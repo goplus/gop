@@ -16,7 +16,8 @@ The qiniu (qn) language。
 
 ## 下载
 
-* linux/amd64: [qnlang-linux-amd64.tar.gz](http://open.qiniudn.com/qnlang-linux-amd64.tar.gz)
+* Linux 64bits: [qnlang-linux-amd64.tar.gz](http://open.qiniudn.com/qnlang-linux-amd64.tar.gz)
+* Mac OS: [qnlang-darwin-amd64.tar.gz](http://open.qiniudn.com/qnlang-darwin-amd64.tar.gz)
 
 
 ## 样例
