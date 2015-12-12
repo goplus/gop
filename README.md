@@ -14,6 +14,49 @@ The qiniu (qn) language。
 * 由于与 Go 语言的无缝配合，qnlang 在嵌入式脚本领域有 lua、python、javascript 所不能比拟的优越性。
 * 比如：网络游戏中取代 lua 的位置。
 
+## 样例
+
+### 最大素数
+
+输入 n，求 < n 的最大素数：
+
+* [maxprime.qn](https://github.com/qiniu/qnlang/blob/master/maxprime.qn)
+
+用法：
+
+```
+qnlang maxprime.qn <N>
+```
+
+### 计算器
+
+实现一个支持四则运算及函数调用的计算器：
+
+* [calc.qn](https://github.com/qiniu/qnlang/blob/master/calc.qn)
+
+用法：
+
+```
+qnlang calc.qn
+```
+
+### qnlang自举
+
+qnlang的自举（用qnlang实现一个qnlang）：
+
+* [qnlang.qn](https://github.com/qiniu/qnlang/blob/master/qnlang.qn)
+
+交互模式跑 qnlang 版本的 qnlang（可以认为是上面计算器的增强版本）：
+
+```
+qnlang qnlang.qn
+```
+
+当然你还可以用 qnlang 版本的 qnlang 来跑最大素数问题：
+
+```
+qnlang qnlang.qn maxprime.qn <N>
+```
 
 # 使用说明
 
@@ -574,10 +617,11 @@ t4 = type(foo.f)
 
 可以看到，class Foo 的 Go 类型是 *qnlang.Class，而 object foo 的 Go 类型是 *qnlang.Object。而 Foo.f 和普通用户自定义函数一致，也是 *qnlang.Function，但 foo.f 不一样，它是 *qnlang.thisDref 类型。
 
+# 附录
 
-# 样例
+## 样例代码
 
-## 求最大素数
+### 求最大素数
 
 ```go
 primes = [2, 3]
@@ -649,3 +693,133 @@ max--
 v = maxPrimeOf(max)
 println(v)
 ```
+
+### 计算器
+
+```go
+grammar = `
+
+term = factor *('*' factor/mul | '/' factor/quo | '%' factor/mod)
+
+doc = term *('+' term/add | '-' term/sub)
+
+factor =
+	FLOAT/pushFloat |
+	'-' factor/neg |
+	'(' doc ')' |
+	(IDENT '(' doc %= ','/ARITY ')')/call
+`
+
+fntable = nil
+
+Stack = class {
+
+	fn _init() {
+		set(this, "stk", [])
+	}
+
+	fn clear() {
+		set(this, "stk", this.stk[:0])
+	}
+
+	fn pop() {
+		n = len(this.stk)
+		if n > 0 {
+			v = this.stk[n-1]
+			set(this, "stk", this.stk[:n-1])
+			return [v, true]
+		}
+		return [nil, false]
+	}
+
+	fn push(v) {
+		set(this, "stk", append(this.stk, v))
+	}
+
+	fn popArgs(arity) {
+		n = len(this.stk)
+		if n < arity {
+			panic("Stack.popArgs: unexpected")
+		}
+		args = sliceFrom(this.stk[n-arity:n]...)
+		set(this, "stk", this.stk[:n-arity])
+		return args
+	}
+}
+
+Calculator = class {
+
+	fn _init() {
+		set(this, "stk", new Stack)
+	}
+
+	fn grammar() {
+		return grammar
+	}
+
+	fn stack() {
+		return this.stk
+	}
+
+	fn fntable() {
+		return fntable
+	}
+
+	fn ret() {
+		v, _ = this.stk.pop()
+		this.stk.clear()
+		return v
+	}
+
+	fn call(name) {
+		f = fntable[name]
+		if f == nil {
+			panic("function not found: " + name)
+		}
+		arity, _ = this.stk.pop()
+		args = this.stk.popArgs(arity)
+		ret = f(args...)
+		this.stk.push(ret)
+	}
+}
+
+fntable = {
+	"sin": sin,
+	"cos": cos,
+	"pow": pow,
+	"max": max,
+	"min": min,
+
+	"$mul": fn(a, b) { return a*b },
+	"$quo": fn(a, b) { return a/b },
+	"$mod": fn(a, b) { return a%b },
+	"$add": fn(a, b) { return a+b },
+	"$sub": fn(a, b) { return a-b },
+	"$neg": fn(a) { return -a },
+
+	"$call": Calculator.call,
+	"$pushFloat": Stack.push,
+	"$ARITY": Stack.push,
+}
+
+calc = new Calculator
+engine, err = interpreter(calc, nil)
+if err != nil {
+	fprintln(os.stderr, err)
+	return 1
+}
+
+scanner = bufio.scanner(os.stdin)
+for scanner.scan() {
+	line = strings.trim(scanner.text(), " \t\r\n")
+	if line != "" {
+		err = engine.eval(line)
+		if err != nil {
+			fprintln(os.stderr, err)
+		} else {
+			printf("> %v\n\n", calc.ret())
+		}
+	}
+}
+```
+
