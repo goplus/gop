@@ -14,6 +14,11 @@ The qiniu (qn) language。
 * 由于与 Go 语言的无缝配合，qnlang 在嵌入式脚本领域有 lua、python、javascript 所不能比拟的优越性。
 * 比如：网络游戏中取代 lua 的位置。
 
+## 下载
+
+* linux/amd64: [qnlang-linux-amd64.tar.gz](http://open.qiniudn.com/qnlang-linux-amd64.tar.gz)
+
+
 ## 样例
 
 ### 最大素数
