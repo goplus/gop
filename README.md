@@ -3,9 +3,23 @@ The Q Language (Q语言)
 
 # 下载
 
+## 源代码
+
 ```
 go get -u qlang.io/qlang
 ```
+
+## 二进制
+
+### qlang.v1
+
+* linux/amd64: [qnlang-linux-amd64.tar.gz](http://open.qiniudn.com/qnlang-linux-amd64.tar.gz)
+* Mac OS: [qnlang-darwin-amd64.tar.gz](http://open.qiniudn.com/qnlang-darwin-amd64.tar.gz)
+
+### qlang.v2
+
+* 性能比qlang.v2更优。暂未提供二进制下载包，请通过源代码自行编译。
+
 
 # 语言特色
 
@@ -17,11 +31,6 @@ go get -u qlang.io/qlang
 
 * 由于与 Go 语言的无缝配合，qlang 在嵌入式脚本领域有 lua、python、javascript 所不能比拟的优越性。
 * 比如：网络游戏中取代 lua 的位置。
-
-## 下载
-
-* linux/amd64: [qnlang-linux-amd64.tar.gz](http://open.qiniudn.com/qnlang-linux-amd64.tar.gz)
-* Mac OS: [qnlang-darwin-amd64.tar.gz](http://open.qiniudn.com/qnlang-darwin-amd64.tar.gz)
 
 
 ## 样例
