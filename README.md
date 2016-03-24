@@ -3,20 +3,18 @@ The Q Language (Q语言)
 
 # 下载
 
-## 源代码
+### 源代码
 
 ```
 go get -u qlang.io/qlang
 ```
 
-## 二进制
-
-### qlang.v1
+### 二进制(qlang.v1)
 
 * linux/amd64: [qnlang-linux-amd64.tar.gz](http://open.qiniudn.com/qnlang-linux-amd64.tar.gz)
 * Mac OS: [qnlang-darwin-amd64.tar.gz](http://open.qiniudn.com/qnlang-darwin-amd64.tar.gz)
 
-### qlang.v2
+### 二进制(qlang.v2)
 
 * 性能比qlang.v2更优。暂未提供二进制下载包，请通过源代码自行编译。
 
