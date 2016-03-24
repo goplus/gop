@@ -9,6 +9,14 @@ The Q Language (Q语言)
 go get -u qlang.io/qlang
 ```
 
+或者在 src 目录执行如下命令：
+
+```
+mkdir qiniupkg.com
+git clone https://github.com/qiniu/qlang.git qlang.io
+git clone https://github.com/qiniu/text.git qiniupkg.com/text
+```
+
 ### 二进制(qlang.v1)
 
 * linux/amd64: [qnlang-linux-amd64.tar.gz](http://open.qiniudn.com/qnlang-linux-amd64.tar.gz)
