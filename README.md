@@ -1,7 +1,5 @@
-# qnlang
-
-The qiniu (qn) language。
-
+The Q Language (Q语言)
+========
 
 # 语言特色
 
@@ -11,12 +9,12 @@ The qiniu (qn) language。
 
 预期的商业场景：
 
-* 由于与 Go 语言的无缝配合，qnlang 在嵌入式脚本领域有 lua、python、javascript 所不能比拟的优越性。
+* 由于与 Go 语言的无缝配合，qlang 在嵌入式脚本领域有 lua、python、javascript 所不能比拟的优越性。
 * 比如：网络游戏中取代 lua 的位置。
 
 ## 下载
 
-* Linux 64bits: [qnlang-linux-amd64.tar.gz](http://open.qiniudn.com/qnlang-linux-amd64.tar.gz)
+* linux/amd64: [qnlang-linux-amd64.tar.gz](http://open.qiniudn.com/qnlang-linux-amd64.tar.gz)
 * Mac OS: [qnlang-darwin-amd64.tar.gz](http://open.qiniudn.com/qnlang-darwin-amd64.tar.gz)
 
 
@@ -26,42 +24,42 @@ The qiniu (qn) language。
 
 输入 n，求 < n 的最大素数：
 
-* [maxprime.qn](https://github.com/qiniu/qnlang/blob/master/maxprime.qn)
+* [maxprime.ql](https://github.com/qiniu/qlang/blob/develop/app/qlang/maxprime.ql)
 
 用法：
 
 ```
-qnlang maxprime.qn <N>
+qlang maxprime.ql <N>
 ```
 
 ### 计算器
 
 实现一个支持四则运算及函数调用的计算器：
 
-* [calc.qn](https://github.com/qiniu/qnlang/blob/master/calc.qn)
+* [calc.ql](https://github.com/qiniu/qlang/blob/develop/app/qlang/calc.ql)
 
 用法：
 
 ```
-qnlang calc.qn
+qlang calc.ql
 ```
 
-### qnlang自举
+### qlang自举
 
-qnlang的自举（用qnlang实现一个qnlang）：
+qlang的自举（用qlang实现一个qlang）：
 
-* [qnlang.qn](https://github.com/qiniu/qnlang/blob/master/qnlang.qn)
+* [qlang.ql](https://github.com/qiniu/qlang/blob/develop/app/qlang/qlang.ql)
 
-交互模式跑 qnlang 版本的 qnlang（可以认为是上面计算器的增强版本）：
-
-```
-qnlang qnlang.qn
-```
-
-当然你还可以用 qnlang 版本的 qnlang 来跑最大素数问题：
+交互模式跑 qlang 版本的 qlang（可以认为是上面计算器的增强版本）：
 
 ```
-qnlang qnlang.qn maxprime.qn <N>
+qlang.v1 qlang.ql  #目前暂时只能用qlang.v1版本完成自举
+```
+
+当然你还可以用 qlang 版本的 qlang 来跑最大素数问题：
+
+```
+qlang.v1 qlang.ql maxprime.ql <N>
 ```
 
 # 使用说明
@@ -140,15 +138,15 @@ set(b, 1, 777, 2, 888, 3, 999) // Go 里面是：b[1], b[2], b[3] = 777, 888, 99
 b2 = b[1:4] // Go 里面是： b2 = b[1:4]
 ```
 
-特别地，在 qnlang 中可以这样赋值：
+特别地，在 qlang 中可以这样赋值：
 
 ```go
 x, y, z = [1, 2, 3]
 ```
 
-结果是 x = 1, y = 2, z = 3。这是 qnlang 和 Go 语言的基础设计不同导致的：
+结果是 x = 1, y = 2, z = 3。这是 qlang 和 Go 语言的基础设计不同导致的：
 
-* qnlang 不支持多返回值。对于那些返回了多个值的 Go 函数，在 qnlang 会理解为返回 var slice，也就是 []interface{}。
+* qlang 不支持多返回值。对于那些返回了多个值的 Go 函数，在 qlang 会理解为返回 var slice，也就是 []interface{}。
 
 举个例子：
 
@@ -156,7 +154,7 @@ x, y, z = [1, 2, 3]
 f, err = os.open(fname)
 ```
 
-这个例子，在 Go 里面返回的是 (*os.File, error)。但是 qnlang 中是 var slice。
+这个例子，在 Go 里面返回的是 (*os.File, error)。但是 qlang 中是 var slice。
 
 ### map 类型
 
@@ -191,7 +189,7 @@ c, ok2 := x["c"] // 结果：c = 0, ok2 = false
 d := x["d"] // 结果：d = 0
 ```
 
-而在 qnlang 中是这样的：
+而在 qlang 中是这样的：
 
 ```go
 x = {"a": 1, "b": 2}
@@ -375,7 +373,7 @@ println(x(3)) // 输出 3
 
 ### 私有变量
 
-在 qnlang 中，我们引入了私有变量的概念。
+在 qlang 中，我们引入了私有变量的概念。
 
 私有变量以 _ 开头来标识。私有变量只能在本函数内使用，并且互不干扰（没有名字冲突）。如：
 
@@ -394,7 +392,7 @@ println(x(3)) // 输出 1，因为 y(a) 这个调用并不影响 x 函数中的 
 
 ### 可变参数
 
-如 Go 语言类似，qnlang 也支持可变参数的函数。例如内置的 max、min 都是可变参数的：
+如 Go 语言类似，qlang 也支持可变参数的函数。例如内置的 max、min 都是可变参数的：
 
 ```go
 a = max(1.2, 3, 5, 6) // a 的值为 float 类型的 6
@@ -414,7 +412,7 @@ x = fn(fmt, args...) {
 
 ## defer
 
-是的，qnlang 也支持 defer。这在处理系统资源（如文件、锁等）释放场景非常有用。一个典型场景：
+是的，qlang 也支持 defer。这在处理系统资源（如文件、锁等）释放场景非常有用。一个典型场景：
 
 ```go
 f, err = os.open(fname)
@@ -429,7 +427,7 @@ defer f.close()
 
 值得注意的是：
 
-在一个细节上 qnlang 的 defer 和 Go 语言处理并不一致，那就是 defer 表达式中的变量值。在 Go 语言中，所有 defer 引用的变量均在 defer 语句时刻固定下来（如上面的 f 变量），后面任何修改均不影响 defer 语句的行为。但 qnlang 是会受到影响的。例如，假设你在 defer 之后，调用 f = nil 把 f 变量改为 nil，那么后面执行 f.close() 时就会 panic。
+在一个细节上 qlang 的 defer 和 Go 语言处理并不一致，那就是 defer 表达式中的变量值。在 Go 语言中，所有 defer 引用的变量均在 defer 语句时刻固定下来（如上面的 f 变量），后面任何修改均不影响 defer 语句的行为。但 qlang 是会受到影响的。例如，假设你在 defer 之后，调用 f = nil 把 f 变量改为 nil，那么后面执行 f.close() 时就会 panic。
 
 
 ## 类
@@ -458,7 +456,7 @@ println(a) // 输出 3
 
 ### 构造函数
 
-在 qnlang 中，构造函数只是一个名为 _init 的成员方法（method）：
+在 qlang 中，构造函数只是一个名为 _init 的成员方法（method）：
 
 ```go
 Foo = class {
@@ -478,39 +476,39 @@ println(foo.a) // 输出 3
 
 ## 模块及模块import
 
-在 qnlang 中的确有模块的概念，但是并不像大部分脚本语言那样，有模块的 import 语法。
+在 qlang 中的确有模块的概念，但是并不像大部分脚本语言那样，有模块的 import 语法。
 
-要理解这一点，最关键是理解 qnlang 的核心理念：
+要理解这一点，最关键是理解 qlang 的核心理念：
 
-* qnlang 是一个嵌入式语言，它的定位是作为 Go 语言应用的运行时嵌入脚本。
-* 我们鼓励依据应用按需求对 qnlang 进行裁剪。这也是 qnlang 采用微内核设计的原因。
+* qlang 是一个嵌入式语言，它的定位是作为 Go 语言应用的运行时嵌入脚本。
+* 我们鼓励依据应用按需求对 qlang 进行裁剪。这也是 qlang 采用微内核设计的原因。
 
-看起来 qnlang 将自己的使用范围收得非常窄，但考虑到 Go 语言在未来的霸主地位，qnlang 有着广阔的应用空间。
+看起来 qlang 将自己的使用范围收得非常窄，但考虑到 Go 语言在未来的霸主地位，qlang 有着广阔的应用空间。
 
-而在 Go 语言应用的嵌入脚本领域而言，qnlang 有无可比拟的核心优势：
+而在 Go 语言应用的嵌入脚本领域而言，qlang 有无可比拟的核心优势：
 
-* 任何 Go 语言的函数，都可以不做任何包装直接在 qnlang 中使用
+* 任何 Go 语言的函数，都可以不做任何包装直接在 qlang 中使用
 
 这太爽了！
 
 
-### 定制qnlang
+### 定制qlang
 
-尽管 qnlang 本身没有 import，但是 qnlang 的 Go 语言包支持 import。通过 import 你可以自由定制你想要的 qnlang 的样子。在没有引入任何模块的情况下，qnlang 连最基本的 '+'、'-'、'*'、'/' 都做不了，因为提供这个能力的是 builtin 包。
+尽管 qlang 本身没有 import，但是 qlang 的 Go 语言包支持 import。通过 import 你可以自由定制你想要的 qlang 的样子。在没有引入任何模块的情况下，qlang 连最基本的 '+'、'-'、'*'、'/' 都做不了，因为提供这个能力的是 builtin 包。
 
-所以一个最基础版本的 qnlang 应该是这样的：
+所以一个最基础版本的 qlang 应该是这样的：
 
 ```go
 import (
 	"fmt"
 
-	"qiniupkg.com/qnlang.v1/qnlang"
-	_ "qiniupkg.com/qnlang/builtin" // 导入 builtin 包
+	"qlang.io/qlang.v2/qlang"
+	_ "qlang.io/qlang/builtin" // 导入 builtin 包
 )
 
 func main() {
 
-	lang, err := qnlang.New(nil) // 参数 nil 也可以改为 qnlang.InsertSemis
+	lang, err := qlang.New(nil) // 参数 nil 也可以改为 qlang.InsertSemis
 	if err != nil {
 		// 错误处理
 		return
@@ -527,39 +525,39 @@ func main() {
 }
 ```
 
-在大部分正式的场合，qnlang.New 传入 qnlang.InsertSemis 会更多一些。它表示在各行的末尾智能的插入 ';'。但是在本例中我们希望执行的是一个表达式，而不是语句，所以传入 nil 参数更为合适。如果我们改为传入 qnlang.InsertSemis，那么得到的结果就不再是 3，而是 nil。因为表达式 `1+2` 的结果是 3，但是表达式 `1+2;` 的结果是 nil。
+在大部分正式的场合，qlang.New 传入 qlang.InsertSemis 会更多一些。它表示在各行的末尾智能的插入 ';'。但是在本例中我们希望执行的是一个表达式，而不是语句，所以传入 nil 参数更为合适。如果我们改为传入 qlang.InsertSemis，那么得到的结果就不再是 3，而是 nil。因为表达式 `1+2` 的结果是 3，但是表达式 `1+2;` 的结果是 nil。
 
 有了这个基础版本以后，我们可以自由添加各种模块，如：
 
 ```go
 import (
-	"qiniupkg.com/qnlang/math"
-	"qiniupkg.com/qnlang/strconv"
-	"qiniupkg.com/qnlang/strings"
+	"qlang.io/qlang/math"
+	"qlang.io/qlang/strconv"
+	"qlang.io/qlang/strings"
 	...
 )
 
 func main() {
 
-	qnlang.Import("math", math.Exports)
-	qnlang.Import("strconv", strconv.Exports)
-	qnlang.Import("strings", strings.Exports)
+	qlang.Import("math", math.Exports)
+	qlang.Import("strconv", strconv.Exports)
+	qlang.Import("strings", strings.Exports)
 
 	...
 }
 ```
 
-这样，在 qnlang 中就可以用 math.sin, strconv.itoa 等函数了。
+这样，在 qlang 中就可以用 math.sin, strconv.itoa 等函数了。
 
 如果你嫌 math.sin 太长，还可以将 math 模块作为 builtin 功能导入。这只需要略微修改下导入的文法：
 
 ```go
-qnlang.Import("", math.Exports) // 如此，你就可以直接用 sin 而不是 math.sin 了
+qlang.Import("", math.Exports) // 如此，你就可以直接用 sin 而不是 math.sin 了
 ```
 
-### 制作qnlang模块
+### 制作qlang模块
 
-制作qnlang的模块成本极其低廉。我们打开 `qiniupkg.com/qnlang/strings` 看看它是什么样的：
+制作qlang的模块成本极其低廉。我们打开 `qlang.io/qlang/strings` 看看它是什么样的：
 
 ```go
 package strings
@@ -590,7 +588,7 @@ var Exports = map[string]interface{}{
 strings.replacer("?", "!").replace("hello, world???") // 得到 "hello, world!!!"
 ```
 
-这是 qnlang 最强大的地方，免包装。甚至，你可以写一个自动的 Go package 转 qnlang 模块的工具，找到 Go package 所有导出的全局函数，加入到 Exports 表即完成了该 Go package 的包装，几乎零成本。
+这是 qlang 最强大的地方，近乎免包装。甚至，你可以写一个自动的 Go package 转 qlang 模块的工具，找到 Go package 所有导出的全局函数，加入到 Exports 表即完成了该 Go package 的包装，几乎零成本。
 
 
 ## 反射
@@ -601,13 +599,13 @@ strings.replacer("?", "!").replace("hello, world???") // 得到 "hello, world!!!
 t1 = type(1) // 相当于调用 Go 语言中的 reflect.TypeOf
 ```
 
-用 type 可以很好地研究 qnlang 的内在实现。比如：
+用 type 可以很好地研究 qlang 的内在实现。比如：
 
 ```go
 t2 = type(fn() {})
 ```
 
-我们得到了 *qnlang.Function。这说明尽管用户自定义的函数原型多样，但是其 Go 类型是一致的。
+我们得到了 *qlang.Function。这说明尽管用户自定义的函数原型多样，但是其 Go 类型是一致的。
 
 我们也可以看看用户自定义的类型：
 
@@ -621,7 +619,7 @@ t3 = type(foo)
 t4 = type(foo.f)
 ```
 
-可以看到，class Foo 的 Go 类型是 *qnlang.Class，而 object foo 的 Go 类型是 *qnlang.Object。而 Foo.f 和普通用户自定义函数一致，也是 *qnlang.Function，但 foo.f 不一样，它是 *qnlang.thisDref 类型。
+可以看到，class Foo 的 Go 类型是 *qlang.Class，而 object foo 的 Go 类型是 *qlang.Object。而 Foo.f 和普通用户自定义函数一致，也是 *qlang.Function，但 foo.f 不一样，它是 *qlang.thisDref 类型。
 
 # 附录
 
