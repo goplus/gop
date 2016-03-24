@@ -4,7 +4,7 @@ The Q Language (Q语言)
 # 下载
 
 ```
-go get -u qlang.io
+go get -u qlang.io/qlang
 ```
 
 # 语言特色
