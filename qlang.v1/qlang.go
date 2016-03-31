@@ -318,6 +318,11 @@ func (p *Interpreter) Var(name string) (v interface{}, ok bool) {
 	return
 }
 
+func (p *Interpreter) SetVar(name string, v interface{}) {
+
+	p.vars[name] = v
+}
+
 func (p *Interpreter) Stack() interpreter.Stack {
 
 	return p.stk
