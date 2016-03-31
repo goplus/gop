@@ -183,6 +183,11 @@ func (p *Context) Var(name string) (v interface{}, ok bool) {
 	return
 }
 
+func (p *Context) SetVar(name string, v interface{}) {
+
+	p.vars[name] = v
+}
+
 func (p *Context) Unset(name string) {
 
 	delete(p.vars, name)
@@ -330,8 +335,8 @@ func (p *Code) Exec(ip, ipEnd int, stk *Stack, ctx *Context) {
 
 func (p *Code) Dump() {
 
-	for _, instr := range p.data {
-		fmt.Printf("==> %s %v\n", instrName(instr), instr)
+	for i, instr := range p.data {
+		fmt.Printf("==> %04d: %s %v\n", i, instrName(instr), instr)
 	}
 }
 
