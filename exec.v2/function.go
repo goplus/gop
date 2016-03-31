@@ -100,6 +100,24 @@ var (
 )
 
 // -----------------------------------------------------------------------------
+
+type iBlock struct {
+	start int
+	end   int
+}
+
+func (p *iBlock) Exec(stk *Stack, ctx *Context) {
+
+	ip := ctx.ip
+	ctx.Code.Exec(p.start, p.end, stk, ctx)
+	ctx.ip = ip
+}
+
+func Block(start, end int) Instr {
+	return &iBlock{start, end}
+}
+
+// -----------------------------------------------------------------------------
 // NewFunction
 
 type Function struct {
