@@ -100,6 +100,17 @@ func (p *Compiler) Main(e interpreter.Engine) {
 	)
 }
 
+func (p *Compiler) Include(file string) {
+
+	code := p.code
+	instr := code.Reserve()
+	p.exits = append(p.exits, func() {
+		start := code.Len()
+		end := p.Incl(file)
+		instr.Set(exec.Block(start, end))
+	})
+}
+
 func (p *Compiler) Return(e interpreter.Engine) {
 
 	arity := p.popArity()

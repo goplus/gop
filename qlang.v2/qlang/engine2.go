@@ -16,6 +16,7 @@ type Options interpreter.Options
 
 var (
 	InsertSemis = (*Options)(interpreter.InsertSemis)
+	DumpCode    = false
 )
 
 // -----------------------------------------------------------------------------
@@ -37,6 +38,11 @@ func New(options *Options) (lang *Qlang, err error) {
 	return &Qlang{ctx, cl, stk, options}, nil
 }
 
+func (p *Qlang) Include(incl func(file string) int) {
+
+	p.cl.Incl = incl
+}
+
 func (p *Qlang) Ret() (v interface{}, ok bool) {
 
 	v, ok = p.stk.Pop()
@@ -44,7 +50,7 @@ func (p *Qlang) Ret() (v interface{}, ok bool) {
 	return
 }
 
-func (p *Qlang) Cl(codeText []byte, fname string) (end int, err error) {
+func (p *Qlang) Cl(codeText []byte, fname string, incl ...bool) (end int, err error) {
 
 	cl := p.cl
 	engine, err := interpreter.New(cl, (*interpreter.Options)(p.options))
@@ -59,7 +65,9 @@ func (p *Qlang) Cl(codeText []byte, fname string) (end int, err error) {
 		return
 	}
 	end = cl.Code().Len()
-	cl.Done()
+	if incl == nil {
+		cl.Done()
+	}
 	return
 }
 
@@ -88,6 +96,10 @@ func (p *Qlang) Exec(codeText []byte, fname string) (err error) {
 	end, err := p.Cl(codeText, fname)
 	if err != nil {
 		return
+	}
+
+	if DumpCode {
+		code.Dump()
 	}
 
 	code.Exec(start, end, p.stk, p.Context)

@@ -30,7 +30,8 @@ s = (
 	(IDENT "*="! expr)/mula |
 	(IDENT "/="! expr)/quoa |
 	(IDENT "%="! expr)/moda |
-	"return" ?expr/ARITY /return |
+	"return"! ?expr/ARITY /return |
+	"include"! STRING/include |
 	"defer"/_mute! expr/_code/_unmute/defer |
 	expr)/xline
 
@@ -75,16 +76,22 @@ factor =
 // -----------------------------------------------------------------------------
 
 type Compiler struct {
+	Incl  func(file string) int
 	code  *exec.Code
 	exits []func()
 	gvars map[string]interface{}
 	gstk  exec.Stack
 }
 
+func includeNotimpl(file string) int {
+
+	panic("instruction `include` not implemented")
+}
+
 func New() *Compiler {
 
 	gvars := make(map[string]interface{})
-	return &Compiler{code: exec.New(), gvars: gvars}
+	return &Compiler{code: exec.New(), gvars: gvars, Incl: includeNotimpl}
 }
 
 func (p *Compiler) Vars() map[string]interface{} {
@@ -196,6 +203,7 @@ var exports = map[string]interface{}{
 	"$return":  (*Compiler).Return,
 	"$fn":      (*Compiler).Function,
 	"$main":    (*Compiler).Main,
+	"$include": (*Compiler).Include,
 	"$mfn":     (*Compiler).MemberFuncDecl,
 	"$class":   (*Compiler).Class,
 	"$new":     (*Compiler).New,
