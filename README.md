@@ -24,7 +24,7 @@ git clone https://github.com/qiniu/text.git qiniupkg.com/text
 
 ### 二进制(qlang.v2)
 
-* 性能比qlang.v2更优。暂未提供二进制下载包，请通过源代码自行编译。
+* 性能比qlang.v1更优。暂未提供二进制下载包，请通过源代码自行编译。
 
 
 # 语言特色
@@ -62,7 +62,7 @@ qlang maxprime.ql <N>
 用法：
 
 ```
-qlang calc.ql
+qlang.v1 calc.ql  #目前暂时只有qlang.v1版本实现了interpreter模块
 ```
 
 ### qlang自举
