@@ -62,7 +62,7 @@ qlang maxprime.ql <N>
 用法：
 
 ```
-qlang calc.ql
+qlang.v1 calc.ql  #目前暂时只有qlang.v1版本实现了interpreter模块
 ```
 
 ### qlang自举
