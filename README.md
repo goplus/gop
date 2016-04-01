@@ -24,7 +24,7 @@ git clone https://github.com/qiniu/text.git qiniupkg.com/text
 
 ### 二进制(qlang.v2)
 
-* 性能比qlang.v2更优。暂未提供二进制下载包，请通过源代码自行编译。
+* 性能比qlang.v1更优。暂未提供二进制下载包，请通过源代码自行编译。
 
 
 # 语言特色
