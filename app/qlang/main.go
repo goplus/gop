@@ -17,12 +17,18 @@ func main() {
 
 	qall.InitSafe(false)
 
+	libs := os.Getenv("QLANG_PATH")
+	if libs == "" {
+		libs = os.Getenv("HOME") + "/qlang"
+	}
+
 	if len(os.Args) > 1 {
 		lang, err := qlang.New(qlang.InsertSemis)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
+		lang.SetLibs(libs)
 		fname := os.Args[1]
 		b, err := ioutil.ReadFile(fname)
 		if err != nil {
@@ -43,6 +49,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+	lang.SetLibs(libs)
 
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {

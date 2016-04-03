@@ -56,6 +56,16 @@ func (p *Compiler) popArity() int {
 	panic("no arity")
 }
 
+func (p *Compiler) popName() string {
+
+	if v, ok := p.gstk.Pop(); ok {
+		if name, ok := v.(string); ok {
+			return name
+		}
+	}
+	panic("no ident name")
+}
+
 func (p *Compiler) PushCode(code interface{}) {
 
 	p.gstk.Push(code)
@@ -70,3 +80,6 @@ func (p *Compiler) PushName(name string) {
 
 	p.gstk.Push(name)
 }
+
+// -----------------------------------------------------------------------------
+

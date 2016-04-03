@@ -1,9 +1,13 @@
 package qlang
 
 import (
+	"strings"
+
 	"qlang.io/exec.v2"
 	"qlang.io/qlang.spec.v1"
 	"qiniupkg.com/text/tpl.v1/interpreter.util"
+
+	ipt "qiniupkg.com/text/tpl.v1/interpreter"
 )
 
 // -----------------------------------------------------------------------------
@@ -32,6 +36,8 @@ s = (
 	(IDENT "%="! expr)/moda |
 	"return"! ?expr/ARITY /return |
 	"include"! STRING/include |
+	"import"! (STRING ?("as" IDENT/name)/ARITY)/import |
+	"export"! IDENT/name % ','/ARITY /export |
 	"defer"/_mute! expr/_code/_unmute/defer |
 	expr)/xline
 
@@ -75,23 +81,35 @@ factor =
 
 // -----------------------------------------------------------------------------
 
-type Compiler struct {
-	Incl  func(file string) int
-	code  *exec.Code
-	exits []func()
-	gvars map[string]interface{}
-	gstk  exec.Stack
+type module struct {
+	start, end int
 }
 
-func includeNotimpl(file string) int {
-
-	panic("instruction `include` not implemented")
+type Compiler struct {
+	Opts  *ipt.Options
+	code  *exec.Code
+	libs  []string
+	exits []func()
+	mods  map[string]module
+	gvars map[string]interface{}
+	gstk  exec.Stack
 }
 
 func New() *Compiler {
 
 	gvars := make(map[string]interface{})
-	return &Compiler{code: exec.New(), gvars: gvars, Incl: includeNotimpl}
+	mods := make(map[string]module)
+	return &Compiler{
+		code:  exec.New(),
+		mods:  mods,
+		gvars: gvars,
+		Opts:  ipt.InsertSemis,
+	}
+}
+
+func (p *Compiler) SetLibs(libs string) {
+
+	p.libs = strings.Split(libs, ":")
 }
 
 func (p *Compiler) Vars() map[string]interface{} {
@@ -204,6 +222,8 @@ var exports = map[string]interface{}{
 	"$fn":      (*Compiler).Function,
 	"$main":    (*Compiler).Main,
 	"$include": (*Compiler).Include,
+	"$import":  (*Compiler).Import,
+	"$export":  (*Compiler).Export,
 	"$mfn":     (*Compiler).MemberFuncDecl,
 	"$class":   (*Compiler).Class,
 	"$new":     (*Compiler).New,
