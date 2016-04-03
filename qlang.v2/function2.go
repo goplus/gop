@@ -86,18 +86,14 @@ func (p *Compiler) Function(e interpreter.Engine) {
 	})
 }
 
-func (p *Compiler) Main(e interpreter.Engine) {
+func (p *Compiler) AnonymFn(e interpreter.Engine) {
 
 	fnb, _ := p.gstk.Pop()
 	instr := p.code.Reserve()
 	p.exits = append(p.exits, func() {
 		start, end := p.cl(e, "doc", fnb)
-		instr.Set(exec.Func(nil, start, end, nil, false))
+		instr.Set(exec.AnonymFn(start, end))
 	})
-	p.code.Block(
-		exec.CallFn(0),
-		exec.Exit,
-	)
 }
 
 func (p *Compiler) Return(e interpreter.Engine) {

@@ -1,25 +1,47 @@
 package exec
 
 // -----------------------------------------------------------------------------
+// Macro(宏) - 用以在当前位置插入执行一段代码块
 
-type iBlock struct {
+type iMacro struct {
 	start int
 	end   int
 }
 
-func (p *iBlock) Exec(stk *Stack, ctx *Context) {
+func (p *iMacro) Exec(stk *Stack, ctx *Context) {
 
 	ip := ctx.ip
 	ctx.Code.Exec(p.start, p.end, stk, ctx)
 	ctx.ip = ip
 }
 
-func Block(start, end int) Instr {
+func Macro(start, end int) Instr {
 
-	return &iBlock{start, end}
+	return &iMacro{start, end}
 }
 
 // -----------------------------------------------------------------------------
+// AnonymFn(匿名函数)
+
+type iAnonymFn struct {
+	start int
+	end   int
+}
+
+func (p *iAnonymFn) Exec(stk *Stack, ctx *Context) {
+
+	fn := NewFunction(nil, p.start, p.end, nil, false)
+	fn.parent = ctx
+	fn.ExtCall(nil)
+}
+
+func AnonymFn(start, end int) Instr {
+
+	return &iAnonymFn{start, end}
+}
+
+// -----------------------------------------------------------------------------
+// Module(模块)
 
 type iModule struct {
 	start int
@@ -31,16 +53,15 @@ func (p *iModule) Exec(stk *Stack, ctx *Context) {
 
 	exports, ok := ctx.mods[p.id]
 	if !ok {
-		parent := &Context{
+		modCtx := &Context{
 			Code:  ctx.Code,
 			Stack: ctx.Stack,
 			mods:  ctx.mods,
 			vars:  make(map[string]interface{}),
 		}
-		fn := NewFunction(nil, p.start, p.end, nil, false)		
-		fn.parent = parent
-		_, mod := fn.ExtCall()
-		exports = mod.Exports()
+		modFn := NewFunction(nil, p.start, p.end, nil, false)
+		modFn.ExtCall(modCtx)
+		exports = modCtx.Exports()
 		ctx.mods[p.id] = exports
 	}
 	stk.Push(exports)

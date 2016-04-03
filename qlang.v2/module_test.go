@@ -77,3 +77,43 @@ func TestImport(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
+const scriptA1 = `
+
+defer fn() {
+	x; x = 2
+}()
+
+x = 1
+export x
+`
+
+const scriptB1 = `
+
+import "a"
+
+println("a.x:", a.x)
+`
+
+func TestModuleDefer(t *testing.T) {
+
+	lang, _ := qlang.New(qlang.InsertSemis)
+
+	qlang.SetFindEntry(func(file string, libs []string) (string, error) {
+		return file, nil
+	})
+
+	qlang.SetReadFile(func(file string) ([]byte, error) {
+		return []byte(scriptA1), nil
+	})
+
+	err := lang.SafeExec([]byte(scriptB1), "b.ql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v, ok := lang.Var("a"); !ok || v.(map[string]interface{})["x"] != 2 {
+		t.Fatal("x != 2, x =", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
