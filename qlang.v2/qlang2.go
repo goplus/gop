@@ -18,7 +18,9 @@ term1 = factor *('*' factor/mul | '/' factor/quo | '%' factor/mod)
 
 term2 = term1 *('+' term1/add | '-' term1/sub)
 
-term3 = term2 *('<' term2/lt | '>' term2/gt | "==" term2/eq | "<=" term2/le | ">=" term2/ge | "!=" term2/ne)
+term31 = term2 *('<' term2/lt | '>' term2/gt | "==" term2/eq | "<=" term2/le | ">=" term2/ge | "!=" term2/ne)
+
+term3 = term31 *("<-" term31/chin)
 
 term4 = term3 *("&&"/_mute term3/_code/_unmute/and)
 
@@ -39,6 +41,7 @@ s = (
 	"import"! (STRING ?("as" IDENT/name)/ARITY)/import |
 	"export"! IDENT/name % ','/ARITY /export |
 	"defer"/_mute! expr/_code/_unmute/defer |
+	"go"/_mute! expr/_code/_unmute/go |
 	expr)/xline
 
 doc = s *(';'/clear s | ';'/pushn)
@@ -79,6 +82,7 @@ factor =
 	'{'! (expr ':' expr) %= ','/ARITY ?',' '}'/map |
 	'!' factor/not |
 	'-' factor/neg |
+	"<-" factor/chout |
 	'+' factor
 `
 
@@ -220,6 +224,9 @@ var exports = map[string]interface{}{
 	"$quoa":    (*Compiler).QuoAssign,
 	"$moda":    (*Compiler).ModAssign,
 	"$defer":   (*Compiler).Defer,
+	"$go":      (*Compiler).Go,
+	"$chin":    (*Compiler).ChanIn,
+	"$chout":   (*Compiler).ChanOut,
 	"$recover": (*Compiler).Recover,
 	"$return":  (*Compiler).Return,
 	"$fn":      (*Compiler).Function,
