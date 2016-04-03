@@ -162,6 +162,8 @@ type Context struct {
 	Recov  interface{}
 	ret    interface{}
 	vars   map[string]interface{}
+	mods   map[string]interface{}
+	export []string
 	ip     int
 	base   int
 }
@@ -169,7 +171,18 @@ type Context struct {
 func NewContext() *Context {
 
 	vars := make(map[string]interface{})
-	return &Context{vars: vars}
+	mods := make(map[string]interface{})
+	return &Context{vars: vars, mods: mods}
+}
+
+func (p *Context) Exports() map[string]interface{} {
+
+	export := make(map[string]interface{}, len(p.export))
+	vars := p.vars
+	for _, name := range p.export {
+		export[name] = vars[name]
+	}
+	return export
 }
 
 func (p *Context) Vars() map[string]interface{} {

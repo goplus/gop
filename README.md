@@ -495,27 +495,104 @@ println(foo.a) // 输出 3
 ```
 
 
-## 模块及模块import
+## include
 
-在 qlang 中的确有模块的概念，但是并不像大部分脚本语言那样，有模块的 import 语法。
+在 qlang 中，一个 .ql 文件可以通过 include 文法来将另一个 .ql 的内容包含进来。所谓包含，其实际的能力类似于将代码拷贝粘贴过来。例如，在某个目录下有 a.ql 和 b.ql 两个文件。
 
-要理解这一点，最关键是理解 qlang 的核心理念：
+其中 a.ql 内容如下：
 
-* qlang 是一个嵌入式语言，它的定位是作为 Go 语言应用的运行时嵌入脚本。
-* 我们鼓励依据应用按需求对 qlang 进行裁剪。这也是 qlang 采用微内核设计的原因。
 
-看起来 qlang 将自己的使用范围收得非常窄，但考虑到 Go 语言在未来的霸主地位，qlang 有着广阔的应用空间。
+```go
+println("in script A")
 
-而在 Go 语言应用的嵌入脚本领域而言，qlang 有无可比拟的核心优势：
+foo = fn() {
+	println("in func foo:", a, b)
+}
+```
 
-* 任何 Go 语言的函数，都可以不做任何包装直接在 qlang 中使用
+其中 b.ql 内容如下：
+
+```go
+a = 1
+b = 2
+
+include "a.ql"
+
+println("in script B")
+foo()
+```
+
+如果 include 语句的文件名不是以 .ql 为后缀，那么 qlang 会认为这是一个目录名，并为其补上 "/main.ql" 后缀。也就是说：
+
+```go
+include "foo/bar.v1"
+```
+
+等价于：
+
+```go
+include "foo/bar.v1/main.ql"
+```
+
+## 模块及import
+
+在 qlang 中，模块(module)是一个目录，该目录下要求有一个名为 main.ql 的文件。模块中的标识(ident)默认都是私有的。想要导出一个标识(ident)，需要用 export 语法。例如：
+
+```go
+a = 1
+b = 2
+
+println("in script A")
+
+f = fn() {
+	println("in func foo:", a, b)
+}
+
+export a, f
+```
+
+这个模块导出了两个标识(ident)：整型变量 a 和 函数 f。
+
+要引用这个模块，我们需要用 import 文法：
+
+```go
+import "foo/bar.v1"
+import "foo/bar.v1" as bar2
+
+set(bar, "a", 100) // 将 bar.a 值设置为 100
+println(bar.a, bar2.a) // bar.a, bar2.a 的值现在都是 100
+
+bar.f()
+```
+
+qlang 会在环境变量 `QLANG_PATH` 指示的目录列表中查找 `foo/bar.v1/main.ql` 文件。如个没有设置环境变量 `QLANG_PATH`，则会在 `~/qlang` 目录中查找。
+
+将一个模块 import 多次并不会出现什么问题，事实上第二次导入不会发生什么，只是增加了一个别名。
+
+
+### include vs. import
+
+include 是拷贝粘贴，比较适合用于模块内的内容组织。比如一个模块比较复杂，全部写在 main.ql 文件中过于冗长，则可以用 include 语句分解到多个文件中。include 不会通过 `QLANG_PATH` 来找文件，它永远基于 `__dir__`(即 include 代码所在脚本的目录) 来定位文件。
+
+import 是模块引用，适合用于作为业务分解的主要方式。import 基于 `QLANG_PATH` 这个环境变量搜寻被引用的模块，而不是基于 `__dir__`。
+
+
+## 与Go语言的互操作性
+
+qlang 是一个嵌入式语言，它的定位是作为 Go 语言应用的运行时嵌入脚本。
+
+作为 Go 语言的伴生语言，它与 Go 语言有极佳的互操作性。任何 Go 语言的函数，可以几乎不做任何包装就可以直接在 qlang 中使用。
 
 这太爽了！
 
 
 ### 定制qlang
 
-尽管 qlang 本身没有 import，但是 qlang 的 Go 语言包支持 import。通过 import 你可以自由定制你想要的 qlang 的样子。在没有引入任何模块的情况下，qlang 连最基本的 '+'、'-'、'*'、'/' 都做不了，因为提供这个能力的是 builtin 包。
+除了 qlang 语言的 import 支持外，qlang 的 Go 语言开发包也支持 Go package 编写 qlang 模块。
+
+qlang 采用微内核设计，大部分你看到的功能，都通过 Go package 形式编写的 qlang 模块提供。你可以按需定制 qlang。
+
+你可以自由定制你想要的 qlang 的样子。在没有引入任何模块的情况下，qlang 连最基本的 '+'、'-'、'*'、'/' 都做不了，因为提供这个能力的是 builtin 包。
 
 所以一个最基础版本的 qlang 应该是这样的：
 
@@ -603,7 +680,7 @@ var Exports = map[string]interface{}{
 }
 ```
 
-值得注意的一个细节是，我们并没有对 Go 语言的 strings package 进行包装。比如上面的我们导出了 strings.NewReplacer，但是我们不必去包装 strings.Replacer 类。这个类的所有功能可以直接使用。如：
+值得注意的一个细节是，我们几乎不需要对 Go 语言的 strings package 中的函数进行任何包装，你只需要把这个函数加入到导出表（Exports）即可。你也无需包装 Go 语言中的类，比如上面的我们导出了 strings.NewReplacer，但是我们不必去包装 strings.Replacer 类。这个类的所有功能可以直接使用。如：
 
 ```go
 strings.replacer("?", "!").replace("hello, world???") // 得到 "hello, world!!!"
