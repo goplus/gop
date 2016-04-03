@@ -123,7 +123,7 @@ func (p *Compiler) Include(lit string) {
 		start := code.Len()
 		fname := qlangFile(ResolvePath(file, p.Dir()))
 		end := p.Compile(fname)
-		instr.Set(exec.Block(start, end))
+		instr.Set(exec.Macro(start, end))
 	})
 }
 

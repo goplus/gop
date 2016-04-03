@@ -9,6 +9,110 @@ import (
 
 // -----------------------------------------------------------------------------
 
+const testAnonymFnCode = `
+
+x = 1
+
+main {
+	x; x = 2
+	println("x:", x)
+}
+
+x = 3
+println("x:", x)
+`
+
+func TestAnonymFn(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+
+	err = lang.SafeExec([]byte(testAnonymFnCode), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("x"); !ok || v != 3 {
+		t.Fatal("x != 3, x =", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+const testAnonymFnCode2 = `
+
+x = 1
+fn { x; x = 2 }
+x = 3
+`
+
+func TestAnonymFn2(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+
+	err = lang.SafeExec([]byte(testAnonymFnCode2), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("x"); !ok || v != 3 {
+		t.Fatal("x != 3, x =", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+const testDeferCode = `
+
+defer fn { x; x = 2 }
+x = 1
+`
+
+func TestDefer(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+
+	err = lang.SafeExec([]byte(testDeferCode), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("x"); !ok || v != 2 {
+		t.Fatal("x != 2, x =", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+const testDeferCode2 = `
+
+defer fn() { x; x = 2 }()
+x = 1
+`
+
+func TestDefer2(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+
+	err = lang.SafeExec([]byte(testDeferCode2), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("x"); !ok || v != 2 {
+		t.Fatal("x != 2, x =", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
 const testClosureCode1 = `
 
 test = fn() {
@@ -42,7 +146,6 @@ func TestClosure1(t *testing.T) {
 	if v, ok := lang.Var("x"); !ok || v != 1 {
 		t.Fatal("x != 1, x =", v)
 	}
-	return
 }
 
 // -----------------------------------------------------------------------------
@@ -83,7 +186,6 @@ func TestClosure2(t *testing.T) {
 	if v, ok := lang.Var("x"); !ok || v != 1 {
 		t.Fatal("x != 1, x =", v)
 	}
-	return
 }
 
 // -----------------------------------------------------------------------------
