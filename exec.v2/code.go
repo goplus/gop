@@ -206,6 +206,12 @@ func (p *Context) Unset(name string) {
 	delete(p.vars, name)
 }
 
+func (p *Context) ExecBlock(ip, ipEnd int) {
+
+	mod := NewFunction(nil, ip, ipEnd, nil, false)
+	mod.ExtCall(p)
+}
+
 // -----------------------------------------------------------------------------
 
 type Error struct {
