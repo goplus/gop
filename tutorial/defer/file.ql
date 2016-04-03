@@ -14,6 +14,4 @@ if err != nil {
 	return 2
 }
 
-ret = sub(b, 0, n)
-println(string(ret))
-
+println(string(b[:n]))
