@@ -118,11 +118,10 @@ func NewFunction(cls *Class, start, end int, args []string, variadic bool) *Func
 
 func (p *Function) Call(args ...interface{}) (ret interface{}) {
 
-	ret, _ = p.ExtCall(args...)
-	return
+	return p.ExtCall(nil, args...)
 }
 
-func (p *Function) ExtCall(args ...interface{}) (ret interface{}, ctx *Context) {
+func (p *Function) ExtCall(ctx *Context, args ...interface{}) (ret interface{}) {
 
 	n := len(p.Args)
 	if p.Variadic {
@@ -136,21 +135,30 @@ func (p *Function) ExtCall(args ...interface{}) (ret interface{}, ctx *Context) 
 	}
 
 	if p.start == p.end {
-		return nil, nil
+		return nil
 	}
 
-	parent := p.parent
-	stk := parent.Stack
-	vars := make(map[string]interface{})
+	var base int
+	var vars map[string]interface{}
+	var stk *Stack
 
-	base := stk.BaseFrame()
-	ctx = &Context{
-		parent: parent,
-		Stack:  stk,
-		Code:   parent.Code,
-		mods:   parent.mods,
-		vars:   vars,
-		base:   base,
+	if ctx == nil {
+		parent := p.parent
+		vars = make(map[string]interface{})
+		stk = parent.Stack
+		base = stk.BaseFrame()
+		ctx = &Context{
+			parent: parent,
+			Stack:  stk,
+			Code:   parent.Code,
+			mods:   parent.mods,
+			vars:   vars,
+			base:   base,
+		}
+	} else {
+		vars = ctx.vars
+		stk = ctx.Stack
+		base = stk.BaseFrame()
 	}
 
 	if p.Variadic {

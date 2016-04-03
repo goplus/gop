@@ -1,5 +1,5 @@
 
-f, err = os.open(__file__)
+f, err = os.open("file.ql")
 if err != nil {
 	fprintln(os.stderr, err)
 	return 1

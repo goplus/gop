@@ -450,6 +450,40 @@ defer f.close()
 
 在一个细节上 qlang 的 defer 和 Go 语言处理并不一致，那就是 defer 表达式中的变量值。在 Go 语言中，所有 defer 引用的变量均在 defer 语句时刻固定下来（如上面的 f 变量），后面任何修改均不影响 defer 语句的行为。但 qlang 是会受到影响的。例如，假设你在 defer 之后，调用 f = nil 把 f 变量改为 nil，那么后面执行 f.close() 时就会 panic。
 
+### 匿名函数
+
+所谓匿名函数，是指：
+
+```
+fn {
+	... // 一段复杂代码
+}
+```
+
+它等价于：
+
+```go
+fn() {
+	... // 一段复杂代码
+}()
+```
+
+以前在 defer 要执行一段很复杂的代码段时，我们往往这样写：
+
+```go
+defer fn() {
+	... // 一段复杂代码
+}()
+```
+
+有了匿名函数，我们可以简写为：
+
+```go
+defer fn {
+	... // 一段复杂代码
+}
+```
+
 
 ## 类
 
@@ -875,7 +909,7 @@ Calculator = class {
 
 	fn call(name) {
 		f = fntable[name]
-		if f == nil {
+		if f == undefined {
 			panic("function not found: " + name)
 		}
 		arity, _ = this.stk.pop()
@@ -904,22 +938,25 @@ fntable = {
 	"$ARITY": Stack.push,
 }
 
-calc = new Calculator
-engine, err = interpreter(calc, nil)
-if err != nil {
-	fprintln(os.stderr, err)
-	return 1
-}
+main { // 使用main关键字将主程序括起来，是为了避免其中用的局部变量比如 err 对其他函数造成影响
 
-scanner = bufio.scanner(os.stdin)
-for scanner.scan() {
-	line = strings.trim(scanner.text(), " \t\r\n")
-	if line != "" {
-		err = engine.eval(line)
-		if err != nil {
-			fprintln(os.stderr, err)
-		} else {
-			printf("> %v\n\n", calc.ret())
+	calc = new Calculator
+	engine, err = interpreter(calc, nil)
+	if err != nil {
+		fprintln(os.stderr, err)
+		return 1
+	}
+
+	scanner = bufio.scanner(os.stdin)
+	for scanner.scan() {
+		line = strings.trim(scanner.text(), " \t\r\n")
+		if line != "" {
+			err = engine.eval(line)
+			if err != nil {
+				fprintln(os.stderr, err)
+			} else {
+				printf("> %v\n\n", calc.ret())
+			}
 		}
 	}
 }

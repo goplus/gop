@@ -33,7 +33,6 @@ func SetFindEntry(fn func(file string, libs []string) (string, error)) {
 type Qlang struct {
 	*exec.Context
 	cl      *qlangv2.Compiler
-	stk     *exec.Stack
 	options *Options
 }
 
@@ -44,7 +43,7 @@ func New(options *Options) (lang *Qlang, err error) {
 	ctx := exec.NewContext()
 	ctx.Stack = stk
 	ctx.Code = cl.Code()
-	return &Qlang{ctx, cl, stk, options}, nil
+	return &Qlang{ctx, cl, options}, nil
 }
 
 func (p *Qlang) SetLibs(libs string) {
@@ -54,8 +53,9 @@ func (p *Qlang) SetLibs(libs string) {
 
 func (p *Qlang) Ret() (v interface{}, ok bool) {
 
-	v, ok = p.stk.Pop()
-	p.stk.SetFrame(0)
+	stk := p.Stack
+	v, ok = stk.Pop()
+	stk.SetFrame(0)
 	return
 }
 
@@ -97,7 +97,7 @@ func (p *Qlang) Exec(codeText []byte, fname string) (err error) {
 		code.Dump()
 	}
 
-	code.Exec(start, end, p.stk, p.Context)
+	p.ExecBlock(start, end)
 	return
 }
 

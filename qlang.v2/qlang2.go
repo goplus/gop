@@ -49,6 +49,8 @@ swbody = *("case"! expr/_code ':' ?doc/_code)/_ARITY ?("default"! ':' ?doc/_code
 
 fnbody = '(' IDENT/name %= ','/ARITY ?"..."/ARITY ')' '{'/_mute ?doc/_code '}'/_unmute
 
+afn = '{'/_mute ?doc/_code '}'/_unmute/afn
+
 clsname = '(' IDENT/ref ')' | IDENT/ref
 
 newargs = ?('(' expr %= ','/ARITY ')')/ARITY
@@ -65,14 +67,15 @@ factor =
 	FLOAT/pushf |
 	STRING/pushs |
 	CHAR/pushc |
-	(IDENT/ref | '('! expr ')' | "fn"! fnbody/fn | '[' expr %= ','/ARITY ?',' ']'/slice) *atom |
+	(IDENT/ref | '('! expr ')' |
+	"fn"! (~'{' fnbody/fn | afn) | '[' expr %= ','/ARITY ?',' ']'/slice) *atom |
 	"if"/_mute! expr/_code ifbody *("elif" expr/_code ifbody)/_ARITY ?("else" ifbody)/_ARITY/_unmute/if |
 	"switch"/_mute! ?(~'{' expr)/_code '{' swbody '}'/_unmute/switch |
 	"for"/_mute! (~'{' s)/_code %= ';'/_ARITY '{' ?doc/_code '}'/_unmute/for |
 	"new"! clsname newargs /new |
 	"class"! '{' *classb/ARITY '}'/class |
-	"recover" '(' ')'/recover |
-	"main" '{'/_mute ?doc/_code '}'/_unmute/main |
+	"recover"! '(' ')'/recover |
+	"main"! afn |
 	'{'! (expr ':' expr) %= ','/ARITY ?',' '}'/map |
 	'!' factor/not |
 	'-' factor/neg |
@@ -220,7 +223,7 @@ var exports = map[string]interface{}{
 	"$recover": (*Compiler).Recover,
 	"$return":  (*Compiler).Return,
 	"$fn":      (*Compiler).Function,
-	"$main":    (*Compiler).Main,
+	"$afn":     (*Compiler).AnonymFn,
 	"$include": (*Compiler).Include,
 	"$import":  (*Compiler).Import,
 	"$export":  (*Compiler).Export,
