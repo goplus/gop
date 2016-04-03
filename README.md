@@ -454,7 +454,7 @@ defer f.close()
 
 所谓匿名函数，是指：
 
-```
+```go
 fn {
 	... // 一段复杂代码
 }
@@ -527,6 +527,35 @@ Foo = class {
 foo = new Foo(3, "hello")
 println(foo.a) // 输出 3
 ```
+
+## goroutine
+
+和 Go 语言一样，qlang 中通过 go 关键字启动一个新的 goroutine。如：
+
+```go
+go println("this is a goroutine")
+```
+
+一个比较复杂的例子：
+
+```go
+wg = sync.waitGroup()
+wg.add(2)
+
+go fn {
+	defer wg.done()
+	println("in goroutine1")
+}
+
+go fn {
+	defer wg.done()
+	println("in goroutine2")
+}
+
+wg.wait()
+```
+
+这是一个经典的 goroutine 使用场景，把一个 task 分为 2 个子 task，交给 2 个 goroutine 执行。
 
 
 ## include
