@@ -100,24 +100,6 @@ var (
 )
 
 // -----------------------------------------------------------------------------
-
-type iBlock struct {
-	start int
-	end   int
-}
-
-func (p *iBlock) Exec(stk *Stack, ctx *Context) {
-
-	ip := ctx.ip
-	ctx.Code.Exec(p.start, p.end, stk, ctx)
-	ctx.ip = ip
-}
-
-func Block(start, end int) Instr {
-	return &iBlock{start, end}
-}
-
-// -----------------------------------------------------------------------------
 // NewFunction
 
 type Function struct {
@@ -136,6 +118,12 @@ func NewFunction(cls *Class, start, end int, args []string, variadic bool) *Func
 
 func (p *Function) Call(args ...interface{}) (ret interface{}) {
 
+	ret, _ = p.ExtCall(args...)
+	return
+}
+
+func (p *Function) ExtCall(args ...interface{}) (ret interface{}, ctx *Context) {
+
 	n := len(p.Args)
 	if p.Variadic {
 		if len(args) < n-1 {
@@ -148,7 +136,7 @@ func (p *Function) Call(args ...interface{}) (ret interface{}) {
 	}
 
 	if p.start == p.end {
-		return nil
+		return nil, nil
 	}
 
 	parent := p.parent
@@ -156,10 +144,11 @@ func (p *Function) Call(args ...interface{}) (ret interface{}) {
 	vars := make(map[string]interface{})
 
 	base := stk.BaseFrame()
-	ctx := &Context{
+	ctx = &Context{
 		parent: parent,
 		Stack:  stk,
 		Code:   parent.Code,
+		mods:   parent.mods,
 		vars:   vars,
 		base:   base,
 	}
