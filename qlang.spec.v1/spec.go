@@ -33,9 +33,19 @@ func dummySet(m interface{}, args ...interface{}) {
 	panic("function not implemented")
 }
 
+func dummyChanIn(ch, val interface{}, try bool) interface{} {
+	panic("operator ch<-value not implemented")
+}
+
+func dummyChanOut(ch interface{}, try bool) interface{} {
+	panic("operator <-ch not implemented")
+}
+
 var (
 	fnDummy1  = reflect.ValueOf(dummy1).Pointer()
 	fnDummy2  = reflect.ValueOf(dummy2).Pointer()
+	ChanIn    = dummyChanIn
+	ChanOut   = dummyChanOut
 	Set       = dummySet
 	MapFrom   = dummyN
 	SliceFrom = dummyN

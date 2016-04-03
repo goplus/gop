@@ -9,8 +9,10 @@ import (
 	"qlang.io/qlang/os"
 	"qlang.io/qlang/path"
 	"qlang.io/qlang/reflect"
+	"qlang.io/qlang/runtime"
 	"qlang.io/qlang/strconv"
 	"qlang.io/qlang/strings"
+	"qlang.io/qlang/sync"
 	"qlang.io/qlang/tpl.v1/extractor"
 	"qlang.io/qlang/version"
 	"qlang.io/qlang.spec.v1"
@@ -37,8 +39,10 @@ func InitSafe(safeMode bool) {
 	qlang.Import("os", os.Exports)
 	qlang.Import("path", path.Exports)
 	qlang.Import("reflect", reflect.Exports)
+	qlang.Import("runtime", runtime.Exports)
 	qlang.Import("strconv", strconv.Exports)
 	qlang.Import("strings", strings.Exports)
+	qlang.Import("sync", sync.Exports)
 	qlang.Import("extractor", extractor.Exports)
 }
 

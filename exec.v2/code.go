@@ -166,6 +166,7 @@ type Context struct {
 	export []string
 	ip     int
 	base   int
+	onsel  bool // on select
 }
 
 func NewContext() *Context {

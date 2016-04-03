@@ -32,18 +32,18 @@ func SetFindEntry(fn func(file string, libs []string) (string, error)) {
 
 type Qlang struct {
 	*exec.Context
-	cl      *qlangv2.Compiler
-	options *Options
+	cl *qlangv2.Compiler
 }
 
 func New(options *Options) (lang *Qlang, err error) {
 
 	cl := qlangv2.New()
+	cl.Opts = (*interpreter.Options)(options)
 	stk := exec.NewStack()
 	ctx := exec.NewContext()
 	ctx.Stack = stk
 	ctx.Code = cl.Code()
-	return &Qlang{ctx, cl, options}, nil
+	return &Qlang{ctx, cl}, nil
 }
 
 func (p *Qlang) SetLibs(libs string) {
@@ -101,6 +101,23 @@ func (p *Qlang) Exec(codeText []byte, fname string) (err error) {
 	return
 }
 
+func (p *Qlang) Eval(expr string) (err error) {
+
+	code := p.cl.Code()
+	start := code.Len()
+	end, err := p.Cl([]byte(expr), "")
+	if err != nil {
+		return
+	}
+
+	if DumpCode {
+		code.Dump()
+	}
+
+	code.Exec(start, end, p.Stack, p.Context)
+	return
+}
+
 func (p *Qlang) SafeExec(code []byte, fname string) (err error) {
 
 	defer func() {
@@ -122,7 +139,21 @@ func (p *Qlang) SafeExec(code []byte, fname string) (err error) {
 
 func (p *Qlang) SafeEval(expr string) (err error) {
 
-	return p.SafeExec([]byte(expr), "")
+	defer func() {
+		if e := recover(); e != nil {
+			switch v := e.(type) {
+			case string:
+				err = errors.New(v)
+			case error:
+				err = v
+			default:
+				panic(e)
+			}
+		}
+	}()
+
+	err = p.Eval(expr)
+	return
 }
 
 func Import(mod string, table map[string]interface{}) {
