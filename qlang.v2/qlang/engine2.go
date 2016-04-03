@@ -2,7 +2,6 @@ package qlang
 
 import (
 	"errors"
-	"path/filepath"
 	"reflect"
 
 	"qiniupkg.com/text/tpl.v1/interpreter"
@@ -18,6 +17,16 @@ var (
 	InsertSemis = (*Options)(interpreter.InsertSemis)
 	DumpCode    = false
 )
+
+func SetReadFile(fn func(file string) ([]byte, error)) {
+
+	qlangv2.ReadFile = fn
+}
+
+func SetFindEntry(fn func(file string, libs []string) (string, error)) {
+
+	qlangv2.FindEntry = fn
+}
 
 // -----------------------------------------------------------------------------
 
@@ -38,9 +47,9 @@ func New(options *Options) (lang *Qlang, err error) {
 	return &Qlang{ctx, cl, stk, options}, nil
 }
 
-func (p *Qlang) Include(incl func(file string) int) {
+func (p *Qlang) SetLibs(libs string) {
 
-	p.cl.Incl = incl
+	p.cl.SetLibs(libs)
 }
 
 func (p *Qlang) Ret() (v interface{}, ok bool) {
@@ -50,24 +59,10 @@ func (p *Qlang) Ret() (v interface{}, ok bool) {
 	return
 }
 
-func (p *Qlang) Cl(codeText []byte, fname string, incl ...bool) (end int, err error) {
+func (p *Qlang) Cl(codeText []byte, fname string) (end int, err error) {
 
-	cl := p.cl
-	engine, err := interpreter.New(cl, (*interpreter.Options)(p.options))
-	if err != nil {
-		return
-	}
-	vars := cl.Vars()
-	vars["__dir__"] = filepath.Dir(fname)
-	vars["__file__"] = fname
-	err = engine.MatchExactly(codeText, fname)
-	if err != nil {
-		return
-	}
-	end = cl.Code().Len()
-	if incl == nil {
-		cl.Done()
-	}
+	end = p.cl.Cl(codeText, fname)
+	p.cl.Done()
 	return
 }
 

@@ -1,8 +1,6 @@
 package qlang
 
 import (
-	"strconv"
-
 	"qlang.io/exec.v2"
 	"qiniupkg.com/text/tpl.v1/interpreter.util"
 )
@@ -100,22 +98,6 @@ func (p *Compiler) Main(e interpreter.Engine) {
 		exec.CallFn(0),
 		exec.Exit,
 	)
-}
-
-func (p *Compiler) Include(lit string) {
-
-	file, err := strconv.Unquote(lit)
-	if err != nil {
-		panic("invalid string `" + lit + "`: " + err.Error())
-	}
-
-	code := p.code
-	instr := code.Reserve()
-	p.exits = append(p.exits, func() {
-		start := code.Len()
-		end := p.Incl(file)
-		instr.Set(exec.Block(start, end))
-	})
 }
 
 func (p *Compiler) Return(e interpreter.Engine) {
