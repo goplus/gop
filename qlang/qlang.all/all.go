@@ -18,6 +18,7 @@ import (
 	"qlang.io/qlang.spec.v1"
 
 	_ "qlang.io/qlang/builtin"
+	_ "qlang.io/qlang/chan"
 )
 
 // -----------------------------------------------------------------------------
