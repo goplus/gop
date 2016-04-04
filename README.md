@@ -184,8 +184,8 @@ a = {"a": 1, "b": 2, "c": 3} // 得到 map[string]int 类型的对象
 b = {"a": 1, "b", 2.3, "c": 3} // 得到 map[string]float64 类型的对象
 c = {1: "a", 2: "b", 3: "c"} // 得到 map[int]string 类型的对象
 d = {"a": "hello", "b": 2.0, "c": true} // 得到 map[string]interface{} 类型的对象
-e = map("string:int") // 创建一个空的 map[string]int 类型的对象
-f = map(mapOf("string", type(e))) // 创建一个 map[string]map[string]int 类型的对象
+e = mkmap("string:int") // 创建一个空的 map[string]int 类型的对象
+f = mkmap(mapOf("string", type(e))) // 创建一个 map[string]map[string]int 类型的对象
 ```
 
 和 Go 语言类似，map 有如下内置的操作：
@@ -222,6 +222,32 @@ c = x["c"] // 结果：c = undefined，注意不是0，也不是nil
 d = x["d"] // 结果：d = undefined，注意不是0，也不是nil
 ```
 
+### chan 类型
+
+```go
+ch1 = mkchan("bool", 2) // 得到 buffer = 2 的 chan bool
+ch2 = mkchan("int") // 得到 buffer = 0 的 chan int
+ch3 = mkchan(mapOf("string", ch2)) // 得到 buffer = 0 的 chan map[string]chan int
+```
+
+和 Go 语言类似，chan 有如下内置的操作：
+
+```go
+n = len(ch1) // 取得chan当前的元素个数
+m = cap(ch1) // 取得chan的容量
+ch1 <- true // 向chan发送一个值
+v = <-ch1 // 从chan取出一个值
+```
+
+需要注意的是，在 chan 被关闭后，<-ch 取得 undefined 值。所以在 qlang 中应该这样：
+
+```go
+v := <-ch1
+if v != undefined { // 判断chan没有被关闭的逻辑
+	...
+}
+```
+
 ## 类型转换
 
 ### 自动类型转换
@@ -240,7 +266,7 @@ c = string('a') // 强制将 byte 类型转为 string 类型
 
 ## 流程控制
 
-### if语句
+### if 语句
 
 ```go
 if booleanExpr1 {
@@ -278,7 +304,7 @@ x = if a < b { a; } else { b; }
 
 结果是 `x = nil`。
 
-### switch语句
+### switch 语句
 
 ```go
 switch expr {
@@ -304,7 +330,7 @@ default:
 }
 ```
 
-### for语句
+### for 语句
 
 除了不支持 for range 文法，也不支持中途 continue、break（但是支持 return）。其他和 Go 语言完全类似：
 
