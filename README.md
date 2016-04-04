@@ -74,7 +74,7 @@ qlang的自举（用qlang实现一个qlang）：
 交互模式跑 qlang 版本的 qlang（可以认为是上面计算器的增强版本）：
 
 ```
-qlang.v1 qlang.ql  #目前暂时只能用qlang.v1版本完成自举
+qlang.v1 qlang.ql  #目前暂时只能用qlang.v1版本完成自举(同样因为v2暂未实现interpreter模块)
 ```
 
 当然你还可以用 qlang 版本的 qlang 来跑最大素数问题：
@@ -87,12 +87,12 @@ qlang.v1 qlang.ql maxprime.ql <N>
 
 ## 运算符
 
-基本上除了位运算：'&'、'|'、'>>'、'<<' 和 chan 操作 '<-' 之外，Go 语言的操作符都支持。包括：
+基本上除了位运算：'&'、'|'、'>>'、'<<' 之外，Go 语言的操作符都支持。包括：
 
 * '+'、'-'、'*'、'/'、'%'、'='
 * '+='、'-='、'*='、'/='、'%='、'++'、'--'
 * '!'、'>='、'<='、'>'、'<'、'=='、'!='、'&&'、'||'
-
+* '<-' (chan操作符)
 
 ## 类型
 
@@ -693,26 +693,28 @@ import (
 	_ "qlang.io/qlang/builtin" // 导入 builtin 包
 )
 
+const scriptCode = `
+	x = 1 + 2
+`
+
 func main() {
 
-	lang, err := qlang.New(nil) // 参数 nil 也可以改为 qlang.InsertSemis
+	lang, err := qlang.New(qlang.InsertSemis)
 	if err != nil {
 		// 错误处理
 		return
 	}
 
-	err = lang.SafeEval(`1 + 2`)
+	err = lang.SafeExec([]byte(scriptCode), "")
 	if err != nil {
 		// 错误处理
 		return
 	}
 
-	v, _ := lang.Ret()
-	fmt.Println(v) // 输出 3
+	v, _ := lang.Var("x")
+	fmt.Println("x:", v) // 输出 x: 3
 }
 ```
-
-在大部分正式的场合，qlang.New 传入 qlang.InsertSemis 会更多一些。它表示在各行的末尾智能的插入 ';'。但是在本例中我们希望执行的是一个表达式，而不是语句，所以传入 nil 参数更为合适。如果我们改为传入 qlang.InsertSemis，那么得到的结果就不再是 3，而是 nil。因为表达式 `1+2` 的结果是 3，但是表达式 `1+2;` 的结果是 nil。
 
 有了这个基础版本以后，我们可以自由添加各种模块，如：
 
@@ -741,6 +743,10 @@ func main() {
 ```go
 qlang.Import("", math.Exports) // 如此，你就可以直接用 sin 而不是 math.sin 了
 ```
+
+实际项目可参考代码：
+
+* [qlang/main.go](https://github.com/qiniu/qlang/blob/develop/app/qlang/main.go)
 
 ### 制作qlang模块
 
