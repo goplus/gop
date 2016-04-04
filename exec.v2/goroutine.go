@@ -14,9 +14,9 @@ type iGo struct {
 func (p *iGo) Exec(stk *Stack, ctx *Context) {
 
 	go func() {
-		fn := NewFunction(nil, p.start, p.end, nil, false)
-		fn.parent = ctx
-		fn.ExtCall(nil)
+		cloneCtx := *ctx // 每个goroutine需要自己的上下文，有自己的堆栈
+		cloneCtx.Stack = NewStack()
+		cloneCtx.Code.Exec(p.start, p.end, cloneCtx.Stack, &cloneCtx)
 	}()
 	stk.Push(nil)
 }
