@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	"qlang.io/qlang.spec.v1"
+	"qlang.io/qlang/builtin/types"
 )
 
 // -----------------------------------------------------------------------------
@@ -20,35 +21,17 @@ func Panicf(format string, args ...interface{}) {
 // -----------------------------------------------------------------------------
 
 var (
-	zeroVal  reflect.Value
-	ptrIntf  *interface{}
-	typeIntf = reflect.TypeOf(ptrIntf).Elem()
+	zeroVal reflect.Value
 )
 
-func Map(typ interface{}) interface{} {
+func Mkmap(typ interface{}, n ...int) interface{} {
 
-	if t, ok := typ.(string); ok {
-		switch t {
-		case "string:int":
-			return make(map[string]int)
-		case "string:float":
-			return make(map[string]float64)
-		case "string:string":
-			return make(map[string]string)
-		case "string:var":
-			return make(map[string]interface{})
-		}
-		panic("unsupported map type: " + t)
-	}
-	if t, ok := typ.(reflect.Type); ok {
-		return reflect.MakeMap(t).Interface()
-	}
-	panic("invalid param of map function: must be `string` or `type`")
+	return reflect.MakeMap(types.Reflect(typ)).Interface()
 }
 
 func MapOf(key, val interface{}) interface{} {
 
-	return reflect.MapOf(typeOf(key), typeOf(val))
+	return reflect.MapOf(types.Reflect(key), types.Reflect(val))
 }
 
 func MapFrom(args ...interface{}) interface{} {
@@ -178,12 +161,26 @@ func Get(m interface{}, key interface{}) interface{} {
 	}
 }
 
-func Len(a interface{}) interface{} {
+func Len(a interface{}) int {
 
 	if a == nil {
 		return 0
 	}
+	if ch, ok := a.(*types.Chan); ok {
+		return ch.Data.Len()
+	}
 	return reflect.ValueOf(a).Len()
+}
+
+func Cap(a interface{}) int {
+
+	if a == nil {
+		return 0
+	}
+	if ch, ok := a.(*types.Chan); ok {
+		return ch.Data.Cap()
+	}
+	return reflect.ValueOf(a).Cap()
 }
 
 func SubSlice(a, i, j interface{}) interface{} {
@@ -260,7 +257,7 @@ func Slice(typ interface{}, args ...interface{}) interface{} {
 			panic("3rd param type of func `slice` must be `int`")
 		}
 	}
-	typSlice := reflect.SliceOf(typeOf(typ))
+	typSlice := reflect.SliceOf(types.Reflect(typ))
 	return reflect.MakeSlice(typSlice, n, cap).Interface()
 }
 
@@ -285,30 +282,7 @@ func SliceFrom(args ...interface{}) interface{} {
 
 func SliceOf(typ interface{}) interface{} {
 
-	return reflect.SliceOf(typeOf(typ))
-}
-
-func typeOf(typ interface{}) reflect.Type {
-
-	if t, ok := typ.(string); ok {
-		return builtinTypes[t]
-	}
-	if t, ok := typ.(reflect.Type); ok {
-		return t
-	}
-	return nil
-}
-
-var builtinTypes = map[string]reflect.Type{
-	"int":           reflect.TypeOf(0),
-	"float":         reflect.TypeOf(float64(0)),
-	"string":        reflect.TypeOf(""),
-	"byte":          reflect.TypeOf(byte(0)),
-	"var":           typeIntf,
-	"string:int":    reflect.TypeOf(map[string]int(nil)),
-	"string:float":  reflect.TypeOf(map[string]float64(nil)),
-	"string:string": reflect.TypeOf(map[string]string(nil)),
-	"string:var":    reflect.TypeOf(map[string]interface{}(nil)),
+	return reflect.SliceOf(types.Reflect(typ))
 }
 
 // -----------------------------------------------------------------------------
