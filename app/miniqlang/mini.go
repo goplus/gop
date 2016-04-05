@@ -4,28 +4,32 @@ import (
 	"fmt"
 	"os"
 
-	"qlang.io/qlang.v1/qlang"
+	"qlang.io/qlang.v2/qlang"
 	_ "qlang.io/qlang/builtin" // 导入 builtin 包
 )
 
 // -----------------------------------------------------------------------------
 
+const scriptCode = `
+	x = 1 + 2
+`
+
 func main() {
 
-	lang, err := qlang.New(nil) // 参数 nil 也可以改为 qlang.InsertSemis
+	lang, err := qlang.New(qlang.InsertSemis)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
-	err = lang.SafeEval(`"str" + 2`)
+	err = lang.SafeExec([]byte(scriptCode), "")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
 
-	v, _ := lang.Ret()
-	fmt.Println(v)
+	v, _ := lang.Var("x")
+	fmt.Println("x:", v)
 }
 
 // -----------------------------------------------------------------------------
