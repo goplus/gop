@@ -151,7 +151,7 @@ func (p *Function) ExtCall(ctx *Context, args ...interface{}) (ret interface{}) 
 			parent: parent,
 			Stack:  stk,
 			Code:   parent.Code,
-			mods:   parent.mods,
+			modmgr: parent.modmgr,
 			vars:   vars,
 			base:   base,
 		}

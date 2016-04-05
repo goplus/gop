@@ -55,6 +55,9 @@ func TestInclude(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if v, ok := lang.Var("b"); !ok || v != 2 {
+		t.Fatal("b != 2, b =", v)
+	}
 }
 
 func TestImport(t *testing.T) {
@@ -72,6 +75,9 @@ func TestImport(t *testing.T) {
 	err := lang.SafeExec([]byte(scriptC), "c.ql")
 	if err != nil {
 		t.Fatal(err)
+	}
+	if v, ok := lang.Var("a"); !ok || v.(map[string]interface{})["b"] != 4 {
+		t.Fatal("a.b != 4, a.b =", v)
 	}
 }
 
