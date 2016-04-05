@@ -74,7 +74,7 @@ qlang的自举（用qlang实现一个qlang）：
 交互模式跑 qlang 版本的 qlang（可以认为是上面计算器的增强版本）：
 
 ```
-qlang.v1 qlang.ql  #目前暂时只能用qlang.v1版本完成自举
+qlang.v1 qlang.ql  #目前暂时只能用qlang.v1版本完成自举(同样因为v2暂未实现interpreter模块)
 ```
 
 当然你还可以用 qlang 版本的 qlang 来跑最大素数问题：
@@ -83,16 +83,56 @@ qlang.v1 qlang.ql  #目前暂时只能用qlang.v1版本完成自举
 qlang.v1 qlang.ql maxprime.ql <N>
 ```
 
+# 快速入门
+
+一个基础版本的 qlang 应该是这样的：
+
+```go
+import (
+	"fmt"
+
+	"qlang.io/qlang.v2/qlang"
+	_ "qlang.io/qlang/builtin" // 导入 builtin 包
+)
+
+const scriptCode = `
+	x = 1 + 2
+`
+
+func main() {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		// 错误处理
+		return
+	}
+
+	err = lang.SafeExec([]byte(scriptCode), "")
+	if err != nil {
+		// 错误处理
+		return
+	}
+
+	v, _ := lang.Var("x")
+	fmt.Println("x:", v) // 输出 x: 3
+}
+```
+
+这是一个最精简功能的 mini qlang。想要了解更多，可参考后文“定制 qlang”一节。实际项目中你也可以参考代码：
+
+* [qlang/main.go](https://github.com/qiniu/qlang/blob/develop/app/qlang/main.go)
+
+
 # 使用说明
 
 ## 运算符
 
-基本上除了位运算：'&'、'|'、'>>'、'<<' 和 chan 操作 '<-' 之外，Go 语言的操作符都支持。包括：
+基本上除了位运算：'&'、'|'、'>>'、'<<' 之外，Go 语言的操作符都支持。包括：
 
 * '+'、'-'、'*'、'/'、'%'、'='
 * '+='、'-='、'*='、'/='、'%='、'++'、'--'
 * '!'、'>='、'<='、'>'、'<'、'=='、'!='、'&&'、'||'
-
+* '<-' (chan操作符)
 
 ## 类型
 
@@ -153,6 +193,7 @@ f = slice(type(e), len, cap) // 创建一个 int slice 的 slice，也就是 Go 
 ```go
 a = append(a, 4, 5, 6) // 含义与 Go 语言完全一致
 n = len(a) // 取 a 的元素个数
+m = cap(a) // 取 slice a 的容量
 b1 = b[2] // 取 b 这个 slice 的第二个元素
 set(b, 2, 888) // 设置 b 这个 slice 的第二个元素的值为 888。在 Go 语言里面是 b[2] = 888
 set(b, 1, 777, 2, 888, 3, 999) // Go 里面是：b[1], b[2], b[3] = 777, 888, 999
@@ -176,6 +217,7 @@ f, err = os.open(fname)
 ```
 
 这个例子，在 Go 里面返回的是 (*os.File, error)。但是 qlang 中是 var slice。
+
 
 ### map 类型
 
@@ -242,7 +284,7 @@ v = <-ch1 // 从chan取出一个值
 需要注意的是，在 chan 被关闭后，<-ch 取得 undefined 值。所以在 qlang 中应该这样：
 
 ```go
-v := <-ch1
+v = <-ch1
 if v != undefined { // 判断chan没有被关闭的逻辑
 	...
 }
@@ -355,7 +397,6 @@ for i = 0; i < 10; i++ {
 	...
 }
 ```
-
 
 ## 函数
 
@@ -623,7 +664,7 @@ include "foo/bar.v1"
 include "foo/bar.v1/main.ql"
 ```
 
-## 模块及import
+## 模块及 import
 
 在 qlang 中，模块(module)是一个目录，该目录下要求有一个名为 main.ql 的文件。模块中的标识(ident)默认都是私有的。想要导出一个标识(ident)，需要用 export 语法。例如：
 
@@ -666,7 +707,7 @@ include 是拷贝粘贴，比较适合用于模块内的内容组织。比如一
 import 是模块引用，适合用于作为业务分解的主要方式。import 基于 `QLANG_PATH` 这个环境变量搜寻被引用的模块，而不是基于 `__dir__`。
 
 
-## 与Go语言的互操作性
+## 与 Go 语言的互操作性
 
 qlang 是一个嵌入式语言，它的定位是作为 Go 语言应用的运行时嵌入脚本。
 
@@ -675,7 +716,7 @@ qlang 是一个嵌入式语言，它的定位是作为 Go 语言应用的运行�
 这太爽了！
 
 
-### 定制qlang
+### 定制 qlang
 
 除了 qlang 语言的 import 支持外，qlang 的 Go 语言开发包也支持 Go package 编写 qlang 模块。
 
@@ -683,38 +724,7 @@ qlang 采用微内核设计，大部分你看到的功能，都通过 Go package
 
 你可以自由定制你想要的 qlang 的样子。在没有引入任何模块的情况下，qlang 连最基本的 '+'、'-'、'*'、'/' 都做不了，因为提供这个能力的是 builtin 包。
 
-所以一个最基础版本的 qlang 应该是这样的：
-
-```go
-import (
-	"fmt"
-
-	"qlang.io/qlang.v2/qlang"
-	_ "qlang.io/qlang/builtin" // 导入 builtin 包
-)
-
-func main() {
-
-	lang, err := qlang.New(nil) // 参数 nil 也可以改为 qlang.InsertSemis
-	if err != nil {
-		// 错误处理
-		return
-	}
-
-	err = lang.SafeEval(`1 + 2`)
-	if err != nil {
-		// 错误处理
-		return
-	}
-
-	v, _ := lang.Ret()
-	fmt.Println(v) // 输出 3
-}
-```
-
-在大部分正式的场合，qlang.New 传入 qlang.InsertSemis 会更多一些。它表示在各行的末尾智能的插入 ';'。但是在本例中我们希望执行的是一个表达式，而不是语句，所以传入 nil 参数更为合适。如果我们改为传入 qlang.InsertSemis，那么得到的结果就不再是 3，而是 nil。因为表达式 `1+2` 的结果是 3，但是表达式 `1+2;` 的结果是 nil。
-
-有了这个基础版本以后，我们可以自由添加各种模块，如：
+在前面“快速入门”给出的精简版本基础上，我们可以自由添加各种模块，如：
 
 ```go
 import (
@@ -742,9 +752,9 @@ func main() {
 qlang.Import("", math.Exports) // 如此，你就可以直接用 sin 而不是 math.sin 了
 ```
 
-### 制作qlang模块
+### 制作 qlang 模块
 
-制作qlang的模块成本极其低廉。我们打开 `qlang.io/qlang/strings` 看看它是什么样的：
+制作 qlang 模块的成本极其低廉。我们打开 `qlang.io/qlang/strings` 看看它是什么样的：
 
 ```go
 package strings
