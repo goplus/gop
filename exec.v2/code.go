@@ -157,12 +157,12 @@ type theDefer struct {
 type Context struct {
 	parent *Context
 	defers *theDefer
+	modmgr *moduleMgr
 	Stack  *Stack
 	Code   *Code
 	Recov  interface{}
 	ret    interface{}
 	vars   map[string]interface{}
-	mods   map[string]interface{}
 	export []string
 	ip     int
 	base   int
@@ -172,8 +172,11 @@ type Context struct {
 func NewContext() *Context {
 
 	vars := make(map[string]interface{})
-	mods := make(map[string]interface{})
-	return &Context{vars: vars, mods: mods}
+	mods := make(map[string]*importMod)
+	modmgr := &moduleMgr{
+		mods: mods,
+	}
+	return &Context{vars: vars, modmgr: modmgr}
 }
 
 func (p *Context) Exports() map[string]interface{} {
@@ -211,6 +214,25 @@ func (p *Context) ExecBlock(ip, ipEnd int) {
 
 	mod := NewFunction(nil, ip, ipEnd, nil, false)
 	mod.ExtCall(p)
+}
+
+func (p *Context) ExecDefers() {
+
+	d := p.defers
+	if d == nil {
+		return
+	}
+
+	p.defers = nil
+	code := p.Code
+	stk := p.Stack
+	for {
+		code.Exec(d.start, d.end, stk, p)
+		d = d.next
+		if d == nil {
+			break
+		}
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -373,27 +395,6 @@ func instrName(instr interface{}) string {
 		t = t[6:]
 	}
 	return t
-}
-
-// -----------------------------------------------------------------------------
-
-func (p *Context) ExecDefers() {
-
-	d := p.defers
-	if d == nil {
-		return
-	}
-
-	p.defers = nil
-	code := p.Code
-	stk := p.Stack
-	for {
-		code.Exec(d.start, d.end, stk, p)
-		d = d.next
-		if d == nil {
-			break
-		}
-	}
 }
 
 // -----------------------------------------------------------------------------

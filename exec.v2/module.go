@@ -1,5 +1,9 @@
 package exec
 
+import (
+	"sync"
+)
+
 // -----------------------------------------------------------------------------
 // Macro(宏) - 用以在当前位置插入执行一段代码块
 
@@ -43,6 +47,39 @@ func AnonymFn(start, end int) Instr {
 // -----------------------------------------------------------------------------
 // Module(模块)
 
+type importMod struct {
+	exports map[string]interface{}
+	sync.Mutex
+}
+
+func (p *importMod) Lock() (exports map[string]interface{}, uninited bool) {
+
+	p.Mutex.Lock()
+	if p.exports == nil {
+		return nil, true
+	}
+	exports = p.exports
+	p.Mutex.Unlock()
+	return
+}
+
+type moduleMgr struct {
+	mods   map[string]*importMod
+	mutex  sync.Mutex
+}
+
+func (p *moduleMgr) get(id string) *importMod {
+
+	p.mutex.Lock()
+	mod, ok := p.mods[id]
+	if !ok {
+		mod = new(importMod)
+		p.mods[id] = mod
+	}
+	p.mutex.Unlock()
+	return mod
+}
+
 type iModule struct {
 	start int
 	end   int
@@ -51,18 +88,20 @@ type iModule struct {
 
 func (p *iModule) Exec(stk *Stack, ctx *Context) {
 
-	exports, ok := ctx.mods[p.id]
-	if !ok {
+	mod := ctx.modmgr.get(p.id)
+	exports, uninited := mod.Lock()
+	if uninited {
+		defer mod.Unlock()
 		modCtx := &Context{
-			Code:  ctx.Code,
-			Stack: ctx.Stack,
-			mods:  ctx.mods,
-			vars:  make(map[string]interface{}),
+			Code:   ctx.Code,
+			Stack:  ctx.Stack,
+			modmgr: ctx.modmgr,
+			vars:   make(map[string]interface{}),
 		}
 		modFn := NewFunction(nil, p.start, p.end, nil, false)
 		modFn.ExtCall(modCtx)
 		exports = modCtx.Exports()
-		ctx.mods[p.id] = exports
+		mod.exports = exports
 	}
 	stk.Push(exports)
 }
