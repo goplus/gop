@@ -17,6 +17,16 @@ git clone https://github.com/qiniu/qlang.git qlang.io
 git clone https://github.com/qiniu/text.git qiniupkg.com/text
 ```
 
+### 二进制(qlang.v1)
+
+* linux/amd64: [qnlang-linux-amd64.tar.gz](http://open.qiniudn.com/qnlang-linux-amd64.tar.gz)
+* Mac OS: [qnlang-darwin-amd64.tar.gz](http://open.qiniudn.com/qnlang-darwin-amd64.tar.gz)
+
+### 二进制(qlang.v2)
+
+* 性能比qlang.v1更优。暂未提供二进制下载包，请通过源代码自行编译。
+
+
 # 语言特色
 
 * 最大卖点：与 Go 语言有最好的互操作性。所有 Go 语言的社区资源可以直接为我所用。
@@ -28,6 +38,50 @@ git clone https://github.com/qiniu/text.git qiniupkg.com/text
 * 由于与 Go 语言的无缝配合，qlang 在嵌入式脚本领域有 lua、python、javascript 所不能比拟的优越性。
 * 比如：网络游戏中取代 lua 的位置。
 
+
+## 样例
+
+### 最大素数
+
+输入 n，求 < n 的最大素数：
+
+* [maxprime.ql](https://github.com/qiniu/qlang/blob/develop/app/qlang/maxprime.ql)
+
+用法：
+
+```
+qlang maxprime.ql <N>
+```
+
+### 计算器
+
+实现一个支持四则运算及函数调用的计算器：
+
+* [calc.ql](https://github.com/qiniu/qlang/blob/develop/app/qlang/calc.ql)
+
+用法：
+
+```
+qlang.v1 calc.ql  #目前暂时只有qlang.v1版本实现了interpreter模块
+```
+
+### qlang自举
+
+qlang的自举（用qlang实现一个qlang）：
+
+* [qlang.ql](https://github.com/qiniu/qlang/blob/develop/app/qlang/qlang.ql)
+
+交互模式跑 qlang 版本的 qlang（可以认为是上面计算器的增强版本）：
+
+```
+qlang.v1 qlang.ql  #目前暂时只能用qlang.v1版本完成自举(同样因为v2暂未实现interpreter模块)
+```
+
+当然你还可以用 qlang 版本的 qlang 来跑最大素数问题：
+
+```
+qlang.v1 qlang.ql maxprime.ql <N>
+```
 
 # 快速入门
 
