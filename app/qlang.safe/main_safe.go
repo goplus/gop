@@ -7,9 +7,8 @@ import (
 	"strings"
 	"os"
 
-	"qlang.io/qlang.v1/qlang"
+	"qlang.io/qlang.v2/qlang"
 	qall "qlang.io/qlang/qlang.all"
-	qipt "qlang.io/qlang.v1/interpreter"
 )
 
 // -----------------------------------------------------------------------------
@@ -17,7 +16,6 @@ import (
 func main() {
 
 	qall.InitSafe(true)
-	qlang.Import("", qipt.Exports)
 
 	if len(os.Args) > 1 {
 		lang, err := qlang.New(qlang.InsertSemis)
