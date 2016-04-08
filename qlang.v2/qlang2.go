@@ -44,15 +44,15 @@ s = (
 	"go"/_mute! expr/_code/_unmute/go |
 	expr)/xline
 
-doc = s *(';'/clear s | ';'/pushn)
+doc = ?(s/xcnt *(';' ?(s/xcnt)))
 
-ifbody = '{' ?doc/_code '}'
+ifbody = '{' doc/_code '}'
 
-swbody = *("case"! expr/_code ':' ?doc/_code)/_ARITY ?("default"! ':' ?doc/_code)/_ARITY
+swbody = *("case"! expr/_code ':' doc/_code)/_ARITY ?("default"! ':' doc/_code)/_ARITY
 
-fnbody = '(' IDENT/name %= ','/ARITY ?"..."/ARITY ')' '{'/_mute ?doc/_code '}'/_unmute
+fnbody = '(' IDENT/name %= ','/ARITY ?"..."/ARITY ')' '{'/_mute doc/_code '}'/_unmute
 
-afn = '{'/_mute ?doc/_code '}'/_unmute/afn
+afn = '{'/_mute doc/_code '}'/_unmute/afn
 
 clsname = '(' IDENT/ref ')' | IDENT/ref
 
@@ -74,7 +74,7 @@ factor =
 	"fn"! (~'{' fnbody/fn | afn) | '[' expr %= ','/ARITY ?',' ']'/slice) *atom |
 	"if"/_mute! expr/_code ifbody *("elif" expr/_code ifbody)/_ARITY ?("else" ifbody)/_ARITY/_unmute/if |
 	"switch"/_mute! ?(~'{' expr)/_code '{' swbody '}'/_unmute/switch |
-	"for"/_mute! (~'{' s)/_code %= ';'/_ARITY '{' ?doc/_code '}'/_unmute/for |
+	"for"/_mute! (~'{' s)/_code %= ';'/_ARITY '{' doc/_code '}'/_unmute/for |
 	"new"! clsname newargs /new |
 	"class"! '{' *classb/ARITY '}'/class |
 	"recover"! '(' ')'/recover |
@@ -100,6 +100,7 @@ type Compiler struct {
 	mods  map[string]module
 	gvars map[string]interface{}
 	gstk  exec.Stack
+	nexpr int
 }
 
 func New() *Compiler {
@@ -186,6 +187,11 @@ func (p *Compiler) Index() {
 	}
 }
 
+func (p *Compiler) CountExpr() {
+
+	p.nexpr++
+}
+
 func (p *Compiler) CodeLine(f *interpreter.FileLine) {
 
 	p.code.CodeLine(f.File, f.Line)
@@ -203,7 +209,6 @@ var exports = map[string]interface{}{
 	"$_ARITY":  (*Compiler).Arity,
 	"$_code":   (*Compiler).PushCode,
 	"$name":    (*Compiler).PushName,
-	"$pushn":   (*Compiler).PushNil,
 	"$pushi":   (*Compiler).PushInt,
 	"$pushf":   (*Compiler).PushFloat,
 	"$pushs":   (*Compiler).PushString,
@@ -243,6 +248,7 @@ var exports = map[string]interface{}{
 	"$for":     (*Compiler).For,
 	"$and":     (*Compiler).And,
 	"$or":      (*Compiler).Or,
+	"$xcnt":    (*Compiler).CountExpr,
 	"$xline":   (*Compiler).CodeLine,
 }
 

@@ -56,20 +56,12 @@ func (p *Compiler) doIf(e interpreter.Engine, ifbr []interface{}, elseCode inter
 		p.code.CodeLine(t.File, t.Line)
 		reserved1 := p.code.Reserve()
 		bodyCode := ifbr[(i<<1)+1]
-		if bodyCode == nil {
-			p.code.Block(exec.Nil)
-		} else {
-			evalDocCode(e, p, bodyCode)
-		}
+		evalDocCode(e, p, bodyCode, false)
 		reserved2[i] = p.code.Reserve()
 		reserved1.Set(exec.JmpIfFalse(reserved2[i].Delta(reserved1)))
 	}
 
-	if elseCode == nil {
-		p.code.Block(exec.Nil)
-	} else {
-		evalDocCode(e, p, elseCode)
-	}
+	evalDocCode(e, p, elseCode, false)
 
 	end := p.code.Len()
 	for i := 0; i < condArity; i++ {
@@ -110,21 +102,13 @@ func (p *Compiler) Switch(e interpreter.Engine) {
 		p.code.CodeLine(t.File, t.Line)
 		reserved1 := p.code.Reserve()
 		bodyCode := casebr[(i<<1)+1]
-		if bodyCode == nil {
-			p.code.Block(exec.Nil)
-		} else {
-			evalDocCode(e, p, bodyCode)
-		}
+		evalDocCode(e, p, bodyCode, false)
 		reserved2[i] = p.code.Reserve()
 		reserved1.Set(exec.Case(reserved2[i].Delta(reserved1)))
 	}
 
 	p.code.Block(exec.Default)
-	if defaultCode == nil {
-		p.code.Block(exec.Nil)
-	} else {
-		evalDocCode(e, p, defaultCode)
-	}
+	evalDocCode(e, p, defaultCode, false)
 
 	end := p.code.Len()
 	for i := 0; i < caseArity; i++ {
@@ -177,10 +161,7 @@ func (p *Compiler) doFor(e interpreter.Engine) {
 		}()
 	}
 
-	if bodyCode != nil {
-		evalDocCode(e, p, bodyCode)
-		p.code.Block(exec.Pop)
-	}
+	evalDocCode(e, p, bodyCode, true)
 
 	if stepCode != nil {
 		if err := e.EvalCode(p, "s", stepCode); err != nil {
@@ -192,11 +173,30 @@ func (p *Compiler) doFor(e interpreter.Engine) {
 	p.code.Block(exec.Jmp(loop - (p.code.Len() + 1)))
 }
 
-func evalDocCode(e interpreter.Engine, p *Compiler, code interface{}) {
+func evalDocCode(e interpreter.Engine, p *Compiler, code interface{}, pop bool) {
 
-	p.code.Block(exec.SaveBaseFrame)
+	if code == nil {
+		if !pop {
+			p.code.Block(exec.Nil)
+		}
+		return
+	}
+
+	old := p.nexpr
+	p.nexpr = 0
 	err := e.EvalCode(p, "doc", code)
-	p.code.Block(exec.RestoreBaseFrame)
+	if pop {
+		if p.nexpr > 0 {
+			p.code.Block(exec.PopN(p.nexpr))
+		}
+	} else {
+		if p.nexpr > 1 {
+			p.code.Block(exec.Compose(p.nexpr))
+		} else if p.nexpr == 0 {
+			p.code.Block(exec.Nil)
+		}
+	}
+	p.nexpr = old
 	if err != nil {
 		panic(err)
 	}

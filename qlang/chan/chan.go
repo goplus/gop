@@ -82,11 +82,18 @@ func Mkchan(typ interface{}, buffer ...int) *types.Chan {
 	return &types.Chan{reflect.MakeChan(t, n)}
 }
 
+func Close(ch1 interface{}) {
+
+	ch := ch1.(*types.Chan)
+	ch.Data.Close()
+}
+
 // -----------------------------------------------------------------------------
 
 var exports = map[string]interface{}{
 	"chanOf": ChanOf,
 	"mkchan": Mkchan,
+	"close":  Close,
 }
 
 func init() {

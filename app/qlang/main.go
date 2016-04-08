@@ -21,6 +21,9 @@ func main() {
 	if libs == "" {
 		libs = os.Getenv("HOME") + "/qlang"
 	}
+	if os.Getenv("QLANG_DUMPCODE") == "true" {
+		qlang.DumpCode = true
+	}
 
 	if len(os.Args) > 1 {
 		lang, err := qlang.New(qlang.InsertSemis)
