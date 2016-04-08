@@ -12,6 +12,7 @@ type iPush struct {
 }
 
 type iPop int
+type iPopN int
 
 func (p *iPush) Exec(stk *Stack, ctx *Context) {
 	stk.Push(p.v)
@@ -21,8 +22,16 @@ func (p iPop) Exec(stk *Stack, ctx *Context) {
 	stk.Pop()
 }
 
+func (p iPopN) Exec(stk *Stack, ctx *Context) {
+	stk.data = stk.data[:len(stk.data)-int(p)]
+}
+
 func Push(v interface{}) Instr {
 	return &iPush{v}
+}
+
+func PopN(n int) Instr {
+	return iPopN(n)
 }
 
 var (
@@ -31,32 +40,33 @@ var (
 )
 
 // -----------------------------------------------------------------------------
-// SaveBaseFrame/RestoreBaseFrame/Clear
+// Compose
 
-type iSaveBaseFrame int
-type iRestoreBaseFrame int
-type iClear int
+type iCompose int
 
-func (p iSaveBaseFrame) Exec(stk *Stack, ctx *Context) {
-	stk.Push(ctx.base)
-	ctx.base = len(stk.data)
-}
+func (p iCompose) Exec(stk *Stack, ctx *Context) {
 
-func (p iRestoreBaseFrame) Exec(stk *Stack, ctx *Context) {
 	n := len(stk.data)
-	ctx.base = stk.data[n-2].(int)
-	stk.data[n-2] = stk.data[n-1]
-	stk.data = stk.data[:n-1]
+	n1 := n-int(p)
+	stk.data[n1] = stk.data[n-1]
+	stk.data = stk.data[:n1+1]
 }
+
+func Compose(n int) Instr {
+	return iCompose(n)
+}
+
+// -----------------------------------------------------------------------------
+// Clear
+
+type iClear int
 
 func (p iClear) Exec(stk *Stack, ctx *Context) {
 	stk.data = stk.data[:ctx.base]
 }
 
 var (
-	SaveBaseFrame    Instr = iSaveBaseFrame(0)
-	RestoreBaseFrame Instr = iRestoreBaseFrame(0)
-	Clear            Instr = iClear(0)
+	Clear Instr = iClear(0)
 )
 
 // -----------------------------------------------------------------------------

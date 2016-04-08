@@ -215,7 +215,7 @@ d = x["d"] // 结果：d = undefined，注意不是0，也不是nil
 ```go
 ch1 = mkchan("bool", 2) // 得到 buffer = 2 的 chan bool
 ch2 = mkchan("int") // 得到 buffer = 0 的 chan int
-ch3 = mkchan(mapOf("string", ch2)) // 得到 buffer = 0 的 chan map[string]chan int
+ch3 = mkchan(mapOf("string", type(ch2))) // 得到 buffer = 0 的 chan map[string]chan int
 ```
 
 和 Go 语言类似，chan 有如下内置的操作：
@@ -225,6 +225,7 @@ n = len(ch1) // 取得chan当前的元素个数
 m = cap(ch1) // 取得chan的容量
 ch1 <- true // 向chan发送一个值
 v = <-ch1 // 从chan取出一个值
+close(ch1) // 关闭chan，被关闭的chan是不能写，但是还可以读(直到已经写入的值全部被取完为止)
 ```
 
 需要注意的是，在 chan 被关闭后，<-ch 取得 undefined 值。所以在 qlang 中应该这样：
@@ -271,26 +272,12 @@ if booleanExpr1 {
 需要注意的是，if 语句是有值的。比如：
 
 ```go
-x = if a < b { a } else { b } // x 取 a 和 b 两者中的小值。即 x = min(a, b)
-```
-
-如果你希望使用 if 表达式的值，建议不要写成多行：
-
-```go
-x = if a < b {
+x = if a < b { // x 取 a 和 b 两者中的小值。即 x = min(a, b)
 	a
 } else {
 	b
 }
 ```
-
-这段代码不会如你所愿工作。原因是编译器会在行末自动插入 ';'，所以相当于是：
-
-```go
-x = if a < b { a; } else { b; }
-```
-
-结果是 `x = nil`。
 
 ### switch 语句
 
@@ -315,6 +302,29 @@ case booleanExpr2:
 	// ...
 default:
 	// ...
+}
+```
+
+需要注意的是：和 if 语句类似，switch 语句也是有值的。比如：
+
+```go
+v = switch weekday {
+case "Monday":
+	1
+case "Tuesday":
+	2
+case "Wednesday":
+	3
+case "Thursday":
+	4
+case "Friday":
+	5
+case "Saterday":
+	6
+case "Sunday":
+	7
+default:
+	0
 }
 ```
 

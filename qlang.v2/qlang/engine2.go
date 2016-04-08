@@ -94,7 +94,7 @@ func (p *Qlang) Exec(codeText []byte, fname string) (err error) {
 	}
 
 	if DumpCode {
-		code.Dump()
+		code.Dump(start)
 	}
 
 	p.ExecBlock(start, end)
@@ -111,7 +111,7 @@ func (p *Qlang) Eval(expr string) (err error) {
 	}
 
 	if DumpCode {
-		code.Dump()
+		code.Dump(start)
 	}
 
 	code.Exec(start, end, p.Stack, p.Context)
