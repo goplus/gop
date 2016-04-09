@@ -7,12 +7,16 @@ import (
 // -----------------------------------------------------------------------------
 // Push/Pop
 
+var (
+	OnPop func(v interface{})
+)
+
 type iPush struct {
 	v interface{}
 }
 
 type iPop int
-type iPopN int
+type iPopEx int
 
 func (p *iPush) Exec(stk *Stack, ctx *Context) {
 	stk.Push(p.v)
@@ -22,39 +26,27 @@ func (p iPop) Exec(stk *Stack, ctx *Context) {
 	stk.Pop()
 }
 
-func (p iPopN) Exec(stk *Stack, ctx *Context) {
-	stk.data = stk.data[:len(stk.data)-int(p)]
+func (p iPopEx) Exec(stk *Stack, ctx *Context) {
+	v, _ := stk.Pop()
+	OnPop(v)
 }
 
 func Push(v interface{}) Instr {
 	return &iPush{v}
 }
 
-func PopN(n int) Instr {
-	return iPopN(n)
+func PopEx() Instr {
+	if OnPop != nil {
+		return popEx
+	}
+	return Pop
 }
 
 var (
-	Nil Instr = Push(nil)
-	Pop Instr = iPop(0)
+	Nil   Instr = Push(nil)
+	Pop   Instr = iPop(0)
+	popEx Instr = iPopEx(0)
 )
-
-// -----------------------------------------------------------------------------
-// Compose
-
-type iCompose int
-
-func (p iCompose) Exec(stk *Stack, ctx *Context) {
-
-	n := len(stk.data)
-	n1 := n-int(p)
-	stk.data[n1] = stk.data[n-1]
-	stk.data = stk.data[:n1+1]
-}
-
-func Compose(n int) Instr {
-	return iCompose(n)
-}
 
 // -----------------------------------------------------------------------------
 // Clear

@@ -1,31 +1,31 @@
 weekday = "Friday"
 
-v = switch weekday {
+switch weekday {
 case "Monday":
-	1
+	v = 1
 case "Tuesday":
-	2
+	v = 2
 case "Wednesday":
-	3
+	v = 3
 case "Thursday":
-	4
+	v = 4
 case "Friday":
-	5
+	v = 5
 case "Saterday":
-	6
+	v = 6
 case "Sunday":
-	7
+	v = 7
 default:
-	0
+	v = 0
 }
 println(weekday, "=>", v)
 
 a = 3
 b = 7
-min = if a < b {
-	a
+if a < b {
+	min = a
 } else {
-	b
+	min = b
 }
 println("min", a, b, ":", min)
 

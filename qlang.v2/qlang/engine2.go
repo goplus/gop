@@ -28,6 +28,20 @@ func SetFindEntry(fn func(file string, libs []string) (string, error)) {
 	qlangv2.FindEntry = fn
 }
 
+func SetOnPop(fn func(v interface{})) {
+
+	exec.OnPop = fn
+}
+
+func Debug(fn func()) {
+
+	DumpCode = true
+	defer func() {
+		DumpCode = false
+	}()
+	fn()
+}
+
 // -----------------------------------------------------------------------------
 
 type Qlang struct {
@@ -49,14 +63,6 @@ func New(options *Options) (lang *Qlang, err error) {
 func (p *Qlang) SetLibs(libs string) {
 
 	p.cl.SetLibs(libs)
-}
-
-func (p *Qlang) Ret() (v interface{}, ok bool) {
-
-	stk := p.Stack
-	v, ok = stk.Pop()
-	stk.SetFrame(0)
-	return
 }
 
 func (p *Qlang) Cl(codeText []byte, fname string) (end int, err error) {
@@ -103,19 +109,7 @@ func (p *Qlang) Exec(codeText []byte, fname string) (err error) {
 
 func (p *Qlang) Eval(expr string) (err error) {
 
-	code := p.cl.Code()
-	start := code.Len()
-	end, err := p.Cl([]byte(expr), "")
-	if err != nil {
-		return
-	}
-
-	if DumpCode {
-		code.Dump(start)
-	}
-
-	code.Exec(start, end, p.Stack, p.Context)
-	return
+	return p.Exec([]byte(expr), "")
 }
 
 func (p *Qlang) SafeExec(code []byte, fname string) (err error) {
@@ -139,21 +133,7 @@ func (p *Qlang) SafeExec(code []byte, fname string) (err error) {
 
 func (p *Qlang) SafeEval(expr string) (err error) {
 
-	defer func() {
-		if e := recover(); e != nil {
-			switch v := e.(type) {
-			case string:
-				err = errors.New(v)
-			case error:
-				err = v
-			default:
-				panic(e)
-			}
-		}
-	}()
-
-	err = p.Eval(expr)
-	return
+	return p.SafeExec([]byte(expr), "")
 }
 
 func Import(mod string, table map[string]interface{}) {
