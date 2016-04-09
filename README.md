@@ -68,7 +68,7 @@ func main() {
 
 * [qlang/main.go](https://github.com/qiniu/qlang/blob/develop/app/qlang/main.go)
 
-你也可以把 qlang 用户非嵌入式脚本领域，直接用 qlang 程序来执行 *.ql 的代码。如下：
+你也可以把 qlang 用于非嵌入式脚本领域，直接用 `qlang` 程序来执行 *.ql 的代码。如下：
 
 ```
 qlang xxx.ql <arg1> <arg2> ... <argN>
