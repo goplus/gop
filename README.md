@@ -25,8 +25,8 @@ git clone https://github.com/qiniu/text.git qiniupkg.com/text
 
 预期的商业场景：
 
-* 由于与 Go 语言的无缝配合，qlang 在嵌入式脚本领域有 lua、python、javascript 所不能比拟的优越性。
-* 比如：网络游戏中取代 lua 的位置。
+* 由于与 Go 语言的无缝配合，qlang 在嵌入式脚本领域有 lua、python、javascript 所不能比拟的优越性。比如：网络游戏中取代 lua 的位置。
+* 作为编译原理的教学语言。由于 qlang 的 Compiler 代码极短，便于阅读和理解，非常方便教学实践之用。
 
 
 # 快速入门
@@ -68,6 +68,17 @@ func main() {
 
 * [qlang/main.go](https://github.com/qiniu/qlang/blob/develop/app/qlang/main.go)
 
+你也可以把 qlang 用户非嵌入式脚本领域，直接用 qlang 程序来执行 *.ql 的代码。如下：
+
+```
+qlang xxx.ql <arg1> <arg2> ... <argN>
+```
+
+为了方便学习和调试问题，我们还支持导出 qlang 编译的 “汇编指令”：
+
+```
+QLANG_DUMPCODE=true qlang xxx.ql <arg1> <arg2> ... <argN>
+```
 
 # 使用说明
 
@@ -269,16 +280,6 @@ if booleanExpr1 {
 }
 ```
 
-需要注意的是，if 语句是有值的。比如：
-
-```go
-x = if a < b { // x 取 a 和 b 两者中的小值。即 x = min(a, b)
-	a
-} else {
-	b
-}
-```
-
 ### switch 语句
 
 ```go
@@ -305,32 +306,9 @@ default:
 }
 ```
 
-需要注意的是：和 if 语句类似，switch 语句也是有值的。比如：
-
-```go
-v = switch weekday {
-case "Monday":
-	1
-case "Tuesday":
-	2
-case "Wednesday":
-	3
-case "Thursday":
-	4
-case "Friday":
-	5
-case "Saterday":
-	6
-case "Sunday":
-	7
-default:
-	0
-}
-```
-
 ### for 语句
 
-除了不支持 for range 文法，也不支持中途 continue、break（但是支持 return）。其他和 Go 语言完全类似：
+除了不支持 for range 文法，其他和 Go 语言完全类似：
 
 ```go
 for { // 无限循环，需要在中间 return，或者 os.exit(code)，否则不能退出

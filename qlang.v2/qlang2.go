@@ -36,17 +36,24 @@ s = (
 	(IDENT "*="! expr)/mula |
 	(IDENT "/="! expr)/quoa |
 	(IDENT "%="! expr)/moda |
+	"if"/_mute! expr/_code body *("elif" expr/_code body)/_ARITY ?("else" body)/_ARITY/_unmute/if |
+	"switch"/_mute! ?(~'{' expr)/_code '{' swbody '}'/_unmute/switch |
+	"for"/_mute! fhead body/_unmute/for |
 	"return"! ?expr/ARITY /return |
+	"break" /brk |
+	"continue" /cont |
 	"include"! STRING/include |
 	"import"! (STRING ?("as" IDENT/name)/ARITY)/import |
 	"export"! IDENT/name % ','/ARITY /export |
 	"defer"/_mute! expr/_code/_unmute/defer |
 	"go"/_mute! expr/_code/_unmute/go |
-	expr)/xline
+	(expr/pop))/xline
 
-doc = ?(s/xcnt *(';' ?(s/xcnt)))
+doc = ?(s *(';' ?s))
 
-ifbody = '{' doc/_code '}'
+body = '{' doc/_code '}'
+
+fhead = (~'{' s)/_code %= ';'/_ARITY
 
 swbody = *("case"! expr/_code ':' doc/_code)/_ARITY ?("default"! ':' doc/_code)/_ARITY
 
@@ -72,9 +79,6 @@ factor =
 	CHAR/pushc |
 	(IDENT/ref | '('! expr ')' |
 	"fn"! (~'{' fnbody/fn | afn) | '[' expr %= ','/ARITY ?',' ']'/slice) *atom |
-	"if"/_mute! expr/_code ifbody *("elif" expr/_code ifbody)/_ARITY ?("else" ifbody)/_ARITY/_unmute/if |
-	"switch"/_mute! ?(~'{' expr)/_code '{' swbody '}'/_unmute/switch |
-	"for"/_mute! (~'{' s)/_code %= ';'/_ARITY '{' doc/_code '}'/_unmute/for |
 	"new"! clsname newargs /new |
 	"class"! '{' *classb/ARITY '}'/class |
 	"recover"! '(' ')'/recover |
@@ -92,6 +96,42 @@ type module struct {
 	start, end int
 }
 
+type instrNode struct {
+	prev  *instrNode
+	instr exec.ReservedInstr
+}
+
+func (p *instrNode) JmpTo(where int) {
+	for p != nil {
+		instr := exec.Jmp(where - p.instr.Next())
+		p.instr.Set(instr)
+		p = p.prev
+	}
+}
+
+func (p *instrNode) MergeTo(parent *instrNode) *instrNode {
+	for p != nil {
+		p, p.prev, parent = p.prev, parent, p
+	}
+	return parent
+}
+
+type blockCtx struct {
+	brks  *instrNode
+	conts *instrNode
+}
+
+func (p *blockCtx) MergeTo(parent *blockCtx) {
+	parent.brks = p.brks.MergeTo(parent.brks)
+	parent.conts = p.conts.MergeTo(parent.conts)
+}
+
+func (p *blockCtx) MergeSw(old *blockCtx, done int) {
+	old.conts = p.conts.MergeTo(old.conts)
+	p.brks.JmpTo(done)
+	*p = *old
+}
+
 type Compiler struct {
 	Opts  *ipt.Options
 	code  *exec.Code
@@ -100,7 +140,7 @@ type Compiler struct {
 	mods  map[string]module
 	gvars map[string]interface{}
 	gstk  exec.Stack
-	nexpr int
+	bctx  blockCtx
 }
 
 func New() *Compiler {
@@ -187,9 +227,9 @@ func (p *Compiler) Index() {
 	}
 }
 
-func (p *Compiler) CountExpr() {
+func (p *Compiler) Pop() {
 
-	p.nexpr++
+	p.code.Block(exec.PopEx())
 }
 
 func (p *Compiler) CodeLine(f *interpreter.FileLine) {
@@ -246,9 +286,11 @@ var exports = map[string]interface{}{
 	"$if":      (*Compiler).If,
 	"$switch":  (*Compiler).Switch,
 	"$for":     (*Compiler).For,
+	"$brk":     (*Compiler).Break,
+	"$cont":    (*Compiler).Continue,
 	"$and":     (*Compiler).And,
 	"$or":      (*Compiler).Or,
-	"$xcnt":    (*Compiler).CountExpr,
+	"$pop":     (*Compiler).Pop,
 	"$xline":   (*Compiler).CodeLine,
 }
 

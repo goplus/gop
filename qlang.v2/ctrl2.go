@@ -56,12 +56,14 @@ func (p *Compiler) doIf(e interpreter.Engine, ifbr []interface{}, elseCode inter
 		p.code.CodeLine(t.File, t.Line)
 		reserved1 := p.code.Reserve()
 		bodyCode := ifbr[(i<<1)+1]
-		evalDocCode(e, p, bodyCode, false)
+		bctx := evalDocCode(e, p, bodyCode)
+		bctx.MergeTo(&p.bctx)
 		reserved2[i] = p.code.Reserve()
 		reserved1.Set(exec.JmpIfFalse(reserved2[i].Delta(reserved1)))
 	}
 
-	evalDocCode(e, p, elseCode, false)
+	bctx := evalDocCode(e, p, elseCode)
+	bctx.MergeTo(&p.bctx)
 
 	end := p.code.Len()
 	for i := 0; i < condArity; i++ {
@@ -82,8 +84,11 @@ func (p *Compiler) Switch(e interpreter.Engine) {
 	casebr := p.gstk.PopNArgs(caseArity << 1) // 2 * caseArity
 	switchCode, _ := p.gstk.Pop()
 
+	old := p.bctx
+	p.bctx = blockCtx{}
 	if switchCode == nil {
 		p.doIf(e, casebr, defaultCode, caseArity)
+		p.bctx.MergeSw(&old, p.code.Len())
 		return
 	}
 
@@ -102,27 +107,24 @@ func (p *Compiler) Switch(e interpreter.Engine) {
 		p.code.CodeLine(t.File, t.Line)
 		reserved1 := p.code.Reserve()
 		bodyCode := casebr[(i<<1)+1]
-		evalDocCode(e, p, bodyCode, false)
+		bctx := evalDocCode(e, p, bodyCode)
+		bctx.MergeTo(&p.bctx)
 		reserved2[i] = p.code.Reserve()
 		reserved1.Set(exec.Case(reserved2[i].Delta(reserved1)))
 	}
 
 	p.code.Block(exec.Default)
-	evalDocCode(e, p, defaultCode, false)
+	bctx := evalDocCode(e, p, defaultCode)
+	bctx.MergeTo(&p.bctx)
 
 	end := p.code.Len()
 	for i := 0; i < caseArity; i++ {
 		reserved2[i].Set(exec.Jmp(end - reserved2[i].Next()))
 	}
+	p.bctx.MergeSw(&old, end)
 }
 
 func (p *Compiler) For(e interpreter.Engine) {
-
-	p.doFor(e)
-	p.code.Block(exec.Nil)
-}
-
-func (p *Compiler) doFor(e interpreter.Engine) {
 
 	bodyCode, _ := p.gstk.Pop()
 
@@ -139,7 +141,6 @@ func (p *Compiler) doFor(e interpreter.Engine) {
 				if err := e.EvalCode(p, "s", initCode); err != nil {
 					panic(err)
 				}
-				p.code.Block(exec.Pop)
 			}
 			stepCode = forCode[2]
 		}
@@ -152,7 +153,7 @@ func (p *Compiler) doFor(e interpreter.Engine) {
 	loop := p.code.Len()
 
 	if condCode != nil {
-		if err := e.EvalCode(p, "s", condCode); err != nil {
+		if err := e.EvalCode(p, "expr", condCode); err != nil {
 			panic(err)
 		}
 		reserved := p.code.Reserve()
@@ -161,45 +162,56 @@ func (p *Compiler) doFor(e interpreter.Engine) {
 		}()
 	}
 
-	evalDocCode(e, p, bodyCode, true)
-
+	bctx := evalDocCode(e, p, bodyCode)
 	if stepCode != nil {
+		bctx.conts.JmpTo(p.code.Len())
 		if err := e.EvalCode(p, "s", stepCode); err != nil {
 			panic(err)
 		}
-		p.code.Block(exec.Pop)
+	} else {
+		bctx.conts.JmpTo(loop)
 	}
 
 	p.code.Block(exec.Jmp(loop - (p.code.Len() + 1)))
+	bctx.brks.JmpTo(p.code.Len())
 }
 
-func evalDocCode(e interpreter.Engine, p *Compiler, code interface{}, pop bool) {
+func (p *Compiler) Break() {
+
+	instr := p.code.Reserve()
+	p.bctx.brks = &instrNode{
+		prev:  p.bctx.brks,
+		instr: instr,
+	}
+}
+
+func (p *Compiler) Continue() {
+
+	instr := p.code.Reserve()
+	p.bctx.conts = &instrNode{
+		prev:  p.bctx.conts,
+		instr: instr,
+	}
+}
+
+func evalDocCode(e interpreter.Engine, p *Compiler, code interface{}) (bctx blockCtx) {
 
 	if code == nil {
-		if !pop {
-			p.code.Block(exec.Nil)
-		}
 		return
 	}
 
-	old := p.nexpr
-	p.nexpr = 0
+	old := p.bctx
+	p.bctx = bctx
+
 	err := e.EvalCode(p, "doc", code)
-	if pop {
-		if p.nexpr > 0 {
-			p.code.Block(exec.PopN(p.nexpr))
-		}
-	} else {
-		if p.nexpr > 1 {
-			p.code.Block(exec.Compose(p.nexpr))
-		} else if p.nexpr == 0 {
-			p.code.Block(exec.Nil)
-		}
-	}
-	p.nexpr = old
+
+	bctx = p.bctx
+	p.bctx = old
+
 	if err != nil {
 		panic(err)
 	}
+	return
 }
 
 // -----------------------------------------------------------------------------

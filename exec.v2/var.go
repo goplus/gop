@@ -40,7 +40,6 @@ func (p *iAssign) Exec(stk *Stack, ctx *Context) {
 	vars := ctx.getVars(p.name)
 	if v, ok := stk.Pop(); ok {
 		vars[p.name] = v
-		stk.Push(v)
 	} else {
 		panic(ErrAssignWithoutVal)
 	}
@@ -102,8 +101,6 @@ func (p *iMultiAssign) Exec(stk *Stack, ctx *Context) {
 		vars := ctx.getVars(name)
 		vars[name] = v.Index(i).Interface()
 	}
-
-	stk.Push(val)
 }
 
 func MultiAssign(names []string) Instr {
@@ -132,7 +129,6 @@ func (p *iOpAssign) Exec(stk *Stack, ctx *Context) {
 	}
 	val = p.op(val, v)
 	vars[p.name] = val
-	stk.Push(val)
 }
 
 func (p *iOp1Assign) Exec(stk *Stack, ctx *Context) {
@@ -140,7 +136,6 @@ func (p *iOp1Assign) Exec(stk *Stack, ctx *Context) {
 	vars, val := ctx.getVar(p.name)
 	val = p.op(val)
 	vars[p.name] = val
-	stk.Push(val)
 }
 
 func (p *Context) getVar(name string) (vars map[string]interface{}, val interface{}) {

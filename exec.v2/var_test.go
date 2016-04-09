@@ -20,11 +20,8 @@ func TestAssign(t *testing.T) {
 	)
 
 	code.Exec(0, code.Len(), stk, ctx)
-	if stk.BaseFrame() != 1 {
+	if stk.BaseFrame() != 0 {
 		t.Fatal("code.Exec failed")
-	}
-	if v, ok := stk.Pop(); !(ok && v == 6.0) {
-		t.Fatal("@ != 6")
 	}
 	if v, ok := ctx.Var("a"); !(ok && v == 6.0) {
 		t.Fatal("a != 6")
@@ -46,11 +43,8 @@ func TestOpAssign(t *testing.T) {
 	)
 
 	code.Exec(0, code.Len(), stk, ctx)
-	if stk.BaseFrame() != 2 {
+	if stk.BaseFrame() != 0 {
 		t.Fatal("code.Exec failed")
-	}
-	if v, ok := stk.Pop(); !(ok && v == 60.0) {
-		t.Fatal("@ != 6")
 	}
 	if v, ok := ctx.Var("a"); !(ok && v == 60.0) {
 		t.Fatal("a != 6")
