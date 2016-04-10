@@ -11,6 +11,10 @@ var (
 	Undefined interface{} = errors.New("undefined")
 )
 
+type Chan struct {
+	Data reflect.Value
+}
+
 // -----------------------------------------------------------------------------
 
 func dummy1(a interface{}) interface{} {
