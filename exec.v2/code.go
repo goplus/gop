@@ -368,8 +368,9 @@ func (p *Code) Exec(ip, ipEnd int, stk *Stack, ctx *Context) {
 	}()
 
 	ctx.ip = ip
+	data := p.data
 	for ctx.ip != ipEnd {
-		instr := p.data[ctx.ip]
+		instr := data[ctx.ip]
 		ctx.ip++
 		instr.Exec(stk, ctx)
 	}
