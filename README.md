@@ -77,7 +77,7 @@ qlang xxx.ql <arg1> <arg2> ... <argN>
 为了方便学习和调试问题，我们还支持导出 qlang 编译的 “汇编指令”：
 
 ```
-QLANG_DUMPCODE=true qlang xxx.ql <arg1> <arg2> ... <argN>
+QLANG_DUMPCODE=1 qlang xxx.ql <arg1> <arg2> ... <argN>
 ```
 
 # 使用说明
@@ -907,7 +907,8 @@ Stack = class {
 		if n < arity {
 			panic("Stack.popArgs: unexpected")
 		}
-		args = sliceFrom(this.stk[n-arity:n]...)
+		args = slice("var", arity)
+		copy(args, this.stk[n-arity:])
 		set(this, "stk", this.stk[:n-arity])
 		return args
 	}
