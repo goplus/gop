@@ -15,7 +15,6 @@ type Options interpreter.Options
 
 var (
 	InsertSemis = (*Options)(interpreter.InsertSemis)
-	DumpCode    = false
 )
 
 func SetReadFile(fn func(file string) ([]byte, error)) {
@@ -33,12 +32,22 @@ func SetOnPop(fn func(v interface{})) {
 	exec.OnPop = fn
 }
 
+func SetDumpCode(dumpCode string) {
+
+	switch dumpCode {
+	case "true", "1":
+		qlangv2.DumpCode = 1
+	case "2":
+		qlangv2.DumpCode = 2
+	default:
+		qlangv2.DumpCode = 0
+	}
+}
+
 func Debug(fn func()) {
 
-	DumpCode = true
-	defer func() {
-		DumpCode = false
-	}()
+	SetDumpCode("1")
+	defer SetDumpCode("0")
 	fn()
 }
 
@@ -99,7 +108,7 @@ func (p *Qlang) Exec(codeText []byte, fname string) (err error) {
 		return
 	}
 
-	if DumpCode {
+	if qlangv2.DumpCode != 0 {
 		code.Dump(start)
 	}
 

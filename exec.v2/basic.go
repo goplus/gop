@@ -5,6 +5,22 @@ import (
 )
 
 // -----------------------------------------------------------------------------
+// Rem
+
+type iRem struct {
+	File string
+	Line int
+	Code string
+}
+
+func (p *iRem) Exec(stk *Stack, ctx *Context) {}
+
+func Rem(file string, line int, code string) Instr {
+
+	return &iRem{file, line, code}
+}
+
+// -----------------------------------------------------------------------------
 // Push/Pop
 
 var (
