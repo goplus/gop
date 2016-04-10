@@ -16,13 +16,11 @@ import (
 func main() {
 
 	qall.InitSafe(true)
+	qlang.SetDumpCode(os.Getenv("QLANG_DUMPCODE"))
 
 	libs := os.Getenv("QLANG_PATH")
 	if libs == "" {
 		libs = os.Getenv("HOME") + "/qlang"
-	}
-	if os.Getenv("QLANG_DUMPCODE") != "" {
-		qlang.DumpCode = true
 	}
 
 	if len(os.Args) > 1 {

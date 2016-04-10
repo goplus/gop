@@ -135,6 +135,7 @@ func (p *blockCtx) MergeSw(old *blockCtx, done int) {
 type Compiler struct {
 	Opts  *ipt.Options
 	code  *exec.Code
+	ipt   interpreter.Engine
 	libs  []string
 	exits []func()
 	mods  map[string]module
@@ -232,14 +233,28 @@ func (p *Compiler) Pop() {
 	p.code.Block(exec.PopEx())
 }
 
-func (p *Compiler) CodeLine(f *interpreter.FileLine) {
-
-	p.code.CodeLine(f.File, f.Line)
-}
-
 func (p *Compiler) CallFn(fn interface{}) {
 
 	p.code.Block(exec.Call(fn))
+}
+
+// -----------------------------------------------------------------------------
+
+var DumpCode int
+
+func (p *Compiler) CodeLine(src interface{}) {
+
+	ipt := p.ipt
+	if ipt == nil {
+		return
+	}
+
+	f := ipt.FileLine(src)
+	p.code.CodeLine(f.File, f.Line)
+	if DumpCode == 1 {
+		text := string(ipt.Source(src))
+		p.code.Block(exec.Rem(f.File, f.Line, text))
+	}
 }
 
 // -----------------------------------------------------------------------------
