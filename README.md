@@ -308,10 +308,8 @@ default:
 
 ### for 语句
 
-除了不支持 for range 文法，其他和 Go 语言完全类似：
-
 ```go
-for { // 无限循环，需要在中间 return，或者 os.exit(code)，否则不能退出
+for { // 无限循环，需要在中间 break 或 return 结束
 	...
 }
 
@@ -328,6 +326,22 @@ for initExpr; conditionExpr; stepExpr {
 
 ```go
 for i = 0; i < 10; i++ {
+	...
+}
+```
+
+另外我们也支持 for..range 语法：
+
+```go
+for range collectionExpr { // 其中 collectionExpr 可以是 slice, map 或 chan
+	...
+}
+
+for index = range collectionExpr {
+	...
+}
+
+for index, value = range collectionExpr {
 	...
 }
 ```
