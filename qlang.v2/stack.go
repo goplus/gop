@@ -39,11 +39,6 @@ func (p *Compiler) PushString(lit string) {
 	p.code.Block(exec.Push(v))
 }
 
-func (p *Compiler) PushNil() {
-
-	p.code.Block(exec.Nil)
-}
-
 // -----------------------------------------------------------------------------
 
 func (p *Compiler) popArity() int {

@@ -18,7 +18,6 @@ func (p *iGo) Exec(stk *Stack, ctx *Context) {
 		cloneCtx.Stack = NewStack()
 		cloneCtx.Code.Exec(p.start, p.end, cloneCtx.Stack, &cloneCtx)
 	}()
-	stk.Push(nil)
 }
 
 func Go(start, end int) Instr {

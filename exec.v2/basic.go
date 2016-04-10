@@ -5,13 +5,34 @@ import (
 )
 
 // -----------------------------------------------------------------------------
+// Rem
+
+type iRem struct {
+	File string
+	Line int
+	Code string
+}
+
+func (p *iRem) Exec(stk *Stack, ctx *Context) {}
+
+func Rem(file string, line int, code string) Instr {
+
+	return &iRem{file, line, code}
+}
+
+// -----------------------------------------------------------------------------
 // Push/Pop
+
+var (
+	OnPop func(v interface{})
+)
 
 type iPush struct {
 	v interface{}
 }
 
 type iPop int
+type iPopEx int
 
 func (p *iPush) Exec(stk *Stack, ctx *Context) {
 	stk.Push(p.v)
@@ -21,42 +42,39 @@ func (p iPop) Exec(stk *Stack, ctx *Context) {
 	stk.Pop()
 }
 
+func (p iPopEx) Exec(stk *Stack, ctx *Context) {
+	v, _ := stk.Pop()
+	OnPop(v)
+}
+
 func Push(v interface{}) Instr {
 	return &iPush{v}
 }
 
+func PopEx() Instr {
+	if OnPop != nil {
+		return popEx
+	}
+	return Pop
+}
+
 var (
-	Nil Instr = Push(nil)
-	Pop Instr = iPop(0)
+	Nil   Instr = Push(nil)
+	Pop   Instr = iPop(0)
+	popEx Instr = iPopEx(0)
 )
 
 // -----------------------------------------------------------------------------
-// SaveBaseFrame/RestoreBaseFrame/Clear
+// Clear
 
-type iSaveBaseFrame int
-type iRestoreBaseFrame int
 type iClear int
-
-func (p iSaveBaseFrame) Exec(stk *Stack, ctx *Context) {
-	stk.Push(ctx.base)
-	ctx.base = len(stk.data)
-}
-
-func (p iRestoreBaseFrame) Exec(stk *Stack, ctx *Context) {
-	n := len(stk.data)
-	ctx.base = stk.data[n-2].(int)
-	stk.data[n-2] = stk.data[n-1]
-	stk.data = stk.data[:n-1]
-}
 
 func (p iClear) Exec(stk *Stack, ctx *Context) {
 	stk.data = stk.data[:ctx.base]
 }
 
 var (
-	SaveBaseFrame    Instr = iSaveBaseFrame(0)
-	RestoreBaseFrame Instr = iRestoreBaseFrame(0)
-	Clear            Instr = iClear(0)
+	Clear Instr = iClear(0)
 )
 
 // -----------------------------------------------------------------------------

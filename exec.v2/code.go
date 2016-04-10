@@ -375,10 +375,10 @@ func (p *Code) Exec(ip, ipEnd int, stk *Stack, ctx *Context) {
 	}
 }
 
-func (p *Code) Dump() {
+func (p *Code) Dump(start int) {
 
-	for i, instr := range p.data {
-		fmt.Printf("==> %04d: %s %v\n", i, instrName(instr), instr)
+	for i, instr := range p.data[start:] {
+		fmt.Printf("==> %04d: %s %v\n", i+start, instrName(instr), instr)
 	}
 }
 

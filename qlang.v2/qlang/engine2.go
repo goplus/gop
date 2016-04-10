@@ -15,7 +15,6 @@ type Options interpreter.Options
 
 var (
 	InsertSemis = (*Options)(interpreter.InsertSemis)
-	DumpCode    = false
 )
 
 func SetReadFile(fn func(file string) ([]byte, error)) {
@@ -26,6 +25,30 @@ func SetReadFile(fn func(file string) ([]byte, error)) {
 func SetFindEntry(fn func(file string, libs []string) (string, error)) {
 
 	qlangv2.FindEntry = fn
+}
+
+func SetOnPop(fn func(v interface{})) {
+
+	exec.OnPop = fn
+}
+
+func SetDumpCode(dumpCode string) {
+
+	switch dumpCode {
+	case "true", "1":
+		qlangv2.DumpCode = 1
+	case "2":
+		qlangv2.DumpCode = 2
+	default:
+		qlangv2.DumpCode = 0
+	}
+}
+
+func Debug(fn func()) {
+
+	SetDumpCode("1")
+	defer SetDumpCode("0")
+	fn()
 }
 
 // -----------------------------------------------------------------------------
@@ -49,14 +72,6 @@ func New(options *Options) (lang *Qlang, err error) {
 func (p *Qlang) SetLibs(libs string) {
 
 	p.cl.SetLibs(libs)
-}
-
-func (p *Qlang) Ret() (v interface{}, ok bool) {
-
-	stk := p.Stack
-	v, ok = stk.Pop()
-	stk.SetFrame(0)
-	return
 }
 
 func (p *Qlang) Cl(codeText []byte, fname string) (end int, err error) {
@@ -93,8 +108,8 @@ func (p *Qlang) Exec(codeText []byte, fname string) (err error) {
 		return
 	}
 
-	if DumpCode {
-		code.Dump()
+	if qlangv2.DumpCode != 0 {
+		code.Dump(start)
 	}
 
 	p.ExecBlock(start, end)
@@ -103,19 +118,7 @@ func (p *Qlang) Exec(codeText []byte, fname string) (err error) {
 
 func (p *Qlang) Eval(expr string) (err error) {
 
-	code := p.cl.Code()
-	start := code.Len()
-	end, err := p.Cl([]byte(expr), "")
-	if err != nil {
-		return
-	}
-
-	if DumpCode {
-		code.Dump()
-	}
-
-	code.Exec(start, end, p.Stack, p.Context)
-	return
+	return p.Exec([]byte(expr), "")
 }
 
 func (p *Qlang) SafeExec(code []byte, fname string) (err error) {
@@ -139,21 +142,7 @@ func (p *Qlang) SafeExec(code []byte, fname string) (err error) {
 
 func (p *Qlang) SafeEval(expr string) (err error) {
 
-	defer func() {
-		if e := recover(); e != nil {
-			switch v := e.(type) {
-			case string:
-				err = errors.New(v)
-			case error:
-				err = v
-			default:
-				panic(e)
-			}
-		}
-	}()
-
-	err = p.Eval(expr)
-	return
+	return p.SafeExec([]byte(expr), "")
 }
 
 func Import(mod string, table map[string]interface{}) {

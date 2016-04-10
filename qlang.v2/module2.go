@@ -99,6 +99,7 @@ func (p *Compiler) Cl(codeText []byte, fname string) int {
 		panic(err)
 	}
 
+	p.ipt = engine
 	p.gvars["__dir__"] = path.Dir(fname)
 	p.gvars["__file__"] = fname
 	err = engine.MatchExactly(codeText, fname)

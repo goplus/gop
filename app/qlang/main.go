@@ -16,6 +16,7 @@ import (
 func main() {
 
 	qall.InitSafe(false)
+	qlang.SetDumpCode(os.Getenv("QLANG_DUMPCODE"))
 
 	libs := os.Getenv("QLANG_PATH")
 	if libs == "" {
@@ -44,6 +45,12 @@ func main() {
 	}
 
 	qall.Copyright()
+
+	var ret interface{}
+	qlang.SetOnPop(func(v interface{}) {
+		ret = v
+	})
+
 	lang, err := qlang.New(nil)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -57,13 +64,13 @@ func main() {
 		if line == "" {
 			continue
 		}
+		ret = nil
 		err := lang.SafeEval(line)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			continue
 		}
-		v, _ := lang.Ret()
-		fmt.Printf("> %v\n\n", v)
+		fmt.Printf("> %v\n\n", ret)
 	}
 }
 
