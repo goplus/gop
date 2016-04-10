@@ -198,6 +198,11 @@ func SubSlice(a, i, j interface{}) interface{} {
 	return va.Slice(i1, j1).Interface()
 }
 
+func Copy(a, b interface{}) int {
+
+	return reflect.Copy(reflect.ValueOf(a), reflect.ValueOf(b))
+}
+
 func Append(a interface{}, vals ...interface{}) interface{} {
 
 	switch arr := a.(type) {
@@ -275,6 +280,8 @@ func SliceFrom(args ...interface{}) interface{} {
 		return appendFloat(make([]float64, 0, n), args...)
 	case reflect.String:
 		return Append(make([]string, 0, n), args...)
+	case reflect.Uint8:
+		return Append(make([]byte, 0, n), args...)
 	default:
 		return Append(make([]interface{}, 0, n), args...)
 	}

@@ -55,6 +55,7 @@ func (p *Compiler) Defer(e interpreter.Engine) {
 	instr := p.code.Reserve()
 	p.exits = append(p.exits, func() {
 		start, end := p.cl(e, "expr", src)
+		p.CodeLine(src)
 		instr.Set(exec.Defer(start, end))
 	})
 }

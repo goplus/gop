@@ -52,8 +52,7 @@ func (p *Compiler) doIf(e interpreter.Engine, ifbr []interface{}, elseCode inter
 		if err := e.EvalCode(p, "expr", condCode); err != nil {
 			panic(err)
 		}
-		t := e.FileLine(condCode)
-		p.code.CodeLine(t.File, t.Line)
+		p.CodeLine(condCode)
 		reserved1 := p.code.Reserve()
 		bodyCode := ifbr[(i<<1)+1]
 		bctx := evalDocCode(e, p, bodyCode)
@@ -96,15 +95,13 @@ func (p *Compiler) Switch(e interpreter.Engine) {
 	if err := e.EvalCode(p, "expr", switchCode); err != nil {
 		panic(err)
 	}
-	t := e.FileLine(switchCode)
-	p.code.CodeLine(t.File, t.Line)
+	p.CodeLine(switchCode)
 	for i := 0; i < caseArity; i++ {
 		caseCode := casebr[i<<1]
 		if err := e.EvalCode(p, "expr", caseCode); err != nil {
 			panic(err)
 		}
-		t := e.FileLine(caseCode)
-		p.code.CodeLine(t.File, t.Line)
+		p.CodeLine(caseCode)
 		reserved1 := p.code.Reserve()
 		bodyCode := casebr[(i<<1)+1]
 		bctx := evalDocCode(e, p, bodyCode)
@@ -156,6 +153,7 @@ func (p *Compiler) For(e interpreter.Engine) {
 		if err := e.EvalCode(p, "expr", condCode); err != nil {
 			panic(err)
 		}
+		p.CodeLine(condCode)
 		reserved := p.code.Reserve()
 		defer func() {
 			reserved.Set(exec.JmpIfFalse(p.code.Len() - reserved.Next()))

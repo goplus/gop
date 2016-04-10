@@ -28,7 +28,7 @@ expr = term4 *("||"/_mute term4/_code/_unmute/or)
 
 s = (
 	(IDENT '='! expr)/assign |
-	(IDENT ','!)/name IDENT/name % ','/ARITY '=' expr /massign |
+	(IDENT ','!)/name IDENT/name % ','/ARITY '=' expr % ','/ARITY /massign |
 	(IDENT "++")/inc |
 	(IDENT "--")/dec |
 	(IDENT "+="! expr)/adda |
@@ -39,7 +39,7 @@ s = (
 	"if"/_mute! expr/_code body *("elif" expr/_code body)/_ARITY ?("else" body)/_ARITY/_unmute/if |
 	"switch"/_mute! ?(~'{' expr)/_code '{' swbody '}'/_unmute/switch |
 	"for"/_mute! fhead body/_unmute/for |
-	"return"! ?expr/ARITY /return |
+	"return"! expr %= ','/ARITY /return |
 	"break" /brk |
 	"continue" /cont |
 	"include"! STRING/include |
