@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"qlang.io/qlang.spec.v1/types"
+	"qlang.io/qlang.spec.v1"
 )
 
 // -----------------------------------------------------------------------------
@@ -48,7 +48,7 @@ func (p *iForRange) Exec(stk *Stack, ctx *Context) {
 	args := p.args
 	narg := len(args)
 
-	if ch, ok := val.(*types.Chan); ok {
+	if ch, ok := val.(*qlang.Chan); ok {
 		if narg > 1 {
 			panic("too many variables in range")
 		}
