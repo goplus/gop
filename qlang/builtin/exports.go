@@ -11,6 +11,7 @@ import (
 
 var exports = map[string]interface{}{
 	"append":    Append,
+	"copy":      Copy,
 	"delete":    Delete,
 	"get":       Get,
 	"len":       Len,

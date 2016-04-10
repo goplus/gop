@@ -35,8 +35,10 @@ func (arity iReturn) Exec(stk *Stack, ctx *Context) {
 
 	if arity == 0 {
 		ctx.ret = nil
-	} else {
+	} else if arity == 1 {
 		ctx.ret, _ = stk.Pop()
+	} else {
+		ctx.ret = stk.PopNArgs(int(arity))
 	}
 	if ctx.parent != nil {
 		panic(ErrReturn) // 利用 panic 来实现 return (正常退出)

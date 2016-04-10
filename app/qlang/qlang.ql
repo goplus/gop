@@ -112,7 +112,8 @@ Stack = class {
 		if n < arity {
 			panic("Stack.popArgs: unexpected")
 		}
-		args = sliceFrom(this.stk[n-arity:n]...)
+		args = slice("byte", arity)
+		copy(args, this.stk[n-arity:])
 		set(this, "stk", this.stk[:n-arity])
 		return args
 	}

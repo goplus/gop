@@ -9,6 +9,59 @@ import (
 
 // -----------------------------------------------------------------------------
 
+const testReturnCode = `
+
+x = fn {
+	return 3
+}
+`
+
+func TestReturn(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+
+	err = lang.SafeExec([]byte(testReturnCode), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("x"); !ok || v != 3 {
+		t.Fatal("x != 3, x =", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+const testReturnCode2 = `
+
+x, y = fn {
+	return 3, 2
+}
+`
+
+func TestReturn2(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+
+	err = lang.SafeExec([]byte(testReturnCode2), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("x"); !ok || v != 3 {
+		t.Fatal("x != 3, x =", v)
+	}
+	if v, ok := lang.Var("y"); !ok || v != 2 {
+		t.Fatal("y != 2, y =", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
 const testAnonymFnCode = `
 
 x = 1

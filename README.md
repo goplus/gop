@@ -96,7 +96,7 @@ QLANG_DUMPCODE=true qlang xxx.ql <arg1> <arg2> ... <argN>
 原理上支持所有 Go 语言中的类型。典型有：
 
 * 基本类型：int、float (在 Go 语言里面是 float64)、string、byte、bool、var（在 Go 语言里面是 interface{}）。
-* 复合类型：slice、map
+* 复合类型：slice、map、chan
 * 用户自定义：函数（闭包）、类成员函数、类
 
 
@@ -412,16 +412,16 @@ x = fn(a) {
 println(x(3)) // 输出 1，因为 y(a) 这个调用并不影响 x 函数中的 _b 变量
 ```
 
-### 可变参数
+### 不定参数
 
-如 Go 语言类似，qlang 也支持可变参数的函数。例如内置的 max、min 都是可变参数的：
+和 Go 语言类似，qlang 也支持不定参数的函数。例如内置的 max、min 都是不定参数的：
 
 ```go
 a = max(1.2, 3, 5, 6) // a 的值为 float 类型的 6
 b = max(1, 3, 5, 6) // b 的值为 int 类型的 6
 ```
 
-也可以自定义一个可变参数的函数，如：
+也可以自定义一个不定参数的函数，如：
 
 ```go
 x = fn(fmt, args...) {
@@ -430,6 +430,37 @@ x = fn(fmt, args...) {
 ```
 
 这样就得到了一个 x 函数，功能和内建的 printf 函数一模一样。
+
+
+## 多赋值
+
+形式上，qlang 和 Go 语言一样支持多赋值，也支持函数返回多个值：
+
+```go
+x, y, z = 1, 2, 3.5
+a, b, c = fn() {
+	return 1, 2, 3.5 // 返回的是 var slice
+}()
+```
+
+另外我们也支持：
+
+```go
+x, y, z = [1, 2, 3.5]
+a, b, c = fn() {
+	return [1, 2, 3.5] // 返回的是 float slice
+}()
+```
+
+需要注意的是，带上[]进行多赋值和不带[]进行多赋值在语义上有一点点不同。下面是例子：
+
+```go
+x1, y1, z1 = 1, 2, 3.5
+x2, y2, z2 = [1, 2, 3.5]
+println(type(x1), type(x2))
+```
+
+结果表明 x1 的类型为 int，而 x2 的类型是 float。
 
 
 ## defer

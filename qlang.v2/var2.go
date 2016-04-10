@@ -53,9 +53,16 @@ func (p *Compiler) ModAssign(name string) {
 
 func (p *Compiler) MultiAssign() {
 
+	nval := p.popArity()
 	arity := p.popArity() + 1
 	names := p.gstk.PopFnArgs(arity)
-	p.code.Block(exec.MultiAssign(names))
+	if nval == 1 {
+		p.code.Block(exec.MultiAssignFromSlice(names))
+	} else if arity != nval {
+		panic("argument count of multi assignment doesn't match")
+	} else {
+		p.code.Block(exec.MultiAssign(names))
+	}
 }
 
 func (p *Compiler) Assign(name string) {

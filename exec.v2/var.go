@@ -75,11 +75,11 @@ func Assign(name string) Instr {
 
 // -----------------------------------------------------------------------------
 
-type iMultiAssign struct {
+type iMultiAssignFromSlice struct {
 	names []string
 }
 
-func (p *iMultiAssign) Exec(stk *Stack, ctx *Context) {
+func (p *iMultiAssignFromSlice) Exec(stk *Stack, ctx *Context) {
 
 	val, ok := stk.Pop()
 	if !ok {
@@ -100,6 +100,31 @@ func (p *iMultiAssign) Exec(stk *Stack, ctx *Context) {
 	for i, name := range p.names {
 		vars := ctx.getVars(name)
 		vars[name] = v.Index(i).Interface()
+	}
+}
+
+func MultiAssignFromSlice(names []string) Instr {
+	return &iMultiAssignFromSlice{names}
+}
+
+// -----------------------------------------------------------------------------
+
+type iMultiAssign struct {
+	names []string
+}
+
+func (p *iMultiAssign) Exec(stk *Stack, ctx *Context) {
+
+	n := len(p.names)
+	for i := n; i > 0; {
+		val, ok := stk.Pop()
+		if !ok {
+			panic(ErrAssignWithoutVal)
+		}
+		i--
+		name := p.names[i]
+		vars := ctx.getVars(name)
+		vars[name] = val
 	}
 }
 
