@@ -72,7 +72,6 @@ func (p *iDefer) Exec(stk *Stack, ctx *Context) {
 		start: p.start,
 		end:   p.end,
 	}
-	stk.Push(nil)
 }
 
 func Defer(start, end int) Instr {
