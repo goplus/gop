@@ -166,7 +166,7 @@ func Len(a interface{}) int {
 	if a == nil {
 		return 0
 	}
-	if ch, ok := a.(*types.Chan); ok {
+	if ch, ok := a.(*qlang.Chan); ok {
 		return ch.Data.Len()
 	}
 	return reflect.ValueOf(a).Len()
@@ -177,7 +177,7 @@ func Cap(a interface{}) int {
 	if a == nil {
 		return 0
 	}
-	if ch, ok := a.(*types.Chan); ok {
+	if ch, ok := a.(*qlang.Chan); ok {
 		return ch.Data.Cap()
 	}
 	return reflect.ValueOf(a).Cap()

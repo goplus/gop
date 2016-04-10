@@ -9,7 +9,7 @@ import (
 
 // -----------------------------------------------------------------------------
 
-func TrySend(p *types.Chan, v interface{}) interface{} {
+func TrySend(p *qlang.Chan, v interface{}) interface{} {
 
 	if v == qlang.Undefined {
 		panic("can't send `undefined` value to a channel")
@@ -20,7 +20,7 @@ func TrySend(p *types.Chan, v interface{}) interface{} {
 	return qlang.Undefined
 }
 
-func TryRecv(p *types.Chan) interface{} {
+func TryRecv(p *qlang.Chan) interface{} {
 
 	v, _ := p.Data.TryRecv()
 	if v.IsValid() {
@@ -29,7 +29,7 @@ func TryRecv(p *types.Chan) interface{} {
 	return qlang.Undefined
 }
 
-func Send(p *types.Chan, v interface{}) {
+func Send(p *qlang.Chan, v interface{}) {
 
 	if v == qlang.Undefined {
 		panic("can't send `undefined` value to a channel")
@@ -37,7 +37,7 @@ func Send(p *types.Chan, v interface{}) {
 	p.Data.Send(reflect.ValueOf(v))
 }
 
-func Recv(p *types.Chan) interface{} {
+func Recv(p *qlang.Chan) interface{} {
 
 	v, ok := p.Data.Recv()
 	if ok {
@@ -50,7 +50,7 @@ func Recv(p *types.Chan) interface{} {
 
 func ChanIn(ch1, val interface{}, try bool) interface{} {
 
-	ch := ch1.(*types.Chan)
+	ch := ch1.(*qlang.Chan)
 	if try {
 		return TrySend(ch, val)
 	}
@@ -60,7 +60,7 @@ func ChanIn(ch1, val interface{}, try bool) interface{} {
 
 func ChanOut(ch1 interface{}, try bool) interface{} {
 
-	ch := ch1.(*types.Chan)
+	ch := ch1.(*qlang.Chan)
 	if try {
 		return TryRecv(ch)
 	}
@@ -72,19 +72,19 @@ func ChanOf(typ interface{}) interface{} {
 	return reflect.ChanOf(reflect.BothDir, types.Reflect(typ))
 }
 
-func Mkchan(typ interface{}, buffer ...int) *types.Chan {
+func Mkchan(typ interface{}, buffer ...int) *qlang.Chan {
 
 	n := 0
 	if len(buffer) > 0 {
 		n = buffer[0]
 	}
 	t := reflect.ChanOf(reflect.BothDir, types.Reflect(typ))
-	return &types.Chan{reflect.MakeChan(t, n)}
+	return &qlang.Chan{reflect.MakeChan(t, n)}
 }
 
 func Close(ch1 interface{}) {
 
-	ch := ch1.(*types.Chan)
+	ch := ch1.(*qlang.Chan)
 	ch.Data.Close()
 }
 
