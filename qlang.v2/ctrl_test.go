@@ -215,3 +215,247 @@ func TestSwitchDefaultContinue(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
+func TestForRange1(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+
+	err = lang.SafeExec([]byte(`
+		x = 0
+		for range [1, 2] {
+			x++
+		}`), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("x"); !ok || v != 2 {
+		t.Fatal("x =", v)
+	}
+}
+
+func TestForRange2(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+
+	err = lang.SafeExec([]byte(`
+		x = 0
+		for i = range [10, 20] {
+			x += i+1
+		}`), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("x"); !ok || v != 3 {
+		t.Fatal("x =", v)
+	}
+}
+
+func TestForRange3(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+
+	err = lang.SafeExec([]byte(`
+		x = 0
+		for _, v = range [10, 20] {
+			x += v
+		}`), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("x"); !ok || v != 30 {
+		t.Fatal("x =", v)
+	}
+}
+
+func TestForRange4(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+
+	err = lang.SafeExec([]byte(`
+		x = 0
+		for range {10: 3, 20: 4} {
+			x++
+		}`), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("x"); !ok || v != 2 {
+		t.Fatal("x =", v)
+	}
+}
+
+func TestForRange5(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+
+	err = lang.SafeExec([]byte(`
+		x = 0
+		for k = range {10: 3, 20: 4} {
+			x += k
+		}`), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("x"); !ok || v != 30 {
+		t.Fatal("x =", v)
+	}
+}
+
+func TestForRange6(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+
+	err = lang.SafeExec([]byte(`
+		x = 0
+		for _, v = range {10: 3, 20: 4} {
+			x += v
+		}`), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("x"); !ok || v != 7 {
+		t.Fatal("x =", v)
+	}
+}
+
+func TestForRange7(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+
+	err = lang.SafeExec([]byte(`
+		x = 0
+		for k, v = range {10: 3, 20: 4} {
+			x += k + v
+		}`), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("x"); !ok || v != 37 {
+		t.Fatal("x =", v)
+	}
+}
+
+func TestForRange8(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+
+	err = lang.SafeExec([]byte(`
+
+		ch = mkchan("int", 2)
+		ch <- 10
+		ch <- 20
+		close(ch)
+
+		x = 0
+		for range ch {
+			x++
+		}`), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("x"); !ok || v != 2 {
+		t.Fatal("x =", v)
+	}
+}
+
+func TestForRange9(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+
+	err = lang.SafeExec([]byte(`
+
+		ch = mkchan("int", 2)
+		ch <- 10
+		ch <- 20
+		close(ch)
+
+		x = 0
+		for v = range ch {
+			x += v
+		}`), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("x"); !ok || v != 30 {
+		t.Fatal("x =", v)
+	}
+}
+
+func TestForRange10(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+
+	err = lang.SafeExec([]byte(`
+		x = 0
+		for i, v = range [10, 20, 30, 40] {
+			if true {
+				if i == 2 {
+					break
+				}
+			}
+			x += v
+		}`), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("x"); !ok || v != 30 {
+		t.Fatal("x =", v)
+	}
+}
+
+func TestForRange11(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+
+	err = lang.SafeExec([]byte(`
+		x = 0
+		for i, v = range [10, 20, 30, 40] {
+			if true {
+				if i == 2 {
+					continue
+				}
+			}
+			x += v
+		}`), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("x"); !ok || v != 70 {
+		t.Fatal("x =", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+

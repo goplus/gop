@@ -5,7 +5,7 @@ import (
 	"reflect"
 
 	"qlang.io/qlang.spec.v1"
-	"qlang.io/qlang/builtin/types"
+	"qlang.io/qlang.spec.v1/types"
 )
 
 // -----------------------------------------------------------------------------

@@ -38,7 +38,7 @@ s = (
 	(IDENT "%="! expr)/moda |
 	"if"/_mute! expr/_code body *("elif" expr/_code body)/_ARITY ?("else" body)/_ARITY/_unmute/if |
 	"switch"/_mute! ?(~'{' expr)/_code '{' swbody '}'/_unmute/switch |
-	"for"/_mute! fhead body/_unmute/for |
+	"for"/_mute/_urange! fhead body/_unmute/for |
 	"return"! expr %= ','/ARITY /return |
 	"break" /brk |
 	"continue" /cont |
@@ -49,11 +49,13 @@ s = (
 	"go"/_mute! expr/_code/_unmute/go |
 	(expr/pop))/xline
 
-doc = ?(s *(';' ?s))
+doc = ?s *(';' ?s)
 
 body = '{' doc/_code '}'
 
 fhead = (~'{' s)/_code %= ';'/_ARITY
+
+frange = ?(IDENT/name % ','/ARITY '=')/ARITY "range" expr
 
 swbody = *("case"! expr/_code ':' doc/_code)/_ARITY ?("default"! ':' doc/_code)/_ARITY
 
@@ -80,6 +82,7 @@ factor =
 	(IDENT/ref | '('! expr ')' |
 	"fn"! (~'{' fnbody/fn | afn) | '[' expr %= ','/ARITY ?',' ']'/slice) *atom |
 	"new"! clsname newargs /new |
+	"range"! expr/_range |
 	"class"! '{' *classb/ARITY '}'/class |
 	"recover"! '(' ')'/recover |
 	"main"! afn |
@@ -142,6 +145,8 @@ type Compiler struct {
 	gvars map[string]interface{}
 	gstk  exec.Stack
 	bctx  blockCtx
+	forRg bool
+	inFor bool
 }
 
 func New() *Compiler {
@@ -301,6 +306,8 @@ var exports = map[string]interface{}{
 	"$if":      (*Compiler).If,
 	"$switch":  (*Compiler).Switch,
 	"$for":     (*Compiler).For,
+	"$_urange": (*Compiler).UnsetRange,
+	"$_range":  (*Compiler).SetRange,
 	"$brk":     (*Compiler).Break,
 	"$cont":    (*Compiler).Continue,
 	"$and":     (*Compiler).And,

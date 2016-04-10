@@ -121,7 +121,65 @@ func (p *Compiler) Switch(e interpreter.Engine) {
 	p.bctx.MergeSw(&old, end)
 }
 
+func (p *Compiler) UnsetRange() {
+
+	p.forRg = false
+	p.inFor = true
+}
+
+func (p *Compiler) SetRange() {
+
+	if !p.inFor {
+		panic("don't use `range` out of `for` statement")
+	}
+
+	p.forRg = true
+	p.inFor = false
+}
+
+func (p *Compiler) ForRange(e interpreter.Engine) {
+
+	bodyCode, _ := p.gstk.Pop()
+	arity := p.popArity()
+	if arity != 1 {
+		panic("illegal `for range` statement")
+	}
+
+	frangeCode, _ := p.gstk.Pop()
+	if err := e.EvalCode(p, "frange", frangeCode); err != nil {
+		panic(err)
+	}
+	p.CodeLine(frangeCode)
+
+	var args []string
+	arity = p.popArity()
+	if arity > 0 {
+		arity = p.popArity()
+		if arity > 2 {
+			panic("illegal `for range` statement")
+		}
+		args = p.gstk.PopFnArgs(arity)
+	}
+
+	instr := p.code.Reserve()
+	p.exits = append(p.exits, func() {
+		old := p.bctx
+		p.bctx = blockCtx{}
+		start, end := p.cl(e, "doc", bodyCode)
+		p.bctx.brks.JmpTo(exec.BreakForRange)
+		p.bctx.conts.JmpTo(exec.ContinueForRange)
+		p.bctx = old
+		p.CodeLine(bodyCode)
+		instr.Set(exec.ForRange(args, start, end))
+	})
+}
+
 func (p *Compiler) For(e interpreter.Engine) {
+
+	if p.forRg {
+		p.ForRange(e)
+		return
+	}
 
 	bodyCode, _ := p.gstk.Pop()
 
@@ -144,7 +202,7 @@ func (p *Compiler) For(e interpreter.Engine) {
 		condCode = forCode[arity>>1]
 	case 0:
 	default:
-		panic("for statement is in illegal form")
+		panic("illegal `for` statement")
 	}
 
 	loop := p.code.Len()
