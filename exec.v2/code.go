@@ -419,8 +419,11 @@ func instrName(instr interface{}) string {
 	if strings.HasPrefix(t, "*") {
 		t = t[1:]
 	}
-	if strings.HasPrefix(t, "exec.i") {
-		t = t[6:]
+	if strings.HasPrefix(t, "exec.") {
+		t = t[5:]
+	}
+	if strings.HasPrefix(t, "i") {
+		t = t[1:]
 	}
 	return t
 }
