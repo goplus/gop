@@ -806,7 +806,7 @@ t4 = type(foo.f)
 
 输入 n，求 < n 的最大素数。用法：
 
-* qlang maxprime.ql <N>
+* `qlang maxprime.ql <N>`
 
 ```go
 primes = [2, 3]
