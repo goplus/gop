@@ -1,13 +1,13 @@
 package qlang
 
 import (
-	"qlang.io/exec.v2"
 	"qiniupkg.com/text/tpl.v1/interpreter.util"
+	"qlang.io/exec.v2"
 )
 
 // -----------------------------------------------------------------------------
 
-func (p *Compiler) Go(e interpreter.Engine) {
+func (p *Compiler) fnGo(e interpreter.Engine) {
 
 	src, _ := p.gstk.Pop()
 	instr := p.code.Reserve()
@@ -19,15 +19,14 @@ func (p *Compiler) Go(e interpreter.Engine) {
 
 // -----------------------------------------------------------------------------
 
-func (p *Compiler) ChanIn() {
+func (p *Compiler) chanIn() {
 
 	p.code.Block(exec.ChanIn)
 }
 
-func (p *Compiler) ChanOut() {
+func (p *Compiler) chanOut() {
 
 	p.code.Block(exec.ChanOut)
 }
 
 // -----------------------------------------------------------------------------
-

@@ -20,7 +20,7 @@ git clone https://github.com/qiniu/text.git qiniupkg.com/text
 # 语言特色
 
 * 最大卖点：与 Go 语言有最好的互操作性。所有 Go 语言的社区资源可以直接为我所用。
-* 有赖 Go 语言的互操作性，这门语言不需要自己实现标准库。尽管年轻，但是这门语言已经具备商用的可行性。
+* 有赖于 Go 语言的互操作性，这门语言不需要自己实现标准库。尽管年轻，但是这门语言已经具备商用的可行性。
 * 微内核：语言的核心只有 1200 行代码。所有功能以可插拔的 module 方式提供。
 
 预期的商业场景：
@@ -151,10 +151,10 @@ f = slice(type(e), len, cap) // 创建一个 int slice 的 slice，也就是 Go 
 a = append(a, 4, 5, 6) // 含义与 Go 语言完全一致
 n = len(a) // 取 a 的元素个数
 m = cap(a) // 取 slice a 的容量
-b1 = b[2] // 取 b 这个 slice 的第二个元素
-set(b, 2, 888) // 设置 b 这个 slice 的第二个元素的值为 888。在 Go 语言里面是 b[2] = 888
-set(b, 1, 777, 2, 888, 3, 999) // Go 里面是：b[1], b[2], b[3] = 777, 888, 999
-b2 = b[1:4] // Go 里面是： b2 = b[1:4]
+b1 = b[2] // 取 b 这个 slice 中 index=2 的元素
+b[2] = 888 // 设置 b 这个 slice 中 index=2 的元素值为 888
+b[1], b[2], b[3] =777, 888, 999 // 设置 b 这个 slice 中 index=1, 2, 3 的三个元素值
+b2 = b[1:4] // 取子slice
 ```
 
 特别地，在 qlang 中可以这样赋值：
@@ -192,8 +192,9 @@ f = mkmap(mapOf("string", type(e))) // 创建一个 map[string]map[string]int �
 ```go
 n = len(a) // 取 a 的元素个数
 x = a["b"] // 取 a map 中 key 为 "b" 的元素
-x = a.b // 含义同上
-set(a, "e", 4, "f", 5, "g", 6) // 在 Go 语言里面是 a["e"], b["f"], b["g"] = 4, 5, 6
+x = a.b // 含义同上，但如果 "b" 元素不存在会 panic
+a["e"], a["f"], a["g"] = 4, 5, 6 // 同 Go 语言
+a.e, a.f, a.g = 4, 5, 6 // 含义同 a["e"], a["f"], a["g"] = 4, 5, 6
 delete(a, "e") // 删除 a map 中的 "e" 元素
 ```
 
@@ -538,7 +539,7 @@ defer fn {
 ```go
 Foo = class {
 	fn setAB(a, b) {
-		set(this, "a", a, "b", b)
+		this.a, this.b = a, b
 	}
 	fn getA() {
 		return this.a
@@ -562,7 +563,7 @@ println(a) // 输出 3
 ```go
 Foo = class {
 	fn _init(a, b) {
-		set(this, "a", a, "b", b)
+		this.a, this.b = a, b
 	}
 }
 ```
@@ -668,7 +669,7 @@ export a, f
 import "foo/bar.v1"
 import "foo/bar.v1" as bar2
 
-set(bar, "a", 100) // 将 bar.a 值设置为 100
+bar.a = 100 // 将 bar.a 值设置为 100
 println(bar.a, bar2.a) // bar.a, bar2.a 的值现在都是 100
 
 bar.f()
@@ -803,6 +804,10 @@ t4 = type(foo.f)
 
 ### 求最大素数
 
+输入 n，求 < n 的最大素数。用法：
+
+* qlang maxprime.ql <N>
+
 ```go
 primes = [2, 3]
 n = 1
@@ -876,7 +881,10 @@ println(v)
 
 ### 计算器
 
+实现一个支持四则运算及函数调用的计算器：
+
 ```go
+
 grammar = `
 
 term = factor *('*' factor/mul | '/' factor/quo | '%' factor/mod)
@@ -895,25 +903,25 @@ fntable = nil
 Stack = class {
 
 	fn _init() {
-		set(this, "stk", [])
+		this.stk = []
 	}
 
 	fn clear() {
-		set(this, "stk", this.stk[:0])
+		this.stk = this.stk[:0]
 	}
 
 	fn pop() {
 		n = len(this.stk)
 		if n > 0 {
 			v = this.stk[n-1]
-			set(this, "stk", this.stk[:n-1])
+			this.stk = this.stk[:n-1]
 			return [v, true]
 		}
 		return [nil, false]
 	}
 
 	fn push(v) {
-		set(this, "stk", append(this.stk, v))
+		this.stk = append(this.stk, v)
 	}
 
 	fn popArgs(arity) {
@@ -923,7 +931,7 @@ Stack = class {
 		}
 		args = slice("var", arity)
 		copy(args, this.stk[n-arity:])
-		set(this, "stk", this.stk[:n-arity])
+		this.stk = this.stk[:n-arity]
 		return args
 	}
 }
@@ -931,7 +939,7 @@ Stack = class {
 Calculator = class {
 
 	fn _init() {
-		set(this, "stk", new Stack)
+		this.stk = new Stack
 	}
 
 	fn grammar() {
@@ -1006,4 +1014,3 @@ main { // 使用main关键字将主程序括起来，是为了避免其中用的
 	}
 }
 ```
-

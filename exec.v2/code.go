@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"reflect"
 	"runtime/debug"
-	"strings"
 	"sort"
+	"strings"
 
 	"qlang.io/qlang.spec.v1"
 )
@@ -267,6 +267,10 @@ type Instr interface {
 	Exec(stk *Stack, ctx *Context)
 }
 
+type RefToVar interface {
+	ToVar() Instr
+}
+
 type ipFileLine struct {
 	ip   int
 	line int
@@ -322,22 +326,43 @@ func (p ReservedInstr) Set(code Instr) {
 	p.code.data[p.idx] = code
 }
 
+// Next returns next instruction position.
+//
 func (p ReservedInstr) Next() int {
 
 	return p.idx + 1
 }
 
-func (a ReservedInstr) Delta(b ReservedInstr) int {
+// Delta returns distance from b to p.
+//
+func (p ReservedInstr) Delta(b ReservedInstr) int {
 
-	return a.idx - b.idx
+	return p.idx - b.idx
 }
 
+// Block appends some instructions to code.
+//
 func (p *Code) Block(code ...Instr) int {
 
 	p.data = append(p.data, code...)
 	return len(p.data)
 }
 
+// ToVar converts the last instruction from ref to var.
+//
+func (p *Code) ToVar() {
+
+	data := p.data
+	idx := len(data) - 1
+	if cvt, ok := data[idx].(RefToVar); ok {
+		data[idx] = cvt.ToVar()
+	} else {
+		panic("expr is not assignable")
+	}
+}
+
+// Exec executes a code block from ip to ipEnd.
+//
 func (p *Code) Exec(ip, ipEnd int, stk *Stack, ctx *Context) {
 
 	defer func() {
@@ -358,9 +383,9 @@ func (p *Code) Exec(ip, ipEnd int, stk *Stack, ctx *Context) {
 			}
 			file, line := p.Line(ctx.ip - 1)
 			err = &Error{
-				Err:  err,
-				File: file,
-				Line: line,
+				Err:   err,
+				File:  file,
+				Line:  line,
 				Stack: debug.Stack(),
 			}
 			panic(err)
@@ -376,6 +401,8 @@ func (p *Code) Exec(ip, ipEnd int, stk *Stack, ctx *Context) {
 	}
 }
 
+// Dump dumps code instructions from a start position.
+//
 func (p *Code) Dump(start int) {
 
 	for i, instr := range p.data[start:] {
@@ -389,11 +416,14 @@ func instrName(instr interface{}) string {
 		return "<nil>"
 	}
 	t := reflect.TypeOf(instr).String()
-	if strings.HasPrefix(t, "*")  {
+	if strings.HasPrefix(t, "*") {
 		t = t[1:]
 	}
-	if strings.HasPrefix(t, "exec.i") {
-		t = t[6:]
+	if strings.HasPrefix(t, "exec.") {
+		t = t[5:]
+	}
+	if strings.HasPrefix(t, "i") {
+		t = t[1:]
 	}
 	return t
 }

@@ -8,17 +8,17 @@ import (
 
 // -----------------------------------------------------------------------------
 
-func (p *Compiler) PushInt(v int) {
+func (p *Compiler) pushInt(v int) {
 
 	p.code.Block(exec.Push(v))
 }
 
-func (p *Compiler) PushFloat(v float64) {
+func (p *Compiler) pushFloat(v float64) {
 
 	p.code.Block(exec.Push(v))
 }
 
-func (p *Compiler) PushByte(lit string) {
+func (p *Compiler) pushByte(lit string) {
 
 	v, multibyte, tail, err := strconv.UnquoteChar(lit[1:len(lit)-1], '\'')
 	if err != nil {
@@ -30,7 +30,7 @@ func (p *Compiler) PushByte(lit string) {
 	p.code.Block(exec.Push(byte(v)))
 }
 
-func (p *Compiler) PushString(lit string) {
+func (p *Compiler) pushString(lit string) {
 
 	v, err := strconv.Unquote(lit)
 	if err != nil {
@@ -61,20 +61,19 @@ func (p *Compiler) popName() string {
 	panic("no ident name")
 }
 
-func (p *Compiler) PushCode(code interface{}) {
+func (p *Compiler) pushCode(code interface{}) {
 
 	p.gstk.Push(code)
 }
 
-func (p *Compiler) Arity(arity int) {
+func (p *Compiler) arity(arity int) {
 
 	p.gstk.Push(arity)
 }
 
-func (p *Compiler) PushName(name string) {
+func (p *Compiler) pushName(name string) {
 
 	p.gstk.Push(name)
 }
 
 // -----------------------------------------------------------------------------
-
