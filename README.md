@@ -669,7 +669,7 @@ export a, f
 import "foo/bar.v1"
 import "foo/bar.v1" as bar2
 
-set(bar, "a", 100) // 将 bar.a 值设置为 100
+bar.a = 100 // 将 bar.a 值设置为 100
 println(bar.a, bar2.a) // bar.a, bar2.a 的值现在都是 100
 
 bar.f()
@@ -804,6 +804,10 @@ t4 = type(foo.f)
 
 ### 求最大素数
 
+输入 n，求 < n 的最大素数。用法：
+
+* qlang maxprime.ql <N>
+
 ```go
 primes = [2, 3]
 n = 1
@@ -877,7 +881,10 @@ println(v)
 
 ### 计算器
 
+实现一个支持四则运算及函数调用的计算器：
+
 ```go
+
 grammar = `
 
 term = factor *('*' factor/mul | '/' factor/quo | '%' factor/mod)
@@ -896,25 +903,25 @@ fntable = nil
 Stack = class {
 
 	fn _init() {
-		set(this, "stk", [])
+		this.stk = []
 	}
 
 	fn clear() {
-		set(this, "stk", this.stk[:0])
+		this.stk = this.stk[:0]
 	}
 
 	fn pop() {
 		n = len(this.stk)
 		if n > 0 {
 			v = this.stk[n-1]
-			set(this, "stk", this.stk[:n-1])
+			this.stk = this.stk[:n-1]
 			return [v, true]
 		}
 		return [nil, false]
 	}
 
 	fn push(v) {
-		set(this, "stk", append(this.stk, v))
+		this.stk = append(this.stk, v)
 	}
 
 	fn popArgs(arity) {
@@ -924,7 +931,7 @@ Stack = class {
 		}
 		args = slice("var", arity)
 		copy(args, this.stk[n-arity:])
-		set(this, "stk", this.stk[:n-arity])
+		this.stk = this.stk[:n-arity]
 		return args
 	}
 }
@@ -932,7 +939,7 @@ Stack = class {
 Calculator = class {
 
 	fn _init() {
-		set(this, "stk", new Stack)
+		this.stk = new Stack
 	}
 
 	fn grammar() {
@@ -1007,4 +1014,3 @@ main { // 使用main关键字将主程序括起来，是为了避免其中用的
 	}
 }
 ```
-

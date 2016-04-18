@@ -17,25 +17,25 @@ fntable = nil
 Stack = class {
 
 	fn _init() {
-		set(this, "stk", [])
+		this.stk = []
 	}
 
 	fn clear() {
-		set(this, "stk", this.stk[:0])
+		this.stk = this.stk[:0]
 	}
 
 	fn pop() {
 		n = len(this.stk)
 		if n > 0 {
 			v = this.stk[n-1]
-			set(this, "stk", this.stk[:n-1])
+			this.stk = this.stk[:n-1]
 			return [v, true]
 		}
 		return [nil, false]
 	}
 
 	fn push(v) {
-		set(this, "stk", append(this.stk, v))
+		this.stk = append(this.stk, v)
 	}
 
 	fn popArgs(arity) {
@@ -45,7 +45,7 @@ Stack = class {
 		}
 		args = slice("var", arity)
 		copy(args, this.stk[n-arity:])
-		set(this, "stk", this.stk[:n-arity])
+		this.stk = this.stk[:n-arity]
 		return args
 	}
 }
@@ -53,7 +53,7 @@ Stack = class {
 Calculator = class {
 
 	fn _init() {
-		set(this, "stk", new Stack)
+		this.stk = new Stack
 	}
 
 	fn grammar() {
