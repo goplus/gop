@@ -220,6 +220,11 @@ func (p *iRef) Exec(stk *Stack, ctx *Context) {
 	stk.Push(ctx.getRef(p.name))
 }
 
+func (p *iRef) ToVar() Instr {
+
+	return &iVar{p.name}
+}
+
 func (p *Context) getRef(name string) interface{} {
 
 	if name == "unset" {
@@ -261,3 +266,25 @@ func Ref(name string) Instr {
 
 // -----------------------------------------------------------------------------
 
+type iGet int
+
+func (p iGet) Exec(stk *Stack, ctx *Context) {
+
+	k, ok1 := stk.Pop()
+	o, ok2 := stk.Pop()
+	if !ok1 || !ok2 {
+		panic("unexpected to call `Get` instruction")
+	}
+	stk.Push(qlang.Get(o, k))
+}
+
+func (p iGet) ToVar() Instr {
+
+	return GetVar
+}
+
+// Get is the Get instruction.
+//
+var Get Instr = iGet(0)
+
+// -----------------------------------------------------------------------------

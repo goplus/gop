@@ -14,6 +14,8 @@ import (
 
 // -----------------------------------------------------------------------------
 
+// An Error represents a compiling time error.
+//
 type Error struct {
 	Name string
 	Err  error
@@ -46,7 +48,7 @@ func findEntry(file string, libs []string) (string, error) {
 	return "", &Error{file, syscall.ENOENT}
 }
 
-func ResolvePath(file string, base string) string {
+func resolvePath(file string, base string) string {
 
 	if strings.HasPrefix(file, "/") {
 		return file
@@ -55,8 +57,11 @@ func ResolvePath(file string, base string) string {
 }
 
 var (
+	// FindEntry specifies the policy how qlang searches library file.
 	FindEntry = findEntry
-	ReadFile  = ioutil.ReadFile
+
+	// ReadFile specifies the policy how qlang reads source file.
+	ReadFile = ioutil.ReadFile
 )
 
 // -----------------------------------------------------------------------------
@@ -73,7 +78,7 @@ func qlangFile(file string) string {
 	return file + indexFile
 }
 
-func (p *Compiler) Dir() string {
+func (p *Compiler) dir() string {
 
 	if v, ok := p.gvars["__dir__"]; ok {
 		if dir, ok := v.(string); ok {
@@ -83,6 +88,8 @@ func (p *Compiler) Dir() string {
 	panic("ident `__dir__` not found")
 }
 
+// Compile compiles a qlang source file.
+//
 func (p *Compiler) Compile(fname string) int {
 
 	codeText, err := ReadFile(fname)
@@ -92,6 +99,8 @@ func (p *Compiler) Compile(fname string) int {
 	return p.Cl(codeText, fname)
 }
 
+// Cl compiles a qlang source code.
+//
 func (p *Compiler) Cl(codeText []byte, fname string) int {
 
 	engine, err := interpreter.New(p, p.Opts)
@@ -111,7 +120,7 @@ func (p *Compiler) Cl(codeText []byte, fname string) int {
 
 // -----------------------------------------------------------------------------
 
-func (p *Compiler) Include(lit string) {
+func (p *Compiler) include(lit string) {
 
 	file, err := strconv.Unquote(lit)
 	if err != nil {
@@ -122,20 +131,20 @@ func (p *Compiler) Include(lit string) {
 	instr := code.Reserve()
 	p.exits = append(p.exits, func() {
 		start := code.Len()
-		fname := qlangFile(ResolvePath(file, p.Dir()))
+		fname := qlangFile(resolvePath(file, p.dir()))
 		end := p.Compile(fname)
 		instr.Set(exec.Macro(start, end))
 	})
 }
 
-func (p *Compiler) Import(lit string) {
+func (p *Compiler) fnImport(lit string) {
 
 	dir, err := strconv.Unquote(lit)
 	if err != nil {
 		panic("invalid string `" + lit + "`: " + err.Error())
 	}
 
-	file, err := FindEntry(dir + indexFile, p.libs)
+	file, err := FindEntry(dir+indexFile, p.libs)
 	if err != nil {
 		panic(err)
 	}
@@ -167,7 +176,7 @@ func (p *Compiler) Import(lit string) {
 	})
 }
 
-func (p *Compiler) Export() {
+func (p *Compiler) export() {
 
 	arity := p.popArity()
 	names := p.gstk.PopFnArgs(arity)
@@ -175,4 +184,3 @@ func (p *Compiler) Export() {
 }
 
 // -----------------------------------------------------------------------------
-

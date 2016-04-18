@@ -10,17 +10,26 @@ import (
 )
 
 var (
-	ErrNewWithoutClassName   = errors.New("new object without class name")
+	// ErrNewWithoutClassName is returned when new doesn't specify a class.
+	ErrNewWithoutClassName = errors.New("new object without class name")
+
+	// ErrNewObjectWithNotClass is returned when new T but T is not a class.
 	ErrNewObjectWithNotClass = errors.New("can't new object: not a class")
-	ErrRefWithoutObject      = errors.New("reference without object")
+
+	// ErrRefWithoutObject is returned when refer member without specified an object.
+	ErrRefWithoutObject = errors.New("reference without object")
 )
 
 // -----------------------------------------------------------------------------
 
+// A Class represents a qlang class.
+//
 type Class struct {
-	Fns    map[string]*Function
+	Fns map[string]*Function
 }
 
+// Exec is required by interface Instr.
+//
 func (p *Class) Exec(stk *Stack, ctx *Context) {
 
 	for _, f := range p.Fns {
@@ -29,7 +38,9 @@ func (p *Class) Exec(stk *Stack, ctx *Context) {
 	stk.Push(p)
 }
 
-func Class_() *Class {
+// IClass returns a Class instruction.
+//
+func IClass() *Class {
 
 	fns := make(map[string]*Function)
 	return &Class{Fns: fns}
@@ -37,11 +48,15 @@ func Class_() *Class {
 
 // -----------------------------------------------------------------------------
 
+// A Object represents a qlang object.
+//
 type Object struct {
 	vars map[string]interface{}
 	Cls  *Class
 }
 
+// SetVar sets the value of a qlang object's member.
+//
 func (p *Object) SetVar(name string, val interface{}) {
 
 	if _, ok := p.Cls.Fns[name]; ok {
@@ -50,6 +65,8 @@ func (p *Object) SetVar(name string, val interface{}) {
 	p.vars[name] = val
 }
 
+// SetMemberVar implements set(object, k1, v1, k2, v2, ...), ie. sets values of qlang object's multiple members.
+//
 func SetMemberVar(m interface{}, args ...interface{}) {
 
 	if v, ok := m.(*Object); ok {
@@ -62,7 +79,7 @@ func SetMemberVar(m interface{}, args ...interface{}) {
 }
 
 func init() {
-	qlang.Set = SetMemberVar
+	qlang.SetEx = SetMemberVar
 }
 
 // -----------------------------------------------------------------------------
@@ -115,7 +132,9 @@ func (nArgs iNew) Exec(stk *Stack, ctx *Context) {
 	panic(ErrNewWithoutClassName)
 }
 
-func New_(nArgs int) Instr {
+// INew returns a New instruction.
+//
+func INew(nArgs int) Instr {
 	return iNew(nArgs)
 }
 
@@ -194,8 +213,37 @@ func (p *iMemberRef) Exec(stk *Stack, ctx *Context) {
 	}
 }
 
+func (p *iMemberRef) ToVar() Instr {
+	return &iMemberVar{p.name}
+}
+
+// MemberRef returns a MemberRef instruction.
+//
 func MemberRef(name string) Instr {
 	return &iMemberRef{name}
+}
+
+// -----------------------------------------------------------------------------
+// MemberVar
+
+type iMemberVar struct {
+	name string
+}
+
+func (p *iMemberVar) Exec(stk *Stack, ctx *Context) {
+
+	v, ok := stk.Pop()
+	if !ok {
+		panic(ErrRefWithoutObject)
+	}
+
+	stk.Push(&qlang.DataIndex{Data: v, Index: p.name})
+}
+
+// MemberVar returns a MemberVar instruction.
+//
+func MemberVar(name string) Instr {
+	return &iMemberVar{name}
 }
 
 // -----------------------------------------------------------------------------
