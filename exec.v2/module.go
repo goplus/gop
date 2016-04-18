@@ -45,7 +45,7 @@ func AnonymFn(start, end int) Instr {
 }
 
 // -----------------------------------------------------------------------------
-// Module(模块)
+// Module
 
 type importMod struct {
 	exports map[string]interface{}
@@ -64,8 +64,8 @@ func (p *importMod) Lock() (exports map[string]interface{}, uninited bool) {
 }
 
 type moduleMgr struct {
-	mods   map[string]*importMod
-	mutex  sync.Mutex
+	mods  map[string]*importMod
+	mutex sync.Mutex
 }
 
 func (p *moduleMgr) get(id string) *importMod {
@@ -154,4 +154,3 @@ func Export(names ...string) Instr {
 }
 
 // -----------------------------------------------------------------------------
-
