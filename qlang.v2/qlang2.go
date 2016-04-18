@@ -31,7 +31,7 @@ sexpr = expr (
 	','/tovar! expr/tovar % ','/ARITY '=' expr % ','/ARITY /massign |
 	"++"/tovar/inc | "--"/tovar/dec |
 	"+="/tovar! expr/adda | "-="/tovar! expr/suba |
-	"*="/tovar! expr/mula | "/="/tovar! expr/quoa | "%="/tovar! expr/moda | true/pop)
+	"*="/tovar! expr/mula | "/="/tovar! expr/quoa | "%="/tovar! expr/moda | 1/pop)
 
 s = "if"/_mute! expr/_code body *("elif" expr/_code body)/_ARITY ?("else" body)/_ARITY/_unmute/if |
 	"switch"/_mute! ?(~'{' expr)/_code '{' swbody '}'/_unmute/switch |
