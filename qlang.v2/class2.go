@@ -1,13 +1,13 @@
 package qlang
 
 import (
-	"qlang.io/exec.v2"
 	"qiniupkg.com/text/tpl.v1/interpreter.util"
+	"qlang.io/exec.v2"
 )
 
 // -----------------------------------------------------------------------------
 
-type FunctionInfo struct {
+type functionInfo struct {
 	args     []string // args[0] => function name
 	fnb      interface{}
 	variadic bool
@@ -15,13 +15,13 @@ type FunctionInfo struct {
 
 // -----------------------------------------------------------------------------
 
-func (p *Compiler) MemberFuncDecl() {
+func (p *Compiler) memberFuncDecl() {
 
 	fnb, _ := p.gstk.Pop()
 	variadic := p.popArity()
 	arity := p.popArity()
 	args := p.gstk.PopFnArgs(arity + 1)
-	fn := &FunctionInfo{
+	fn := &functionInfo{
 		args:     args,
 		fnb:      fnb,
 		variadic: variadic != 0,
@@ -31,9 +31,9 @@ func (p *Compiler) MemberFuncDecl() {
 
 func (p *Compiler) newClass(e interpreter.Engine, members []interface{}) *exec.Class {
 
-	cls := exec.Class_()
+	cls := exec.IClass()
 	for _, val := range members {
-		v := val.(*FunctionInfo)
+		v := val.(*functionInfo)
 		name := v.args[0]
 		v.args[0] = "this"
 		start, end := p.cl(e, "doc", v.fnb)
@@ -43,7 +43,7 @@ func (p *Compiler) newClass(e interpreter.Engine, members []interface{}) *exec.C
 	return cls
 }
 
-func (p *Compiler) Class(e interpreter.Engine) {
+func (p *Compiler) fnClass(e interpreter.Engine) {
 
 	arity := p.popArity()
 	members := p.gstk.PopNArgs(arity)
@@ -54,16 +54,16 @@ func (p *Compiler) Class(e interpreter.Engine) {
 	})
 }
 
-func (p *Compiler) New() {
+func (p *Compiler) fnNew() {
 
 	nArgs := p.popArity()
 	if nArgs != 0 {
 		nArgs = p.popArity()
 	}
-	p.code.Block(exec.New_(nArgs))
+	p.code.Block(exec.INew(nArgs))
 }
 
-func (p *Compiler) MemberRef(name string) {
+func (p *Compiler) memberRef(name string) {
 
 	p.code.Block(exec.MemberRef(name))
 }

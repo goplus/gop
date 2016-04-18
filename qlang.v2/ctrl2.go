@@ -1,13 +1,13 @@
 package qlang
 
 import (
-	"qlang.io/exec.v2"
 	"qiniupkg.com/text/tpl.v1/interpreter.util"
+	"qlang.io/exec.v2"
 )
 
 // -----------------------------------------------------------------------------
 
-func (p *Compiler) Or(e interpreter.Engine) {
+func (p *Compiler) or(e interpreter.Engine) {
 
 	reserved := p.code.Reserve()
 	expr, _ := p.gstk.Pop()
@@ -17,7 +17,7 @@ func (p *Compiler) Or(e interpreter.Engine) {
 	reserved.Set(exec.Or(p.code.Len() - reserved.Next()))
 }
 
-func (p *Compiler) And(e interpreter.Engine) {
+func (p *Compiler) and(e interpreter.Engine) {
 
 	reserved := p.code.Reserve()
 	expr, _ := p.gstk.Pop()
@@ -27,7 +27,7 @@ func (p *Compiler) And(e interpreter.Engine) {
 	reserved.Set(exec.And(p.code.Len() - reserved.Next()))
 }
 
-func (p *Compiler) If(e interpreter.Engine) {
+func (p *Compiler) fnIf(e interpreter.Engine) {
 
 	var elseCode interface{}
 
@@ -52,7 +52,7 @@ func (p *Compiler) doIf(e interpreter.Engine, ifbr []interface{}, elseCode inter
 		if err := e.EvalCode(p, "expr", condCode); err != nil {
 			panic(err)
 		}
-		p.CodeLine(condCode)
+		p.codeLine(condCode)
 		reserved1 := p.code.Reserve()
 		bodyCode := ifbr[(i<<1)+1]
 		bctx := evalDocCode(e, p, bodyCode)
@@ -70,7 +70,7 @@ func (p *Compiler) doIf(e interpreter.Engine, ifbr []interface{}, elseCode inter
 	}
 }
 
-func (p *Compiler) Switch(e interpreter.Engine) {
+func (p *Compiler) fnSwitch(e interpreter.Engine) {
 
 	var defaultCode interface{}
 
@@ -95,13 +95,13 @@ func (p *Compiler) Switch(e interpreter.Engine) {
 	if err := e.EvalCode(p, "expr", switchCode); err != nil {
 		panic(err)
 	}
-	p.CodeLine(switchCode)
+	p.codeLine(switchCode)
 	for i := 0; i < caseArity; i++ {
 		caseCode := casebr[i<<1]
 		if err := e.EvalCode(p, "expr", caseCode); err != nil {
 			panic(err)
 		}
-		p.CodeLine(caseCode)
+		p.codeLine(caseCode)
 		reserved1 := p.code.Reserve()
 		bodyCode := casebr[(i<<1)+1]
 		bctx := evalDocCode(e, p, bodyCode)
@@ -121,13 +121,13 @@ func (p *Compiler) Switch(e interpreter.Engine) {
 	p.bctx.MergeSw(&old, end)
 }
 
-func (p *Compiler) UnsetRange() {
+func (p *Compiler) unsetRange() {
 
 	p.forRg = false
 	p.inFor = true
 }
 
-func (p *Compiler) SetRange() {
+func (p *Compiler) setRange() {
 
 	if !p.inFor {
 		panic("don't use `range` out of `for` statement")
@@ -137,7 +137,7 @@ func (p *Compiler) SetRange() {
 	p.inFor = false
 }
 
-func (p *Compiler) ForRange(e interpreter.Engine) {
+func (p *Compiler) forRange(e interpreter.Engine) {
 
 	bodyCode, _ := p.gstk.Pop()
 	arity := p.popArity()
@@ -149,7 +149,7 @@ func (p *Compiler) ForRange(e interpreter.Engine) {
 	if err := e.EvalCode(p, "frange", frangeCode); err != nil {
 		panic(err)
 	}
-	p.CodeLine(frangeCode)
+	p.codeLine(frangeCode)
 
 	var args []string
 	arity = p.popArity()
@@ -169,15 +169,15 @@ func (p *Compiler) ForRange(e interpreter.Engine) {
 		p.bctx.brks.JmpTo(exec.BreakForRange)
 		p.bctx.conts.JmpTo(exec.ContinueForRange)
 		p.bctx = old
-		p.CodeLine(bodyCode)
+		p.codeLine(bodyCode)
 		instr.Set(exec.ForRange(args, start, end))
 	})
 }
 
-func (p *Compiler) For(e interpreter.Engine) {
+func (p *Compiler) fnFor(e interpreter.Engine) {
 
 	if p.forRg {
-		p.ForRange(e)
+		p.forRange(e)
 		return
 	}
 
@@ -211,7 +211,7 @@ func (p *Compiler) For(e interpreter.Engine) {
 		if err := e.EvalCode(p, "expr", condCode); err != nil {
 			panic(err)
 		}
-		p.CodeLine(condCode)
+		p.codeLine(condCode)
 		reserved := p.code.Reserve()
 		defer func() {
 			reserved.Set(exec.JmpIfFalse(p.code.Len() - reserved.Next()))
@@ -232,7 +232,7 @@ func (p *Compiler) For(e interpreter.Engine) {
 	bctx.brks.JmpTo(p.code.Len())
 }
 
-func (p *Compiler) Break() {
+func (p *Compiler) fnBreak() {
 
 	instr := p.code.Reserve()
 	p.bctx.brks = &instrNode{
@@ -241,7 +241,7 @@ func (p *Compiler) Break() {
 	}
 }
 
-func (p *Compiler) Continue() {
+func (p *Compiler) fnContinue() {
 
 	instr := p.code.Reserve()
 	p.bctx.conts = &instrNode{
@@ -271,4 +271,3 @@ func evalDocCode(e interpreter.Engine, p *Compiler, code interface{}) (bctx bloc
 }
 
 // -----------------------------------------------------------------------------
-

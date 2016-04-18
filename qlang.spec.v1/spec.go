@@ -8,11 +8,27 @@ import (
 // -----------------------------------------------------------------------------
 
 var (
-	Undefined interface{} = errors.New("undefined")
+	// Undefined is `undefined` in qlang.
+	Undefined = interface{}(errors.New("undefined"))
 )
 
+// A Chan represents chan class in qlang.
+//
 type Chan struct {
 	Data reflect.Value
+}
+
+// A DataIndex represents a compound data and its index. such as map[index], slice[index], object.member.
+//
+type DataIndex struct {
+	Data  interface{}
+	Index interface{}
+}
+
+// A Var represents a qlang variable.
+//
+type Var struct {
+	Name string
 }
 
 // -----------------------------------------------------------------------------
@@ -33,6 +49,10 @@ func dummyN(a ...interface{}) interface{} {
 	panic("function not implemented")
 }
 
+func dummySetIndex(m, index, val interface{}) {
+	panic("function not implemented")
+}
+
 func dummySet(m interface{}, args ...interface{}) {
 	panic("function not implemented")
 }
@@ -50,11 +70,13 @@ var (
 	fnDummy2  = reflect.ValueOf(dummy2).Pointer()
 	ChanIn    = dummyChanIn
 	ChanOut   = dummyChanOut
-	Set       = dummySet
+	SetEx     = dummySet
+	SetIndex  = dummySetIndex
 	MapFrom   = dummyN
 	SliceFrom = dummyN
 	SubSlice  = dummy3
 	EQ        = dummy2
+	GetVar    = dummy2
 	Get       = dummy2
 	Add       = dummy2
 	Sub       = dummy2
@@ -65,6 +87,8 @@ var (
 	Dec       = dummy1
 )
 
+// Fntable is function table required by tpl.Interpreter engine.
+//
 var Fntable = map[string]interface{}{
 	"$neg": dummy1,
 	"$mul": dummy2,
@@ -84,8 +108,12 @@ var Fntable = map[string]interface{}{
 	"$not": dummy1,
 }
 
+// SafeMode is the init mode of qlang.
+//
 var SafeMode bool
 
+// Import imports a qlang module implemented by Go.
+//
 func Import(mod string, table map[string]interface{}) {
 
 	if SafeMode {
@@ -124,17 +152,23 @@ func Import(mod string, table map[string]interface{}) {
 // -----------------------------------------------------------------------------
 
 var (
+	// DumpStack indicates to dump stack when error.
 	DumpStack = false
-	AutoCall  = make(map[reflect.Type]bool)
+
+	// AutoCall is reserved for internal use.
+	AutoCall = make(map[reflect.Type]bool)
 )
 
+// SetAutoCall is reserved for internal use.
+//
 func SetAutoCall(t reflect.Type) {
 	AutoCall[t] = true
 }
 
+// SetDumpStack set to dump stack or not.
+//
 func SetDumpStack(dump bool) {
 	DumpStack = dump
 }
 
 // -----------------------------------------------------------------------------
-

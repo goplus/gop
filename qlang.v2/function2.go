@@ -1,13 +1,13 @@
 package qlang
 
 import (
-	"qlang.io/exec.v2"
 	"qiniupkg.com/text/tpl.v1/interpreter.util"
+	"qlang.io/exec.v2"
 )
 
 // -----------------------------------------------------------------------------
 
-func (p *Compiler) Function(e interpreter.Engine) {
+func (p *Compiler) function(e interpreter.Engine) {
 
 	fnb, _ := p.gstk.Pop()
 	variadic := p.popArity()
@@ -20,7 +20,7 @@ func (p *Compiler) Function(e interpreter.Engine) {
 	})
 }
 
-func (p *Compiler) AnonymFn(e interpreter.Engine) {
+func (p *Compiler) anonymFn(e interpreter.Engine) {
 
 	fnb, _ := p.gstk.Pop()
 	instr := p.code.Reserve()
@@ -30,7 +30,7 @@ func (p *Compiler) AnonymFn(e interpreter.Engine) {
 	})
 }
 
-func (p *Compiler) Return(e interpreter.Engine) {
+func (p *Compiler) fnReturn(e interpreter.Engine) {
 
 	arity := p.popArity()
 	p.code.Block(exec.Return(arity))
@@ -49,18 +49,18 @@ func (p *Compiler) Done() {
 	}
 }
 
-func (p *Compiler) Defer(e interpreter.Engine) {
+func (p *Compiler) fnDefer(e interpreter.Engine) {
 
 	src, _ := p.gstk.Pop()
 	instr := p.code.Reserve()
 	p.exits = append(p.exits, func() {
 		start, end := p.cl(e, "expr", src)
-		p.CodeLine(src)
+		p.codeLine(src)
 		instr.Set(exec.Defer(start, end))
 	})
 }
 
-func (p *Compiler) Recover() {
+func (p *Compiler) fnRecover() {
 
 	p.code.Block(exec.Recover)
 }

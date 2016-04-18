@@ -64,7 +64,9 @@ func init() {
 	qlang.SliceFrom = SliceFrom
 	qlang.MapFrom = MapFrom
 	qlang.EQ = EQ
+	qlang.GetVar = GetVar
 	qlang.Get = Get
+	qlang.SetIndex = SetIndex
 	qlang.Add = Add
 	qlang.Sub = Sub
 	qlang.Mul = Mul

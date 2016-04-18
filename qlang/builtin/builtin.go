@@ -142,7 +142,33 @@ func Set(m interface{}, args ...interface{}) {
 			o.Index(args[i].(int)).Set(reflect.ValueOf(args[i+1]))
 		}
 	default:
-		qlang.Set(m, args...)
+		qlang.SetEx(m, args...)
+	}
+}
+
+func SetIndex(m, key, v interface{}) {
+
+	o := reflect.ValueOf(m)
+	switch o.Kind() {
+	case reflect.Map:
+		var val reflect.Value
+		switch v {
+		case qlang.Undefined:
+			val = zeroVal
+		case nil:
+			val = reflect.Zero(o.Type().Elem())
+		default:
+			val = reflect.ValueOf(v)
+		}
+		o.SetMapIndex(reflect.ValueOf(key), val)
+	case reflect.Slice:
+		if idx, ok := key.(int); ok {
+			o.Index(idx).Set(reflect.ValueOf(v))
+		} else {
+			panic("slice index isn't an integer value")
+		}
+	default:
+		qlang.SetEx(m, key, v)
 	}
 }
 
@@ -156,9 +182,16 @@ func Get(m interface{}, key interface{}) interface{} {
 			return v.Interface()
 		}
 		return qlang.Undefined
-	default:
+	case reflect.Slice, reflect.String:
 		return o.Index(key.(int)).Interface()
+	default:
+		panic(fmt.Sprintf("%v doesn't support operator[]", o.Type()))
 	}
+}
+
+func GetVar(m interface{}, key interface{}) interface{} {
+
+	return &qlang.DataIndex{Data: m, Index: key}
 }
 
 func Len(a interface{}) int {

@@ -2,81 +2,92 @@ package qlang
 
 import (
 	"qlang.io/exec.v2"
+	"qlang.io/qlang.spec.v1"
 )
 
 // -----------------------------------------------------------------------------
 
-func (p *Compiler) Clear() {
+func (p *Compiler) inc() {
 
-	p.code.Block(exec.Clear)
+	p.code.Block(exec.IncEx)
 }
 
-func (p *Compiler) Unset(name string) {
+func (p *Compiler) dec() {
 
-	p.code.Block(exec.Unset(name))
+	p.code.Block(exec.DecEx)
 }
 
-func (p *Compiler) Inc(name string) {
+func (p *Compiler) addAssign() {
 
-	p.code.Block(exec.Inc(name))
+	p.code.Block(exec.AddAssignEx)
 }
 
-func (p *Compiler) Dec(name string) {
+func (p *Compiler) subAssign() {
 
-	p.code.Block(exec.Dec(name))
+	p.code.Block(exec.SubAssignEx)
 }
 
-func (p *Compiler) AddAssign(name string) {
+func (p *Compiler) mulAssign() {
 
-	p.code.Block(exec.AddAssign(name))
+	p.code.Block(exec.MulAssignEx)
 }
 
-func (p *Compiler) SubAssign(name string) {
+func (p *Compiler) quoAssign() {
 
-	p.code.Block(exec.SubAssign(name))
+	p.code.Block(exec.QuoAssignEx)
 }
 
-func (p *Compiler) MulAssign(name string) {
+func (p *Compiler) modAssign() {
 
-	p.code.Block(exec.MulAssign(name))
+	p.code.Block(exec.ModAssignEx)
 }
 
-func (p *Compiler) QuoAssign(name string) {
-
-	p.code.Block(exec.QuoAssign(name))
-}
-
-func (p *Compiler) ModAssign(name string) {
-
-	p.code.Block(exec.ModAssign(name))
-}
-
-func (p *Compiler) MultiAssign() {
+func (p *Compiler) multiAssign() {
 
 	nval := p.popArity()
 	arity := p.popArity() + 1
-	names := p.gstk.PopFnArgs(arity)
 	if nval == 1 {
-		p.code.Block(exec.MultiAssignFromSlice(names))
+		p.code.Block(exec.MultiAssignFromSliceEx(arity))
 	} else if arity != nval {
 		panic("argument count of multi assignment doesn't match")
 	} else {
-		p.code.Block(exec.MultiAssign(names))
+		p.code.Block(exec.MultiAssignEx(arity))
 	}
 }
 
-func (p *Compiler) Assign(name string) {
+func (p *Compiler) assign() {
 
-	p.code.Block(exec.Assign(name))
+	p.code.Block(exec.AssignEx)
 }
 
-func (p *Compiler) Ref(name string) {
+func (p *Compiler) ref(name string) {
 
 	if val, ok := p.gvars[name]; ok {
 		p.code.Block(exec.Push(val))
 	} else {
 		p.code.Block(exec.Ref(name))
 	}
+}
+
+func (p *Compiler) index() {
+
+	arity2 := p.popArity()
+	arityMid := p.popArity()
+	arity1 := p.popArity()
+
+	if arityMid == 0 {
+		if arity1 == 0 {
+			panic("call operator[] without index")
+		}
+		p.code.Block(exec.Get)
+	} else {
+		p.code.Block(exec.Op3(qlang.SubSlice, arity1 != 0, arity2 != 0))
+	}
+}
+
+func (p *Compiler) toVar() {
+
+	p.code.ToVar()
 }
 
 // -----------------------------------------------------------------------------

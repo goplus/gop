@@ -3,16 +3,16 @@ package qlang
 import (
 	"strings"
 
+	"qiniupkg.com/text/tpl.v1/interpreter.util"
 	"qlang.io/exec.v2"
 	"qlang.io/qlang.spec.v1"
-	"qiniupkg.com/text/tpl.v1/interpreter.util"
 
 	ipt "qiniupkg.com/text/tpl.v1/interpreter"
 )
 
 // -----------------------------------------------------------------------------
 
-const Grammar = `
+const grammar = `
 
 term1 = factor *('*' factor/mul | '/' factor/quo | '%' factor/mod)
 
@@ -26,17 +26,14 @@ term4 = term3 *("&&"/_mute term3/_code/_unmute/and)
 
 expr = term4 *("||"/_mute term4/_code/_unmute/or)
 
-s = (
-	(IDENT '='! expr)/assign |
-	(IDENT ','!)/name IDENT/name % ','/ARITY '=' expr % ','/ARITY /massign |
-	(IDENT "++")/inc |
-	(IDENT "--")/dec |
-	(IDENT "+="! expr)/adda |
-	(IDENT "-="! expr)/suba |
-	(IDENT "*="! expr)/mula |
-	(IDENT "/="! expr)/quoa |
-	(IDENT "%="! expr)/moda |
-	"if"/_mute! expr/_code body *("elif" expr/_code body)/_ARITY ?("else" body)/_ARITY/_unmute/if |
+sexpr = expr (
+	'='/tovar! expr/assign |
+	','/tovar! expr/tovar % ','/ARITY '=' expr % ','/ARITY /massign |
+	"++"/tovar/inc | "--"/tovar/dec |
+	"+="/tovar! expr/adda | "-="/tovar! expr/suba |
+	"*="/tovar! expr/mula | "/="/tovar! expr/quoa | "%="/tovar! expr/moda | 1/pop)
+
+s = "if"/_mute! expr/_code body *("elif" expr/_code body)/_ARITY ?("else" body)/_ARITY/_unmute/if |
 	"switch"/_mute! ?(~'{' expr)/_code '{' swbody '}'/_unmute/switch |
 	"for"/_mute/_urange! fhead body/_unmute/for |
 	"return"! expr %= ','/ARITY /return |
@@ -47,7 +44,7 @@ s = (
 	"export"! IDENT/name % ','/ARITY /export |
 	"defer"/_mute! expr/_code/_unmute/defer |
 	"go"/_mute! expr/_code/_unmute/go |
-	(expr/pop))/xline
+	sexpr
 
 doc = ?s *(';' ?s)
 
@@ -63,15 +60,17 @@ fnbody = '(' IDENT/name %= ','/ARITY ?"..."/ARITY ')' '{'/_mute doc/_code '}'/_u
 
 afn = '{'/_mute doc/_code '}'/_unmute/afn
 
-clsname = '(' IDENT/ref ')' | IDENT/ref
+member = IDENT | "class" | "new" | "recover" | "main" | "import" | "export" | "include"
 
 newargs = ?('(' expr %= ','/ARITY ')')/ARITY
 
 classb = "fn"! IDENT/name fnbody ?';'/mfn
 
+clsname = IDENT/ref *('.' member/mref)
+
 atom =
 	'(' expr %= ','/ARITY ?"..."/ARITY ?',' ')'/call |
-	'.' (IDENT|"class"|"new"|"recover"|"main")/mref |
+	'.' member/mref |
 	'[' ?expr/ARITY ?':'/ARITY ?expr/ARITY ']'/index
 
 factor =
@@ -81,7 +80,7 @@ factor =
 	CHAR/pushc |
 	(IDENT/ref | '('! expr ')' |
 	"fn"! (~'{' fnbody/fn | afn) | '[' expr %= ','/ARITY ?',' ']'/slice) *atom |
-	"new"! clsname newargs /new |
+	"new"! ('('! clsname ')' | clsname) newargs /new |
 	"range"! expr/_range |
 	"class"! '{' *classb/ARITY '}'/class |
 	"recover"! '(' ')'/recover |
@@ -135,6 +134,8 @@ func (p *blockCtx) MergeSw(old *blockCtx, done int) {
 	*p = *old
 }
 
+// A Compiler represents a qlang compiler.
+//
 type Compiler struct {
 	Opts  *ipt.Options
 	code  *exec.Code
@@ -149,6 +150,8 @@ type Compiler struct {
 	inFor bool
 }
 
+// New returns a qlang compiler instance.
+//
 func New() *Compiler {
 
 	gvars := make(map[string]interface{})
@@ -161,49 +164,61 @@ func New() *Compiler {
 	}
 }
 
+// SetLibs sets searching paths when qlang searchs a library (ie. import a module).
+//
 func (p *Compiler) SetLibs(libs string) {
 
 	p.libs = strings.Split(libs, ":")
 }
 
+// Vars returns compiling time variables, eg. __file__, __dir__, etc.
+//
 func (p *Compiler) Vars() map[string]interface{} {
 
 	return p.gvars
 }
 
+// Code returns the generated code.
+//
 func (p *Compiler) Code() *exec.Code {
 
 	return p.code
 }
 
+// Grammar returns the qlang compiler's grammar. It is required by tpl.Interpreter engine.
+//
 func (p *Compiler) Grammar() string {
 
-	return Grammar
+	return grammar
 }
 
+// Fntable returns the qlang compiler's function table. It is required by tpl.Interpreter engine.
+//
 func (p *Compiler) Fntable() map[string]interface{} {
 
 	return qlang.Fntable
 }
 
+// Stack returns nil (no stack). It is required by tpl.Interpreter engine.
+//
 func (p *Compiler) Stack() interpreter.Stack {
 
 	return nil
 }
 
-func (p *Compiler) VMap() {
+func (p *Compiler) vMap() {
 
 	arity := p.popArity()
 	p.code.Block(exec.Call(qlang.MapFrom, arity*2))
 }
 
-func (p *Compiler) VSlice() {
+func (p *Compiler) vSlice() {
 
 	arity := p.popArity()
 	p.code.Block(exec.Call(qlang.SliceFrom, arity))
 }
 
-func (p *Compiler) VCall() {
+func (p *Compiler) vCall() {
 
 	variadic := p.popArity()
 	arity := p.popArity()
@@ -217,27 +232,13 @@ func (p *Compiler) VCall() {
 	}
 }
 
-func (p *Compiler) Index() {
-
-	arity2 := p.popArity()
-	arityMid := p.popArity()
-	arity1 := p.popArity()
-
-	if arityMid == 0 {
-		if arity1 == 0 {
-			panic("call operator[] without index")
-		}
-		p.code.Block(exec.Call(qlang.Get, 2))
-	} else {
-		p.code.Block(exec.Op3(qlang.SubSlice, arity1 != 0, arity2 != 0))
-	}
-}
-
-func (p *Compiler) Pop() {
+func (p *Compiler) pop() {
 
 	p.code.Block(exec.PopEx())
 }
 
+// CallFn generates a function call instruction. It is required by tpl.Interpreter engine.
+//
 func (p *Compiler) CallFn(fn interface{}) {
 
 	p.code.Block(exec.Call(fn))
@@ -245,9 +246,12 @@ func (p *Compiler) CallFn(fn interface{}) {
 
 // -----------------------------------------------------------------------------
 
+// DumpCode is mode how to dump code.
+// 1 means to dump code with `rem` instruction; 2 means to dump clean code; 0 means don't dump code.
+//
 var DumpCode int
 
-func (p *Compiler) CodeLine(src interface{}) {
+func (p *Compiler) codeLine(src interface{}) {
 
 	ipt := p.ipt
 	if ipt == nil {
@@ -265,55 +269,55 @@ func (p *Compiler) CodeLine(src interface{}) {
 // -----------------------------------------------------------------------------
 
 var exports = map[string]interface{}{
-	"$ARITY":   (*Compiler).Arity,
-	"$_ARITY":  (*Compiler).Arity,
-	"$_code":   (*Compiler).PushCode,
-	"$name":    (*Compiler).PushName,
-	"$pushi":   (*Compiler).PushInt,
-	"$pushf":   (*Compiler).PushFloat,
-	"$pushs":   (*Compiler).PushString,
-	"$pushc":   (*Compiler).PushByte,
-	"$index":   (*Compiler).Index,
-	"$mref":    (*Compiler).MemberRef,
-	"$ref":     (*Compiler).Ref,
-	"$slice":   (*Compiler).VSlice,
-	"$map":     (*Compiler).VMap,
-	"$call":    (*Compiler).VCall,
-	"$assign":  (*Compiler).Assign,
-	"$massign": (*Compiler).MultiAssign,
-	"$inc":     (*Compiler).Inc,
-	"$dec":     (*Compiler).Dec,
-	"$adda":    (*Compiler).AddAssign,
-	"$suba":    (*Compiler).SubAssign,
-	"$mula":    (*Compiler).MulAssign,
-	"$quoa":    (*Compiler).QuoAssign,
-	"$moda":    (*Compiler).ModAssign,
-	"$defer":   (*Compiler).Defer,
-	"$go":      (*Compiler).Go,
-	"$chin":    (*Compiler).ChanIn,
-	"$chout":   (*Compiler).ChanOut,
-	"$recover": (*Compiler).Recover,
-	"$return":  (*Compiler).Return,
-	"$fn":      (*Compiler).Function,
-	"$afn":     (*Compiler).AnonymFn,
-	"$include": (*Compiler).Include,
-	"$import":  (*Compiler).Import,
-	"$export":  (*Compiler).Export,
-	"$mfn":     (*Compiler).MemberFuncDecl,
-	"$class":   (*Compiler).Class,
-	"$new":     (*Compiler).New,
-	"$clear":   (*Compiler).Clear,
-	"$if":      (*Compiler).If,
-	"$switch":  (*Compiler).Switch,
-	"$for":     (*Compiler).For,
-	"$_urange": (*Compiler).UnsetRange,
-	"$_range":  (*Compiler).SetRange,
-	"$brk":     (*Compiler).Break,
-	"$cont":    (*Compiler).Continue,
-	"$and":     (*Compiler).And,
-	"$or":      (*Compiler).Or,
-	"$pop":     (*Compiler).Pop,
-	"$xline":   (*Compiler).CodeLine,
+	"$ARITY":   (*Compiler).arity,
+	"$_ARITY":  (*Compiler).arity,
+	"$_code":   (*Compiler).pushCode,
+	"$name":    (*Compiler).pushName,
+	"$pushi":   (*Compiler).pushInt,
+	"$pushf":   (*Compiler).pushFloat,
+	"$pushs":   (*Compiler).pushString,
+	"$pushc":   (*Compiler).pushByte,
+	"$index":   (*Compiler).index,
+	"$mref":    (*Compiler).memberRef,
+	"$ref":     (*Compiler).ref,
+	"$tovar":   (*Compiler).toVar,
+	"$slice":   (*Compiler).vSlice,
+	"$map":     (*Compiler).vMap,
+	"$call":    (*Compiler).vCall,
+	"$assign":  (*Compiler).assign,
+	"$massign": (*Compiler).multiAssign,
+	"$inc":     (*Compiler).inc,
+	"$dec":     (*Compiler).dec,
+	"$adda":    (*Compiler).addAssign,
+	"$suba":    (*Compiler).subAssign,
+	"$mula":    (*Compiler).mulAssign,
+	"$quoa":    (*Compiler).quoAssign,
+	"$moda":    (*Compiler).modAssign,
+	"$defer":   (*Compiler).fnDefer,
+	"$go":      (*Compiler).fnGo,
+	"$chin":    (*Compiler).chanIn,
+	"$chout":   (*Compiler).chanOut,
+	"$recover": (*Compiler).fnRecover,
+	"$return":  (*Compiler).fnReturn,
+	"$fn":      (*Compiler).function,
+	"$afn":     (*Compiler).anonymFn,
+	"$include": (*Compiler).include,
+	"$import":  (*Compiler).fnImport,
+	"$export":  (*Compiler).export,
+	"$mfn":     (*Compiler).memberFuncDecl,
+	"$class":   (*Compiler).fnClass,
+	"$new":     (*Compiler).fnNew,
+	"$if":      (*Compiler).fnIf,
+	"$switch":  (*Compiler).fnSwitch,
+	"$for":     (*Compiler).fnFor,
+	"$_urange": (*Compiler).unsetRange,
+	"$_range":  (*Compiler).setRange,
+	"$brk":     (*Compiler).fnBreak,
+	"$cont":    (*Compiler).fnContinue,
+	"$and":     (*Compiler).and,
+	"$or":      (*Compiler).or,
+	"$pop":     (*Compiler).pop,
+	"$xline":   (*Compiler).codeLine,
 }
 
 func init() {
