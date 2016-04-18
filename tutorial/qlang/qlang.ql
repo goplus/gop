@@ -67,21 +67,21 @@ errReturn = newRuntimeError("return")
 Stack = class {
 
 	fn _init() {
-		set(this, "stk", [])
+		this.stk = []
 	}
 
 	fn pop() {
 		n = len(this.stk)
 		if n > 0 {
 			v = this.stk[n-1]
-			set(this, "stk", this.stk[:n-1])
+			this.stk = this.stk[:n-1]
 			return [v, true]
 		}
 		return [nil, false]
 	}
 
 	fn push(v) {
-		set(this, "stk", append(this.stk, v))
+		this.stk = append(this.stk, v)
 	}
 
 	fn pushByte(lit) {
@@ -92,7 +92,7 @@ Stack = class {
 		if tail != "" || multibyte {
 			panic("invalid char: " + lit)
 		}
-		set(this, "stk", append(this.stk, v))
+		this.stk = append(this.stk, v)
 	}
 
 	fn pushString(lit) {
@@ -100,11 +100,11 @@ Stack = class {
 		if err != nil {
 			panicf("invalid string `%s`: %v", lit, err)
 		}
-		set(this, "stk", append(this.stk, v))
+		this.stk = append(this.stk, v)
 	}
 
 	fn pushNil() {
-		set(this, "stk", append(this.stk, nil))
+		this.stk = append(this.stk, nil)
 	}
 
 	fn popArgs(arity) {
@@ -114,7 +114,7 @@ Stack = class {
 		}
 		args = slice("var", arity)
 		copy(args, this.stk[n-arity:])
-		set(this, "stk", this.stk[:n-arity])
+		this.stk = this.stk[:n-arity]
 		return args
 	}
 
@@ -123,7 +123,7 @@ Stack = class {
 	}
 
 	fn setFrame(n) {
-		set(this, "stk", this.stk[:n])
+		this.stk = this.stk[:n]
 	}
 
 	fn index() {
@@ -152,37 +152,35 @@ Stack = class {
 evalCode = fn(e, ip, name, code) {
 
 	old = ip.base
-	set(ip, "base", ip.stk.baseFrame())
+	ip.base = ip.stk.baseFrame()
 	err = e.evalCode(ip, name, code)
-	set(ip, "base", old)
+	ip.base = old
 	return err
 }
 
 externVar = class {
 
 	fn _init(vars) {
-		set(this, "vars", vars)
+		this.vars = vars
 	}
 }
 
 functionInfo = class {
 
 	fn _init(args, fnb, variadic) {
-		set(this, "args", args, "fnb", fnb, "variadic", variadic)
+		this.args, this.fnb, this.variadic = args, fnb, variadic
 	}
 }
 
 Interpreter = class {
 
 	fn _init() {
-		set(this,
-			"stk",    new Stack,
-			"vars",   {},
-			"parent", nil,
-			"retv",   nil,
-			"defers", [],
-			"base",   0,
-		)
+		this. stk = new Stack
+		this.vars = {}
+		this.parent = nil
+		this.retv = nil
+		this.defers = []
+		this.base = 0
 	}
 
 	fn grammar() {
@@ -254,14 +252,14 @@ Interpreter = class {
 	fn inc(name) {
 		vars, val = this.getVar(name)
 		val++
-		set(vars, name, val)
+		vars[name] = val
 		this.stk.push(val)
 	}
 
 	fn dec(name) {
 		vars, val = this.getVar(name)
 		val--
-		set(vars, name, val)
+		vars[name] = val
 		this.stk.push(val)
 	}
 
@@ -269,7 +267,7 @@ Interpreter = class {
 		vars, val = this.getVar(name)
 		v, ok = this.stk.pop()
 		val += v
-		set(vars, name, val)
+		vars[name] = val
 		this.stk.push(val)
 	}
 
@@ -277,7 +275,7 @@ Interpreter = class {
 		vars, val = this.getVar(name)
 		v, ok = this.stk.pop()
 		val -= v
-		set(vars, name, val)
+		vars[name] = val
 		this.stk.push(val)
 	}
 
@@ -285,7 +283,7 @@ Interpreter = class {
 		vars, val = this.getVar(name)
 		v, ok = this.stk.pop()
 		val *= v
-		set(vars, name, val)
+		vars[name] = val
 		this.stk.push(val)
 	}
 
@@ -293,7 +291,7 @@ Interpreter = class {
 		vars, val = this.getVar(name)
 		v, ok = this.stk.pop()
 		val /= v
-		set(vars, name, val)
+		vars[name] = val
 		this.stk.push(val)
 	}
 
@@ -301,7 +299,7 @@ Interpreter = class {
 		vars, val = this.getVar(name)
 		v, ok = this.stk.pop()
 		val %= v
-		set(vars, name, val)
+		vars[name] = val
 		this.stk.push(val)
 	}
 
@@ -340,7 +338,7 @@ Interpreter = class {
 						} else {
 							e = new externVar(t.vars)
 						}
-						set(this.vars, name, e) // 缓存访问过的变量
+						this.vars[name] = e // 缓存访问过的变量
 						return val
 					}
 				}
@@ -364,7 +362,7 @@ Interpreter = class {
 		for i = 0; i < arity; i++ {
 			name = names[i]
 			vars = this.getVars(name)
-			set(vars, name, val[i])
+			vars[name] = val[i]
 		}
 		this.stk.push(val)
 	}
@@ -372,7 +370,7 @@ Interpreter = class {
 	fn assign(name) {
 		vars = this.getVars(name)
 		v, _ = this.stk.pop()
-		set(vars, name, v)
+		vars[name] = v
 		this.stk.push(v)
 	}
 
@@ -386,24 +384,22 @@ Interpreter = class {
 		arity, _ = this.stk.pop()
 		args = this.stk.popArgs(arity)
 		f = new Function
-		set(f,
-			"args",     args,
-			"fnb",      fnb,
-			"engine",   engine,
-			"parent",   this,
-			"cls",      nil,
-			"variadic", variadic != 0,
-		)
+		f.args = args
+		f.fnb = fnb
+		f.engine = engine
+		f.parent = this
+		f.cls = nil
+		f.variadic = (variadic != 0)
 		this.stk.push(f.call)
 	}
 
 	fn fnReturn(engine) {
 		arity, _ = this.stk.pop()
 		if arity == 0 {
-			set(this, "retv", nil)
+			this.retv = nil
 		} else {
 			v, _ = this.stk.pop()
-			set(this, "retv", v)
+			this.retv = v
 		}
 		if this.parent != nil {
 			panic(errReturn) // 利用 panic 来实现 return (正常退出)
@@ -423,12 +419,12 @@ Interpreter = class {
 				panic(err)
 			}
 		}
-		set(this, "defers", this.defers[:0])
+		this.defers = this.defers[:0]
 	}
 
 	fn fnDefer() {
 		src, _ = this.stk.pop()
-		set(this, "defers", append(this.defers, src))
+		this.defers = append(this.defers, src)
 		this.stk.push(nil)
 	}
 
@@ -449,17 +445,15 @@ Interpreter = class {
 		for i = 0; i < len(args); i++ {
 			v = args[i]
 			name = v.args[0]
-			set(v.args, 0, "this")
+			v.args[0] = "this"
 			f = new Function
-			set(f,
-				"args",     v.args,
-				"fnb",      v.fnb,
-				"engine",   engine,
-				"parent",   this,
-				"cls",      cls,
-				"variadic", v.variadic,
-			)
-			set(fns, name, f.call)
+			f.args = v.args
+			f.fnb = v.fnb
+			f.engine = engine
+			f.parent = this
+			f.cls = cls
+			f.variadic = v.variadic
+			fns[name] = f.call
 		}
 		this.stk.push(cls)
 	}
@@ -670,14 +664,14 @@ Interpreter = class {
 Class = class {
 
 	fn _init(fns, engine, parent) {
-		set(this, "fns", fns, "engine", engine, "parent", parent)
+		this.fns, this.engine, this.parent = fns, engine, parent
 	}
 }
 
 Object = class {
 
 	fn _init(cls) {
-		set(this, "vars", {}, "cls", cls)
+		this.vars, this.cls = {}, cls
 	}
 
 	fn setVar(name, val) {
@@ -685,7 +679,7 @@ Object = class {
 		if f != undefined {
 			panic("set failed: class already have a method named " + name)
 		}
-		set(this.vars, name, val)
+		this.vars[name] = val
 	}
 }
 
@@ -713,21 +707,19 @@ Function = class {
 		vars = {}
 		base = stk.baseFrame()
 		ip = new Interpreter
-		set(ip,
-			"vars",   vars,
-			"parent", parent,
-			"stk",    stk,
-			"base",   base,
-		)
+		ip.vars = vars
+		ip.parent = parent
+		ip.stk = stk
+		ip.base = base
 
 		if this.variadic {
 			for i = 0; i < n-1; i++ {
-				set(vars, this.args[i], args[i])
+				vars[this.args[i]] = args[i]
 			}
-			set(vars, this.args[n-1], args[n-1:])
+			vars[this.args[n-1]] = args[n-1:]
 		} else {
 			for i = 0; i < len(args); i++ {
-				set(vars, this.args[i], args[i])
+				vars[this.args[i]] = args[i]
 			}
 		}
 
@@ -755,7 +747,7 @@ Function = class {
 thisDeref = class {
 
 	fn _init(p, f) {
-		set(this, "p", p, "f", f)
+		this.p, this.f = p, f
 	}
 
 	fn call(args...) {
@@ -902,4 +894,3 @@ main { // 使用main关键字将主程序括起来，是为了避免其中用的
 		}
 	}
 }
-
