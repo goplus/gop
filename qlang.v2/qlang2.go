@@ -60,15 +60,17 @@ fnbody = '(' IDENT/name %= ','/ARITY ?"..."/ARITY ')' '{'/_mute doc/_code '}'/_u
 
 afn = '{'/_mute doc/_code '}'/_unmute/afn
 
-clsname = '(' IDENT/ref ')' | IDENT/ref
+member = IDENT | "class" | "new" | "recover" | "main" | "import" | "export" | "include"
 
 newargs = ?('(' expr %= ','/ARITY ')')/ARITY
 
 classb = "fn"! IDENT/name fnbody ?';'/mfn
 
+clsname = IDENT/ref *('.' member/mref)
+
 atom =
 	'(' expr %= ','/ARITY ?"..."/ARITY ?',' ')'/call |
-	'.' (IDENT|"class"|"new"|"recover"|"main"|"import"|"export"|"include")/mref |
+	'.' member/mref |
 	'[' ?expr/ARITY ?':'/ARITY ?expr/ARITY ']'/index
 
 factor =
@@ -78,7 +80,7 @@ factor =
 	CHAR/pushc |
 	(IDENT/ref | '('! expr ')' |
 	"fn"! (~'{' fnbody/fn | afn) | '[' expr %= ','/ARITY ?',' ']'/slice) *atom |
-	"new"! clsname newargs /new |
+	"new"! ('('! clsname ')' | clsname) newargs /new |
 	"range"! expr/_range |
 	"class"! '{' *classb/ARITY '}'/class |
 	"recover"! '(' ')'/recover |
