@@ -6,7 +6,7 @@ The Q Language (Q语言)
 ### 源代码
 
 ```
-go get -u qlang.io/qlang
+go get -u -insecure qlang.io/qlang
 ```
 
 或者在 src 目录执行如下命令：
