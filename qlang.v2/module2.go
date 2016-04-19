@@ -41,7 +41,7 @@ func findEntry(file string, libs []string) (string, error) {
 			continue
 		}
 		path := dir + "/" + file
-		if _, err := os.Stat(file); err == nil {
+		if _, err := os.Stat(path); err == nil {
 			return path, nil
 		}
 	}
