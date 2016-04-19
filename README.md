@@ -153,7 +153,7 @@ n = len(a) // 取 a 的元素个数
 m = cap(a) // 取 slice a 的容量
 b1 = b[2] // 取 b 这个 slice 中 index=2 的元素
 b[2] = 888 // 设置 b 这个 slice 中 index=2 的元素值为 888
-b[1], b[2], b[3] =777, 888, 999 // 设置 b 这个 slice 中 index=1, 2, 3 的三个元素值
+b[1], b[2], b[3] = 777, 888, 999 // 设置 b 这个 slice 中 index=1, 2, 3 的三个元素值
 b2 = b[1:4] // 取子slice
 ```
 

@@ -175,7 +175,7 @@ functionInfo = class {
 Interpreter = class {
 
 	fn _init() {
-		this. stk = new Stack
+		this.stk = new Stack
 		this.vars = {}
 		this.parent = nil
 		this.retv = nil
