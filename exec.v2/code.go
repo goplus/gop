@@ -14,21 +14,29 @@ import (
 // -----------------------------------------------------------------------------
 // type Stack
 
+// A Stack represents a FILO container.
+//
 type Stack struct {
 	data []interface{}
 }
 
+// NewStack returns a new Stack.
+//
 func NewStack() *Stack {
 
 	data := make([]interface{}, 0, 16)
 	return &Stack{data}
 }
 
+// Push pushs a value into this stack.
+//
 func (p *Stack) Push(v interface{}) {
 
 	p.data = append(p.data, v)
 }
 
+// Top returns the last pushed value, if it exists.
+//
 func (p *Stack) Top() (v interface{}, ok bool) {
 
 	n := len(p.data)
@@ -38,6 +46,8 @@ func (p *Stack) Top() (v interface{}, ok bool) {
 	return
 }
 
+// Pop pops a value from this stack.
+//
 func (p *Stack) Pop() (v interface{}, ok bool) {
 
 	n := len(p.data)
@@ -48,43 +58,27 @@ func (p *Stack) Pop() (v interface{}, ok bool) {
 	return
 }
 
+// PushRet pushs a function call result.
+//
 func (p *Stack) PushRet(ret []reflect.Value) error {
 
 	switch len(ret) {
 	case 0:
 		p.Push(nil)
 	case 1:
-		p.Push(castVal(ret[0]))
+		p.Push(ret[0].Interface())
 	default:
 		slice := make([]interface{}, len(ret))
 		for i, v := range ret {
-			slice[i] = castVal(v)
+			slice[i] = v.Interface()
 		}
 		p.Push(slice)
 	}
 	return nil
 }
 
-func castVal(v reflect.Value) interface{} {
-
-	switch kind := v.Kind(); {
-	case kind == reflect.Float64 || kind == reflect.Int:
-		return v.Interface()
-	case kind > reflect.Int && kind <= reflect.Int64:
-		if kind != reflect.Uint8 {
-			return int(v.Int())
-		} else {
-			return v.Interface()
-		}
-	case kind >= reflect.Uint && kind <= reflect.Uintptr:
-		return int(v.Uint())
-	case kind == reflect.Float32:
-		return v.Float()
-	default:
-		return v.Interface()
-	}
-}
-
+// PopArgs pops arguments of a function call.
+//
 func (p *Stack) PopArgs(arity int) (args []reflect.Value, ok bool) {
 
 	pstk := p.data
@@ -100,6 +94,8 @@ func (p *Stack) PopArgs(arity int) (args []reflect.Value, ok bool) {
 	return
 }
 
+// PopNArgs pops arguments of a function call.
+//
 func (p *Stack) PopNArgs(arity int) []interface{} {
 
 	pstk := p.data
@@ -116,6 +112,8 @@ func (p *Stack) PopNArgs(arity int) []interface{} {
 	panic("unexpected argument count")
 }
 
+// PopFnArgs pops argument names of a function call.
+//
 func (p *Stack) PopFnArgs(arity int) []string {
 
 	ok := false
@@ -135,11 +133,15 @@ func (p *Stack) PopFnArgs(arity int) []string {
 	panic("unexpected argument count")
 }
 
+// BaseFrame returns current stack size.
+//
 func (p *Stack) BaseFrame() int {
 
 	return len(p.data)
 }
 
+// SetFrame sets stack to new size.
+//
 func (p *Stack) SetFrame(n int) {
 
 	p.data = p.data[:n]
@@ -154,6 +156,8 @@ type theDefer struct {
 	end   int
 }
 
+// A Context represents the context of an executor.
+//
 type Context struct {
 	parent *Context
 	defers *theDefer
@@ -169,6 +173,8 @@ type Context struct {
 	onsel  bool // on select
 }
 
+// NewContext returns a new context of an executor.
+//
 func NewContext() *Context {
 
 	vars := make(map[string]interface{})
@@ -179,6 +185,15 @@ func NewContext() *Context {
 	return &Context{vars: vars, modmgr: modmgr}
 }
 
+// NewSimpleContext returns a new context of an executor, without module support.
+//
+func NewSimpleContext(vars map[string]interface{}, stk *Stack, code *Code) *Context {
+
+	return &Context{vars: vars, Stack: stk, Code: code}
+}
+
+// Exports returns a module exports.
+//
 func (p *Context) Exports() map[string]interface{} {
 
 	export := make(map[string]interface{}, len(p.export))
@@ -189,33 +204,45 @@ func (p *Context) Exports() map[string]interface{} {
 	return export
 }
 
+// Vars returns all variables in executing context.
+//
 func (p *Context) Vars() map[string]interface{} {
 
 	return p.vars
 }
 
+// Var returns a variable value in executing context.
+//
 func (p *Context) Var(name string) (v interface{}, ok bool) {
 
 	v, ok = p.vars[name]
 	return
 }
 
+// SetVar sets a variable value.
+//
 func (p *Context) SetVar(name string, v interface{}) {
 
 	p.vars[name] = v
 }
 
+// Unset deletes a variable.
+//
 func (p *Context) Unset(name string) {
 
 	delete(p.vars, name)
 }
 
+// ExecBlock executes an anonym function.
+//
 func (p *Context) ExecBlock(ip, ipEnd int) {
 
 	mod := NewFunction(nil, ip, ipEnd, nil, false)
 	mod.ExtCall(p)
 }
 
+// ExecDefers executes defer blocks.
+//
 func (p *Context) ExecDefers() {
 
 	d := p.defers
@@ -263,6 +290,8 @@ func (p *Error) Error() string {
 // -----------------------------------------------------------------------------
 // type Code
 
+// A Instr represents a instruction of the executor.
+//
 type Instr interface {
 	Exec(stk *Stack, ctx *Context)
 }
@@ -277,16 +306,22 @@ type ipFileLine struct {
 	file string
 }
 
+// A Code represents generated instructions to execute.
+//
 type Code struct {
 	data  []Instr
 	lines []*ipFileLine // ip => (file,line)
 }
 
+// A ReservedInstr represents a reserved instruction to be assigned.
+//
 type ReservedInstr struct {
 	code *Code
 	idx  int
 }
 
+// New returns a new Code object.
+//
 func New(data ...Instr) *Code {
 
 	return &Code{data, nil}

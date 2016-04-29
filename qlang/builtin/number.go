@@ -8,28 +8,30 @@ import (
 
 // -----------------------------------------------------------------------------
 
+// Inc returns a+1
+//
 func Inc(a interface{}) interface{} {
 
 	switch v := a.(type) {
 	case int:
-		return v+1
-	case byte:
-		return v+1
+		return v + 1
 	}
 	return panicUnsupportedOp1("++", a)
 }
 
+// Dec returns a-1
+//
 func Dec(a interface{}) interface{} {
 
 	switch v := a.(type) {
 	case int:
-		return v-1
-	case byte:
-		return v-1
+		return v - 1
 	}
 	return panicUnsupportedOp1("--", a)
 }
 
+// Neg returns -a
+//
 func Neg(a interface{}) interface{} {
 
 	switch a1 := a.(type) {
@@ -41,6 +43,8 @@ func Neg(a interface{}) interface{} {
 	return panicUnsupportedOp1("-", a)
 }
 
+// Float returns float64(a)
+//
 func Float(a interface{}) interface{} {
 
 	switch a1 := a.(type) {
@@ -48,12 +52,12 @@ func Float(a interface{}) interface{} {
 		return float64(a1)
 	case float64:
 		return a1
-	case byte:
-		return float64(a1)
 	}
 	return panicUnsupportedFn("float", a)
 }
 
+// Int returns int(a)
+//
 func Int(a interface{}) interface{} {
 
 	switch a1 := a.(type) {
@@ -61,31 +65,133 @@ func Int(a interface{}) interface{} {
 		return int(a1)
 	case int:
 		return a1
-	case byte:
-		return int(a1)
 	}
 	return panicUnsupportedFn("int", a)
 }
 
+// Int8 returns int8(a)
+//
+func Int8(a interface{}) interface{} {
+
+	switch a1 := a.(type) {
+	case float64:
+		return int8(a1)
+	case int:
+		return int8(a1)
+	}
+	return panicUnsupportedFn("int8", a)
+}
+
+// Int16 returns int16(a)
+//
+func Int16(a interface{}) interface{} {
+
+	switch a1 := a.(type) {
+	case float64:
+		return int16(a1)
+	case int:
+		return int16(a1)
+	}
+	return panicUnsupportedFn("int16", a)
+}
+
+// Int32 returns int32(a)
+//
+func Int32(a interface{}) interface{} {
+
+	switch a1 := a.(type) {
+	case float64:
+		return int32(a1)
+	case int:
+		return int32(a1)
+	}
+	return panicUnsupportedFn("int32", a)
+}
+
+// Int64 returns int64(a)
+//
+func Int64(a interface{}) interface{} {
+
+	switch a1 := a.(type) {
+	case float64:
+		return int64(a1)
+	case int:
+		return int64(a1)
+	}
+	return panicUnsupportedFn("int64", a)
+}
+
+// Uint16 returns uint16(a)
+//
+func Uint16(a interface{}) interface{} {
+
+	switch a1 := a.(type) {
+	case float64:
+		return uint16(a1)
+	case int:
+		return uint16(a1)
+	}
+	return panicUnsupportedFn("uint16", a)
+}
+
+// Uint32 returns uint32(a)
+//
+func Uint32(a interface{}) interface{} {
+
+	switch a1 := a.(type) {
+	case float64:
+		return uint32(a1)
+	case int:
+		return uint32(a1)
+	}
+	return panicUnsupportedFn("uint32", a)
+}
+
+// Uint64 returns uint64(a)
+//
+func Uint64(a interface{}) interface{} {
+
+	switch a1 := a.(type) {
+	case float64:
+		return uint64(a1)
+	case int:
+		return uint64(a1)
+	}
+	return panicUnsupportedFn("uint64", a)
+}
+
+// Uint returns uint(a)
+//
+func Uint(a interface{}) interface{} {
+
+	switch a1 := a.(type) {
+	case float64:
+		return uint(a1)
+	case int:
+		return uint(a1)
+	}
+	return panicUnsupportedFn("uint", a)
+}
+
+// Byte returns byte(a)
+//
 func Byte(a interface{}) interface{} {
 
 	switch a1 := a.(type) {
 	case int:
 		return byte(a1)
-	case byte:
-		return a1
 	case float64:
 		return byte(a1)
 	}
 	return panicUnsupportedFn("byte", a)
 }
 
+// String returns string(a)
+//
 func String(a interface{}) interface{} {
 
 	switch a1 := a.(type) {
 	case []byte:
-		return string(a1)
-	case byte:
 		return string(a1)
 	case int:
 		return string(a1)
@@ -93,6 +199,8 @@ func String(a interface{}) interface{} {
 	return panicUnsupportedFn("string", a)
 }
 
+// Mul returns a*b
+//
 func Mul(a, b interface{}) interface{} {
 
 	switch a1 := a.(type) {
@@ -114,6 +222,8 @@ func Mul(a, b interface{}) interface{} {
 	return panicUnsupportedOp2("*", a, b)
 }
 
+// Quo returns a/b
+//
 func Quo(a, b interface{}) interface{} {
 
 	switch a1 := a.(type) {
@@ -135,6 +245,8 @@ func Quo(a, b interface{}) interface{} {
 	return panicUnsupportedOp2("/", a, b)
 }
 
+// Mod returns a%b
+//
 func Mod(a, b interface{}) interface{} {
 
 	if a1, ok := a.(int); ok {
@@ -145,6 +257,8 @@ func Mod(a, b interface{}) interface{} {
 	return panicUnsupportedOp2("%", a, b)
 }
 
+// Add returns a+b
+//
 func Add(a, b interface{}) interface{} {
 
 	switch a1 := a.(type) {
@@ -170,6 +284,8 @@ func Add(a, b interface{}) interface{} {
 	return panicUnsupportedOp2("+", a, b)
 }
 
+// Sub returns a-b
+//
 func Sub(a, b interface{}) interface{} {
 
 	switch a1 := a.(type) {
@@ -191,6 +307,8 @@ func Sub(a, b interface{}) interface{} {
 	return panicUnsupportedOp2("-", a, b)
 }
 
+// Max returns max(a1, a2, ...)
+//
 func Max(args ...interface{}) (max interface{}) {
 
 	if len(args) == 0 {
@@ -206,6 +324,8 @@ func Max(args ...interface{}) (max interface{}) {
 	return panicUnsupportedFn("max", args)
 }
 
+// Min returns min(a1, a2, ...)
+//
 func Min(args ...interface{}) (min interface{}) {
 
 	if len(args) == 0 {
@@ -337,14 +457,12 @@ func panicUnsupportedFn(fn string, args ...interface{}) interface{} {
 		targs[i] = typeString(a)
 	}
 	panic("unsupported function: " + fn + "(" + strings.Join(targs, ",") + ")")
-	return nil
 }
 
 func panicUnsupportedOp1(op string, a interface{}) interface{} {
 
 	ta := typeString(a)
 	panic("unsupported operator: " + op + ta)
-	return nil
 }
 
 func panicUnsupportedOp2(op string, a, b interface{}) interface{} {
@@ -352,7 +470,6 @@ func panicUnsupportedOp2(op string, a, b interface{}) interface{} {
 	ta := typeString(a)
 	tb := typeString(b)
 	panic("unsupported operator: " + ta + op + tb)
-	return nil
 }
 
 func typeString(a interface{}) string {
