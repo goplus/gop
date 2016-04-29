@@ -215,3 +215,17 @@ func CallFnv(arity int) Instr {
 }
 
 // -----------------------------------------------------------------------------
+
+type typeOf int
+
+func (p typeOf) Exec(stk *Stack, ctx *Context) {
+
+	n := len(stk.data) - 1
+	stk.data[n] = reflect.TypeOf(stk.data[n])
+}
+
+// TypeOf is the type(v) instruction.
+//
+var TypeOf Instr = typeOf(0)
+
+// -----------------------------------------------------------------------------
