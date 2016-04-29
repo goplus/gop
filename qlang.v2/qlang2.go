@@ -60,7 +60,7 @@ fnbody = '(' IDENT/name %= ','/ARITY ?"..."/ARITY ')' '{'/_mute doc/_code '}'/_u
 
 afn = '{'/_mute doc/_code '}'/_unmute/afn
 
-member = IDENT | "class" | "new" | "recover" | "main" | "import" | "export" | "include"
+member = IDENT | "class" | "new" | "recover" | "main" | "import" | "export" | "include" | "type"
 
 newargs = ?('(' expr %= ','/ARITY ')')/ARITY
 
@@ -84,6 +84,7 @@ factor =
 	"range"! expr/_range |
 	"class"! '{' *classb/ARITY '}'/class |
 	"recover"! '(' ')'/recover |
+	"type"! '(' expr ')'/type |
 	"main"! afn |
 	'{'! (expr ':' expr) %= ','/ARITY ?',' '}'/map |
 	'!' factor/not |
@@ -307,6 +308,7 @@ var exports = map[string]interface{}{
 	"$mfn":     (*Compiler).memberFuncDecl,
 	"$class":   (*Compiler).fnClass,
 	"$new":     (*Compiler).fnNew,
+	"$type":    (*Compiler).fnType,
 	"$if":      (*Compiler).fnIf,
 	"$switch":  (*Compiler).fnSwitch,
 	"$for":     (*Compiler).fnFor,
