@@ -154,6 +154,8 @@ type theDefer struct {
 	end   int
 }
 
+// A Context represents the context of an executor.
+//
 type Context struct {
 	parent *Context
 	defers *theDefer
@@ -169,6 +171,8 @@ type Context struct {
 	onsel  bool // on select
 }
 
+// NewContext returns a new context of an executor.
+//
 func NewContext() *Context {
 
 	vars := make(map[string]interface{})
@@ -179,6 +183,15 @@ func NewContext() *Context {
 	return &Context{vars: vars, modmgr: modmgr}
 }
 
+// NewSimpleContext returns a new context of an executor, without module support.
+//
+func NewSimpleContext(vars map[string]interface{}, stk *Stack, code *Code) *Context {
+
+	return &Context{vars: vars, Stack: stk, Code: code}
+}
+
+// Exports returns a module exports.
+//
 func (p *Context) Exports() map[string]interface{} {
 
 	export := make(map[string]interface{}, len(p.export))
@@ -189,33 +202,45 @@ func (p *Context) Exports() map[string]interface{} {
 	return export
 }
 
+// Vars returns all variables in executing context.
+//
 func (p *Context) Vars() map[string]interface{} {
 
 	return p.vars
 }
 
+// Var returns a variable value in executing context.
+//
 func (p *Context) Var(name string) (v interface{}, ok bool) {
 
 	v, ok = p.vars[name]
 	return
 }
 
+// SetVar sets a variable value.
+//
 func (p *Context) SetVar(name string, v interface{}) {
 
 	p.vars[name] = v
 }
 
+// Unset deletes a variable.
+//
 func (p *Context) Unset(name string) {
 
 	delete(p.vars, name)
 }
 
+// ExecBlock executes an anonym function.
+//
 func (p *Context) ExecBlock(ip, ipEnd int) {
 
 	mod := NewFunction(nil, ip, ipEnd, nil, false)
 	mod.ExtCall(p)
 }
 
+// ExecDefers executes defer blocks.
+//
 func (p *Context) ExecDefers() {
 
 	d := p.defers
