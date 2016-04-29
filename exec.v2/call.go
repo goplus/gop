@@ -14,6 +14,7 @@ var (
 
 var (
 	typeFloat64 = reflect.TypeOf(float64(0))
+	typeIntf    = reflect.TypeOf((*interface{})(nil)).Elem()
 )
 
 // -----------------------------------------------------------------------------
@@ -37,7 +38,7 @@ func (p *iCall) Exec(stk *Stack, ctx *Context) {
 			panic(ErrStackDamaged)
 		}
 		if tfn.IsVariadic() {
-			n--;
+			n--
 			t := tfn.In(n).Elem()
 			for i := n; i < arity; i++ {
 				validateType(&in[i], t)
@@ -57,7 +58,19 @@ func (p *iCall) Exec(stk *Stack, ctx *Context) {
 func validateType(in *reflect.Value, t reflect.Type) {
 
 	switch t.Kind() {
-	case reflect.Interface, reflect.Ptr:
+	case reflect.Interface:
+		switch kind := in.Kind(); {
+		case kind == reflect.Invalid:
+			*in = reflect.Zero(t) // work around `reflect: Call using zero Value argument`
+		case kind > reflect.Int && kind <= reflect.Int64:
+			*in = reflect.ValueOf(int(in.Int()))
+		case kind > reflect.Uint && kind <= reflect.Uintptr:
+			*in = reflect.ValueOf(int(in.Uint()))
+		case kind == reflect.Float32:
+			*in = reflect.ValueOf(in.Float())
+		}
+		return
+	case reflect.Ptr:
 		if !in.IsValid() {
 			*in = reflect.Zero(t) // work around `reflect: Call using zero Value argument`
 		}
@@ -89,6 +102,8 @@ lzErr:
 	panic(fmt.Errorf("invalid argument type: require `%v`, but we got `%v`", t, tin))
 }
 
+// Call returns a function call instruction.
+//
 func Call(fn interface{}, varity ...int) Instr {
 
 	tfn := reflect.TypeOf(fn)
@@ -145,7 +160,7 @@ func (arity iCallFn) Exec(stk *Stack, ctx *Context) {
 
 	in = in[1:]
 	if isVariadic {
-		n--;
+		n--
 		t := tfn.In(n).Elem()
 		for i := n; i < int(arity); i++ {
 			validateType(&in[i], t)
@@ -162,6 +177,8 @@ func (arity iCallFn) Exec(stk *Stack, ctx *Context) {
 	}
 }
 
+// CallFn returns a function call instruction.
+//
 func CallFn(arity int) Instr {
 	return iCallFn(arity)
 }
@@ -191,9 +208,10 @@ func (arity iCallFnv) Exec(stk *Stack, ctx *Context) {
 	instr.Exec(stk, ctx)
 }
 
+// CallFnv returns a function call instruction.
+//
 func CallFnv(arity int) Instr {
 	return iCallFnv(arity)
 }
 
 // -----------------------------------------------------------------------------
-

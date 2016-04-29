@@ -3,8 +3,8 @@ package qlang_test
 import (
 	"testing"
 
-	_ "qlang.io/qlang/builtin"
 	"qlang.io/qlang.v2/qlang"
+	_ "qlang.io/qlang/builtin"
 )
 
 // -----------------------------------------------------------------------------
@@ -243,3 +243,37 @@ func TestClosure2(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
+const testUint32Code = `
+
+a = uint32(3)
+x = foo(a)
+`
+
+func toUint32(v int) uint32 {
+	return uint32(v)
+}
+
+func fooUint32(v uint32) uint32 {
+	return v * 2
+}
+
+func TestUint32(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+
+	lang.SetVar("uint32", toUint32)
+	lang.SetVar("foo", fooUint32)
+
+	err = lang.SafeExec([]byte(testUint32Code), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("x"); !ok || v != uint32(6) {
+		t.Fatal("x != 6, x =", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
