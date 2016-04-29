@@ -38,6 +38,24 @@ func (p *Class) Exec(stk *Stack, ctx *Context) {
 	stk.Push(p)
 }
 
+// New create a new instance of this class.
+//
+func (p *Class) New(args ...interface{}) *Object {
+
+	obj := &Object{
+		vars: make(map[string]interface{}),
+		Cls:  p,
+	}
+	if init, ok := p.Fns["_init"]; ok { // 构造函数
+		closure := &Method{
+			this: obj,
+			fn:   init,
+		}
+		closure.Call(args...)
+	}
+	return obj
+}
+
 // IClass returns a Class instruction.
 //
 func IClass() *Class {
@@ -65,6 +83,22 @@ func (p *Object) SetVar(name string, val interface{}) {
 	p.vars[name] = val
 }
 
+// Member returns a member of this object.
+//
+func (p *Object) Member(name string) interface{} {
+
+	if val, ok := p.vars[name]; ok {
+		return val
+	}
+	if fn, ok := p.Cls.Fns[name]; ok {
+		return &Method{
+			this: p,
+			fn:   fn,
+		}
+	}
+	panic(fmt.Errorf("object doesn't has member `%s`", name))
+}
+
 // SetMemberVar implements set(object, k1, v1, k2, v2, ...), ie. sets values of qlang object's multiple members.
 //
 func SetMemberVar(m interface{}, args ...interface{}) {
@@ -84,12 +118,16 @@ func init() {
 
 // -----------------------------------------------------------------------------
 
-type thisDeref struct {
+// A Method represents a method of an Object.
+//
+type Method struct {
 	this *Object
 	fn   *Function
 }
 
-func (p *thisDeref) Call(a ...interface{}) interface{} {
+// Call calls this method with arguments.
+//
+func (p *Method) Call(a ...interface{}) interface{} {
 
 	args := make([]interface{}, len(a)+1)
 	args[0] = p.this
@@ -113,17 +151,7 @@ func (nArgs iNew) Exec(stk *Stack, ctx *Context) {
 
 	if v, ok := stk.Pop(); ok {
 		if cls, ok := v.(*Class); ok {
-			obj := &Object{
-				vars: make(map[string]interface{}),
-				Cls:  cls,
-			}
-			if init, ok := cls.Fns["_init"]; ok { // 构造函数
-				closure := &thisDeref{
-					this: obj,
-					fn:   init,
-				}
-				closure.Call(args...)
-			}
+			obj := cls.New(args...)
 			stk.Push(obj)
 			return
 		}
@@ -160,19 +188,7 @@ func (p *iMemberRef) Exec(stk *Stack, ctx *Context) {
 	t := reflect.TypeOf(v)
 	switch t {
 	case typeObjectPtr:
-		o := v.(*Object)
-		val, ok := o.vars[name]
-		if !ok {
-			if fn, ok := o.Cls.Fns[name]; ok {
-				t := &thisDeref{
-					this: o,
-					fn:   fn,
-				}
-				val = t
-			} else {
-				panic(fmt.Errorf("object doesn't has member `%s`", name))
-			}
-		}
+		val := v.(*Object).Member(name)
 		stk.Push(val)
 		return
 	case typeClassPtr:

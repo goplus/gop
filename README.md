@@ -782,7 +782,7 @@ t1 = type(1) // 相当于调用 Go 语言中的 reflect.TypeOf
 t2 = type(fn() {})
 ```
 
-我们得到了 *qlang.Function。这说明尽管用户自定义的函数原型多样，但是其 Go 类型是一致的。
+我们得到了 *Function。这说明尽管用户自定义的函数原型多样，但是其 Go 类型是一致的。
 
 我们也可以看看用户自定义的类型：
 
@@ -796,7 +796,7 @@ t3 = type(foo)
 t4 = type(foo.f)
 ```
 
-可以看到，class Foo 的 Go 类型是 *qlang.Class，而 object foo 的 Go 类型是 *qlang.Object。而 Foo.f 和普通用户自定义函数一致，也是 *qlang.Function，但 foo.f 不一样，它是 *qlang.thisDref 类型。
+可以看到，class Foo 的 Go 类型是 *Class，而 object foo 的 Go 类型是 *Object。而 Foo.f 和普通用户自定义函数一致，也是 *Function，但 foo.f 不一样，它是 *Method 类型。
 
 # 附录
 
