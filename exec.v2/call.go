@@ -58,7 +58,7 @@ func (p *iCall) Exec(stk *Stack, ctx *Context) {
 func validateType(in *reflect.Value, t reflect.Type) {
 
 	switch t.Kind() {
-	case reflect.Interface, reflect.Ptr:
+	case reflect.Interface:
 		switch kind := in.Kind(); {
 		case kind == reflect.Invalid:
 			*in = reflect.Zero(t) // work around `reflect: Call using zero Value argument`
@@ -68,6 +68,11 @@ func validateType(in *reflect.Value, t reflect.Type) {
 			*in = reflect.ValueOf(int(in.Uint()))
 		case kind == reflect.Float32:
 			*in = reflect.ValueOf(in.Float())
+		}
+		return
+	case reflect.Ptr:
+		if !in.IsValid() {
+			*in = reflect.Zero(t) // work around `reflect: Call using zero Value argument`
 		}
 		return
 	}
