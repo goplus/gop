@@ -63,6 +63,11 @@ func (p *Compiler) fnNew() {
 	p.code.Block(exec.INew(nArgs))
 }
 
+func (p *Compiler) fnType() {
+
+	p.code.Block(exec.TypeOf)
+}
+
 func (p *Compiler) memberRef(name string) {
 
 	p.code.Block(exec.MemberRef(name))

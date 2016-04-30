@@ -6,6 +6,8 @@ import (
 
 // -----------------------------------------------------------------------------
 
+// Exports is export table of this module.
+//
 var Exports = map[string]interface{}{
 	"valueOf":   reflect.ValueOf,
 	"typeOf":    reflect.TypeOf,
@@ -14,11 +16,10 @@ var Exports = map[string]interface{}{
 	"makeMap":   reflect.MakeMap,
 	"zero":      reflect.Zero,
 
-	"Map":       int(reflect.Map),
-	"Slice":     int(reflect.Slice),
-	"Interface": int(reflect.Interface),
-	"Int":       int(reflect.Int),
+	"Map":       reflect.Map,
+	"Slice":     reflect.Slice,
+	"Interface": reflect.Interface,
+	"Int":       reflect.Int,
 }
 
 // -----------------------------------------------------------------------------
-
