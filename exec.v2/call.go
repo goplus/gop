@@ -64,7 +64,7 @@ func validateType(in *reflect.Value, t reflect.Type) {
 			*in = reflect.Zero(t) // work around `reflect: Call using zero Value argument`
 		case kind > reflect.Int && kind <= reflect.Int64:
 			*in = reflect.ValueOf(int(in.Int()))
-		case kind > reflect.Uint && kind <= reflect.Uintptr:
+		case kind >= reflect.Uint && kind <= reflect.Uintptr:
 			*in = reflect.ValueOf(int(in.Uint()))
 		case kind == reflect.Float32:
 			*in = reflect.ValueOf(in.Float())
