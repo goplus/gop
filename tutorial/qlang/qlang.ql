@@ -75,9 +75,9 @@ Stack = class {
 		if n > 0 {
 			v = this.stk[n-1]
 			this.stk = this.stk[:n-1]
-			return [v, true]
+			return v, true
 		}
-		return [nil, false]
+		return nil, false
 	}
 
 	fn push(v) {
@@ -246,7 +246,7 @@ Interpreter = class {
 			vars = val.vars
 			val = vars[name]
 		}
-		return [vars, val]
+		return vars, val
 	}
 
 	fn inc(name) {
@@ -786,7 +786,7 @@ fntable = {
 	"min":      min,
 	"len":      len,
 	"append":   append,
-	"type":     type,
+	"type":     reflect.typeOf,
 	"printf":   printf,
 	"println":  println,
 	"fprintln": fprintln,

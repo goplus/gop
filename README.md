@@ -915,9 +915,9 @@ Stack = class {
 		if n > 0 {
 			v = this.stk[n-1]
 			this.stk = this.stk[:n-1]
-			return [v, true]
+			return v, true
 		}
-		return [nil, false]
+		return nil, false
 	}
 
 	fn push(v) {

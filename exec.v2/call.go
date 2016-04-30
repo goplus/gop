@@ -64,7 +64,7 @@ func validateType(in *reflect.Value, t reflect.Type) {
 			*in = reflect.Zero(t) // work around `reflect: Call using zero Value argument`
 		case kind > reflect.Int && kind <= reflect.Int64:
 			*in = reflect.ValueOf(int(in.Int()))
-		case kind > reflect.Uint && kind <= reflect.Uintptr:
+		case kind >= reflect.Uint && kind <= reflect.Uintptr:
 			*in = reflect.ValueOf(int(in.Uint()))
 		case kind == reflect.Float32:
 			*in = reflect.ValueOf(in.Float())
@@ -213,5 +213,19 @@ func (arity iCallFnv) Exec(stk *Stack, ctx *Context) {
 func CallFnv(arity int) Instr {
 	return iCallFnv(arity)
 }
+
+// -----------------------------------------------------------------------------
+
+type typeOf int
+
+func (p typeOf) Exec(stk *Stack, ctx *Context) {
+
+	n := len(stk.data) - 1
+	stk.data[n] = reflect.TypeOf(stk.data[n])
+}
+
+// TypeOf is the type(v) instruction.
+//
+var TypeOf Instr = typeOf(0)
 
 // -----------------------------------------------------------------------------
