@@ -2,6 +2,8 @@ package builtin
 
 // -----------------------------------------------------------------------------
 
+// Not returns !a
+//
 func Not(a interface{}) interface{} {
 
 	if a1, ok := a.(bool); ok {
@@ -10,15 +12,9 @@ func Not(a interface{}) interface{} {
 	return panicUnsupportedOp1("!", a)
 }
 
+// LT returns a < b
+//
 func LT(a, b interface{}) interface{} {
-
-	if a1, ok := a.(byte); ok {
-		a = int(a1)
-	}
-
-	if b1, ok := b.(byte); ok {
-		b = int(b1)
-	}
 
 	switch a1 := a.(type) {
 	case int:
@@ -43,15 +39,9 @@ func LT(a, b interface{}) interface{} {
 	return panicUnsupportedOp2("<", a, b)
 }
 
+// GT returns a > b
+//
 func GT(a, b interface{}) interface{} {
-
-	if a1, ok := a.(byte); ok {
-		a = int(a1)
-	}
-
-	if b1, ok := b.(byte); ok {
-		b = int(b1)
-	}
 
 	switch a1 := a.(type) {
 	case int:
@@ -76,15 +66,9 @@ func GT(a, b interface{}) interface{} {
 	return panicUnsupportedOp2(">", a, b)
 }
 
+// LE returns a <= b
+//
 func LE(a, b interface{}) interface{} {
-
-	if a1, ok := a.(byte); ok {
-		a = int(a1)
-	}
-
-	if b1, ok := b.(byte); ok {
-		b = int(b1)
-	}
 
 	switch a1 := a.(type) {
 	case int:
@@ -109,15 +93,9 @@ func LE(a, b interface{}) interface{} {
 	return panicUnsupportedOp2("<=", a, b)
 }
 
+// GE returns a >= b
+//
 func GE(a, b interface{}) interface{} {
-
-	if a1, ok := a.(byte); ok {
-		a = int(a1)
-	}
-
-	if b1, ok := b.(byte); ok {
-		b = int(b1)
-	}
 
 	switch a1 := a.(type) {
 	case int:
@@ -142,11 +120,15 @@ func GE(a, b interface{}) interface{} {
 	return panicUnsupportedOp2(">=", a, b)
 }
 
+// EQ returns a == b
+//
 func EQ(a, b interface{}) interface{} {
 
 	return a == b
 }
 
+// NE returns a != b
+//
 func NE(a, b interface{}) interface{} {
 
 	return a != b

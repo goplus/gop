@@ -6,7 +6,7 @@ import (
 
 // -----------------------------------------------------------------------------
 
-// Exports is export table of this module.
+// Exports is the export table of this module.
 //
 var Exports = map[string]interface{}{
 	"valueOf":   reflect.ValueOf,
