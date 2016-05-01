@@ -10,10 +10,14 @@ import (
 
 // -----------------------------------------------------------------------------
 
+// Panic panics with v.
+//
 func Panic(v interface{}) {
 	panic(v)
 }
 
+// Panicf panics with sprintf(format, args...).
+//
 func Panicf(format string, args ...interface{}) {
 	panic(fmt.Sprintf(format, args...))
 }
@@ -24,16 +28,22 @@ var (
 	zeroVal reflect.Value
 )
 
+// Mkmap makes a new map object.
+//
 func Mkmap(typ interface{}, n ...int) interface{} {
 
 	return reflect.MakeMap(types.Reflect(typ)).Interface()
 }
 
+// MapOf makes a map type.
+//
 func MapOf(key, val interface{}) interface{} {
 
 	return reflect.MapOf(types.Reflect(key), types.Reflect(val))
 }
 
+// MapFrom creates a map from args.
+//
 func MapFrom(args ...interface{}) interface{} {
 
 	n := len(args)
@@ -108,11 +118,15 @@ func MapFrom(args ...interface{}) interface{} {
 	}
 }
 
+// Delete deletes a key from map object.
+//
 func Delete(m interface{}, key interface{}) {
 
 	reflect.ValueOf(m).SetMapIndex(reflect.ValueOf(key), zeroVal)
 }
 
+// Set sets (index, value) pairs to an object. object can be a slice, an array, a map or a user-defined class.
+//
 func Set(m interface{}, args ...interface{}) {
 
 	n := len(args)
@@ -137,7 +151,7 @@ func Set(m interface{}, args ...interface{}) {
 			}
 			o.SetMapIndex(key, val)
 		}
-	case reflect.Slice:
+	case reflect.Slice, reflect.Array:
 		for i := 0; i < n; i += 2 {
 			o.Index(args[i].(int)).Set(reflect.ValueOf(args[i+1]))
 		}
@@ -146,6 +160,8 @@ func Set(m interface{}, args ...interface{}) {
 	}
 }
 
+// SetIndex sets a (index, value) pair to an object. object can be a slice, an array, a map or a user-defined class.
+//
 func SetIndex(m, key, v interface{}) {
 
 	o := reflect.ValueOf(m)
@@ -161,7 +177,7 @@ func SetIndex(m, key, v interface{}) {
 			val = reflect.ValueOf(v)
 		}
 		o.SetMapIndex(reflect.ValueOf(key), val)
-	case reflect.Slice:
+	case reflect.Slice, reflect.Array:
 		if idx, ok := key.(int); ok {
 			o.Index(idx).Set(reflect.ValueOf(v))
 		} else {
@@ -172,6 +188,8 @@ func SetIndex(m, key, v interface{}) {
 	}
 }
 
+// Get gets a value from an object. object can be a slice, an array, a map or a user-defined class.
+//
 func Get(m interface{}, key interface{}) interface{} {
 
 	o := reflect.ValueOf(m)
@@ -182,18 +200,22 @@ func Get(m interface{}, key interface{}) interface{} {
 			return v.Interface()
 		}
 		return qlang.Undefined
-	case reflect.Slice, reflect.String:
+	case reflect.Slice, reflect.String, reflect.Array:
 		return o.Index(key.(int)).Interface()
 	default:
 		panic(fmt.Sprintf("%v doesn't support operator[]", o.Type()))
 	}
 }
 
+// GetVar returns a member variable of an object. object can be a slice, an array, a map or a user-defined class.
+//
 func GetVar(m interface{}, key interface{}) interface{} {
 
 	return &qlang.DataIndex{Data: m, Index: key}
 }
 
+// Len returns length of a collection object. object can be a slice, an array, a map, a string or a chan.
+//
 func Len(a interface{}) int {
 
 	if a == nil {
@@ -205,6 +227,8 @@ func Len(a interface{}) int {
 	return reflect.ValueOf(a).Len()
 }
 
+// Cap returns capacity of a collection object. object can be a slice, an array or a chan.
+//
 func Cap(a interface{}) int {
 
 	if a == nil {
@@ -216,6 +240,8 @@ func Cap(a interface{}) int {
 	return reflect.ValueOf(a).Cap()
 }
 
+// SubSlice returns a[i:j]. if i == nil it returns a[:j]. if j == nil it returns a[i:].
+//
 func SubSlice(a, i, j interface{}) interface{} {
 
 	var va = reflect.ValueOf(a)
@@ -231,11 +257,15 @@ func SubSlice(a, i, j interface{}) interface{} {
 	return va.Slice(i1, j1).Interface()
 }
 
+// Copy does copy(a, b).
+//
 func Copy(a, b interface{}) int {
 
 	return reflect.Copy(reflect.ValueOf(a), reflect.ValueOf(b))
 }
 
+// Append does append(a, vals...)
+//
 func Append(a interface{}, vals ...interface{}) interface{} {
 
 	switch arr := a.(type) {
@@ -274,6 +304,8 @@ func appendFloat(a []float64, vals ...interface{}) interface{} {
 	return a
 }
 
+// Slice returns a new slice.
+//
 func Slice(typ interface{}, args ...interface{}) interface{} {
 
 	n, cap := 0, 0
@@ -299,6 +331,8 @@ func Slice(typ interface{}, args ...interface{}) interface{} {
 	return reflect.MakeSlice(typSlice, n, cap).Interface()
 }
 
+// SliceFrom creates a slice from args.
+//
 func SliceFrom(args ...interface{}) interface{} {
 
 	n := len(args)
@@ -320,6 +354,8 @@ func SliceFrom(args ...interface{}) interface{} {
 	}
 }
 
+// SliceOf makes a slice type.
+//
 func SliceOf(typ interface{}) interface{} {
 
 	return reflect.SliceOf(types.Reflect(typ))

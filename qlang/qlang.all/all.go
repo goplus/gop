@@ -1,7 +1,9 @@
 package qlang_all
 
 import (
+	"qlang.io/qlang.spec.v1"
 	"qlang.io/qlang/bufio"
+	"qlang.io/qlang/bytes"
 	"qlang.io/qlang/crypto/md5"
 	"qlang.io/qlang/encoding/json"
 	"qlang.io/qlang/io/ioutil"
@@ -15,24 +17,29 @@ import (
 	"qlang.io/qlang/sync"
 	"qlang.io/qlang/tpl.v1/extractor"
 	"qlang.io/qlang/version"
-	"qlang.io/qlang.spec.v1"
 
+	// qlang builtin modules
 	_ "qlang.io/qlang/builtin"
 	_ "qlang.io/qlang/chan"
 )
 
 // -----------------------------------------------------------------------------
 
+// Copyright prints qlang copyright information.
+//
 func Copyright() {
 	version.Copyright()
 }
 
+// InitSafe inits qlang and imports modules.
+//
 func InitSafe(safeMode bool) {
 
 	qlang.SafeMode = safeMode
 
 	qlang.Import("", math.Exports) // import math as builtin package
 	qlang.Import("bufio", bufio.Exports)
+	qlang.Import("bytes", bytes.Exports)
 	qlang.Import("md5", md5.Exports)
 	qlang.Import("ioutil", ioutil.Exports)
 	qlang.Import("json", json.Exports)

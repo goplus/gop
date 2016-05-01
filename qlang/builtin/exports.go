@@ -59,6 +59,14 @@ var exports = map[string]interface{}{
 	"$add": Add,
 	"$sub": Sub,
 
+	"$xor":    Xor,
+	"$lshr":   Lshr,
+	"$rshr":   Rshr,
+	"$bitand": BitAnd,
+	"$bitor":  BitOr,
+	"$bitnot": BitNot,
+	"$andnot": AndNot,
+
 	"$lt":  LT,
 	"$gt":  GT,
 	"$le":  LE,
@@ -81,6 +89,12 @@ func init() {
 	qlang.Mul = Mul
 	qlang.Quo = Quo
 	qlang.Mod = Mod
+	qlang.Xor = Xor
+	qlang.Lshr = Lshr
+	qlang.Rshr = Rshr
+	qlang.BitAnd = BitAnd
+	qlang.BitOr = BitOr
+	qlang.AndNot = AndNot
 	qlang.Inc = Inc
 	qlang.Dec = Dec
 	qlang.Import("", exports)
