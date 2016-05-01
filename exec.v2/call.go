@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+
+	"qlang.io/qlang.spec.v1"
 )
 
 var (
@@ -227,5 +229,29 @@ func (p typeOf) Exec(stk *Stack, ctx *Context) {
 // TypeOf is the type(v) instruction.
 //
 var TypeOf Instr = typeOf(0)
+
+// -----------------------------------------------------------------------------
+
+type sliceFrom int
+
+var nilVarSlice = make([]interface{}, 0)
+
+func (p sliceFrom) Exec(stk *Stack, ctx *Context) {
+
+	if p == 0 {
+		stk.data = append(stk.data, nilVarSlice)
+		return
+	}
+	n := len(stk.data) - int(p)
+	stk.data[n] = qlang.SliceFrom(stk.data[n:]...)
+	stk.data = stk.data[:n+1]
+}
+
+// SliceFrom is an instruction that creates slice in [a1, a2, ...] form.
+//
+func SliceFrom(arity int) Instr {
+
+	return sliceFrom(arity)
+}
 
 // -----------------------------------------------------------------------------
