@@ -75,6 +75,12 @@ var (
 	MapFrom   = dummyN
 	SliceFrom = dummyN
 	SubSlice  = dummy3
+	Xor       = dummy2
+	Lshr      = dummy2
+	Rshr      = dummy2
+	BitAnd    = dummy2
+	BitOr     = dummy2
+	AndNot    = dummy2
 	EQ        = dummy2
 	GetVar    = dummy2
 	Get       = dummy2
@@ -96,6 +102,14 @@ var Fntable = map[string]interface{}{
 	"$mod": dummy2,
 	"$add": dummy2,
 	"$sub": dummy2,
+
+	"$xor":    dummy2,
+	"$lshr":   dummy2,
+	"$rshr":   dummy2,
+	"$bitand": dummy2,
+	"$bitor":  dummy2,
+	"$bitnot": dummy1,
+	"$andnot": dummy2,
 
 	"$lt":  dummy2,
 	"$gt":  dummy2,

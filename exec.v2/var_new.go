@@ -148,6 +148,12 @@ type iSubAssignEx int
 type iMulAssignEx int
 type iQuoAssignEx int
 type iModAssignEx int
+type iXorAssignEx int
+type iBitAndAssignEx int
+type iBitOrAssignEx int
+type iAndNotAssignEx int
+type iLshrAssignEx int
+type iRshrAssignEx int
 type iIncEx int
 type iDecEx int
 
@@ -171,6 +177,30 @@ func (p iModAssignEx) Exec(stk *Stack, ctx *Context) {
 	execOpAssignEx(qlang.Mod, stk, ctx)
 }
 
+func (p iXorAssignEx) Exec(stk *Stack, ctx *Context) {
+	execOpAssignEx(qlang.Xor, stk, ctx)
+}
+
+func (p iBitAndAssignEx) Exec(stk *Stack, ctx *Context) {
+	execOpAssignEx(qlang.BitAnd, stk, ctx)
+}
+
+func (p iBitOrAssignEx) Exec(stk *Stack, ctx *Context) {
+	execOpAssignEx(qlang.BitOr, stk, ctx)
+}
+
+func (p iAndNotAssignEx) Exec(stk *Stack, ctx *Context) {
+	execOpAssignEx(qlang.AndNot, stk, ctx)
+}
+
+func (p iLshrAssignEx) Exec(stk *Stack, ctx *Context) {
+	execOpAssignEx(qlang.Lshr, stk, ctx)
+}
+
+func (p iRshrAssignEx) Exec(stk *Stack, ctx *Context) {
+	execOpAssignEx(qlang.Rshr, stk, ctx)
+}
+
 func (p iIncEx) Exec(stk *Stack, ctx *Context) {
 	execOp1AssignEx(qlang.Inc, stk, ctx)
 }
@@ -180,13 +210,19 @@ func (p iDecEx) Exec(stk *Stack, ctx *Context) {
 }
 
 var (
-	AddAssignEx Instr = iAddAssignEx(0)
-	SubAssignEx Instr = iSubAssignEx(0)
-	MulAssignEx Instr = iMulAssignEx(0)
-	QuoAssignEx Instr = iQuoAssignEx(0)
-	ModAssignEx Instr = iModAssignEx(0)
-	IncEx       Instr = iIncEx(0)
-	DecEx       Instr = iDecEx(0)
+	AddAssignEx    Instr = iAddAssignEx(0)
+	SubAssignEx    Instr = iSubAssignEx(0)
+	MulAssignEx    Instr = iMulAssignEx(0)
+	QuoAssignEx    Instr = iQuoAssignEx(0)
+	ModAssignEx    Instr = iModAssignEx(0)
+	XorAssignEx    Instr = iXorAssignEx(0)
+	BitAndAssignEx Instr = iBitAndAssignEx(0)
+	BitOrAssignEx  Instr = iBitOrAssignEx(0)
+	AndNotAssignEx Instr = iAndNotAssignEx(0)
+	LshrAssignEx   Instr = iLshrAssignEx(0)
+	RshrAssignEx   Instr = iRshrAssignEx(0)
+	IncEx          Instr = iIncEx(0)
+	DecEx          Instr = iDecEx(0)
 )
 
 // -----------------------------------------------------------------------------
