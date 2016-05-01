@@ -14,9 +14,11 @@ import (
 
 const grammar = `
 
-term1 = factor *('*' factor/mul | '/' factor/quo | '%' factor/mod)
+term1 = factor *(
+	'*' factor/mul | '/' factor/quo | '%' factor/mod |
+	"<<" factor/lshr | ">>" factor/rshr | '&' factor/bitand | "&^" factor/andnot)
 
-term2 = term1 *('+' term1/add | '-' term1/sub)
+term2 = term1 *('+' term1/add | '-' term1/sub | '|' term1/bitor | '^' term1/xor)
 
 term31 = term2 *('<' term2/lt | '>' term2/gt | "==" term2/eq | "<=" term2/le | ">=" term2/ge | "!=" term2/ne)
 
@@ -31,7 +33,9 @@ sexpr = expr (
 	','/tovar! expr/tovar % ','/ARITY '=' expr % ','/ARITY /massign |
 	"++"/tovar/inc | "--"/tovar/dec |
 	"+="/tovar! expr/adda | "-="/tovar! expr/suba |
-	"*="/tovar! expr/mula | "/="/tovar! expr/quoa | "%="/tovar! expr/moda | 1/pop)
+	"*="/tovar! expr/mula | "/="/tovar! expr/quoa | "%="/tovar! expr/moda |
+	"^="/tovar! expr/xora | "<<="/tovar! expr/lshra | ">>="/tovar! expr/rshra |
+	"&="/tovar! expr/bitanda | "|="/tovar! expr/bitora | "&^="/tovar! expr/andnota | 1/pop)
 
 s = "if"/_mute! expr/_code body *("elif" expr/_code body)/_ARITY ?("else" body)/_ARITY/_unmute/if |
 	"switch"/_mute! ?(~'{' expr)/_code '{' swbody '}'/_unmute/switch |
@@ -88,6 +92,7 @@ factor =
 	"main"! afn |
 	'{'! (expr ':' expr) %= ','/ARITY ?',' '}'/map |
 	'!' factor/not |
+	'^' factor/bitnot |
 	'-' factor/neg |
 	"<-" factor/chout |
 	'+' factor
@@ -294,6 +299,12 @@ var exports = map[string]interface{}{
 	"$mula":    (*Compiler).mulAssign,
 	"$quoa":    (*Compiler).quoAssign,
 	"$moda":    (*Compiler).modAssign,
+	"$xora":    (*Compiler).xorAssign,
+	"$lshra":   (*Compiler).lshrAssign,
+	"$rshra":   (*Compiler).rshrAssign,
+	"$bitanda": (*Compiler).bitandAssign,
+	"$bitora":  (*Compiler).bitorAssign,
+	"$andnota": (*Compiler).andnotAssign,
 	"$defer":   (*Compiler).fnDefer,
 	"$go":      (*Compiler).fnGo,
 	"$chin":    (*Compiler).chanIn,

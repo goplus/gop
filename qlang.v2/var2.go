@@ -42,6 +42,36 @@ func (p *Compiler) modAssign() {
 	p.code.Block(exec.ModAssignEx)
 }
 
+func (p *Compiler) xorAssign() {
+
+	p.code.Block(exec.XorAssignEx)
+}
+
+func (p *Compiler) bitandAssign() {
+
+	p.code.Block(exec.BitAndAssignEx)
+}
+
+func (p *Compiler) bitorAssign() {
+
+	p.code.Block(exec.BitOrAssignEx)
+}
+
+func (p *Compiler) andnotAssign() {
+
+	p.code.Block(exec.AndNotAssignEx)
+}
+
+func (p *Compiler) lshrAssign() {
+
+	p.code.Block(exec.LshrAssignEx)
+}
+
+func (p *Compiler) rshrAssign() {
+
+	p.code.Block(exec.RshrAssignEx)
+}
+
 func (p *Compiler) multiAssign() {
 
 	nval := p.popArity()
