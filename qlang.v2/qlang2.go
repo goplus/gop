@@ -216,7 +216,7 @@ func (p *Compiler) vMap() {
 func (p *Compiler) vSlice() {
 
 	arity := p.popArity()
-	p.code.Block(exec.Call(qlang.SliceFrom, arity))
+	p.code.Block(exec.SliceFrom(arity))
 }
 
 func (p *Compiler) vCall() {
