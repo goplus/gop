@@ -143,8 +143,8 @@ a = [1, 2, 3] // 创建一个 int slice，并初始化为 [1, 2, 3]
 b = [1, 2.3, 5] // 创建一个 float slice
 c = ["a", "b", "c"] // 创建一个 string slice
 d = ["a", 1, 2.3] // 创建一个 var slice (等价于 Go 语言的 []interface{})
-e = slice("int", len, cap) // 创建一个 int slice，并将长度设置为 len，容量设置为 cap
-f = slice(type(e), len, cap) // 创建一个 int slice 的 slice，也就是 Go 语言里面的 [][]int
+e = mkslice("int", len, cap) // 创建一个 int slice，并将长度设置为 len，容量设置为 cap
+f = mkslice(type(e), len, cap) // 创建一个 int slice 的 slice，也就是 Go 语言里面的 [][]int
 ```
 
 和 Go 语言类似，slice 有如下内置的操作：
@@ -931,7 +931,7 @@ Stack = class {
 		if n < arity {
 			panic("Stack.popArgs: unexpected")
 		}
-		args = slice("var", arity)
+		args = mkslice("var", arity)
 		copy(args, this.stk[n-arity:])
 		this.stk = this.stk[:n-arity]
 		return args

@@ -35,7 +35,7 @@ type iAnonymFn struct {
 func (p *iAnonymFn) Exec(stk *Stack, ctx *Context) {
 
 	fn := NewFunction(nil, p.start, p.end, nil, false)
-	fn.parent = ctx
+	fn.Parent = ctx
 	stk.Push(fn.ExtCall(nil))
 }
 

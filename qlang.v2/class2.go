@@ -1,6 +1,9 @@
 package qlang
 
 import (
+	"errors"
+
+	ipt "qiniupkg.com/text/tpl.v1/interpreter"
 	"qiniupkg.com/text/tpl.v1/interpreter.util"
 	"qlang.io/exec.v2"
 )
@@ -29,18 +32,17 @@ func (p *Compiler) memberFuncDecl() {
 	p.gstk.Push(fn)
 }
 
-func (p *Compiler) newClass(e interpreter.Engine, members []interface{}) *exec.Class {
+func (p *Compiler) addMethods(cls *exec.Class, e interpreter.Engine, members []interface{}) {
 
-	cls := exec.IClass()
 	for _, val := range members {
 		v := val.(*functionInfo)
 		name := v.args[0]
 		v.args[0] = "this"
 		start, end := p.cl(e, "doc", v.fnb)
 		fn := exec.NewFunction(cls, start, end, v.args, v.variadic)
+		fn.Parent = cls.Ctx
 		cls.Fns[name] = fn
 	}
-	return cls
 }
 
 func (p *Compiler) fnClass(e interpreter.Engine) {
@@ -49,9 +51,46 @@ func (p *Compiler) fnClass(e interpreter.Engine) {
 	members := p.gstk.PopNArgs(arity)
 	instr := p.code.Reserve()
 	p.exits = append(p.exits, func() {
-		cls := p.newClass(e, members)
+		cls := exec.IClass()
+		p.addMethods(cls, e, members)
 		instr.Set(cls)
 	})
+}
+
+// InjectMethods injects some methods into a class.
+//
+func (p *Compiler) InjectMethods(cls *exec.Class, code []byte) (err error) {
+
+	defer func() {
+		if e := recover(); e != nil {
+			switch v := e.(type) {
+			case string:
+				err = errors.New(v)
+			case error:
+				err = v
+			default:
+				panic(e)
+			}
+		}
+	}()
+
+	engine, err := ipt.New(p, p.Opts)
+	if err != nil {
+		return
+	}
+	p.ipt = engine
+
+	src, err := engine.Tokenize(code, "")
+	if err != nil {
+		return
+	}
+
+	p.cl(engine, "methods", src)
+	arity := p.popArity()
+	members := p.gstk.PopNArgs(arity)
+	p.addMethods(cls, engine, members)
+	p.Done()
+	return
 }
 
 func (p *Compiler) fnNew() {

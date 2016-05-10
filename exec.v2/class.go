@@ -26,19 +26,21 @@ var (
 //
 type Class struct {
 	Fns map[string]*Function
+	Ctx *Context
 }
 
 // Exec is required by interface Instr.
 //
 func (p *Class) Exec(stk *Stack, ctx *Context) {
 
+	p.Ctx = ctx
 	for _, f := range p.Fns {
-		f.parent = ctx
+		f.Parent = ctx
 	}
 	stk.Push(p)
 }
 
-// New create a new instance of this class.
+// New creates a new instance of this class.
 //
 func (p *Class) New(args ...interface{}) *Object {
 

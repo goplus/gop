@@ -8,9 +8,12 @@ import (
 // -----------------------------------------------------------------------------
 
 var (
+	// Var is reflect.Type of interface{}
 	Var = reflect.TypeOf((*interface{})(nil)).Elem()
 )
 
+// Reflect returns reflect.Type of typ.
+//
 func Reflect(typ interface{}) reflect.Type {
 
 	if t, ok := typ.(string); ok {
@@ -30,6 +33,10 @@ var builtinTypes = map[string]reflect.Type{
 	"string":        reflect.TypeOf(""),
 	"byte":          reflect.TypeOf(byte(0)),
 	"var":           Var,
+	"int:int":       reflect.TypeOf(map[int]int(nil)),
+	"int:float":     reflect.TypeOf(map[int]float64(nil)),
+	"int:string":    reflect.TypeOf(map[int]string(nil)),
+	"int:var":       reflect.TypeOf(map[int]interface{}(nil)),
 	"string:int":    reflect.TypeOf(map[string]int(nil)),
 	"string:float":  reflect.TypeOf(map[string]float64(nil)),
 	"string:string": reflect.TypeOf(map[string]string(nil)),
@@ -37,4 +44,3 @@ var builtinTypes = map[string]reflect.Type{
 }
 
 // -----------------------------------------------------------------------------
-

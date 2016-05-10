@@ -105,7 +105,7 @@ var (
 
 type Function struct {
 	Cls      *Class
-	parent   *Context
+	Parent   *Context
 	start    int
 	end      int
 	Args     []string
@@ -144,7 +144,7 @@ func (p *Function) ExtCall(ctx *Context, args ...interface{}) (ret interface{}) 
 	var stk *Stack
 
 	if ctx == nil {
-		parent := p.parent
+		parent := p.Parent
 		vars = make(map[string]interface{})
 		stk = parent.Stack
 		base = stk.BaseFrame()
@@ -193,7 +193,7 @@ func (p *Function) ExtCall(ctx *Context, args ...interface{}) (ret interface{}) 
 type iFunc Function
 
 func (p *iFunc) Exec(stk *Stack, ctx *Context) {
-	p.parent = ctx
+	p.Parent = ctx
 	stk.Push((*Function)(p))
 }
 
