@@ -45,7 +45,11 @@ func (p *Compiler) fnIf(e interpreter.Engine) {
 
 func (p *Compiler) doIf(e interpreter.Engine, ifbr []interface{}, elseCode interface{}, condArity int) {
 
-	reserved2 := make([]exec.ReservedInstr, condArity)
+	reservedCnt := condArity
+	if elseCode == nil {
+		reservedCnt--
+	}
+	reserved2 := make([]exec.ReservedInstr, reservedCnt)
 
 	for i := 0; i < condArity; i++ {
 		condCode := ifbr[i<<1]
@@ -57,15 +61,17 @@ func (p *Compiler) doIf(e interpreter.Engine, ifbr []interface{}, elseCode inter
 		bodyCode := ifbr[(i<<1)+1]
 		bctx := evalDocCode(e, p, bodyCode)
 		bctx.MergeTo(&p.bctx)
-		reserved2[i] = p.code.Reserve()
-		reserved1.Set(exec.JmpIfFalse(reserved2[i].Delta(reserved1)))
+		if i < reservedCnt {
+			reserved2[i] = p.code.Reserve()
+		}
+		reserved1.Set(exec.JmpIfFalse(p.code.Len() - reserved1.Next()))
 	}
 
 	bctx := evalDocCode(e, p, elseCode)
 	bctx.MergeTo(&p.bctx)
 
 	end := p.code.Len()
-	for i := 0; i < condArity; i++ {
+	for i := 0; i < reservedCnt; i++ {
 		reserved2[i].Set(exec.Jmp(end - reserved2[i].Next()))
 	}
 }
