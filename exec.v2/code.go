@@ -171,6 +171,7 @@ type Context struct {
 	ip     int
 	base   int
 	onsel  bool // on select
+	noextv bool // don't cache extern var
 }
 
 // NewContext returns a new context of an executor.
@@ -187,9 +188,9 @@ func NewContext() *Context {
 
 // NewSimpleContext returns a new context of an executor, without module support.
 //
-func NewSimpleContext(vars map[string]interface{}, stk *Stack, code *Code) *Context {
+func NewSimpleContext(vars map[string]interface{}, stk *Stack, code *Code, parent *Context) *Context {
 
-	return &Context{vars: vars, Stack: stk, Code: code}
+	return &Context{vars: vars, Stack: stk, Code: code, parent: parent, noextv: true}
 }
 
 // Exports returns a module exports.
@@ -264,6 +265,8 @@ func (p *Context) ExecDefers() {
 
 // -----------------------------------------------------------------------------
 
+// A Error represents a qlang runtime error.
+//
 type Error struct {
 	Err   error
 	File  string
@@ -296,8 +299,14 @@ type Instr interface {
 	Exec(stk *Stack, ctx *Context)
 }
 
+// RefToVar converts a value reference instruction into a assignable variable instruction.
+//
 type RefToVar interface {
 	ToVar() Instr
+}
+
+type optimizableArityGetter interface {
+	OptimizableGetArity() int
 }
 
 type ipFileLine struct {
@@ -327,11 +336,15 @@ func New(data ...Instr) *Code {
 	return &Code{data, nil}
 }
 
+// CodeLine informs current file and line.
+//
 func (p *Code) CodeLine(file string, line int) {
 
 	p.lines = append(p.lines, &ipFileLine{ip: len(p.data), file: file, line: line})
 }
 
+// Line returns file line of a instruction position.
+//
 func (p *Code) Line(ip int) (file string, line int) {
 
 	idx := sort.Search(len(p.lines), func(i int) bool {
@@ -344,11 +357,15 @@ func (p *Code) Line(ip int) (file string, line int) {
 	return "", 0
 }
 
+// Len returns code length.
+//
 func (p *Code) Len() int {
 
 	return len(p.data)
 }
 
+// Reserve reserves an instruction and returns it.
+//
 func (p *Code) Reserve() ReservedInstr {
 
 	idx := len(p.data)
@@ -356,6 +373,8 @@ func (p *Code) Reserve() ReservedInstr {
 	return ReservedInstr{p, idx}
 }
 
+// Set sets a reserved instruction.
+//
 func (p ReservedInstr) Set(code Instr) {
 
 	p.code.data[p.idx] = code
@@ -375,11 +394,46 @@ func (p ReservedInstr) Delta(b ReservedInstr) int {
 	return p.idx - b.idx
 }
 
+// CheckConst returns the value, if code[ip] is a const instruction.
+//
+func (p *Code) CheckConst(ip int) (v interface{}, ok bool) {
+
+	if instr, ok := p.data[ip].(*iPush); ok {
+		return instr.v, true
+	}
+	return
+}
+
+func appendInstrOptimized(data []Instr, instr Instr, arity int) []Instr {
+
+	n := len(data)
+	base := n - arity
+	for i := base; i < n; i++ {
+		if _, ok := data[i].(*iPush); !ok {
+			return append(data, instr)
+		}
+	}
+	args := make([]interface{}, arity)
+	for i := base; i < n; i++ {
+		args[i-base] = data[i].(*iPush).v
+	}
+	stk := &Stack{data: args}
+	instr.Exec(stk, nil)
+	return append(data[:base], Push(stk.data[0]))
+}
+
 // Block appends some instructions to code.
 //
 func (p *Code) Block(code ...Instr) int {
 
-	p.data = append(p.data, code...)
+	for _, instr := range code {
+		if g, ok := instr.(optimizableArityGetter); ok {
+			arity := g.OptimizableGetArity()
+			p.data = appendInstrOptimized(p.data, instr, arity)
+		} else {
+			p.data = append(p.data, instr)
+		}
+	}
 	return len(p.data)
 }
 
@@ -436,11 +490,19 @@ func (p *Code) Exec(ip, ipEnd int, stk *Stack, ctx *Context) {
 	}
 }
 
-// Dump dumps code instructions from a start position.
+// Dump dumps code instructions within a range.
 //
-func (p *Code) Dump(start int) {
+func (p *Code) Dump(ranges ...int) {
 
-	for i, instr := range p.data[start:] {
+	start := 0
+	end := len(p.data)
+	if len(ranges) > 0 {
+		start = ranges[0]
+		if len(ranges) > 1 {
+			end = ranges[1]
+		}
+	}
+	for i, instr := range p.data[start:end] {
 		fmt.Printf("==> %04d: %s %v\n", i+start, instrName(instr), instr)
 	}
 }

@@ -304,9 +304,9 @@ func appendFloat(a []float64, vals ...interface{}) interface{} {
 	return a
 }
 
-// Slice returns a new slice.
+// Mkslice returns a new slice.
 //
-func Slice(typ interface{}, args ...interface{}) interface{} {
+func Mkslice(typ interface{}, args ...interface{}) interface{} {
 
 	n, cap := 0, 0
 	if len(args) == 1 {

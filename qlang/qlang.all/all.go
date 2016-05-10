@@ -5,7 +5,9 @@ import (
 	"qlang.io/qlang/bufio"
 	"qlang.io/qlang/bytes"
 	"qlang.io/qlang/crypto/md5"
+	"qlang.io/qlang/encoding/hex"
 	"qlang.io/qlang/encoding/json"
+	"qlang.io/qlang/errors"
 	"qlang.io/qlang/io/ioutil"
 	"qlang.io/qlang/math"
 	"qlang.io/qlang/os"
@@ -42,7 +44,9 @@ func InitSafe(safeMode bool) {
 	qlang.Import("bytes", bytes.Exports)
 	qlang.Import("md5", md5.Exports)
 	qlang.Import("ioutil", ioutil.Exports)
+	qlang.Import("hex", hex.Exports)
 	qlang.Import("json", json.Exports)
+	qlang.Import("errors", errors.Exports)
 	qlang.Import("math", math.Exports)
 	qlang.Import("os", os.Exports)
 	qlang.Import("path", path.Exports)
