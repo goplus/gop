@@ -9,8 +9,11 @@ import (
 )
 
 var (
-	ErrAssignWithoutVal           = errors.New("variable assign without value")
-	ErrMultiAssignExprMustBeSlice = errors.New("expression of multi assignment must return slice")
+	// ErrAssignWithoutVal is returned when variable assign without value
+	ErrAssignWithoutVal = errors.New("variable assign without value")
+
+	// ErrMultiAssignExprMustBeSlice is returned when expression of multi assignment must be a slice
+	ErrMultiAssignExprMustBeSlice = errors.New("expression of multi assignment must be a slice")
 )
 
 // -----------------------------------------------------------------------------
@@ -24,6 +27,8 @@ func (p *iUnset) Exec(stk *Stack, ctx *Context) {
 	delete(ctx.vars, p.name)
 }
 
+// Unset returns an instruction that means unset(name)
+//
 func Unset(name string) Instr {
 	return &iUnset{name}
 }
@@ -69,6 +74,8 @@ func (p *Context) getVars(name string) (vars map[string]interface{}) {
 	return
 }
 
+// Assign returns an instruction that means $name = $stk[top]
+//
 func Assign(name string) Instr {
 	return &iAssign{name}
 }
@@ -103,6 +110,8 @@ func (p *iMultiAssignFromSlice) Exec(stk *Stack, ctx *Context) {
 	}
 }
 
+// MultiAssignFromSlice returns an instruction that means $name1, $name2, ..., $nameN = $stk[top]
+//
 func MultiAssignFromSlice(names []string) Instr {
 	return &iMultiAssignFromSlice{names}
 }
@@ -128,6 +137,8 @@ func (p *iMultiAssign) Exec(stk *Stack, ctx *Context) {
 	}
 }
 
+// MultiAssign returns an instruction that means $name1, $name2, ..., $nameN = $stk[top-N+1], ..., $stk[top]
+//
 func MultiAssign(names []string) Instr {
 	return &iMultiAssign{names}
 }
@@ -177,34 +188,50 @@ func (p *Context) getVar(name string) (vars map[string]interface{}, val interfac
 	return
 }
 
+// OpAssign returns an instruction that means $name <op>= $stk[top]
+//
 func OpAssign(name string, op func(a, b interface{}) interface{}) Instr {
 	return &iOpAssign{name, op}
 }
 
+// AddAssign returns an instruction that means $name += $stk[top]
+//
 func AddAssign(name string) Instr {
 	return &iOpAssign{name, qlang.Add}
 }
 
+// SubAssign returns an instruction that means $name -= $stk[top]
+//
 func SubAssign(name string) Instr {
 	return &iOpAssign{name, qlang.Sub}
 }
 
+// MulAssign returns an instruction that means $name *= $stk[top]
+//
 func MulAssign(name string) Instr {
 	return &iOpAssign{name, qlang.Mul}
 }
 
+// QuoAssign returns an instruction that means $name /= $stk[top]
+//
 func QuoAssign(name string) Instr {
 	return &iOpAssign{name, qlang.Quo}
 }
 
+// ModAssign returns an instruction that means $name %= $stk[top]
+//
 func ModAssign(name string) Instr {
 	return &iOpAssign{name, qlang.Mod}
 }
 
+// Inc returns an instruction that means $name++
+//
 func Inc(name string) Instr {
 	return &iOp1Assign{name, qlang.Inc}
 }
 
+// Dec returns an instruction that means $name--
+//
 func Dec(name string) Instr {
 	return &iOp1Assign{name, qlang.Dec}
 }
@@ -239,16 +266,19 @@ func (p *Context) getRef(name string) interface{} {
 	} else {
 		if name[0] != '_' { // NOTE: '_' 开头的变量是私有的，不可继承
 			for t := p.parent; t != nil; t = t.parent {
-				if val, ok = t.vars[name]; ok {
+				if val, ok = t.vars[name]; !ok {
+					continue
+				}
+				if !p.noextv { // cache extern var
 					e, ok1 := val.(externVar)
 					if ok1 {
 						val = e.vars[name]
 					} else {
 						e = externVar{t.vars}
 					}
-					p.vars[name] = e // 缓存访问过的变量
-					goto lzDone
+					p.vars[name] = e
 				}
+				goto lzDone
 			}
 		}
 		if val, ok = qlang.Fntable[name]; !ok {
@@ -260,6 +290,8 @@ lzDone:
 	return val
 }
 
+// Ref returns an instruction that refers a variable.
+//
 func Ref(name string) Instr {
 	return &iRef{name}
 }

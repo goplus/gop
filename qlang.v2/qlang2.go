@@ -37,7 +37,8 @@ sexpr = expr (
 	"^="/tovar! expr/xora | "<<="/tovar! expr/lshra | ">>="/tovar! expr/rshra |
 	"&="/tovar! expr/bitanda | "|="/tovar! expr/bitora | "&^="/tovar! expr/andnota | 1/pop)
 
-s = "if"/_mute! expr/_code body *("elif" expr/_code body)/_ARITY ?("else" body)/_ARITY/_unmute/if |
+s = (
+	"if"/_mute! expr/_code body *("elif" expr/_code body)/_ARITY ?("else" body)/_ARITY/_unmute/if |
 	"switch"/_mute! ?(~'{' expr)/_code '{' swbody '}'/_unmute/switch |
 	"for"/_mute/_urange! fhead body/_unmute/for |
 	"return"! expr %= ','/ARITY /return |
@@ -48,7 +49,7 @@ s = "if"/_mute! expr/_code body *("elif" expr/_code body)/_ARITY ?("else" body)/
 	"export"! IDENT/name % ','/ARITY /export |
 	"defer"/_mute! expr/_code/_unmute/defer |
 	"go"/_mute! expr/_code/_unmute/go |
-	sexpr
+	sexpr)/xline
 
 doc = ?s *(';' ?s)
 
@@ -69,6 +70,8 @@ member = IDENT | "class" | "new" | "recover" | "main" | "import" | "export" | "i
 newargs = ?('(' expr %= ','/ARITY ')')/ARITY
 
 classb = "fn"! IDENT/name fnbody ?';'/mfn
+
+methods = *classb/ARITY
 
 clsname = IDENT/ref *('.' member/mref)
 

@@ -8,6 +8,8 @@ import (
 
 // -----------------------------------------------------------------------------
 
+// Pretty prints a value in pretty mode.
+//
 func Pretty(v interface{}) string {
 
 	b, err := json.MarshalIndent(v, "", "  ")
@@ -17,6 +19,8 @@ func Pretty(v interface{}) string {
 	return string(b)
 }
 
+// Unmarshal unmarshals a []byte or string
+//
 func Unmarshal(b interface{}) (v interface{}, err error) {
 
 	switch in := b.(type) {
@@ -30,6 +34,8 @@ func Unmarshal(b interface{}) (v interface{}, err error) {
 	return
 }
 
+// Exports is the export table of this module.
+//
 var Exports = map[string]interface{}{
 	"decoder":       json.NewDecoder,
 	"encoder":       json.NewEncoder,

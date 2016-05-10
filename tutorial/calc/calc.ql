@@ -43,7 +43,7 @@ Stack = class {
 		if n < arity {
 			panic("Stack.popArgs: unexpected")
 		}
-		args = slice("var", arity)
+		args = mkslice("var", arity)
 		copy(args, this.stk[n-arity:])
 		this.stk = this.stk[:n-arity]
 		return args

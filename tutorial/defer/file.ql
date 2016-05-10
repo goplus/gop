@@ -7,7 +7,7 @@ if err != nil {
 defer println("exit!")
 defer f.close()
 
-b = slice("byte", 8)
+b = mkslice("byte", 8)
 n, err = f.read(b)
 if err != nil {
 	fprintln(os.stderr, "Read failed:", err)
