@@ -64,11 +64,9 @@ func (p *Context) getVars(name string) (vars map[string]interface{}) {
 		return
 	}
 
-	if name[0] != '_' { // NOTE: '_' 开头的变量是私有的，不可继承
-		for t := p.parent; t != nil; t = t.parent {
-			if _, ok := t.vars[name]; ok {
-				panic(fmt.Sprintf("variable `%s` exists in extern function", name))
-			}
+	for t := p.parent; t != nil; t = t.parent {
+		if _, ok := t.vars[name]; ok {
+			panic(fmt.Sprintf("variable `%s` exists in extern function", name))
 		}
 	}
 	return
@@ -264,22 +262,20 @@ func (p *Context) getRef(name string) interface{} {
 			val = e.vars[name]
 		}
 	} else {
-		if name[0] != '_' { // NOTE: '_' 开头的变量是私有的，不可继承
-			for t := p.parent; t != nil; t = t.parent {
-				if val, ok = t.vars[name]; !ok {
-					continue
-				}
-				if !p.noextv { // cache extern var
-					e, ok1 := val.(externVar)
-					if ok1 {
-						val = e.vars[name]
-					} else {
-						e = externVar{t.vars}
-					}
-					p.vars[name] = e
-				}
-				goto lzDone
+		for t := p.parent; t != nil; t = t.parent {
+			if val, ok = t.vars[name]; !ok {
+				continue
 			}
+			if !p.noextv { // cache extern var
+				e, ok1 := val.(externVar)
+				if ok1 {
+					val = e.vars[name]
+				} else {
+					e = externVar{t.vars}
+				}
+				p.vars[name] = e
+			}
+			goto lzDone
 		}
 		if val, ok = qlang.Fntable[name]; !ok {
 			panic("symbol not found: " + name)
