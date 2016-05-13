@@ -2,6 +2,8 @@ package bytes
 
 import (
 	"bytes"
+	"fmt"
+	"reflect"
 )
 
 // -----------------------------------------------------------------------------
@@ -20,10 +22,31 @@ func newBuffer(a ...interface{}) *bytes.Buffer {
 	panic("bytes.buffer() - unsupported argument type")
 }
 
+func from(v interface{}) []byte {
+
+	switch args := v.(type) {
+	case []int:
+		b := make([]byte, len(args))
+		for i, v := range args {
+			b[i] = byte(v)
+		}
+		return b
+	case string:
+		return []byte(args)
+	default:
+		if v == nil {
+			return nil
+		}
+		panic(fmt.Sprintf("can't convert from `%v` to []byte", reflect.TypeOf(v)))
+	}
+}
+
 // Exports is the export table of this module.
 //
 var Exports = map[string]interface{}{
 	"buffer":   newBuffer,
+	"from":     from,
+	"equal":    bytes.Equal,
 	"reader":   bytes.NewReader,
 	"contains": bytes.Contains,
 	"index":    bytes.Index,

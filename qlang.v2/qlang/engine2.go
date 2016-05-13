@@ -45,7 +45,7 @@ func SetOnPop(fn func(v interface{})) {
 // SetDumpCode sets dump code mode:
 //	"1" - dump code with rem instruction.
 //	"2" - dump code without rem instruction.
-//  else - don't dump code.
+//	else - don't dump code.
 //
 func SetDumpCode(dumpCode string) {
 
