@@ -65,7 +65,7 @@ fnbody = '(' IDENT/name %= ','/ARITY ?"..."/ARITY ')' '{'/_mute doc/_code '}'/_u
 
 afn = '{'/_mute doc/_code '}'/_unmute/afn
 
-member = IDENT | "class" | "new" | "recover" | "main" | "import" | "export" | "include" | "type"
+member = IDENT | "class" | "new" | "recover" | "main" | "import" | "as" | "export" | "include" | "type"
 
 newargs = ?('(' expr %= ','/ARITY ')')/ARITY
 

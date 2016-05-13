@@ -14,18 +14,16 @@ import (
 
 // -----------------------------------------------------------------------------
 
-// An Error represents a compiling time error.
+// An FindEntryError represents a FindEntry error.
 //
-type Error struct {
+type FindEntryError struct {
 	Name string
 	Err  error
 }
 
-func (e *Error) Error() string {
+func (e *FindEntryError) Error() string {
 	return strconv.Quote(e.Name) + ": " + e.Err.Error()
 }
-
-// -----------------------------------------------------------------------------
 
 func findEntry(file string, libs []string) (string, error) {
 
@@ -34,7 +32,7 @@ func findEntry(file string, libs []string) (string, error) {
 		if err == nil {
 			return file, nil
 		}
-		return "", &Error{file, err}
+		return "", &FindEntryError{file, err}
 	}
 	for _, dir := range libs {
 		if dir == "" {
@@ -45,7 +43,7 @@ func findEntry(file string, libs []string) (string, error) {
 			return path, nil
 		}
 	}
-	return "", &Error{file, syscall.ENOENT}
+	return "", &FindEntryError{file, syscall.ENOENT}
 }
 
 func resolvePath(file string, base string) string {

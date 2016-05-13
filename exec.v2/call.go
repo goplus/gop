@@ -9,8 +9,13 @@ import (
 )
 
 var (
-	ErrStackDamaged       = errors.New("unexpected: stack damaged")
-	ErrArityRequired      = errors.New("arity required")
+	// ErrStackDamaged is returned when stack is damaged.
+	ErrStackDamaged = errors.New("unexpected: stack damaged")
+
+	// ErrArityRequired is returned when calling `Call` without providing `arity`.
+	ErrArityRequired = errors.New("arity required")
+
+	// ErrArgumentsNotEnough is returned when calling a function without enough arguments.
 	ErrArgumentsNotEnough = errors.New("arguments not enough")
 )
 
@@ -77,11 +82,11 @@ func validateType(in *reflect.Value, t reflect.Type) {
 			*in = reflect.ValueOf(in.Float())
 		}
 		return
-	case reflect.Ptr:
+	case reflect.Ptr, reflect.Slice, reflect.Map:
 		if !in.IsValid() {
 			*in = reflect.Zero(t) // work around `reflect: Call using zero Value argument`
+			return
 		}
-		return
 	}
 
 	tin := in.Type()
@@ -250,6 +255,11 @@ var TypeOf Instr = typeOf(0)
 type sliceFrom int
 
 var nilVarSlice = make([]interface{}, 0)
+
+func (p sliceFrom) OptimizableGetArity() int {
+
+	return int(p)
+}
 
 func (p sliceFrom) Exec(stk *Stack, ctx *Context) {
 
