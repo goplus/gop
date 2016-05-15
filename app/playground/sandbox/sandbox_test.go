@@ -17,7 +17,7 @@ f = fib()
 println(f(), f(), f(), f(), f())
 `
 
-func TestCompileAndRun(t *testing.T) {
+func _TestCompileAndRun(t *testing.T) {
 	req := Request{
 		Body: fibCode,
 	}
