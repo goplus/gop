@@ -3,18 +3,3 @@ go:
   - 1.4.2
   - 1.6
 sudo: false
-before_script:
-  - export QBOXROOT=$TRAVIS_BUILD_DIR/..
-  - export PATH=$PATH:$QBOXROOT/qlang/bin
-script:
-  - echo "==== qbox/base ===="
-  - cd $QBOXROOT
-  - git clone git@github.com:qbox/base.git
-  - cd $QBOXROOT/base
-  - git checkout $TRAVIS_BRANCH; source env.sh
-  - echo "====================="
-  - cd $TRAVIS_BUILD_DIR
-  - source env.sh
-  - make
-  - make test
-
