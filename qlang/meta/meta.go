@@ -63,8 +63,9 @@ func ExporStructField(t reflect.Type) ([]string, error) {
 	}
 	var list []string
 	for i := 0; i < t.NumField(); i++ {
-		if IsExported(t.Field(i).Name) {
-			list = append(list, t.Field(i).Name)
+		name := t.Field(i).Name
+		if IsExported(name) {
+			list = append(list, name)
 		}
 	}
 	return list, nil
@@ -103,7 +104,10 @@ func Dir(i interface{}) (list []string) {
 			}
 			// list type method
 			for i := 0; i < t.NumMethod(); i++ {
-				list = append(list, t.Method(i).Name)
+				name := t.Method(i).Name
+				if IsExported(name) {
+					list = append(list, name)
+				}
 			}
 		}
 	}
