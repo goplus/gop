@@ -75,6 +75,12 @@ type Object struct {
 	Cls  *Class
 }
 
+//  Vars returns member map of this object
+//
+func (p *Object) Vars() map[string]interface{} {
+	return p.vars
+}
+
 // SetVar sets the value of a qlang object's member.
 //
 func (p *Object) SetVar(name string, val interface{}) {
