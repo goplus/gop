@@ -3,6 +3,7 @@ package meta
 import (
 	"errors"
 	"reflect"
+	"strings"
 	"unicode"
 	"unicode/utf8"
 
@@ -23,7 +24,9 @@ var Exports = map[string]interface{}{
 //
 func FnList() (list []string) {
 	for k, _ := range qlang.Fntable {
-		list = append(list, k)
+		if !strings.HasPrefix(k, "$") {
+			list = append(list, k)
+		}
 	}
 	return
 }
@@ -31,7 +34,13 @@ func FnList() (list []string) {
 // FnTable returns qlang all function table
 //
 func FnTable() map[string]interface{} {
-	return qlang.Fntable
+	table := make(map[string]interface{})
+	for k, v := range qlang.Fntable {
+		if !strings.HasPrefix(k, "$") {
+			table[k] = v
+		}
+	}
+	return table
 }
 
 // GoPkgList returns qlang Go implemented module list
