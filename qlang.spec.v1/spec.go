@@ -126,6 +126,16 @@ var Fntable = map[string]interface{}{
 //
 var SafeMode bool
 
+var (
+	_GoModuleList []string
+)
+
+// GoModuleList returns qlang Go implemented module list
+//
+func GoModuleList() []string {
+	return _GoModuleList
+}
+
 // Import imports a qlang module implemented by Go.
 //
 func Import(mod string, table map[string]interface{}) {
@@ -145,6 +155,7 @@ func Import(mod string, table map[string]interface{}) {
 			panic("module to import exists already: " + mod)
 		}
 		Fntable[mod] = table
+		_GoModuleList = append(_GoModuleList, mod)
 		return
 	}
 
