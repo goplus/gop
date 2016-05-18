@@ -211,7 +211,7 @@ func Get(m interface{}, key interface{}) interface{} {
 	case reflect.Slice, reflect.String, reflect.Array:
 		return o.Index(key.(int)).Interface()
 	default:
-		panic(fmt.Sprintf("%v doesn't support operator[]", o.Type()))
+		return qlang.GetEx(m, key)
 	}
 }
 
