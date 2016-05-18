@@ -7,6 +7,8 @@ import (
 
 // -----------------------------------------------------------------------------
 
+// Exports is the export table of this module.
+//
 var Exports = map[string]interface{}{
 	"args":      os.Args[1:],
 	"stdin":     os.Stdin,
@@ -23,6 +25,8 @@ func _initSafe(table map[string]interface{}, dummy func(...interface{}) interfac
 	table["exit"] = SafeExit
 }
 
+// SafeExit is a safe way to quit qlang application.
+//
 func SafeExit(code int) {
 
 	panic(strconv.Itoa(code))
