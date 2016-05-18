@@ -12,6 +12,7 @@ import (
 	"qlang.io/qlang/io/ioutil"
 	"qlang.io/qlang/math"
 	"qlang.io/qlang/net/http"
+	"qlang.io/qlang/meta"
 	"qlang.io/qlang/os"
 	"qlang.io/qlang/path"
 	"qlang.io/qlang/reflect"
@@ -42,6 +43,7 @@ func InitSafe(safeMode bool) {
 	qlang.SafeMode = safeMode
 
 	qlang.Import("", math.Exports) // import math as builtin package
+	qlang.Import("", meta.Exports) // import meta package
 	qlang.Import("bufio", bufio.Exports)
 	qlang.Import("bytes", bytes.Exports)
 	qlang.Import("md5", md5.Exports)
