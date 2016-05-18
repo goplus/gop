@@ -152,8 +152,16 @@ func Set(m interface{}, args ...interface{}) {
 			o.SetMapIndex(key, val)
 		}
 	case reflect.Slice, reflect.Array:
+		var val reflect.Value
 		for i := 0; i < n; i += 2 {
-			o.Index(args[i].(int)).Set(reflect.ValueOf(args[i+1]))
+			t := args[i+1]
+			switch t {
+			case nil:
+				val = reflect.Zero(o.Type().Elem())
+			default:
+				val = reflect.ValueOf(t)
+			}
+			o.Index(args[i].(int)).Set(val)
 		}
 	default:
 		qlang.SetEx(m, args...)

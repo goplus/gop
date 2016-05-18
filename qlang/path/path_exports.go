@@ -6,6 +6,8 @@ import (
 
 // -----------------------------------------------------------------------------
 
+// Exports is the export table of this module.
+//
 var Exports = map[string]interface{}{
 	"base":  path.Base,
 	"clean": path.Clean,
