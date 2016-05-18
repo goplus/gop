@@ -70,6 +70,7 @@ var (
 	fnDummy2  = reflect.ValueOf(dummy2).Pointer()
 	ChanIn    = dummyChanIn
 	ChanOut   = dummyChanOut
+	GetEx     = dummy2
 	SetEx     = dummySet
 	SetIndex  = dummySetIndex
 	MapFrom   = dummyN

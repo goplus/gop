@@ -261,3 +261,38 @@ func TestAssignEx(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
+const testClassAddAssignCode = `
+
+Foo = class {
+	fn _init() {
+		this.foo = 1
+	}
+
+	fn f() {
+		this.foo += 2
+	}
+}
+
+a = new Foo
+a.f()
+x = a.foo
+`
+
+func TestClassAddAssign(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+
+	err = lang.SafeExec([]byte(testClassAddAssignCode), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("x"); !ok || v != 3 {
+		t.Fatal("x != 3, x =", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
