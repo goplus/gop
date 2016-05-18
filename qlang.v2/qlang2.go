@@ -76,9 +76,9 @@ methods = *classb/ARITY
 clsname = IDENT/ref *('.' member/mref)
 
 atom =
-	'(' expr %= ','/ARITY ?"..."/ARITY ?',' ')'/call |
-	'.' member/mref |
-	'[' ?expr/ARITY ?':'/ARITY ?expr/ARITY ']'/index
+	'('! expr %= ','/ARITY ?"..."/ARITY ?',' ')'/call |
+	'.'! member/mref |
+	'['! ?expr/ARITY ?':'/ARITY ?expr/ARITY ']'/index
 
 factor =
 	INT/pushi |

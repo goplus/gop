@@ -1,7 +1,7 @@
-package strconv
+package lzw
 
 import (
-	"strconv"
+	"compress/lzw"
 )
 
 // -----------------------------------------------------------------------------
@@ -9,12 +9,10 @@ import (
 // Exports is the export table of this module.
 //
 var Exports = map[string]interface{}{
-	"itoa":      strconv.Itoa,
-	"parseUint": strconv.ParseUint,
-	"parseInt":  strconv.ParseInt,
-
-	"unquoteChar": strconv.UnquoteChar,
-	"unquote":     strconv.Unquote,
+	"reader": lzw.NewReader,
+	"writer": lzw.NewWriter,
+	"LSB":    lzw.LSB,
+	"MSB":    lzw.MSB,
 }
 
 // -----------------------------------------------------------------------------
