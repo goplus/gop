@@ -75,6 +75,12 @@ type Object struct {
 	Cls  *Class
 }
 
+// Vars returns all variables (not including methods) of this object.
+//
+func (p *Object) Vars() map[string]interface{} {
+	return p.vars
+}
+
 // SetVar sets the value of a qlang object's member.
 //
 func (p *Object) SetVar(name string, val interface{}) {
@@ -114,7 +120,21 @@ func SetMemberVar(m interface{}, args ...interface{}) {
 	panic(fmt.Sprintf("type `%v` doesn't support `set` operator", reflect.TypeOf(m)))
 }
 
+// GetMemberVar implements get(object, key).
+//
+func GetMemberVar(m interface{}, key interface{}) interface{} {
+
+	if v, ok := m.(*Object); ok {
+		if name, ok := key.(string); ok {
+			return v.Member(name)
+		}
+		panic("get(object, member): member should be `string` type")
+	}
+	panic(fmt.Sprintf("type `%v` doesn't support `get` operator", reflect.TypeOf(m)))
+}
+
 func init() {
+	qlang.GetEx = GetMemberVar
 	qlang.SetEx = SetMemberVar
 }
 

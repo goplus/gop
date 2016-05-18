@@ -70,6 +70,7 @@ var (
 	fnDummy2  = reflect.ValueOf(dummy2).Pointer()
 	ChanIn    = dummyChanIn
 	ChanOut   = dummyChanOut
+	GetEx     = dummy2
 	SetEx     = dummySet
 	SetIndex  = dummySetIndex
 	MapFrom   = dummyN
@@ -126,6 +127,14 @@ var Fntable = map[string]interface{}{
 //
 var SafeMode bool
 
+var goMods []string
+
+// GoModuleList returns qlang modules implemented by Go.
+//
+func GoModuleList() []string {
+	return goMods
+}
+
 // Import imports a qlang module implemented by Go.
 //
 func Import(mod string, table map[string]interface{}) {
@@ -145,6 +154,7 @@ func Import(mod string, table map[string]interface{}) {
 			panic("module to import exists already: " + mod)
 		}
 		Fntable[mod] = table
+		goMods = append(goMods, mod)
 		return
 	}
 

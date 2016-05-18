@@ -8,8 +8,11 @@ import (
 	"qlang.io/qlang/encoding/hex"
 	"qlang.io/qlang/encoding/json"
 	"qlang.io/qlang/errors"
+	"qlang.io/qlang/io"
 	"qlang.io/qlang/io/ioutil"
 	"qlang.io/qlang/math"
+	"qlang.io/qlang/meta"
+	"qlang.io/qlang/net/http"
 	"qlang.io/qlang/os"
 	"qlang.io/qlang/path"
 	"qlang.io/qlang/reflect"
@@ -40,9 +43,11 @@ func InitSafe(safeMode bool) {
 	qlang.SafeMode = safeMode
 
 	qlang.Import("", math.Exports) // import math as builtin package
+	qlang.Import("", meta.Exports) // import meta package
 	qlang.Import("bufio", bufio.Exports)
 	qlang.Import("bytes", bytes.Exports)
 	qlang.Import("md5", md5.Exports)
+	qlang.Import("io", io.Exports)
 	qlang.Import("ioutil", ioutil.Exports)
 	qlang.Import("hex", hex.Exports)
 	qlang.Import("json", json.Exports)
@@ -50,6 +55,7 @@ func InitSafe(safeMode bool) {
 	qlang.Import("math", math.Exports)
 	qlang.Import("os", os.Exports)
 	qlang.Import("path", path.Exports)
+	qlang.Import("http", http.Exports)
 	qlang.Import("reflect", reflect.Exports)
 	qlang.Import("runtime", runtime.Exports)
 	qlang.Import("strconv", strconv.Exports)
