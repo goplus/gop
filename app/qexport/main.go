@@ -22,12 +22,28 @@ import (
 )
 
 var (
-	flagExportPath string
+	flagExportPath     string
+	flagDefaultContext bool
+	flagCustomContext  string
 )
 
+var doc string = `Export go packages to qlang modules.
+
+Usage:
+  qexport [-contexts=""] [-defctx=false] [-outpath="./qlang"] packages
+	 
+The packages for go package list or std for golang all standard packages.
+`
+
+var Usage = func() {
+	fmt.Fprintln(os.Stderr, doc)
+	flag.PrintDefaults()
+}
+
 func init() {
-	flag.StringVar(&flagExportPath, "outpath", "./qlang", "set export root path")
-	goapi.ApiDefaultCtx = false
+	flag.StringVar(&flagExportPath, "outpath", "./qlang", "optional set export root path")
+	flag.BoolVar(&flagDefaultContext, "defctx", false, "optional use default context for build, default use all contexts.")
+	flag.StringVar(&flagCustomContext, "contexts", "", "optional comma-separated list of <goos>-<goarch>[-cgo] to override default contexts.")
 }
 
 func main() {
@@ -35,9 +51,12 @@ func main() {
 	args := flag.Args()
 
 	if len(args) == 0 {
-		flag.Usage()
+		Usage()
 		return
 	}
+
+	goapi.ApiDefaultCtx = flagDefaultContext
+	goapi.ApiCustomCtx = flagCustomContext
 
 	var outpath string
 	if filepath.IsAbs(flagExportPath) {
