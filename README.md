@@ -84,16 +84,12 @@ qlang xxx.ql <arg1> <arg2> ... <argN>
 QLANG_DUMPCODE=1 qlang xxx.ql <arg1> <arg2> ... <argN>
 ```
 
-如果 qlang 命令不带参数，则进入 qlang shell。更详细的内容，请参考《[Q语言手册](README_QL.md)》。
+如果 qlang 命令不带参数，则进入 qlang shell。
 
 # 相关资源
 
-## 发布版本列表
-
-* https://github.com/qiniu/qlang/releases
-
-## Go 语言包自动生成qlang library
-
+* [Q 语言手册](README_QL.md)
+* [发布版本列表](https://github.com/qiniu/qlang/releases)
 * [qexport](app/qexport/README.md): 可为一个Go语言的标准库或者你自己写的Go Package自动导出相应的qlang library。
 
 ## Qlang Libs
