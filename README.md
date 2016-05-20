@@ -84,7 +84,7 @@ qlang xxx.ql <arg1> <arg2> ... <argN>
 QLANG_DUMPCODE=1 qlang xxx.ql <arg1> <arg2> ... <argN>
 ```
 
-更详细的内容，请参考《[Q语言手册](README_QL.md)》
+更详细的内容，请参考《[Q语言手册](README_QL.md)》。
 
 # 相关资源
 
