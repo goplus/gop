@@ -88,6 +88,10 @@ QLANG_DUMPCODE=1 qlang xxx.ql <arg1> <arg2> ... <argN>
 
 # 相关资源
 
+## 发布版本列表
+
+* https://github.com/qiniu/qlang/releases
+
 ## Go 语言包自动生成qlang library
 
 * [qexport](app/qexport/README.md): 可为一个Go语言的标准库或者你自己写的Go Package自动导出相应的qlang library。
