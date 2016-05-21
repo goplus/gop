@@ -73,6 +73,7 @@ func trimRightFunc(s string, f caller) string {
 // Exports is the export table of this module.
 //
 var Exports = map[string]interface{}{
+	"_name":          "strings",
 	"contains":       strings.Contains,
 	"containsAny":    strings.ContainsAny,
 	"containsRune":   strings.ContainsRune,

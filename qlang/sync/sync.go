@@ -20,11 +20,13 @@ func newWaitGroup() *sync.WaitGroup {
 
 // -----------------------------------------------------------------------------
 
+// Exports is the export table of this module.
+//
 var Exports = map[string]interface{}{
+	"_name":     "sync",
 	"cond":      sync.NewCond,
 	"mutex":     newMutex,
 	"waitGroup": newWaitGroup,
 }
 
 // -----------------------------------------------------------------------------
-

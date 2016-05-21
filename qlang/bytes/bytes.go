@@ -44,6 +44,7 @@ func from(v interface{}) []byte {
 // Exports is the export table of this module.
 //
 var Exports = map[string]interface{}{
+	"_name":    "bytes",
 	"buffer":   newBuffer,
 	"from":     from,
 	"equal":    bytes.Equal,
