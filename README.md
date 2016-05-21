@@ -1,31 +1,17 @@
-The Q Language (Q语言)
+The Q Language (Q语言) - A script language for Go
 ========
 
 [![Build Status](https://travis-ci.org/qiniu/qlang.png?branch=develop)](https://travis-ci.org/qiniu/qlang)
 
 ![logo](http://qiniutek.com/images/logo-2.png)
 
-# 下载
-
-### 源代码
-
-```
-go get -u -insecure qlang.io/qlang
-```
-
-或者在 src 目录执行如下命令：
-
-```
-mkdir qiniupkg.com
-git clone https://github.com/qiniu/qlang.git qlang.io
-git clone https://github.com/qiniu/text.git qiniupkg.com/text
-```
-
 # 语言特色
 
-* 最大卖点：与 Go 语言有最好的互操作性。所有 Go 语言的社区资源可以直接为我所用。
-* 有赖于 Go 语言的互操作性，这门语言不需要自己实现标准库。尽管年轻，但是这门语言已经具备商用的可行性。
-* 微内核：语言的核心只有 1200 行代码。所有功能以可插拔的 module 方式提供。
+* 与 Go 语言有最好的互操作性。可不进行任何包装即可直接调用 Go 语言的函数、类成员方法。
+* 有赖于 Go 语言的互操作性，这门语言直接拥有了一套非常完整且您十分熟悉的标准库，无额外学习成本。
+* 与 Go 十分相近的语法，降低您的学习成本。
+* 支持 Go 绝大部分语言特性，包括：for range, string, slice, map, chan, goroutine, defer, etc。
+* 微内核：语言的核心只有大约 1200 行代码。所有功能以可插拔的 module 方式提供。
 
 预期的商业场景：
 
@@ -35,7 +21,7 @@ git clone https://github.com/qiniu/text.git qiniupkg.com/text
 
 # 快速入门
 
-一个基础版本的 qlang 应该是这样的：
+## 在您的 Go 代码中整合 qlang
 
 ```go
 import (
@@ -45,9 +31,7 @@ import (
 	_ "qlang.io/qlang/builtin" // 导入 builtin 包
 )
 
-const scriptCode = `
-	x = 1 + 2
-`
+const scriptCode = `x = 1 + 2`
 
 func main() {
 
@@ -68,29 +52,74 @@ func main() {
 }
 ```
 
-这是一个最精简功能的 mini qlang。想要了解更多，可参考后文“定制 qlang”一节。实际项目中你也可以参考代码：
+这是一个最精简功能的 mini qlang。想要了解更多，可参考“[定制 qlang](README_QL.md#定制 qlang)”相关内容。实际项目中你也可以参考代码：
 
-* [qlang/main.go](https://github.com/qiniu/qlang/blob/develop/app/qlang/main.go)
+* [qlang/main.go](app/qlang/main.go)
 
-你也可以把 qlang 用于非嵌入式脚本领域，直接用 `qlang` 程序来执行 *.ql 的代码。如下：
+## 非嵌入式场景下使用 qlang
+
+尽管我们认为 qlang 的优势领域是在与 Go 配合的嵌入式场景，但您也可以把 qlang 语言用于非嵌入式脚本领域。
+
+您可以直接通过 `qlang` 命令行程序来执行 *.ql 的代码。如下：
 
 ```
 qlang xxx.ql <arg1> <arg2> ... <argN>
 ```
 
-为了方便学习和调试问题，我们还支持导出 qlang 编译的 “汇编指令”：
+为了方便学习 qlang 工作机理，我们支持导出 qlang 编译的 “汇编指令”：
 
 ```
 QLANG_DUMPCODE=1 qlang xxx.ql <arg1> <arg2> ... <argN>
 ```
 
-如果 qlang 命令不带参数，则进入 qlang shell。
+在 Unix 系的操作系统下，您可以在 xxx.ql 文件开头加上：
 
-# 相关资源
+```
+#!/usr/bin/env qlang
+```
 
-* [Q 语言手册](README_QL.md)
-* [发布版本列表](https://github.com/qiniu/qlang/releases)
-* [qexport](app/qexport/README.md): 可为一个Go语言的标准库或者你自己写的Go Package自动导出相应的qlang library。
+并给 xxx.ql 文件加上可执行权限，即可直接运行 xxx.ql 脚本。
+
+## 使用 qlang shell
+
+命令行下输入 `qlang` 命令（不带参数），直接进入 qlang shell。
+
+你同样也可以设置 QLANG_DUMPCODE 环境变量来学习 qlang 的工作机理：
+
+```
+QLANG_DUMPCODE=1 qlang
+```
+
+## 学习 qlang 语言特性
+
+* [Q 语言手册](README_QL.md): 这里有语言特性的详细介绍。
+* [Qlang Tutorial](tutorial): 这里是一些 qlang 的样例代码，供您学习 qlang 时参考。
+
+# 下载
+
+### 发行版本 (推荐)
+
+* https://github.com/qiniu/qlang/releases
+
+### 源代码
+
+```
+go get -u -insecure qlang.io/qlang
+```
+
+或者在 src 目录执行如下命令：
+
+```
+mkdir qiniupkg.com
+git clone https://github.com/qiniu/qlang.git qlang.io
+git clone https://github.com/qiniu/text.git qiniupkg.com/text
+```
+
+# 社区资源
+
+## 为 Go package 导出 qlang library
+
+* [qexport](app/qexport/README.md): 可为 Go 语言的标准库或者你自己写的 Go Package 自动导出相应的 qlang library。
 
 ## Qlang Libs
 
