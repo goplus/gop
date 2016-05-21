@@ -1,4 +1,4 @@
-The Q Language (Q语言) - A script language for Go
+Q Language - A script language for Go
 ========
 
 [![Build Status](https://travis-ci.org/qiniu/qlang.png?branch=develop)](https://travis-ci.org/qiniu/qlang)
