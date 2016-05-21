@@ -97,11 +97,11 @@ QLANG_DUMPCODE=1 qlang
 
 ## 下载
 
-### 发行版本 (推荐)
+### 发行版本
 
 * https://github.com/qiniu/qlang/releases
 
-### 源代码
+### 最新版本
 
 ```
 go get -u -insecure qlang.io/qlang
