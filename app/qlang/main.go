@@ -27,13 +27,14 @@ func main() {
 		libs = os.Getenv("HOME") + "/qlang"
 	}
 
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	lang.SetLibs(libs)
+
 	if len(os.Args) > 1 {
-		lang, err := qlang.New(qlang.InsertSemis)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-		lang.SetLibs(libs)
 		fname := os.Args[1]
 		b, err := ioutil.ReadFile(fname)
 		if err != nil {
@@ -51,21 +52,14 @@ func main() {
 	qall.Copyright()
 
 	var ret interface{}
+	var poped bool
 	qlang.SetOnPop(func(v interface{}) {
-		ret = v
+		ret, poped = v, true
 	})
 
-	lang, err := qlang.New(nil)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-	lang.SetLibs(libs)
-
 	historyFile := os.Getenv("HOME") + "/.qlang.history"
-
 	rl, err := readline.NewEx(&readline.Config{
-		Prompt:          "qlang> ",
+		Prompt:          ">>> ",
 		HistoryFile:     historyFile,
 		InterruptPrompt: "^C",
 		EOFPrompt:       "exit",
@@ -97,14 +91,15 @@ func main() {
 			continue
 		}
 
-		ret = nil
+		poped = false
 		err = lang.SafeEval(line)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			continue
 		}
-
-		fmt.Printf("=> %v\n", ret)
+		if poped {
+			fmt.Println(ret)
+		}
 	}
 }
 

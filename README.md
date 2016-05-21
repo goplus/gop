@@ -84,7 +84,7 @@ QLANG_DUMPCODE=1 qlang xxx.ql <arg1> <arg2> ... <argN>
 
 命令行下输入 `qlang` 命令（不带参数），直接进入 qlang shell。
 
-你同样也可以设置 QLANG_DUMPCODE 环境变量来学习 qlang 的工作机理：
+您同样也可以设置 QLANG_DUMPCODE 环境变量来学习 qlang 的工作机理：
 
 ```
 QLANG_DUMPCODE=1 qlang
@@ -117,11 +117,11 @@ git clone https://github.com/qiniu/text.git qiniupkg.com/text
 
 ## 社区资源
 
-### 为 Go package 导出 qlang library
+### 为 Go package 导出 qlang module
 
-* [qexport](app/qexport/README.md): 可为 Go 语言的标准库或者你自己写的 Go Package 自动导出相应的 qlang library。
+* [qexport](app/qexport/README.md): 可为 Go 语言的标准库或者你自己写的 Go Package 自动导出相应的 qlang module。
 
-### Qlang Libs
+### Qlang Modules
 
 * 准官方库: https://github.com/qlangio/libs
 * 第三方库: https://github.com/qlang-libs
@@ -130,4 +130,4 @@ git clone https://github.com/qiniu/text.git qiniupkg.com/text
 
 * liteide - https://github.com/visualfc/liteide
 * sublime - https://github.com/damonchen/sublime-qlang
-* vim     - https://github.com/simon-xia/vim-qlang/
+* vim - https://github.com/simon-xia/vim-qlang/
