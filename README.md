@@ -130,3 +130,4 @@ git clone https://github.com/qiniu/text.git qiniupkg.com/text
 
 * liteide - https://github.com/visualfc/liteide
 * sublime - https://github.com/damonchen/sublime-qlang
+* vim     - https://github.com/simon-xia/vim-qlang/
