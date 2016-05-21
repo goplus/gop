@@ -2,6 +2,8 @@ package ioutil
 
 import (
 	"io/ioutil"
+
+	"qlang.io/qlang.spec.v1"
 )
 
 // -----------------------------------------------------------------------------
@@ -9,20 +11,22 @@ import (
 // Exports is the export table of this module.
 //
 var Exports = map[string]interface{}{
+	"_name":     "io/ioutil",
+	"_initSafe": _initSafe,
+	"discard":   ioutil.Discard,
+
 	"nopCloser": ioutil.NopCloser,
 	"readAll":   ioutil.ReadAll,
 	"readDir":   ioutil.ReadDir,
 	"readFile":  ioutil.ReadFile,
+	"tempDir":   ioutil.TempDir,
+	"tempFile":  ioutil.TempFile,
 	"writeFile": ioutil.WriteFile,
-	"discard":   ioutil.Discard,
-	"_initSafe": _initSafe,
 }
 
-func _initSafe(table map[string]interface{}, dummy func(...interface{}) interface{}) {
+func _initSafe(mod qlang.Module) {
 
-	table["readDir"] = dummy
-	table["readFile"] = dummy
-	table["writeFile"] = dummy
+	mod.Disable("readDir", "readFile", "writeFile")
 }
 
 // -----------------------------------------------------------------------------

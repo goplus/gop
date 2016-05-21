@@ -37,6 +37,7 @@ func Unmarshal(b interface{}) (v interface{}, err error) {
 // Exports is the export table of this module.
 //
 var Exports = map[string]interface{}{
+	"_name":         "encoding/json",
 	"decoder":       json.NewDecoder,
 	"encoder":       json.NewEncoder,
 	"marshal":       json.Marshal,

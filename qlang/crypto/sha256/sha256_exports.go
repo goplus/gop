@@ -7,6 +7,7 @@ import "crypto/sha256"
 // Exports is the export table of this module.
 //
 var Exports = map[string]interface{}{
+	"_name":  "crypto/sha256",
 	"new":    sha256.New,
 	"new224": sha256.New224,
 

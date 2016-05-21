@@ -9,6 +9,7 @@ import (
 // Exports is the export table of this module.
 //
 var Exports = map[string]interface{}{
+	"_name":       "io",
 	"copy":        io.Copy,
 	"copyN":       io.CopyN,
 	"readAtLeast": io.ReadAtLeast,

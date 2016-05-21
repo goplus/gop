@@ -6,9 +6,11 @@ import (
 
 // -----------------------------------------------------------------------------
 
+// Exports is the export table of this module.
+//
 var Exports = map[string]interface{}{
-	"new":  extractor.New,
+	"_name": "qiniupkg.com/text/tpl.v1/extractor",
+	"new":   extractor.New,
 }
 
 // -----------------------------------------------------------------------------
-

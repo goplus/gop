@@ -57,6 +57,7 @@ func newServeMux() serveMux {
 // Exports is the export table of this module.
 //
 var Exports = map[string]interface{}{
+	"_name":            "net/http",
 	"request":          http.NewRequest,
 	"response":         newResponse,
 	"header":           newHeader,

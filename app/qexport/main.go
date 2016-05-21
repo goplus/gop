@@ -27,15 +27,15 @@ var (
 	flagCustomContext  string
 )
 
-var doc string = `Export go packages to qlang modules.
+const doc = `Export go packages to qlang modules.
 
 Usage:
   qexport [-contexts=""] [-defctx=false] [-outpath="./qlang"] packages
-	 
+
 The packages for go package list or std for golang all standard packages.
 `
 
-var Usage = func() {
+func usage() {
 	fmt.Fprintln(os.Stderr, doc)
 	flag.PrintDefaults()
 }
@@ -51,7 +51,7 @@ func main() {
 	args := flag.Args()
 
 	if len(args) == 0 {
-		Usage()
+		usage()
 		return
 	}
 
@@ -92,7 +92,8 @@ func main() {
 
 var sym = regexp.MustCompile(`^pkg (\S+)\s?(.*)?, (?:(var|func|type|const)) ([A-Z]\w*)`)
 
-func export(pkg string, outpath string, skip_osarch bool) error {
+func export(pkg string, outpath string, skipOSArch bool) error {
+
 	lines, err := goapi.LookupApi(pkg)
 	if err != nil {
 		return err
@@ -115,8 +116,8 @@ func export(pkg string, outpath string, skip_osarch bool) error {
 			// 2 os-arch-cgo
 			// 3 var|func|type|const
 			// 4 name
-			if skip_osarch && m[2] != "" {
-				//	log.Println("skip", m[2], m[4])
+			if skipOSArch && m[2] != "" {
+				//log.Println("skip", m[2], m[4])
 				continue
 			}
 			full := m[1]
@@ -193,8 +194,14 @@ func export(pkg string, outpath string, skip_osarch bool) error {
 			nmap[s] = append(nmap[s], "new"+s)
 		}
 	}
+
 	//write exports
-	outf("var Exports = map[string]interface{}{\n")
+	outf(`// Exports is the export table of this module.
+//
+var Exports = map[string]interface{}{
+	"_name": "%s",
+`, pkg)
+
 	//write new func
 	var newlines []string
 	for s, fns := range nmap {
