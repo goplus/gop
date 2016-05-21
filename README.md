@@ -93,7 +93,7 @@ QLANG_DUMPCODE=1 qlang
 ### 学习 qlang 语言特性
 
 * [Q 语言手册](README_QL.md): 这里有语言特性的详细介绍。
-* [Qlang Tutorial](tutorial): 这里是一些 qlang 的样例代码，供您学习 qlang 时参考。
+* [Qlang Tutorials](tutorial): 这里是一些 qlang 的样例代码，供您学习 qlang 时参考。
 
 ## 下载
 
