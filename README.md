@@ -5,7 +5,7 @@ Q Language - A script language for Go
 
 ![logo](http://qiniutek.com/images/logo-2.png)
 
-# 语言特色
+## 语言特色
 
 * 与 Go 语言有最好的互操作性。可不进行任何包装即可直接调用 Go 语言的函数、类成员方法。
 * 有赖于 Go 语言的互操作性，这门语言直接拥有了一套非常完整且您十分熟悉的标准库，无额外学习成本。
@@ -19,9 +19,9 @@ Q Language - A script language for Go
 * 作为编译原理的教学语言。由于 qlang 的 Compiler 代码极短，便于阅读和理解，非常方便教学实践之用。
 
 
-# 快速入门
+## 快速入门
 
-## 在您的 Go 代码中整合 qlang
+### 在您的 Go 代码中整合 qlang
 
 ```go
 import (
@@ -56,7 +56,7 @@ func main() {
 
 * [qlang/main.go](app/qlang/main.go)
 
-## 非嵌入式场景下使用 qlang
+### 非嵌入式场景下使用 qlang
 
 尽管我们认为 qlang 的优势领域是在与 Go 配合的嵌入式场景，但您也可以把 qlang 语言用于非嵌入式脚本领域。
 
@@ -80,7 +80,7 @@ QLANG_DUMPCODE=1 qlang xxx.ql <arg1> <arg2> ... <argN>
 
 并给 xxx.ql 文件加上可执行权限，即可直接运行 xxx.ql 脚本。
 
-## 使用 qlang shell
+### 使用 qlang shell
 
 命令行下输入 `qlang` 命令（不带参数），直接进入 qlang shell。
 
@@ -90,12 +90,12 @@ QLANG_DUMPCODE=1 qlang xxx.ql <arg1> <arg2> ... <argN>
 QLANG_DUMPCODE=1 qlang
 ```
 
-## 学习 qlang 语言特性
+### 学习 qlang 语言特性
 
 * [Q 语言手册](README_QL.md): 这里有语言特性的详细介绍。
 * [Qlang Tutorial](tutorial): 这里是一些 qlang 的样例代码，供您学习 qlang 时参考。
 
-# 下载
+## 下载
 
 ### 发行版本 (推荐)
 
@@ -115,18 +115,18 @@ git clone https://github.com/qiniu/qlang.git qlang.io
 git clone https://github.com/qiniu/text.git qiniupkg.com/text
 ```
 
-# 社区资源
+## 社区资源
 
-## 为 Go package 导出 qlang library
+### 为 Go package 导出 qlang library
 
 * [qexport](app/qexport/README.md): 可为 Go 语言的标准库或者你自己写的 Go Package 自动导出相应的 qlang library。
 
-## Qlang Libs
+### Qlang Libs
 
 * 准官方库: https://github.com/qlangio/libs
 * 第三方库: https://github.com/qlang-libs
 
-## IDE 插件
+### IDE 插件
 
 * liteide - https://github.com/visualfc/liteide
 * sublime - https://github.com/damonchen/sublime-qlang
