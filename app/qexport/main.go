@@ -87,15 +87,15 @@ func main() {
 }
 
 var (
-	skip_const_keys = []string{
+	uint64_const_keys = []string{
 		"crc64.ECMA",
 		"crc64.ISO",
 		"math.MaxUint64",
 	}
 )
 
-func isSkipConst(key string) bool {
-	for _, k := range skip_const_keys {
+func isUint64Const(key string) bool {
+	for _, k := range uint64_const_keys {
 		if key == k {
 			return true
 		}
@@ -161,9 +161,8 @@ var Exports = map[string]interface{}{
 		for _, v := range keys {
 			name := toQlangName(v)
 			fn := pkgName + "." + v
-			if isSkipConst(fn) {
-				log.Println("waring skip const", fn)
-				continue
+			if isUint64Const(fn) {
+				fn = "uint64(" + fn + ")"
 			}
 			outf("\t%q:\t%s,\n", name, fn)
 		}
