@@ -1,4 +1,3 @@
-// qexport project main.go
 package main
 
 import (
@@ -6,19 +5,14 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"go/ast"
+	"go/doc"
 	"go/format"
 	"log"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
-	"regexp"
-	"sort"
 	"strings"
 	"unicode"
-
-	"github.com/visualfc/goapi"
 )
 
 var (
@@ -27,7 +21,7 @@ var (
 	flagCustomContext  string
 )
 
-const doc = `Export go packages to qlang modules.
+const help = `Export go packages to qlang modules.
 
 Usage:
   qexport [-contexts=""] [-defctx=false] [-outpath="./qlang"] packages
@@ -36,13 +30,13 @@ The packages for go package list or std for golang all standard packages.
 `
 
 func usage() {
-	fmt.Fprintln(os.Stderr, doc)
+	fmt.Fprintln(os.Stderr, help)
 	flag.PrintDefaults()
 }
 
 func init() {
 	flag.StringVar(&flagExportPath, "outpath", "./qlang", "optional set export root path")
-	flag.BoolVar(&flagDefaultContext, "defctx", false, "optional use default context for build, default use all contexts.")
+	flag.BoolVar(&flagDefaultContext, "defctx", true, "optional use default context for build, default use all contexts.")
 	flag.StringVar(&flagCustomContext, "contexts", "", "optional comma-separated list of <goos>-<goarch>[-cgo] to override default contexts.")
 }
 
@@ -55,8 +49,10 @@ func main() {
 		return
 	}
 
-	goapi.ApiDefaultCtx = flagDefaultContext
-	goapi.ApiCustomCtx = flagCustomContext
+	if flagCustomContext != "" {
+		flagDefaultContext = false
+		setCustomContexts(flagCustomContext)
+	}
 
 	var outpath string
 	if filepath.IsAbs(flagExportPath) {
@@ -90,70 +86,52 @@ func main() {
 	}
 }
 
-var sym = regexp.MustCompile(`^pkg (\S+)\s?(.*)?, (?:(var|func|type|const)) ([A-Z]\w*)`)
+var (
+	skip_const_keys = []string{
+		"crc64.ECMA",
+		"crc64.ISO",
+		"math.MaxUint64",
+	}
+)
+
+func isSkipConst(key string) bool {
+	for _, k := range skip_const_keys {
+		if key == k {
+			return true
+		}
+	}
+	return false
+}
 
 func export(pkg string, outpath string, skipOSArch bool) error {
-
-	lines, err := goapi.LookupApi(pkg)
+	p, err := NewPackage(pkg, flagDefaultContext)
 	if err != nil {
 		return err
 	}
 
-	fullImport := map[string]string{} // "zip.NewReader" => "archive/zip"
-	ambiguous := map[string]bool{}
-	var keys []string
-	var funcs []string
-	var cons []string
-	var vars []string
-	var structs []string
-	for _, l := range lines {
-		has := func(v string) bool { return strings.Contains(l, v) }
-		if has("interface, ") || has(", method (") {
-			continue
-		}
-		if m := sym.FindStringSubmatch(l); m != nil {
-			// 1 pkgname
-			// 2 os-arch-cgo
-			// 3 var|func|type|const
-			// 4 name
-			if skipOSArch && m[2] != "" {
-				//log.Println("skip", m[2], m[4])
-				continue
-			}
-			full := m[1]
-			key := path.Base(full) + "." + m[4]
-			if exist, ok := fullImport[key]; ok {
-				if exist != full {
-					ambiguous[key] = true
-				}
-			} else {
-				fullImport[key] = full
-				keys = append(keys, key)
-				if m[3] == "func" {
-					funcs = append(funcs, m[4])
-				} else if m[3] == "const" {
-					cons = append(cons, m[4])
-				} else if m[3] == "var" {
-					vars = append(vars, m[4])
-				} else if m[3] == "type" && strings.HasSuffix(l, m[4]+" struct") {
-					structs = append(structs, m[4])
-				}
-			}
+	p.Parser()
+
+	bp := p.BuildPackage()
+	if bp == nil {
+		return errors.New("not find build")
+	}
+
+	if p.CommonCount() == 0 {
+		return errors.New("empty common exports")
+	}
+
+	if pkg == "unsafe" {
+		return errors.New("skip unsafe pkg")
+	}
+
+	pkgName := bp.Name
+
+	//skip internal
+	for _, path := range strings.Split(bp.ImportPath, "/") {
+		if path == "internal" {
+			return errors.New("skip internal pkg")
 		}
 	}
-	sort.Strings(keys)
-
-	if len(cons) == 0 && len(funcs) == 0 {
-		return errors.New("empty funcs and const")
-	}
-
-	root := filepath.Join(outpath, pkg)
-	err = os.MkdirAll(root, 0777)
-	if err != nil {
-		return err
-	}
-
-	pkgName := path.Base(pkg)
 
 	var buf bytes.Buffer
 	outf := func(format string, a ...interface{}) (err error) {
@@ -169,102 +147,108 @@ func export(pkg string, outpath string, skipOSArch bool) error {
 	outf("\t%q\n", pkg)
 	outf(")\n\n")
 
-	sort.Strings(structs)
-	sort.Strings(funcs)
-	sort.Strings(vars)
-	sort.Strings(cons)
-
-	//check new func map
-	nmap := make(map[string][]string)
-	skip := make(map[string]bool)
-	for _, s := range structs {
-		fnNew := "New" + s
-		find := false
-		for _, v := range funcs {
-			if strings.HasPrefix(v, fnNew) {
-				nmap[s] = append(nmap[s], v)
-				skip[v] = true
-				find = true
-			}
-		}
-		if !find {
-			outf("func new%s() *%s{\n", s, pkgName+"."+s)
-			outf("return new(%s)\n", pkgName+"."+s)
-			outf("}\n\n")
-			nmap[s] = append(nmap[s], "new"+s)
-		}
-	}
-
 	//write exports
 	outf(`// Exports is the export table of this module.
 //
 var Exports = map[string]interface{}{
-	"_name": "%s",
+	"_name": "%s",	
 `, pkg)
 
-	//write new func
-	var newlines []string
-	for s, fns := range nmap {
-		if len(fns) == 1 {
-			qname := toQlangName(s)
-			fnNew := fns[0]
-			if ast.IsExported(fnNew) {
-				fnNew = pkgName + "." + fnNew
+	var addins []string
+	//const
+	if keys, _ := p.FilterCommon(Const); len(keys) > 0 {
+		outf("\n")
+		for _, v := range keys {
+			name := toQlangName(v)
+			fn := pkgName + "." + v
+			if isSkipConst(fn) {
+				log.Println("waring skip const", fn)
+				continue
 			}
-			newlines = append(newlines, fmt.Sprintf("\t%q:\t%s,", qname, fnNew))
-		} else if len(fns) > 1 {
-			for _, fn := range fns {
-				qname := toQlangName(fn)
-				fnNew := fn
-				if ast.IsExported(fnNew) {
-					fnNew = pkgName + "." + fnNew
-				}
-				newlines = append(newlines, fmt.Sprintf("\t%q:\t%s,", qname, fnNew))
-			}
+			outf("\t%q:\t%s,\n", name, fn)
 		}
 	}
-	sort.Strings(newlines)
-	for _, v := range newlines {
-		outf("%s\n", v)
-	}
-	if len(newlines) != 0 {
-		outf("\n")
-	}
 
-	//var
-	for _, v := range vars {
-		name := toQlangName(v)
-		fn := pkgName + "." + v
-		outf("\t%q:\t%s,\n", name, fn)
-	}
-	if len(vars) != 0 {
+	//vars
+	if keys, _ := p.FilterCommon(Var); len(keys) > 0 {
 		outf("\n")
-	}
-
-	//const
-	for _, v := range cons {
-		name := toQlangName(v)
-		fn := pkgName + "." + v
-		outf("\t%q:\t%s,\n", name, fn)
-	}
-
-	if len(cons) != 0 {
-		outf("\n")
+		for _, v := range keys {
+			name := toQlangName(v)
+			fn := pkgName + "." + v
+			outf("\t%q:\t%s,\n", name, fn)
+		}
 	}
 
 	//funcs
-	for _, v := range funcs {
-		name := toQlangName(v)
-		fn := pkgName + "." + v
-		if skip[v] {
-			continue
+	if keys, _ := p.FilterCommon(Func); len(keys) > 0 {
+		outf("\n")
+		for _, v := range keys {
+			name := toQlangName(v)
+			fn := pkgName + "." + v
+			outf("\t%q:\t%s,\n", name, fn)
 		}
-		outf("\t%q:\t%s,\n", name, fn)
 	}
 
+	//structs
+	if keys, m := p.FilterCommon(Struct); len(keys) > 0 {
+		_, fm := p.FilterCommon(Factor)
+		outf("\n")
+		for _, v := range keys {
+			t, ok := m[v]
+			if !ok {
+				continue
+			}
+			dt, ok := t.(*doc.Type)
+			if !ok {
+				continue
+			}
+			//empty func
+			if len(dt.Funcs) == 0 {
+				//fmt.Println(v)
+				name := toQlangName(v)
+				var vfn string = "var" + v
+				var tname string = pkgName + "." + v
+				addins = append(addins, fmt.Sprintf("func %s() %s {\n\tvar v %s\n\treturn v\n}",
+					vfn, tname, tname,
+				))
+				var vfns string = "new" + v + "Array"
+				addins = append(addins, fmt.Sprintf("func %s(n int) []%s {\n\treturn make([]%s,n)\n}",
+					vfns, tname, tname,
+				))
+				outf("\t%q:\t%s,\n", name, vfn)
+				outf("\t%q:\t%s,\n", name+"Array", vfns)
+			} else {
+				//write factor func and check is common
+				for _, f := range dt.Funcs {
+					if _, ok = fm[f.Name]; ok {
+						name := toQlangName(f.Name)
+						fn := pkgName + "." + f.Name
+						outf("\t%q:\t%s,\n", name, fn)
+					}
+				}
+			}
+		}
+	}
+
+	// end exports
 	outf("}")
 
+	if len(addins) > 0 {
+		for _, addin := range addins {
+			outf("\n\n")
+			outf(addin)
+		}
+	}
+
+	// format
 	data, err := format.Source(buf.Bytes())
+	if err != nil {
+		return err
+	}
+
+	// write file
+	root := filepath.Join(outpath, pkg)
+	err = os.MkdirAll(root, 0777)
 	if err != nil {
 		return err
 	}
