@@ -4,12 +4,10 @@ import (
 	"go/ast"
 	"go/build"
 	"go/doc"
-	"go/importer"
 	"go/parser"
 	"go/token"
 	"path/filepath"
 	"sort"
-	"strings"
 )
 
 type DocType int
@@ -58,19 +56,6 @@ func (p *Package) BuildPackage() *build.Package {
 		}
 	}
 	return nil
-}
-
-func poorMansImporter(imports map[string]*ast.Object, path string) (*ast.Object, error) {
-	pkg := imports[path]
-	if pkg == nil {
-		//fmt.Println("import", path)
-		importer.Default()
-		// note that strings.LastIndex returns -1 if there is no "/"
-		pkg = ast.NewObj(ast.Pkg, path[strings.LastIndex(path, "/")+1:])
-		pkg.Data = ast.NewScope(nil) // required by ast.NewPackage for dot-import
-		imports[path] = pkg
-	}
-	return pkg, nil
 }
 
 func (p *Package) Parser() {
