@@ -117,15 +117,19 @@ func export(pkg string, outpath string, skipOSArch bool) error {
 		return errors.New("not find build")
 	}
 
-	if p.CommonCount() == 0 {
-		return errors.New("empty common exports")
+	pkgName := bp.Name
+
+	if bp.Name == "main" {
+		return errors.New("skip main pkg")
 	}
 
 	if pkg == "unsafe" {
 		return errors.New("skip unsafe pkg")
 	}
 
-	pkgName := bp.Name
+	if p.CommonCount() == 0 {
+		return errors.New("empty common exports")
+	}
 
 	//skip internal
 	for _, path := range strings.Split(bp.ImportPath, "/") {
