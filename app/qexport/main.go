@@ -205,21 +205,43 @@ var Exports = map[string]interface{}{
 			if !ok {
 				continue
 			}
+
 			//empty func
 			if len(dt.Funcs) == 0 && ast.IsExported(v) {
-				//fmt.Println(v)
+				//check export type
+				isVar, isPtr, isArray := p.CheckExportType(v)
+				if !isVar && !isPtr && !isArray {
+					//is not unexported type, export ptr
+					if !p.CheckTypeUnexportedFields(dt.Decl) {
+						isPtr = true
+					}
+				}
 				name := toQlangName(v)
-				var vfn string = "new" + v
 				var tname string = pkgName + "." + v
-				addins = append(addins, fmt.Sprintf("func %s() *%s {\n\treturn new(%s)\n}",
-					vfn, tname, tname,
-				))
-				var vfns string = "new" + v + "Array"
-				addins = append(addins, fmt.Sprintf("func %s(n int) []%s {\n\treturn make([]%s,n)\n}",
-					vfns, tname, tname,
-				))
-				outf("\t%q:\t%s,\n", name, vfn)
-				outf("\t%q:\t%s,\n", name+"Array", vfns)
+				//export var and not ptr
+				if isVar && !isPtr {
+					var vfn string = "var" + v
+					addins = append(addins, fmt.Sprintf("func %s() %s {\n\tvar v %s\n\treturn v\n}",
+						vfn, tname, tname,
+					))
+					outf("\t%q:\t%s,\n", name, vfn)
+				}
+				//export ptr
+				if isPtr {
+					var vfn string = "new" + v
+					addins = append(addins, fmt.Sprintf("func %s() *%s {\n\treturn new(%s)\n}",
+						vfn, tname, tname,
+					))
+					outf("\t%q:\t%s,\n", name, vfn)
+				}
+				//export array
+				if isArray {
+					var vfns string = "new" + v + "s"
+					addins = append(addins, fmt.Sprintf("func %s(n int) []%s {\n\treturn make([]%s,n)\n}",
+						vfns, tname, tname,
+					))
+					outf("\t%q:\t%s,\n", name+"s", vfns)
+				}
 			} else {
 				//write factor func and check is common
 				var funcs []string

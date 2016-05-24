@@ -1,13 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"go/ast"
 	"go/build"
 	"go/doc"
 	"go/parser"
+	"go/printer"
 	"go/token"
 	"path/filepath"
 	"sort"
+	"strings"
 )
 
 type DocType int
@@ -25,6 +28,7 @@ const (
 
 type Package struct {
 	pkg      string
+	fset     *token.FileSet
 	files    map[string]*ast.File
 	dpkg     map[string]*doc.Package
 	keys     map[DocType]map[string]map[string]interface{}
@@ -39,6 +43,7 @@ func NewPackage(pkg string, defctx bool) (*Package, error) {
 		return nil, err
 	}
 	p := new(Package)
+	p.fset = token.NewFileSet()
 	p.pkg = pkg
 	p.files = make(map[string]*ast.File)
 	p.dpkg = make(map[string]*doc.Package)
@@ -86,14 +91,14 @@ func (p *Package) parser(ctx build.Context) (*doc.Package, error) {
 	var files []string
 	files = append(files, bp.GoFiles...)
 	files = append(files, bp.CgoFiles...)
-	fset := token.NewFileSet()
+
 	fs := make(map[string]*ast.File)
 	var afiles []*ast.File
 	for _, file := range files {
 		fileName := filepath.Join(bp.Dir, file)
 		f, ok := p.files[fileName]
 		if !ok {
-			f, err = parser.ParseFile(fset, fileName, nil, parser.ParseComments)
+			f, err = parser.ParseFile(p.fset, fileName, nil, parser.ParseComments)
 			if err != nil {
 				return nil, err
 			}
@@ -106,7 +111,7 @@ func (p *Package) parser(ctx build.Context) (*doc.Package, error) {
 		afiles = append(afiles, f)
 	}
 
-	apkg, err := ast.NewPackage(fset, fs, nil, nil)
+	apkg, err := ast.NewPackage(p.fset, fs, nil, nil)
 	if err != nil {
 		//fmt.Println(err)
 	}
@@ -231,4 +236,62 @@ func (p *Package) CommonCount() int {
 		count += len(ks)
 	}
 	return count
+}
+
+func (p *Package) nodeString(node interface{}) (string, error) {
+	var buf bytes.Buffer
+	err := printer.Fprint(&buf, p.fset, node) // only print statements
+	if err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
+// hard code check type unexported // contains filtered or unexported fields
+func (p *Package) CheckTypeUnexportedFields(decl *ast.GenDecl) bool {
+	str, err := p.nodeString(decl)
+	if err != nil {
+		return false
+	}
+	return strings.Contains(str, "unexported")
+}
+
+// check func param type is var,ptr,array
+func (p *Package) CheckExportType(typ string) (isVar bool, isPtr bool, isArray bool) {
+	fnCheck := func(f *doc.Func) {
+		if f.Decl.Type.Params.List == nil {
+			return
+		}
+		for _, field := range f.Decl.Type.Params.List {
+			str, err := p.nodeString(field.Type)
+			if err != nil {
+				return
+			}
+			if str == typ {
+				isVar = true
+			} else if str == "*"+typ {
+				isPtr = true
+			} else if str == "[]"+typ {
+				isArray = true
+			}
+		}
+	}
+	//check func
+	_, mf := p.FilterCommon(Func)
+	for _, v := range mf {
+		f := v.(*doc.Func)
+		fnCheck(f)
+	}
+	//check type
+	_, mt := p.FilterCommon(Struct)
+	for _, v := range mt {
+		t := v.(*doc.Type)
+		for _, f := range t.Funcs {
+			fnCheck(f)
+		}
+		for _, f := range t.Methods {
+			fnCheck(f)
+		}
+	}
+	return
 }
