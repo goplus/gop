@@ -35,64 +35,77 @@ export all package
 ```
 
 
-Export pacakge go/build:
+Export pacakge runtime:
 
 ``` go
-package build
+package runtime
 
 import (
-	"go/build"
+	"runtime"
 )
 
 // Exports is the export table of this module.
 //
 var Exports = map[string]interface{}{
-	"_name": "go/build",
+	"_name": "runtime",
 
-	"allowBinary":   build.AllowBinary,
-	"findOnly":      build.FindOnly,
-	"ignoreVendor":  build.IgnoreVendor,
-	"importComment": build.ImportComment,
+	"compiler": runtime.Compiler,
+	"GOARCH":   runtime.GOARCH,
+	"GOOS":     runtime.GOOS,
 
-	"default": build.Default,
-	"toolDir": build.ToolDir,
+	"memProfileRate": runtime.MemProfileRate,
 
-	"archChar":      build.ArchChar,
-	"isLocalImport": build.IsLocalImport,
+	"blockProfile":        runtime.BlockProfile,
+	"breakpoint":          runtime.Breakpoint,
+	"CPUProfile":          runtime.CPUProfile,
+	"caller":              runtime.Caller,
+	"callers":             runtime.Callers,
+	"GC":                  runtime.GC,
+	"GOMAXPROCS":          runtime.GOMAXPROCS,
+	"GOROOT":              runtime.GOROOT,
+	"goexit":              runtime.Goexit,
+	"goroutineProfile":    runtime.GoroutineProfile,
+	"gosched":             runtime.Gosched,
+	"lockOSThread":        runtime.LockOSThread,
+	"memProfile":          runtime.MemProfile,
+	"numCPU":              runtime.NumCPU,
+	"numCgoCall":          runtime.NumCgoCall,
+	"numGoroutine":        runtime.NumGoroutine,
+	"readMemStats":        runtime.ReadMemStats,
+	"readTrace":           runtime.ReadTrace,
+	"setBlockProfileRate": runtime.SetBlockProfileRate,
+	"setCPUProfileRate":   runtime.SetCPUProfileRate,
+	"setFinalizer":        runtime.SetFinalizer,
+	"stack":               runtime.Stack,
+	"startTrace":          runtime.StartTrace,
+	"stopTrace":           runtime.StopTrace,
+	"threadCreateProfile": runtime.ThreadCreateProfile,
+	"unlockOSThread":      runtime.UnlockOSThread,
+	"version":             runtime.Version,
 
-	"context":                   newContext,
-	"contextArray":              newContextArray,
-	"multiplePackageError":      newMultiplePackageError,
-	"multiplePackageErrorArray": newMultiplePackageErrorArray,
-	"noGoError":                 newNoGoError,
-	"noGoErrorArray":            newNoGoErrorArray,
-	"import":                    build.Import,
-	"importDir":                 build.ImportDir,
+	"blockProfileRecords": newBlockProfileRecords,
+	"funcForPC":           runtime.FuncForPC,
+	"memProfileRecords":   newMemProfileRecords,
+	"memStats":            newMemStats,
+	"stackRecords":        newStackRecords,
 }
 
-func newContext() *build.Context {
-	return new(build.Context)
+func newBlockProfileRecords(n int) []runtime.BlockProfileRecord {
+	return make([]runtime.BlockProfileRecord, n)
 }
 
-func newContextArray(n int) []build.Context {
-	return make([]build.Context, n)
+func newMemProfileRecords(n int) []runtime.MemProfileRecord {
+	return make([]runtime.MemProfileRecord, n)
 }
 
-func newMultiplePackageError() *build.MultiplePackageError {
-	return new(build.MultiplePackageError)
+func newMemStats() *runtime.MemStats {
+	return new(runtime.MemStats)
 }
 
-func newMultiplePackageErrorArray(n int) []build.MultiplePackageError {
-	return make([]build.MultiplePackageError, n)
+func newStackRecords(n int) []runtime.StackRecord {
+	return make([]runtime.StackRecord, n)
 }
 
-func newNoGoError() *build.NoGoError {
-	return new(build.NoGoError)
-}
-
-func newNoGoErrorArray(n int) []build.NoGoError {
-	return make([]build.NoGoError, n)
-}
 ```
 
 		
