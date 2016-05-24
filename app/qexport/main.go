@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"go/ast"
 	"go/doc"
 	"go/format"
 	"log"
@@ -36,7 +37,7 @@ func usage() {
 
 func init() {
 	flag.StringVar(&flagExportPath, "outpath", "./qlang", "optional set export root path")
-	flag.BoolVar(&flagDefaultContext, "defctx", true, "optional use default context for build, default use all contexts.")
+	flag.BoolVar(&flagDefaultContext, "defctx", false, "optional use default context for build, default use all contexts.")
 	flag.StringVar(&flagCustomContext, "contexts", "", "optional comma-separated list of <goos>-<goarch>[-cgo] to override default contexts.")
 }
 
@@ -190,7 +191,6 @@ var Exports = map[string]interface{}{
 
 	//structs
 	if keys, m := p.FilterCommon(Struct); len(keys) > 0 {
-		_, fm := p.FilterCommon(Factor)
 		outf("\n")
 		for _, v := range keys {
 			t, ok := m[v]
@@ -202,12 +202,12 @@ var Exports = map[string]interface{}{
 				continue
 			}
 			//empty func
-			if len(dt.Funcs) == 0 {
+			if len(dt.Funcs) == 0 && ast.IsExported(v) {
 				//fmt.Println(v)
 				name := toQlangName(v)
-				var vfn string = "var" + v
+				var vfn string = "new" + v
 				var tname string = pkgName + "." + v
-				addins = append(addins, fmt.Sprintf("func %s() %s {\n\tvar v %s\n\treturn v\n}",
+				addins = append(addins, fmt.Sprintf("func %s() *%s {\n\treturn new(%s)\n}",
 					vfn, tname, tname,
 				))
 				var vfns string = "new" + v + "Array"
@@ -218,12 +218,19 @@ var Exports = map[string]interface{}{
 				outf("\t%q:\t%s,\n", name+"Array", vfns)
 			} else {
 				//write factor func and check is common
+				var funcs []string
 				for _, f := range dt.Funcs {
-					if _, ok = fm[f.Name]; ok {
-						name := toQlangName(f.Name)
-						fn := pkgName + "." + f.Name
-						outf("\t%q:\t%s,\n", name, fn)
+					if ast.IsExported(f.Name) {
+						funcs = append(funcs, f.Name)
 					}
+				}
+				for _, f := range funcs {
+					name := toQlangName(f)
+					if len(funcs) == 0 {
+						name = toQlangName(v)
+					}
+					fn := pkgName + "." + f
+					outf("\t%q:\t%s,\n", name, fn)
 				}
 			}
 		}

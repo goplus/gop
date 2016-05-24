@@ -130,8 +130,21 @@ func (p *Package) parser(ctx build.Context) (*doc.Package, error) {
 			continue
 		}
 		updata(typ, ctxName, v.Name, v)
+		//type func
 		for _, f := range v.Funcs {
 			updata(Factor, ctxName, f.Name, f)
+		}
+		//type var
+		for _, f := range v.Vars {
+			for _, name := range f.Names {
+				updata(Var, ctxName, name, f)
+			}
+		}
+		//type const
+		for _, f := range v.Consts {
+			for _, name := range f.Names {
+				updata(Const, ctxName, name, f)
+			}
 		}
 	}
 	//funcs
@@ -147,7 +160,7 @@ func (p *Package) parser(ctx build.Context) (*doc.Package, error) {
 	//vars
 	for _, v := range dpkg.Vars {
 		for _, name := range v.Names {
-			updata(Const, ctxName, name, v)
+			updata(Var, ctxName, name, v)
 		}
 	}
 	return dpkg, nil
@@ -199,7 +212,7 @@ func (p *Package) FilterCommon(typ DocType) ([]string, map[string]interface{}) {
 		def := contextName(&build.Default)
 		var key []string
 		for k, v := range m {
-			if ast.IsExported(k) && len(v) == ctxsize {
+			if len(v) == ctxsize && (ast.IsExported(k) || typ == Struct) {
 				key = append(key, k)
 				cm[k] = v[def]
 			}

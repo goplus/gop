@@ -35,109 +35,63 @@ export all package
 ```
 
 
-Export pacakge runtime:
+Export pacakge go/build:
 
 ``` go
-package runtime
+package build
 
 import (
-	"runtime"
+	"go/build"
 )
 
 // Exports is the export table of this module.
 //
 var Exports = map[string]interface{}{
-	"_name": "runtime",
+	"_name": "go/build",
 
-	"compiler":       runtime.Compiler,
-	"GOARCH":         runtime.GOARCH,
-	"GOOS":           runtime.GOOS,
-	"memProfileRate": runtime.MemProfileRate,
+	"allowBinary":   build.AllowBinary,
+	"findOnly":      build.FindOnly,
+	"ignoreVendor":  build.IgnoreVendor,
+	"importComment": build.ImportComment,
 
-	"blockProfile":        runtime.BlockProfile,
-	"breakpoint":          runtime.Breakpoint,
-	"CPUProfile":          runtime.CPUProfile,
-	"caller":              runtime.Caller,
-	"callers":             runtime.Callers,
-	"GC":                  runtime.GC,
-	"GOMAXPROCS":          runtime.GOMAXPROCS,
-	"GOROOT":              runtime.GOROOT,
-	"goexit":              runtime.Goexit,
-	"goroutineProfile":    runtime.GoroutineProfile,
-	"gosched":             runtime.Gosched,
-	"lockOSThread":        runtime.LockOSThread,
-	"memProfile":          runtime.MemProfile,
-	"numCPU":              runtime.NumCPU,
-	"numCgoCall":          runtime.NumCgoCall,
-	"numGoroutine":        runtime.NumGoroutine,
-	"readMemStats":        runtime.ReadMemStats,
-	"readTrace":           runtime.ReadTrace,
-	"setBlockProfileRate": runtime.SetBlockProfileRate,
-	"setCPUProfileRate":   runtime.SetCPUProfileRate,
-	"setFinalizer":        runtime.SetFinalizer,
-	"stack":               runtime.Stack,
-	"startTrace":          runtime.StartTrace,
-	"stopTrace":           runtime.StopTrace,
-	"threadCreateProfile": runtime.ThreadCreateProfile,
-	"unlockOSThread":      runtime.UnlockOSThread,
-	"version":             runtime.Version,
+	"default": build.Default,
+	"toolDir": build.ToolDir,
 
-	"blockProfileRecord":      varBlockProfileRecord,
-	"blockProfileRecordArray": newBlockProfileRecordArray,
-	"funcForPC":               runtime.FuncForPC,
-	"memProfileRecord":        varMemProfileRecord,
-	"memProfileRecordArray":   newMemProfileRecordArray,
-	"memStats":                varMemStats,
-	"memStatsArray":           newMemStatsArray,
-	"stackRecord":             varStackRecord,
-	"stackRecordArray":        newStackRecordArray,
-	"typeAssertionError":      varTypeAssertionError,
-	"typeAssertionErrorArray": newTypeAssertionErrorArray,
+	"archChar":      build.ArchChar,
+	"isLocalImport": build.IsLocalImport,
+
+	"context":                   newContext,
+	"contextArray":              newContextArray,
+	"multiplePackageError":      newMultiplePackageError,
+	"multiplePackageErrorArray": newMultiplePackageErrorArray,
+	"noGoError":                 newNoGoError,
+	"noGoErrorArray":            newNoGoErrorArray,
+	"import":                    build.Import,
+	"importDir":                 build.ImportDir,
 }
 
-func varBlockProfileRecord() runtime.BlockProfileRecord {
-	var v runtime.BlockProfileRecord
-	return v
+func newContext() *build.Context {
+	return new(build.Context)
 }
 
-func newBlockProfileRecordArray(n int) []runtime.BlockProfileRecord {
-	return make([]runtime.BlockProfileRecord, n)
+func newContextArray(n int) []build.Context {
+	return make([]build.Context, n)
 }
 
-func varMemProfileRecord() runtime.MemProfileRecord {
-	var v runtime.MemProfileRecord
-	return v
+func newMultiplePackageError() *build.MultiplePackageError {
+	return new(build.MultiplePackageError)
 }
 
-func newMemProfileRecordArray(n int) []runtime.MemProfileRecord {
-	return make([]runtime.MemProfileRecord, n)
+func newMultiplePackageErrorArray(n int) []build.MultiplePackageError {
+	return make([]build.MultiplePackageError, n)
 }
 
-func varMemStats() runtime.MemStats {
-	var v runtime.MemStats
-	return v
+func newNoGoError() *build.NoGoError {
+	return new(build.NoGoError)
 }
 
-func newMemStatsArray(n int) []runtime.MemStats {
-	return make([]runtime.MemStats, n)
-}
-
-func varStackRecord() runtime.StackRecord {
-	var v runtime.StackRecord
-	return v
-}
-
-func newStackRecordArray(n int) []runtime.StackRecord {
-	return make([]runtime.StackRecord, n)
-}
-
-func varTypeAssertionError() runtime.TypeAssertionError {
-	var v runtime.TypeAssertionError
-	return v
-}
-
-func newTypeAssertionErrorArray(n int) []runtime.TypeAssertionError {
-	return make([]runtime.TypeAssertionError, n)
+func newNoGoErrorArray(n int) []build.NoGoError {
+	return make([]build.NoGoError, n)
 }
 ```
 
