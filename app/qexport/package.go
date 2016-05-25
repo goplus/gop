@@ -252,40 +252,29 @@ func (p *Package) nodeString(node interface{}) (string, error) {
 
 // check type field un exported
 func (p *Package) CheckTypeFields(d *ast.GenDecl, hasUnexportedField bool, hasUnexportedFieldPtr bool, hasUnexportedInterfaceField bool) bool {
-	keys, _ := p.FilterCommon(Interface)
+	interfaceNames, _ := p.FilterCommon(Interface)
 	switch d.Tok {
 	case token.TYPE:
 		for _, sp := range d.Specs {
 			ts := sp.(*ast.TypeSpec)
 			switch t := ts.Type.(type) {
-			case *ast.InterfaceType:
 			case *ast.StructType:
 				for _, field := range t.Fields.List {
-					//check unexported name
-					if hasUnexportedField {
-						for _, name := range field.Names {
-							if !ast.IsExported(name.Name) {
+					for _, name := range field.Names {
+						if !ast.IsExported(name.Name) {
+							if hasUnexportedField {
 								return true
 							}
-						}
-					}
-
-					if hasUnexportedFieldPtr {
-						for _, name := range field.Names {
-							typ, _ := p.nodeString(field.Type)
-							if !ast.IsExported(name.Name) && strings.HasPrefix(typ, "*") {
-								return true
+							if hasUnexportedFieldPtr {
+								typ, _ := p.nodeString(field.Type)
+								if strings.HasPrefix(typ, "*") {
+									return true
+								}
 							}
-						}
-					}
-
-					//check type is interface
-					if hasUnexportedInterfaceField {
-						for _, name := range field.Names {
-							typ, _ := p.nodeString(field.Type)
-							if !ast.IsExported(name.Name) {
-								for _, key := range keys {
-									if typ == key {
+							if hasUnexportedInterfaceField {
+								typ, _ := p.nodeString(field.Type)
+								for _, iname := range interfaceNames {
+									if typ == iname {
 										return true
 									}
 								}
@@ -294,6 +283,7 @@ func (p *Package) CheckTypeFields(d *ast.GenDecl, hasUnexportedField bool, hasUn
 					}
 				}
 			default:
+				break
 			}
 		}
 	}
