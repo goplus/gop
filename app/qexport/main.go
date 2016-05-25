@@ -76,14 +76,17 @@ func main() {
 	} else {
 		pkgs = args
 	}
-
+	var exportd []string
 	for _, pkg := range pkgs {
 		err := export(pkg, outpath, true)
 		if err != nil {
-			log.Printf("export pkg %q error, %s.\n", pkg, err)
+			log.Printf("warning skip pkg %q, error %v.\n", pkg, err)
 		} else {
-			log.Printf("export pkg %q success.\n", pkg)
+			exportd = append(exportd, pkg)
 		}
+	}
+	for _, pkg := range exportd {
+		log.Printf("export pkg %q success.\n", pkg)
 	}
 }
 
@@ -193,6 +196,35 @@ var Exports = map[string]interface{}{
 		}
 	}
 
+	//interface
+	if keys, m := p.FilterCommon(Interface); len(keys) > 0 {
+		outf("\n")
+		for _, v := range keys {
+			t, ok := m[v]
+			if !ok {
+				continue
+			}
+			dt, ok := t.(*doc.Type)
+			if !ok {
+				continue
+			}
+			var funcs []string
+			for _, f := range dt.Funcs {
+				if ast.IsExported(f.Name) {
+					funcs = append(funcs, f.Name)
+				}
+			}
+			for _, f := range funcs {
+				name := toQlangName(f)
+				if len(funcs) == 1 && strings.HasPrefix(name, "new") {
+					name = toQlangName(v)
+				}
+				fn := pkgName + "." + f
+				outf("\t%q:\t%s,\n", name, fn)
+			}
+		}
+	}
+
 	//structs
 	if keys, m := p.FilterCommon(Struct); len(keys) > 0 {
 		outf("\n")
@@ -205,15 +237,49 @@ var Exports = map[string]interface{}{
 			if !ok {
 				continue
 			}
-
-			//empty func
-			if len(dt.Funcs) == 0 && ast.IsExported(v) {
+			// exported funcs
+			var funcs []string
+			for _, f := range dt.Funcs {
+				if ast.IsExported(f.Name) {
+					funcs = append(funcs, f.Name)
+				}
+			}
+			// check error interface implement struct
+			if strings.HasSuffix(v, "Error") {
+				check := func(name string) bool {
+					for _, f := range dt.Methods {
+						if f.Name == name {
+							return true
+						}
+					}
+					return false
+				}
+				if check("Error") {
+					log.Printf("warning skip struct %s, is error interface{} implement\n", bp.ImportPath+"."+v)
+					continue
+				}
+			}
+			// check empty func
+			if len(funcs) == 0 && ast.IsExported(v) {
 				//check export type
 				isVar, isPtr, isArray := p.CheckExportType(v)
 				if !isVar && !isPtr && !isArray {
 					//is not unexported type, export ptr
-					if !p.CheckTypeUnexportedFields(dt.Decl) {
+					if !p.CheckTypeFields(dt.Decl, false, true, true) {
 						isPtr = true
+					} else {
+						//hack check file method has open
+						var hasOpen bool
+						for _, f := range dt.Methods {
+							if f.Name == "Open" {
+								hasOpen = true
+								break
+							}
+						}
+						if !hasOpen {
+							log.Printf("warning skip struct %s, has unexported field\n", bp.ImportPath+"."+v)
+							continue
+						}
 					}
 				}
 				name := toQlangName(v)
@@ -244,15 +310,9 @@ var Exports = map[string]interface{}{
 				}
 			} else {
 				//write factor func and check is common
-				var funcs []string
-				for _, f := range dt.Funcs {
-					if ast.IsExported(f.Name) {
-						funcs = append(funcs, f.Name)
-					}
-				}
 				for _, f := range funcs {
 					name := toQlangName(f)
-					if len(funcs) == 0 {
+					if len(funcs) == 1 && strings.HasPrefix(name, "new") {
 						name = toQlangName(v)
 					}
 					fn := pkgName + "." + f

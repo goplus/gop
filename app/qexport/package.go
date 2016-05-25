@@ -112,10 +112,13 @@ func (p *Package) parser(ctx build.Context) (*doc.Package, error) {
 	}
 
 	apkg, err := ast.NewPackage(p.fset, fs, nil, nil)
+
 	if err != nil {
 		//fmt.Println(err)
 	}
-	dpkg := doc.New(apkg, bp.Name, doc.AllMethods)
+
+	dpkg := doc.New(apkg, bp.Name, doc.AllMethods|doc.AllDecls)
+
 	p.dpkg[contextName(&ctx)] = dpkg
 
 	updata := func(typ DocType, ctx string, key string, value interface{}) {
@@ -152,6 +155,7 @@ func (p *Package) parser(ctx build.Context) (*doc.Package, error) {
 			}
 		}
 	}
+
 	//funcs
 	for _, v := range dpkg.Funcs {
 		updata(Func, ctxName, v.Name, v)
@@ -205,37 +209,36 @@ func (p *Package) Filter(typ DocType) ([]string, map[string]map[string]interface
 	return nil, nil
 }
 
-func (p *Package) FilterCommon(typ DocType) ([]string, map[string]interface{}) {
+func (p *Package) FilterCommon(typs ...DocType) ([]string, map[string]interface{}) {
 	var ctxsize int
 	if p.defctx {
 		ctxsize = 1
 	} else {
 		ctxsize = len(p.contexts)
 	}
-	if m, ok := p.keys[typ]; ok {
-		cm := make(map[string]interface{})
-		def := contextName(&build.Default)
-		var key []string
-		for k, v := range m {
-			if len(v) == ctxsize && (ast.IsExported(k) || typ == Struct) {
-				key = append(key, k)
-				cm[k] = v[def]
+
+	var key []string
+	cm := make(map[string]interface{})
+	def := contextName(&build.Default)
+	for _, typ := range typs {
+		if m, ok := p.keys[typ]; ok {
+			for k, v := range m {
+				if len(v) == ctxsize && (ast.IsExported(k) || typ == Struct) {
+					key = append(key, k)
+					cm[k] = v[def]
+				}
 			}
+			sort.Strings(key)
 		}
-		sort.Strings(key)
-		return key, cm
 	}
-	return nil, nil
+
+	return key, cm
 }
 
 func (p *Package) CommonCount() int {
-	var count int
 	var typs = []DocType{Func, Factor, Const, Var, Struct}
-	for _, typ := range typs {
-		ks, _ := p.FilterCommon(typ)
-		count += len(ks)
-	}
-	return count
+	ks, _ := p.FilterCommon(typs...)
+	return len(ks)
 }
 
 func (p *Package) nodeString(node interface{}) (string, error) {
@@ -247,13 +250,54 @@ func (p *Package) nodeString(node interface{}) (string, error) {
 	return buf.String(), nil
 }
 
-// hard code check type unexported // contains filtered or unexported fields
-func (p *Package) CheckTypeUnexportedFields(decl *ast.GenDecl) bool {
-	str, err := p.nodeString(decl)
-	if err != nil {
-		return false
+// check type field un exported
+func (p *Package) CheckTypeFields(d *ast.GenDecl, hasUnexportedField bool, hasUnexportedFieldPtr bool, hasUnexportedInterfaceField bool) bool {
+	keys, _ := p.FilterCommon(Interface)
+	switch d.Tok {
+	case token.TYPE:
+		for _, sp := range d.Specs {
+			ts := sp.(*ast.TypeSpec)
+			switch t := ts.Type.(type) {
+			case *ast.InterfaceType:
+			case *ast.StructType:
+				for _, field := range t.Fields.List {
+					//check unexported name
+					if hasUnexportedField {
+						for _, name := range field.Names {
+							if !ast.IsExported(name.Name) {
+								return true
+							}
+						}
+					}
+
+					if hasUnexportedFieldPtr {
+						for _, name := range field.Names {
+							typ, _ := p.nodeString(field.Type)
+							if !ast.IsExported(name.Name) && strings.HasPrefix(typ, "*") {
+								return true
+							}
+						}
+					}
+
+					//check type is interface
+					if hasUnexportedInterfaceField {
+						for _, name := range field.Names {
+							typ, _ := p.nodeString(field.Type)
+							if !ast.IsExported(name.Name) {
+								for _, key := range keys {
+									if typ == key {
+										return true
+									}
+								}
+							}
+						}
+					}
+				}
+			default:
+			}
+		}
 	}
-	return strings.Contains(str, "unexported")
+	return false
 }
 
 // check func param type is var,ptr,array
