@@ -133,7 +133,7 @@ func (p *Package) parser(ctx build.Context) (*doc.Package, error) {
 
 	//types
 	for _, v := range dpkg.Types {
-		typ := parserDeclType(v.Decl)
+		typ := parserTypeDecl(v.Decl)
 		if typ == NilType {
 			continue
 		}
@@ -175,7 +175,7 @@ func (p *Package) parser(ctx build.Context) (*doc.Package, error) {
 	return dpkg, nil
 }
 
-func parserDeclType(d *ast.GenDecl) DocType {
+func parserTypeDecl(d *ast.GenDecl) DocType {
 	switch d.Tok {
 	case token.TYPE:
 		for _, sp := range d.Specs {
@@ -191,6 +191,17 @@ func parserDeclType(d *ast.GenDecl) DocType {
 		}
 	}
 	return NilType
+}
+
+func (p *Package) simpleValueDeclType(d *ast.GenDecl) string {
+	switch d.Tok {
+	case token.VAR:
+		for _, sp := range d.Specs {
+			ts := sp.(*ast.ValueSpec)
+			return p.nodeString(ts.Type)
+		}
+	}
+	return ""
 }
 
 func (p *Package) Filter(typ DocType) ([]string, map[string]map[string]interface{}) {
@@ -241,13 +252,13 @@ func (p *Package) CommonCount() int {
 	return len(ks)
 }
 
-func (p *Package) nodeString(node interface{}) (string, error) {
-	var buf bytes.Buffer
-	err := printer.Fprint(&buf, p.fset, node) // only print statements
-	if err != nil {
-		return "", err
+func (p *Package) nodeString(node interface{}) string {
+	if node == nil {
+		return ""
 	}
-	return buf.String(), nil
+	var b bytes.Buffer
+	printer.Fprint(&b, p.fset, node)
+	return b.String()
 }
 
 // check type field un exported
@@ -266,13 +277,13 @@ func (p *Package) CheckTypeFields(d *ast.GenDecl, hasUnexportedField bool, hasUn
 								return true
 							}
 							if hasUnexportedFieldPtr {
-								typ, _ := p.nodeString(field.Type)
+								typ := p.nodeString(field.Type)
 								if strings.HasPrefix(typ, "*") {
 									return true
 								}
 							}
 							if hasUnexportedInterfaceField {
-								typ, _ := p.nodeString(field.Type)
+								typ := p.nodeString(field.Type)
 								for _, iname := range interfaceNames {
 									if typ == iname {
 										return true
@@ -297,10 +308,7 @@ func (p *Package) CheckExportType(typ string) (isVar bool, isPtr bool, isArray b
 			return
 		}
 		for _, field := range f.Decl.Type.Params.List {
-			str, err := p.nodeString(field.Type)
-			if err != nil {
-				return
-			}
+			str := p.nodeString(field.Type)
 			if str == typ {
 				isVar = true
 			} else if str == "*"+typ {
