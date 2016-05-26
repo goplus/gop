@@ -69,7 +69,8 @@ func (p *iCall) Exec(stk *Stack, ctx *Context) {
 
 func validateType(in *reflect.Value, t reflect.Type) {
 
-	switch t.Kind() {
+	tkind := t.Kind()
+	switch tkind {
 	case reflect.Interface:
 		switch kind := in.Kind(); {
 		case kind == reflect.Invalid:
@@ -94,7 +95,15 @@ func validateType(in *reflect.Value, t reflect.Type) {
 		return
 	}
 
-	if t == typeFloat64 {
+	if tkind == reflect.Struct {
+		if tin.Kind() == reflect.Ptr {
+			tin = tin.Elem()
+			if tin == t {
+				*in = in.Elem()
+				return
+			}
+		}
+	} else if t == typeFloat64 {
 		var val float64
 		switch kind := tin.Kind(); {
 		case kind >= reflect.Int && kind <= reflect.Int64:
