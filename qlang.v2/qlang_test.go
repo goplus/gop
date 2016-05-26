@@ -61,3 +61,35 @@ func TestNilSlice(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
+type fooMode uint
+
+func castFooMode(mode fooMode) int {
+	return int(mode)
+}
+
+const testCastFooModeCode = `
+
+y = castFooMode(1)
+`
+
+func TestCastFooMode(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+	qlang.Import("", map[string]interface{}{
+		"castFooMode": castFooMode,
+	})
+
+	err = lang.SafeExec([]byte(testCastFooModeCode), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("y"); !ok || v != 1 {
+		t.Fatal("y != 1, y =", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
