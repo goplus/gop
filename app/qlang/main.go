@@ -58,14 +58,11 @@ func main() {
 		ret = v
 	})
 
-	// term
 	term := terminal.New()
-	// load/save histroy
-	term.LoadHistroy(historyFile)
+	term.LoadHistroy(historyFile) // load/save histroy
 	defer term.SaveHistroy(historyFile)
 
-	// read more line check
-	fnReadMore := func(expr string, line string) (string, bool) {
+	fnReadMore := func(expr string, line string) (string, bool) { // read more line check
 		if strings.HasSuffix(line, "\\") {
 			return expr + line[:len(line)-1], true
 		}

@@ -224,8 +224,9 @@ func (p *iMemberRef) Exec(stk *Stack, ctx *Context) {
 	}
 
 	obj := reflect.ValueOf(v)
+	kind := obj.Kind()
 	switch {
-	case obj.Kind() == reflect.Map:
+	case kind == reflect.Map:
 		m := obj.MapIndex(reflect.ValueOf(name))
 		if m.IsValid() {
 			stk.Push(m.Interface())
@@ -235,17 +236,23 @@ func (p *iMemberRef) Exec(stk *Stack, ctx *Context) {
 	default:
 		name = strings.Title(name)
 		m := obj.MethodByName(name)
-		if m.IsValid() {
-			if qlang.AutoCall[t] && m.Type().NumIn() == 0 {
-				out := m.Call(nil)
-				stk.PushRet(out)
-				return
+		if !m.IsValid() {
+			if kind == reflect.Ptr {
+				obj = reflect.Indirect(obj)
+				m = obj.FieldByName(name)
+			} else if obj.CanAddr() {
+				obj = obj.Addr()
+				m = obj.MethodByName(name)
 			}
-		} else {
-			m = reflect.Indirect(obj).FieldByName(name)
 			if !m.IsValid() {
-				panic(fmt.Errorf("type `%v` doesn't has member `%s`", obj.Type(), name))
+				panic(fmt.Errorf("type `%v` doesn't has member `%s`", reflect.TypeOf(v), name))
 			}
+			t = obj.Type()
+		}
+		if qlang.AutoCall[t] && m.Type().NumIn() == 0 {
+			out := m.Call(nil)
+			stk.PushRet(out)
+			return
 		}
 		stk.Push(m.Interface())
 	}
