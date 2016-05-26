@@ -97,6 +97,7 @@ factor =
 	'!' factor/not |
 	'^' factor/bitnot |
 	'-' factor/neg |
+	'*' factor/elem |
 	"<-" factor/chout |
 	'+' factor
 `

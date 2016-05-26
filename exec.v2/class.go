@@ -13,8 +13,8 @@ var (
 	// ErrNewWithoutClassName is returned when new doesn't specify a class.
 	ErrNewWithoutClassName = errors.New("new object without class name")
 
-	// ErrNewObjectWithNotClass is returned when new T but T is not a class.
-	ErrNewObjectWithNotClass = errors.New("can't new object: not a class")
+	// ErrNewObjectWithNotType is returned when new T but T is not a type.
+	ErrNewObjectWithNotType = errors.New("can't new object: not a type")
 
 	// ErrRefWithoutObject is returned when refer member without specified an object.
 	ErrRefWithoutObject = errors.New("reference without object")
@@ -38,6 +38,22 @@ func (p *Class) Exec(stk *Stack, ctx *Context) {
 		f.Parent = ctx
 	}
 	stk.Push(p)
+}
+
+var tyObject = reflect.TypeOf(Object{})
+
+// GoType returns the underlying go type. required by `qlang type` spec.
+//
+func (p *Class) GoType() reflect.Type {
+
+	return tyObject
+}
+
+// NewInstance creates a new instance of a qlang type. required by `qlang type` spec.
+//
+func (p *Class) NewInstance(args ...interface{}) interface{} {
+
+	return p.New(args...)
 }
 
 // New creates a new instance of this class.
@@ -161,6 +177,10 @@ func (p *Method) Call(a ...interface{}) interface{} {
 
 // -----------------------------------------------------------------------------
 
+type newTyper interface {
+	NewInstance(args ...interface{}) interface{}
+}
+
 type iNew int
 
 func (nArgs iNew) Exec(stk *Stack, ctx *Context) {
@@ -172,12 +192,12 @@ func (nArgs iNew) Exec(stk *Stack, ctx *Context) {
 	}
 
 	if v, ok := stk.Pop(); ok {
-		if cls, ok := v.(*Class); ok {
-			obj := cls.New(args...)
+		if cls, ok := v.(newTyper); ok {
+			obj := cls.NewInstance(args...)
 			stk.Push(obj)
 			return
 		}
-		panic(ErrNewObjectWithNotClass)
+		panic(ErrNewObjectWithNotType)
 	}
 	panic(ErrNewWithoutClassName)
 }

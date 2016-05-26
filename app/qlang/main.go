@@ -9,6 +9,7 @@ import (
 	"qlang.io/qlang.v2/qlang"
 	"qlang.io/qlang/terminal"
 
+	qspec "qlang.io/qlang.spec.v1"
 	qipt "qlang.io/qlang.v2/interpreter"
 	qall "qlang.io/qlang/qlang.all"
 )
@@ -70,7 +71,7 @@ func main() {
 	}
 
 	for {
-		expr, err := term.Scan(">>>", fnReadMore)
+		expr, err := term.Scan(">>> ", fnReadMore)
 		if err != nil {
 			if err == terminal.ErrPromptAborted {
 				break
@@ -82,13 +83,15 @@ func main() {
 		if expr == "" {
 			continue
 		}
-		ret = nil
+		ret = qspec.Undefined
 		err = lang.SafeEval(expr)
 		if err != nil {
 			fmt.Println(strings.TrimSpace(err.Error()))
 			continue
 		}
-		fmt.Println(ret)
+		if ret != qspec.Undefined {
+			fmt.Println(ret)
+		}
 	}
 }
 

@@ -18,6 +18,7 @@ var Exports = map[string]interface{}{
 	"stderr":    os.Stderr,
 	"stdout":    os.Stdout,
 	"open":      os.Open,
+	"create":    os.Create,
 	"exit":      os.Exit,
 	"_initSafe": _initSafe,
 }

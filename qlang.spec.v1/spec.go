@@ -129,12 +129,13 @@ var (
 // Fntable is function table required by tpl.Interpreter engine.
 //
 var Fntable = map[string]interface{}{
-	"$neg": dummy1,
-	"$mul": dummy2,
-	"$quo": dummy2,
-	"$mod": dummy2,
-	"$add": dummy2,
-	"$sub": dummy2,
+	"$neg":  dummy1,
+	"$elem": dummy1,
+	"$mul":  dummy2,
+	"$quo":  dummy2,
+	"$mod":  dummy2,
+	"$add":  dummy2,
+	"$sub":  dummy2,
 
 	"$xor":    dummy2,
 	"$lshr":   dummy2,
