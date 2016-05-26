@@ -65,6 +65,11 @@ func (p *Type) Call(a interface{}) interface{} {
 	return reflect.ValueOf(a).Convert(p.t).Interface()
 }
 
+func (p *Type) String() string {
+
+	return p.t.String()
+}
+
 // TySliceOf represents the `[]T` type.
 //
 func TySliceOf(elem reflect.Type) *Type {

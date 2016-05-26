@@ -106,6 +106,7 @@ var (
 	SetEx     = dummySet
 	SetIndex  = dummySetIndex
 	MapFrom   = dummyN
+	Slice     = dummy1
 	SliceFrom = dummyN
 	SubSlice  = dummy3
 	Xor       = dummy2

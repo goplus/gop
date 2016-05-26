@@ -84,6 +84,7 @@ var exports = map[string]interface{}{
 func init() {
 	qlang.SubSlice = SubSlice
 	qlang.SliceFrom = SliceFrom
+	qlang.Slice = Slice
 	qlang.MapFrom = MapFrom
 	qlang.EQ = EQ
 	qlang.GetVar = GetVar

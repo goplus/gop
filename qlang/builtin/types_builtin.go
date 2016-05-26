@@ -31,6 +31,11 @@ func (p tyFloat32) Call(a interface{}) float32 {
 	return Float32(a)
 }
 
+func (p tyFloat32) String() string {
+
+	return "float32"
+}
+
 // TyFloat32 represents the `float32` type.
 //
 var TyFloat32 = tyFloat32(0)
@@ -58,6 +63,11 @@ func (p tyFloat64) NewInstance(args ...interface{}) interface{} {
 func (p tyFloat64) Call(a interface{}) float64 {
 
 	return Float64(a)
+}
+
+func (p tyFloat64) String() string {
+
+	return "float64"
 }
 
 // TyFloat64 represents the `float64` type.
@@ -89,6 +99,11 @@ func (p tyInt) Call(a interface{}) int {
 	return Int(a)
 }
 
+func (p tyInt) String() string {
+
+	return "int"
+}
+
 // TyInt represents the `int` type.
 //
 var TyInt = tyInt(0)
@@ -116,6 +131,11 @@ func (p tyInt8) NewInstance(args ...interface{}) interface{} {
 func (p tyInt8) Call(a interface{}) int8 {
 
 	return Int8(a)
+}
+
+func (p tyInt8) String() string {
+
+	return "int8"
 }
 
 // TyInt8 represents the `int8` type.
@@ -147,6 +167,11 @@ func (p tyInt16) Call(a interface{}) int16 {
 	return Int16(a)
 }
 
+func (p tyInt16) String() string {
+
+	return "int16"
+}
+
 // TyInt16 represents the `int16` type.
 //
 var TyInt16 = tyInt16(0)
@@ -174,6 +199,11 @@ func (p tyInt32) NewInstance(args ...interface{}) interface{} {
 func (p tyInt32) Call(a interface{}) int32 {
 
 	return Int32(a)
+}
+
+func (p tyInt32) String() string {
+
+	return "int32"
 }
 
 // TyInt32 represents the `int32` type.
@@ -205,6 +235,11 @@ func (p tyInt64) Call(a interface{}) int64 {
 	return Int64(a)
 }
 
+func (p tyInt64) String() string {
+
+	return "int64"
+}
+
 // TyInt64 represents the `int64` type.
 //
 var TyInt64 = tyInt64(0)
@@ -232,6 +267,11 @@ func (p tyUint) NewInstance(args ...interface{}) interface{} {
 func (p tyUint) Call(a interface{}) uint {
 
 	return Uint(a)
+}
+
+func (p tyUint) String() string {
+
+	return "uint"
 }
 
 // TyUint represents the `uint` type.
@@ -263,6 +303,11 @@ func (p tyUint8) Call(a interface{}) uint8 {
 	return Uint8(a)
 }
 
+func (p tyUint8) String() string {
+
+	return "uint8"
+}
+
 // TyUint8 represents the `uint8` type.
 //
 var TyUint8 = tyUint8(0)
@@ -290,6 +335,11 @@ func (p tyUint16) NewInstance(args ...interface{}) interface{} {
 func (p tyUint16) Call(a interface{}) uint16 {
 
 	return Uint16(a)
+}
+
+func (p tyUint16) String() string {
+
+	return "uint16"
 }
 
 // TyUint16 represents the `uint16` type.
@@ -321,6 +371,11 @@ func (p tyUint32) Call(a interface{}) uint32 {
 	return Uint32(a)
 }
 
+func (p tyUint32) String() string {
+
+	return "uint32"
+}
+
 // TyUint32 represents the `uint32` type.
 //
 var TyUint32 = tyUint32(0)
@@ -350,6 +405,11 @@ func (p tyUint64) Call(a interface{}) uint64 {
 	return Uint64(a)
 }
 
+func (p tyUint64) String() string {
+
+	return "uint64"
+}
+
 // TyUint64 represents the `uint64` type.
 //
 var TyUint64 = tyUint64(0)
@@ -377,6 +437,11 @@ func (p tyString) NewInstance(args ...interface{}) interface{} {
 func (p tyString) Call(a interface{}) string {
 
 	return String(a)
+}
+
+func (p tyString) String() string {
+
+	return "string"
 }
 
 // TyString represents the `string` type.

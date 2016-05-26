@@ -299,3 +299,22 @@ func SliceFrom(arity int) Instr {
 }
 
 // -----------------------------------------------------------------------------
+
+type slice int
+
+func (p slice) OptimizableGetArity() int {
+
+	return 1
+}
+
+func (p slice) Exec(stk *Stack, ctx *Context) {
+
+	n := len(stk.data) - 1
+	stk.data[n] = qlang.Slice(stk.data[n])
+}
+
+// Slice is an instruction that returns []T.
+//
+var Slice Instr = slice(0)
+
+// -----------------------------------------------------------------------------

@@ -32,6 +32,11 @@ func (p ty{{Type}}) Call(a interface{}) {{TypeLower}} {
 	return {{Type}}(a)
 }
 
+func (p ty{{Type}}) String() string {
+
+	return "{{TypeLower}}"
+}
+
 // Ty{{Type}} represents the %%{{TypeLower}}%% type.
 //
 var Ty{{Type}} = ty{{Type}}(0)
