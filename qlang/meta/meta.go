@@ -1,7 +1,9 @@
 package meta
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 	"unicode"
@@ -17,8 +19,9 @@ var Exports = map[string]interface{}{
 	"_name":   "qlang.io/qlang/meta",
 	"fnlist":  FnList,
 	"fntable": FnTable,
-	"pkglist": GoPkgList,
+	"pkgs":    GoPkgList,
 	"dir":     Dir,
+	"doc":     Doc,
 }
 
 // FnList returns qlang all function list
@@ -113,4 +116,91 @@ func Dir(i interface{}) (list []string) {
 		}
 	}
 	return
+}
+
+func findPackageName(i interface{}) (string, bool) {
+	v := reflect.ValueOf(i)
+	if v.Kind() == reflect.Map {
+		for _, k := range v.MapKeys() {
+			if k.Kind() == reflect.String && k.String() == "_name" {
+				ev := v.MapIndex(k)
+				if ev.Kind() == reflect.Interface {
+					rv := ev.Elem()
+					if rv.Kind() == reflect.String {
+						return rv.String(), true
+					}
+				}
+			}
+		}
+	}
+	return "", false
+}
+
+// Doc returns doc info of object
+//
+func Doc(i interface{}) string {
+	var buf bytes.Buffer
+	outf := func(format string, a ...interface{}) (err error) {
+		_, err = buf.WriteString(fmt.Sprintf(format, a...))
+		return
+	}
+	v := reflect.ValueOf(i)
+	if v.Kind() == reflect.Map {
+		pkgName, isPkg := findPackageName(i)
+		if isPkg {
+			outf("package %v", pkgName)
+			for _, k := range v.MapKeys() {
+				ev := v.MapIndex(k)
+				if ev.Kind() == reflect.Interface {
+					rv := ev.Elem()
+					outf("\n%v\t%v ", k, rv.Type())
+				}
+			}
+		} else {
+			for _, k := range v.MapKeys() {
+				ev := v.MapIndex(k)
+				outf("\n%v\t%v", k, ev)
+			}
+		}
+	} else {
+		switch e := i.(type) {
+		case *exec.Class:
+			outf("*exec.Class")
+			for k, v := range e.Fns {
+				outf("\n%v\t%T", k, v)
+			}
+		case *exec.Object:
+			outf("*exec.Object")
+			for k, v := range e.Cls.Fns {
+				outf("\n%v\t%T", k, v)
+			}
+			for k, kv := range e.Vars() {
+				outf("\n%v\t%T", k, kv)
+			}
+		default:
+			t := v.Type()
+			outf("%v", t)
+			{
+				t := v.Type()
+				for t.Kind() == reflect.Ptr {
+					t = t.Elem()
+				}
+				if t.Kind() == reflect.Struct {
+					for i := 0; i < t.NumField(); i++ {
+						field := t.Field(i)
+						if IsExported(field.Name) {
+							outf("\n%v\t%v", field.Name, field.Type)
+						}
+					}
+				}
+			}
+			for i := 0; i < t.NumMethod(); i++ {
+				m := t.Method(i)
+				if IsExported(m.Name) {
+					outf("\n%v\t%v", m.Name, m.Type)
+				}
+			}
+		}
+	}
+	return buf.String()
 }
