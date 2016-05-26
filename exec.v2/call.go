@@ -95,7 +95,8 @@ func validateType(in *reflect.Value, t reflect.Type) {
 		return
 	}
 
-	if tkind == reflect.Struct {
+	switch tkind {
+	case reflect.Struct:
 		if tin.Kind() == reflect.Ptr {
 			tin = tin.Elem()
 			if tin == t {
@@ -103,7 +104,7 @@ func validateType(in *reflect.Value, t reflect.Type) {
 				return
 			}
 		}
-	} else if t == typeFloat64 {
+	case reflect.Float64:
 		var val float64
 		switch kind := tin.Kind(); {
 		case kind >= reflect.Int && kind <= reflect.Int64:
@@ -117,10 +118,19 @@ func validateType(in *reflect.Value, t reflect.Type) {
 		}
 		*in = reflect.ValueOf(val)
 		return
+	default:
+		if kind := in.Kind(); tkind == kind || convertible(kind, tkind) {
+			*in = in.Convert(t)
+			return
+		}
 	}
-
 lzErr:
 	panic(fmt.Errorf("invalid argument type: require `%v`, but we got `%v`", t, tin))
+}
+
+func convertible(kind, tkind reflect.Kind) bool {
+
+	return (tkind == reflect.Int || tkind == reflect.Uint) && (kind >= reflect.Int && kind <= reflect.Uintptr)
 }
 
 // Call returns a function call instruction.
