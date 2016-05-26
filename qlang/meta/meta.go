@@ -14,6 +14,7 @@ import (
 // Exports is the export table of this module.
 //
 var Exports = map[string]interface{}{
+	"_name":   "qlang.io/qlang/meta",
 	"fnlist":  FnList,
 	"fntable": FnTable,
 	"pkglist": GoPkgList,
@@ -86,14 +87,14 @@ func Dir(i interface{}) (list []string) {
 	} else {
 		switch e := i.(type) {
 		case *exec.Class:
-			for k, _ := range e.Fns {
+			for k := range e.Fns {
 				list = append(list, k)
 			}
 		case *exec.Object:
-			for k, _ := range e.Cls.Fns {
+			for k := range e.Cls.Fns {
 				list = append(list, k)
 			}
-			for k, _ := range e.Vars() {
+			for k := range e.Vars() {
 				list = append(list, k)
 			}
 		default:

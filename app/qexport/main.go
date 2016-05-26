@@ -1,4 +1,3 @@
-// qexport project main.go
 package main
 
 import (
@@ -7,18 +6,14 @@ import (
 	"flag"
 	"fmt"
 	"go/ast"
+	"go/doc"
 	"go/format"
 	"log"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
-	"regexp"
-	"sort"
 	"strings"
 	"unicode"
-
-	"github.com/visualfc/goapi"
 )
 
 var (
@@ -27,16 +22,16 @@ var (
 	flagCustomContext  string
 )
 
-var doc string = `Export go packages to qlang modules.
+const help = `Export go packages to qlang modules.
 
 Usage:
   qexport [-contexts=""] [-defctx=false] [-outpath="./qlang"] packages
-	 
+
 The packages for go package list or std for golang all standard packages.
 `
 
-var Usage = func() {
-	fmt.Fprintln(os.Stderr, doc)
+func usage() {
+	fmt.Fprintln(os.Stderr, help)
 	flag.PrintDefaults()
 }
 
@@ -51,12 +46,14 @@ func main() {
 	args := flag.Args()
 
 	if len(args) == 0 {
-		Usage()
+		usage()
 		return
 	}
 
-	goapi.ApiDefaultCtx = flagDefaultContext
-	goapi.ApiCustomCtx = flagCustomContext
+	if flagCustomContext != "" {
+		flagDefaultContext = false
+		setCustomContexts(flagCustomContext)
+	}
 
 	var outpath string
 	if filepath.IsAbs(flagExportPath) {
@@ -79,80 +76,70 @@ func main() {
 	} else {
 		pkgs = args
 	}
-
+	var exportd []string
 	for _, pkg := range pkgs {
 		err := export(pkg, outpath, true)
 		if err != nil {
-			log.Printf("export pkg %q error, %s.\n", pkg, err)
+			log.Printf("warning skip pkg %q, error %v.\n", pkg, err)
 		} else {
-			log.Printf("export pkg %q success.\n", pkg)
+			exportd = append(exportd, pkg)
 		}
+	}
+	for _, pkg := range exportd {
+		log.Printf("export pkg %q success.\n", pkg)
 	}
 }
 
-var sym = regexp.MustCompile(`^pkg (\S+)\s?(.*)?, (?:(var|func|type|const)) ([A-Z]\w*)`)
+var (
+	uint64_const_keys = []string{
+		"crc64.ECMA",
+		"crc64.ISO",
+		"math.MaxUint64",
+	}
+)
 
-func export(pkg string, outpath string, skip_osarch bool) error {
-	lines, err := goapi.LookupApi(pkg)
+func isUint64Const(key string) bool {
+	for _, k := range uint64_const_keys {
+		if key == k {
+			return true
+		}
+	}
+	return false
+}
+
+func export(pkg string, outpath string, skipOSArch bool) error {
+	p, err := NewPackage(pkg, flagDefaultContext)
 	if err != nil {
 		return err
 	}
 
-	fullImport := map[string]string{} // "zip.NewReader" => "archive/zip"
-	ambiguous := map[string]bool{}
-	var keys []string
-	var funcs []string
-	var cons []string
-	var vars []string
-	var structs []string
-	for _, l := range lines {
-		has := func(v string) bool { return strings.Contains(l, v) }
-		if has("interface, ") || has(", method (") {
-			continue
-		}
-		if m := sym.FindStringSubmatch(l); m != nil {
-			// 1 pkgname
-			// 2 os-arch-cgo
-			// 3 var|func|type|const
-			// 4 name
-			if skip_osarch && m[2] != "" {
-				//	log.Println("skip", m[2], m[4])
-				continue
-			}
-			full := m[1]
-			key := path.Base(full) + "." + m[4]
-			if exist, ok := fullImport[key]; ok {
-				if exist != full {
-					ambiguous[key] = true
-				}
-			} else {
-				fullImport[key] = full
-				keys = append(keys, key)
-				if m[3] == "func" {
-					funcs = append(funcs, m[4])
-				} else if m[3] == "const" {
-					cons = append(cons, m[4])
-				} else if m[3] == "var" {
-					vars = append(vars, m[4])
-				} else if m[3] == "type" && strings.HasSuffix(l, m[4]+" struct") {
-					structs = append(structs, m[4])
-				}
-			}
+	p.Parser()
+
+	bp := p.BuildPackage()
+	if bp == nil {
+		return errors.New("not find build")
+	}
+
+	pkgName := bp.Name
+
+	if bp.Name == "main" {
+		return errors.New("skip main pkg")
+	}
+
+	if pkg == "unsafe" {
+		return errors.New("skip unsafe pkg")
+	}
+
+	if p.CommonCount() == 0 {
+		return errors.New("empty common exports")
+	}
+
+	//skip internal
+	for _, path := range strings.Split(bp.ImportPath, "/") {
+		if path == "internal" {
+			return errors.New("skip internal pkg")
 		}
 	}
-	sort.Strings(keys)
-
-	if len(cons) == 0 && len(funcs) == 0 {
-		return errors.New("empty funcs and const")
-	}
-
-	root := filepath.Join(outpath, pkg)
-	err = os.MkdirAll(root, 0777)
-	if err != nil {
-		return err
-	}
-
-	pkgName := path.Base(pkg)
 
 	var buf bytes.Buffer
 	outf := func(format string, a ...interface{}) (err error) {
@@ -168,96 +155,192 @@ func export(pkg string, outpath string, skip_osarch bool) error {
 	outf("\t%q\n", pkg)
 	outf(")\n\n")
 
-	sort.Strings(structs)
-	sort.Strings(funcs)
-	sort.Strings(vars)
-	sort.Strings(cons)
-
-	//check new func map
-	nmap := make(map[string][]string)
-	skip := make(map[string]bool)
-	for _, s := range structs {
-		fnNew := "New" + s
-		find := false
-		for _, v := range funcs {
-			if strings.HasPrefix(v, fnNew) {
-				nmap[s] = append(nmap[s], v)
-				skip[v] = true
-				find = true
-			}
-		}
-		if !find {
-			outf("func new%s() *%s{\n", s, pkgName+"."+s)
-			outf("return new(%s)\n", pkgName+"."+s)
-			outf("}\n\n")
-			nmap[s] = append(nmap[s], "new"+s)
-		}
-	}
 	//write exports
-	outf("var Exports = map[string]interface{}{\n")
-	//write new func
-	var newlines []string
-	for s, fns := range nmap {
-		if len(fns) == 1 {
-			qname := toQlangName(s)
-			fnNew := fns[0]
-			if ast.IsExported(fnNew) {
-				fnNew = pkgName + "." + fnNew
+	outf(`// Exports is the export table of this module.
+//
+var Exports = map[string]interface{}{
+	"_name": "%s",	
+`, pkg)
+
+	var addins []string
+	//const
+	if keys, _ := p.FilterCommon(Const); len(keys) > 0 {
+		outf("\n")
+		for _, v := range keys {
+			name := toQlangName(v)
+			fn := pkgName + "." + v
+			if isUint64Const(fn) {
+				fn = "uint64(" + fn + ")"
 			}
-			newlines = append(newlines, fmt.Sprintf("\t%q:\t%s,", qname, fnNew))
-		} else if len(fns) > 1 {
-			for _, fn := range fns {
-				qname := toQlangName(fn)
-				fnNew := fn
-				if ast.IsExported(fnNew) {
-					fnNew = pkgName + "." + fnNew
-				}
-				newlines = append(newlines, fmt.Sprintf("\t%q:\t%s,", qname, fnNew))
-			}
+			outf("\t%q:\t%s,\n", name, fn)
 		}
 	}
-	sort.Strings(newlines)
-	for _, v := range newlines {
-		outf("%s\n", v)
-	}
-	if len(newlines) != 0 {
-		outf("\n")
-	}
 
-	//var
-	for _, v := range vars {
-		name := toQlangName(v)
-		fn := pkgName + "." + v
-		outf("\t%q:\t%s,\n", name, fn)
-	}
-	if len(vars) != 0 {
+	//vars
+	if keys, _ := p.FilterCommon(Var); len(keys) > 0 {
 		outf("\n")
-	}
-
-	//const
-	for _, v := range cons {
-		name := toQlangName(v)
-		fn := pkgName + "." + v
-		outf("\t%q:\t%s,\n", name, fn)
-	}
-
-	if len(cons) != 0 {
-		outf("\n")
+		for _, v := range keys {
+			name := toQlangName(v)
+			fn := pkgName + "." + v
+			outf("\t%q:\t%s,\n", name, fn)
+		}
 	}
 
 	//funcs
-	for _, v := range funcs {
-		name := toQlangName(v)
-		fn := pkgName + "." + v
-		if skip[v] {
-			continue
+	if keys, _ := p.FilterCommon(Func); len(keys) > 0 {
+		outf("\n")
+		for _, v := range keys {
+			name := toQlangName(v)
+			fn := pkgName + "." + v
+			outf("\t%q:\t%s,\n", name, fn)
 		}
-		outf("\t%q:\t%s,\n", name, fn)
 	}
 
+	//interface
+	if keys, m := p.FilterCommon(Interface); len(keys) > 0 {
+		outf("\n")
+		for _, v := range keys {
+			t, ok := m[v]
+			if !ok {
+				continue
+			}
+			dt, ok := t.(*doc.Type)
+			if !ok {
+				continue
+			}
+			var funcs []string
+			for _, f := range dt.Funcs {
+				if ast.IsExported(f.Name) {
+					funcs = append(funcs, f.Name)
+				}
+			}
+			for _, f := range funcs {
+				name := toQlangName(f)
+				if len(funcs) == 1 && strings.HasPrefix(name, "new") {
+					name = toQlangName(v)
+				}
+				fn := pkgName + "." + f
+				outf("\t%q:\t%s,\n", name, fn)
+			}
+		}
+	}
+
+	//structs
+	if keys, m := p.FilterCommon(Struct); len(keys) > 0 {
+		outf("\n")
+		for _, v := range keys {
+			t, ok := m[v]
+			if !ok {
+				continue
+			}
+			dt, ok := t.(*doc.Type)
+			if !ok {
+				continue
+			}
+			// exported funcs
+			var funcs []string
+			for _, f := range dt.Funcs {
+				if ast.IsExported(f.Name) {
+					funcs = append(funcs, f.Name)
+				}
+			}
+			// check error interface implement struct
+			if strings.HasSuffix(v, "Error") {
+				check := func(name string) bool {
+					for _, f := range dt.Methods {
+						if f.Name == name {
+							return true
+						}
+					}
+					return false
+				}
+				if check("Error") {
+					log.Printf("warning skip struct %s, is error interface{} implement\n", bp.ImportPath+"."+v)
+					continue
+				}
+			}
+			// check empty func
+			if len(funcs) == 0 && ast.IsExported(v) {
+				//check export type
+				isVar, isPtr, isArray := p.CheckExportType(v)
+				if !isVar && !isPtr && !isArray {
+					//is not unexported type, export ptr
+					if !p.CheckTypeFields(dt.Decl, false, true, true) {
+						isPtr = true
+					} else {
+						//hack check file method has open
+						var hasOpen bool
+						for _, f := range dt.Methods {
+							if f.Name == "Open" {
+								hasOpen = true
+								break
+							}
+						}
+						if !hasOpen {
+							log.Printf("warning skip struct %s, has unexported field\n", bp.ImportPath+"."+v)
+							continue
+						}
+					}
+				}
+				name := toQlangName(v)
+				var tname string = pkgName + "." + v
+				//export var and not ptr
+				if isVar && !isPtr {
+					var vfn string = "var" + v
+					addins = append(addins, fmt.Sprintf("func %s() %s {\n\tvar v %s\n\treturn v\n}",
+						vfn, tname, tname,
+					))
+					outf("\t%q:\t%s,\n", name, vfn)
+				}
+				//export ptr
+				if isPtr {
+					var vfn string = "new" + v
+					addins = append(addins, fmt.Sprintf("func %s() *%s {\n\treturn new(%s)\n}",
+						vfn, tname, tname,
+					))
+					outf("\t%q:\t%s,\n", name, vfn)
+				}
+				//export array
+				if isArray {
+					var vfns string = "new" + v + "s"
+					addins = append(addins, fmt.Sprintf("func %s(n int) []%s {\n\treturn make([]%s,n)\n}",
+						vfns, tname, tname,
+					))
+					outf("\t%q:\t%s,\n", name+"s", vfns)
+				}
+			} else {
+				//write factor func and check is common
+				for _, f := range funcs {
+					name := toQlangName(f)
+					if len(funcs) == 1 && strings.HasPrefix(name, "new") {
+						name = toQlangName(v)
+					}
+					fn := pkgName + "." + f
+					outf("\t%q:\t%s,\n", name, fn)
+				}
+			}
+		}
+	}
+
+	// end exports
 	outf("}")
 
+	if len(addins) > 0 {
+		for _, addin := range addins {
+			outf("\n\n")
+			outf(addin)
+		}
+	}
+
+	// format
 	data, err := format.Source(buf.Bytes())
+	if err != nil {
+		return err
+	}
+
+	// write file
+	root := filepath.Join(outpath, pkg)
+	err = os.MkdirAll(root, 0777)
 	if err != nil {
 		return err
 	}

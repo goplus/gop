@@ -33,6 +33,38 @@ type Var struct {
 
 // -----------------------------------------------------------------------------
 
+type Module struct {
+	Exports map[string]interface{}
+}
+
+func (p Module) Disable(fnNames ...string) {
+
+	for _, fnName := range fnNames {
+		p.Exports[fnName] = dummyN
+	}
+}
+
+func GoModuleName(table map[string]interface{}) (name string, ok bool) {
+
+	name, ok = table["_name"].(string)
+	return
+}
+
+func GetInitSafe(table map[string]interface{}) (initSafe func(mod Module), ok bool) {
+
+	vinitSafe, ok := table["_initSafe"]
+	if !ok {
+		return
+	}
+	initSafe, ok = vinitSafe.(func(mod Module))
+	if !ok {
+		panic("invalid prototype of initSafe: must be `func initSafe(mod qlang.Module)`")
+	}
+	return
+}
+
+// -----------------------------------------------------------------------------
+
 func dummy1(a interface{}) interface{} {
 	panic("function not implemented")
 }
@@ -140,12 +172,8 @@ func GoModuleList() []string {
 func Import(mod string, table map[string]interface{}) {
 
 	if SafeMode {
-		if v, ok := table["_initSafe"]; ok {
-			if fn, ok := v.(func(map[string]interface{}, func(...interface{}) interface{})); ok {
-				fn(table, dummyN)
-			} else {
-				panic("invalid prototype of _initSafe")
-			}
+		if initSafe, ok := GetInitSafe(table); ok {
+			initSafe(Module{Exports: table})
 		}
 	}
 
@@ -159,6 +187,9 @@ func Import(mod string, table map[string]interface{}) {
 	}
 
 	for name, fn := range table {
+		if name == "_name" {
+			continue
+		}
 		if fn, ok := Fntable[name]; ok {
 			if v := reflect.ValueOf(fn); v.Kind() == reflect.Func {
 				p := v.Pointer()

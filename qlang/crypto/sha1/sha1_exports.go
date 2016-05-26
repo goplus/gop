@@ -18,6 +18,7 @@ func Sumstr(b []byte) string {
 // Exports is the export table of this module.
 //
 var Exports = map[string]interface{}{
+	"_name":  "crypto/sha1",
 	"new":    sha1.New,
 	"sum":    sha1.Sum,
 	"sumstr": Sumstr,

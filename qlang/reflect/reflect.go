@@ -9,6 +9,7 @@ import (
 // Exports is the export table of this module.
 //
 var Exports = map[string]interface{}{
+	"_name":     "reflect",
 	"valueOf":   reflect.ValueOf,
 	"typeOf":    reflect.TypeOf,
 	"indirect":  reflect.Indirect,

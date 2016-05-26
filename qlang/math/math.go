@@ -23,7 +23,10 @@ func init() {
 
 // -----------------------------------------------------------------------------
 
+// Exports is the export table of this module.
+//
 var Exports = map[string]interface{}{
+	"_name":     "math",
 	"abs":       math.Abs,
 	"acos":      math.Acos,
 	"acosh":     math.Acosh,
@@ -57,7 +60,7 @@ var Exports = map[string]interface{}{
 	"log1p":     math.Log1p,
 	"log2":      math.Log2,
 	"logb":      math.Logb,
-	"mod":       Mod,
+	"mod":       mod,
 	"nextafter": math.Nextafter,
 	"pow":       math.Pow,
 	"pow10":     math.Pow10,
@@ -75,7 +78,7 @@ var Exports = map[string]interface{}{
 
 // -----------------------------------------------------------------------------
 
-func Mod(a, b interface{}) interface{} {
+func mod(a, b interface{}) interface{} {
 
 	return math.Mod(castFloat(a), castFloat(b))
 }
@@ -99,8 +102,6 @@ func panicUnsupportedFn(fn string, args ...interface{}) interface{} {
 		targs[i] = reflect.TypeOf(a).String()
 	}
 	panic("unsupported function: " + fn + "(" + strings.Join(targs, ",") + ")")
-	return nil
 }
 
 // -----------------------------------------------------------------------------
-
