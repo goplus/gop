@@ -75,9 +75,9 @@ func main() {
 		expr, err := term.Scan(">>> ", fnReadMore)
 		if err != nil {
 			if err == terminal.ErrPromptAborted {
-				fmt.Println("Aborted")
-				continue
+				break
 			} else if err == io.EOF {
+				fmt.Println("^D")
 				break
 			}
 			fmt.Fprintln(os.Stderr, err)
