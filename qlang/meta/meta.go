@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	osexec "os/exec"
 	"reflect"
 	"strings"
 	"unicode"
@@ -139,6 +140,9 @@ func findPackageName(i interface{}) (string, bool) {
 // Doc returns doc info of object
 //
 func Doc(i interface{}) string {
+	if s, ok := i.(string); ok {
+		return Docs(s)
+	}
 	var buf bytes.Buffer
 	outf := func(format string, a ...interface{}) (err error) {
 		_, err = buf.WriteString(fmt.Sprintf(format, a...))
@@ -206,4 +210,73 @@ func Doc(i interface{}) string {
 		}
 	}
 	return buf.String()
+}
+
+func parserName(names string) (pkg string, name string) {
+	if strings.Contains(names, ".") {
+		ar := strings.Split(names, ".")
+		pkg = ar[0]
+		var sep string
+		for i, v := range ar[1:] {
+			if i == 1 {
+				sep = "."
+			}
+			name += sep + strings.Title(v)
+		}
+	} else {
+		pkg = names
+	}
+	return
+}
+
+func findFnTable(key string) (fn interface{}, gopkg string) {
+	if i, ok := qlang.Fntable[key]; ok {
+		fn = i
+		if m, ok := i.(map[string]interface{}); ok {
+			if name, ok := m["_name"]; ok {
+				if s, ok := name.(string); ok {
+					gopkg = s
+				}
+			}
+		}
+	}
+	return
+}
+
+func godoc(pkg string, name string) (string, error) {
+	bin, err := osexec.LookPath("godoc")
+	if err != nil {
+		return "", err
+	}
+	args := []string{pkg}
+	if name != "" {
+		args = append(args, name)
+	}
+	data, err := osexec.Command(bin, args...).Output()
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+// Docs returns doc info of string, gopkg find in godoc
+//
+func Docs(names string) string {
+	pkg, name := parserName(names)
+	fn, gopkg := findFnTable(pkg)
+	if fn == nil {
+		return fmt.Sprintf("error find %q", names)
+	}
+	if gopkg != "" {
+		info, err := godoc(gopkg, name)
+		if err != nil {
+			return fmt.Sprintf("godoc error %v", err)
+		}
+		return info
+	}
+	//check is string
+	if s, ok := fn.(string); ok {
+		return s
+	}
+	return Doc(fn)
 }
