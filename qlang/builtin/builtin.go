@@ -3,6 +3,7 @@ package builtin
 import (
 	"fmt"
 	"reflect"
+	"strings"
 
 	"qlang.io/qlang.spec.v1"
 	"qlang.io/qlang.spec.v1/types"
@@ -164,7 +165,7 @@ func Set(m interface{}, args ...interface{}) {
 			o.Index(args[i].(int)).Set(val)
 		}
 	default:
-		qlang.SetEx(m, args...)
+		setMember(m, args...)
 	}
 }
 
@@ -192,8 +193,39 @@ func SetIndex(m, key, v interface{}) {
 			panic("slice index isn't an integer value")
 		}
 	default:
-		qlang.SetEx(m, key, v)
+		setMember(m, key, v)
 	}
+}
+
+type varSetter interface {
+	SetVar(name string, val interface{})
+}
+
+func setMember(m interface{}, args ...interface{}) {
+
+	if v, ok := m.(varSetter); ok {
+		for i := 0; i < len(args); i += 2 {
+			v.SetVar(args[i].(string), args[i+1])
+		}
+		return
+	}
+
+	o := reflect.ValueOf(m)
+	if o.Kind() == reflect.Ptr {
+		o = o.Elem()
+		if o.Kind() == reflect.Struct {
+			for i := 0; i < len(args); i += 2 {
+				key := args[i].(string)
+				field := o.FieldByName(strings.Title(key))
+				if !field.IsValid() {
+					panic(fmt.Sprintf("struct `%v` doesn't has member `%v`", o.Type(), key))
+				}
+				field.Set(reflect.ValueOf(args[i+1]))
+			}
+			return
+		}
+	}
+	panic(fmt.Sprintf("type `%v` doesn't support `set` operator", o.Type()))
 }
 
 // Get gets a value from an object. object can be a slice, an array, a map or a user-defined class.
@@ -391,7 +423,7 @@ func Mkslice(typ interface{}, args ...interface{}) interface{} {
 	return reflect.MakeSlice(typSlice, n, cap).Interface()
 }
 
-// SliceFrom creates a slice from args.
+// SliceFrom creates a slice from [a1, a2, ...].
 //
 func SliceFrom(args ...interface{}) interface{} {
 
@@ -412,6 +444,20 @@ func SliceFrom(args ...interface{}) interface{} {
 	default:
 		return append(make([]interface{}, 0, n), args...)
 	}
+}
+
+// SliceFromTy creates a slice from []T{a1, a2, ...}.
+//
+func SliceFromTy(args ...interface{}) interface{} {
+
+	got, ok := args[0].(goTyper)
+	if !ok {
+		panic(fmt.Sprintf("`%v` is not a qlang type", args[0]))
+	}
+	t := got.GoType()
+	n := len(args)
+	ret := reflect.MakeSlice(reflect.SliceOf(t), 0, n-1).Interface()
+	return Append(ret, args[1:]...)
 }
 
 // SliceOf makes a slice type.

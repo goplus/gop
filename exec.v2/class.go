@@ -123,19 +123,6 @@ func (p *Object) Member(name string) interface{} {
 	panic(fmt.Errorf("object doesn't has member `%s`", name))
 }
 
-// SetMemberVar implements set(object, k1, v1, k2, v2, ...), ie. sets values of qlang object's multiple members.
-//
-func SetMemberVar(m interface{}, args ...interface{}) {
-
-	if v, ok := m.(*Object); ok {
-		for i := 0; i < len(args); i += 2 {
-			v.SetVar(args[i].(string), args[i+1])
-		}
-		return
-	}
-	panic(fmt.Sprintf("type `%v` doesn't support `set` operator", reflect.TypeOf(m)))
-}
-
 // GetMemberVar implements get(object, key).
 //
 func GetMemberVar(m interface{}, key interface{}) interface{} {
@@ -151,7 +138,6 @@ func GetMemberVar(m interface{}, key interface{}) interface{} {
 
 func init() {
 	qlang.GetEx = GetMemberVar
-	qlang.SetEx = SetMemberVar
 }
 
 // -----------------------------------------------------------------------------

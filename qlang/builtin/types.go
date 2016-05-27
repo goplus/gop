@@ -26,76 +26,6 @@ var (
 	gotyInterface = reflect.TypeOf((*interface{})(nil)).Elem()
 )
 
-// -----------------------------------------------------------------------------
-
-// A Type represents a qlang builtin type.
-//
-type Type struct {
-	t reflect.Type
-}
-
-// NewType returns a qlang builtin type object.
-//
-func NewType(t reflect.Type) *Type {
-
-	return &Type{t: t}
-}
-
-// GoType returns the underlying go type. required by `qlang type` spec.
-//
-func (p *Type) GoType() reflect.Type {
-
-	return p.t
-}
-
-// NewInstance creates a new instance of a qlang type. required by `qlang type` spec.
-//
-func (p *Type) NewInstance(args ...interface{}) interface{} {
-
-	ret := reflect.New(p.t)
-	if len(args) > 0 {
-		v := reflect.ValueOf(args[0]).Convert(p.t)
-		ret.Set(v)
-	}
-	return ret.Interface()
-}
-
-// Call returns `T(a)`.
-//
-func (p *Type) Call(a interface{}) interface{} {
-
-	if a == nil {
-		return reflect.Zero(p.t).Interface()
-	}
-	return reflect.ValueOf(a).Convert(p.t).Interface()
-}
-
-func (p *Type) String() string {
-
-	return p.t.String()
-}
-
-// TySliceOf represents the `[]T` type.
-//
-func TySliceOf(elem reflect.Type) *Type {
-
-	return &Type{t: reflect.SliceOf(elem)}
-}
-
-// TyMapOf represents the `map[key]elem` type.
-//
-func TyMapOf(key, elem reflect.Type) *Type {
-
-	return &Type{t: reflect.MapOf(key, elem)}
-}
-
-// TyPtrTo represents the `*T` type.
-//
-func TyPtrTo(elem reflect.Type) *Type {
-
-	return &Type{t: reflect.PtrTo(elem)}
-}
-
 // TyByte represents the `byte` type.
 //
 var TyByte = TyUint8
@@ -141,22 +71,22 @@ var TyVar = tyVar(0)
 // -----------------------------------------------------------------------------
 
 type goSliceFrom int
-type goType int
+type goTypeOf int
 
 func (p goSliceFrom) Call(a ...interface{}) interface{} {
 	return SliceFrom(a...)
 }
 
-func (p goType) Call(a interface{}) reflect.Type {
+func (p goTypeOf) Call(a interface{}) reflect.Type {
 	return reflect.TypeOf(a)
 }
 
 var sliceFrom = goSliceFrom(0)
-var goTypeOf = goType(0)
+var typeOf = goTypeOf(0)
 
 func init() {
 	t1 := reflect.TypeOf(TyVar)
-	t2 := reflect.TypeOf(goTypeOf)
+	t2 := reflect.TypeOf(typeOf)
 	t3 := reflect.TypeOf(sliceFrom)
 	qlang.SetDontTyNormalize(t1)
 	qlang.SetDontTyNormalize(t2)
@@ -174,7 +104,7 @@ type goTyper interface {
 func Elem(a interface{}) interface{} {
 
 	if t, ok := a.(goTyper); ok {
-		return TyPtrTo(t.GoType())
+		return qlang.TyPtrTo(t.GoType())
 	}
 	return reflect.ValueOf(a).Elem().Interface()
 }
@@ -184,7 +114,7 @@ func Elem(a interface{}) interface{} {
 func Slice(elem interface{}) interface{} {
 
 	if t, ok := elem.(goTyper); ok {
-		return TySliceOf(t.GoType())
+		return qlang.TySliceOf(t.GoType())
 	}
 	panic(fmt.Sprintf("invalid []T: `%v` isn't a qlang type", elem))
 }
@@ -201,7 +131,7 @@ func Map(key, elem interface{}) interface{} {
 	if !ok {
 		panic(fmt.Sprintf("invalid map[key]elem: elem `%v` isn't a qlang type", elem))
 	}
-	return TyMapOf(tkey.GoType(), telem.GoType())
+	return qlang.TyMapOf(tkey.GoType(), telem.GoType())
 }
 
 // -----------------------------------------------------------------------------

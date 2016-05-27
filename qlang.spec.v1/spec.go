@@ -33,6 +33,76 @@ type Var struct {
 
 // -----------------------------------------------------------------------------
 
+// A Type represents a qlang builtin type.
+//
+type Type struct {
+	t reflect.Type
+}
+
+// NewType returns a qlang builtin type object.
+//
+func NewType(t reflect.Type) *Type {
+
+	return &Type{t: t}
+}
+
+// GoType returns the underlying go type. required by `qlang type` spec.
+//
+func (p *Type) GoType() reflect.Type {
+
+	return p.t
+}
+
+// NewInstance creates a new instance of a qlang type. required by `qlang type` spec.
+//
+func (p *Type) NewInstance(args ...interface{}) interface{} {
+
+	ret := reflect.New(p.t)
+	if len(args) > 0 {
+		v := reflect.ValueOf(args[0]).Convert(p.t)
+		ret.Set(v)
+	}
+	return ret.Interface()
+}
+
+// Call returns `T(a)`.
+//
+func (p *Type) Call(a interface{}) interface{} {
+
+	if a == nil {
+		return reflect.Zero(p.t).Interface()
+	}
+	return reflect.ValueOf(a).Convert(p.t).Interface()
+}
+
+func (p *Type) String() string {
+
+	return p.t.String()
+}
+
+// TySliceOf represents the `[]T` type.
+//
+func TySliceOf(elem reflect.Type) *Type {
+
+	return &Type{t: reflect.SliceOf(elem)}
+}
+
+// TyMapOf represents the `map[key]elem` type.
+//
+func TyMapOf(key, elem reflect.Type) *Type {
+
+	return &Type{t: reflect.MapOf(key, elem)}
+}
+
+// TyPtrTo represents the `*T` type.
+//
+func TyPtrTo(elem reflect.Type) *Type {
+
+	return &Type{t: reflect.PtrTo(elem)}
+}
+
+// -----------------------------------------------------------------------------
+
 type Module struct {
 	Exports map[string]interface{}
 }
@@ -85,10 +155,6 @@ func dummySetIndex(m, index, val interface{}) {
 	panic("function not implemented")
 }
 
-func dummySet(m interface{}, args ...interface{}) {
-	panic("function not implemented")
-}
-
 func dummyChanIn(ch, val interface{}, try bool) interface{} {
 	panic("operator ch<-value not implemented")
 }
@@ -98,33 +164,33 @@ func dummyChanOut(ch interface{}, try bool) interface{} {
 }
 
 var (
-	fnDummy1  = reflect.ValueOf(dummy1).Pointer()
-	fnDummy2  = reflect.ValueOf(dummy2).Pointer()
-	ChanIn    = dummyChanIn
-	ChanOut   = dummyChanOut
-	GetEx     = dummy2
-	SetEx     = dummySet
-	SetIndex  = dummySetIndex
-	MapFrom   = dummyN
-	Slice     = dummy1
-	SliceFrom = dummyN
-	SubSlice  = dummy3
-	Xor       = dummy2
-	Lshr      = dummy2
-	Rshr      = dummy2
-	BitAnd    = dummy2
-	BitOr     = dummy2
-	AndNot    = dummy2
-	EQ        = dummy2
-	GetVar    = dummy2
-	Get       = dummy2
-	Add       = dummy2
-	Sub       = dummy2
-	Mul       = dummy2
-	Quo       = dummy2
-	Mod       = dummy2
-	Inc       = dummy1
-	Dec       = dummy1
+	fnDummy1    = reflect.ValueOf(dummy1).Pointer()
+	fnDummy2    = reflect.ValueOf(dummy2).Pointer()
+	ChanIn      = dummyChanIn
+	ChanOut     = dummyChanOut
+	GetEx       = dummy2
+	SetIndex    = dummySetIndex
+	MapFrom     = dummyN
+	Slice       = dummy1
+	SliceFrom   = dummyN
+	SliceFromTy = dummyN
+	SubSlice    = dummy3
+	Xor         = dummy2
+	Lshr        = dummy2
+	Rshr        = dummy2
+	BitAnd      = dummy2
+	BitOr       = dummy2
+	AndNot      = dummy2
+	EQ          = dummy2
+	GetVar      = dummy2
+	Get         = dummy2
+	Add         = dummy2
+	Sub         = dummy2
+	Mul         = dummy2
+	Quo         = dummy2
+	Mod         = dummy2
+	Inc         = dummy1
+	Dec         = dummy1
 )
 
 // Fntable is function table required by tpl.Interpreter engine.

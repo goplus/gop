@@ -46,7 +46,7 @@ var exports = map[string]interface{}{
 	"uint64":  TyUint64,
 	"string":  TyString,
 	"var":     TyVar,
-	"type":    goTypeOf,
+	"type":    typeOf,
 
 	"max": Max,
 	"min": Min,
@@ -84,6 +84,7 @@ var exports = map[string]interface{}{
 func init() {
 	qlang.SubSlice = SubSlice
 	qlang.SliceFrom = SliceFrom
+	qlang.SliceFromTy = SliceFromTy
 	qlang.Slice = Slice
 	qlang.MapFrom = MapFrom
 	qlang.EQ = EQ

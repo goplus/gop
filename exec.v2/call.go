@@ -256,12 +256,18 @@ func CallFnv(arity int) Instr {
 // -----------------------------------------------------------------------------
 
 type sliceFrom int
+type sliceFromTy int
 
 var nilVarSlice = make([]interface{}, 0)
 
 func (p sliceFrom) OptimizableGetArity() int {
 
 	return int(p)
+}
+
+func (p sliceFromTy) OptimizableGetArity() int {
+
+	return int(p) + 1
 }
 
 func (p sliceFrom) Exec(stk *Stack, ctx *Context) {
@@ -275,11 +281,25 @@ func (p sliceFrom) Exec(stk *Stack, ctx *Context) {
 	stk.data = stk.data[:n+1]
 }
 
+func (p sliceFromTy) Exec(stk *Stack, ctx *Context) {
+
+	n := len(stk.data) - int(p) - 1
+	stk.data[n] = qlang.SliceFromTy(stk.data[n:]...)
+	stk.data = stk.data[:n+1]
+}
+
 // SliceFrom is an instruction that creates slice in [a1, a2, ...] form.
 //
 func SliceFrom(arity int) Instr {
 
 	return sliceFrom(arity)
+}
+
+// SliceFromTy is an instruction that creates slice in []T{a1, a2, ...} form.
+//
+func SliceFromTy(arity int) Instr {
+
+	return sliceFromTy(arity)
 }
 
 // -----------------------------------------------------------------------------

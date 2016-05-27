@@ -82,8 +82,10 @@ atom =
 
 type =
 	IDENT/ref | '('! expr ')' |
-	'[' ']' type /tslice |
-	'*' type/elem
+	'[' ']'! type /tslice |
+	'*'! type /elem
+
+slice = type ?('{'! expr %= ','/ARITY ?',' '}')/ARITY
 
 factor =
 	INT/pushi |
@@ -91,7 +93,7 @@ factor =
 	STRING/pushs |
 	CHAR/pushc |
 	(IDENT/ref | '('! expr ')' |
-	"fn"! (~'{' fnbody/fn | afn) | '[' expr %= ','/ARITY ?',' ']' ?type/ARITY /slice) *atom |
+	"fn"! (~'{' fnbody/fn | afn) | '['! expr %= ','/ARITY ?',' ']' ?slice/ARITY /slice) *atom |
 	"new"! ('('! clsname ')' | clsname) newargs /new |
 	"range"! expr/_range |
 	"class"! '{' *classb/ARITY '}'/class |
@@ -218,31 +220,6 @@ func (p *Compiler) Fntable() map[string]interface{} {
 func (p *Compiler) Stack() interpreter.Stack {
 
 	return nil
-}
-
-func (p *Compiler) vMap() {
-
-	arity := p.popArity()
-	p.code.Block(exec.Call(qlang.MapFrom, arity*2))
-}
-
-func (p *Compiler) tSlice() {
-
-	p.code.Block(exec.Slice)
-}
-
-func (p *Compiler) vSlice() {
-
-	hasType := p.popArity()
-	arity := p.popArity()
-	if hasType > 0 { // []T
-		if arity > 0 {
-			panic("must be []type")
-		}
-		p.code.Block(exec.Slice)
-	} else {
-		p.code.Block(exec.SliceFrom(arity))
-	}
 }
 
 func (p *Compiler) vCall() {
