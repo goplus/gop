@@ -3,6 +3,8 @@ package builtin
 import (
 	"fmt"
 	"reflect"
+
+	"qlang.io/qlang.spec.v1"
 )
 
 // -----------------------------------------------------------------------------
@@ -101,6 +103,65 @@ var TyByte = TyUint8
 // TyFloat represents the `float` type.
 //
 var TyFloat = TyFloat64
+
+// -----------------------------------------------------------------------------
+
+type tyVar int
+
+func (p tyVar) GoType() reflect.Type {
+
+	return gotyInterface
+}
+
+// NewInstance creates a new instance of a qlang type. required by `qlang type` spec.
+//
+func (p tyVar) NewInstance(args ...interface{}) interface{} {
+
+	ret := new(interface{})
+	if len(args) > 0 {
+		*ret = args[0]
+	}
+	return ret
+}
+
+func (p tyVar) Call(a interface{}) interface{} {
+
+	return a
+}
+
+func (p tyVar) String() string {
+
+	return "var"
+}
+
+// TyVar represents the `var` type.
+//
+var TyVar = tyVar(0)
+
+// -----------------------------------------------------------------------------
+
+type goSliceFrom int
+type goType int
+
+func (p goSliceFrom) Call(a ...interface{}) interface{} {
+	return SliceFrom(a...)
+}
+
+func (p goType) Call(a interface{}) reflect.Type {
+	return reflect.TypeOf(a)
+}
+
+var sliceFrom = goSliceFrom(0)
+var goTypeOf = goType(0)
+
+func init() {
+	t1 := reflect.TypeOf(TyVar)
+	t2 := reflect.TypeOf(goTypeOf)
+	t3 := reflect.TypeOf(sliceFrom)
+	qlang.SetDontTyNormalize(t1)
+	qlang.SetDontTyNormalize(t2)
+	qlang.SetDontTyNormalize(t3)
+}
 
 // -----------------------------------------------------------------------------
 

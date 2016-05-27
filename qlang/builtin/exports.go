@@ -2,7 +2,6 @@ package builtin
 
 import (
 	"fmt"
-	"reflect"
 
 	"qlang.io/qlang.spec.v1"
 )
@@ -27,10 +26,9 @@ var exports = map[string]interface{}{
 	"set":       Set,
 	"mkslice":   Mkslice,
 	"slice":     Mkslice,
-	"sliceFrom": SliceFrom,
+	"sliceFrom": sliceFrom,
 	"sliceOf":   SliceOf,
 	"sub":       SubSlice,
-	"type":      reflect.TypeOf,
 
 	"float":   TyFloat64,
 	"float64": TyFloat64,
@@ -47,6 +45,8 @@ var exports = map[string]interface{}{
 	"uint32":  TyUint32,
 	"uint64":  TyUint64,
 	"string":  TyString,
+	"var":     TyVar,
+	"type":    goTypeOf,
 
 	"max": Max,
 	"min": Min,

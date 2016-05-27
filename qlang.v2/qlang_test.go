@@ -5,7 +5,35 @@ import (
 	"testing"
 
 	"qlang.io/qlang.v2/qlang"
+	"qlang.io/qlang/math"
 )
+
+// -----------------------------------------------------------------------------
+
+const testCastFloatCode = `
+
+x = sin(0)
+`
+
+func TestCastFloat(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+
+	err = lang.SafeExec([]byte(testCastFloatCode), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("x"); !ok || v != 0.0 {
+		t.Fatal("x != 0.0, x =", v)
+	}
+}
+
+func init() {
+	qlang.Import("", math.Exports)
+}
 
 // -----------------------------------------------------------------------------
 

@@ -50,7 +50,7 @@ func GoModuleName(table map[string]interface{}) (name string, ok bool) {
 	return
 }
 
-func GetInitSafe(table map[string]interface{}) (initSafe func(mod Module), ok bool) {
+func getInitSafe(table map[string]interface{}) (initSafe func(mod Module), ok bool) {
 
 	vinitSafe, ok := table["_initSafe"]
 	if !ok {
@@ -174,7 +174,7 @@ func GoModuleList() []string {
 func Import(mod string, table map[string]interface{}) {
 
 	if SafeMode {
-		if initSafe, ok := GetInitSafe(table); ok {
+		if initSafe, ok := getInitSafe(table); ok {
 			initSafe(Module{Exports: table})
 		}
 	}
@@ -214,12 +214,21 @@ var (
 
 	// AutoCall is reserved for internal use.
 	AutoCall = make(map[reflect.Type]bool)
+
+	// DontTyNormalize is reserved for internal use.
+	DontTyNormalize = make(map[reflect.Type]bool)
 )
 
 // SetAutoCall is reserved for internal use.
 //
 func SetAutoCall(t reflect.Type) {
 	AutoCall[t] = true
+}
+
+// SetDontTyNormalize is reserved for internal use.
+//
+func SetDontTyNormalize(t reflect.Type) {
+	DontTyNormalize[t] = true
 }
 
 // SetDumpStack set to dump stack or not.

@@ -277,25 +277,36 @@ func Copy(a, b interface{}) int {
 func Append(a interface{}, vals ...interface{}) interface{} {
 
 	switch arr := a.(type) {
-	case []float64:
-		return appendFloat(arr, vals...)
+	case []int:
+		return appendInts(arr, vals...)
 	case []interface{}:
 		return append(arr, vals...)
+	case []string:
+		return appendStrings(arr, vals...)
+	case []byte:
+		return appendBytes(arr, vals...)
+	case []float64:
+		return appendFloats(arr, vals...)
 	}
 
 	va := reflect.ValueOf(a)
+	telem := va.Type().Elem()
 	x := make([]reflect.Value, len(vals))
 	for i, v := range vals {
 		if v != nil {
-			x[i] = reflect.ValueOf(v)
+			val := reflect.ValueOf(v)
+			if telem != reflect.TypeOf(v) {
+				val = val.Convert(telem)
+			}
+			x[i] = val
 		} else {
-			x[i] = reflect.Zero(va.Type().Elem())
+			x[i] = reflect.Zero(telem)
 		}
 	}
 	return reflect.Append(va, x...).Interface()
 }
 
-func appendFloat(a []float64, vals ...interface{}) interface{} {
+func appendFloats(a []float64, vals ...interface{}) interface{} {
 
 	for _, v := range vals {
 		switch val := v.(type) {
@@ -307,6 +318,47 @@ func appendFloat(a []float64, vals ...interface{}) interface{} {
 			a = append(a, float64(val))
 		default:
 			panic("unsupported: []float64 append " + reflect.TypeOf(v).String())
+		}
+	}
+	return a
+}
+
+func appendInts(a []int, vals ...interface{}) interface{} {
+
+	for _, v := range vals {
+		switch val := v.(type) {
+		case int:
+			a = append(a, val)
+		default:
+			panic("unsupported: []int append " + reflect.TypeOf(v).String())
+		}
+	}
+	return a
+}
+
+func appendBytes(a []byte, vals ...interface{}) interface{} {
+
+	for _, v := range vals {
+		switch val := v.(type) {
+		case byte:
+			a = append(a, val)
+		case int:
+			a = append(a, byte(val))
+		default:
+			panic("unsupported: []byte append " + reflect.TypeOf(v).String())
+		}
+	}
+	return a
+}
+
+func appendStrings(a []string, vals ...interface{}) interface{} {
+
+	for _, v := range vals {
+		switch val := v.(type) {
+		case string:
+			a = append(a, val)
+		default:
+			panic("unsupported: []string append " + reflect.TypeOf(v).String())
 		}
 	}
 	return a
@@ -350,15 +402,15 @@ func SliceFrom(args ...interface{}) interface{} {
 
 	switch kindOfArgs(args) {
 	case reflect.Int:
-		return Append(make([]int, 0, n), args...)
+		return appendInts(make([]int, 0, n), args...)
 	case reflect.Float64:
-		return appendFloat(make([]float64, 0, n), args...)
+		return appendFloats(make([]float64, 0, n), args...)
 	case reflect.String:
-		return Append(make([]string, 0, n), args...)
+		return appendStrings(make([]string, 0, n), args...)
 	case reflect.Uint8:
-		return Append(make([]byte, 0, n), args...)
+		return appendBytes(make([]byte, 0, n), args...)
 	default:
-		return Append(make([]interface{}, 0, n), args...)
+		return append(make([]interface{}, 0, n), args...)
 	}
 }
 
