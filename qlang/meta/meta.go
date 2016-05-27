@@ -150,6 +150,9 @@ func Doc(i interface{}) string {
 		if isPkg {
 			outf("package %v", pkgName)
 			for _, k := range v.MapKeys() {
+				if strings.HasPrefix(k.String(), "_") {
+					continue
+				}
 				ev := v.MapIndex(k)
 				if ev.Kind() == reflect.Interface {
 					rv := ev.Elem()
