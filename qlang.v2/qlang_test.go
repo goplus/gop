@@ -127,6 +127,12 @@ type AImportType struct {
 	X int
 }
 
+func init() {
+	qlang.Import("", map[string]interface{}{
+		"AImportType": qspec.NewType(reflect.TypeOf((*AImportType)(nil)).Elem()),
+	})
+}
+
 const testImportTypeCode = `
 
 a = new AImportType
@@ -140,9 +146,6 @@ func TestImportType(t *testing.T) {
 	if err != nil {
 		t.Fatal("qlang.New:", err)
 	}
-	qlang.Import("", map[string]interface{}{
-		"AImportType": qspec.NewType(reflect.TypeOf((*AImportType)(nil)).Elem()),
-	})
 
 	err = lang.SafeExec([]byte(testImportTypeCode), "")
 	if err != nil {
@@ -167,9 +170,6 @@ func TestStructInit(t *testing.T) {
 	if err != nil {
 		t.Fatal("qlang.New:", err)
 	}
-	qlang.Import("", map[string]interface{}{
-		"AImportType": qspec.NewType(reflect.TypeOf((*AImportType)(nil)).Elem()),
-	})
 
 	err = lang.SafeExec([]byte(testStructInitCode), "")
 	if err != nil {

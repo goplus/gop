@@ -215,9 +215,10 @@ func setMember(m interface{}, args ...interface{}) {
 		o = o.Elem()
 		if o.Kind() == reflect.Struct {
 			setStructMember(o, args...)
+			return
 		}
 	}
-	panic(fmt.Sprintf("type `%v` doesn't support `set` operator", o.Type()))
+	panic(fmt.Sprintf("type `%v` doesn't support `set` operator", reflect.TypeOf(m)))
 }
 
 func setStructMember(o reflect.Value, args ...interface{}) {
