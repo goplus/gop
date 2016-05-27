@@ -3,6 +3,7 @@ package builtin
 import (
 	"fmt"
 	"reflect"
+	"strings"
 
 	"qlang.io/qlang.spec.v1"
 	"qlang.io/qlang.spec.v1/types"
@@ -164,7 +165,7 @@ func Set(m interface{}, args ...interface{}) {
 			o.Index(args[i].(int)).Set(val)
 		}
 	default:
-		qlang.SetEx(m, args...)
+		setMember(m, args...)
 	}
 }
 
@@ -192,8 +193,39 @@ func SetIndex(m, key, v interface{}) {
 			panic("slice index isn't an integer value")
 		}
 	default:
-		qlang.SetEx(m, key, v)
+		setMember(m, key, v)
 	}
+}
+
+type varSetter interface {
+	SetVar(name string, val interface{})
+}
+
+func setMember(m interface{}, args ...interface{}) {
+
+	if v, ok := m.(varSetter); ok {
+		for i := 0; i < len(args); i += 2 {
+			v.SetVar(args[i].(string), args[i+1])
+		}
+		return
+	}
+
+	o := reflect.ValueOf(m)
+	if o.Kind() == reflect.Ptr {
+		o = o.Elem()
+		if o.Kind() == reflect.Struct {
+			for i := 0; i < len(args); i += 2 {
+				key := args[i].(string)
+				field := o.FieldByName(strings.Title(key))
+				if !field.IsValid() {
+					panic(fmt.Sprintf("struct `%v` doesn't has member `%v`", o.Type(), key))
+				}
+				field.Set(reflect.ValueOf(args[i+1]))
+			}
+			return
+		}
+	}
+	panic(fmt.Sprintf("type `%v` doesn't support `set` operator", o.Type()))
 }
 
 // Get gets a value from an object. object can be a slice, an array, a map or a user-defined class.
@@ -277,25 +309,36 @@ func Copy(a, b interface{}) int {
 func Append(a interface{}, vals ...interface{}) interface{} {
 
 	switch arr := a.(type) {
-	case []float64:
-		return appendFloat(arr, vals...)
+	case []int:
+		return appendInts(arr, vals...)
 	case []interface{}:
 		return append(arr, vals...)
+	case []string:
+		return appendStrings(arr, vals...)
+	case []byte:
+		return appendBytes(arr, vals...)
+	case []float64:
+		return appendFloats(arr, vals...)
 	}
 
 	va := reflect.ValueOf(a)
+	telem := va.Type().Elem()
 	x := make([]reflect.Value, len(vals))
 	for i, v := range vals {
 		if v != nil {
-			x[i] = reflect.ValueOf(v)
+			val := reflect.ValueOf(v)
+			if telem != reflect.TypeOf(v) {
+				val = val.Convert(telem)
+			}
+			x[i] = val
 		} else {
-			x[i] = reflect.Zero(va.Type().Elem())
+			x[i] = reflect.Zero(telem)
 		}
 	}
 	return reflect.Append(va, x...).Interface()
 }
 
-func appendFloat(a []float64, vals ...interface{}) interface{} {
+func appendFloats(a []float64, vals ...interface{}) interface{} {
 
 	for _, v := range vals {
 		switch val := v.(type) {
@@ -307,6 +350,47 @@ func appendFloat(a []float64, vals ...interface{}) interface{} {
 			a = append(a, float64(val))
 		default:
 			panic("unsupported: []float64 append " + reflect.TypeOf(v).String())
+		}
+	}
+	return a
+}
+
+func appendInts(a []int, vals ...interface{}) interface{} {
+
+	for _, v := range vals {
+		switch val := v.(type) {
+		case int:
+			a = append(a, val)
+		default:
+			panic("unsupported: []int append " + reflect.TypeOf(v).String())
+		}
+	}
+	return a
+}
+
+func appendBytes(a []byte, vals ...interface{}) interface{} {
+
+	for _, v := range vals {
+		switch val := v.(type) {
+		case byte:
+			a = append(a, val)
+		case int:
+			a = append(a, byte(val))
+		default:
+			panic("unsupported: []byte append " + reflect.TypeOf(v).String())
+		}
+	}
+	return a
+}
+
+func appendStrings(a []string, vals ...interface{}) interface{} {
+
+	for _, v := range vals {
+		switch val := v.(type) {
+		case string:
+			a = append(a, val)
+		default:
+			panic("unsupported: []string append " + reflect.TypeOf(v).String())
 		}
 	}
 	return a
@@ -339,7 +423,7 @@ func Mkslice(typ interface{}, args ...interface{}) interface{} {
 	return reflect.MakeSlice(typSlice, n, cap).Interface()
 }
 
-// SliceFrom creates a slice from args.
+// SliceFrom creates a slice from [a1, a2, ...].
 //
 func SliceFrom(args ...interface{}) interface{} {
 
@@ -350,16 +434,30 @@ func SliceFrom(args ...interface{}) interface{} {
 
 	switch kindOfArgs(args) {
 	case reflect.Int:
-		return Append(make([]int, 0, n), args...)
+		return appendInts(make([]int, 0, n), args...)
 	case reflect.Float64:
-		return appendFloat(make([]float64, 0, n), args...)
+		return appendFloats(make([]float64, 0, n), args...)
 	case reflect.String:
-		return Append(make([]string, 0, n), args...)
+		return appendStrings(make([]string, 0, n), args...)
 	case reflect.Uint8:
-		return Append(make([]byte, 0, n), args...)
+		return appendBytes(make([]byte, 0, n), args...)
 	default:
-		return Append(make([]interface{}, 0, n), args...)
+		return append(make([]interface{}, 0, n), args...)
 	}
+}
+
+// SliceFromTy creates a slice from []T{a1, a2, ...}.
+//
+func SliceFromTy(args ...interface{}) interface{} {
+
+	got, ok := args[0].(goTyper)
+	if !ok {
+		panic(fmt.Sprintf("`%v` is not a qlang type", args[0]))
+	}
+	t := got.GoType()
+	n := len(args)
+	ret := reflect.MakeSlice(reflect.SliceOf(t), 0, n-1).Interface()
+	return Append(ret, args[1:]...)
 }
 
 // SliceOf makes a slice type.

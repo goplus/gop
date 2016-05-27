@@ -79,9 +79,9 @@ func Neg(a interface{}) interface{} {
 	return panicUnsupportedOp1("-", a)
 }
 
-// Float returns float64(a)
+// Float64 returns float64(a)
 //
-func Float(a interface{}) interface{} {
+func Float64(a interface{}) float64 {
 
 	switch a1 := a.(type) {
 	case int:
@@ -89,12 +89,27 @@ func Float(a interface{}) interface{} {
 	case float64:
 		return a1
 	}
-	return panicUnsupportedFn("float", a)
+	panicUnsupportedFn("float", a)
+	return 0
+}
+
+// Float32 returns float32(a)
+//
+func Float32(a interface{}) float32 {
+
+	switch a1 := a.(type) {
+	case int:
+		return float32(a1)
+	case float64:
+		return float32(a1)
+	}
+	panicUnsupportedFn("float32", a)
+	return 0
 }
 
 // Int returns int(a)
 //
-func Int(a interface{}) interface{} {
+func Int(a interface{}) int {
 
 	switch a1 := a.(type) {
 	case float64:
@@ -102,12 +117,13 @@ func Int(a interface{}) interface{} {
 	case int:
 		return a1
 	}
-	return panicUnsupportedFn("int", a)
+	panicUnsupportedFn("int", a)
+	return 0
 }
 
 // Int8 returns int8(a)
 //
-func Int8(a interface{}) interface{} {
+func Int8(a interface{}) int8 {
 
 	switch a1 := a.(type) {
 	case float64:
@@ -115,12 +131,13 @@ func Int8(a interface{}) interface{} {
 	case int:
 		return int8(a1)
 	}
-	return panicUnsupportedFn("int8", a)
+	panicUnsupportedFn("int8", a)
+	return 0
 }
 
 // Int16 returns int16(a)
 //
-func Int16(a interface{}) interface{} {
+func Int16(a interface{}) int16 {
 
 	switch a1 := a.(type) {
 	case float64:
@@ -128,12 +145,13 @@ func Int16(a interface{}) interface{} {
 	case int:
 		return int16(a1)
 	}
-	return panicUnsupportedFn("int16", a)
+	panicUnsupportedFn("int16", a)
+	return 0
 }
 
 // Int32 returns int32(a)
 //
-func Int32(a interface{}) interface{} {
+func Int32(a interface{}) int32 {
 
 	switch a1 := a.(type) {
 	case float64:
@@ -141,12 +159,13 @@ func Int32(a interface{}) interface{} {
 	case int:
 		return int32(a1)
 	}
-	return panicUnsupportedFn("int32", a)
+	panicUnsupportedFn("int32", a)
+	return 0
 }
 
 // Int64 returns int64(a)
 //
-func Int64(a interface{}) interface{} {
+func Int64(a interface{}) int64 {
 
 	switch a1 := a.(type) {
 	case float64:
@@ -154,12 +173,13 @@ func Int64(a interface{}) interface{} {
 	case int:
 		return int64(a1)
 	}
-	return panicUnsupportedFn("int64", a)
+	panicUnsupportedFn("int64", a)
+	return 0
 }
 
 // Uint16 returns uint16(a)
 //
-func Uint16(a interface{}) interface{} {
+func Uint16(a interface{}) uint16 {
 
 	switch a1 := a.(type) {
 	case float64:
@@ -167,12 +187,13 @@ func Uint16(a interface{}) interface{} {
 	case int:
 		return uint16(a1)
 	}
-	return panicUnsupportedFn("uint16", a)
+	panicUnsupportedFn("uint16", a)
+	return 0
 }
 
 // Uint32 returns uint32(a)
 //
-func Uint32(a interface{}) interface{} {
+func Uint32(a interface{}) uint32 {
 
 	switch a1 := a.(type) {
 	case float64:
@@ -180,12 +201,13 @@ func Uint32(a interface{}) interface{} {
 	case int:
 		return uint32(a1)
 	}
-	return panicUnsupportedFn("uint32", a)
+	panicUnsupportedFn("uint32", a)
+	return 0
 }
 
 // Uint64 returns uint64(a)
 //
-func Uint64(a interface{}) interface{} {
+func Uint64(a interface{}) uint64 {
 
 	switch a1 := a.(type) {
 	case float64:
@@ -193,12 +215,13 @@ func Uint64(a interface{}) interface{} {
 	case int:
 		return uint64(a1)
 	}
-	return panicUnsupportedFn("uint64", a)
+	panicUnsupportedFn("uint64", a)
+	return 0
 }
 
 // Uint returns uint(a)
 //
-func Uint(a interface{}) interface{} {
+func Uint(a interface{}) uint {
 
 	switch a1 := a.(type) {
 	case float64:
@@ -206,12 +229,13 @@ func Uint(a interface{}) interface{} {
 	case int:
 		return uint(a1)
 	}
-	return panicUnsupportedFn("uint", a)
+	panicUnsupportedFn("uint", a)
+	return 0
 }
 
-// Byte returns byte(a)
+// Uint8 returns uint8(a)
 //
-func Byte(a interface{}) interface{} {
+func Uint8(a interface{}) byte {
 
 	switch a1 := a.(type) {
 	case int:
@@ -219,20 +243,24 @@ func Byte(a interface{}) interface{} {
 	case float64:
 		return byte(a1)
 	}
-	return panicUnsupportedFn("byte", a)
+	panicUnsupportedFn("uint8", a)
+	return 0
 }
 
 // String returns string(a)
 //
-func String(a interface{}) interface{} {
+func String(a interface{}) string {
 
 	switch a1 := a.(type) {
 	case []byte:
 		return string(a1)
 	case int:
 		return string(a1)
+	case string:
+		return a1
 	}
-	return panicUnsupportedFn("string", a)
+	panicUnsupportedFn("string", a)
+	return ""
 }
 
 // Mul returns a*b

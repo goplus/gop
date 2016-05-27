@@ -53,11 +53,11 @@ func (p *iCall) Exec(stk *Stack, ctx *Context) {
 			n--
 			t := tfn.In(n).Elem()
 			for i := n; i < arity; i++ {
-				validateType(&in[i], t)
+				validateType(&in[i], t, nil)
 			}
 		}
 		for i := 0; i < n; i++ {
-			validateType(&in[i], tfn.In(i))
+			validateType(&in[i], tfn.In(i), nil)
 		}
 	}
 	out := p.vfn.Call(in)
@@ -67,11 +67,14 @@ func (p *iCall) Exec(stk *Stack, ctx *Context) {
 	}
 }
 
-func validateType(in *reflect.Value, t reflect.Type) {
+func validateType(in *reflect.Value, t, tfn reflect.Type) {
 
 	tkind := t.Kind()
 	switch tkind {
 	case reflect.Interface:
+		if tfn != nil && qlang.DontTyNormalize[tfn] { // don't normalize input type
+			return
+		}
 		switch kind := in.Kind(); {
 		case kind == reflect.Invalid:
 			*in = reflect.Zero(t) // work around `reflect: Call using zero Value argument`
@@ -95,42 +98,34 @@ func validateType(in *reflect.Value, t reflect.Type) {
 		return
 	}
 
+	kind := in.Kind()
 	switch tkind {
 	case reflect.Struct:
-		if tin.Kind() == reflect.Ptr {
+		if kind == reflect.Ptr {
 			tin = tin.Elem()
 			if tin == t {
 				*in = in.Elem()
 				return
 			}
 		}
-	case reflect.Float64:
-		var val float64
-		switch kind := tin.Kind(); {
-		case kind >= reflect.Int && kind <= reflect.Int64:
-			val = float64(in.Int())
-		case kind >= reflect.Uint && kind <= reflect.Uintptr:
-			val = float64(in.Uint())
-		case kind == reflect.Float32:
-			val = in.Float()
-		default:
-			goto lzErr
-		}
-		*in = reflect.ValueOf(val)
-		return
 	default:
-		if kind := in.Kind(); tkind == kind || convertible(kind, tkind) {
+		if tkind == kind || convertible(kind, tkind) {
 			*in = in.Convert(t)
 			return
 		}
 	}
-lzErr:
 	panic(fmt.Errorf("invalid argument type: require `%v`, but we got `%v`", t, tin))
 }
 
 func convertible(kind, tkind reflect.Kind) bool {
 
-	return (tkind == reflect.Int || tkind == reflect.Uint) && (kind >= reflect.Int && kind <= reflect.Uintptr)
+	if tkind >= reflect.Int && tkind <= reflect.Uintptr {
+		return kind >= reflect.Int && kind <= reflect.Uintptr
+	}
+	if tkind == reflect.Float64 || tkind == reflect.Float32 {
+		return kind >= reflect.Int && kind <= reflect.Float64
+	}
+	return false
 }
 
 // Call returns a function call instruction.
@@ -179,10 +174,13 @@ func (arity iCallFn) Exec(stk *Stack, ctx *Context) {
 	}
 
 	vfn := in[0]
-	if vfn.Kind() != reflect.Func { // 这不是func，而是Function对象
-		vfn = vfn.MethodByName("Call")
-	}
 	tfn := vfn.Type()
+	var tfn0 reflect.Type
+	if vfn.Kind() != reflect.Func { // 这不是func，而是Function对象
+		tfn0 = tfn
+		vfn = vfn.MethodByName("Call")
+		tfn = vfn.Type()
+	}
 	n := tfn.NumIn()
 
 	isVariadic := tfn.IsVariadic() // 可变参数函数
@@ -199,11 +197,11 @@ func (arity iCallFn) Exec(stk *Stack, ctx *Context) {
 		n--
 		t := tfn.In(n).Elem()
 		for i := n; i < int(arity); i++ {
-			validateType(&in[i], t)
+			validateType(&in[i], t, tfn0)
 		}
 	}
 	for i := 0; i < n; i++ {
-		validateType(&in[i], tfn.In(i))
+		validateType(&in[i], tfn.In(i), tfn0)
 	}
 
 	out := vfn.Call(in)
@@ -257,27 +255,19 @@ func CallFnv(arity int) Instr {
 
 // -----------------------------------------------------------------------------
 
-type typeOf int
-
-func (p typeOf) Exec(stk *Stack, ctx *Context) {
-
-	n := len(stk.data) - 1
-	stk.data[n] = reflect.TypeOf(stk.data[n])
-}
-
-// TypeOf is the type(v) instruction.
-//
-var TypeOf Instr = typeOf(0)
-
-// -----------------------------------------------------------------------------
-
 type sliceFrom int
+type sliceFromTy int
 
 var nilVarSlice = make([]interface{}, 0)
 
 func (p sliceFrom) OptimizableGetArity() int {
 
 	return int(p)
+}
+
+func (p sliceFromTy) OptimizableGetArity() int {
+
+	return int(p) + 1
 }
 
 func (p sliceFrom) Exec(stk *Stack, ctx *Context) {
@@ -291,11 +281,44 @@ func (p sliceFrom) Exec(stk *Stack, ctx *Context) {
 	stk.data = stk.data[:n+1]
 }
 
+func (p sliceFromTy) Exec(stk *Stack, ctx *Context) {
+
+	n := len(stk.data) - int(p) - 1
+	stk.data[n] = qlang.SliceFromTy(stk.data[n:]...)
+	stk.data = stk.data[:n+1]
+}
+
 // SliceFrom is an instruction that creates slice in [a1, a2, ...] form.
 //
 func SliceFrom(arity int) Instr {
 
 	return sliceFrom(arity)
 }
+
+// SliceFromTy is an instruction that creates slice in []T{a1, a2, ...} form.
+//
+func SliceFromTy(arity int) Instr {
+
+	return sliceFromTy(arity)
+}
+
+// -----------------------------------------------------------------------------
+
+type slice int
+
+func (p slice) OptimizableGetArity() int {
+
+	return 1
+}
+
+func (p slice) Exec(stk *Stack, ctx *Context) {
+
+	n := len(stk.data) - 1
+	stk.data[n] = qlang.Slice(stk.data[n])
+}
+
+// Slice is an instruction that returns []T.
+//
+var Slice Instr = slice(0)
 
 // -----------------------------------------------------------------------------

@@ -177,12 +177,27 @@ var Exports = map[string]interface{}{
 	}
 
 	//vars
-	if keys, _ := p.FilterCommon(Var); len(keys) > 0 {
+	if keys, m := p.FilterCommon(Var); len(keys) > 0 {
 		outf("\n")
+		skeys, _ := p.FilterCommon(Struct)
 		for _, v := range keys {
+			mv := m[v].(*doc.Value)
+			var isStructVar bool
+			if typ := p.simpleValueDeclType(mv.Decl); typ != "" {
+				for _, k := range skeys {
+					if typ == k {
+						isStructVar = true
+						log.Printf("warning convert struct var to ref %s %s (%s)\n", bp.ImportPath, v, typ)
+					}
+				}
+			}
 			name := toQlangName(v)
 			fn := pkgName + "." + v
-			outf("\t%q:\t%s,\n", name, fn)
+			if isStructVar {
+				outf("\t%q:\t&%s,\n", name, fn)
+			} else {
+				outf("\t%q:\t%s,\n", name, fn)
+			}
 		}
 	}
 

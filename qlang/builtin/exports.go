@@ -2,7 +2,6 @@ package builtin
 
 import (
 	"fmt"
-	"reflect"
 
 	"qlang.io/qlang.spec.v1"
 )
@@ -27,38 +26,43 @@ var exports = map[string]interface{}{
 	"set":       Set,
 	"mkslice":   Mkslice,
 	"slice":     Mkslice,
-	"sliceFrom": SliceFrom,
+	"sliceFrom": sliceFrom,
 	"sliceOf":   SliceOf,
-	"string":    String,
 	"sub":       SubSlice,
-	"type":      reflect.TypeOf,
 
-	"float":  Float,
-	"int8":   Int8,
-	"int16":  Int16,
-	"int32":  Int32,
-	"int64":  Int64,
-	"int":    Int,
-	"uint":   Uint,
-	"byte":   Byte,
-	"uint8":  Byte,
-	"uint16": Uint16,
-	"uint32": Uint32,
-	"uint64": Uint64,
-	"max":    Max,
-	"min":    Min,
+	"float":   TyFloat64,
+	"float64": TyFloat64,
+	"float32": TyFloat32,
+	"int8":    TyInt8,
+	"int16":   TyInt16,
+	"int32":   TyInt32,
+	"int64":   TyInt64,
+	"int":     TyInt,
+	"uint":    TyUint,
+	"byte":    TyUint8,
+	"uint8":   TyUint8,
+	"uint16":  TyUint16,
+	"uint32":  TyUint32,
+	"uint64":  TyUint64,
+	"string":  TyString,
+	"var":     TyVar,
+	"type":    typeOf,
+
+	"max": Max,
+	"min": Min,
 
 	"undefined": qlang.Undefined,
 	"nil":       nil,
 	"true":      true,
 	"false":     false,
 
-	"$neg": Neg,
-	"$mul": Mul,
-	"$quo": Quo,
-	"$mod": Mod,
-	"$add": Add,
-	"$sub": Sub,
+	"$elem": Elem,
+	"$neg":  Neg,
+	"$mul":  Mul,
+	"$quo":  Quo,
+	"$mod":  Mod,
+	"$add":  Add,
+	"$sub":  Sub,
 
 	"$xor":    Xor,
 	"$lshr":   Lshr,
@@ -80,6 +84,8 @@ var exports = map[string]interface{}{
 func init() {
 	qlang.SubSlice = SubSlice
 	qlang.SliceFrom = SliceFrom
+	qlang.SliceFromTy = SliceFromTy
+	qlang.Slice = Slice
 	qlang.MapFrom = MapFrom
 	qlang.EQ = EQ
 	qlang.GetVar = GetVar

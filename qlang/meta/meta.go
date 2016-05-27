@@ -1,7 +1,10 @@
 package meta
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
+	osexec "os/exec"
 	"reflect"
 	"strings"
 	"unicode"
@@ -17,8 +20,9 @@ var Exports = map[string]interface{}{
 	"_name":   "qlang.io/qlang/meta",
 	"fnlist":  FnList,
 	"fntable": FnTable,
-	"pkglist": GoPkgList,
+	"pkgs":    GoPkgList,
 	"dir":     Dir,
+	"doc":     Doc,
 }
 
 // FnList returns qlang all function list
@@ -113,4 +117,166 @@ func Dir(i interface{}) (list []string) {
 		}
 	}
 	return
+}
+
+func findPackageName(i interface{}) (string, bool) {
+	v := reflect.ValueOf(i)
+	if v.Kind() == reflect.Map {
+		for _, k := range v.MapKeys() {
+			if k.Kind() == reflect.String && k.String() == "_name" {
+				ev := v.MapIndex(k)
+				if ev.Kind() == reflect.Interface {
+					rv := ev.Elem()
+					if rv.Kind() == reflect.String {
+						return rv.String(), true
+					}
+				}
+			}
+		}
+	}
+	return "", false
+}
+
+// Doc returns doc info of object
+//
+func Doc(i interface{}) string {
+	if s, ok := i.(string); ok {
+		return Docs(s)
+	}
+	var buf bytes.Buffer
+	outf := func(format string, a ...interface{}) (err error) {
+		_, err = buf.WriteString(fmt.Sprintf(format, a...))
+		return
+	}
+	v := reflect.ValueOf(i)
+	if v.Kind() == reflect.Map {
+		pkgName, isPkg := findPackageName(i)
+		if isPkg {
+			outf("package %v", pkgName)
+			for _, k := range v.MapKeys() {
+				if strings.HasPrefix(k.String(), "_") {
+					continue
+				}
+				ev := v.MapIndex(k)
+				if ev.Kind() == reflect.Interface {
+					rv := ev.Elem()
+					outf("\n%v\t%v ", k, rv.Type())
+				}
+			}
+		} else {
+			for _, k := range v.MapKeys() {
+				ev := v.MapIndex(k)
+				outf("\n%v\t%v", k, ev)
+			}
+		}
+	} else {
+		switch e := i.(type) {
+		case *exec.Class:
+			outf("*exec.Class")
+			for k, v := range e.Fns {
+				outf("\n%v\t%T", k, v)
+			}
+		case *exec.Object:
+			outf("*exec.Object")
+			for k, v := range e.Cls.Fns {
+				outf("\n%v\t%T", k, v)
+			}
+			for k, kv := range e.Vars() {
+				outf("\n%v\t%T", k, kv)
+			}
+		default:
+			t := v.Type()
+			outf("%v", t)
+			{
+				t := v.Type()
+				for t.Kind() == reflect.Ptr {
+					t = t.Elem()
+				}
+				if t.Kind() == reflect.Struct {
+					for i := 0; i < t.NumField(); i++ {
+						field := t.Field(i)
+						if IsExported(field.Name) {
+							outf("\n%v\t%v", field.Name, field.Type)
+						}
+					}
+				}
+			}
+			for i := 0; i < t.NumMethod(); i++ {
+				m := t.Method(i)
+				if IsExported(m.Name) {
+					outf("\n%v\t%v", m.Name, m.Type)
+				}
+			}
+		}
+	}
+	return buf.String()
+}
+
+func parserName(names string) (pkg string, name string) {
+	if strings.Contains(names, ".") {
+		ar := strings.Split(names, ".")
+		pkg = ar[0]
+		var sep string
+		for i, v := range ar[1:] {
+			if i == 1 {
+				sep = "."
+			}
+			name += sep + strings.Title(v)
+		}
+	} else {
+		pkg = names
+	}
+	return
+}
+
+func findFnTable(key string) (fn interface{}, gopkg string) {
+	if i, ok := qlang.Fntable[key]; ok {
+		fn = i
+		if m, ok := i.(map[string]interface{}); ok {
+			if name, ok := m["_name"]; ok {
+				if s, ok := name.(string); ok {
+					gopkg = s
+				}
+			}
+		}
+	}
+	return
+}
+
+func godoc(pkg string, name string) (string, error) {
+	bin, err := osexec.LookPath("godoc")
+	if err != nil {
+		return "", err
+	}
+	args := []string{pkg}
+	if name != "" {
+		args = append(args, name)
+	}
+	data, err := osexec.Command(bin, args...).Output()
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+// Docs returns doc info of string, gopkg find in godoc
+//
+func Docs(names string) string {
+	pkg, name := parserName(names)
+	fn, gopkg := findFnTable(pkg)
+	if fn == nil {
+		return fmt.Sprintf("error find %q", names)
+	}
+	if gopkg != "" {
+		info, err := godoc(gopkg, name)
+		if err != nil {
+			return fmt.Sprintf("godoc error %v", err)
+		}
+		return info
+	}
+	//check is string
+	if s, ok := fn.(string); ok {
+		return s
+	}
+	return Doc(fn)
 }
