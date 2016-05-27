@@ -62,6 +62,9 @@ func (p *Type) NewInstance(args ...interface{}) interface{} {
 //
 func (p *Type) Call(a interface{}) interface{} {
 
+	if a == nil {
+		return reflect.Zero(p.t).Interface()
+	}
 	return reflect.ValueOf(a).Convert(p.t).Interface()
 }
 
