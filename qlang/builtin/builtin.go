@@ -214,18 +214,22 @@ func setMember(m interface{}, args ...interface{}) {
 	if o.Kind() == reflect.Ptr {
 		o = o.Elem()
 		if o.Kind() == reflect.Struct {
-			for i := 0; i < len(args); i += 2 {
-				key := args[i].(string)
-				field := o.FieldByName(strings.Title(key))
-				if !field.IsValid() {
-					panic(fmt.Sprintf("struct `%v` doesn't has member `%v`", o.Type(), key))
-				}
-				field.Set(reflect.ValueOf(args[i+1]))
-			}
-			return
+			setStructMember(o, args...)
 		}
 	}
 	panic(fmt.Sprintf("type `%v` doesn't support `set` operator", o.Type()))
+}
+
+func setStructMember(o reflect.Value, args ...interface{}) {
+
+	for i := 0; i < len(args); i += 2 {
+		key := args[i].(string)
+		field := o.FieldByName(strings.Title(key))
+		if !field.IsValid() {
+			panic(fmt.Sprintf("struct `%v` doesn't has member `%v`", o.Type(), key))
+		}
+		field.Set(reflect.ValueOf(args[i+1]))
+	}
 }
 
 // Get gets a value from an object. object can be a slice, an array, a map or a user-defined class.
@@ -446,7 +450,7 @@ func SliceFrom(args ...interface{}) interface{} {
 	}
 }
 
-// SliceFromTy creates a slice from []T{a1, a2, ...}.
+// SliceFromTy creates a slice from `[]T{a1, a2, ...}`.
 //
 func SliceFromTy(args ...interface{}) interface{} {
 
@@ -458,6 +462,23 @@ func SliceFromTy(args ...interface{}) interface{} {
 	n := len(args)
 	ret := reflect.MakeSlice(reflect.SliceOf(t), 0, n-1).Interface()
 	return Append(ret, args[1:]...)
+}
+
+// StructInit creates a struct object from `&T{name1: expr1, name2: expr2, ...}`.
+//
+func StructInit(args ...interface{}) interface{} {
+
+	got, ok := args[0].(goTyper)
+	if !ok {
+		panic(fmt.Sprintf("`%v` is not a qlang type", args[0]))
+	}
+	t := got.GoType()
+	if t.Kind() != reflect.Struct {
+		panic(fmt.Sprintf("`%v` is not a struct type", args[0]))
+	}
+	ret := reflect.New(t)
+	setStructMember(ret.Elem(), args[1:]...)
+	return ret.Interface()
 }
 
 // SliceOf makes a slice type.

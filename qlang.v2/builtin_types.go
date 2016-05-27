@@ -7,10 +7,18 @@ import (
 
 // -----------------------------------------------------------------------------
 
+func (p *Compiler) structInit() {
+
+	arity := p.popArity()
+	p.code.Block(exec.StructInit((arity << 1) + 1))
+}
+
+// -----------------------------------------------------------------------------
+
 func (p *Compiler) vMap() {
 
 	arity := p.popArity()
-	p.code.Block(exec.Call(qlang.MapFrom, arity*2))
+	p.code.Block(exec.Call(qlang.MapFrom, arity<<1))
 }
 
 // -----------------------------------------------------------------------------
@@ -40,7 +48,7 @@ func (p *Compiler) vSlice() {
 			panic("must be []type")
 		}
 		if hasInit > 0 { // []T{a1, a2, ...}
-			p.code.Block(exec.SliceFromTy(arityInit))
+			p.code.Block(exec.SliceFromTy(arityInit + 1))
 		} else { // []T
 			p.code.Block(exec.Slice)
 		}

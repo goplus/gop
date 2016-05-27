@@ -174,6 +174,7 @@ var (
 	Slice       = dummy1
 	SliceFrom   = dummyN
 	SliceFromTy = dummyN
+	StructInit  = dummyN
 	SubSlice    = dummy3
 	Xor         = dummy2
 	Lshr        = dummy2

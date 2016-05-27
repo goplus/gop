@@ -154,3 +154,30 @@ func TestImportType(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
+const testStructInitCode = `
+
+a = &AImportType{x: 1}
+y = a.x
+`
+
+func TestStructInit(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+	qlang.Import("", map[string]interface{}{
+		"AImportType": qspec.NewType(reflect.TypeOf((*AImportType)(nil)).Elem()),
+	})
+
+	err = lang.SafeExec([]byte(testStructInitCode), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("y"); !ok || v != 1 {
+		t.Fatal("y != 1, y =", v)
+	}
+}
+
+// -----------------------------------------------------------------------------

@@ -267,7 +267,7 @@ func (p sliceFrom) OptimizableGetArity() int {
 
 func (p sliceFromTy) OptimizableGetArity() int {
 
-	return int(p) + 1
+	return int(p)
 }
 
 func (p sliceFrom) Exec(stk *Stack, ctx *Context) {
@@ -283,7 +283,7 @@ func (p sliceFrom) Exec(stk *Stack, ctx *Context) {
 
 func (p sliceFromTy) Exec(stk *Stack, ctx *Context) {
 
-	n := len(stk.data) - int(p) - 1
+	n := len(stk.data) - int(p)
 	stk.data[n] = qlang.SliceFromTy(stk.data[n:]...)
 	stk.data = stk.data[:n+1]
 }
@@ -300,6 +300,29 @@ func SliceFrom(arity int) Instr {
 func SliceFromTy(arity int) Instr {
 
 	return sliceFromTy(arity)
+}
+
+// -----------------------------------------------------------------------------
+// StructInit
+
+type iStructInit int
+
+func (p iStructInit) OptimizableGetArity() int {
+
+	return int(p)
+}
+
+func (p iStructInit) Exec(stk *Stack, ctx *Context) {
+
+	n := len(stk.data) - int(p)
+	stk.data[n] = qlang.StructInit(stk.data[n:]...)
+	stk.data = stk.data[:n+1]
+}
+
+// StructInit returns a StructInit instruction that means `&StructType{name1: expr1, name2: expr2, ...}`.
+//
+func StructInit(arity int) Instr {
+	return iStructInit(arity)
 }
 
 // -----------------------------------------------------------------------------

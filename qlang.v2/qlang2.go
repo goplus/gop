@@ -104,6 +104,7 @@ factor =
 	'^' factor/bitnot |
 	'-' factor/neg |
 	'*' factor/elem |
+	'&' IDENT/ref '{' (IDENT/pushid ':' expr) %= ','/ARITY ?',' '}' /initst |
 	"<-" factor/chout |
 	'+' factor
 `
@@ -280,11 +281,13 @@ var exports = map[string]interface{}{
 	"$pushi":   (*Compiler).pushInt,
 	"$pushf":   (*Compiler).pushFloat,
 	"$pushs":   (*Compiler).pushString,
+	"$pushid":  (*Compiler).pushID,
 	"$pushc":   (*Compiler).pushByte,
 	"$index":   (*Compiler).index,
 	"$mref":    (*Compiler).memberRef,
 	"$ref":     (*Compiler).ref,
 	"$tovar":   (*Compiler).toVar,
+	"$initst":  (*Compiler).structInit,
 	"$slice":   (*Compiler).vSlice,
 	"$tslice":  (*Compiler).tSlice,
 	"$map":     (*Compiler).vMap,
