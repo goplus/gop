@@ -2,6 +2,7 @@ package qlang_test
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"qlang.io/qlang.v2/qlang"
@@ -292,6 +293,103 @@ func TestTypeOf(t *testing.T) {
 	}
 	if v, ok := lang.Var("x"); !ok || v != reflect.TypeOf(uint32(1)) {
 		t.Fatal("x != uint32, x =", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+const testCallbackCode = `
+
+x = strings.indexFunc("Hello!!!", fn(c) { return c == '!' })
+`
+
+func TestCallback(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+	qlang.Import("strings", map[string]interface{}{
+		"indexFunc": strings.IndexFunc,
+	})
+
+	err = lang.SafeExec([]byte(testCallbackCode), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("x"); !ok || v != 5 {
+		t.Fatal("x != 5, x =", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+func forEach(values []int, fn func(v int)) {
+	for _, v := range values {
+		fn(v)
+	}
+}
+
+const testCallback2Code = `
+
+x = 0
+forEach([1, 2, 2], fn(v) { x; x += v })
+`
+
+func TestCallback2(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+	qlang.Import("", map[string]interface{}{
+		"forEach": forEach,
+	})
+
+	err = lang.SafeExec([]byte(testCallback2Code), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("x"); !ok || v != 5 {
+		t.Fatal("x != 5, x =", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+func toVars(values []int, fn func(v int) interface{}) []interface{} {
+	ret := make([]interface{}, len(values))
+	for i, v := range values {
+		ret[i] = fn(v)
+	}
+	return ret
+}
+
+const testCallback3Code = `
+
+ret = toVars([1, 2, 3], fn(v) { return v+1 })
+`
+
+func TestCallback3(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+	qlang.Import("", map[string]interface{}{
+		"toVars": toVars,
+	})
+
+	err = lang.SafeExec([]byte(testCallback3Code), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	ret, ok := lang.Var("ret")
+	if !ok {
+		t.Fatal("ret not found")
+	}
+	if v, ok := ret.([]interface{}); !ok || len(v) != 3 {
+		t.Fatal("ret != [2, 3, 4], ret =", v)
 	}
 }
 
