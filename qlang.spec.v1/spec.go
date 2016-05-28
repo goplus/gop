@@ -2,6 +2,7 @@ package qlang
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 )
 
@@ -101,6 +102,33 @@ func TyPtrTo(elem reflect.Type) *Type {
 	return &Type{t: reflect.PtrTo(elem)}
 }
 
+// AutoConvert converts a value to specified type automatically.
+//
+func AutoConvert(v reflect.Value, t reflect.Type) reflect.Value {
+
+	tkind := t.Kind()
+	if tkind == reflect.Interface {
+		return v
+	}
+
+	kind := v.Kind()
+	if kind == tkind || convertible(kind, tkind) {
+		return v.Convert(t)
+	}
+	panic(fmt.Sprintf("Can't convert `%v` to `%v` automatically", v.Type(), t))
+}
+
+func convertible(kind, tkind reflect.Kind) bool {
+
+	if tkind >= reflect.Int && tkind <= reflect.Uintptr {
+		return kind >= reflect.Int && kind <= reflect.Uintptr
+	}
+	if tkind == reflect.Float64 || tkind == reflect.Float32 {
+		return kind >= reflect.Int && kind <= reflect.Float64
+	}
+	return false
+}
+
 // -----------------------------------------------------------------------------
 
 type Module struct {
@@ -170,10 +198,13 @@ var (
 	ChanOut     = dummyChanOut
 	GetEx       = dummy2
 	SetIndex    = dummySetIndex
+	MapInit     = dummyN
 	MapFrom     = dummyN
+	Map         = dummy2
 	Slice       = dummy1
 	SliceFrom   = dummyN
 	SliceFromTy = dummyN
+	StructInit  = dummyN
 	SubSlice    = dummy3
 	Xor         = dummy2
 	Lshr        = dummy2

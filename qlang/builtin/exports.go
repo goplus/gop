@@ -86,7 +86,10 @@ func init() {
 	qlang.SliceFrom = SliceFrom
 	qlang.SliceFromTy = SliceFromTy
 	qlang.Slice = Slice
+	qlang.Map = Map
 	qlang.MapFrom = MapFrom
+	qlang.MapInit = MapInit
+	qlang.StructInit = StructInit
 	qlang.EQ = EQ
 	qlang.GetVar = GetVar
 	qlang.Get = Get

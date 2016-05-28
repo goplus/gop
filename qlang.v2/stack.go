@@ -39,6 +39,11 @@ func (p *Compiler) pushString(lit string) {
 	p.code.Block(exec.Push(v))
 }
 
+func (p *Compiler) pushID(name string) {
+
+	p.code.Block(exec.Push(name))
+}
+
 // -----------------------------------------------------------------------------
 
 func (p *Compiler) popArity() int {
