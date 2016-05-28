@@ -3,6 +3,8 @@ package types
 import (
 	"fmt"
 	"reflect"
+
+	"qlang.io/qlang.spec.v1"
 )
 
 // -----------------------------------------------------------------------------
@@ -16,6 +18,9 @@ var (
 //
 func Reflect(typ interface{}) reflect.Type {
 
+	if t, ok := typ.(qlang.GoTyper); ok {
+		return t.GoType()
+	}
 	if t, ok := typ.(string); ok {
 		if v, ok := builtinTypes[t]; ok {
 			return v

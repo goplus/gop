@@ -81,6 +81,7 @@ atom =
 type =
 	IDENT/ref *('.' member/mref) |
 	"class"! '{' *classb/ARITY '}'/class |
+	"map" '['! type ']' type /tmap |
 	'[' ']'! type /tslice |
 	'*'! type /elem |
 	'('! type ')'

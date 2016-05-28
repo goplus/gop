@@ -454,7 +454,7 @@ func SliceFrom(args ...interface{}) interface{} {
 //
 func SliceFromTy(args ...interface{}) interface{} {
 
-	got, ok := args[0].(goTyper)
+	got, ok := args[0].(qlang.GoTyper)
 	if !ok {
 		panic(fmt.Sprintf("`%v` is not a qlang type", args[0]))
 	}
@@ -479,7 +479,7 @@ func StructInit(args ...interface{}) interface{} {
 		panic("call with invalid argument count: please use `structInit(structType, member1, val1, ...)")
 	}
 
-	got, ok := args[0].(goTyper)
+	got, ok := args[0].(qlang.GoTyper)
 	if !ok {
 		panic(fmt.Sprintf("`%v` is not a qlang type", args[0]))
 	}
@@ -500,7 +500,7 @@ func MapInit(args ...interface{}) interface{} {
 		panic("call with invalid argument count: please use `mapInit(mapType, member1, val1, ...)")
 	}
 
-	got, ok := args[0].(goTyper)
+	got, ok := args[0].(qlang.GoTyper)
 	if !ok {
 		panic(fmt.Sprintf("`%v` is not a qlang type", args[0]))
 	}

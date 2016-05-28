@@ -79,7 +79,7 @@ func Mkchan(typ interface{}, buffer ...int) *qlang.Chan {
 		n = buffer[0]
 	}
 	t := reflect.ChanOf(reflect.BothDir, types.Reflect(typ))
-	return &qlang.Chan{reflect.MakeChan(t, n)}
+	return &qlang.Chan{Data: reflect.MakeChan(t, n)}
 }
 
 func Close(ch1 interface{}) {
@@ -96,11 +96,20 @@ var exports = map[string]interface{}{
 	"close":  Close,
 }
 
+func makeChan(typ reflect.Type, buffer ...int) interface{} {
+
+	n := 0
+	if len(buffer) > 0 {
+		n = buffer[0]
+	}
+	return &qlang.Chan{Data: reflect.MakeChan(typ, n)}
+}
+
 func init() {
 	qlang.ChanIn = ChanIn
 	qlang.ChanOut = ChanOut
+	qlang.MakeChan = makeChan
 	qlang.Import("", exports)
 }
 
 // -----------------------------------------------------------------------------
-
