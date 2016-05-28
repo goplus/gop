@@ -13,7 +13,18 @@ func (p *Compiler) structInit() {
 	p.code.Block(exec.StructInit((arity << 1) + 1))
 }
 
+func (p *Compiler) mapInit() {
+
+	arity := p.popArity()
+	p.code.Block(exec.MapInit((arity << 1) + 1))
+}
+
 // -----------------------------------------------------------------------------
+
+func (p *Compiler) tMap() {
+
+	p.code.Block(exec.Map)
+}
 
 func (p *Compiler) vMap() {
 
@@ -27,8 +38,6 @@ func (p *Compiler) tSlice() {
 
 	p.code.Block(exec.Slice)
 }
-
-// -----------------------------------------------------------------------------
 
 func (p *Compiler) vSlice() {
 

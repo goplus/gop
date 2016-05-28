@@ -65,11 +65,11 @@ fnbody = '(' IDENT/name %= ','/ARITY ?"..."/ARITY ')' '{'/_mute doc/_code '}'/_u
 
 afn = '{'/_mute doc/_code '}'/_unmute/afn
 
-member = IDENT | "class" | "new" | "recover" | "main" | "import" | "as" | "export" | "include"
+member = IDENT | "class" | "new" | "recover" | "main" | "import" | "as" | "map" | "export" | "include"
 
 newargs = ?('(' expr %= ','/ARITY ')')/ARITY
 
-classb = "fn"! IDENT/name fnbody ?';'/mfn
+classb = "fn"! member/name fnbody ?';'/mfn
 
 methods = *classb/ARITY
 
@@ -81,7 +81,7 @@ atom =
 	'['! ?expr/ARITY ?':'/ARITY ?expr/ARITY ']'/index
 
 type =
-	IDENT/ref | '('! expr ')' |
+	IDENT/ref | '('! type ')' |
 	'[' ']'! type /tslice |
 	'*'! type /elem
 
@@ -92,7 +92,8 @@ factor =
 	FLOAT/pushf |
 	STRING/pushs |
 	CHAR/pushc |
-	(IDENT/ref | '('! expr ')' |
+	((IDENT | "map" ~'[')/ref | '('! expr ')' |
+	"map" '['! type ']' type /tmap ?('{'! (expr ':' expr) %= ','/ARITY ?',' '}'/initm) |
 	"fn"! (~'{' fnbody/fn | afn) | '['! expr %= ','/ARITY ?',' ']' ?slice/ARITY /slice) *atom |
 	"new"! ('('! clsname ')' | clsname) newargs /new |
 	"range"! expr/_range |
@@ -291,6 +292,8 @@ var exports = map[string]interface{}{
 	"$slice":   (*Compiler).vSlice,
 	"$tslice":  (*Compiler).tSlice,
 	"$map":     (*Compiler).vMap,
+	"$tmap":    (*Compiler).tMap,
+	"$initm":   (*Compiler).mapInit,
 	"$call":    (*Compiler).vCall,
 	"$assign":  (*Compiler).assign,
 	"$massign": (*Compiler).multiAssign,

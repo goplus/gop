@@ -181,3 +181,114 @@ func TestStructInit(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
+const testMapInitCode = `
+
+a = map[string]int16{"x": 1}
+y = a.x
+`
+
+func TestMapInit(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+
+	err = lang.SafeExec([]byte(testMapInitCode), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("y"); !ok || v != int16(1) {
+		t.Fatal("y != 1, y =", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+const testMapInit2Code = `
+
+y = map[string]int(nil)
+`
+
+func TestMapInit2(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+
+	err = lang.SafeExec([]byte(testMapInit2Code), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("y"); !ok || v.(map[string]int) != nil {
+		t.Fatal("y != nil, y =", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+const testMapInit3Code = `
+
+a = map[string]var{"x": 1, "y": "hello"}
+y = a.x
+z = a.y
+`
+
+func TestMapInit3(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+
+	err = lang.SafeExec([]byte(testMapInit3Code), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("y"); !ok || v != 1 {
+		t.Fatal("y != 1, y =", v)
+	}
+	if v, ok := lang.Var("z"); !ok || v != "hello" {
+		t.Fatal("z != hello, z =", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+const testMapIDCode = `
+
+map = 1
+y = map
+
+t = class {
+	fn map() {
+		return "hello"
+	}
+}
+
+obj = new t
+z = obj.map()
+`
+
+func TestMapID(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+
+	err = lang.SafeExec([]byte(testMapIDCode), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("y"); !ok || v != 1 {
+		t.Fatal("y != 1, y =", v)
+	}
+	if v, ok := lang.Var("z"); !ok || v != "hello" {
+		t.Fatal("z != hello, z =", v)
+	}
+}
+
+// -----------------------------------------------------------------------------

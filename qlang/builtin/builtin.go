@@ -132,38 +132,19 @@ func Set(m interface{}, args ...interface{}) {
 
 	n := len(args)
 	if (n & 1) != 0 {
-		panic("call with invalid argument count, please use `set(obj, member1, val1, ...)")
+		panic("call with invalid argument count: please use `set(obj, member1, val1, ...)")
 	}
 
 	o := reflect.ValueOf(m)
 	switch o.Kind() {
-	case reflect.Map:
-		var val reflect.Value
-		for i := 0; i < n; i += 2 {
-			key := reflect.ValueOf(args[i])
-			t := args[i+1]
-			switch t {
-			case qlang.Undefined:
-				val = zeroVal
-			case nil:
-				val = reflect.Zero(o.Type().Elem())
-			default:
-				val = reflect.ValueOf(t)
-			}
-			o.SetMapIndex(key, val)
-		}
 	case reflect.Slice, reflect.Array:
-		var val reflect.Value
+		telem := reflect.TypeOf(m).Elem()
 		for i := 0; i < n; i += 2 {
-			t := args[i+1]
-			switch t {
-			case nil:
-				val = reflect.Zero(o.Type().Elem())
-			default:
-				val = reflect.ValueOf(t)
-			}
+			val := autoConvert(telem, args[i+1])
 			o.Index(args[i].(int)).Set(val)
 		}
+	case reflect.Map:
+		setMapMember(o, args...)
 	default:
 		setMember(m, args...)
 	}
@@ -177,13 +158,10 @@ func SetIndex(m, key, v interface{}) {
 	switch o.Kind() {
 	case reflect.Map:
 		var val reflect.Value
-		switch v {
-		case qlang.Undefined:
+		if v == qlang.Undefined {
 			val = zeroVal
-		case nil:
-			val = reflect.Zero(o.Type().Elem())
-		default:
-			val = reflect.ValueOf(v)
+		} else {
+			val = autoConvert(o.Type().Elem(), v)
 		}
 		o.SetMapIndex(reflect.ValueOf(key), val)
 	case reflect.Slice, reflect.Array:
@@ -230,6 +208,22 @@ func setStructMember(o reflect.Value, args ...interface{}) {
 			panic(fmt.Sprintf("struct `%v` doesn't has member `%v`", o.Type(), key))
 		}
 		field.Set(reflect.ValueOf(args[i+1]))
+	}
+}
+
+func setMapMember(o reflect.Value, args ...interface{}) {
+
+	var val reflect.Value
+	telem := o.Type().Elem()
+	for i := 0; i < len(args); i += 2 {
+		key := reflect.ValueOf(args[i])
+		t := args[i+1]
+		if t == qlang.Undefined {
+			val = zeroVal
+		} else {
+			val = autoConvert(telem, t)
+		}
+		o.SetMapIndex(key, val)
 	}
 }
 
@@ -330,17 +324,22 @@ func Append(a interface{}, vals ...interface{}) interface{} {
 	telem := va.Type().Elem()
 	x := make([]reflect.Value, len(vals))
 	for i, v := range vals {
-		if v != nil {
-			val := reflect.ValueOf(v)
-			if telem != reflect.TypeOf(v) {
-				val = val.Convert(telem)
-			}
-			x[i] = val
-		} else {
-			x[i] = reflect.Zero(telem)
-		}
+		x[i] = autoConvert(telem, v)
 	}
 	return reflect.Append(va, x...).Interface()
+}
+
+func autoConvert(telem reflect.Type, v interface{}) reflect.Value {
+
+	if v == nil {
+		return reflect.Zero(telem)
+	}
+
+	val := reflect.ValueOf(v)
+	if telem != reflect.TypeOf(v) {
+		val = qlang.AutoConvert(val, telem)
+	}
+	return val
 }
 
 func appendFloats(a []float64, vals ...interface{}) interface{} {
@@ -465,9 +464,20 @@ func SliceFromTy(args ...interface{}) interface{} {
 	return Append(ret, args[1:]...)
 }
 
-// StructInit creates a struct object from `&T{name1: expr1, name2: expr2, ...}`.
+// SliceOf makes a slice type.
+//
+func SliceOf(typ interface{}) interface{} {
+
+	return reflect.SliceOf(types.Reflect(typ))
+}
+
+// StructInit creates a struct object from `structInit(structType, member1, val1, ...)`.
 //
 func StructInit(args ...interface{}) interface{} {
+
+	if (len(args) & 1) != 1 {
+		panic("call with invalid argument count: please use `structInit(structType, member1, val1, ...)")
+	}
 
 	got, ok := args[0].(goTyper)
 	if !ok {
@@ -482,11 +492,25 @@ func StructInit(args ...interface{}) interface{} {
 	return ret.Interface()
 }
 
-// SliceOf makes a slice type.
+// MapInit creates a map object from `mapInit(mapType, member1, val1, ...)`.
 //
-func SliceOf(typ interface{}) interface{} {
+func MapInit(args ...interface{}) interface{} {
 
-	return reflect.SliceOf(types.Reflect(typ))
+	if (len(args) & 1) != 1 {
+		panic("call with invalid argument count: please use `mapInit(mapType, member1, val1, ...)")
+	}
+
+	got, ok := args[0].(goTyper)
+	if !ok {
+		panic(fmt.Sprintf("`%v` is not a qlang type", args[0]))
+	}
+	t := got.GoType()
+	if t.Kind() != reflect.Map {
+		panic(fmt.Sprintf("`%v` is not a map type", args[0]))
+	}
+	ret := reflect.MakeMap(t)
+	setMapMember(ret, args[1:]...)
+	return ret.Interface()
 }
 
 // -----------------------------------------------------------------------------
