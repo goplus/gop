@@ -64,6 +64,8 @@ c = ["a", "b", "c"] // 创建一个 string slice
 d = ["a", 1, 2.3] // 创建一个 var slice (等价于 Go 语言的 []interface{})
 e = mkslice("int", len, cap) // 创建一个 int slice，并将长度设置为 len，容量设置为 cap
 f = mkslice(type(e), len, cap) // 创建一个 int slice 的 slice，也就是 Go 语言里面的 [][]int
+g = []byte{1, 2, 3} // 创建一个 byte slice，并初始化为 [1, 2, 3]
+h = []byte(nil) // 创建一个空 byte slice
 ```
 
 和 Go 语言类似，slice 有如下内置的操作：
@@ -106,6 +108,7 @@ c = {1: "a", 2: "b", 3: "c"} // 得到 map[int]string 类型的对象
 d = {"a": "hello", "b": 2.0, "c": true} // 得到 map[string]interface{} 类型的对象
 e = mkmap("string:int") // 创建一个空的 map[string]int 类型的对象
 f = mkmap(mapOf("string", type(e))) // 创建一个 map[string]map[string]int 类型的对象
+g = map[int16]string{1: "a", 2: "b"} // 创建一个 map[int16]string 类型的对象
 ```
 
 和 Go 语言类似，map 有如下内置的操作：
@@ -669,6 +672,44 @@ strings.replacer("?", "!").replace("hello, world???") // 得到 "hello, world!!!
 
 这是 qlang 最强大的地方，近乎免包装。甚至，你可以写一个自动的 Go package 转 qlang 模块的工具，找到 Go package 所有导出的全局函数，加入到 Exports 表即完成了该 Go package 的包装，几乎零成本。
 
+### 导出 Go 结构体
+
+假设我们有 Go 结构体如下：
+
+```go
+package foo
+
+type Bar struct {
+	X int
+	Y string
+}
+
+func (p *Bar) GetX() int {
+	return p.X
+}
+```
+
+我们一样可以把它加入到 Export 表进行导出：
+
+```go
+import (
+	"reflect"
+	"qlang.io/qlang.spec.v1"
+)
+
+var Exports = map[string]interface{}{
+	"Bar": qlang.NewType(reflect.TypeOf((*foo.Bar)(nil)).Elem()),
+}
+```
+
+这样你就可以在 qlang 里面使用这个结构体：
+
+```go
+bar = &foo.Bar{x: 1, y: "hello"}
+x = bar.getX()
+y = bar.y
+println(x, y)
+```
 
 ## 反射
 

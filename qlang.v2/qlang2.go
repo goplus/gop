@@ -105,7 +105,7 @@ factor =
 	'^' factor/bitnot |
 	'-' factor/neg |
 	'*' factor/elem |
-	'&' IDENT/ref '{' (IDENT/pushid ':' expr) %= ','/ARITY ?',' '}' /initst |
+	'&' IDENT/ref *('.' member/mref) '{' (IDENT/pushid ':' expr) %= ','/ARITY ?',' '}' /initst |
 	"<-" factor/chout |
 	'+' factor
 `

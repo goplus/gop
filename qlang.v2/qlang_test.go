@@ -127,17 +127,21 @@ type AImportType struct {
 	X int
 }
 
+func (p *AImportType) GetX() int {
+	return p.X
+}
+
 func init() {
-	qlang.Import("", map[string]interface{}{
+	qlang.Import("foo", map[string]interface{}{
 		"AImportType": qspec.NewType(reflect.TypeOf((*AImportType)(nil)).Elem()),
 	})
 }
 
 const testImportTypeCode = `
 
-a = new AImportType
+a = new foo.AImportType
 a.x = 1
-y = a.x
+y = a.getX()
 `
 
 func TestImportType(t *testing.T) {
@@ -160,7 +164,7 @@ func TestImportType(t *testing.T) {
 
 const testStructInitCode = `
 
-a = &AImportType{x: 1}
+a = &foo.AImportType{x: 1}
 y = a.x
 `
 
@@ -252,6 +256,30 @@ func TestMapInit3(t *testing.T) {
 	}
 	if v, ok := lang.Var("z"); !ok || v != "hello" {
 		t.Fatal("z != hello, z =", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+const testMapInit32Code = `
+
+a = map[string]int16{"x": 1, "hello": 2}
+z = a.x
+`
+
+func TestMapInit32(t *testing.T) {
+
+	lang, err := qlang.New(qlang.InsertSemis)
+	if err != nil {
+		t.Fatal("qlang.New:", err)
+	}
+
+	err = lang.SafeExec([]byte(testMapInit32Code), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v, ok := lang.Var("z"); !ok || v != int16(1) {
+		t.Fatal("z != 1, z =", v)
 	}
 }
 
