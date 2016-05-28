@@ -108,7 +108,7 @@ c = {1: "a", 2: "b", 3: "c"} // 得到 map[int]string 类型的对象
 d = {"a": "hello", "b": 2.0, "c": true} // 得到 map[string]interface{} 类型的对象
 e = mkmap("string:int") // 创建一个空的 map[string]int 类型的对象
 f = mkmap(mapOf("string", type(e))) // 创建一个 map[string]map[string]int 类型的对象
-g = map[int16]string{1: "a", 2: "b"} // 创建一个 map[int16]string 类型的对象
+g = map[string]int16{"a": 1, "b": 2} // 创建一个 map[string]int16 类型的对象
 ```
 
 和 Go 语言类似，map 有如下内置的操作：
