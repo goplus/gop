@@ -3,10 +3,10 @@ package qlang_test
 import (
 	"testing"
 
+	"qlang.io/qlang.v2/qlang"
 	_ "qlang.io/qlang/builtin"
 	_ "qlang.io/qlang/chan"
 	"qlang.io/qlang/sync"
-	"qlang.io/qlang.v2/qlang"
 )
 
 func init() {
@@ -18,7 +18,7 @@ func init() {
 const testChanCode = `
 
 mutex = sync.mutex()
-ch = mkchan("bool", 2)
+ch = make(chan bool, 2)
 
 x = 1
 
@@ -105,5 +105,3 @@ func TestGoroutine(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
-
-

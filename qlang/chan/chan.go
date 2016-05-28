@@ -1,6 +1,7 @@
 package channel
 
 import (
+	"fmt"
 	"reflect"
 
 	"qlang.io/qlang.spec.v1"
@@ -105,10 +106,20 @@ func makeChan(typ reflect.Type, buffer ...int) interface{} {
 	return &qlang.Chan{Data: reflect.MakeChan(typ, n)}
 }
 
+func chanOf(elem interface{}) interface{} {
+
+	if t, ok := elem.(qlang.GoTyper); ok {
+		tchan := reflect.ChanOf(reflect.BothDir, t.GoType())
+		return qlang.NewType(tchan)
+	}
+	panic(fmt.Sprintf("invalid chan T: `%v` isn't a qlang type", elem))
+}
+
 func init() {
 	qlang.ChanIn = ChanIn
 	qlang.ChanOut = ChanOut
 	qlang.MakeChan = makeChan
+	qlang.ChanOf = chanOf
 	qlang.Import("", exports)
 }
 

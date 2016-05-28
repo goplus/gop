@@ -6,6 +6,25 @@ import (
 
 // -----------------------------------------------------------------------------
 
+type tchan int
+
+func (p tchan) OptimizableGetArity() int {
+
+	return 1
+}
+
+func (p tchan) Exec(stk *Stack, ctx *Context) {
+
+	n := len(stk.data) - 1
+	stk.data[n] = qlang.ChanOf(stk.data[n])
+}
+
+// Chan is an instruction that returns chan T.
+//
+var Chan Instr = tchan(0)
+
+// -----------------------------------------------------------------------------
+
 type slice int
 
 func (p slice) OptimizableGetArity() int {

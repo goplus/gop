@@ -149,9 +149,9 @@ d = x["d"] // 结果：d = undefined，注意不是0，也不是nil
 ### chan 类型
 
 ```go
-ch1 = mkchan(bool, 2) // 得到 buffer = 2 的 chan bool
-ch2 = mkchan(int) // 得到 buffer = 0 的 chan int
-ch3 = mkchan(map[string]int) // 得到 buffer = 0 的 chan map[string]int
+ch1 = make(chan bool, 2) // 得到 buffer = 2 的 chan bool
+ch2 = make(chan int) // 得到 buffer = 0 的 chan int
+ch3 = make(chan map[string]int) // 得到 buffer = 0 的 chan map[string]int
 ```
 
 和 Go 语言类似，chan 有如下内置的操作：
@@ -856,7 +856,7 @@ Stack = class {
 		if n < arity {
 			panic("Stack.popArgs: unexpected")
 		}
-		args = mkslice("var", arity)
+		args = make([]var, arity)
 		copy(args, this.stk[n-arity:])
 		this.stk = this.stk[:n-arity]
 		return args

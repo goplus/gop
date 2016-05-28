@@ -198,7 +198,7 @@ func dummyChanOut(ch interface{}, try bool) interface{} {
 }
 
 func dummyMakeChan(typ reflect.Type, cap ...int) interface{} {
-	panic("mkchan not implemented")
+	panic("make(chan T) not implemented")
 }
 
 var (
@@ -217,6 +217,7 @@ var (
 	SliceFromTy = dummyN
 	StructInit  = dummyN
 	SubSlice    = dummy3
+	ChanOf      = dummy1
 	Xor         = dummy2
 	Lshr        = dummy2
 	Rshr        = dummy2

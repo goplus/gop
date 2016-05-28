@@ -3,8 +3,8 @@ package qlang_test
 import (
 	"testing"
 
-	_ "qlang.io/qlang/builtin"
 	"qlang.io/qlang.v2/qlang"
+	_ "qlang.io/qlang/builtin"
 )
 
 // -----------------------------------------------------------------------------
@@ -364,7 +364,7 @@ func TestForRange8(t *testing.T) {
 
 	err = lang.SafeExec([]byte(`
 
-		ch = mkchan("int", 2)
+		ch = make(chan int, 2)
 		ch <- 10
 		ch <- 20
 		close(ch)
@@ -390,7 +390,7 @@ func TestForRange9(t *testing.T) {
 
 	err = lang.SafeExec([]byte(`
 
-		ch = mkchan("int", 2)
+		ch = make(chan int, 2)
 		ch <- 10
 		ch <- 20
 		close(ch)
@@ -458,4 +458,3 @@ func TestForRange11(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
-
