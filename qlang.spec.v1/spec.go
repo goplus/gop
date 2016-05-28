@@ -34,6 +34,12 @@ type Var struct {
 
 // -----------------------------------------------------------------------------
 
+// GoTyper is required by `qlang type` spec.
+//
+type GoTyper interface {
+	GoType() reflect.Type
+}
+
 // A Type represents a qlang builtin type.
 //
 type Type struct {
@@ -191,11 +197,16 @@ func dummyChanOut(ch interface{}, try bool) interface{} {
 	panic("operator <-ch not implemented")
 }
 
+func dummyMakeChan(typ reflect.Type, cap ...int) interface{} {
+	panic("mkchan not implemented")
+}
+
 var (
 	fnDummy1    = reflect.ValueOf(dummy1).Pointer()
 	fnDummy2    = reflect.ValueOf(dummy2).Pointer()
 	ChanIn      = dummyChanIn
 	ChanOut     = dummyChanOut
+	MakeChan    = dummyMakeChan
 	GetEx       = dummy2
 	SetIndex    = dummySetIndex
 	MapInit     = dummyN

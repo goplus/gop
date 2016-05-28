@@ -29,6 +29,7 @@ var exports = map[string]interface{}{
 	"sliceFrom": sliceFrom,
 	"sliceOf":   SliceOf,
 	"sub":       SubSlice,
+	"make":      Make,
 
 	"float":   TyFloat64,
 	"float64": TyFloat64,

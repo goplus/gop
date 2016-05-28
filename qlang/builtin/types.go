@@ -95,15 +95,11 @@ func init() {
 
 // -----------------------------------------------------------------------------
 
-type goTyper interface {
-	GoType() reflect.Type
-}
-
 // Elem returns *a
 //
 func Elem(a interface{}) interface{} {
 
-	if t, ok := a.(goTyper); ok {
+	if t, ok := a.(qlang.GoTyper); ok {
 		return qlang.TyPtrTo(t.GoType())
 	}
 	return reflect.ValueOf(a).Elem().Interface()
@@ -113,7 +109,7 @@ func Elem(a interface{}) interface{} {
 //
 func Slice(elem interface{}) interface{} {
 
-	if t, ok := elem.(goTyper); ok {
+	if t, ok := elem.(qlang.GoTyper); ok {
 		return qlang.TySliceOf(t.GoType())
 	}
 	panic(fmt.Sprintf("invalid []T: `%v` isn't a qlang type", elem))
@@ -123,15 +119,40 @@ func Slice(elem interface{}) interface{} {
 //
 func Map(key, elem interface{}) interface{} {
 
-	tkey, ok := key.(goTyper)
+	tkey, ok := key.(qlang.GoTyper)
 	if !ok {
 		panic(fmt.Sprintf("invalid map[key]elem: key `%v` isn't a qlang type", key))
 	}
-	telem, ok := elem.(goTyper)
+	telem, ok := elem.(qlang.GoTyper)
 	if !ok {
 		panic(fmt.Sprintf("invalid map[key]elem: elem `%v` isn't a qlang type", elem))
 	}
 	return qlang.TyMapOf(tkey.GoType(), telem.GoType())
+}
+
+// -----------------------------------------------------------------------------
+
+// Make creates a instance of qlang builtin type (slice, map and chan)
+//
+func Make(typ qlang.GoTyper, args ...int) interface{} {
+
+	t := typ.GoType()
+	switch t.Kind() {
+	case reflect.Slice:
+		n, cap := 0, 0
+		if len(args) == 1 {
+			n = args[0]
+			cap = n
+		} else if len(args) > 1 {
+			n, cap = args[0], args[1]
+		}
+		return reflect.MakeSlice(t, n, cap).Interface()
+	case reflect.Map:
+		return reflect.MakeMap(t).Interface()
+	case reflect.Chan:
+		return qlang.MakeChan(t, args...)
+	}
+	panic(fmt.Sprintf("cannot make type `%v`", typ))
 }
 
 // -----------------------------------------------------------------------------
