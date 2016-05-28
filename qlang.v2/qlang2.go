@@ -73,17 +73,17 @@ classb = "fn"! member/name fnbody ?';'/mfn
 
 methods = *classb/ARITY
 
-clsname = IDENT/ref *('.' member/mref)
-
 atom =
 	'('! expr %= ','/ARITY ?"..."/ARITY ?',' ')'/call |
 	'.'! member/mref |
 	'['! ?expr/ARITY ?':'/ARITY ?expr/ARITY ']'/index
 
 type =
-	IDENT/ref | '('! type ')' |
+	IDENT/ref *('.' member/mref) |
+	"class"! '{' *classb/ARITY '}'/class |
 	'[' ']'! type /tslice |
-	'*'! type /elem
+	'*'! type /elem |
+	'('! type ')'
 
 slice = type ?('{'! expr %= ','/ARITY ?',' '}')/ARITY
 
@@ -95,7 +95,7 @@ factor =
 	((IDENT | "map" ~'[')/ref | '('! expr ')' |
 	"map" '['! type ']' type /tmap ?('{'! (expr ':' expr) %= ','/ARITY ?',' '}'/initm) |
 	"fn"! (~'{' fnbody/fn | afn) | '['! expr %= ','/ARITY ?',' ']' ?slice/ARITY /slice) *atom |
-	"new"! ('('! clsname ')' | clsname) newargs /new |
+	"new"! ('('! type ')' | type) newargs /new |
 	"range"! expr/_range |
 	"class"! '{' *classb/ARITY '}'/class |
 	"recover"! '(' ')'/recover |
@@ -105,7 +105,7 @@ factor =
 	'^' factor/bitnot |
 	'-' factor/neg |
 	'*' factor/elem |
-	'&' IDENT/ref '{' (IDENT/pushid ':' expr) %= ','/ARITY ?',' '}' /initst |
+	'&' IDENT/ref *('.' member/mref) '{' (IDENT/pushid ':' expr) %= ','/ARITY ?',' '}' /initst |
 	"<-" factor/chout |
 	'+' factor
 `
