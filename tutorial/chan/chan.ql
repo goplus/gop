@@ -1,4 +1,4 @@
-ch = mkchan("bool", 2)
+ch = make(chan bool, 2)
 x = 1
 
 go fn {

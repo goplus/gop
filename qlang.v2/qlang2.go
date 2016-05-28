@@ -82,6 +82,7 @@ type =
 	IDENT/ref *('.' member/mref) |
 	"class"! '{' *classb/ARITY '}'/class |
 	"map" '['! type ']' type /tmap |
+	"chan"! type /tchan |
 	'[' ']'! type /tslice |
 	'*'! type /elem |
 	'('! type ')'
@@ -99,6 +100,7 @@ factor =
 	"new"! ('('! type ')' | type) newargs /new |
 	"range"! expr/_range |
 	"class"! '{' *classb/ARITY '}'/class |
+	"chan"! type /tchan |
 	"recover"! '(' ')'/recover |
 	"main"! afn |
 	'{'! (expr ':' expr) %= ','/ARITY ?',' '}'/map |
@@ -289,6 +291,7 @@ var exports = map[string]interface{}{
 	"$mref":    (*Compiler).memberRef,
 	"$ref":     (*Compiler).ref,
 	"$tovar":   (*Compiler).toVar,
+	"$tchan":   (*Compiler).tChan,
 	"$initst":  (*Compiler).structInit,
 	"$slice":   (*Compiler).vSlice,
 	"$tslice":  (*Compiler).tSlice,

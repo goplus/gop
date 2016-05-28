@@ -29,4 +29,9 @@ func (p *Compiler) chanOut() {
 	p.code.Block(exec.ChanOut)
 }
 
+func (p *Compiler) tChan() {
+
+	p.code.Block(exec.Chan)
+}
+
 // -----------------------------------------------------------------------------
