@@ -22,7 +22,8 @@ var (
 	gotyUint64    = reflect.TypeOf(uint64(0))
 	gotyFloat32   = reflect.TypeOf(float32(0))
 	gotyFloat64   = reflect.TypeOf(float64(0))
-	gotyString    = reflect.TypeOf(string(""))
+	gotyString    = reflect.TypeOf("")
+	gotyBool      = reflect.TypeOf(false)
 	gotyInterface = reflect.TypeOf((*interface{})(nil)).Elem()
 )
 

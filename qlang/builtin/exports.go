@@ -46,6 +46,7 @@ var exports = map[string]interface{}{
 	"uint32":  TyUint32,
 	"uint64":  TyUint64,
 	"string":  TyString,
+	"bool":    TyBool,
 	"var":     TyVar,
 	"type":    typeOf,
 

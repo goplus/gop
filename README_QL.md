@@ -62,8 +62,8 @@ a = [1, 2, 3] // 创建一个 int slice，并初始化为 [1, 2, 3]
 b = [1, 2.3, 5] // 创建一个 float slice
 c = ["a", "b", "c"] // 创建一个 string slice
 d = ["a", 1, 2.3] // 创建一个 var slice (等价于 Go 语言的 []interface{})
-e = mkslice("int", len, cap) // 创建一个 int slice，并将长度设置为 len，容量设置为 cap
-f = mkslice(type(e), len, cap) // 创建一个 int slice 的 slice，也就是 Go 语言里面的 [][]int
+e = make([]int, len, cap) // 创建一个 int slice，并将长度设置为 len，容量设置为 cap
+f = make([][]int, len, cap) // 创建一个 []int 的 slice，并将长度设置为 len，容量设置为 cap
 g = []byte{1, 2, 3} // 创建一个 byte slice，并初始化为 [1, 2, 3]
 h = []byte(nil) // 创建一个空 byte slice
 ```
@@ -106,8 +106,8 @@ a = {"a": 1, "b": 2, "c": 3} // 得到 map[string]int 类型的对象
 b = {"a": 1, "b", 2.3, "c": 3} // 得到 map[string]float64 类型的对象
 c = {1: "a", 2: "b", 3: "c"} // 得到 map[int]string 类型的对象
 d = {"a": "hello", "b": 2.0, "c": true} // 得到 map[string]interface{} 类型的对象
-e = mkmap("string:int") // 创建一个空的 map[string]int 类型的对象
-f = mkmap(mapOf("string", type(e))) // 创建一个 map[string]map[string]int 类型的对象
+e = make(map[string]int) // 创建一个空的 map[string]int 类型的对象
+f = make(map[string]map[string]int) // 创建一个 map[string]map[string]int 类型的对象
 g = map[string]int16{"a": 1, "b": 2} // 创建一个 map[string]int16 类型的对象
 ```
 
@@ -149,9 +149,9 @@ d = x["d"] // 结果：d = undefined，注意不是0，也不是nil
 ### chan 类型
 
 ```go
-ch1 = mkchan("bool", 2) // 得到 buffer = 2 的 chan bool
-ch2 = mkchan("int") // 得到 buffer = 0 的 chan int
-ch3 = mkchan(mapOf("string", type(ch2))) // 得到 buffer = 0 的 chan map[string]chan int
+ch1 = mkchan(bool, 2) // 得到 buffer = 2 的 chan bool
+ch2 = mkchan(int) // 得到 buffer = 0 的 chan int
+ch3 = mkchan(map[string]int) // 得到 buffer = 0 的 chan map[string]int
 ```
 
 和 Go 语言类似，chan 有如下内置的操作：
@@ -171,22 +171,6 @@ v = <-ch1
 if v != undefined { // 判断chan没有被关闭的逻辑
 	...
 }
-```
-
-## 类型转换
-
-### 自动类型转换
-
-大部分情况下，我们不会自动进行类型转换。一些例外是：
-
-* 如果一个函数接受的是 float，但是传入的是 int，会进行自动类型转换。
-
-### 强制类型转换
-
-```go
-a = int('a') // 强制将 byte 类型转为 int 类型
-b = float(b) // 强制将 int 类型转为 float 类型
-c = string('a') // 强制将 byte 类型转为 string 类型
 ```
 
 ## 流程控制

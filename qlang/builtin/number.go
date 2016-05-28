@@ -263,6 +263,18 @@ func String(a interface{}) string {
 	return ""
 }
 
+// Bool returns bool(a)
+//
+func Bool(a interface{}) bool {
+
+	switch a1 := a.(type) {
+	case bool:
+		return a1
+	}
+	panicUnsupportedFn("bool", a)
+	return false
+}
+
 // Mul returns a*b
 //
 func Mul(a, b interface{}) interface{} {
