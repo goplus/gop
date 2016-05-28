@@ -133,3 +133,27 @@ func TestMemberRef(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
+const testNewClassCode = `
+
+t = new class {
+	fn f() {
+		return 2
+	}
+}
+x = t.f()
+`
+
+func TestNewClass(t *testing.T) {
+
+	lang, _ := qlang.New(qlang.InsertSemis)
+	err := lang.SafeExec([]byte(testNewClassCode), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v, ok := lang.Var("x"); !ok || v != 2 {
+		t.Fatal("x != 2, x =", v)
+	}
+}
+
+// -----------------------------------------------------------------------------

@@ -70,6 +70,8 @@ func (p *Class) New(args ...interface{}) *Object {
 			fn:   init,
 		}
 		closure.Call(args...)
+	} else if len(args) > 0 {
+		panic("constructor `_init` not found")
 	}
 	return obj
 }
