@@ -7,6 +7,7 @@ import (
 )
 
 var (
+	// ErrReturn is used for `panic(ErrReturn)`
 	ErrReturn = errors.New("return")
 )
 
@@ -23,7 +24,8 @@ func doExit(ret interface{}) {
 }
 
 var (
-	Exit Instr = Call(doExit)
+	// Exit is the instruction that executes `exit(<code>)`.
+	Exit = Call(doExit)
 )
 
 // -----------------------------------------------------------------------------
@@ -55,6 +57,8 @@ func (arity iReturn) Exec(stk *Stack, ctx *Context) {
 	panic("must return `int` for main function")
 }
 
+// Return returns an instruction that means `return <expr1>, ..., <exprN>`.
+//
 func Return(arity int) Instr {
 	return iReturn(arity)
 }
@@ -76,6 +80,8 @@ func (p *iDefer) Exec(stk *Stack, ctx *Context) {
 	}
 }
 
+// Defer returns an instruction that executes `defer <expr>`.
+//
 func Defer(start, end int) Instr {
 	return &iDefer{start, end}
 }
@@ -97,12 +103,15 @@ func (p iRecover) Exec(stk *Stack, ctx *Context) {
 }
 
 var (
+	// Recover is the instruction that executes `recover()`.
 	Recover Instr = iRecover(0)
 )
 
 // -----------------------------------------------------------------------------
 // NewFunction
 
+// A Function represents a function object.
+//
 type Function struct {
 	Cls      *Class
 	Parent   *Context
@@ -112,16 +121,22 @@ type Function struct {
 	Variadic bool
 }
 
+// NewFunction creates a new function object.
+//
 func NewFunction(cls *Class, start, end int, args []string, variadic bool) *Function {
 
 	return &Function{cls, nil, start, end, args, variadic}
 }
 
+// Call calls this function with default context.
+//
 func (p *Function) Call(args ...interface{}) (ret interface{}) {
 
 	return p.ExtCall(nil, args...)
 }
 
+// ExtCall calls this function with a specified context.
+//
 func (p *Function) ExtCall(ctx *Context, args ...interface{}) (ret interface{}) {
 
 	n := len(p.Args)
@@ -197,6 +212,8 @@ func (p *iFunc) Exec(stk *Stack, ctx *Context) {
 	stk.Push((*Function)(p))
 }
 
+// Func returns an instruction that create a function object.
+//
 func Func(cls *Class, start, end int, args []string, variadic bool) Instr {
 	f := NewFunction(cls, start, end, args, variadic)
 	return (*iFunc)(f)

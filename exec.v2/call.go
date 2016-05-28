@@ -20,8 +20,9 @@ var (
 )
 
 var (
-	typeFloat64 = reflect.TypeOf(float64(0))
-	typeIntf    = reflect.TypeOf((*interface{})(nil)).Elem()
+	typeFloat64  = reflect.TypeOf(float64(0))
+	typeIntf     = reflect.TypeOf((*interface{})(nil)).Elem()
+	typeFunction = reflect.TypeOf((*Function)(nil))
 )
 
 // -----------------------------------------------------------------------------
@@ -67,6 +68,37 @@ func (p *iCall) Exec(stk *Stack, ctx *Context) {
 	}
 }
 
+func function2Func(in *reflect.Value, t reflect.Type) {
+
+	fn := in.MethodByName("Call")
+	wrap := func(args []reflect.Value) (results []reflect.Value) {
+		ret := fn.Call(args)[0]
+		n := t.NumOut()
+		if n == 0 {
+			return
+		}
+		if n == 1 {
+			if t.Out(0) != typeIntf {
+				ret = ret.Elem()
+			}
+			return []reflect.Value{ret}
+		}
+		if ret.Kind() != reflect.Slice || ret.Len() != n {
+			panic(fmt.Sprintf("unexpected return value count, we need `%d` values", n))
+		}
+		results = make([]reflect.Value, n)
+		for i := 0; i < n; i++ {
+			result := ret.Index(i)
+			if t.Out(i) != typeIntf {
+				result = result.Elem()
+			}
+			results[i] = result
+		}
+		return
+	}
+	*in = reflect.MakeFunc(t, wrap)
+}
+
 func validateType(in *reflect.Value, t, tfn reflect.Type) {
 
 	tkind := t.Kind()
@@ -98,20 +130,27 @@ func validateType(in *reflect.Value, t, tfn reflect.Type) {
 		return
 	}
 
-	kind := in.Kind()
-	switch tkind {
-	case reflect.Struct:
-		if kind == reflect.Ptr {
-			tin = tin.Elem()
-			if tin == t {
-				*in = in.Elem()
+	if tkind == reflect.Func {
+		if tin == typeFunction {
+			function2Func(in, t)
+			return
+		}
+	} else {
+		kind := in.Kind()
+		switch tkind {
+		case reflect.Struct:
+			if kind == reflect.Ptr {
+				tin = tin.Elem()
+				if tin == t {
+					*in = in.Elem()
+					return
+				}
+			}
+		default:
+			if tkind == kind || convertible(kind, tkind) {
+				*in = in.Convert(t)
 				return
 			}
-		}
-	default:
-		if tkind == kind || convertible(kind, tkind) {
-			*in = in.Convert(t)
-			return
 		}
 	}
 	panic(fmt.Errorf("invalid argument type: require `%v`, but we got `%v`", t, tin))

@@ -40,13 +40,11 @@ func (p *Class) Exec(stk *Stack, ctx *Context) {
 	stk.Push(p)
 }
 
-var tyObject = reflect.TypeOf(Object{})
-
 // GoType returns the underlying go type. required by `qlang type` spec.
 //
 func (p *Class) GoType() reflect.Type {
 
-	return tyObject
+	return typeIntf
 }
 
 // NewInstance creates a new instance of a qlang type. required by `qlang type` spec.
