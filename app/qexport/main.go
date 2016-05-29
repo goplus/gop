@@ -17,17 +17,17 @@ import (
 )
 
 var (
-	flagExportPath               string
 	flagDefaultContext           bool
-	flagExportLower              bool
+	flagExportQlangStyle         bool
 	flagSkipErrorImplementStruct bool
 	flagCustomContext            string
+	flagExportPath               string
 )
 
 const help = `Export go packages to qlang modules.
 
 Usage:
-  qexport [-contexts=""] [-defctx=false] [skiperrimpl=true] [lower=false] [-outpath="./qlang"] packages
+  qexport [-contexts=""] [-defctx=false] [skiperrimpl=true] [qlangstyle=true] [-outpath="./qlang"] packages
 
 The packages for go package list or std for golang all standard packages.
 `
@@ -38,11 +38,11 @@ func usage() {
 }
 
 func init() {
-	flag.StringVar(&flagExportPath, "outpath", "./qlang", "optional set export root path")
-	flag.BoolVar(&flagDefaultContext, "defctx", false, "optional use default context for build, default use all contexts.")
-	flag.BoolVar(&flagExportLower, "lower", false, "optional export name is first lower")
-	flag.BoolVar(&flagSkipErrorImplementStruct, "skiperrimpl", true, "optional skip error interface implement struct.")
 	flag.StringVar(&flagCustomContext, "contexts", "", "optional comma-separated list of <goos>-<goarch>[-cgo] to override default contexts.")
+	flag.BoolVar(&flagDefaultContext, "defctx", false, "optional use default context for build, default use all contexts.")
+	flag.BoolVar(&flagExportQlangStyle, "qlangstyle", true, "optional export qlang style, lower and struct.")
+	flag.BoolVar(&flagSkipErrorImplementStruct, "skiperrimpl", true, "optional skip error interface implement struct.")
+	flag.StringVar(&flagExportPath, "outpath", "./qlang", "optional set export root path")
 }
 
 func main() {
@@ -189,7 +189,9 @@ var Exports = map[string]interface{}{
 					}
 				}
 			}
-			name := toQlangName(v)
+			//name := toQlangName(v)
+			// TODO qlang var export is title
+			name := v
 			fn := pkgName + "." + v
 			if isStructVar {
 				outf("\t%q:\t&%s,\n", name, fn)
@@ -229,9 +231,9 @@ var Exports = map[string]interface{}{
 			}
 			for _, f := range funcs {
 				name := toQlangName(f)
-				//				if len(funcs) == 1 && strings.HasPrefix(name, "new") {
-				//					name = toQlangName(v)
-				//				}
+				if flagExportQlangStyle && len(funcs) == 1 && strings.HasPrefix(name, "new") {
+					name = toQlangName(v)
+				}
 				fn := pkgName + "." + f
 				outf("\t%q:\t%s,\n", name, fn)
 			}
@@ -283,6 +285,13 @@ var Exports = map[string]interface{}{
 
 			for _, f := range funcs {
 				name := toQlangName(f)
+				if flagExportQlangStyle && len(funcs) == 1 && strings.HasPrefix(name, "new") {
+					name = toQlangName(v)
+					// TODO qlang.NewTypeEx
+					if ast.IsExported(name) {
+						name = toQlangName(f)
+					}
+				}
 				fn := pkgName + "." + f
 				outf("\t%q:\t%s,\n", name, fn)
 			}
@@ -341,7 +350,7 @@ var Exports = map[string]interface{}{
 }
 
 func toQlangName(s string) string {
-	if flagExportLower {
+	if flagExportQlangStyle {
 		if len(s) <= 1 {
 			return s
 		}
