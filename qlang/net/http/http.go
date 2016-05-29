@@ -9,14 +9,11 @@ import (
 
 // -----------------------------------------------------------------------------
 
-var (
-	request = qlang.NewTypeEx(reflect.TypeOf((*http.Request)(nil)).Elem(), http.NewRequest)
-)
-
 // Exports is the export table of this module.
 //
 var Exports = map[string]interface{}{
 	"_name":            "net/http",
+	"request":          http.NewRequest,
 	"readRequest":      http.ReadRequest,
 	"readResponse":     http.ReadResponse,
 	"parseHTTPVersion": http.ParseHTTPVersion,
@@ -61,11 +58,9 @@ var Exports = map[string]interface{}{
 	"Client":   qlang.NewType(reflect.TypeOf((*http.Client)(nil)).Elem()),
 	"Cookie":   qlang.NewType(reflect.TypeOf((*http.Cookie)(nil)).Elem()),
 	"Header":   qlang.NewType(reflect.TypeOf((*http.Header)(nil)).Elem()),
+	"Request":  qlang.NewType(reflect.TypeOf((*http.Request)(nil)).Elem()),
 	"Response": qlang.NewType(reflect.TypeOf((*http.Response)(nil)).Elem()),
 	"Server":   qlang.NewType(reflect.TypeOf((*http.Server)(nil)).Elem()),
-
-	"Request": request,
-	"request": request,
 }
 
 // -----------------------------------------------------------------------------

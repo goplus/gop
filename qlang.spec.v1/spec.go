@@ -110,45 +110,6 @@ func TyPtrTo(elem reflect.Type) *Type {
 
 // -----------------------------------------------------------------------------
 
-// A TypeEx represents a qlang builtin type with a cast function.
-//
-type TypeEx struct {
-	t    reflect.Type
-	Call interface{}
-}
-
-// NewTypeEx returns a qlang builtin type object.
-//
-func NewTypeEx(t reflect.Type, call interface{}) *TypeEx {
-
-	return &TypeEx{t: t, Call: call}
-}
-
-// GoType returns the underlying go type. required by `qlang type` spec.
-//
-func (p *TypeEx) GoType() reflect.Type {
-
-	return p.t
-}
-
-// NewInstance creates a new instance of a qlang type. required by `qlang type` spec.
-//
-func (p *TypeEx) NewInstance(args ...interface{}) interface{} {
-
-	ret := reflect.New(p.t)
-	if len(args) > 0 {
-		panic(fmt.Sprintf("type `%v` doesn't support initializing with a constructor", p.t))
-	}
-	return ret.Interface()
-}
-
-func (p *TypeEx) String() string {
-
-	return p.t.String()
-}
-
-// -----------------------------------------------------------------------------
-
 // AutoConvert converts a value to specified type automatically.
 //
 func AutoConvert(v reflect.Value, t reflect.Type) reflect.Value {

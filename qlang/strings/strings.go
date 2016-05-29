@@ -10,8 +10,8 @@ import (
 // -----------------------------------------------------------------------------
 
 var (
-	reader   = qlang.NewTypeEx(reflect.TypeOf((*strings.Reader)(nil)).Elem(), strings.NewReader)
-	replacer = qlang.NewTypeEx(reflect.TypeOf((*strings.Replacer)(nil)).Elem(), strings.NewReplacer)
+	tyReader   = qlang.NewType(reflect.TypeOf((*strings.Reader)(nil)).Elem())
+	tyReplacer = qlang.NewType(reflect.TypeOf((*strings.Replacer)(nil)).Elem())
 )
 
 // Exports is the export table of this module.
@@ -59,11 +59,11 @@ var Exports = map[string]interface{}{
 	"trimSpace":      strings.TrimSpace,
 	"trimSuffix":     strings.TrimSuffix,
 
-	"reader": reader,
-	"Reader": reader,
+	"reader":   strings.NewReader,
+	"replacer": strings.NewReplacer,
 
-	"replacer": replacer,
-	"Replacer": replacer,
+	"Reader":   tyReader,
+	"Replacer": tyReplacer,
 }
 
 // -----------------------------------------------------------------------------
