@@ -13,7 +13,7 @@ import (
 //
 var Exports = map[string]interface{}{
 	"_name":            "net/http",
-	"newRequest":       http.NewRequest,
+	"request":          http.NewRequest,
 	"readRequest":      http.ReadRequest,
 	"readResponse":     http.ReadResponse,
 	"parseHTTPVersion": http.ParseHTTPVersion,

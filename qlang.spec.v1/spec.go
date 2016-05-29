@@ -108,6 +108,8 @@ func TyPtrTo(elem reflect.Type) *Type {
 	return &Type{t: reflect.PtrTo(elem)}
 }
 
+// -----------------------------------------------------------------------------
+
 // AutoConvert converts a value to specified type automatically.
 //
 func AutoConvert(v reflect.Value, t reflect.Type) reflect.Value {
