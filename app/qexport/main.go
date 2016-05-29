@@ -17,15 +17,17 @@ import (
 )
 
 var (
-	flagExportPath     string
-	flagDefaultContext bool
-	flagCustomContext  string
+	flagDefaultContext           bool
+	flagExportQlangStyle         bool
+	flagSkipErrorImplementStruct bool
+	flagCustomContext            string
+	flagExportPath               string
 )
 
 const help = `Export go packages to qlang modules.
 
 Usage:
-  qexport [-contexts=""] [-defctx=false] [-outpath="./qlang"] packages
+  qexport [-contexts=""] [-defctx=false] [skiperrimpl=true] [qlangstyle=true] [-outpath="./qlang"] packages
 
 The packages for go package list or std for golang all standard packages.
 `
@@ -36,9 +38,11 @@ func usage() {
 }
 
 func init() {
-	flag.StringVar(&flagExportPath, "outpath", "./qlang", "optional set export root path")
-	flag.BoolVar(&flagDefaultContext, "defctx", false, "optional use default context for build, default use all contexts.")
 	flag.StringVar(&flagCustomContext, "contexts", "", "optional comma-separated list of <goos>-<goarch>[-cgo] to override default contexts.")
+	flag.BoolVar(&flagDefaultContext, "defctx", false, "optional use default context for build, default use all contexts.")
+	flag.BoolVar(&flagExportQlangStyle, "qlangstyle", true, "optional export qlang style, lower and struct.")
+	flag.BoolVar(&flagSkipErrorImplementStruct, "skiperrimpl", true, "optional skip error interface implement struct.")
+	flag.StringVar(&flagExportPath, "outpath", "./qlang", "optional set export root path")
 }
 
 func main() {
@@ -147,13 +151,7 @@ func export(pkg string, outpath string, skipOSArch bool) error {
 		return
 	}
 
-	//write package
-	outf("package %s\n", pkgName)
-
-	//write imports
-	outf("import (\n")
-	outf("\t%q\n", pkg)
-	outf(")\n\n")
+	var hasTypeExport bool
 
 	//write exports
 	outf(`// Exports is the export table of this module.
@@ -191,7 +189,9 @@ var Exports = map[string]interface{}{
 					}
 				}
 			}
-			name := toQlangName(v)
+			//name := toQlangName(v)
+			// TODO qlang var export is title
+			name := v
 			fn := pkgName + "." + v
 			if isStructVar {
 				outf("\t%q:\t&%s,\n", name, fn)
@@ -231,7 +231,7 @@ var Exports = map[string]interface{}{
 			}
 			for _, f := range funcs {
 				name := toQlangName(f)
-				if len(funcs) == 1 && strings.HasPrefix(name, "new") {
+				if flagExportQlangStyle && len(funcs) == 1 && strings.HasPrefix(name, "new") {
 					name = toQlangName(v)
 				}
 				fn := pkgName + "." + f
@@ -260,7 +260,7 @@ var Exports = map[string]interface{}{
 				}
 			}
 			// check error interface implement struct
-			if strings.HasSuffix(v, "Error") {
+			if flagSkipErrorImplementStruct && strings.HasSuffix(v, "Error") {
 				check := func(name string) bool {
 					for _, f := range dt.Methods {
 						if f.Name == name {
@@ -274,65 +274,26 @@ var Exports = map[string]interface{}{
 					continue
 				}
 			}
-			// check empty func
-			if len(funcs) == 0 && ast.IsExported(v) {
-				//check export type
-				isVar, isPtr, isArray := p.CheckExportType(v)
-				if !isVar && !isPtr && !isArray {
-					//is not unexported type, export ptr
-					if !p.CheckTypeFields(dt.Decl, false, true, true) {
-						isPtr = true
-					} else {
-						//hack check file method has open
-						var hasOpen bool
-						for _, f := range dt.Methods {
-							if f.Name == "Open" {
-								hasOpen = true
-								break
-							}
-						}
-						if !hasOpen {
-							log.Printf("warning skip struct %s, has unexported field\n", bp.ImportPath+"."+v)
-							continue
-						}
+
+			//qlang.NewType(reflect.TypeOf((*http.Client)(nil)).Elem())
+			//export type
+
+			if ast.IsExported(v) {
+				hasTypeExport = true
+				outf("\t%q:\tqlang.NewType(reflect.TypeOf((*%s.%s)(nil)).Elem()),\n", v, pkgName, v)
+			}
+
+			for _, f := range funcs {
+				name := toQlangName(f)
+				if flagExportQlangStyle && len(funcs) == 1 && strings.HasPrefix(name, "new") {
+					name = toQlangName(v)
+					// TODO qlang.NewTypeEx
+					if ast.IsExported(name) {
+						name = toQlangName(f)
 					}
 				}
-				name := toQlangName(v)
-				var tname string = pkgName + "." + v
-				//export var and not ptr
-				if isVar && !isPtr {
-					var vfn string = "var" + v
-					addins = append(addins, fmt.Sprintf("func %s() %s {\n\tvar v %s\n\treturn v\n}",
-						vfn, tname, tname,
-					))
-					outf("\t%q:\t%s,\n", name, vfn)
-				}
-				//export ptr
-				if isPtr {
-					var vfn string = "new" + v
-					addins = append(addins, fmt.Sprintf("func %s() *%s {\n\treturn new(%s)\n}",
-						vfn, tname, tname,
-					))
-					outf("\t%q:\t%s,\n", name, vfn)
-				}
-				//export array
-				if isArray {
-					var vfns string = "new" + v + "s"
-					addins = append(addins, fmt.Sprintf("func %s(n int) []%s {\n\treturn make([]%s,n)\n}",
-						vfns, tname, tname,
-					))
-					outf("\t%q:\t%s,\n", name+"s", vfns)
-				}
-			} else {
-				//write factor func and check is common
-				for _, f := range funcs {
-					name := toQlangName(f)
-					if len(funcs) == 1 && strings.HasPrefix(name, "new") {
-						name = toQlangName(v)
-					}
-					fn := pkgName + "." + f
-					outf("\t%q:\t%s,\n", name, fn)
-				}
+				fn := pkgName + "." + f
+				outf("\t%q:\t%s,\n", name, fn)
 			}
 		}
 	}
@@ -347,8 +308,26 @@ var Exports = map[string]interface{}{
 		}
 	}
 
+	var head bytes.Buffer
+	outHeadf := func(format string, a ...interface{}) (err error) {
+		_, err = head.WriteString(fmt.Sprintf(format, a...))
+		return
+	}
+
+	//write package
+	outHeadf("package %s\n", pkgName)
+
+	//write imports
+	outHeadf("import (\n")
+	outHeadf("\t%q\n", pkg)
+	if hasTypeExport {
+		outHeadf("\t\"reflect\"\n\n")
+		outHeadf("\t\"qlang.io/qlang.spec.v1\"\n")
+	}
+	outHeadf(")\n\n")
+
 	// format
-	data, err := format.Source(buf.Bytes())
+	data, err := format.Source(append(head.Bytes(), buf.Bytes()...))
 	if err != nil {
 		return err
 	}
@@ -371,12 +350,14 @@ var Exports = map[string]interface{}{
 }
 
 func toQlangName(s string) string {
-	if len(s) <= 1 {
-		return s
-	}
+	if flagExportQlangStyle {
+		if len(s) <= 1 {
+			return s
+		}
 
-	if unicode.IsLower(rune(s[1])) {
-		return strings.ToLower(s[0:1]) + s[1:]
+		if unicode.IsLower(rune(s[1])) {
+			return strings.ToLower(s[0:1]) + s[1:]
+		}
 	}
 	return s
 }

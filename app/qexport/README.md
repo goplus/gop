@@ -9,17 +9,20 @@ The Q Language : https://github.com/qiniu/qlang
 
 Usages:
 ```
-qexport [-contexts=""] [-defctx=false] [-outpath="./qlang"] packages
-	 
+qexport [-contexts=""] [-defctx=false] [skiperrimpl=true] [lower=false] [-outpath="./qlang"] packages
+
 The packages for go package list or std for golang all standard packages.
 
   -contexts string
     	optional comma-separated list of <goos>-<goarch>[-cgo] to override default contexts.
   -defctx
     	optional use default context for build, default use all contexts.
+  -lower
+    	optional export name is first lower
   -outpath string
     	optional set export root path (default "./qlang")
-```
+  -skiperrimpl
+    	optional skip error interface implement struct. (default true)```
 
 Examples:
 
@@ -41,7 +44,10 @@ Export pacakge runtime:
 package runtime
 
 import (
+	"reflect"
 	"runtime"
+
+	"qlang.io/qlang.spec.v1"
 )
 
 // Exports is the export table of this module.
@@ -49,61 +55,46 @@ import (
 var Exports = map[string]interface{}{
 	"_name": "runtime",
 
-	"compiler": runtime.Compiler,
+	"Compiler": runtime.Compiler,
 	"GOARCH":   runtime.GOARCH,
 	"GOOS":     runtime.GOOS,
 
-	"memProfileRate": runtime.MemProfileRate,
+	"MemProfileRate": runtime.MemProfileRate,
 
-	"blockProfile":        runtime.BlockProfile,
-	"breakpoint":          runtime.Breakpoint,
+	"BlockProfile":        runtime.BlockProfile,
+	"Breakpoint":          runtime.Breakpoint,
 	"CPUProfile":          runtime.CPUProfile,
-	"caller":              runtime.Caller,
-	"callers":             runtime.Callers,
+	"Caller":              runtime.Caller,
+	"Callers":             runtime.Callers,
 	"GC":                  runtime.GC,
 	"GOMAXPROCS":          runtime.GOMAXPROCS,
 	"GOROOT":              runtime.GOROOT,
-	"goexit":              runtime.Goexit,
-	"goroutineProfile":    runtime.GoroutineProfile,
-	"gosched":             runtime.Gosched,
-	"lockOSThread":        runtime.LockOSThread,
-	"memProfile":          runtime.MemProfile,
-	"numCPU":              runtime.NumCPU,
-	"numCgoCall":          runtime.NumCgoCall,
-	"numGoroutine":        runtime.NumGoroutine,
-	"readMemStats":        runtime.ReadMemStats,
-	"readTrace":           runtime.ReadTrace,
-	"setBlockProfileRate": runtime.SetBlockProfileRate,
-	"setCPUProfileRate":   runtime.SetCPUProfileRate,
-	"setFinalizer":        runtime.SetFinalizer,
-	"stack":               runtime.Stack,
-	"startTrace":          runtime.StartTrace,
-	"stopTrace":           runtime.StopTrace,
-	"threadCreateProfile": runtime.ThreadCreateProfile,
-	"unlockOSThread":      runtime.UnlockOSThread,
-	"version":             runtime.Version,
+	"Goexit":              runtime.Goexit,
+	"GoroutineProfile":    runtime.GoroutineProfile,
+	"Gosched":             runtime.Gosched,
+	"LockOSThread":        runtime.LockOSThread,
+	"MemProfile":          runtime.MemProfile,
+	"NumCPU":              runtime.NumCPU,
+	"NumCgoCall":          runtime.NumCgoCall,
+	"NumGoroutine":        runtime.NumGoroutine,
+	"ReadMemStats":        runtime.ReadMemStats,
+	"ReadTrace":           runtime.ReadTrace,
+	"SetBlockProfileRate": runtime.SetBlockProfileRate,
+	"SetCPUProfileRate":   runtime.SetCPUProfileRate,
+	"SetFinalizer":        runtime.SetFinalizer,
+	"Stack":               runtime.Stack,
+	"StartTrace":          runtime.StartTrace,
+	"StopTrace":           runtime.StopTrace,
+	"ThreadCreateProfile": runtime.ThreadCreateProfile,
+	"UnlockOSThread":      runtime.UnlockOSThread,
+	"Version":             runtime.Version,
 
-	"blockProfileRecords": newBlockProfileRecords,
-	"funcForPC":           runtime.FuncForPC,
-	"memProfileRecords":   newMemProfileRecords,
-	"memStats":            newMemStats,
-	"stackRecords":        newStackRecords,
-}
-
-func newBlockProfileRecords(n int) []runtime.BlockProfileRecord {
-	return make([]runtime.BlockProfileRecord, n)
-}
-
-func newMemProfileRecords(n int) []runtime.MemProfileRecord {
-	return make([]runtime.MemProfileRecord, n)
-}
-
-func newMemStats() *runtime.MemStats {
-	return new(runtime.MemStats)
-}
-
-func newStackRecords(n int) []runtime.StackRecord {
-	return make([]runtime.StackRecord, n)
+	"BlockProfileRecord": qlang.NewType(reflect.TypeOf((*runtime.BlockProfileRecord)(nil)).Elem()),
+	"Func":               qlang.NewType(reflect.TypeOf((*runtime.Func)(nil)).Elem()),
+	"FuncForPC":          runtime.FuncForPC,
+	"MemProfileRecord":   qlang.NewType(reflect.TypeOf((*runtime.MemProfileRecord)(nil)).Elem()),
+	"MemStats":           qlang.NewType(reflect.TypeOf((*runtime.MemStats)(nil)).Elem()),
+	"StackRecord":        qlang.NewType(reflect.TypeOf((*runtime.StackRecord)(nil)).Elem()),
 }
 
 ```
