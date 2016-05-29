@@ -1,10 +1,18 @@
 package strings
 
 import (
+	"reflect"
 	"strings"
+
+	"qlang.io/qlang.spec.v1"
 )
 
 // -----------------------------------------------------------------------------
+
+var (
+	reader   = qlang.NewTypeEx(reflect.TypeOf((*strings.Reader)(nil)).Elem(), strings.NewReader)
+	replacer = qlang.NewTypeEx(reflect.TypeOf((*strings.Replacer)(nil)).Elem(), strings.NewReplacer)
+)
 
 // Exports is the export table of this module.
 //
@@ -50,8 +58,12 @@ var Exports = map[string]interface{}{
 	"trimRightFunc":  strings.TrimRightFunc,
 	"trimSpace":      strings.TrimSpace,
 	"trimSuffix":     strings.TrimSuffix,
-	"reader":         strings.NewReader,
-	"replacer":       strings.NewReplacer,
+
+	"reader": reader,
+	"Reader": reader,
+
+	"replacer": replacer,
+	"Replacer": replacer,
 }
 
 // -----------------------------------------------------------------------------
