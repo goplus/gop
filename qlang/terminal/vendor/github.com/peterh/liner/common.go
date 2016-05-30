@@ -26,6 +26,7 @@ type commonState struct {
 	columns           int
 	killRing          *ring.Ring
 	ctrlCAborts       bool
+	tabForInput       bool
 	r                 *bufio.Reader
 	tabStyle          TabStyle
 	multiLineMode     bool
@@ -208,6 +209,11 @@ type ModeApplier interface {
 // (and Prompt does not return) regardless of the value passed to SetCtrlCAborts.
 func (s *State) SetCtrlCAborts(aborts bool) {
 	s.ctrlCAborts = aborts
+}
+
+// SetEnableTabForInput set tab for input \t
+func (s *State) SetTabForInput(enable bool) {
+	s.tabForInput = enable
 }
 
 // SetMultiLineMode sets whether line is auto-wrapped. The default is false (single line).
