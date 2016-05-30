@@ -18,7 +18,7 @@ import (
 
 var (
 	flagDefaultContext           bool
-	flagExportQlangStyle         bool
+	flagRenameNewTypeFunc        bool
 	flagSkipErrorImplementStruct bool
 	flagCustomContext            string
 	flagExportPath               string
@@ -27,7 +27,7 @@ var (
 const help = `Export go packages to qlang modules.
 
 Usage:
-  qexport [-contexts=""] [-defctx=false] [skiperrimpl=true] [qlangstyle=true] [-outpath="./qlang"] packages
+  qexport [-contexts=""] [-defctx=false] [-convnew=true] [-skiperrimpl=true] [-outpath="./qlang"] packages
 
 The packages for go package list or std for golang all standard packages.
 `
@@ -40,7 +40,7 @@ func usage() {
 func init() {
 	flag.StringVar(&flagCustomContext, "contexts", "", "optional comma-separated list of <goos>-<goarch>[-cgo] to override default contexts.")
 	flag.BoolVar(&flagDefaultContext, "defctx", false, "optional use default context for build, default use all contexts.")
-	flag.BoolVar(&flagExportQlangStyle, "qlangstyle", true, "optional export qlang style, lower and struct.")
+	flag.BoolVar(&flagRenameNewTypeFunc, "convnew", true, "optional convert NewType func to type func")
 	flag.BoolVar(&flagSkipErrorImplementStruct, "skiperrimpl", true, "optional skip error interface implement struct.")
 	flag.StringVar(&flagExportPath, "outpath", "./qlang", "optional set export root path")
 }
@@ -160,12 +160,11 @@ var Exports = map[string]interface{}{
 	"_name": "%s",	
 `, pkg)
 
-	var addins []string
 	//const
 	if keys, _ := p.FilterCommon(Const); len(keys) > 0 {
 		outf("\n")
 		for _, v := range keys {
-			name := toQlangName(v)
+			name := v
 			fn := pkgName + "." + v
 			if isUint64Const(fn) {
 				fn = "uint64(" + fn + ")"
@@ -189,8 +188,6 @@ var Exports = map[string]interface{}{
 					}
 				}
 			}
-			//name := toQlangName(v)
-			// TODO qlang var export is title
 			name := v
 			fn := pkgName + "." + v
 			if isStructVar {
@@ -205,7 +202,7 @@ var Exports = map[string]interface{}{
 	if keys, _ := p.FilterCommon(Func); len(keys) > 0 {
 		outf("\n")
 		for _, v := range keys {
-			name := toQlangName(v)
+			name := toLowerCaseStyle(v)
 			fn := pkgName + "." + v
 			outf("\t%q:\t%s,\n", name, fn)
 		}
@@ -223,17 +220,35 @@ var Exports = map[string]interface{}{
 			if !ok {
 				continue
 			}
-			var funcs []string
+
+			// exported funcs
+			var funcsNew []string
+			var funcsOther []string
 			for _, f := range dt.Funcs {
 				if ast.IsExported(f.Name) {
-					funcs = append(funcs, f.Name)
+					if strings.HasPrefix(f.Name, "New"+v) {
+						funcsNew = append(funcsNew, f.Name)
+					} else {
+						funcsOther = append(funcsOther, f.Name)
+					}
 				}
 			}
-			for _, f := range funcs {
-				name := toQlangName(f)
-				if flagExportQlangStyle && len(funcs) == 1 && strings.HasPrefix(name, "new") {
-					name = toQlangName(v)
+
+			for _, f := range funcsNew {
+				name := toLowerCaseStyle(f)
+				if flagRenameNewTypeFunc && len(funcsNew) == 1 {
+					name = toLowerCaseStyle(v)
+					if ast.IsExported(name) {
+						name = strings.ToLower(name)
+						log.Printf("waring convert %s to %s", bp.ImportPath+"."+f, name)
+					}
 				}
+				fn := pkgName + "." + f
+				outf("\t%q:\t%s,\n", name, fn)
+			}
+
+			for _, f := range funcsOther {
+				name := toLowerCaseStyle(f)
 				fn := pkgName + "." + f
 				outf("\t%q:\t%s,\n", name, fn)
 			}
@@ -253,10 +268,15 @@ var Exports = map[string]interface{}{
 				continue
 			}
 			// exported funcs
-			var funcs []string
+			var funcsNew []string
+			var funcsOther []string
 			for _, f := range dt.Funcs {
 				if ast.IsExported(f.Name) {
-					funcs = append(funcs, f.Name)
+					if strings.HasPrefix(f.Name, "New"+v) {
+						funcsNew = append(funcsNew, f.Name)
+					} else {
+						funcsOther = append(funcsOther, f.Name)
+					}
 				}
 			}
 			// check error interface implement struct
@@ -275,23 +295,28 @@ var Exports = map[string]interface{}{
 				}
 			}
 
-			//qlang.NewType(reflect.TypeOf((*http.Client)(nil)).Elem())
-			//export type
-
+			//export type, qlang.NewType(reflect.TypeOf((*http.Client)(nil)).Elem())
 			if ast.IsExported(v) {
 				hasTypeExport = true
 				outf("\t%q:\tqlang.NewType(reflect.TypeOf((*%s.%s)(nil)).Elem()),\n", v, pkgName, v)
 			}
 
-			for _, f := range funcs {
-				name := toQlangName(f)
-				if flagExportQlangStyle && len(funcs) == 1 && strings.HasPrefix(name, "new") {
-					name = toQlangName(v)
-					// TODO qlang.NewTypeEx
+			for _, f := range funcsNew {
+				name := toLowerCaseStyle(f)
+				if flagRenameNewTypeFunc && len(funcsNew) == 1 {
+					name = toLowerCaseStyle(v)
+					//NewRGBA => rgba
 					if ast.IsExported(name) {
-						name = toQlangName(f)
+						name = strings.ToLower(name)
+						log.Printf("waring convert %s to %s", bp.ImportPath+"."+f, name)
 					}
 				}
+				fn := pkgName + "." + f
+				outf("\t%q:\t%s,\n", name, fn)
+			}
+
+			for _, f := range funcsOther {
+				name := toLowerCaseStyle(f)
 				fn := pkgName + "." + f
 				outf("\t%q:\t%s,\n", name, fn)
 			}
@@ -300,13 +325,6 @@ var Exports = map[string]interface{}{
 
 	// end exports
 	outf("}")
-
-	if len(addins) > 0 {
-		for _, addin := range addins {
-			outf("\n\n")
-			outf(addin)
-		}
-	}
 
 	var head bytes.Buffer
 	outHeadf := func(format string, a ...interface{}) (err error) {
@@ -349,15 +367,13 @@ var Exports = map[string]interface{}{
 	return nil
 }
 
-func toQlangName(s string) string {
-	if flagExportQlangStyle {
-		if len(s) <= 1 {
-			return s
-		}
-
-		if unicode.IsLower(rune(s[1])) {
-			return strings.ToLower(s[0:1]) + s[1:]
-		}
+// convert to lower case style, Name => name, NAME => NAME
+func toLowerCaseStyle(s string) string {
+	if len(s) <= 1 {
+		return s
+	}
+	if unicode.IsLower(rune(s[1])) {
+		return strings.ToLower(s[0:1]) + s[1:]
 	}
 	return s
 }
