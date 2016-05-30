@@ -60,13 +60,17 @@ func main() {
 		ret = v
 	})
 
-	term := terminal.New()
+	var tokener tokener
+	term := terminal.New(">>> ", "... ", tokener.ReadMore)
+	term.SetWordCompleter(func(line string, pos int) (head string, completions []string, tail string) {
+		return line[:pos], []string{"  "}, line[pos:]
+	})
+
 	term.LoadHistroy(historyFile) // load/save histroy
 	defer term.SaveHistroy(historyFile)
 
-	var tokener tokener
 	for {
-		expr, err := term.Scan(">>> ", tokener.ReadMore)
+		expr, err := term.Scan()
 		if err != nil {
 			if err == terminal.ErrPromptAborted {
 				break
@@ -117,6 +121,19 @@ func readMore(line string) bool {
 	return pos < 0 && strings.IndexByte(puncts, line[n-1]) >= 0
 }
 
+func findEnd(line string, c byte) int {
+
+	for i := 0; i < len(line); i++ {
+		switch line[i] {
+		case c:
+			return i
+		case '\\':
+			i++
+		}
+	}
+	return -1
+}
+
 func (p *tokener) ReadMore(expr string, line string) (string, bool) { // read more line check
 
 	ret := expr + line + "\n"
@@ -147,7 +164,7 @@ func (p *tokener) ReadMore(expr string, line string) (string, bool) { // read mo
 			p.instr = true
 		default:
 			line = line[pos+1:]
-			pos = strings.IndexByte(line, c)
+			pos = findEnd(line, c)
 			if pos < 0 {
 				return ret, p.level != 0
 			}

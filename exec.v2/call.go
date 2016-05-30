@@ -101,15 +101,18 @@ func function2Func(in *reflect.Value, t reflect.Type) {
 
 func validateType(in *reflect.Value, t, tfn reflect.Type) {
 
+	kind := in.Kind()
+	if kind == reflect.Invalid {
+		*in = reflect.Zero(t) // work around `reflect: Call using zero Value argument`
+		return
+	}
+
 	tkind := t.Kind()
-	switch tkind {
-	case reflect.Interface:
+	if tkind == reflect.Interface {
 		if tfn != nil && qlang.DontTyNormalize[tfn] { // don't normalize input type
 			return
 		}
-		switch kind := in.Kind(); {
-		case kind == reflect.Invalid:
-			*in = reflect.Zero(t) // work around `reflect: Call using zero Value argument`
+		switch {
 		case kind > reflect.Int && kind <= reflect.Int64:
 			*in = reflect.ValueOf(int(in.Int()))
 		case kind >= reflect.Uint && kind <= reflect.Uintptr:
@@ -118,11 +121,6 @@ func validateType(in *reflect.Value, t, tfn reflect.Type) {
 			*in = reflect.ValueOf(in.Float())
 		}
 		return
-	case reflect.Ptr, reflect.Slice, reflect.Map:
-		if !in.IsValid() {
-			*in = reflect.Zero(t) // work around `reflect: Call using zero Value argument`
-			return
-		}
 	}
 
 	tin := in.Type()
@@ -130,27 +128,24 @@ func validateType(in *reflect.Value, t, tfn reflect.Type) {
 		return
 	}
 
-	if tkind == reflect.Func {
+	switch tkind {
+	case reflect.Struct:
+		if kind == reflect.Ptr {
+			tin = tin.Elem()
+			if tin == t {
+				*in = in.Elem()
+				return
+			}
+		}
+	case reflect.Func:
 		if tin == typeFunction {
 			function2Func(in, t)
 			return
 		}
-	} else {
-		kind := in.Kind()
-		switch tkind {
-		case reflect.Struct:
-			if kind == reflect.Ptr {
-				tin = tin.Elem()
-				if tin == t {
-					*in = in.Elem()
-					return
-				}
-			}
-		default:
-			if tkind == kind || convertible(kind, tkind) {
-				*in = in.Convert(t)
-				return
-			}
+	default:
+		if tkind == kind || convertible(kind, tkind) {
+			*in = in.Convert(t)
+			return
 		}
 	}
 	panic(fmt.Errorf("invalid argument type: require `%v`, but we got `%v`", t, tin))
