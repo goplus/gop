@@ -64,15 +64,9 @@ func main() {
 	term.LoadHistroy(historyFile) // load/save histroy
 	defer term.SaveHistroy(historyFile)
 
-	fnReadMore := func(expr string, line string) (string, bool) { // read more line check
-		if strings.HasSuffix(line, "\\") {
-			return expr + line[:len(line)-1], true
-		}
-		return expr + line + "\n", false
-	}
-
+	var tokener tokener
 	for {
-		expr, err := term.Scan(">>> ", fnReadMore)
+		expr, err := term.Scan(">>> ", tokener.ReadMore)
 		if err != nil {
 			if err == terminal.ErrPromptAborted {
 				break
@@ -90,12 +84,75 @@ func main() {
 		ret = qspec.Undefined
 		err = lang.SafeEval(expr)
 		if err != nil {
-			fmt.Println(strings.TrimSpace(err.Error()))
+			fmt.Fprintln(os.Stderr, err)
 			continue
 		}
 		if ret != qspec.Undefined {
 			fmt.Println(ret)
 		}
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+type tokener struct {
+	level int
+	instr bool
+}
+
+var dontReadMoreChars = "+-})];"
+var puncts = "([=,*/%|&<>^.:"
+
+func readMore(line string) bool {
+
+	n := len(line)
+	if n == 0 {
+		return false
+	}
+
+	pos := strings.IndexByte(dontReadMoreChars, line[n-1])
+	if pos == 0 || pos == 1 {
+		return n >= 2 && line[n-2] != dontReadMoreChars[pos]
+	}
+	return pos < 0 && strings.IndexByte(puncts, line[n-1]) >= 0
+}
+
+func (p *tokener) ReadMore(expr string, line string) (string, bool) { // read more line check
+
+	ret := expr + line + "\n"
+	for {
+		if p.instr {
+			pos := strings.IndexByte(line, '`')
+			if pos < 0 {
+				return ret, true
+			}
+			line = line[pos+1:]
+			p.instr = false
+		}
+
+		pos := strings.IndexAny(line, "{}`'\"")
+		if pos < 0 {
+			if p.level != 0 {
+				return ret, true
+			}
+			line = strings.TrimRight(line, " \t")
+			return ret, readMore(line)
+		}
+		switch c := line[pos]; c {
+		case '{':
+			p.level++
+		case '}':
+			p.level--
+		case '`':
+			p.instr = true
+		default:
+			line = line[pos+1:]
+			pos = strings.IndexByte(line, c)
+			if pos < 0 {
+				return ret, p.level != 0
+			}
+		}
+		line = line[pos+1:]
 	}
 }
 
