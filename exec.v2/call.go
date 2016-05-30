@@ -215,9 +215,17 @@ func (arity iCallFn) Exec(stk *Stack, ctx *Context) {
 	vfn := in[0]
 	tfn := vfn.Type()
 	var tfn0 reflect.Type
-	if vfn.Kind() != reflect.Func { // 这不是func，而是Function对象
+	if vfn.Kind() != reflect.Func { // 这不是func，而是Function/其他可调用对象
 		tfn0 = tfn
-		vfn = vfn.MethodByName("Call")
+		vfnt := vfn.MethodByName("Call")
+		if vfnt.IsValid() {
+			vfn = vfnt
+		} else {
+			vfn = reflect.Indirect(vfn).FieldByName("Call")
+			if vfn.Kind() == reflect.Interface {
+				vfn = vfn.Elem()
+			}
+		}
 		tfn = vfn.Type()
 	}
 	n := tfn.NumIn()
