@@ -785,8 +785,12 @@ mainLoop:
 				s.refresh(p, line, pos)
 				goto haveNext
 			case tab: // Tab completion
-				line, pos, next, err = s.tabComplete(p, line, pos)
-				goto haveNext
+				if s.tabForInput {
+					fmt.Printf("\t")
+				} else {
+					line, pos, next, err = s.tabComplete(p, line, pos)
+					goto haveNext
+				}
 			// Catch keys that do nothing, but you don't want them to beep
 			case esc:
 				// DO NOTHING

@@ -14,6 +14,7 @@ type Terminal struct {
 func New() *Terminal {
 	term := &Terminal{liner.NewLiner()}
 	term.state.SetCtrlCAborts(true)
+	term.state.SetTabForInput(true)
 	return term
 }
 

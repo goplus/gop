@@ -9,16 +9,20 @@ The Q Language : https://github.com/qiniu/qlang
 
 Usages:
 ```
-qexport [-contexts=""] [-defctx=false] [-outpath="./qlang"] packages
-	 
+qexport [-contexts=""] [-defctx=false] [-convnew=true] [-skiperrimpl=true] [-outpath="./qlang"] packages
+
 The packages for go package list or std for golang all standard packages.
 
   -contexts string
     	optional comma-separated list of <goos>-<goarch>[-cgo] to override default contexts.
+  -convnew
+    	optional convert NewType func to type func (default true)
   -defctx
     	optional use default context for build, default use all contexts.
   -outpath string
     	optional set export root path (default "./qlang")
+  -skiperrimpl
+    	optional skip error interface implement struct. (default true)
 ```
 
 Examples:
@@ -41,7 +45,10 @@ Export pacakge runtime:
 package runtime
 
 import (
+	"reflect"
 	"runtime"
+
+	"qlang.io/qlang.spec.v1"
 )
 
 // Exports is the export table of this module.
@@ -49,11 +56,11 @@ import (
 var Exports = map[string]interface{}{
 	"_name": "runtime",
 
-	"compiler": runtime.Compiler,
+	"Compiler": runtime.Compiler,
 	"GOARCH":   runtime.GOARCH,
 	"GOOS":     runtime.GOOS,
 
-	"memProfileRate": runtime.MemProfileRate,
+	"MemProfileRate": runtime.MemProfileRate,
 
 	"blockProfile":        runtime.BlockProfile,
 	"breakpoint":          runtime.Breakpoint,
@@ -83,29 +90,13 @@ var Exports = map[string]interface{}{
 	"unlockOSThread":      runtime.UnlockOSThread,
 	"version":             runtime.Version,
 
-	"blockProfileRecords": newBlockProfileRecords,
-	"funcForPC":           runtime.FuncForPC,
-	"memProfileRecords":   newMemProfileRecords,
-	"memStats":            newMemStats,
-	"stackRecords":        newStackRecords,
+	"BlockProfileRecord": qlang.NewType(reflect.TypeOf((*runtime.BlockProfileRecord)(nil)).Elem()),
+	"Func":               qlang.NewType(reflect.TypeOf((*runtime.Func)(nil)).Elem()),
+	"funcForPC":          runtime.FuncForPC,
+	"MemProfileRecord":   qlang.NewType(reflect.TypeOf((*runtime.MemProfileRecord)(nil)).Elem()),
+	"MemStats":           qlang.NewType(reflect.TypeOf((*runtime.MemStats)(nil)).Elem()),
+	"StackRecord":        qlang.NewType(reflect.TypeOf((*runtime.StackRecord)(nil)).Elem()),
 }
-
-func newBlockProfileRecords(n int) []runtime.BlockProfileRecord {
-	return make([]runtime.BlockProfileRecord, n)
-}
-
-func newMemProfileRecords(n int) []runtime.MemProfileRecord {
-	return make([]runtime.MemProfileRecord, n)
-}
-
-func newMemStats() *runtime.MemStats {
-	return new(runtime.MemStats)
-}
-
-func newStackRecords(n int) []runtime.StackRecord {
-	return make([]runtime.StackRecord, n)
-}
-
 ```
 
 		
