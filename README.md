@@ -7,7 +7,7 @@ Q Language - A script language for Go
 
 ## 语言特色
 
-* 与 Go 语言有最好的互操作性。可不进行任何包装即可直接调用 Go 语言的函数、类成员方法。
+* 与 Go 语言有最好的互操作性。可不进行任何包装即可直接使用 Go 语言的函数、类及其成员变量和方法。
 * 有赖于 Go 语言的互操作性，这门语言直接拥有了一套非常完整且您十分熟悉的标准库，无额外学习成本。
 * 与 Go 十分相近的语法，降低您的学习成本。
 * 支持 Go 绝大部分语言特性，包括：for range, string, slice, map, chan, goroutine, defer, etc。
@@ -130,4 +130,4 @@ git clone https://github.com/qiniu/text.git qiniupkg.com/text
 
 * liteide - https://github.com/visualfc/liteide
 * sublime - https://github.com/damonchen/sublime-qlang
-* vim - https://github.com/simon-xia/vim-qlang/
+* vim - https://github.com/simon-xia/vim-qlang
