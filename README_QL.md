@@ -74,6 +74,7 @@ h = []byte(nil) // 创建一个空 byte slice
 a = append(a, 4, 5, 6) // 含义与 Go 语言完全一致
 n = len(a) // 取 a 的元素个数
 m = cap(a) // 取 slice a 的容量
+ncopy = copy(a, b) // 复制 b 的内容到 a，复制的长度 ncopy = min(len(a), len(b))
 b1 = b[2] // 取 b 这个 slice 中 index=2 的元素
 b[2] = 888 // 设置 b 这个 slice 中 index=2 的元素值为 888
 b[1], b[2], b[3] = 777, 888, 999 // 设置 b 这个 slice 中 index=1, 2, 3 的三个元素值
@@ -86,9 +87,11 @@ b2 = b[1:4] // 取子slice
 x, y, z = [1, 2, 3]
 ```
 
-结果是 x = 1, y = 2, z = 3。这是 qlang 和 Go 语言的基础设计不同导致的：
+结果是 x = 1, y = 2, z = 3。
 
-* qlang 不支持多返回值。对于那些返回了多个值的 Go 函数，在 qlang 会理解为返回 var slice，也就是 []interface{}。
+实际上，qlang 支持多返回值就是通过 slice 的多赋值完成：
+
+* 对于那些返回了多个值的 Go 函数，在 qlang 会理解为返回 var slice，也就是 []interface{}。
 
 举个例子：
 

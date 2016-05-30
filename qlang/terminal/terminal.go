@@ -8,12 +8,20 @@ import (
 )
 
 type Terminal struct {
-	state *liner.State
+	*liner.State
+	promptFirst string
+	promptNext  string
+	fnReadMore  func(expr string, line string) (string, bool)
 }
 
-func New() *Terminal {
-	term := &Terminal{liner.NewLiner()}
-	term.state.SetCtrlCAborts(true)
+func New(promptFirst, promptNext string, fnReadMore func(expr string, line string) (string, bool)) *Terminal {
+	term := &Terminal{
+		State:       liner.NewLiner(),
+		promptFirst: promptFirst,
+		promptNext:  promptNext,
+		fnReadMore:  fnReadMore,
+	}
+	term.SetCtrlCAborts(true)
 	return term
 }
 
@@ -23,7 +31,7 @@ func (term *Terminal) LoadHistroy(historyFile string) error {
 		return err
 	}
 	defer f.Close()
-	term.state.ReadHistory(f)
+	term.ReadHistory(f)
 	return nil
 }
 
@@ -33,7 +41,7 @@ func (term *Terminal) SaveHistroy(historyFile string) error {
 		return err
 	}
 	defer f.Close()
-	term.state.WriteHistory(f)
+	term.WriteHistory(f)
 	return nil
 }
 
@@ -41,11 +49,13 @@ var (
 	ErrPromptAborted = liner.ErrPromptAborted
 )
 
-func (term *Terminal) Scan(prompt string, fnReadMore func(expr string, line string) (string, bool)) (string, error) {
+func (term *Terminal) Scan() (string, error) {
 	var all string
 	var more bool
+	prompt := term.promptFirst
+	fnReadMore := term.fnReadMore
 	for {
-		line, err := term.state.Prompt(prompt)
+		line, err := term.Prompt(prompt)
 		if err != nil {
 			if err == liner.ErrPromptAborted {
 				return all, ErrPromptAborted
@@ -53,7 +63,7 @@ func (term *Terminal) Scan(prompt string, fnReadMore func(expr string, line stri
 			return all, err
 		}
 		if strings.TrimSpace(line) != "" {
-			term.state.AppendHistory(line)
+			term.AppendHistory(line)
 		}
 		if fnReadMore == nil {
 			return line, nil
@@ -62,7 +72,15 @@ func (term *Terminal) Scan(prompt string, fnReadMore func(expr string, line stri
 		if !more {
 			break
 		}
-		prompt = "..."
+		prompt = term.promptNext
 	}
 	return all, nil
+}
+
+// Exports is the export table of this module.
+//
+var Exports = map[string]interface{}{
+	"new":       New,
+	"supported": liner.TerminalSupported,
+	"mode":      liner.TerminalMode,
 }

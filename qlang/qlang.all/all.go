@@ -20,6 +20,7 @@ import (
 	"qlang.io/qlang/strconv"
 	"qlang.io/qlang/strings"
 	"qlang.io/qlang/sync"
+	"qlang.io/qlang/terminal"
 	"qlang.io/qlang/tpl.v1/extractor"
 	"qlang.io/qlang/version"
 
@@ -61,6 +62,7 @@ func InitSafe(safeMode bool) {
 	qlang.Import("strconv", strconv.Exports)
 	qlang.Import("strings", strings.Exports)
 	qlang.Import("sync", sync.Exports)
+	qlang.Import("terminal", terminal.Exports)
 	qlang.Import("extractor", extractor.Exports)
 }
 

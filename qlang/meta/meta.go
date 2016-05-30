@@ -88,6 +88,11 @@ func Dir(i interface{}) (list []string) {
 		for _, k := range v.MapKeys() {
 			list = append(list, k.String())
 		}
+	} else if v.Kind() == reflect.Slice {
+		for i := 0; i < v.Len(); i++ {
+			ev := v.Index(i)
+			list = append(list, fmt.Sprintf("%v", ev))
+		}
 	} else {
 		switch e := i.(type) {
 		case *exec.Class:
@@ -167,6 +172,17 @@ func Doc(i interface{}) string {
 			for _, k := range v.MapKeys() {
 				ev := v.MapIndex(k)
 				outf("\n%v\t%v", k, ev)
+			}
+		}
+	} else if v.Kind() == reflect.Slice {
+		t := v.Type()
+		outf("%v", t)
+		for i := 0; i < v.Len(); i++ {
+			ev := v.Index(i)
+			if ev.Kind() == reflect.Interface {
+				outf("\n%v\t%T", ev, ev.Interface())
+			} else {
+				outf("\n%v", ev)
 			}
 		}
 	} else {
