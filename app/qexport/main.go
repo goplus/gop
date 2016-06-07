@@ -345,9 +345,10 @@ var Exports = map[string]interface{}{
 			}
 
 			//export type, qlang.NewType(reflect.TypeOf((*http.Client)(nil)).Elem())
+			//export type, qlang.StructOf((*strings.Reader)(nil))
 			if ast.IsExported(v) {
 				name := v
-				fn := fmt.Sprintf("qlang.NewType(reflect.TypeOf((*%s.%s)(nil)).Elem())", pkgName, v)
+				fn := fmt.Sprintf("qlang.StructOf((*%s.%s)(nil))", pkgName, v)
 				if vers, ok := checkVer(v); ok {
 					verHasTypeExport[vers] = true
 					outfv(vers, name, fn)
@@ -404,8 +405,7 @@ var Exports = map[string]interface{}{
 		outHeadf("import (\n")
 		outHeadf("\t%q\n", pkg)
 		if hasTypeExport {
-			outHeadf("\t\"reflect\"\n\n")
-			outHeadf("\t\"qlang.io/qlang.spec.v1\"\n")
+			outHeadf("\n\t\"qlang.io/qlang.spec.v1\"\n")
 		}
 		outHeadf(")\n\n")
 	}
@@ -437,8 +437,7 @@ var Exports = map[string]interface{}{
 		buf.WriteString(fmt.Sprintf("package %s\n\n", pkgName))
 		if verHasTypeExport[ver] {
 			buf.WriteString("import (\n")
-			buf.WriteString(fmt.Sprintf("\t%q\n", bp.ImportPath))
-			buf.WriteString(fmt.Sprintf("\t%q\n\n", "reflect"))
+			buf.WriteString(fmt.Sprintf("\t%q\n\n", bp.ImportPath))
 			buf.WriteString(fmt.Sprintf("\t%q\n", "qlang.io/qlang.spec.v1"))
 			buf.WriteString(")\n")
 		} else {
