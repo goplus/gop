@@ -2,7 +2,6 @@ package http
 
 import (
 	"net/http"
-	"reflect"
 
 	"qlang.io/qlang.spec.v1"
 )
@@ -55,12 +54,12 @@ var Exports = map[string]interface{}{
 	"DefaultClient":    http.DefaultClient,
 	"DefaultServeMux":  http.DefaultServeMux,
 
-	"Client":   qlang.NewType(reflect.TypeOf((*http.Client)(nil)).Elem()),
-	"Cookie":   qlang.NewType(reflect.TypeOf((*http.Cookie)(nil)).Elem()),
-	"Header":   qlang.NewType(reflect.TypeOf((*http.Header)(nil)).Elem()),
-	"Request":  qlang.NewType(reflect.TypeOf((*http.Request)(nil)).Elem()),
-	"Response": qlang.NewType(reflect.TypeOf((*http.Response)(nil)).Elem()),
-	"Server":   qlang.NewType(reflect.TypeOf((*http.Server)(nil)).Elem()),
+	"Client":   qlang.StructOf((*http.Client)(nil)),
+	"Cookie":   qlang.StructOf((*http.Cookie)(nil)),
+	"Header":   qlang.StructOf((*http.Header)(nil)),
+	"Request":  qlang.StructOf((*http.Request)(nil)),
+	"Response": qlang.StructOf((*http.Response)(nil)),
+	"Server":   qlang.StructOf((*http.Server)(nil)),
 }
 
 // -----------------------------------------------------------------------------

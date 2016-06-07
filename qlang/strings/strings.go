@@ -1,7 +1,6 @@
 package strings
 
 import (
-	"reflect"
 	"strings"
 
 	"qlang.io/qlang.spec.v1"
@@ -10,8 +9,8 @@ import (
 // -----------------------------------------------------------------------------
 
 var (
-	tyReader   = qlang.NewType(reflect.TypeOf((*strings.Reader)(nil)).Elem())
-	tyReplacer = qlang.NewType(reflect.TypeOf((*strings.Replacer)(nil)).Elem())
+	tyReader   = qlang.StructOf((*strings.Reader)(nil))
+	tyReplacer = qlang.StructOf((*strings.Replacer)(nil))
 )
 
 // Exports is the export table of this module.

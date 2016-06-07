@@ -60,8 +60,6 @@ factor =
 	'+' factor
 `
 
-fntable = nil
-
 errReturn = newRuntimeError("return")
 
 Stack = class {
