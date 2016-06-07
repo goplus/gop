@@ -8,14 +8,17 @@ eql 全称 embedded qlang，是类似 erubis/erb 的东西。结合 go generate 
 命令行：
 
 ```
-eql <input>.eql [-o <output_file>] [--key1=val1 --key2=val2 ...]
+eql <template_file> [-o <output_file>] [--key1=val1 --key2=val2 ...]
+eql <template_dir> [-o <output_dir>] [--key1=val1 --key2=val2 ...]
 ```
 
 其中
 
-* `<input>.eql`: 要解析的 eql 文件，也就是模板文件。
+* `<template_file>`: 要解析的 eql 文件，也就是模板文件。
+* `<template_dir>`: 要解析的 template package，也就是整个目录是一个模板。
 * `<output_file>`: 要生成的渲染后的文件。如果没有指定则为 stdout。
-* `--key1=val1 --key2=val2 ...`: 给 eql 文件中涉及到的模板变量赋值。
+* `<output_dir>`: 要生成的渲染后的目标目录。如果没有指定则为对 `<template_dir>` 进行渲染后的值。
+* `--key1=val1 --key2=val2 ...`: 渲染涉及到的模板变量的值。
 
 ## 语法
 
@@ -193,3 +196,7 @@ func (p modbufio) flush(out *bufio.Writer) {
 ```
 
 如此，你只需要在 foo.go 所在的目录执行 go generate 就可以生成 example_bufio.go 文件了。
+
+### 样例: template package
+
+* [$set.v1](example/$set.v1): 以集合类为例展示如何构建一个 template package。
