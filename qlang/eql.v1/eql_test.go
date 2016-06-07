@@ -75,6 +75,13 @@ func TestSubst(t *testing.T) {
 	if out != "$123!" {
 		t.Fatal("Subst failed:", out)
 	}
+
+	out = Subst(`$$$Writer`, map[string]interface{}{
+		"Writer": 123,
+	})
+	if out != "$123" {
+		t.Fatal("Subst failed:", out)
+	}
 }
 
 // -----------------------------------------------------------------------------

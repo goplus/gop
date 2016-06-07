@@ -7,10 +7,10 @@ import (
 	"strings"
 
 	"qlang.io/exec.v2"
+	"qlang.io/qlang.v2/interpreter"
 	"qlang.io/qlang.v2/qlang"
-
-	qipt "qlang.io/qlang.v2/interpreter"
 	"qlang.io/qlang/eql.v1"
+
 	qall "qlang.io/qlang/qlang.all"
 )
 
@@ -26,7 +26,7 @@ Usage:
 func main() {
 
 	qall.InitSafe(false)
-	qlang.Import("", qipt.Exports)
+	qlang.Import("", interpreter.Exports)
 	qlang.SetDumpCode(os.Getenv("QLANG_DUMPCODE"))
 
 	libs := os.Getenv("QLANG_PATH")

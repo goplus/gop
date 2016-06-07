@@ -166,10 +166,14 @@ func Subst(text string, param ...interface{}) string {
 			text = text[pos+2:]
 		case (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'):
 			b.WriteString(text[:pos])
-			n := strings.IndexFunc(text[pos+2:], func(c rune) bool {
+			pos1 := pos + 2
+			n := strings.IndexFunc(text[pos1:], func(c rune) bool {
 				return !unicode.IsLetter(c) && !unicode.IsDigit(c)
 			})
-			pos2 := pos + 2 + n
+			if n < 0 {
+				n = len(text) - pos1
+			}
+			pos2 := pos1 + n
 			key := text[pos+1 : pos2]
 			val, ok := vars.Var(key)
 			if !ok {
