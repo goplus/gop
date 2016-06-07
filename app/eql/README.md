@@ -20,6 +20,17 @@ eql <template_dir> [-o <output_dir>] [--key1=val1 --key2=val2 ...]
 * `<output_dir>`: 要生成的渲染后的目标目录。如果没有指定则为对 `<template_dir>` 进行渲染后的值。
 * `--key1=val1 --key2=val2 ...`: 渲染涉及到的模板变量的值。
 
+## 样例
+
+### 单文件模板
+
+* [example.eql](example.eql): 展示 eql 语法的样例，下文将详细介绍。
+
+### 目录模板
+
+* [$set.v1](example/$set.v1): 以集合类为例展示如何构建一个 template package。
+
+
 ## 语法
 
 ### 插入 qlang 代码
@@ -196,7 +207,3 @@ func (p modbufio) flush(out *bufio.Writer) {
 ```
 
 如此，你只需要在 foo.go 所在的目录执行 go generate 就可以生成 example_bufio.go 文件了。
-
-### 样例: template package
-
-* [$set.v1](example/$set.v1): 以集合类为例展示如何构建一个 template package。
