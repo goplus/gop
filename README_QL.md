@@ -680,12 +680,11 @@ func (p *Bar) GetX() int {
 
 ```go
 import (
-	"reflect"
 	"qlang.io/qlang.spec.v1"
 )
 
 var Exports = map[string]interface{}{
-	"Bar": qlang.NewType(reflect.TypeOf((*foo.Bar)(nil)).Elem()),
+	"Bar": qlang.StructOf((*foo.Bar)(nil)),
 }
 ```
 

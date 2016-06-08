@@ -117,6 +117,10 @@ git clone https://github.com/qiniu/text.git qiniupkg.com/text
 
 ## 社区资源
 
+### Embedded qlang (eql)
+
+* [eql](app/eql/README.md): 全称 [embedded qlang](app/eql/README.md)，是类似 erubis/erb 的东西。结合 go generate 可很方便地让 Go 支持模板（不是 html template，是指泛型）。
+
 ### 为 Go package 导出 qlang module
 
 * [qexport](app/qexport/README.md): 可为 Go 语言的标准库或者你自己写的 Go Package 自动导出相应的 qlang module。

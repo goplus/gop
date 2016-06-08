@@ -45,6 +45,10 @@ func init() {
 	flag.StringVar(&flagExportPath, "outpath", "./qlang", "optional set export root path")
 }
 
+var (
+	ac *ApiCheck
+)
+
 func main() {
 	flag.Parse()
 	args := flag.Args()
@@ -57,6 +61,17 @@ func main() {
 	if flagCustomContext != "" {
 		flagDefaultContext = false
 		setCustomContexts(flagCustomContext)
+	}
+
+	//load ApiCheck
+	ac = NewApiCheck()
+	err := ac.LoadBase("go1", "go1.1", "go1.2", "go1.3", "go1.4")
+	if err != nil {
+		log.Println(err)
+	}
+	err = ac.LoadApi("go1.5", "go1.6", "go1.7")
+	if err != nil {
+		log.Println(err)
 	}
 
 	var outpath string
@@ -151,7 +166,22 @@ func export(pkg string, outpath string, skipOSArch bool) error {
 		return
 	}
 
+	checkVer := func(key string) (string, bool) {
+		vers := ac.FincApis(bp.ImportPath + "." + key)
+		if len(vers) > 0 {
+			return vers[0], true
+		}
+		return "", false
+	}
+
+	// go ver map
+	verMap := make(map[string][]string)
+	outfv := func(ver string, k, v string) {
+		verMap[ver] = append(verMap[ver], fmt.Sprintf("Exports[%q]=%s", k, v))
+	}
+
 	var hasTypeExport bool
+	verHasTypeExport := make(map[string]bool)
 
 	//write exports
 	outf(`// Exports is the export table of this module.
@@ -169,7 +199,11 @@ var Exports = map[string]interface{}{
 			if isUint64Const(fn) {
 				fn = "uint64(" + fn + ")"
 			}
-			outf("\t%q:\t%s,\n", name, fn)
+			if vers, ok := checkVer(v); ok {
+				outfv(vers, name, fn)
+			} else {
+				outf("\t%q:\t%s,\n", name, fn)
+			}
 		}
 	}
 
@@ -191,7 +225,10 @@ var Exports = map[string]interface{}{
 			name := v
 			fn := pkgName + "." + v
 			if isStructVar {
-				outf("\t%q:\t&%s,\n", name, fn)
+				fn = "&" + fn
+			}
+			if vers, ok := checkVer(v); ok {
+				outfv(vers, name, fn)
 			} else {
 				outf("\t%q:\t%s,\n", name, fn)
 			}
@@ -204,7 +241,11 @@ var Exports = map[string]interface{}{
 		for _, v := range keys {
 			name := toLowerCaseStyle(v)
 			fn := pkgName + "." + v
-			outf("\t%q:\t%s,\n", name, fn)
+			if vers, ok := checkVer(v); ok {
+				outfv(vers, name, fn)
+			} else {
+				outf("\t%q:\t%s,\n", name, fn)
+			}
 		}
 	}
 
@@ -244,13 +285,21 @@ var Exports = map[string]interface{}{
 					}
 				}
 				fn := pkgName + "." + f
-				outf("\t%q:\t%s,\n", name, fn)
+				if vers, ok := checkVer(f); ok {
+					outfv(vers, name, fn)
+				} else {
+					outf("\t%q:\t%s,\n", name, fn)
+				}
 			}
 
 			for _, f := range funcsOther {
 				name := toLowerCaseStyle(f)
 				fn := pkgName + "." + f
-				outf("\t%q:\t%s,\n", name, fn)
+				if vers, ok := checkVer(f); ok {
+					outfv(vers, name, fn)
+				} else {
+					outf("\t%q:\t%s,\n", name, fn)
+				}
 			}
 		}
 	}
@@ -296,9 +345,17 @@ var Exports = map[string]interface{}{
 			}
 
 			//export type, qlang.NewType(reflect.TypeOf((*http.Client)(nil)).Elem())
+			//export type, qlang.StructOf((*strings.Reader)(nil))
 			if ast.IsExported(v) {
-				hasTypeExport = true
-				outf("\t%q:\tqlang.NewType(reflect.TypeOf((*%s.%s)(nil)).Elem()),\n", v, pkgName, v)
+				name := v
+				fn := fmt.Sprintf("qlang.StructOf((*%s.%s)(nil))", pkgName, v)
+				if vers, ok := checkVer(v); ok {
+					verHasTypeExport[vers] = true
+					outfv(vers, name, fn)
+				} else {
+					hasTypeExport = true
+					outf("\t%q:\t%s,\n", name, fn)
+				}
 			}
 
 			for _, f := range funcsNew {
@@ -312,13 +369,21 @@ var Exports = map[string]interface{}{
 					}
 				}
 				fn := pkgName + "." + f
-				outf("\t%q:\t%s,\n", name, fn)
+				if vers, ok := checkVer(f); ok {
+					outfv(vers, name, fn)
+				} else {
+					outf("\t%q:\t%s,\n", name, fn)
+				}
 			}
 
 			for _, f := range funcsOther {
 				name := toLowerCaseStyle(f)
 				fn := pkgName + "." + f
-				outf("\t%q:\t%s,\n", name, fn)
+				if vers, ok := checkVer(f); ok {
+					outfv(vers, name, fn)
+				} else {
+					outf("\t%q:\t%s,\n", name, fn)
+				}
 			}
 		}
 	}
@@ -335,14 +400,15 @@ var Exports = map[string]interface{}{
 	//write package
 	outHeadf("package %s\n", pkgName)
 
-	//write imports
-	outHeadf("import (\n")
-	outHeadf("\t%q\n", pkg)
-	if hasTypeExport {
-		outHeadf("\t\"reflect\"\n\n")
-		outHeadf("\t\"qlang.io/qlang.spec.v1\"\n")
+	if strings.Count(buf.String(), ",") > 1 {
+		//write imports
+		outHeadf("import (\n")
+		outHeadf("\t%q\n", pkg)
+		if hasTypeExport {
+			outHeadf("\n\t\"qlang.io/qlang.spec.v1\"\n")
+		}
+		outHeadf(")\n\n")
 	}
-	outHeadf(")\n\n")
 
 	// format
 	data, err := format.Source(append(head.Bytes(), buf.Bytes()...))
@@ -363,6 +429,34 @@ var Exports = map[string]interface{}{
 	}
 	defer file.Close()
 	file.Write(data)
+
+	// write version
+	for ver, lines := range verMap {
+		var buf bytes.Buffer
+		buf.WriteString(fmt.Sprintf("// +build %s\n\n", ver))
+		buf.WriteString(fmt.Sprintf("package %s\n\n", pkgName))
+		if verHasTypeExport[ver] {
+			buf.WriteString("import (\n")
+			buf.WriteString(fmt.Sprintf("\t%q\n\n", bp.ImportPath))
+			buf.WriteString(fmt.Sprintf("\t%q\n", "qlang.io/qlang.spec.v1"))
+			buf.WriteString(")\n")
+		} else {
+			buf.WriteString(fmt.Sprintf("import %q\n", bp.ImportPath))
+		}
+		buf.WriteString("func init() {\n\t")
+		buf.WriteString(strings.Join(lines, "\n\t"))
+		buf.WriteString("\n}")
+		data, err := format.Source(buf.Bytes())
+		if err != nil {
+			return err
+		}
+		file, err := os.Create(filepath.Join(root, pkgName+"-"+strings.Replace(ver, ".", "", 1)+".go"))
+		if err != nil {
+			return err
+		}
+		file.Write(data)
+		file.Close()
+	}
 
 	return nil
 }

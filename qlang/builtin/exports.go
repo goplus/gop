@@ -20,6 +20,7 @@ var exports = map[string]interface{}{
 	"mapOf":     MapOf,
 	"panic":     Panic,
 	"panicf":    Panicf,
+	"print":     fmt.Print,
 	"printf":    fmt.Printf,
 	"println":   fmt.Println,
 	"fprintln":  fmt.Fprintln,

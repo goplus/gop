@@ -1,17 +1,30 @@
 package qlang
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 )
 
 // -----------------------------------------------------------------------------
 
+type undefinedType int
+
+var undefinedBytes = []byte("\"```undefined```\"")
+
+func (p undefinedType) Error() string {
+	return "undefined"
+}
+
+func (p undefinedType) MarshalJSON() ([]byte, error) {
+	return undefinedBytes, nil
+}
+
 var (
 	// Undefined is `undefined` in qlang.
-	Undefined = interface{}(errors.New("undefined"))
+	Undefined interface{} = undefinedType(0)
 )
+
+// -----------------------------------------------------------------------------
 
 // A Chan represents chan class in qlang.
 //
@@ -51,6 +64,13 @@ type Type struct {
 func NewType(t reflect.Type) *Type {
 
 	return &Type{t: t}
+}
+
+// StructOf returns a qlang builtin type object.
+//
+func StructOf(ptr interface{}) *Type {
+
+	return &Type{t: reflect.TypeOf(ptr).Elem()}
 }
 
 // GoType returns the underlying go type. required by `qlang type` spec.
@@ -117,11 +137,18 @@ type TypeEx struct {
 	Call interface{}
 }
 
-// NewTypeEx returns a qlang builtin type object.
+// NewTypeEx returns a qlang builtin type object with a cast function.
 //
-func NewTypeEx(t reflect.Type, call interface{}) *TypeEx {
+func NewTypeEx(t reflect.Type, cast interface{}) *TypeEx {
 
-	return &TypeEx{t: t, Call: call}
+	return &TypeEx{t: t, Call: cast}
+}
+
+// StructOfEx returns a qlang builtin type object with a cast function.
+//
+func StructOfEx(ptr interface{}, cast interface{}) *TypeEx {
+
+	return &TypeEx{t: reflect.TypeOf(ptr).Elem(), Call: cast}
 }
 
 // GoType returns the underlying go type. required by `qlang type` spec.

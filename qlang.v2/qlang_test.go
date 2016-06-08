@@ -133,7 +133,7 @@ func (p *AImportType) GetX() int {
 
 func init() {
 	qlang.Import("foo", map[string]interface{}{
-		"AImportType": qspec.NewType(reflect.TypeOf((*AImportType)(nil)).Elem()),
+		"AImportType": qspec.StructOf((*AImportType)(nil)),
 	})
 }
 

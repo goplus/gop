@@ -12,8 +12,6 @@ factor =
 	(IDENT '(' doc %= ','/ARITY ')')/call
 `
 
-fntable = nil
-
 Stack = class {
 
 	fn _init() {
