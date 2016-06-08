@@ -1,6 +1,9 @@
 package eql
 
-import "testing"
+import (
+	"bytes"
+	"testing"
+)
 
 // -----------------------------------------------------------------------------
 
@@ -81,6 +84,19 @@ func TestSubst(t *testing.T) {
 	})
 	if out != "$123" {
 		t.Fatal("Subst failed:", out)
+	}
+}
+
+func TestParseText(t *testing.T) {
+
+	var b bytes.Buffer
+	err := parseText(&b, "abc ``` def")
+	if err != nil {
+		t.Fatal("parseText failed:", err)
+	}
+
+	if b.String() != "printf(eql.subst(`abc ` + \"```\" + ` def`)); " {
+		t.Fatal(b.String())
 	}
 }
 

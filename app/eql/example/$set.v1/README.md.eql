@@ -1,0 +1,37 @@
+<%
+	//
+	// eql '$set.v1' --base=qlang.io/app/eql/example --set=uint32set --Set=Type --Item=uint32
+	// eql '$set.v1' --base=qlang.io/app/eql/example --set=uintset --Set=Type --Item=uint
+	//
+
+	if Item == "string" {
+		NewArgs, AddArgs, HasArgs = `"a", "b"`, `"c"`, `"d"`
+	} else {
+		NewArgs, AddArgs, HasArgs = `1, 2`, `3`, `4`
+	}
+
+	base = eql.var("base", "") // if variable `base` is undefined, let it be ""
+	if base != "" {
+		base += "/"
+	}
+	package = base + set + ".v1"
+%>
+$package
+======
+
+$set.$Set is a set of $Item, implemented via `map[$Item]struct{}` for minimal memory consumption.
+
+Here is an example:
+
+```go
+import (
+	"$package"
+)
+
+set := $set.New($NewArgs)
+set.Add($AddArgs)
+
+if set.Has($HasArgs) {
+	println("set has item `$HasArgs`")
+}
+```
