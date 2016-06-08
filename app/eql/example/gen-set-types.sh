@@ -1,2 +1,2 @@
-eql '$set.v1' --set=uint32set --Set=Uint32Set --Item=uint32
-eql '$set.v1' --set=stringset --Set=StringSet --Item=string
+eql '$set.v1' --base=qlang.io/app/eql/example --set=uint32set --Set=Type --Item=uint32
+eql '$set.v1' --base=qlang.io/app/eql/example --set=stringset --Set=Type --Item=string

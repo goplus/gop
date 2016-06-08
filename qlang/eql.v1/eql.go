@@ -217,6 +217,15 @@ func imports(imports string) string {
 	return "\"" + strings.Join(mods, "\"\n\t\"") + "\""
 }
 
+func getVar(name string, defval interface{}) interface{} {
+
+	v, ok := DefaultVars.Var(name)
+	if !ok {
+		v = defval
+	}
+	return v
+}
+
 // -----------------------------------------------------------------------------
 
 // Exports is the export table of this module.
@@ -224,6 +233,7 @@ func imports(imports string) string {
 var Exports = map[string]interface{}{
 	"parse":   Parse,
 	"subst":   Subst,
+	"var":     getVar,
 	"imports": imports,
 
 	"ErrEndRequired": ErrEndRequired,

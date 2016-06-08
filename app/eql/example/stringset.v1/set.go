@@ -4,43 +4,43 @@ package stringset
 
 type empty struct{}
 
-// StringSet is a set of string, implemented via map[string]struct{} for minimal memory consumption.
-type StringSet map[string]empty
+// Type is a set of string, implemented via map[string]struct{} for minimal memory consumption.
+type Type map[string]empty
 
-// New creates a StringSet from a list of values.
-func New(items ...string) StringSet {
-	ss := StringSet{}
+// New creates a Type from a list of values.
+func New(items ...string) Type {
+	ss := Type{}
 	ss.Insert(items...)
 	return ss
 }
 
 // Add adds one item to the set.
-func (s StringSet) Add(item string) {
+func (s Type) Add(item string) {
 	s[item] = empty{}
 }
 
 // Insert adds items to the set.
-func (s StringSet) Insert(items ...string) {
+func (s Type) Insert(items ...string) {
 	for _, item := range items {
 		s[item] = empty{}
 	}
 }
 
 // Delete removes all items from the set.
-func (s StringSet) Delete(items ...string) {
+func (s Type) Delete(items ...string) {
 	for _, item := range items {
 		delete(s, item)
 	}
 }
 
 // Has returns true iff item is contained in the set.
-func (s StringSet) Has(item string) bool {
+func (s Type) Has(item string) bool {
 	_, contained := s[item]
 	return contained
 }
 
 // HasAll returns true iff all items are contained in the set.
-func (s StringSet) HasAll(items ...string) bool {
+func (s Type) HasAll(items ...string) bool {
 	for _, item := range items {
 		if !s.Has(item) {
 			return false
@@ -50,7 +50,7 @@ func (s StringSet) HasAll(items ...string) bool {
 }
 
 // IsSuperset returns true iff s1 is a superset of s2.
-func (s StringSet) IsSuperset(s2 StringSet) bool {
+func (s Type) IsSuperset(s2 Type) bool {
 	for item := range s2 {
 		if !s.Has(item) {
 			return false
@@ -60,7 +60,7 @@ func (s StringSet) IsSuperset(s2 StringSet) bool {
 }
 
 // Len returns the size of the set.
-func (s StringSet) Len() int {
+func (s Type) Len() int {
 	return len(s)
 }
 
