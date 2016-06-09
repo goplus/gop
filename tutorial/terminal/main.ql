@@ -11,8 +11,8 @@ main { // 使用main关键字将主程序括起来，是为了避免其中用的
 
 	historyFile = os.getenv("HOME") + "/.qcalc.history"
 	term = terminal.new(">>> ", "... ", nil)
-	term.LoadHistroy(historyFile)
-	defer term.SaveHistroy(historyFile)
+	term.loadHistroy(historyFile)
+	defer term.saveHistroy(historyFile)
 
 	println(`Q-Calculator - http://qlang.io, version 1.0.00
 Copyright (C) 2015 Qiniu.com - Shanghai Qiniu Information Technologies Co., Ltd.
@@ -20,7 +20,7 @@ Use Ctrl-D (i.e. EOF) to exit.
 `)
 
 	for {
-		expr, err = term.Scan()
+		expr, err = term.scan()
 		if err != nil {
 			if err == terminal.ErrPromptAborted {
 				continue
