@@ -41,11 +41,11 @@ export all package
 
 Export pacakge runtime:
 
+* runtime.go
 ``` go
 package runtime
 
 import (
-	"reflect"
 	"runtime"
 
 	"qlang.io/qlang.spec.v1"
@@ -79,24 +79,34 @@ var Exports = map[string]interface{}{
 	"numCgoCall":          runtime.NumCgoCall,
 	"numGoroutine":        runtime.NumGoroutine,
 	"readMemStats":        runtime.ReadMemStats,
-	"readTrace":           runtime.ReadTrace,
 	"setBlockProfileRate": runtime.SetBlockProfileRate,
 	"setCPUProfileRate":   runtime.SetCPUProfileRate,
 	"setFinalizer":        runtime.SetFinalizer,
 	"stack":               runtime.Stack,
-	"startTrace":          runtime.StartTrace,
-	"stopTrace":           runtime.StopTrace,
 	"threadCreateProfile": runtime.ThreadCreateProfile,
 	"unlockOSThread":      runtime.UnlockOSThread,
 	"version":             runtime.Version,
 
-	"BlockProfileRecord": qlang.NewType(reflect.TypeOf((*runtime.BlockProfileRecord)(nil)).Elem()),
-	"Func":               qlang.NewType(reflect.TypeOf((*runtime.Func)(nil)).Elem()),
+	"BlockProfileRecord": qlang.StructOf((*runtime.BlockProfileRecord)(nil)),
+	"Func":               qlang.StructOf((*runtime.Func)(nil)),
 	"funcForPC":          runtime.FuncForPC,
-	"MemProfileRecord":   qlang.NewType(reflect.TypeOf((*runtime.MemProfileRecord)(nil)).Elem()),
-	"MemStats":           qlang.NewType(reflect.TypeOf((*runtime.MemStats)(nil)).Elem()),
-	"StackRecord":        qlang.NewType(reflect.TypeOf((*runtime.StackRecord)(nil)).Elem()),
+	"MemProfileRecord":   qlang.StructOf((*runtime.MemProfileRecord)(nil)),
+	"MemStats":           qlang.StructOf((*runtime.MemStats)(nil)),
+	"StackRecord":        qlang.StructOf((*runtime.StackRecord)(nil)),
 }
 ```
+* runtime-go15.go
+``` go
+// +build go1.5
 
+package runtime
+
+import "runtime"
+
+func init() {
+	Exports["readTrace"] = runtime.ReadTrace
+	Exports["startTrace"] = runtime.StartTrace
+	Exports["stopTrace"] = runtime.StopTrace
+}
+```
 		

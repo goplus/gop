@@ -7,6 +7,7 @@ import (
 	"qlang.io/qlang/crypto/md5"
 	"qlang.io/qlang/encoding/hex"
 	"qlang.io/qlang/encoding/json"
+	"qlang.io/qlang/eql.v1"
 	"qlang.io/qlang/errors"
 	"qlang.io/qlang/io"
 	"qlang.io/qlang/io/ioutil"
@@ -53,8 +54,10 @@ func InitSafe(safeMode bool) {
 	qlang.Import("hex", hex.Exports)
 	qlang.Import("json", json.Exports)
 	qlang.Import("errors", errors.Exports)
+	qlang.Import("eql", eql.Exports)
 	qlang.Import("math", math.Exports)
 	qlang.Import("os", os.Exports)
+	qlang.Import("", os.InlineExports)
 	qlang.Import("path", path.Exports)
 	qlang.Import("http", http.Exports)
 	qlang.Import("reflect", reflect.Exports)

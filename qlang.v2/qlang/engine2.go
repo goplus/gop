@@ -82,7 +82,7 @@ type Qlang struct {
 func New(options *Options) (lang *Qlang, err error) {
 
 	cl := qlangv2.New()
-	cl.Opts = (*interpreter.Options)(options)
+	cl.Opts = interpreter.InsertSemis
 	stk := exec.NewStack()
 	ctx := exec.NewContext()
 	ctx.Stack = stk

@@ -205,11 +205,32 @@ func (p *Context) Exports() map[string]interface{} {
 	return export
 }
 
-// Vars returns all variables in executing context.
+// Vars is deprecated. please use `CopyVars` method.
 //
 func (p *Context) Vars() map[string]interface{} {
 
 	return p.vars
+}
+
+// CopyVars copies and returns all variables in executing context.
+//
+func (p *Context) CopyVars() map[string]interface{} {
+
+	vars := make(map[string]interface{})
+	for k, v := range p.vars {
+		vars[k] = v
+	}
+	return vars
+}
+
+// ResetVars resets all variables in executing context.
+//
+func (p *Context) ResetVars(vars map[string]interface{}) {
+
+	p.vars = make(map[string]interface{})
+	for k, v := range vars {
+		p.vars[k] = v
+	}
 }
 
 // Var returns a variable value in executing context.

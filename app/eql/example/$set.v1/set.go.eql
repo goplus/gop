@@ -1,0 +1,67 @@
+package $set
+
+// ---------------------------------------------------------------------------
+
+type empty struct{}
+
+// $Set is a set of $Item, implemented via map[$Item]struct{} for minimal memory consumption.
+type $Set map[$Item]empty
+
+// New creates a $Set from a list of values.
+func New(items ...$Item) $Set {
+	ss := $Set{}
+	ss.Insert(items...)
+	return ss
+}
+
+// Add adds one item to the set.
+func (s $Set) Add(item $Item) {
+	s[item] = empty{}
+}
+
+// Insert adds items to the set.
+func (s $Set) Insert(items ...$Item) {
+	for _, item := range items {
+		s[item] = empty{}
+	}
+}
+
+// Delete removes all items from the set.
+func (s $Set) Delete(items ...$Item) {
+	for _, item := range items {
+		delete(s, item)
+	}
+}
+
+// Has returns true iff item is contained in the set.
+func (s $Set) Has(item $Item) bool {
+	_, contained := s[item]
+	return contained
+}
+
+// HasAll returns true iff all items are contained in the set.
+func (s $Set) HasAll(items ...$Item) bool {
+	for _, item := range items {
+		if !s.Has(item) {
+			return false
+		}
+	}
+	return true
+}
+
+// IsSuperset returns true iff s1 is a superset of s2.
+func (s $Set) IsSuperset(s2 $Set) bool {
+	for item := range s2 {
+		if !s.Has(item) {
+			return false
+		}
+	}
+	return true
+}
+
+// Len returns the size of the set.
+func (s $Set) Len() int {
+	return len(s)
+}
+
+// ---------------------------------------------------------------------------

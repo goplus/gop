@@ -83,4 +83,6 @@ var Exports = map[string]interface{}{
 	"new":       New,
 	"supported": liner.TerminalSupported,
 	"mode":      liner.TerminalMode,
+
+	"ErrPromptAborted": ErrPromptAborted,
 }
