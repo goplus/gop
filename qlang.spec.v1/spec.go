@@ -222,7 +222,7 @@ func GoModuleName(table map[string]interface{}) (name string, ok bool) {
 	return
 }
 
-func getInitSafe(table map[string]interface{}) (initSafe func(mod Module), ok bool) {
+func fetchInitSafe(table map[string]interface{}) (initSafe func(mod Module), ok bool) {
 
 	vinitSafe, ok := table["_initSafe"]
 	if !ok {
@@ -232,6 +232,7 @@ func getInitSafe(table map[string]interface{}) (initSafe func(mod Module), ok bo
 	if !ok {
 		panic("invalid prototype of initSafe: must be `func initSafe(mod qlang.Module)`")
 	}
+	delete(table, "_initSafe")
 	return
 }
 
@@ -351,7 +352,7 @@ func GoModuleList() []string {
 func Import(mod string, table map[string]interface{}) {
 
 	if SafeMode {
-		if initSafe, ok := getInitSafe(table); ok {
+		if initSafe, ok := fetchInitSafe(table); ok {
 			initSafe(Module{Exports: table})
 		}
 	}

@@ -40,6 +40,7 @@ func Main(safeMode bool) {
 	lang.SetLibs(libs)
 
 	// exec source
+	//
 	if len(os.Args) > 1 {
 		fname := os.Args[1]
 		b, err := ioutil.ReadFile(fname)
@@ -56,7 +57,13 @@ func Main(safeMode bool) {
 	}
 
 	// interpreter
+
 	qall.Copyright()
+	if safeMode {
+		fmt.Printf("Use Ctrl-D (i.e. EOF) to exit.\n\n")
+	} else {
+		fmt.Printf("Use exit() or Ctrl-D (i.e. EOF) to exit.\n\n")
+	}
 
 	var ret interface{}
 	qlang.SetOnPop(func(v interface{}) {

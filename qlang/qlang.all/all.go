@@ -57,6 +57,7 @@ func InitSafe(safeMode bool) {
 	qlang.Import("eql", eql.Exports)
 	qlang.Import("math", math.Exports)
 	qlang.Import("os", os.Exports)
+	qlang.Import("", os.InlineExports)
 	qlang.Import("path", path.Exports)
 	qlang.Import("http", http.Exports)
 	qlang.Import("reflect", reflect.Exports)

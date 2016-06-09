@@ -17,6 +17,7 @@ var Exports = map[string]interface{}{
 	"stdin":     os.Stdin,
 	"stderr":    os.Stderr,
 	"stdout":    os.Stdout,
+	"getenv":    os.Getenv,
 	"open":      os.Open,
 	"create":    os.Create,
 	"exit":      os.Exit,
@@ -26,6 +27,7 @@ var Exports = map[string]interface{}{
 func _initSafe(mod qlang.Module) {
 
 	mod.Disable("open")
+	mod.Disable("getenv")
 	mod.Exports["exit"] = SafeExit
 }
 
@@ -33,7 +35,28 @@ func _initSafe(mod qlang.Module) {
 //
 func SafeExit(code int) {
 
-	panic(strconv.Itoa(code))
+	panic("exit " + strconv.Itoa(code))
+}
+
+// -----------------------------------------------------------------------------
+
+func exit() {
+	os.Exit(0)
+}
+
+func safeExit() {
+	panic("exit")
+}
+
+func _initSafe2(mod qlang.Module) {
+	mod.Exports["exit"] = safeExit
+}
+
+// InlineExports is the export table of this module.
+//
+var InlineExports = map[string]interface{}{
+	"exit":      exit,
+	"_initSafe": _initSafe2,
 }
 
 // -----------------------------------------------------------------------------
