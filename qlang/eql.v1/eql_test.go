@@ -16,7 +16,7 @@ const eqlTestCode = `<%
 package eql_test
 
 import (
-	<%= eql.imports(imports) %>
+	<%= eql.imports() %>
 	"encoding/binary"
 )
 
@@ -95,7 +95,7 @@ func TestParseText(t *testing.T) {
 		t.Fatal("parseText failed:", err)
 	}
 
-	if b.String() != "printf(eql.subst(`abc ` + \"```\" + ` def`)); " {
+	if b.String() != "print(eql.subst(`abc ` + \"```\" + ` def`)); " {
 		t.Fatal(b.String())
 	}
 }
