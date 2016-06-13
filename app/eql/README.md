@@ -110,7 +110,7 @@ $$
 这个函数主要解决 qlang 中目前还没有支持判断一个变量是否存在的缺陷。其语义看起来是这样的：
 
 ```go
-if varname == undefined {
+if varname != undefined {
 	return varname
 } else {
 	return defaultval
