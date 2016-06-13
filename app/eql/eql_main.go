@@ -44,7 +44,7 @@ func main() {
 	vars = lang.Context
 	eql.DefaultVars = vars
 
-	paseFlags()
+	parseFlags()
 	if source == "" {
 		fmt.Fprintln(os.Stderr, usage)
 		return
@@ -155,7 +155,7 @@ var (
 	vars   *exec.Context
 )
 
-func paseFlags() {
+func parseFlags() {
 
 	vars.SetVar("imports", "")
 	for i := 1; i < len(os.Args); i++ {

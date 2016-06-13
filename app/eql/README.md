@@ -24,14 +24,14 @@ eql <template_dir> [-o <output_dir>] [--key1=val1 --key2=val2 ...]
 
 ### 单文件模板
 
-* [example.eql](example.eql): 展示 eql 语法的样例，下文将详细介绍。
+* [example.eql](example.eql): 展示 eql 语法的样例，下文将详细介绍“模板文法”。
 
 ### 目录模板
 
-* [$set.v1](example/$set.v1): 以集合类为例展示如何构建一个 template package。
+* [$set.v1](example/$set.v1): 以集合类为例展示如何构建一个 template package。下文将详细介绍“目录模板规则”。
 
 
-## 语法
+## 模板文法
 
 ### 插入 qlang 代码
 
@@ -77,6 +77,62 @@ $$
 <% print('$') %>
 ```
 
+## 目录模板规则
+
+目录模板的根目录名本身允许是模板，但是只有在用户没有指定 `-o <output_dir>` 的情况下有效。例如上面例子中的 `$set.v1` 包含模板变量 `$set`。
+
+目录模板的渲染过程（实例化过程）比较简单，就是对模板目录进行遍历，并执行如下规则：
+
+* 如果遇到子目录，创建出对应子目录，并递归本过程。
+* 如果是 `.eql` 后缀的文件，进行模板渲染并去掉 `.eql` 后缀进行存储。例如 `README.md.eql` 渲染后保存为 `README.md`。
+* 如果是其他后缀的文件，则进行简单复制。
+
+
+## eql 模块内建函数
+
+在 qlang 中，有一个 module 叫 eql，是专门面向 `eql` 程序服务的。它包含如下函数：
+
+### eql.imports()
+
+这个函数解析 imports 变量（通常是用户通过命令行 `--imports=package1,package2,...` 传入的）并将 `,` 分隔风格改为符合 Go 语言中 import (...) 风格的字符串。
+
+如果 imports 变量不存在，则该函数返回 "" (空字符串)。
+
+例如，我们假设传入的 imports 变量为 "bufio,bytes"，则 `eql.imports()` 为如下风格的字符串：
+
+```go
+	"bufio"
+	"bytes"
+```
+
+### eql.var("varname", defaultval)
+
+这个函数主要解决 qlang 中目前还没有支持判断一个变量是否存在的缺陷。其语义看起来是这样的：
+
+```go
+if varname == undefined {
+	return varname
+} else {
+	return defaultval
+}
+```
+
+当然目前因为在 qlang 中如果 varname 不存在就会直接报错，所以以上代码仅仅是表达 `eql.var("varname", defaultval)` 的逻辑语义。
+
+### eql.subst("template text", dom)
+
+这个在 eql 模板里面不太用得到，实际上是 eql 的内部机理相关的函数，其功能是替换 $varname 为对应的值。如：
+
+```
+eql.subst("Hello, $name!", {"name": "qlang"})
+```
+
+得到的结果是：
+
+```
+Hello, qlang!
+```
+
 ## 用 eql 实现 Go 对泛型的支持
 
 我们举例说明。假设我们现在实现了一个 Go 的模板类，文件名为 `example.eql`，内容如下：
@@ -85,7 +141,7 @@ $$
 package eql_test
 
 import (
-	<%= eql.imports(imports) %>
+	<%= eql.imports() %>
 	"encoding/binary"
 )
 

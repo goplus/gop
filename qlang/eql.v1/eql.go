@@ -208,8 +208,14 @@ func Subst(text string, param ...interface{}) string {
 
 // -----------------------------------------------------------------------------
 
-func imports(imports string) string {
+func imports(param ...string) string {
 
+	imports := ""
+	if len(param) > 0 {
+		imports = param[0]
+	} else {
+		imports = getVar("imports", "").(string)
+	}
 	if imports == "" {
 		return ""
 	}
