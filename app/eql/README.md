@@ -123,7 +123,7 @@ if varname != undefined {
 
 这个在 eql 模板里面不太用得到，实际上是 eql 的内部机理相关的函数，其功能是替换 $varname 为对应的值。如：
 
-```
+```go
 eql.subst("Hello, $name!", {"name": "qlang"})
 ```
 
