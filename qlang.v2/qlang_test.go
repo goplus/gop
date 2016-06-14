@@ -18,12 +18,8 @@ x = sin(0)
 
 func TestCastFloat(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testCastFloatCode), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testCastFloatCode), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -46,12 +42,8 @@ x = type(a)
 
 func TestByteSlice(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testTestByteSliceCode), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testTestByteSliceCode), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -72,12 +64,8 @@ y = a[0]
 
 func TestNilSlice(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testNilSliceCode), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testNilSliceCode), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -104,15 +92,12 @@ y = castFooMode(1)
 
 func TestCastFooMode(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
+	lang := qlang.New()
 	qlang.Import("", map[string]interface{}{
 		"castFooMode": castFooMode,
 	})
 
-	err = lang.SafeExec([]byte(testCastFooModeCode), "")
+	err := lang.SafeExec([]byte(testCastFooModeCode), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -146,12 +131,8 @@ y = a.getX()
 
 func TestImportType(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testImportTypeCode), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testImportTypeCode), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -170,12 +151,8 @@ y = a.x
 
 func TestStructInit(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testStructInitCode), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testStructInitCode), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -194,12 +171,8 @@ y = a.x
 
 func TestMapInit(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testMapInitCode), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testMapInitCode), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -217,12 +190,8 @@ y = map[string]int(nil)
 
 func TestMapInit2(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testMapInit2Code), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testMapInit2Code), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -242,12 +211,8 @@ z = a.y
 
 func TestMapInit3(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testMapInit3Code), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testMapInit3Code), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -269,12 +234,8 @@ z = a.x
 
 func TestMapInit32(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testMapInit32Code), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testMapInit32Code), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -302,12 +263,8 @@ z = obj.map()
 
 func TestMapID(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testMapIDCode), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testMapIDCode), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}

@@ -11,12 +11,8 @@ import (
 
 func TestIf(t *testing.T) {
 
-	lang, err := qlang.New(nil)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(`fn { 0 }; if true { x = 3 } else { x = 5 }`), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(`fn { 0 }; if true { x = 3 } else { x = 5 }`), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -27,12 +23,8 @@ func TestIf(t *testing.T) {
 
 func TestNormalFor(t *testing.T) {
 
-	lang, err := qlang.New(nil)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(`for i = 3; i < 10; i++ {}`), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(`for i = 3; i < 10; i++ {}`), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -43,12 +35,8 @@ func TestNormalFor(t *testing.T) {
 
 func TestBreak(t *testing.T) {
 
-	lang, err := qlang.New(nil)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(`for i = 3; i < 10; i++ { x = 1; y = 2; break }`), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(`for i = 3; i < 10; i++ { x = 1; y = 2; break }`), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -59,12 +47,8 @@ func TestBreak(t *testing.T) {
 
 func TestIfBreak(t *testing.T) {
 
-	lang, err := qlang.New(nil)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(`for i = 3; i < 10; i++ { x = 1; y = 2; if i == 8 { z = 3; break } }`), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(`for i = 3; i < 10; i++ { x = 1; y = 2; if i == 8 { z = 3; break } }`), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -75,12 +59,8 @@ func TestIfBreak(t *testing.T) {
 
 func TestContinue(t *testing.T) {
 
-	lang, err := qlang.New(nil)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(`for i = 3; i < 10; i++ { continue; i=100 }`), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(`for i = 3; i < 10; i++ { continue; i=100 }`), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -91,12 +71,8 @@ func TestContinue(t *testing.T) {
 
 func TestSwitchBreak(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(`
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(`
 		for i = 3; i < 10; i++ {
 			x = 1
 			y = 2
@@ -117,12 +93,8 @@ func TestSwitchBreak(t *testing.T) {
 
 func TestIfContinue(t *testing.T) {
 
-	lang, err := qlang.New(nil)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(`for i = 3; i < 10; i++ { x = 1; y = 2; if true { z = 3; continue }; i=100 }`), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(`for i = 3; i < 10; i++ { x = 1; y = 2; if true { z = 3; continue }; i=100 }`), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -133,12 +105,8 @@ func TestIfContinue(t *testing.T) {
 
 func TestSwitchContinue(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(`
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(`
 		for i = 3; i < 10; i++ {
 			x = 1
 			y = 2
@@ -159,12 +127,8 @@ func TestSwitchContinue(t *testing.T) {
 
 func TestSwitchContinue2(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(`
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(`
 		for i = 3; i < 10; i++ {
 			x = 1
 			y = 2
@@ -187,12 +151,8 @@ func TestSwitchContinue2(t *testing.T) {
 
 func TestSwitchDefaultContinue(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(`
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(`
 		for i = 3; i < 10; i++ {
 			x = 1
 			y = 2
@@ -217,12 +177,8 @@ func TestSwitchDefaultContinue(t *testing.T) {
 
 func TestForRange1(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(`
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(`
 		x = 0
 		for range [1, 2] {
 			x++
@@ -237,12 +193,8 @@ func TestForRange1(t *testing.T) {
 
 func TestForRange2(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(`
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(`
 		x = 0
 		for i = range [10, 20] {
 			x += i+1
@@ -257,12 +209,8 @@ func TestForRange2(t *testing.T) {
 
 func TestForRange3(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(`
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(`
 		x = 0
 		for _, v = range [10, 20] {
 			x += v
@@ -277,12 +225,8 @@ func TestForRange3(t *testing.T) {
 
 func TestForRange4(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(`
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(`
 		x = 0
 		for range {10: 3, 20: 4} {
 			x++
@@ -297,12 +241,8 @@ func TestForRange4(t *testing.T) {
 
 func TestForRange5(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(`
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(`
 		x = 0
 		for k = range {10: 3, 20: 4} {
 			x += k
@@ -317,12 +257,8 @@ func TestForRange5(t *testing.T) {
 
 func TestForRange6(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(`
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(`
 		x = 0
 		for _, v = range {10: 3, 20: 4} {
 			x += v
@@ -337,12 +273,8 @@ func TestForRange6(t *testing.T) {
 
 func TestForRange7(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(`
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(`
 		x = 0
 		for k, v = range {10: 3, 20: 4} {
 			x += k + v
@@ -357,12 +289,8 @@ func TestForRange7(t *testing.T) {
 
 func TestForRange8(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(`
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(`
 
 		ch = make(chan int, 2)
 		ch <- 10
@@ -383,12 +311,8 @@ func TestForRange8(t *testing.T) {
 
 func TestForRange9(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(`
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(`
 
 		ch = make(chan int, 2)
 		ch <- 10
@@ -409,12 +333,8 @@ func TestForRange9(t *testing.T) {
 
 func TestForRange10(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(`
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(`
 		x = 0
 		for i, v = range [10, 20, 30, 40] {
 			if true {
@@ -434,12 +354,8 @@ func TestForRange10(t *testing.T) {
 
 func TestForRange11(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(`
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(`
 		x = 0
 		for i, v = range [10, 20, 30, 40] {
 			if true {

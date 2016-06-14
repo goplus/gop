@@ -35,12 +35,7 @@ const scriptCode = `x = 1 + 2`
 
 func main() {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		// 错误处理
-		return
-	}
-
+	lang := qlang.New()
 	err = lang.SafeExec([]byte(scriptCode), "")
 	if err != nil {
 		// 错误处理

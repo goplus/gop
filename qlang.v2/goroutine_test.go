@@ -44,12 +44,8 @@ go fn {
 
 func TestChan(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testChanCode), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testChanCode), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -90,12 +86,8 @@ wg.wait()
 
 func TestGoroutine(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testGoroutineCode), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testGoroutineCode), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}

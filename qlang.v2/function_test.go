@@ -20,12 +20,8 @@ x = fn {
 
 func TestReturn(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testReturnCode), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testReturnCode), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -45,12 +41,8 @@ x, y = fn {
 
 func TestReturn2(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testReturnCode2), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testReturnCode2), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -79,12 +71,8 @@ println("x:", x)
 
 func TestAnonymFn(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testAnonymFnCode), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testAnonymFnCode), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -104,12 +92,8 @@ x = 3
 
 func TestAnonymFn2(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testAnonymFnCode2), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testAnonymFnCode2), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -128,12 +112,8 @@ x = 1
 
 func TestDefer(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testDeferCode), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testDeferCode), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -152,12 +132,8 @@ x = 1
 
 func TestDefer2(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testDeferCode2), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testDeferCode2), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -189,12 +165,8 @@ fn() {
 
 func TestClosure1(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testClosureCode1), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testClosureCode1), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -229,12 +201,8 @@ fn() {
 
 func TestClosure2(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testClosureCode2), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testClosureCode2), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -257,14 +225,10 @@ func fooUint32(v uint32) uint32 {
 
 func TestUint32(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
+	lang := qlang.New()
 	lang.SetVar("foo", fooUint32)
 
-	err = lang.SafeExec([]byte(testUint32Code), "")
+	err := lang.SafeExec([]byte(testUint32Code), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -282,12 +246,8 @@ x = type(uint32(3))
 
 func TestTypeOf(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testTypeOfCode), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testTypeOfCode), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -305,15 +265,12 @@ x = strings.indexFunc("Hello!!!", fn(c) { return c == '!' })
 
 func TestCallback(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
+	lang := qlang.New()
 	qlang.Import("strings", map[string]interface{}{
 		"indexFunc": strings.IndexFunc,
 	})
 
-	err = lang.SafeExec([]byte(testCallbackCode), "")
+	err := lang.SafeExec([]byte(testCallbackCode), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -338,15 +295,12 @@ forEach([1, 2, 2], fn(v) { x; x += v })
 
 func TestCallback2(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
+	lang := qlang.New()
 	qlang.Import("", map[string]interface{}{
 		"forEach": forEach,
 	})
 
-	err = lang.SafeExec([]byte(testCallback2Code), "")
+	err := lang.SafeExec([]byte(testCallback2Code), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -372,15 +326,12 @@ ret = toVars([1, 2, 3], fn(v) { return v+1 })
 
 func TestCallback3(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
+	lang := qlang.New()
 	qlang.Import("", map[string]interface{}{
 		"toVars": toVars,
 	})
 
-	err = lang.SafeExec([]byte(testCallback3Code), "")
+	err := lang.SafeExec([]byte(testCallback3Code), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
