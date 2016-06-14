@@ -7,18 +7,45 @@ eql 全称 embedded qlang，是类似 erubis/erb 的东西。结合 go generate 
 
 命令行：
 
-```
-eql <template_file> [-o <output_file>] [--key1=val1 --key2=val2 ...]
-eql <template_dir> [-o <output_dir>] [--key1=val1 --key2=val2 ...]
+```bash
+eql <templatefile> [-i -j <jsoninput> -o <outputfile> --key1=value1 --key2=value2 ...]
+eql <templatedir> [-i -j <jsoninput> -o <outputdir> --key1=value1 --key2=value2 ...]
 ```
 
 其中
 
 * `<template_file>`: 要解析的 eql 文件，也就是模板文件。
 * `<template_dir>`: 要解析的 template package，也就是整个目录是一个模板。
-* `<output_file>`: 要生成的渲染后的文件。如果没有指定则为 stdout。
-* `<output_dir>`: 要生成的渲染后的目标目录。如果没有指定则为对 `<template_dir>` 进行渲染后的值。
-* `--key1=val1 --key2=val2 ...`: 渲染涉及到的模板变量的值。
+* `-i`: 以 stdin 作为 json input。
+* `-j <jsoninput>`: 输入 json input。
+* `-o <output_file>`: 要生成的渲染后的文件。如果没有指定则为 stdout。
+* `-o <output_dir>`: 要生成的渲染后的目标目录。如果没有指定则为对 `<template_dir>` 进行渲染后的值。
+* `--key1=val1 --key2=val2 ...`: 重载 json input 涉及到的模板变量的值。
+
+假设我们有 a.eql，内容如下：
+
+```
+Hello, $a!
+```
+
+则我们可以有这样一些使用 `eql` 程序的方式：
+
+```bash
+eql -j '{"a":"qlang"}' a.eql
+```
+
+或者：
+
+```bash
+echo '{"a":"qlang"}' | eql -i a.eql
+```
+
+或者：
+
+```bash
+# 这种方式看起来最为简洁，只是无法输入 string 类型之外的数据
+eql --a=qlang a.eql
+```
 
 ## 样例
 
@@ -35,7 +62,7 @@ eql <template_dir> [-o <output_dir>] [--key1=val1 --key2=val2 ...]
 
 ### 插入 qlang 代码
 
-```
+```go
 <%
     // 在此插入 qlang 代码
 %>
@@ -43,13 +70,13 @@ eql <template_dir> [-o <output_dir>] [--key1=val1 --key2=val2 ...]
 
 ### 输出 qlang 表达式
 
-```
+```go
 <%= qlang_expr %>
 ```
 
 你可以理解为这只是插入 qlang 代码的一种简写手法。它等价于：
 
-```
+```go
 <% print(qlang_expr) %>
 ```
 
@@ -61,7 +88,7 @@ $var
 
 你可以理解为这只是插入 qlang 代码的一种简写手法。它等价于：
 
-```
+```go
 <% print(var) %>
 ```
 
@@ -73,7 +100,7 @@ $$
 
 等价于：
 
-```
+```go
 <% print('$') %>
 ```
 
@@ -88,9 +115,7 @@ $$
 * 如果是其他后缀的文件，则进行简单复制。
 
 
-## eql 模块内建函数
-
-在 qlang 中，有一个 module 叫 eql，是专门面向 `eql` 程序服务的。它包含如下函数：
+## eql 函数
 
 ### eql.imports()
 
@@ -118,20 +143,6 @@ if varname != undefined {
 ```
 
 当然目前因为在 qlang 中如果 varname 不存在就会直接报错，所以以上代码仅仅是表达 `eql.var("varname", defaultval)` 的逻辑语义。
-
-### eql.subst("template text", dom)
-
-这个在 eql 模板里面不太用得到，实际上是 eql 的内部机理相关的函数，其功能是替换 $varname 为对应的值。如：
-
-```go
-eql.subst("Hello, $name!", {"name": "qlang"})
-```
-
-得到的结果是：
-
-```
-Hello, qlang!
-```
 
 ## 用 eql 实现 Go 对泛型的支持
 
@@ -263,3 +274,65 @@ func (p modbufio) flush(out *bufio.Writer) {
 ```
 
 如此，你只需要在 foo.go 所在的目录执行 go generate 就可以生成 example_bufio.go 文件了。
+
+
+## 以库的方式使用 eql
+
+### 初始化
+
+```go
+ql = qlang.new()
+eql = eqlang.new(ql)
+
+ql.resetVars(map[string]var{"name": "qlang"}) // 重置 ql 对象的变量集合
+ql.setVar("a", 123)
+```
+
+### eql.subst("template text")
+
+替换 $varname 为对应的值。例如：
+
+```go
+output = eql.subst("Hello, $name!")
+println(output)
+```
+
+得到的结果是：
+
+```
+Hello, qlang!
+```
+
+### eql.execute("template script", fname, output)
+
+执行 eql 模板。
+
+* fname:  为模板文件名。
+* output: 为输出文件，为 "" 表示输出到 stdout。
+
+例如：
+
+```go
+eql.execute("Hello, <%= strings.toUpper(name) %>!\n", "", "")
+```
+
+输出为：
+
+```
+Hello, qlang!
+```
+
+### eql.executeFile(source, output)
+
+执行 eql 模板文件。
+
+* source: 为 eql 模板文件。
+* output: 为输出文件，为 "" 表示输出到 stdout。
+
+### eql.executeDir(vars, source, output)
+
+执行 eql 模板目录。
+
+* vars:   是模板依赖的变量集。
+* source: 为 eql 模板目录。
+* output: 为输出目录，为 "" 表示输出的目录名是以 source 为模板的渲染结果。

@@ -16,13 +16,8 @@ const scriptCode = `
 
 func main() {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	err = lang.SafeExec([]byte(scriptCode), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(scriptCode), "")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
@@ -33,4 +28,3 @@ func main() {
 }
 
 // -----------------------------------------------------------------------------
-

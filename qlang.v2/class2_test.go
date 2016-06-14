@@ -42,12 +42,8 @@ x3 = a.bar(1)
 
 func TestInject(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testInjectCode), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testInjectCode), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -105,16 +101,13 @@ ret = fooCall(foo)
 
 func TestMemberRef(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
+	lang := qlang.New()
 	qlang.Import("", map[string]interface{}{
 		"fooMemberPtr": fooMemberPtr,
 		"fooCall":      fooCall,
 	})
 
-	err = lang.SafeExec([]byte(testMemberRefCode), "")
+	err := lang.SafeExec([]byte(testMemberRefCode), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -146,7 +139,7 @@ x = t.f()
 
 func TestNewClass(t *testing.T) {
 
-	lang, _ := qlang.New(qlang.InsertSemis)
+	lang := qlang.New()
 	err := lang.SafeExec([]byte(testNewClassCode), "")
 	if err != nil {
 		t.Fatal(err)

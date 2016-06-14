@@ -1,4 +1,4 @@
-package eql
+package eqlang
 
 import (
 	"bytes"

@@ -79,15 +79,21 @@ type Qlang struct {
 
 // New returns a new qlang instance.
 //
-func New(options *Options) (lang *Qlang, err error) {
+func New() *Qlang {
 
 	cl := qlangv2.New()
-	cl.Opts = interpreter.InsertSemis
 	stk := exec.NewStack()
 	ctx := exec.NewContext()
 	ctx.Stack = stk
 	ctx.Code = cl.Code()
-	return &Qlang{ctx, cl}, nil
+	return &Qlang{ctx, cl}
+}
+
+// NewEx returns a new qlang instance.
+//
+func NewEx(options ...*Options) (lang *Qlang, err error) {
+
+	return New(), nil
 }
 
 // SetLibs sets lib paths for searching modules.
@@ -215,6 +221,14 @@ func Import(mod string, table map[string]interface{}) {
 func SetAutoCall(t reflect.Type) {
 
 	qlang.SetAutoCall(t)
+}
+
+// -----------------------------------------------------------------------------
+
+// Exports is the export table of this module.
+//
+var Exports = map[string]interface{}{
+	"new": New,
 }
 
 // -----------------------------------------------------------------------------

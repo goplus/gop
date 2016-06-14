@@ -2,25 +2,31 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
-	"path"
 	"strings"
 
 	"qlang.io/exec.v2"
 	"qlang.io/qlang.v2/interpreter"
 	"qlang.io/qlang.v2/qlang"
-	"qlang.io/qlang/eql.v1"
-
-	qall "qlang.io/qlang/qlang.all"
+	"qlang.io/qlang/eqlang.v1"
+	"qlang.io/qlang/qlang.all"
 )
 
 // -----------------------------------------------------------------------------
 
 const usage = `
 Usage:
-    eql <templatefile> [-o <outputfile>] [--key1=value1 --key2=value2 ...]
-    eql <templatedir> [-o <outputdir>] [--key1=value1 --key2=value2 ...]
+    eql <templatefile> [-i -j <jsoninput> -o <outputfile> --key1=value1 --key2=value2 ...]
+    eql <templatedir> [-i -j <jsoninput> -o <outputdir> --key1=value1 --key2=value2 ...]
+
+<templatefile>: the template file to format.
+<templatedir>:  the template dir to format.
+
+-i:              use stdin as json input.
+-j <jsoninput>:  json input string.
+-o <outputfile>: output result into this file, default is stdout.
+-o <outputdir>:  output result into this directory, default is <templatedir> format result.
+--key=value:     (key, value) pair that overrides json input specified by -i or -j <jsoninput>.
 `
 
 func main() {
@@ -34,15 +40,11 @@ func main() {
 		libs = os.Getenv("HOME") + "/qlang"
 	}
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(-1)
-	}
+	lang := qlang.New()
 	lang.SetLibs(libs)
 
 	vars = lang.Context
-	eql.DefaultVars = vars
+	eql := eqlang.New(lang)
 
 	parseFlags()
 	if source == "" {
@@ -57,93 +59,10 @@ func main() {
 	}
 
 	if fi.IsDir() {
-		if output == "" {
-			output = eql.Subst(source, vars)
-			if output == source {
-				panic(fmt.Sprintf("source `%s` doesn't have $var", source))
-			}
-		}
 		global := lang.CopyVars()
-		genDir(lang, global, source, output)
+		eql.ExecuteDir(global, source, output)
 	} else {
-		genFile(lang, source, output)
-	}
-}
-
-func genDir(lang *qlang.Qlang, global map[string]interface{}, source, output string) {
-
-	err := os.MkdirAll(output, 0755)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(21)
-	}
-
-	fis, err := ioutil.ReadDir(source)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(22)
-	}
-
-	source += "/"
-	output += "/"
-	for _, fi := range fis {
-		name := fi.Name()
-		if fi.IsDir() {
-			genDir(lang, global, source+name, output+name)
-		} else if path.Ext(name) == ".eql" {
-			lang.ResetVars(global)
-			newname := name[:len(name)-4]
-			genFile(lang, source+name, output+newname)
-		} else {
-			copyFile(source+name, output+name, fi.Mode())
-		}
-	}
-}
-
-func copyFile(source, output string, perm os.FileMode) {
-
-	b, err := ioutil.ReadFile(source)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(31)
-	}
-
-	err = ioutil.WriteFile(output, b, perm)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(32)
-	}
-}
-
-func genFile(lang *qlang.Qlang, source, output string) {
-
-	b, err := ioutil.ReadFile(source)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	code, err := eql.Parse(string(b))
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(2)
-	}
-
-	if output != "" {
-		f, err := os.Create(output)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(3)
-		}
-		defer f.Close()
-		os.Stdout = f
-	}
-
-	err = lang.SafeExec(code, source)
-	if err != nil {
-		os.Remove(output)
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(4)
+		eql.ExecuteFile(source, output)
 	}
 }
 
@@ -166,6 +85,25 @@ func parseFlags() {
 				os.Exit(10)
 			}
 			output = os.Args[i+1]
+			i++
+		case "-i":
+			ret, err := eqlang.InputFile("-")
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "ERROR: stdin isn't valid json - %v\n", err)
+				os.Exit(12)
+			}
+			vars.ResetVars(ret)
+		case "-j":
+			if i+1 >= len(os.Args) {
+				fmt.Fprintln(os.Stderr, "ERROR: switch -j doesn't have parameters, please use -j <jsoninput>")
+				os.Exit(10)
+			}
+			ret, err := eqlang.Input(os.Args[i+1])
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "ERROR: invalid parameter `-j <jsoninput>` - %v\n", err)
+				os.Exit(12)
+			}
+			vars.ResetVars(ret)
 			i++
 		default:
 			if strings.HasPrefix(arg, "--") {

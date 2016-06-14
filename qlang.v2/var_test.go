@@ -21,12 +21,8 @@ z = c.a
 
 func TestGet(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testGetCode), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testGetCode), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -53,12 +49,8 @@ x++
 
 func TestInc(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testIncCode), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testIncCode), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -80,12 +72,8 @@ x *= 2
 
 func TestMulAssign(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testMulAssignCode), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testMulAssignCode), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -105,12 +93,8 @@ x, y = t.a, t.b
 
 func TestSwap(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testSwapCode), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testSwapCode), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -131,12 +115,8 @@ x, y = 3, 2
 
 func TestMultiAssign(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testMultiAssignCode), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testMultiAssignCode), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -157,12 +137,8 @@ x, y = [3, 2]
 
 func TestMultiAssign2(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testMultiAssignCode2), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testMultiAssignCode2), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -183,12 +159,8 @@ x, y = 3, 2, 1
 
 func TestErrMultiAssign(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testErrMultiAssignCode), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testErrMultiAssignCode), "")
 	if err == nil {
 		t.Fatal("qlang.SafeExec?")
 	}
@@ -209,12 +181,8 @@ x, y = a[1], b.b
 
 func TestMultiAssignEx(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testMultiAssignExCode), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testMultiAssignExCode), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -246,12 +214,8 @@ x = a.f()
 
 func TestAssignEx(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testAssignExCode), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testAssignExCode), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
@@ -281,12 +245,8 @@ x = a.foo
 
 func TestClassAddAssign(t *testing.T) {
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		t.Fatal("qlang.New:", err)
-	}
-
-	err = lang.SafeExec([]byte(testClassAddAssignCode), "")
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testClassAddAssignCode), "")
 	if err != nil {
 		t.Fatal("qlang.SafeExec:", err)
 	}
