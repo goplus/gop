@@ -319,7 +319,7 @@ eql.execute("Hello, <%= strings.toUpper(name) %>!\n", "", "")
 输出为：
 
 ```
-Hello, qlang!
+Hello, QLANG!
 ```
 
 ### eql.executeFile(source, output)
