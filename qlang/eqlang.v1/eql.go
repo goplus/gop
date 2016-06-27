@@ -1,9 +1,11 @@
-package eql
+package eqlang
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"reflect"
 	"strings"
 	"unicode"
@@ -47,7 +49,7 @@ func Parse(source string) (code []byte, err error) {
 
 func parseText(b *bytes.Buffer, source string) (err error) {
 
-	b.WriteString("printf(eql.subst(`")
+	b.WriteString("print(eql.subst(`")
 	for {
 		pos := strings.IndexByte(source, '`')
 		if pos < 0 {
@@ -91,6 +93,8 @@ func parseEql(b *bytes.Buffer, source string) (ret string, err error) {
 				} else if strings.HasPrefix(ret, "\n") {
 					ret = ret[1:]
 					b.WriteString("\n")
+				} else {
+					b.WriteString("; ")
 				}
 				return
 			}
@@ -142,32 +146,27 @@ func (vars mapStrings) Var(name string) (v interface{}, ok bool) {
 	return
 }
 
-// -----------------------------------------------------------------------------
-
-// DefaultVars is the default variables.
-//
-var DefaultVars Variables
-
 // Subst substs variables in text.
 //
-func Subst(text string, param ...interface{}) string {
+func Subst(text string, lang interface{}) string {
+
+	var vars Variables
+	switch v := lang.(type) {
+	case map[string]interface{}:
+		vars = mapVars(v)
+	case map[string]string:
+		vars = mapStrings(v)
+	case Variables:
+		vars = v
+	default:
+		panic(fmt.Sprintf("eql.Subst: unsupported lang type `%v`", reflect.TypeOf(lang)))
+	}
+	return subst(text, vars)
+}
+
+func subst(text string, vars Variables) string {
 
 	var b bytes.Buffer
-	var vars Variables
-	if len(param) == 0 {
-		vars = DefaultVars
-	} else {
-		switch v := param[0].(type) {
-		case map[string]interface{}:
-			vars = mapVars(v)
-		case map[string]string:
-			vars = mapStrings(v)
-		case Variables:
-			vars = v
-		default:
-			panic(fmt.Sprintf("eql.Subst: unsupported param type `%v`", reflect.TypeOf(param[0])))
-		}
-	}
 	for {
 		pos := strings.IndexByte(text, '$')
 		if pos < 0 || pos+1 >= len(text) {
@@ -208,22 +207,29 @@ func Subst(text string, param ...interface{}) string {
 
 // -----------------------------------------------------------------------------
 
-func imports(imports string) string {
+// Input decodes a json string.
+//
+func Input(input string) (ret map[string]interface{}, err error) {
 
-	if imports == "" {
-		return ""
-	}
-	mods := strings.Split(imports, ",")
-	return "\"" + strings.Join(mods, "\"\n\t\"") + "\""
+	err = json.NewDecoder(strings.NewReader(input)).Decode(&ret)
+	return
 }
 
-func getVar(name string, defval interface{}) interface{} {
+// InputFile decodes a json file.
+//
+func InputFile(input string) (ret map[string]interface{}, err error) {
 
-	v, ok := DefaultVars.Var(name)
-	if !ok {
-		v = defval
+	in := os.Stdin
+	if input != "-" {
+		f, err1 := os.Open(input)
+		if err1 != nil {
+			return nil, err1
+		}
+		defer f.Close()
+		in = f
 	}
-	return v
+	err = json.NewDecoder(in).Decode(&ret)
+	return
 }
 
 // -----------------------------------------------------------------------------
@@ -231,10 +237,12 @@ func getVar(name string, defval interface{}) interface{} {
 // Exports is the export table of this module.
 //
 var Exports = map[string]interface{}{
-	"parse":   Parse,
-	"subst":   Subst,
-	"var":     getVar,
-	"imports": imports,
+	"new":   New,
+	"parse": Parse,
+	"subst": Subst,
+
+	"input":     Input,
+	"inputFile": InputFile,
 
 	"ErrEndRequired": ErrEndRequired,
 	"ErrEndOfString": ErrEndOfString,

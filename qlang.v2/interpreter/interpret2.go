@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"qlang.io/exec.v2"
 	"qiniupkg.com/text/tpl.v1"
 	"qiniupkg.com/text/tpl.v1/interpreter"
+	"qlang.io/exec.v2"
 )
 
 var (
@@ -31,7 +31,7 @@ type Engine struct {
 
 var (
 	optionsDef Options
-	typeFunc = reflect.TypeOf((*exec.Function)(nil))
+	typeFunc   = reflect.TypeOf((*exec.Function)(nil))
 )
 
 var (
@@ -54,7 +54,7 @@ func call(ip *exec.Object, name string) interface{} {
 	if fn, ok := ip.Cls.Fns[name]; ok {
 		return fn.Call(ip)
 	}
-	panic("method not found: " + name) 
+	panic("method not found: " + name)
 }
 
 func callN(ip *exec.Object, name string, args ...interface{}) interface{} {
@@ -64,7 +64,7 @@ func callN(ip *exec.Object, name string, args ...interface{}) interface{} {
 		args1[0] = ip
 		return fn.Call(append(args1, args...)...)
 	}
-	panic("method not found: " + name) 
+	panic("method not found: " + name)
 }
 
 func callFn(stk *exec.Object, fn interface{}, arity int) {
@@ -352,4 +352,3 @@ var Exports = map[string]interface{}{
 }
 
 // -----------------------------------------------------------------------------
-

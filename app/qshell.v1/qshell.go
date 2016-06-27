@@ -25,6 +25,7 @@ func Main(safeMode bool) {
 
 	qall.InitSafe(safeMode)
 	qlang.Import("", qipt.Exports)
+	qlang.Import("qlang", qlang.Exports)
 	qlang.SetDumpCode(os.Getenv("QLANG_DUMPCODE"))
 
 	libs := os.Getenv("QLANG_PATH")
@@ -32,14 +33,11 @@ func Main(safeMode bool) {
 		libs = os.Getenv("HOME") + "/qlang"
 	}
 
-	lang, err := qlang.New(qlang.InsertSemis)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+	lang := qlang.New()
 	lang.SetLibs(libs)
 
 	// exec source
+	//
 	if len(os.Args) > 1 {
 		fname := os.Args[1]
 		b, err := ioutil.ReadFile(fname)
@@ -56,7 +54,13 @@ func Main(safeMode bool) {
 	}
 
 	// interpreter
+
 	qall.Copyright()
+	if safeMode {
+		fmt.Printf("Use Ctrl-D (i.e. EOF) to exit.\n\n")
+	} else {
+		fmt.Printf("Use exit() or Ctrl-D (i.e. EOF) to exit.\n\n")
+	}
 
 	var ret interface{}
 	qlang.SetOnPop(func(v interface{}) {

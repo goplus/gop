@@ -45,8 +45,7 @@ a.foo(b)
 
 func TestInclude(t *testing.T) {
 
-	lang, _ := qlang.New(qlang.InsertSemis)
-
+	lang := qlang.New()
 	qlang.SetReadFile(func(file string) ([]byte, error) {
 		return []byte(scriptA), nil
 	})
@@ -62,8 +61,7 @@ func TestInclude(t *testing.T) {
 
 func TestImport(t *testing.T) {
 
-	lang, _ := qlang.New(qlang.InsertSemis)
-
+	lang := qlang.New()
 	qlang.SetFindEntry(func(file string, libs []string) (string, error) {
 		return file, nil
 	})
@@ -102,8 +100,7 @@ println("a.x:", a.x)
 
 func TestModuleDefer(t *testing.T) {
 
-	lang, _ := qlang.New(qlang.InsertSemis)
-
+	lang := qlang.New()
 	qlang.SetFindEntry(func(file string, libs []string) (string, error) {
 		return file, nil
 	})
@@ -144,8 +141,7 @@ x = t.f()
 
 func TestModuleClass(t *testing.T) {
 
-	lang, _ := qlang.New(qlang.InsertSemis)
-
+	lang := qlang.New()
 	qlang.SetFindEntry(func(file string, libs []string) (string, error) {
 		return file, nil
 	})
