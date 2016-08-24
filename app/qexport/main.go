@@ -109,23 +109,6 @@ func main() {
 	}
 }
 
-var (
-	uint64_const_keys = []string{
-		"crc64.ECMA",
-		"crc64.ISO",
-		"math.MaxUint64",
-	}
-)
-
-func isUint64Const(key string, name string, i interface{}) bool {
-	for _, k := range uint64_const_keys {
-		if key == k {
-			return true
-		}
-	}
-	return false
-}
-
 func export(pkg string, outpath string, skipOSArch bool) error {
 	p, err := NewPackage(pkg, flagDefaultContext)
 	if err != nil {
