@@ -20,7 +20,6 @@ var num = regexp.MustCompile(`^\-?[0-9]+$`)
 type KeyType int
 
 const (
-	None        KeyType = 0
 	Normal      KeyType = 1
 	ConstInt64  KeyType = 2
 	ConstUnit64 KeyType = 3
@@ -139,5 +138,5 @@ func (ac *ApiCheck) CheckConstType(name string) KeyType {
 			return typ
 		}
 	}
-	return None
+	return Normal
 }
