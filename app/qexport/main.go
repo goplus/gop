@@ -117,7 +117,7 @@ var (
 	}
 )
 
-func isUint64Const(key string) bool {
+func isUint64Const(key string, name string, i interface{}) bool {
 	for _, k := range uint64_const_keys {
 		if key == k {
 			return true
@@ -157,6 +157,8 @@ func export(pkg string, outpath string, skipOSArch bool) error {
 	for _, path := range strings.Split(bp.ImportPath, "/") {
 		if path == "internal" {
 			return errors.New("skip internal pkg")
+		} else if path == "vendor" {
+			return errors.New("skip vendor pkg")
 		}
 	}
 
@@ -172,6 +174,9 @@ func export(pkg string, outpath string, skipOSArch bool) error {
 			return vers[0], true
 		}
 		return "", false
+	}
+	checkConst := func(key string) KeyType {
+		return ac.CheckConstType(bp.ImportPath + "." + key)
 	}
 
 	// go ver map
@@ -196,7 +201,10 @@ var Exports = map[string]interface{}{
 		for _, v := range keys {
 			name := v
 			fn := pkgName + "." + v
-			if isUint64Const(fn) {
+			typ := checkConst(v)
+			if typ == ConstInt64 {
+				fn = "int64(" + fn + ")"
+			} else if typ == ConstUnit64 {
 				fn = "uint64(" + fn + ")"
 			}
 			if vers, ok := checkVer(v); ok {

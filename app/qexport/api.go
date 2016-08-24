@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -12,10 +13,21 @@ func apipath(base string) string {
 	return filepath.Join(os.Getenv("GOROOT"), "api", base)
 }
 
+//pkg syscall (windows-386), const CERT_E_CN_NO_MATCH = 2148204815
 var sym = regexp.MustCompile(`^pkg (\S+)\s?(.*)?, (?:(var|func|type|const)) ([A-Z]\w*)`)
+var num = regexp.MustCompile(`^\-?[0-9]+$`)
+
+type KeyType int
+
+const (
+	None        KeyType = 0
+	Normal      KeyType = 1
+	ConstInt64  KeyType = 2
+	ConstUnit64 KeyType = 3
+)
 
 type GoApi struct {
-	Keys map[string]bool
+	Keys map[string]KeyType
 	Ver  string
 }
 
@@ -25,7 +37,7 @@ func LoadApi(ver string) (*GoApi, error) {
 		return nil, err
 	}
 	sc := bufio.NewScanner(f)
-	keys := make(map[string]bool)
+	keys := make(map[string]KeyType)
 	for sc.Scan() {
 		l := sc.Text()
 		has := func(v string) bool { return strings.Contains(l, v) }
@@ -38,20 +50,38 @@ func LoadApi(ver string) (*GoApi, error) {
 			// 3 var|func|type|const
 			// 4 name
 			key := m[1] + "." + m[4]
-			keys[key] = true
+			if _, ok := keys[key]; ok {
+				continue
+			}
+			keys[key] = Normal
+			if m[3] == "const" {
+				if pos := strings.LastIndex(l, "="); pos != -1 {
+					value := strings.TrimSpace(l[pos+1:])
+					if num.MatchString(value) {
+						_, err := strconv.ParseInt(l[pos+2:], 10, 32)
+						if err != nil {
+							if value[0] == '-' {
+								keys[key] = ConstInt64
+							} else {
+								keys[key] = ConstUnit64
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 	return &GoApi{Ver: ver, Keys: keys}, nil
 }
 
 type ApiCheck struct {
-	Base map[string]bool
+	Base map[string]KeyType
 	Apis []*GoApi
 }
 
 func NewApiCheck() *ApiCheck {
 	ac := &ApiCheck{}
-	ac.Base = make(map[string]bool)
+	ac.Base = make(map[string]KeyType)
 	return ac
 }
 
@@ -75,7 +105,7 @@ func (ac *ApiCheck) LoadApi(vers ...string) error {
 			return err
 		}
 		for k, _ := range api.Keys {
-			if ac.Base[k] {
+			if _, ok := ac.Base[k]; ok {
 				delete(api.Keys, k)
 			}
 		}
@@ -86,7 +116,7 @@ func (ac *ApiCheck) LoadApi(vers ...string) error {
 
 func (ac *ApiCheck) FincApis(name string) (vers []string) {
 	for _, api := range ac.Apis {
-		if api.Keys[name] {
+		if _, ok := api.Keys[name]; ok {
 			vers = append(vers, api.Ver)
 		}
 	}
@@ -98,4 +128,16 @@ func (ac *ApiCheck) ApiVers() (vers []string) {
 		vers = append(vers, api.Ver)
 	}
 	return
+}
+
+func (ac *ApiCheck) CheckConstType(name string) KeyType {
+	if typ, ok := ac.Base[name]; ok {
+		return typ
+	}
+	for _, api := range ac.Apis {
+		if typ, ok := api.Keys[name]; ok {
+			return typ
+		}
+	}
+	return None
 }
