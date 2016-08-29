@@ -36,7 +36,7 @@ const scriptCode = `x = 1 + 2`
 func main() {
 
 	lang := qlang.New()
-	err = lang.SafeExec([]byte(scriptCode), "")
+	err := lang.SafeExec([]byte(scriptCode), "")
 	if err != nil {
 		// 错误处理
 		return
@@ -130,3 +130,4 @@ git clone https://github.com/qiniu/text.git qiniupkg.com/text
 * liteide - https://github.com/visualfc/liteide
 * sublime - https://github.com/damonchen/sublime-qlang
 * vim - https://github.com/simon-xia/vim-qlang
+* atom - https://github.com/bingohuang/atom-language-q

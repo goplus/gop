@@ -14,12 +14,12 @@ eql <templatedir> [-i -j <jsoninput> -o <outputdir> --key1=value1 --key2=value2 
 
 其中
 
-* `<template_file>`: 要解析的 eql 文件，也就是模板文件。
-* `<template_dir>`: 要解析的 template package，也就是整个目录是一个模板。
+* `<templatefile>`: 要解析的 eql 文件，也就是模板文件。
+* `<templatedir>`: 要解析的 template package，也就是整个目录是一个模板。
 * `-i`: 以 stdin 作为 json input。
 * `-j <jsoninput>`: 输入 json input。
-* `-o <output_file>`: 要生成的渲染后的文件。如果没有指定则为 stdout。
-* `-o <output_dir>`: 要生成的渲染后的目标目录。如果没有指定则为对 `<template_dir>` 进行渲染后的值。
+* `-o <outputfile>`: 要生成的渲染后的文件。如果没有指定则为 stdout。
+* `-o <outputdir>`: 要生成的渲染后的目标目录。如果没有指定则为对 `<template_dir>` 进行渲染后的值。
 * `--key1=val1 --key2=val2 ...`: 重载 json input 涉及到的模板变量的值。
 
 假设我们有 a.eql，内容如下：
@@ -319,7 +319,7 @@ eql.execute("Hello, <%= strings.toUpper(name) %>!\n", "", "")
 输出为：
 
 ```
-Hello, qlang!
+Hello, QLANG!
 ```
 
 ### eql.executeFile(source, output)
