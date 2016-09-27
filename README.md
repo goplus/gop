@@ -2,6 +2,7 @@ Q Language - A script language for Go
 ========
 
 [![Build Status](https://travis-ci.org/qiniu/qlang.png?branch=develop)](https://travis-ci.org/qiniu/qlang)
+[![Go Report Card](https://goreportcard.com/badge/github.com/qiniu/qlang)](https://goreportcard.com/report/github.com/qiniu/qlang)
 
 ![logo](http://qiniutek.com/images/logo-2.png)
 
