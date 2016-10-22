@@ -6,6 +6,7 @@ import (
 	"fmt"
 	osexec "os/exec"
 	"reflect"
+	"sort"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -142,6 +143,13 @@ func findPackageName(i interface{}) (string, bool) {
 	return "", false
 }
 
+// reflect.Value slice
+type ReflectValues []reflect.Value
+
+func (p ReflectValues) Len() int           { return len(p) }
+func (p ReflectValues) Less(i, j int) bool { return p[i].String() < p[j].String() }
+func (p ReflectValues) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+
 // Doc returns doc info of object
 //
 func Doc(i interface{}) string {
@@ -155,10 +163,12 @@ func Doc(i interface{}) string {
 	}
 	v := reflect.ValueOf(i)
 	if v.Kind() == reflect.Map {
+		mapKeys := v.MapKeys()
+		sort.Sort(ReflectValues(mapKeys))
 		pkgName, isPkg := findPackageName(i)
 		if isPkg {
 			outf("package %v", pkgName)
-			for _, k := range v.MapKeys() {
+			for _, k := range mapKeys {
 				if strings.HasPrefix(k.String(), "_") {
 					continue
 				}
@@ -169,7 +179,7 @@ func Doc(i interface{}) string {
 				}
 			}
 		} else {
-			for _, k := range v.MapKeys() {
+			for _, k := range mapKeys {
 				ev := v.MapIndex(k)
 				outf("\n%v\t%v", k, ev)
 			}

@@ -60,9 +60,13 @@ func main() {
 
 	if fi.IsDir() {
 		global := lang.CopyVars()
-		eql.ExecuteDir(global, source, output)
+		err = eql.ExecuteDir(global, source, output)
 	} else {
-		eql.ExecuteFile(source, output)
+		err = eql.ExecuteFile(source, output)
+	}
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(-3)
 	}
 }
 

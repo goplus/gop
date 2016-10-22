@@ -297,18 +297,20 @@ type Error struct {
 
 func (p *Error) Error() string {
 
+	var sep string
 	var stk []byte
 	if qlang.DumpStack {
 		stk = p.Stack
+		sep = "\n\n"
 	}
 
 	if p.Line == 0 {
-		return fmt.Sprintf("%v\n\n%s", p.Err, stk)
+		return fmt.Sprintf("%v%s%s", p.Err, sep, stk)
 	}
 	if p.File == "" {
-		return fmt.Sprintf("line %d: %v\n\n%s", p.Line, p.Err, stk)
+		return fmt.Sprintf("line %d: %v%s%s", p.Line, p.Err, sep, stk)
 	}
-	return fmt.Sprintf("%s:%d: %v\n\n%s", p.File, p.Line, p.Err, stk)
+	return fmt.Sprintf("%s:%d: %v%s%s", p.File, p.Line, p.Err, sep, stk)
 }
 
 // -----------------------------------------------------------------------------

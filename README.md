@@ -2,6 +2,7 @@ Q Language - A script language for Go
 ========
 
 [![Build Status](https://travis-ci.org/qiniu/qlang.png?branch=develop)](https://travis-ci.org/qiniu/qlang)
+[![Go Report Card](https://goreportcard.com/badge/github.com/qiniu/qlang)](https://goreportcard.com/report/github.com/qiniu/qlang)
 
 ![logo](http://qiniutek.com/images/logo-2.png)
 
@@ -36,7 +37,7 @@ const scriptCode = `x = 1 + 2`
 func main() {
 
 	lang := qlang.New()
-	err = lang.SafeExec([]byte(scriptCode), "")
+	err := lang.SafeExec([]byte(scriptCode), "")
 	if err != nil {
 		// 错误处理
 		return
@@ -130,3 +131,4 @@ git clone https://github.com/qiniu/text.git qiniupkg.com/text
 * liteide - https://github.com/visualfc/liteide
 * sublime - https://github.com/damonchen/sublime-qlang
 * vim - https://github.com/simon-xia/vim-qlang
+* atom - https://github.com/bingohuang/atom-language-q
