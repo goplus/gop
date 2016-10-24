@@ -119,9 +119,7 @@ go get -u -insecure qlang.io/qlang
 或者在 src 目录执行如下命令：
 
 ```
-mkdir qiniupkg.com
 git clone https://github.com/qiniu/qlang.git qlang.io
-git clone https://github.com/qiniu/text.git qiniupkg.com/text
 ```
 
 ## 社区资源
