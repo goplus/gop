@@ -3,7 +3,7 @@ package strings
 import (
 	"strings"
 
-	"qlang.io/qlang.spec.v1"
+	qlang "qlang.io/spec"
 )
 
 // -----------------------------------------------------------------------------

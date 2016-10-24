@@ -1,0 +1,15 @@
+#!/usr/bin/env php
+<?php
+	$argc = $_SERVER["argc"];
+	if ($argc < 2) {
+		echo "Usage: jspt input.php [input.json] > output\n\n";
+		return;
+	}
+
+	$argv = $_SERVER["argv"];
+	if ($argc == 2)
+		$doc = json_decode(stream_get_contents(STDIN));
+	else
+		$doc = json_decode(file_get_contents($argv[2]));
+	require($argv[1]);
+?>

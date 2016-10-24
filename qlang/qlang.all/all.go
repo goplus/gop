@@ -1,13 +1,12 @@
 package qall
 
 import (
-	"qlang.io/qlang.spec.v1"
 	"qlang.io/qlang/bufio"
 	"qlang.io/qlang/bytes"
 	"qlang.io/qlang/crypto/md5"
 	"qlang.io/qlang/encoding/hex"
 	"qlang.io/qlang/encoding/json"
-	"qlang.io/qlang/eqlang.v1"
+	"qlang.io/qlang/eqlang"
 	"qlang.io/qlang/errors"
 	"qlang.io/qlang/io"
 	"qlang.io/qlang/io/ioutil"
@@ -22,8 +21,9 @@ import (
 	"qlang.io/qlang/strings"
 	"qlang.io/qlang/sync"
 	"qlang.io/qlang/terminal"
-	"qlang.io/qlang/tpl.v1/extractor"
+	"qlang.io/qlang/tpl/extractor"
 	"qlang.io/qlang/version"
+	qlang "qlang.io/spec"
 
 	// qlang builtin modules
 	_ "qlang.io/qlang/builtin"
