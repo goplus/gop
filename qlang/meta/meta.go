@@ -11,8 +11,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"qlang.io/exec.v2"
-	"qlang.io/qlang.spec.v1"
+	"qlang.io/exec"
+	qlang "qlang.io/spec"
 )
 
 // Exports is the export table of this module.

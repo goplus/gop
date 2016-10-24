@@ -680,7 +680,7 @@ func (p *Bar) GetX() int {
 
 ```go
 import (
-	"qlang.io/qlang.spec.v1"
+	qlang "qlang.io/spec"
 )
 
 var Exports = map[string]interface{}{
