@@ -3,7 +3,7 @@ package ioutil
 import (
 	"io/ioutil"
 
-	"qlang.io/qlang.spec.v1"
+	qlang "qlang.io/spec"
 )
 
 // -----------------------------------------------------------------------------

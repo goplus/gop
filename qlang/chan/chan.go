@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"qlang.io/qlang.spec.v1"
-	"qlang.io/qlang.spec.v1/types"
+	qlang "qlang.io/spec"
+	"qlang.io/spec/types"
 )
 
 // -----------------------------------------------------------------------------
