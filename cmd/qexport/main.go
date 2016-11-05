@@ -109,23 +109,6 @@ func main() {
 	}
 }
 
-var (
-	uint64_const_keys = []string{
-		"crc64.ECMA",
-		"crc64.ISO",
-		"math.MaxUint64",
-	}
-)
-
-func isUint64Const(key string) bool {
-	for _, k := range uint64_const_keys {
-		if key == k {
-			return true
-		}
-	}
-	return false
-}
-
 func export(pkg string, outpath string, skipOSArch bool) error {
 	p, err := NewPackage(pkg, flagDefaultContext)
 	if err != nil {
@@ -157,6 +140,8 @@ func export(pkg string, outpath string, skipOSArch bool) error {
 	for _, path := range strings.Split(bp.ImportPath, "/") {
 		if path == "internal" {
 			return errors.New("skip internal pkg")
+		} else if path == "vendor" {
+			return errors.New("skip vendor pkg")
 		}
 	}
 
@@ -172,6 +157,9 @@ func export(pkg string, outpath string, skipOSArch bool) error {
 			return vers[0], true
 		}
 		return "", false
+	}
+	checkConst := func(key string) KeyType {
+		return ac.CheckConstType(bp.ImportPath + "." + key)
 	}
 
 	// go ver map
@@ -196,7 +184,10 @@ var Exports = map[string]interface{}{
 		for _, v := range keys {
 			name := v
 			fn := pkgName + "." + v
-			if isUint64Const(fn) {
+			typ := checkConst(v)
+			if typ == ConstInt64 {
+				fn = "int64(" + fn + ")"
+			} else if typ == ConstUnit64 {
 				fn = "uint64(" + fn + ")"
 			}
 			if vers, ok := checkVer(v); ok {
@@ -344,11 +335,11 @@ var Exports = map[string]interface{}{
 				}
 			}
 
-			//export type, qlang.NewType(reflect.TypeOf((*http.Client)(nil)).Elem())
-			//export type, qlang.StructOf((*strings.Reader)(nil))
+			//export type, spec.NewType(reflect.TypeOf((*http.Client)(nil)).Elem())
+			//export type, spec.StructOf((*strings.Reader)(nil))
 			if ast.IsExported(v) {
 				name := v
-				fn := fmt.Sprintf("qlang.StructOf((*%s.%s)(nil))", pkgName, v)
+				fn := fmt.Sprintf("spec.StructOf((*%s.%s)(nil))", pkgName, v)
 				if vers, ok := checkVer(v); ok {
 					verHasTypeExport[vers] = true
 					outfv(vers, name, fn)
@@ -405,7 +396,7 @@ var Exports = map[string]interface{}{
 		outHeadf("import (\n")
 		outHeadf("\t%q\n", pkg)
 		if hasTypeExport {
-			outHeadf("\n\t\"qlang.io/qlang.spec.v1\"\n")
+			outHeadf("\n\t\"qlang.io/spec\"\n")
 		}
 		outHeadf(")\n\n")
 	}
@@ -438,7 +429,7 @@ var Exports = map[string]interface{}{
 		if verHasTypeExport[ver] {
 			buf.WriteString("import (\n")
 			buf.WriteString(fmt.Sprintf("\t%q\n\n", bp.ImportPath))
-			buf.WriteString(fmt.Sprintf("\t%q\n", "qlang.io/qlang.spec.v1"))
+			buf.WriteString(fmt.Sprintf("\t%q\n", "qlang.io/spec"))
 			buf.WriteString(")\n")
 		} else {
 			buf.WriteString(fmt.Sprintf("import %q\n", bp.ImportPath))
