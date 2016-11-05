@@ -72,7 +72,11 @@ func function2Func(in *reflect.Value, t reflect.Type) {
 
 	fn := in.MethodByName("Call")
 	wrap := func(args []reflect.Value) (results []reflect.Value) {
-		ret := fn.Call(args)[0]
+		argsWithStk := make([]reflect.Value, len(args)+1)
+		stk := NewStack() // issue #127: 使用新的stack，因为回调过程有可能是从新的goroutine发起的
+		argsWithStk[0] = reflect.ValueOf(stk)
+		copy(argsWithStk[1:], args)
+		ret := fn.Call(argsWithStk)[0]
 		n := t.NumOut()
 		if n == 0 {
 			return
@@ -194,6 +198,9 @@ func Call(fn interface{}, varity ...int) Instr {
 // CallFn
 
 type iCallFn int
+type iCaller interface {
+	Call(stk *Stack, args ...interface{}) interface{}
+}
 
 func (arity iCallFn) OptimizableGetArity() int {
 
@@ -212,13 +219,19 @@ func (arity iCallFn) Exec(stk *Stack, ctx *Context) {
 	var tfn0 reflect.Type
 	if vfn.Kind() != reflect.Func { // 这不是func，而是Function/其他可调用对象
 		tfn0 = tfn
-		vfnt := vfn.MethodByName("Call")
-		if vfnt.IsValid() {
-			vfn = vfnt
+		if caller, ok := vfn.Interface().(iCaller); ok {
+			vfn = reflect.ValueOf(func(args ...interface{}) interface{} {
+				return caller.Call(stk, args...)
+			})
 		} else {
-			vfn = reflect.Indirect(vfn).FieldByName("Call")
-			if vfn.Kind() == reflect.Interface {
-				vfn = vfn.Elem()
+			vfnt := vfn.MethodByName("Call")
+			if vfnt.IsValid() {
+				vfn = vfnt
+			} else {
+				vfn = reflect.Indirect(vfn).FieldByName("Call")
+				if vfn.Kind() == reflect.Interface {
+					vfn = vfn.Elem()
+				}
 			}
 		}
 		tfn = vfn.Type()

@@ -49,14 +49,14 @@ func (p *Class) GoType() reflect.Type {
 
 // NewInstance creates a new instance of a qlang type. required by `qlang type` spec.
 //
-func (p *Class) NewInstance(args ...interface{}) interface{} {
+func (p *Class) NewInstance(stk *Stack, args ...interface{}) interface{} {
 
-	return p.New(args...)
+	return p.New(stk, args...)
 }
 
 // New creates a new instance of this class.
 //
-func (p *Class) New(args ...interface{}) *Object {
+func (p *Class) New(stk *Stack, args ...interface{}) *Object {
 
 	obj := &Object{
 		vars: make(map[string]interface{}),
@@ -67,7 +67,7 @@ func (p *Class) New(args ...interface{}) *Object {
 			this: obj,
 			fn:   init,
 		}
-		closure.Call(args...)
+		closure.Call(stk, args...)
 	} else if len(args) > 0 {
 		panic("constructor `_init` not found")
 	}
@@ -151,20 +151,24 @@ type Method struct {
 
 // Call calls this method with arguments.
 //
-func (p *Method) Call(a ...interface{}) interface{} {
+func (p *Method) Call(stk *Stack, a ...interface{}) interface{} {
 
 	args := make([]interface{}, len(a)+1)
 	args[0] = p.this
 	for i, v := range a {
 		args[i+1] = v
 	}
-	return p.fn.Call(args...)
+	return p.fn.Call(stk, args...)
 }
 
 // -----------------------------------------------------------------------------
 
 type newTyper interface {
 	NewInstance(args ...interface{}) interface{}
+}
+
+type newTyperEx interface {
+	NewInstance(stk *Stack, args ...interface{}) interface{}
 }
 
 type iNew int
@@ -178,6 +182,11 @@ func (nArgs iNew) Exec(stk *Stack, ctx *Context) {
 	}
 
 	if v, ok := stk.Pop(); ok {
+		if cls, ok := v.(newTyperEx); ok {
+			obj := cls.NewInstance(stk, args...)
+			stk.Push(obj)
+			return
+		}
 		if cls, ok := v.(newTyper); ok {
 			obj := cls.NewInstance(args...)
 			stk.Push(obj)
