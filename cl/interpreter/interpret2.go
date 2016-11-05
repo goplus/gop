@@ -49,29 +49,29 @@ func lastWord(s string) string {
 	return ""
 }
 
-func call(ip *exec.Object, name string) interface{} {
+func call(estk *exec.Stack, ip *exec.Object, name string) interface{} {
 
 	if fn, ok := ip.Cls.Fns[name]; ok {
-		return fn.Call(ip)
+		return fn.Call(estk, ip)
 	}
 	panic("method not found: " + name)
 }
 
-func callN(ip *exec.Object, name string, args ...interface{}) interface{} {
+func callN(estk *exec.Stack, ip *exec.Object, name string, args ...interface{}) interface{} {
 
 	if fn, ok := ip.Cls.Fns[name]; ok {
 		args1 := make([]interface{}, 1, len(args)+1)
 		args1[0] = ip
-		return fn.Call(append(args1, args...)...)
+		return fn.Call(estk, append(args1, args...)...)
 	}
 	panic("method not found: " + name)
 }
 
-func callFn(stk *exec.Object, fn interface{}, arity int) {
+func callFn(estk *exec.Stack, stk *exec.Object, fn interface{}, arity int) {
 
 	var in []reflect.Value
 	if arity > 0 {
-		ret := reflect.ValueOf(callN(stk, "popArgs", arity))
+		ret := reflect.ValueOf(callN(estk, stk, "popArgs", arity))
 		if ret.Kind() != reflect.Slice {
 			panic("method stack.popArgs doesn't return a slice")
 		}
@@ -84,17 +84,17 @@ func callFn(stk *exec.Object, fn interface{}, arity int) {
 	vfn := reflect.ValueOf(fn)
 	out := vfn.Call(in)
 	if len(out) == 0 {
-		callN(stk, "push", nil)
+		callN(estk, stk, "push", nil)
 	} else {
-		callN(stk, "push", out[0].Interface())
+		callN(estk, stk, "push", out[0].Interface())
 	}
 }
 
-func callVfn(stk *exec.Object, fn *exec.Function, arity int) {
+func callVfn(estk *exec.Stack, stk *exec.Object, fn *exec.Function, arity int) {
 
-	v := callN(stk, "popArgs", arity)
+	v := callN(estk, stk, "popArgs", arity)
 	if args, ok := v.([]interface{}); ok {
-		callN(stk, "push", fn.Call(args...))
+		callN(estk, stk, "push", fn.Call(estk, args...))
 		return
 	}
 
@@ -107,7 +107,7 @@ func callVfn(stk *exec.Object, fn *exec.Function, arity int) {
 	for i := 0; i < n; i++ {
 		in[i] = ret.Index(i).Interface()
 	}
-	callN(stk, "push", fn.Call(in...))
+	callN(estk, stk, "push", fn.Call(estk, in...))
 }
 
 func New(ip interface{}, options *Options) (p *Engine, err error) {
@@ -125,7 +125,8 @@ func New(ip interface{}, options *Options) (p *Engine, err error) {
 		}
 	}()
 
-	p = newEngine(ip, options)
+	estk := exec.NewStack()
+	p = newEngine(estk, ip, options)
 	return
 }
 
@@ -153,7 +154,7 @@ func (p *Engine) Eval(expr string) (err error) {
 	return p.Exec([]byte(expr), "")
 }
 
-func newEngine(ip1 interface{}, options *Options) (p *Engine) {
+func newEngine(estk *exec.Stack, ip1 interface{}, options *Options) (p *Engine) {
 
 	if options == nil {
 		options = &optionsDef
@@ -165,13 +166,13 @@ func newEngine(ip1 interface{}, options *Options) (p *Engine) {
 	}
 
 	p = new(Engine)
-	vstk := call(ip, "stack")
+	vstk := call(estk, ip, "stack")
 	stk, ok := vstk.(*exec.Object)
 	if !ok {
 		panic("stack isn't an object")
 	}
 
-	vfntable := call(ip, "fntable")
+	vfntable := call(estk, ip, "fntable")
 	fntable, ok := vfntable.(map[string]interface{})
 	if !ok {
 		panic("fntable isn't a map[string]interface{} object")
@@ -220,7 +221,7 @@ func newEngine(ip1 interface{}, options *Options) (p *Engine) {
 						return
 					}
 				}
-				callFn(stk, fn, n)
+				callFn(estk, stk, fn, n)
 			}
 			return tpl.Action(g, action)
 		}
@@ -288,15 +289,15 @@ func newEngine(ip1 interface{}, options *Options) (p *Engine) {
 						}
 					}
 				}
-				vfn.Call(args...)
+				vfn.Call(estk, args...)
 			} else {
-				callVfn(stk, vfn, n)
+				callVfn(estk, stk, vfn, n)
 			}
 		}
 		return tpl.Action(g, action)
 	}
 
-	vgrammar := call(ip, "grammar")
+	vgrammar := call(estk, ip, "grammar")
 	grammar, ok := vgrammar.(string)
 	if !ok {
 		panic("grammar isn't a string object")

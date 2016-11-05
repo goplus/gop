@@ -17,7 +17,7 @@ func (p *iAnonymFn) Exec(stk *Stack, ctx *Context) {
 
 	fn := NewFunction(nil, p.start, p.end, p.symtbl, nil, false)
 	fn.Parent = ctx
-	stk.Push(fn.ExtCall(nil))
+	stk.Push(fn.Call(stk))
 }
 
 // AnonymFn returns an instruction that creates an anonymous function.
@@ -81,7 +81,7 @@ func (p *iModule) Exec(stk *Stack, ctx *Context) {
 			Stack:  ctx.Stack,
 			modmgr: ctx.modmgr,
 		}
-		modCtx.InitVars(p.symtbl)
+		modCtx.initVars(p.symtbl)
 		modFn := NewFunction(nil, p.start, p.end, p.symtbl, nil, false)
 		modFn.ExtCall(modCtx)
 		exports = modCtx.Exports()

@@ -131,9 +131,18 @@ func NewFunction(cls *Class, start, end int, symtbl map[string]int, args []strin
 
 // Call calls this function with default context.
 //
-func (p *Function) Call(args ...interface{}) (ret interface{}) {
+func (p *Function) Call(stk *Stack, args ...interface{}) (ret interface{}) {
 
-	return p.ExtCall(nil, args...)
+	parent := p.Parent
+	ctx := &Context{
+		parent: parent,
+		Stack:  stk,
+		Code:   parent.Code,
+		modmgr: parent.modmgr,
+		base:   stk.BaseFrame(),
+	}
+	ctx.initVars(p.symtbl)
+	return p.ExtCall(ctx, args...)
 }
 
 // ExtCall calls this function with a specified context.
@@ -155,26 +164,7 @@ func (p *Function) ExtCall(ctx *Context, args ...interface{}) (ret interface{}) 
 		return nil
 	}
 
-	var base int
-	var stk *Stack
-
-	if ctx == nil {
-		parent := p.Parent
-		stk = parent.Stack
-		base = stk.BaseFrame()
-		ctx = &Context{
-			parent: parent,
-			Stack:  stk,
-			Code:   parent.Code,
-			modmgr: parent.modmgr,
-			base:   base,
-		}
-		ctx.InitVars(p.symtbl)
-	} else {
-		stk = ctx.Stack
-		base = stk.BaseFrame()
-	}
-
+	stk := ctx.Stack
 	vars := ctx.Vars()
 	if p.Variadic {
 		for i := 0; i < n-1; i++ {
@@ -193,7 +183,7 @@ func (p *Function) ExtCall(ctx *Context, args ...interface{}) (ret interface{}) 
 		}
 		ret = ctx.ret
 		ctx.ExecDefers()
-		stk.SetFrame(base)
+		stk.SetFrame(ctx.base)
 		if ctx.Recov != nil {
 			panic(ctx.Recov)
 		}

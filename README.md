@@ -20,19 +20,6 @@ Q Language - A script language for Go
 * 作为编译原理的教学语言。由于 qlang 的 Compiler 代码极短，便于阅读和理解，非常方便教学实践之用。
 
 
-## 不兼容调整
-
-qlang.v3 在 [qlang.v2](https://github.com/qiniu/qlang/tree/qlang.v2) 基础上，有如下不兼容调整：
-
-1. exec.Context: Var(name) 改名为 GetVar(name)；
-2. 采用 vendor 机制，放弃手工在包名上带上版本号（这意味着我们不再支持 go1.4 及以下版本）；
-3. 目录结构调整：
- - 语言规范：qlang.io/qlang.spec.v1 => qlang.io/spec
- - 编译器：qlang.io/qlang.v2/qlang => qlang.io/cl/qlang
- - 运行时：qlang.io/exec.v2 => qlang.io/exec
- - 可执行程序：qlang.io/app/* => qlang.io/cmd/*
-
-
 ## 快速入门
 
 ### 在您的 Go 代码中整合 qlang
@@ -104,6 +91,20 @@ QLANG_DUMPCODE=1 qlang
 * [Q 语言手册](README_QL.md): 这里有语言特性的详细介绍。
 * [Qlang Tutorials](tutorial): 这里是一些 qlang 的样例代码，供您学习 qlang 时参考。
 
+
+## 不兼容调整
+
+qlang.v3 在 [qlang.v2](https://github.com/qiniu/qlang/tree/qlang.v2) 基础上，有如下不兼容调整：
+
+1. exec.Context: Var(name) 改名为 GetVar(name)；
+2. 采用 vendor 机制，放弃手工在包名上带上版本号（这意味着我们不再支持 go1.4 及以下版本）；
+3. 目录结构调整：
+ - 语言规范：qlang.io/qlang.spec.v1 => qlang.io/spec
+ - 编译器：qlang.io/qlang.v2/qlang => qlang.io/cl/qlang
+ - 运行时：qlang.io/exec.v2 => qlang.io/exec
+ - 可执行程序：qlang.io/app/* => qlang.io/cmd/*
+
+
 ## 下载
 
 ### 发行版本
@@ -119,9 +120,7 @@ go get -u -insecure qlang.io/qlang
 或者在 src 目录执行如下命令：
 
 ```
-mkdir qiniupkg.com
 git clone https://github.com/qiniu/qlang.git qlang.io
-git clone https://github.com/qiniu/text.git qiniupkg.com/text
 ```
 
 ## 社区资源

@@ -89,13 +89,6 @@ func New() *Qlang {
 	return &Qlang{ctx, cl}
 }
 
-// NewEx returns a new qlang instance.
-//
-func NewEx(options ...*Options) (lang *Qlang, err error) {
-
-	return New(), nil
-}
-
 // SetLibs sets lib paths for searching modules.
 //
 func (p *Qlang) SetLibs(libs string) {

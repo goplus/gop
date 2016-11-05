@@ -158,9 +158,9 @@ type variables struct {
 	symtbl map[string]int // symbol table
 }
 
-// InitVars initializes the variable table.
+// initVars initializes the variable table.
 //
-func (p *variables) InitVars(symtbl map[string]int) {
+func (p *variables) initVars(symtbl map[string]int) {
 
 	n := len(symtbl)
 	if n > 0 {
@@ -169,7 +169,7 @@ func (p *variables) InitVars(symtbl map[string]int) {
 	p.symtbl = symtbl
 }
 
-// ResizeVars resizes variable table.
+// ResizeVars is reserved for internal use.
 //
 func (p *variables) ResizeVars() {
 
@@ -307,7 +307,7 @@ func NewContextEx(symtbl map[string]int) *Context {
 		mods: mods,
 	}
 	p := &Context{modmgr: modmgr}
-	p.InitVars(symtbl)
+	p.initVars(symtbl)
 	return p
 }
 
