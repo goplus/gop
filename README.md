@@ -50,7 +50,7 @@ func main() {
 
 这是一个最精简功能的 mini qlang。想要了解更多，可参考“[定制 qlang](README_QL.md#定制-qlang)”相关内容。实际项目中你也可以参考代码：
 
-* [qlang/main.go](app/qlang/main.go)
+* [qlang/main.go](cmd/qlang/main.go)
 
 ### 非嵌入式场景下使用 qlang
 
@@ -127,11 +127,11 @@ git clone https://github.com/qiniu/qlang.git qlang.io
 
 ### Embedded qlang (eql)
 
-* [eql](app/eql): 全称 [embedded qlang](app/eql)，是类似 erubis/erb 的东西。结合 go generate 可很方便地让 Go 支持模板（不是 html template，是指泛型）。
+* [eql](cmd/eql): 全称 [embedded qlang](cmd/eql)，是类似 erubis/erb 的东西。结合 go generate 可很方便地让 Go 支持模板（不是 html template，是指泛型）。
 
 ### 为 Go package 导出 qlang module
 
-* [qexport](app/qexport): 可为 Go 语言的标准库或者你自己写的 Go Package 自动导出相应的 qlang module。
+* [qexport](cmd/qexport): 可为 Go 语言的标准库或者你自己写的 Go Package 自动导出相应的 qlang module。
 
 ### Qlang Modules
 
