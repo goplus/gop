@@ -1,7 +1,7 @@
 <%
 	//
-	// eql '$set.v1' --base=qlang.io/app/eql/example --set=uint32set --Set=Type --Item=uint32
-	// eql '$set.v1' --base=qlang.io/app/eql/example --set=uintset --Set=Type --Item=uint
+	// eql '$set.v1' --base=qlang.io/cmd/eql/example --set=uint32set --Set=Type --Item=uint32
+	// eql '$set.v1' --base=qlang.io/cmd/eql/example --set=uintset --Set=Type --Item=uint
 	//
 
 	if Item == "string" {
