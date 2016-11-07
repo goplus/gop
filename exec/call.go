@@ -34,11 +34,6 @@ type iCall struct {
 	arity int // 实际传入的参数个数
 }
 
-func (p *iCall) OptimizableGetArity() int {
-
-	return p.arity
-}
-
 func (p *iCall) Exec(stk *Stack, ctx *Context) {
 
 	tfn := p.vfn.Type()
@@ -202,11 +197,6 @@ type iCaller interface {
 	Call(stk *Stack, args ...interface{}) interface{}
 }
 
-func (arity iCallFn) OptimizableGetArity() int {
-
-	return int(arity) + 1
-}
-
 func (arity iCallFn) Exec(stk *Stack, ctx *Context) {
 
 	in, ok := stk.PopArgs(int(arity) + 1)
@@ -276,11 +266,6 @@ func CallFn(arity int) Instr {
 // CallFnv
 
 type iCallFnv int
-
-func (arity iCallFnv) OptimizableGetArity() int {
-
-	return int(arity) + 1
-}
 
 func (arity iCallFnv) Exec(stk *Stack, ctx *Context) {
 
