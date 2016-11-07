@@ -49,16 +49,6 @@ type sliceFromTy int
 
 var nilVarSlice = make([]interface{}, 0)
 
-func (p sliceFrom) OptimizableGetArity() int {
-
-	return int(p)
-}
-
-func (p sliceFromTy) OptimizableGetArity() int {
-
-	return int(p)
-}
-
 func (p sliceFrom) Exec(stk *Stack, ctx *Context) {
 
 	if p == 0 {
@@ -96,11 +86,6 @@ func SliceFromTy(arity int) Instr {
 
 type iStructInit int
 
-func (p iStructInit) OptimizableGetArity() int {
-
-	return int(p)
-}
-
 func (p iStructInit) Exec(stk *Stack, ctx *Context) {
 
 	n := len(stk.data) - int(p)
@@ -118,11 +103,6 @@ func StructInit(arity int) Instr {
 // MapInit
 
 type iMapInit int
-
-func (p iMapInit) OptimizableGetArity() int {
-
-	return int(p)
-}
 
 func (p iMapInit) Exec(stk *Stack, ctx *Context) {
 
