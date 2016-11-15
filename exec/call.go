@@ -71,31 +71,36 @@ func function2Func(in *reflect.Value, t reflect.Type) {
 		stk := NewStack() // issue #127: 使用新的stack，因为回调过程有可能是从新的goroutine发起的
 		argsWithStk[0] = reflect.ValueOf(stk)
 		copy(argsWithStk[1:], args)
-		ret := fn.Call(argsWithStk)[0]
+		out := fn.Call(argsWithStk)
 		n := t.NumOut()
 		if n == 0 {
 			return
 		}
+		ret := out[0]
 		if n == 1 {
-			if t.Out(0) != typeIntf {
-				ret = ret.Elem()
-			}
-			return []reflect.Value{ret}
+			return []reflect.Value{toType(ret, t.Out(0))}
 		}
 		if ret.Kind() != reflect.Slice || ret.Len() != n {
 			panic(fmt.Sprintf("unexpected return value count, we need `%d` values", n))
 		}
 		results = make([]reflect.Value, n)
 		for i := 0; i < n; i++ {
-			result := ret.Index(i)
-			if t.Out(i) != typeIntf {
-				result = result.Elem()
-			}
-			results[i] = result
+			results[i] = toType(ret.Index(i), t.Out(i))
 		}
 		return
 	}
 	*in = reflect.MakeFunc(t, wrap)
+}
+
+func toType(v reflect.Value, t reflect.Type) reflect.Value {
+
+	if t.Kind() != reflect.Interface {
+		return v.Elem()
+	}
+	if v.IsNil() {
+		return reflect.New(t).Elem()
+	}
+	return v.Elem().Convert(t)
 }
 
 func validateType(in *reflect.Value, t, tfn reflect.Type) {
