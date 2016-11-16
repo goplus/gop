@@ -35,6 +35,7 @@ type Package struct {
 	bps      map[string]*build.Package
 	defctx   bool
 	contexts []*build.Context
+	fnskip   func(key string) bool
 }
 
 func NewPackage(pkg string, defctx bool) (*Package, error) {
@@ -235,6 +236,9 @@ func (p *Package) FilterCommon(typs ...DocType) ([]string, map[string]interface{
 		if m, ok := p.keys[typ]; ok {
 			for k, v := range m {
 				if len(v) == ctxsize && (ast.IsExported(k) || typ == Struct) {
+					if p.fnskip != nil && p.fnskip(k) {
+						continue
+					}
 					key = append(key, k)
 					cm[k] = v[def]
 				}
