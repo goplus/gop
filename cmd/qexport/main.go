@@ -127,14 +127,18 @@ type Info struct {
 	obj   types.Object
 }
 
+type InsertInfo struct {
+	file *ast.File
+	decl ast.Decl
+	pos  token.Position
+}
+
 type UpdateInfo struct {
-	updataPkg         string
-	usesMap           map[string]*Info
-	exportsDecl       ast.Decl
-	exportsInsertPos  token.Position
-	exportsDeclFile   *ast.File
-	initDecl          []ast.Decl
-	initDeclInsertPos []token.Position
+	fileset     *token.FileSet
+	updataPkg   string
+	usesMap     map[string]*Info
+	exportsInfo *InsertInfo
+	initsInfo   []*InsertInfo
 }
 
 var (
@@ -143,29 +147,25 @@ var (
 	Stdin  io.Reader = os.Stdin
 )
 
-func (ui *UpdateInfo) Update(outpath string, data []byte) error {
-	if ui.exportsDecl == nil {
-		return os.ErrInvalid
-	}
-	filename := filepath.Join(outpath, ui.exportsInsertPos.Filename)
-	all, err := ioutil.ReadFile(filename)
+func UpdateFile(outpath string, filename string, pos int, data []byte) error {
+	file := filepath.Join(outpath, filename)
+	all, err := ioutil.ReadFile(file)
 	if err != nil {
 		return err
 	}
-	pos := ui.exportsInsertPos.Offset
 	var out []byte
 	out = append(out, all[:pos-1]...)
 	out = append(out, data...)
 	out = append(out, all[pos-1:]...)
 
-	ioutil.WriteFile(filename, out, 0777)
+	ioutil.WriteFile(file, out, 0777)
 
 	cmd := goimports.Command
 	cmd.Stdin = Stdin
 	cmd.Stdout = Stdout
 	cmd.Stderr = Stderr
 	var args []string
-	args = append(args, "-w=true", filename)
+	args = append(args, "-w=true", file)
 
 	cmd.Flag.Parse(args)
 	args = cmd.Flag.Args()
@@ -191,7 +191,8 @@ func checkUpdate(pkgname string, pkg string) (*UpdateInfo, error) {
 	list := pkgwalk.LookupObjList(w, pkgx, conf)
 
 	ui := &UpdateInfo{}
-	ui.updataPkg = bp.Name
+	ui.fileset = w.FileSet
+	ui.updataPkg = bp.ImportPath
 	ui.usesMap = make(map[string]*Info)
 
 	for ident, obj := range conf.Info.Uses {
@@ -207,17 +208,18 @@ func checkUpdate(pkgname string, pkg string) (*UpdateInfo, error) {
 	for _, obj := range list {
 		if obj != nil && obj.Obj != nil {
 			if obj.Obj.Name() == "Exports" {
-				ui.exportsDeclFile, ui.exportsDecl = w.FindDeclForPos(obj.Ident.Pos())
-				pos := w.FileSet.Position(ui.exportsDecl.End())
-				pos.Filename = fnUpdatePath(pos.Filename)
-				ui.exportsInsertPos = pos
-			} else if obj.Obj.Name() == "init" {
-				_, decl := w.FindDeclForPos(obj.Ident.Pos())
+				file, decl := w.FindDeclForPos(obj.Ident.Pos())
 				if decl != nil {
-					ui.initDecl = append(ui.initDecl, decl)
 					pos := w.FileSet.Position(decl.End())
 					pos.Filename = fnUpdatePath(pos.Filename)
-					ui.initDeclInsertPos = append(ui.initDeclInsertPos, pos)
+					ui.exportsInfo = &InsertInfo{file, decl, pos}
+				}
+			} else if obj.Obj.Name() == "init" {
+				file, decl := w.FindDeclForPos(obj.Ident.Pos())
+				if decl != nil {
+					pos := w.FileSet.Position(decl.End())
+					pos.Filename = fnUpdatePath(pos.Filename)
+					ui.initsInfo = append(ui.initsInfo, &InsertInfo{file, decl, pos})
 				}
 			}
 		}
@@ -268,17 +270,17 @@ func export(pkg string, outpath string, skipOSArch bool) error {
 	}
 
 	if upinfo != nil {
-		log.Println("import from update pkg", upinfo.updataPkg)
+		log.Printf("export pkg %q update with %q\n", pkg, upinfo.updataPkg)
 	}
 
 	fnskip := func(key string) bool {
 		return false
 	}
 
+	//check fnskip
 	if upinfo != nil {
 		fnskip = func(key string) bool {
 			if _, ok := upinfo.usesMap[key]; ok {
-				fmt.Println(key)
 				return true
 			}
 			return false
@@ -311,17 +313,6 @@ func export(pkg string, outpath string, skipOSArch bool) error {
 
 	var hasTypeExport bool
 	verHasTypeExport := make(map[string]bool)
-
-	exportsDecl := fmt.Sprintf(`// Exports is the export table of this module.
-//
-var Exports = map[string]interface{}{
-	"_name": "%s",	
-`, pkg)
-
-	//write exports
-	if upinfo == nil {
-		outf(exportsDecl)
-	}
 
 	//const
 	if keys, _ := p.FilterCommon(Const); len(keys) > 0 {
@@ -529,58 +520,87 @@ var Exports = map[string]interface{}{
 			}
 		}
 	}
-
-	// end exports
-	if upinfo == nil {
-		outf("}")
-	}
-
-	if upinfo != nil {
-		upinfo.Update(filepath.Join(outpath, pkg), buf.Bytes())
-		return nil
-	}
-
-	var head bytes.Buffer
-	outHeadf := func(format string, a ...interface{}) (err error) {
-		_, err = head.WriteString(fmt.Sprintf(format, a...))
-		return
-	}
-
-	//write package
-	outHeadf("package %s\n", pkgName)
-
-	if strings.Count(buf.String(), ",") > 1 {
-		//write imports
-		outHeadf("import (\n")
-		outHeadf("\t%q\n", pkg)
-		if hasTypeExport {
-			outHeadf("\n\t\"qlang.io/spec\"\n")
-		}
-		outHeadf(")\n\n")
-	}
-
-	// format
-	data, err := format.Source(append(head.Bytes(), buf.Bytes()...))
-	if err != nil {
-		return err
-	}
-
-	// write file
+	// write root dir
 	root := filepath.Join(outpath, pkg)
-	err = os.MkdirAll(root, 0777)
-	if err != nil {
-		return err
+	os.MkdirAll(root, 0777)
+
+	upverMap := make(map[string]*InsertInfo)
+
+	//check update ver map
+	if upinfo != nil {
+		for _, ii := range upinfo.initsInfo {
+			for _, group := range ii.file.Comments {
+				for _, comment := range group.List {
+					if upinfo.fileset.Position(comment.Pos()).Offset != 0 {
+						continue
+					}
+					text := comment.Text
+					if strings.HasPrefix(text, "//") {
+						text = strings.TrimSpace(text[2:])
+						if strings.HasPrefix(text, "+build ") {
+							tag := strings.TrimSpace(text[6:])
+							upverMap[tag] = ii
+						}
+					}
+				}
+			}
+		}
 	}
 
-	file, err := os.Create(filepath.Join(root, pkgName+".go"))
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	file.Write(data)
+	//write exports
+	if upinfo != nil && upinfo.exportsInfo != nil {
+		UpdateFile(root, upinfo.exportsInfo.pos.Filename, upinfo.exportsInfo.pos.Offset, buf.Bytes())
+	} else {
+		var head bytes.Buffer
+		outHeadf := func(format string, a ...interface{}) (err error) {
+			_, err = head.WriteString(fmt.Sprintf(format, a...))
+			return
+		}
 
-	// write version
+		//write package
+		outHeadf("package %s\n", pkgName)
+
+		if strings.Count(buf.String(), ",") > 1 {
+			//write imports
+			outHeadf("import (\n")
+			outHeadf("\t%q\n", pkg)
+			if hasTypeExport {
+				outHeadf("\n\t\"qlang.io/spec\"\n")
+			}
+			outHeadf(")\n\n")
+		}
+
+		var source []byte
+		source = append(source, head.Bytes()...)
+		exportsDecl := fmt.Sprintf(`// Exports is the export table of this module.
+//
+var Exports = map[string]interface{}{
+	"_name": "%s",	
+`, pkg)
+		source = append(source, []byte(exportsDecl)...)
+		source = append(source, buf.Bytes()...)
+		source = append(source, '}')
+
+		// format
+		data, err := format.Source(source)
+		if err != nil {
+			return err
+		}
+
+		file, err := os.Create(filepath.Join(root, pkgName+".go"))
+		if err != nil {
+			return err
+		}
+		file.Write(data)
+		file.Close()
+	}
+	// write version data
 	for ver, lines := range verMap {
+		if ii, ok := upverMap[ver]; ok {
+			data := strings.Join(lines, "\n\t")
+			UpdateFile(root, ii.pos.Filename, ii.pos.Offset, []byte(data))
+			continue
+		}
 		var buf bytes.Buffer
 		buf.WriteString(fmt.Sprintf("// +build %s\n\n", ver))
 		buf.WriteString(fmt.Sprintf("package %s\n\n", pkgName))
@@ -606,7 +626,6 @@ var Exports = map[string]interface{}{
 		file.Write(data)
 		file.Close()
 	}
-
 	return nil
 }
 
