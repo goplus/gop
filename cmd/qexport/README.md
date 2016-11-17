@@ -7,9 +7,13 @@ Export go package to qlang module
 The Q Language : https://github.com/qiniu/qlang
 
 
-Usages:
+### Usages:
+
 ```
-qexport [-contexts=""] [-defctx=false] [-convnew=true] [-skiperrimpl=true] [-outpath="./qlang"] packages
+Export go packages to qlang modules.
+
+Usage:
+  qexport [option] packages
 
 The packages for go package list or std for golang all standard packages.
 
@@ -19,13 +23,17 @@ The packages for go package list or std for golang all standard packages.
     	optional convert NewType func to type func (default true)
   -defctx
     	optional use default context for build, default use all contexts.
+  -lowercase
+    	optional use qlang lower case style. (default true)
   -outpath string
     	optional set export root path (default "./qlang")
   -skiperrimpl
     	optional skip error interface implement struct. (default true)
+  -updatepath string
+    	option set update qlang package root
 ```
 
-Examples:
+### Examples
 
 ```
 export sync
@@ -36,77 +44,36 @@ export html and html/template package
 
 export all package
 > qexport std
+
+export io and update from qlang.io/qlang/io
+> qexport -updatepath qlang.io/qlang io
+
+export all package and update from qlang.io
+> qexport -updatepath qlang.io/qlang std
 ```
 
+### 导出包
 
-Export pacakge runtime:
-
-* runtime.go
-``` go
-package runtime
-
-import (
-	"runtime"
-
-	"qlang.io/qlang.spec.v1"
-)
-
-// Exports is the export table of this module.
-//
-var Exports = map[string]interface{}{
-	"_name": "runtime",
-
-	"Compiler": runtime.Compiler,
-	"GOARCH":   runtime.GOARCH,
-	"GOOS":     runtime.GOOS,
-
-	"MemProfileRate": runtime.MemProfileRate,
-
-	"blockProfile":        runtime.BlockProfile,
-	"breakpoint":          runtime.Breakpoint,
-	"CPUProfile":          runtime.CPUProfile,
-	"caller":              runtime.Caller,
-	"callers":             runtime.Callers,
-	"GC":                  runtime.GC,
-	"GOMAXPROCS":          runtime.GOMAXPROCS,
-	"GOROOT":              runtime.GOROOT,
-	"goexit":              runtime.Goexit,
-	"goroutineProfile":    runtime.GoroutineProfile,
-	"gosched":             runtime.Gosched,
-	"lockOSThread":        runtime.LockOSThread,
-	"memProfile":          runtime.MemProfile,
-	"numCPU":              runtime.NumCPU,
-	"numCgoCall":          runtime.NumCgoCall,
-	"numGoroutine":        runtime.NumGoroutine,
-	"readMemStats":        runtime.ReadMemStats,
-	"setBlockProfileRate": runtime.SetBlockProfileRate,
-	"setCPUProfileRate":   runtime.SetCPUProfileRate,
-	"setFinalizer":        runtime.SetFinalizer,
-	"stack":               runtime.Stack,
-	"threadCreateProfile": runtime.ThreadCreateProfile,
-	"unlockOSThread":      runtime.UnlockOSThread,
-	"version":             runtime.Version,
-
-	"BlockProfileRecord": qlang.StructOf((*runtime.BlockProfileRecord)(nil)),
-	"Func":               qlang.StructOf((*runtime.Func)(nil)),
-	"funcForPC":          runtime.FuncForPC,
-	"MemProfileRecord":   qlang.StructOf((*runtime.MemProfileRecord)(nil)),
-	"MemStats":           qlang.StructOf((*runtime.MemStats)(nil)),
-	"StackRecord":        qlang.StructOf((*runtime.StackRecord)(nil)),
-}
 ```
-* runtime-go15.go
-``` go
-// +build go1.5
+导出一个包
+> qexport bufio
 
-package runtime
+导出多个包
+> qexport bufio io io/ioutil
 
-import "runtime"
-
-func init() {
-	Exports["readTrace"] = runtime.ReadTrace
-	Exports["startTrace"] = runtime.StartTrace
-	Exports["stopTrace"] = runtime.StopTrace
-}
+导出标准包
+> qexport std 
 ```
-		
+
+### 更新包
+```
+导出bufio包，复制qlang.io/qlang中bufio包到输出目录并更新。
+> qexport -updatepath qlang.io/qlang bufio
+
+导出多个包，复制qlang.io/qlang中对应包到输出目录并作更新。
+> qexport -updatepath qlang.io/qlang bufio io io/ioutil
+
+导出标准包，复制qlang.io/qlang中对应包到输出目录并作更新。
+> qexport -updatepath qlang.io/qlang std
+
+```
