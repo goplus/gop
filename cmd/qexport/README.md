@@ -77,3 +77,19 @@ export all package and update from qlang.io
 > qexport -updatepath qlang.io/qlang std
 
 ```
+
+### 导出和更新包原理和实现
+```
+1. 导出pkg包，首先分析pkg包的所有函数和类型作导出准备
+
+2. 如果需要更新，则先复制qlang.io/qlang/pkg包到输出目录中
+   同时分析qlang.io/qlang/pkg包中对原始pkg包的引用
+   所有引用的名称在做更新导出时不再输出。
+
+3. 输出需要导出的函数到输出文件中，如果为更新包，则作合并处理
+   标准输出位置为 Exports 变量的定义处
+   特定Go版本输出 以go1.6版本为例
+        文件名为 pkg-go1.6.go 
+        编译注释 // +build go1.6 
+	    在init函数中作输出
+```
