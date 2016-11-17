@@ -6,22 +6,14 @@ import (
 	"flag"
 	"fmt"
 	"go/ast"
-	"go/build"
 	"go/doc"
 	"go/format"
-	"go/token"
-	"go/types"
-	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"unicode"
-
-	"github.com/visualfc/gotools/goimports"
-	"github.com/visualfc/gotools/pkgwalk"
 )
 
 var (
@@ -37,7 +29,7 @@ var (
 const help = `Export go packages to qlang modules.
 
 Usage:
-  qexport [-contexts=""] [-defctx=false] [-convnew=true] [-skiperrimpl=true] [-outpath="./qlang"] packages
+  qexport [option] packages
 
 The packages for go package list or std for golang all standard packages.
 `
@@ -54,7 +46,7 @@ func init() {
 	flag.BoolVar(&flagSkipErrorImplementStruct, "skiperrimpl", true, "optional skip error interface implement struct.")
 	flag.BoolVar(&flagQlangLowerCaseStyle, "lowercase", true, "optional use qlang lower case style.")
 	flag.StringVar(&flagExportPath, "outpath", "./qlang", "optional set export root path")
-	flag.StringVar(&flagUpdatePath, "updatepath", "", "option set qlang update root path")
+	flag.StringVar(&flagUpdatePath, "updatepath", "", "option set update qlang package root")
 }
 
 var (
@@ -121,113 +113,6 @@ func main() {
 	}
 }
 
-type Info struct {
-	kind  pkgwalk.ObjKind
-	ident *ast.Ident
-	obj   types.Object
-}
-
-type InsertInfo struct {
-	file *ast.File
-	decl ast.Decl
-	pos  token.Position
-}
-
-type UpdateInfo struct {
-	fileset     *token.FileSet
-	updataPkg   string
-	usesMap     map[string]*Info
-	exportsInfo *InsertInfo
-	initsInfo   []*InsertInfo
-}
-
-var (
-	Stdout io.Writer = os.Stdout
-	Stderr io.Writer = os.Stderr
-	Stdin  io.Reader = os.Stdin
-)
-
-func UpdateFile(outpath string, filename string, pos int, data []byte) error {
-	file := filepath.Join(outpath, filename)
-	all, err := ioutil.ReadFile(file)
-	if err != nil {
-		return err
-	}
-	var out []byte
-	out = append(out, all[:pos-1]...)
-	out = append(out, data...)
-	out = append(out, all[pos-1:]...)
-
-	ioutil.WriteFile(file, out, 0777)
-
-	cmd := goimports.Command
-	cmd.Stdin = Stdin
-	cmd.Stdout = Stdout
-	cmd.Stderr = Stderr
-	var args []string
-	args = append(args, "-w=true", file)
-
-	cmd.Flag.Parse(args)
-	args = cmd.Flag.Args()
-
-	cmd.Run(cmd, args)
-	return nil
-}
-
-func checkUpdate(pkgname string, pkg string) (*UpdateInfo, error) {
-	updatePkgPath := flagUpdatePath + "/" + pkg
-	bp, err := build.Import(updatePkgPath, "", 0)
-	if err != nil {
-		return nil, err
-	}
-	CopyDir(bp.Dir, flagExportPath+"/"+pkg, false)
-
-	conf := pkgwalk.DefaultPkgConfig()
-	w := pkgwalk.NewPkgWalker(&build.Default)
-	pkgx, err := pkgwalk.ImportPackage(w, updatePkgPath, conf)
-	if err != nil {
-		return nil, err
-	}
-	list := pkgwalk.LookupObjList(w, pkgx, conf)
-
-	ui := &UpdateInfo{}
-	ui.fileset = w.FileSet
-	ui.updataPkg = bp.ImportPath
-	ui.usesMap = make(map[string]*Info)
-
-	for ident, obj := range conf.Info.Uses {
-		if obj != nil && obj.Pkg() != nil && obj.Pkg().Path() == pkg {
-			kind, _ := pkgwalk.ParserObjectKind(ident, obj, conf)
-			ui.usesMap[ident.Name] = &Info{kind, ident, obj}
-		}
-	}
-	fnUpdatePath := func(filename string) string {
-		_, file := filepath.Split(filename)
-		return file
-	}
-	for _, obj := range list {
-		if obj != nil && obj.Obj != nil {
-			if obj.Obj.Name() == "Exports" {
-				file, decl := w.FindDeclForPos(obj.Ident.Pos())
-				if decl != nil {
-					pos := w.FileSet.Position(decl.End())
-					pos.Filename = fnUpdatePath(pos.Filename)
-					ui.exportsInfo = &InsertInfo{file, decl, pos}
-				}
-			} else if obj.Obj.Name() == "init" {
-				file, decl := w.FindDeclForPos(obj.Ident.Pos())
-				if decl != nil {
-					pos := w.FileSet.Position(decl.End())
-					pos.Filename = fnUpdatePath(pos.Filename)
-					ui.initsInfo = append(ui.initsInfo, &InsertInfo{file, decl, pos})
-				}
-			}
-		}
-	}
-
-	return ui, nil
-}
-
 func export(pkg string, outpath string, skipOSArch bool) error {
 	p, err := NewPackage(pkg, flagDefaultContext)
 	if err != nil {
@@ -266,11 +151,11 @@ func export(pkg string, outpath string, skipOSArch bool) error {
 
 	var upinfo *UpdateInfo
 	if flagUpdatePath != "" {
-		upinfo, _ = checkUpdate(bp.Name, pkg)
+		upinfo, _ = CheckUpdateInfo(bp.Name, pkg)
 	}
 
 	if upinfo != nil {
-		log.Printf("export pkg %q update with %q\n", pkg, upinfo.updataPkg)
+		log.Printf("update pkg %q from %q\n", pkg, upinfo.updataPkg)
 	}
 
 	fnskip := func(key string) bool {
@@ -477,11 +362,10 @@ func export(pkg string, outpath string, skipOSArch bool) error {
 				}
 			}
 
-			//export type, spec.NewType(reflect.TypeOf((*http.Client)(nil)).Elem())
-			//export type, spec.StructOf((*strings.Reader)(nil))
+			//export type, qlang.StructOf((*strings.Reader)(nil))
 			if ast.IsExported(v) {
 				name := v
-				fn := fmt.Sprintf("spec.StructOf((*%s.%s)(nil))", pkgName, v)
+				fn := fmt.Sprintf("qlang.StructOf((*%s.%s)(nil))", pkgName, v)
 				if vers, ok := checkVer(v); ok {
 					verHasTypeExport[vers] = true
 					outfv(vers, name, fn)
@@ -524,7 +408,7 @@ func export(pkg string, outpath string, skipOSArch bool) error {
 	root := filepath.Join(outpath, pkg)
 	os.MkdirAll(root, 0777)
 
-	upverMap := make(map[string]*InsertInfo)
+	verUpdateMap := make(map[string]*InsertInfo)
 
 	//check update ver map
 	if upinfo != nil {
@@ -539,7 +423,7 @@ func export(pkg string, outpath string, skipOSArch bool) error {
 						text = strings.TrimSpace(text[2:])
 						if strings.HasPrefix(text, "+build ") {
 							tag := strings.TrimSpace(text[6:])
-							upverMap[tag] = ii
+							verUpdateMap[tag] = ii
 						}
 					}
 				}
@@ -549,7 +433,7 @@ func export(pkg string, outpath string, skipOSArch bool) error {
 
 	//write exports
 	if upinfo != nil && upinfo.exportsInfo != nil {
-		UpdateFile(root, upinfo.exportsInfo.pos.Filename, upinfo.exportsInfo.pos.Offset, buf.Bytes())
+		upinfo.exportsInfo.UpdateFile(root, buf.Bytes(), hasTypeExport)
 	} else {
 		var head bytes.Buffer
 		outHeadf := func(format string, a ...interface{}) (err error) {
@@ -560,12 +444,14 @@ func export(pkg string, outpath string, skipOSArch bool) error {
 		//write package
 		outHeadf("package %s\n", pkgName)
 
-		if strings.Count(buf.String(), ",") > 1 {
+		//check pkgName used
+		if strings.Index(buf.String(), pkgName+".") > 0 {
 			//write imports
 			outHeadf("import (\n")
 			outHeadf("\t%q\n", pkg)
+			//check qlang used
 			if hasTypeExport {
-				outHeadf("\n\t\"qlang.io/spec\"\n")
+				outHeadf("\n\tqlang \"qlang.io/spec\"\n")
 			}
 			outHeadf(")\n\n")
 		}
@@ -596,9 +482,9 @@ var Exports = map[string]interface{}{
 	}
 	// write version data
 	for ver, lines := range verMap {
-		if ii, ok := upverMap[ver]; ok {
+		if ii, ok := verUpdateMap[ver]; ok {
 			data := strings.Join(lines, "\n\t")
-			UpdateFile(root, ii.pos.Filename, ii.pos.Offset, []byte(data))
+			ii.UpdateFile(root, []byte(data), verHasTypeExport[ver])
 			continue
 		}
 		var buf bytes.Buffer
@@ -607,7 +493,7 @@ var Exports = map[string]interface{}{
 		if verHasTypeExport[ver] {
 			buf.WriteString("import (\n")
 			buf.WriteString(fmt.Sprintf("\t%q\n\n", bp.ImportPath))
-			buf.WriteString(fmt.Sprintf("\t%q\n", "qlang.io/spec"))
+			buf.WriteString(fmt.Sprintf("\tqlang %q\n", "qlang.io/spec"))
 			buf.WriteString(")\n")
 		} else {
 			buf.WriteString(fmt.Sprintf("import %q\n", bp.ImportPath))
