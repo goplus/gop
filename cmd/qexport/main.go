@@ -113,6 +113,25 @@ func main() {
 	}
 }
 
+func checkStructHasUnexportField(decl *ast.GenDecl) bool {
+	if len(decl.Specs) > 0 {
+		if ts, ok := decl.Specs[0].(*ast.TypeSpec); ok {
+			if st, ok := ts.Type.(*ast.StructType); ok {
+				if st.Fields != nil {
+					for _, f := range st.Fields.List {
+						for _, n := range f.Names {
+							if !ast.IsExported(n.Name) {
+								return true
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return false
+}
+
 func export(pkg string, outpath string, skipOSArch bool) error {
 	p, err := NewPackage(pkg, flagDefaultContext)
 	if err != nil {
@@ -331,6 +350,7 @@ func export(pkg string, outpath string, skipOSArch bool) error {
 			if !ok {
 				continue
 			}
+			//fmt.Printf("%v\n", dt.Decl.Specs[0].(*ast.TypeSpec).Type.(*ast.StructType).Fields.List)
 			// exported funcs
 			var funcsNew []string
 			var funcsOther []string
@@ -363,7 +383,7 @@ func export(pkg string, outpath string, skipOSArch bool) error {
 			}
 
 			//export type, qlang.StructOf((*strings.Reader)(nil))
-			if ast.IsExported(v) {
+			if ast.IsExported(v) && !checkStructHasUnexportField(dt.Decl) {
 				name := v
 				fn := fmt.Sprintf("qlang.StructOf((*%s.%s)(nil))", pkgName, v)
 				if vers, ok := checkVer(v); ok {
