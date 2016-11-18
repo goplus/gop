@@ -294,13 +294,29 @@ func (w *PkgWalker) FindDeclForPos(p token.Pos) (*ast.File, ast.Decl) {
 	return f, findDecl(w.FileSet, f, p)
 }
 
+func importName(is *ast.ImportSpec) string {
+	fpath, _ := strconv.Unquote(is.Path.Value)
+
+	fbase := fpath
+	pos := strings.LastIndexAny(fpath, "./-\\")
+	if pos != -1 {
+		fbase = fpath[pos+1:]
+	}
+
+	var fname string
+	if is.Name != nil {
+		fname = is.Name.Name
+	} else {
+		fname = fbase
+	}
+	return fname
+}
+
 func (w *PkgWalker) FindImportName(ast *ast.File, path string) string {
 	for _, im := range ast.Imports {
-		if im.Path.Value == path {
-			if im.Name != nil {
-				return im.Name.Name
-			}
-			return path
+		ipath, _ := strconv.Unquote(im.Path.Value)
+		if ipath == path {
+			return importName(im)
 		}
 	}
 	return ""
