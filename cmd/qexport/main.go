@@ -435,9 +435,6 @@ func export(pkg string, outpath string, skipOSArch bool) error {
 		for _, ii := range upinfo.initsInfo {
 			for _, group := range ii.file.Comments {
 				for _, comment := range group.List {
-					if upinfo.fileset.Position(comment.Pos()).Offset != 0 {
-						continue
-					}
 					text := comment.Text
 					if strings.HasPrefix(text, "//") {
 						text = strings.TrimSpace(text[2:])
