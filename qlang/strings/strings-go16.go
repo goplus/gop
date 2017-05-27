@@ -9,4 +9,7 @@ import (
 func init() {
 	Exports["lastIndexByte"] = strings.LastIndexByte
 	Exports["compare"] = strings.Compare
+
+	Exports["LastIndexByte"] = strings.LastIndexByte
+	Exports["Compare"] = strings.Compare
 }

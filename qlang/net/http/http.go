@@ -18,10 +18,21 @@ var Exports = map[string]interface{}{
 	"parseHTTPVersion": http.ParseHTTPVersion,
 	"parseTime":        http.ParseTime,
 
+	"NewRequest":       http.NewRequest,
+	"ReadRequest":      http.ReadRequest,
+	"ReadResponse":     http.ReadResponse,
+	"ParseHTTPVersion": http.ParseHTTPVersion,
+	"ParseTime":        http.ParseTime,
+
 	"get":      http.Get,
 	"post":     http.Post,
 	"postForm": http.PostForm,
 	"head":     http.Head,
+
+	"Get":      http.Get,
+	"Post":     http.Post,
+	"PostForm": http.PostForm,
+	"Head":     http.Head,
 
 	"handle":            http.Handle,
 	"handleFunc":        http.HandleFunc,
@@ -29,6 +40,13 @@ var Exports = map[string]interface{}{
 	"serve":             http.Serve,
 	"listenAndServe":    http.ListenAndServe,
 	"listenAndServeTLS": http.ListenAndServeTLS,
+
+	"Handle":            http.Handle,
+	"HandleFunc":        http.HandleFunc,
+	"ServeMux":          http.NewServeMux,
+	"Serve":             http.Serve,
+	"ListenAndServe":    http.ListenAndServe,
+	"ListenAndServeTLS": http.ListenAndServeTLS,
 
 	"error":           http.Error,
 	"notFound":        http.NotFound,
@@ -43,12 +61,32 @@ var Exports = map[string]interface{}{
 	"stripPrefix":     http.StripPrefix,
 	"timeoutHandler":  http.TimeoutHandler,
 
+	"Error":           http.Error,
+	"NotFound":        http.NotFound,
+	"NotFoundHandler": http.NotFoundHandler,
+	"Redirect":        http.Redirect,
+	"RedirectHandler": http.RedirectHandler,
+	"FileServer":      http.FileServer,
+	"FileTransport":   http.NewFileTransport,
+	"ServeContent":    http.ServeContent,
+	"ServeFile":       http.ServeFile,
+	"SetCookie":       http.SetCookie,
+	"StripPrefix":     http.StripPrefix,
+	"TimeoutHandler":  http.TimeoutHandler,
+
 	"statusText":           http.StatusText,
 	"canonicalHeaderKey":   http.CanonicalHeaderKey,
 	"detectContentType":    http.DetectContentType,
 	"maxBytesReader":       http.MaxBytesReader,
 	"proxyFromEnvironment": http.ProxyFromEnvironment,
 	"proxyURL":             http.ProxyURL,
+
+	"StatusText":           http.StatusText,
+	"CanonicalHeaderKey":   http.CanonicalHeaderKey,
+	"DetectContentType":    http.DetectContentType,
+	"MaxBytesReader":       http.MaxBytesReader,
+	"ProxyFromEnvironment": http.ProxyFromEnvironment,
+	"ProxyURL":             http.ProxyURL,
 
 	"DefaultTransport": http.DefaultTransport,
 	"DefaultClient":    http.DefaultClient,

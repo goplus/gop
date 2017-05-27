@@ -34,6 +34,10 @@ var Exports = map[string]interface{}{
 	"reader":  NewReader,
 	"writer":  NewWriter,
 	"scanner": bufio.NewScanner,
+
+	"NewReader":  NewReader,
+	"NewWriter":  NewWriter,
+	"NewScanner": bufio.NewScanner,
 }
 
 // -----------------------------------------------------------------------------

@@ -13,6 +13,7 @@ import (
 //
 var Exports = map[string]interface{}{
 	"_name":     "os",
+	"_initSafe": _initSafe,
 	"args":      os.Args[1:],
 	"stdin":     os.Stdin,
 	"stderr":    os.Stderr,
@@ -21,7 +22,15 @@ var Exports = map[string]interface{}{
 	"open":      os.Open,
 	"create":    os.Create,
 	"exit":      os.Exit,
-	"_initSafe": _initSafe,
+
+	"Args":   os.Args[1:],
+	"Stdin":  os.Stdin,
+	"Stderr": os.Stderr,
+	"Stdout": os.Stdout,
+	"Getenv": os.Getenv,
+	"Open":   os.Open,
+	"Create": os.Create,
+	"Exit":   os.Exit,
 }
 
 func _initSafe(mod qlang.Module) {
@@ -29,6 +38,10 @@ func _initSafe(mod qlang.Module) {
 	mod.Disable("open")
 	mod.Disable("getenv")
 	mod.Exports["exit"] = SafeExit
+
+	mod.Disable("Open")
+	mod.Disable("Getenv")
+	mod.Exports["Exit"] = SafeExit
 }
 
 // SafeExit is a safe way to quit qlang application.

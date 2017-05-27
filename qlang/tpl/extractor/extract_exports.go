@@ -11,6 +11,7 @@ import (
 var Exports = map[string]interface{}{
 	"_name": "qiniupkg.com/text/tpl.v1/extractor",
 	"new":   extractor.New,
+	"New":   extractor.New,
 }
 
 // -----------------------------------------------------------------------------

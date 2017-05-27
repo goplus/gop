@@ -17,6 +17,13 @@ var Exports = map[string]interface{}{
 	"makeMap":   reflect.MakeMap,
 	"zero":      reflect.Zero,
 
+	"ValueOf":   reflect.ValueOf,
+	"TypeOf":    reflect.TypeOf,
+	"Indirect":  reflect.Indirect,
+	"MakeSlice": reflect.MakeSlice,
+	"MakeMap":   reflect.MakeMap,
+	"Zero":      reflect.Zero,
+
 	"Map":       reflect.Map,
 	"Slice":     reflect.Slice,
 	"Interface": reflect.Interface,

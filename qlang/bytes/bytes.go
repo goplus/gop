@@ -58,6 +58,20 @@ var Exports = map[string]interface{}{
 	"toTitle":  bytes.ToTitle,
 	"toUpper":  bytes.ToUpper,
 	"trim":     bytes.Trim,
+
+	"NewBuffer": newBuffer,
+	"From":      from,
+	"Equal":     bytes.Equal,
+	"NewReader": bytes.NewReader,
+	"Contains":  bytes.Contains,
+	"Index":     bytes.Index,
+	"IndexAny":  bytes.IndexAny,
+	"Join":      bytes.Join,
+	"Title":     bytes.Title,
+	"ToLower":   bytes.ToLower,
+	"ToTitle":   bytes.ToTitle,
+	"ToUpper":   bytes.ToUpper,
+	"Trim":      bytes.Trim,
 }
 
 // -----------------------------------------------------------------------------

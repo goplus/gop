@@ -16,6 +16,15 @@ var Exports = map[string]interface{}{
 	"decodeString":   hex.DecodeString,
 	"dump":           hex.Dump,
 	"dumper":         hex.Dumper,
+
+	"EncodedLen":     hex.EncodedLen,
+	"Encode":         hex.Encode,
+	"DecodedLen":     hex.DecodedLen,
+	"Decode":         hex.Decode,
+	"EncodeToString": hex.EncodeToString,
+	"DecodeString":   hex.DecodeString,
+	"Dump":           hex.Dump,
+	"Dumper":         hex.Dumper,
 }
 
 // -----------------------------------------------------------------------------

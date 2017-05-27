@@ -14,6 +14,9 @@ var Exports = map[string]interface{}{
 	"writer": lzw.NewWriter,
 	"LSB":    lzw.LSB,
 	"MSB":    lzw.MSB,
+
+	"NewReader": lzw.NewReader,
+	"NewWriter": lzw.NewWriter,
 }
 
 // -----------------------------------------------------------------------------

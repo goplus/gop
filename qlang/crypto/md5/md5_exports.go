@@ -59,6 +59,11 @@ var Exports = map[string]interface{}{
 	"sumstr": Sumstr,
 	"hash":   Hash,
 
+	"New":    md5.New,
+	"Sum":    md5.Sum,
+	"Sumstr": Sumstr,
+	"Hash":   Hash,
+
 	"BlockSize": md5.BlockSize,
 	"Size":      md5.Size,
 }
