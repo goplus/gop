@@ -8,4 +8,5 @@ import (
 
 func init() {
 	Exports["copyBuffer"] = io.CopyBuffer
+	Exports["CopyBuffer"] = io.CopyBuffer
 }

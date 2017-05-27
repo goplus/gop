@@ -17,6 +17,7 @@ func init() {
 	fnt["e"] = math.E
 	fnt["pi"] = math.Pi
 	fnt["phi"] = math.Phi
+
 	fnt["Inf"] = math.Inf(1)
 	fnt["NaN"] = math.NaN()
 }
@@ -74,6 +75,53 @@ var Exports = map[string]interface{}{
 	"y0":        math.Y0,
 	"y1":        math.Y1,
 	"yn":        math.Yn,
+
+	"Abs":       math.Abs,
+	"Acos":      math.Acos,
+	"Acosh":     math.Acosh,
+	"Asin":      math.Asin,
+	"Asinh":     math.Asinh,
+	"Atan":      math.Atan,
+	"Atan2":     math.Atan2,
+	"Atanh":     math.Atanh,
+	"Cbrt":      math.Cbrt,
+	"Ceil":      math.Ceil,
+	"Copysign":  math.Copysign,
+	"Cos":       math.Cos,
+	"Cosh":      math.Cosh,
+	"Dim":       math.Dim,
+	"Erf":       math.Erf,
+	"Erfc":      math.Erfc,
+	"Exp":       math.Exp,
+	"Exp2":      math.Exp2,
+	"Expm1":     math.Expm1,
+	"Floor":     math.Floor,
+	"Gamma":     math.Gamma,
+	"Hypot":     math.Hypot,
+	"J0":        math.J0,
+	"J1":        math.J1,
+	"Jn":        math.Jn,
+	"Ldexp":     math.Ldexp,
+	"Ln":        math.Log,
+	"Log":       math.Log,
+	"Log10":     math.Log10,
+	"Log1p":     math.Log1p,
+	"Log2":      math.Log2,
+	"Logb":      math.Logb,
+	"Mod":       mod,
+	"Nextafter": math.Nextafter,
+	"Pow":       math.Pow,
+	"Pow10":     math.Pow10,
+	"Remainder": math.Remainder,
+	"Sin":       math.Sin,
+	"Sinh":      math.Sinh,
+	"Sqrt":      math.Sqrt,
+	"Tan":       math.Tan,
+	"Tanh":      math.Tanh,
+	"Trunc":     math.Trunc,
+	"Y0":        math.Y0,
+	"Y1":        math.Y1,
+	"Yn":        math.Yn,
 }
 
 // -----------------------------------------------------------------------------

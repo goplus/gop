@@ -23,6 +23,10 @@ var Exports = map[string]interface{}{
 	"sum":    sha1.Sum,
 	"sumstr": Sumstr,
 
+	"New":    sha1.New,
+	"Sum":    sha1.Sum,
+	"Sumstr": Sumstr,
+
 	"BlockSize": sha1.BlockSize,
 	"Size":      sha1.Size,
 }

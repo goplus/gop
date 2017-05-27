@@ -27,6 +27,10 @@ var Exports = map[string]interface{}{
 	"cond":      sync.NewCond,
 	"mutex":     newMutex,
 	"waitGroup": newWaitGroup,
+
+	"NewCond":      sync.NewCond,
+	"NewMutex":     newMutex,
+	"NewWaitGroup": newWaitGroup,
 }
 
 // -----------------------------------------------------------------------------

@@ -11,6 +11,9 @@ var Exports = map[string]interface{}{
 	"new":    sha256.New,
 	"new224": sha256.New224,
 
+	"New":    sha256.New,
+	"New224": sha256.New224,
+
 	"BlockSize": sha256.BlockSize,
 	"Size":      sha256.Size,
 }

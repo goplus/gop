@@ -244,6 +244,13 @@ var Exports = map[string]interface{}{
 	"input":     Input,
 	"inputFile": InputFile,
 
+	"New":   New,
+	"Parse": Parse,
+	"Subst": Subst,
+
+	"Input":     Input,
+	"InputFile": InputFile,
+
 	"ErrEndRequired": ErrEndRequired,
 	"ErrEndOfString": ErrEndOfString,
 }

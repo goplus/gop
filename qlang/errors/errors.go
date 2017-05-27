@@ -9,6 +9,7 @@ import "errors"
 var Exports = map[string]interface{}{
 	"_name": "errors",
 	"new":   errors.New,
+	"New":   errors.New,
 }
 
 // -----------------------------------------------------------------------------

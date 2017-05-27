@@ -47,6 +47,16 @@ var Exports = map[string]interface{}{
 	"compact":       json.Compact,
 	"indent":        json.Indent,
 	"htmlEscape":    json.HTMLEscape,
+
+	"NewDecoder":    json.NewDecoder,
+	"NewEncoder":    json.NewEncoder,
+	"Marshal":       json.Marshal,
+	"MarshalIndent": json.MarshalIndent,
+	"Pretty":        Pretty,
+	"Unmarshal":     Unmarshal,
+	"Compact":       json.Compact,
+	"Indent":        json.Indent,
+	"HTMLEscape":    json.HTMLEscape,
 }
 
 // -----------------------------------------------------------------------------
