@@ -5,6 +5,7 @@ import (
 
 	"qlang.io/cl/qlang"
 	_ "qlang.io/qlang/builtin"
+	ql "qlang.io/spec"
 )
 
 // -----------------------------------------------------------------------------
@@ -34,6 +35,26 @@ func TestGet(t *testing.T) {
 	}
 	if v, ok := lang.GetVar("z"); !ok || v != 1 {
 		t.Fatal("z != 1, z =", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+const testGetUndefinedCode = `
+
+c = {}
+x = c["a"]["b"]
+`
+
+func TestGetUndefined(t *testing.T) {
+
+	lang := qlang.New()
+	err := lang.SafeExec([]byte(testGetUndefinedCode), "")
+	if err != nil {
+		t.Fatal("qlang.SafeExec:", err)
+	}
+	if v := lang.Var("x"); v != ql.Undefined {
+		t.Fatal("x != undefined, x =", v)
 	}
 }
 

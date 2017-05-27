@@ -215,6 +215,16 @@ func (p *variables) ResetVars(vars map[string]interface{}) {
 	}
 }
 
+// Var returns a variable value.
+//
+func (p *variables) Var(name string) interface{} {
+
+	if k, ok := p.symtbl[name]; ok {
+		return p.vars[k]
+	}
+	return qlang.Undefined
+}
+
 // GetVar returns a variable value.
 //
 func (p *variables) GetVar(name string) (v interface{}, ok bool) {

@@ -36,15 +36,14 @@ const scriptCode = `x = 1 + 2`
 
 func main() {
 
-	lang := qlang.New()
-	err := lang.SafeExec([]byte(scriptCode), "")
+	ql := qlang.New()
+	err := ql.SafeExec([]byte(scriptCode), "")
 	if err != nil {
 		// 错误处理
 		return
 	}
 
-	v, _ := lang.GetVar("x")
-	fmt.Println("x:", v) // 输出 x: 3
+	fmt.Println("x:", ql.Var("x")) // 输出 x: 3
 }
 ```
 
@@ -90,19 +89,6 @@ QLANG_DUMPCODE=1 qlang
 
 * [Q 语言手册](README_QL.md): 这里有语言特性的详细介绍。
 * [Qlang Tutorials](tutorial): 这里是一些 qlang 的样例代码，供您学习 qlang 时参考。
-
-
-## 不兼容调整
-
-qlang.v3 在 [qlang.v2](https://github.com/qiniu/qlang/tree/qlang.v2) 基础上，有如下不兼容调整：
-
-1. exec.Context: Var(name) 改名为 GetVar(name)；
-2. 采用 vendor 机制，放弃手工在包名上带上版本号（这意味着我们不再支持 go1.4 及以下版本）；
-3. 目录结构调整：
- - 语言规范：qlang.io/qlang.spec.v1 => qlang.io/spec
- - 编译器：qlang.io/qlang.v2/qlang => qlang.io/cl/qlang
- - 运行时：qlang.io/exec.v2 => qlang.io/exec
- - 可执行程序：qlang.io/app/* => qlang.io/cmd/*
 
 
 ## 下载

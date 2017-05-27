@@ -241,6 +241,8 @@ func Get(m interface{}, key interface{}) interface{} {
 		return qlang.Undefined
 	case reflect.Slice, reflect.String, reflect.Array:
 		return o.Index(key.(int)).Interface()
+	case reflect.Int: // undefined?
+		return qlang.Undefined
 	default:
 		return qlang.GetEx(m, key)
 	}
