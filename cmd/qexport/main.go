@@ -20,14 +20,16 @@ var (
 	flagDefaultContext           bool
 	flagRenameNewTypeFunc        bool
 	flagSkipErrorImplementStruct bool
+	flagQlangLowerCaseStyle      bool
 	flagCustomContext            string
 	flagExportPath               string
+	flagUpdatePath               string
 )
 
 const help = `Export go packages to qlang modules.
 
 Usage:
-  qexport [-contexts=""] [-defctx=false] [-convnew=true] [-skiperrimpl=true] [-outpath="./qlang"] packages
+  qexport [option] packages
 
 The packages for go package list or std for golang all standard packages.
 `
@@ -42,7 +44,9 @@ func init() {
 	flag.BoolVar(&flagDefaultContext, "defctx", false, "optional use default context for build, default use all contexts.")
 	flag.BoolVar(&flagRenameNewTypeFunc, "convnew", true, "optional convert NewType func to type func")
 	flag.BoolVar(&flagSkipErrorImplementStruct, "skiperrimpl", true, "optional skip error interface implement struct.")
+	flag.BoolVar(&flagQlangLowerCaseStyle, "lowercase", true, "optional use qlang lower case style.")
 	flag.StringVar(&flagExportPath, "outpath", "./qlang", "optional set export root path")
+	flag.StringVar(&flagUpdatePath, "updatepath", "", "option set update qlang package root")
 }
 
 var (
@@ -109,6 +113,25 @@ func main() {
 	}
 }
 
+func checkStructHasUnexportField(decl *ast.GenDecl) bool {
+	if len(decl.Specs) > 0 {
+		if ts, ok := decl.Specs[0].(*ast.TypeSpec); ok {
+			if st, ok := ts.Type.(*ast.StructType); ok {
+				if st.Fields != nil {
+					for _, f := range st.Fields.List {
+						for _, n := range f.Names {
+							if !ast.IsExported(n.Name) {
+								return true
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return false
+}
+
 func export(pkg string, outpath string, skipOSArch bool) error {
 	p, err := NewPackage(pkg, flagDefaultContext)
 	if err != nil {
@@ -145,6 +168,30 @@ func export(pkg string, outpath string, skipOSArch bool) error {
 		}
 	}
 
+	var upinfo *UpdateInfo
+	if flagUpdatePath != "" {
+		upinfo, _ = CheckUpdateInfo(bp.Name, pkg)
+	}
+
+	if upinfo != nil {
+		log.Printf("update pkg %q from %q\n", pkg, upinfo.updataPkg)
+	}
+
+	fnskip := func(key string) bool {
+		return false
+	}
+
+	//check fnskip
+	if upinfo != nil {
+		fnskip = func(key string) bool {
+			if _, ok := upinfo.usesMap[key]; ok {
+				return true
+			}
+			return false
+		}
+		p.fnskip = fnskip
+	}
+
 	var buf bytes.Buffer
 	outf := func(format string, a ...interface{}) (err error) {
 		_, err = buf.WriteString(fmt.Sprintf(format, a...))
@@ -170,13 +217,6 @@ func export(pkg string, outpath string, skipOSArch bool) error {
 
 	var hasTypeExport bool
 	verHasTypeExport := make(map[string]bool)
-
-	//write exports
-	outf(`// Exports is the export table of this module.
-//
-var Exports = map[string]interface{}{
-	"_name": "%s",	
-`, pkg)
 
 	//const
 	if keys, _ := p.FilterCommon(Const); len(keys) > 0 {
@@ -230,7 +270,7 @@ var Exports = map[string]interface{}{
 	if keys, _ := p.FilterCommon(Func); len(keys) > 0 {
 		outf("\n")
 		for _, v := range keys {
-			name := toLowerCaseStyle(v)
+			name := toQlangName(v)
 			fn := pkgName + "." + v
 			if vers, ok := checkVer(v); ok {
 				outfv(vers, name, fn)
@@ -257,6 +297,9 @@ var Exports = map[string]interface{}{
 			var funcsNew []string
 			var funcsOther []string
 			for _, f := range dt.Funcs {
+				if fnskip(f.Name) {
+					continue
+				}
 				if ast.IsExported(f.Name) {
 					if strings.HasPrefix(f.Name, "New"+v) {
 						funcsNew = append(funcsNew, f.Name)
@@ -267,9 +310,9 @@ var Exports = map[string]interface{}{
 			}
 
 			for _, f := range funcsNew {
-				name := toLowerCaseStyle(f)
+				name := toQlangName(f)
 				if flagRenameNewTypeFunc && len(funcsNew) == 1 {
-					name = toLowerCaseStyle(v)
+					name = toQlangName(v)
 					if ast.IsExported(name) {
 						name = strings.ToLower(name)
 						log.Printf("waring convert %s to %s", bp.ImportPath+"."+f, name)
@@ -284,7 +327,7 @@ var Exports = map[string]interface{}{
 			}
 
 			for _, f := range funcsOther {
-				name := toLowerCaseStyle(f)
+				name := toQlangName(f)
 				fn := pkgName + "." + f
 				if vers, ok := checkVer(f); ok {
 					outfv(vers, name, fn)
@@ -307,10 +350,14 @@ var Exports = map[string]interface{}{
 			if !ok {
 				continue
 			}
+			//fmt.Printf("%v\n", dt.Decl.Specs[0].(*ast.TypeSpec).Type.(*ast.StructType).Fields.List)
 			// exported funcs
 			var funcsNew []string
 			var funcsOther []string
 			for _, f := range dt.Funcs {
+				if fnskip(f.Name) {
+					continue
+				}
 				if ast.IsExported(f.Name) {
 					if strings.HasPrefix(f.Name, "New"+v) {
 						funcsNew = append(funcsNew, f.Name)
@@ -335,11 +382,10 @@ var Exports = map[string]interface{}{
 				}
 			}
 
-			//export type, spec.NewType(reflect.TypeOf((*http.Client)(nil)).Elem())
-			//export type, spec.StructOf((*strings.Reader)(nil))
-			if ast.IsExported(v) {
+			//export type, qlang.StructOf((*strings.Reader)(nil))
+			if ast.IsExported(v) && !checkStructHasUnexportField(dt.Decl) {
 				name := v
-				fn := fmt.Sprintf("spec.StructOf((*%s.%s)(nil))", pkgName, v)
+				fn := fmt.Sprintf("qlang.StructOf((*%s.%s)(nil))", pkgName, v)
 				if vers, ok := checkVer(v); ok {
 					verHasTypeExport[vers] = true
 					outfv(vers, name, fn)
@@ -350,9 +396,9 @@ var Exports = map[string]interface{}{
 			}
 
 			for _, f := range funcsNew {
-				name := toLowerCaseStyle(f)
+				name := toQlangName(f)
 				if flagRenameNewTypeFunc && len(funcsNew) == 1 {
-					name = toLowerCaseStyle(v)
+					name = toQlangName(v)
 					//NewRGBA => rgba
 					if ast.IsExported(name) {
 						name = strings.ToLower(name)
@@ -368,7 +414,7 @@ var Exports = map[string]interface{}{
 			}
 
 			for _, f := range funcsOther {
-				name := toLowerCaseStyle(f)
+				name := toQlangName(f)
 				fn := pkgName + "." + f
 				if vers, ok := checkVer(f); ok {
 					outfv(vers, name, fn)
@@ -378,58 +424,93 @@ var Exports = map[string]interface{}{
 			}
 		}
 	}
-
-	// end exports
-	outf("}")
-
-	var head bytes.Buffer
-	outHeadf := func(format string, a ...interface{}) (err error) {
-		_, err = head.WriteString(fmt.Sprintf(format, a...))
-		return
-	}
-
-	//write package
-	outHeadf("package %s\n", pkgName)
-
-	if strings.Count(buf.String(), ",") > 1 {
-		//write imports
-		outHeadf("import (\n")
-		outHeadf("\t%q\n", pkg)
-		if hasTypeExport {
-			outHeadf("\n\t\"qlang.io/spec\"\n")
-		}
-		outHeadf(")\n\n")
-	}
-
-	// format
-	data, err := format.Source(append(head.Bytes(), buf.Bytes()...))
-	if err != nil {
-		return err
-	}
-
-	// write file
+	// write root dir
 	root := filepath.Join(outpath, pkg)
-	err = os.MkdirAll(root, 0777)
-	if err != nil {
-		return err
+	os.MkdirAll(root, 0777)
+
+	verUpdateMap := make(map[string]*InsertInfo)
+
+	//check update ver map
+	if upinfo != nil {
+		for _, ii := range upinfo.initsInfo {
+			for _, group := range ii.file.Comments {
+				for _, comment := range group.List {
+					text := comment.Text
+					if strings.HasPrefix(text, "//") {
+						text = strings.TrimSpace(text[2:])
+						if strings.HasPrefix(text, "+build ") {
+							tag := strings.TrimSpace(text[6:])
+							verUpdateMap[tag] = ii
+						}
+					}
+				}
+			}
+		}
 	}
 
-	file, err := os.Create(filepath.Join(root, pkgName+".go"))
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	file.Write(data)
+	//write exports
+	if upinfo != nil && upinfo.exportsInfo != nil {
+		upinfo.exportsInfo.UpdateFile(root, buf.Bytes(), hasTypeExport)
+	} else {
+		var head bytes.Buffer
+		outHeadf := func(format string, a ...interface{}) (err error) {
+			_, err = head.WriteString(fmt.Sprintf(format, a...))
+			return
+		}
 
-	// write version
+		//write package
+		outHeadf("package %s\n", pkgName)
+
+		//check pkgName used
+		if strings.Index(buf.String(), pkgName+".") > 0 {
+			//write imports
+			outHeadf("import (\n")
+			outHeadf("\t%q\n", pkg)
+			//check qlang used
+			if hasTypeExport {
+				outHeadf("\n\tqlang \"qlang.io/spec\"\n")
+			}
+			outHeadf(")\n\n")
+		}
+
+		var source []byte
+		source = append(source, head.Bytes()...)
+		exportsDecl := fmt.Sprintf(`// Exports is the export table of this module.
+//
+var Exports = map[string]interface{}{
+	"_name": "%s",	
+`, pkg)
+		source = append(source, []byte(exportsDecl)...)
+		source = append(source, buf.Bytes()...)
+		source = append(source, '}')
+
+		// format
+		data, err := format.Source(source)
+		if err != nil {
+			return err
+		}
+
+		file, err := os.Create(filepath.Join(root, pkgName+".go"))
+		if err != nil {
+			return err
+		}
+		file.Write(data)
+		file.Close()
+	}
+	// write version data
 	for ver, lines := range verMap {
+		if ii, ok := verUpdateMap[ver]; ok {
+			data := strings.Join(lines, "\n\t")
+			ii.UpdateFile(root, []byte(data), verHasTypeExport[ver])
+			continue
+		}
 		var buf bytes.Buffer
 		buf.WriteString(fmt.Sprintf("// +build %s\n\n", ver))
 		buf.WriteString(fmt.Sprintf("package %s\n\n", pkgName))
 		if verHasTypeExport[ver] {
 			buf.WriteString("import (\n")
 			buf.WriteString(fmt.Sprintf("\t%q\n\n", bp.ImportPath))
-			buf.WriteString(fmt.Sprintf("\t%q\n", "qlang.io/spec"))
+			buf.WriteString(fmt.Sprintf("\tqlang %q\n", "qlang.io/spec"))
 			buf.WriteString(")\n")
 		} else {
 			buf.WriteString(fmt.Sprintf("import %q\n", bp.ImportPath))
@@ -448,12 +529,14 @@ var Exports = map[string]interface{}{
 		file.Write(data)
 		file.Close()
 	}
-
 	return nil
 }
 
-// convert to lower case style, Name => name, NAME => NAME
-func toLowerCaseStyle(s string) string {
+// convert to qlang name, default use lower case style, Name => name, NAME => NAME
+func toQlangName(s string) string {
+	if !flagQlangLowerCaseStyle {
+		return s
+	}
 	if len(s) <= 1 {
 		return s
 	}
