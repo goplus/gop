@@ -938,7 +938,7 @@ main { // 使用main关键字将主程序括起来，是为了避免其中用的
 			if err != nil {
 				fprintln(os.Stderr, err)
 			} else {
-				printf("> %v\n\n", calc.Ret())
+				printf("> %v\n\n", calc.ret())
 			}
 		}
 	}
