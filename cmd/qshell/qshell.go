@@ -9,10 +9,10 @@ import (
 	"strings"
 
 	"qlang.io/cl/qlang"
-	"qlang.io/qlang/terminal"
+	"qlang.io/lib/terminal"
 
 	qipt "qlang.io/cl/interpreter"
-	qall "qlang.io/qlang/qlang.all"
+	qall "qlang.io/lib/qlang.all"
 )
 
 var (

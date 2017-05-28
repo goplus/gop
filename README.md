@@ -29,7 +29,7 @@ import (
 	"fmt"
 
 	"qlang.io/cl/qlang"
-	_ "qlang.io/qlang/builtin" // 导入 builtin 包
+	_ "qlang.io/lib/builtin" // 导入 builtin 包
 )
 
 const scriptCode = `x = 1 + 2`

@@ -7,4 +7,3 @@ defer fn {
 }
 
 x = 1
-

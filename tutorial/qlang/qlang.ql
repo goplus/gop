@@ -83,7 +83,7 @@ Stack = class {
 	}
 
 	fn pushByte(lit) {
-		v, multibyte, tail, err = strconv.unquoteChar(lit[1:len(lit)-1], '\'')
+		v, multibyte, tail, err = strconv.UnquoteChar(lit[1:len(lit)-1], '\'')
 		if err != nil {
 			panicf("invalid char `%s`: %v", lit, err)
 		}
@@ -94,7 +94,7 @@ Stack = class {
 	}
 
 	fn pushString(lit) {
-		v, err = strconv.unquote(lit)
+		v, err = strconv.Unquote(lit)
 		if err != nil {
 			panicf("invalid string `%s`: %v", lit, err)
 		}
@@ -151,7 +151,7 @@ evalCode = fn(e, ip, name, code) {
 
 	old = ip.base
 	ip.base = ip.stk.baseFrame()
-	err = e.evalCode(ip, name, code)
+	err = e.EvalCode(ip, name, code)
 	ip.base = old
 	return err
 }
@@ -404,9 +404,9 @@ Interpreter = class {
 		}
 		this.execDefers(engine)
 		if this.retv == nil {
-			os.exit(0)
+			os.Exit(0)
 		}
-		os.exit(this.retv)
+		os.Exit(this.retv)
 	}
 
 	fn execDefers(engine) {
@@ -502,25 +502,25 @@ Interpreter = class {
 			return
 		}
 
-		obj = reflect.valueOf(o)
+		obj = reflect.ValueOf(o)
 		switch {
-		case obj.kind() == reflect.Map:
-			m = obj.mapIndex(reflect.valueOf(name))
-			if m.isValid() {
-				this.stk.push(m.interface())
+		case obj.Kind() == reflect.Map:
+			m = obj.MapIndex(reflect.ValueOf(name))
+			if m.IsValid() {
+				this.stk.push(m.Interface())
 			} else {
 				panicf("member `%s` not found", name)
 			}
 		default:
-			name = strings.title(name)
-			m = obj.methodByName(name)
-			if !m.isValid() {
-				m = reflect.indirect(obj).fieldByName(name)
-				if !m.isValid() {
-					panicf("type `%v` doesn't has member `%s`", obj.type(), name)
+			name = strings.Title(name)
+			m = obj.MethodByName(name)
+			if !m.IsValid() {
+				m = reflect.Indirect(obj).FieldByName(name)
+				if !m.IsValid() {
+					panicf("type `%v` doesn't has member `%s`", obj.Type(), name)
 				}
 			}
-			this.stk.push(m.interface())
+			this.stk.push(m.Interface())
 		}
 	}
 
@@ -764,11 +764,11 @@ fnSet = fn(o, args...) {
 }
 
 osMod = {
-	"args":   os.args[1:],
-	"open":   os.open,
-	"stderr": os.stderr,
-	"stdout": os.stdout,
-	"stdin":  os.stdin,
+	"Args":   os.Args[1:],
+	"Open":   os.Open,
+	"Stderr": os.Stderr,
+	"Stdout": os.Stdout,
+	"Stdin":  os.Stdin,
 }
 
 fntable = {
@@ -784,7 +784,7 @@ fntable = {
 	"min":      min,
 	"len":      len,
 	"append":   append,
-	"type":     reflect.typeOf,
+	"type":     reflect.TypeOf,
 	"printf":   printf,
 	"println":  println,
 	"fprintln": fprintln,
@@ -847,48 +847,4 @@ fntable = {
 
 	"$retEngine": Interpreter.fnReturn,
 	"$fnEngine":  Interpreter.function,
-}
-
-main { // 使用main关键字将主程序括起来，是为了避免其中用的局部变量比如 err 对其他函数造成影响
-
-	ipt = new Interpreter
-
-	if len(os.args) > 1 {
-		engine, err = interpreter(ipt, insertSemis)
-		if err != nil {
-			fprintln(os.stderr, err)
-			return 1
-		}
-		fname = os.args[1]
-		b, err = ioutil.readFile(fname)
-		if err != nil {
-			fprintln(os.stderr, err)
-			return 2
-		}
-		err = engine.exec(b, fname)
-		if err != nil {
-			fprintln(os.stderr, err)
-			return 3
-		}
-		return
-	}
-
-	engine, err = interpreter(ipt, nil)
-	if err != nil {
-		fprintln(os.stderr, err)
-		return 1
-	}
-
-	scanner = bufio.scanner(os.stdin)
-	for scanner.scan() {
-		line = strings.trim(scanner.text(), " \t\r\n")
-		if line != "" {
-			err = engine.eval(line)
-			if err != nil {
-				fprintln(os.stderr, err)
-			} else {
-				printf("> %v\n\n", ipt.ret())
-			}
-		}
-	}
 }

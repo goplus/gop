@@ -1,26 +1,26 @@
-include "../calc/calc.ql"
+include "../qlang/qlang.ql"
 
 main { // 使用main关键字将主程序括起来，是为了避免其中用的局部变量比如 err 对其他函数造成影响
 
-	calc = new Calculator
-	engine, err = interpreter(calc, nil)
+	ipt = new Interpreter
+	engine, err = interpreter(ipt, nil)
 	if err != nil {
-		fprintln(os.stderr, err)
+		fprintln(os.Stderr, err)
 		return 1
 	}
 
-	historyFile = os.getenv("HOME") + "/.qcalc.history"
-	term = terminal.new(">>> ", "... ", nil)
-	term.loadHistroy(historyFile)
-	defer term.saveHistroy(historyFile)
+	historyFile = os.Getenv("HOME") + "/.qlang.history"
+	term = terminal.New(">>> ", "... ", nil)
+	term.LoadHistroy(historyFile)
+	defer term.SaveHistroy(historyFile)
 
-	println(`Q-Calculator - http://qlang.io, version 1.0.00
+	println(`Q-language - http://qlang.io, version 1.0.00
 Copyright (C) 2015 Qiniu.com - Shanghai Qiniu Information Technologies Co., Ltd.
 Use Ctrl-D (i.e. EOF) to exit.
 `)
 
 	for {
-		expr, err = term.scan()
+		expr, err = term.Scan()
 		if err != nil {
 			if err == terminal.ErrPromptAborted {
 				continue
@@ -28,18 +28,18 @@ Use Ctrl-D (i.e. EOF) to exit.
 				println("^D")
 				break
 			}
-			fprintln(os.stderr, err)
+			fprintln(os.Stderr, err)
 			continue
 		}
-		expr = strings.trimSpace(expr)
+		expr = strings.TrimSpace(expr)
 		if expr == "" {
 			continue
 		}
-		err = engine.eval(expr)
+		err = engine.Eval(expr)
 		if err != nil {
-			fprintln(os.stderr, err)
+			fprintln(os.Stderr, err)
 		} else {
-			println(calc.ret())
+			println(ipt.ret())
 		}
 	}
 }

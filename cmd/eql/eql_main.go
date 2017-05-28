@@ -8,8 +8,8 @@ import (
 	"qlang.io/cl/interpreter"
 	"qlang.io/cl/qlang"
 	"qlang.io/exec"
-	"qlang.io/qlang/eqlang"
-	"qlang.io/qlang/qlang.all"
+	"qlang.io/lib/eqlang"
+	"qlang.io/lib/qlang.all"
 )
 
 // -----------------------------------------------------------------------------

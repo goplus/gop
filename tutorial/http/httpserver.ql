@@ -1,10 +1,10 @@
-mux = http.serveMux()
-mux.handle("/404", http.notFoundHandler())
-mux.handleFunc("/", fn(w, req) {
-	fprintln(w, "host:", req.host, "path:", req.URL)
+mux = http.NewServeMux()
+mux.Handle("/404", http.NotFoundHandler())
+mux.HandleFunc("/", fn(w, req) {
+	fprintln(w, "host:", req.Host, "path:", req.URL)
 })
 
-err = http.listenAndServe(":8888", mux)
+err = http.ListenAndServe(":8888", mux)
 if err != nil {
-	fprintln(os.stderr, err)
+	fprintln(os.Stderr, err)
 }

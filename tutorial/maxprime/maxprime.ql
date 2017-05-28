@@ -50,14 +50,14 @@ maxPrimeOf = fn(max) {
 
 // Usage: maxprime <Value>
 //
-if len(os.args) < 2 {
-	fprintln(os.stderr, "Usage: maxprime <Value>")
+if len(os.Args) < 2 {
+	fprintln(os.Stderr, "Usage: maxprime <Value>")
 	return
 }
 
-max, err = strconv.parseInt(os.args[1], 10, 64)
+max, err = strconv.ParseInt(os.Args[1], 10, 64)
 if err != nil {
-	fprintln(os.stderr, err)
+	fprintln(os.Stderr, err)
 	return 1
 }
 if max < 8 { // <8 的情况下，可直接建表，答案略
@@ -67,4 +67,3 @@ if max < 8 { // <8 的情况下，可直接建表，答案略
 max--
 v = maxPrimeOf(max)
 println(v)
-

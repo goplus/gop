@@ -1,22 +1,21 @@
-mutex = sync.mutex()
+mutex = sync.NewMutex()
 
 n = 10
 x = 1
 
-wg = sync.waitGroup()
-wg.add(n)
+wg = sync.NewWaitGroup()
+wg.Add(n)
 
 for i = 0; i < n; i++ {
 	go fn {
-		defer wg.done()
+		defer wg.Done()
 
-		mutex.lock()
-		defer mutex.unlock()
+		mutex.Lock()
+		defer mutex.Unlock()
 		x; x++
 	}
 }
 
-wg.wait()
+wg.Wait()
 
 println("x:", x)
-

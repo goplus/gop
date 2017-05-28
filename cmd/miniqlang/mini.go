@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"qlang.io/cl/qlang"
-	_ "qlang.io/qlang/builtin" // 导入 builtin 包
+	_ "qlang.io/lib/builtin" // 导入 builtin 包
 )
 
 // -----------------------------------------------------------------------------

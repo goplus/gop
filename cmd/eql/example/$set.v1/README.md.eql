@@ -10,7 +10,7 @@
 		NewArgs, AddArgs, HasArgs = `1, 2`, `3`, `4`
 	}
 
-	base = eql.var("base", "") // if variable `base` is undefined, let it be ""
+	base = eql.Var("base", "") // if variable `base` is undefined, let it be ""
 	if base != "" {
 		base += "/"
 	}
