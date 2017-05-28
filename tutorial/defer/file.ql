@@ -1,16 +1,16 @@
 
-f, err = os.open("file.ql")
+f, err = os.Open("file.ql")
 if err != nil {
-	fprintln(os.stderr, err)
+	fprintln(os.Stderr, err)
 	return 1
 }
 defer println("exit!")
-defer f.close()
+defer f.Close()
 
 b = make([]byte, 8)
-n, err = f.read(b)
+n, err = f.Read(b)
 if err != nil {
-	fprintln(os.stderr, "Read failed:", err)
+	fprintln(os.Stderr, "Read failed:", err)
 	return 2
 }
 

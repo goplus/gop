@@ -225,6 +225,7 @@ func SetAutoCall(t reflect.Type) {
 //
 var Exports = map[string]interface{}{
 	"new": New,
+	"New": New,
 }
 
 // -----------------------------------------------------------------------------

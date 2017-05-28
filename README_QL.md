@@ -96,7 +96,7 @@ x, y, z = [1, 2, 3]
 举个例子：
 
 ```go
-f, err = os.open(fname)
+f, err = os.Open(fname)
 ```
 
 这个例子，在 Go 里面返回的是 (*os.File, error)。但是 qlang 中是 var slice。
@@ -375,19 +375,19 @@ println(type(x1), type(x2))
 是的，qlang 也支持 defer。这在处理系统资源（如文件、锁等）释放场景非常有用。一个典型场景：
 
 ```go
-f, err = os.open(fname)
+f, err = os.Open(fname)
 if err != nil {
 	// 做些出错处理
 	return
 }
-defer f.close()
+defer f.Close()
 
 // 正常操作这个 f 文件
 ```
 
 值得注意的是：
 
-在一个细节上 qlang 的 defer 和 Go 语言处理并不一致，那就是 defer 表达式中的变量值。在 Go 语言中，所有 defer 引用的变量均在 defer 语句时刻固定下来（如上面的 f 变量），后面任何修改均不影响 defer 语句的行为。但 qlang 是会受到影响的。例如，假设你在 defer 之后，调用 f = nil 把 f 变量改为 nil，那么后面执行 f.close() 时就会 panic。
+在一个细节上 qlang 的 defer 和 Go 语言处理并不一致，那就是 defer 表达式中的变量值。在 Go 语言中，所有 defer 引用的变量均在 defer 语句时刻固定下来（如上面的 f 变量），后面任何修改均不影响 defer 语句的行为。但 qlang 是会受到影响的。例如，假设你在 defer 之后，调用 f = nil 把 f 变量改为 nil，那么后面执行 f.Close() 时就会 panic。
 
 ### 匿名函数
 
@@ -430,10 +430,10 @@ defer fn {
 
 ```go
 Foo = class {
-	fn setAB(a, b) {
+	fn SetAB(a, b) {
 		this.a, this.b = a, b
 	}
-	fn getA() {
+	fn GetA() {
 		return this.a
 	}
 }
@@ -443,8 +443,8 @@ Foo = class {
 
 ```go
 foo = new Foo
-foo.setAB(3, "hello")
-a = foo.getA()
+foo.SetAB(3, "hello")
+a = foo.GetA()
 println(a) // 输出 3
 ```
 
@@ -478,20 +478,20 @@ go println("this is a goroutine")
 一个比较复杂的例子：
 
 ```go
-wg = sync.waitGroup()
-wg.add(2)
+wg = sync.NewWaitGroup()
+wg.Add(2)
 
 go fn {
-	defer wg.done()
+	defer wg.Done()
 	println("in goroutine1")
 }
 
 go fn {
-	defer wg.done()
+	defer wg.Done()
 	println("in goroutine2")
 }
 
-wg.wait()
+wg.Wait()
 ```
 
 这是一个经典的 goroutine 使用场景，把一个 task 分为 2 个子 task，交给 2 个 goroutine 执行。
@@ -600,9 +600,9 @@ qlang 采用微内核设计，大部分你看到的功能，都通过 Go package
 
 ```go
 import (
-	"qlang.io/qlang/math"
-	"qlang.io/qlang/strconv"
-	"qlang.io/qlang/strings"
+	"qlang.io/lib/math"
+	"qlang.io/lib/strconv"
+	"qlang.io/lib/strings"
 	...
 )
 
@@ -626,7 +626,7 @@ qlang.Import("", math.Exports) // 如此，你就可以直接用 sin 而不是 m
 
 ### 制作 qlang 模块
 
-制作 qlang 模块的成本极其低廉。我们打开 `qlang.io/qlang/strings` 看看它是什么样的：
+制作 qlang 模块的成本极其低廉。我们打开 `qlang.io/lib/strings` 看看它是什么样的：
 
 ```go
 package strings
@@ -636,17 +636,18 @@ import (
 )
 
 var Exports = map[string]interface{}{
-	"contains":  strings.Contains,
-	"index":     strings.Index,
-	"indexAny":  strings.IndexAny,
-	"join":      strings.Join,
-	"title":     strings.Title,
-	"toLower":   strings.ToLower,
-	"toTitle":   strings.ToTitle,
-	"toUpper":   strings.ToUpper,
-	"trim":      strings.Trim,
-	"reader":    strings.NewReader,
-	"replacer":	 strings.NewReplacer,
+	"Contains":  strings.Contains,
+	"Index":     strings.Index,
+	"IndexAny":  strings.IndexAny,
+	"Join":      strings.Join,
+	"Title":     strings.Title,
+	"ToLower":   strings.ToLower,
+	"ToTitle":   strings.ToTitle,
+	"ToUpper":   strings.ToUpper,
+	"Trim":      strings.Trim,
+
+	"NewReader":   strings.NewReader,
+	"NewReplacer": strings.NewReplacer,
 	...
 }
 ```
@@ -654,7 +655,7 @@ var Exports = map[string]interface{}{
 值得注意的一个细节是，我们几乎不需要对 Go 语言的 strings package 中的函数进行任何包装，你只需要把这个函数加入到导出表（Exports）即可。你也无需包装 Go 语言中的类，比如上面的我们导出了 strings.NewReplacer，但是我们不必去包装 strings.Replacer 类。这个类的所有功能可以直接使用。如：
 
 ```go
-strings.replacer("?", "!").replace("hello, world???") // 得到 "hello, world!!!"
+strings.NewReplacer("?", "!").Replace("hello, world???") // 得到 "hello, world!!!"
 ```
 
 这是 qlang 最强大的地方，近乎免包装。甚至，你可以写一个自动的 Go package 转 qlang 模块的工具，找到 Go package 所有导出的全局函数，加入到 Exports 表即完成了该 Go package 的包装，几乎零成本。
@@ -691,9 +692,9 @@ var Exports = map[string]interface{}{
 这样你就可以在 qlang 里面使用这个结构体：
 
 ```go
-bar = &foo.Bar{x: 1, y: "hello"}
-x = bar.getX()
-y = bar.y
+bar = &foo.Bar{X: 1, Y: "hello"}
+x = bar.GetX()
+y = bar.Y
 println(x, y)
 ```
 
@@ -789,14 +790,14 @@ maxPrimeOf = fn(max) {
 
 // Usage: maxprime <Value>
 //
-if len(os.args) < 2 {
-	fprintln(os.stderr, "Usage: maxprime <Value>")
+if len(os.Args) < 2 {
+	fprintln(os.Stderr, "Usage: maxprime <Value>")
 	return
 }
 
-max, err = strconv.parseInt(os.args[1], 10, 64)
+max, err = strconv.ParseInt(os.Args[1], 10, 64)
 if err != nil {
-	fprintln(os.stderr, err)
+	fprintln(os.Stderr, err)
 	return 1
 }
 if max < 8 { // <8 的情况下，可直接建表，答案略
@@ -925,19 +926,19 @@ main { // 使用main关键字将主程序括起来，是为了避免其中用的
 	calc = new Calculator
 	engine, err = interpreter(calc, nil)
 	if err != nil {
-		fprintln(os.stderr, err)
+		fprintln(os.Stderr, err)
 		return 1
 	}
 
-	scanner = bufio.scanner(os.stdin)
-	for scanner.scan() {
-		line = strings.trim(scanner.text(), " \t\r\n")
+	scanner = bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		line = strings.Trim(scanner.Text(), " \t\r\n")
 		if line != "" {
-			err = engine.eval(line)
+			err = engine.Eval(line)
 			if err != nil {
-				fprintln(os.stderr, err)
+				fprintln(os.Stderr, err)
 			} else {
-				printf("> %v\n\n", calc.ret())
+				printf("> %v\n\n", calc.Ret())
 			}
 		}
 	}

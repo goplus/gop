@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"qlang.io/cl/qlang"
-	_ "qlang.io/qlang/builtin"
+	_ "qlang.io/lib/builtin"
 )
 
 // -----------------------------------------------------------------------------

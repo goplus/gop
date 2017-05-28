@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"qlang.io/cl/qlang"
-	_ "qlang.io/qlang/builtin"
-	_ "qlang.io/qlang/chan"
-	"qlang.io/qlang/sync"
+	_ "qlang.io/lib/builtin"
+	_ "qlang.io/lib/chan"
+	"qlang.io/lib/sync"
 )
 
 func init() {

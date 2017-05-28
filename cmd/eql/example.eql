@@ -7,7 +7,7 @@
 package eql_test
 
 import (
-	<%= eql.imports() %>
+	<%= eql.Imports() %>
 	"encoding/binary"
 )
 

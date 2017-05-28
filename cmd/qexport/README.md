@@ -45,7 +45,7 @@ export html and html/template package
 export all package
 > qexport std
 
-export io and update from qlang.io/qlang/io
+export io and update from qlang.io/lib/io
 > qexport -updatepath qlang.io/qlang io
 
 export all package and update from qlang.io
@@ -82,8 +82,8 @@ export all package and update from qlang.io
 ```
 1. 导出pkg包，首先分析pkg包的所有函数和类型作导出准备
 
-2. 如果需要更新，则先复制qlang.io/qlang/pkg包到输出目录中
-   同时分析qlang.io/qlang/pkg包中对原始pkg包的引用
+2. 如果需要更新，则先复制qlang.io/lib/pkg包到输出目录中
+   同时分析qlang.io/lib/pkg包中对原始pkg包的引用
    所有引用的名称在做更新导出时不再输出。
 
 3. 输出需要导出的函数到输出文件中，如果为更新包，则作合并处理

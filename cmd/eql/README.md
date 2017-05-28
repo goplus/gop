@@ -117,20 +117,20 @@ $$
 
 ## eql 函数
 
-### eql.imports()
+### eql.Imports()
 
 这个函数解析 imports 变量（通常是用户通过命令行 `--imports=package1,package2,...` 传入的）并将 `,` 分隔风格改为符合 Go 语言中 import (...) 风格的字符串。
 
 如果 imports 变量不存在，则该函数返回 "" (空字符串)。
 
-例如，我们假设传入的 imports 变量为 "bufio,bytes"，则 `eql.imports()` 为如下风格的字符串：
+例如，我们假设传入的 imports 变量为 "bufio,bytes"，则 `eql.Imports()` 为如下风格的字符串：
 
 ```go
 	"bufio"
 	"bytes"
 ```
 
-### eql.var("varname", defaultval)
+### eql.Var("varname", defaultval)
 
 这个函数主要解决 qlang 中目前还没有支持判断一个变量是否存在的缺陷。其语义看起来是这样的：
 
@@ -142,7 +142,7 @@ if varname != undefined {
 }
 ```
 
-当然目前因为在 qlang 中如果 varname 不存在就会直接报错，所以以上代码仅仅是表达 `eql.var("varname", defaultval)` 的逻辑语义。
+当然目前因为在 qlang 中如果 varname 不存在就会直接报错，所以以上代码仅仅是表达 `eql.Var("varname", defaultval)` 的逻辑语义。
 
 ## 用 eql 实现 Go 对泛型的支持
 
@@ -152,7 +152,7 @@ if varname != undefined {
 package eql_test
 
 import (
-	<%= eql.imports() %>
+	<%= eql.Imports() %>
 	"encoding/binary"
 )
 
@@ -281,19 +281,19 @@ func (p modbufio) flush(out *bufio.Writer) {
 ### 初始化
 
 ```go
-ql = qlang.new()
-eql = eqlang.new(ql)
+ql = qlang.New()
+eql = eqlang.New(ql)
 
-ql.resetVars(map[string]var{"name": "qlang"}) // 重置 ql 对象的变量集合
-ql.setVar("a", 123)
+ql.ResetVars(map[string]var{"name": "qlang"}) // 重置 ql 对象的变量集合
+ql.SetVar("a", 123)
 ```
 
-### eql.subst("template text")
+### eql.Subst("template text")
 
 替换 $varname 为对应的值。例如：
 
 ```go
-output = eql.subst("Hello, $name!")
+output = eql.Subst("Hello, $name!")
 println(output)
 ```
 
@@ -303,7 +303,7 @@ println(output)
 Hello, qlang!
 ```
 
-### eql.execute("template script", fname, output)
+### eql.Execute("template script", fname, output)
 
 执行 eql 模板。
 
@@ -313,7 +313,7 @@ Hello, qlang!
 例如：
 
 ```go
-eql.execute("Hello, <%= strings.toUpper(name) %>!\n", "", "")
+eql.Execute("Hello, <%= strings.ToUpper(name) %>!\n", "", "")
 ```
 
 输出为：
@@ -322,14 +322,14 @@ eql.execute("Hello, <%= strings.toUpper(name) %>!\n", "", "")
 Hello, QLANG!
 ```
 
-### eql.executeFile(source, output)
+### eql.ExecuteFile(source, output)
 
 执行 eql 模板文件。
 
 * source: 为 eql 模板文件。
 * output: 为输出文件，为 "" 表示输出到 stdout。
 
-### eql.executeDir(vars, source, output)
+### eql.ExecuteDir(vars, source, output)
 
 执行 eql 模板目录。
 

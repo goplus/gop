@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"qlang.io/cl/qlang"
-	"qlang.io/qlang/math"
+	"qlang.io/lib/math"
 	qspec "qlang.io/spec"
 )
 

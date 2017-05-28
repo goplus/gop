@@ -5,17 +5,17 @@ main { // 使用main关键字将主程序括起来，是为了避免其中用的
 	calc = new Calculator
 	engine, err = interpreter(calc, nil)
 	if err != nil {
-		fprintln(os.stderr, err)
+		fprintln(os.Stderr, err)
 		return 1
 	}
 
-	scanner = bufio.scanner(os.stdin)
-	for scanner.scan() {
-		line = strings.trim(scanner.text(), " \t\r\n")
+	scanner = bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		line = strings.Trim(scanner.Text(), " \t\r\n")
 		if line != "" {
-			err = engine.eval(line)
+			err = engine.Eval(line)
 			if err != nil {
-				fprintln(os.stderr, err)
+				fprintln(os.Stderr, err)
 			} else {
 				printf("> %v\n\n", calc.ret())
 			}

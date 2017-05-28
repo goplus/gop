@@ -49,7 +49,7 @@ func Parse(source string) (code []byte, err error) {
 
 func parseText(b *bytes.Buffer, source string) (err error) {
 
-	b.WriteString("print(eql.subst(`")
+	b.WriteString("print(eql.Subst(`")
 	for {
 		pos := strings.IndexByte(source, '`')
 		if pos < 0 {
