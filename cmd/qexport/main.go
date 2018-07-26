@@ -17,10 +17,15 @@ import (
 )
 
 var (
+	g_UpperCaseStyle bool
+	g_LowerCaseStyle bool
+)
+
+var (
 	flagDefaultContext           bool
 	flagRenameNewTypeFunc        bool
 	flagSkipErrorImplementStruct bool
-	flagQlangLowerCaseStyle      bool
+	flagExportCaseStyle          int // 0: golang upper case export, 1: lower case export, 2: both upper case and lower case export
 	flagCustomContext            string
 	flagExportPath               string
 	flagUpdatePath               string
@@ -44,7 +49,7 @@ func init() {
 	flag.BoolVar(&flagDefaultContext, "defctx", false, "optional use default context for build, default use all contexts.")
 	flag.BoolVar(&flagRenameNewTypeFunc, "convnew", true, "optional convert NewType func to type func")
 	flag.BoolVar(&flagSkipErrorImplementStruct, "skiperrimpl", true, "optional skip error interface implement struct.")
-	flag.BoolVar(&flagQlangLowerCaseStyle, "lowercase", true, "optional use qlang lower case style.")
+	flag.IntVar(&flagExportCaseStyle, "casestyle", 0, "optional export case style. 0: upper case, 1: lower case, 2: both case export. (default 0)")
 	flag.StringVar(&flagExportPath, "outpath", "./qlang", "optional set export root path")
 	flag.StringVar(&flagUpdatePath, "updatepath", "", "option set update qlang package root")
 }
@@ -62,6 +67,19 @@ func main() {
 		return
 	}
 
+	switch flagExportCaseStyle {
+	case 0:
+		g_UpperCaseStyle = true
+	case 1:
+		g_LowerCaseStyle = true
+	case 2:
+		g_UpperCaseStyle = true
+		g_LowerCaseStyle = true
+	default:
+		usage()
+		return
+	}
+
 	if flagCustomContext != "" {
 		flagDefaultContext = false
 		setCustomContexts(flagCustomContext)
@@ -73,7 +91,7 @@ func main() {
 	if err != nil {
 		log.Println(err)
 	}
-	err = ac.LoadApi("go1.5", "go1.6", "go1.7")
+	err = ac.LoadApi("go1.5", "go1.6", "go1.7", "go1.8", "go1.9", "go1.10", "go1.11")
 	if err != nil {
 		log.Println(err)
 	}
@@ -192,10 +210,30 @@ func export(pkg string, outpath string, skipOSArch bool) error {
 		p.fnskip = fnskip
 	}
 
+	//output
 	var buf bytes.Buffer
+	outCache := make(map[string]bool)
 	outf := func(format string, a ...interface{}) (err error) {
-		_, err = buf.WriteString(fmt.Sprintf(format, a...))
+		s := fmt.Sprintf(format, a...)
+		if strings.TrimSpace(s) != "" {
+			if outCache[s] {
+				return
+			}
+			outCache[s] = true
+		}
+		_, err = buf.WriteString(s)
 		return
+	}
+	// go ver map
+	verMap := make(map[string][]string)
+	outfv := func(ver string, k, v string) {
+		s := fmt.Sprintf("Exports[%q]=%s", k, v)
+		for _, line := range verMap[ver] {
+			if line == s {
+				return
+			}
+		}
+		verMap[ver] = append(verMap[ver], s)
 	}
 
 	checkVer := func(key string) (string, bool) {
@@ -209,221 +247,257 @@ func export(pkg string, outpath string, skipOSArch bool) error {
 		return ac.CheckConstType(bp.ImportPath + "." + key)
 	}
 
-	// go ver map
-	verMap := make(map[string][]string)
-	outfv := func(ver string, k, v string) {
-		verMap[ver] = append(verMap[ver], fmt.Sprintf("Exports[%q]=%s", k, v))
-	}
-
 	var hasTypeExport bool
 	verHasTypeExport := make(map[string]bool)
 
 	//const
-	if keys, _ := p.FilterCommon(Const); len(keys) > 0 {
-		outf("\n")
-		for _, v := range keys {
-			name := v
-			fn := pkgName + "." + v
-			typ := checkConst(v)
-			if typ == ConstInt64 {
-				fn = "int64(" + fn + ")"
-			} else if typ == ConstUnit64 {
-				fn = "uint64(" + fn + ")"
-			}
-			if vers, ok := checkVer(v); ok {
-				outfv(vers, name, fn)
-			} else {
-				outf("\t%q:\t%s,\n", name, fn)
+	exportConst := func(lower bool) {
+		if keys, _ := p.FilterCommon(Const); len(keys) > 0 {
+			outf("\n")
+			for _, v := range keys {
+				name := toQlangName(v, lower)
+				fn := pkgName + "." + v
+				typ := checkConst(v)
+				if typ == ConstInt64 {
+					fn = "int64(" + fn + ")"
+				} else if typ == ConstUnit64 {
+					fn = "uint64(" + fn + ")"
+				}
+				if vers, ok := checkVer(v); ok {
+					outfv(vers, name, fn)
+				} else {
+					outf("\t%q:\t%s,\n", name, fn)
+				}
 			}
 		}
+	}
+	if g_LowerCaseStyle {
+		exportConst(true)
+	}
+	if g_UpperCaseStyle {
+		exportConst(false)
 	}
 
 	//vars
-	if keys, m := p.FilterCommon(Var); len(keys) > 0 {
-		outf("\n")
-		skeys, _ := p.FilterCommon(Struct)
-		for _, v := range keys {
-			mv := m[v].(*doc.Value)
-			var isStructVar bool
-			if typ := p.simpleValueDeclType(mv.Decl); typ != "" {
-				for _, k := range skeys {
-					if typ == k {
-						isStructVar = true
-						log.Printf("warning convert struct var to ref %s %s (%s)\n", bp.ImportPath, v, typ)
+	exportVar := func(lower bool) {
+		if keys, m := p.FilterCommon(Var); len(keys) > 0 {
+			outf("\n")
+			skeys, _ := p.FilterCommon(Struct)
+			for _, v := range keys {
+				mv := m[v].(*doc.Value)
+				var isStructVar bool
+				if typ := p.simpleValueDeclType(mv.Decl); typ != "" {
+					for _, k := range skeys {
+						if typ == k {
+							isStructVar = true
+							log.Printf("warning convert struct var to ref %s %s (%s)\n", bp.ImportPath, v, typ)
+						}
 					}
 				}
-			}
-			name := v
-			fn := pkgName + "." + v
-			if isStructVar {
-				fn = "&" + fn
-			}
-			if vers, ok := checkVer(v); ok {
-				outfv(vers, name, fn)
-			} else {
-				outf("\t%q:\t%s,\n", name, fn)
+				name := toQlangName(v, lower)
+				fn := pkgName + "." + v
+				if isStructVar {
+					fn = "&" + fn
+				}
+				if vers, ok := checkVer(v); ok {
+					outfv(vers, name, fn)
+				} else {
+					outf("\t%q:\t%s,\n", name, fn)
+				}
 			}
 		}
+	}
+	if g_LowerCaseStyle {
+		exportVar(true)
+	}
+	if g_UpperCaseStyle {
+		exportVar(false)
 	}
 
 	//funcs
-	if keys, _ := p.FilterCommon(Func); len(keys) > 0 {
-		outf("\n")
-		for _, v := range keys {
-			name := toQlangName(v)
-			fn := pkgName + "." + v
-			if vers, ok := checkVer(v); ok {
-				outfv(vers, name, fn)
-			} else {
-				outf("\t%q:\t%s,\n", name, fn)
+	//func check case
+	exportFunc := func(lower bool) {
+		if keys, _ := p.FilterCommon(Func); len(keys) > 0 {
+			outf("\n")
+			for _, v := range keys {
+				name := toQlangName(v, lower)
+				fn := pkgName + "." + v
+				if vers, ok := checkVer(v); ok {
+					outfv(vers, name, fn)
+				} else {
+					outf("\t%q:\t%s,\n", name, fn)
+				}
 			}
 		}
+	}
+	if g_LowerCaseStyle {
+		exportFunc(true)
+	}
+	if g_UpperCaseStyle {
+		exportFunc(false)
 	}
 
 	//interface
-	if keys, m := p.FilterCommon(Interface); len(keys) > 0 {
-		outf("\n")
-		for _, v := range keys {
-			t, ok := m[v]
-			if !ok {
-				continue
-			}
-			dt, ok := t.(*doc.Type)
-			if !ok {
-				continue
-			}
-
-			// exported funcs
-			var funcsNew []string
-			var funcsOther []string
-			for _, f := range dt.Funcs {
-				if fnskip(f.Name) {
+	exportInterface := func(lower bool) {
+		if keys, m := p.FilterCommon(Interface); len(keys) > 0 {
+			outf("\n")
+			for _, v := range keys {
+				t, ok := m[v]
+				if !ok {
 					continue
 				}
-				if ast.IsExported(f.Name) {
-					if strings.HasPrefix(f.Name, "New"+v) {
-						funcsNew = append(funcsNew, f.Name)
+				dt, ok := t.(*doc.Type)
+				if !ok {
+					continue
+				}
+
+				// exported funcs
+				var funcsNew []string
+				var funcsOther []string
+				for _, f := range dt.Funcs {
+					if fnskip(f.Name) {
+						continue
+					}
+					if ast.IsExported(f.Name) {
+						if strings.HasPrefix(f.Name, "New"+v) {
+							funcsNew = append(funcsNew, f.Name)
+						} else {
+							funcsOther = append(funcsOther, f.Name)
+						}
+					}
+				}
+
+				for _, f := range funcsNew {
+					name := toQlangName(f, lower)
+					if flagRenameNewTypeFunc && len(funcsNew) == 1 {
+						name = toQlangName(v, lower)
+						if ast.IsExported(name) {
+							name = strings.ToLower(name)
+							log.Printf("waring convert %s to %s", bp.ImportPath+"."+f, name)
+						}
+					}
+					fn := pkgName + "." + f
+					if vers, ok := checkVer(f); ok {
+						outfv(vers, name, fn)
 					} else {
-						funcsOther = append(funcsOther, f.Name)
+						outf("\t%q:\t%s,\n", name, fn)
 					}
 				}
-			}
 
-			for _, f := range funcsNew {
-				name := toQlangName(f)
-				if flagRenameNewTypeFunc && len(funcsNew) == 1 {
-					name = toQlangName(v)
-					if ast.IsExported(name) {
-						name = strings.ToLower(name)
-						log.Printf("waring convert %s to %s", bp.ImportPath+"."+f, name)
+				for _, f := range funcsOther {
+					name := toQlangName(f, lower)
+					fn := pkgName + "." + f
+					if vers, ok := checkVer(f); ok {
+						outfv(vers, name, fn)
+					} else {
+						outf("\t%q:\t%s,\n", name, fn)
 					}
-				}
-				fn := pkgName + "." + f
-				if vers, ok := checkVer(f); ok {
-					outfv(vers, name, fn)
-				} else {
-					outf("\t%q:\t%s,\n", name, fn)
-				}
-			}
-
-			for _, f := range funcsOther {
-				name := toQlangName(f)
-				fn := pkgName + "." + f
-				if vers, ok := checkVer(f); ok {
-					outfv(vers, name, fn)
-				} else {
-					outf("\t%q:\t%s,\n", name, fn)
 				}
 			}
 		}
+	}
+	if g_LowerCaseStyle {
+		exportInterface(true)
+	}
+	if g_UpperCaseStyle {
+		exportInterface(false)
 	}
 
 	//structs
-	if keys, m := p.FilterCommon(Struct); len(keys) > 0 {
-		outf("\n")
-		for _, v := range keys {
-			t, ok := m[v]
-			if !ok {
-				continue
-			}
-			dt, ok := t.(*doc.Type)
-			if !ok {
-				continue
-			}
-			//fmt.Printf("%v\n", dt.Decl.Specs[0].(*ast.TypeSpec).Type.(*ast.StructType).Fields.List)
-			// exported funcs
-			var funcsNew []string
-			var funcsOther []string
-			for _, f := range dt.Funcs {
-				if fnskip(f.Name) {
+	exportStruct := func(lower bool) {
+		if keys, m := p.FilterCommon(Struct); len(keys) > 0 {
+			outf("\n")
+			for _, v := range keys {
+				t, ok := m[v]
+				if !ok {
 					continue
 				}
-				if ast.IsExported(f.Name) {
-					if strings.HasPrefix(f.Name, "New"+v) {
-						funcsNew = append(funcsNew, f.Name)
-					} else {
-						funcsOther = append(funcsOther, f.Name)
-					}
+				dt, ok := t.(*doc.Type)
+				if !ok {
+					continue
 				}
-			}
-			// check error interface implement struct
-			if flagSkipErrorImplementStruct && strings.HasSuffix(v, "Error") {
-				check := func(name string) bool {
-					for _, f := range dt.Methods {
-						if f.Name == name {
-							return true
+				//fmt.Printf("%v\n", dt.Decl.Specs[0].(*ast.TypeSpec).Type.(*ast.StructType).Fields.List)
+				// exported funcs
+				var funcsNew []string
+				var funcsOther []string
+				for _, f := range dt.Funcs {
+					if fnskip(f.Name) {
+						continue
+					}
+					if ast.IsExported(f.Name) {
+						if strings.HasPrefix(f.Name, "New"+v) {
+							funcsNew = append(funcsNew, f.Name)
+						} else {
+							funcsOther = append(funcsOther, f.Name)
 						}
 					}
-					return false
 				}
-				if check("Error") {
-					log.Printf("warning skip struct %s, is error interface{} implement\n", bp.ImportPath+"."+v)
-					continue
-				}
-			}
-
-			//export type, qlang.StructOf((*strings.Reader)(nil))
-			if ast.IsExported(v) && !checkStructHasUnexportField(dt.Decl) {
-				name := v
-				fn := fmt.Sprintf("qlang.StructOf((*%s.%s)(nil))", pkgName, v)
-				if vers, ok := checkVer(v); ok {
-					verHasTypeExport[vers] = true
-					outfv(vers, name, fn)
-				} else {
-					hasTypeExport = true
-					outf("\t%q:\t%s,\n", name, fn)
-				}
-			}
-
-			for _, f := range funcsNew {
-				name := toQlangName(f)
-				if flagRenameNewTypeFunc && len(funcsNew) == 1 {
-					name = toQlangName(v)
-					//NewRGBA => rgba
-					if ast.IsExported(name) {
-						name = strings.ToLower(name)
-						log.Printf("waring convert %s to %s", bp.ImportPath+"."+f, name)
+				// check error interface implement struct
+				if flagSkipErrorImplementStruct && strings.HasSuffix(v, "Error") {
+					check := func(name string) bool {
+						for _, f := range dt.Methods {
+							if f.Name == name {
+								return true
+							}
+						}
+						return false
+					}
+					if check("Error") {
+						log.Printf("warning skip struct %s, is error interface{} implement\n", bp.ImportPath+"."+v)
+						continue
 					}
 				}
-				fn := pkgName + "." + f
-				if vers, ok := checkVer(f); ok {
-					outfv(vers, name, fn)
-				} else {
-					outf("\t%q:\t%s,\n", name, fn)
-				}
-			}
 
-			for _, f := range funcsOther {
-				name := toQlangName(f)
-				fn := pkgName + "." + f
-				if vers, ok := checkVer(f); ok {
-					outfv(vers, name, fn)
-				} else {
-					outf("\t%q:\t%s,\n", name, fn)
+				//export type, qlang.StructOf((*strings.Reader)(nil))
+				if ast.IsExported(v) && !checkStructHasUnexportField(dt.Decl) {
+					name := v
+					fn := fmt.Sprintf("qlang.StructOf((*%s.%s)(nil))", pkgName, v)
+					if vers, ok := checkVer(v); ok {
+						verHasTypeExport[vers] = true
+						outfv(vers, name, fn)
+					} else {
+						hasTypeExport = true
+						outf("\t%q:\t%s,\n", name, fn)
+					}
+				}
+
+				for _, f := range funcsNew {
+					name := toQlangName(f, lower)
+					if flagRenameNewTypeFunc && len(funcsNew) == 1 {
+						name = toQlangName(v, lower)
+						//NewRGBA => rgba
+						if ast.IsExported(name) {
+							name = strings.ToLower(name)
+							log.Printf("waring convert %s to %s", bp.ImportPath+"."+f, name)
+						}
+					}
+					fn := pkgName + "." + f
+					if vers, ok := checkVer(f); ok {
+						outfv(vers, name, fn)
+					} else {
+						outf("\t%q:\t%s,\n", name, fn)
+					}
+				}
+
+				for _, f := range funcsOther {
+					name := toQlangName(f, lower)
+					fn := pkgName + "." + f
+					if vers, ok := checkVer(f); ok {
+						outfv(vers, name, fn)
+					} else {
+						outf("\t%q:\t%s,\n", name, fn)
+					}
 				}
 			}
 		}
 	}
+	if g_LowerCaseStyle {
+		exportStruct(true)
+	}
+	if g_UpperCaseStyle {
+		exportStruct(false)
+	}
+
 	// write root dir
 	root := filepath.Join(outpath, pkg)
 	os.MkdirAll(root, 0777)
@@ -533,8 +607,8 @@ var Exports = map[string]interface{}{
 }
 
 // convert to qlang name, default use lower case style, Name => name, NAME => NAME
-func toQlangName(s string) string {
-	if !flagQlangLowerCaseStyle {
+func toQlangName(s string, lower bool) string {
+	if !lower {
 		return s
 	}
 	if len(s) <= 1 {
