@@ -16,15 +16,15 @@ Usage:
   qexport [option] packages
 
 The packages for go package list or std for golang all standard packages.
-
+  
+  -casestyle int
+    	optional export case style. 0: upper case, 1: lower case, 2: both case export. (default 0)
   -contexts string
     	optional comma-separated list of <goos>-<goarch>[-cgo] to override default contexts.
   -convnew
     	optional convert NewType func to type func (default true)
   -defctx
     	optional use default context for build, default use all contexts.
-  -lowercase
-    	optional use qlang lower case style. (default true)
   -outpath string
     	optional set export root path (default "./qlang")
   -skiperrimpl
@@ -46,7 +46,7 @@ export all package
 > qexport std
 
 export io and update from qlang.io/lib/io
-> qexport -updatepath qlang.io/qlang io
+> qexport -casestyle 2 -updatepath qlang.io/qlang io
 
 export all package and update from qlang.io
 > qexport -updatepath qlang.io/qlang std
