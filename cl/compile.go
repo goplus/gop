@@ -863,7 +863,7 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 							defer p.SetInTestingFile(old)
 							vSpec = nil
 							names := makeNames(v.Names)
-							loadConsts(ctx, names, v)
+							loadConsts(ctx, names, v, true)
 							removeNames(syms, names)
 						}
 					})
@@ -880,7 +880,7 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 							defer p.SetInTestingFile(old)
 							vSpec = nil
 							names := makeNames(v.Names)
-							loadVars(ctx, names, v)
+							loadVars(ctx, names, v, true)
 							removeNames(syms, names)
 						}
 					})
@@ -1007,7 +1007,7 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 	ctx.imports[name] = pkg
 }
 
-func loadConsts(ctx *blockCtx, names []string, v *ast.ValueSpec) {
+func loadConsts(ctx *blockCtx, names []string, v *ast.ValueSpec, global bool) {
 	var typ types.Type
 	if v.Type != nil {
 		typ = toType(ctx, v.Type)
@@ -1015,14 +1015,20 @@ func loadConsts(ctx *blockCtx, names []string, v *ast.ValueSpec) {
 	if debugLoad {
 		log.Println("==> Load const", typ, names)
 	}
-	cb := ctx.pkg.NewConstStart(v.Names[0].Pos(), typ, names...)
+	var scope *types.Scope
+	if global {
+		scope = ctx.pkg.Types.Scope()
+	} else {
+		scope = ctx.cb.Scope()
+	}
+	cb := ctx.pkg.NewConstStart(scope, v.Names[0].Pos(), typ, names...)
 	for _, val := range v.Values {
 		compileExpr(ctx, val)
 	}
 	cb.EndInit(len(v.Values))
 }
 
-func loadVars(ctx *blockCtx, names []string, v *ast.ValueSpec) {
+func loadVars(ctx *blockCtx, names []string, v *ast.ValueSpec, global bool) {
 	var typ types.Type
 	if v.Type != nil {
 		typ = toType(ctx, v.Type)
@@ -1030,7 +1036,13 @@ func loadVars(ctx *blockCtx, names []string, v *ast.ValueSpec) {
 	if debugLoad {
 		log.Println("==> Load var", typ, names)
 	}
-	varDecl := ctx.pkg.NewVar(v.Names[0].Pos(), typ, names...)
+	var scope *types.Scope
+	if global {
+		scope = ctx.pkg.Types.Scope()
+	} else {
+		scope = ctx.cb.Scope()
+	}
+	varDecl := ctx.pkg.NewVarEx(scope, v.Names[0].Pos(), typ, names...)
 	if v.Values != nil {
 		cb := varDecl.InitStart(ctx.pkg)
 		for _, val := range v.Values {

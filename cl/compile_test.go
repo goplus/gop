@@ -127,6 +127,27 @@ func init() {
 `)
 }
 
+func TestVarAfterMain(t *testing.T) {
+	gopClTest(t, `
+package main
+
+func main() {
+	println(i)
+}
+
+var i int
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Println(i)
+}
+
+var i int
+`)
+}
+
 func TestSelect(t *testing.T) {
 	gopClTest(t, `
 
