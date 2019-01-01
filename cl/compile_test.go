@@ -127,6 +127,38 @@ func init() {
 `)
 }
 
+func TestIssue772(t *testing.T) {
+	gopClTest(t, `
+package main
+
+func t() (int,int,error){
+	return 0, 0, nil
+}
+
+func main() {
+	a, b := t()!
+	println(a, b)
+}`, `package main
+
+import fmt "fmt"
+
+func t() (int, int, error) {
+	return 0, 0, nil
+}
+func main() {
+	var _gop_err error
+	a, b := func() (_gop_ret int, _gop_ret2 int) {
+		_gop_ret, _gop_ret2, _gop_err = t()
+		if _gop_err != nil {
+			panic(_gop_err)
+		}
+		return
+	}()
+	fmt.Println(a, b)
+}
+`)
+}
+
 func TestIssue774(t *testing.T) {
 	gopClTest(t, `
 package main

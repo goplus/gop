@@ -20,6 +20,7 @@ import (
 	"log"
 	"math/big"
 	"reflect"
+	"strconv"
 
 	goast "go/ast"
 	gotoken "go/token"
@@ -752,18 +753,45 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr) {
 	if !useClosure && (cb.Scope().Parent() == types.Universe) {
 		panic("TODO: can't use expr? in global")
 	}
-	ret := pkg.NewAutoParam("_gop_ret")
-	sig := types.NewSignature(nil, nil, types.NewTuple(ret), false)
+
+	compileExpr(ctx, v.X)
+	x := cb.InternalStack().Pop()
+	results, ok := x.Type.(*types.Tuple)
+	if !ok {
+		panic("TODO: can't use ErrWrapExpr in non function call")
+	}
+	n := results.Len() - 1
+	if n < 1 {
+		panic("TODO: unexpected results")
+	}
+
+	i, retName := 0, "_gop_ret"
+	ret := make([]*gox.Param, n)
+	for {
+		ret[i] = pkg.NewAutoParam(retName)
+		i++
+		if i >= n {
+			break
+		}
+		retName = "_gop_ret" + strconv.Itoa(i+1)
+	}
+	cb.NewVar(tyError, "_gop_err")
+	err := cb.Scope().Lookup("_gop_err")
+
+	sig := types.NewSignature(nil, nil, types.NewTuple(ret...), false)
 	if useClosure {
 		cb.NewClosureWith(sig).BodyStart(pkg)
 	} else {
 		cb.CallInlineClosureStart(sig, 0, false)
 	}
-	cb.NewVar(tyError, "_gop_err")
-	err := cb.Scope().Lookup("_gop_err")
-	cb.VarRef(ret).VarRef(err)
-	compileExpr(ctx, v.X)
-	cb.Assign(2, 1)
+
+	for _, retVar := range ret {
+		cb.VarRef(retVar)
+	}
+	cb.VarRef(err)
+	cb.InternalStack().Push(x)
+	cb.Assign(n+1, 1)
+
 	cb.If().Val(err).CompareNil(gotoken.NEQ).Then()
 	if v.Tok == token.NOT { // expr!
 		cb.Val(pkg.Builtin().Ref("panic")).Val(err).Call(1).EndStmt() // TODO: wrap err
