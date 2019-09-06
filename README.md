@@ -1,10 +1,9 @@
 Q Language - A script language for Go
 ========
 
-[![Build Status](https://travis-ci.org/qiniu/qlang.png?branch=develop)](https://travis-ci.org/qiniu/qlang)
-[![Go Report Card](https://goreportcard.com/badge/github.com/qiniu/qlang)](https://goreportcard.com/report/github.com/qiniu/qlang)
+[![Build Status](https://travis-ci.org/qiniu/qlang.png?branch=master)](https://travis-ci.org/qiniu/qlang) [![GoDoc](https://godoc.org/github.com/qiniu/qlang?status.svg)](https://godoc.org/github.com/qiniu/qlang) [![Go Report Card](https://goreportcard.com/badge/github.com/qiniu/qlang)](https://goreportcard.com/report/github.com/qiniu/qlang)
 
-![logo](http://qiniutek.com/images/logo-2.png)
+[![Qiniu Logo](http://open.qiniudn.com/logo.png)](http://www.qiniu.com/)
 
 ## 语言特色
 
@@ -28,8 +27,8 @@ Q Language - A script language for Go
 import (
 	"fmt"
 
-	"qlang.io/cl/qlang"
-	_ "qlang.io/lib/builtin" // 导入 builtin 包
+	"github.com/qiniu/qlang/cl/qlang"
+	_ "github.com/qiniu/qlang/lib/builtin" // 导入 builtin 包
 )
 
 const scriptCode = `x = 1 + 2`
@@ -100,13 +99,7 @@ QLANG_DUMPCODE=1 qlang
 ### 最新版本
 
 ```
-go get -u -insecure qlang.io/qlang
-```
-
-或者在 src 目录执行如下命令：
-
-```
-git clone https://github.com/qiniu/qlang.git qlang.io
+go get github.com/qiniu/qlang
 ```
 
 ## 社区资源
