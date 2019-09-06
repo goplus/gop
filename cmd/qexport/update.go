@@ -10,7 +10,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/qiniu/qlang/3rd/github.com/visualfc/gotools/pkgwalk"
+	"github.com/visualfc/gotools/pkg/pkgwalk"
 )
 
 type ObjectInfo struct {
