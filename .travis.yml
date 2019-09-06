@@ -2,5 +2,6 @@ language: go
 go:
   - 1.12
 install:
+  - export GO111MODULE=
   - go install -v ./...
   - go test ./...
