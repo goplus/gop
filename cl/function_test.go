@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/qiniu/qlang/cl/qlang"
+	"github.com/qiniu/qlang"
 	_ "github.com/qiniu/qlang/lib/builtin"
 )
 

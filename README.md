@@ -27,7 +27,7 @@ Q Language - A script language for Go
 import (
 	"fmt"
 
-	"github.com/qiniu/qlang/cl/qlang"
+	"github.com/qiniu/qlang"
 	_ "github.com/qiniu/qlang/lib/builtin" // 导入 builtin 包
 )
 

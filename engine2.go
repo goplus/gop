@@ -6,9 +6,9 @@ import (
 	"reflect"
 
 	"github.com/qiniu/text/tpl/interpreter"
+	"github.com/qiniu/qlang/exec"
 
 	qcl "github.com/qiniu/qlang/cl"
-	"github.com/qiniu/qlang/exec"
 	qlang "github.com/qiniu/qlang/spec"
 )
 

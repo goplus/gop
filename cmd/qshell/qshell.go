@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/qiniu/qlang/cl/qlang"
+	"github.com/qiniu/qlang"
 	"github.com/qiniu/qlang/lib/terminal"
 
 	qipt "github.com/qiniu/qlang/cl/interpreter"
