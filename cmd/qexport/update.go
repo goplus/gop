@@ -56,7 +56,7 @@ func (i *InsertInfo) UpdateFile(outpath string, data []byte, hasTypeExport bool)
 
 	out := insertData(all, data, i.pos.Offset)
 	if hasTypeExport && i.specImportName == "" {
-		spec := []byte("\n\nqlang \"qlang.io/spec\"\n")
+		spec := []byte("\n\nqlang \"github.com/qiniu/qlang/spec\"\n")
 		out = insertData(out, spec, i.importPos.Offset+1)
 	}
 
@@ -103,7 +103,7 @@ func CheckUpdateInfo(pkgname string, pkg string) (*UpdateInfo, error) {
 		if decl == nil {
 			return nil
 		}
-		specImport := w.FindImportName(file, "qlang.io/spec")
+		specImport := w.FindImportName(file, "github.com/qiniu/qlang/spec")
 		endImportPos := w.FindImportEndPos(file)
 		pos := w.FileSet.Position(decl.End())
 		_, pos.Filename = filepath.Split(pos.Filename)

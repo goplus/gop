@@ -468,7 +468,7 @@ func export(pkg string, outpath string, skipOSArch bool) error {
 			outHeadf("\t%q\n", pkg)
 			//check qlang used
 			if hasTypeExport {
-				outHeadf("\n\tqlang \"qlang.io/spec\"\n")
+				outHeadf("\n\tqlang \"github.com/qiniu/qlang/spec\"\n")
 			}
 			outHeadf(")\n\n")
 		}
@@ -510,7 +510,7 @@ var Exports = map[string]interface{}{
 		if verHasTypeExport[ver] {
 			buf.WriteString("import (\n")
 			buf.WriteString(fmt.Sprintf("\t%q\n\n", bp.ImportPath))
-			buf.WriteString(fmt.Sprintf("\tqlang %q\n", "qlang.io/spec"))
+			buf.WriteString(fmt.Sprintf("\tqlang %q\n", "github.com/qiniu/qlang/spec"))
 			buf.WriteString(")\n")
 		} else {
 			buf.WriteString(fmt.Sprintf("import %q\n", bp.ImportPath))
