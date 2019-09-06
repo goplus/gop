@@ -3,7 +3,7 @@ package exec
 import (
 	"errors"
 
-	qlang "qlang.io/spec"
+	qlang "github.com/qiniu/qlang/spec"
 )
 
 var (

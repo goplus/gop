@@ -1,7 +1,7 @@
 package main
 
 import (
-	"qlang.io/cmd/qshell"
+	"github.com/qiniu/qlang/cmd/qshell"
 )
 
 // -----------------------------------------------------------------------------

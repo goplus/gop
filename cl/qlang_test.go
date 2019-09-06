@@ -4,9 +4,9 @@ import (
 	"reflect"
 	"testing"
 
-	"qlang.io/cl/qlang"
-	"qlang.io/lib/math"
-	qspec "qlang.io/spec"
+	"github.com/qiniu/qlang/cl/qlang"
+	"github.com/qiniu/qlang/lib/math"
+	qspec "github.com/qiniu/qlang/spec"
 )
 
 // -----------------------------------------------------------------------------

@@ -8,11 +8,11 @@ import (
 	"os"
 	"strings"
 
-	"qlang.io/cl/qlang"
-	"qlang.io/lib/terminal"
+	"github.com/qiniu/qlang/cl/qlang"
+	"github.com/qiniu/qlang/lib/terminal"
 
-	qipt "qlang.io/cl/interpreter"
-	qall "qlang.io/lib/qlang.all"
+	qipt "github.com/qiniu/qlang/cl/interpreter"
+	qall "github.com/qiniu/qlang/lib/qlang.all"
 )
 
 var (

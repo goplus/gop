@@ -1,7 +1,7 @@
 package exec
 
 import (
-	qlang "qlang.io/spec"
+	qlang "github.com/qiniu/qlang/spec"
 )
 
 // -----------------------------------------------------------------------------

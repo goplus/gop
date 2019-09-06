@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"reflect"
 
-	"qiniupkg.com/text/tpl.v1/interpreter"
+	"github.com/qiniu/text/tpl/interpreter"
 
-	qcl "qlang.io/cl"
-	"qlang.io/exec"
-	qlang "qlang.io/spec"
+	qcl "github.com/qiniu/qlang/cl"
+	"github.com/qiniu/qlang/exec"
+	qlang "github.com/qiniu/qlang/spec"
 )
 
 // Options represent interpreter options.

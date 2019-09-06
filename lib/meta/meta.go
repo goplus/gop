@@ -11,14 +11,14 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"qlang.io/exec"
-	qlang "qlang.io/spec"
+	"github.com/qiniu/qlang/exec"
+	qlang "github.com/qiniu/qlang/spec"
 )
 
 // Exports is the export table of this module.
 //
 var Exports = map[string]interface{}{
-	"_name":   "qlang.io/lib/meta",
+	"_name":   "github.com/qiniu/qlang/lib/meta",
 	"fnlist":  FnList,
 	"fntable": FnTable,
 	"pkgs":    GoPkgList,

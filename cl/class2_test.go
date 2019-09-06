@@ -3,7 +3,7 @@ package qlang_test
 import (
 	"testing"
 
-	"qlang.io/cl/qlang"
+	"github.com/qiniu/qlang/cl/qlang"
 )
 
 // -----------------------------------------------------------------------------

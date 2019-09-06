@@ -1,9 +1,4 @@
 language: go
-go:
-  - 1.6
-sudo: false
 install:
-  - export QINIU_SRC=$HOME/gopath/src
-  - mv $QINIU_SRC/github.com/qiniu/qlang $QINIU_SRC/qlang.io
-  - export TRAVIS_BUILD_DIR=$QINIU_SRC/qlang.io
-  - cd $TRAVIS_BUILD_DIR
+  - go install -v ./...
+  - go test ./...

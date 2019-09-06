@@ -1,0 +1,8 @@
+github.com/mattn/go-runewidth v0.0.3 h1:a+kO+98RDGEfo6asOGMmpodZq4FNtnGP54yps8BzLR4=
+github.com/mattn/go-runewidth v0.0.3/go.mod h1:LwmH8dsx7+W8Uxz3IHJYH5QSwggIsqBzpuz5H//U1FU=
+github.com/peterh/liner v1.1.0 h1:f+aAedNJA6uk7+6rXsYBnhdo4Xux7ESLe+kcuVUF5os=
+github.com/peterh/liner v1.1.0/go.mod h1:CRroGNssyjTd/qIG2FyxByd2S8JEAZXBl4qUrZf8GS0=
+github.com/qiniu/text v0.0.0-20190906154525-bf29e80e366e h1:khXpvN+c0iYq2szBAyuIo8L8J49vZgG5J5cKDAO6anU=
+github.com/qiniu/text v0.0.0-20190906154525-bf29e80e366e/go.mod h1:v9y6inngR3QcljoFfgmBN+ukkI4WBItyzxMfyHao1C4=
+github.com/visualfc/gotools v0.0.0-20190715142037-64c955ca5eea h1:DF2P3A7XMN1mhn45oyQxHCasJGmXWsS1qpuWNOjkScE=
+qiniupkg.com/text v0.0.0-20190906154525-bf29e80e366e h1:7+5dSjQZx14scW8y4jfCUOtTlzBuREcQ4gwIqrmu2mo=

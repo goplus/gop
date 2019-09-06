@@ -4,7 +4,7 @@ import (
 	"os"
 	"strconv"
 
-	qlang "qlang.io/spec"
+	qlang "github.com/qiniu/qlang/spec"
 )
 
 // -----------------------------------------------------------------------------

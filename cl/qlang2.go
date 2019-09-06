@@ -3,11 +3,11 @@ package qlang
 import (
 	"strings"
 
-	"qlang.io/exec"
-	qlang "qlang.io/spec"
+	"github.com/qiniu/qlang/exec"
+	qlang "github.com/qiniu/qlang/spec"
 
-	ipt "qiniupkg.com/text/tpl.v1/interpreter"
-	"qiniupkg.com/text/tpl.v1/interpreter.util"
+	ipt "github.com/qiniu/text/tpl/interpreter"
+	"github.com/qiniu/text/tpl/interpreter.util"
 )
 
 // -----------------------------------------------------------------------------
