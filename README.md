@@ -26,28 +26,37 @@ Q Language - A script language for Go
 ```go
 import (
 	"fmt"
+	"log"
+	"strings"
 
 	"github.com/qiniu/qlang"
 	_ "github.com/qiniu/qlang/lib/builtin" // 导入 builtin 包
 )
 
-const scriptCode = `x = 1 + 2`
+var strings_Exports = map[string]interface{}{
+	"replacer": strings.NewReplacer,
+}
 
 func main() {
 
+	qlang.Import("strings",	strings_Exports) // 导入一个自定义的包，叫 strings（和标准库同名）
 	ql := qlang.New()
-	err := ql.SafeExec([]byte(scriptCode), "")
+
+	err := ql.SafeEval(`x = strings.replacer("?", "!").replace("hello, world???")`)
 	if err != nil {
-		// 错误处理
+		log.Fatal(err)
 		return
 	}
 
-	fmt.Println("x:", ql.Var("x")) // 输出 x: 3
+	fmt.Println("x:", ql.Var("x")) // 输出 x: hello, world!!!
 }
 ```
 
-这是一个最精简功能的 mini qlang。想要了解更多，可参考“[定制 qlang](README_QL.md#定制-qlang)”相关内容。实际项目中你也可以参考代码：
+这是一个功能最精简功能的迷你版 qlang。
 
+想要了解更多，可参考“[定制 qlang](README_QL.md#定制-qlang)”相关内容。实际项目中你也可以参考代码：
+
+* [qshell.go](cmd/qshell/qshell.go)
 * [qlang/main.go](cmd/qlang/main.go)
 
 ### 非嵌入式场景下使用 qlang
