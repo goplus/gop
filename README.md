@@ -34,7 +34,7 @@ import (
 )
 
 var strings_Exports = map[string]interface{}{
-	"replacer":	strings.NewReplacer,
+	"replacer": strings.NewReplacer,
 }
 
 func main() {
@@ -42,7 +42,7 @@ func main() {
 	qlang.Import("strings",	strings_Exports) // 导入一个自定义的包，叫 strings（和标准库同名）
 	ql := qlang.New()
 
-	err := ql..SafeEval(`x = strings.replacer("?", "!").replace("hello,	world???")`)
+	err := ql..SafeEval(`x = strings.replacer("?", "!").replace("hello, world???")`)
 	if err != nil {
 		log.Fatal(err)
 		return
