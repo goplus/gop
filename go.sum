@@ -22,6 +22,8 @@ github.com/spf13/pflag v0.0.0-20170417173400-9e4c21054fa1/go.mod h1:DYY7MBk1bdzu
 github.com/visualfc/fastmod v0.0.0-20190714050813-3600cbe34ad5/go.mod h1:qklLSKOIVNIn5SdfGlics3Ljx4kOC29a2gwOS+NjDnQ=
 github.com/visualfc/gotools v0.0.0-20190715142037-64c955ca5eea h1:DF2P3A7XMN1mhn45oyQxHCasJGmXWsS1qpuWNOjkScE=
 github.com/visualfc/gotools v0.0.0-20190715142037-64c955ca5eea/go.mod h1:m6PkBvi4j7UhZB5EFWuAmwz7EJXwiX5pQzzZm3nb64k=
+github.com/visualfc/pkgwalk v1.0.0 h1:WjGmokBfgJbmv5DU9+FDWK7A/tU2zyKpeWsNi/kKfSM=
+github.com/visualfc/pkgwalk v1.0.0/go.mod h1:1FBUxT6vBvYFqrUQVNrrmn1Nu30snrj2pTKlQMku3Tg=
 go.starlark.net v0.0.0-20190702223751-32f345186213/go.mod h1:c1/X6cHgvdXj6pUlmWKMkuqRnW4K8x2vwt6JAaaircg=
 golang.org/x/arch v0.0.0-20171004143515-077ac972c2e4/go.mod h1:cYlCBUl1MsqxdiKgmc4uh7TxZfWSFLOGSRR090WDxt8=
 golang.org/x/crypto v0.0.0-20180614174826-fd5f17ee7299/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=

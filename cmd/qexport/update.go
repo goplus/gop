@@ -10,7 +10,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/visualfc/gotools/pkg/pkgwalk"
+	"github.com/visualfc/pkgwalk"
 )
 
 type ObjectInfo struct {
