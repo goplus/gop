@@ -33,7 +33,7 @@ import (
 	_ "github.com/qiniu/qlang/lib/builtin" // 导入 builtin 包
 )
 
-var strings_Exports	= map[string]interface{}{
+var strings_Exports = map[string]interface{}{
 	"replacer":	strings.NewReplacer,
 }
 
