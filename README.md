@@ -99,15 +99,7 @@ QLANG_DUMPCODE=1 qlang
 ### 最新版本
 
 ```
-go get -u -insecure github.com/qiniu/qlang/qlang
-```
-
-或者在 src 目录执行如下命令：
-
-```
-mkdir github.com/qiniu
-git clone https://github.com/qiniu/qlang.git github.com/qiniu/qlang
-git clone https://github.com/qiniu/text.git github.com/qiniu/text
+go get github.com/qiniu/qlang
 ```
 
 ## 社区资源
