@@ -49,7 +49,7 @@ func main() {
 
 这是一个最精简功能的 mini qlang。想要了解更多，可参考“[定制 qlang](README_QL.md#定制-qlang)”相关内容。实际项目中你也可以参考代码：
 
-* [qlang/main.go](app/qlang/main.go)
+* [qlang/main.go](cmd/qshell/qshell.go)
 
 ### 非嵌入式场景下使用 qlang
 
