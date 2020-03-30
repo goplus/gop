@@ -600,9 +600,9 @@ qlang 采用微内核设计，大部分你看到的功能，都通过 Go package
 
 ```go
 import (
-	"qlang.io/qlang/math"
-	"qlang.io/qlang/strconv"
-	"qlang.io/qlang/strings"
+	"github.com/qiniu/qlang/lib/math"
+	"github.com/qiniu/qlang/lib/strconv"
+	"github.com/qiniu/qlang/lib/strings"
 	...
 )
 
@@ -626,7 +626,7 @@ qlang.Import("", math.Exports) // 如此，你就可以直接用 sin 而不是 m
 
 ### 制作 qlang 模块
 
-制作 qlang 模块的成本极其低廉。我们打开 `qlang.io/qlang/strings` 看看它是什么样的：
+制作 qlang 模块的成本极其低廉。我们打开 `github.com/qiniu/qlang/lib/strings` 看看它是什么样的：
 
 ```go
 package strings
@@ -680,7 +680,7 @@ func (p *Bar) GetX() int {
 
 ```go
 import (
-	"qlang.io/qlang.spec.v1"
+	"github.com/qiniu/qlang/spec"
 )
 
 var Exports = map[string]interface{}{

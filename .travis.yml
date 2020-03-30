@@ -1,13 +1,5 @@
 language: go
-go:
-  - 1.4.2
-  - 1.6
-sudo: false
 install:
-  - export QINIU_SRC=$HOME/gopath/src
-  - mkdir -p $QINIU_SRC/qiniupkg.com
-  - mv $QINIU_SRC/github.com/qiniu/qlang $QINIU_SRC/qlang.io
-  - git clone --depth=50 git://github.com/qiniu/text.git $QINIU_SRC/qiniupkg.com/text
-  - go get github.com/peterh/liner
-  - export TRAVIS_BUILD_DIR=$QINIU_SRC/qlang.io
-  - cd $TRAVIS_BUILD_DIR
+  - export GO111MODULE="on"
+  - go install -v ./...
+  - go test ./...

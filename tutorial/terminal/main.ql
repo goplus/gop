@@ -14,7 +14,7 @@ main { // 使用main关键字将主程序括起来，是为了避免其中用的
 	term.loadHistroy(historyFile)
 	defer term.saveHistroy(historyFile)
 
-	println(`Q-Calculator - http://qlang.io, version 1.0.00
+	println(`Q-Calculator - http://github.com/qiniu/qlang, version 1.0.00
 Copyright (C) 2015 Qiniu.com - Shanghai Qiniu Information Technologies Co., Ltd.
 Use Ctrl-D (i.e. EOF) to exit.
 `)
