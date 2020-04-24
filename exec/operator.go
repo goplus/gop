@@ -1,6 +1,10 @@
 package exec
 
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+	"strconv"
+)
 
 // -----------------------------------------------------------------------------
 
@@ -59,6 +63,42 @@ const (
 	// OpBitNot '^'
 	OpBitNot
 )
+
+var opNames = []string{
+	OpAdd:       "+",
+	OpSub:       "-",
+	OpMul:       "*",
+	OpDiv:       "/",
+	OpMod:       "%",
+	OpBitAnd:    "&",
+	OpBitOr:     "|",
+	OpBitXor:    "^",
+	OpBitAndNot: "&^",
+	OpBitSHL:    "<<",
+	OpBitSHR:    ">>",
+	OpLT:        "<",
+	OpLE:        "<=",
+	OpGT:        ">",
+	OpGE:        ">=",
+	OpEQ:        "==",
+	OpEQNil:     "== nil",
+	OpNE:        "!=",
+	OpNENil:     "!= nil",
+	OpLAnd:      "&&",
+	OpLOr:       "||",
+	OpNeg:       "-",
+	OpNot:       "!",
+	OpBitNot:    "^",
+}
+
+func (op Operator) String() string {
+	if int(op) < len(opNames) {
+		return opNames[op]
+	}
+	return "op" + strconv.Itoa(int(op))
+}
+
+// -----------------------------------------------------------------------------
 
 // A Kind represents the specific kind of type that a Type represents.
 type Kind = reflect.Kind
@@ -641,7 +681,13 @@ var builtinOps = map[int]func(i Instr, p *Context){
 }
 
 // BuiltinOp instr
-func (p *Code) BuiltinOp(kind Kind, op Operator) {
+func (p *Code) BuiltinOp(kind Kind, op Operator) error {
+	i := (int(kind) << bitsOperator) | int(op)
+	if _, ok := builtinOps[i]; ok {
+		p.data = append(p.data, (opBuiltinOp<<bitsOpShift)|uint32(i))
+		return nil
+	}
+	return fmt.Errorf("type %v doesn't support operator %v", kind, op)
 }
 
 // -----------------------------------------------------------------------------
