@@ -221,6 +221,282 @@ func execAddString(i Instr, p *Context) {
 
 // -----------------------------------------------------------------------------
 
+func execSubInt(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int) - p.data[n-1].(int)
+	p.data = p.data[:n-1]
+}
+
+func execSubInt8(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int8) - p.data[n-1].(int8)
+	p.data = p.data[:n-1]
+}
+
+func execSubInt16(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int16) - p.data[n-1].(int16)
+	p.data = p.data[:n-1]
+}
+
+func execSubInt32(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int32) - p.data[n-1].(int32)
+	p.data = p.data[:n-1]
+}
+
+func execSubInt64(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int64) - p.data[n-1].(int64)
+	p.data = p.data[:n-1]
+}
+
+func execSubUint(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint) - p.data[n-1].(uint)
+	p.data = p.data[:n-1]
+}
+
+func execSubUint8(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint8) - p.data[n-1].(uint8)
+	p.data = p.data[:n-1]
+}
+
+func execSubUint16(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint16) - p.data[n-1].(uint16)
+	p.data = p.data[:n-1]
+}
+
+func execSubUint32(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint32) - p.data[n-1].(uint32)
+	p.data = p.data[:n-1]
+}
+
+func execSubUint64(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint64) - p.data[n-1].(uint64)
+	p.data = p.data[:n-1]
+}
+
+func execSubUintptr(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uintptr) - p.data[n-1].(uintptr)
+	p.data = p.data[:n-1]
+}
+
+func execSubFloat32(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(float32) - p.data[n-1].(float32)
+	p.data = p.data[:n-1]
+}
+
+func execSubFloat64(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(float64) - p.data[n-1].(float64)
+	p.data = p.data[:n-1]
+}
+
+func execSubComplex64(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(complex64) - p.data[n-1].(complex64)
+	p.data = p.data[:n-1]
+}
+
+func execSubComplex128(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(complex128) - p.data[n-1].(complex128)
+	p.data = p.data[:n-1]
+}
+
+// -----------------------------------------------------------------------------
+
+func execMulInt(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int) * p.data[n-1].(int)
+	p.data = p.data[:n-1]
+}
+
+func execMulInt8(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int8) * p.data[n-1].(int8)
+	p.data = p.data[:n-1]
+}
+
+func execMulInt16(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int16) * p.data[n-1].(int16)
+	p.data = p.data[:n-1]
+}
+
+func execMulInt32(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int32) * p.data[n-1].(int32)
+	p.data = p.data[:n-1]
+}
+
+func execMulInt64(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int64) * p.data[n-1].(int64)
+	p.data = p.data[:n-1]
+}
+
+func execMulUint(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint) * p.data[n-1].(uint)
+	p.data = p.data[:n-1]
+}
+
+func execMulUint8(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint8) * p.data[n-1].(uint8)
+	p.data = p.data[:n-1]
+}
+
+func execMulUint16(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint16) * p.data[n-1].(uint16)
+	p.data = p.data[:n-1]
+}
+
+func execMulUint32(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint32) * p.data[n-1].(uint32)
+	p.data = p.data[:n-1]
+}
+
+func execMulUint64(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint64) * p.data[n-1].(uint64)
+	p.data = p.data[:n-1]
+}
+
+func execMulUintptr(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uintptr) * p.data[n-1].(uintptr)
+	p.data = p.data[:n-1]
+}
+
+func execMulFloat32(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(float32) * p.data[n-1].(float32)
+	p.data = p.data[:n-1]
+}
+
+func execMulFloat64(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(float64) * p.data[n-1].(float64)
+	p.data = p.data[:n-1]
+}
+
+func execMulComplex64(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(complex64) * p.data[n-1].(complex64)
+	p.data = p.data[:n-1]
+}
+
+func execMulComplex128(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(complex128) * p.data[n-1].(complex128)
+	p.data = p.data[:n-1]
+}
+
+// -----------------------------------------------------------------------------
+
+func execDivInt(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int) / p.data[n-1].(int)
+	p.data = p.data[:n-1]
+}
+
+func execDivInt8(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int8) / p.data[n-1].(int8)
+	p.data = p.data[:n-1]
+}
+
+func execDivInt16(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int16) / p.data[n-1].(int16)
+	p.data = p.data[:n-1]
+}
+
+func execDivInt32(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int32) / p.data[n-1].(int32)
+	p.data = p.data[:n-1]
+}
+
+func execDivInt64(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int64) / p.data[n-1].(int64)
+	p.data = p.data[:n-1]
+}
+
+func execDivUint(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint) / p.data[n-1].(uint)
+	p.data = p.data[:n-1]
+}
+
+func execDivUint8(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint8) / p.data[n-1].(uint8)
+	p.data = p.data[:n-1]
+}
+
+func execDivUint16(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint16) / p.data[n-1].(uint16)
+	p.data = p.data[:n-1]
+}
+
+func execDivUint32(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint32) / p.data[n-1].(uint32)
+	p.data = p.data[:n-1]
+}
+
+func execDivUint64(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint64) / p.data[n-1].(uint64)
+	p.data = p.data[:n-1]
+}
+
+func execDivUintptr(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uintptr) / p.data[n-1].(uintptr)
+	p.data = p.data[:n-1]
+}
+
+func execDivFloat32(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(float32) / p.data[n-1].(float32)
+	p.data = p.data[:n-1]
+}
+
+func execDivFloat64(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(float64) / p.data[n-1].(float64)
+	p.data = p.data[:n-1]
+}
+
+func execDivComplex64(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(complex64) / p.data[n-1].(complex64)
+	p.data = p.data[:n-1]
+}
+
+func execDivComplex128(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(complex128) / p.data[n-1].(complex128)
+	p.data = p.data[:n-1]
+}
+
+// -----------------------------------------------------------------------------
+
 // BuiltinOp instr
 func (p *Code) BuiltinOp(kind Kind, op Operator) {
 }
