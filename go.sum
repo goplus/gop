@@ -1,8 +1,1 @@
-github.com/mattn/go-runewidth v0.0.3 h1:a+kO+98RDGEfo6asOGMmpodZq4FNtnGP54yps8BzLR4=
-github.com/mattn/go-runewidth v0.0.3/go.mod h1:LwmH8dsx7+W8Uxz3IHJYH5QSwggIsqBzpuz5H//U1FU=
-github.com/peterh/liner v1.1.0 h1:f+aAedNJA6uk7+6rXsYBnhdo4Xux7ESLe+kcuVUF5os=
-github.com/peterh/liner v1.1.0/go.mod h1:CRroGNssyjTd/qIG2FyxByd2S8JEAZXBl4qUrZf8GS0=
-github.com/qiniu/text v1.3.0 h1:rcEMTMM4PzieXFNpgjwBe45KUoWa1EJ+l+suAywJWrc=
-github.com/qiniu/text v1.3.0/go.mod h1:v9y6inngR3QcljoFfgmBN+ukkI4WBItyzxMfyHao1C4=
-github.com/visualfc/pkgwalk v1.0.0 h1:WjGmokBfgJbmv5DU9+FDWK7A/tU2zyKpeWsNi/kKfSM=
-github.com/visualfc/pkgwalk v1.0.0/go.mod h1:1FBUxT6vBvYFqrUQVNrrmn1Nu30snrj2pTKlQMku3Tg=
+github.com/qiniu/x v1.8.5/go.mod h1:BeQOcur1vCtXTTv1Fo4WtJypt4cEh4/kuVY6GOAPxLs=
