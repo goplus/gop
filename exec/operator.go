@@ -118,11 +118,6 @@ const (
 
 // -----------------------------------------------------------------------------
 
-const (
-	bitsKind     = 5 // Kind count = 26
-	bitsOperator = 5 // Operator count = 24
-)
-
 func execAddInt(i Instr, p *Context) {
 	n := len(p.data)
 	p.data[n-2] = p.data[n-2].(int) + p.data[n-1].(int)
@@ -564,6 +559,86 @@ func execModUintptr(i Instr, p *Context) {
 }
 
 // -----------------------------------------------------------------------------
+
+const (
+	bitsKind     = 5 // Kind count = 26
+	bitsOperator = 5 // Operator count = 24
+)
+
+var builtinOps = map[int]func(i Instr, p *Context){
+	(int(Int) << bitsOperator) | int(OpAdd):        execAddInt,
+	(int(Int8) << bitsOperator) | int(OpAdd):       execAddInt8,
+	(int(Int16) << bitsOperator) | int(OpAdd):      execAddInt16,
+	(int(Int32) << bitsOperator) | int(OpAdd):      execAddInt32,
+	(int(Int64) << bitsOperator) | int(OpAdd):      execAddInt64,
+	(int(Uint) << bitsOperator) | int(OpAdd):       execAddUint,
+	(int(Uint8) << bitsOperator) | int(OpAdd):      execAddUint8,
+	(int(Uint16) << bitsOperator) | int(OpAdd):     execAddUint16,
+	(int(Uint32) << bitsOperator) | int(OpAdd):     execAddUint32,
+	(int(Uint64) << bitsOperator) | int(OpAdd):     execAddUint64,
+	(int(Uintptr) << bitsOperator) | int(OpAdd):    execAddUintptr,
+	(int(String) << bitsOperator) | int(OpAdd):     execAddString,
+	(int(Float32) << bitsOperator) | int(OpAdd):    execAddFloat32,
+	(int(Float64) << bitsOperator) | int(OpAdd):    execAddFloat64,
+	(int(Complex64) << bitsOperator) | int(OpAdd):  execAddComplex64,
+	(int(Complex128) << bitsOperator) | int(OpAdd): execAddComplex128,
+	(int(Int) << bitsOperator) | int(OpSub):        execSubInt,
+	(int(Int8) << bitsOperator) | int(OpSub):       execSubInt8,
+	(int(Int16) << bitsOperator) | int(OpSub):      execSubInt16,
+	(int(Int32) << bitsOperator) | int(OpSub):      execSubInt32,
+	(int(Int64) << bitsOperator) | int(OpSub):      execSubInt64,
+	(int(Uint) << bitsOperator) | int(OpSub):       execSubUint,
+	(int(Uint8) << bitsOperator) | int(OpSub):      execSubUint8,
+	(int(Uint16) << bitsOperator) | int(OpSub):     execSubUint16,
+	(int(Uint32) << bitsOperator) | int(OpSub):     execSubUint32,
+	(int(Uint64) << bitsOperator) | int(OpSub):     execSubUint64,
+	(int(Uintptr) << bitsOperator) | int(OpSub):    execSubUintptr,
+	(int(Float32) << bitsOperator) | int(OpSub):    execSubFloat32,
+	(int(Float64) << bitsOperator) | int(OpSub):    execSubFloat64,
+	(int(Complex64) << bitsOperator) | int(OpSub):  execSubComplex64,
+	(int(Complex128) << bitsOperator) | int(OpSub): execSubComplex128,
+	(int(Int) << bitsOperator) | int(OpMul):        execMulInt,
+	(int(Int8) << bitsOperator) | int(OpMul):       execMulInt8,
+	(int(Int16) << bitsOperator) | int(OpMul):      execMulInt16,
+	(int(Int32) << bitsOperator) | int(OpMul):      execMulInt32,
+	(int(Int64) << bitsOperator) | int(OpMul):      execMulInt64,
+	(int(Uint) << bitsOperator) | int(OpMul):       execMulUint,
+	(int(Uint8) << bitsOperator) | int(OpMul):      execMulUint8,
+	(int(Uint16) << bitsOperator) | int(OpMul):     execMulUint16,
+	(int(Uint32) << bitsOperator) | int(OpMul):     execMulUint32,
+	(int(Uint64) << bitsOperator) | int(OpMul):     execMulUint64,
+	(int(Uintptr) << bitsOperator) | int(OpMul):    execMulUintptr,
+	(int(Float32) << bitsOperator) | int(OpMul):    execMulFloat32,
+	(int(Float64) << bitsOperator) | int(OpMul):    execMulFloat64,
+	(int(Complex64) << bitsOperator) | int(OpMul):  execMulComplex64,
+	(int(Complex128) << bitsOperator) | int(OpMul): execMulComplex128,
+	(int(Int) << bitsOperator) | int(OpDiv):        execDivInt,
+	(int(Int8) << bitsOperator) | int(OpDiv):       execDivInt8,
+	(int(Int16) << bitsOperator) | int(OpDiv):      execDivInt16,
+	(int(Int32) << bitsOperator) | int(OpDiv):      execDivInt32,
+	(int(Int64) << bitsOperator) | int(OpDiv):      execDivInt64,
+	(int(Uint) << bitsOperator) | int(OpDiv):       execDivUint,
+	(int(Uint8) << bitsOperator) | int(OpDiv):      execDivUint8,
+	(int(Uint16) << bitsOperator) | int(OpDiv):     execDivUint16,
+	(int(Uint32) << bitsOperator) | int(OpDiv):     execDivUint32,
+	(int(Uint64) << bitsOperator) | int(OpDiv):     execDivUint64,
+	(int(Uintptr) << bitsOperator) | int(OpDiv):    execDivUintptr,
+	(int(Float32) << bitsOperator) | int(OpDiv):    execDivFloat32,
+	(int(Float64) << bitsOperator) | int(OpDiv):    execDivFloat64,
+	(int(Complex64) << bitsOperator) | int(OpDiv):  execDivComplex64,
+	(int(Complex128) << bitsOperator) | int(OpDiv): execDivComplex128,
+	(int(Int) << bitsOperator) | int(OpMod):        execModInt,
+	(int(Int8) << bitsOperator) | int(OpMod):       execModInt8,
+	(int(Int16) << bitsOperator) | int(OpMod):      execModInt16,
+	(int(Int32) << bitsOperator) | int(OpMod):      execModInt32,
+	(int(Int64) << bitsOperator) | int(OpMod):      execModInt64,
+	(int(Uint) << bitsOperator) | int(OpMod):       execModUint,
+	(int(Uint8) << bitsOperator) | int(OpMod):      execModUint8,
+	(int(Uint16) << bitsOperator) | int(OpMod):     execModUint16,
+	(int(Uint32) << bitsOperator) | int(OpMod):     execModUint32,
+	(int(Uint64) << bitsOperator) | int(OpMod):     execModUint64,
+	(int(Uintptr) << bitsOperator) | int(OpMod):    execModUintptr,
+}
 
 // BuiltinOp instr
 func (p *Code) BuiltinOp(kind Kind, op Operator) {
