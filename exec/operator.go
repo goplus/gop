@@ -497,6 +497,74 @@ func execDivComplex128(i Instr, p *Context) {
 
 // -----------------------------------------------------------------------------
 
+func execModInt(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int) % p.data[n-1].(int)
+	p.data = p.data[:n-1]
+}
+
+func execModInt8(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int8) % p.data[n-1].(int8)
+	p.data = p.data[:n-1]
+}
+
+func execModInt16(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int16) % p.data[n-1].(int16)
+	p.data = p.data[:n-1]
+}
+
+func execModInt32(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int32) % p.data[n-1].(int32)
+	p.data = p.data[:n-1]
+}
+
+func execModInt64(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int64) % p.data[n-1].(int64)
+	p.data = p.data[:n-1]
+}
+
+func execModUint(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint) % p.data[n-1].(uint)
+	p.data = p.data[:n-1]
+}
+
+func execModUint8(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint8) % p.data[n-1].(uint8)
+	p.data = p.data[:n-1]
+}
+
+func execModUint16(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint16) % p.data[n-1].(uint16)
+	p.data = p.data[:n-1]
+}
+
+func execModUint32(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint32) % p.data[n-1].(uint32)
+	p.data = p.data[:n-1]
+}
+
+func execModUint64(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint64) % p.data[n-1].(uint64)
+	p.data = p.data[:n-1]
+}
+
+func execModUintptr(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uintptr) % p.data[n-1].(uintptr)
+	p.data = p.data[:n-1]
+}
+
+// -----------------------------------------------------------------------------
+
 // BuiltinOp instr
 func (p *Code) BuiltinOp(kind Kind, op Operator) {
 }
