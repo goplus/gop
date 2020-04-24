@@ -1,0 +1,208 @@
+package exec
+
+import (
+	"reflect"
+
+	"github.com/qiniu/qlang/spec"
+)
+
+// -----------------------------------------------------------------------------
+
+func pushInt(stk *Stack, kind reflect.Kind, v int64) {
+	var val interface{}
+	switch kind {
+	case reflect.Int:
+		val = int(v)
+	case reflect.Int64:
+		val = int64(v)
+	case reflect.Int32:
+		val = int32(v)
+	case reflect.Int16:
+		val = int16(v)
+	case reflect.Int8:
+		val = int8(v)
+	default:
+		panic("pushInt failed: invalid kind")
+	}
+	stk.Push(val)
+}
+
+func pushUint(stk *Stack, kind reflect.Kind, v uint64) {
+	var val interface{}
+	switch kind {
+	case reflect.Uint:
+		val = uint(v)
+	case reflect.Uint64:
+		val = uint64(v)
+	case reflect.Uint32:
+		val = uint32(v)
+	case reflect.Uint8:
+		val = uint8(v)
+	case reflect.Uint16:
+		val = uint16(v)
+	case reflect.Uintptr:
+		val = uintptr(v)
+	default:
+		panic("pushUint failed: invalid kind")
+	}
+	stk.Push(val)
+}
+
+// -----------------------------------------------------------------------------
+
+var valSpecs = []interface{}{
+	false,
+	true,
+	nil,
+	spec.Undefined,
+}
+
+func execPushValSpec(i Instr, stk *Stack, ctx *Context) int {
+	stk.Push(valSpecs[i&bitsOperand])
+	return 0
+}
+
+func execPushStringR(i Instr, stk *Stack, ctx *Context) int {
+	v := ctx.Code.stringConsts[i&bitsOperand]
+	stk.Push(v)
+	return 0
+}
+
+func execPushIntR(i Instr, stk *Stack, ctx *Context) int {
+	v := ctx.Code.intConsts[i&bitsOpIntOperand]
+	kind := reflect.Int + reflect.Kind((i>>bitsOpIntOperand)&7)
+	pushInt(stk, kind, v)
+	return 0
+}
+
+func execPushInt(i Instr, stk *Stack, ctx *Context) int {
+	v := int64(int32(i) << bitsOpIntShift >> bitsOpIntShift)
+	kind := reflect.Int + reflect.Kind((i>>bitsOpIntOperand)&7)
+	pushInt(stk, kind, v)
+	return 0
+}
+
+func execPushUintR(i Instr, stk *Stack, ctx *Context) int {
+	v := ctx.Code.uintConsts[i&bitsOpIntOperand]
+	kind := reflect.Uint + reflect.Kind((i>>bitsOpIntOperand)&7)
+	pushUint(stk, kind, v)
+	return 0
+}
+
+func execPushUint(i Instr, stk *Stack, ctx *Context) int {
+	v := uint64(i & bitsOpIntOperand)
+	kind := reflect.Uint + reflect.Kind((i>>bitsOpIntOperand)&7)
+	pushUint(stk, kind, v)
+	return 0
+}
+
+func execPushFloatR(i Instr, stk *Stack, ctx *Context) int {
+	v := ctx.Code.valConsts[i&bitsOpFloatOperand]
+	stk.Push(v)
+	return 0
+}
+
+func execPushFloat(i Instr, stk *Stack, ctx *Context) int {
+	panic("execPushFloat: not impl")
+	return 0
+}
+
+// -----------------------------------------------------------------------------
+
+type valUnresolved struct {
+	op   Instr
+	offs []int
+}
+
+// Builder class.
+type Builder struct {
+	valConsts map[interface{}]*valUnresolved
+}
+
+// Resolve func.
+func (p *Builder) Resolve(code *Code) {
+	var i Instr
+	for val, vu := range p.valConsts {
+		switch vu.op {
+		case opPushStringR:
+			i = (opPushStringR << bitsOpShift) | uint32(len(code.stringConsts))
+			code.stringConsts = append(code.stringConsts, val.(string))
+		case opPushIntR:
+			v := reflect.ValueOf(val)
+			kind := v.Kind()
+			i = (opPushIntR << bitsOpShift) | (uint32(kind-reflect.Int) << bitsOpIntShift) | uint32(len(code.intConsts))
+			code.intConsts = append(code.intConsts, v.Int())
+		case opPushUintR:
+			v := reflect.ValueOf(val)
+			kind := v.Kind()
+			i = (opPushUintR << bitsOpShift) | (uint32(kind-reflect.Uint) << bitsOpIntShift) | uint32(len(code.uintConsts))
+			code.uintConsts = append(code.uintConsts, v.Uint())
+		case opPushFloatR:
+			v := reflect.ValueOf(val)
+			kind := v.Kind()
+			i = (opPushFloatR << bitsOpShift) | (uint32(kind-reflect.Float32) << bitsOpFloatShift) | uint32(len(code.valConsts))
+			code.valConsts = append(code.valConsts, val)
+		default:
+			panic("Resolve failed: unknown type")
+		}
+		for _, off := range vu.offs {
+			code.data[off] = i
+		}
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+func (p *Code) pushUnresolved(ctx *Builder, op Instr, val interface{}) {
+	vu, ok := ctx.valConsts[val]
+	if !ok {
+		vu = &valUnresolved{op: op}
+		ctx.valConsts[val] = vu
+	}
+	vu.offs = append(vu.offs, len(p.data))
+	p.data = append(p.data, iPushUnresolved)
+}
+
+// Push instr
+func (p *Code) Push(ctx *Builder, val interface{}) {
+	var i Instr
+	v := reflect.ValueOf(val)
+	kind := v.Kind()
+	if kind >= reflect.Int && kind <= reflect.Int64 {
+		iv := v.Int()
+		ivStore := int64(int32(iv) << bitsOpIntShift >> bitsOpIntShift)
+		if iv != ivStore {
+			p.pushUnresolved(ctx, opPushIntR, val)
+			return
+		}
+		i = (opPushInt << bitsOpShift) | (uint32(kind-reflect.Int) << bitsOpIntShift) | (uint32(iv) & bitsOpIntOperand)
+	} else if kind >= reflect.Uint && kind <= reflect.Uintptr {
+		iv := v.Uint()
+		if iv != (iv & bitsOpIntOperand) {
+			p.pushUnresolved(ctx, opPushUintR, val)
+			return
+		}
+		i = (opPushUint << bitsOpShift) | (uint32(kind-reflect.Uint) << bitsOpIntShift) | (uint32(iv) & bitsOpIntOperand)
+	} else if kind == reflect.Bool {
+		if val.(bool) {
+			i = iPushTrue
+		} else {
+			i = iPushFalse
+		}
+	} else if kind == reflect.String {
+		p.pushUnresolved(ctx, opPushStringR, val)
+		return
+	} else if kind >= reflect.Float32 && kind <= reflect.Complex128 {
+		p.pushUnresolved(ctx, opPushFloatR, val)
+		return
+	} else if val == spec.Undefined {
+		i = iPushUndefined
+	} else if kind == reflect.Interface && v.IsNil() {
+		i = iPushNil
+	} else {
+		panic("Push failed: unsupported type")
+	}
+	p.data = append(p.data, i)
+}
+
+// -----------------------------------------------------------------------------
