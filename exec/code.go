@@ -31,15 +31,16 @@ const (
 	opPushIntR    = 0x05
 	opPushUintR   = 0x06
 	opPushFloatR  = 0x07
+	opBuiltinOp   = 0x08
 )
 
 const (
 	iPushFalse      = (opPushValSpec << bitsOpShift)
 	iPushTrue       = (opPushValSpec << bitsOpShift) | 1
-	iPushNil        = (opPushValSpec << bitsOpShift) | 2
-	iPushUndefined  = (opPushValSpec << bitsOpShift) | 3
 	iPushUnresolved = (opInvalid << bitsOpShift)
 )
+
+// -----------------------------------------------------------------------------
 
 // A Code represents generated instructions to execute.
 //
@@ -95,14 +96,21 @@ func (p *Code) Len() int {
 	return len(p.data)
 }
 
-// Block appends some instructions to code.
-//
-func (p *Code) Block(code ...Instr) int {
+// -----------------------------------------------------------------------------
 
-	for _, instr := range code {
-		p.data = append(p.data, instr)
-	}
-	return len(p.data)
+type valUnresolved struct {
+	op   Instr
+	offs []int
+}
+
+// Builder class.
+type Builder struct {
+	valConsts map[interface{}]*valUnresolved
+}
+
+// Resolve func.
+func (p *Builder) Resolve(code *Code) {
+	p.resolveConsts(code)
 }
 
 // -----------------------------------------------------------------------------
