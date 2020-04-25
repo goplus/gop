@@ -62,7 +62,6 @@ type ReservedInstr struct {
 // Reserve reserves an instruction and returns it.
 //
 func (p *Code) Reserve() ReservedInstr {
-
 	idx := len(p.data)
 	p.data = append(p.data, 0)
 	return ReservedInstr{p, idx}
@@ -71,28 +70,31 @@ func (p *Code) Reserve() ReservedInstr {
 // Set sets a reserved instruction.
 //
 func (p ReservedInstr) Set(code Instr) {
-
 	p.code.data[p.idx] = code
 }
 
 // Next returns next instruction position.
 //
 func (p ReservedInstr) Next() int {
-
 	return p.idx + 1
 }
 
 // Delta returns distance from b to p.
 //
 func (p ReservedInstr) Delta(b ReservedInstr) int {
-
 	return p.idx - b.idx
+}
+
+// NewCode returns a new Code object.
+//
+func NewCode() *Code {
+
+	return &Code{data: make([]Instr, 0, 64)}
 }
 
 // Len returns code length.
 //
 func (p *Code) Len() int {
-
 	return len(p.data)
 }
 
@@ -105,12 +107,26 @@ type valUnresolved struct {
 
 // Builder class.
 type Builder struct {
+	code      *Code
 	valConsts map[interface{}]*valUnresolved
 }
 
-// Resolve func.
-func (p *Builder) Resolve(code *Code) {
-	p.resolveConsts(code)
+// NewBuilder creates a new Code Builder instance.
+func NewBuilder(code *Code) *Builder {
+	if code == nil {
+		code = NewCode()
+	}
+	return &Builder{
+		code:      code,
+		valConsts: make(map[interface{}]*valUnresolved),
+	}
+}
+
+// Resolve resolves all unresolved consts/functions/etc.
+func (ctx *Builder) Resolve() (code *Code) {
+	code = ctx.code
+	resolveConsts(ctx, code)
+	return
 }
 
 // -----------------------------------------------------------------------------

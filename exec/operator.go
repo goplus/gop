@@ -64,7 +64,7 @@ const (
 	OpBitNot
 )
 
-var opNames = []string{
+var opNames = [...]string{
 	OpAdd:       "+",
 	OpSub:       "-",
 	OpMul:       "*",
@@ -598,6 +598,14 @@ func execModUintptr(i Instr, p *Context) {
 	p.data = p.data[:n-1]
 }
 
+func execBuiltinOp(i Instr, ctx *Context) {
+	if fn, ok := builtinOps[int(i&bitsOperand)]; ok {
+		fn(i, ctx)
+	} else {
+		panic("execBuiltinOp: invalid builtinOp")
+	}
+}
+
 // -----------------------------------------------------------------------------
 
 const (
@@ -680,14 +688,22 @@ var builtinOps = map[int]func(i Instr, p *Context){
 	(int(Uintptr) << bitsOperator) | int(OpMod):    execModUintptr,
 }
 
-// BuiltinOp instr
-func (p *Code) BuiltinOp(kind Kind, op Operator) error {
+func (p *Code) builtinOp(kind Kind, op Operator) error {
 	i := (int(kind) << bitsOperator) | int(op)
 	if _, ok := builtinOps[i]; ok {
 		p.data = append(p.data, (opBuiltinOp<<bitsOpShift)|uint32(i))
 		return nil
 	}
-	return fmt.Errorf("type %v doesn't support operator %v", kind, op)
+	return fmt.Errorf("builtinOp: type %v doesn't support operator %v", kind, op)
+}
+
+// BuiltinOp instr
+func (ctx *Builder) BuiltinOp(kind Kind, op Operator) *Builder {
+	err := ctx.code.builtinOp(kind, op)
+	if err != nil {
+		panic(err)
+	}
+	return ctx
 }
 
 // -----------------------------------------------------------------------------

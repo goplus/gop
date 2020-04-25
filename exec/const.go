@@ -97,7 +97,7 @@ func execPushFloat(i Instr, stk *Context) {
 
 // -----------------------------------------------------------------------------
 
-func (p *Builder) resolveConsts(code *Code) {
+func resolveConsts(p *Builder, code *Code) {
 	var i Instr
 	for val, vu := range p.valConsts {
 		switch vu.op {
@@ -130,18 +130,20 @@ func (p *Builder) resolveConsts(code *Code) {
 
 // -----------------------------------------------------------------------------
 
-func (p *Code) pushUnresolved(ctx *Builder, op Instr, val interface{}) {
+func (ctx *Builder) pushUnresolved(op Instr, val interface{}) *Builder {
 	vu, ok := ctx.valConsts[val]
 	if !ok {
 		vu = &valUnresolved{op: op}
 		ctx.valConsts[val] = vu
 	}
+	p := ctx.code
 	vu.offs = append(vu.offs, len(p.data))
 	p.data = append(p.data, iPushUnresolved)
+	return ctx
 }
 
 // Push instr
-func (p *Code) Push(ctx *Builder, val interface{}) {
+func (ctx *Builder) Push(val interface{}) *Builder {
 	var i Instr
 	v := reflect.ValueOf(val)
 	kind := v.Kind()
@@ -149,15 +151,13 @@ func (p *Code) Push(ctx *Builder, val interface{}) {
 		iv := v.Int()
 		ivStore := int64(int32(iv) << bitsOpIntShift >> bitsOpIntShift)
 		if iv != ivStore {
-			p.pushUnresolved(ctx, opPushIntR, val)
-			return
+			return ctx.pushUnresolved(opPushIntR, val)
 		}
 		i = (opPushInt << bitsOpShift) | (uint32(kind-reflect.Int) << bitsOpIntShift) | (uint32(iv) & bitsOpIntOperand)
 	} else if kind >= reflect.Uint && kind <= reflect.Uintptr {
 		iv := v.Uint()
 		if iv != (iv & bitsOpIntOperand) {
-			p.pushUnresolved(ctx, opPushUintR, val)
-			return
+			return ctx.pushUnresolved(opPushUintR, val)
 		}
 		i = (opPushUint << bitsOpShift) | (uint32(kind-reflect.Uint) << bitsOpIntShift) | (uint32(iv) & bitsOpIntOperand)
 	} else if kind == reflect.Bool {
@@ -167,15 +167,14 @@ func (p *Code) Push(ctx *Builder, val interface{}) {
 			i = iPushFalse
 		}
 	} else if kind == reflect.String {
-		p.pushUnresolved(ctx, opPushStringR, val)
-		return
+		return ctx.pushUnresolved(opPushStringR, val)
 	} else if kind >= reflect.Float32 && kind <= reflect.Complex128 {
-		p.pushUnresolved(ctx, opPushFloatR, val)
-		return
+		return ctx.pushUnresolved(opPushFloatR, val)
 	} else {
 		panic("Push failed: unsupported type")
 	}
-	p.data = append(p.data, i)
+	ctx.code.data = append(ctx.code.data, i)
+	return ctx
 }
 
 // -----------------------------------------------------------------------------

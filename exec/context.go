@@ -8,7 +8,7 @@ type Stack struct {
 	data []interface{}
 }
 
-func (p *Stack) init()  {
+func (p *Stack) init() {
 	p.data = make([]interface{}, 0, 64)
 }
 
@@ -47,6 +47,50 @@ type Context struct {
 	Stack
 	Code   *Code
 	parent *Context
+	ip     int
+}
+
+// NewContext returns a new context of an executor.
+//
+func NewContext(code *Code) *Context {
+	p := &Context{
+		Code: code,
+	}
+	p.Stack.init()
+	return p
+}
+
+// Exec executes a code block from ip to ipEnd.
+//
+func (ctx *Context) Exec(ip, ipEnd int) {
+	ctx.ip = ip
+	data := ctx.Code.data
+	for ctx.ip != ipEnd {
+		i := data[ctx.ip]
+		ctx.ip++
+		switch i >> bitsOpShift {
+		case opPushInt:
+			execPushInt(i, ctx)
+		case opPushStringR:
+			execPushStringR(i, ctx)
+		case opBuiltinOp:
+			execBuiltinOp(i, ctx)
+		default:
+			execTable[i>>bitsOpShift](i, ctx)
+		}
+	}
+}
+
+var execTable = [...]func(i Instr, p *Context){
+	opPushInt:     execPushInt,
+	opPushUint:    execPushUint,
+	opPushFloat:   execPushFloat,
+	opPushValSpec: execPushValSpec,
+	opPushStringR: execPushStringR,
+	opPushIntR:    execPushIntR,
+	opPushUintR:   execPushUintR,
+	opPushFloatR:  execPushFloatR,
+	opBuiltinOp:   execBuiltinOp,
 }
 
 // -----------------------------------------------------------------------------
