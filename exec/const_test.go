@@ -71,4 +71,17 @@ func TestConst5(t *testing.T) {
 	}
 }
 
+func TestConst6(t *testing.T) {
+
+	code := NewBuilder(nil).
+		Push(1.12).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != 1.12 {
+		t.Fatal("1.12 != 1.12, ret =", v)
+	}
+}
+
 // -----------------------------------------------------------------------------

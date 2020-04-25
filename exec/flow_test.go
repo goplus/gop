@@ -13,9 +13,9 @@ func TestIf1(t *testing.T) {
 	code := NewBuilder(nil).
 		Push(true).
 		JmpIfFalse(label1).
-		Push(5).
+		Push(50).
 		Push(6).
-		BuiltinOp(Int, OpMul).
+		BuiltinOp(Int, OpDiv).
 		Jmp(label2).
 		Label(label1).
 		Push(5).
@@ -26,8 +26,8 @@ func TestIf1(t *testing.T) {
 
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
-	if v := checkPop(ctx); v != 30 {
-		t.Fatal("5 6 mul != 30, ret =", v)
+	if v := checkPop(ctx); v != 8 {
+		t.Fatal("50 6 div != 8, ret =", v)
 	}
 }
 
@@ -43,16 +43,16 @@ func TestIf2(t *testing.T) {
 		BuiltinOp(Int, OpMul).
 		Jmp(label2).
 		Label(label1).
-		Push(5).
-		Push(2).
-		BuiltinOp(Int, OpMod).
+		Push(5.0).
+		Push(2.0).
+		BuiltinOp(Float64, OpMul).
 		Label(label2).
 		Resolve()
 
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
-	if v := checkPop(ctx); v != 1 {
-		t.Fatal("5 2 mod != 1, ret =", v)
+	if v := checkPop(ctx); v != 10.0 {
+		t.Fatal("5.0 2.0 mul != 10.0, ret =", v)
 	}
 }
 
@@ -69,7 +69,7 @@ func TestCase1(t *testing.T) {
 		CaseNE(label1).
 		Push(5).
 		Push(6).
-		BuiltinOp(Int, OpMul).
+		BuiltinOp(Int, OpAdd).
 		Jmp(done).
 		Label(label1).
 		Push(2).
@@ -86,8 +86,8 @@ func TestCase1(t *testing.T) {
 
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
-	if v := checkPop(ctx); v != 30 {
-		t.Fatal("5 6 mul != 30, ret =", v)
+	if v := checkPop(ctx); v != 11 {
+		t.Fatal("5 6 add != 11, ret =", v)
 	}
 }
 
@@ -109,7 +109,7 @@ func TestCase2(t *testing.T) {
 		CaseNE(label2).
 		Push(5).
 		Push(2).
-		BuiltinOp(Int, OpMod).
+		BuiltinOp(Int, OpSub).
 		Jmp(done).
 		Label(label2).
 		Default().
@@ -119,8 +119,8 @@ func TestCase2(t *testing.T) {
 
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
-	if v := checkPop(ctx); v != 1 {
-		t.Fatal("5 2 mod != 1, ret =", v)
+	if v := checkPop(ctx); v != 3 {
+		t.Fatal("5 2 sub != 3, ret =", v)
 	}
 }
 
