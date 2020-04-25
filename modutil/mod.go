@@ -112,7 +112,7 @@ const (
 	// PkgTypeDepMod - a depended module found at $GOPATH/pkg/mod
 	PkgTypeDepMod = fastmod.PkgTypeDepMod
 
-	// PkgTypeLocalDep - module that rewrites to local
+	// PkgTypeLocalDep - a module that rewrites to local
 	PkgTypeLocalDep = fastmod.PkgTypeLocalMod
 )
 
