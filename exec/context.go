@@ -101,6 +101,8 @@ var execTable = [...]func(i Instr, p *Context){
 	opBuiltinOp:   execBuiltinOp,
 	opJmp:         execJmp,
 	opJmpIfFalse:  execJmpIfFalse,
+	opCaseNE:      execCaseNE,
+	opPop:         execPop,
 }
 
 // -----------------------------------------------------------------------------

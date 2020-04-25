@@ -135,6 +135,11 @@ func execPushFloat(i Instr, stk *Context) {
 	panic("execPushFloat: not impl")
 }
 
+func execPop(i Instr, stk *Context) {
+	n := len(stk.data) - int(i&bitsOperand)
+	stk.data = stk.data[:n]
+}
+
 // -----------------------------------------------------------------------------
 
 func (p *Builder) resolveConsts() {
@@ -213,6 +218,13 @@ func (p *Builder) Push(val interface{}) *Builder {
 	} else {
 		panic("Push failed: unsupported type")
 	}
+	p.code.data = append(p.code.data, i)
+	return p
+}
+
+// Pop instr
+func (p *Builder) Pop(n int) *Builder {
+	i := (opPop << bitsOpShift) | uint32(n)
 	p.code.data = append(p.code.data, i)
 	return p
 }

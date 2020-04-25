@@ -598,9 +598,9 @@ func execModUintptr(i Instr, p *Context) {
 	p.data = p.data[:n-1]
 }
 
-func execBuiltinOp(i Instr, ctx *Context) {
+func execBuiltinOp(i Instr, p *Context) {
 	if fn, ok := builtinOps[int(i&bitsOperand)]; ok {
-		fn(i, ctx)
+		fn(i, p)
 	} else {
 		panic("execBuiltinOp: invalid builtinOp")
 	}

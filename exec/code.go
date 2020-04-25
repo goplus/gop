@@ -37,6 +37,8 @@ const (
 	opBuiltinOp   = 8
 	opJmp         = 9
 	opJmpIfFalse  = 10
+	opCaseNE      = 11
+	opPop         = 12
 )
 
 const (

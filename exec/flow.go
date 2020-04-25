@@ -9,8 +9,17 @@ func execJmp(i Instr, ctx *Context) {
 
 func execJmpIfFalse(i Instr, ctx *Context) {
 	if !ctx.pop().(bool) {
-		delta := int32(i&bitsOperand) << bitsOp >> bitsOp
-		ctx.ip += int(delta)
+		execJmp(i, ctx)
+	}
+}
+
+func execCaseNE(i Instr, ctx *Context) {
+	n := len(ctx.data)
+	if ctx.data[n-2] != ctx.data[n-1] {
+		ctx.data = ctx.data[:n-1]
+		execJmp(i, ctx)
+	} else {
+		ctx.data = ctx.data[:n-2]
 	}
 }
 
@@ -64,6 +73,16 @@ func (p *Builder) Jmp(l *Label) *Builder {
 // JmpIfFalse instr
 func (p *Builder) JmpIfFalse(l *Label) *Builder {
 	return p.labelOp(opJmpIfFalse, l)
+}
+
+// CaseNE instr
+func (p *Builder) CaseNE(l *Label) *Builder {
+	return p.labelOp(opCaseNE, l)
+}
+
+// Default instr
+func (p *Builder) Default() *Builder {
+	return p.Pop(1)
 }
 
 // -----------------------------------------------------------------------------

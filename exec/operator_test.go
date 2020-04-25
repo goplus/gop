@@ -16,7 +16,7 @@ func TestMul(t *testing.T) {
 
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
-	if v, ok := ctx.Pop(); !(ok && v == 30) {
+	if v := checkPop(ctx); v != 30 {
 		t.Fatal("5 6 mul != 30, ret =", v)
 	}
 }
@@ -31,7 +31,7 @@ func TestStrcat(t *testing.T) {
 
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
-	if v, ok := ctx.Pop(); !(ok && v == "56") {
+	if v := checkPop(ctx); v != "56" {
 		t.Fatal("`5` `6` add != `56`, ret =", v)
 	}
 }
