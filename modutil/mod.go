@@ -1,4 +1,4 @@
-package mod
+package modutil
 
 import (
 	"go/build"
@@ -109,11 +109,11 @@ const (
 	// PkgTypeChild - child module of this module
 	PkgTypeChild = fastmod.PkgTypeLocal
 
-	// PkgTypeExternal - $GOPATH/pkg/mod
-	PkgTypeExternal = fastmod.PkgTypeDepMod
+	// PkgTypeDepMod - a depended module found at $GOPATH/pkg/mod
+	PkgTypeDepMod = fastmod.PkgTypeDepMod
 
-	// PkgTypeExternalLocal - external module that rewrites to local
-	PkgTypeExternalLocal = fastmod.PkgTypeLocalMod
+	// PkgTypeLocalDep - module that rewrites to local
+	PkgTypeLocalDep = fastmod.PkgTypeLocalMod
 )
 
 // PackageInfo represents a package info.
