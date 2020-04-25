@@ -33,10 +33,16 @@ func (p *Stack) Top() (v interface{}, ok bool) {
 func (p *Stack) Pop() (v interface{}, ok bool) {
 	n := len(p.data)
 	if n > 0 {
-		v, ok = p.data[n-1], true
-		p.data = p.data[:n-1]
+		v, ok = p.pop(), true
 	}
 	return
+}
+
+func (p *Stack) pop() interface{} {
+	n := len(p.data)
+	v := p.data[n-1]
+	p.data = p.data[:n-1]
+	return v
 }
 
 // -----------------------------------------------------------------------------
@@ -63,18 +69,20 @@ func NewContext(code *Code) *Context {
 // Exec executes a code block from ip to ipEnd.
 //
 func (ctx *Context) Exec(ip, ipEnd int) {
-	ctx.ip = ip
 	data := ctx.Code.data
+	ctx.ip = ip
 	for ctx.ip != ipEnd {
 		i := data[ctx.ip]
 		ctx.ip++
 		switch i >> bitsOpShift {
+		case opBuiltinOp:
+			execBuiltinOp(i, ctx)
 		case opPushInt:
 			execPushInt(i, ctx)
 		case opPushStringR:
 			execPushStringR(i, ctx)
-		case opBuiltinOp:
-			execBuiltinOp(i, ctx)
+		case opPushUint:
+			execPushUint(i, ctx)
 		default:
 			execTable[i>>bitsOpShift](i, ctx)
 		}
@@ -91,6 +99,8 @@ var execTable = [...]func(i Instr, p *Context){
 	opPushUintR:   execPushUintR,
 	opPushFloatR:  execPushFloatR,
 	opBuiltinOp:   execBuiltinOp,
+	opJmp:         execJmp,
+	opJmpIfFalse:  execJmpIfFalse,
 }
 
 // -----------------------------------------------------------------------------

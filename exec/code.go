@@ -3,17 +3,20 @@ package exec
 // -----------------------------------------------------------------------------
 
 const (
+	bitsInstr     = 32
 	bitsOp        = 6
 	bitsIntKind   = 3
 	bitsFloatKind = 2
 
-	bitsOpShift = 32 - bitsOp
+	bitsOpShift = bitsInstr - bitsOp
 	bitsOperand = (1 << bitsOpShift) - 1
 
-	bitsOpIntShift   = 32 - (bitsOp + bitsIntKind)
+	bitsOpInt        = bitsOp + bitsIntKind
+	bitsOpIntShift   = bitsInstr - bitsOpInt
 	bitsOpIntOperand = (1 << bitsOpIntShift) - 1
 
-	bitsOpFloatShift   = 32 - (bitsOp + bitsFloatKind)
+	bitsOpFloat        = bitsOp + bitsFloatKind
+	bitsOpFloatShift   = bitsInstr - bitsOpFloat
 	bitsOpFloatOperand = (1 << bitsOpFloatShift) - 1
 )
 
@@ -23,15 +26,17 @@ type Instr = uint32
 
 const (
 	opInvalid     = (1 << bitsOp) - 1
-	opPushInt     = 0x00
-	opPushUint    = 0x01
-	opPushFloat   = 0x02
-	opPushValSpec = 0x03
-	opPushStringR = 0x04
-	opPushIntR    = 0x05
-	opPushUintR   = 0x06
-	opPushFloatR  = 0x07
-	opBuiltinOp   = 0x08
+	opPushInt     = 0
+	opPushUint    = 1
+	opPushFloat   = 2
+	opPushValSpec = 3
+	opPushStringR = 4
+	opPushIntR    = 5
+	opPushUintR   = 6
+	opPushFloatR  = 7
+	opBuiltinOp   = 8
+	opJmp         = 9
+	opJmpIfFalse  = 10
 )
 
 const (
@@ -52,39 +57,6 @@ type Code struct {
 	valConsts    []interface{}
 }
 
-// A ReservedInstr represents a reserved instruction to be assigned.
-//
-type ReservedInstr struct {
-	code *Code
-	idx  int
-}
-
-// Reserve reserves an instruction and returns it.
-//
-func (p *Code) Reserve() ReservedInstr {
-	idx := len(p.data)
-	p.data = append(p.data, 0)
-	return ReservedInstr{p, idx}
-}
-
-// Set sets a reserved instruction.
-//
-func (p ReservedInstr) Set(code Instr) {
-	p.code.data[p.idx] = code
-}
-
-// Next returns next instruction position.
-//
-func (p ReservedInstr) Next() int {
-	return p.idx + 1
-}
-
-// Delta returns distance from b to p.
-//
-func (p ReservedInstr) Delta(b ReservedInstr) int {
-	return p.idx - b.idx
-}
-
 // NewCode returns a new Code object.
 //
 func NewCode() *Code {
@@ -100,6 +72,10 @@ func (p *Code) Len() int {
 
 // -----------------------------------------------------------------------------
 
+type anyUnresolved struct {
+	offs []int
+}
+
 type valUnresolved struct {
 	op   Instr
 	offs []int
@@ -109,6 +85,7 @@ type valUnresolved struct {
 type Builder struct {
 	code      *Code
 	valConsts map[interface{}]*valUnresolved
+	labels    map[*Label]int
 }
 
 // NewBuilder creates a new Code Builder instance.
@@ -119,14 +96,15 @@ func NewBuilder(code *Code) *Builder {
 	return &Builder{
 		code:      code,
 		valConsts: make(map[interface{}]*valUnresolved),
+		labels:    make(map[*Label]int),
 	}
 }
 
-// Resolve resolves all unresolved consts/functions/etc.
-func (ctx *Builder) Resolve() (code *Code) {
-	code = ctx.code
-	resolveConsts(ctx, code)
-	return
+// Resolve resolves all unresolved labels/functions/consts/etc.
+func (p *Builder) Resolve() *Code {
+	p.resolveLabels()
+	p.resolveConsts()
+	return p.code
 }
 
 // -----------------------------------------------------------------------------
