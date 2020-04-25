@@ -4,6 +4,7 @@ import (
 	"go/build"
 	"os"
 	"path/filepath"
+	"sync"
 	"syscall"
 
 	"github.com/visualfc/fastmod"
@@ -35,20 +36,23 @@ func LookupModFile(dir string) (file string, err error) {
 
 // -----------------------------------------------------------------------------
 
-// Modules represents a fast module loader.
-type Modules struct {
-	impl *fastmod.ModuleList
+type modules = *fastmod.ModuleList
+
+var gMods modules
+var onceMods sync.Once
+
+func getModules() modules {
+	if gMods == nil {
+		onceMods.Do(func() {
+			gMods = fastmod.NewModuleList(BuildContext)
+		})
+	}
+	return gMods
 }
 
-// GetModules returns a fast module loader.
-func GetModules() Modules {
-	impl := fastmod.NewModuleList(BuildContext)
-	return Modules{impl}
-}
-
-// Load loads a module from specified dir.
-func (p Modules) Load(dir string) (mod Module, err error) {
-	impl, err := p.impl.LoadModule(dir)
+// LoadModule loads a module from specified dir.
+func LoadModule(dir string) (mod Module, err error) {
+	impl, err := getModules().LoadModule(dir)
 	if err != nil {
 		return
 	}

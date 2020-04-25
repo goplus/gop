@@ -9,8 +9,7 @@ import (
 )
 
 func TestMod(t *testing.T) {
-	mods := modutil.GetModules()
-	mod, err := mods.Load(".")
+	mod, err := modutil.LoadModule(".")
 	if err != nil {
 		t.Fatal(err)
 	}
