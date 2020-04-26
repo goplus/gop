@@ -17,7 +17,8 @@ func Test(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	pkg, err := gopkg.Load(".", names)
+	types := gopkg.NewUniqueTypes()
+	pkg, err := gopkg.Load(".", names, types)
 	if err != nil {
 		t.Fatal(err)
 	}

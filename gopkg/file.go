@@ -14,11 +14,12 @@ import (
 type fileLoader struct {
 	pkg     *Package
 	names   *PkgNames
+	types   *UniqueTypes
 	imports map[string]string
 }
 
-func newFileLoader(pkg *Package, names *PkgNames) *fileLoader {
-	return &fileLoader{pkg: pkg, names: names}
+func newFileLoader(pkg *Package, names *PkgNames, types *UniqueTypes) *fileLoader {
+	return &fileLoader{pkg: pkg, names: names, types: types}
 }
 
 func (p *fileLoader) load(f *ast.File) {
@@ -89,28 +90,37 @@ func (p *fileLoader) loadVals(d *ast.GenDecl, tok token.Token) {
 }
 
 func (p *fileLoader) loadFunc(d *ast.FuncDecl) {
-	name := d.Name.Name
+	var name = d.Name.Name
+	var recv Type
+	if d.Recv != nil {
+		fields := d.Recv.List
+		if len(fields) != 1 {
+			panic("loadFunc: multi recv object?")
+		}
+		field := fields[0]
+		recv = p.ToType(field.Type)
+	}
 	typ := p.ToFuncType(d)
-	p.pkg.insertFunc(name, typ)
-	log.Debug("func:", name, "-", typ)
+	p.pkg.insertFunc(name, recv, typ)
+	if log.Ldebug >= log.Std.Level {
+		log.Debug("func:", getFuncName(name, recv), "-", typ.Unique())
+	}
+}
+
+func getFuncName(name string, recv Type) string {
+	if recv == nil {
+		return name
+	}
+	return "(" + recv.Unique() + ")." + name
 }
 
 // -----------------------------------------------------------------------------
 
 // ToFuncType converts ast.FuncDecl to a FuncType.
 func (p *fileLoader) ToFuncType(d *ast.FuncDecl) *FuncType {
-	var recv Type
-	if d.Recv != nil {
-		fields := d.Recv.List
-		if len(fields) != 1 {
-			panic("ToFuncType: multi recv object?")
-		}
-		field := fields[0]
-		recv = p.ToType(field.Type)
-	}
 	params := p.ToTypes(d.Type.Params)
 	results := p.ToTypes(d.Type.Results)
-	return &FuncType{Recv: recv, Params: params, Results: results}
+	return p.types.Unique(&FuncType{Params: params, Results: results}).(*FuncType)
 }
 
 // ToTypes converts ast.FieldList to types []Type.
@@ -136,7 +146,7 @@ func (p *fileLoader) ToType(typ ast.Expr) Type {
 	switch v := typ.(type) {
 	case *ast.StarExpr:
 		elem := p.ToType(v.X)
-		return &PointerType{elem}
+		return p.types.Unique(&PointerType{elem})
 	case *ast.SelectorExpr:
 		x, ok := v.X.(*ast.Ident)
 		if !ok {
@@ -146,27 +156,27 @@ func (p *fileLoader) ToType(typ ast.Expr) Type {
 		if !ok {
 			log.Fatalln("ToType: PkgName isn't imported -", x.Name)
 		}
-		return &NamedType{PkgName: x.Name, PkgPath: pkgPath, Name: v.Sel.Name}
+		return p.types.Unique(&NamedType{PkgPath: pkgPath, Name: v.Sel.Name})
 	case *ast.ArrayType:
 		n := ToLen(v.Len)
 		elem := p.ToType(v.Elt)
-		return &ArrayType{Len: n, Elem: elem}
+		return p.types.Unique(&ArrayType{Len: n, Elem: elem})
 	case *ast.Ident:
-		return IdentType(v.Name)
+		return p.IdentType(v.Name)
 	}
 	log.Fatalln("ToType: unknown -", reflect.TypeOf(typ))
 	return nil
 }
 
 // IdentType converts an ident to a Type.
-func IdentType(ident string) Type {
-	return &NamedType{Name: ident}
+func (p *fileLoader) IdentType(ident string) Type {
+	return p.types.Unique(&NamedType{Name: ident})
 }
 
 // ToLen converts ast.Expr to a Len.
 func ToLen(e ast.Expr) int {
 	if e != nil {
-		log.Debug("ToLen:", reflect.TypeOf(e))
+		log.Fatalln("not impl - ToLen:", reflect.TypeOf(e))
 	}
 	return 0
 }

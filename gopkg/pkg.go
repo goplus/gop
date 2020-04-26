@@ -53,13 +53,13 @@ func New(name string) *Package {
 }
 
 // Load loads a Go package.
-func Load(dir string, names *PkgNames) (*Package, error) {
+func Load(dir string, names *PkgNames, types *UniqueTypes) (*Package, error) {
 	p, err := loadGoPackage(dir)
 	if err != nil {
 		return nil, err
 	}
 	pkg := New(p.name)
-	loader := newFileLoader(pkg, names)
+	loader := newFileLoader(pkg, names, types)
 	for name, f := range p.impl.Files {
 		log.Debug("file:", name)
 		loader.load(f)
@@ -72,8 +72,8 @@ func (p *Package) Name() string {
 	return p.name
 }
 
-func (p *Package) insertFunc(name string, typ *FuncType) {
-	if typ.Recv == nil {
+func (p *Package) insertFunc(name string, recv Type, typ *FuncType) {
+	if recv == nil {
 		p.insertSym(name, &FuncSym{typ})
 	} else {
 		// TODO
@@ -100,7 +100,7 @@ func (p *TypeSym) String() string {
 	if p.Alias {
 		alias = "= "
 	}
-	return alias + p.Type.String()
+	return alias + p.Type.Unique()
 }
 
 // FuncSym represents a function symbol.
@@ -109,7 +109,7 @@ type FuncSym struct {
 }
 
 func (p *FuncSym) String() string {
-	return p.Type.String()
+	return p.Type.Unique()
 }
 
 // VarSym represents a variable symbol.
@@ -118,7 +118,7 @@ type VarSym struct {
 }
 
 func (p *VarSym) String() string {
-	return p.Type.String()
+	return p.Type.Unique()
 }
 
 // ConstSym represents a const symbol.
@@ -129,9 +129,9 @@ type ConstSym struct {
 
 func (p *ConstSym) String() string {
 	if p.Value == nil {
-		return p.Type.String()
+		return p.Type.Unique()
 	}
-	return fmt.Sprintf("%v = %v", p.Type, p.Value)
+	return fmt.Sprintf("%s = %v", p.Type.Unique(), p.Value)
 }
 
 // Symbol represents a Go symbol.
@@ -143,17 +143,16 @@ type Symbol interface {
 
 // NamedType represents a named type.
 type NamedType struct {
-	PkgName string
 	PkgPath string
 	Name    string
 }
 
-func (p *NamedType) String() string {
-	pkg := p.PkgName
-	if pkg != "" {
-		pkg += "."
+// Unique returns a unique id of this type.
+func (p *NamedType) Unique() string {
+	if p.PkgPath == "" {
+		return p.Name
 	}
-	return pkg + p.Name
+	return p.PkgPath + "." + p.Name
 }
 
 // ArrayType represents a array/slice type.
@@ -162,12 +161,13 @@ type ArrayType struct {
 	Elem Type
 }
 
-func (p *ArrayType) String() string {
+// Unique returns a unique id of this type.
+func (p *ArrayType) Unique() string {
 	len := ""
 	if p.Len > 0 {
 		len = strconv.Itoa(p.Len)
 	}
-	return "[" + len + "]" + p.Elem.String()
+	return "[" + len + "]" + p.Elem.Unique()
 }
 
 // PointerType represents a pointer type.
@@ -175,29 +175,26 @@ type PointerType struct {
 	Elem Type
 }
 
-func (p *PointerType) String() string {
-	return "*" + p.Elem.String()
+// Unique returns a unique id of this type.
+func (p *PointerType) Unique() string {
+	return "*" + p.Elem.Unique()
 }
 
 // FuncType represents a function type.
 type FuncType struct {
-	Recv    Type
 	Params  []Type
 	Results []Type
 }
 
-func (p *FuncType) String() string {
-	recv := ""
-	if p.Recv != nil {
-		recv = "(" + p.Recv.String() + ")"
-	}
-	params := TypeListString(p.Params, true)
-	results := TypeListString(p.Results, false)
-	return recv + "func" + params + results
+// Unique returns a unique id of this type.
+func (p *FuncType) Unique() string {
+	params := UniqueTypeList(p.Params, true)
+	results := UniqueTypeList(p.Results, false)
+	return "func" + params + results
 }
 
-// TypeListString returns friendly info of a type list.
-func TypeListString(types []Type, noEmpty bool) string {
+// UniqueTypeList returns unique id of a type list.
+func UniqueTypeList(types []Type, noEmpty bool) string {
 	if types == nil {
 		if noEmpty {
 			return "()"
@@ -206,14 +203,39 @@ func TypeListString(types []Type, noEmpty bool) string {
 	}
 	items := make([]string, len(types))
 	for i, typ := range types {
-		items[i] = typ.String()
+		items[i] = typ.Unique()
 	}
 	return "(" + strings.Join(items, ",") + ")"
 }
 
 // Type represents a Go type.
 type Type interface {
-	String() string
+	// Unique returns a unique id of this type.
+	Unique() string
+}
+
+// -----------------------------------------------------------------------------
+
+// UniqueTypes manages all types to make it unique.
+type UniqueTypes struct {
+	data map[string]Type
+}
+
+// NewUniqueTypes creates a UniqueTypes object.
+func NewUniqueTypes() *UniqueTypes {
+	return &UniqueTypes{
+		data: make(map[string]Type),
+	}
+}
+
+// Unique returns the unique instance of a type.
+func (p *UniqueTypes) Unique(t Type) Type {
+	id := t.Unique()
+	if v, ok := p.data[id]; ok {
+		return v
+	}
+	p.data[id] = t
+	return t
 }
 
 // -----------------------------------------------------------------------------
