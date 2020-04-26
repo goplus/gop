@@ -5,7 +5,6 @@ import (
 	"go/token"
 	"reflect"
 	"strconv"
-	"strings"
 
 	"github.com/qiniu/x/log"
 )
@@ -14,11 +13,12 @@ import (
 
 type fileLoader struct {
 	pkg     *Package
+	names   *PkgNames
 	imports map[string]string
 }
 
-func newFileLoader(pkg *Package) *fileLoader {
-	return &fileLoader{pkg: pkg}
+func newFileLoader(pkg *Package, names *PkgNames) *fileLoader {
+	return &fileLoader{pkg: pkg, names: names}
 }
 
 func (p *fileLoader) load(f *ast.File) {
@@ -56,7 +56,7 @@ func (p *fileLoader) loadImport(spec *ast.ImportSpec) {
 			panic("not impl")
 		}
 	} else {
-		name = p.pkg.GetPkgName(path)
+		name = p.names.GetPkgName(path)
 	}
 	p.imports[name] = path
 	log.Debug("import:", name, path)
@@ -89,13 +89,16 @@ func (p *fileLoader) loadVals(d *ast.GenDecl, tok token.Token) {
 }
 
 func (p *fileLoader) loadFunc(d *ast.FuncDecl) {
-	log.Debug("func:", d.Name.Name, "-", ToFuncType(d))
+	name := d.Name.Name
+	typ := p.ToFuncType(d)
+	p.pkg.insertFunc(name, typ)
+	log.Debug("func:", name, "-", typ)
 }
 
 // -----------------------------------------------------------------------------
 
 // ToFuncType converts ast.FuncDecl to a FuncType.
-func ToFuncType(d *ast.FuncDecl) *FuncType {
+func (p *fileLoader) ToFuncType(d *ast.FuncDecl) *FuncType {
 	var recv Type
 	if d.Recv != nil {
 		fields := d.Recv.List
@@ -103,15 +106,15 @@ func ToFuncType(d *ast.FuncDecl) *FuncType {
 			panic("ToFuncType: multi recv object?")
 		}
 		field := fields[0]
-		recv = ToType(field.Type)
+		recv = p.ToType(field.Type)
 	}
-	params := ToTypes(d.Type.Params)
-	results := ToTypes(d.Type.Results)
+	params := p.ToTypes(d.Type.Params)
+	results := p.ToTypes(d.Type.Results)
 	return &FuncType{Recv: recv, Params: params, Results: results}
 }
 
 // ToTypes converts ast.FieldList to types []Type.
-func ToTypes(fields *ast.FieldList) (types []Type) {
+func (p *fileLoader) ToTypes(fields *ast.FieldList) (types []Type) {
 	if fields == nil {
 		return
 	}
@@ -120,7 +123,7 @@ func ToTypes(fields *ast.FieldList) (types []Type) {
 		if n == 0 {
 			n = 1
 		}
-		typ := ToType(field.Type)
+		typ := p.ToType(field.Type)
 		for i := 0; i < n; i++ {
 			types = append(types, typ)
 		}
@@ -129,25 +132,29 @@ func ToTypes(fields *ast.FieldList) (types []Type) {
 }
 
 // ToType converts ast.Expr to a Type.
-func ToType(typ ast.Expr) Type {
+func (p *fileLoader) ToType(typ ast.Expr) Type {
 	switch v := typ.(type) {
 	case *ast.StarExpr:
-		elem := ToType(v.X)
+		elem := p.ToType(v.X)
 		return &PointerType{elem}
 	case *ast.SelectorExpr:
 		x, ok := v.X.(*ast.Ident)
 		if !ok {
-			log.Fatal("ToType: SelectorExpr isn't *ast.Ident -", reflect.TypeOf(v.X))
+			log.Fatalln("ToType: SelectorExpr isn't *ast.Ident -", reflect.TypeOf(v.X))
 		}
-		return &NamedType{PkgName: x.Name, PkgPath: x.Name, Name: v.Sel.Name}
+		pkgPath, ok := p.imports[x.Name]
+		if !ok {
+			log.Fatalln("ToType: PkgName isn't imported -", x.Name)
+		}
+		return &NamedType{PkgName: x.Name, PkgPath: pkgPath, Name: v.Sel.Name}
 	case *ast.ArrayType:
 		n := ToLen(v.Len)
-		elem := ToType(v.Elt)
+		elem := p.ToType(v.Elt)
 		return &ArrayType{Len: n, Elem: elem}
 	case *ast.Ident:
 		return IdentType(v.Name)
 	}
-	log.Fatal("ToType: unknown -", reflect.TypeOf(typ))
+	log.Fatalln("ToType: unknown -", reflect.TypeOf(typ))
 	return nil
 }
 
@@ -173,83 +180,6 @@ func ToString(l *ast.BasicLit) string {
 		}
 	}
 	panic("ToString: convert ast.BasicLit to string failed")
-}
-
-// -----------------------------------------------------------------------------
-
-// NamedType represents a named type.
-type NamedType struct {
-	PkgName string
-	PkgPath string
-	Name    string
-}
-
-func (p *NamedType) String() string {
-	pkg := p.PkgName
-	if pkg != "" {
-		pkg += "."
-	}
-	return pkg + p.Name
-}
-
-// ArrayType represents a array/slice type.
-type ArrayType struct {
-	Len  int // Len=0 for slice type
-	Elem Type
-}
-
-func (p *ArrayType) String() string {
-	len := ""
-	if p.Len > 0 {
-		len = strconv.Itoa(p.Len)
-	}
-	return "[" + len + "]" + p.Elem.String()
-}
-
-// PointerType represents a pointer type.
-type PointerType struct {
-	Elem Type
-}
-
-func (p *PointerType) String() string {
-	return "*" + p.Elem.String()
-}
-
-// FuncType represents a function type.
-type FuncType struct {
-	Recv    Type
-	Params  []Type
-	Results []Type
-}
-
-func (p *FuncType) String() string {
-	recv := ""
-	if p.Recv != nil {
-		recv = "(" + p.Recv.String() + ")"
-	}
-	params := TypeListString(p.Params, true)
-	results := TypeListString(p.Results, false)
-	return recv + "func" + params + results
-}
-
-// TypeListString returns friendly info of a type list.
-func TypeListString(types []Type, noEmpty bool) string {
-	if types == nil {
-		if noEmpty {
-			return "()"
-		}
-		return ""
-	}
-	items := make([]string, len(types))
-	for i, typ := range types {
-		items[i] = typ.String()
-	}
-	return "(" + strings.Join(items, ",") + ")"
-}
-
-// Type represents a Go type.
-type Type interface {
-	String() string
 }
 
 // -----------------------------------------------------------------------------

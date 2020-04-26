@@ -13,12 +13,15 @@ func init() {
 }
 
 func Test(t *testing.T) {
-	pkg, err := gopkg.Load(".")
+	names, err := gopkg.OpenPkgNames(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	pkg, err := gopkg.Load(".", names)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if pkg.Name() != "gopkg" {
 		t.Fatal("please run test in this package directory")
 	}
-	pkg.Export()
 }
