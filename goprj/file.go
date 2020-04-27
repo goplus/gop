@@ -14,13 +14,12 @@ import (
 
 type fileLoader struct {
 	pkg     *Package
-	names   *PkgNames
-	types   *UniqueTypes
+	prj     *Project
 	imports map[string]string
 }
 
-func newFileLoader(pkg *Package, names *PkgNames, types *UniqueTypes) *fileLoader {
-	return &fileLoader{pkg: pkg, names: names, types: types}
+func newFileLoader(pkg *Package, prj *Project) *fileLoader {
+	return &fileLoader{pkg: pkg, prj: prj}
 }
 
 func (p *fileLoader) load(f *ast.File) {
@@ -60,7 +59,7 @@ func (p *fileLoader) loadImport(spec *ast.ImportSpec) {
 			panic("not impl")
 		}
 	} else {
-		name = p.names.GetPkgName(path)
+		name = p.prj.LookupPkgName(path)
 	}
 	p.imports[name] = path
 	log.Debug("import:", name, path)
@@ -153,7 +152,7 @@ func (p *fileLoader) InferType(expr ast.Expr) Type {
 		switch v.Op {
 		case token.AND: // address
 			t := p.InferType(v.X)
-			return p.types.Unique(&PointerType{t})
+			return p.prj.UniqueType(&PointerType{t})
 		default:
 			log.Fatalln("InferType: unknown UnaryExpr -", v.Op)
 		}
@@ -181,7 +180,7 @@ func (p *fileLoader) inferTypeFromFun(fun ast.Expr) Type {
 func (p *fileLoader) ToFuncType(d *ast.FuncDecl) *FuncType {
 	params := p.ToTypes(d.Type.Params)
 	results := p.ToTypes(d.Type.Results)
-	return p.types.Unique(&FuncType{Params: params, Results: results}).(*FuncType)
+	return p.prj.UniqueType(&FuncType{Params: params, Results: results}).(*FuncType)
 }
 
 // ToTypes converts ast.FieldList to types []Type.
@@ -207,7 +206,7 @@ func (p *fileLoader) ToType(typ ast.Expr) Type {
 	switch v := typ.(type) {
 	case *ast.StarExpr:
 		elem := p.ToType(v.X)
-		return p.types.Unique(&PointerType{elem})
+		return p.prj.UniqueType(&PointerType{elem})
 	case *ast.SelectorExpr:
 		x, ok := v.X.(*ast.Ident)
 		if !ok {
@@ -217,11 +216,11 @@ func (p *fileLoader) ToType(typ ast.Expr) Type {
 		if !ok {
 			log.Fatalln("ToType: PkgName isn't imported -", x.Name)
 		}
-		return p.types.Unique(&NamedType{PkgPath: pkgPath, Name: v.Sel.Name})
+		return p.prj.UniqueType(&NamedType{PkgPath: pkgPath, Name: v.Sel.Name})
 	case *ast.ArrayType:
 		n := ToLen(v.Len)
 		elem := p.ToType(v.Elt)
-		return p.types.Unique(&ArrayType{Len: n, Elem: elem})
+		return p.prj.UniqueType(&ArrayType{Len: n, Elem: elem})
 	case *ast.Ident:
 		return p.IdentType(v.Name)
 	}
@@ -231,7 +230,7 @@ func (p *fileLoader) ToType(typ ast.Expr) Type {
 
 // IdentType converts an ident to a Type.
 func (p *fileLoader) IdentType(ident string) Type {
-	return p.types.Unique(&NamedType{Name: ident})
+	return p.prj.UniqueType(&NamedType{Name: ident})
 }
 
 // ToLen converts ast.Expr to a Len.

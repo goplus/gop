@@ -14,12 +14,11 @@ func init() {
 
 func Test(t *testing.T) {
 	pkgDir := "."
-	names, err := goprj.OpenPkgNames(pkgDir)
+	prj, err := goprj.Open(pkgDir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	types := goprj.NewUniqueTypes()
-	pkg, err := goprj.LoadPackage(pkgDir, names, types)
+	pkg, err := prj.LoadPackage(pkgDir)
 	if err != nil {
 		t.Fatal(err)
 	}

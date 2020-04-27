@@ -36,46 +36,9 @@ func GetPkgName(dir string) (string, error) {
 	panic("not here")
 }
 
-// -----------------------------------------------------------------------------
-
-// PkgNames keeps a package name cache: pkg => pkgName
-type PkgNames struct {
-	mod   modutil.Module
-	names map[string]string // pkg => pkgName
-}
-
-// OpenPkgNames loads module from `dir` and creates a new PkgNames object.
-func OpenPkgNames(dir string) (*PkgNames, error) {
-	mod, err := modutil.LoadModule(dir)
-	if err != nil {
-		return nil, err
-	}
-	return NewPkgNames(mod), nil
-}
-
-// NewPkgNames creates a new PkgNames object.
-func NewPkgNames(mod modutil.Module) *PkgNames {
-	return &PkgNames{
-		mod:   mod,
-		names: make(map[string]string),
-	}
-}
-
-// GetPkgName returns package name of a module.
-func (p *PkgNames) GetPkgName(pkg string) string {
-	if name, ok := p.names[pkg]; ok {
-		return name
-	}
-	name, err := p.getPkgName(pkg)
-	if err != nil {
-		panic(err)
-	}
-	p.names[pkg] = name
-	return name
-}
-
-func (p *PkgNames) getPkgName(pkg string) (name string, err error) {
-	pi, err := p.mod.Lookup(pkg)
+// LookupPkgName lookups a package name by specified PkgPath.
+func LookupPkgName(prjMod modutil.Module, pkg string) (name string, err error) {
+	pi, err := prjMod.Lookup(pkg)
 	if err != nil {
 		return
 	}
@@ -83,6 +46,33 @@ func (p *PkgNames) getPkgName(pkg string) (name string, err error) {
 		return path.Base(pkg), nil
 	}
 	return GetPkgName(pi.Location)
+}
+
+// -----------------------------------------------------------------------------
+
+// PkgNames keeps a package name cache: pkg => pkgName
+type PkgNames struct {
+	names map[string]string // pkg => pkgName
+}
+
+// NewPkgNames creates a new PkgNames object.
+func NewPkgNames() PkgNames {
+	return PkgNames{
+		names: make(map[string]string),
+	}
+}
+
+// LookupPkgName lookups a package name by specified PkgPath.
+func (p PkgNames) LookupPkgName(prjMod modutil.Module, pkg string) string {
+	if name, ok := p.names[pkg]; ok {
+		return name
+	}
+	name, err := LookupPkgName(prjMod, pkg)
+	if err != nil {
+		panic(err)
+	}
+	p.names[pkg] = name
+	return name
 }
 
 // -----------------------------------------------------------------------------

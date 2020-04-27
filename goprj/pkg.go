@@ -53,23 +53,14 @@ func NewPackage(name string) *Package {
 }
 
 // NewPackageFrom creates a package from a Go package.
-func NewPackageFrom(p *GoPackage, names *PkgNames, types *UniqueTypes) *Package {
+func NewPackageFrom(p *GoPackage, prj *Project) *Package {
 	pkg := NewPackage(p.name)
-	loader := newFileLoader(pkg, names, types)
+	loader := newFileLoader(pkg, prj)
 	for name, f := range p.impl.Files {
 		log.Debug("file:", name)
 		loader.load(f)
 	}
 	return pkg
-}
-
-// LoadPackage loads a Go package.
-func LoadPackage(dir string, names *PkgNames, types *UniqueTypes) (*Package, error) {
-	p, err := LoadGoPackage(dir)
-	if err != nil {
-		return nil, err
-	}
-	return NewPackageFrom(p, names, types), nil
 }
 
 // Name returns the package name.
@@ -217,30 +208,6 @@ func UniqueTypeList(types []Type, noEmpty bool) string {
 type Type interface {
 	// Unique returns a unique id of this type.
 	Unique() string
-}
-
-// -----------------------------------------------------------------------------
-
-// UniqueTypes manages all types to make it unique.
-type UniqueTypes struct {
-	data map[string]Type
-}
-
-// NewUniqueTypes creates a UniqueTypes object.
-func NewUniqueTypes() *UniqueTypes {
-	return &UniqueTypes{
-		data: make(map[string]Type),
-	}
-}
-
-// Unique returns the unique instance of a type.
-func (p *UniqueTypes) Unique(t Type) Type {
-	id := t.Unique()
-	if v, ok := p.data[id]; ok {
-		return v
-	}
-	p.data[id] = t
-	return t
 }
 
 // -----------------------------------------------------------------------------
