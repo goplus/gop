@@ -5,6 +5,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -137,6 +138,54 @@ type Symbol interface {
 
 // -----------------------------------------------------------------------------
 
+// AtomKind represents kind of a basic Go type.
+type AtomKind = reflect.Kind
+
+const (
+	// Bool - bool
+	Bool AtomKind = reflect.Bool
+	// Int - int
+	Int AtomKind = reflect.Int
+	// Int8 - int8
+	Int8 AtomKind = reflect.Int8
+	// Int16 - int16
+	Int16 AtomKind = reflect.Int16
+	// Int32 - int32
+	Int32 AtomKind = reflect.Int32
+	// Int64 - int64
+	Int64 AtomKind = reflect.Int64
+	// Uint - uint
+	Uint AtomKind = reflect.Uint
+	// Uint8 - uint8
+	Uint8 AtomKind = reflect.Uint8
+	// Uint16 - uint16
+	Uint16 AtomKind = reflect.Uint16
+	// Uint32 - uint32
+	Uint32 AtomKind = reflect.Uint32
+	// Uint64 - uint64
+	Uint64 AtomKind = reflect.Uint64
+	// Uintptr - uintptr
+	Uintptr AtomKind = reflect.Uintptr
+	// Float32 - float32
+	Float32 AtomKind = reflect.Float32
+	// Float64 - float64
+	Float64 AtomKind = reflect.Float64
+	// Complex64 - complex64
+	Complex64 AtomKind = reflect.Complex64
+	// Complex128 - complex128
+	Complex128 AtomKind = reflect.Complex128
+	// String - string
+	String AtomKind = reflect.String
+)
+
+// AtomType represents a basic Go type.
+type AtomType AtomKind
+
+// Unique returns a unique id of this type.
+func (p AtomType) Unique() string {
+	return AtomKind(p).String()
+}
+
 // NamedType represents a named type.
 type NamedType struct {
 	PkgPath string
@@ -202,6 +251,39 @@ func UniqueTypeList(types []Type, noEmpty bool) string {
 		items[i] = typ.Unique()
 	}
 	return "(" + strings.Join(items, ",") + ")"
+}
+
+// Member represents a struct member or an interface method.
+type Member struct {
+	Name string
+	Type Type
+}
+
+// InterfaceType represents a Go interface type.
+type InterfaceType struct {
+	Methods []Member
+}
+
+// Unique returns a unique id of this type.
+func (p *InterfaceType) Unique() string {
+	items := make([]string, len(p.Methods)<<1)
+	for i, method := range p.Methods {
+		items[i<<1] = method.Name
+		items[(i<<1)+1] = method.Type.Unique()
+	}
+	return "i{" + strings.Join(items, " ") + "}"
+}
+
+// UninferedType represents a type that needs to be infered.
+type UninferedType struct {
+	Expr ast.Expr
+}
+
+// Unique returns a unique id of this type.
+func (p *UninferedType) Unique() string {
+	pos := int(p.Expr.Pos())
+	end := int(p.Expr.End())
+	return "uninfer:" + strconv.Itoa(pos) + "," + strconv.Itoa(end)
 }
 
 // Type represents a Go type.

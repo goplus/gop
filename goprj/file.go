@@ -1,10 +1,10 @@
 package goprj
 
 import (
-	"fmt"
 	"go/ast"
 	"go/token"
 	"reflect"
+	"sort"
 	"strconv"
 
 	"github.com/qiniu/x/log"
@@ -87,15 +87,15 @@ func (p *fileLoader) loadVar(spec *ast.ValueSpec) {
 		for _, name := range spec.Names {
 			p.pkg.insertSym(name.Name, &VarSym{typ})
 			if log.Ldebug >= log.Std.Level {
-				log.Info("var:", name.Name, "-", typ.Unique())
+				log.Debug("var:", name.Name, "-", typ.Unique())
 			}
 		}
 	} else {
 		for i, name := range spec.Names {
-			typ := p.InferType(spec.Values[i])
+			typ := p.prj.InferType(spec.Values[i])
 			p.pkg.insertSym(name.Name, &VarSym{typ})
 			if log.Ldebug >= log.Std.Level {
-				//log.Info("var:", name.Name, "-", typ.Unique())
+				log.Debug("var:", name.Name, "-", typ.Unique())
 			}
 		}
 	}
@@ -107,13 +107,35 @@ func (p *fileLoader) loadVars(d *ast.GenDecl) {
 	}
 }
 
-func (p *fileLoader) loadConst(spec *ast.ValueSpec) {
-	fmt.Println("const:", *spec)
+func (p *fileLoader) loadConst(spec *ast.ValueSpec, idx int, last []ast.Expr) []ast.Expr {
+	var typ Type
+	if spec.Type != nil {
+		typ = p.ToType(spec.Type)
+	}
+	vals := spec.Values
+	if vals == nil {
+		if last == nil {
+			panic("const: no value?")
+		}
+		vals = last
+	}
+	for i, name := range spec.Names {
+		typInfer, val := p.prj.InferConst(vals[i], idx)
+		if typ != nil {
+			typInfer = typ
+		}
+		p.pkg.insertSym(name.Name, &ConstSym{typInfer, val})
+		if log.Ldebug >= log.Std.Level {
+			log.Debug("const:", name.Name, "-", typ.Unique(), "-", val)
+		}
+	}
+	return vals
 }
 
 func (p *fileLoader) loadConsts(d *ast.GenDecl) {
-	for _, item := range d.Specs {
-		p.loadConst(item.(*ast.ValueSpec))
+	var last []ast.Expr
+	for i, item := range d.Specs {
+		last = p.loadConst(item.(*ast.ValueSpec), i, last)
 	}
 }
 
@@ -140,38 +162,6 @@ func getFuncName(name string, recv Type) string {
 		return name
 	}
 	return "(" + recv.Unique() + ")." + name
-}
-
-// -----------------------------------------------------------------------------
-
-func (p *fileLoader) InferType(expr ast.Expr) Type {
-	switch v := expr.(type) {
-	case *ast.CallExpr:
-		return p.inferTypeFromFun(v.Fun)
-	case *ast.UnaryExpr:
-		switch v.Op {
-		case token.AND: // address
-			t := p.InferType(v.X)
-			return p.prj.UniqueType(&PointerType{t})
-		default:
-			log.Fatalln("InferType: unknown UnaryExpr -", v.Op)
-		}
-	case *ast.SelectorExpr:
-		_ = v
-	default:
-		log.Fatalln("InferType:", reflect.TypeOf(expr))
-	}
-	return nil
-}
-
-func (p *fileLoader) inferTypeFromFun(fun ast.Expr) Type {
-	switch v := fun.(type) {
-	case *ast.SelectorExpr:
-		_ = v
-	default:
-		log.Fatalln("inferTypeFromFun:", reflect.TypeOf(fun))
-	}
-	return nil
 }
 
 // -----------------------------------------------------------------------------
@@ -204,9 +194,8 @@ func (p *fileLoader) ToTypes(fields *ast.FieldList) (types []Type) {
 // ToType converts ast.Expr to a Type.
 func (p *fileLoader) ToType(typ ast.Expr) Type {
 	switch v := typ.(type) {
-	case *ast.StarExpr:
-		elem := p.ToType(v.X)
-		return p.prj.UniqueType(&PointerType{elem})
+	case *ast.Ident:
+		return p.IdentType(v.Name)
 	case *ast.SelectorExpr:
 		x, ok := v.X.(*ast.Ident)
 		if !ok {
@@ -217,15 +206,36 @@ func (p *fileLoader) ToType(typ ast.Expr) Type {
 			log.Fatalln("ToType: PkgName isn't imported -", x.Name)
 		}
 		return p.prj.UniqueType(&NamedType{PkgPath: pkgPath, Name: v.Sel.Name})
+	case *ast.StarExpr:
+		elem := p.ToType(v.X)
+		return p.prj.UniqueType(&PointerType{elem})
 	case *ast.ArrayType:
 		n := ToLen(v.Len)
 		elem := p.ToType(v.Elt)
 		return p.prj.UniqueType(&ArrayType{Len: n, Elem: elem})
-	case *ast.Ident:
-		return p.IdentType(v.Name)
+	case *ast.InterfaceType:
+		return p.InterfaceType(v)
 	}
 	log.Fatalln("ToType: unknown -", reflect.TypeOf(typ))
 	return nil
+}
+
+func (p *fileLoader) InterfaceType(v *ast.InterfaceType) Type {
+	methods := v.Methods.List
+	out := make([]Member, 0, len(methods))
+	for _, field := range v.Methods.List {
+		if field.Names == nil {
+			panic("todo: embbed member")
+		}
+		typ := p.ToType(field.Type)
+		for _, name := range field.Names {
+			out = append(out, Member{name.Name, typ})
+		}
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].Name < out[j].Name
+	})
+	return p.prj.UniqueType(&InterfaceType{out})
 }
 
 // IdentType converts an ident to a Type.

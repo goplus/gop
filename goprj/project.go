@@ -1,8 +1,29 @@
 package goprj
 
 import (
+	"go/ast"
+
 	"github.com/qiniu/qlang/modutil"
 )
+
+// -----------------------------------------------------------------------------
+
+// TypeInferrer represents a TypeInferrer who can infer type from a ast.Expr.
+type TypeInferrer interface {
+	InferType(expr ast.Expr) (typ Type)
+	InferConst(expr ast.Expr, i int) (typ Type, val interface{})
+}
+
+type nilTypeInferer struct {
+}
+
+func (p *nilTypeInferer) InferType(expr ast.Expr) Type {
+	return &UninferedType{expr}
+}
+
+func (p *nilTypeInferer) InferConst(expr ast.Expr, i int) (typ Type, val interface{}) {
+	return &UninferedType{expr}, expr
+}
 
 // -----------------------------------------------------------------------------
 
@@ -11,6 +32,7 @@ type Project struct {
 	prjMod modutil.Module
 	names  PkgNames
 	types  map[string]Type
+	TypeInferrer
 }
 
 // Open loads module from `dir` and creates a new Project object.
@@ -20,9 +42,10 @@ func Open(dir string) (*Project, error) {
 		return nil, err
 	}
 	return &Project{
-		prjMod: mod,
-		names:  NewPkgNames(),
-		types:  make(map[string]Type),
+		prjMod:       mod,
+		names:        NewPkgNames(),
+		types:        make(map[string]Type),
+		TypeInferrer: &nilTypeInferer{},
 	}, nil
 }
 

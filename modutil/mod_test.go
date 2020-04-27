@@ -8,7 +8,22 @@ import (
 	"github.com/qiniu/qlang/modutil"
 )
 
+const (
+	a  = 30
+	a2 = 90
+	a3
+	b = iota
+	c
+	d, e = 2, 3
+	f, g
+	h = iota
+)
+
 func TestMod(t *testing.T) {
+	fmt.Println(a3, b, c, f, g, h)
+	if b != 3 || c != 4 {
+		t.Fatal("const")
+	}
 	mod, err := modutil.LoadModule(".")
 	if err != nil {
 		t.Fatal(err)
