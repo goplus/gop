@@ -233,13 +233,13 @@ type FuncType struct {
 
 // Unique returns a unique id of this type.
 func (p *FuncType) Unique() string {
-	params := UniqueTypeList(p.Params, true)
-	results := UniqueTypeList(p.Results, false)
+	params := uniqueTypeList(p.Params, true)
+	results := uniqueTypeList(p.Results, false)
 	return "func" + params + results
 }
 
-// UniqueTypeList returns unique id of a type list.
-func UniqueTypeList(types []Type, noEmpty bool) string {
+// uniqueTypeList returns unique id of a type list.
+func uniqueTypeList(types []Type, noEmpty bool) string {
 	if types == nil {
 		if noEmpty {
 			return "()"
@@ -253,25 +253,50 @@ func UniqueTypeList(types []Type, noEmpty bool) string {
 	return "(" + strings.Join(items, ",") + ")"
 }
 
-// Member represents a struct member or an interface method.
-type Member struct {
-	Name string
+// Field represents a struct field or an interface method.
+type Field struct {
+	Name string // empty if embbed
 	Type Type
 }
 
 // InterfaceType represents a Go interface type.
 type InterfaceType struct {
-	Methods []Member
+	Methods []Field
 }
 
 // Unique returns a unique id of this type.
 func (p *InterfaceType) Unique() string {
-	items := make([]string, len(p.Methods)<<1)
-	for i, method := range p.Methods {
+	return uniqueMembers("i{", p.Methods)
+}
+
+func uniqueMembers(typeTag string, fields []Field) string {
+	items := make([]string, len(fields)<<1)
+	for i, method := range fields {
 		items[i<<1] = method.Name
 		items[(i<<1)+1] = method.Type.Unique()
 	}
-	return "i{" + strings.Join(items, " ") + "}"
+	return typeTag + strings.Join(items, " ") + "}"
+}
+
+// StructType represents a Go struct type.
+type StructType struct {
+	Fields []Field
+}
+
+// Unique returns a unique id of this type.
+func (p *StructType) Unique() string {
+	return uniqueMembers("s{", p.Fields)
+}
+
+// MapType represents a Go map type.
+type MapType struct {
+	Key   Type
+	Value Type
+}
+
+// Unique returns a unique id of this type.
+func (p *MapType) Unique() string {
+	return "map[" + p.Key.Unique() + "]" + p.Value.Unique()
 }
 
 // UninferedType represents a type that needs to be infered.

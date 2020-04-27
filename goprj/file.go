@@ -72,7 +72,13 @@ func (p *fileLoader) loadImports(d *ast.GenDecl) {
 }
 
 func (p *fileLoader) loadType(spec *ast.TypeSpec) {
-	//fmt.Println("type:", *spec)
+	name := spec.Name.Name
+	alias := spec.Assign.IsValid()
+	typ := p.ToType(spec.Type)
+	p.pkg.insertSym(name, &TypeSym{typ, alias})
+	if log.Ldebug >= log.Std.Level {
+		log.Debug("type:", name, typ.Unique(), "alias:", alias)
+	}
 }
 
 func (p *fileLoader) loadTypes(d *ast.GenDecl) {
@@ -150,7 +156,7 @@ func (p *fileLoader) loadFunc(d *ast.FuncDecl) {
 		field := fields[0]
 		recv = p.ToType(field.Type)
 	}
-	typ := p.ToFuncType(d)
+	typ := p.ToFuncType(d.Type)
 	p.pkg.insertFunc(name, recv, typ)
 	if log.Ldebug >= log.Std.Level {
 		log.Debug("func:", getFuncName(name, recv), "-", typ.Unique())
@@ -167,9 +173,9 @@ func getFuncName(name string, recv Type) string {
 // -----------------------------------------------------------------------------
 
 // ToFuncType converts ast.FuncDecl to a FuncType.
-func (p *fileLoader) ToFuncType(d *ast.FuncDecl) *FuncType {
-	params := p.ToTypes(d.Type.Params)
-	results := p.ToTypes(d.Type.Results)
+func (p *fileLoader) ToFuncType(t *ast.FuncType) *FuncType {
+	params := p.ToTypes(t.Params)
+	results := p.ToTypes(t.Results)
 	return p.prj.UniqueType(&FuncType{Params: params, Results: results}).(*FuncType)
 }
 
@@ -213,23 +219,47 @@ func (p *fileLoader) ToType(typ ast.Expr) Type {
 		n := ToLen(v.Len)
 		elem := p.ToType(v.Elt)
 		return p.prj.UniqueType(&ArrayType{Len: n, Elem: elem})
+	case *ast.FuncType:
+		return p.ToFuncType(v)
 	case *ast.InterfaceType:
 		return p.InterfaceType(v)
+	case *ast.StructType:
+		return p.StructType(v)
+	case *ast.MapType:
+		key := p.ToType(v.Key)
+		val := p.ToType(v.Value)
+		return p.prj.UniqueType(&MapType{key, val})
 	}
 	log.Fatalln("ToType: unknown -", reflect.TypeOf(typ))
 	return nil
 }
 
+func (p *fileLoader) StructType(v *ast.StructType) Type {
+	fields := v.Fields.List
+	out := make([]Field, 0, len(fields))
+	for _, field := range fields {
+		typ := p.ToType(field.Type)
+		if field.Names == nil { // embbed
+			out = append(out, Field{"", typ})
+			continue
+		}
+		for _, name := range field.Names {
+			out = append(out, Field{name.Name, typ})
+		}
+	}
+	return p.prj.UniqueType(&StructType{out})
+}
+
 func (p *fileLoader) InterfaceType(v *ast.InterfaceType) Type {
 	methods := v.Methods.List
-	out := make([]Member, 0, len(methods))
-	for _, field := range v.Methods.List {
+	out := make([]Field, 0, len(methods))
+	for _, field := range methods {
 		if field.Names == nil {
 			panic("todo: embbed member")
 		}
 		typ := p.ToType(field.Type)
 		for _, name := range field.Names {
-			out = append(out, Member{name.Name, typ})
+			out = append(out, Field{name.Name, typ})
 		}
 	}
 	sort.Slice(out, func(i, j int) bool {
