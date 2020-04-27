@@ -1,4 +1,4 @@
-package gopkg
+package goprj
 
 import (
 	"fmt"
@@ -13,15 +13,15 @@ import (
 
 // -----------------------------------------------------------------------------
 
-// goPackage represents a set of source files collectively building a Go package.
-type goPackage struct {
+// GoPackage represents a set of source files collectively building a Go package.
+type GoPackage struct {
 	fset *token.FileSet
 	impl *ast.Package
 	name string
 }
 
-// loadGoPackage loads a Go package.
-func loadGoPackage(dir string) (pkg *goPackage, err error) {
+// LoadGoPackage loads a Go package.
+func LoadGoPackage(dir string) (pkg *GoPackage, err error) {
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseDir(fset, dir, filterTest, 0)
 	if err != nil {
@@ -31,7 +31,7 @@ func loadGoPackage(dir string) (pkg *goPackage, err error) {
 		return nil, ErrMultiPackages
 	}
 	for name, impl := range pkgs {
-		return &goPackage{fset: fset, impl: impl, name: name}, nil
+		return &GoPackage{fset: fset, impl: impl, name: name}, nil
 	}
 	panic("not here")
 }
@@ -44,27 +44,32 @@ type Package struct {
 	syms map[string]Symbol
 }
 
-// New creates a Go package.
-func New(name string) *Package {
+// NewPackage creates a Go package.
+func NewPackage(name string) *Package {
 	return &Package{
 		name: name,
 		syms: make(map[string]Symbol),
 	}
 }
 
-// Load loads a Go package.
-func Load(dir string, names *PkgNames, types *UniqueTypes) (*Package, error) {
-	p, err := loadGoPackage(dir)
-	if err != nil {
-		return nil, err
-	}
-	pkg := New(p.name)
+// NewPackageFrom creates a package from a Go package.
+func NewPackageFrom(p *GoPackage, names *PkgNames, types *UniqueTypes) *Package {
+	pkg := NewPackage(p.name)
 	loader := newFileLoader(pkg, names, types)
 	for name, f := range p.impl.Files {
 		log.Debug("file:", name)
 		loader.load(f)
 	}
-	return pkg, nil
+	return pkg
+}
+
+// LoadPackage loads a Go package.
+func LoadPackage(dir string, names *PkgNames, types *UniqueTypes) (*Package, error) {
+	p, err := LoadGoPackage(dir)
+	if err != nil {
+		return nil, err
+	}
+	return NewPackageFrom(p, names, types), nil
 }
 
 // Name returns the package name.

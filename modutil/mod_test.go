@@ -13,7 +13,7 @@ func TestMod(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println(mod.ModFile(), mod.Path())
+	fmt.Println(mod.ModFile(), mod.RootPath(), mod.PkgPath())
 	pkg, err := mod.Lookup("github.com/qiniu/x/log")
 	if err != nil || pkg.Type != modutil.PkgTypeDepMod {
 		t.Fatal(err, pkg)

@@ -1,6 +1,7 @@
-package gopkg
+package goprj
 
 import (
+	"fmt"
 	"go/ast"
 	"go/token"
 	"reflect"
@@ -26,19 +27,21 @@ func (p *fileLoader) load(f *ast.File) {
 	p.imports = make(map[string]string)
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
+		case *ast.FuncDecl:
+			p.loadFunc(d)
 		case *ast.GenDecl:
 			switch d.Tok {
 			case token.IMPORT:
 				p.loadImports(d)
 			case token.TYPE:
 				p.loadTypes(d)
-			case token.CONST, token.VAR:
-				p.loadVals(d, d.Tok)
+			case token.CONST:
+				p.loadConsts(d)
+			case token.VAR:
+				p.loadVars(d)
 			default:
 				log.Debug("tok:", d.Tok, "spec:", reflect.TypeOf(d.Specs).Elem())
 			}
-		case *ast.FuncDecl:
-			p.loadFunc(d)
 		default:
 			log.Debug("gopkg.Package.load: unknown decl -", reflect.TypeOf(decl))
 		}
@@ -79,13 +82,39 @@ func (p *fileLoader) loadTypes(d *ast.GenDecl) {
 	}
 }
 
-func (p *fileLoader) loadVal(spec *ast.ValueSpec, tok token.Token) {
-	//fmt.Println("tok:", tok, "val:", *spec)
+func (p *fileLoader) loadVar(spec *ast.ValueSpec) {
+	if spec.Type != nil {
+		typ := p.ToType(spec.Type)
+		for _, name := range spec.Names {
+			p.pkg.insertSym(name.Name, &VarSym{typ})
+			if log.Ldebug >= log.Std.Level {
+				log.Info("var:", name.Name, "-", typ.Unique())
+			}
+		}
+	} else {
+		for i, name := range spec.Names {
+			typ := p.InferType(spec.Values[i])
+			p.pkg.insertSym(name.Name, &VarSym{typ})
+			if log.Ldebug >= log.Std.Level {
+				//log.Info("var:", name.Name, "-", typ.Unique())
+			}
+		}
+	}
 }
 
-func (p *fileLoader) loadVals(d *ast.GenDecl, tok token.Token) {
+func (p *fileLoader) loadVars(d *ast.GenDecl) {
 	for _, item := range d.Specs {
-		p.loadVal(item.(*ast.ValueSpec), tok)
+		p.loadVar(item.(*ast.ValueSpec))
+	}
+}
+
+func (p *fileLoader) loadConst(spec *ast.ValueSpec) {
+	fmt.Println("const:", *spec)
+}
+
+func (p *fileLoader) loadConsts(d *ast.GenDecl) {
+	for _, item := range d.Specs {
+		p.loadConst(item.(*ast.ValueSpec))
 	}
 }
 
@@ -112,6 +141,38 @@ func getFuncName(name string, recv Type) string {
 		return name
 	}
 	return "(" + recv.Unique() + ")." + name
+}
+
+// -----------------------------------------------------------------------------
+
+func (p *fileLoader) InferType(expr ast.Expr) Type {
+	switch v := expr.(type) {
+	case *ast.CallExpr:
+		return p.inferTypeFromFun(v.Fun)
+	case *ast.UnaryExpr:
+		switch v.Op {
+		case token.AND: // address
+			t := p.InferType(v.X)
+			return p.types.Unique(&PointerType{t})
+		default:
+			log.Fatalln("InferType: unknown UnaryExpr -", v.Op)
+		}
+	case *ast.SelectorExpr:
+		_ = v
+	default:
+		log.Fatalln("InferType:", reflect.TypeOf(expr))
+	}
+	return nil
+}
+
+func (p *fileLoader) inferTypeFromFun(fun ast.Expr) Type {
+	switch v := fun.(type) {
+	case *ast.SelectorExpr:
+		_ = v
+	default:
+		log.Fatalln("inferTypeFromFun:", reflect.TypeOf(fun))
+	}
+	return nil
 }
 
 // -----------------------------------------------------------------------------

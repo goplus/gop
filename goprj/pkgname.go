@@ -1,4 +1,4 @@
-package gopkg
+package goprj
 
 import (
 	"errors"

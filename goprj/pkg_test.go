@@ -1,9 +1,9 @@
-package gopkg_test
+package goprj_test
 
 import (
 	"testing"
 
-	"github.com/qiniu/qlang/gopkg"
+	"github.com/qiniu/qlang/goprj"
 	"github.com/qiniu/x/log"
 )
 
@@ -13,16 +13,17 @@ func init() {
 }
 
 func Test(t *testing.T) {
-	names, err := gopkg.OpenPkgNames(".")
+	pkgDir := "."
+	names, err := goprj.OpenPkgNames(pkgDir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	types := gopkg.NewUniqueTypes()
-	pkg, err := gopkg.Load(".", names, types)
+	types := goprj.NewUniqueTypes()
+	pkg, err := goprj.LoadPackage(pkgDir, names, types)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if pkg.Name() != "gopkg" {
+	if pkg.Name() != "goprj" {
 		t.Fatal("please run test in this package directory")
 	}
 }
