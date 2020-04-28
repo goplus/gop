@@ -24,6 +24,9 @@ func Test(t *testing.T) {
 	if pkg.Source().Name != "goprj" {
 		t.Fatal("please run test in this package directory")
 	}
+	if pkg.PkgPath() != "github.com/qiniu/qlang/goprj" {
+		t.Fatal("PkgPath:", pkg.PkgPath())
+	}
 	log.Debug("------------------------------------------------------")
 	pkg2, err := prj.LoadPackage("github.com/qiniu/qlang/modutil")
 	if err != nil {

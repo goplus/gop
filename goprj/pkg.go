@@ -323,11 +323,11 @@ func (p *FuncType) ID() string {
 	items := make([]string, 1, len(p.Params)+len(p.Results)+3)
 	items[0] = "f{"
 	for _, param := range p.Params {
-		items = append(items, param.ID())
+		items = append(items, pointer(param))
 	}
 	items = append(items, ":")
 	for _, ret := range p.Results {
-		items = append(items, ret.ID())
+		items = append(items, pointer(ret))
 	}
 	items = append(items, "}")
 	return strings.Join(items, " ")
@@ -382,7 +382,7 @@ func uniqueMembers(typeTag string, fields []Field) string {
 	items[0] = typeTag
 	for i, method := range fields {
 		items[(i<<1)+1] = method.Name
-		items[(i<<1)+2] = method.Type.ID()
+		items[(i<<1)+2] = pointer(method.Type)
 	}
 	items[n+1] = "}"
 	return strings.Join(items, "|")
