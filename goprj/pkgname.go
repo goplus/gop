@@ -68,6 +68,9 @@ func NewPkgNames() PkgNames {
 
 // LookupPkgName lookups a package name by specified PkgPath.
 func (p PkgNames) LookupPkgName(prjMod modutil.Module, pkg string) string {
+	if pkg == "C" { // import "C"
+		return pkg
+	}
 	if name, ok := p.names[pkg]; ok {
 		return name
 	}

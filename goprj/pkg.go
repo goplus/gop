@@ -100,7 +100,8 @@ func (p *Package) insertFunc(name string, recv Type, typ *FuncType) {
 
 func (p *Package) insertSym(name string, sym Symbol) {
 	if _, ok := p.syms[name]; ok {
-		log.Fatalln(p.pkgPath, "package insert symbol failed: exists -", name)
+		log.Debug(p.pkgPath, "package insert symbol failed: exists -", name)
+		return // We don't support condition compiling, and It's normal we get an existed symbol.
 	}
 	p.syms[name] = sym
 }

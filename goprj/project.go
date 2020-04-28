@@ -72,6 +72,9 @@ func (p *Project) Load() (pkg *Package, err error) {
 
 // LoadPackage loads a package.
 func (p *Project) LoadPackage(pkgPath string) (pkg *Package, err error) {
+	if pkgPath == "C" {
+		panic("LoadPackage: \"C\" not allow")
+	}
 	if pkg, ok := p.pkgs[pkgPath]; ok {
 		return pkg, nil
 	}
@@ -79,7 +82,7 @@ func (p *Project) LoadPackage(pkgPath string) (pkg *Package, err error) {
 	if err != nil {
 		return
 	}
-	log.Debug("====> LoadPackage:", pi.PkgPath)
+	log.Info("====> LoadPackage:", pi.PkgPath)
 	pkg, err = openPackage(pi.PkgPath, pi.Location, p)
 	if err != nil {
 		return
@@ -90,6 +93,9 @@ func (p *Project) LoadPackage(pkgPath string) (pkg *Package, err error) {
 
 // LookupType returns the type of symbol pkgPath.name.
 func (p *Project) LookupType(pkgPath string, name string) (typ Type, err error) {
+	if pkgPath == "C" {
+		return p.UniqueType(&NamedType{PkgPath: pkgPath, Name: name}), nil
+	}
 	pkg, err := p.LoadPackage(pkgPath)
 	if err != nil {
 		return

@@ -13,7 +13,7 @@ import (
 
 func init() {
 	log.SetFlags(log.Llevel)
-	log.SetOutputLevel(log.Ldebug)
+	//log.SetOutputLevel(log.Ldebug)
 }
 
 type simpleTypeInferer struct {
@@ -30,7 +30,11 @@ func (p *simpleTypeInferer) InferConst(expr ast.Expr, i int) (typ goprj.Type, va
 		case token.INT:
 			n, err := strconv.ParseInt(v.Value, 0, 0)
 			if err != nil {
-				log.Fatalln("InferConst: strconv.ParseInt failed:", err)
+				n2, err2 := strconv.ParseUint(v.Value, 0, 0)
+				if err2 != nil {
+					log.Fatalln("InferConst: strconv.ParseInt failed:", err2)
+				}
+				return goprj.AtomType(goprj.Uint), uint(n2)
 			}
 			return goprj.AtomType(goprj.Int), int(n)
 		case token.FLOAT:
@@ -53,6 +57,10 @@ func (p *simpleTypeInferer) InferConst(expr ast.Expr, i int) (typ goprj.Type, va
 			return goprj.AtomType(goprj.String), n
 		default:
 			log.Fatalln("InferConst: unknown -", expr)
+		}
+	case *ast.Ident:
+		if i < 0 {
+			return goprj.AtomType(goprj.Int), 0
 		}
 	case *ast.SelectorExpr:
 		if i < 0 {
