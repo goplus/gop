@@ -34,9 +34,6 @@ func TestMod(t *testing.T) {
 		t.Fatal(err, pkg)
 	}
 	fmt.Println(pkg)
-	if !strings.HasPrefix(pkg.Location, modutil.GetPkgModPath()) {
-		t.Fatal("not at mod path:", pkg.Location)
-	}
 	pkg, err = mod.Lookup("fmt")
 	if err != nil || pkg.Type != modutil.PkgTypeStd {
 		t.Fatal(err, pkg, "goroot:", modutil.BuildContext.GOROOT)

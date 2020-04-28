@@ -229,6 +229,12 @@ func (p *fileLoader) ToType(typ ast.Expr) Type {
 		key := p.ToType(v.Key)
 		val := p.ToType(v.Value)
 		return p.prj.UniqueType(&MapType{key, val})
+	case *ast.ChanType:
+		val := p.ToType(v.Value)
+		return p.prj.UniqueType(&ChanType{val, v.Dir})
+	case *ast.Ellipsis:
+		elem := p.ToType(v.Elt)
+		return p.prj.UniqueType(&EllipsisType{elem})
 	}
 	log.Fatalln("ToType: unknown -", reflect.TypeOf(typ))
 	return nil

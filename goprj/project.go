@@ -49,6 +49,11 @@ func Open(dir string) (*Project, error) {
 	}, nil
 }
 
+// ThisModule returns the Module instance.
+func (p *Project) ThisModule() modutil.Module {
+	return p.prjMod
+}
+
 // Load loads the main package of a Go module.
 func (p *Project) Load() (pkg *Package, err error) {
 	mod := p.prjMod
@@ -61,7 +66,7 @@ func (p *Project) LoadPackage(pkgPath string) (pkg *Package, err error) {
 	if err != nil {
 		return
 	}
-	return openPackage(pkgPath, pi.Location, p)
+	return openPackage(pi.PkgPath, pi.Location, p)
 }
 
 // LookupPkgName lookups a package name by specified PkgPath.

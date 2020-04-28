@@ -4,6 +4,7 @@ import (
 	"go/build"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"syscall"
 
@@ -17,10 +18,8 @@ var (
 
 // -----------------------------------------------------------------------------
 
-// GetPkgModPath returns base path that `go get` places all versioned packages.
-func GetPkgModPath() string {
-	return fastmod.GetPkgModPath(BuildContext)
-}
+// gPkgModPath - base path that `go get` places all versioned packages.
+var gPkgModPath string
 
 // LookupModFile finds go.mod file for a package directory.
 func LookupModFile(dir string) (file string, err error) {
@@ -44,6 +43,7 @@ var onceMods sync.Once
 func getModules() modules {
 	if gMods == nil {
 		onceMods.Do(func() {
+			gPkgModPath = fastmod.GetPkgModPath(BuildContext) + "/"
 			gMods = fastmod.NewModuleList(BuildContext)
 		})
 	}
@@ -56,14 +56,16 @@ func LoadModule(dir string) (mod Module, err error) {
 	if err != nil {
 		return
 	}
-	return Module{impl}, nil
+	isMod := strings.HasPrefix(dir, gPkgModPath)
+	return Module{impl, isMod}, nil
 }
 
 // -----------------------------------------------------------------------------
 
 // Module represents a loaded module.
 type Module struct {
-	impl *fastmod.Module
+	impl  *fastmod.Module
+	isMod bool
 }
 
 // Lookup returns package info, if found.
@@ -77,7 +79,10 @@ func (p Module) Lookup(pkg string) (pi PackageInfo, err error) {
 		err = syscall.ENOENT
 		return
 	}
-	return PackageInfo{Location: dir, Type: typ}, nil
+	if typ == PkgTypeDepMod {
+		pkg = strings.TrimPrefix(dir, gPkgModPath)
+	}
+	return PackageInfo{PkgPath: pkg, Location: dir, Type: typ}, nil
 }
 
 // ModFile returns `go.mod` file path of this module. eg. `$HOME/work/qiniu/qlang/go.mod`
@@ -90,8 +95,11 @@ func (p Module) RootPath() string {
 	return p.impl.ModDir()
 }
 
-// PkgPath returns PkgPath of this module. eg. `github.com/qiniu/qlang`
+// PkgPath returns PkgPath (with version) of this module. eg. `github.com/qiniu/qlang@v1.0.0`
 func (p Module) PkgPath() string {
+	if p.isMod {
+		return strings.TrimPrefix(p.impl.ModDir(), gPkgModPath)
+	}
 	return p.impl.Path()
 }
 
@@ -128,6 +136,7 @@ const (
 // PackageInfo represents a package info.
 type PackageInfo struct {
 	Location string
+	PkgPath  string
 	Type     PkgType
 }
 

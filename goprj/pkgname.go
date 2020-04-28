@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/qiniu/qlang/modutil"
+	"github.com/qiniu/x/log"
 )
 
 var (
@@ -69,7 +70,7 @@ func (p PkgNames) LookupPkgName(prjMod modutil.Module, pkg string) string {
 	}
 	name, err := LookupPkgName(prjMod, pkg)
 	if err != nil {
-		panic(err)
+		log.Fatalln("LookupPkgName failed:", err, "-", pkg)
 	}
 	p.names[pkg] = name
 	return name

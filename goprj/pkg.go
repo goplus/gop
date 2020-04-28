@@ -75,6 +75,11 @@ func (p *Package) Source() *GoPackage {
 	return p.src
 }
 
+// PkgPath retuns PkgPath (with version).
+func (p *Package) PkgPath() string {
+	return p.pkgPath
+}
+
 func (p *Package) insertFunc(name string, recv Type, typ *FuncType) {
 	if recv == nil {
 		p.insertSym(name, typ)
@@ -206,6 +211,51 @@ func (p *NamedType) ID() string {
 		return p.Name
 	}
 	return p.PkgPath + "." + p.Name
+}
+
+// ChanType represents chan type.
+type ChanType struct {
+	Value Type        // value type
+	Dir   ast.ChanDir // channel direction
+}
+
+func (p *ChanType) String() string {
+	val := p.Value.String()
+	switch p.Dir {
+	case ast.SEND:
+		return "chan<- " + val
+	case ast.RECV:
+		return "<-chan " + val
+	default:
+		return "chan " + val
+	}
+}
+
+// ID returns a unique id of this type.
+func (p *ChanType) ID() string {
+	val := pointer(p.Value)
+	switch p.Dir {
+	case ast.SEND:
+		return "chan<- " + val
+	case ast.RECV:
+		return "<-chan " + val
+	default:
+		return "chan " + val
+	}
+}
+
+// EllipsisType represents ...type
+type EllipsisType struct {
+	Elem Type
+}
+
+func (p *EllipsisType) String() string {
+	return "..." + p.Elem.String()
+}
+
+// ID returns a unique id of this type.
+func (p *EllipsisType) ID() string {
+	return "..." + pointer(p.Elem)
 }
 
 // ArrayType represents a array/slice type.
