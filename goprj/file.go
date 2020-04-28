@@ -155,6 +155,8 @@ func (p *fileLoader) loadFunc(d *ast.FuncDecl) {
 		}
 		field := fields[0]
 		recv = p.ToType(field.Type)
+	} else if name == "init" { // skip init function
+		return
 	}
 	typ := p.ToFuncType(d.Type)
 	p.pkg.insertFunc(name, recv, typ)
@@ -203,20 +205,12 @@ func (p *fileLoader) ToType(typ ast.Expr) Type {
 	case *ast.Ident:
 		return p.IdentType(v.Name)
 	case *ast.SelectorExpr:
-		x, ok := v.X.(*ast.Ident)
-		if !ok {
-			log.Fatalln("ToType: SelectorExpr isn't *ast.Ident -", reflect.TypeOf(v.X))
-		}
-		pkgPath, ok := p.imports[x.Name]
-		if !ok {
-			log.Fatalln("ToType: PkgName isn't imported -", x.Name)
-		}
-		return p.prj.UniqueType(&NamedType{PkgPath: pkgPath, Name: v.Sel.Name})
+		return p.ExternalType(v)
 	case *ast.StarExpr:
 		elem := p.ToType(v.X)
 		return p.prj.UniqueType(&PointerType{elem})
 	case *ast.ArrayType:
-		n := ToLen(v.Len)
+		n := p.ToLen(v.Len)
 		elem := p.ToType(v.Elt)
 		return p.prj.UniqueType(&ArrayType{Len: n, Elem: elem})
 	case *ast.FuncType:
@@ -274,6 +268,22 @@ func (p *fileLoader) InterfaceType(v *ast.InterfaceType) Type {
 	return p.prj.UniqueType(&InterfaceType{out})
 }
 
+func (p *fileLoader) ExternalType(v *ast.SelectorExpr) Type {
+	x, ok := v.X.(*ast.Ident)
+	if !ok {
+		log.Fatalln("ExternalType: SelectorExpr isn't *ast.Ident -", reflect.TypeOf(v.X))
+	}
+	pkgPath, ok := p.imports[x.Name]
+	if !ok {
+		log.Fatalln("ExternalType: PkgName isn't imported -", x.Name)
+	}
+	typ, err := p.prj.LookupType(pkgPath, v.Sel.Name)
+	if err != nil {
+		log.Fatalln("LookupType failed:", err, "-", pkgPath, v.Sel.Name)
+	}
+	return typ
+}
+
 // IdentType converts an ident to a Type.
 func (p *fileLoader) IdentType(ident string) Type {
 	if t, ok := builtinTypes[ident]; ok {
@@ -303,9 +313,17 @@ var builtinTypes = map[string]AtomKind{
 }
 
 // ToLen converts ast.Expr to a Len.
-func ToLen(e ast.Expr) int {
+func (p *fileLoader) ToLen(e ast.Expr) int {
 	if e != nil {
-		log.Fatalln("not impl - ToLen:", reflect.TypeOf(e))
+		_, val := p.prj.InferConst(e, -1)
+		if _, ok := val.(*UninferedType); ok {
+			log.Fatal("ToLen:", reflect.TypeOf(e))
+		}
+		if n, ok := val.(int); ok {
+			return n
+		}
+		log.Debug("ToLen:", reflect.TypeOf(val))
+		return int(reflect.ValueOf(val).Int())
 	}
 	return 0
 }

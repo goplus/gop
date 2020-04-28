@@ -1,9 +1,17 @@
 package goprj
 
 import (
+	"errors"
 	"go/ast"
+	"syscall"
 
 	"github.com/qiniu/qlang/modutil"
+	"github.com/qiniu/x/log"
+)
+
+var (
+	// ErrSymbolIsNotAType error.
+	ErrSymbolIsNotAType = errors.New("symbol isn't a type")
 )
 
 // -----------------------------------------------------------------------------
@@ -32,6 +40,7 @@ type Project struct {
 	prjMod modutil.Module
 	names  PkgNames
 	types  map[string]Type
+	pkgs   map[string]*Package
 	TypeInferrer
 }
 
@@ -45,6 +54,7 @@ func Open(dir string) (*Project, error) {
 		prjMod:       mod,
 		names:        NewPkgNames(),
 		types:        make(map[string]Type),
+		pkgs:         make(map[string]*Package),
 		TypeInferrer: &nilTypeInferer{},
 	}, nil
 }
@@ -62,16 +72,45 @@ func (p *Project) Load() (pkg *Package, err error) {
 
 // LoadPackage loads a package.
 func (p *Project) LoadPackage(pkgPath string) (pkg *Package, err error) {
+	if pkg, ok := p.pkgs[pkgPath]; ok {
+		return pkg, nil
+	}
 	pi, err := p.prjMod.Lookup(pkgPath)
 	if err != nil {
 		return
 	}
-	return openPackage(pi.PkgPath, pi.Location, p)
+	log.Debug("====> LoadPackage:", pi.PkgPath)
+	pkg, err = openPackage(pi.PkgPath, pi.Location, p)
+	if err != nil {
+		return
+	}
+	p.pkgs[pkgPath] = pkg
+	return
+}
+
+// LookupType returns the type of symbol pkgPath.name.
+func (p *Project) LookupType(pkgPath string, name string) (typ Type, err error) {
+	pkg, err := p.LoadPackage(pkgPath)
+	if err != nil {
+		return
+	}
+	sym, ok := pkg.LookupSymbol(name)
+	if !ok {
+		return nil, syscall.ENOENT
+	}
+	tsym, ok := sym.(*TypeSym)
+	if !ok {
+		return nil, ErrSymbolIsNotAType
+	}
+	if tsym.Alias {
+		return tsym.Type, nil
+	}
+	return p.UniqueType(&NamedType{PkgPath: pkg.PkgPath(), Name: name}), nil
 }
 
 // LookupPkgName lookups a package name by specified PkgPath.
-func (p *Project) LookupPkgName(pkg string) string {
-	return p.names.LookupPkgName(p.prjMod, pkg)
+func (p *Project) LookupPkgName(pkgPath string) string {
+	return p.names.LookupPkgName(p.prjMod, pkgPath)
 }
 
 // UniqueType returns the unique instance of a type.

@@ -72,7 +72,7 @@ type Module struct {
 func (p Module) Lookup(pkg string) (pi PackageInfo, err error) {
 	dir := filepath.Join(BuildContext.GOROOT, "src", pkg)
 	if isDirExist(dir) {
-		return PackageInfo{Location: dir, Type: PkgTypeStd}, nil
+		return PackageInfo{PkgPath: pkg, Location: dir, Type: PkgTypeStd}, nil
 	}
 	_, dir, typ := p.impl.Lookup(pkg)
 	if typ == fastmod.PkgTypeNil {

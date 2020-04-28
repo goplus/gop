@@ -80,6 +80,12 @@ func (p *Package) PkgPath() string {
 	return p.pkgPath
 }
 
+// LookupSymbol lookups symbol info.
+func (p *Package) LookupSymbol(name string) (sym Symbol, ok bool) {
+	sym, ok = p.syms[name]
+	return
+}
+
 func (p *Package) insertFunc(name string, recv Type, typ *FuncType) {
 	if recv == nil {
 		p.insertSym(name, typ)
@@ -181,6 +187,10 @@ const (
 	Complex128 AtomKind = reflect.Complex128
 	// String - string
 	String AtomKind = reflect.String
+	// Rune - rune
+	Rune = Int32
+	// Byte - byte
+	Byte = Uint8
 )
 
 // AtomType represents a basic Go type.
