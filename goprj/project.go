@@ -67,7 +67,7 @@ func (p *Project) ThisModule() modutil.Module {
 // Load loads the main package of a Go module.
 func (p *Project) Load() (pkg *Package, err error) {
 	mod := p.prjMod
-	return openPackage(mod.PkgPath(), mod.RootPath(), p)
+	return openPackage(mod.VersionPkgPath(), mod.RootPath(), p)
 }
 
 // LoadPackage loads a package.
@@ -82,8 +82,8 @@ func (p *Project) LoadPackage(pkgPath string) (pkg *Package, err error) {
 	if err != nil {
 		return
 	}
-	log.Info("====> LoadPackage:", pi.PkgPath)
-	pkg, err = openPackage(pi.PkgPath, pi.Location, p)
+	log.Info("====> LoadPackage:", pi.VersionPkgPath)
+	pkg, err = openPackage(pi.VersionPkgPath, pi.Location, p)
 	if err != nil {
 		return
 	}
@@ -94,7 +94,7 @@ func (p *Project) LoadPackage(pkgPath string) (pkg *Package, err error) {
 // LookupType returns the type of symbol pkgPath.name.
 func (p *Project) LookupType(pkgPath string, name string) (typ Type, err error) {
 	if pkgPath == "C" {
-		return p.UniqueType(&NamedType{PkgPath: "C", Name: name}), nil
+		return p.UniqueType(&NamedType{VersionPkgPath: "C", Name: name}), nil
 	}
 	pkg, err := p.LoadPackage(pkgPath)
 	if err != nil {
@@ -111,7 +111,7 @@ func (p *Project) LookupType(pkgPath string, name string) (typ Type, err error) 
 	if tsym.Alias {
 		return tsym.Type, nil
 	}
-	return p.UniqueType(&NamedType{PkgPath: pkg.PkgPath(), Name: name}), nil
+	return p.UniqueType(&NamedType{VersionPkgPath: pkg.VersionPkgPath(), Name: name}), nil
 }
 
 // LookupPkgName lookups a package name by specified PkgPath.

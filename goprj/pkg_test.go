@@ -123,8 +123,8 @@ func Test(t *testing.T) {
 	if pkg.Source().Name != "goprj" {
 		t.Fatal("please run test in this package directory")
 	}
-	if pkg.PkgPath() != "github.com/qiniu/qlang/goprj" {
-		t.Fatal("PkgPath:", pkg.PkgPath())
+	if pkg.VersionPkgPath() != "github.com/qiniu/qlang/goprj" {
+		t.Fatal("PkgPath:", pkg.VersionPkgPath())
 	}
 	return
 	log.Debug("------------------------------------------------------")
@@ -149,7 +149,7 @@ func Test(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if pkg3.PkgPath() != "github.com/visualfc/fastmod@v1.3.3" {
-		t.Fatal("PkgPath:", pkg3.PkgPath())
+	if pkg3.VersionPkgPath() != "github.com/visualfc/fastmod@v1.3.3" {
+		t.Fatal("PkgPath:", pkg3.VersionPkgPath())
 	}
 }

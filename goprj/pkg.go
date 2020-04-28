@@ -46,25 +46,25 @@ func OpenGoPackage(dir string) (pkg *GoPackage, err error) {
 
 // Package represents a set of source files collectively building a Go package.
 type Package struct {
-	syms    map[string]Symbol
-	src     *GoPackage
-	pkgPath string
+	syms       map[string]Symbol
+	src        *GoPackage
+	verPkgPath string
 }
 
-func openPackage(pkgPath string, dir string, prj *Project) (*Package, error) {
+func openPackage(verPkgPath string, dir string, prj *Project) (*Package, error) {
 	gopkg, err := OpenGoPackage(dir)
 	if err != nil {
 		return nil, err
 	}
-	return newPackageFrom(pkgPath, gopkg, prj), nil
+	return newPackageFrom(verPkgPath, gopkg, prj), nil
 }
 
 // newPackageFrom creates a package from a Go package.
-func newPackageFrom(pkgPath string, gopkg *GoPackage, prj *Project) *Package {
+func newPackageFrom(verPkgPath string, gopkg *GoPackage, prj *Project) *Package {
 	pkg := &Package{
-		syms:    make(map[string]Symbol),
-		src:     gopkg,
-		pkgPath: pkgPath,
+		syms:       make(map[string]Symbol),
+		src:        gopkg,
+		verPkgPath: verPkgPath,
 	}
 	loader := newFileLoader(pkg, prj)
 	for name, f := range gopkg.Files {
@@ -79,9 +79,9 @@ func (p *Package) Source() *GoPackage {
 	return p.src
 }
 
-// PkgPath retuns PkgPath (with version).
-func (p *Package) PkgPath() string {
-	return p.pkgPath
+// VersionPkgPath retuns PkgPath with version.
+func (p *Package) VersionPkgPath() string {
+	return p.verPkgPath
 }
 
 // LookupSymbol lookups symbol info.
@@ -100,7 +100,7 @@ func (p *Package) insertFunc(name string, recv Type, typ *FuncType) {
 
 func (p *Package) insertSym(name string, sym Symbol) {
 	if _, ok := p.syms[name]; ok {
-		log.Debug(p.pkgPath, "package insert symbol failed: exists -", name)
+		log.Debug(p.verPkgPath, "package insert symbol failed: exists -", name)
 		return // We don't support condition compiling, and It's normal we get an existed symbol.
 	}
 	p.syms[name] = sym
@@ -212,8 +212,8 @@ func (p AtomType) ID() string {
 
 // NamedType represents a named type.
 type NamedType struct {
-	PkgPath string
-	Name    string
+	VersionPkgPath string
+	Name           string
 }
 
 func (p *NamedType) String() string {
@@ -222,10 +222,10 @@ func (p *NamedType) String() string {
 
 // ID returns a unique id of this type.
 func (p *NamedType) ID() string {
-	if p.PkgPath == "" {
+	if p.VersionPkgPath == "" {
 		return p.Name
 	}
-	return p.PkgPath + "." + p.Name
+	return p.VersionPkgPath + "." + p.Name
 }
 
 // ChanType represents chan type.

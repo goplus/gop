@@ -72,7 +72,7 @@ type Module struct {
 func (p Module) Lookup(pkg string) (pi PackageInfo, err error) {
 	dir := filepath.Join(BuildContext.GOROOT, "src", pkg)
 	if isDirExist(dir) {
-		return PackageInfo{PkgPath: pkg, Location: dir, Type: PkgTypeStd}, nil
+		return PackageInfo{VersionPkgPath: pkg, Location: dir, Type: PkgTypeStd}, nil
 	}
 	_, dir, typ := p.impl.Lookup(pkg)
 	if typ == fastmod.PkgTypeNil {
@@ -82,7 +82,7 @@ func (p Module) Lookup(pkg string) (pi PackageInfo, err error) {
 	if typ == PkgTypeDepMod {
 		pkg = strings.TrimPrefix(dir, gPkgModPath)
 	}
-	return PackageInfo{PkgPath: pkg, Location: dir, Type: typ}, nil
+	return PackageInfo{VersionPkgPath: pkg, Location: dir, Type: typ}, nil
 }
 
 // ModFile returns `go.mod` file path of this module. eg. `$HOME/work/qiniu/qlang/go.mod`
@@ -95,8 +95,8 @@ func (p Module) RootPath() string {
 	return p.impl.ModDir()
 }
 
-// PkgPath returns PkgPath (with version) of this module. eg. `github.com/qiniu/qlang@v1.0.0`
-func (p Module) PkgPath() string {
+// VersionPkgPath returns VersionPkgPath of this module. eg. `github.com/qiniu/qlang@v1.0.0`
+func (p Module) VersionPkgPath() string {
 	if p.isMod {
 		return strings.TrimPrefix(p.impl.ModDir(), gPkgModPath)
 	}
@@ -135,9 +135,9 @@ const (
 
 // PackageInfo represents a package info.
 type PackageInfo struct {
-	Location string
-	PkgPath  string
-	Type     PkgType
+	Location       string
+	VersionPkgPath string
+	Type           PkgType
 }
 
 // -----------------------------------------------------------------------------
