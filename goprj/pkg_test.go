@@ -13,16 +13,15 @@ func init() {
 }
 
 func Test(t *testing.T) {
-	pkgDir := "."
-	prj, err := goprj.Open(pkgDir)
+	prj, err := goprj.Open(".")
 	if err != nil {
 		t.Fatal(err)
 	}
-	pkg, err := prj.LoadPackage(pkgDir)
+	pkg, err := prj.LoadPackage("github.com/qiniu/qlang/goprj")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if pkg.Name() != "goprj" {
+	if pkg.Source().Name != "goprj" {
 		t.Fatal("please run test in this package directory")
 	}
 }

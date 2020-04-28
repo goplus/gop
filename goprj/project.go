@@ -49,13 +49,19 @@ func Open(dir string) (*Project, error) {
 	}, nil
 }
 
+// Load loads the main package of a Go module.
+func (p *Project) Load() (pkg *Package, err error) {
+	mod := p.prjMod
+	return openPackage(mod.PkgPath(), mod.RootPath(), p)
+}
+
 // LoadPackage loads a package.
-func (p *Project) LoadPackage(dir string) (pkg *Package, err error) {
-	gopkg, err := LoadGoPackage(dir)
+func (p *Project) LoadPackage(pkgPath string) (pkg *Package, err error) {
+	pi, err := p.prjMod.Lookup(pkgPath)
 	if err != nil {
-		return nil, err
+		return
 	}
-	return NewPackageFrom(gopkg, p), nil
+	return openPackage(pkgPath, pi.Location, p)
 }
 
 // LookupPkgName lookups a package name by specified PkgPath.

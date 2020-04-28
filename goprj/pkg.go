@@ -17,13 +17,13 @@ import (
 
 // GoPackage represents a set of source files collectively building a Go package.
 type GoPackage struct {
-	fset *token.FileSet
-	impl *ast.Package
-	name string
+	*ast.Package
+	FileSet *token.FileSet
+	Name    string
 }
 
-// LoadGoPackage loads a Go package.
-func LoadGoPackage(dir string) (pkg *GoPackage, err error) {
+// OpenGoPackage opens a Go package from a directory.
+func OpenGoPackage(dir string) (pkg *GoPackage, err error) {
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseDir(fset, dir, filterTest, 0)
 	if err != nil {
@@ -33,7 +33,7 @@ func LoadGoPackage(dir string) (pkg *GoPackage, err error) {
 		return nil, ErrMultiPackages
 	}
 	for name, impl := range pkgs {
-		return &GoPackage{fset: fset, impl: impl, name: name}, nil
+		return &GoPackage{FileSet: fset, Package: impl, Name: name}, nil
 	}
 	panic("not here")
 }
@@ -42,32 +42,37 @@ func LoadGoPackage(dir string) (pkg *GoPackage, err error) {
 
 // Package represents a set of source files collectively building a Go package.
 type Package struct {
-	name string
-	syms map[string]Symbol
+	syms    map[string]Symbol
+	src     *GoPackage
+	pkgPath string
 }
 
-// NewPackage creates a Go package.
-func NewPackage(name string) *Package {
-	return &Package{
-		name: name,
-		syms: make(map[string]Symbol),
+func openPackage(pkgPath string, dir string, prj *Project) (*Package, error) {
+	gopkg, err := OpenGoPackage(dir)
+	if err != nil {
+		return nil, err
 	}
+	return newPackageFrom(pkgPath, gopkg, prj), nil
 }
 
-// NewPackageFrom creates a package from a Go package.
-func NewPackageFrom(p *GoPackage, prj *Project) *Package {
-	pkg := NewPackage(p.name)
+// newPackageFrom creates a package from a Go package.
+func newPackageFrom(pkgPath string, gopkg *GoPackage, prj *Project) *Package {
+	pkg := &Package{
+		syms:    make(map[string]Symbol),
+		src:     gopkg,
+		pkgPath: pkgPath,
+	}
 	loader := newFileLoader(pkg, prj)
-	for name, f := range p.impl.Files {
+	for name, f := range gopkg.Files {
 		log.Debug("file:", name)
 		loader.load(f)
 	}
 	return pkg
 }
 
-// Name returns the package name.
-func (p *Package) Name() string {
-	return p.name
+// Source returns the Go package instance.
+func (p *Package) Source() *GoPackage {
+	return p.src
 }
 
 func (p *Package) insertFunc(name string, recv Type, typ *FuncType) {
@@ -80,7 +85,7 @@ func (p *Package) insertFunc(name string, recv Type, typ *FuncType) {
 
 func (p *Package) insertSym(name string, sym Symbol) {
 	if _, ok := p.syms[name]; ok {
-		log.Fatalln(p.name, "package insert symbol failed: exists -", name)
+		log.Fatalln(p.pkgPath, "package insert symbol failed: exists -", name)
 	}
 	p.syms[name] = sym
 }

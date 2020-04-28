@@ -270,7 +270,30 @@ func (p *fileLoader) InterfaceType(v *ast.InterfaceType) Type {
 
 // IdentType converts an ident to a Type.
 func (p *fileLoader) IdentType(ident string) Type {
+	if t, ok := builtinTypes[ident]; ok {
+		return AtomType(t)
+	}
 	return p.prj.UniqueType(&NamedType{Name: ident})
+}
+
+var builtinTypes = map[string]AtomKind{
+	"bool":       Bool,
+	"int":        Int,
+	"int8":       Int8,
+	"int16":      Int16,
+	"int32":      Int32,
+	"int64":      Int64,
+	"uint":       Uint,
+	"uint8":      Uint8,
+	"uint16":     Uint16,
+	"uint32":     Uint32,
+	"uint64":     Uint64,
+	"uintptr":    Uintptr,
+	"float32":    Float32,
+	"float64":    Float64,
+	"complex64":  Complex64,
+	"complex128": Complex128,
+	"string":     String,
 }
 
 // ToLen converts ast.Expr to a Len.
