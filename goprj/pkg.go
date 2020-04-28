@@ -321,6 +321,24 @@ func (p *PointerType) ID() string {
 	return "*" + pointer(p.Elem)
 }
 
+// RetType represents types of function return value.
+type RetType struct {
+	Results []Type
+}
+
+func (p *RetType) String() string {
+	return listTypeList(p.Results, false)
+}
+
+// ID returns a unique id of this type.
+func (p *RetType) ID() string {
+	items := make([]string, len(p.Results))
+	for i, ret := range p.Results {
+		items[i] = pointer(ret)
+	}
+	return strings.Join(items, " ")
+}
+
 // FuncType represents a function type.
 type FuncType struct {
 	Params  []Type

@@ -18,18 +18,18 @@ var (
 
 // TypeInferrer represents a TypeInferrer who can infer type from a ast.Expr.
 type TypeInferrer interface {
-	InferType(expr ast.Expr) (typ Type)
-	InferConst(expr ast.Expr, i int) (typ Type, val interface{})
+	InferType(pkg *Package, expr ast.Expr, reserved int) (typ Type)
+	InferConst(pkg *Package, expr ast.Expr, i int) (typ Type, val interface{})
 }
 
 type nilTypeInferer struct {
 }
 
-func (p *nilTypeInferer) InferType(expr ast.Expr) Type {
+func (p *nilTypeInferer) InferType(pkg *Package, expr ast.Expr, reserved int) Type {
 	return &UninferedType{expr}
 }
 
-func (p *nilTypeInferer) InferConst(expr ast.Expr, i int) (typ Type, val interface{}) {
+func (p *nilTypeInferer) InferConst(pkg *Package, expr ast.Expr, i int) (typ Type, val interface{}) {
 	return &UninferedType{expr}, expr
 }
 
@@ -94,7 +94,7 @@ func (p *Project) LoadPackage(pkgPath string) (pkg *Package, err error) {
 // LookupType returns the type of symbol pkgPath.name.
 func (p *Project) LookupType(pkgPath string, name string) (typ Type, err error) {
 	if pkgPath == "C" {
-		return p.UniqueType(&NamedType{PkgPath: pkgPath, Name: name}), nil
+		return p.UniqueType(&NamedType{PkgPath: "C", Name: name}), nil
 	}
 	pkg, err := p.LoadPackage(pkgPath)
 	if err != nil {

@@ -16,14 +16,46 @@ func init() {
 	//log.SetOutputLevel(log.Ldebug)
 }
 
-type simpleTypeInferer struct {
+type simpleTypeInferrer struct {
+	prj *goprj.Project
 }
 
-func (p *simpleTypeInferer) InferType(expr ast.Expr) goprj.Type {
+func (p *simpleTypeInferrer) InferType(pkg *goprj.Package, expr ast.Expr, reserved int) goprj.Type {
+	if reserved < 0 {
+		switch v := expr.(type) {
+		case *ast.CallExpr:
+			if t, ok := p.inferTypeFromFun(pkg, v.Fun); ok {
+				return t
+			}
+		}
+		log.Fatalln("InferType: unknown -", reflect.TypeOf(expr))
+		return &goprj.UninferedType{expr}
+	}
 	return &goprj.UninferedType{expr}
 }
 
-func (p *simpleTypeInferer) InferConst(expr ast.Expr, i int) (typ goprj.Type, val interface{}) {
+func (p *simpleTypeInferrer) inferTypeFromFun(pkg *goprj.Package, fun ast.Expr) (t goprj.Type, ok bool) {
+	switch v := fun.(type) {
+	case *ast.SelectorExpr:
+		switch recv := v.X.(type) {
+		case *ast.Ident:
+			fnt, err := p.prj.LookupType(recv.Name, v.Sel.Name)
+			if err == nil {
+				if fn, ok := fnt.(*goprj.FuncType); ok {
+					return &goprj.RetType{fn.Results}, true
+				}
+			}
+		default:
+			log.Fatalln("inferTypeFromFun:", reflect.TypeOf(v.X))
+		}
+	case *ast.Ident:
+	default:
+		log.Fatalln("inferTypeFromFun:", reflect.TypeOf(fun))
+	}
+	return nil, false
+}
+
+func (p *simpleTypeInferrer) InferConst(pkg *goprj.Package, expr ast.Expr, i int) (typ goprj.Type, val interface{}) {
 	switch v := expr.(type) {
 	case *ast.BasicLit:
 		switch v.Kind {
@@ -83,7 +115,7 @@ func Test(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	prj.TypeInferrer = &simpleTypeInferer{}
+	prj.TypeInferrer = &simpleTypeInferrer{prj}
 	pkg, err := prj.LoadPackage("github.com/qiniu/qlang/goprj")
 	if err != nil {
 		t.Fatal(err)

@@ -96,15 +96,33 @@ func (p *fileLoader) loadVar(spec *ast.ValueSpec) {
 				log.Debug("var:", name.Name, "-", typ)
 			}
 		}
-	} else {
+		return
+	}
+	if len(spec.Names) == len(spec.Values) {
 		for i, name := range spec.Names {
-			typ := p.prj.InferType(spec.Values[i])
+			typ := p.prj.InferType(p.pkg, spec.Values[i], 0)
 			p.pkg.insertSym(name.Name, &VarSym{typ})
 			if log.Ldebug >= log.Std.Level {
 				log.Debug("var:", name.Name, "-", typ)
 			}
 		}
+		return
 	}
+	if len(spec.Values) != 1 {
+		log.Fatalln("loadVar: unexpected -", *spec)
+	}
+	typ := p.prj.InferType(p.pkg, spec.Values[0], -1)
+	if ret, ok := typ.(*RetType); ok {
+		for i, name := range spec.Names {
+			typ := ret.Results[i]
+			p.pkg.insertSym(name.Name, &VarSym{typ})
+			if log.Ldebug >= log.Std.Level {
+				log.Debug("var:", name.Name, "-", typ)
+			}
+		}
+		return
+	}
+	log.Fatalln("loadVar: InferType should get RetType -", reflect.TypeOf(typ))
 }
 
 func (p *fileLoader) loadVars(d *ast.GenDecl) {
@@ -126,7 +144,7 @@ func (p *fileLoader) loadConst(spec *ast.ValueSpec, idx int, last []ast.Expr) []
 		vals = last
 	}
 	for i, name := range spec.Names {
-		typInfer, val := p.prj.InferConst(vals[i], idx)
+		typInfer, val := p.prj.InferConst(p.pkg, vals[i], idx)
 		if typ != nil {
 			typInfer = typ
 		}
@@ -315,7 +333,7 @@ var builtinTypes = map[string]AtomKind{
 // ToLen converts ast.Expr to a Len.
 func (p *fileLoader) ToLen(e ast.Expr) int {
 	if e != nil {
-		_, val := p.prj.InferConst(e, -1)
+		_, val := p.prj.InferConst(p.pkg, e, -1)
 		if _, ok := val.(*UninferedType); ok {
 			log.Fatal("ToLen:", reflect.TypeOf(e))
 		}
