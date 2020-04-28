@@ -77,7 +77,7 @@ func (p *fileLoader) loadType(spec *ast.TypeSpec) {
 	typ := p.ToType(spec.Type)
 	p.pkg.insertSym(name, &TypeSym{typ, alias})
 	if log.Ldebug >= log.Std.Level {
-		log.Debug("type:", name, typ.Unique(), "alias:", alias)
+		log.Debug("type:", name, typ, "alias:", alias)
 	}
 }
 
@@ -93,7 +93,7 @@ func (p *fileLoader) loadVar(spec *ast.ValueSpec) {
 		for _, name := range spec.Names {
 			p.pkg.insertSym(name.Name, &VarSym{typ})
 			if log.Ldebug >= log.Std.Level {
-				log.Debug("var:", name.Name, "-", typ.Unique())
+				log.Debug("var:", name.Name, "-", typ)
 			}
 		}
 	} else {
@@ -101,7 +101,7 @@ func (p *fileLoader) loadVar(spec *ast.ValueSpec) {
 			typ := p.prj.InferType(spec.Values[i])
 			p.pkg.insertSym(name.Name, &VarSym{typ})
 			if log.Ldebug >= log.Std.Level {
-				log.Debug("var:", name.Name, "-", typ.Unique())
+				log.Debug("var:", name.Name, "-", typ)
 			}
 		}
 	}
@@ -132,7 +132,7 @@ func (p *fileLoader) loadConst(spec *ast.ValueSpec, idx int, last []ast.Expr) []
 		}
 		p.pkg.insertSym(name.Name, &ConstSym{typInfer, val})
 		if log.Ldebug >= log.Std.Level {
-			log.Debug("const:", name.Name, "-", typ.Unique(), "-", val)
+			log.Debug("const:", name.Name, "-", typ, "-", val)
 		}
 	}
 	return vals
@@ -159,7 +159,7 @@ func (p *fileLoader) loadFunc(d *ast.FuncDecl) {
 	typ := p.ToFuncType(d.Type)
 	p.pkg.insertFunc(name, recv, typ)
 	if log.Ldebug >= log.Std.Level {
-		log.Debug("func:", getFuncName(name, recv), "-", typ.Unique())
+		log.Debug("func:", getFuncName(name, recv), "-", typ)
 	}
 }
 
@@ -167,7 +167,7 @@ func getFuncName(name string, recv Type) string {
 	if recv == nil {
 		return name
 	}
-	return "(" + recv.Unique() + ")." + name
+	return "(" + recv.String() + ")." + name
 }
 
 // -----------------------------------------------------------------------------

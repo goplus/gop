@@ -65,7 +65,7 @@ func (p *Project) LookupPkgName(pkg string) string {
 
 // UniqueType returns the unique instance of a type.
 func (p *Project) UniqueType(t Type) Type {
-	id := t.Unique()
+	id := t.ID()
 	if v, ok := p.types[id]; ok {
 		return v
 	}

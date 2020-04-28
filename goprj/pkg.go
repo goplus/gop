@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"unsafe"
 
 	"github.com/qiniu/x/log"
 )
@@ -71,7 +72,7 @@ func (p *Package) Name() string {
 
 func (p *Package) insertFunc(name string, recv Type, typ *FuncType) {
 	if recv == nil {
-		p.insertSym(name, &FuncSym{typ})
+		p.insertSym(name, typ)
 	} else {
 		// TODO
 	}
@@ -97,17 +98,11 @@ func (p *TypeSym) String() string {
 	if p.Alias {
 		alias = "= "
 	}
-	return alias + p.Type.Unique()
+	return alias + p.Type.String()
 }
 
 // FuncSym represents a function symbol.
-type FuncSym struct {
-	Type *FuncType
-}
-
-func (p *FuncSym) String() string {
-	return p.Type.Unique()
-}
+type FuncSym = FuncType
 
 // VarSym represents a variable symbol.
 type VarSym struct {
@@ -115,7 +110,7 @@ type VarSym struct {
 }
 
 func (p *VarSym) String() string {
-	return p.Type.Unique()
+	return p.Type.String()
 }
 
 // ConstSym represents a const symbol.
@@ -126,9 +121,9 @@ type ConstSym struct {
 
 func (p *ConstSym) String() string {
 	if p.Value == nil {
-		return p.Type.Unique()
+		return p.Type.String()
 	}
-	return fmt.Sprintf("%s = %v", p.Type.Unique(), p.Value)
+	return fmt.Sprintf("%s = %v", p.Type.String(), p.Value)
 }
 
 // Symbol represents a Go symbol.
@@ -181,8 +176,12 @@ const (
 // AtomType represents a basic Go type.
 type AtomType AtomKind
 
-// Unique returns a unique id of this type.
-func (p AtomType) Unique() string {
+func (p AtomType) String() string {
+	return p.ID()
+}
+
+// ID returns a unique id of this type.
+func (p AtomType) ID() string {
 	return AtomKind(p).String()
 }
 
@@ -192,8 +191,12 @@ type NamedType struct {
 	Name    string
 }
 
-// Unique returns a unique id of this type.
-func (p *NamedType) Unique() string {
+func (p *NamedType) String() string {
+	return p.ID()
+}
+
+// ID returns a unique id of this type.
+func (p *NamedType) ID() string {
 	if p.PkgPath == "" {
 		return p.Name
 	}
@@ -206,13 +209,32 @@ type ArrayType struct {
 	Elem Type
 }
 
-// Unique returns a unique id of this type.
-func (p *ArrayType) Unique() string {
-	len := ""
+func (p *ArrayType) String() string {
+	elem := p.Elem.String()
 	if p.Len > 0 {
-		len = strconv.Itoa(p.Len)
+		len := strconv.Itoa(p.Len)
+		return "[" + len + "]" + elem
 	}
-	return "[" + len + "]" + p.Elem.Unique()
+	return "[]" + elem
+}
+
+// ID returns a unique id of this type.
+func (p *ArrayType) ID() string {
+	elem := pointer(p.Elem)
+	if p.Len > 0 {
+		len := strconv.Itoa(p.Len)
+		return "[" + len + "]" + elem
+	}
+	return "[]" + elem
+}
+
+type interfaceStruct struct {
+	itabOrType uintptr
+	word       uintptr
+}
+
+func pointer(typ Type) string {
+	return strconv.FormatInt(int64((*interfaceStruct)(unsafe.Pointer(&typ)).word), 32)
 }
 
 // PointerType represents a pointer type.
@@ -220,9 +242,13 @@ type PointerType struct {
 	Elem Type
 }
 
-// Unique returns a unique id of this type.
-func (p *PointerType) Unique() string {
-	return "*" + p.Elem.Unique()
+func (p *PointerType) String() string {
+	return "*" + p.Elem.String()
+}
+
+// ID returns a unique id of this type.
+func (p *PointerType) ID() string {
+	return "*" + pointer(p.Elem)
 }
 
 // FuncType represents a function type.
@@ -231,15 +257,28 @@ type FuncType struct {
 	Results []Type
 }
 
-// Unique returns a unique id of this type.
-func (p *FuncType) Unique() string {
-	params := uniqueTypeList(p.Params, true)
-	results := uniqueTypeList(p.Results, false)
+func (p *FuncType) String() string {
+	params := listTypeList(p.Params, true)
+	results := listTypeList(p.Results, false)
 	return "func" + params + results
 }
 
-// uniqueTypeList returns unique id of a type list.
-func uniqueTypeList(types []Type, noEmpty bool) string {
+// ID returns a unique id of this type.
+func (p *FuncType) ID() string {
+	items := make([]string, 1, len(p.Params)+len(p.Results)+3)
+	items[0] = "f{"
+	for _, param := range p.Params {
+		items = append(items, param.ID())
+	}
+	items = append(items, ":")
+	for _, ret := range p.Results {
+		items = append(items, ret.ID())
+	}
+	items = append(items, "}")
+	return strings.Join(items, " ")
+}
+
+func listTypeList(types []Type, noEmpty bool) string {
 	if types == nil {
 		if noEmpty {
 			return "()"
@@ -248,7 +287,7 @@ func uniqueTypeList(types []Type, noEmpty bool) string {
 	}
 	items := make([]string, len(types))
 	for i, typ := range types {
-		items[i] = typ.Unique()
+		items[i] = typ.String()
 	}
 	return "(" + strings.Join(items, ",") + ")"
 }
@@ -264,18 +303,34 @@ type InterfaceType struct {
 	Methods []Field
 }
 
-// Unique returns a unique id of this type.
-func (p *InterfaceType) Unique() string {
+func (p *InterfaceType) String() string {
+	return listMembers("i{", p.Methods)
+}
+
+// ID returns a unique id of this type.
+func (p *InterfaceType) ID() string {
 	return uniqueMembers("i{", p.Methods)
 }
 
-func uniqueMembers(typeTag string, fields []Field) string {
+func listMembers(typeTag string, fields []Field) string {
 	items := make([]string, len(fields)<<1)
 	for i, method := range fields {
 		items[i<<1] = method.Name
-		items[(i<<1)+1] = method.Type.Unique()
+		items[(i<<1)+1] = method.Type.String()
 	}
 	return typeTag + strings.Join(items, " ") + "}"
+}
+
+func uniqueMembers(typeTag string, fields []Field) string {
+	n := len(fields) << 1
+	items := make([]string, n+2)
+	items[0] = typeTag
+	for i, method := range fields {
+		items[(i<<1)+1] = method.Name
+		items[(i<<1)+2] = method.Type.ID()
+	}
+	items[n+1] = "}"
+	return strings.Join(items, "|")
 }
 
 // StructType represents a Go struct type.
@@ -283,8 +338,12 @@ type StructType struct {
 	Fields []Field
 }
 
-// Unique returns a unique id of this type.
-func (p *StructType) Unique() string {
+func (p *StructType) String() string {
+	return listMembers("s{", p.Fields)
+}
+
+// ID returns a unique id of this type.
+func (p *StructType) ID() string {
 	return uniqueMembers("s{", p.Fields)
 }
 
@@ -294,9 +353,13 @@ type MapType struct {
 	Value Type
 }
 
-// Unique returns a unique id of this type.
-func (p *MapType) Unique() string {
-	return "map[" + p.Key.Unique() + "]" + p.Value.Unique()
+func (p *MapType) String() string {
+	return "map[" + p.Key.String() + "]" + p.Value.String()
+}
+
+// ID returns a unique id of this type.
+func (p *MapType) ID() string {
+	return "map[" + pointer(p.Key) + "]" + pointer(p.Value)
 }
 
 // UninferedType represents a type that needs to be infered.
@@ -304,8 +367,12 @@ type UninferedType struct {
 	Expr ast.Expr
 }
 
-// Unique returns a unique id of this type.
-func (p *UninferedType) Unique() string {
+func (p *UninferedType) String() string {
+	return p.ID()
+}
+
+// ID returns a unique id of this type.
+func (p *UninferedType) ID() string {
 	pos := int(p.Expr.Pos())
 	end := int(p.Expr.End())
 	return "uninfer:" + strconv.Itoa(pos) + "," + strconv.Itoa(end)
@@ -313,8 +380,9 @@ func (p *UninferedType) Unique() string {
 
 // Type represents a Go type.
 type Type interface {
-	// Unique returns a unique id of this type.
-	Unique() string
+	// ID returns a unique id of this type.
+	ID() string
+	String() string
 }
 
 // -----------------------------------------------------------------------------
