@@ -254,10 +254,10 @@ func (p *fileLoader) InterfaceType(v *ast.InterfaceType) Type {
 	methods := v.Methods.List
 	out := make([]Field, 0, len(methods))
 	for _, field := range methods {
-		if field.Names == nil {
-			panic("todo: embbed member")
-		}
 		typ := p.ToType(field.Type)
+		if field.Names == nil { // embbed
+			out = append(out, Field{"", typ})
+		}
 		for _, name := range field.Names {
 			out = append(out, Field{name.Name, typ})
 		}

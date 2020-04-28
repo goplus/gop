@@ -54,6 +54,10 @@ func (p *simpleTypeInferer) InferConst(expr ast.Expr, i int) (typ goprj.Type, va
 		default:
 			log.Fatalln("InferConst: unknown -", expr)
 		}
+	case *ast.SelectorExpr:
+		if i < 0 {
+			return goprj.AtomType(goprj.Int), 0
+		}
 	case *ast.BinaryExpr:
 		if i < 0 {
 			return goprj.AtomType(goprj.Int), 0

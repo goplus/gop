@@ -30,7 +30,11 @@ func OpenGoPackage(dir string) (pkg *GoPackage, err error) {
 		return
 	}
 	if len(pkgs) != 1 {
-		return nil, ErrMultiPackages
+		delete(pkgs, "main")
+		if len(pkgs) != 1 {
+			log.Debug("GetPkgName failed:", ErrMultiPackages, "-", pkgs)
+			return nil, ErrMultiPackages
+		}
 	}
 	for name, impl := range pkgs {
 		return &GoPackage{FileSet: fset, Package: impl, Name: name}, nil

@@ -29,7 +29,10 @@ func GetPkgName(dir string) (string, error) {
 		return "", err
 	}
 	if len(pkgs) != 1 {
-		return "", ErrMultiPackages
+		delete(pkgs, "main")
+		if len(pkgs) != 1 {
+			return "", ErrMultiPackages
+		}
 	}
 	for name := range pkgs {
 		return name, nil
