@@ -75,7 +75,7 @@ func (p *fileLoader) loadType(spec *ast.TypeSpec) {
 	name := spec.Name.Name
 	alias := spec.Assign.IsValid()
 	typ := p.ToType(spec.Type)
-	p.pkg.insertSym(name, &TypeSym{typ, alias})
+	p.pkg.insertSymbol(name, &TypeSym{typ, alias})
 	if log.Ldebug >= log.Std.Level {
 		log.Debug("type:", name, typ, "alias:", alias)
 	}
@@ -91,20 +91,20 @@ func (p *fileLoader) loadVar(spec *ast.ValueSpec) {
 	if spec.Type != nil {
 		typ := p.ToType(spec.Type)
 		for _, name := range spec.Names {
-			p.pkg.insertSym(name.Name, &VarSym{typ})
-			if log.Ldebug >= log.Std.Level {
-				log.Debug("var:", name.Name, "-", typ)
+			if name.Name == "_" {
+				continue
 			}
+			p.pkg.insertVar(name.Name, typ)
 		}
 		return
 	}
 	if len(spec.Names) == len(spec.Values) {
 		for i, name := range spec.Names {
-			typ := p.prj.InferType(p.pkg, spec.Values[i], 0)
-			p.pkg.insertSym(name.Name, &VarSym{typ})
-			if log.Ldebug >= log.Std.Level {
-				log.Debug("var:", name.Name, "-", typ)
+			if name.Name == "_" {
+				continue
 			}
+			typ := p.prj.InferType(p.pkg, spec.Values[i], 0)
+			p.pkg.insertVar(name.Name, typ)
 		}
 		return
 	}
@@ -112,17 +112,28 @@ func (p *fileLoader) loadVar(spec *ast.ValueSpec) {
 		log.Fatalln("loadVar: unexpected -", *spec)
 	}
 	typ := p.prj.InferType(p.pkg, spec.Values[0], -1)
-	if ret, ok := typ.(*RetType); ok {
+	switch ret := typ.(type) {
+	case *RetType:
 		for i, name := range spec.Names {
-			typ := ret.Results[i]
-			p.pkg.insertSym(name.Name, &VarSym{typ})
-			if log.Ldebug >= log.Std.Level {
-				log.Debug("var:", name.Name, "-", typ)
+			if name.Name == "_" {
+				continue
 			}
+			typ := ret.Results[i]
+			p.pkg.insertVar(name.Name, typ)
 		}
 		return
+	case *UninferedRetType:
+		for i, name := range spec.Names {
+			if name.Name == "_" {
+				continue
+			}
+			typ := &UninferedRetType{Fun: ret.Fun, Nth: i}
+			p.pkg.insertVar(name.Name, typ)
+		}
+		return
+	default:
+		log.Fatalln("loadVar: InferType return unknown type -", reflect.TypeOf(typ))
 	}
-	log.Fatalln("loadVar: InferType should get RetType -", reflect.TypeOf(typ))
 }
 
 func (p *fileLoader) loadVars(d *ast.GenDecl) {
@@ -148,7 +159,7 @@ func (p *fileLoader) loadConst(spec *ast.ValueSpec, idx int, last []ast.Expr) []
 		if typ != nil {
 			typInfer = typ
 		}
-		p.pkg.insertSym(name.Name, &ConstSym{typInfer, val})
+		p.pkg.insertSymbol(name.Name, &ConstSym{typInfer, val})
 		if log.Ldebug >= log.Std.Level {
 			log.Debug("const:", name.Name, "-", typ, "-", val)
 		}

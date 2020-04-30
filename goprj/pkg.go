@@ -13,7 +13,7 @@ import (
 // Package represents a set of source files collectively building a Go package.
 type Package struct {
 	prj *Project
-	mod modutil.Module
+	mod *modutil.Module
 	dir string
 
 	names PkgNames
@@ -28,6 +28,7 @@ func openPackage(dir string, prj *Project) (pkg *Package, err error) {
 	if err != nil {
 		return
 	}
+	log.Info("====> OpenPackage:", mod.VersionPkgPath(), "-", dir)
 	return &Package{prj: prj, mod: mod, dir: dir, names: NewPkgNames()}, nil
 }
 
@@ -45,7 +46,7 @@ func (p *Package) Project() *Project {
 }
 
 // ThisModule returns the module instance.
-func (p *Package) ThisModule() modutil.Module {
+func (p *Package) ThisModule() *modutil.Module {
 	return p.mod
 }
 
@@ -111,6 +112,8 @@ func (p *Package) FindSymbol(name string) (sym Symbol, err error) {
 }
 
 var (
+	// ErrSymbolIsNotAType error.
+	ErrSymbolIsNotAType = errors.New("symbol isn't a type")
 	// ErrPackageIsLoading error.
 	ErrPackageIsLoading = errors.New("package is loading")
 	// ErrNotFound error.

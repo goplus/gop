@@ -65,16 +65,25 @@ func (p *Package) requireSource() (err error) {
 
 func (p *Package) insertFunc(name string, recv Type, typ *FuncType) {
 	if recv == nil {
-		p.insertSym(name, typ)
+		p.insertSymbol(name, typ)
 	} else {
 		// TODO
 	}
 }
 
-func (p *Package) insertSym(name string, sym Symbol) {
+func (p *Package) insertVar(name string, typ Type) {
 	if _, ok := p.syms[name]; ok {
-		log.Debug(p.mod.VersionPkgPath(), "package insert symbol failed: exists -", name)
-		return // We don't support condition compiling, and It's normal we get an existed symbol.
+		log.Debug(p.mod.VersionPkgPath(), "insertVar failed: exists -", name)
+		return // We don't support condition compile, and it's normal we get an existed var.
+	}
+	p.syms[name] = &VarSym{typ}
+	log.Debug("var:", name, "-", typ)
+}
+
+func (p *Package) insertSymbol(name string, sym Symbol) {
+	if _, ok := p.syms[name]; ok {
+		log.Debug(p.mod.VersionPkgPath(), "insertSymbol failed: exists -", name)
+		return // We don't support condition compile, and it's normal we get an existed symbol.
 	}
 	p.syms[name] = sym
 }
@@ -436,7 +445,22 @@ func (p *UninferedType) String() string {
 func (p *UninferedType) ID() string {
 	pos := int(p.Expr.Pos())
 	end := int(p.Expr.End())
-	return "uninfer:" + strconv.Itoa(pos) + "," + strconv.Itoa(end)
+	return "u:" + strconv.Itoa(pos) + "," + strconv.Itoa(end)
+}
+
+// UninferedRetType represents a function return types that needs to be infered.
+type UninferedRetType struct {
+	Fun string
+	Nth int
+}
+
+func (p *UninferedRetType) String() string {
+	return p.ID()
+}
+
+// ID returns a unique id of this type.
+func (p *UninferedRetType) ID() string {
+	return "uret:" + p.Fun + "," + strconv.Itoa(p.Nth)
 }
 
 // Type represents a Go type.

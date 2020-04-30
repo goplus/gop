@@ -41,7 +41,7 @@ func GetPkgName(dir string) (string, error) {
 }
 
 // LookupPkgName lookups a package name by specified PkgPath.
-func LookupPkgName(prjMod modutil.Module, pkg string) (name string, err error) {
+func LookupPkgName(prjMod *modutil.Module, pkg string) (name string, err error) {
 	pi, err := prjMod.Lookup(pkg)
 	if err != nil {
 		return
@@ -67,7 +67,7 @@ func NewPkgNames() PkgNames {
 }
 
 // LookupPkgName lookups a package name by specified PkgPath.
-func (p PkgNames) LookupPkgName(prjMod modutil.Module, pkg string) string {
+func (p PkgNames) LookupPkgName(prjMod *modutil.Module, pkg string) string {
 	if pkg == "C" { // import "C"
 		return pkg
 	}

@@ -50,13 +50,7 @@ func inferTypeFromFun(pkg *goprj.Package, fun ast.Expr) (t goprj.Type, ok bool) 
 			log.Fatalln("inferTypeFromFun:", reflect.TypeOf(v.X))
 		}
 	case *ast.Ident:
-		fnt, err := pkg.FindType(v.Name)
-		if err == nil {
-			if fn, ok := fnt.(*goprj.FuncType); ok {
-				return &goprj.RetType{Results: fn.Results}, true
-			}
-		}
-		log.Fatalln("inferTypeFromFun: FindType error -", err)
+		return &goprj.UninferedRetType{Fun: v.Name, Nth: -1}, true
 	default:
 		log.Fatalln("inferTypeFromFun: unknown -", reflect.TypeOf(fun))
 	}

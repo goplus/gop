@@ -20,6 +20,7 @@ var (
 
 // gPkgModPath - base path that `go get` places all versioned packages.
 var gPkgModPath string
+var gGorootSrcPath string
 
 // LookupModFile finds go.mod file for a package directory.
 func LookupModFile(dir string) (file string, err error) {
@@ -44,6 +45,7 @@ func getModules() modules {
 	if gMods == nil {
 		onceMods.Do(func() {
 			gPkgModPath = fastmod.GetPkgModPath(BuildContext) + "/"
+			gGorootSrcPath = BuildContext.GOROOT + "/src/"
 			gMods = fastmod.NewModuleList(BuildContext)
 		})
 	}
@@ -51,21 +53,33 @@ func getModules() modules {
 }
 
 // LoadModule loads a module from specified dir.
-func LoadModule(dir string) (mod Module, err error) {
+func LoadModule(dir string) (mod *Module, err error) {
 	impl, err := getModules().LoadModule(dir)
 	if err != nil {
 		return
 	}
 	isMod := strings.HasPrefix(dir, gPkgModPath)
-	return Module{impl, isMod}, nil
+	modKind := 0
+	if isMod {
+		modKind = modKindMod
+	} else if impl.Path() == "std" {
+		modKind = modKindStd
+	}
+	return &Module{impl, dir, modKind}, nil
 }
 
 // -----------------------------------------------------------------------------
 
+const (
+	modKindMod = 0x01
+	modKindStd = 0x02
+)
+
 // Module represents a loaded module.
 type Module struct {
-	impl  *fastmod.Module
-	isMod bool
+	impl    *fastmod.Module
+	dir     string
+	modKind int
 }
 
 // Lookup returns package info, if found.
@@ -97,15 +111,24 @@ func (p Module) RootPath() string {
 
 // PkgPath returns PkgPath of this module. eg. `github.com/qiniu/qlang`
 func (p Module) PkgPath() string {
-	return p.impl.Path()
+	switch p.modKind {
+	case modKindStd:
+		return strings.TrimPrefix(p.dir, gGorootSrcPath)
+	default:
+		return p.impl.Path()
+	}
 }
 
 // VersionPkgPath returns VersionPkgPath of this module. eg. `github.com/qiniu/qlang@v1.0.0`
 func (p Module) VersionPkgPath() string {
-	if p.isMod {
+	switch p.modKind {
+	case modKindMod:
 		return strings.TrimPrefix(p.impl.ModDir(), gPkgModPath)
+	case modKindStd:
+		return strings.TrimPrefix(p.dir, gGorootSrcPath)
+	default:
+		return p.impl.Path()
 	}
-	return p.impl.Path()
 }
 
 func isDirExist(dir string) bool {

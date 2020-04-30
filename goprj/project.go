@@ -1,15 +1,7 @@
 package goprj
 
 import (
-	"errors"
 	"go/ast"
-
-	"github.com/qiniu/x/log"
-)
-
-var (
-	// ErrSymbolIsNotAType error.
-	ErrSymbolIsNotAType = errors.New("symbol isn't a type")
 )
 
 // -----------------------------------------------------------------------------
@@ -56,7 +48,6 @@ func (p *Project) OpenPackage(dir string) (pkg *Package, err error) {
 	if pkg, ok := p.openedPkgs[dir]; ok {
 		return pkg, nil
 	}
-	log.Info("====> OpenPackage:", dir)
 	pkg, err = openPackage(dir, p)
 	if err != nil {
 		return
