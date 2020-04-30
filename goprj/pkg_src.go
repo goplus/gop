@@ -25,7 +25,7 @@ type GoPackage struct {
 // OpenGoPackage opens a Go package from a directory.
 func OpenGoPackage(dir string) (pkg *GoPackage, err error) {
 	fset := token.NewFileSet()
-	pkgs, err := parser.ParseDir(fset, dir, filterTest, 0)
+	pkgs, err := parser.ParseDir(fset, dir, filterTest, parser.ParseComments)
 	if err != nil {
 		return
 	}
@@ -48,18 +48,19 @@ func (p *Package) requireSource() (err error) {
 	if p.src != nil {
 		return nil
 	}
-	src, err := OpenGoPackage(p.dir)
+	p.src, err = OpenGoPackage(p.dir)
 	if err != nil {
 		return
 	}
+	p.busy = true
 	p.syms = make(map[string]Symbol)
 	loader := newFileLoader(p, p.prj)
-	for name, f := range src.Files {
-		log.Debug("file:", name)
+	for name, f := range p.src.Files {
+		log.Info("file:", name)
 		loader.load(f)
 	}
-	p.src = src
-	return nil
+	p.busy = false
+	return
 }
 
 func (p *Package) insertFunc(name string, recv Type, typ *FuncType) {

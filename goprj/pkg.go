@@ -1,6 +1,7 @@
 package goprj
 
 import (
+	"errors"
 	"syscall"
 
 	"github.com/qiniu/qlang/modutil"
@@ -19,6 +20,7 @@ type Package struct {
 
 	syms map[string]Symbol // cached
 	src  *GoPackage
+	busy bool
 }
 
 func openPackage(dir string, prj *Project) (pkg *Package, err error) {
@@ -35,6 +37,11 @@ func (p *Package) Source() *GoPackage {
 		log.Fatal("requireSource failed:", err)
 	}
 	return p.src
+}
+
+// Project returns the project instance.
+func (p *Package) Project() *Project {
+	return p.prj
 }
 
 // ThisModule returns the module instance.
@@ -59,8 +66,8 @@ func (p *Package) LoadPackage(pkgPath string) (pkg *Package, err error) {
 	return p.prj.OpenPackage(pi.Location)
 }
 
-// LookupType returns the type of symbol pkgPath.name.
-func (p *Package) LookupType(pkgPath string, name string) (typ Type, err error) {
+// FindPackageType returns the type of symbol pkgPath.name.
+func (p *Package) FindPackageType(pkgPath string, name string) (typ Type, err error) {
 	if pkgPath == "C" {
 		return p.prj.UniqueType(&NamedType{VersionPkgPath: "C", Name: name}), nil
 	}
@@ -68,9 +75,14 @@ func (p *Package) LookupType(pkgPath string, name string) (typ Type, err error) 
 	if err != nil {
 		return
 	}
-	sym, ok := pkg.LookupSymbol(name)
-	if !ok {
-		return nil, syscall.ENOENT
+	return pkg.FindType(name)
+}
+
+// FindType returns the type of symbol.
+func (p *Package) FindType(name string) (typ Type, err error) {
+	sym, err := p.FindSymbol(name)
+	if err != nil {
+		return
 	}
 	tsym, ok := sym.(*TypeSym)
 	if !ok {
@@ -79,17 +91,30 @@ func (p *Package) LookupType(pkgPath string, name string) (typ Type, err error) 
 	if tsym.Alias {
 		return tsym.Type, nil
 	}
-	return p.prj.UniqueType(&NamedType{VersionPkgPath: pkg.mod.VersionPkgPath(), Name: name}), nil
+	return p.prj.UniqueType(&NamedType{VersionPkgPath: p.mod.VersionPkgPath(), Name: name}), nil
 }
 
-// LookupSymbol lookups symbol info.
-func (p *Package) LookupSymbol(name string) (sym Symbol, ok bool) {
-	if err := p.requireSource(); err != nil {
+// FindSymbol lookups symbol info.
+func (p *Package) FindSymbol(name string) (sym Symbol, err error) {
+	if err = p.requireSource(); err != nil {
 		log.Fatal("LookupSymbol failed:", err)
 		return
 	}
-	sym, ok = p.syms[name]
-	return
+	sym, ok := p.syms[name]
+	if ok {
+		return
+	}
+	if p.busy {
+		return nil, ErrPackageIsLoading
+	}
+	return nil, ErrNotFound
 }
+
+var (
+	// ErrPackageIsLoading error.
+	ErrPackageIsLoading = errors.New("package is loading")
+	// ErrNotFound error.
+	ErrNotFound = syscall.ENOENT
+)
 
 // -----------------------------------------------------------------------------

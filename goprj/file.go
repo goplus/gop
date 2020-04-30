@@ -39,10 +39,10 @@ func (p *fileLoader) load(f *ast.File) {
 			case token.VAR:
 				p.loadVars(d)
 			default:
-				log.Debug("tok:", d.Tok, "spec:", reflect.TypeOf(d.Specs).Elem())
+				log.Fatalln("tok:", d.Tok, "spec:", reflect.TypeOf(d.Specs).Elem())
 			}
 		default:
-			log.Debug("gopkg.Package.load: unknown decl -", reflect.TypeOf(decl))
+			log.Fatalln("gopkg.Package.load: unknown decl -", reflect.TypeOf(decl))
 		}
 	}
 }
@@ -295,7 +295,7 @@ func (p *fileLoader) ExternalType(v *ast.SelectorExpr) Type {
 	if !ok {
 		log.Fatalln("ExternalType: PkgName isn't imported -", x.Name)
 	}
-	typ, err := p.pkg.LookupType(pkgPath, v.Sel.Name)
+	typ, err := p.pkg.FindPackageType(pkgPath, v.Sel.Name)
 	if err != nil {
 		log.Fatalln("LookupType failed:", err, "-", pkgPath, v.Sel.Name)
 	}

@@ -16,7 +16,9 @@ var (
 
 // TypeInferrer represents a TypeInferrer who can infer type from a ast.Expr.
 type TypeInferrer interface {
+	// InferType infers type from a ast.Expr.
 	InferType(pkg *Package, expr ast.Expr, reserved int) (typ Type)
+	// InferConst infers constant value from a ast.Expr.
 	InferConst(pkg *Package, expr ast.Expr, i int) (typ Type, val interface{})
 }
 
