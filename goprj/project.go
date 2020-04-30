@@ -3,9 +3,7 @@ package goprj
 import (
 	"errors"
 	"go/ast"
-	"syscall"
 
-	"github.com/qiniu/qlang/modutil"
 	"github.com/qiniu/x/log"
 )
 
@@ -37,86 +35,32 @@ func (p *nilTypeInferer) InferConst(pkg *Package, expr ast.Expr, i int) (typ Typ
 
 // Project represents a new Go project.
 type Project struct {
-	prjMod modutil.Module
-	names  PkgNames
-	types  map[string]Type
-	pkgs   map[string]*Package
+	types      map[string]Type
+	openedPkgs map[string]*Package // dir => Package
 	TypeInferrer
 }
 
-// Open loads module from `dir` and creates a new Project object.
-func Open(dir string) (*Project, error) {
-	mod, err := modutil.LoadModule(dir)
-	if err != nil {
-		return nil, err
-	}
+// NewProject creates a new Project.
+func NewProject() *Project {
 	return &Project{
-		prjMod:       mod,
-		names:        NewPkgNames(),
 		types:        make(map[string]Type),
-		pkgs:         make(map[string]*Package),
+		openedPkgs:   make(map[string]*Package),
 		TypeInferrer: &nilTypeInferer{},
-	}, nil
-}
-
-// ThisModule returns the Module instance.
-func (p *Project) ThisModule() modutil.Module {
-	return p.prjMod
-}
-
-// Load loads the main package of a Go module.
-func (p *Project) Load() (pkg *Package, err error) {
-	mod := p.prjMod
-	return openPackage(mod.VersionPkgPath(), mod.RootPath(), p)
-}
-
-// LoadPackage loads a package.
-func (p *Project) LoadPackage(pkgPath string) (pkg *Package, err error) {
-	if pkgPath == "C" {
-		panic("LoadPackage: \"C\" not allow")
 	}
-	if pkg, ok := p.pkgs[pkgPath]; ok {
+}
+
+// OpenPackage open a package by specified directory.
+func (p *Project) OpenPackage(dir string) (pkg *Package, err error) {
+	if pkg, ok := p.openedPkgs[dir]; ok {
 		return pkg, nil
 	}
-	pi, err := p.prjMod.Lookup(pkgPath)
+	log.Info("====> OpenPackage:", dir)
+	pkg, err = openPackage(dir, p)
 	if err != nil {
 		return
 	}
-	log.Info("====> LoadPackage:", pi.VersionPkgPath)
-	pkg, err = openPackage(pi.VersionPkgPath, pi.Location, p)
-	if err != nil {
-		return
-	}
-	p.pkgs[pkgPath] = pkg
+	p.openedPkgs[dir] = pkg
 	return
-}
-
-// LookupType returns the type of symbol pkgPath.name.
-func (p *Project) LookupType(pkgPath string, name string) (typ Type, err error) {
-	if pkgPath == "C" {
-		return p.UniqueType(&NamedType{VersionPkgPath: "C", Name: name}), nil
-	}
-	pkg, err := p.LoadPackage(pkgPath)
-	if err != nil {
-		return
-	}
-	sym, ok := pkg.LookupSymbol(name)
-	if !ok {
-		return nil, syscall.ENOENT
-	}
-	tsym, ok := sym.(*TypeSym)
-	if !ok {
-		return nil, ErrSymbolIsNotAType
-	}
-	if tsym.Alias {
-		return tsym.Type, nil
-	}
-	return p.UniqueType(&NamedType{VersionPkgPath: pkg.VersionPkgPath(), Name: name}), nil
-}
-
-// LookupPkgName lookups a package name by specified PkgPath.
-func (p *Project) LookupPkgName(pkgPath string) string {
-	return p.names.LookupPkgName(p.prjMod, pkgPath)
 }
 
 // UniqueType returns the unique instance of a type.

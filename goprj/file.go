@@ -59,7 +59,7 @@ func (p *fileLoader) loadImport(spec *ast.ImportSpec) {
 			panic("not impl")
 		}
 	} else {
-		name = p.prj.LookupPkgName(path)
+		name = p.pkg.LookupPkgName(path)
 	}
 	p.imports[name] = path
 	log.Debug("import:", name, path)
@@ -295,7 +295,7 @@ func (p *fileLoader) ExternalType(v *ast.SelectorExpr) Type {
 	if !ok {
 		log.Fatalln("ExternalType: PkgName isn't imported -", x.Name)
 	}
-	typ, err := p.prj.LookupType(pkgPath, v.Sel.Name)
+	typ, err := p.pkg.LookupType(pkgPath, v.Sel.Name)
 	if err != nil {
 		log.Fatalln("LookupType failed:", err, "-", pkgPath, v.Sel.Name)
 	}

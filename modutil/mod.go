@@ -95,6 +95,11 @@ func (p Module) RootPath() string {
 	return p.impl.ModDir()
 }
 
+// PkgPath returns PkgPath of this module. eg. `github.com/qiniu/qlang`
+func (p Module) PkgPath() string {
+	return p.impl.Path()
+}
+
 // VersionPkgPath returns VersionPkgPath of this module. eg. `github.com/qiniu/qlang@v1.0.0`
 func (p Module) VersionPkgPath() string {
 	if p.isMod {

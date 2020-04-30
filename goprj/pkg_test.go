@@ -17,7 +17,6 @@ func init() {
 }
 
 type simpleTypeInferrer struct {
-	prj *goprj.Project
 }
 
 func (p *simpleTypeInferrer) InferType(pkg *goprj.Package, expr ast.Expr, reserved int) goprj.Type {
@@ -39,7 +38,7 @@ func (p *simpleTypeInferrer) inferTypeFromFun(pkg *goprj.Package, fun ast.Expr) 
 	case *ast.SelectorExpr:
 		switch recv := v.X.(type) {
 		case *ast.Ident:
-			fnt, err := p.prj.LookupType(recv.Name, v.Sel.Name)
+			fnt, err := pkg.LookupType(recv.Name, v.Sel.Name)
 			if err == nil {
 				if fn, ok := fnt.(*goprj.FuncType); ok {
 					return &goprj.RetType{fn.Results}, true
@@ -111,24 +110,21 @@ func (p *simpleTypeInferrer) InferConst(pkg *goprj.Package, expr ast.Expr, i int
 }
 
 func Test(t *testing.T) {
-	prj, err := goprj.Open(".")
-	if err != nil {
-		t.Fatal(err)
-	}
-	prj.TypeInferrer = &simpleTypeInferrer{prj}
-	pkg, err := prj.LoadPackage("github.com/qiniu/qlang/goprj")
+	prj := goprj.NewProject()
+	prj.TypeInferrer = &simpleTypeInferrer{}
+	pkg, err := prj.OpenPackage(".")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if pkg.Source().Name != "goprj" {
 		t.Fatal("please run test in this package directory")
 	}
-	if pkg.VersionPkgPath() != "github.com/qiniu/qlang/goprj" {
-		t.Fatal("PkgPath:", pkg.VersionPkgPath())
+	if pkg.ThisModule().PkgPath() != "github.com/qiniu/qlang/goprj" {
+		t.Fatal("PkgPath:", pkg.ThisModule().PkgPath())
 	}
 	return
 	log.Debug("------------------------------------------------------")
-	pkg2, err := prj.LoadPackage("github.com/qiniu/qlang/modutil")
+	pkg2, err := pkg.LoadPackage("github.com/qiniu/qlang/modutil")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -137,19 +133,11 @@ func Test(t *testing.T) {
 	}
 	log.Debug("------------------------------------------------------")
 	prjPath := "github.com/visualfc/fastmod"
-	pi, err := prj.ThisModule().Lookup(prjPath)
+	pkg3, err := pkg2.LoadPackage(prjPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	prj2, err := goprj.Open(pi.Location)
-	if err != nil {
-		t.Fatal(err)
-	}
-	pkg3, err := prj2.Load()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if pkg3.VersionPkgPath() != "github.com/visualfc/fastmod@v1.3.3" {
-		t.Fatal("PkgPath:", pkg3.VersionPkgPath())
+	if pkg3.ThisModule().VersionPkgPath() != "github.com/visualfc/fastmod@v1.3.3" {
+		t.Fatal("PkgPath:", pkg3.ThisModule().VersionPkgPath())
 	}
 }
