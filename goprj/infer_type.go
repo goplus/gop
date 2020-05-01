@@ -73,8 +73,11 @@ func (p *fileLoader) inferTypeFromFun(fun ast.Expr) Type {
 		case *ast.Ident:
 			fnt, err := p.pkg.FindPackageType(recv.Name, v.Sel.Name)
 			if err == nil {
-				if fn, ok := fnt.(*FuncType); ok {
+				switch fn := fnt.(type) {
+				case *FuncType:
 					return &RetType{Results: fn.Results}
+				case AtomType:
+					return fnt
 				}
 				log.Fatalln("inferTypeFromFun: FindPackageType not func -", reflect.TypeOf(fnt))
 			}

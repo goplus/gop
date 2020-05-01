@@ -119,6 +119,10 @@ func (p *fileLoader) ToConst(expr ast.Expr, i int64) (typ Type, val interface{})
 		default:
 			log.Fatalln("ToConst CallExpr: unknown -", reflect.TypeOf(fun))
 		}
+	case *ast.CompositeLit:
+		if v.Type != nil {
+			return p.ToType(v.Type), nil
+		}
 	case *ast.ParenExpr:
 		return p.ToConst(v.X, i)
 	}

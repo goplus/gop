@@ -141,21 +141,35 @@ func (p *fileLoader) loadVars(d *ast.GenDecl) {
 	}
 }
 
-func (p *fileLoader) loadConst(spec *ast.ValueSpec, idx int64, last []ast.Expr) []ast.Expr {
+func (p *fileLoader) loadConst(spec *ast.ValueSpec, idx int64, tlast *Type, last *[]ast.Expr) {
 	var typ Type
-	if spec.Type != nil {
+	if spec.Type == nil {
+		typ = *tlast
+	} else {
 		typ = p.ToType(spec.Type)
+		*tlast = typ
 	}
 	vals := spec.Values
 	if vals == nil {
-		if last == nil {
+		vals = *last
+		if vals == nil {
 			panic("const: no value?")
 		}
-		vals = last
+	} else {
+		*last = vals
 	}
 	for i, name := range spec.Names {
 		typInfer, val := p.ToConst(vals[i], idx)
 		if typ != nil {
+			if false {
+				t, ok := checkType(typ.(AtomType), typInfer.(AtomType))
+				if ok {
+					assertNotOverflow(t, val)
+				} else {
+					log.Fatalln("loadConst: checkType failed:", typ, typInfer)
+				}
+				typInfer = t
+			}
 			typInfer = typ
 		}
 		p.pkg.insertSymbol(name.Name, &ConstSym{typInfer, val})
@@ -163,13 +177,13 @@ func (p *fileLoader) loadConst(spec *ast.ValueSpec, idx int64, last []ast.Expr) 
 			log.Debug("const:", name.Name, "-", typInfer, "-", val)
 		}
 	}
-	return vals
 }
 
 func (p *fileLoader) loadConsts(d *ast.GenDecl) {
+	var tlast Type
 	var last []ast.Expr
 	for i, item := range d.Specs {
-		last = p.loadConst(item.(*ast.ValueSpec), int64(i), last)
+		p.loadConst(item.(*ast.ValueSpec), int64(i), &tlast, &last)
 	}
 }
 
