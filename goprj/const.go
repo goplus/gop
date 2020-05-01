@@ -23,23 +23,23 @@ func ToString(l *ast.BasicLit) string {
 }
 
 // ToLen converts ast.Expr to a Len.
-func (p *fileLoader) ToLen(e ast.Expr) int {
+func (p *fileLoader) ToLen(e ast.Expr) int64 {
 	if e != nil {
 		_, val := p.ToConst(e, -1)
 		if _, ok := val.(*UninferedType); ok {
 			log.Fatal("ToLen:", reflect.TypeOf(e))
 		}
-		if n, ok := val.(int); ok {
+		if n, ok := val.(int64); ok {
 			return n
 		}
 		log.Debug("ToLen:", reflect.TypeOf(val))
-		return int(reflect.ValueOf(val).Int())
+		return reflect.ValueOf(val).Int()
 	}
 	return 0
 }
 
 // ToConst infers constant value from a ast.Expr.
-func (p *fileLoader) ToConst(expr ast.Expr, i int) (typ Type, val interface{}) {
+func (p *fileLoader) ToConst(expr ast.Expr, i int64) (typ Type, val interface{}) {
 	switch v := expr.(type) {
 	case *ast.BasicLit:
 		switch v.Kind {
@@ -50,9 +50,9 @@ func (p *fileLoader) ToConst(expr ast.Expr, i int) (typ Type, val interface{}) {
 				if err2 != nil {
 					log.Fatalln("ToConst: strconv.ParseInt failed:", err2)
 				}
-				return Unbound, uint(n2)
+				return Unbound, n2
 			}
-			return Unbound, int(n)
+			return Unbound, n
 		case token.CHAR, token.STRING:
 			n, err := strconv.Unquote(v.Value)
 			if err != nil {
@@ -60,7 +60,7 @@ func (p *fileLoader) ToConst(expr ast.Expr, i int) (typ Type, val interface{}) {
 			}
 			if v.Kind == token.CHAR {
 				for _, c := range n {
-					return Rune, int(c)
+					return Rune, int64(c)
 				}
 				panic("not here")
 			}
@@ -92,6 +92,25 @@ func (p *fileLoader) ToConst(expr ast.Expr, i int) (typ Type, val interface{}) {
 		return binaryOp(v.Op, tx, ty, x, y)
 	case *ast.Ellipsis:
 		return Unbound, -1
+	case *ast.CallExpr:
+		switch fun := v.Fun.(type) {
+		case *ast.SelectorExpr:
+			switch recv := fun.X.(type) {
+			case *ast.Ident:
+				if recv.Name == "unsafe" {
+					switch fun.Sel.Name {
+					case "Sizeof":
+						t := p.InferType(v.Args[0])
+						return Uintptr, uint64(t.Sizeof(p.prj))
+					}
+				}
+				log.Fatalln("ToConst CallExpr/SelectorExpr: unknown -", recv.Name, fun.Sel.Name)
+			}
+		default:
+			log.Fatalln("ToConst CallExpr: unknown -", reflect.TypeOf(fun))
+		}
+	case *ast.ParenExpr:
+		return p.ToConst(v.X, i)
 	}
 	log.Fatalln("ToConst: unknown -", reflect.TypeOf(expr), "-", expr)
 	return &UninferedType{Expr: expr}, expr
@@ -118,13 +137,13 @@ func assertUnbound(t Type) {
 
 func checkValue(tx, ty Type, x, y interface{}) (nx, ny interface{}) {
 	switch vx := x.(type) {
-	case int:
+	case int64:
 		switch vy := y.(type) {
-		case int:
+		case int64:
 			return x, y
-		case uint:
+		case uint64:
 			assertUnbound(ty)
-			return x, int(vy)
+			return x, int64(vy)
 		case float64:
 			assertUnbound(tx)
 			return float64(vx), y
@@ -139,12 +158,12 @@ func checkValue(tx, ty Type, x, y interface{}) (nx, ny interface{}) {
 			return x, y
 		}
 		log.Fatalln("checkValue failed: <string> op <unnkown> -", reflect.TypeOf(y))
-	case uint:
+	case uint64:
 		switch y.(type) {
-		case int:
+		case int64:
 			assertUnbound(tx)
-			return int(vx), y
-		case uint:
+			return int64(vx), y
+		case uint64:
 			return x, y
 		case float64:
 			assertUnbound(tx)
@@ -157,10 +176,10 @@ func checkValue(tx, ty Type, x, y interface{}) (nx, ny interface{}) {
 		}
 	case float64:
 		switch vy := y.(type) {
-		case int:
+		case int64:
 			assertUnbound(ty)
 			return x, float64(vy)
-		case uint:
+		case uint64:
 			assertUnbound(ty)
 			return x, float64(vy)
 		case float64:
@@ -173,10 +192,10 @@ func checkValue(tx, ty Type, x, y interface{}) (nx, ny interface{}) {
 		}
 	case complex128:
 		switch vy := y.(type) {
-		case int:
+		case int64:
 			assertUnbound(ty)
 			return x, complex(float64(vy), 0)
-		case uint:
+		case uint64:
 			assertUnbound(ty)
 			return x, complex(float64(vy), 0)
 		case float64:
@@ -201,12 +220,12 @@ func binaryOp(op token.Token, tx, ty Type, x, y interface{}) (Type, interface{})
 			switch op {
 			case token.ADD:
 				switch vx := x.(type) {
-				case int:
-					return t, vx + y.(int)
+				case int64:
+					return t, vx + y.(int64)
 				case string:
 					return t, vx + y.(string)
-				case uint:
-					return t, vx + y.(uint)
+				case uint64:
+					return t, vx + y.(uint64)
 				case float64:
 					return t, vx + y.(float64)
 				case complex128:
@@ -216,10 +235,10 @@ func binaryOp(op token.Token, tx, ty Type, x, y interface{}) (Type, interface{})
 				}
 			case token.SUB:
 				switch vx := x.(type) {
-				case int:
-					return t, vx - y.(int)
-				case uint:
-					return t, vx - y.(uint)
+				case int64:
+					return t, vx - y.(int64)
+				case uint64:
+					return t, vx - y.(uint64)
 				case float64:
 					return t, vx - y.(float64)
 				case complex128:
@@ -229,10 +248,10 @@ func binaryOp(op token.Token, tx, ty Type, x, y interface{}) (Type, interface{})
 				}
 			case token.MUL:
 				switch vx := x.(type) {
-				case int:
-					return t, vx * y.(int)
-				case uint:
-					return t, vx * y.(uint)
+				case int64:
+					return t, vx * y.(int64)
+				case uint64:
+					return t, vx * y.(uint64)
 				case float64:
 					return t, vx * y.(float64)
 				case complex128:
@@ -242,10 +261,10 @@ func binaryOp(op token.Token, tx, ty Type, x, y interface{}) (Type, interface{})
 				}
 			case token.QUO:
 				switch vx := x.(type) {
-				case int:
-					return t, vx / y.(int)
-				case uint:
-					return t, vx / y.(uint)
+				case int64:
+					return t, vx / y.(int64)
+				case uint64:
+					return t, vx / y.(uint64)
 				case float64:
 					return t, vx / y.(float64)
 				case complex128:
@@ -255,10 +274,10 @@ func binaryOp(op token.Token, tx, ty Type, x, y interface{}) (Type, interface{})
 				}
 			case token.REM:
 				switch vx := x.(type) {
-				case int:
-					return t, vx % y.(int)
-				case uint:
-					return t, vx % y.(uint)
+				case int64:
+					return t, vx % y.(int64)
+				case uint64:
+					return t, vx % y.(uint64)
 				default:
 					log.Fatalln("binaryOp % failed: unknown -", reflect.TypeOf(x))
 				}
@@ -266,12 +285,12 @@ func binaryOp(op token.Token, tx, ty Type, x, y interface{}) (Type, interface{})
 				return Bool, x == y
 			case token.LSS: // <
 				switch vx := x.(type) {
-				case int:
-					return Bool, vx < y.(int)
+				case int64:
+					return Bool, vx < y.(int64)
 				case string:
 					return Bool, vx < y.(string)
-				case uint:
-					return Bool, vx < y.(uint)
+				case uint64:
+					return Bool, vx < y.(uint64)
 				case float64:
 					return Bool, vx < y.(float64)
 				default:
@@ -279,12 +298,12 @@ func binaryOp(op token.Token, tx, ty Type, x, y interface{}) (Type, interface{})
 				}
 			case token.GTR: // >
 				switch vx := x.(type) {
-				case int:
-					return Bool, vx > y.(int)
+				case int64:
+					return Bool, vx > y.(int64)
 				case string:
 					return Bool, vx > y.(string)
-				case uint:
-					return Bool, vx > y.(uint)
+				case uint64:
+					return Bool, vx > y.(uint64)
 				case float64:
 					return Bool, vx > y.(float64)
 				default:
@@ -294,12 +313,12 @@ func binaryOp(op token.Token, tx, ty Type, x, y interface{}) (Type, interface{})
 				return Bool, x != y
 			case token.LEQ: // <=
 				switch vx := x.(type) {
-				case int:
-					return Bool, vx <= y.(int)
+				case int64:
+					return Bool, vx <= y.(int64)
 				case string:
 					return Bool, vx <= y.(string)
-				case uint:
-					return Bool, vx <= y.(uint)
+				case uint64:
+					return Bool, vx <= y.(uint64)
 				case float64:
 					return Bool, vx <= y.(float64)
 				default:
@@ -307,12 +326,12 @@ func binaryOp(op token.Token, tx, ty Type, x, y interface{}) (Type, interface{})
 				}
 			case token.GEQ: // >=
 				switch vx := x.(type) {
-				case int:
-					return Bool, vx >= y.(int)
+				case int64:
+					return Bool, vx >= y.(int64)
 				case string:
 					return Bool, vx >= y.(string)
-				case uint:
-					return Bool, vx >= y.(uint)
+				case uint64:
+					return Bool, vx >= y.(uint64)
 				case float64:
 					return Bool, vx >= y.(float64)
 				default:
@@ -320,37 +339,37 @@ func binaryOp(op token.Token, tx, ty Type, x, y interface{}) (Type, interface{})
 				}
 			case token.AND: // &
 				switch vx := x.(type) {
-				case int:
-					return t, vx & y.(int)
-				case uint:
-					return t, vx & y.(uint)
+				case int64:
+					return t, vx & y.(int64)
+				case uint64:
+					return t, vx & y.(uint64)
 				default:
 					log.Fatalln("binaryOp & failed: unknown -", reflect.TypeOf(x))
 				}
 			case token.OR: // |
 				switch vx := x.(type) {
-				case int:
-					return t, vx | y.(int)
-				case uint:
-					return t, vx | y.(uint)
+				case int64:
+					return t, vx | y.(int64)
+				case uint64:
+					return t, vx | y.(uint64)
 				default:
 					log.Fatalln("binaryOp | failed: unknown -", reflect.TypeOf(x))
 				}
 			case token.XOR: //  ^
 				switch vx := x.(type) {
-				case int:
-					return t, vx ^ y.(int)
-				case uint:
-					return t, vx ^ y.(uint)
+				case int64:
+					return t, vx ^ y.(int64)
+				case uint64:
+					return t, vx ^ y.(uint64)
 				default:
 					log.Fatalln("binaryOp ^ failed: unknown -", reflect.TypeOf(x))
 				}
 			case token.AND_NOT: // &^
 				switch vx := x.(type) {
-				case int:
-					return t, vx &^ y.(int)
-				case uint:
-					return t, vx &^ y.(uint)
+				case int64:
+					return t, vx &^ y.(int64)
+				case uint64:
+					return t, vx &^ y.(uint64)
 				default:
 					log.Fatalln("binaryOp &^ failed: unknown -", reflect.TypeOf(x))
 				}
@@ -369,20 +388,20 @@ func binaryOp(op token.Token, tx, ty Type, x, y interface{}) (Type, interface{})
 		log.Fatalln("binaryOp: bool expression required -", tx, op, ty)
 	case token.SHL: // <<
 		switch vx := x.(type) {
-		case int:
+		case int64:
 			switch vy := y.(type) {
-			case int:
+			case int64:
 				return tx, vx << vy
-			case uint:
+			case uint64:
 				return tx, vx << vy
 			default:
 				log.Fatalln("binaryOp failed: int << unknown -", ty)
 			}
-		case uint:
+		case uint64:
 			switch vy := y.(type) {
-			case int:
+			case int64:
 				return tx, vx << vy
-			case uint:
+			case uint64:
 				return tx, vx << vy
 			default:
 				log.Fatalln("binaryOp failed: int << unknown -", ty)
@@ -392,20 +411,20 @@ func binaryOp(op token.Token, tx, ty Type, x, y interface{}) (Type, interface{})
 		}
 	case token.SHR: // >>
 		switch vx := x.(type) {
-		case int:
+		case int64:
 			switch vy := y.(type) {
-			case int:
+			case int64:
 				return tx, vx >> vy
-			case uint:
+			case uint64:
 				return tx, vx >> vy
 			default:
 				log.Fatalln("binaryOp failed: int >> unknown -", ty)
 			}
-		case uint:
+		case uint64:
 			switch vy := y.(type) {
-			case int:
+			case int64:
 				return tx, vx >> vy
-			case uint:
+			case uint64:
 				return tx, vx >> vy
 			default:
 				log.Fatalln("binaryOp failed: int >> unknown -", ty)

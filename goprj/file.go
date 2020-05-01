@@ -141,7 +141,7 @@ func (p *fileLoader) loadVars(d *ast.GenDecl) {
 	}
 }
 
-func (p *fileLoader) loadConst(spec *ast.ValueSpec, idx int, last []ast.Expr) []ast.Expr {
+func (p *fileLoader) loadConst(spec *ast.ValueSpec, idx int64, last []ast.Expr) []ast.Expr {
 	var typ Type
 	if spec.Type != nil {
 		typ = p.ToType(spec.Type)
@@ -160,7 +160,7 @@ func (p *fileLoader) loadConst(spec *ast.ValueSpec, idx int, last []ast.Expr) []
 		}
 		p.pkg.insertSymbol(name.Name, &ConstSym{typInfer, val})
 		if log.Ldebug >= log.Std.Level {
-			log.Debug("const:", name.Name, "-", typ, "-", val)
+			log.Debug("const:", name.Name, "-", typInfer, "-", val)
 		}
 	}
 	return vals
@@ -169,7 +169,7 @@ func (p *fileLoader) loadConst(spec *ast.ValueSpec, idx int, last []ast.Expr) []
 func (p *fileLoader) loadConsts(d *ast.GenDecl) {
 	var last []ast.Expr
 	for i, item := range d.Specs {
-		last = p.loadConst(item.(*ast.ValueSpec), i, last)
+		last = p.loadConst(item.(*ast.ValueSpec), int64(i), last)
 	}
 }
 

@@ -1,5 +1,7 @@
 package goprj
 
+import "github.com/qiniu/x/log"
+
 // -----------------------------------------------------------------------------
 
 // Project represents a new Go project.
@@ -27,6 +29,12 @@ func (p *Project) OpenPackage(dir string) (pkg *Package, err error) {
 	}
 	p.openedPkgs[dir] = pkg
 	return
+}
+
+// FindVersionType lookups verPkgPath.name type.
+func (p *Project) FindVersionType(verPkgPath string, name string) Type {
+	log.Fatalln("FindVersionType: not impl")
+	return nil
 }
 
 // UniqueType returns the unique instance of a type.

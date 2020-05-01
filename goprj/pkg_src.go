@@ -148,6 +148,14 @@ func (p AtomType) ID() string {
 	return reflect.Kind(p).String()
 }
 
+// Sizeof returns size of this type.
+func (p AtomType) Sizeof(prj *Project) (n uintptr) {
+	if p == Unbound {
+		log.Fatalln("Sizeof(Unbound): don't call me")
+	}
+	return sizeofAtomTypes[int(p)]
+}
+
 const (
 	// Unbound - unbound
 	Unbound = AtomType(reflect.Invalid)
@@ -191,6 +199,26 @@ const (
 	Byte = Uint8
 )
 
+var sizeofAtomTypes = [...]uintptr{
+	reflect.Bool:       1,
+	reflect.Int:        unsafe.Sizeof(int(0)),
+	reflect.Int8:       1,
+	reflect.Int16:      2,
+	reflect.Int32:      4,
+	reflect.Int64:      8,
+	reflect.Uint:       unsafe.Sizeof(uint(0)),
+	reflect.Uint8:      1,
+	reflect.Uint16:     2,
+	reflect.Uint32:     4,
+	reflect.Uint64:     8,
+	reflect.Uintptr:    unsafe.Sizeof(uintptr(0)),
+	reflect.Float32:    4,
+	reflect.Float64:    8,
+	reflect.Complex64:  8,
+	reflect.Complex128: 16,
+	reflect.String:     unsafe.Sizeof(string('0')),
+}
+
 // NamedType represents a named type.
 type NamedType struct {
 	VersionPkgPath string
@@ -209,10 +237,21 @@ func (p *NamedType) ID() string {
 	return p.VersionPkgPath + "." + p.Name
 }
 
+// Sizeof returns size of this type.
+func (p *NamedType) Sizeof(prj *Project) uintptr {
+	t := prj.FindVersionType(p.VersionPkgPath, p.Name)
+	return t.Sizeof(prj)
+}
+
 // ChanType represents chan type.
 type ChanType struct {
 	Value Type        // value type
 	Dir   ast.ChanDir // channel direction
+}
+
+// Sizeof returns size of this type.
+func (p *ChanType) Sizeof(prj *Project) (n uintptr) {
+	return unsafe.Sizeof(uintptr(0))
 }
 
 func (p *ChanType) String() string {
@@ -245,6 +284,11 @@ type EllipsisType struct {
 	Elem Type
 }
 
+// Sizeof returns size of this type.
+func (p *EllipsisType) Sizeof(prj *Project) (n uintptr) {
+	return unsafe.Sizeof([]int{})
+}
+
 func (p *EllipsisType) String() string {
 	return "..." + p.Elem.String()
 }
@@ -256,14 +300,26 @@ func (p *EllipsisType) ID() string {
 
 // ArrayType represents a array/slice type.
 type ArrayType struct {
-	Len  int // Len=0 for slice type
+	Len  int64 // Len=0 for slice type
 	Elem Type
+}
+
+// Sizeof returns size of this type.
+func (p *ArrayType) Sizeof(prj *Project) (n uintptr) {
+	if p.Len > 0 {
+		return p.Elem.Sizeof(prj) * uintptr(p.Len)
+	}
+	if p.Len == 0 {
+		return unsafe.Sizeof([]int{})
+	}
+	log.Fatalln("ArrayType.Sizeof: len < 0?")
+	return 0
 }
 
 func (p *ArrayType) String() string {
 	elem := p.Elem.String()
 	if p.Len > 0 {
-		len := strconv.Itoa(p.Len)
+		len := strconv.FormatInt(p.Len, 10)
 		return "[" + len + "]" + elem
 	}
 	return "[]" + elem
@@ -273,7 +329,7 @@ func (p *ArrayType) String() string {
 func (p *ArrayType) ID() string {
 	elem := pointer(p.Elem)
 	if p.Len > 0 {
-		len := strconv.Itoa(p.Len)
+		len := strconv.FormatInt(p.Len, 10)
 		return "[" + len + "]" + elem
 	}
 	return "[]" + elem
@@ -293,6 +349,11 @@ type PointerType struct {
 	Elem Type
 }
 
+// Sizeof returns size of this type.
+func (p *PointerType) Sizeof(prj *Project) (n uintptr) {
+	return unsafe.Sizeof(uintptr(0))
+}
+
 func (p *PointerType) String() string {
 	return "*" + p.Elem.String()
 }
@@ -305,6 +366,12 @@ func (p *PointerType) ID() string {
 // RetType represents types of function return value.
 type RetType struct {
 	Results []Type
+}
+
+// Sizeof returns size of this type.
+func (p *RetType) Sizeof(prj *Project) uintptr {
+	log.Fatalln("RetType.Sizeof: don't call me")
+	return 0
 }
 
 func (p *RetType) String() string {
@@ -324,6 +391,11 @@ func (p *RetType) ID() string {
 type FuncType struct {
 	Params  []Type
 	Results []Type
+}
+
+// Sizeof returns size of this type.
+func (p *FuncType) Sizeof(prj *Project) (n uintptr) {
+	return unsafe.Sizeof(uintptr(0))
 }
 
 func (p *FuncType) String() string {
@@ -381,6 +453,11 @@ func (p *InterfaceType) ID() string {
 	return uniqueMembers("i{", p.Methods)
 }
 
+// Sizeof returns size of this type.
+func (p *InterfaceType) Sizeof(prj *Project) (n uintptr) {
+	return unsafe.Sizeof(uintptr(0)) * 2
+}
+
 func listMembers(typeTag string, fields []Field) string {
 	items := make([]string, len(fields)<<1)
 	for i, method := range fields {
@@ -414,6 +491,14 @@ func (p *StructType) String() string {
 // ID returns a unique id of this type.
 func (p *StructType) ID() string {
 	return uniqueMembers("s{", p.Fields)
+}
+
+// Sizeof returns size of this type.
+func (p *StructType) Sizeof(prj *Project) (n uintptr) {
+	for _, field := range p.Fields {
+		n += field.Type.Sizeof(prj)
+	}
+	return
 }
 
 // TypeField gets field type by specified name.
@@ -455,6 +540,11 @@ func (p *MapType) ID() string {
 	return "map[" + pointer(p.Key) + "]" + pointer(p.Value)
 }
 
+// Sizeof returns size of this type.
+func (p *MapType) Sizeof(prj *Project) uintptr {
+	return unsafe.Sizeof(uintptr(0))
+}
+
 // UninferedType represents a type that needs to be infered.
 type UninferedType struct {
 	Expr ast.Expr
@@ -469,6 +559,12 @@ func (p *UninferedType) ID() string {
 	pos := int(p.Expr.Pos())
 	end := int(p.Expr.End())
 	return "u:" + strconv.Itoa(pos) + "," + strconv.Itoa(end)
+}
+
+// Sizeof returns size of this type.
+func (p *UninferedType) Sizeof(prj *Project) uintptr {
+	log.Fatalln("UninferedType.Sizeof: don't call me")
+	return 0
 }
 
 // UninferedRetType represents a function return types that needs to be infered.
@@ -486,8 +582,16 @@ func (p *UninferedRetType) ID() string {
 	return "uret:" + p.Fun + "," + strconv.Itoa(p.Nth)
 }
 
+// Sizeof returns size of this type.
+func (p *UninferedRetType) Sizeof(prj *Project) uintptr {
+	log.Fatalln("UninferedRetType.Sizeof: don't call me")
+	return 0
+}
+
 // Type represents a Go type.
 type Type interface {
+	// Sizeof returns size of this type.
+	Sizeof(prj *Project) uintptr
 	// ID returns a unique id of this type.
 	ID() string
 	String() string
