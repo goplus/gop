@@ -5,7 +5,6 @@ import (
 	"go/token"
 	"reflect"
 	"sort"
-	"strconv"
 
 	"github.com/qiniu/x/log"
 )
@@ -103,7 +102,7 @@ func (p *fileLoader) loadVar(spec *ast.ValueSpec) {
 			if name.Name == "_" {
 				continue
 			}
-			typ := p.prj.InferType(p.pkg, spec.Values[i], 0)
+			typ := p.InferType(spec.Values[i])
 			p.pkg.insertVar(name.Name, typ)
 		}
 		return
@@ -111,7 +110,7 @@ func (p *fileLoader) loadVar(spec *ast.ValueSpec) {
 	if len(spec.Values) != 1 {
 		log.Fatalln("loadVar: unexpected -", *spec)
 	}
-	typ := p.prj.InferType(p.pkg, spec.Values[0], -1)
+	typ := p.InferType(spec.Values[0])
 	switch ret := typ.(type) {
 	case *RetType:
 		for i, name := range spec.Names {
@@ -155,7 +154,7 @@ func (p *fileLoader) loadConst(spec *ast.ValueSpec, idx int, last []ast.Expr) []
 		vals = last
 	}
 	for i, name := range spec.Names {
-		typInfer, val := p.prj.InferConst(p.pkg, vals[i], idx)
+		typInfer, val := p.ToConst(vals[i], idx)
 		if typ != nil {
 			typInfer = typ
 		}
@@ -241,6 +240,9 @@ func (p *fileLoader) ToType(typ ast.Expr) Type {
 	case *ast.ArrayType:
 		n := p.ToLen(v.Len)
 		elem := p.ToType(v.Elt)
+		if n < 0 {
+			return &EllipsisType{elem}
+		}
 		return p.prj.UniqueType(&ArrayType{Len: n, Elem: elem})
 	case *ast.FuncType:
 		return p.ToFuncType(v)
@@ -316,12 +318,12 @@ func (p *fileLoader) ExternalType(v *ast.SelectorExpr) Type {
 // IdentType converts an ident to a Type.
 func (p *fileLoader) IdentType(ident string) Type {
 	if t, ok := builtinTypes[ident]; ok {
-		return AtomType(t)
+		return t
 	}
 	return p.prj.UniqueType(&NamedType{Name: ident})
 }
 
-var builtinTypes = map[string]AtomKind{
+var builtinTypes = map[string]AtomType{
 	"bool":       Bool,
 	"int":        Int,
 	"int8":       Int8,
@@ -339,33 +341,8 @@ var builtinTypes = map[string]AtomKind{
 	"complex64":  Complex64,
 	"complex128": Complex128,
 	"string":     String,
-}
-
-// ToLen converts ast.Expr to a Len.
-func (p *fileLoader) ToLen(e ast.Expr) int {
-	if e != nil {
-		_, val := p.prj.InferConst(p.pkg, e, -1)
-		if _, ok := val.(*UninferedType); ok {
-			log.Fatal("ToLen:", reflect.TypeOf(e))
-		}
-		if n, ok := val.(int); ok {
-			return n
-		}
-		log.Debug("ToLen:", reflect.TypeOf(val))
-		return int(reflect.ValueOf(val).Int())
-	}
-	return 0
-}
-
-// ToString converts a ast.BasicLit to string value.
-func ToString(l *ast.BasicLit) string {
-	if l.Kind == token.STRING {
-		s, err := strconv.Unquote(l.Value)
-		if err == nil {
-			return s
-		}
-	}
-	panic("ToString: convert ast.BasicLit to string failed")
+	"rune":       Rune,
+	"byte":       Byte,
 }
 
 // -----------------------------------------------------------------------------

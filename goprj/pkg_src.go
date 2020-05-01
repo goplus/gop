@@ -136,52 +136,8 @@ type Symbol interface {
 
 // -----------------------------------------------------------------------------
 
-// AtomKind represents kind of a basic Go type.
-type AtomKind = reflect.Kind
-
-const (
-	// Bool - bool
-	Bool AtomKind = reflect.Bool
-	// Int - int
-	Int AtomKind = reflect.Int
-	// Int8 - int8
-	Int8 AtomKind = reflect.Int8
-	// Int16 - int16
-	Int16 AtomKind = reflect.Int16
-	// Int32 - int32
-	Int32 AtomKind = reflect.Int32
-	// Int64 - int64
-	Int64 AtomKind = reflect.Int64
-	// Uint - uint
-	Uint AtomKind = reflect.Uint
-	// Uint8 - uint8
-	Uint8 AtomKind = reflect.Uint8
-	// Uint16 - uint16
-	Uint16 AtomKind = reflect.Uint16
-	// Uint32 - uint32
-	Uint32 AtomKind = reflect.Uint32
-	// Uint64 - uint64
-	Uint64 AtomKind = reflect.Uint64
-	// Uintptr - uintptr
-	Uintptr AtomKind = reflect.Uintptr
-	// Float32 - float32
-	Float32 AtomKind = reflect.Float32
-	// Float64 - float64
-	Float64 AtomKind = reflect.Float64
-	// Complex64 - complex64
-	Complex64 AtomKind = reflect.Complex64
-	// Complex128 - complex128
-	Complex128 AtomKind = reflect.Complex128
-	// String - string
-	String AtomKind = reflect.String
-	// Rune - rune
-	Rune = Int32
-	// Byte - byte
-	Byte = Uint8
-)
-
 // AtomType represents a basic Go type.
-type AtomType AtomKind
+type AtomType reflect.Kind
 
 func (p AtomType) String() string {
 	return p.ID()
@@ -189,8 +145,51 @@ func (p AtomType) String() string {
 
 // ID returns a unique id of this type.
 func (p AtomType) ID() string {
-	return AtomKind(p).String()
+	return reflect.Kind(p).String()
 }
+
+const (
+	// Unbound - unbound
+	Unbound = AtomType(reflect.Invalid)
+	// Bool - bool
+	Bool = AtomType(reflect.Bool)
+	// Int - int
+	Int = AtomType(reflect.Int)
+	// Int8 - int8
+	Int8 = AtomType(reflect.Int8)
+	// Int16 - int16
+	Int16 = AtomType(reflect.Int16)
+	// Int32 - int32
+	Int32 = AtomType(reflect.Int32)
+	// Int64 - int64
+	Int64 = AtomType(reflect.Int64)
+	// Uint - uint
+	Uint = AtomType(reflect.Uint)
+	// Uint8 - uint8
+	Uint8 = AtomType(reflect.Uint8)
+	// Uint16 - uint16
+	Uint16 = AtomType(reflect.Uint16)
+	// Uint32 - uint32
+	Uint32 = AtomType(reflect.Uint32)
+	// Uint64 - uint64
+	Uint64 = AtomType(reflect.Uint64)
+	// Uintptr - uintptr
+	Uintptr = AtomType(reflect.Uintptr)
+	// Float32 - float32
+	Float32 = AtomType(reflect.Float32)
+	// Float64 - float64
+	Float64 = AtomType(reflect.Float64)
+	// Complex64 - complex64
+	Complex64 = AtomType(reflect.Complex64)
+	// Complex128 - complex128
+	Complex128 = AtomType(reflect.Complex128)
+	// String - string
+	String = AtomType(reflect.String)
+	// Rune - rune
+	Rune = Int32
+	// Byte - byte
+	Byte = Uint8
+)
 
 // NamedType represents a named type.
 type NamedType struct {
@@ -415,6 +414,30 @@ func (p *StructType) String() string {
 // ID returns a unique id of this type.
 func (p *StructType) ID() string {
 	return uniqueMembers("s{", p.Fields)
+}
+
+// TypeField gets field type by specified name.
+func TypeField(t Type, name string) (ft Type, ok bool) {
+	switch v := t.(type) {
+	case *StructType:
+		for _, field := range v.Fields {
+			if field.Name == name {
+				return field.Type, true
+			}
+			if field.Name == "" { // embbed
+				if ft, ok = TypeField(field.Type, name); ok {
+					return
+				}
+			}
+		}
+	case *InterfaceType:
+		for _, field := range v.Methods {
+			if field.Name == name {
+				return field.Type, true
+			}
+		}
+	}
+	return
 }
 
 // MapType represents a Go map type.

@@ -1,6 +1,6 @@
 module github.com/qiniu/qlang
 
-go 1.12
+go 1.14
 
 require (
 	github.com/qiniu/x v1.10.1

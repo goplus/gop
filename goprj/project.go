@@ -1,45 +1,18 @@
 package goprj
 
-import (
-	"go/ast"
-)
-
-// -----------------------------------------------------------------------------
-
-// TypeInferrer represents a TypeInferrer who can infer type from a ast.Expr.
-type TypeInferrer interface {
-	// InferType infers type from a ast.Expr.
-	InferType(pkg *Package, expr ast.Expr, reserved int) (typ Type)
-	// InferConst infers constant value from a ast.Expr.
-	InferConst(pkg *Package, expr ast.Expr, i int) (typ Type, val interface{})
-}
-
-type nilTypeInferer struct {
-}
-
-func (p *nilTypeInferer) InferType(pkg *Package, expr ast.Expr, reserved int) Type {
-	return &UninferedType{expr}
-}
-
-func (p *nilTypeInferer) InferConst(pkg *Package, expr ast.Expr, i int) (typ Type, val interface{}) {
-	return &UninferedType{expr}, expr
-}
-
 // -----------------------------------------------------------------------------
 
 // Project represents a new Go project.
 type Project struct {
 	types      map[string]Type
 	openedPkgs map[string]*Package // dir => Package
-	TypeInferrer
 }
 
 // NewProject creates a new Project.
 func NewProject() *Project {
 	return &Project{
-		types:        make(map[string]Type),
-		openedPkgs:   make(map[string]*Package),
-		TypeInferrer: &nilTypeInferer{},
+		types:      make(map[string]Type),
+		openedPkgs: make(map[string]*Package),
 	}
 }
 
