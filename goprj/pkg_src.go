@@ -65,7 +65,7 @@ func (p *Package) requireSource() (err error) {
 
 func (p *Package) insertFunc(name string, recv Type, typ *FuncType) {
 	if recv == nil {
-		p.insertSymbol(name, typ)
+		p.insertSymbol(name, &FuncSym{typ})
 	} else {
 		// TODO
 	}
@@ -97,15 +97,31 @@ type TypeSym struct {
 }
 
 func (p *TypeSym) String() string {
-	alias := ""
+	s := p.Type.String()
 	if p.Alias {
-		alias = "= "
+		return "= " + s
 	}
-	return alias + p.Type.String()
+	return s
+}
+
+// SymInfo returns a symbol's info.
+func (p *TypeSym) SymInfo() (Type, token.Token) {
+	return nil, token.TYPE
 }
 
 // FuncSym represents a function symbol.
-type FuncSym = FuncType
+type FuncSym struct {
+	Type *FuncType
+}
+
+func (p *FuncSym) String() string {
+	return p.Type.String()
+}
+
+// SymInfo returns a symbol's info.
+func (p *FuncSym) SymInfo() (Type, token.Token) {
+	return p.Type, token.FUNC
+}
 
 // VarSym represents a variable symbol.
 type VarSym struct {
@@ -114,6 +130,11 @@ type VarSym struct {
 
 func (p *VarSym) String() string {
 	return p.Type.String()
+}
+
+// SymInfo returns a symbol's info.
+func (p *VarSym) SymInfo() (Type, token.Token) {
+	return p.Type, token.VAR
 }
 
 // ConstSym represents a const symbol.
@@ -129,8 +150,15 @@ func (p *ConstSym) String() string {
 	return fmt.Sprintf("%s = %v", p.Type.String(), p.Value)
 }
 
+// SymInfo returns a symbol's info.
+func (p *ConstSym) SymInfo() (Type, token.Token) {
+	return p.Type, token.CONST
+}
+
 // Symbol represents a Go symbol.
 type Symbol interface {
+	// SymInfo returns a symbol's info.
+	SymInfo() (Type, token.Token)
 	String() string
 }
 

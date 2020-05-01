@@ -24,10 +24,7 @@ func (p *fileLoader) InferType(expr ast.Expr) Type {
 			log.Fatalln("InferType: unknown UnaryExpr -", v.Op)
 		}
 	case *ast.SelectorExpr:
-		t := p.InferType(v.X)
-		if tf, ok := TypeField(t, v.Sel.Name); ok {
-			return tf
-		}
+		return p.inferExternalValue(v)
 	case *ast.Ident:
 	case *ast.CompositeLit:
 		if v.Type != nil {
@@ -37,6 +34,28 @@ func (p *fileLoader) InferType(expr ast.Expr) Type {
 	case *ast.ArrayType:
 	}
 	log.Fatalln("InferType: unknown -", reflect.TypeOf(expr), "-", expr)
+	return nil
+}
+
+func (p *fileLoader) inferExternalValue(v *ast.SelectorExpr) Type {
+	switch x := v.X.(type) {
+	case *ast.Ident:
+		pkgPath, ok := p.imports[x.Name]
+		if !ok {
+			log.Fatalln("inferExternalValue: PkgName isn't imported -", x.Name)
+		}
+		typ, err := p.pkg.InferPackageValue(pkgPath, v.Sel.Name)
+		if err != nil {
+			log.Fatalln("inferExternalValue: InferPackageValue failed -", err)
+		}
+		return typ
+	default:
+		t := p.InferType(v.X)
+		if tf, ok := TypeField(t, v.Sel.Name); ok {
+			return tf
+		}
+	}
+	log.Fatalln("inferExternalValue: unknown -", reflect.TypeOf(v.X))
 	return nil
 }
 
