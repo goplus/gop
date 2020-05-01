@@ -308,9 +308,15 @@ func (p *fileLoader) ExternalType(v *ast.SelectorExpr) Type {
 	if !ok {
 		log.Fatalln("ExternalType: PkgName isn't imported -", x.Name)
 	}
+	if pkgPath == "unsafe" {
+		if v.Sel.Name == "Pointer" {
+			return UnsafePointer
+		}
+		log.Fatalln("ExternalType: unknown - unsafe", v.Sel.Name)
+	}
 	typ, err := p.pkg.FindPackageType(pkgPath, v.Sel.Name)
 	if err != nil {
-		log.Fatalln("LookupType failed:", err, "-", pkgPath, v.Sel.Name)
+		log.Fatalln("ExternalType - FindPackageType failed:", err, "-", pkgPath, v.Sel.Name)
 	}
 	return typ
 }

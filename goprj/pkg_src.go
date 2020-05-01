@@ -193,6 +193,8 @@ const (
 	Complex128 = AtomType(reflect.Complex128)
 	// String - string
 	String = AtomType(reflect.String)
+	// UnsafePointer - unsafe.Pointer
+	UnsafePointer = AtomType(reflect.UnsafePointer)
 	// Rune - rune
 	Rune = Int32
 	// Byte - byte
@@ -200,23 +202,24 @@ const (
 )
 
 var sizeofAtomTypes = [...]uintptr{
-	reflect.Bool:       1,
-	reflect.Int:        unsafe.Sizeof(int(0)),
-	reflect.Int8:       1,
-	reflect.Int16:      2,
-	reflect.Int32:      4,
-	reflect.Int64:      8,
-	reflect.Uint:       unsafe.Sizeof(uint(0)),
-	reflect.Uint8:      1,
-	reflect.Uint16:     2,
-	reflect.Uint32:     4,
-	reflect.Uint64:     8,
-	reflect.Uintptr:    unsafe.Sizeof(uintptr(0)),
-	reflect.Float32:    4,
-	reflect.Float64:    8,
-	reflect.Complex64:  8,
-	reflect.Complex128: 16,
-	reflect.String:     unsafe.Sizeof(string('0')),
+	reflect.Bool:          1,
+	reflect.Int:           unsafe.Sizeof(int(0)),
+	reflect.Int8:          1,
+	reflect.Int16:         2,
+	reflect.Int32:         4,
+	reflect.Int64:         8,
+	reflect.Uint:          unsafe.Sizeof(uint(0)),
+	reflect.Uint8:         1,
+	reflect.Uint16:        2,
+	reflect.Uint32:        4,
+	reflect.Uint64:        8,
+	reflect.Uintptr:       unsafe.Sizeof(uintptr(0)),
+	reflect.Float32:       4,
+	reflect.Float64:       8,
+	reflect.Complex64:     8,
+	reflect.Complex128:    16,
+	reflect.String:        unsafe.Sizeof(string('0')),
+	reflect.UnsafePointer: unsafe.Sizeof(uintptr(0)),
 }
 
 // NamedType represents a named type.
