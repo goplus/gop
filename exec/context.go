@@ -89,6 +89,10 @@ func (ctx *Context) Exec(ip, ipEnd int) {
 			execPushInt(i, ctx)
 		case opPushStringR:
 			execPushStringR(i, ctx)
+		case opCallGoFun:
+			execGoFun(i, ctx)
+		case opCallGoFunv:
+			execGoFunv(i, ctx)
 		case opPushUint:
 			execPushUint(i, ctx)
 		default:

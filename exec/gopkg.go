@@ -30,7 +30,17 @@ type GoPackage struct {
 
 // NewPackage creates a new builtin Go Package.
 func NewPackage(pkgPath string) *GoPackage {
-	return &GoPackage{PkgPath: pkgPath, syms: make(map[string]uint32)}
+	if _, ok := gopkgs[pkgPath]; ok {
+		log.Fatalln("NewPackage failed: package exists -", pkgPath)
+	}
+	pkg := &GoPackage{PkgPath: pkgPath, syms: make(map[string]uint32)}
+	gopkgs[pkgPath] = pkg
+	return pkg
+}
+
+// Package lookups a Go package by pkgPath. It returns nil if not found.
+func Package(pkgPath string) *GoPackage {
+	return gopkgs[pkgPath]
 }
 
 // FindFunc lookups a Go function by name.
@@ -131,6 +141,7 @@ func (p *GoPackage) RegisterVariadicFuncs(funs ...GoFuncInfo) (base GoVariadicFu
 // -----------------------------------------------------------------------------
 
 var (
+	gopkgs  = make(map[string]*GoPackage)
 	gofuns  []GoFuncInfo
 	gofunvs []GoFuncInfo
 	govars  []GoVarInfo

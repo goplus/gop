@@ -97,7 +97,7 @@ func TestSprintf(t *testing.T) {
 
 func TestLargeArity(t *testing.T) {
 
-	sprint, ok := I.FindVariadicFunc("Sprint")
+	sprint, ok := Package("").FindVariadicFunc("Sprint")
 	if !ok {
 		t.Fatal("FindVariadicFunc failed: Sprint")
 	}
