@@ -1,5 +1,5 @@
-github.com/qiniu/x v1.10.1 h1:Pv5aPTb7eqSm2wzOpVCD6SDgaK1qr7eeYLzcnQtO+3A=
-github.com/qiniu/x v1.10.1/go.mod h1:BeQOcur1vCtXTTv1Fo4WtJypt4cEh4/kuVY6GOAPxLs=
+github.com/qiniu/x v1.10.2 h1:raXaVLExzAd7VJ1OGbwy8BHf69m/9sxaPMWMjOLj2GI=
+github.com/qiniu/x v1.10.2/go.mod h1:BeQOcur1vCtXTTv1Fo4WtJypt4cEh4/kuVY6GOAPxLs=
 github.com/visualfc/fastmod v1.3.3 h1:NPT3Zog9LJT0IX8pSTYIYUiL/HUib5tVUrySZXMDLEU=
 github.com/visualfc/fastmod v1.3.3/go.mod h1:IpOumy9gVomQ72T+yA7gayE3V1FCNlwr6if3mlqnasY=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=

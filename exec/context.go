@@ -3,7 +3,6 @@ package exec
 // -----------------------------------------------------------------------------
 
 // A Stack represents a FILO container.
-//
 type Stack struct {
 	data []interface{}
 }
@@ -12,14 +11,27 @@ func (p *Stack) init() {
 	p.data = make([]interface{}, 0, 64)
 }
 
-// Push pushs a value into this stack.
-//
+// Get returns the value at specified index.
+func (p *Stack) Get(idx int) interface{} {
+	return p.data[len(p.data)-idx]
+}
+
+// GetArgs returns all arguments of a function.
+func (p *Stack) GetArgs(arity uint32) []interface{} {
+	return p.data[len(p.data)-int(arity):]
+}
+
+// Ret pops n values from this stack, and then pushes results.
+func (p *Stack) Ret(arity uint32, results ...interface{}) {
+	p.data = append(p.data[:len(p.data)-int(arity)], results...)
+}
+
+// Push pushes a value into this stack.
 func (p *Stack) Push(v interface{}) {
 	p.data = append(p.data, v)
 }
 
 // Top returns the last pushed value, if it exists.
-//
 func (p *Stack) Top() (v interface{}, ok bool) {
 	n := len(p.data)
 	if n > 0 {
@@ -29,7 +41,6 @@ func (p *Stack) Top() (v interface{}, ok bool) {
 }
 
 // Pop pops a value from this stack.
-//
 func (p *Stack) Pop() (v interface{}, ok bool) {
 	n := len(p.data)
 	if n > 0 {
@@ -48,7 +59,6 @@ func (p *Stack) pop() interface{} {
 // -----------------------------------------------------------------------------
 
 // A Context represents the context of an executor.
-//
 type Context struct {
 	Stack
 	Code   *Code
@@ -57,7 +67,6 @@ type Context struct {
 }
 
 // NewContext returns a new context of an executor.
-//
 func NewContext(code *Code) *Context {
 	p := &Context{
 		Code: code,
@@ -67,7 +76,6 @@ func NewContext(code *Code) *Context {
 }
 
 // Exec executes a code block from ip to ipEnd.
-//
 func (ctx *Context) Exec(ip, ipEnd int) {
 	data := ctx.Code.data
 	ctx.ip = ip
@@ -103,6 +111,8 @@ var execTable = [...]func(i Instr, p *Context){
 	opJmpIfFalse:  execJmpIfFalse,
 	opCaseNE:      execCaseNE,
 	opPop:         execPop,
+	opCallGoFun:   execGoFun,
+	opCallGoFunv:  execGoFunv,
 }
 
 // -----------------------------------------------------------------------------
