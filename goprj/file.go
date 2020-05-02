@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"sort"
 
+	"github.com/qiniu/qlang/ast/astutil"
 	"github.com/qiniu/x/log"
 )
 
@@ -47,7 +48,7 @@ func (p *fileLoader) load(f *ast.File) {
 }
 
 func (p *fileLoader) loadImport(spec *ast.ImportSpec) {
-	var path = ToString(spec.Path)
+	var path = astutil.ToString(spec.Path)
 	var name string
 	if spec.Name != nil {
 		name = spec.Name.Name
