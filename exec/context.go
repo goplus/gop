@@ -7,7 +7,8 @@ type Stack struct {
 	data []interface{}
 }
 
-func (p *Stack) init() {
+// Init initializes this Stack object.
+func (p *Stack) Init() {
 	p.data = make([]interface{}, 0, 64)
 }
 
@@ -71,7 +72,7 @@ func NewContext(code *Code) *Context {
 	p := &Context{
 		Code: code,
 	}
-	p.Stack.init()
+	p.Stack.Init()
 	return p
 }
 

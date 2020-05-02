@@ -1,6 +1,7 @@
 package cl
 
 import (
+	"errors"
 	"path"
 	"reflect"
 
@@ -11,35 +12,97 @@ import (
 	"github.com/qiniu/x/log"
 )
 
+var (
+	// ErrMainFuncNotFound error.
+	ErrMainFuncNotFound = errors.New("main function not found")
+)
+
 // -----------------------------------------------------------------------------
 
-// A Compiler represents a qlang compiler.
-type Compiler struct {
-	out     *exec.Builder
+type pkgCtx struct {
+	infer exec.Stack
+}
+
+func newPkgCtx() *pkgCtx {
+	p := &pkgCtx{}
+	p.infer.Init()
+	return p
+}
+
+type fileCtx struct {
+	pkg     *pkgCtx
 	imports map[string]string
 }
 
-// New returns a qlang compiler instance.
-func New() *Compiler {
-	return &Compiler{}
+func newFileCtx(pkg *pkgCtx) *fileCtx {
+	return &fileCtx{pkg: pkg, imports: make(map[string]string)}
 }
 
-// Compile compiles a qlang package.
-func (p *Compiler) Compile(out *exec.Builder, pkg *ast.Package) (err error) {
-	p.out = out
+// -----------------------------------------------------------------------------
+
+type funcTypeDecl struct {
+	X *ast.FuncType
+}
+
+type methodDecl struct {
+	Recv    string // recv object name
+	Pointer int
+	Type    *funcTypeDecl
+	Body    *ast.BlockStmt
+	ctx     *fileCtx
+}
+
+type typeDecl struct {
+	Methods map[string]*methodDecl
+	Alias   bool
+}
+
+type funcDecl struct {
+	Type *funcTypeDecl
+	Body *ast.BlockStmt
+	ctx  *fileCtx
+}
+
+// A Package represents a qlang package.
+type Package struct {
+	out   *exec.Builder
+	types map[string]*typeDecl
+	funcs map[string]*funcDecl
+}
+
+// NewPackage creates a qlang package instance.
+func NewPackage(out *exec.Builder, pkg *ast.Package) (p *Package, err error) {
+	p = &Package{
+		out:   out,
+		types: make(map[string]*typeDecl),
+		funcs: make(map[string]*funcDecl),
+	}
+	ctx := newPkgCtx()
+	for name, f := range pkg.Files {
+		log.Debug("file:", name)
+		p.loadFile(ctx, f)
+	}
+	if pkg.Name == "main" {
+		entry, ok := p.funcs["main"]
+		if !ok {
+			return p, ErrMainFuncNotFound
+		}
+		block := newBlockCtx(entry.ctx, nil)
+		p.compileBlockStmt(block, entry.Body)
+	}
 	return
 }
 
-func (p *Compiler) loadFile(f *ast.File) {
-	p.imports = make(map[string]string)
+func (p *Package) loadFile(pkg *pkgCtx, f *ast.File) {
+	ctx := newFileCtx(pkg)
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
-			p.loadFunc(d)
+			p.loadFunc(ctx, d)
 		case *ast.GenDecl:
 			switch d.Tok {
 			case token.IMPORT:
-				p.loadImports(d)
+				p.loadImports(ctx, d)
 			case token.TYPE:
 				p.loadTypes(d)
 			case token.CONST:
@@ -55,13 +118,13 @@ func (p *Compiler) loadFile(f *ast.File) {
 	}
 }
 
-func (p *Compiler) loadImports(d *ast.GenDecl) {
+func (p *Package) loadImports(ctx *fileCtx, d *ast.GenDecl) {
 	for _, item := range d.Specs {
-		p.loadImport(item.(*ast.ImportSpec))
+		p.loadImport(ctx, item.(*ast.ImportSpec))
 	}
 }
 
-func (p *Compiler) loadImport(spec *ast.ImportSpec) {
+func (p *Package) loadImport(ctx *fileCtx, spec *ast.ImportSpec) {
 	var pkgPath = astutil.ToString(spec.Path)
 	var name string
 	if spec.Name != nil {
@@ -73,32 +136,76 @@ func (p *Compiler) loadImport(spec *ast.ImportSpec) {
 	} else {
 		name = path.Base(pkgPath)
 	}
-	p.imports[name] = pkgPath
+	ctx.imports[name] = pkgPath
 	log.Debug("import:", name, pkgPath)
 }
 
-func (p *Compiler) loadTypes(d *ast.GenDecl) {
+func (p *Package) loadTypes(d *ast.GenDecl) {
 	for _, item := range d.Specs {
 		p.loadType(item.(*ast.TypeSpec))
 	}
 }
 
-func (p *Compiler) loadType(spec *ast.TypeSpec) {
+func (p *Package) loadType(spec *ast.TypeSpec) {
 }
 
-func (p *Compiler) loadConsts(d *ast.GenDecl) {
+func (p *Package) loadConsts(d *ast.GenDecl) {
 }
 
-func (p *Compiler) loadVars(d *ast.GenDecl) {
+func (p *Package) loadVars(d *ast.GenDecl) {
 	for _, item := range d.Specs {
 		p.loadVar(item.(*ast.ValueSpec))
 	}
 }
 
-func (p *Compiler) loadVar(spec *ast.ValueSpec) {
+func (p *Package) loadVar(spec *ast.ValueSpec) {
 }
 
-func (p *Compiler) loadFunc(d *ast.FuncDecl) {
+func (p *Package) loadFunc(ctx *fileCtx, d *ast.FuncDecl) {
+	var name = d.Name.Name
+	if d.Recv != nil {
+		recv := astutil.ToRecv(d.Recv)
+		p.insertMethod(recv.Type, name, &methodDecl{
+			Recv:    recv.Name,
+			Pointer: recv.Pointer,
+			Type:    &funcTypeDecl{X: d.Type},
+			Body:    d.Body,
+			ctx:     ctx,
+		})
+	} else if name == "init" {
+		log.Fatalln("loadFunc TODO: init")
+	} else {
+		p.insertFunc(name, &funcDecl{
+			Type: &funcTypeDecl{X: d.Type},
+			Body: d.Body,
+			ctx:  ctx,
+		})
+	}
+}
+
+func (p *Package) insertFunc(name string, fun *funcDecl) {
+	if _, ok := p.funcs[name]; ok {
+		log.Fatalln("insertFunc failed: func exists -", name)
+	}
+	p.funcs[name] = fun
+}
+
+func (p *Package) insertMethod(typeName, methodName string, method *methodDecl) {
+	typ, ok := p.types[typeName]
+	if !ok {
+		typ = new(typeDecl)
+		p.types[typeName] = typ
+	} else if typ.Alias {
+		log.Fatalln("insertMethod failed: alias?")
+	}
+	if typ.Methods == nil {
+		typ.Methods = map[string]*methodDecl{methodName: method}
+	} else {
+		if _, ok := typ.Methods[methodName]; ok {
+			log.Fatalln("insertMethod failed: method exists -", typeName, methodName)
+		}
+		typ.Methods[methodName] = method
+	}
 }
 
 // -----------------------------------------------------------------------------
