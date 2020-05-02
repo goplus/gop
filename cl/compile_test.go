@@ -8,6 +8,8 @@ import (
 	"github.com/qiniu/qlang/parser"
 	"github.com/qiniu/qlang/token"
 	"github.com/qiniu/x/log"
+
+	_ "github.com/qiniu/qlang/lib/builtin"
 )
 
 func init() {

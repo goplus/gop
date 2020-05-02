@@ -20,11 +20,12 @@ var (
 // -----------------------------------------------------------------------------
 
 type pkgCtx struct {
-	infer exec.Stack
+	infer   exec.Stack
+	builtin *exec.GoPackage
 }
 
 func newPkgCtx() *pkgCtx {
-	p := &pkgCtx{}
+	p := &pkgCtx{builtin: exec.Package("")}
 	p.infer.Init()
 	return p
 }

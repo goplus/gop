@@ -4,6 +4,8 @@ import (
 	"reflect"
 
 	"github.com/qiniu/qlang/ast"
+	"github.com/qiniu/qlang/ast/astutil"
+	"github.com/qiniu/qlang/exec"
 	"github.com/qiniu/x/log"
 )
 
@@ -48,9 +50,22 @@ func (p *Package) compileExpr(ctx *blockCtx, expr ast.Expr) {
 }
 
 func (p *Package) compileIdent(ctx *blockCtx, name string) {
+	addr, kind, ok := ctx.builtin.Find(name)
+	if !ok {
+		log.Fatalln("compileIdent failed: unknown -", name)
+	}
+	switch kind {
+	case exec.SymbolVar:
+	case exec.SymbolFunc, exec.SymbolVariadicFunc:
+		ctx.infer.Push(getGoFunc(addr, kind))
+		return
+	}
+	log.Fatalln("compileIdent failed: unknown -", kind, addr)
 }
 
 func (p *Package) compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {
+	kind, n := astutil.ToConst(v)
+	ctx.infer.Push(&constVal{v: n, kind: kind})
 }
 
 func (p *Package) compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {

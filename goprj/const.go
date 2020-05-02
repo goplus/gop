@@ -4,9 +4,9 @@ import (
 	"go/ast"
 	"go/token"
 	"reflect"
-	"strconv"
 	"unsafe"
 
+	"github.com/qiniu/qlang/ast/astutil"
 	"github.com/qiniu/x/log"
 )
 
@@ -32,45 +32,11 @@ func (p *fileLoader) ToLen(e ast.Expr) int64 {
 func (p *fileLoader) ToConst(expr ast.Expr, i int64) (typ Type, val interface{}) {
 	switch v := expr.(type) {
 	case *ast.BasicLit:
-		switch v.Kind {
-		case token.INT:
-			n, err := strconv.ParseInt(v.Value, 0, 0)
-			if err != nil {
-				n2, err2 := strconv.ParseUint(v.Value, 0, 0)
-				if err2 != nil {
-					log.Fatalln("ToConst: strconv.ParseInt failed:", err2)
-				}
-				return Unbound, n2
-			}
-			return Unbound, n
-		case token.CHAR, token.STRING:
-			n, err := strconv.Unquote(v.Value)
-			if err != nil {
-				log.Fatalln("ToConst: strconv.Unquote failed:", err)
-			}
-			if v.Kind == token.CHAR {
-				for _, c := range n {
-					return Rune, int64(c)
-				}
-				panic("not here")
-			}
-			return String, n
-		case token.FLOAT:
-			n, err := strconv.ParseFloat(v.Value, 64)
-			if err != nil {
-				log.Fatalln("ToConst: strconv.ParseFloat failed:", err)
-			}
-			return Unbound, n
-		case token.IMAG: // 123.45i
-			val := v.Value
-			n, err := strconv.ParseFloat(val[:len(val)-1], 64)
-			if err != nil {
-				log.Fatalln("ToConst: strconv.ParseFloat failed:", err)
-			}
-			return Unbound, complex(0, n)
-		default:
-			log.Fatalln("ToConst: unknown -", expr)
+		kind, n := astutil.ToConst(v)
+		if astutil.IsConstBound(kind) {
+			return AtomType(kind), n
 		}
+		return Unbound, n
 	case *ast.Ident:
 		if v.Name == "iota" {
 			return Unbound, i

@@ -22,6 +22,18 @@ func execGoFunv(i Instr, p *Context) {
 
 // -----------------------------------------------------------------------------
 
+// SymbolKind represents symbol kind.
+type SymbolKind uint32
+
+const (
+	// SymbolFunc - function
+	SymbolFunc SymbolKind = opCallGoFun
+	// SymbolVariadicFunc - variadic function
+	SymbolVariadicFunc SymbolKind = opCallGoFunv
+	// SymbolVar - variable
+	SymbolVar SymbolKind = 0
+)
+
 // GoPackage represents a Go package.
 type GoPackage struct {
 	PkgPath string
@@ -41,6 +53,14 @@ func NewPackage(pkgPath string) *GoPackage {
 // Package lookups a Go package by pkgPath. It returns nil if not found.
 func Package(pkgPath string) *GoPackage {
 	return gopkgs[pkgPath]
+}
+
+// Find lookups a symbol by specified its name.
+func (p *GoPackage) Find(name string) (addr uint32, kind SymbolKind, ok bool) {
+	if v, ok := p.syms[name]; ok {
+		return v & bitsOperand, SymbolKind(v >> bitsOpShift), true
+	}
+	return
 }
 
 // FindFunc lookups a Go function by name.
@@ -67,7 +87,7 @@ func (p *GoPackage) FindVariadicFunc(name string) (addr GoVariadicFuncAddr, ok b
 func (p *GoPackage) FindVar(name string) (addr GoVarAddr, ok bool) {
 	if v, ok := p.syms[name]; ok {
 		if (v >> bitsOpShift) == 0 {
-			return GoVarAddr(v & bitsOperand), true
+			return GoVarAddr(v), true
 		}
 	}
 	return
