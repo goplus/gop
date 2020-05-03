@@ -14,7 +14,7 @@ func (p *Stack) Init() {
 
 // Get returns the value at specified index.
 func (p *Stack) Get(idx int) interface{} {
-	return p.data[len(p.data)-idx]
+	return p.data[len(p.data)+idx]
 }
 
 // GetArgs returns all arguments of a function.

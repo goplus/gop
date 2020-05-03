@@ -11,6 +11,10 @@ import (
 
 // -----------------------------------------------------------------------------
 
+const (
+	inferOnly = 1
+)
+
 type blockCtx struct {
 	*pkgCtx
 	file   *fileCtx
@@ -33,23 +37,23 @@ func (p *Package) compileBlockStmt(ctx *blockCtx, body *ast.BlockStmt) {
 }
 
 func (p *Package) compileExprStmt(ctx *blockCtx, expr *ast.ExprStmt) {
-	p.compileExpr(ctx, expr.X)
+	p.compileExpr(ctx, expr.X, 0)
 }
 
-func (p *Package) compileExpr(ctx *blockCtx, expr ast.Expr) {
+func (p *Package) compileExpr(ctx *blockCtx, expr ast.Expr, mode int) {
 	switch v := expr.(type) {
 	case *ast.Ident:
-		p.compileIdent(ctx, v.Name)
+		p.compileIdent(ctx, v.Name, mode)
 	case *ast.BasicLit:
-		p.compileBasicLit(ctx, v)
+		p.compileBasicLit(ctx, v, mode)
 	case *ast.CallExpr:
-		p.compileCallExpr(ctx, v)
+		p.compileCallExpr(ctx, v, mode)
 	default:
 		log.Fatalln("compileExpr failed: unknown -", reflect.TypeOf(v))
 	}
 }
 
-func (p *Package) compileIdent(ctx *blockCtx, name string) {
+func (p *Package) compileIdent(ctx *blockCtx, name string, mode int) {
 	addr, kind, ok := ctx.builtin.Find(name)
 	if !ok {
 		log.Fatalln("compileIdent failed: unknown -", name)
@@ -63,16 +67,38 @@ func (p *Package) compileIdent(ctx *blockCtx, name string) {
 	log.Fatalln("compileIdent failed: unknown -", kind, addr)
 }
 
-func (p *Package) compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {
+func (p *Package) compileBasicLit(ctx *blockCtx, v *ast.BasicLit, mode int) {
 	kind, n := astutil.ToConst(v)
 	ctx.infer.Push(&constVal{v: n, kind: kind})
 }
 
-func (p *Package) compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
-	p.compileExpr(ctx, v.Fun)
-	for _, arg := range v.Args {
-		p.compileExpr(ctx, arg)
+func (p *Package) compileCallExpr(ctx *blockCtx, v *ast.CallExpr, mode int) {
+	p.compileExpr(ctx, v.Fun, inferOnly)
+	fn := ctx.infer.Get(-1)
+	switch vfn := fn.(type) {
+	case *goFunc:
+		ret := &exprResult{results: vfn.TypesOut(), expr: v}
+		if mode == inferOnly {
+			ctx.infer.Ret(1, ret)
+			return
+		}
+		for _, arg := range v.Args {
+			p.compileExpr(ctx, arg, 0)
+		}
+		nargs := uint32(len(v.Args))
+		args := ctx.infer.GetArgs(nargs)
+		tfn := vfn.Proto()
+		arity := checkFuncCall(tfn, args)
+		switch vfn.kind {
+		case exec.SymbolFunc:
+			p.out.CallGoFun(exec.GoFuncAddr(vfn.addr))
+		case exec.SymbolVariadicFunc:
+			p.out.CallGoFunv(exec.GoVariadicFuncAddr(vfn.addr), arity)
+		}
+		ctx.infer.Ret(1, ret)
+		return
 	}
+	log.Fatalln("compileCallExpr failed: unknown -", reflect.TypeOf(fn))
 }
 
 // -----------------------------------------------------------------------------

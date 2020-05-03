@@ -34,11 +34,11 @@ const (
 	// ConstBoundString - bound type: string
 	ConstBoundString = reflect.String
 	// ConstUnboundInt - unbound int type
-	ConstUnboundInt = ConstKind(reflect.UnsafePointer + iota)
+	ConstUnboundInt = ConstKind(reflect.UnsafePointer + 3)
 	// ConstUnboundFloat - unbound float type
-	ConstUnboundFloat
+	ConstUnboundFloat = ConstKind(reflect.UnsafePointer + 4)
 	// ConstUnboundComplex - unbound complex type
-	ConstUnboundComplex
+	ConstUnboundComplex = ConstKind(reflect.UnsafePointer + 5)
 )
 
 // IsConstBound checks a const is bound or not.
