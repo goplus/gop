@@ -109,9 +109,14 @@ func newGoFunc(addr uint32, kind exec.SymbolKind) *goFunc {
 
 // -----------------------------------------------------------------------------
 
+var (
+	typEmptyInterface = reflect.TypeOf((*interface{})(nil)).Elem()
+)
+
 type constVal struct {
-	v    interface{}
-	kind astutil.ConstKind
+	v       interface{}
+	kind    astutil.ConstKind
+	reserve exec.Reserved
 }
 
 func (p *constVal) TypeOf() iType {
@@ -119,6 +124,36 @@ func (p *constVal) TypeOf() iType {
 		return &goType{t: reflect.TypeOf(p.v)}
 	}
 	return unboundType(p.kind)
+}
+
+func (p *constVal) bound(t reflect.Type, b *exec.Builder) {
+	if p.reserve == -1 { // bounded
+		if p.kind != t.Kind() {
+			if t == typEmptyInterface {
+				return
+			}
+			log.Fatalln("function call with invalid argument type: requires", t, ", but got", p.kind)
+		}
+		return
+	}
+	var v interface{}
+	if t == typEmptyInterface {
+		switch nv := p.v.(type) {
+		case int64:
+			v = int(nv)
+		case uint64:
+			v = uint(nv)
+		default:
+			v = p.v
+		}
+	} else {
+		if nv, ok := astutil.ConstBound(p.v, t); ok {
+			v = nv
+		} else {
+			log.Fatalln("function call with invalid argument type: requires", t, ", but got", reflect.TypeOf(p.v))
+		}
+	}
+	p.reserve.Push(b, v)
 }
 
 // -----------------------------------------------------------------------------
@@ -141,12 +176,29 @@ var (
 	ErrFuncArgCantBeMultiValue = errors.New("function argument expression can't be multi values")
 )
 
-func checkFuncCall(tfn iFuncType, args []interface{}) (arity int) {
+func checkFuncCall(tfn iFuncType, args []interface{}, b *exec.Builder) (arity int) {
+	narg := tfn.NumIn()
+	variadic := tfn.IsVariadic()
+	if variadic {
+		narg--
+	}
 	if len(args) == 1 {
 		targ := args[0].(iValue).TypeOf()
-		return targ.NumValues()
+		n := targ.NumValues()
+		if n != 1 { // TODO
+			return n
+		}
 	}
-	for _, arg := range args {
+	for idx, arg := range args {
+		var treq reflect.Type
+		if variadic && idx >= narg {
+			treq = tfn.In(narg).Elem()
+		} else {
+			treq = tfn.In(idx)
+		}
+		if v, ok := arg.(*constVal); ok {
+			v.bound(treq, b)
+		}
 		targ := arg.(iValue).TypeOf()
 		n := targ.NumValues()
 		if n != 1 {

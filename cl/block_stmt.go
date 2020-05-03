@@ -71,14 +71,18 @@ func (p *Package) compileIdent(ctx *blockCtx, name string, mode int) {
 
 func (p *Package) compileBasicLit(ctx *blockCtx, v *ast.BasicLit, mode int) {
 	kind, n := astutil.ToConst(v)
-	ctx.infer.Push(&constVal{v: n, kind: kind})
+	ret := &constVal{v: n, kind: kind, reserve: -1}
+	ctx.infer.Push(ret)
 	if mode == inferOnly {
 		return
 	}
-	if !astutil.IsConstBound(kind) {
-		log.Fatalln("compileBasicLit: todo - how to support unbound const?")
-	} else {
+	if astutil.IsConstBound(kind) {
+		if kind == astutil.ConstBoundRune {
+			n = rune(n.(int64))
+		}
 		p.out.Push(n)
+	} else {
+		ret.reserve = p.out.Reserve()
 	}
 }
 
@@ -98,7 +102,7 @@ func (p *Package) compileCallExpr(ctx *blockCtx, v *ast.CallExpr, mode int) {
 		nargs := uint32(len(v.Args))
 		args := ctx.infer.GetArgs(nargs)
 		tfn := vfn.Proto()
-		arity := checkFuncCall(tfn, args)
+		arity := checkFuncCall(tfn, args, p.out)
 		switch vfn.kind {
 		case exec.SymbolFunc:
 			p.out.CallGoFun(exec.GoFuncAddr(vfn.addr))

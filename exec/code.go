@@ -118,7 +118,10 @@ func (p *Builder) Resolve() *Code {
 // Reserved represents a reserved instruction position.
 type Reserved int
 
-// Reserve reserves a instruction.
+// InvalidReserved is an invalid reserved position.
+const InvalidReserved Reserved = -1
+
+// Reserve reserves an instruction.
 func (p *Builder) Reserve() Reserved {
 	code := p.code
 	idx := len(code.data)
