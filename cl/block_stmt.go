@@ -70,6 +70,13 @@ func (p *Package) compileIdent(ctx *blockCtx, name string, mode int) {
 func (p *Package) compileBasicLit(ctx *blockCtx, v *ast.BasicLit, mode int) {
 	kind, n := astutil.ToConst(v)
 	ctx.infer.Push(&constVal{v: n, kind: kind})
+	if mode == inferOnly {
+		return
+	}
+	if !astutil.IsConstBound(kind) {
+		log.Fatalln("compileBasicLit: todo - how to support unbound const?")
+	}
+	p.out.Push(n)
 }
 
 func (p *Package) compileCallExpr(ctx *blockCtx, v *ast.CallExpr, mode int) {
