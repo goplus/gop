@@ -12,7 +12,7 @@ import (
 // -----------------------------------------------------------------------------
 
 const (
-	inferOnly = 1
+	inferOnly = 1 // don't generate any code.
 )
 
 type blockCtx struct {
@@ -61,8 +61,10 @@ func (p *Package) compileIdent(ctx *blockCtx, name string, mode int) {
 	switch kind {
 	case exec.SymbolVar:
 	case exec.SymbolFunc, exec.SymbolVariadicFunc:
-		ctx.infer.Push(getGoFunc(addr, kind))
-		return
+		ctx.infer.Push(newGoFunc(addr, kind))
+		if mode == inferOnly {
+			return
+		}
 	}
 	log.Fatalln("compileIdent failed: unknown -", kind, addr)
 }
@@ -75,8 +77,9 @@ func (p *Package) compileBasicLit(ctx *blockCtx, v *ast.BasicLit, mode int) {
 	}
 	if !astutil.IsConstBound(kind) {
 		log.Fatalln("compileBasicLit: todo - how to support unbound const?")
+	} else {
+		p.out.Push(n)
 	}
-	p.out.Push(n)
 }
 
 func (p *Package) compileCallExpr(ctx *blockCtx, v *ast.CallExpr, mode int) {

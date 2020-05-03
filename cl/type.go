@@ -26,6 +26,14 @@ type iValue interface {
 	TypeOf() iType
 }
 
+type iFuncType interface {
+	In(i int) reflect.Type
+	Out(i int) reflect.Type
+	NumIn() int
+	NumOut() int
+	IsVariadic() bool
+}
+
 // -----------------------------------------------------------------------------
 
 type goType struct {
@@ -55,7 +63,7 @@ func (p unboundType) NumValues() int {
 // -----------------------------------------------------------------------------
 
 type retType struct {
-	tfn reflect.Type
+	tfn iFuncType
 }
 
 func (p *retType) TypeValue(i int) iType {
@@ -74,19 +82,19 @@ type goFunc struct {
 	kind exec.SymbolKind
 }
 
-func (p *goFunc) Proto() reflect.Type {
+func (p *goFunc) Proto() iFuncType {
 	return reflect.TypeOf(p.v.This)
 }
 
 func (p *goFunc) TypeOf() iType {
-	return &goType{t: p.Proto()}
+	return &goType{t: reflect.TypeOf(p.v.This)}
 }
 
 func (p *goFunc) TypesOut() *retType {
 	return &retType{tfn: p.Proto()}
 }
 
-func getGoFunc(addr uint32, kind exec.SymbolKind) *goFunc {
+func newGoFunc(addr uint32, kind exec.SymbolKind) *goFunc {
 	var fi *exec.GoFuncInfo
 	switch kind {
 	case exec.SymbolFunc:
@@ -126,12 +134,6 @@ func (p *exprResult) TypeOf() iType {
 
 // -----------------------------------------------------------------------------
 
-type iFunc interface {
-	In(i int) reflect.Type
-	NumIn() int
-	IsVariadic() bool
-}
-
 var (
 	// ErrFuncArgNoReturnValue error.
 	ErrFuncArgNoReturnValue = errors.New("function argument expression doesn't have return value")
@@ -139,7 +141,7 @@ var (
 	ErrFuncArgCantBeMultiValue = errors.New("function argument expression can't be multi values")
 )
 
-func checkFuncCall(tfn iFunc, args []interface{}) (arity int) {
+func checkFuncCall(tfn iFuncType, args []interface{}) (arity int) {
 	if len(args) == 1 {
 		targ := args[0].(iValue).TypeOf()
 		return targ.NumValues()

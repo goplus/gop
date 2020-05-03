@@ -175,34 +175,31 @@ func (p *Builder) resolveConsts() {
 	}
 }
 
-func (p *Builder) pushUnresolved(op Instr, val interface{}) *Builder {
+func (p *Builder) pushUnresolved(op Instr, val interface{}, off int) (i Instr) {
 	vu, ok := p.valConsts[val]
 	if !ok {
 		vu = &valUnresolved{op: op}
 		p.valConsts[val] = vu
 	}
-	code := p.code
-	vu.offs = append(vu.offs, len(code.data))
-	code.data = append(code.data, iPushUnresolved)
-	return p
+	vu.offs = append(vu.offs, off)
+	return iPushUnresolved
 }
 
 // Push instr
-func (p *Builder) Push(val interface{}) *Builder {
-	var i Instr
+func (p *Builder) pushInstr(val interface{}, off int) (i Instr) {
 	v := reflect.ValueOf(val)
 	kind := v.Kind()
 	if kind >= reflect.Int && kind <= reflect.Int64 {
 		iv := v.Int()
 		ivStore := int64(int32(iv) << bitsOpInt >> bitsOpInt)
 		if iv != ivStore {
-			return p.pushUnresolved(opPushIntR, val)
+			return p.pushUnresolved(opPushIntR, val, off)
 		}
 		i = (opPushInt << bitsOpShift) | (uint32(kind-reflect.Int) << bitsOpIntShift) | (uint32(iv) & bitsOpIntOperand)
 	} else if kind >= reflect.Uint && kind <= reflect.Uintptr {
 		iv := v.Uint()
 		if iv != (iv & bitsOpIntOperand) {
-			return p.pushUnresolved(opPushUintR, val)
+			return p.pushUnresolved(opPushUintR, val, off)
 		}
 		i = (opPushUint << bitsOpShift) | (uint32(kind-reflect.Uint) << bitsOpIntShift) | (uint32(iv) & bitsOpIntOperand)
 	} else if kind == reflect.Bool {
@@ -212,14 +209,27 @@ func (p *Builder) Push(val interface{}) *Builder {
 			i = iPushFalse
 		}
 	} else if kind == reflect.String {
-		return p.pushUnresolved(opPushStringR, val)
+		return p.pushUnresolved(opPushStringR, val, off)
 	} else if kind >= reflect.Float32 && kind <= reflect.Complex128 {
-		return p.pushUnresolved(opPushFloatR, val)
+		return p.pushUnresolved(opPushFloatR, val, off)
 	} else {
 		panic("Push failed: unsupported type")
 	}
-	p.code.data = append(p.code.data, i)
+	return
+}
+
+// Push instr
+func (p *Builder) Push(val interface{}) *Builder {
+	code := p.code
+	i := p.pushInstr(val, len(code.data))
+	code.data = append(code.data, i)
 	return p
+}
+
+// Push instr
+func (p Reserved) Push(b *Builder, val interface{}) {
+	i := b.pushInstr(val, int(p))
+	b.code.data[p] = i
 }
 
 // Pop instr

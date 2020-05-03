@@ -84,4 +84,18 @@ func TestConst6(t *testing.T) {
 	}
 }
 
+func TestReserve(t *testing.T) {
+
+	b := NewBuilder(nil)
+	off := b.Reserve()
+	off.Push(b, 1.12)
+	code := b.Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != 1.12 {
+		t.Fatal("1.12 != 1.12, ret =", v)
+	}
+}
+
 // -----------------------------------------------------------------------------

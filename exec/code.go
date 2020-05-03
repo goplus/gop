@@ -26,7 +26,6 @@ const (
 )
 
 // A Instr represents a instruction of the executor.
-//
 type Instr = uint32
 
 const (
@@ -49,6 +48,7 @@ const (
 )
 
 const (
+	iInvalid        = (opInvalid << bitsOpShift)
 	iPushFalse      = (opPushValSpec << bitsOpShift)
 	iPushTrue       = (opPushValSpec << bitsOpShift) | 1
 	iPushUnresolved = (opInvalid << bitsOpShift)
@@ -57,7 +57,6 @@ const (
 // -----------------------------------------------------------------------------
 
 // A Code represents generated instructions to execute.
-//
 type Code struct {
 	data         []Instr
 	stringConsts []string
@@ -67,14 +66,12 @@ type Code struct {
 }
 
 // NewCode returns a new Code object.
-//
 func NewCode() *Code {
 
 	return &Code{data: make([]Instr, 0, 64)}
 }
 
 // Len returns code length.
-//
 func (p *Code) Len() int {
 	return len(p.data)
 }
@@ -114,6 +111,19 @@ func (p *Builder) Resolve() *Code {
 	p.resolveLabels()
 	p.resolveConsts()
 	return p.code
+}
+
+// -----------------------------------------------------------------------------
+
+// Reserved represents a reserved instruction position.
+type Reserved int
+
+// Reserve reserves a instruction.
+func (p *Builder) Reserve() Reserved {
+	code := p.code
+	idx := len(code.data)
+	code.data = append(code.data, iInvalid)
+	return Reserved(idx)
 }
 
 // -----------------------------------------------------------------------------

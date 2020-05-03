@@ -21,6 +21,7 @@ func init() {
 // -----------------------------------------------------------------------------
 
 var fsTestBasic = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	println("Hello", "xsw", "- nice to meet you!")
 	println("Hello, world!")
 `)
 
