@@ -4,30 +4,30 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/qiniu/qlang/spec"
+	qlang "github.com/qiniu/qlang/spec"
 )
 
 // -----------------------------------------------------------------------------
 
-func execPrint(arity uint32, p *spec.Context) {
+func execPrint(arity uint32, p *qlang.Context) {
 	args := p.GetArgs(arity)
 	n, err := fmt.Print(args...)
 	p.Ret(arity, n, err)
 }
 
-func execPrintf(arity uint32, p *spec.Context) {
+func execPrintf(arity uint32, p *qlang.Context) {
 	args := p.GetArgs(arity)
 	n, err := fmt.Printf(args[0].(string), args[1:]...)
 	p.Ret(arity, n, err)
 }
 
-func execPrintln(arity uint32, p *spec.Context) {
+func execPrintln(arity uint32, p *qlang.Context) {
 	args := p.GetArgs(arity)
 	n, err := fmt.Println(args...)
 	p.Ret(arity, n, err)
 }
 
-func execFprintln(arity uint32, p *spec.Context) {
+func execFprintln(arity uint32, p *qlang.Context) {
 	args := p.GetArgs(arity)
 	n, err := fmt.Fprintln(args[0].(io.Writer), args[1:]...)
 	p.Ret(arity, n, err)
@@ -36,7 +36,7 @@ func execFprintln(arity uint32, p *spec.Context) {
 // -----------------------------------------------------------------------------
 
 // I is a Go package instance.
-var I = spec.NewPackage("")
+var I = qlang.NewPackage("")
 
 func init() {
 	I.RegisterVariadicFuncs(

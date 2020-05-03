@@ -67,6 +67,10 @@ type Context struct {
 	ip     int
 }
 
+func newSimpleContext(data []interface{}) *Context {
+	return &Context{Stack: Stack{data: data}}
+}
+
 // NewContext returns a new context of an executor.
 func NewContext(code *Code) *Context {
 	p := &Context{

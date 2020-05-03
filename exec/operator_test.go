@@ -365,3 +365,12 @@ func TestStrcat(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
+func TestCallBuiltinOp(t *testing.T) {
+	ret := CallBuiltinOp(String, OpAdd, "5", "6")
+	if ret.(string) != "56" {
+		t.Fatal("CallBuiltinOp failed: ret =", ret)
+	}
+}
+
+// -----------------------------------------------------------------------------

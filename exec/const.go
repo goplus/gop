@@ -2,6 +2,8 @@ package exec
 
 import (
 	"reflect"
+
+	"github.com/qiniu/x/log"
 )
 
 // -----------------------------------------------------------------------------
@@ -20,7 +22,7 @@ func pushInt(stk *Context, kind reflect.Kind, v int64) {
 	case reflect.Int8:
 		val = int8(v)
 	default:
-		panic("pushInt failed: invalid kind")
+		log.Fatalln("pushInt failed: invalid kind -", kind)
 	}
 	stk.Push(val)
 }
@@ -39,7 +41,7 @@ func pushInt32(stk *Context, kind reflect.Kind, v int32) {
 	case reflect.Int8:
 		val = int8(v)
 	default:
-		panic("pushInt failed: invalid kind")
+		log.Fatalln("pushInt failed: invalid kind -", kind)
 	}
 	stk.Push(val)
 }
@@ -60,7 +62,7 @@ func pushUint(stk *Context, kind reflect.Kind, v uint64) {
 	case reflect.Uintptr:
 		val = uintptr(v)
 	default:
-		panic("pushUint failed: invalid kind")
+		log.Fatalln("pushUint failed: invalid kind -", kind)
 	}
 	stk.Push(val)
 }
@@ -81,7 +83,7 @@ func pushUint32(stk *Context, kind reflect.Kind, v uint32) {
 	case reflect.Uintptr:
 		val = uintptr(v)
 	default:
-		panic("pushUint failed: invalid kind")
+		log.Fatalln("pushUint failed: invalid kind -", kind)
 	}
 	stk.Push(val)
 }
@@ -213,7 +215,7 @@ func (p *Builder) pushInstr(val interface{}, off int) (i Instr) {
 	} else if kind >= reflect.Float32 && kind <= reflect.Complex128 {
 		return p.pushUnresolved(opPushFloatR, val, off)
 	} else {
-		panic("Push failed: unsupported type")
+		log.Fatalln("Push failed: unsupported type:", reflect.TypeOf(val), "-", val)
 	}
 	return
 }

@@ -112,15 +112,27 @@ func ConstBound(v interface{}, t reflect.Type) (ret interface{}, ok bool) {
 			return nil, false
 		}
 	} else if nkind == reflect.Float64 || nkind == reflect.Float32 {
-		if ov, ok := v.(float64); ok {
+		switch ov := v.(type) {
+		case float64:
 			nv.SetFloat(ov)
-		} else {
+		case int64:
+			nv.SetFloat(float64(ov))
+		case uint64:
+			nv.SetFloat(float64(ov))
+		default:
 			return nil, false
 		}
 	} else if nkind == reflect.Complex128 || nkind == reflect.Complex64 {
-		if ov, ok := v.(complex128); ok {
+		switch ov := v.(type) {
+		case complex128:
 			nv.SetComplex(ov)
-		} else {
+		case float64:
+			nv.SetComplex(complex(float64(ov), 0))
+		case int64:
+			nv.SetComplex(complex(float64(ov), 0))
+		case uint64:
+			nv.SetComplex(complex(float64(ov), 0))
+		default:
 			return nil, false
 		}
 	} else {

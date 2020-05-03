@@ -2,26 +2,29 @@ package cl
 
 import (
 	"errors"
-	"go/ast"
 	"reflect"
 
 	"github.com/qiniu/qlang/ast/astutil"
 	"github.com/qiniu/qlang/exec"
+	"github.com/qiniu/qlang/token"
 	"github.com/qiniu/x/log"
 )
 
 // iType represents a qlang type.
 //  - *goType
 //  - *retType
+//  - unboundType
 type iType interface {
 	TypeValue(i int) iType
 	NumValues() int
+	Kind() reflect.Kind
 }
 
 // iValue represents a qlang value.
 //  - *goFunc
 //  - *constVal
 //  - *exprResult
+//  - *operatorResult
 type iValue interface {
 	TypeOf() iType
 }
@@ -40,6 +43,10 @@ type goType struct {
 	t reflect.Type
 }
 
+func (p *goType) Kind() reflect.Kind {
+	return p.t.Kind()
+}
+
 func (p *goType) TypeValue(i int) iType {
 	return p
 }
@@ -51,6 +58,10 @@ func (p *goType) NumValues() int {
 // -----------------------------------------------------------------------------
 
 type unboundType astutil.ConstKind
+
+func (p unboundType) Kind() reflect.Kind {
+	return reflect.Kind(p)
+}
 
 func (p unboundType) TypeValue(i int) iType {
 	return p
@@ -64,6 +75,10 @@ func (p unboundType) NumValues() int {
 
 type retType struct {
 	tfn iFuncType
+}
+
+func (p *retType) Kind() reflect.Kind {
+	return reflect.Invalid
 }
 
 func (p *retType) TypeValue(i int) iType {
@@ -156,15 +171,72 @@ func (p *constVal) bound(t reflect.Type, b *exec.Builder) {
 	p.reserve.Push(b, v)
 }
 
+func binaryOp(op exec.Operator, x, y *constVal) *constVal {
+	i := op.GetInfo()
+	xkind := x.kind
+	ykind := y.kind
+	var kind, kindReal astutil.ConstKind
+	if astutil.IsConstBound(xkind) {
+		kind, kindReal = xkind, xkind
+	} else if astutil.IsConstBound(ykind) {
+		kind, kindReal = ykind, ykind
+	} else if xkind < ykind {
+		kind, kindReal = ykind, realKindOf(ykind)
+	} else {
+		kind, kindReal = xkind, realKindOf(xkind)
+	}
+	if (i.InFirst & (1 << kindReal)) == 0 {
+		log.Fatalln("binaryOp failed: invalid first argument type.")
+	}
+	t := exec.TypeFromKind(kindReal)
+	vx, xok := astutil.ConstBound(x.v, t)
+	vy, yok := astutil.ConstBound(y.v, t)
+	if !xok || !yok {
+		log.Fatalln("binaryOp failed: invalid argument type -", t)
+	}
+	v := exec.CallBuiltinOp(kindReal, op, vx, vy)
+	return &constVal{kind: kind, v: v, reserve: -1}
+}
+
+func realKindOf(kind astutil.ConstKind) reflect.Kind {
+	switch kind {
+	case astutil.ConstUnboundInt:
+		return reflect.Int64
+	case astutil.ConstUnboundFloat:
+		return reflect.Float64
+	case astutil.ConstUnboundComplex:
+		return reflect.Complex128
+	default:
+		return kind
+	}
+}
+
 // -----------------------------------------------------------------------------
 
 type exprResult struct {
 	results iType
-	expr    ast.Expr
 }
 
 func (p *exprResult) TypeOf() iType {
 	return p.results
+}
+
+// -----------------------------------------------------------------------------
+
+type operatorResult struct {
+	kind exec.Kind
+	op   exec.Operator
+}
+
+func (p *operatorResult) TypeOf() iType {
+	op := p.op.GetInfo()
+	var kind exec.Kind
+	if op.Out == exec.SameAsFirst {
+		kind = p.kind
+	} else {
+		kind = op.Out
+	}
+	return &goType{t: exec.TypeFromKind(kind)}
 }
 
 // -----------------------------------------------------------------------------
@@ -210,6 +282,51 @@ func checkFuncCall(tfn iFuncType, args []interface{}, b *exec.Builder) (arity in
 		}
 	}
 	return len(args)
+}
+
+func checkBinaryOp(kind exec.Kind, op exec.Operator, x, y interface{}, b *exec.Builder) {
+	if xcons, xok := x.(*constVal); xok {
+		if xcons.reserve != -1 {
+			xv, ok := astutil.ConstBound(xcons.v, exec.TypeFromKind(kind))
+			if !ok {
+				log.Fatalln("checkBinaryOp: invalid operator", kind, "argument type.")
+			}
+			xcons.reserve.Push(b, xv)
+		}
+	}
+	if ycons, yok := y.(*constVal); yok {
+		i := op.GetInfo()
+		if i.InSecond != (1 << exec.SameAsFirst) {
+			if (uint64(ycons.kind) & i.InSecond) == 0 {
+				log.Fatalln("checkBinaryOp: invalid operator", kind, "argument type.")
+			}
+			kind = ycons.kind
+		}
+		if ycons.reserve != -1 {
+			yv, ok := astutil.ConstBound(ycons.v, exec.TypeFromKind(kind))
+			if !ok {
+				log.Fatalln("checkBinaryOp: invalid operator", kind, "argument type.")
+			}
+			ycons.reserve.Push(b, yv)
+		}
+	}
+}
+
+func inferBinaryOp(tok token.Token, x, y interface{}) (kind exec.Kind, op exec.Operator) {
+	tx := x.(iValue).TypeOf()
+	ty := y.(iValue).TypeOf()
+	op = binaryOps[tok]
+	if tx.NumValues() != 1 || ty.NumValues() != 1 {
+		log.Fatalln("inferBinaryOp failed: argument isn't an expr.")
+	}
+	kind = tx.TypeValue(0).Kind()
+	if !astutil.IsConstBound(kind) {
+		kind = ty.TypeValue(0).Kind()
+		if !astutil.IsConstBound(kind) {
+			log.Fatalln("inferBinaryOp failed: expect x, y aren't const values either.")
+		}
+	}
+	return
 }
 
 // -----------------------------------------------------------------------------

@@ -1,6 +1,7 @@
 package cl
 
 import (
+	"go/token"
 	"reflect"
 
 	"github.com/qiniu/qlang/ast"
@@ -48,6 +49,8 @@ func (p *Package) compileExpr(ctx *blockCtx, expr ast.Expr, mode int) {
 		p.compileBasicLit(ctx, v, mode)
 	case *ast.CallExpr:
 		p.compileCallExpr(ctx, v, mode)
+	case *ast.BinaryExpr:
+		p.compileBinaryExpr(ctx, v, mode)
 	default:
 		log.Fatalln("compileExpr failed: unknown -", reflect.TypeOf(v))
 	}
@@ -86,12 +89,65 @@ func (p *Package) compileBasicLit(ctx *blockCtx, v *ast.BasicLit, mode int) {
 	}
 }
 
+func (p *Package) compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr, mode int) {
+	p.compileExpr(ctx, v.X, inferOnly)
+	p.compileExpr(ctx, v.Y, inferOnly)
+	x := ctx.infer.Get(-2)
+	y := ctx.infer.Get(-1)
+	op := binaryOps[v.Op]
+	xcons, xok := x.(*constVal)
+	ycons, yok := y.(*constVal)
+	if xok && yok { // <const> op <const>
+		ret := binaryOp(op, xcons, ycons)
+		ctx.infer.Ret(2, ret)
+		if mode != inferOnly {
+			ret.reserve = p.out.Reserve()
+		}
+		return
+	}
+	kind, op := inferBinaryOp(v.Op, x, y)
+	ret := &operatorResult{kind: kind, op: op}
+	if mode == inferOnly {
+		ctx.infer.Ret(2, ret)
+		return
+	}
+	p.compileExpr(ctx, v.X, 0)
+	p.compileExpr(ctx, v.Y, 0)
+	x = ctx.infer.Get(-2)
+	y = ctx.infer.Get(-1)
+	checkBinaryOp(kind, op, x, y, p.out)
+	p.out.BuiltinOp(kind, op)
+	ctx.infer.Ret(4, ret)
+}
+
+var binaryOps = [...]exec.Operator{
+	token.ADD:     exec.OpAdd,
+	token.SUB:     exec.OpSub,
+	token.MUL:     exec.OpMul,
+	token.QUO:     exec.OpDiv,
+	token.REM:     exec.OpMod,
+	token.AND:     exec.OpBitAnd,
+	token.OR:      exec.OpBitOr,
+	token.XOR:     exec.OpBitXor,
+	token.AND_NOT: exec.OpBitAndNot,
+	token.SHL:     exec.OpBitSHL,
+	token.SHR:     exec.OpBitSHR,
+	token.LSS:     exec.OpLT,
+	token.LEQ:     exec.OpLE,
+	token.GTR:     exec.OpGT,
+	token.GEQ:     exec.OpGE,
+	token.EQL:     exec.OpEQ,
+	token.NEQ:     exec.OpNE,
+	token.LAND:    exec.OpLAnd,
+	token.LOR:     exec.OpLOr,
+}
+
 func (p *Package) compileCallExpr(ctx *blockCtx, v *ast.CallExpr, mode int) {
 	p.compileExpr(ctx, v.Fun, inferOnly)
 	fn := ctx.infer.Get(-1)
 	switch vfn := fn.(type) {
 	case *goFunc:
-		ret := &exprResult{results: vfn.TypesOut(), expr: v}
+		ret := &exprResult{results: vfn.TypesOut()}
 		if mode == inferOnly {
 			ctx.infer.Ret(1, ret)
 			return
@@ -109,7 +165,7 @@ func (p *Package) compileCallExpr(ctx *blockCtx, v *ast.CallExpr, mode int) {
 		case exec.SymbolVariadicFunc:
 			p.out.CallGoFunv(exec.GoVariadicFuncAddr(vfn.addr), arity)
 		}
-		ctx.infer.Ret(1, ret)
+		ctx.infer.Ret(uint32(len(v.Args)+1), ret)
 		return
 	}
 	log.Fatalln("compileCallExpr failed: unknown -", reflect.TypeOf(fn))
