@@ -3,11 +3,13 @@ package exec
 // -----------------------------------------------------------------------------
 
 const (
-	bitsInstr       = 32
-	bitsOp          = 6
+	bitsInstr = 32
+	bitsOp    = 6
+
 	bitsIntKind     = 3
 	bitsFloatKind   = 2
 	bitsGoFunvArity = 10
+	bitsVarScope    = 6
 
 	bitsOpShift = bitsInstr - bitsOp
 	bitsOperand = (1 << bitsOpShift) - 1
@@ -23,6 +25,10 @@ const (
 	bitsOpCallGoFunv        = bitsOp + bitsGoFunvArity
 	bitsOpCallGoFunvShift   = bitsInstr - bitsOpCallGoFunv
 	bitsOpCallGoFunvOperand = (1 << bitsOpCallGoFunvShift) - 1
+
+	bitsOpVar        = bitsOp + bitsVarScope
+	bitsOpVarShift   = bitsInstr - bitsOpVar
+	bitsOpVarOperand = (1 << bitsOpVarShift) - 1
 )
 
 // A Instr represents a instruction of the executor.
@@ -45,6 +51,8 @@ const (
 	opPop         = 12
 	opCallGoFun   = 13 // call a Go function
 	opCallGoFunv  = 14 // call a Go function with variadic args
+	opLoadVar     = 15
+	opStoreVar    = 16
 )
 
 const (

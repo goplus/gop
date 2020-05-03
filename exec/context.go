@@ -62,8 +62,9 @@ func (p *Stack) pop() interface{} {
 // A Context represents the context of an executor.
 type Context struct {
 	Stack
-	Code   *Code
+	code   *Code
 	parent *Context
+	vars   []interface{}
 	ip     int
 }
 
@@ -74,7 +75,17 @@ func newSimpleContext(data []interface{}) *Context {
 // NewContext returns a new context of an executor.
 func NewContext(code *Code) *Context {
 	p := &Context{
-		Code: code,
+		code: code,
+	}
+	p.Stack.Init()
+	return p
+}
+
+// NewContextEx returns a new context of an executor, with n local variables.
+func NewContextEx(code *Code, n int) *Context {
+	p := &Context{
+		code: code,
+		vars: make([]interface{}, n),
 	}
 	p.Stack.Init()
 	return p
@@ -82,7 +93,7 @@ func NewContext(code *Code) *Context {
 
 // Exec executes a code block from ip to ipEnd.
 func (ctx *Context) Exec(ip, ipEnd int) {
-	data := ctx.Code.data
+	data := ctx.code.data
 	ctx.ip = ip
 	for ctx.ip != ipEnd {
 		i := data[ctx.ip]

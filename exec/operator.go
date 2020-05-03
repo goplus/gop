@@ -838,13 +838,12 @@ func (ctx *Builder) BuiltinOp(kind Kind, op Operator) *Builder {
 // CallBuiltinOp calls BuiltinOp
 func CallBuiltinOp(kind Kind, op Operator, data ...interface{}) interface{} {
 	i := (int(kind) << bitsOperator) | int(op)
-	ctx := newSimpleContext(data)
 	if fn, ok := builtinOps[i]; ok {
+		ctx := newSimpleContext(data)
 		fn(0, ctx)
-	} else {
-		panic("CallBuiltinOp: invalid builtinOp")
+		return ctx.Get(-1)
 	}
-	return ctx.Get(-1)
+	panic("CallBuiltinOp: invalid builtinOp")
 }
 
 // -----------------------------------------------------------------------------

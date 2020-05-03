@@ -100,12 +100,12 @@ func execPushValSpec(i Instr, stk *Context) {
 }
 
 func execPushStringR(i Instr, stk *Context) {
-	v := stk.Code.stringConsts[i&bitsOperand]
+	v := stk.code.stringConsts[i&bitsOperand]
 	stk.Push(v)
 }
 
 func execPushIntR(i Instr, stk *Context) {
-	v := stk.Code.intConsts[i&bitsOpIntOperand]
+	v := stk.code.intConsts[i&bitsOpIntOperand]
 	kind := reflect.Int + reflect.Kind((i>>bitsOpIntShift)&7)
 	pushInt(stk, kind, v)
 }
@@ -117,7 +117,7 @@ func execPushInt(i Instr, stk *Context) {
 }
 
 func execPushUintR(i Instr, stk *Context) {
-	v := stk.Code.uintConsts[i&bitsOpIntOperand]
+	v := stk.code.uintConsts[i&bitsOpIntOperand]
 	kind := reflect.Uint + reflect.Kind((i>>bitsOpIntShift)&7)
 	pushUint(stk, kind, v)
 }
@@ -129,7 +129,7 @@ func execPushUint(i Instr, stk *Context) {
 }
 
 func execPushFloatR(i Instr, stk *Context) {
-	v := stk.Code.valConsts[i&bitsOpFloatOperand]
+	v := stk.code.valConsts[i&bitsOpFloatOperand]
 	stk.Push(v)
 }
 
