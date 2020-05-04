@@ -46,10 +46,12 @@ func init() {
 	I.RegisterFuncs(
 		I.Func("strcat", Strcat, execStrcat),
 	)
+	I.RegisterVars(
+		I.Var("x", new(int)),
+	)
 }
 
 func TestSprint(t *testing.T) {
-
 	sprint, ok := I.FindVariadicFunc("Sprint")
 	if !ok {
 		t.Fatal("FindVariadicFunc failed: Sprint")
@@ -69,7 +71,6 @@ func TestSprint(t *testing.T) {
 }
 
 func TestSprintf(t *testing.T) {
-
 	sprintf, ok := I.FindVariadicFunc("Sprintf")
 	strcat, ok2 := I.FindFunc("strcat")
 	if !ok || !ok2 {
@@ -96,9 +97,8 @@ func TestSprintf(t *testing.T) {
 }
 
 func TestLargeArity(t *testing.T) {
-
-	sprint, ok := Package("").FindVariadicFunc("Sprint")
-	if !ok {
+	sprint, kind, ok := Package("").Find("Sprint")
+	if !ok || kind != SymbolVariadicFunc {
 		t.Fatal("FindVariadicFunc failed: Sprint")
 	}
 
@@ -109,7 +109,7 @@ func TestLargeArity(t *testing.T) {
 		ret += "32"
 	}
 	code := b.
-		CallGoFunv(sprint, bitsGoFunvArityMax+1).
+		CallGoFunv(GoVariadicFuncAddr(sprint), bitsGoFunvArityMax+1).
 		Resolve()
 
 	ctx := NewContext(code)

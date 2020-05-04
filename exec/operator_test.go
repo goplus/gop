@@ -7,7 +7,6 @@ import (
 // -----------------------------------------------------------------------------
 
 func TestInt(t *testing.T) {
-
 	code := NewBuilder(nil).
 		Push(int(5)).
 		Push(int(6)).
@@ -30,7 +29,6 @@ func TestInt(t *testing.T) {
 }
 
 func TestInt64(t *testing.T) {
-
 	code := NewBuilder(nil).
 		Push(int64(5)).
 		Push(int64(6)).
@@ -53,7 +51,6 @@ func TestInt64(t *testing.T) {
 }
 
 func TestInt32(t *testing.T) {
-
 	code := NewBuilder(nil).
 		Push(int32(5)).
 		Push(int32(6)).
@@ -76,7 +73,6 @@ func TestInt32(t *testing.T) {
 }
 
 func TestInt16(t *testing.T) {
-
 	code := NewBuilder(nil).
 		Push(int16(5)).
 		Push(int16(6)).
@@ -99,7 +95,6 @@ func TestInt16(t *testing.T) {
 }
 
 func TestInt8(t *testing.T) {
-
 	code := NewBuilder(nil).
 		Push(int8(5)).
 		Push(int8(6)).
@@ -124,7 +119,6 @@ func TestInt8(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 func TestUint(t *testing.T) {
-
 	code := NewBuilder(nil).
 		Push(uint(5)).
 		Push(uint(6)).
@@ -147,7 +141,6 @@ func TestUint(t *testing.T) {
 }
 
 func TestUintptr(t *testing.T) {
-
 	code := NewBuilder(nil).
 		Push(uintptr(5)).
 		Push(uintptr(6)).
@@ -170,7 +163,6 @@ func TestUintptr(t *testing.T) {
 }
 
 func TestUint64(t *testing.T) {
-
 	code := NewBuilder(nil).
 		Push(uint64(5)).
 		Push(uint64(6)).
@@ -193,7 +185,6 @@ func TestUint64(t *testing.T) {
 }
 
 func TestUint32(t *testing.T) {
-
 	code := NewBuilder(nil).
 		Push(uint32(5)).
 		Push(uint32(6)).
@@ -216,7 +207,6 @@ func TestUint32(t *testing.T) {
 }
 
 func TestUint16(t *testing.T) {
-
 	code := NewBuilder(nil).
 		Push(uint16(5)).
 		Push(uint16(6)).
@@ -239,7 +229,6 @@ func TestUint16(t *testing.T) {
 }
 
 func TestUint8(t *testing.T) {
-
 	code := NewBuilder(nil).
 		Push(uint8(5)).
 		Push(uint8(6)).
@@ -264,7 +253,6 @@ func TestUint8(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 func TestFloat64(t *testing.T) {
-
 	code := NewBuilder(nil).
 		Push(5.0).
 		Push(2.0).
@@ -285,7 +273,6 @@ func TestFloat64(t *testing.T) {
 }
 
 func TestFloat32(t *testing.T) {
-
 	code := NewBuilder(nil).
 		Push(float32(5.0)).
 		Push(float32(2.0)).
@@ -306,7 +293,6 @@ func TestFloat32(t *testing.T) {
 }
 
 func TestComplex64(t *testing.T) {
-
 	code := NewBuilder(nil).
 		Push(complex64(5.0)).
 		Push(complex64(2.0)).
@@ -327,7 +313,6 @@ func TestComplex64(t *testing.T) {
 }
 
 func TestComplex128(t *testing.T) {
-
 	code := NewBuilder(nil).
 		Push(complex128(5.0)).
 		Push(complex128(2.0)).
@@ -350,7 +335,6 @@ func TestComplex128(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 func TestStrcat(t *testing.T) {
-
 	code := NewBuilder(nil).
 		Push("5").
 		Push("6").
@@ -369,6 +353,10 @@ func TestStrcat(t *testing.T) {
 func TestCallBuiltinOp(t *testing.T) {
 	ret := CallBuiltinOp(String, OpAdd, "5", "6")
 	if ret.(string) != "56" {
+		t.Fatal("CallBuiltinOp failed: ret =", ret)
+	}
+	ret = CallBuiltinOp(Int, OpAdd, 5, 6)
+	if ret.(int) != 11 {
 		t.Fatal("CallBuiltinOp failed: ret =", ret)
 	}
 }

@@ -13,8 +13,10 @@ import (
 type Operator uint
 
 const (
+	// OpInvalid - invalid operator
+	OpInvalid Operator = iota
 	// OpAdd '+' String/Int/Uint/Float/Complex
-	OpAdd Operator = iota
+	OpAdd
 	// OpSub '-' Int/Uint/Float/Complex
 	OpSub
 	// OpMul '*' Int/Uint/Float/Complex
@@ -726,7 +728,15 @@ func execModUintptr(i Instr, p *Context) {
 }
 
 func execBuiltinOp(i Instr, p *Context) {
-	if fn, ok := builtinOps[int(i&bitsOperand)]; ok {
+	if fn := builtinOps[int(i&bitsOperand)]; fn != nil {
+		fn(0, p)
+	} else {
+		panic("execBuiltinOp: invalid builtinOp")
+	}
+}
+
+func execBuiltinOpS(i Instr, p *Context) {
+	if fn := builtinStringOps[int(i&bitsOperand)]; fn != nil {
 		fn(0, p)
 	} else {
 		panic("execBuiltinOp: invalid builtinOp")
@@ -740,7 +750,7 @@ const (
 	bitsOperator = 5 // Operator count = 24
 )
 
-var builtinOps = map[int]func(i Instr, p *Context){
+var builtinOps = [...]func(i Instr, p *Context){
 	(int(Int) << bitsOperator) | int(OpAdd):        execAddInt,
 	(int(Int8) << bitsOperator) | int(OpAdd):       execAddInt8,
 	(int(Int16) << bitsOperator) | int(OpAdd):      execAddInt16,
@@ -752,7 +762,6 @@ var builtinOps = map[int]func(i Instr, p *Context){
 	(int(Uint32) << bitsOperator) | int(OpAdd):     execAddUint32,
 	(int(Uint64) << bitsOperator) | int(OpAdd):     execAddUint64,
 	(int(Uintptr) << bitsOperator) | int(OpAdd):    execAddUintptr,
-	(int(String) << bitsOperator) | int(OpAdd):     execAddString,
 	(int(Float32) << bitsOperator) | int(OpAdd):    execAddFloat32,
 	(int(Float64) << bitsOperator) | int(OpAdd):    execAddFloat64,
 	(int(Complex64) << bitsOperator) | int(OpAdd):  execAddComplex64,
@@ -815,11 +824,23 @@ var builtinOps = map[int]func(i Instr, p *Context){
 	(int(Uintptr) << bitsOperator) | int(OpMod):    execModUintptr,
 }
 
+var builtinStringOps = [...]func(i Instr, p *Context){
+	int(OpAdd): execAddString,
+}
+
 func (p *Code) builtinOp(kind Kind, op Operator) error {
-	i := (int(kind) << bitsOperator) | int(op)
-	if _, ok := builtinOps[i]; ok {
-		p.data = append(p.data, (opBuiltinOp<<bitsOpShift)|uint32(i))
-		return nil
+	switch kind {
+	case String:
+		if fn := builtinStringOps[int(op)]; fn != nil {
+			p.data = append(p.data, (opBuiltinOpS<<bitsOpShift)|uint32(op))
+			return nil
+		}
+	default:
+		i := (int(kind) << bitsOperator) | int(op)
+		if fn := builtinOps[i]; fn != nil {
+			p.data = append(p.data, (opBuiltinOp<<bitsOpShift)|uint32(i))
+			return nil
+		}
 	}
 	return fmt.Errorf("builtinOp: type %v doesn't support operator %v", kind, op)
 }
@@ -837,8 +858,14 @@ func (ctx *Builder) BuiltinOp(kind Kind, op Operator) *Builder {
 
 // CallBuiltinOp calls BuiltinOp
 func CallBuiltinOp(kind Kind, op Operator, data ...interface{}) interface{} {
-	i := (int(kind) << bitsOperator) | int(op)
-	if fn, ok := builtinOps[i]; ok {
+	var fn func(i Instr, p *Context)
+	switch kind {
+	case String:
+		fn = builtinStringOps[int(op)]
+	default:
+		fn = builtinOps[(int(kind)<<bitsOperator)|int(op)]
+	}
+	if fn != nil {
 		ctx := newSimpleContext(data)
 		fn(0, ctx)
 		return ctx.Get(-1)

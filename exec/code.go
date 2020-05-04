@@ -10,6 +10,7 @@ const (
 	bitsFloatKind   = 2
 	bitsGoFunvArity = 10
 	bitsVarScope    = 6
+	bitsAssignOp    = 4
 
 	bitsOpShift = bitsInstr - bitsOp
 	bitsOperand = (1 << bitsOpShift) - 1
@@ -36,23 +37,28 @@ type Instr = uint32
 
 const (
 	opInvalid     = (1 << bitsOp) - 1
-	opPushInt     = 0
-	opPushUint    = 1
-	opPushFloat   = 2
-	opPushValSpec = 3
-	opPushStringR = 4
-	opPushIntR    = 5
-	opPushUintR   = 6
-	opPushFloatR  = 7
-	opBuiltinOp   = 8
-	opJmp         = 9
-	opJmpIfFalse  = 10
-	opCaseNE      = 11
-	opPop         = 12
-	opCallGoFun   = 13 // call a Go function
-	opCallGoFunv  = 14 // call a Go function with variadic args
-	opLoadVar     = 15
-	opStoreVar    = 16
+	opPushInt     = 0  // intKind(3) intVal(23)
+	opPushUint    = 1  // intKind(3) intVal(23)
+	opPushValSpec = 2  // valSpec(26) - false=0, true=1
+	opPushFloatR  = 3  // floatKind(2) floatIdx(24)
+	opPushStringR = 4  // stringIdx(26)
+	opPushIntR    = 5  // intKind(3) intIdx(23)
+	opPushUintR   = 6  // intKind(3) intIdx(23)
+	opBuiltinOp   = 7  // reserved(16) kind(5) builtinOp(5)
+	opBuiltinOpS  = 8  // reserved(21) builtinOp(5)
+	opJmp         = 9  // offset(26)
+	opJmpIfFalse  = 10 // offset(26)
+	opCaseNE      = 11 // offset(26)
+	opPop         = 12 // n(26)
+	opCallGoFun   = 13 // addr(26) - call a Go function
+	opCallGoFunv  = 14 // goFunvArity(10) addr(16) - call a Go function with variadic args
+	opLoadVar     = 15 // varScope(6) addr(20)
+	opStoreVar    = 16 // varScope(6) addr(20)
+	opAddrVar     = 17 // varScope(6) addr(20) - load a variable's address
+	opLoadGoVar   = 18 // addr(26)
+	opStoreGoVar  = 19 // addr(26)
+	opAddrGoVar   = 20 // addr(26)
+	opAddrOp      = 21 // reserved(17) addressOp(4) kind(5)
 )
 
 const (
@@ -71,11 +77,11 @@ type Code struct {
 	intConsts    []int64
 	uintConsts   []uint64
 	valConsts    []interface{}
+	structs      []StructInfo
 }
 
 // NewCode returns a new Code object.
 func NewCode() *Code {
-
 	return &Code{data: make([]Instr, 0, 64)}
 }
 

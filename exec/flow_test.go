@@ -7,7 +7,6 @@ import (
 // -----------------------------------------------------------------------------
 
 func TestIf1(t *testing.T) {
-
 	label1 := NewLabel()
 	label2 := NewLabel()
 	code := NewBuilder(nil).
@@ -32,7 +31,6 @@ func TestIf1(t *testing.T) {
 }
 
 func TestIf2(t *testing.T) {
-
 	label1 := NewLabel()
 	label2 := NewLabel()
 	code := NewBuilder(nil).
@@ -59,7 +57,6 @@ func TestIf2(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 func TestCase1(t *testing.T) {
-
 	done := NewLabel()
 	label1 := NewLabel()
 	label2 := NewLabel()
@@ -92,7 +89,6 @@ func TestCase1(t *testing.T) {
 }
 
 func TestCase2(t *testing.T) {
-
 	done := NewLabel()
 	label1 := NewLabel()
 	label2 := NewLabel()
@@ -125,7 +121,6 @@ func TestCase2(t *testing.T) {
 }
 
 func TestDefault(t *testing.T) {
-
 	done := NewLabel()
 	label1 := NewLabel()
 	label2 := NewLabel()

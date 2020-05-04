@@ -1,5 +1,9 @@
 package exec
 
+import (
+	"reflect"
+)
+
 // -----------------------------------------------------------------------------
 
 // A Stack represents a FILO container.
@@ -64,7 +68,7 @@ type Context struct {
 	Stack
 	code   *Code
 	parent *Context
-	vars   []interface{}
+	vars   reflect.Value
 	ip     int
 }
 
@@ -82,13 +86,31 @@ func NewContext(code *Code) *Context {
 }
 
 // NewContextEx returns a new context of an executor, with n local variables.
-func NewContextEx(code *Code, n int) *Context {
+func NewContextEx(code *Code, si *StructInfo, parent *Context) *Context {
 	p := &Context{
-		code: code,
-		vars: make([]interface{}, n),
+		code:   code,
+		parent: parent,
+	}
+	if si != nil {
+		p.vars = reflect.New(si.Type()).Elem()
 	}
 	p.Stack.Init()
 	return p
+}
+
+// AddrVar returns a variable address by index.
+func (ctx *Context) AddrVar(idx uint32) interface{} {
+	return ctx.vars.Field(int(idx)).Addr().Interface()
+}
+
+// GetVar returns a variable value by index.
+func (ctx *Context) GetVar(idx uint32) interface{} {
+	return ctx.vars.Field(int(idx)).Interface()
+}
+
+// SetVar returns a variable value by index.
+func (ctx *Context) SetVar(idx uint32, v interface{}) {
+	ctx.vars.Field(int(idx)).Set(reflect.ValueOf(v))
 }
 
 // Exec executes a code block from ip to ipEnd.
@@ -105,6 +127,10 @@ func (ctx *Context) Exec(ip, ipEnd int) {
 			execPushInt(i, ctx)
 		case opPushStringR:
 			execPushStringR(i, ctx)
+		case opLoadVar:
+			execLoadVar(i, ctx)
+		case opStoreVar:
+			execStoreVar(i, ctx)
 		case opCallGoFun:
 			execGoFun(i, ctx)
 		case opCallGoFunv:
@@ -120,19 +146,23 @@ func (ctx *Context) Exec(ip, ipEnd int) {
 var execTable = [...]func(i Instr, p *Context){
 	opPushInt:     execPushInt,
 	opPushUint:    execPushUint,
-	opPushFloat:   execPushFloat,
 	opPushValSpec: execPushValSpec,
 	opPushStringR: execPushStringR,
 	opPushIntR:    execPushIntR,
 	opPushUintR:   execPushUintR,
 	opPushFloatR:  execPushFloatR,
 	opBuiltinOp:   execBuiltinOp,
+	opBuiltinOpS:  execBuiltinOpS,
 	opJmp:         execJmp,
 	opJmpIfFalse:  execJmpIfFalse,
 	opCaseNE:      execCaseNE,
 	opPop:         execPop,
 	opCallGoFun:   execGoFun,
 	opCallGoFunv:  execGoFunv,
+	opLoadVar:     execLoadVar,
+	opStoreVar:    execStoreVar,
+	opAddrVar:     execAddrVar,
+	opAddrOp:      execAddrOp,
 }
 
 // -----------------------------------------------------------------------------

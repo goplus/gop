@@ -133,10 +133,6 @@ func execPushFloatR(i Instr, stk *Context) {
 	stk.Push(v)
 }
 
-func execPushFloat(i Instr, stk *Context) {
-	panic("execPushFloat: not impl")
-}
-
 func execPop(i Instr, stk *Context) {
 	n := len(stk.data) - int(i&bitsOperand)
 	stk.data = stk.data[:n]
