@@ -55,8 +55,8 @@ func execOpAddrVal(i Instr, p *Context) {
 
 func execOpAssign(i Instr, p *Context) {
 	n := len(p.data)
-	v := reflect.ValueOf(p.data[n-1])
-	reflect.ValueOf(p.data[n-2]).Elem().Set(v)
+	v := reflect.ValueOf(p.data[n-2])
+	reflect.ValueOf(p.data[n-1]).Elem().Set(v)
 	p.data = p.data[:n-2]
 }
 
@@ -124,80 +124,101 @@ var builtinAssignOps = [...]func(i Instr, p *Context){
 
 // -----------------------------------------------------------------------------
 
-func execAddrVar(i Instr, p *Context) {
-	idx := i & bitsOperand
-	if idx <= bitsOpVarOperand {
-		p.Push(p.AddrVar(idx))
-		return
-	}
+func getParentCtx(p *Context, idx Address) *Context {
 	pp := p.parent
-	scope := idx >> bitsOpVarShift
+	scope := uint32(idx) >> bitsOpVarShift
 	for scope > 1 {
 		pp = pp.parent
 		scope--
 	}
-	p.Push(pp.AddrVar(idx & bitsOpVarOperand))
+	return pp
+}
+
+// FastAddrVar func.
+func (p *Context) FastAddrVar(idx Address) interface{} {
+	if idx <= bitsOpVarOperand {
+		return p.addrVar(uint32(idx))
+	}
+	return getParentCtx(p, idx).addrVar(uint32(idx) & bitsOpVarOperand)
+}
+
+// FastGetVar func.
+func (p *Context) FastGetVar(idx Address) interface{} {
+	if idx <= bitsOpVarOperand {
+		return p.getVar(uint32(idx))
+	}
+	return getParentCtx(p, idx).getVar(uint32(idx) & bitsOpVarOperand)
+}
+
+// FastSetVar func.
+func (p *Context) FastSetVar(idx Address, v interface{}) {
+	if idx <= bitsOpVarOperand {
+		p.setVar(uint32(idx), v)
+		return
+	}
+	getParentCtx(p, idx).setVar(uint32(idx)&bitsOpVarOperand, v)
+}
+
+func execAddrVar(i Instr, p *Context) {
+	idx := i & bitsOperand
+	if idx <= bitsOpVarOperand {
+		p.Push(p.addrVar(idx))
+		return
+	}
+	p.Push(getParentCtx(p, Address(idx)).addrVar(idx & bitsOpVarOperand))
 }
 
 func execLoadVar(i Instr, p *Context) {
 	idx := i & bitsOperand
 	if idx <= bitsOpVarOperand {
-		p.Push(p.GetVar(idx))
+		p.Push(p.getVar(idx))
 		return
 	}
-	pp := p.parent
-	scope := idx >> bitsOpVarShift
-	for scope > 1 {
-		pp = pp.parent
-		scope--
-	}
-	p.Push(pp.GetVar(idx & bitsOpVarOperand))
+	p.Push(getParentCtx(p, Address(idx)).getVar(idx & bitsOpVarOperand))
 }
 
 func execStoreVar(i Instr, p *Context) {
 	idx := i & bitsOperand
 	if idx <= bitsOpVarOperand {
-		p.SetVar(idx, p.pop())
+		p.setVar(idx, p.Pop())
 		return
 	}
-	pp := p.parent
-	scope := idx >> bitsOpVarShift
-	for scope > 1 {
-		pp = pp.parent
-		scope--
-	}
-	pp.SetVar(idx&bitsOpVarOperand, p.pop())
+	getParentCtx(p, Address(idx)).setVar(idx&bitsOpVarOperand, p.Pop())
 }
 
 // -----------------------------------------------------------------------------
 
-// AddrVar instr
-func (p *Builder) AddrVar(scope, idx uint32) *Builder {
+// Address represents a variable address.
+type Address uint32
+
+// Scope returns the scope of this variable. Zero means it is defined in current block.
+func (p Address) Scope() int {
+	return int(p >> bitsVarScope)
+}
+
+// MakeAddr creates a variable address.
+func MakeAddr(scope, idx uint32) Address {
 	if scope >= (1<<bitsVarScope) || idx > bitsOpVarOperand {
-		log.Fatalln("AddrVar failed: invalid scope or variable index -", scope, idx)
+		log.Fatalln("MakeAddr failed: invalid scope or variable index -", scope, idx)
 	}
-	i := (opAddrVar << bitsOpShift) | (scope << bitsOpVarShift) | idx
-	p.code.data = append(p.code.data, i)
+	return Address((scope << bitsOpVarShift) | idx)
+}
+
+// AddrVar instr
+func (p *Builder) AddrVar(addr Address) *Builder {
+	p.code.data = append(p.code.data, (opAddrVar<<bitsOpShift)|uint32(addr))
 	return p
 }
 
 // LoadVar instr
-func (p *Builder) LoadVar(scope, idx uint32) *Builder {
-	if scope >= (1<<bitsVarScope) || idx > bitsOpVarOperand {
-		log.Fatalln("LoadVar failed: invalid scope or variable index -", scope, idx)
-	}
-	i := (opLoadVar << bitsOpShift) | (scope << bitsOpVarShift) | idx
-	p.code.data = append(p.code.data, i)
+func (p *Builder) LoadVar(addr Address) *Builder {
+	p.code.data = append(p.code.data, (opLoadVar<<bitsOpShift)|uint32(addr))
 	return p
 }
 
 // StoreVar instr
-func (p *Builder) StoreVar(scope, idx uint32) *Builder {
-	if scope >= (1<<bitsVarScope) || idx > bitsOpVarOperand {
-		log.Fatalln("LoadVar failed: invalid scope or variable index -", scope, idx)
-	}
-	i := (opStoreVar << bitsOpShift) | (scope << bitsOpVarShift) | idx
-	p.code.data = append(p.code.data, i)
+func (p *Builder) StoreVar(addr Address) *Builder {
+	p.code.data = append(p.code.data, (opStoreVar<<bitsOpShift)|uint32(addr))
 	return p
 }
 

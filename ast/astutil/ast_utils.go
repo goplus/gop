@@ -89,58 +89,6 @@ func ToConst(v *ast.BasicLit) (ConstKind, interface{}) {
 	return 0, nil
 }
 
-// ConstBound bounds v into type `t`.
-func ConstBound(v interface{}, t reflect.Type) (ret interface{}, ok bool) {
-	nkind := t.Kind()
-	nv := reflect.New(t).Elem()
-	if nkind >= reflect.Int && nkind <= reflect.Int64 {
-		switch ov := v.(type) {
-		case int64:
-			nv.SetInt(ov)
-		case uint64:
-			nv.SetInt(int64(ov))
-		default:
-			return nil, false
-		}
-	} else if nkind >= reflect.Uint && nkind <= reflect.Uintptr {
-		switch ov := v.(type) {
-		case int64:
-			nv.SetUint(uint64(ov))
-		case uint64:
-			nv.SetUint(ov)
-		default:
-			return nil, false
-		}
-	} else if nkind == reflect.Float64 || nkind == reflect.Float32 {
-		switch ov := v.(type) {
-		case float64:
-			nv.SetFloat(ov)
-		case int64:
-			nv.SetFloat(float64(ov))
-		case uint64:
-			nv.SetFloat(float64(ov))
-		default:
-			return nil, false
-		}
-	} else if nkind == reflect.Complex128 || nkind == reflect.Complex64 {
-		switch ov := v.(type) {
-		case complex128:
-			nv.SetComplex(ov)
-		case float64:
-			nv.SetComplex(complex(float64(ov), 0))
-		case int64:
-			nv.SetComplex(complex(float64(ov), 0))
-		case uint64:
-			nv.SetComplex(complex(float64(ov), 0))
-		default:
-			return nil, false
-		}
-	} else {
-		return nil, false
-	}
-	return nv.Interface(), true
-}
-
 // -----------------------------------------------------------------------------
 
 // RecvInfo represents recv information of a method.

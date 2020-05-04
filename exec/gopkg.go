@@ -15,7 +15,7 @@ func execGoFunv(i Instr, p *Context) {
 	idx := i & bitsOpCallGoFunvOperand
 	arity := (i >> bitsOpCallGoFunvShift) & bitsGoFunvArityMax
 	if arity == bitsGoFunvArityMax {
-		arity = uint32(p.pop().(int) + bitsGoFunvArityMax)
+		arity = uint32(p.Pop().(int) + bitsGoFunvArityMax)
 	}
 	gofunvs[idx].exec(arity, p)
 }

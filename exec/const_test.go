@@ -73,7 +73,7 @@ func TestConst6(t *testing.T) {
 
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
-	if v, ok := ctx.Top(); !ok || v != 1.12 {
+	if v := ctx.Pop(); v != 1.12 {
 		t.Fatal("1.12 != 1.12, ret =", v)
 	}
 }

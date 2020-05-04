@@ -36,29 +36,22 @@ func (p *Stack) Push(v interface{}) {
 	p.data = append(p.data, v)
 }
 
-// Top returns the last pushed value, if it exists.
-func (p *Stack) Top() (v interface{}, ok bool) {
-	n := len(p.data)
-	if n > 0 {
-		v, ok = p.data[n-1], true
-	}
-	return
+// PopN pops n elements.
+func (p *Stack) PopN(n int) {
+	p.data = p.data[:len(p.data)-n]
 }
 
 // Pop pops a value from this stack.
-func (p *Stack) Pop() (v interface{}, ok bool) {
-	n := len(p.data)
-	if n > 0 {
-		v, ok = p.pop(), true
-	}
-	return
-}
-
-func (p *Stack) pop() interface{} {
+func (p *Stack) Pop() interface{} {
 	n := len(p.data)
 	v := p.data[n-1]
 	p.data = p.data[:n-1]
 	return v
+}
+
+// Len returns count of stack elements.
+func (p *Stack) Len() int {
+	return len(p.data)
 }
 
 // -----------------------------------------------------------------------------
@@ -98,18 +91,15 @@ func NewContextEx(code *Code, si *StructInfo, parent *Context) *Context {
 	return p
 }
 
-// AddrVar returns a variable address by index.
-func (ctx *Context) AddrVar(idx uint32) interface{} {
+func (ctx *Context) addrVar(idx uint32) interface{} {
 	return ctx.vars.Field(int(idx)).Addr().Interface()
 }
 
-// GetVar returns a variable value by index.
-func (ctx *Context) GetVar(idx uint32) interface{} {
+func (ctx *Context) getVar(idx uint32) interface{} {
 	return ctx.vars.Field(int(idx)).Interface()
 }
 
-// SetVar returns a variable value by index.
-func (ctx *Context) SetVar(idx uint32, v interface{}) {
+func (ctx *Context) setVar(idx uint32, v interface{}) {
 	ctx.vars.Field(int(idx)).Set(reflect.ValueOf(v))
 }
 

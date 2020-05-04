@@ -8,7 +8,7 @@ func execJmp(i Instr, ctx *Context) {
 }
 
 func execJmpIfFalse(i Instr, ctx *Context) {
-	if !ctx.pop().(bool) {
+	if !ctx.Pop().(bool) {
 		execJmp(i, ctx)
 	}
 }
