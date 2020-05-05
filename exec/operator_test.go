@@ -3,6 +3,7 @@ package exec
 import (
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -111,6 +112,39 @@ func _TestAutogen(t *testing.T) {
 		if Op != "" {
 			autogenWithTempl(f, Operator(i), Op, "")
 		}
+	}
+}
+
+func newKindValue(kind Kind) interface{} {
+	t := TypeFromKind(kind)
+	o := reflect.New(t).Elem()
+	if kind >= Int && kind <= Int64 {
+		o.SetInt(1)
+	}
+	if kind >= Uint && kind <= Uintptr {
+		o.SetUint(1)
+	}
+	if kind >= Float32 && kind <= Float64 {
+		o.SetFloat(1.0)
+	}
+	if kind >= Complex64 && kind <= Complex128 {
+		o.SetComplex(1.0)
+	}
+	return o.Interface()
+}
+
+func TestExecAutogen(t *testing.T) {
+	for i, execOp := range builtinOps {
+		if execOp == nil {
+			continue
+		}
+		kind := Kind(i >> bitsOperator)
+		op := Operator(i & ((1 << bitsOperator) - 1))
+		vars := []interface{}{
+			newKindValue(kind),
+			newKindValue(kind),
+		}
+		CallBuiltinOp(kind, op, vars...)
 	}
 }
 
