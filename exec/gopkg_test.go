@@ -74,7 +74,7 @@ func TestSprintf(t *testing.T) {
 	sprintf, ok := I.FindVariadicFunc("Sprintf")
 	strcat, ok2 := I.FindFunc("strcat")
 	if !ok || !ok2 {
-		t.Fatal("FindVariadicFunc failed: Sprintf/strcat")
+		t.Fatal("FindFunc failed: Sprintf/strcat")
 	}
 	fmt.Println("sprintf:", sprintf.GetInfo())
 	fmt.Println("strcat:", strcat.GetInfo())

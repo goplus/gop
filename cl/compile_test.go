@@ -155,7 +155,7 @@ var fsTestVarOp = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	y := 1 + x
 	println("Hello", y + 10)
 	n, err := println("Hello", y + 10)
-	println("ret:", n, err)
+	println("ret:", n << 1, err)
 `)
 
 func TestVarOp(t *testing.T) {

@@ -73,7 +73,7 @@ func checkBinaryOp(kind exec.Kind, op exec.Operator, x, y interface{}, b *exec.B
 			if (uint64(ycons.kind) & i.InSecond) == 0 {
 				log.Fatalln("checkBinaryOp: invalid operator", kind, "argument type.")
 			}
-			kind = ycons.kind
+			kind = ycons.boundKind()
 		}
 		if ycons.reserve != -1 {
 			yv, ok := boundConst(ycons.v, exec.TypeFromKind(kind))

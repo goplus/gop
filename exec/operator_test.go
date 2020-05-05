@@ -1,8 +1,91 @@
 package exec
 
 import (
+	"fmt"
+	"os"
+	"strings"
 	"testing"
 )
+
+// -----------------------------------------------------------------------------
+
+var opAutogen = [...]string{
+	OpAdd:       "Add",
+	OpSub:       "Sub",
+	OpMul:       "Mul",
+	OpDiv:       "Div",
+	OpMod:       "Mod",
+	OpBitAnd:    "BitAnd",
+	OpBitOr:     "BitOr",
+	OpBitXor:    "BitXor",
+	OpBitAndNot: "BitAndNot",
+	OpBitSHL:    "BitSHL",
+	OpBitSHR:    "BitSHR",
+	OpLT:        "LT",
+	OpLE:        "LE",
+	OpGT:        "GT",
+	OpGE:        "GE",
+	OpEQ:        "EQ",
+	OpNE:        "NE",
+	OpLAnd:      "LAnd",
+	OpLOr:       "LOr",
+	OpNeg:       "Neg",
+	OpNot:       "Not",
+	OpBitNot:    "BitNot",
+}
+
+const autogenHeader = `
+package exec
+`
+
+const autogenBinaryOpTempl = `
+func exec$Op$Type(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].($type) $op p.data[n-1].($type)
+	p.data = p.data[:n-1]
+}
+`
+const autogenUnaryOpTempl = `
+func exec$Op$Type(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-1] = $opp.data[n-1].($type)
+}
+`
+
+func autogen(f *os.File, op Operator, Op string) {
+	i := op.GetInfo()
+	if i.InSecond == bitsAllIntUint {
+		return
+	}
+	templ := autogenBinaryOpTempl
+	if i.InSecond == bitNone {
+		templ = autogenUnaryOpTempl
+	}
+	for kind := Bool; kind <= UnsafePointer; kind++ {
+		if (i.InFirst & (1 << kind)) == 0 {
+			continue
+		}
+		typ := TypeFromKind(kind).String()
+		Typ := strings.Title(typ)
+		repl := strings.NewReplacer("$Op", Op, "$op", i.Lit, "$Type", Typ, "$type", typ)
+		text := repl.Replace(templ)
+		fmt.Fprint(f, text)
+	}
+}
+
+func _TestAutogen(t *testing.T) {
+	f, err := os.Create("exec_autogen.go")
+	if err != nil {
+		t.Fatal("TestAutogen failed:", err)
+	}
+	defer f.Close()
+	fmt.Fprint(f, autogenHeader)
+	for i, Op := range opAutogen {
+		if Op != "" {
+			autogen(f, Operator(i), Op)
+		}
+	}
+}
 
 // -----------------------------------------------------------------------------
 

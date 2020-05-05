@@ -10,7 +10,7 @@ func TestVar(t *testing.T) {
 	sprint, ok := I.FindVariadicFunc("Sprint")
 	strcat, ok2 := I.FindFunc("strcat")
 	if !ok || !ok2 {
-		t.Fatal("FindVariadicFunc failed: Sprintf/strcat")
+		t.Fatal("FindFunc failed: Sprintf/strcat")
 	}
 
 	x := NewVar(TyString, "x")
@@ -38,7 +38,7 @@ func TestParentCtx(t *testing.T) {
 	sprint, ok := I.FindVariadicFunc("Sprint")
 	strcat, ok2 := I.FindFunc("strcat")
 	if !ok || !ok2 {
-		t.Fatal("FindVariadicFunc failed: Sprintf/strcat")
+		t.Fatal("FindFunc failed: Sprintf/strcat")
 	}
 
 	x := NewVar(TyString, "x")
@@ -74,7 +74,7 @@ func TestAddrVar(t *testing.T) {
 	sprint, ok := I.FindVariadicFunc("Sprint")
 	strcat, ok2 := I.FindFunc("strcat")
 	if !ok || !ok2 {
-		t.Fatal("FindVariadicFunc failed: Sprintf/strcat")
+		t.Fatal("FindFunc failed: Sprintf/strcat")
 	}
 
 	x := NewVar(TyString, "x")

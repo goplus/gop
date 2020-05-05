@@ -145,23 +145,27 @@ func (p *constVal) Value(i int) iValue {
 	return p
 }
 
-func (p *constVal) boundType() reflect.Type {
+func (p *constVal) boundKind() reflect.Kind {
 	if astutil.IsConstBound(p.kind) {
-		return exec.TypeFromKind(p.kind)
+		return p.kind
 	}
 	switch p.kind {
 	case astutil.ConstUnboundInt:
 		if _, ok := p.v.(int64); ok {
-			return exec.TyInt
+			return reflect.Int
 		}
-		return exec.TyUint
+		return reflect.Uint
 	case astutil.ConstUnboundFloat:
-		return exec.TyFloat64
+		return reflect.Float64
 	case astutil.ConstUnboundComplex:
-		return exec.TyComplex128
+		return reflect.Complex128
 	}
-	log.Fatalln("boundType: unexpected type kind -", p.kind)
-	return nil
+	log.Fatalln("boundKind: unexpected type kind -", p.kind)
+	return reflect.Invalid
+}
+
+func (p *constVal) boundType() reflect.Type {
+	return exec.TypeFromKind(p.boundKind())
 }
 
 func boundType(in iValue) reflect.Type {
