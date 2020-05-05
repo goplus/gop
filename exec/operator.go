@@ -295,14 +295,6 @@ func execBuiltinOp(i Instr, p *Context) {
 	}
 }
 
-func execBuiltinOpS(i Instr, p *Context) {
-	if fn := builtinStringOps[int(i&bitsOperand)]; fn != nil {
-		fn(0, p)
-	} else {
-		panic("execBuiltinOp: invalid builtinOp")
-	}
-}
-
 // -----------------------------------------------------------------------------
 
 const (
@@ -310,97 +302,11 @@ const (
 	bitsOperator = 5 // Operator count = 24
 )
 
-var builtinOps = [...]func(i Instr, p *Context){
-	(int(Int) << bitsOperator) | int(OpAdd):        execAddInt,
-	(int(Int8) << bitsOperator) | int(OpAdd):       execAddInt8,
-	(int(Int16) << bitsOperator) | int(OpAdd):      execAddInt16,
-	(int(Int32) << bitsOperator) | int(OpAdd):      execAddInt32,
-	(int(Int64) << bitsOperator) | int(OpAdd):      execAddInt64,
-	(int(Uint) << bitsOperator) | int(OpAdd):       execAddUint,
-	(int(Uint8) << bitsOperator) | int(OpAdd):      execAddUint8,
-	(int(Uint16) << bitsOperator) | int(OpAdd):     execAddUint16,
-	(int(Uint32) << bitsOperator) | int(OpAdd):     execAddUint32,
-	(int(Uint64) << bitsOperator) | int(OpAdd):     execAddUint64,
-	(int(Uintptr) << bitsOperator) | int(OpAdd):    execAddUintptr,
-	(int(Float32) << bitsOperator) | int(OpAdd):    execAddFloat32,
-	(int(Float64) << bitsOperator) | int(OpAdd):    execAddFloat64,
-	(int(Complex64) << bitsOperator) | int(OpAdd):  execAddComplex64,
-	(int(Complex128) << bitsOperator) | int(OpAdd): execAddComplex128,
-	(int(Int) << bitsOperator) | int(OpSub):        execSubInt,
-	(int(Int8) << bitsOperator) | int(OpSub):       execSubInt8,
-	(int(Int16) << bitsOperator) | int(OpSub):      execSubInt16,
-	(int(Int32) << bitsOperator) | int(OpSub):      execSubInt32,
-	(int(Int64) << bitsOperator) | int(OpSub):      execSubInt64,
-	(int(Uint) << bitsOperator) | int(OpSub):       execSubUint,
-	(int(Uint8) << bitsOperator) | int(OpSub):      execSubUint8,
-	(int(Uint16) << bitsOperator) | int(OpSub):     execSubUint16,
-	(int(Uint32) << bitsOperator) | int(OpSub):     execSubUint32,
-	(int(Uint64) << bitsOperator) | int(OpSub):     execSubUint64,
-	(int(Uintptr) << bitsOperator) | int(OpSub):    execSubUintptr,
-	(int(Float32) << bitsOperator) | int(OpSub):    execSubFloat32,
-	(int(Float64) << bitsOperator) | int(OpSub):    execSubFloat64,
-	(int(Complex64) << bitsOperator) | int(OpSub):  execSubComplex64,
-	(int(Complex128) << bitsOperator) | int(OpSub): execSubComplex128,
-	(int(Int) << bitsOperator) | int(OpMul):        execMulInt,
-	(int(Int8) << bitsOperator) | int(OpMul):       execMulInt8,
-	(int(Int16) << bitsOperator) | int(OpMul):      execMulInt16,
-	(int(Int32) << bitsOperator) | int(OpMul):      execMulInt32,
-	(int(Int64) << bitsOperator) | int(OpMul):      execMulInt64,
-	(int(Uint) << bitsOperator) | int(OpMul):       execMulUint,
-	(int(Uint8) << bitsOperator) | int(OpMul):      execMulUint8,
-	(int(Uint16) << bitsOperator) | int(OpMul):     execMulUint16,
-	(int(Uint32) << bitsOperator) | int(OpMul):     execMulUint32,
-	(int(Uint64) << bitsOperator) | int(OpMul):     execMulUint64,
-	(int(Uintptr) << bitsOperator) | int(OpMul):    execMulUintptr,
-	(int(Float32) << bitsOperator) | int(OpMul):    execMulFloat32,
-	(int(Float64) << bitsOperator) | int(OpMul):    execMulFloat64,
-	(int(Complex64) << bitsOperator) | int(OpMul):  execMulComplex64,
-	(int(Complex128) << bitsOperator) | int(OpMul): execMulComplex128,
-	(int(Int) << bitsOperator) | int(OpDiv):        execDivInt,
-	(int(Int8) << bitsOperator) | int(OpDiv):       execDivInt8,
-	(int(Int16) << bitsOperator) | int(OpDiv):      execDivInt16,
-	(int(Int32) << bitsOperator) | int(OpDiv):      execDivInt32,
-	(int(Int64) << bitsOperator) | int(OpDiv):      execDivInt64,
-	(int(Uint) << bitsOperator) | int(OpDiv):       execDivUint,
-	(int(Uint8) << bitsOperator) | int(OpDiv):      execDivUint8,
-	(int(Uint16) << bitsOperator) | int(OpDiv):     execDivUint16,
-	(int(Uint32) << bitsOperator) | int(OpDiv):     execDivUint32,
-	(int(Uint64) << bitsOperator) | int(OpDiv):     execDivUint64,
-	(int(Uintptr) << bitsOperator) | int(OpDiv):    execDivUintptr,
-	(int(Float32) << bitsOperator) | int(OpDiv):    execDivFloat32,
-	(int(Float64) << bitsOperator) | int(OpDiv):    execDivFloat64,
-	(int(Complex64) << bitsOperator) | int(OpDiv):  execDivComplex64,
-	(int(Complex128) << bitsOperator) | int(OpDiv): execDivComplex128,
-	(int(Int) << bitsOperator) | int(OpMod):        execModInt,
-	(int(Int8) << bitsOperator) | int(OpMod):       execModInt8,
-	(int(Int16) << bitsOperator) | int(OpMod):      execModInt16,
-	(int(Int32) << bitsOperator) | int(OpMod):      execModInt32,
-	(int(Int64) << bitsOperator) | int(OpMod):      execModInt64,
-	(int(Uint) << bitsOperator) | int(OpMod):       execModUint,
-	(int(Uint8) << bitsOperator) | int(OpMod):      execModUint8,
-	(int(Uint16) << bitsOperator) | int(OpMod):     execModUint16,
-	(int(Uint32) << bitsOperator) | int(OpMod):     execModUint32,
-	(int(Uint64) << bitsOperator) | int(OpMod):     execModUint64,
-	(int(Uintptr) << bitsOperator) | int(OpMod):    execModUintptr,
-}
-
-var builtinStringOps = [...]func(i Instr, p *Context){
-	int(OpAdd): execAddString,
-}
-
 func (p *Code) builtinOp(kind Kind, op Operator) error {
-	switch kind {
-	case String:
-		if fn := builtinStringOps[int(op)]; fn != nil {
-			p.data = append(p.data, (opBuiltinOpS<<bitsOpShift)|uint32(op))
-			return nil
-		}
-	default:
-		i := (int(kind) << bitsOperator) | int(op)
-		if fn := builtinOps[i]; fn != nil {
-			p.data = append(p.data, (opBuiltinOp<<bitsOpShift)|uint32(i))
-			return nil
-		}
+	i := (int(kind) << bitsOperator) | int(op)
+	if fn := builtinOps[i]; fn != nil {
+		p.data = append(p.data, (opBuiltinOp<<bitsOpShift)|uint32(i))
+		return nil
 	}
 	return fmt.Errorf("builtinOp: type %v doesn't support operator %v", kind, op)
 }
@@ -414,18 +320,9 @@ func (ctx *Builder) BuiltinOp(kind Kind, op Operator) *Builder {
 	return ctx
 }
 
-// -----------------------------------------------------------------------------
-
 // CallBuiltinOp calls BuiltinOp
 func CallBuiltinOp(kind Kind, op Operator, data ...interface{}) interface{} {
-	var fn func(i Instr, p *Context)
-	switch kind {
-	case String:
-		fn = builtinStringOps[int(op)]
-	default:
-		fn = builtinOps[(int(kind)<<bitsOperator)|int(op)]
-	}
-	if fn != nil {
+	if fn := builtinOps[(int(kind)<<bitsOperator)|int(op)]; fn != nil {
 		ctx := newSimpleContext(data)
 		fn(0, ctx)
 		return ctx.Get(-1)

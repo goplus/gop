@@ -45,7 +45,7 @@ const (
 	opPushIntR    = 5  // intKind(3) intIdx(23)
 	opPushUintR   = 6  // intKind(3) intIdx(23)
 	opBuiltinOp   = 7  // reserved(16) kind(5) builtinOp(5)
-	opBuiltinOpS  = 8  // reserved(21) builtinOp(5)
+	opReserved    = 8  // reserved for future
 	opJmp         = 9  // offset(26)
 	opJmpIfFalse  = 10 // offset(26)
 	opCaseNE      = 11 // offset(26)

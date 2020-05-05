@@ -52,14 +52,26 @@ func exec$Op$Type(i Instr, p *Context) {
 }
 `
 
-func autogen(f *os.File, op Operator, Op string) {
+const autogenBuiltinOpHeader = `
+var builtinOps = [...]func(i Instr, p *Context){`
+
+const autogenBuiltinOpItemTempl = `
+	(int($Type) << bitsOperator) | int(Op$Op): exec$Op$Type,`
+
+const autogenBuiltinOpFooter = `
+}
+`
+
+func autogenWithTempl(f *os.File, op Operator, Op string, templ string) {
 	i := op.GetInfo()
 	if i.InSecond == bitsAllIntUint {
 		return
 	}
-	templ := autogenBinaryOpTempl
-	if i.InSecond == bitNone {
-		templ = autogenUnaryOpTempl
+	if templ == "" {
+		templ = autogenBinaryOpTempl
+		if i.InSecond == bitNone {
+			templ = autogenUnaryOpTempl
+		}
 	}
 	for kind := Bool; kind <= UnsafePointer; kind++ {
 		if (i.InFirst & (1 << kind)) == 0 {
@@ -80,9 +92,16 @@ func _TestAutogen(t *testing.T) {
 	}
 	defer f.Close()
 	fmt.Fprint(f, autogenHeader)
+	fmt.Fprint(f, autogenBuiltinOpHeader)
 	for i, Op := range opAutogen {
 		if Op != "" {
-			autogen(f, Operator(i), Op)
+			autogenWithTempl(f, Operator(i), Op, autogenBuiltinOpItemTempl)
+		}
+	}
+	fmt.Fprint(f, autogenBuiltinOpFooter)
+	for i, Op := range opAutogen {
+		if Op != "" {
+			autogenWithTempl(f, Operator(i), Op, "")
 		}
 	}
 }
