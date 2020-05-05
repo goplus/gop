@@ -15,7 +15,7 @@ import (
 //  - *funcResult
 //  - *operatorResult
 type iValue interface {
-	TypeOf() iType
+	TypeOf() reflect.Type
 	Value(i int) iValue
 	NumValues() int
 }
@@ -44,7 +44,7 @@ type goValue struct {
 	t reflect.Type
 }
 
-func (p *goValue) TypeOf() iType {
+func (p *goValue) TypeOf() reflect.Type {
 	return p.t
 }
 
@@ -58,20 +58,27 @@ func (p *goValue) Value(i int) iValue {
 
 // -----------------------------------------------------------------------------
 
-type funcResult struct {
+type funcResults struct {
 	tfn reflect.Type
 }
 
-func (p *funcResult) TypeOf() iType {
+func (p *funcResults) TypeOf() reflect.Type {
 	panic("don't call me")
 }
 
-func (p *funcResult) NumValues() int {
+func (p *funcResults) NumValues() int {
 	return p.tfn.NumOut()
 }
 
-func (p *funcResult) Value(i int) iValue {
+func (p *funcResults) Value(i int) iValue {
 	return &goValue{t: p.tfn.Out(i)}
+}
+
+func newFuncResults(tfn reflect.Type) iValue {
+	if tfn.NumOut() == 1 {
+		return &goValue{t: tfn.Out(0)}
+	}
+	return &funcResults{tfn: tfn}
 }
 
 // -----------------------------------------------------------------------------
@@ -95,7 +102,7 @@ func newGoFunc(addr uint32, kind exec.SymbolKind) *goFunc {
 	return &goFunc{v: fi, addr: addr, kind: kind}
 }
 
-func (p *goFunc) TypeOf() iType {
+func (p *goFunc) TypeOf() reflect.Type {
 	return reflect.TypeOf(p.v.This)
 }
 
@@ -107,8 +114,8 @@ func (p *goFunc) Value(i int) iValue {
 	return p
 }
 
-func (p *goFunc) Results() *funcResult {
-	return &funcResult{tfn: reflect.TypeOf(p.v.This)}
+func (p *goFunc) Results() iValue {
+	return newFuncResults(reflect.TypeOf(p.v.This))
 }
 
 func (p *goFunc) Proto() iFuncType {
@@ -123,11 +130,11 @@ type constVal struct {
 	reserve exec.Reserved
 }
 
-func (p *constVal) TypeOf() iType {
+func (p *constVal) TypeOf() reflect.Type {
 	if astutil.IsConstBound(p.kind) {
 		return exec.TypeFromKind(p.kind)
 	}
-	return unboundType(p.kind)
+	panic("don't call constVal.TypeOf: unbounded")
 }
 
 func (p *constVal) NumValues() int {
@@ -136,6 +143,32 @@ func (p *constVal) NumValues() int {
 
 func (p *constVal) Value(i int) iValue {
 	return p
+}
+
+func (p *constVal) boundType() reflect.Type {
+	if astutil.IsConstBound(p.kind) {
+		return exec.TypeFromKind(p.kind)
+	}
+	switch p.kind {
+	case astutil.ConstUnboundInt:
+		if _, ok := p.v.(int64); ok {
+			return exec.TyInt
+		}
+		return exec.TyUint
+	case astutil.ConstUnboundFloat:
+		return exec.TyFloat64
+	case astutil.ConstUnboundComplex:
+		return exec.TyComplex128
+	}
+	log.Fatalln("boundType: unexpected type kind -", p.kind)
+	return nil
+}
+
+func boundType(in iValue) reflect.Type {
+	if v, ok := in.(*constVal); ok {
+		return v.boundType()
+	}
+	return in.TypeOf()
 }
 
 func (p *constVal) bound(t reflect.Type, b *exec.Builder) {

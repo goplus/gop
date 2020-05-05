@@ -106,6 +106,7 @@ type Builder struct {
 	code      *Code
 	valConsts map[interface{}]*valUnresolved
 	labels    map[*Label]int
+	NestDepth uint32
 }
 
 // NewBuilder creates a new Code Builder instance.

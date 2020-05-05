@@ -22,10 +22,11 @@ var (
 type pkgCtx struct {
 	infer   exec.Stack
 	builtin *exec.GoPackage
+	out     *exec.Builder
 }
 
-func newPkgCtx() *pkgCtx {
-	p := &pkgCtx{builtin: exec.Package("")}
+func newPkgCtx(out *exec.Builder) *pkgCtx {
+	p := &pkgCtx{builtin: exec.Package(""), out: out}
 	p.infer.Init()
 	return p
 }
@@ -66,19 +67,18 @@ type funcDecl struct {
 
 // A Package represents a qlang package.
 type Package struct {
-	out   *exec.Builder
 	types map[string]*typeDecl
 	funcs map[string]*funcDecl
+	vlist []*exec.Var
 }
 
 // NewPackage creates a qlang package instance.
 func NewPackage(out *exec.Builder, pkg *ast.Package) (p *Package, err error) {
 	p = &Package{
-		out:   out,
 		types: make(map[string]*typeDecl),
 		funcs: make(map[string]*funcDecl),
 	}
-	ctx := newPkgCtx()
+	ctx := newPkgCtx(out)
 	for name, f := range pkg.Files {
 		log.Debug("file:", name)
 		p.loadFile(ctx, f)
@@ -90,8 +90,14 @@ func NewPackage(out *exec.Builder, pkg *ast.Package) (p *Package, err error) {
 		}
 		block := newBlockCtx(entry.ctx, nil)
 		p.compileBlockStmt(block, entry.Body)
+		p.vlist = block.vlist
 	}
 	return
+}
+
+// GetGlobalVars returns the global variable list.
+func (p *Package) GetGlobalVars() []*exec.Var {
+	return p.vlist
 }
 
 func (p *Package) loadFile(pkg *pkgCtx, f *ast.File) {

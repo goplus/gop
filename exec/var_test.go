@@ -13,9 +13,10 @@ func TestVar(t *testing.T) {
 		t.Fatal("FindVariadicFunc failed: Sprintf/strcat")
 	}
 
-	x := MakeAddr(0, 0)
-	y := MakeAddr(0, 1)
+	x := NewVar(TyString, "x")
+	y := NewVar(TyString, "y")
 	code := NewBuilder(nil).
+		DefineVar(x, y).
 		Push(5).
 		Push("32").
 		CallGoFunv(sprint, 2).
@@ -26,11 +27,7 @@ func TestVar(t *testing.T) {
 		StoreVar(y). // y = strcat("78", x)
 		Resolve()
 
-	tvars := Struct([]StructField{
-		{Name: "X", Type: TyString},
-		{Name: "Y", Type: TyString},
-	})
-	ctx := NewContextEx(code, tvars, nil)
+	ctx := NewContext(code, x, y)
 	ctx.Exec(0, code.Len())
 	if v := ctx.getVar(1); v != "78532" {
 		t.Fatal("y != 78532, ret =", v)
@@ -44,9 +41,13 @@ func TestParentCtx(t *testing.T) {
 		t.Fatal("FindVariadicFunc failed: Sprintf/strcat")
 	}
 
-	x := MakeAddr(0, 0)
-	z := MakeAddr(2, 0)
+	x := NewVar(TyString, "x")
+	y := NewVar(TyString, "y")
+	z := NewVar(TyString, "z")
 	code := NewBuilder(nil).
+		DefineVar(z).
+		SetNestDepth(2).
+		DefineVar(x, y).
 		Push(5).
 		Push("32").
 		CallGoFunv(sprint, 2).
@@ -57,22 +58,15 @@ func TestParentCtx(t *testing.T) {
 		StoreVar(z). // z = strcat(z, x)
 		Resolve()
 
-	tvars1 := Struct([]StructField{
-		{Name: "Z", Type: TyString},
-	})
-	tvars2 := Struct([]StructField{
-		{Name: "X", Type: TyString},
-		{Name: "Y", Type: TyString},
-	})
-	pp := NewContextEx(code, tvars1, nil)
-	pp.FastSetVar(0, "78")
+	p1 := NewContext(code, z)
+	p1.SetVar(z, "78")
 
-	pp2 := NewContextEx(code, nil, pp)
+	p2 := p1.NewNest()
+	ctx := p2.NewNest(x, y)
 
-	ctx := NewContextEx(code, tvars2, pp2)
 	ctx.Exec(0, code.Len())
-	if v := pp.FastGetVar(0); v != "78532" {
-		t.Fatal("y != 78532, ret =", v)
+	if v := p1.GetVar(z); v != "78532" {
+		t.Fatal("z != 78532, ret =", v)
 	}
 }
 
@@ -83,9 +77,13 @@ func TestAddrVar(t *testing.T) {
 		t.Fatal("FindVariadicFunc failed: Sprintf/strcat")
 	}
 
-	x := MakeAddr(0, 0)
-	z := MakeAddr(2, 0)
+	x := NewVar(TyString, "x")
+	y := NewVar(TyString, "y")
+	z := NewVar(TyString, "z")
 	code := NewBuilder(nil).
+		DefineVar(z).
+		SetNestDepth(2).
+		DefineVar(x, y).
 		Push(5).
 		Push("32").
 		CallGoFunv(sprint, 2).
@@ -98,20 +96,13 @@ func TestAddrVar(t *testing.T) {
 		AddrOp(String, OpAssign). // z = strcat(z, *&x)
 		Resolve()
 
-	tvars1 := Struct([]StructField{
-		{Name: "Z", Type: TyString},
-	})
-	tvars2 := Struct([]StructField{
-		{Name: "X", Type: TyString},
-		{Name: "Y", Type: TyString},
-	})
-	pp := NewContextEx(code, tvars1, nil)
+	p1 := NewContext(code, z)
+	p1.SetVar(z, "78")
 
-	pp2 := NewContextEx(code, nil, pp)
-	ctx := NewContextEx(code, tvars2, pp2)
-	ctx.FastSetVar(z, "78")
+	p2 := p1.NewNest()
+	ctx := p2.NewNest(x, y)
 	ctx.Exec(0, code.Len())
-	if v := ctx.FastGetVar(z); v != "78532" {
+	if v := p1.GetVar(z); v != "78532" {
 		t.Fatal("y != 78532, ret =", v)
 	}
 }

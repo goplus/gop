@@ -118,12 +118,11 @@ func TestOperator(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 var fsTestVar = asttest.NewSingleFileFS("/foo", "bar.ql", `
-	x := 123.0
-	y := x * 2
-	println("Hello", 4.5 * y)
+	x := 123.1
+	println("Hello", x)
 `)
 
-func _TestVar(t *testing.T) {
+func TestVar(t *testing.T) {
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseFSDir(fset, fsTestVar, "/foo", nil, 0)
 	if err != nil || len(pkgs) != 1 {
@@ -132,19 +131,19 @@ func _TestVar(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
+	pkg, err := NewPackage(b, bar)
 	if err != nil {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
 
-	ctx := exec.NewContext(code)
+	ctx := exec.NewContext(code, pkg.GetGlobalVars()...)
 	ctx.Exec(0, code.Len())
 	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
 	if v := ctx.Get(-1); v != nil {
 		t.Fatal("error:", v)
 	}
-	if v := ctx.Get(-2); v != int(19) {
+	if v := ctx.Get(-2); v != int(12) {
 		t.Fatal("n:", v)
 	}
 }

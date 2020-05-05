@@ -4,17 +4,9 @@ import (
 	"errors"
 	"reflect"
 
-	"github.com/qiniu/qlang/ast/astutil"
 	"github.com/qiniu/qlang/exec"
 	"github.com/qiniu/x/log"
 )
-
-// iType represents a qlang type.
-//  - reflect.Type
-//  - unboundType
-type iType interface {
-	Kind() reflect.Kind
-}
 
 type iFuncType interface {
 	In(i int) reflect.Type
@@ -23,26 +15,6 @@ type iFuncType interface {
 	NumOut() int
 	IsVariadic() bool
 }
-
-type unboundType astutil.ConstKind
-
-func (p unboundType) Kind() reflect.Kind {
-	return reflect.Kind(p)
-}
-
-// -----------------------------------------------------------------------------
-
-func checkType(a reflect.Type, in iType) bool {
-	log.Fatalln("todo")
-	return false
-}
-
-func boundType(in iType) reflect.Type {
-	log.Fatalln("todo")
-	return nil
-}
-
-// -----------------------------------------------------------------------------
 
 var (
 	// ErrFuncArgNoReturnValue error.
@@ -110,6 +82,12 @@ func checkBinaryOp(kind exec.Kind, op exec.Operator, x, y interface{}, b *exec.B
 			}
 			ycons.reserve.Push(b, yv)
 		}
+	}
+}
+
+func checkType(t reflect.Type, v interface{}, b *exec.Builder) {
+	if cons, ok := v.(*constVal); ok {
+		cons.bound(t, b)
 	}
 }
 

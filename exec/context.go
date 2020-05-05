@@ -1,9 +1,5 @@
 package exec
 
-import (
-	"reflect"
-)
-
 // -----------------------------------------------------------------------------
 
 // A Stack represents a FILO container.
@@ -61,7 +57,7 @@ type Context struct {
 	Stack
 	code   *Code
 	parent *Context
-	vars   reflect.Value
+	vars   varsContext
 	ip     int
 }
 
@@ -70,37 +66,28 @@ func newSimpleContext(data []interface{}) *Context {
 }
 
 // NewContext returns a new context of an executor.
-func NewContext(code *Code) *Context {
+func NewContext(code *Code, vars ...*Var) *Context {
 	p := &Context{
 		code: code,
 	}
+	if len(vars) > 0 {
+		p.vars = makeVarsContext(vars, p)
+	}
 	p.Stack.Init()
 	return p
 }
 
-// NewContextEx returns a new context of an executor, with n local variables.
-func NewContextEx(code *Code, si *StructInfo, parent *Context) *Context {
+// NewNest creates a nest closure context, with some local variables.
+func (ctx *Context) NewNest(vars ...*Var) *Context {
 	p := &Context{
-		code:   code,
-		parent: parent,
+		code:   ctx.code,
+		parent: ctx,
 	}
-	if si != nil {
-		p.vars = reflect.New(si.Type()).Elem()
+	if len(vars) > 0 {
+		p.vars = makeVarsContext(vars, p)
 	}
 	p.Stack.Init()
 	return p
-}
-
-func (ctx *Context) addrVar(idx uint32) interface{} {
-	return ctx.vars.Field(int(idx)).Addr().Interface()
-}
-
-func (ctx *Context) getVar(idx uint32) interface{} {
-	return ctx.vars.Field(int(idx)).Interface()
-}
-
-func (ctx *Context) setVar(idx uint32, v interface{}) {
-	ctx.vars.Field(int(idx)).Set(reflect.ValueOf(v))
 }
 
 // Exec executes a code block from ip to ipEnd.

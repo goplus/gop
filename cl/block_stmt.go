@@ -21,17 +21,13 @@ const (
 	lhsDefine compleMode = token.DEFINE // leftHandSide := ...
 )
 
-type varDecl struct {
-	Type reflect.Type
-	Idx  uint32
-}
-
 type blockCtx struct {
 	*pkgCtx
 	file   *fileCtx
 	parent *blockCtx
-	vars   map[string]*varDecl
-	rhs    exec.Stack // only used by assign statement
+
+	vlist []*exec.Var
+	vars  map[string]*exec.Var
 }
 
 func newBlockCtx(file *fileCtx, parent *blockCtx) *blockCtx {
@@ -39,36 +35,29 @@ func newBlockCtx(file *fileCtx, parent *blockCtx) *blockCtx {
 		pkgCtx: file.pkg,
 		file:   file,
 		parent: parent,
-		vars:   make(map[string]*varDecl),
+		vars:   make(map[string]*exec.Var),
 	}
 }
 
-func (p *blockCtx) findVar(name string) (addr exec.Address, typ reflect.Type, ok bool) {
-	var scope uint32
-	for p != nil {
+func (p *blockCtx) findVar(name string) (addr *exec.Var, ok bool) {
+	for ; p != nil; p = p.parent {
 		if v, ok := p.vars[name]; ok {
-			return exec.MakeAddr(scope, v.Idx), v.Type, true
+			return v, true
 		}
-		p = p.parent
-		scope++
 	}
 	return
 }
 
-func (p *blockCtx) requireVar(name string, typ iType) (addr exec.Address, ok bool) {
-	addr, typExist, ok := p.findVar(name)
-	if ok {
-		if addr.Scope() > 0 {
-			log.Fatalln("requireVar failed: variable is shadowed -", name)
-		}
-		if !checkType(typExist, typ) {
-			log.Fatalln("requireVar failed: mismatched type -", name)
-		}
-		return
+func (p *blockCtx) insertVar(name string, typ reflect.Type) *exec.Var {
+	if _, ok := p.vars[name]; ok {
+		log.Fatalln("insertVar failed: variable exists -", name)
 	}
-	idx := uint32(len(p.vars))
-	p.vars[name] = &varDecl{Type: boundType(typ), Idx: idx}
-	return exec.MakeAddr(0, idx), true
+	idx := uint32(len(p.vlist))
+	v := exec.NewVar(typ, name)
+	v.SetAddr(p.out.NestDepth, idx)
+	p.vars[name] = v
+	p.vlist = append(p.vlist, v)
+	return v
 }
 
 // -----------------------------------------------------------------------------
@@ -91,24 +80,37 @@ func (p *Package) compileExprStmt(ctx *blockCtx, expr *ast.ExprStmt) {
 }
 
 func (p *Package) compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
-	/*
-		ctx.rhs.Init()
-		for _, rhs := range expr.Rhs {
-			p.compileExpr(ctx, rhs, 0)
-			t := ctx.infer.Get(-1).(iValue).TypeOf()
-			n := t.NumValues()
+	if ctx.infer.Len() != 0 {
+		log.Fatalln("compileAssignStmt internal error: infer stack is not empty.")
+	}
+	if len(expr.Rhs) == 1 {
+		p.compileExpr(ctx, expr.Rhs[0], 0)
+		v := ctx.infer.Get(-1).(iValue)
+		n := v.NumValues()
+		if n != 1 {
+			if n == 0 {
+				log.Fatalln("compileAssignStmt failed: expr has no return value.")
+			}
+			rhs := make([]interface{}, n)
 			for i := 0; i < n; i++ {
-				ctx.rhs.Push(t.TypeValue(i))
+				rhs[i] = v.Value(i)
+			}
+			ctx.infer.Ret(1, rhs...)
+		}
+	} else {
+		for _, item := range expr.Rhs {
+			p.compileExpr(ctx, item, 0)
+			if ctx.infer.Get(-1).(iValue).NumValues() != 1 {
+				log.Fatalln("compileAssignStmt failed: expr has multiple values.")
 			}
 		}
-		if len(typs) != len(expr.Lhs) {
-			log.Fatalln("compileAssignStmt failed: assign statment has mismatched variables count.")
-		}
-		ctx.rhs = typs
-		for i := len(typs) - 1; i >= 0; i-- {
-			p.compileExpr(ctx, expr.Lhs[i], expr.Tok)
-		}
-	*/
+	}
+	if ctx.infer.Len() != len(expr.Lhs) {
+		log.Fatalln("compileAssignStmt failed: assign statment has mismatched variables count.")
+	}
+	for i := len(expr.Lhs) - 1; i >= 0; i-- {
+		p.compileExpr(ctx, expr.Lhs[i], expr.Tok)
+	}
 }
 
 func (p *Package) compileExpr(ctx *blockCtx, expr ast.Expr, mode compleMode) {
@@ -128,18 +130,27 @@ func (p *Package) compileExpr(ctx *blockCtx, expr ast.Expr, mode compleMode) {
 
 func (p *Package) compileIdent(ctx *blockCtx, name string, mode compleMode) {
 	if mode > lhsBase {
-		/*		var addr exec.Address
-				var typ reflect.Type
-				var ok bool
-				if mode == lhsAssign {
-					if addr, type, ok = ctx.findVar(name); !ok {
-						log.Fatalln("compileIdent failed: symbol not found -", name)
-					}
-				} else {
-					ctx.requireVar(name, val.(iValue).TypeOf())
-				}
-		*/
-		log.Fatalln("compileIdent: can't be lhs (left hand side) expr.")
+		in := ctx.infer.Get(-1)
+		addr, ok := ctx.findVar(name)
+		if ok {
+			if mode == lhsDefine && addr.NestDepth != ctx.out.NestDepth {
+				log.Fatalln("requireVar failed: variable is shadowed -", name)
+			}
+		} else if mode == lhsAssign {
+			log.Fatalln("compileIdent failed: symbol not found -", name)
+		} else {
+			typ := boundType(in.(iValue))
+			addr = ctx.insertVar(name, typ)
+		}
+		checkType(addr.Type, in, ctx.out)
+		ctx.infer.PopN(1)
+		ctx.out.StoreVar(addr)
+	} else if addr, ok := ctx.findVar(name); ok {
+		ctx.infer.Push(&goValue{t: addr.Type})
+		if mode == inferOnly {
+			return
+		}
+		ctx.out.LoadVar(addr)
 	} else {
 		addr, kind, ok := ctx.builtin.Find(name)
 		if !ok {
@@ -171,9 +182,9 @@ func (p *Package) compileBasicLit(ctx *blockCtx, v *ast.BasicLit, mode compleMod
 		if kind == astutil.ConstBoundRune {
 			n = rune(n.(int64))
 		}
-		p.out.Push(n)
+		ctx.out.Push(n)
 	} else {
-		ret.reserve = p.out.Reserve()
+		ret.reserve = ctx.out.Reserve()
 	}
 }
 
@@ -192,7 +203,7 @@ func (p *Package) compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr, mode compl
 		ret := binaryOp(op, xcons, ycons)
 		ctx.infer.Ret(2, ret)
 		if mode != inferOnly {
-			ret.reserve = p.out.Reserve()
+			ret.reserve = ctx.out.Reserve()
 		}
 		return
 	}
@@ -272,12 +283,13 @@ func (p *Package) compileCallExpr(ctx *blockCtx, v *ast.CallExpr, mode compleMod
 		}
 		nargs := uint32(len(v.Args))
 		args := ctx.infer.GetArgs(nargs)
-		arity := checkFuncCall(vfn.Proto(), args, p.out)
+		out := ctx.out
+		arity := checkFuncCall(vfn.Proto(), args, out)
 		switch vfn.kind {
 		case exec.SymbolFunc:
-			p.out.CallGoFun(exec.GoFuncAddr(vfn.addr))
+			out.CallGoFun(exec.GoFuncAddr(vfn.addr))
 		case exec.SymbolVariadicFunc:
-			p.out.CallGoFunv(exec.GoVariadicFuncAddr(vfn.addr), arity)
+			out.CallGoFunv(exec.GoVariadicFuncAddr(vfn.addr), arity)
 		}
 		ctx.infer.Ret(uint32(len(v.Args)+1), ret)
 		return
