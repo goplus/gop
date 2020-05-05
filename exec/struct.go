@@ -65,7 +65,12 @@ func (ctx *Context) getVar(idx uint32) interface{} {
 }
 
 func (ctx *Context) setVar(idx uint32, v interface{}) {
-	ctx.vars.Field(int(idx)).Set(reflect.ValueOf(v))
+	x := ctx.vars.Field(int(idx))
+	if v != nil {
+		x.Set(reflect.ValueOf(v))
+		return
+	}
+	x.Set(reflect.Zero(x.Type()))
 }
 
 // -----------------------------------------------------------------------------

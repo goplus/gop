@@ -79,8 +79,7 @@ func NewPackage(out *exec.Builder, pkg *ast.Package) (p *Package, err error) {
 		funcs: make(map[string]*funcDecl),
 	}
 	ctx := newPkgCtx(out)
-	for name, f := range pkg.Files {
-		log.Debug("file:", name)
+	for _, f := range pkg.Files {
 		p.loadFile(ctx, f)
 	}
 	if pkg.Name == "main" {

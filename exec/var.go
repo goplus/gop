@@ -2,7 +2,6 @@ package exec
 
 import (
 	"reflect"
-	"strings"
 
 	"github.com/qiniu/x/log"
 )
@@ -256,7 +255,7 @@ type Var struct {
 
 // NewVar creates a variable instance.
 func NewVar(typ reflect.Type, name string) *Var {
-	return &Var{Type: typ, Name: strings.ToTitle(name), idx: ^uint32(0)}
+	return &Var{Type: typ, Name: "Q" + name, idx: ^uint32(0)}
 }
 
 func (p *Var) isGlobal() bool {

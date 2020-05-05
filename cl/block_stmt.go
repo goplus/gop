@@ -77,11 +77,12 @@ func (p *Package) compileBlockStmt(ctx *blockCtx, body *ast.BlockStmt) {
 
 func (p *Package) compileExprStmt(ctx *blockCtx, expr *ast.ExprStmt) {
 	p.compileExpr(ctx, expr.X, 0)
+	ctx.infer.PopN(1)
 }
 
 func (p *Package) compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 	if ctx.infer.Len() != 0 {
-		log.Fatalln("compileAssignStmt internal error: infer stack is not empty.")
+		log.Panicln("compileAssignStmt internal error: infer stack is not empty.")
 	}
 	if len(expr.Rhs) == 1 {
 		p.compileExpr(ctx, expr.Rhs[0], 0)
@@ -207,41 +208,39 @@ func (p *Package) compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr, mode compl
 		}
 		return
 	}
-	log.Println("compileBinaryExpr: not impl")
-	/*	kind, op := inferBinaryOp(v.Op, x, y)
-		ret := &operatorResult{kind: kind, op: op}
-		if mode == inferOnly {
-			ctx.infer.Ret(2, ret)
-			return
-		}
-		p.compileExpr(ctx, v.X, 0)
-		p.compileExpr(ctx, v.Y, 0)
-		x = ctx.infer.Get(-2)
-		y = ctx.infer.Get(-1)
-		checkBinaryOp(kind, op, x, y, p.out)
-		p.out.BuiltinOp(kind, op)
-		ctx.infer.Ret(4, ret)
-	*/
+	kind, ret := binaryOpResult(op, x, y)
+	if mode == inferOnly {
+		ctx.infer.Ret(2, ret)
+		return
+	}
+	p.compileExpr(ctx, v.X, 0)
+	p.compileExpr(ctx, v.Y, 0)
+	x = ctx.infer.Get(-2)
+	y = ctx.infer.Get(-1)
+	checkBinaryOp(kind, op, x, y, ctx.out)
+	ctx.out.BuiltinOp(kind, op)
+	ctx.infer.Ret(4, ret)
 }
 
-/*
-func inferBinaryOp(tok token.Token, x, y interface{}) (kind exec.Kind, op exec.Operator) {
-	tx := x.(iValue).TypeOf()
-	ty := y.(iValue).TypeOf()
-	op = binaryOps[tok]
-	if tx.NumValues() != 1 || ty.NumValues() != 1 {
-		log.Fatalln("inferBinaryOp failed: argument isn't an expr.")
+func binaryOpResult(op exec.Operator, x, y interface{}) (exec.Kind, iValue) {
+	vx := x.(iValue)
+	vy := y.(iValue)
+	if vx.NumValues() != 1 || vy.NumValues() != 1 {
+		log.Fatalln("binaryOp: argument isn't an expr.")
 	}
-	kind = tx.TypeValue(0).Kind()
+	kind := vx.Kind()
 	if !astutil.IsConstBound(kind) {
-		kind = ty.TypeValue(0).Kind()
+		kind = vy.Kind()
 		if !astutil.IsConstBound(kind) {
-			log.Fatalln("inferBinaryOp failed: expect x, y aren't const values either.")
+			log.Fatalln("binaryOp: expect x, y aren't const values either.")
 		}
 	}
-	return
+	i := op.GetInfo()
+	if i.Out != exec.SameAsFirst {
+		kind = i.Out
+	}
+	return kind, &goValue{t: exec.TypeFromKind(kind)}
 }
-*/
 
 var binaryOps = [...]exec.Operator{
 	token.ADD:     exec.OpAdd,

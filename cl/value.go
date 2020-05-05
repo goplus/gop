@@ -8,43 +8,31 @@ import (
 	"github.com/qiniu/x/log"
 )
 
+type iKind = astutil.ConstKind
+
 // iValue represents a qlang value(s).
 //  - *goFunc
 //  - *goValue
 //  - *constVal
 //  - *funcResult
-//  - *operatorResult
 type iValue interface {
-	TypeOf() reflect.Type
+	Type() reflect.Type
+	Kind() iKind
 	Value(i int) iValue
 	NumValues() int
 }
 
-// -----------------------------------------------------------------------------
-/*
-type operatorResult struct {
-	kind exec.Kind
-	op   exec.Operator
-}
-
-func (p *operatorResult) TypeOf() iType {
-	op := p.op.GetInfo()
-	var kind exec.Kind
-	if op.Out == exec.SameAsFirst {
-		kind = p.kind
-	} else {
-		kind = op.Out
-	}
-	return &goType{t: exec.TypeFromKind(kind)}
-}
-*/
 // -----------------------------------------------------------------------------
 
 type goValue struct {
 	t reflect.Type
 }
 
-func (p *goValue) TypeOf() reflect.Type {
+func (p *goValue) Kind() iKind {
+	return p.t.Kind()
+}
+
+func (p *goValue) Type() reflect.Type {
 	return p.t
 }
 
@@ -62,7 +50,11 @@ type funcResults struct {
 	tfn reflect.Type
 }
 
-func (p *funcResults) TypeOf() reflect.Type {
+func (p *funcResults) Kind() iKind {
+	panic("don't call me")
+}
+
+func (p *funcResults) Type() reflect.Type {
 	panic("don't call me")
 }
 
@@ -102,7 +94,11 @@ func newGoFunc(addr uint32, kind exec.SymbolKind) *goFunc {
 	return &goFunc{v: fi, addr: addr, kind: kind}
 }
 
-func (p *goFunc) TypeOf() reflect.Type {
+func (p *goFunc) Kind() iKind {
+	return p.Type().Kind()
+}
+
+func (p *goFunc) Type() reflect.Type {
 	return reflect.TypeOf(p.v.This)
 }
 
@@ -126,11 +122,15 @@ func (p *goFunc) Proto() iFuncType {
 
 type constVal struct {
 	v       interface{}
-	kind    astutil.ConstKind
+	kind    iKind
 	reserve exec.Reserved
 }
 
-func (p *constVal) TypeOf() reflect.Type {
+func (p *constVal) Kind() iKind {
+	return p.kind
+}
+
+func (p *constVal) Type() reflect.Type {
 	if astutil.IsConstBound(p.kind) {
 		return exec.TypeFromKind(p.kind)
 	}
@@ -168,7 +168,7 @@ func boundType(in iValue) reflect.Type {
 	if v, ok := in.(*constVal); ok {
 		return v.boundType()
 	}
-	return in.TypeOf()
+	return in.Type()
 }
 
 func (p *constVal) bound(t reflect.Type, b *exec.Builder) {
