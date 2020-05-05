@@ -38,6 +38,14 @@ const autogenHeader = `
 package exec
 `
 
+const autogenBinaryOpUintTempl = `
+func exec$Op$Type(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].($type) $op toUint(p.data[n-1])
+	p.data = p.data[:n-1]
+}
+`
+
 const autogenBinaryOpTempl = `
 func exec$Op$Type(i Instr, p *Context) {
 	n := len(p.data)
@@ -45,6 +53,7 @@ func exec$Op$Type(i Instr, p *Context) {
 	p.data = p.data[:n-1]
 }
 `
+
 const autogenUnaryOpTempl = `
 func exec$Op$Type(i Instr, p *Context) {
 	n := len(p.data)
@@ -64,13 +73,12 @@ const autogenBuiltinOpFooter = `
 
 func autogenWithTempl(f *os.File, op Operator, Op string, templ string) {
 	i := op.GetInfo()
-	if i.InSecond == bitsAllIntUint {
-		return
-	}
 	if templ == "" {
 		templ = autogenBinaryOpTempl
 		if i.InSecond == bitNone {
 			templ = autogenUnaryOpTempl
+		} else if i.InSecond == bitsAllIntUint {
+			templ = autogenBinaryOpUintTempl
 		}
 	}
 	for kind := Bool; kind <= UnsafePointer; kind++ {

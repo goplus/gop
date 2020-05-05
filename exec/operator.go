@@ -5,6 +5,8 @@ import (
 	"reflect"
 	"strconv"
 	"unsafe"
+
+	"github.com/qiniu/x/log"
 )
 
 // -----------------------------------------------------------------------------
@@ -286,6 +288,36 @@ func SizeofKind(kind Kind) uintptr {
 }
 
 // -----------------------------------------------------------------------------
+
+func toUint(v interface{}) uint {
+	switch n := v.(type) {
+	case int:
+		return uint(n)
+	case uint:
+		return uint(n)
+	case uint32:
+		return uint(n)
+	case int32:
+		return uint(n)
+	case uint64:
+		return uint(n)
+	case int64:
+		return uint(n)
+	case uintptr:
+		return uint(n)
+	case uint16:
+		return uint(n)
+	case int16:
+		return uint(n)
+	case uint8:
+		return uint(n)
+	case int8:
+		return uint(n)
+	default:
+		log.Panicln("toUint failed: unsupport type -", reflect.TypeOf(v))
+		return 0
+	}
+}
 
 func execBuiltinOp(i Instr, p *Context) {
 	if fn := builtinOps[int(i&bitsOperand)]; fn != nil {

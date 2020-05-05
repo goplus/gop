@@ -117,6 +117,28 @@ var builtinOps = [...]func(i Instr, p *Context){
 	(int(Uint32) << bitsOperator) | int(OpBitAndNot):  execBitAndNotUint32,
 	(int(Uint64) << bitsOperator) | int(OpBitAndNot):  execBitAndNotUint64,
 	(int(Uintptr) << bitsOperator) | int(OpBitAndNot): execBitAndNotUintptr,
+	(int(Int) << bitsOperator) | int(OpBitSHL):        execBitSHLInt,
+	(int(Int8) << bitsOperator) | int(OpBitSHL):       execBitSHLInt8,
+	(int(Int16) << bitsOperator) | int(OpBitSHL):      execBitSHLInt16,
+	(int(Int32) << bitsOperator) | int(OpBitSHL):      execBitSHLInt32,
+	(int(Int64) << bitsOperator) | int(OpBitSHL):      execBitSHLInt64,
+	(int(Uint) << bitsOperator) | int(OpBitSHL):       execBitSHLUint,
+	(int(Uint8) << bitsOperator) | int(OpBitSHL):      execBitSHLUint8,
+	(int(Uint16) << bitsOperator) | int(OpBitSHL):     execBitSHLUint16,
+	(int(Uint32) << bitsOperator) | int(OpBitSHL):     execBitSHLUint32,
+	(int(Uint64) << bitsOperator) | int(OpBitSHL):     execBitSHLUint64,
+	(int(Uintptr) << bitsOperator) | int(OpBitSHL):    execBitSHLUintptr,
+	(int(Int) << bitsOperator) | int(OpBitSHR):        execBitSHRInt,
+	(int(Int8) << bitsOperator) | int(OpBitSHR):       execBitSHRInt8,
+	(int(Int16) << bitsOperator) | int(OpBitSHR):      execBitSHRInt16,
+	(int(Int32) << bitsOperator) | int(OpBitSHR):      execBitSHRInt32,
+	(int(Int64) << bitsOperator) | int(OpBitSHR):      execBitSHRInt64,
+	(int(Uint) << bitsOperator) | int(OpBitSHR):       execBitSHRUint,
+	(int(Uint8) << bitsOperator) | int(OpBitSHR):      execBitSHRUint8,
+	(int(Uint16) << bitsOperator) | int(OpBitSHR):     execBitSHRUint16,
+	(int(Uint32) << bitsOperator) | int(OpBitSHR):     execBitSHRUint32,
+	(int(Uint64) << bitsOperator) | int(OpBitSHR):     execBitSHRUint64,
+	(int(Uintptr) << bitsOperator) | int(OpBitSHR):    execBitSHRUintptr,
 	(int(Int) << bitsOperator) | int(OpLT):            execLTInt,
 	(int(Int8) << bitsOperator) | int(OpLT):           execLTInt8,
 	(int(Int16) << bitsOperator) | int(OpLT):          execLTInt16,
@@ -929,6 +951,138 @@ func execBitAndNotUint64(i Instr, p *Context) {
 func execBitAndNotUintptr(i Instr, p *Context) {
 	n := len(p.data)
 	p.data[n-2] = p.data[n-2].(uintptr) &^ p.data[n-1].(uintptr)
+	p.data = p.data[:n-1]
+}
+
+func execBitSHLInt(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int) << toUint(p.data[n-1])
+	p.data = p.data[:n-1]
+}
+
+func execBitSHLInt8(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int8) << toUint(p.data[n-1])
+	p.data = p.data[:n-1]
+}
+
+func execBitSHLInt16(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int16) << toUint(p.data[n-1])
+	p.data = p.data[:n-1]
+}
+
+func execBitSHLInt32(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int32) << toUint(p.data[n-1])
+	p.data = p.data[:n-1]
+}
+
+func execBitSHLInt64(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int64) << toUint(p.data[n-1])
+	p.data = p.data[:n-1]
+}
+
+func execBitSHLUint(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint) << toUint(p.data[n-1])
+	p.data = p.data[:n-1]
+}
+
+func execBitSHLUint8(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint8) << toUint(p.data[n-1])
+	p.data = p.data[:n-1]
+}
+
+func execBitSHLUint16(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint16) << toUint(p.data[n-1])
+	p.data = p.data[:n-1]
+}
+
+func execBitSHLUint32(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint32) << toUint(p.data[n-1])
+	p.data = p.data[:n-1]
+}
+
+func execBitSHLUint64(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint64) << toUint(p.data[n-1])
+	p.data = p.data[:n-1]
+}
+
+func execBitSHLUintptr(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uintptr) << toUint(p.data[n-1])
+	p.data = p.data[:n-1]
+}
+
+func execBitSHRInt(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int) >> toUint(p.data[n-1])
+	p.data = p.data[:n-1]
+}
+
+func execBitSHRInt8(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int8) >> toUint(p.data[n-1])
+	p.data = p.data[:n-1]
+}
+
+func execBitSHRInt16(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int16) >> toUint(p.data[n-1])
+	p.data = p.data[:n-1]
+}
+
+func execBitSHRInt32(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int32) >> toUint(p.data[n-1])
+	p.data = p.data[:n-1]
+}
+
+func execBitSHRInt64(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(int64) >> toUint(p.data[n-1])
+	p.data = p.data[:n-1]
+}
+
+func execBitSHRUint(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint) >> toUint(p.data[n-1])
+	p.data = p.data[:n-1]
+}
+
+func execBitSHRUint8(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint8) >> toUint(p.data[n-1])
+	p.data = p.data[:n-1]
+}
+
+func execBitSHRUint16(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint16) >> toUint(p.data[n-1])
+	p.data = p.data[:n-1]
+}
+
+func execBitSHRUint32(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint32) >> toUint(p.data[n-1])
+	p.data = p.data[:n-1]
+}
+
+func execBitSHRUint64(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uint64) >> toUint(p.data[n-1])
+	p.data = p.data[:n-1]
+}
+
+func execBitSHRUintptr(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(uintptr) >> toUint(p.data[n-1])
 	p.data = p.data[:n-1]
 }
 
