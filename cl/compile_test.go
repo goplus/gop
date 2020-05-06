@@ -11,6 +11,8 @@ import (
 	"github.com/qiniu/x/log"
 
 	_ "github.com/qiniu/qlang/lib/builtin"
+	_ "github.com/qiniu/qlang/lib/fmt"
+	_ "github.com/qiniu/qlang/lib/strings"
 )
 
 func init() {
@@ -194,7 +196,7 @@ var fsTestGoPackage = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	fmt.Println("x:", x)
 `)
 
-func _TestGoPackage(t *testing.T) {
+func TestGoPackage(t *testing.T) {
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseFSDir(fset, fsTestGoPackage, "/foo", nil, 0)
 	if err != nil || len(pkgs) != 1 {
@@ -211,8 +213,12 @@ func _TestGoPackage(t *testing.T) {
 
 	ctx := exec.NewContext(code, pkg.GetGlobalVars()...)
 	ctx.Exec(0, code.Len())
-	if ctx.Len() != 0 {
-		t.Fatal("error: stack not empty")
+	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(19) {
+		t.Fatal("n:", v)
 	}
 }
 

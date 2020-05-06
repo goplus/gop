@@ -282,7 +282,6 @@ func (p *Package) loadImport(ctx *fileCtx, spec *ast.ImportSpec) {
 		name = path.Base(pkgPath)
 	}
 	ctx.imports[name] = pkgPath
-	log.Debug("import:", name, pkgPath)
 }
 
 func (p *Package) loadTypes(d *ast.GenDecl) {

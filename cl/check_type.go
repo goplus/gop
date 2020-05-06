@@ -23,8 +23,8 @@ var (
 	ErrFuncArgCantBeMultiValue = errors.New("function argument expression can't be multi values")
 )
 
-func checkFuncCall(tfn iFuncType, args []interface{}, b *exec.Builder) (arity int) {
-	narg := tfn.NumIn()
+func checkFuncCall(tfn iFuncType, isMethod int, args []interface{}, b *exec.Builder) (arity int) {
+	narg := tfn.NumIn() - isMethod
 	variadic := tfn.IsVariadic()
 	if variadic {
 		narg--
@@ -32,15 +32,15 @@ func checkFuncCall(tfn iFuncType, args []interface{}, b *exec.Builder) (arity in
 	if len(args) == 1 {
 		n := args[0].(iValue).NumValues()
 		if n != 1 { // TODO
-			return n
+			return n + isMethod
 		}
 	}
 	for idx, arg := range args {
 		var treq reflect.Type
 		if variadic && idx >= narg {
-			treq = tfn.In(narg).Elem()
+			treq = tfn.In(narg + isMethod).Elem()
 		} else {
-			treq = tfn.In(idx)
+			treq = tfn.In(idx + isMethod)
 		}
 		if v, ok := arg.(*constVal); ok {
 			v.bound(treq, b)
@@ -54,7 +54,7 @@ func checkFuncCall(tfn iFuncType, args []interface{}, b *exec.Builder) (arity in
 			}
 		}
 	}
-	return len(args)
+	return len(args) + isMethod
 }
 
 func checkBinaryOp(kind exec.Kind, op exec.Operator, x, y interface{}, b *exec.Builder) {

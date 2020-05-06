@@ -13,6 +13,7 @@ type iKind = astutil.ConstKind
 // iValue represents a qlang value(s).
 //  - *goFunc
 //  - *goValue
+//  - *nonValue
 //  - *constVal
 //  - *funcResult
 type iValue interface {
@@ -41,6 +42,28 @@ func (p *goValue) NumValues() int {
 }
 
 func (p *goValue) Value(i int) iValue {
+	return p
+}
+
+// -----------------------------------------------------------------------------
+
+type nonValue struct {
+	v interface{} // *exec.GoPackage, type, etc.
+}
+
+func (p *nonValue) Kind() iKind {
+	return reflect.Invalid
+}
+
+func (p *nonValue) Type() reflect.Type {
+	return nil
+}
+
+func (p *nonValue) NumValues() int {
+	return 0
+}
+
+func (p *nonValue) Value(i int) iValue {
 	return p
 }
 
@@ -76,12 +99,13 @@ func newFuncResults(tfn reflect.Type) iValue {
 // -----------------------------------------------------------------------------
 
 type goFunc struct {
-	v    *exec.GoFuncInfo
-	addr uint32
-	kind exec.SymbolKind
+	v        *exec.GoFuncInfo
+	addr     uint32
+	kind     exec.SymbolKind
+	isMethod int // 0 - global func, 1 - method
 }
 
-func newGoFunc(addr uint32, kind exec.SymbolKind) *goFunc {
+func newGoFunc(addr uint32, kind exec.SymbolKind, isMethod int) *goFunc {
 	var fi *exec.GoFuncInfo
 	switch kind {
 	case exec.SymbolFunc:
@@ -91,7 +115,7 @@ func newGoFunc(addr uint32, kind exec.SymbolKind) *goFunc {
 	default:
 		log.Panicln("getGoFunc: unknown -", kind, addr)
 	}
-	return &goFunc{v: fi, addr: addr, kind: kind}
+	return &goFunc{v: fi, addr: addr, kind: kind, isMethod: isMethod}
 }
 
 func (p *goFunc) Kind() iKind {

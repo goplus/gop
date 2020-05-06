@@ -2,6 +2,7 @@ package cl
 
 import (
 	"reflect"
+	"strings"
 	"syscall"
 
 	"github.com/qiniu/qlang/ast"
@@ -110,14 +111,23 @@ func (p *Package) compileIdent(ctx *blockCtx, name string, mode compleMode) {
 		checkType(addr.Type, in, ctx.out)
 		ctx.infer.PopN(1)
 		ctx.out.StoreVar(addr)
-	} else if addr, err := ctx.findVar(name); err == nil {
-		ctx.infer.Push(&goValue{t: addr.Type})
-		if mode == inferOnly {
-			return
+	} else if sym, ok := ctx.find(name); ok {
+		switch v := sym.(type) {
+		case *exec.Var:
+			ctx.infer.Push(&goValue{t: v.Type})
+			if mode == inferOnly {
+				return
+			}
+			ctx.out.LoadVar(v)
+		case string: // pkgPath
+			pkg := exec.Package(v)
+			if pkg == nil {
+				log.Panicln("compileIdent failed: package not found -", v)
+			}
+			ctx.infer.Push(&nonValue{pkg})
+		default:
+			log.Panicln("compileIdent failed: unknown -", reflect.TypeOf(sym))
 		}
-		ctx.out.LoadVar(addr)
-	} else if false {
-		// ...
 	} else {
 		addr, kind, ok := ctx.builtin.Find(name)
 		if !ok {
@@ -126,7 +136,7 @@ func (p *Package) compileIdent(ctx *blockCtx, name string, mode compleMode) {
 		switch kind {
 		case exec.SymbolVar:
 		case exec.SymbolFunc, exec.SymbolVariadicFunc:
-			ctx.infer.Push(newGoFunc(addr, kind))
+			ctx.infer.Push(newGoFunc(addr, kind, 0))
 			if mode == inferOnly {
 				return
 			}
@@ -243,20 +253,23 @@ func (p *Package) compileCallExpr(ctx *blockCtx, v *ast.CallExpr, mode compleMod
 			ctx.infer.Ret(1, ret)
 			return
 		}
+		if vfn.isMethod != 0 {
+			p.compileExpr(ctx, v.Fun.(*ast.SelectorExpr).X, 0)
+		}
 		for _, arg := range v.Args {
 			p.compileExpr(ctx, arg, 0)
 		}
 		nargs := uint32(len(v.Args))
 		args := ctx.infer.GetArgs(nargs)
 		out := ctx.out
-		arity := checkFuncCall(vfn.Proto(), args, out)
+		arity := checkFuncCall(vfn.Proto(), vfn.isMethod, args, out)
 		switch vfn.kind {
 		case exec.SymbolFunc:
 			out.CallGoFun(exec.GoFuncAddr(vfn.addr))
 		case exec.SymbolVariadicFunc:
 			out.CallGoFunv(exec.GoVariadicFuncAddr(vfn.addr), arity)
 		}
-		ctx.infer.Ret(uint32(len(v.Args)+1), ret)
+		ctx.infer.Ret(uint32(len(v.Args)+1+vfn.isMethod), ret)
 		return
 	}
 	log.Panicln("compileCallExpr failed: unknown -", reflect.TypeOf(fn))
@@ -266,9 +279,66 @@ func (p *Package) compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, mode c
 	p.compileExpr(ctx, v.X, inferOnly)
 	x := ctx.infer.Get(-1)
 	switch vx := x.(type) {
+	case *nonValue:
+		switch nv := vx.v.(type) {
+		case *exec.GoPackage:
+			addr, kind, ok := nv.Find(v.Sel.Name)
+			if !ok {
+				log.Panicln("compileSelectorExpr: not found -", nv.PkgPath, v.Sel.Name)
+			}
+			switch kind {
+			case exec.SymbolFunc, exec.SymbolVariadicFunc:
+				ctx.infer.Ret(1, newGoFunc(addr, kind, 0))
+				if mode == inferOnly {
+					return
+				}
+				log.Panicln("compileSelectorExpr: todo")
+			default:
+				log.Panicln("compileSelectorExpr: unknown GoPackage symbol kind -", kind)
+			}
+		default:
+			log.Panicln("compileSelectorExpr: unknown nonValue -", reflect.TypeOf(nv))
+		}
+	case *goValue:
+		n, t := countPtr(vx.t)
+		name := v.Sel.Name
+		if sf, ok := t.FieldByName(name); ok {
+			log.Panicln("compileSelectorExpr todo: structField -", t, sf)
+		}
+		pkgPath, method := normalizeMethod(n, t, name)
+		pkg := exec.Package(pkgPath)
+		if pkg == nil {
+			log.Panicln("compileSelectorExpr failed: package not found -", pkgPath)
+		}
+		addr, kind, ok := pkg.Find(method)
+		if !ok {
+			log.Panicln("compileSelectorExpr: method not found -", method)
+		}
+		ctx.infer.Ret(1, newGoFunc(addr, kind, 1))
+		if mode == inferOnly {
+			return
+		}
+		log.Panicln("compileSelectorExpr: todo")
 	default:
 		log.Panicln("compileSelectorExpr failed: unknown -", reflect.TypeOf(vx))
 	}
+}
+
+func countPtr(t reflect.Type) (int, reflect.Type) {
+	n := 0
+	for t.Kind() == reflect.Ptr {
+		t = t.Elem()
+		n++
+	}
+	return n, t
+}
+
+func normalizeMethod(n int, t reflect.Type, name string) (pkgPath string, formalName string) {
+	typName := t.Name()
+	if n > 0 {
+		typName = strings.Repeat("*", n) + typName
+	}
+	return t.PkgPath(), "(" + typName + ")." + name
 }
 
 // -----------------------------------------------------------------------------
