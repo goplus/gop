@@ -60,7 +60,7 @@ func newFileCtx(block *blockCtx) *fileCtx {
 // - funcName => *funcDecl
 // - typeName => *typeDecl
 //
-type iGblSymbol = interface{}
+type iSymbol = interface{}
 
 type blockCtx struct {
 	*pkgCtx
@@ -68,14 +68,14 @@ type blockCtx struct {
 	parent *blockCtx
 
 	vlist []*exec.Var
-	syms  map[string]iGblSymbol
+	syms  map[string]iSymbol
 }
 
 func newGblBlockCtx(pkg *pkgCtx, parent *blockCtx) *blockCtx {
 	return &blockCtx{
 		pkgCtx: pkg,
 		parent: parent,
-		syms:   make(map[string]iGblSymbol),
+		syms:   make(map[string]iSymbol),
 	}
 }
 
@@ -205,7 +205,7 @@ type funcDecl struct {
 // A Package represents a qlang package.
 type Package struct {
 	vlist []*exec.Var
-	syms  map[string]iGblSymbol
+	syms  map[string]iSymbol
 }
 
 // NewPackage creates a qlang package instance.

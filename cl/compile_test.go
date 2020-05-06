@@ -190,9 +190,9 @@ func TestVarOp(t *testing.T) {
 
 var fsTestGoPackage = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	import "fmt"
-	import "strings"
+	import gostrings "strings"
 
-	x := strings.NewReplacer("?", "!").Replace("hello, world???")
+	x := gostrings.NewReplacer("?", "!").Replace("hello, world???")
 	fmt.Println("x:", x)
 `)
 
