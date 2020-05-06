@@ -14,8 +14,20 @@ import (
 )
 
 var (
+	// ErrNotFound error.
+	ErrNotFound = syscall.ENOENT
+
 	// ErrMainFuncNotFound error.
 	ErrMainFuncNotFound = errors.New("main function not found")
+
+	// ErrSymbolNotVariable error.
+	ErrSymbolNotVariable = errors.New("symbol exists but not a variable")
+
+	// ErrSymbolNotFunc error.
+	ErrSymbolNotFunc = errors.New("symbol exists but not a func")
+
+	// ErrSymbolNotType error.
+	ErrSymbolNotType = errors.New("symbol exists but not a type")
 )
 
 // -----------------------------------------------------------------------------
@@ -33,17 +45,22 @@ func newPkgCtx(out *exec.Builder) *pkgCtx {
 }
 
 type fileCtx struct {
-	pkg     *pkgCtx
-	imports map[string]string
+	*blockCtx // it's global blockCtx
+	imports   map[string]string
 }
 
-func newFileCtx(pkg *pkgCtx) *fileCtx {
-	return &fileCtx{pkg: pkg, imports: make(map[string]string)}
+func newFileCtx(block *blockCtx) *fileCtx {
+	return &fileCtx{blockCtx: block, imports: make(map[string]string)}
 }
 
 // -----------------------------------------------------------------------------
 
-type iSymbol = interface{}
+// - varName => *exec.Var
+// - pkgName => pkgPath
+// - funcName => *funcDecl
+// - typeName => *typeDecl
+//
+type iGblSymbol = interface{}
 
 type blockCtx struct {
 	*pkgCtx
@@ -51,32 +68,75 @@ type blockCtx struct {
 	parent *blockCtx
 
 	vlist []*exec.Var
-	syms  map[string]iSymbol
+	syms  map[string]iGblSymbol
 }
 
-func newBlockCtx(file *fileCtx, parent *blockCtx) *blockCtx {
+func newGblBlockCtx(pkg *pkgCtx, parent *blockCtx) *blockCtx {
 	return &blockCtx{
-		pkgCtx: file.pkg,
-		file:   file,
+		pkgCtx: pkg,
 		parent: parent,
-		syms:   make(map[string]iSymbol),
+		syms:   make(map[string]iGblSymbol),
 	}
+}
+
+func (p *blockCtx) exists(name string) (ok bool) {
+	if _, ok = p.syms[name]; ok {
+		return
+	}
+	if p.parent == nil { // it's global blockCtx
+		_, ok = p.file.imports[name]
+	}
+	return
+}
+
+func (p *blockCtx) find(name string) (sym interface{}, ok bool) {
+	ctx := p
+	for ; p != nil; p = p.parent {
+		if sym, ok = p.syms[name]; ok {
+			return
+		}
+	}
+	if ctx.parent == nil { // it's global blockCtx
+		sym, ok = ctx.file.imports[name]
+	}
+	return
+}
+
+func (p *blockCtx) findType(name string) (decl *typeDecl, err error) {
+	v, ok := p.find(name)
+	if !ok {
+		return nil, ErrNotFound
+	}
+	if decl, ok = v.(*typeDecl); ok {
+		return
+	}
+	return nil, ErrSymbolNotType
+}
+
+func (p *blockCtx) findFunc(name string) (addr *funcDecl, err error) {
+	v, ok := p.find(name)
+	if !ok {
+		return nil, ErrNotFound
+	}
+	if addr, ok = v.(*funcDecl); ok {
+		return
+	}
+	return nil, ErrSymbolNotFunc
 }
 
 func (p *blockCtx) findVar(name string) (addr *exec.Var, err error) {
-	for ; p != nil; p = p.parent {
-		if v, ok := p.syms[name]; ok {
-			if addr, ok = v.(*exec.Var); ok {
-				return
-			}
-			return nil, syscall.EEXIST // exists, but not a variable
-		}
+	v, ok := p.find(name)
+	if !ok {
+		return nil, ErrNotFound
 	}
-	return nil, syscall.ENOENT // not found
+	if addr, ok = v.(*exec.Var); ok {
+		return
+	}
+	return nil, ErrSymbolNotVariable
 }
 
 func (p *blockCtx) insertVar(name string, typ reflect.Type) *exec.Var {
-	if _, ok := p.syms[name]; ok {
+	if p.exists(name) {
 		log.Panicln("insertVar failed: symbol exists -", name)
 	}
 	idx := uint32(len(p.vlist))
@@ -85,6 +145,36 @@ func (p *blockCtx) insertVar(name string, typ reflect.Type) *exec.Var {
 	p.syms[name] = v
 	p.vlist = append(p.vlist, v)
 	return v
+}
+
+func (p *blockCtx) insertFunc(name string, fun *funcDecl) {
+	if p.exists(name) {
+		log.Panicln("insertFunc failed: symbol exists -", name)
+	}
+	p.syms[name] = fun
+}
+
+func (p *blockCtx) insertMethod(typeName, methodName string, method *methodDecl) {
+	if p.parent != nil {
+		log.Panicln("insertMethod failed: unexpected - non global method declaration?")
+	}
+	typ, err := p.findType(typeName)
+	if err == ErrNotFound {
+		typ = new(typeDecl)
+		p.syms[typeName] = typ
+	} else if err != nil {
+		log.Panicln("insertMethod failed:", err)
+	} else if typ.Alias {
+		log.Panicln("insertMethod failed: alias?")
+	}
+	if typ.Methods == nil {
+		typ.Methods = map[string]*methodDecl{methodName: method}
+	} else {
+		if _, ok := typ.Methods[methodName]; ok {
+			log.Panicln("insertMethod failed: method exists -", typeName, methodName)
+		}
+		typ.Methods[methodName] = method
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -98,7 +188,7 @@ type methodDecl struct {
 	Pointer int
 	Type    *funcTypeDecl
 	Body    *ast.BlockStmt
-	ctx     *fileCtx
+	file    *fileCtx
 }
 
 type typeDecl struct {
@@ -109,35 +199,36 @@ type typeDecl struct {
 type funcDecl struct {
 	Type *funcTypeDecl
 	Body *ast.BlockStmt
-	ctx  *fileCtx
+	file *fileCtx
 }
 
 // A Package represents a qlang package.
 type Package struct {
-	types map[string]*typeDecl
-	funcs map[string]*funcDecl
 	vlist []*exec.Var
+	syms  map[string]iGblSymbol
 }
 
 // NewPackage creates a qlang package instance.
 func NewPackage(out *exec.Builder, pkg *ast.Package) (p *Package, err error) {
-	p = &Package{
-		types: make(map[string]*typeDecl),
-		funcs: make(map[string]*funcDecl),
-	}
-	ctx := newPkgCtx(out)
+	p = &Package{}
+	ctxPkg := newPkgCtx(out)
+	ctx := newGblBlockCtx(ctxPkg, nil)
 	for _, f := range pkg.Files {
 		p.loadFile(ctx, f)
 	}
 	if pkg.Name == "main" {
-		entry, ok := p.funcs["main"]
-		if !ok {
-			return p, ErrMainFuncNotFound
+		entry, err := ctx.findFunc("main")
+		if err != nil {
+			if err == ErrNotFound {
+				err = ErrMainFuncNotFound
+			}
+			return p, err
 		}
-		block := newBlockCtx(entry.ctx, nil)
-		p.compileBlockStmt(block, entry.Body)
-		p.vlist = block.vlist
+		ctx.file = entry.file
+		p.compileBlockStmt(ctx, entry.Body)
 	}
+	p.vlist = ctx.vlist
+	p.syms = ctx.syms
 	return
 }
 
@@ -146,8 +237,9 @@ func (p *Package) GetGlobalVars() []*exec.Var {
 	return p.vlist
 }
 
-func (p *Package) loadFile(pkg *pkgCtx, f *ast.File) {
-	ctx := newFileCtx(pkg)
+func (p *Package) loadFile(block *blockCtx, f *ast.File) {
+	ctx := newFileCtx(block)
+	block.file = ctx
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
@@ -218,46 +310,21 @@ func (p *Package) loadFunc(ctx *fileCtx, d *ast.FuncDecl) {
 	var name = d.Name.Name
 	if d.Recv != nil {
 		recv := astutil.ToRecv(d.Recv)
-		p.insertMethod(recv.Type, name, &methodDecl{
+		ctx.insertMethod(recv.Type, name, &methodDecl{
 			Recv:    recv.Name,
 			Pointer: recv.Pointer,
 			Type:    &funcTypeDecl{X: d.Type},
 			Body:    d.Body,
-			ctx:     ctx,
+			file:    ctx,
 		})
 	} else if name == "init" {
 		log.Panicln("loadFunc TODO: init")
 	} else {
-		p.insertFunc(name, &funcDecl{
+		ctx.insertFunc(name, &funcDecl{
 			Type: &funcTypeDecl{X: d.Type},
 			Body: d.Body,
-			ctx:  ctx,
+			file: ctx,
 		})
-	}
-}
-
-func (p *Package) insertFunc(name string, fun *funcDecl) {
-	if _, ok := p.funcs[name]; ok {
-		log.Panicln("insertFunc failed: func exists -", name)
-	}
-	p.funcs[name] = fun
-}
-
-func (p *Package) insertMethod(typeName, methodName string, method *methodDecl) {
-	typ, ok := p.types[typeName]
-	if !ok {
-		typ = new(typeDecl)
-		p.types[typeName] = typ
-	} else if typ.Alias {
-		log.Panicln("insertMethod failed: alias?")
-	}
-	if typ.Methods == nil {
-		typ.Methods = map[string]*methodDecl{methodName: method}
-	} else {
-		if _, ok := typ.Methods[methodName]; ok {
-			log.Panicln("insertMethod failed: method exists -", typeName, methodName)
-		}
-		typ.Methods[methodName] = method
 	}
 }
 

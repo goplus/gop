@@ -99,7 +99,7 @@ func (p *Package) compileIdent(ctx *blockCtx, name string, mode compleMode) {
 		addr, err := ctx.findVar(name)
 		if err == nil {
 			if mode == lhsDefine && addr.NestDepth != ctx.out.NestDepth {
-				log.Panicln("requireVar failed: variable is shadowed -", name)
+				log.Warn("requireVar: variable is shadowed -", name)
 			}
 		} else if mode == lhsAssign || err != syscall.ENOENT {
 			log.Panicln("compileIdent failed:", err)
