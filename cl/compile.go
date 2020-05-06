@@ -4,6 +4,7 @@ import (
 	"errors"
 	"path"
 	"reflect"
+	"syscall"
 
 	"github.com/qiniu/qlang/ast"
 	"github.com/qiniu/qlang/ast/astutil"
@@ -38,6 +39,52 @@ type fileCtx struct {
 
 func newFileCtx(pkg *pkgCtx) *fileCtx {
 	return &fileCtx{pkg: pkg, imports: make(map[string]string)}
+}
+
+// -----------------------------------------------------------------------------
+
+type iSymbol = interface{}
+
+type blockCtx struct {
+	*pkgCtx
+	file   *fileCtx
+	parent *blockCtx
+
+	vlist []*exec.Var
+	syms  map[string]iSymbol
+}
+
+func newBlockCtx(file *fileCtx, parent *blockCtx) *blockCtx {
+	return &blockCtx{
+		pkgCtx: file.pkg,
+		file:   file,
+		parent: parent,
+		syms:   make(map[string]iSymbol),
+	}
+}
+
+func (p *blockCtx) findVar(name string) (addr *exec.Var, err error) {
+	for ; p != nil; p = p.parent {
+		if v, ok := p.syms[name]; ok {
+			if addr, ok = v.(*exec.Var); ok {
+				return
+			}
+			return nil, syscall.EEXIST // exists, but not a variable
+		}
+	}
+	return nil, syscall.ENOENT // not found
+}
+
+func (p *blockCtx) insertVar(name string, typ reflect.Type) *exec.Var {
+	if _, ok := p.syms[name]; ok {
+		log.Panicln("insertVar failed: symbol exists -", name)
+	}
+	idx := uint32(len(p.vlist))
+	v := exec.NewVar(typ, name)
+	v.SetAddr(p.out.NestDepth, idx)
+	p.syms[name] = v
+	p.vlist = append(p.vlist, v)
+	return v
 }
 
 // -----------------------------------------------------------------------------
@@ -116,10 +163,10 @@ func (p *Package) loadFile(pkg *pkgCtx, f *ast.File) {
 			case token.VAR:
 				p.loadVars(d)
 			default:
-				log.Fatalln("tok:", d.Tok, "spec:", reflect.TypeOf(d.Specs).Elem())
+				log.Panicln("tok:", d.Tok, "spec:", reflect.TypeOf(d.Specs).Elem())
 			}
 		default:
-			log.Fatalln("gopkg.Package.load: unknown decl -", reflect.TypeOf(decl))
+			log.Panicln("gopkg.Package.load: unknown decl -", reflect.TypeOf(decl))
 		}
 	}
 }
@@ -179,7 +226,7 @@ func (p *Package) loadFunc(ctx *fileCtx, d *ast.FuncDecl) {
 			ctx:     ctx,
 		})
 	} else if name == "init" {
-		log.Fatalln("loadFunc TODO: init")
+		log.Panicln("loadFunc TODO: init")
 	} else {
 		p.insertFunc(name, &funcDecl{
 			Type: &funcTypeDecl{X: d.Type},
@@ -191,7 +238,7 @@ func (p *Package) loadFunc(ctx *fileCtx, d *ast.FuncDecl) {
 
 func (p *Package) insertFunc(name string, fun *funcDecl) {
 	if _, ok := p.funcs[name]; ok {
-		log.Fatalln("insertFunc failed: func exists -", name)
+		log.Panicln("insertFunc failed: func exists -", name)
 	}
 	p.funcs[name] = fun
 }
@@ -202,13 +249,13 @@ func (p *Package) insertMethod(typeName, methodName string, method *methodDecl) 
 		typ = new(typeDecl)
 		p.types[typeName] = typ
 	} else if typ.Alias {
-		log.Fatalln("insertMethod failed: alias?")
+		log.Panicln("insertMethod failed: alias?")
 	}
 	if typ.Methods == nil {
 		typ.Methods = map[string]*methodDecl{methodName: method}
 	} else {
 		if _, ok := typ.Methods[methodName]; ok {
-			log.Fatalln("insertMethod failed: method exists -", typeName, methodName)
+			log.Panicln("insertMethod failed: method exists -", typeName, methodName)
 		}
 		typ.Methods[methodName] = method
 	}

@@ -48,9 +48,9 @@ func checkFuncCall(tfn iFuncType, args []interface{}, b *exec.Builder) (arity in
 		n := arg.(iValue).NumValues()
 		if n != 1 {
 			if n == 0 {
-				log.Fatalln("checkFuncCall:", ErrFuncArgNoReturnValue)
+				log.Panicln("checkFuncCall:", ErrFuncArgNoReturnValue)
 			} else {
-				log.Fatalln("checkFuncCall:", ErrFuncArgCantBeMultiValue)
+				log.Panicln("checkFuncCall:", ErrFuncArgCantBeMultiValue)
 			}
 		}
 	}
@@ -62,7 +62,7 @@ func checkBinaryOp(kind exec.Kind, op exec.Operator, x, y interface{}, b *exec.B
 		if xcons.reserve != -1 {
 			xv, ok := boundConst(xcons.v, exec.TypeFromKind(kind))
 			if !ok {
-				log.Fatalln("checkBinaryOp: invalid operator", kind, "argument type.")
+				log.Panicln("checkBinaryOp: invalid operator", kind, "argument type.")
 			}
 			xcons.reserve.Push(b, xv)
 		}
@@ -71,14 +71,14 @@ func checkBinaryOp(kind exec.Kind, op exec.Operator, x, y interface{}, b *exec.B
 		i := op.GetInfo()
 		if i.InSecond != (1 << exec.SameAsFirst) {
 			if (uint64(ycons.kind) & i.InSecond) == 0 {
-				log.Fatalln("checkBinaryOp: invalid operator", kind, "argument type.")
+				log.Panicln("checkBinaryOp: invalid operator", kind, "argument type.")
 			}
 			kind = ycons.boundKind()
 		}
 		if ycons.reserve != -1 {
 			yv, ok := boundConst(ycons.v, exec.TypeFromKind(kind))
 			if !ok {
-				log.Fatalln("checkBinaryOp: invalid operator", kind, "argument type.")
+				log.Panicln("checkBinaryOp: invalid operator", kind, "argument type.")
 			}
 			ycons.reserve.Push(b, yv)
 		}

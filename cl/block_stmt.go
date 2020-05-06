@@ -2,6 +2,7 @@ package cl
 
 import (
 	"reflect"
+	"syscall"
 
 	"github.com/qiniu/qlang/ast"
 	"github.com/qiniu/qlang/ast/astutil"
@@ -21,45 +22,6 @@ const (
 	lhsDefine compleMode = token.DEFINE // leftHandSide := ...
 )
 
-type blockCtx struct {
-	*pkgCtx
-	file   *fileCtx
-	parent *blockCtx
-
-	vlist []*exec.Var
-	vars  map[string]*exec.Var
-}
-
-func newBlockCtx(file *fileCtx, parent *blockCtx) *blockCtx {
-	return &blockCtx{
-		pkgCtx: file.pkg,
-		file:   file,
-		parent: parent,
-		vars:   make(map[string]*exec.Var),
-	}
-}
-
-func (p *blockCtx) findVar(name string) (addr *exec.Var, ok bool) {
-	for ; p != nil; p = p.parent {
-		if v, ok := p.vars[name]; ok {
-			return v, true
-		}
-	}
-	return
-}
-
-func (p *blockCtx) insertVar(name string, typ reflect.Type) *exec.Var {
-	if _, ok := p.vars[name]; ok {
-		log.Fatalln("insertVar failed: variable exists -", name)
-	}
-	idx := uint32(len(p.vlist))
-	v := exec.NewVar(typ, name)
-	v.SetAddr(p.out.NestDepth, idx)
-	p.vars[name] = v
-	p.vlist = append(p.vlist, v)
-	return v
-}
-
 // -----------------------------------------------------------------------------
 
 func (p *Package) compileBlockStmt(ctx *blockCtx, body *ast.BlockStmt) {
@@ -70,7 +32,7 @@ func (p *Package) compileBlockStmt(ctx *blockCtx, body *ast.BlockStmt) {
 		case *ast.AssignStmt:
 			p.compileAssignStmt(ctx, v)
 		default:
-			log.Fatalln("compileBlockStmt failed: unknown -", reflect.TypeOf(v))
+			log.Panicln("compileBlockStmt failed: unknown -", reflect.TypeOf(v))
 		}
 	}
 }
@@ -90,7 +52,7 @@ func (p *Package) compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		n := v.NumValues()
 		if n != 1 {
 			if n == 0 {
-				log.Fatalln("compileAssignStmt failed: expr has no return value.")
+				log.Panicln("compileAssignStmt failed: expr has no return value.")
 			}
 			rhs := make([]interface{}, n)
 			for i := 0; i < n; i++ {
@@ -102,12 +64,12 @@ func (p *Package) compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		for _, item := range expr.Rhs {
 			p.compileExpr(ctx, item, 0)
 			if ctx.infer.Get(-1).(iValue).NumValues() != 1 {
-				log.Fatalln("compileAssignStmt failed: expr has multiple values.")
+				log.Panicln("compileAssignStmt failed: expr has multiple values.")
 			}
 		}
 	}
 	if ctx.infer.Len() != len(expr.Lhs) {
-		log.Fatalln("compileAssignStmt failed: assign statment has mismatched variables count.")
+		log.Panicln("compileAssignStmt failed: assign statment has mismatched variables count.")
 	}
 	for i := len(expr.Lhs) - 1; i >= 0; i-- {
 		p.compileExpr(ctx, expr.Lhs[i], expr.Tok)
@@ -124,21 +86,23 @@ func (p *Package) compileExpr(ctx *blockCtx, expr ast.Expr, mode compleMode) {
 		p.compileCallExpr(ctx, v, mode)
 	case *ast.BinaryExpr:
 		p.compileBinaryExpr(ctx, v, mode)
+	case *ast.SelectorExpr:
+		p.compileSelectorExpr(ctx, v, mode)
 	default:
-		log.Fatalln("compileExpr failed: unknown -", reflect.TypeOf(v))
+		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
 	}
 }
 
 func (p *Package) compileIdent(ctx *blockCtx, name string, mode compleMode) {
 	if mode > lhsBase {
 		in := ctx.infer.Get(-1)
-		addr, ok := ctx.findVar(name)
-		if ok {
+		addr, err := ctx.findVar(name)
+		if err == nil {
 			if mode == lhsDefine && addr.NestDepth != ctx.out.NestDepth {
-				log.Fatalln("requireVar failed: variable is shadowed -", name)
+				log.Panicln("requireVar failed: variable is shadowed -", name)
 			}
-		} else if mode == lhsAssign {
-			log.Fatalln("compileIdent failed: symbol not found -", name)
+		} else if mode == lhsAssign || err != syscall.ENOENT {
+			log.Panicln("compileIdent failed:", err)
 		} else {
 			typ := boundType(in.(iValue))
 			addr = ctx.insertVar(name, typ)
@@ -146,16 +110,18 @@ func (p *Package) compileIdent(ctx *blockCtx, name string, mode compleMode) {
 		checkType(addr.Type, in, ctx.out)
 		ctx.infer.PopN(1)
 		ctx.out.StoreVar(addr)
-	} else if addr, ok := ctx.findVar(name); ok {
+	} else if addr, err := ctx.findVar(name); err == nil {
 		ctx.infer.Push(&goValue{t: addr.Type})
 		if mode == inferOnly {
 			return
 		}
 		ctx.out.LoadVar(addr)
+	} else if false {
+		// ...
 	} else {
 		addr, kind, ok := ctx.builtin.Find(name)
 		if !ok {
-			log.Fatalln("compileIdent failed: unknown -", name)
+			log.Panicln("compileIdent failed: unknown -", name)
 		}
 		switch kind {
 		case exec.SymbolVar:
@@ -165,13 +131,13 @@ func (p *Package) compileIdent(ctx *blockCtx, name string, mode compleMode) {
 				return
 			}
 		}
-		log.Fatalln("compileIdent failed: unknown -", kind, addr)
+		log.Panicln("compileIdent failed: unknown -", kind, addr)
 	}
 }
 
 func (p *Package) compileBasicLit(ctx *blockCtx, v *ast.BasicLit, mode compleMode) {
 	if mode > lhsBase {
-		log.Fatalln("compileBasicLit: can't be lhs (left hand side) expr.")
+		log.Panicln("compileBasicLit: can't be lhs (left hand side) expr.")
 	}
 	kind, n := astutil.ToConst(v)
 	ret := &constVal{v: n, kind: kind, reserve: -1}
@@ -191,7 +157,7 @@ func (p *Package) compileBasicLit(ctx *blockCtx, v *ast.BasicLit, mode compleMod
 
 func (p *Package) compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr, mode compleMode) {
 	if mode > lhsBase {
-		log.Fatalln("compileBinaryExpr: can't be lhs (left hand side) expr.")
+		log.Panicln("compileBinaryExpr: can't be lhs (left hand side) expr.")
 	}
 	p.compileExpr(ctx, v.X, inferOnly)
 	p.compileExpr(ctx, v.Y, inferOnly)
@@ -226,13 +192,13 @@ func binaryOpResult(op exec.Operator, x, y interface{}) (exec.Kind, iValue) {
 	vx := x.(iValue)
 	vy := y.(iValue)
 	if vx.NumValues() != 1 || vy.NumValues() != 1 {
-		log.Fatalln("binaryOp: argument isn't an expr.")
+		log.Panicln("binaryOp: argument isn't an expr.")
 	}
 	kind := vx.Kind()
 	if !astutil.IsConstBound(kind) {
 		kind = vy.Kind()
 		if !astutil.IsConstBound(kind) {
-			log.Fatalln("binaryOp: expect x, y aren't const values either.")
+			log.Panicln("binaryOp: expect x, y aren't const values either.")
 		}
 	}
 	i := op.GetInfo()
@@ -266,7 +232,7 @@ var binaryOps = [...]exec.Operator{
 
 func (p *Package) compileCallExpr(ctx *blockCtx, v *ast.CallExpr, mode compleMode) {
 	if mode > lhsBase {
-		log.Fatalln("compileCallExpr: can't be lhs (left hand side) expr.")
+		log.Panicln("compileCallExpr: can't be lhs (left hand side) expr.")
 	}
 	p.compileExpr(ctx, v.Fun, inferOnly)
 	fn := ctx.infer.Get(-1)
@@ -293,7 +259,16 @@ func (p *Package) compileCallExpr(ctx *blockCtx, v *ast.CallExpr, mode compleMod
 		ctx.infer.Ret(uint32(len(v.Args)+1), ret)
 		return
 	}
-	log.Fatalln("compileCallExpr failed: unknown -", reflect.TypeOf(fn))
+	log.Panicln("compileCallExpr failed: unknown -", reflect.TypeOf(fn))
+}
+
+func (p *Package) compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, mode compleMode) {
+	p.compileExpr(ctx, v.X, inferOnly)
+	x := ctx.infer.Get(-1)
+	switch vx := x.(type) {
+	default:
+		log.Panicln("compileSelectorExpr failed: unknown -", reflect.TypeOf(vx))
+	}
 }
 
 // -----------------------------------------------------------------------------

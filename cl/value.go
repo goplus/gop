@@ -89,7 +89,7 @@ func newGoFunc(addr uint32, kind exec.SymbolKind) *goFunc {
 	case exec.SymbolVariadicFunc:
 		fi = exec.GoVariadicFuncAddr(addr).GetInfo()
 	default:
-		log.Fatalln("getGoFunc: unknown -", kind, addr)
+		log.Panicln("getGoFunc: unknown -", kind, addr)
 	}
 	return &goFunc{v: fi, addr: addr, kind: kind}
 }
@@ -160,7 +160,7 @@ func (p *constVal) boundKind() reflect.Kind {
 	case astutil.ConstUnboundComplex:
 		return reflect.Complex128
 	}
-	log.Fatalln("boundKind: unexpected type kind -", p.kind)
+	log.Panicln("boundKind: unexpected type kind -", p.kind)
 	return reflect.Invalid
 }
 
@@ -181,13 +181,13 @@ func (p *constVal) bound(t reflect.Type, b *exec.Builder) {
 			if t == exec.TyEmptyInterface {
 				return
 			}
-			log.Fatalln("function call with invalid argument type: requires", t, ", but got", p.kind)
+			log.Panicln("function call with invalid argument type: requires", t, ", but got", p.kind)
 		}
 		return
 	}
 	v, ok := boundConst(p.v, t)
 	if !ok {
-		log.Fatalln("function call with invalid argument type: requires", t, ", but got", reflect.TypeOf(p.v))
+		log.Panicln("function call with invalid argument type: requires", t, ", but got", reflect.TypeOf(p.v))
 	}
 	p.reserve.Push(b, v)
 }
@@ -207,13 +207,13 @@ func binaryOp(op exec.Operator, x, y *constVal) *constVal {
 		kind, kindReal = xkind, realKindOf(xkind)
 	}
 	if (i.InFirst & (1 << kindReal)) == 0 {
-		log.Fatalln("binaryOp failed: invalid first argument type.")
+		log.Panicln("binaryOp failed: invalid first argument type.")
 	}
 	t := exec.TypeFromKind(kindReal)
 	vx, xok := boundConst(x.v, t)
 	vy, yok := boundConst(y.v, t)
 	if !xok || !yok {
-		log.Fatalln("binaryOp failed: invalid argument type -", t)
+		log.Panicln("binaryOp failed: invalid argument type -", t)
 	}
 	v := exec.CallBuiltinOp(kindReal, op, vx, vy)
 	return &constVal{kind: kind, v: v, reserve: -1}

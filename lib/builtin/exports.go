@@ -9,25 +9,29 @@ import (
 
 // -----------------------------------------------------------------------------
 
-func execPrint(arity uint32, p *qlang.Context) {
+// QexecPrint instr
+func QexecPrint(arity uint32, p *qlang.Context) {
 	args := p.GetArgs(arity)
 	n, err := fmt.Print(args...)
 	p.Ret(arity, n, err)
 }
 
-func execPrintf(arity uint32, p *qlang.Context) {
+// QexecPrintf instr
+func QexecPrintf(arity uint32, p *qlang.Context) {
 	args := p.GetArgs(arity)
 	n, err := fmt.Printf(args[0].(string), args[1:]...)
 	p.Ret(arity, n, err)
 }
 
-func execPrintln(arity uint32, p *qlang.Context) {
+// QexecPrintln instr
+func QexecPrintln(arity uint32, p *qlang.Context) {
 	args := p.GetArgs(arity)
 	n, err := fmt.Println(args...)
 	p.Ret(arity, n, err)
 }
 
-func execFprintln(arity uint32, p *qlang.Context) {
+// QexecFprintln instr
+func QexecFprintln(arity uint32, p *qlang.Context) {
 	args := p.GetArgs(arity)
 	n, err := fmt.Fprintln(args[0].(io.Writer), args[1:]...)
 	p.Ret(arity, n, err)
@@ -40,10 +44,10 @@ var I = qlang.NewPackage("")
 
 func init() {
 	I.RegisterVariadicFuncs(
-		I.Func("print", fmt.Print, execPrint),
-		I.Func("printf", fmt.Printf, execPrintf),
-		I.Func("println", fmt.Println, execPrintln),
-		I.Func("fprintln", fmt.Fprintln, execFprintln),
+		I.Func("print", fmt.Print, QexecPrint),
+		I.Func("printf", fmt.Printf, QexecPrintf),
+		I.Func("println", fmt.Println, QexecPrintln),
+		I.Func("fprintln", fmt.Fprintln, QexecFprintln),
 	)
 }
 

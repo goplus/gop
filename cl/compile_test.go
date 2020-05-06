@@ -185,3 +185,35 @@ func TestVarOp(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
+var fsTestGoPackage = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	import "fmt"
+	import "strings"
+
+	x := strings.NewReplacer("?", "!").Replace("hello, world???")
+	fmt.Println("x:", x)
+`)
+
+func _TestGoPackage(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestGoPackage, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	pkg, err := NewPackage(b, bar)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code, pkg.GetGlobalVars()...)
+	ctx.Exec(0, code.Len())
+	if ctx.Len() != 0 {
+		t.Fatal("error: stack not empty")
+	}
+}
+
+// -----------------------------------------------------------------------------
