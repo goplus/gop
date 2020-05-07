@@ -11,7 +11,7 @@ import (
 // -----------------------------------------------------------------------------
 
 // I is a Go package instance.
-var I = qlang.NewPackage("fmt")
+var I = qlang.NewGoPackage("fmt")
 
 func init() {
 	I.RegisterVariadicFuncs(

@@ -7,8 +7,8 @@ import (
 // -----------------------------------------------------------------------------
 
 func TestIf1(t *testing.T) {
-	label1 := NewLabel()
-	label2 := NewLabel()
+	label1 := NewLabel("a")
+	label2 := NewLabel("b")
 	code := NewBuilder(nil).
 		Push(true).
 		JmpIfFalse(label1).
@@ -31,8 +31,8 @@ func TestIf1(t *testing.T) {
 }
 
 func TestIf2(t *testing.T) {
-	label1 := NewLabel()
-	label2 := NewLabel()
+	label1 := NewLabel("a")
+	label2 := NewLabel("b")
 	code := NewBuilder(nil).
 		Push(false).
 		JmpIfFalse(label1).
@@ -57,9 +57,9 @@ func TestIf2(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 func TestCase1(t *testing.T) {
-	done := NewLabel()
-	label1 := NewLabel()
-	label2 := NewLabel()
+	done := NewLabel("done")
+	label1 := NewLabel("a")
+	label2 := NewLabel("b")
 	code := NewBuilder(nil).
 		Push(1).
 		Push(1).
@@ -89,9 +89,9 @@ func TestCase1(t *testing.T) {
 }
 
 func TestCase2(t *testing.T) {
-	done := NewLabel()
-	label1 := NewLabel()
-	label2 := NewLabel()
+	done := NewLabel("done")
+	label1 := NewLabel("a")
+	label2 := NewLabel("b")
 	code := NewBuilder(nil).
 		Push(2).
 		Push(1).
@@ -121,9 +121,9 @@ func TestCase2(t *testing.T) {
 }
 
 func TestDefault(t *testing.T) {
-	done := NewLabel()
-	label1 := NewLabel()
-	label2 := NewLabel()
+	done := NewLabel("done")
+	label1 := NewLabel("a")
+	label2 := NewLabel("b")
 	code := NewBuilder(nil).
 		Push(3).
 		Push(1).

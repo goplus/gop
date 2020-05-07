@@ -36,7 +36,7 @@ func execSprintf(arity uint32, p *Context) {
 }
 
 // I is a Go package instance.
-var I = NewPackage("")
+var I = NewGoPackage("")
 
 func init() {
 	I.RegisterVariadicFuncs(
@@ -60,7 +60,7 @@ func TestSprint(t *testing.T) {
 	code := NewBuilder(nil).
 		Push(5).
 		Push("32").
-		CallGoFunv(sprint, 2).
+		CallGoFuncv(sprint, 2).
 		Resolve()
 
 	ctx := NewContext(code)
@@ -85,8 +85,8 @@ func TestSprintf(t *testing.T) {
 		Push(1).
 		Push("x").
 		Push("sw").
-		CallGoFun(strcat).
-		CallGoFunv(sprintf, 4).
+		CallGoFunc(strcat).
+		CallGoFuncv(sprintf, 4).
 		Resolve()
 
 	ctx := NewContext(code)
@@ -97,19 +97,19 @@ func TestSprintf(t *testing.T) {
 }
 
 func TestLargeArity(t *testing.T) {
-	sprint, kind, ok := Package("").Find("Sprint")
+	sprint, kind, ok := FindGoPackage("").Find("Sprint")
 	if !ok || kind != SymbolVariadicFunc {
 		t.Fatal("FindVariadicFunc failed: Sprint")
 	}
 
 	b := NewBuilder(nil)
 	ret := ""
-	for i := 0; i < bitsGoFunvArityMax+1; i++ {
+	for i := 0; i < bitsFuncvArityMax+1; i++ {
 		b.Push("32")
 		ret += "32"
 	}
 	code := b.
-		CallGoFunv(GoVariadicFuncAddr(sprint), bitsGoFunvArityMax+1).
+		CallGoFuncv(GoVariadicFuncAddr(sprint), bitsFuncvArityMax+1).
 		Resolve()
 
 	ctx := NewContext(code)

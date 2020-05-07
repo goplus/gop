@@ -40,7 +40,7 @@ func QexecFprintln(arity uint32, p *qlang.Context) {
 // -----------------------------------------------------------------------------
 
 // I is a Go package instance.
-var I = qlang.NewPackage("")
+var I = qlang.NewGoPackage("")
 
 func init() {
 	I.RegisterVariadicFuncs(

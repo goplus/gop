@@ -6,11 +6,11 @@ const (
 	bitsInstr = 32
 	bitsOp    = 6
 
-	bitsIntKind     = 3
-	bitsFloatKind   = 2
-	bitsGoFunvArity = 10
-	bitsVarScope    = 6
-	bitsAssignOp    = 4
+	bitsIntKind    = 3
+	bitsFloatKind  = 2
+	bitsFuncvArity = 10
+	bitsVarScope   = 6
+	bitsAssignOp   = 4
 
 	bitsOpShift = bitsInstr - bitsOp
 	bitsOperand = (1 << bitsOpShift) - 1
@@ -23,9 +23,10 @@ const (
 	bitsOpFloatShift   = bitsInstr - bitsOpFloat
 	bitsOpFloatOperand = (1 << bitsOpFloatShift) - 1
 
-	bitsOpCallGoFunv        = bitsOp + bitsGoFunvArity
-	bitsOpCallGoFunvShift   = bitsInstr - bitsOpCallGoFunv
-	bitsOpCallGoFunvOperand = (1 << bitsOpCallGoFunvShift) - 1
+	bitsOpCallFuncv        = bitsOp + bitsFuncvArity
+	bitsOpCallFuncvShift   = bitsInstr - bitsOpCallFuncv
+	bitsOpCallFuncvOperand = (1 << bitsOpCallFuncvShift) - 1
+	bitsFuncvArityMax      = (1 << bitsFuncvArity) - 1
 
 	bitsOpVar        = bitsOp + bitsVarScope
 	bitsOpVarShift   = bitsInstr - bitsOpVar
@@ -50,8 +51,8 @@ const (
 	opJmpIfFalse  = 10 // offset(26)
 	opCaseNE      = 11 // offset(26)
 	opPop         = 12 // n(26)
-	opCallGoFun   = 13 // addr(26) - call a Go function
-	opCallGoFunv  = 14 // goFunvArity(10) addr(16) - call a Go function with variadic args
+	opCallGoFunc  = 13 // addr(26) - call a Go function
+	opCallGoFuncv = 14 // funvArity(10) addr(16) - call a Go function with variadic args
 	opLoadVar     = 15 // varScope(6) addr(20)
 	opStoreVar    = 16 // varScope(6) addr(20)
 	opAddrVar     = 17 // varScope(6) addr(20) - load a variable's address
@@ -59,12 +60,16 @@ const (
 	opStoreGoVar  = 19 // addr(26)
 	opAddrGoVar   = 20 // addr(26)
 	opAddrOp      = 21 // reserved(17) addressOp(4) kind(5)
+	opCallFunc    = 22 // addr(26)
+	opCallFuncv   = 23 // funvArity(10) addr(16)
+	opReturn      = 24 // reserved(26)
 )
 
 const (
 	iInvalid        = (opInvalid << bitsOpShift)
 	iPushFalse      = (opPushValSpec << bitsOpShift)
 	iPushTrue       = (opPushValSpec << bitsOpShift) | 1
+	iPushNil        = (opPushValSpec << bitsOpShift) | 2
 	iPushUnresolved = (opInvalid << bitsOpShift)
 )
 
@@ -77,6 +82,8 @@ type Code struct {
 	intConsts    []int64
 	uintConsts   []uint64
 	valConsts    []interface{}
+	funs         []*FuncInfo
+	funvs        []*FuncInfo
 	structs      []StructInfo
 }
 
@@ -106,6 +113,7 @@ type Builder struct {
 	code      *Code
 	valConsts map[interface{}]*valUnresolved
 	labels    map[*Label]int
+	funcs     map[*FuncInfo]int
 	NestDepth uint32
 }
 
@@ -118,6 +126,7 @@ func NewBuilder(code *Code) *Builder {
 		code:      code,
 		valConsts: make(map[interface{}]*valUnresolved),
 		labels:    make(map[*Label]int),
+		funcs:     make(map[*FuncInfo]int),
 	}
 }
 
@@ -125,6 +134,7 @@ func NewBuilder(code *Code) *Builder {
 func (p *Builder) Resolve() *Code {
 	p.resolveLabels()
 	p.resolveConsts()
+	p.resolveFuncs()
 	return p.code
 }
 

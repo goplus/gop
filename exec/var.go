@@ -134,33 +134,6 @@ func getParentCtx(p *Context, idx tAddress) *Context {
 	return pp
 }
 
-/*
-// FastAddrVar func.
-func (p *Context) fastAddrVar(idx tAddress) interface{} {
-	if idx <= bitsOpVarOperand {
-		return p.addrVar(uint32(idx))
-	}
-	return getParentCtx(p, idx).addrVar(uint32(idx) & bitsOpVarOperand)
-}
-
-// FastGetVar func.
-func (p *Context) fastGetVar(idx tAddress) interface{} {
-	if idx <= bitsOpVarOperand {
-		return p.getVar(uint32(idx))
-	}
-	return getParentCtx(p, idx).getVar(uint32(idx) & bitsOpVarOperand)
-}
-
-// FastSetVar func.
-func (p *Context) fastSetVar(idx tAddress, v interface{}) {
-	if idx <= bitsOpVarOperand {
-		p.setVar(uint32(idx), v)
-		return
-	}
-	getParentCtx(p, idx).setVar(uint32(idx)&bitsOpVarOperand, v)
-}
-*/
-
 // GetVar func.
 func (p *Context) GetVar(x *Var) interface{} {
 	if x.isGlobal() {

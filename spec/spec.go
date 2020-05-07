@@ -14,9 +14,9 @@ type Context = exec.Context
 // GoPackage represents a Go package.
 type GoPackage = exec.GoPackage
 
-// NewPackage creates a new builtin Go Package.
-func NewPackage(pkgPath string) *GoPackage {
-	return exec.NewPackage(pkgPath)
+// NewGoPackage creates a new builtin Go Package.
+func NewGoPackage(pkgPath string) *GoPackage {
+	return exec.NewGoPackage(pkgPath)
 }
 
 // ToStrings converts []interface{} into []string.

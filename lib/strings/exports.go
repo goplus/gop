@@ -23,7 +23,7 @@ func execReplacerReplace(zero uint32, p *qlang.Context) {
 // -----------------------------------------------------------------------------
 
 // I is a Go package instance.
-var I = qlang.NewPackage("strings")
+var I = qlang.NewGoPackage("strings")
 
 func init() {
 	I.RegisterVariadicFuncs(

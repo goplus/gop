@@ -6,16 +6,16 @@ import (
 	"github.com/qiniu/x/log"
 )
 
-func execGoFun(i Instr, p *Context) {
+func execGoFunc(i Instr, p *Context) {
 	idx := i & bitsOperand
 	gofuns[idx].exec(0, p)
 }
 
-func execGoFunv(i Instr, p *Context) {
-	idx := i & bitsOpCallGoFunvOperand
-	arity := (i >> bitsOpCallGoFunvShift) & bitsGoFunvArityMax
-	if arity == bitsGoFunvArityMax {
-		arity = uint32(p.Pop().(int) + bitsGoFunvArityMax)
+func execGoFuncv(i Instr, p *Context) {
+	idx := i & bitsOpCallFuncvOperand
+	arity := (i >> bitsOpCallFuncvShift) & bitsFuncvArityMax
+	if arity == bitsFuncvArityMax {
+		arity = uint32(p.Pop().(int) + bitsFuncvArityMax)
 	}
 	gofunvs[idx].exec(arity, p)
 }
@@ -27,9 +27,9 @@ type SymbolKind uint32
 
 const (
 	// SymbolFunc - function
-	SymbolFunc SymbolKind = opCallGoFun
+	SymbolFunc SymbolKind = opCallGoFunc
 	// SymbolVariadicFunc - variadic function
-	SymbolVariadicFunc SymbolKind = opCallGoFunv
+	SymbolVariadicFunc SymbolKind = opCallGoFuncv
 	// SymbolVar - variable
 	SymbolVar SymbolKind = 0
 )
@@ -40,8 +40,8 @@ type GoPackage struct {
 	syms    map[string]uint32
 }
 
-// NewPackage creates a new builtin Go Package.
-func NewPackage(pkgPath string) *GoPackage {
+// NewGoPackage creates a new builtin Go Package.
+func NewGoPackage(pkgPath string) *GoPackage {
 	if _, ok := gopkgs[pkgPath]; ok {
 		log.Fatalln("NewPackage failed: package exists -", pkgPath)
 	}
@@ -50,8 +50,8 @@ func NewPackage(pkgPath string) *GoPackage {
 	return pkg
 }
 
-// Package lookups a Go package by pkgPath. It returns nil if not found.
-func Package(pkgPath string) *GoPackage {
+// FindGoPackage lookups a Go package by pkgPath. It returns nil if not found.
+func FindGoPackage(pkgPath string) *GoPackage {
 	return gopkgs[pkgPath]
 }
 
@@ -66,7 +66,7 @@ func (p *GoPackage) Find(name string) (addr uint32, kind SymbolKind, ok bool) {
 // FindFunc lookups a Go function by name.
 func (p *GoPackage) FindFunc(name string) (addr GoFuncAddr, ok bool) {
 	if v, ok := p.syms[name]; ok {
-		if (v >> bitsOpShift) == opCallGoFun {
+		if (v >> bitsOpShift) == opCallGoFunc {
 			return GoFuncAddr(v & bitsOperand), true
 		}
 	}
@@ -76,7 +76,7 @@ func (p *GoPackage) FindFunc(name string) (addr GoFuncAddr, ok bool) {
 // FindVariadicFunc lookups a Go function by name.
 func (p *GoPackage) FindVariadicFunc(name string) (addr GoVariadicFuncAddr, ok bool) {
 	if v, ok := p.syms[name]; ok {
-		if (v >> bitsOpShift) == opCallGoFunv {
+		if (v >> bitsOpShift) == opCallGoFuncv {
 			return GoVariadicFuncAddr(v & bitsOperand), true
 		}
 	}
@@ -133,7 +133,7 @@ func (p *GoPackage) RegisterFuncs(funs ...GoFuncInfo) (base GoFuncAddr) {
 	base = GoFuncAddr(len(gofuns))
 	gofuns = append(gofuns, funs...)
 	for i, v := range funs {
-		p.syms[v.Name] = (uint32(base) + uint32(i)) | (opCallGoFun << bitsOpShift)
+		p.syms[v.Name] = (uint32(base) + uint32(i)) | (opCallGoFunc << bitsOpShift)
 	}
 	return
 }
@@ -153,7 +153,7 @@ func (p *GoPackage) RegisterVariadicFuncs(funs ...GoFuncInfo) (base GoVariadicFu
 	base = GoVariadicFuncAddr(len(gofunvs))
 	gofunvs = append(gofunvs, funs...)
 	for i, v := range funs {
-		p.syms[v.Name] = (uint32(base) + uint32(i)) | (opCallGoFunv << bitsOpShift)
+		p.syms[v.Name] = (uint32(base) + uint32(i)) | (opCallGoFuncv << bitsOpShift)
 	}
 	return
 }
@@ -215,26 +215,22 @@ func (i GoVarAddr) GetInfo() *GoVarInfo {
 	return nil
 }
 
-// CallGoFun instr
-func (p *Builder) CallGoFun(fun GoFuncAddr) *Builder {
-	p.code.data = append(p.code.data, (opCallGoFun<<bitsOpShift)|uint32(fun))
+// CallGoFunc instr
+func (p *Builder) CallGoFunc(fun GoFuncAddr) *Builder {
+	p.code.data = append(p.code.data, (opCallGoFunc<<bitsOpShift)|uint32(fun))
 	return p
 }
 
-// CallGoFunv instr
-func (p *Builder) CallGoFunv(fun GoVariadicFuncAddr, arity int) *Builder {
+// CallGoFuncv instr
+func (p *Builder) CallGoFuncv(fun GoVariadicFuncAddr, arity int) *Builder {
 	code := p.code
-	if arity >= bitsGoFunvArityMax {
-		p.Push(arity - bitsGoFunvArityMax)
-		arity = bitsGoFunvArityMax
+	if arity >= bitsFuncvArityMax {
+		p.Push(arity - bitsFuncvArityMax)
+		arity = bitsFuncvArityMax
 	}
-	i := (opCallGoFunv << bitsOpShift) | (uint32(arity) << bitsOpCallGoFunvShift) | uint32(fun)
+	i := (opCallGoFuncv << bitsOpShift) | (uint32(arity) << bitsOpCallFuncvShift) | uint32(fun)
 	code.data = append(code.data, i)
 	return p
 }
-
-const (
-	bitsGoFunvArityMax = (1 << bitsGoFunvArity) - 1
-)
 
 // -----------------------------------------------------------------------------

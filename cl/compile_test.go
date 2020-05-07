@@ -193,12 +193,49 @@ var fsTestGoPackage = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	import gostrings "strings"
 
 	x := gostrings.NewReplacer("?", "!").Replace("hello, world???")
-	fmt.Println("x:", x)
+	fmt.Println("x: " + x)
 `)
 
 func TestGoPackage(t *testing.T) {
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseFSDir(fset, fsTestGoPackage, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	pkg, err := NewPackage(b, bar)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code, pkg.GetGlobalVars()...)
+	ctx.Exec(0, code.Len())
+	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(19) {
+		t.Fatal("n:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+var fsTestFunc = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	func foo(x string) (n int, err error) {
+		n, err = fmt.Println("x: " + x)
+		return
+	}
+
+	foo("Hello, world!")
+`)
+
+func _TestFunc(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestFunc, "/foo", nil, 0)
 	if err != nil || len(pkgs) != 1 {
 		t.Fatal("ParseFSDir failed:", err, len(pkgs))
 	}

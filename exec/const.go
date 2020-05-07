@@ -93,6 +93,7 @@ func pushUint32(stk *Context, kind reflect.Kind, v uint32) {
 var valSpecs = []interface{}{
 	false,
 	true,
+	nil,
 }
 
 func execPushValSpec(i Instr, stk *Context) {
@@ -185,6 +186,9 @@ func (p *Builder) pushUnresolved(op Instr, val interface{}, off int) (i Instr) {
 
 // Push instr
 func (p *Builder) pushInstr(val interface{}, off int) (i Instr) {
+	if val == nil {
+		return iPushNil
+	}
 	v := reflect.ValueOf(val)
 	kind := v.Kind()
 	if kind >= reflect.Int && kind <= reflect.Int64 {

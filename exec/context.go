@@ -94,7 +94,7 @@ func (ctx *Context) NewNest(vars ...*Var) *Context {
 func (ctx *Context) Exec(ip, ipEnd int) {
 	data := ctx.code.data
 	ctx.ip = ip
-	for ctx.ip != ipEnd {
+	for ctx.ip < ipEnd {
 		i := data[ctx.ip]
 		ctx.ip++
 		switch i >> bitsOpShift {
@@ -108,10 +108,16 @@ func (ctx *Context) Exec(ip, ipEnd int) {
 			execLoadVar(i, ctx)
 		case opStoreVar:
 			execStoreVar(i, ctx)
-		case opCallGoFun:
-			execGoFun(i, ctx)
-		case opCallGoFunv:
-			execGoFunv(i, ctx)
+		case opCallFunc:
+			execFunc(i, ctx)
+		case opCallFuncv:
+			execFuncv(i, ctx)
+		case opCallGoFunc:
+			execGoFunc(i, ctx)
+		case opCallGoFuncv:
+			execGoFuncv(i, ctx)
+		case opReturn:
+			return
 		case opPushUint:
 			execPushUint(i, ctx)
 		default:
@@ -133,8 +139,8 @@ var execTable = [...]func(i Instr, p *Context){
 	opJmpIfFalse:  execJmpIfFalse,
 	opCaseNE:      execCaseNE,
 	opPop:         execPop,
-	opCallGoFun:   execGoFun,
-	opCallGoFunv:  execGoFunv,
+	opCallGoFunc:  execGoFunc,
+	opCallGoFuncv: execGoFuncv,
 	opLoadVar:     execLoadVar,
 	opStoreVar:    execStoreVar,
 	opAddrVar:     execAddrVar,

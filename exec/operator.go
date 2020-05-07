@@ -190,22 +190,8 @@ const (
 	Complex64 = reflect.Complex64
 	// Complex128 type
 	Complex128 = reflect.Complex128
-
 	// String type
 	String = reflect.String
-
-	// Chan type
-	Chan = reflect.Chan
-	// Func type
-	Func = reflect.Func
-	// Interface type
-	Interface = reflect.Interface
-	// Map type
-	Map = reflect.Map
-	// Ptr type
-	Ptr = reflect.Ptr
-	// Slice type
-	Slice = reflect.Slice
 	// UnsafePointer type
 	UnsafePointer = reflect.UnsafePointer
 )

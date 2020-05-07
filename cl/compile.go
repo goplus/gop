@@ -39,7 +39,7 @@ type pkgCtx struct {
 }
 
 func newPkgCtx(out *exec.Builder) *pkgCtx {
-	p := &pkgCtx{builtin: exec.Package(""), out: out}
+	p := &pkgCtx{builtin: exec.FindGoPackage(""), out: out}
 	p.infer.Init()
 	return p
 }

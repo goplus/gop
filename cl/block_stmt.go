@@ -120,7 +120,7 @@ func (p *Package) compileIdent(ctx *blockCtx, name string, mode compleMode) {
 			}
 			ctx.out.LoadVar(v)
 		case string: // pkgPath
-			pkg := exec.Package(v)
+			pkg := exec.FindGoPackage(v)
 			if pkg == nil {
 				log.Panicln("compileIdent failed: package not found -", v)
 			}
@@ -265,9 +265,9 @@ func (p *Package) compileCallExpr(ctx *blockCtx, v *ast.CallExpr, mode compleMod
 		arity := checkFuncCall(vfn.Proto(), vfn.isMethod, args, out)
 		switch vfn.kind {
 		case exec.SymbolFunc:
-			out.CallGoFun(exec.GoFuncAddr(vfn.addr))
+			out.CallGoFunc(exec.GoFuncAddr(vfn.addr))
 		case exec.SymbolVariadicFunc:
-			out.CallGoFunv(exec.GoVariadicFuncAddr(vfn.addr), arity)
+			out.CallGoFuncv(exec.GoVariadicFuncAddr(vfn.addr), arity)
 		}
 		ctx.infer.Ret(uint32(len(v.Args)+1+vfn.isMethod), ret)
 		return
@@ -306,7 +306,7 @@ func (p *Package) compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, mode c
 			log.Panicln("compileSelectorExpr todo: structField -", t, sf)
 		}
 		pkgPath, method := normalizeMethod(n, t, name)
-		pkg := exec.Package(pkgPath)
+		pkg := exec.FindGoPackage(pkgPath)
 		if pkg == nil {
 			log.Panicln("compileSelectorExpr failed: package not found -", pkgPath)
 		}

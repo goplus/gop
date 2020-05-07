@@ -1,5 +1,9 @@
 package exec
 
+import (
+	"github.com/qiniu/x/log"
+)
+
 // -----------------------------------------------------------------------------
 
 func execJmp(i Instr, ctx *Context) {
@@ -26,18 +30,21 @@ func execCaseNE(i Instr, ctx *Context) {
 // -----------------------------------------------------------------------------
 
 // Label represents a label.
-type Label anyUnresolved
+type Label struct {
+	anyUnresolved
+	Name string
+}
 
 // NewLabel creates a label object.
-func NewLabel() *Label {
-	return new(Label)
+func NewLabel(name string) *Label {
+	return &Label{Name: name}
 }
 
 func (p *Builder) resolveLabels() {
 	data := p.code.data
 	for l, pos := range p.labels {
 		if pos < 0 {
-			panic("label is not defined")
+			log.Panicln("resolveLabels failed: label is not defined -", l.Name)
 		}
 		for _, off := range l.offs {
 			data[off] |= uint32(pos-(off+1)) & bitsOperand
@@ -59,7 +66,7 @@ func (p *Builder) labelOp(op int, l *Label) *Builder {
 // Label defines a label to jmp here.
 func (p *Builder) Label(l *Label) *Builder {
 	if v, ok := p.labels[l]; ok && v >= 0 {
-		panic("label is defined already")
+		log.Panicln("Label failed: label is defined already -", l.Name)
 	}
 	p.labels[l] = p.code.Len()
 	return p
