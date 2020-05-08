@@ -1,15 +1,17 @@
 package exec
 
+import "github.com/qiniu/x/log"
+
 // -----------------------------------------------------------------------------
 
 func checkPop(ctx *Context) interface{} {
 	if ctx.Len() < 1 {
-		panic("checkPop failed: no data")
+		log.Panicln("checkPop failed: no data.")
 	}
 	v := ctx.Get(-1)
 	ctx.PopN(1)
 	if ctx.Len() > 0 {
-		panic("checkPop failed: too many data")
+		log.Panicln("checkPop failed: too many data:", ctx.Len())
 	}
 	return v
 }

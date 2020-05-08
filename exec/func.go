@@ -24,10 +24,15 @@ func execFunc(i Instr, p *Context) {
 func execFuncv(i Instr, p *Context) {
 	idx := i & bitsOpCallFuncvOperand
 	arity := (i >> bitsOpCallFuncvShift) & bitsFuncvArityMax
-	if arity == bitsFuncvArityMax {
-		arity = uint32(p.Pop().(int) + bitsFuncvArityMax)
+	fun := p.code.funvs[idx]
+	if arity == bitsFuncvArityVar {
+		fun.exec(p)
+	} else {
+		if arity == bitsFuncvArityMax {
+			arity = uint32(p.Pop().(int) + bitsFuncvArityMax)
+		}
+		fun.execVariadic(arity, p)
 	}
-	p.code.funvs[idx].execVariadic(arity, p)
 }
 
 // -----------------------------------------------------------------------------
@@ -202,7 +207,9 @@ func (p *Builder) CallFuncv(fun *FuncInfo, arity int) *Builder {
 	}
 	code := p.code
 	fun.offs = append(fun.offs, len(code.data))
-	if arity >= bitsFuncvArityMax {
+	if arity < 0 {
+		arity = bitsFuncvArityVar
+	} else if arity >= bitsFuncvArityMax {
 		p.Push(arity - bitsFuncvArityMax)
 		arity = bitsFuncvArityMax
 	}

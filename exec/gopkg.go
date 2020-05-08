@@ -23,7 +23,6 @@ func execGoFuncv(i Instr, p *Context) {
 			p.Push(args.Index(i).Interface())
 		}
 		arity = uint32(fun.getNumIn() - 1 + n)
-		log.Debug("execGoFuncv:", arity, p.GetArgs(arity))
 	} else if arity == bitsFuncvArityMax {
 		arity = uint32(p.Pop().(int) + bitsFuncvArityMax)
 	}

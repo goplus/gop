@@ -81,4 +81,47 @@ func TestFuncv(t *testing.T) {
 	}
 }
 
+func TestFuncLargeArity(t *testing.T) {
+	sprint, kind, ok := FindGoPackage("").Find("Sprint")
+	if !ok || kind != SymbolFuncv {
+		t.Fatal("Find failed: Sprint")
+	}
+
+	tyStringSlice := reflect.SliceOf(TyString)
+
+	foo := NewFunc("foo")
+	bar := NewFunc("bar")
+	b := NewBuilder(nil).
+		Push(nil)
+	ret := ""
+	for i := 0; i < bitsFuncvArityMax+1; i++ {
+		b.Push("32")
+		ret += "32"
+	}
+	code := b.
+		CallFuncv(foo, bitsFuncvArityMax+1).
+		Return().
+		DefineFunc(
+			bar.Return(TyString).
+				Vargs(tyStringSlice)).
+		Load(-1).
+		CallGoFuncv(GoFuncvAddr(sprint), -1).
+		Store(-2).
+		EndFunc(bar).
+		DefineFunc(
+			foo.Return(TyString).
+				Vargs(tyStringSlice)).
+		Load(-1).
+		CallFuncv(bar, -1).
+		Store(-2).
+		EndFunc(foo).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != ret {
+		t.Fatal("32 times(1024) sprint != `32` times(1024), ret =", v)
+	}
+}
+
 // -----------------------------------------------------------------------------
