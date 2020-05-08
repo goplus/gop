@@ -26,7 +26,9 @@ const (
 	bitsOpCallFuncv        = bitsOp + bitsFuncvArity
 	bitsOpCallFuncvShift   = bitsInstr - bitsOpCallFuncv
 	bitsOpCallFuncvOperand = (1 << bitsOpCallFuncvShift) - 1
-	bitsFuncvArityMax      = (1 << bitsFuncvArity) - 1
+	bitsFuncvArityOperand  = (1 << bitsFuncvArity) - 1
+	bitsFuncvArityVar      = bitsFuncvArityOperand
+	bitsFuncvArityMax      = bitsFuncvArityOperand - 1
 
 	bitsOpVar        = bitsOp + bitsVarScope
 	bitsOpVarShift   = bitsInstr - bitsOpVar
@@ -37,16 +39,15 @@ const (
 type Instr = uint32
 
 const (
-	opInvalid     = (1 << bitsOp) - 1
-	opPushInt     = 0  // intKind(3) intVal(23)
-	opPushUint    = 1  // intKind(3) intVal(23)
-	opPushValSpec = 2  // valSpec(26) - false=0, true=1
+	opInvalid     = 0
+	opPushInt     = 1  // intKind(3) intVal(23)
+	opPushUint    = 2  // intKind(3) intVal(23)
 	opPushFloatR  = 3  // floatKind(2) floatIdx(24)
 	opPushStringR = 4  // stringIdx(26)
 	opPushIntR    = 5  // intKind(3) intIdx(23)
 	opPushUintR   = 6  // intKind(3) intIdx(23)
-	opBuiltinOp   = 7  // reserved(16) kind(5) builtinOp(5)
-	opReserved    = 8  // reserved for future
+	opPushValSpec = 7  // valSpec(26) - false=0, true=1
+	opBuiltinOp   = 8  // reserved(16) kind(5) builtinOp(5)
 	opJmp         = 9  // offset(26)
 	opJmpIfFalse  = 10 // offset(26)
 	opCaseNE      = 11 // offset(26)
@@ -63,6 +64,8 @@ const (
 	opCallFunc    = 22 // addr(26)
 	opCallFuncv   = 23 // funvArity(10) addr(16)
 	opReturn      = 24 // reserved(26)
+	opLoad        = 25 // index(26)
+	opStore       = 26 // index(26)
 )
 
 const (

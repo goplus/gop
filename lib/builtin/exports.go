@@ -43,11 +43,11 @@ func QexecFprintln(arity uint32, p *qlang.Context) {
 var I = qlang.NewGoPackage("")
 
 func init() {
-	I.RegisterVariadicFuncs(
-		I.Func("print", fmt.Print, QexecPrint),
-		I.Func("printf", fmt.Printf, QexecPrintf),
-		I.Func("println", fmt.Println, QexecPrintln),
-		I.Func("fprintln", fmt.Fprintln, QexecFprintln),
+	I.RegisterFuncvs(
+		I.Funcv("print", fmt.Print, QexecPrint),
+		I.Funcv("printf", fmt.Printf, QexecPrintf),
+		I.Funcv("println", fmt.Println, QexecPrintln),
+		I.Funcv("fprintln", fmt.Fprintln, QexecFprintln),
 	)
 }
 

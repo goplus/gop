@@ -110,8 +110,8 @@ func newGoFunc(addr uint32, kind exec.SymbolKind, isMethod int) *goFunc {
 	switch kind {
 	case exec.SymbolFunc:
 		fi = exec.GoFuncAddr(addr).GetInfo()
-	case exec.SymbolVariadicFunc:
-		fi = exec.GoVariadicFuncAddr(addr).GetInfo()
+	case exec.SymbolFuncv:
+		fi = exec.GoFuncvAddr(addr).GetInfo()
 	default:
 		log.Panicln("getGoFunc: unknown -", kind, addr)
 	}

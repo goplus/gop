@@ -39,9 +39,9 @@ func execSprintf(arity uint32, p *Context) {
 var I = NewGoPackage("")
 
 func init() {
-	I.RegisterVariadicFuncs(
-		I.Func("Sprint", fmt.Sprint, execSprint),
-		I.Func("Sprintf", fmt.Sprintf, execSprintf),
+	I.RegisterFuncvs(
+		I.Funcv("Sprint", fmt.Sprint, execSprint),
+		I.Funcv("Sprintf", fmt.Sprintf, execSprintf),
 	)
 	I.RegisterFuncs(
 		I.Func("strcat", Strcat, execStrcat),
@@ -52,9 +52,9 @@ func init() {
 }
 
 func TestSprint(t *testing.T) {
-	sprint, ok := I.FindVariadicFunc("Sprint")
+	sprint, ok := I.FindFuncv("Sprint")
 	if !ok {
-		t.Fatal("FindVariadicFunc failed: Sprint")
+		t.Fatal("FindFuncv failed: Sprint")
 	}
 
 	code := NewBuilder(nil).
@@ -71,7 +71,7 @@ func TestSprint(t *testing.T) {
 }
 
 func TestSprintf(t *testing.T) {
-	sprintf, ok := I.FindVariadicFunc("Sprintf")
+	sprintf, ok := I.FindFuncv("Sprintf")
 	strcat, ok2 := I.FindFunc("strcat")
 	if !ok || !ok2 {
 		t.Fatal("FindFunc failed: Sprintf/strcat")
@@ -98,8 +98,8 @@ func TestSprintf(t *testing.T) {
 
 func TestLargeArity(t *testing.T) {
 	sprint, kind, ok := FindGoPackage("").Find("Sprint")
-	if !ok || kind != SymbolVariadicFunc {
-		t.Fatal("FindVariadicFunc failed: Sprint")
+	if !ok || kind != SymbolFuncv {
+		t.Fatal("Find failed: Sprint")
 	}
 
 	b := NewBuilder(nil)
@@ -109,7 +109,7 @@ func TestLargeArity(t *testing.T) {
 		ret += "32"
 	}
 	code := b.
-		CallGoFuncv(GoVariadicFuncAddr(sprint), bitsFuncvArityMax+1).
+		CallGoFuncv(GoFuncvAddr(sprint), bitsFuncvArityMax+1).
 		Resolve()
 
 	ctx := NewContext(code)

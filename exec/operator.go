@@ -235,6 +235,8 @@ var (
 	TyUnsafePointer = reflect.TypeOf(unsafe.Pointer(nil))
 	// TyEmptyInterface type
 	TyEmptyInterface = reflect.TypeOf((*interface{})(nil)).Elem()
+	// TyError type
+	TyError = reflect.TypeOf((*error)(nil)).Elem()
 )
 
 type bTI struct { // builtin type info

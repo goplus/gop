@@ -6,6 +6,16 @@ import (
 	"github.com/qiniu/x/log"
 )
 
+func execLoad(i Instr, p *Context) {
+	idx := int32(i) << bitsOp >> bitsOp
+	p.Push(p.data[p.base+int(idx)])
+}
+
+func execStore(i Instr, p *Context) {
+	idx := int32(i) << bitsOp >> bitsOp
+	p.data[p.base+int(idx)] = p.Pop()
+}
+
 func execFunc(i Instr, p *Context) {
 	idx := i & bitsOperand
 	p.code.funs[idx].exec(p)
@@ -26,6 +36,12 @@ func execFuncv(i Instr, p *Context) {
 type Package struct {
 }
 
+const (
+	nVariadicInvalid      = 0
+	nVariadicFixedArgs    = 1
+	nVariadicVariadicArgs = 2
+)
+
 // FuncInfo represents a qlang function information.
 type FuncInfo struct {
 	Pkg      *Package
@@ -37,7 +53,7 @@ type FuncInfo struct {
 	Out      []reflect.Type
 	anyUnresolved
 	nestDepth uint32
-	Variadic  bool
+	nVariadic uint32
 }
 
 // NewFunc create a qlang function.
@@ -48,6 +64,7 @@ func NewFunc(name string) *FuncInfo {
 // Args sets argument types of a qlang function.
 func (p *FuncInfo) Args(in ...reflect.Type) *FuncInfo {
 	p.In = in
+	p.setVariadic(nVariadicFixedArgs)
 	return p
 }
 
@@ -57,7 +74,7 @@ func (p *FuncInfo) Vargs(in ...reflect.Type) *FuncInfo {
 		log.Panicln("Vargs failed: last argument must be a slice.")
 	}
 	p.In = in
-	p.Variadic = true
+	p.setVariadic(nVariadicVariadicArgs)
 	return p
 }
 
@@ -73,9 +90,25 @@ func (p *FuncInfo) DefineVar(vars ...*Var) *FuncInfo {
 	return p
 }
 
+// IsVariadic returns if this function is variadic or not.
+func (p *FuncInfo) IsVariadic() bool {
+	if p.nVariadic == 0 {
+		log.Panicln("FuncInfo is unintialized.")
+	}
+	return p.nVariadic == nVariadicVariadicArgs
+}
+
+func (p *FuncInfo) setVariadic(nVariadic uint32) {
+	if p.nVariadic == 0 {
+		p.nVariadic = nVariadic
+	} else if p.nVariadic != nVariadic {
+		log.Panicln("setVariadic failed: unmatched -", p.Name)
+	}
+}
+
 // Type returns type of this function.
 func (p *FuncInfo) Type() reflect.Type {
-	return reflect.FuncOf(p.In, p.Out, p.Variadic)
+	return reflect.FuncOf(p.In, p.Out, p.IsVariadic())
 }
 
 func (p *FuncInfo) exec(ctx *Context) {
@@ -122,13 +155,14 @@ func (p *Builder) resolveFuncs() {
 
 // DefineFunc instr
 func (p *Builder) DefineFunc(fun *FuncInfo) *Builder {
-	if _, ok := p.funcs[fun]; ok {
+	if idx, ok := p.funcs[fun]; ok && idx >= 0 {
 		log.Panicln("DefineFunc failed: func is defined already -", fun.Name)
 	}
 	p.NestDepth++
+	fun.FunEntry = len(p.code.data)
 	fun.nestDepth = p.NestDepth
 	p.DefineVar(fun.Vars...)
-	if fun.Variadic {
+	if fun.IsVariadic() {
 		p.funcs[fun] = len(p.code.funvs)
 		p.code.funvs = append(p.code.funvs, fun)
 	} else {
@@ -143,16 +177,14 @@ func (p *Builder) EndFunc(fun *FuncInfo) *Builder {
 	if fun.nestDepth != p.NestDepth {
 		log.Panicln("EndFunc failed: doesn't match with DefineFunc -", fun.Name)
 	}
-	fun.FunEnd = p.code.Len()
+	fun.FunEnd = len(p.code.data)
 	p.NestDepth--
 	return p
 }
 
 // CallFunc instr
 func (p *Builder) CallFunc(fun *FuncInfo) *Builder {
-	if fun.Variadic {
-		log.Panicln("CallFunc failed: can't be a variadic function -", fun)
-	}
+	fun.setVariadic(nVariadicFixedArgs)
 	if _, ok := p.funcs[fun]; !ok {
 		p.funcs[fun] = -1
 	}
@@ -164,9 +196,7 @@ func (p *Builder) CallFunc(fun *FuncInfo) *Builder {
 
 // CallFuncv instr
 func (p *Builder) CallFuncv(fun *FuncInfo, arity int) *Builder {
-	if !fun.Variadic {
-		log.Panicln("CallFuncv failed: not a variadic function -", fun)
-	}
+	fun.setVariadic(nVariadicVariadicArgs)
 	if _, ok := p.funcs[fun]; !ok {
 		p.funcs[fun] = -1
 	}
@@ -183,7 +213,19 @@ func (p *Builder) CallFuncv(fun *FuncInfo, arity int) *Builder {
 
 // Return instr
 func (p *Builder) Return() *Builder {
-	p.code.data = append(p.code.data, opReturn)
+	p.code.data = append(p.code.data, opReturn<<bitsOpShift)
+	return p
+}
+
+// Load instr
+func (p *Builder) Load(idx int32) *Builder {
+	p.code.data = append(p.code.data, (opLoad<<bitsOpShift)|(uint32(idx)&bitsOperand))
+	return p
+}
+
+// Store instr
+func (p *Builder) Store(idx int32) *Builder {
+	p.code.data = append(p.code.data, (opStore<<bitsOpShift)|(uint32(idx)&bitsOperand))
 	return p
 }
 

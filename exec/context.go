@@ -1,10 +1,19 @@
 package exec
 
+import (
+	"github.com/qiniu/x/log"
+)
+
 // -----------------------------------------------------------------------------
 
 // A Stack represents a FILO container.
 type Stack struct {
 	data []interface{}
+}
+
+// NewStack creates a Stack instance.
+func NewStack() (p *Stack) {
+	return &Stack{data: make([]interface{}, 0, 64)}
 }
 
 // Init initializes this Stack object.
@@ -15,6 +24,11 @@ func (p *Stack) Init() {
 // Get returns the value at specified index.
 func (p *Stack) Get(idx int) interface{} {
 	return p.data[len(p.data)+idx]
+}
+
+// Set returns the value at specified index.
+func (p *Stack) Set(idx int, v interface{}) {
+	p.data[len(p.data)+idx] = v
 }
 
 // GetArgs returns all arguments of a function.
@@ -54,39 +68,41 @@ func (p *Stack) Len() int {
 
 // A Context represents the context of an executor.
 type Context struct {
-	Stack
+	*Stack
 	code   *Code
 	parent *Context
 	vars   varsContext
 	ip     int
+	base   int
 }
 
 func newSimpleContext(data []interface{}) *Context {
-	return &Context{Stack: Stack{data: data}}
+	return &Context{Stack: &Stack{data: data}}
 }
 
 // NewContext returns a new context of an executor.
 func NewContext(code *Code, vars ...*Var) *Context {
 	p := &Context{
-		code: code,
+		Stack: NewStack(),
+		code:  code,
 	}
 	if len(vars) > 0 {
 		p.vars = makeVarsContext(vars, p)
 	}
-	p.Stack.Init()
 	return p
 }
 
 // NewNest creates a nest closure context, with some local variables.
 func (ctx *Context) NewNest(vars ...*Var) *Context {
 	p := &Context{
+		Stack:  ctx.Stack,
 		code:   ctx.code,
 		parent: ctx,
+		base:   len(ctx.data),
 	}
 	if len(vars) > 0 {
 		p.vars = makeVarsContext(vars, p)
 	}
-	p.Stack.Init()
 	return p
 }
 
@@ -121,7 +137,11 @@ func (ctx *Context) Exec(ip, ipEnd int) {
 		case opPushUint:
 			execPushUint(i, ctx)
 		default:
-			execTable[i>>bitsOpShift](i, ctx)
+			if fn := execTable[i>>bitsOpShift]; fn != nil {
+				fn(i, ctx)
+			} else {
+				log.Panicln("Exec failed: unknown instr -", i>>bitsOpShift, "ip:", ctx.ip-1)
+			}
 		}
 	}
 }
@@ -145,6 +165,8 @@ var execTable = [...]func(i Instr, p *Context){
 	opStoreVar:    execStoreVar,
 	opAddrVar:     execAddrVar,
 	opAddrOp:      execAddrOp,
+	opLoad:        execLoad,
+	opStore:       execStore,
 }
 
 // -----------------------------------------------------------------------------

@@ -238,7 +238,7 @@ func (p *Var) isGlobal() bool {
 // SetAddr sets a variable address.
 func (p *Var) SetAddr(nestDepth, idx uint32) {
 	if p.idx <= bitsOpVarOperand {
-		log.Fatalln("Var.setAddr failed: the variable is defined already -", p.Name)
+		log.Panicln("Var.setAddr failed: the variable is defined already -", p.Name)
 	}
 	p.NestDepth, p.idx = nestDepth, idx
 }

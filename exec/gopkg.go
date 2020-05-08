@@ -13,11 +13,21 @@ func execGoFunc(i Instr, p *Context) {
 
 func execGoFuncv(i Instr, p *Context) {
 	idx := i & bitsOpCallFuncvOperand
-	arity := (i >> bitsOpCallFuncvShift) & bitsFuncvArityMax
-	if arity == bitsFuncvArityMax {
+	arity := (i >> bitsOpCallFuncvShift) & bitsFuncvArityOperand
+	fun := gofunvs[idx]
+	if arity == bitsFuncvArityVar {
+		v := p.Pop()
+		args := reflect.ValueOf(v)
+		n := args.Len()
+		for i := 0; i < n; i++ {
+			p.Push(args.Index(i).Interface())
+		}
+		arity = uint32(fun.getNumIn() - 1 + n)
+		log.Debug("execGoFuncv:", arity, p.GetArgs(arity))
+	} else if arity == bitsFuncvArityMax {
 		arity = uint32(p.Pop().(int) + bitsFuncvArityMax)
 	}
-	gofunvs[idx].exec(arity, p)
+	fun.exec(arity, p)
 }
 
 // -----------------------------------------------------------------------------
@@ -28,8 +38,8 @@ type SymbolKind uint32
 const (
 	// SymbolFunc - function
 	SymbolFunc SymbolKind = opCallGoFunc
-	// SymbolVariadicFunc - variadic function
-	SymbolVariadicFunc SymbolKind = opCallGoFuncv
+	// SymbolFuncv - variadic function
+	SymbolFuncv SymbolKind = opCallGoFuncv
 	// SymbolVar - variable
 	SymbolVar SymbolKind = 0
 )
@@ -43,7 +53,7 @@ type GoPackage struct {
 // NewGoPackage creates a new builtin Go Package.
 func NewGoPackage(pkgPath string) *GoPackage {
 	if _, ok := gopkgs[pkgPath]; ok {
-		log.Fatalln("NewPackage failed: package exists -", pkgPath)
+		log.Panicln("NewPackage failed: package exists -", pkgPath)
 	}
 	pkg := &GoPackage{PkgPath: pkgPath, syms: make(map[string]uint32)}
 	gopkgs[pkgPath] = pkg
@@ -73,11 +83,11 @@ func (p *GoPackage) FindFunc(name string) (addr GoFuncAddr, ok bool) {
 	return
 }
 
-// FindVariadicFunc lookups a Go function by name.
-func (p *GoPackage) FindVariadicFunc(name string) (addr GoVariadicFuncAddr, ok bool) {
+// FindFuncv lookups a Go function by name.
+func (p *GoPackage) FindFuncv(name string) (addr GoFuncvAddr, ok bool) {
 	if v, ok := p.syms[name]; ok {
 		if (v >> bitsOpShift) == opCallGoFuncv {
-			return GoVariadicFuncAddr(v & bitsOperand), true
+			return GoFuncvAddr(v & bitsOperand), true
 		}
 	}
 	return
@@ -97,7 +107,7 @@ func (p *GoPackage) FindVar(name string) (addr GoVarAddr, ok bool) {
 func (p *GoPackage) Var(name string, addr interface{}) GoVarInfo {
 	if log.CanOutput(log.Ldebug) {
 		if reflect.TypeOf(addr).Kind() != reflect.Ptr {
-			log.Fatalln("variable address isn't a pointer?")
+			log.Panicln("variable address isn't a pointer?")
 		}
 	}
 	return GoVarInfo{Pkg: p, Name: name, Addr: addr}
@@ -106,6 +116,11 @@ func (p *GoPackage) Var(name string, addr interface{}) GoVarInfo {
 // Func creates a GoFuncInfo instance.
 func (p *GoPackage) Func(name string, fn interface{}, exec func(i Instr, p *Context)) GoFuncInfo {
 	return GoFuncInfo{Pkg: p, Name: name, This: fn, exec: exec}
+}
+
+// Funcv creates a GoFuncvInfo instance.
+func (p *GoPackage) Funcv(name string, fn interface{}, exec func(i Instr, p *Context)) GoFuncvInfo {
+	return GoFuncvInfo{GoFuncInfo{Pkg: p, Name: name, This: fn, exec: exec}, 0}
 }
 
 // RegisterVars registers all exported Go variables of this package.
@@ -123,10 +138,10 @@ func (p *GoPackage) RegisterFuncs(funs ...GoFuncInfo) (base GoFuncAddr) {
 	if log.CanOutput(log.Ldebug) {
 		for _, v := range funs {
 			if v.Pkg != p {
-				log.Fatalln("function doesn't belong to this package:", v.Name)
+				log.Panicln("function doesn't belong to this package:", v.Name)
 			}
 			if v.This != nil && reflect.TypeOf(v.This).IsVariadic() {
-				log.Fatalln("function is variadic? -", v.Name)
+				log.Panicln("function is variadic? -", v.Name)
 			}
 		}
 	}
@@ -138,19 +153,19 @@ func (p *GoPackage) RegisterFuncs(funs ...GoFuncInfo) (base GoFuncAddr) {
 	return
 }
 
-// RegisterVariadicFuncs registers all exported Go functions with variadic arguments of this package.
-func (p *GoPackage) RegisterVariadicFuncs(funs ...GoFuncInfo) (base GoVariadicFuncAddr) {
+// RegisterFuncvs registers all exported Go functions with variadic arguments of this package.
+func (p *GoPackage) RegisterFuncvs(funs ...GoFuncvInfo) (base GoFuncvAddr) {
 	if log.CanOutput(log.Ldebug) {
 		for _, v := range funs {
 			if v.Pkg != p {
-				log.Fatalln("function doesn't belong to this package:", v.Name)
+				log.Panicln("function doesn't belong to this package:", v.Name)
 			}
 			if v.This != nil && !reflect.TypeOf(v.This).IsVariadic() {
-				log.Fatalln("function isn't variadic? -", v.Name)
+				log.Panicln("function isn't variadic? -", v.Name)
 			}
 		}
 	}
-	base = GoVariadicFuncAddr(len(gofunvs))
+	base = GoFuncvAddr(len(gofunvs))
 	gofunvs = append(gofunvs, funs...)
 	for i, v := range funs {
 		p.syms[v.Name] = (uint32(base) + uint32(i)) | (opCallGoFuncv << bitsOpShift)
@@ -163,15 +178,15 @@ func (p *GoPackage) RegisterVariadicFuncs(funs ...GoFuncInfo) (base GoVariadicFu
 var (
 	gopkgs  = make(map[string]*GoPackage)
 	gofuns  []GoFuncInfo
-	gofunvs []GoFuncInfo
+	gofunvs []GoFuncvInfo
 	govars  []GoVarInfo
 )
 
 // GoFuncAddr represents a Go function address.
 type GoFuncAddr uint32
 
-// GoVariadicFuncAddr represents a variadic Go function address.
-type GoVariadicFuncAddr uint32
+// GoFuncvAddr represents a variadic Go function address.
+type GoFuncvAddr uint32
 
 // GoVarAddr represents a variadic Go variable address.
 type GoVarAddr uint32
@@ -182,6 +197,19 @@ type GoFuncInfo struct {
 	Name string
 	This interface{}
 	exec func(i Instr, p *Context)
+}
+
+// GoFuncvInfo represents a Go function information.
+type GoFuncvInfo struct {
+	GoFuncInfo
+	numIn int // cache
+}
+
+func (p *GoFuncvInfo) getNumIn() int {
+	if p.numIn == 0 {
+		p.numIn = reflect.TypeOf(p.This).NumIn()
+	}
+	return p.numIn
 }
 
 // GoVarInfo represents a Go variable information.
@@ -200,9 +228,9 @@ func (i GoFuncAddr) GetInfo() *GoFuncInfo {
 }
 
 // GetInfo retuns a Go function info.
-func (i GoVariadicFuncAddr) GetInfo() *GoFuncInfo {
-	if i < GoVariadicFuncAddr(len(gofunvs)) {
-		return &gofunvs[i]
+func (i GoFuncvAddr) GetInfo() *GoFuncInfo {
+	if i < GoFuncvAddr(len(gofunvs)) {
+		return &gofunvs[i].GoFuncInfo
 	}
 	return nil
 }
@@ -222,9 +250,11 @@ func (p *Builder) CallGoFunc(fun GoFuncAddr) *Builder {
 }
 
 // CallGoFuncv instr
-func (p *Builder) CallGoFuncv(fun GoVariadicFuncAddr, arity int) *Builder {
+func (p *Builder) CallGoFuncv(fun GoFuncvAddr, arity int) *Builder {
 	code := p.code
-	if arity >= bitsFuncvArityMax {
+	if arity < 0 {
+		arity = bitsFuncvArityVar
+	} else if arity >= bitsFuncvArityMax {
 		p.Push(arity - bitsFuncvArityMax)
 		arity = bitsFuncvArityMax
 	}

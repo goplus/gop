@@ -7,7 +7,7 @@ import (
 // -----------------------------------------------------------------------------
 
 func TestVar(t *testing.T) {
-	sprint, ok := I.FindVariadicFunc("Sprint")
+	sprint, ok := I.FindFuncv("Sprint")
 	strcat, ok2 := I.FindFunc("strcat")
 	if !ok || !ok2 {
 		t.Fatal("FindFunc failed: Sprintf/strcat")
@@ -35,7 +35,7 @@ func TestVar(t *testing.T) {
 }
 
 func TestParentCtx(t *testing.T) {
-	sprint, ok := I.FindVariadicFunc("Sprint")
+	sprint, ok := I.FindFuncv("Sprint")
 	strcat, ok2 := I.FindFunc("strcat")
 	if !ok || !ok2 {
 		t.Fatal("FindFunc failed: Sprintf/strcat")
@@ -71,7 +71,7 @@ func TestParentCtx(t *testing.T) {
 }
 
 func TestAddrVar(t *testing.T) {
-	sprint, ok := I.FindVariadicFunc("Sprint")
+	sprint, ok := I.FindFuncv("Sprint")
 	strcat, ok2 := I.FindFunc("strcat")
 	if !ok || !ok2 {
 		t.Fatal("FindFunc failed: Sprintf/strcat")

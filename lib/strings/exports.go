@@ -26,8 +26,8 @@ func execReplacerReplace(zero uint32, p *qlang.Context) {
 var I = qlang.NewGoPackage("strings")
 
 func init() {
-	I.RegisterVariadicFuncs(
-		I.Func("NewReplacer", strings.NewReplacer, execNewReplacer),
+	I.RegisterFuncvs(
+		I.Funcv("NewReplacer", strings.NewReplacer, execNewReplacer),
 	)
 	I.RegisterFuncs(
 		I.Func("(*Replacer).Replace", (*strings.Replacer).Replace, execReplacerReplace),

@@ -14,11 +14,11 @@ import (
 var I = qlang.NewGoPackage("fmt")
 
 func init() {
-	I.RegisterVariadicFuncs(
-		I.Func("Print", fmt.Print, builtin.QexecPrint),
-		I.Func("Printf", fmt.Printf, builtin.QexecPrintf),
-		I.Func("Println", fmt.Println, builtin.QexecPrintln),
-		I.Func("Fprintln", fmt.Fprintln, builtin.QexecFprintln),
+	I.RegisterFuncvs(
+		I.Funcv("Print", fmt.Print, builtin.QexecPrint),
+		I.Funcv("Printf", fmt.Printf, builtin.QexecPrintf),
+		I.Funcv("Println", fmt.Println, builtin.QexecPrintln),
+		I.Funcv("Fprintln", fmt.Fprintln, builtin.QexecFprintln),
 	)
 }
 

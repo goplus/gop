@@ -135,7 +135,7 @@ func (p *Package) compileIdent(ctx *blockCtx, name string, mode compleMode) {
 		}
 		switch kind {
 		case exec.SymbolVar:
-		case exec.SymbolFunc, exec.SymbolVariadicFunc:
+		case exec.SymbolFunc, exec.SymbolFuncv:
 			ctx.infer.Push(newGoFunc(addr, kind, 0))
 			if mode == inferOnly {
 				return
@@ -266,8 +266,8 @@ func (p *Package) compileCallExpr(ctx *blockCtx, v *ast.CallExpr, mode compleMod
 		switch vfn.kind {
 		case exec.SymbolFunc:
 			out.CallGoFunc(exec.GoFuncAddr(vfn.addr))
-		case exec.SymbolVariadicFunc:
-			out.CallGoFuncv(exec.GoVariadicFuncAddr(vfn.addr), arity)
+		case exec.SymbolFuncv:
+			out.CallGoFuncv(exec.GoFuncvAddr(vfn.addr), arity)
 		}
 		ctx.infer.Ret(uint32(len(v.Args)+1+vfn.isMethod), ret)
 		return
@@ -287,7 +287,7 @@ func (p *Package) compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, mode c
 				log.Panicln("compileSelectorExpr: not found -", nv.PkgPath, v.Sel.Name)
 			}
 			switch kind {
-			case exec.SymbolFunc, exec.SymbolVariadicFunc:
+			case exec.SymbolFunc, exec.SymbolFuncv:
 				ctx.infer.Ret(1, newGoFunc(addr, kind, 0))
 				if mode == inferOnly {
 					return
