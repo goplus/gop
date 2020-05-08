@@ -111,6 +111,7 @@ func TestFuncLargeArity(t *testing.T) {
 		DefineFunc(
 			foo.Return(TyString).
 				Vargs(tyStringSlice)).
+		Push(nil).
 		Load(-1).
 		CallFuncv(bar, -1).
 		Store(-2).

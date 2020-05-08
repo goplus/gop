@@ -23,7 +23,7 @@ func execFunc(i Instr, p *Context) {
 
 func execFuncv(i Instr, p *Context) {
 	idx := i & bitsOpCallFuncvOperand
-	arity := (i >> bitsOpCallFuncvShift) & bitsFuncvArityMax
+	arity := (i >> bitsOpCallFuncvShift) & bitsFuncvArityOperand
 	fun := p.code.funvs[idx]
 	if arity == bitsFuncvArityVar {
 		fun.exec(p)
@@ -205,14 +205,14 @@ func (p *Builder) CallFuncv(fun *FuncInfo, arity int) *Builder {
 	if _, ok := p.funcs[fun]; !ok {
 		p.funcs[fun] = -1
 	}
-	code := p.code
-	fun.offs = append(fun.offs, len(code.data))
 	if arity < 0 {
 		arity = bitsFuncvArityVar
 	} else if arity >= bitsFuncvArityMax {
 		p.Push(arity - bitsFuncvArityMax)
 		arity = bitsFuncvArityMax
 	}
+	code := p.code
+	fun.offs = append(fun.offs, len(code.data))
 	i := (opCallFuncv << bitsOpShift) | (uint32(arity) << bitsOpCallFuncvShift)
 	code.data = append(code.data, i)
 	return p
