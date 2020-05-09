@@ -2,6 +2,7 @@ package exec
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/qiniu/x/log"
@@ -48,6 +49,12 @@ func init() {
 	)
 	I.RegisterVars(
 		I.Var("x", new(int)),
+	)
+	I.RegisterTypes(
+		I.Rtype(reflect.TypeOf((*Context)(nil))),
+		I.Rtype(reflect.TypeOf((*Code)(nil))),
+		I.Rtype(reflect.TypeOf((*Stack)(nil))),
+		I.Type("rune", TyRune),
 	)
 }
 
@@ -117,4 +124,18 @@ func TestLargeArity(t *testing.T) {
 	if v := checkPop(ctx); v != ret {
 		t.Fatal("32 times(1024) sprint != `32` times(1024), ret =", v)
 	}
+}
+
+func TestType(t *testing.T) {
+	typ, ok := I.FindType("Context")
+	if !ok {
+		t.Fatal("FindType failed: Context not found")
+	}
+	fmt.Println(typ)
+
+	typ, ok = FindGoPackage("").FindType("rune")
+	if !ok || typ != TyRune {
+		t.Fatal("FindType failed: rune not found")
+	}
+	fmt.Println(typ)
 }

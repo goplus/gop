@@ -239,6 +239,13 @@ var (
 	TyError = reflect.TypeOf((*error)(nil)).Elem()
 )
 
+var (
+	// TyByte type
+	TyByte = reflect.TypeOf(byte(0))
+	// TyRune type
+	TyRune = reflect.TypeOf(rune(0))
+)
+
 type bTI struct { // builtin type info
 	typ  reflect.Type
 	size uintptr

@@ -47,6 +47,7 @@ const (
 type GoPackage struct {
 	PkgPath string
 	syms    map[string]uint32
+	types   map[string]reflect.Type
 }
 
 // NewGoPackage creates a new builtin Go Package.
@@ -54,7 +55,11 @@ func NewGoPackage(pkgPath string) *GoPackage {
 	if _, ok := gopkgs[pkgPath]; ok {
 		log.Panicln("NewPackage failed: package exists -", pkgPath)
 	}
-	pkg := &GoPackage{PkgPath: pkgPath, syms: make(map[string]uint32)}
+	pkg := &GoPackage{
+		PkgPath: pkgPath,
+		syms:    make(map[string]uint32),
+		types:   make(map[string]reflect.Type),
+	}
 	gopkgs[pkgPath] = pkg
 	return pkg
 }
@@ -102,6 +107,12 @@ func (p *GoPackage) FindVar(name string) (addr GoVarAddr, ok bool) {
 	return
 }
 
+// FindType lookups a Go type by name.
+func (p *GoPackage) FindType(name string) (typ reflect.Type, ok bool) {
+	typ, ok = p.types[name]
+	return
+}
+
 // Var creates a GoVarInfo instance.
 func (p *GoPackage) Var(name string, addr interface{}) GoVarInfo {
 	if log.CanOutput(log.Ldebug) {
@@ -120,6 +131,19 @@ func (p *GoPackage) Func(name string, fn interface{}, exec func(i Instr, p *Cont
 // Funcv creates a GoFuncvInfo instance.
 func (p *GoPackage) Funcv(name string, fn interface{}, exec func(i Instr, p *Context)) GoFuncvInfo {
 	return GoFuncvInfo{GoFuncInfo{Pkg: p, Name: name, This: fn, exec: exec}, 0}
+}
+
+// Type creates a GoTypeInfo instance.
+func (p *GoPackage) Type(name string, typ reflect.Type) GoTypeInfo {
+	return GoTypeInfo{Pkg: p, Name: name, Type: typ}
+}
+
+// Rtype gets the real type information.
+func (p *GoPackage) Rtype(typ reflect.Type) GoTypeInfo {
+	if typ.Kind() == reflect.Ptr {
+		typ = typ.Elem()
+	}
+	return GoTypeInfo{Pkg: p, Name: typ.Name(), Type: typ}
 }
 
 // RegisterVars registers all exported Go variables of this package.
@@ -172,6 +196,22 @@ func (p *GoPackage) RegisterFuncvs(funs ...GoFuncvInfo) (base GoFuncvAddr) {
 	return
 }
 
+// RegisterTypes registers all exported Go types defined by this package.
+func (p *GoPackage) RegisterTypes(typinfos ...GoTypeInfo) {
+	for _, ti := range typinfos {
+		if p != ti.Pkg {
+			log.Panicln("RegisterTypes failed: unmatched package instance.")
+		}
+		if ti.Name == "" {
+			log.Panicln("RegisterTypes failed: unnamed type? -", ti.Type)
+		}
+		if _, ok := p.types[ti.Name]; ok {
+			log.Panicln("RegisterTypes failed: register an existed type -", p.PkgPath, ti.Name)
+		}
+		p.types[ti.Name] = ti.Type
+	}
+}
+
 // -----------------------------------------------------------------------------
 
 var (
@@ -209,6 +249,13 @@ func (p *GoFuncvInfo) getNumIn() int {
 		p.numIn = reflect.TypeOf(p.This).NumIn()
 	}
 	return p.numIn
+}
+
+// GoTypeInfo represents a Go type information.
+type GoTypeInfo struct {
+	Pkg  *GoPackage
+	Name string
+	Type reflect.Type
 }
 
 // GoVarInfo represents a Go variable information.
