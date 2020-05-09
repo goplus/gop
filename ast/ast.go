@@ -4,8 +4,6 @@ import (
 	"go/ast"
 )
 
-// -----------------------------------------------------------------------------
-
 // A Package node represents a set of source files collectively building a qlang package.
 type Package = ast.Package
 
@@ -17,6 +15,9 @@ type Expr = ast.Expr
 
 // Stmt - All statement nodes implement the Stmt interface.
 type Stmt = ast.Stmt
+
+// ----------------------------------------------------------------------------
+// Declarations
 
 // A Spec node represents a single (non-parenthesized) import,
 // constant, type, or variable declaration.
@@ -54,30 +55,8 @@ type (
 	FuncDecl = ast.FuncDecl
 )
 
-// A type is represented by a tree consisting of one
-// or more of the following type-specific expression
-// nodes.
-type (
-	// An ArrayType node represents an array or slice type.
-	ArrayType = ast.ArrayType
-
-	// A StructType node represents a struct type.
-	StructType = ast.StructType
-
-	// Pointer types are represented via StarExpr nodes.
-
-	// A FuncType node represents a function type.
-	FuncType = ast.FuncType
-
-	// An InterfaceType node represents an interface type.
-	InterfaceType = ast.InterfaceType
-
-	// A MapType node represents a map type.
-	MapType = ast.MapType
-
-	// A ChanType node represents a channel type.
-	ChanType = ast.ChanType
-)
+// ----------------------------------------------------------------------------
+// Statements
 
 // A statement is represented by a tree consisting of one
 // or more of the following concrete statement nodes.
@@ -153,6 +132,20 @@ type (
 	RangeStmt = ast.RangeStmt
 )
 
+// ----------------------------------------------------------------------------
+// Expressions and types
+
+// A Field represents a Field declaration list in a struct type,
+// a method list in an interface type, or a parameter/result declaration
+// in a signature.
+// Field.Names is nil for unnamed parameters (parameter lists which only contain types)
+// and embedded struct fields. In the latter case, the field name is the type name.
+//
+type Field = ast.Field
+
+// A FieldList represents a list of Fields, enclosed by parentheses or braces.
+type FieldList = ast.FieldList
+
 // An expression is represented by a tree consisting of one
 // or more of the following concrete expression nodes.
 //
@@ -211,6 +204,42 @@ type (
 	// A KeyValueExpr node represents (key : value) pairs
 	// in composite literals.
 	KeyValueExpr = ast.KeyValueExpr
+)
+
+// ChanDir - the direction of a channel type is indicated by a bit
+// mask including one or both of the following constants.
+type ChanDir = ast.ChanDir
+
+const (
+	// SEND flag
+	SEND = ast.SEND
+	// RECV flag
+	RECV = ast.RECV
+)
+
+// A type is represented by a tree consisting of one
+// or more of the following type-specific expression
+// nodes.
+type (
+	// An ArrayType node represents an array or slice type.
+	ArrayType = ast.ArrayType
+
+	// A StructType node represents a struct type.
+	StructType = ast.StructType
+
+	// Pointer types are represented via StarExpr nodes.
+
+	// A FuncType node represents a function type.
+	FuncType = ast.FuncType
+
+	// An InterfaceType node represents an interface type.
+	InterfaceType = ast.InterfaceType
+
+	// A MapType node represents a map type.
+	MapType = ast.MapType
+
+	// A ChanType node represents a channel type.
+	ChanType = ast.ChanType
 )
 
 // -----------------------------------------------------------------------------

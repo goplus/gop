@@ -259,7 +259,20 @@ func (p *Package) compileCallExpr(ctx *blockCtx, v *ast.CallExpr, mode compleMod
 			ctx.infer.Ret(1, ret)
 			return
 		}
-		log.Panicln("compileCallExpr: todo")
+		for _, arg := range v.Args {
+			p.compileExpr(ctx, arg, 0)
+		}
+		nargs := uint32(len(v.Args))
+		args := ctx.infer.GetArgs(nargs)
+		out := ctx.out
+		arity := checkFuncCall(vfn.Proto(), 0, args, out)
+		fun := vfn.getFuncInfo()
+		if fun.IsVariadic() {
+			out.CallFuncv(fun, arity)
+		} else {
+			out.CallFunc(fun)
+		}
+		ctx.infer.Ret(uint32(len(v.Args)+1), ret)
 	case *goFunc:
 		ret := vfn.Results()
 		if mode == inferOnly {

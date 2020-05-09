@@ -104,6 +104,10 @@ func newQlFunc(f *funcDecl) *qlFunc {
 	return (*qlFunc)(f)
 }
 
+func (p *qlFunc) getFuncInfo() *exec.FuncInfo {
+	panic("todo")
+}
+
 func (p *qlFunc) Kind() iKind {
 	return reflect.Func
 }
