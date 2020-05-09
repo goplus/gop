@@ -125,6 +125,12 @@ func (p *Package) compileIdent(ctx *blockCtx, name string, mode compleMode) {
 				log.Panicln("compileIdent failed: package not found -", v)
 			}
 			ctx.infer.Push(&nonValue{pkg})
+		case *funcDecl:
+			ctx.infer.Push(newQlFunc(v))
+			if mode == inferOnly {
+				return
+			}
+			log.Panicln("compileIdent failed: todo - funcDecl")
 		default:
 			log.Panicln("compileIdent failed: unknown -", reflect.TypeOf(sym))
 		}
@@ -247,6 +253,13 @@ func (p *Package) compileCallExpr(ctx *blockCtx, v *ast.CallExpr, mode compleMod
 	p.compileExpr(ctx, v.Fun, inferOnly)
 	fn := ctx.infer.Get(-1)
 	switch vfn := fn.(type) {
+	case *qlFunc:
+		ret := vfn.Results()
+		if mode == inferOnly {
+			ctx.infer.Ret(1, ret)
+			return
+		}
+		log.Panicln("compileCallExpr: todo")
 	case *goFunc:
 		ret := vfn.Results()
 		if mode == inferOnly {

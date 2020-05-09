@@ -179,29 +179,6 @@ func (p *blockCtx) insertMethod(typeName, methodName string, method *methodDecl)
 
 // -----------------------------------------------------------------------------
 
-type funcTypeDecl struct {
-	X *ast.FuncType
-}
-
-type methodDecl struct {
-	Recv    string // recv object name
-	Pointer int
-	Type    *funcTypeDecl
-	Body    *ast.BlockStmt
-	file    *fileCtx
-}
-
-type typeDecl struct {
-	Methods map[string]*methodDecl
-	Alias   bool
-}
-
-type funcDecl struct {
-	Type *funcTypeDecl
-	Body *ast.BlockStmt
-	file *fileCtx
-}
-
 // A Package represents a qlang package.
 type Package struct {
 	vlist []*exec.Var
@@ -225,7 +202,7 @@ func NewPackage(out *exec.Builder, pkg *ast.Package) (p *Package, err error) {
 			return p, err
 		}
 		ctx.file = entry.file
-		p.compileBlockStmt(ctx, entry.Body)
+		p.compileBlockStmt(ctx, entry.body)
 	}
 	p.vlist = ctx.vlist
 	p.syms = ctx.syms
@@ -320,8 +297,8 @@ func (p *Package) loadFunc(ctx *fileCtx, d *ast.FuncDecl) {
 		log.Panicln("loadFunc TODO: init")
 	} else {
 		ctx.insertFunc(name, &funcDecl{
-			Type: &funcTypeDecl{X: d.Type},
-			Body: d.Body,
+			typ:  &funcTypeDecl{X: d.Type},
+			body: d.Body,
 			file: ctx,
 		})
 	}

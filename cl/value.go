@@ -98,6 +98,38 @@ func newFuncResults(tfn reflect.Type) iValue {
 
 // -----------------------------------------------------------------------------
 
+type qlFunc funcDecl
+
+func newQlFunc(f *funcDecl) *qlFunc {
+	return (*qlFunc)(f)
+}
+
+func (p *qlFunc) Kind() iKind {
+	return reflect.Func
+}
+
+func (p *qlFunc) Type() reflect.Type {
+	return ((*funcDecl)(p)).typeOf()
+}
+
+func (p *qlFunc) NumValues() int {
+	return 1
+}
+
+func (p *qlFunc) Value(i int) iValue {
+	return p
+}
+
+func (p *qlFunc) Results() iValue {
+	return newFuncResults(p.Type())
+}
+
+func (p *qlFunc) Proto() iFuncType {
+	return p.Type()
+}
+
+// -----------------------------------------------------------------------------
+
 type goFunc struct {
 	v        *exec.GoFuncInfo
 	addr     uint32
@@ -119,7 +151,7 @@ func newGoFunc(addr uint32, kind exec.SymbolKind, isMethod int) *goFunc {
 }
 
 func (p *goFunc) Kind() iKind {
-	return p.Type().Kind()
+	return reflect.Func
 }
 
 func (p *goFunc) Type() reflect.Type {
