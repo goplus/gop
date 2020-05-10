@@ -225,6 +225,8 @@ func TestGoPackage(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 var fsTestFunc = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	import "fmt"
+
 	func foo(x string) (n int, err error) {
 		n, err = fmt.Println("x: " + x)
 		return

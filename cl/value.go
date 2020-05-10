@@ -104,8 +104,8 @@ func newQlFunc(f *funcDecl) *qlFunc {
 	return (*qlFunc)(f)
 }
 
-func (p *qlFunc) getFuncInfo() *exec.FuncInfo {
-	panic("todo")
+func (p *qlFunc) FuncInfo() *exec.FuncInfo {
+	return ((*funcDecl)(p)).getFuncInfo()
 }
 
 func (p *qlFunc) Kind() iKind {

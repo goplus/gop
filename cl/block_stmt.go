@@ -25,30 +25,30 @@ const (
 
 // -----------------------------------------------------------------------------
 
-func (p *Package) compileBlockStmt(ctx *blockCtx, body *ast.BlockStmt) {
+func compileBlockStmt(ctx *blockCtx, body *ast.BlockStmt) {
 	for _, stmt := range body.List {
 		switch v := stmt.(type) {
 		case *ast.ExprStmt:
-			p.compileExprStmt(ctx, v)
+			compileExprStmt(ctx, v)
 		case *ast.AssignStmt:
-			p.compileAssignStmt(ctx, v)
+			compileAssignStmt(ctx, v)
 		default:
 			log.Panicln("compileBlockStmt failed: unknown -", reflect.TypeOf(v))
 		}
 	}
 }
 
-func (p *Package) compileExprStmt(ctx *blockCtx, expr *ast.ExprStmt) {
-	p.compileExpr(ctx, expr.X, 0)
+func compileExprStmt(ctx *blockCtx, expr *ast.ExprStmt) {
+	compileExpr(ctx, expr.X, 0)
 	ctx.infer.PopN(1)
 }
 
-func (p *Package) compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
+func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 	if ctx.infer.Len() != 0 {
 		log.Panicln("compileAssignStmt internal error: infer stack is not empty.")
 	}
 	if len(expr.Rhs) == 1 {
-		p.compileExpr(ctx, expr.Rhs[0], 0)
+		compileExpr(ctx, expr.Rhs[0], 0)
 		v := ctx.infer.Get(-1).(iValue)
 		n := v.NumValues()
 		if n != 1 {
@@ -63,7 +63,7 @@ func (p *Package) compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		}
 	} else {
 		for _, item := range expr.Rhs {
-			p.compileExpr(ctx, item, 0)
+			compileExpr(ctx, item, 0)
 			if ctx.infer.Get(-1).(iValue).NumValues() != 1 {
 				log.Panicln("compileAssignStmt failed: expr has multiple values.")
 			}
@@ -73,28 +73,28 @@ func (p *Package) compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		log.Panicln("compileAssignStmt failed: assign statment has mismatched variables count.")
 	}
 	for i := len(expr.Lhs) - 1; i >= 0; i-- {
-		p.compileExpr(ctx, expr.Lhs[i], expr.Tok)
+		compileExpr(ctx, expr.Lhs[i], expr.Tok)
 	}
 }
 
-func (p *Package) compileExpr(ctx *blockCtx, expr ast.Expr, mode compleMode) {
+func compileExpr(ctx *blockCtx, expr ast.Expr, mode compleMode) {
 	switch v := expr.(type) {
 	case *ast.Ident:
-		p.compileIdent(ctx, v.Name, mode)
+		compileIdent(ctx, v.Name, mode)
 	case *ast.BasicLit:
-		p.compileBasicLit(ctx, v, mode)
+		compileBasicLit(ctx, v, mode)
 	case *ast.CallExpr:
-		p.compileCallExpr(ctx, v, mode)
+		compileCallExpr(ctx, v, mode)
 	case *ast.BinaryExpr:
-		p.compileBinaryExpr(ctx, v, mode)
+		compileBinaryExpr(ctx, v, mode)
 	case *ast.SelectorExpr:
-		p.compileSelectorExpr(ctx, v, mode)
+		compileSelectorExpr(ctx, v, mode)
 	default:
 		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
 	}
 }
 
-func (p *Package) compileIdent(ctx *blockCtx, name string, mode compleMode) {
+func compileIdent(ctx *blockCtx, name string, mode compleMode) {
 	if mode > lhsBase {
 		in := ctx.infer.Get(-1)
 		addr, err := ctx.findVar(name)
@@ -126,6 +126,7 @@ func (p *Package) compileIdent(ctx *blockCtx, name string, mode compleMode) {
 			}
 			ctx.infer.Push(&nonValue{pkg})
 		case *funcDecl:
+			ctx.use(v)
 			ctx.infer.Push(newQlFunc(v))
 			if mode == inferOnly {
 				return
@@ -151,7 +152,7 @@ func (p *Package) compileIdent(ctx *blockCtx, name string, mode compleMode) {
 	}
 }
 
-func (p *Package) compileBasicLit(ctx *blockCtx, v *ast.BasicLit, mode compleMode) {
+func compileBasicLit(ctx *blockCtx, v *ast.BasicLit, mode compleMode) {
 	if mode > lhsBase {
 		log.Panicln("compileBasicLit: can't be lhs (left hand side) expr.")
 	}
@@ -171,12 +172,12 @@ func (p *Package) compileBasicLit(ctx *blockCtx, v *ast.BasicLit, mode compleMod
 	}
 }
 
-func (p *Package) compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr, mode compleMode) {
+func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr, mode compleMode) {
 	if mode > lhsBase {
 		log.Panicln("compileBinaryExpr: can't be lhs (left hand side) expr.")
 	}
-	p.compileExpr(ctx, v.X, inferOnly)
-	p.compileExpr(ctx, v.Y, inferOnly)
+	compileExpr(ctx, v.X, inferOnly)
+	compileExpr(ctx, v.Y, inferOnly)
 	x := ctx.infer.Get(-2)
 	y := ctx.infer.Get(-1)
 	op := binaryOps[v.Op]
@@ -195,8 +196,8 @@ func (p *Package) compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr, mode compl
 		ctx.infer.Ret(2, ret)
 		return
 	}
-	p.compileExpr(ctx, v.X, 0)
-	p.compileExpr(ctx, v.Y, 0)
+	compileExpr(ctx, v.X, 0)
+	compileExpr(ctx, v.Y, 0)
 	x = ctx.infer.Get(-2)
 	y = ctx.infer.Get(-1)
 	checkBinaryOp(kind, op, x, y, ctx.out)
@@ -246,11 +247,11 @@ var binaryOps = [...]exec.Operator{
 	token.LOR:     exec.OpLOr,
 }
 
-func (p *Package) compileCallExpr(ctx *blockCtx, v *ast.CallExpr, mode compleMode) {
+func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, mode compleMode) {
 	if mode > lhsBase {
 		log.Panicln("compileCallExpr: can't be lhs (left hand side) expr.")
 	}
-	p.compileExpr(ctx, v.Fun, inferOnly)
+	compileExpr(ctx, v.Fun, inferOnly)
 	fn := ctx.infer.Get(-1)
 	switch vfn := fn.(type) {
 	case *qlFunc:
@@ -260,19 +261,20 @@ func (p *Package) compileCallExpr(ctx *blockCtx, v *ast.CallExpr, mode compleMod
 			return
 		}
 		for _, arg := range v.Args {
-			p.compileExpr(ctx, arg, 0)
+			compileExpr(ctx, arg, 0)
 		}
 		nargs := uint32(len(v.Args))
 		args := ctx.infer.GetArgs(nargs)
 		out := ctx.out
 		arity := checkFuncCall(vfn.Proto(), 0, args, out)
-		fun := vfn.getFuncInfo()
+		fun := vfn.FuncInfo()
 		if fun.IsVariadic() {
 			out.CallFuncv(fun, arity)
 		} else {
 			out.CallFunc(fun)
 		}
 		ctx.infer.Ret(uint32(len(v.Args)+1), ret)
+		return
 	case *goFunc:
 		ret := vfn.Results()
 		if mode == inferOnly {
@@ -280,10 +282,10 @@ func (p *Package) compileCallExpr(ctx *blockCtx, v *ast.CallExpr, mode compleMod
 			return
 		}
 		if vfn.isMethod != 0 {
-			p.compileExpr(ctx, v.Fun.(*ast.SelectorExpr).X, 0)
+			compileExpr(ctx, v.Fun.(*ast.SelectorExpr).X, 0)
 		}
 		for _, arg := range v.Args {
-			p.compileExpr(ctx, arg, 0)
+			compileExpr(ctx, arg, 0)
 		}
 		nargs := uint32(len(v.Args))
 		args := ctx.infer.GetArgs(nargs)
@@ -301,8 +303,8 @@ func (p *Package) compileCallExpr(ctx *blockCtx, v *ast.CallExpr, mode compleMod
 	log.Panicln("compileCallExpr failed: unknown -", reflect.TypeOf(fn))
 }
 
-func (p *Package) compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, mode compleMode) {
-	p.compileExpr(ctx, v.X, inferOnly)
+func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, mode compleMode) {
+	compileExpr(ctx, v.X, inferOnly)
 	x := ctx.infer.Get(-1)
 	switch vx := x.(type) {
 	case *nonValue:

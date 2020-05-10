@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	"github.com/qiniu/qlang/ast"
+	"github.com/qiniu/qlang/exec"
 )
 
 type iType = reflect.Type
@@ -65,6 +66,17 @@ func toFuncType(ctx *fileCtx, t *ast.FuncType) iType {
 	return reflect.FuncOf(in, out, variadic)
 }
 
+func getFuncType(fi *exec.FuncInfo, ctx *fileCtx, t *ast.FuncType) {
+	in, variadic := toTypesEx(ctx, t.Params)
+	out := toTypes(ctx, t.Results)
+	if variadic {
+		fi.Vargs(in...)
+	} else {
+		fi.Args(in...)
+	}
+	fi.Out = out
+}
+
 func toTypes(ctx *fileCtx, fields *ast.FieldList) (types []iType) {
 	if fields == nil {
 		return
@@ -121,7 +133,11 @@ func toExternalType(ctx *fileCtx, v *ast.SelectorExpr) iType {
 }
 
 func toIdentType(ctx *fileCtx, ident string) iType {
-	panic("toIdentType: todo")
+	if typ, ok := ctx.builtin.FindType(ident); ok {
+		return typ
+	}
+	log.Panicln("toIdentType failed: unknown ident -", ident)
+	return nil
 }
 
 func toArrayType(ctx *fileCtx, v *ast.ArrayType) iType {
@@ -135,30 +151,45 @@ type typeDecl struct {
 	Alias   bool
 }
 
-type funcTypeDecl struct {
-	X *ast.FuncType
-}
-
 type methodDecl struct {
-	Recv    string // recv object name
-	Pointer int
-	Type    *funcTypeDecl
-	Body    *ast.BlockStmt
+	recv    string // recv object name
+	pointer int
+	typ     *ast.FuncType
+	body    *ast.BlockStmt
 	file    *fileCtx
 }
 
 type funcDecl struct {
-	typ  *funcTypeDecl
+	typ  *ast.FuncType
 	body *ast.BlockStmt
 	file *fileCtx
-	t    iType
+	fi   *exec.FuncInfo
+	t    reflect.Type
+	used bool
+}
+
+func newFuncDecl(name string, typ *ast.FuncType, body *ast.BlockStmt, file *fileCtx) *funcDecl {
+	fi := exec.NewFunc(name)
+	return &funcDecl{typ: typ, body: body, file: file, fi: fi}
+}
+
+func (p *funcDecl) getFuncInfo() *exec.FuncInfo {
+	if !p.fi.IsTypeValid() {
+		getFuncType(p.fi, p.file, p.typ)
+	}
+	return p.fi
 }
 
 func (p *funcDecl) typeOf() iType {
 	if p.t == nil {
-		p.t = toType(p.file, p.typ.X)
+		p.t = p.getFuncInfo().Type()
 	}
 	return p.t
+}
+
+func (p *funcDecl) compile() {
+	ctx := newBlockCtx(p.file)
+	compileBlockStmt(ctx, p.body)
 }
 
 // -----------------------------------------------------------------------------

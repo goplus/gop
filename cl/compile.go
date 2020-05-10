@@ -36,12 +36,33 @@ type pkgCtx struct {
 	infer   exec.Stack
 	builtin *exec.GoPackage
 	out     *exec.Builder
+	usedfns []*funcDecl
 }
 
 func newPkgCtx(out *exec.Builder) *pkgCtx {
 	p := &pkgCtx{builtin: exec.FindGoPackage(""), out: out}
 	p.infer.Init()
 	return p
+}
+
+func (p *pkgCtx) use(f *funcDecl) {
+	if f.used {
+		return
+	}
+	p.usedfns = append(p.usedfns, f)
+	f.used = true
+}
+
+func (p *pkgCtx) resolveFuncs() {
+	for {
+		n := len(p.usedfns)
+		if n == 0 {
+			break
+		}
+		f := p.usedfns[n-1]
+		p.usedfns = p.usedfns[:n-1]
+		f.compile()
+	}
 }
 
 type fileCtx struct {
@@ -71,6 +92,15 @@ type blockCtx struct {
 	syms  map[string]iSymbol
 }
 
+func newBlockCtx(file *fileCtx) *blockCtx {
+	return &blockCtx{
+		pkgCtx: file.pkgCtx,
+		file:   file,
+		parent: file.blockCtx,
+		syms:   make(map[string]iSymbol),
+	}
+}
+
 func newGblBlockCtx(pkg *pkgCtx, parent *blockCtx) *blockCtx {
 	return &blockCtx{
 		pkgCtx: pkg,
@@ -96,9 +126,7 @@ func (p *blockCtx) find(name string) (sym interface{}, ok bool) {
 			return
 		}
 	}
-	if ctx.parent == nil { // it's global blockCtx
-		sym, ok = ctx.file.imports[name]
-	}
+	sym, ok = ctx.file.imports[name]
 	return
 }
 
@@ -191,7 +219,7 @@ func NewPackage(out *exec.Builder, pkg *ast.Package) (p *Package, err error) {
 	ctxPkg := newPkgCtx(out)
 	ctx := newGblBlockCtx(ctxPkg, nil)
 	for _, f := range pkg.Files {
-		p.loadFile(ctx, f)
+		loadFile(ctx, f)
 	}
 	if pkg.Name == "main" {
 		entry, err := ctx.findFunc("main")
@@ -202,7 +230,8 @@ func NewPackage(out *exec.Builder, pkg *ast.Package) (p *Package, err error) {
 			return p, err
 		}
 		ctx.file = entry.file
-		p.compileBlockStmt(ctx, entry.body)
+		compileBlockStmt(ctx, entry.body)
+		ctxPkg.resolveFuncs()
 	}
 	p.vlist = ctx.vlist
 	p.syms = ctx.syms
@@ -214,23 +243,23 @@ func (p *Package) GetGlobalVars() []*exec.Var {
 	return p.vlist
 }
 
-func (p *Package) loadFile(block *blockCtx, f *ast.File) {
+func loadFile(block *blockCtx, f *ast.File) {
 	ctx := newFileCtx(block)
 	block.file = ctx
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
-			p.loadFunc(ctx, d)
+			loadFunc(ctx, d)
 		case *ast.GenDecl:
 			switch d.Tok {
 			case token.IMPORT:
-				p.loadImports(ctx, d)
+				loadImports(ctx, d)
 			case token.TYPE:
-				p.loadTypes(d)
+				loadTypes(d)
 			case token.CONST:
-				p.loadConsts(d)
+				loadConsts(d)
 			case token.VAR:
-				p.loadVars(d)
+				loadVars(d)
 			default:
 				log.Panicln("tok:", d.Tok, "spec:", reflect.TypeOf(d.Specs).Elem())
 			}
@@ -240,13 +269,13 @@ func (p *Package) loadFile(block *blockCtx, f *ast.File) {
 	}
 }
 
-func (p *Package) loadImports(ctx *fileCtx, d *ast.GenDecl) {
+func loadImports(ctx *fileCtx, d *ast.GenDecl) {
 	for _, item := range d.Specs {
-		p.loadImport(ctx, item.(*ast.ImportSpec))
+		loadImport(ctx, item.(*ast.ImportSpec))
 	}
 }
 
-func (p *Package) loadImport(ctx *fileCtx, spec *ast.ImportSpec) {
+func loadImport(ctx *fileCtx, spec *ast.ImportSpec) {
 	var pkgPath = astutil.ToString(spec.Path)
 	var name string
 	if spec.Name != nil {
@@ -261,46 +290,42 @@ func (p *Package) loadImport(ctx *fileCtx, spec *ast.ImportSpec) {
 	ctx.imports[name] = pkgPath
 }
 
-func (p *Package) loadTypes(d *ast.GenDecl) {
+func loadTypes(d *ast.GenDecl) {
 	for _, item := range d.Specs {
-		p.loadType(item.(*ast.TypeSpec))
+		loadType(item.(*ast.TypeSpec))
 	}
 }
 
-func (p *Package) loadType(spec *ast.TypeSpec) {
+func loadType(spec *ast.TypeSpec) {
 }
 
-func (p *Package) loadConsts(d *ast.GenDecl) {
+func loadConsts(d *ast.GenDecl) {
 }
 
-func (p *Package) loadVars(d *ast.GenDecl) {
+func loadVars(d *ast.GenDecl) {
 	for _, item := range d.Specs {
-		p.loadVar(item.(*ast.ValueSpec))
+		loadVar(item.(*ast.ValueSpec))
 	}
 }
 
-func (p *Package) loadVar(spec *ast.ValueSpec) {
+func loadVar(spec *ast.ValueSpec) {
 }
 
-func (p *Package) loadFunc(ctx *fileCtx, d *ast.FuncDecl) {
+func loadFunc(ctx *fileCtx, d *ast.FuncDecl) {
 	var name = d.Name.Name
 	if d.Recv != nil {
 		recv := astutil.ToRecv(d.Recv)
 		ctx.insertMethod(recv.Type, name, &methodDecl{
-			Recv:    recv.Name,
-			Pointer: recv.Pointer,
-			Type:    &funcTypeDecl{X: d.Type},
-			Body:    d.Body,
+			recv:    recv.Name,
+			pointer: recv.Pointer,
+			typ:     d.Type,
+			body:    d.Body,
 			file:    ctx,
 		})
 	} else if name == "init" {
 		log.Panicln("loadFunc TODO: init")
 	} else {
-		ctx.insertFunc(name, &funcDecl{
-			typ:  &funcTypeDecl{X: d.Type},
-			body: d.Body,
-			file: ctx,
-		})
+		ctx.insertFunc(name, newFuncDecl(name, d.Type, d.Body, ctx))
 	}
 }
 
