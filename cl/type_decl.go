@@ -224,7 +224,7 @@ type funcDecl struct {
 }
 
 func newFuncDecl(name string, typ *ast.FuncType, body *ast.BlockStmt, ctx *blockCtx) *funcDecl {
-	fi := exec.NewFunc(name)
+	fi := exec.NewFunc(name, 1)
 	return &funcDecl{typ: typ, body: body, ctx: ctx, fi: fi}
 }
 
@@ -245,7 +245,7 @@ func (p *funcDecl) typeOf() iType {
 func (p *funcDecl) compile() {
 	fun := p.getFuncInfo()
 	ctx := p.ctx
-	out := p.ctx.out
+	out := ctx.out
 	out.DefineFunc(fun)
 	compileBlockStmt(ctx, p.body)
 	out.EndFunc(fun)

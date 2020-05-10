@@ -62,8 +62,9 @@ type FuncInfo struct {
 }
 
 // NewFunc create a qlang function.
-func NewFunc(name string) *FuncInfo {
-	return &FuncInfo{Name: name}
+func NewFunc(name string, nestDepth uint32) *FuncInfo {
+	f := &FuncInfo{Name: name, nestDepth: nestDepth}
+	return f
 }
 
 // IsTypeValid returns if function type is valid or not.
@@ -97,6 +98,9 @@ func (p *FuncInfo) Return(out ...reflect.Type) *FuncInfo {
 // DefineVar defines variables in this function.
 func (p *FuncInfo) DefineVar(vars ...*Var) *FuncInfo {
 	p.Vars = vars
+	for i, v := range vars {
+		v.SetAddr(p.nestDepth, uint32(i))
+	}
 	return p
 }
 
@@ -122,20 +126,20 @@ func (p *FuncInfo) Type() reflect.Type {
 }
 
 func (p *FuncInfo) exec(ctx *Context) {
-	sub := ctx.NewNest(p.Vars...)
+	stk := ctx.Stack
+	sub := NewContextEx(ctx.globalCtx(), stk, ctx.code, p.Vars...)
 	sub.Exec(p.FunEntry, p.FunEnd)
-	ctx.PopN(len(p.In))
+	stk.PopN(len(p.In))
 }
 
 func (p *FuncInfo) execVariadic(arity uint32, ctx *Context) {
 	var n = uint32(len(p.In) - 1)
-	var last interface{}
 	if arity > n {
 		tVariadic := p.In[n]
 		nVariadic := arity - n
-		if tVariadic == TyEmptyInterface {
-			last = ctx.GetArgs(nVariadic)
-			ctx.Ret(nVariadic, last)
+		if tVariadic == tyEmptyInterfaceSlice {
+			var empty []interface{}
+			ctx.Ret(nVariadic, append(empty, ctx.GetArgs(nVariadic)...))
 		} else {
 			variadic := reflect.MakeSlice(tVariadic, int(nVariadic), int(nVariadic))
 			items := ctx.GetArgs(nVariadic)
@@ -147,6 +151,8 @@ func (p *FuncInfo) execVariadic(arity uint32, ctx *Context) {
 	}
 	p.exec(ctx)
 }
+
+var tyEmptyInterfaceSlice = reflect.SliceOf(TyEmptyInterface)
 
 // -----------------------------------------------------------------------------
 
@@ -168,10 +174,8 @@ func (p *Builder) DefineFunc(fun *FuncInfo) *Builder {
 	if idx, ok := p.funcs[fun]; ok && idx >= 0 {
 		log.Panicln("DefineFunc failed: func is defined already -", fun.Name)
 	}
-	p.NestDepth++
+	p.NestDepth = fun.nestDepth
 	fun.FunEntry = len(p.code.data)
-	fun.nestDepth = p.NestDepth
-	p.DefineVar(fun.Vars...)
 	if fun.IsVariadic() {
 		p.funcs[fun] = len(p.code.funvs)
 		p.code.funvs = append(p.code.funvs, fun)
@@ -188,7 +192,7 @@ func (p *Builder) EndFunc(fun *FuncInfo) *Builder {
 		log.Panicln("EndFunc failed: doesn't match with DefineFunc -", fun.Name)
 	}
 	fun.FunEnd = len(p.code.data)
-	p.NestDepth--
+	p.NestDepth = 0
 	return p
 }
 

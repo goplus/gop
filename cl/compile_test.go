@@ -2,7 +2,6 @@ package cl
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/qiniu/qlang/ast/asttest"
@@ -225,6 +224,47 @@ func TestGoPackage(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
+var fsTestReturn = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	import (
+		"fmt"
+		"strings"
+	)
+
+	func foo(x string) string {
+		return strings.NewReplacer("?", "!").Replace(x)
+	}
+
+	fmt.Println(foo("Hello, world???"))
+`)
+
+func _TestReturn(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestReturn, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	pkg, err := NewPackage(b, bar)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code, pkg.GetGlobalVars()...)
+	ctx.Exec(0, code.Len())
+	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(17) {
+		t.Fatal("n:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
 var fsTestFunc = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	import "fmt"
 
@@ -250,8 +290,6 @@ func TestFunc(t *testing.T) {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
-
-	code.Dump(os.Stdout)
 
 	ctx := exec.NewContext(code, pkg.GetGlobalVars()...)
 	ctx.Exec(0, code.Len())

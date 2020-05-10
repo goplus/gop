@@ -16,7 +16,7 @@ func TestFunc(t *testing.T) {
 	}
 	fmt.Println("strcat:", strcat.GetInfo())
 
-	foo := NewFunc("foo")
+	foo := NewFunc("foo", 1)
 	code := NewBuilder(nil).
 		Push(nil).
 		Push("x").
@@ -49,7 +49,8 @@ func TestFuncv(t *testing.T) {
 
 	tyInterfaceSlice := reflect.SliceOf(TyEmptyInterface)
 
-	foo := NewFunc("foo")
+	foo := NewFunc("foo", 1)
+	bar := NewFunc("bar", 1)
 	format := NewVar(TyString, "format")
 	args := NewVar(tyInterfaceSlice, "args")
 	code := NewBuilder(nil).
@@ -58,7 +59,7 @@ func TestFuncv(t *testing.T) {
 		Push(1.3).
 		Push(1).
 		Push("xsw").
-		CallFuncv(foo, 4).
+		CallFuncv(bar, 4).
 		Return().
 		DefineFunc(
 			foo.Return(TyString).
@@ -73,6 +74,15 @@ func TestFuncv(t *testing.T) {
 		CallGoFuncv(sprintf, -1). // sprintf(format, args...)
 		Store(-3).
 		EndFunc(foo).
+		DefineFunc(
+			bar.Return(TyString).
+				Vargs(TyString, tyInterfaceSlice)).
+		Push(nil).
+		Load(-2).
+		Load(-1).
+		CallFuncv(foo, -1). // foo(format, args...)
+		Store(-3).
+		EndFunc(bar).
 		Resolve()
 
 	code.Dump(os.Stdout)
@@ -92,8 +102,8 @@ func TestFuncLargeArity(t *testing.T) {
 
 	tyStringSlice := reflect.SliceOf(TyString)
 
-	foo := NewFunc("foo")
-	bar := NewFunc("bar")
+	foo := NewFunc("foo", 1)
+	bar := NewFunc("bar", 1)
 	b := NewBuilder(nil).
 		Push(nil)
 	ret := ""

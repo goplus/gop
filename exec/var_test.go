@@ -61,9 +61,8 @@ func TestParentCtx(t *testing.T) {
 	p1 := NewContext(code, z)
 	p1.SetVar(z, "78")
 
-	p2 := p1.NewNest()
-	ctx := p2.NewNest(x, y)
-
+	p2 := NewContextEx(p1, p1.Stack, p1.code)
+	ctx := NewContextEx(p2, p2.Stack, p2.code, x, y)
 	ctx.Exec(0, code.Len())
 	if v := p1.GetVar(z); v != "78532" {
 		t.Fatal("z != 78532, ret =", v)
@@ -99,8 +98,8 @@ func TestAddrVar(t *testing.T) {
 	p1 := NewContext(code, z)
 	p1.SetVar(z, "78")
 
-	p2 := p1.NewNest()
-	ctx := p2.NewNest(x, y)
+	p2 := NewContextEx(p1, p1.Stack, p1.code)
+	ctx := NewContextEx(p2, p2.Stack, p2.code, x, y)
 	ctx.Exec(0, code.Len())
 	if v := p1.GetVar(z); v != "78532" {
 		t.Fatal("y != 78532, ret =", v)

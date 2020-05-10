@@ -49,7 +49,7 @@ func makeVarsContext(vars []*Var, ctx *Context) varsContext {
 		nestDepth := ctx.getNestDepth()
 		for i, v := range vars {
 			if v.NestDepth != nestDepth || v.idx != uint32(i) {
-				log.Panicln("makeVarsContext failed: unexpected variable -", v.Name)
+				log.Panicln("makeVarsContext failed: unexpected variable -", v.Name, v.NestDepth)
 			}
 		}
 	}

@@ -92,18 +92,25 @@ func NewContext(code *Code, vars ...*Var) *Context {
 	return p
 }
 
-// NewNest creates a nest closure context, with some local variables.
-func (ctx *Context) NewNest(vars ...*Var) *Context {
+// NewContextEx creates a closure context, with some local variables.
+func NewContextEx(parent *Context, stk *Stack, code *Code, vars ...*Var) *Context {
 	p := &Context{
-		Stack:  ctx.Stack,
-		code:   ctx.code,
-		parent: ctx,
-		base:   len(ctx.data),
+		Stack:  stk,
+		code:   code,
+		parent: parent,
+		base:   len(stk.data),
 	}
 	if len(vars) > 0 {
 		p.vars = makeVarsContext(vars, p)
 	}
 	return p
+}
+
+func (ctx *Context) globalCtx() *Context {
+	for ctx.parent != nil {
+		ctx = ctx.parent
+	}
+	return ctx
 }
 
 // Exec executes a code block from ip to ipEnd.
