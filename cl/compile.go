@@ -77,11 +77,42 @@ func newFileCtx(block *blockCtx) *fileCtx {
 // -----------------------------------------------------------------------------
 
 // - varName => *exec.Var
+// - stkVarName => *stackVar
 // - pkgName => pkgPath
 // - funcName => *funcDecl
 // - typeName => *typeDecl
 //
 type iSymbol = interface{}
+
+type iVar interface {
+	inCurrentCtx(ctx *blockCtx) bool
+	getType() reflect.Type
+}
+
+type execVar exec.Var
+
+func (p *execVar) inCurrentCtx(ctx *blockCtx) bool {
+	return p.NestDepth == ctx.out.NestDepth
+}
+
+func (p *execVar) getType() reflect.Type {
+	return p.Type
+}
+
+type stackVar struct {
+	typ   reflect.Type
+	index int32
+}
+
+func (p *stackVar) inCurrentCtx(ctx *blockCtx) bool {
+	return true
+}
+
+func (p *stackVar) getType() reflect.Type {
+	return p.typ
+}
+
+// -----------------------------------------------------------------------------
 
 type blockCtx struct {
 	*pkgCtx
@@ -152,18 +183,42 @@ func (p *blockCtx) findFunc(name string) (addr *funcDecl, err error) {
 	return nil, ErrSymbolNotFunc
 }
 
-func (p *blockCtx) findVar(name string) (addr *exec.Var, err error) {
+func (p *blockCtx) findVar(name string) (addr iVar, err error) {
 	v, ok := p.find(name)
 	if !ok {
 		return nil, ErrNotFound
 	}
-	if addr, ok = v.(*exec.Var); ok {
+	if addr, ok = v.(iVar); ok {
 		return
 	}
 	return nil, ErrSymbolNotVariable
 }
 
-func (p *blockCtx) insertVar(name string, typ reflect.Type) *exec.Var {
+func (p *blockCtx) insertStackVars(in []reflect.Type, args []string, out []reflect.Type, rets []string) {
+	n := len(args)
+	if n > 0 {
+		for i := n - 1; i >= 0; i-- {
+			name := args[i]
+			if p.exists(name) {
+				log.Panicln("insertStkVars failed: symbol exists -", name)
+			}
+			p.syms[name] = &stackVar{index: int32(i - n), typ: in[i]}
+		}
+	}
+	m := len(rets)
+	if m > 0 {
+		n += m
+		for i := m - 1; i >= 0; i-- {
+			name := rets[i]
+			if p.exists(name) {
+				log.Panicln("insertStkVars failed: symbol exists -", name, p.syms)
+			}
+			p.syms[name] = &stackVar{index: int32(i - n), typ: out[i]}
+		}
+	}
+}
+
+func (p *blockCtx) insertVar(name string, typ reflect.Type) *execVar {
 	if p.exists(name) {
 		log.Panicln("insertVar failed: symbol exists -", name)
 	}
@@ -172,7 +227,7 @@ func (p *blockCtx) insertVar(name string, typ reflect.Type) *exec.Var {
 	v.SetAddr(p.out.NestDepth, idx)
 	p.syms[name] = v
 	p.vlist = append(p.vlist, v)
-	return v
+	return (*execVar)(v)
 }
 
 func (p *blockCtx) insertFunc(name string, fun *funcDecl) {
@@ -229,7 +284,7 @@ func NewPackage(out *exec.Builder, pkg *ast.Package) (p *Package, err error) {
 			}
 			return p, err
 		}
-		ctx.file = entry.file
+		ctx.file = entry.ctx.file
 		compileBlockStmt(ctx, entry.body)
 		ctxPkg.resolveFuncs()
 	}
@@ -325,7 +380,8 @@ func loadFunc(ctx *fileCtx, d *ast.FuncDecl) {
 	} else if name == "init" {
 		log.Panicln("loadFunc TODO: init")
 	} else {
-		ctx.insertFunc(name, newFuncDecl(name, d.Type, d.Body, ctx))
+		funCtx := newBlockCtx(ctx)
+		ctx.insertFunc(name, newFuncDecl(name, d.Type, d.Body, funCtx))
 	}
 }
 

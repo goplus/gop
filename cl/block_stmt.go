@@ -32,10 +32,24 @@ func compileBlockStmt(ctx *blockCtx, body *ast.BlockStmt) {
 			compileExprStmt(ctx, v)
 		case *ast.AssignStmt:
 			compileAssignStmt(ctx, v)
+		case *ast.ReturnStmt:
+			compileReturnStmt(ctx, v)
 		default:
 			log.Panicln("compileBlockStmt failed: unknown -", reflect.TypeOf(v))
 		}
 	}
+}
+
+func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
+	rets := expr.Results
+	if rets == nil {
+		ctx.out.Return()
+		return
+	}
+	for _, ret := range rets {
+		compileExpr(ctx, ret, 0)
+	}
+	log.Panicln("compileReturnStmt: todo")
 }
 
 func compileExprStmt(ctx *blockCtx, expr *ast.ExprStmt) {
@@ -99,7 +113,7 @@ func compileIdent(ctx *blockCtx, name string, mode compleMode) {
 		in := ctx.infer.Get(-1)
 		addr, err := ctx.findVar(name)
 		if err == nil {
-			if mode == lhsDefine && addr.NestDepth != ctx.out.NestDepth {
+			if mode == lhsDefine && !addr.inCurrentCtx(ctx) {
 				log.Warn("requireVar: variable is shadowed -", name)
 			}
 		} else if mode == lhsAssign || err != syscall.ENOENT {
@@ -108,9 +122,13 @@ func compileIdent(ctx *blockCtx, name string, mode compleMode) {
 			typ := boundType(in.(iValue))
 			addr = ctx.insertVar(name, typ)
 		}
-		checkType(addr.Type, in, ctx.out)
+		checkType(addr.getType(), in, ctx.out)
 		ctx.infer.PopN(1)
-		ctx.out.StoreVar(addr)
+		if v, ok := addr.(*execVar); ok {
+			ctx.out.StoreVar((*exec.Var)(v))
+		} else {
+			ctx.out.Store(addr.(*stackVar).index)
+		}
 	} else if sym, ok := ctx.find(name); ok {
 		switch v := sym.(type) {
 		case *exec.Var:
@@ -119,6 +137,12 @@ func compileIdent(ctx *blockCtx, name string, mode compleMode) {
 				return
 			}
 			ctx.out.LoadVar(v)
+		case *stackVar:
+			ctx.infer.Push(&goValue{t: v.typ})
+			if mode == inferOnly {
+				return
+			}
+			ctx.out.Load(v.index)
 		case string: // pkgPath
 			pkg := exec.FindGoPackage(v)
 			if pkg == nil {
@@ -260,12 +284,15 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, mode compleMode) {
 			ctx.infer.Ret(1, ret)
 			return
 		}
+		out := ctx.out
+		for i := ret.NumValues(); i >= 0; i-- {
+			out.Push(nil)
+		}
 		for _, arg := range v.Args {
 			compileExpr(ctx, arg, 0)
 		}
 		nargs := uint32(len(v.Args))
 		args := ctx.infer.GetArgs(nargs)
-		out := ctx.out
 		arity := checkFuncCall(vfn.Proto(), 0, args, out)
 		fun := vfn.FuncInfo()
 		if fun.IsVariadic() {

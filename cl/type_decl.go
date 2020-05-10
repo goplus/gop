@@ -10,7 +10,7 @@ import (
 
 type iType = reflect.Type
 
-func toTypeEx(ctx *fileCtx, typ ast.Expr) (t iType, variadic bool) {
+func toTypeEx(ctx *blockCtx, typ ast.Expr) (t iType, variadic bool) {
 	if t = toType(ctx, typ); t != nil {
 		return
 	}
@@ -22,7 +22,7 @@ func toTypeEx(ctx *fileCtx, typ ast.Expr) (t iType, variadic bool) {
 	return nil, false
 }
 
-func toType(ctx *fileCtx, typ ast.Expr) iType {
+func toType(ctx *blockCtx, typ ast.Expr) iType {
 	switch v := typ.(type) {
 	case *ast.Ident:
 		return toIdentType(ctx, v.Name)
@@ -60,24 +60,25 @@ func toChanDir(dir ast.ChanDir) (ret reflect.ChanDir) {
 	return
 }
 
-func toFuncType(ctx *fileCtx, t *ast.FuncType) iType {
+func toFuncType(ctx *blockCtx, t *ast.FuncType) iType {
 	in, variadic := toTypesEx(ctx, t.Params)
 	out := toTypes(ctx, t.Results)
 	return reflect.FuncOf(in, out, variadic)
 }
 
-func getFuncType(fi *exec.FuncInfo, ctx *fileCtx, t *ast.FuncType) {
-	in, variadic := toTypesEx(ctx, t.Params)
-	out := toTypes(ctx, t.Results)
+func buildFuncType(fi *exec.FuncInfo, ctx *blockCtx, t *ast.FuncType) {
+	in, args, variadic := toTypeAndNamesEx(ctx, t.Params)
+	out, rets := toTypeAndNames(ctx, t.Results)
 	if variadic {
 		fi.Vargs(in...)
 	} else {
 		fi.Args(in...)
 	}
 	fi.Out = out
+	ctx.insertStackVars(in, args, out, rets)
 }
 
-func toTypes(ctx *fileCtx, fields *ast.FieldList) (types []iType) {
+func toTypes(ctx *blockCtx, fields *ast.FieldList) (types []iType) {
 	if fields == nil {
 		return
 	}
@@ -97,7 +98,7 @@ func toTypes(ctx *fileCtx, fields *ast.FieldList) (types []iType) {
 	return
 }
 
-func toTypesEx(ctx *fileCtx, fields *ast.FieldList) ([]iType, bool) {
+func toTypesEx(ctx *blockCtx, fields *ast.FieldList) ([]iType, bool) {
 	var types []iType
 	last := len(fields.List) - 1
 	for i := 0; i <= last; i++ {
@@ -120,19 +121,73 @@ func toTypesEx(ctx *fileCtx, fields *ast.FieldList) ([]iType, bool) {
 	return types, false
 }
 
-func toStructType(ctx *fileCtx, v *ast.StructType) iType {
+func toTypeAndNames(ctx *blockCtx, fields *ast.FieldList) (types []iType, names []string) {
+	if fields == nil {
+		return
+	}
+	for _, field := range fields.List {
+		n := len(field.Names)
+		if n == 0 {
+			names = append(names, "")
+			n = 1
+		} else {
+			for _, fld := range field.Names {
+				names = append(names, fld.Name)
+			}
+		}
+		typ := toType(ctx, field.Type)
+		if typ == nil {
+			log.Panicln("toType: unknown -", reflect.TypeOf(field.Type))
+		}
+		for i := 0; i < n; i++ {
+			types = append(types, typ)
+		}
+	}
+	return
+}
+
+func toTypeAndNamesEx(ctx *blockCtx, fields *ast.FieldList) ([]iType, []string, bool) {
+	var types []iType
+	var names []string
+	last := len(fields.List) - 1
+	for i := 0; i <= last; i++ {
+		field := fields.List[i]
+		n := len(field.Names)
+		if n == 0 {
+			names = append(names, "")
+			n = 1
+		} else {
+			for _, fld := range field.Names {
+				names = append(names, fld.Name)
+			}
+		}
+		typ, variadic := toTypeEx(ctx, field.Type)
+		for i := 0; i < n; i++ {
+			types = append(types, typ)
+		}
+		if variadic {
+			if i != last {
+				log.Panicln("toTypes failed: the variadic type isn't last argument?")
+			}
+			return types, names, true
+		}
+	}
+	return types, names, false
+}
+
+func toStructType(ctx *blockCtx, v *ast.StructType) iType {
 	panic("toStructType: todo")
 }
 
-func toInterfaceType(ctx *fileCtx, v *ast.InterfaceType) iType {
+func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) iType {
 	panic("toInterfaceType: todo")
 }
 
-func toExternalType(ctx *fileCtx, v *ast.SelectorExpr) iType {
+func toExternalType(ctx *blockCtx, v *ast.SelectorExpr) iType {
 	panic("toExternalType: todo")
 }
 
-func toIdentType(ctx *fileCtx, ident string) iType {
+func toIdentType(ctx *blockCtx, ident string) iType {
 	if typ, ok := ctx.builtin.FindType(ident); ok {
 		return typ
 	}
@@ -140,7 +195,7 @@ func toIdentType(ctx *fileCtx, ident string) iType {
 	return nil
 }
 
-func toArrayType(ctx *fileCtx, v *ast.ArrayType) iType {
+func toArrayType(ctx *blockCtx, v *ast.ArrayType) iType {
 	panic("toArrayType: todo")
 }
 
@@ -162,20 +217,20 @@ type methodDecl struct {
 type funcDecl struct {
 	typ  *ast.FuncType
 	body *ast.BlockStmt
-	file *fileCtx
+	ctx  *blockCtx
 	fi   *exec.FuncInfo
 	t    reflect.Type
 	used bool
 }
 
-func newFuncDecl(name string, typ *ast.FuncType, body *ast.BlockStmt, file *fileCtx) *funcDecl {
+func newFuncDecl(name string, typ *ast.FuncType, body *ast.BlockStmt, ctx *blockCtx) *funcDecl {
 	fi := exec.NewFunc(name)
-	return &funcDecl{typ: typ, body: body, file: file, fi: fi}
+	return &funcDecl{typ: typ, body: body, ctx: ctx, fi: fi}
 }
 
 func (p *funcDecl) getFuncInfo() *exec.FuncInfo {
 	if !p.fi.IsTypeValid() {
-		getFuncType(p.fi, p.file, p.typ)
+		buildFuncType(p.fi, p.ctx, p.typ)
 	}
 	return p.fi
 }
@@ -188,8 +243,12 @@ func (p *funcDecl) typeOf() iType {
 }
 
 func (p *funcDecl) compile() {
-	ctx := newBlockCtx(p.file)
+	fun := p.getFuncInfo()
+	ctx := p.ctx
+	out := p.ctx.out
+	out.DefineFunc(fun)
 	compileBlockStmt(ctx, p.body)
+	out.EndFunc(fun)
 }
 
 // -----------------------------------------------------------------------------
