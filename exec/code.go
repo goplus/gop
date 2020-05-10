@@ -1,5 +1,11 @@
 package exec
 
+import (
+	"bufio"
+	"io"
+	"strconv"
+)
+
 // -----------------------------------------------------------------------------
 
 const (
@@ -76,6 +82,57 @@ const (
 	iPushUnresolved = (opInvalid << bitsOpShift)
 )
 
+// DecodeInstr returns
+func DecodeInstr(i Instr) (InstrInfo, int32, int32) {
+	op := i >> bitsOpShift
+	v := instrInfos[op]
+	p1, p2 := getParam(int32(i<<bitsOp), v.Params>>8)
+	p2, _ = getParam(p2, v.Params&0xff)
+	return v, p1, p2
+}
+
+func getParam(v int32, bits uint16) (int32, int32) {
+	return v >> (32 - bits), v << bits
+}
+
+// InstrInfo represents the information of an instr.
+type InstrInfo struct {
+	Name   string
+	Arg1   string
+	Arg2   string
+	Params uint16
+}
+
+var instrInfos = []InstrInfo{
+	opInvalid:     {"invalid", "", "", 0},
+	opPushInt:     {"pushInt", "intKind", "intVal", (3 << 8) | 23},        // intKind(3) intVal(23)
+	opPushUint:    {"pushUint", "intKind", "intVal", (3 << 8) | 23},       // intKind(3) intVal(23)
+	opPushFloatR:  {"pushFloatR", "floatKind", "floatIdx", (2 << 8) | 24}, // floatKind(2) floatIdx(24)
+	opPushStringR: {"pushStringR", "", "stringIdx", 26},                   // stringIdx(26)
+	opPushIntR:    {"pushIntR", "intKind", "intIdx", (3 << 8) | 23},       // intKind(3) intIdx(23)
+	opPushUintR:   {"pushUintR", "intKind", "intIdx", (3 << 8) | 23},      // intKind(3) intIdx(23)
+	opPushValSpec: {"pushValSpec", "", "valSpec", 26},                     // valSpec(26) - false=0, true=1
+	opBuiltinOp:   {"builtinOp", "kind", "op", (21 << 8) | 5},             // reserved(16) kind(5) builtinOp(5)
+	opJmp:         {"jmp", "", "offset", 26},                              // offset(26)
+	opJmpIfFalse:  {"jmpIfFalse", "", "offset", 26},                       // offset(26)
+	opCaseNE:      {"caseNE", "", "offset", 26},                           // offset(26)
+	opPop:         {"pop", "", "n", 26},                                   // n(26)
+	opCallGoFunc:  {"callGoFunc", "", "addr", 26},                         // addr(26) - call a Go function
+	opCallGoFuncv: {"callGoFuncv", "funvArity", "addr", (10 << 8) | 16},   // funvArity(10) addr(16) - call a Go function with variadic args
+	opLoadVar:     {"loadVar", "varScope", "addr", (6 << 8) | 20},         // varScope(6) addr(20)
+	opStoreVar:    {"storeVar", "varScope", "addr", (6 << 8) | 20},        // varScope(6) addr(20)
+	opAddrVar:     {"addrVar", "varScope", "addr", (6 << 8) | 20},         // varScope(6) addr(20) - load a variable's address
+	opLoadGoVar:   {"loadGoVar", "", "addr", 26},                          // addr(26)
+	opStoreGoVar:  {"storeGoVar", "", "addr", 26},                         // addr(26)
+	opAddrGoVar:   {"addrGoVar", "", "addr", 26},                          // addr(26)
+	opAddrOp:      {"addrOp", "op", "kind", (21 << 8) | 5},                // reserved(17) addressOp(4) kind(5)
+	opCallFunc:    {"callFunc", "", "addr", 26},                           // addr(26)
+	opCallFuncv:   {"callFuncv", "funvArity", "addr", (10 << 8) | 16},     // funvArity(10) addr(16)
+	opReturn:      {"return", "", "", 0},                                  // reserved(26)
+	opLoad:        {"load", "", "index", 26},                              // index(26)
+	opStore:       {"store", "", "index", 26},                             // index(26)
+}
+
 // -----------------------------------------------------------------------------
 
 // A Code represents generated instructions to execute.
@@ -98,6 +155,29 @@ func NewCode() *Code {
 // Len returns code length.
 func (p *Code) Len() int {
 	return len(p.data)
+}
+
+// Dump dumps code.
+func (p *Code) Dump(w io.Writer) {
+	b := bufio.NewWriter(w)
+	for _, i := range p.data {
+		v, p1, p2 := DecodeInstr(i)
+		b.WriteString(v.Name)
+		b.WriteByte(' ')
+		if (v.Params & 0xff00) != 0 {
+			b.WriteString(v.Arg1)
+			b.WriteByte('=')
+			b.WriteString(strconv.Itoa(int(p1)))
+			b.WriteByte(' ')
+		}
+		if (v.Params & 0xff) != 0 {
+			b.WriteString(v.Arg2)
+			b.WriteByte('=')
+			b.WriteString(strconv.Itoa(int(p2)))
+		}
+		b.WriteByte('\n')
+	}
+	b.Flush()
 }
 
 // -----------------------------------------------------------------------------

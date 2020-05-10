@@ -8,7 +8,6 @@ import (
 
 func execLoad(i Instr, p *Context) {
 	idx := int32(i) << bitsOp >> bitsOp
-	log.Debug("execLoad:", p.base, idx)
 	p.Push(p.data[p.base+int(idx)])
 }
 

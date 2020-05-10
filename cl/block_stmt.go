@@ -285,7 +285,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, mode compleMode) {
 			return
 		}
 		out := ctx.out
-		for i := ret.NumValues(); i >= 0; i-- {
+		for i := ret.NumValues(); i > 0; i-- {
 			out.Push(nil)
 		}
 		for _, arg := range v.Args {

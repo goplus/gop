@@ -286,6 +286,7 @@ func NewPackage(out *exec.Builder, pkg *ast.Package) (p *Package, err error) {
 		}
 		ctx.file = entry.ctx.file
 		compileBlockStmt(ctx, entry.body)
+		out.Return()
 		ctxPkg.resolveFuncs()
 	}
 	p.vlist = ctx.vlist

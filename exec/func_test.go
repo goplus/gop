@@ -2,6 +2,7 @@ package exec
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"testing"
 )
@@ -73,6 +74,8 @@ func TestFuncv(t *testing.T) {
 		Store(-3).
 		EndFunc(foo).
 		Resolve()
+
+	code.Dump(os.Stdout)
 
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())

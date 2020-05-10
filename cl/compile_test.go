@@ -2,6 +2,7 @@ package cl
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/qiniu/qlang/ast/asttest"
@@ -235,7 +236,7 @@ var fsTestFunc = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	foo("Hello, world!")
 `)
 
-func _TestFunc(t *testing.T) {
+func TestFunc(t *testing.T) {
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseFSDir(fset, fsTestFunc, "/foo", nil, 0)
 	if err != nil || len(pkgs) != 1 {
@@ -250,13 +251,15 @@ func _TestFunc(t *testing.T) {
 	}
 	code := b.Resolve()
 
+	code.Dump(os.Stdout)
+
 	ctx := exec.NewContext(code, pkg.GetGlobalVars()...)
 	ctx.Exec(0, code.Len())
 	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
 	if v := ctx.Get(-1); v != nil {
 		t.Fatal("error:", v)
 	}
-	if v := ctx.Get(-2); v != int(19) {
+	if v := ctx.Get(-2); v != int(17) {
 		t.Fatal("n:", v)
 	}
 }
