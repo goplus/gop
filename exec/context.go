@@ -64,6 +64,11 @@ func (p *Stack) Len() int {
 	return len(p.data)
 }
 
+// SetLen sets count of stack elements.
+func (p *Stack) SetLen(base int) {
+	p.data = p.data[:base]
+}
+
 // -----------------------------------------------------------------------------
 
 // A Context represents the context of an executor.
@@ -81,13 +86,13 @@ func newSimpleContext(data []interface{}) *Context {
 }
 
 // NewContext returns a new context of an executor.
-func NewContext(code *Code, vars ...*Var) *Context {
+func NewContext(code *Code) *Context {
 	p := &Context{
 		Stack: NewStack(),
 		code:  code,
 	}
-	if len(vars) > 0 {
-		p.vars = makeVarsContext(vars, p)
+	if len(code.vlist) > 0 {
+		p.vars = makeVarsContext(code.vlist, p)
 	}
 	return p
 }

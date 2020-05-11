@@ -27,7 +27,7 @@ func TestVar(t *testing.T) {
 		StoreVar(y). // y = strcat("78", x)
 		Resolve()
 
-	ctx := NewContext(code, x, y)
+	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
 	if v := ctx.getVar(1); v != "78532" {
 		t.Fatal("y != 78532, ret =", v)
@@ -46,7 +46,7 @@ func TestParentCtx(t *testing.T) {
 	z := NewVar(TyString, "z")
 	code := NewBuilder(nil).
 		DefineVar(z).
-		SetNestDepth(2).
+		DefineFunc(NewFunc("", 2).Args()).
 		DefineVar(x, y).
 		Push(5).
 		Push("32").
@@ -58,7 +58,7 @@ func TestParentCtx(t *testing.T) {
 		StoreVar(z). // z = strcat(z, x)
 		Resolve()
 
-	p1 := NewContext(code, z)
+	p1 := NewContext(code)
 	p1.SetVar(z, "78")
 
 	p2 := NewContextEx(p1, p1.Stack, p1.code)
@@ -81,7 +81,7 @@ func TestAddrVar(t *testing.T) {
 	z := NewVar(TyString, "z")
 	code := NewBuilder(nil).
 		DefineVar(z).
-		SetNestDepth(2).
+		DefineFunc(NewFunc("", 2).Args()).
 		DefineVar(x, y).
 		Push(5).
 		Push("32").
@@ -95,7 +95,7 @@ func TestAddrVar(t *testing.T) {
 		AddrOp(String, OpAssign). // z = strcat(z, *&x)
 		Resolve()
 
-	p1 := NewContext(code, z)
+	p1 := NewContext(code)
 	p1.SetVar(z, "78")
 
 	p2 := NewContextEx(p1, p1.Stack, p1.code)

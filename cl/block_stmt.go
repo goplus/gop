@@ -117,7 +117,7 @@ func compileIdent(ctx *blockCtx, name string, mode compleMode) {
 				log.Warn("requireVar: variable is shadowed -", name)
 			}
 		} else if mode == lhsAssign || err != syscall.ENOENT {
-			log.Panicln("compileIdent failed:", err)
+			log.Panicln("compileIdent failed:", err, "-", name)
 		} else {
 			typ := boundType(in.(iValue))
 			addr = ctx.insertVar(name, typ)
@@ -131,12 +131,12 @@ func compileIdent(ctx *blockCtx, name string, mode compleMode) {
 		}
 	} else if sym, ok := ctx.find(name); ok {
 		switch v := sym.(type) {
-		case *exec.Var:
+		case *execVar:
 			ctx.infer.Push(&goValue{t: v.Type})
 			if mode == inferOnly {
 				return
 			}
-			ctx.out.LoadVar(v)
+			ctx.out.LoadVar((*exec.Var)(v))
 		case *stackVar:
 			ctx.infer.Push(&goValue{t: v.typ})
 			if mode == inferOnly {
@@ -284,13 +284,10 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, mode compleMode) {
 			ctx.infer.Ret(1, ret)
 			return
 		}
-		out := ctx.out
-		for i := ret.NumValues(); i > 0; i-- {
-			out.Push(nil)
-		}
 		for _, arg := range v.Args {
 			compileExpr(ctx, arg, 0)
 		}
+		out := ctx.out
 		nargs := uint32(len(v.Args))
 		args := ctx.infer.GetArgs(nargs)
 		arity := checkFuncCall(vfn.Proto(), 0, args, out)

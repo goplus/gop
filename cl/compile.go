@@ -92,7 +92,7 @@ type iVar interface {
 type execVar exec.Var
 
 func (p *execVar) inCurrentCtx(ctx *blockCtx) bool {
-	return p.NestDepth == ctx.out.NestDepth
+	return ctx.out.InCurrentCtx((*exec.Var)(p))
 }
 
 func (p *execVar) getType() reflect.Type {
@@ -118,9 +118,7 @@ type blockCtx struct {
 	*pkgCtx
 	file   *fileCtx
 	parent *blockCtx
-
-	vlist []*exec.Var
-	syms  map[string]iSymbol
+	syms   map[string]iSymbol
 }
 
 func newBlockCtx(file *fileCtx) *blockCtx {
@@ -194,27 +192,26 @@ func (p *blockCtx) findVar(name string) (addr iVar, err error) {
 	return nil, ErrSymbolNotVariable
 }
 
-func (p *blockCtx) insertStackVars(in []reflect.Type, args []string, out []reflect.Type, rets []string) {
+func (p *blockCtx) insertFuncVars(in []reflect.Type, args []string, rets []*exec.Var) {
 	n := len(args)
 	if n > 0 {
 		for i := n - 1; i >= 0; i-- {
 			name := args[i]
+			if name == "" { // unnamed argument
+				continue
+			}
 			if p.exists(name) {
 				log.Panicln("insertStkVars failed: symbol exists -", name)
 			}
 			p.syms[name] = &stackVar{index: int32(i - n), typ: in[i]}
 		}
 	}
-	m := len(rets)
-	if m > 0 {
-		n += m
-		for i := m - 1; i >= 0; i-- {
-			name := rets[i]
-			if p.exists(name) {
-				log.Panicln("insertStkVars failed: symbol exists -", name, p.syms)
-			}
-			p.syms[name] = &stackVar{index: int32(i - n), typ: out[i]}
+	for _, ret := range rets {
+		name := ret.Name()
+		if c := name[0]; c >= '0' && c <= '9' { // unnamed return value
+			continue
 		}
+		p.syms[name] = (*execVar)(ret)
 	}
 }
 
@@ -222,11 +219,9 @@ func (p *blockCtx) insertVar(name string, typ reflect.Type) *execVar {
 	if p.exists(name) {
 		log.Panicln("insertVar failed: symbol exists -", name)
 	}
-	idx := uint32(len(p.vlist))
 	v := exec.NewVar(typ, name)
-	v.SetAddr(p.out.NestDepth, idx)
-	p.syms[name] = v
-	p.vlist = append(p.vlist, v)
+	p.out.DefineVar(v)
+	p.syms[name] = (*execVar)(v)
 	return (*execVar)(v)
 }
 
@@ -264,8 +259,7 @@ func (p *blockCtx) insertMethod(typeName, methodName string, method *methodDecl)
 
 // A Package represents a qlang package.
 type Package struct {
-	vlist []*exec.Var
-	syms  map[string]iSymbol
+	syms map[string]iSymbol
 }
 
 // NewPackage creates a qlang package instance.
@@ -289,14 +283,8 @@ func NewPackage(out *exec.Builder, pkg *ast.Package) (p *Package, err error) {
 		out.Return()
 		ctxPkg.resolveFuncs()
 	}
-	p.vlist = ctx.vlist
 	p.syms = ctx.syms
 	return
-}
-
-// GetGlobalVars returns the global variable list.
-func (p *Package) GetGlobalVars() []*exec.Var {
-	return p.vlist
 }
 
 func loadFile(block *blockCtx, f *ast.File) {

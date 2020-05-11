@@ -133,13 +133,13 @@ func TestVar(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	pkg, err := NewPackage(b, bar)
+	_, err = NewPackage(b, bar)
 	if err != nil {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
 
-	ctx := exec.NewContext(code, pkg.GetGlobalVars()...)
+	ctx := exec.NewContext(code)
 	ctx.Exec(0, code.Len())
 	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
 	if v := ctx.Get(-1); v != nil {
@@ -169,13 +169,13 @@ func TestVarOp(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	pkg, err := NewPackage(b, bar)
+	_, err = NewPackage(b, bar)
 	if err != nil {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
 
-	ctx := exec.NewContext(code, pkg.GetGlobalVars()...)
+	ctx := exec.NewContext(code)
 	ctx.Exec(0, code.Len())
 	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
 	if v := ctx.Get(-1); v != nil {
@@ -205,13 +205,13 @@ func TestGoPackage(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	pkg, err := NewPackage(b, bar)
+	_, err = NewPackage(b, bar)
 	if err != nil {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
 
-	ctx := exec.NewContext(code, pkg.GetGlobalVars()...)
+	ctx := exec.NewContext(code)
 	ctx.Exec(0, code.Len())
 	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
 	if v := ctx.Get(-1); v != nil {
@@ -246,13 +246,13 @@ func _TestReturn(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	pkg, err := NewPackage(b, bar)
+	_, err = NewPackage(b, bar)
 	if err != nil {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
 
-	ctx := exec.NewContext(code, pkg.GetGlobalVars()...)
+	ctx := exec.NewContext(code)
 	ctx.Exec(0, code.Len())
 	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
 	if v := ctx.Get(-1); v != nil {
@@ -285,13 +285,13 @@ func TestFunc(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	pkg, err := NewPackage(b, bar)
+	_, err = NewPackage(b, bar)
 	if err != nil {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
 
-	ctx := exec.NewContext(code, pkg.GetGlobalVars()...)
+	ctx := exec.NewContext(code)
 	ctx.Exec(0, code.Len())
 	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
 	if v := ctx.Get(-1); v != nil {

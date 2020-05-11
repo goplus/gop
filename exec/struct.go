@@ -38,7 +38,7 @@ func makeVarList(vars []*Var) []StructField {
 	items := make([]StructField, len(vars))
 	for i, v := range vars {
 		items[i].Type = v.Type
-		items[i].Name = v.Name
+		items[i].Name = v.name
 	}
 	return items
 }
@@ -48,8 +48,8 @@ func makeVarsContext(vars []*Var, ctx *Context) varsContext {
 	if log.CanOutput(log.Ldebug) {
 		nestDepth := ctx.getNestDepth()
 		for i, v := range vars {
-			if v.NestDepth != nestDepth || v.idx != uint32(i) {
-				log.Panicln("makeVarsContext failed: unexpected variable -", v.Name, v.NestDepth)
+			if v.nestDepth != nestDepth || v.idx != uint32(i) {
+				log.Panicln("makeVarsContext failed: unexpected variable -", v.name[1:], v.nestDepth)
 			}
 		}
 	}

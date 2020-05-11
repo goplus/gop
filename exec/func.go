@@ -53,17 +53,20 @@ type FuncInfo struct {
 	Name     string
 	FunEntry int
 	FunEnd   int
-	Vars     []*Var
-	In       []reflect.Type
-	Out      []reflect.Type
+	t        reflect.Type
+	in       []reflect.Type
 	anyUnresolved
-	nestDepth uint32
+	numOut int
+	varManager
 	nVariadic uint32
 }
 
 // NewFunc create a qlang function.
 func NewFunc(name string, nestDepth uint32) *FuncInfo {
-	f := &FuncInfo{Name: name, nestDepth: nestDepth}
+	f := &FuncInfo{
+		Name:       name,
+		varManager: varManager{nestDepth: nestDepth},
+	}
 	return f
 }
 
@@ -74,7 +77,7 @@ func (p *FuncInfo) IsTypeValid() bool {
 
 // Args sets argument types of a qlang function.
 func (p *FuncInfo) Args(in ...reflect.Type) *FuncInfo {
-	p.In = in
+	p.in = in
 	p.setVariadic(nVariadicFixedArgs)
 	return p
 }
@@ -84,23 +87,18 @@ func (p *FuncInfo) Vargs(in ...reflect.Type) *FuncInfo {
 	if in[len(in)-1].Kind() != reflect.Slice {
 		log.Panicln("Vargs failed: last argument must be a slice.")
 	}
-	p.In = in
+	p.in = in
 	p.setVariadic(nVariadicVariadicArgs)
 	return p
 }
 
 // Return sets return types of a qlang function.
-func (p *FuncInfo) Return(out ...reflect.Type) *FuncInfo {
-	p.Out = out
-	return p
-}
-
-// DefineVar defines variables in this function.
-func (p *FuncInfo) DefineVar(vars ...*Var) *FuncInfo {
-	p.Vars = vars
-	for i, v := range vars {
-		v.SetAddr(p.nestDepth, uint32(i))
+func (p *FuncInfo) Return(out ...*Var) *FuncInfo {
+	if p.vlist != nil {
+		log.Panicln("don't call DefineVar before calling Return.")
 	}
+	p.addVars(out...)
+	p.numOut = len(out)
 	return p
 }
 
@@ -122,20 +120,31 @@ func (p *FuncInfo) setVariadic(nVariadic uint32) {
 
 // Type returns type of this function.
 func (p *FuncInfo) Type() reflect.Type {
-	return reflect.FuncOf(p.In, p.Out, p.IsVariadic())
+	if p.t == nil {
+		out := make([]reflect.Type, p.numOut)
+		for i := 0; i < p.numOut; i++ {
+			out[i] = p.vlist[i].Type
+		}
+		p.t = reflect.FuncOf(p.in, out, p.IsVariadic())
+	}
+	return p.t
 }
 
 func (p *FuncInfo) exec(ctx *Context) {
 	stk := ctx.Stack
-	sub := NewContextEx(ctx.globalCtx(), stk, ctx.code, p.Vars...)
+	sub := NewContextEx(ctx.globalCtx(), stk, ctx.code, p.vlist...)
 	sub.Exec(p.FunEntry, p.FunEnd)
-	stk.PopN(len(p.In))
+	stk.SetLen(sub.base - len(p.in))
+	n := uint32(p.numOut)
+	for i := uint32(0); i < n; i++ {
+		stk.Push(sub.getVar(i))
+	}
 }
 
 func (p *FuncInfo) execVariadic(arity uint32, ctx *Context) {
-	var n = uint32(len(p.In) - 1)
+	var n = uint32(len(p.in) - 1)
 	if arity > n {
-		tVariadic := p.In[n]
+		tVariadic := p.in[n]
 		nVariadic := arity - n
 		if tVariadic == tyEmptyInterfaceSlice {
 			var empty []interface{}
@@ -174,7 +183,7 @@ func (p *Builder) DefineFunc(fun *FuncInfo) *Builder {
 	if idx, ok := p.funcs[fun]; ok && idx >= 0 {
 		log.Panicln("DefineFunc failed: func is defined already -", fun.Name)
 	}
-	p.NestDepth = fun.nestDepth
+	p.varManager = &fun.varManager
 	fun.FunEntry = len(p.code.data)
 	if fun.IsVariadic() {
 		p.funcs[fun] = len(p.code.funvs)
@@ -188,11 +197,11 @@ func (p *Builder) DefineFunc(fun *FuncInfo) *Builder {
 
 // EndFunc instr
 func (p *Builder) EndFunc(fun *FuncInfo) *Builder {
-	if fun.nestDepth != p.NestDepth {
+	if p.varManager != &fun.varManager {
 		log.Panicln("EndFunc failed: doesn't match with DefineFunc -", fun.Name)
 	}
 	fun.FunEnd = len(p.code.data)
-	p.NestDepth = 0
+	p.varManager = &p.code.varManager
 	return p
 }
 

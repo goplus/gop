@@ -221,27 +221,50 @@ func (p *Builder) AddrOp(kind Kind, op AddrOperator) *Builder {
 // Var represents a variable.
 type Var struct {
 	Type      reflect.Type
-	Name      string
-	NestDepth uint32
+	name      string
+	nestDepth uint32
 	idx       uint32
 }
 
 // NewVar creates a variable instance.
 func NewVar(typ reflect.Type, name string) *Var {
-	return &Var{Type: typ, Name: "Q" + name, idx: ^uint32(0)}
+	return &Var{Type: typ, name: "Q" + name, idx: ^uint32(0)}
 }
 
 func (p *Var) isGlobal() bool {
-	return p.idx <= bitsOpVarOperand && p.NestDepth == 0
+	return p.idx <= bitsOpVarOperand && p.nestDepth == 0
+}
+
+// Name returns variable's name.
+func (p *Var) Name() string {
+	return p.name[1:]
 }
 
 // SetAddr sets a variable address.
 func (p *Var) SetAddr(nestDepth, idx uint32) {
 	if p.idx <= bitsOpVarOperand {
-		log.Panicln("Var.setAddr failed: the variable is defined already -", p.Name)
+		log.Panicln("Var.setAddr failed: the variable is defined already -", p.name[1:])
 	}
-	p.NestDepth, p.idx = nestDepth, idx
+	p.nestDepth, p.idx = nestDepth, idx
 }
+
+// -----------------------------------------------------------------------------
+
+type varManager struct {
+	vlist     []*Var
+	nestDepth uint32
+}
+
+func (p *varManager) addVars(vars ...*Var) {
+	n := len(p.vlist)
+	nestDepth := p.nestDepth
+	for i, v := range vars {
+		v.SetAddr(nestDepth, uint32(i+n))
+	}
+	p.vlist = append(p.vlist, vars...)
+}
+
+// -----------------------------------------------------------------------------
 
 func (p *Context) getNestDepth() (nestDepth uint32) {
 	for {
@@ -252,35 +275,32 @@ func (p *Context) getNestDepth() (nestDepth uint32) {
 	}
 }
 
-// SetNestDepth sets function nest depth.
-func (p *Builder) SetNestDepth(nestDepth uint32) *Builder {
-	p.NestDepth = nestDepth
-	return p
+// InCurrentCtx returns if a variable is in current context or not.
+func (p *Builder) InCurrentCtx(v *Var) bool {
+	return p.nestDepth == v.nestDepth
 }
 
 // DefineVar defines all local variable of a function (closure).
 func (p *Builder) DefineVar(vars ...*Var) *Builder {
-	for i, v := range vars {
-		v.SetAddr(p.NestDepth, uint32(i))
-	}
+	p.addVars(vars...)
 	return p
 }
 
 // AddrVar instr
 func (p *Builder) AddrVar(v *Var) *Builder {
-	p.addrVar(makeAddr(p.NestDepth-v.NestDepth, v.idx))
+	p.addrVar(makeAddr(p.nestDepth-v.nestDepth, v.idx))
 	return p
 }
 
 // LoadVar instr
 func (p *Builder) LoadVar(v *Var) *Builder {
-	p.loadVar(makeAddr(p.NestDepth-v.NestDepth, v.idx))
+	p.loadVar(makeAddr(p.nestDepth-v.nestDepth, v.idx))
 	return p
 }
 
 // StoreVar instr
 func (p *Builder) StoreVar(v *Var) *Builder {
-	p.storeVar(makeAddr(p.NestDepth-v.NestDepth, v.idx))
+	p.storeVar(makeAddr(p.nestDepth-v.nestDepth, v.idx))
 	return p
 }
 

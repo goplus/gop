@@ -145,6 +145,7 @@ type Code struct {
 	funs         []*FuncInfo
 	funvs        []*FuncInfo
 	structs      []StructInfo
+	varManager
 }
 
 // NewCode returns a new Code object.
@@ -197,7 +198,7 @@ type Builder struct {
 	valConsts map[interface{}]*valUnresolved
 	labels    map[*Label]int
 	funcs     map[*FuncInfo]int
-	NestDepth uint32
+	*varManager
 }
 
 // NewBuilder creates a new Code Builder instance.
@@ -206,10 +207,11 @@ func NewBuilder(code *Code) *Builder {
 		code = NewCode()
 	}
 	return &Builder{
-		code:      code,
-		valConsts: make(map[interface{}]*valUnresolved),
-		labels:    make(map[*Label]int),
-		funcs:     make(map[*FuncInfo]int),
+		code:       code,
+		valConsts:  make(map[interface{}]*valUnresolved),
+		labels:     make(map[*Label]int),
+		funcs:      make(map[*FuncInfo]int),
+		varManager: &code.varManager,
 	}
 }
 

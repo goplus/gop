@@ -1,11 +1,12 @@
 package cl
 
 import (
-	"log"
 	"reflect"
+	"strconv"
 
 	"github.com/qiniu/qlang/ast"
 	"github.com/qiniu/qlang/exec"
+	"github.com/qiniu/x/log"
 )
 
 type iType = reflect.Type
@@ -67,15 +68,15 @@ func toFuncType(ctx *blockCtx, t *ast.FuncType) iType {
 }
 
 func buildFuncType(fi *exec.FuncInfo, ctx *blockCtx, t *ast.FuncType) {
-	in, args, variadic := toTypeAndNamesEx(ctx, t.Params)
-	out, rets := toTypeAndNames(ctx, t.Results)
+	in, args, variadic := toArgTypes(ctx, t.Params)
+	rets := toReturnTypes(ctx, t.Results)
 	if variadic {
 		fi.Vargs(in...)
 	} else {
 		fi.Args(in...)
 	}
-	fi.Out = out
-	ctx.insertStackVars(in, args, out, rets)
+	fi.Return(rets...)
+	ctx.insertFuncVars(in, args, rets)
 }
 
 func toTypes(ctx *blockCtx, fields *ast.FieldList) (types []iType) {
@@ -121,32 +122,31 @@ func toTypesEx(ctx *blockCtx, fields *ast.FieldList) ([]iType, bool) {
 	return types, false
 }
 
-func toTypeAndNames(ctx *blockCtx, fields *ast.FieldList) (types []iType, names []string) {
+func toReturnTypes(ctx *blockCtx, fields *ast.FieldList) (vars []*exec.Var) {
 	if fields == nil {
 		return
 	}
+	index := 0
 	for _, field := range fields.List {
 		n := len(field.Names)
-		if n == 0 {
-			names = append(names, "")
-			n = 1
-		} else {
-			for _, fld := range field.Names {
-				names = append(names, fld.Name)
-			}
-		}
 		typ := toType(ctx, field.Type)
 		if typ == nil {
 			log.Panicln("toType: unknown -", reflect.TypeOf(field.Type))
 		}
-		for i := 0; i < n; i++ {
-			types = append(types, typ)
+		if n == 0 {
+			index++
+			vars = append(vars, exec.NewVar(typ, strconv.Itoa(index)))
+		} else {
+			for i := 0; i < n; i++ {
+				vars = append(vars, exec.NewVar(typ, field.Names[i].Name))
+			}
+			index += n
 		}
 	}
 	return
 }
 
-func toTypeAndNamesEx(ctx *blockCtx, fields *ast.FieldList) ([]iType, []string, bool) {
+func toArgTypes(ctx *blockCtx, fields *ast.FieldList) ([]iType, []string, bool) {
 	var types []iType
 	var names []string
 	last := len(fields.List) - 1

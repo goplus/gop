@@ -17,19 +17,19 @@ func TestFunc(t *testing.T) {
 	fmt.Println("strcat:", strcat.GetInfo())
 
 	foo := NewFunc("foo", 1)
+	ret := NewVar(TyString, "1")
 	code := NewBuilder(nil).
-		Push(nil).
 		Push("x").
 		Push("sw").
 		CallFunc(foo).
 		Return().
 		DefineFunc(
-			foo.Return(TyString).
+			foo.Return(ret).
 				Args(TyString, TyString)).
 		Load(-2).
 		Load(-1).
 		CallGoFunc(strcat).
-		Store(-3).
+		StoreVar(ret).
 		EndFunc(foo).
 		Resolve()
 
@@ -51,10 +51,11 @@ func TestFuncv(t *testing.T) {
 
 	foo := NewFunc("foo", 1)
 	bar := NewFunc("bar", 1)
+	ret1 := NewVar(TyString, "1")
+	ret2 := NewVar(TyString, "1")
 	format := NewVar(TyString, "format")
 	args := NewVar(tyInterfaceSlice, "args")
 	code := NewBuilder(nil).
-		Push(nil).
 		Push("Hello, %v, %d, %s").
 		Push(1.3).
 		Push(1).
@@ -62,9 +63,9 @@ func TestFuncv(t *testing.T) {
 		CallFuncv(bar, 4).
 		Return().
 		DefineFunc(
-			foo.Return(TyString).
-				Vargs(TyString, tyInterfaceSlice).
-				DefineVar(format, args)).
+			foo.Return(ret1).
+				Vargs(TyString, tyInterfaceSlice)).
+		DefineVar(format, args).
 		Load(-2).
 		StoreVar(format).
 		Load(-1).
@@ -72,16 +73,15 @@ func TestFuncv(t *testing.T) {
 		LoadVar(format).
 		LoadVar(args).
 		CallGoFuncv(sprintf, -1). // sprintf(format, args...)
-		Store(-3).
+		StoreVar(ret1).
 		EndFunc(foo).
 		DefineFunc(
-			bar.Return(TyString).
+			bar.Return(ret2).
 				Vargs(TyString, tyInterfaceSlice)).
-		Push(nil).
 		Load(-2).
 		Load(-1).
 		CallFuncv(foo, -1). // foo(format, args...)
-		Store(-3).
+		StoreVar(ret2).
 		EndFunc(bar).
 		Resolve()
 
@@ -104,8 +104,9 @@ func TestFuncLargeArity(t *testing.T) {
 
 	foo := NewFunc("foo", 1)
 	bar := NewFunc("bar", 1)
-	b := NewBuilder(nil).
-		Push(nil)
+	ret1 := NewVar(TyString, "1")
+	ret2 := NewVar(TyString, "1")
+	b := NewBuilder(nil)
 	ret := ""
 	for i := 0; i < bitsFuncvArityMax+1; i++ {
 		b.Push("32")
@@ -115,21 +116,24 @@ func TestFuncLargeArity(t *testing.T) {
 		CallFuncv(foo, bitsFuncvArityMax+1).
 		Return().
 		DefineFunc(
-			bar.Return(TyString).
+			bar.Return(ret1).
 				Vargs(tyStringSlice)).
 		Load(-1).
 		CallGoFuncv(GoFuncvAddr(sprint), -1).
-		Store(-2).
+		StoreVar(ret1).
 		EndFunc(bar).
 		DefineFunc(
-			foo.Return(TyString).
+			foo.Return(ret2).
 				Vargs(tyStringSlice)).
-		Push(nil).
 		Load(-1).
 		CallFuncv(bar, -1).
-		Store(-2).
+		StoreVar(ret2).
 		EndFunc(foo).
 		Resolve()
+
+	if bar.IsTypeValid() {
+		fmt.Println("func bar:", bar.Type())
+	}
 
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
