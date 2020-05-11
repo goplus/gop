@@ -81,7 +81,7 @@ func TestFuncv(t *testing.T) {
 		Load(-2).
 		Load(-1).
 		CallFuncv(foo, -1). // foo(format, args...)
-		StoreVar(ret2).
+		Return(2).
 		EndFunc(bar).
 		Resolve()
 
