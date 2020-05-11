@@ -16,22 +16,53 @@ func execStore(i Instr, p *Context) {
 	p.data[p.base+int(idx)] = p.Pop()
 }
 
+const (
+	closureParentCtxFlag = (1 << bitsOpClosureShift)
+	closureVariadicFlag  = (2 << bitsOpClosureShift)
+)
+
+func execClosure(i Instr, p *Context) {
+	idx := i & bitsOpClosureOperand
+	var fun *FuncInfo
+	if (i & closureVariadicFlag) != 0 {
+		fun = p.code.funvs[idx]
+	} else {
+		fun = p.code.funs[idx]
+	}
+	if (i & closureParentCtxFlag) == 0 {
+		p = p.globalCtx()
+	}
+	p.Push(&closure{fun: fun, parent: p})
+}
+
+func execCallClosure(i Instr, p *Context) {
+	arity := i & bitsOperand
+	c := p.Pop().(*closure)
+	fun, stk, parent := c.fun, p.Stack, c.parent
+	if fun.IsVariadic() && arity != bitsOperand { // not is: args...
+		fun.execVariadic(arity, stk, parent)
+	} else {
+		fun.exec(stk, parent)
+	}
+}
+
 func execFunc(i Instr, p *Context) {
 	idx := i & bitsOperand
-	p.code.funs[idx].exec(p)
+	p.code.funs[idx].exec(p.Stack, p.globalCtx())
 }
 
 func execFuncv(i Instr, p *Context) {
 	idx := i & bitsOpCallFuncvOperand
 	arity := (i >> bitsOpCallFuncvShift) & bitsFuncvArityOperand
 	fun := p.code.funvs[idx]
-	if arity == bitsFuncvArityVar {
-		fun.exec(p)
+	stk, parent := p.Stack, p.globalCtx()
+	if arity == bitsFuncvArityVar { // args...
+		fun.exec(stk, parent)
 	} else {
 		if arity == bitsFuncvArityMax {
 			arity = uint32(p.Pop().(int) + bitsFuncvArityMax)
 		}
-		fun.execVariadic(arity, p)
+		fun.execVariadic(arity, stk, parent)
 	}
 }
 
@@ -39,6 +70,12 @@ func execFuncv(i Instr, p *Context) {
 
 // Package represents a qlang package.
 type Package struct {
+}
+
+type closure struct {
+	fun    *FuncInfo
+	recv   interface{}
+	parent *Context
 }
 
 const (
@@ -153,40 +190,39 @@ func (p *FuncInfo) Type() reflect.Type {
 	return p.t
 }
 
-func (p *FuncInfo) exec(ctx *Context) {
-	stk := ctx.Stack
-	sub := NewContextEx(ctx.globalCtx(), stk, ctx.code, p.vlist...)
-	sub.Exec(p.FunEntry, p.FunEnd)
-	if sub.ip == ipReturnN {
+func (p *FuncInfo) exec(stk *Stack, parent *Context) {
+	ctx := NewContextEx(parent, stk, parent.code, p.vlist...)
+	ctx.Exec(p.FunEntry, p.FunEnd)
+	if ctx.ip == ipReturnN {
 		n := len(stk.data)
-		stk.Ret(uint32(len(p.in)+n-sub.base), stk.data[n-p.numOut:]...)
+		stk.Ret(uint32(len(p.in)+n-ctx.base), stk.data[n-p.numOut:]...)
 	} else {
-		stk.SetLen(sub.base - len(p.in))
+		stk.SetLen(ctx.base - len(p.in))
 		n := uint32(p.numOut)
 		for i := uint32(0); i < n; i++ {
-			stk.Push(sub.getVar(i))
+			stk.Push(ctx.getVar(i))
 		}
 	}
 }
 
-func (p *FuncInfo) execVariadic(arity uint32, ctx *Context) {
+func (p *FuncInfo) execVariadic(arity uint32, stk *Stack, parent *Context) {
 	var n = uint32(len(p.in) - 1)
 	if arity > n {
 		tVariadic := p.in[n]
 		nVariadic := arity - n
 		if tVariadic == tyEmptyInterfaceSlice {
 			var empty []interface{}
-			ctx.Ret(nVariadic, append(empty, ctx.GetArgs(nVariadic)...))
+			parent.Ret(nVariadic, append(empty, parent.GetArgs(nVariadic)...))
 		} else {
 			variadic := reflect.MakeSlice(tVariadic, int(nVariadic), int(nVariadic))
-			items := ctx.GetArgs(nVariadic)
+			items := parent.GetArgs(nVariadic)
 			for i, item := range items {
 				setValue(variadic.Index(i), item)
 			}
-			ctx.Ret(nVariadic, variadic.Interface())
+			parent.Ret(nVariadic, variadic.Interface())
 		}
 	}
-	p.exec(ctx)
+	p.exec(stk, parent)
 }
 
 var tyEmptyInterfaceSlice = reflect.SliceOf(TyEmptyInterface)
@@ -200,7 +236,11 @@ func (p *Builder) resolveFuncs() {
 			log.Panicln("resolveFuncs failed: func is not defined -", fun.Name)
 		}
 		for _, off := range fun.offs {
-			data[off] |= uint32(pos)
+			if (data[off]>>bitsOpShift) == opClosure && fun.IsVariadic() {
+				data[off] |= closureVariadicFlag | uint32(pos)
+			} else {
+				data[off] |= uint32(pos)
+			}
 		}
 		fun.offs = nil
 	}
@@ -230,6 +270,26 @@ func (p *Builder) EndFunc(fun *FuncInfo) *Builder {
 	}
 	fun.FunEnd = len(p.code.data)
 	p.varManager = &p.code.varManager
+	return p
+}
+
+// Closure instr
+func (p *Builder) Closure(fun *FuncInfo, useParentCtx bool) *Builder {
+	var i uint32
+	if useParentCtx {
+		i = (opClosure << bitsOpShift) | closureParentCtxFlag
+	} else {
+		i = opClosure << bitsOpShift
+	}
+	code := p.code
+	fun.offs = append(fun.offs, len(code.data))
+	code.data = append(code.data, i)
+	return p
+}
+
+// CallClosure instr
+func (p *Builder) CallClosure(arity int) *Builder {
+	p.code.data = append(p.code.data, (opCallClosure<<bitsOpShift)|(uint32(arity)&bitsOperand))
 	return p
 }
 

@@ -14,6 +14,7 @@ const (
 
 	bitsIntKind    = 3
 	bitsFloatKind  = 2
+	bitsFuncKind   = 2
 	bitsFuncvArity = 10
 	bitsVarScope   = 6
 	bitsAssignOp   = 4
@@ -35,6 +36,10 @@ const (
 	bitsFuncvArityOperand  = (1 << bitsFuncvArity) - 1
 	bitsFuncvArityVar      = bitsFuncvArityOperand
 	bitsFuncvArityMax      = bitsFuncvArityOperand - 1
+
+	bitsOpClosure        = bitsOp + bitsFuncKind
+	bitsOpClosureShift   = bitsInstr - bitsOpClosure
+	bitsOpClosureOperand = (1 << bitsOpClosureShift) - 1
 
 	bitsOpVar        = bitsOp + bitsVarScope
 	bitsOpVarShift   = bitsInstr - bitsOpVar
@@ -72,6 +77,8 @@ const (
 	opReturn      = 24 // n(26)
 	opLoad        = 25 // index(26)
 	opStore       = 26 // index(26)
+	opClosure     = 27 // funcKind(2) addr(24)
+	opCallClosure = 28 // arity(26)
 )
 
 const (
@@ -137,6 +144,8 @@ var instrInfos = []InstrInfo{
 	opReturn:      {"return", "", "n", 26},                                // n(26)
 	opLoad:        {"load", "", "index", 26},                              // index(26)
 	opStore:       {"store", "", "index", 26},                             // index(26)
+	opClosure:     {"closure", "funcKind", "addr", (2 << 8) | 24},         // funcKind(2) addr(24)
+	opCallClosure: {"callClosure", "", "arity", 26},                       // arity(26)
 }
 
 // -----------------------------------------------------------------------------

@@ -201,6 +201,14 @@ func compileIdent(ctx *blockCtx, name string, mode compleMode) {
 }
 
 func compileFuncLit(ctx *blockCtx, v *ast.FuncLit, mode compleMode) {
+	funCtx := newBlockCtx(ctx)
+	decl := newFuncDecl("", v.Type, v.Body, funCtx)
+	ctx.use(decl)
+	ctx.infer.Push(newQlFunc(decl))
+	if mode == inferOnly {
+		return
+	}
+	log.Panicln("compileFuncLit failed: todo - funcDecl")
 }
 
 func compileBasicLit(ctx *blockCtx, v *ast.BasicLit, mode compleMode) {

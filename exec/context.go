@@ -161,7 +161,7 @@ func (ctx *Context) Exec(ip, ipEnd int) {
 	}
 }
 
-var execTable = [...]func(i Instr, p *Context){
+var _execTable = [...]func(i Instr, p *Context){
 	opPushInt:     execPushInt,
 	opPushUint:    execPushUint,
 	opPushValSpec: execPushValSpec,
@@ -182,6 +182,14 @@ var execTable = [...]func(i Instr, p *Context){
 	opAddrOp:      execAddrOp,
 	opLoad:        execLoad,
 	opStore:       execStore,
+	opClosure:     execClosure,
+	opCallClosure: execCallClosure,
+}
+
+var execTable []func(i Instr, p *Context)
+
+func init() {
+	execTable = _execTable[:]
 }
 
 // -----------------------------------------------------------------------------

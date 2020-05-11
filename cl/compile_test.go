@@ -307,12 +307,13 @@ func TestFunc(t *testing.T) {
 var fsTestClosure = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	import "fmt"
 
-	foo := func(x string) (n int, err error) {
-		n, err = fmt.Println("x: " + x)
+	foo := func(prompt string) (n int, err error) {
+		n, err = fmt.Println(prompt + x)
 		return
 	}
 
-	foo("Hello, world!")
+	x := "Hello, world!"
+	foo("x: ")
 `)
 
 func _TestClosure(t *testing.T) {
