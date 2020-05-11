@@ -145,6 +145,9 @@ func (ctx *Context) Exec(ip, ipEnd int) {
 		case opCallGoFuncv:
 			execGoFuncv(i, ctx)
 		case opReturn:
+			if i != iReturn {
+				ctx.ip = ipReturnN
+			}
 			return
 		case opPushUint:
 			execPushUint(i, ctx)

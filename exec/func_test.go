@@ -22,7 +22,7 @@ func TestFunc(t *testing.T) {
 		Push("x").
 		Push("sw").
 		CallFunc(foo).
-		Return().
+		Return(-1).
 		DefineFunc(
 			foo.Return(ret).
 				Args(TyString, TyString)).
@@ -61,7 +61,7 @@ func TestFuncv(t *testing.T) {
 		Push(1).
 		Push("xsw").
 		CallFuncv(bar, 4).
-		Return().
+		Return(-1).
 		DefineFunc(
 			foo.Return(ret1).
 				Vargs(TyString, tyInterfaceSlice)).
@@ -114,7 +114,7 @@ func TestFuncLargeArity(t *testing.T) {
 	}
 	code := b.
 		CallFuncv(foo, bitsFuncvArityMax+1).
-		Return().
+		Return(-1).
 		DefineFunc(
 			bar.Return(ret1).
 				Vargs(tyStringSlice)).

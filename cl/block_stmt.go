@@ -41,9 +41,12 @@ func compileBlockStmt(ctx *blockCtx, body *ast.BlockStmt) {
 }
 
 func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
+	if ctx.fun == nil {
+		log.Panicln("compileReturnStmt failed: return statement not in a function.")
+	}
 	rets := expr.Results
 	if rets == nil {
-		ctx.out.Return()
+		ctx.out.Return(-1)
 		return
 	}
 	for _, ret := range rets {

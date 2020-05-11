@@ -118,6 +118,7 @@ type blockCtx struct {
 	*pkgCtx
 	file   *fileCtx
 	parent *blockCtx
+	fun    *exec.FuncInfo
 	syms   map[string]iSymbol
 }
 
@@ -280,7 +281,7 @@ func NewPackage(out *exec.Builder, pkg *ast.Package) (p *Package, err error) {
 		}
 		ctx.file = entry.ctx.file
 		compileBlockStmt(ctx, entry.body)
-		out.Return()
+		out.Return(-1)
 		ctxPkg.resolveFuncs()
 	}
 	p.syms = ctx.syms

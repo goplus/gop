@@ -134,10 +134,15 @@ func (p *FuncInfo) exec(ctx *Context) {
 	stk := ctx.Stack
 	sub := NewContextEx(ctx.globalCtx(), stk, ctx.code, p.vlist...)
 	sub.Exec(p.FunEntry, p.FunEnd)
-	stk.SetLen(sub.base - len(p.in))
-	n := uint32(p.numOut)
-	for i := uint32(0); i < n; i++ {
-		stk.Push(sub.getVar(i))
+	if sub.ip == ipReturnN {
+		n := len(stk.data)
+		stk.Ret(uint32(len(p.in)+n-sub.base), stk.data[n-p.numOut:]...)
+	} else {
+		stk.SetLen(sub.base - len(p.in))
+		n := uint32(p.numOut)
+		for i := uint32(0); i < n; i++ {
+			stk.Push(sub.getVar(i))
+		}
 	}
 }
 
@@ -237,8 +242,8 @@ func (p *Builder) CallFuncv(fun *FuncInfo, arity int) *Builder {
 }
 
 // Return instr
-func (p *Builder) Return() *Builder {
-	p.code.data = append(p.code.data, opReturn<<bitsOpShift)
+func (p *Builder) Return(n int32) *Builder {
+	p.code.data = append(p.code.data, opReturn<<bitsOpShift|(uint32(n)&bitsOperand))
 	return p
 }
 

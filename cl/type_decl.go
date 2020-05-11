@@ -219,7 +219,6 @@ type funcDecl struct {
 	body *ast.BlockStmt
 	ctx  *blockCtx
 	fi   *exec.FuncInfo
-	t    reflect.Type
 	used bool
 }
 
@@ -236,10 +235,7 @@ func (p *funcDecl) getFuncInfo() *exec.FuncInfo {
 }
 
 func (p *funcDecl) typeOf() iType {
-	if p.t == nil {
-		p.t = p.getFuncInfo().Type()
-	}
-	return p.t
+	return p.getFuncInfo().Type()
 }
 
 func (p *funcDecl) compile() {
@@ -247,7 +243,9 @@ func (p *funcDecl) compile() {
 	ctx := p.ctx
 	out := ctx.out
 	out.DefineFunc(fun)
+	ctx.fun = fun
 	compileBlockStmt(ctx, p.body)
+	ctx.fun = nil
 	out.EndFunc(fun)
 }
 

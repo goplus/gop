@@ -69,7 +69,7 @@ const (
 	opAddrOp      = 21 // reserved(17) addressOp(4) kind(5)
 	opCallFunc    = 22 // addr(26)
 	opCallFuncv   = 23 // funvArity(10) addr(16)
-	opReturn      = 24 // reserved(26)
+	opReturn      = 24 // n(26)
 	opLoad        = 25 // index(26)
 	opStore       = 26 // index(26)
 )
@@ -80,6 +80,12 @@ const (
 	iPushTrue       = (opPushValSpec << bitsOpShift) | 1
 	iPushNil        = (opPushValSpec << bitsOpShift) | 2
 	iPushUnresolved = (opInvalid << bitsOpShift)
+	iReturn         = (opReturn << bitsOpShift) | (0xffffffff & bitsOperand)
+)
+
+const (
+	ipInvalid = 0x7fffffff
+	ipReturnN = ipInvalid - 1
 )
 
 // DecodeInstr returns
@@ -128,7 +134,7 @@ var instrInfos = []InstrInfo{
 	opAddrOp:      {"addrOp", "op", "kind", (21 << 8) | 5},                // reserved(17) addressOp(4) kind(5)
 	opCallFunc:    {"callFunc", "", "addr", 26},                           // addr(26)
 	opCallFuncv:   {"callFuncv", "funvArity", "addr", (10 << 8) | 16},     // funvArity(10) addr(16)
-	opReturn:      {"return", "", "", 0},                                  // reserved(26)
+	opReturn:      {"return", "", "n", 26},                                // n(26)
 	opLoad:        {"load", "", "index", 26},                              // index(26)
 	opStore:       {"store", "", "index", 26},                             // index(26)
 }
