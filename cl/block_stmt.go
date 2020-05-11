@@ -41,18 +41,37 @@ func compileBlockStmt(ctx *blockCtx, body *ast.BlockStmt) {
 }
 
 func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
-	if ctx.fun == nil {
+	fun := ctx.fun
+	if fun == nil {
 		log.Panicln("compileReturnStmt failed: return statement not in a function.")
 	}
 	rets := expr.Results
 	if rets == nil {
+		if fun.IsUnnamedOut() {
+			log.Panicln("compileReturnStmt failed: return without values -", fun.Name)
+		}
 		ctx.out.Return(-1)
 		return
 	}
 	for _, ret := range rets {
 		compileExpr(ctx, ret, 0)
 	}
-	log.Panicln("compileReturnStmt: todo")
+	n := len(rets)
+	if fun.NumOut() != n {
+		log.Panicln("compileReturnStmt failed: mismatched count of return values -", fun.Name)
+	}
+	if ctx.infer.Len() != n {
+		log.Panicln("compileReturnStmt failed: can't use multi values funcation result as return values -", fun.Name)
+	}
+	results := ctx.infer.GetArgs(uint32(n))
+	for i, result := range results {
+		v := fun.Out(i)
+		if v.Type != result.(iValue).Type() {
+			log.Panicln("compileReturnStmt failed: return mismatched value type -", fun.Name)
+		}
+	}
+	ctx.infer.SetLen(0)
+	ctx.out.Return(int32(n))
 }
 
 func compileExprStmt(ctx *blockCtx, expr *ast.ExprStmt) {

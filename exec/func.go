@@ -70,6 +70,29 @@ func NewFunc(name string, nestDepth uint32) *FuncInfo {
 	return f
 }
 
+// NumOut returns a function type's output parameter count.
+// It panics if the type's Kind is not Func.
+func (p *FuncInfo) NumOut() int {
+	return p.numOut
+}
+
+// Out returns the type of a function type's i'th output parameter.
+// It panics if i is not in the range [0, NumOut()).
+func (p *FuncInfo) Out(i int) *Var {
+	if i >= p.numOut {
+		log.Panicln("FuncInfo.Out: out of range -", i, "func:", p.Name)
+	}
+	return p.vlist[i]
+}
+
+// IsUnnamedOut returns if function results unnamed or not.
+func (p *FuncInfo) IsUnnamedOut() bool {
+	if p.numOut > 0 {
+		return p.vlist[0].IsUnnamedOut()
+	}
+	return false
+}
+
 // IsTypeValid returns if function type is valid or not.
 func (p *FuncInfo) IsTypeValid() bool {
 	return p.nVariadic != nVariadicInvalid

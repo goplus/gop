@@ -237,7 +237,7 @@ var fsTestReturn = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	fmt.Println(foo("Hello, world???"))
 `)
 
-func _TestReturn(t *testing.T) {
+func TestReturn(t *testing.T) {
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseFSDir(fset, fsTestReturn, "/foo", nil, 0)
 	if err != nil || len(pkgs) != 1 {
@@ -258,7 +258,7 @@ func _TestReturn(t *testing.T) {
 	if v := ctx.Get(-1); v != nil {
 		t.Fatal("error:", v)
 	}
-	if v := ctx.Get(-2); v != int(17) {
+	if v := ctx.Get(-2); v != int(16) {
 		t.Fatal("n:", v)
 	}
 }

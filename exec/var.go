@@ -240,6 +240,12 @@ func (p *Var) Name() string {
 	return p.name[1:]
 }
 
+// IsUnnamedOut returns if variable unnamed or not.
+func (p *Var) IsUnnamedOut() bool {
+	c := p.name[0]
+	return c >= '0' && c <= '9'
+}
+
 // SetAddr sets a variable address.
 func (p *Var) SetAddr(nestDepth, idx uint32) {
 	if p.idx <= bitsOpVarOperand {

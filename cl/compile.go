@@ -208,11 +208,10 @@ func (p *blockCtx) insertFuncVars(in []reflect.Type, args []string, rets []*exec
 		}
 	}
 	for _, ret := range rets {
-		name := ret.Name()
-		if c := name[0]; c >= '0' && c <= '9' { // unnamed return value
+		if ret.IsUnnamedOut() {
 			continue
 		}
-		p.syms[name] = (*execVar)(ret)
+		p.syms[ret.Name()] = (*execVar)(ret)
 	}
 }
 
