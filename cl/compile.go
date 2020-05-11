@@ -122,11 +122,11 @@ type blockCtx struct {
 	syms   map[string]iSymbol
 }
 
-func newBlockCtx(file *fileCtx) *blockCtx {
+func newBlockCtx(parent *blockCtx) *blockCtx {
 	return &blockCtx{
-		pkgCtx: file.pkgCtx,
-		file:   file,
-		parent: file.blockCtx,
+		pkgCtx: parent.pkgCtx,
+		file:   parent.file,
+		parent: parent,
 		syms:   make(map[string]iSymbol),
 	}
 }
@@ -287,9 +287,9 @@ func NewPackage(out *exec.Builder, pkg *ast.Package) (p *Package, err error) {
 	return
 }
 
-func loadFile(block *blockCtx, f *ast.File) {
-	ctx := newFileCtx(block)
-	block.file = ctx
+func loadFile(ctx *blockCtx, f *ast.File) {
+	file := newFileCtx(ctx)
+	ctx.file = file
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
@@ -297,13 +297,13 @@ func loadFile(block *blockCtx, f *ast.File) {
 		case *ast.GenDecl:
 			switch d.Tok {
 			case token.IMPORT:
-				loadImports(ctx, d)
+				loadImports(file, d)
 			case token.TYPE:
-				loadTypes(d)
+				loadTypes(ctx, d)
 			case token.CONST:
-				loadConsts(d)
+				loadConsts(ctx, d)
 			case token.VAR:
-				loadVars(d)
+				loadVars(ctx, d)
 			default:
 				log.Panicln("tok:", d.Tok, "spec:", reflect.TypeOf(d.Specs).Elem())
 			}
@@ -334,28 +334,28 @@ func loadImport(ctx *fileCtx, spec *ast.ImportSpec) {
 	ctx.imports[name] = pkgPath
 }
 
-func loadTypes(d *ast.GenDecl) {
+func loadTypes(ctx *blockCtx, d *ast.GenDecl) {
 	for _, item := range d.Specs {
-		loadType(item.(*ast.TypeSpec))
+		loadType(ctx, item.(*ast.TypeSpec))
 	}
 }
 
-func loadType(spec *ast.TypeSpec) {
+func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
 }
 
-func loadConsts(d *ast.GenDecl) {
+func loadConsts(ctx *blockCtx, d *ast.GenDecl) {
 }
 
-func loadVars(d *ast.GenDecl) {
+func loadVars(ctx *blockCtx, d *ast.GenDecl) {
 	for _, item := range d.Specs {
-		loadVar(item.(*ast.ValueSpec))
+		loadVar(ctx, item.(*ast.ValueSpec))
 	}
 }
 
-func loadVar(spec *ast.ValueSpec) {
+func loadVar(ctx *blockCtx, spec *ast.ValueSpec) {
 }
 
-func loadFunc(ctx *fileCtx, d *ast.FuncDecl) {
+func loadFunc(ctx *blockCtx, d *ast.FuncDecl) {
 	var name = d.Name.Name
 	if d.Recv != nil {
 		recv := astutil.ToRecv(d.Recv)
@@ -364,7 +364,7 @@ func loadFunc(ctx *fileCtx, d *ast.FuncDecl) {
 			pointer: recv.Pointer,
 			typ:     d.Type,
 			body:    d.Body,
-			file:    ctx,
+			file:    ctx.file,
 		})
 	} else if name == "init" {
 		log.Panicln("loadFunc TODO: init")

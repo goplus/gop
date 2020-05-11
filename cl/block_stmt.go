@@ -125,6 +125,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, mode compleMode) {
 		compileBinaryExpr(ctx, v, mode)
 	case *ast.SelectorExpr:
 		compileSelectorExpr(ctx, v, mode)
+	case *ast.FuncLit:
+		compileFuncLit(ctx, v, mode)
 	default:
 		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
 	}
@@ -196,6 +198,9 @@ func compileIdent(ctx *blockCtx, name string, mode compleMode) {
 		}
 		log.Panicln("compileIdent failed: unknown -", kind, addr)
 	}
+}
+
+func compileFuncLit(ctx *blockCtx, v *ast.FuncLit, mode compleMode) {
 }
 
 func compileBasicLit(ctx *blockCtx, v *ast.BasicLit, mode compleMode) {

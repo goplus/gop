@@ -303,3 +303,42 @@ func TestFunc(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
+var fsTestClosure = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	import "fmt"
+
+	foo := func(x string) (n int, err error) {
+		n, err = fmt.Println("x: " + x)
+		return
+	}
+
+	foo("Hello, world!")
+`)
+
+func _TestClosure(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestClosure, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, err = NewPackage(b, bar)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(17) {
+		t.Fatal("n:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
