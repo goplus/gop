@@ -71,6 +71,9 @@ func FindGoPackage(pkgPath string) *GoPackage {
 
 // Find lookups a symbol by specified its name.
 func (p *GoPackage) Find(name string) (addr uint32, kind SymbolKind, ok bool) {
+	if p == nil {
+		return
+	}
 	if v, ok := p.syms[name]; ok {
 		return v & bitsOperand, SymbolKind(v >> bitsOpShift), true
 	}

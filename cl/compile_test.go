@@ -56,7 +56,7 @@ func TestBasic(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 var fsTestUnbound = asttest.NewSingleFileFS("/foo", "bar.ql", `
-	println("Hello", 123, 4.5, 7i)
+	println("Hello " + "qiniu:", 123, 4.5, 7i)
 `)
 
 func TestUnbound(t *testing.T) {
@@ -80,7 +80,7 @@ func TestUnbound(t *testing.T) {
 	if v := ctx.Get(-1); v != nil {
 		t.Fatal("error:", v)
 	}
-	if v := ctx.Get(-2); v != int(21) {
+	if v := ctx.Get(-2); v != int(28) {
 		t.Fatal("n:", v)
 	}
 }

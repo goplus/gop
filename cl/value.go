@@ -333,6 +333,13 @@ func boundConst(v interface{}, t reflect.Type) (ret interface{}, ok bool) {
 		default:
 			return nil, false
 		}
+	} else if nkind == reflect.String {
+		switch ov := v.(type) {
+		case string:
+			nv.SetString(ov)
+		default:
+			return nil, false
+		}
 	} else {
 		return nil, false
 	}

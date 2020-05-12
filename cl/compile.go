@@ -273,6 +273,9 @@ type Package struct {
 
 // NewPackage creates a qlang package instance.
 func NewPackage(out *exec.Builder, pkg *ast.Package) (p *Package, err error) {
+	if pkg == nil {
+		log.Panicln("NewPackage failed: nil ast.Package")
+	}
 	p = &Package{}
 	ctxPkg := newPkgCtx(out)
 	ctx := newGblBlockCtx(ctxPkg, nil)
