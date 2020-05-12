@@ -88,6 +88,8 @@ func checkBinaryOp(kind exec.Kind, op exec.Operator, x, y interface{}, b *exec.B
 func checkType(t reflect.Type, v interface{}, b *exec.Builder) {
 	if cons, ok := v.(*constVal); ok {
 		cons.bound(t, b)
+	} else if t != v.(iValue).Type() {
+		log.Panicln("checkType failed: return mismatched value type.")
 	}
 }
 

@@ -17,11 +17,10 @@ func execStore(i Instr, p *Context) {
 }
 
 const (
-	closureParentCtxFlag = (1 << bitsOpClosureShift)
-	closureVariadicFlag  = (2 << bitsOpClosureShift)
+	closureVariadicFlag = (1 << bitsOpClosureShift)
 )
 
-func execClosure(i Instr, p *Context) {
+func newClosure(i Instr, p *Context) *Closure {
 	idx := i & bitsOpClosureOperand
 	var fun *FuncInfo
 	if (i & closureVariadicFlag) != 0 {
@@ -29,15 +28,53 @@ func execClosure(i Instr, p *Context) {
 	} else {
 		fun = p.code.funs[idx]
 	}
-	if (i & closureParentCtxFlag) == 0 {
+	if fun.nestDepth == 1 {
 		p = p.globalCtx()
 	}
-	p.Push(&closure{fun: fun, parent: p})
+	return &Closure{fun: fun, parent: p}
+}
+
+func execClosure(i Instr, p *Context) {
+	closure := newClosure(i, p)
+	p.Push(closure)
+}
+
+func execGoClosure(i Instr, p *Context) {
+	closure := newClosure(i, p)
+	v := reflect.MakeFunc(closure.fun.Type(), closure.Call)
+	p.Push(v.Interface())
+}
+
+func execCallGoClosure(i Instr, p *Context) {
+	arity := i & bitsOperand
+	fn := reflect.ValueOf(p.Pop())
+	t := fn.Type()
+	var out []reflect.Value
+	if t.IsVariadic() && arity == bitsOperand {
+		arity = uint32(t.NumIn())
+		args := p.GetArgs(arity)
+		in := make([]reflect.Value, arity)
+		for i, arg := range args {
+			in[i] = reflect.ValueOf(arg)
+		}
+		out = fn.CallSlice(in)
+	} else {
+		args := p.GetArgs(arity)
+		in := make([]reflect.Value, arity)
+		for i, arg := range args {
+			in[i] = reflect.ValueOf(arg)
+		}
+		out = fn.Call(in)
+	}
+	p.PopN(int(arity))
+	for _, v := range out {
+		p.Push(v.Interface())
+	}
 }
 
 func execCallClosure(i Instr, p *Context) {
 	arity := i & bitsOperand
-	c := p.Pop().(*closure)
+	c := p.Pop().(*Closure)
 	fun, stk, parent := c.fun, p.Stack, c.parent
 	if fun.IsVariadic() && arity != bitsOperand { // not is: args...
 		fun.execVariadic(arity, stk, parent)
@@ -48,21 +85,29 @@ func execCallClosure(i Instr, p *Context) {
 
 func execFunc(i Instr, p *Context) {
 	idx := i & bitsOperand
-	p.code.funs[idx].exec(p.Stack, p.globalCtx())
+	fun := p.code.funs[idx]
+	stk := p.Stack
+	if fun.nestDepth == 1 {
+		p = p.globalCtx()
+	}
+	fun.exec(stk, p)
 }
 
 func execFuncv(i Instr, p *Context) {
 	idx := i & bitsOpCallFuncvOperand
 	arity := (i >> bitsOpCallFuncvShift) & bitsFuncvArityOperand
 	fun := p.code.funvs[idx]
-	stk, parent := p.Stack, p.globalCtx()
+	stk := p.Stack
+	if fun.nestDepth == 1 {
+		p = p.globalCtx()
+	}
 	if arity == bitsFuncvArityVar { // args...
-		fun.exec(stk, parent)
+		fun.exec(stk, p)
 	} else {
 		if arity == bitsFuncvArityMax {
 			arity = uint32(p.Pop().(int) + bitsFuncvArityMax)
 		}
-		fun.execVariadic(arity, stk, parent)
+		fun.execVariadic(arity, stk, p)
 	}
 }
 
@@ -72,10 +117,28 @@ func execFuncv(i Instr, p *Context) {
 type Package struct {
 }
 
-type closure struct {
+// Closure represents a qlang closure.
+type Closure struct {
 	fun    *FuncInfo
 	recv   interface{}
 	parent *Context
+}
+
+// Call calls a closure.
+func (p *Closure) Call(in []reflect.Value) (out []reflect.Value) {
+	stk := NewStack()
+	for _, v := range in {
+		stk.Push(v.Interface())
+	}
+	p.fun.exec(stk, p.parent)
+	n := len(stk.data)
+	if n > 0 {
+		out = make([]reflect.Value, n)
+		for i, ret := range stk.data {
+			out[i] = reflect.ValueOf(ret)
+		}
+	}
+	return
 }
 
 const (
@@ -95,7 +158,7 @@ type FuncInfo struct {
 	anyUnresolved
 	numOut int
 	varManager
-	nVariadic uint32
+	nVariadic uint16
 }
 
 // NewFunc create a qlang function.
@@ -170,7 +233,7 @@ func (p *FuncInfo) IsVariadic() bool {
 	return p.nVariadic == nVariadicVariadicArgs
 }
 
-func (p *FuncInfo) setVariadic(nVariadic uint32) {
+func (p *FuncInfo) setVariadic(nVariadic uint16) {
 	if p.nVariadic == 0 {
 		p.nVariadic = nVariadic
 	} else if p.nVariadic != nVariadic {
@@ -236,7 +299,7 @@ func (p *Builder) resolveFuncs() {
 			log.Panicln("resolveFuncs failed: func is not defined -", fun.Name)
 		}
 		for _, off := range fun.offs {
-			if (data[off]>>bitsOpShift) == opClosure && fun.IsVariadic() {
+			if isClosure(data[off]>>bitsOpShift) && fun.IsVariadic() {
 				data[off] |= closureVariadicFlag | uint32(pos)
 			} else {
 				data[off] |= uint32(pos)
@@ -244,6 +307,10 @@ func (p *Builder) resolveFuncs() {
 		}
 		fun.offs = nil
 	}
+}
+
+func isClosure(op uint32) bool {
+	return op == opClosure || op == opGoClosure
 }
 
 // DefineFunc instr
@@ -274,22 +341,30 @@ func (p *Builder) EndFunc(fun *FuncInfo) *Builder {
 }
 
 // Closure instr
-func (p *Builder) Closure(fun *FuncInfo, useParentCtx bool) *Builder {
-	var i uint32
-	if useParentCtx {
-		i = (opClosure << bitsOpShift) | closureParentCtxFlag
-	} else {
-		i = opClosure << bitsOpShift
-	}
+func (p *Builder) Closure(fun *FuncInfo) *Builder {
 	code := p.code
 	fun.offs = append(fun.offs, len(code.data))
-	code.data = append(code.data, i)
+	code.data = append(code.data, opClosure<<bitsOpShift)
+	return p
+}
+
+// GoClosure instr
+func (p *Builder) GoClosure(fun *FuncInfo) *Builder {
+	code := p.code
+	fun.offs = append(fun.offs, len(code.data))
+	code.data = append(code.data, opGoClosure<<bitsOpShift)
 	return p
 }
 
 // CallClosure instr
 func (p *Builder) CallClosure(arity int) *Builder {
 	p.code.data = append(p.code.data, (opCallClosure<<bitsOpShift)|(uint32(arity)&bitsOperand))
+	return p
+}
+
+// CallGoClosure instr
+func (p *Builder) CallGoClosure(arity int) *Builder {
+	p.code.data = append(p.code.data, (opCallGoClosure<<bitsOpShift)|(uint32(arity)&bitsOperand))
 	return p
 }
 

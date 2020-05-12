@@ -223,7 +223,7 @@ type funcDecl struct {
 }
 
 func newFuncDecl(name string, typ *ast.FuncType, body *ast.BlockStmt, ctx *blockCtx) *funcDecl {
-	fi := exec.NewFunc(name, 1)
+	fi := exec.NewFunc(name, ctx.getNestDepth())
 	return &funcDecl{typ: typ, body: body, ctx: ctx, fi: fi}
 }
 

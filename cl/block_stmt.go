@@ -66,9 +66,7 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 	results := ctx.infer.GetArgs(uint32(n))
 	for i, result := range results {
 		v := fun.Out(i)
-		if v.Type != result.(iValue).Type() {
-			log.Panicln("compileReturnStmt failed: return mismatched value type -", fun.Name)
-		}
+		checkType(v.Type, result, ctx.out)
 	}
 	ctx.infer.SetLen(0)
 	ctx.out.Return(int32(n))
@@ -208,7 +206,7 @@ func compileFuncLit(ctx *blockCtx, v *ast.FuncLit, mode compleMode) {
 	if mode == inferOnly {
 		return
 	}
-	log.Panicln("compileFuncLit failed: todo - funcDecl")
+	ctx.out.Closure(decl.fi)
 }
 
 func compileBasicLit(ctx *blockCtx, v *ast.BasicLit, mode compleMode) {
@@ -357,6 +355,11 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, mode compleMode) {
 			out.CallGoFuncv(exec.GoFuncvAddr(vfn.addr), arity)
 		}
 		ctx.infer.Ret(uint32(len(v.Args)+1+vfn.isMethod), ret)
+		return
+	case *goValue:
+		if vfn.t.Kind() != reflect.Func {
+			log.Panicln("compileCallExpr failed: call a non function.")
+		}
 		return
 	}
 	log.Panicln("compileCallExpr failed: unknown -", reflect.TypeOf(fn))

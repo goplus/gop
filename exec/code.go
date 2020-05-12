@@ -50,35 +50,37 @@ const (
 type Instr = uint32
 
 const (
-	opInvalid     = 0
-	opPushInt     = 1  // intKind(3) intVal(23)
-	opPushUint    = 2  // intKind(3) intVal(23)
-	opPushFloatR  = 3  // floatKind(2) floatIdx(24)
-	opPushStringR = 4  // stringIdx(26)
-	opPushIntR    = 5  // intKind(3) intIdx(23)
-	opPushUintR   = 6  // intKind(3) intIdx(23)
-	opPushValSpec = 7  // valSpec(26) - false=0, true=1
-	opBuiltinOp   = 8  // reserved(16) kind(5) builtinOp(5)
-	opJmp         = 9  // offset(26)
-	opJmpIfFalse  = 10 // offset(26)
-	opCaseNE      = 11 // offset(26)
-	opPop         = 12 // n(26)
-	opCallGoFunc  = 13 // addr(26) - call a Go function
-	opCallGoFuncv = 14 // funvArity(10) addr(16) - call a Go function with variadic args
-	opLoadVar     = 15 // varScope(6) addr(20)
-	opStoreVar    = 16 // varScope(6) addr(20)
-	opAddrVar     = 17 // varScope(6) addr(20) - load a variable's address
-	opLoadGoVar   = 18 // addr(26)
-	opStoreGoVar  = 19 // addr(26)
-	opAddrGoVar   = 20 // addr(26)
-	opAddrOp      = 21 // reserved(17) addressOp(4) kind(5)
-	opCallFunc    = 22 // addr(26)
-	opCallFuncv   = 23 // funvArity(10) addr(16)
-	opReturn      = 24 // n(26)
-	opLoad        = 25 // index(26)
-	opStore       = 26 // index(26)
-	opClosure     = 27 // funcKind(2) addr(24)
-	opCallClosure = 28 // arity(26)
+	opInvalid       = 0
+	opPushInt       = 1  // intKind(3) intVal(23)
+	opPushUint      = 2  // intKind(3) intVal(23)
+	opPushFloatR    = 3  // floatKind(2) floatIdx(24)
+	opPushStringR   = 4  // stringIdx(26)
+	opPushIntR      = 5  // intKind(3) intIdx(23)
+	opPushUintR     = 6  // intKind(3) intIdx(23)
+	opPushValSpec   = 7  // valSpec(26) - false=0, true=1
+	opBuiltinOp     = 8  // reserved(16) kind(5) builtinOp(5)
+	opJmp           = 9  // offset(26)
+	opJmpIfFalse    = 10 // offset(26)
+	opCaseNE        = 11 // offset(26)
+	opPop           = 12 // n(26)
+	opCallGoFunc    = 13 // addr(26) - call a Go function
+	opCallGoFuncv   = 14 // funvArity(10) addr(16) - call a Go function with variadic args
+	opLoadVar       = 15 // varScope(6) addr(20)
+	opStoreVar      = 16 // varScope(6) addr(20)
+	opAddrVar       = 17 // varScope(6) addr(20) - load a variable's address
+	opLoadGoVar     = 18 // addr(26)
+	opStoreGoVar    = 19 // addr(26)
+	opAddrGoVar     = 20 // addr(26)
+	opAddrOp        = 21 // reserved(17) addressOp(4) kind(5)
+	opCallFunc      = 22 // addr(26)
+	opCallFuncv     = 23 // funvArity(10) addr(16)
+	opReturn        = 24 // n(26)
+	opLoad          = 25 // index(26)
+	opStore         = 26 // index(26)
+	opClosure       = 27 // funcKind(2) addr(24)
+	opCallClosure   = 28 // arity(26)
+	opGoClosure     = 29 // funcKind(2) addr(24)
+	opCallGoClosure = 30 // arity(26)
 )
 
 const (
@@ -117,35 +119,37 @@ type InstrInfo struct {
 }
 
 var instrInfos = []InstrInfo{
-	opInvalid:     {"invalid", "", "", 0},
-	opPushInt:     {"pushInt", "intKind", "intVal", (3 << 8) | 23},        // intKind(3) intVal(23)
-	opPushUint:    {"pushUint", "intKind", "intVal", (3 << 8) | 23},       // intKind(3) intVal(23)
-	opPushFloatR:  {"pushFloatR", "floatKind", "floatIdx", (2 << 8) | 24}, // floatKind(2) floatIdx(24)
-	opPushStringR: {"pushStringR", "", "stringIdx", 26},                   // stringIdx(26)
-	opPushIntR:    {"pushIntR", "intKind", "intIdx", (3 << 8) | 23},       // intKind(3) intIdx(23)
-	opPushUintR:   {"pushUintR", "intKind", "intIdx", (3 << 8) | 23},      // intKind(3) intIdx(23)
-	opPushValSpec: {"pushValSpec", "", "valSpec", 26},                     // valSpec(26) - false=0, true=1
-	opBuiltinOp:   {"builtinOp", "kind", "op", (21 << 8) | 5},             // reserved(16) kind(5) builtinOp(5)
-	opJmp:         {"jmp", "", "offset", 26},                              // offset(26)
-	opJmpIfFalse:  {"jmpIfFalse", "", "offset", 26},                       // offset(26)
-	opCaseNE:      {"caseNE", "", "offset", 26},                           // offset(26)
-	opPop:         {"pop", "", "n", 26},                                   // n(26)
-	opCallGoFunc:  {"callGoFunc", "", "addr", 26},                         // addr(26) - call a Go function
-	opCallGoFuncv: {"callGoFuncv", "funvArity", "addr", (10 << 8) | 16},   // funvArity(10) addr(16) - call a Go function with variadic args
-	opLoadVar:     {"loadVar", "varScope", "addr", (6 << 8) | 20},         // varScope(6) addr(20)
-	opStoreVar:    {"storeVar", "varScope", "addr", (6 << 8) | 20},        // varScope(6) addr(20)
-	opAddrVar:     {"addrVar", "varScope", "addr", (6 << 8) | 20},         // varScope(6) addr(20) - load a variable's address
-	opLoadGoVar:   {"loadGoVar", "", "addr", 26},                          // addr(26)
-	opStoreGoVar:  {"storeGoVar", "", "addr", 26},                         // addr(26)
-	opAddrGoVar:   {"addrGoVar", "", "addr", 26},                          // addr(26)
-	opAddrOp:      {"addrOp", "op", "kind", (21 << 8) | 5},                // reserved(17) addressOp(4) kind(5)
-	opCallFunc:    {"callFunc", "", "addr", 26},                           // addr(26)
-	opCallFuncv:   {"callFuncv", "funvArity", "addr", (10 << 8) | 16},     // funvArity(10) addr(16)
-	opReturn:      {"return", "", "n", 26},                                // n(26)
-	opLoad:        {"load", "", "index", 26},                              // index(26)
-	opStore:       {"store", "", "index", 26},                             // index(26)
-	opClosure:     {"closure", "funcKind", "addr", (2 << 8) | 24},         // funcKind(2) addr(24)
-	opCallClosure: {"callClosure", "", "arity", 26},                       // arity(26)
+	opInvalid:       {"invalid", "", "", 0},
+	opPushInt:       {"pushInt", "intKind", "intVal", (3 << 8) | 23},        // intKind(3) intVal(23)
+	opPushUint:      {"pushUint", "intKind", "intVal", (3 << 8) | 23},       // intKind(3) intVal(23)
+	opPushFloatR:    {"pushFloatR", "floatKind", "floatIdx", (2 << 8) | 24}, // floatKind(2) floatIdx(24)
+	opPushStringR:   {"pushStringR", "", "stringIdx", 26},                   // stringIdx(26)
+	opPushIntR:      {"pushIntR", "intKind", "intIdx", (3 << 8) | 23},       // intKind(3) intIdx(23)
+	opPushUintR:     {"pushUintR", "intKind", "intIdx", (3 << 8) | 23},      // intKind(3) intIdx(23)
+	opPushValSpec:   {"pushValSpec", "", "valSpec", 26},                     // valSpec(26) - false=0, true=1
+	opBuiltinOp:     {"builtinOp", "kind", "op", (21 << 8) | 5},             // reserved(16) kind(5) builtinOp(5)
+	opJmp:           {"jmp", "", "offset", 26},                              // offset(26)
+	opJmpIfFalse:    {"jmpIfFalse", "", "offset", 26},                       // offset(26)
+	opCaseNE:        {"caseNE", "", "offset", 26},                           // offset(26)
+	opPop:           {"pop", "", "n", 26},                                   // n(26)
+	opCallGoFunc:    {"callGoFunc", "", "addr", 26},                         // addr(26) - call a Go function
+	opCallGoFuncv:   {"callGoFuncv", "funvArity", "addr", (10 << 8) | 16},   // funvArity(10) addr(16) - call a Go function with variadic args
+	opLoadVar:       {"loadVar", "varScope", "addr", (6 << 8) | 20},         // varScope(6) addr(20)
+	opStoreVar:      {"storeVar", "varScope", "addr", (6 << 8) | 20},        // varScope(6) addr(20)
+	opAddrVar:       {"addrVar", "varScope", "addr", (6 << 8) | 20},         // varScope(6) addr(20) - load a variable's address
+	opLoadGoVar:     {"loadGoVar", "", "addr", 26},                          // addr(26)
+	opStoreGoVar:    {"storeGoVar", "", "addr", 26},                         // addr(26)
+	opAddrGoVar:     {"addrGoVar", "", "addr", 26},                          // addr(26)
+	opAddrOp:        {"addrOp", "op", "kind", (21 << 8) | 5},                // reserved(17) addressOp(4) kind(5)
+	opCallFunc:      {"callFunc", "", "addr", 26},                           // addr(26)
+	opCallFuncv:     {"callFuncv", "funvArity", "addr", (10 << 8) | 16},     // funvArity(10) addr(16)
+	opReturn:        {"return", "", "n", 26},                                // n(26)
+	opLoad:          {"load", "", "index", 26},                              // index(26)
+	opStore:         {"store", "", "index", 26},                             // index(26)
+	opClosure:       {"closure", "funcKind", "addr", (2 << 8) | 24},         // funcKind(2) addr(24)
+	opCallClosure:   {"callClosure", "", "arity", 26},                       // arity(26)
+	opGoClosure:     {"closureGo", "funcKind", "addr", (2 << 8) | 24},       // funcKind(2) addr(24)
+	opCallGoClosure: {"callGoClosure", "", "arity", 26},                     // arity(26)
 }
 
 // -----------------------------------------------------------------------------

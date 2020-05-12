@@ -139,6 +139,15 @@ func newGblBlockCtx(pkg *pkgCtx, parent *blockCtx) *blockCtx {
 	}
 }
 
+func (p *blockCtx) getNestDepth() (nestDepth uint32) {
+	for {
+		if p = p.parent; p == nil {
+			return
+		}
+		nestDepth++
+	}
+}
+
 func (p *blockCtx) exists(name string) (ok bool) {
 	if _, ok = p.syms[name]; ok {
 		return
