@@ -20,7 +20,7 @@ const (
 	closureVariadicFlag = (1 << bitsOpClosureShift)
 )
 
-func newClosure(i Instr, p *Context) *Closure {
+func makeClosure(i Instr, p *Context) Closure {
 	idx := i & bitsOpClosureOperand
 	var fun *FuncInfo
 	if (i & closureVariadicFlag) != 0 {
@@ -31,16 +31,11 @@ func newClosure(i Instr, p *Context) *Closure {
 	if fun.nestDepth == 1 {
 		p = p.globalCtx()
 	}
-	return &Closure{fun: fun, parent: p}
-}
-
-func execClosure(i Instr, p *Context) {
-	closure := newClosure(i, p)
-	p.Push(closure)
+	return Closure{fun: fun, parent: p}
 }
 
 func execGoClosure(i Instr, p *Context) {
-	closure := newClosure(i, p)
+	closure := makeClosure(i, p)
 	v := reflect.MakeFunc(closure.fun.Type(), closure.Call)
 	p.Push(v.Interface())
 }
@@ -70,6 +65,11 @@ func execCallGoClosure(i Instr, p *Context) {
 	for _, v := range out {
 		p.Push(v.Interface())
 	}
+}
+
+func execClosure(i Instr, p *Context) {
+	closure := makeClosure(i, p)
+	p.Push(&closure)
 }
 
 func execCallClosure(i Instr, p *Context) {
