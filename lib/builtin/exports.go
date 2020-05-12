@@ -2,115 +2,76 @@ package builtin
 
 import (
 	"fmt"
+	"io"
 
+	"github.com/qiniu/qlang/exec"
 	qlang "github.com/qiniu/qlang/spec"
 )
 
 // -----------------------------------------------------------------------------
 
-var exports = map[string]interface{}{
-	"append":    Append,
-	"copy":      Copy,
-	"delete":    Delete,
-	"get":       Get,
-	"len":       Len,
-	"cap":       Cap,
-	"mkmap":     Mkmap,
-	"mapFrom":   MapFrom,
-	"mapOf":     MapOf,
-	"panic":     Panic,
-	"panicf":    Panicf,
-	"print":     fmt.Print,
-	"printf":    fmt.Printf,
-	"println":   fmt.Println,
-	"fprintln":  fmt.Fprintln,
-	"set":       Set,
-	"mkslice":   Mkslice,
-	"slice":     Mkslice,
-	"sliceFrom": sliceFrom,
-	"sliceOf":   SliceOf,
-	"sub":       SubSlice,
-	"make":      Make,
-
-	"float":   TyFloat64,
-	"float64": TyFloat64,
-	"float32": TyFloat32,
-	"int8":    TyInt8,
-	"int16":   TyInt16,
-	"int32":   TyInt32,
-	"int64":   TyInt64,
-	"int":     TyInt,
-	"uint":    TyUint,
-	"byte":    TyUint8,
-	"uint8":   TyUint8,
-	"uint16":  TyUint16,
-	"uint32":  TyUint32,
-	"uint64":  TyUint64,
-	"string":  TyString,
-	"bool":    TyBool,
-	"var":     TyVar,
-	"type":    typeOf,
-
-	"max": Max,
-	"min": Min,
-
-	"undefined": qlang.Undefined,
-	"nil":       nil,
-	"true":      true,
-	"false":     false,
-
-	"$elem": Elem,
-	"$neg":  Neg,
-	"$mul":  Mul,
-	"$quo":  Quo,
-	"$mod":  Mod,
-	"$add":  Add,
-	"$sub":  Sub,
-
-	"$xor":    Xor,
-	"$lshr":   Lshr,
-	"$rshr":   Rshr,
-	"$bitand": BitAnd,
-	"$bitor":  BitOr,
-	"$bitnot": BitNot,
-	"$andnot": AndNot,
-
-	"$lt":  LT,
-	"$gt":  GT,
-	"$le":  LE,
-	"$ge":  GE,
-	"$eq":  EQ,
-	"$ne":  NE,
-	"$not": Not,
+// QexecPrint instr
+func QexecPrint(arity uint32, p *qlang.Context) {
+	args := p.GetArgs(arity)
+	n, err := fmt.Print(args...)
+	p.Ret(arity, n, err)
 }
 
+// QexecPrintf instr
+func QexecPrintf(arity uint32, p *qlang.Context) {
+	args := p.GetArgs(arity)
+	n, err := fmt.Printf(args[0].(string), args[1:]...)
+	p.Ret(arity, n, err)
+}
+
+// QexecPrintln instr
+func QexecPrintln(arity uint32, p *qlang.Context) {
+	args := p.GetArgs(arity)
+	n, err := fmt.Println(args...)
+	p.Ret(arity, n, err)
+}
+
+// QexecFprintln instr
+func QexecFprintln(arity uint32, p *qlang.Context) {
+	args := p.GetArgs(arity)
+	n, err := fmt.Fprintln(args[0].(io.Writer), args[1:]...)
+	p.Ret(arity, n, err)
+}
+
+// -----------------------------------------------------------------------------
+
+// I is a Go package instance.
+var I = qlang.NewGoPackage("")
+
 func init() {
-	qlang.SubSlice = SubSlice
-	qlang.SliceFrom = SliceFrom
-	qlang.SliceFromTy = SliceFromTy
-	qlang.Slice = Slice
-	qlang.Map = Map
-	qlang.MapFrom = MapFrom
-	qlang.MapInit = MapInit
-	qlang.StructInit = StructInit
-	qlang.EQ = EQ
-	qlang.GetVar = GetVar
-	qlang.Get = Get
-	qlang.SetIndex = SetIndex
-	qlang.Add = Add
-	qlang.Sub = Sub
-	qlang.Mul = Mul
-	qlang.Quo = Quo
-	qlang.Mod = Mod
-	qlang.Xor = Xor
-	qlang.Lshr = Lshr
-	qlang.Rshr = Rshr
-	qlang.BitAnd = BitAnd
-	qlang.BitOr = BitOr
-	qlang.AndNot = AndNot
-	qlang.Inc = Inc
-	qlang.Dec = Dec
-	qlang.Import("", exports)
+	I.RegisterFuncvs(
+		I.Funcv("print", fmt.Print, QexecPrint),
+		I.Funcv("printf", fmt.Printf, QexecPrintf),
+		I.Funcv("println", fmt.Println, QexecPrintln),
+		I.Funcv("fprintln", fmt.Fprintln, QexecFprintln),
+	)
+	I.RegisterTypes(
+		I.Type("bool", exec.TyBool),
+		I.Type("int", exec.TyInt),
+		I.Type("int8", exec.TyInt8),
+		I.Type("int16", exec.TyInt16),
+		I.Type("int32", exec.TyInt32),
+		I.Type("int64", exec.TyInt64),
+		I.Type("uint", exec.TyUint),
+		I.Type("uint8", exec.TyUint8),
+		I.Type("uint16", exec.TyUint16),
+		I.Type("uint32", exec.TyUint32),
+		I.Type("uint64", exec.TyUint64),
+		I.Type("uintptr", exec.TyUintptr),
+		I.Type("float32", exec.TyFloat32),
+		I.Type("float64", exec.TyFloat64),
+		I.Type("complex64", exec.TyComplex64),
+		I.Type("complex128", exec.TyComplex128),
+		I.Type("string", exec.TyString),
+		I.Type("error", exec.TyError),
+		I.Type("byte", exec.TyByte),
+		I.Type("rune", exec.TyRune),
+	)
 }
 
 // -----------------------------------------------------------------------------

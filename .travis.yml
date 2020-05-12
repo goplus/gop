@@ -1,4 +1,7 @@
 language: go
+go:
+  - "1.13"
+  - "1.14"
 install:
   - export GO111MODULE="on"
   - go install -v ./...

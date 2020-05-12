@@ -2,11 +2,13 @@
 *.o
 *.a
 *.so
+*.txt
 .DS_Store
 
 # Folders
 _obj
 _test
+_old
 
 # Architecture specific extensions/prefixes
 *.[568vq]
