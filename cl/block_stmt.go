@@ -206,7 +206,7 @@ func compileFuncLit(ctx *blockCtx, v *ast.FuncLit, mode compleMode) {
 	if mode == inferOnly {
 		return
 	}
-	ctx.out.Closure(decl.fi)
+	ctx.out.GoClosure(decl.fi)
 }
 
 func compileBasicLit(ctx *blockCtx, v *ast.BasicLit, mode compleMode) {
@@ -360,6 +360,20 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, mode compleMode) {
 		if vfn.t.Kind() != reflect.Func {
 			log.Panicln("compileCallExpr failed: call a non function.")
 		}
+		ret := newFuncResults(vfn.t)
+		if mode == inferOnly {
+			ctx.infer.Ret(1, ret)
+			return
+		}
+		for _, arg := range v.Args {
+			compileExpr(ctx, arg, 0)
+		}
+		compileExpr(ctx, v.Fun, 0)
+		nargs := uint32(len(v.Args))
+		args := ctx.infer.GetArgs(nargs)
+		arity := checkFuncCall(vfn.t, 0, args, ctx.out)
+		ctx.out.CallGoClosure(arity)
+		ctx.infer.Ret(uint32(len(v.Args)+2), ret)
 		return
 	}
 	log.Panicln("compileCallExpr failed: unknown -", reflect.TypeOf(fn))

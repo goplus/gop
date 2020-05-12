@@ -77,4 +77,25 @@ func setValue(x reflect.Value, v interface{}) {
 	x.Set(reflect.Zero(x.Type()))
 }
 
+func getValueOf(v interface{}, t reflect.Type) reflect.Value {
+	if v != nil {
+		return reflect.ValueOf(v)
+	}
+	return reflect.Zero(t)
+}
+
+func getArgOf(v interface{}, t reflect.Type, i int) reflect.Value {
+	if v != nil {
+		return reflect.ValueOf(v)
+	}
+	return reflect.Zero(t.In(i))
+}
+
+func getRetOf(v interface{}, fun *FuncInfo, i int) reflect.Value {
+	if v != nil {
+		return reflect.ValueOf(v)
+	}
+	return reflect.Zero(fun.vlist[i].Type)
+}
+
 // -----------------------------------------------------------------------------

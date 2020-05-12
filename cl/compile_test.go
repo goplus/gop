@@ -316,7 +316,7 @@ var fsTestClosure = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	foo("x: ")
 `)
 
-func _TestClosure(t *testing.T) {
+func TestClosure(t *testing.T) {
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseFSDir(fset, fsTestClosure, "/foo", nil, 0)
 	if err != nil || len(pkgs) != 1 {

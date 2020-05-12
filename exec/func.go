@@ -50,14 +50,14 @@ func execCallGoClosure(i Instr, p *Context) {
 		args := p.GetArgs(arity)
 		in := make([]reflect.Value, arity)
 		for i, arg := range args {
-			in[i] = reflect.ValueOf(arg)
+			in[i] = getArgOf(arg, t, i)
 		}
 		out = fn.CallSlice(in)
 	} else {
 		args := p.GetArgs(arity)
 		in := make([]reflect.Value, arity)
 		for i, arg := range args {
-			in[i] = reflect.ValueOf(arg)
+			in[i] = getArgOf(arg, t, i)
 		}
 		out = fn.Call(in)
 	}
@@ -130,12 +130,13 @@ func (p *Closure) Call(in []reflect.Value) (out []reflect.Value) {
 	for _, v := range in {
 		stk.Push(v.Interface())
 	}
-	p.fun.exec(stk, p.parent)
+	fun := p.fun
+	fun.exec(stk, p.parent)
 	n := len(stk.data)
 	if n > 0 {
 		out = make([]reflect.Value, n)
 		for i, ret := range stk.data {
-			out[i] = reflect.ValueOf(ret)
+			out[i] = getRetOf(ret, fun, i)
 		}
 	}
 	return
