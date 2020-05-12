@@ -24,6 +24,9 @@ func main() {
 	}
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseDir(fset, os.Args[1], nil, 0)
+	if err != nil {
+		log.Fatalln("ParseDir failed:", err)
+	}
 
 	b := exec.NewBuilder(nil)
 	_, err = cl.NewPackage(b, pkgs["main"])
