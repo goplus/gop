@@ -274,7 +274,7 @@ func (p *FuncInfo) execVariadic(arity uint32, stk *Stack, parent *Context) {
 	if arity > n {
 		tVariadic := p.in[n]
 		nVariadic := arity - n
-		if tVariadic == tyEmptyInterfaceSlice {
+		if tVariadic == TyEmptyInterfaceSlice {
 			var empty []interface{}
 			stk.Ret(nVariadic, append(empty, stk.GetArgs(nVariadic)...))
 		} else {
@@ -289,7 +289,8 @@ func (p *FuncInfo) execVariadic(arity uint32, stk *Stack, parent *Context) {
 	p.exec(stk, parent)
 }
 
-var tyEmptyInterfaceSlice = reflect.SliceOf(TyEmptyInterface)
+// TyEmptyInterfaceSlice type
+var TyEmptyInterfaceSlice = reflect.SliceOf(TyEmptyInterface)
 
 // -----------------------------------------------------------------------------
 

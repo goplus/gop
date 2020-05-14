@@ -214,7 +214,12 @@ func compileSliceLit(ctx *blockCtx, v *ast.SliceLit, mode compleMode) {
 	}
 	n := len(v.Elts)
 	if n == 0 {
-		log.Panicln("compileSliceLit: can't be an empty slice.")
+		log.Debug("compileSliceLit:", exec.TyEmptyInterfaceSlice)
+		ctx.infer.Push(&goValue{t: exec.TyEmptyInterfaceSlice})
+		if mode != inferOnly {
+			ctx.out.MakeArray(exec.TyEmptyInterfaceSlice, 0)
+		}
+		return
 	}
 	elts := ctx.infer.GetArgs(uint32(n))
 	typElem := boundElementType(elts, 0, n, 1)
@@ -245,7 +250,13 @@ func compileMapLit(ctx *blockCtx, v *ast.CompositeLit, mode compleMode) {
 	}
 	n := len(v.Elts) << 1
 	if n == 0 {
-		log.Panicln("compileMapLit: can't be an empty map.")
+		typMap := reflect.MapOf(exec.TyString, exec.TyEmptyInterface)
+		log.Debug("compileMapLit:", typMap)
+		ctx.infer.Push(&goValue{t: typMap})
+		if mode != inferOnly {
+			ctx.out.MakeMap(typMap, 0)
+		}
+		return
 	}
 	elts := ctx.infer.GetArgs(uint32(n))
 	typKey := boundElementType(elts, 0, n, 2)

@@ -6,3 +6,5 @@ println("y:", y)
 
 println({"Hello": 1, "xsw": 3})  // map[string]int
 println({1: 1.4, 3: "qlang"})    // map[int]interface{}
+
+println("empty map:", {}) // map[string]interface{}
