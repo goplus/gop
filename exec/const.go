@@ -141,49 +141,6 @@ func execPop(i Instr, stk *Context) {
 
 // -----------------------------------------------------------------------------
 
-func (p *Builder) resolveConsts() {
-	var i Instr
-	var code = p.code
-	for val, vu := range p.valConsts {
-		switch vu.op {
-		case opPushStringR:
-			i = (opPushStringR << bitsOpShift) | uint32(len(code.stringConsts))
-			code.stringConsts = append(code.stringConsts, val.(string))
-		case opPushIntR:
-			v := reflect.ValueOf(val)
-			kind := v.Kind()
-			i = (opPushIntR << bitsOpShift) | (uint32(kind-reflect.Int) << bitsOpIntShift) | uint32(len(code.intConsts))
-			code.intConsts = append(code.intConsts, v.Int())
-		case opPushUintR:
-			v := reflect.ValueOf(val)
-			kind := v.Kind()
-			i = (opPushUintR << bitsOpShift) | (uint32(kind-reflect.Uint) << bitsOpIntShift) | uint32(len(code.uintConsts))
-			code.uintConsts = append(code.uintConsts, v.Uint())
-		case opPushFloatR:
-			v := reflect.ValueOf(val)
-			kind := v.Kind()
-			i = (opPushFloatR << bitsOpShift) | (uint32(kind-reflect.Float32) << bitsOpFloatShift) | uint32(len(code.valConsts))
-			code.valConsts = append(code.valConsts, val)
-		default:
-			panic("Resolve failed: unknown type")
-		}
-		for _, off := range vu.offs {
-			code.data[off] = i
-		}
-		vu.offs = nil
-	}
-}
-
-func (p *Builder) pushUnresolved(op Instr, val interface{}, off int) (i Instr) {
-	vu, ok := p.valConsts[val]
-	if !ok {
-		vu = &valUnresolved{op: op}
-		p.valConsts[val] = vu
-	}
-	vu.offs = append(vu.offs, off)
-	return iPushUnresolved
-}
-
 // Push instr
 func (p *Builder) pushInstr(val interface{}, off int) (i Instr) {
 	if val == nil {
@@ -195,13 +152,19 @@ func (p *Builder) pushInstr(val interface{}, off int) (i Instr) {
 		iv := v.Int()
 		ivStore := int64(int32(iv) << bitsOpInt >> bitsOpInt)
 		if iv != ivStore {
-			return p.pushUnresolved(opPushIntR, val, off)
+			code := p.code
+			i = (opPushIntR << bitsOpShift) | (uint32(kind-reflect.Int) << bitsOpIntShift) | uint32(len(code.intConsts))
+			code.intConsts = append(code.intConsts, iv)
+			return
 		}
 		i = (opPushInt << bitsOpShift) | (uint32(kind-reflect.Int) << bitsOpIntShift) | (uint32(iv) & bitsOpIntOperand)
 	} else if kind >= reflect.Uint && kind <= reflect.Uintptr {
 		iv := v.Uint()
 		if iv != (iv & bitsOpIntOperand) {
-			return p.pushUnresolved(opPushUintR, val, off)
+			code := p.code
+			i = (opPushUintR << bitsOpShift) | (uint32(kind-reflect.Uint) << bitsOpIntShift) | uint32(len(code.uintConsts))
+			code.uintConsts = append(code.uintConsts, iv)
+			return
 		}
 		i = (opPushUint << bitsOpShift) | (uint32(kind-reflect.Uint) << bitsOpIntShift) | (uint32(iv) & bitsOpIntOperand)
 	} else if kind == reflect.Bool {
@@ -211,9 +174,13 @@ func (p *Builder) pushInstr(val interface{}, off int) (i Instr) {
 			i = iPushFalse
 		}
 	} else if kind == reflect.String {
-		return p.pushUnresolved(opPushStringR, val, off)
+		code := p.code
+		i = (opPushStringR << bitsOpShift) | uint32(len(code.stringConsts))
+		code.stringConsts = append(code.stringConsts, val.(string))
 	} else if kind >= reflect.Float32 && kind <= reflect.Complex128 {
-		return p.pushUnresolved(opPushFloatR, val, off)
+		code := p.code
+		i = (opPushFloatR << bitsOpShift) | (uint32(kind-reflect.Float32) << bitsOpFloatShift) | uint32(len(code.valConsts))
+		code.valConsts = append(code.valConsts, val)
 	} else {
 		log.Panicln("Push failed: unsupported type:", reflect.TypeOf(val), "-", val)
 	}

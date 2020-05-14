@@ -276,14 +276,14 @@ func (p *FuncInfo) execVariadic(arity uint32, stk *Stack, parent *Context) {
 		nVariadic := arity - n
 		if tVariadic == tyEmptyInterfaceSlice {
 			var empty []interface{}
-			parent.Ret(nVariadic, append(empty, parent.GetArgs(nVariadic)...))
+			stk.Ret(nVariadic, append(empty, stk.GetArgs(nVariadic)...))
 		} else {
 			variadic := reflect.MakeSlice(tVariadic, int(nVariadic), int(nVariadic))
-			items := parent.GetArgs(nVariadic)
+			items := stk.GetArgs(nVariadic)
 			for i, item := range items {
 				setValue(variadic.Index(i), item)
 			}
-			parent.Ret(nVariadic, variadic.Interface())
+			stk.Ret(nVariadic, variadic.Interface())
 		}
 	}
 	p.exec(stk, parent)

@@ -9,7 +9,22 @@ import (
 	"github.com/qiniu/x/log"
 )
 
-type iType = reflect.Type
+type iType interface {
+	Kind() reflect.Kind
+	Elem() reflect.Type
+}
+
+type unboundArrayType struct {
+	elem reflect.Type
+}
+
+func (p *unboundArrayType) Kind() reflect.Kind {
+	return reflect.Array
+}
+
+func (p *unboundArrayType) Elem() reflect.Type {
+	return p.elem
+}
 
 func toTypeEx(ctx *blockCtx, typ ast.Expr) (t iType, variadic bool) {
 	if t = toType(ctx, typ); t != nil {
@@ -17,7 +32,7 @@ func toTypeEx(ctx *blockCtx, typ ast.Expr) (t iType, variadic bool) {
 	}
 	if v, ok := typ.(*ast.Ellipsis); ok {
 		elem := toType(ctx, v.Elt)
-		return reflect.SliceOf(elem), true
+		return reflect.SliceOf(elem.(reflect.Type)), true
 	}
 	log.Panicln("toType: unknown -", reflect.TypeOf(typ))
 	return nil, false
@@ -31,7 +46,7 @@ func toType(ctx *blockCtx, typ ast.Expr) iType {
 		return toExternalType(ctx, v)
 	case *ast.StarExpr:
 		elem := toType(ctx, v.X)
-		return reflect.PtrTo(elem)
+		return reflect.PtrTo(elem.(reflect.Type))
 	case *ast.ArrayType:
 		return toArrayType(ctx, v)
 	case *ast.FuncType:
@@ -43,10 +58,10 @@ func toType(ctx *blockCtx, typ ast.Expr) iType {
 	case *ast.MapType:
 		key := toType(ctx, v.Key)
 		elem := toType(ctx, v.Value)
-		return reflect.MapOf(key, elem)
+		return reflect.MapOf(key.(reflect.Type), elem.(reflect.Type))
 	case *ast.ChanType:
 		val := toType(ctx, v.Value)
-		return reflect.ChanOf(toChanDir(v.Dir), val)
+		return reflect.ChanOf(toChanDir(v.Dir), val.(reflect.Type))
 	}
 	return nil
 }
@@ -79,7 +94,7 @@ func buildFuncType(fi *exec.FuncInfo, ctx *blockCtx, t *ast.FuncType) {
 	ctx.insertFuncVars(in, args, rets)
 }
 
-func toTypes(ctx *blockCtx, fields *ast.FieldList) (types []iType) {
+func toTypes(ctx *blockCtx, fields *ast.FieldList) (types []reflect.Type) {
 	if fields == nil {
 		return
 	}
@@ -93,14 +108,14 @@ func toTypes(ctx *blockCtx, fields *ast.FieldList) (types []iType) {
 			log.Panicln("toType: unknown -", reflect.TypeOf(field.Type))
 		}
 		for i := 0; i < n; i++ {
-			types = append(types, typ)
+			types = append(types, typ.(reflect.Type))
 		}
 	}
 	return
 }
 
-func toTypesEx(ctx *blockCtx, fields *ast.FieldList) ([]iType, bool) {
-	var types []iType
+func toTypesEx(ctx *blockCtx, fields *ast.FieldList) ([]reflect.Type, bool) {
+	var types []reflect.Type
 	last := len(fields.List) - 1
 	for i := 0; i <= last; i++ {
 		field := fields.List[i]
@@ -110,7 +125,7 @@ func toTypesEx(ctx *blockCtx, fields *ast.FieldList) ([]iType, bool) {
 		}
 		typ, variadic := toTypeEx(ctx, field.Type)
 		for i := 0; i < n; i++ {
-			types = append(types, typ)
+			types = append(types, typ.(reflect.Type))
 		}
 		if variadic {
 			if i != last {
@@ -135,10 +150,10 @@ func toReturnTypes(ctx *blockCtx, fields *ast.FieldList) (vars []*exec.Var) {
 		}
 		if n == 0 {
 			index++
-			vars = append(vars, exec.NewVar(typ, strconv.Itoa(index)))
+			vars = append(vars, exec.NewVar(typ.(reflect.Type), strconv.Itoa(index)))
 		} else {
 			for i := 0; i < n; i++ {
-				vars = append(vars, exec.NewVar(typ, field.Names[i].Name))
+				vars = append(vars, exec.NewVar(typ.(reflect.Type), field.Names[i].Name))
 			}
 			index += n
 		}
@@ -146,8 +161,8 @@ func toReturnTypes(ctx *blockCtx, fields *ast.FieldList) (vars []*exec.Var) {
 	return
 }
 
-func toArgTypes(ctx *blockCtx, fields *ast.FieldList) ([]iType, []string, bool) {
-	var types []iType
+func toArgTypes(ctx *blockCtx, fields *ast.FieldList) ([]reflect.Type, []string, bool) {
+	var types []reflect.Type
 	var names []string
 	last := len(fields.List) - 1
 	for i := 0; i <= last; i++ {
@@ -163,7 +178,7 @@ func toArgTypes(ctx *blockCtx, fields *ast.FieldList) ([]iType, []string, bool) 
 		}
 		typ, variadic := toTypeEx(ctx, field.Type)
 		for i := 0; i < n; i++ {
-			types = append(types, typ)
+			types = append(types, typ.(reflect.Type))
 		}
 		if variadic {
 			if i != last {
@@ -196,7 +211,22 @@ func toIdentType(ctx *blockCtx, ident string) iType {
 }
 
 func toArrayType(ctx *blockCtx, v *ast.ArrayType) iType {
-	panic("toArrayType: todo")
+	elem := toType(ctx, v.Elt)
+	if v.Len == nil {
+		return reflect.SliceOf(elem.(reflect.Type))
+	}
+	compileExpr(ctx, v.Len, inferOnly)
+	n := ctx.infer.Pop()
+	if nv, ok := n.(iValue).(*constVal); ok {
+		if iv, ok := nv.v.(int64); ok {
+			if iv < 0 {
+				return &unboundArrayType{elem: elem.(reflect.Type)}
+			}
+			return reflect.ArrayOf(int(iv), elem.(reflect.Type))
+		}
+	}
+	log.Panicln("toArrayType failed: unknown -", reflect.TypeOf(n))
+	return nil
 }
 
 // -----------------------------------------------------------------------------
@@ -234,7 +264,7 @@ func (p *funcDecl) getFuncInfo() *exec.FuncInfo {
 	return p.fi
 }
 
-func (p *funcDecl) typeOf() iType {
+func (p *funcDecl) typeOf() reflect.Type {
 	return p.getFuncInfo().Type()
 }
 

@@ -3,6 +3,7 @@ package exec
 import (
 	"bufio"
 	"io"
+	"reflect"
 	"strconv"
 )
 
@@ -33,13 +34,18 @@ const (
 	bitsOpCallFuncv        = bitsOp + bitsFuncvArity
 	bitsOpCallFuncvShift   = bitsInstr - bitsOpCallFuncv
 	bitsOpCallFuncvOperand = (1 << bitsOpCallFuncvShift) - 1
-	bitsFuncvArityOperand  = (1 << bitsFuncvArity) - 1
-	bitsFuncvArityVar      = bitsFuncvArityOperand
-	bitsFuncvArityMax      = bitsFuncvArityOperand - 1
+
+	bitsFuncvArityOperand = (1 << bitsFuncvArity) - 1
+	bitsFuncvArityVar     = bitsFuncvArityOperand
+	bitsFuncvArityMax     = bitsFuncvArityOperand - 1
 
 	bitsOpClosure        = bitsOp + bitsFuncKind
 	bitsOpClosureShift   = bitsInstr - bitsOpClosure
 	bitsOpClosureOperand = (1 << bitsOpClosureShift) - 1
+
+	bitsOpMakeArray        = bitsOpCallFuncv
+	bitsOpMakeArrayShift   = bitsOpCallFuncvShift
+	bitsOpMakeArrayOperand = bitsOpCallFuncvOperand
 
 	bitsOpVar        = bitsOp + bitsVarScope
 	bitsOpVarShift   = bitsInstr - bitsOpVar
@@ -81,6 +87,7 @@ const (
 	opCallClosure   = 28 // arity(26)
 	opGoClosure     = 29 // funcKind(2) addr(24)
 	opCallGoClosure = 30 // arity(26)
+	opMakeArray     = 31 // funvArity(10) type(16)
 )
 
 const (
@@ -150,6 +157,7 @@ var instrInfos = []InstrInfo{
 	opCallClosure:   {"callClosure", "", "arity", 26},                       // arity(26)
 	opGoClosure:     {"closureGo", "funcKind", "addr", (2 << 8) | 24},       // funcKind(2) addr(24)
 	opCallGoClosure: {"callGoClosure", "", "arity", 26},                     // arity(26)
+	opMakeArray:     {"makeArray", "funvArity", "type", (10 << 8) | 16},     // funvArity(10) type(16)
 }
 
 // -----------------------------------------------------------------------------
@@ -163,6 +171,7 @@ type Code struct {
 	valConsts    []interface{}
 	funs         []*FuncInfo
 	funvs        []*FuncInfo
+	types        []reflect.Type
 	structs      []StructInfo
 	varManager
 }
@@ -206,17 +215,12 @@ type anyUnresolved struct {
 	offs []int
 }
 
-type valUnresolved struct {
-	op   Instr
-	offs []int
-}
-
 // Builder class.
 type Builder struct {
-	code      *Code
-	valConsts map[interface{}]*valUnresolved
-	labels    map[*Label]int
-	funcs     map[*FuncInfo]int
+	code   *Code
+	labels map[*Label]int
+	funcs  map[*FuncInfo]int
+	types  map[reflect.Type]uint32
 	*varManager
 }
 
@@ -227,9 +231,9 @@ func NewBuilder(code *Code) *Builder {
 	}
 	return &Builder{
 		code:       code,
-		valConsts:  make(map[interface{}]*valUnresolved),
 		labels:     make(map[*Label]int),
 		funcs:      make(map[*FuncInfo]int),
+		types:      make(map[reflect.Type]uint32),
 		varManager: &code.varManager,
 	}
 }
@@ -237,7 +241,6 @@ func NewBuilder(code *Code) *Builder {
 // Resolve resolves all unresolved labels/functions/consts/etc.
 func (p *Builder) Resolve() *Code {
 	p.resolveLabels()
-	p.resolveConsts()
 	p.resolveFuncs()
 	return p.code
 }

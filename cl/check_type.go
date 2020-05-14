@@ -93,4 +93,12 @@ func checkType(t reflect.Type, v interface{}, b *exec.Builder) {
 	}
 }
 
+func checkElements(ctx *blockCtx, t reflect.Type, nelt int) {
+	elts := ctx.infer.GetArgs(uint32(nelt))
+	b := ctx.out
+	for _, elt := range elts {
+		checkType(t, elt, b)
+	}
+}
+
 // -----------------------------------------------------------------------------

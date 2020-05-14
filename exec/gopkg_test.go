@@ -126,6 +126,43 @@ func TestLargeArity(t *testing.T) {
 	}
 }
 
+func TestLargeSlice(t *testing.T) {
+	b := NewBuilder(nil)
+	ret := []string{}
+	for i := 0; i < bitsFuncvArityMax+1; i++ {
+		b.Push("32")
+		ret = append(ret, "32")
+	}
+	code := b.
+		MakeArray(reflect.SliceOf(TyString), bitsFuncvArityMax+1).
+		MakeArray(reflect.SliceOf(TyString), -1).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); !reflect.DeepEqual(v, ret) {
+		t.Fatal("32 times(1024) mkslice != `32` times(1024) slice, ret =", v)
+	}
+}
+
+func TestLargeArray(t *testing.T) {
+	b := NewBuilder(nil)
+	ret := [bitsFuncvArityMax + 1]string{}
+	for i := 0; i < bitsFuncvArityMax+1; i++ {
+		b.Push("32")
+		ret[i] = "32"
+	}
+	code := b.
+		MakeArray(reflect.ArrayOf(bitsFuncvArityMax+1, TyString), bitsFuncvArityMax+1).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); !reflect.DeepEqual(v, ret) {
+		t.Fatal("32 times(1024) mkslice != `32` times(1024) slice, ret =", v)
+	}
+}
+
 func TestType(t *testing.T) {
 	typ, ok := I.FindType("Context")
 	if !ok {

@@ -29,6 +29,33 @@ func execGoFuncv(i Instr, p *Context) {
 	fun.exec(arity, p)
 }
 
+func execMakeArray(i Instr, p *Context) {
+	typSlice := getType(i&bitsOpMakeArrayOperand, p)
+	arity := (i >> bitsOpMakeArrayShift) & bitsFuncvArityOperand
+	if arity == bitsFuncvArityVar { // args...
+		v := reflect.ValueOf(p.Get(-1))
+		n := v.Len()
+		ret := reflect.MakeSlice(typSlice, n, n)
+		reflect.Copy(ret, v)
+		p.Ret(1, ret.Interface())
+	} else {
+		if arity == bitsFuncvArityMax {
+			arity = uint32(p.Pop().(int) + bitsFuncvArityMax)
+		}
+		args := p.GetArgs(arity)
+		var ret reflect.Value
+		if typSlice.Kind() == reflect.Slice {
+			ret = reflect.MakeSlice(typSlice, int(arity), int(arity))
+		} else {
+			ret = reflect.New(typSlice).Elem()
+		}
+		for i, arg := range args {
+			ret.Index(i).Set(getElementOf(arg, typSlice))
+		}
+		p.Ret(arity, ret.Interface())
+	}
+}
+
 // -----------------------------------------------------------------------------
 
 // SymbolKind represents symbol kind.
@@ -310,6 +337,50 @@ func (p *Builder) CallGoFuncv(fun GoFuncvAddr, arity int) *Builder {
 	i := (opCallGoFuncv << bitsOpShift) | (uint32(arity) << bitsOpCallFuncvShift) | uint32(fun)
 	code.data = append(code.data, i)
 	return p
+}
+
+// MakeArray instr
+func (p *Builder) MakeArray(typ reflect.Type, arity int) *Builder {
+	if arity < 0 {
+		if typ.Kind() == reflect.Array {
+			log.Panicln("MakeArray failed: can't be variadic.")
+		}
+		arity = bitsFuncvArityVar
+	} else if arity >= bitsFuncvArityMax {
+		p.Push(arity - bitsFuncvArityMax)
+		arity = bitsFuncvArityMax
+	}
+	code := p.code
+	i := (opMakeArray << bitsOpShift) | (uint32(arity) << bitsOpMakeArrayShift) | p.newType(typ)
+	code.data = append(code.data, i)
+	return p
+}
+
+func (p *Builder) requireType(typ reflect.Type) uint32 {
+	kind := typ.Kind()
+	bt := builtinTypes[kind]
+	if bt.size > 0 {
+		return uint32(kind)
+	}
+	return p.newType(typ)
+}
+
+func (p *Builder) newType(typ reflect.Type) uint32 {
+	if ityp, ok := p.types[typ]; ok {
+		return ityp
+	}
+	code := p.code
+	ityp := uint32(len(code.types) + len(builtinTypes))
+	code.types = append(code.types, typ)
+	p.types[typ] = ityp
+	return ityp
+}
+
+func getType(ityp uint32, ctx *Context) reflect.Type {
+	if ityp < uint32(len(builtinTypes)) {
+		return builtinTypes[ityp].typ
+	}
+	return ctx.code.types[ityp-uint32(len(builtinTypes))]
 }
 
 // -----------------------------------------------------------------------------

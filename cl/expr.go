@@ -37,11 +37,25 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, mode compleMode) {
 		compileBinaryExpr(ctx, v, mode)
 	case *ast.SelectorExpr:
 		compileSelectorExpr(ctx, v, mode)
+	case *ast.CompositeLit:
+		compileCompositeLit(ctx, v, mode)
 	case *ast.FuncLit:
 		compileFuncLit(ctx, v, mode)
+	case *ast.Ellipsis:
+		compileEllipsis(ctx, v, mode)
 	default:
 		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
 	}
+}
+
+func compileEllipsis(ctx *blockCtx, v *ast.Ellipsis, mode compleMode) {
+	if mode != inferOnly {
+		log.Panicln("compileEllipsis: only support inferOnly mode.")
+	}
+	if v.Elt != nil {
+		log.Panicln("compileEllipsis: todo")
+	}
+	ctx.infer.Push(&constVal{v: int64(-1), kind: astutil.ConstUnboundInt})
 }
 
 func compileIdent(ctx *blockCtx, name string, mode compleMode) {
@@ -112,7 +126,42 @@ func compileIdent(ctx *blockCtx, name string, mode compleMode) {
 	}
 }
 
+func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, mode compleMode) {
+	if mode > lhsBase {
+		log.Panicln("compileCompositeLit: can't be lhs (left hand side) expr.")
+	}
+	if v.Type == nil {
+		log.Panicln("compileCompositeLit failed: type is not defined.")
+	}
+	typ := toType(ctx, v.Type)
+	if t, ok := typ.(*unboundArrayType); ok {
+		typ = reflect.ArrayOf(len(v.Elts), t.elem)
+	}
+	if mode == inferOnly {
+		ctx.infer.Push(&goValue{t: typ.(reflect.Type)})
+		return
+	}
+	switch kind := typ.Kind(); kind {
+	case reflect.Slice, reflect.Array:
+		for _, elt := range v.Elts {
+			compileExpr(ctx, elt, 0)
+		}
+		n := len(v.Elts)
+		typSlice := typ.(reflect.Type)
+		checkElements(ctx, typSlice.Elem(), n)
+		ctx.out.MakeArray(typSlice, n)
+		ctx.infer.Ret(uint32(n), &goValue{t: typSlice})
+	case reflect.Map:
+		log.Panicln("compileCompositeLit failed: todo -", typ)
+	default:
+		log.Panicln("compileCompositeLit failed: unknown -", reflect.TypeOf(typ))
+	}
+}
+
 func compileFuncLit(ctx *blockCtx, v *ast.FuncLit, mode compleMode) {
+	if mode > lhsBase {
+		log.Panicln("compileFuncLit: can't be lhs (left hand side) expr.")
+	}
 	funCtx := newBlockCtx(ctx)
 	decl := newFuncDecl("", v.Type, v.Body, funCtx)
 	ctx.use(decl)

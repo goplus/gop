@@ -78,6 +78,18 @@ func TestConst6(t *testing.T) {
 	}
 }
 
+func TestNil(t *testing.T) {
+	code := NewBuilder(nil).
+		Push(nil).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := ctx.Pop(); v != nil {
+		t.Fatal("nil != nil, ret =", v)
+	}
+}
+
 func TestReserve(t *testing.T) {
 	b := NewBuilder(nil)
 	off := b.Reserve()

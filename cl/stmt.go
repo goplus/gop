@@ -88,7 +88,7 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		}
 	}
 	if ctx.infer.Len() != len(expr.Lhs) {
-		log.Panicln("compileAssignStmt failed: assign statment has mismatched variables count.")
+		log.Panicln("compileAssignStmt: assign statment has mismatched variables count -", ctx.infer.Len())
 	}
 	for i := len(expr.Lhs) - 1; i >= 0; i-- {
 		compileExpr(ctx, expr.Lhs[i], expr.Tok)
