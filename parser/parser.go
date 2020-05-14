@@ -18,7 +18,6 @@ package parser
 
 import (
 	"fmt"
-	"go/ast"
 	"go/scanner"
 	"go/token"
 	"reflect"
@@ -26,6 +25,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/qiniu/qlang/ast"
 	"github.com/qiniu/x/log"
 )
 
@@ -666,7 +666,7 @@ func (p *parser) parseTypeName() ast.Expr {
 	return ident
 }
 
-func (p *parser) parseArrayType() ast.Expr {
+func (p *parser) parseArrayTypeOrSliceLit(allowSliceLit bool) (expr ast.Expr, isSliceLit bool) {
 	if p.trace {
 		defer un(trace(p, "ArrayType"))
 	}
@@ -680,12 +680,29 @@ func (p *parser) parseArrayType() ast.Expr {
 		p.next()
 	} else if p.tok != token.RBRACK {
 		len = p.parseRHS()
+		if allowSliceLit && p.tok == token.COMMA { // [a, b, c, d ...]
+			elts := p.parseSliceLit(lbrack, len)
+			p.exprLev--
+			return elts, true
+		}
 	}
 	p.exprLev--
-	p.expect(token.RBRACK)
-	elt := p.parseType()
+	rbrack := p.expect(token.RBRACK)
 
-	return &ast.ArrayType{Lbrack: lbrack, Len: len, Elt: elt}
+	var elt ast.Expr
+	if allowSliceLit {
+		elt = p.tryType()
+		if elt == nil { // [a]
+			return newSliceLit(lbrack, rbrack, len), true
+		}
+	} else {
+		elt = p.parseType()
+	}
+
+	if p.trace {
+		log.Debug("parseArrayType:", len, "elt:", elt)
+	}
+	return &ast.ArrayType{Lbrack: lbrack, Len: len, Elt: elt}, false
 }
 
 func (p *parser) makeIdentList(list []ast.Expr) []*ast.Ident {
@@ -800,7 +817,7 @@ func (p *parser) tryVarType(isParam bool) ast.Expr {
 	if isParam && p.tok == token.ELLIPSIS {
 		pos := p.pos
 		p.next()
-		typ := p.tryIdentOrType() // don't use parseType so we can provide better error message
+		typ, _ := p.tryIdentOrType(false) // don't use parseType so we can provide better error message
 		if typ != nil {
 			p.resolve(typ)
 		} else {
@@ -809,7 +826,8 @@ func (p *parser) tryVarType(isParam bool) ast.Expr {
 		}
 		return &ast.Ellipsis{Ellipsis: pos, Elt: typ}
 	}
-	return p.tryIdentOrType()
+	typ, _ := p.tryIdentOrType(false)
+	return typ
 }
 
 // If the result is an identifier, it is not resolved.
@@ -1032,39 +1050,39 @@ func (p *parser) parseChanType() *ast.ChanType {
 }
 
 // If the result is an identifier, it is not resolved.
-func (p *parser) tryIdentOrType() ast.Expr {
+func (p *parser) tryIdentOrType(allowSliceLit bool) (ast.Expr, bool) {
 	switch p.tok {
 	case token.IDENT:
-		return p.parseTypeName()
+		return p.parseTypeName(), false
 	case token.LBRACK:
-		return p.parseArrayType()
+		return p.parseArrayTypeOrSliceLit(allowSliceLit)
 	case token.STRUCT:
-		return p.parseStructType()
+		return p.parseStructType(), false
 	case token.MUL:
-		return p.parsePointerType()
+		return p.parsePointerType(), false
 	case token.FUNC:
 		typ, _ := p.parseFuncType()
-		return typ
+		return typ, false
 	case token.INTERFACE:
-		return p.parseInterfaceType()
+		return p.parseInterfaceType(), false
 	case token.MAP:
-		return p.parseMapType()
+		return p.parseMapType(), false
 	case token.CHAN, token.ARROW:
-		return p.parseChanType()
+		return p.parseChanType(), false
 	case token.LPAREN:
 		lparen := p.pos
 		p.next()
 		typ := p.parseType()
 		rparen := p.expect(token.RPAREN)
-		return &ast.ParenExpr{Lparen: lparen, X: typ, Rparen: rparen}
+		return &ast.ParenExpr{Lparen: lparen, X: typ, Rparen: rparen}, false
 	}
 
 	// no type found
-	return nil
+	return nil, false
 }
 
 func (p *parser) tryType() ast.Expr {
-	typ := p.tryIdentOrType()
+	typ, _ := p.tryIdentOrType(false)
 	if typ != nil {
 		p.resolve(typ)
 	}
@@ -1177,7 +1195,11 @@ func (p *parser) parseOperand(lhs bool) ast.Expr {
 		}
 	}
 
-	if typ := p.tryIdentOrType(); typ != nil {
+	typ, isSliceLit := p.tryIdentOrType(true)
+	if isSliceLit { // slice lit
+		return typ
+	}
+	if typ != nil {
 		// could be type for composite literal or conversion
 		_, isIdent := typ.(*ast.Ident)
 		assert(!isIdent, "type cannot be identifier")
@@ -1390,6 +1412,7 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	case *ast.BasicLit:
 	case *ast.FuncLit:
 	case *ast.CompositeLit:
+	case *ast.SliceLit:
 	case *ast.ParenExpr:
 		panic("unreachable")
 	case *ast.SelectorExpr:

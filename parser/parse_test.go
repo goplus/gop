@@ -2,10 +2,10 @@ package parser
 
 import (
 	"fmt"
-	"go/ast"
 	"reflect"
 	"testing"
 
+	"github.com/qiniu/qlang/ast"
 	"github.com/qiniu/qlang/ast/asttest"
 	"github.com/qiniu/qlang/token"
 	"github.com/qiniu/x/log"
@@ -97,14 +97,84 @@ func TestParseNoPackageAndGlobalCode(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestMap = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestMapLit = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	x := {"Hello": 1, "xsw": 3.4}
 	println("x:", x)
 `)
 
-func TestMap(t *testing.T) {
+func TestMapLit(t *testing.T) {
 	fset := token.NewFileSet()
-	pkgs, err := ParseFSDir(fset, fsTestMap, "/foo", nil, Trace)
+	pkgs, err := ParseFSDir(fset, fsTestMapLit, "/foo", nil, Trace)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+	bar, isMain := pkgs["main"]
+	if !isMain {
+		t.Fatal("TestMap failed: not main")
+	}
+	file := bar.Files["/foo/bar.ql"]
+	fmt.Println("Pkg:", file.Name)
+	for _, decl := range file.Decls {
+		fmt.Println("decl:", reflect.TypeOf(decl))
+		switch d := decl.(type) {
+		case *ast.GenDecl:
+			for _, spec := range d.Specs {
+				switch v := spec.(type) {
+				case *ast.ImportSpec:
+					fmt.Println(" - import:", v.Path.Value)
+				}
+			}
+		case *ast.FuncDecl:
+			fmt.Println(" - func:", d.Name.Name)
+		}
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+var fsTestSliceLit = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	x := [1, 3.4, 5.6]
+	println("x:", x)
+`)
+
+func TestSliceLit(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := ParseFSDir(fset, fsTestSliceLit, "/foo", nil, Trace)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+	bar, isMain := pkgs["main"]
+	if !isMain {
+		t.Fatal("TestMap failed: not main")
+	}
+	file := bar.Files["/foo/bar.ql"]
+	fmt.Println("Pkg:", file.Name)
+	for _, decl := range file.Decls {
+		fmt.Println("decl:", reflect.TypeOf(decl))
+		switch d := decl.(type) {
+		case *ast.GenDecl:
+			for _, spec := range d.Specs {
+				switch v := spec.(type) {
+				case *ast.ImportSpec:
+					fmt.Println(" - import:", v.Path.Value)
+				}
+			}
+		case *ast.FuncDecl:
+			fmt.Println(" - func:", d.Name.Name)
+		}
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+var fsTestSliceLit2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	x := [5.6]
+	println("x:", x)
+`)
+
+func TestSliceLit2(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := ParseFSDir(fset, fsTestSliceLit2, "/foo", nil, Trace)
 	if err != nil || len(pkgs) != 1 {
 		t.Fatal("ParseFSDir failed:", err, len(pkgs))
 	}

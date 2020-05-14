@@ -1,11 +1,11 @@
 package astutil
 
 import (
-	"go/ast"
 	"go/token"
 	"reflect"
 	"strconv"
 
+	"github.com/qiniu/qlang/ast"
 	"github.com/qiniu/x/log"
 )
 
