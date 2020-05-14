@@ -56,7 +56,7 @@ type parser struct {
 
 	// Non-syntactic parser control
 	exprLev int  // < 0: in control clause, >= 0: in expression
-	inRhs   bool // if set, the parser is parsing a rhs expression
+	inRHS   bool // if set, the parser is parsing a rhs expression
 
 	// Ordinary identifier scopes
 	pkgScope   *ast.Scope        // pkgScope.Outer == nil
@@ -587,9 +587,9 @@ func (p *parser) parseExprList(lhs bool) (list []ast.Expr) {
 	return
 }
 
-func (p *parser) parseLhsList() []ast.Expr {
-	old := p.inRhs
-	p.inRhs = false
+func (p *parser) parseLHSList() []ast.Expr {
+	old := p.inRHS
+	p.inRHS = false
 	list := p.parseExprList(true)
 	switch p.tok {
 	case token.DEFINE:
@@ -611,15 +611,15 @@ func (p *parser) parseLhsList() []ast.Expr {
 			p.resolve(x)
 		}
 	}
-	p.inRhs = old
+	p.inRHS = old
 	return list
 }
 
-func (p *parser) parseRhsList() []ast.Expr {
-	old := p.inRhs
-	p.inRhs = true
+func (p *parser) parseRHSList() []ast.Expr {
+	old := p.inRHS
+	p.inRHS = true
 	list := p.parseExprList(false)
-	p.inRhs = old
+	p.inRHS = old
 	return list
 }
 
@@ -676,7 +676,7 @@ func (p *parser) parseArrayType() ast.Expr {
 		len = &ast.Ellipsis{Ellipsis: p.pos}
 		p.next()
 	} else if p.tok != token.RBRACK {
-		len = p.parseRhs()
+		len = p.parseRHS()
 	}
 	p.exprLev--
 	p.expect(token.RBRACK)
@@ -1160,7 +1160,7 @@ func (p *parser) parseOperand(lhs bool) ast.Expr {
 		lparen := p.pos
 		p.next()
 		p.exprLev++
-		x := p.parseRhsOrType() // types may be parenthesized: (some type)
+		x := p.parseRHSOrType() // types may be parenthesized: (some type)
 		p.exprLev--
 		rparen := p.expect(token.RPAREN)
 		return &ast.ParenExpr{Lparen: lparen, X: x, Rparen: rparen}
@@ -1222,7 +1222,7 @@ func (p *parser) parseIndexOrSlice(x ast.Expr) ast.Expr {
 	var index [N]ast.Expr
 	var colons [N - 1]token.Pos
 	if p.tok != token.COLON {
-		index[0] = p.parseRhs()
+		index[0] = p.parseRHS()
 	}
 	ncolons := 0
 	for p.tok == token.COLON && ncolons < len(colons) {
@@ -1230,7 +1230,7 @@ func (p *parser) parseIndexOrSlice(x ast.Expr) ast.Expr {
 		ncolons++
 		p.next()
 		if p.tok != token.COLON && p.tok != token.RBRACK && p.tok != token.EOF {
-			index[ncolons] = p.parseRhs()
+			index[ncolons] = p.parseRHS()
 		}
 	}
 	p.exprLev--
@@ -1268,7 +1268,7 @@ func (p *parser) parseCallOrConversion(fun ast.Expr) *ast.CallExpr {
 	var list []ast.Expr
 	var ellipsis token.Pos
 	for p.tok != token.RPAREN && p.tok != token.EOF && !ellipsis.IsValid() {
-		list = append(list, p.parseRhsOrType()) // builtins may expect a type: make(some type, ...)
+		list = append(list, p.parseRHSOrType()) // builtins may expect a type: make(some type, ...)
 		if p.tok == token.ELLIPSIS {
 			ellipsis = p.pos
 			p.next()
@@ -1596,7 +1596,7 @@ func (p *parser) parseUnaryExpr(lhs bool) ast.Expr {
 
 func (p *parser) tokPrec() (token.Token, int) {
 	tok := p.tok
-	if p.inRhs && tok == token.ASSIGN {
+	if p.inRHS && tok == token.ASSIGN {
 		tok = token.EQL
 	}
 	return tok, tok.Precedence()
@@ -1636,19 +1636,19 @@ func (p *parser) parseExpr(lhs bool) ast.Expr {
 	return p.parseBinaryExpr(lhs, token.LowestPrec+1)
 }
 
-func (p *parser) parseRhs() ast.Expr {
-	old := p.inRhs
-	p.inRhs = true
+func (p *parser) parseRHS() ast.Expr {
+	old := p.inRHS
+	p.inRHS = true
 	x := p.checkExpr(p.parseExpr(false))
-	p.inRhs = old
+	p.inRHS = old
 	return x
 }
 
-func (p *parser) parseRhsOrType() ast.Expr {
-	old := p.inRhs
-	p.inRhs = true
+func (p *parser) parseRHSOrType() ast.Expr {
+	old := p.inRHS
+	p.inRHS = true
 	x := p.checkExprOrType(p.parseExpr(false))
-	p.inRhs = old
+	p.inRHS = old
 	return x
 }
 
@@ -1671,7 +1671,7 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 		defer un(trace(p, "SimpleStmt"))
 	}
 
-	x := p.parseLhsList()
+	x := p.parseLHSList()
 
 	switch p.tok {
 	case
@@ -1687,10 +1687,10 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 		if mode == rangeOk && p.tok == token.RANGE && (tok == token.DEFINE || tok == token.ASSIGN) {
 			pos := p.pos
 			p.next()
-			y = []ast.Expr{&ast.UnaryExpr{OpPos: pos, Op: token.RANGE, X: p.parseRhs()}}
+			y = []ast.Expr{&ast.UnaryExpr{OpPos: pos, Op: token.RANGE, X: p.parseRHS()}}
 			isRange = true
 		} else {
-			y = p.parseRhsList()
+			y = p.parseRHSList()
 		}
 		as := &ast.AssignStmt{Lhs: x, TokPos: pos, Tok: tok, Rhs: y}
 		if tok == token.DEFINE {
@@ -1730,7 +1730,7 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 		// send statement
 		arrow := p.pos
 		p.next()
-		y := p.parseRhs()
+		y := p.parseRHS()
 		return &ast.SendStmt{Chan: x[0], Arrow: arrow, Value: y}, false
 
 	case token.INC, token.DEC:
@@ -1745,7 +1745,7 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 }
 
 func (p *parser) parseCallExpr(callType string) *ast.CallExpr {
-	x := p.parseRhsOrType() // could be a conversion: (some type)(x)
+	x := p.parseRHSOrType() // could be a conversion: (some type)(x)
 	if call, isCall := x.(*ast.CallExpr); isCall {
 		return call
 	}
@@ -1795,7 +1795,7 @@ func (p *parser) parseReturnStmt() *ast.ReturnStmt {
 	p.expect(token.RETURN)
 	var x []ast.Expr
 	if p.tok != token.SEMICOLON && p.tok != token.RBRACE {
-		x = p.parseRhsList()
+		x = p.parseRHSList()
 	}
 	p.expectSemi()
 
@@ -1910,24 +1910,24 @@ func (p *parser) parseIfStmt() *ast.IfStmt {
 	init, cond := p.parseIfHeader()
 	body := p.parseBlockStmt()
 
-	var else_ ast.Stmt
+	var elseStmt ast.Stmt
 	if p.tok == token.ELSE {
 		p.next()
 		switch p.tok {
 		case token.IF:
-			else_ = p.parseIfStmt()
+			elseStmt = p.parseIfStmt()
 		case token.LBRACE:
-			else_ = p.parseBlockStmt()
+			elseStmt = p.parseBlockStmt()
 			p.expectSemi()
 		default:
 			p.errorExpected(p.pos, "if statement or block")
-			else_ = &ast.BadStmt{From: p.pos, To: p.pos}
+			elseStmt = &ast.BadStmt{From: p.pos, To: p.pos}
 		}
 	} else {
 		p.expectSemi()
 	}
 
-	return &ast.IfStmt{If: pos, Init: init, Cond: cond, Body: body, Else: else_}
+	return &ast.IfStmt{If: pos, Init: init, Cond: cond, Body: body, Else: elseStmt}
 }
 
 func (p *parser) parseTypeList() (list []ast.Expr) {
@@ -1956,7 +1956,7 @@ func (p *parser) parseCaseClause(typeSwitch bool) *ast.CaseClause {
 		if typeSwitch {
 			list = p.parseTypeList()
 		} else {
-			list = p.parseRhsList()
+			list = p.parseRHSList()
 		}
 	} else {
 		p.expect(token.DEFAULT)
@@ -2064,7 +2064,7 @@ func (p *parser) parseCommClause() *ast.CommClause {
 	var comm ast.Stmt
 	if p.tok == token.CASE {
 		p.next()
-		lhs := p.parseLhsList()
+		lhs := p.parseLHSList()
 		if p.tok == token.ARROW {
 			// SendStmt
 			if len(lhs) > 1 {
@@ -2073,7 +2073,7 @@ func (p *parser) parseCommClause() *ast.CommClause {
 			}
 			arrow := p.pos
 			p.next()
-			rhs := p.parseRhs()
+			rhs := p.parseRHS()
 			comm = &ast.SendStmt{Chan: lhs[0], Arrow: arrow, Value: rhs}
 		} else {
 			// RecvStmt
@@ -2086,7 +2086,7 @@ func (p *parser) parseCommClause() *ast.CommClause {
 				}
 				pos := p.pos
 				p.next()
-				rhs := p.parseRhs()
+				rhs := p.parseRHS()
 				as := &ast.AssignStmt{Lhs: lhs, TokPos: pos, Tok: tok, Rhs: []ast.Expr{rhs}}
 				if tok == token.DEFINE {
 					p.shortVarDecl(as, lhs)
@@ -2149,7 +2149,7 @@ func (p *parser) parseForStmt() ast.Stmt {
 				// "for range x" (nil lhs in assignment)
 				pos := p.pos
 				p.next()
-				y := []ast.Expr{&ast.UnaryExpr{OpPos: pos, Op: token.RANGE, X: p.parseRhs()}}
+				y := []ast.Expr{&ast.UnaryExpr{OpPos: pos, Op: token.RANGE, X: p.parseRHS()}}
 				s2 = &ast.AssignStmt{Rhs: y}
 				isRange = true
 			} else {
@@ -2339,7 +2339,7 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 	// always permit optional initialization for more tolerant parsing
 	if p.tok == token.ASSIGN {
 		p.next()
-		values = p.parseRhsList()
+		values = p.parseRHSList()
 	}
 	p.expectSemi() // call before accessing p.linecomment
 
