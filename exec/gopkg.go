@@ -29,6 +29,55 @@ func execGoFuncv(i Instr, p *Context) {
 	fun.exec(arity, p)
 }
 
+func execMakeArray(i Instr, p *Context) {
+	typSlice := getType(i&bitsOpMakeArrayOperand, p)
+	arity := (i >> bitsOpMakeArrayShift) & bitsFuncvArityOperand
+	if arity == bitsFuncvArityVar { // args...
+		v := reflect.ValueOf(p.Get(-1))
+		n := v.Len()
+		ret := reflect.MakeSlice(typSlice, n, n)
+		reflect.Copy(ret, v)
+		p.Ret(1, ret.Interface())
+	} else {
+		if arity == bitsFuncvArityMax {
+			arity = uint32(p.Pop().(int) + bitsFuncvArityMax)
+		}
+		args := p.GetArgs(arity)
+		var ret reflect.Value
+		if typSlice.Kind() == reflect.Slice {
+			ret = reflect.MakeSlice(typSlice, int(arity), int(arity))
+		} else {
+			ret = reflect.New(typSlice).Elem()
+		}
+		for i, arg := range args {
+			ret.Index(i).Set(getElementOf(arg, typSlice))
+		}
+		p.Ret(arity, ret.Interface())
+	}
+}
+
+func execMakeMap(i Instr, p *Context) {
+	typMap := getType(i&bitsOpMakeArrayOperand, p)
+	arity := (i >> bitsOpMakeArrayShift) & bitsFuncvArityOperand
+	if arity == bitsFuncvArityMax {
+		arity = uint32(p.Pop().(int) + bitsFuncvArityMax)
+	}
+	n := arity << 1
+	args := p.GetArgs(n)
+	ret := reflect.MakeMapWithSize(typMap, int(n))
+	for i := uint32(0); i < n; i += 2 {
+		key := getKeyOf(args[i], typMap)
+		val := getElementOf(args[i+1], typMap)
+		ret.SetMapIndex(key, val)
+	}
+	p.Ret(n, ret.Interface())
+}
+
+func execZero(i Instr, p *Context) {
+	typ := getType(i&bitsOpMakeArrayOperand, p)
+	p.Push(reflect.Zero(typ).Interface())
+}
+
 // -----------------------------------------------------------------------------
 
 // SymbolKind represents symbol kind.
@@ -310,6 +359,72 @@ func (p *Builder) CallGoFuncv(fun GoFuncvAddr, arity int) *Builder {
 	i := (opCallGoFuncv << bitsOpShift) | (uint32(arity) << bitsOpCallFuncvShift) | uint32(fun)
 	code.data = append(code.data, i)
 	return p
+}
+
+// MakeArray instr
+func (p *Builder) MakeArray(typ reflect.Type, arity int) *Builder {
+	if arity < 0 {
+		if typ.Kind() == reflect.Array {
+			log.Panicln("MakeArray failed: can't be variadic.")
+		}
+		arity = bitsFuncvArityVar
+	} else if arity >= bitsFuncvArityMax {
+		p.Push(arity - bitsFuncvArityMax)
+		arity = bitsFuncvArityMax
+	}
+	code := p.code
+	i := (opMakeArray << bitsOpShift) | (uint32(arity) << bitsOpMakeArrayShift) | p.newType(typ)
+	code.data = append(code.data, i)
+	return p
+}
+
+// MakeMap instr
+func (p *Builder) MakeMap(typ reflect.Type, arity int) *Builder {
+	if arity < 0 {
+		log.Panicln("MakeMap failed: can't be variadic.")
+	} else if arity >= bitsFuncvArityMax {
+		p.Push(arity - bitsFuncvArityMax)
+		arity = bitsFuncvArityMax
+	}
+	code := p.code
+	i := (opMakeMap << bitsOpShift) | (uint32(arity) << bitsOpMakeMapShift) | p.newType(typ)
+	code.data = append(code.data, i)
+	return p
+}
+
+// Zero instr
+func (p *Builder) Zero(typ reflect.Type) *Builder {
+	code := p.code
+	i := (opZero << bitsOpShift) | p.requireType(typ)
+	code.data = append(code.data, i)
+	return p
+}
+
+func (p *Builder) requireType(typ reflect.Type) uint32 {
+	kind := typ.Kind()
+	bt := builtinTypes[kind]
+	if bt.size > 0 {
+		return uint32(kind)
+	}
+	return p.newType(typ)
+}
+
+func (p *Builder) newType(typ reflect.Type) uint32 {
+	if ityp, ok := p.types[typ]; ok {
+		return ityp
+	}
+	code := p.code
+	ityp := uint32(len(code.types) + len(builtinTypes))
+	code.types = append(code.types, typ)
+	p.types[typ] = ityp
+	return ityp
+}
+
+func getType(ityp uint32, ctx *Context) reflect.Type {
+	if ityp < uint32(len(builtinTypes)) {
+		return builtinTypes[ityp].typ
+	}
+	return ctx.code.types[ityp-uint32(len(builtinTypes))]
 }
 
 // -----------------------------------------------------------------------------

@@ -84,6 +84,20 @@ func getValueOf(v interface{}, t reflect.Type) reflect.Value {
 	return reflect.Zero(t)
 }
 
+func getKeyOf(v interface{}, t reflect.Type) reflect.Value {
+	if v != nil {
+		return reflect.ValueOf(v)
+	}
+	return reflect.Zero(t.Key())
+}
+
+func getElementOf(v interface{}, t reflect.Type) reflect.Value {
+	if v != nil {
+		return reflect.ValueOf(v)
+	}
+	return reflect.Zero(t.Elem())
+}
+
 func getArgOf(v interface{}, t reflect.Type, i int) reflect.Value {
 	if v != nil {
 		return reflect.ValueOf(v)

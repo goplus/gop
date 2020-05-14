@@ -3,7 +3,6 @@ package parser
 import (
 	"bytes"
 	"errors"
-	"go/parser"
 	"go/scanner"
 	"io"
 	"io/ioutil"
@@ -13,30 +12,6 @@ import (
 
 	"github.com/qiniu/qlang/ast"
 	"github.com/qiniu/qlang/token"
-)
-
-// A Mode value is a set of flags (or 0). They control the amount of source code parsed
-// and other optional parser functionality.
-type Mode = parser.Mode
-
-const (
-	// PackageClauseOnly - stop parsing after package clause
-	PackageClauseOnly = parser.PackageClauseOnly
-
-	// ImportsOnly - stop parsing after import declarations
-	ImportsOnly = parser.ImportsOnly
-
-	// ParseComments - parse comments and add them to AST
-	ParseComments = parser.ParseComments
-
-	// Trace - print a trace of parsed productions
-	Trace = parser.Trace
-
-	// DeclarationErrors - report declaration errors
-	DeclarationErrors = parser.DeclarationErrors
-
-	// AllErrors - report all errors (not just the first 10 on different lines)
-	AllErrors = parser.AllErrors
 )
 
 // -----------------------------------------------------------------------------
@@ -96,7 +71,7 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, filter func(os.
 		if strings.HasSuffix(d.Name(), ".ql") && (filter == nil || filter(d)) {
 			filename := fs.Join(path, d.Name())
 			if filedata, err := fs.ReadFile(filename); err == nil {
-				if src, err := ParseFile(fset, filename, filedata, mode); err == nil {
+				if src, err := ParseFSFile(fset, fs, filename, filedata, mode); err == nil {
 					name := src.Name.Name
 					pkg, found := pkgs[name]
 					if !found {
@@ -115,7 +90,6 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, filter func(os.
 			}
 		}
 	}
-
 	return
 }
 
@@ -137,14 +111,14 @@ func ParseFSFile(fset *token.FileSet, fs FileSystem, filename string, src interf
 	if err != nil {
 		return
 	}
-	return parseFile(fset, filename, code, mode)
+	return parseFileEx(fset, filename, code, mode)
 }
 
-func parseFile(fset *token.FileSet, filename string, code []byte, mode Mode) (f *ast.File, err error) {
+func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (f *ast.File, err error) {
 	var b []byte
 	var isMod bool
 	var fsetTmp = token.NewFileSet()
-	f, err = parser.ParseFile(fsetTmp, filename, code, PackageClauseOnly)
+	f, err = parseFile(fsetTmp, filename, code, PackageClauseOnly)
 	if err != nil {
 		n := len(code)
 		b = make([]byte, n+28)
@@ -154,7 +128,7 @@ func parseFile(fset *token.FileSet, filename string, code []byte, mode Mode) (f 
 	} else {
 		isMod = f.Name.Name != "main"
 	}
-	_, err = parser.ParseFile(fsetTmp, filename, code, mode)
+	_, err = parseFile(fsetTmp, filename, code, mode)
 	if err != nil {
 		if errlist, ok := err.(scanner.ErrorList); ok {
 			if e := errlist[0]; strings.HasPrefix(e.Msg, "expected declaration") {
@@ -177,7 +151,7 @@ func parseFile(fset *token.FileSet, filename string, code []byte, mode Mode) (f 
 		}
 	}
 	if err == nil {
-		f, err = parser.ParseFile(fset, filename, code, mode)
+		f, err = parseFile(fset, filename, code, mode)
 	}
 	return
 }

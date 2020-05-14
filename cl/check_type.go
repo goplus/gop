@@ -88,8 +88,21 @@ func checkBinaryOp(kind exec.Kind, op exec.Operator, x, y interface{}, b *exec.B
 func checkType(t reflect.Type, v interface{}, b *exec.Builder) {
 	if cons, ok := v.(*constVal); ok {
 		cons.bound(t, b)
-	} else if t != v.(iValue).Type() {
-		log.Panicln("checkType failed: return mismatched value type.")
+	} else {
+		typVal := v.(iValue).Type()
+		if kind := t.Kind(); kind == reflect.Interface {
+			if !typVal.Implements(t) {
+				log.Panicln("checkType: type doesn't implments interface -", typVal, t)
+			}
+		} else if t != typVal {
+			log.Panicln("checkType: mismatched value type -", t, typVal)
+		}
+	}
+}
+
+func checkElementType(t reflect.Type, elts []interface{}, i, n, step int, b *exec.Builder) {
+	for ; i < n; i += step {
+		checkType(t, elts[i], b)
 	}
 }
 

@@ -8,7 +8,13 @@ import (
 
 	"github.com/qiniu/qlang/ast/asttest"
 	"github.com/qiniu/qlang/token"
+	"github.com/qiniu/x/log"
 )
+
+func init() {
+	log.SetFlags(log.Ldefault &^ log.LstdFlags)
+	log.SetOutputLevel(log.Ldebug)
+}
 
 // -----------------------------------------------------------------------------
 
@@ -70,6 +76,41 @@ func TestParseNoPackageAndGlobalCode(t *testing.T) {
 	bar, isMain := pkgs["main"]
 	if !isMain {
 		t.Fatal("TestParseNoPackageAndGlobalCode failed: not main")
+	}
+	file := bar.Files["/foo/bar.ql"]
+	fmt.Println("Pkg:", file.Name)
+	for _, decl := range file.Decls {
+		fmt.Println("decl:", reflect.TypeOf(decl))
+		switch d := decl.(type) {
+		case *ast.GenDecl:
+			for _, spec := range d.Specs {
+				switch v := spec.(type) {
+				case *ast.ImportSpec:
+					fmt.Println(" - import:", v.Path.Value)
+				}
+			}
+		case *ast.FuncDecl:
+			fmt.Println(" - func:", d.Name.Name)
+		}
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+var fsTestMap = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	x := {"Hello": 1, "xsw": 3.4}
+	println("x:", x)
+`)
+
+func TestMap(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := ParseFSDir(fset, fsTestMap, "/foo", nil, Trace)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+	bar, isMain := pkgs["main"]
+	if !isMain {
+		t.Fatal("TestMap failed: not main")
 	}
 	file := bar.Files["/foo/bar.ql"]
 	fmt.Println("Pkg:", file.Name)

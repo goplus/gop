@@ -4,6 +4,11 @@ import (
 	"go/ast"
 )
 
+// A Scope maintains the set of named language entities declared
+// in the scope and a link to the immediately surrounding (outer)
+// scope.
+type Scope = ast.Scope
+
 // A Package node represents a set of source files collectively building a qlang package.
 type Package = ast.Package
 
@@ -54,6 +59,13 @@ type (
 	// A FuncDecl node represents a function declaration.
 	FuncDecl = ast.FuncDecl
 )
+
+// ----------------------------------------------------------------------------
+// Comments
+
+// A CommentGroup represents a sequence of comments
+// with no other tokens and no empty lines between.
+type CommentGroup = ast.CommentGroup
 
 // ----------------------------------------------------------------------------
 // Statements
