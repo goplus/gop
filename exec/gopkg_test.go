@@ -163,6 +163,20 @@ func TestLargeArray(t *testing.T) {
 	}
 }
 
+func TestZero(t *testing.T) {
+	code := NewBuilder(nil).
+		Zero(TyFloat64).
+		Push(3.2).
+		BuiltinOp(Float64, OpAdd).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != 3.2 {
+		t.Fatal("0 + 3.2 != 3.2, ret =", v)
+	}
+}
+
 func TestType(t *testing.T) {
 	typ, ok := I.FindType("Context")
 	if !ok {

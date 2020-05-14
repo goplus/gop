@@ -43,6 +43,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, mode compleMode) {
 		compileFuncLit(ctx, v, mode)
 	case *ast.Ellipsis:
 		compileEllipsis(ctx, v, mode)
+	case *ast.KeyValueExpr:
+		panic("compileExpr: ast.KeyValueExpr unexpected")
 	default:
 		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
 	}
@@ -134,23 +136,49 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, mode compleMode) {
 		log.Panicln("compileCompositeLit failed: type is not defined.")
 	}
 	typ := toType(ctx, v.Type)
-	if t, ok := typ.(*unboundArrayType); ok {
-		typ = reflect.ArrayOf(len(v.Elts), t.elem)
-	}
-	if mode == inferOnly {
-		ctx.infer.Push(&goValue{t: typ.(reflect.Type)})
-		return
-	}
 	switch kind := typ.Kind(); kind {
 	case reflect.Slice, reflect.Array:
-		for _, elt := range v.Elts {
-			compileExpr(ctx, elt, 0)
+		var typSlice reflect.Type
+		if t, ok := typ.(*unboundArrayType); ok {
+			n := toBoundArrayLen(ctx, v)
+			typSlice = reflect.ArrayOf(n, t.elem)
+		} else {
+			typSlice = typ.(reflect.Type)
 		}
-		n := len(v.Elts)
-		typSlice := typ.(reflect.Type)
-		checkElements(ctx, typSlice.Elem(), n)
+		if mode == inferOnly {
+			ctx.infer.Push(&goValue{t: typSlice})
+			return
+		}
+		var nLen int
+		if kind == reflect.Array {
+			nLen = typSlice.Len()
+		} else {
+			nLen = toBoundArrayLen(ctx, v)
+		}
+		n := -1
+		elts := make([]ast.Expr, nLen)
+		for _, elt := range v.Elts {
+			switch e := elt.(type) {
+			case *ast.KeyValueExpr:
+				n = toInt(ctx, e.Key)
+				elts[n] = e.Value
+			default:
+				n++
+				elts[n] = e
+			}
+		}
+		n++
+		typElem := typSlice.Elem()
+		for _, elt := range elts {
+			if elt != nil {
+				compileExpr(ctx, elt, 0)
+				checkType(typElem, ctx.infer.Pop(), ctx.out)
+			} else {
+				ctx.out.Zero(typElem)
+			}
+		}
 		ctx.out.MakeArray(typSlice, n)
-		ctx.infer.Ret(uint32(n), &goValue{t: typSlice})
+		ctx.infer.Push(&goValue{t: typSlice})
 	case reflect.Map:
 		log.Panicln("compileCompositeLit failed: todo -", typ)
 	default:

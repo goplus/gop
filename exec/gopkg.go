@@ -56,6 +56,11 @@ func execMakeArray(i Instr, p *Context) {
 	}
 }
 
+func execZero(i Instr, p *Context) {
+	typ := getType(i&bitsOpMakeArrayOperand, p)
+	p.Push(reflect.Zero(typ).Interface())
+}
+
 // -----------------------------------------------------------------------------
 
 // SymbolKind represents symbol kind.
@@ -352,6 +357,14 @@ func (p *Builder) MakeArray(typ reflect.Type, arity int) *Builder {
 	}
 	code := p.code
 	i := (opMakeArray << bitsOpShift) | (uint32(arity) << bitsOpMakeArrayShift) | p.newType(typ)
+	code.data = append(code.data, i)
+	return p
+}
+
+// Zero instr
+func (p *Builder) Zero(typ reflect.Type) *Builder {
+	code := p.code
+	i := (opZero << bitsOpShift) | p.requireType(typ)
 	code.data = append(code.data, i)
 	return p
 }

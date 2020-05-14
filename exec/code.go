@@ -88,6 +88,7 @@ const (
 	opGoClosure     = 29 // funcKind(2) addr(24)
 	opCallGoClosure = 30 // arity(26)
 	opMakeArray     = 31 // funvArity(10) type(16)
+	opZero          = 32 // type(26)
 )
 
 const (
@@ -158,6 +159,7 @@ var instrInfos = []InstrInfo{
 	opGoClosure:     {"closureGo", "funcKind", "addr", (2 << 8) | 24},       // funcKind(2) addr(24)
 	opCallGoClosure: {"callGoClosure", "", "arity", 26},                     // arity(26)
 	opMakeArray:     {"makeArray", "funvArity", "type", (10 << 8) | 16},     // funvArity(10) type(16)
+	opZero:          {"zero", "", "type", 26},                               // type(26)
 }
 
 // -----------------------------------------------------------------------------

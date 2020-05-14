@@ -212,6 +212,37 @@ func TestSlice(t *testing.T) {
 	}
 }
 
+var fsTestSlice2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	x := []float64{1, 2: 3.4, 5}
+	println("x:", x)
+`)
+
+func TestSlice2(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestSlice2, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, err = NewPackage(b, bar)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(15) {
+		t.Fatal("n:", v)
+	}
+}
+
 // -----------------------------------------------------------------------------
 
 var fsTestArray = asttest.NewSingleFileFS("/foo", "bar.ql", `
@@ -244,6 +275,39 @@ func TestArray(t *testing.T) {
 		t.Fatal("error:", v)
 	}
 	if v := ctx.Get(-2); v != int(15) {
+		t.Fatal("n:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+var fsTestArray2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	x := [...]float64{1, 3: 3.4, 5}
+	println("x:", x)
+`)
+
+func TestArray2(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestArray2, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, err = NewPackage(b, bar)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(17) {
 		t.Fatal("n:", v)
 	}
 }

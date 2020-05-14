@@ -229,6 +229,31 @@ func toArrayType(ctx *blockCtx, v *ast.ArrayType) iType {
 	return nil
 }
 
+func toBoundArrayLen(ctx *blockCtx, v *ast.CompositeLit) int {
+	n := -1
+	for _, elt := range v.Elts {
+		if e, ok := elt.(*ast.KeyValueExpr); ok {
+			n = toInt(ctx, e.Key)
+		} else {
+			n++
+		}
+	}
+	return n + 1
+}
+
+func toInt(ctx *blockCtx, e ast.Expr) int {
+	compileExpr(ctx, e, inferOnly)
+	nv, ok := ctx.infer.Pop().(*constVal)
+	if !ok {
+		log.Panicln("toInt: require constant expr.")
+	}
+	iv, ok := nv.v.(int64)
+	if !ok {
+		log.Panicln("toInt: constant expr isn't an integer.")
+	}
+	return int(iv)
+}
+
 // -----------------------------------------------------------------------------
 
 type typeDecl struct {
