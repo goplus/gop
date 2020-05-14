@@ -89,7 +89,7 @@ func checkType(t reflect.Type, v interface{}, b *exec.Builder) {
 	if cons, ok := v.(*constVal); ok {
 		cons.bound(t, b)
 	} else if t != v.(iValue).Type() {
-		log.Panicln("checkType failed: return mismatched value type.")
+		log.Panicln("checkType failed: mismatched value type.")
 	}
 }
 
