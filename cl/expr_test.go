@@ -346,3 +346,36 @@ func TestMap(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
+var fsTestMap2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	x := {"Hello": 1, "xsw": 3.4}
+	println("x:", x)
+`)
+
+func TestMap2(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestMap2, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, err = NewPackage(b, bar)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(24) {
+		t.Fatal("n:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------

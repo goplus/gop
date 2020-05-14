@@ -90,3 +90,38 @@ func TestParseNoPackageAndGlobalCode(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
+var fsTestMap = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	x := {"Hello": 1, "xsw": 3.4}
+	println("x:", x)
+`)
+
+func _TestMap(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := ParseFSDir(fset, fsTestMap, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+	bar, isMain := pkgs["main"]
+	if !isMain {
+		t.Fatal("TestParseNoPackageAndGlobalCode failed: not main")
+	}
+	file := bar.Files["/foo/bar.ql"]
+	fmt.Println("Pkg:", file.Name)
+	for _, decl := range file.Decls {
+		fmt.Println("decl:", reflect.TypeOf(decl))
+		switch d := decl.(type) {
+		case *ast.GenDecl:
+			for _, spec := range d.Specs {
+				switch v := spec.(type) {
+				case *ast.ImportSpec:
+					fmt.Println(" - import:", v.Path.Value)
+				}
+			}
+		case *ast.FuncDecl:
+			fmt.Println(" - func:", d.Name.Name)
+		}
+	}
+}
+
+// -----------------------------------------------------------------------------
