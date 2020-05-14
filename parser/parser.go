@@ -21,9 +21,12 @@ import (
 	"go/ast"
 	"go/scanner"
 	"go/token"
+	"reflect"
 	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/qiniu/x/log"
 )
 
 // The parser structure holds the parser's internal state.
@@ -1167,6 +1170,11 @@ func (p *parser) parseOperand(lhs bool) ast.Expr {
 
 	case token.FUNC:
 		return p.parseFuncTypeOrLit()
+
+	case token.LBRACE:
+		if !lhs { // rhs
+			return p.parseLiteralValue(nil)
+		}
 	}
 
 	if typ := p.tryIdentOrType(); typ != nil {
@@ -1359,6 +1367,7 @@ func (p *parser) parseElementList() (list []ast.Expr) {
 
 func (p *parser) parseLiteralValue(typ ast.Expr) ast.Expr {
 	if p.trace {
+		log.Debug("parseLiteralValue:", reflect.TypeOf(typ))
 		defer un(trace(p, "LiteralValue"))
 	}
 
@@ -1476,6 +1485,9 @@ func (p *parser) parsePrimaryExpr(lhs bool) ast.Expr {
 	}
 
 	x := p.parseOperand(lhs)
+	if p.trace {
+		log.Debug("parsePrimaryExpr:", lhs, "parseOperand:", reflect.TypeOf(x), x)
+	}
 L:
 	for {
 		switch p.tok {
@@ -1521,6 +1533,9 @@ L:
 		lhs = false // no need to try to resolve again
 	}
 
+	if p.trace {
+		log.Debug("parsePrimaryExpr:", lhs, "return:", reflect.TypeOf(x), x)
+	}
 	return x
 }
 

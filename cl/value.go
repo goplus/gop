@@ -359,4 +359,51 @@ func realKindOf(kind astutil.ConstKind) reflect.Kind {
 	}
 }
 
+func boundElementType(elts []interface{}, base, max, step int) reflect.Type {
+	var tBound reflect.Type
+	var kindUnbound iKind
+	for i := base; i < max; i += step {
+		e := elts[i].(iValue)
+		if e.NumValues() != 1 {
+			log.Panicln("boundElementType: unexpected - multiple return values.")
+		}
+		kind := e.Kind()
+		if !astutil.IsConstBound(kind) { // unbound
+			if kindUnbound < kind {
+				kindUnbound = kind
+			}
+		} else {
+			if t := e.Type(); tBound != t {
+				if tBound != nil { // mismatched type
+					return nil
+				}
+				tBound = t
+			}
+		}
+	}
+	if tBound != nil {
+		for i := base; i < max; i += step {
+			if e, ok := elts[i].(*constVal); ok {
+				if _, ok := boundConst(e.v, tBound); !ok { // mismatched type
+					return nil
+				}
+			}
+		}
+		return tBound
+	}
+	var kindBound iKind
+	for i := base; i < max; i += step {
+		if e, ok := elts[i].(*constVal); ok && e.kind == kindUnbound {
+			kind := e.boundKind()
+			if kind != kindBound {
+				if kindBound != 0 { // mismatched type
+					return nil
+				}
+				kindBound = kind
+			}
+		}
+	}
+	return exec.TypeFromKind(kindBound)
+}
+
 // -----------------------------------------------------------------------------

@@ -133,7 +133,8 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, mode compleMode) {
 		log.Panicln("compileCompositeLit: can't be lhs (left hand side) expr.")
 	}
 	if v.Type == nil {
-		log.Panicln("compileCompositeLit failed: type is not defined.")
+		compileMapLit(ctx, v, mode)
+		return
 	}
 	typ := toType(ctx, v.Type)
 	switch kind := typ.Kind(); kind {
@@ -203,6 +204,42 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, mode compleMode) {
 	default:
 		log.Panicln("compileCompositeLit failed: unknown -", reflect.TypeOf(typ))
 	}
+}
+
+func compileMapLit(ctx *blockCtx, v *ast.CompositeLit, mode compleMode) {
+	for _, elt := range v.Elts {
+		switch e := elt.(type) {
+		case *ast.KeyValueExpr:
+			compileExpr(ctx, e.Key, mode)
+			compileExpr(ctx, e.Value, mode)
+		default:
+			log.Panicln("compileMapLit: map requires key-value expr.")
+		}
+	}
+	n := len(v.Elts) << 1
+	if n == 0 {
+		log.Panicln("compileMapLit: can't be an empty map.")
+	}
+	elts := ctx.infer.GetArgs(uint32(n))
+	typKey := boundElementType(elts, 0, n, 2)
+	if typKey == nil {
+		log.Panicln("compileMapLit: mismatched key type.")
+	}
+	typVal := boundElementType(elts, 1, n, 2)
+	if typVal == nil {
+		typVal = exec.TyEmptyInterface
+	}
+	typMap := reflect.MapOf(typKey, typVal)
+	if mode == inferOnly {
+		ctx.infer.Ret(uint32(n), &goValue{t: typMap})
+		return
+	}
+	out := ctx.out
+	log.Debug("compileMapLit:", typMap)
+	checkElementType(typKey, elts, 0, n, 2, out)
+	checkElementType(typVal, elts, 1, n, 2, out)
+	out.MakeMap(typMap, len(v.Elts))
+	ctx.infer.Ret(uint32(n), &goValue{t: typMap})
 }
 
 func compileFuncLit(ctx *blockCtx, v *ast.FuncLit, mode compleMode) {
