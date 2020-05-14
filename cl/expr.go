@@ -180,7 +180,26 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, mode compleMode) {
 		ctx.out.MakeArray(typSlice, n)
 		ctx.infer.Push(&goValue{t: typSlice})
 	case reflect.Map:
-		log.Panicln("compileCompositeLit failed: todo -", typ)
+		typMap := typ.(reflect.Type)
+		if mode == inferOnly {
+			ctx.infer.Push(&goValue{t: typMap})
+			return
+		}
+		typKey := typMap.Key()
+		typVal := typMap.Elem()
+		for _, elt := range v.Elts {
+			switch e := elt.(type) {
+			case *ast.KeyValueExpr:
+				compileExpr(ctx, e.Key, 0)
+				checkType(typKey, ctx.infer.Pop(), ctx.out)
+				compileExpr(ctx, e.Value, 0)
+				checkType(typVal, ctx.infer.Pop(), ctx.out)
+			default:
+				log.Panicln("compileCompositeLit: map requires key-value expr.")
+			}
+		}
+		ctx.out.MakeMap(typMap, len(v.Elts))
+		ctx.infer.Push(&goValue{t: typMap})
 	default:
 		log.Panicln("compileCompositeLit failed: unknown -", reflect.TypeOf(typ))
 	}

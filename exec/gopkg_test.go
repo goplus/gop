@@ -163,6 +163,22 @@ func TestLargeArray(t *testing.T) {
 	}
 }
 
+func TestMap(t *testing.T) {
+	code := NewBuilder(nil).
+		Push("Hello").
+		Push(3.2).
+		Push("xsw").
+		Push(1.0).
+		MakeMap(reflect.MapOf(TyString, TyFloat64), 2).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); !reflect.DeepEqual(v, map[string]float64{"Hello": 3.2, "xsw": 1.0}) {
+		t.Fatal("expected: {`Hello`: 3.2, `xsw`: 1}, ret =", v)
+	}
+}
+
 func TestZero(t *testing.T) {
 	code := NewBuilder(nil).
 		Zero(TyFloat64).

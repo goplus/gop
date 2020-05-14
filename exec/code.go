@@ -47,6 +47,10 @@ const (
 	bitsOpMakeArrayShift   = bitsOpCallFuncvShift
 	bitsOpMakeArrayOperand = bitsOpCallFuncvOperand
 
+	bitsOpMakeMap        = bitsOpCallFuncv
+	bitsOpMakeMapShift   = bitsOpCallFuncvShift
+	bitsOpMakeMapOperand = bitsOpCallFuncvOperand
+
 	bitsOpVar        = bitsOp + bitsVarScope
 	bitsOpVarShift   = bitsInstr - bitsOpVar
 	bitsOpVarOperand = (1 << bitsOpVarShift) - 1
@@ -88,7 +92,8 @@ const (
 	opGoClosure     = 29 // funcKind(2) addr(24)
 	opCallGoClosure = 30 // arity(26)
 	opMakeArray     = 31 // funvArity(10) type(16)
-	opZero          = 32 // type(26)
+	opMakeMap       = 32 // funvArity(10) type(16)
+	opZero          = 33 // type(26)
 )
 
 const (

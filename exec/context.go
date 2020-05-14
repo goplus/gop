@@ -187,6 +187,7 @@ var _execTable = [...]func(i Instr, p *Context){
 	opGoClosure:     execGoClosure,
 	opCallGoClosure: execCallGoClosure,
 	opMakeArray:     execMakeArray,
+	opMakeMap:       execMakeMap,
 	opZero:          execZero,
 }
 

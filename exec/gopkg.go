@@ -56,6 +56,23 @@ func execMakeArray(i Instr, p *Context) {
 	}
 }
 
+func execMakeMap(i Instr, p *Context) {
+	typMap := getType(i&bitsOpMakeArrayOperand, p)
+	arity := (i >> bitsOpMakeArrayShift) & bitsFuncvArityOperand
+	if arity == bitsFuncvArityMax {
+		arity = uint32(p.Pop().(int) + bitsFuncvArityMax)
+	}
+	n := arity << 1
+	args := p.GetArgs(n)
+	ret := reflect.MakeMapWithSize(typMap, int(n))
+	for i := uint32(0); i < n; i += 2 {
+		key := getKeyOf(args[i], typMap)
+		val := getElementOf(args[i+1], typMap)
+		ret.SetMapIndex(key, val)
+	}
+	p.Ret(n, ret.Interface())
+}
+
 func execZero(i Instr, p *Context) {
 	typ := getType(i&bitsOpMakeArrayOperand, p)
 	p.Push(reflect.Zero(typ).Interface())
@@ -357,6 +374,20 @@ func (p *Builder) MakeArray(typ reflect.Type, arity int) *Builder {
 	}
 	code := p.code
 	i := (opMakeArray << bitsOpShift) | (uint32(arity) << bitsOpMakeArrayShift) | p.newType(typ)
+	code.data = append(code.data, i)
+	return p
+}
+
+// MakeMap instr
+func (p *Builder) MakeMap(typ reflect.Type, arity int) *Builder {
+	if arity < 0 {
+		log.Panicln("MakeMap failed: can't be variadic.")
+	} else if arity >= bitsFuncvArityMax {
+		p.Push(arity - bitsFuncvArityMax)
+		arity = bitsFuncvArityMax
+	}
+	code := p.code
+	i := (opMakeMap << bitsOpShift) | (uint32(arity) << bitsOpMakeMapShift) | p.newType(typ)
 	code.data = append(code.data, i)
 	return p
 }
