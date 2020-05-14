@@ -192,7 +192,11 @@ func (p *parser) parseSliceLit(lbrack token.Pos, len ast.Expr) ast.Expr {
 }
 
 func newSliceLit(lbrack, rbrack token.Pos, len ast.Expr) ast.Expr {
-	return &ast.SliceLit{Lbrack: lbrack, Elts: []ast.Expr{len}, Rbrack: rbrack}
+	var elts []ast.Expr
+	if len != nil {
+		elts = []ast.Expr{len}
+	}
+	return &ast.SliceLit{Lbrack: lbrack, Elts: elts, Rbrack: rbrack}
 }
 
 // -----------------------------------------------------------------------------

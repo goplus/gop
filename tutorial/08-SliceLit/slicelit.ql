@@ -10,3 +10,5 @@ println("z:", z)
 println([1, 3.4, 3+4i]) // []complex128
 println([5+6i])         // []complex128
 println(["xsw", 3])     // []interface{}
+
+println("empty slice:", []) // []interface{}

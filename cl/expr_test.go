@@ -383,6 +383,8 @@ func TestMapLit(t *testing.T) {
 var fsTestMapLit2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	x := {"Hello": 1, "xsw": "3.4"}
 	println("x:", x)
+
+	println("empty map:", {})
 `)
 
 func TestMapLit2(t *testing.T) {
@@ -406,7 +408,7 @@ func TestMapLit2(t *testing.T) {
 	if v := ctx.Get(-1); v != nil {
 		t.Fatal("error:", v)
 	}
-	if v := ctx.Get(-2); v != int(24) {
+	if v := ctx.Get(-2); v != int(17) {
 		t.Fatal("n:", v)
 	}
 }
@@ -422,6 +424,8 @@ var fsSliceLit = asttest.NewSingleFileFS("/foo", "bar.ql", `
 
 	z := [1+2i, "xsw"]
 	println("z:", z)
+
+	println("empty slice:", [])
 `)
 
 func TestSliceLit(t *testing.T) {
