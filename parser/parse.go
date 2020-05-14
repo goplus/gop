@@ -178,3 +178,21 @@ func readSource(src interface{}) ([]byte, error) {
 }
 
 // -----------------------------------------------------------------------------
+
+func (p *parser) parseSliceLit(lbrack token.Pos, len ast.Expr) ast.Expr {
+	elts := make([]ast.Expr, 1, 8)
+	elts[0] = len
+	for p.tok == token.COMMA {
+		p.next()
+		elt := p.parseRHS()
+		elts = append(elts, elt)
+	}
+	rbrack := p.expect(token.RBRACK)
+	return &ast.SliceLit{Lbrack: lbrack, Elts: elts, Rbrack: rbrack}
+}
+
+func newSliceLit(lbrack, rbrack token.Pos, len ast.Expr) ast.Expr {
+	return &ast.SliceLit{Lbrack: lbrack, Elts: []ast.Expr{len}, Rbrack: rbrack}
+}
+
+// -----------------------------------------------------------------------------

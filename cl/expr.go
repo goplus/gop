@@ -39,6 +39,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, mode compleMode) {
 		compileSelectorExpr(ctx, v, mode)
 	case *ast.CompositeLit:
 		compileCompositeLit(ctx, v, mode)
+	case *ast.SliceLit:
+		compileSliceLit(ctx, v, mode)
 	case *ast.FuncLit:
 		compileFuncLit(ctx, v, mode)
 	case *ast.Ellipsis:
@@ -204,6 +206,31 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, mode compleMode) {
 	default:
 		log.Panicln("compileCompositeLit failed: unknown -", reflect.TypeOf(typ))
 	}
+}
+
+func compileSliceLit(ctx *blockCtx, v *ast.SliceLit, mode compleMode) {
+	for _, elt := range v.Elts {
+		compileExpr(ctx, elt, mode)
+	}
+	n := len(v.Elts)
+	if n == 0 {
+		log.Panicln("compileSliceLit: can't be an empty slice.")
+	}
+	elts := ctx.infer.GetArgs(uint32(n))
+	typElem := boundElementType(elts, 0, n, 1)
+	if typElem == nil {
+		typElem = exec.TyEmptyInterface
+	}
+	typSlice := reflect.SliceOf(typElem)
+	if mode == inferOnly {
+		ctx.infer.Ret(uint32(n), &goValue{t: typSlice})
+		return
+	}
+	out := ctx.out
+	log.Debug("compileSliceLit:", typSlice)
+	checkElementType(typElem, elts, 0, n, 1, out)
+	out.MakeArray(typSlice, len(v.Elts))
+	ctx.infer.Ret(uint32(n), &goValue{t: typSlice})
 }
 
 func compileMapLit(ctx *blockCtx, v *ast.CompositeLit, mode compleMode) {
