@@ -5,10 +5,10 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/qiniu/qlang/ast"
-	"github.com/qiniu/qlang/ast/astutil"
-	"github.com/qiniu/qlang/exec"
-	"github.com/qiniu/qlang/token"
+	"github.com/qiniu/qlang/v6/ast"
+	"github.com/qiniu/qlang/v6/ast/astutil"
+	"github.com/qiniu/qlang/v6/exec"
+	"github.com/qiniu/qlang/v6/token"
 	"github.com/qiniu/x/log"
 )
 

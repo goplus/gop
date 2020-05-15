@@ -5,9 +5,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/qiniu/qlang/ast"
-	"github.com/qiniu/qlang/ast/asttest"
-	"github.com/qiniu/qlang/token"
+	"github.com/qiniu/qlang/v6/ast"
+	"github.com/qiniu/qlang/v6/ast/asttest"
+	"github.com/qiniu/qlang/v6/token"
 	"github.com/qiniu/x/log"
 )
 

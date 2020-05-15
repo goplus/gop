@@ -1,7 +1,7 @@
 package spec
 
 import (
-	"github.com/qiniu/qlang/exec"
+	"github.com/qiniu/qlang/v6/exec"
 )
 
 // -----------------------------------------------------------------------------

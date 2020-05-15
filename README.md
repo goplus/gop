@@ -5,7 +5,7 @@ Q Language - A script language for Go
 
 [![Qiniu Logo](http://open.qiniudn.com/logo.png)](http://www.qiniu.com/)
 
-最新的 qlang v1.6 版本在能力上较以前的版本有极大的调整。其核心变化为：
+最新的 qlang v6 版本在能力上较以前的版本有极大的调整。其核心变化为：
 
 - 完全推翻重来，从动态类型转向静态类型！
 - 完全兼容 Go 语言文法。
@@ -34,12 +34,12 @@ a = 1   // 需要改为 a := 1，放弃该特性是为了让编译器更好地�
 
 代码样例：
 
-* https://github.com/qiniu/qlang/tree/v1.6/tutorial
+* https://github.com/qiniu/qlang/tree/v6.x/tutorial
 
 
 ## 老版本
 
-当前 qlang v1.6 还在快速迭代中。在正式场合建议使用正式 release 的版本：
+当前 qlang v6 还在快速迭代中。在正式场合建议使用正式 release 的版本：
 
 * https://github.com/qiniu/qlang/releases
 
