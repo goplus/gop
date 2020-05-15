@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/qiniu/qlang/modutil"
+	"github.com/qiniu/qlang/v6/modutil"
 )
 
 const (

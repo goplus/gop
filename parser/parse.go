@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/qiniu/qlang/ast"
-	"github.com/qiniu/qlang/token"
+	"github.com/qiniu/qlang/v6/ast"
+	"github.com/qiniu/qlang/v6/token"
 )
 
 // -----------------------------------------------------------------------------

@@ -4,7 +4,7 @@ println("x:", x)
 y := [1] // []int
 println("y:", y)
 
-z := [1+2i, "xsw"] // []complex128
+z := [1+2i, "xsw"] // []interface{}
 println("z:", z)
 
 println([1, 3.4, 3+4i]) // []complex128

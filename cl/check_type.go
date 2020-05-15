@@ -4,7 +4,7 @@ import (
 	"errors"
 	"reflect"
 
-	"github.com/qiniu/qlang/exec"
+	"github.com/qiniu/qlang/v6/exec"
 	"github.com/qiniu/x/log"
 )
 

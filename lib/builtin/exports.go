@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/qiniu/qlang/exec"
-	qlang "github.com/qiniu/qlang/spec"
+	"github.com/qiniu/qlang/v6/exec"
+	qlang "github.com/qiniu/qlang/v6/spec"
 )
 
 // -----------------------------------------------------------------------------

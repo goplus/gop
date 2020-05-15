@@ -3,9 +3,9 @@ package fmt
 import (
 	"fmt"
 
-	"github.com/qiniu/qlang/lib/builtin"
+	"github.com/qiniu/qlang/v6/lib/builtin"
 
-	qlang "github.com/qiniu/qlang/spec"
+	qlang "github.com/qiniu/qlang/v6/spec"
 )
 
 // -----------------------------------------------------------------------------

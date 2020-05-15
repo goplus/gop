@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"unsafe"
 
-	"github.com/qiniu/qlang/ast/astutil"
+	"github.com/qiniu/qlang/v6/ast/astutil"
 	"github.com/qiniu/x/log"
 )
 

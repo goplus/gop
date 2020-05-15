@@ -3,7 +3,7 @@ package cl
 import (
 	"reflect"
 
-	"github.com/qiniu/qlang/ast"
+	"github.com/qiniu/qlang/v6/ast"
 	"github.com/qiniu/x/log"
 )
 
