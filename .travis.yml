@@ -2,7 +2,9 @@ language: go
 go:
   - "1.13"
   - "1.14"
-install:
+script:
   - export GO111MODULE="on"
   - go install -v ./...
-  - go test ./...
+  - go test -race -coverprofile=coverage.txt -covermode=atomic ./...
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

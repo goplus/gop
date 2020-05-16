@@ -1,7 +1,12 @@
 Q Language - A script language for Go
 ========
 
-[![Build Status](https://travis-ci.org/qiniu/qlang.png?branch=master)](https://travis-ci.org/qiniu/qlang) [![GoDoc](https://godoc.org/github.com/qiniu/qlang?status.svg)](https://godoc.org/github.com/qiniu/qlang) [![Go Report Card](https://goreportcard.com/badge/github.com/qiniu/qlang)](https://goreportcard.com/report/github.com/qiniu/qlang)
+[![LICENSE](https://img.shields.io/github/license/qiniu/qlang.svg)](https://github.com/qiniu/qlang/blob/master/LICENSE)
+[![Build Status](https://travis-ci.org/qiniu/qlang.svg?branch=master)](https://travis-ci.org/qiniu/qlang)
+[![Go Report Card](https://goreportcard.com/badge/github.com/qiniu/qlang)](https://goreportcard.com/report/github.com/qiniu/qlang)
+[![GitHub release](https://img.shields.io/github/v/tag/qiniu/qlang.svg?label=release)](https://github.com/qiniu/qlang/releases)
+[![Coverage Status](https://codecov.io/gh/qiniu/qlang/branch/master/graph/badge.svg)](https://codecov.io/gh/qiniu/qlang)
+[![GoDoc](https://img.shields.io/badge/Godoc-reference-blue.svg)](https://godoc.org/github.com/qiniu/qlang)
 
 [![Qiniu Logo](http://open.qiniudn.com/logo.png)](http://www.qiniu.com/)
 
