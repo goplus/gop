@@ -3,29 +3,9 @@ The Q Language (Q语言)
 
 # 下载
 
-### 源代码
-
 ```
-go get -u qlang.io/qlang
+go get github.com/qiniu/qlang
 ```
-
-或者在 src 目录执行如下命令：
-
-```
-mkdir qiniupkg.com
-git clone https://github.com/qiniu/qlang.git qlang.io
-git clone https://github.com/qiniu/text.git qiniupkg.com/text
-```
-
-### 二进制(qlang.v1)
-
-* linux/amd64: [qnlang-linux-amd64.tar.gz](http://open.qiniudn.com/qnlang-linux-amd64.tar.gz)
-* Mac OS: [qnlang-darwin-amd64.tar.gz](http://open.qiniudn.com/qnlang-darwin-amd64.tar.gz)
-
-### 二进制(qlang.v2)
-
-* 性能比qlang.v1更优。暂未提供二进制下载包，请通过源代码自行编译。
-
 
 # 语言特色
 
@@ -45,7 +25,7 @@ git clone https://github.com/qiniu/text.git qiniupkg.com/text
 
 输入 n，求 < n 的最大素数：
 
-* [maxprime.ql](https://github.com/qiniu/qlang/blob/develop/app/qlang/maxprime.ql)
+* [maxprime.ql](https://github.com/qiniu/qlang/blob/v1.2/tutorial/maxprime/maxprime.ql)
 
 用法：
 
@@ -57,7 +37,7 @@ qlang maxprime.ql <N>
 
 实现一个支持四则运算及函数调用的计算器：
 
-* [calc.ql](https://github.com/qiniu/qlang/blob/develop/app/qlang/calc.ql)
+* [calc.ql](https://github.com/qiniu/qlang/blob/v1.2/tutorial/calc/calc.ql)
 
 用法：
 
@@ -69,7 +49,7 @@ qlang.v1 calc.ql  #目前暂时只有qlang.v1版本实现了interpreter模块
 
 qlang的自举（用qlang实现一个qlang）：
 
-* [qlang.ql](https://github.com/qiniu/qlang/blob/develop/app/qlang/qlang.ql)
+* [qlang.ql](https://github.com/qiniu/qlang/blob/v1.2/tutorial/qlang/qlang.ql)
 
 交互模式跑 qlang 版本的 qlang（可以认为是上面计算器的增强版本）：
 
@@ -91,8 +71,8 @@ qlang.v1 qlang.ql maxprime.ql <N>
 import (
 	"fmt"
 
-	"qlang.io/qlang.v2/qlang"
-	_ "qlang.io/qlang/builtin" // 导入 builtin 包
+	"github.com/qiniu/qlang"
+	_ "github.com/qiniu/qlang/lib/builtin" // 导入 builtin 包
 )
 
 const scriptCode = `
@@ -120,7 +100,7 @@ func main() {
 
 这是一个最精简功能的 mini qlang。想要了解更多，可参考后文“定制 qlang”一节。实际项目中你也可以参考代码：
 
-* [qlang/main.go](https://github.com/qiniu/qlang/blob/develop/app/qlang/main.go)
+* [qlang/main.go](https://github.com/qiniu/qlang/blob/v1.2/cmd/qshell/qshell.go)
 
 
 # 使用说明
@@ -728,9 +708,9 @@ qlang 采用微内核设计，大部分你看到的功能，都通过 Go package
 
 ```go
 import (
-	"qlang.io/qlang/math"
-	"qlang.io/qlang/strconv"
-	"qlang.io/qlang/strings"
+	"github.com/qiniu/qlang/lib/math"
+	"github.com/qiniu/qlang/lib/strconv"
+	"github.com/qiniu/qlang/lib/strings"
 	...
 )
 
@@ -754,7 +734,7 @@ qlang.Import("", math.Exports) // 如此，你就可以直接用 sin 而不是 m
 
 ### 制作 qlang 模块
 
-制作 qlang 模块的成本极其低廉。我们打开 `qlang.io/qlang/strings` 看看它是什么样的：
+制作 qlang 模块的成本极其低廉。我们打开 `github.com/qiniu/qlang/lib/strings` 看看它是什么样的：
 
 ```go
 package strings
