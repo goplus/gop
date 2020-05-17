@@ -19,10 +19,9 @@ func init() {
 
 func Copyright() {
 	fmt.Printf("Q-language - http://qlang.io, version qlang-%s %s/%s\n", version, runtime.GOOS, runtime.GOARCH)
-	fmt.Println("Copyright (C) 2015 Qiniu.com - Shanghai Qiniu Information Technologies Co., Ltd.\n")
+	fmt.Printf("Copyright (C) 2015 Qiniu.com - Shanghai Qiniu Information Technologies Co., Ltd.\n\n")
 }
 
 func Version() string {
 	return version
 }
-
