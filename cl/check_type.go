@@ -106,6 +106,11 @@ func checkElementType(t reflect.Type, elts []interface{}, i, n, step int, b *exe
 	}
 }
 
+func checkCaseCompare(x, y interface{}, b *exec.Builder) {
+	kind, _ := binaryOpResult(exec.OpEQ, x, y)
+	checkBinaryOp(kind, exec.OpEQ, x, y, b)
+}
+
 func checkBool(v interface{}) {
 	if !isBool(v.(iValue)) {
 		log.Panicln("checkBool failed: bool expression required.")

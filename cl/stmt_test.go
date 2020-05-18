@@ -12,6 +12,122 @@ import (
 
 // -----------------------------------------------------------------------------
 
+var fsTestSw = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	x := 0
+	switch t := "Hello"; t {
+	case "xsw":
+		x = 3
+	case "Hello", "world":
+		x = 5
+	default:
+		x= 7
+	}
+	x
+`)
+
+func TestSwitch(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestSw, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, err = NewPackage(b, bar)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("x:", ctx.Get(-1))
+	if v := ctx.Get(-1); v != 5 {
+		t.Fatal("x:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+var fsTestSw2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	x := 0
+	t := "Hello"
+	switch t {
+	}
+	switch t {
+	case "world", "Hello":
+		x = 5
+	case "xsw":
+		x = 3
+	}
+	x
+`)
+
+func TestSwitch2(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestSw2, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, err = NewPackage(b, bar)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("x:", ctx.Get(-1))
+	if v := ctx.Get(-1); v != 5 {
+		t.Fatal("x:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+var fsTestSw3 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	x := 0
+	t := "Hello"
+	switch t {
+	default:
+		x = 7
+	case "world", "hi":
+		x = 5
+	case "xsw":
+		x = 3
+	}
+	x
+`)
+
+func TestDefault(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestSw3, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, err = NewPackage(b, bar)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("x:", ctx.Get(-1))
+	if v := ctx.Get(-1); v != 7 {
+		t.Fatal("x:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
 var fsTestIf = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	x := 0
 	if t := false; t {
