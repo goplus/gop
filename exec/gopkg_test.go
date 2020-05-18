@@ -50,12 +50,33 @@ func init() {
 	I.RegisterVars(
 		I.Var("x", new(int)),
 	)
+	I.RegisterConsts(
+		I.Const("true", reflect.Bool, true),
+		I.Const("false", reflect.Bool, false),
+		I.Const("nil", ConstUnboundPtr, nil),
+	)
 	I.RegisterTypes(
 		I.Rtype(reflect.TypeOf((*Context)(nil))),
 		I.Rtype(reflect.TypeOf((*Code)(nil))),
 		I.Rtype(reflect.TypeOf((*Stack)(nil))),
 		I.Type("rune", TyRune),
 	)
+}
+
+func TestVarAndConst(t *testing.T) {
+	if ci, ok := I.FindConst("true"); !ok || ci.Value != true {
+		t.Fatal("FindConst failed:", ci.Value)
+	}
+	if ci, ok := I.FindConst("nil"); !ok || ci.Kind != ConstUnboundPtr {
+		t.Fatal("FindConst failed:", ci.Kind)
+	}
+	if addr, ok := I.FindVar("x"); !ok || addr != 0 {
+		t.Fatal("FindVar failed:", addr)
+	} else {
+		if addr.GetInfo().Name != "x" {
+			t.Fatal("var.GetInfo failed:", *addr.GetInfo())
+		}
+	}
 }
 
 func TestSprint(t *testing.T) {

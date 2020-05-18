@@ -116,18 +116,20 @@ func (p *stackVar) getType() reflect.Type {
 
 type blockCtx struct {
 	*pkgCtx
-	file   *fileCtx
-	parent *blockCtx
-	fun    *exec.FuncInfo
-	syms   map[string]iSymbol
+	file      *fileCtx
+	parent    *blockCtx
+	fun       *exec.FuncInfo
+	syms      map[string]iSymbol
+	noExecCtx bool
 }
 
-func newBlockCtx(parent *blockCtx) *blockCtx {
+func newBlockCtx(parent *blockCtx, noExecCtx bool) *blockCtx {
 	return &blockCtx{
-		pkgCtx: parent.pkgCtx,
-		file:   parent.file,
-		parent: parent,
-		syms:   make(map[string]iSymbol),
+		pkgCtx:    parent.pkgCtx,
+		file:      parent.file,
+		parent:    parent,
+		syms:      make(map[string]iSymbol),
+		noExecCtx: noExecCtx,
 	}
 }
 
@@ -144,7 +146,9 @@ func (p *blockCtx) getNestDepth() (nestDepth uint32) {
 		if p = p.parent; p == nil {
 			return
 		}
-		nestDepth++
+		if !p.noExecCtx {
+			nestDepth++
+		}
 	}
 }
 
@@ -291,7 +295,7 @@ func NewPackage(out *exec.Builder, pkg *ast.Package) (p *Package, err error) {
 			return p, err
 		}
 		ctx.file = entry.ctx.file
-		compileBlockStmt(ctx, entry.body)
+		compileBlockStmtWithout(ctx, entry.body)
 		out.Return(-1)
 		ctxPkg.resolveFuncs()
 	}
@@ -381,7 +385,7 @@ func loadFunc(ctx *blockCtx, d *ast.FuncDecl) {
 	} else if name == "init" {
 		log.Panicln("loadFunc TODO: init")
 	} else {
-		funCtx := newBlockCtx(ctx)
+		funCtx := newBlockCtx(ctx, false)
 		ctx.insertFunc(name, newFuncDecl(name, d.Type, d.Body, funCtx))
 	}
 }

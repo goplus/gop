@@ -114,19 +114,22 @@ func compileIdent(ctx *blockCtx, name string, mode compleMode) {
 			log.Panicln("compileIdent failed: unknown -", reflect.TypeOf(sym))
 		}
 	} else {
-		addr, kind, ok := ctx.builtin.Find(name)
-		if !ok {
-			log.Panicln("compileIdent failed: unknown -", name)
-		}
-		switch kind {
-		case exec.SymbolVar:
-		case exec.SymbolFunc, exec.SymbolFuncv:
-			ctx.infer.Push(newGoFunc(addr, kind, 0))
-			if mode == inferOnly {
-				return
+		if addr, kind, ok := ctx.builtin.Find(name); ok {
+			switch kind {
+			case exec.SymbolVar:
+			case exec.SymbolFunc, exec.SymbolFuncv:
+				ctx.infer.Push(newGoFunc(addr, kind, 0))
+				if mode == inferOnly {
+					return
+				}
 			}
+			log.Panicln("compileIdent failed: unknown -", kind, addr)
 		}
-		log.Panicln("compileIdent failed: unknown -", kind, addr)
+		if ci, ok := ctx.builtin.FindConst(name); ok {
+			compileConst(ctx, ci.Kind, ci.Value, mode)
+			return
+		}
+		log.Panicln("compileIdent failed: unknown -", name)
 	}
 }
 
@@ -284,7 +287,7 @@ func compileFuncLit(ctx *blockCtx, v *ast.FuncLit, mode compleMode) {
 	if mode > lhsBase {
 		log.Panicln("compileFuncLit: can't be lhs (left hand side) expr.")
 	}
-	funCtx := newBlockCtx(ctx)
+	funCtx := newBlockCtx(ctx, false)
 	decl := newFuncDecl("", v.Type, v.Body, funCtx)
 	ctx.use(decl)
 	ctx.infer.Push(newQlFunc(decl))
@@ -299,12 +302,16 @@ func compileBasicLit(ctx *blockCtx, v *ast.BasicLit, mode compleMode) {
 		log.Panicln("compileBasicLit: can't be lhs (left hand side) expr.")
 	}
 	kind, n := astutil.ToConst(v)
-	ret := &constVal{v: n, kind: kind, reserve: -1}
+	compileConst(ctx, kind, n, mode)
+}
+
+func compileConst(ctx *blockCtx, kind astutil.ConstKind, n interface{}, mode compleMode) {
+	ret := newConstVal(n, kind)
 	ctx.infer.Push(ret)
 	if mode == inferOnly {
 		return
 	}
-	if astutil.IsConstBound(kind) {
+	if isConstBound(kind) {
 		if kind == astutil.ConstBoundRune {
 			n = rune(n.(int64))
 		}
@@ -354,9 +361,9 @@ func binaryOpResult(op exec.Operator, x, y interface{}) (exec.Kind, iValue) {
 		log.Panicln("binaryOp: argument isn't an expr.")
 	}
 	kind := vx.Kind()
-	if !astutil.IsConstBound(kind) {
+	if !isConstBound(kind) {
 		kind = vy.Kind()
-		if !astutil.IsConstBound(kind) {
+		if !isConstBound(kind) {
 			log.Panicln("binaryOp: expect x, y aren't const values either.")
 		}
 	}

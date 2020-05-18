@@ -4,23 +4,60 @@ import (
 	"reflect"
 
 	"github.com/qiniu/qlang/v6/ast"
+	"github.com/qiniu/qlang/v6/exec"
 	"github.com/qiniu/x/log"
 )
 
 // -----------------------------------------------------------------------------
 
-func compileBlockStmt(ctx *blockCtx, body *ast.BlockStmt) {
+func compileBlockStmtWith(ctx *blockCtx, body *ast.BlockStmt) {
+	ctxWith := newBlockCtx(ctx, true)
+	compileBlockStmtWithout(ctxWith, body)
+}
+
+func compileBlockStmtWithout(ctx *blockCtx, body *ast.BlockStmt) {
 	for _, stmt := range body.List {
-		switch v := stmt.(type) {
-		case *ast.ExprStmt:
-			compileExprStmt(ctx, v)
-		case *ast.AssignStmt:
-			compileAssignStmt(ctx, v)
-		case *ast.ReturnStmt:
-			compileReturnStmt(ctx, v)
-		default:
-			log.Panicln("compileBlockStmt failed: unknown -", reflect.TypeOf(v))
+		compileStmt(ctx, stmt)
+	}
+}
+
+func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
+	switch v := stmt.(type) {
+	case *ast.ExprStmt:
+		compileExprStmt(ctx, v)
+	case *ast.AssignStmt:
+		compileAssignStmt(ctx, v)
+	case *ast.IfStmt:
+		var done *exec.Label
+		var ctxIf *blockCtx
+		if v.Init != nil {
+			ctxIf = newBlockCtx(ctx, true)
+			compileStmt(ctxIf, v.Init)
+		} else {
+			ctxIf = ctx
 		}
+		compileExpr(ctxIf, v.Cond, 0)
+		checkBool(ctx.infer.Pop())
+		out := ctx.out
+		label := exec.NewLabel("")
+		hasElse := v.Else != nil
+		out.JmpIfFalse(label)
+		compileBlockStmtWith(ctxIf, v.Body)
+		if hasElse {
+			done = exec.NewLabel("")
+			out.Jmp(done)
+		}
+		out.Label(label)
+		if hasElse {
+			compileStmt(ctxIf, v.Else)
+			out.Label(done)
+		}
+	case *ast.BlockStmt:
+		compileBlockStmtWith(ctx, v)
+	case *ast.ReturnStmt:
+		compileReturnStmt(ctx, v)
+	default:
+		log.Panicln("compileBlockStmt failed: unknown -", reflect.TypeOf(v))
 	}
 }
 

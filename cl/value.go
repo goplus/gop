@@ -23,6 +23,10 @@ type iValue interface {
 	NumValues() int
 }
 
+func isBool(v iValue) bool {
+	return v.NumValues() == 1 && v.Type() == exec.TyBool
+}
+
 // -----------------------------------------------------------------------------
 
 type goValue struct {
@@ -180,10 +184,19 @@ func (p *goFunc) Proto() iFuncType {
 
 // -----------------------------------------------------------------------------
 
+// isConstBound checks a const is bound or not.
+func isConstBound(kind astutil.ConstKind) bool {
+	return kind <= reflect.UnsafePointer
+}
+
 type constVal struct {
 	v       interface{}
 	kind    iKind
 	reserve exec.Reserved
+}
+
+func newConstVal(v interface{}, kind iKind) *constVal {
+	return &constVal{v: v, kind: kind, reserve: exec.InvalidReserved}
 }
 
 func (p *constVal) Kind() iKind {
@@ -191,7 +204,7 @@ func (p *constVal) Kind() iKind {
 }
 
 func (p *constVal) Type() reflect.Type {
-	if astutil.IsConstBound(p.kind) {
+	if isConstBound(p.kind) {
 		return exec.TypeFromKind(p.kind)
 	}
 	panic("don't call constVal.TypeOf: unbounded")
@@ -206,7 +219,7 @@ func (p *constVal) Value(i int) iValue {
 }
 
 func (p *constVal) boundKind() reflect.Kind {
-	if astutil.IsConstBound(p.kind) {
+	if isConstBound(p.kind) {
 		return p.kind
 	}
 	switch p.kind {
@@ -236,7 +249,7 @@ func boundType(in iValue) reflect.Type {
 }
 
 func (p *constVal) bound(t reflect.Type, b *exec.Builder) {
-	if p.reserve == -1 { // bounded
+	if p.reserve == exec.InvalidReserved { // bounded
 		if p.kind != t.Kind() {
 			if t == exec.TyEmptyInterface {
 				return
@@ -257,9 +270,9 @@ func binaryOp(op exec.Operator, x, y *constVal) *constVal {
 	xkind := x.kind
 	ykind := y.kind
 	var kind, kindReal astutil.ConstKind
-	if astutil.IsConstBound(xkind) {
+	if isConstBound(xkind) {
 		kind, kindReal = xkind, xkind
-	} else if astutil.IsConstBound(ykind) {
+	} else if isConstBound(ykind) {
 		kind, kindReal = ykind, ykind
 	} else if xkind < ykind {
 		kind, kindReal = ykind, realKindOf(ykind)
@@ -368,7 +381,7 @@ func boundElementType(elts []interface{}, base, max, step int) reflect.Type {
 			log.Panicln("boundElementType: unexpected - multiple return values.")
 		}
 		kind := e.Kind()
-		if !astutil.IsConstBound(kind) { // unbound
+		if !isConstBound(kind) { // unbound
 			if kindUnbound < kind {
 				kindUnbound = kind
 			}
