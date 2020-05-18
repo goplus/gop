@@ -63,14 +63,14 @@ func TestCase1(t *testing.T) {
 	code := NewBuilder(nil).
 		Push(1).
 		Push(1).
-		CaseNE(label1).
+		CaseNE(label1, 1).
 		Push(5).
 		Push(6).
 		BuiltinOp(Int, OpAdd).
 		Jmp(done).
 		Label(label1).
 		Push(2).
-		CaseNE(label2).
+		CaseNE(label2, 1).
 		Push(5).
 		Push(2).
 		BuiltinOp(Int, OpMod).
@@ -95,14 +95,17 @@ func TestCase2(t *testing.T) {
 	code := NewBuilder(nil).
 		Push(2).
 		Push(1).
-		CaseNE(label1).
+		Push(0).
+		CaseNE(label1, 2).
 		Push(5).
 		Push(6).
 		BuiltinOp(Int, OpMul).
 		Jmp(done).
 		Label(label1).
+		Push(3).
 		Push(2).
-		CaseNE(label2).
+		Push(100).
+		CaseNE(label2, 3).
 		Push(5).
 		Push(2).
 		BuiltinOp(Int, OpSub).
@@ -127,14 +130,14 @@ func TestDefault(t *testing.T) {
 	code := NewBuilder(nil).
 		Push(3).
 		Push(1).
-		CaseNE(label1).
+		CaseNE(label1, 1).
 		Push(5).
 		Push(6).
 		BuiltinOp(Int, OpMul).
 		Jmp(done).
 		Label(label1).
 		Push(2).
-		CaseNE(label2).
+		CaseNE(label2, 1).
 		Push(5).
 		Push(2).
 		BuiltinOp(Int, OpMod).

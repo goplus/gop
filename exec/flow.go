@@ -17,13 +17,31 @@ func execJmpIfFalse(i Instr, ctx *Context) {
 	}
 }
 
+const (
+	bitsCaseArityOperand = (1 << (bitsOpCaseNE - bitsOp)) - 1
+)
+
 func execCaseNE(i Instr, ctx *Context) {
+	arity := (i >> 16) & bitsCaseArityOperand
 	n := len(ctx.data)
-	if ctx.data[n-2] != ctx.data[n-1] {
-		ctx.data = ctx.data[:n-1]
-		execJmp(i, ctx)
+	if arity == 1 {
+		if ctx.data[n-2] != ctx.data[n-1] {
+			ctx.data = ctx.data[:n-1]
+			ctx.ip += int(int16(i))
+		} else {
+			ctx.data = ctx.data[:n-2]
+		}
 	} else {
-		ctx.data = ctx.data[:n-2]
+		itag := n - 1 - int(arity)
+		v := ctx.data[itag]
+		for i := int(arity); i > 0; i-- {
+			if v == ctx.data[n-i] {
+				ctx.data = ctx.data[:itag]
+				return
+			}
+		}
+		ctx.data = ctx.data[:itag+1]
+		ctx.ip += int(int16(i))
 	}
 }
 
@@ -53,13 +71,13 @@ func (p *Builder) resolveLabels() {
 	}
 }
 
-func (p *Builder) labelOp(op int, l *Label) *Builder {
+func (p *Builder) labelOp(op uint32, l *Label) *Builder {
 	if _, ok := p.labels[l]; !ok {
 		p.labels[l] = -1
 	}
 	code := p.code
 	l.offs = append(l.offs, code.Len())
-	code.data = append(code.data, uint32(op)<<bitsOpShift)
+	code.data = append(code.data, op)
 	return p
 }
 
@@ -74,17 +92,17 @@ func (p *Builder) Label(l *Label) *Builder {
 
 // Jmp instr
 func (p *Builder) Jmp(l *Label) *Builder {
-	return p.labelOp(opJmp, l)
+	return p.labelOp(opJmp<<bitsOpShift, l)
 }
 
 // JmpIfFalse instr
 func (p *Builder) JmpIfFalse(l *Label) *Builder {
-	return p.labelOp(opJmpIfFalse, l)
+	return p.labelOp(opJmpIfFalse<<bitsOpShift, l)
 }
 
 // CaseNE instr
-func (p *Builder) CaseNE(l *Label) *Builder {
-	return p.labelOp(opCaseNE, l)
+func (p *Builder) CaseNE(l *Label, arity int) *Builder {
+	return p.labelOp((opCaseNE<<bitsOpShift)|(uint32(arity)<<bitsOpCaseNEShift), l)
 }
 
 // Default instr

@@ -11,13 +11,19 @@ import (
 // -----------------------------------------------------------------------------
 
 func compileBlockStmtWith(ctx *blockCtx, body *ast.BlockStmt) {
-	ctxWith := newBlockCtx(ctx, true)
-	compileBlockStmtWithout(ctxWith, body)
+	compileBodyWith(ctx, body.List)
 }
 
 func compileBlockStmtWithout(ctx *blockCtx, body *ast.BlockStmt) {
 	for _, stmt := range body.List {
 		compileStmt(ctx, stmt)
+	}
+}
+
+func compileBodyWith(ctx *blockCtx, body []ast.Stmt) {
+	ctxWith := newBlockCtx(ctx, true)
+	for _, stmt := range body {
+		compileStmt(ctxWith, stmt)
 	}
 }
 
@@ -28,36 +34,89 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	case *ast.AssignStmt:
 		compileAssignStmt(ctx, v)
 	case *ast.IfStmt:
-		var done *exec.Label
-		var ctxIf *blockCtx
-		if v.Init != nil {
-			ctxIf = newBlockCtx(ctx, true)
-			compileStmt(ctxIf, v.Init)
-		} else {
-			ctxIf = ctx
-		}
-		compileExpr(ctxIf, v.Cond, 0)
-		checkBool(ctx.infer.Pop())
-		out := ctx.out
-		label := exec.NewLabel("")
-		hasElse := v.Else != nil
-		out.JmpIfFalse(label)
-		compileBlockStmtWith(ctxIf, v.Body)
-		if hasElse {
-			done = exec.NewLabel("")
-			out.Jmp(done)
-		}
-		out.Label(label)
-		if hasElse {
-			compileStmt(ctxIf, v.Else)
-			out.Label(done)
-		}
+		compileIfStmt(ctx, v)
 	case *ast.BlockStmt:
 		compileBlockStmtWith(ctx, v)
+	case *ast.SwitchStmt:
+		compileSwitchStmt(ctx, v)
 	case *ast.ReturnStmt:
 		compileReturnStmt(ctx, v)
 	default:
 		log.Panicln("compileBlockStmt failed: unknown -", reflect.TypeOf(v))
+	}
+}
+
+func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
+	var done *exec.Label
+	var ctxIf *blockCtx
+	if v.Init != nil {
+		ctxIf = newBlockCtx(ctx, true)
+		compileStmt(ctxIf, v.Init)
+	} else {
+		ctxIf = ctx
+	}
+	compileExpr(ctxIf, v.Cond, 0)
+	checkBool(ctx.infer.Pop())
+	out := ctx.out
+	label := exec.NewLabel("")
+	hasElse := v.Else != nil
+	out.JmpIfFalse(label)
+	compileBlockStmtWith(ctxIf, v.Body)
+	if hasElse {
+		done = exec.NewLabel("")
+		out.Jmp(done)
+	}
+	out.Label(label)
+	if hasElse {
+		compileStmt(ctxIf, v.Else)
+		out.Label(done)
+	}
+}
+
+func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
+	var defaultBody []ast.Stmt
+	var ctxSw *blockCtx
+	if v.Init != nil {
+		ctxSw = newBlockCtx(ctx, true)
+		compileStmt(ctxSw, v.Init)
+	} else {
+		ctxSw = ctx
+	}
+	out := ctx.out
+	hasTag := v.Tag != nil
+	if hasTag {
+		if len(v.Body.List) == 0 {
+			return
+		}
+		compileExpr(ctxSw, v.Tag, 0)
+		tag := ctx.infer.Pop()
+		done := exec.NewLabel("")
+		for _, item := range v.Body.List {
+			c, ok := item.(*ast.CaseClause)
+			if !ok {
+				log.Panicln("compile SwitchStmt failed: case clause expected.")
+			}
+			if c.List == nil { // default
+				defaultBody = c.Body
+				continue
+			}
+			for _, caseExp := range c.List {
+				compileExpr(ctxSw, caseExp, 0)
+				checkCaseCompare(tag, ctx.infer.Pop(), out)
+			}
+			next := exec.NewLabel("")
+			out.CaseNE(next, len(c.List))
+			compileBodyWith(ctxSw, c.Body)
+			out.Jmp(done)
+			out.Label(next)
+		}
+		out.Default()
+		if defaultBody != nil {
+			compileBodyWith(ctxSw, defaultBody)
+		}
+		out.Label(done)
+	} else {
+		log.Panicln("compileSwitchStmt: todo")
 	}
 }
 

@@ -54,6 +54,10 @@ const (
 	bitsOpVar        = bitsOp + bitsVarScope
 	bitsOpVarShift   = bitsInstr - bitsOpVar
 	bitsOpVarOperand = (1 << bitsOpVarShift) - 1
+
+	bitsOpCaseNE        = bitsOp + 10
+	bitsOpCaseNEShift   = bitsInstr - bitsOpCaseNE
+	bitsOpCaseNEOperand = (1 << bitsOpCaseNEShift) - 1
 )
 
 // A Instr represents a instruction of the executor.
@@ -71,7 +75,7 @@ const (
 	opBuiltinOp     = 8  // reserved(16) kind(5) builtinOp(5)
 	opJmp           = 9  // offset(26)
 	opJmpIfFalse    = 10 // offset(26)
-	opCaseNE        = 11 // offset(26)
+	opCaseNE        = 11 // n(10) offset(16)
 	opPop           = 12 // n(26)
 	opCallGoFunc    = 13 // addr(26) - call a Go function
 	opCallGoFuncv   = 14 // funvArity(10) addr(16) - call a Go function with variadic args
@@ -143,7 +147,7 @@ var instrInfos = []InstrInfo{
 	opBuiltinOp:     {"builtinOp", "kind", "op", (21 << 8) | 5},             // reserved(16) kind(5) builtinOp(5)
 	opJmp:           {"jmp", "", "offset", 26},                              // offset(26)
 	opJmpIfFalse:    {"jmpIfFalse", "", "offset", 26},                       // offset(26)
-	opCaseNE:        {"caseNE", "", "offset", 26},                           // offset(26)
+	opCaseNE:        {"caseNE", "n", "offset", (10 << 8) | 16},              // n(10) offset(16)
 	opPop:           {"pop", "", "n", 26},                                   // n(26)
 	opCallGoFunc:    {"callGoFunc", "", "addr", 26},                         // addr(26) - call a Go function
 	opCallGoFuncv:   {"callGoFuncv", "funvArity", "addr", (10 << 8) | 16},   // funvArity(10) addr(16) - call a Go function with variadic args
