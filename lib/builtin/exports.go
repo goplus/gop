@@ -3,6 +3,7 @@ package builtin
 import (
 	"fmt"
 	"io"
+	"reflect"
 
 	"github.com/qiniu/qlang/v6/exec"
 	qlang "github.com/qiniu/qlang/v6/spec"
@@ -49,6 +50,11 @@ func init() {
 		I.Funcv("printf", fmt.Printf, QexecPrintf),
 		I.Funcv("println", fmt.Println, QexecPrintln),
 		I.Funcv("fprintln", fmt.Fprintln, QexecFprintln),
+	)
+	I.RegisterConsts(
+		I.Const("true", reflect.Bool, true),
+		I.Const("false", reflect.Bool, false),
+		I.Const("nil", exec.ConstUnboundPtr, nil),
 	)
 	I.RegisterTypes(
 		I.Type("bool", exec.TyBool),

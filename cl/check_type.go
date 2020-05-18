@@ -106,4 +106,10 @@ func checkElementType(t reflect.Type, elts []interface{}, i, n, step int, b *exe
 	}
 }
 
+func checkBool(v interface{}) {
+	if !isBool(v.(iValue)) {
+		log.Panicln("checkBool failed: bool expression required.")
+	}
+}
+
 // -----------------------------------------------------------------------------

@@ -3,6 +3,7 @@ package exec
 import (
 	"reflect"
 
+	"github.com/qiniu/qlang/v6/ast/spec"
 	"github.com/qiniu/x/log"
 )
 
@@ -80,6 +81,25 @@ func execZero(i Instr, p *Context) {
 
 // -----------------------------------------------------------------------------
 
+// A ConstKind represents the specific kind of type that a Type represents.
+// The zero Kind is not a valid kind.
+type ConstKind = spec.ConstKind
+
+const (
+	// ConstBoundRune - bound type: rune
+	ConstBoundRune = spec.ConstBoundRune
+	// ConstBoundString - bound type: string
+	ConstBoundString = spec.ConstBoundString
+	// ConstUnboundInt - unbound int type
+	ConstUnboundInt = spec.ConstUnboundInt
+	// ConstUnboundFloat - unbound float type
+	ConstUnboundFloat = spec.ConstUnboundFloat
+	// ConstUnboundComplex - unbound complex type
+	ConstUnboundComplex = spec.ConstUnboundComplex
+	// ConstUnboundPtr - nil: unbound ptr
+	ConstUnboundPtr = spec.ConstUnboundPtr
+)
+
 // SymbolKind represents symbol kind.
 type SymbolKind uint32
 
@@ -97,6 +117,7 @@ type GoPackage struct {
 	PkgPath string
 	syms    map[string]uint32
 	types   map[string]reflect.Type
+	consts  map[string]*GoConstInfo
 }
 
 // NewGoPackage creates a new builtin Go Package.
@@ -108,6 +129,7 @@ func NewGoPackage(pkgPath string) *GoPackage {
 		PkgPath: pkgPath,
 		syms:    make(map[string]uint32),
 		types:   make(map[string]reflect.Type),
+		consts:  make(map[string]*GoConstInfo),
 	}
 	gopkgs[pkgPath] = pkg
 	return pkg
@@ -149,6 +171,12 @@ func (p *GoPackage) FindFuncv(name string) (addr GoFuncvAddr, ok bool) {
 	return
 }
 
+// FindConst lookups a Go constant by name.
+func (p *GoPackage) FindConst(name string) (ci *GoConstInfo, ok bool) {
+	ci, ok = p.consts[name]
+	return
+}
+
 // FindVar lookups a Go variable by name.
 func (p *GoPackage) FindVar(name string) (addr GoVarAddr, ok bool) {
 	if v, ok := p.syms[name]; ok {
@@ -163,6 +191,11 @@ func (p *GoPackage) FindVar(name string) (addr GoVarAddr, ok bool) {
 func (p *GoPackage) FindType(name string) (typ reflect.Type, ok bool) {
 	typ, ok = p.types[name]
 	return
+}
+
+// Const creates a GoConstInfo instance.
+func (p *GoPackage) Const(name string, kind ConstKind, val interface{}) GoConstInfo {
+	return GoConstInfo{Pkg: p, Name: name, Kind: kind, Value: val}
 }
 
 // Var creates a GoVarInfo instance.
@@ -206,6 +239,14 @@ func (p *GoPackage) RegisterVars(vars ...GoVarInfo) (base GoVarAddr) {
 		p.syms[v.Name] = uint32(base) + uint32(i)
 	}
 	return
+}
+
+// RegisterConsts registers all exported Go constants of this package.
+func (p *GoPackage) RegisterConsts(consts ...GoConstInfo) {
+	for i := range consts {
+		ci := &consts[i]
+		p.consts[ci.Name] = ci
+	}
 }
 
 // RegisterFuncs registers all exported Go functions of this package.
@@ -308,6 +349,14 @@ type GoTypeInfo struct {
 	Pkg  *GoPackage
 	Name string
 	Type reflect.Type
+}
+
+// GoConstInfo represents a Go constant information.
+type GoConstInfo struct {
+	Pkg   *GoPackage
+	Name  string
+	Kind  ConstKind
+	Value interface{}
 }
 
 // GoVarInfo represents a Go variable information.

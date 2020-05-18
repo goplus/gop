@@ -299,7 +299,7 @@ func (p *funcDecl) compile() {
 	out := ctx.out
 	out.DefineFunc(fun)
 	ctx.fun = fun
-	compileBlockStmt(ctx, p.body)
+	compileBlockStmtWithout(ctx, p.body)
 	ctx.fun = nil
 	out.EndFunc(fun)
 }

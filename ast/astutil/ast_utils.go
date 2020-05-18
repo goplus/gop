@@ -2,10 +2,10 @@ package astutil
 
 import (
 	"go/token"
-	"reflect"
 	"strconv"
 
 	"github.com/qiniu/qlang/v6/ast"
+	"github.com/qiniu/qlang/v6/ast/spec"
 	"github.com/qiniu/x/log"
 )
 
@@ -26,25 +26,20 @@ func ToString(l *ast.BasicLit) string {
 
 // A ConstKind represents the specific kind of type that a Type represents.
 // The zero Kind is not a valid kind.
-type ConstKind = reflect.Kind
+type ConstKind = spec.ConstKind
 
 const (
 	// ConstBoundRune - bound type: rune
-	ConstBoundRune = reflect.Int32
+	ConstBoundRune = spec.ConstBoundRune
 	// ConstBoundString - bound type: string
-	ConstBoundString = reflect.String
+	ConstBoundString = spec.ConstBoundString
 	// ConstUnboundInt - unbound int type
-	ConstUnboundInt = ConstKind(reflect.UnsafePointer + 3)
+	ConstUnboundInt = spec.ConstUnboundInt
 	// ConstUnboundFloat - unbound float type
-	ConstUnboundFloat = ConstKind(reflect.UnsafePointer + 4)
+	ConstUnboundFloat = spec.ConstUnboundFloat
 	// ConstUnboundComplex - unbound complex type
-	ConstUnboundComplex = ConstKind(reflect.UnsafePointer + 5)
+	ConstUnboundComplex = spec.ConstUnboundComplex
 )
-
-// IsConstBound checks a const is bound or not.
-func IsConstBound(kind ConstKind) bool {
-	return kind <= reflect.UnsafePointer
-}
 
 // ToConst converts a ast.BasicLit to constant value.
 func ToConst(v *ast.BasicLit) (ConstKind, interface{}) {
