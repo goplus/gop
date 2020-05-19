@@ -94,6 +94,7 @@ func parseFile(fset *token.FileSet, filename string, src interface{}, mode Mode)
 	return
 }
 
+/*
 // ParseExprFrom is a convenience function for parsing an expression.
 // The arguments have the same meaning as for ParseFile, but the source must
 // be a valid Go (type or value) expression. Specifically, fset must not
@@ -161,3 +162,4 @@ func parseExprFrom(fset *token.FileSet, filename string, src interface{}, mode M
 func parseExpr(x string) (ast.Expr, error) {
 	return parseExprFrom(token.NewFileSet(), "", x, 0)
 }
+*/

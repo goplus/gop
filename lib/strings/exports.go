@@ -8,13 +8,13 @@ import (
 
 // -----------------------------------------------------------------------------
 
-func execNewReplacer(arity uint32, p *qlang.Context) {
+func execNewReplacer(arity int, p *qlang.Context) {
 	args := p.GetArgs(arity)
 	repl := strings.NewReplacer(qlang.ToStrings(args)...)
 	p.Ret(arity, repl)
 }
 
-func execReplacerReplace(zero uint32, p *qlang.Context) {
+func execReplacerReplace(zero int, p *qlang.Context) {
 	args := p.GetArgs(2)
 	ret := args[0].(*strings.Replacer).Replace(args[1].(string))
 	p.Ret(2, ret)

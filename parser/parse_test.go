@@ -19,7 +19,6 @@ func init() {
 // -----------------------------------------------------------------------------
 
 var fsTest1 = asttest.NewSingleFileFS("/foo", "bar.ql", `package bar; import "io"
-
 func New() (*Bar, error) {
 	return nil, io.EOF
 }
@@ -57,7 +56,6 @@ func TestParseBarPackage(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 var fsTest2 = asttest.NewSingleFileFS("/foo", "bar.ql", `import "io"
-
 func New() (*Bar, error) {
 	return nil, io.EOF
 }
@@ -65,7 +63,8 @@ func New() (*Bar, error) {
 bar, err := New()
 if err != nil {
 	log.Println(err)
-}`)
+}
+`)
 
 func TestParseNoPackageAndGlobalCode(t *testing.T) {
 	fset := token.NewFileSet()
@@ -210,6 +209,76 @@ var fsTestSliceLit3 = asttest.NewSingleFileFS("/foo", "bar.ql", `
 func TestSliceLit3(t *testing.T) {
 	fset := token.NewFileSet()
 	pkgs, err := ParseFSDir(fset, fsTestSliceLit3, "/foo", nil, Trace)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+	bar, isMain := pkgs["main"]
+	if !isMain {
+		t.Fatal("TestMap failed: not main")
+	}
+	file := bar.Files["/foo/bar.ql"]
+	fmt.Println("Pkg:", file.Name)
+	for _, decl := range file.Decls {
+		fmt.Println("decl:", reflect.TypeOf(decl))
+		switch d := decl.(type) {
+		case *ast.GenDecl:
+			for _, spec := range d.Specs {
+				switch v := spec.(type) {
+				case *ast.ImportSpec:
+					fmt.Println(" - import:", v.Path.Value)
+				}
+			}
+		case *ast.FuncDecl:
+			fmt.Println(" - func:", d.Name.Name)
+		}
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+var fsTestListComprehension = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	x := [x*x for x <- [1, 2, 3, 4]]
+	println("x:", x)
+`)
+
+func TestListComprehension(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := ParseFSDir(fset, fsTestListComprehension, "/foo", nil, Trace)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+	bar, isMain := pkgs["main"]
+	if !isMain {
+		t.Fatal("TestMap failed: not main")
+	}
+	file := bar.Files["/foo/bar.ql"]
+	fmt.Println("Pkg:", file.Name)
+	for _, decl := range file.Decls {
+		fmt.Println("decl:", reflect.TypeOf(decl))
+		switch d := decl.(type) {
+		case *ast.GenDecl:
+			for _, spec := range d.Specs {
+				switch v := spec.(type) {
+				case *ast.ImportSpec:
+					fmt.Println(" - import:", v.Path.Value)
+				}
+			}
+		case *ast.FuncDecl:
+			fmt.Println(" - func:", d.Name.Name)
+		}
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+var fsTestMapComprehension = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	x := {v: k*k for k, v <- [3, 5, 7, 11]}
+	println("x:", x)
+`)
+
+func TestMapComprehension(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := ParseFSDir(fset, fsTestMapComprehension, "/foo", nil, Trace)
 	if err != nil || len(pkgs) != 1 {
 		t.Fatal("ParseFSDir failed:", err, len(pkgs))
 	}

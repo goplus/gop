@@ -98,6 +98,8 @@ const (
 	opMakeArray     = 31 // funvArity(10) type(16)
 	opMakeMap       = 32 // funvArity(10) type(16)
 	opZero          = 33 // type(26)
+	opLstComprehens = 34 // addr(26)
+	opMapComprehens = 35 // addr(26)
 )
 
 const (
@@ -169,6 +171,8 @@ var instrInfos = []InstrInfo{
 	opCallGoClosure: {"callGoClosure", "", "arity", 26},                     // arity(26)
 	opMakeArray:     {"makeArray", "funvArity", "type", (10 << 8) | 16},     // funvArity(10) type(16)
 	opZero:          {"zero", "", "type", 26},                               // type(26)
+	opLstComprehens: {"listComprehension", "", "addr", 26},                  // addr(26)
+	opMapComprehens: {"mapComprehension", "", "addr", 26},                   // addr(26)
 }
 
 // -----------------------------------------------------------------------------
@@ -182,6 +186,7 @@ type Code struct {
 	valConsts    []interface{}
 	funs         []*FuncInfo
 	funvs        []*FuncInfo
+	comprehens   []*Comprehension
 	types        []reflect.Type
 	structs      []StructInfo
 	varManager

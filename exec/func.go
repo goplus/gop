@@ -41,12 +41,12 @@ func execGoClosure(i Instr, p *Context) {
 }
 
 func execCallGoClosure(i Instr, p *Context) {
-	arity := i & bitsOperand
+	arity := int(i & bitsOperand)
 	fn := reflect.ValueOf(p.Pop())
 	t := fn.Type()
 	var out []reflect.Value
 	if t.IsVariadic() && arity == bitsOperand {
-		arity = uint32(t.NumIn())
+		arity = t.NumIn()
 		args := p.GetArgs(arity)
 		in := make([]reflect.Value, arity)
 		for i, arg := range args {
@@ -109,6 +109,62 @@ func execFuncv(i Instr, p *Context) {
 		}
 		fun.execVariadic(arity, stk, p)
 	}
+}
+
+func execListComprehension(i Instr, p *Context) {
+	addr := i & bitsOperand
+	c := p.code.comprehens[addr]
+	n := c.exec(p)
+	makeArray(c.Out, n, p)
+}
+
+func execMapComprehension(i Instr, p *Context) {
+	addr := i & bitsOperand
+	c := p.code.comprehens[addr]
+	n := c.exec(p)
+	makeMap(c.Out, n, p)
+}
+
+func (c *Comprehension) exec(p *Context) int {
+	data := reflect.ValueOf(p.Pop())
+	switch data.Kind() {
+	case reflect.Map:
+		return c.execMapRange(data, p)
+	default:
+		return c.execListRange(data, p)
+	}
+}
+
+func (c *Comprehension) execListRange(data reflect.Value, p *Context) int {
+	n := data.Len()
+	ip, ipEnd := p.ip, c.End
+	key, val := c.Key, c.Value
+	for i := 0; i < n; i++ {
+		if key != nil {
+			p.SetVar(key, i)
+		}
+		if val != nil {
+			p.SetVar(val, data.Index(i).Interface())
+		}
+		p.Exec(ip, ipEnd)
+	}
+	return n
+}
+
+func (c *Comprehension) execMapRange(data reflect.Value, p *Context) int {
+	iter := data.MapRange()
+	ip, ipEnd := p.ip, c.End
+	key, val := c.Key, c.Value
+	for iter.Next() {
+		if key != nil {
+			p.SetVar(key, iter.Key().Interface())
+		}
+		if val != nil {
+			p.SetVar(val, iter.Value().Interface())
+		}
+		p.Exec(ip, ipEnd)
+	}
+	return data.Len()
 }
 
 // -----------------------------------------------------------------------------
@@ -259,7 +315,7 @@ func (p *FuncInfo) exec(stk *Stack, parent *Context) {
 	ctx.Exec(p.FunEntry, p.FunEnd)
 	if ctx.ip == ipReturnN {
 		n := len(stk.data)
-		stk.Ret(uint32(len(p.in)+n-ctx.base), stk.data[n-p.numOut:]...)
+		stk.Ret(len(p.in)+n-ctx.base, stk.data[n-p.numOut:]...)
 	} else {
 		stk.SetLen(ctx.base - len(p.in))
 		n := uint32(p.numOut)
@@ -273,12 +329,12 @@ func (p *FuncInfo) execVariadic(arity uint32, stk *Stack, parent *Context) {
 	var n = uint32(len(p.in) - 1)
 	if arity > n {
 		tVariadic := p.in[n]
-		nVariadic := arity - n
+		nVariadic := int(arity - n)
 		if tVariadic == TyEmptyInterfaceSlice {
 			var empty []interface{}
 			stk.Ret(nVariadic, append(empty, stk.GetArgs(nVariadic)...))
 		} else {
-			variadic := reflect.MakeSlice(tVariadic, int(nVariadic), int(nVariadic))
+			variadic := reflect.MakeSlice(tVariadic, nVariadic, nVariadic)
 			items := stk.GetArgs(nVariadic)
 			for i, item := range items {
 				setValue(variadic.Index(i), item)
@@ -291,6 +347,20 @@ func (p *FuncInfo) execVariadic(arity uint32, stk *Stack, parent *Context) {
 
 // TyEmptyInterfaceSlice type
 var TyEmptyInterfaceSlice = reflect.SliceOf(TyEmptyInterface)
+
+// -----------------------------------------------------------------------------
+
+// Comprehension represents a list/map comprehension.
+type Comprehension struct {
+	Key, Value *Var // Key, Value may be nil
+	In, Out    reflect.Type
+	End        int
+}
+
+// NewComprehension creates a new Comprehension instance.
+func NewComprehension(key, val *Var, in, out reflect.Type) *Comprehension {
+	return &Comprehension{In: in, Out: out, Key: key, Value: val}
+}
 
 // -----------------------------------------------------------------------------
 
@@ -313,6 +383,30 @@ func (p *Builder) resolveFuncs() {
 
 func isClosure(op uint32) bool {
 	return op == opClosure || op == opGoClosure
+}
+
+// ListComprehension instr
+func (p *Builder) ListComprehension(c *Comprehension) *Builder {
+	code := p.code
+	addr := uint32(len(code.comprehens))
+	code.comprehens = append(code.comprehens, c)
+	code.data = append(code.data, (opLstComprehens<<bitsOpShift)|addr)
+	return p
+}
+
+// MapComprehension instr
+func (p *Builder) MapComprehension(c *Comprehension) *Builder {
+	code := p.code
+	addr := uint32(len(code.comprehens))
+	code.comprehens = append(code.comprehens, c)
+	code.data = append(code.data, (opMapComprehens<<bitsOpShift)|addr)
+	return p
+}
+
+// EndComprehension instr
+func (p *Builder) EndComprehension(c *Comprehension) *Builder {
+	c.End = len(p.code.data)
+	return p
 }
 
 // DefineFunc instr

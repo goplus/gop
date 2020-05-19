@@ -17,99 +17,107 @@ import (
 type compleMode = token.Token
 
 const (
-	inferOnly compleMode = 1 // don't generate any code.
-	lhsBase   compleMode = 10
 	lhsAssign compleMode = token.ASSIGN // leftHandSide = ...
 	lhsDefine compleMode = token.DEFINE // leftHandSide := ...
 )
 
 // -----------------------------------------------------------------------------
 
-func compileExpr(ctx *blockCtx, expr ast.Expr, mode compleMode) {
+func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compleMode) {
 	switch v := expr.(type) {
 	case *ast.Ident:
-		compileIdent(ctx, v.Name, mode)
-	case *ast.BasicLit:
-		compileBasicLit(ctx, v, mode)
-	case *ast.CallExpr:
-		compileCallExpr(ctx, v, mode)
-	case *ast.BinaryExpr:
-		compileBinaryExpr(ctx, v, mode)
-	case *ast.SelectorExpr:
-		compileSelectorExpr(ctx, v, mode)
-	case *ast.CompositeLit:
-		compileCompositeLit(ctx, v, mode)
-	case *ast.SliceLit:
-		compileSliceLit(ctx, v, mode)
-	case *ast.FuncLit:
-		compileFuncLit(ctx, v, mode)
-	case *ast.Ellipsis:
-		compileEllipsis(ctx, v, mode)
-	case *ast.KeyValueExpr:
-		panic("compileExpr: ast.KeyValueExpr unexpected")
+		compileIdentLHS(ctx, v.Name, mode)
 	default:
 		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
 	}
 }
 
-func compileEllipsis(ctx *blockCtx, v *ast.Ellipsis, mode compleMode) {
-	if mode != inferOnly {
-		log.Panicln("compileEllipsis: only support inferOnly mode.")
+func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
+	switch v := expr.(type) {
+	case *ast.Ident:
+		return compileIdent(ctx, v.Name)
+	case *ast.BasicLit:
+		return compileBasicLit(ctx, v)
+	case *ast.CallExpr:
+		return compileCallExpr(ctx, v)
+	case *ast.BinaryExpr:
+		return compileBinaryExpr(ctx, v)
+	case *ast.SelectorExpr:
+		return compileSelectorExpr(ctx, v)
+	case *ast.CompositeLit:
+		return compileCompositeLit(ctx, v)
+	case *ast.SliceLit:
+		return compileSliceLit(ctx, v)
+	case *ast.FuncLit:
+		return compileFuncLit(ctx, v)
+	case *ast.ListComprehensionExpr:
+		return compileListComprehensionExpr(ctx, v)
+	case *ast.Ellipsis:
+		return compileEllipsis(ctx, v)
+	case *ast.KeyValueExpr:
+		panic("compileExpr: ast.KeyValueExpr unexpected")
+	default:
+		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
+		return nil
 	}
+}
+
+func compileEllipsis(ctx *blockCtx, v *ast.Ellipsis) func() {
 	if v.Elt != nil {
 		log.Panicln("compileEllipsis: todo")
 	}
 	ctx.infer.Push(&constVal{v: int64(-1), kind: astutil.ConstUnboundInt})
+	return nil
 }
 
-func compileIdent(ctx *blockCtx, name string, mode compleMode) {
-	if mode > lhsBase {
-		in := ctx.infer.Get(-1)
-		addr, err := ctx.findVar(name)
-		if err == nil {
-			if mode == lhsDefine && !addr.inCurrentCtx(ctx) {
-				log.Warn("requireVar: variable is shadowed -", name)
-			}
-		} else if mode == lhsAssign || err != syscall.ENOENT {
-			log.Panicln("compileIdent failed:", err, "-", name)
-		} else {
-			typ := boundType(in.(iValue))
-			addr = ctx.insertVar(name, typ)
+func compileIdentLHS(ctx *blockCtx, name string, mode compleMode) {
+	in := ctx.infer.Get(-1)
+	addr, err := ctx.findVar(name)
+	if err == nil {
+		if mode == lhsDefine && !addr.inCurrentCtx(ctx) {
+			log.Warn("requireVar: variable is shadowed -", name)
 		}
-		checkType(addr.getType(), in, ctx.out)
-		ctx.infer.PopN(1)
-		if v, ok := addr.(*execVar); ok {
-			ctx.out.StoreVar((*exec.Var)(v))
-		} else {
-			ctx.out.Store(addr.(*stackVar).index)
-		}
-	} else if sym, ok := ctx.find(name); ok {
+	} else if mode == lhsAssign || err != syscall.ENOENT {
+		log.Panicln("compileIdent failed:", err, "-", name)
+	} else {
+		typ := boundType(in.(iValue))
+		addr = ctx.insertVar(name, typ)
+	}
+	checkType(addr.getType(), in, ctx.out)
+	ctx.infer.PopN(1)
+	if v, ok := addr.(*execVar); ok {
+		ctx.out.StoreVar((*exec.Var)(v))
+	} else {
+		ctx.out.Store(addr.(*stackVar).index)
+	}
+}
+
+func compileIdent(ctx *blockCtx, name string) func() {
+	if sym, ok := ctx.find(name); ok {
 		switch v := sym.(type) {
 		case *execVar:
 			ctx.infer.Push(&goValue{t: v.Type})
-			if mode == inferOnly {
-				return
+			return func() {
+				ctx.out.LoadVar((*exec.Var)(v))
 			}
-			ctx.out.LoadVar((*exec.Var)(v))
 		case *stackVar:
 			ctx.infer.Push(&goValue{t: v.typ})
-			if mode == inferOnly {
-				return
+			return func() {
+				ctx.out.Load(v.index)
 			}
-			ctx.out.Load(v.index)
 		case string: // pkgPath
 			pkg := exec.FindGoPackage(v)
 			if pkg == nil {
 				log.Panicln("compileIdent failed: package not found -", v)
 			}
 			ctx.infer.Push(&nonValue{pkg})
+			return nil
 		case *funcDecl:
 			ctx.use(v)
 			ctx.infer.Push(newQlFunc(v))
-			if mode == inferOnly {
-				return
+			return func() {
+				log.Panicln("compileIdent failed: todo - funcDecl")
 			}
-			log.Panicln("compileIdent failed: todo - funcDecl")
 		default:
 			log.Panicln("compileIdent failed: unknown -", reflect.TypeOf(sym))
 		}
@@ -119,27 +127,23 @@ func compileIdent(ctx *blockCtx, name string, mode compleMode) {
 			case exec.SymbolVar:
 			case exec.SymbolFunc, exec.SymbolFuncv:
 				ctx.infer.Push(newGoFunc(addr, kind, 0))
-				if mode == inferOnly {
-					return
+				return func() {
+					log.Panicln("compileIdent todo: func -", kind, addr)
 				}
 			}
-			log.Panicln("compileIdent failed: unknown -", kind, addr)
+			log.Panicln("compileIdent todo: var -", kind, addr)
 		}
 		if ci, ok := ctx.builtin.FindConst(name); ok {
-			compileConst(ctx, ci.Kind, ci.Value, mode)
-			return
+			return compileConst(ctx, ci.Kind, ci.Value)
 		}
 		log.Panicln("compileIdent failed: unknown -", name)
 	}
+	return nil
 }
 
-func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, mode compleMode) {
-	if mode > lhsBase {
-		log.Panicln("compileCompositeLit: can't be lhs (left hand side) expr.")
-	}
+func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 	if v.Type == nil {
-		compileMapLit(ctx, v, mode)
-		return
+		return compileMapLit(ctx, v)
 	}
 	typ := toType(ctx, v.Type)
 	switch kind := typ.Kind(); kind {
@@ -151,117 +155,157 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, mode compleMode) {
 		} else {
 			typSlice = typ.(reflect.Type)
 		}
-		if mode == inferOnly {
-			ctx.infer.Push(&goValue{t: typSlice})
-			return
-		}
-		var nLen int
-		if kind == reflect.Array {
-			nLen = typSlice.Len()
-		} else {
-			nLen = toBoundArrayLen(ctx, v)
-		}
-		n := -1
-		elts := make([]ast.Expr, nLen)
-		for _, elt := range v.Elts {
-			switch e := elt.(type) {
-			case *ast.KeyValueExpr:
-				n = toInt(ctx, e.Key)
-				elts[n] = e.Value
-			default:
-				n++
-				elts[n] = e
-			}
-		}
-		n++
-		typElem := typSlice.Elem()
-		for _, elt := range elts {
-			if elt != nil {
-				compileExpr(ctx, elt, 0)
-				checkType(typElem, ctx.infer.Pop(), ctx.out)
-			} else {
-				ctx.out.Zero(typElem)
-			}
-		}
-		ctx.out.MakeArray(typSlice, n)
 		ctx.infer.Push(&goValue{t: typSlice})
+		return func() {
+			var nLen int
+			if kind == reflect.Array {
+				nLen = typSlice.Len()
+			} else {
+				nLen = toBoundArrayLen(ctx, v)
+			}
+			n := -1
+			elts := make([]ast.Expr, nLen)
+			for _, elt := range v.Elts {
+				switch e := elt.(type) {
+				case *ast.KeyValueExpr:
+					n = toInt(ctx, e.Key)
+					elts[n] = e.Value
+				default:
+					n++
+					elts[n] = e
+				}
+			}
+			n++
+			typElem := typSlice.Elem()
+			for _, elt := range elts {
+				if elt != nil {
+					compileExpr(ctx, elt)()
+					checkType(typElem, ctx.infer.Pop(), ctx.out)
+				} else {
+					ctx.out.Zero(typElem)
+				}
+			}
+			ctx.out.MakeArray(typSlice, n)
+		}
 	case reflect.Map:
 		typMap := typ.(reflect.Type)
-		if mode == inferOnly {
-			ctx.infer.Push(&goValue{t: typMap})
-			return
-		}
-		typKey := typMap.Key()
-		typVal := typMap.Elem()
-		for _, elt := range v.Elts {
-			switch e := elt.(type) {
-			case *ast.KeyValueExpr:
-				compileExpr(ctx, e.Key, 0)
-				checkType(typKey, ctx.infer.Pop(), ctx.out)
-				compileExpr(ctx, e.Value, 0)
-				checkType(typVal, ctx.infer.Pop(), ctx.out)
-			default:
-				log.Panicln("compileCompositeLit: map requires key-value expr.")
-			}
-		}
-		ctx.out.MakeMap(typMap, len(v.Elts))
 		ctx.infer.Push(&goValue{t: typMap})
+		return func() {
+			typKey := typMap.Key()
+			typVal := typMap.Elem()
+			for _, elt := range v.Elts {
+				switch e := elt.(type) {
+				case *ast.KeyValueExpr:
+					compileExpr(ctx, e.Key)()
+					checkType(typKey, ctx.infer.Pop(), ctx.out)
+					compileExpr(ctx, e.Value)()
+					checkType(typVal, ctx.infer.Pop(), ctx.out)
+				default:
+					log.Panicln("compileCompositeLit: map requires key-value expr.")
+				}
+			}
+			ctx.out.MakeMap(typMap, len(v.Elts))
+		}
 	default:
 		log.Panicln("compileCompositeLit failed: unknown -", reflect.TypeOf(typ))
+		return nil
 	}
 }
 
-func compileSliceLit(ctx *blockCtx, v *ast.SliceLit, mode compleMode) {
-	for _, elt := range v.Elts {
-		compileExpr(ctx, elt, mode)
-	}
+func compileSliceLit(ctx *blockCtx, v *ast.SliceLit) func() {
 	n := len(v.Elts)
 	if n == 0 {
-		log.Debug("compileSliceLit:", exec.TyEmptyInterfaceSlice)
 		ctx.infer.Push(&goValue{t: exec.TyEmptyInterfaceSlice})
-		if mode != inferOnly {
+		return func() {
+			log.Debug("compileSliceLit:", exec.TyEmptyInterfaceSlice)
 			ctx.out.MakeArray(exec.TyEmptyInterfaceSlice, 0)
 		}
-		return
 	}
-	elts := ctx.infer.GetArgs(uint32(n))
+	fnElts := make([]func(), n)
+	elts := make([]interface{}, n)
+	for i, elt := range v.Elts {
+		fnElts[i] = compileExpr(ctx, elt)
+		elts[i] = ctx.infer.Get(-1)
+	}
 	typElem := boundElementType(elts, 0, n, 1)
 	if typElem == nil {
 		typElem = exec.TyEmptyInterface
 	}
 	typSlice := reflect.SliceOf(typElem)
-	if mode == inferOnly {
-		ctx.infer.Ret(uint32(n), &goValue{t: typSlice})
-		return
+	ctx.infer.Ret(n, &goValue{t: typSlice})
+	return func() {
+		log.Debug("compileSliceLit:", typSlice)
+		for _, fnElt := range fnElts {
+			fnElt()
+		}
+		checkElementType(typElem, elts, 0, n, 1, ctx.out)
+		ctx.out.MakeArray(typSlice, len(v.Elts))
 	}
-	out := ctx.out
-	log.Debug("compileSliceLit:", typSlice)
-	checkElementType(typElem, elts, 0, n, 1, out)
-	out.MakeArray(typSlice, len(v.Elts))
-	ctx.infer.Ret(uint32(n), &goValue{t: typSlice})
 }
 
-func compileMapLit(ctx *blockCtx, v *ast.CompositeLit, mode compleMode) {
-	for _, elt := range v.Elts {
+func compileListComprehensionExpr(ctx *blockCtx, v *ast.ListComprehensionExpr) func() {
+	var typKey reflect.Type
+	var varKey *exec.Var
+	var hasKey = v.Key != nil
+	var ctxList = newBlockCtx(ctx, true)
+
+	exprX := compileExpr(ctxList, v.X)
+	typData := boundType(ctx.infer.Get(-1).(iValue))
+	if hasKey {
+		switch kind := typData.Kind(); kind {
+		case reflect.Slice, reflect.Array:
+			typKey = exec.TyInt
+		case reflect.Map:
+			typKey = typData.Key()
+		default:
+			log.Panicln("compileListComprehensionExpr: require slice, array or map")
+		}
+		varKey = (*exec.Var)(ctxList.insertVar(v.Key.Name, typKey, true))
+	}
+	typVal := typData.Elem()
+	varVal := (*exec.Var)(ctxList.insertVar(v.Value.Name, typVal, true))
+
+	exprElt := compileExpr(ctxList, v.Elt)
+	typElem := boundType(ctx.infer.Get(-1).(iValue))
+	typSlice := reflect.SliceOf(typElem)
+	ctx.infer.Ret(2, &goValue{t: typSlice})
+	return func() {
+		exprX()
+		out := ctxList.out
+		c := exec.NewComprehension(varKey, varVal, typData, typSlice)
+		out.ListComprehension(c)
+		if hasKey {
+			out.DefineVar(varKey)
+		}
+		out.DefineVar(varVal)
+		exprElt()
+		out.EndComprehension(c)
+	}
+}
+
+func compileMapLit(ctx *blockCtx, v *ast.CompositeLit) func() {
+	n := len(v.Elts) << 1
+	if n == 0 {
+		typMap := reflect.MapOf(exec.TyString, exec.TyEmptyInterface)
+		ctx.infer.Push(&goValue{t: typMap})
+		return func() {
+			log.Debug("compileMapLit:", typMap)
+			ctx.out.MakeMap(typMap, 0)
+		}
+	}
+	fnElts := make([]func(), n)
+	elts := make([]interface{}, n)
+	for i, elt := range v.Elts {
 		switch e := elt.(type) {
 		case *ast.KeyValueExpr:
-			compileExpr(ctx, e.Key, mode)
-			compileExpr(ctx, e.Value, mode)
+			fnElts[i<<1] = compileExpr(ctx, e.Key)
+			elts[i<<1] = ctx.infer.Get(-1)
+			fnElts[(i<<1)+1] = compileExpr(ctx, e.Value)
+			elts[(i<<1)+1] = ctx.infer.Get(-1)
 		default:
 			log.Panicln("compileMapLit: map requires key-value expr.")
 		}
 	}
-	n := len(v.Elts) << 1
-	if n == 0 {
-		typMap := reflect.MapOf(exec.TyString, exec.TyEmptyInterface)
-		log.Debug("compileMapLit:", typMap)
-		ctx.infer.Push(&goValue{t: typMap})
-		if mode != inferOnly {
-			ctx.out.MakeMap(typMap, 0)
-		}
-		return
-	}
-	elts := ctx.infer.GetArgs(uint32(n))
 	typKey := boundElementType(elts, 0, n, 2)
 	if typKey == nil {
 		log.Panicln("compileMapLit: mismatched key type.")
@@ -271,62 +315,52 @@ func compileMapLit(ctx *blockCtx, v *ast.CompositeLit, mode compleMode) {
 		typVal = exec.TyEmptyInterface
 	}
 	typMap := reflect.MapOf(typKey, typVal)
-	if mode == inferOnly {
-		ctx.infer.Ret(uint32(n), &goValue{t: typMap})
-		return
+	ctx.infer.Ret(n, &goValue{t: typMap})
+	return func() {
+		log.Debug("compileMapLit:", typMap)
+		for _, fnElt := range fnElts {
+			fnElt()
+		}
+		out := ctx.out
+		checkElementType(typKey, elts, 0, n, 2, out)
+		checkElementType(typVal, elts, 1, n, 2, out)
+		out.MakeMap(typMap, len(v.Elts))
 	}
-	out := ctx.out
-	log.Debug("compileMapLit:", typMap)
-	checkElementType(typKey, elts, 0, n, 2, out)
-	checkElementType(typVal, elts, 1, n, 2, out)
-	out.MakeMap(typMap, len(v.Elts))
-	ctx.infer.Ret(uint32(n), &goValue{t: typMap})
 }
 
-func compileFuncLit(ctx *blockCtx, v *ast.FuncLit, mode compleMode) {
-	if mode > lhsBase {
-		log.Panicln("compileFuncLit: can't be lhs (left hand side) expr.")
-	}
+func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) func() {
 	funCtx := newBlockCtx(ctx, false)
 	decl := newFuncDecl("", v.Type, v.Body, funCtx)
 	ctx.use(decl)
 	ctx.infer.Push(newQlFunc(decl))
-	if mode == inferOnly {
-		return
+	return func() {
+		ctx.out.GoClosure(decl.fi)
 	}
-	ctx.out.GoClosure(decl.fi)
 }
 
-func compileBasicLit(ctx *blockCtx, v *ast.BasicLit, mode compleMode) {
-	if mode > lhsBase {
-		log.Panicln("compileBasicLit: can't be lhs (left hand side) expr.")
-	}
+func compileBasicLit(ctx *blockCtx, v *ast.BasicLit) func() {
 	kind, n := astutil.ToConst(v)
-	compileConst(ctx, kind, n, mode)
+	return compileConst(ctx, kind, n)
 }
 
-func compileConst(ctx *blockCtx, kind astutil.ConstKind, n interface{}, mode compleMode) {
+func compileConst(ctx *blockCtx, kind astutil.ConstKind, n interface{}) func() {
 	ret := newConstVal(n, kind)
 	ctx.infer.Push(ret)
-	if mode == inferOnly {
-		return
-	}
-	if isConstBound(kind) {
-		if kind == astutil.ConstBoundRune {
-			n = rune(n.(int64))
+	return func() {
+		if isConstBound(kind) {
+			if kind == astutil.ConstBoundRune {
+				n = rune(n.(int64))
+			}
+			ctx.out.Push(n)
+		} else {
+			ret.reserve = ctx.out.Reserve()
 		}
-		ctx.out.Push(n)
-	} else {
-		ret.reserve = ctx.out.Reserve()
 	}
 }
 
-func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr, mode compleMode) {
-	if mode > lhsBase {
-		log.Panicln("compileBinaryExpr: can't be lhs (left hand side) expr.")
-	}
-	compileExpr(ctx, v.X, inferOnly)
-	compileExpr(ctx, v.Y, inferOnly)
+func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
+	exprX := compileExpr(ctx, v.X)
+	exprY := compileExpr(ctx, v.Y)
 	x := ctx.infer.Get(-2)
 	y := ctx.infer.Get(-1)
 	op := binaryOps[v.Op]
@@ -335,23 +369,18 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr, mode compleMode) {
 	if xok && yok { // <const> op <const>
 		ret := binaryOp(op, xcons, ycons)
 		ctx.infer.Ret(2, ret)
-		if mode != inferOnly {
+		return func() {
 			ret.reserve = ctx.out.Reserve()
 		}
-		return
 	}
 	kind, ret := binaryOpResult(op, x, y)
-	if mode == inferOnly {
-		ctx.infer.Ret(2, ret)
-		return
+	ctx.infer.Ret(2, ret)
+	return func() {
+		exprX()
+		exprY()
+		checkBinaryOp(kind, op, x, y, ctx.out)
+		ctx.out.BuiltinOp(kind, op)
 	}
-	compileExpr(ctx, v.X, 0)
-	compileExpr(ctx, v.Y, 0)
-	x = ctx.infer.Get(-2)
-	y = ctx.infer.Get(-1)
-	checkBinaryOp(kind, op, x, y, ctx.out)
-	ctx.out.BuiltinOp(kind, op)
-	ctx.infer.Ret(4, ret)
 }
 
 func binaryOpResult(op exec.Operator, x, y interface{}) (exec.Kind, iValue) {
@@ -397,83 +426,75 @@ var binaryOps = [...]exec.Operator{
 	token.LOR:     exec.OpLOr,
 }
 
-func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, mode compleMode) {
-	if mode > lhsBase {
-		log.Panicln("compileCallExpr: can't be lhs (left hand side) expr.")
-	}
-	compileExpr(ctx, v.Fun, inferOnly)
+func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) func() {
+	exprFun := compileExpr(ctx, v.Fun)
 	fn := ctx.infer.Get(-1)
 	switch vfn := fn.(type) {
 	case *qlFunc:
 		ret := vfn.Results()
-		if mode == inferOnly {
-			ctx.infer.Ret(1, ret)
-			return
+		ctx.infer.Ret(1, ret)
+		return func() {
+			for _, arg := range v.Args {
+				compileExpr(ctx, arg)()
+			}
+			out := ctx.out
+			nargs := len(v.Args)
+			args := ctx.infer.GetArgs(nargs)
+			arity := checkFuncCall(vfn.Proto(), 0, args, out)
+			fun := vfn.FuncInfo()
+			if fun.IsVariadic() {
+				out.CallFuncv(fun, arity)
+			} else {
+				out.CallFunc(fun)
+			}
+			ctx.infer.PopN(nargs)
 		}
-		for _, arg := range v.Args {
-			compileExpr(ctx, arg, 0)
-		}
-		out := ctx.out
-		nargs := uint32(len(v.Args))
-		args := ctx.infer.GetArgs(nargs)
-		arity := checkFuncCall(vfn.Proto(), 0, args, out)
-		fun := vfn.FuncInfo()
-		if fun.IsVariadic() {
-			out.CallFuncv(fun, arity)
-		} else {
-			out.CallFunc(fun)
-		}
-		ctx.infer.Ret(uint32(len(v.Args)+1), ret)
-		return
 	case *goFunc:
 		ret := vfn.Results()
-		if mode == inferOnly {
-			ctx.infer.Ret(1, ret)
-			return
+		ctx.infer.Ret(1, ret)
+		return func() {
+			if vfn.isMethod != 0 {
+				compileExpr(ctx, v.Fun.(*ast.SelectorExpr).X)()
+			}
+			for _, arg := range v.Args {
+				compileExpr(ctx, arg)()
+			}
+			nargs := len(v.Args)
+			args := ctx.infer.GetArgs(nargs)
+			out := ctx.out
+			arity := checkFuncCall(vfn.Proto(), vfn.isMethod, args, out)
+			switch vfn.kind {
+			case exec.SymbolFunc:
+				out.CallGoFunc(exec.GoFuncAddr(vfn.addr))
+			case exec.SymbolFuncv:
+				out.CallGoFuncv(exec.GoFuncvAddr(vfn.addr), arity)
+			}
+			ctx.infer.PopN(nargs + vfn.isMethod)
 		}
-		if vfn.isMethod != 0 {
-			compileExpr(ctx, v.Fun.(*ast.SelectorExpr).X, 0)
-		}
-		for _, arg := range v.Args {
-			compileExpr(ctx, arg, 0)
-		}
-		nargs := uint32(len(v.Args))
-		args := ctx.infer.GetArgs(nargs)
-		out := ctx.out
-		arity := checkFuncCall(vfn.Proto(), vfn.isMethod, args, out)
-		switch vfn.kind {
-		case exec.SymbolFunc:
-			out.CallGoFunc(exec.GoFuncAddr(vfn.addr))
-		case exec.SymbolFuncv:
-			out.CallGoFuncv(exec.GoFuncvAddr(vfn.addr), arity)
-		}
-		ctx.infer.Ret(uint32(len(v.Args)+1+vfn.isMethod), ret)
-		return
 	case *goValue:
 		if vfn.t.Kind() != reflect.Func {
 			log.Panicln("compileCallExpr failed: call a non function.")
 		}
 		ret := newFuncResults(vfn.t)
-		if mode == inferOnly {
-			ctx.infer.Ret(1, ret)
-			return
+		ctx.infer.Ret(1, ret)
+		return func() {
+			for _, arg := range v.Args {
+				compileExpr(ctx, arg)()
+			}
+			exprFun()
+			nargs := len(v.Args)
+			args := ctx.infer.GetArgs(nargs)
+			arity := checkFuncCall(vfn.t, 0, args, ctx.out)
+			ctx.out.CallGoClosure(arity)
+			ctx.infer.PopN(nargs)
 		}
-		for _, arg := range v.Args {
-			compileExpr(ctx, arg, 0)
-		}
-		compileExpr(ctx, v.Fun, 0)
-		nargs := uint32(len(v.Args))
-		args := ctx.infer.GetArgs(nargs)
-		arity := checkFuncCall(vfn.t, 0, args, ctx.out)
-		ctx.out.CallGoClosure(arity)
-		ctx.infer.Ret(uint32(len(v.Args)+2), ret)
-		return
 	}
 	log.Panicln("compileCallExpr failed: unknown -", reflect.TypeOf(fn))
+	return nil
 }
 
-func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, mode compleMode) {
-	compileExpr(ctx, v.X, inferOnly)
+func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
+	exprX := compileExpr(ctx, v.X)
 	x := ctx.infer.Get(-1)
 	switch vx := x.(type) {
 	case *nonValue:
@@ -486,10 +507,9 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, mode compleMode) {
 			switch kind {
 			case exec.SymbolFunc, exec.SymbolFuncv:
 				ctx.infer.Ret(1, newGoFunc(addr, kind, 0))
-				if mode == inferOnly {
-					return
+				return func() {
+					log.Panicln("compileSelectorExpr: todo")
 				}
-				log.Panicln("compileSelectorExpr: todo")
 			default:
 				log.Panicln("compileSelectorExpr: unknown GoPackage symbol kind -", kind)
 			}
@@ -512,13 +532,14 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, mode compleMode) {
 			log.Panicln("compileSelectorExpr: method not found -", method)
 		}
 		ctx.infer.Ret(1, newGoFunc(addr, kind, 1))
-		if mode == inferOnly {
-			return
+		return func() {
+			log.Panicln("compileSelectorExpr: todo")
 		}
-		log.Panicln("compileSelectorExpr: todo")
 	default:
 		log.Panicln("compileSelectorExpr failed: unknown -", reflect.TypeOf(vx))
 	}
+	_ = exprX
+	return nil
 }
 
 func countPtr(t reflect.Type) (int, reflect.Type) {

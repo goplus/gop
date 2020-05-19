@@ -32,13 +32,13 @@ func (p *Stack) Set(idx int, v interface{}) {
 }
 
 // GetArgs returns all arguments of a function.
-func (p *Stack) GetArgs(arity uint32) []interface{} {
-	return p.data[len(p.data)-int(arity):]
+func (p *Stack) GetArgs(arity int) []interface{} {
+	return p.data[len(p.data)-arity:]
 }
 
 // Ret pops n values from this stack, and then pushes results.
-func (p *Stack) Ret(arity uint32, results ...interface{}) {
-	p.data = append(p.data[:len(p.data)-int(arity)], results...)
+func (p *Stack) Ret(arity int, results ...interface{}) {
+	p.data = append(p.data[:len(p.data)-arity], results...)
 }
 
 // Push pushes a value into this stack.
@@ -193,6 +193,8 @@ var _execTable = [...]func(i Instr, p *Context){
 	opMakeArray:     execMakeArray,
 	opMakeMap:       execMakeMap,
 	opZero:          execZero,
+	opLstComprehens: execListComprehension,
+	opMapComprehens: execMapComprehension,
 }
 
 var execTable []func(i Instr, p *Context)

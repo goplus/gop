@@ -14,7 +14,7 @@ func execGoFunc(i Instr, p *Context) {
 
 func execGoFuncv(i Instr, p *Context) {
 	idx := i & bitsOpCallFuncvOperand
-	arity := (i >> bitsOpCallFuncvShift) & bitsFuncvArityOperand
+	arity := int((i >> bitsOpCallFuncvShift) & bitsFuncvArityOperand)
 	fun := gofunvs[idx]
 	if arity == bitsFuncvArityVar {
 		v := p.Pop()
@@ -23,16 +23,16 @@ func execGoFuncv(i Instr, p *Context) {
 		for i := 0; i < n; i++ {
 			p.Push(args.Index(i).Interface())
 		}
-		arity = uint32(fun.getNumIn() - 1 + n)
+		arity = fun.getNumIn() - 1 + n
 	} else if arity == bitsFuncvArityMax {
-		arity = uint32(p.Pop().(int) + bitsFuncvArityMax)
+		arity = p.Pop().(int) + bitsFuncvArityMax
 	}
 	fun.exec(arity, p)
 }
 
 func execMakeArray(i Instr, p *Context) {
 	typSlice := getType(i&bitsOpMakeArrayOperand, p)
-	arity := (i >> bitsOpMakeArrayShift) & bitsFuncvArityOperand
+	arity := int((i >> bitsOpMakeArrayShift) & bitsFuncvArityOperand)
 	if arity == bitsFuncvArityVar { // args...
 		v := reflect.ValueOf(p.Get(-1))
 		n := v.Len()
@@ -41,32 +41,40 @@ func execMakeArray(i Instr, p *Context) {
 		p.Ret(1, ret.Interface())
 	} else {
 		if arity == bitsFuncvArityMax {
-			arity = uint32(p.Pop().(int) + bitsFuncvArityMax)
+			arity = p.Pop().(int) + bitsFuncvArityMax
 		}
-		args := p.GetArgs(arity)
-		var ret reflect.Value
-		if typSlice.Kind() == reflect.Slice {
-			ret = reflect.MakeSlice(typSlice, int(arity), int(arity))
-		} else {
-			ret = reflect.New(typSlice).Elem()
-		}
-		for i, arg := range args {
-			ret.Index(i).Set(getElementOf(arg, typSlice))
-		}
-		p.Ret(arity, ret.Interface())
+		makeArray(typSlice, arity, p)
 	}
+}
+
+func makeArray(typSlice reflect.Type, arity int, p *Context) {
+	args := p.GetArgs(arity)
+	var ret reflect.Value
+	if typSlice.Kind() == reflect.Slice {
+		ret = reflect.MakeSlice(typSlice, int(arity), int(arity))
+	} else {
+		ret = reflect.New(typSlice).Elem()
+	}
+	for i, arg := range args {
+		ret.Index(i).Set(getElementOf(arg, typSlice))
+	}
+	p.Ret(arity, ret.Interface())
 }
 
 func execMakeMap(i Instr, p *Context) {
 	typMap := getType(i&bitsOpMakeArrayOperand, p)
-	arity := (i >> bitsOpMakeArrayShift) & bitsFuncvArityOperand
+	arity := int((i >> bitsOpMakeArrayShift) & bitsFuncvArityOperand)
 	if arity == bitsFuncvArityMax {
-		arity = uint32(p.Pop().(int) + bitsFuncvArityMax)
+		arity = p.Pop().(int) + bitsFuncvArityMax
 	}
+	makeMap(typMap, arity, p)
+}
+
+func makeMap(typMap reflect.Type, arity int, p *Context) {
 	n := arity << 1
 	args := p.GetArgs(n)
 	ret := reflect.MakeMapWithSize(typMap, int(n))
-	for i := uint32(0); i < n; i += 2 {
+	for i := 0; i < n; i += 2 {
 		key := getKeyOf(args[i], typMap)
 		val := getElementOf(args[i+1], typMap)
 		ret.SetMapIndex(key, val)
@@ -209,12 +217,12 @@ func (p *GoPackage) Var(name string, addr interface{}) GoVarInfo {
 }
 
 // Func creates a GoFuncInfo instance.
-func (p *GoPackage) Func(name string, fn interface{}, exec func(i Instr, p *Context)) GoFuncInfo {
+func (p *GoPackage) Func(name string, fn interface{}, exec func(i int, p *Context)) GoFuncInfo {
 	return GoFuncInfo{Pkg: p, Name: name, This: fn, exec: exec}
 }
 
 // Funcv creates a GoFuncvInfo instance.
-func (p *GoPackage) Funcv(name string, fn interface{}, exec func(i Instr, p *Context)) GoFuncvInfo {
+func (p *GoPackage) Funcv(name string, fn interface{}, exec func(i int, p *Context)) GoFuncvInfo {
 	return GoFuncvInfo{GoFuncInfo{Pkg: p, Name: name, This: fn, exec: exec}, 0}
 }
 
@@ -328,7 +336,7 @@ type GoFuncInfo struct {
 	Pkg  *GoPackage
 	Name string
 	This interface{}
-	exec func(i Instr, p *Context)
+	exec func(arity int, p *Context)
 }
 
 // GoFuncvInfo represents a Go function information.

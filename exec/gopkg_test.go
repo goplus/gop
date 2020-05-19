@@ -18,19 +18,19 @@ func Strcat(a, b string) string {
 	return a + b
 }
 
-func execStrcat(arity uint32, p *Context) {
+func execStrcat(arity int, p *Context) {
 	args := p.GetArgs(2)
 	ret := Strcat(args[0].(string), args[1].(string))
 	p.Ret(2, ret)
 }
 
-func execSprint(arity uint32, p *Context) {
+func execSprint(arity int, p *Context) {
 	args := p.GetArgs(arity)
 	s := fmt.Sprint(args...)
 	p.Ret(arity, s)
 }
 
-func execSprintf(arity uint32, p *Context) {
+func execSprintf(arity int, p *Context) {
 	args := p.GetArgs(arity)
 	s := fmt.Sprintf(args[0].(string), args[1:]...)
 	p.Ret(arity, s)
@@ -197,6 +197,83 @@ func TestMap(t *testing.T) {
 	ctx.Exec(0, code.Len())
 	if v := checkPop(ctx); !reflect.DeepEqual(v, map[string]float64{"Hello": 3.2, "xsw": 1.0}) {
 		t.Fatal("expected: {`Hello`: 3.2, `xsw`: 1}, ret =", v)
+	}
+}
+
+func TestMapComprehension(t *testing.T) {
+	typData := reflect.MapOf(TyString, TyInt)
+	key := NewVar(TyString, "k")
+	val := NewVar(TyInt, "v")
+	c := NewComprehension(key, val, typData, reflect.MapOf(TyInt, TyString))
+	code := NewBuilder(nil).
+		Push("Hello").
+		Push(3).
+		Push("xsw").
+		Push(1).
+		MakeMap(typData, 2).
+		MapComprehension(c).
+		DefineVar(key, val).
+		LoadVar(val).
+		LoadVar(key).
+		EndComprehension(c).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); !reflect.DeepEqual(v, map[int]string{3: "Hello", 1: "xsw"}) {
+		t.Fatal(`expected: {3: "Hello", 1: "xsw"}, ret =`, v)
+	}
+}
+
+func TestListComprehension(t *testing.T) {
+	typData := reflect.ArrayOf(4, TyInt)
+	x := NewVar(TyInt, "x")
+	c := NewComprehension(nil, x, typData, reflect.SliceOf(TyInt))
+	code := NewBuilder(nil).
+		Push(1).
+		Push(3).
+		Push(5).
+		Push(7).
+		MakeArray(typData, 4).
+		ListComprehension(c).
+		DefineVar(x).
+		LoadVar(x).
+		LoadVar(x).
+		BuiltinOp(Int, OpMul).
+		EndComprehension(c).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); !reflect.DeepEqual(v, []int{1, 9, 25, 49}) {
+		t.Fatal(`expected: [1, 9, 25, 49], ret =`, v)
+	}
+}
+
+func TestMapComprehension2(t *testing.T) {
+	typData := reflect.SliceOf(TyInt)
+	i := NewVar(TyInt, "i")
+	x := NewVar(TyInt, "x")
+	c := NewComprehension(i, x, typData, reflect.MapOf(TyInt, TyInt))
+	code := NewBuilder(nil).
+		Push(1).
+		Push(3).
+		Push(5).
+		Push(7).
+		MakeArray(typData, 4).
+		MapComprehension(c).
+		DefineVar(i, x).
+		LoadVar(x).
+		LoadVar(x).
+		BuiltinOp(Int, OpMul).
+		LoadVar(i).
+		EndComprehension(c).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); !reflect.DeepEqual(v, map[int]int{1: 0, 9: 1, 25: 2, 49: 3}) {
+		t.Fatal(`expected: {1: 0, 9: 1, 25: 2, 49: 3}, ret =`, v)
 	}
 }
 
