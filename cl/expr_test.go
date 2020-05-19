@@ -455,3 +455,36 @@ func TestSliceLit(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
+var fsListComprehension = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	x := [x*x for x <- [1, 2, 3, 4]]
+	println("x:", x)
+`)
+
+func _TestListComprehension(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsListComprehension, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, err = NewPackage(b, bar)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(16) {
+		t.Fatal("n:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------

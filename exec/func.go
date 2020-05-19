@@ -41,12 +41,12 @@ func execGoClosure(i Instr, p *Context) {
 }
 
 func execCallGoClosure(i Instr, p *Context) {
-	arity := i & bitsOperand
+	arity := int(i & bitsOperand)
 	fn := reflect.ValueOf(p.Pop())
 	t := fn.Type()
 	var out []reflect.Value
 	if t.IsVariadic() && arity == bitsOperand {
-		arity = uint32(t.NumIn())
+		arity = t.NumIn()
 		args := p.GetArgs(arity)
 		in := make([]reflect.Value, arity)
 		for i, arg := range args {
@@ -259,7 +259,7 @@ func (p *FuncInfo) exec(stk *Stack, parent *Context) {
 	ctx.Exec(p.FunEntry, p.FunEnd)
 	if ctx.ip == ipReturnN {
 		n := len(stk.data)
-		stk.Ret(uint32(len(p.in)+n-ctx.base), stk.data[n-p.numOut:]...)
+		stk.Ret(len(p.in)+n-ctx.base, stk.data[n-p.numOut:]...)
 	} else {
 		stk.SetLen(ctx.base - len(p.in))
 		n := uint32(p.numOut)
@@ -273,12 +273,12 @@ func (p *FuncInfo) execVariadic(arity uint32, stk *Stack, parent *Context) {
 	var n = uint32(len(p.in) - 1)
 	if arity > n {
 		tVariadic := p.in[n]
-		nVariadic := arity - n
+		nVariadic := int(arity - n)
 		if tVariadic == TyEmptyInterfaceSlice {
 			var empty []interface{}
 			stk.Ret(nVariadic, append(empty, stk.GetArgs(nVariadic)...))
 		} else {
-			variadic := reflect.MakeSlice(tVariadic, int(nVariadic), int(nVariadic))
+			variadic := reflect.MakeSlice(tVariadic, nVariadic, nVariadic)
 			items := stk.GetArgs(nVariadic)
 			for i, item := range items {
 				setValue(variadic.Index(i), item)

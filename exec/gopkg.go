@@ -14,7 +14,7 @@ func execGoFunc(i Instr, p *Context) {
 
 func execGoFuncv(i Instr, p *Context) {
 	idx := i & bitsOpCallFuncvOperand
-	arity := (i >> bitsOpCallFuncvShift) & bitsFuncvArityOperand
+	arity := int((i >> bitsOpCallFuncvShift) & bitsFuncvArityOperand)
 	fun := gofunvs[idx]
 	if arity == bitsFuncvArityVar {
 		v := p.Pop()
@@ -23,9 +23,9 @@ func execGoFuncv(i Instr, p *Context) {
 		for i := 0; i < n; i++ {
 			p.Push(args.Index(i).Interface())
 		}
-		arity = uint32(fun.getNumIn() - 1 + n)
+		arity = fun.getNumIn() - 1 + n
 	} else if arity == bitsFuncvArityMax {
-		arity = uint32(p.Pop().(int) + bitsFuncvArityMax)
+		arity = p.Pop().(int) + bitsFuncvArityMax
 	}
 	fun.exec(arity, p)
 }
@@ -43,7 +43,7 @@ func execMakeArray(i Instr, p *Context) {
 		if arity == bitsFuncvArityMax {
 			arity = uint32(p.Pop().(int) + bitsFuncvArityMax)
 		}
-		args := p.GetArgs(arity)
+		args := p.GetArgs(int(arity))
 		var ret reflect.Value
 		if typSlice.Kind() == reflect.Slice {
 			ret = reflect.MakeSlice(typSlice, int(arity), int(arity))
@@ -53,7 +53,7 @@ func execMakeArray(i Instr, p *Context) {
 		for i, arg := range args {
 			ret.Index(i).Set(getElementOf(arg, typSlice))
 		}
-		p.Ret(arity, ret.Interface())
+		p.Ret(int(arity), ret.Interface())
 	}
 }
 
@@ -64,14 +64,14 @@ func execMakeMap(i Instr, p *Context) {
 		arity = uint32(p.Pop().(int) + bitsFuncvArityMax)
 	}
 	n := arity << 1
-	args := p.GetArgs(n)
+	args := p.GetArgs(int(n))
 	ret := reflect.MakeMapWithSize(typMap, int(n))
 	for i := uint32(0); i < n; i += 2 {
 		key := getKeyOf(args[i], typMap)
 		val := getElementOf(args[i+1], typMap)
 		ret.SetMapIndex(key, val)
 	}
-	p.Ret(n, ret.Interface())
+	p.Ret(int(n), ret.Interface())
 }
 
 func execZero(i Instr, p *Context) {
@@ -209,12 +209,12 @@ func (p *GoPackage) Var(name string, addr interface{}) GoVarInfo {
 }
 
 // Func creates a GoFuncInfo instance.
-func (p *GoPackage) Func(name string, fn interface{}, exec func(i Instr, p *Context)) GoFuncInfo {
+func (p *GoPackage) Func(name string, fn interface{}, exec func(i int, p *Context)) GoFuncInfo {
 	return GoFuncInfo{Pkg: p, Name: name, This: fn, exec: exec}
 }
 
 // Funcv creates a GoFuncvInfo instance.
-func (p *GoPackage) Funcv(name string, fn interface{}, exec func(i Instr, p *Context)) GoFuncvInfo {
+func (p *GoPackage) Funcv(name string, fn interface{}, exec func(i int, p *Context)) GoFuncvInfo {
 	return GoFuncvInfo{GoFuncInfo{Pkg: p, Name: name, This: fn, exec: exec}, 0}
 }
 
@@ -328,7 +328,7 @@ type GoFuncInfo struct {
 	Pkg  *GoPackage
 	Name string
 	This interface{}
-	exec func(i Instr, p *Context)
+	exec func(arity int, p *Context)
 }
 
 // GoFuncvInfo represents a Go function information.

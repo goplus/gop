@@ -12,28 +12,28 @@ import (
 // -----------------------------------------------------------------------------
 
 // QexecPrint instr
-func QexecPrint(arity uint32, p *qlang.Context) {
+func QexecPrint(arity int, p *qlang.Context) {
 	args := p.GetArgs(arity)
 	n, err := fmt.Print(args...)
 	p.Ret(arity, n, err)
 }
 
 // QexecPrintf instr
-func QexecPrintf(arity uint32, p *qlang.Context) {
+func QexecPrintf(arity int, p *qlang.Context) {
 	args := p.GetArgs(arity)
 	n, err := fmt.Printf(args[0].(string), args[1:]...)
 	p.Ret(arity, n, err)
 }
 
 // QexecPrintln instr
-func QexecPrintln(arity uint32, p *qlang.Context) {
+func QexecPrintln(arity int, p *qlang.Context) {
 	args := p.GetArgs(arity)
 	n, err := fmt.Println(args...)
 	p.Ret(arity, n, err)
 }
 
 // QexecFprintln instr
-func QexecFprintln(arity uint32, p *qlang.Context) {
+func QexecFprintln(arity int, p *qlang.Context) {
 	args := p.GetArgs(arity)
 	n, err := fmt.Fprintln(args[0].(io.Writer), args[1:]...)
 	p.Ret(arity, n, err)

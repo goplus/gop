@@ -215,7 +215,7 @@ func toArrayType(ctx *blockCtx, v *ast.ArrayType) iType {
 	if v.Len == nil {
 		return reflect.SliceOf(elem.(reflect.Type))
 	}
-	compileExpr(ctx, v.Len, inferOnly)
+	compileExpr(ctx, v.Len)
 	n := ctx.infer.Pop()
 	if nv, ok := n.(iValue).(*constVal); ok {
 		if iv, ok := nv.v.(int64); ok {
@@ -242,7 +242,7 @@ func toBoundArrayLen(ctx *blockCtx, v *ast.CompositeLit) int {
 }
 
 func toInt(ctx *blockCtx, e ast.Expr) int {
-	compileExpr(ctx, e, inferOnly)
+	compileExpr(ctx, e)
 	nv, ok := ctx.infer.Pop().(*constVal)
 	if !ok {
 		log.Panicln("toInt: require constant expr.")

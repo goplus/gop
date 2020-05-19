@@ -18,19 +18,19 @@ func Strcat(a, b string) string {
 	return a + b
 }
 
-func execStrcat(arity uint32, p *Context) {
+func execStrcat(arity int, p *Context) {
 	args := p.GetArgs(2)
 	ret := Strcat(args[0].(string), args[1].(string))
 	p.Ret(2, ret)
 }
 
-func execSprint(arity uint32, p *Context) {
+func execSprint(arity int, p *Context) {
 	args := p.GetArgs(arity)
 	s := fmt.Sprint(args...)
 	p.Ret(arity, s)
 }
 
-func execSprintf(arity uint32, p *Context) {
+func execSprintf(arity int, p *Context) {
 	args := p.GetArgs(arity)
 	s := fmt.Sprintf(args[0].(string), args[1:]...)
 	p.Ret(arity, s)

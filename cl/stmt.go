@@ -62,7 +62,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 		if len(v.Body.List) == 0 {
 			return
 		}
-		compileExpr(ctxSw, v.Tag, 0)
+		compileExpr(ctxSw, v.Tag)()
 		tag := ctx.infer.Pop()
 		for _, item := range v.Body.List {
 			c, ok := item.(*ast.CaseClause)
@@ -74,7 +74,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 				continue
 			}
 			for _, caseExp := range c.List {
-				compileExpr(ctxSw, caseExp, 0)
+				compileExpr(ctxSw, caseExp)()
 				checkCaseCompare(tag, ctx.infer.Pop(), out)
 			}
 			next := exec.NewLabel("")
@@ -97,17 +97,17 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 			next := exec.NewLabel("")
 			last := len(c.List) - 1
 			if last == 0 {
-				compileExpr(ctxSw, c.List[0], 0)
+				compileExpr(ctxSw, c.List[0])()
 				checkBool(ctxSw.infer.Pop())
 				out.JmpIf(0, next)
 			} else {
 				start := exec.NewLabel("")
 				for i := 0; i < last; i++ {
-					compileExpr(ctxSw, c.List[i], 0)
+					compileExpr(ctxSw, c.List[i])()
 					checkBool(ctxSw.infer.Pop())
 					out.JmpIf(1, start)
 				}
-				compileExpr(ctxSw, c.List[last], 0)
+				compileExpr(ctxSw, c.List[last])()
 				checkBool(ctxSw.infer.Pop())
 				out.JmpIf(0, next)
 				out.Label(start)
@@ -132,7 +132,7 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 	} else {
 		ctxIf = ctx
 	}
-	compileExpr(ctxIf, v.Cond, 0)
+	compileExpr(ctxIf, v.Cond)()
 	checkBool(ctx.infer.Pop())
 	out := ctx.out
 	label := exec.NewLabel("")
@@ -164,7 +164,7 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 		return
 	}
 	for _, ret := range rets {
-		compileExpr(ctx, ret, 0)
+		compileExpr(ctx, ret)()
 	}
 	n := len(rets)
 	if fun.NumOut() != n {
@@ -173,7 +173,7 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 	if ctx.infer.Len() != n {
 		log.Panicln("compileReturnStmt failed: can't use multi values funcation result as return values -", fun.Name)
 	}
-	results := ctx.infer.GetArgs(uint32(n))
+	results := ctx.infer.GetArgs(n)
 	for i, result := range results {
 		v := fun.Out(i)
 		checkType(v.Type, result, ctx.out)
@@ -183,7 +183,7 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 }
 
 func compileExprStmt(ctx *blockCtx, expr *ast.ExprStmt) {
-	compileExpr(ctx, expr.X, 0)
+	compileExpr(ctx, expr.X)()
 	ctx.infer.PopN(1)
 }
 
@@ -192,7 +192,7 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		log.Panicln("compileAssignStmt internal error: infer stack is not empty.")
 	}
 	if len(expr.Rhs) == 1 {
-		compileExpr(ctx, expr.Rhs[0], 0)
+		compileExpr(ctx, expr.Rhs[0])()
 		v := ctx.infer.Get(-1).(iValue)
 		n := v.NumValues()
 		if n != 1 {
@@ -207,7 +207,7 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		}
 	} else {
 		for _, item := range expr.Rhs {
-			compileExpr(ctx, item, 0)
+			compileExpr(ctx, item)()
 			if ctx.infer.Get(-1).(iValue).NumValues() != 1 {
 				log.Panicln("compileAssignStmt failed: expr has multiple values.")
 			}
@@ -217,7 +217,7 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		log.Panicln("compileAssignStmt: assign statment has mismatched variables count -", ctx.infer.Len())
 	}
 	for i := len(expr.Lhs) - 1; i >= 0; i-- {
-		compileExpr(ctx, expr.Lhs[i], expr.Tok)
+		compileExprLHS(ctx, expr.Lhs[i], expr.Tok)
 	}
 }
 
