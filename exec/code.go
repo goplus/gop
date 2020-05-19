@@ -73,8 +73,8 @@ const (
 	opPushUintR     = 6  // intKind(3) intIdx(23)
 	opPushValSpec   = 7  // valSpec(26) - false=0, true=1
 	opBuiltinOp     = 8  // reserved(16) kind(5) builtinOp(5)
-	opJmp           = 9  // offset(26)
-	opJmpIfFalse    = 10 // offset(26)
+	opJmp           = 9  // reserved(1) offset(25)
+	opJmpIf         = 10 // bool(1) offset(25)
 	opCaseNE        = 11 // n(10) offset(16)
 	opPop           = 12 // n(26)
 	opCallGoFunc    = 13 // addr(26) - call a Go function
@@ -146,7 +146,7 @@ var instrInfos = []InstrInfo{
 	opPushValSpec:   {"pushValSpec", "", "valSpec", 26},                     // valSpec(26) - false=0, true=1
 	opBuiltinOp:     {"builtinOp", "kind", "op", (21 << 8) | 5},             // reserved(16) kind(5) builtinOp(5)
 	opJmp:           {"jmp", "", "offset", 26},                              // offset(26)
-	opJmpIfFalse:    {"jmpIfFalse", "", "offset", 26},                       // offset(26)
+	opJmpIf:         {"jmpIf", "bool", "offset", (1 << 8) | 25},             // bool(1) offset(25)
 	opCaseNE:        {"caseNE", "n", "offset", (10 << 8) | 16},              // n(10) offset(16)
 	opPop:           {"pop", "", "n", 26},                                   // n(26)
 	opCallGoFunc:    {"callGoFunc", "", "addr", 26},                         // addr(26) - call a Go function

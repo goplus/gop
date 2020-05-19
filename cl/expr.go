@@ -368,10 +368,11 @@ func binaryOpResult(op exec.Operator, x, y interface{}) (exec.Kind, iValue) {
 		}
 	}
 	i := op.GetInfo()
+	kindRet := kind
 	if i.Out != exec.SameAsFirst {
-		kind = i.Out
+		kindRet = i.Out
 	}
-	return kind, &goValue{t: exec.TypeFromKind(kind)}
+	return kind, &goValue{t: exec.TypeFromKind(kindRet)}
 }
 
 var binaryOps = [...]exec.Operator{

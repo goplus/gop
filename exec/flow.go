@@ -6,15 +6,29 @@ import (
 
 // -----------------------------------------------------------------------------
 
+const (
+	bitsOpJmp           = bitsOp + 1
+	bitsOpJmpIfCond     = bitsInstr - bitsOpJmp
+	bitsOpJmpIfCondFlag = 1 << bitsOpJmpIfCond
+	bitsOpJmpOperand    = bitsOpJmpIfCondFlag - 1
+)
+
 func execJmp(i Instr, ctx *Context) {
-	delta := int32(i&bitsOperand) << bitsOp >> bitsOp
+	delta := int32(i&bitsOpJmpOperand) << bitsOpJmp >> bitsOpJmp
 	ctx.ip += int(delta)
 }
 
-func execJmpIfFalse(i Instr, ctx *Context) {
-	if !ctx.Pop().(bool) {
-		execJmp(i, ctx)
+func execJmpIf(i Instr, ctx *Context) {
+	cond := ctx.Pop().(bool)
+	if (i & bitsOpJmpIfCondFlag) == 0 {
+		if cond {
+			return
+		}
+	} else if !cond {
+		return
 	}
+	log.Debug("execJmpIf:", cond, "if:", (i&bitsOpJmpIfCondFlag) != 0)
+	execJmp(i, ctx)
 }
 
 const (
@@ -65,7 +79,11 @@ func (p *Builder) resolveLabels() {
 			log.Panicln("resolveLabels failed: label is not defined -", l.Name)
 		}
 		for _, off := range l.offs {
-			data[off] |= uint32(pos-(off+1)) & bitsOperand
+			if (data[off] >> bitsOpShift) == opCaseNE {
+				data[off] |= uint32(int16(pos - (off + 1)))
+			} else {
+				data[off] |= uint32(pos-(off+1)) & bitsOpJmpOperand
+			}
 		}
 		l.offs = nil
 	}
@@ -95,9 +113,9 @@ func (p *Builder) Jmp(l *Label) *Builder {
 	return p.labelOp(opJmp<<bitsOpShift, l)
 }
 
-// JmpIfFalse instr
-func (p *Builder) JmpIfFalse(l *Label) *Builder {
-	return p.labelOp(opJmpIfFalse<<bitsOpShift, l)
+// JmpIf instr
+func (p *Builder) JmpIf(zeroOrOne uint32, l *Label) *Builder {
+	return p.labelOp((opJmpIf<<bitsOpShift)|(zeroOrOne<<bitsOpJmpIfCond), l)
 }
 
 // CaseNE instr

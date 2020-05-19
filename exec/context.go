@@ -128,6 +128,10 @@ func (ctx *Context) Exec(ip, ipEnd int) {
 		switch i >> bitsOpShift {
 		case opBuiltinOp:
 			execBuiltinOp(i, ctx)
+		case opJmp:
+			execJmp(i, ctx)
+		case opJmpIf:
+			execJmpIf(i, ctx)
 		case opPushInt:
 			execPushInt(i, ctx)
 		case opPushStringR:
@@ -171,7 +175,7 @@ var _execTable = [...]func(i Instr, p *Context){
 	opPushFloatR:    execPushFloatR,
 	opBuiltinOp:     execBuiltinOp,
 	opJmp:           execJmp,
-	opJmpIfFalse:    execJmpIfFalse,
+	opJmpIf:         execJmpIf,
 	opCaseNE:        execCaseNE,
 	opPop:           execPop,
 	opCallGoFunc:    execGoFunc,
