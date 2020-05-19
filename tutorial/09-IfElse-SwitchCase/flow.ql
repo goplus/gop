@@ -16,3 +16,25 @@ case "xsw":
     x = 3
 }
 println("x:", x)
+
+v := "Hello"
+switch {
+case v == "xsw":
+    x = 3
+case v == "Hello", v == "world":
+    x = 9
+default:
+    x = 7
+}
+println("x:", x)
+
+v = "Hello"
+switch {
+case v == "xsw":
+    x = 3
+case v == "hi", v == "world":
+    x = 9
+default:
+    x = 11
+}
+println("x:", x)

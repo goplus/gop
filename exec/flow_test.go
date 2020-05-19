@@ -11,7 +11,7 @@ func TestIf1(t *testing.T) {
 	label2 := NewLabel("b")
 	code := NewBuilder(nil).
 		Push(true).
-		JmpIfFalse(label1).
+		JmpIf(0, label1).
 		Push(50).
 		Push(6).
 		BuiltinOp(Int, OpDiv).
@@ -35,7 +35,7 @@ func TestIf2(t *testing.T) {
 	label2 := NewLabel("b")
 	code := NewBuilder(nil).
 		Push(false).
-		JmpIfFalse(label1).
+		JmpIf(0, label1).
 		Push(5).
 		Push(6).
 		BuiltinOp(Int, OpMul).
@@ -50,6 +50,54 @@ func TestIf2(t *testing.T) {
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
 	if v := checkPop(ctx); v != 10.0 {
+		t.Fatal("5.0 2.0 mul != 10.0, ret =", v)
+	}
+}
+
+func TestIf3(t *testing.T) {
+	label1 := NewLabel("a")
+	label2 := NewLabel("b")
+	code := NewBuilder(nil).
+		Push(true).
+		JmpIf(1, label1).
+		Push(5).
+		Push(6).
+		BuiltinOp(Int, OpMul).
+		Jmp(label2).
+		Label(label1).
+		Push(5.0).
+		Push(2.0).
+		BuiltinOp(Float64, OpMul).
+		Label(label2).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != 10.0 {
+		t.Fatal("5.0 2.0 mul != 10.0, ret =", v)
+	}
+}
+
+func TestIf4(t *testing.T) {
+	label1 := NewLabel("a")
+	label2 := NewLabel("b")
+	code := NewBuilder(nil).
+		Push(false).
+		JmpIf(1, label1).
+		Push(5).
+		Push(6).
+		BuiltinOp(Int, OpMul).
+		Jmp(label2).
+		Label(label1).
+		Push(5.0).
+		Push(2.0).
+		BuiltinOp(Float64, OpMul).
+		Label(label2).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != 30 {
 		t.Fatal("5.0 2.0 mul != 10.0, ret =", v)
 	}
 }
