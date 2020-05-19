@@ -32,7 +32,7 @@ func execGoFuncv(i Instr, p *Context) {
 
 func execMakeArray(i Instr, p *Context) {
 	typSlice := getType(i&bitsOpMakeArrayOperand, p)
-	arity := (i >> bitsOpMakeArrayShift) & bitsFuncvArityOperand
+	arity := int((i >> bitsOpMakeArrayShift) & bitsFuncvArityOperand)
 	if arity == bitsFuncvArityVar { // args...
 		v := reflect.ValueOf(p.Get(-1))
 		n := v.Len()
@@ -41,37 +41,45 @@ func execMakeArray(i Instr, p *Context) {
 		p.Ret(1, ret.Interface())
 	} else {
 		if arity == bitsFuncvArityMax {
-			arity = uint32(p.Pop().(int) + bitsFuncvArityMax)
+			arity = p.Pop().(int) + bitsFuncvArityMax
 		}
-		args := p.GetArgs(int(arity))
-		var ret reflect.Value
-		if typSlice.Kind() == reflect.Slice {
-			ret = reflect.MakeSlice(typSlice, int(arity), int(arity))
-		} else {
-			ret = reflect.New(typSlice).Elem()
-		}
-		for i, arg := range args {
-			ret.Index(i).Set(getElementOf(arg, typSlice))
-		}
-		p.Ret(int(arity), ret.Interface())
+		makeArray(typSlice, arity, p)
 	}
+}
+
+func makeArray(typSlice reflect.Type, arity int, p *Context) {
+	args := p.GetArgs(arity)
+	var ret reflect.Value
+	if typSlice.Kind() == reflect.Slice {
+		ret = reflect.MakeSlice(typSlice, int(arity), int(arity))
+	} else {
+		ret = reflect.New(typSlice).Elem()
+	}
+	for i, arg := range args {
+		ret.Index(i).Set(getElementOf(arg, typSlice))
+	}
+	p.Ret(arity, ret.Interface())
 }
 
 func execMakeMap(i Instr, p *Context) {
 	typMap := getType(i&bitsOpMakeArrayOperand, p)
-	arity := (i >> bitsOpMakeArrayShift) & bitsFuncvArityOperand
+	arity := int((i >> bitsOpMakeArrayShift) & bitsFuncvArityOperand)
 	if arity == bitsFuncvArityMax {
-		arity = uint32(p.Pop().(int) + bitsFuncvArityMax)
+		arity = p.Pop().(int) + bitsFuncvArityMax
 	}
+	makeMap(typMap, arity, p)
+}
+
+func makeMap(typMap reflect.Type, arity int, p *Context) {
 	n := arity << 1
-	args := p.GetArgs(int(n))
+	args := p.GetArgs(n)
 	ret := reflect.MakeMapWithSize(typMap, int(n))
-	for i := uint32(0); i < n; i += 2 {
+	for i := 0; i < n; i += 2 {
 		key := getKeyOf(args[i], typMap)
 		val := getElementOf(args[i+1], typMap)
 		ret.SetMapIndex(key, val)
 	}
-	p.Ret(int(n), ret.Interface())
+	p.Ret(n, ret.Interface())
 }
 
 func execZero(i Instr, p *Context) {

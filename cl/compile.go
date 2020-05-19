@@ -228,12 +228,14 @@ func (p *blockCtx) insertFuncVars(in []reflect.Type, args []string, rets []*exec
 	}
 }
 
-func (p *blockCtx) insertVar(name string, typ reflect.Type) *execVar {
+func (p *blockCtx) insertVar(name string, typ reflect.Type, inferOnly ...bool) *execVar {
 	if p.exists(name) {
 		log.Panicln("insertVar failed: symbol exists -", name)
 	}
 	v := exec.NewVar(typ, name)
-	p.out.DefineVar(v)
+	if inferOnly == nil {
+		p.out.DefineVar(v)
+	}
 	p.syms[name] = (*execVar)(v)
 	return (*execVar)(v)
 }

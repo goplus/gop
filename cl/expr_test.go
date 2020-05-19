@@ -457,11 +457,11 @@ func TestSliceLit(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 var fsListComprehension = asttest.NewSingleFileFS("/foo", "bar.ql", `
-	x := [x*x for x <- [1, 2, 3, 4]]
-	println("x:", x)
+	y := [i+x for i, x <- [1, 2, 3, 4]]
+	println("y:", y)
 `)
 
-func _TestListComprehension(t *testing.T) {
+func TestListComprehension(t *testing.T) {
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseFSDir(fset, fsListComprehension, "/foo", nil, 0)
 	if err != nil || len(pkgs) != 1 {
@@ -482,7 +482,40 @@ func _TestListComprehension(t *testing.T) {
 	if v := ctx.Get(-1); v != nil {
 		t.Fatal("error:", v)
 	}
-	if v := ctx.Get(-2); v != int(16) {
+	if v := ctx.Get(-2); v != int(13) {
+		t.Fatal("n:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+var fsListComprehension2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	y := [i+x for i, x <- {3: 1, 5: 2, 7: 3, 11: 4}]
+	println("y:", y)
+`)
+
+func TestListComprehension2(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsListComprehension2, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, err = NewPackage(b, bar)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(15) {
 		t.Fatal("n:", v)
 	}
 }

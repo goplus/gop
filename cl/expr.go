@@ -17,7 +17,6 @@ import (
 type compleMode = token.Token
 
 const (
-	lhsBase   compleMode = 10
 	lhsAssign compleMode = token.ASSIGN // leftHandSide = ...
 	lhsDefine compleMode = token.DEFINE // leftHandSide := ...
 )
@@ -51,8 +50,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 		return compileSliceLit(ctx, v)
 	case *ast.FuncLit:
 		return compileFuncLit(ctx, v)
-	//case *ast.ListComprehensionExpr:
-	//	return compileListComprehensionExpr(ctx, v)
+	case *ast.ListComprehensionExpr:
+		return compileListComprehensionExpr(ctx, v)
 	case *ast.Ellipsis:
 		return compileEllipsis(ctx, v)
 	case *ast.KeyValueExpr:
@@ -244,44 +243,45 @@ func compileSliceLit(ctx *blockCtx, v *ast.SliceLit) func() {
 	}
 }
 
-/*
-func compileListComprehensionExpr(ctx *blockCtx, v *ast.ListComprehensionExpr, mode compleMode) {
-	if mode > lhsBase {
-		log.Panicln("compileListComprehensionExpr: can't be lhs (left hand side) expr.")
-	}
+func compileListComprehensionExpr(ctx *blockCtx, v *ast.ListComprehensionExpr) func() {
 	var typKey reflect.Type
+	var varKey *exec.Var
+	var hasKey = v.Key != nil
 	var ctxList = newBlockCtx(ctx, true)
-	compileExpr(ctxList, v.X, mode)
+
+	exprX := compileExpr(ctxList, v.X)
 	typData := boundType(ctx.infer.Get(-1).(iValue))
-	switch kind := typData.Kind(); kind {
-	case reflect.Slice, reflect.Array:
-		typKey = exec.TyInt
-	case reflect.Map:
-		typKey = typData.Key()
-	default:
-		log.Panicln("compileListComprehensionExpr: require slice, array or map")
+	if hasKey {
+		switch kind := typData.Kind(); kind {
+		case reflect.Slice, reflect.Array:
+			typKey = exec.TyInt
+		case reflect.Map:
+			typKey = typData.Key()
+		default:
+			log.Panicln("compileListComprehensionExpr: require slice, array or map")
+		}
+		varKey = (*exec.Var)(ctxList.insertVar(v.Key.Name, typKey, true))
 	}
 	typVal := typData.Elem()
-	ctxList.insertVar(v.Key.Name, typKey)
-	ctxList.insertVar(v.Value.Name, typVal)
+	varVal := (*exec.Var)(ctxList.insertVar(v.Value.Name, typVal, true))
 
-	if mode == inferOnly {
-		compileExpr(ctxList, v.Elt, inferOnly)
-		typElem := boundType(ctx.infer.Get(-1).(iValue))
-		typSlice := reflect.SliceOf(typElem)
-		ctx.infer.Ret(1, &goValue{t: typSlice})
-		return
-	}
-	compileExpr(ctxList, v.Elt, 0)
+	exprElt := compileExpr(ctxList, v.Elt)
 	typElem := boundType(ctx.infer.Get(-1).(iValue))
 	typSlice := reflect.SliceOf(typElem)
-	if mode == inferOnly {
-		ctx.infer.Ret(1, &goValue{t: typSlice})
-		return
+	ctx.infer.Ret(2, &goValue{t: typSlice})
+	return func() {
+		exprX()
+		out := ctxList.out
+		c := exec.NewComprehension(varKey, varVal, typData, typSlice)
+		out.ListComprehension(c)
+		if hasKey {
+			out.DefineVar(varKey)
+		}
+		out.DefineVar(varVal)
+		exprElt()
+		out.EndComprehension(c)
 	}
-	start := exec.NewLabel("")
 }
-*/
 
 func compileMapLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 	n := len(v.Elts) << 1

@@ -111,6 +111,62 @@ func execFuncv(i Instr, p *Context) {
 	}
 }
 
+func execListComprehension(i Instr, p *Context) {
+	addr := i & bitsOperand
+	c := p.code.comprehens[addr]
+	n := c.exec(p)
+	makeArray(c.Out, n, p)
+}
+
+func execMapComprehension(i Instr, p *Context) {
+	addr := i & bitsOperand
+	c := p.code.comprehens[addr]
+	n := c.exec(p)
+	makeMap(c.Out, n, p)
+}
+
+func (c *Comprehension) exec(p *Context) int {
+	data := reflect.ValueOf(p.Pop())
+	switch data.Kind() {
+	case reflect.Map:
+		return c.execMapRange(data, p)
+	default:
+		return c.execListRange(data, p)
+	}
+}
+
+func (c *Comprehension) execListRange(data reflect.Value, p *Context) int {
+	n := data.Len()
+	ip, ipEnd := p.ip, c.End
+	key, val := c.Key, c.Value
+	for i := 0; i < n; i++ {
+		if key != nil {
+			p.SetVar(key, i)
+		}
+		if val != nil {
+			p.SetVar(val, data.Index(i).Interface())
+		}
+		p.Exec(ip, ipEnd)
+	}
+	return n
+}
+
+func (c *Comprehension) execMapRange(data reflect.Value, p *Context) int {
+	iter := data.MapRange()
+	ip, ipEnd := p.ip, c.End
+	key, val := c.Key, c.Value
+	for iter.Next() {
+		if key != nil {
+			p.SetVar(key, iter.Key().Interface())
+		}
+		if val != nil {
+			p.SetVar(val, iter.Value().Interface())
+		}
+		p.Exec(ip, ipEnd)
+	}
+	return data.Len()
+}
+
 // -----------------------------------------------------------------------------
 
 // Package represents a qlang package.
@@ -294,6 +350,20 @@ var TyEmptyInterfaceSlice = reflect.SliceOf(TyEmptyInterface)
 
 // -----------------------------------------------------------------------------
 
+// Comprehension represents a list/map comprehension.
+type Comprehension struct {
+	Key, Value *Var // Key, Value may be nil
+	In, Out    reflect.Type
+	End        int
+}
+
+// NewComprehension creates a new Comprehension instance.
+func NewComprehension(key, val *Var, in, out reflect.Type) *Comprehension {
+	return &Comprehension{In: in, Out: out, Key: key, Value: val}
+}
+
+// -----------------------------------------------------------------------------
+
 func (p *Builder) resolveFuncs() {
 	data := p.code.data
 	for fun, pos := range p.funcs {
@@ -313,6 +383,30 @@ func (p *Builder) resolveFuncs() {
 
 func isClosure(op uint32) bool {
 	return op == opClosure || op == opGoClosure
+}
+
+// ListComprehension instr
+func (p *Builder) ListComprehension(c *Comprehension) *Builder {
+	code := p.code
+	addr := uint32(len(code.comprehens))
+	code.comprehens = append(code.comprehens, c)
+	code.data = append(code.data, (opLstComprehens<<bitsOpShift)|addr)
+	return p
+}
+
+// MapComprehension instr
+func (p *Builder) MapComprehension(c *Comprehension) *Builder {
+	code := p.code
+	addr := uint32(len(code.comprehens))
+	code.comprehens = append(code.comprehens, c)
+	code.data = append(code.data, (opMapComprehens<<bitsOpShift)|addr)
+	return p
+}
+
+// EndComprehension instr
+func (p *Builder) EndComprehension(c *Comprehension) *Builder {
+	c.End = len(p.code.data)
+	return p
 }
 
 // DefineFunc instr
