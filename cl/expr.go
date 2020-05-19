@@ -52,6 +52,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 		return compileFuncLit(ctx, v)
 	case *ast.ListComprehensionExpr:
 		return compileListComprehensionExpr(ctx, v)
+	case *ast.MapComprehensionExpr:
+		return compileMapComprehensionExpr(ctx, v)
 	case *ast.Ellipsis:
 		return compileEllipsis(ctx, v)
 	case *ast.KeyValueExpr:
@@ -279,6 +281,49 @@ func compileListComprehensionExpr(ctx *blockCtx, v *ast.ListComprehensionExpr) f
 		}
 		out.DefineVar(varVal)
 		exprElt()
+		out.EndComprehension(c)
+	}
+}
+
+func compileMapComprehensionExpr(ctx *blockCtx, v *ast.MapComprehensionExpr) func() {
+	var typKey reflect.Type
+	var varKey *exec.Var
+	var hasKey = v.Key != nil
+	var ctxMap = newBlockCtx(ctx, true)
+
+	exprX := compileExpr(ctxMap, v.X)
+	typData := boundType(ctx.infer.Get(-1).(iValue))
+	if hasKey {
+		switch kind := typData.Kind(); kind {
+		case reflect.Slice, reflect.Array:
+			typKey = exec.TyInt
+		case reflect.Map:
+			typKey = typData.Key()
+		default:
+			log.Panicln("compileListComprehensionExpr: require slice, array or map")
+		}
+		varKey = (*exec.Var)(ctxMap.insertVar(v.Key.Name, typKey, true))
+	}
+	typVal := typData.Elem()
+	varVal := (*exec.Var)(ctxMap.insertVar(v.Value.Name, typVal, true))
+
+	exprEltKey := compileExpr(ctxMap, v.Elt.Key)
+	exprEltVal := compileExpr(ctxMap, v.Elt.Value)
+	typEltKey := boundType(ctx.infer.Get(-2).(iValue))
+	typEltVal := boundType(ctx.infer.Get(-1).(iValue))
+	typMap := reflect.MapOf(typEltKey, typEltVal)
+	ctx.infer.Ret(3, &goValue{t: typMap})
+	return func() {
+		exprX()
+		out := ctxMap.out
+		c := exec.NewComprehension(varKey, varVal, typData, typMap)
+		out.MapComprehension(c)
+		if hasKey {
+			out.DefineVar(varKey)
+		}
+		out.DefineVar(varVal)
+		exprEltKey()
+		exprEltVal()
 		out.EndComprehension(c)
 	}
 }
