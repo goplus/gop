@@ -522,6 +522,39 @@ func TestListComprehension2(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
+var fsListComprehensionFilter = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	y := [i+x for i, x <- {3: 1, 5: 2, 7: 3, 11: 4}, x % 2 == 1]
+	println("y:", y)
+`)
+
+func TestListComprehensionFilter(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsListComprehensionFilter, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, err = NewPackage(b, bar)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(10) {
+		t.Fatal("n:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
 var fsMapComprehension = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	y := {x: i for i, x <- [3, 5, 7, 11, 13]}
 	println("y:", y)
@@ -549,6 +582,39 @@ func TestMapComprehension(t *testing.T) {
 		t.Fatal("error:", v)
 	}
 	if v := ctx.Get(-2); v != int(30) {
+		t.Fatal("n:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+var fsMapComprehensionFilter = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	y := {x: i for i, x <- [3, 5, 7, 11, 13], i % 2 == 1}
+	println("y:", y)
+`)
+
+func TestMapComprehensionFilter(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsMapComprehensionFilter, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, err = NewPackage(b, bar)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(17) {
 		t.Fatal("n:", v)
 	}
 }

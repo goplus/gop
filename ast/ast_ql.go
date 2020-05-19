@@ -284,6 +284,7 @@ type ForPhrase struct {
 	Key, Value *Ident    // Key may be nil
 	TokPos     token.Pos // position of "<-" operator
 	X          Expr      // value to range over, must be list or map
+	Cond       Expr      // value filter, can be nil
 }
 
 // ListComprehensionExpr represents `[expr for k, v <- listOrMap]`

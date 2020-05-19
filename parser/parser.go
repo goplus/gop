@@ -686,11 +686,14 @@ func (p *parser) parseArrayTypeOrSliceLit(allowSliceLit bool) (expr ast.Expr, is
 				elts := p.parseSliceLit(lbrack, len)
 				p.exprLev--
 				return elts, true
-			case token.FOR: // [expr for k, v <- listOrMap]
+			case token.FOR: // [expr for k, v <- listOrMap, cond]
 				phrase := p.parseForPhrase()
 				p.exprLev--
 				rbrack := p.expect(token.RBRACK)
-				return &ast.ListComprehensionExpr{Lbrack: lbrack, Elt: len, ForPhrase: phrase, Rbrack: rbrack}, true
+				return &ast.ListComprehensionExpr{
+					Lbrack: lbrack, Elt: len,
+					ForPhrase: phrase, Rbrack: rbrack,
+				}, true
 			}
 		}
 	}
@@ -2226,7 +2229,7 @@ func (p *parser) parseSelectStmt() *ast.SelectStmt {
 	return &ast.SelectStmt{Select: pos, Body: body}
 }
 
-func (p *parser) parseForPhrase() ast.ForPhrase { // for k, v <- listOrMap
+func (p *parser) parseForPhrase() ast.ForPhrase { // for k, v <- listOrMap, cond
 	if p.trace {
 		defer un(trace(p, "ForPhrase"))
 	}
@@ -2244,7 +2247,12 @@ func (p *parser) parseForPhrase() ast.ForPhrase { // for k, v <- listOrMap
 
 	tokPos := p.expect(token.ARROW) // <-
 	x := p.parseExpr(false)
-	return ast.ForPhrase{For: pos, Key: k, Value: v, TokPos: tokPos, X: x}
+	var cond ast.Expr
+	if p.tok == token.COMMA {
+		p.next()
+		cond = p.parseExpr(false)
+	}
+	return ast.ForPhrase{For: pos, Key: k, Value: v, TokPos: tokPos, X: x, Cond: cond}
 }
 
 func (p *parser) parseForStmt() ast.Stmt {

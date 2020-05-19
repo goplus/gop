@@ -280,6 +280,11 @@ func compileListComprehensionExpr(ctx *blockCtx, v *ast.ListComprehensionExpr) f
 			out.DefineVar(varKey)
 		}
 		out.DefineVar(varVal)
+		if v.Cond != nil {
+			compileExpr(ctxList, v.Cond)()
+			checkBool(ctxList.infer.Pop())
+			out.FilterComprehension(c)
+		}
 		exprElt()
 		out.EndComprehension(c)
 	}
@@ -322,6 +327,11 @@ func compileMapComprehensionExpr(ctx *blockCtx, v *ast.MapComprehensionExpr) fun
 			out.DefineVar(varKey)
 		}
 		out.DefineVar(varVal)
+		if v.Cond != nil {
+			compileExpr(ctxMap, v.Cond)()
+			checkBool(ctxMap.infer.Pop())
+			out.FilterComprehension(c)
+		}
 		exprEltKey()
 		exprEltVal()
 		out.EndComprehension(c)

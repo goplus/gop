@@ -237,7 +237,7 @@ func TestSliceLit3(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 var fsTestListComprehension = asttest.NewSingleFileFS("/foo", "bar.ql", `
-	x := [x*x for x <- [1, 2, 3, 4]]
+	x := [x*x for x <- [1, 2, 3, 4], x > 2]
 	println("x:", x)
 `)
 
@@ -279,6 +279,49 @@ var fsTestMapComprehension = asttest.NewSingleFileFS("/foo", "bar.ql", `
 func TestMapComprehension(t *testing.T) {
 	fset := token.NewFileSet()
 	pkgs, err := ParseFSDir(fset, fsTestMapComprehension, "/foo", nil, Trace)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+	bar, isMain := pkgs["main"]
+	if !isMain {
+		t.Fatal("TestMap failed: not main")
+	}
+	file := bar.Files["/foo/bar.ql"]
+	fmt.Println("Pkg:", file.Name)
+	for _, decl := range file.Decls {
+		fmt.Println("decl:", reflect.TypeOf(decl))
+		switch d := decl.(type) {
+		case *ast.GenDecl:
+			for _, spec := range d.Specs {
+				switch v := spec.(type) {
+				case *ast.ImportSpec:
+					fmt.Println(" - import:", v.Path.Value)
+				}
+			}
+		case *ast.FuncDecl:
+			fmt.Println(" - func:", d.Name.Name)
+		}
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+var fsTestMapComprehensionCond = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	x := {v: k*k for k, v <- [3, 5, 7, 11], k % 2 == 1}
+	println("x:", x)
+
+	x = map[int]int{}
+	for k, v := range []int{3, 5, 7, 11} {
+		if k % 2 == 1 {
+			x[v] = k*k
+		}
+	}
+	println("x:", x)
+`)
+
+func TestMapComprehensionCond(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := ParseFSDir(fset, fsTestMapComprehensionCond, "/foo", nil, Trace)
 	if err != nil || len(pkgs) != 1 {
 		t.Fatal("ParseFSDir failed:", err, len(pkgs))
 	}

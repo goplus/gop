@@ -135,9 +135,9 @@ func (c *Comprehension) exec(p *Context) int {
 	}
 }
 
-func (c *Comprehension) execListRange(data reflect.Value, p *Context) int {
+func (c *Comprehension) execListRange(data reflect.Value, p *Context) (nfilter int) {
 	n := data.Len()
-	ip, ipEnd := p.ip, c.End
+	ip, ipCond, ipEnd := p.ip, c.Cond, c.End
 	key, val := c.Key, c.Value
 	for i := 0; i < n; i++ {
 		if key != nil {
@@ -146,14 +146,24 @@ func (c *Comprehension) execListRange(data reflect.Value, p *Context) int {
 		if val != nil {
 			p.SetVar(val, data.Index(i).Interface())
 		}
-		p.Exec(ip, ipEnd)
+		if ipCond > 0 {
+			p.Exec(ip, ipCond)
+			if ok := p.Pop().(bool); ok {
+				nfilter++
+				p.Exec(ipCond, ipEnd)
+			}
+		} else {
+			p.Exec(ip, ipEnd)
+			nfilter++
+		}
 	}
-	return n
+	p.ip = ipEnd
+	return
 }
 
-func (c *Comprehension) execMapRange(data reflect.Value, p *Context) int {
+func (c *Comprehension) execMapRange(data reflect.Value, p *Context) (nfilter int) {
 	iter := data.MapRange()
-	ip, ipEnd := p.ip, c.End
+	ip, ipCond, ipEnd := p.ip, c.Cond, c.End
 	key, val := c.Key, c.Value
 	for iter.Next() {
 		if key != nil {
@@ -162,9 +172,19 @@ func (c *Comprehension) execMapRange(data reflect.Value, p *Context) int {
 		if val != nil {
 			p.SetVar(val, iter.Value().Interface())
 		}
-		p.Exec(ip, ipEnd)
+		if ipCond > 0 {
+			p.Exec(ip, ipCond)
+			if ok := p.Pop().(bool); ok {
+				nfilter++
+				p.Exec(ipCond, ipEnd)
+			}
+		} else {
+			p.Exec(ip, ipEnd)
+			nfilter++
+		}
 	}
-	return data.Len()
+	p.ip = ipEnd
+	return
 }
 
 // -----------------------------------------------------------------------------
@@ -354,7 +374,7 @@ var TyEmptyInterfaceSlice = reflect.SliceOf(TyEmptyInterface)
 type Comprehension struct {
 	Key, Value *Var // Key, Value may be nil
 	In, Out    reflect.Type
-	End        int
+	Cond, End  int
 }
 
 // NewComprehension creates a new Comprehension instance.
@@ -400,6 +420,12 @@ func (p *Builder) MapComprehension(c *Comprehension) *Builder {
 	addr := uint32(len(code.comprehens))
 	code.comprehens = append(code.comprehens, c)
 	code.data = append(code.data, (opMapComprehens<<bitsOpShift)|addr)
+	return p
+}
+
+// FilterComprehension instr
+func (p *Builder) FilterComprehension(c *Comprehension) *Builder {
+	c.Cond = len(p.code.data)
 	return p
 }
 

@@ -225,6 +225,35 @@ func TestMapComprehension(t *testing.T) {
 	}
 }
 
+func TestMapComprehensionFilter(t *testing.T) {
+	typData := reflect.MapOf(TyString, TyInt)
+	key := NewVar(TyString, "k")
+	val := NewVar(TyInt, "v")
+	c := NewComprehension(key, val, typData, reflect.MapOf(TyInt, TyString))
+	code := NewBuilder(nil).
+		Push("Hello").
+		Push(3).
+		Push("xsw").
+		Push(1).
+		MakeMap(typData, 2).
+		MapComprehension(c).
+		DefineVar(key, val).
+		LoadVar(val).
+		Push(2).
+		BuiltinOp(Int, OpLE).
+		FilterComprehension(c).
+		LoadVar(val).
+		LoadVar(key).
+		EndComprehension(c).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); !reflect.DeepEqual(v, map[int]string{1: "xsw"}) {
+		t.Fatal(`expected: {1: "xsw"}, ret =`, v)
+	}
+}
+
 func TestListComprehension(t *testing.T) {
 	typData := reflect.ArrayOf(4, TyInt)
 	x := NewVar(TyInt, "x")
@@ -247,6 +276,35 @@ func TestListComprehension(t *testing.T) {
 	ctx.Exec(0, code.Len())
 	if v := checkPop(ctx); !reflect.DeepEqual(v, []int{1, 9, 25, 49}) {
 		t.Fatal(`expected: [1, 9, 25, 49], ret =`, v)
+	}
+}
+
+func TestListComprehensionFilter(t *testing.T) {
+	typData := reflect.ArrayOf(4, TyInt)
+	x := NewVar(TyInt, "x")
+	c := NewComprehension(nil, x, typData, reflect.SliceOf(TyInt))
+	code := NewBuilder(nil).
+		Push(1).
+		Push(3).
+		Push(5).
+		Push(7).
+		MakeArray(typData, 4).
+		ListComprehension(c).
+		DefineVar(x).
+		LoadVar(x).
+		Push(3).
+		BuiltinOp(Int, OpGT). // x > 3
+		FilterComprehension(c).
+		LoadVar(x).
+		LoadVar(x).
+		BuiltinOp(Int, OpMul).
+		EndComprehension(c).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); !reflect.DeepEqual(v, []int{25, 49}) {
+		t.Fatal(`expected: [25, 49], ret =`, v)
 	}
 }
 
