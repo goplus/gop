@@ -277,3 +277,55 @@ func (p *SliceLit) End() token.Pos {
 func (*SliceLit) exprNode() {}
 
 // -----------------------------------------------------------------------------
+
+// ForPhrase represents `for k, v <- listOrMap`
+type ForPhrase struct {
+	For        token.Pos // position of "for" keyword
+	Key, Value *Ident    // Key may be nil
+	TokPos     token.Pos // position of "<-" operator
+	X          Expr      // value to range over, must be list or map
+}
+
+// ListComprehensionExpr represents `[expr for k, v <- listOrMap]`
+type ListComprehensionExpr struct {
+	Lbrack token.Pos // position of "["
+	Elt    Expr
+	ForPhrase
+	Rbrack token.Pos // position of "]"
+}
+
+// Pos - position of first character belonging to the node
+func (p *ListComprehensionExpr) Pos() token.Pos {
+	return p.Lbrack
+}
+
+// End - position of first character immediately after the node
+func (p *ListComprehensionExpr) End() token.Pos {
+	return p.Rbrack + 1
+}
+
+func (*ListComprehensionExpr) exprNode() {}
+
+// -----------------------------------------------------------------------------
+
+// MapComprehensionExpr represents `{kexpr: vexpr for k, v <- listOrMap}`
+type MapComprehensionExpr struct {
+	Lbrace token.Pos // position of "{"
+	Elt    *KeyValueExpr
+	ForPhrase
+	Rbrace token.Pos // position of "}"
+}
+
+// Pos - position of first character belonging to the node
+func (p *MapComprehensionExpr) Pos() token.Pos {
+	return p.Lbrace
+}
+
+// End - position of first character immediately after the node
+func (p *MapComprehensionExpr) End() token.Pos {
+	return p.Rbrace + 1
+}
+
+func (*MapComprehensionExpr) exprNode() {}
+
+// -----------------------------------------------------------------------------

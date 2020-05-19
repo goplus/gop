@@ -680,10 +680,18 @@ func (p *parser) parseArrayTypeOrSliceLit(allowSliceLit bool) (expr ast.Expr, is
 		p.next()
 	} else if p.tok != token.RBRACK {
 		len = p.parseRHS()
-		if allowSliceLit && p.tok == token.COMMA { // [a, b, c, d ...]
-			elts := p.parseSliceLit(lbrack, len)
-			p.exprLev--
-			return elts, true
+		if allowSliceLit {
+			switch p.tok {
+			case token.COMMA: // [a, b, c, d ...]
+				elts := p.parseSliceLit(lbrack, len)
+				p.exprLev--
+				return elts, true
+			case token.FOR: // [expr for k, v <- listOrMap]
+				phrase := p.parseForPhrase()
+				p.exprLev--
+				rbrack := p.expect(token.RBRACK)
+				return &ast.ListComprehensionExpr{Lbrack: lbrack, Elt: len, ForPhrase: phrase, Rbrack: rbrack}, true
+			}
 		}
 	}
 	p.exprLev--
@@ -1190,8 +1198,8 @@ func (p *parser) parseOperand(lhs bool) ast.Expr {
 		return p.parseFuncTypeOrLit()
 
 	case token.LBRACE:
-		if !lhs { // rhs
-			return p.parseLiteralValue(nil)
+		if !lhs { // rhs: mapLit - {k1: v1, k2: v2, ...}
+			return p.parseLiteralValueOrMapComprehension()
 		}
 	}
 
@@ -1320,7 +1328,7 @@ func (p *parser) parseValue(keyOk bool) ast.Expr {
 	}
 
 	if p.tok == token.LBRACE {
-		return p.parseLiteralValue(nil)
+		return p.parseLiteralValueOrMapComprehension()
 	}
 
 	// Because the parser doesn't know the composite literal type, it cannot
@@ -1371,6 +1379,55 @@ func (p *parser) parseElement() ast.Expr {
 	return x
 }
 
+// {k1: v1, k2: v2, ...}
+// {kexpr, vexpr for k, v <- listOrMap}
+func (p *parser) parseLiteralValueOrMapComprehension() ast.Expr {
+	if p.trace {
+		defer un(trace(p, "LiteralValue"))
+	}
+
+	lbrace := p.expect(token.LBRACE)
+	var elts []ast.Expr
+	var mce *ast.MapComprehensionExpr
+	p.exprLev++
+	if p.tok != token.RBRACE {
+		elts, mce = p.parseElementListOrMapComprehension()
+	}
+	p.exprLev--
+	rbrace := p.expectClosing(token.RBRACE, "composite literal")
+	if mce != nil {
+		mce.Lbrace, mce.Rbrace = lbrace, rbrace
+		return mce
+	}
+	return &ast.CompositeLit{Lbrace: lbrace, Elts: elts, Rbrace: rbrace}
+}
+
+func (p *parser) parseElementListOrMapComprehension() (list []ast.Expr, mce *ast.MapComprehensionExpr) {
+	if p.trace {
+		defer un(trace(p, "ElementList"))
+	}
+
+	for p.tok != token.RBRACE && p.tok != token.EOF {
+		list = append(list, p.parseElement())
+		if p.tok == token.FOR { // for k, v <- listOrMap
+			if len(list) != 1 {
+				log.Panicln("invalid map comprehension: too may `key: value` pairs.")
+			}
+			elt, ok := list[0].(*ast.KeyValueExpr)
+			if !ok {
+				log.Panicln("invalid map comprehension: a `key: value` pair is required.")
+			}
+			phrase := p.parseForPhrase()
+			return nil, &ast.MapComprehensionExpr{Elt: elt, ForPhrase: phrase}
+		}
+		if !p.atComma("composite literal", token.RBRACE) {
+			break
+		}
+		p.next()
+	}
+	return
+}
+
 func (p *parser) parseElementList() (list []ast.Expr) {
 	if p.trace {
 		defer un(trace(p, "ElementList"))
@@ -1389,7 +1446,6 @@ func (p *parser) parseElementList() (list []ast.Expr) {
 
 func (p *parser) parseLiteralValue(typ ast.Expr) ast.Expr {
 	if p.trace {
-		log.Debug("parseLiteralValue:", reflect.TypeOf(typ))
 		defer un(trace(p, "LiteralValue"))
 	}
 
@@ -1413,6 +1469,8 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	case *ast.FuncLit:
 	case *ast.CompositeLit:
 	case *ast.SliceLit:
+	case *ast.ListComprehensionExpr:
+	case *ast.MapComprehensionExpr:
 	case *ast.ParenExpr:
 		panic("unreachable")
 	case *ast.SelectorExpr:
@@ -2166,6 +2224,27 @@ func (p *parser) parseSelectStmt() *ast.SelectStmt {
 	body := &ast.BlockStmt{Lbrace: lbrace, List: list, Rbrace: rbrace}
 
 	return &ast.SelectStmt{Select: pos, Body: body}
+}
+
+func (p *parser) parseForPhrase() ast.ForPhrase { // for k, v <- listOrMap
+	if p.trace {
+		defer un(trace(p, "ForPhrase"))
+	}
+
+	pos := p.expect(token.FOR)
+	p.openScope()
+	defer p.closeScope()
+
+	var k, v *ast.Ident
+	v = p.parseIdent()
+	if p.tok == token.COMMA {
+		p.next()
+		k, v = v, p.parseIdent()
+	}
+
+	tokPos := p.expect(token.ARROW) // <-
+	x := p.parseExpr(false)
+	return ast.ForPhrase{For: pos, Key: k, Value: v, TokPos: tokPos, X: x}
 }
 
 func (p *parser) parseForStmt() ast.Stmt {
