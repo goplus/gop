@@ -331,7 +331,7 @@ func (p *FuncInfo) Type() reflect.Type {
 }
 
 func (p *FuncInfo) exec(stk *Stack, parent *Context) {
-	ctx := NewContextEx(parent, stk, parent.code, p.vlist...)
+	ctx := newContextEx(parent, stk, parent.code, &p.varManager)
 	ctx.Exec(p.FunEntry, p.FunEnd)
 	if ctx.ip == ipReturnN {
 		n := len(stk.data)

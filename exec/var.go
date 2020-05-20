@@ -259,6 +259,11 @@ func (p *Var) SetAddr(nestDepth, idx uint32) {
 type varManager struct {
 	vlist     []*Var
 	nestDepth uint32
+	tcache    reflect.Type
+}
+
+func newVarManager(vars ...*Var) *varManager {
+	return &varManager{vlist: vars}
 }
 
 func (p *varManager) addVars(vars ...*Var) {

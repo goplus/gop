@@ -2,6 +2,7 @@ package exec
 
 import (
 	"reflect"
+	"strconv"
 
 	"github.com/qiniu/x/log"
 )
@@ -35,15 +36,21 @@ func (p *StructInfo) Type() reflect.Type {
 type varsContext = reflect.Value
 
 func makeVarList(vars []*Var) []StructField {
+	exists := make(map[string]bool, len(vars))
 	items := make([]StructField, len(vars))
 	for i, v := range vars {
+		if _, ok := exists[v.name]; ok {
+			v.name = "Q" + strconv.Itoa(i) + v.name[1:]
+		} else {
+			exists[v.name] = true
+		}
 		items[i].Type = v.Type
 		items[i].Name = v.name
 	}
 	return items
 }
 
-func makeVarsContext(vars []*Var, ctx *Context) varsContext {
+func makeVarsContextType(vars []*Var, ctx *Context) reflect.Type {
 	t := Struct(makeVarList(vars)).Type()
 	if log.CanOutput(log.Ldebug) {
 		nestDepth := ctx.getNestDepth()
@@ -53,7 +60,14 @@ func makeVarsContext(vars []*Var, ctx *Context) varsContext {
 			}
 		}
 	}
-	return reflect.New(t).Elem()
+	return t
+}
+
+func (p *varManager) makeVarsContext(ctx *Context) varsContext {
+	if p.tcache == nil {
+		p.tcache = makeVarsContextType(p.vlist, ctx)
+	}
+	return reflect.New(p.tcache).Elem()
 }
 
 func (ctx *Context) addrVar(idx uint32) interface{} {
