@@ -114,28 +114,35 @@ func execFuncv(i Instr, p *Context) {
 func execListComprehension(i Instr, p *Context) {
 	addr := i & bitsOperand
 	c := p.code.comprehens[addr]
-	n := c.exec(p)
-	makeArray(c.Out, n, p)
+	base := len(p.data)
+	p.Exec(p.ip, c.End)
+	makeArray(c.TypeOut, len(p.data)-base, p)
 }
 
 func execMapComprehension(i Instr, p *Context) {
 	addr := i & bitsOperand
 	c := p.code.comprehens[addr]
-	n := c.exec(p)
-	makeMap(c.Out, n, p)
+	base := len(p.data)
+	p.Exec(p.ip, c.End)
+	makeMap(c.TypeOut, (len(p.data)-base)>>1, p)
 }
 
-func (c *Comprehension) exec(p *Context) int {
+func execForPhrase(i Instr, p *Context) {
+	addr := i & bitsOperand
+	p.code.fors[addr].exec(p)
+}
+
+func (c *ForPhrase) exec(p *Context) {
 	data := reflect.ValueOf(p.Pop())
 	switch data.Kind() {
 	case reflect.Map:
-		return c.execMapRange(data, p)
+		c.execMapRange(data, p)
 	default:
-		return c.execListRange(data, p)
+		c.execListRange(data, p)
 	}
 }
 
-func (c *Comprehension) execListRange(data reflect.Value, p *Context) (nfilter int) {
+func (c *ForPhrase) execListRange(data reflect.Value, p *Context) {
 	n := data.Len()
 	ip, ipCond, ipEnd := p.ip, c.Cond, c.End
 	key, val := c.Key, c.Value
@@ -149,19 +156,16 @@ func (c *Comprehension) execListRange(data reflect.Value, p *Context) (nfilter i
 		if ipCond > 0 {
 			p.Exec(ip, ipCond)
 			if ok := p.Pop().(bool); ok {
-				nfilter++
 				p.Exec(ipCond, ipEnd)
 			}
 		} else {
 			p.Exec(ip, ipEnd)
-			nfilter++
 		}
 	}
 	p.ip = ipEnd
-	return
 }
 
-func (c *Comprehension) execMapRange(data reflect.Value, p *Context) (nfilter int) {
+func (c *ForPhrase) execMapRange(data reflect.Value, p *Context) {
 	iter := data.MapRange()
 	ip, ipCond, ipEnd := p.ip, c.Cond, c.End
 	key, val := c.Key, c.Value
@@ -175,16 +179,13 @@ func (c *Comprehension) execMapRange(data reflect.Value, p *Context) (nfilter in
 		if ipCond > 0 {
 			p.Exec(ip, ipCond)
 			if ok := p.Pop().(bool); ok {
-				nfilter++
 				p.Exec(ipCond, ipEnd)
 			}
 		} else {
 			p.Exec(ip, ipEnd)
-			nfilter++
 		}
 	}
 	p.ip = ipEnd
-	return
 }
 
 // -----------------------------------------------------------------------------
@@ -370,16 +371,27 @@ var TyEmptyInterfaceSlice = reflect.SliceOf(TyEmptyInterface)
 
 // -----------------------------------------------------------------------------
 
+// ForPhrase represents a for range phrase.
+type ForPhrase struct {
+	Key, Value *Var // Key, Value may be nil
+	Cond, End  int
+	TypeIn     reflect.Type
+}
+
+// NewForPhrase creates a new ForPhrase instance.
+func NewForPhrase(key, val *Var, in reflect.Type) *ForPhrase {
+	return &ForPhrase{TypeIn: in, Key: key, Value: val}
+}
+
 // Comprehension represents a list/map comprehension.
 type Comprehension struct {
-	Key, Value *Var // Key, Value may be nil
-	In, Out    reflect.Type
-	Cond, End  int
+	TypeOut reflect.Type
+	End     int
 }
 
 // NewComprehension creates a new Comprehension instance.
-func NewComprehension(key, val *Var, in, out reflect.Type) *Comprehension {
-	return &Comprehension{In: in, Out: out, Key: key, Value: val}
+func NewComprehension(out reflect.Type) *Comprehension {
+	return &Comprehension{TypeOut: out}
 }
 
 // -----------------------------------------------------------------------------
@@ -405,6 +417,27 @@ func isClosure(op uint32) bool {
 	return op == opClosure || op == opGoClosure
 }
 
+// ForPhrase instr
+func (p *Builder) ForPhrase(f *ForPhrase) *Builder {
+	code := p.code
+	addr := uint32(len(code.fors))
+	code.fors = append(code.fors, f)
+	code.data = append(code.data, (opForPhrase<<bitsOpShift)|addr)
+	return p
+}
+
+// FilterForPhrase instr
+func (p *Builder) FilterForPhrase(f *ForPhrase) *Builder {
+	f.Cond = len(p.code.data)
+	return p
+}
+
+// EndForPhrase instr
+func (p *Builder) EndForPhrase(f *ForPhrase) *Builder {
+	f.End = len(p.code.data)
+	return p
+}
+
 // ListComprehension instr
 func (p *Builder) ListComprehension(c *Comprehension) *Builder {
 	code := p.code
@@ -420,12 +453,6 @@ func (p *Builder) MapComprehension(c *Comprehension) *Builder {
 	addr := uint32(len(code.comprehens))
 	code.comprehens = append(code.comprehens, c)
 	code.data = append(code.data, (opMapComprehens<<bitsOpShift)|addr)
-	return p
-}
-
-// FilterComprehension instr
-func (p *Builder) FilterComprehension(c *Comprehension) *Builder {
-	c.Cond = len(p.code.data)
 	return p
 }
 
