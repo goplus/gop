@@ -687,12 +687,12 @@ func (p *parser) parseArrayTypeOrSliceLit(allowSliceLit bool) (expr ast.Expr, is
 				p.exprLev--
 				return elts, true
 			case token.FOR: // [expr for k, v <- listOrMap, cond]
-				phrase := p.parseForPhrase()
+				phrases := p.parseForPhrases()
 				p.exprLev--
 				rbrack := p.expect(token.RBRACK)
 				return &ast.ListComprehensionExpr{
 					Lbrack: lbrack, Elt: len,
-					ForPhrase: phrase, Rbrack: rbrack,
+					Fors: phrases, Rbrack: rbrack,
 				}, true
 			}
 		}
@@ -1420,8 +1420,8 @@ func (p *parser) parseElementListOrMapComprehension() (list []ast.Expr, mce *ast
 			if !ok {
 				log.Panicln("invalid map comprehension: a `key: value` pair is required.")
 			}
-			phrase := p.parseForPhrase()
-			return nil, &ast.MapComprehensionExpr{Elt: elt, ForPhrase: phrase}
+			phrases := p.parseForPhrases()
+			return nil, &ast.MapComprehensionExpr{Elt: elt, Fors: phrases}
 		}
 		if !p.atComma("composite literal", token.RBRACE) {
 			break
@@ -2227,6 +2227,16 @@ func (p *parser) parseSelectStmt() *ast.SelectStmt {
 	body := &ast.BlockStmt{Lbrace: lbrace, List: list, Rbrace: rbrace}
 
 	return &ast.SelectStmt{Select: pos, Body: body}
+}
+
+func (p *parser) parseForPhrases() (phrases []ast.ForPhrase) {
+	for {
+		phrase := p.parseForPhrase()
+		phrases = append(phrases, phrase)
+		if p.tok != token.FOR {
+			return
+		}
+	}
 }
 
 func (p *parser) parseForPhrase() ast.ForPhrase { // for k, v <- listOrMap, cond

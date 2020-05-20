@@ -51,7 +51,7 @@ func makeArray(typSlice reflect.Type, arity int, p *Context) {
 	args := p.GetArgs(arity)
 	var ret reflect.Value
 	if typSlice.Kind() == reflect.Slice {
-		ret = reflect.MakeSlice(typSlice, int(arity), int(arity))
+		ret = reflect.MakeSlice(typSlice, arity, arity)
 	} else {
 		ret = reflect.New(typSlice).Elem()
 	}
@@ -73,7 +73,7 @@ func execMakeMap(i Instr, p *Context) {
 func makeMap(typMap reflect.Type, arity int, p *Context) {
 	n := arity << 1
 	args := p.GetArgs(n)
-	ret := reflect.MakeMapWithSize(typMap, int(n))
+	ret := reflect.MakeMapWithSize(typMap, arity)
 	for i := 0; i < n; i += 2 {
 		key := getKeyOf(args[i], typMap)
 		val := getElementOf(args[i+1], typMap)

@@ -245,14 +245,15 @@ func compileSliceLit(ctx *blockCtx, v *ast.SliceLit) func() {
 	}
 }
 
-func compileListComprehensionExpr(ctx *blockCtx, v *ast.ListComprehensionExpr) func() {
-	var typKey reflect.Type
-	var varKey *exec.Var
-	var hasKey = v.Key != nil
-	var ctxList = newBlockCtx(ctx, true)
+func compileForPhrase(parent *blockCtx, f ast.ForPhrase) (*blockCtx, func(exprElt func())) {
+	var typKey, typVal reflect.Type
+	var varKey, varVal *exec.Var
+	var hasKey = f.Key != nil
+	var hasVal = f.Value != nil
+	var ctx = newBlockCtx(parent, true)
 
-	exprX := compileExpr(ctxList, v.X)
-	typData := boundType(ctx.infer.Get(-1).(iValue))
+	exprX := compileExpr(ctx, f.X)
+	typData := boundType(ctx.infer.Pop().(iValue))
 	if hasKey {
 		switch kind := typData.Kind(); kind {
 		case reflect.Slice, reflect.Array:
@@ -262,79 +263,81 @@ func compileListComprehensionExpr(ctx *blockCtx, v *ast.ListComprehensionExpr) f
 		default:
 			log.Panicln("compileListComprehensionExpr: require slice, array or map")
 		}
-		varKey = (*exec.Var)(ctxList.insertVar(v.Key.Name, typKey, true))
+		varKey = (*exec.Var)(ctx.insertVar(f.Key.Name, typKey, true))
 	}
-	typVal := typData.Elem()
-	varVal := (*exec.Var)(ctxList.insertVar(v.Value.Name, typVal, true))
-
-	exprElt := compileExpr(ctxList, v.Elt)
-	typElem := boundType(ctx.infer.Get(-1).(iValue))
-	typSlice := reflect.SliceOf(typElem)
-	ctx.infer.Ret(2, &goValue{t: typSlice})
-	return func() {
+	if hasVal {
+		typVal = typData.Elem()
+		varVal = (*exec.Var)(ctx.insertVar(f.Value.Name, typVal, true))
+	}
+	return ctx, func(exprElt func()) {
 		exprX()
-		out := ctxList.out
-		c := exec.NewComprehension(varKey, varVal, typData, typSlice)
-		out.ListComprehension(c)
+		out := ctx.out
+		c := exec.NewForPhrase(varKey, varVal, typData)
+		out.ForPhrase(c)
 		if hasKey {
 			out.DefineVar(varKey)
 		}
-		out.DefineVar(varVal)
-		if v.Cond != nil {
-			compileExpr(ctxList, v.Cond)()
-			checkBool(ctxList.infer.Pop())
-			out.FilterComprehension(c)
+		if hasVal {
+			out.DefineVar(varVal)
+		}
+		if f.Cond != nil {
+			compileExpr(ctx, f.Cond)()
+			checkBool(ctx.infer.Pop())
+			out.FilterForPhrase(c)
 		}
 		exprElt()
-		out.EndComprehension(c)
+		out.EndForPhrase(c)
 	}
 }
 
-func compileMapComprehensionExpr(ctx *blockCtx, v *ast.MapComprehensionExpr) func() {
-	var typKey reflect.Type
-	var varKey *exec.Var
-	var hasKey = v.Key != nil
-	var ctxMap = newBlockCtx(ctx, true)
-
-	exprX := compileExpr(ctxMap, v.X)
-	typData := boundType(ctx.infer.Get(-1).(iValue))
-	if hasKey {
-		switch kind := typData.Kind(); kind {
-		case reflect.Slice, reflect.Array:
-			typKey = exec.TyInt
-		case reflect.Map:
-			typKey = typData.Key()
-		default:
-			log.Panicln("compileListComprehensionExpr: require slice, array or map")
-		}
-		varKey = (*exec.Var)(ctxMap.insertVar(v.Key.Name, typKey, true))
+func compileForPhrases(ctx *blockCtx, fors []ast.ForPhrase) (*blockCtx, []func(exprElt func())) {
+	n := len(fors)
+	fns := make([]func(exprElt func()), n)
+	for i := n - 1; i >= 0; i-- {
+		ctx, fns[i] = compileForPhrase(ctx, fors[i])
 	}
-	typVal := typData.Elem()
-	varVal := (*exec.Var)(ctxMap.insertVar(v.Value.Name, typVal, true))
+	return ctx, fns
+}
 
-	exprEltKey := compileExpr(ctxMap, v.Elt.Key)
-	exprEltVal := compileExpr(ctxMap, v.Elt.Value)
+func compileListComprehensionExpr(parent *blockCtx, v *ast.ListComprehensionExpr) func() {
+	ctx, fns := compileForPhrases(parent, v.Fors)
+	exprElt := compileExpr(ctx, v.Elt)
+	typElem := boundType(ctx.infer.Get(-1).(iValue))
+	typSlice := reflect.SliceOf(typElem)
+	ctx.infer.Ret(1, &goValue{t: typSlice})
+	return func() {
+		for _, v := range fns {
+			e, fn := exprElt, v
+			exprElt = func() { fn(e) }
+		}
+		c := exec.NewComprehension(typSlice)
+		ctx.out.ListComprehension(c)
+		exprElt()
+		ctx.out.EndComprehension(c)
+	}
+}
+
+func compileMapComprehensionExpr(parent *blockCtx, v *ast.MapComprehensionExpr) func() {
+	ctx, fns := compileForPhrases(parent, v.Fors)
+	exprEltKey := compileExpr(ctx, v.Elt.Key)
+	exprEltVal := compileExpr(ctx, v.Elt.Value)
 	typEltKey := boundType(ctx.infer.Get(-2).(iValue))
 	typEltVal := boundType(ctx.infer.Get(-1).(iValue))
 	typMap := reflect.MapOf(typEltKey, typEltVal)
-	ctx.infer.Ret(3, &goValue{t: typMap})
-	return func() {
-		exprX()
-		out := ctxMap.out
-		c := exec.NewComprehension(varKey, varVal, typData, typMap)
-		out.MapComprehension(c)
-		if hasKey {
-			out.DefineVar(varKey)
-		}
-		out.DefineVar(varVal)
-		if v.Cond != nil {
-			compileExpr(ctxMap, v.Cond)()
-			checkBool(ctxMap.infer.Pop())
-			out.FilterComprehension(c)
-		}
+	exprElt := func() {
 		exprEltKey()
 		exprEltVal()
-		out.EndComprehension(c)
+	}
+	ctx.infer.Ret(2, &goValue{t: typMap})
+	return func() {
+		for _, v := range fns {
+			e, fn := exprElt, v
+			exprElt = func() { fn(e) }
+		}
+		c := exec.NewComprehension(typMap)
+		ctx.out.MapComprehension(c)
+		exprElt()
+		ctx.out.EndComprehension(c)
 	}
 }
 

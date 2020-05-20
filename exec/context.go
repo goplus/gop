@@ -193,6 +193,7 @@ var _execTable = [...]func(i Instr, p *Context){
 	opMakeArray:     execMakeArray,
 	opMakeMap:       execMakeMap,
 	opZero:          execZero,
+	opForPhrase:     execForPhrase,
 	opLstComprehens: execListComprehension,
 	opMapComprehens: execMapComprehension,
 }

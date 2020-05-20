@@ -287,11 +287,11 @@ type ForPhrase struct {
 	Cond       Expr      // value filter, can be nil
 }
 
-// ListComprehensionExpr represents `[expr for k, v <- listOrMap]`
+// ListComprehensionExpr represents `[expr for k1, v1 <- listOrMap1, cond1 ...]`
 type ListComprehensionExpr struct {
 	Lbrack token.Pos // position of "["
 	Elt    Expr
-	ForPhrase
+	Fors   []ForPhrase
 	Rbrack token.Pos // position of "]"
 }
 
@@ -309,11 +309,11 @@ func (*ListComprehensionExpr) exprNode() {}
 
 // -----------------------------------------------------------------------------
 
-// MapComprehensionExpr represents `{kexpr: vexpr for k, v <- listOrMap}`
+// MapComprehensionExpr represents `{kexpr: vexpr for k1, v1 <- listOrMap1, cond1 ...}`
 type MapComprehensionExpr struct {
 	Lbrace token.Pos // position of "{"
 	Elt    *KeyValueExpr
-	ForPhrase
+	Fors   []ForPhrase
 	Rbrace token.Pos // position of "}"
 }
 

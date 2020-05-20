@@ -13,6 +13,7 @@ import (
 // -----------------------------------------------------------------------------
 
 var fsTestStd = asttest.NewSingleFileFS("/foo", "bar.ql", `package bar; import "io"
+	// comment
 	x := 0
 	if t := false; t {
 		x = 3
@@ -21,6 +22,8 @@ var fsTestStd = asttest.NewSingleFileFS("/foo", "bar.ql", `package bar; import "
 	}
 	println("x:", x)
 
+	// comment 1
+	// comment 2
 	x = 0
 	switch s := "Hello"; s {
 	default:
@@ -31,11 +34,19 @@ var fsTestStd = asttest.NewSingleFileFS("/foo", "bar.ql", `package bar; import "
 		x = 3
 	}
 	println("x:", x)
+
+	c := make(chan bool, 100)
+	select {
+	case c <- true:
+	case v := <-c:
+	default:
+		panic("error")
+	}
 `)
 
 func TestStd(t *testing.T) {
 	fset := token.NewFileSet()
-	pkgs, err := ParseFSDir(fset, fsTestStd, "/foo", nil, 0)
+	pkgs, err := ParseFSDir(fset, fsTestStd, "/foo", nil, ParseComments)
 	if err != nil || len(pkgs) != 1 {
 		t.Fatal("ParseFSDir failed:", err, len(pkgs))
 	}

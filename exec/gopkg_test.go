@@ -204,17 +204,20 @@ func TestMapComprehension(t *testing.T) {
 	typData := reflect.MapOf(TyString, TyInt)
 	key := NewVar(TyString, "k")
 	val := NewVar(TyInt, "v")
-	c := NewComprehension(key, val, typData, reflect.MapOf(TyInt, TyString))
+	f := NewForPhrase(key, val, typData)
+	c := NewComprehension(reflect.MapOf(TyInt, TyString))
 	code := NewBuilder(nil).
+		MapComprehension(c).
 		Push("Hello").
 		Push(3).
 		Push("xsw").
 		Push(1).
 		MakeMap(typData, 2).
-		MapComprehension(c).
+		ForPhrase(f).
 		DefineVar(key, val).
 		LoadVar(val).
 		LoadVar(key).
+		EndForPhrase(f).
 		EndComprehension(c).
 		Resolve()
 
@@ -229,21 +232,24 @@ func TestMapComprehensionFilter(t *testing.T) {
 	typData := reflect.MapOf(TyString, TyInt)
 	key := NewVar(TyString, "k")
 	val := NewVar(TyInt, "v")
-	c := NewComprehension(key, val, typData, reflect.MapOf(TyInt, TyString))
+	f := NewForPhrase(key, val, typData)
+	c := NewComprehension(reflect.MapOf(TyInt, TyString))
 	code := NewBuilder(nil).
+		MapComprehension(c).
 		Push("Hello").
 		Push(3).
 		Push("xsw").
 		Push(1).
 		MakeMap(typData, 2).
-		MapComprehension(c).
+		ForPhrase(f).
 		DefineVar(key, val).
 		LoadVar(val).
 		Push(2).
 		BuiltinOp(Int, OpLE).
-		FilterComprehension(c).
+		FilterForPhrase(f).
 		LoadVar(val).
 		LoadVar(key).
+		EndForPhrase(f).
 		EndComprehension(c).
 		Resolve()
 
@@ -257,18 +263,21 @@ func TestMapComprehensionFilter(t *testing.T) {
 func TestListComprehension(t *testing.T) {
 	typData := reflect.ArrayOf(4, TyInt)
 	x := NewVar(TyInt, "x")
-	c := NewComprehension(nil, x, typData, reflect.SliceOf(TyInt))
+	f := NewForPhrase(nil, x, typData)
+	c := NewComprehension(reflect.SliceOf(TyInt))
 	code := NewBuilder(nil).
+		ListComprehension(c).
 		Push(1).
 		Push(3).
 		Push(5).
 		Push(7).
 		MakeArray(typData, 4).
-		ListComprehension(c).
+		ForPhrase(f).
 		DefineVar(x).
 		LoadVar(x).
 		LoadVar(x).
 		BuiltinOp(Int, OpMul).
+		EndForPhrase(f).
 		EndComprehension(c).
 		Resolve()
 
@@ -282,22 +291,25 @@ func TestListComprehension(t *testing.T) {
 func TestListComprehensionFilter(t *testing.T) {
 	typData := reflect.ArrayOf(4, TyInt)
 	x := NewVar(TyInt, "x")
-	c := NewComprehension(nil, x, typData, reflect.SliceOf(TyInt))
+	f := NewForPhrase(nil, x, typData)
+	c := NewComprehension(reflect.SliceOf(TyInt))
 	code := NewBuilder(nil).
+		ListComprehension(c).
 		Push(1).
 		Push(3).
 		Push(5).
 		Push(7).
 		MakeArray(typData, 4).
-		ListComprehension(c).
+		ForPhrase(f).
 		DefineVar(x).
 		LoadVar(x).
 		Push(3).
 		BuiltinOp(Int, OpGT). // x > 3
-		FilterComprehension(c).
+		FilterForPhrase(f).
 		LoadVar(x).
 		LoadVar(x).
 		BuiltinOp(Int, OpMul).
+		EndForPhrase(f).
 		EndComprehension(c).
 		Resolve()
 
@@ -312,19 +324,22 @@ func TestMapComprehension2(t *testing.T) {
 	typData := reflect.SliceOf(TyInt)
 	i := NewVar(TyInt, "i")
 	x := NewVar(TyInt, "x")
-	c := NewComprehension(i, x, typData, reflect.MapOf(TyInt, TyInt))
+	f := NewForPhrase(i, x, typData)
+	c := NewComprehension(reflect.MapOf(TyInt, TyInt))
 	code := NewBuilder(nil).
+		MapComprehension(c).
 		Push(1).
 		Push(3).
 		Push(5).
 		Push(7).
 		MakeArray(typData, 4).
-		MapComprehension(c).
+		ForPhrase(f).
 		DefineVar(i, x).
 		LoadVar(x).
 		LoadVar(x).
 		BuiltinOp(Int, OpMul).
 		LoadVar(i).
+		EndForPhrase(f).
 		EndComprehension(c).
 		Resolve()
 
@@ -332,6 +347,47 @@ func TestMapComprehension2(t *testing.T) {
 	ctx.Exec(0, code.Len())
 	if v := checkPop(ctx); !reflect.DeepEqual(v, map[int]int{1: 0, 9: 1, 25: 2, 49: 3}) {
 		t.Fatal(`expected: {1: 0, 9: 1, 25: 2, 49: 3}, ret =`, v)
+	}
+}
+
+func TestListComprehensionEx(t *testing.T) {
+	typData := reflect.SliceOf(TyInt)
+	a := NewVar(TyInt, "a")
+	b := NewVar(TyInt, "b")
+	fa := NewForPhrase(nil, a, typData)
+	fb := NewForPhrase(nil, b, typData)
+	c := NewComprehension(typData)
+	code := NewBuilder(nil).
+		ListComprehension(c).
+		Push(5).
+		Push(6).
+		Push(7).
+		MakeArray(typData, 3).
+		ForPhrase(fb).
+		DefineVar(b).
+		Push(1).
+		Push(2).
+		Push(3).
+		Push(4).
+		MakeArray(typData, 4).
+		ForPhrase(fa).
+		DefineVar(a).
+		LoadVar(a).
+		Push(1).
+		BuiltinOp(Int, OpGT). // a > 1
+		FilterForPhrase(fa).
+		LoadVar(a).
+		LoadVar(b).
+		BuiltinOp(Int, OpMul).
+		EndForPhrase(fa).
+		EndForPhrase(fb).
+		EndComprehension(c).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); !reflect.DeepEqual(v, []int{10, 15, 20, 12, 18, 24, 14, 21, 28}) {
+		t.Fatal(`expected: [10, 15, 20, 12, 18, 24, 14, 21, 28], ret =`, v)
 	}
 }
 
