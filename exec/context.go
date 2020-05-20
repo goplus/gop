@@ -92,21 +92,21 @@ func NewContext(code *Code) *Context {
 		code:  code,
 	}
 	if len(code.vlist) > 0 {
-		p.vars = makeVarsContext(code.vlist, p)
+		p.vars = code.makeVarsContext(p)
 	}
 	return p
 }
 
 // NewContextEx creates a closure context, with some local variables.
-func NewContextEx(parent *Context, stk *Stack, code *Code, vars ...*Var) *Context {
+func newContextEx(parent *Context, stk *Stack, code *Code, vmgr *varManager) *Context {
 	p := &Context{
 		Stack:  stk,
 		code:   code,
 		parent: parent,
 		base:   len(stk.data),
 	}
-	if len(vars) > 0 {
-		p.vars = makeVarsContext(vars, p)
+	if vmgr != nil {
+		p.vars = vmgr.makeVarsContext(p)
 	}
 	return p
 }
