@@ -110,6 +110,12 @@ func TestStd2(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 var fsTestStdFor = asttest.NewSingleFileFS("/foo", "bar.ql", `package bar; import "io"
+	n := 0
+	for range [1, 3, 5, 7, 11] {
+		n++
+	}
+	println("n:", n)
+
 	sum := 0
 	for _, x := range [1, 3, 5, 7, 11] {
 		if x > 3 {

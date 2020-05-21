@@ -391,6 +391,12 @@ var fsTestFor = asttest.NewSingleFileFS("/foo", "bar.ql", `
 		sum += x
 	}
 	println("sum(1,3,5,7,11):", sum)
+
+	sum = 0
+	for i, x <- [1, 3, 5, 7, 11], i%2 == 1 {
+		sum += x
+	}
+	println("sum(1,3,5,7,11):", sum)
 `)
 
 func TestFor(t *testing.T) {
