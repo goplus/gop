@@ -495,17 +495,13 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) func() {
 			for _, arg := range v.Args {
 				compileExpr(ctx, arg)()
 			}
-			out := ctx.out
-			nargs := len(v.Args)
-			args := ctx.infer.GetArgs(nargs)
-			arity := checkFuncCall(vfn.Proto(), 0, args, out)
+			arity := checkFuncCall(vfn.Proto(), 0, v, ctx)
 			fun := vfn.FuncInfo()
 			if fun.IsVariadic() {
-				out.CallFuncv(fun, arity)
+				ctx.out.CallFuncv(fun, arity)
 			} else {
-				out.CallFunc(fun)
+				ctx.out.CallFunc(fun)
 			}
-			ctx.infer.PopN(nargs)
 		}
 	case *goFunc:
 		ret := vfn.Results()
@@ -517,17 +513,13 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) func() {
 			for _, arg := range v.Args {
 				compileExpr(ctx, arg)()
 			}
-			nargs := len(v.Args)
-			args := ctx.infer.GetArgs(nargs)
-			out := ctx.out
-			arity := checkFuncCall(vfn.Proto(), vfn.isMethod, args, out)
+			arity := checkFuncCall(vfn.Proto(), vfn.isMethod, v, ctx)
 			switch vfn.kind {
 			case exec.SymbolFunc:
-				out.CallGoFunc(exec.GoFuncAddr(vfn.addr))
+				ctx.out.CallGoFunc(exec.GoFuncAddr(vfn.addr))
 			case exec.SymbolFuncv:
-				out.CallGoFuncv(exec.GoFuncvAddr(vfn.addr), arity)
+				ctx.out.CallGoFuncv(exec.GoFuncvAddr(vfn.addr), arity)
 			}
-			ctx.infer.PopN(nargs + vfn.isMethod)
 		}
 	case *goValue:
 		if vfn.t.Kind() != reflect.Func {
@@ -540,11 +532,8 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) func() {
 				compileExpr(ctx, arg)()
 			}
 			exprFun()
-			nargs := len(v.Args)
-			args := ctx.infer.GetArgs(nargs)
-			arity := checkFuncCall(vfn.t, 0, args, ctx.out)
+			arity := checkFuncCall(vfn.t, 0, v, ctx)
 			ctx.out.CallGoClosure(arity)
-			ctx.infer.PopN(nargs)
 		}
 	}
 	log.Panicln("compileCallExpr failed: unknown -", reflect.TypeOf(fn))
