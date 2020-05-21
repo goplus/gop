@@ -108,3 +108,46 @@ func TestStd2(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
+var fsTestStdFor = asttest.NewSingleFileFS("/foo", "bar.ql", `package bar; import "io"
+	sum := 0
+	for _, x := range [1, 3, 5, 7, 11] {
+		if x > 3 {
+			sum += x
+		}
+	}
+	println("sum(1,3,5,7,11):", sum)
+
+	sum = 0
+	for i := 1; i < 100; i++ {
+		sum += i
+	}
+	println("sum(1-100):", sum)
+`)
+
+func TestStdFor(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := ParseFSDir(fset, fsTestStdFor, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+	bar := pkgs["bar"]
+	file := bar.Files["/foo/bar.ql"]
+	fmt.Println("Pkg:", file.Name)
+	for _, decl := range file.Decls {
+		fmt.Println("decl:", reflect.TypeOf(decl))
+		switch d := decl.(type) {
+		case *ast.GenDecl:
+			for _, spec := range d.Specs {
+				switch v := spec.(type) {
+				case *ast.ImportSpec:
+					fmt.Println(" - import:", v.Path.Value)
+				}
+			}
+		case *ast.FuncDecl:
+			fmt.Println(" - func:", d.Name.Name)
+		}
+	}
+}
+
+// -----------------------------------------------------------------------------

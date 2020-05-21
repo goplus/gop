@@ -330,3 +330,23 @@ func (p *MapComprehensionExpr) End() token.Pos {
 func (*MapComprehensionExpr) exprNode() {}
 
 // -----------------------------------------------------------------------------
+
+// A ForPhraseStmt represents a for statement with a for <- clause.
+type ForPhraseStmt struct {
+	ForPhrase
+	Body *BlockStmt
+}
+
+// Pos - position of first character belonging to the node
+func (p *ForPhraseStmt) Pos() token.Pos {
+	return p.For
+}
+
+// End - position of first character immediately after the node
+func (p *ForPhraseStmt) End() token.Pos {
+	return p.Body.End()
+}
+
+func (*ForPhraseStmt) stmtNode() {}
+
+// -----------------------------------------------------------------------------

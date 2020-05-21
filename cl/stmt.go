@@ -35,15 +35,21 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileAssignStmt(ctx, v)
 	case *ast.IfStmt:
 		compileIfStmt(ctx, v)
-	case *ast.BlockStmt:
-		compileBlockStmtWith(ctx, v)
+	case *ast.ForPhraseStmt:
+		compileForPhraseStmt(ctx, v)
 	case *ast.SwitchStmt:
 		compileSwitchStmt(ctx, v)
+	case *ast.BlockStmt:
+		compileBlockStmtWith(ctx, v)
 	case *ast.ReturnStmt:
 		compileReturnStmt(ctx, v)
 	default:
 		log.Panicln("compileBlockStmt failed: unknown -", reflect.TypeOf(v))
 	}
+}
+
+func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
+	log.Panicln("compileForPhraseStmt: todo")
 }
 
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
