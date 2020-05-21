@@ -357,6 +357,45 @@ func TestFunc(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
+var fsTestFuncv = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	import "fmt"
+
+	func foo(format string, args ...interface{}) (n int, err error) {
+		n, err = printf(format, args...)
+		return
+	}
+
+	println(foo("Hello, %v!\n", 123))
+`)
+
+func TestFuncv(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestFuncv, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, err = NewPackage(b, bar)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(9) {
+		t.Fatal("n:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
 var fsTestClosure = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	import "fmt"
 
@@ -391,6 +430,45 @@ func TestClosure(t *testing.T) {
 		t.Fatal("error:", v)
 	}
 	if v := ctx.Get(-2); v != int(17) {
+		t.Fatal("n:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+var fsTestClosurev = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	import "fmt"
+
+	foo := func(format string, args ...interface{}) (n int, err error) {
+		n, err = fmt.Printf(format, args...)
+		return
+	}
+
+	foo("Hello, %v!\n", "xsw")
+`)
+
+func TestClosurev(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestClosurev, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, err = NewPackage(b, bar)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(12) {
 		t.Fatal("n:", v)
 	}
 }

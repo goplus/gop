@@ -4,7 +4,9 @@ import (
 	"errors"
 	"reflect"
 
+	"github.com/qiniu/qlang/v6/ast"
 	"github.com/qiniu/qlang/v6/exec"
+	"github.com/qiniu/qlang/v6/token"
 	"github.com/qiniu/x/log"
 )
 
@@ -23,38 +25,64 @@ var (
 	ErrFuncArgCantBeMultiValue = errors.New("function argument expression can't be multi values")
 )
 
-func checkFuncCall(tfn iFuncType, isMethod int, args []interface{}, b *exec.Builder) (arity int) {
-	narg := tfn.NumIn() - isMethod
+func checkFuncCall(tfn iFuncType, isMethod int, v *ast.CallExpr, ctx *blockCtx) (arity int) {
+	nargIn := len(v.Args) + isMethod
+	nargExp := tfn.NumIn()
 	variadic := tfn.IsVariadic()
-	if variadic {
-		narg--
-	}
-	if len(args) == 1 {
-		n := args[0].(iValue).NumValues()
-		if n != 1 { // TODO
-			return n + isMethod
+	args := ctx.infer.GetArgs(nargIn)
+	if v.Ellipsis != token.NoPos {
+		if !variadic {
+			log.Panicln("checkFuncCall: call a non variadic function with ...")
 		}
-	}
-	for idx, arg := range args {
-		var treq reflect.Type
-		if variadic && idx >= narg {
-			treq = tfn.In(narg + isMethod).Elem()
-		} else {
-			treq = tfn.In(idx + isMethod)
+		if nargIn != nargExp {
+			log.Panicln("checkFuncCall: call with unexpected argument count")
 		}
-		if v, ok := arg.(*constVal); ok {
-			v.bound(treq, b)
-		}
-		n := arg.(iValue).NumValues()
-		if n != 1 {
-			if n == 0 {
-				log.Panicln("checkFuncCall:", ErrFuncArgNoReturnValue)
-			} else {
-				log.Panicln("checkFuncCall:", ErrFuncArgCantBeMultiValue)
+		checkFuncArgs(tfn, args, ctx.out)
+		arity = -1
+	} else {
+		if len(v.Args) == 1 {
+			recv, in := args[0], args[isMethod].(iValue)
+			n := in.NumValues()
+			if n != 1 {
+				if n == 0 {
+					log.Panicln("checkFuncCall:", ErrFuncArgNoReturnValue)
+				}
+				args = make([]interface{}, 0, n+isMethod)
+				if isMethod > 0 {
+					args = append(args, recv)
+				}
+				for i := 0; i < n; i++ {
+					args = append(args, in.Value(i))
+				}
 			}
 		}
+		if !variadic {
+			if len(args) != nargExp {
+				log.Panicln("checkFuncCall: call with unexpected argument count")
+			}
+			checkFuncArgs(tfn, args, ctx.out)
+		} else {
+			nargExp--
+			if len(args) < nargExp {
+				log.Panicln("checkFuncCall: argument count is not enough")
+			}
+			checkFuncArgs(tfn, args[:nargExp], ctx.out)
+			nVariadic := len(args) - nargExp
+			if nVariadic > 0 {
+				checkElementType(tfn.In(nargExp).Elem(), args[nargExp:], 0, nVariadic, 1, ctx.out)
+			}
+		}
+		arity = len(args)
 	}
-	return len(args) + isMethod
+	ctx.infer.PopN(nargIn)
+	return
+}
+
+func checkFuncArgs(tfn iFuncType, args []interface{}, b *exec.Builder) {
+	for i, arg := range args {
+		texp := tfn.In(i)
+		checkType(texp, arg, b)
+	}
 }
 
 func checkBinaryOp(kind exec.Kind, op exec.Operator, x, y interface{}, b *exec.Builder) {
@@ -89,13 +117,18 @@ func checkType(t reflect.Type, v interface{}, b *exec.Builder) {
 	if cons, ok := v.(*constVal); ok {
 		cons.bound(t, b)
 	} else {
-		typVal := v.(iValue).Type()
+		iv := v.(iValue)
+		n := iv.NumValues()
+		if n != 1 {
+			panicExprNotValue(n)
+		}
+		typVal := iv.Type()
 		if kind := t.Kind(); kind == reflect.Interface {
 			if !typVal.Implements(t) {
-				log.Panicln("checkType: type doesn't implments interface -", typVal, t)
+				log.Panicf("checkType: type `%v` doesn't implments interface `%v`", typVal, t)
 			}
 		} else if t != typVal {
-			log.Panicln("checkType: mismatched value type -", t, typVal)
+			log.Panicf("checkType: unexptected value type, require `%v`, but got `%v`\n", t, typVal)
 		}
 	}
 }
@@ -114,6 +147,14 @@ func checkCaseCompare(x, y interface{}, b *exec.Builder) {
 func checkBool(v interface{}) {
 	if !isBool(v.(iValue)) {
 		log.Panicln("checkBool failed: bool expression required.")
+	}
+}
+
+func panicExprNotValue(n int) {
+	if n == 0 {
+		log.Panicln("checkFuncCall:", ErrFuncArgNoReturnValue)
+	} else {
+		log.Panicln("checkFuncCall:", ErrFuncArgCantBeMultiValue)
 	}
 }
 

@@ -14,6 +14,8 @@ type iType interface {
 	Elem() reflect.Type
 }
 
+// -----------------------------------------------------------------------------
+
 type unboundArrayType struct {
 	elem reflect.Type
 }
@@ -25,6 +27,8 @@ func (p *unboundArrayType) Kind() reflect.Kind {
 func (p *unboundArrayType) Elem() reflect.Type {
 	return p.elem
 }
+
+// -----------------------------------------------------------------------------
 
 func toTypeEx(ctx *blockCtx, typ ast.Expr) (t iType, variadic bool) {
 	if t = toType(ctx, typ); t != nil {
@@ -62,7 +66,10 @@ func toType(ctx *blockCtx, typ ast.Expr) iType {
 	case *ast.ChanType:
 		val := toType(ctx, v.Value)
 		return reflect.ChanOf(toChanDir(v.Dir), val.(reflect.Type))
+	case *ast.Ellipsis:
+		return nil
 	}
+	log.Panicln("toType: unknown -", reflect.TypeOf(typ))
 	return nil
 }
 
@@ -195,6 +202,10 @@ func toStructType(ctx *blockCtx, v *ast.StructType) iType {
 }
 
 func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) iType {
+	methods := v.Methods.List
+	if methods == nil {
+		return exec.TyEmptyInterface
+	}
 	panic("toInterfaceType: todo")
 }
 
