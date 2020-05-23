@@ -18,19 +18,6 @@ Q Language - A script language for Go
 
 ```
 a := [1, 2, 3.4]
-// 等价于 Go 中的  a := []float64{1, 2, 3.4}
-
-b := {"a": 1, "b": 3.0}
-// 等价于  b := map[string]float64{"a": 1, "b": 3.0}
-
-c := {"a": 1, "b": "Hello"}
-// 等价于 c := map[string]interface{}{"a": 1, "b": "Hello"}
-```
-
-当然也会放弃一些特性，比如：
-
-```
-a = 1   // 需要改为 a := 1，放弃该特性是为了让编译器更好地发现变量名冲突。
 ```
 
 关于新版本的详细规划，参考：
@@ -41,7 +28,6 @@ a = 1   // 需要改为 a := 1，放弃该特性是为了让编译器更好地�
 
 * https://github.com/qiniu/qlang/tree/v6.x/tutorial
 
-
 ## 老版本
 
 当前 qlang v6 还在快速迭代中。在正式场合建议使用正式 release 的版本：
@@ -51,3 +37,144 @@ a = 1   // 需要改为 a := 1，放弃该特性是为了让编译器更好地�
 最近的老版本代码可以从 qlang v1.5 分支获得：
 
 * https://github.com/qiniu/qlang/tree/v1.5
+
+## 已支持的特性
+
+### Variable & operator
+
+```go
+x := 123.1 - 3i
+y, z := 1, 123
+s := "Hello"
+
+println(s + " complex")
+println(x - 1, y * z)
+```
+
+### Control flow
+
+```go
+x := 0
+if t := false; t {
+    x = 3
+} else {
+    x = 5
+}
+
+x = 0
+switch s := "Hello"; s {
+default:
+    x = 7
+case "world", "hi":
+    x = 5
+case "xsw":
+    x = 3
+}
+
+v := "Hello"
+switch {
+case v == "xsw":
+    x = 3
+case v == "Hello", v == "world":
+    x = 5
+default:
+    x = 7
+}
+```
+
+### Import go package
+
+```go
+import (
+    "fmt"
+    "strings"
+)
+
+x := strings.NewReplacer("?", "!").Replace("hello, world???")
+fmt.Println("x:", x)
+```
+
+### Func & closure
+
+```go
+import (
+    "fmt"
+    "strings"
+)
+
+func foo(x string) string {
+    return strings.NewReplacer("?", "!").Replace(x)
+}
+
+func printf(format string, args ...interface{}) (n int, err error) {
+    n, err = fmt.Printf(format, args...)
+    return
+}
+
+fooVar := func(prompt string) (n int, err error) {
+    n, err = fmt.Println(prompt + x)
+    return
+}
+
+printfVar := func(format string, args ...interface{}) (n int, err error) {
+    n, err = fmt.Printf(format, args...)
+    return
+}
+```
+
+### Map, array & slice
+
+```go
+x := []float64{1, 3.4, 5}
+y := map[string]float64{"Hello": 1, "xsw": 3.4}
+
+a := [...]float64{1, 3.4, 5}
+b := [...]float64{1, 3: 3.4, 5}
+c := []float64{2: 1.2, 3, 6: 4.5}
+```
+
+### Map literal
+
+```go
+x := {"Hello": 1, "xsw": 3.4} // map[string]float64
+y := {"Hello": 1, "xsw": "qlang"} // map[string]interface{}
+z := {"Hello": 1, "xsw": 3} // map[string]int
+empty := {} // map[string]interface{}
+```
+
+### Slice literal
+
+```go
+x := [1, 3.4] // []float64
+y := [1] // []int
+z := [1+2i, "xsw"] // []interface{}
+a := [1, 3.4, 3+4i] // []complex128
+b := [5+6i] // []complex128
+c := ["xsw", 3] // []interface{}
+empty := [] // []interface{}
+```
+
+### List/Map comprehension
+
+```go
+a := [x * x for x <- [1, 3, 5, 7, 11]]
+b := [x * x for x <- [1, 3, 5, 7, 11], x > 3]
+c := [i + v for i, v <- [1, 3, 5, 7, 11], i%2 == 1]
+d := [k + "," + s for k, s <- {"Hello": "xsw", "Hi": "qlang"}]
+
+arr := [1, 2, 3, 4, 5, 6]
+e := [[a, b] for a <- arr, a < b for b <- arr, b > 2]
+
+x := {x: i for i, x <- [1, 3, 5, 7, 11]}
+y := {x: i for i, x <- [1, 3, 5, 7, 11], i%2 == 1}
+z := {v: k for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "qlang"}, k > 3}
+```
+
+### For
+
+```go
+sum := 0
+for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
+    sum += x
+}
+```
