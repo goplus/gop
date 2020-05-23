@@ -21,7 +21,7 @@ func compileBlockStmtWithout(ctx *blockCtx, body *ast.BlockStmt) {
 }
 
 func compileBodyWith(ctx *blockCtx, body []ast.Stmt) {
-	ctxWith := newBlockCtx(ctx, true)
+	ctxWith := newNoExecBlockCtx(ctx)
 	for _, stmt := range body {
 		compileStmt(ctxWith, stmt)
 	}
@@ -51,7 +51,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 func compileForPhraseStmt(parent *blockCtx, v *ast.ForPhraseStmt) {
 	ctxFor, exprFor := compileForPhrase(parent, v.ForPhrase)
 	noExecCtx := isNoExecCtx(ctxFor, v.Body)
-	ctx := newBlockCtx(ctxFor, noExecCtx)
+	ctx := newNoExecBlockCtx(ctxFor)
+	ctx.noExecCtx = noExecCtx
 	exprFor(func() {
 		if noExecCtx {
 			compileBlockStmtWithout(ctx, v.Body)
@@ -65,7 +66,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	var defaultBody []ast.Stmt
 	var ctxSw *blockCtx
 	if v.Init != nil {
-		ctxSw = newBlockCtx(ctx, true)
+		ctxSw = newNoExecBlockCtx(ctx)
 		compileStmt(ctxSw, v.Init)
 	} else {
 		ctxSw = ctx
@@ -142,7 +143,7 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 	var done *exec.Label
 	var ctxIf *blockCtx
 	if v.Init != nil {
-		ctxIf = newBlockCtx(ctx, true)
+		ctxIf = newNoExecBlockCtx(ctx)
 		compileStmt(ctxIf, v.Init)
 	} else {
 		ctxIf = ctx

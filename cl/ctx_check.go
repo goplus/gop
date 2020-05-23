@@ -11,13 +11,13 @@ import (
 // -----------------------------------------------------------------------------
 
 func newBlockCtxWithFlag(parent *blockCtx) *blockCtx {
-	ctx := newBlockCtx(parent, true)
+	ctx := newNoExecBlockCtx(parent)
 	ctx.checkFlag = true
 	return ctx
 }
 
-func isNoExecCtx(ctxFor *blockCtx, body *ast.BlockStmt) bool {
-	ctx := newBlockCtxWithFlag(ctxFor)
+func isNoExecCtx(parent *blockCtx, body *ast.BlockStmt) bool {
+	ctx := newBlockCtxWithFlag(parent)
 	for _, stmt := range body.List {
 		if noExecCtx := isNoExecCtxStmt(ctx, stmt); !noExecCtx {
 			return false

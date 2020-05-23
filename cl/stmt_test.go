@@ -13,6 +13,40 @@ import (
 
 // -----------------------------------------------------------------------------
 
+var fsTestAssign = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	x, y := 123, "Hello"
+	x
+	y
+`)
+
+func TestAssign(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestAssign, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("x, y:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-2); v != 123 {
+		t.Fatal("x:", v)
+	}
+	if v := ctx.Get(-1); v != "Hello" {
+		t.Fatal("y:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
 var fsTestSwif = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	x := 0
 	t := "Hello"
@@ -312,6 +346,45 @@ func TestReturn(t *testing.T) {
 		t.Fatal("error:", v)
 	}
 	if v := ctx.Get(-2); v != int(16) {
+		t.Fatal("n:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+var fsTestReturn2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	func max(a, b int) int {
+		if a < b {
+			return b
+		}
+		return a
+	}
+
+	println("max(23,345):", max(23,345))
+`)
+
+func TestReturn2(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestReturn2, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(17) {
 		t.Fatal("n:", v)
 	}
 }
