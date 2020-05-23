@@ -126,8 +126,8 @@ func TestVarOp(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -162,8 +162,8 @@ func TestGoPackage(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -195,8 +195,8 @@ func TestSlice(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -226,8 +226,8 @@ func TestSlice2(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -262,8 +262,8 @@ func TestArray(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -295,8 +295,8 @@ func TestArray2(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -328,8 +328,8 @@ func TestMap(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -361,8 +361,8 @@ func TestMapLit(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -396,8 +396,8 @@ func TestMapLit2(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -437,8 +437,8 @@ func TestSliceLit(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -470,8 +470,8 @@ func TestListComprehension(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -503,8 +503,8 @@ func TestListComprehension2(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -536,8 +536,8 @@ func TestListComprehensionFilter(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -569,8 +569,8 @@ func TestMapComprehension(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -602,8 +602,8 @@ func TestMapComprehensionFilter(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -635,8 +635,8 @@ func TestMapComprehension2(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -668,8 +668,8 @@ func TestMapComprehension3(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -702,8 +702,8 @@ func TestMapComprehension4(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()

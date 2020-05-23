@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/qiniu/qlang/v6/ast"
 	"github.com/qiniu/qlang/v6/ast/asttest"
 	"github.com/qiniu/qlang/v6/exec"
 	"github.com/qiniu/qlang/v6/parser"
@@ -20,11 +21,24 @@ func init() {
 	log.SetOutputLevel(log.Ldebug)
 }
 
+func newPackage(out *exec.Builder, pkg *ast.Package) (p *Package, noExecCtx bool, err error) {
+	if p, err = NewPackage(out, pkg); err != nil {
+		return
+	}
+	ctxPkg := newPkgCtx(out)
+	ctx := newGblBlockCtx(ctxPkg, nil)
+	ctx.syms = p.syms
+	entry, _ := ctx.findFunc("main")
+	noExecCtx = isNoExecCtx(ctx, entry.body)
+	return
+}
+
 // -----------------------------------------------------------------------------
 
 var fsTestBasic = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	println("Hello", "xsw", "- nice to meet you!")
 	println("Hello, world!")
+	return
 `)
 
 func TestBasic(t *testing.T) {
@@ -36,8 +50,8 @@ func TestBasic(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()

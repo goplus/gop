@@ -10,7 +10,7 @@ import (
 
 // -----------------------------------------------------------------------------
 
-var opAutogen = [...]string{
+var opAutogenOps = [...]string{
 	OpAdd:       "Add",
 	OpSub:       "Sub",
 	OpMul:       "Mul",
@@ -35,8 +35,7 @@ var opAutogen = [...]string{
 	OpBitNot:    "BitNot",
 }
 
-const autogenHeader = `
-package exec
+const autogenOpHeader = `package exec
 `
 
 const autogenBinaryOpUintTempl = `
@@ -72,7 +71,7 @@ const autogenBuiltinOpFooter = `
 }
 `
 
-func autogenWithTempl(f *os.File, op Operator, Op string, templ string) {
+func autogenOpWithTempl(f *os.File, op Operator, Op string, templ string) {
 	i := op.GetInfo()
 	if templ == "" {
 		templ = autogenBinaryOpTempl
@@ -94,28 +93,28 @@ func autogenWithTempl(f *os.File, op Operator, Op string, templ string) {
 	}
 }
 
-func _TestAutogen(t *testing.T) {
-	f, err := os.Create("exec_autogen.go")
+func _TestOpAutogen(t *testing.T) {
+	f, err := os.Create("exec_op_autogen.go")
 	if err != nil {
 		t.Fatal("TestAutogen failed:", err)
 	}
 	defer f.Close()
-	fmt.Fprint(f, autogenHeader)
+	fmt.Fprint(f, autogenOpHeader)
 	fmt.Fprint(f, autogenBuiltinOpHeader)
-	for i, Op := range opAutogen {
+	for i, Op := range opAutogenOps {
 		if Op != "" {
-			autogenWithTempl(f, Operator(i), Op, autogenBuiltinOpItemTempl)
+			autogenOpWithTempl(f, Operator(i), Op, autogenBuiltinOpItemTempl)
 		}
 	}
 	fmt.Fprint(f, autogenBuiltinOpFooter)
-	for i, Op := range opAutogen {
+	for i, Op := range opAutogenOps {
 		if Op != "" {
-			autogenWithTempl(f, Operator(i), Op, "")
+			autogenOpWithTempl(f, Operator(i), Op, "")
 		}
 	}
 }
 
-func newKindValue(kind Kind) interface{} {
+func newKindValue(kind Kind) reflect.Value {
 	t := TypeFromKind(kind)
 	o := reflect.New(t).Elem()
 	if kind >= Int && kind <= Int64 {
@@ -130,10 +129,12 @@ func newKindValue(kind Kind) interface{} {
 	if kind >= Complex64 && kind <= Complex128 {
 		o.SetComplex(1.0)
 	}
-	return o.Interface()
+	return o
 }
 
-func TestExecAutogen(t *testing.T) {
+func TestExecAutogenOp(t *testing.T) {
+	add := OpAdd.GetInfo()
+	fmt.Println("+", add, OpAdd.String())
 	for i, execOp := range builtinOps {
 		if execOp == nil {
 			continue
@@ -141,8 +142,8 @@ func TestExecAutogen(t *testing.T) {
 		kind := Kind(i >> bitsOperator)
 		op := Operator(i & ((1 << bitsOperator) - 1))
 		vars := []interface{}{
-			newKindValue(kind),
-			newKindValue(kind),
+			newKindValue(kind).Interface(),
+			newKindValue(kind).Interface(),
 		}
 		CallBuiltinOp(kind, op, vars...)
 	}

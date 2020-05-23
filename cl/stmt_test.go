@@ -36,8 +36,8 @@ func TestSwitchIf(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -75,8 +75,8 @@ func TestSwitchIfDefault(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -115,8 +115,8 @@ func TestSwitch(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -154,8 +154,8 @@ func TestSwitch2(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -193,8 +193,8 @@ func TestDefault(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -228,8 +228,8 @@ func TestIf(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -261,8 +261,8 @@ func TestIf2(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -299,8 +299,8 @@ func TestReturn(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -338,8 +338,8 @@ func TestFunc(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -377,8 +377,8 @@ func TestFuncv(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -417,8 +417,8 @@ func TestClosure(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -456,8 +456,8 @@ func TestClosurev(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
-	if err != nil {
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -469,6 +469,42 @@ func TestClosurev(t *testing.T) {
 		t.Fatal("error:", v)
 	}
 	if v := ctx.Get(-2); v != int(12) {
+		t.Fatal("n:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+var fsTestForPhraseStmt = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	sum := 0
+	for x <- [1, 3, 5, 7], x > 1 {
+		sum += x
+	}
+	println("sum(3,5,7):", sum)
+`)
+
+func TestForPhraseStmt(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestForPhraseStmt, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(15) {
 		t.Fatal("n:", v)
 	}
 }

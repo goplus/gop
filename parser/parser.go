@@ -1796,6 +1796,8 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 			p.shortVarDecl(as, x)
 		}
 		return as, isRange
+	case token.ARROW:
+		return p.parseForPhraseStmtPart(x), true
 	}
 
 	if len(x) > 1 {
@@ -2239,6 +2241,34 @@ func (p *parser) parseForPhrases() (phrases []ast.ForPhrase) {
 	}
 }
 
+func (p *parser) parseForPhraseStmtPart(lhs []ast.Expr) *ast.ForPhraseStmt {
+	tokPos := p.expect(token.ARROW) // <-
+	x := p.parseExpr(false)
+	var cond ast.Expr
+	if p.tok == token.COMMA {
+		p.next()
+		cond = p.parseExpr(false)
+	}
+
+	stmt := &ast.ForPhraseStmt{ForPhrase: ast.ForPhrase{TokPos: tokPos, X: x, Cond: cond}}
+	switch len(lhs) {
+	case 1:
+		stmt.Value = toIdent(lhs[0])
+	case 2:
+		stmt.Key, stmt.Value = toIdent(lhs[0]), toIdent(lhs[1])
+	default:
+		log.Panicln("parseForPhraseStmt: too many variables, 1 or 2 is required")
+	}
+	return stmt
+}
+
+func toIdent(e ast.Expr) *ast.Ident {
+	if i, ok := e.(*ast.Ident); ok {
+		return i
+	}
+	panic("ident expr is required")
+}
+
 func (p *parser) parseForPhrase() ast.ForPhrase { // for k, v <- listOrMap, cond
 	if p.trace {
 		defer un(trace(p, "ForPhrase"))
@@ -2310,6 +2340,11 @@ func (p *parser) parseForStmt() ast.Stmt {
 	p.expectSemi()
 
 	if isRange {
+		if stmt, ok := s2.(*ast.ForPhraseStmt); ok {
+			stmt.For = pos
+			stmt.Body = body
+			return stmt
+		}
 		as := s2.(*ast.AssignStmt)
 		// check lhs
 		var key, value ast.Expr

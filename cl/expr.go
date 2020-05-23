@@ -80,7 +80,7 @@ func compileIdentLHS(ctx *blockCtx, name string, mode compleMode) {
 			log.Warn("requireVar: variable is shadowed -", name)
 		}
 	} else if mode == lhsAssign || err != syscall.ENOENT {
-		log.Panicln("compileIdent failed:", err, "-", name)
+		log.Panicln("compileIdentLHS failed:", err, "-", name)
 	} else {
 		typ := boundType(in.(iValue))
 		addr = ctx.insertVar(name, typ)
@@ -88,10 +88,35 @@ func compileIdentLHS(ctx *blockCtx, name string, mode compleMode) {
 	checkType(addr.getType(), in, ctx.out)
 	ctx.infer.PopN(1)
 	if v, ok := addr.(*execVar); ok {
-		ctx.out.StoreVar((*exec.Var)(v))
+		if mode == token.ASSIGN || mode == token.DEFINE {
+			ctx.out.StoreVar((*exec.Var)(v))
+		} else if op, ok := addrops[mode]; ok {
+			ctx.out.AddrVar((*exec.Var)(v)).AddrOp(v.Type.Kind(), op)
+		} else {
+			log.Panicln("compileIdentLHS failed: unknown op -", mode)
+		}
 	} else {
-		ctx.out.Store(addr.(*stackVar).index)
+		if mode == token.ASSIGN || mode == token.DEFINE {
+			ctx.out.Store(addr.(*stackVar).index)
+		} else {
+			panic("compileIdentLHS: todo")
+		}
 	}
+}
+
+var addrops = map[token.Token]exec.AddrOperator{
+	token.ASSIGN:         exec.OpAssign,
+	token.ADD_ASSIGN:     exec.OpAddAssign,
+	token.SUB_ASSIGN:     exec.OpSubAssign,
+	token.MUL_ASSIGN:     exec.OpMulAssign,
+	token.QUO_ASSIGN:     exec.OpDivAssign,
+	token.REM_ASSIGN:     exec.OpModAssign,
+	token.AND_ASSIGN:     exec.OpBitAndAssign,
+	token.OR_ASSIGN:      exec.OpBitOrAssign,
+	token.XOR_ASSIGN:     exec.OpBitXorAssign,
+	token.SHL_ASSIGN:     exec.OpBitSHLAssign,
+	token.SHR_ASSIGN:     exec.OpBitSHRAssign,
+	token.AND_NOT_ASSIGN: exec.OpBitAndNotAssign,
 }
 
 func compileIdent(ctx *blockCtx, name string) func() {
@@ -252,7 +277,7 @@ func compileForPhrase(parent *blockCtx, f ast.ForPhrase) (*blockCtx, func(exprEl
 	var hasVal = f.Value != nil
 	var ctx = newBlockCtx(parent, true)
 
-	exprX := compileExpr(ctx, f.X)
+	exprX := compileExpr(parent, f.X)
 	typData := boundType(ctx.infer.Pop().(iValue))
 	if hasKey {
 		switch kind := typData.Kind(); kind {
