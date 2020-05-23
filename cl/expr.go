@@ -275,7 +275,7 @@ func compileForPhrase(parent *blockCtx, f ast.ForPhrase) (*blockCtx, func(exprEl
 	var varKey, varVal *exec.Var
 	var hasKey = f.Key != nil
 	var hasVal = f.Value != nil
-	var ctx = newBlockCtx(parent, true)
+	var ctx = newNoExecBlockCtx(parent)
 
 	exprX := compileExpr(parent, f.X)
 	typData := boundType(ctx.infer.Pop().(iValue))
@@ -412,7 +412,7 @@ func compileMapLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 }
 
 func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) func() {
-	funCtx := newBlockCtx(ctx, false)
+	funCtx := newExecBlockCtx(ctx)
 	decl := newFuncDecl("", v.Type, v.Body, funCtx)
 	ctx.use(decl)
 	ctx.infer.Push(newQlFunc(decl))

@@ -124,13 +124,24 @@ type blockCtx struct {
 	checkFlag bool
 }
 
-func newBlockCtx(parent *blockCtx, noExecCtx bool) *blockCtx {
+func newExecBlockCtx(parent *blockCtx) *blockCtx {
 	return &blockCtx{
 		pkgCtx:    parent.pkgCtx,
 		file:      parent.file,
 		parent:    parent,
 		syms:      make(map[string]iSymbol),
-		noExecCtx: noExecCtx,
+		noExecCtx: false,
+	}
+}
+
+func newNoExecBlockCtx(parent *blockCtx) *blockCtx {
+	return &blockCtx{
+		pkgCtx:    parent.pkgCtx,
+		file:      parent.file,
+		parent:    parent,
+		fun:       parent.fun,
+		syms:      make(map[string]iSymbol),
+		noExecCtx: true,
 	}
 }
 
@@ -388,7 +399,7 @@ func loadFunc(ctx *blockCtx, d *ast.FuncDecl) {
 	} else if name == "init" {
 		log.Panicln("loadFunc TODO: init")
 	} else {
-		funCtx := newBlockCtx(ctx, false)
+		funCtx := newExecBlockCtx(ctx)
 		ctx.insertFunc(name, newFuncDecl(name, d.Type, d.Body, funCtx))
 	}
 }
