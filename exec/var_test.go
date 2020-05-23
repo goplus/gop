@@ -84,7 +84,7 @@ func autogenAddrOpWithTempl(f *os.File, op AddrOperator, Op string, templ string
 	}
 }
 
-func TestAddrOpAutogen(t *testing.T) {
+func _TestAddrOpAutogen(t *testing.T) {
 	f, err := os.Create("exec_addrop_autogen.go")
 	if err != nil {
 		t.Fatal("TestAutogen failed:", err)
