@@ -44,12 +44,21 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	case *ast.ReturnStmt:
 		compileReturnStmt(ctx, v)
 	default:
-		log.Panicln("compileBlockStmt failed: unknown -", reflect.TypeOf(v))
+		log.Panicln("compileStmt failed: unknown -", reflect.TypeOf(v))
 	}
 }
 
-func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
-	log.Panicln("compileForPhraseStmt: todo")
+func compileForPhraseStmt(parent *blockCtx, v *ast.ForPhraseStmt) {
+	ctxFor, exprFor := compileForPhrase(parent, v.ForPhrase)
+	noExecCtx := isNoExecCtx(ctxFor, v.Body)
+	ctx := newBlockCtx(ctxFor, noExecCtx)
+	exprFor(func() {
+		if noExecCtx {
+			compileBlockStmtWithout(ctx, v.Body)
+		} else {
+			log.Panicln("compileForPhraseStmt: todo")
+		}
+	})
 }
 
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
@@ -159,6 +168,10 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 	fun := ctx.fun
 	if fun == nil {
+		if expr.Results == nil { // return in main
+			ctx.out.Return(0)
+			return
+		}
 		log.Panicln("compileReturnStmt failed: return statement not in a function.")
 	}
 	rets := expr.Results

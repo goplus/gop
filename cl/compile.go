@@ -121,6 +121,7 @@ type blockCtx struct {
 	fun       *exec.FuncInfo
 	syms      map[string]iSymbol
 	noExecCtx bool
+	checkFlag bool
 }
 
 func newBlockCtx(parent *blockCtx, noExecCtx bool) *blockCtx {

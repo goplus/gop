@@ -3,7 +3,6 @@ package exec
 import (
 	"fmt"
 	"reflect"
-	"strconv"
 	"unsafe"
 
 	"github.com/qiniu/x/log"
@@ -146,10 +145,7 @@ func (op Operator) GetInfo() *OperatorInfo {
 }
 
 func (op Operator) String() string {
-	if int(op) < len(opInfos) {
-		return opInfos[op].Lit
-	}
-	return "op" + strconv.Itoa(int(op))
+	return opInfos[op].Lit
 }
 
 // -----------------------------------------------------------------------------
@@ -317,9 +313,9 @@ func toUint(v interface{}) uint {
 func execBuiltinOp(i Instr, p *Context) {
 	if fn := builtinOps[int(i&bitsOperand)]; fn != nil {
 		fn(0, p)
-	} else {
-		panic("execBuiltinOp: invalid builtinOp")
+		return
 	}
+	log.Panicln("execBuiltinOp: invalid instr -", i)
 }
 
 // -----------------------------------------------------------------------------

@@ -13,7 +13,7 @@ type AddrOperator Operator
 
 const (
 	// OpAddrVal `*addr`
-	OpAddrVal = AddrOperator(OpInvalid)
+	OpAddrVal = AddrOperator(0)
 	// OpAddAssign `+=`
 	OpAddAssign = AddrOperator(OpAdd)
 	// OpSubAssign `-=`
@@ -37,14 +37,52 @@ const (
 	OpBitSHLAssign = AddrOperator(OpBitSHL)
 	// OpBitSHRAssign '>>='
 	OpBitSHRAssign = AddrOperator(OpBitSHR)
-
 	// OpAssign `=`
 	OpAssign AddrOperator = iota
 	// OpInc '++'
-	OpInc AddrOperator = iota
+	OpInc
 	// OpDec '--'
 	OpDec
 )
+
+// AddrOperatorInfo represents an addr-operator information.
+type AddrOperatorInfo struct {
+	Lit      string
+	InFirst  uint64 // first argument supported types.
+	InSecond uint64 // second argument supported types. It may have SameAsFirst flag.
+}
+
+var addropInfos = [...]AddrOperatorInfo{
+	OpAddAssign:       {"+=", bitsAllNumber | bitString, bitSameAsFirst},
+	OpSubAssign:       {"-=", bitsAllNumber, bitSameAsFirst},
+	OpMulAssign:       {"*=", bitsAllNumber, bitSameAsFirst},
+	OpDivAssign:       {"/=", bitsAllNumber, bitSameAsFirst},
+	OpModAssign:       {"%=", bitsAllIntUint, bitSameAsFirst},
+	OpBitAndAssign:    {"&=", bitsAllIntUint, bitSameAsFirst},
+	OpBitOrAssign:     {"|=", bitsAllIntUint, bitSameAsFirst},
+	OpBitXorAssign:    {"^=", bitsAllIntUint, bitSameAsFirst},
+	OpBitAndNotAssign: {"&^=", bitsAllIntUint, bitSameAsFirst},
+	OpBitSHLAssign:    {"<<=", bitsAllIntUint, bitsAllIntUint},
+	OpBitSHRAssign:    {">>=", bitsAllIntUint, bitsAllIntUint},
+	OpInc:             {"++", bitsAllNumber, bitNone},
+	OpDec:             {"--", bitsAllNumber, bitNone},
+}
+
+// GetInfo returns the information of this operator.
+func (op AddrOperator) GetInfo() *AddrOperatorInfo {
+	return &addropInfos[op]
+}
+
+func (op AddrOperator) String() string {
+	switch op {
+	case OpAddrVal:
+		return "*"
+	case OpAssign:
+		return "="
+	default:
+		return addropInfos[op].Lit
+	}
+}
 
 // -----------------------------------------------------------------------------
 
@@ -60,66 +98,20 @@ func execOpAssign(i Instr, p *Context) {
 	p.data = p.data[:n-2]
 }
 
-func execOpAddAssign(i Instr, p *Context) {
-}
-
-func execOpSubAssign(i Instr, p *Context) {
-}
-
-func execOpMulAssign(i Instr, p *Context) {
-}
-
-func execOpDivAssign(i Instr, p *Context) {
-}
-
-func execOpModAssign(i Instr, p *Context) {
-}
-
-func execOpBitAndAssign(i Instr, p *Context) {
-}
-
-func execOpBitOrAssign(i Instr, p *Context) {
-}
-
-func execOpBitXorAssign(i Instr, p *Context) {
-}
-
-func execOpBitAndNotAssign(i Instr, p *Context) {
-}
-
-func execOpBitSHLAssign(i Instr, p *Context) {
-}
-
-func execOpBitSHRAssign(i Instr, p *Context) {
-}
-
-func execOpInc(i Instr, p *Context) {
-}
-
-func execOpDec(i Instr, p *Context) {
-}
-
 func execAddrOp(i Instr, p *Context) {
-	op := (i & bitsOperand) >> bitsKind
-	builtinAssignOps[op](i, p)
-}
-
-var builtinAssignOps = [...]func(i Instr, p *Context){
-	OpAddrVal:         execOpAddrVal,
-	OpAssign:          execOpAssign,
-	OpAddAssign:       execOpAddAssign,
-	OpSubAssign:       execOpSubAssign,
-	OpMulAssign:       execOpMulAssign,
-	OpDivAssign:       execOpDivAssign,
-	OpModAssign:       execOpModAssign,
-	OpBitAndAssign:    execOpBitAndAssign,
-	OpBitOrAssign:     execOpBitOrAssign,
-	OpBitXorAssign:    execOpBitXorAssign,
-	OpBitAndNotAssign: execOpBitAndNotAssign,
-	OpBitSHLAssign:    execOpBitSHLAssign,
-	OpBitSHRAssign:    execOpBitSHRAssign,
-	OpInc:             execOpInc,
-	OpDec:             execOpDec,
+	op := i & bitsOperand
+	if fn := builtinAddrOps[int(op)]; fn != nil {
+		fn(0, p)
+		return
+	}
+	switch AddrOperator(op >> bitsKind) {
+	case OpAssign:
+		execOpAssign(0, p)
+	case OpAddrVal:
+		execOpAddrVal(0, p)
+	default:
+		log.Panicln("execAddrOp: invalid instr -", i)
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -209,13 +201,6 @@ func (p *Builder) storeVar(addr tAddress) *Builder {
 	return p
 }
 
-// AddrOp instr
-func (p *Builder) AddrOp(kind Kind, op AddrOperator) *Builder {
-	i := (int(op) << bitsKind) | int(kind)
-	p.code.data = append(p.code.data, (opAddrOp<<bitsOpShift)|uint32(i))
-	return p
-}
-
 // -----------------------------------------------------------------------------
 
 // Var represents a variable.
@@ -297,12 +282,6 @@ func (p *Builder) DefineVar(vars ...*Var) *Builder {
 	return p
 }
 
-// AddrVar instr
-func (p *Builder) AddrVar(v *Var) *Builder {
-	p.addrVar(makeAddr(p.nestDepth-v.nestDepth, v.idx))
-	return p
-}
-
 // LoadVar instr
 func (p *Builder) LoadVar(v *Var) *Builder {
 	p.loadVar(makeAddr(p.nestDepth-v.nestDepth, v.idx))
@@ -313,6 +292,29 @@ func (p *Builder) LoadVar(v *Var) *Builder {
 func (p *Builder) StoreVar(v *Var) *Builder {
 	p.storeVar(makeAddr(p.nestDepth-v.nestDepth, v.idx))
 	return p
+}
+
+// AddrVar instr
+func (p *Builder) AddrVar(v *Var) *Builder {
+	p.addrVar(makeAddr(p.nestDepth-v.nestDepth, v.idx))
+	return p
+}
+
+// AddrOp instr
+func (p *Builder) AddrOp(kind Kind, op AddrOperator) *Builder {
+	i := (int(op) << bitsKind) | int(kind)
+	p.code.data = append(p.code.data, (opAddrOp<<bitsOpShift)|uint32(i))
+	return p
+}
+
+// CallAddrOp calls AddrOp
+func CallAddrOp(kind Kind, op AddrOperator, data ...interface{}) {
+	if fn := builtinAddrOps[(int(op)<<bitsKind)|int(kind)]; fn != nil {
+		ctx := newSimpleContext(data)
+		fn(0, ctx)
+		return
+	}
+	panic("CallAddrOp: invalid addrOp")
 }
 
 // -----------------------------------------------------------------------------
