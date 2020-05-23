@@ -111,6 +111,7 @@ func printf(format string, args ...interface{}) (n int, err error) {
     return
 }
 
+x := "qlang"
 fooVar := func(prompt string) (n int, err error) {
     n, err = fmt.Println(prompt + x)
     return
