@@ -205,7 +205,7 @@ for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
 }
 ```
 
-## Builtin & typecast
+### Builtin & typecast
 
 ```go
 a := make([]int, uint64(2))
