@@ -25,12 +25,16 @@ var (
 	ErrFuncArgCantBeMultiValue = errors.New("function argument expression can't be multi values")
 )
 
+func isEllipsis(v *ast.CallExpr) bool {
+	return v.Ellipsis != token.NoPos
+}
+
 func checkFuncCall(tfn iFuncType, isMethod int, v *ast.CallExpr, ctx *blockCtx) (arity int) {
 	nargIn := len(v.Args) + isMethod
 	nargExp := tfn.NumIn()
 	variadic := tfn.IsVariadic()
 	args := ctx.infer.GetArgs(nargIn)
-	if v.Ellipsis != token.NoPos {
+	if isEllipsis(v) {
 		if !variadic {
 			log.Panicln("checkFuncCall: call a non variadic function with ...")
 		}
@@ -129,6 +133,26 @@ func checkType(t reflect.Type, v interface{}, b *exec.Builder) {
 			}
 		} else if t != typVal {
 			log.Panicf("checkType: unexptected value type, require `%v`, but got `%v`\n", t, typVal)
+		}
+	}
+}
+
+func checkIntType(v interface{}, b *exec.Builder) {
+	if cons, ok := v.(*constVal); ok {
+		cons.bound(exec.TyInt, b)
+	} else {
+		iv := v.(iValue)
+		n := iv.NumValues()
+		if n != 1 {
+			panicExprNotValue(n)
+		}
+		t := iv.Type()
+		if kind := t.Kind(); kind >= reflect.Int && kind <= reflect.Uintptr {
+			if kind != reflect.Int {
+				b.TypeCast(kind, reflect.Int)
+			}
+		} else {
+			log.Panicf("checkIntType: unexptected value type, require integer type, but got `%v`\n", t)
 		}
 	}
 }

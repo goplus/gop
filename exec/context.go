@@ -134,8 +134,8 @@ func (ctx *Context) Exec(ip, ipEnd int) {
 			execJmpIf(i, ctx)
 		case opPushInt:
 			execPushInt(i, ctx)
-		case opPushStringR:
-			execPushStringR(i, ctx)
+		case opPushConstR:
+			execPushConstR(i, ctx)
 		case opLoadVar:
 			execLoadVar(i, ctx)
 		case opStoreVar:
@@ -169,10 +169,10 @@ var _execTable = [...]func(i Instr, p *Context){
 	opPushInt:       execPushInt,
 	opPushUint:      execPushUint,
 	opPushValSpec:   execPushValSpec,
-	opPushStringR:   execPushStringR,
-	opPushIntR:      execPushIntR,
-	opPushUintR:     execPushUintR,
-	opPushFloatR:    execPushFloatR,
+	opPushConstR:    execPushConstR,
+	opTypeCast:      execTypeCast,
+	opMake:          execMake,
+	opAppend:        execAppend,
 	opBuiltinOp:     execBuiltinOp,
 	opJmp:           execJmp,
 	opJmpIf:         execJmpIf,

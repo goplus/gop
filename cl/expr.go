@@ -163,6 +163,10 @@ func compileIdent(ctx *blockCtx, name string) func() {
 		if ci, ok := ctx.builtin.FindConst(name); ok {
 			return compileConst(ctx, ci.Kind, ci.Value)
 		}
+		if gi, ok := goinstrs[name]; ok {
+			ctx.infer.Push(&nonValue{gi.instr})
+			return nil
+		}
 		log.Panicln("compileIdent failed: unknown -", name)
 	}
 	return nil
@@ -511,11 +515,11 @@ var binaryOps = [...]exec.Operator{
 
 func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) func() {
 	exprFun := compileExpr(ctx, v.Fun)
-	fn := ctx.infer.Get(-1)
+	fn := ctx.infer.Pop()
 	switch vfn := fn.(type) {
 	case *qlFunc:
 		ret := vfn.Results()
-		ctx.infer.Ret(1, ret)
+		ctx.infer.Push(ret)
 		return func() {
 			for _, arg := range v.Args {
 				compileExpr(ctx, arg)()
@@ -530,7 +534,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) func() {
 		}
 	case *goFunc:
 		ret := vfn.Results()
-		ctx.infer.Ret(1, ret)
+		ctx.infer.Push(ret)
 		return func() {
 			if vfn.isMethod != 0 {
 				compileExpr(ctx, v.Fun.(*ast.SelectorExpr).X)()
@@ -551,7 +555,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) func() {
 			log.Panicln("compileCallExpr failed: call a non function.")
 		}
 		ret := newFuncResults(vfn.t)
-		ctx.infer.Ret(1, ret)
+		ctx.infer.Push(ret)
 		return func() {
 			for _, arg := range v.Args {
 				compileExpr(ctx, arg)()
@@ -559,6 +563,11 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) func() {
 			exprFun()
 			arity := checkFuncCall(vfn.t, 0, v, ctx)
 			ctx.out.CallGoClosure(arity)
+		}
+	case *nonValue:
+		switch nv := vfn.v.(type) {
+		case goInstr:
+			return nv(ctx, v)
 		}
 	}
 	log.Panicln("compileCallExpr failed: unknown -", reflect.TypeOf(fn))

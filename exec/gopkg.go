@@ -30,63 +30,6 @@ func execGoFuncv(i Instr, p *Context) {
 	fun.exec(arity, p)
 }
 
-func execMakeArray(i Instr, p *Context) {
-	typSlice := getType(i&bitsOpMakeArrayOperand, p)
-	arity := int((i >> bitsOpMakeArrayShift) & bitsFuncvArityOperand)
-	if arity == bitsFuncvArityVar { // args...
-		v := reflect.ValueOf(p.Get(-1))
-		n := v.Len()
-		ret := reflect.MakeSlice(typSlice, n, n)
-		reflect.Copy(ret, v)
-		p.Ret(1, ret.Interface())
-	} else {
-		if arity == bitsFuncvArityMax {
-			arity = p.Pop().(int) + bitsFuncvArityMax
-		}
-		makeArray(typSlice, arity, p)
-	}
-}
-
-func makeArray(typSlice reflect.Type, arity int, p *Context) {
-	args := p.GetArgs(arity)
-	var ret reflect.Value
-	if typSlice.Kind() == reflect.Slice {
-		ret = reflect.MakeSlice(typSlice, arity, arity)
-	} else {
-		ret = reflect.New(typSlice).Elem()
-	}
-	for i, arg := range args {
-		ret.Index(i).Set(getElementOf(arg, typSlice))
-	}
-	p.Ret(arity, ret.Interface())
-}
-
-func execMakeMap(i Instr, p *Context) {
-	typMap := getType(i&bitsOpMakeArrayOperand, p)
-	arity := int((i >> bitsOpMakeArrayShift) & bitsFuncvArityOperand)
-	if arity == bitsFuncvArityMax {
-		arity = p.Pop().(int) + bitsFuncvArityMax
-	}
-	makeMap(typMap, arity, p)
-}
-
-func makeMap(typMap reflect.Type, arity int, p *Context) {
-	n := arity << 1
-	args := p.GetArgs(n)
-	ret := reflect.MakeMapWithSize(typMap, arity)
-	for i := 0; i < n; i += 2 {
-		key := getKeyOf(args[i], typMap)
-		val := getElementOf(args[i+1], typMap)
-		ret.SetMapIndex(key, val)
-	}
-	p.Ret(n, ret.Interface())
-}
-
-func execZero(i Instr, p *Context) {
-	typ := getType(i&bitsOpMakeArrayOperand, p)
-	p.Push(reflect.Zero(typ).Interface())
-}
-
 // -----------------------------------------------------------------------------
 
 // A ConstKind represents the specific kind of type that a Type represents.
@@ -374,7 +317,7 @@ type GoVarInfo struct {
 	Addr interface{}
 }
 
-// GetInfo retuns a Go function info.
+// GetInfo returns a Go function info.
 func (i GoFuncAddr) GetInfo() *GoFuncInfo {
 	if i < GoFuncAddr(len(gofuns)) {
 		return &gofuns[i]
@@ -382,7 +325,7 @@ func (i GoFuncAddr) GetInfo() *GoFuncInfo {
 	return nil
 }
 
-// GetInfo retuns a Go function info.
+// GetInfo returns a Go function info.
 func (i GoFuncvAddr) GetInfo() *GoFuncInfo {
 	if i < GoFuncvAddr(len(gofunvs)) {
 		return &gofunvs[i].GoFuncInfo
@@ -390,7 +333,7 @@ func (i GoFuncvAddr) GetInfo() *GoFuncInfo {
 	return nil
 }
 
-// GetInfo retuns a Go variable info.
+// GetInfo returns a Go variable info.
 func (i GoVarAddr) GetInfo() *GoVarInfo {
 	if i < GoVarAddr(len(govars)) {
 		return &govars[i]
@@ -406,7 +349,6 @@ func (p *Builder) CallGoFunc(fun GoFuncAddr) *Builder {
 
 // CallGoFuncv instr
 func (p *Builder) CallGoFuncv(fun GoFuncvAddr, arity int) *Builder {
-	code := p.code
 	if arity < 0 {
 		arity = bitsFuncvArityVar
 	} else if arity >= bitsFuncvArityMax {
@@ -414,74 +356,8 @@ func (p *Builder) CallGoFuncv(fun GoFuncvAddr, arity int) *Builder {
 		arity = bitsFuncvArityMax
 	}
 	i := (opCallGoFuncv << bitsOpShift) | (uint32(arity) << bitsOpCallFuncvShift) | uint32(fun)
-	code.data = append(code.data, i)
+	p.code.data = append(p.code.data, i)
 	return p
-}
-
-// MakeArray instr
-func (p *Builder) MakeArray(typ reflect.Type, arity int) *Builder {
-	if arity < 0 {
-		if typ.Kind() == reflect.Array {
-			log.Panicln("MakeArray failed: can't be variadic.")
-		}
-		arity = bitsFuncvArityVar
-	} else if arity >= bitsFuncvArityMax {
-		p.Push(arity - bitsFuncvArityMax)
-		arity = bitsFuncvArityMax
-	}
-	code := p.code
-	i := (opMakeArray << bitsOpShift) | (uint32(arity) << bitsOpMakeArrayShift) | p.newType(typ)
-	code.data = append(code.data, i)
-	return p
-}
-
-// MakeMap instr
-func (p *Builder) MakeMap(typ reflect.Type, arity int) *Builder {
-	if arity < 0 {
-		log.Panicln("MakeMap failed: can't be variadic.")
-	} else if arity >= bitsFuncvArityMax {
-		p.Push(arity - bitsFuncvArityMax)
-		arity = bitsFuncvArityMax
-	}
-	code := p.code
-	i := (opMakeMap << bitsOpShift) | (uint32(arity) << bitsOpMakeMapShift) | p.newType(typ)
-	code.data = append(code.data, i)
-	return p
-}
-
-// Zero instr
-func (p *Builder) Zero(typ reflect.Type) *Builder {
-	code := p.code
-	i := (opZero << bitsOpShift) | p.requireType(typ)
-	code.data = append(code.data, i)
-	return p
-}
-
-func (p *Builder) requireType(typ reflect.Type) uint32 {
-	kind := typ.Kind()
-	bt := builtinTypes[kind]
-	if bt.size > 0 {
-		return uint32(kind)
-	}
-	return p.newType(typ)
-}
-
-func (p *Builder) newType(typ reflect.Type) uint32 {
-	if ityp, ok := p.types[typ]; ok {
-		return ityp
-	}
-	code := p.code
-	ityp := uint32(len(code.types) + len(builtinTypes))
-	code.types = append(code.types, typ)
-	p.types[typ] = ityp
-	return ityp
-}
-
-func getType(ityp uint32, ctx *Context) reflect.Type {
-	if ityp < uint32(len(builtinTypes)) {
-		return builtinTypes[ityp].typ
-	}
-	return ctx.code.types[ityp-uint32(len(builtinTypes))]
 }
 
 // -----------------------------------------------------------------------------

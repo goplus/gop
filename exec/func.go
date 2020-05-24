@@ -111,83 +111,6 @@ func execFuncv(i Instr, p *Context) {
 	}
 }
 
-func execListComprehension(i Instr, p *Context) {
-	addr := i & bitsOperand
-	c := p.code.comprehens[addr]
-	base := len(p.data)
-	p.Exec(p.ip, c.End)
-	makeArray(c.TypeOut, len(p.data)-base, p)
-}
-
-func execMapComprehension(i Instr, p *Context) {
-	addr := i & bitsOperand
-	c := p.code.comprehens[addr]
-	base := len(p.data)
-	p.Exec(p.ip, c.End)
-	makeMap(c.TypeOut, (len(p.data)-base)>>1, p)
-}
-
-func execForPhrase(i Instr, p *Context) {
-	addr := i & bitsOperand
-	p.code.fors[addr].exec(p)
-}
-
-func (c *ForPhrase) exec(p *Context) {
-	data := reflect.ValueOf(p.Pop())
-	switch data.Kind() {
-	case reflect.Map:
-		c.execMapRange(data, p)
-	default:
-		c.execListRange(data, p)
-	}
-}
-
-func (c *ForPhrase) execListRange(data reflect.Value, p *Context) {
-	n := data.Len()
-	ip, ipCond, ipEnd := p.ip, c.Cond, c.End
-	key, val := c.Key, c.Value
-	for i := 0; i < n; i++ {
-		if key != nil {
-			p.SetVar(key, i)
-		}
-		if val != nil {
-			p.SetVar(val, data.Index(i).Interface())
-		}
-		if ipCond > 0 {
-			p.Exec(ip, ipCond)
-			if ok := p.Pop().(bool); ok {
-				p.Exec(ipCond, ipEnd)
-			}
-		} else {
-			p.Exec(ip, ipEnd)
-		}
-	}
-	p.ip = ipEnd
-}
-
-func (c *ForPhrase) execMapRange(data reflect.Value, p *Context) {
-	iter := data.MapRange()
-	ip, ipCond, ipEnd := p.ip, c.Cond, c.End
-	key, val := c.Key, c.Value
-	for iter.Next() {
-		if key != nil {
-			p.SetVar(key, iter.Key().Interface())
-		}
-		if val != nil {
-			p.SetVar(val, iter.Value().Interface())
-		}
-		if ipCond > 0 {
-			p.Exec(ip, ipCond)
-			if ok := p.Pop().(bool); ok {
-				p.Exec(ipCond, ipEnd)
-			}
-		} else {
-			p.Exec(ip, ipEnd)
-		}
-	}
-	p.ip = ipEnd
-}
-
 // -----------------------------------------------------------------------------
 
 // Package represents a qlang package.
@@ -371,31 +294,6 @@ var TyEmptyInterfaceSlice = reflect.SliceOf(TyEmptyInterface)
 
 // -----------------------------------------------------------------------------
 
-// ForPhrase represents a for range phrase.
-type ForPhrase struct {
-	Key, Value *Var // Key, Value may be nil
-	Cond, End  int
-	TypeIn     reflect.Type
-}
-
-// NewForPhrase creates a new ForPhrase instance.
-func NewForPhrase(key, val *Var, in reflect.Type) *ForPhrase {
-	return &ForPhrase{TypeIn: in, Key: key, Value: val}
-}
-
-// Comprehension represents a list/map comprehension.
-type Comprehension struct {
-	TypeOut reflect.Type
-	End     int
-}
-
-// NewComprehension creates a new Comprehension instance.
-func NewComprehension(out reflect.Type) *Comprehension {
-	return &Comprehension{TypeOut: out}
-}
-
-// -----------------------------------------------------------------------------
-
 func (p *Builder) resolveFuncs() {
 	data := p.code.data
 	for fun, pos := range p.funcs {
@@ -415,51 +313,6 @@ func (p *Builder) resolveFuncs() {
 
 func isClosure(op uint32) bool {
 	return op == opClosure || op == opGoClosure
-}
-
-// ForPhrase instr
-func (p *Builder) ForPhrase(f *ForPhrase) *Builder {
-	code := p.code
-	addr := uint32(len(code.fors))
-	code.fors = append(code.fors, f)
-	code.data = append(code.data, (opForPhrase<<bitsOpShift)|addr)
-	return p
-}
-
-// FilterForPhrase instr
-func (p *Builder) FilterForPhrase(f *ForPhrase) *Builder {
-	f.Cond = len(p.code.data)
-	return p
-}
-
-// EndForPhrase instr
-func (p *Builder) EndForPhrase(f *ForPhrase) *Builder {
-	f.End = len(p.code.data)
-	return p
-}
-
-// ListComprehension instr
-func (p *Builder) ListComprehension(c *Comprehension) *Builder {
-	code := p.code
-	addr := uint32(len(code.comprehens))
-	code.comprehens = append(code.comprehens, c)
-	code.data = append(code.data, (opLstComprehens<<bitsOpShift)|addr)
-	return p
-}
-
-// MapComprehension instr
-func (p *Builder) MapComprehension(c *Comprehension) *Builder {
-	code := p.code
-	addr := uint32(len(code.comprehens))
-	code.comprehens = append(code.comprehens, c)
-	code.data = append(code.data, (opMapComprehens<<bitsOpShift)|addr)
-	return p
-}
-
-// EndComprehension instr
-func (p *Builder) EndComprehension(c *Comprehension) *Builder {
-	c.End = len(p.code.data)
-	return p
 }
 
 // DefineFunc instr
