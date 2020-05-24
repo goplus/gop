@@ -12,5 +12,10 @@ func printf(format string, args ...interface{}) (n int, err error) {
     return
 }
 
+func bar(foo func(string, ...interface{}) (int, error)) {
+    foo("Hello, %v!\n", "qlang")
+}
+
+bar(printf)
 fmt.Println(foo("Hello, world???"))
 fmt.Println(printf("Hello, %v\n", "qlang"))

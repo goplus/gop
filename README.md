@@ -125,6 +125,10 @@ func printf(format string, args ...interface{}) (n int, err error) {
     return
 }
 
+func bar(f func(string, ...interface{}) (int, error)) {
+    f("Hello, %v!\n", "qlang")
+}
+
 x := "qlang"
 fooVar := func(prompt string) (n int, err error) {
     n, err = fmt.Println(prompt + x)
@@ -135,6 +139,13 @@ printfVar := func(format string, args ...interface{}) (n int, err error) {
     n, err = fmt.Printf(format, args...)
     return
 }
+
+barVar := func(f func(string, ...interface{}) (int, error)) {
+    f("Hello, %v!\n", "qlang")
+}
+
+bar(printf)
+barVar(printfVar)
 ```
 
 ### Map, array & slice
@@ -192,4 +203,15 @@ sum := 0
 for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
     sum += x
 }
+```
+
+## Builtin and typecast
+
+```go
+a := make([]int, uint64(2))
+a = append(a, 1, 2, 3)
+
+b := make([]int, 0, uint16(4))
+c := [1, 2, 3]
+b = append(b, c...)
 ```

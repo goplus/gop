@@ -140,10 +140,11 @@ func compileIdent(ctx *blockCtx, name string) func() {
 			ctx.infer.Push(&nonValue{pkg})
 			return nil
 		case *funcDecl:
+			fn := newQlFunc(v)
 			ctx.use(v)
-			ctx.infer.Push(newQlFunc(v))
-			return func() {
-				log.Panicln("compileIdent failed: todo - funcDecl")
+			ctx.infer.Push(fn)
+			return func() { // TODO: maybe slowly, use Closure instead of GoClosure
+				ctx.out.GoClosure(fn.fi)
 			}
 		default:
 			log.Panicln("compileIdent failed: unknown -", reflect.TypeOf(sym))
@@ -153,9 +154,10 @@ func compileIdent(ctx *blockCtx, name string) func() {
 			switch kind {
 			case exec.SymbolVar:
 			case exec.SymbolFunc, exec.SymbolFuncv:
-				ctx.infer.Push(newGoFunc(addr, kind, 0))
+				fn := newGoFunc(addr, kind, 0)
+				ctx.infer.Push(fn)
 				return func() {
-					log.Panicln("compileIdent todo: func -", kind, addr)
+					log.Panicln("compileIdent todo: goFunc")
 				}
 			}
 			log.Panicln("compileIdent todo: var -", kind, addr)
@@ -424,7 +426,7 @@ func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) func() {
 	decl := newFuncDecl("", v.Type, v.Body, funCtx)
 	ctx.use(decl)
 	ctx.infer.Push(newQlFunc(decl))
-	return func() {
+	return func() { // TODO: maybe slowly, use Closure instead of GoClosure
 		ctx.out.GoClosure(decl.fi)
 	}
 }
