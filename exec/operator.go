@@ -268,7 +268,7 @@ var builtinTypes = [...]bTI{
 	Complex64:     {TyComplex64, 8, bitsAllComplex},
 	Complex128:    {TyComplex128, 16, bitsAllComplex},
 	String:        {TyString, unsafe.Sizeof(string('0')), bitsAllIntUint},
-	UnsafePointer: {TyUnsafePointer, unsafe.Sizeof(uintptr(0)), bitsAllPtr},
+	UnsafePointer: {TyUnsafePointer, unsafe.Sizeof(uintptr(0)), 0},
 }
 
 // TypeFromKind returns the type who has this kind.

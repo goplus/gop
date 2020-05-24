@@ -276,10 +276,6 @@ func callExecAddrOp(kind Kind, op AddrOperator, data ...interface{}) {
 // -----------------------------------------------------------------------------
 
 const autogenCastOpHeader = `package exec
-
-import (
-	"unsafe"
-)
 `
 
 const autogenCastOpTempl = `
