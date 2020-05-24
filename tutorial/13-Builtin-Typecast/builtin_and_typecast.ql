@@ -1,5 +1,5 @@
 n := 2
-a := make([]int, uint64(2))
+a := make([]int, uint64(n))
 a = append(a, 1, 2, 3)
 println(a)
 
