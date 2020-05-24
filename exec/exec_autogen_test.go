@@ -275,6 +275,7 @@ func callExecAddrOp(kind Kind, op AddrOperator, data ...interface{}) {
 
 // -----------------------------------------------------------------------------
 
+/*
 const autogenCastOpHeader = `package exec
 `
 
@@ -362,5 +363,14 @@ func callExecCastOp(kind Kind, op Kind, data ...interface{}) {
 	ctx := newSimpleContext(data)
 	execTypeCast((opAddrOp<<bitsOpShift)|uint32(i), ctx)
 }
+
+func execTypeCast(i Instr, p *Context) {
+	if fn := builtinCastOps[int(i&bitsOperand)]; fn != nil {
+		fn(0, p)
+		return
+	}
+	log.Panicln("execTypeCast: invalid instr -", i)
+}
+*/
 
 // -----------------------------------------------------------------------------

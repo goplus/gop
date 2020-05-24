@@ -157,4 +157,29 @@ func igoRecover(ctx *blockCtx, v *ast.CallExpr) func() {
 	panic("todo")
 }
 
+func compileTypeCast(typ reflect.Type, ctx *blockCtx, v *ast.CallExpr) func() {
+	if len(v.Args) != 1 {
+		log.Panicln("compileTypeCast: invalid argument count, please use `type(expr)`")
+	}
+	ctx.infer.Push(&goValue{typ})
+	return func() {
+		compileExpr(ctx, v.Args[0])()
+		in := ctx.infer.Pop()
+		if cons, ok := in.(*constVal); ok {
+			cons.bound(typ, ctx.out)
+			return
+		}
+		iv := in.(iValue)
+		n := iv.NumValues()
+		if n != 1 {
+			panicExprNotValue(n)
+		}
+		tIn := iv.Type()
+		if !tIn.ConvertibleTo(typ) {
+			log.Panicf("compileTypeCast: can't convert type `%v` to `%v`\n", tIn, typ)
+		}
+		ctx.out.TypeCast(tIn, typ)
+	}
+}
+
 // -----------------------------------------------------------------------------

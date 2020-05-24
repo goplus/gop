@@ -112,6 +112,75 @@ func TestMake2(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
+var fsTestMake3 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	n := 4
+	a := make(map[string]interface{}, uint16(n))
+	println(a)
+`)
+
+func TestMake3(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestMake3, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, err = NewPackage(b, bar)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(6) {
+		t.Fatal("n:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+var fsTestMake4 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	import "reflect"
+
+	a := make(chan *func(), uint16(4))
+	println(reflect.TypeOf(a))
+`)
+
+func TestMake4(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestMake4, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, err = NewPackage(b, bar)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(13) {
+		t.Fatal("n:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
 var fsTestOperator = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	println("Hello", 123 * 4.5, 1 + 7i)
 `)

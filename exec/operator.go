@@ -321,14 +321,6 @@ func execBuiltinOp(i Instr, p *Context) {
 	log.Panicln("execBuiltinOp: invalid instr -", i)
 }
 
-func execTypeCast(i Instr, p *Context) {
-	if fn := builtinCastOps[int(i&bitsOperand)]; fn != nil {
-		fn(0, p)
-		return
-	}
-	log.Panicln("execTypeCast: invalid instr -", i)
-}
-
 // -----------------------------------------------------------------------------
 
 const (
@@ -351,13 +343,6 @@ func (ctx *Builder) BuiltinOp(kind Kind, op Operator) *Builder {
 	if err != nil {
 		panic(err)
 	}
-	return ctx
-}
-
-// TypeCast instr
-func (ctx *Builder) TypeCast(from, to reflect.Kind) *Builder {
-	i := (opTypeCast << bitsOpShift) | uint32(to<<5|from)
-	ctx.code.data = append(ctx.code.data, i)
 	return ctx
 }
 

@@ -149,7 +149,7 @@ func checkIntType(v interface{}, b *exec.Builder) {
 		t := iv.Type()
 		if kind := t.Kind(); kind >= reflect.Int && kind <= reflect.Uintptr {
 			if kind != reflect.Int {
-				b.TypeCast(kind, reflect.Int)
+				b.TypeCast(t, exec.TyInt)
 			}
 		} else {
 			log.Panicf("checkIntType: unexptected value type, require integer type, but got `%v`\n", t)

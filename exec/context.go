@@ -170,7 +170,6 @@ var _execTable = [...]func(i Instr, p *Context){
 	opPushUint:      execPushUint,
 	opPushValSpec:   execPushValSpec,
 	opPushConstR:    execPushConstR,
-	opTypeCast:      execTypeCast,
 	opMake:          execMake,
 	opAppend:        execAppend,
 	opBuiltinOp:     execBuiltinOp,
@@ -196,6 +195,7 @@ var _execTable = [...]func(i Instr, p *Context){
 	opForPhrase:     execForPhrase,
 	opLstComprehens: execListComprehension,
 	opMapComprehens: execMapComprehension,
+	opTypeCast:      execTypeCast,
 }
 
 var execTable []func(i Instr, p *Context)
