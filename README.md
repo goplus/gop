@@ -1,4 +1,4 @@
-Q Language - A script language for Go
+Q Language - The Go++ language for Data Technology
 ========
 
 [![LICENSE](https://img.shields.io/github/license/qiniu/qlang.svg)](https://github.com/qiniu/qlang/blob/master/LICENSE)
