@@ -51,7 +51,7 @@ println(s + " complex")
 println(x - 1, y * z)
 ```
 
-### Control flow
+### Condition
 
 ```go
 x := 0
@@ -171,7 +171,7 @@ y := {x: i for i, x <- [1, 3, 5, 7, 11], i%2 == 1}
 z := {v: k for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "qlang"}, k > 3}
 ```
 
-### For
+### For loop
 
 ```go
 sum := 0

@@ -25,12 +25,16 @@ var (
 	ErrFuncArgCantBeMultiValue = errors.New("function argument expression can't be multi values")
 )
 
+func isEllipsis(v *ast.CallExpr) bool {
+	return v.Ellipsis != token.NoPos
+}
+
 func checkFuncCall(tfn iFuncType, isMethod int, v *ast.CallExpr, ctx *blockCtx) (arity int) {
 	nargIn := len(v.Args) + isMethod
 	nargExp := tfn.NumIn()
 	variadic := tfn.IsVariadic()
 	args := ctx.infer.GetArgs(nargIn)
-	if v.Ellipsis != token.NoPos {
+	if isEllipsis(v) {
 		if !variadic {
 			log.Panicln("checkFuncCall: call a non variadic function with ...")
 		}

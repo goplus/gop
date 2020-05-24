@@ -84,7 +84,7 @@ var fsTestMake2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	println(a)
 `)
 
-func _TestMake2(t *testing.T) {
+func TestMake2(t *testing.T) {
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseFSDir(fset, fsTestMake2, "/foo", nil, 0)
 	if err != nil || len(pkgs) != 1 {

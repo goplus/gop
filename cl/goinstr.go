@@ -36,6 +36,7 @@ func init() {
 
 // -----------------------------------------------------------------------------
 
+/*
 func checkSliceType(args []interface{}, i int) (typ reflect.Type, ok bool) {
 	if i >= len(args) {
 		return
@@ -44,6 +45,7 @@ func checkSliceType(args []interface{}, i int) (typ reflect.Type, ok bool) {
 	ok = typ.Kind() == reflect.Slice
 	return
 }
+*/
 
 // func append(slice []Type, elems ...Type) []Type
 func igoAppend(ctx *blockCtx, v *ast.CallExpr) func() {
@@ -63,9 +65,18 @@ func igoAppend(ctx *blockCtx, v *ast.CallExpr) func() {
 		}
 		args := ctx.infer.GetArgs(n1)
 		elem := sliceTy.Elem()
-		checkElementType(elem, args, 0, n1, 1, ctx.out)
-		ctx.infer.PopN(n1)
-		ctx.out.Append(elem, n1+1)
+		if isEllipsis(v) {
+			if n1 != 1 {
+				log.Panicln("append: please use `append(slice, elems...)`")
+			}
+			checkType(sliceTy, args[0], ctx.out)
+			ctx.infer.PopN(1)
+			ctx.out.Append(elem, -1)
+		} else {
+			checkElementType(elem, args, 0, n1, 1, ctx.out)
+			ctx.infer.PopN(n1)
+			ctx.out.Append(elem, n1+1)
+		}
 	}
 }
 
