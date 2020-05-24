@@ -41,10 +41,19 @@ func QexecFprintln(arity int, p *qlang.Context) {
 
 // -----------------------------------------------------------------------------
 
+func execPanic(zero int, p *qlang.Context) {
+	panic(p.Pop())
+}
+
+// -----------------------------------------------------------------------------
+
 // I is a Go package instance.
 var I = qlang.NewGoPackage("")
 
 func init() {
+	I.RegisterFuncs(
+		I.Func("panic", qlPanic, execPanic),
+	)
 	I.RegisterFuncvs(
 		I.Funcv("print", fmt.Print, QexecPrint),
 		I.Funcv("printf", fmt.Printf, QexecPrintf),

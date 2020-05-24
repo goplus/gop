@@ -550,15 +550,93 @@ func TestClosurev(t *testing.T) {
 
 var fsTestForPhraseStmt = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	sum := 0
-	for x <- [1, 3, 5, 7], x > 1 {
+	for x <- [1, 3, 5, 7], x < 7 {
 		sum += x
 	}
-	println("sum(3,5,7):", sum)
+	println("sum(1,3,5):", sum)
 `)
 
 func TestForPhraseStmt(t *testing.T) {
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseFSDir(fset, fsTestForPhraseStmt, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(14) {
+		t.Fatal("n:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+var fsTestForPhraseStmt2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	sum := 0
+	fns := make([]func() int, 3)
+	for i, x <- [3, 5, 7] {
+		v := x
+		fns[i] = func() int {
+			return v
+		}
+	}
+	println("values:", fns[0](), fns[1](), fns[2]())
+`)
+
+func _TestForPhraseStmt2(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestForPhraseStmt2, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(14) {
+		t.Fatal("n:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+var fsTestForRangeStmt = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	sum := 0
+	for x := range [1, 3, 5, 7] {
+		if x < 7 {
+			sum += x
+		}
+	}
+	println("sum(1,3,5):", sum)
+`)
+
+func _TestForRangeStmt(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestForRangeStmt, "/foo", nil, 0)
 	if err != nil || len(pkgs) != 1 {
 		t.Fatal("ParseFSDir failed:", err, len(pkgs))
 	}

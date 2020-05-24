@@ -1,153 +1,8 @@
 package exec
 
 import (
-	"fmt"
-	"os"
-	"reflect"
-	"strings"
 	"testing"
 )
-
-// -----------------------------------------------------------------------------
-
-var opAutogenOps = [...]string{
-	OpAdd:       "Add",
-	OpSub:       "Sub",
-	OpMul:       "Mul",
-	OpDiv:       "Div",
-	OpMod:       "Mod",
-	OpBitAnd:    "BitAnd",
-	OpBitOr:     "BitOr",
-	OpBitXor:    "BitXor",
-	OpBitAndNot: "BitAndNot",
-	OpBitSHL:    "BitSHL",
-	OpBitSHR:    "BitSHR",
-	OpLT:        "LT",
-	OpLE:        "LE",
-	OpGT:        "GT",
-	OpGE:        "GE",
-	OpEQ:        "EQ",
-	OpNE:        "NE",
-	OpLAnd:      "LAnd",
-	OpLOr:       "LOr",
-	OpNeg:       "Neg",
-	OpNot:       "Not",
-	OpBitNot:    "BitNot",
-}
-
-const autogenOpHeader = `package exec
-`
-
-const autogenBinaryOpUintTempl = `
-func exec$Op$Type(i Instr, p *Context) {
-	n := len(p.data)
-	p.data[n-2] = p.data[n-2].($type) $op toUint(p.data[n-1])
-	p.data = p.data[:n-1]
-}
-`
-
-const autogenBinaryOpTempl = `
-func exec$Op$Type(i Instr, p *Context) {
-	n := len(p.data)
-	p.data[n-2] = p.data[n-2].($type) $op p.data[n-1].($type)
-	p.data = p.data[:n-1]
-}
-`
-
-const autogenUnaryOpTempl = `
-func exec$Op$Type(i Instr, p *Context) {
-	n := len(p.data)
-	p.data[n-1] = $opp.data[n-1].($type)
-}
-`
-
-const autogenBuiltinOpHeader = `
-var builtinOps = [...]func(i Instr, p *Context){`
-
-const autogenBuiltinOpItemTempl = `
-	(int($Type) << bitsOperator) | int(Op$Op): exec$Op$Type,`
-
-const autogenBuiltinOpFooter = `
-}
-`
-
-func autogenOpWithTempl(f *os.File, op Operator, Op string, templ string) {
-	i := op.GetInfo()
-	if templ == "" {
-		templ = autogenBinaryOpTempl
-		if i.InSecond == bitNone {
-			templ = autogenUnaryOpTempl
-		} else if i.InSecond == bitsAllIntUint {
-			templ = autogenBinaryOpUintTempl
-		}
-	}
-	for kind := Bool; kind <= UnsafePointer; kind++ {
-		if (i.InFirst & (1 << kind)) == 0 {
-			continue
-		}
-		typ := TypeFromKind(kind).String()
-		Typ := strings.Title(typ)
-		repl := strings.NewReplacer("$Op", Op, "$op", i.Lit, "$Type", Typ, "$type", typ)
-		text := repl.Replace(templ)
-		fmt.Fprint(f, text)
-	}
-}
-
-func _TestOpAutogen(t *testing.T) {
-	f, err := os.Create("exec_op_autogen.go")
-	if err != nil {
-		t.Fatal("TestAutogen failed:", err)
-	}
-	defer f.Close()
-	fmt.Fprint(f, autogenOpHeader)
-	fmt.Fprint(f, autogenBuiltinOpHeader)
-	for i, Op := range opAutogenOps {
-		if Op != "" {
-			autogenOpWithTempl(f, Operator(i), Op, autogenBuiltinOpItemTempl)
-		}
-	}
-	fmt.Fprint(f, autogenBuiltinOpFooter)
-	for i, Op := range opAutogenOps {
-		if Op != "" {
-			autogenOpWithTempl(f, Operator(i), Op, "")
-		}
-	}
-}
-
-func newKindValue(kind Kind) reflect.Value {
-	t := TypeFromKind(kind)
-	o := reflect.New(t).Elem()
-	if kind >= Int && kind <= Int64 {
-		o.SetInt(1)
-	}
-	if kind >= Uint && kind <= Uintptr {
-		o.SetUint(1)
-	}
-	if kind >= Float32 && kind <= Float64 {
-		o.SetFloat(1.0)
-	}
-	if kind >= Complex64 && kind <= Complex128 {
-		o.SetComplex(1.0)
-	}
-	return o
-}
-
-func TestExecAutogenOp(t *testing.T) {
-	add := OpAdd.GetInfo()
-	fmt.Println("+", add, OpAdd.String())
-	for i, execOp := range builtinOps {
-		if execOp == nil {
-			continue
-		}
-		kind := Kind(i >> bitsOperator)
-		op := Operator(i & ((1 << bitsOperator) - 1))
-		vars := []interface{}{
-			newKindValue(kind).Interface(),
-			newKindValue(kind).Interface(),
-		}
-		CallBuiltinOp(kind, op, vars...)
-	}
-}
 
 // -----------------------------------------------------------------------------
 
@@ -482,6 +337,21 @@ func TestComplex128(t *testing.T) {
 func TestStrcat(t *testing.T) {
 	code := NewBuilder(nil).
 		Push("5").
+		Push("6").
+		BuiltinOp(String, OpAdd).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != "56" {
+		t.Fatal("`5` `6` add != `56`, ret =", v)
+	}
+}
+
+func TestTypeCast(t *testing.T) {
+	code := NewBuilder(nil).
+		Push(byte('5')).
+		TypeCast(Uint8, String).
 		Push("6").
 		BuiltinOp(String, OpAdd).
 		Resolve()

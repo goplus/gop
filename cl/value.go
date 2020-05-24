@@ -52,7 +52,7 @@ func (p *goValue) Value(i int) iValue {
 // -----------------------------------------------------------------------------
 
 type nonValue struct {
-	v interface{} // *exec.GoPackage, type, etc.
+	v interface{} // *exec.GoPackage, goInstr, iType, etc.
 }
 
 func (p *nonValue) Kind() iKind {

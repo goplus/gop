@@ -133,6 +133,26 @@ func checkType(t reflect.Type, v interface{}, b *exec.Builder) {
 	}
 }
 
+func checkIntType(v interface{}, b *exec.Builder) {
+	if cons, ok := v.(*constVal); ok {
+		cons.bound(exec.TyInt, b)
+	} else {
+		iv := v.(iValue)
+		n := iv.NumValues()
+		if n != 1 {
+			panicExprNotValue(n)
+		}
+		t := iv.Type()
+		if kind := t.Kind(); kind >= reflect.Int && kind <= reflect.Uintptr {
+			if kind != reflect.Int {
+				b.TypeCast(kind, reflect.Int)
+			}
+		} else {
+			log.Panicf("checkIntType: unexptected value type, require integer type, but got `%v`\n", t)
+		}
+	}
+}
+
 func checkElementType(t reflect.Type, elts []interface{}, i, n, step int, b *exec.Builder) {
 	for ; i < n; i += step {
 		checkType(t, elts[i], b)

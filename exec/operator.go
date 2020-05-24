@@ -94,6 +94,7 @@ const (
 	bitComplex128    = 1 << Complex128
 	bitString        = 1 << String
 	bitUnsafePointer = 1 << UnsafePointer
+	bitPtr           = 1 << reflect.Ptr
 
 	bitsAllInt     = bitInt | bitInt8 | bitInt16 | bitInt32 | bitInt64
 	bitsAllUint    = bitUint | bitUint8 | bitUint16 | bitUint32 | bitUint64 | bitUintptr
@@ -102,6 +103,7 @@ const (
 	bitsAllReal    = bitsAllIntUint | bitsAllFloat
 	bitsAllComplex = bitComplex64 | bitComplex128
 	bitsAllNumber  = bitsAllReal | bitsAllComplex
+	bitsAllPtr     = bitPtr | bitUintptr | bitUnsafePointer
 )
 
 // OperatorInfo represents an operator information.
@@ -243,29 +245,30 @@ var (
 )
 
 type bTI struct { // builtin type info
-	typ  reflect.Type
-	size uintptr
+	typ      reflect.Type
+	size     uintptr
+	castFrom uint64
 }
 
 var builtinTypes = [...]bTI{
-	Bool:          {TyBool, 1},
-	Int:           {TyInt, unsafe.Sizeof(int(0))},
-	Int8:          {TyInt8, 1},
-	Int16:         {TyInt16, 2},
-	Int32:         {TyInt32, 4},
-	Int64:         {TyInt64, 8},
-	Uint:          {TyUint, unsafe.Sizeof(uint(0))},
-	Uint8:         {TyUint8, 1},
-	Uint16:        {TyUint16, 2},
-	Uint32:        {TyUint32, 4},
-	Uint64:        {TyUint64, 8},
-	Uintptr:       {TyUintptr, unsafe.Sizeof(uintptr(0))},
-	Float32:       {TyFloat32, 4},
-	Float64:       {TyFloat64, 8},
-	Complex64:     {TyComplex64, 8},
-	Complex128:    {TyComplex128, 16},
-	String:        {TyString, unsafe.Sizeof(string('0'))},
-	UnsafePointer: {TyUnsafePointer, unsafe.Sizeof(uintptr(0))},
+	Bool:          {TyBool, 1, 0},
+	Int:           {TyInt, unsafe.Sizeof(int(0)), bitsAllReal},
+	Int8:          {TyInt8, 1, bitsAllReal},
+	Int16:         {TyInt16, 2, bitsAllReal},
+	Int32:         {TyInt32, 4, bitsAllReal},
+	Int64:         {TyInt64, 8, bitsAllReal},
+	Uint:          {TyUint, unsafe.Sizeof(uint(0)), bitsAllReal},
+	Uint8:         {TyUint8, 1, bitsAllReal},
+	Uint16:        {TyUint16, 2, bitsAllReal},
+	Uint32:        {TyUint32, 4, bitsAllReal},
+	Uint64:        {TyUint64, 8, bitsAllReal},
+	Uintptr:       {TyUintptr, unsafe.Sizeof(uintptr(0)), bitsAllReal},
+	Float32:       {TyFloat32, 4, bitsAllReal},
+	Float64:       {TyFloat64, 8, bitsAllReal},
+	Complex64:     {TyComplex64, 8, bitsAllComplex},
+	Complex128:    {TyComplex128, 16, bitsAllComplex},
+	String:        {TyString, unsafe.Sizeof(string('0')), bitsAllIntUint},
+	UnsafePointer: {TyUnsafePointer, unsafe.Sizeof(uintptr(0)), bitsAllPtr},
 }
 
 // TypeFromKind returns the type who has this kind.
@@ -318,6 +321,14 @@ func execBuiltinOp(i Instr, p *Context) {
 	log.Panicln("execBuiltinOp: invalid instr -", i)
 }
 
+func execTypeCast(i Instr, p *Context) {
+	if fn := builtinCastOps[int(i&bitsOperand)]; fn != nil {
+		fn(0, p)
+		return
+	}
+	log.Panicln("execTypeCast: invalid instr -", i)
+}
+
 // -----------------------------------------------------------------------------
 
 const (
@@ -340,6 +351,13 @@ func (ctx *Builder) BuiltinOp(kind Kind, op Operator) *Builder {
 	if err != nil {
 		panic(err)
 	}
+	return ctx
+}
+
+// TypeCast instr
+func (ctx *Builder) TypeCast(from, to reflect.Kind) *Builder {
+	i := (opTypeCast << bitsOpShift) | uint32(to<<5|from)
+	ctx.code.data = append(ctx.code.data, i)
 	return ctx
 }
 

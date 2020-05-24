@@ -35,10 +35,12 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileAssignStmt(ctx, v)
 	case *ast.IfStmt:
 		compileIfStmt(ctx, v)
-	case *ast.ForPhraseStmt:
-		compileForPhraseStmt(ctx, v)
 	case *ast.SwitchStmt:
 		compileSwitchStmt(ctx, v)
+	case *ast.ForPhraseStmt:
+		compileForPhraseStmt(ctx, v)
+	case *ast.RangeStmt:
+		compileRangeStmt(ctx, v)
 	case *ast.BlockStmt:
 		compileBlockStmtWith(ctx, v)
 	case *ast.ReturnStmt:
@@ -60,6 +62,10 @@ func compileForPhraseStmt(parent *blockCtx, v *ast.ForPhraseStmt) {
 			log.Panicln("compileForPhraseStmt: todo")
 		}
 	})
+}
+
+func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
+	log.Panicln("compileRangeStmt: todo")
 }
 
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
@@ -234,7 +240,7 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		}
 	}
 	if ctx.infer.Len() != len(expr.Lhs) {
-		log.Panicln("compileAssignStmt: assign statment has mismatched variables count -", ctx.infer.Len())
+		log.Panicln("compileAssignStmt: assign statement has mismatched variables count -", ctx.infer.Len())
 	}
 	for i := len(expr.Lhs) - 1; i >= 0; i-- {
 		compileExprLHS(ctx, expr.Lhs[i], expr.Tok)
