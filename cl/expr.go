@@ -160,6 +160,10 @@ func compileIdent(ctx *blockCtx, name string) func() {
 			}
 			log.Panicln("compileIdent todo: var -", kind, addr)
 		}
+		if typ, ok := ctx.builtin.FindType(name); ok {
+			ctx.infer.Push(&nonValue{typ})
+			return nil
+		}
 		if ci, ok := ctx.builtin.FindConst(name); ok {
 			return compileConst(ctx, ci.Kind, ci.Value)
 		}
@@ -568,6 +572,8 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) func() {
 		switch nv := vfn.v.(type) {
 		case goInstr:
 			return nv(ctx, v)
+		case reflect.Type:
+			return compileTypeCast(nv, ctx, v)
 		}
 	}
 	log.Panicln("compileCallExpr failed: unknown -", reflect.TypeOf(fn))

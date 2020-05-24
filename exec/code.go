@@ -56,7 +56,7 @@ const (
 	opPushUint      = 2  // intKind(3) intVal(23)
 	opPushValSpec   = 3  // valSpec(26) - false=0, true=1
 	opPushConstR    = 4  // idx(26)
-	opTypeCast      = 5  // reserved(16) toKind(5) fromKind(5)
+	opReserved      = 5  // reserved(26)
 	opMake          = 6  // funvArity(10) type(16)
 	opAppend        = 7  // arity(26)
 	opBuiltinOp     = 8  // reserved(16) kind(5) builtinOp(5)
@@ -88,6 +88,7 @@ const (
 	opForPhrase     = 34 // addr(26)
 	opLstComprehens = 35 // addr(26)
 	opMapComprehens = 36 // addr(26)
+	opTypeCast      = 37 // type(26)
 )
 
 const (
@@ -131,7 +132,6 @@ var instrInfos = []InstrInfo{
 	opPushUint:      {"pushUint", "intKind", "intVal", (3 << 8) | 23},     // intKind(3) intVal(23)
 	opPushValSpec:   {"pushValSpec", "", "valSpec", 26},                   // valSpec(26) - false=0, true=1
 	opPushConstR:    {"pushConstR", "", "idx", 26},                        // idx(26)
-	opTypeCast:      {"typeCast", "toKind", "fromKind", (5 << 8) | 5},     // reserved(16) toKind(5) fromKind(5)
 	opMake:          {"make", "funvArity", "type", (10 << 8) | 16},        // funvArity(10) type(16)
 	opAppend:        {"append", "", "arity", 26},                          // arity(26)
 	opBuiltinOp:     {"builtinOp", "kind", "op", (21 << 8) | 5},           // reserved(16) kind(5) builtinOp(5)
@@ -163,6 +163,7 @@ var instrInfos = []InstrInfo{
 	opForPhrase:     {"forPhrase", "", "addr", 26},                        // addr(26)
 	opLstComprehens: {"listComprehension", "", "addr", 26},                // addr(26)
 	opMapComprehens: {"mapComprehension", "", "addr", 26},                 // addr(26)
+	opTypeCast:      {"typeCast", "", "type", 26},                         // type(26)
 }
 
 // -----------------------------------------------------------------------------

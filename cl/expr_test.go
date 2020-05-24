@@ -113,7 +113,8 @@ func TestMake2(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 var fsTestMake3 = asttest.NewSingleFileFS("/foo", "bar.ql", `
-	a := make(map[string]interface{}, 4)
+	n := 4
+	a := make(map[string]interface{}, uint16(n))
 	println(a)
 `)
 
@@ -148,7 +149,7 @@ func TestMake3(t *testing.T) {
 var fsTestMake4 = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	import "reflect"
 
-	a := make(chan *func(), 4)
+	a := make(chan *func(), uint16(4))
 	println(reflect.TypeOf(a))
 `)
 

@@ -179,6 +179,12 @@ func makeMap(typMap reflect.Type, arity int, p *Context) {
 	p.Ret(n, ret.Interface())
 }
 
+func execTypeCast(i Instr, p *Context) {
+	args := p.GetArgs(1)
+	typ := getType(i&bitsOperand, p)
+	args[0] = reflect.ValueOf(args[0]).Convert(typ).Interface()
+}
+
 func execZero(i Instr, p *Context) {
 	typ := getType(i&bitsOperand, p)
 	p.Push(reflect.Zero(typ).Interface())
@@ -307,6 +313,13 @@ func (p *Builder) MakeMap(typ reflect.Type, arity int) *Builder {
 // Make instr
 func (p *Builder) Make(typ reflect.Type, arity int) *Builder {
 	i := (opMake << bitsOpShift) | (uint32(arity) << bitsOpCallFuncvShift) | p.newType(typ)
+	p.code.data = append(p.code.data, i)
+	return p
+}
+
+// TypeCast instr
+func (p *Builder) TypeCast(from, to reflect.Type) *Builder {
+	i := (opTypeCast << bitsOpShift) | p.requireType(to)
 	p.code.data = append(p.code.data, i)
 	return p
 }

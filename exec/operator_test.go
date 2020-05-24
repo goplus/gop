@@ -348,21 +348,6 @@ func TestStrcat(t *testing.T) {
 	}
 }
 
-func TestTypeCast(t *testing.T) {
-	code := NewBuilder(nil).
-		Push(byte('5')).
-		TypeCast(Uint8, String).
-		Push("6").
-		BuiltinOp(String, OpAdd).
-		Resolve()
-
-	ctx := NewContext(code)
-	ctx.Exec(0, code.Len())
-	if v := checkPop(ctx); v != "56" {
-		t.Fatal("`5` `6` add != `56`, ret =", v)
-	}
-}
-
 // -----------------------------------------------------------------------------
 
 func TestCallBuiltinOp(t *testing.T) {

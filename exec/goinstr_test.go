@@ -383,3 +383,18 @@ func TestMakeChan2(t *testing.T) {
 		t.Fatal("ret != chan int, ret:", v)
 	}
 }
+
+func TestTypeCast(t *testing.T) {
+	code := NewBuilder(nil).
+		Push(byte('5')).
+		TypeCast(TyUint8, TyString).
+		Push("6").
+		BuiltinOp(String, OpAdd).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != "56" {
+		t.Fatal("`5` `6` add != `56`, ret =", v)
+	}
+}
