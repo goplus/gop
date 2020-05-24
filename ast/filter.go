@@ -82,7 +82,7 @@ func filterFieldList(fields *FieldList, filter Filter, export bool) (removedFiel
 	list := fields.List
 	j := 0
 	for _, f := range list {
-		keepField := false
+		var keepField bool
 		if len(f.Names) == 0 {
 			// anonymous field
 			name := fieldName(f.Type)

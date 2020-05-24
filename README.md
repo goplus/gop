@@ -10,6 +10,8 @@ Q Language - A script language for Go
 
 [![Qiniu Logo](http://open.qiniudn.com/logo.png)](http://www.qiniu.com/)
 
+## Mission & vision
+
 最新的 qlang v6 版本在能力上较以前的版本有极大的调整。其核心变化为：
 
 - 完全推翻重来，从动态类型转向静态类型！
@@ -20,6 +22,18 @@ Q Language - A script language for Go
 a := [1, 2, 3.4]
 ```
 
+为什么人们需要 qlang？它的使命与愿景是什么？
+
+一句话：qlang 希望能够将 Go 语言带到数据科技（DT）的世界。
+
+对于服务端编程的最佳实践而言，Go 语言非常优雅。所以 Go 制霸了云计算了云计算领域。
+
+但是当前 Go 是有舒适区的，从数据科技的角度，Go 语言显得很笨拙。有没有办法让 Go 在数据科技领域变得一样优雅？
+
+这就是 qlang v6 的由来。它兼容 Go，扩展 Go，以 Go++ 的姿态出现，让数据科技享受 Go 的简洁之美。
+
+qlang 将支持生成 Go 代码，方便 Go 语言编译并与其他代码集成。
+
 关于新版本的详细规划，参考：
 
 * https://github.com/qiniu/qlang/issues/176
@@ -28,7 +42,7 @@ a := [1, 2, 3.4]
 
 * https://github.com/qiniu/qlang/tree/v6.x/tutorial
 
-## 老版本
+## Old versions
 
 当前 qlang v6 还在快速迭代中。在正式场合建议使用正式 release 的版本：
 
@@ -38,7 +52,7 @@ a := [1, 2, 3.4]
 
 * https://github.com/qiniu/qlang/tree/v1.5
 
-## 已支持的特性
+## Supported features
 
 ### Variable & operator
 
