@@ -26,3 +26,5 @@ coverage.txt
 *.exe
 *.test
 *.prof
+
+.vscode
