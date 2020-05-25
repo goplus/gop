@@ -11,7 +11,7 @@ import (
 // -----------------------------------------------------------------------------
 
 func newBlockCtxWithFlag(parent *blockCtx) *blockCtx {
-	ctx := newNoExecBlockCtx(parent)
+	ctx := newNormBlockCtx(parent)
 	ctx.checkFlag = true
 	return ctx
 }
@@ -132,7 +132,7 @@ func isNoExecCtxMapComprehensionExpr(parent *blockCtx, v *ast.MapComprehensionEx
 }
 
 func isNoExecCtxFuncLit(ctx *blockCtx, v *ast.FuncLit) bool {
-	log.Warn("isNoExecCtxFuncLit: todo")
+	log.Warn("isNoExecCtxFuncLit: to be optimized")
 	return false
 }
 

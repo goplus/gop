@@ -28,59 +28,65 @@ func execForPhrase(i Instr, p *Context) {
 }
 
 func (c *ForPhrase) exec(p *Context) {
+	var ctxBody *Context
+	if c.block != nil {
+		ctxBody = newContextEx(p, p.Stack, p.code, &c.block.varManager)
+	} else {
+		ctxBody = p
+	}
 	data := reflect.ValueOf(p.Pop())
 	switch data.Kind() {
 	case reflect.Map:
-		c.execMapRange(data, p)
+		c.execMapRange(data, p, ctxBody)
 	default:
-		c.execListRange(data, p)
+		c.execListRange(data, p, ctxBody)
 	}
 }
 
-func (c *ForPhrase) execListRange(data reflect.Value, p *Context) {
+func (c *ForPhrase) execListRange(data reflect.Value, ctxFor, ctxBody *Context) {
 	n := data.Len()
-	ip, ipCond, ipEnd := p.ip, c.Cond, c.End
+	ip, ipCond, ipEnd := ctxFor.ip, c.Cond, c.End
 	key, val := c.Key, c.Value
 	for i := 0; i < n; i++ {
 		if key != nil {
-			p.SetVar(key, i)
+			ctxFor.setVar(key.idx, i)
 		}
 		if val != nil {
-			p.SetVar(val, data.Index(i).Interface())
+			ctxFor.setVar(val.idx, data.Index(i).Interface())
 		}
 		if ipCond > 0 {
-			p.Exec(ip, ipCond)
-			if ok := p.Pop().(bool); ok {
-				p.Exec(ipCond, ipEnd)
+			ctxBody.Exec(ip, ipCond)
+			if ok := ctxBody.Pop().(bool); ok {
+				ctxBody.Exec(ipCond, ipEnd)
 			}
 		} else {
-			p.Exec(ip, ipEnd)
+			ctxBody.Exec(ip, ipEnd)
 		}
 	}
-	p.ip = ipEnd
+	ctxFor.ip = ipEnd
 }
 
-func (c *ForPhrase) execMapRange(data reflect.Value, p *Context) {
+func (c *ForPhrase) execMapRange(data reflect.Value, ctxFor, ctxBody *Context) {
 	iter := data.MapRange()
-	ip, ipCond, ipEnd := p.ip, c.Cond, c.End
+	ip, ipCond, ipEnd := ctxFor.ip, c.Cond, c.End
 	key, val := c.Key, c.Value
 	for iter.Next() {
 		if key != nil {
-			p.SetVar(key, iter.Key().Interface())
+			ctxFor.setVar(key.idx, iter.Key().Interface())
 		}
 		if val != nil {
-			p.SetVar(val, iter.Value().Interface())
+			ctxFor.setVar(val.idx, iter.Value().Interface())
 		}
 		if ipCond > 0 {
-			p.Exec(ip, ipCond)
-			if ok := p.Pop().(bool); ok {
-				p.Exec(ipCond, ipEnd)
+			ctxBody.Exec(ip, ipCond)
+			if ok := ctxBody.Pop().(bool); ok {
+				ctxBody.Exec(ipCond, ipEnd)
 			}
 		} else {
-			p.Exec(ip, ipEnd)
+			ctxBody.Exec(ip, ipEnd)
 		}
 	}
-	p.ip = ipEnd
+	ctxFor.ip = ipEnd
 }
 
 func execMakeArray(i Instr, p *Context) {
@@ -206,11 +212,17 @@ type ForPhrase struct {
 	Key, Value *Var // Key, Value may be nil
 	Cond, End  int
 	TypeIn     reflect.Type
+	block      *blockCtx
 }
 
 // NewForPhrase creates a new ForPhrase instance.
-func NewForPhrase(key, val *Var, in reflect.Type) *ForPhrase {
-	return &ForPhrase{TypeIn: in, Key: key, Value: val}
+func NewForPhrase(in reflect.Type) *ForPhrase {
+	return &ForPhrase{TypeIn: in}
+}
+
+// NewForPhraseWith creates a new ForPhrase instance with executing context.
+func NewForPhraseWith(in reflect.Type, nestDepth uint32) *ForPhrase {
+	return &ForPhrase{TypeIn: in, block: newBlockCtx(nestDepth)}
 }
 
 // Comprehension represents a list/map comprehension.
@@ -225,7 +237,18 @@ func NewComprehension(out reflect.Type) *Comprehension {
 }
 
 // ForPhrase instr
-func (p *Builder) ForPhrase(f *ForPhrase) *Builder {
+func (p *Builder) ForPhrase(f *ForPhrase, key, val *Var) *Builder {
+	f.Key, f.Value = key, val
+	if key != nil {
+		p.DefineVar(key)
+	}
+	if val != nil {
+		p.DefineVar(val)
+	}
+	if f.block != nil {
+		f.block.parent = p.varManager
+		p.varManager = &f.block.varManager
+	}
 	code := p.code
 	addr := uint32(len(code.fors))
 	code.fors = append(code.fors, f)
@@ -242,6 +265,9 @@ func (p *Builder) FilterForPhrase(f *ForPhrase) *Builder {
 // EndForPhrase instr
 func (p *Builder) EndForPhrase(f *ForPhrase) *Builder {
 	f.End = len(p.code.data)
+	if f.block != nil {
+		p.varManager = f.block.parent
+	}
 	return p
 }
 

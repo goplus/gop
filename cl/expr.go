@@ -280,16 +280,14 @@ func compileSliceLit(ctx *blockCtx, v *ast.SliceLit) func() {
 	}
 }
 
-func compileForPhrase(parent *blockCtx, f ast.ForPhrase) (*blockCtx, func(exprElt func())) {
+func compileForPhrase(parent *blockCtx, f ast.ForPhrase, noExecCtx bool) (*blockCtx, func(exprElt func())) {
 	var typKey, typVal reflect.Type
 	var varKey, varVal *exec.Var
-	var hasKey = f.Key != nil
-	var hasVal = f.Value != nil
-	var ctx = newNoExecBlockCtx(parent)
+	var ctx = newNormBlockCtxEx(parent, noExecCtx)
 
 	exprX := compileExpr(parent, f.X)
 	typData := boundType(ctx.infer.Pop().(iValue))
-	if hasKey {
+	if f.Key != nil {
 		switch kind := typData.Kind(); kind {
 		case reflect.Slice, reflect.Array:
 			typKey = exec.TyInt
@@ -300,21 +298,15 @@ func compileForPhrase(parent *blockCtx, f ast.ForPhrase) (*blockCtx, func(exprEl
 		}
 		varKey = (*exec.Var)(ctx.insertVar(f.Key.Name, typKey, true))
 	}
-	if hasVal {
+	if f.Value != nil {
 		typVal = typData.Elem()
 		varVal = (*exec.Var)(ctx.insertVar(f.Value.Name, typVal, true))
 	}
 	return ctx, func(exprElt func()) {
 		exprX()
 		out := ctx.out
-		c := exec.NewForPhrase(varKey, varVal, typData)
-		out.ForPhrase(c)
-		if hasKey {
-			out.DefineVar(varKey)
-		}
-		if hasVal {
-			out.DefineVar(varVal)
-		}
+		c := exec.NewForPhrase(typData)
+		out.ForPhrase(c, varKey, varVal)
 		if f.Cond != nil {
 			compileExpr(ctx, f.Cond)()
 			checkBool(ctx.infer.Pop())
@@ -329,7 +321,7 @@ func compileForPhrases(ctx *blockCtx, fors []ast.ForPhrase) (*blockCtx, []func(e
 	n := len(fors)
 	fns := make([]func(exprElt func()), n)
 	for i := n - 1; i >= 0; i-- {
-		ctx, fns[i] = compileForPhrase(ctx, fors[i])
+		ctx, fns[i] = compileForPhrase(ctx, fors[i], true)
 	}
 	return ctx, fns
 }

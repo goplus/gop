@@ -62,7 +62,7 @@ func TestMapComprehension(t *testing.T) {
 	typData := reflect.MapOf(TyString, TyInt)
 	key := NewVar(TyString, "k")
 	val := NewVar(TyInt, "v")
-	f := NewForPhrase(key, val, typData)
+	f := NewForPhraseWith(typData, 1)
 	c := NewComprehension(reflect.MapOf(TyInt, TyString))
 	code := NewBuilder(nil).
 		MapComprehension(c).
@@ -71,8 +71,7 @@ func TestMapComprehension(t *testing.T) {
 		Push("xsw").
 		Push(1).
 		MakeMap(typData, 2).
-		ForPhrase(f).
-		DefineVar(key, val).
+		ForPhrase(f, key, val).
 		LoadVar(val).
 		LoadVar(key).
 		EndForPhrase(f).
@@ -90,7 +89,7 @@ func TestMapComprehensionFilter(t *testing.T) {
 	typData := reflect.MapOf(TyString, TyInt)
 	key := NewVar(TyString, "k")
 	val := NewVar(TyInt, "v")
-	f := NewForPhrase(key, val, typData)
+	f := NewForPhrase(typData)
 	c := NewComprehension(reflect.MapOf(TyInt, TyString))
 	code := NewBuilder(nil).
 		MapComprehension(c).
@@ -99,8 +98,7 @@ func TestMapComprehensionFilter(t *testing.T) {
 		Push("xsw").
 		Push(1).
 		MakeMap(typData, 2).
-		ForPhrase(f).
-		DefineVar(key, val).
+		ForPhrase(f, key, val).
 		LoadVar(val).
 		Push(2).
 		BuiltinOp(Int, OpLE).
@@ -121,7 +119,7 @@ func TestMapComprehensionFilter(t *testing.T) {
 func TestListComprehension(t *testing.T) {
 	typData := reflect.ArrayOf(4, TyInt)
 	x := NewVar(TyInt, "x")
-	f := NewForPhrase(nil, x, typData)
+	f := NewForPhrase(typData)
 	c := NewComprehension(reflect.SliceOf(TyInt))
 	code := NewBuilder(nil).
 		ListComprehension(c).
@@ -130,8 +128,7 @@ func TestListComprehension(t *testing.T) {
 		Push(5).
 		Push(7).
 		MakeArray(typData, 4).
-		ForPhrase(f).
-		DefineVar(x).
+		ForPhrase(f, nil, x).
 		LoadVar(x).
 		LoadVar(x).
 		BuiltinOp(Int, OpMul).
@@ -149,7 +146,7 @@ func TestListComprehension(t *testing.T) {
 func TestListComprehensionFilter(t *testing.T) {
 	typData := reflect.ArrayOf(4, TyInt)
 	x := NewVar(TyInt, "x")
-	f := NewForPhrase(nil, x, typData)
+	f := NewForPhrase(typData)
 	c := NewComprehension(reflect.SliceOf(TyInt))
 	code := NewBuilder(nil).
 		ListComprehension(c).
@@ -158,8 +155,7 @@ func TestListComprehensionFilter(t *testing.T) {
 		Push(5).
 		Push(7).
 		MakeArray(typData, 4).
-		ForPhrase(f).
-		DefineVar(x).
+		ForPhrase(f, nil, x).
 		LoadVar(x).
 		Push(3).
 		BuiltinOp(Int, OpGT). // x > 3
@@ -182,7 +178,7 @@ func TestMapComprehension2(t *testing.T) {
 	typData := reflect.SliceOf(TyInt)
 	i := NewVar(TyInt, "i")
 	x := NewVar(TyInt, "x")
-	f := NewForPhrase(i, x, typData)
+	f := NewForPhrase(typData)
 	c := NewComprehension(reflect.MapOf(TyInt, TyInt))
 	code := NewBuilder(nil).
 		MapComprehension(c).
@@ -191,8 +187,7 @@ func TestMapComprehension2(t *testing.T) {
 		Push(5).
 		Push(7).
 		MakeArray(typData, 4).
-		ForPhrase(f).
-		DefineVar(i, x).
+		ForPhrase(f, i, x).
 		LoadVar(x).
 		LoadVar(x).
 		BuiltinOp(Int, OpMul).
@@ -212,8 +207,8 @@ func TestListComprehensionEx(t *testing.T) {
 	typData := reflect.SliceOf(TyInt)
 	a := NewVar(TyInt, "a")
 	b := NewVar(TyInt, "b")
-	fa := NewForPhrase(nil, a, typData)
-	fb := NewForPhrase(nil, b, typData)
+	fa := NewForPhrase(typData)
+	fb := NewForPhrase(typData)
 	c := NewComprehension(typData)
 	code := NewBuilder(nil).
 		ListComprehension(c).
@@ -221,15 +216,13 @@ func TestListComprehensionEx(t *testing.T) {
 		Push(6).
 		Push(7).
 		MakeArray(typData, 3).
-		ForPhrase(fb).
-		DefineVar(b).
+		ForPhrase(fb, nil, b).
 		Push(1).
 		Push(2).
 		Push(3).
 		Push(4).
 		MakeArray(typData, 4).
-		ForPhrase(fa).
-		DefineVar(a).
+		ForPhrase(fa, nil, a).
 		LoadVar(a).
 		Push(1).
 		BuiltinOp(Int, OpGT). // a > 1
