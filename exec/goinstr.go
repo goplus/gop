@@ -207,6 +207,68 @@ func execTypeCast(i Instr, p *Context) {
 	args[0] = reflect.ValueOf(args[0]).Convert(typ).Interface()
 }
 
+func execIndex(i Instr, p *Context) {
+	idx := int(i & setIndexOperand)
+	if idx == setIndexOperand {
+		idx = p.Pop().(int)
+	}
+	n := len(p.data)
+	v := reflect.ValueOf(p.data[n-1]).Index(idx)
+	if (i & setIndexFlag) != 0 { // value sliceData $idx $setIndex
+		v.Set(reflect.ValueOf(p.data[n-2]))
+		p.PopN(2)
+	} else { // sliceData $idx $setIndex
+		p.data[n-1] = v.Interface()
+	}
+}
+
+func execMapIndex(i Instr, p *Context) {
+	n := len(p.data)
+	key := reflect.ValueOf(p.data[n-1])
+	v := reflect.ValueOf(p.data[n-2])
+	if (i & bitsOperand) != 0 { // value mapData $key $setMapIndex
+		v.SetMapIndex(key, reflect.ValueOf(p.data[n-3]))
+		p.PopN(3)
+	} else { // mapData $key $mapIndex
+		p.Ret(2, v.MapIndex(key).Interface())
+	}
+}
+
+func popSliceIndexs(instr Instr, p *Context) (i, j int) {
+	instr &= bitsOperand
+	i = int(instr >> 13)
+	j = int(instr & sliceIndexMask)
+	if j == sliceIndexMask {
+		j = p.Pop().(int)
+	} else if j == sliceIndexMask-1 {
+		j = -2
+	}
+	if i == sliceIndexMask {
+		i = p.Pop().(int)
+	} else if i == sliceIndexMask-1 {
+		i = 0
+	}
+	return
+}
+
+func execSlice(instr Instr, p *Context) {
+	i, j := popSliceIndexs(instr, p)
+	n := len(p.data)
+	v := reflect.ValueOf(p.data[n-1])
+	if j == -2 {
+		j = v.Len()
+	}
+	p.data[n-1] = v.Slice(i, j).Interface()
+}
+
+func execSlice3(instr Instr, p *Context) {
+	k := p.Pop().(int)
+	i, j := popSliceIndexs(instr, p)
+	n := len(p.data)
+	v := reflect.ValueOf(p.data[n-1])
+	p.data[n-1] = v.Slice3(i, j, k).Interface()
+}
+
 func execZero(i Instr, p *Context) {
 	typ := getType(i&bitsOperand, p)
 	p.Push(reflect.Zero(typ).Interface())
@@ -354,8 +416,85 @@ func (p *Builder) MakeMap(typ reflect.Type, arity int) *Builder {
 
 // Make instr
 func (p *Builder) Make(typ reflect.Type, arity int) *Builder {
+	if arity > 2 {
+		panic("make arity > 2")
+	}
 	i := (opMake << bitsOpShift) | (uint32(arity) << bitsOpCallFuncvShift) | p.newType(typ)
 	p.code.data = append(p.code.data, i)
+	return p
+}
+
+// MapIndex instr
+func (p *Builder) MapIndex() *Builder {
+	p.code.data = append(p.code.data, opMapIndex<<bitsOpShift)
+	return p
+}
+
+// SetMapIndex instr
+func (p *Builder) SetMapIndex() *Builder {
+	p.code.data = append(p.code.data, (opMapIndex<<bitsOpShift)|1)
+	return p
+}
+
+// Index instr
+func (p *Builder) Index(idx int) *Builder {
+	if idx >= setIndexOperand {
+		p.Push(idx)
+		idx = -1
+	}
+	i := (opIndex << bitsOpShift) | uint32(idx&setIndexOperand)
+	p.code.data = append(p.code.data, i)
+	return p
+}
+
+// SetIndex instr
+func (p *Builder) SetIndex(idx int) *Builder {
+	if idx >= setIndexOperand {
+		p.Push(idx)
+		idx = -1
+	}
+	i := (opIndex<<bitsOpShift | setIndexFlag) | uint32(idx&setIndexOperand)
+	p.code.data = append(p.code.data, i)
+	return p
+}
+
+const (
+	setIndexFlag    = (1 << 25)
+	setIndexOperand = setIndexFlag - 1
+	sliceIndexMask  = (1 << 13) - 1
+	// SliceConstIndexLast - slice const index max
+	SliceConstIndexLast = (1 << 13) - 3
+	// SliceDefaultIndex - unspecified index
+	SliceDefaultIndex = -2
+)
+
+// Slice instr
+func (p *Builder) Slice(i, j int) *Builder { // i = -1, -2
+	if i > SliceConstIndexLast {
+		panic("i > SliceConstIndexLast")
+	}
+	if j > SliceConstIndexLast {
+		p.Push(j)
+		j = -1
+	}
+	instr := (opSlice << bitsOpShift) | uint32(i&sliceIndexMask)<<13 | uint32(j&sliceIndexMask)
+	p.code.data = append(p.code.data, instr)
+	return p
+}
+
+// Slice3 instr
+func (p *Builder) Slice3(i, j, k int) *Builder {
+	if i > SliceConstIndexLast {
+		panic("i > SliceConstIndexLast")
+	}
+	if k == -2 || j == -2 || j > SliceConstIndexLast {
+		panic("k == SliceDefaultIndex || j == SliceDefaultIndex || j > SliceConstIndexLast")
+	}
+	if k >= 0 {
+		p.Push(k)
+	}
+	instr := (opSlice3 << bitsOpShift) | uint32(i&sliceIndexMask)<<13 | uint32(j&sliceIndexMask)
+	p.code.data = append(p.code.data, instr)
 	return p
 }
 

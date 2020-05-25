@@ -43,6 +43,8 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compleMode) {
 	switch v := expr.(type) {
 	case *ast.Ident:
 		compileIdentLHS(ctx, v.Name, mode)
+	case *ast.IndexExpr:
+		compileIndexExprLHS(ctx, v, mode)
 	default:
 		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
 	}
@@ -60,6 +62,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 		return compileBinaryExpr(ctx, v)
 	case *ast.SelectorExpr:
 		return compileSelectorExpr(ctx, v)
+	case *ast.IndexExpr:
+		return compileIndexExpr(ctx, v)
 	case *ast.CompositeLit:
 		return compileCompositeLit(ctx, v)
 	case *ast.SliceLit:
@@ -78,14 +82,6 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
 		return nil
 	}
-}
-
-func compileEllipsis(ctx *blockCtx, v *ast.Ellipsis) func() {
-	if v.Elt != nil {
-		log.Panicln("compileEllipsis: todo")
-	}
-	ctx.infer.Push(&constVal{v: int64(-1), kind: astutil.ConstUnboundInt})
-	return nil
 }
 
 func compileIdentLHS(ctx *blockCtx, name string, mode compleMode) {
@@ -191,6 +187,14 @@ func compileIdent(ctx *blockCtx, name string) func() {
 		}
 		log.Panicln("compileIdent failed: unknown -", name)
 	}
+	return nil
+}
+
+func compileEllipsis(ctx *blockCtx, v *ast.Ellipsis) func() {
+	if v.Elt != nil {
+		log.Panicln("compileEllipsis: todo")
+	}
+	ctx.infer.Push(&constVal{v: int64(-1), kind: astutil.ConstUnboundInt})
 	return nil
 }
 
@@ -588,6 +592,100 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) func() {
 	}
 	log.Panicln("compileCallExpr failed: unknown -", reflect.TypeOf(fn))
 	return nil
+}
+
+func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compleMode) {
+	if mode == lhsDefine {
+		log.Panicln("compileIndexExprLHS: `:=` can't be used for index expression")
+	}
+	val := ctx.infer.Get(-1)
+	compileExpr(ctx, v.X)()
+	typ := ctx.infer.Get(-1).(iValue).Type()
+	typElem := typ.Elem()
+	if cons, ok := val.(*constVal); ok {
+		cons.bound(typElem, ctx.out)
+	} else if t := val.(iValue).Type(); t != typElem {
+		log.Panicf("compileIndexExprLHS: can't assign `%v`[i] = `%v`\n", typ, t)
+	}
+	exprIdx := compileExpr(ctx, v.Index)
+	i := ctx.infer.Get(-1)
+	ctx.infer.PopN(3)
+	switch typ.Kind() {
+	case reflect.Slice, reflect.Array:
+		if cons, ok := i.(*constVal); ok {
+			if n, ok := boundConst(cons.v, exec.TyInt); ok {
+				ctx.out.SetIndex(n.(int))
+				return
+			}
+			log.Panicln("compileIndexExprLHS: index expression value type is invalid")
+		}
+		typIdx := i.(iValue).Type()
+		if typIdx.ConvertibleTo(exec.TyInt) {
+			ctx.out.TypeCast(typIdx, exec.TyInt)
+		} else {
+			log.Panicln("compileIndexExprLHS: index expression value type is invalid")
+		}
+		exprIdx()
+		ctx.out.SetIndex(-1)
+	case reflect.Map:
+		exprIdx()
+		typIdx := typ.Key()
+		if cons, ok := i.(*constVal); ok {
+			cons.bound(typIdx, ctx.out)
+		}
+		if t := i.(iValue).Type(); t != typIdx {
+			log.Panicf("compileIndexExprLHS: index type `%v` required, but got `%v`\n", typIdx, t)
+		}
+		ctx.out.SetMapIndex()
+	default:
+		log.Panicln("compileIndexExprLHS: unknown -", typ)
+	}
+}
+
+func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr) func() { // x[i]
+	exprX := compileExpr(ctx, v.X)
+	x := ctx.infer.Get(-1)
+	typ := x.(iValue).Type()
+	ctx.infer.Ret(1, &goValue{typ.Elem()})
+	return func() {
+		exprX()
+		exprIdx := compileExpr(ctx, v.Index)
+		i := ctx.infer.Pop()
+		switch typ.Kind() {
+		case reflect.Slice, reflect.Array:
+			if cons, ok := i.(*constVal); ok {
+				if n, ok := boundConst(cons.v, exec.TyInt); ok {
+					ctx.out.Index(n.(int))
+					return
+				}
+				log.Panicln("compileIndexExpr: index expression value type is invalid")
+			}
+			typIdx := i.(iValue).Type()
+			if typIdx.ConvertibleTo(exec.TyInt) {
+				ctx.out.TypeCast(typIdx, exec.TyInt)
+			} else {
+				log.Panicln("compileIndexExpr: index expression value type is invalid")
+			}
+			exprIdx()
+			ctx.out.Index(-1)
+		case reflect.Map:
+			exprIdx()
+			typIdx := typ.Key()
+			if cons, ok := i.(*constVal); ok {
+				cons.bound(typIdx, ctx.out)
+			}
+			if t := i.(iValue).Type(); t != typIdx {
+				log.Panicf("compileIndexExpr: index type `%v` required, but got `%v`", typIdx, t)
+			}
+			ctx.out.MapIndex()
+		default:
+			log.Panicln("compileIndexExpr: unknown -", typ)
+		}
+	}
+}
+
+func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) func() {
+	panic("compileSliceExpr: todo")
 }
 
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {

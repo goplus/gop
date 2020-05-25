@@ -70,7 +70,49 @@ func TestMap(t *testing.T) {
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
 	if v := checkPop(ctx); !reflect.DeepEqual(v, map[string]float64{"Hello": 3.2, "xsw": 1.0}) {
-		t.Fatal("expected: {`Hello`: 3.2, `xsw`: 1}, ret =", v)
+		t.Fatal("expected: {`Hello`: 3.2, `xsw`: 1.0}, ret =", v)
+	}
+}
+
+func TestMapIndex(t *testing.T) {
+	code := NewBuilder(nil).
+		Push("Hello").
+		Push(3.2).
+		Push("xsw").
+		Push(1.0).
+		MakeMap(reflect.MapOf(TyString, TyFloat64), 2).
+		Push("xsw").
+		MapIndex().
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != 1.0 {
+		t.Fatal("{`Hello`: 3.2, `xsw`: 1.0}[`xsw`] != 1.0, ret =", v)
+	}
+}
+
+func TestSetMapIndex(t *testing.T) {
+	a := NewVar(reflect.MapOf(TyString, TyFloat64), "")
+	code := NewBuilder(nil).
+		DefineVar(a).
+		Push(2.0).
+		Push("Hello").
+		Push(3.2).
+		Push("xsw").
+		Push(1.0).
+		MakeMap(reflect.MapOf(TyString, TyFloat64), 2).
+		StoreVar(a).
+		LoadVar(a).
+		Push("xsw").
+		SetMapIndex().
+		LoadVar(a).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); !reflect.DeepEqual(v, map[string]float64{"Hello": 3.2, "xsw": 2.0}) {
+		t.Fatal("expected: {`Hello`: 3.2, `xsw`: 2.0}, ret =", v)
 	}
 }
 
@@ -269,6 +311,171 @@ func TestZero(t *testing.T) {
 	ctx.Exec(0, code.Len())
 	if v := checkPop(ctx); v != 3.2 {
 		t.Fatal("0 + 3.2 != 3.2, ret =", v)
+	}
+}
+
+func TestIndex(t *testing.T) {
+	code := NewBuilder(nil).
+		Push(3.2).
+		Push(1.2).
+		Push(2.4).
+		MakeArray(reflect.SliceOf(TyFloat64), 3).
+		Index(1).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != 1.2 {
+		t.Fatal("[3.2, 1.2, 2.4][1] != 1.2, ret:", v)
+	}
+}
+
+func TestIndex2(t *testing.T) {
+	code := NewBuilder(nil).
+		Push(3.2).
+		Push(1.2).
+		Push(2.4).
+		MakeArray(reflect.SliceOf(TyFloat64), 3).
+		Push(2).
+		Index(-1).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != 2.4 {
+		t.Fatal("[3.2, 1.2, 2.4][2] != 2.4, ret:", v)
+	}
+}
+
+func TestSetIndex(t *testing.T) {
+	a := NewVar(reflect.SliceOf(TyFloat64), "")
+	code := NewBuilder(nil).
+		DefineVar(a).
+		Push(0.7).
+		Push(3.2).
+		Push(1.2).
+		Push(2.4).
+		MakeArray(reflect.SliceOf(TyFloat64), 3).
+		StoreVar(a).
+		LoadVar(a).
+		Push(2).
+		SetIndex(-1).
+		LoadVar(a).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); !reflect.DeepEqual(v, []float64{3.2, 1.2, 0.7}) {
+		t.Fatal("[3.2, 1.2, 0.7], ret:", v)
+	}
+}
+
+func TestSetLargeIndex(t *testing.T) {
+	a := NewVar(reflect.SliceOf(TyFloat64), "")
+	code := NewBuilder(nil).
+		DefineVar(a).
+		Push(setIndexOperand+1).
+		Make(reflect.SliceOf(TyFloat64), 1).
+		StoreVar(a).
+		Push(1.7).
+		LoadVar(a).
+		SetIndex(setIndexOperand).
+		LoadVar(a).
+		Index(setIndexOperand).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != 1.7 {
+		t.Fatal("v != 1.7, ret:", v)
+	}
+}
+
+func TestSlice(t *testing.T) {
+	code := NewBuilder(nil).
+		Push(3.2).
+		Push(1.2).
+		Push(2.4).
+		MakeArray(reflect.SliceOf(TyFloat64), 3).
+		Slice(0, 2).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); !reflect.DeepEqual(v, []float64{3.2, 1.2}) {
+		t.Fatal("[3.2, 1.2, 2.4][0:2] != [3.2, 1.2], ret:", v)
+	}
+}
+
+func TestSliceLarge(t *testing.T) {
+	a := NewVar(reflect.SliceOf(TyFloat64), "")
+	code := NewBuilder(nil).
+		DefineVar(a).
+		Push(SliceConstIndexLast+1).
+		Make(reflect.SliceOf(TyFloat64), 1).
+		StoreVar(a).
+		Push(1.7).
+		LoadVar(a).
+		SetIndex(SliceConstIndexLast).
+		LoadVar(a).
+		Slice(SliceConstIndexLast, SliceConstIndexLast+1).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); !reflect.DeepEqual(v, []float64{1.7}) {
+		t.Fatal("ret != [1.7], ret:", v)
+	}
+}
+
+func TestSlice2(t *testing.T) {
+	code := NewBuilder(nil).
+		Push(3.2).
+		Push(1.2).
+		Push(2.4).
+		MakeArray(reflect.SliceOf(TyFloat64), 3).
+		Push(1).
+		Slice(SliceDefaultIndex, -1).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); !reflect.DeepEqual(v, []float64{3.2}) {
+		t.Fatal("[3.2, 1.2, 2.4][:1] != [3.2], ret:", v)
+	}
+}
+
+func TestSlice3(t *testing.T) {
+	code := NewBuilder(nil).
+		Push(3.2).
+		Push(1.2).
+		Push(2.4).
+		MakeArray(reflect.SliceOf(TyFloat64), 3).
+		Push(1).
+		Slice(-1, SliceDefaultIndex).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); !reflect.DeepEqual(v, []float64{1.2, 2.4}) {
+		t.Fatal("[3.2, 1.2, 2.4][1:] != [1.2, 2.4], ret:", v)
+	}
+}
+
+func TestSlice4(t *testing.T) {
+	code := NewBuilder(nil).
+		Push(3.2).
+		Push(1.2).
+		Push(2.4).
+		MakeArray(reflect.SliceOf(TyFloat64), 3).
+		Push(1).
+		Slice3(SliceDefaultIndex, -1, 2).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); !reflect.DeepEqual(v, []float64{3.2}) || reflect.ValueOf(v).Cap() != 2 {
+		t.Fatal("[3.2, 1.2, 2.4][:1] != [3.2], ret:", v)
 	}
 }
 
