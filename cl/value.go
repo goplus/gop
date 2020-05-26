@@ -1,5 +1,5 @@
 /*
- Copyright 2020 Qiniu Cloud (七牛云)
+ Copyright 2020 Qiniu Cloud (qiniu.com)
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -265,8 +265,9 @@ func boundType(in iValue) reflect.Type {
 }
 
 func (p *constVal) bound(t reflect.Type, b *exec.Builder) {
+	kind := t.Kind()
 	if p.reserve == exec.InvalidReserved { // bounded
-		if p.kind != t.Kind() {
+		if p.kind != kind {
 			if t == exec.TyEmptyInterface {
 				return
 			}
@@ -278,6 +279,7 @@ func (p *constVal) bound(t reflect.Type, b *exec.Builder) {
 	if !ok {
 		log.Panicln("function call with invalid argument type: requires", t, ", but got", reflect.TypeOf(p.v))
 	}
+	p.v, p.kind = v, kind
 	p.reserve.Push(b, v)
 }
 

@@ -1,5 +1,5 @@
 /*
- Copyright 2020 Qiniu Cloud (七牛云)
+ Copyright 2020 Qiniu Cloud (qiniu.com)
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -145,7 +145,7 @@ func getParentCtx(p *Context, idx tAddress) *Context {
 // GetVar func.
 func (p *Context) GetVar(x *Var) interface{} {
 	if x.isGlobal() {
-		return p.getVar(uint32(x.idx))
+		return p.getVar(x.idx)
 	}
 	panic("variable not defined, or not a global variable")
 }
@@ -153,7 +153,7 @@ func (p *Context) GetVar(x *Var) interface{} {
 // SetVar func.
 func (p *Context) SetVar(x *Var, v interface{}) {
 	if x.isGlobal() {
-		p.setVar(uint32(x.idx), v)
+		p.setVar(x.idx, v)
 		return
 	}
 	panic("variable not defined, or not a global variable")
@@ -259,8 +259,8 @@ func (p *Var) SetAddr(nestDepth, idx uint32) {
 
 type varManager struct {
 	vlist     []*Var
-	nestDepth uint32
 	tcache    reflect.Type
+	nestDepth uint32
 }
 
 func newVarManager(vars ...*Var) *varManager {
@@ -274,6 +274,15 @@ func (p *varManager) addVars(vars ...*Var) {
 		v.SetAddr(nestDepth, uint32(i+n))
 	}
 	p.vlist = append(p.vlist, vars...)
+}
+
+type blockCtx struct {
+	varManager
+	parent *varManager
+}
+
+func newBlockCtx(nestDepth uint32) *blockCtx {
+	return &blockCtx{varManager: varManager{nestDepth: nestDepth}}
 }
 
 // -----------------------------------------------------------------------------

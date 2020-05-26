@@ -1,5 +1,5 @@
 /*
- Copyright 2020 Qiniu Cloud (七牛云)
+ Copyright 2020 Qiniu Cloud (qiniu.com)
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -186,6 +186,7 @@ var _execTable = [...]func(i Instr, p *Context){
 	opPushUint:      execPushUint,
 	opPushValSpec:   execPushValSpec,
 	opPushConstR:    execPushConstR,
+	opIndex:         execIndex,
 	opMake:          execMake,
 	opAppend:        execAppend,
 	opBuiltinOp:     execBuiltinOp,
@@ -212,6 +213,9 @@ var _execTable = [...]func(i Instr, p *Context){
 	opLstComprehens: execListComprehension,
 	opMapComprehens: execMapComprehension,
 	opTypeCast:      execTypeCast,
+	opSlice:         execSlice,
+	opSlice3:        execSlice3,
+	opMapIndex:      execMapIndex,
 }
 
 var execTable []func(i Instr, p *Context)

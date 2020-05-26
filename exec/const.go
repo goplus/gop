@@ -1,5 +1,5 @@
 /*
- Copyright 2020 Qiniu Cloud (七牛云)
+ Copyright 2020 Qiniu Cloud (qiniu.com)
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.

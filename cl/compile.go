@@ -1,5 +1,5 @@
 /*
- Copyright 2020 Qiniu Cloud (七牛云)
+ Copyright 2020 Qiniu Cloud (qiniu.com)
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -140,6 +140,7 @@ type blockCtx struct {
 	checkFlag bool
 }
 
+// function block ctx
 func newExecBlockCtx(parent *blockCtx) *blockCtx {
 	return &blockCtx{
 		pkgCtx:    parent.pkgCtx,
@@ -150,17 +151,23 @@ func newExecBlockCtx(parent *blockCtx) *blockCtx {
 	}
 }
 
-func newNoExecBlockCtx(parent *blockCtx) *blockCtx {
+// normal block ctx, eg. if/switch/for/etc.
+func newNormBlockCtx(parent *blockCtx) *blockCtx {
+	return newNormBlockCtxEx(parent, true)
+}
+
+func newNormBlockCtxEx(parent *blockCtx, noExecCtx bool) *blockCtx {
 	return &blockCtx{
 		pkgCtx:    parent.pkgCtx,
 		file:      parent.file,
 		parent:    parent,
 		fun:       parent.fun,
 		syms:      make(map[string]iSymbol),
-		noExecCtx: true,
+		noExecCtx: noExecCtx,
 	}
 }
 
+// global block ctx
 func newGblBlockCtx(pkg *pkgCtx, parent *blockCtx) *blockCtx {
 	return &blockCtx{
 		pkgCtx: pkg,

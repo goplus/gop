@@ -1,5 +1,5 @@
 /*
- Copyright 2020 Qiniu Cloud (七牛云)
+ Copyright 2020 Qiniu Cloud (qiniu.com)
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ func compileBlockStmtWithout(ctx *blockCtx, body *ast.BlockStmt) {
 }
 
 func compileBodyWith(ctx *blockCtx, body []ast.Stmt) {
-	ctxWith := newNoExecBlockCtx(ctx)
+	ctxWith := newNormBlockCtx(ctx)
 	for _, stmt := range body {
 		compileStmt(ctxWith, stmt)
 	}
@@ -67,16 +67,11 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 }
 
 func compileForPhraseStmt(parent *blockCtx, v *ast.ForPhraseStmt) {
-	ctxFor, exprFor := compileForPhrase(parent, v.ForPhrase)
-	noExecCtx := isNoExecCtx(ctxFor, v.Body)
-	ctx := newNoExecBlockCtx(ctxFor)
-	ctx.noExecCtx = noExecCtx
+	noExecCtx := isNoExecCtx(parent, v.Body)
+	ctxFor, exprFor := compileForPhrase(parent, v.ForPhrase, noExecCtx)
+	ctx := newNormBlockCtxEx(ctxFor, noExecCtx)
 	exprFor(func() {
-		if noExecCtx {
-			compileBlockStmtWithout(ctx, v.Body)
-		} else {
-			log.Panicln("compileForPhraseStmt: todo")
-		}
+		compileBlockStmtWithout(ctx, v.Body)
 	})
 }
 
@@ -88,7 +83,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	var defaultBody []ast.Stmt
 	var ctxSw *blockCtx
 	if v.Init != nil {
-		ctxSw = newNoExecBlockCtx(ctx)
+		ctxSw = newNormBlockCtx(ctx)
 		compileStmt(ctxSw, v.Init)
 	} else {
 		ctxSw = ctx
@@ -165,7 +160,7 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 	var done *exec.Label
 	var ctxIf *blockCtx
 	if v.Init != nil {
-		ctxIf = newNoExecBlockCtx(ctx)
+		ctxIf = newNormBlockCtx(ctx)
 		compileStmt(ctxIf, v.Init)
 	} else {
 		ctxIf = ctx

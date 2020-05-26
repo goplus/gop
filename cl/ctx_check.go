@@ -1,5 +1,5 @@
 /*
- Copyright 2020 Qiniu Cloud (七牛云)
+ Copyright 2020 Qiniu Cloud (qiniu.com)
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import (
 // -----------------------------------------------------------------------------
 
 func newBlockCtxWithFlag(parent *blockCtx) *blockCtx {
-	ctx := newNoExecBlockCtx(parent)
+	ctx := newNormBlockCtx(parent)
 	ctx.checkFlag = true
 	return ctx
 }
@@ -76,6 +76,8 @@ func isNoExecCtxExpr(ctx *blockCtx, expr ast.Expr) bool {
 		return isNoExecCtxBinaryExpr(ctx, v)
 	case *ast.SelectorExpr:
 		return isNoExecCtxExpr(ctx, v.X)
+	case *ast.IndexExpr:
+		return isNoExecCtxIndexExpr(ctx, v)
 	case *ast.CompositeLit:
 		return isNoExecCtxExprs(ctx, v.Elts)
 	case *ast.SliceLit:
@@ -148,7 +150,7 @@ func isNoExecCtxMapComprehensionExpr(parent *blockCtx, v *ast.MapComprehensionEx
 }
 
 func isNoExecCtxFuncLit(ctx *blockCtx, v *ast.FuncLit) bool {
-	log.Warn("isNoExecCtxFuncLit: todo")
+	log.Warn("isNoExecCtxFuncLit: to be optimized")
 	return false
 }
 
@@ -157,6 +159,13 @@ func isNoExecCtxKeyValueExpr(ctx *blockCtx, v *ast.KeyValueExpr) bool {
 		return false
 	}
 	return isNoExecCtxExpr(ctx, v.Value)
+}
+
+func isNoExecCtxIndexExpr(ctx *blockCtx, v *ast.IndexExpr) bool {
+	if noExecCtx := isNoExecCtxExpr(ctx, v.X); !noExecCtx {
+		return false
+	}
+	return isNoExecCtxExpr(ctx, v.Index)
 }
 
 func isNoExecCtxBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) bool {
@@ -254,10 +263,19 @@ func isNoExecCtxExprLHS(ctx *blockCtx, expr ast.Expr, mode compleMode) bool {
 	switch v := expr.(type) {
 	case *ast.Ident:
 		return isNoExecCtxIdentLHS(ctx, v.Name, mode)
+	case *ast.IndexExpr:
+		return isNoExecCtxIndexExprLHS(ctx, v, mode)
 	default:
 		log.Panicln("isNoExecCtxExprLHS failed: unknown -", reflect.TypeOf(v))
 	}
 	return true
+}
+
+func isNoExecCtxIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compleMode) bool {
+	if noExecCtx := isNoExecCtxExpr(ctx, v.X); !noExecCtx {
+		return false
+	}
+	return isNoExecCtxExpr(ctx, v.Index)
 }
 
 func isNoExecCtxIdentLHS(ctx *blockCtx, name string, mode compleMode) bool {
