@@ -60,6 +60,7 @@ func (c *ForPhrase) exec(p *Context) {
 }
 
 func (c *ForPhrase) execListRange(data reflect.Value, ctxFor, ctxBody *Context) {
+	data = reflect.Indirect(data)
 	n := data.Len()
 	ip, ipCond, ipEnd := ctxFor.ip, c.Cond, c.End
 	key, val := c.Key, c.Value
@@ -124,14 +125,16 @@ func execMakeArray(i Instr, p *Context) {
 
 func makeArray(typSlice reflect.Type, arity int, p *Context) {
 	args := p.GetArgs(arity)
-	var ret reflect.Value
+	var ret, set reflect.Value
 	if typSlice.Kind() == reflect.Slice {
 		ret = reflect.MakeSlice(typSlice, arity, arity)
+		set = ret
 	} else {
-		ret = reflect.New(typSlice).Elem()
+		ret = reflect.New(typSlice)
+		set = ret.Elem()
 	}
 	for i, arg := range args {
-		ret.Index(i).Set(getElementOf(arg, typSlice))
+		set.Index(i).Set(getElementOf(arg, typSlice))
 	}
 	p.Ret(arity, ret.Interface())
 }
@@ -213,7 +216,7 @@ func execIndex(i Instr, p *Context) {
 		idx = p.Pop().(int)
 	}
 	n := len(p.data)
-	v := reflect.ValueOf(p.data[n-1]).Index(idx)
+	v := reflect.Indirect(reflect.ValueOf(p.data[n-1])).Index(idx)
 	if (i & setIndexFlag) != 0 { // value sliceData $idx $setIndex
 		v.Set(reflect.ValueOf(p.data[n-2]))
 		p.PopN(2)
