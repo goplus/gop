@@ -606,9 +606,8 @@ func TestForPhraseStmt(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 var fsTestForPhraseStmt2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
-	sum := 0
 	fns := make([]func() int, 3)
-	for i, x <- [3, 5, 7] {
+	for i, x <- [3, 15, 777] {
 		v := x
 		fns[i] = func() int {
 			return v
@@ -617,7 +616,7 @@ var fsTestForPhraseStmt2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	println("values:", fns[0](), fns[1](), fns[2]())
 `)
 
-func _TestForPhraseStmt2(t *testing.T) {
+func TestForPhraseStmt2(t *testing.T) {
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseFSDir(fset, fsTestForPhraseStmt2, "/foo", nil, 0)
 	if err != nil || len(pkgs) != 1 {
@@ -627,7 +626,7 @@ func _TestForPhraseStmt2(t *testing.T) {
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
 	_, noExecCtx, err := newPackage(b, bar)
-	if err != nil || !noExecCtx {
+	if err != nil || noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -638,7 +637,7 @@ func _TestForPhraseStmt2(t *testing.T) {
 	if v := ctx.Get(-1); v != nil {
 		t.Fatal("error:", v)
 	}
-	if v := ctx.Get(-2); v != int(14) {
+	if v := ctx.Get(-2); v != 17 {
 		t.Fatal("n:", v)
 	}
 }

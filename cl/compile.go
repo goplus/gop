@@ -170,19 +170,20 @@ func newNormBlockCtxEx(parent *blockCtx, noExecCtx bool) *blockCtx {
 // global block ctx
 func newGblBlockCtx(pkg *pkgCtx, parent *blockCtx) *blockCtx {
 	return &blockCtx{
-		pkgCtx: pkg,
-		parent: parent,
-		syms:   make(map[string]iSymbol),
+		pkgCtx:    pkg,
+		parent:    parent,
+		syms:      make(map[string]iSymbol),
+		noExecCtx: true,
 	}
 }
 
 func (p *blockCtx) getNestDepth() (nestDepth uint32) {
 	for {
-		if p = p.parent; p == nil {
-			return
-		}
 		if !p.noExecCtx {
 			nestDepth++
+		}
+		if p = p.parent; p == nil {
+			return
 		}
 	}
 }
@@ -342,11 +343,12 @@ func NewPackage(out *exec.Builder, pkg *ast.Package) (p *Package, err error) {
 
 func loadFile(ctx *blockCtx, f *ast.File) {
 	file := newFileCtx(ctx)
+	last := len(f.Decls) - 1
 	ctx.file = file
-	for _, decl := range f.Decls {
+	for i, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
-			loadFunc(ctx, d)
+			loadFunc(ctx, d, f.HasUnnamed && i == last)
 		case *ast.GenDecl:
 			switch d.Tok {
 			case token.IMPORT:
@@ -408,7 +410,7 @@ func loadVars(ctx *blockCtx, d *ast.GenDecl) {
 func loadVar(ctx *blockCtx, spec *ast.ValueSpec) {
 }
 
-func loadFunc(ctx *blockCtx, d *ast.FuncDecl) {
+func loadFunc(ctx *blockCtx, d *ast.FuncDecl, isUnnamed bool) {
 	var name = d.Name.Name
 	if d.Recv != nil {
 		recv := astutil.ToRecv(d.Recv)
@@ -423,6 +425,7 @@ func loadFunc(ctx *blockCtx, d *ast.FuncDecl) {
 		log.Panicln("loadFunc TODO: init")
 	} else {
 		funCtx := newExecBlockCtx(ctx)
+		funCtx.noExecCtx = isUnnamed
 		ctx.insertFunc(name, newFuncDecl(name, d.Type, d.Body, funCtx))
 	}
 }

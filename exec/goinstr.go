@@ -44,22 +44,16 @@ func execForPhrase(i Instr, p *Context) {
 }
 
 func (c *ForPhrase) exec(p *Context) {
-	var ctxBody *Context
-	if c.block != nil {
-		ctxBody = newContextEx(p, p.Stack, p.code, &c.block.varManager)
-	} else {
-		ctxBody = p
-	}
 	data := reflect.ValueOf(p.Pop())
 	switch data.Kind() {
 	case reflect.Map:
-		c.execMapRange(data, p, ctxBody)
+		c.execMapRange(data, p)
 	default:
-		c.execListRange(data, p, ctxBody)
+		c.execListRange(data, p)
 	}
 }
 
-func (c *ForPhrase) execListRange(data reflect.Value, ctxFor, ctxBody *Context) {
+func (c *ForPhrase) execListRange(data reflect.Value, ctxFor *Context) {
 	data = reflect.Indirect(data)
 	n := data.Len()
 	ip, ipCond, ipEnd := ctxFor.ip, c.Cond, c.End
@@ -70,6 +64,12 @@ func (c *ForPhrase) execListRange(data reflect.Value, ctxFor, ctxBody *Context) 
 		}
 		if val != nil {
 			ctxFor.setVar(val.idx, data.Index(i).Interface())
+		}
+		var ctxBody *Context
+		if c.block != nil {
+			ctxBody = newContextEx(ctxFor, ctxFor.Stack, ctxFor.code, &c.block.varManager)
+		} else {
+			ctxBody = ctxFor
 		}
 		if ipCond > 0 {
 			ctxBody.Exec(ip, ipCond)
@@ -83,7 +83,7 @@ func (c *ForPhrase) execListRange(data reflect.Value, ctxFor, ctxBody *Context) 
 	ctxFor.ip = ipEnd
 }
 
-func (c *ForPhrase) execMapRange(data reflect.Value, ctxFor, ctxBody *Context) {
+func (c *ForPhrase) execMapRange(data reflect.Value, ctxFor *Context) {
 	iter := data.MapRange()
 	ip, ipCond, ipEnd := ctxFor.ip, c.Cond, c.End
 	key, val := c.Key, c.Value
@@ -93,6 +93,12 @@ func (c *ForPhrase) execMapRange(data reflect.Value, ctxFor, ctxBody *Context) {
 		}
 		if val != nil {
 			ctxFor.setVar(val.idx, iter.Value().Interface())
+		}
+		var ctxBody *Context
+		if c.block != nil {
+			ctxBody = newContextEx(ctxFor, ctxFor.Stack, ctxFor.code, &c.block.varManager)
+		} else {
+			ctxBody = ctxFor
 		}
 		if ipCond > 0 {
 			ctxBody.Exec(ip, ipCond)
@@ -301,11 +307,6 @@ func NewForPhrase(in reflect.Type) *ForPhrase {
 	return &ForPhrase{TypeIn: in}
 }
 
-// NewForPhraseWith creates a new ForPhrase instance with executing context.
-func NewForPhraseWith(in reflect.Type, nestDepth uint32) *ForPhrase {
-	return &ForPhrase{TypeIn: in, block: newBlockCtx(nestDepth)}
-}
-
 // Comprehension represents a list/map comprehension.
 type Comprehension struct {
 	TypeOut reflect.Type
@@ -318,7 +319,7 @@ func NewComprehension(out reflect.Type) *Comprehension {
 }
 
 // ForPhrase instr
-func (p *Builder) ForPhrase(f *ForPhrase, key, val *Var) *Builder {
+func (p *Builder) ForPhrase(f *ForPhrase, key, val *Var, hasExecCtx ...bool) *Builder {
 	f.Key, f.Value = key, val
 	if key != nil {
 		p.DefineVar(key)
@@ -326,9 +327,10 @@ func (p *Builder) ForPhrase(f *ForPhrase, key, val *Var) *Builder {
 	if val != nil {
 		p.DefineVar(val)
 	}
-	if f.block != nil {
-		f.block.parent = p.varManager
+	if hasExecCtx != nil && hasExecCtx[0] {
+		f.block = newBlockCtx(p.nestDepth+1, p.varManager)
 		p.varManager = &f.block.varManager
+		log.Debug("ForPhrase:", f.block.nestDepth)
 	}
 	code := p.code
 	addr := uint32(len(code.fors))

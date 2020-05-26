@@ -7,7 +7,7 @@ c := []float64{2: 1.2, 3, 6: 4.5}
 
 x[1], y["xsw"] = 1.7, 2.8
 println("x:", x, "y:", y)
-println(`x[1]:`, x[1], `y["xsw"]:`, y["xsw"], `a[1]`, a[1])
+println(`x[1]:`, x[1], `y["xsw"]:`, y["xsw"], `a[1]:`, a[1])
 
 i := uint16(4)
 b[uint32(4)], c[i] = 123, 1.7

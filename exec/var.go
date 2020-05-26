@@ -272,6 +272,7 @@ func (p *varManager) addVars(vars ...*Var) {
 	nestDepth := p.nestDepth
 	for i, v := range vars {
 		v.SetAddr(nestDepth, uint32(i+n))
+		log.Debug("DefineVar:", v.Name(), "-", nestDepth)
 	}
 	p.vlist = append(p.vlist, vars...)
 }
@@ -281,8 +282,8 @@ type blockCtx struct {
 	parent *varManager
 }
 
-func newBlockCtx(nestDepth uint32) *blockCtx {
-	return &blockCtx{varManager: varManager{nestDepth: nestDepth}}
+func newBlockCtx(nestDepth uint32, parent *varManager) *blockCtx {
+	return &blockCtx{varManager: varManager{nestDepth: nestDepth}, parent: parent}
 }
 
 // -----------------------------------------------------------------------------

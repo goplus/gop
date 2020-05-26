@@ -176,6 +176,15 @@ func isNoExecCtxBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) bool {
 }
 
 func isNoExecCtxCallExpr(ctx *blockCtx, v *ast.CallExpr) bool {
+	switch expr := v.Fun.(type) {
+	case *ast.Ident:
+		switch expr.Name {
+		case "make":
+			return isNoExecCtxExprs(ctx, v.Args[1:])
+		case "new":
+			return true
+		}
+	}
 	if noExecCtx := isNoExecCtxExpr(ctx, v.Fun); !noExecCtx {
 		return false
 	}

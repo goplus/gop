@@ -331,7 +331,7 @@ func compileForPhrase(parent *blockCtx, f ast.ForPhrase, noExecCtx bool) (*block
 		exprX()
 		out := ctx.out
 		c := exec.NewForPhrase(typData)
-		out.ForPhrase(c, varKey, varVal)
+		out.ForPhrase(c, varKey, varVal, !noExecCtx)
 		if f.Cond != nil {
 			compileExpr(ctx, f.Cond)()
 			checkBool(ctx.infer.Pop())

@@ -120,7 +120,7 @@ func TestMapComprehension(t *testing.T) {
 	typData := reflect.MapOf(TyString, TyInt)
 	key := NewVar(TyString, "k")
 	val := NewVar(TyInt, "v")
-	f := NewForPhraseWith(typData, 1)
+	f := NewForPhrase(typData)
 	c := NewComprehension(reflect.MapOf(TyInt, TyString))
 	code := NewBuilder(nil).
 		MapComprehension(c).
@@ -129,7 +129,7 @@ func TestMapComprehension(t *testing.T) {
 		Push("xsw").
 		Push(1).
 		MakeMap(typData, 2).
-		ForPhrase(f, key, val).
+		ForPhrase(f, key, val, true).
 		LoadVar(val).
 		LoadVar(key).
 		EndForPhrase(f).
