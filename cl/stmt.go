@@ -68,8 +68,7 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 
 func compileForPhraseStmt(parent *blockCtx, v *ast.ForPhraseStmt) {
 	noExecCtx := isNoExecCtx(parent, v.Body)
-	ctxFor, exprFor := compileForPhrase(parent, v.ForPhrase, noExecCtx)
-	ctx := newNormBlockCtxEx(ctxFor, noExecCtx)
+	ctx, exprFor := compileForPhrase(parent, v.ForPhrase, noExecCtx)
 	exprFor(func() {
 		compileBlockStmtWithout(ctx, v.Body)
 	})

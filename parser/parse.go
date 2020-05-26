@@ -132,7 +132,7 @@ func ParseFSFile(fset *token.FileSet, fs FileSystem, filename string, src interf
 
 func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (f *ast.File, err error) {
 	var b []byte
-	var isMod bool
+	var isMod, hasUnnamed bool
 	var fsetTmp = token.NewFileSet()
 	f, err = parseFile(fsetTmp, filename, code, PackageClauseOnly)
 	if err != nil {
@@ -162,12 +162,16 @@ func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (
 				}
 				b[n+12] = '}'
 				code = b[:n+13]
+				hasUnnamed = true
 				err = nil
 			}
 		}
 	}
 	if err == nil {
 		f, err = parseFile(fset, filename, code, mode)
+		if err == nil {
+			f.HasUnnamed = hasUnnamed
+		}
 	}
 	return
 }
