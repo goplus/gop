@@ -619,13 +619,14 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compleMode) {
 			}
 			log.Panicln("compileIndexExprLHS: index expression value type is invalid")
 		}
-		typIdx := i.(iValue).Type()
-		if typIdx.ConvertibleTo(exec.TyInt) {
-			ctx.out.TypeCast(typIdx, exec.TyInt)
-		} else {
-			log.Panicln("compileIndexExprLHS: index expression value type is invalid")
-		}
 		exprIdx()
+		if typIdx := i.(iValue).Type(); typIdx != exec.TyInt {
+			if typIdx.ConvertibleTo(exec.TyInt) {
+				ctx.out.TypeCast(typIdx, exec.TyInt)
+			} else {
+				log.Panicln("compileIndexExprLHS: index expression value type is invalid")
+			}
+		}
 		ctx.out.SetIndex(-1)
 	case reflect.Map:
 		exprIdx()
@@ -660,13 +661,14 @@ func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr) func() { // x[i]
 				}
 				log.Panicln("compileIndexExpr: index expression value type is invalid")
 			}
-			typIdx := i.(iValue).Type()
-			if typIdx.ConvertibleTo(exec.TyInt) {
-				ctx.out.TypeCast(typIdx, exec.TyInt)
-			} else {
-				log.Panicln("compileIndexExpr: index expression value type is invalid")
-			}
 			exprIdx()
+			if typIdx := i.(iValue).Type(); typIdx != exec.TyInt {
+				if typIdx.ConvertibleTo(exec.TyInt) {
+					ctx.out.TypeCast(typIdx, exec.TyInt)
+				} else {
+					log.Panicln("compileIndexExpr: index expression value type is invalid")
+				}
+			}
 			ctx.out.Index(-1)
 		case reflect.Map:
 			exprIdx()

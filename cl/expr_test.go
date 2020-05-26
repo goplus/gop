@@ -568,6 +568,45 @@ func TestMapLit2(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
+var fsTestMapIdx = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	x := {"Hello": 1, "xsw": "3.4"}
+	y := {1: "qlang", 5: "Hi"}
+	i := 1
+	q := "Q"
+	key := "xsw"
+	x["xsw"], y[i] = 3.1415926, q
+	println("x:", x, "y:", y)
+	println("x[key]:", x[key], "y[1]:", y[1])
+`)
+
+func TestMapIdx(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestMapIdx, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, noExecCtx, err := newPackage(b, bar)
+	if err != nil || !noExecCtx {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(26) {
+		t.Fatal("n:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
 var fsSliceLit = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	x := [1, 3.4]
 	println("x:", x)
@@ -610,9 +649,11 @@ func TestSliceLit(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 var fsSliceIdx = asttest.NewSingleFileFS("/foo", "bar.ql", `
-	x := [1, 3.4]
+	x := [1, 3.4, 17]
+	n, m := 1, uint16(0)
 	x[1] = 32.7
-	println("x:", x[1])
+	x[m] = 36.86
+	println("x:", x[2], x[m], x[n])
 `)
 
 func TestSliceIdx(t *testing.T) {
@@ -636,7 +677,7 @@ func TestSliceIdx(t *testing.T) {
 	if v := ctx.Get(-1); v != nil {
 		t.Fatal("error:", v)
 	}
-	if v := ctx.Get(-2); v != int(8) {
+	if v := ctx.Get(-2); v != int(17) {
 		t.Fatal("n:", v)
 	}
 }
