@@ -427,7 +427,7 @@ func TestArray(t *testing.T) {
 	if v := ctx.Get(-1); v != nil {
 		t.Fatal("error:", v)
 	}
-	if v := ctx.Get(-2); v != int(15) {
+	if v := ctx.Get(-2); v != int(16) {
 		t.Fatal("n:", v)
 	}
 }
@@ -436,7 +436,8 @@ func TestArray(t *testing.T) {
 
 var fsTestArray2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	x := [...]float64{1, 3: 3.4, 5}
-	println("x:", x)
+	x[1] = 217
+	println("x:", x, "x[1]:", x[1])
 `)
 
 func TestArray2(t *testing.T) {
@@ -460,7 +461,7 @@ func TestArray2(t *testing.T) {
 	if v := ctx.Get(-1); v != nil {
 		t.Fatal("error:", v)
 	}
-	if v := ctx.Get(-2); v != int(17) {
+	if v := ctx.Get(-2); v != int(30) {
 		t.Fatal("n:", v)
 	}
 }

@@ -53,7 +53,7 @@ func TestLargeArray(t *testing.T) {
 
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
-	if v := checkPop(ctx); !reflect.DeepEqual(v, ret) {
+	if v := checkPop(ctx); !reflect.DeepEqual(v, &ret) {
 		t.Fatal("32 times(1024) mkslice != `32` times(1024) slice, ret =", v)
 	}
 }

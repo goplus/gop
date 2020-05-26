@@ -205,14 +205,19 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 	typ := toType(ctx, v.Type)
 	switch kind := typ.Kind(); kind {
 	case reflect.Slice, reflect.Array:
-		var typSlice reflect.Type
+		var typSlice, typRet reflect.Type
 		if t, ok := typ.(*unboundArrayType); ok {
 			n := toBoundArrayLen(ctx, v)
 			typSlice = reflect.ArrayOf(n, t.elem)
 		} else {
 			typSlice = typ.(reflect.Type)
 		}
-		ctx.infer.Push(&goValue{t: typSlice})
+		if typSlice.Kind() == reflect.Array {
+			typRet = reflect.PtrTo(typSlice)
+		} else {
+			typRet = typSlice
+		}
+		ctx.infer.Push(&goValue{t: typRet})
 		return func() {
 			var nLen int
 			if kind == reflect.Array {
@@ -602,6 +607,13 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compleMode) {
 	compileExpr(ctx, v.X)()
 	typ := ctx.infer.Get(-1).(iValue).Type()
 	typElem := typ.Elem()
+	if typ.Kind() == reflect.Ptr {
+		if typElem.Kind() != reflect.Array {
+			log.Panicf("compileIndexExprLHS: type %v does not support indexing\n", typ)
+		}
+		typ = typElem
+		typElem = typElem.Elem()
+	}
 	if cons, ok := val.(*constVal); ok {
 		cons.bound(typElem, ctx.out)
 	} else if t := val.(iValue).Type(); t != typElem {
@@ -647,6 +659,12 @@ func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr) func() { // x[i]
 	exprX := compileExpr(ctx, v.X)
 	x := ctx.infer.Get(-1)
 	typ := x.(iValue).Type()
+	if typ.Kind() == reflect.Ptr {
+		typ = typ.Elem()
+		if typ.Kind() != reflect.Array {
+			log.Panicf("compileIndexExpr: type *%v does not support indexing\n", typ)
+		}
+	}
 	ctx.infer.Ret(1, &goValue{typ.Elem()})
 	return func() {
 		exprX()
