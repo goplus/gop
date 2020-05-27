@@ -28,6 +28,7 @@ import (
 
 	_ "github.com/qiniu/qlang/v6/lib/builtin"
 	_ "github.com/qiniu/qlang/v6/lib/fmt"
+	_ "github.com/qiniu/qlang/v6/lib/reflect"
 	_ "github.com/qiniu/qlang/v6/lib/strings"
 )
 
