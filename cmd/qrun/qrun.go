@@ -45,7 +45,7 @@ func main() {
 	}
 
 	b := exec.NewBuilder(nil)
-	_, err = cl.NewPackage(b, pkgs["main"])
+	_, err = cl.NewPackage(b.Interface(), pkgs["main"])
 	if err != nil {
 		log.Fatalln("cl.NewPackage failed:", err)
 	}

@@ -41,7 +41,7 @@ func TestUnbound(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
+	_, _, err = newPackage(b, bar)
 	if err != nil {
 		t.Fatal("Compile failed:", err)
 	}
@@ -75,7 +75,7 @@ func TestMake(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
+	_, _, err = newPackage(b, bar)
 	if err != nil {
 		t.Fatal("Compile failed:", err)
 	}
@@ -109,7 +109,7 @@ func TestMake2(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
+	_, _, err = newPackage(b, bar)
 	if err != nil {
 		t.Fatal("Compile failed:", err)
 	}
@@ -143,7 +143,7 @@ func TestMake3(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
+	_, _, err = newPackage(b, bar)
 	if err != nil {
 		t.Fatal("Compile failed:", err)
 	}
@@ -178,7 +178,7 @@ func TestMake4(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
+	_, _, err = newPackage(b, bar)
 	if err != nil {
 		t.Fatal("Compile failed:", err)
 	}
@@ -210,7 +210,7 @@ func TestOperator(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
+	_, _, err = newPackage(b, bar)
 	if err != nil {
 		t.Fatal("Compile failed:", err)
 	}
@@ -243,7 +243,7 @@ func TestVar(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b, bar)
+	_, _, err = newPackage(b, bar)
 	if err != nil {
 		t.Fatal("Compile failed:", err)
 	}

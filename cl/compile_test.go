@@ -40,10 +40,11 @@ func init() {
 }
 
 func newPackage(out *exec.Builder, pkg *ast.Package) (p *Package, noExecCtx bool, err error) {
-	if p, err = NewPackage(out, pkg); err != nil {
+	b := out.Interface()
+	if p, err = NewPackage(b, pkg); err != nil {
 		return
 	}
-	ctxPkg := newPkgCtx(out)
+	ctxPkg := newPkgCtx(b)
 	ctx := newGblBlockCtx(ctxPkg, nil)
 	ctx.syms = p.syms
 	entry, _ := ctx.findFunc("main")

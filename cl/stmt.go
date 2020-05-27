@@ -204,10 +204,10 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 	}
 	n := len(rets)
 	if fun.NumOut() != n {
-		log.Panicln("compileReturnStmt failed: mismatched count of return values -", fun.Name)
+		log.Panicln("compileReturnStmt failed: mismatched count of return values -", fun.Name())
 	}
 	if ctx.infer.Len() != n {
-		log.Panicln("compileReturnStmt failed: can't use multi values funcation result as return values -", fun.Name)
+		log.Panicln("compileReturnStmt failed: can't use multi values funcation result as return values -", fun.Name())
 	}
 	results := ctx.infer.GetArgs(n)
 	for i, result := range results {
