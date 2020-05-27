@@ -23,7 +23,7 @@ import (
 // -----------------------------------------------------------------------------
 
 func TestConst1(t *testing.T) {
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(1 << 32).
 		Resolve()
 
@@ -35,7 +35,7 @@ func TestConst1(t *testing.T) {
 }
 
 func TestConst2(t *testing.T) {
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(uint64(1 << 32)).
 		Resolve()
 
@@ -47,7 +47,7 @@ func TestConst2(t *testing.T) {
 }
 
 func TestConst3(t *testing.T) {
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(uint32(1 << 30)).
 		Resolve()
 
@@ -59,7 +59,7 @@ func TestConst3(t *testing.T) {
 }
 
 func TestConst4(t *testing.T) {
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(int32(1 << 30)).
 		Resolve()
 
@@ -71,7 +71,7 @@ func TestConst4(t *testing.T) {
 }
 
 func TestConst5(t *testing.T) {
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(uint(1 << 12)).
 		Resolve()
 
@@ -83,7 +83,7 @@ func TestConst5(t *testing.T) {
 }
 
 func TestConst6(t *testing.T) {
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(1.12).
 		Resolve()
 
@@ -95,7 +95,7 @@ func TestConst6(t *testing.T) {
 }
 
 func TestNil(t *testing.T) {
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(nil).
 		Resolve()
 
@@ -109,7 +109,21 @@ func TestNil(t *testing.T) {
 func TestReserve(t *testing.T) {
 	b := NewBuilder(nil)
 	off := b.Reserve()
-	off.Push(b, 1.12)
+	b.ReservedAsPush(off, 1.12)
+	code := b.Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != 1.12 {
+		t.Fatal("1.12 != 1.12, ret =", v)
+	}
+	_ = b.Interface().Pop(0).(*iBuilder).GlobalInterface()
+}
+
+func TestReserve2(t *testing.T) {
+	b := newBuilder()
+	off := b.Reserve()
+	b.ReservedAsPush(off, 1.12)
 	code := b.Resolve()
 
 	ctx := NewContext(code)

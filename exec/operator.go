@@ -19,283 +19,122 @@ package exec
 import (
 	"fmt"
 	"reflect"
-	"unsafe"
 
+	"github.com/qiniu/qlang/v6/exec.spec"
 	"github.com/qiniu/x/log"
 )
 
 // -----------------------------------------------------------------------------
 
 // Operator type.
-type Operator uint
+type Operator = exec.Operator
 
 const (
 	// OpInvalid - invalid operator
-	OpInvalid Operator = iota
+	OpInvalid = exec.OpInvalid
 	// OpAdd '+' String/Int/Uint/Float/Complex
-	OpAdd
+	OpAdd = exec.OpAdd
 	// OpSub '-' Int/Uint/Float/Complex
-	OpSub
+	OpSub = exec.OpSub
 	// OpMul '*' Int/Uint/Float/Complex
-	OpMul
+	OpMul = exec.OpMul
 	// OpDiv '/' Int/Uint/Float/Complex
-	OpDiv
+	OpDiv = exec.OpDiv
 	// OpMod '%' Int/Uint
-	OpMod
+	OpMod = exec.OpMod
 	// OpBitAnd '&' Int/Uint
-	OpBitAnd
+	OpBitAnd = exec.OpBitAnd
 	// OpBitOr '|' Int/Uint
-	OpBitOr
+	OpBitOr = exec.OpBitOr
 	// OpBitXor '^' Int/Uint
-	OpBitXor
+	OpBitXor = exec.OpBitXor
 	// OpBitAndNot '&^' Int/Uint
-	OpBitAndNot
+	OpBitAndNot = exec.OpBitAndNot
 	// OpBitSHL '<<' Int/Uint, Uint
-	OpBitSHL
+	OpBitSHL = exec.OpBitSHL
 	// OpBitSHR '>>' Int/Uint, Uint
-	OpBitSHR
+	OpBitSHR = exec.OpBitSHR
 	// OpLT '<' String/Int/Uint/Float
-	OpLT
+	OpLT = exec.OpLT
 	// OpLE '<=' String/Int/Uint/Float
-	OpLE
+	OpLE = exec.OpLE
 	// OpGT '>' String/Int/Uint/Float
-	OpGT
+	OpGT = exec.OpGT
 	// OpGE '>=' String/Int/Uint/Float
-	OpGE
+	OpGE = exec.OpGE
 	// OpEQ '==' ComparableType
 	// Slice, map, and function values are not comparable. However, as a special case, a slice, map,
 	// or function value may be compared to the predeclared identifier nil.
-	OpEQ
+	OpEQ = exec.OpEQ
 	// OpEQNil '==' nil
-	OpEQNil
+	OpEQNil = exec.OpEQNil
 	// OpNE '!=' ComparableType
-	OpNE
+	OpNE = exec.OpNE
 	// OpNENil '!=' nil
-	OpNENil
+	OpNENil = exec.OpNENil
 	// OpLAnd '&&' Bool
-	OpLAnd
+	OpLAnd = exec.OpLAnd
 	// OpLOr '||' Bool
-	OpLOr
+	OpLOr = exec.OpLOr
 	// OpNeg '-'
-	OpNeg
+	OpNeg = exec.OpNeg
 	// OpNot '!'
-	OpNot
+	OpNot = exec.OpNot
 	// OpBitNot '^'
-	OpBitNot
+	OpBitNot = exec.OpBitNot
 )
 
 const (
 	// SameAsFirst means the second argument is same as first argument type.
-	SameAsFirst = reflect.Invalid
-)
-
-const (
-	bitNone          = 0
-	bitSameAsFirst   = 1 << SameAsFirst
-	bitBool          = 1 << Bool
-	bitInt           = 1 << Int
-	bitInt8          = 1 << Int8
-	bitInt16         = 1 << Int16
-	bitInt32         = 1 << Int32
-	bitInt64         = 1 << Int64
-	bitUint          = 1 << Uint
-	bitUint8         = 1 << Uint8
-	bitUint16        = 1 << Uint16
-	bitUint32        = 1 << Uint32
-	bitUint64        = 1 << Uint64
-	bitUintptr       = 1 << Uintptr
-	bitFloat32       = 1 << Float32
-	bitFloat64       = 1 << Float64
-	bitComplex64     = 1 << Complex64
-	bitComplex128    = 1 << Complex128
-	bitString        = 1 << String
-	bitUnsafePointer = 1 << UnsafePointer
-	bitPtr           = 1 << reflect.Ptr
-
-	bitsAllInt     = bitInt | bitInt8 | bitInt16 | bitInt32 | bitInt64
-	bitsAllUint    = bitUint | bitUint8 | bitUint16 | bitUint32 | bitUint64 | bitUintptr
-	bitsAllIntUint = bitsAllInt | bitsAllUint
-	bitsAllFloat   = bitFloat32 | bitFloat64
-	bitsAllReal    = bitsAllIntUint | bitsAllFloat
-	bitsAllComplex = bitComplex64 | bitComplex128
-	bitsAllNumber  = bitsAllReal | bitsAllComplex
-	bitsAllPtr     = bitPtr | bitUintptr | bitUnsafePointer
+	SameAsFirst = exec.SameAsFirst
 )
 
 // OperatorInfo represents an operator information.
-type OperatorInfo struct {
-	Lit      string
-	InFirst  uint64       // first argument supported types.
-	InSecond uint64       // second argument supported types. It may have SameAsFirst flag.
-	Out      reflect.Kind // result type. It may be SameAsFirst.
-}
-
-var opInfos = [...]OperatorInfo{
-	OpAdd:       {"+", bitsAllNumber | bitString, bitSameAsFirst, SameAsFirst},
-	OpSub:       {"-", bitsAllNumber, bitSameAsFirst, SameAsFirst},
-	OpMul:       {"*", bitsAllNumber, bitSameAsFirst, SameAsFirst},
-	OpDiv:       {"/", bitsAllNumber, bitSameAsFirst, SameAsFirst},
-	OpMod:       {"%", bitsAllIntUint, bitSameAsFirst, SameAsFirst},
-	OpBitAnd:    {"&", bitsAllIntUint, bitSameAsFirst, SameAsFirst},
-	OpBitOr:     {"|", bitsAllIntUint, bitSameAsFirst, SameAsFirst},
-	OpBitXor:    {"^", bitsAllIntUint, bitSameAsFirst, SameAsFirst},
-	OpBitAndNot: {"&^", bitsAllIntUint, bitSameAsFirst, SameAsFirst},
-	OpBitSHL:    {"<<", bitsAllIntUint, bitsAllIntUint, SameAsFirst},
-	OpBitSHR:    {">>", bitsAllIntUint, bitsAllIntUint, SameAsFirst},
-	OpLT:        {"<", bitsAllReal | bitString, bitSameAsFirst, Bool},
-	OpLE:        {"<=", bitsAllReal | bitString, bitSameAsFirst, Bool},
-	OpGT:        {">", bitsAllReal | bitString, bitSameAsFirst, Bool},
-	OpGE:        {">=", bitsAllReal | bitString, bitSameAsFirst, Bool},
-	OpEQ:        {"==", bitsAllNumber | bitString, bitSameAsFirst, Bool},
-	OpEQNil:     {"== nil", bitUnsafePointer, bitNone, Bool},
-	OpNE:        {"!=", bitsAllNumber | bitString, bitSameAsFirst, Bool},
-	OpNENil:     {"!= nil", bitUnsafePointer, bitNone, Bool},
-	OpLAnd:      {"&&", bitBool, bitBool, Bool},
-	OpLOr:       {"||", bitBool, bitBool, Bool},
-	OpNeg:       {"-", bitsAllNumber, bitNone, SameAsFirst},
-	OpNot:       {"!", bitBool, bitNone, Bool},
-	OpBitNot:    {"^", bitsAllIntUint, bitNone, SameAsFirst},
-}
-
-// GetInfo returns the information of this operator.
-func (op Operator) GetInfo() *OperatorInfo {
-	return &opInfos[op]
-}
-
-func (op Operator) String() string {
-	return opInfos[op].Lit
-}
+type OperatorInfo = exec.OperatorInfo
 
 // -----------------------------------------------------------------------------
 
 // A Kind represents the specific kind of type that a Type represents.
-type Kind = reflect.Kind
+type Kind = exec.Kind
 
 const (
 	// Bool type
-	Bool = reflect.Bool
+	Bool = exec.Bool
 	// Int type
-	Int = reflect.Int
+	Int = exec.Int
 	// Int8 type
-	Int8 = reflect.Int8
+	Int8 = exec.Int8
 	// Int16 type
-	Int16 = reflect.Int16
+	Int16 = exec.Int16
 	// Int32 type
-	Int32 = reflect.Int32
+	Int32 = exec.Int32
 	// Int64 type
-	Int64 = reflect.Int64
+	Int64 = exec.Int64
 	// Uint type
-	Uint = reflect.Uint
+	Uint = exec.Uint
 	// Uint8 type
-	Uint8 = reflect.Uint8
+	Uint8 = exec.Uint8
 	// Uint16 type
-	Uint16 = reflect.Uint16
+	Uint16 = exec.Uint16
 	// Uint32 type
-	Uint32 = reflect.Uint32
+	Uint32 = exec.Uint32
 	// Uint64 type
-	Uint64 = reflect.Uint64
+	Uint64 = exec.Uint64
 	// Uintptr type
-	Uintptr = reflect.Uintptr
+	Uintptr = exec.Uintptr
 	// Float32 type
-	Float32 = reflect.Float32
+	Float32 = exec.Float32
 	// Float64 type
-	Float64 = reflect.Float64
+	Float64 = exec.Float64
 	// Complex64 type
-	Complex64 = reflect.Complex64
+	Complex64 = exec.Complex64
 	// Complex128 type
-	Complex128 = reflect.Complex128
+	Complex128 = exec.Complex128
 	// String type
-	String = reflect.String
+	String = exec.String
 	// UnsafePointer type
-	UnsafePointer = reflect.UnsafePointer
+	UnsafePointer = exec.UnsafePointer
 )
-
-var (
-	// TyBool type
-	TyBool = reflect.TypeOf(true)
-	// TyInt type
-	TyInt = reflect.TypeOf(int(0))
-	// TyInt8 type
-	TyInt8 = reflect.TypeOf(int8(0))
-	// TyInt16 type
-	TyInt16 = reflect.TypeOf(int16(0))
-	// TyInt32 type
-	TyInt32 = reflect.TypeOf(int32(0))
-	// TyInt64 type
-	TyInt64 = reflect.TypeOf(int64(0))
-	// TyUint type
-	TyUint = reflect.TypeOf(uint(0))
-	// TyUint8 type
-	TyUint8 = reflect.TypeOf(uint8(0))
-	// TyUint16 type
-	TyUint16 = reflect.TypeOf(uint16(0))
-	// TyUint32 type
-	TyUint32 = reflect.TypeOf(uint32(0))
-	// TyUint64 type
-	TyUint64 = reflect.TypeOf(uint64(0))
-	// TyUintptr type
-	TyUintptr = reflect.TypeOf(uintptr(0))
-	// TyFloat32 type
-	TyFloat32 = reflect.TypeOf(float32(0))
-	// TyFloat64 type
-	TyFloat64 = reflect.TypeOf(float64(0))
-	// TyComplex64 type
-	TyComplex64 = reflect.TypeOf(complex64(0))
-	// TyComplex128 type
-	TyComplex128 = reflect.TypeOf(complex128(0))
-	// TyString type
-	TyString = reflect.TypeOf("")
-	// TyUnsafePointer type
-	TyUnsafePointer = reflect.TypeOf(unsafe.Pointer(nil))
-	// TyEmptyInterface type
-	TyEmptyInterface = reflect.TypeOf((*interface{})(nil)).Elem()
-	// TyError type
-	TyError = reflect.TypeOf((*error)(nil)).Elem()
-)
-
-var (
-	// TyByte type
-	TyByte = reflect.TypeOf(byte(0))
-	// TyRune type
-	TyRune = reflect.TypeOf(rune(0))
-)
-
-type bTI struct { // builtin type info
-	typ      reflect.Type
-	size     uintptr
-	castFrom uint64
-}
-
-var builtinTypes = [...]bTI{
-	Bool:          {TyBool, 1, 0},
-	Int:           {TyInt, unsafe.Sizeof(int(0)), bitsAllReal},
-	Int8:          {TyInt8, 1, bitsAllReal},
-	Int16:         {TyInt16, 2, bitsAllReal},
-	Int32:         {TyInt32, 4, bitsAllReal},
-	Int64:         {TyInt64, 8, bitsAllReal},
-	Uint:          {TyUint, unsafe.Sizeof(uint(0)), bitsAllReal},
-	Uint8:         {TyUint8, 1, bitsAllReal},
-	Uint16:        {TyUint16, 2, bitsAllReal},
-	Uint32:        {TyUint32, 4, bitsAllReal},
-	Uint64:        {TyUint64, 8, bitsAllReal},
-	Uintptr:       {TyUintptr, unsafe.Sizeof(uintptr(0)), bitsAllReal},
-	Float32:       {TyFloat32, 4, bitsAllReal},
-	Float64:       {TyFloat64, 8, bitsAllReal},
-	Complex64:     {TyComplex64, 8, bitsAllComplex},
-	Complex128:    {TyComplex128, 16, bitsAllComplex},
-	String:        {TyString, unsafe.Sizeof(string('0')), bitsAllIntUint},
-	UnsafePointer: {TyUnsafePointer, unsafe.Sizeof(uintptr(0)), 0},
-}
-
-// TypeFromKind returns the type who has this kind.
-func TypeFromKind(kind Kind) reflect.Type {
-	return builtinTypes[kind].typ
-}
-
-// SizeofKind returns sizeof type who has this kind.
-func SizeofKind(kind Kind) uintptr {
-	return builtinTypes[kind].size
-}
 
 // -----------------------------------------------------------------------------
 

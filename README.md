@@ -148,7 +148,7 @@ bar(printf)
 barVar(printfVar)
 ```
 
-### Map, array & slice
+### String, map, array & slice
 
 ```go
 x := []float64{1, 3.4, 5}

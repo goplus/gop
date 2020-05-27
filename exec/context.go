@@ -17,6 +17,7 @@
 package exec
 
 import (
+	"github.com/qiniu/qlang/v6/exec.spec"
 	"github.com/qiniu/x/log"
 )
 
@@ -102,7 +103,8 @@ func newSimpleContext(data []interface{}) *Context {
 }
 
 // NewContext returns a new context of an executor.
-func NewContext(code *Code) *Context {
+func NewContext(in exec.Code) *Context {
+	code := in.(*Code)
 	p := &Context{
 		Stack: NewStack(),
 		code:  code,
@@ -182,6 +184,8 @@ func (ctx *Context) Exec(ip, ipEnd int) {
 }
 
 var _execTable = [...]func(i Instr, p *Context){
+	opCallGoFunc:    execGoFunc,
+	opCallGoFuncv:   execGoFuncv,
 	opPushInt:       execPushInt,
 	opPushUint:      execPushUint,
 	opPushValSpec:   execPushValSpec,
@@ -194,8 +198,6 @@ var _execTable = [...]func(i Instr, p *Context){
 	opJmpIf:         execJmpIf,
 	opCaseNE:        execCaseNE,
 	opPop:           execPop,
-	opCallGoFunc:    execGoFunc,
-	opCallGoFuncv:   execGoFuncv,
 	opLoadVar:       execLoadVar,
 	opStoreVar:      execStoreVar,
 	opAddrVar:       execAddrVar,
@@ -216,6 +218,7 @@ var _execTable = [...]func(i Instr, p *Context){
 	opSlice:         execSlice,
 	opSlice3:        execSlice3,
 	opMapIndex:      execMapIndex,
+	opGoBuiltin:     execGoBuiltin,
 }
 
 var execTable []func(i Instr, p *Context)

@@ -80,19 +80,24 @@ func execCaseNE(i Instr, ctx *Context) {
 // Label represents a label.
 type Label struct {
 	anyUnresolved
-	Name string
+	name string
 }
 
 // NewLabel creates a label object.
 func NewLabel(name string) *Label {
-	return &Label{Name: name}
+	return &Label{name: name}
+}
+
+// Name returns the label name.
+func (p *Label) Name() string {
+	return p.name
 }
 
 func (p *Builder) resolveLabels() {
 	data := p.code.data
 	for l, pos := range p.labels {
 		if pos < 0 {
-			log.Panicln("resolveLabels failed: label is not defined -", l.Name)
+			log.Panicln("resolveLabels failed: label is not defined -", l.name)
 		}
 		for _, off := range l.offs {
 			if (data[off] >> bitsOpShift) == opCaseNE {
@@ -118,7 +123,7 @@ func (p *Builder) labelOp(op uint32, l *Label) *Builder {
 // Label defines a label to jmp here.
 func (p *Builder) Label(l *Label) *Builder {
 	if v, ok := p.labels[l]; ok && v >= 0 {
-		log.Panicln("Label failed: label is defined already -", l.Name)
+		log.Panicln("Label failed: label is defined already -", l.name)
 	}
 	p.labels[l] = p.code.Len()
 	return p

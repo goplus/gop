@@ -28,6 +28,9 @@ import (
 
 func init() {
 	log.SetOutputLevel(log.Ldebug)
+	if opCallGoFunc != SymbolFunc || opCallGoFuncv != SymbolFuncv {
+		panic("opCallGoFunc != SymbolFunc || opCallGoFuncv != SymbolFuncv")
+	}
 }
 
 func Strcat(a, b string) string {
@@ -77,6 +80,7 @@ func init() {
 		I.Rtype(reflect.TypeOf((*Stack)(nil))),
 		I.Type("rune", TyRune),
 	)
+	_ = I.PkgPath()
 }
 
 func TestVarAndConst(t *testing.T) {
@@ -88,10 +92,6 @@ func TestVarAndConst(t *testing.T) {
 	}
 	if addr, ok := I.FindVar("x"); !ok || addr != 0 {
 		t.Fatal("FindVar failed:", addr)
-	} else {
-		if addr.GetInfo().Name != "x" {
-			t.Fatal("var.GetInfo failed:", *addr.GetInfo())
-		}
 	}
 }
 
@@ -101,7 +101,7 @@ func TestSprint(t *testing.T) {
 		t.Fatal("FindFuncv failed: Sprint")
 	}
 
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(5).
 		Push("32").
 		CallGoFuncv(sprint, 2).
@@ -120,10 +120,10 @@ func TestSprintf(t *testing.T) {
 	if !ok || !ok2 {
 		t.Fatal("FindFunc failed: Sprintf/strcat")
 	}
-	fmt.Println("sprintf:", sprintf.GetInfo())
-	fmt.Println("strcat:", strcat.GetInfo())
+	_ = defaultImpl.GetGoFuncType(strcat)
+	_ = defaultImpl.GetGoFuncvType(sprintf)
 
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push("Hello, %v, %d, %s").
 		Push(1.3).
 		Push(1).
@@ -141,12 +141,12 @@ func TestSprintf(t *testing.T) {
 }
 
 func TestLargeArity(t *testing.T) {
-	sprint, kind, ok := FindGoPackage("").Find("Sprint")
+	sprint, kind, ok := defaultImpl.FindGoPackage("").Find("Sprint")
 	if !ok || kind != SymbolFuncv {
 		t.Fatal("Find failed: Sprint")
 	}
 
-	b := NewBuilder(nil)
+	b := newBuilder()
 	ret := ""
 	for i := 0; i < bitsFuncvArityMax+1; i++ {
 		b.Push("32")

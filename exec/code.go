@@ -21,6 +21,8 @@ import (
 	"io"
 	"reflect"
 	"strconv"
+
+	"github.com/qiniu/qlang/v6/exec.spec"
 )
 
 // -----------------------------------------------------------------------------
@@ -68,20 +70,20 @@ type Instr = uint32
 
 const (
 	opInvalid       = 0
-	opPushInt       = 1  // intKind(3) intVal(23)
-	opPushUint      = 2  // intKind(3) intVal(23)
-	opPushValSpec   = 3  // valSpec(26) - false=0, true=1
-	opPushConstR    = 4  // idx(26)
-	opIndex         = 5  // set(1) idx(25)
-	opMake          = 6  // funvArity(10) type(16)
-	opAppend        = 7  // arity(26)
-	opBuiltinOp     = 8  // reserved(16) kind(5) builtinOp(5)
-	opJmp           = 9  // reserved(1) offset(25)
-	opJmpIf         = 10 // bool(1) offset(25)
-	opCaseNE        = 11 // n(10) offset(16)
-	opPop           = 12 // n(26)
-	opCallGoFunc    = 13 // addr(26) - call a Go function
-	opCallGoFuncv   = 14 // funvArity(10) addr(16) - call a Go function with variadic args
+	opCallGoFunc    = 1  // addr(26) - call a Go function
+	opCallGoFuncv   = 2  // funvArity(10) addr(16) - call a Go function with variadic args
+	opPushInt       = 3  // intKind(3) intVal(23)
+	opPushUint      = 4  // intKind(3) intVal(23)
+	opPushValSpec   = 5  // valSpec(26) - false=0, true=1
+	opPushConstR    = 6  // idx(26)
+	opIndex         = 7  // set(1) idx(25)
+	opMake          = 8  // funvArity(10) type(16)
+	opAppend        = 9  // arity(26)
+	opBuiltinOp     = 10 // reserved(16) kind(5) builtinOp(5)
+	opJmp           = 11 // reserved(1) offset(25)
+	opJmpIf         = 12 // bool(1) offset(25)
+	opCaseNE        = 13 // n(10) offset(16)
+	opPop           = 14 // n(26)
 	opLoadVar       = 15 // varScope(6) addr(20)
 	opStoreVar      = 16 // varScope(6) addr(20)
 	opAddrVar       = 17 // varScope(6) addr(20) - load a variable's address
@@ -108,6 +110,7 @@ const (
 	opSlice         = 38 // i(13) j(13)
 	opSlice3        = 39 // i(13) j(13)
 	opMapIndex      = 40 // reserved(26) set(1)
+	opGoBuiltin     = 41 // op(26)
 )
 
 const (
@@ -147,6 +150,8 @@ type InstrInfo struct {
 
 var instrInfos = []InstrInfo{
 	opInvalid:       {"invalid", "", "", 0},
+	opCallGoFunc:    {"callGoFunc", "", "addr", 26},                       // addr(26) - call a Go function
+	opCallGoFuncv:   {"callGoFuncv", "funvArity", "addr", (10 << 8) | 16}, // funvArity(10) addr(16) - call a Go function with variadic args
 	opPushInt:       {"pushInt", "intKind", "intVal", (3 << 8) | 23},      // intKind(3) intVal(23)
 	opPushUint:      {"pushUint", "intKind", "intVal", (3 << 8) | 23},     // intKind(3) intVal(23)
 	opPushValSpec:   {"pushValSpec", "", "valSpec", 26},                   // valSpec(26) - false=0, true=1
@@ -159,8 +164,6 @@ var instrInfos = []InstrInfo{
 	opJmpIf:         {"jmpIf", "bool", "offset", (1 << 8) | 25},           // bool(1) offset(25)
 	opCaseNE:        {"caseNE", "n", "offset", (10 << 8) | 16},            // n(10) offset(16)
 	opPop:           {"pop", "", "n", 26},                                 // n(26)
-	opCallGoFunc:    {"callGoFunc", "", "addr", 26},                       // addr(26) - call a Go function
-	opCallGoFuncv:   {"callGoFuncv", "funvArity", "addr", (10 << 8) | 16}, // funvArity(10) addr(16) - call a Go function with variadic args
 	opLoadVar:       {"loadVar", "varScope", "addr", (6 << 8) | 20},       // varScope(6) addr(20)
 	opStoreVar:      {"storeVar", "varScope", "addr", (6 << 8) | 20},      // varScope(6) addr(20)
 	opAddrVar:       {"addrVar", "varScope", "addr", (6 << 8) | 20},       // varScope(6) addr(20) - load a variable's address
@@ -187,6 +190,7 @@ var instrInfos = []InstrInfo{
 	opSlice:         {"slice", "i", "j", (13 << 8) | 13},                  // i(13) j(13)
 	opSlice3:        {"slice3", "i", "j", (13 << 8) | 13},                 // i(13) j(13)
 	opMapIndex:      {"mapIndex", "", "set", 26},                          // reserved(25) set(1)
+	opGoBuiltin:     {"goBuiltin", "", "op", 26},                          // op(26)
 }
 
 // -----------------------------------------------------------------------------
@@ -243,7 +247,7 @@ type anyUnresolved struct {
 	offs []int
 }
 
-// Builder class.
+// Builder is a class that generates executing byte code.
 type Builder struct {
 	code   *Code
 	labels map[*Label]int
@@ -276,10 +280,10 @@ func (p *Builder) Resolve() *Code {
 // -----------------------------------------------------------------------------
 
 // Reserved represents a reserved instruction position.
-type Reserved int
+type Reserved = exec.Reserved
 
 // InvalidReserved is an invalid reserved position.
-const InvalidReserved Reserved = -1
+const InvalidReserved = exec.InvalidReserved
 
 // Reserve reserves an instruction.
 func (p *Builder) Reserve() Reserved {

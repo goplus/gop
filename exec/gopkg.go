@@ -19,7 +19,7 @@ package exec
 import (
 	"reflect"
 
-	"github.com/qiniu/qlang/v6/ast/spec"
+	"github.com/qiniu/qlang/v6/exec.spec"
 	"github.com/qiniu/x/log"
 )
 
@@ -50,38 +50,38 @@ func execGoFuncv(i Instr, p *Context) {
 
 // A ConstKind represents the specific kind of type that a Type represents.
 // The zero Kind is not a valid kind.
-type ConstKind = spec.ConstKind
+type ConstKind = exec.ConstKind
 
 const (
 	// ConstBoundRune - bound type: rune
-	ConstBoundRune = spec.ConstBoundRune
+	ConstBoundRune = exec.ConstBoundRune
 	// ConstBoundString - bound type: string
-	ConstBoundString = spec.ConstBoundString
+	ConstBoundString = exec.ConstBoundString
 	// ConstUnboundInt - unbound int type
-	ConstUnboundInt = spec.ConstUnboundInt
+	ConstUnboundInt = exec.ConstUnboundInt
 	// ConstUnboundFloat - unbound float type
-	ConstUnboundFloat = spec.ConstUnboundFloat
+	ConstUnboundFloat = exec.ConstUnboundFloat
 	// ConstUnboundComplex - unbound complex type
-	ConstUnboundComplex = spec.ConstUnboundComplex
+	ConstUnboundComplex = exec.ConstUnboundComplex
 	// ConstUnboundPtr - nil: unbound ptr
-	ConstUnboundPtr = spec.ConstUnboundPtr
+	ConstUnboundPtr = exec.ConstUnboundPtr
 )
 
 // SymbolKind represents symbol kind.
-type SymbolKind uint32
+type SymbolKind = exec.SymbolKind
 
 const (
-	// SymbolFunc - function
-	SymbolFunc SymbolKind = opCallGoFunc
-	// SymbolFuncv - variadic function
-	SymbolFuncv SymbolKind = opCallGoFuncv
 	// SymbolVar - variable
-	SymbolVar SymbolKind = 0
+	SymbolVar = exec.SymbolVar
+	// SymbolFunc - function
+	SymbolFunc = exec.SymbolFunc
+	// SymbolFuncv - variadic function
+	SymbolFuncv = exec.SymbolFuncv
 )
 
 // GoPackage represents a Go package.
 type GoPackage struct {
-	PkgPath string
+	pkgPath string
 	syms    map[string]uint32
 	types   map[string]reflect.Type
 	consts  map[string]*GoConstInfo
@@ -93,7 +93,7 @@ func NewGoPackage(pkgPath string) *GoPackage {
 		log.Panicln("NewPackage failed: package exists -", pkgPath)
 	}
 	pkg := &GoPackage{
-		PkgPath: pkgPath,
+		pkgPath: pkgPath,
 		syms:    make(map[string]uint32),
 		types:   make(map[string]reflect.Type),
 		consts:  make(map[string]*GoConstInfo),
@@ -105,6 +105,11 @@ func NewGoPackage(pkgPath string) *GoPackage {
 // FindGoPackage lookups a Go package by pkgPath. It returns nil if not found.
 func FindGoPackage(pkgPath string) *GoPackage {
 	return gopkgs[pkgPath]
+}
+
+// PkgPath returns the package path for importing.
+func (p *GoPackage) PkgPath() string {
+	return p.pkgPath
 }
 
 // Find lookups a symbol by specified its name.
@@ -266,7 +271,7 @@ func (p *GoPackage) RegisterTypes(typinfos ...GoTypeInfo) {
 			log.Panicln("RegisterTypes failed: unnamed type? -", ti.Type)
 		}
 		if _, ok := p.types[ti.Name]; ok {
-			log.Panicln("RegisterTypes failed: register an existed type -", p.PkgPath, ti.Name)
+			log.Panicln("RegisterTypes failed: register an existed type -", p.pkgPath, ti.Name)
 		}
 		p.types[ti.Name] = ti.Type
 	}
@@ -282,13 +287,13 @@ var (
 )
 
 // GoFuncAddr represents a Go function address.
-type GoFuncAddr uint32
+type GoFuncAddr = exec.GoFuncAddr
 
 // GoFuncvAddr represents a variadic Go function address.
-type GoFuncvAddr uint32
+type GoFuncvAddr = exec.GoFuncvAddr
 
 // GoVarAddr represents a variadic Go variable address.
-type GoVarAddr uint32
+type GoVarAddr = exec.GoVarAddr
 
 // GoFuncInfo represents a Go function information.
 type GoFuncInfo struct {
@@ -319,42 +324,13 @@ type GoTypeInfo struct {
 }
 
 // GoConstInfo represents a Go constant information.
-type GoConstInfo struct {
-	Pkg   *GoPackage
-	Name  string
-	Kind  ConstKind
-	Value interface{}
-}
+type GoConstInfo = exec.GoConstInfo
 
 // GoVarInfo represents a Go variable information.
 type GoVarInfo struct {
 	Pkg  *GoPackage
 	Name string
 	Addr interface{}
-}
-
-// GetInfo returns a Go function info.
-func (i GoFuncAddr) GetInfo() *GoFuncInfo {
-	if i < GoFuncAddr(len(gofuns)) {
-		return &gofuns[i]
-	}
-	return nil
-}
-
-// GetInfo returns a Go function info.
-func (i GoFuncvAddr) GetInfo() *GoFuncInfo {
-	if i < GoFuncvAddr(len(gofunvs)) {
-		return &gofunvs[i].GoFuncInfo
-	}
-	return nil
-}
-
-// GetInfo returns a Go variable info.
-func (i GoVarAddr) GetInfo() *GoVarInfo {
-	if i < GoVarAddr(len(govars)) {
-		return &govars[i]
-	}
-	return nil
 }
 
 // CallGoFunc instr

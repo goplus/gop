@@ -82,6 +82,7 @@ func parseFile(fset *token.FileSet, filename string, src interface{}, mode Mode)
 				Scope: ast.NewScope(nil),
 			}
 		}
+		f.Code = text
 
 		p.errors.Sort()
 		err = p.errors.Err()

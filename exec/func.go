@@ -19,6 +19,7 @@ package exec
 import (
 	"reflect"
 
+	"github.com/qiniu/qlang/v6/exec.spec"
 	"github.com/qiniu/x/log"
 )
 
@@ -167,9 +168,9 @@ const (
 // FuncInfo represents a qlang function information.
 type FuncInfo struct {
 	Pkg      *Package
-	Name     string
-	FunEntry int
-	FunEnd   int
+	name     string
+	funEntry int
+	funEnd   int
 	t        reflect.Type
 	in       []reflect.Type
 	anyUnresolved
@@ -181,10 +182,15 @@ type FuncInfo struct {
 // NewFunc create a qlang function.
 func NewFunc(name string, nestDepth uint32) *FuncInfo {
 	f := &FuncInfo{
-		Name:       name,
+		name:       name,
 		varManager: varManager{nestDepth: nestDepth},
 	}
 	return f
+}
+
+// Name returns the function name.
+func (p *FuncInfo) Name() string {
+	return p.name
 }
 
 // NumOut returns a function type's output parameter count.
@@ -197,7 +203,7 @@ func (p *FuncInfo) NumOut() int {
 // It panics if i is not in the range [0, NumOut()).
 func (p *FuncInfo) Out(i int) *Var {
 	if i >= p.numOut {
-		log.Panicln("FuncInfo.Out: out of range -", i, "func:", p.Name)
+		log.Panicln("FuncInfo.Out: out of range -", i, "func:", p.name)
 	}
 	return p.vlist[i]
 }
@@ -210,10 +216,12 @@ func (p *FuncInfo) IsUnnamedOut() bool {
 	return false
 }
 
+/*
 // IsTypeValid returns if function type is valid or not.
 func (p *FuncInfo) IsTypeValid() bool {
 	return p.nVariadic != nVariadicInvalid
 }
+*/
 
 // Args sets argument types of a qlang function.
 func (p *FuncInfo) Args(in ...reflect.Type) *FuncInfo {
@@ -237,7 +245,7 @@ func (p *FuncInfo) Return(out ...*Var) *FuncInfo {
 	if p.vlist != nil {
 		log.Panicln("don't call DefineVar before calling Return.")
 	}
-	p.addVars(out...)
+	p.addVar(out...)
 	p.numOut = len(out)
 	return p
 }
@@ -254,7 +262,7 @@ func (p *FuncInfo) setVariadic(nVariadic uint16) {
 	if p.nVariadic == 0 {
 		p.nVariadic = nVariadic
 	} else if p.nVariadic != nVariadic {
-		log.Panicln("setVariadic failed: unmatched -", p.Name)
+		log.Panicln("setVariadic failed: unmatched -", p.name)
 	}
 }
 
@@ -263,7 +271,7 @@ func (p *FuncInfo) Type() reflect.Type {
 	if p.t == nil {
 		out := make([]reflect.Type, p.numOut)
 		for i := 0; i < p.numOut; i++ {
-			out[i] = p.vlist[i].Type
+			out[i] = p.vlist[i].typ
 		}
 		p.t = reflect.FuncOf(p.in, out, p.IsVariadic())
 	}
@@ -272,7 +280,7 @@ func (p *FuncInfo) Type() reflect.Type {
 
 func (p *FuncInfo) exec(stk *Stack, parent *Context) {
 	ctx := newContextEx(parent, stk, parent.code, &p.varManager)
-	ctx.Exec(p.FunEntry, p.FunEnd)
+	ctx.Exec(p.funEntry, p.funEnd)
 	if ctx.ip == ipReturnN {
 		n := len(stk.data)
 		stk.Ret(len(p.in)+n-ctx.base, stk.data[n-p.numOut:]...)
@@ -290,7 +298,7 @@ func (p *FuncInfo) execVariadic(arity uint32, stk *Stack, parent *Context) {
 	if arity > n {
 		tVariadic := p.in[n]
 		nVariadic := int(arity - n)
-		if tVariadic == TyEmptyInterfaceSlice {
+		if tVariadic == exec.TyEmptyInterfaceSlice {
 			var empty []interface{}
 			stk.Ret(nVariadic, append(empty, stk.GetArgs(nVariadic)...))
 		} else {
@@ -305,16 +313,13 @@ func (p *FuncInfo) execVariadic(arity uint32, stk *Stack, parent *Context) {
 	p.exec(stk, parent)
 }
 
-// TyEmptyInterfaceSlice type
-var TyEmptyInterfaceSlice = reflect.SliceOf(TyEmptyInterface)
-
 // -----------------------------------------------------------------------------
 
 func (p *Builder) resolveFuncs() {
 	data := p.code.data
 	for fun, pos := range p.funcs {
 		if pos < 0 {
-			log.Panicln("resolveFuncs failed: func is not defined -", fun.Name)
+			log.Panicln("resolveFuncs failed: func is not defined -", fun.name)
 		}
 		for _, off := range fun.offs {
 			if isClosure(data[off]>>bitsOpShift) && fun.IsVariadic() {
@@ -334,10 +339,10 @@ func isClosure(op uint32) bool {
 // DefineFunc instr
 func (p *Builder) DefineFunc(fun *FuncInfo) *Builder {
 	if idx, ok := p.funcs[fun]; ok && idx >= 0 {
-		log.Panicln("DefineFunc failed: func is defined already -", fun.Name)
+		log.Panicln("DefineFunc failed: func is defined already -", fun.name)
 	}
 	p.varManager = &fun.varManager
-	fun.FunEntry = len(p.code.data)
+	fun.funEntry = len(p.code.data)
 	if fun.IsVariadic() {
 		p.funcs[fun] = len(p.code.funvs)
 		p.code.funvs = append(p.code.funvs, fun)
@@ -351,9 +356,9 @@ func (p *Builder) DefineFunc(fun *FuncInfo) *Builder {
 // EndFunc instr
 func (p *Builder) EndFunc(fun *FuncInfo) *Builder {
 	if p.varManager != &fun.varManager {
-		log.Panicln("EndFunc failed: doesn't match with DefineFunc -", fun.Name)
+		log.Panicln("EndFunc failed: doesn't match with DefineFunc -", fun.name)
 	}
-	fun.FunEnd = len(p.code.data)
+	fun.funEnd = len(p.code.data)
 	p.varManager = &p.code.varManager
 	return p
 }

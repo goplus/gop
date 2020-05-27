@@ -19,86 +19,75 @@ package exec
 import (
 	"reflect"
 
+	"github.com/qiniu/qlang/v6/exec.spec"
 	"github.com/qiniu/x/log"
 )
 
 // -----------------------------------------------------------------------------
 
 // AddrOperator type.
-type AddrOperator Operator
+type AddrOperator = exec.AddrOperator
 
 const (
 	// OpAddrVal `*addr`
-	OpAddrVal = AddrOperator(0)
+	OpAddrVal = exec.OpAddrVal
 	// OpAddAssign `+=`
-	OpAddAssign = AddrOperator(OpAdd)
+	OpAddAssign = exec.OpAddAssign
 	// OpSubAssign `-=`
-	OpSubAssign = AddrOperator(OpSub)
+	OpSubAssign = exec.OpSubAssign
 	// OpMulAssign `*=`
-	OpMulAssign = AddrOperator(OpMul)
+	OpMulAssign = exec.OpMulAssign
 	// OpDivAssign `/=`
-	OpDivAssign = AddrOperator(OpDiv)
+	OpDivAssign = exec.OpDivAssign
 	// OpModAssign `%=`
-	OpModAssign = AddrOperator(OpMod)
+	OpModAssign = exec.OpModAssign
 
 	// OpBitAndAssign '&='
-	OpBitAndAssign = AddrOperator(OpBitAnd)
+	OpBitAndAssign = exec.OpBitAndAssign
 	// OpBitOrAssign '|='
-	OpBitOrAssign = AddrOperator(OpBitOr)
+	OpBitOrAssign = exec.OpBitOrAssign
 	// OpBitXorAssign '^='
-	OpBitXorAssign = AddrOperator(OpBitXor)
+	OpBitXorAssign = exec.OpBitXorAssign
 	// OpBitAndNotAssign '&^='
-	OpBitAndNotAssign = AddrOperator(OpBitAndNot)
+	OpBitAndNotAssign = exec.OpBitAndNotAssign
 	// OpBitSHLAssign '<<='
-	OpBitSHLAssign = AddrOperator(OpBitSHL)
+	OpBitSHLAssign = exec.OpBitSHLAssign
 	// OpBitSHRAssign '>>='
-	OpBitSHRAssign = AddrOperator(OpBitSHR)
+	OpBitSHRAssign = exec.OpBitSHRAssign
 	// OpAssign `=`
-	OpAssign AddrOperator = iota
+	OpAssign = exec.OpAssign
 	// OpInc '++'
-	OpInc
+	OpInc = exec.OpInc
 	// OpDec '--'
-	OpDec
+	OpDec = exec.OpDec
 )
 
 // AddrOperatorInfo represents an addr-operator information.
-type AddrOperatorInfo struct {
-	Lit      string
-	InFirst  uint64 // first argument supported types.
-	InSecond uint64 // second argument supported types. It may have SameAsFirst flag.
-}
+type AddrOperatorInfo = exec.AddrOperatorInfo
 
-var addropInfos = [...]AddrOperatorInfo{
-	OpAddAssign:       {"+=", bitsAllNumber | bitString, bitSameAsFirst},
-	OpSubAssign:       {"-=", bitsAllNumber, bitSameAsFirst},
-	OpMulAssign:       {"*=", bitsAllNumber, bitSameAsFirst},
-	OpDivAssign:       {"/=", bitsAllNumber, bitSameAsFirst},
-	OpModAssign:       {"%=", bitsAllIntUint, bitSameAsFirst},
-	OpBitAndAssign:    {"&=", bitsAllIntUint, bitSameAsFirst},
-	OpBitOrAssign:     {"|=", bitsAllIntUint, bitSameAsFirst},
-	OpBitXorAssign:    {"^=", bitsAllIntUint, bitSameAsFirst},
-	OpBitAndNotAssign: {"&^=", bitsAllIntUint, bitSameAsFirst},
-	OpBitSHLAssign:    {"<<=", bitsAllIntUint, bitsAllIntUint},
-	OpBitSHRAssign:    {">>=", bitsAllIntUint, bitsAllIntUint},
-	OpInc:             {"++", bitsAllNumber, bitNone},
-	OpDec:             {"--", bitsAllNumber, bitNone},
-}
+// -----------------------------------------------------------------------------
 
-// GetInfo returns the information of this operator.
-func (op AddrOperator) GetInfo() *AddrOperatorInfo {
-	return &addropInfos[op]
-}
+// GoBuiltin represents go builtin func.
+type GoBuiltin = exec.GoBuiltin
 
-func (op AddrOperator) String() string {
-	switch op {
-	case OpAddrVal:
-		return "*"
-	case OpAssign:
-		return "="
-	default:
-		return addropInfos[op].Lit
-	}
-}
+const (
+	// GobLen - len: 1
+	GobLen = exec.GobLen
+	// GobCap - cap: 2
+	GobCap = exec.GobCap
+	// GobCopy - copy: 3
+	GobCopy = exec.GobCopy
+	// GobDelete - delete: 4
+	GobDelete = exec.GobDelete
+	// GobComplex - complex: 5
+	GobComplex = exec.GobComplex
+	// GobReal - real: 6
+	GobReal = exec.GobReal
+	// GobImag - imag: 7
+	GobImag = exec.GobImag
+	// GobClose - close: 8
+	GobClose = exec.GobClose
+)
 
 // -----------------------------------------------------------------------------
 
@@ -127,6 +116,21 @@ func execAddrOp(i Instr, p *Context) {
 		execOpAddrVal(0, p)
 	default:
 		log.Panicln("execAddrOp: invalid instr -", i)
+	}
+}
+
+func execGoBuiltin(i Instr, p *Context) {
+	op := i & bitsOperand
+	n := len(p.data)
+	switch exec.GoBuiltin(op) {
+	case GobLen:
+		v := reflect.ValueOf(p.data[n-1])
+		p.data[n-1] = reflect.Indirect(v).Len()
+	case GobCap:
+		v := reflect.ValueOf(p.data[n-1])
+		p.data[n-1] = reflect.Indirect(v).Cap()
+	default:
+		log.Panicln("execGoBuiltin: todo -", i)
 	}
 }
 
@@ -221,7 +225,7 @@ func (p *Builder) storeVar(addr tAddress) *Builder {
 
 // Var represents a variable.
 type Var struct {
-	Type      reflect.Type
+	typ       reflect.Type
 	name      string
 	nestDepth uint32
 	idx       uint32
@@ -229,11 +233,16 @@ type Var struct {
 
 // NewVar creates a variable instance.
 func NewVar(typ reflect.Type, name string) *Var {
-	return &Var{Type: typ, name: "Q" + name, idx: ^uint32(0)}
+	return &Var{typ: typ, name: "Q" + name, idx: ^uint32(0)}
 }
 
 func (p *Var) isGlobal() bool {
 	return p.idx <= bitsOpVarOperand && p.nestDepth == 0
+}
+
+// Type returns variable's type.
+func (p *Var) Type() reflect.Type {
+	return p.typ
 }
 
 // Name returns variable's name.
@@ -267,7 +276,7 @@ func newVarManager(vars ...*Var) *varManager {
 	return &varManager{vlist: vars}
 }
 
-func (p *varManager) addVars(vars ...*Var) {
+func (p *varManager) addVar(vars ...*Var) {
 	n := len(p.vlist)
 	nestDepth := p.nestDepth
 	for i, v := range vars {
@@ -275,6 +284,17 @@ func (p *varManager) addVars(vars ...*Var) {
 		log.Debug("DefineVar:", v.Name(), "-", nestDepth)
 	}
 	p.vlist = append(p.vlist, vars...)
+}
+
+func (p *varManager) addVars(vars ...exec.Var) {
+	n := len(p.vlist)
+	nestDepth := p.nestDepth
+	for i, item := range vars {
+		v := item.(*Var)
+		v.SetAddr(nestDepth, uint32(i+n))
+		log.Debug("DefineVar:", v.Name(), "-", nestDepth)
+		p.vlist = append(p.vlist, v)
+	}
 }
 
 type blockCtx struct {
@@ -302,8 +322,14 @@ func (p *Builder) InCurrentCtx(v *Var) bool {
 	return p.nestDepth == v.nestDepth
 }
 
-// DefineVar defines all local variable of a function (closure).
+// DefineVar defines variables.
 func (p *Builder) DefineVar(vars ...*Var) *Builder {
+	p.addVar(vars...)
+	return p
+}
+
+// DefineVars defines variables.
+func (p *Builder) DefineVars(vars ...exec.Var) *Builder {
 	p.addVars(vars...)
 	return p
 }
@@ -330,6 +356,12 @@ func (p *Builder) AddrVar(v *Var) *Builder {
 func (p *Builder) AddrOp(kind Kind, op AddrOperator) *Builder {
 	i := (int(op) << bitsKind) | int(kind)
 	p.code.data = append(p.code.data, (opAddrOp<<bitsOpShift)|uint32(i))
+	return p
+}
+
+// GoBuiltin instr
+func (p *Builder) GoBuiltin(typ reflect.Type, op GoBuiltin) *Builder {
+	p.code.data = append(p.code.data, (opGoBuiltin<<bitsOpShift)|uint32(op))
 	return p
 }
 

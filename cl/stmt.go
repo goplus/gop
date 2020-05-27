@@ -20,7 +20,7 @@ import (
 	"reflect"
 
 	"github.com/qiniu/qlang/v6/ast"
-	"github.com/qiniu/qlang/v6/exec"
+	"github.com/qiniu/qlang/v6/exec.spec"
 	"github.com/qiniu/x/log"
 )
 
@@ -88,7 +88,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 		ctxSw = ctx
 	}
 	out := ctx.out
-	done := exec.NewLabel("")
+	done := ctx.NewLabel("")
 	hasTag := v.Tag != nil
 	if hasTag {
 		if len(v.Body.List) == 0 {
@@ -109,7 +109,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 				compileExpr(ctxSw, caseExp)()
 				checkCaseCompare(tag, ctx.infer.Pop(), out)
 			}
-			next := exec.NewLabel("")
+			next := ctx.NewLabel("")
 			out.CaseNE(next, len(c.List))
 			compileBodyWith(ctxSw, c.Body)
 			out.Jmp(done)
@@ -126,14 +126,14 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 				defaultBody = c.Body
 				continue
 			}
-			next := exec.NewLabel("")
+			next := ctx.NewLabel("")
 			last := len(c.List) - 1
 			if last == 0 {
 				compileExpr(ctxSw, c.List[0])()
 				checkBool(ctxSw.infer.Pop())
 				out.JmpIf(0, next)
 			} else {
-				start := exec.NewLabel("")
+				start := ctx.NewLabel("")
 				for i := 0; i < last; i++ {
 					compileExpr(ctxSw, c.List[i])()
 					checkBool(ctxSw.infer.Pop())
@@ -156,7 +156,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 }
 
 func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
-	var done *exec.Label
+	var done exec.Label
 	var ctxIf *blockCtx
 	if v.Init != nil {
 		ctxIf = newNormBlockCtx(ctx)
@@ -167,12 +167,12 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 	compileExpr(ctxIf, v.Cond)()
 	checkBool(ctx.infer.Pop())
 	out := ctx.out
-	label := exec.NewLabel("")
+	label := ctx.NewLabel("")
 	hasElse := v.Else != nil
 	out.JmpIf(0, label)
 	compileBlockStmtWith(ctxIf, v.Body)
 	if hasElse {
-		done = exec.NewLabel("")
+		done = ctx.NewLabel("")
 		out.Jmp(done)
 	}
 	out.Label(label)
@@ -194,7 +194,7 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 	rets := expr.Results
 	if rets == nil {
 		if fun.IsUnnamedOut() {
-			log.Panicln("compileReturnStmt failed: return without values -", fun.Name)
+			log.Panicln("compileReturnStmt failed: return without values -", fun.Name())
 		}
 		ctx.out.Return(-1)
 		return
@@ -204,15 +204,15 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 	}
 	n := len(rets)
 	if fun.NumOut() != n {
-		log.Panicln("compileReturnStmt failed: mismatched count of return values -", fun.Name)
+		log.Panicln("compileReturnStmt failed: mismatched count of return values -", fun.Name())
 	}
 	if ctx.infer.Len() != n {
-		log.Panicln("compileReturnStmt failed: can't use multi values funcation result as return values -", fun.Name)
+		log.Panicln("compileReturnStmt failed: can't use multi values funcation result as return values -", fun.Name())
 	}
 	results := ctx.infer.GetArgs(n)
 	for i, result := range results {
 		v := fun.Out(i)
-		checkType(v.Type, result, ctx.out)
+		checkType(v.Type(), result, ctx.out)
 	}
 	ctx.infer.SetLen(0)
 	ctx.out.Return(int32(n))

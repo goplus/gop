@@ -23,9 +23,9 @@ import (
 // -----------------------------------------------------------------------------
 
 func TestIf1(t *testing.T) {
-	label1 := NewLabel("a")
+	label1 := defaultImpl.NewLabel("a").(*Label)
 	label2 := NewLabel("b")
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(true).
 		JmpIf(0, label1).
 		Push(50).
@@ -44,12 +44,13 @@ func TestIf1(t *testing.T) {
 	if v := checkPop(ctx); v != 8 {
 		t.Fatal("50 6 div != 8, ret =", v)
 	}
+	_ = label1.Name()
 }
 
 func TestIf2(t *testing.T) {
 	label1 := NewLabel("a")
 	label2 := NewLabel("b")
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(false).
 		JmpIf(0, label1).
 		Push(5).
@@ -73,7 +74,7 @@ func TestIf2(t *testing.T) {
 func TestIf3(t *testing.T) {
 	label1 := NewLabel("a")
 	label2 := NewLabel("b")
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(true).
 		JmpIf(1, label1).
 		Push(5).
@@ -97,7 +98,7 @@ func TestIf3(t *testing.T) {
 func TestIf4(t *testing.T) {
 	label1 := NewLabel("a")
 	label2 := NewLabel("b")
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(false).
 		JmpIf(1, label1).
 		Push(5).
@@ -124,7 +125,7 @@ func TestCase1(t *testing.T) {
 	done := NewLabel("done")
 	label1 := NewLabel("a")
 	label2 := NewLabel("b")
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(1).
 		Push(1).
 		CaseNE(label1, 1).
@@ -156,7 +157,7 @@ func TestCase2(t *testing.T) {
 	done := NewLabel("done")
 	label1 := NewLabel("a")
 	label2 := NewLabel("b")
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(2).
 		Push(1).
 		Push(0).
@@ -191,7 +192,7 @@ func TestDefault(t *testing.T) {
 	done := NewLabel("done")
 	label1 := NewLabel("a")
 	label2 := NewLabel("b")
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(3).
 		Push(1).
 		CaseNE(label1, 1).

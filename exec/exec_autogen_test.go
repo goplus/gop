@@ -22,6 +22,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/qiniu/qlang/v6/exec.spec"
 )
 
 // -----------------------------------------------------------------------------
@@ -91,9 +93,9 @@ func autogenOpWithTempl(f *os.File, op Operator, Op string, templ string) {
 	i := op.GetInfo()
 	if templ == "" {
 		templ = autogenBinaryOpTempl
-		if i.InSecond == bitNone {
+		if i.InSecond == exec.BitNone {
 			templ = autogenUnaryOpTempl
-		} else if i.InSecond == bitsAllIntUint {
+		} else if i.InSecond == exec.BitsAllIntUint {
 			templ = autogenBinaryOpUintTempl
 		}
 	}
@@ -101,7 +103,7 @@ func autogenOpWithTempl(f *os.File, op Operator, Op string, templ string) {
 		if (i.InFirst & (1 << kind)) == 0 {
 			continue
 		}
-		typ := TypeFromKind(kind).String()
+		typ := exec.TypeFromKind(kind).String()
 		Typ := strings.Title(typ)
 		repl := strings.NewReplacer("$Op", Op, "$op", i.Lit, "$Type", Typ, "$type", typ)
 		text := repl.Replace(templ)
@@ -131,7 +133,7 @@ func _TestOpAutogen(t *testing.T) {
 }
 
 func newKindValue(kind Kind) reflect.Value {
-	t := TypeFromKind(kind)
+	t := exec.TypeFromKind(kind)
 	o := reflect.New(t).Elem()
 	if kind >= Int && kind <= Int64 {
 		o.SetInt(1)
@@ -224,9 +226,9 @@ func autogenAddrOpWithTempl(f *os.File, op AddrOperator, Op string, templ string
 	i := op.GetInfo()
 	if templ == "" {
 		templ = autogenBinaryAddrOpTempl
-		if i.InSecond == bitNone {
+		if i.InSecond == exec.BitNone {
 			templ = autogenUnaryAddrOpTempl
-		} else if i.InSecond == bitsAllIntUint {
+		} else if i.InSecond == exec.BitsAllIntUint {
 			templ = autogenBinaryAddrOpUintTempl
 		}
 	}
@@ -234,7 +236,7 @@ func autogenAddrOpWithTempl(f *os.File, op AddrOperator, Op string, templ string
 		if (i.InFirst & (1 << kind)) == 0 {
 			continue
 		}
-		typ := TypeFromKind(kind).String()
+		typ := exec.TypeFromKind(kind).String()
 		Typ := strings.Title(typ)
 		repl := strings.NewReplacer("$Op", Op, "$op", i.Lit, "$Type", Typ, "$type", typ)
 		text := repl.Replace(templ)

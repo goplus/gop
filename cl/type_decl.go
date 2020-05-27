@@ -21,7 +21,7 @@ import (
 	"strconv"
 
 	"github.com/qiniu/qlang/v6/ast"
-	"github.com/qiniu/qlang/v6/exec"
+	"github.com/qiniu/qlang/v6/exec.spec"
 	"github.com/qiniu/x/log"
 )
 
@@ -105,7 +105,7 @@ func toFuncType(ctx *blockCtx, t *ast.FuncType) iType {
 	return reflect.FuncOf(in, out, variadic)
 }
 
-func buildFuncType(fi *exec.FuncInfo, ctx *blockCtx, t *ast.FuncType) {
+func buildFuncType(fi exec.FuncInfo, ctx *blockCtx, t *ast.FuncType) {
 	in, args, variadic := toArgTypes(ctx, t.Params)
 	rets := toReturnTypes(ctx, t.Results)
 	if variadic {
@@ -160,7 +160,7 @@ func toTypesEx(ctx *blockCtx, fields *ast.FieldList) ([]reflect.Type, bool) {
 	return types, false
 }
 
-func toReturnTypes(ctx *blockCtx, fields *ast.FieldList) (vars []*exec.Var) {
+func toReturnTypes(ctx *blockCtx, fields *ast.FieldList) (vars []exec.Var) {
 	if fields == nil {
 		return
 	}
@@ -173,10 +173,10 @@ func toReturnTypes(ctx *blockCtx, fields *ast.FieldList) (vars []*exec.Var) {
 		}
 		if n == 0 {
 			index++
-			vars = append(vars, exec.NewVar(typ.(reflect.Type), strconv.Itoa(index)))
+			vars = append(vars, ctx.NewVar(typ.(reflect.Type), strconv.Itoa(index)))
 		} else {
 			for i := 0; i < n; i++ {
-				vars = append(vars, exec.NewVar(typ.(reflect.Type), field.Names[i].Name))
+				vars = append(vars, ctx.NewVar(typ.(reflect.Type), field.Names[i].Name))
 			}
 			index += n
 		}
@@ -297,23 +297,25 @@ type methodDecl struct {
 }
 
 type funcDecl struct {
-	typ  *ast.FuncType
-	body *ast.BlockStmt
-	ctx  *blockCtx
-	fi   *exec.FuncInfo
-	used bool
+	typ    *ast.FuncType
+	body   *ast.BlockStmt
+	ctx    *blockCtx
+	fi     exec.FuncInfo
+	used   bool
+	cached bool
 }
 
 func newFuncDecl(name string, typ *ast.FuncType, body *ast.BlockStmt, ctx *blockCtx) *funcDecl {
 	nestDepth := ctx.getNestDepth()
 	log.Debug("newFuncDecl -", name, "-", nestDepth)
-	fi := exec.NewFunc(name, nestDepth)
+	fi := ctx.NewFunc(name, nestDepth)
 	return &funcDecl{typ: typ, body: body, ctx: ctx, fi: fi}
 }
 
-func (p *funcDecl) getFuncInfo() *exec.FuncInfo {
-	if !p.fi.IsTypeValid() {
+func (p *funcDecl) getFuncInfo() exec.FuncInfo {
+	if !p.cached {
 		buildFuncType(p.fi, p.ctx, p.typ)
+		p.cached = true
 	}
 	return p.fi
 }

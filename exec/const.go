@@ -140,9 +140,9 @@ func (p *Builder) Push(val interface{}) *Builder {
 	return p
 }
 
-// Push instr
-func (p Reserved) Push(b *Builder, val interface{}) {
-	b.code.data[p] = b.pushInstr(val)
+// ReservedAsPush sets Reserved as Push(v)
+func (p *Builder) ReservedAsPush(r Reserved, val interface{}) {
+	p.code.data[r] = p.pushInstr(val)
 }
 
 // Pop instr
