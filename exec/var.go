@@ -67,6 +67,30 @@ type AddrOperatorInfo = exec.AddrOperatorInfo
 
 // -----------------------------------------------------------------------------
 
+// GoBuiltin represents go builtin func.
+type GoBuiltin = exec.GoBuiltin
+
+const (
+	// GobLen - len: 1
+	GobLen = exec.GobLen
+	// GobCap - cap: 2
+	GobCap = exec.GobCap
+	// GobCopy - copy: 3
+	GobCopy = exec.GobCopy
+	// GobDelete - delete: 4
+	GobDelete = exec.GobDelete
+	// GobComplex - complex: 5
+	GobComplex = exec.GobComplex
+	// GobReal - real: 6
+	GobReal = exec.GobReal
+	// GobImag - imag: 7
+	GobImag = exec.GobImag
+	// GobClose - close: 8
+	GobClose = exec.GobClose
+)
+
+// -----------------------------------------------------------------------------
+
 func execOpAddrVal(i Instr, p *Context) {
 	n := len(p.data)
 	p.data[n-1] = reflect.ValueOf(p.data[n-1]).Elem().Interface()
@@ -92,6 +116,21 @@ func execAddrOp(i Instr, p *Context) {
 		execOpAddrVal(0, p)
 	default:
 		log.Panicln("execAddrOp: invalid instr -", i)
+	}
+}
+
+func execGoBuiltin(i Instr, p *Context) {
+	op := i & bitsOperand
+	n := len(p.data)
+	switch exec.GoBuiltin(op) {
+	case GobLen:
+		v := reflect.ValueOf(p.data[n-1])
+		p.data[n-1] = reflect.Indirect(v).Len()
+	case GobCap:
+		v := reflect.ValueOf(p.data[n-1])
+		p.data[n-1] = reflect.Indirect(v).Cap()
+	default:
+		log.Panicln("execGoBuiltin: todo -", i)
 	}
 }
 
@@ -317,6 +356,12 @@ func (p *Builder) AddrVar(v *Var) *Builder {
 func (p *Builder) AddrOp(kind Kind, op AddrOperator) *Builder {
 	i := (int(op) << bitsKind) | int(kind)
 	p.code.data = append(p.code.data, (opAddrOp<<bitsOpShift)|uint32(i))
+	return p
+}
+
+// GoBuiltin instr
+func (p *Builder) GoBuiltin(typ reflect.Type, op GoBuiltin) *Builder {
+	p.code.data = append(p.code.data, (opGoBuiltin<<bitsOpShift)|uint32(op))
 	return p
 }
 

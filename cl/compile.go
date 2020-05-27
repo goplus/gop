@@ -18,6 +18,7 @@ package cl
 
 import (
 	"errors"
+	"fmt"
 	"path"
 	"reflect"
 	"syscall"
@@ -53,19 +54,66 @@ var (
 
 // -----------------------------------------------------------------------------
 
+// CompileError represents a compiling time error.
+type CompileError struct {
+	At  ast.Node
+	Err error
+}
+
+func (p *CompileError) Error() string {
+	return p.Err.Error()
+}
+
+func newError(at ast.Node, format string, params ...interface{}) *CompileError {
+	err := fmt.Errorf(format, params...)
+	return &CompileError{at, err}
+}
+
+func logError(ctx *blockCtx, at ast.Node, format string, params ...interface{}) {
+	err := newError(at, format, params...)
+	log.Error(err)
+}
+
+func logPanic(ctx *blockCtx, at ast.Node, format string, params ...interface{}) {
+	err := newError(at, format, params...)
+	log.Panicln(err)
+}
+
+func logNonIntegerIdxPanic(ctx *blockCtx, v ast.Node, kind reflect.Kind) {
+	logPanic(ctx, v, `non-integer %v index %v`, kind, ctx.code(v))
+}
+
+func logIllTypeMapIndexPanic(ctx *blockCtx, v ast.Node, t, typIdx reflect.Type) {
+	logPanic(ctx, v, `cannot use %v (type %v) as type %v in map index`, ctx.code(v), t, typIdx)
+}
+
+// -----------------------------------------------------------------------------
+
 type pkgCtx struct {
 	exec.Interface
 	infer   exec.Stack
 	builtin exec.GoPackage
 	out     exec.Builder
 	usedfns []*funcDecl
+	pkg     *ast.Package
+	fset    *token.FileSet
 }
 
-func newPkgCtx(out exec.Builder) *pkgCtx {
+func newPkgCtx(out exec.Builder, pkg *ast.Package, fset *token.FileSet) *pkgCtx {
 	g := out.GlobalInterface()
-	p := &pkgCtx{Interface: g, builtin: g.FindGoPackage(""), out: out}
+	p := &pkgCtx{Interface: g, builtin: g.FindGoPackage(""), out: out, pkg: pkg, fset: fset}
 	p.infer.Init()
 	return p
+}
+
+func (p *pkgCtx) code(v ast.Node) string {
+	start, end := v.Pos(), v.End()
+	pos := p.fset.Position(start)
+	if f, ok := p.pkg.Files[pos.Filename]; ok {
+		return string(f.Code[pos.Offset : pos.Offset+int(end-start)])
+	}
+	log.Panicln("pkgCtx.code failed: file not found -", pos.Filename)
+	return ""
 }
 
 func (p *pkgCtx) use(f *funcDecl) {
@@ -177,10 +225,10 @@ func newNormBlockCtxEx(parent *blockCtx, noExecCtx bool) *blockCtx {
 }
 
 // global block ctx
-func newGblBlockCtx(pkg *pkgCtx, parent *blockCtx) *blockCtx {
+func newGblBlockCtx(pkg *pkgCtx) *blockCtx {
 	return &blockCtx{
 		pkgCtx:    pkg,
-		parent:    parent,
+		parent:    nil,
 		syms:      make(map[string]iSymbol),
 		noExecCtx: true,
 	}
@@ -324,7 +372,7 @@ type Package struct {
 }
 
 // NewPackage creates a qlang package instance.
-func NewPackage(out exec.Builder, pkg *ast.Package) (p *Package, err error) {
+func NewPackage(out exec.Builder, pkg *ast.Package, fset *token.FileSet) (p *Package, err error) {
 	if pkg == nil {
 		log.Panicln("NewPackage failed: nil ast.Package")
 	}
@@ -332,8 +380,8 @@ func NewPackage(out exec.Builder, pkg *ast.Package) (p *Package, err error) {
 		log.Panicln("NewPackage failed: variable CallBuiltinOp is uninitialized")
 	}
 	p = &Package{}
-	ctxPkg := newPkgCtx(out)
-	ctx := newGblBlockCtx(ctxPkg, nil)
+	ctxPkg := newPkgCtx(out, pkg, fset)
+	ctx := newGblBlockCtx(ctxPkg)
 	for _, f := range pkg.Files {
 		loadFile(ctx, f)
 	}

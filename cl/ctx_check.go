@@ -78,6 +78,8 @@ func isNoExecCtxExpr(ctx *blockCtx, expr ast.Expr) bool {
 		return isNoExecCtxExpr(ctx, v.X)
 	case *ast.IndexExpr:
 		return isNoExecCtxIndexExpr(ctx, v)
+	case *ast.SliceExpr:
+		return isNoExecCtxSliceExpr(ctx, v)
 	case *ast.CompositeLit:
 		return isNoExecCtxExprs(ctx, v.Elts)
 	case *ast.SliceLit:
@@ -166,6 +168,28 @@ func isNoExecCtxIndexExpr(ctx *blockCtx, v *ast.IndexExpr) bool {
 		return false
 	}
 	return isNoExecCtxExpr(ctx, v.Index)
+}
+
+func isNoExecCtxSliceExpr(ctx *blockCtx, v *ast.SliceExpr) bool {
+	if noExecCtx := isNoExecCtxExpr(ctx, v.X); !noExecCtx {
+		return false
+	}
+	if v.Low != nil {
+		if noExecCtx := isNoExecCtxExpr(ctx, v.Low); !noExecCtx {
+			return false
+		}
+	}
+	if v.High != nil {
+		if noExecCtx := isNoExecCtxExpr(ctx, v.High); !noExecCtx {
+			return false
+		}
+	}
+	if v.Max != nil {
+		if noExecCtx := isNoExecCtxExpr(ctx, v.Max); !noExecCtx {
+			return false
+		}
+	}
+	return true
 }
 
 func isNoExecCtxBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) bool {

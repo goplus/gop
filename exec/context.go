@@ -218,6 +218,7 @@ var _execTable = [...]func(i Instr, p *Context){
 	opSlice:         execSlice,
 	opSlice3:        execSlice3,
 	opMapIndex:      execMapIndex,
+	opGoBuiltin:     execGoBuiltin,
 }
 
 var execTable []func(i Instr, p *Context)

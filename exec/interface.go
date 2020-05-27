@@ -391,6 +391,12 @@ func (p *iBuilder) TypeCast(from, to reflect.Type) exec.Builder {
 	return p
 }
 
+// GoBuiltin instr
+func (p *iBuilder) GoBuiltin(typ reflect.Type, op GoBuiltin) exec.Builder {
+	((*Builder)(p)).GoBuiltin(typ, op)
+	return p
+}
+
 // Zero instr
 func (p *iBuilder) Zero(typ reflect.Type) exec.Builder {
 	((*Builder)(p)).Zero(typ)

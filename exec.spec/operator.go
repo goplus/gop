@@ -226,11 +226,47 @@ func (op AddrOperator) String() string {
 
 // -----------------------------------------------------------------------------
 
+// GoBuiltin represents go builtin func.
+type GoBuiltin uint
+
+const (
+	gobInvalid GoBuiltin = iota
+	// GobLen - len: 1
+	GobLen
+	// GobCap - cap: 2
+	GobCap
+	// GobCopy - copy: 3
+	GobCopy
+	// GobDelete - delete: 4
+	GobDelete
+	// GobComplex - complex: 5
+	GobComplex
+	// GobReal - real: 6
+	GobReal
+	// GobImag - imag: 7
+	GobImag
+	// GobClose - close: 8
+	GobClose
+)
+
+// -----------------------------------------------------------------------------
+
+// Operator related constants, for Operator/AddrOperator instr.
 const (
 	// BitNone - bitNone
 	BitNone = bitNone
 	// BitsAllIntUint - bitsAllIntUint
 	BitsAllIntUint = bitsAllIntUint
+)
+
+// -----------------------------------------------------------------------------
+
+// Slice related constants, for Slice/Slice3 instr.
+const (
+	// SliceConstIndexLast - slice const index max
+	SliceConstIndexLast = (1 << 13) - 3
+	// SliceDefaultIndex - unspecified index
+	SliceDefaultIndex = -2
 )
 
 // -----------------------------------------------------------------------------

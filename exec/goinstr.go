@@ -264,7 +264,7 @@ func popSliceIndexs(instr Instr, p *Context) (i, j int) {
 func execSlice(instr Instr, p *Context) {
 	i, j := popSliceIndexs(instr, p)
 	n := len(p.data)
-	v := reflect.ValueOf(p.data[n-1])
+	v := reflect.Indirect(reflect.ValueOf(p.data[n-1]))
 	if j == -2 {
 		j = v.Len()
 	}
@@ -469,9 +469,9 @@ const (
 	setIndexOperand = setIndexFlag - 1
 	sliceIndexMask  = (1 << 13) - 1
 	// SliceConstIndexLast - slice const index max
-	SliceConstIndexLast = (1 << 13) - 3
+	SliceConstIndexLast = exec.SliceConstIndexLast
 	// SliceDefaultIndex - unspecified index
-	SliceDefaultIndex = -2
+	SliceDefaultIndex = exec.SliceDefaultIndex
 )
 
 // Slice instr

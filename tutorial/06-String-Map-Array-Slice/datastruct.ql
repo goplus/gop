@@ -12,3 +12,7 @@ println(`x[1]:`, x[1], `y["xsw"]:`, y["xsw"], `a[1]:`, a[1])
 i := uint16(4)
 b[uint32(4)], c[i] = 123, 1.7
 println("a:", a, "b:", b, "c:", c)
+
+arr := [...]float64{1, 2}
+title := "Hello,world!" + "2020-05-27"
+println(title[:len(title)-len("2006-01-02")], len(arr), arr[1:])

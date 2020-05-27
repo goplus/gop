@@ -18,6 +18,7 @@ package cl
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/qiniu/qlang/v6/ast"
@@ -39,16 +40,26 @@ func init() {
 	CallBuiltinOp = exec.CallBuiltinOp
 }
 
-func newPackage(out *exec.Builder, pkg *ast.Package) (p *Package, noExecCtx bool, err error) {
-	b := out.Interface()
-	if p, err = NewPackage(b, pkg); err != nil {
+func newPackage(
+	out *exec.Builder, pkg *ast.Package, fset *token.FileSet) (p *Package, noExecCtx bool, err error) {
+	p, ctx, err := newPackageEx(out, pkg, fset)
+	if err != nil {
 		return
 	}
-	ctxPkg := newPkgCtx(b)
-	ctx := newGblBlockCtx(ctxPkg, nil)
-	ctx.syms = p.syms
 	entry, _ := ctx.findFunc("main")
 	noExecCtx = isNoExecCtx(ctx, entry.body)
+	return
+}
+
+func newPackageEx(
+	out *exec.Builder, pkg *ast.Package, fset *token.FileSet) (p *Package, ctx *blockCtx, err error) {
+	b := out.Interface()
+	if p, err = NewPackage(b, pkg, fset); err != nil {
+		return
+	}
+	ctxPkg := newPkgCtx(b, pkg, fset)
+	ctx = newGblBlockCtx(ctxPkg)
+	ctx.syms = p.syms
 	return
 }
 
@@ -69,8 +80,8 @@ func TestBasic(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar)
-	if err != nil || !noExecCtx {
+	_, bctx, err := newPackageEx(b, bar, fset)
+	if err != nil {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
@@ -82,6 +93,59 @@ func TestBasic(t *testing.T) {
 		t.Fatal("error:", v)
 	}
 	if v := ctx.Get(-2); v != int(14) {
+		t.Fatal("n:", v)
+	}
+	e := newError(nil, "cannot slice a (type *%v)", "[]int")
+	_ = e.Error()
+	ev := &execVar{exec.NewVar(reflect.TypeOf(0), "")}
+	_ = ev.getType()
+	_ = ev.inCurrentCtx(bctx)
+	sv := new(stackVar)
+	_ = sv.getType()
+	_ = sv.inCurrentCtx(nil)
+	logError(bctx, nil, "unknown error")
+	entry, _ := bctx.findFunc("main")
+	defer func() {
+		recover()
+		defer func() {
+			recover()
+		}()
+		logIllTypeMapIndexPanic(bctx, entry.body, reflect.TypeOf(0), reflect.TypeOf(1.2))
+	}()
+	logNonIntegerIdxPanic(bctx, entry.body, reflect.String)
+}
+
+// -----------------------------------------------------------------------------
+
+var fsTestBasic2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	arr := [...]float64{1, 2}
+	slice := make([]float64, 0, 32)
+	title := "Hello,world!2020-05-27"
+	println(title[0:len(title)-len("2006-01-02")], len(arr), cap(arr), len(slice), cap(slice))
+`)
+
+func TestBasic2(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestBasic2, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, noExecCtx, err := newPackage(b, bar, fset)
+	if err != nil || !noExecCtx {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(22) {
 		t.Fatal("n:", v)
 	}
 }

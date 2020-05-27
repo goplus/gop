@@ -250,6 +250,9 @@ type Builder interface {
 	// TypeCast instr
 	TypeCast(from, to reflect.Type) Builder
 
+	// GoBuiltin instr
+	GoBuiltin(typ reflect.Type, op GoBuiltin) Builder
+
 	// Zero instr
 	Zero(typ reflect.Type) Builder
 
