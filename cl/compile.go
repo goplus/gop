@@ -328,6 +328,9 @@ func NewPackage(out exec.Builder, pkg *ast.Package) (p *Package, err error) {
 	if pkg == nil {
 		log.Panicln("NewPackage failed: nil ast.Package")
 	}
+	if CallBuiltinOp == nil {
+		log.Panicln("NewPackage failed: variable CallBuiltinOp is uninitialized")
+	}
 	p = &Package{}
 	ctxPkg := newPkgCtx(out)
 	ctx := newGblBlockCtx(ctxPkg, nil)

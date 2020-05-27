@@ -38,11 +38,13 @@ func main() {
 		fmt.Println("Usage: qrun <qlangSrcDir>")
 		return
 	}
+	log.SetFlags(log.Ldefault &^ log.LstdFlags)
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseDir(fset, os.Args[1], nil, 0)
 	if err != nil {
 		log.Fatalln("ParseDir failed:", err)
 	}
+	cl.CallBuiltinOp = exec.CallBuiltinOp
 
 	b := exec.NewBuilder(nil)
 	_, err = cl.NewPackage(b.Interface(), pkgs["main"])
