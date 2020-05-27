@@ -243,7 +243,7 @@ func (p *FuncInfo) Return(out ...*Var) *FuncInfo {
 	if p.vlist != nil {
 		log.Panicln("don't call DefineVar before calling Return.")
 	}
-	p.addVars(out...)
+	p.addVar(out...)
 	p.numOut = len(out)
 	return p
 }

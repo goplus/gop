@@ -21,6 +21,8 @@ import (
 	"io"
 	"reflect"
 	"strconv"
+
+	"github.com/qiniu/qlang/v6/exec.spec"
 )
 
 // -----------------------------------------------------------------------------
@@ -276,10 +278,10 @@ func (p *Builder) Resolve() *Code {
 // -----------------------------------------------------------------------------
 
 // Reserved represents a reserved instruction position.
-type Reserved int
+type Reserved = exec.Reserved
 
 // InvalidReserved is an invalid reserved position.
-const InvalidReserved Reserved = -1
+const InvalidReserved = exec.InvalidReserved
 
 // Reserve reserves an instruction.
 func (p *Builder) Reserve() Reserved {

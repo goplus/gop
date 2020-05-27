@@ -17,6 +17,7 @@
 package exec
 
 import (
+	"github.com/qiniu/qlang/v6/exec.spec"
 	"github.com/qiniu/x/log"
 )
 
@@ -102,7 +103,8 @@ func newSimpleContext(data []interface{}) *Context {
 }
 
 // NewContext returns a new context of an executor.
-func NewContext(code *Code) *Context {
+func NewContext(in exec.Code) *Context {
+	code := in.(*Code)
 	p := &Context{
 		Stack: NewStack(),
 		code:  code,

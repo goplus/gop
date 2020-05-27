@@ -237,7 +237,7 @@ func newVarManager(vars ...*Var) *varManager {
 	return &varManager{vlist: vars}
 }
 
-func (p *varManager) addVars(vars ...*Var) {
+func (p *varManager) addVar(vars ...*Var) {
 	n := len(p.vlist)
 	nestDepth := p.nestDepth
 	for i, v := range vars {
@@ -245,6 +245,17 @@ func (p *varManager) addVars(vars ...*Var) {
 		log.Debug("DefineVar:", v.Name(), "-", nestDepth)
 	}
 	p.vlist = append(p.vlist, vars...)
+}
+
+func (p *varManager) addVars(vars ...exec.Var) {
+	n := len(p.vlist)
+	nestDepth := p.nestDepth
+	for i, item := range vars {
+		v := item.(*Var)
+		v.SetAddr(nestDepth, uint32(i+n))
+		log.Debug("DefineVar:", v.Name(), "-", nestDepth)
+		p.vlist = append(p.vlist, v)
+	}
 }
 
 type blockCtx struct {
@@ -274,6 +285,12 @@ func (p *Builder) InCurrentCtx(v *Var) bool {
 
 // DefineVar defines variables.
 func (p *Builder) DefineVar(vars ...*Var) *Builder {
+	p.addVar(vars...)
+	return p
+}
+
+// DefineVars defines variables.
+func (p *Builder) DefineVars(vars ...exec.Var) *Builder {
 	p.addVars(vars...)
 	return p
 }

@@ -109,7 +109,7 @@ func TestNil(t *testing.T) {
 func TestReserve(t *testing.T) {
 	b := NewBuilder(nil)
 	off := b.Reserve()
-	off.Push(b, 1.12)
+	b.ReservedAsPush(off, 1.12)
 	code := b.Resolve()
 
 	ctx := NewContext(code)
@@ -117,6 +117,7 @@ func TestReserve(t *testing.T) {
 	if v := checkPop(ctx); v != 1.12 {
 		t.Fatal("1.12 != 1.12, ret =", v)
 	}
+	_ = b.Interface()
 }
 
 // -----------------------------------------------------------------------------

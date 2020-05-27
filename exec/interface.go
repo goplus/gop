@@ -50,9 +50,7 @@ func (p *iFuncInfo) Return(out ...exec.Var) exec.FuncInfo {
 	if p.vlist != nil {
 		log.Panicln("don't call DefineVar before calling Return.")
 	}
-	for _, v := range out {
-		p.addVars(v.(*Var))
-	}
+	p.addVars(out...)
 	p.numOut = len(out)
 	return p
 }
@@ -106,17 +104,22 @@ func (p *interfaceImpl) FindGoPackage(pkgPath string) exec.GoPackage {
 
 // GetGoFuncType returns a Go function's type.
 func (p *interfaceImpl) GetGoFuncType(addr exec.GoFuncAddr) reflect.Type {
-	panic("todo")
+	return reflect.TypeOf(gofuns[addr].This)
 }
 
 // GetGoFuncvType returns a Go function's type.
 func (p *interfaceImpl) GetGoFuncvType(addr exec.GoFuncvAddr) reflect.Type {
-	panic("todo")
+	return reflect.TypeOf(gofunvs[addr].This)
 }
 
 // -----------------------------------------------------------------------------
 
 type iBuilder Builder
+
+// Interface converts *Builder to exec.Builder interface.
+func (p *Builder) Interface() exec.Builder {
+	return (*iBuilder)(p)
+}
 
 // Push instr
 func (p *iBuilder) Push(val interface{}) exec.Builder {
@@ -282,107 +285,129 @@ func (p *iBuilder) EndFunc(fun exec.FuncInfo) exec.Builder {
 
 // DefineVar defines variables.
 func (p *iBuilder) DefineVar(vars ...exec.Var) exec.Builder {
-	panic("todo")
+	((*Builder)(p)).DefineVars(vars...)
+	return p
 }
 
 // InCurrentCtx returns if a variable is in current context or not.
 func (p *iBuilder) InCurrentCtx(v exec.Var) bool {
-	panic("todo")
+	return ((*Builder)(p)).InCurrentCtx(v.(*Var))
 }
 
 // LoadVar instr
 func (p *iBuilder) LoadVar(v exec.Var) exec.Builder {
-	panic("todo")
+	((*Builder)(p)).LoadVar(v.(*Var))
+	return p
 }
 
 // StoreVar instr
 func (p *iBuilder) StoreVar(v exec.Var) exec.Builder {
-	panic("todo")
+	((*Builder)(p)).StoreVar(v.(*Var))
+	return p
 }
 
 // AddrVar instr
 func (p *iBuilder) AddrVar(v exec.Var) exec.Builder {
-	panic("todo")
+	((*Builder)(p)).AddrVar(v.(*Var))
+	return p
 }
 
 // AddrOp instr
 func (p *iBuilder) AddrOp(kind exec.Kind, op exec.AddrOperator) exec.Builder {
-	panic("todo")
+	((*Builder)(p)).AddrOp(kind, op)
+	return p
 }
 
 // Append instr
 func (p *iBuilder) Append(typ reflect.Type, arity int) exec.Builder {
-	panic("todo")
+	((*Builder)(p)).Append(typ, arity)
+	return p
 }
 
 // MakeArray instr
 func (p *iBuilder) MakeArray(typ reflect.Type, arity int) exec.Builder {
-	panic("todo")
+	((*Builder)(p)).MakeArray(typ, arity)
+	return p
 }
 
 // MakeMap instr
 func (p *iBuilder) MakeMap(typ reflect.Type, arity int) exec.Builder {
-	panic("todo")
+	((*Builder)(p)).MakeMap(typ, arity)
+	return p
 }
 
 // Make instr
 func (p *iBuilder) Make(typ reflect.Type, arity int) exec.Builder {
-	panic("todo")
+	((*Builder)(p)).Make(typ, arity)
+	return p
 }
 
 // MapIndex instr
 func (p *iBuilder) MapIndex() exec.Builder {
-	panic("todo")
+	((*Builder)(p)).MapIndex()
+	return p
 }
 
 // SetMapIndex instr
 func (p *iBuilder) SetMapIndex() exec.Builder {
-	panic("todo")
+	((*Builder)(p)).SetMapIndex()
+	return p
 }
 
 // Index instr
 func (p *iBuilder) Index(idx int) exec.Builder {
-	panic("todo")
+	((*Builder)(p)).Index(idx)
+	return p
 }
 
 // SetIndex instr
 func (p *iBuilder) SetIndex(idx int) exec.Builder {
-	panic("todo")
+	((*Builder)(p)).SetIndex(idx)
+	return p
 }
 
 // Slice instr
 func (p *iBuilder) Slice(i, j int) exec.Builder {
-	panic("todo")
+	((*Builder)(p)).Slice(i, j)
+	return p
 }
 
 // Slice3 instr
 func (p *iBuilder) Slice3(i, j, k int) exec.Builder {
-	panic("todo")
+	((*Builder)(p)).Slice3(i, j, k)
+	return p
 }
 
 // TypeCast instr
 func (p *iBuilder) TypeCast(from, to reflect.Type) exec.Builder {
-	panic("todo")
+	((*Builder)(p)).TypeCast(from, to)
+	return p
 }
 
 // Zero instr
 func (p *iBuilder) Zero(typ reflect.Type) exec.Builder {
-	panic("todo")
+	((*Builder)(p)).Zero(typ)
+	return p
 }
 
 // Reserve reserves an instruction.
 func (p *iBuilder) Reserve() exec.Reserved {
-	panic("todo")
+	return ((*Builder)(p)).Reserve()
 }
 
-// ReservedPush sets Reserved as Push(v)
-func (p *iBuilder) ReservedPush(r exec.Reserved, v interface{}) {
-	panic("todo")
+// ReservedAsPush sets Reserved as Push(v)
+func (p *iBuilder) ReservedAsPush(r exec.Reserved, v interface{}) {
+	((*Builder)(p)).ReservedAsPush(r, v)
 }
 
 // GlobalInterface returns the global Interface.
 func (p *iBuilder) GlobalInterface() exec.Interface {
-	panic("todo")
+	return defaultImpl
+}
+
+// Resolve resolves all unresolved labels/functions/consts/etc.
+func (p *iBuilder) Resolve() exec.Code {
+	return ((*Builder)(p)).Resolve()
 }
 
 // -----------------------------------------------------------------------------

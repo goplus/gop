@@ -32,7 +32,7 @@ const InvalidReserved Reserved = -1
 
 // Push instr
 func (p Reserved) Push(b Builder, val interface{}) {
-	b.ReservedPush(p, val)
+	b.ReservedAsPush(p, val)
 }
 
 // ForPhrase represents a for range phrase.
@@ -108,6 +108,10 @@ type GoPackage interface {
 
 	// FindConst lookups a Go constant by name.
 	FindConst(name string) (ci *GoConstInfo, ok bool)
+}
+
+// A Code represents generated instructions to execute.
+type Code interface {
 }
 
 // Builder represents a executing byte code generator.
@@ -250,11 +254,14 @@ type Builder interface {
 	// Reserve reserves an instruction.
 	Reserve() Reserved
 
-	// ReservedPush sets Reserved as Push(v)
-	ReservedPush(r Reserved, v interface{})
+	// ReservedAsPush sets Reserved as Push(v)
+	ReservedAsPush(r Reserved, v interface{})
 
 	// GlobalInterface returns the global Interface.
 	GlobalInterface() Interface
+
+	// Resolve resolves all unresolved labels/functions/consts/etc.
+	Resolve() Code
 }
 
 // Interface represents all global functions of a executing byte code generator.
