@@ -71,12 +71,12 @@ const (
 type SymbolKind uint32
 
 const (
+	// SymbolVar - variable
+	SymbolVar SymbolKind = 0
 	// SymbolFunc - function
 	SymbolFunc SymbolKind = opCallGoFunc
 	// SymbolFuncv - variadic function
 	SymbolFuncv SymbolKind = opCallGoFuncv
-	// SymbolVar - variable
-	SymbolVar SymbolKind = 0
 )
 
 // GoPackage represents a Go package.

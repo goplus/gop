@@ -23,7 +23,7 @@ import (
 
 	"github.com/qiniu/qlang/v6/ast"
 	"github.com/qiniu/qlang/v6/ast/astutil"
-	"github.com/qiniu/qlang/v6/exec"
+	"github.com/qiniu/qlang/v6/exec.spec"
 	"github.com/qiniu/qlang/v6/token"
 	"github.com/qiniu/x/log"
 )
@@ -101,9 +101,9 @@ func compileIdentLHS(ctx *blockCtx, name string, mode compleMode) {
 	ctx.infer.PopN(1)
 	if v, ok := addr.(*execVar); ok {
 		if mode == token.ASSIGN || mode == token.DEFINE {
-			ctx.out.StoreVar((*exec.Var)(v))
+			ctx.out.StoreVar(v.v)
 		} else if op, ok := addrops[mode]; ok {
-			ctx.out.AddrVar((*exec.Var)(v)).AddrOp(v.Type.Kind(), op)
+			ctx.out.AddrVar(v.v).AddrOp(v.v.Type().Kind(), op)
 		} else {
 			log.Panicln("compileIdentLHS failed: unknown op -", mode)
 		}
@@ -135,9 +135,9 @@ func compileIdent(ctx *blockCtx, name string) func() {
 	if sym, ok := ctx.find(name); ok {
 		switch v := sym.(type) {
 		case *execVar:
-			ctx.infer.Push(&goValue{t: v.Type})
+			ctx.infer.Push(&goValue{t: v.v.Type()})
 			return func() {
-				ctx.out.LoadVar((*exec.Var)(v))
+				ctx.out.LoadVar(v.v)
 			}
 		case *stackVar:
 			ctx.infer.Push(&goValue{t: v.typ})
@@ -145,7 +145,7 @@ func compileIdent(ctx *blockCtx, name string) func() {
 				ctx.out.Load(v.index)
 			}
 		case string: // pkgPath
-			pkg := exec.FindGoPackage(v)
+			pkg := ctx.FindGoPackage(v)
 			if pkg == nil {
 				log.Panicln("compileIdent failed: package not found -", v)
 			}
@@ -166,7 +166,7 @@ func compileIdent(ctx *blockCtx, name string) func() {
 			switch kind {
 			case exec.SymbolVar:
 			case exec.SymbolFunc, exec.SymbolFuncv:
-				fn := newGoFunc(addr, kind, 0)
+				fn := newGoFunc(addr, kind, 0, ctx)
 				ctx.infer.Push(fn)
 				return func() {
 					log.Panicln("compileIdent todo: goFunc")
@@ -307,7 +307,7 @@ func compileSliceLit(ctx *blockCtx, v *ast.SliceLit) func() {
 
 func compileForPhrase(parent *blockCtx, f ast.ForPhrase, noExecCtx bool) (*blockCtx, func(exprElt func())) {
 	var typKey, typVal reflect.Type
-	var varKey, varVal *exec.Var
+	var varKey, varVal exec.Var
 	var ctx = newNormBlockCtxEx(parent, noExecCtx)
 
 	exprX := compileExpr(parent, f.X)
@@ -321,16 +321,16 @@ func compileForPhrase(parent *blockCtx, f ast.ForPhrase, noExecCtx bool) (*block
 		default:
 			log.Panicln("compileListComprehensionExpr: require slice, array or map")
 		}
-		varKey = (*exec.Var)(ctx.insertVar(f.Key.Name, typKey, true))
+		varKey = ctx.insertVar(f.Key.Name, typKey, true).v
 	}
 	if f.Value != nil {
 		typVal = typData.Elem()
-		varVal = (*exec.Var)(ctx.insertVar(f.Value.Name, typVal, true))
+		varVal = ctx.insertVar(f.Value.Name, typVal, true).v
 	}
 	return ctx, func(exprElt func()) {
 		exprX()
 		out := ctx.out
-		c := exec.NewForPhrase(typData)
+		c := ctx.NewForPhrase(typData)
 		out.ForPhrase(c, varKey, varVal, !noExecCtx)
 		if f.Cond != nil {
 			compileExpr(ctx, f.Cond)()
@@ -362,7 +362,7 @@ func compileListComprehensionExpr(parent *blockCtx, v *ast.ListComprehensionExpr
 			e, fn := exprElt, v
 			exprElt = func() { fn(e) }
 		}
-		c := exec.NewComprehension(typSlice)
+		c := ctx.NewComprehension(typSlice)
 		ctx.out.ListComprehension(c)
 		exprElt()
 		ctx.out.EndComprehension(c)
@@ -386,7 +386,7 @@ func compileMapComprehensionExpr(parent *blockCtx, v *ast.MapComprehensionExpr) 
 			e, fn := exprElt, v
 			exprElt = func() { fn(e) }
 		}
-		c := exec.NewComprehension(typMap)
+		c := ctx.NewComprehension(typMap)
 		ctx.out.MapComprehension(c)
 		exprElt()
 		ctx.out.EndComprehension(c)
@@ -714,14 +714,14 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 	switch vx := x.(type) {
 	case *nonValue:
 		switch nv := vx.v.(type) {
-		case *exec.GoPackage:
+		case exec.GoPackage:
 			addr, kind, ok := nv.Find(v.Sel.Name)
 			if !ok {
-				log.Panicln("compileSelectorExpr: not found -", nv.PkgPath, v.Sel.Name)
+				log.Panicln("compileSelectorExpr: not found -", nv.PkgPath(), v.Sel.Name)
 			}
 			switch kind {
 			case exec.SymbolFunc, exec.SymbolFuncv:
-				ctx.infer.Ret(1, newGoFunc(addr, kind, 0))
+				ctx.infer.Ret(1, newGoFunc(addr, kind, 0, ctx))
 				return func() {
 					log.Panicln("compileSelectorExpr: todo")
 				}
@@ -738,7 +738,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 			log.Panicln("compileSelectorExpr todo: structField -", t, sf)
 		}
 		pkgPath, method := normalizeMethod(n, t, name)
-		pkg := exec.FindGoPackage(pkgPath)
+		pkg := ctx.FindGoPackage(pkgPath)
 		if pkg == nil {
 			log.Panicln("compileSelectorExpr failed: package not found -", pkgPath)
 		}
@@ -746,7 +746,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 		if !ok {
 			log.Panicln("compileSelectorExpr: method not found -", method)
 		}
-		ctx.infer.Ret(1, newGoFunc(addr, kind, 1))
+		ctx.infer.Ret(1, newGoFunc(addr, kind, 1, ctx))
 		return func() {
 			log.Panicln("compileSelectorExpr: todo")
 		}

@@ -182,6 +182,8 @@ func (ctx *Context) Exec(ip, ipEnd int) {
 }
 
 var _execTable = [...]func(i Instr, p *Context){
+	opCallGoFunc:    execGoFunc,
+	opCallGoFuncv:   execGoFuncv,
 	opPushInt:       execPushInt,
 	opPushUint:      execPushUint,
 	opPushValSpec:   execPushValSpec,
@@ -194,8 +196,6 @@ var _execTable = [...]func(i Instr, p *Context){
 	opJmpIf:         execJmpIf,
 	opCaseNE:        execCaseNE,
 	opPop:           execPop,
-	opCallGoFunc:    execGoFunc,
-	opCallGoFuncv:   execGoFuncv,
 	opLoadVar:       execLoadVar,
 	opStoreVar:      execStoreVar,
 	opAddrVar:       execAddrVar,

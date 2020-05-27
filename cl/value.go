@@ -20,7 +20,7 @@ import (
 	"reflect"
 
 	"github.com/qiniu/qlang/v6/ast/astutil"
-	"github.com/qiniu/qlang/v6/exec"
+	"github.com/qiniu/qlang/v6/exec.spec"
 	"github.com/qiniu/x/log"
 )
 
@@ -124,7 +124,7 @@ func newQlFunc(f *funcDecl) *qlFunc {
 	return (*qlFunc)(f)
 }
 
-func (p *qlFunc) FuncInfo() *exec.FuncInfo {
+func (p *qlFunc) FuncInfo() exec.FuncInfo {
 	return ((*funcDecl)(p)).getFuncInfo()
 }
 
@@ -155,23 +155,23 @@ func (p *qlFunc) Proto() iFuncType {
 // -----------------------------------------------------------------------------
 
 type goFunc struct {
-	v        *exec.GoFuncInfo
+	t        reflect.Type
 	addr     uint32
 	kind     exec.SymbolKind
 	isMethod int // 0 - global func, 1 - method
 }
 
-func newGoFunc(addr uint32, kind exec.SymbolKind, isMethod int) *goFunc {
-	var fi *exec.GoFuncInfo
+func newGoFunc(addr uint32, kind exec.SymbolKind, isMethod int, ctx *blockCtx) *goFunc {
+	var t reflect.Type
 	switch kind {
 	case exec.SymbolFunc:
-		fi = exec.GoFuncAddr(addr).GetInfo()
+		t = ctx.GetGoFuncType(exec.GoFuncAddr(addr))
 	case exec.SymbolFuncv:
-		fi = exec.GoFuncvAddr(addr).GetInfo()
+		t = ctx.GetGoFuncvType(exec.GoFuncvAddr(addr))
 	default:
 		log.Panicln("getGoFunc: unknown -", kind, addr)
 	}
-	return &goFunc{v: fi, addr: addr, kind: kind, isMethod: isMethod}
+	return &goFunc{t: t, addr: addr, kind: kind, isMethod: isMethod}
 }
 
 func (p *goFunc) Kind() iKind {
@@ -179,7 +179,7 @@ func (p *goFunc) Kind() iKind {
 }
 
 func (p *goFunc) Type() reflect.Type {
-	return reflect.TypeOf(p.v.This)
+	return p.t
 }
 
 func (p *goFunc) NumValues() int {
@@ -191,11 +191,11 @@ func (p *goFunc) Value(i int) iValue {
 }
 
 func (p *goFunc) Results() iValue {
-	return newFuncResults(reflect.TypeOf(p.v.This))
+	return newFuncResults(p.t)
 }
 
 func (p *goFunc) Proto() iFuncType {
-	return reflect.TypeOf(p.v.This)
+	return p.t
 }
 
 // -----------------------------------------------------------------------------
@@ -264,7 +264,7 @@ func boundType(in iValue) reflect.Type {
 	return in.Type()
 }
 
-func (p *constVal) bound(t reflect.Type, b *exec.Builder) {
+func (p *constVal) bound(t reflect.Type, b exec.Builder) {
 	kind := t.Kind()
 	if p.reserve == exec.InvalidReserved { // bounded
 		if p.kind != kind {
@@ -306,7 +306,7 @@ func binaryOp(op exec.Operator, x, y *constVal) *constVal {
 	if !xok || !yok {
 		log.Panicln("binaryOp failed: invalid argument type -", t)
 	}
-	v := exec.CallBuiltinOp(kindReal, op, vx, vy)
+	v := CallBuiltinOp(kindReal, op, vx, vy)
 	return &constVal{kind: kind, v: v, reserve: -1}
 }
 

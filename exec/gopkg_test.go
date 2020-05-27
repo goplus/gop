@@ -28,6 +28,9 @@ import (
 
 func init() {
 	log.SetOutputLevel(log.Ldebug)
+	if opCallGoFunc != 1 || opCallGoFuncv != 2 {
+		panic("opCallGoFunc != 1 || opCallGoFuncv != 2")
+	}
 }
 
 func Strcat(a, b string) string {

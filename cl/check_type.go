@@ -21,7 +21,7 @@ import (
 	"reflect"
 
 	"github.com/qiniu/qlang/v6/ast"
-	"github.com/qiniu/qlang/v6/exec"
+	"github.com/qiniu/qlang/v6/exec.spec"
 	"github.com/qiniu/qlang/v6/token"
 	"github.com/qiniu/x/log"
 )
@@ -98,14 +98,14 @@ func checkFuncCall(tfn iFuncType, isMethod int, v *ast.CallExpr, ctx *blockCtx) 
 	return
 }
 
-func checkFuncArgs(tfn iFuncType, args []interface{}, b *exec.Builder) {
+func checkFuncArgs(tfn iFuncType, args []interface{}, b exec.Builder) {
 	for i, arg := range args {
 		texp := tfn.In(i)
 		checkType(texp, arg, b)
 	}
 }
 
-func checkBinaryOp(kind exec.Kind, op exec.Operator, x, y interface{}, b *exec.Builder) {
+func checkBinaryOp(kind exec.Kind, op exec.Operator, x, y interface{}, b exec.Builder) {
 	if xcons, xok := x.(*constVal); xok {
 		if xcons.reserve != -1 {
 			xv, ok := boundConst(xcons.v, exec.TypeFromKind(kind))
@@ -133,7 +133,7 @@ func checkBinaryOp(kind exec.Kind, op exec.Operator, x, y interface{}, b *exec.B
 	}
 }
 
-func checkType(t reflect.Type, v interface{}, b *exec.Builder) {
+func checkType(t reflect.Type, v interface{}, b exec.Builder) {
 	if cons, ok := v.(*constVal); ok {
 		cons.bound(t, b)
 	} else {
@@ -153,7 +153,7 @@ func checkType(t reflect.Type, v interface{}, b *exec.Builder) {
 	}
 }
 
-func checkIntType(v interface{}, b *exec.Builder) {
+func checkIntType(v interface{}, b exec.Builder) {
 	if cons, ok := v.(*constVal); ok {
 		cons.bound(exec.TyInt, b)
 	} else {
@@ -173,13 +173,13 @@ func checkIntType(v interface{}, b *exec.Builder) {
 	}
 }
 
-func checkElementType(t reflect.Type, elts []interface{}, i, n, step int, b *exec.Builder) {
+func checkElementType(t reflect.Type, elts []interface{}, i, n, step int, b exec.Builder) {
 	for ; i < n; i += step {
 		checkType(t, elts[i], b)
 	}
 }
 
-func checkCaseCompare(x, y interface{}, b *exec.Builder) {
+func checkCaseCompare(x, y interface{}, b exec.Builder) {
 	kind, _ := binaryOpResult(exec.OpEQ, x, y)
 	checkBinaryOp(kind, exec.OpEQ, x, y, b)
 }

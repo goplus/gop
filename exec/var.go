@@ -302,7 +302,7 @@ func (p *Builder) InCurrentCtx(v *Var) bool {
 	return p.nestDepth == v.nestDepth
 }
 
-// DefineVar defines all local variable of a function (closure).
+// DefineVar defines variables.
 func (p *Builder) DefineVar(vars ...*Var) *Builder {
 	p.addVars(vars...)
 	return p

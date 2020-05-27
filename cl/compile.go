@@ -24,7 +24,7 @@ import (
 
 	"github.com/qiniu/qlang/v6/ast"
 	"github.com/qiniu/qlang/v6/ast/astutil"
-	"github.com/qiniu/qlang/v6/exec"
+	"github.com/qiniu/qlang/v6/exec.spec"
 	"github.com/qiniu/qlang/v6/token"
 	"github.com/qiniu/x/log"
 )
@@ -46,17 +46,24 @@ var (
 	ErrSymbolNotType = errors.New("symbol exists but not a type")
 )
 
+var (
+	// CallBuiltinOp calls BuiltinOp
+	CallBuiltinOp func(kind exec.Kind, op exec.Operator, data ...interface{}) interface{}
+)
+
 // -----------------------------------------------------------------------------
 
 type pkgCtx struct {
+	exec.Interface
 	infer   exec.Stack
-	builtin *exec.GoPackage
-	out     *exec.Builder
+	builtin exec.GoPackage
+	out     exec.Builder
 	usedfns []*funcDecl
 }
 
-func newPkgCtx(out *exec.Builder) *pkgCtx {
-	p := &pkgCtx{builtin: exec.FindGoPackage(""), out: out}
+func newPkgCtx(out exec.Builder) *pkgCtx {
+	g := out.GlobalInterface()
+	p := &pkgCtx{Interface: g, builtin: g.FindGoPackage(""), out: out}
 	p.infer.Init()
 	return p
 }
@@ -105,14 +112,16 @@ type iVar interface {
 	getType() reflect.Type
 }
 
-type execVar exec.Var
+type execVar struct {
+	v exec.Var
+}
 
 func (p *execVar) inCurrentCtx(ctx *blockCtx) bool {
-	return ctx.out.InCurrentCtx((*exec.Var)(p))
+	return ctx.out.InCurrentCtx(p.v)
 }
 
 func (p *execVar) getType() reflect.Type {
-	return p.Type
+	return p.v.Type()
 }
 
 type stackVar struct {
@@ -134,7 +143,7 @@ type blockCtx struct {
 	*pkgCtx
 	file      *fileCtx
 	parent    *blockCtx
-	fun       *exec.FuncInfo
+	fun       exec.FuncInfo
 	syms      map[string]iSymbol
 	noExecCtx bool
 	checkFlag bool
@@ -242,7 +251,7 @@ func (p *blockCtx) findVar(name string) (addr iVar, err error) {
 	return nil, ErrSymbolNotVariable
 }
 
-func (p *blockCtx) insertFuncVars(in []reflect.Type, args []string, rets []*exec.Var) {
+func (p *blockCtx) insertFuncVars(in []reflect.Type, args []string, rets []exec.Var) {
 	n := len(args)
 	if n > 0 {
 		for i := n - 1; i >= 0; i-- {
@@ -260,7 +269,7 @@ func (p *blockCtx) insertFuncVars(in []reflect.Type, args []string, rets []*exec
 		if ret.IsUnnamedOut() {
 			continue
 		}
-		p.syms[ret.Name()] = (*execVar)(ret)
+		p.syms[ret.Name()] = &execVar{ret}
 	}
 }
 
@@ -268,12 +277,13 @@ func (p *blockCtx) insertVar(name string, typ reflect.Type, inferOnly ...bool) *
 	if p.exists(name) {
 		log.Panicln("insertVar failed: symbol exists -", name)
 	}
-	v := exec.NewVar(typ, name)
+	v := p.NewVar(typ, name)
 	if inferOnly == nil {
 		p.out.DefineVar(v)
 	}
-	p.syms[name] = (*execVar)(v)
-	return (*execVar)(v)
+	ev := &execVar{v}
+	p.syms[name] = ev
+	return ev
 }
 
 func (p *blockCtx) insertFunc(name string, fun *funcDecl) {
@@ -314,7 +324,7 @@ type Package struct {
 }
 
 // NewPackage creates a qlang package instance.
-func NewPackage(out *exec.Builder, pkg *ast.Package) (p *Package, err error) {
+func NewPackage(out exec.Builder, pkg *ast.Package) (p *Package, err error) {
 	if pkg == nil {
 		log.Panicln("NewPackage failed: nil ast.Package")
 	}
