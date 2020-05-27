@@ -717,6 +717,7 @@ func compileIdx(ctx *blockCtx, v ast.Expr, nlast int, kind reflect.Kind) int {
 
 func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr) func() { // x[i]
 	var kind reflect.Kind
+	var typElem reflect.Type
 	exprX := compileExpr(ctx, v.X)
 	x := ctx.infer.Get(-1)
 	typ := x.(iValue).Type()
@@ -726,11 +727,16 @@ func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr) func() { // x[i]
 			logPanic(ctx, v, `type *%v does not support indexing`, typ)
 		}
 	}
-	ctx.infer.Ret(1, &goValue{typ.Elem()})
+	if kind == reflect.String {
+		typElem = exec.TyByte
+	} else {
+		typElem = typ.Elem()
+	}
+	ctx.infer.Ret(1, &goValue{typElem})
 	return func() {
 		exprX()
 		switch kind {
-		case reflect.Slice, reflect.Array:
+		case reflect.String, reflect.Slice, reflect.Array:
 			n := compileIdx(ctx, v.Index, 1<<32, kind)
 			ctx.out.Index(n)
 		case reflect.Map:

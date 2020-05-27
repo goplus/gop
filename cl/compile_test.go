@@ -123,7 +123,7 @@ var fsTestBasic2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	title := "Hello,world!2020-05-27"
 	s := title[0:len(title)-len("2006-01-02")]
 	slice = slice[:3:10]
-	println(s, len(s), arr[:1], len(arr), cap(arr), slice, len(slice), cap(slice))
+	println(s, len(s), s[0], s[:2], arr[:1], len(arr), cap(arr), slice, len(slice), cap(slice))
 `)
 
 func TestBasic2(t *testing.T) {
@@ -147,7 +147,7 @@ func TestBasic2(t *testing.T) {
 	if v := ctx.Get(-1); v != nil {
 		t.Fatal("error:", v)
 	}
-	if v := ctx.Get(-2); v != int(37) {
+	if v := ctx.Get(-2); v != int(43) {
 		t.Fatal("n:", v)
 	}
 }
