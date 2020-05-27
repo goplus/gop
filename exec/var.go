@@ -19,86 +19,51 @@ package exec
 import (
 	"reflect"
 
+	"github.com/qiniu/qlang/v6/exec.spec"
 	"github.com/qiniu/x/log"
 )
 
 // -----------------------------------------------------------------------------
 
 // AddrOperator type.
-type AddrOperator Operator
+type AddrOperator = exec.AddrOperator
 
 const (
 	// OpAddrVal `*addr`
-	OpAddrVal = AddrOperator(0)
+	OpAddrVal = exec.OpAddrVal
 	// OpAddAssign `+=`
-	OpAddAssign = AddrOperator(OpAdd)
+	OpAddAssign = exec.OpAddAssign
 	// OpSubAssign `-=`
-	OpSubAssign = AddrOperator(OpSub)
+	OpSubAssign = exec.OpSubAssign
 	// OpMulAssign `*=`
-	OpMulAssign = AddrOperator(OpMul)
+	OpMulAssign = exec.OpMulAssign
 	// OpDivAssign `/=`
-	OpDivAssign = AddrOperator(OpDiv)
+	OpDivAssign = exec.OpDivAssign
 	// OpModAssign `%=`
-	OpModAssign = AddrOperator(OpMod)
+	OpModAssign = exec.OpModAssign
 
 	// OpBitAndAssign '&='
-	OpBitAndAssign = AddrOperator(OpBitAnd)
+	OpBitAndAssign = exec.OpBitAndAssign
 	// OpBitOrAssign '|='
-	OpBitOrAssign = AddrOperator(OpBitOr)
+	OpBitOrAssign = exec.OpBitOrAssign
 	// OpBitXorAssign '^='
-	OpBitXorAssign = AddrOperator(OpBitXor)
+	OpBitXorAssign = exec.OpBitXorAssign
 	// OpBitAndNotAssign '&^='
-	OpBitAndNotAssign = AddrOperator(OpBitAndNot)
+	OpBitAndNotAssign = exec.OpBitAndNotAssign
 	// OpBitSHLAssign '<<='
-	OpBitSHLAssign = AddrOperator(OpBitSHL)
+	OpBitSHLAssign = exec.OpBitSHLAssign
 	// OpBitSHRAssign '>>='
-	OpBitSHRAssign = AddrOperator(OpBitSHR)
+	OpBitSHRAssign = exec.OpBitSHRAssign
 	// OpAssign `=`
-	OpAssign AddrOperator = iota
+	OpAssign = exec.OpAssign
 	// OpInc '++'
-	OpInc
+	OpInc = exec.OpInc
 	// OpDec '--'
-	OpDec
+	OpDec = exec.OpDec
 )
 
 // AddrOperatorInfo represents an addr-operator information.
-type AddrOperatorInfo struct {
-	Lit      string
-	InFirst  uint64 // first argument supported types.
-	InSecond uint64 // second argument supported types. It may have SameAsFirst flag.
-}
-
-var addropInfos = [...]AddrOperatorInfo{
-	OpAddAssign:       {"+=", bitsAllNumber | bitString, bitSameAsFirst},
-	OpSubAssign:       {"-=", bitsAllNumber, bitSameAsFirst},
-	OpMulAssign:       {"*=", bitsAllNumber, bitSameAsFirst},
-	OpDivAssign:       {"/=", bitsAllNumber, bitSameAsFirst},
-	OpModAssign:       {"%=", bitsAllIntUint, bitSameAsFirst},
-	OpBitAndAssign:    {"&=", bitsAllIntUint, bitSameAsFirst},
-	OpBitOrAssign:     {"|=", bitsAllIntUint, bitSameAsFirst},
-	OpBitXorAssign:    {"^=", bitsAllIntUint, bitSameAsFirst},
-	OpBitAndNotAssign: {"&^=", bitsAllIntUint, bitSameAsFirst},
-	OpBitSHLAssign:    {"<<=", bitsAllIntUint, bitsAllIntUint},
-	OpBitSHRAssign:    {">>=", bitsAllIntUint, bitsAllIntUint},
-	OpInc:             {"++", bitsAllNumber, bitNone},
-	OpDec:             {"--", bitsAllNumber, bitNone},
-}
-
-// GetInfo returns the information of this operator.
-func (op AddrOperator) GetInfo() *AddrOperatorInfo {
-	return &addropInfos[op]
-}
-
-func (op AddrOperator) String() string {
-	switch op {
-	case OpAddrVal:
-		return "*"
-	case OpAssign:
-		return "="
-	default:
-		return addropInfos[op].Lit
-	}
-}
+type AddrOperatorInfo = exec.AddrOperatorInfo
 
 // -----------------------------------------------------------------------------
 

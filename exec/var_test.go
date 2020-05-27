@@ -31,7 +31,8 @@ func TestVar(t *testing.T) {
 
 	x := NewVar(TyString, "x")
 	y := NewVar(TyString, "y")
-	code := NewBuilder(nil).
+	b := NewBuilder(nil)
+	code := b.
 		DefineVar(x, y).
 		Push(5).
 		Push("32").
@@ -48,6 +49,8 @@ func TestVar(t *testing.T) {
 	if v := ctx.getVar(1); v != "78532" {
 		t.Fatal("y != 78532, ret =", v)
 	}
+	_ = x.Type()
+	_ = b.InCurrentCtx(x)
 }
 
 func TestParentCtx(t *testing.T) {

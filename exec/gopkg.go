@@ -287,13 +287,13 @@ var (
 )
 
 // GoFuncAddr represents a Go function address.
-type GoFuncAddr uint32
+type GoFuncAddr = exec.GoFuncAddr
 
 // GoFuncvAddr represents a variadic Go function address.
-type GoFuncvAddr uint32
+type GoFuncvAddr = exec.GoFuncvAddr
 
 // GoVarAddr represents a variadic Go variable address.
-type GoVarAddr uint32
+type GoVarAddr = exec.GoVarAddr
 
 // GoFuncInfo represents a Go function information.
 type GoFuncInfo struct {
@@ -331,30 +331,6 @@ type GoVarInfo struct {
 	Pkg  *GoPackage
 	Name string
 	Addr interface{}
-}
-
-// GetInfo returns a Go function info.
-func (i GoFuncAddr) GetInfo() *GoFuncInfo {
-	if i < GoFuncAddr(len(gofuns)) {
-		return &gofuns[i]
-	}
-	return nil
-}
-
-// GetInfo returns a Go function info.
-func (i GoFuncvAddr) GetInfo() *GoFuncInfo {
-	if i < GoFuncvAddr(len(gofunvs)) {
-		return &gofunvs[i].GoFuncInfo
-	}
-	return nil
-}
-
-// GetInfo returns a Go variable info.
-func (i GoVarAddr) GetInfo() *GoVarInfo {
-	if i < GoVarAddr(len(govars)) {
-		return &govars[i]
-	}
-	return nil
 }
 
 // CallGoFunc instr

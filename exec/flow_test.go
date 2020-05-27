@@ -44,6 +44,7 @@ func TestIf1(t *testing.T) {
 	if v := checkPop(ctx); v != 8 {
 		t.Fatal("50 6 div != 8, ret =", v)
 	}
+	_ = label1.Name()
 }
 
 func TestIf2(t *testing.T) {

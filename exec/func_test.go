@@ -30,7 +30,6 @@ func TestFunc(t *testing.T) {
 	if !ok {
 		t.Fatal("FindFunc failed: strcat")
 	}
-	fmt.Println("strcat:", strcat.GetInfo())
 
 	foo := NewFunc("foo", 1)
 	ret := NewVar(TyString, "1")
@@ -54,6 +53,10 @@ func TestFunc(t *testing.T) {
 	if v := checkPop(ctx); v != "xsw" {
 		t.Fatal("`x` `sw` foo != `xsw`, ret =", v)
 	}
+	_ = foo.Name()
+	_ = foo.NumOut()
+	_ = foo.Out(0)
+	_ = foo.IsUnnamedOut()
 }
 
 func TestFuncv(t *testing.T) {
@@ -61,7 +64,6 @@ func TestFuncv(t *testing.T) {
 	if !ok {
 		t.Fatal("FindFunc failed: Sprintf")
 	}
-	fmt.Println("sprintf:", sprintf.GetInfo())
 
 	tyInterfaceSlice := reflect.SliceOf(TyEmptyInterface)
 
@@ -97,6 +99,8 @@ func TestFuncv(t *testing.T) {
 		Load(-2).
 		Load(-1).
 		CallFuncv(foo, -1). // foo(format, args...)
+		Push("123").
+		Store(-2). // format = "123"
 		Return(2).
 		EndFunc(bar).
 		Resolve()
@@ -163,7 +167,6 @@ func TestClosure(t *testing.T) {
 	if !ok {
 		t.Fatal("FindFunc failed: strcat")
 	}
-	fmt.Println("strcat:", strcat.GetInfo())
 
 	foo := NewFunc("foo", 1)
 	ret := NewVar(TyString, "1")
@@ -197,7 +200,6 @@ func TestClosure2(t *testing.T) {
 	if !ok {
 		t.Fatal("FindFunc failed: Sprintf")
 	}
-	fmt.Println("sprintf:", sprintf.GetInfo())
 
 	tyInterfaceSlice := reflect.SliceOf(TyEmptyInterface)
 
@@ -245,7 +247,6 @@ func TestGoClosure(t *testing.T) {
 	if !ok {
 		t.Fatal("FindFunc failed: Sprintf")
 	}
-	fmt.Println("sprintf:", sprintf.GetInfo())
 
 	tyInterfaceSlice := reflect.SliceOf(TyEmptyInterface)
 

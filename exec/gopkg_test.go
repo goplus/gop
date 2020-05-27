@@ -80,6 +80,7 @@ func init() {
 		I.Rtype(reflect.TypeOf((*Stack)(nil))),
 		I.Type("rune", TyRune),
 	)
+	_ = I.PkgPath()
 }
 
 func TestVarAndConst(t *testing.T) {
@@ -91,10 +92,6 @@ func TestVarAndConst(t *testing.T) {
 	}
 	if addr, ok := I.FindVar("x"); !ok || addr != 0 {
 		t.Fatal("FindVar failed:", addr)
-	} else {
-		if addr.GetInfo().Name != "x" {
-			t.Fatal("var.GetInfo failed:", *addr.GetInfo())
-		}
 	}
 }
 
@@ -123,8 +120,6 @@ func TestSprintf(t *testing.T) {
 	if !ok || !ok2 {
 		t.Fatal("FindFunc failed: Sprintf/strcat")
 	}
-	fmt.Println("sprintf:", sprintf.GetInfo())
-	fmt.Println("strcat:", strcat.GetInfo())
 
 	code := NewBuilder(nil).
 		Push("Hello, %v, %d, %s").

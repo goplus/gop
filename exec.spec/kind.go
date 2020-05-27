@@ -141,6 +141,11 @@ func SizeofKind(kind Kind) uintptr {
 	return builtinTypes[kind].size
 }
 
+const (
+	// BuiltinTypesLen - len(builtinTypes)
+	BuiltinTypesLen = len(builtinTypes)
+)
+
 // -----------------------------------------------------------------------------
 
 // A ConstKind represents the specific kind of type that a Type represents.

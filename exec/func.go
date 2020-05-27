@@ -19,6 +19,7 @@ package exec
 import (
 	"reflect"
 
+	"github.com/qiniu/qlang/v6/exec.spec"
 	"github.com/qiniu/x/log"
 )
 
@@ -295,7 +296,7 @@ func (p *FuncInfo) execVariadic(arity uint32, stk *Stack, parent *Context) {
 	if arity > n {
 		tVariadic := p.in[n]
 		nVariadic := int(arity - n)
-		if tVariadic == TyEmptyInterfaceSlice {
+		if tVariadic == exec.TyEmptyInterfaceSlice {
 			var empty []interface{}
 			stk.Ret(nVariadic, append(empty, stk.GetArgs(nVariadic)...))
 		} else {
@@ -309,9 +310,6 @@ func (p *FuncInfo) execVariadic(arity uint32, stk *Stack, parent *Context) {
 	}
 	p.exec(stk, parent)
 }
-
-// TyEmptyInterfaceSlice type
-var TyEmptyInterfaceSlice = reflect.SliceOf(TyEmptyInterface)
 
 // -----------------------------------------------------------------------------
 

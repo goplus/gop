@@ -225,3 +225,12 @@ func (op AddrOperator) String() string {
 }
 
 // -----------------------------------------------------------------------------
+
+const (
+	// BitNone - bitNone
+	BitNone = bitNone
+	// BitsAllIntUint - bitsAllIntUint
+	BitsAllIntUint = bitsAllIntUint
+)
+
+// -----------------------------------------------------------------------------

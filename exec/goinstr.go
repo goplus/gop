@@ -19,6 +19,7 @@ package exec
 import (
 	"reflect"
 
+	"github.com/qiniu/qlang/v6/exec.spec"
 	"github.com/qiniu/x/log"
 )
 
@@ -519,8 +520,7 @@ func (p *Builder) Zero(typ reflect.Type) *Builder {
 
 func (p *Builder) requireType(typ reflect.Type) uint32 {
 	kind := typ.Kind()
-	bt := builtinTypes[kind]
-	if bt.size > 0 {
+	if exec.SizeofKind(kind) > 0 {
 		return uint32(kind)
 	}
 	return p.newType(typ)
@@ -531,17 +531,17 @@ func (p *Builder) newType(typ reflect.Type) uint32 {
 		return ityp
 	}
 	code := p.code
-	ityp := uint32(len(code.types) + len(builtinTypes))
+	ityp := uint32(len(code.types) + exec.BuiltinTypesLen)
 	code.types = append(code.types, typ)
 	p.types[typ] = ityp
 	return ityp
 }
 
 func getType(ityp uint32, ctx *Context) reflect.Type {
-	if ityp < uint32(len(builtinTypes)) {
-		return builtinTypes[ityp].typ
+	if ityp < uint32(exec.BuiltinTypesLen) {
+		return exec.TypeFromKind(exec.Kind(ityp))
 	}
-	return ctx.code.types[ityp-uint32(len(builtinTypes))]
+	return ctx.code.types[ityp-uint32(exec.BuiltinTypesLen)]
 }
 
 // -----------------------------------------------------------------------------

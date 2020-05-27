@@ -16,7 +16,62 @@
 
 package exec
 
-import "github.com/qiniu/x/log"
+import (
+	"github.com/qiniu/qlang/v6/exec.spec"
+	"github.com/qiniu/x/log"
+)
+
+var (
+	// TyBool type
+	TyBool = exec.TyBool
+	// TyInt type
+	TyInt = exec.TyInt
+	// TyInt8 type
+	TyInt8 = exec.TyInt8
+	// TyInt16 type
+	TyInt16 = exec.TyInt16
+	// TyInt32 type
+	TyInt32 = exec.TyInt32
+	// TyInt64 type
+	TyInt64 = exec.TyInt64
+	// TyUint type
+	TyUint = exec.TyUint
+	// TyUint8 type
+	TyUint8 = exec.TyUint8
+	// TyUint16 type
+	TyUint16 = exec.TyUint16
+	// TyUint32 type
+	TyUint32 = exec.TyUint32
+	// TyUint64 type
+	TyUint64 = exec.TyUint64
+	// TyUintptr type
+	TyUintptr = exec.TyUintptr
+	// TyFloat32 type
+	TyFloat32 = exec.TyFloat32
+	// TyFloat64 type
+	TyFloat64 = exec.TyFloat64
+	// TyComplex64 type
+	TyComplex64 = exec.TyComplex64
+	// TyComplex128 type
+	TyComplex128 = exec.TyComplex128
+	// TyString type
+	TyString = exec.TyString
+	// TyUnsafePointer type
+	TyUnsafePointer = exec.TyUnsafePointer
+	// TyEmptyInterface type
+	TyEmptyInterface = exec.TyEmptyInterface
+	// TyError type
+	TyError = exec.TyError
+)
+
+var (
+	// TyByte type
+	TyByte = exec.TyByte
+	// TyRune type
+	TyRune = exec.TyRune
+	// TyEmptyInterfaceSlice type
+	TyEmptyInterfaceSlice = exec.TyEmptyInterfaceSlice
+)
 
 // -----------------------------------------------------------------------------
 
