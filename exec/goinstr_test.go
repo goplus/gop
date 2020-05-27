@@ -22,7 +22,7 @@ import (
 )
 
 func TestLargeSlice(t *testing.T) {
-	b := NewBuilder(nil)
+	b := newBuilder()
 	ret := []string{}
 	for i := 0; i < bitsFuncvArityMax+1; i++ {
 		b.Push("32")
@@ -41,7 +41,7 @@ func TestLargeSlice(t *testing.T) {
 }
 
 func TestLargeArray(t *testing.T) {
-	b := NewBuilder(nil)
+	b := newBuilder()
 	ret := [bitsFuncvArityMax + 1]string{}
 	for i := 0; i < bitsFuncvArityMax+1; i++ {
 		b.Push("32")
@@ -59,7 +59,7 @@ func TestLargeArray(t *testing.T) {
 }
 
 func TestMap(t *testing.T) {
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push("Hello").
 		Push(3.2).
 		Push("xsw").
@@ -75,7 +75,7 @@ func TestMap(t *testing.T) {
 }
 
 func TestMapIndex(t *testing.T) {
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push("Hello").
 		Push(3.2).
 		Push("xsw").
@@ -94,7 +94,7 @@ func TestMapIndex(t *testing.T) {
 
 func TestSetMapIndex(t *testing.T) {
 	a := NewVar(reflect.MapOf(TyString, TyFloat64), "")
-	code := NewBuilder(nil).
+	code := newBuilder().
 		DefineVar(a).
 		Push(2.0).
 		Push("Hello").
@@ -120,9 +120,9 @@ func TestMapComprehension(t *testing.T) {
 	typData := reflect.MapOf(TyString, TyInt)
 	key := NewVar(TyString, "k")
 	val := NewVar(TyInt, "v")
-	f := NewForPhrase(typData)
-	c := NewComprehension(reflect.MapOf(TyInt, TyString))
-	code := NewBuilder(nil).
+	f := defaultImpl.NewForPhrase(typData).(*ForPhrase)
+	c := defaultImpl.NewComprehension(reflect.MapOf(TyInt, TyString)).(*Comprehension)
+	code := newBuilder().
 		MapComprehension(c).
 		Push("Hello").
 		Push(3).
@@ -149,7 +149,7 @@ func TestMapComprehensionFilter(t *testing.T) {
 	val := NewVar(TyInt, "v")
 	f := NewForPhrase(typData)
 	c := NewComprehension(reflect.MapOf(TyInt, TyString))
-	code := NewBuilder(nil).
+	code := newBuilder().
 		MapComprehension(c).
 		Push("Hello").
 		Push(3).
@@ -179,7 +179,7 @@ func TestListComprehension(t *testing.T) {
 	x := NewVar(TyInt, "x")
 	f := NewForPhrase(typData)
 	c := NewComprehension(reflect.SliceOf(TyInt))
-	code := NewBuilder(nil).
+	code := newBuilder().
 		ListComprehension(c).
 		Push(1).
 		Push(3).
@@ -206,7 +206,7 @@ func TestListComprehensionFilter(t *testing.T) {
 	x := NewVar(TyInt, "x")
 	f := NewForPhrase(typData)
 	c := NewComprehension(reflect.SliceOf(TyInt))
-	code := NewBuilder(nil).
+	code := newBuilder().
 		ListComprehension(c).
 		Push(1).
 		Push(3).
@@ -238,7 +238,7 @@ func TestMapComprehension2(t *testing.T) {
 	x := NewVar(TyInt, "x")
 	f := NewForPhrase(typData)
 	c := NewComprehension(reflect.MapOf(TyInt, TyInt))
-	code := NewBuilder(nil).
+	code := newBuilder().
 		MapComprehension(c).
 		Push(1).
 		Push(3).
@@ -268,7 +268,7 @@ func TestListComprehensionEx(t *testing.T) {
 	fa := NewForPhrase(typData)
 	fb := NewForPhrase(typData)
 	c := NewComprehension(typData)
-	code := NewBuilder(nil).
+	code := newBuilder().
 		ListComprehension(c).
 		Push(5).
 		Push(6).
@@ -301,7 +301,7 @@ func TestListComprehensionEx(t *testing.T) {
 }
 
 func TestZero(t *testing.T) {
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Zero(TyFloat64).
 		Push(3.2).
 		BuiltinOp(Float64, OpAdd).
@@ -315,7 +315,7 @@ func TestZero(t *testing.T) {
 }
 
 func TestIndex(t *testing.T) {
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(3.2).
 		Push(1.2).
 		Push(2.4).
@@ -331,7 +331,7 @@ func TestIndex(t *testing.T) {
 }
 
 func TestIndex2(t *testing.T) {
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(3.2).
 		Push(1.2).
 		Push(2.4).
@@ -349,7 +349,7 @@ func TestIndex2(t *testing.T) {
 
 func TestSetIndex(t *testing.T) {
 	a := NewVar(reflect.SliceOf(TyFloat64), "")
-	code := NewBuilder(nil).
+	code := newBuilder().
 		DefineVar(a).
 		Push(0.7).
 		Push(3.2).
@@ -372,7 +372,7 @@ func TestSetIndex(t *testing.T) {
 
 func TestSetLargeIndex(t *testing.T) {
 	a := NewVar(reflect.SliceOf(TyFloat64), "")
-	code := NewBuilder(nil).
+	code := newBuilder().
 		DefineVar(a).
 		Push(setIndexOperand+1).
 		Make(reflect.SliceOf(TyFloat64), 1).
@@ -392,7 +392,7 @@ func TestSetLargeIndex(t *testing.T) {
 }
 
 func TestSlice(t *testing.T) {
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(3.2).
 		Push(1.2).
 		Push(2.4).
@@ -409,7 +409,7 @@ func TestSlice(t *testing.T) {
 
 func TestSliceLarge(t *testing.T) {
 	a := NewVar(reflect.SliceOf(TyFloat64), "")
-	code := NewBuilder(nil).
+	code := newBuilder().
 		DefineVar(a).
 		Push(SliceConstIndexLast+1).
 		Make(reflect.SliceOf(TyFloat64), 1).
@@ -429,7 +429,7 @@ func TestSliceLarge(t *testing.T) {
 }
 
 func TestSlice2(t *testing.T) {
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(3.2).
 		Push(1.2).
 		Push(2.4).
@@ -446,7 +446,7 @@ func TestSlice2(t *testing.T) {
 }
 
 func TestSlice3(t *testing.T) {
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(3.2).
 		Push(1.2).
 		Push(2.4).
@@ -463,7 +463,7 @@ func TestSlice3(t *testing.T) {
 }
 
 func TestSlice4(t *testing.T) {
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(3.2).
 		Push(1.2).
 		Push(2.4).
@@ -480,7 +480,7 @@ func TestSlice4(t *testing.T) {
 }
 
 func TestAppend(t *testing.T) {
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Zero(reflect.SliceOf(TyFloat64)).
 		Push(3.2).
 		Push(1.2).
@@ -497,7 +497,7 @@ func TestAppend(t *testing.T) {
 
 func TestAppend2(t *testing.T) {
 	sliceTy := reflect.SliceOf(TyFloat64)
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Zero(sliceTy).
 		Push(3.2).
 		Push(1.2).
@@ -514,7 +514,7 @@ func TestAppend2(t *testing.T) {
 }
 
 func TestMakeSlice(t *testing.T) {
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(2).
 		Make(reflect.SliceOf(TyFloat64), 1).
 		Push(3.2).
@@ -531,7 +531,7 @@ func TestMakeSlice(t *testing.T) {
 }
 
 func TestMakeSlice2(t *testing.T) {
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(2).
 		Push(4).
 		Make(reflect.SliceOf(TyFloat64), 2).
@@ -549,7 +549,7 @@ func TestMakeSlice2(t *testing.T) {
 }
 
 func TestMakeMap(t *testing.T) {
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Make(reflect.MapOf(TyInt, TyFloat64), 0).
 		Resolve()
 
@@ -561,7 +561,7 @@ func TestMakeMap(t *testing.T) {
 }
 
 func TestMakeMap2(t *testing.T) {
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(2).
 		Make(reflect.MapOf(TyInt, TyFloat64), 1).
 		Resolve()
@@ -575,7 +575,7 @@ func TestMakeMap2(t *testing.T) {
 
 func TestMakeChan(t *testing.T) {
 	typ := reflect.ChanOf(reflect.BothDir, TyInt)
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Make(typ, 0).
 		Resolve()
 
@@ -588,7 +588,7 @@ func TestMakeChan(t *testing.T) {
 
 func TestMakeChan2(t *testing.T) {
 	typ := reflect.ChanOf(reflect.BothDir, TyInt)
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(2).
 		Make(typ, 1).
 		Resolve()
@@ -601,7 +601,7 @@ func TestMakeChan2(t *testing.T) {
 }
 
 func TestTypeCast(t *testing.T) {
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(byte('5')).
 		TypeCast(TyUint8, TyString).
 		Push("6").

@@ -216,10 +216,12 @@ func (p *FuncInfo) IsUnnamedOut() bool {
 	return false
 }
 
+/*
 // IsTypeValid returns if function type is valid or not.
 func (p *FuncInfo) IsTypeValid() bool {
 	return p.nVariadic != nVariadicInvalid
 }
+*/
 
 // Args sets argument types of a qlang function.
 func (p *FuncInfo) Args(in ...reflect.Type) *FuncInfo {

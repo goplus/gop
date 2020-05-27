@@ -112,6 +112,8 @@ type GoPackage interface {
 
 // A Code represents generated instructions to execute.
 type Code interface {
+	// Len returns code length.
+	Len() int
 }
 
 // Builder represents a executing byte code generator.

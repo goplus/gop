@@ -101,7 +101,7 @@ func TestSprint(t *testing.T) {
 		t.Fatal("FindFuncv failed: Sprint")
 	}
 
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push(5).
 		Push("32").
 		CallGoFuncv(sprint, 2).
@@ -120,8 +120,10 @@ func TestSprintf(t *testing.T) {
 	if !ok || !ok2 {
 		t.Fatal("FindFunc failed: Sprintf/strcat")
 	}
+	_ = defaultImpl.GetGoFuncType(strcat)
+	_ = defaultImpl.GetGoFuncvType(sprintf)
 
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push("Hello, %v, %d, %s").
 		Push(1.3).
 		Push(1).
@@ -139,12 +141,12 @@ func TestSprintf(t *testing.T) {
 }
 
 func TestLargeArity(t *testing.T) {
-	sprint, kind, ok := FindGoPackage("").Find("Sprint")
+	sprint, kind, ok := defaultImpl.FindGoPackage("").Find("Sprint")
 	if !ok || kind != SymbolFuncv {
 		t.Fatal("Find failed: Sprint")
 	}
 
-	b := NewBuilder(nil)
+	b := newBuilder()
 	ret := ""
 	for i := 0; i < bitsFuncvArityMax+1; i++ {
 		b.Push("32")

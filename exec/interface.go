@@ -171,8 +171,15 @@ func (p *iBuilder) Default() exec.Builder {
 
 // ForPhrase instr
 func (p *iBuilder) ForPhrase(f exec.ForPhrase, key, val exec.Var, hasExecCtx ...bool) exec.Builder {
-	((*Builder)(p)).ForPhrase(f.(*ForPhrase), key.(*Var), val.(*Var), hasExecCtx...)
+	((*Builder)(p)).ForPhrase(f.(*ForPhrase), toVar(key), toVar(val), hasExecCtx...)
 	return p
+}
+
+func toVar(v exec.Var) *Var {
+	if v == nil {
+		return nil
+	}
+	return v.(*Var)
 }
 
 // FilterForPhrase instr

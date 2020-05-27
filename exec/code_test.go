@@ -75,6 +75,14 @@ var (
 
 // -----------------------------------------------------------------------------
 
+func newBuilder() exec.Builder {
+	return NewBuilder(nil).Interface()
+}
+
+func newFunc(name string, nestDepth uint32) exec.FuncInfo {
+	return defaultImpl.NewFunc(name, nestDepth)
+}
+
 func checkPop(ctx *Context) interface{} {
 	if ctx.Len() < 1 {
 		log.Panicln("checkPop failed: no data.")

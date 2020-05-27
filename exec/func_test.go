@@ -17,8 +17,6 @@
 package exec
 
 import (
-	"fmt"
-	"os"
 	"reflect"
 	"testing"
 )
@@ -31,9 +29,9 @@ func TestFunc(t *testing.T) {
 		t.Fatal("FindFunc failed: strcat")
 	}
 
-	foo := NewFunc("foo", 1)
+	foo := newFunc("foo", 1)
 	ret := NewVar(TyString, "1")
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push("x").
 		Push("sw").
 		CallFunc(foo).
@@ -57,6 +55,8 @@ func TestFunc(t *testing.T) {
 	_ = foo.NumOut()
 	_ = foo.Out(0)
 	_ = foo.IsUnnamedOut()
+	_ = foo.IsVariadic()
+	_ = foo.Type()
 }
 
 func TestFuncv(t *testing.T) {
@@ -68,6 +68,8 @@ func TestFuncv(t *testing.T) {
 	tyInterfaceSlice := reflect.SliceOf(TyEmptyInterface)
 
 	foo := NewFunc("foo", 1)
+	_ = foo.IsUnnamedOut()
+
 	bar := NewFunc("bar", 1)
 	ret1 := NewVar(TyString, "1")
 	ret2 := NewVar(TyString, "1")
@@ -105,13 +107,13 @@ func TestFuncv(t *testing.T) {
 		EndFunc(bar).
 		Resolve()
 
-	code.Dump(os.Stdout)
-
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
 	if v := checkPop(ctx); v != "Hello, 1.3, 1, xsw" {
 		t.Fatal("format 1.3 1 `xsw` sprintf != `Hello, 1.3, 1, xsw`, ret =", v)
 	}
+	_ = foo.NumOut()
+	_ = foo.Name()
 }
 
 func TestFuncLargeArity(t *testing.T) {
@@ -122,11 +124,11 @@ func TestFuncLargeArity(t *testing.T) {
 
 	tyStringSlice := reflect.SliceOf(TyString)
 
-	foo := NewFunc("foo", 1)
-	bar := NewFunc("bar", 1)
+	foo := newFunc("foo", 1)
+	bar := newFunc("bar", 1)
 	ret1 := NewVar(TyString, "1")
 	ret2 := NewVar(TyString, "1")
-	b := NewBuilder(nil)
+	b := newBuilder()
 	ret := ""
 	for i := 0; i < bitsFuncvArityMax+1; i++ {
 		b.Push("32")
@@ -151,10 +153,6 @@ func TestFuncLargeArity(t *testing.T) {
 		EndFunc(foo).
 		Resolve()
 
-	if bar.IsTypeValid() {
-		fmt.Println("func bar:", bar.Type())
-	}
-
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
 	if v := checkPop(ctx); v != ret {
@@ -168,9 +166,9 @@ func TestClosure(t *testing.T) {
 		t.Fatal("FindFunc failed: strcat")
 	}
 
-	foo := NewFunc("foo", 1)
+	foo := newFunc("foo", 1)
 	ret := NewVar(TyString, "1")
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push("x").
 		Push("sw").
 		Closure(foo).
@@ -185,8 +183,6 @@ func TestClosure(t *testing.T) {
 		StoreVar(ret).
 		EndFunc(foo).
 		Resolve()
-
-	code.Dump(os.Stdout)
 
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
@@ -203,16 +199,17 @@ func TestClosure2(t *testing.T) {
 
 	tyInterfaceSlice := reflect.SliceOf(TyEmptyInterface)
 
-	foo := NewFunc("foo", 2)
-	bar := NewFunc("bar", 1)
+	foo := newFunc("foo", 2)
+	bar := newFunc("bar", 1)
 	ret1 := NewVar(TyString, "1")
 	ret2 := NewVar(TyString, "1")
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push("Hello, %v, %d, %s").
 		Push(1.3).
 		Push(1).
 		Push("xsw").
-		CallFuncv(bar, 4).
+		Closure(bar).
+		CallClosure(4).
 		Return(-1).
 		DefineFunc(
 			foo.Return(ret1).
@@ -233,8 +230,6 @@ func TestClosure2(t *testing.T) {
 		EndFunc(bar).
 		Resolve()
 
-	code.Dump(os.Stdout)
-
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
 	if v := checkPop(ctx); v != "Hello, 1.3, 1, xsw" {
@@ -250,11 +245,11 @@ func TestGoClosure(t *testing.T) {
 
 	tyInterfaceSlice := reflect.SliceOf(TyEmptyInterface)
 
-	foo := NewFunc("foo", 2)
-	bar := NewFunc("bar", 1)
+	foo := newFunc("foo", 2)
+	bar := newFunc("bar", 1)
 	ret1 := NewVar(TyString, "1")
 	ret2 := NewVar(TyString, "1")
-	code := NewBuilder(nil).
+	code := newBuilder().
 		Push("Hello, %v, %d, %s").
 		Push(1.3).
 		Push(1).
@@ -280,8 +275,6 @@ func TestGoClosure(t *testing.T) {
 		Return(2).
 		EndFunc(bar).
 		Resolve()
-
-	code.Dump(os.Stdout)
 
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())

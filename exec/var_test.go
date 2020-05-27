@@ -29,9 +29,9 @@ func TestVar(t *testing.T) {
 		t.Fatal("FindFunc failed: Sprintf/strcat")
 	}
 
-	x := NewVar(TyString, "x")
+	x := defaultImpl.NewVar(TyString, "x").(*Var)
 	y := NewVar(TyString, "y")
-	b := NewBuilder(nil)
+	b := newBuilder()
 	code := b.
 		DefineVar(x, y).
 		Push(5).
@@ -63,9 +63,9 @@ func TestParentCtx(t *testing.T) {
 	x := NewVar(TyString, "x")
 	y := NewVar(TyString, "y")
 	z := NewVar(TyString, "z")
-	code := NewBuilder(nil).
+	code := newBuilder().
 		DefineVar(z).
-		DefineFunc(NewFunc("", 2).Args()).
+		DefineFunc(newFunc("", 2).Args()).
 		DefineVar(x, y).
 		Push(5).
 		Push("32").
@@ -98,9 +98,9 @@ func TestAddrVar(t *testing.T) {
 	x := NewVar(TyString, "x")
 	y := NewVar(TyString, "y")
 	z := NewVar(TyString, "z")
-	code := NewBuilder(nil).
+	code := newBuilder().
 		DefineVar(z).
-		DefineFunc(NewFunc("", 2).Args()).
+		DefineFunc(newFunc("", 2).Args()).
 		DefineVar(x, y).
 		Push(5).
 		Push("32").
