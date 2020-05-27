@@ -221,7 +221,7 @@ func (p *Builder) storeVar(addr tAddress) *Builder {
 
 // Var represents a variable.
 type Var struct {
-	Type      reflect.Type
+	typ       reflect.Type
 	name      string
 	nestDepth uint32
 	idx       uint32
@@ -229,11 +229,16 @@ type Var struct {
 
 // NewVar creates a variable instance.
 func NewVar(typ reflect.Type, name string) *Var {
-	return &Var{Type: typ, name: "Q" + name, idx: ^uint32(0)}
+	return &Var{typ: typ, name: "Q" + name, idx: ^uint32(0)}
 }
 
 func (p *Var) isGlobal() bool {
 	return p.idx <= bitsOpVarOperand && p.nestDepth == 0
+}
+
+// Type returns variable's type.
+func (p *Var) Type() reflect.Type {
+	return p.typ
 }
 
 // Name returns variable's name.

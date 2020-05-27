@@ -60,7 +60,7 @@ func makeVarList(vars []*Var) []StructField {
 		} else {
 			exists[v.name] = true
 		}
-		items[i].Type = v.Type
+		items[i].Type = v.typ
 		items[i].Name = v.name
 	}
 	return items
@@ -139,7 +139,7 @@ func getRetOf(v interface{}, fun *FuncInfo, i int) reflect.Value {
 	if v != nil {
 		return reflect.ValueOf(v)
 	}
-	return reflect.Zero(fun.vlist[i].Type)
+	return reflect.Zero(fun.vlist[i].typ)
 }
 
 // -----------------------------------------------------------------------------

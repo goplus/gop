@@ -36,6 +36,7 @@ import (
 func init() {
 	log.SetFlags(log.Ldefault &^ log.LstdFlags)
 	log.SetOutputLevel(log.Ldebug)
+	CallBuiltinOp = exec.CallBuiltinOp
 }
 
 func newPackage(out *exec.Builder, pkg *ast.Package) (p *Package, noExecCtx bool, err error) {
