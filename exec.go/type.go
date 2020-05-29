@@ -1,7 +1,24 @@
+/*
+ Copyright 2020 Qiniu Cloud (qiniu.com)
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+*/
+
 package exec
 
 import (
 	"go/ast"
+	"go/token"
 	"reflect"
 
 	"github.com/qiniu/x/log"
@@ -32,6 +49,56 @@ func PtrType(p *Builder, typElem reflect.Type) ast.Expr {
 	return &ast.StarExpr{X: elt}
 }
 
+// Field instr
+func Field(p *Builder, name string, typ reflect.Type, tag string, ellipsis bool) *ast.Field {
+	var names []*ast.Ident
+	var ftag *ast.BasicLit
+	var typExpr ast.Expr
+	if name != "" {
+		names = []*ast.Ident{Ident(name)}
+	}
+	if tag != "" {
+		ftag = StringConst(tag)
+	}
+	if ellipsis {
+		typExpr = &ast.Ellipsis{Elt: Type(p, typ.Elem())}
+	} else {
+		typExpr = Type(p, typ)
+	}
+	return &ast.Field{Names: names, Type: typExpr, Tag: ftag}
+}
+
+// FuncType instr
+func FuncType(p *Builder, typ reflect.Type) *ast.FuncType {
+	numIn, numOut := typ.NumIn(), typ.NumOut()
+	variadic := typ.IsVariadic()
+	var opening token.Pos
+	var params, results []*ast.Field
+	if numIn > 0 {
+		params = make([]*ast.Field, numIn)
+		if variadic {
+			numIn--
+		}
+		for i := 0; i < numIn; i++ {
+			params[i] = Field(p, "", typ.In(i), "", false)
+		}
+		if variadic {
+			params[numIn] = Field(p, "", typ.In(numIn), "", true)
+		}
+	}
+	if numOut > 0 {
+		results = make([]*ast.Field, numOut)
+		for i := 0; i < numIn; i++ {
+			results[i] = Field(p, "", typ.Out(i), "", false)
+		}
+		opening++
+	}
+	return &ast.FuncType{
+		Params:  &ast.FieldList{Opening: 1, List: params, Closing: 1},
+		Results: &ast.FieldList{Opening: opening, List: results, Closing: opening},
+	}
+}
+
 // Type instr
 func Type(p *Builder, typ reflect.Type) ast.Expr {
 	pkgPath, name := typ.PkgPath(), typ.Name()
@@ -52,6 +119,7 @@ func Type(p *Builder, typ reflect.Type) ast.Expr {
 	case reflect.Ptr:
 		return PtrType(p, typ.Elem())
 	case reflect.Func:
+		return FuncType(p, typ)
 	case reflect.Chan:
 	case reflect.Interface:
 	case reflect.Struct:

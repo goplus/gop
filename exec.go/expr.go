@@ -1,3 +1,19 @@
+/*
+ Copyright 2020 Qiniu Cloud (qiniu.com)
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+*/
+
 package exec
 
 import (
@@ -23,13 +39,30 @@ func Ident(name string) *ast.Ident {
 	return &ast.Ident{Name: name}
 }
 
+// GoFuncIdent - ast.Ident or ast.SelectorExpr
+func (p *Builder) GoFuncIdent(pkgPath, name string) ast.Expr {
+	if pkgPath == "" {
+		return Ident(name)
+	}
+	pkg := p.Import(pkgPath)
+	return &ast.SelectorExpr{
+		X:   Ident(pkg),
+		Sel: Ident(name),
+	}
+}
+
 // StringConst instr
 func (p *Builder) StringConst(v string) *Builder {
-	p.code.Push(&ast.BasicLit{
+	p.code.Push(StringConst(v))
+	return p
+}
+
+// StringConst - ast.BasicLit
+func StringConst(v string) *ast.BasicLit {
+	return &ast.BasicLit{
 		Kind:  token.STRING,
 		Value: strconv.Quote(v),
-	})
-	return p
+	}
 }
 
 // IntConst instr
@@ -193,17 +226,52 @@ func (p *Builder) TypeCast(from, to reflect.Type) *Builder {
 
 // Call instr
 func (p *Builder) Call(narg int, ellipsis bool) *Builder {
+	fun := p.code.Pop().(ast.Expr)
 	args := make([]ast.Expr, narg)
 	for i := narg - 1; i >= 0; i-- {
 		args[i] = p.code.Pop().(ast.Expr)
 	}
-	fun := p.code.Pop().(ast.Expr)
 	expr := &ast.CallExpr{Fun: fun, Args: args}
 	if ellipsis {
 		expr.Ellipsis++
 	}
 	p.code.Push(expr)
 	return p
+}
+
+// CallGoFunc instr
+func (p *Builder) CallGoFunc(fun exec.GoFuncAddr) *Builder {
+	gfi := defaultImpl.GetGoFuncInfo(fun)
+	pkgPath, name := gfi.Pkg.PkgPath(), gfi.Name
+	fn := p.GoFuncIdent(pkgPath, name)
+	p.code.Push(fn)
+	arity := reflect.TypeOf(gfi.This).NumIn()
+	return p.Call(arity, false)
+}
+
+// CallGoFuncv instr
+func (p *Builder) CallGoFuncv(fun exec.GoFuncvAddr, arity int) *Builder {
+	gfi := defaultImpl.GetGoFuncvInfo(fun)
+	pkgPath, name := gfi.Pkg.PkgPath(), gfi.Name
+	if pkgPath == "" {
+		if alias, ok := builtinFnvs[name]; ok {
+			pkgPath, name = alias[0], alias[1]
+		}
+	}
+	fn := p.GoFuncIdent(pkgPath, name)
+	p.code.Push(fn)
+	ellipsis := arity == -1
+	if ellipsis {
+		arity = reflect.TypeOf(gfi.This).NumIn()
+	}
+	return p.Call(arity, ellipsis)
+}
+
+var builtinFnvs = map[string][2]string{
+	"print":   {"fmt", "Print"},
+	"printf":  {"fmt", "Printf"},
+	"println": {"fmt", "Println"},
+	"fprintf": {"fmt", "Fprintf"},
 }
 
 // -----------------------------------------------------------------------------

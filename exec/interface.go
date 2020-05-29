@@ -72,6 +72,11 @@ type interfaceImpl struct{}
 
 var defaultImpl = &interfaceImpl{}
 
+// GlobalInterface returns the global Interface.
+func GlobalInterface() exec.Interface {
+	return defaultImpl
+}
+
 // NewVar creates a variable instance.
 func (p *interfaceImpl) NewVar(typ reflect.Type, name string) exec.Var {
 	return NewVar(typ, name)
@@ -110,6 +115,18 @@ func (p *interfaceImpl) GetGoFuncType(addr exec.GoFuncAddr) reflect.Type {
 // GetGoFuncvType returns a Go function's type.
 func (p *interfaceImpl) GetGoFuncvType(addr exec.GoFuncvAddr) reflect.Type {
 	return reflect.TypeOf(gofunvs[addr].This)
+}
+
+// GetGoFuncInfo returns a Go function's information.
+func (p *interfaceImpl) GetGoFuncInfo(addr exec.GoFuncAddr) *exec.GoFuncInfo {
+	gfi := &gofuns[addr]
+	return &exec.GoFuncInfo{Pkg: gfi.Pkg, Name: gfi.Name, This: gfi.This}
+}
+
+// GetGoFuncvInfo returns a Go function's information.
+func (p *interfaceImpl) GetGoFuncvInfo(addr exec.GoFuncvAddr) *exec.GoFuncInfo {
+	gfi := &gofunvs[addr]
+	return &exec.GoFuncInfo{Pkg: gfi.Pkg, Name: gfi.Name, This: gfi.This}
 }
 
 // -----------------------------------------------------------------------------
@@ -406,6 +423,10 @@ func (p *iBuilder) Zero(typ reflect.Type) exec.Builder {
 // Reserve reserves an instruction.
 func (p *iBuilder) Reserve() exec.Reserved {
 	return ((*Builder)(p)).Reserve()
+}
+
+// EndStmt recieves a `EndStmt` event.
+func (p *iBuilder) EndStmt(stmt interface{}) {
 }
 
 // ReservedAsPush sets Reserved as Push(v)

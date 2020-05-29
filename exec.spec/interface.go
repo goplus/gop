@@ -1,3 +1,19 @@
+/*
+ Copyright 2020 Qiniu Cloud (qiniu.com)
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+*/
+
 package exec
 
 import (
@@ -108,6 +124,13 @@ type GoPackage interface {
 
 	// FindConst lookups a Go constant by name.
 	FindConst(name string) (ci *GoConstInfo, ok bool)
+}
+
+// GoFuncInfo represents a Go function information.
+type GoFuncInfo struct {
+	Pkg  GoPackage
+	Name string
+	This interface{}
 }
 
 // A Code represents generated instructions to execute.
@@ -262,6 +285,9 @@ type Builder interface {
 	// ReservedAsPush sets Reserved as Push(v)
 	ReservedAsPush(r Reserved, v interface{})
 
+	// EndStmt
+	EndStmt(stmt interface{})
+
 	// GlobalInterface returns the global Interface.
 	GlobalInterface() Interface
 
@@ -294,6 +320,12 @@ type Interface interface {
 
 	// GetGoFuncvType returns a Go function's type.
 	GetGoFuncvType(addr GoFuncvAddr) reflect.Type
+
+	// GetGoFuncInfo returns a Go function's information.
+	GetGoFuncInfo(addr GoFuncAddr) *GoFuncInfo
+
+	// GetGoFuncvInfo returns a Go function's information.
+	GetGoFuncvInfo(addr GoFuncvAddr) *GoFuncInfo
 }
 
 // -----------------------------------------------------------------------------
