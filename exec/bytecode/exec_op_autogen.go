@@ -14,7 +14,7 @@
  limitations under the License.
 */
 
-package exec
+package bytecode
 
 var builtinOps = [...]func(i Instr, p *Context){
 	(int(Int) << bitsOperator) | int(OpAdd):           execAddInt,

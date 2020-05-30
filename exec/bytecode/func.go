@@ -14,12 +14,12 @@
  limitations under the License.
 */
 
-package exec
+package bytecode
 
 import (
 	"reflect"
 
-	"github.com/qiniu/qlang/v6/exec/spec"
+	exec "github.com/qiniu/qlang/v6/exec.spec"
 	"github.com/qiniu/x/log"
 )
 

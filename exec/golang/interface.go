@@ -1,10 +1,10 @@
-package exec
+package golang
 
 import (
 	"log"
 	"reflect"
 
-	"github.com/qiniu/qlang/v6/exec/spec"
+	"github.com/qiniu/qlang/v6/exec.spec"
 
 	qexec "github.com/qiniu/qlang/v6/exec/bytecode"
 )

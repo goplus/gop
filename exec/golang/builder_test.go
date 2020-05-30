@@ -14,14 +14,14 @@
  limitations under the License.
 */
 
-package exec
+package golang
 
 import (
 	"fmt"
 	"testing"
 
 	"github.com/qiniu/qlang/v6/cl"
-	exec "github.com/qiniu/qlang/v6/exec/spec"
+	"github.com/qiniu/qlang/v6/exec.spec"
 	"github.com/qiniu/qlang/v6/token"
 
 	qexec "github.com/qiniu/qlang/v6/exec/bytecode"
@@ -86,9 +86,9 @@ func TestFileLine(t *testing.T) {
 import fmt "fmt"
 
 func main() { 
-//line foo.ql:1:23
+//line foo.ql:1
 	fmt.Println(1 + 2)
-//line bar.ql:1:22
+//line bar.ql:1
 	fmt.Println(complex64(3 + 2i))
 }
 `

@@ -14,7 +14,7 @@
  limitations under the License.
 */
 
-package exec
+package bytecode
 
 import (
 	"bufio"
@@ -22,7 +22,7 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/qiniu/qlang/v6/exec/spec"
+	exec "github.com/qiniu/qlang/v6/exec.spec"
 )
 
 // -----------------------------------------------------------------------------

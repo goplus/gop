@@ -14,7 +14,7 @@
  limitations under the License.
 */
 
-package exec
+package golang
 
 import (
 	"bytes"
@@ -26,9 +26,9 @@ import (
 	"reflect"
 	"strconv"
 
+	"github.com/qiniu/qlang/v6/exec.spec"
 	"github.com/qiniu/qlang/v6/exec/go/format"
 	"github.com/qiniu/qlang/v6/exec/go/printer"
-	"github.com/qiniu/qlang/v6/exec/spec"
 	"github.com/qiniu/x/log"
 )
 

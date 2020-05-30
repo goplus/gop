@@ -14,7 +14,7 @@
  limitations under the License.
 */
 
-package exec
+package bytecode
 
 var builtinAddrOps = [...]func(i Instr, p *Context){
 	(int(OpAddAssign) << bitsKind) | int(Int):           execAddAssignInt,

@@ -14,7 +14,7 @@
  limitations under the License.
 */
 
-package exec
+package golang
 
 import (
 	"go/ast"

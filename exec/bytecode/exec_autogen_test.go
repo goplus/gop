@@ -14,7 +14,7 @@
  limitations under the License.
 */
 
-package exec
+package bytecode
 
 import (
 	"fmt"
@@ -23,7 +23,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/qiniu/qlang/v6/exec/spec"
+	exec "github.com/qiniu/qlang/v6/exec.spec"
 )
 
 // -----------------------------------------------------------------------------
@@ -53,7 +53,7 @@ var opAutogenOps = [...]string{
 	OpBitNot:    "BitNot",
 }
 
-const autogenOpHeader = `package exec
+const autogenOpHeader = `package bytecode
 `
 
 const autogenBinaryOpUintTempl = `
@@ -185,7 +185,7 @@ var opAutogenAddrOps = [...]string{
 	OpDec:             "Dec",
 }
 
-const autogenAddrOpHeader = `package exec
+const autogenAddrOpHeader = `package bytecode
 `
 
 const autogenBinaryAddrOpUintTempl = `
@@ -294,7 +294,7 @@ func callExecAddrOp(kind Kind, op AddrOperator, data ...interface{}) {
 // -----------------------------------------------------------------------------
 
 /*
-const autogenCastOpHeader = `package exec
+const autogenCastOpHeader = `package bytecode
 `
 
 const autogenCastOpTempl = `

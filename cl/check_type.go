@@ -21,7 +21,7 @@ import (
 	"reflect"
 
 	"github.com/qiniu/qlang/v6/ast"
-	"github.com/qiniu/qlang/v6/exec/spec"
+	"github.com/qiniu/qlang/v6/exec.spec"
 	"github.com/qiniu/qlang/v6/token"
 	"github.com/qiniu/x/log"
 )

@@ -1,4 +1,4 @@
-package exec
+package golang
 
 import (
 	"go/token"

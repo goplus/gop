@@ -14,7 +14,7 @@
  limitations under the License.
 */
 
-package exec
+package golang
 
 import (
 	"go/ast"
@@ -23,7 +23,7 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/qiniu/qlang/v6/exec/spec"
+	"github.com/qiniu/qlang/v6/exec.spec"
 )
 
 // -----------------------------------------------------------------------------

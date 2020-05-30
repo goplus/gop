@@ -1,9 +1,9 @@
-package exec
+package golang
 
 import (
 	"go/ast"
 
-	"github.com/qiniu/qlang/v6/exec/spec"
+	"github.com/qiniu/qlang/v6/exec.spec"
 	"github.com/qiniu/x/log"
 )
 
