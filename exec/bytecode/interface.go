@@ -3,7 +3,7 @@ package exec
 import (
 	"reflect"
 
-	"github.com/qiniu/qlang/v6/exec.spec"
+	exec "github.com/qiniu/qlang/v6/exec/spec"
 	"github.com/qiniu/x/log"
 )
 
@@ -409,7 +409,7 @@ func (p *iBuilder) TypeCast(from, to reflect.Type) exec.Builder {
 }
 
 // GoBuiltin instr
-func (p *iBuilder) GoBuiltin(typ reflect.Type, op GoBuiltin) exec.Builder {
+func (p *iBuilder) GoBuiltin(typ reflect.Type, op exec.GoBuiltin) exec.Builder {
 	((*Builder)(p)).GoBuiltin(typ, op)
 	return p
 }
@@ -420,13 +420,14 @@ func (p *iBuilder) Zero(typ reflect.Type) exec.Builder {
 	return p
 }
 
+// EndStmt recieves a `EndStmt` event.
+func (p *iBuilder) EndStmt(stmt interface{}) exec.Builder {
+	return p
+}
+
 // Reserve reserves an instruction.
 func (p *iBuilder) Reserve() exec.Reserved {
 	return ((*Builder)(p)).Reserve()
-}
-
-// EndStmt recieves a `EndStmt` event.
-func (p *iBuilder) EndStmt(stmt interface{}) {
 }
 
 // ReservedAsPush sets Reserved as Push(v)

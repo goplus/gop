@@ -21,7 +21,7 @@ import (
 	"strconv"
 
 	"github.com/qiniu/qlang/v6/ast"
-	"github.com/qiniu/qlang/v6/exec.spec"
+	"github.com/qiniu/qlang/v6/exec/spec"
 	"github.com/qiniu/x/log"
 )
 

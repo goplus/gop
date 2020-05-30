@@ -17,7 +17,7 @@
 package spec
 
 import (
-	"github.com/qiniu/qlang/v6/exec"
+	exec "github.com/qiniu/qlang/v6/exec/bytecode"
 )
 
 // -----------------------------------------------------------------------------

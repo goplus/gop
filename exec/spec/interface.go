@@ -279,14 +279,14 @@ type Builder interface {
 	// Zero instr
 	Zero(typ reflect.Type) Builder
 
+	// EndStmt
+	EndStmt(stmt interface{}) Builder
+
 	// Reserve reserves an instruction.
 	Reserve() Reserved
 
 	// ReservedAsPush sets Reserved as Push(v)
 	ReservedAsPush(r Reserved, v interface{})
-
-	// EndStmt
-	EndStmt(stmt interface{})
 
 	// GlobalInterface returns the global Interface.
 	GlobalInterface() Interface

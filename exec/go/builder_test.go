@@ -20,19 +20,24 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/qiniu/qlang/v6/exec.spec"
+	"github.com/qiniu/qlang/v6/cl"
+	exec "github.com/qiniu/qlang/v6/exec/spec"
 	"github.com/qiniu/qlang/v6/token"
 
-	qexec "github.com/qiniu/qlang/v6/exec"
+	qexec "github.com/qiniu/qlang/v6/exec/bytecode"
 	_ "github.com/qiniu/qlang/v6/lib/builtin"
 )
 
 // I is a Go package instance.
 var I = qexec.FindGoPackage("")
 
+func init() {
+	cl.CallBuiltinOp = qexec.CallBuiltinOp
+}
+
 // -----------------------------------------------------------------------------
 
-func TestBasic(t *testing.T) {
+func TestBuild(t *testing.T) {
 	codeExp := `package main
 
 import fmt "fmt"

@@ -22,7 +22,7 @@ import (
 	"go/token"
 	"io"
 
-	"github.com/qiniu/qlang/v6/exec.go/printer"
+	"github.com/qiniu/qlang/v6/exec/go/printer"
 )
 
 var config = printer.Config{Mode: printer.UseSpaces | printer.TabIndent, Tabwidth: 8}

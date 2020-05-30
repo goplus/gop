@@ -966,6 +966,9 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		p.print(blank)
 		p.expr(x.Value)
 
+	case *ReservedExpr:
+		p.expr(x.Expr)
+
 	default:
 		panic("unreachable")
 	}
@@ -1360,6 +1363,11 @@ func (p *printer) stmt(stmt ast.Stmt, nextIsRBrace bool) {
 type CommentedStmt struct {
 	Comments *ast.CommentGroup
 	ast.Stmt
+}
+
+// ReservedExpr represents a reserved expression.
+type ReservedExpr struct {
+	ast.Expr
 }
 
 // ----------------------------------------------------------------------------

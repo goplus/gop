@@ -23,11 +23,11 @@ import (
 
 	"github.com/qiniu/qlang/v6/ast"
 	"github.com/qiniu/qlang/v6/ast/asttest"
-	"github.com/qiniu/qlang/v6/exec"
 	"github.com/qiniu/qlang/v6/parser"
 	"github.com/qiniu/qlang/v6/token"
 	"github.com/qiniu/x/log"
 
+	exec "github.com/qiniu/qlang/v6/exec/bytecode"
 	_ "github.com/qiniu/qlang/v6/lib/builtin"
 	_ "github.com/qiniu/qlang/v6/lib/fmt"
 	_ "github.com/qiniu/qlang/v6/lib/reflect"

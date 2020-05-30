@@ -23,7 +23,7 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/qiniu/qlang/v6/exec.spec"
+	"github.com/qiniu/qlang/v6/exec/spec"
 )
 
 // -----------------------------------------------------------------------------
@@ -51,24 +51,12 @@ func (p *Builder) GoFuncIdent(pkgPath, name string) ast.Expr {
 	}
 }
 
-// StringConst instr
-func (p *Builder) StringConst(v string) *Builder {
-	p.code.Push(StringConst(v))
-	return p
-}
-
 // StringConst - ast.BasicLit
 func StringConst(v string) *ast.BasicLit {
 	return &ast.BasicLit{
 		Kind:  token.STRING,
 		Value: strconv.Quote(v),
 	}
-}
-
-// IntConst instr
-func (p *Builder) IntConst(v int64) *Builder {
-	p.code.Push(IntConst(v))
-	return p
 }
 
 // IntConst - ast.BasicLit
@@ -80,81 +68,84 @@ func IntConst(v int64) *ast.BasicLit {
 }
 
 // UintConst instr
-func (p *Builder) UintConst(v uint64) *Builder {
-	p.code.Push(&ast.BasicLit{
+func UintConst(v uint64) *ast.BasicLit {
+	return &ast.BasicLit{
 		Kind:  token.INT,
 		Value: strconv.FormatUint(v, 10),
-	})
-	return p
+	}
 }
 
 // FloatConst instr
-func (p *Builder) FloatConst(v float64) *Builder {
-	p.code.Push(&ast.BasicLit{
+func FloatConst(v float64) *ast.BasicLit {
+	return &ast.BasicLit{
 		Kind:  token.FLOAT,
 		Value: strconv.FormatFloat(v, 'g', -1, 64),
-	})
-	return p
+	}
 }
 
 // ImagConst instr
-func (p *Builder) ImagConst(v float64) *Builder {
-	p.code.Push(&ast.BasicLit{
+func ImagConst(v float64) *ast.BasicLit {
+	return &ast.BasicLit{
 		Kind:  token.IMAG,
 		Value: strconv.FormatFloat(v, 'g', -1, 64) + "i",
-	})
-	return p
+	}
 }
 
 // ComplexConst instr
-func (p *Builder) ComplexConst(v complex128) *Builder {
+func ComplexConst(v complex128) ast.Expr {
 	r, i := real(v), imag(v)
-	return p.FloatConst(r).ImagConst(i).BuiltinOp(exec.Float64, exec.OpAdd)
+	x, y := FloatConst(r), ImagConst(i)
+	return BinaryOp(token.ADD, x, y)
 }
 
-// Push instr
-func (p *Builder) Push(val interface{}) *Builder {
+// Const instr
+func Const(p *Builder, val interface{}) ast.Expr {
 	if val == nil {
-		return p.Ident("nil")
+		return Ident("nil")
 	}
 	v := reflect.ValueOf(val)
 	kind := v.Kind()
 	if kind == reflect.String {
-		return p.StringConst(val.(string))
+		return StringConst(val.(string))
 	}
 	if kind >= reflect.Int && kind <= reflect.Int64 {
-		p.IntConst(v.Int())
+		var expr ast.Expr = IntConst(v.Int())
 		if t := v.Type(); t != exec.TyInt {
-			p.TypeCast(exec.TyInt, t)
+			expr = TypeCast(p, expr, exec.TyInt, t)
 		}
-		return p
+		return expr
 	}
 	if kind >= reflect.Uint && kind <= reflect.Uintptr {
-		p.UintConst(v.Uint())
-		p.TypeCast(exec.TyInt, v.Type())
-		return p
+		var expr ast.Expr = UintConst(v.Uint())
+		return TypeCast(p, expr, exec.TyInt, v.Type())
 	}
 	if kind >= reflect.Float32 && kind <= reflect.Float64 {
-		p.FloatConst(v.Float())
+		var expr ast.Expr = FloatConst(v.Float())
 		if t := v.Type(); t != exec.TyFloat64 {
-			p.TypeCast(exec.TyFloat64, t)
+			expr = TypeCast(p, expr, exec.TyFloat64, t)
 		}
-		return p
+		return expr
 	}
 	if kind >= reflect.Complex64 && kind <= reflect.Complex128 {
-		p.ComplexConst(v.Complex())
+		var expr ast.Expr = ComplexConst(v.Complex())
 		if t := v.Type(); t != exec.TyComplex128 {
-			p.TypeCast(exec.TyComplex128, t)
+			expr = TypeCast(p, expr, exec.TyComplex128, t)
 		}
-		return p
+		return expr
 	}
 	if kind == reflect.Bool {
 		if val.(bool) {
-			return p.Ident("true")
+			return Ident("true")
 		}
-		return p.Ident("false")
+		return Ident("false")
 	}
-	log.Panicln("Builder.Push: value type is unknown -", v.Type())
+	log.Panicln("Const: value type is unknown -", v.Type())
+	return nil
+}
+
+// Push instr
+func (p *Builder) Push(val interface{}) *Builder {
+	p.code.Push(Const(p, val))
 	return p
 }
 
@@ -171,6 +162,11 @@ func (p *Builder) BinaryOp(tok token.Token) *Builder {
 	x := p.code.Pop().(ast.Expr)
 	p.code.Push(&ast.BinaryExpr{Op: tok, X: x, Y: y})
 	return p
+}
+
+// BinaryOp instr
+func BinaryOp(tok token.Token, x, y ast.Expr) *ast.BinaryExpr {
+	return &ast.BinaryExpr{Op: tok, X: x, Y: y}
 }
 
 // BuiltinOp instr
@@ -215,13 +211,18 @@ var opTokens = [...]token.Token{
 
 // TypeCast instr
 func (p *Builder) TypeCast(from, to reflect.Type) *Builder {
-	t := Type(p, to)
 	x := p.code.Pop().(ast.Expr)
-	p.code.Push(&ast.CallExpr{
+	TypeCast(p, x, from, to)
+	return p
+}
+
+// TypeCast instr
+func TypeCast(p *Builder, x ast.Expr, from, to reflect.Type) *ast.CallExpr {
+	t := Type(p, to)
+	return &ast.CallExpr{
 		Fun:  t,
 		Args: []ast.Expr{x},
-	})
-	return p
+	}
 }
 
 // Call instr

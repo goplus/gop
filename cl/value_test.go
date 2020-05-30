@@ -3,7 +3,7 @@ package cl
 import (
 	"testing"
 
-	"github.com/qiniu/qlang/v6/exec.spec"
+	exec "github.com/qiniu/qlang/v6/exec/spec"
 )
 
 // -----------------------------------------------------------------------------
