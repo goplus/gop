@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"fmt"
 	"go/ast"
-	"go/format"
 	"go/token"
 	"io"
 	"log"
@@ -28,6 +27,8 @@ import (
 	"reflect"
 	"strconv"
 
+	"github.com/qiniu/qlang/v6/exec.go/format"
+	"github.com/qiniu/qlang/v6/exec.go/printer"
 	"github.com/qiniu/qlang/v6/exec.spec"
 
 	qexec "github.com/qiniu/qlang/v6/exec"
@@ -82,7 +83,6 @@ type Builder struct {
 	imports     map[string]string
 	importPaths map[string]string
 	stmts       []ast.Stmt
-	cmap        ast.CommentMap
 	fset        *token.FileSet
 }
 
@@ -95,7 +95,6 @@ func NewBuilder(code *Code, fset *token.FileSet) *Builder {
 		out:         code,
 		imports:     make(map[string]string),
 		importPaths: make(map[string]string),
-		cmap:        make(ast.CommentMap),
 		fset:        fset,
 	}
 	p.code.Init()
@@ -123,14 +122,11 @@ func (p *Builder) Resolve() *Code {
 		}
 		decls = append(decls, fn)
 	}
-	f := &ast.File{
+	p.out.fset = token.NewFileSet()
+	p.out.file = &ast.File{
 		Name:  Ident("main"),
 		Decls: decls,
 	}
-	adjustFile(f, p.cmap)
-	p.out.fset = token.NewFileSet()
-	p.out.file = f
-	f.Comments = p.cmap.Comments()
 	return p.out
 }
 
@@ -176,14 +172,13 @@ func (p *Builder) EndStmt(stmt interface{}) *Builder {
 	default:
 		log.Panicln("EndStmt: unexpected -", reflect.TypeOf(val))
 	}
-	p.stmts = append(p.stmts, node)
-	if stmt == nil {
-		return p
+	if stmt != nil {
+		start := stmt.(ast.Node).Pos()
+		pos := p.fset.Position(start)
+		line := fmt.Sprintf("\n//line %s:%d:%d", pos.Filename, pos.Line, pos.Column)
+		node = &printer.CommentedStmt{Comments: Comment(line), Stmt: node}
 	}
-	start := stmt.(ast.Node).Pos()
-	pos := p.fset.Position(start)
-	line := fmt.Sprintf("/*line %s:%d:%d*/", pos.Filename, pos.Line, pos.Column)
-	p.cmap[node] = []*ast.CommentGroup{Comment(line)}
+	p.stmts = append(p.stmts, node)
 	return p
 }
 

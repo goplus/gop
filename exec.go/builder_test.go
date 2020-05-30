@@ -33,6 +33,15 @@ var I = qexec.FindGoPackage("")
 // -----------------------------------------------------------------------------
 
 func TestBasic(t *testing.T) {
+	codeExp := `package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Println(1 + 2)
+	fmt.Println(complex64(3 + 2i))
+}
+`
 	println, _ := I.FindFuncv("println")
 	code := NewBuilder(nil, nil).
 		Push(1).
@@ -45,7 +54,11 @@ func TestBasic(t *testing.T) {
 		EndStmt(nil).
 		Resolve()
 
-	fmt.Println(code.String())
+	codeGen := code.String()
+	if codeGen != codeExp {
+		fmt.Println(codeGen)
+		t.Fatal("TestBasic failed: codeGen != codeExp")
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -63,6 +76,17 @@ func (p *node) End() token.Pos {
 }
 
 func TestFileLine(t *testing.T) {
+	codeExp := `package main
+
+import fmt "fmt"
+
+func main() { 
+//line foo.ql:1:23
+	fmt.Println(1 + 2)
+//line bar.ql:1:22
+	fmt.Println(complex64(3 + 2i))
+}
+`
 	fset := token.NewFileSet()
 	foo := fset.AddFile("foo.ql", fset.Base(), 100)
 	bar := fset.AddFile("bar.ql", fset.Base(), 100)
@@ -82,7 +106,11 @@ func TestFileLine(t *testing.T) {
 		EndStmt(node2).
 		Resolve()
 
-	fmt.Println(code.String())
+	codeGen := code.String()
+	if codeGen != codeExp {
+		fmt.Println(codeGen)
+		t.Fatal("TestFileLine failed: codeGen != codeExp")
+	}
 }
 
 // -----------------------------------------------------------------------------
