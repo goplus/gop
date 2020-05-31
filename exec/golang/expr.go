@@ -95,7 +95,7 @@ func ImagConst(v float64) *ast.BasicLit {
 func ComplexConst(v complex128) ast.Expr {
 	r, i := real(v), imag(v)
 	x, y := FloatConst(r), ImagConst(i)
-	return BinaryOp(token.ADD, x, y)
+	return &ast.ParenExpr{X: BinaryOp(token.ADD, x, y)}
 }
 
 // Const instr
