@@ -68,6 +68,22 @@ func Field(p *Builder, name string, typ reflect.Type, tag string, ellipsis bool)
 	return &ast.Field{Names: names, Type: typExpr, Tag: ftag}
 }
 
+// Methods instr
+func Methods(p *Builder, typ reflect.Type) []*ast.Field {
+	n := typ.NumMethod()
+	if n == 0 {
+		return nil
+	}
+	panic("Methods: todo")
+}
+
+// InterfaceType instr
+func InterfaceType(p *Builder, typ reflect.Type) *ast.InterfaceType {
+	return &ast.InterfaceType{
+		Methods: &ast.FieldList{List: Methods(p, typ)},
+	}
+}
+
 // FuncType instr
 func FuncType(p *Builder, typ reflect.Type) *ast.FuncType {
 	numIn, numOut := typ.NumIn(), typ.NumOut()
@@ -120,8 +136,9 @@ func Type(p *Builder, typ reflect.Type) ast.Expr {
 		return PtrType(p, typ.Elem())
 	case reflect.Func:
 		return FuncType(p, typ)
-	case reflect.Chan:
 	case reflect.Interface:
+		return InterfaceType(p, typ)
+	case reflect.Chan:
 	case reflect.Struct:
 	}
 	log.Panicln("Type: unknown type -", typ)

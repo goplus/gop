@@ -186,7 +186,7 @@ func (p *Builder) EndStmt(stmt interface{}) *Builder {
 		node = &ast.AssignStmt{Lhs: lhs, Tok: token.ASSIGN, Rhs: rhs}
 	} else {
 		if p.rhs.Len() != 1 {
-			log.Panicln("EndStmt: comma expression? -", p.rhs.Len())
+			log.Panicln("EndStmt: comma expression? -", p.rhs.Len(), "stmt:", reflect.TypeOf(stmt))
 		}
 		var val = p.rhs.Pop()
 		switch v := val.(type) {
@@ -238,66 +238,6 @@ func (p *Builder) ReservedAsPush(r exec.Reserved, v interface{}) {
 
 // Pop instr
 func (p *Builder) Pop(n int) *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// MakeArray instr
-func (p *Builder) MakeArray(typ reflect.Type, arity int) *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// MakeMap instr
-func (p *Builder) MakeMap(typ reflect.Type, arity int) *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// MapIndex instr
-func (p *Builder) MapIndex() *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// SetMapIndex instr
-func (p *Builder) SetMapIndex() *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// Index instr
-func (p *Builder) Index(idx int) *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// SetIndex instr
-func (p *Builder) SetIndex(idx int) *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// Slice instr
-func (p *Builder) Slice(i, j int) *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// Slice3 instr
-func (p *Builder) Slice3(i, j, k int) *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// Zero instr
-func (p *Builder) Zero(typ reflect.Type) *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// GoBuiltin instr
-func (p *Builder) GoBuiltin(typ reflect.Type, op exec.GoBuiltin) *Builder {
 	log.Panicln("todo")
 	return p
 }

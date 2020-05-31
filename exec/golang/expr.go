@@ -305,4 +305,84 @@ func (p *Builder) Make(typ reflect.Type, arity int) *Builder {
 	return p
 }
 
+// MakeArray instr
+func (p *Builder) MakeArray(typ reflect.Type, arity int) *Builder {
+	typExpr := Type(p, typ)
+	elts := make([]ast.Expr, arity)
+	for i, v := range p.rhs.GetArgs(arity) {
+		elts[i] = v.(ast.Expr)
+	}
+	p.rhs.Ret(arity, &ast.CompositeLit{
+		Type: typExpr,
+		Elts: elts,
+	})
+	return p
+}
+
+// MakeMap instr
+func (p *Builder) MakeMap(typ reflect.Type, arity int) *Builder {
+	typExpr := Type(p, typ)
+	elts := make([]ast.Expr, arity)
+	args := p.rhs.GetArgs(arity << 1)
+	for i := 0; i < arity; i++ {
+		elts[i] = &ast.KeyValueExpr{
+			Key:   args[i<<1].(ast.Expr),
+			Value: args[(i<<1)+1].(ast.Expr),
+		}
+	}
+	p.rhs.Ret(arity<<1, &ast.CompositeLit{
+		Type: typExpr,
+		Elts: elts,
+	})
+	return p
+}
+
+// MapIndex instr
+func (p *Builder) MapIndex() *Builder {
+	log.Panicln("todo")
+	return p
+}
+
+// SetMapIndex instr
+func (p *Builder) SetMapIndex() *Builder {
+	log.Panicln("todo")
+	return p
+}
+
+// Index instr
+func (p *Builder) Index(idx int) *Builder {
+	log.Panicln("todo")
+	return p
+}
+
+// SetIndex instr
+func (p *Builder) SetIndex(idx int) *Builder {
+	log.Panicln("todo")
+	return p
+}
+
+// Slice instr
+func (p *Builder) Slice(i, j int) *Builder {
+	log.Panicln("todo")
+	return p
+}
+
+// Slice3 instr
+func (p *Builder) Slice3(i, j, k int) *Builder {
+	log.Panicln("todo")
+	return p
+}
+
+// Zero instr
+func (p *Builder) Zero(typ reflect.Type) *Builder {
+	log.Panicln("todo")
+	return p
+}
+
+// GoBuiltin instr
+func (p *Builder) GoBuiltin(typ reflect.Type, op exec.GoBuiltin) *Builder {
+	log.Panicln("todo")
+	return p
+}
+
 // -----------------------------------------------------------------------------
