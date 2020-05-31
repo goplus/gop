@@ -27,8 +27,8 @@ import (
 	"strconv"
 
 	"github.com/qiniu/qlang/v6/exec.spec"
-	"github.com/qiniu/qlang/v6/exec/go/format"
-	"github.com/qiniu/qlang/v6/exec/go/printer"
+	"github.com/qiniu/qlang/v6/exec/golang/internal/go/format"
+	"github.com/qiniu/qlang/v6/exec/golang/internal/go/printer"
 	"github.com/qiniu/x/log"
 )
 
