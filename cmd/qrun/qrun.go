@@ -21,11 +21,11 @@ import (
 	"os"
 
 	"github.com/qiniu/qlang/v6/cl"
-	exec "github.com/qiniu/qlang/v6/exec/bytecode"
 	"github.com/qiniu/qlang/v6/parser"
 	"github.com/qiniu/qlang/v6/token"
 	"github.com/qiniu/x/log"
 
+	exec "github.com/qiniu/qlang/v6/exec/bytecode"
 	_ "github.com/qiniu/qlang/v6/lib/builtin"
 	_ "github.com/qiniu/qlang/v6/lib/fmt"
 	_ "github.com/qiniu/qlang/v6/lib/reflect"
