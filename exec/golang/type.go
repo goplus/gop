@@ -104,7 +104,7 @@ func FuncType(p *Builder, typ reflect.Type) *ast.FuncType {
 	}
 	if numOut > 0 {
 		results = make([]*ast.Field, numOut)
-		for i := 0; i < numIn; i++ {
+		for i := 0; i < numOut; i++ {
 			results[i] = Field(p, "", typ.Out(i), "", false)
 		}
 		opening++

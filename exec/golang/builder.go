@@ -80,16 +80,18 @@ func (p *Code) String() string {
 // Builder is a class that generates go code.
 type Builder struct {
 	lhs, rhs    exec.Stack
-	out         *Code
-	imports     map[string]string
-	importPaths map[string]string
-	gblvars     varManager
-	gblstmts    []ast.Stmt
-	fset        *token.FileSet
-	stmts       *[]ast.Stmt
+	out         *Code             // golang code
+	imports     map[string]string // pkgPath => aliasName
+	importPaths map[string]string // aliasName => pkgPath
+	gblScope    scopeCtx          // global scope
+	gblDecls    []ast.Decl        // global declarations
+	labels      []*Label          // labels of current statement
+	fset        *token.FileSet    // fileset of qlang code
+	cfun        *FuncInfo         // current function
 	reserveds   []*printer.ReservedExpr
-	comprehens  func()
-	*varManager
+	comprehens  func() // current comprehension
+	identBase   int    // auo-increasement ident index
+	*scopeCtx          // current block scope
 }
 
 // NewBuilder creates a new Code Builder instance.
@@ -99,15 +101,20 @@ func NewBuilder(code *Code, fset *token.FileSet) *Builder {
 	}
 	p := &Builder{
 		out:         code,
+		gblDecls:    make([]ast.Decl, 0, 4),
 		imports:     make(map[string]string),
 		importPaths: make(map[string]string),
 		fset:        fset,
 	}
-	p.varManager = &p.gblvars // default scope is global
-	p.stmts = &p.gblstmts
+	p.scopeCtx = &p.gblScope // default scope is global
 	p.lhs.Init()
 	p.rhs.Init()
 	return p
+}
+
+func (p *Builder) autoIdent() string {
+	p.identBase++
+	return "_qlang_" + strconv.Itoa(p.identBase)
 }
 
 var (
@@ -125,12 +132,13 @@ func (p *Builder) Resolve() *Code {
 	if imports != nil {
 		decls = append(decls, imports)
 	}
-	gblvars := p.gblvars.toGenDecl(p)
+	gblvars := p.gblScope.toGenDecl(p)
 	if gblvars != nil {
 		decls = append(decls, gblvars)
 	}
-	if len(p.gblstmts) != 0 {
-		body := &ast.BlockStmt{List: p.gblstmts}
+	p.endBlockStmt()
+	if len(p.gblScope.stmts) != 0 {
+		body := &ast.BlockStmt{List: p.gblScope.stmts}
 		fn := &ast.FuncDecl{
 			Name: Ident("main"),
 			Type: FuncType(p, tyMainFunc),
@@ -138,6 +146,7 @@ func (p *Builder) Resolve() *Code {
 		}
 		decls = append(decls, fn)
 	}
+	decls = append(decls, p.gblDecls...)
 	p.out.fset = token.NewFileSet()
 	p.out.file = &ast.File{
 		Name:  Ident("main"),
@@ -176,15 +185,21 @@ func Comment(text string) *ast.CommentGroup {
 	}
 }
 
+// StartStmt recieves a `StartStmt` event.
+func (p *Builder) StartStmt(stmt interface{}) interface{} {
+	return p.rhs.Len()
+}
+
 // EndStmt recieves a `EndStmt` event.
-func (p *Builder) EndStmt(stmt interface{}) *Builder {
+func (p *Builder) EndStmt(stmt, start interface{}) *Builder {
+	var rhsBase = start.(int)
 	var node ast.Stmt
 	if lhsLen := p.lhs.Len(); lhsLen > 0 { // assignment
 		lhs := make([]ast.Expr, lhsLen)
 		for i := 0; i < lhsLen; i++ {
 			lhs[i] = p.lhs.Pop().(ast.Expr)
 		}
-		rhsLen := p.rhs.Len()
+		rhsLen := p.rhs.Len() - rhsBase
 		rhs := make([]ast.Expr, rhsLen)
 		for i, v := range p.rhs.GetArgs(rhsLen) {
 			rhs[i] = v.(ast.Expr)
@@ -192,7 +207,10 @@ func (p *Builder) EndStmt(stmt interface{}) *Builder {
 		p.rhs.PopN(rhsLen)
 		node = &ast.AssignStmt{Lhs: lhs, Tok: token.ASSIGN, Rhs: rhs}
 	} else {
-		if p.rhs.Len() != 1 {
+		if rhsLen := p.rhs.Len() - rhsBase; rhsLen != 1 {
+			if rhsLen == 0 {
+				return p
+			}
 			log.Panicln("EndStmt: comma expression? -", p.rhs.Len(), "stmt:", reflect.TypeOf(stmt))
 		}
 		var val = p.rhs.Pop()
@@ -211,8 +229,31 @@ func (p *Builder) EndStmt(stmt interface{}) *Builder {
 		line := fmt.Sprintf("\n//line ./%s:%d", path.Base(pos.Filename), pos.Line)
 		node = &printer.CommentedStmt{Comments: Comment(line), Stmt: node}
 	}
-	*p.stmts = append(*p.stmts, node)
+	p.emitStmt(node)
 	return p
+}
+
+func (p *Builder) emitStmt(stmt ast.Stmt) {
+	p.stmts = append(p.stmts, p.labeled(stmt))
+}
+
+func (p *Builder) endBlockStmt() {
+	if stmt := p.labeled(nil); stmt != nil {
+		p.stmts = append(p.stmts, stmt)
+	}
+}
+
+func (p *Builder) labeled(stmt ast.Stmt) ast.Stmt {
+	if p.labels != nil {
+		for _, l := range p.labels {
+			stmt = &ast.LabeledStmt{
+				Label: Ident(l.getName(p)),
+				Stmt:  stmt,
+			}
+		}
+		p.labels = nil
+	}
+	return stmt
 }
 
 // Import imports a package by pkgPath.

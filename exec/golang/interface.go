@@ -1,7 +1,6 @@
 package golang
 
 import (
-	"log"
 	"reflect"
 
 	"github.com/qiniu/qlang/v6/exec.spec"
@@ -25,7 +24,7 @@ func (p *interfaceImpl) NewVar(typ reflect.Type, name string) exec.Var {
 
 // NewLabel creates a label object.
 func (p *interfaceImpl) NewLabel(name string) exec.Label {
-	panic("todo")
+	return NewLabel(name)
 }
 
 // NewForPhrase creates a new ForPhrase instance.
@@ -43,8 +42,7 @@ func (p *interfaceImpl) NewFunc(name string, nestDepth uint32) exec.FuncInfo {
 	if nestDepth == 0 {
 		return nil
 	}
-	log.Panicln("NewFunc:", name, nestDepth)
-	panic("todo")
+	return NewFunc(name, nestDepth)
 }
 
 // FindGoPackage lookups a Go package by pkgPath. It returns nil if not found.
@@ -101,30 +99,26 @@ func (p *iBuilder) BuiltinOp(kind exec.Kind, op exec.Operator) exec.Builder {
 
 // Label defines a label to jmp here.
 func (p *iBuilder) Label(l exec.Label) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).Label(l.(*Label))
-	//return p
+	((*Builder)(p)).Label(l.(*Label))
+	return p
 }
 
 // Jmp instr
 func (p *iBuilder) Jmp(l exec.Label) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).Jmp(l.(*Label))
-	//return p
+	((*Builder)(p)).Jmp(l.(*Label))
+	return p
 }
 
 // JmpIf instr
 func (p *iBuilder) JmpIf(zeroOrOne uint32, l exec.Label) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).JmpIf(zeroOrOne, l.(*Label))
-	//return p
+	((*Builder)(p)).JmpIf(zeroOrOne, l.(*Label))
+	return p
 }
 
 // CaseNE instr
 func (p *iBuilder) CaseNE(l exec.Label, arity int) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).CaseNE(l.(*Label), arity)
-	//return p
+	((*Builder)(p)).CaseNE(l.(*Label), arity)
+	return p
 }
 
 // Default instr
@@ -178,61 +172,56 @@ func (p *iBuilder) EndComprehension(c exec.Comprehension) exec.Builder {
 
 // Closure instr
 func (p *iBuilder) Closure(fun exec.FuncInfo) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).Closure((*FuncInfo)(fun.(*iFuncInfo)))
-	//return p
+	((*Builder)(p)).Closure(fun.(*FuncInfo))
+	return p
 }
 
 // GoClosure instr
 func (p *iBuilder) GoClosure(fun exec.FuncInfo) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).GoClosure((*FuncInfo)(fun.(*iFuncInfo)))
-	//return p
+	((*Builder)(p)).Closure(fun.(*FuncInfo))
+	return p
 }
 
 // CallClosure instr
-func (p *iBuilder) CallClosure(arity int) exec.Builder {
-	((*Builder)(p)).CallClosure(arity)
+func (p *iBuilder) CallClosure(nexpr, arity int, ellipsis bool) exec.Builder {
+	((*Builder)(p)).Call(nexpr, ellipsis)
 	return p
 }
 
 // CallGoClosure instr
-func (p *iBuilder) CallGoClosure(arity int) exec.Builder {
-	((*Builder)(p)).CallGoClosure(arity)
+func (p *iBuilder) CallGoClosure(nexpr, arity int, ellipsis bool) exec.Builder {
+	((*Builder)(p)).Call(nexpr, ellipsis)
 	return p
 }
 
 // CallFunc instr
-func (p *iBuilder) CallFunc(fun exec.FuncInfo) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).CallFunc((*FuncInfo)(fun.(*iFuncInfo)))
-	//return p
+func (p *iBuilder) CallFunc(fun exec.FuncInfo, nexpr int) exec.Builder {
+	((*Builder)(p)).CallFunc(fun.(*FuncInfo), nexpr)
+	return p
 }
 
 // CallFuncv instr
-func (p *iBuilder) CallFuncv(fun exec.FuncInfo, arity int) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).CallFuncv((*FuncInfo)(fun.(*iFuncInfo)), arity)
-	//return p
+func (p *iBuilder) CallFuncv(fun exec.FuncInfo, nexpr, arity int) exec.Builder {
+	((*Builder)(p)).CallFuncv(fun.(*FuncInfo), nexpr, arity)
+	return p
 }
 
 // CallGoFunc instr
-func (p *iBuilder) CallGoFunc(fun exec.GoFuncAddr) exec.Builder {
-	((*Builder)(p)).CallGoFunc(fun)
+func (p *iBuilder) CallGoFunc(fun exec.GoFuncAddr, nexpr int) exec.Builder {
+	((*Builder)(p)).CallGoFunc(fun, nexpr)
 	return p
 }
 
 // CallGoFuncv instr
-func (p *iBuilder) CallGoFuncv(fun exec.GoFuncvAddr, arity int) exec.Builder {
-	((*Builder)(p)).CallGoFuncv(fun, arity)
+func (p *iBuilder) CallGoFuncv(fun exec.GoFuncvAddr, nexpr, arity int) exec.Builder {
+	((*Builder)(p)).CallGoFuncv(fun, nexpr, arity)
 	return p
 }
 
 // DefineFunc instr
 func (p *iBuilder) DefineFunc(fun exec.FuncInfo) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).DefineFunc((*FuncInfo)(fun.(*iFuncInfo)))
-	//return p
+	((*Builder)(p)).DefineFunc(fun)
+	return p
 }
 
 // Return instr
@@ -255,9 +244,8 @@ func (p *iBuilder) Store(idx int32) exec.Builder {
 
 // EndFunc instr
 func (p *iBuilder) EndFunc(fun exec.FuncInfo) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).EndFunc((*FuncInfo)(fun.(*iFuncInfo)))
-	//return p
+	((*Builder)(p)).EndFunc(fun.(*FuncInfo))
+	return p
 }
 
 // DefineVar defines variables.
@@ -373,9 +361,14 @@ func (p *iBuilder) Zero(typ reflect.Type) exec.Builder {
 	return p
 }
 
+// StartStmt recieves a `StartStmt` event.
+func (p *iBuilder) StartStmt(stmt interface{}) interface{} {
+	return ((*Builder)(p)).StartStmt(stmt)
+}
+
 // EndStmt recieves a `EndStmt` event.
-func (p *iBuilder) EndStmt(stmt interface{}) exec.Builder {
-	((*Builder)(p)).EndStmt(stmt)
+func (p *iBuilder) EndStmt(stmt, start interface{}) exec.Builder {
+	((*Builder)(p)).EndStmt(stmt, start)
 	return p
 }
 

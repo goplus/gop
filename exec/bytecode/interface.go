@@ -242,37 +242,43 @@ func (p *iBuilder) GoClosure(fun exec.FuncInfo) exec.Builder {
 }
 
 // CallClosure instr
-func (p *iBuilder) CallClosure(arity int) exec.Builder {
+func (p *iBuilder) CallClosure(nexpr, arity int, ellipsis bool) exec.Builder {
+	if ellipsis {
+		arity = -1
+	}
 	((*Builder)(p)).CallClosure(arity)
 	return p
 }
 
 // CallGoClosure instr
-func (p *iBuilder) CallGoClosure(arity int) exec.Builder {
+func (p *iBuilder) CallGoClosure(nexpr, arity int, ellipsis bool) exec.Builder {
+	if ellipsis {
+		arity = -1
+	}
 	((*Builder)(p)).CallGoClosure(arity)
 	return p
 }
 
 // CallFunc instr
-func (p *iBuilder) CallFunc(fun exec.FuncInfo) exec.Builder {
+func (p *iBuilder) CallFunc(fun exec.FuncInfo, nexpr int) exec.Builder {
 	((*Builder)(p)).CallFunc((*FuncInfo)(fun.(*iFuncInfo)))
 	return p
 }
 
 // CallFuncv instr
-func (p *iBuilder) CallFuncv(fun exec.FuncInfo, arity int) exec.Builder {
+func (p *iBuilder) CallFuncv(fun exec.FuncInfo, nexpr, arity int) exec.Builder {
 	((*Builder)(p)).CallFuncv((*FuncInfo)(fun.(*iFuncInfo)), arity)
 	return p
 }
 
 // CallGoFunc instr
-func (p *iBuilder) CallGoFunc(fun exec.GoFuncAddr) exec.Builder {
+func (p *iBuilder) CallGoFunc(fun exec.GoFuncAddr, nexpr int) exec.Builder {
 	((*Builder)(p)).CallGoFunc(fun)
 	return p
 }
 
 // CallGoFuncv instr
-func (p *iBuilder) CallGoFuncv(fun exec.GoFuncvAddr, arity int) exec.Builder {
+func (p *iBuilder) CallGoFuncv(fun exec.GoFuncvAddr, nexpr, arity int) exec.Builder {
 	((*Builder)(p)).CallGoFuncv(fun, arity)
 	return p
 }
@@ -420,8 +426,13 @@ func (p *iBuilder) Zero(typ reflect.Type) exec.Builder {
 	return p
 }
 
+// StartStmt recieves a `StartStmt` event.
+func (p *iBuilder) StartStmt(stmt interface{}) interface{} {
+	return nil
+}
+
 // EndStmt recieves a `EndStmt` event.
-func (p *iBuilder) EndStmt(stmt interface{}) exec.Builder {
+func (p *iBuilder) EndStmt(stmt, start interface{}) exec.Builder {
 	return p
 }
 

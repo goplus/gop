@@ -117,7 +117,13 @@ func TestReserve(t *testing.T) {
 	if v := checkPop(ctx); v != 1.12 {
 		t.Fatal("1.12 != 1.12, ret =", v)
 	}
-	_ = b.Interface().Pop(0).(*iBuilder).GlobalInterface()
+	i := b.Interface()
+	_ = i.EndStmt(nil, nil).StartStmt(nil)
+	_ = i.GoBuiltin(nil, 0).Store(0)
+	g := i.Pop(0).(*iBuilder).GlobalInterface()
+	g = GlobalInterface()
+	_ = g.GetGoFuncInfo(0)
+	_ = g.GetGoFuncvInfo(0)
 }
 
 func TestReserve2(t *testing.T) {

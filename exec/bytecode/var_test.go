@@ -36,11 +36,11 @@ func TestVar(t *testing.T) {
 		DefineVar(x, y).
 		Push(5).
 		Push("32").
-		CallGoFuncv(sprint, 2).
+		CallGoFuncv(sprint, 2, 2).
 		StoreVar(x). // x = sprint(5, "32")
 		Push("78").
 		LoadVar(x).
-		CallGoFunc(strcat).
+		CallGoFunc(strcat, 2).
 		StoreVar(y). // y = strcat("78", x)
 		Resolve()
 
@@ -69,11 +69,11 @@ func TestParentCtx(t *testing.T) {
 		DefineVar(x, y).
 		Push(5).
 		Push("32").
-		CallGoFuncv(sprint, 2).
+		CallGoFuncv(sprint, 2, 2).
 		StoreVar(x). // x = sprint(5, "32")
 		LoadVar(z).
 		LoadVar(x).
-		CallGoFunc(strcat).
+		CallGoFunc(strcat, 2).
 		StoreVar(z). // z = strcat(z, x)
 		Resolve()
 
@@ -104,12 +104,12 @@ func TestAddrVar(t *testing.T) {
 		DefineVar(x, y).
 		Push(5).
 		Push("32").
-		CallGoFuncv(sprint, 2).
+		CallGoFuncv(sprint, 2, 2).
 		StoreVar(x). // x = sprint(5, "32")
 		LoadVar(z).
 		AddrVar(x). // &x
 		AddrOp(String, OpAddrVal).
-		CallGoFunc(strcat).
+		CallGoFunc(strcat, 2).
 		AddrVar(z).
 		AddrOp(String, OpAssign). // z = strcat(z, *&x)
 		Resolve()

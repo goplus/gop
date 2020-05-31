@@ -190,22 +190,22 @@ type Builder interface {
 	GoClosure(fun FuncInfo) Builder
 
 	// CallClosure instr
-	CallClosure(arity int) Builder
+	CallClosure(nexpr, arity int, ellipsis bool) Builder
 
 	// CallGoClosure instr
-	CallGoClosure(arity int) Builder
+	CallGoClosure(nexpr, arity int, ellipsis bool) Builder
 
 	// CallFunc instr
-	CallFunc(fun FuncInfo) Builder
+	CallFunc(fun FuncInfo, nexpr int) Builder
 
 	// CallFuncv instr
-	CallFuncv(fun FuncInfo, arity int) Builder
+	CallFuncv(fun FuncInfo, nexpr, arity int) Builder
 
 	// CallGoFunc instr
-	CallGoFunc(fun GoFuncAddr) Builder
+	CallGoFunc(fun GoFuncAddr, nexpr int) Builder
 
 	// CallGoFuncv instr
-	CallGoFuncv(fun GoFuncvAddr, arity int) Builder
+	CallGoFuncv(fun GoFuncvAddr, nexpr, arity int) Builder
 
 	// DefineFunc instr
 	DefineFunc(fun FuncInfo) Builder
@@ -279,8 +279,11 @@ type Builder interface {
 	// Zero instr
 	Zero(typ reflect.Type) Builder
 
-	// EndStmt
-	EndStmt(stmt interface{}) Builder
+	// StartStmt emit a `StartStmt` event.
+	StartStmt(stmt interface{}) interface{}
+
+	// EndStmt emit a `EndStmt` event.
+	EndStmt(stmt, start interface{}) Builder
 
 	// Reserve reserves an instruction.
 	Reserve() Reserved

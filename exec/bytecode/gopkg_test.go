@@ -104,7 +104,7 @@ func TestSprint(t *testing.T) {
 	code := newBuilder().
 		Push(5).
 		Push("32").
-		CallGoFuncv(sprint, 2).
+		CallGoFuncv(sprint, 2, 2).
 		Resolve()
 
 	ctx := NewContext(code)
@@ -129,8 +129,8 @@ func TestSprintf(t *testing.T) {
 		Push(1).
 		Push("x").
 		Push("sw").
-		CallGoFunc(strcat).
-		CallGoFuncv(sprintf, 4).
+		CallGoFunc(strcat, 2).
+		CallGoFuncv(sprintf, 4, 4).
 		Resolve()
 
 	ctx := NewContext(code)
@@ -153,7 +153,7 @@ func TestLargeArity(t *testing.T) {
 		ret += "32"
 	}
 	code := b.
-		CallGoFuncv(GoFuncvAddr(sprint), bitsFuncvArityMax+1).
+		CallGoFuncv(GoFuncvAddr(sprint), bitsFuncvArityMax+1, bitsFuncvArityMax+1).
 		Resolve()
 
 	ctx := NewContext(code)

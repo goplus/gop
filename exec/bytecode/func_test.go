@@ -34,14 +34,14 @@ func TestFunc(t *testing.T) {
 	code := newBuilder().
 		Push("x").
 		Push("sw").
-		CallFunc(foo).
+		CallFunc(foo, 2).
 		Return(-1).
 		DefineFunc(
 			foo.Return(ret).
 				Args(TyString, TyString)).
 		Load(-2).
 		Load(-1).
-		CallGoFunc(strcat).
+		CallGoFunc(strcat, 2).
 		StoreVar(ret).
 		EndFunc(foo).
 		Resolve()
@@ -135,20 +135,20 @@ func TestFuncLargeArity(t *testing.T) {
 		ret += "32"
 	}
 	code := b.
-		CallFuncv(foo, bitsFuncvArityMax+1).
+		CallFuncv(foo, bitsFuncvArityMax+1, bitsFuncvArityMax+1).
 		Return(-1).
 		DefineFunc(
 			bar.Return(ret1).
 				Vargs(tyStringSlice)).
 		Load(-1).
-		CallGoFuncv(GoFuncvAddr(sprint), -1).
+		CallGoFuncv(GoFuncvAddr(sprint), 1, -1).
 		StoreVar(ret1).
 		EndFunc(bar).
 		DefineFunc(
 			foo.Return(ret2).
 				Vargs(tyStringSlice)).
 		Load(-1).
-		CallFuncv(bar, -1).
+		CallFuncv(bar, 1, -1).
 		StoreVar(ret2).
 		EndFunc(foo).
 		Resolve()
@@ -172,14 +172,14 @@ func TestClosure(t *testing.T) {
 		Push("x").
 		Push("sw").
 		Closure(foo).
-		CallClosure(2).
+		CallClosure(2, 2, false).
 		Return(-1).
 		DefineFunc(
 			foo.Return(ret).
 				Args(TyString, TyString)).
 		Load(-2).
 		Load(-1).
-		CallGoFunc(strcat).
+		CallGoFunc(strcat, 2).
 		StoreVar(ret).
 		EndFunc(foo).
 		Resolve()
@@ -209,14 +209,14 @@ func TestClosure2(t *testing.T) {
 		Push(1).
 		Push("xsw").
 		Closure(bar).
-		CallClosure(4).
+		CallClosure(4, 4, false).
 		Return(-1).
 		DefineFunc(
 			foo.Return(ret1).
 				Vargs(TyString, tyInterfaceSlice)).
 		Load(-2).
 		Load(-1).
-		CallGoFuncv(sprintf, -1). // sprintf(format, args...)
+		CallGoFuncv(sprintf, 2, -1). // sprintf(format, args...)
 		StoreVar(ret1).
 		EndFunc(foo).
 		DefineFunc(
@@ -225,7 +225,7 @@ func TestClosure2(t *testing.T) {
 		Load(-2).
 		Load(-1).
 		Closure(foo).
-		CallClosure(-1). // foo(format, args...)
+		CallClosure(2, -1, true). // foo(format, args...)
 		Return(2).
 		EndFunc(bar).
 		Resolve()
@@ -255,14 +255,14 @@ func TestGoClosure(t *testing.T) {
 		Push(1).
 		Push("xsw").
 		GoClosure(bar).
-		CallGoClosure(4).
+		CallGoClosure(4, 4, false).
 		Return(-1).
 		DefineFunc(
 			foo.Return(ret1).
 				Vargs(TyString, tyInterfaceSlice)).
 		Load(-2).
 		Load(-1).
-		CallGoFuncv(sprintf, -1). // sprintf(format, args...)
+		CallGoFuncv(sprintf, 2, -1). // sprintf(format, args...)
 		StoreVar(ret1).
 		EndFunc(foo).
 		DefineFunc(
@@ -271,7 +271,7 @@ func TestGoClosure(t *testing.T) {
 		Load(-2).
 		Load(-1).
 		GoClosure(foo).
-		CallGoClosure(-1). // foo(format, args...)
+		CallGoClosure(2, -1, true). // foo(format, args...)
 		Return(2).
 		EndFunc(bar).
 		Resolve()
