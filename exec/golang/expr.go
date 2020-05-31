@@ -312,10 +312,14 @@ func (p *Builder) MakeArray(typ reflect.Type, arity int) *Builder {
 	for i, v := range p.rhs.GetArgs(arity) {
 		elts[i] = v.(ast.Expr)
 	}
-	p.rhs.Ret(arity, &ast.CompositeLit{
+	var xExpr ast.Expr = &ast.CompositeLit{
 		Type: typExpr,
 		Elts: elts,
-	})
+	}
+	if typ.Kind() == reflect.Array {
+		xExpr = &ast.UnaryExpr{Op: token.AND, X: xExpr}
+	}
+	p.rhs.Ret(arity, xExpr)
 	return p
 }
 
