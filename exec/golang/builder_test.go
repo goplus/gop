@@ -23,6 +23,7 @@ import (
 	"github.com/qiniu/qlang/v6/cl"
 	"github.com/qiniu/qlang/v6/exec.spec"
 	"github.com/qiniu/qlang/v6/token"
+	"github.com/qiniu/x/log"
 
 	qexec "github.com/qiniu/qlang/v6/exec/bytecode"
 	_ "github.com/qiniu/qlang/v6/lib/builtin"
@@ -36,6 +37,7 @@ var I = qexec.FindGoPackage("")
 
 func init() {
 	cl.CallBuiltinOp = qexec.CallBuiltinOp
+	log.SetFlags(log.Ldefault &^ log.LstdFlags)
 }
 
 // -----------------------------------------------------------------------------

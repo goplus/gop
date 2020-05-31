@@ -12,6 +12,7 @@ import (
 	"github.com/qiniu/qlang/v6/exec/golang"
 	"github.com/qiniu/qlang/v6/parser"
 	"github.com/qiniu/qlang/v6/token"
+	"github.com/qiniu/x/log"
 
 	exec "github.com/qiniu/qlang/v6/exec/bytecode"
 	_ "github.com/qiniu/qlang/v6/lib/builtin"
@@ -98,5 +99,6 @@ func main() {
 	}
 	dir := os.Args[1]
 	cl.CallBuiltinOp = exec.CallBuiltinOp
+	log.SetFlags(log.Ldefault &^ log.LstdFlags)
 	genGo(dir)
 }

@@ -19,12 +19,12 @@ package golang
 import (
 	"go/ast"
 	"go/token"
-	"log"
 	"reflect"
 	"strconv"
 	"strings"
 
 	"github.com/qiniu/qlang/v6/exec.spec"
+	"github.com/qiniu/x/log"
 )
 
 // -----------------------------------------------------------------------------
@@ -223,7 +223,7 @@ var opTokens = [...]token.Token{
 // TypeCast instr
 func (p *Builder) TypeCast(from, to reflect.Type) *Builder {
 	x := p.rhs.Pop().(ast.Expr)
-	TypeCast(p, x, from, to)
+	p.rhs.Push(TypeCast(p, x, from, to))
 	return p
 }
 
