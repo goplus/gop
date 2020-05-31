@@ -14,34 +14,24 @@
  limitations under the License.
 */
 
-package spec
-
-import (
-	exec "github.com/qiniu/qlang/v6/exec/bytecode"
-)
+package bytecode
 
 // -----------------------------------------------------------------------------
-
-// A Context represents the context of an executor.
-type Context = exec.Context
-
-// -----------------------------------------------------------------------------
-
-// GoPackage represents a Go package.
-type GoPackage = exec.GoPackage
-
-// NewGoPackage creates a new builtin Go Package.
-func NewGoPackage(pkgPath string) *GoPackage {
-	return exec.NewGoPackage(pkgPath)
-}
-
-// ToStrings converts []interface{} into []string.
-func ToStrings(args []interface{}) []string {
-	ret := make([]string, len(args))
-	for i, arg := range args {
-		ret[i] = arg.(string)
+/*
+// Import imports a module written in Go.
+//
+func Import(args ...interface{}) {
+	if mod, ok := args[0].(string); ok {
+		importMod(mod, args[1].(map[string]interface{}))
+		return
 	}
-	return ret
+	for _, arg := range args {
+		table := arg.(map[string]interface{})
+		table["_name"]
+	}
 }
 
+func importMod(mod string, table map[string]interface{}) {
+}
+*/
 // -----------------------------------------------------------------------------

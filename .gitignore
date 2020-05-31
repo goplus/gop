@@ -22,6 +22,8 @@ _cgo_export.*
 
 _testmain.go
 coverage.txt
+qlang_autogen.go
+goplus_autogen.go
 
 *.exe
 *.test

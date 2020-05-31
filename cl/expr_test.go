@@ -21,9 +21,10 @@ import (
 	"testing"
 
 	"github.com/qiniu/qlang/v6/ast/asttest"
-	"github.com/qiniu/qlang/v6/exec"
 	"github.com/qiniu/qlang/v6/parser"
 	"github.com/qiniu/qlang/v6/token"
+
+	exec "github.com/qiniu/qlang/v6/exec/bytecode"
 )
 
 // -----------------------------------------------------------------------------

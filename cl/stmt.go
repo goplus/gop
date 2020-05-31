@@ -64,6 +64,7 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	default:
 		log.Panicln("compileStmt failed: unknown -", reflect.TypeOf(v))
 	}
+	ctx.out.EndStmt(stmt)
 }
 
 func compileForPhraseStmt(parent *blockCtx, v *ast.ForPhraseStmt) {

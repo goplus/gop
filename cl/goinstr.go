@@ -51,11 +51,6 @@ func init() {
 	}
 }
 
-var goBuiltinNames = [...]string{
-	exec.GobLen: "len",
-	exec.GobCap: "cap",
-}
-
 // -----------------------------------------------------------------------------
 
 /*
@@ -115,10 +110,10 @@ func igoDelete(ctx *blockCtx, v *ast.CallExpr) func() {
 // func len/cap(v Type) int
 func igoLenOrCap(ctx *blockCtx, v *ast.CallExpr, op exec.GoBuiltin) func() {
 	if len(v.Args) < 1 {
-		logPanic(ctx, v, `missing argument to %v: %v`, goBuiltinNames[op], ctx.code(v))
+		logPanic(ctx, v, `missing argument to %v: %v`, op, ctx.code(v))
 	}
 	if len(v.Args) > 1 {
-		logPanic(ctx, v, `too many arguments to %v: %v`, goBuiltinNames[op], ctx.code(v))
+		logPanic(ctx, v, `too many arguments to %v: %v`, op, ctx.code(v))
 	}
 	expr := compileExpr(ctx, v.Args[0])
 	x := ctx.infer.Get(-1)
@@ -127,7 +122,7 @@ func igoLenOrCap(ctx *blockCtx, v *ast.CallExpr, op exec.GoBuiltin) func() {
 	if kind == reflect.Ptr {
 		typ = typ.Elem()
 		if kind = typ.Kind(); kind != reflect.Array {
-			logPanic(ctx, v, `invalid argument a (type *%v) for %v`, typ, goBuiltinNames[op])
+			logPanic(ctx, v, `invalid argument a (type *%v) for %v`, typ, op)
 		}
 	}
 	switch kind {
@@ -161,7 +156,7 @@ func igoLenOrCap(ctx *blockCtx, v *ast.CallExpr, op exec.GoBuiltin) func() {
 			expr()
 			ctx.out.GoBuiltin(typ, op)
 		default:
-			logPanic(ctx, v, `invalid argument a (type %v) for %v`, typ, goBuiltinNames[op])
+			logPanic(ctx, v, `invalid argument a (type %v) for %v`, typ, op)
 		}
 	}
 }

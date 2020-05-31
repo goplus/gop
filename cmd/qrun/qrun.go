@@ -17,30 +17,37 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
 	"github.com/qiniu/qlang/v6/cl"
-	"github.com/qiniu/qlang/v6/exec"
 	"github.com/qiniu/qlang/v6/parser"
 	"github.com/qiniu/qlang/v6/token"
 	"github.com/qiniu/x/log"
 
+	exec "github.com/qiniu/qlang/v6/exec/bytecode"
 	_ "github.com/qiniu/qlang/v6/lib/builtin"
 	_ "github.com/qiniu/qlang/v6/lib/fmt"
+	_ "github.com/qiniu/qlang/v6/lib/reflect"
 	_ "github.com/qiniu/qlang/v6/lib/strings"
 )
 
 // -----------------------------------------------------------------------------
 
+var (
+	flagAsm = flag.Bool("asm", false, "generate asm code")
+)
+
 func main() {
 	if len(os.Args) <= 1 {
-		fmt.Println("Usage: qrun <qlangSrcDir>")
+		fmt.Println("Usage: qrun [-asm] <qlangSrcDir>")
 		return
 	}
+	flag.Parse()
 	log.SetFlags(log.Ldefault &^ log.LstdFlags)
 	fset := token.NewFileSet()
-	pkgs, err := parser.ParseDir(fset, os.Args[1], nil, 0)
+	pkgs, err := parser.ParseDir(fset, flag.Arg(0), nil, 0)
 	if err != nil {
 		log.Fatalln("ParseDir failed:", err)
 	}
@@ -52,7 +59,10 @@ func main() {
 		log.Fatalln("cl.NewPackage failed:", err)
 	}
 	code := b.Resolve()
-
+	if *flagAsm {
+		code.Dump(os.Stdout)
+		return
+	}
 	ctx := exec.NewContext(code)
 	ctx.Exec(0, code.Len())
 }
