@@ -279,8 +279,11 @@ type Builder interface {
 	// Zero instr
 	Zero(typ reflect.Type) Builder
 
-	// EndStmt
-	EndStmt(stmt interface{}) Builder
+	// StartStmt emit a `StartStmt` event.
+	StartStmt(stmt interface{}) interface{}
+
+	// EndStmt emit a `EndStmt` event.
+	EndStmt(stmt, start interface{}) Builder
 
 	// Reserve reserves an instruction.
 	Reserve() Reserved

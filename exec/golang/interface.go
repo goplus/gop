@@ -25,7 +25,7 @@ func (p *interfaceImpl) NewVar(typ reflect.Type, name string) exec.Var {
 
 // NewLabel creates a label object.
 func (p *interfaceImpl) NewLabel(name string) exec.Label {
-	panic("todo")
+	return NewLabel(name)
 }
 
 // NewForPhrase creates a new ForPhrase instance.
@@ -101,30 +101,26 @@ func (p *iBuilder) BuiltinOp(kind exec.Kind, op exec.Operator) exec.Builder {
 
 // Label defines a label to jmp here.
 func (p *iBuilder) Label(l exec.Label) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).Label(l.(*Label))
-	//return p
+	((*Builder)(p)).Label(l.(*Label))
+	return p
 }
 
 // Jmp instr
 func (p *iBuilder) Jmp(l exec.Label) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).Jmp(l.(*Label))
-	//return p
+	((*Builder)(p)).Jmp(l.(*Label))
+	return p
 }
 
 // JmpIf instr
 func (p *iBuilder) JmpIf(zeroOrOne uint32, l exec.Label) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).JmpIf(zeroOrOne, l.(*Label))
-	//return p
+	((*Builder)(p)).JmpIf(zeroOrOne, l.(*Label))
+	return p
 }
 
 // CaseNE instr
 func (p *iBuilder) CaseNE(l exec.Label, arity int) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).CaseNE(l.(*Label), arity)
-	//return p
+	((*Builder)(p)).CaseNE(l.(*Label), arity)
+	return p
 }
 
 // Default instr
@@ -373,9 +369,14 @@ func (p *iBuilder) Zero(typ reflect.Type) exec.Builder {
 	return p
 }
 
+// StartStmt recieves a `StartStmt` event.
+func (p *iBuilder) StartStmt(stmt interface{}) interface{} {
+	return ((*Builder)(p)).StartStmt(stmt)
+}
+
 // EndStmt recieves a `EndStmt` event.
-func (p *iBuilder) EndStmt(stmt interface{}) exec.Builder {
-	((*Builder)(p)).EndStmt(stmt)
+func (p *iBuilder) EndStmt(stmt, start interface{}) exec.Builder {
+	((*Builder)(p)).EndStmt(stmt, start)
 	return p
 }
 

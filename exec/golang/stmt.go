@@ -4,50 +4,96 @@ import (
 	"go/ast"
 	"go/token"
 	"reflect"
-
-	"github.com/qiniu/qlang/v6/exec.spec"
-	"github.com/qiniu/x/log"
 )
 
 // ----------------------------------------------------------------------------
 
-// Return instr
-func (p *Builder) Return(n int32) *Builder {
-	var results []ast.Expr
-	if n > 0 {
-		log.Panicln("todo")
+// Label represents a label.
+type Label struct {
+	name string
+}
+
+// NewLabel creates a label object.
+func NewLabel(name string) *Label {
+	return &Label{name: name}
+}
+
+func (p *Label) getName(b *Builder) string {
+	if p.name == "" {
+		p.name = b.autoIdent()
 	}
-	p.rhs.Push(&ast.ReturnStmt{Results: results})
-	return p
+	return p.name
+}
+
+// Name returns the label name.
+func (p *Label) Name() string {
+	return p.name
 }
 
 // Label defines a label to jmp here.
-func (p *Builder) Label(l exec.Label) *Builder {
-	log.Panicln("todo")
+func (p *Builder) Label(l *Label) *Builder {
+	p.labels = append(p.labels, l)
 	return p
 }
 
 // Jmp instr
-func (p *Builder) Jmp(l exec.Label) *Builder {
-	log.Panicln("todo")
+func (p *Builder) Jmp(l *Label) *Builder {
+	p.emitStmt(Goto(p, l))
 	return p
 }
 
+// Goto instr
+func Goto(p *Builder, l *Label) *ast.BranchStmt {
+	return &ast.BranchStmt{
+		Tok:   token.GOTO,
+		Label: Ident(l.getName(p)),
+	}
+}
+
+// GotoIf instr
+func GotoIf(p *Builder, cond ast.Expr, l *Label) *ast.IfStmt {
+	return &ast.IfStmt{
+		Cond: cond,
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{Goto(p, l)},
+		},
+	}
+}
+
 // JmpIf instr
-func (p *Builder) JmpIf(zeroOrOne uint32, l exec.Label) *Builder {
-	log.Panicln("todo")
+func (p *Builder) JmpIf(zeroOrOne uint32, l *Label) *Builder {
+	cond := p.rhs.Pop().(ast.Expr)
+	if zeroOrOne == 0 {
+		cond = &ast.UnaryExpr{Op: token.NOT, X: cond}
+	}
+	p.emitStmt(GotoIf(p, cond, l))
 	return p
 }
 
 // CaseNE instr
-func (p *Builder) CaseNE(l exec.Label, arity int) *Builder {
-	log.Panicln("todo")
+func (p *Builder) CaseNE(l *Label, arity int) *Builder {
+	args := p.rhs.GetArgs(arity + 1)
+	arg0 := args[0]
+	x, ok := arg0.(*ast.Ident)
+	if !ok {
+		x = Ident(p.autoIdent())
+		p.emitStmt(&ast.AssignStmt{
+			Lhs: []ast.Expr{x},
+			Tok: token.DEFINE,
+			Rhs: []ast.Expr{arg0.(ast.Expr)},
+		})
+		args[0] = x
+	}
+	for i := 1; i <= arity; i++ {
+		p.emitStmt(GotoIf(p, &ast.BinaryExpr{X: x, Op: token.NEQ, Y: args[i].(ast.Expr)}, l))
+	}
+	p.rhs.PopN(arity)
 	return p
 }
 
 // Default instr
 func (p *Builder) Default() *Builder {
-	log.Panicln("todo")
+	p.rhs.PopN(1)
 	return p
 }
 

@@ -44,6 +44,7 @@ func compileBodyWith(ctx *blockCtx, body []ast.Stmt) {
 }
 
 func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
+	start := ctx.out.StartStmt(stmt)
 	switch v := stmt.(type) {
 	case *ast.ExprStmt:
 		compileExprStmt(ctx, v)
@@ -64,7 +65,7 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	default:
 		log.Panicln("compileStmt failed: unknown -", reflect.TypeOf(v))
 	}
-	ctx.out.EndStmt(stmt)
+	ctx.out.EndStmt(stmt, start)
 }
 
 func compileForPhraseStmt(parent *blockCtx, v *ast.ForPhraseStmt) {

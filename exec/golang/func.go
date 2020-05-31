@@ -1,6 +1,8 @@
 package golang
 
 import (
+	"go/ast"
+
 	"github.com/qiniu/qlang/v6/exec.spec"
 	"github.com/qiniu/x/log"
 )
@@ -46,6 +48,16 @@ func (p *Builder) CallFuncv(fun exec.FuncInfo, arity int) *Builder {
 // DefineFunc instr
 func (p *Builder) DefineFunc(fun exec.FuncInfo) *Builder {
 	log.Panicln("todo")
+	return p
+}
+
+// Return instr
+func (p *Builder) Return(n int32) *Builder {
+	var results []ast.Expr
+	if n > 0 {
+		log.Panicln("todo")
+	}
+	p.rhs.Push(&ast.ReturnStmt{Results: results})
 	return p
 }
 

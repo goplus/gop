@@ -58,10 +58,10 @@ func main() {
 		Push(2).
 		BuiltinOp(exec.Int, exec.OpAdd).
 		CallGoFuncv(println, 1).
-		EndStmt(nil).
+		EndStmt(nil, 0).
 		Push(complex64(3+2i)).
 		CallGoFuncv(println, 1).
-		EndStmt(nil).
+		EndStmt(nil, 0).
 		Resolve()
 
 	codeGen := code.String()
@@ -110,10 +110,10 @@ func main() {
 		Push(2).
 		BuiltinOp(exec.Int, exec.OpAdd).
 		CallGoFuncv(println, 1).
-		EndStmt(node1).
+		EndStmt(node1, 0).
 		Push(complex64(3+2i)).
 		CallGoFuncv(println, 1).
-		EndStmt(node2).
+		EndStmt(node2, 0).
 		Resolve()
 
 	codeGen := code.String()
