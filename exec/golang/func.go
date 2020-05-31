@@ -24,9 +24,7 @@ type FuncInfo struct {
 	t      reflect.Type
 	in     []reflect.Type
 	numOut int
-	stmts  []ast.Stmt
-	varManager
-	blockCtx
+	scopeCtx
 	nVariadic uint16
 }
 
@@ -148,9 +146,8 @@ func (p *Builder) CallFuncv(fun *FuncInfo, nexpr, arity int) *Builder {
 // DefineFunc instr
 func (p *Builder) DefineFunc(fun exec.FuncInfo) *Builder {
 	f := fun.(*FuncInfo)
-	f.saveEnv(p)
-	p.varManager = &f.varManager
-	p.stmts = &f.stmts
+	f.initStmts()
+	p.scopeCtx = &f.scopeCtx
 	p.cfun = f
 	return p
 }
@@ -174,15 +171,15 @@ func (p *Builder) Return(n int32) *Builder {
 // EndFunc instr
 func (p *Builder) EndFunc(fun *FuncInfo) *Builder {
 	p.endBlockStmt()
-	body := &ast.BlockStmt{List: fun.stmts}
+	body := &ast.BlockStmt{List: fun.getStmts(p)}
 	fn := &ast.FuncDecl{
 		Name: Ident(fun.getName(p)),
 		Type: toFuncType(p, fun),
 		Body: body,
 	}
-	p.gbldecls = append(p.gbldecls, fn)
+	p.gblDecls = append(p.gblDecls, fn)
 	p.cfun = nil
-	fun.restoreEnv(p)
+	p.scopeCtx = &p.gblScope
 	return p
 }
 

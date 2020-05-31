@@ -16,7 +16,7 @@ import (
 type Var struct {
 	typ   reflect.Type
 	name  string
-	where *varManager
+	where *scopeCtx
 }
 
 // NewVar creates a variable instance.
@@ -43,7 +43,7 @@ func (p *Var) IsUnnamedOut() bool {
 	return strings.HasPrefix(p.name, "_ret_")
 }
 
-func (p *Var) setScope(where *varManager) {
+func (p *Var) setScope(where *scopeCtx) {
 	if p.where != nil {
 		panic("Var.setScope: variable already defined")
 	}
@@ -52,22 +52,19 @@ func (p *Var) setScope(where *varManager) {
 
 // -----------------------------------------------------------------------------
 
-type varManager struct {
+type scopeCtx struct {
 	vlist []exec.Var
+	stmts []ast.Stmt
 }
 
-func newVarManager(vars ...exec.Var) *varManager {
-	return &varManager{vlist: vars}
-}
-
-func (p *varManager) addVar(vars ...exec.Var) {
+func (p *scopeCtx) addVar(vars ...exec.Var) {
 	for _, v := range vars {
 		v.(*Var).setScope(p)
 	}
 	p.vlist = append(p.vlist, vars...)
 }
 
-func (p *varManager) toGenDecl(b *Builder) *ast.GenDecl {
+func (p *scopeCtx) toGenDecl(b *Builder) *ast.GenDecl {
 	n := len(p.vlist)
 	if n == 0 {
 		return nil
@@ -87,6 +84,18 @@ func (p *varManager) toGenDecl(b *Builder) *ast.GenDecl {
 	}
 }
 
+func (p *scopeCtx) getStmts(b *Builder) []ast.Stmt {
+	if decl := p.toGenDecl(b); decl != nil {
+		p.stmts[0] = &ast.DeclStmt{Decl: decl}
+		return p.stmts
+	}
+	return p.stmts[1:]
+}
+
+func (p *scopeCtx) initStmts() {
+	p.stmts = make([]ast.Stmt, 1, 8)
+}
+
 // -----------------------------------------------------------------------------
 
 // DefineVar defines variables.
@@ -97,7 +106,7 @@ func (p *Builder) DefineVar(vars ...exec.Var) *Builder {
 
 // InCurrentCtx returns if a variable is in current context or not.
 func (p *Builder) InCurrentCtx(v exec.Var) bool {
-	return p.varManager == v.(*Var).where
+	return p.scopeCtx == v.(*Var).where
 }
 
 // Load instr

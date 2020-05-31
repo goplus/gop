@@ -100,21 +100,18 @@ func (p *Builder) Default() *Builder {
 // ----------------------------------------------------------------------------
 
 type blockCtx struct {
-	parent *varManager
-	old    *[]ast.Stmt
+	parent *scopeCtx
 }
 
 func (p *blockCtx) saveEnv(b *Builder) {
 	if p.parent != nil {
 		panic("blockCtx.setParent: already defined")
 	}
-	p.parent = b.varManager
-	p.old = b.stmts
+	p.parent = b.scopeCtx
 }
 
 func (p *blockCtx) restoreEnv(b *Builder) {
-	b.varManager = p.parent
-	b.stmts = p.old
+	b.scopeCtx = p.parent
 }
 
 // ForPhrase represents a for range phrase.
@@ -122,8 +119,7 @@ type ForPhrase struct {
 	Key, Value *Var // Key, Value may be nil
 	X, Cond    ast.Expr
 	TypeIn     reflect.Type
-	stmts      []ast.Stmt
-	varManager
+	scopeCtx
 	blockCtx
 }
 
@@ -145,9 +141,9 @@ func NewComprehension(out reflect.Type) *Comprehension {
 
 // ForPhrase instr
 func (p *Builder) ForPhrase(f *ForPhrase, key, val *Var, hasExecCtx ...bool) *Builder {
+	f.initStmts()
 	f.saveEnv(p)
-	p.varManager = &f.varManager
-	p.stmts = &f.stmts
+	p.scopeCtx = &f.scopeCtx
 	f.Key, f.Value = key, val
 	f.X = p.rhs.Pop().(ast.Expr)
 	return p
@@ -164,7 +160,7 @@ func (p *Builder) EndForPhrase(f *ForPhrase) *Builder {
 	if p.comprehens != nil {
 		p.comprehens()
 	}
-	body := &ast.BlockStmt{List: f.stmts}
+	body := &ast.BlockStmt{List: f.getStmts(p)}
 	if f.Cond != nil {
 		body = &ast.BlockStmt{List: []ast.Stmt{
 			&ast.IfStmt{Cond: f.Cond, Body: body},
@@ -194,7 +190,7 @@ func (p *Builder) ListComprehension(c *Comprehension) *Builder {
 	p.comprehens = func() {
 		v := p.rhs.Pop()
 		if stmt, ok := v.(*ast.RangeStmt); ok {
-			*p.stmts = append(*p.stmts, stmt)
+			p.emitStmt(stmt)
 			return
 		}
 		x := v.(ast.Expr)
@@ -207,7 +203,7 @@ func (p *Builder) ListComprehension(c *Comprehension) *Builder {
 			Tok: token.ASSIGN,
 			Rhs: []ast.Expr{appendExpr},
 		}
-		*p.stmts = append(*p.stmts, assign)
+		p.emitStmt(assign)
 	}
 	return p
 }
@@ -218,7 +214,7 @@ func (p *Builder) MapComprehension(c *Comprehension) *Builder {
 	p.comprehens = func() {
 		v := p.rhs.Pop()
 		if stmt, ok := v.(*ast.RangeStmt); ok {
-			*p.stmts = append(*p.stmts, stmt)
+			p.emitStmt(stmt)
 			return
 		}
 		val := v.(ast.Expr)
@@ -228,7 +224,7 @@ func (p *Builder) MapComprehension(c *Comprehension) *Builder {
 			Tok: token.ASSIGN,
 			Rhs: []ast.Expr{val},
 		}
-		*p.stmts = append(*p.stmts, assign)
+		p.emitStmt(assign)
 	}
 	return p
 }

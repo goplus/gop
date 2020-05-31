@@ -83,17 +83,15 @@ type Builder struct {
 	out         *Code             // golang code
 	imports     map[string]string // pkgPath => aliasName
 	importPaths map[string]string // aliasName => pkgPath
-	gbldecls    []ast.Decl        // global declarations
-	gblstmts    []ast.Stmt        // global statements
-	gblvars     varManager        // global variables
+	gblScope    scopeCtx          // global scope
+	gblDecls    []ast.Decl        // global declarations
 	labels      []*Label          // labels of current statement
 	fset        *token.FileSet    // fileset of qlang code
-	stmts       *[]ast.Stmt       // current block statements
 	cfun        *FuncInfo         // current function
 	reserveds   []*printer.ReservedExpr
 	comprehens  func() // current comprehension
 	identBase   int    // auo-increasement ident index
-	*varManager        // current block variables
+	*scopeCtx          // current block scope
 }
 
 // NewBuilder creates a new Code Builder instance.
@@ -103,13 +101,12 @@ func NewBuilder(code *Code, fset *token.FileSet) *Builder {
 	}
 	p := &Builder{
 		out:         code,
-		gbldecls:    make([]ast.Decl, 0, 4),
+		gblDecls:    make([]ast.Decl, 0, 4),
 		imports:     make(map[string]string),
 		importPaths: make(map[string]string),
 		fset:        fset,
 	}
-	p.varManager = &p.gblvars // default scope is global
-	p.stmts = &p.gblstmts
+	p.scopeCtx = &p.gblScope // default scope is global
 	p.lhs.Init()
 	p.rhs.Init()
 	return p
@@ -135,13 +132,13 @@ func (p *Builder) Resolve() *Code {
 	if imports != nil {
 		decls = append(decls, imports)
 	}
-	gblvars := p.gblvars.toGenDecl(p)
+	gblvars := p.gblScope.toGenDecl(p)
 	if gblvars != nil {
 		decls = append(decls, gblvars)
 	}
 	p.endBlockStmt()
-	if len(p.gblstmts) != 0 {
-		body := &ast.BlockStmt{List: p.gblstmts}
+	if len(p.gblScope.stmts) != 0 {
+		body := &ast.BlockStmt{List: p.gblScope.stmts}
 		fn := &ast.FuncDecl{
 			Name: Ident("main"),
 			Type: FuncType(p, tyMainFunc),
@@ -149,7 +146,7 @@ func (p *Builder) Resolve() *Code {
 		}
 		decls = append(decls, fn)
 	}
-	decls = append(decls, p.gbldecls...)
+	decls = append(decls, p.gblDecls...)
 	p.out.fset = token.NewFileSet()
 	p.out.file = &ast.File{
 		Name:  Ident("main"),
@@ -237,12 +234,12 @@ func (p *Builder) EndStmt(stmt, start interface{}) *Builder {
 }
 
 func (p *Builder) emitStmt(stmt ast.Stmt) {
-	*p.stmts = append(*p.stmts, p.labeled(stmt))
+	p.stmts = append(p.stmts, p.labeled(stmt))
 }
 
 func (p *Builder) endBlockStmt() {
 	if stmt := p.labeled(nil); stmt != nil {
-		*p.stmts = append(*p.stmts, stmt)
+		p.stmts = append(p.stmts, stmt)
 	}
 }
 

@@ -8,7 +8,8 @@ func foo(x string) string {
 }
 
 func bar(n int, err error) {
-	fmt.Println(n, err)
+    m := n
+	fmt.Println(m, err)
 }
 
 bar(fmt.Println(foo("Hello, world???")))
