@@ -288,7 +288,7 @@ var builtinFnvs = map[string][2]string{
 
 // Append instr
 func (p *Builder) Append(typ reflect.Type, arity int) *Builder {
-	p.rhs.Push(Ident("append"))
+	p.rhs.Push(appendIden)
 	var ellipsis bool
 	if arity == -1 {
 		ellipsis = true
@@ -300,7 +300,7 @@ func (p *Builder) Append(typ reflect.Type, arity int) *Builder {
 
 // Make instr
 func (p *Builder) Make(typ reflect.Type, arity int) *Builder {
-	p.rhs.Push(Ident("make"))
+	p.rhs.Push(makeIden)
 	p.Call(arity, false, Type(p, typ))
 	return p
 }

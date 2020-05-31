@@ -84,9 +84,11 @@ type Builder struct {
 	imports     map[string]string
 	importPaths map[string]string
 	gblvars     varManager
-	stmts       []ast.Stmt
+	gblstmts    []ast.Stmt
 	fset        *token.FileSet
+	stmts       *[]ast.Stmt
 	reserveds   []*printer.ReservedExpr
+	comprehens  func()
 	*varManager
 }
 
@@ -102,6 +104,7 @@ func NewBuilder(code *Code, fset *token.FileSet) *Builder {
 		fset:        fset,
 	}
 	p.varManager = &p.gblvars // default scope is global
+	p.stmts = &p.gblstmts
 	p.lhs.Init()
 	p.rhs.Init()
 	return p
@@ -109,6 +112,10 @@ func NewBuilder(code *Code, fset *token.FileSet) *Builder {
 
 var (
 	tyMainFunc = reflect.TypeOf((*func())(nil)).Elem()
+	unnamedVar = Ident("_")
+	qlangRet   = Ident("_qlang_ret")
+	appendIden = Ident("append")
+	makeIden   = Ident("make")
 )
 
 // Resolve resolves all unresolved labels/functions/consts/etc.
@@ -122,8 +129,8 @@ func (p *Builder) Resolve() *Code {
 	if gblvars != nil {
 		decls = append(decls, gblvars)
 	}
-	if len(p.stmts) != 0 {
-		body := &ast.BlockStmt{List: p.stmts}
+	if len(p.gblstmts) != 0 {
+		body := &ast.BlockStmt{List: p.gblstmts}
 		fn := &ast.FuncDecl{
 			Name: Ident("main"),
 			Type: FuncType(p, tyMainFunc),
@@ -204,7 +211,7 @@ func (p *Builder) EndStmt(stmt interface{}) *Builder {
 		line := fmt.Sprintf("\n//line ./%s:%d", path.Base(pos.Filename), pos.Line)
 		node = &printer.CommentedStmt{Comments: Comment(line), Stmt: node}
 	}
-	p.stmts = append(p.stmts, node)
+	*p.stmts = append(*p.stmts, node)
 	return p
 }
 

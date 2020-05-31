@@ -87,7 +87,7 @@ func genGo(dir string) {
 		fmt.Printf("Compiling %s ...\n", dir)
 		err = genGopkg(dir)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "# %v\n[ERROR] %v\n\n", dir, err)
+			fmt.Fprintf(os.Stderr, "[ERROR] %v\n\n", err)
 		}
 	}
 }

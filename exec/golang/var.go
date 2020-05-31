@@ -110,14 +110,44 @@ func (p *Builder) StoreVar(v exec.Var) *Builder {
 
 // AddrVar instr
 func (p *Builder) AddrVar(v exec.Var) *Builder {
-	log.Panicln("todo")
+	p.rhs.Push(&ast.UnaryExpr{
+		Op: token.AND,
+		X:  Ident(v.(*Var).name),
+	})
 	return p
 }
 
 // AddrOp instr
 func (p *Builder) AddrOp(kind exec.Kind, op exec.AddrOperator) *Builder {
-	log.Panicln("todo")
+	var stmt ast.Stmt
+	var x = p.rhs.Pop()
+	var val = p.rhs.Pop().(ast.Expr)
+	switch v := x.(type) {
+	case *ast.UnaryExpr:
+		stmt = &ast.AssignStmt{
+			Lhs: []ast.Expr{v.X}, Tok: addropTokens[op], Rhs: []ast.Expr{val},
+		}
+	default:
+		log.Panicln("AddrOp: todo")
+	}
+	p.rhs.Push(stmt)
 	return p
+}
+
+var addropTokens = [...]token.Token{
+	exec.OpAddAssign:       token.ADD_ASSIGN,
+	exec.OpSubAssign:       token.SUB_ASSIGN,
+	exec.OpMulAssign:       token.MUL_ASSIGN,
+	exec.OpDivAssign:       token.QUO_ASSIGN,
+	exec.OpModAssign:       token.REM_ASSIGN,
+	exec.OpBitAndAssign:    token.AND_ASSIGN,
+	exec.OpBitOrAssign:     token.OR_ASSIGN,
+	exec.OpBitXorAssign:    token.XOR_ASSIGN,
+	exec.OpBitAndNotAssign: token.AND_NOT_ASSIGN,
+	exec.OpBitSHLAssign:    token.SHL_ASSIGN,
+	exec.OpBitSHRAssign:    token.SHR_ASSIGN,
+	exec.OpInc:             token.INC,
+	exec.OpDec:             token.DEC,
 }
 
 // -----------------------------------------------------------------------------

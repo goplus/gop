@@ -30,12 +30,12 @@ func (p *interfaceImpl) NewLabel(name string) exec.Label {
 
 // NewForPhrase creates a new ForPhrase instance.
 func (p *interfaceImpl) NewForPhrase(in reflect.Type) exec.ForPhrase {
-	panic("todo")
+	return NewForPhrase(in)
 }
 
 // NewComprehension creates a new Comprehension instance.
 func (p *interfaceImpl) NewComprehension(out reflect.Type) exec.Comprehension {
-	panic("todo")
+	return NewComprehension(out)
 }
 
 // NewFunc create a qlang function.
@@ -135,53 +135,45 @@ func (p *iBuilder) Default() exec.Builder {
 
 // ForPhrase instr
 func (p *iBuilder) ForPhrase(f exec.ForPhrase, key, val exec.Var, hasExecCtx ...bool) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).ForPhrase(f.(*ForPhrase), toVar(key), toVar(val), hasExecCtx...)
-	//return p
+	((*Builder)(p)).ForPhrase(f.(*ForPhrase), toVar(key), toVar(val), hasExecCtx...)
+	return p
 }
 
-/*
 func toVar(v exec.Var) *Var {
 	if v == nil {
 		return nil
 	}
 	return v.(*Var)
 }
-*/
 
 // FilterForPhrase instr
 func (p *iBuilder) FilterForPhrase(f exec.ForPhrase) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).FilterForPhrase(f.(*ForPhrase))
-	//return p
+	((*Builder)(p)).FilterForPhrase(f.(*ForPhrase))
+	return p
 }
 
 // EndForPhrase instr
 func (p *iBuilder) EndForPhrase(f exec.ForPhrase) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).EndForPhrase(f.(*ForPhrase))
-	//return p
+	((*Builder)(p)).EndForPhrase(f.(*ForPhrase))
+	return p
 }
 
 // ListComprehension instr
 func (p *iBuilder) ListComprehension(c exec.Comprehension) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).ListComprehension(c.(*Comprehension))
-	//return p
+	((*Builder)(p)).ListComprehension(c.(*Comprehension))
+	return p
 }
 
 // MapComprehension instr
 func (p *iBuilder) MapComprehension(c exec.Comprehension) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).MapComprehension(c.(*Comprehension))
-	//return p
+	((*Builder)(p)).MapComprehension(c.(*Comprehension))
+	return p
 }
 
 // EndComprehension instr
 func (p *iBuilder) EndComprehension(c exec.Comprehension) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).EndComprehension(c.(*Comprehension))
-	//return p
+	((*Builder)(p)).EndComprehension(c.(*Comprehension))
+	return p
 }
 
 // Closure instr
@@ -293,9 +285,8 @@ func (p *iBuilder) StoreVar(v exec.Var) exec.Builder {
 
 // AddrVar instr
 func (p *iBuilder) AddrVar(v exec.Var) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).AddrVar(v.(*Var))
-	//return p
+	((*Builder)(p)).AddrVar(v.(*Var))
+	return p
 }
 
 // AddrOp instr
