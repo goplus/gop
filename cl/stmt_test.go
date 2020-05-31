@@ -22,9 +22,10 @@ import (
 	"testing"
 
 	"github.com/qiniu/qlang/v6/ast/asttest"
-	"github.com/qiniu/qlang/v6/exec"
 	"github.com/qiniu/qlang/v6/parser"
 	"github.com/qiniu/qlang/v6/token"
+
+	exec "github.com/qiniu/qlang/v6/exec/bytecode"
 )
 
 // -----------------------------------------------------------------------------
@@ -44,7 +45,7 @@ func TestAssign(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar)
+	_, noExecCtx, err := newPackage(b, bar, fset)
 	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
@@ -86,7 +87,7 @@ func TestSwitchIf(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar)
+	_, noExecCtx, err := newPackage(b, bar, fset)
 	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
@@ -125,7 +126,7 @@ func TestSwitchIfDefault(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar)
+	_, noExecCtx, err := newPackage(b, bar, fset)
 	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
@@ -165,7 +166,7 @@ func TestSwitch(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar)
+	_, noExecCtx, err := newPackage(b, bar, fset)
 	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
@@ -204,7 +205,7 @@ func TestSwitch2(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar)
+	_, noExecCtx, err := newPackage(b, bar, fset)
 	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
@@ -243,7 +244,7 @@ func TestDefault(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar)
+	_, noExecCtx, err := newPackage(b, bar, fset)
 	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
@@ -278,7 +279,7 @@ func TestIf(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar)
+	_, noExecCtx, err := newPackage(b, bar, fset)
 	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
@@ -311,7 +312,7 @@ func TestIf2(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar)
+	_, noExecCtx, err := newPackage(b, bar, fset)
 	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
@@ -349,7 +350,7 @@ func TestReturn(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar)
+	_, noExecCtx, err := newPackage(b, bar, fset)
 	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
@@ -388,7 +389,7 @@ func TestReturn2(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar)
+	_, noExecCtx, err := newPackage(b, bar, fset)
 	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
@@ -427,7 +428,7 @@ func TestFunc(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar)
+	_, noExecCtx, err := newPackage(b, bar, fset)
 	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
@@ -471,7 +472,7 @@ func TestFuncv(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar)
+	_, noExecCtx, err := newPackage(b, bar, fset)
 	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
@@ -511,7 +512,7 @@ func TestClosure(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar)
+	_, noExecCtx, err := newPackage(b, bar, fset)
 	if err != nil || noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
@@ -550,7 +551,7 @@ func TestClosurev(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar)
+	_, noExecCtx, err := newPackage(b, bar, fset)
 	if err != nil || noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
@@ -586,7 +587,7 @@ func TestForPhraseStmt(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar)
+	_, noExecCtx, err := newPackage(b, bar, fset)
 	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
@@ -625,7 +626,7 @@ func TestForPhraseStmt2(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar)
+	_, noExecCtx, err := newPackage(b, bar, fset)
 	if err != nil || noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}
@@ -663,7 +664,7 @@ func _TestForRangeStmt(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar)
+	_, noExecCtx, err := newPackage(b, bar, fset)
 	if err != nil || !noExecCtx {
 		t.Fatal("Compile failed:", err)
 	}

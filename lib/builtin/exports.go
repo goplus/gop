@@ -21,7 +21,8 @@ import (
 	"io"
 	"reflect"
 
-	"github.com/qiniu/qlang/v6/exec"
+	qspec "github.com/qiniu/qlang/v6/exec.spec"
+	exec "github.com/qiniu/qlang/v6/exec/bytecode"
 	qlang "github.com/qiniu/qlang/v6/spec"
 )
 
@@ -82,26 +83,26 @@ func init() {
 		I.Const("nil", exec.ConstUnboundPtr, nil),
 	)
 	I.RegisterTypes(
-		I.Type("bool", exec.TyBool),
-		I.Type("int", exec.TyInt),
-		I.Type("int8", exec.TyInt8),
-		I.Type("int16", exec.TyInt16),
-		I.Type("int32", exec.TyInt32),
-		I.Type("int64", exec.TyInt64),
-		I.Type("uint", exec.TyUint),
-		I.Type("uint8", exec.TyUint8),
-		I.Type("uint16", exec.TyUint16),
-		I.Type("uint32", exec.TyUint32),
-		I.Type("uint64", exec.TyUint64),
-		I.Type("uintptr", exec.TyUintptr),
-		I.Type("float32", exec.TyFloat32),
-		I.Type("float64", exec.TyFloat64),
-		I.Type("complex64", exec.TyComplex64),
-		I.Type("complex128", exec.TyComplex128),
-		I.Type("string", exec.TyString),
-		I.Type("error", exec.TyError),
-		I.Type("byte", exec.TyByte),
-		I.Type("rune", exec.TyRune),
+		I.Type("bool", qspec.TyBool),
+		I.Type("int", qspec.TyInt),
+		I.Type("int8", qspec.TyInt8),
+		I.Type("int16", qspec.TyInt16),
+		I.Type("int32", qspec.TyInt32),
+		I.Type("int64", qspec.TyInt64),
+		I.Type("uint", qspec.TyUint),
+		I.Type("uint8", qspec.TyUint8),
+		I.Type("uint16", qspec.TyUint16),
+		I.Type("uint32", qspec.TyUint32),
+		I.Type("uint64", qspec.TyUint64),
+		I.Type("uintptr", qspec.TyUintptr),
+		I.Type("float32", qspec.TyFloat32),
+		I.Type("float64", qspec.TyFloat64),
+		I.Type("complex64", qspec.TyComplex64),
+		I.Type("complex128", qspec.TyComplex128),
+		I.Type("string", qspec.TyString),
+		I.Type("error", qspec.TyError),
+		I.Type("byte", qspec.TyByte),
+		I.Type("rune", qspec.TyRune),
 	)
 }
 

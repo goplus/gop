@@ -21,6 +21,7 @@ import (
 	"reflect"
 
 	"github.com/qiniu/qlang/v6/ast"
+	"github.com/qiniu/qlang/v6/exec.spec"
 )
 
 // -----------------------------------------------------------------------------
@@ -106,20 +107,74 @@ func igoDelete(ctx *blockCtx, v *ast.CallExpr) func() {
 	panic("todo")
 }
 
+// func len/cap(v Type) int
+func igoLenOrCap(ctx *blockCtx, v *ast.CallExpr, op exec.GoBuiltin) func() {
+	if len(v.Args) < 1 {
+		logPanic(ctx, v, `missing argument to %v: %v`, op, ctx.code(v))
+	}
+	if len(v.Args) > 1 {
+		logPanic(ctx, v, `too many arguments to %v: %v`, op, ctx.code(v))
+	}
+	expr := compileExpr(ctx, v.Args[0])
+	x := ctx.infer.Get(-1)
+	typ := x.(iValue).Type()
+	kind := typ.Kind()
+	if kind == reflect.Ptr {
+		typ = typ.Elem()
+		if kind = typ.Kind(); kind != reflect.Array {
+			logPanic(ctx, v, `invalid argument a (type *%v) for %v`, typ, op)
+		}
+	}
+	switch kind {
+	case reflect.Array:
+		n := typ.Len()
+		ctx.infer.Ret(1, newConstVal(n, exec.Int))
+		return func() {
+			ctx.out.Push(n)
+		}
+	default:
+		if kind == reflect.String {
+			if op == exec.GobCap {
+				logPanic(ctx, v, `invalid argument a (type %v) for cap`, typ)
+			}
+			if cons, ok := x.(*constVal); ok {
+				n := len(cons.v.(string))
+				ctx.infer.Ret(1, newConstVal(n, exec.Int))
+				return func() {
+					ctx.out.Push(n)
+				}
+			}
+		}
+		ctx.infer.Ret(1, &goValue{t: exec.TyInt})
+	}
+	return func() {
+		switch kind {
+		case reflect.Slice, reflect.String, reflect.Map, reflect.Chan:
+			if op == exec.GobCap && kind == reflect.Chan {
+				logPanic(ctx, v, `invalid argument a (type %v) for cap`, typ)
+			}
+			expr()
+			ctx.out.GoBuiltin(typ, op)
+		default:
+			logPanic(ctx, v, `invalid argument a (type %v) for %v`, typ, op)
+		}
+	}
+}
+
 // func len(v Type) int
 func igoLen(ctx *blockCtx, v *ast.CallExpr) func() {
-	panic("todo")
+	return igoLenOrCap(ctx, v, exec.GobLen)
 }
 
 // func cap(v Type) int
 func igoCap(ctx *blockCtx, v *ast.CallExpr) func() {
-	panic("todo")
+	return igoLenOrCap(ctx, v, exec.GobCap)
 }
 
 // func make(t Type, size ...IntegerType) Type
 func igoMake(ctx *blockCtx, v *ast.CallExpr) func() {
 	if len(v.Args) < 1 {
-		log.Panicln("make: argument count not enough")
+		logPanic(ctx, v, `missing argument to make: %v`, ctx.code(v))
 	}
 	t := toType(ctx, v.Args[0])
 	kind := t.Kind()

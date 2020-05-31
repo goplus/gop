@@ -23,7 +23,7 @@ import (
 
 	"github.com/qiniu/qlang/v6/ast"
 	"github.com/qiniu/qlang/v6/ast/astutil"
-	"github.com/qiniu/qlang/v6/exec"
+	"github.com/qiniu/qlang/v6/exec.spec"
 	"github.com/qiniu/qlang/v6/token"
 	"github.com/qiniu/x/log"
 )
@@ -64,6 +64,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 		return compileSelectorExpr(ctx, v)
 	case *ast.IndexExpr:
 		return compileIndexExpr(ctx, v)
+	case *ast.SliceExpr:
+		return compileSliceExpr(ctx, v)
 	case *ast.CompositeLit:
 		return compileCompositeLit(ctx, v)
 	case *ast.SliceLit:
@@ -101,9 +103,9 @@ func compileIdentLHS(ctx *blockCtx, name string, mode compleMode) {
 	ctx.infer.PopN(1)
 	if v, ok := addr.(*execVar); ok {
 		if mode == token.ASSIGN || mode == token.DEFINE {
-			ctx.out.StoreVar((*exec.Var)(v))
+			ctx.out.StoreVar(v.v)
 		} else if op, ok := addrops[mode]; ok {
-			ctx.out.AddrVar((*exec.Var)(v)).AddrOp(v.Type.Kind(), op)
+			ctx.out.AddrVar(v.v).AddrOp(v.v.Type().Kind(), op)
 		} else {
 			log.Panicln("compileIdentLHS failed: unknown op -", mode)
 		}
@@ -135,9 +137,9 @@ func compileIdent(ctx *blockCtx, name string) func() {
 	if sym, ok := ctx.find(name); ok {
 		switch v := sym.(type) {
 		case *execVar:
-			ctx.infer.Push(&goValue{t: v.Type})
+			ctx.infer.Push(&goValue{t: v.v.Type()})
 			return func() {
-				ctx.out.LoadVar((*exec.Var)(v))
+				ctx.out.LoadVar(v.v)
 			}
 		case *stackVar:
 			ctx.infer.Push(&goValue{t: v.typ})
@@ -145,7 +147,7 @@ func compileIdent(ctx *blockCtx, name string) func() {
 				ctx.out.Load(v.index)
 			}
 		case string: // pkgPath
-			pkg := exec.FindGoPackage(v)
+			pkg := ctx.FindGoPackage(v)
 			if pkg == nil {
 				log.Panicln("compileIdent failed: package not found -", v)
 			}
@@ -166,7 +168,7 @@ func compileIdent(ctx *blockCtx, name string) func() {
 			switch kind {
 			case exec.SymbolVar:
 			case exec.SymbolFunc, exec.SymbolFuncv:
-				fn := newGoFunc(addr, kind, 0)
+				fn := newGoFunc(addr, kind, 0, ctx)
 				ctx.infer.Push(fn)
 				return func() {
 					log.Panicln("compileIdent todo: goFunc")
@@ -307,7 +309,7 @@ func compileSliceLit(ctx *blockCtx, v *ast.SliceLit) func() {
 
 func compileForPhrase(parent *blockCtx, f ast.ForPhrase, noExecCtx bool) (*blockCtx, func(exprElt func())) {
 	var typKey, typVal reflect.Type
-	var varKey, varVal *exec.Var
+	var varKey, varVal exec.Var
 	var ctx = newNormBlockCtxEx(parent, noExecCtx)
 
 	exprX := compileExpr(parent, f.X)
@@ -321,16 +323,16 @@ func compileForPhrase(parent *blockCtx, f ast.ForPhrase, noExecCtx bool) (*block
 		default:
 			log.Panicln("compileListComprehensionExpr: require slice, array or map")
 		}
-		varKey = (*exec.Var)(ctx.insertVar(f.Key.Name, typKey, true))
+		varKey = ctx.insertVar(f.Key.Name, typKey, true).v
 	}
 	if f.Value != nil {
 		typVal = typData.Elem()
-		varVal = (*exec.Var)(ctx.insertVar(f.Value.Name, typVal, true))
+		varVal = ctx.insertVar(f.Value.Name, typVal, true).v
 	}
 	return ctx, func(exprElt func()) {
 		exprX()
 		out := ctx.out
-		c := exec.NewForPhrase(typData)
+		c := ctx.NewForPhrase(typData)
 		out.ForPhrase(c, varKey, varVal, !noExecCtx)
 		if f.Cond != nil {
 			compileExpr(ctx, f.Cond)()
@@ -362,7 +364,7 @@ func compileListComprehensionExpr(parent *blockCtx, v *ast.ListComprehensionExpr
 			e, fn := exprElt, v
 			exprElt = func() { fn(e) }
 		}
-		c := exec.NewComprehension(typSlice)
+		c := ctx.NewComprehension(typSlice)
 		ctx.out.ListComprehension(c)
 		exprElt()
 		ctx.out.EndComprehension(c)
@@ -386,7 +388,7 @@ func compileMapComprehensionExpr(parent *blockCtx, v *ast.MapComprehensionExpr) 
 			e, fn := exprElt, v
 			exprElt = func() { fn(e) }
 		}
-		c := exec.NewComprehension(typMap)
+		c := ctx.NewComprehension(typMap)
 		ctx.out.MapComprehension(c)
 		exprElt()
 		ctx.out.EndComprehension(c)
@@ -550,9 +552,9 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) func() {
 			arity := checkFuncCall(vfn.Proto(), 0, v, ctx)
 			fun := vfn.FuncInfo()
 			if fun.IsVariadic() {
-				ctx.out.CallFuncv(fun, arity)
+				ctx.out.CallFuncv(fun, len(v.Args), arity)
 			} else {
-				ctx.out.CallFunc(fun)
+				ctx.out.CallFunc(fun, len(v.Args))
 			}
 		}
 	case *goFunc:
@@ -565,12 +567,13 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) func() {
 			for _, arg := range v.Args {
 				compileExpr(ctx, arg)()
 			}
+			nexpr := len(v.Args) + vfn.isMethod
 			arity := checkFuncCall(vfn.Proto(), vfn.isMethod, v, ctx)
 			switch vfn.kind {
 			case exec.SymbolFunc:
-				ctx.out.CallGoFunc(exec.GoFuncAddr(vfn.addr))
+				ctx.out.CallGoFunc(exec.GoFuncAddr(vfn.addr), nexpr)
 			case exec.SymbolFuncv:
-				ctx.out.CallGoFuncv(exec.GoFuncvAddr(vfn.addr), arity)
+				ctx.out.CallGoFuncv(exec.GoFuncvAddr(vfn.addr), nexpr, arity)
 			}
 		}
 	case *goValue:
@@ -584,8 +587,11 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) func() {
 				compileExpr(ctx, arg)()
 			}
 			exprFun()
-			arity := checkFuncCall(vfn.t, 0, v, ctx)
-			ctx.out.CallGoClosure(arity)
+			arity, ellipsis := checkFuncCall(vfn.t, 0, v, ctx), false
+			if arity == -1 {
+				arity, ellipsis = len(v.Args), true
+			}
+			ctx.out.CallGoClosure(len(v.Args), arity, ellipsis)
 		}
 	case *nonValue:
 		switch nv := vfn.v.(type) {
@@ -609,7 +615,7 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compleMode) {
 	typElem := typ.Elem()
 	if typ.Kind() == reflect.Ptr {
 		if typElem.Kind() != reflect.Array {
-			log.Panicf("compileIndexExprLHS: type %v does not support indexing\n", typ)
+			logPanic(ctx, v, `type %v does not support indexing`, typ)
 		}
 		typ = typElem
 		typElem = typElem.Elem()
@@ -647,7 +653,7 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compleMode) {
 			cons.bound(typIdx, ctx.out)
 		}
 		if t := i.(iValue).Type(); t != typIdx {
-			log.Panicf("compileIndexExprLHS: index type `%v` required, but got `%v`\n", typIdx, t)
+			logIllTypeMapIndexPanic(ctx, v, t, typIdx)
 		}
 		ctx.out.SetMapIndex()
 	default:
@@ -655,47 +661,97 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compleMode) {
 	}
 }
 
-func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr) func() { // x[i]
+func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) func() { // x[i:j:k]
+	var kind reflect.Kind
 	exprX := compileExpr(ctx, v.X)
 	x := ctx.infer.Get(-1)
 	typ := x.(iValue).Type()
-	if typ.Kind() == reflect.Ptr {
+	if kind = typ.Kind(); kind == reflect.Ptr {
 		typ = typ.Elem()
-		if typ.Kind() != reflect.Array {
-			log.Panicf("compileIndexExpr: type *%v does not support indexing\n", typ)
+		if kind = typ.Kind(); kind != reflect.Array {
+			logPanic(ctx, v, `cannot slice a (type *%v)`, typ)
 		}
+		typ = reflect.SliceOf(typ.Elem())
+		ctx.infer.Ret(1, &goValue{typ})
 	}
-	ctx.infer.Ret(1, &goValue{typ.Elem()})
 	return func() {
 		exprX()
-		exprIdx := compileExpr(ctx, v.Index)
-		i := ctx.infer.Pop()
-		switch typ.Kind() {
-		case reflect.Slice, reflect.Array:
-			if cons, ok := i.(*constVal); ok {
-				if n, ok := boundConst(cons.v, exec.TyInt); ok {
-					ctx.out.Index(n.(int))
-					return
-				}
-				log.Panicln("compileIndexExpr: index expression value type is invalid")
+		i, j, k := exec.SliceDefaultIndex, exec.SliceDefaultIndex, exec.SliceDefaultIndex
+		if v.Low != nil {
+			i = compileIdx(ctx, v.Low, exec.SliceConstIndexLast, kind)
+		}
+		if v.High != nil {
+			j = compileIdx(ctx, v.High, exec.SliceConstIndexLast, kind)
+		}
+		if v.Max != nil {
+			k = compileIdx(ctx, v.Max, exec.SliceConstIndexLast, kind)
+		}
+		if v.Slice3 {
+			ctx.out.Slice3(i, j, k)
+		} else {
+			ctx.out.Slice(i, j)
+		}
+	}
+}
+
+func compileIdx(ctx *blockCtx, v ast.Expr, nlast int, kind reflect.Kind) int {
+	expr := compileExpr(ctx, v)
+	i := ctx.infer.Pop()
+	if cons, ok := i.(*constVal); ok {
+		if nv, ok := boundConst(cons.v, exec.TyInt); ok {
+			n := nv.(int)
+			if n <= nlast {
+				return n
 			}
-			exprIdx()
-			if typIdx := i.(iValue).Type(); typIdx != exec.TyInt {
-				if typIdx.ConvertibleTo(exec.TyInt) {
-					ctx.out.TypeCast(typIdx, exec.TyInt)
-				} else {
-					log.Panicln("compileIndexExpr: index expression value type is invalid")
-				}
-			}
-			ctx.out.Index(-1)
+			ctx.out.Push(n)
+			return -1
+		}
+		logNonIntegerIdxPanic(ctx, v, kind)
+	}
+	expr()
+	if typIdx := i.(iValue).Type(); typIdx != exec.TyInt {
+		if typIdx.ConvertibleTo(exec.TyInt) {
+			ctx.out.TypeCast(typIdx, exec.TyInt)
+		} else {
+			logNonIntegerIdxPanic(ctx, v, kind)
+		}
+	}
+	return -1
+}
+
+func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr) func() { // x[i]
+	var kind reflect.Kind
+	var typElem reflect.Type
+	exprX := compileExpr(ctx, v.X)
+	x := ctx.infer.Get(-1)
+	typ := x.(iValue).Type()
+	if kind = typ.Kind(); kind == reflect.Ptr {
+		typ = typ.Elem()
+		if kind = typ.Kind(); kind != reflect.Array {
+			logPanic(ctx, v, `type *%v does not support indexing`, typ)
+		}
+	}
+	if kind == reflect.String {
+		typElem = exec.TyByte
+	} else {
+		typElem = typ.Elem()
+	}
+	ctx.infer.Ret(1, &goValue{typElem})
+	return func() {
+		exprX()
+		switch kind {
+		case reflect.String, reflect.Slice, reflect.Array:
+			n := compileIdx(ctx, v.Index, 1<<30, kind)
+			ctx.out.Index(n)
 		case reflect.Map:
-			exprIdx()
 			typIdx := typ.Key()
+			compileExpr(ctx, v.Index)()
+			i := ctx.infer.Pop()
 			if cons, ok := i.(*constVal); ok {
 				cons.bound(typIdx, ctx.out)
 			}
 			if t := i.(iValue).Type(); t != typIdx {
-				log.Panicf("compileIndexExpr: index type `%v` required, but got `%v`", typIdx, t)
+				logIllTypeMapIndexPanic(ctx, v, t, typIdx)
 			}
 			ctx.out.MapIndex()
 		default:
@@ -704,24 +760,20 @@ func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr) func() { // x[i]
 	}
 }
 
-func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) func() {
-	panic("compileSliceExpr: todo")
-}
-
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 	exprX := compileExpr(ctx, v.X)
 	x := ctx.infer.Get(-1)
 	switch vx := x.(type) {
 	case *nonValue:
 		switch nv := vx.v.(type) {
-		case *exec.GoPackage:
+		case exec.GoPackage:
 			addr, kind, ok := nv.Find(v.Sel.Name)
 			if !ok {
-				log.Panicln("compileSelectorExpr: not found -", nv.PkgPath, v.Sel.Name)
+				log.Panicln("compileSelectorExpr: not found -", nv.PkgPath(), v.Sel.Name)
 			}
 			switch kind {
 			case exec.SymbolFunc, exec.SymbolFuncv:
-				ctx.infer.Ret(1, newGoFunc(addr, kind, 0))
+				ctx.infer.Ret(1, newGoFunc(addr, kind, 0, ctx))
 				return func() {
 					log.Panicln("compileSelectorExpr: todo")
 				}
@@ -738,7 +790,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 			log.Panicln("compileSelectorExpr todo: structField -", t, sf)
 		}
 		pkgPath, method := normalizeMethod(n, t, name)
-		pkg := exec.FindGoPackage(pkgPath)
+		pkg := ctx.FindGoPackage(pkgPath)
 		if pkg == nil {
 			log.Panicln("compileSelectorExpr failed: package not found -", pkgPath)
 		}
@@ -746,7 +798,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 		if !ok {
 			log.Panicln("compileSelectorExpr: method not found -", method)
 		}
-		ctx.infer.Ret(1, newGoFunc(addr, kind, 1))
+		ctx.infer.Ret(1, newGoFunc(addr, kind, 1, ctx))
 		return func() {
 			log.Panicln("compileSelectorExpr: todo")
 		}
