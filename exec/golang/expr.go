@@ -385,14 +385,40 @@ func IndexWith(p *Builder, idx int) *ast.IndexExpr {
 
 // Slice instr
 func (p *Builder) Slice(i, j int) *Builder {
-	log.Panicln("todo")
+	jExpr := SliceIndex(p, j)
+	iExpr := SliceIndex(p, i)
+	p.rhs.Push(&ast.SliceExpr{
+		X:    p.rhs.Pop().(ast.Expr),
+		Low:  iExpr,
+		High: jExpr,
+	})
 	return p
 }
 
 // Slice3 instr
 func (p *Builder) Slice3(i, j, k int) *Builder {
-	log.Panicln("todo")
+	kExpr := SliceIndex(p, k)
+	jExpr := SliceIndex(p, j)
+	iExpr := SliceIndex(p, i)
+	p.rhs.Push(&ast.SliceExpr{
+		X:      p.rhs.Pop().(ast.Expr),
+		Low:    iExpr,
+		High:   jExpr,
+		Max:    kExpr,
+		Slice3: true,
+	})
 	return p
+}
+
+// SliceIndex instr
+func SliceIndex(p *Builder, idx int) ast.Expr {
+	if idx == exec.SliceDefaultIndex {
+		return nil
+	}
+	if idx == -1 {
+		return p.rhs.Pop().(ast.Expr)
+	}
+	return IntConst(int64(idx))
 }
 
 // Zero instr
