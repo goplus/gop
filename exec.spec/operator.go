@@ -245,6 +245,10 @@ func (op AddrOperator) String() string {
 // GoBuiltin represents go builtin func.
 type GoBuiltin uint
 
+func (p GoBuiltin) String() string {
+	return goBuiltinNames[p]
+}
+
 const (
 	gobInvalid GoBuiltin = iota
 	// GobLen - len: 1
@@ -264,6 +268,17 @@ const (
 	// GobClose - close: 8
 	GobClose
 )
+
+var goBuiltinNames = [...]string{
+	GobLen:     "len",
+	GobCap:     "cap",
+	GobCopy:    "copy",
+	GobDelete:  "delete",
+	GobComplex: "complex",
+	GobReal:    "real",
+	GobImag:    "imag",
+	GobClose:   "close",
+}
 
 // -----------------------------------------------------------------------------
 

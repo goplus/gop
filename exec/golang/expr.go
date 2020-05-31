@@ -339,26 +339,48 @@ func (p *Builder) MakeMap(typ reflect.Type, arity int) *Builder {
 
 // MapIndex instr
 func (p *Builder) MapIndex() *Builder {
-	log.Panicln("todo")
+	p.rhs.Push(Index(p))
 	return p
 }
 
 // SetMapIndex instr
 func (p *Builder) SetMapIndex() *Builder {
-	log.Panicln("todo")
+	p.lhs.Push(Index(p))
 	return p
 }
 
 // Index instr
 func (p *Builder) Index(idx int) *Builder {
-	log.Panicln("todo")
+	p.rhs.Push(IndexWith(p, idx))
 	return p
 }
 
 // SetIndex instr
 func (p *Builder) SetIndex(idx int) *Builder {
-	log.Panicln("todo")
+	p.lhs.Push(IndexWith(p, idx))
 	return p
+}
+
+// Index instr
+func Index(p *Builder) *ast.IndexExpr {
+	idx := p.rhs.Pop().(ast.Expr)
+	x := p.rhs.Pop().(ast.Expr)
+	return &ast.IndexExpr{
+		X:     x,
+		Index: idx,
+	}
+}
+
+// IndexWith instr
+func IndexWith(p *Builder, idx int) *ast.IndexExpr {
+	if idx == -1 {
+		return Index(p)
+	}
+	x := p.rhs.Pop().(ast.Expr)
+	return &ast.IndexExpr{
+		X:     x,
+		Index: IntConst(int64(idx)),
+	}
 }
 
 // Slice instr
@@ -375,14 +397,42 @@ func (p *Builder) Slice3(i, j, k int) *Builder {
 
 // Zero instr
 func (p *Builder) Zero(typ reflect.Type) *Builder {
-	log.Panicln("todo")
+	p.rhs.Push(Zero(p, typ))
 	return p
+}
+
+// Zero instr
+func Zero(p *Builder, typ reflect.Type) ast.Expr {
+	kind := typ.Kind()
+	if kind == reflect.String {
+		return StringConst("")
+	}
+	if kind >= reflect.Int && kind <= reflect.Complex128 {
+		return IntConst(0)
+	}
+	if kind == reflect.Bool {
+		return Ident("false")
+	}
+	log.Panicln("Zero: unknown -", typ)
+	return nil
 }
 
 // GoBuiltin instr
 func (p *Builder) GoBuiltin(typ reflect.Type, op exec.GoBuiltin) *Builder {
-	log.Panicln("todo")
-	return p
+	arity := goBuiltinArities[op]
+	p.rhs.Push(Ident(op.String()))
+	return p.Call(arity, false)
+}
+
+var goBuiltinArities = [...]int{
+	exec.GobLen:     1,
+	exec.GobCap:     1,
+	exec.GobCopy:    2,
+	exec.GobDelete:  2,
+	exec.GobComplex: 2,
+	exec.GobReal:    1,
+	exec.GobImag:    1,
+	exec.GobClose:   1,
 }
 
 // -----------------------------------------------------------------------------
