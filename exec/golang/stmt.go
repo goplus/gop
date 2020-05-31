@@ -189,20 +189,31 @@ func (p *Builder) MapComprehension(c *Comprehension) *Builder {
 
 // EndComprehension instr
 func (p *Builder) EndComprehension(c *Comprehension) *Builder {
-	out := &ast.Field{
+	typOut := Type(p, c.TypeOut)
+	fldOut := &ast.Field{
 		Names: []*ast.Ident{qlangRet},
-		Type:  Type(p, c.TypeOut),
+		Type:  typOut,
 	}
 	typFun := &ast.FuncType{
 		Params:  &ast.FieldList{Opening: 1, Closing: 1},
-		Results: &ast.FieldList{Opening: 1, Closing: 1, List: []*ast.Field{out}},
+		Results: &ast.FieldList{Opening: 1, Closing: 1, List: []*ast.Field{fldOut}},
 	}
+	makeArgs := []ast.Expr{typOut}
+	if c.TypeOut.Kind() == reflect.Slice {
+		makeArgs = append(makeArgs, IntConst(0), IntConst(4))
+	}
+	makeExpr := &ast.CallExpr{Fun: makeIden, Args: makeArgs}
 	stmt := p.rhs.Pop().(ast.Stmt)
+	stmtInit := &ast.AssignStmt{
+		Lhs: []ast.Expr{qlangRet},
+		Tok: token.ASSIGN,
+		Rhs: []ast.Expr{makeExpr},
+	}
 	stmtReturn := &ast.ReturnStmt{}
 	p.rhs.Push(&ast.CallExpr{
 		Fun: &ast.FuncLit{
 			Type: typFun,
-			Body: &ast.BlockStmt{List: []ast.Stmt{stmt, stmtReturn}},
+			Body: &ast.BlockStmt{List: []ast.Stmt{stmtInit, stmt, stmtReturn}},
 		},
 	})
 	p.comprehens = c.old
