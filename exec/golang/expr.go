@@ -22,6 +22,7 @@ import (
 	"log"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/qiniu/qlang/v6/exec.spec"
 )
@@ -45,6 +46,16 @@ func (p *Builder) GoFuncIdent(pkgPath, name string) ast.Expr {
 		return Ident(name)
 	}
 	pkg := p.Import(pkgPath)
+	if strings.HasPrefix(name, "(") { // eg. name = "(*Replacer).Replace"
+		pos := strings.LastIndexByte(name, '*')
+		if pos == -1 {
+			pos = 1
+		} else {
+			pos++
+		}
+		name = name[:pos] + pkg + "." + name[pos:]
+		return Ident(name)
+	}
 	return &ast.SelectorExpr{
 		X:   Ident(pkg),
 		Sel: Ident(name),

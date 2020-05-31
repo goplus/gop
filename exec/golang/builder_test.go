@@ -26,6 +26,9 @@ import (
 
 	qexec "github.com/qiniu/qlang/v6/exec/bytecode"
 	_ "github.com/qiniu/qlang/v6/lib/builtin"
+	_ "github.com/qiniu/qlang/v6/lib/fmt"
+	_ "github.com/qiniu/qlang/v6/lib/reflect"
+	_ "github.com/qiniu/qlang/v6/lib/strings"
 )
 
 // I is a Go package instance.
@@ -44,7 +47,7 @@ import fmt "fmt"
 
 func main() {
 	fmt.Println(1 + 2)
-	fmt.Println(complex64(3 + 2i))
+	fmt.Println(complex64((3 + 2i)))
 }
 `
 	println, _ := I.FindFuncv("println")
@@ -89,7 +92,7 @@ func main() {
 //line ./foo.ql:1
 	fmt.Println(1 + 2)
 //line ./bar.ql:1
-	fmt.Println(complex64(3 + 2i))
+	fmt.Println(complex64((3 + 2i)))
 }
 `
 	fset := token.NewFileSet()
