@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/qiniu/qlang/v6/cl"
 	"github.com/qiniu/qlang/v6/exec/golang"
@@ -31,7 +32,7 @@ func saveGoFile(dir string, code *golang.Code) error {
 	return ioutil.WriteFile(dir+"/qlang_autogen.go", b, 0666)
 }
 
-func genGo(pkgDir string) (err error) {
+func genGopkg(pkgDir string) (err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			switch v := e.(type) {
@@ -64,23 +65,38 @@ func genGo(pkgDir string) (err error) {
 	return saveGoFile(pkgDir, code)
 }
 
+func genGo(dir string) {
+	fis, err := ioutil.ReadDir(dir)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "ReadDir failed:", err)
+		return
+	}
+	var isPkg bool
+	for _, fi := range fis {
+		if fi.IsDir() {
+			pkgDir := path.Join(dir, fi.Name())
+			genGo(pkgDir)
+			continue
+		}
+		if strings.HasSuffix(fi.Name(), ".ql") {
+			isPkg = true
+		}
+	}
+	if isPkg {
+		fmt.Printf("Compiling %s ...\n", dir)
+		err = genGopkg(dir)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "# %v\n[ERROR] %v\n\n", dir, err)
+		}
+	}
+}
+
 func main() {
 	if len(os.Args) <= 1 {
 		fmt.Println("Usage: qgo <qlangSrcDir>")
 		return
 	}
 	dir := os.Args[1]
-	fis, err := ioutil.ReadDir(dir)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "ReadDir failed:", err)
-		return
-	}
 	cl.CallBuiltinOp = exec.CallBuiltinOp
-	for _, fi := range fis {
-		pkgDir := path.Join(dir, fi.Name())
-		fmt.Printf("Compiling %s ...\n", pkgDir)
-		if err = genGo(pkgDir); err != nil {
-			fmt.Fprintf(os.Stderr, "# %v\n[ERROR] %v\n\n", pkgDir, err)
-		}
-	}
+	genGo(dir)
 }
