@@ -103,7 +103,7 @@ func NewBuilder(code *Code, fset *token.FileSet) *Builder {
 	}
 	p := &Builder{
 		out:         code,
-		gbldecls:    make([]ast.Decl, 0, 8),
+		gbldecls:    make([]ast.Decl, 0, 4),
 		imports:     make(map[string]string),
 		importPaths: make(map[string]string),
 		fset:        fset,
@@ -130,7 +130,7 @@ var (
 
 // Resolve resolves all unresolved labels/functions/consts/etc.
 func (p *Builder) Resolve() *Code {
-	decls := p.gbldecls
+	decls := make([]ast.Decl, 0, 8)
 	imports := p.resolveImports()
 	if imports != nil {
 		decls = append(decls, imports)
@@ -149,6 +149,7 @@ func (p *Builder) Resolve() *Code {
 		}
 		decls = append(decls, fn)
 	}
+	decls = append(decls, p.gbldecls...)
 	p.out.fset = token.NewFileSet()
 	p.out.file = &ast.File{
 		Name:  Ident("main"),

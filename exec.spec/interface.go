@@ -190,22 +190,22 @@ type Builder interface {
 	GoClosure(fun FuncInfo) Builder
 
 	// CallClosure instr
-	CallClosure(arity int, ellipsis bool) Builder
+	CallClosure(nexpr, arity int, ellipsis bool) Builder
 
 	// CallGoClosure instr
-	CallGoClosure(arity int, ellipsis bool) Builder
+	CallGoClosure(nexpr, arity int, ellipsis bool) Builder
 
 	// CallFunc instr
-	CallFunc(fun FuncInfo) Builder
+	CallFunc(fun FuncInfo, nexpr int) Builder
 
 	// CallFuncv instr
-	CallFuncv(fun FuncInfo, arity int) Builder
+	CallFuncv(fun FuncInfo, nexpr, arity int) Builder
 
 	// CallGoFunc instr
-	CallGoFunc(fun GoFuncAddr) Builder
+	CallGoFunc(fun GoFuncAddr, nexpr int) Builder
 
 	// CallGoFuncv instr
-	CallGoFuncv(fun GoFuncvAddr, arity int) Builder
+	CallGoFuncv(fun GoFuncvAddr, nexpr, arity int) Builder
 
 	// DefineFunc instr
 	DefineFunc(fun FuncInfo) Builder

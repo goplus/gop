@@ -552,9 +552,9 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) func() {
 			arity := checkFuncCall(vfn.Proto(), 0, v, ctx)
 			fun := vfn.FuncInfo()
 			if fun.IsVariadic() {
-				ctx.out.CallFuncv(fun, arity)
+				ctx.out.CallFuncv(fun, len(v.Args), arity)
 			} else {
-				ctx.out.CallFunc(fun)
+				ctx.out.CallFunc(fun, len(v.Args))
 			}
 		}
 	case *goFunc:
@@ -567,12 +567,13 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) func() {
 			for _, arg := range v.Args {
 				compileExpr(ctx, arg)()
 			}
+			nexpr := len(v.Args) + vfn.isMethod
 			arity := checkFuncCall(vfn.Proto(), vfn.isMethod, v, ctx)
 			switch vfn.kind {
 			case exec.SymbolFunc:
-				ctx.out.CallGoFunc(exec.GoFuncAddr(vfn.addr))
+				ctx.out.CallGoFunc(exec.GoFuncAddr(vfn.addr), nexpr)
 			case exec.SymbolFuncv:
-				ctx.out.CallGoFuncv(exec.GoFuncvAddr(vfn.addr), arity)
+				ctx.out.CallGoFuncv(exec.GoFuncvAddr(vfn.addr), nexpr, arity)
 			}
 		}
 	case *goValue:
@@ -590,7 +591,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) func() {
 			if arity == -1 {
 				arity, ellipsis = len(v.Args), true
 			}
-			ctx.out.CallGoClosure(arity, ellipsis)
+			ctx.out.CallGoClosure(len(v.Args), arity, ellipsis)
 		}
 	case *nonValue:
 		switch nv := vfn.v.(type) {

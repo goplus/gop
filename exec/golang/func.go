@@ -134,20 +134,15 @@ func (p *Builder) Closure(fun *FuncInfo) *Builder {
 }
 
 // CallFunc instr
-func (p *Builder) CallFunc(fun *FuncInfo) *Builder {
+func (p *Builder) CallFunc(fun *FuncInfo, nexpr int) *Builder {
 	p.rhs.Push(Ident(fun.getName(p)))
-	return p.Call(len(fun.in), false)
+	return p.Call(nexpr, false)
 }
 
 // CallFuncv instr
-func (p *Builder) CallFuncv(fun *FuncInfo, arity int) *Builder {
-	var ellipsis bool
-	if arity == -1 {
-		arity = len(fun.in)
-		ellipsis = true
-	}
+func (p *Builder) CallFuncv(fun *FuncInfo, nexpr, arity int) *Builder {
 	p.rhs.Push(Ident(fun.getName(p)))
-	return p.Call(arity, ellipsis)
+	return p.Call(nexpr, arity == -1)
 }
 
 // DefineFunc instr

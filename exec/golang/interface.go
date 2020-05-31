@@ -183,38 +183,38 @@ func (p *iBuilder) GoClosure(fun exec.FuncInfo) exec.Builder {
 }
 
 // CallClosure instr
-func (p *iBuilder) CallClosure(arity int, ellipsis bool) exec.Builder {
-	((*Builder)(p)).Call(arity, ellipsis)
+func (p *iBuilder) CallClosure(nexpr, arity int, ellipsis bool) exec.Builder {
+	((*Builder)(p)).Call(nexpr, ellipsis)
 	return p
 }
 
 // CallGoClosure instr
-func (p *iBuilder) CallGoClosure(arity int, ellipsis bool) exec.Builder {
-	((*Builder)(p)).Call(arity, ellipsis)
+func (p *iBuilder) CallGoClosure(nexpr, arity int, ellipsis bool) exec.Builder {
+	((*Builder)(p)).Call(nexpr, ellipsis)
 	return p
 }
 
 // CallFunc instr
-func (p *iBuilder) CallFunc(fun exec.FuncInfo) exec.Builder {
-	((*Builder)(p)).CallFunc(fun.(*FuncInfo))
+func (p *iBuilder) CallFunc(fun exec.FuncInfo, nexpr int) exec.Builder {
+	((*Builder)(p)).CallFunc(fun.(*FuncInfo), nexpr)
 	return p
 }
 
 // CallFuncv instr
-func (p *iBuilder) CallFuncv(fun exec.FuncInfo, arity int) exec.Builder {
-	((*Builder)(p)).CallFuncv(fun.(*FuncInfo), arity)
+func (p *iBuilder) CallFuncv(fun exec.FuncInfo, nexpr, arity int) exec.Builder {
+	((*Builder)(p)).CallFuncv(fun.(*FuncInfo), nexpr, arity)
 	return p
 }
 
 // CallGoFunc instr
-func (p *iBuilder) CallGoFunc(fun exec.GoFuncAddr) exec.Builder {
-	((*Builder)(p)).CallGoFunc(fun)
+func (p *iBuilder) CallGoFunc(fun exec.GoFuncAddr, nexpr int) exec.Builder {
+	((*Builder)(p)).CallGoFunc(fun, nexpr)
 	return p
 }
 
 // CallGoFuncv instr
-func (p *iBuilder) CallGoFuncv(fun exec.GoFuncvAddr, arity int) exec.Builder {
-	((*Builder)(p)).CallGoFuncv(fun, arity)
+func (p *iBuilder) CallGoFuncv(fun exec.GoFuncvAddr, nexpr, arity int) exec.Builder {
+	((*Builder)(p)).CallGoFuncv(fun, nexpr, arity)
 	return p
 }
 

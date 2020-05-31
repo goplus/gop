@@ -252,17 +252,16 @@ func (p *Builder) Call(narg int, ellipsis bool, args ...ast.Expr) *Builder {
 }
 
 // CallGoFunc instr
-func (p *Builder) CallGoFunc(fun exec.GoFuncAddr) *Builder {
+func (p *Builder) CallGoFunc(fun exec.GoFuncAddr, nexpr int) *Builder {
 	gfi := defaultImpl.GetGoFuncInfo(fun)
 	pkgPath, name := gfi.Pkg.PkgPath(), gfi.Name
 	fn := p.GoFuncIdent(pkgPath, name)
 	p.rhs.Push(fn)
-	arity := reflect.TypeOf(gfi.This).NumIn()
-	return p.Call(arity, false)
+	return p.Call(nexpr, false)
 }
 
 // CallGoFuncv instr
-func (p *Builder) CallGoFuncv(fun exec.GoFuncvAddr, arity int) *Builder {
+func (p *Builder) CallGoFuncv(fun exec.GoFuncvAddr, nexpr, arity int) *Builder {
 	gfi := defaultImpl.GetGoFuncvInfo(fun)
 	pkgPath, name := gfi.Pkg.PkgPath(), gfi.Name
 	if pkgPath == "" {
@@ -272,11 +271,7 @@ func (p *Builder) CallGoFuncv(fun exec.GoFuncvAddr, arity int) *Builder {
 	}
 	fn := p.GoFuncIdent(pkgPath, name)
 	p.rhs.Push(fn)
-	ellipsis := arity == -1
-	if ellipsis {
-		arity = reflect.TypeOf(gfi.This).NumIn()
-	}
-	return p.Call(arity, ellipsis)
+	return p.Call(nexpr, arity == -1)
 }
 
 var builtinFnvs = map[string][2]string{
