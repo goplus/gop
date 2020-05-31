@@ -86,15 +86,15 @@ func TestFileLine(t *testing.T) {
 import fmt "fmt"
 
 func main() { 
-//line foo.ql:1
+//line ./foo.ql:1
 	fmt.Println(1 + 2)
-//line bar.ql:1
+//line ./bar.ql:1
 	fmt.Println(complex64(3 + 2i))
 }
 `
 	fset := token.NewFileSet()
-	foo := fset.AddFile("foo.ql", fset.Base(), 100)
-	bar := fset.AddFile("bar.ql", fset.Base(), 100)
+	foo := fset.AddFile("./foo.ql", fset.Base(), 100)
+	bar := fset.AddFile("./bar.ql", fset.Base(), 100)
 	foo.SetLines([]int{0, 10, 20, 80, 100})
 	bar.SetLines([]int{0, 10, 20, 80, 100})
 	node1 := &node{23}

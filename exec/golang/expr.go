@@ -30,7 +30,7 @@ import (
 
 // Ident instr
 func (p *Builder) Ident(name string) *Builder {
-	p.code.Push(&ast.Ident{Name: name})
+	p.rhs.Push(&ast.Ident{Name: name})
 	return p
 }
 
@@ -145,22 +145,22 @@ func Const(p *Builder, val interface{}) ast.Expr {
 
 // Push instr
 func (p *Builder) Push(val interface{}) *Builder {
-	p.code.Push(Const(p, val))
+	p.rhs.Push(Const(p, val))
 	return p
 }
 
 // UnaryOp instr
 func (p *Builder) UnaryOp(tok token.Token) *Builder {
-	x := p.code.Pop().(ast.Expr)
-	p.code.Push(&ast.UnaryExpr{Op: tok, X: x})
+	x := p.rhs.Pop().(ast.Expr)
+	p.rhs.Push(&ast.UnaryExpr{Op: tok, X: x})
 	return p
 }
 
 // BinaryOp instr
 func (p *Builder) BinaryOp(tok token.Token) *Builder {
-	y := p.code.Pop().(ast.Expr)
-	x := p.code.Pop().(ast.Expr)
-	p.code.Push(&ast.BinaryExpr{Op: tok, X: x, Y: y})
+	y := p.rhs.Pop().(ast.Expr)
+	x := p.rhs.Pop().(ast.Expr)
+	p.rhs.Push(&ast.BinaryExpr{Op: tok, X: x, Y: y})
 	return p
 }
 
@@ -211,7 +211,7 @@ var opTokens = [...]token.Token{
 
 // TypeCast instr
 func (p *Builder) TypeCast(from, to reflect.Type) *Builder {
-	x := p.code.Pop().(ast.Expr)
+	x := p.rhs.Pop().(ast.Expr)
 	TypeCast(p, x, from, to)
 	return p
 }
@@ -226,17 +226,17 @@ func TypeCast(p *Builder, x ast.Expr, from, to reflect.Type) *ast.CallExpr {
 }
 
 // Call instr
-func (p *Builder) Call(narg int, ellipsis bool) *Builder {
-	fun := p.code.Pop().(ast.Expr)
-	args := make([]ast.Expr, narg)
-	for i := narg - 1; i >= 0; i-- {
-		args[i] = p.code.Pop().(ast.Expr)
+func (p *Builder) Call(narg int, ellipsis bool, args ...ast.Expr) *Builder {
+	fun := p.rhs.Pop().(ast.Expr)
+	for _, item := range p.rhs.GetArgs(narg) {
+		args = append(args, item.(ast.Expr))
 	}
+	p.rhs.PopN(narg)
 	expr := &ast.CallExpr{Fun: fun, Args: args}
 	if ellipsis {
 		expr.Ellipsis++
 	}
-	p.code.Push(expr)
+	p.rhs.Push(expr)
 	return p
 }
 
@@ -245,7 +245,7 @@ func (p *Builder) CallGoFunc(fun exec.GoFuncAddr) *Builder {
 	gfi := defaultImpl.GetGoFuncInfo(fun)
 	pkgPath, name := gfi.Pkg.PkgPath(), gfi.Name
 	fn := p.GoFuncIdent(pkgPath, name)
-	p.code.Push(fn)
+	p.rhs.Push(fn)
 	arity := reflect.TypeOf(gfi.This).NumIn()
 	return p.Call(arity, false)
 }
@@ -260,7 +260,7 @@ func (p *Builder) CallGoFuncv(fun exec.GoFuncvAddr, arity int) *Builder {
 		}
 	}
 	fn := p.GoFuncIdent(pkgPath, name)
-	p.code.Push(fn)
+	p.rhs.Push(fn)
 	ellipsis := arity == -1
 	if ellipsis {
 		arity = reflect.TypeOf(gfi.This).NumIn()
@@ -273,6 +273,25 @@ var builtinFnvs = map[string][2]string{
 	"printf":  {"fmt", "Printf"},
 	"println": {"fmt", "Println"},
 	"fprintf": {"fmt", "Fprintf"},
+}
+
+// Append instr
+func (p *Builder) Append(typ reflect.Type, arity int) *Builder {
+	p.rhs.Push(Ident("append"))
+	var ellipsis bool
+	if arity == -1 {
+		ellipsis = true
+		arity = 2
+	}
+	p.Call(arity, ellipsis)
+	return p
+}
+
+// Make instr
+func (p *Builder) Make(typ reflect.Type, arity int) *Builder {
+	p.rhs.Push(Ident("make"))
+	p.Call(arity, false, Type(p, typ))
+	return p
 }
 
 // -----------------------------------------------------------------------------

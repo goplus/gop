@@ -15,7 +15,7 @@ func (p *Builder) Return(n int32) *Builder {
 	if n > 0 {
 		log.Panicln("todo")
 	}
-	p.code.Push(&ast.ReturnStmt{Results: results})
+	p.rhs.Push(&ast.ReturnStmt{Results: results})
 	return p
 }
 

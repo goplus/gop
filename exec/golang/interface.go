@@ -20,7 +20,7 @@ var defaultImpl = &interfaceImpl{}
 
 // NewVar creates a variable instance.
 func (p *interfaceImpl) NewVar(typ reflect.Type, name string) exec.Var {
-	panic("todo")
+	return NewVar(typ, name)
 }
 
 // NewLabel creates a label object.
@@ -270,29 +270,25 @@ func (p *iBuilder) EndFunc(fun exec.FuncInfo) exec.Builder {
 
 // DefineVar defines variables.
 func (p *iBuilder) DefineVar(vars ...exec.Var) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).DefineVars(vars...)
-	//return p
+	((*Builder)(p)).DefineVar(vars...)
+	return p
 }
 
 // InCurrentCtx returns if a variable is in current context or not.
 func (p *iBuilder) InCurrentCtx(v exec.Var) bool {
-	panic("todo")
-	//return ((*Builder)(p)).InCurrentCtx(v.(*Var))
+	return ((*Builder)(p)).InCurrentCtx(v.(*Var))
 }
 
 // LoadVar instr
 func (p *iBuilder) LoadVar(v exec.Var) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).LoadVar(v.(*Var))
-	//return p
+	((*Builder)(p)).LoadVar(v)
+	return p
 }
 
 // StoreVar instr
 func (p *iBuilder) StoreVar(v exec.Var) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).StoreVar(v.(*Var))
-	//return p
+	((*Builder)(p)).StoreVar(v)
+	return p
 }
 
 // AddrVar instr

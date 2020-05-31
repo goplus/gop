@@ -79,13 +79,15 @@ func (p *Code) String() string {
 
 // Builder is a class that generates go code.
 type Builder struct {
-	code        exec.Stack
+	lhs, rhs    exec.Stack
 	out         *Code
 	imports     map[string]string
 	importPaths map[string]string
+	gblvars     varManager
 	stmts       []ast.Stmt
 	fset        *token.FileSet
 	reserveds   []*printer.ReservedExpr
+	*varManager
 }
 
 // NewBuilder creates a new Code Builder instance.
@@ -99,7 +101,9 @@ func NewBuilder(code *Code, fset *token.FileSet) *Builder {
 		importPaths: make(map[string]string),
 		fset:        fset,
 	}
-	p.code.Init()
+	p.varManager = &p.gblvars // default scope is global
+	p.lhs.Init()
+	p.rhs.Init()
 	return p
 }
 
@@ -113,6 +117,10 @@ func (p *Builder) Resolve() *Code {
 	imports := p.resolveImports()
 	if imports != nil {
 		decls = append(decls, imports)
+	}
+	gblvars := p.gblvars.toGenDecl(p)
+	if gblvars != nil {
+		decls = append(decls, gblvars)
 	}
 	if len(p.stmts) != 0 {
 		body := &ast.BlockStmt{List: p.stmts}
@@ -164,19 +172,36 @@ func Comment(text string) *ast.CommentGroup {
 // EndStmt recieves a `EndStmt` event.
 func (p *Builder) EndStmt(stmt interface{}) *Builder {
 	var node ast.Stmt
-	var val = p.code.Pop()
-	switch v := val.(type) {
-	case ast.Expr:
-		node = &ast.ExprStmt{X: v}
-	case ast.Stmt:
-		node = v
-	default:
-		log.Panicln("EndStmt: unexpected -", reflect.TypeOf(val))
+	if lhsLen := p.lhs.Len(); lhsLen > 0 { // assignment
+		lhs := make([]ast.Expr, lhsLen)
+		for i := 0; i < lhsLen; i++ {
+			lhs[i] = p.lhs.Pop().(ast.Expr)
+		}
+		rhsLen := p.rhs.Len()
+		rhs := make([]ast.Expr, rhsLen)
+		for i, v := range p.rhs.GetArgs(rhsLen) {
+			rhs[i] = v.(ast.Expr)
+		}
+		p.rhs.PopN(rhsLen)
+		node = &ast.AssignStmt{Lhs: lhs, Tok: token.ASSIGN, Rhs: rhs}
+	} else {
+		if p.rhs.Len() != 1 {
+			log.Panicln("EndStmt: comma expression? -", p.rhs.Len())
+		}
+		var val = p.rhs.Pop()
+		switch v := val.(type) {
+		case ast.Expr:
+			node = &ast.ExprStmt{X: v}
+		case ast.Stmt:
+			node = v
+		default:
+			log.Panicln("EndStmt: unexpected -", reflect.TypeOf(val))
+		}
 	}
 	if stmt != nil {
 		start := stmt.(ast.Node).Pos()
 		pos := p.fset.Position(start)
-		line := fmt.Sprintf("\n//line %s:%d", pos.Filename, pos.Line)
+		line := fmt.Sprintf("\n//line ./%s:%d", path.Base(pos.Filename), pos.Line)
 		node = &printer.CommentedStmt{Comments: Comment(line), Stmt: node}
 	}
 	p.stmts = append(p.stmts, node)
@@ -202,7 +227,7 @@ func (p *Builder) Reserve() exec.Reserved {
 	r := new(printer.ReservedExpr)
 	idx := len(p.reserveds)
 	p.reserveds = append(p.reserveds, r)
-	p.code.Push(r)
+	p.rhs.Push(r)
 	return exec.Reserved(idx)
 }
 
@@ -217,108 +242,6 @@ func (p *Builder) Pop(n int) *Builder {
 	return p
 }
 
-// Closure instr
-func (p *Builder) Closure(fun exec.FuncInfo) *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// GoClosure instr
-func (p *Builder) GoClosure(fun exec.FuncInfo) *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// CallClosure instr
-func (p *Builder) CallClosure(arity int) *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// CallGoClosure instr
-func (p *Builder) CallGoClosure(arity int) *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// CallFunc instr
-func (p *Builder) CallFunc(fun exec.FuncInfo) *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// CallFuncv instr
-func (p *Builder) CallFuncv(fun exec.FuncInfo, arity int) *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// DefineFunc instr
-func (p *Builder) DefineFunc(fun exec.FuncInfo) *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// Load instr
-func (p *Builder) Load(idx int32) *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// Store instr
-func (p *Builder) Store(idx int32) *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// EndFunc instr
-func (p *Builder) EndFunc(fun exec.FuncInfo) *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// DefineVar defines variables.
-func (p *Builder) DefineVar(vars ...exec.Var) *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// InCurrentCtx returns if a variable is in current context or not.
-func (p *Builder) InCurrentCtx(v exec.Var) bool {
-	log.Panicln("todo")
-	return false
-}
-
-// LoadVar instr
-func (p *Builder) LoadVar(v exec.Var) *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// StoreVar instr
-func (p *Builder) StoreVar(v exec.Var) *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// AddrVar instr
-func (p *Builder) AddrVar(v exec.Var) *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// AddrOp instr
-func (p *Builder) AddrOp(kind exec.Kind, op exec.AddrOperator) *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// Append instr
-func (p *Builder) Append(typ reflect.Type, arity int) *Builder {
-	log.Panicln("todo")
-	return p
-}
-
 // MakeArray instr
 func (p *Builder) MakeArray(typ reflect.Type, arity int) *Builder {
 	log.Panicln("todo")
@@ -327,12 +250,6 @@ func (p *Builder) MakeArray(typ reflect.Type, arity int) *Builder {
 
 // MakeMap instr
 func (p *Builder) MakeMap(typ reflect.Type, arity int) *Builder {
-	log.Panicln("todo")
-	return p
-}
-
-// Make instr
-func (p *Builder) Make(typ reflect.Type, arity int) *Builder {
 	log.Panicln("todo")
 	return p
 }
