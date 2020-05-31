@@ -83,11 +83,13 @@ type Builder struct {
 	out         *Code             // golang code
 	imports     map[string]string // pkgPath => aliasName
 	importPaths map[string]string // aliasName => pkgPath
-	gblvars     varManager        // global variables
+	gbldecls    []ast.Decl        // global declarations
 	gblstmts    []ast.Stmt        // global statements
+	gblvars     varManager        // global variables
 	labels      []*Label          // labels of current statement
 	fset        *token.FileSet    // fileset of qlang code
 	stmts       *[]ast.Stmt       // current block statements
+	cfun        *FuncInfo         // current function
 	reserveds   []*printer.ReservedExpr
 	comprehens  func() // current comprehension
 	identBase   int    // auo-increasement ident index
@@ -101,6 +103,7 @@ func NewBuilder(code *Code, fset *token.FileSet) *Builder {
 	}
 	p := &Builder{
 		out:         code,
+		gbldecls:    make([]ast.Decl, 0, 8),
 		imports:     make(map[string]string),
 		importPaths: make(map[string]string),
 		fset:        fset,
@@ -127,7 +130,7 @@ var (
 
 // Resolve resolves all unresolved labels/functions/consts/etc.
 func (p *Builder) Resolve() *Code {
-	decls := make([]ast.Decl, 0, 8)
+	decls := p.gbldecls
 	imports := p.resolveImports()
 	if imports != nil {
 		decls = append(decls, imports)

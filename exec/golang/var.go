@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/token"
 	"reflect"
+	"strings"
 
 	"github.com/qiniu/qlang/v6/exec.spec"
 	"github.com/qiniu/x/log"
@@ -20,6 +21,10 @@ type Var struct {
 
 // NewVar creates a variable instance.
 func NewVar(typ reflect.Type, name string) *Var {
+	c := name[0]
+	if c >= '0' && c <= '9' {
+		name = "_ret_" + name
+	}
 	return &Var{typ: typ, name: name}
 }
 
@@ -35,8 +40,7 @@ func (p *Var) Name() string {
 
 // IsUnnamedOut returns if variable unnamed or not.
 func (p *Var) IsUnnamedOut() bool {
-	c := p.name[0]
-	return c >= '0' && c <= '9'
+	return strings.HasPrefix(p.name, "_ret_")
 }
 
 func (p *Var) setScope(where *varManager) {
@@ -94,6 +98,23 @@ func (p *Builder) DefineVar(vars ...exec.Var) *Builder {
 // InCurrentCtx returns if a variable is in current context or not.
 func (p *Builder) InCurrentCtx(v exec.Var) bool {
 	return p.varManager == v.(*Var).where
+}
+
+// Load instr
+func (p *Builder) Load(idx int32) *Builder {
+	p.rhs.Push(p.argIdent(idx))
+	return p
+}
+
+// Store instr
+func (p *Builder) Store(idx int32) *Builder {
+	p.lhs.Push(p.argIdent(idx))
+	return p
+}
+
+func (p *Builder) argIdent(idx int32) *ast.Ident {
+	i := len(p.cfun.in) + int(idx)
+	return Ident(toArg(i))
 }
 
 // LoadVar instr

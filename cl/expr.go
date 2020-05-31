@@ -586,8 +586,11 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) func() {
 				compileExpr(ctx, arg)()
 			}
 			exprFun()
-			arity := checkFuncCall(vfn.t, 0, v, ctx)
-			ctx.out.CallGoClosure(arity)
+			arity, ellipsis := checkFuncCall(vfn.t, 0, v, ctx), false
+			if arity == -1 {
+				arity, ellipsis = len(v.Args), true
+			}
+			ctx.out.CallGoClosure(arity, ellipsis)
 		}
 	case *nonValue:
 		switch nv := vfn.v.(type) {

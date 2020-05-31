@@ -242,13 +242,19 @@ func (p *iBuilder) GoClosure(fun exec.FuncInfo) exec.Builder {
 }
 
 // CallClosure instr
-func (p *iBuilder) CallClosure(arity int) exec.Builder {
+func (p *iBuilder) CallClosure(arity int, ellipsis bool) exec.Builder {
+	if ellipsis {
+		arity = -1
+	}
 	((*Builder)(p)).CallClosure(arity)
 	return p
 }
 
 // CallGoClosure instr
-func (p *iBuilder) CallGoClosure(arity int) exec.Builder {
+func (p *iBuilder) CallGoClosure(arity int, ellipsis bool) exec.Builder {
+	if ellipsis {
+		arity = -1
+	}
 	((*Builder)(p)).CallGoClosure(arity)
 	return p
 }

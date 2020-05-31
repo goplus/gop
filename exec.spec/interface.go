@@ -190,10 +190,10 @@ type Builder interface {
 	GoClosure(fun FuncInfo) Builder
 
 	// CallClosure instr
-	CallClosure(arity int) Builder
+	CallClosure(arity int, ellipsis bool) Builder
 
 	// CallGoClosure instr
-	CallGoClosure(arity int) Builder
+	CallGoClosure(arity int, ellipsis bool) Builder
 
 	// CallFunc instr
 	CallFunc(fun FuncInfo) Builder

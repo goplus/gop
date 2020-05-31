@@ -1,7 +1,6 @@
 package golang
 
 import (
-	"log"
 	"reflect"
 
 	"github.com/qiniu/qlang/v6/exec.spec"
@@ -43,8 +42,7 @@ func (p *interfaceImpl) NewFunc(name string, nestDepth uint32) exec.FuncInfo {
 	if nestDepth == 0 {
 		return nil
 	}
-	log.Panicln("NewFunc:", name, nestDepth)
-	panic("todo")
+	return NewFunc(name, nestDepth)
 }
 
 // FindGoPackage lookups a Go package by pkgPath. It returns nil if not found.
@@ -174,42 +172,38 @@ func (p *iBuilder) EndComprehension(c exec.Comprehension) exec.Builder {
 
 // Closure instr
 func (p *iBuilder) Closure(fun exec.FuncInfo) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).Closure((*FuncInfo)(fun.(*iFuncInfo)))
-	//return p
+	((*Builder)(p)).Closure(fun.(*FuncInfo))
+	return p
 }
 
 // GoClosure instr
 func (p *iBuilder) GoClosure(fun exec.FuncInfo) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).GoClosure((*FuncInfo)(fun.(*iFuncInfo)))
-	//return p
+	((*Builder)(p)).Closure(fun.(*FuncInfo))
+	return p
 }
 
 // CallClosure instr
-func (p *iBuilder) CallClosure(arity int) exec.Builder {
-	((*Builder)(p)).CallClosure(arity)
+func (p *iBuilder) CallClosure(arity int, ellipsis bool) exec.Builder {
+	((*Builder)(p)).Call(arity, ellipsis)
 	return p
 }
 
 // CallGoClosure instr
-func (p *iBuilder) CallGoClosure(arity int) exec.Builder {
-	((*Builder)(p)).CallGoClosure(arity)
+func (p *iBuilder) CallGoClosure(arity int, ellipsis bool) exec.Builder {
+	((*Builder)(p)).Call(arity, ellipsis)
 	return p
 }
 
 // CallFunc instr
 func (p *iBuilder) CallFunc(fun exec.FuncInfo) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).CallFunc((*FuncInfo)(fun.(*iFuncInfo)))
-	//return p
+	((*Builder)(p)).CallFunc(fun.(*FuncInfo))
+	return p
 }
 
 // CallFuncv instr
 func (p *iBuilder) CallFuncv(fun exec.FuncInfo, arity int) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).CallFuncv((*FuncInfo)(fun.(*iFuncInfo)), arity)
-	//return p
+	((*Builder)(p)).CallFuncv(fun.(*FuncInfo), arity)
+	return p
 }
 
 // CallGoFunc instr
@@ -226,9 +220,8 @@ func (p *iBuilder) CallGoFuncv(fun exec.GoFuncvAddr, arity int) exec.Builder {
 
 // DefineFunc instr
 func (p *iBuilder) DefineFunc(fun exec.FuncInfo) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).DefineFunc((*FuncInfo)(fun.(*iFuncInfo)))
-	//return p
+	((*Builder)(p)).DefineFunc(fun)
+	return p
 }
 
 // Return instr
@@ -251,9 +244,8 @@ func (p *iBuilder) Store(idx int32) exec.Builder {
 
 // EndFunc instr
 func (p *iBuilder) EndFunc(fun exec.FuncInfo) exec.Builder {
-	panic("todo")
-	//((*Builder)(p)).EndFunc((*FuncInfo)(fun.(*iFuncInfo)))
-	//return p
+	((*Builder)(p)).EndFunc(fun.(*FuncInfo))
+	return p
 }
 
 // DefineVar defines variables.

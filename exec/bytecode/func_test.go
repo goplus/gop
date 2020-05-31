@@ -172,7 +172,7 @@ func TestClosure(t *testing.T) {
 		Push("x").
 		Push("sw").
 		Closure(foo).
-		CallClosure(2).
+		CallClosure(2, false).
 		Return(-1).
 		DefineFunc(
 			foo.Return(ret).
@@ -209,7 +209,7 @@ func TestClosure2(t *testing.T) {
 		Push(1).
 		Push("xsw").
 		Closure(bar).
-		CallClosure(4).
+		CallClosure(4, false).
 		Return(-1).
 		DefineFunc(
 			foo.Return(ret1).
@@ -225,7 +225,7 @@ func TestClosure2(t *testing.T) {
 		Load(-2).
 		Load(-1).
 		Closure(foo).
-		CallClosure(-1). // foo(format, args...)
+		CallClosure(-1, true). // foo(format, args...)
 		Return(2).
 		EndFunc(bar).
 		Resolve()
@@ -255,7 +255,7 @@ func TestGoClosure(t *testing.T) {
 		Push(1).
 		Push("xsw").
 		GoClosure(bar).
-		CallGoClosure(4).
+		CallGoClosure(4, false).
 		Return(-1).
 		DefineFunc(
 			foo.Return(ret1).
@@ -271,7 +271,7 @@ func TestGoClosure(t *testing.T) {
 		Load(-2).
 		Load(-1).
 		GoClosure(foo).
-		CallGoClosure(-1). // foo(format, args...)
+		CallGoClosure(-1, true). // foo(format, args...)
 		Return(2).
 		EndFunc(bar).
 		Resolve()
