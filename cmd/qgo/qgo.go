@@ -1,10 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"errors"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
 
@@ -14,7 +17,7 @@ import (
 	"github.com/qiniu/qlang/v6/token"
 	"github.com/qiniu/x/log"
 
-	exec "github.com/qiniu/qlang/v6/exec/bytecode"
+	"github.com/qiniu/qlang/v6/exec/bytecode"
 	_ "github.com/qiniu/qlang/v6/lib/builtin"
 	_ "github.com/qiniu/qlang/v6/lib/fmt"
 	_ "github.com/qiniu/qlang/v6/lib/reflect"
@@ -66,7 +69,35 @@ func genGopkg(pkgDir string) (err error) {
 	return saveGoFile(pkgDir, code)
 }
 
-func genGo(dir string) {
+// -----------------------------------------------------------------------------
+
+func testPkg(dir string) {
+	cmd1 := exec.Command("go", "run", path.Join(dir, "qlang_autogen.go"))
+	gorun, err := cmd1.CombinedOutput()
+	if err != nil {
+		os.Stderr.Write(gorun)
+		fmt.Fprintf(os.Stderr, "[ERROR] `%v` failed: %v\n", cmd1, err)
+		return
+	}
+	cmd2 := exec.Command("qrun", "-quiet", dir) // -quiet: don't generate any log
+	qrun, err := cmd2.CombinedOutput()
+	if err != nil {
+		os.Stderr.Write(qrun)
+		fmt.Fprintf(os.Stderr, "[ERROR] `%v` failed: %v\n", cmd2, err)
+		return
+	}
+	if !bytes.Equal(gorun, qrun) {
+		fmt.Fprintf(os.Stderr, "[ERROR] Output has differences!\n")
+		fmt.Fprintf(os.Stderr, ">>> Output of `%v`:\n", cmd1)
+		os.Stderr.Write(gorun)
+		fmt.Fprintf(os.Stderr, "\n>>> Output of `%v`:\n", cmd2)
+		os.Stderr.Write(qrun)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+func genGo(dir string, test bool) {
 	fis, err := ioutil.ReadDir(dir)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "ReadDir failed:", err)
@@ -76,7 +107,7 @@ func genGo(dir string) {
 	for _, fi := range fis {
 		if fi.IsDir() {
 			pkgDir := path.Join(dir, fi.Name())
-			genGo(pkgDir)
+			genGo(pkgDir, test)
 			continue
 		}
 		if strings.HasSuffix(fi.Name(), ".ql") {
@@ -88,17 +119,30 @@ func genGo(dir string) {
 		err = genGopkg(dir)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "[ERROR] %v\n\n", err)
+		} else {
+			fmt.Printf("Testing %s ...\n", dir)
+			testPkg(dir)
 		}
 	}
 }
 
+// -----------------------------------------------------------------------------
+
+var (
+	flagTest = flag.Bool("test", false, "test qlang package")
+)
+
 func main() {
-	if len(os.Args) <= 1 {
-		fmt.Println("Usage: qgo <qlangSrcDir>")
+	flag.Parse()
+	if flag.NArg() < 1 {
+		fmt.Println("Usage: qgo [-test] <qlangSrcDir>")
+		flag.PrintDefaults()
 		return
 	}
-	dir := os.Args[1]
-	cl.CallBuiltinOp = exec.CallBuiltinOp
+	dir := flag.Arg(0)
+	cl.CallBuiltinOp = bytecode.CallBuiltinOp
 	log.SetFlags(log.Ldefault &^ log.LstdFlags)
-	genGo(dir)
+	genGo(dir, *flagTest)
 }
+
+// -----------------------------------------------------------------------------

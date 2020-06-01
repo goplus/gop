@@ -36,16 +36,23 @@ import (
 // -----------------------------------------------------------------------------
 
 var (
-	flagAsm = flag.Bool("asm", false, "generate asm code")
+	flagAsm   = flag.Bool("asm", false, "generate asm code")
+	flagQuiet = flag.Bool("quiet", false, "don't generate any log")
 )
 
 func main() {
-	if len(os.Args) <= 1 {
-		fmt.Println("Usage: qrun [-asm] <qlangSrcDir>")
+	flag.Parse()
+	if flag.NArg() < 1 {
+		fmt.Println("Usage: qrun [-asm] [-quiet] <qlangSrcDir>")
+		flag.PrintDefaults()
 		return
 	}
-	flag.Parse()
+
 	log.SetFlags(log.Ldefault &^ log.LstdFlags)
+	if *flagQuiet {
+		log.SetOutputLevel(0x7000)
+	}
+
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseDir(fset, flag.Arg(0), nil, 0)
 	if err != nil {
