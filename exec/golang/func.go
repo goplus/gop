@@ -32,15 +32,15 @@ type FuncInfo struct {
 
 // NewFunc create a qlang function.
 func NewFunc(name string, nestDepth uint32) *FuncInfo {
-	return &FuncInfo{name: name}
+	if name != "" {
+		return &FuncInfo{name: name}
+	}
+	return &FuncInfo{closure: &printer.ReservedExpr{}}
 }
 
 func (p *FuncInfo) getFuncExpr() ast.Expr {
 	if p.name != "" {
 		return Ident(p.name)
-	}
-	if p.closure == nil {
-		log.Panicln("getFuncExpr: func is undefined")
 	}
 	return p.closure
 }
@@ -125,8 +125,7 @@ func (p *FuncInfo) setVariadic(nVariadic uint16) {
 
 // Closure instr
 func (p *Builder) Closure(fun *FuncInfo) *Builder {
-	fun.closure = &printer.ReservedExpr{}
-	p.rhs.Push(fun.closure)
+	p.rhs.Push(fun.getFuncExpr())
 	return p
 }
 

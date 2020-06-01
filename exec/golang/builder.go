@@ -227,6 +227,9 @@ func (p *Builder) EndStmt(stmt, start interface{}) *Builder {
 		start := stmt.(ast.Node).Pos()
 		pos := p.fset.Position(start)
 		line := fmt.Sprintf("\n//line ./%s:%d", path.Base(pos.Filename), pos.Line)
+		if node == nil {
+			panic("node nil")
+		}
 		node = &printer.CommentedStmt{Comments: Comment(line), Stmt: node}
 	}
 	p.emitStmt(node)
@@ -246,6 +249,9 @@ func (p *Builder) endBlockStmt() {
 func (p *Builder) labeled(stmt ast.Stmt) ast.Stmt {
 	if p.labels != nil {
 		for _, l := range p.labels {
+			if stmt == nil {
+				panic("labeled nil")
+			}
 			stmt = &ast.LabeledStmt{
 				Label: Ident(l.getName(p)),
 				Stmt:  stmt,
