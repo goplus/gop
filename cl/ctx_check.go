@@ -152,7 +152,7 @@ func isNoExecCtxMapComprehensionExpr(parent *blockCtx, v *ast.MapComprehensionEx
 }
 
 func isNoExecCtxFuncLit(ctx *blockCtx, v *ast.FuncLit) bool {
-	log.Warn("isNoExecCtxFuncLit: to be optimized")
+	// TODO: log.Warn("isNoExecCtxFuncLit: to be optimized")
 	return false
 }
 

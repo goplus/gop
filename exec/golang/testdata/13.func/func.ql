@@ -7,9 +7,15 @@ func foo(x string) string {
     return strings.NewReplacer("?", "!").Replace(x)
 }
 
-func bar(n int, err error) {
-    m := n
-	fmt.Println(m, err)
+func printf(format string, args ...interface{}) (n int, err error) {
+    n, err = fmt.Printf(format, args...)
+    return
 }
 
-bar(fmt.Println(foo("Hello, world???")))
+func bar(foo func(string, ...interface{}) (int, error)) {
+    foo("Hello, %v!\n", "qlang")
+}
+
+bar(printf)
+fmt.Println(foo("Hello, world???"))
+fmt.Println(printf("Hello, %v\n", "qlang"))
