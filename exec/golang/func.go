@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/qiniu/qlang/v6/exec.spec"
+	"github.com/qiniu/qlang/v6/exec/golang/internal/go/printer"
 	"github.com/qiniu/x/log"
 )
 
@@ -20,10 +21,11 @@ const (
 
 // FuncInfo represents a qlang function information.
 type FuncInfo struct {
-	name   string
-	t      reflect.Type
-	in     []reflect.Type
-	numOut int
+	name    string
+	closure *printer.ReservedExpr // only when name="" (closure)
+	t       reflect.Type
+	in      []reflect.Type
+	out     []exec.Var
 	scopeCtx
 	nVariadic uint16
 }
@@ -33,11 +35,14 @@ func NewFunc(name string, nestDepth uint32) *FuncInfo {
 	return &FuncInfo{name: name}
 }
 
-func (p *FuncInfo) getName(b *Builder) string {
-	if p.name == "" {
-		p.name = b.autoIdent()
+func (p *FuncInfo) getFuncExpr() ast.Expr {
+	if p.name != "" {
+		return Ident(p.name)
 	}
-	return p.name
+	if p.closure == nil {
+		log.Panicln("getFuncExpr: func is undefined")
+	}
+	return p.closure
 }
 
 // Name returns the function name.
@@ -48,9 +53,9 @@ func (p *FuncInfo) Name() string {
 // Type returns type of this function.
 func (p *FuncInfo) Type() reflect.Type {
 	if p.t == nil {
-		out := make([]reflect.Type, p.numOut)
-		for i := 0; i < p.numOut; i++ {
-			out[i] = p.vlist[i].(*Var).typ
+		out := make([]reflect.Type, len(p.out))
+		for i, v := range p.out {
+			out[i] = v.(*Var).typ
 		}
 		p.t = reflect.FuncOf(p.in, out, p.IsVariadic())
 	}
@@ -60,16 +65,13 @@ func (p *FuncInfo) Type() reflect.Type {
 // NumOut returns a function type's output parameter count.
 // It panics if the type's Kind is not Func.
 func (p *FuncInfo) NumOut() int {
-	return p.numOut
+	return len(p.out)
 }
 
 // Out returns the type of a function type's i'th output parameter.
 // It panics if i is not in the range [0, NumOut()).
 func (p *FuncInfo) Out(i int) exec.Var {
-	if i >= p.numOut {
-		log.Panicln("FuncInfo.Out: out of range -", i, "func:", p.name)
-	}
-	return p.vlist[i]
+	return p.out[i]
 }
 
 // Args sets argument types of a qlang function.
@@ -91,18 +93,14 @@ func (p *FuncInfo) Vargs(in ...reflect.Type) exec.FuncInfo {
 
 // Return sets return types of a qlang function.
 func (p *FuncInfo) Return(out ...exec.Var) exec.FuncInfo {
-	if p.vlist != nil {
-		log.Panicln("don't call DefineVar before calling Return.")
-	}
-	p.addVar(out...)
-	p.numOut = len(out)
+	p.out = out
 	return p
 }
 
 // IsUnnamedOut returns if function results unnamed or not.
 func (p *FuncInfo) IsUnnamedOut() bool {
-	if p.numOut > 0 {
-		return p.vlist[0].IsUnnamedOut()
+	if len(p.out) > 0 {
+		return p.out[0].IsUnnamedOut()
 	}
 	return false
 }
@@ -127,19 +125,20 @@ func (p *FuncInfo) setVariadic(nVariadic uint16) {
 
 // Closure instr
 func (p *Builder) Closure(fun *FuncInfo) *Builder {
-	p.rhs.Push(Ident(fun.getName(p)))
+	fun.closure = &printer.ReservedExpr{}
+	p.rhs.Push(fun.closure)
 	return p
 }
 
 // CallFunc instr
 func (p *Builder) CallFunc(fun *FuncInfo, nexpr int) *Builder {
-	p.rhs.Push(Ident(fun.getName(p)))
+	p.rhs.Push(fun.getFuncExpr())
 	return p.Call(nexpr, false)
 }
 
 // CallFuncv instr
 func (p *Builder) CallFuncv(fun *FuncInfo, nexpr, arity int) *Builder {
-	p.rhs.Push(Ident(fun.getName(p)))
+	p.rhs.Push(fun.getFuncExpr())
 	return p.Call(nexpr, arity == -1)
 }
 
@@ -172,12 +171,20 @@ func (p *Builder) Return(n int32) *Builder {
 func (p *Builder) EndFunc(fun *FuncInfo) *Builder {
 	p.endBlockStmt()
 	body := &ast.BlockStmt{List: fun.getStmts(p)}
-	fn := &ast.FuncDecl{
-		Name: Ident(fun.getName(p)),
-		Type: toFuncType(p, fun),
-		Body: body,
+	name := fun.name
+	if name != "" {
+		fn := &ast.FuncDecl{
+			Name: Ident(name),
+			Type: toFuncType(p, fun),
+			Body: body,
+		}
+		p.gblDecls = append(p.gblDecls, fn)
+	} else {
+		fun.closure.Expr = &ast.FuncLit{
+			Type: toFuncType(p, fun),
+			Body: body,
+		}
 	}
-	p.gblDecls = append(p.gblDecls, fn)
 	p.cfun = nil
 	p.scopeCtx = &p.gblScope
 	return p
