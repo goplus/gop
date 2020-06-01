@@ -119,7 +119,7 @@ func genGo(dir string, test bool) {
 		err = genGopkg(dir)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "[ERROR] %v\n\n", err)
-		} else {
+		} else if test {
 			fmt.Printf("Testing %s ...\n", dir)
 			testPkg(dir)
 		}
