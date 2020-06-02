@@ -18,14 +18,14 @@ package parser
 
 import (
 	"fmt"
-	"go/scanner"
-	"go/token"
 	"reflect"
 	"strconv"
 	"strings"
 	"unicode"
 
 	"github.com/qiniu/qlang/v6/ast"
+	"github.com/qiniu/qlang/v6/scanner"
+	"github.com/qiniu/qlang/v6/token"
 	"github.com/qiniu/x/log"
 )
 

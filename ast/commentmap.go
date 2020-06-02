@@ -7,8 +7,9 @@ package ast
 import (
 	"bytes"
 	"fmt"
-	"go/token"
 	"sort"
+
+	"github.com/qiniu/qlang/v6/token"
 )
 
 type byPos []*CommentGroup

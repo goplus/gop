@@ -1,170 +1,343 @@
-/*
- Copyright 2020 Qiniu Cloud (qiniu.com)
+// Copyright 2009 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
 
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-*/
-
+// Package token defines constants representing the lexical tokens of the Go
+// programming language and basic operations on tokens (printing, predicates).
+//
 package token
 
 import (
-	"go/token"
+	"strconv"
+	"unicode"
+	"unicode/utf8"
 )
 
-// -----------------------------------------------------------------------------
-
-// Token is the set of lexical tokens of the qlang.
-type Token = token.Token
-
-const (
-	// NoPos - The zero value for Pos is NoPos; there is no file and line information
-	// associated with it, and NoPos.IsValid() is false. NoPos is always smaller
-	// than any other Pos value. The corresponding Position value for NoPos is
-	// the zero value for Position.
-	NoPos = token.NoPos
-)
+// Token is the set of lexical tokens of the Go programming language.
+type Token int
 
 // The list of tokens.
 const (
-	IDENT  = token.IDENT  // main
-	INT    = token.INT    // 12345
-	FLOAT  = token.FLOAT  // 123.45
-	IMAG   = token.IMAG   // 123.45i
-	CHAR   = token.CHAR   // 'a'
-	STRING = token.STRING // "abc"
+	// Special tokens
+	ILLEGAL Token = iota
+	EOF
+	COMMENT
 
-	ADD = token.ADD // +
-	SUB = token.SUB // -
-	MUL = token.MUL // *
-	QUO = token.QUO // /
-	REM = token.REM // %
+	literal_beg
+	// Identifiers and basic type literals
+	// (these tokens stand for classes of literals)
+	IDENT  // main
+	INT    // 12345
+	FLOAT  // 123.45
+	IMAG   // 123.45i
+	CHAR   // 'a'
+	STRING // "abc"
+	literal_end
 
-	AND     = token.AND     // &
-	OR      = token.OR      // |
-	XOR     = token.XOR     // ^
-	SHL     = token.SHL     // <<
-	SHR     = token.SHR     // >>
-	AND_NOT = token.AND_NOT // &^
+	operator_beg
+	// Operators and delimiters
+	ADD // +
+	SUB // -
+	MUL // *
+	QUO // /
+	REM // %
 
-	ADD_ASSIGN = token.ADD_ASSIGN // +=
-	SUB_ASSIGN = token.SUB_ASSIGN // -=
-	MUL_ASSIGN = token.MUL_ASSIGN // *=
-	QUO_ASSIGN = token.QUO_ASSIGN // /=
-	REM_ASSIGN = token.REM_ASSIGN // %=
+	AND     // &
+	OR      // |
+	XOR     // ^
+	SHL     // <<
+	SHR     // >>
+	AND_NOT // &^
 
-	AND_ASSIGN     = token.AND_ASSIGN     // &=
-	OR_ASSIGN      = token.OR_ASSIGN      // |=
-	XOR_ASSIGN     = token.XOR_ASSIGN     // ^=
-	SHL_ASSIGN     = token.SHL_ASSIGN     // <<=
-	SHR_ASSIGN     = token.SHR_ASSIGN     // >>=
-	AND_NOT_ASSIGN = token.AND_NOT_ASSIGN // &^=
+	ADD_ASSIGN // +=
+	SUB_ASSIGN // -=
+	MUL_ASSIGN // *=
+	QUO_ASSIGN // /=
+	REM_ASSIGN // %=
 
-	LAND  = token.LAND  // &&
-	LOR   = token.LOR   // ||
-	ARROW = token.ARROW // <-
-	INC   = token.INC   // ++
-	DEC   = token.DEC   // --
+	AND_ASSIGN     // &=
+	OR_ASSIGN      // |=
+	XOR_ASSIGN     // ^=
+	SHL_ASSIGN     // <<=
+	SHR_ASSIGN     // >>=
+	AND_NOT_ASSIGN // &^=
 
-	EQL    = token.EQL    // ==
-	LSS    = token.LSS    // <
-	GTR    = token.GTR    // >
-	ASSIGN = token.ASSIGN // =
-	NOT    = token.NOT    // !
+	LAND  // &&
+	LOR   // ||
+	ARROW // <-
+	INC   // ++
+	DEC   // --
 
-	NEQ      = token.NEQ      // !=
-	LEQ      = token.LEQ      // <=
-	GEQ      = token.GEQ      // >=
-	DEFINE   = token.DEFINE   // :=
-	ELLIPSIS = token.ELLIPSIS // ...
+	EQL    // ==
+	LSS    // <
+	GTR    // >
+	ASSIGN // =
+	NOT    // !
 
-	LPAREN = token.LPAREN // (
-	LBRACK = token.LBRACK // [
-	LBRACE = token.LBRACE // {
-	COMMA  = token.COMMA  // ,
-	PERIOD = token.PERIOD // .
+	NEQ      // !=
+	LEQ      // <=
+	GEQ      // >=
+	DEFINE   // :=
+	ELLIPSIS // ...
 
-	RPAREN    = token.RPAREN    // )
-	RBRACK    = token.RBRACK    // ]
-	RBRACE    = token.RBRACE    // }
-	SEMICOLON = token.SEMICOLON // ;
-	COLON     = token.COLON     // :
+	LPAREN // (
+	LBRACK // [
+	LBRACE // {
+	COMMA  // ,
+	PERIOD // .
 
+	RPAREN    // )
+	RBRACK    // ]
+	RBRACE    // }
+	SEMICOLON // ;
+	COLON     // :
+	operator_end
+
+	keyword_beg
 	// Keywords
-	BREAK    = token.BREAK
-	CASE     = token.CASE
-	CHAN     = token.CHAN
-	CONST    = token.CONST
-	CONTINUE = token.CONTINUE
+	BREAK
+	CASE
+	CHAN
+	CONST
+	CONTINUE
 
-	DEFAULT     = token.DEFAULT
-	DEFER       = token.DEFER
-	ELSE        = token.ELSE
-	FALLTHROUGH = token.FALLTHROUGH
-	FOR         = token.FOR
+	DEFAULT
+	DEFER
+	ELSE
+	FALLTHROUGH
+	FOR
 
-	FUNC   = token.FUNC
-	GO     = token.GO
-	GOTO   = token.GOTO
-	IF     = token.IF
-	IMPORT = token.IMPORT
+	FUNC
+	GO
+	GOTO
+	IF
+	IMPORT
 
-	INTERFACE = token.INTERFACE
-	MAP       = token.MAP
-	PACKAGE   = token.PACKAGE
-	RANGE     = token.RANGE
-	RETURN    = token.RETURN
+	INTERFACE
+	MAP
+	PACKAGE
+	RANGE
+	RETURN
 
-	SELECT = token.SELECT
-	STRUCT = token.STRUCT
-	SWITCH = token.SWITCH
-	TYPE   = token.TYPE
-	VAR    = token.VAR
+	SELECT
+	STRUCT
+	SWITCH
+	TYPE
+	VAR
+	keyword_end
+
+	TILDE = operator_end // ~
 )
 
-// -----------------------------------------------------------------------------
+var tokens = [...]string{
+	ILLEGAL: "ILLEGAL",
 
-// Pos is a compact encoding of a source position within a file set.
-// It can be converted into a Position for a more convenient, but much
-// larger, representation.
-//
-// The Pos value for a given file is a number in the range [base, base+size],
-// where base and size are specified when adding the file to the file set via
-// AddFile.
-//
-// To create the Pos value for a specific source offset (measured in bytes),
-// first add the respective file to the current file set using FileSet.AddFile
-// and then call File.Pos(offset) for that file. Given a Pos value p
-// for a specific file set fset, the corresponding Position value is
-// obtained by calling fset.Position(p).
-//
-// Pos values can be compared directly with the usual comparison operators:
-// If two Pos values p and q are in the same file, comparing p and q is
-// equivalent to comparing the respective source file offsets. If p and q
-// are in different files, p < q is true if the file implied by p was added
-// to the respective file set before the file implied by q.
-//
-type Pos = token.Pos
+	EOF:     "EOF",
+	COMMENT: "COMMENT",
 
-// A File is a handle for a file belonging to a FileSet.
-// A File has a name, size, and line offset table.
-type File = token.File
+	IDENT:  "IDENT",
+	INT:    "INT",
+	FLOAT:  "FLOAT",
+	IMAG:   "IMAG",
+	CHAR:   "CHAR",
+	STRING: "STRING",
 
-// A FileSet represents a set of source files. Methods of file sets are synchronized;
-// multiple goroutines may invoke them concurrently.
-type FileSet = token.FileSet
+	ADD: "+",
+	SUB: "-",
+	MUL: "*",
+	QUO: "/",
+	REM: "%",
 
-// NewFileSet creates a new file set.
-func NewFileSet() *FileSet {
-	return token.NewFileSet()
+	AND:     "&",
+	OR:      "|",
+	XOR:     "^",
+	SHL:     "<<",
+	SHR:     ">>",
+	AND_NOT: "&^",
+
+	ADD_ASSIGN: "+=",
+	SUB_ASSIGN: "-=",
+	MUL_ASSIGN: "*=",
+	QUO_ASSIGN: "/=",
+	REM_ASSIGN: "%=",
+
+	AND_ASSIGN:     "&=",
+	OR_ASSIGN:      "|=",
+	XOR_ASSIGN:     "^=",
+	SHL_ASSIGN:     "<<=",
+	SHR_ASSIGN:     ">>=",
+	AND_NOT_ASSIGN: "&^=",
+
+	LAND:  "&&",
+	LOR:   "||",
+	ARROW: "<-",
+	INC:   "++",
+	DEC:   "--",
+
+	EQL:    "==",
+	LSS:    "<",
+	GTR:    ">",
+	ASSIGN: "=",
+	NOT:    "!",
+
+	NEQ:      "!=",
+	LEQ:      "<=",
+	GEQ:      ">=",
+	DEFINE:   ":=",
+	ELLIPSIS: "...",
+
+	LPAREN: "(",
+	LBRACK: "[",
+	LBRACE: "{",
+	COMMA:  ",",
+	PERIOD: ".",
+
+	RPAREN:    ")",
+	RBRACK:    "]",
+	RBRACE:    "}",
+	SEMICOLON: ";",
+	COLON:     ":",
+	TILDE:     "~",
+
+	BREAK:    "break",
+	CASE:     "case",
+	CHAN:     "chan",
+	CONST:    "const",
+	CONTINUE: "continue",
+
+	DEFAULT:     "default",
+	DEFER:       "defer",
+	ELSE:        "else",
+	FALLTHROUGH: "fallthrough",
+	FOR:         "for",
+
+	FUNC:   "func",
+	GO:     "go",
+	GOTO:   "goto",
+	IF:     "if",
+	IMPORT: "import",
+
+	INTERFACE: "interface",
+	MAP:       "map",
+	PACKAGE:   "package",
+	RANGE:     "range",
+	RETURN:    "return",
+
+	SELECT: "select",
+	STRUCT: "struct",
+	SWITCH: "switch",
+	TYPE:   "type",
+	VAR:    "var",
 }
 
-// -----------------------------------------------------------------------------
+// String returns the string corresponding to the token tok.
+// For operators, delimiters, and keywords the string is the actual
+// token character sequence (e.g., for the token ADD, the string is
+// "+"). For all other tokens the string corresponds to the token
+// constant name (e.g. for the token IDENT, the string is "IDENT").
+//
+func (tok Token) String() string {
+	s := ""
+	if 0 <= tok && tok < Token(len(tokens)) {
+		s = tokens[tok]
+	}
+	if s == "" {
+		s = "token(" + strconv.Itoa(int(tok)) + ")"
+	}
+	return s
+}
+
+// A set of constants for precedence-based expression parsing.
+// Non-operators have lowest precedence, followed by operators
+// starting with precedence 1 up to unary operators. The highest
+// precedence serves as "catch-all" precedence for selector,
+// indexing, and other operator and delimiter tokens.
+//
+const (
+	LowestPrec  = 0 // non-operators
+	UnaryPrec   = 6
+	HighestPrec = 7
+)
+
+// Precedence returns the operator precedence of the binary
+// operator op. If op is not a binary operator, the result
+// is LowestPrecedence.
+//
+func (op Token) Precedence() int {
+	switch op {
+	case LOR:
+		return 1
+	case LAND:
+		return 2
+	case EQL, NEQ, LSS, LEQ, GTR, GEQ:
+		return 3
+	case ADD, SUB, OR, XOR:
+		return 4
+	case MUL, QUO, REM, SHL, SHR, AND, AND_NOT:
+		return 5
+	}
+	return LowestPrec
+}
+
+var keywords map[string]Token
+
+func init() {
+	keywords = make(map[string]Token)
+	for i := keyword_beg + 1; i < keyword_end; i++ {
+		keywords[tokens[i]] = i
+	}
+}
+
+// Lookup maps an identifier to its keyword token or IDENT (if not a keyword).
+//
+func Lookup(ident string) Token {
+	if tok, is_keyword := keywords[ident]; is_keyword {
+		return tok
+	}
+	return IDENT
+}
+
+// Predicates
+
+// IsLiteral returns true for tokens corresponding to identifiers
+// and basic type literals; it returns false otherwise.
+//
+func (tok Token) IsLiteral() bool { return literal_beg < tok && tok < literal_end }
+
+// IsOperator returns true for tokens corresponding to operators and
+// delimiters; it returns false otherwise.
+//
+func (tok Token) IsOperator() bool { return operator_beg < tok && tok <= operator_end }
+
+// IsKeyword returns true for tokens corresponding to keywords;
+// it returns false otherwise.
+//
+func (tok Token) IsKeyword() bool { return keyword_beg < tok && tok < keyword_end }
+
+// IsExported reports whether name starts with an upper-case letter.
+//
+func IsExported(name string) bool {
+	ch, _ := utf8.DecodeRuneInString(name)
+	return unicode.IsUpper(ch)
+}
+
+// IsKeyword reports whether name is a Go keyword, such as "func" or "return".
+//
+func IsKeyword(name string) bool {
+	// TODO: opt: use a perfect hash function instead of a global map.
+	_, ok := keywords[name]
+	return ok
+}
+
+// IsIdentifier reports whether name is a Go identifier, that is, a non-empty
+// string made up of letters, digits, and underscores, where the first character
+// is not a digit. Keywords are not identifiers.
+//
+func IsIdentifier(name string) bool {
+	for i, c := range name {
+		if !unicode.IsLetter(c) && c != '_' && (i == 0 || !unicode.IsDigit(c)) {
+			return false
+		}
+	}
+	return name != "" && !IsKeyword(name)
+}

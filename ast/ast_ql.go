@@ -16,7 +16,9 @@
 
 package ast
 
-import "go/token"
+import (
+	"github.com/qiniu/qlang/v6/token"
+)
 
 // ----------------------------------------------------------------------------
 /*

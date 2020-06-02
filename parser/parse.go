@@ -19,7 +19,6 @@ package parser
 import (
 	"bytes"
 	"errors"
-	"go/scanner"
 	"io"
 	"io/ioutil"
 	"os"
@@ -27,6 +26,7 @@ import (
 	"strings"
 
 	"github.com/qiniu/qlang/v6/ast"
+	"github.com/qiniu/qlang/v6/scanner"
 	"github.com/qiniu/qlang/v6/token"
 )
 
