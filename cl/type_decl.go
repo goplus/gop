@@ -305,6 +305,7 @@ type FuncDecl struct {
 	used     bool
 	cached   bool
 	compiled bool
+	reserved bool
 }
 
 type funcDecl = FuncDecl
