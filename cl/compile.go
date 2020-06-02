@@ -132,7 +132,7 @@ func (p *pkgCtx) resolveFuncs() {
 		}
 		f := p.usedfns[n-1]
 		p.usedfns = p.usedfns[:n-1]
-		f.compile()
+		f.Compile()
 	}
 }
 
@@ -399,6 +399,38 @@ func NewPackage(out exec.Builder, pkg *ast.Package, fset *token.FileSet) (p *Pac
 		ctxPkg.resolveFuncs()
 	}
 	p.syms = ctx.syms
+	return
+}
+
+// SymKind represents a symbol kind.
+type SymKind uint
+
+const (
+	// SymInvalid - invalid symbol kind
+	SymInvalid SymKind = iota
+	// SymVar - symbol is a variable
+	SymVar
+	// SymFunc - symbol is a function
+	SymFunc
+	// SymType - symbol is a type
+	SymType
+)
+
+// Find lookups a symbol and returns it's kind and the object instance.
+func (p *Package) Find(name string) (kind SymKind, v interface{}, ok bool) {
+	if v, ok = p.syms[name]; !ok {
+		return
+	}
+	switch v.(type) {
+	case *exec.Var:
+		kind = SymVar
+	case *funcDecl:
+		kind = SymFunc
+	case *typeDecl:
+		kind = SymType
+	default:
+		log.Panicln("Package.Find: unknown symbol type -", reflect.TypeOf(v))
+	}
 	return
 }
 

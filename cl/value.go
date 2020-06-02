@@ -133,7 +133,7 @@ func (p *qlFunc) Kind() iKind {
 }
 
 func (p *qlFunc) Type() reflect.Type {
-	return ((*funcDecl)(p)).typeOf()
+	return ((*funcDecl)(p)).Type()
 }
 
 func (p *qlFunc) NumValues() int {

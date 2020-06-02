@@ -296,14 +296,18 @@ type methodDecl struct {
 	file    *fileCtx
 }
 
-type funcDecl struct {
-	typ    *ast.FuncType
-	body   *ast.BlockStmt
-	ctx    *blockCtx
-	fi     exec.FuncInfo
-	used   bool
-	cached bool
+// FuncDecl represents a function declaration.
+type FuncDecl struct {
+	typ      *ast.FuncType
+	body     *ast.BlockStmt
+	ctx      *blockCtx
+	fi       exec.FuncInfo
+	used     bool
+	cached   bool
+	compiled bool
 }
+
+type funcDecl = FuncDecl
 
 func newFuncDecl(name string, typ *ast.FuncType, body *ast.BlockStmt, ctx *blockCtx) *funcDecl {
 	nestDepth := ctx.getNestDepth()
@@ -320,19 +324,25 @@ func (p *funcDecl) getFuncInfo() exec.FuncInfo {
 	return p.fi
 }
 
-func (p *funcDecl) typeOf() reflect.Type {
+// Type returns the type of this function.
+func (p *FuncDecl) Type() reflect.Type {
 	return p.getFuncInfo().Type()
 }
 
-func (p *funcDecl) compile() {
+// Compile compiles this function
+func (p *FuncDecl) Compile() exec.FuncInfo {
 	fun := p.getFuncInfo()
-	ctx := p.ctx
-	out := ctx.out
-	out.DefineFunc(fun)
-	ctx.fun = fun
-	compileBlockStmtWithout(ctx, p.body)
-	ctx.fun = nil
-	out.EndFunc(fun)
+	if !p.compiled {
+		ctx := p.ctx
+		out := ctx.out
+		out.DefineFunc(fun)
+		ctx.fun = fun
+		compileBlockStmtWithout(ctx, p.body)
+		ctx.fun = nil
+		out.EndFunc(fun)
+		p.compiled = true
+	}
+	return fun
 }
 
 // -----------------------------------------------------------------------------

@@ -153,3 +153,46 @@ func TestBasic2(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
+var fsTestPkg = asttest.NewSingleFileFS("/foo", "bar.ql", `
+package foo
+
+func ReverseMap(m map[string]int) map[int]string {
+    return {v: k for k, v <- m}
+}
+`)
+
+func TestPkg(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestPkg, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["foo"]
+	b := exec.NewBuilder(nil)
+	pkg, err := NewPackage(b.Interface(), bar, fset)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+
+	kind, sym, ok := pkg.Find("ReverseMap")
+	if !ok {
+		t.Fatal("pkg.Find failed: ReverseMap not found")
+	}
+	if kind != SymFunc {
+		t.Fatal("pkg.Find failed: kind != SymFunc")
+	}
+
+	f := sym.(*FuncDecl).Compile()
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Push(map[string]int{"Hi": 1, "Hello": 2})
+	ctx.Call(f)
+	if v := ctx.Get(-1); !reflect.DeepEqual(v, map[int]string{1: "Hi", 2: "Hello"}) {
+		t.Fatal("ReverseMap failed: ret =", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
