@@ -37,7 +37,7 @@ func saveGoFile(dir string, code *golang.Code) error {
 	return ioutil.WriteFile(dir+"/qlang_autogen.go", b, 0666)
 }
 
-func genGopkg(pkgDir string) (err error) {
+func genGopkg(pkgDir string) (mainPkg bool, err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			switch v := e.(type) {
@@ -57,7 +57,7 @@ func genGopkg(pkgDir string) (err error) {
 		return
 	}
 	if len(pkgs) != 1 {
-		return fmt.Errorf("too many package in the same directory")
+		return false, fmt.Errorf("too many package in the same directory")
 	}
 
 	pkg := getPkg(pkgs)
@@ -67,7 +67,7 @@ func genGopkg(pkgDir string) (err error) {
 		return
 	}
 	code := b.Resolve()
-	return saveGoFile(pkgDir, code)
+	return pkg.Name == "main", saveGoFile(pkgDir, code)
 }
 
 func getPkg(pkgs map[string]*ast.Package) *ast.Package {
@@ -124,10 +124,10 @@ func genGo(dir string, test bool) {
 	}
 	if isPkg {
 		fmt.Printf("Compiling %s ...\n", dir)
-		err = genGopkg(dir)
+		isPkg, err = genGopkg(dir)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "[ERROR] %v\n\n", err)
-		} else if test {
+		} else if isPkg && test {
 			fmt.Printf("Testing %s ...\n", dir)
 			testPkg(dir)
 		}
