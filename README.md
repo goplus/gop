@@ -238,7 +238,7 @@ func ReverseMap(m map[string]int) map[int]string {
 }
 ```
 
-Then use it in Go a package:
+Then use it in a Go package:
 
 ```go
 package main
