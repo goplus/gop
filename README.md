@@ -223,3 +223,34 @@ c := [1, 2, 3]
 b = append(b, c...)
 println(b, "len:", len(b), "cap:", cap(b))
 ```
+
+### Using qlang in Go
+
+See [tutorial/14-Using-qlang-in-Go](https://github.com/qiniu/qlang/tree/v6.x/tutorial/14-Using-qlang-in-Go).
+
+Write a qlang package named `qlfoo`:
+
+```go
+package qlfoo
+
+func ReverseMap(m map[string]int) map[int]string {
+    return {v: k for k, v <- m}
+}
+```
+
+Then use it in Go a package:
+
+```go
+package main
+
+import (
+	"fmt"
+
+	"github.com/qiniu/qlang/v6/tutorial/14-Using-qlang-in-Go/qlfoo"
+)
+
+func main() {
+	rmap := qlfoo.ReverseMap(map[string]int{"Hi": 1, "Hello": 2})
+	fmt.Println(rmap)
+}
+```

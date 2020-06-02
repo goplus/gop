@@ -17,6 +17,7 @@
 package bytecode
 
 import (
+	"os"
 	"reflect"
 	"testing"
 )
@@ -295,6 +296,7 @@ func TestGoClosure(t *testing.T) {
 	if v := checkPop(ctx); v != "Hello, 1.3, 1, xsw" {
 		t.Fatal("format 1.3 1 `xsw` sprintf != `Hello, 1.3, 1, xsw`, ret =", v)
 	}
+	code.(*Code).Dump(os.Stdout) // for code coverage
 }
 
 // -----------------------------------------------------------------------------
