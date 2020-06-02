@@ -4,6 +4,10 @@ go:
   - "1.14"
 script:
   - export GO111MODULE="on"
+  - cd cmd
+  - go install -v ./...
+  - cd ..
+  - qgo tutorial/
   - go install -v ./...
   - go test -race -coverprofile=coverage.txt -covermode=atomic ./...
 after_success:
