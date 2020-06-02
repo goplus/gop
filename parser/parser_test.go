@@ -18,12 +18,15 @@ package parser
 
 import (
 	"fmt"
-	"go/token"
+	"io/ioutil"
+	"os"
+	"path"
 	"reflect"
 	"testing"
 
 	"github.com/qiniu/qlang/v6/ast"
 	"github.com/qiniu/qlang/v6/ast/asttest"
+	"github.com/qiniu/qlang/v6/token"
 )
 
 // -----------------------------------------------------------------------------
@@ -204,6 +207,31 @@ func TestBuild(t *testing.T) {
 		case *ast.FuncDecl:
 			fmt.Println(" - func:", d.Name.Name)
 		}
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+func testFrom(t *testing.T, pkgDir string) {
+	fset := token.NewFileSet()
+	pkgs, err := ParseDir(fset, pkgDir, nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseDir failed:", err, len(pkgs))
+	}
+}
+
+func TestFromTestdata(t *testing.T) {
+	dir, err := os.Getwd()
+	if err != nil {
+		t.Fatal("Getwd failed:", err)
+	}
+	dir = path.Join(dir, "../exec/golang/testdata")
+	fis, err := ioutil.ReadDir(dir)
+	if err != nil {
+		t.Fatal("ReadDir failed:", err)
+	}
+	for _, fi := range fis {
+		testFrom(t, dir+"/"+fi.Name())
 	}
 }
 
