@@ -40,8 +40,8 @@ func testGenGo(t *testing.T, pkgDir string) {
 	}
 
 	bar := getPkg(pkgs)
-	b := NewBuilder(nil, fset)
-	_, err = cl.NewPackage(b.Interface(), bar, fset, cl.PkgActClMain)
+	b := NewBuilder(bar.Name, nil, fset)
+	_, err = cl.NewPackage(b.Interface(), bar, fset, cl.PkgActClAll)
 	if err != nil {
 		t.Fatal("Compile failed:", err)
 	}

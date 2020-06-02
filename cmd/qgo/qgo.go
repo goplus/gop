@@ -61,7 +61,7 @@ func genGopkg(pkgDir string) (err error) {
 	}
 
 	pkg := getPkg(pkgs)
-	b := golang.NewBuilder(nil, fset)
+	b := golang.NewBuilder(pkg.Name, nil, fset)
 	_, err = cl.NewPackage(b.Interface(), pkg, fset, cl.PkgActClAll)
 	if err != nil {
 		return

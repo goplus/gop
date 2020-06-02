@@ -312,7 +312,6 @@ type funcDecl = FuncDecl
 
 func newFuncDecl(name string, typ *ast.FuncType, body *ast.BlockStmt, ctx *blockCtx) *FuncDecl {
 	nestDepth := ctx.getNestDepth()
-	log.Debug("newFuncDecl -", name, "-", nestDepth)
 	fi := ctx.NewFunc(name, nestDepth)
 	return &FuncDecl{typ: typ, body: body, ctx: ctx, fi: fi}
 }

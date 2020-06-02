@@ -400,7 +400,18 @@ func NewPackage(out exec.Builder, pkg *ast.Package, fset *token.FileSet, act Pkg
 	for _, f := range pkg.Files {
 		loadFile(ctx, f)
 	}
-	if act == PkgActClMain {
+	switch act {
+	case PkgActClAll:
+		for _, sym := range ctx.syms {
+			if f, ok := sym.(*funcDecl); ok && f.fi != nil {
+				ctxPkg.use(f)
+			}
+		}
+		if pkg.Name != "main" {
+			break
+		}
+		fallthrough
+	case PkgActClMain:
 		if pkg.Name != "main" {
 			return nil, ErrNotAMainPackage
 		}
@@ -414,15 +425,8 @@ func NewPackage(out exec.Builder, pkg *ast.Package, fset *token.FileSet, act Pkg
 		ctx.file = entry.ctx.file
 		compileBlockStmtWithout(ctx, entry.body)
 		out.Return(-1)
-		ctxPkg.resolveFuncs()
-	} else if act == PkgActClAll {
-		for _, sym := range ctx.syms {
-			if f, ok := sym.(*funcDecl); ok {
-				ctxPkg.use(f)
-			}
-		}
-		ctxPkg.resolveFuncs()
 	}
+	ctxPkg.resolveFuncs()
 	p.syms = ctx.syms
 	return
 }
