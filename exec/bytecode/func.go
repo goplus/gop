@@ -104,7 +104,7 @@ func execFunc(i Instr, p *Context) {
 	idx := i & bitsOperand
 	fun := p.code.funs[idx]
 	stk := p.Stack
-	if fun.nestDepth == 1 {
+	if fun.nestDepth == 1 { // function's parent is the global block
 		p = p.globalCtx()
 	}
 	fun.exec(stk, p)
@@ -115,7 +115,7 @@ func execFuncv(i Instr, p *Context) {
 	arity := (i >> bitsOpCallFuncvShift) & bitsFuncvArityOperand
 	fun := p.code.funvs[idx]
 	stk := p.Stack
-	if fun.nestDepth == 1 {
+	if fun.nestDepth == 1 { // function's parent is the global block
 		p = p.globalCtx()
 	}
 	if arity == bitsFuncvArityVar { // args...
@@ -126,6 +126,11 @@ func execFuncv(i Instr, p *Context) {
 		}
 		fun.execVariadic(arity, stk, p)
 	}
+}
+
+// Call calls a function.
+func (p *Context) Call(fun exec.FuncInfo) {
+	((*FuncInfo)(fun.(*iFuncInfo))).exec(p.Stack, p)
 }
 
 // -----------------------------------------------------------------------------

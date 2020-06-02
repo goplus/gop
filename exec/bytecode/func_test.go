@@ -57,6 +57,13 @@ func TestFunc(t *testing.T) {
 	_ = foo.IsUnnamedOut()
 	_ = foo.IsVariadic()
 	_ = foo.Type()
+
+	ctx.Push("q")
+	ctx.Push("lang")
+	ctx.Call(foo)
+	if v := checkPop(ctx); v != "qlang" {
+		t.Fatal("`q` `lang` foo != `qlang`, ret =", v)
+	}
 }
 
 func TestFuncv(t *testing.T) {
@@ -114,6 +121,13 @@ func TestFuncv(t *testing.T) {
 	}
 	_ = foo.NumOut()
 	_ = foo.Name()
+
+	ctx.Push("Hello, %v, %d, %s")
+	ctx.Push([]interface{}{1.3, 1, "xsw"})
+	ctx.Call((*iFuncInfo)(bar))
+	if v := checkPop(ctx); v != "Hello, 1.3, 1, xsw" {
+		t.Fatal("format 1.3 1 `xsw` sprintf != `Hello, 1.3, 1, xsw`, ret =", v)
+	}
 }
 
 func TestFuncLargeArity(t *testing.T) {

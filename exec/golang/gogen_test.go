@@ -1,13 +1,14 @@
 package golang
 
 import (
-	"go/token"
 	"io/ioutil"
 	"os"
 	"testing"
 
+	"github.com/qiniu/qlang/v6/ast"
 	"github.com/qiniu/qlang/v6/cl"
 	"github.com/qiniu/qlang/v6/parser"
+	"github.com/qiniu/qlang/v6/token"
 )
 
 func saveGoFile(dir string, code *Code) error {
@@ -24,6 +25,13 @@ func saveGoFile(dir string, code *Code) error {
 
 // -----------------------------------------------------------------------------
 
+func getPkg(pkgs map[string]*ast.Package) *ast.Package {
+	for _, pkg := range pkgs {
+		return pkg
+	}
+	return nil
+}
+
 func testGenGo(t *testing.T, pkgDir string) {
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseDir(fset, pkgDir, nil, 0)
@@ -31,9 +39,9 @@ func testGenGo(t *testing.T, pkgDir string) {
 		t.Fatal("ParseDir failed:", err, len(pkgs))
 	}
 
-	bar := pkgs["main"]
-	b := NewBuilder(nil, fset)
-	_, err = cl.NewPackage(b.Interface(), bar, fset)
+	bar := getPkg(pkgs)
+	b := NewBuilder(bar.Name, nil, fset)
+	_, err = cl.NewPackage(b.Interface(), bar, fset, cl.PkgActClAll)
 	if err != nil {
 		t.Fatal("Compile failed:", err)
 	}

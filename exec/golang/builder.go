@@ -81,6 +81,7 @@ func (p *Code) String() string {
 type Builder struct {
 	lhs, rhs    exec.Stack
 	out         *Code             // golang code
+	pkgName     string            // package name
 	imports     map[string]string // pkgPath => aliasName
 	importPaths map[string]string // aliasName => pkgPath
 	gblScope    scopeCtx          // global scope
@@ -95,7 +96,7 @@ type Builder struct {
 }
 
 // NewBuilder creates a new Code Builder instance.
-func NewBuilder(code *Code, fset *token.FileSet) *Builder {
+func NewBuilder(pkgName string, code *Code, fset *token.FileSet) *Builder {
 	if code == nil {
 		code = NewCode()
 	}
@@ -105,6 +106,7 @@ func NewBuilder(code *Code, fset *token.FileSet) *Builder {
 		imports:     make(map[string]string),
 		importPaths: make(map[string]string),
 		fset:        fset,
+		pkgName:     pkgName,
 	}
 	p.scopeCtx = &p.gblScope // default scope is global
 	p.lhs.Init()
@@ -149,7 +151,7 @@ func (p *Builder) Resolve() *Code {
 	decls = append(decls, p.gblDecls...)
 	p.out.fset = token.NewFileSet()
 	p.out.file = &ast.File{
-		Name:  Ident("main"),
+		Name:  Ident(p.pkgName),
 		Decls: decls,
 	}
 	return p.out

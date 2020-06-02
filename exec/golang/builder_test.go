@@ -53,7 +53,7 @@ func main() {
 }
 `
 	println, _ := I.FindFuncv("println")
-	code := NewBuilder(nil, nil).
+	code := NewBuilder("main", nil, nil).
 		Push(1).
 		Push(2).
 		BuiltinOp(exec.Int, exec.OpAdd).
@@ -105,7 +105,7 @@ func main() {
 	node1 := &node{23}
 	node2 := &node{123}
 	println, _ := I.FindFuncv("println")
-	code := NewBuilder(nil, fset).
+	code := NewBuilder("main", nil, fset).
 		Push(1).
 		Push(2).
 		BuiltinOp(exec.Int, exec.OpAdd).

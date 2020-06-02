@@ -31,19 +31,22 @@ import (
 )
 
 var (
-	// ErrNotFound error.
+	// ErrNotFound error
 	ErrNotFound = syscall.ENOENT
 
-	// ErrMainFuncNotFound error.
+	// ErrNotAMainPackage error
+	ErrNotAMainPackage = errors.New("not a main package")
+
+	// ErrMainFuncNotFound error
 	ErrMainFuncNotFound = errors.New("main function not found")
 
-	// ErrSymbolNotVariable error.
+	// ErrSymbolNotVariable error
 	ErrSymbolNotVariable = errors.New("symbol exists but not a variable")
 
-	// ErrSymbolNotFunc error.
+	// ErrSymbolNotFunc error
 	ErrSymbolNotFunc = errors.New("symbol exists but not a func")
 
-	// ErrSymbolNotType error.
+	// ErrSymbolNotType error
 	ErrSymbolNotType = errors.New("symbol exists but not a type")
 )
 
@@ -132,7 +135,7 @@ func (p *pkgCtx) resolveFuncs() {
 		}
 		f := p.usedfns[n-1]
 		p.usedfns = p.usedfns[:n-1]
-		f.compile()
+		f.Compile()
 	}
 }
 
@@ -371,10 +374,22 @@ type Package struct {
 	syms map[string]iSymbol
 }
 
+// PkgAct represents a package compiling action.
+type PkgAct int
+
+const (
+	// PkgActNone - do nothing
+	PkgActNone PkgAct = iota
+	// PkgActClMain - compile main function
+	PkgActClMain
+	// PkgActClAll - compile all things
+	PkgActClAll
+)
+
 // NewPackage creates a qlang package instance.
-func NewPackage(out exec.Builder, pkg *ast.Package, fset *token.FileSet) (p *Package, err error) {
+func NewPackage(out exec.Builder, pkg *ast.Package, fset *token.FileSet, act PkgAct) (p *Package, err error) {
 	if pkg == nil {
-		log.Panicln("NewPackage failed: nil ast.Package")
+		return nil, ErrNotFound
 	}
 	if CallBuiltinOp == nil {
 		log.Panicln("NewPackage failed: variable CallBuiltinOp is uninitialized")
@@ -385,7 +400,21 @@ func NewPackage(out exec.Builder, pkg *ast.Package, fset *token.FileSet) (p *Pac
 	for _, f := range pkg.Files {
 		loadFile(ctx, f)
 	}
-	if pkg.Name == "main" {
+	switch act {
+	case PkgActClAll:
+		for _, sym := range ctx.syms {
+			if f, ok := sym.(*funcDecl); ok && f.fi != nil {
+				ctxPkg.use(f)
+			}
+		}
+		if pkg.Name != "main" {
+			break
+		}
+		fallthrough
+	case PkgActClMain:
+		if pkg.Name != "main" {
+			return nil, ErrNotAMainPackage
+		}
 		entry, err := ctx.findFunc("main")
 		if err != nil {
 			if err == ErrNotFound {
@@ -396,9 +425,41 @@ func NewPackage(out exec.Builder, pkg *ast.Package, fset *token.FileSet) (p *Pac
 		ctx.file = entry.ctx.file
 		compileBlockStmtWithout(ctx, entry.body)
 		out.Return(-1)
-		ctxPkg.resolveFuncs()
 	}
+	ctxPkg.resolveFuncs()
 	p.syms = ctx.syms
+	return
+}
+
+// SymKind represents a symbol kind.
+type SymKind uint
+
+const (
+	// SymInvalid - invalid symbol kind
+	SymInvalid SymKind = iota
+	// SymVar - symbol is a variable
+	SymVar
+	// SymFunc - symbol is a function
+	SymFunc
+	// SymType - symbol is a type
+	SymType
+)
+
+// Find lookups a symbol and returns it's kind and the object instance.
+func (p *Package) Find(name string) (kind SymKind, v interface{}, ok bool) {
+	if v, ok = p.syms[name]; !ok {
+		return
+	}
+	switch v.(type) {
+	case *exec.Var:
+		kind = SymVar
+	case *funcDecl:
+		kind = SymFunc
+	case *typeDecl:
+		kind = SymType
+	default:
+		log.Panicln("Package.Find: unknown symbol type -", reflect.TypeOf(v))
+	}
 	return
 }
 

@@ -296,23 +296,28 @@ type methodDecl struct {
 	file    *fileCtx
 }
 
-type funcDecl struct {
-	typ    *ast.FuncType
-	body   *ast.BlockStmt
-	ctx    *blockCtx
-	fi     exec.FuncInfo
-	used   bool
-	cached bool
+// FuncDecl represents a function declaration.
+type FuncDecl struct {
+	typ      *ast.FuncType
+	body     *ast.BlockStmt
+	ctx      *blockCtx
+	fi       exec.FuncInfo
+	used     bool
+	cached   bool
+	compiled bool
+	reserved bool
 }
 
-func newFuncDecl(name string, typ *ast.FuncType, body *ast.BlockStmt, ctx *blockCtx) *funcDecl {
+type funcDecl = FuncDecl
+
+func newFuncDecl(name string, typ *ast.FuncType, body *ast.BlockStmt, ctx *blockCtx) *FuncDecl {
 	nestDepth := ctx.getNestDepth()
-	log.Debug("newFuncDecl -", name, "-", nestDepth)
 	fi := ctx.NewFunc(name, nestDepth)
-	return &funcDecl{typ: typ, body: body, ctx: ctx, fi: fi}
+	return &FuncDecl{typ: typ, body: body, ctx: ctx, fi: fi}
 }
 
-func (p *funcDecl) getFuncInfo() exec.FuncInfo {
+// Get returns function information.
+func (p *FuncDecl) Get() exec.FuncInfo {
 	if !p.cached {
 		buildFuncType(p.fi, p.ctx, p.typ)
 		p.cached = true
@@ -320,19 +325,25 @@ func (p *funcDecl) getFuncInfo() exec.FuncInfo {
 	return p.fi
 }
 
-func (p *funcDecl) typeOf() reflect.Type {
-	return p.getFuncInfo().Type()
+// Type returns the type of this function.
+func (p *FuncDecl) Type() reflect.Type {
+	return p.Get().Type()
 }
 
-func (p *funcDecl) compile() {
-	fun := p.getFuncInfo()
-	ctx := p.ctx
-	out := ctx.out
-	out.DefineFunc(fun)
-	ctx.fun = fun
-	compileBlockStmtWithout(ctx, p.body)
-	ctx.fun = nil
-	out.EndFunc(fun)
+// Compile compiles this function
+func (p *FuncDecl) Compile() exec.FuncInfo {
+	fun := p.Get()
+	if !p.compiled {
+		ctx := p.ctx
+		out := ctx.out
+		out.DefineFunc(fun)
+		ctx.fun = fun
+		compileBlockStmtWithout(ctx, p.body)
+		ctx.fun = nil
+		out.EndFunc(fun)
+		p.compiled = true
+	}
+	return fun
 }
 
 // -----------------------------------------------------------------------------
