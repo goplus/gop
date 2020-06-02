@@ -254,3 +254,10 @@ func main() {
 	fmt.Println(rmap)
 }
 ```
+
+How to compile this exmaple?
+
+```bash
+qgo tutorial/ # Convert all qlang code in tutorial/ into Go packages
+go install ./...
+```
