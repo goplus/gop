@@ -11,6 +11,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/qiniu/qlang/v6/ast"
 	"github.com/qiniu/qlang/v6/cl"
 	"github.com/qiniu/qlang/v6/exec/golang"
 	"github.com/qiniu/qlang/v6/parser"
@@ -59,14 +60,21 @@ func genGopkg(pkgDir string) (err error) {
 		return fmt.Errorf("too many package in the same directory")
 	}
 
-	bar := pkgs["main"]
+	pkg := getPkg(pkgs)
 	b := golang.NewBuilder(nil, fset)
-	_, err = cl.NewPackage(b.Interface(), bar, fset)
+	_, err = cl.NewPackage(b.Interface(), pkg, fset, cl.PkgActClAll)
 	if err != nil {
 		return
 	}
 	code := b.Resolve()
 	return saveGoFile(pkgDir, code)
+}
+
+func getPkg(pkgs map[string]*ast.Package) *ast.Package {
+	for _, pkg := range pkgs {
+		return pkg
+	}
+	return nil
 }
 
 // -----------------------------------------------------------------------------

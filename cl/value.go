@@ -125,7 +125,7 @@ func newQlFunc(f *funcDecl) *qlFunc {
 }
 
 func (p *qlFunc) FuncInfo() exec.FuncInfo {
-	return ((*funcDecl)(p)).getFuncInfo()
+	return ((*funcDecl)(p)).Get()
 }
 
 func (p *qlFunc) Kind() iKind {

@@ -309,14 +309,15 @@ type FuncDecl struct {
 
 type funcDecl = FuncDecl
 
-func newFuncDecl(name string, typ *ast.FuncType, body *ast.BlockStmt, ctx *blockCtx) *funcDecl {
+func newFuncDecl(name string, typ *ast.FuncType, body *ast.BlockStmt, ctx *blockCtx) *FuncDecl {
 	nestDepth := ctx.getNestDepth()
 	log.Debug("newFuncDecl -", name, "-", nestDepth)
 	fi := ctx.NewFunc(name, nestDepth)
-	return &funcDecl{typ: typ, body: body, ctx: ctx, fi: fi}
+	return &FuncDecl{typ: typ, body: body, ctx: ctx, fi: fi}
 }
 
-func (p *funcDecl) getFuncInfo() exec.FuncInfo {
+// Get returns function information.
+func (p *FuncDecl) Get() exec.FuncInfo {
 	if !p.cached {
 		buildFuncType(p.fi, p.ctx, p.typ)
 		p.cached = true
@@ -326,12 +327,12 @@ func (p *funcDecl) getFuncInfo() exec.FuncInfo {
 
 // Type returns the type of this function.
 func (p *FuncDecl) Type() reflect.Type {
-	return p.getFuncInfo().Type()
+	return p.Get().Type()
 }
 
 // Compile compiles this function
 func (p *FuncDecl) Compile() exec.FuncInfo {
-	fun := p.getFuncInfo()
+	fun := p.Get()
 	if !p.compiled {
 		ctx := p.ctx
 		out := ctx.out

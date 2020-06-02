@@ -54,7 +54,7 @@ func newPackage(
 func newPackageEx(
 	out *exec.Builder, pkg *ast.Package, fset *token.FileSet) (p *Package, ctx *blockCtx, err error) {
 	b := out.Interface()
-	if p, err = NewPackage(b, pkg, fset); err != nil {
+	if p, err = NewPackage(b, pkg, fset, PkgActClMain); err != nil {
 		return
 	}
 	ctxPkg := newPkgCtx(b, pkg, fset)
@@ -95,6 +95,8 @@ func TestBasic(t *testing.T) {
 	if v := ctx.Get(-2); v != int(14) {
 		t.Fatal("n:", v)
 	}
+
+	_, _ = NewPackage(nil, nil, nil, 0)
 	e := newError(nil, "cannot slice a (type *%v)", "[]int")
 	_ = e.Error()
 	ev := &execVar{exec.NewVar(reflect.TypeOf(0), "")}
@@ -154,6 +156,31 @@ func TestBasic2(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
+var fsTestMainPkgNoMain = asttest.NewSingleFileFS("/foo", "bar.ql", `
+package main
+
+func ReverseMap(m map[string]int) map[int]string {
+    return {v: k for k, v <- m}
+}
+`)
+
+func TestMainPkgNoMain(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestMainPkgNoMain, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, err = NewPackage(b.Interface(), bar, fset, PkgActClMain)
+	if err != ErrMainFuncNotFound {
+		t.Fatal("NewPackage failed:", err)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
 var fsTestPkg = asttest.NewSingleFileFS("/foo", "bar.ql", `
 package foo
 
@@ -171,7 +198,11 @@ func TestPkg(t *testing.T) {
 
 	bar := pkgs["foo"]
 	b := exec.NewBuilder(nil)
-	pkg, err := NewPackage(b.Interface(), bar, fset)
+	_, err = NewPackage(b.Interface(), bar, fset, PkgActClMain)
+	if err != ErrNotAMainPackage {
+		t.Fatal("NewPackage failed:", err)
+	}
+	pkg, err := NewPackage(b.Interface(), bar, fset, PkgActNone)
 	if err != nil {
 		t.Fatal("Compile failed:", err)
 	}
@@ -187,6 +218,34 @@ func TestPkg(t *testing.T) {
 	f := sym.(*FuncDecl).Compile()
 	code := b.Resolve()
 
+	ctx := exec.NewContext(code)
+	ctx.Push(map[string]int{"Hi": 1, "Hello": 2})
+	ctx.Call(f)
+	if v := ctx.Get(-1); !reflect.DeepEqual(v, map[int]string{1: "Hi", 2: "Hello"}) {
+		t.Fatal("ReverseMap failed: ret =", v)
+	}
+}
+
+func TestPkg2(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestPkg, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["foo"]
+	b := exec.NewBuilder(nil)
+	pkg, err := NewPackage(b.Interface(), bar, fset, PkgActClAll)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	kind, sym, ok := pkg.Find("ReverseMap")
+	if !ok || kind != SymFunc {
+		t.Fatal("pkg.Find failed: ReverseMap func not found")
+	}
+	f := sym.(*FuncDecl).Get()
 	ctx := exec.NewContext(code)
 	ctx.Push(map[string]int{"Hi": 1, "Hello": 2})
 	ctx.Call(f)

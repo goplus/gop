@@ -61,7 +61,7 @@ func main() {
 	cl.CallBuiltinOp = exec.CallBuiltinOp
 
 	b := exec.NewBuilder(nil)
-	_, err = cl.NewPackage(b.Interface(), pkgs["main"], fset)
+	_, err = cl.NewPackage(b.Interface(), pkgs["main"], fset, cl.PkgActClMain)
 	if err != nil {
 		log.Fatalln("cl.NewPackage failed:", err)
 	}
