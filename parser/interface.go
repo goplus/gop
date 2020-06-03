@@ -7,9 +7,8 @@
 package parser
 
 import (
-	"go/token"
-
 	"github.com/qiniu/goplus/ast"
+	"github.com/qiniu/goplus/token"
 )
 
 // A Mode value is a set of flags (or 0).

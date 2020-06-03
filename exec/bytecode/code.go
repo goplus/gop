@@ -14,6 +14,7 @@
  limitations under the License.
 */
 
+// Package bytecode implements a bytecode backend for the Go+ language.
 package bytecode
 
 import (

@@ -14,6 +14,7 @@
  limitations under the License.
 */
 
+// Package golang implements a golang backend for Go+ to generate Go code.
 package golang
 
 import (
