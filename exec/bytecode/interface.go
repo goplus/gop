@@ -33,19 +33,19 @@ func (p *iFuncInfo) Out(i int) exec.Var {
 	return ((*FuncInfo)(p)).Out(i)
 }
 
-// Args sets argument types of a qlang function.
+// Args sets argument types of a Go+ function.
 func (p *iFuncInfo) Args(in ...reflect.Type) exec.FuncInfo {
 	((*FuncInfo)(p)).Args(in...)
 	return p
 }
 
-// Vargs sets argument types of a variadic qlang function.
+// Vargs sets argument types of a variadic Go+ function.
 func (p *iFuncInfo) Vargs(in ...reflect.Type) exec.FuncInfo {
 	((*FuncInfo)(p)).Vargs(in...)
 	return p
 }
 
-// Return sets return types of a qlang function.
+// Return sets return types of a Go+ function.
 func (p *iFuncInfo) Return(out ...exec.Var) exec.FuncInfo {
 	if p.vlist != nil {
 		log.Panicln("don't call DefineVar before calling Return.")
@@ -97,7 +97,7 @@ func (p *interfaceImpl) NewComprehension(out reflect.Type) exec.Comprehension {
 	return NewComprehension(out)
 }
 
-// NewFunc create a qlang function.
+// NewFunc create a Go+ function.
 func (p *interfaceImpl) NewFunc(name string, nestDepth uint32) exec.FuncInfo {
 	return (*iFuncInfo)(NewFunc(name, nestDepth))
 }

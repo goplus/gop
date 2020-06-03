@@ -27,10 +27,10 @@ import (
 // scope.
 type Scope = ast.Scope
 
-// A Package node represents a set of source files collectively building a qlang package.
+// A Package node represents a set of source files collectively building a Go+ package.
 type Package = ast.Package
 
-// A File node represents a qlang source file.
+// A File node represents a Go+ source file.
 type File = ast.File
 
 // Expr - All expression nodes implement the Expr interface.

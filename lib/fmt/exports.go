@@ -21,13 +21,13 @@ import (
 
 	"github.com/qiniu/goplus/lib/builtin"
 
-	qlang "github.com/qiniu/goplus/spec"
+	goplus "github.com/qiniu/goplus/spec"
 )
 
 // -----------------------------------------------------------------------------
 
 // I is a Go package instance.
-var I = qlang.NewGoPackage("fmt")
+var I = goplus.NewGoPackage("fmt")
 
 func init() {
 	I.RegisterFuncvs(

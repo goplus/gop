@@ -59,7 +59,7 @@ type ForPhrase interface {
 type Comprehension interface {
 }
 
-// FuncInfo represents a qlang function information.
+// FuncInfo represents a Go+ function information.
 type FuncInfo interface {
 	// Name returns the function name.
 	Name() string
@@ -67,13 +67,13 @@ type FuncInfo interface {
 	// Type returns type of this function.
 	Type() reflect.Type
 
-	// Args sets argument types of a qlang function.
+	// Args sets argument types of a Go+ function.
 	Args(in ...reflect.Type) FuncInfo
 
-	// Vargs sets argument types of a variadic qlang function.
+	// Vargs sets argument types of a variadic Go+ function.
 	Vargs(in ...reflect.Type) FuncInfo
 
-	// Return sets return types of a qlang function.
+	// Return sets return types of a Go+ function.
 	Return(out ...Var) FuncInfo
 
 	// NumOut returns a function type's output parameter count.
@@ -312,7 +312,7 @@ type Interface interface {
 	// NewComprehension creates a new Comprehension instance.
 	NewComprehension(out reflect.Type) Comprehension
 
-	// NewFunc create a qlang function.
+	// NewFunc create a Go+ function.
 	NewFunc(name string, nestDepth uint32) FuncInfo
 
 	// FindGoPackage lookups a Go package by pkgPath. It returns nil if not found.

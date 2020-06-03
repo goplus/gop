@@ -137,13 +137,13 @@ func genGo(dir string, test bool) {
 // -----------------------------------------------------------------------------
 
 var (
-	flagTest = flag.Bool("test", false, "test qlang package")
+	flagTest = flag.Bool("test", false, "test Go+ package")
 )
 
 func main() {
 	flag.Parse()
 	if flag.NArg() < 1 {
-		fmt.Println("Usage: qgo [-test] <qlangSrcDir>")
+		fmt.Println("Usage: qgo [-test] <gopSrcDir>")
 		flag.PrintDefaults()
 		return
 	}

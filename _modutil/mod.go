@@ -115,12 +115,12 @@ func (p Module) Lookup(pkg string) (pi PackageInfo, err error) {
 	return PackageInfo{VersionPkgPath: pkg, Location: dir, Type: typ}, nil
 }
 
-// ModFile returns `go.mod` file path of this module. eg. `$HOME/work/qiniu/qlang/go.mod`
+// ModFile returns `go.mod` file path of this module. eg. `$HOME/work/qiniu/goplus/go.mod`
 func (p Module) ModFile() string {
 	return p.impl.ModFile()
 }
 
-// RootPath returns root path of this module. eg. `$HOME/work/qiniu/qlang`
+// RootPath returns root path of this module. eg. `$HOME/work/qiniu/goplus`
 func (p Module) RootPath() string {
 	return p.impl.ModDir()
 }

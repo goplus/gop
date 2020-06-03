@@ -22,7 +22,7 @@ import (
 
 // -----------------------------------------------------------------------------
 /*
-// Token is the set of lexical tokens of the qlang.
+// Token is the set of lexical tokens of Go+.
 type Token = token.Token
 
 // The list of tokens.

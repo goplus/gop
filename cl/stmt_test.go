@@ -456,7 +456,7 @@ var fsTestFuncv = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	}
 
 	func bar(foo func(string, ...interface{}) (int, error)) {
-		foo("Hello, %v!\n", "qlang")
+		foo("Hello, %v!\n", "glang")
 	}
 
 	bar(foo)

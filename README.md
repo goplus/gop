@@ -128,7 +128,7 @@ Go [tutorial/14-Using-goplus-in-Go](https://github.com/qiniu/goplus/tree/v6.x/tu
 
 ```go
 x := {"Hello": 1, "xsw": 3.4} // map[string]float64
-y := {"Hello": 1, "xsw": "qlang"} // map[string]interface{}
+y := {"Hello": 1, "xsw": "Go+"} // map[string]interface{}
 z := {"Hello": 1, "xsw": 3} // map[string]int
 empty := {} // map[string]interface{}
 ```
@@ -151,14 +151,14 @@ empty := [] // []interface{}
 a := [x * x for x <- [1, 3, 5, 7, 11]]
 b := [x * x for x <- [1, 3, 5, 7, 11], x > 3]
 c := [i + v for i, v <- [1, 3, 5, 7, 11], i%2 == 1]
-d := [k + "," + s for k, s <- {"Hello": "xsw", "Hi": "qlang"}]
+d := [k + "," + s for k, s <- {"Hello": "xsw", "Hi": "Go+"}]
 
 arr := [1, 2, 3, 4, 5, 6]
 e := [[a, b] for a <- arr, a < b for b <- arr, b > 2]
 
 x := {x: i for i, x <- [1, 3, 5, 7, 11]}
 y := {x: i for i, x <- [1, 3, 5, 7, 11], i%2 == 1}
-z := {v: k for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "qlang"}, k > 3}
+z := {v: k for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "Go+"}, k > 3}
 ```
 
 ### For loop

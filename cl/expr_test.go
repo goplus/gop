@@ -605,7 +605,7 @@ func TestMapLit2(t *testing.T) {
 
 var fsTestMapIdx = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	x := {"Hello": 1, "xsw": "3.4"}
-	y := {1: "qlang", 5: "Hi"}
+	y := {1: "glang", 5: "Hi"}
 	i := 1
 	q := "Q"
 	key := "xsw"
@@ -885,7 +885,7 @@ func TestMapComprehensionFilter(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 var fsMapComprehension2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
-	y := {v: k for k, v <- {"Hello": "xsw", "Hi": "qlang"}}
+	y := {v: k for k, v <- {"Hello": "xsw", "Hi": "glang"}}
 	println("y:", y)
 `)
 

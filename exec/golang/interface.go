@@ -37,7 +37,7 @@ func (p *interfaceImpl) NewComprehension(out reflect.Type) exec.Comprehension {
 	return NewComprehension(out)
 }
 
-// NewFunc create a qlang function.
+// NewFunc create a Go+ function.
 func (p *interfaceImpl) NewFunc(name string, nestDepth uint32) exec.FuncInfo {
 	if nestDepth == 0 {
 		return nil

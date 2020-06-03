@@ -87,7 +87,7 @@ type Builder struct {
 	gblScope    scopeCtx          // global scope
 	gblDecls    []ast.Decl        // global declarations
 	labels      []*Label          // labels of current statement
-	fset        *token.FileSet    // fileset of qlang code
+	fset        *token.FileSet    // fileset of Go+ code
 	cfun        *FuncInfo         // current function
 	reserveds   []*printer.ReservedExpr
 	comprehens  func() // current comprehension
@@ -116,13 +116,13 @@ func NewBuilder(pkgName string, code *Code, fset *token.FileSet) *Builder {
 
 func (p *Builder) autoIdent() string {
 	p.identBase++
-	return "_qlang_" + strconv.Itoa(p.identBase)
+	return "_gop_" + strconv.Itoa(p.identBase)
 }
 
 var (
 	tyMainFunc = reflect.TypeOf((*func())(nil)).Elem()
 	unnamedVar = Ident("_")
-	qlangRet   = Ident("_qlang_ret")
+	gopRet     = Ident("_gop_ret")
 	appendIden = Ident("append")
 	makeIden   = Ident("make")
 )

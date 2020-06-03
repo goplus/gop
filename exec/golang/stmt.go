@@ -196,10 +196,10 @@ func (p *Builder) ListComprehension(c *Comprehension) *Builder {
 		x := v.(ast.Expr)
 		appendExpr := &ast.CallExpr{
 			Fun:  appendIden,
-			Args: []ast.Expr{qlangRet, x},
+			Args: []ast.Expr{gopRet, x},
 		}
 		assign := &ast.AssignStmt{
-			Lhs: []ast.Expr{qlangRet},
+			Lhs: []ast.Expr{gopRet},
 			Tok: token.ASSIGN,
 			Rhs: []ast.Expr{appendExpr},
 		}
@@ -220,7 +220,7 @@ func (p *Builder) MapComprehension(c *Comprehension) *Builder {
 		val := v.(ast.Expr)
 		key := p.rhs.Pop().(ast.Expr)
 		assign := &ast.AssignStmt{
-			Lhs: []ast.Expr{&ast.IndexExpr{X: qlangRet, Index: key}},
+			Lhs: []ast.Expr{&ast.IndexExpr{X: gopRet, Index: key}},
 			Tok: token.ASSIGN,
 			Rhs: []ast.Expr{val},
 		}
@@ -233,7 +233,7 @@ func (p *Builder) MapComprehension(c *Comprehension) *Builder {
 func (p *Builder) EndComprehension(c *Comprehension) *Builder {
 	typOut := Type(p, c.TypeOut)
 	fldOut := &ast.Field{
-		Names: []*ast.Ident{qlangRet},
+		Names: []*ast.Ident{gopRet},
 		Type:  typOut,
 	}
 	typFun := &ast.FuncType{
@@ -247,7 +247,7 @@ func (p *Builder) EndComprehension(c *Comprehension) *Builder {
 	makeExpr := &ast.CallExpr{Fun: makeIden, Args: makeArgs}
 	stmt := p.rhs.Pop().(ast.Stmt)
 	stmtInit := &ast.AssignStmt{
-		Lhs: []ast.Expr{qlangRet},
+		Lhs: []ast.Expr{gopRet},
 		Tok: token.ASSIGN,
 		Rhs: []ast.Expr{makeExpr},
 	}

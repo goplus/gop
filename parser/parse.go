@@ -111,12 +111,12 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, filter func(os.
 
 // -----------------------------------------------------------------------------
 
-// ParseFile parses the source code of a single qlang source file and returns the corresponding ast.File node.
+// ParseFile parses the source code of a single Go+ source file and returns the corresponding ast.File node.
 func ParseFile(fset *token.FileSet, filename string, src interface{}, mode Mode) (f *ast.File, err error) {
 	return ParseFSFile(fset, local, filename, src, mode)
 }
 
-// ParseFSFile parses the source code of a single qlang source file and returns the corresponding ast.File node.
+// ParseFSFile parses the source code of a single Go+ source file and returns the corresponding ast.File node.
 func ParseFSFile(fset *token.FileSet, fs FileSystem, filename string, src interface{}, mode Mode) (f *ast.File, err error) {
 	var code []byte
 	if src == nil {

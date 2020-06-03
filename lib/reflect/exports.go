@@ -19,15 +19,15 @@ package fmt
 import (
 	"reflect"
 
-	qlang "github.com/qiniu/goplus/spec"
+	goplus "github.com/qiniu/goplus/spec"
 )
 
-func execTypeOf(zero int, p *qlang.Context) {
+func execTypeOf(zero int, p *goplus.Context) {
 	args := p.GetArgs(1)
 	args[0] = reflect.TypeOf(args[0])
 }
 
-func execValueOf(zero int, p *qlang.Context) {
+func execValueOf(zero int, p *goplus.Context) {
 	args := p.GetArgs(1)
 	args[0] = reflect.ValueOf(args[0])
 }
@@ -35,7 +35,7 @@ func execValueOf(zero int, p *qlang.Context) {
 // -----------------------------------------------------------------------------
 
 // I is a Go package instance.
-var I = qlang.NewGoPackage("reflect")
+var I = goplus.NewGoPackage("reflect")
 
 func init() {
 	I.RegisterFuncs(

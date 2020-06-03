@@ -135,11 +135,11 @@ func (p *Context) Call(fun exec.FuncInfo) {
 
 // -----------------------------------------------------------------------------
 
-// Package represents a qlang package.
+// Package represents a Go+ package.
 type Package struct {
 }
 
-// Closure represents a qlang closure.
+// Closure represents a Go+ closure.
 type Closure struct {
 	fun    *FuncInfo
 	recv   interface{}
@@ -170,7 +170,7 @@ const (
 	nVariadicVariadicArgs = 2
 )
 
-// FuncInfo represents a qlang function information.
+// FuncInfo represents a Go+ function information.
 type FuncInfo struct {
 	Pkg      *Package
 	name     string
@@ -184,7 +184,7 @@ type FuncInfo struct {
 	nVariadic uint16
 }
 
-// NewFunc create a qlang function.
+// NewFunc create a Go+ function.
 func NewFunc(name string, nestDepth uint32) *FuncInfo {
 	f := &FuncInfo{
 		name:       name,
@@ -221,14 +221,14 @@ func (p *FuncInfo) IsUnnamedOut() bool {
 	return false
 }
 
-// Args sets argument types of a qlang function.
+// Args sets argument types of a Go+ function.
 func (p *FuncInfo) Args(in ...reflect.Type) *FuncInfo {
 	p.in = in
 	p.setVariadic(nVariadicFixedArgs)
 	return p
 }
 
-// Vargs sets argument types of a variadic qlang function.
+// Vargs sets argument types of a variadic Go+ function.
 func (p *FuncInfo) Vargs(in ...reflect.Type) *FuncInfo {
 	if in[len(in)-1].Kind() != reflect.Slice {
 		log.Panicln("Vargs failed: last argument must be a slice.")
@@ -238,7 +238,7 @@ func (p *FuncInfo) Vargs(in ...reflect.Type) *FuncInfo {
 	return p
 }
 
-// Return sets return types of a qlang function.
+// Return sets return types of a Go+ function.
 func (p *FuncInfo) Return(out ...*Var) *FuncInfo {
 	if p.vlist != nil {
 		log.Panicln("don't call DefineVar before calling Return.")
