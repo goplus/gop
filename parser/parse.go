@@ -63,12 +63,12 @@ func ParseDir(fset *token.FileSet, path string, filter func(os.FileInfo) bool, m
 	return ParseFSDir(fset, local, path, filter, mode)
 }
 
-// ParseFSDir calls ParseFile for all files with names ending in ".ql" in the
+// ParseFSDir calls ParseFile for all files with names ending in ".gop" in the
 // directory specified by path and returns a map of package name -> package
 // AST with all the packages found.
 //
 // If filter != nil, only the files with os.FileInfo entries passing through
-// the filter (and ending in ".ql") are considered. The mode bits are passed
+// the filter (and ending in ".gop") are considered. The mode bits are passed
 // to ParseFile unchanged. Position information is recorded in fset, which
 // must not be nil.
 //
@@ -84,7 +84,7 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, filter func(os.
 
 	pkgs = make(map[string]*ast.Package)
 	for _, d := range list {
-		if strings.HasSuffix(d.Name(), ".ql") && (filter == nil || filter(d)) {
+		if strings.HasSuffix(d.Name(), ".gop") && (filter == nil || filter(d)) {
 			filename := fs.Join(path, d.Name())
 			if filedata, err := fs.ReadFile(filename); err == nil {
 				if src, err := ParseFSFile(fset, fs, filename, filedata, mode); err == nil {

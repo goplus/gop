@@ -1,9 +1,0 @@
-import "fmt"
-
-foo := func(prompt string) (n int, err error) {
-    n, err = fmt.Println(prompt + x)
-    return
-}
-
-x := "Hello, world!"
-fmt.Println(foo("x: "))

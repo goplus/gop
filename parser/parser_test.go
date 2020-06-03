@@ -31,7 +31,7 @@ import (
 
 // -----------------------------------------------------------------------------
 
-var fsTestStd = asttest.NewSingleFileFS("/foo", "bar.ql", `package bar; import "io"
+var fsTestStd = asttest.NewSingleFileFS("/foo", "bar.gop", `package bar; import "io"
 	// comment
 	x := 0
 	if t := false; t {
@@ -70,7 +70,7 @@ func TestStd(t *testing.T) {
 		t.Fatal("ParseFSDir failed:", err, len(pkgs))
 	}
 	bar := pkgs["bar"]
-	file := bar.Files["/foo/bar.ql"]
+	file := bar.Files["/foo/bar.gop"]
 	fmt.Println("Pkg:", file.Name)
 	for _, decl := range file.Decls {
 		fmt.Println("decl:", reflect.TypeOf(decl))
@@ -90,7 +90,7 @@ func TestStd(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestStd2 = asttest.NewSingleFileFS("/foo", "bar.ql", `package bar; import "io"
+var fsTestStd2 = asttest.NewSingleFileFS("/foo", "bar.gop", `package bar; import "io"
 	x := []float64{1, 3.4, 5}
 	y := map[string]float64{"Hello": 1, "xsw": 3.4}
 	println("x:", x, "y:", y)
@@ -108,7 +108,7 @@ func TestStd2(t *testing.T) {
 		t.Fatal("ParseFSDir failed:", err, len(pkgs))
 	}
 	bar := pkgs["bar"]
-	file := bar.Files["/foo/bar.ql"]
+	file := bar.Files["/foo/bar.gop"]
 	fmt.Println("Pkg:", file.Name)
 	for _, decl := range file.Decls {
 		fmt.Println("decl:", reflect.TypeOf(decl))
@@ -128,7 +128,7 @@ func TestStd2(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestStdFor = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestStdFor = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	n := 0
 	for range [1, 3, 5, 7, 11] {
 		n++
@@ -157,7 +157,7 @@ func TestStdFor(t *testing.T) {
 		t.Fatal("ParseFSDir failed:", err, len(pkgs))
 	}
 	bar := pkgs["main"]
-	file := bar.Files["/foo/bar.ql"]
+	file := bar.Files["/foo/bar.gop"]
 	fmt.Println("Pkg:", file.Name)
 	for _, decl := range file.Decls {
 		fmt.Println("decl:", reflect.TypeOf(decl))
@@ -177,7 +177,7 @@ func TestStdFor(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestBuild = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestBuild = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	type cstring string
 
 	title := "Hello,world!2020-05-27"
@@ -192,7 +192,7 @@ func TestBuild(t *testing.T) {
 		t.Fatal("ParseFSDir failed:", err, len(pkgs))
 	}
 	bar := pkgs["main"]
-	file := bar.Files["/foo/bar.ql"]
+	file := bar.Files["/foo/bar.gop"]
 	fmt.Println("Pkg:", file.Name)
 	for _, decl := range file.Decls {
 		fmt.Println("decl:", reflect.TypeOf(decl))

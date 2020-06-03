@@ -69,7 +69,7 @@ func newPackageEx(
 
 // -----------------------------------------------------------------------------
 
-var fsTestBasic = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestBasic = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	println("Hello", "xsw", "- nice to meet you!")
 	println("Hello, world!")
 	return
@@ -123,7 +123,7 @@ func TestBasic(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestBasic2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestBasic2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	arr := [...]float64{1, 2}
 	slice := make([]float64, 0, 32)
 	title := "Hello,world!2020-05-27"
@@ -160,7 +160,7 @@ func TestBasic2(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestMainPkgNoMain = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestMainPkgNoMain = asttest.NewSingleFileFS("/foo", "bar.gop", `
 package main
 
 func ReverseMap(m map[string]int) map[int]string {
@@ -185,7 +185,7 @@ func TestMainPkgNoMain(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestPkg = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestPkg = asttest.NewSingleFileFS("/foo", "bar.gop", `
 package foo
 
 func ReverseMap(m map[string]int) map[int]string {

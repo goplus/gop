@@ -8,7 +8,6 @@ GoPlus - The Go+ language for data science
 [![Coverage Status](https://codecov.io/gh/qiniu/goplus/branch/master/graph/badge.svg)](https://codecov.io/gh/qiniu/goplus)
 [![GoDoc](https://img.shields.io/badge/Godoc-reference-blue.svg)](https://godoc.org/github.com/qiniu/goplus)
 
-[![Qiniu Logo](http://open.qiniudn.com/logo.png)](http://www.qiniu.com/)
 
 ## Summary about Go+
 

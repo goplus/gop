@@ -29,7 +29,7 @@ import (
 
 // -----------------------------------------------------------------------------
 
-var fsTestUnbound = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestUnbound = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	println("Hello " + "qiniu:", 123, 4.5, 7i)
 `)
 
@@ -61,7 +61,7 @@ func TestUnbound(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestTILDE = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestTILDE = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := uint32(1)
 	println(~x, ^uint32(1), +3)
 `)
@@ -94,7 +94,7 @@ func TestTILDE(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestMake = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestMake = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	a := make([]int, 0, 4)
 	a = append(a, 1, 2, 3)
 	println(a)
@@ -128,7 +128,7 @@ func TestMake(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestMake2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestMake2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	a := make([]int, 0, 4)
 	a = append(a, [1, 2, 3]...)
 	println(a)
@@ -162,7 +162,7 @@ func TestMake2(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestMake3 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestMake3 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	n := 4
 	a := make(map[string]interface{}, uint16(n))
 	println(a)
@@ -196,7 +196,7 @@ func TestMake3(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestMake4 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestMake4 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	import "reflect"
 
 	a := make(chan *func(), uint16(4))
@@ -231,7 +231,7 @@ func TestMake4(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestOperator = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestOperator = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	println("Hello", 123 * 4.5, 1 + 7i)
 `)
 
@@ -263,7 +263,7 @@ func TestOperator(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestVar = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestVar = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := 123.1
 	println("Hello", x)
 `)
@@ -296,7 +296,7 @@ func TestVar(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestVarOp = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestVarOp = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := 123.1
 	y := 1 + x
 	println("Hello", y + 10)
@@ -332,7 +332,7 @@ func TestVarOp(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestGoPackage = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestGoPackage = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	import "fmt"
 	import gostrings "strings"
 
@@ -368,7 +368,7 @@ func TestGoPackage(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestSlice = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestSlice = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := []float64{1, 2.3, 3.6}
 	println("x:", x)
 `)
@@ -399,7 +399,7 @@ func TestSlice(t *testing.T) {
 	}
 }
 
-var fsTestSlice2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestSlice2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := []float64{1, 2: 3.4, 5}
 	println("x:", x)
 `)
@@ -432,7 +432,7 @@ func TestSlice2(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestArray = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestArray = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := [4]float64{1, 2.3, 3.6}
 	println("x:", x)
 
@@ -468,7 +468,7 @@ func TestArray(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestArray2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestArray2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := [...]float64{1, 3: 3.4, 5}
 	x[1] = 217
 	println("x:", x, "x[1]:", x[1])
@@ -502,7 +502,7 @@ func TestArray2(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestMap = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestMap = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := map[string]float64{"Hello": 1, "xsw": 3.4}
 	println("x:", x)
 `)
@@ -535,7 +535,7 @@ func TestMap(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestMapLit = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestMapLit = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := {"Hello": 1, "xsw": 3.4}
 	println("x:", x)
 `)
@@ -568,7 +568,7 @@ func TestMapLit(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestMapLit2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestMapLit2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := {"Hello": 1, "xsw": "3.4"}
 	println("x:", x)
 
@@ -603,7 +603,7 @@ func TestMapLit2(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestMapIdx = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestMapIdx = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := {"Hello": 1, "xsw": "3.4"}
 	y := {1: "glang", 5: "Hi"}
 	i := 1
@@ -642,7 +642,7 @@ func TestMapIdx(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsSliceLit = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsSliceLit = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := [1, 3.4]
 	println("x:", x)
 
@@ -683,7 +683,7 @@ func TestSliceLit(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsSliceIdx = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsSliceIdx = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := [1, 3.4, 17]
 	n, m := 1, uint16(0)
 	x[1] = 32.7
@@ -719,7 +719,7 @@ func TestSliceIdx(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsListComprehension = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsListComprehension = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	y := [i+x for i, x <- [1, 2, 3, 4]]
 	println("y:", y)
 `)
@@ -752,7 +752,7 @@ func TestListComprehension(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsListComprehension2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsListComprehension2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	y := [i+x for i, x <- {3: 1, 5: 2, 7: 3, 11: 4}]
 	println("y:", y)
 `)
@@ -785,7 +785,7 @@ func TestListComprehension2(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsListComprehensionFilter = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsListComprehensionFilter = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	y := [i+x for i, x <- {3: 1, 5: 2, 7: 3, 11: 4}, x % 2 == 1]
 	println("y:", y)
 `)
@@ -818,7 +818,7 @@ func TestListComprehensionFilter(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsMapComprehension = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsMapComprehension = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	y := {x: i for i, x <- [3, 5, 7, 11, 13]}
 	println("y:", y)
 `)
@@ -851,7 +851,7 @@ func TestMapComprehension(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsMapComprehensionFilter = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsMapComprehensionFilter = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	y := {x: i for i, x <- [3, 5, 7, 11, 13], i % 2 == 1}
 	println("y:", y)
 `)
@@ -884,7 +884,7 @@ func TestMapComprehensionFilter(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsMapComprehension2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsMapComprehension2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	y := {v: k for k, v <- {"Hello": "xsw", "Hi": "glang"}}
 	println("y:", y)
 `)
@@ -917,7 +917,7 @@ func TestMapComprehension2(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsMapComprehension3 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsMapComprehension3 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	println({x: i for i, x <- [3, 5, 7, 11, 13]})
 	println({x: i for i, x <- [3, 5, 7, 11, 13]})
 `)
@@ -950,7 +950,7 @@ func TestMapComprehension3(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsMapComprehension4 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsMapComprehension4 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	arr := [1, 2, 3, 4, 5, 6]
 	x := [[a, b] for a <- arr, a < b for b <- arr, b > 2]
 	println("x:", x)
