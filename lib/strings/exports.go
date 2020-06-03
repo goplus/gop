@@ -19,18 +19,18 @@ package strings
 import (
 	"strings"
 
-	goplus "github.com/qiniu/goplus/spec"
+	"github.com/qiniu/goplus/gop"
 )
 
 // -----------------------------------------------------------------------------
 
-func execNewReplacer(arity int, p *goplus.Context) {
+func execNewReplacer(arity int, p *gop.Context) {
 	args := p.GetArgs(arity)
-	repl := strings.NewReplacer(goplus.ToStrings(args)...)
+	repl := strings.NewReplacer(gop.ToStrings(args)...)
 	p.Ret(arity, repl)
 }
 
-func execReplacerReplace(zero int, p *goplus.Context) {
+func execReplacerReplace(zero int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret := args[0].(*strings.Replacer).Replace(args[1].(string))
 	p.Ret(2, ret)
@@ -39,7 +39,7 @@ func execReplacerReplace(zero int, p *goplus.Context) {
 // -----------------------------------------------------------------------------
 
 // I is a Go package instance.
-var I = goplus.NewGoPackage("strings")
+var I = gop.NewGoPackage("strings")
 
 func init() {
 	I.RegisterFuncvs(

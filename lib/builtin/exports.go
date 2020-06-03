@@ -21,36 +21,37 @@ import (
 	"io"
 	"reflect"
 
+	"github.com/qiniu/goplus/gop"
+
 	qspec "github.com/qiniu/goplus/exec.spec"
 	exec "github.com/qiniu/goplus/exec/bytecode"
-	goplus "github.com/qiniu/goplus/spec"
 )
 
 // -----------------------------------------------------------------------------
 
 // QexecPrint instr
-func QexecPrint(arity int, p *goplus.Context) {
+func QexecPrint(arity int, p *gop.Context) {
 	args := p.GetArgs(arity)
 	n, err := fmt.Print(args...)
 	p.Ret(arity, n, err)
 }
 
 // QexecPrintf instr
-func QexecPrintf(arity int, p *goplus.Context) {
+func QexecPrintf(arity int, p *gop.Context) {
 	args := p.GetArgs(arity)
 	n, err := fmt.Printf(args[0].(string), args[1:]...)
 	p.Ret(arity, n, err)
 }
 
 // QexecPrintln instr
-func QexecPrintln(arity int, p *goplus.Context) {
+func QexecPrintln(arity int, p *gop.Context) {
 	args := p.GetArgs(arity)
 	n, err := fmt.Println(args...)
 	p.Ret(arity, n, err)
 }
 
 // QexecFprintln instr
-func QexecFprintln(arity int, p *goplus.Context) {
+func QexecFprintln(arity int, p *gop.Context) {
 	args := p.GetArgs(arity)
 	n, err := fmt.Fprintln(args[0].(io.Writer), args[1:]...)
 	p.Ret(arity, n, err)
@@ -58,14 +59,14 @@ func QexecFprintln(arity int, p *goplus.Context) {
 
 // -----------------------------------------------------------------------------
 
-func execPanic(zero int, p *goplus.Context) {
+func execPanic(zero int, p *gop.Context) {
 	panic(p.Pop())
 }
 
 // -----------------------------------------------------------------------------
 
 // I is a Go package instance.
-var I = goplus.NewGoPackage("")
+var I = gop.NewGoPackage("")
 
 func init() {
 	I.RegisterFuncs(

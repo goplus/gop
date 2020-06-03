@@ -19,15 +19,14 @@ package fmt
 import (
 	"fmt"
 
+	"github.com/qiniu/goplus/gop"
 	"github.com/qiniu/goplus/lib/builtin"
-
-	goplus "github.com/qiniu/goplus/spec"
 )
 
 // -----------------------------------------------------------------------------
 
 // I is a Go package instance.
-var I = goplus.NewGoPackage("fmt")
+var I = gop.NewGoPackage("fmt")
 
 func init() {
 	I.RegisterFuncvs(
