@@ -292,7 +292,6 @@ func (p *varManager) addVars(vars ...exec.Var) {
 	for i, item := range vars {
 		v := item.(*Var)
 		v.SetAddr(nestDepth, uint32(i+n))
-		log.Debug("DefineVar:", v.Name(), "-", nestDepth)
 		p.vlist = append(p.vlist, v)
 	}
 }
