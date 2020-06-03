@@ -10,7 +10,7 @@ package ast
 import (
 	"strings"
 
-	"github.com/qiniu/qlang/v6/token"
+	"github.com/qiniu/goplus/token"
 )
 
 // ----------------------------------------------------------------------------

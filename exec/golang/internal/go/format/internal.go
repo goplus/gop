@@ -16,7 +16,7 @@ import (
 	"go/token"
 	"strings"
 
-	"github.com/qiniu/qlang/v6/exec/golang/internal/go/printer"
+	"github.com/qiniu/goplus/exec/golang/internal/go/printer"
 )
 
 // parse parses src, which was read from the named file,

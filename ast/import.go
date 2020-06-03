@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/qiniu/qlang/v6/token"
+	"github.com/qiniu/goplus/token"
 )
 
 // SortImports sorts runs of consecutive import lines in import blocks in f.

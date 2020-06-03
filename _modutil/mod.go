@@ -125,7 +125,7 @@ func (p Module) RootPath() string {
 	return p.impl.ModDir()
 }
 
-// PkgPath returns PkgPath of this module. eg. `github.com/qiniu/qlang/v6`
+// PkgPath returns PkgPath of this module. eg. `github.com/qiniu/goplus`
 func (p Module) PkgPath() string {
 	switch p.modKind {
 	case modKindStd:
@@ -135,7 +135,7 @@ func (p Module) PkgPath() string {
 	}
 }
 
-// VersionPkgPath returns VersionPkgPath of this module. eg. `github.com/qiniu/qlang/v6@v1.0.0`
+// VersionPkgPath returns VersionPkgPath of this module. eg. `github.com/qiniu/goplus@v1.0.0`
 func (p Module) VersionPkgPath() string {
 	switch p.modKind {
 	case modKindMod:

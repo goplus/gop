@@ -11,18 +11,18 @@ import (
 	"path"
 	"strings"
 
-	"github.com/qiniu/qlang/v6/ast"
-	"github.com/qiniu/qlang/v6/cl"
-	"github.com/qiniu/qlang/v6/exec/bytecode"
-	"github.com/qiniu/qlang/v6/exec/golang"
-	"github.com/qiniu/qlang/v6/parser"
-	"github.com/qiniu/qlang/v6/token"
+	"github.com/qiniu/goplus/ast"
+	"github.com/qiniu/goplus/cl"
+	"github.com/qiniu/goplus/exec/bytecode"
+	"github.com/qiniu/goplus/exec/golang"
+	"github.com/qiniu/goplus/parser"
+	"github.com/qiniu/goplus/token"
 	"github.com/qiniu/x/log"
 
-	_ "github.com/qiniu/qlang/v6/lib/builtin"
-	_ "github.com/qiniu/qlang/v6/lib/fmt"
-	_ "github.com/qiniu/qlang/v6/lib/reflect"
-	_ "github.com/qiniu/qlang/v6/lib/strings"
+	_ "github.com/qiniu/goplus/lib/builtin"
+	_ "github.com/qiniu/goplus/lib/fmt"
+	_ "github.com/qiniu/goplus/lib/reflect"
+	_ "github.com/qiniu/goplus/lib/strings"
 )
 
 func saveGoFile(dir string, code *golang.Code) error {

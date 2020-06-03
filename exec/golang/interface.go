@@ -3,9 +3,9 @@ package golang
 import (
 	"reflect"
 
-	"github.com/qiniu/qlang/v6/exec.spec"
+	"github.com/qiniu/goplus/exec.spec"
 
-	qexec "github.com/qiniu/qlang/v6/exec/bytecode"
+	qexec "github.com/qiniu/goplus/exec/bytecode"
 )
 
 var qexecImpl = qexec.GlobalInterface()

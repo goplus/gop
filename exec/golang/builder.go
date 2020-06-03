@@ -26,9 +26,9 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/qiniu/qlang/v6/exec.spec"
-	"github.com/qiniu/qlang/v6/exec/golang/internal/go/format"
-	"github.com/qiniu/qlang/v6/exec/golang/internal/go/printer"
+	"github.com/qiniu/goplus/exec.spec"
+	"github.com/qiniu/goplus/exec/golang/internal/go/format"
+	"github.com/qiniu/goplus/exec/golang/internal/go/printer"
 	"github.com/qiniu/x/log"
 )
 

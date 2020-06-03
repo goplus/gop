@@ -1,2 +1,5 @@
+github.com/qiniu/qlang v1.5.0 h1:6Nvr27Wf1H86f4GJek1wMfM1NQjl+3gSXB+XM/28VR4=
+github.com/qiniu/qlang/v6 v6.0.0-20200603164401-a3052e698dcc h1:YOc1vsYfpvVaHYKKDbCx8euU51wdSqa+EgcnBBNVHK8=
+github.com/qiniu/qlang/v6 v6.0.0-20200603164401-a3052e698dcc/go.mod h1:ny2arcu3Zr0HamkKhsY34o5EhZoVeSea0ftOyPbvU4c=
 github.com/qiniu/x v1.10.3 h1:rlToGtLuLd0+lJ5QwKzNBWmWq98mFxR0lmUM1voFxPM=
 github.com/qiniu/x v1.10.3/go.mod h1:BeQOcur1vCtXTTv1Fo4WtJypt4cEh4/kuVY6GOAPxLs=

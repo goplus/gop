@@ -9,7 +9,7 @@ import (
 	"io"
 	"sort"
 
-	"github.com/qiniu/qlang/v6/token"
+	"github.com/qiniu/goplus/token"
 )
 
 // Error - In an ErrorList, an error is represented by an *Error.

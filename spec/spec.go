@@ -17,7 +17,7 @@
 package spec
 
 import (
-	exec "github.com/qiniu/qlang/v6/exec/bytecode"
+	exec "github.com/qiniu/goplus/exec/bytecode"
 )
 
 // -----------------------------------------------------------------------------

@@ -10,8 +10,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/qiniu/qlang/v6/scanner"
-	"github.com/qiniu/qlang/v6/token"
+	"github.com/qiniu/goplus/scanner"
+	"github.com/qiniu/goplus/token"
 )
 
 type pkgBuilder struct {

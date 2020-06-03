@@ -20,16 +20,16 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/qiniu/qlang/v6/cl"
-	"github.com/qiniu/qlang/v6/exec.spec"
-	"github.com/qiniu/qlang/v6/token"
+	"github.com/qiniu/goplus/cl"
+	"github.com/qiniu/goplus/exec.spec"
+	"github.com/qiniu/goplus/token"
 	"github.com/qiniu/x/log"
 
-	qexec "github.com/qiniu/qlang/v6/exec/bytecode"
-	_ "github.com/qiniu/qlang/v6/lib/builtin"
-	_ "github.com/qiniu/qlang/v6/lib/fmt"
-	_ "github.com/qiniu/qlang/v6/lib/reflect"
-	_ "github.com/qiniu/qlang/v6/lib/strings"
+	qexec "github.com/qiniu/goplus/exec/bytecode"
+	_ "github.com/qiniu/goplus/lib/builtin"
+	_ "github.com/qiniu/goplus/lib/fmt"
+	_ "github.com/qiniu/goplus/lib/reflect"
+	_ "github.com/qiniu/goplus/lib/strings"
 )
 
 // I is a Go package instance.

@@ -21,16 +21,16 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/qiniu/qlang/v6/cl"
-	"github.com/qiniu/qlang/v6/parser"
-	"github.com/qiniu/qlang/v6/token"
+	"github.com/qiniu/goplus/cl"
+	"github.com/qiniu/goplus/parser"
+	"github.com/qiniu/goplus/token"
 	"github.com/qiniu/x/log"
 
-	exec "github.com/qiniu/qlang/v6/exec/bytecode"
-	_ "github.com/qiniu/qlang/v6/lib/builtin"
-	_ "github.com/qiniu/qlang/v6/lib/fmt"
-	_ "github.com/qiniu/qlang/v6/lib/reflect"
-	_ "github.com/qiniu/qlang/v6/lib/strings"
+	exec "github.com/qiniu/goplus/exec/bytecode"
+	_ "github.com/qiniu/goplus/lib/builtin"
+	_ "github.com/qiniu/goplus/lib/fmt"
+	_ "github.com/qiniu/goplus/lib/reflect"
+	_ "github.com/qiniu/goplus/lib/strings"
 )
 
 // -----------------------------------------------------------------------------

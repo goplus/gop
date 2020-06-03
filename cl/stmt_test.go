@@ -21,11 +21,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/qiniu/qlang/v6/ast/asttest"
-	"github.com/qiniu/qlang/v6/parser"
-	"github.com/qiniu/qlang/v6/token"
+	"github.com/qiniu/goplus/ast/asttest"
+	"github.com/qiniu/goplus/parser"
+	"github.com/qiniu/goplus/token"
 
-	exec "github.com/qiniu/qlang/v6/exec/bytecode"
+	exec "github.com/qiniu/goplus/exec/bytecode"
 )
 
 // -----------------------------------------------------------------------------

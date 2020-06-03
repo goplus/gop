@@ -25,9 +25,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/qiniu/qlang/v6/ast"
-	"github.com/qiniu/qlang/v6/scanner"
-	"github.com/qiniu/qlang/v6/token"
+	"github.com/qiniu/goplus/ast"
+	"github.com/qiniu/goplus/scanner"
+	"github.com/qiniu/goplus/token"
 )
 
 // -----------------------------------------------------------------------------

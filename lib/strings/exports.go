@@ -19,7 +19,7 @@ package strings
 import (
 	"strings"
 
-	qlang "github.com/qiniu/qlang/v6/spec"
+	qlang "github.com/qiniu/goplus/spec"
 )
 
 // -----------------------------------------------------------------------------
