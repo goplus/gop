@@ -372,7 +372,7 @@ func TestReturn(t *testing.T) {
 var fsTestReturn2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	func max(a, b int) int {
 		if a < b {
-			return b
+			a = b
 		}
 		return a
 	}

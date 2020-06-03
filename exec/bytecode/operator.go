@@ -194,6 +194,7 @@ func (p *Code) builtinOp(kind Kind, op Operator) error {
 
 // BuiltinOp instr
 func (ctx *Builder) BuiltinOp(kind Kind, op Operator) *Builder {
+	log.Debug("BuiltinOp:", kind, op)
 	err := ctx.code.builtinOp(kind, op)
 	if err != nil {
 		panic(err)

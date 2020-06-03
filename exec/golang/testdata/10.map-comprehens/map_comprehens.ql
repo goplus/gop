@@ -7,5 +7,5 @@ println(y)
 z := {v: k for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "qlang"}, k > 3}
 println(z)
 
-z = {v+t: k+t for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "qlang"}, k > 3 for t <- ["a"]}
+z = {v+t: k+i for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "qlang"}, k > 3 for i, t <- ["a"]}
 println(z)
