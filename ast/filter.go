@@ -7,7 +7,7 @@ package ast
 import (
 	"sort"
 
-	"github.com/qiniu/qlang/v6/token"
+	"github.com/qiniu/goplus/token"
 )
 
 // ----------------------------------------------------------------------------

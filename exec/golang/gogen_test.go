@@ -5,10 +5,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/qiniu/qlang/v6/ast"
-	"github.com/qiniu/qlang/v6/cl"
-	"github.com/qiniu/qlang/v6/parser"
-	"github.com/qiniu/qlang/v6/token"
+	"github.com/qiniu/goplus/ast"
+	"github.com/qiniu/goplus/cl"
+	"github.com/qiniu/goplus/parser"
+	"github.com/qiniu/goplus/token"
 )
 
 func saveGoFile(dir string, code *Code) error {

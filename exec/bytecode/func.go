@@ -19,7 +19,7 @@ package bytecode
 import (
 	"reflect"
 
-	exec "github.com/qiniu/qlang/v6/exec.spec"
+	exec "github.com/qiniu/goplus/exec.spec"
 	"github.com/qiniu/x/log"
 )
 

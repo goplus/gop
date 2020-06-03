@@ -20,7 +20,7 @@ import (
 	"reflect"
 	"unsafe"
 
-	"github.com/qiniu/qlang/v6/ast/spec"
+	"github.com/qiniu/goplus/ast/spec"
 )
 
 // -----------------------------------------------------------------------------

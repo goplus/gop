@@ -19,9 +19,9 @@ package fmt
 import (
 	"fmt"
 
-	"github.com/qiniu/qlang/v6/lib/builtin"
+	"github.com/qiniu/goplus/lib/builtin"
 
-	qlang "github.com/qiniu/qlang/v6/spec"
+	qlang "github.com/qiniu/goplus/spec"
 )
 
 // -----------------------------------------------------------------------------

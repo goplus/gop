@@ -21,9 +21,9 @@ import (
 	"io"
 	"reflect"
 
-	qspec "github.com/qiniu/qlang/v6/exec.spec"
-	exec "github.com/qiniu/qlang/v6/exec/bytecode"
-	qlang "github.com/qiniu/qlang/v6/spec"
+	qspec "github.com/qiniu/goplus/exec.spec"
+	exec "github.com/qiniu/goplus/exec/bytecode"
+	qlang "github.com/qiniu/goplus/spec"
 )
 
 // -----------------------------------------------------------------------------

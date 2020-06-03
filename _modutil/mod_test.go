@@ -21,7 +21,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/qiniu/qlang/v6/modutil"
+	"github.com/qiniu/goplus/modutil"
 )
 
 const (

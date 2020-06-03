@@ -19,7 +19,7 @@ package fmt
 import (
 	"reflect"
 
-	qlang "github.com/qiniu/qlang/v6/spec"
+	qlang "github.com/qiniu/goplus/spec"
 )
 
 func execTypeOf(zero int, p *qlang.Context) {

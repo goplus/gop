@@ -1,102 +1,67 @@
-Q Language - The Go++ language for Data Technology
+GoPlus - The Go+ language for data science
 ========
 
-[![LICENSE](https://img.shields.io/github/license/qiniu/qlang.svg)](https://github.com/qiniu/qlang/blob/master/LICENSE)
-[![Build Status](https://travis-ci.org/qiniu/qlang.png?branch=master)](https://travis-ci.org/qiniu/qlang)
-[![Go Report Card](https://goreportcard.com/badge/github.com/qiniu/qlang)](https://goreportcard.com/report/github.com/qiniu/qlang)
-[![GitHub release](https://img.shields.io/github/v/tag/qiniu/qlang.svg?label=release)](https://github.com/qiniu/qlang/releases)
-[![Coverage Status](https://codecov.io/gh/qiniu/qlang/branch/master/graph/badge.svg)](https://codecov.io/gh/qiniu/qlang)
-[![GoDoc](https://img.shields.io/badge/Godoc-reference-blue.svg)](https://godoc.org/github.com/qiniu/qlang)
+[![LICENSE](https://img.shields.io/github/license/qiniu/goplus.svg)](https://github.com/qiniu/goplus/blob/master/LICENSE)
+[![Build Status](https://travis-ci.org/qiniu/goplus.png?branch=master)](https://travis-ci.org/qiniu/goplus)
+[![Go Report Card](https://goreportcard.com/badge/github.com/qiniu/goplus)](https://goreportcard.com/report/github.com/qiniu/goplus)
+[![GitHub release](https://img.shields.io/github/v/tag/qiniu/goplus.svg?label=release)](https://github.com/qiniu/goplus/releases)
+[![Coverage Status](https://codecov.io/gh/qiniu/goplus/branch/master/graph/badge.svg)](https://codecov.io/gh/qiniu/goplus)
+[![GoDoc](https://img.shields.io/badge/Godoc-reference-blue.svg)](https://godoc.org/github.com/qiniu/goplus)
 
 [![Qiniu Logo](http://open.qiniudn.com/logo.png)](http://www.qiniu.com/)
 
-## Mission & vision
+## Summary about Go+
 
-最新的 qlang v6 版本在能力上较以前的版本有极大的调整。其核心变化为：
+What are mainly impressions about Go+?
 
-- 完全推翻重来，从动态类型转向静态类型！
-- 完全兼容 Go 语言文法。
-- 在 Go 语言兼容基础上，保留当初 qlang 动态类型版本的重要特性。比如：
+- A static typed language.
+- Fully compatible with [the Go language](https://github.com/golang/go).
+- Script-like style, and more readable code for data science than Go.
 
-```
+For example, the following is a legal Go+ source code:
+
+```go
 a := [1, 2, 3.4]
+println(a)
 ```
 
-为什么人们需要 qlang？它的使命与愿景是什么？
-
-一句话：qlang 希望能够将 Go 语言带到数据科技（DT）的世界。
-
-对于服务端编程的最佳实践而言，Go 语言非常优雅。所以 Go 制霸了云计算领域。
-
-但是当前 Go 是有舒适区的，从数据科技的角度，Go 语言显得很笨拙。有没有办法让 Go 在数据科技领域变得一样优雅？
-
-这就是 qlang v6 的由来。它兼容 Go，扩展 Go，以 Go++ 的姿态出现，让数据科技享受 Go 的简洁之美。
-
-qlang 将支持生成 Go 代码，方便 Go 编译 qlang 代码并与其他 Go 项目进行集成。
-
-关于新版本的详细规划，参考：
-
-* https://github.com/qiniu/qlang/issues/176
-
-代码样例：
-
-* https://github.com/qiniu/qlang/tree/v6.x/tutorial
-
-## Old versions
-
-当前 qlang v6 还在快速迭代中。在正式场合建议使用正式 release 的版本：
-
-* https://github.com/qiniu/qlang/releases
-
-最近的老版本代码可以从 qlang v1.5 分支获得：
-
-* https://github.com/qiniu/qlang/tree/v1.5
-
-## Supported features
-
-### Variable & operator
+How do we do this in the Go language?
 
 ```go
-x := 123.1 - 3i
-y, z := 1, 123
-s := "Hello"
+package main
 
-println(s + " complex")
-println(x - 1, y * z)
+func main() {
+    a := []float64{1, 2, 3.4}
+    println(a)
+}
 ```
 
-### Condition
+Of course, we don't only do less-typing things. For example, we  support `list comprehension`, which make data processing easier.
 
 ```go
-x := 0
-if t := false; t {
-    x = 3
-} else {
-    x = 5
-}
+a := [1, 3, 5, 7, 11]
+b := [x*x for x <- a, x > 3]
+println(b) // output: [25 49 121]
 
-x = 0
-switch s := "Hello"; s {
-default:
-    x = 7
-case "world", "hi":
-    x = 5
-case "xsw":
-    x = 3
-}
-
-v := "Hello"
-switch {
-case v == "xsw":
-    x = 3
-case v == "Hello", v == "world":
-    x = 5
-default:
-    x = 7
-}
+mapData := {"Hi": 1, "Hello": 2, "Go+": 3}
+reversedMap := {v: k for k, v <- mapData}
+println(reversedMap) // output: map[1:Hi 2:Hello 3:Go+]
 ```
 
-### Import go package
+We will keep Go+ simple. This is why we call it Go+, not Go++.
+
+Less is exponentially more.
+
+It's for Go, and it's also for Go+.
+
+
+## Compatibility with Go
+
+All Go features (not including `cgo`) will be supported.
+
+* See [supported the Go language features](https://github.com/qiniu/goplus/wiki/Supported-Go-features).
+
+All Go packages (even these packages use `cgo`) can be imported by Go+.
 
 ```go
 import (
@@ -108,62 +73,56 @@ x := strings.NewReplacer("?", "!").Replace("hello, world???")
 fmt.Println("x:", x)
 ```
 
-### Func & closure
+Be interested in how it works? See [Dive into Go+](https://github.com/qiniu/goplus/wiki/Dive-into-Goplus).
+
+**Also, all Go+ packages can be converted into Go packages, and then be imported by Go.**
+
+First, let's make a directory named `tutorial/14-Using-goplus-in-Go`.
+
+Then write a Go+ package named `foo` in it:
 
 ```go
+package foo
+
+func ReverseMap(m map[string]int) map[int]string {
+    return {v: k for k, v <- m}
+}
+```
+
+Then use it in a Go package:
+
+```go
+package main
+
 import (
-    "fmt"
-    "strings"
+	"fmt"
+
+	"github.com/qiniu/goplus/tutorial/14-Using-goplus-in-Go/foo"
 )
 
-func foo(x string) string {
-    return strings.NewReplacer("?", "!").Replace(x)
+func main() {
+	rmap := foo.ReverseMap(map[string]int{"Hi": 1, "Hello": 2})
+	fmt.Println(rmap)
 }
-
-func printf(format string, args ...interface{}) (n int, err error) {
-    n, err = fmt.Printf(format, args...)
-    return
-}
-
-func bar(f func(string, ...interface{}) (int, error)) {
-    f("Hello, %v!\n", "qlang")
-}
-
-x := "qlang"
-fooVar := func(prompt string) (n int, err error) {
-    n, err = fmt.Println(prompt + x)
-    return
-}
-
-printfVar := func(format string, args ...interface{}) (n int, err error) {
-    n, err = fmt.Printf(format, args...)
-    return
-}
-
-barVar := func(f func(string, ...interface{}) (int, error)) {
-    f("Hello, %v!\n", "qlang")
-}
-
-bar(printf)
-barVar(printfVar)
 ```
 
-### String, map, array & slice
+How to compile this exmaple?
 
-```go
-x := []float64{1, 3.4, 5}
-y := map[string]float64{"Hello": 1, "xsw": 3.4}
-
-a := [...]float64{1, 3.4, 5}
-b := [...]float64{1, 3: 3.4, 5}
-c := []float64{2: 1.2, 3, 6: 4.5}
-
-x[1], y["xsw"] = 1.7, 2.8
-println(`x[1]:`, x[1], `y["xsw"]:`, y["xsw"])
-
-title := "Hello,world!" + "2020-05-27"
-println(title[:len(title)-len("2006-01-02")], len(a), a[1:])
+```bash
+gop go tutorial/ # Convert all Go+ packages in tutorial/ into Go packages
+go install ./...
 ```
+
+Or:
+
+```bash
+gop install ./... # Convert Go+ packages and go install ./...
+```
+
+Go [tutorial/14-Using-goplus-in-Go](https://github.com/qiniu/goplus/tree/v6.x/tutorial/14-Using-goplus-in-Go) to get the source code.
+
+
+## Go+ features
 
 ### Map literal
 
@@ -211,53 +170,13 @@ for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
 }
 ```
 
-### Builtin & typecast
+### Go features
 
-```go
-a := make([]int, uint64(2))
-a = append(a, 1, 2, 3)
-println(a, "len:", len(a), "cap:", cap(a))
+All Go features (not including `cgo`) will be supported.
 
-b := make([]int, 0, uint16(4))
-c := [1, 2, 3]
-b = append(b, c...)
-println(b, "len:", len(b), "cap:", cap(b))
-```
+* See [supported the Go language features](https://github.com/qiniu/goplus/wiki/Supported-Go-features).
 
-### Using qlang in Go
 
-See [tutorial/14-Using-qlang-in-Go](https://github.com/qiniu/qlang/tree/v6.x/tutorial/14-Using-qlang-in-Go).
+## Tutorials
 
-Write a qlang package named `qlfoo`:
-
-```go
-package qlfoo
-
-func ReverseMap(m map[string]int) map[int]string {
-    return {v: k for k, v <- m}
-}
-```
-
-Then use it in a Go package:
-
-```go
-package main
-
-import (
-	"fmt"
-
-	"github.com/qiniu/qlang/v6/tutorial/14-Using-qlang-in-Go/qlfoo"
-)
-
-func main() {
-	rmap := qlfoo.ReverseMap(map[string]int{"Hi": 1, "Hello": 2})
-	fmt.Println(rmap)
-}
-```
-
-How to compile this exmaple?
-
-```bash
-qgo tutorial/ # Convert all qlang code in tutorial/ into Go packages
-go install ./...
-```
+* https://github.com/qiniu/goplus/tree/v6.x/tutorial

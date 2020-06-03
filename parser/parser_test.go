@@ -24,9 +24,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/qiniu/qlang/v6/ast"
-	"github.com/qiniu/qlang/v6/ast/asttest"
-	"github.com/qiniu/qlang/v6/token"
+	"github.com/qiniu/goplus/ast"
+	"github.com/qiniu/goplus/ast/asttest"
+	"github.com/qiniu/goplus/token"
 )
 
 // -----------------------------------------------------------------------------

@@ -10,7 +10,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/qiniu/qlang/v6/token"
+	"github.com/qiniu/goplus/token"
 )
 
 // A Scope maintains the set of named language entities declared

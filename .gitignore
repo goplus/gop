@@ -9,6 +9,7 @@
 _obj
 _test
 _old
+_t
 
 # Architecture specific extensions/prefixes
 *.[568vq]
