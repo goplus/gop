@@ -34,7 +34,7 @@ func saveGoFile(dir string, code *golang.Code) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(dir+"/qlang_autogen.go", b, 0666)
+	return ioutil.WriteFile(dir+"/gop_autogen.go", b, 0666)
 }
 
 func genGopkg(pkgDir string) (mainPkg bool, err error) {
@@ -80,7 +80,7 @@ func getPkg(pkgs map[string]*ast.Package) *ast.Package {
 // -----------------------------------------------------------------------------
 
 func testPkg(dir string) {
-	cmd1 := exec.Command("go", "run", path.Join(dir, "qlang_autogen.go"))
+	cmd1 := exec.Command("go", "run", path.Join(dir, "gop_autogen.go"))
 	gorun, err := cmd1.CombinedOutput()
 	if err != nil {
 		os.Stderr.Write(gorun)
