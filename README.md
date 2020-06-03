@@ -120,12 +120,12 @@ Or:
 gop install ./... # Convert Go+ packages and go install ./...
 ```
 
-Go [tutorial/14-Using-goplus-in-Go](https://github.com/qiniu/goplus/tree/v6.x/tutorial/14-Using-goplus-in-Go) to get the source code.
+Go [tutorial/14-Using-goplus-in-Go](https://github.com/qiniu/goplus/tree/master/tutorial/14-Using-goplus-in-Go) to get the source code.
 
 
 ## Tutorials
 
-* https://github.com/qiniu/goplus/tree/v6.x/tutorial
+* https://github.com/qiniu/goplus/tree/master/tutorial
 
 
 ## Go+ features
