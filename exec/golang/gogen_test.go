@@ -20,7 +20,7 @@ func saveGoFile(dir string, code *Code) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(dir+"/qlang_autogen.go", b, 0666)
+	return ioutil.WriteFile(dir+"/gop_autogen.go", b, 0666)
 }
 
 // -----------------------------------------------------------------------------
