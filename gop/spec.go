@@ -14,7 +14,9 @@
  limitations under the License.
 */
 
-package spec
+// Package gop provides all interfaces for implementing a Go+ package from
+// existed Go packages.
+package gop
 
 import (
 	exec "github.com/qiniu/goplus/exec/bytecode"

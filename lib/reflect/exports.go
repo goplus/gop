@@ -19,15 +19,15 @@ package fmt
 import (
 	"reflect"
 
-	goplus "github.com/qiniu/goplus/spec"
+	"github.com/qiniu/goplus/gop"
 )
 
-func execTypeOf(zero int, p *goplus.Context) {
+func execTypeOf(zero int, p *gop.Context) {
 	args := p.GetArgs(1)
 	args[0] = reflect.TypeOf(args[0])
 }
 
-func execValueOf(zero int, p *goplus.Context) {
+func execValueOf(zero int, p *gop.Context) {
 	args := p.GetArgs(1)
 	args[0] = reflect.ValueOf(args[0])
 }
@@ -35,7 +35,7 @@ func execValueOf(zero int, p *goplus.Context) {
 // -----------------------------------------------------------------------------
 
 // I is a Go package instance.
-var I = goplus.NewGoPackage("reflect")
+var I = gop.NewGoPackage("reflect")
 
 func init() {
 	I.RegisterFuncs(
