@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package token defines constants representing the lexical tokens of the Go
+// Package token defines constants representing the lexical tokens of the Go+
 // programming language and basic operations on tokens (printing, predicates).
 //
 package token
