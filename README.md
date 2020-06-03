@@ -185,10 +185,10 @@ empty := [] // []interface{}
 ### List/Map comprehension
 
 ```go
-a := [x * x for x <- [1, 3, 5, 7, 11]]
-b := [x * x for x <- [1, 3, 5, 7, 11], x > 3]
-c := [i + v for i, v <- [1, 3, 5, 7, 11], i%2 == 1]
-d := [k + "," + s for k, s <- {"Hello": "xsw", "Hi": "Go+"}]
+a := [x*x for x <- [1, 3, 5, 7, 11]]
+b := [x*x for x <- [1, 3, 5, 7, 11], x > 3]
+c := [i+v for i, v <- [1, 3, 5, 7, 11], i%2 == 1]
+d := [k+","+s for k, s <- {"Hello": "xsw", "Hi": "Go+"}]
 
 arr := [1, 2, 3, 4, 5, 6]
 e := [[a, b] for a <- arr, a < b for b <- arr, b > 2]
