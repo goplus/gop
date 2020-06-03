@@ -14,6 +14,8 @@
  limitations under the License.
 */
 
+// Package cl compiles Go+ syntax trees (ast) into a backend code.
+// For now the supported backends are `bytecode` and `golang`.
 package cl
 
 import (

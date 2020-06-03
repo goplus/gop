@@ -14,6 +14,7 @@
  limitations under the License.
 */
 
+// Package exec defines the specification of a Go+ backend.
 package exec
 
 import (
