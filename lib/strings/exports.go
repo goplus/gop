@@ -14,6 +14,7 @@
  limitations under the License.
 */
 
+// Package strings provide Go+ "strings" package, as "strings" package in Go.
 package strings
 
 import (

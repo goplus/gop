@@ -14,6 +14,7 @@
  limitations under the License.
 */
 
+// Package fmt provide Go+ "reflect" package, as "reflect" package in Go.
 package fmt
 
 import (

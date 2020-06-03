@@ -14,6 +14,7 @@
  limitations under the License.
 */
 
+// Package fmt provide Go+ "fmt" package, as "fmt" package in Go.
 package fmt
 
 import (

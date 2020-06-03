@@ -14,6 +14,8 @@
  limitations under the License.
 */
 
+// Package builtin provide Go+ builtin staffs, including builtin constants,
+// types and functions.
 package builtin
 
 import (
