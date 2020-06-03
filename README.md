@@ -63,7 +63,7 @@ All Go features (not including `cgo`) will be supported.
 
 * See [supported the Go language features](https://github.com/qiniu/goplus/wiki/Supported-Go-features).
 
-All Go packages (even these packages use `cgo`) can be imported by Go+.
+**All Go packages (even these packages use `cgo`) can be imported by Go+.**
 
 ```go
 import (
@@ -124,7 +124,43 @@ gop install ./... # Convert Go+ packages and go install ./...
 Go [tutorial/14-Using-goplus-in-Go](https://github.com/qiniu/goplus/tree/v6.x/tutorial/14-Using-goplus-in-Go) to get the source code.
 
 
+## Tutorials
+
+* https://github.com/qiniu/goplus/tree/v6.x/tutorial
+
+
 ## Go+ features
+
+### Bytecode vs. Go code
+
+Go+ suppports bytecode backend or generating Go code.
+
+When we use `gop go` or `gop install` command, it generates Go code to covert Go+ package into Go packages.
+
+When we use `gop run` command, it doesn't call `go run` command. It generates bytecode to execute.
+
+### Commands
+
+```bash
+gop go <gopSrcDir> # Convert all Go+ packages under <gopSrcDir> into Go packages, recursively
+gop run <gopSrcDir> # Running <gopSrcDir> as a Go+ main package
+gop run <gopSrcFile> # Running <gopSrcFile> as a Go+ script
+gop install ./... # Convert all Go+ packages under ./ and go install ./...
+```
+
+The `gop` command isn't provided currently (in alpha stage). Instead, we provide the following commands:
+
+```bash
+qrun <gopSrcDir> # gop run <gopSrcDir>
+qrun -asm <gopSrcDir> # generates `asm` code of Go+ bytecode backend
+qrun -quiet <gopSrcDir> # don't generate any compiling stage log
+qgo <gopSrcDir> # gop go <gopSrcDir>
+qgo -test <gopSrcDir>
+```
+
+Note:
+
+* `qgo -test <gopSrcDir>` converts Go+ packages into Go packages, and for every package, it call `go run <gopPkgDir>/gop_autogen.go` and `qrun -quiet <gopPkgDir>` to compare their output. If their outputs aren't equal, the test case fails.
 
 ### Map literal
 
@@ -177,8 +213,3 @@ for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
 All Go features (not including `cgo`) will be supported.
 
 * See [supported the Go language features](https://github.com/qiniu/goplus/wiki/Supported-Go-features).
-
-
-## Tutorials
-
-* https://github.com/qiniu/goplus/tree/v6.x/tutorial
