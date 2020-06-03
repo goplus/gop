@@ -369,7 +369,7 @@ func (p *blockCtx) insertMethod(typeName, methodName string, method *methodDecl)
 
 // -----------------------------------------------------------------------------
 
-// A Package represents a qlang package.
+// A Package represents a Go+ package.
 type Package struct {
 	syms map[string]iSymbol
 }
@@ -386,7 +386,7 @@ const (
 	PkgActClAll
 )
 
-// NewPackage creates a qlang package instance.
+// NewPackage creates a Go+ package instance.
 func NewPackage(out exec.Builder, pkg *ast.Package, fset *token.FileSet, act PkgAct) (p *Package, err error) {
 	if pkg == nil {
 		return nil, ErrNotFound

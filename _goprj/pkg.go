@@ -21,7 +21,7 @@ import (
 	"go/token"
 	"syscall"
 
-	"github.com/qiniu/qlang/modutil"
+	"github.com/qiniu/goplus/modutil"
 	"github.com/qiniu/x/log"
 )
 

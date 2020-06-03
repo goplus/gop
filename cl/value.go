@@ -26,7 +26,7 @@ import (
 
 type iKind = astutil.ConstKind
 
-// iValue represents a qlang value(s).
+// iValue represents a Go+ value(s).
 //  - *goFunc
 //  - *goValue
 //  - *nonValue

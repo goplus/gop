@@ -59,11 +59,11 @@ func TestFunc(t *testing.T) {
 	_ = foo.IsVariadic()
 	_ = foo.Type()
 
-	ctx.Push("q")
+	ctx.Push("g")
 	ctx.Push("lang")
 	ctx.Call(foo)
-	if v := checkPop(ctx); v != "qlang" {
-		t.Fatal("`q` `lang` foo != `qlang`, ret =", v)
+	if v := checkPop(ctx); v != "glang" {
+		t.Fatal("`g` `lang` foo != `glang`, ret =", v)
 	}
 }
 

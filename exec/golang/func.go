@@ -19,7 +19,7 @@ const (
 	nVariadicVariadicArgs = 2
 )
 
-// FuncInfo represents a qlang function information.
+// FuncInfo represents a Go+ function information.
 type FuncInfo struct {
 	name    string
 	closure *printer.ReservedExpr // only when name="" (closure)
@@ -30,7 +30,7 @@ type FuncInfo struct {
 	nVariadic uint16
 }
 
-// NewFunc create a qlang function.
+// NewFunc create a Go+ function.
 func NewFunc(name string, nestDepth uint32) *FuncInfo {
 	if name != "" {
 		return &FuncInfo{name: name}
@@ -74,14 +74,14 @@ func (p *FuncInfo) Out(i int) exec.Var {
 	return p.out[i]
 }
 
-// Args sets argument types of a qlang function.
+// Args sets argument types of a Go+ function.
 func (p *FuncInfo) Args(in ...reflect.Type) exec.FuncInfo {
 	p.in = in
 	p.setVariadic(nVariadicFixedArgs)
 	return p
 }
 
-// Vargs sets argument types of a variadic qlang function.
+// Vargs sets argument types of a variadic Go+ function.
 func (p *FuncInfo) Vargs(in ...reflect.Type) exec.FuncInfo {
 	if in[len(in)-1].Kind() != reflect.Slice {
 		log.Panicln("Vargs failed: last argument must be a slice.")
@@ -91,7 +91,7 @@ func (p *FuncInfo) Vargs(in ...reflect.Type) exec.FuncInfo {
 	return p
 }
 
-// Return sets return types of a qlang function.
+// Return sets return types of a Go+ function.
 func (p *FuncInfo) Return(out ...exec.Var) exec.FuncInfo {
 	p.out = out
 	return p

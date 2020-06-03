@@ -19,7 +19,7 @@ package goprj_test
 import (
 	"testing"
 
-	"github.com/qiniu/qlang/goprj"
+	"github.com/qiniu/goplus/goprj"
 	"github.com/qiniu/x/log"
 )
 
@@ -37,12 +37,12 @@ func Test(t *testing.T) {
 	if pkg.Source().Name != "goprj" {
 		t.Fatal("please run test in this package directory")
 	}
-	if pkg.ThisModule().PkgPath() != "github.com/qiniu/qlang/goprj" {
+	if pkg.ThisModule().PkgPath() != "github.com/qiniu/goplus/goprj" {
 		t.Fatal("PkgPath:", pkg.ThisModule().PkgPath())
 	}
 	return
 	log.Debug("------------------------------------------------------")
-	pkg2, err := pkg.LoadPackage("github.com/qiniu/qlang/modutil")
+	pkg2, err := pkg.LoadPackage("github.com/qiniu/goplus/modutil")
 	if err != nil {
 		t.Fatal(err)
 	}

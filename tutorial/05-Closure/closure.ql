@@ -14,8 +14,8 @@ printf := func(format string, args ...interface{}) (n int, err error) {
 }
 
 bar := func(foo func(string, ...interface{}) (int, error)) {
-    foo("Hello, %v!\n", "qlang")
+    foo("Hello, %v!\n", "Go+")
 }
 
 bar(printf)
-fmt.Println(printf("Hello, %v\n", "qlang"))
+fmt.Println(printf("Hello, %v\n", "Go+"))

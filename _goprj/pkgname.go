@@ -24,7 +24,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/qiniu/qlang/modutil"
+	"github.com/qiniu/goplus/modutil"
 	"github.com/qiniu/x/log"
 )
 
