@@ -232,14 +232,17 @@ func compileTypeCast(typ reflect.Type, ctx *blockCtx, v *ast.CallExpr) func() {
 	if len(v.Args) != 1 {
 		log.Panicln("compileTypeCast: invalid argument count, please use `type(expr)`")
 	}
-	ctx.infer.Push(&goValue{typ})
-	return func() {
-		compileExpr(ctx, v.Args[0])()
-		in := ctx.infer.Pop()
-		if cons, ok := in.(*constVal); ok {
-			cons.bound(typ, ctx.out)
-			return
+	xExpr := compileExpr(ctx, v.Args[0])
+	in := ctx.infer.Get(-1)
+	if cons, ok := in.(*constVal); ok {
+		cons.kind = typ.Kind()
+		return func() {
+			pushConstVal(ctx.out, cons)
 		}
+	}
+	ctx.infer.Ret(1, &goValue{typ})
+	return func() {
+		xExpr()
 		iv := in.(iValue)
 		n := iv.NumValues()
 		if n != 1 {

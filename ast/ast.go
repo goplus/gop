@@ -8,8 +8,9 @@
 package ast
 
 import (
-	"go/token"
 	"strings"
+
+	"github.com/qiniu/qlang/v6/token"
 )
 
 // ----------------------------------------------------------------------------

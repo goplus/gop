@@ -143,7 +143,7 @@ func toUint(v interface{}) uint {
 	case int:
 		return uint(n)
 	case uint:
-		return uint(n)
+		return n
 	case uint32:
 		return uint(n)
 	case int32:

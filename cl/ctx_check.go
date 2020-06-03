@@ -74,6 +74,8 @@ func isNoExecCtxExpr(ctx *blockCtx, expr ast.Expr) bool {
 		return isNoExecCtxCallExpr(ctx, v)
 	case *ast.BinaryExpr:
 		return isNoExecCtxBinaryExpr(ctx, v)
+	case *ast.UnaryExpr:
+		return isNoExecCtxExpr(ctx, v.X)
 	case *ast.SelectorExpr:
 		return isNoExecCtxExpr(ctx, v.X)
 	case *ast.IndexExpr:

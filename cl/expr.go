@@ -60,6 +60,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 		return compileCallExpr(ctx, v)
 	case *ast.BinaryExpr:
 		return compileBinaryExpr(ctx, v)
+	case *ast.UnaryExpr:
+		return compileUnaryExpr(ctx, v)
 	case *ast.SelectorExpr:
 		return compileSelectorExpr(ctx, v)
 	case *ast.IndexExpr:
@@ -459,15 +461,66 @@ func compileConst(ctx *blockCtx, kind astutil.ConstKind, n interface{}) func() {
 	ret := newConstVal(n, kind)
 	ctx.infer.Push(ret)
 	return func() {
-		if isConstBound(kind) {
-			if kind == astutil.ConstBoundRune {
-				n = rune(n.(int64))
-			}
-			ctx.out.Push(n)
-		} else {
+		pushConstVal(ctx.out, ret)
+	}
+}
+
+func pushConstVal(b exec.Builder, c *constVal) {
+	c.reserve = b.Reserve()
+	if isConstBound(c.kind) {
+		v := boundConst(c.v, exec.TypeFromKind(c.kind))
+		c.reserve.Push(b, v)
+	}
+}
+
+func compileUnaryExpr(ctx *blockCtx, v *ast.UnaryExpr) func() {
+	exprX := compileExpr(ctx, v.X)
+	x := ctx.infer.Get(-1)
+	op := unaryOps[v.Op]
+	if op == 0 {
+		if v.Op == token.ADD { // +x
+			return exprX
+		}
+	}
+	xcons, xok := x.(*constVal)
+	if xok { // op <const>
+		ret := unaryOp(op, xcons)
+		ctx.infer.Ret(1, ret)
+		return func() {
 			ret.reserve = ctx.out.Reserve()
 		}
 	}
+	kind, ret := unaryOpResult(op, x)
+	ctx.infer.Ret(1, ret)
+	return func() {
+		exprX()
+		checkUnaryOp(kind, op, x, ctx.out)
+		ctx.out.BuiltinOp(kind, op)
+	}
+}
+
+func unaryOpResult(op exec.Operator, x interface{}) (exec.Kind, iValue) {
+	vx := x.(iValue)
+	if vx.NumValues() != 1 {
+		log.Panicln("unaryOp: argument isn't an expr.")
+	}
+	kind := vx.Kind()
+	if !isConstBound(kind) {
+		log.Panicln("unaryOp: expect x aren't const values.")
+	}
+	i := op.GetInfo()
+	kindRet := kind
+	if i.Out != exec.SameAsFirst {
+		kindRet = i.Out
+	}
+	return kind, &goValue{t: exec.TypeFromKind(kindRet)}
+}
+
+var unaryOps = [...]exec.Operator{
+	token.SUB:   exec.OpNeg,
+	token.NOT:   exec.OpNot,
+	token.XOR:   exec.OpBitNot,
+	token.TILDE: exec.OpBitNot,
 }
 
 func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
@@ -631,11 +684,9 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compleMode) {
 	switch typ.Kind() {
 	case reflect.Slice, reflect.Array:
 		if cons, ok := i.(*constVal); ok {
-			if n, ok := boundConst(cons.v, exec.TyInt); ok {
-				ctx.out.SetIndex(n.(int))
-				return
-			}
-			log.Panicln("compileIndexExprLHS: index expression value type is invalid")
+			n := boundConst(cons.v, exec.TyInt)
+			ctx.out.SetIndex(n.(int))
+			return
 		}
 		exprIdx()
 		if typIdx := i.(iValue).Type(); typIdx != exec.TyInt {
@@ -698,15 +749,13 @@ func compileIdx(ctx *blockCtx, v ast.Expr, nlast int, kind reflect.Kind) int {
 	expr := compileExpr(ctx, v)
 	i := ctx.infer.Pop()
 	if cons, ok := i.(*constVal); ok {
-		if nv, ok := boundConst(cons.v, exec.TyInt); ok {
-			n := nv.(int)
-			if n <= nlast {
-				return n
-			}
-			ctx.out.Push(n)
-			return -1
+		nv := boundConst(cons.v, exec.TyInt)
+		n := nv.(int)
+		if n <= nlast {
+			return n
 		}
-		logNonIntegerIdxPanic(ctx, v, kind)
+		ctx.out.Push(n)
+		return -1
 	}
 	expr()
 	if typIdx := i.(iValue).Type(); typIdx != exec.TyInt {

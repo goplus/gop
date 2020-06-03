@@ -18,14 +18,14 @@ package parser
 
 import (
 	"fmt"
-	"go/scanner"
-	"go/token"
 	"reflect"
 	"strconv"
 	"strings"
 	"unicode"
 
 	"github.com/qiniu/qlang/v6/ast"
+	"github.com/qiniu/qlang/v6/scanner"
+	"github.com/qiniu/qlang/v6/token"
 	"github.com/qiniu/x/log"
 )
 
@@ -1630,7 +1630,7 @@ func (p *parser) parseUnaryExpr(lhs bool) ast.Expr {
 	}
 
 	switch p.tok {
-	case token.ADD, token.SUB, token.NOT, token.XOR, token.AND:
+	case token.ADD, token.SUB, token.NOT, token.XOR, token.AND, token.TILDE:
 		pos, op := p.pos, p.tok
 		p.next()
 		x := p.parseUnaryExpr(false)

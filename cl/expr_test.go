@@ -61,6 +61,38 @@ func TestUnbound(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
+var fsTestTILDE = asttest.NewSingleFileFS("/foo", "bar.ql", `
+	println(~uint32(1), ^uint32(1), +3)
+`)
+
+func TestTILDE(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestTILDE, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, _, err = newPackage(b, bar, fset)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(24) {
+		t.Fatal("n:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
 var fsTestMake = asttest.NewSingleFileFS("/foo", "bar.ql", `
 	a := make([]int, 0, 4)
 	a = append(a, 1, 2, 3)

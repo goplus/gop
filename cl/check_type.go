@@ -105,13 +105,19 @@ func checkFuncArgs(tfn iFuncType, args []interface{}, b exec.Builder) {
 	}
 }
 
+func checkUnaryOp(kind exec.Kind, op exec.Operator, x interface{}, b exec.Builder) {
+	if xcons, xok := x.(*constVal); xok {
+		if xcons.reserve != -1 {
+			xv := boundConst(xcons.v, exec.TypeFromKind(kind))
+			xcons.reserve.Push(b, xv)
+		}
+	}
+}
+
 func checkBinaryOp(kind exec.Kind, op exec.Operator, x, y interface{}, b exec.Builder) {
 	if xcons, xok := x.(*constVal); xok {
 		if xcons.reserve != -1 {
-			xv, ok := boundConst(xcons.v, exec.TypeFromKind(kind))
-			if !ok {
-				log.Panicln("checkBinaryOp: invalid operator", kind, "argument type.")
-			}
+			xv := boundConst(xcons.v, exec.TypeFromKind(kind))
 			xcons.reserve.Push(b, xv)
 		}
 	}
@@ -124,10 +130,7 @@ func checkBinaryOp(kind exec.Kind, op exec.Operator, x, y interface{}, b exec.Bu
 			kind = ycons.boundKind()
 		}
 		if ycons.reserve != -1 {
-			yv, ok := boundConst(ycons.v, exec.TypeFromKind(kind))
-			if !ok {
-				log.Panicln("checkBinaryOp: invalid operator", kind, "argument type.")
-			}
+			yv := boundConst(ycons.v, exec.TypeFromKind(kind))
 			ycons.reserve.Push(b, yv)
 		}
 	}

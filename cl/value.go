@@ -275,12 +275,27 @@ func (p *constVal) bound(t reflect.Type, b exec.Builder) {
 		}
 		return
 	}
-	v, ok := boundConst(p.v, t)
-	if !ok {
-		log.Panicln("function call with invalid argument type: requires", t, ", but got", reflect.TypeOf(p.v))
-	}
+	v := boundConst(p.v, t)
 	p.v, p.kind = v, kind
 	p.reserve.Push(b, v)
+}
+
+func unaryOp(op exec.Operator, x *constVal) *constVal {
+	i := op.GetInfo()
+	xkind := x.kind
+	var kindReal astutil.ConstKind
+	if isConstBound(xkind) {
+		kindReal = xkind
+	} else {
+		kindReal = realKindOf(xkind)
+	}
+	if (i.InFirst & (1 << kindReal)) == 0 {
+		log.Panicln("unaryOp failed: invalid argument type.")
+	}
+	t := exec.TypeFromKind(kindReal)
+	vx := boundConst(x.v, t)
+	v := CallBuiltinOp(kindReal, op, vx)
+	return &constVal{kind: xkind, v: v, reserve: -1}
 }
 
 func binaryOp(op exec.Operator, x, y *constVal) *constVal {
@@ -301,80 +316,33 @@ func binaryOp(op exec.Operator, x, y *constVal) *constVal {
 		log.Panicln("binaryOp failed: invalid first argument type.")
 	}
 	t := exec.TypeFromKind(kindReal)
-	vx, xok := boundConst(x.v, t)
-	vy, yok := boundConst(y.v, t)
-	if !xok || !yok {
-		log.Panicln("binaryOp failed: invalid argument type -", t)
-	}
+	vx := boundConst(x.v, t)
+	vy := boundConst(y.v, t)
 	v := CallBuiltinOp(kindReal, op, vx, vy)
 	return &constVal{kind: kind, v: v, reserve: -1}
 }
 
-func boundConst(v interface{}, t reflect.Type) (ret interface{}, ok bool) {
-	if t == exec.TyEmptyInterface {
-		switch nv := v.(type) {
-		case int64:
-			return int(nv), true
-		case uint64:
-			return uint(nv), true
+func boundConst(v interface{}, t reflect.Type) interface{} {
+	sval := reflect.ValueOf(v)
+	if kind := t.Kind(); kind == reflect.Complex128 || kind == reflect.Complex64 {
+		if skind := sval.Kind(); skind >= reflect.Int && skind <= reflect.Float64 {
+			fval := sval.Convert(exec.TyFloat64).Float()
+			return complex(fval, 0)
 		}
-		return v, true
 	}
-	nkind := t.Kind()
-	nv := reflect.New(t).Elem()
-	if nkind >= reflect.Int && nkind <= reflect.Int64 {
-		switch ov := v.(type) {
-		case int64:
-			nv.SetInt(ov)
-		case uint64:
-			nv.SetInt(int64(ov))
-		default:
-			return nil, false
-		}
-	} else if nkind >= reflect.Uint && nkind <= reflect.Uintptr {
-		switch ov := v.(type) {
-		case int64:
-			nv.SetUint(uint64(ov))
-		case uint64:
-			nv.SetUint(ov)
-		default:
-			return nil, false
-		}
-	} else if nkind == reflect.Float64 || nkind == reflect.Float32 {
-		switch ov := v.(type) {
-		case float64:
-			nv.SetFloat(ov)
-		case int64:
-			nv.SetFloat(float64(ov))
-		case uint64:
-			nv.SetFloat(float64(ov))
-		default:
-			return nil, false
-		}
-	} else if nkind == reflect.Complex128 || nkind == reflect.Complex64 {
-		switch ov := v.(type) {
-		case complex128:
-			nv.SetComplex(ov)
-		case float64:
-			nv.SetComplex(complex(float64(ov), 0))
-		case int64:
-			nv.SetComplex(complex(float64(ov), 0))
-		case uint64:
-			nv.SetComplex(complex(float64(ov), 0))
-		default:
-			return nil, false
-		}
-	} else if nkind == reflect.String {
-		switch ov := v.(type) {
-		case string:
-			nv.SetString(ov)
-		default:
-			return nil, false
-		}
-	} else {
-		return nil, false
+	return sval.Convert(t).Interface()
+}
+
+func constIsConvertible(v interface{}, t reflect.Type) bool {
+	styp := reflect.TypeOf(v)
+	skind := styp.Kind()
+	switch kind := t.Kind(); kind {
+	case reflect.String:
+		return skind == reflect.String
+	case reflect.Complex128, reflect.Complex64:
+		return skind >= reflect.Int && skind <= reflect.Complex128
 	}
-	return nv.Interface(), true
+	return styp.ConvertibleTo(t)
 }
 
 func realKindOf(kind astutil.ConstKind) reflect.Kind {
@@ -415,7 +383,7 @@ func boundElementType(elts []interface{}, base, max, step int) reflect.Type {
 	if tBound != nil {
 		for i := base; i < max; i += step {
 			if e, ok := elts[i].(*constVal); ok {
-				if _, ok := boundConst(e.v, tBound); !ok { // mismatched type
+				if !constIsConvertible(e.v, tBound) { // mismatched type
 					return nil
 				}
 			}

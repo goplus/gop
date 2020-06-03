@@ -8,9 +8,10 @@ package ast
 
 import (
 	"fmt"
-	"go/scanner"
-	"go/token"
 	"strconv"
+
+	"github.com/qiniu/qlang/v6/scanner"
+	"github.com/qiniu/qlang/v6/token"
 )
 
 type pkgBuilder struct {
