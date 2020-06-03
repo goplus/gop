@@ -118,7 +118,7 @@ func genGo(dir string, test bool) {
 			genGo(pkgDir, test)
 			continue
 		}
-		if strings.HasSuffix(fi.Name(), ".ql") {
+		if strings.HasSuffix(fi.Name(), ".gop") {
 			isPkg = true
 		}
 	}

@@ -30,7 +30,7 @@ import (
 
 // -----------------------------------------------------------------------------
 
-var fsTestAssign = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestAssign = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x, y := 123, "Hello"
 	x
 	y
@@ -64,7 +64,7 @@ func TestAssign(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestSwif = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestSwif = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := 0
 	t := "Hello"
 	switch {
@@ -103,7 +103,7 @@ func TestSwitchIf(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestSwif2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestSwif2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := 0
 	t := "Hello"
 	switch {
@@ -144,7 +144,7 @@ func TestSwitchIfDefault(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestSw = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestSw = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := 0
 	switch t := "Hello"; t {
 	case "xsw":
@@ -182,7 +182,7 @@ func TestSwitch(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestSw2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestSw2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := 0
 	t := "Hello"
 	switch t {
@@ -221,7 +221,7 @@ func TestSwitch2(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestSw3 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestSw3 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := 0
 	t := "Hello"
 	switch t {
@@ -260,7 +260,7 @@ func TestDefault(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestIf = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestIf = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := 0
 	if t := false; t {
 		x = 3
@@ -295,7 +295,7 @@ func TestIf(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestIf2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestIf2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := 5
 	if true {
 		x = 3
@@ -328,7 +328,7 @@ func TestIf2(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestReturn = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestReturn = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	import (
 		"fmt"
 		"strings"
@@ -369,7 +369,7 @@ func TestReturn(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestReturn2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestReturn2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	func max(a, b int) int {
 		if a < b {
 			a = b
@@ -408,7 +408,7 @@ func TestReturn2(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestFunc = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestFunc = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	import "fmt"
 
 	func foo(x string) (n int, err error) {
@@ -447,7 +447,7 @@ func TestFunc(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestFuncv = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestFuncv = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	import "fmt"
 
 	func foo(format string, args ...interface{}) (n int, err error) {
@@ -491,7 +491,7 @@ func TestFuncv(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestClosure = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestClosure = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	import "fmt"
 
 	foo := func(prompt string) (n int, err error) {
@@ -531,7 +531,7 @@ func TestClosure(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestClosurev = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestClosurev = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	import "fmt"
 
 	foo := func(format string, args ...interface{}) (n int, err error) {
@@ -570,7 +570,7 @@ func TestClosurev(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestForPhraseStmt = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestForPhraseStmt = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	sum := 0
 	for x <- [1, 3, 5, 7], x < 7 {
 		sum += x
@@ -606,7 +606,7 @@ func TestForPhraseStmt(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestForPhraseStmt2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestForPhraseStmt2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	fns := make([]func() int, 3)
 	for i, x <- [3, 15, 777] {
 		v := x
@@ -645,7 +645,7 @@ func TestForPhraseStmt2(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestForRangeStmt = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestForRangeStmt = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	sum := 0
 	for x := range [1, 3, 5, 7] {
 		if x < 7 {

@@ -34,7 +34,7 @@ func init() {
 
 // -----------------------------------------------------------------------------
 
-var fsTest1 = asttest.NewSingleFileFS("/foo", "bar.ql", `package bar; import "io"
+var fsTest1 = asttest.NewSingleFileFS("/foo", "bar.gop", `package bar; import "io"
 func New() (*Bar, error) {
 	return nil, io.EOF
 }
@@ -51,7 +51,7 @@ func TestParseBarPackage(t *testing.T) {
 		t.Fatal("ParseFSDir failed:", err, len(pkgs))
 	}
 	bar := pkgs["bar"]
-	file := bar.Files["/foo/bar.ql"]
+	file := bar.Files["/foo/bar.gop"]
 	fmt.Println("Pkg:", file.Name)
 	for _, decl := range file.Decls {
 		fmt.Println("decl:", reflect.TypeOf(decl))
@@ -71,7 +71,7 @@ func TestParseBarPackage(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTest2 = asttest.NewSingleFileFS("/foo", "bar.ql", `import "io"
+var fsTest2 = asttest.NewSingleFileFS("/foo", "bar.gop", `import "io"
 func New() (*Bar, error) {
 	return nil, io.EOF
 }
@@ -92,7 +92,7 @@ func TestParseNoPackageAndGlobalCode(t *testing.T) {
 	if !isMain {
 		t.Fatal("TestParseNoPackageAndGlobalCode failed: not main")
 	}
-	file := bar.Files["/foo/bar.ql"]
+	file := bar.Files["/foo/bar.gop"]
 	fmt.Println("Pkg:", file.Name)
 	for _, decl := range file.Decls {
 		fmt.Println("decl:", reflect.TypeOf(decl))
@@ -112,7 +112,7 @@ func TestParseNoPackageAndGlobalCode(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestMapLit = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestMapLit = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := {"Hello": 1, "xsw": 3.4}
 	println("x:", x)
 `)
@@ -127,7 +127,7 @@ func TestMapLit(t *testing.T) {
 	if !isMain {
 		t.Fatal("TestMap failed: not main")
 	}
-	file := bar.Files["/foo/bar.ql"]
+	file := bar.Files["/foo/bar.gop"]
 	fmt.Println("Pkg:", file.Name)
 	for _, decl := range file.Decls {
 		fmt.Println("decl:", reflect.TypeOf(decl))
@@ -147,7 +147,7 @@ func TestMapLit(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestSliceLit = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestSliceLit = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := [1, 3.4, 5.6]
 	println("x:", x)
 `)
@@ -162,7 +162,7 @@ func TestSliceLit(t *testing.T) {
 	if !isMain {
 		t.Fatal("TestMap failed: not main")
 	}
-	file := bar.Files["/foo/bar.ql"]
+	file := bar.Files["/foo/bar.gop"]
 	fmt.Println("Pkg:", file.Name)
 	for _, decl := range file.Decls {
 		fmt.Println("decl:", reflect.TypeOf(decl))
@@ -182,7 +182,7 @@ func TestSliceLit(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestSliceLit2 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestSliceLit2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := [5.6]
 	println("x:", x)
 `)
@@ -197,7 +197,7 @@ func TestSliceLit2(t *testing.T) {
 	if !isMain {
 		t.Fatal("TestMap failed: not main")
 	}
-	file := bar.Files["/foo/bar.ql"]
+	file := bar.Files["/foo/bar.gop"]
 	fmt.Println("Pkg:", file.Name)
 	for _, decl := range file.Decls {
 		fmt.Println("decl:", reflect.TypeOf(decl))
@@ -217,7 +217,7 @@ func TestSliceLit2(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestSliceLit3 = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestSliceLit3 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := []
 	println("x:", x)
 `)
@@ -232,7 +232,7 @@ func TestSliceLit3(t *testing.T) {
 	if !isMain {
 		t.Fatal("TestMap failed: not main")
 	}
-	file := bar.Files["/foo/bar.ql"]
+	file := bar.Files["/foo/bar.gop"]
 	fmt.Println("Pkg:", file.Name)
 	for _, decl := range file.Decls {
 		fmt.Println("decl:", reflect.TypeOf(decl))
@@ -252,7 +252,7 @@ func TestSliceLit3(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestListComprehension = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestListComprehension = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := [x*x for x <- [1, 2, 3, 4], x > 2]
 	println("x:", x)
 `)
@@ -267,7 +267,7 @@ func TestListComprehension(t *testing.T) {
 	if !isMain {
 		t.Fatal("TestMap failed: not main")
 	}
-	file := bar.Files["/foo/bar.ql"]
+	file := bar.Files["/foo/bar.gop"]
 	fmt.Println("Pkg:", file.Name)
 	for _, decl := range file.Decls {
 		fmt.Println("decl:", reflect.TypeOf(decl))
@@ -287,7 +287,7 @@ func TestListComprehension(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestMapComprehension = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestMapComprehension = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := {v: k*k for k, v <- [3, 5, 7, 11]}
 	println("x:", x)
 `)
@@ -302,7 +302,7 @@ func TestMapComprehension(t *testing.T) {
 	if !isMain {
 		t.Fatal("TestMap failed: not main")
 	}
-	file := bar.Files["/foo/bar.ql"]
+	file := bar.Files["/foo/bar.gop"]
 	fmt.Println("Pkg:", file.Name)
 	for _, decl := range file.Decls {
 		fmt.Println("decl:", reflect.TypeOf(decl))
@@ -322,7 +322,7 @@ func TestMapComprehension(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestMapComprehensionCond = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestMapComprehensionCond = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := {v: k*k for k, v <- [3, 5, 7, 11], k % 2 == 1}
 	println("x:", x)
 
@@ -345,7 +345,7 @@ func TestMapComprehensionCond(t *testing.T) {
 	if !isMain {
 		t.Fatal("TestMap failed: not main")
 	}
-	file := bar.Files["/foo/bar.ql"]
+	file := bar.Files["/foo/bar.gop"]
 	fmt.Println("Pkg:", file.Name)
 	for _, decl := range file.Decls {
 		fmt.Println("decl:", reflect.TypeOf(decl))
@@ -365,7 +365,7 @@ func TestMapComprehensionCond(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestListComprehensionEx = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestListComprehensionEx = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	arr := [1, 2, 3, 4, 5, 6]
 	x := [[a, b] for a <- arr, a < b for b <- arr, b > 2]
 	println("x:", x)
@@ -381,7 +381,7 @@ func TestListComprehensionEx(t *testing.T) {
 	if !isMain {
 		t.Fatal("TestMap failed: not main")
 	}
-	file := bar.Files["/foo/bar.ql"]
+	file := bar.Files["/foo/bar.gop"]
 	fmt.Println("Pkg:", file.Name)
 	for _, decl := range file.Decls {
 		fmt.Println("decl:", reflect.TypeOf(decl))
@@ -401,7 +401,7 @@ func TestListComprehensionEx(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestFor = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestFor = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	sum := 0
 	for x <- [1, 3, 5, 7, 11], x > 3 {
 		sum += x
@@ -425,7 +425,7 @@ func TestFor(t *testing.T) {
 	if !isMain {
 		t.Fatal("TestMap failed: not main")
 	}
-	file := bar.Files["/foo/bar.ql"]
+	file := bar.Files["/foo/bar.gop"]
 	fmt.Println("Pkg:", file.Name)
 	for _, decl := range file.Decls {
 		fmt.Println("decl:", reflect.TypeOf(decl))
@@ -445,7 +445,7 @@ func TestFor(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestMake = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestMake = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	a := make([]int, 0, 4)
 	a = append(a, [1, 2, 3]...)
 
@@ -463,7 +463,7 @@ func TestMake(t *testing.T) {
 	if !isMain {
 		t.Fatal("TestMap failed: not main")
 	}
-	file := bar.Files["/foo/bar.ql"]
+	file := bar.Files["/foo/bar.gop"]
 	fmt.Println("Pkg:", file.Name)
 	for _, decl := range file.Decls {
 		fmt.Println("decl:", reflect.TypeOf(decl))
@@ -483,7 +483,7 @@ func TestMake(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestTILDE = asttest.NewSingleFileFS("/foo", "bar.ql", `
+var fsTestTILDE = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	println(~uint32(1), ^uint32(1))
 `)
 
@@ -497,7 +497,7 @@ func TestTILDE(t *testing.T) {
 	if !isMain {
 		t.Fatal("TestTILDE failed: not main")
 	}
-	file := bar.Files["/foo/bar.ql"]
+	file := bar.Files["/foo/bar.gop"]
 	fmt.Println("Pkg:", file.Name)
 	for _, decl := range file.Decls {
 		fmt.Println("decl:", reflect.TypeOf(decl))
