@@ -159,7 +159,7 @@ qgo -test <gopSrcDir>
 
 Note:
 
-* `qgo -test <gopSrcDir>` converts Go+ packages into Go packages, and for every package, it call `go run <gopPkgDir>/gop_autogen.go` and `qrun -quiet <gopPkgDir>` to compare their output. If their outputs aren't equal, the test case fails.
+* `qgo -test <gopSrcDir>` converts Go+ packages into Go packages, and for every package, it call `go run <gopPkgDir>/gop_autogen.go` and `qrun -quiet <gopPkgDir>` to compare their outputs. If their outputs aren't equal, the test case fails.
 
 ### Map literal
 
