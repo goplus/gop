@@ -63,7 +63,7 @@ func TestUnbound(t *testing.T) {
 
 var fsTestTILDE = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x := uint32(1)
-	println(~x, ^uint32(1), +3)
+	println(^x, ^uint32(1), +3)
 `)
 
 func TestTILDE(t *testing.T) {

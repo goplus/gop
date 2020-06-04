@@ -45,6 +45,13 @@ func QexecPrintf(arity int, p *gop.Context) {
 	p.Ret(arity, n, err)
 }
 
+// QexecErrorf instr
+func QexecErrorf(arity int, p *gop.Context) {
+	args := p.GetArgs(arity)
+	err := fmt.Errorf(args[0].(string), args[1:]...)
+	p.Ret(arity, err)
+}
+
 // QexecPrintln instr
 func QexecPrintln(arity int, p *gop.Context) {
 	args := p.GetArgs(arity)
@@ -75,6 +82,7 @@ func init() {
 		I.Func("panic", qlPanic, execPanic),
 	)
 	I.RegisterFuncvs(
+		I.Funcv("errorf", fmt.Errorf, QexecErrorf),
 		I.Funcv("print", fmt.Print, QexecPrint),
 		I.Funcv("printf", fmt.Printf, QexecPrintf),
 		I.Funcv("println", fmt.Println, QexecPrintln),

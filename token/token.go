@@ -126,7 +126,7 @@ const (
 	VAR
 	keyword_end
 
-	TILDE = operator_end // ~
+	QUESTION = operator_end // ~
 )
 
 var tokens = [...]string{
@@ -197,7 +197,7 @@ var tokens = [...]string{
 	RBRACE:    "}",
 	SEMICOLON: ";",
 	COLON:     ":",
-	TILDE:     "~",
+	QUESTION:  "?",
 
 	BREAK:    "break",
 	CASE:     "case",

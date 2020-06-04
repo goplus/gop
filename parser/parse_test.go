@@ -483,13 +483,13 @@ func TestMake(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestTILDE = asttest.NewSingleFileFS("/foo", "bar.gop", `
-	println(~uint32(1), ^uint32(1))
+var fsTestXOR = asttest.NewSingleFileFS("/foo", "bar.gop", `
+	println(^uint32(1))
 `)
 
-func TestTILDE(t *testing.T) {
+func TestXOR(t *testing.T) {
 	fset := token.NewFileSet()
-	pkgs, err := ParseFSDir(fset, fsTestTILDE, "/foo", nil, Trace)
+	pkgs, err := ParseFSDir(fset, fsTestXOR, "/foo", nil, Trace)
 	if err != nil || len(pkgs) != 1 {
 		t.Fatal("ParseFSDir failed:", err, len(pkgs))
 	}

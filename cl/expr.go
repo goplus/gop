@@ -517,10 +517,9 @@ func unaryOpResult(op exec.Operator, x interface{}) (exec.Kind, iValue) {
 }
 
 var unaryOps = [...]exec.Operator{
-	token.SUB:   exec.OpNeg,
-	token.NOT:   exec.OpNot,
-	token.XOR:   exec.OpBitNot,
-	token.TILDE: exec.OpBitNot,
+	token.SUB: exec.OpNeg,
+	token.NOT: exec.OpNot,
+	token.XOR: exec.OpBitNot,
 }
 
 func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {

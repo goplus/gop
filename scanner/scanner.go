@@ -924,8 +924,8 @@ scanAgain:
 			}
 		case '|':
 			tok = s.switch3(token.OR, token.OR_ASSIGN, '|', token.LOR)
-		case '~':
-			tok = token.TILDE
+		case '?':
+			tok = token.QUESTION
 		default:
 			// next reports unexpected BOMs - don't repeat
 			if ch != bom {
