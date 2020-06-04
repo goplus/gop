@@ -275,6 +275,7 @@ func (p *Builder) CallGoFuncv(fun exec.GoFuncvAddr, nexpr, arity int) *Builder {
 }
 
 var builtinFnvs = map[string][2]string{
+	"errorf":  {"fmt", "Errorf"},
 	"print":   {"fmt", "Print"},
 	"printf":  {"fmt", "Printf"},
 	"println": {"fmt", "Println"},
