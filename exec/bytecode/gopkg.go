@@ -46,6 +46,23 @@ func execGoFuncv(i Instr, p *Context) {
 	fun.exec(arity, p)
 }
 
+func execLoadGoVar(i Instr, p *Context) {
+	idx := i & bitsOperand
+	v := reflect.ValueOf(gofuns[idx].This).Elem()
+	p.Push(v.Interface())
+}
+
+func execStoreGoVar(i Instr, p *Context) {
+	idx := i & bitsOperand
+	v := reflect.ValueOf(gofuns[idx].This).Elem()
+	v.Set(reflect.ValueOf(p.Pop()))
+}
+
+func execAddrGoVar(i Instr, p *Context) {
+	idx := i & bitsOperand
+	p.Push(gofuns[idx].This)
+}
+
 // -----------------------------------------------------------------------------
 
 // A ConstKind represents the specific kind of type that a Type represents.
@@ -348,6 +365,27 @@ func (p *Builder) CallGoFuncv(fun GoFuncvAddr, arity int) *Builder {
 		arity = bitsFuncvArityMax
 	}
 	i := (opCallGoFuncv << bitsOpShift) | (uint32(arity) << bitsOpCallFuncvShift) | uint32(fun)
+	p.code.data = append(p.code.data, i)
+	return p
+}
+
+// LoadGoVar instr
+func (p *Builder) LoadGoVar(addr GoVarAddr) *Builder {
+	i := (opLoadGoVar << bitsOpShift) | uint32(addr)
+	p.code.data = append(p.code.data, i)
+	return p
+}
+
+// StoreGoVar instr
+func (p *Builder) StoreGoVar(addr GoVarAddr) *Builder {
+	i := (opStoreGoVar << bitsOpShift) | uint32(addr)
+	p.code.data = append(p.code.data, i)
+	return p
+}
+
+// AddrGoVar instr
+func (p *Builder) AddrGoVar(addr GoVarAddr) *Builder {
+	i := (opAddrGoVar << bitsOpShift) | uint32(addr)
 	p.code.data = append(p.code.data, i)
 	return p
 }

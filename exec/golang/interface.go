@@ -70,6 +70,11 @@ func (p *interfaceImpl) GetGoFuncvInfo(addr exec.GoFuncvAddr) *exec.GoFuncInfo {
 	return qexecImpl.GetGoFuncvInfo(addr)
 }
 
+// GetGoVarInfo returns a Go variable's information.
+func (p *interfaceImpl) GetGoVarInfo(addr exec.GoVarAddr) *exec.GoVarInfo {
+	return qexecImpl.GetGoVarInfo(addr)
+}
+
 // -----------------------------------------------------------------------------
 
 type iBuilder Builder
@@ -274,6 +279,24 @@ func (p *iBuilder) StoreVar(v exec.Var) exec.Builder {
 // AddrVar instr
 func (p *iBuilder) AddrVar(v exec.Var) exec.Builder {
 	((*Builder)(p)).AddrVar(v.(*Var))
+	return p
+}
+
+// LoadGoVar instr
+func (p *iBuilder) LoadGoVar(addr exec.GoVarAddr) exec.Builder {
+	((*Builder)(p)).LoadGoVar(addr)
+	return p
+}
+
+// StoreGoVar instr
+func (p *iBuilder) StoreGoVar(addr exec.GoVarAddr) exec.Builder {
+	((*Builder)(p)).StoreGoVar(addr)
+	return p
+}
+
+// AddrGoVar instr
+func (p *iBuilder) AddrGoVar(addr exec.GoVarAddr) exec.Builder {
+	((*Builder)(p)).AddrGoVar(addr)
 	return p
 }
 
