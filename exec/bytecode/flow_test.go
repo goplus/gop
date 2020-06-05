@@ -18,11 +18,38 @@ package bytecode
 
 import (
 	"testing"
+
+	"github.com/qiniu/goplus/exec.spec"
 )
 
 // -----------------------------------------------------------------------------
 
 func TestIf1(t *testing.T) {
+	label1 := defaultImpl.NewLabel("a").(*Label)
+	label2 := NewLabel("b")
+	code := newBuilder().
+		Push(true).
+		JmpIf(exec.JcNil, label1).
+		Push(50).
+		Push(6).
+		BuiltinOp(Int, OpDiv).
+		Jmp(label2).
+		Label(label1).
+		Push(5).
+		Push(2).
+		BuiltinOp(Int, OpMod).
+		Label(label2).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != 8 {
+		t.Fatal("50 6 div != 8, ret =", v)
+	}
+	_ = label1.Name()
+}
+
+func TestIf11(t *testing.T) {
 	label1 := defaultImpl.NewLabel("a").(*Label)
 	label2 := NewLabel("b")
 	code := newBuilder().
@@ -51,6 +78,30 @@ func TestIf2(t *testing.T) {
 	label1 := NewLabel("a")
 	label2 := NewLabel("b")
 	code := newBuilder().
+		Push(nil).
+		JmpIf(exec.JcNil, label1).
+		Push(5).
+		Push(6).
+		BuiltinOp(Int, OpMul).
+		Jmp(label2).
+		Label(label1).
+		Push(5.0).
+		Push(2.0).
+		BuiltinOp(Float64, OpMul).
+		Label(label2).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != 10.0 {
+		t.Fatal("5.0 2.0 mul != 10.0, ret =", v)
+	}
+}
+
+func TestIf22(t *testing.T) {
+	label1 := NewLabel("a")
+	label2 := NewLabel("b")
+	code := newBuilder().
 		Push(false).
 		JmpIf(0, label1).
 		Push(5).
@@ -76,6 +127,30 @@ func TestIf3(t *testing.T) {
 	label2 := NewLabel("b")
 	code := newBuilder().
 		Push(true).
+		JmpIf(exec.JcNotNil, label1).
+		Push(5).
+		Push(6).
+		BuiltinOp(Int, OpMul).
+		Jmp(label2).
+		Label(label1).
+		Push(5.0).
+		Push(2.0).
+		BuiltinOp(Float64, OpMul).
+		Label(label2).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != 10.0 {
+		t.Fatal("5.0 2.0 mul != 10.0, ret =", v)
+	}
+}
+
+func TestIf33(t *testing.T) {
+	label1 := NewLabel("a")
+	label2 := NewLabel("b")
+	code := newBuilder().
+		Push(true).
 		JmpIf(1, label1).
 		Push(5).
 		Push(6).
@@ -96,6 +171,30 @@ func TestIf3(t *testing.T) {
 }
 
 func TestIf4(t *testing.T) {
+	label1 := NewLabel("a")
+	label2 := NewLabel("b")
+	code := newBuilder().
+		Push(nil).
+		JmpIf(exec.JcNotNil, label1).
+		Push(5).
+		Push(6).
+		BuiltinOp(Int, OpMul).
+		Jmp(label2).
+		Label(label1).
+		Push(5.0).
+		Push(2.0).
+		BuiltinOp(Float64, OpMul).
+		Label(label2).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != 30 {
+		t.Fatal("5.0 2.0 mul != 10.0, ret =", v)
+	}
+}
+
+func TestIf44(t *testing.T) {
 	label1 := NewLabel("a")
 	label2 := NewLabel("b")
 	code := newBuilder().

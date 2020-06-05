@@ -126,6 +126,7 @@ var (
 	gopRet     = Ident("_gop_ret")
 	appendIden = Ident("append")
 	makeIden   = Ident("make")
+	nilIden    = Ident("nil")
 )
 
 // Resolve resolves all unresolved labels/functions/consts/etc.

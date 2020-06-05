@@ -4,6 +4,8 @@ import (
 	"go/ast"
 	"go/token"
 	"reflect"
+
+	"github.com/qiniu/goplus/exec.spec"
 )
 
 // ----------------------------------------------------------------------------
@@ -61,10 +63,15 @@ func GotoIf(p *Builder, cond ast.Expr, l *Label) *ast.IfStmt {
 }
 
 // JmpIf instr
-func (p *Builder) JmpIf(zeroOrOne uint32, l *Label) *Builder {
+func (p *Builder) JmpIf(jc exec.JmpCond, l *Label) *Builder {
 	cond := p.rhs.Pop().(ast.Expr)
-	if zeroOrOne == 0 {
+	switch jc {
+	case exec.JcFalse:
 		cond = &ast.UnaryExpr{Op: token.NOT, X: cond}
+	case exec.JcNil:
+		cond = &ast.BinaryExpr{Op: token.EQL, X: cond, Y: nilIden}
+	case exec.JcNotNil:
+		cond = &ast.BinaryExpr{Op: token.NEQ, X: cond, Y: nilIden}
 	}
 	p.emitStmt(GotoIf(p, cond, l))
 	return p
@@ -95,6 +102,12 @@ func (p *Builder) CaseNE(l *Label, arity int) *Builder {
 func (p *Builder) Default() *Builder {
 	p.rhs.PopN(1)
 	return p
+}
+
+// ErrWrap instr
+func (p *Builder) ErrWrap(panicErr bool, n int) *Builder {
+	panic("todo")
+	//return p
 }
 
 // ----------------------------------------------------------------------------

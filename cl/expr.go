@@ -64,6 +64,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 		return compileUnaryExpr(ctx, v)
 	case *ast.SelectorExpr:
 		return compileSelectorExpr(ctx, v)
+	case *ast.ErrWrapExpr:
+		return compileErrWrapExpr(ctx, v)
 	case *ast.IndexExpr:
 		return compileIndexExpr(ctx, v)
 	case *ast.SliceExpr:
@@ -805,6 +807,24 @@ func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr) func() { // x[i]
 		default:
 			log.Panicln("compileIndexExpr: unknown -", typ)
 		}
+	}
+}
+
+func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr) func() {
+	exprX := compileExpr(ctx, v.X)
+	x := ctx.infer.Get(-1).(iValue)
+	nx := x.NumValues()
+	if nx < 1 || !x.Value(nx-1).Type().Implements(exec.TyError) {
+		log.Panicln("compileErrWrapExpr: last expr doesn't implement `error` interface")
+	}
+	ctx.infer.Ret(1, &wrapValue{x})
+	return func() {
+		exprX()
+		if v.Default == nil { // expr? or expr!
+			ctx.out.ErrWrap(v.Tok == token.NOT, nx)
+			return
+		}
+		panic("todo")
 	}
 }
 

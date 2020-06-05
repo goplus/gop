@@ -112,7 +112,7 @@ func ComplexConst(v complex128) ast.Expr {
 // Const instr
 func Const(p *Builder, val interface{}) ast.Expr {
 	if val == nil {
-		return Ident("nil")
+		return nilIden
 	}
 	v := reflect.ValueOf(val)
 	kind := v.Kind()

@@ -92,6 +92,20 @@ type FuncInfo interface {
 	IsUnnamedOut() bool
 }
 
+// JmpCond represents condition of Jmp intruction.
+type JmpCond uint32
+
+const (
+	// JcFalse - JmpIfFalse
+	JcFalse JmpCond = 0
+	// JcTrue - JmpIfTrue
+	JcTrue JmpCond = 1
+	// JcNil - JmpIfNil
+	JcNil JmpCond = 2
+	// JcNotNil - JmpIfNotNil
+	JcNotNil JmpCond = 3
+)
+
 // SymbolKind represents symbol kind.
 type SymbolKind uint32
 
@@ -158,13 +172,16 @@ type Builder interface {
 	Jmp(l Label) Builder
 
 	// JmpIf instr
-	JmpIf(zeroOrOne uint32, l Label) Builder
+	JmpIf(cond JmpCond, l Label) Builder
 
 	// CaseNE instr
 	CaseNE(l Label, arity int) Builder
 
 	// Default instr
 	Default() Builder
+
+	// ErrWrap instr
+	ErrWrap(panicErr bool, n int) Builder
 
 	// ForPhrase instr
 	ForPhrase(f ForPhrase, key, val Var, hasExecCtx ...bool) Builder

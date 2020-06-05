@@ -169,8 +169,8 @@ func (p *iBuilder) Jmp(l exec.Label) exec.Builder {
 }
 
 // JmpIf instr
-func (p *iBuilder) JmpIf(zeroOrOne uint32, l exec.Label) exec.Builder {
-	((*Builder)(p)).JmpIf(zeroOrOne, l.(*Label))
+func (p *iBuilder) JmpIf(cond exec.JmpCond, l exec.Label) exec.Builder {
+	((*Builder)(p)).JmpIf(cond, l.(*Label))
 	return p
 }
 
@@ -183,6 +183,12 @@ func (p *iBuilder) CaseNE(l exec.Label, arity int) exec.Builder {
 // Default instr
 func (p *iBuilder) Default() exec.Builder {
 	((*Builder)(p)).Default()
+	return p
+}
+
+// ErrWrap instr
+func (p *iBuilder) ErrWrap(panicErr bool, n int) exec.Builder {
+	((*Builder)(p)).ErrWrap(panicErr, n)
 	return p
 }
 

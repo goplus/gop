@@ -81,8 +81,8 @@ const (
 	opMake          = 8  // funvArity(10) type(16)
 	opAppend        = 9  // arity(26)
 	opBuiltinOp     = 10 // reserved(16) kind(5) builtinOp(5)
-	opJmp           = 11 // reserved(1) offset(25)
-	opJmpIf         = 12 // bool(1) offset(25)
+	opJmp           = 11 // reserved(2) offset(24)
+	opJmpIf         = 12 // cond(2) offset(24)
 	opCaseNE        = 13 // n(10) offset(16)
 	opPop           = 14 // n(26)
 	opLoadVar       = 15 // varScope(6) addr(20)
@@ -110,8 +110,9 @@ const (
 	opTypeCast      = 37 // type(26)
 	opSlice         = 38 // i(13) j(13)
 	opSlice3        = 39 // i(13) j(13)
-	opMapIndex      = 40 // reserved(26) set(1)
+	opMapIndex      = 40 // reserved(25) set(1)
 	opGoBuiltin     = 41 // op(26)
+	opErrWrap       = 42 // reserved(25) panicErr(1)
 )
 
 const (
@@ -162,7 +163,7 @@ var instrInfos = []InstrInfo{
 	opAppend:        {"append", "", "arity", 26},                          // arity(26)
 	opBuiltinOp:     {"builtinOp", "kind", "op", (21 << 8) | 5},           // reserved(16) kind(5) builtinOp(5)
 	opJmp:           {"jmp", "", "offset", 26},                            // offset(26)
-	opJmpIf:         {"jmpIf", "bool", "offset", (1 << 8) | 25},           // bool(1) offset(25)
+	opJmpIf:         {"jmpIf", "cond", "offset", (2 << 8) | 24},           // cond(2) offset(24)
 	opCaseNE:        {"caseNE", "n", "offset", (10 << 8) | 16},            // n(10) offset(16)
 	opPop:           {"pop", "", "n", 26},                                 // n(26)
 	opLoadVar:       {"loadVar", "varScope", "addr", (6 << 8) | 20},       // varScope(6) addr(20)
@@ -192,6 +193,7 @@ var instrInfos = []InstrInfo{
 	opSlice3:        {"slice3", "i", "j", (13 << 8) | 13},                 // i(13) j(13)
 	opMapIndex:      {"mapIndex", "", "set", 26},                          // reserved(25) set(1)
 	opGoBuiltin:     {"goBuiltin", "", "op", 26},                          // op(26)
+	opErrWrap:       {"errWrap", "", "panicErr", 26},                      // reserved(25) panicErr(1)
 }
 
 // -----------------------------------------------------------------------------

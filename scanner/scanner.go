@@ -915,6 +915,9 @@ scanAgain:
 			tok = s.switch2(token.ASSIGN, token.EQL)
 		case '!':
 			tok = s.switch2(token.NOT, token.NEQ)
+			if tok == token.NOT {
+				insertSemi = true
+			}
 		case '&':
 			if s.ch == '^' {
 				s.next()
@@ -926,6 +929,7 @@ scanAgain:
 			tok = s.switch3(token.OR, token.OR_ASSIGN, '|', token.LOR)
 		case '?':
 			tok = token.QUESTION
+			insertSemi = true
 		default:
 			// next reports unexpected BOMs - don't repeat
 			if ch != bom {

@@ -10,5 +10,5 @@ func bar(n int) (int, error) {
     return n, nil
 }
 
-bar(-1)
-println("bar(-1):", bar(false ? -1 : 1) ? 0)
+foo()!
+println("bar(-1):", bar(false ? 1 : -1) ? 0)

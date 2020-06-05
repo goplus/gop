@@ -983,3 +983,32 @@ func TestMapComprehension4(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
+var fsTestErrWrapExpr = asttest.NewSingleFileFS("/foo", "bar.gop", `
+	x := println("Hello qiniu")!
+	x
+`)
+
+func _TestErrWrapExpr(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestErrWrapExpr, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, _, err = newPackage(b, bar, fset)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := ctx.Get(-1); v != int(28) {
+		t.Fatal("n:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------

@@ -89,6 +89,34 @@ func (p *nonValue) Value(i int) iValue {
 
 // -----------------------------------------------------------------------------
 
+type wrapValue struct {
+	x iValue
+}
+
+func (p *wrapValue) Type() reflect.Type {
+	if p.x.NumValues() != 2 {
+		panic("don't call me")
+	}
+	return p.x.Value(0).Type()
+}
+
+func (p *wrapValue) Kind() iKind {
+	if p.x.NumValues() != 2 {
+		panic("don't call me")
+	}
+	return p.x.Value(0).Kind()
+}
+
+func (p *wrapValue) NumValues() int {
+	return p.x.NumValues() - 1
+}
+
+func (p *wrapValue) Value(i int) iValue {
+	return p.x.Value(i)
+}
+
+// -----------------------------------------------------------------------------
+
 type funcResults struct {
 	tfn reflect.Type
 }

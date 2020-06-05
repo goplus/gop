@@ -319,11 +319,12 @@ func (*TernaryExpr) exprNode() {}
 
 // -----------------------------------------------------------------------------
 
-// ErrWrapExpr represents `expr?` or `expr? defaultValue`
+// ErrWrapExpr represents `expr!`, `expr?` or `expr? defaultValue`
 type ErrWrapExpr struct {
-	X        Expr
-	Question token.Pos
-	Default  Expr // can be nil
+	X       Expr
+	Tok     token.Token // ! or ?
+	TokPos  token.Pos
+	Default Expr // can be nil
 }
 
 // Pos - position of first character belonging to the node
@@ -336,7 +337,7 @@ func (p *ErrWrapExpr) End() token.Pos {
 	if p.Default != nil {
 		return p.Default.End()
 	}
-	return p.Question
+	return p.TokPos
 }
 
 func (*ErrWrapExpr) exprNode() {}

@@ -3,12 +3,14 @@ package golang
 import (
 	"io/ioutil"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/qiniu/goplus/ast"
 	"github.com/qiniu/goplus/cl"
 	"github.com/qiniu/goplus/parser"
 	"github.com/qiniu/goplus/token"
+	"github.com/qiniu/x/log"
 )
 
 func saveGoFile(dir string, code *Code) error {
@@ -32,7 +34,14 @@ func getPkg(pkgs map[string]*ast.Package) *ast.Package {
 	return nil
 }
 
-func testGenGo(t *testing.T, pkgDir string) {
+func testGenGo(t *testing.T, pkgDir, sel, exclude string) {
+	if sel != "" && !strings.Contains(pkgDir, sel) {
+		return
+	}
+	if exclude != "" && strings.Contains(pkgDir, exclude) {
+		return
+	}
+	log.Debug("Compiling", pkgDir)
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseDir(fset, pkgDir, nil, 0)
 	if err != nil || len(pkgs) != 1 {
@@ -53,6 +62,7 @@ func testGenGo(t *testing.T, pkgDir string) {
 }
 
 func TestGenGofile(t *testing.T) {
+	sel, exclude := "", "17"
 	dir, err := os.Getwd()
 	if err != nil {
 		t.Fatal("Getwd failed:", err)
@@ -63,7 +73,7 @@ func TestGenGofile(t *testing.T) {
 		t.Fatal("ReadDir failed:", err)
 	}
 	for _, fi := range fis {
-		testGenGo(t, dir+"/"+fi.Name())
+		testGenGo(t, dir+"/"+fi.Name(), sel, exclude)
 	}
 }
 

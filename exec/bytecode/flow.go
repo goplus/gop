@@ -17,16 +17,18 @@
 package bytecode
 
 import (
+	exec "github.com/qiniu/goplus/exec.spec"
 	"github.com/qiniu/x/log"
 )
 
 // -----------------------------------------------------------------------------
 
 const (
-	bitsOpJmp           = bitsOp + 1
-	bitsOpJmpIfCond     = bitsInstr - bitsOpJmp
-	bitsOpJmpIfCondFlag = 1 << bitsOpJmpIfCond
-	bitsOpJmpOperand    = bitsOpJmpIfCondFlag - 1
+	bitsOpJmp             = bitsOp + 2
+	bitsOpJmpIfCond       = bitsInstr - bitsOpJmp
+	bitsOpJmpBoolCondFlag = 1 << bitsOpJmpIfCond
+	bitsOpJmpPtrCondFlag  = 2 << bitsOpJmpIfCond
+	bitsOpJmpOperand      = bitsOpJmpBoolCondFlag - 1
 )
 
 func execJmp(i Instr, ctx *Context) {
@@ -35,15 +37,25 @@ func execJmp(i Instr, ctx *Context) {
 }
 
 func execJmpIf(i Instr, ctx *Context) {
-	cond := ctx.Pop().(bool)
-	if (i & bitsOpJmpIfCondFlag) == 0 {
-		if cond {
+	v := ctx.Pop()
+	if (i & bitsOpJmpPtrCondFlag) != 0 {
+		if (i & bitsOpJmpBoolCondFlag) == 0 {
+			if v != nil {
+				return
+			}
+		} else if v == nil {
 			return
 		}
-	} else if !cond {
-		return
+	} else {
+		cond := v.(bool)
+		if (i & bitsOpJmpBoolCondFlag) == 0 {
+			if cond {
+				return
+			}
+		} else if !cond {
+			return
+		}
 	}
-	log.Debug("execJmpIf:", cond, "if:", (i&bitsOpJmpIfCondFlag) != 0)
 	execJmp(i, ctx)
 }
 
@@ -135,8 +147,8 @@ func (p *Builder) Jmp(l *Label) *Builder {
 }
 
 // JmpIf instr
-func (p *Builder) JmpIf(zeroOrOne uint32, l *Label) *Builder {
-	return p.labelOp((opJmpIf<<bitsOpShift)|(zeroOrOne<<bitsOpJmpIfCond), l)
+func (p *Builder) JmpIf(cond exec.JmpCond, l *Label) *Builder {
+	return p.labelOp((opJmpIf<<bitsOpShift)|(uint32(cond)<<bitsOpJmpIfCond), l)
 }
 
 // CaseNE instr
@@ -147,6 +159,12 @@ func (p *Builder) CaseNE(l *Label, arity int) *Builder {
 // Default instr
 func (p *Builder) Default() *Builder {
 	return p.Pop(1)
+}
+
+// ErrWrap instr
+func (p *Builder) ErrWrap(panicErr bool, n int) *Builder {
+	panic("todo")
+	//return p
 }
 
 // -----------------------------------------------------------------------------

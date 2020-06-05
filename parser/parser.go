@@ -1735,16 +1735,21 @@ func (p *parser) parseExpr(lhs bool) ast.Expr {
 	}
 
 	cond := p.parseBinaryExpr(lhs, token.LowestPrec+1)
-	if lhs || p.tok != token.QUESTION { // ?
+	if lhs || (p.tok != token.QUESTION && p.tok != token.NOT) { // ? or !
 		return cond
 	}
-	return p.parseQuestionExpr(cond)
+	return p.parseQuestionOrNotExpr(cond)
 }
 
-func (p *parser) parseQuestionExpr(cond ast.Expr) ast.Expr {
+func (p *parser) parseQuestionOrNotExpr(cond ast.Expr) ast.Expr {
+	if p.tok == token.NOT { // !
+		expr := &ast.ErrWrapExpr{X: cond, Tok: token.NOT, TokPos: p.pos}
+		p.next()
+		return expr
+	}
 	question := p.expect(token.QUESTION)
-	if p.tok == token.SEMICOLON || p.tok == token.RBRACE { // expr?
-		return &ast.ErrWrapExpr{X: cond, Question: question}
+	if p.isSemi() { // expr?
+		return &ast.ErrWrapExpr{X: cond, Tok: token.QUESTION, TokPos: question}
 	}
 	expr1 := p.parseBinaryExpr(false, token.LowestPrec+1)
 	if p.tok == token.COLON { // :
@@ -1759,7 +1764,21 @@ func (p *parser) parseQuestionExpr(cond ast.Expr) ast.Expr {
 			Y:        expr2,
 		}
 	}
-	return &ast.ErrWrapExpr{X: cond, Question: question, Default: expr1} // expr ? defaultValue
+	return &ast.ErrWrapExpr{ // expr ? defaultValue
+		X:       cond,
+		Tok:     token.QUESTION,
+		TokPos:  question,
+		Default: expr1,
+	}
+}
+
+func (p *parser) isSemi() bool {
+	switch p.tok {
+	case token.SEMICOLON, token.RPAREN, token.RBRACE:
+		return true
+	default:
+		return false
+	}
 }
 
 func (p *parser) parseRHS() ast.Expr {
@@ -1867,8 +1886,11 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 		p.next()
 		return s, false
 
-	case token.QUESTION:
-		x[0] = p.parseQuestionExpr(x[0])
+	case token.QUESTION, token.NOT:
+		x[0] = p.parseQuestionOrNotExpr(x[0])
+		if p.tok == token.NOT {
+			panic("todo")
+		}
 	}
 
 	// expression

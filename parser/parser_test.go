@@ -227,7 +227,7 @@ func testFrom(t *testing.T, pkgDir, sel string) {
 }
 
 func TestFromTestdata(t *testing.T) {
-	sel := "17"
+	sel := ""
 	dir, err := os.Getwd()
 	if err != nil {
 		t.Fatal("Getwd failed:", err)
