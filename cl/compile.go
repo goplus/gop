@@ -112,13 +112,18 @@ func newPkgCtx(out exec.Builder, pkg *ast.Package, fset *token.FileSet) *pkgCtx 
 }
 
 func (p *pkgCtx) code(v ast.Node) string {
+	_, code := p.getCodeInfo(v)
+	return code
+}
+
+func (p *pkgCtx) getCodeInfo(v ast.Node) (token.Position, string) {
 	start, end := v.Pos(), v.End()
 	pos := p.fset.Position(start)
 	if f, ok := p.pkg.Files[pos.Filename]; ok {
-		return string(f.Code[pos.Offset : pos.Offset+int(end-start)])
+		return pos, string(f.Code[pos.Offset : pos.Offset+int(end-start)])
 	}
-	log.Panicln("pkgCtx.code failed: file not found -", pos.Filename)
-	return ""
+	log.Panicln("pkgCtx.getCodeInfo failed: file not found -", pos.Filename)
+	return pos, ""
 }
 
 func (p *pkgCtx) use(f *funcDecl) {

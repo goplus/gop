@@ -62,8 +62,12 @@ func (p *FuncInfo) Type() reflect.Type {
 	return p.t
 }
 
-// NumOut returns a function type's output parameter count.
-// It panics if the type's Kind is not Func.
+// NumIn returns a function's input parameter count.
+func (p *FuncInfo) NumIn() int {
+	return len(p.in)
+}
+
+// NumOut returns a function's output parameter count.
 func (p *FuncInfo) NumOut() int {
 	return len(p.out)
 }

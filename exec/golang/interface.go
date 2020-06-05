@@ -128,8 +128,8 @@ func (p *iBuilder) Default() exec.Builder {
 }
 
 // ErrWrap instr
-func (p *iBuilder) ErrWrap(panicErr int32, n int, frame *errors.Frame) exec.Builder {
-	((*Builder)(p)).ErrWrap(panicErr, n, frame)
+func (p *iBuilder) ErrWrap(nret int, retErr exec.Var, frame *errors.Frame, narg int) exec.Builder {
+	((*Builder)(p)).ErrWrap(nret, retErr, frame, narg)
 	return p
 }
 

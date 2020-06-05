@@ -1751,11 +1751,11 @@ func (p *parser) parseQuestionOrNotExpr(cond ast.Expr) ast.Expr {
 	if p.isSemi() { // expr?
 		return &ast.ErrWrapExpr{X: cond, Tok: token.QUESTION, TokPos: question}
 	}
-	expr1 := p.parseBinaryExpr(false, token.LowestPrec+1)
+	expr1 := p.parseExpr(false)
 	if p.tok == token.COLON { // :
 		colon := p.pos
 		p.next()
-		expr2 := p.parseBinaryExpr(false, token.LowestPrec+1)
+		expr2 := p.parseExpr(false)
 		return &ast.TernaryExpr{ // cond ? expr1 : expr2
 			Cond:     cond,
 			Question: question,

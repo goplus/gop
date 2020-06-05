@@ -22,8 +22,12 @@ func (p *iFuncInfo) Type() reflect.Type {
 	return ((*FuncInfo)(p)).Type()
 }
 
-// NumOut returns a function type's output parameter count.
-// It panics if the type's Kind is not Func.
+// NumIn returns a function's input parameter count.
+func (p *iFuncInfo) NumIn() int {
+	return ((*FuncInfo)(p)).NumIn()
+}
+
+// NumOut returns a function's output parameter count.
 func (p *iFuncInfo) NumOut() int {
 	return p.numOut
 }
@@ -188,8 +192,8 @@ func (p *iBuilder) Default() exec.Builder {
 }
 
 // ErrWrap instr
-func (p *iBuilder) ErrWrap(panicErr int32, n int, frame *errors.Frame) exec.Builder {
-	((*Builder)(p)).ErrWrap(panicErr, n, frame)
+func (p *iBuilder) ErrWrap(nret int, retErr exec.Var, frame *errors.Frame, narg int) exec.Builder {
+	((*Builder)(p)).ErrWrap(nret, retErr, frame, narg)
 	return p
 }
 

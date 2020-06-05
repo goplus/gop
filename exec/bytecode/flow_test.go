@@ -17,30 +17,66 @@
 package bytecode
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/qiniu/goplus/exec.spec"
+	"github.com/qiniu/x/errors"
 )
 
 // -----------------------------------------------------------------------------
 
-func _TestErrWrap(t *testing.T) {
+func TestErrWrap(t *testing.T) {
 	errorf, ok := I.FindFuncv("Errorf")
 	if !ok {
 		t.Fatal("FindFuncv failed: Errorf")
 	}
 
+	defer func() {
+		if e := recover(); e != nil {
+			frame, ok := e.(*errors.Frame)
+			if !ok {
+				t.Fatal("TestErrWrap failed:", e)
+			}
+			fmt.Println(frame.Args...)
+		}
+	}()
+	frame := &errors.Frame{
+		Pkg:  "main",
+		Func: "TestErrWrap",
+		Code: `errorf("not found")?`,
+		File: `./flow_test.go`,
+		Line: 45,
+	}
 	code := newBuilder().
+		Push("arg1").
+		Push("arg2").
+		Push("arg3").
 		Push(123).
 		Push("not found").
 		CallGoFuncv(errorf, 1, 1).
-		ErrWrap(0, 2, nil).
+		ErrWrap(2, nil, frame, 3).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.base = 3
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != 8 {
+		t.Fatal("v != 8, ret =", v)
+	}
+}
+
+func TestErrWrap2(t *testing.T) {
+	code := newBuilder().
+		Push(123).
+		Push(nil).
+		ErrWrap(2, nil, nil, 0).
 		Resolve()
 
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
-	if v := checkPop(ctx); v != 8 {
-		t.Fatal("v != 8, ret =", v)
+	if v := checkPop(ctx); v != 123 {
+		t.Fatal("v != 123, ret =", v)
 	}
 }
 

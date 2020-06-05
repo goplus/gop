@@ -53,6 +53,7 @@ func TestFunc(t *testing.T) {
 		t.Fatal("`x` `sw` foo != `xsw`, ret =", v)
 	}
 	_ = foo.Name()
+	_ = foo.NumIn()
 	_ = foo.NumOut()
 	_ = foo.Out(0)
 	_ = foo.IsUnnamedOut()

@@ -816,19 +816,54 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr) func() {
 	x := ctx.infer.Get(-1).(iValue)
 	nx := x.NumValues()
 	if nx < 1 || !x.Value(nx-1).Type().Implements(exec.TyError) {
-		log.Panicln("compileErrWrapExpr: last expr doesn't implement `error` interface")
+		log.Panicln("last output parameter doesn't implement `error` interface")
 	}
 	ctx.infer.Ret(1, &wrapValue{x})
 	return func() {
 		exprX()
 		if v.Default == nil { // expr? or expr!
-			frame := &errors.Frame{Pkg: "", Func: "", Code: "", File: "", Line: 1}
-			ctx.out.ErrWrap(1, nx, frame)
-			//ctx.out.ErrWrap(v.Tok == token.NOT, nx, frame)
+			var fun = ctx.fun
+			var ok bool
+			var retErr exec.Var
+			if v.Tok == token.QUESTION {
+				if retErr, ok = returnErr(fun); !ok {
+					log.Panicln("used `expr?` in a function that last output parameter is not an error")
+				}
+			}
+			pos, code := ctx.getCodeInfo(v)
+			fn, narg := getFuncInfo(fun)
+			frame := &errors.Frame{
+				Pkg:  ctx.pkg.Name,
+				Func: fn,
+				Code: code,
+				File: pos.Filename,
+				Line: pos.Line,
+			}
+			ctx.out.ErrWrap(nx, retErr, frame, narg)
 			return
 		}
 		panic("todo")
 	}
+}
+
+func returnErr(fun exec.FuncInfo) (retErr exec.Var, ok bool) {
+	if fun == nil {
+		return
+	}
+	n := fun.NumOut()
+	if n == 0 {
+		return
+	}
+	retErr = fun.Out(n - 1)
+	ok = retErr.Type() == exec.TyError
+	return
+}
+
+func getFuncInfo(fun exec.FuncInfo) (name string, narg int) {
+	if fun != nil {
+		return fun.Name(), fun.NumIn()
+	}
+	return "main", 0
 }
 
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {

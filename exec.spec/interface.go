@@ -79,8 +79,10 @@ type FuncInfo interface {
 	// Return sets return types of a Go+ function.
 	Return(out ...Var) FuncInfo
 
-	// NumOut returns a function type's output parameter count.
-	// It panics if the type's Kind is not Func.
+	// NumIn returns a function's input parameter count.
+	NumIn() int
+
+	// NumOut returns a function's output parameter count.
 	NumOut() int
 
 	// Out returns the type of a function type's i'th output parameter.
@@ -183,7 +185,7 @@ type Builder interface {
 	Default() Builder
 
 	// ErrWrap instr
-	ErrWrap(panicErr int32, n int, frame *errors.Frame) Builder
+	ErrWrap(nret int, retErr Var, frame *errors.Frame, narg int) Builder
 
 	// ForPhrase instr
 	ForPhrase(f ForPhrase, key, val Var, hasExecCtx ...bool) Builder

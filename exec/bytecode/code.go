@@ -112,7 +112,7 @@ const (
 	opSlice3        = 39 // i(13) j(13)
 	opMapIndex      = 40 // reserved(25) set(1)
 	opGoBuiltin     = 41 // op(26)
-	opErrWrap       = 42 // reserved(25) panicErr(1)
+	opErrWrap       = 42 // idx(26)
 )
 
 const (
@@ -193,7 +193,7 @@ var instrInfos = []InstrInfo{
 	opSlice3:        {"slice3", "i", "j", (13 << 8) | 13},                 // i(13) j(13)
 	opMapIndex:      {"mapIndex", "", "set", 26},                          // reserved(25) set(1)
 	opGoBuiltin:     {"goBuiltin", "", "op", 26},                          // op(26)
-	opErrWrap:       {"errWrap", "", "panicErr", 26},                      // reserved(25) panicErr(1)
+	opErrWrap:       {"errWrap", "", "idx", 26},                           // idx(26)
 }
 
 // -----------------------------------------------------------------------------
@@ -208,6 +208,7 @@ type Code struct {
 	fors       []*ForPhrase
 	types      []reflect.Type
 	structs    []StructInfo
+	errWraps   []errWrap
 	varManager
 }
 
