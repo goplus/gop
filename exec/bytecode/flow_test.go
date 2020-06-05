@@ -46,7 +46,7 @@ func TestErrWrap(t *testing.T) {
 		Func: "TestErrWrap",
 		Code: `errorf("not found")?`,
 		File: `./flow_test.go`,
-		Line: 45,
+		Line: 49,
 	}
 	code := newBuilder().
 		Push("arg1").
@@ -63,6 +63,46 @@ func TestErrWrap(t *testing.T) {
 	ctx.Exec(0, code.Len())
 	if v := checkPop(ctx); v != 8 {
 		t.Fatal("v != 8, ret =", v)
+	}
+}
+
+func TestErrWrap1(t *testing.T) {
+	errorf, ok := I.FindFuncv("Errorf")
+	if !ok {
+		t.Fatal("FindFuncv failed: Errorf")
+	}
+
+	frame := &errors.Frame{
+		Pkg:  "main",
+		Func: "TestErrWrap",
+		Code: `errorf("not found")?`,
+		File: `./flow_test.go`,
+		Line: 45,
+	}
+	retErr := NewVar(TyError, "err")
+	code := newBuilder().
+		DefineVar(retErr).
+		Push("arg1").
+		Push("arg2").
+		Push("arg3").
+		Push(123).
+		Push("not found").
+		CallGoFuncv(errorf, 1, 1).
+		ErrWrap(2, retErr, frame, 3).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.base = 3
+	ctx.Exec(0, code.Len())
+
+	if e := ctx.GetVar(retErr); e != nil {
+		frame, ok := e.(*errors.Frame)
+		if !ok {
+			t.Fatal("TestErrWrap1 failed:", e)
+		}
+		fmt.Println(frame.Args...)
+	} else {
+		t.Fatal("TestErrWrap1 failed: retErr not set")
 	}
 }
 
