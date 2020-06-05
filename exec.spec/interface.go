@@ -19,6 +19,8 @@ package exec
 
 import (
 	"reflect"
+
+	"github.com/qiniu/x/errors"
 )
 
 // -----------------------------------------------------------------------------
@@ -181,7 +183,7 @@ type Builder interface {
 	Default() Builder
 
 	// ErrWrap instr
-	ErrWrap(panicErr bool, n int) Builder
+	ErrWrap(panicErr int32, n int, frame *errors.Frame) Builder
 
 	// ForPhrase instr
 	ForPhrase(f ForPhrase, key, val Var, hasExecCtx ...bool) Builder

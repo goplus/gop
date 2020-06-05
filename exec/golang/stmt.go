@@ -6,6 +6,7 @@ import (
 	"reflect"
 
 	"github.com/qiniu/goplus/exec.spec"
+	"github.com/qiniu/x/errors"
 )
 
 // ----------------------------------------------------------------------------
@@ -105,7 +106,7 @@ func (p *Builder) Default() *Builder {
 }
 
 // ErrWrap instr
-func (p *Builder) ErrWrap(panicErr bool, n int) *Builder {
+func (p *Builder) ErrWrap(panicErr int32, n int, frame *errors.Frame) *Builder {
 	panic("todo")
 	//return p
 }

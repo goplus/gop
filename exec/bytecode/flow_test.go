@@ -24,6 +24,26 @@ import (
 
 // -----------------------------------------------------------------------------
 
+func _TestErrWrap(t *testing.T) {
+	errorf, ok := I.FindFuncv("Errorf")
+	if !ok {
+		t.Fatal("FindFuncv failed: Errorf")
+	}
+
+	code := newBuilder().
+		Push(123).
+		Push("not found").
+		CallGoFuncv(errorf, 1, 1).
+		ErrWrap(0, 2, nil).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != 8 {
+		t.Fatal("v != 8, ret =", v)
+	}
+}
+
 func TestIf1(t *testing.T) {
 	label1 := defaultImpl.NewLabel("a").(*Label)
 	label2 := NewLabel("b")

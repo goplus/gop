@@ -25,6 +25,7 @@ import (
 	"github.com/qiniu/goplus/ast/astutil"
 	"github.com/qiniu/goplus/exec.spec"
 	"github.com/qiniu/goplus/token"
+	"github.com/qiniu/x/errors"
 	"github.com/qiniu/x/log"
 )
 
@@ -821,7 +822,9 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr) func() {
 	return func() {
 		exprX()
 		if v.Default == nil { // expr? or expr!
-			ctx.out.ErrWrap(v.Tok == token.NOT, nx)
+			frame := &errors.Frame{Pkg: "", Func: "", Code: "", File: "", Line: 1}
+			ctx.out.ErrWrap(1, nx, frame)
+			//ctx.out.ErrWrap(v.Tok == token.NOT, nx, frame)
 			return
 		}
 		panic("todo")

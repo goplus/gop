@@ -3,7 +3,8 @@ package bytecode
 import (
 	"reflect"
 
-	exec "github.com/qiniu/goplus/exec.spec"
+	"github.com/qiniu/goplus/exec.spec"
+	"github.com/qiniu/x/errors"
 	"github.com/qiniu/x/log"
 )
 
@@ -187,8 +188,8 @@ func (p *iBuilder) Default() exec.Builder {
 }
 
 // ErrWrap instr
-func (p *iBuilder) ErrWrap(panicErr bool, n int) exec.Builder {
-	((*Builder)(p)).ErrWrap(panicErr, n)
+func (p *iBuilder) ErrWrap(panicErr int32, n int, frame *errors.Frame) exec.Builder {
+	((*Builder)(p)).ErrWrap(panicErr, n, frame)
 	return p
 }
 

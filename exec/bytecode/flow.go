@@ -17,7 +17,8 @@
 package bytecode
 
 import (
-	exec "github.com/qiniu/goplus/exec.spec"
+	"github.com/qiniu/goplus/exec.spec"
+	"github.com/qiniu/x/errors"
 	"github.com/qiniu/x/log"
 )
 
@@ -85,6 +86,10 @@ func execCaseNE(i Instr, ctx *Context) {
 		ctx.data = ctx.data[:itag+1]
 		ctx.ip += int(int16(i))
 	}
+}
+
+func execErrWrap(i Instr, ctx *Context) {
+
 }
 
 // -----------------------------------------------------------------------------
@@ -162,8 +167,10 @@ func (p *Builder) Default() *Builder {
 }
 
 // ErrWrap instr
-func (p *Builder) ErrWrap(panicErr bool, n int) *Builder {
+func (p *Builder) ErrWrap(panicErr int32, n int, frame *errors.Frame) *Builder {
 	panic("todo")
+	//i1 := (opErrWrap << bitsOpShift) | uint32(panicErr)
+	//p.code.data = append(p.code.data, i1)
 	//return p
 }
 

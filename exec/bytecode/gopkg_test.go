@@ -55,6 +55,12 @@ func execSprintf(arity int, p *Context) {
 	p.Ret(arity, s)
 }
 
+func execErrorf(arity int, p *Context) {
+	args := p.GetArgs(arity)
+	s := fmt.Errorf(args[0].(string), args[1:]...)
+	p.Ret(arity, s)
+}
+
 // I is a Go package instance.
 var I = NewGoPackage("")
 
@@ -62,6 +68,7 @@ func init() {
 	I.RegisterFuncvs(
 		I.Funcv("Sprint", fmt.Sprint, execSprint),
 		I.Funcv("Sprintf", fmt.Sprintf, execSprintf),
+		I.Funcv("Errorf", fmt.Errorf, execErrorf),
 	)
 	I.RegisterFuncs(
 		I.Func("strcat", Strcat, execStrcat),
