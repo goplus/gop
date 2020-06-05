@@ -1489,6 +1489,8 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	case *ast.StarExpr:
 	case *ast.UnaryExpr:
 	case *ast.BinaryExpr:
+	case *ast.TernaryExpr:
+	case *ast.ErrWrapExpr:
 	default:
 		// all other nodes are not proper expressions
 		p.errorExpected(x.Pos(), "expression")
@@ -1732,7 +1734,32 @@ func (p *parser) parseExpr(lhs bool) ast.Expr {
 		defer un(trace(p, "Expression"))
 	}
 
-	return p.parseBinaryExpr(lhs, token.LowestPrec+1)
+	cond := p.parseBinaryExpr(lhs, token.LowestPrec+1)
+	if lhs || p.tok != token.QUESTION { // ?
+		return cond
+	}
+	return p.parseQuestionExpr(cond)
+}
+
+func (p *parser) parseQuestionExpr(cond ast.Expr) ast.Expr {
+	question := p.expect(token.QUESTION)
+	if p.tok == token.SEMICOLON || p.tok == token.RBRACE { // expr?
+		return &ast.ErrWrapExpr{X: cond, Question: question}
+	}
+	expr1 := p.parseBinaryExpr(false, token.LowestPrec+1)
+	if p.tok == token.COLON { // :
+		colon := p.pos
+		p.next()
+		expr2 := p.parseBinaryExpr(false, token.LowestPrec+1)
+		return &ast.TernaryExpr{ // cond ? expr1 : expr2
+			Cond:     cond,
+			Question: question,
+			X:        expr1,
+			Colon:    colon,
+			Y:        expr2,
+		}
+	}
+	return &ast.ErrWrapExpr{X: cond, Question: question, Default: expr1} // expr ? defaultValue
 }
 
 func (p *parser) parseRHS() ast.Expr {
@@ -1839,6 +1866,9 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 		s := &ast.IncDecStmt{X: x[0], TokPos: p.pos, Tok: p.tok}
 		p.next()
 		return s, false
+
+	case token.QUESTION:
+		x[0] = p.parseQuestionExpr(x[0])
 	}
 
 	// expression

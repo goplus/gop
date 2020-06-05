@@ -1,0 +1,14 @@
+
+func foo() error {
+    return errorf("not found")
+}
+
+func bar(n int) (int, error) {
+    if n < 0 {
+        foo()?
+    }
+    return n, nil
+}
+
+bar(-1)
+println("bar(-1):", bar(false ? -1 : 1) ? 0)
