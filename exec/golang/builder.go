@@ -189,12 +189,12 @@ func Comment(text string) *ast.CommentGroup {
 	}
 }
 
-// StartStmt recieves a `StartStmt` event.
+// StartStmt receives a `StartStmt` event.
 func (p *Builder) StartStmt(stmt interface{}) interface{} {
 	return p.rhs.Len()
 }
 
-// EndStmt recieves a `EndStmt` event.
+// EndStmt receives a `EndStmt` event.
 func (p *Builder) EndStmt(stmt, start interface{}) *Builder {
 	var rhsBase = start.(int)
 	var node ast.Stmt

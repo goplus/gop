@@ -367,12 +367,12 @@ func (p *iBuilder) Zero(typ reflect.Type) exec.Builder {
 	return p
 }
 
-// StartStmt recieves a `StartStmt` event.
+// StartStmt receives a `StartStmt` event.
 func (p *iBuilder) StartStmt(stmt interface{}) interface{} {
 	return ((*Builder)(p)).StartStmt(stmt)
 }
 
-// EndStmt recieves a `EndStmt` event.
+// EndStmt receives a `EndStmt` event.
 func (p *iBuilder) EndStmt(stmt, start interface{}) exec.Builder {
 	((*Builder)(p)).EndStmt(stmt, start)
 	return p
