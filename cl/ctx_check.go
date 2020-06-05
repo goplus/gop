@@ -73,13 +73,15 @@ func isNoExecCtxExpr(ctx *blockCtx, expr ast.Expr) bool {
 	case *ast.CallExpr:
 		return isNoExecCtxCallExpr(ctx, v)
 	case *ast.BinaryExpr:
-		return isNoExecCtxBinaryExpr(ctx, v)
+		return isNoExecCtx2nd(ctx, v.X, v.Y)
 	case *ast.UnaryExpr:
 		return isNoExecCtxExpr(ctx, v.X)
 	case *ast.SelectorExpr:
 		return isNoExecCtxExpr(ctx, v.X)
+	case *ast.ErrWrapExpr:
+		return isNoExecCtx2nd(ctx, v.X, v.Default)
 	case *ast.IndexExpr:
-		return isNoExecCtxIndexExpr(ctx, v)
+		return isNoExecCtx2nd(ctx, v.X, v.Index)
 	case *ast.SliceExpr:
 		return isNoExecCtxSliceExpr(ctx, v)
 	case *ast.CompositeLit:
@@ -95,7 +97,7 @@ func isNoExecCtxExpr(ctx *blockCtx, expr ast.Expr) bool {
 	case *ast.Ellipsis:
 		return true
 	case *ast.KeyValueExpr:
-		return isNoExecCtxKeyValueExpr(ctx, v)
+		return isNoExecCtx2nd(ctx, v.Key, v.Value)
 	default:
 		log.Panicln("isNoExecCtxExpr failed: unknown -", reflect.TypeOf(v))
 	}
@@ -150,26 +152,8 @@ func isNoExecCtxMapComprehensionExpr(parent *blockCtx, v *ast.MapComprehensionEx
 	if !noExecCtx {
 		return false
 	}
-	return isNoExecCtxKeyValueExpr(ctx, v.Elt)
-}
-
-func isNoExecCtxFuncLit(ctx *blockCtx, v *ast.FuncLit) bool {
-	// TODO: log.Warn("isNoExecCtxFuncLit: to be optimized")
-	return false
-}
-
-func isNoExecCtxKeyValueExpr(ctx *blockCtx, v *ast.KeyValueExpr) bool {
-	if noExecCtx := isNoExecCtxExpr(ctx, v.Key); !noExecCtx {
-		return false
-	}
-	return isNoExecCtxExpr(ctx, v.Value)
-}
-
-func isNoExecCtxIndexExpr(ctx *blockCtx, v *ast.IndexExpr) bool {
-	if noExecCtx := isNoExecCtxExpr(ctx, v.X); !noExecCtx {
-		return false
-	}
-	return isNoExecCtxExpr(ctx, v.Index)
+	elt := v.Elt
+	return isNoExecCtx2nd(ctx, elt.Key, elt.Value)
 }
 
 func isNoExecCtxSliceExpr(ctx *blockCtx, v *ast.SliceExpr) bool {
@@ -194,11 +178,19 @@ func isNoExecCtxSliceExpr(ctx *blockCtx, v *ast.SliceExpr) bool {
 	return true
 }
 
-func isNoExecCtxBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) bool {
-	if noExecCtx := isNoExecCtxExpr(ctx, v.X); !noExecCtx {
+func isNoExecCtxFuncLit(ctx *blockCtx, v *ast.FuncLit) bool {
+	// TODO: log.Warn("isNoExecCtxFuncLit: to be optimized")
+	return false
+}
+
+func isNoExecCtx2nd(ctx *blockCtx, a, b ast.Expr) bool {
+	if noExecCtx := isNoExecCtxExpr(ctx, a); !noExecCtx {
 		return false
 	}
-	return isNoExecCtxExpr(ctx, v.Y)
+	if b == nil {
+		return true
+	}
+	return isNoExecCtxExpr(ctx, b)
 }
 
 func isNoExecCtxCallExpr(ctx *blockCtx, v *ast.CallExpr) bool {

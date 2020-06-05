@@ -989,7 +989,7 @@ var fsTestErrWrapExpr = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	x
 `)
 
-func _TestErrWrapExpr(t *testing.T) {
+func TestErrWrapExpr(t *testing.T) {
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseFSDir(fset, fsTestErrWrapExpr, "/foo", nil, 0)
 	if err != nil || len(pkgs) != 1 {
@@ -1006,7 +1006,7 @@ func _TestErrWrapExpr(t *testing.T) {
 
 	ctx := exec.NewContext(code)
 	ctx.Exec(0, code.Len())
-	if v := ctx.Get(-1); v != int(28) {
+	if v := ctx.Get(-1); v != int(12) {
 		t.Fatal("n:", v)
 	}
 }
