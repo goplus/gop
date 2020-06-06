@@ -190,6 +190,9 @@ type Builder interface {
 	// Default instr
 	Default() Builder
 
+	// WrapIfErr instr
+	WrapIfErr(nret int, l Label) Builder
+
 	// ErrWrap instr
 	ErrWrap(nret int, retErr Var, frame *errors.Frame, narg int) Builder
 

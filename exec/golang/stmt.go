@@ -105,6 +105,12 @@ func (p *Builder) Default() *Builder {
 	return p
 }
 
+// WrapIfErr instr
+func (p *Builder) WrapIfErr(nret int, l *Label) *Builder {
+	panic("todo")
+	//return p
+}
+
 // ErrWrap instr
 func (p *Builder) ErrWrap(nret int, retErr exec.Var, frame *errors.Frame, narg int) *Builder {
 	panic("todo")

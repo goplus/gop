@@ -223,6 +223,7 @@ var _execTable = [...]func(i Instr, p *Context){
 	opMapIndex:      execMapIndex,
 	opGoBuiltin:     execGoBuiltin,
 	opErrWrap:       execErrWrap,
+	opWrapIfErr:     execWrapIfErr,
 }
 
 var execTable []func(i Instr, p *Context)

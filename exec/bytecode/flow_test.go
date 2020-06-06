@@ -120,6 +120,40 @@ func TestErrWrap2(t *testing.T) {
 	}
 }
 
+func TestWrapIfErr(t *testing.T) {
+	l := NewLabel("")
+	code := newBuilder().
+		Push(123).
+		Push(nil).
+		WrapIfErr(2, l).
+		Push(0).
+		Label(l).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != 123 {
+		t.Fatal("v != 123, ret =", v)
+	}
+}
+
+func TestWrapIfErr2(t *testing.T) {
+	l := NewLabel("")
+	code := newBuilder().
+		Push(123).
+		Push(true).
+		WrapIfErr(2, l).
+		Push(10).
+		Label(l).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != 10 {
+		t.Fatal("v != 10, ret =", v)
+	}
+}
+
 func TestIf1(t *testing.T) {
 	label1 := defaultImpl.NewLabel("a").(*Label)
 	label2 := NewLabel("b")
