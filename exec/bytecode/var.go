@@ -136,7 +136,7 @@ func execGoBuiltin(i Instr, p *Context) {
 
 // -----------------------------------------------------------------------------
 
-func getParentCtx(p *Context, idx tAddress) *Context {
+func getParentCtx(p *Context, idx tAddress) *varScope {
 	pp := p.parent
 	scope := uint32(idx) >> bitsOpVarShift
 	for scope > 1 {
@@ -309,8 +309,9 @@ func newBlockCtx(nestDepth uint32, parent *varManager) *blockCtx {
 // -----------------------------------------------------------------------------
 
 func (p *Context) getNestDepth() (nestDepth uint32) {
+	vs := &p.varScope
 	for {
-		if p = p.parent; p == nil {
+		if vs = vs.parent; vs == nil {
 			return
 		}
 		nestDepth++

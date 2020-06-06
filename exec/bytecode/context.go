@@ -17,11 +17,15 @@
 package bytecode
 
 import (
+	"time"
+
 	exec "github.com/qiniu/goplus/exec.spec"
 	"github.com/qiniu/x/log"
 )
 
 // -----------------------------------------------------------------------------
+
+const defaultStkSize = 128
 
 // A Stack represents a FILO container.
 type Stack struct {
@@ -30,12 +34,12 @@ type Stack struct {
 
 // NewStack creates a Stack instance.
 func NewStack() (p *Stack) {
-	return &Stack{data: make([]interface{}, 0, 64)}
+	return &Stack{data: make([]interface{}, 0, defaultStkSize)}
 }
 
 // Init initializes this Stack object.
 func (p *Stack) Init() {
-	p.data = make([]interface{}, 0, 64)
+	p.data = make([]interface{}, 0, defaultStkSize)
 }
 
 // Get returns the value at specified index.
@@ -88,34 +92,41 @@ func (p *Stack) SetLen(base int) {
 
 // -----------------------------------------------------------------------------
 
+type varScope struct {
+	vars   varsContext
+	parent *varScope
+}
+
 // A Context represents the context of an executor.
 type Context struct {
-	*Stack
-	code   *Code
-	parent *Context
-	vars   varsContext
-	ip     int
-	base   int
+	Stack
+	varScope
+	code *Code
+	ip   int
+	base int
 }
 
 func newSimpleContext(data []interface{}) *Context {
-	return &Context{Stack: &Stack{data: data}}
+	return &Context{Stack: Stack{data: data}}
 }
 
 // NewContext returns a new context of an executor.
 func NewContext(in exec.Code) *Context {
 	code := in.(*Code)
 	p := &Context{
-		Stack: NewStack(),
-		code:  code,
+		code: code,
 	}
+	p.Init()
 	if len(code.vlist) > 0 {
 		p.vars = code.makeVarsContext(p)
 	}
 	return p
 }
 
-// NewContextEx creates a closure context, with some local variables.
+func (ctx *Context) switchCtx(parent *varScope, vmgr *varManager) {
+	ctx.vars = vmgr.makeVarsContext(ctx)
+}
+
 func newContextEx(parent *Context, stk *Stack, code *Code, vmgr *varManager) *Context {
 	p := &Context{
 		Stack:  stk,
@@ -129,29 +140,49 @@ func newContextEx(parent *Context, stk *Stack, code *Code, vmgr *varManager) *Co
 	return p
 }
 
-func (ctx *Context) globalCtx() *Context {
-	for ctx.parent != nil {
-		ctx = ctx.parent
+func (ctx *Context) globalScope() *varScope {
+	scope := ctx.parent
+	if scope == nil {
+		vs := ctx.varScope
+		return &vs
 	}
-	return ctx
+	for scope.parent != nil {
+		scope = scope.parent
+	}
+	return scope
 }
 
 // Exec executes a code block from ip to ipEnd.
 func (ctx *Context) Exec(ip, ipEnd int) {
-	data := ctx.code.data
+	const allowProfile = true
+	var lastInstr Instr
+	var start time.Time
+	var data = ctx.code.data
 	ctx.ip = ip
 	for ctx.ip < ipEnd {
 		i := data[ctx.ip]
 		ctx.ip++
+		if allowProfile && doProfile {
+			if lastInstr != 0 {
+				instrProfile(lastInstr, time.Since(start))
+			}
+			lastInstr, start = i, time.Now()
+		}
 		switch i >> bitsOpShift {
+		case opPushInt:
+			const mask = ^uint32(bitsOpIntOperand >> 1)
+			switch i & mask {
+			case 201326592: // push kind=int
+				ctx.Push(int(i & ^mask))
+			default:
+				execPushInt(i, ctx)
+			}
 		case opBuiltinOp:
 			execBuiltinOp(i, ctx)
 		case opJmp:
 			execJmp(i, ctx)
 		case opJmpIf:
 			execJmpIf(i, ctx)
-		case opPushInt:
-			execPushInt(i, ctx)
 		case opPushConstR:
 			execPushConstR(i, ctx)
 		case opLoadVar:
@@ -170,15 +201,21 @@ func (ctx *Context) Exec(ip, ipEnd int) {
 			if i != iReturn {
 				ctx.ip = ipReturnN
 			}
-			return
+			goto finished
 		case opPushUint:
 			execPushUint(i, ctx)
 		default:
 			if fn := execTable[i>>bitsOpShift]; fn != nil {
 				fn(i, ctx)
 			} else {
-				log.Panicln("Exec failed: unknown instr -", i>>bitsOpShift, "ip:", ctx.ip-1)
+				log.Panicln("Exec: unknown instr -", i>>bitsOpShift, "ip:", ctx.ip-1)
 			}
+		}
+	}
+finished:
+	if allowProfile && doProfile {
+		if lastInstr != 0 {
+			instrProfile(lastInstr, time.Since(start))
 		}
 	}
 }

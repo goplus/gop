@@ -19,7 +19,7 @@ package bytecode
 import (
 	"reflect"
 
-	exec "github.com/qiniu/goplus/exec.spec"
+	"github.com/qiniu/goplus/exec.spec"
 	"github.com/qiniu/x/log"
 )
 
@@ -143,7 +143,7 @@ type Package struct {
 type Closure struct {
 	fun    *FuncInfo
 	recv   interface{}
-	parent *Context
+	parent *varScope
 }
 
 // Call calls a closure.
@@ -279,7 +279,7 @@ func (p *FuncInfo) Type() reflect.Type {
 	return p.t
 }
 
-func (p *FuncInfo) exec(stk *Stack, parent *Context) {
+func (p *FuncInfo) exec(stk *Context, parent *varScope) {
 	ctx := newContextEx(parent, stk, parent.code, &p.varManager)
 	ctx.Exec(p.funEntry, p.funEnd)
 	if ctx.ip == ipReturnN {
