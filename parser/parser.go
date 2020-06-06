@@ -1709,7 +1709,7 @@ func (p *parser) parseBinaryExpr(lhs bool, prec1 int) ast.Expr {
 		defer un(trace(p, "BinaryExpr"))
 	}
 
-	x := p.parseUnaryExpr(lhs)
+	x := p.parseErrWrapExpr(lhs)
 	for {
 		op, oprec := p.tokPrec()
 		if oprec < prec1 {
@@ -1725,6 +1725,26 @@ func (p *parser) parseBinaryExpr(lhs bool, prec1 int) ast.Expr {
 	}
 }
 
+func (p *parser) parseErrWrapExpr(lhs bool) ast.Expr { // expr! expr? expr?:defval
+	x := p.parseUnaryExpr(lhs)
+	switch p.tok {
+	case token.NOT: // expr!
+		expr := &ast.ErrWrapExpr{X: x, Tok: token.NOT, TokPos: p.pos}
+		p.next()
+		return expr
+	case token.QUESTION: // expr? expr?:defval
+		expr := &ast.ErrWrapExpr{X: x, Tok: token.QUESTION, TokPos: p.pos}
+		p.next()
+		if p.tok == token.COLON {
+			p.next()
+			expr.Default = p.parseUnaryExpr(false)
+		}
+		return expr
+	default:
+		return x
+	}
+}
+
 // If lhs is set and the result is an identifier, it is not resolved.
 // The result may be a type or even a raw type ([...]int). Callers must
 // check the result (using checkExpr or checkExprOrType), depending on
@@ -1734,51 +1754,7 @@ func (p *parser) parseExpr(lhs bool) ast.Expr {
 		defer un(trace(p, "Expression"))
 	}
 
-	cond := p.parseBinaryExpr(lhs, token.LowestPrec+1)
-	if lhs || (p.tok != token.QUESTION && p.tok != token.NOT) { // ? or !
-		return cond
-	}
-	return p.parseQuestionOrNotExpr(cond)
-}
-
-func (p *parser) parseQuestionOrNotExpr(cond ast.Expr) ast.Expr {
-	if p.tok == token.NOT { // !
-		expr := &ast.ErrWrapExpr{X: cond, Tok: token.NOT, TokPos: p.pos}
-		p.next()
-		return expr
-	}
-	question := p.expect(token.QUESTION)
-	if p.isSemi() { // expr?
-		return &ast.ErrWrapExpr{X: cond, Tok: token.QUESTION, TokPos: question}
-	}
-	expr1 := p.parseExpr(false)
-	if p.tok == token.COLON { // :
-		colon := p.pos
-		p.next()
-		expr2 := p.parseExpr(false)
-		return &ast.TernaryExpr{ // cond ? expr1 : expr2
-			Cond:     cond,
-			Question: question,
-			X:        expr1,
-			Colon:    colon,
-			Y:        expr2,
-		}
-	}
-	return &ast.ErrWrapExpr{ // expr ? defaultValue
-		X:       cond,
-		Tok:     token.QUESTION,
-		TokPos:  question,
-		Default: expr1,
-	}
-}
-
-func (p *parser) isSemi() bool {
-	switch p.tok {
-	case token.SEMICOLON, token.RPAREN, token.RBRACE:
-		return true
-	default:
-		return false
-	}
+	return p.parseBinaryExpr(lhs, token.LowestPrec+1)
 }
 
 func (p *parser) parseRHS() ast.Expr {
@@ -1885,12 +1861,6 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 		s := &ast.IncDecStmt{X: x[0], TokPos: p.pos, Tok: p.tok}
 		p.next()
 		return s, false
-
-	case token.QUESTION, token.NOT:
-		x[0] = p.parseQuestionOrNotExpr(x[0])
-		if p.tok == token.NOT {
-			panic("todo")
-		}
 	}
 
 	// expression

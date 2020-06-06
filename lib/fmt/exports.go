@@ -31,6 +31,7 @@ var I = gop.NewGoPackage("fmt")
 
 func init() {
 	I.RegisterFuncvs(
+		I.Funcv("errorf", fmt.Errorf, builtin.QexecErrorf),
 		I.Funcv("Print", fmt.Print, builtin.QexecPrint),
 		I.Funcv("Printf", fmt.Printf, builtin.QexecPrintf),
 		I.Funcv("Println", fmt.Println, builtin.QexecPrintln),

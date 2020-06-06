@@ -1,3 +1,11 @@
+import (
+	"strconv"
+)
+
+func add(x, y string) (int, error) {
+	sum := strconv.Atoi(x)? + strconv.Atoi(y)?
+	return sum, nil
+}
 
 func foo() error {
     return errorf("not found")
@@ -10,5 +18,5 @@ func bar(n int) (int, error) {
     return n, nil
 }
 
-foo()!
-println("bar(-1):", bar(false ? 1 : -1) ? 0)
+println(`add("100", "23"):`, add("100", "23")!)
+println("bar(-1):", bar(-1) ?: 0)

@@ -351,8 +351,15 @@ func binaryOp(op exec.Operator, x, y *constVal) *constVal {
 }
 
 func boundConst(v interface{}, t reflect.Type) interface{} {
+	kind := t.Kind()
+	if v == nil {
+		if kind >= reflect.Chan && kind <= reflect.Slice {
+			return nil
+		}
+		log.Panicln("boundConst: can't convert nil into", t)
+	}
 	sval := reflect.ValueOf(v)
-	if kind := t.Kind(); kind == reflect.Complex128 || kind == reflect.Complex64 {
+	if kind == reflect.Complex128 || kind == reflect.Complex64 {
 		if skind := sval.Kind(); skind >= reflect.Int && skind <= reflect.Float64 {
 			fval := sval.Convert(exec.TyFloat64).Float()
 			return complex(fval, 0)

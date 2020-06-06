@@ -27,10 +27,7 @@ import (
 	"github.com/qiniu/x/log"
 
 	exec "github.com/qiniu/goplus/exec/bytecode"
-	_ "github.com/qiniu/goplus/lib/builtin"
-	_ "github.com/qiniu/goplus/lib/fmt"
-	_ "github.com/qiniu/goplus/lib/reflect"
-	_ "github.com/qiniu/goplus/lib/strings"
+	_ "github.com/qiniu/goplus/lib"
 )
 
 // -----------------------------------------------------------------------------
