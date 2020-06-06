@@ -22,7 +22,6 @@ import (
 
 	"github.com/qiniu/goplus/cl"
 	"github.com/qiniu/goplus/exec.spec"
-	"github.com/qiniu/goplus/token"
 	"github.com/qiniu/x/log"
 
 	qexec "github.com/qiniu/goplus/exec/bytecode"
@@ -56,68 +55,16 @@ func main() {
 		Push(2).
 		BuiltinOp(exec.Int, exec.OpAdd).
 		CallGoFuncv(println, 1, 1).
-		EndStmt(nil, 0).
+		EndStmt(nil, &stmtState{rhsBase: 0}).
 		Push(complex64(3+2i)).
 		CallGoFuncv(println, 1, 1).
-		EndStmt(nil, 0).
+		EndStmt(nil, &stmtState{rhsBase: 0}).
 		Resolve()
 
 	codeGen := code.String()
 	if codeGen != codeExp {
 		fmt.Println(codeGen)
 		t.Fatal("TestBasic failed: codeGen != codeExp")
-	}
-}
-
-// -----------------------------------------------------------------------------
-
-type node struct {
-	pos token.Pos
-}
-
-func (p *node) Pos() token.Pos {
-	return p.pos
-}
-
-func (p *node) End() token.Pos {
-	return p.pos + 1
-}
-
-func TestFileLine(t *testing.T) {
-	codeExp := `package main
-
-import fmt "fmt"
-
-func main() { 
-//line ./foo.gop:1
-	fmt.Println(1 + 2)
-//line ./bar.gop:1
-	fmt.Println(complex64((3 + 2i)))
-}
-`
-	fset := token.NewFileSet()
-	foo := fset.AddFile("./foo.gop", fset.Base(), 100)
-	bar := fset.AddFile("./bar.gop", fset.Base(), 100)
-	foo.SetLines([]int{0, 10, 20, 80, 100})
-	bar.SetLines([]int{0, 10, 20, 80, 100})
-	node1 := &node{23}
-	node2 := &node{123}
-	println, _ := I.FindFuncv("println")
-	code := NewBuilder("main", nil, fset).
-		Push(1).
-		Push(2).
-		BuiltinOp(exec.Int, exec.OpAdd).
-		CallGoFuncv(println, 1, 1).
-		EndStmt(node1, 0).
-		Push(complex64(3+2i)).
-		CallGoFuncv(println, 1, 1).
-		EndStmt(node2, 0).
-		Resolve()
-
-	codeGen := code.String()
-	if codeGen != codeExp {
-		fmt.Println(codeGen)
-		t.Fatal("TestFileLine failed: codeGen != codeExp")
 	}
 }
 
