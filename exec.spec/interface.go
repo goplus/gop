@@ -145,12 +145,18 @@ type GoPackage interface {
 	FindConst(name string) (ci *GoConstInfo, ok bool)
 }
 
-// GoFuncInfo represents a Go function information.
-type GoFuncInfo struct {
+// GoSymInfo represents a Go symbol (function or variable) information.
+type GoSymInfo struct {
 	Pkg  GoPackage
 	Name string
-	This interface{}
+	This interface{} // address of this symbol
 }
+
+// GoFuncInfo represents a Go function information.
+type GoFuncInfo = GoSymInfo
+
+// GoVarInfo represents a Go function information.
+type GoVarInfo = GoSymInfo
 
 // A Code represents generated instructions to execute.
 type Code interface {
@@ -259,6 +265,15 @@ type Builder interface {
 	// AddrVar instr
 	AddrVar(v Var) Builder
 
+	// LoadGoVar instr
+	LoadGoVar(addr GoVarAddr) Builder
+
+	// StoreGoVar instr
+	StoreGoVar(addr GoVarAddr) Builder
+
+	// AddrGoVar instr
+	AddrGoVar(addr GoVarAddr) Builder
+
 	// AddrOp instr
 	AddrOp(kind Kind, op AddrOperator) Builder
 
@@ -351,6 +366,9 @@ type Interface interface {
 
 	// GetGoFuncvInfo returns a Go function's information.
 	GetGoFuncvInfo(addr GoFuncvAddr) *GoFuncInfo
+
+	// GetGoVarInfo returns a Go variable's information.
+	GetGoVarInfo(addr GoVarAddr) *GoVarInfo
 }
 
 // -----------------------------------------------------------------------------

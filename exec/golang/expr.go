@@ -275,6 +275,38 @@ func (p *Builder) CallGoFuncv(fun exec.GoFuncvAddr, nexpr, arity int) *Builder {
 	return p.Call(nexpr, arity == -1)
 }
 
+var builtinFnvs = map[string][2]string{
+	"errorf":  {"fmt", "Errorf"},
+	"print":   {"fmt", "Print"},
+	"printf":  {"fmt", "Printf"},
+	"println": {"fmt", "Println"},
+	"fprintf": {"fmt", "Fprintf"},
+}
+
+// LoadGoVar instr
+func (p *Builder) LoadGoVar(addr exec.GoVarAddr) *Builder {
+	gvi := defaultImpl.GetGoVarInfo(addr)
+	_ = gvi
+	panic("todo")
+	return p
+}
+
+// StoreGoVar instr
+func (p *Builder) StoreGoVar(addr exec.GoVarAddr) *Builder {
+	gvi := defaultImpl.GetGoVarInfo(addr)
+	_ = gvi
+	panic("todo")
+	return p
+}
+
+// AddrGoVar instr
+func (p *Builder) AddrGoVar(addr exec.GoVarAddr) *Builder {
+	gvi := defaultImpl.GetGoVarInfo(addr)
+	_ = gvi
+	panic("todo")
+	return p
+}
+
 // Append instr
 func (p *Builder) Append(typ reflect.Type, arity int) *Builder {
 	p.rhs.Push(appendIden)
