@@ -13,6 +13,6 @@ func addSafe(x, y string) int {
 println(`add("100", "23"):`, add("100", "23")!)
 
 sum, err := add("10", "abc")
-println(`add("10", "efg"):`, sum, err)
+println(`add("10", "abc"):`, sum, err)
 
-println(`addSafe("10", "efg"):`, addSafe("10", "abc"))
+println(`addSafe("10", "abc"):`, addSafe("10", "abc"))
