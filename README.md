@@ -235,22 +235,22 @@ func addSafe(x, y string) int {
 println(`add("100", "23"):`, add("100", "23")!)
 
 sum, err := add("10", "abc")
-println(`add("10", "efg"):`, sum, err)
+println(`add("10", "abc"):`, sum, err)
 
-println(`addSafe("10", "efg"):`, addSafe("10", "abc"))
+println(`addSafe("10", "abc"):`, addSafe("10", "abc"))
 ```
 
 The output of this example is:
 
 ```
 add("100", "23"): 123
-add("10", "efg"): 0 strconv.Atoi: parsing "abc": invalid syntax
+add("10", "abc"): 0 strconv.Atoi: parsing "abc": invalid syntax
 
 ===> errors stack:
 main.add("10", "abc")
 	/Users/xsw/goplus/tutorial/15-ErrWrap/err_wrap.gop:6 strconv.Atoi(y)?
 
-addSafe("10", "efg"): 10
+addSafe("10", "abc"): 10
 ```
 
 Compared to corresponding Go code, It is clear and more readable.
