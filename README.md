@@ -212,9 +212,9 @@ for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
 We reinvent error handling specification in Go+. We call them `ErrWrap expressions`:
 
 ```go
-expr!
-expr?
-expr?:defval
+expr! // panic if err
+expr? // return if err
+expr?:defval // use defval if err
 ```
 
 How to use them? Here is an example:
