@@ -429,8 +429,13 @@ func NewPackage(out exec.Builder, pkg *ast.Package, fset *token.FileSet, act Pkg
 			}
 			return p, err
 		}
-		ctx.file = entry.ctx.file
-		compileBlockStmtWithout(ctx, entry.body)
+		if entry.ctx.noExecCtx {
+			ctx.file = entry.ctx.file
+			compileBlockStmtWithout(ctx, entry.body)
+		} else {
+			out.CallFunc(entry.Get(), 0)
+			ctxPkg.use(entry)
+		}
 		out.Return(-1)
 	}
 	ctxPkg.resolveFuncs()

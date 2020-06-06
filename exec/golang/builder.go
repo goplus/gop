@@ -263,10 +263,10 @@ func (p *Builder) endBlockStmt() {
 
 func (p *Builder) labeled(stmt ast.Stmt) ast.Stmt {
 	if p.labels != nil {
+		if stmt == nil {
+			stmt = &ast.ReturnStmt{}
+		}
 		for _, l := range p.labels {
-			if stmt == nil {
-				panic("labeled nil")
-			}
 			stmt = &ast.LabeledStmt{
 				Label: Ident(l.getName(p)),
 				Stmt:  stmt,
