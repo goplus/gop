@@ -337,7 +337,7 @@ func (p *ErrWrapExpr) End() token.Pos {
 	if p.Default != nil {
 		return p.Default.End()
 	}
-	return p.TokPos
+	return p.TokPos + 1
 }
 
 func (*ErrWrapExpr) exprNode() {}

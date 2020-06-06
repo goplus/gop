@@ -35,6 +35,7 @@ import (
 var (
 	flagAsm   = flag.Bool("asm", false, "generate asm code")
 	flagQuiet = flag.Bool("quiet", false, "don't generate any log")
+	flagDebug = flag.Bool("debug", false, "print debug information")
 )
 
 func main() {
@@ -48,6 +49,8 @@ func main() {
 	log.SetFlags(log.Ldefault &^ log.LstdFlags)
 	if *flagQuiet {
 		log.SetOutputLevel(0x7000)
+	} else if *flagDebug {
+		log.SetOutputLevel(log.Ldebug)
 	}
 
 	fset := token.NewFileSet()

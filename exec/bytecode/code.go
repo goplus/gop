@@ -125,8 +125,8 @@ const (
 )
 
 const (
-	ipInvalid = 0x7fffffff
-	ipReturnN = ipInvalid - 1
+	ipInvalid = 0x7fffffff    // return
+	ipReturnN = ipInvalid - 1 // return val1, val2, ...
 )
 
 // DecodeInstr returns

@@ -829,6 +829,8 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr) func() {
 				if retErr, ok = returnErr(fun); !ok {
 					log.Panicln("used `expr?` in a function that last output parameter is not an error")
 				}
+			} else if v.Tok == token.NOT {
+				retErr = nil
 			}
 			pos, code := ctx.getCodeInfo(v)
 			fn, narg := getFuncInfo(fun)
