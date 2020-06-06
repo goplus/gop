@@ -90,6 +90,7 @@ type Builder struct {
 	labels      []*Label          // labels of current statement
 	fset        *token.FileSet    // fileset of Go+ code
 	cfun        *FuncInfo         // current function
+	cstmt       interface{}       // current statement
 	reserveds   []*printer.ReservedExpr
 	comprehens  func() // current comprehension
 	identBase   int    // auo-increasement ident index
@@ -189,21 +190,31 @@ func Comment(text string) *ast.CommentGroup {
 	}
 }
 
+type stmtState struct {
+	stmtOld interface{}
+	rhsBase int
+}
+
 // StartStmt receives a `StartStmt` event.
 func (p *Builder) StartStmt(stmt interface{}) interface{} {
-	return p.rhs.Len()
+	state := &stmtState{p.cstmt, p.rhs.Len()}
+	p.cstmt = stmt
+	return state
 }
 
 // EndStmt receives a `EndStmt` event.
 func (p *Builder) EndStmt(stmt, start interface{}) *Builder {
-	var rhsBase = start.(int)
 	var node ast.Stmt
+	var state = start.(*stmtState)
+	defer func() { // restore parent statement
+		p.cstmt = state.stmtOld
+	}()
 	if lhsLen := p.lhs.Len(); lhsLen > 0 { // assignment
 		lhs := make([]ast.Expr, lhsLen)
 		for i := 0; i < lhsLen; i++ {
 			lhs[i] = p.lhs.Pop().(ast.Expr)
 		}
-		rhsLen := p.rhs.Len() - rhsBase
+		rhsLen := p.rhs.Len() - state.rhsBase
 		rhs := make([]ast.Expr, rhsLen)
 		for i, v := range p.rhs.GetArgs(rhsLen) {
 			rhs[i] = v.(ast.Expr)
@@ -211,7 +222,7 @@ func (p *Builder) EndStmt(stmt, start interface{}) *Builder {
 		p.rhs.PopN(rhsLen)
 		node = &ast.AssignStmt{Lhs: lhs, Tok: token.ASSIGN, Rhs: rhs}
 	} else {
-		if rhsLen := p.rhs.Len() - rhsBase; rhsLen != 1 {
+		if rhsLen := p.rhs.Len() - state.rhsBase; rhsLen != 1 {
 			if rhsLen == 0 {
 				return p
 			}
@@ -227,7 +238,12 @@ func (p *Builder) EndStmt(stmt, start interface{}) *Builder {
 			log.Panicln("EndStmt: unexpected -", reflect.TypeOf(val))
 		}
 	}
-	if stmt != nil {
+	p.emitStmt(node)
+	return p
+}
+
+func (p *Builder) emitStmt(node ast.Stmt) {
+	if stmt := p.cstmt; stmt != nil {
 		start := stmt.(ast.Node).Pos()
 		pos := p.fset.Position(start)
 		line := fmt.Sprintf("\n//line ./%s:%d", path.Base(pos.Filename), pos.Line)
@@ -236,12 +252,7 @@ func (p *Builder) EndStmt(stmt, start interface{}) *Builder {
 		}
 		node = &printer.CommentedStmt{Comments: Comment(line), Stmt: node}
 	}
-	p.emitStmt(node)
-	return p
-}
-
-func (p *Builder) emitStmt(stmt ast.Stmt) {
-	p.stmts = append(p.stmts, p.labeled(stmt))
+	p.stmts = append(p.stmts, p.labeled(node))
 }
 
 func (p *Builder) endBlockStmt() {
