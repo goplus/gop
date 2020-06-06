@@ -207,6 +207,58 @@ for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
 }
 ```
 
+### Error handling
+
+We reinvent error handling specification in Go+. We call them `ErrWrap expressions`:
+
+```go
+expr!
+expr?
+expr?:defval
+```
+
+How to use them? Here is an example:
+
+```go
+import (
+	"strconv"
+)
+
+func add(x, y string) (int, error) {
+	return strconv.Atoi(x)? + strconv.Atoi(y)?, nil
+}
+
+func addSafe(x, y string) int {
+	return strconv.Atoi(x)?:0 + strconv.Atoi(y)?:0
+}
+
+println(`add("100", "23"):`, add("100", "23")!)
+
+sum, err := add("10", "abc")
+println(`add("10", "efg"):`, sum, err)
+
+println(`addSafe("10", "efg"):`, addSafe("10", "abc"))
+```
+
+The output of this example is:
+
+```
+add("100", "23"): 123
+add("10", "efg"): 0 strconv.Atoi: parsing "abc": invalid syntax
+
+===> errors stack:
+main.add("10", "abc")
+	/Users/xsw/goplus/tutorial/15-ErrWrap/err_wrap.gop:6 strconv.Atoi(y)?
+
+addSafe("10", "efg"): 10
+```
+
+Compared to corresponding Go code, It is clear and more readable.
+
+And the most interesting thing is, the return error contains the full error stack. When we got an error, it is very easy to position what the root cause is.
+
+How these `ErrWrap expressions` work? See [Error Handling](https://github.com/qiniu/goplus/wiki/Error-Handling) for more information.
+
 ### Go features
 
 All Go features (not including `cgo`) will be supported.
