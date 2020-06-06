@@ -161,7 +161,7 @@ type GoSymInfo struct {
 // GoFuncInfo represents a Go function information.
 type GoFuncInfo = GoSymInfo
 
-// GoVarInfo represents a Go function information.
+// GoVarInfo represents a Go variable information.
 type GoVarInfo = GoSymInfo
 
 // A Code represents generated instructions to execute.
