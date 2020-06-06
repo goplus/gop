@@ -120,7 +120,7 @@ func NewGoPackage(pkgPath string) *GoPackage {
 }
 
 // FindGoPackage lookups a Go package by pkgPath. It returns nil if not found.
-func FindGoPackage(pkgPath string) *GoPackage {
+func FindGoPackage(pkgPath string) exec.GoPackage {
 	return gopkgs[pkgPath]
 }
 
@@ -297,7 +297,7 @@ func (p *GoPackage) RegisterTypes(typinfos ...GoTypeInfo) {
 // -----------------------------------------------------------------------------
 
 var (
-	gopkgs  = make(map[string]*GoPackage)
+	gopkgs  = make(map[string]exec.GoPackage)
 	gofuns  []GoFuncInfo
 	gofunvs []GoFuncvInfo
 	govars  []GoVarInfo

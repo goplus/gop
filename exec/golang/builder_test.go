@@ -26,10 +26,7 @@ import (
 	"github.com/qiniu/x/log"
 
 	qexec "github.com/qiniu/goplus/exec/bytecode"
-	_ "github.com/qiniu/goplus/lib/builtin"
-	_ "github.com/qiniu/goplus/lib/fmt"
-	_ "github.com/qiniu/goplus/lib/reflect"
-	_ "github.com/qiniu/goplus/lib/strings"
+	_ "github.com/qiniu/goplus/lib"
 )
 
 // I is a Go package instance.
@@ -38,6 +35,7 @@ var I = qexec.FindGoPackage("")
 func init() {
 	cl.CallBuiltinOp = qexec.CallBuiltinOp
 	log.SetFlags(log.Ldefault &^ log.LstdFlags)
+	log.SetOutputLevel(0)
 }
 
 // -----------------------------------------------------------------------------
