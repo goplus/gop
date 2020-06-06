@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/qiniu/goplus/ast"
@@ -49,6 +50,7 @@ func genGopkg(pkgDir string) (mainPkg bool, err error) {
 	}()
 
 	fset := token.NewFileSet()
+	pkgDir, _ = filepath.Abs(pkgDir)
 	pkgs, err := parser.ParseDir(fset, pkgDir, nil, 0)
 	if err != nil {
 		return

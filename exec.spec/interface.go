@@ -138,6 +138,12 @@ type GoPackage interface {
 	// Find lookups a symbol by specified its name.
 	Find(name string) (addr uint32, kind SymbolKind, ok bool)
 
+	// FindFunc lookups a Go function by name.
+	FindFunc(name string) (addr GoFuncAddr, ok bool)
+
+	// FindFuncv lookups a Go function by name.
+	FindFuncv(name string) (addr GoFuncvAddr, ok bool)
+
 	// FindType lookups a Go type by name.
 	FindType(name string) (typ reflect.Type, ok bool)
 
@@ -189,6 +195,9 @@ type Builder interface {
 
 	// Default instr
 	Default() Builder
+
+	// WrapIfErr instr
+	WrapIfErr(nret int, l Label) Builder
 
 	// ErrWrap instr
 	ErrWrap(nret int, retErr Var, frame *errors.Frame, narg int) Builder

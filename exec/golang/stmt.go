@@ -6,6 +6,7 @@ import (
 	"reflect"
 
 	"github.com/qiniu/goplus/exec.spec"
+	"github.com/qiniu/goplus/exec/golang/internal/go/printer"
 	"github.com/qiniu/x/errors"
 )
 
@@ -13,7 +14,8 @@ import (
 
 // Label represents a label.
 type Label struct {
-	name string
+	name      string
+	wrapIfErr bool // for wrapIfErr instr
 }
 
 // NewLabel creates a label object.
@@ -35,6 +37,12 @@ func (p *Label) Name() string {
 
 // Label defines a label to jmp here.
 func (p *Builder) Label(l *Label) *Builder {
+	if l.wrapIfErr {
+		defval := p.rhs.Pop().(ast.Expr)
+		reservedExpr := p.rhs.Pop().(*printer.ReservedExpr)
+		reservedExpr.Expr = defval
+		return p
+	}
 	p.labels = append(p.labels, l)
 	return p
 }
@@ -105,10 +113,86 @@ func (p *Builder) Default() *Builder {
 	return p
 }
 
+// WrapIfErr instr
+func (p *Builder) WrapIfErr(nret int, l *Label) *Builder {
+	args := p.wrapCall(nret)
+	reservedExpr := &printer.ReservedExpr{}
+	assignVal := &ast.AssignStmt{
+		Lhs: []ast.Expr{args[0]},
+		Tok: token.ASSIGN,
+		Rhs: []ast.Expr{reservedExpr},
+	}
+	ifStmt := &ast.IfStmt{
+		Cond: &ast.BinaryExpr{X: args[nret-1], Op: token.NEQ, Y: nilIden},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{assignVal},
+		},
+	}
+	p.emitStmt(ifStmt)
+	p.rhs.Push(args[0])
+	p.rhs.Push(reservedExpr)
+	l.wrapIfErr = true
+	return p
+}
+
+func (p *Builder) wrapCall(nret int) []ast.Expr {
+	x := p.rhs.Pop().(ast.Expr)
+	args := make([]ast.Expr, nret)
+	for i := 0; i < nret; i++ {
+		args[i] = Ident(p.autoIdent())
+	}
+	assignStmt := &ast.AssignStmt{
+		Lhs: args,
+		Tok: token.DEFINE,
+		Rhs: []ast.Expr{x},
+	}
+	p.emitStmt(assignStmt)
+	return args
+}
+
 // ErrWrap instr
 func (p *Builder) ErrWrap(nret int, retErr exec.Var, frame *errors.Frame, narg int) *Builder {
-	panic("todo")
-	//return p
+	args := p.wrapCall(nret)
+	frameFun := p.GoFuncIdent("github.com/qiniu/x/errors", "NewFrame")
+	frameArgs := make([]ast.Expr, narg+6)
+	frameArgs[0] = args[nret-1]
+	frameArgs[1] = StringConst(frame.Code)
+	frameArgs[2] = StringConst(frame.File)
+	frameArgs[3] = IntConst(int64(frame.Line))
+	frameArgs[4] = StringConst(frame.Pkg)
+	frameArgs[5] = StringConst(frame.Func)
+	for i := 0; i < narg; i++ {
+		frameArgs[6+i] = Ident(toArg(i))
+	}
+	frameErr := &ast.CallExpr{Fun: frameFun, Args: frameArgs}
+	var body *ast.BlockStmt
+	if retErr != nil {
+		outErr := Ident(retErr.Name())
+		assignErr := &ast.AssignStmt{
+			Lhs: []ast.Expr{outErr},
+			Tok: token.ASSIGN,
+			Rhs: []ast.Expr{frameErr},
+		}
+		returnStmt := &ast.ReturnStmt{}
+		body = &ast.BlockStmt{
+			List: []ast.Stmt{assignErr, returnStmt},
+		}
+	} else {
+		panicArgs := []ast.Expr{frameErr}
+		panicStmt := &ast.ExprStmt{X: &ast.CallExpr{Fun: Ident("panic"), Args: panicArgs}}
+		body = &ast.BlockStmt{
+			List: []ast.Stmt{panicStmt},
+		}
+	}
+	ifStmt := &ast.IfStmt{
+		Cond: &ast.BinaryExpr{X: args[nret-1], Op: token.NEQ, Y: nilIden},
+		Body: body,
+	}
+	p.emitStmt(ifStmt)
+	for _, arg := range args[:nret-1] {
+		p.rhs.Push(arg)
+	}
+	return p
 }
 
 // ----------------------------------------------------------------------------

@@ -844,7 +844,14 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr) func() {
 			ctx.out.ErrWrap(nx, retErr, frame, narg)
 			return
 		}
-		panic("todo")
+		if nx != 2 {
+			log.Panicln("compileErrWrapExpr: output parameters count must be 2")
+		}
+		label := ctx.NewLabel("")
+		ctx.out.WrapIfErr(nx, label)
+		compileExpr(ctx, v.Default)()
+		checkType(x.Value(0).Type(), ctx.infer.Pop(), ctx.out)
+		ctx.out.Label(label)
 	}
 }
 

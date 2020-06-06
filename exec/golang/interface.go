@@ -132,6 +132,12 @@ func (p *iBuilder) Default() exec.Builder {
 	return p
 }
 
+// WrapIfErr instr
+func (p *iBuilder) WrapIfErr(nret int, l exec.Label) exec.Builder {
+	((*Builder)(p)).WrapIfErr(nret, l.(*Label))
+	return p
+}
+
 // ErrWrap instr
 func (p *iBuilder) ErrWrap(nret int, retErr exec.Var, frame *errors.Frame, narg int) exec.Builder {
 	((*Builder)(p)).ErrWrap(nret, retErr, frame, narg)

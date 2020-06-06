@@ -37,6 +37,15 @@ func execJmp(i Instr, ctx *Context) {
 	ctx.ip += int(delta)
 }
 
+func execWrapIfErr(i Instr, ctx *Context) {
+	v := ctx.Pop()
+	if v == nil {
+		execJmp(i, ctx)
+		return
+	}
+	ctx.PopN(1)
+}
+
 func execJmpIf(i Instr, ctx *Context) {
 	v := ctx.Pop()
 	if (i & bitsOpJmpPtrCondFlag) != 0 {
@@ -150,6 +159,11 @@ func (p *Builder) Jmp(l *Label) *Builder {
 // JmpIf instr
 func (p *Builder) JmpIf(cond exec.JmpCond, l *Label) *Builder {
 	return p.labelOp((opJmpIf<<bitsOpShift)|(uint32(cond)<<bitsOpJmpIfCond), l)
+}
+
+// WrapIfErr instr
+func (p *Builder) WrapIfErr(nret int, l *Label) *Builder {
+	return p.labelOp(opWrapIfErr<<bitsOpShift, l)
 }
 
 // CaseNE instr
