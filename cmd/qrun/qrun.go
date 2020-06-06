@@ -20,6 +20,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/qiniu/goplus/cl"
 	"github.com/qiniu/goplus/parser"
@@ -27,10 +28,7 @@ import (
 	"github.com/qiniu/x/log"
 
 	exec "github.com/qiniu/goplus/exec/bytecode"
-	_ "github.com/qiniu/goplus/lib/builtin"
-	_ "github.com/qiniu/goplus/lib/fmt"
-	_ "github.com/qiniu/goplus/lib/reflect"
-	_ "github.com/qiniu/goplus/lib/strings"
+	_ "github.com/qiniu/goplus/lib"
 )
 
 // -----------------------------------------------------------------------------
@@ -38,6 +36,7 @@ import (
 var (
 	flagAsm   = flag.Bool("asm", false, "generate asm code")
 	flagQuiet = flag.Bool("quiet", false, "don't generate any log")
+	flagDebug = flag.Bool("debug", false, "print debug information")
 )
 
 func main() {
@@ -51,10 +50,13 @@ func main() {
 	log.SetFlags(log.Ldefault &^ log.LstdFlags)
 	if *flagQuiet {
 		log.SetOutputLevel(0x7000)
+	} else if *flagDebug {
+		log.SetOutputLevel(log.Ldebug)
 	}
 
 	fset := token.NewFileSet()
-	pkgs, err := parser.ParseDir(fset, flag.Arg(0), nil, 0)
+	pkgDir, _ := filepath.Abs(flag.Arg(0))
+	pkgs, err := parser.ParseDir(fset, pkgDir, nil, 0)
 	if err != nil {
 		log.Fatalln("ParseDir failed:", err)
 	}

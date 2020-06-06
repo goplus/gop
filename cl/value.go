@@ -89,6 +89,34 @@ func (p *nonValue) Value(i int) iValue {
 
 // -----------------------------------------------------------------------------
 
+type wrapValue struct {
+	x iValue
+}
+
+func (p *wrapValue) Type() reflect.Type {
+	if p.x.NumValues() != 2 {
+		panic("don't call me")
+	}
+	return p.x.Value(0).Type()
+}
+
+func (p *wrapValue) Kind() iKind {
+	if p.x.NumValues() != 2 {
+		panic("don't call me")
+	}
+	return p.x.Value(0).Kind()
+}
+
+func (p *wrapValue) NumValues() int {
+	return p.x.NumValues() - 1
+}
+
+func (p *wrapValue) Value(i int) iValue {
+	return p.x.Value(i)
+}
+
+// -----------------------------------------------------------------------------
+
 type funcResults struct {
 	tfn reflect.Type
 }
@@ -323,8 +351,15 @@ func binaryOp(op exec.Operator, x, y *constVal) *constVal {
 }
 
 func boundConst(v interface{}, t reflect.Type) interface{} {
+	kind := t.Kind()
+	if v == nil {
+		if kind >= reflect.Chan && kind <= reflect.Slice {
+			return nil
+		}
+		log.Panicln("boundConst: can't convert nil into", t)
+	}
 	sval := reflect.ValueOf(v)
-	if kind := t.Kind(); kind == reflect.Complex128 || kind == reflect.Complex64 {
+	if kind == reflect.Complex128 || kind == reflect.Complex64 {
 		if skind := sval.Kind(); skind >= reflect.Int && skind <= reflect.Float64 {
 			fval := sval.Convert(exec.TyFloat64).Float()
 			return complex(fval, 0)

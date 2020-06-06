@@ -1489,6 +1489,8 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	case *ast.StarExpr:
 	case *ast.UnaryExpr:
 	case *ast.BinaryExpr:
+	case *ast.TernaryExpr:
+	case *ast.ErrWrapExpr:
 	default:
 		// all other nodes are not proper expressions
 		p.errorExpected(x.Pos(), "expression")
@@ -1707,7 +1709,7 @@ func (p *parser) parseBinaryExpr(lhs bool, prec1 int) ast.Expr {
 		defer un(trace(p, "BinaryExpr"))
 	}
 
-	x := p.parseUnaryExpr(lhs)
+	x := p.parseErrWrapExpr(lhs)
 	for {
 		op, oprec := p.tokPrec()
 		if oprec < prec1 {
@@ -1720,6 +1722,26 @@ func (p *parser) parseBinaryExpr(lhs bool, prec1 int) ast.Expr {
 		}
 		y := p.parseBinaryExpr(false, oprec+1)
 		x = &ast.BinaryExpr{X: p.checkExpr(x), OpPos: pos, Op: op, Y: p.checkExpr(y)}
+	}
+}
+
+func (p *parser) parseErrWrapExpr(lhs bool) ast.Expr { // expr! expr? expr?:defval
+	x := p.parseUnaryExpr(lhs)
+	switch p.tok {
+	case token.NOT: // expr!
+		expr := &ast.ErrWrapExpr{X: x, Tok: token.NOT, TokPos: p.pos}
+		p.next()
+		return expr
+	case token.QUESTION: // expr? expr?:defval
+		expr := &ast.ErrWrapExpr{X: x, Tok: token.QUESTION, TokPos: p.pos}
+		p.next()
+		if p.tok == token.COLON {
+			p.next()
+			expr.Default = p.parseUnaryExpr(false)
+		}
+		return expr
+	default:
+		return x
 	}
 }
 

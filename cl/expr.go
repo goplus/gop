@@ -25,6 +25,7 @@ import (
 	"github.com/qiniu/goplus/ast/astutil"
 	"github.com/qiniu/goplus/exec.spec"
 	"github.com/qiniu/goplus/token"
+	"github.com/qiniu/x/errors"
 	"github.com/qiniu/x/log"
 )
 
@@ -64,6 +65,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 		return compileUnaryExpr(ctx, v)
 	case *ast.SelectorExpr:
 		return compileSelectorExpr(ctx, v)
+	case *ast.ErrWrapExpr:
+		return compileErrWrapExpr(ctx, v)
 	case *ast.IndexExpr:
 		return compileIndexExpr(ctx, v)
 	case *ast.SliceExpr:
@@ -806,6 +809,63 @@ func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr) func() { // x[i]
 			log.Panicln("compileIndexExpr: unknown -", typ)
 		}
 	}
+}
+
+func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr) func() {
+	exprX := compileExpr(ctx, v.X)
+	x := ctx.infer.Get(-1).(iValue)
+	nx := x.NumValues()
+	if nx < 1 || !x.Value(nx-1).Type().Implements(exec.TyError) {
+		log.Panicln("last output parameter doesn't implement `error` interface")
+	}
+	ctx.infer.Ret(1, &wrapValue{x})
+	return func() {
+		exprX()
+		if v.Default == nil { // expr? or expr!
+			var fun = ctx.fun
+			var ok bool
+			var retErr exec.Var
+			if v.Tok == token.QUESTION {
+				if retErr, ok = returnErr(fun); !ok {
+					log.Panicln("used `expr?` in a function that last output parameter is not an error")
+				}
+			} else if v.Tok == token.NOT {
+				retErr = nil
+			}
+			pos, code := ctx.getCodeInfo(v)
+			fn, narg := getFuncInfo(fun)
+			frame := &errors.Frame{
+				Pkg:  ctx.pkg.Name,
+				Func: fn,
+				Code: code,
+				File: pos.Filename,
+				Line: pos.Line,
+			}
+			ctx.out.ErrWrap(nx, retErr, frame, narg)
+			return
+		}
+		panic("todo")
+	}
+}
+
+func returnErr(fun exec.FuncInfo) (retErr exec.Var, ok bool) {
+	if fun == nil {
+		return
+	}
+	n := fun.NumOut()
+	if n == 0 {
+		return
+	}
+	retErr = fun.Out(n - 1)
+	ok = retErr.Type() == exec.TyError
+	return
+}
+
+func getFuncInfo(fun exec.FuncInfo) (name string, narg int) {
+	if fun != nil {
+		return fun.Name(), fun.NumIn()
+	}
+	return "main", 0
 }
 
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {

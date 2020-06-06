@@ -46,4 +46,12 @@ func ToStrings(args []interface{}) []string {
 	return ret
 }
 
+// ToError converts a value into error.
+func ToError(v interface{}) error {
+	if v == nil {
+		return nil
+	}
+	return v.(error)
+}
+
 // -----------------------------------------------------------------------------

@@ -1,0 +1,22 @@
+import (
+	"strconv"
+)
+
+func add(x, y string) (int, error) {
+	sum := strconv.Atoi(x)? + strconv.Atoi(y)?
+	return sum, nil
+}
+
+func foo() error {
+    return errorf("not found")
+}
+
+func bar(n int) (int, error) {
+    if n < 0 {
+        foo()?
+    }
+    return n, nil
+}
+
+println(`add("100", "23"):`, add("100", "23")!)
+println("bar(-1):", bar(-1) ?: 0)

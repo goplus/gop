@@ -32,10 +32,7 @@ import (
 	"github.com/qiniu/x/log"
 
 	exec "github.com/qiniu/goplus/exec/bytecode"
-	_ "github.com/qiniu/goplus/lib/builtin"
-	_ "github.com/qiniu/goplus/lib/fmt"
-	_ "github.com/qiniu/goplus/lib/reflect"
-	_ "github.com/qiniu/goplus/lib/strings"
+	_ "github.com/qiniu/goplus/lib"
 )
 
 func init() {
@@ -267,8 +264,11 @@ func getPkg(pkgs map[string]*ast.Package) *ast.Package {
 	return nil
 }
 
-func testFrom(t *testing.T, pkgDir, sel string) {
+func testFrom(t *testing.T, pkgDir, sel, exclude string) {
 	if sel != "" && !strings.Contains(pkgDir, sel) {
+		return
+	}
+	if exclude != "" && strings.Contains(pkgDir, exclude) {
 		return
 	}
 	log.Debug("Compiling", pkgDir)
@@ -294,7 +294,7 @@ func testFrom(t *testing.T, pkgDir, sel string) {
 }
 
 func TestFromTestdata(t *testing.T) {
-	sel := ""
+	sel, exclude := "", "17"
 	dir, err := os.Getwd()
 	if err != nil {
 		t.Fatal("Getwd failed:", err)
@@ -305,7 +305,7 @@ func TestFromTestdata(t *testing.T) {
 		t.Fatal("ReadDir failed:", err)
 	}
 	for _, fi := range fis {
-		testFrom(t, dir+"/"+fi.Name(), sel)
+		testFrom(t, dir+"/"+fi.Name(), sel, exclude)
 	}
 }
 

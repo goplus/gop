@@ -198,14 +198,17 @@ func (p *FuncInfo) Name() string {
 	return p.name
 }
 
-// NumOut returns a function type's output parameter count.
-// It panics if the type's Kind is not Func.
+// NumIn returns a function's input parameter count.
+func (p *FuncInfo) NumIn() int {
+	return len(p.in)
+}
+
+// NumOut returns a function's output parameter count.
 func (p *FuncInfo) NumOut() int {
 	return p.numOut
 }
 
 // Out returns the type of a function type's i'th output parameter.
-// It panics if i is not in the range [0, NumOut()).
 func (p *FuncInfo) Out(i int) *Var {
 	if i >= p.numOut {
 		log.Panicln("FuncInfo.Out: out of range -", i, "func:", p.name)

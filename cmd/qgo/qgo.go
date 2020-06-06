@@ -19,10 +19,7 @@ import (
 	"github.com/qiniu/goplus/token"
 	"github.com/qiniu/x/log"
 
-	_ "github.com/qiniu/goplus/lib/builtin"
-	_ "github.com/qiniu/goplus/lib/fmt"
-	_ "github.com/qiniu/goplus/lib/reflect"
-	_ "github.com/qiniu/goplus/lib/strings"
+	_ "github.com/qiniu/goplus/lib"
 )
 
 func saveGoFile(dir string, code *golang.Code) error {

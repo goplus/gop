@@ -281,7 +281,7 @@ func (p *varManager) addVar(vars ...*Var) {
 	nestDepth := p.nestDepth
 	for i, v := range vars {
 		v.SetAddr(nestDepth, uint32(i+n))
-		log.Debug("DefineVar:", v.Name(), "-", nestDepth)
+		log.Debug("DefineVar:", v.Name(), "nestDepth:", nestDepth)
 	}
 	p.vlist = append(p.vlist, vars...)
 }
@@ -292,6 +292,7 @@ func (p *varManager) addVars(vars ...exec.Var) {
 	for i, item := range vars {
 		v := item.(*Var)
 		v.SetAddr(nestDepth, uint32(i+n))
+		log.Debug("DefineVar:", v.Name(), "nestDepth:", nestDepth)
 		p.vlist = append(p.vlist, v)
 	}
 }

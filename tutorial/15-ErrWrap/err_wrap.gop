@@ -1,0 +1,10 @@
+import (
+	"strconv"
+)
+
+func add(x, y string) (int, error) {
+	return strconv.Atoi(x)? + strconv.Atoi(y)?, nil
+}
+
+println(`add("100", "23"):`, add("100", "23")!)
+println(`add("1", "efg"):`, add("1", "abc")!) // expect to panic

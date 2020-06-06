@@ -296,6 +296,54 @@ func (*SliceLit) exprNode() {}
 
 // -----------------------------------------------------------------------------
 
+// TernaryExpr represents `cond ? expr1 : expr2`
+type TernaryExpr struct {
+	Cond     Expr
+	Question token.Pos
+	X        Expr
+	Colon    token.Pos
+	Y        Expr
+}
+
+// Pos - position of first character belonging to the node
+func (p *TernaryExpr) Pos() token.Pos {
+	return p.Cond.Pos()
+}
+
+// End - position of first character immediately after the node
+func (p *TernaryExpr) End() token.Pos {
+	return p.Y.End()
+}
+
+func (*TernaryExpr) exprNode() {}
+
+// -----------------------------------------------------------------------------
+
+// ErrWrapExpr represents `expr!`, `expr?` or `expr? defaultValue`
+type ErrWrapExpr struct {
+	X       Expr
+	Tok     token.Token // ! or ?
+	TokPos  token.Pos
+	Default Expr // can be nil
+}
+
+// Pos - position of first character belonging to the node
+func (p *ErrWrapExpr) Pos() token.Pos {
+	return p.X.Pos()
+}
+
+// End - position of first character immediately after the node
+func (p *ErrWrapExpr) End() token.Pos {
+	if p.Default != nil {
+		return p.Default.End()
+	}
+	return p.TokPos + 1
+}
+
+func (*ErrWrapExpr) exprNode() {}
+
+// -----------------------------------------------------------------------------
+
 // ForPhrase represents `for k, v <- listOrMap`
 type ForPhrase struct {
 	For        token.Pos // position of "for" keyword

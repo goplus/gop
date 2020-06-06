@@ -14,28 +14,29 @@
  limitations under the License.
 */
 
-// Package fmt provide Go+ "fmt" package, as "fmt" package in Go.
+// Package fmt provide Go+ "reflect" package, as "reflect" package in Go.
 package fmt
 
 import (
-	"fmt"
+	"strconv"
 
 	"github.com/qiniu/goplus/gop"
-	"github.com/qiniu/goplus/lib/builtin"
 )
+
+func execAtoi(zero int, p *gop.Context) {
+	args := p.GetArgs(1)
+	v, err := strconv.Atoi(args[0].(string))
+	p.Ret(1, v, err)
+}
 
 // -----------------------------------------------------------------------------
 
 // I is a Go package instance.
-var I = gop.NewGoPackage("fmt")
+var I = gop.NewGoPackage("strconv")
 
 func init() {
-	I.RegisterFuncvs(
-		I.Funcv("errorf", fmt.Errorf, builtin.QexecErrorf),
-		I.Funcv("Print", fmt.Print, builtin.QexecPrint),
-		I.Funcv("Printf", fmt.Printf, builtin.QexecPrintf),
-		I.Funcv("Println", fmt.Println, builtin.QexecPrintln),
-		I.Funcv("Fprintln", fmt.Fprintln, builtin.QexecFprintln),
+	I.RegisterFuncs(
+		I.Func("Atoi", strconv.Atoi, execAtoi),
 	)
 }
 

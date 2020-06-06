@@ -22,11 +22,13 @@ import (
 	"os"
 	"path"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/qiniu/goplus/ast"
 	"github.com/qiniu/goplus/ast/asttest"
 	"github.com/qiniu/goplus/token"
+	"github.com/qiniu/x/log"
 )
 
 // -----------------------------------------------------------------------------
@@ -212,7 +214,11 @@ func TestBuild(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-func testFrom(t *testing.T, pkgDir string) {
+func testFrom(t *testing.T, pkgDir, sel string) {
+	if sel != "" && !strings.Contains(pkgDir, sel) {
+		return
+	}
+	log.Debug("Parsing", pkgDir)
 	fset := token.NewFileSet()
 	pkgs, err := ParseDir(fset, pkgDir, nil, 0)
 	if err != nil || len(pkgs) != 1 {
@@ -221,6 +227,7 @@ func testFrom(t *testing.T, pkgDir string) {
 }
 
 func TestFromTestdata(t *testing.T) {
+	sel := ""
 	dir, err := os.Getwd()
 	if err != nil {
 		t.Fatal("Getwd failed:", err)
@@ -231,7 +238,7 @@ func TestFromTestdata(t *testing.T) {
 		t.Fatal("ReadDir failed:", err)
 	}
 	for _, fi := range fis {
-		testFrom(t, dir+"/"+fi.Name())
+		testFrom(t, dir+"/"+fi.Name(), sel)
 	}
 }
 

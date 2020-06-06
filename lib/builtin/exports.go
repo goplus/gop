@@ -19,6 +19,7 @@
 package builtin
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"reflect"
@@ -66,6 +67,19 @@ func QexecFprintln(arity int, p *gop.Context) {
 	p.Ret(arity, n, err)
 }
 
+// QexecIs instr
+func QexecIs(zero int, p *gop.Context) {
+	args := p.GetArgs(2)
+	is := errors.Is(gop.ToError(args[0]), gop.ToError(args[1]))
+	p.Ret(2, is)
+}
+
+// FuncGoInfo returns Go package and function name of a Go+ builtin function.
+func FuncGoInfo(f string) ([2]string, bool) {
+	fi, ok := builtinFnvs[f]
+	return fi, ok
+}
+
 // -----------------------------------------------------------------------------
 
 func execPanic(zero int, p *gop.Context) {
@@ -77,9 +91,18 @@ func execPanic(zero int, p *gop.Context) {
 // I is a Go package instance.
 var I = gop.NewGoPackage("")
 
+var builtinFnvs = map[string][2]string{
+	"errorf":  {"fmt", "Errorf"},
+	"print":   {"fmt", "Print"},
+	"printf":  {"fmt", "Printf"},
+	"println": {"fmt", "Println"},
+	"fprintf": {"fmt", "Fprintf"},
+}
+
 func init() {
 	I.RegisterFuncs(
 		I.Func("panic", qlPanic, execPanic),
+		I.Func("is", errors.Is, QexecIs),
 	)
 	I.RegisterFuncvs(
 		I.Funcv("errorf", fmt.Errorf, QexecErrorf),

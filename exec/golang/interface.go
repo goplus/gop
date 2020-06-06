@@ -4,11 +4,11 @@ import (
 	"reflect"
 
 	"github.com/qiniu/goplus/exec.spec"
-
-	qexec "github.com/qiniu/goplus/exec/bytecode"
+	"github.com/qiniu/goplus/exec/bytecode"
+	"github.com/qiniu/x/errors"
 )
 
-var qexecImpl = qexec.GlobalInterface()
+var qexecImpl = bytecode.GlobalInterface()
 
 // -----------------------------------------------------------------------------
 
@@ -115,8 +115,8 @@ func (p *iBuilder) Jmp(l exec.Label) exec.Builder {
 }
 
 // JmpIf instr
-func (p *iBuilder) JmpIf(zeroOrOne uint32, l exec.Label) exec.Builder {
-	((*Builder)(p)).JmpIf(zeroOrOne, l.(*Label))
+func (p *iBuilder) JmpIf(cond exec.JmpCond, l exec.Label) exec.Builder {
+	((*Builder)(p)).JmpIf(cond, l.(*Label))
 	return p
 }
 
@@ -129,6 +129,12 @@ func (p *iBuilder) CaseNE(l exec.Label, arity int) exec.Builder {
 // Default instr
 func (p *iBuilder) Default() exec.Builder {
 	((*Builder)(p)).Default()
+	return p
+}
+
+// ErrWrap instr
+func (p *iBuilder) ErrWrap(nret int, retErr exec.Var, frame *errors.Frame, narg int) exec.Builder {
+	((*Builder)(p)).ErrWrap(nret, retErr, frame, narg)
 	return p
 }
 
@@ -384,12 +390,12 @@ func (p *iBuilder) Zero(typ reflect.Type) exec.Builder {
 	return p
 }
 
-// StartStmt recieves a `StartStmt` event.
+// StartStmt receives a `StartStmt` event.
 func (p *iBuilder) StartStmt(stmt interface{}) interface{} {
 	return ((*Builder)(p)).StartStmt(stmt)
 }
 
-// EndStmt recieves a `EndStmt` event.
+// EndStmt receives a `EndStmt` event.
 func (p *iBuilder) EndStmt(stmt, start interface{}) exec.Builder {
 	((*Builder)(p)).EndStmt(stmt, start)
 	return p

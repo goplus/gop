@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/qiniu/goplus/exec.spec"
+	"github.com/qiniu/goplus/lib/builtin"
 	"github.com/qiniu/x/log"
 )
 
@@ -112,7 +113,7 @@ func ComplexConst(v complex128) ast.Expr {
 // Const instr
 func Const(p *Builder, val interface{}) ast.Expr {
 	if val == nil {
-		return Ident("nil")
+		return nilIden
 	}
 	v := reflect.ValueOf(val)
 	kind := v.Kind()
@@ -265,7 +266,7 @@ func (p *Builder) CallGoFuncv(fun exec.GoFuncvAddr, nexpr, arity int) *Builder {
 	gfi := defaultImpl.GetGoFuncvInfo(fun)
 	pkgPath, name := gfi.Pkg.PkgPath(), gfi.Name
 	if pkgPath == "" {
-		if alias, ok := builtinFnvs[name]; ok {
+		if alias, ok := builtin.FuncGoInfo(name); ok {
 			pkgPath, name = alias[0], alias[1]
 		}
 	}
