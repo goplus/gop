@@ -20,6 +20,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/qiniu/goplus/cl"
 	"github.com/qiniu/goplus/parser"
@@ -54,7 +55,8 @@ func main() {
 	}
 
 	fset := token.NewFileSet()
-	pkgs, err := parser.ParseDir(fset, flag.Arg(0), nil, 0)
+	pkgDir, _ := filepath.Abs(flag.Arg(0))
+	pkgs, err := parser.ParseDir(fset, pkgDir, nil, 0)
 	if err != nil {
 		log.Fatalln("ParseDir failed:", err)
 	}
