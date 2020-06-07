@@ -81,18 +81,19 @@ func TestParentCtx(t *testing.T) {
 	ctx.SetVar(z, "78")
 
 	p0 := ctx.getScope(true)
-	ctx.switchScope(p0, newVarManager())
+	old := ctx.switchScope(p0, newVarManager())
 
 	p1 := ctx.getScope(true)
 	ctx.switchScope(p1, newVarManager(x, y))
 
 	ctx.Exec(0, code.Len())
+	ctx.restoreScope(old)
 	if v := ctx.GetVar(z); v != "78532" {
 		t.Fatal("z != 78532, ret =", v)
 	}
 }
 
-func _TestAddrVar(t *testing.T) {
+func TestAddrVar(t *testing.T) {
 	sprint, ok := I.FindFuncv("Sprint")
 	strcat, ok2 := I.FindFunc("strcat")
 	if !ok || !ok2 {
@@ -122,12 +123,13 @@ func _TestAddrVar(t *testing.T) {
 	ctx.SetVar(z, "78")
 
 	p0 := ctx.getScope(true)
-	ctx.switchScope(p0, newVarManager())
+	old := ctx.switchScope(p0, newVarManager())
 
 	p1 := ctx.getScope(true)
 	ctx.switchScope(p1, newVarManager(x, y))
 
 	ctx.Exec(0, code.Len())
+	ctx.restoreScope(old)
 	if v := ctx.GetVar(z); v != "78532" {
 		t.Fatal("y != 78532, ret =", v)
 	}

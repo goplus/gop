@@ -183,11 +183,12 @@ func execLoadVar(i Instr, p *Context) {
 
 func execStoreVar(i Instr, p *Context) {
 	idx := i & bitsOperand
+	val := p.Pop()
 	if idx <= bitsOpVarOperand {
-		p.setVar(idx, p.Pop())
+		p.setVar(idx, val)
 		return
 	}
-	getParentCtx(p, tAddress(idx)).setVar(idx&bitsOpVarOperand, p.Pop())
+	getParentCtx(p, tAddress(idx)).setVar(idx&bitsOpVarOperand, val)
 }
 
 // -----------------------------------------------------------------------------
