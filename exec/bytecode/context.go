@@ -17,6 +17,8 @@
 package bytecode
 
 import (
+	"time"
+
 	exec "github.com/qiniu/goplus/exec.spec"
 	"github.com/qiniu/x/log"
 )
@@ -138,11 +140,20 @@ func (ctx *Context) globalCtx() *Context {
 
 // Exec executes a code block from ip to ipEnd.
 func (ctx *Context) Exec(ip, ipEnd int) {
-	data := ctx.code.data
+	const allowProfile = true
+	var lastInstr Instr
+	var start time.Time
+	var data = ctx.code.data
 	ctx.ip = ip
 	for ctx.ip < ipEnd {
 		i := data[ctx.ip]
 		ctx.ip++
+		if allowProfile && doProfile {
+			if lastInstr != 0 {
+				instrProfile(lastInstr, time.Since(start))
+			}
+			lastInstr, start = i, time.Now()
+		}
 		switch i >> bitsOpShift {
 		case opBuiltinOp:
 			execBuiltinOp(i, ctx)
@@ -170,7 +181,7 @@ func (ctx *Context) Exec(ip, ipEnd int) {
 			if i != iReturn {
 				ctx.ip = ipReturnN
 			}
-			return
+			goto finished
 		case opPushUint:
 			execPushUint(i, ctx)
 		default:
@@ -179,6 +190,12 @@ func (ctx *Context) Exec(ip, ipEnd int) {
 			} else {
 				log.Panicln("Exec failed: unknown instr -", i>>bitsOpShift, "ip:", ctx.ip-1)
 			}
+		}
+	}
+finished:
+	if allowProfile && doProfile {
+		if lastInstr != 0 {
+			instrProfile(lastInstr, time.Since(start))
 		}
 	}
 }
