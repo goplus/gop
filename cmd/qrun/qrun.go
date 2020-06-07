@@ -37,6 +37,7 @@ var (
 	flagAsm   = flag.Bool("asm", false, "generate asm code")
 	flagQuiet = flag.Bool("quiet", false, "don't generate any log")
 	flagDebug = flag.Bool("debug", false, "print debug information")
+	flagProf  = flag.Bool("prof", false, "print profile information")
 )
 
 func main() {
@@ -52,6 +53,9 @@ func main() {
 		log.SetOutputLevel(0x7000)
 	} else if *flagDebug {
 		log.SetOutputLevel(log.Ldebug)
+	}
+	if *flagProf {
+		exec.SetProfile(true)
 	}
 
 	fset := token.NewFileSet()
@@ -74,6 +78,9 @@ func main() {
 	}
 	ctx := exec.NewContext(code)
 	ctx.Exec(0, code.Len())
+	if *flagProf {
+		exec.ProfileReport()
+	}
 }
 
 // -----------------------------------------------------------------------------

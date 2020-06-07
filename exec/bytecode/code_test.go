@@ -75,6 +75,10 @@ var (
 
 // -----------------------------------------------------------------------------
 
+func init() {
+	SetProfile(true)
+}
+
 func newBuilder() exec.Builder {
 	return NewBuilder(nil).Interface()
 }
