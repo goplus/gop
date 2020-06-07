@@ -25,7 +25,7 @@ import (
 
 // -----------------------------------------------------------------------------
 
-const defaultStkSize = 128
+const defaultStkSize = 64
 
 // A Stack represents a FILO container.
 type Stack struct {

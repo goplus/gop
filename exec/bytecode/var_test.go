@@ -53,7 +53,7 @@ func TestVar(t *testing.T) {
 	_ = b.InCurrentCtx(x)
 }
 
-func _TestParentCtx(t *testing.T) {
+func TestParentCtx(t *testing.T) {
 	sprint, ok := I.FindFuncv("Sprint")
 	strcat, ok2 := I.FindFunc("strcat")
 	if !ok || !ok2 {
