@@ -48,19 +48,19 @@ func execGoFuncv(i Instr, p *Context) {
 
 func execLoadGoVar(i Instr, p *Context) {
 	idx := i & bitsOperand
-	v := reflect.ValueOf(gofuns[idx].This).Elem()
+	v := reflect.ValueOf(govars[idx].Addr).Elem()
 	p.Push(v.Interface())
 }
 
 func execStoreGoVar(i Instr, p *Context) {
 	idx := i & bitsOperand
-	v := reflect.ValueOf(gofuns[idx].This).Elem()
+	v := reflect.ValueOf(govars[idx].Addr).Elem()
 	v.Set(reflect.ValueOf(p.Pop()))
 }
 
 func execAddrGoVar(i Instr, p *Context) {
 	idx := i & bitsOperand
-	p.Push(gofuns[idx].This)
+	p.Push(govars[idx].Addr)
 }
 
 // -----------------------------------------------------------------------------
