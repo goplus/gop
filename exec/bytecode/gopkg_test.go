@@ -75,6 +75,7 @@ func init() {
 	)
 	I.RegisterVars(
 		I.Var("x", new(int)),
+		I.Var("y", new(int)),
 	)
 	I.RegisterConsts(
 		I.Const("true", reflect.Bool, true),
@@ -99,6 +100,76 @@ func TestVarAndConst(t *testing.T) {
 	}
 	if addr, ok := I.FindVar("x"); !ok || addr != 0 {
 		t.Fatal("FindVar failed:", addr)
+	}
+}
+
+func TestGoVar(t *testing.T) {
+	sprint, ok := I.FindFuncv("Sprint")
+	strcat, ok2 := I.FindFunc("strcat")
+	if !ok || !ok2 {
+		t.Fatal("FindFunc failed: Sprintf/strcat")
+	}
+
+	pkg := NewGoPackage("pkg")
+
+	pkg.RegisterVars(
+		I.Var("x", new(string)),
+		I.Var("y", new(string)),
+		I.Var("i", new(int)),
+		I.Var("j", new(int)),
+	)
+
+	x, ok := pkg.FindVar("x")
+	if !ok {
+		t.Fatal("FindVar failed:", x)
+	}
+	y, ok := pkg.FindVar("y")
+	if !ok {
+		t.Fatal("FindVar failed:", y)
+	}
+	i, ok := pkg.FindVar("i")
+	if !ok {
+		t.Fatal("FindVar failed:", i)
+	}
+	j, ok := pkg.FindVar("j")
+	if !ok {
+		t.Fatal("FindVar failed:", j)
+	}
+
+	b := newBuilder()
+	code := b.
+		Push(5).
+		Push("32").
+		CallGoFuncv(sprint, 2, 2).
+		StoreGoVar(x). // x = sprint(5, "32")
+		Push("78").
+		LoadGoVar(x).
+		CallGoFunc(strcat, 2).
+		StoreGoVar(y). // y = strcat("78", x)
+		Push(5).
+		StoreGoVar(i).
+		LoadGoVar(i).
+		AddrGoVar(j).
+		AddrOp(Int, OpAssign).
+		Push(5).
+		AddrGoVar(j).
+		AddrOp(Int, OpAddAssign).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+
+	if v := reflect.ValueOf(govars[x].Addr).Elem().String(); v != "532" {
+		t.Fatal("x != 532, x = ", v)
+	}
+	if v := reflect.ValueOf(govars[y].Addr).Elem().String(); v != "78532" {
+		t.Fatal("y != 78532, x =", v)
+	}
+	if v := reflect.ValueOf(govars[i].Addr).Elem().Int(); v != 5 {
+		t.Fatal("i !=5, x =", i)
+	}
+	if v := reflect.ValueOf(govars[j].Addr).Elem().Int(); v != 10 {
+		t.Fatal("j !=10, x =", j)
 	}
 }
 
