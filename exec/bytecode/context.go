@@ -25,6 +25,8 @@ import (
 
 // -----------------------------------------------------------------------------
 
+const defaultStkSize = 64
+
 // A Stack represents a FILO container.
 type Stack struct {
 	data []interface{}
@@ -32,12 +34,12 @@ type Stack struct {
 
 // NewStack creates a Stack instance.
 func NewStack() (p *Stack) {
-	return &Stack{data: make([]interface{}, 0, 64)}
+	return &Stack{data: make([]interface{}, 0, defaultStkSize)}
 }
 
 // Init initializes this Stack object.
 func (p *Stack) Init() {
-	p.data = make([]interface{}, 0, 64)
+	p.data = make([]interface{}, 0, defaultStkSize)
 }
 
 // Get returns the value at specified index.
@@ -90,52 +92,69 @@ func (p *Stack) SetLen(base int) {
 
 // -----------------------------------------------------------------------------
 
+type varScope struct {
+	vars   varsContext
+	parent *varScope
+}
+
 // A Context represents the context of an executor.
 type Context struct {
-	*Stack
-	code   *Code
-	parent *Context
-	vars   varsContext
-	ip     int
-	base   int
+	Stack
+	varScope
+	code *Code
+	ip   int
+	base int
 }
 
 func newSimpleContext(data []interface{}) *Context {
-	return &Context{Stack: &Stack{data: data}}
+	return &Context{Stack: Stack{data: data}}
 }
 
 // NewContext returns a new context of an executor.
 func NewContext(in exec.Code) *Context {
 	code := in.(*Code)
 	p := &Context{
-		Stack: NewStack(),
-		code:  code,
+		code: code,
 	}
+	p.Init()
 	if len(code.vlist) > 0 {
 		p.vars = code.makeVarsContext(p)
 	}
 	return p
 }
 
-// NewContextEx creates a closure context, with some local variables.
-func newContextEx(parent *Context, stk *Stack, code *Code, vmgr *varManager) *Context {
-	p := &Context{
-		Stack:  stk,
-		code:   code,
-		parent: parent,
-		base:   len(stk.data),
-	}
-	if vmgr != nil {
-		p.vars = vmgr.makeVarsContext(p)
-	}
-	return p
+type savedScopeCtx struct {
+	base int
+	ip   int
+	varScope
 }
 
-func (ctx *Context) globalCtx() *Context {
-	for ctx.parent != nil {
-		ctx = ctx.parent
+func (ctx *Context) switchScope(parent *varScope, vmgr *varManager) (old savedScopeCtx) {
+	old.base = ctx.base
+	old.ip = ctx.ip
+	old.varScope = ctx.varScope
+	ctx.base = len(ctx.data)
+	ctx.parent = parent
+	ctx.vars = vmgr.makeVarsContext(ctx)
+	return
+}
+
+func (ctx *Context) restoreScope(old savedScopeCtx) {
+	ctx.ip = old.ip
+	ctx.base = old.base
+	ctx.varScope = old.varScope
+}
+
+func (ctx *Context) getScope(local bool) *varScope {
+	scope := ctx.parent
+	if scope == nil || local {
+		vs := ctx.varScope
+		return &vs
 	}
-	return ctx
+	for scope.parent != nil {
+		scope = scope.parent
+	}
+	return scope
 }
 
 // Exec executes a code block from ip to ipEnd.
@@ -155,22 +174,29 @@ func (ctx *Context) Exec(ip, ipEnd int) {
 			lastInstr, start = i, time.Now()
 		}
 		switch i >> bitsOpShift {
+		case opPushInt:
+			const mask = uint32(bitsOpIntOperand >> 1)
+			switch i & ^mask {
+			case opPushInt << bitsOpShift: // push kind=int
+				ctx.Push(int(i & mask))
+			default:
+				execPushInt(i, ctx)
+			}
 		case opBuiltinOp:
 			execBuiltinOp(i, ctx)
+		case opCallFunc:
+			fun := ctx.code.funs[i&bitsOperand]
+			fun.exec(ctx, ctx.getScope(fun.nestDepth > 1))
 		case opJmp:
 			execJmp(i, ctx)
 		case opJmpIf:
 			execJmpIf(i, ctx)
-		case opPushInt:
-			execPushInt(i, ctx)
 		case opPushConstR:
 			execPushConstR(i, ctx)
 		case opLoadVar:
 			execLoadVar(i, ctx)
 		case opStoreVar:
 			execStoreVar(i, ctx)
-		case opCallFunc:
-			execFunc(i, ctx)
 		case opCallFuncv:
 			execFuncv(i, ctx)
 		case opCallGoFunc:
@@ -188,7 +214,7 @@ func (ctx *Context) Exec(ip, ipEnd int) {
 			if fn := execTable[i>>bitsOpShift]; fn != nil {
 				fn(i, ctx)
 			} else {
-				log.Panicln("Exec failed: unknown instr -", i>>bitsOpShift, "ip:", ctx.ip-1)
+				log.Panicln("Exec: unknown instr -", i>>bitsOpShift, "ip:", ctx.ip-1)
 			}
 		}
 	}

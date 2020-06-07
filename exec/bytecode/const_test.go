@@ -120,8 +120,7 @@ func TestReserve(t *testing.T) {
 	i := b.Interface()
 	_ = i.EndStmt(nil, nil).StartStmt(nil)
 	_ = i.GoBuiltin(nil, 0).Store(0)
-	g := i.Pop(0).(*iBuilder).GlobalInterface()
-	g = GlobalInterface()
+	g := i.Pop(0).(*iBuilder).GetPackage()
 	_ = g.GetGoFuncInfo(0)
 	_ = g.GetGoFuncvInfo(0)
 }

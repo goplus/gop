@@ -136,7 +136,7 @@ func execGoBuiltin(i Instr, p *Context) {
 
 // -----------------------------------------------------------------------------
 
-func getParentCtx(p *Context, idx tAddress) *Context {
+func getParentCtx(p *Context, idx tAddress) *varScope {
 	pp := p.parent
 	scope := uint32(idx) >> bitsOpVarShift
 	for scope > 1 {
@@ -183,11 +183,12 @@ func execLoadVar(i Instr, p *Context) {
 
 func execStoreVar(i Instr, p *Context) {
 	idx := i & bitsOperand
+	val := p.Pop()
 	if idx <= bitsOpVarOperand {
-		p.setVar(idx, p.Pop())
+		p.setVar(idx, val)
 		return
 	}
-	getParentCtx(p, tAddress(idx)).setVar(idx&bitsOpVarOperand, p.Pop())
+	getParentCtx(p, tAddress(idx)).setVar(idx&bitsOpVarOperand, val)
 }
 
 // -----------------------------------------------------------------------------
@@ -233,7 +234,7 @@ type Var struct {
 
 // NewVar creates a variable instance.
 func NewVar(typ reflect.Type, name string) *Var {
-	return &Var{typ: typ, name: "Q" + name, idx: ^uint32(0)}
+	return &Var{typ: typ, name: "Q" + name, idx: 0xffffffff}
 }
 
 func (p *Var) isGlobal() bool {
@@ -309,8 +310,9 @@ func newBlockCtx(nestDepth uint32, parent *varManager) *blockCtx {
 // -----------------------------------------------------------------------------
 
 func (p *Context) getNestDepth() (nestDepth uint32) {
+	vs := &p.varScope
 	for {
-		if p = p.parent; p == nil {
+		if vs = vs.parent; vs == nil {
 			return
 		}
 		nestDepth++

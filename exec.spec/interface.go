@@ -337,15 +337,15 @@ type Builder interface {
 	// ReservedAsPush sets Reserved as Push(v)
 	ReservedAsPush(r Reserved, v interface{})
 
-	// GlobalInterface returns the global Interface.
-	GlobalInterface() Interface
+	// GetPackage returns the Go+ package that the Builder works for.
+	GetPackage() Package
 
 	// Resolve resolves all unresolved labels/functions/consts/etc.
 	Resolve() Code
 }
 
-// Interface represents all global functions of a executing byte code generator.
-type Interface interface {
+// Package represents a Go+ package.
+type Package interface {
 	// NewVar creates a variable instance.
 	NewVar(typ reflect.Type, name string) Var
 
@@ -358,7 +358,7 @@ type Interface interface {
 	// NewComprehension creates a new Comprehension instance.
 	NewComprehension(out reflect.Type) Comprehension
 
-	// NewFunc create a Go+ function.
+	// NewFunc creates a Go+ function.
 	NewFunc(name string, nestDepth uint32) FuncInfo
 
 	// FindGoPackage lookups a Go package by pkgPath. It returns nil if not found.

@@ -54,63 +54,69 @@ func (c *ForPhrase) exec(p *Context) {
 	}
 }
 
-func (c *ForPhrase) execListRange(data reflect.Value, ctxFor *Context) {
+func (c *ForPhrase) execListRange(data reflect.Value, ctx *Context) {
 	data = reflect.Indirect(data)
-	n := data.Len()
-	ip, ipCond, ipEnd := ctxFor.ip, c.Cond, c.End
-	key, val := c.Key, c.Value
+	var n = data.Len()
+	var ip, ipCond, ipEnd = ctx.ip, c.Cond, c.End
+	var key, val = c.Key, c.Value
+	var blockScope = c.block != nil
+	var old savedScopeCtx
 	for i := 0; i < n; i++ {
 		if key != nil {
-			ctxFor.setVar(key.idx, i)
+			ctx.setVar(key.idx, i)
 		}
 		if val != nil {
-			ctxFor.setVar(val.idx, data.Index(i).Interface())
+			ctx.setVar(val.idx, data.Index(i).Interface())
 		}
-		var ctxBody *Context
-		if c.block != nil {
-			ctxBody = newContextEx(ctxFor, ctxFor.Stack, ctxFor.code, &c.block.varManager)
-		} else {
-			ctxBody = ctxFor
+		if blockScope { // TODO: move out of `for` statement
+			parent := ctx.varScope
+			old = ctx.switchScope(&parent, &c.block.varManager)
 		}
 		if ipCond > 0 {
-			ctxBody.Exec(ip, ipCond)
-			if ok := ctxBody.Pop().(bool); ok {
-				ctxBody.Exec(ipCond, ipEnd)
+			ctx.Exec(ip, ipCond)
+			if ok := ctx.Pop().(bool); ok {
+				ctx.Exec(ipCond, ipEnd)
 			}
 		} else {
-			ctxBody.Exec(ip, ipEnd)
+			ctx.Exec(ip, ipEnd)
+		}
+		if blockScope {
+			ctx.restoreScope(old)
 		}
 	}
-	ctxFor.ip = ipEnd
+	ctx.ip = ipEnd
 }
 
-func (c *ForPhrase) execMapRange(data reflect.Value, ctxFor *Context) {
-	iter := data.MapRange()
-	ip, ipCond, ipEnd := ctxFor.ip, c.Cond, c.End
-	key, val := c.Key, c.Value
+func (c *ForPhrase) execMapRange(data reflect.Value, ctx *Context) {
+	var iter = data.MapRange()
+	var ip, ipCond, ipEnd = ctx.ip, c.Cond, c.End
+	var key, val = c.Key, c.Value
+	var blockScope = c.block != nil
+	var old savedScopeCtx
 	for iter.Next() {
 		if key != nil {
-			ctxFor.setVar(key.idx, iter.Key().Interface())
+			ctx.setVar(key.idx, iter.Key().Interface())
 		}
 		if val != nil {
-			ctxFor.setVar(val.idx, iter.Value().Interface())
+			ctx.setVar(val.idx, iter.Value().Interface())
 		}
-		var ctxBody *Context
-		if c.block != nil {
-			ctxBody = newContextEx(ctxFor, ctxFor.Stack, ctxFor.code, &c.block.varManager)
-		} else {
-			ctxBody = ctxFor
+		if blockScope {
+			parent := ctx.varScope
+			old = ctx.switchScope(&parent, &c.block.varManager)
 		}
 		if ipCond > 0 {
-			ctxBody.Exec(ip, ipCond)
-			if ok := ctxBody.Pop().(bool); ok {
-				ctxBody.Exec(ipCond, ipEnd)
+			ctx.Exec(ip, ipCond)
+			if ok := ctx.Pop().(bool); ok {
+				ctx.Exec(ipCond, ipEnd)
 			}
 		} else {
-			ctxBody.Exec(ip, ipEnd)
+			ctx.Exec(ip, ipEnd)
+		}
+		if blockScope {
+			ctx.restoreScope(old)
 		}
 	}
-	ctxFor.ip = ipEnd
+	ctx.ip = ipEnd
 }
 
 func execMakeArray(i Instr, p *Context) {

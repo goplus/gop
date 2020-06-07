@@ -62,7 +62,7 @@ func execErrorf(arity int, p *Context) {
 }
 
 // I is a Go package instance.
-var I = NewGoPackage("")
+var I = NewGoPackage("foo")
 
 func init() {
 	I.RegisterFuncvs(
@@ -148,7 +148,7 @@ func TestSprintf(t *testing.T) {
 }
 
 func TestLargeArity(t *testing.T) {
-	sprint, kind, ok := defaultImpl.FindGoPackage("").Find("Sprint")
+	sprint, kind, ok := defaultImpl.FindGoPackage("foo").Find("Sprint")
 	if !ok || kind != SymbolFuncv {
 		t.Fatal("Find failed: Sprint")
 	}
@@ -177,7 +177,7 @@ func TestType(t *testing.T) {
 	}
 	fmt.Println(typ)
 
-	typ, ok = FindGoPackage("").FindType("rune")
+	typ, ok = FindGoPackage("foo").FindType("rune")
 	if !ok || typ != TyRune {
 		t.Fatal("FindType failed: rune not found")
 	}

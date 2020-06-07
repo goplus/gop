@@ -24,7 +24,7 @@ import (
 	"github.com/qiniu/x/errors"
 )
 
-var qexecImpl = bytecode.GlobalInterface()
+var qexecImpl = bytecode.NewPackage(nil)
 
 // -----------------------------------------------------------------------------
 
@@ -433,8 +433,8 @@ func (p *iBuilder) ReservedAsPush(r exec.Reserved, v interface{}) {
 	((*Builder)(p)).ReservedAsPush(r, v)
 }
 
-// GlobalInterface returns the global Interface.
-func (p *iBuilder) GlobalInterface() exec.Interface {
+// GetPackage returns the Go+ package that the Builder works for.
+func (p *iBuilder) GetPackage() exec.Package {
 	return defaultImpl
 }
 

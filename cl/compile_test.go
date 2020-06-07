@@ -18,11 +18,7 @@ package cl
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path"
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/qiniu/goplus/ast"
@@ -252,60 +248,6 @@ func TestPkg2(t *testing.T) {
 	ctx.Call(f)
 	if v := ctx.Get(-1); !reflect.DeepEqual(v, map[int]string{1: "Hi", 2: "Hello"}) {
 		t.Fatal("ReverseMap failed: ret =", v)
-	}
-}
-
-// -----------------------------------------------------------------------------
-
-func getPkg(pkgs map[string]*ast.Package) *ast.Package {
-	for _, pkg := range pkgs {
-		return pkg
-	}
-	return nil
-}
-
-func testFrom(t *testing.T, pkgDir, sel, exclude string) {
-	if sel != "" && !strings.Contains(pkgDir, sel) {
-		return
-	}
-	if exclude != "" && strings.Contains(pkgDir, exclude) {
-		return
-	}
-	log.Debug("Compiling", pkgDir)
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseDir(fset, pkgDir, nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseDir failed:", err, len(pkgs))
-	}
-
-	bar := getPkg(pkgs)
-	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b.Interface(), bar, fset, PkgActClMain)
-	if err != nil {
-		if err == ErrNotAMainPackage {
-			return
-		}
-		t.Fatal("Compile failed:", err)
-	}
-	code := b.Resolve()
-
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-}
-
-func TestFromTestdata(t *testing.T) {
-	sel, exclude := "", ""
-	dir, err := os.Getwd()
-	if err != nil {
-		t.Fatal("Getwd failed:", err)
-	}
-	dir = path.Join(dir, "../exec/golang/testdata")
-	fis, err := ioutil.ReadDir(dir)
-	if err != nil {
-		t.Fatal("ReadDir failed:", err)
-	}
-	for _, fi := range fis {
-		testFrom(t, dir+"/"+fi.Name(), sel, exclude)
 	}
 }
 

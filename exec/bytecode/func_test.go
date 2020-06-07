@@ -133,7 +133,7 @@ func TestFuncv(t *testing.T) {
 }
 
 func TestFuncLargeArity(t *testing.T) {
-	sprint, kind, ok := FindGoPackage("").Find("Sprint")
+	sprint, kind, ok := FindGoPackage("foo").Find("Sprint")
 	if !ok || kind != SymbolFuncv {
 		t.Fatal("Find failed: Sprint")
 	}
@@ -291,6 +291,9 @@ func TestGoClosure(t *testing.T) {
 		Return(2).
 		EndFunc(bar).
 		Resolve()
+
+	setPackage(foo, code)
+	setPackage(bar, code)
 
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())

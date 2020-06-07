@@ -95,7 +95,7 @@ func logIllTypeMapIndexPanic(ctx *blockCtx, v ast.Node, t, typIdx reflect.Type) 
 // -----------------------------------------------------------------------------
 
 type pkgCtx struct {
-	exec.Interface
+	exec.Package
 	infer   exec.Stack
 	builtin exec.GoPackage
 	out     exec.Builder
@@ -105,8 +105,9 @@ type pkgCtx struct {
 }
 
 func newPkgCtx(out exec.Builder, pkg *ast.Package, fset *token.FileSet) *pkgCtx {
-	g := out.GlobalInterface()
-	p := &pkgCtx{Interface: g, builtin: g.FindGoPackage(""), out: out, pkg: pkg, fset: fset}
+	pkgOut := out.GetPackage()
+	builtin := pkgOut.FindGoPackage("")
+	p := &pkgCtx{Package: pkgOut, builtin: builtin, out: out, pkg: pkg, fset: fset}
 	p.infer.Init()
 	return p
 }
