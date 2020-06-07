@@ -153,6 +153,8 @@ The `gop` command isn't provided currently (in alpha stage). Instead, we provide
 qrun <gopSrcDir> # gop run <gopSrcDir>
 qrun -asm <gopSrcDir> # generates `asm` code of Go+ bytecode backend
 qrun -quiet <gopSrcDir> # don't generate any compiling stage log
+qrun -debug <gopSrcDir> # print debug information
+qrun -prof <gopSrcDir> # do profile and generate profile report
 qgo <gopSrcDir> # gop go <gopSrcDir>
 qgo -test <gopSrcDir>
 ```
