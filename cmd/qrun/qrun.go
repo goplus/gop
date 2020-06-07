@@ -37,7 +37,7 @@ var (
 	flagAsm   = flag.Bool("asm", false, "generate asm code")
 	flagQuiet = flag.Bool("quiet", false, "don't generate any log")
 	flagDebug = flag.Bool("debug", false, "print debug information")
-	flagProf  = flag.Bool("prof", false, "print profile information")
+	flagProf  = flag.Bool("prof", false, "do profile and generate profile report")
 )
 
 func main() {
