@@ -72,76 +72,6 @@ func (p *iFuncInfo) IsVariadic() bool {
 
 // -----------------------------------------------------------------------------
 
-// Interface represents all global functions of a executing byte code generator.
-type interfaceImpl struct{}
-
-var defaultImpl = &interfaceImpl{}
-
-// GlobalInterface returns the global Interface.
-func GlobalInterface() exec.Interface {
-	return defaultImpl
-}
-
-// NewVar creates a variable instance.
-func (p *interfaceImpl) NewVar(typ reflect.Type, name string) exec.Var {
-	return NewVar(typ, name)
-}
-
-// NewLabel creates a label object.
-func (p *interfaceImpl) NewLabel(name string) exec.Label {
-	return NewLabel(name)
-}
-
-// NewForPhrase creates a new ForPhrase instance.
-func (p *interfaceImpl) NewForPhrase(in reflect.Type) exec.ForPhrase {
-	return NewForPhrase(in)
-}
-
-// NewComprehension creates a new Comprehension instance.
-func (p *interfaceImpl) NewComprehension(out reflect.Type) exec.Comprehension {
-	return NewComprehension(out)
-}
-
-// NewFunc create a Go+ function.
-func (p *interfaceImpl) NewFunc(name string, nestDepth uint32) exec.FuncInfo {
-	return (*iFuncInfo)(NewFunc(name, nestDepth))
-}
-
-// FindGoPackage lookups a Go package by pkgPath. It returns nil if not found.
-func (p *interfaceImpl) FindGoPackage(pkgPath string) exec.GoPackage {
-	return FindGoPackage(pkgPath)
-}
-
-// GetGoFuncType returns a Go function's type.
-func (p *interfaceImpl) GetGoFuncType(addr exec.GoFuncAddr) reflect.Type {
-	return reflect.TypeOf(gofuns[addr].This)
-}
-
-// GetGoFuncvType returns a Go function's type.
-func (p *interfaceImpl) GetGoFuncvType(addr exec.GoFuncvAddr) reflect.Type {
-	return reflect.TypeOf(gofunvs[addr].This)
-}
-
-// GetGoFuncInfo returns a Go function's information.
-func (p *interfaceImpl) GetGoFuncInfo(addr exec.GoFuncAddr) *exec.GoFuncInfo {
-	gfi := &gofuns[addr]
-	return &exec.GoFuncInfo{Pkg: gfi.Pkg, Name: gfi.Name, This: gfi.This}
-}
-
-// GetGoFuncvInfo returns a Go function's information.
-func (p *interfaceImpl) GetGoFuncvInfo(addr exec.GoFuncvAddr) *exec.GoFuncInfo {
-	gfi := &gofunvs[addr]
-	return &exec.GoFuncInfo{Pkg: gfi.Pkg, Name: gfi.Name, This: gfi.This}
-}
-
-// GetGoVarInfo returns a Go variable's information.
-func (p *interfaceImpl) GetGoVarInfo(addr exec.GoVarAddr) *exec.GoVarInfo {
-	gvi := &govars[addr]
-	return &exec.GoVarInfo{Pkg: gvi.Pkg, Name: gvi.Name, This: gvi.Addr}
-}
-
-// -----------------------------------------------------------------------------
-
 type iBuilder Builder
 
 // Interface converts *Builder to exec.Builder interface.
@@ -487,9 +417,9 @@ func (p *iBuilder) ReservedAsPush(r exec.Reserved, v interface{}) {
 	((*Builder)(p)).ReservedAsPush(r, v)
 }
 
-// GlobalInterface returns the global Interface.
-func (p *iBuilder) GlobalInterface() exec.Interface {
-	return defaultImpl
+// GetPackage returns the Go+ package that the Builder works for.
+func (p *iBuilder) GetPackage() exec.Package {
+	return NewPackage(p.code)
 }
 
 // Resolve resolves all unresolved labels/functions/consts/etc.

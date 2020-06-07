@@ -75,12 +75,20 @@ var (
 
 // -----------------------------------------------------------------------------
 
+var (
+	defaultImpl = NewPackage(nil)
+)
+
 func newBuilder() exec.Builder {
 	return NewBuilder(nil).Interface()
 }
 
 func newFunc(name string, nestDepth uint32) exec.FuncInfo {
 	return defaultImpl.NewFunc(name, nestDepth)
+}
+
+func setPackage(f exec.FuncInfo, code exec.Code) {
+	f.(*iFuncInfo).Pkg = NewPackage(code.(*Code))
 }
 
 func checkPop(ctx *Context) interface{} {

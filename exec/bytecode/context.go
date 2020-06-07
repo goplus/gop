@@ -123,26 +123,31 @@ func NewContext(in exec.Code) *Context {
 	return p
 }
 
-func (ctx *Context) switchCtx(parent *varScope, vmgr *varManager) {
+type savedScopeCtx struct {
+	base int
+	ip   int
+	varScope
+}
+
+func (ctx *Context) switchScope(parent *varScope, vmgr *varManager) (old savedScopeCtx) {
+	old.base = ctx.base
+	old.ip = ctx.ip
+	old.varScope = ctx.varScope
+	ctx.base = len(ctx.data)
+	ctx.parent = parent
 	ctx.vars = vmgr.makeVarsContext(ctx)
+	return
 }
 
-func newContextEx(parent *Context, stk *Stack, code *Code, vmgr *varManager) *Context {
-	p := &Context{
-		Stack:  stk,
-		code:   code,
-		parent: parent,
-		base:   len(stk.data),
-	}
-	if vmgr != nil {
-		p.vars = vmgr.makeVarsContext(p)
-	}
-	return p
+func (ctx *Context) restoreScope(old savedScopeCtx) {
+	ctx.ip = old.ip
+	ctx.base = old.base
+	ctx.varScope = old.varScope
 }
 
-func (ctx *Context) globalScope() *varScope {
+func (ctx *Context) getScope(local bool) *varScope {
 	scope := ctx.parent
-	if scope == nil {
+	if scope == nil || local {
 		vs := ctx.varScope
 		return &vs
 	}
@@ -170,15 +175,18 @@ func (ctx *Context) Exec(ip, ipEnd int) {
 		}
 		switch i >> bitsOpShift {
 		case opPushInt:
-			const mask = ^uint32(bitsOpIntOperand >> 1)
-			switch i & mask {
-			case 201326592: // push kind=int
-				ctx.Push(int(i & ^mask))
+			const mask = uint32(bitsOpIntOperand >> 1)
+			switch i & ^mask {
+			case opPushInt << bitsOpShift: // push kind=int
+				ctx.Push(int(i & mask))
 			default:
 				execPushInt(i, ctx)
 			}
 		case opBuiltinOp:
 			execBuiltinOp(i, ctx)
+		case opCallFunc:
+			fun := ctx.code.funs[i&bitsOperand]
+			fun.exec(ctx, ctx.getScope(fun.nestDepth > 1))
 		case opJmp:
 			execJmp(i, ctx)
 		case opJmpIf:
@@ -189,8 +197,6 @@ func (ctx *Context) Exec(ip, ipEnd int) {
 			execLoadVar(i, ctx)
 		case opStoreVar:
 			execStoreVar(i, ctx)
-		case opCallFunc:
-			execFunc(i, ctx)
 		case opCallFuncv:
 			execFuncv(i, ctx)
 		case opCallGoFunc:

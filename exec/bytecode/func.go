@@ -45,10 +45,7 @@ func makeClosure(i Instr, p *Context) Closure {
 	} else {
 		fun = p.code.funs[idx]
 	}
-	if fun.nestDepth == 1 {
-		p = p.globalCtx()
-	}
-	return Closure{fun: fun, parent: p}
+	return Closure{fun: fun, parent: p.getScope(fun.nestDepth > 1)}
 }
 
 func execGoClosure(i Instr, p *Context) {
@@ -84,60 +81,49 @@ func execCallGoClosure(i Instr, p *Context) {
 	}
 }
 
-func execClosure(i Instr, p *Context) {
-	closure := makeClosure(i, p)
-	p.Push(&closure)
+func execClosure(i Instr, ctx *Context) {
+	closure := makeClosure(i, ctx)
+	ctx.Push(&closure)
 }
 
-func execCallClosure(i Instr, p *Context) {
+func execCallClosure(i Instr, ctx *Context) {
 	arity := i & bitsOperand
-	c := p.Pop().(*Closure)
-	fun, stk, parent := c.fun, p.Stack, c.parent
+	c := ctx.Pop().(*Closure)
+	fun, parent := c.fun, c.parent
 	if fun.IsVariadic() && arity != bitsOperand { // not is: args...
-		fun.execVariadic(arity, stk, parent)
+		fun.execVariadic(arity, ctx, parent)
 	} else {
-		fun.exec(stk, parent)
+		fun.exec(ctx, parent)
 	}
 }
 
-func execFunc(i Instr, p *Context) {
-	idx := i & bitsOperand
-	fun := p.code.funs[idx]
-	stk := p.Stack
-	if fun.nestDepth == 1 { // function's parent is the global block
-		p = p.globalCtx()
-	}
-	fun.exec(stk, p)
-}
-
-func execFuncv(i Instr, p *Context) {
+func execFuncv(i Instr, ctx *Context) {
 	idx := i & bitsOpCallFuncvOperand
 	arity := (i >> bitsOpCallFuncvShift) & bitsFuncvArityOperand
-	fun := p.code.funvs[idx]
-	stk := p.Stack
-	if fun.nestDepth == 1 { // function's parent is the global block
-		p = p.globalCtx()
-	}
+	fun := ctx.code.funvs[idx]
+	parent := ctx.getScope(fun.nestDepth > 1)
 	if arity == bitsFuncvArityVar { // args...
-		fun.exec(stk, p)
+		fun.exec(ctx, parent)
 	} else {
 		if arity == bitsFuncvArityMax {
-			arity = uint32(p.Pop().(int) + bitsFuncvArityMax)
+			arity = uint32(ctx.Pop().(int) + bitsFuncvArityMax)
 		}
-		fun.execVariadic(arity, stk, p)
+		fun.execVariadic(arity, ctx, parent)
 	}
+}
+
+func execFunc(i Instr, ctx *Context) {
+	fun := ctx.code.funs[i&bitsOperand]
+	fun.exec(ctx, ctx.getScope(fun.nestDepth > 1))
 }
 
 // Call calls a function.
-func (p *Context) Call(fun exec.FuncInfo) {
-	((*FuncInfo)(fun.(*iFuncInfo))).exec(p.Stack, p)
+func (ctx *Context) Call(f exec.FuncInfo) {
+	fun := (*FuncInfo)(f.(*iFuncInfo))
+	fun.exec(ctx, ctx.getScope(fun.nestDepth > 1))
 }
 
 // -----------------------------------------------------------------------------
-
-// Package represents a Go+ package.
-type Package struct {
-}
 
 // Closure represents a Go+ closure.
 type Closure struct {
@@ -148,16 +134,16 @@ type Closure struct {
 
 // Call calls a closure.
 func (p *Closure) Call(in []reflect.Value) (out []reflect.Value) {
-	stk := NewStack()
+	ctx := NewContext(p.fun.Pkg.code)
 	for _, v := range in {
-		stk.Push(v.Interface())
+		ctx.Push(v.Interface())
 	}
 	fun := p.fun
-	fun.exec(stk, p.parent)
-	n := len(stk.data)
+	fun.exec(ctx, p.parent)
+	n := len(ctx.data)
 	if n > 0 {
 		out = make([]reflect.Value, n)
-		for i, ret := range stk.data {
+		for i, ret := range ctx.data {
 			out[i] = getRetOf(ret, fun, i)
 		}
 	}
@@ -187,6 +173,15 @@ type FuncInfo struct {
 // NewFunc create a Go+ function.
 func NewFunc(name string, nestDepth uint32) *FuncInfo {
 	f := &FuncInfo{
+		name:       name,
+		varManager: varManager{nestDepth: nestDepth},
+	}
+	return f
+}
+
+func newFuncWith(pkg *Package, name string, nestDepth uint32) *FuncInfo {
+	f := &FuncInfo{
+		Pkg:        pkg,
 		name:       name,
 		varManager: varManager{nestDepth: nestDepth},
 	}
@@ -279,39 +274,40 @@ func (p *FuncInfo) Type() reflect.Type {
 	return p.t
 }
 
-func (p *FuncInfo) exec(stk *Context, parent *varScope) {
-	ctx := newContextEx(parent, stk, parent.code, &p.varManager)
+func (p *FuncInfo) exec(ctx *Context, parent *varScope) {
+	old := ctx.switchScope(parent, &p.varManager)
 	ctx.Exec(p.funEntry, p.funEnd)
 	if ctx.ip == ipReturnN {
-		n := len(stk.data)
-		stk.Ret(len(p.in)+n-ctx.base, stk.data[n-p.numOut:]...)
+		n := len(ctx.data)
+		ctx.data = append(ctx.data[:ctx.base-len(p.in)], ctx.data[n-p.numOut:]...)
 	} else {
-		stk.SetLen(ctx.base - len(p.in))
+		ctx.data = ctx.data[:ctx.base-len(p.in)]
 		n := uint32(p.numOut)
 		for i := uint32(0); i < n; i++ {
-			stk.Push(ctx.getVar(i))
+			ctx.data = append(ctx.data, ctx.getVar(i))
 		}
 	}
+	ctx.restoreScope(old)
 }
 
-func (p *FuncInfo) execVariadic(arity uint32, stk *Stack, parent *Context) {
+func (p *FuncInfo) execVariadic(arity uint32, ctx *Context, parent *varScope) {
 	var n = uint32(len(p.in) - 1)
 	if arity > n {
 		tVariadic := p.in[n]
 		nVariadic := int(arity - n)
 		if tVariadic == exec.TyEmptyInterfaceSlice {
 			var empty []interface{}
-			stk.Ret(nVariadic, append(empty, stk.GetArgs(nVariadic)...))
+			ctx.Ret(nVariadic, append(empty, ctx.GetArgs(nVariadic)...))
 		} else {
 			variadic := reflect.MakeSlice(tVariadic, nVariadic, nVariadic)
-			items := stk.GetArgs(nVariadic)
+			items := ctx.GetArgs(nVariadic)
 			for i, item := range items {
 				setValue(variadic.Index(i), item)
 			}
-			stk.Ret(nVariadic, variadic.Interface())
+			ctx.Ret(nVariadic, variadic.Interface())
 		}
 	}
-	p.exec(stk, parent)
+	p.exec(ctx, parent)
 }
 
 // -----------------------------------------------------------------------------

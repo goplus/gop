@@ -233,7 +233,7 @@ type Var struct {
 
 // NewVar creates a variable instance.
 func NewVar(typ reflect.Type, name string) *Var {
-	return &Var{typ: typ, name: "Q" + name, idx: ^uint32(0)}
+	return &Var{typ: typ, name: "Q" + name, idx: 0xffffffff}
 }
 
 func (p *Var) isGlobal() bool {

@@ -86,15 +86,15 @@ func (p *varManager) makeVarsContext(ctx *Context) varsContext {
 	return reflect.New(p.tcache).Elem()
 }
 
-func (ctx *Context) addrVar(idx uint32) interface{} {
+func (ctx *varScope) addrVar(idx uint32) interface{} {
 	return ctx.vars.Field(int(idx)).Addr().Interface()
 }
 
-func (ctx *Context) getVar(idx uint32) interface{} {
+func (ctx *varScope) getVar(idx uint32) interface{} {
 	return ctx.vars.Field(int(idx)).Interface()
 }
 
-func (ctx *Context) setVar(idx uint32, v interface{}) {
+func (ctx *varScope) setVar(idx uint32, v interface{}) {
 	x := ctx.vars.Field(int(idx))
 	setValue(x, v)
 }
