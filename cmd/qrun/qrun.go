@@ -77,6 +77,7 @@ func main() {
 		return
 	}
 	ctx := exec.NewContext(code)
+	fmt.Println("qrun starting ...")
 	ctx.Exec(0, code.Len())
 	if *flagProf {
 		exec.ProfileReport()
