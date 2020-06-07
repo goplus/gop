@@ -11,5 +11,5 @@ func fib(n int) int {
 }
 
 func main() {
-	fib(35)
+	println(`fib(27):`, fib(27))
 }

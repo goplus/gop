@@ -84,11 +84,11 @@ func ProfileReport() {
 	fmt.Println("Generating op profile information:")
 	for i := 0; i < 16; i++ {
 		op := sortedOps[i]
-		time := gOpDurations[op].Milliseconds()
+		time := gOpDurations[op]
 		if time == 0 {
 			break
 		}
-		fmt.Println("op:", op, "time(ms):", time, "calls:", opCalls[op])
+		fmt.Println("op:", op, "time(ms):", time.Milliseconds(), "calls:", opCalls[op])
 	}
 	fmt.Println("Generating instr profile information:")
 	sortedInstrs := sortInstrCalls()

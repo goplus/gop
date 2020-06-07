@@ -301,6 +301,7 @@ func TestGoClosure(t *testing.T) {
 		t.Fatal("format 1.3 1 `xsw` sprintf != `Hello, 1.3, 1, xsw`, ret =", v)
 	}
 	code.(*Code).Dump(os.Stdout) // for code coverage
+	ProfileReport()
 }
 
 // -----------------------------------------------------------------------------
