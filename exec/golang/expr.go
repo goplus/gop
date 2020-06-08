@@ -42,7 +42,7 @@ func Ident(name string) *ast.Ident {
 }
 
 // GoFuncIdent - ast.Ident or ast.SelectorExpr
-func (p *Builder) GoFuncIdent(pkgPath, name string) ast.Expr {
+func (p *Builder) GoSymIdent(pkgPath, name string) ast.Expr {
 	if pkgPath == "" {
 		return Ident(name)
 	}
@@ -256,7 +256,7 @@ func (p *Builder) Call(narg int, ellipsis bool, args ...ast.Expr) *Builder {
 func (p *Builder) CallGoFunc(fun exec.GoFuncAddr, nexpr int) *Builder {
 	gfi := defaultImpl.GetGoFuncInfo(fun)
 	pkgPath, name := gfi.Pkg.PkgPath(), gfi.Name
-	fn := p.GoFuncIdent(pkgPath, name)
+	fn := p.GoSymIdent(pkgPath, name)
 	p.rhs.Push(fn)
 	return p.Call(nexpr, false)
 }
@@ -270,7 +270,7 @@ func (p *Builder) CallGoFuncv(fun exec.GoFuncvAddr, nexpr, arity int) *Builder {
 			pkgPath, name = alias[0], alias[1]
 		}
 	}
-	fn := p.GoFuncIdent(pkgPath, name)
+	fn := p.GoSymIdent(pkgPath, name)
 	p.rhs.Push(fn)
 	return p.Call(nexpr, arity == -1)
 }
@@ -286,14 +286,14 @@ var builtinFnvs = map[string][2]string{
 // LoadGoVar instr
 func (p *Builder) LoadGoVar(addr exec.GoVarAddr) *Builder {
 	gvi := defaultImpl.GetGoVarInfo(addr)
-	p.rhs.Push(p.GoFuncIdent(gvi.Pkg.PkgPath(), gvi.Name))
+	p.rhs.Push(p.GoSymIdent(gvi.Pkg.PkgPath(), gvi.Name))
 	return p
 }
 
 // StoreGoVar instr
 func (p *Builder) StoreGoVar(addr exec.GoVarAddr) *Builder {
 	gvi := defaultImpl.GetGoVarInfo(addr)
-	p.lhs.Push(p.GoFuncIdent(gvi.Pkg.PkgPath(), gvi.Name))
+	p.lhs.Push(p.GoSymIdent(gvi.Pkg.PkgPath(), gvi.Name))
 	return p
 }
 
@@ -302,7 +302,7 @@ func (p *Builder) AddrGoVar(addr exec.GoVarAddr) *Builder {
 	gvi := defaultImpl.GetGoVarInfo(addr)
 	p.rhs.Push(&ast.UnaryExpr{
 		Op: token.AND,
-		X:  p.GoFuncIdent(gvi.Pkg.PkgPath(), gvi.Name),
+		X:  p.GoSymIdent(gvi.Pkg.PkgPath(), gvi.Name),
 	})
 	return p
 }

@@ -169,7 +169,7 @@ func (p *Builder) wrapCall(nret int) []ast.Expr {
 // ErrWrap instr
 func (p *Builder) ErrWrap(nret int, retErr exec.Var, frame *errors.Frame, narg int) *Builder {
 	args := p.wrapCall(nret)
-	frameFun := p.GoFuncIdent("github.com/qiniu/x/errors", "NewFrame")
+	frameFun := p.GoSymIdent("github.com/qiniu/x/errors", "NewFrame")
 	frameArgs := make([]ast.Expr, narg+6)
 	frameArgs[0] = args[nret-1]
 	frameArgs[1] = StringConst(frame.Code)
