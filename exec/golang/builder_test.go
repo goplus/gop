@@ -68,4 +68,59 @@ func main() {
 	}
 }
 
+func TestGoVar(t *testing.T) {
+	codeExp := `package main
+
+import (
+	pkg "pkg"
+	fmt "fmt"
+)
+
+func main() {
+	pkg.X, pkg.Y = 5, 6
+	fmt.Println(pkg.X, pkg.Y)
+	fmt.Println(&pkg.X, &pkg.Y)
+}
+`
+	println, _ := I.FindFuncv("println")
+
+	pkg := qexec.NewGoPackage("pkg")
+	pkg.RegisterVars(
+		pkg.Var("X", new(int)),
+		pkg.Var("Y", new(int)),
+	)
+
+	x, ok := pkg.FindVar("X")
+	if !ok {
+		t.Fatal("FindVar failed:", x)
+	}
+	y, ok := pkg.FindVar("Y")
+	if !ok {
+		t.Fatal("FindVar failed:", y)
+	}
+
+	code := NewBuilder("main", nil, nil).
+		Push(5).
+		Push(6).
+		StoreGoVar(y).
+		StoreGoVar(x).
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		LoadGoVar(x).
+		LoadGoVar(y).
+		CallGoFuncv(println, 2, 2).
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		AddrGoVar(x).
+		AddrGoVar(y).
+		//AddrOp(exec.Int, exec.OpAddrVal).
+		CallGoFuncv(println, 2, 2).
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Resolve()
+
+	codeGen := code.String()
+	if codeGen != codeExp {
+		fmt.Println(codeGen)
+		t.Fatal("TestGoVar failed: codeGen != codeExp")
+	}
+}
+
 // -----------------------------------------------------------------------------
