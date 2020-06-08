@@ -286,24 +286,24 @@ var builtinFnvs = map[string][2]string{
 // LoadGoVar instr
 func (p *Builder) LoadGoVar(addr exec.GoVarAddr) *Builder {
 	gvi := defaultImpl.GetGoVarInfo(addr)
-	_ = gvi
-	panic("todo")
+	p.rhs.Push(p.GoFuncIdent(gvi.Pkg.PkgPath(), gvi.Name))
 	return p
 }
 
 // StoreGoVar instr
 func (p *Builder) StoreGoVar(addr exec.GoVarAddr) *Builder {
 	gvi := defaultImpl.GetGoVarInfo(addr)
-	_ = gvi
-	panic("todo")
+	p.lhs.Push(p.GoFuncIdent(gvi.Pkg.PkgPath(), gvi.Name))
 	return p
 }
 
 // AddrGoVar instr
 func (p *Builder) AddrGoVar(addr exec.GoVarAddr) *Builder {
 	gvi := defaultImpl.GetGoVarInfo(addr)
-	_ = gvi
-	panic("todo")
+	p.rhs.Push(&ast.UnaryExpr{
+		Op: token.AND,
+		X:  p.GoFuncIdent(gvi.Pkg.PkgPath(), gvi.Name),
+	})
 	return p
 }
 
