@@ -79,7 +79,7 @@ import (
 func main() {
 	pkg.X, pkg.Y = 5, 6
 	fmt.Println(pkg.X, pkg.Y)
-	fmt.Println(&pkg.X, &pkg.Y)
+	fmt.Println(&pkg.X, *&pkg.Y)
 }
 `
 	println, _ := I.FindFuncv("println")
@@ -111,7 +111,7 @@ func main() {
 		EndStmt(nil, &stmtState{rhsBase: 0}).
 		AddrGoVar(x).
 		AddrGoVar(y).
-		//AddrOp(exec.Int, exec.OpAddrVal).
+		AddrOp(exec.Int, exec.OpAddrVal).
 		CallGoFuncv(println, 2, 2).
 		EndStmt(nil, &stmtState{rhsBase: 0}).
 		Resolve()

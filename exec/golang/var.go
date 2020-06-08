@@ -165,11 +165,20 @@ func (p *Builder) AddrVar(v exec.Var) *Builder {
 
 // AddrOp instr
 func (p *Builder) AddrOp(kind exec.Kind, op exec.AddrOperator) *Builder {
+	if op == exec.OpAddrVal {
+		p.rhs.Push(&ast.StarExpr{
+			X: p.rhs.Pop().(ast.Expr),
+		})
+		return p
+	}
 	var stmt ast.Stmt
 	var x = p.rhs.Pop()
 	var val = p.rhs.Pop().(ast.Expr)
 	switch v := x.(type) {
 	case *ast.UnaryExpr:
+		if v.Op != token.AND {
+			log.Panicln("AddrOp: unknown x expr -", reflect.TypeOf(x))
+		}
 		stmt = &ast.AssignStmt{
 			Lhs: []ast.Expr{v.X}, Tok: addropTokens[op], Rhs: []ast.Expr{val},
 		}
