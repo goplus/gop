@@ -234,6 +234,9 @@ func (p *GoPackage) RegisterVars(vars ...GoVarInfo) (base GoVarAddr) {
 func (p *GoPackage) RegisterConsts(consts ...GoConstInfo) {
 	for i := range consts {
 		ci := &consts[i]
+		if ci.Kind == ConstUnboundInt { // TODO
+			ci.Value = reflect.ValueOf(ci.Value).Int()
+		}
 		p.consts[ci.Name] = ci
 	}
 }
