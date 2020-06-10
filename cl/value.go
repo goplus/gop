@@ -271,8 +271,7 @@ func (p *constVal) boundKind() reflect.Kind {
 		if _, ok := p.v.(int64); ok {
 			return reflect.Int
 		}
-		return reflect.TypeOf(p.v).Kind()
-		//return reflect.Uint
+		return reflect.Uint
 	case astutil.ConstUnboundFloat:
 		return reflect.Float64
 	case astutil.ConstUnboundComplex:
