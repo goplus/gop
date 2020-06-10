@@ -882,6 +882,13 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 	case *nonValue:
 		switch nv := vx.v.(type) {
 		case exec.GoPackage:
+			if c, ok := nv.FindConst(v.Sel.Name); ok {
+				ret := newConstVal(c.Value, c.Kind)
+				ctx.infer.Ret(1, ret)
+				return func() {
+					pushConstVal(ctx.out, ret)
+				}
+			}
 			addr, kind, ok := nv.Find(v.Sel.Name)
 			if !ok {
 				log.Panicln("compileSelectorExpr: not found -", nv.PkgPath(), v.Sel.Name)
