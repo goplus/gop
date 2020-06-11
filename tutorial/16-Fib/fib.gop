@@ -1,5 +1,3 @@
-package main
-
 func fib(n int) int {
 	if n == 0 {
 		return 0
@@ -10,6 +8,4 @@ func fib(n int) int {
 	}
 }
 
-func main() {
-	println(`fib(27):`, fib(27))
-}
+println(`fib(27):`, fib(27))

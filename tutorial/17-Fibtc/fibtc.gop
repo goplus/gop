@@ -1,5 +1,3 @@
-package main
-
 func fibtc(n, a, b int) int {
 	if n == 0 {
 		return a
@@ -10,6 +8,4 @@ func fibtc(n, a, b int) int {
 	}
 }
 
-func main() {
-	println(`fibtc(27):`, fibtc(27, 0, 1))
-}
+println(`fibtc(27):`, fibtc(27, 0, 1))
