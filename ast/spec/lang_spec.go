@@ -27,23 +27,29 @@ import (
 type ConstKind = reflect.Kind
 
 const (
+	// BigInt - bound type - bigint
+	BigInt = ConstKind(reflect.UnsafePointer + 1)
+	// BigRat - bound type - bigrat
+	BigRat = ConstKind(reflect.UnsafePointer + 2)
+	// BigFloat - bound type - bigfloat
+	BigFloat = ConstKind(reflect.UnsafePointer + 3)
 	// ConstBoundRune - bound type: rune
 	ConstBoundRune = reflect.Int32
 	// ConstBoundString - bound type: string
 	ConstBoundString = reflect.String
 	// ConstUnboundInt - unbound int type
-	ConstUnboundInt = ConstKind(reflect.UnsafePointer + 3)
+	ConstUnboundInt = ConstKind(reflect.UnsafePointer + 4)
 	// ConstUnboundFloat - unbound float type
-	ConstUnboundFloat = ConstKind(reflect.UnsafePointer + 4)
+	ConstUnboundFloat = ConstKind(reflect.UnsafePointer + 5)
 	// ConstUnboundComplex - unbound complex type
-	ConstUnboundComplex = ConstKind(reflect.UnsafePointer + 5)
+	ConstUnboundComplex = ConstKind(reflect.UnsafePointer + 6)
 	// ConstUnboundPtr - nil: unbound ptr
-	ConstUnboundPtr = ConstKind(reflect.UnsafePointer + 6)
+	ConstUnboundPtr = ConstKind(reflect.UnsafePointer + 7)
 )
 
 // IsConstBound checks a const is bound or not.
 func IsConstBound(kind ConstKind) bool {
-	return kind <= reflect.UnsafePointer
+	return kind <= BigFloat
 }
 
 // -----------------------------------------------------------------------------

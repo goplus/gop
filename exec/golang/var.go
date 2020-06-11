@@ -190,19 +190,19 @@ func (p *Builder) AddrOp(kind exec.Kind, op exec.AddrOperator) *Builder {
 }
 
 var addropTokens = [...]token.Token{
-	exec.OpAddAssign:       token.ADD_ASSIGN,
-	exec.OpSubAssign:       token.SUB_ASSIGN,
-	exec.OpMulAssign:       token.MUL_ASSIGN,
-	exec.OpDivAssign:       token.QUO_ASSIGN,
-	exec.OpModAssign:       token.REM_ASSIGN,
-	exec.OpBitAndAssign:    token.AND_ASSIGN,
-	exec.OpBitOrAssign:     token.OR_ASSIGN,
-	exec.OpBitXorAssign:    token.XOR_ASSIGN,
-	exec.OpBitAndNotAssign: token.AND_NOT_ASSIGN,
-	exec.OpBitSHLAssign:    token.SHL_ASSIGN,
-	exec.OpBitSHRAssign:    token.SHR_ASSIGN,
-	exec.OpInc:             token.INC,
-	exec.OpDec:             token.DEC,
+	exec.OpAddAssign:    token.ADD_ASSIGN,
+	exec.OpSubAssign:    token.SUB_ASSIGN,
+	exec.OpMulAssign:    token.MUL_ASSIGN,
+	exec.OpQuoAssign:    token.QUO_ASSIGN,
+	exec.OpModAssign:    token.REM_ASSIGN,
+	exec.OpAndAssign:    token.AND_ASSIGN,
+	exec.OpOrAssign:     token.OR_ASSIGN,
+	exec.OpXorAssign:    token.XOR_ASSIGN,
+	exec.OpAndNotAssign: token.AND_NOT_ASSIGN,
+	exec.OpLshAssign:    token.SHL_ASSIGN,
+	exec.OpRshAssign:    token.SHR_ASSIGN,
+	exec.OpInc:          token.INC,
+	exec.OpDec:          token.DEC,
 }
 
 // -----------------------------------------------------------------------------

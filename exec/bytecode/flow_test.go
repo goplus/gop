@@ -162,7 +162,7 @@ func TestIf1(t *testing.T) {
 		JmpIf(exec.JcNil, label1).
 		Push(50).
 		Push(6).
-		BuiltinOp(Int, OpDiv).
+		BuiltinOp(Int, OpQuo).
 		Jmp(label2).
 		Label(label1).
 		Push(5).
@@ -187,7 +187,7 @@ func TestIf11(t *testing.T) {
 		JmpIf(0, label1).
 		Push(50).
 		Push(6).
-		BuiltinOp(Int, OpDiv).
+		BuiltinOp(Int, OpQuo).
 		Jmp(label2).
 		Label(label1).
 		Push(5).

@@ -41,7 +41,7 @@ func Ident(name string) *ast.Ident {
 	return &ast.Ident{Name: name}
 }
 
-// GoFuncIdent - ast.Ident or ast.SelectorExpr
+// GoSymIdent - ast.Ident or ast.SelectorExpr
 func (p *Builder) GoSymIdent(pkgPath, name string) ast.Expr {
 	if pkgPath == "" {
 		return Ident(name)
@@ -195,30 +195,30 @@ func (p *Builder) BuiltinOp(kind exec.Kind, op exec.Operator) *Builder {
 }
 
 var opTokens = [...]token.Token{
-	exec.OpAdd:       token.ADD,
-	exec.OpSub:       token.SUB,
-	exec.OpMul:       token.MUL,
-	exec.OpDiv:       token.QUO,
-	exec.OpMod:       token.REM,
-	exec.OpBitAnd:    token.AND,
-	exec.OpBitOr:     token.OR,
-	exec.OpBitXor:    token.XOR,
-	exec.OpBitAndNot: token.AND_NOT,
-	exec.OpBitSHL:    token.SHL,
-	exec.OpBitSHR:    token.SHR,
-	exec.OpLT:        token.LSS,
-	exec.OpLE:        token.LEQ,
-	exec.OpGT:        token.GTR,
-	exec.OpGE:        token.GEQ,
-	exec.OpEQ:        token.EQL,
-	exec.OpEQNil:     token.ILLEGAL,
-	exec.OpNE:        token.NEQ,
-	exec.OpNENil:     token.ILLEGAL,
-	exec.OpLAnd:      token.LAND,
-	exec.OpLOr:       token.LOR,
-	exec.OpNeg:       token.SUB,
-	exec.OpNot:       token.NOT,
-	exec.OpBitNot:    token.XOR,
+	exec.OpAdd:    token.ADD,
+	exec.OpSub:    token.SUB,
+	exec.OpMul:    token.MUL,
+	exec.OpQuo:    token.QUO,
+	exec.OpMod:    token.REM,
+	exec.OpAnd:    token.AND,
+	exec.OpOr:     token.OR,
+	exec.OpXor:    token.XOR,
+	exec.OpAndNot: token.AND_NOT,
+	exec.OpLsh:    token.SHL,
+	exec.OpRsh:    token.SHR,
+	exec.OpLT:     token.LSS,
+	exec.OpLE:     token.LEQ,
+	exec.OpGT:     token.GTR,
+	exec.OpGE:     token.GEQ,
+	exec.OpEQ:     token.EQL,
+	exec.OpEQNil:  token.ILLEGAL,
+	exec.OpNE:     token.NEQ,
+	exec.OpNENil:  token.ILLEGAL,
+	exec.OpLAnd:   token.LAND,
+	exec.OpLOr:    token.LOR,
+	exec.OpLNot:   token.NOT,
+	exec.OpNeg:    token.SUB,
+	exec.OpBitNot: token.XOR,
 }
 
 // TypeCast instr

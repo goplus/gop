@@ -30,7 +30,7 @@ func TestInt(t *testing.T) {
 		Push(int(36)).
 		BuiltinOp(Int, OpMod).
 		Push(int(7)).
-		BuiltinOp(Int, OpDiv).
+		BuiltinOp(Int, OpQuo).
 		Push(int(1)).
 		BuiltinOp(Int, OpAdd).
 		Push(int(2)).
@@ -52,7 +52,7 @@ func TestInt64(t *testing.T) {
 		Push(int64(36)).
 		BuiltinOp(Int64, OpMod).
 		Push(int64(7)).
-		BuiltinOp(Int64, OpDiv).
+		BuiltinOp(Int64, OpQuo).
 		Push(int64(1)).
 		BuiltinOp(Int64, OpAdd).
 		Push(int64(2)).
@@ -74,7 +74,7 @@ func TestInt32(t *testing.T) {
 		Push(int32(36)).
 		BuiltinOp(Int32, OpMod).
 		Push(int32(7)).
-		BuiltinOp(Int32, OpDiv).
+		BuiltinOp(Int32, OpQuo).
 		Push(int32(1)).
 		BuiltinOp(Int32, OpAdd).
 		Push(int32(2)).
@@ -96,7 +96,7 @@ func TestInt16(t *testing.T) {
 		Push(int16(36)).
 		BuiltinOp(Int16, OpMod).
 		Push(int16(7)).
-		BuiltinOp(Int16, OpDiv).
+		BuiltinOp(Int16, OpQuo).
 		Push(int16(1)).
 		BuiltinOp(Int16, OpAdd).
 		Push(int16(2)).
@@ -118,7 +118,7 @@ func TestInt8(t *testing.T) {
 		Push(int8(36)).
 		BuiltinOp(Int8, OpMod).
 		Push(int8(7)).
-		BuiltinOp(Int8, OpDiv).
+		BuiltinOp(Int8, OpQuo).
 		Push(int8(1)).
 		BuiltinOp(Int8, OpAdd).
 		Push(int8(2)).
@@ -142,7 +142,7 @@ func TestUint(t *testing.T) {
 		Push(uint(36)).
 		BuiltinOp(Uint, OpMod).
 		Push(uint(7)).
-		BuiltinOp(Uint, OpDiv).
+		BuiltinOp(Uint, OpQuo).
 		Push(uint(1)).
 		BuiltinOp(Uint, OpAdd).
 		Push(uint(2)).
@@ -164,7 +164,7 @@ func TestUintptr(t *testing.T) {
 		Push(uintptr(36)).
 		BuiltinOp(Uintptr, OpMod).
 		Push(uintptr(7)).
-		BuiltinOp(Uintptr, OpDiv).
+		BuiltinOp(Uintptr, OpQuo).
 		Push(uintptr(1)).
 		BuiltinOp(Uintptr, OpAdd).
 		Push(uintptr(2)).
@@ -186,7 +186,7 @@ func TestUint64(t *testing.T) {
 		Push(uint64(36)).
 		BuiltinOp(Uint64, OpMod).
 		Push(uint64(7)).
-		BuiltinOp(Uint64, OpDiv).
+		BuiltinOp(Uint64, OpQuo).
 		Push(uint64(1)).
 		BuiltinOp(Uint64, OpAdd).
 		Push(uint64(2)).
@@ -208,7 +208,7 @@ func TestUint32(t *testing.T) {
 		Push(uint32(36)).
 		BuiltinOp(Uint32, OpMod).
 		Push(uint32(7)).
-		BuiltinOp(Uint32, OpDiv).
+		BuiltinOp(Uint32, OpQuo).
 		Push(uint32(1)).
 		BuiltinOp(Uint32, OpAdd).
 		Push(uint32(2)).
@@ -230,7 +230,7 @@ func TestUint16(t *testing.T) {
 		Push(uint16(36)).
 		BuiltinOp(Uint16, OpMod).
 		Push(uint16(7)).
-		BuiltinOp(Uint16, OpDiv).
+		BuiltinOp(Uint16, OpQuo).
 		Push(uint16(1)).
 		BuiltinOp(Uint16, OpAdd).
 		Push(uint16(2)).
@@ -252,7 +252,7 @@ func TestUint8(t *testing.T) {
 		Push(uint8(36)).
 		BuiltinOp(Uint8, OpMod).
 		Push(uint8(7)).
-		BuiltinOp(Uint8, OpDiv).
+		BuiltinOp(Uint8, OpQuo).
 		Push(uint8(1)).
 		BuiltinOp(Uint8, OpAdd).
 		Push(uint8(2)).
@@ -272,7 +272,7 @@ func TestFloat64(t *testing.T) {
 	code := newBuilder().
 		Push(5.0).
 		Push(2.0).
-		BuiltinOp(Float64, OpDiv).
+		BuiltinOp(Float64, OpQuo).
 		Push(4.0).
 		BuiltinOp(Float64, OpMul).
 		Push(7.0).
@@ -296,7 +296,7 @@ func TestFloat32(t *testing.T) {
 		Push(float32(1.0)).
 		BuiltinOp(Float32, OpSub).
 		Push(float32(2.0)).
-		BuiltinOp(Float32, OpDiv).
+		BuiltinOp(Float32, OpQuo).
 		Push(float32(4.0)).
 		BuiltinOp(Float32, OpMul).
 		Resolve()
@@ -316,7 +316,7 @@ func TestComplex64(t *testing.T) {
 		Push(complex64(1.0)).
 		BuiltinOp(Complex64, OpSub).
 		Push(complex64(2.0)).
-		BuiltinOp(Complex64, OpDiv).
+		BuiltinOp(Complex64, OpQuo).
 		Push(complex64(4.0)).
 		BuiltinOp(Complex64, OpMul).
 		Resolve()
@@ -336,7 +336,7 @@ func TestComplex128(t *testing.T) {
 		Push(complex128(1.0)).
 		BuiltinOp(Complex128, OpSub).
 		Push(complex128(2.0)).
-		BuiltinOp(Complex128, OpDiv).
+		BuiltinOp(Complex128, OpQuo).
 		Push(complex128(4.0)).
 		BuiltinOp(Complex128, OpMul).
 		Resolve()
