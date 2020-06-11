@@ -126,6 +126,7 @@ const (
 	VAR
 	keyword_end
 
+	RAT      = literal_end  // 123.5r
 	QUESTION = operator_end // ~
 )
 
@@ -302,7 +303,7 @@ func Lookup(ident string) Token {
 // IsLiteral returns true for tokens corresponding to identifiers
 // and basic type literals; it returns false otherwise.
 //
-func (tok Token) IsLiteral() bool { return literal_beg < tok && tok < literal_end }
+func (tok Token) IsLiteral() bool { return literal_beg < tok && tok <= literal_end }
 
 // IsOperator returns true for tokens corresponding to operators and
 // delimiters; it returns false otherwise.

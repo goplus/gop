@@ -475,6 +475,9 @@ func (s *Scanner) scanNumber() (token.Token, string) {
 	if s.ch == 'i' {
 		tok = token.IMAG
 		s.next()
+	} else if s.ch == 'r' {
+		tok = token.RAT
+		s.next()
 	}
 
 	lit := string(s.src[offs:s.offset])

@@ -1183,7 +1183,7 @@ func (p *parser) parseOperand(lhs bool) ast.Expr {
 		}
 		return x
 
-	case token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING:
+	case token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING, token.RAT:
 		x := &ast.BasicLit{ValuePos: p.pos, Kind: p.tok, Value: p.lit}
 		p.next()
 		return x

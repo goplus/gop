@@ -516,3 +516,37 @@ func TestXOR(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
+var fsTestRational = asttest.NewSingleFileFS("/foo", "bar.gop", `
+	println(5/7r + 3.4r)
+`)
+
+func TestRational(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := ParseFSDir(fset, fsTestRational, "/foo", nil, Trace)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+	bar, isMain := pkgs["main"]
+	if !isMain {
+		t.Fatal("TestTILDE failed: not main")
+	}
+	file := bar.Files["/foo/bar.gop"]
+	fmt.Println("Pkg:", file.Name)
+	for _, decl := range file.Decls {
+		fmt.Println("decl:", reflect.TypeOf(decl))
+		switch d := decl.(type) {
+		case *ast.GenDecl:
+			for _, spec := range d.Specs {
+				switch v := spec.(type) {
+				case *ast.ImportSpec:
+					fmt.Println(" - import:", v.Path.Value)
+				}
+			}
+		case *ast.FuncDecl:
+			fmt.Println(" - func:", d.Name.Name)
+		}
+	}
+}
+
+// -----------------------------------------------------------------------------
