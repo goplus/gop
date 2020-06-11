@@ -17,6 +17,7 @@
 package exec
 
 import (
+	"math/big"
 	"reflect"
 	"unsafe"
 
@@ -65,6 +66,12 @@ const (
 	String = reflect.String
 	// UnsafePointer type
 	UnsafePointer = reflect.UnsafePointer
+	// BigInt type
+	BigInt = spec.BigInt
+	// BigRat type
+	BigRat = spec.BigRat
+	// BigFloat type
+	BigFloat = spec.BigFloat
 )
 
 var (
@@ -108,6 +115,12 @@ var (
 	TyEmptyInterface = reflect.TypeOf((*interface{})(nil)).Elem()
 	// TyError type
 	TyError = reflect.TypeOf((*error)(nil)).Elem()
+	// TyBigInt type
+	TyBigInt = reflect.TypeOf((*big.Int)(nil))
+	// TyBigRat type
+	TyBigRat = reflect.TypeOf((*big.Rat)(nil))
+	// TyBigFloat type
+	TyBigFloat = reflect.TypeOf((*big.Float)(nil))
 )
 
 var (
@@ -121,30 +134,33 @@ var (
 )
 
 type bTI struct { // builtin type info
-	typ      reflect.Type
-	size     uintptr
-	castFrom uint64
+	typ  reflect.Type
+	size uintptr
+	//castFrom uint64
 }
 
 var builtinTypes = [...]bTI{
-	Bool:          {TyBool, 1, 0},
-	Int:           {TyInt, unsafe.Sizeof(int(0)), bitsAllReal},
-	Int8:          {TyInt8, 1, bitsAllReal},
-	Int16:         {TyInt16, 2, bitsAllReal},
-	Int32:         {TyInt32, 4, bitsAllReal},
-	Int64:         {TyInt64, 8, bitsAllReal},
-	Uint:          {TyUint, unsafe.Sizeof(uint(0)), bitsAllReal},
-	Uint8:         {TyUint8, 1, bitsAllReal},
-	Uint16:        {TyUint16, 2, bitsAllReal},
-	Uint32:        {TyUint32, 4, bitsAllReal},
-	Uint64:        {TyUint64, 8, bitsAllReal},
-	Uintptr:       {TyUintptr, unsafe.Sizeof(uintptr(0)), bitsAllReal},
-	Float32:       {TyFloat32, 4, bitsAllReal},
-	Float64:       {TyFloat64, 8, bitsAllReal},
-	Complex64:     {TyComplex64, 8, bitsAllComplex},
-	Complex128:    {TyComplex128, 16, bitsAllComplex},
-	String:        {TyString, unsafe.Sizeof(string('0')), bitsAllIntUint},
-	UnsafePointer: {TyUnsafePointer, unsafe.Sizeof(uintptr(0)), 0},
+	Bool:          {TyBool, 1},                                  // 0},
+	Int:           {TyInt, unsafe.Sizeof(int(0))},               // bitsAllReal},
+	Int8:          {TyInt8, 1},                                  // bitsAllReal | bitBigInt},
+	Int16:         {TyInt16, 2},                                 // bitsAllReal | bitBigInt},
+	Int32:         {TyInt32, 4},                                 // bitsAllReal | bitBigInt},
+	Int64:         {TyInt64, 8},                                 // bitsAllReal | bitBigInt},
+	Uint:          {TyUint, unsafe.Sizeof(uint(0))},             // bitsAllReal | bitBigInt},
+	Uint8:         {TyUint8, 1},                                 // bitsAllReal | bitBigInt},
+	Uint16:        {TyUint16, 2},                                // bitsAllReal | bitBigInt},
+	Uint32:        {TyUint32, 4},                                // bitsAllReal | bitBigInt},
+	Uint64:        {TyUint64, 8},                                // bitsAllReal | bitBigInt},
+	Uintptr:       {TyUintptr, unsafe.Sizeof(uintptr(0))},       // bitsAllReal | bitBigInt},
+	Float32:       {TyFloat32, 4},                               // bitsAllReal | bitBigInt},
+	Float64:       {TyFloat64, 8},                               // bitsAllReal | bitBigInt},
+	Complex64:     {TyComplex64, 8},                             // bitsAllComplex},
+	Complex128:    {TyComplex128, 16},                           // bitsAllComplex},
+	String:        {TyString, unsafe.Sizeof(string('0'))},       // bitsAllIntUint},
+	UnsafePointer: {TyUnsafePointer, unsafe.Sizeof(uintptr(0))}, // 0},
+	BigInt:        {TyBigInt, unsafe.Sizeof(uintptr(0))},        // bitsAllReal | bitBigInt},
+	BigRat:        {TyBigRat, unsafe.Sizeof(uintptr(0))},        // bitsAllReal | bitBigInt},
+	BigFloat:      {TyBigFloat, unsafe.Sizeof(uintptr(0))},      // bitsAllReal | bitBigInt},
 }
 
 // TypeFromKind returns the type who has this kind.

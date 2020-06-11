@@ -1049,3 +1049,31 @@ func TestErrWrapExpr2(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
+var fsTestRational = asttest.NewSingleFileFS("/foo", "bar.gop", `
+	println(3/4r + 5/7r)
+`)
+
+func _TestRational(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestRational, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, _, err = newPackage(b, bar, fset)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := ctx.Get(-1); v != int(123) {
+		t.Fatal("n:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------

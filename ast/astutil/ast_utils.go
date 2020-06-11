@@ -17,7 +17,9 @@
 package astutil
 
 import (
+	"math/big"
 	"strconv"
+	"strings"
 
 	"github.com/qiniu/goplus/ast"
 	"github.com/qiniu/goplus/ast/spec"
@@ -45,6 +47,12 @@ func ToString(l *ast.BasicLit) string {
 type ConstKind = spec.ConstKind
 
 const (
+	// BigInt - bound type - bigint
+	BigInt = spec.BigInt
+	// BigRat - bound type - bigrat
+	BigRat = spec.BigRat
+	// BigFloat - bound type - bigfloat
+	BigFloat = spec.BigFloat
 	// ConstBoundRune - bound type: rune
 	ConstBoundRune = spec.ConstBoundRune
 	// ConstBoundString - bound type: string
@@ -56,6 +64,11 @@ const (
 	// ConstUnboundComplex - unbound complex type
 	ConstUnboundComplex = spec.ConstUnboundComplex
 )
+
+// IsConstBound checks a const is bound or not.
+func IsConstBound(kind ConstKind) bool {
+	return spec.IsConstBound(kind)
+}
 
 // ToConst converts a ast.BasicLit to constant value.
 func ToConst(v *ast.BasicLit) (ConstKind, interface{}) {
@@ -95,6 +108,17 @@ func ToConst(v *ast.BasicLit) (ConstKind, interface{}) {
 			log.Fatalln("ToConst: strconv.ParseFloat failed:", err)
 		}
 		return ConstUnboundComplex, complex(0, n)
+	case token.RAT:
+		val := v.Value[:len(v.Value)-1]
+		if strings.IndexByte(val, '.') < 0 {
+			if n, ok := new(big.Int).SetString(val, 0); ok {
+				return BigInt, n
+			}
+		} else {
+			if n, ok := new(big.Float).SetString(val); ok {
+				return BigFloat, n
+			}
+		}
 	}
 	log.Fatalln("ToConst: unknown -", v)
 	return 0, nil

@@ -1,190 +1,174 @@
-/*
- Copyright 2020 Qiniu Cloud (qiniu.com)
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-*/
-
 package bytecode
 
 var builtinAddrOps = [...]func(i Instr, p *Context){
-	(int(OpAddAssign) << bitsKind) | int(Int):           execAddAssignInt,
-	(int(OpAddAssign) << bitsKind) | int(Int8):          execAddAssignInt8,
-	(int(OpAddAssign) << bitsKind) | int(Int16):         execAddAssignInt16,
-	(int(OpAddAssign) << bitsKind) | int(Int32):         execAddAssignInt32,
-	(int(OpAddAssign) << bitsKind) | int(Int64):         execAddAssignInt64,
-	(int(OpAddAssign) << bitsKind) | int(Uint):          execAddAssignUint,
-	(int(OpAddAssign) << bitsKind) | int(Uint8):         execAddAssignUint8,
-	(int(OpAddAssign) << bitsKind) | int(Uint16):        execAddAssignUint16,
-	(int(OpAddAssign) << bitsKind) | int(Uint32):        execAddAssignUint32,
-	(int(OpAddAssign) << bitsKind) | int(Uint64):        execAddAssignUint64,
-	(int(OpAddAssign) << bitsKind) | int(Uintptr):       execAddAssignUintptr,
-	(int(OpAddAssign) << bitsKind) | int(Float32):       execAddAssignFloat32,
-	(int(OpAddAssign) << bitsKind) | int(Float64):       execAddAssignFloat64,
-	(int(OpAddAssign) << bitsKind) | int(Complex64):     execAddAssignComplex64,
-	(int(OpAddAssign) << bitsKind) | int(Complex128):    execAddAssignComplex128,
-	(int(OpAddAssign) << bitsKind) | int(String):        execAddAssignString,
-	(int(OpSubAssign) << bitsKind) | int(Int):           execSubAssignInt,
-	(int(OpSubAssign) << bitsKind) | int(Int8):          execSubAssignInt8,
-	(int(OpSubAssign) << bitsKind) | int(Int16):         execSubAssignInt16,
-	(int(OpSubAssign) << bitsKind) | int(Int32):         execSubAssignInt32,
-	(int(OpSubAssign) << bitsKind) | int(Int64):         execSubAssignInt64,
-	(int(OpSubAssign) << bitsKind) | int(Uint):          execSubAssignUint,
-	(int(OpSubAssign) << bitsKind) | int(Uint8):         execSubAssignUint8,
-	(int(OpSubAssign) << bitsKind) | int(Uint16):        execSubAssignUint16,
-	(int(OpSubAssign) << bitsKind) | int(Uint32):        execSubAssignUint32,
-	(int(OpSubAssign) << bitsKind) | int(Uint64):        execSubAssignUint64,
-	(int(OpSubAssign) << bitsKind) | int(Uintptr):       execSubAssignUintptr,
-	(int(OpSubAssign) << bitsKind) | int(Float32):       execSubAssignFloat32,
-	(int(OpSubAssign) << bitsKind) | int(Float64):       execSubAssignFloat64,
-	(int(OpSubAssign) << bitsKind) | int(Complex64):     execSubAssignComplex64,
-	(int(OpSubAssign) << bitsKind) | int(Complex128):    execSubAssignComplex128,
-	(int(OpMulAssign) << bitsKind) | int(Int):           execMulAssignInt,
-	(int(OpMulAssign) << bitsKind) | int(Int8):          execMulAssignInt8,
-	(int(OpMulAssign) << bitsKind) | int(Int16):         execMulAssignInt16,
-	(int(OpMulAssign) << bitsKind) | int(Int32):         execMulAssignInt32,
-	(int(OpMulAssign) << bitsKind) | int(Int64):         execMulAssignInt64,
-	(int(OpMulAssign) << bitsKind) | int(Uint):          execMulAssignUint,
-	(int(OpMulAssign) << bitsKind) | int(Uint8):         execMulAssignUint8,
-	(int(OpMulAssign) << bitsKind) | int(Uint16):        execMulAssignUint16,
-	(int(OpMulAssign) << bitsKind) | int(Uint32):        execMulAssignUint32,
-	(int(OpMulAssign) << bitsKind) | int(Uint64):        execMulAssignUint64,
-	(int(OpMulAssign) << bitsKind) | int(Uintptr):       execMulAssignUintptr,
-	(int(OpMulAssign) << bitsKind) | int(Float32):       execMulAssignFloat32,
-	(int(OpMulAssign) << bitsKind) | int(Float64):       execMulAssignFloat64,
-	(int(OpMulAssign) << bitsKind) | int(Complex64):     execMulAssignComplex64,
-	(int(OpMulAssign) << bitsKind) | int(Complex128):    execMulAssignComplex128,
-	(int(OpDivAssign) << bitsKind) | int(Int):           execDivAssignInt,
-	(int(OpDivAssign) << bitsKind) | int(Int8):          execDivAssignInt8,
-	(int(OpDivAssign) << bitsKind) | int(Int16):         execDivAssignInt16,
-	(int(OpDivAssign) << bitsKind) | int(Int32):         execDivAssignInt32,
-	(int(OpDivAssign) << bitsKind) | int(Int64):         execDivAssignInt64,
-	(int(OpDivAssign) << bitsKind) | int(Uint):          execDivAssignUint,
-	(int(OpDivAssign) << bitsKind) | int(Uint8):         execDivAssignUint8,
-	(int(OpDivAssign) << bitsKind) | int(Uint16):        execDivAssignUint16,
-	(int(OpDivAssign) << bitsKind) | int(Uint32):        execDivAssignUint32,
-	(int(OpDivAssign) << bitsKind) | int(Uint64):        execDivAssignUint64,
-	(int(OpDivAssign) << bitsKind) | int(Uintptr):       execDivAssignUintptr,
-	(int(OpDivAssign) << bitsKind) | int(Float32):       execDivAssignFloat32,
-	(int(OpDivAssign) << bitsKind) | int(Float64):       execDivAssignFloat64,
-	(int(OpDivAssign) << bitsKind) | int(Complex64):     execDivAssignComplex64,
-	(int(OpDivAssign) << bitsKind) | int(Complex128):    execDivAssignComplex128,
-	(int(OpModAssign) << bitsKind) | int(Int):           execModAssignInt,
-	(int(OpModAssign) << bitsKind) | int(Int8):          execModAssignInt8,
-	(int(OpModAssign) << bitsKind) | int(Int16):         execModAssignInt16,
-	(int(OpModAssign) << bitsKind) | int(Int32):         execModAssignInt32,
-	(int(OpModAssign) << bitsKind) | int(Int64):         execModAssignInt64,
-	(int(OpModAssign) << bitsKind) | int(Uint):          execModAssignUint,
-	(int(OpModAssign) << bitsKind) | int(Uint8):         execModAssignUint8,
-	(int(OpModAssign) << bitsKind) | int(Uint16):        execModAssignUint16,
-	(int(OpModAssign) << bitsKind) | int(Uint32):        execModAssignUint32,
-	(int(OpModAssign) << bitsKind) | int(Uint64):        execModAssignUint64,
-	(int(OpModAssign) << bitsKind) | int(Uintptr):       execModAssignUintptr,
-	(int(OpBitAndAssign) << bitsKind) | int(Int):        execBitAndAssignInt,
-	(int(OpBitAndAssign) << bitsKind) | int(Int8):       execBitAndAssignInt8,
-	(int(OpBitAndAssign) << bitsKind) | int(Int16):      execBitAndAssignInt16,
-	(int(OpBitAndAssign) << bitsKind) | int(Int32):      execBitAndAssignInt32,
-	(int(OpBitAndAssign) << bitsKind) | int(Int64):      execBitAndAssignInt64,
-	(int(OpBitAndAssign) << bitsKind) | int(Uint):       execBitAndAssignUint,
-	(int(OpBitAndAssign) << bitsKind) | int(Uint8):      execBitAndAssignUint8,
-	(int(OpBitAndAssign) << bitsKind) | int(Uint16):     execBitAndAssignUint16,
-	(int(OpBitAndAssign) << bitsKind) | int(Uint32):     execBitAndAssignUint32,
-	(int(OpBitAndAssign) << bitsKind) | int(Uint64):     execBitAndAssignUint64,
-	(int(OpBitAndAssign) << bitsKind) | int(Uintptr):    execBitAndAssignUintptr,
-	(int(OpBitOrAssign) << bitsKind) | int(Int):         execBitOrAssignInt,
-	(int(OpBitOrAssign) << bitsKind) | int(Int8):        execBitOrAssignInt8,
-	(int(OpBitOrAssign) << bitsKind) | int(Int16):       execBitOrAssignInt16,
-	(int(OpBitOrAssign) << bitsKind) | int(Int32):       execBitOrAssignInt32,
-	(int(OpBitOrAssign) << bitsKind) | int(Int64):       execBitOrAssignInt64,
-	(int(OpBitOrAssign) << bitsKind) | int(Uint):        execBitOrAssignUint,
-	(int(OpBitOrAssign) << bitsKind) | int(Uint8):       execBitOrAssignUint8,
-	(int(OpBitOrAssign) << bitsKind) | int(Uint16):      execBitOrAssignUint16,
-	(int(OpBitOrAssign) << bitsKind) | int(Uint32):      execBitOrAssignUint32,
-	(int(OpBitOrAssign) << bitsKind) | int(Uint64):      execBitOrAssignUint64,
-	(int(OpBitOrAssign) << bitsKind) | int(Uintptr):     execBitOrAssignUintptr,
-	(int(OpBitXorAssign) << bitsKind) | int(Int):        execBitXorAssignInt,
-	(int(OpBitXorAssign) << bitsKind) | int(Int8):       execBitXorAssignInt8,
-	(int(OpBitXorAssign) << bitsKind) | int(Int16):      execBitXorAssignInt16,
-	(int(OpBitXorAssign) << bitsKind) | int(Int32):      execBitXorAssignInt32,
-	(int(OpBitXorAssign) << bitsKind) | int(Int64):      execBitXorAssignInt64,
-	(int(OpBitXorAssign) << bitsKind) | int(Uint):       execBitXorAssignUint,
-	(int(OpBitXorAssign) << bitsKind) | int(Uint8):      execBitXorAssignUint8,
-	(int(OpBitXorAssign) << bitsKind) | int(Uint16):     execBitXorAssignUint16,
-	(int(OpBitXorAssign) << bitsKind) | int(Uint32):     execBitXorAssignUint32,
-	(int(OpBitXorAssign) << bitsKind) | int(Uint64):     execBitXorAssignUint64,
-	(int(OpBitXorAssign) << bitsKind) | int(Uintptr):    execBitXorAssignUintptr,
-	(int(OpBitAndNotAssign) << bitsKind) | int(Int):     execBitAndNotAssignInt,
-	(int(OpBitAndNotAssign) << bitsKind) | int(Int8):    execBitAndNotAssignInt8,
-	(int(OpBitAndNotAssign) << bitsKind) | int(Int16):   execBitAndNotAssignInt16,
-	(int(OpBitAndNotAssign) << bitsKind) | int(Int32):   execBitAndNotAssignInt32,
-	(int(OpBitAndNotAssign) << bitsKind) | int(Int64):   execBitAndNotAssignInt64,
-	(int(OpBitAndNotAssign) << bitsKind) | int(Uint):    execBitAndNotAssignUint,
-	(int(OpBitAndNotAssign) << bitsKind) | int(Uint8):   execBitAndNotAssignUint8,
-	(int(OpBitAndNotAssign) << bitsKind) | int(Uint16):  execBitAndNotAssignUint16,
-	(int(OpBitAndNotAssign) << bitsKind) | int(Uint32):  execBitAndNotAssignUint32,
-	(int(OpBitAndNotAssign) << bitsKind) | int(Uint64):  execBitAndNotAssignUint64,
-	(int(OpBitAndNotAssign) << bitsKind) | int(Uintptr): execBitAndNotAssignUintptr,
-	(int(OpBitSHLAssign) << bitsKind) | int(Int):        execBitSHLAssignInt,
-	(int(OpBitSHLAssign) << bitsKind) | int(Int8):       execBitSHLAssignInt8,
-	(int(OpBitSHLAssign) << bitsKind) | int(Int16):      execBitSHLAssignInt16,
-	(int(OpBitSHLAssign) << bitsKind) | int(Int32):      execBitSHLAssignInt32,
-	(int(OpBitSHLAssign) << bitsKind) | int(Int64):      execBitSHLAssignInt64,
-	(int(OpBitSHLAssign) << bitsKind) | int(Uint):       execBitSHLAssignUint,
-	(int(OpBitSHLAssign) << bitsKind) | int(Uint8):      execBitSHLAssignUint8,
-	(int(OpBitSHLAssign) << bitsKind) | int(Uint16):     execBitSHLAssignUint16,
-	(int(OpBitSHLAssign) << bitsKind) | int(Uint32):     execBitSHLAssignUint32,
-	(int(OpBitSHLAssign) << bitsKind) | int(Uint64):     execBitSHLAssignUint64,
-	(int(OpBitSHLAssign) << bitsKind) | int(Uintptr):    execBitSHLAssignUintptr,
-	(int(OpBitSHRAssign) << bitsKind) | int(Int):        execBitSHRAssignInt,
-	(int(OpBitSHRAssign) << bitsKind) | int(Int8):       execBitSHRAssignInt8,
-	(int(OpBitSHRAssign) << bitsKind) | int(Int16):      execBitSHRAssignInt16,
-	(int(OpBitSHRAssign) << bitsKind) | int(Int32):      execBitSHRAssignInt32,
-	(int(OpBitSHRAssign) << bitsKind) | int(Int64):      execBitSHRAssignInt64,
-	(int(OpBitSHRAssign) << bitsKind) | int(Uint):       execBitSHRAssignUint,
-	(int(OpBitSHRAssign) << bitsKind) | int(Uint8):      execBitSHRAssignUint8,
-	(int(OpBitSHRAssign) << bitsKind) | int(Uint16):     execBitSHRAssignUint16,
-	(int(OpBitSHRAssign) << bitsKind) | int(Uint32):     execBitSHRAssignUint32,
-	(int(OpBitSHRAssign) << bitsKind) | int(Uint64):     execBitSHRAssignUint64,
-	(int(OpBitSHRAssign) << bitsKind) | int(Uintptr):    execBitSHRAssignUintptr,
-	(int(OpInc) << bitsKind) | int(Int):                 execIncInt,
-	(int(OpInc) << bitsKind) | int(Int8):                execIncInt8,
-	(int(OpInc) << bitsKind) | int(Int16):               execIncInt16,
-	(int(OpInc) << bitsKind) | int(Int32):               execIncInt32,
-	(int(OpInc) << bitsKind) | int(Int64):               execIncInt64,
-	(int(OpInc) << bitsKind) | int(Uint):                execIncUint,
-	(int(OpInc) << bitsKind) | int(Uint8):               execIncUint8,
-	(int(OpInc) << bitsKind) | int(Uint16):              execIncUint16,
-	(int(OpInc) << bitsKind) | int(Uint32):              execIncUint32,
-	(int(OpInc) << bitsKind) | int(Uint64):              execIncUint64,
-	(int(OpInc) << bitsKind) | int(Uintptr):             execIncUintptr,
-	(int(OpInc) << bitsKind) | int(Float32):             execIncFloat32,
-	(int(OpInc) << bitsKind) | int(Float64):             execIncFloat64,
-	(int(OpInc) << bitsKind) | int(Complex64):           execIncComplex64,
-	(int(OpInc) << bitsKind) | int(Complex128):          execIncComplex128,
-	(int(OpDec) << bitsKind) | int(Int):                 execDecInt,
-	(int(OpDec) << bitsKind) | int(Int8):                execDecInt8,
-	(int(OpDec) << bitsKind) | int(Int16):               execDecInt16,
-	(int(OpDec) << bitsKind) | int(Int32):               execDecInt32,
-	(int(OpDec) << bitsKind) | int(Int64):               execDecInt64,
-	(int(OpDec) << bitsKind) | int(Uint):                execDecUint,
-	(int(OpDec) << bitsKind) | int(Uint8):               execDecUint8,
-	(int(OpDec) << bitsKind) | int(Uint16):              execDecUint16,
-	(int(OpDec) << bitsKind) | int(Uint32):              execDecUint32,
-	(int(OpDec) << bitsKind) | int(Uint64):              execDecUint64,
-	(int(OpDec) << bitsKind) | int(Uintptr):             execDecUintptr,
-	(int(OpDec) << bitsKind) | int(Float32):             execDecFloat32,
-	(int(OpDec) << bitsKind) | int(Float64):             execDecFloat64,
-	(int(OpDec) << bitsKind) | int(Complex64):           execDecComplex64,
-	(int(OpDec) << bitsKind) | int(Complex128):          execDecComplex128,
+	(int(OpAddAssign) << bitsKind) | int(Int):        execAddAssignInt,
+	(int(OpAddAssign) << bitsKind) | int(Int8):       execAddAssignInt8,
+	(int(OpAddAssign) << bitsKind) | int(Int16):      execAddAssignInt16,
+	(int(OpAddAssign) << bitsKind) | int(Int32):      execAddAssignInt32,
+	(int(OpAddAssign) << bitsKind) | int(Int64):      execAddAssignInt64,
+	(int(OpAddAssign) << bitsKind) | int(Uint):       execAddAssignUint,
+	(int(OpAddAssign) << bitsKind) | int(Uint8):      execAddAssignUint8,
+	(int(OpAddAssign) << bitsKind) | int(Uint16):     execAddAssignUint16,
+	(int(OpAddAssign) << bitsKind) | int(Uint32):     execAddAssignUint32,
+	(int(OpAddAssign) << bitsKind) | int(Uint64):     execAddAssignUint64,
+	(int(OpAddAssign) << bitsKind) | int(Uintptr):    execAddAssignUintptr,
+	(int(OpAddAssign) << bitsKind) | int(Float32):    execAddAssignFloat32,
+	(int(OpAddAssign) << bitsKind) | int(Float64):    execAddAssignFloat64,
+	(int(OpAddAssign) << bitsKind) | int(Complex64):  execAddAssignComplex64,
+	(int(OpAddAssign) << bitsKind) | int(Complex128): execAddAssignComplex128,
+	(int(OpAddAssign) << bitsKind) | int(String):     execAddAssignString,
+	(int(OpSubAssign) << bitsKind) | int(Int):        execSubAssignInt,
+	(int(OpSubAssign) << bitsKind) | int(Int8):       execSubAssignInt8,
+	(int(OpSubAssign) << bitsKind) | int(Int16):      execSubAssignInt16,
+	(int(OpSubAssign) << bitsKind) | int(Int32):      execSubAssignInt32,
+	(int(OpSubAssign) << bitsKind) | int(Int64):      execSubAssignInt64,
+	(int(OpSubAssign) << bitsKind) | int(Uint):       execSubAssignUint,
+	(int(OpSubAssign) << bitsKind) | int(Uint8):      execSubAssignUint8,
+	(int(OpSubAssign) << bitsKind) | int(Uint16):     execSubAssignUint16,
+	(int(OpSubAssign) << bitsKind) | int(Uint32):     execSubAssignUint32,
+	(int(OpSubAssign) << bitsKind) | int(Uint64):     execSubAssignUint64,
+	(int(OpSubAssign) << bitsKind) | int(Uintptr):    execSubAssignUintptr,
+	(int(OpSubAssign) << bitsKind) | int(Float32):    execSubAssignFloat32,
+	(int(OpSubAssign) << bitsKind) | int(Float64):    execSubAssignFloat64,
+	(int(OpSubAssign) << bitsKind) | int(Complex64):  execSubAssignComplex64,
+	(int(OpSubAssign) << bitsKind) | int(Complex128): execSubAssignComplex128,
+	(int(OpMulAssign) << bitsKind) | int(Int):        execMulAssignInt,
+	(int(OpMulAssign) << bitsKind) | int(Int8):       execMulAssignInt8,
+	(int(OpMulAssign) << bitsKind) | int(Int16):      execMulAssignInt16,
+	(int(OpMulAssign) << bitsKind) | int(Int32):      execMulAssignInt32,
+	(int(OpMulAssign) << bitsKind) | int(Int64):      execMulAssignInt64,
+	(int(OpMulAssign) << bitsKind) | int(Uint):       execMulAssignUint,
+	(int(OpMulAssign) << bitsKind) | int(Uint8):      execMulAssignUint8,
+	(int(OpMulAssign) << bitsKind) | int(Uint16):     execMulAssignUint16,
+	(int(OpMulAssign) << bitsKind) | int(Uint32):     execMulAssignUint32,
+	(int(OpMulAssign) << bitsKind) | int(Uint64):     execMulAssignUint64,
+	(int(OpMulAssign) << bitsKind) | int(Uintptr):    execMulAssignUintptr,
+	(int(OpMulAssign) << bitsKind) | int(Float32):    execMulAssignFloat32,
+	(int(OpMulAssign) << bitsKind) | int(Float64):    execMulAssignFloat64,
+	(int(OpMulAssign) << bitsKind) | int(Complex64):  execMulAssignComplex64,
+	(int(OpMulAssign) << bitsKind) | int(Complex128): execMulAssignComplex128,
+	(int(OpQuoAssign) << bitsKind) | int(Int):        execQuoAssignInt,
+	(int(OpQuoAssign) << bitsKind) | int(Int8):       execQuoAssignInt8,
+	(int(OpQuoAssign) << bitsKind) | int(Int16):      execQuoAssignInt16,
+	(int(OpQuoAssign) << bitsKind) | int(Int32):      execQuoAssignInt32,
+	(int(OpQuoAssign) << bitsKind) | int(Int64):      execQuoAssignInt64,
+	(int(OpQuoAssign) << bitsKind) | int(Uint):       execQuoAssignUint,
+	(int(OpQuoAssign) << bitsKind) | int(Uint8):      execQuoAssignUint8,
+	(int(OpQuoAssign) << bitsKind) | int(Uint16):     execQuoAssignUint16,
+	(int(OpQuoAssign) << bitsKind) | int(Uint32):     execQuoAssignUint32,
+	(int(OpQuoAssign) << bitsKind) | int(Uint64):     execQuoAssignUint64,
+	(int(OpQuoAssign) << bitsKind) | int(Uintptr):    execQuoAssignUintptr,
+	(int(OpQuoAssign) << bitsKind) | int(Float32):    execQuoAssignFloat32,
+	(int(OpQuoAssign) << bitsKind) | int(Float64):    execQuoAssignFloat64,
+	(int(OpQuoAssign) << bitsKind) | int(Complex64):  execQuoAssignComplex64,
+	(int(OpQuoAssign) << bitsKind) | int(Complex128): execQuoAssignComplex128,
+	(int(OpModAssign) << bitsKind) | int(Int):        execModAssignInt,
+	(int(OpModAssign) << bitsKind) | int(Int8):       execModAssignInt8,
+	(int(OpModAssign) << bitsKind) | int(Int16):      execModAssignInt16,
+	(int(OpModAssign) << bitsKind) | int(Int32):      execModAssignInt32,
+	(int(OpModAssign) << bitsKind) | int(Int64):      execModAssignInt64,
+	(int(OpModAssign) << bitsKind) | int(Uint):       execModAssignUint,
+	(int(OpModAssign) << bitsKind) | int(Uint8):      execModAssignUint8,
+	(int(OpModAssign) << bitsKind) | int(Uint16):     execModAssignUint16,
+	(int(OpModAssign) << bitsKind) | int(Uint32):     execModAssignUint32,
+	(int(OpModAssign) << bitsKind) | int(Uint64):     execModAssignUint64,
+	(int(OpModAssign) << bitsKind) | int(Uintptr):    execModAssignUintptr,
+	(int(OpAndAssign) << bitsKind) | int(Int):        execAndAssignInt,
+	(int(OpAndAssign) << bitsKind) | int(Int8):       execAndAssignInt8,
+	(int(OpAndAssign) << bitsKind) | int(Int16):      execAndAssignInt16,
+	(int(OpAndAssign) << bitsKind) | int(Int32):      execAndAssignInt32,
+	(int(OpAndAssign) << bitsKind) | int(Int64):      execAndAssignInt64,
+	(int(OpAndAssign) << bitsKind) | int(Uint):       execAndAssignUint,
+	(int(OpAndAssign) << bitsKind) | int(Uint8):      execAndAssignUint8,
+	(int(OpAndAssign) << bitsKind) | int(Uint16):     execAndAssignUint16,
+	(int(OpAndAssign) << bitsKind) | int(Uint32):     execAndAssignUint32,
+	(int(OpAndAssign) << bitsKind) | int(Uint64):     execAndAssignUint64,
+	(int(OpAndAssign) << bitsKind) | int(Uintptr):    execAndAssignUintptr,
+	(int(OpOrAssign) << bitsKind) | int(Int):         execOrAssignInt,
+	(int(OpOrAssign) << bitsKind) | int(Int8):        execOrAssignInt8,
+	(int(OpOrAssign) << bitsKind) | int(Int16):       execOrAssignInt16,
+	(int(OpOrAssign) << bitsKind) | int(Int32):       execOrAssignInt32,
+	(int(OpOrAssign) << bitsKind) | int(Int64):       execOrAssignInt64,
+	(int(OpOrAssign) << bitsKind) | int(Uint):        execOrAssignUint,
+	(int(OpOrAssign) << bitsKind) | int(Uint8):       execOrAssignUint8,
+	(int(OpOrAssign) << bitsKind) | int(Uint16):      execOrAssignUint16,
+	(int(OpOrAssign) << bitsKind) | int(Uint32):      execOrAssignUint32,
+	(int(OpOrAssign) << bitsKind) | int(Uint64):      execOrAssignUint64,
+	(int(OpOrAssign) << bitsKind) | int(Uintptr):     execOrAssignUintptr,
+	(int(OpXorAssign) << bitsKind) | int(Int):        execXorAssignInt,
+	(int(OpXorAssign) << bitsKind) | int(Int8):       execXorAssignInt8,
+	(int(OpXorAssign) << bitsKind) | int(Int16):      execXorAssignInt16,
+	(int(OpXorAssign) << bitsKind) | int(Int32):      execXorAssignInt32,
+	(int(OpXorAssign) << bitsKind) | int(Int64):      execXorAssignInt64,
+	(int(OpXorAssign) << bitsKind) | int(Uint):       execXorAssignUint,
+	(int(OpXorAssign) << bitsKind) | int(Uint8):      execXorAssignUint8,
+	(int(OpXorAssign) << bitsKind) | int(Uint16):     execXorAssignUint16,
+	(int(OpXorAssign) << bitsKind) | int(Uint32):     execXorAssignUint32,
+	(int(OpXorAssign) << bitsKind) | int(Uint64):     execXorAssignUint64,
+	(int(OpXorAssign) << bitsKind) | int(Uintptr):    execXorAssignUintptr,
+	(int(OpAndNotAssign) << bitsKind) | int(Int):     execAndNotAssignInt,
+	(int(OpAndNotAssign) << bitsKind) | int(Int8):    execAndNotAssignInt8,
+	(int(OpAndNotAssign) << bitsKind) | int(Int16):   execAndNotAssignInt16,
+	(int(OpAndNotAssign) << bitsKind) | int(Int32):   execAndNotAssignInt32,
+	(int(OpAndNotAssign) << bitsKind) | int(Int64):   execAndNotAssignInt64,
+	(int(OpAndNotAssign) << bitsKind) | int(Uint):    execAndNotAssignUint,
+	(int(OpAndNotAssign) << bitsKind) | int(Uint8):   execAndNotAssignUint8,
+	(int(OpAndNotAssign) << bitsKind) | int(Uint16):  execAndNotAssignUint16,
+	(int(OpAndNotAssign) << bitsKind) | int(Uint32):  execAndNotAssignUint32,
+	(int(OpAndNotAssign) << bitsKind) | int(Uint64):  execAndNotAssignUint64,
+	(int(OpAndNotAssign) << bitsKind) | int(Uintptr): execAndNotAssignUintptr,
+	(int(OpLshAssign) << bitsKind) | int(Int):        execLshAssignInt,
+	(int(OpLshAssign) << bitsKind) | int(Int8):       execLshAssignInt8,
+	(int(OpLshAssign) << bitsKind) | int(Int16):      execLshAssignInt16,
+	(int(OpLshAssign) << bitsKind) | int(Int32):      execLshAssignInt32,
+	(int(OpLshAssign) << bitsKind) | int(Int64):      execLshAssignInt64,
+	(int(OpLshAssign) << bitsKind) | int(Uint):       execLshAssignUint,
+	(int(OpLshAssign) << bitsKind) | int(Uint8):      execLshAssignUint8,
+	(int(OpLshAssign) << bitsKind) | int(Uint16):     execLshAssignUint16,
+	(int(OpLshAssign) << bitsKind) | int(Uint32):     execLshAssignUint32,
+	(int(OpLshAssign) << bitsKind) | int(Uint64):     execLshAssignUint64,
+	(int(OpLshAssign) << bitsKind) | int(Uintptr):    execLshAssignUintptr,
+	(int(OpRshAssign) << bitsKind) | int(Int):        execRshAssignInt,
+	(int(OpRshAssign) << bitsKind) | int(Int8):       execRshAssignInt8,
+	(int(OpRshAssign) << bitsKind) | int(Int16):      execRshAssignInt16,
+	(int(OpRshAssign) << bitsKind) | int(Int32):      execRshAssignInt32,
+	(int(OpRshAssign) << bitsKind) | int(Int64):      execRshAssignInt64,
+	(int(OpRshAssign) << bitsKind) | int(Uint):       execRshAssignUint,
+	(int(OpRshAssign) << bitsKind) | int(Uint8):      execRshAssignUint8,
+	(int(OpRshAssign) << bitsKind) | int(Uint16):     execRshAssignUint16,
+	(int(OpRshAssign) << bitsKind) | int(Uint32):     execRshAssignUint32,
+	(int(OpRshAssign) << bitsKind) | int(Uint64):     execRshAssignUint64,
+	(int(OpRshAssign) << bitsKind) | int(Uintptr):    execRshAssignUintptr,
+	(int(OpInc) << bitsKind) | int(Int):              execIncInt,
+	(int(OpInc) << bitsKind) | int(Int8):             execIncInt8,
+	(int(OpInc) << bitsKind) | int(Int16):            execIncInt16,
+	(int(OpInc) << bitsKind) | int(Int32):            execIncInt32,
+	(int(OpInc) << bitsKind) | int(Int64):            execIncInt64,
+	(int(OpInc) << bitsKind) | int(Uint):             execIncUint,
+	(int(OpInc) << bitsKind) | int(Uint8):            execIncUint8,
+	(int(OpInc) << bitsKind) | int(Uint16):           execIncUint16,
+	(int(OpInc) << bitsKind) | int(Uint32):           execIncUint32,
+	(int(OpInc) << bitsKind) | int(Uint64):           execIncUint64,
+	(int(OpInc) << bitsKind) | int(Uintptr):          execIncUintptr,
+	(int(OpInc) << bitsKind) | int(Float32):          execIncFloat32,
+	(int(OpInc) << bitsKind) | int(Float64):          execIncFloat64,
+	(int(OpInc) << bitsKind) | int(Complex64):        execIncComplex64,
+	(int(OpInc) << bitsKind) | int(Complex128):       execIncComplex128,
+	(int(OpDec) << bitsKind) | int(Int):              execDecInt,
+	(int(OpDec) << bitsKind) | int(Int8):             execDecInt8,
+	(int(OpDec) << bitsKind) | int(Int16):            execDecInt16,
+	(int(OpDec) << bitsKind) | int(Int32):            execDecInt32,
+	(int(OpDec) << bitsKind) | int(Int64):            execDecInt64,
+	(int(OpDec) << bitsKind) | int(Uint):             execDecUint,
+	(int(OpDec) << bitsKind) | int(Uint8):            execDecUint8,
+	(int(OpDec) << bitsKind) | int(Uint16):           execDecUint16,
+	(int(OpDec) << bitsKind) | int(Uint32):           execDecUint32,
+	(int(OpDec) << bitsKind) | int(Uint64):           execDecUint64,
+	(int(OpDec) << bitsKind) | int(Uintptr):          execDecUintptr,
+	(int(OpDec) << bitsKind) | int(Float32):          execDecFloat32,
+	(int(OpDec) << bitsKind) | int(Float64):          execDecFloat64,
+	(int(OpDec) << bitsKind) | int(Complex64):        execDecComplex64,
+	(int(OpDec) << bitsKind) | int(Complex128):       execDecComplex128,
 }
 
 func execAddAssignInt(i Instr, p *Context) {
@@ -463,91 +447,91 @@ func execMulAssignComplex128(i Instr, p *Context) {
 	p.data = p.data[:n-2]
 }
 
-func execDivAssignInt(i Instr, p *Context) {
+func execQuoAssignInt(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int) /= p.data[n-2].(int)
 	p.data = p.data[:n-2]
 }
 
-func execDivAssignInt8(i Instr, p *Context) {
+func execQuoAssignInt8(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int8) /= p.data[n-2].(int8)
 	p.data = p.data[:n-2]
 }
 
-func execDivAssignInt16(i Instr, p *Context) {
+func execQuoAssignInt16(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int16) /= p.data[n-2].(int16)
 	p.data = p.data[:n-2]
 }
 
-func execDivAssignInt32(i Instr, p *Context) {
+func execQuoAssignInt32(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int32) /= p.data[n-2].(int32)
 	p.data = p.data[:n-2]
 }
 
-func execDivAssignInt64(i Instr, p *Context) {
+func execQuoAssignInt64(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int64) /= p.data[n-2].(int64)
 	p.data = p.data[:n-2]
 }
 
-func execDivAssignUint(i Instr, p *Context) {
+func execQuoAssignUint(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint) /= p.data[n-2].(uint)
 	p.data = p.data[:n-2]
 }
 
-func execDivAssignUint8(i Instr, p *Context) {
+func execQuoAssignUint8(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint8) /= p.data[n-2].(uint8)
 	p.data = p.data[:n-2]
 }
 
-func execDivAssignUint16(i Instr, p *Context) {
+func execQuoAssignUint16(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint16) /= p.data[n-2].(uint16)
 	p.data = p.data[:n-2]
 }
 
-func execDivAssignUint32(i Instr, p *Context) {
+func execQuoAssignUint32(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint32) /= p.data[n-2].(uint32)
 	p.data = p.data[:n-2]
 }
 
-func execDivAssignUint64(i Instr, p *Context) {
+func execQuoAssignUint64(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint64) /= p.data[n-2].(uint64)
 	p.data = p.data[:n-2]
 }
 
-func execDivAssignUintptr(i Instr, p *Context) {
+func execQuoAssignUintptr(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uintptr) /= p.data[n-2].(uintptr)
 	p.data = p.data[:n-2]
 }
 
-func execDivAssignFloat32(i Instr, p *Context) {
+func execQuoAssignFloat32(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*float32) /= p.data[n-2].(float32)
 	p.data = p.data[:n-2]
 }
 
-func execDivAssignFloat64(i Instr, p *Context) {
+func execQuoAssignFloat64(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*float64) /= p.data[n-2].(float64)
 	p.data = p.data[:n-2]
 }
 
-func execDivAssignComplex64(i Instr, p *Context) {
+func execQuoAssignComplex64(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*complex64) /= p.data[n-2].(complex64)
 	p.data = p.data[:n-2]
 }
 
-func execDivAssignComplex128(i Instr, p *Context) {
+func execQuoAssignComplex128(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*complex128) /= p.data[n-2].(complex128)
 	p.data = p.data[:n-2]
@@ -619,397 +603,397 @@ func execModAssignUintptr(i Instr, p *Context) {
 	p.data = p.data[:n-2]
 }
 
-func execBitAndAssignInt(i Instr, p *Context) {
+func execAndAssignInt(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int) &= p.data[n-2].(int)
 	p.data = p.data[:n-2]
 }
 
-func execBitAndAssignInt8(i Instr, p *Context) {
+func execAndAssignInt8(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int8) &= p.data[n-2].(int8)
 	p.data = p.data[:n-2]
 }
 
-func execBitAndAssignInt16(i Instr, p *Context) {
+func execAndAssignInt16(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int16) &= p.data[n-2].(int16)
 	p.data = p.data[:n-2]
 }
 
-func execBitAndAssignInt32(i Instr, p *Context) {
+func execAndAssignInt32(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int32) &= p.data[n-2].(int32)
 	p.data = p.data[:n-2]
 }
 
-func execBitAndAssignInt64(i Instr, p *Context) {
+func execAndAssignInt64(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int64) &= p.data[n-2].(int64)
 	p.data = p.data[:n-2]
 }
 
-func execBitAndAssignUint(i Instr, p *Context) {
+func execAndAssignUint(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint) &= p.data[n-2].(uint)
 	p.data = p.data[:n-2]
 }
 
-func execBitAndAssignUint8(i Instr, p *Context) {
+func execAndAssignUint8(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint8) &= p.data[n-2].(uint8)
 	p.data = p.data[:n-2]
 }
 
-func execBitAndAssignUint16(i Instr, p *Context) {
+func execAndAssignUint16(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint16) &= p.data[n-2].(uint16)
 	p.data = p.data[:n-2]
 }
 
-func execBitAndAssignUint32(i Instr, p *Context) {
+func execAndAssignUint32(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint32) &= p.data[n-2].(uint32)
 	p.data = p.data[:n-2]
 }
 
-func execBitAndAssignUint64(i Instr, p *Context) {
+func execAndAssignUint64(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint64) &= p.data[n-2].(uint64)
 	p.data = p.data[:n-2]
 }
 
-func execBitAndAssignUintptr(i Instr, p *Context) {
+func execAndAssignUintptr(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uintptr) &= p.data[n-2].(uintptr)
 	p.data = p.data[:n-2]
 }
 
-func execBitOrAssignInt(i Instr, p *Context) {
+func execOrAssignInt(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int) |= p.data[n-2].(int)
 	p.data = p.data[:n-2]
 }
 
-func execBitOrAssignInt8(i Instr, p *Context) {
+func execOrAssignInt8(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int8) |= p.data[n-2].(int8)
 	p.data = p.data[:n-2]
 }
 
-func execBitOrAssignInt16(i Instr, p *Context) {
+func execOrAssignInt16(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int16) |= p.data[n-2].(int16)
 	p.data = p.data[:n-2]
 }
 
-func execBitOrAssignInt32(i Instr, p *Context) {
+func execOrAssignInt32(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int32) |= p.data[n-2].(int32)
 	p.data = p.data[:n-2]
 }
 
-func execBitOrAssignInt64(i Instr, p *Context) {
+func execOrAssignInt64(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int64) |= p.data[n-2].(int64)
 	p.data = p.data[:n-2]
 }
 
-func execBitOrAssignUint(i Instr, p *Context) {
+func execOrAssignUint(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint) |= p.data[n-2].(uint)
 	p.data = p.data[:n-2]
 }
 
-func execBitOrAssignUint8(i Instr, p *Context) {
+func execOrAssignUint8(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint8) |= p.data[n-2].(uint8)
 	p.data = p.data[:n-2]
 }
 
-func execBitOrAssignUint16(i Instr, p *Context) {
+func execOrAssignUint16(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint16) |= p.data[n-2].(uint16)
 	p.data = p.data[:n-2]
 }
 
-func execBitOrAssignUint32(i Instr, p *Context) {
+func execOrAssignUint32(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint32) |= p.data[n-2].(uint32)
 	p.data = p.data[:n-2]
 }
 
-func execBitOrAssignUint64(i Instr, p *Context) {
+func execOrAssignUint64(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint64) |= p.data[n-2].(uint64)
 	p.data = p.data[:n-2]
 }
 
-func execBitOrAssignUintptr(i Instr, p *Context) {
+func execOrAssignUintptr(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uintptr) |= p.data[n-2].(uintptr)
 	p.data = p.data[:n-2]
 }
 
-func execBitXorAssignInt(i Instr, p *Context) {
+func execXorAssignInt(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int) ^= p.data[n-2].(int)
 	p.data = p.data[:n-2]
 }
 
-func execBitXorAssignInt8(i Instr, p *Context) {
+func execXorAssignInt8(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int8) ^= p.data[n-2].(int8)
 	p.data = p.data[:n-2]
 }
 
-func execBitXorAssignInt16(i Instr, p *Context) {
+func execXorAssignInt16(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int16) ^= p.data[n-2].(int16)
 	p.data = p.data[:n-2]
 }
 
-func execBitXorAssignInt32(i Instr, p *Context) {
+func execXorAssignInt32(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int32) ^= p.data[n-2].(int32)
 	p.data = p.data[:n-2]
 }
 
-func execBitXorAssignInt64(i Instr, p *Context) {
+func execXorAssignInt64(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int64) ^= p.data[n-2].(int64)
 	p.data = p.data[:n-2]
 }
 
-func execBitXorAssignUint(i Instr, p *Context) {
+func execXorAssignUint(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint) ^= p.data[n-2].(uint)
 	p.data = p.data[:n-2]
 }
 
-func execBitXorAssignUint8(i Instr, p *Context) {
+func execXorAssignUint8(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint8) ^= p.data[n-2].(uint8)
 	p.data = p.data[:n-2]
 }
 
-func execBitXorAssignUint16(i Instr, p *Context) {
+func execXorAssignUint16(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint16) ^= p.data[n-2].(uint16)
 	p.data = p.data[:n-2]
 }
 
-func execBitXorAssignUint32(i Instr, p *Context) {
+func execXorAssignUint32(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint32) ^= p.data[n-2].(uint32)
 	p.data = p.data[:n-2]
 }
 
-func execBitXorAssignUint64(i Instr, p *Context) {
+func execXorAssignUint64(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint64) ^= p.data[n-2].(uint64)
 	p.data = p.data[:n-2]
 }
 
-func execBitXorAssignUintptr(i Instr, p *Context) {
+func execXorAssignUintptr(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uintptr) ^= p.data[n-2].(uintptr)
 	p.data = p.data[:n-2]
 }
 
-func execBitAndNotAssignInt(i Instr, p *Context) {
+func execAndNotAssignInt(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int) &^= p.data[n-2].(int)
 	p.data = p.data[:n-2]
 }
 
-func execBitAndNotAssignInt8(i Instr, p *Context) {
+func execAndNotAssignInt8(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int8) &^= p.data[n-2].(int8)
 	p.data = p.data[:n-2]
 }
 
-func execBitAndNotAssignInt16(i Instr, p *Context) {
+func execAndNotAssignInt16(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int16) &^= p.data[n-2].(int16)
 	p.data = p.data[:n-2]
 }
 
-func execBitAndNotAssignInt32(i Instr, p *Context) {
+func execAndNotAssignInt32(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int32) &^= p.data[n-2].(int32)
 	p.data = p.data[:n-2]
 }
 
-func execBitAndNotAssignInt64(i Instr, p *Context) {
+func execAndNotAssignInt64(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int64) &^= p.data[n-2].(int64)
 	p.data = p.data[:n-2]
 }
 
-func execBitAndNotAssignUint(i Instr, p *Context) {
+func execAndNotAssignUint(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint) &^= p.data[n-2].(uint)
 	p.data = p.data[:n-2]
 }
 
-func execBitAndNotAssignUint8(i Instr, p *Context) {
+func execAndNotAssignUint8(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint8) &^= p.data[n-2].(uint8)
 	p.data = p.data[:n-2]
 }
 
-func execBitAndNotAssignUint16(i Instr, p *Context) {
+func execAndNotAssignUint16(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint16) &^= p.data[n-2].(uint16)
 	p.data = p.data[:n-2]
 }
 
-func execBitAndNotAssignUint32(i Instr, p *Context) {
+func execAndNotAssignUint32(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint32) &^= p.data[n-2].(uint32)
 	p.data = p.data[:n-2]
 }
 
-func execBitAndNotAssignUint64(i Instr, p *Context) {
+func execAndNotAssignUint64(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint64) &^= p.data[n-2].(uint64)
 	p.data = p.data[:n-2]
 }
 
-func execBitAndNotAssignUintptr(i Instr, p *Context) {
+func execAndNotAssignUintptr(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uintptr) &^= p.data[n-2].(uintptr)
 	p.data = p.data[:n-2]
 }
 
-func execBitSHLAssignInt(i Instr, p *Context) {
+func execLshAssignInt(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int) <<= toUint(p.data[n-2])
 	p.data = p.data[:n-2]
 }
 
-func execBitSHLAssignInt8(i Instr, p *Context) {
+func execLshAssignInt8(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int8) <<= toUint(p.data[n-2])
 	p.data = p.data[:n-2]
 }
 
-func execBitSHLAssignInt16(i Instr, p *Context) {
+func execLshAssignInt16(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int16) <<= toUint(p.data[n-2])
 	p.data = p.data[:n-2]
 }
 
-func execBitSHLAssignInt32(i Instr, p *Context) {
+func execLshAssignInt32(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int32) <<= toUint(p.data[n-2])
 	p.data = p.data[:n-2]
 }
 
-func execBitSHLAssignInt64(i Instr, p *Context) {
+func execLshAssignInt64(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int64) <<= toUint(p.data[n-2])
 	p.data = p.data[:n-2]
 }
 
-func execBitSHLAssignUint(i Instr, p *Context) {
+func execLshAssignUint(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint) <<= toUint(p.data[n-2])
 	p.data = p.data[:n-2]
 }
 
-func execBitSHLAssignUint8(i Instr, p *Context) {
+func execLshAssignUint8(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint8) <<= toUint(p.data[n-2])
 	p.data = p.data[:n-2]
 }
 
-func execBitSHLAssignUint16(i Instr, p *Context) {
+func execLshAssignUint16(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint16) <<= toUint(p.data[n-2])
 	p.data = p.data[:n-2]
 }
 
-func execBitSHLAssignUint32(i Instr, p *Context) {
+func execLshAssignUint32(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint32) <<= toUint(p.data[n-2])
 	p.data = p.data[:n-2]
 }
 
-func execBitSHLAssignUint64(i Instr, p *Context) {
+func execLshAssignUint64(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint64) <<= toUint(p.data[n-2])
 	p.data = p.data[:n-2]
 }
 
-func execBitSHLAssignUintptr(i Instr, p *Context) {
+func execLshAssignUintptr(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uintptr) <<= toUint(p.data[n-2])
 	p.data = p.data[:n-2]
 }
 
-func execBitSHRAssignInt(i Instr, p *Context) {
+func execRshAssignInt(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int) >>= toUint(p.data[n-2])
 	p.data = p.data[:n-2]
 }
 
-func execBitSHRAssignInt8(i Instr, p *Context) {
+func execRshAssignInt8(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int8) >>= toUint(p.data[n-2])
 	p.data = p.data[:n-2]
 }
 
-func execBitSHRAssignInt16(i Instr, p *Context) {
+func execRshAssignInt16(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int16) >>= toUint(p.data[n-2])
 	p.data = p.data[:n-2]
 }
 
-func execBitSHRAssignInt32(i Instr, p *Context) {
+func execRshAssignInt32(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int32) >>= toUint(p.data[n-2])
 	p.data = p.data[:n-2]
 }
 
-func execBitSHRAssignInt64(i Instr, p *Context) {
+func execRshAssignInt64(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*int64) >>= toUint(p.data[n-2])
 	p.data = p.data[:n-2]
 }
 
-func execBitSHRAssignUint(i Instr, p *Context) {
+func execRshAssignUint(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint) >>= toUint(p.data[n-2])
 	p.data = p.data[:n-2]
 }
 
-func execBitSHRAssignUint8(i Instr, p *Context) {
+func execRshAssignUint8(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint8) >>= toUint(p.data[n-2])
 	p.data = p.data[:n-2]
 }
 
-func execBitSHRAssignUint16(i Instr, p *Context) {
+func execRshAssignUint16(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint16) >>= toUint(p.data[n-2])
 	p.data = p.data[:n-2]
 }
 
-func execBitSHRAssignUint32(i Instr, p *Context) {
+func execRshAssignUint32(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint32) >>= toUint(p.data[n-2])
 	p.data = p.data[:n-2]
 }
 
-func execBitSHRAssignUint64(i Instr, p *Context) {
+func execRshAssignUint64(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uint64) >>= toUint(p.data[n-2])
 	p.data = p.data[:n-2]
 }
 
-func execBitSHRAssignUintptr(i Instr, p *Context) {
+func execRshAssignUintptr(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*uintptr) >>= toUint(p.data[n-2])
 	p.data = p.data[:n-2]

@@ -18,6 +18,7 @@ package bytecode
 
 import (
 	"fmt"
+	"math/big"
 	"reflect"
 
 	"github.com/qiniu/goplus/exec.spec"
@@ -38,22 +39,22 @@ const (
 	OpSub = exec.OpSub
 	// OpMul '*' Int/Uint/Float/Complex
 	OpMul = exec.OpMul
-	// OpDiv '/' Int/Uint/Float/Complex
-	OpDiv = exec.OpDiv
+	// OpQuo '/' Int/Uint/Float/Complex
+	OpQuo = exec.OpQuo
 	// OpMod '%' Int/Uint
 	OpMod = exec.OpMod
-	// OpBitAnd '&' Int/Uint
-	OpBitAnd = exec.OpBitAnd
-	// OpBitOr '|' Int/Uint
-	OpBitOr = exec.OpBitOr
-	// OpBitXor '^' Int/Uint
-	OpBitXor = exec.OpBitXor
-	// OpBitAndNot '&^' Int/Uint
-	OpBitAndNot = exec.OpBitAndNot
-	// OpBitSHL '<<' Int/Uint, Uint
-	OpBitSHL = exec.OpBitSHL
-	// OpBitSHR '>>' Int/Uint, Uint
-	OpBitSHR = exec.OpBitSHR
+	// OpAnd '&' Int/Uint
+	OpAnd = exec.OpAnd
+	// OpOr '|' Int/Uint
+	OpOr = exec.OpOr
+	// OpXor '^' Int/Uint
+	OpXor = exec.OpXor
+	// OpAndNot '&^' Int/Uint
+	OpAndNot = exec.OpAndNot
+	// OpLsh '<<' Int/Uint, Uint
+	OpLsh = exec.OpLsh
+	// OpRsh '>>' Int/Uint, Uint
+	OpRsh = exec.OpRsh
 	// OpLT '<' String/Int/Uint/Float
 	OpLT = exec.OpLT
 	// OpLE '<=' String/Int/Uint/Float
@@ -76,12 +77,14 @@ const (
 	OpLAnd = exec.OpLAnd
 	// OpLOr '||' Bool
 	OpLOr = exec.OpLOr
+	// OpLNot '!'
+	OpLNot = exec.OpLNot
 	// OpNeg '-'
 	OpNeg = exec.OpNeg
-	// OpNot '!'
-	OpNot = exec.OpNot
 	// OpBitNot '^'
 	OpBitNot = exec.OpBitNot
+	// OpQuo2 '/'
+	OpQuo2 = exec.OpQuo2
 )
 
 const (
@@ -134,6 +137,12 @@ const (
 	String = exec.String
 	// UnsafePointer type
 	UnsafePointer = exec.UnsafePointer
+	// BigInt type
+	BigInt = exec.BigInt
+	// BigRat type
+	BigRat = exec.BigRat
+	// BigFloat type
+	BigFloat = exec.BigFloat
 )
 
 // -----------------------------------------------------------------------------
@@ -162,6 +171,8 @@ func toUint(v interface{}) uint {
 		return uint(n)
 	case int8:
 		return uint(n)
+	case *big.Int:
+		return uint(n.Uint64())
 	default:
 		log.Panicln("toUint failed: unsupport type -", reflect.TypeOf(v))
 		return 0
@@ -179,7 +190,7 @@ func execBuiltinOp(i Instr, p *Context) {
 // -----------------------------------------------------------------------------
 
 const (
-	bitsKind     = 5 // Kind count = 26
+	bitsKind     = 5 // Kind count = 26+2
 	bitsOperator = 5 // Operator count = 24
 )
 

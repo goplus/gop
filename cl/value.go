@@ -230,7 +230,7 @@ func (p *goFunc) Proto() iFuncType {
 
 // isConstBound checks a const is bound or not.
 func isConstBound(kind astutil.ConstKind) bool {
-	return kind <= reflect.UnsafePointer
+	return astutil.IsConstBound(kind)
 }
 
 type constVal struct {

@@ -34,22 +34,22 @@ const (
 	OpSub
 	// OpMul '*' Int/Uint/Float/Complex
 	OpMul
-	// OpDiv '/' Int/Uint/Float/Complex
-	OpDiv
+	// OpQuo '/' Int/Uint/Float/Complex
+	OpQuo
 	// OpMod '%' Int/Uint
 	OpMod
-	// OpBitAnd '&' Int/Uint
-	OpBitAnd
-	// OpBitOr '|' Int/Uint
-	OpBitOr
-	// OpBitXor '^' Int/Uint
-	OpBitXor
-	// OpBitAndNot '&^' Int/Uint
-	OpBitAndNot
-	// OpBitSHL '<<' Int/Uint, Uint
-	OpBitSHL
-	// OpBitSHR '>>' Int/Uint, Uint
-	OpBitSHR
+	// OpAnd '&' Int/Uint
+	OpAnd
+	// OpOr '|' Int/Uint
+	OpOr
+	// OpXor '^' Int/Uint
+	OpXor
+	// OpAndNot '&^' Int/Uint
+	OpAndNot
+	// OpLsh '<<' Int/Uint, Uint
+	OpLsh
+	// OpRsh '>>' Int/Uint, Uint
+	OpRsh
 	// OpLT '<' String/Int/Uint/Float
 	OpLT
 	// OpLE '<=' String/Int/Uint/Float
@@ -72,12 +72,14 @@ const (
 	OpLAnd
 	// OpLOr '||' Bool
 	OpLOr
+	// OpLNot '!'
+	OpLNot
 	// OpNeg '-'
 	OpNeg
-	// OpNot '!'
-	OpNot
 	// OpBitNot '^'
 	OpBitNot
+	// OpQuo2 '/' for BigRat = BigInt/BigInt
+	OpQuo2
 )
 
 const (
@@ -107,12 +109,15 @@ const (
 	bitString        = 1 << String
 	bitUnsafePointer = 1 << UnsafePointer
 	bitPtr           = 1 << reflect.Ptr
+	bitBigInt        = 1 << BigInt
+	bitBigRat        = 1 << BigRat
+	bitBigFloat      = 1 << BigFloat
 
 	bitsAllInt     = bitInt | bitInt8 | bitInt16 | bitInt32 | bitInt64
 	bitsAllUint    = bitUint | bitUint8 | bitUint16 | bitUint32 | bitUint64 | bitUintptr
 	bitsAllIntUint = bitsAllInt | bitsAllUint
 	bitsAllFloat   = bitFloat32 | bitFloat64
-	bitsAllReal    = bitsAllIntUint | bitsAllFloat
+	bitsAllReal    = bitsAllIntUint | bitsAllFloat | bitBigRat | bitBigFloat
 	bitsAllComplex = bitComplex64 | bitComplex128
 	bitsAllNumber  = bitsAllReal | bitsAllComplex
 	bitsAllPtr     = bitPtr | bitUintptr | bitUnsafePointer
@@ -127,30 +132,31 @@ type OperatorInfo struct {
 }
 
 var opInfos = [...]OperatorInfo{
-	OpAdd:       {"+", bitsAllNumber | bitString, bitSameAsFirst, SameAsFirst},
-	OpSub:       {"-", bitsAllNumber, bitSameAsFirst, SameAsFirst},
-	OpMul:       {"*", bitsAllNumber, bitSameAsFirst, SameAsFirst},
-	OpDiv:       {"/", bitsAllNumber, bitSameAsFirst, SameAsFirst},
-	OpMod:       {"%", bitsAllIntUint, bitSameAsFirst, SameAsFirst},
-	OpBitAnd:    {"&", bitsAllIntUint, bitSameAsFirst, SameAsFirst},
-	OpBitOr:     {"|", bitsAllIntUint, bitSameAsFirst, SameAsFirst},
-	OpBitXor:    {"^", bitsAllIntUint, bitSameAsFirst, SameAsFirst},
-	OpBitAndNot: {"&^", bitsAllIntUint, bitSameAsFirst, SameAsFirst},
-	OpBitSHL:    {"<<", bitsAllIntUint, bitsAllIntUint, SameAsFirst},
-	OpBitSHR:    {">>", bitsAllIntUint, bitsAllIntUint, SameAsFirst},
-	OpLT:        {"<", bitsAllReal | bitString, bitSameAsFirst, Bool},
-	OpLE:        {"<=", bitsAllReal | bitString, bitSameAsFirst, Bool},
-	OpGT:        {">", bitsAllReal | bitString, bitSameAsFirst, Bool},
-	OpGE:        {">=", bitsAllReal | bitString, bitSameAsFirst, Bool},
-	OpEQ:        {"==", bitsAllNumber | bitString, bitSameAsFirst, Bool},
-	OpEQNil:     {"== nil", bitUnsafePointer, bitNone, Bool},
-	OpNE:        {"!=", bitsAllNumber | bitString, bitSameAsFirst, Bool},
-	OpNENil:     {"!= nil", bitUnsafePointer, bitNone, Bool},
-	OpLAnd:      {"&&", bitBool, bitBool, Bool},
-	OpLOr:       {"||", bitBool, bitBool, Bool},
-	OpNeg:       {"-", bitsAllNumber, bitNone, SameAsFirst},
-	OpNot:       {"!", bitBool, bitNone, Bool},
-	OpBitNot:    {"^", bitsAllIntUint, bitNone, SameAsFirst},
+	OpAdd:    {"+", bitsAllNumber | bitString | bitBigInt, bitSameAsFirst, SameAsFirst},
+	OpSub:    {"-", bitsAllNumber | bitBigInt, bitSameAsFirst, SameAsFirst},
+	OpMul:    {"*", bitsAllNumber | bitBigInt, bitSameAsFirst, SameAsFirst},
+	OpQuo:    {"/", bitsAllNumber, bitSameAsFirst, SameAsFirst},
+	OpQuo2:   {"/", bitBigInt, bitSameAsFirst, BigRat},
+	OpMod:    {"%", bitsAllIntUint | bitBigInt, bitSameAsFirst, SameAsFirst},
+	OpAnd:    {"&", bitsAllIntUint | bitBigInt, bitSameAsFirst, SameAsFirst},
+	OpOr:     {"|", bitsAllIntUint | bitBigInt, bitSameAsFirst, SameAsFirst},
+	OpXor:    {"^", bitsAllIntUint | bitBigInt, bitSameAsFirst, SameAsFirst},
+	OpAndNot: {"&^", bitsAllIntUint | bitBigInt, bitSameAsFirst, SameAsFirst},
+	OpLsh:    {"<<", bitsAllIntUint | bitBigInt, bitsAllIntUint, SameAsFirst},
+	OpRsh:    {">>", bitsAllIntUint | bitBigInt, bitsAllIntUint, SameAsFirst},
+	OpLT:     {"<", bitsAllReal | bitString | bitBigInt, bitSameAsFirst, Bool},
+	OpLE:     {"<=", bitsAllReal | bitString | bitBigInt, bitSameAsFirst, Bool},
+	OpGT:     {">", bitsAllReal | bitString | bitBigInt, bitSameAsFirst, Bool},
+	OpGE:     {">=", bitsAllReal | bitString | bitBigInt, bitSameAsFirst, Bool},
+	OpEQ:     {"==", bitsAllNumber | bitString | bitBigInt, bitSameAsFirst, Bool},
+	OpEQNil:  {"== nil", bitUnsafePointer, bitNone, Bool},
+	OpNE:     {"!=", bitsAllNumber | bitString | bitBigInt, bitSameAsFirst, Bool},
+	OpNENil:  {"!= nil", bitUnsafePointer, bitNone, Bool},
+	OpLAnd:   {"&&", bitBool, bitBool, Bool},
+	OpLOr:    {"||", bitBool, bitBool, Bool},
+	OpNeg:    {"-", bitsAllNumber | bitBigInt, bitNone, SameAsFirst},
+	OpLNot:   {"!", bitBool, bitNone, Bool},
+	OpBitNot: {"^", bitsAllIntUint | bitBigInt, bitNone, SameAsFirst},
 }
 
 // GetInfo returns the information of this operator.
@@ -176,23 +182,23 @@ const (
 	OpSubAssign = AddrOperator(OpSub)
 	// OpMulAssign `*=`
 	OpMulAssign = AddrOperator(OpMul)
-	// OpDivAssign `/=`
-	OpDivAssign = AddrOperator(OpDiv)
+	// OpQuoAssign `/=`
+	OpQuoAssign = AddrOperator(OpQuo)
 	// OpModAssign `%=`
 	OpModAssign = AddrOperator(OpMod)
 
-	// OpBitAndAssign '&='
-	OpBitAndAssign = AddrOperator(OpBitAnd)
-	// OpBitOrAssign '|='
-	OpBitOrAssign = AddrOperator(OpBitOr)
-	// OpBitXorAssign '^='
-	OpBitXorAssign = AddrOperator(OpBitXor)
-	// OpBitAndNotAssign '&^='
-	OpBitAndNotAssign = AddrOperator(OpBitAndNot)
-	// OpBitSHLAssign '<<='
-	OpBitSHLAssign = AddrOperator(OpBitSHL)
-	// OpBitSHRAssign '>>='
-	OpBitSHRAssign = AddrOperator(OpBitSHR)
+	// OpAndAssign '&='
+	OpAndAssign = AddrOperator(OpAnd)
+	// OpOrAssign '|='
+	OpOrAssign = AddrOperator(OpOr)
+	// OpXorAssign '^='
+	OpXorAssign = AddrOperator(OpXor)
+	// OpAndNotAssign '&^='
+	OpAndNotAssign = AddrOperator(OpAndNot)
+	// OpLshAssign '<<='
+	OpLshAssign = AddrOperator(OpLsh)
+	// OpRshAssign '>>='
+	OpRshAssign = AddrOperator(OpRsh)
 	// OpAssign `=`
 	OpAssign AddrOperator = iota
 	// OpInc '++'
@@ -209,19 +215,19 @@ type AddrOperatorInfo struct {
 }
 
 var addropInfos = [...]AddrOperatorInfo{
-	OpAddAssign:       {"+=", bitsAllNumber | bitString, bitSameAsFirst},
-	OpSubAssign:       {"-=", bitsAllNumber, bitSameAsFirst},
-	OpMulAssign:       {"*=", bitsAllNumber, bitSameAsFirst},
-	OpDivAssign:       {"/=", bitsAllNumber, bitSameAsFirst},
-	OpModAssign:       {"%=", bitsAllIntUint, bitSameAsFirst},
-	OpBitAndAssign:    {"&=", bitsAllIntUint, bitSameAsFirst},
-	OpBitOrAssign:     {"|=", bitsAllIntUint, bitSameAsFirst},
-	OpBitXorAssign:    {"^=", bitsAllIntUint, bitSameAsFirst},
-	OpBitAndNotAssign: {"&^=", bitsAllIntUint, bitSameAsFirst},
-	OpBitSHLAssign:    {"<<=", bitsAllIntUint, bitsAllIntUint},
-	OpBitSHRAssign:    {">>=", bitsAllIntUint, bitsAllIntUint},
-	OpInc:             {"++", bitsAllNumber, bitNone},
-	OpDec:             {"--", bitsAllNumber, bitNone},
+	OpAddAssign:    {"+=", bitsAllNumber | bitString, bitSameAsFirst},
+	OpSubAssign:    {"-=", bitsAllNumber, bitSameAsFirst},
+	OpMulAssign:    {"*=", bitsAllNumber, bitSameAsFirst},
+	OpQuoAssign:    {"/=", bitsAllNumber, bitSameAsFirst},
+	OpModAssign:    {"%=", bitsAllIntUint, bitSameAsFirst},
+	OpAndAssign:    {"&=", bitsAllIntUint, bitSameAsFirst},
+	OpOrAssign:     {"|=", bitsAllIntUint, bitSameAsFirst},
+	OpXorAssign:    {"^=", bitsAllIntUint, bitSameAsFirst},
+	OpAndNotAssign: {"&^=", bitsAllIntUint, bitSameAsFirst},
+	OpLshAssign:    {"<<=", bitsAllIntUint, bitsAllIntUint},
+	OpRshAssign:    {">>=", bitsAllIntUint, bitsAllIntUint},
+	OpInc:          {"++", bitsAllNumber, bitNone},
+	OpDec:          {"--", bitsAllNumber, bitNone},
 }
 
 // GetInfo returns the information of this operator.

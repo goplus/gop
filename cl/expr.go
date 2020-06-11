@@ -128,14 +128,14 @@ var addrops = map[token.Token]exec.AddrOperator{
 	token.ADD_ASSIGN:     exec.OpAddAssign,
 	token.SUB_ASSIGN:     exec.OpSubAssign,
 	token.MUL_ASSIGN:     exec.OpMulAssign,
-	token.QUO_ASSIGN:     exec.OpDivAssign,
+	token.QUO_ASSIGN:     exec.OpQuoAssign,
 	token.REM_ASSIGN:     exec.OpModAssign,
-	token.AND_ASSIGN:     exec.OpBitAndAssign,
-	token.OR_ASSIGN:      exec.OpBitOrAssign,
-	token.XOR_ASSIGN:     exec.OpBitXorAssign,
-	token.SHL_ASSIGN:     exec.OpBitSHLAssign,
-	token.SHR_ASSIGN:     exec.OpBitSHRAssign,
-	token.AND_NOT_ASSIGN: exec.OpBitAndNotAssign,
+	token.AND_ASSIGN:     exec.OpAndAssign,
+	token.OR_ASSIGN:      exec.OpOrAssign,
+	token.XOR_ASSIGN:     exec.OpXorAssign,
+	token.SHL_ASSIGN:     exec.OpLshAssign,
+	token.SHR_ASSIGN:     exec.OpRshAssign,
+	token.AND_NOT_ASSIGN: exec.OpAndNotAssign,
 }
 
 func compileIdent(ctx *blockCtx, name string) func() {
@@ -521,7 +521,7 @@ func unaryOpResult(op exec.Operator, x interface{}) (exec.Kind, iValue) {
 
 var unaryOps = [...]exec.Operator{
 	token.SUB: exec.OpNeg,
-	token.NOT: exec.OpNot,
+	token.NOT: exec.OpLNot,
 	token.XOR: exec.OpBitNot,
 }
 
@@ -575,14 +575,14 @@ var binaryOps = [...]exec.Operator{
 	token.ADD:     exec.OpAdd,
 	token.SUB:     exec.OpSub,
 	token.MUL:     exec.OpMul,
-	token.QUO:     exec.OpDiv,
+	token.QUO:     exec.OpQuo,
 	token.REM:     exec.OpMod,
-	token.AND:     exec.OpBitAnd,
-	token.OR:      exec.OpBitOr,
-	token.XOR:     exec.OpBitXor,
-	token.AND_NOT: exec.OpBitAndNot,
-	token.SHL:     exec.OpBitSHL,
-	token.SHR:     exec.OpBitSHR,
+	token.AND:     exec.OpAnd,
+	token.OR:      exec.OpOr,
+	token.XOR:     exec.OpXor,
+	token.AND_NOT: exec.OpAndNot,
+	token.SHL:     exec.OpLsh,
+	token.SHR:     exec.OpRsh,
 	token.LSS:     exec.OpLT,
 	token.LEQ:     exec.OpLE,
 	token.GTR:     exec.OpGT,
