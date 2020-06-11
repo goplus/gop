@@ -78,8 +78,6 @@ const (
 	OpNeg
 	// OpBitNot '^'
 	OpBitNot
-	// OpQuo2 '/' for BigRat = BigInt/BigInt
-	OpQuo2
 )
 
 const (
@@ -135,8 +133,7 @@ var opInfos = [...]OperatorInfo{
 	OpAdd:    {"+", bitsAllNumber | bitString | bitBigInt, bitSameAsFirst, SameAsFirst},
 	OpSub:    {"-", bitsAllNumber | bitBigInt, bitSameAsFirst, SameAsFirst},
 	OpMul:    {"*", bitsAllNumber | bitBigInt, bitSameAsFirst, SameAsFirst},
-	OpQuo:    {"/", bitsAllNumber, bitSameAsFirst, SameAsFirst},
-	OpQuo2:   {"/", bitBigInt, bitSameAsFirst, BigRat},
+	OpQuo:    {"/", bitsAllNumber, bitSameAsFirst, SameAsFirst}, // NOTE: not include `bigint/bigint`
 	OpMod:    {"%", bitsAllIntUint | bitBigInt, bitSameAsFirst, SameAsFirst},
 	OpAnd:    {"&", bitsAllIntUint | bitBigInt, bitSameAsFirst, SameAsFirst},
 	OpOr:     {"|", bitsAllIntUint | bitBigInt, bitSameAsFirst, SameAsFirst},

@@ -342,7 +342,12 @@ func binaryOp(op exec.Operator, x, y *constVal) *constVal {
 		kind, kindReal = xkind, realKindOf(xkind)
 	}
 	if (i.InFirst & (1 << kindReal)) == 0 {
-		log.Panicln("binaryOp failed: invalid first argument type.")
+		if kindReal != exec.BigInt && op != exec.OpQuo {
+			log.Panicln("binaryOp failed: invalid first argument type -", i, kindReal)
+		}
+		kind = exec.BigRat
+	} else if i.Out != exec.SameAsFirst {
+		kind = i.Out
 	}
 	t := exec.TypeFromKind(kindReal)
 	vx := boundConst(x.v, t)
@@ -360,11 +365,41 @@ func boundConst(v interface{}, t reflect.Type) interface{} {
 		log.Panicln("boundConst: can't convert nil into", t)
 	}
 	sval := reflect.ValueOf(v)
+	st := sval.Type()
+	if t == st {
+		return v
+	}
 	if kind == reflect.Complex128 || kind == reflect.Complex64 {
 		if skind := sval.Kind(); skind >= reflect.Int && skind <= reflect.Float64 {
 			fval := sval.Convert(exec.TyFloat64).Float()
 			return complex(fval, 0)
 		}
+	} else if kind == reflect.Ptr {
+		val := reflect.New(t.Elem())
+		skind := sval.Kind()
+		switch {
+		case skind >= reflect.Int && skind <= reflect.Int64:
+			sval = sval.Convert(exec.TyInt64)
+			val.MethodByName("SetInt64").Call([]reflect.Value{sval})
+		case skind >= reflect.Uint && skind <= reflect.Uintptr:
+			sval = sval.Convert(exec.TyUint64)
+			val.MethodByName("SetUint64").Call([]reflect.Value{sval})
+		case skind >= reflect.Float32 && skind <= reflect.Float64:
+			sval = sval.Convert(exec.TyFloat64)
+			val.MethodByName("SetFloat64").Call([]reflect.Value{sval})
+		case skind == reflect.Ptr:
+			switch st {
+			case exec.TyBigInt:
+				val.MethodByName("SetInt").Call([]reflect.Value{sval})
+			case exec.TyBigRat:
+				val.MethodByName("SetRat").Call([]reflect.Value{sval})
+			default:
+				log.Panicln("boundConst: convert type failed -", st)
+			}
+		default:
+			log.Panicln("boundConst: convert type failed -", skind)
+		}
+		return val.Interface()
 	}
 	return sval.Convert(t).Interface()
 }

@@ -83,8 +83,6 @@ const (
 	OpNeg = exec.OpNeg
 	// OpBitNot '^'
 	OpBitNot = exec.OpBitNot
-	// OpQuo2 '/'
-	OpQuo2 = exec.OpQuo2
 )
 
 const (
@@ -193,6 +191,14 @@ const (
 	bitsKind     = 5 // Kind count = 26+2
 	bitsOperator = 5 // Operator count = 24
 )
+
+func execQuoBigInt(i Instr, p *Context) {
+	n := len(p.data)
+	x := new(big.Rat).SetInt(p.data[n-2].(*big.Int))
+	y := new(big.Rat).SetInt(p.data[n-1].(*big.Int))
+	p.data[n-2] = x.Quo(x, y)
+	p.data = p.data[:n-1]
+}
 
 func (p *Code) builtinOp(kind Kind, op Operator) error {
 	i := (int(kind) << bitsOperator) | int(op)

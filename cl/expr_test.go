@@ -18,6 +18,7 @@ package cl
 
 import (
 	"fmt"
+	"math/big"
 	"testing"
 
 	"github.com/qiniu/goplus/ast/asttest"
@@ -1051,10 +1052,11 @@ func TestErrWrapExpr2(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 var fsTestRational = asttest.NewSingleFileFS("/foo", "bar.gop", `
-	println(3/4r + 5/7r)
+	x := 3/4r + 5/7r
+	x
 `)
 
-func _TestRational(t *testing.T) {
+func TestRational(t *testing.T) {
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseFSDir(fset, fsTestRational, "/foo", nil, 0)
 	if err != nil || len(pkgs) != 1 {
@@ -1071,8 +1073,8 @@ func _TestRational(t *testing.T) {
 
 	ctx := exec.NewContext(code)
 	ctx.Exec(0, code.Len())
-	if v := ctx.Get(-1); v != int(123) {
-		t.Fatal("n:", v)
+	if v := ctx.Get(-1); v.(*big.Rat).Cmp(big.NewRat(41, 28)) != 0 {
+		t.Fatal("v:", v)
 	}
 }
 
