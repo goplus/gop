@@ -52,7 +52,6 @@ var opAutogenOps = [...]string{
 	OpSub:    "Sub",
 	OpMul:    "Mul",
 	OpQuo:    "Quo",
-	OpQuo2:   "Quo",
 	OpMod:    "Mod",
 	OpAnd:    "And",
 	OpOr:     "Or",
@@ -162,7 +161,8 @@ var autogenUnaryOpTempl = [2]string{
 }
 
 const autogenBuiltinOpHeader = `
-var builtinOps = [...]func(i Instr, p *Context){`
+var builtinOps = [...]func(i Instr, p *Context){
+	(int(BigInt) << bitsOperator) | int(OpQuo): execQuoBigInt,`
 
 const autogenStdBuiltinOpItemTempl = `
 	(int($Type) << bitsOperator) | int(Op$Op): exec$Op$Type,`
