@@ -31,7 +31,7 @@ func execNewReplacer(arity int, p *gop.Context) {
 	p.Ret(arity, repl)
 }
 
-func execReplacerReplace(zero int, p *gop.Context) {
+func execReplacerReplace(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret := args[0].(*strings.Replacer).Replace(args[1].(string))
 	p.Ret(2, ret)

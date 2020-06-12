@@ -68,7 +68,7 @@ func QexecFprintln(arity int, p *gop.Context) {
 }
 
 // QexecIs instr
-func QexecIs(zero int, p *gop.Context) {
+func QexecIs(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	is := errors.Is(gop.ToError(args[0]), gop.ToError(args[1]))
 	p.Ret(2, is)
@@ -82,7 +82,7 @@ func FuncGoInfo(f string) ([2]string, bool) {
 
 // -----------------------------------------------------------------------------
 
-func execPanic(zero int, p *gop.Context) {
+func execPanic(_ int, p *gop.Context) {
 	panic(p.Pop())
 }
 
