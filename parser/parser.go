@@ -2387,9 +2387,14 @@ func (p *parser) parseForStmt() ast.Stmt {
 		x := as.Rhs[0].(*ast.UnaryExpr).X
 		return &ast.ForPhraseStmt{
 			ForPhrase: ast.ForPhrase{
-				For:    pos,
-				Key:    toIdent(key),
-				Value:  toIdent(value),
+				For: pos,
+				Key: toIdent(key),
+				Value: func() *ast.Ident {
+					if value != nil {
+						return toIdent(value)
+					}
+					return nil
+				}(),
 				X:      x,
 				TokPos: as.TokPos,
 			},

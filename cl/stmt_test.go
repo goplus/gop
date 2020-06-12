@@ -647,7 +647,7 @@ func TestForPhraseStmt2(t *testing.T) {
 
 var fsTestForRangeStmt = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	sum := 0
-	for x := range [1, 3, 5, 7] {
+	for _,x := range [1, 3, 5, 7] {
 		if x < 7 {
 			sum += x
 		}
@@ -655,7 +655,7 @@ var fsTestForRangeStmt = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	println("sum(1,3,5):", sum)
 `)
 
-func _TestForRangeStmt(t *testing.T) {
+func TestForRangeStmt(t *testing.T) {
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseFSDir(fset, fsTestForRangeStmt, "/foo", nil, 0)
 	if err != nil || len(pkgs) != 1 {
@@ -676,7 +676,48 @@ func _TestForRangeStmt(t *testing.T) {
 	if v := ctx.Get(-1); v != nil {
 		t.Fatal("error:", v)
 	}
-	if v := ctx.Get(-2); v != int(15) {
+	if v := ctx.Get(-2); v != int(14) {
+		t.Fatal("n:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
+
+var fsTestForRangeKeyStmt = asttest.NewSingleFileFS("/foo", "bar.gop", `
+	sum := 0
+	a:=[1,3,5,7]
+	for key := range a{
+		if a[key] < 7 {
+			sum += a[key]
+		}
+	}
+	println("sum(1,3,5):", sum)
+`)
+
+func TestForRangeKeyStmt(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestForRangeKeyStmt, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, noExecCtx, err := newPackage(b, bar, fset)
+	if err != nil || !noExecCtx {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(14) {
 		t.Fatal("n:", v)
 	}
 }
