@@ -1079,3 +1079,66 @@ func TestRational(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
+var fsTestRational2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
+	a := 3/4r
+	x := a + 5/7r
+	x
+`)
+
+func TestRational2(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestRational2, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, _, err = newPackage(b, bar, fset)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := ctx.Get(-1); v.(*big.Rat).Cmp(big.NewRat(41, 28)) != 0 {
+		t.Fatal("v:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+var fsTestRational3 = asttest.NewSingleFileFS("/foo", "bar.gop", `
+	y := 3.14159265358979323846264338327950288419716939937510582097494459r
+	y = y*2
+	y
+`)
+
+func TestRational3(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestRational3, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, _, err = newPackage(b, bar, fset)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	y, _ := new(big.Float).SetString(
+		"3.14159265358979323846264338327950288419716939937510582097494459")
+	y.Mul(y, big.NewFloat(2))
+	if v := ctx.Get(-1); v.(*big.Float).Cmp(y) != 0 {
+		t.Fatal("v:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------

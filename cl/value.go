@@ -50,7 +50,7 @@ type goValue struct {
 }
 
 func (p *goValue) Kind() iKind {
-	return p.t.Kind()
+	return kindOf(p.t)
 }
 
 func (p *goValue) Type() reflect.Type {
@@ -355,8 +355,23 @@ func binaryOp(op exec.Operator, x, y *constVal) *constVal {
 	return &constVal{kind: kind, v: v, reserve: -1}
 }
 
-func boundConst(v interface{}, t reflect.Type) interface{} {
+func kindOf(t reflect.Type) exec.Kind {
 	kind := t.Kind()
+	if kind == reflect.Ptr {
+		switch t {
+		case exec.TyBigRat:
+			return exec.BigRat
+		case exec.TyBigInt:
+			return exec.BigInt
+		case exec.TyBigFloat:
+			return exec.BigFloat
+		}
+	}
+	return kind
+}
+
+func boundConst(v interface{}, t reflect.Type) interface{} {
+	kind := kindOf(t)
 	if v == nil {
 		if kind >= reflect.Chan && kind <= reflect.Slice {
 			return nil
@@ -373,7 +388,7 @@ func boundConst(v interface{}, t reflect.Type) interface{} {
 			fval := sval.Convert(exec.TyFloat64).Float()
 			return complex(fval, 0)
 		}
-	} else if kind == reflect.Ptr {
+	} else if kind >= exec.BigInt {
 		val := reflect.New(t.Elem())
 		skind := sval.Kind()
 		switch {
@@ -386,15 +401,10 @@ func boundConst(v interface{}, t reflect.Type) interface{} {
 		case skind >= reflect.Float32 && skind <= reflect.Float64:
 			sval = sval.Convert(exec.TyFloat64)
 			val.MethodByName("SetFloat64").Call([]reflect.Value{sval})
-		case skind == reflect.Ptr:
-			switch st {
-			case exec.TyBigInt:
-				val.MethodByName("SetInt").Call([]reflect.Value{sval})
-			case exec.TyBigRat:
-				val.MethodByName("SetRat").Call([]reflect.Value{sval})
-			default:
-				log.Panicln("boundConst: convert type failed -", st)
-			}
+		case skind == exec.BigInt:
+			val.MethodByName("SetInt").Call([]reflect.Value{sval})
+		case skind == exec.BigFloat:
+			val.MethodByName("SetRat").Call([]reflect.Value{sval})
 		default:
 			log.Panicln("boundConst: convert type failed -", skind)
 		}
