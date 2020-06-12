@@ -110,7 +110,7 @@ func compileIdentLHS(ctx *blockCtx, name string, mode compleMode) {
 		if mode == token.ASSIGN || mode == token.DEFINE {
 			ctx.out.StoreVar(v.v)
 		} else if op, ok := addrops[mode]; ok {
-			ctx.out.AddrVar(v.v).AddrOp(v.v.Type().Kind(), op)
+			ctx.out.AddrVar(v.v).AddrOp(kindOf(v.v.Type()), op)
 		} else {
 			log.Panicln("compileIdentLHS failed: unknown op -", mode)
 		}

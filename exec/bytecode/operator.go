@@ -192,6 +192,12 @@ const (
 	bitsOperator = 5 // Operator count = 24
 )
 
+var (
+	bigIntOne   = big.NewInt(1)
+	bigRatOne   = big.NewRat(1, 1)
+	bigFloatOne = big.NewFloat(1)
+)
+
 func execQuoBigInt(i Instr, p *Context) {
 	n := len(p.data)
 	x := new(big.Rat).SetInt(p.data[n-2].(*big.Int))
