@@ -200,6 +200,15 @@ y := {x: i for i, x <- [1, 3, 5, 7, 11], i%2 == 1}
 z := {v: k for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "Go+"}, k > 3}
 ```
 
+### Rational number: bigint, bigrat, bigfloat
+
+```go
+a := 1r << 65   // bigint, large than int64
+b := 4/5r       // bigrat
+c := b - 1/3r + 3 * 1/2r
+println(a, b, c)
+```
+
 ### For loop
 
 ```go
