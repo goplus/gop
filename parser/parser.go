@@ -23,10 +23,11 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/qiniu/x/log"
+
 	"github.com/qiniu/goplus/ast"
 	"github.com/qiniu/goplus/scanner"
 	"github.com/qiniu/goplus/token"
-	"github.com/qiniu/x/log"
 )
 
 // The parser structure holds the parser's internal state.
@@ -2384,14 +2385,15 @@ func (p *parser) parseForStmt() ast.Stmt {
 		// parseSimpleStmt returned a right-hand side that
 		// is a single unary expression of the form "range x"
 		x := as.Rhs[0].(*ast.UnaryExpr).X
-		return &ast.RangeStmt{
-			For:    pos,
-			Key:    key,
-			Value:  value,
-			TokPos: as.TokPos,
-			Tok:    as.Tok,
-			X:      x,
-			Body:   body,
+		return &ast.ForPhraseStmt{
+			ForPhrase: ast.ForPhrase{
+				For:    pos,
+				Key:    toIdent(key),
+				Value:  toIdent(value),
+				X:      x,
+				TokPos: as.TokPos,
+			},
+			Body: body,
 		}
 	}
 
