@@ -23,12 +23,12 @@ import (
 	"github.com/qiniu/goplus/gop"
 )
 
-func execTypeOf(zero int, p *gop.Context) {
+func execTypeOf(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	args[0] = reflect.TypeOf(args[0])
 }
 
-func execValueOf(zero int, p *gop.Context) {
+func execValueOf(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	args[0] = reflect.ValueOf(args[0])
 }

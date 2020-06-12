@@ -23,7 +23,7 @@ import (
 	"github.com/qiniu/goplus/gop"
 )
 
-func execAtoi(zero int, p *gop.Context) {
+func execAtoi(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	v, err := strconv.Atoi(args[0].(string))
 	p.Ret(1, v, err)

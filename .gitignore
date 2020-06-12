@@ -30,3 +30,4 @@ gop_autogen.go
 *.prof
 
 .vscode
+.idea

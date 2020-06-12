@@ -18,7 +18,7 @@ func execNewFrame(arity int, p *gop.Context) {
 	p.Ret(arity, err)
 }
 
-func execIs(zero int, p *gop.Context) {
+func execIs(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	is := errors.Is(gop.ToError(args[0]), gop.ToError(args[1]))
 	p.Ret(2, is)
