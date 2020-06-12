@@ -208,7 +208,7 @@ func autogenOpWithTempl(f *os.File, op Operator, Op string, templ *[2]string) {
 	}
 }
 
-func TestOpAutogen(t *testing.T) {
+func _TestOpAutogen(t *testing.T) {
 	f, err := os.Create("exec_op_autogen.go")
 	if err != nil {
 		t.Fatal("TestAutogen failed:", err)
@@ -287,9 +287,13 @@ var opAutogenAddrOps = [...]string{
 }
 
 const autogenAddrOpHeader = `package bytecode
+
+import (
+	"math/big"
+)
 `
 
-const autogenBinaryAddrOpUintTempl = `
+const autogenStdBinaryAddrOpUintTempl = `
 func exec$Op$Type(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*$type) $op toUint(p.data[n-2])
@@ -297,7 +301,21 @@ func exec$Op$Type(i Instr, p *Context) {
 }
 `
 
-const autogenBinaryAddrOpTempl = `
+const autogenBigBinaryAddrOpUintTempl = `
+func exec$Op$Type(i Instr, p *Context) {
+	n := len(p.data)
+	x := p.data[n-1].(*$type)
+	x.$OP(x, toUint(p.data[n-2]))
+	p.data = p.data[:n-2]
+}
+`
+
+var autogenBinaryAddrOpUintTempl = [2]string{
+	autogenStdBinaryAddrOpUintTempl,
+	autogenBigBinaryAddrOpUintTempl,
+}
+
+const autogenStdBinaryAddrOpTempl = `
 func exec$Op$Type(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*$type) $op p.data[n-2].($type)
@@ -305,7 +323,21 @@ func exec$Op$Type(i Instr, p *Context) {
 }
 `
 
-const autogenUnaryAddrOpTempl = `
+const autogenBigBinaryAddrOpTempl = `
+func exec$Op$Type(i Instr, p *Context) {
+	n := len(p.data)
+	x := p.data[n-1].(*$type)
+	x.$OP(x, p.data[n-2].(*$type))
+	p.data = p.data[:n-2]
+}
+`
+
+var autogenBinaryAddrOpTempl = [2]string{
+	autogenStdBinaryAddrOpTempl,
+	autogenBigBinaryAddrOpTempl,
+}
+
+const autogenStdUnaryAddrOpTempl = `
 func exec$Op$Type(i Instr, p *Context) {
 	n := len(p.data)
 	(*p.data[n-1].(*$type))$op
@@ -313,37 +345,75 @@ func exec$Op$Type(i Instr, p *Context) {
 }
 `
 
+const autogenBigUnaryAddrOpTempl = `
+func exec$Op$Type(i Instr, p *Context) {
+	n := len(p.data)
+	x := p.data[n-1].(*$type)
+	x.$OP(x, $one)
+	p.data = p.data[:n-1]
+}
+`
+
+var autogenUnaryAddrOpTempl = [2]string{
+	autogenStdUnaryAddrOpTempl,
+	autogenBigUnaryAddrOpTempl,
+}
+
 const autogenBuiltinAddrOpHeader = `
 var builtinAddrOps = [...]func(i Instr, p *Context){`
 
-const autogenBuiltinAddrOpItemTempl = `
+const autogenStdBuiltinAddrOpItemTempl = `
 	(int(Op$Op) << bitsKind) | int($Type): exec$Op$Type,`
+
+var autogenBuiltinAddrOpItemTempl = [2]string{
+	autogenStdBuiltinAddrOpItemTempl,
+	autogenStdBuiltinAddrOpItemTempl,
+}
 
 const autogenBuiltinAddrOpFooter = `
 }
 `
 
-func autogenAddrOpWithTempl(f *os.File, op AddrOperator, Op string, templ string) {
+func autogenAddrOpWithTempl(f *os.File, op AddrOperator, Op string, templ *[2]string) {
 	i := op.GetInfo()
-	if templ == "" {
-		templ = autogenBinaryAddrOpTempl
+	if templ == nil {
+		templ = &autogenBinaryAddrOpTempl
 		if i.InSecond == exec.BitNone {
-			templ = autogenUnaryAddrOpTempl
+			templ = &autogenUnaryAddrOpTempl
 		} else if i.InSecond == exec.BitsAllIntUint {
-			templ = autogenBinaryAddrOpUintTempl
+			templ = &autogenBinaryAddrOpUintTempl
 		}
 	}
-	for kind := Bool; kind <= UnsafePointer; kind++ {
+	for kind := Bool; kind <= BigFloat; kind++ {
 		if (i.InFirst & (1 << kind)) == 0 {
 			continue
 		}
 		typ := exec.TypeFromKind(kind).String()
-		Typ := strings.Title(typ)
-		repl := strings.NewReplacer("$Op", Op, "$op", i.Lit, "$Type", Typ, "$type", typ)
-		text := repl.Replace(templ)
+		Typ, tpl, one := typ, templ[0], "1"
+		if strings.HasPrefix(typ, "*") { // *Big.Int, *Big.Rat, *Big.Float
+			Typ, tpl = typ[1:4]+typ[5:], templ[1]
+			typ = typ[1:]
+			one = ones[kind-BigInt]
+		}
+		Typ = strings.Title(Typ)
+		Op2 := "Add"
+		if i.InSecond == exec.BitNone {
+			if i.Lit == "--" {
+				Op2 = "Sub"
+			}
+		} else {
+			Op2 = strings.TrimSuffix(Op, "Assign")
+		}
+		repl := strings.NewReplacer(
+			"$Op", Op, "$OP", Op2, "$one", one, "$op", i.Lit, "$Type", Typ, "$type", typ)
+		text := repl.Replace(tpl)
 		fmt.Fprint(f, text)
 	}
 }
+
+var (
+	ones = [3]string{"bigIntOne", "bigRatOne", "bigFloatOne"}
+)
 
 func _TestAddrOpAutogen(t *testing.T) {
 	f, err := os.Create("exec_addrop_autogen.go")
@@ -355,13 +425,13 @@ func _TestAddrOpAutogen(t *testing.T) {
 	fmt.Fprint(f, autogenBuiltinAddrOpHeader)
 	for i, Op := range opAutogenAddrOps {
 		if Op != "" {
-			autogenAddrOpWithTempl(f, AddrOperator(i), Op, autogenBuiltinAddrOpItemTempl)
+			autogenAddrOpWithTempl(f, AddrOperator(i), Op, &autogenBuiltinAddrOpItemTempl)
 		}
 	}
 	fmt.Fprint(f, autogenBuiltinAddrOpFooter)
 	for i, Op := range opAutogenAddrOps {
 		if Op != "" {
-			autogenAddrOpWithTempl(f, AddrOperator(i), Op, "")
+			autogenAddrOpWithTempl(f, AddrOperator(i), Op, nil)
 		}
 	}
 }
@@ -377,9 +447,13 @@ func TestExecAutogenAddrOp(t *testing.T) {
 		}
 		op := AddrOperator(i >> bitsKind)
 		kind := Kind(i & ((1 << bitsKind) - 1))
+		addr := newKindValue(kind)
+		if kind < BigInt {
+			addr = addr.Addr()
+		}
 		vars := []interface{}{
 			newKindValue(kind).Interface(),
-			newKindValue(kind).Addr().Interface(),
+			addr.Interface(),
 		}
 		CallAddrOp(kind, op, vars...)
 		callExecAddrOp(kind, op, vars...)

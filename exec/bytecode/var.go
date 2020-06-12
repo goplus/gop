@@ -350,6 +350,9 @@ func (p *Builder) StoreVar(v *Var) *Builder {
 
 // AddrVar instr
 func (p *Builder) AddrVar(v *Var) *Builder {
+	if v.Type().Kind() == reflect.Ptr {
+		return p.LoadVar(v)
+	}
 	p.addrVar(makeAddr(p.nestDepth-v.nestDepth, v.idx))
 	return p
 }

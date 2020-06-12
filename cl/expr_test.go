@@ -1112,7 +1112,7 @@ func TestRational2(t *testing.T) {
 
 var fsTestRational3 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	y := 3.14159265358979323846264338327950288419716939937510582097494459r
-	y = y*2
+	y *= 2
 	y
 `)
 
