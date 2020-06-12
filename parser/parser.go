@@ -2388,7 +2388,12 @@ func (p *parser) parseForStmt() ast.Stmt {
 		return &ast.ForPhraseStmt{
 			ForPhrase: ast.ForPhrase{
 				For: pos,
-				Key: toIdent(key),
+				Key: func() *ast.Ident {
+					if key != nil {
+						return toIdent(key)
+					}
+					return nil
+				}(),
 				Value: func() *ast.Ident {
 					if value != nil {
 						return toIdent(value)
