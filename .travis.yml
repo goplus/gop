@@ -1,6 +1,5 @@
 language: go
 go:
-  - "1.13"
   - "1.14"
 script:
   - export GO111MODULE="on"
