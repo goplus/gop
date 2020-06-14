@@ -275,3 +275,19 @@ How these `ErrWrap expressions` work? See [Error Handling](https://github.com/qi
 All Go features (not including `cgo`) will be supported.
 
 * See [supported the Go language features](https://github.com/qiniu/goplus/wiki/Supported-Go-features).
+
+## Contributing
+
+The Go+ project welcomes all contributors. We appreciate your help!
+
+Here are [list of Go+ Contributors](https://github.com/qiniu/goplus/wiki/Goplus-Contributors). We award an email account (XXX@goplus.org) for every contributor. And we suggest you commit code by using this email account:
+
+```bash
+git config --global user.email XXX@goplus.org
+```
+
+What does `a contributor of Go+` means? He must meet one of the following conditions: 
+
+* At least one pull request of a full feature implemention.
+* At least three pull requests of feature enhancements.
+* At least ten pull requests of any kind issues.
