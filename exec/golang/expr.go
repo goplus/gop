@@ -19,6 +19,7 @@ package golang
 import (
 	"go/ast"
 	"go/token"
+	"math/big"
 	"reflect"
 	"strconv"
 	"strings"
@@ -110,6 +111,79 @@ func ComplexConst(v complex128) ast.Expr {
 	return &ast.ParenExpr{X: BinaryOp(token.ADD, x, y)}
 }
 
+// NewGopkgType instr
+func NewGopkgType(p *Builder, pkgPath, typName string) ast.Expr {
+	typ := p.GoSymIdent(pkgPath, typName)
+	args := []ast.Expr{typ}
+	return &ast.CallExpr{Fun: newIden, Args: args}
+}
+
+func valBySetString(p *Builder, typ reflect.Type, x ast.Expr, args ...ast.Expr) ast.Expr {
+	setString := &ast.SelectorExpr{X: x, Sel: Ident("SetString")}
+	setStringCall := &ast.CallExpr{Fun: setString, Args: args}
+	stmt := &ast.AssignStmt{
+		Lhs: []ast.Expr{gopRet, unnamedVar},
+		Tok: token.ASSIGN,
+		Rhs: []ast.Expr{setStringCall},
+	}
+	fldOut := &ast.Field{
+		Names: []*ast.Ident{gopRet},
+		Type:  Type(p, typ),
+	}
+	typFun := &ast.FuncType{
+		Params:  &ast.FieldList{Opening: 1, Closing: 1},
+		Results: &ast.FieldList{Opening: 1, Closing: 1, List: []*ast.Field{fldOut}},
+	}
+	stmtReturn := &ast.ReturnStmt{}
+	return &ast.CallExpr{
+		Fun: &ast.FuncLit{
+			Type: typFun,
+			Body: &ast.BlockStmt{List: []ast.Stmt{stmt, stmtReturn}},
+		},
+	}
+}
+
+// BigIntConst instr
+func BigIntConst(p *Builder, v *big.Int) ast.Expr {
+	if v.IsInt64() {
+		newInt := p.GoSymIdent("math/big", "NewInt")
+		args := []ast.Expr{IntConst(v.Int64())}
+		return &ast.CallExpr{Fun: newInt, Args: args}
+	}
+	bigInt := NewGopkgType(p, "math/big", "Int")
+	return valBySetString(p, exec.TyBigInt, bigInt, StringConst(v.String()), IntConst(10))
+}
+
+// BigRatConst instr
+func BigRatConst(p *Builder, v *big.Rat) ast.Expr {
+	a, b := v.Num(), v.Denom()
+	if a.IsInt64() && b.IsInt64() {
+		newRat := p.GoSymIdent("math/big", "NewRat")
+		args := []ast.Expr{IntConst(a.Int64()), IntConst(b.Int64())}
+		return &ast.CallExpr{Fun: newRat, Args: args}
+	}
+	rat := NewGopkgType(p, "math/big", "Rat")
+	setFrac := &ast.SelectorExpr{X: rat, Sel: Ident("SetFrac")}
+	args := []ast.Expr{BigIntConst(p, a), BigIntConst(p, b)}
+	return &ast.CallExpr{Fun: setFrac, Args: args}
+}
+
+// BigFloatConst instr
+func BigFloatConst(p *Builder, v *big.Float) ast.Expr {
+	val, acc := v.Float64()
+	if acc == big.Exact {
+		newFloat := p.GoSymIdent("math/big", "NewFloat")
+		args := []ast.Expr{FloatConst(val)}
+		return &ast.CallExpr{Fun: newFloat, Args: args}
+	}
+	prec := v.Prec()
+	sval := v.Text('g', int(prec))
+	bigFlt := NewGopkgType(p, "math/big", "Float")
+	setPrec := &ast.SelectorExpr{X: bigFlt, Sel: Ident("SetPrec")}
+	setPrecCall := &ast.CallExpr{Fun: setPrec, Args: []ast.Expr{IntConst(int64(prec))}}
+	return valBySetString(p, exec.TyBigFloat, setPrecCall, StringConst(sval))
+}
+
 // Const instr
 func Const(p *Builder, val interface{}) ast.Expr {
 	if val == nil {
@@ -145,11 +219,21 @@ func Const(p *Builder, val interface{}) ast.Expr {
 		}
 		return expr
 	}
-	if kind == reflect.Bool {
+	switch kind {
+	case reflect.Bool:
 		if val.(bool) {
 			return Ident("true")
 		}
 		return Ident("false")
+	case reflect.Ptr:
+		switch v.Type() {
+		case exec.TyBigRat:
+			return BigRatConst(p, val.(*big.Rat))
+		case exec.TyBigInt:
+			return BigIntConst(p, val.(*big.Int))
+		case exec.TyBigFloat:
+			return BigFloatConst(p, val.(*big.Float))
+		}
 	}
 	log.Panicln("Const: value type is unknown -", v.Type())
 	return nil
@@ -161,37 +245,71 @@ func (p *Builder) Push(val interface{}) *Builder {
 	return p
 }
 
-// UnaryOp instr
-func (p *Builder) UnaryOp(tok token.Token) *Builder {
+func (p *Builder) bigBuiltinOp(kind exec.Kind, op exec.Operator) *Builder {
+	val := p.rhs.Pop().(ast.Expr)
+	if op >= exec.OpLT && op <= exec.OpNE {
+		x := p.rhs.Pop().(ast.Expr)
+		bigOp := &ast.SelectorExpr{X: x, Sel: Ident("Cmp")}
+		bigOpCall := &ast.CallExpr{Fun: bigOp, Args: []ast.Expr{val}}
+		p.rhs.Push(&ast.BinaryExpr{X: bigOpCall, Y: IntConst(0), Op: opTokens[op]})
+		return p
+	}
+	method := opOpMethods[op]
+	if method == "" {
+		log.Panicln("bigBuiltinOp: unsupported op -", op)
+	}
+	t := exec.TypeFromKind(kind).Elem()
+	typ := NewGopkgType(p, t.PkgPath(), t.Name())
+	bigOp := &ast.SelectorExpr{X: typ, Sel: Ident(method)}
+	oi := op.GetInfo()
+	if oi.InSecond == 0 {
+		p.rhs.Push(&ast.CallExpr{Fun: bigOp, Args: []ast.Expr{val}})
+		return p
+	}
 	x := p.rhs.Pop().(ast.Expr)
-	p.rhs.Push(&ast.UnaryExpr{Op: tok, X: x})
+	p.rhs.Push(&ast.CallExpr{Fun: bigOp, Args: []ast.Expr{x, val}})
 	return p
 }
 
-// BinaryOp instr
-func (p *Builder) BinaryOp(tok token.Token) *Builder {
-	y := p.rhs.Pop().(ast.Expr)
-	x := p.rhs.Pop().(ast.Expr)
-	p.rhs.Push(&ast.BinaryExpr{Op: tok, X: x, Y: y})
-	return p
+var opOpMethods = [...]string{
+	exec.OpAdd:    "Add",
+	exec.OpSub:    "Sub",
+	exec.OpMul:    "Mul",
+	exec.OpQuo:    "Quo",
+	exec.OpMod:    "Mod",
+	exec.OpAnd:    "And",
+	exec.OpOr:     "Or",
+	exec.OpXor:    "Xor",
+	exec.OpAndNot: "AndNot",
+	exec.OpLsh:    "Lsh",
+	exec.OpRsh:    "Rsh",
+	exec.OpNeg:    "Neg",
+	exec.OpBitNot: "Not",
 }
 
 // BinaryOp instr
-func BinaryOp(tok token.Token, x, y ast.Expr) *ast.BinaryExpr {
+func BinaryOp(tok token.Token, x, y ast.Expr) ast.Expr {
 	return &ast.BinaryExpr{Op: tok, X: x, Y: y}
 }
 
 // BuiltinOp instr
 func (p *Builder) BuiltinOp(kind exec.Kind, op exec.Operator) *Builder {
+	if kind >= exec.BigInt {
+		return p.bigBuiltinOp(kind, op)
+	}
 	tok := opTokens[op]
 	if tok == token.ILLEGAL {
 		log.Panicln("BuiltinOp: unsupported op -", op)
 	}
 	oi := op.GetInfo()
+	val := p.rhs.Pop().(ast.Expr)
 	if oi.InSecond == 0 {
-		return p.UnaryOp(tok)
+		p.rhs.Push(&ast.UnaryExpr{Op: tok, X: val})
+		return p
 	}
-	return p.BinaryOp(tok)
+	x := p.rhs.Pop().(ast.Expr)
+	p.rhs.Push(&ast.BinaryExpr{Op: tok, X: x, Y: val})
+	return p
 }
 
 var opTokens = [...]token.Token{

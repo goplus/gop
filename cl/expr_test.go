@@ -1142,3 +1142,36 @@ func TestRational3(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
+var fsTestRational4 = asttest.NewSingleFileFS("/foo", "bar.gop", `
+	a := 3/4r
+	b := 5/7r
+	if a > b {
+		a = a + 1
+	}
+	a
+`)
+
+func TestRational4(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestRational4, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, _, err = newPackage(b, bar, fset)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := ctx.Get(-1); v.(*big.Rat).Cmp(big.NewRat(7, 4)) != 0 {
+		t.Fatal("v:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------

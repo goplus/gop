@@ -200,9 +200,9 @@ var (
 
 func execQuoBigInt(i Instr, p *Context) {
 	n := len(p.data)
-	x := new(big.Rat).SetInt(p.data[n-2].(*big.Int))
-	y := new(big.Rat).SetInt(p.data[n-1].(*big.Int))
-	p.data[n-2] = x.Quo(x, y)
+	x := p.data[n-2].(*big.Int)
+	y := p.data[n-1].(*big.Int)
+	p.data[n-2] = new(big.Rat).SetFrac(x, y)
 	p.data = p.data[:n-1]
 }
 

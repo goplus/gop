@@ -77,6 +77,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 		return compileSliceLit(ctx, v)
 	case *ast.FuncLit:
 		return compileFuncLit(ctx, v)
+	case *ast.ParenExpr:
+		return compileExpr(ctx, v.X)
 	case *ast.ListComprehensionExpr:
 		return compileListComprehensionExpr(ctx, v)
 	case *ast.MapComprehensionExpr:
