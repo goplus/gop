@@ -127,6 +127,7 @@ var (
 	gopRet     = Ident("_gop_ret")
 	appendIden = Ident("append")
 	makeIden   = Ident("make")
+	newIden    = Ident("new")
 	nilIden    = Ident("nil")
 )
 

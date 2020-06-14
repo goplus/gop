@@ -163,8 +163,52 @@ func (p *Builder) AddrVar(v exec.Var) *Builder {
 	return p
 }
 
+func (p *Builder) bigAddrOp(kind exec.Kind, op exec.AddrOperator) *Builder {
+	if op == exec.OpAddrVal {
+		return p
+	}
+	method := addropMethods[op]
+	if method == "" {
+		log.Panicln("bigAddrOp: unknown op -", op)
+	}
+	var expr ast.Expr
+	var x = p.rhs.Pop()
+	var val = p.rhs.Pop().(ast.Expr)
+	switch v := x.(type) {
+	case *ast.UnaryExpr:
+		if v.Op != token.AND {
+			log.Panicln("bigAddrOp: unknown x expr -", reflect.TypeOf(x))
+		}
+		bigOp := &ast.SelectorExpr{X: v.X, Sel: Ident(method)}
+		expr = &ast.CallExpr{Fun: bigOp, Args: []ast.Expr{v.X, val}}
+	default:
+		log.Panicln("bigAddrOp: todo")
+	}
+	p.rhs.Push(&ast.ExprStmt{X: expr})
+	return p
+}
+
+var addropMethods = [...]string{
+	exec.OpAddAssign:    "Add",
+	exec.OpSubAssign:    "Sub",
+	exec.OpMulAssign:    "Mul",
+	exec.OpQuoAssign:    "Quo",
+	exec.OpModAssign:    "Mod",
+	exec.OpAndAssign:    "And",
+	exec.OpOrAssign:     "Or",
+	exec.OpXorAssign:    "Xor",
+	exec.OpAndNotAssign: "AndNot",
+	exec.OpLshAssign:    "Lsh",
+	exec.OpRshAssign:    "Rsh",
+	exec.OpInc:          "Add",
+	exec.OpDec:          "Sub",
+}
+
 // AddrOp instr
 func (p *Builder) AddrOp(kind exec.Kind, op exec.AddrOperator) *Builder {
+	if kind >= exec.BigInt {
+		return p.bigAddrOp(kind, op)
+	}
 	if op == exec.OpAddrVal {
 		p.rhs.Push(&ast.StarExpr{
 			X: p.rhs.Pop().(ast.Expr),
