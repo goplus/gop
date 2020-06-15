@@ -62,6 +62,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileBlockStmtWith(ctx, v)
 	case *ast.ReturnStmt:
 		compileReturnStmt(ctx, v)
+	case *ast.IncDecStmt:
+		compileIncDecStmt(ctx, v)
 	default:
 		log.Panicln("compileStmt failed: unknown -", reflect.TypeOf(v))
 	}
@@ -223,6 +225,11 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 func compileExprStmt(ctx *blockCtx, expr *ast.ExprStmt) {
 	compileExpr(ctx, expr.X)()
 	ctx.infer.PopN(1)
+}
+
+func compileIncDecStmt(ctx *blockCtx, expr *ast.IncDecStmt) {
+	compileExpr(ctx, expr.X)()
+	compileExprLHS(ctx, expr.X, expr.Tok)
 }
 
 func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {

@@ -138,6 +138,8 @@ var addrops = map[token.Token]exec.AddrOperator{
 	token.SHL_ASSIGN:     exec.OpLshAssign,
 	token.SHR_ASSIGN:     exec.OpRshAssign,
 	token.AND_NOT_ASSIGN: exec.OpAndNotAssign,
+	token.INC:            exec.OpInc,
+	token.DEC:            exec.OpDec,
 }
 
 func compileIdent(ctx *blockCtx, name string) func() {
