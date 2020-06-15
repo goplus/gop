@@ -165,6 +165,8 @@ Note:
 
 ### Rational number: bigint, bigrat, bigfloat
 
+We introduce rational number as native Go+ types. We use -r suffix as a rational constant. For example, (1r << 200) means a big int whose value is equal to 2<sup>200</sup>. And 4/5r means the rational constant 4/5.
+
 ```go
 a := 1r << 65   // bigint, large than int64
 b := 4/5r       // bigrat
