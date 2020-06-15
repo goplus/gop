@@ -223,8 +223,10 @@ func (p *Builder) AddrOp(kind exec.Kind, op exec.AddrOperator) *Builder {
 		if v.Op != token.AND {
 			log.Panicln("AddrOp: unknown x expr -", reflect.TypeOf(x))
 		}
-		stmt = &ast.AssignStmt{
-			Lhs: []ast.Expr{v.X}, Tok: addropTokens[op], Rhs: []ast.Expr{val},
+		if op == exec.OpInc || op == exec.OpDec {
+			stmt = &ast.IncDecStmt{X: v.X, TokPos: v.OpPos, Tok: addropTokens[op]}
+		} else {
+			stmt = &ast.AssignStmt{Lhs: []ast.Expr{v.X}, Tok: addropTokens[op], Rhs: []ast.Expr{val}}
 		}
 	default:
 		log.Panicln("AddrOp: todo")

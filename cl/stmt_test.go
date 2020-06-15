@@ -682,3 +682,38 @@ func _TestForRangeStmt(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
+var fsTestForIncDecStmt = asttest.NewSingleFileFS("/foo", "bar.gop", `
+	a,b:=10,2
+	{a--;a--;a--}
+	{b++;b++;b++}
+	println(a,b,a*b)
+`)
+
+func TestForIncDecStmt(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestForIncDecStmt, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, noExecCtx, err := newPackage(b, bar, fset)
+	if err != nil || !noExecCtx {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(7) {
+		t.Fatal("n:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
