@@ -22,10 +22,12 @@ import (
 	"testing"
 
 	"github.com/qiniu/goplus/ast/asttest"
+	"github.com/qiniu/goplus/gop"
 	"github.com/qiniu/goplus/parser"
 	"github.com/qiniu/goplus/token"
 
 	exec "github.com/qiniu/goplus/exec/bytecode"
+	libbuiltin "github.com/qiniu/goplus/lib/builtin"
 )
 
 // -----------------------------------------------------------------------------
@@ -646,38 +648,91 @@ func TestForPhraseStmt2(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 var fsTestForRangeStmt = asttest.NewSingleFileFS("/foo", "bar.gop", `
-	sum := 0
-	for x := range [1, 3, 5, 7] {
-		if x < 7 {
-			sum += x
-		}
-	}
-	println("sum(1,3,5):", sum)
+sum := 0
+for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
+    sum += x
+}
+println("sum(5,7,11,13,17):", sum)
 `)
 
-func _TestForRangeStmt(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestForRangeStmt, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
+type testData struct {
+	clause string
+	wants  []string
+}
 
+var testForRangeClauses = map[string]testData{
+	"no_kv_range": {`sum:=0
+					for range [1,3,5,7] {
+						sum++
+					}
+					println(sum)
+					`, []string{"4"}},
+	"only_k_range": {`sum:=0
+					for k :=range [1,3,5,7]{
+						sum+=k
+					}
+					println(sum)
+					`, []string{"6"}},
+	"both_kv_range": {`sum:=0
+					for k,v:=range [1,3,5,7]{
+						// 0*1+1*3+2*5+3*7
+						sum+=k*v
+					}
+					println(sum)
+					`, []string{"34"}},
+	"outside_k_range": {`
+					k:=10
+					v:=10
+					for k,v=range [1,3,5,7]{
+					}
+					println(k)
+					println(v)
+					`, []string{"3", "7"}},
+}
+
+func TestRangeStmt(t *testing.T) {
+	for name, clause := range testForRangeClauses {
+		testForRangeStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
+	}
+}
+
+func testForRangeStmt(name string, t *testing.T, fs *asttest.MemFS, wants []string) {
+	var results []string
+	selfPrintln := func(arity int, p *gop.Context) {
+		args := p.GetArgs(arity)
+		results = append(results, fmt.Sprintln(args...))
+		n, err := fmt.Println(args...)
+		p.Ret(arity, n, err)
+	}
+	libbuiltin.I.RegisterFuncvs(libbuiltin.I.Funcv("println", fmt.Print, selfPrintln))
+
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fs, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal(name+" : ParseFSDir failed:", err, len(pkgs))
+	}
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
 	_, noExecCtx, err := newPackage(b, bar, fset)
 	if err != nil || !noExecCtx {
-		t.Fatal("Compile failed:", err)
+		t.Fatal(name+" :Compile failed:", err)
 	}
 	code := b.Resolve()
-
 	ctx := exec.NewContext(code)
 	ctx.Exec(0, code.Len())
-	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
 	if v := ctx.Get(-1); v != nil {
-		t.Fatal("error:", v)
+		t.Fatal(name+" :error:", v)
 	}
-	if v := ctx.Get(-2); v != int(15) {
-		t.Fatal("n:", v)
+	if v := ctx.Get(-2); v != len(results[len(results)-1]) {
+		t.Fatal(name+" :n:", v)
+	}
+	if len(wants) != len(results) {
+		t.Fatal(name+" exec fail", wants, results)
+	}
+	for i := 0; i < len(wants); i++ {
+		if wants[i]+"\n" != results[i] {
+			t.Fatal(name+" exec fail", wants[i], results[i])
+		}
 	}
 }
 

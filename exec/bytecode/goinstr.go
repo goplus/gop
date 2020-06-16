@@ -326,6 +326,7 @@ func NewComprehension(out reflect.Type) *Comprehension {
 	return &Comprehension{TypeOut: out}
 }
 
+// defineForPhraseVar define new var or re-use in varManager
 func (p *Builder) defineForPhraseVar(src *Var, outIter bool) *Var {
 	if src == nil {
 		return nil
