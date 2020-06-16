@@ -115,7 +115,8 @@ func (c *ForPhrase) execRange(iter rangeIter, ctx *Context) {
 }
 
 func (c *ForPhrase) execListRange(data reflect.Value, ctx *Context) {
-	c.execRange(&listRangeIter{data: reflect.Indirect(data), size: data.Len()}, ctx)
+	data = reflect.Indirect(data)
+	c.execRange(&listRangeIter{data: data, size: data.Len()}, ctx)
 }
 
 func (c *ForPhrase) execMapRange(data reflect.Value, ctx *Context) {
