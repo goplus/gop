@@ -12,3 +12,25 @@ for i, x <- [3, 15, 777] {
     }
 }
 println("values:", fns[0](), fns[1](), fns[2]())
+sum=0
+arr:=[1,3,5,7]
+for range arr{
+    sum++
+}
+println("sum==4",sum==4)
+sum=0
+for x:=range arr{
+    sum+=x
+}
+println("sum==6",sum==6)
+
+sum=0
+for k,x:=range arr{
+    sum+=x+k
+}
+println("sum==22",sum==22)
+
+x:=100
+for _,x=range arr{
+}
+println("x==7",x==7)
