@@ -690,7 +690,7 @@ var testForRangeClauses = map[string]testData{
 					`, []string{"3", "7"}},
 	"both_kv_range_map": {`sum:=0
 					m:={1:2,2:4,3:8}
-					for k,v=range m { 
+					for k,v:=range m { 
 						//1*2+2*4+3*8=34
 						sum+=k*v
 					}
