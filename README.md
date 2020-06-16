@@ -127,7 +127,7 @@ Note: The `gop` command isn't provided currently (in alpha stage). Instead, we p
 
 ## How to build
 
-Current version: [![GitHub release](https://img.shields.io/github/v/tag/qiniu/goplus.svg?label=release)]
+Current version: [![GitHub release](https://img.shields.io/github/v/tag/qiniu/goplus.svg?label=release)](https://github.com/qiniu/goplus/releases)
 
 ```go
 go get github.com/qiniu/goplus@vX.X.XX
