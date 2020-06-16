@@ -79,7 +79,29 @@ func compileForPhraseStmt(parent *blockCtx, v *ast.ForPhraseStmt) {
 }
 
 func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
-	log.Panicln("compileRangeStmt: todo")
+	noExecCtx := isNoExecCtx(parent, v.Body)
+	f := ast.ForPhrase{
+		For: v.For,
+		Key: func() *ast.Ident {
+			if v.Key == nil {
+				return nil
+			}
+			return v.Key.(*ast.Ident)
+		}(),
+		Value: func() *ast.Ident {
+			if v.Value == nil {
+				return nil
+			}
+			return v.Value.(*ast.Ident)
+		}(),
+		TokPos: v.TokPos,
+		Tok:    v.Tok,
+		X:      v.X,
+	}
+	ctx, exprFor := compileForPhrase(parent, f, noExecCtx)
+	exprFor(func() {
+		compileBlockStmtWithout(ctx, v.Body)
+	})
 }
 
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {

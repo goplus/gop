@@ -341,7 +341,7 @@ func compileForPhrase(parent *blockCtx, f ast.ForPhrase, noExecCtx bool) (*block
 	return ctx, func(exprElt func()) {
 		exprX()
 		out := ctx.out
-		c := ctx.NewForPhrase(typData)
+		c := ctx.NewForPhrase(typData, f.Tok == token.ASSIGN)
 		out.ForPhrase(c, varKey, varVal, !noExecCtx)
 		if f.Cond != nil {
 			compileExpr(ctx, f.Cond)()
