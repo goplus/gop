@@ -72,8 +72,8 @@ func TestGoVar(t *testing.T) {
 	codeExp := `package main
 
 import (
-	pkg "pkg"
 	fmt "fmt"
+	pkg "pkg"
 )
 
 func main() {
