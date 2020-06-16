@@ -1,3 +1,4 @@
+// for with <-
 sum := 0
 for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
     sum += x
@@ -12,3 +13,28 @@ for i, x <- [3, 15, 777] {
     }
 }
 println("values:", fns[0](), fns[1](), fns[2]())
+
+// for with range
+sum=0
+arr:=[1,3,5,7]
+m:={1:1,2:4,3:8}
+for range arr{
+    sum++
+}
+println("sum==4",sum==4)
+sum=0
+for x:=range arr{
+    sum+=x
+}
+println("sum==6",sum==6)
+
+sum=0
+for k,x:=range m{
+    sum+=x+k
+}
+println("sum==19",sum==19)
+
+x:=100
+for _,x=range arr{
+}
+println("x==7",x==7)
