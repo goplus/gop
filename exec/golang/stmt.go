@@ -233,13 +233,14 @@ type ForPhrase struct {
 	Key, Value *Var // Key, Value may be nil
 	X, Cond    ast.Expr
 	TypeIn     reflect.Type
+	OutIter    bool
 	scopeCtx
 	blockCtx
 }
 
 // NewForPhrase creates a new ForPhrase instance.
-func NewForPhrase(in reflect.Type) *ForPhrase {
-	return &ForPhrase{TypeIn: in}
+func NewForPhrase(in reflect.Type, isOutIter ...bool) *ForPhrase {
+	return &ForPhrase{TypeIn: in, OutIter: append(isOutIter, false)[0]}
 }
 
 // Comprehension represents a list/map comprehension.
@@ -281,11 +282,21 @@ func (p *Builder) EndForPhrase(f *ForPhrase) *Builder {
 		}}
 	}
 	p.rhs.Push(&ast.RangeStmt{
-		Key:   toVarExpr(f.Key, unnamedVar),
+		Key: func() ast.Expr {
+			if f.Key == nil && f.Value == nil {
+				return nil
+			}
+			return toVarExpr(f.Key, unnamedVar)
+		}(),
 		Value: toVarExpr(f.Value, nil),
-		Tok:   token.DEFINE,
-		X:     f.X,
-		Body:  body,
+		Tok: func() token.Token {
+			if f.OutIter {
+				return token.ASSIGN
+			}
+			return token.DEFINE
+		}(),
+		X:    f.X,
+		Body: body,
 	})
 	f.restoreEnv(p)
 	return p

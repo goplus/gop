@@ -306,12 +306,13 @@ type ForPhrase struct {
 	Key, Value *Var // Key, Value may be nil
 	Cond, End  int
 	TypeIn     reflect.Type
+	OutIterVar bool
 	block      *blockCtx
 }
 
 // NewForPhrase creates a new ForPhrase instance.
-func NewForPhrase(in reflect.Type) *ForPhrase {
-	return &ForPhrase{TypeIn: in}
+func NewForPhrase(in reflect.Type, isOutIter ...bool) *ForPhrase {
+	return &ForPhrase{TypeIn: in, OutIterVar: append(isOutIter, false)[0]}
 }
 
 // Comprehension represents a list/map comprehension.
@@ -325,15 +326,27 @@ func NewComprehension(out reflect.Type) *Comprehension {
 	return &Comprehension{TypeOut: out}
 }
 
+func (p *Builder) defineForPhraseVar(src *Var, outIter bool) *Var {
+	if src == nil {
+		return nil
+	}
+	if !outIter {
+		p.DefineVar(src)
+		return src
+	}
+	for i := len(p.vlist); i > 0; i-- {
+		if p.vlist[i-1].name == src.name && p.vlist[i-1].typ == src.typ {
+			src.idx = p.vlist[i-1].idx
+			return src
+		}
+	}
+	return nil
+}
+
 // ForPhrase instr
 func (p *Builder) ForPhrase(f *ForPhrase, key, val *Var, hasExecCtx ...bool) *Builder {
-	f.Key, f.Value = key, val
-	if key != nil {
-		p.DefineVar(key)
-	}
-	if val != nil {
-		p.DefineVar(val)
-	}
+	f.Key = p.defineForPhraseVar(key, f.OutIterVar)
+	f.Value = p.defineForPhraseVar(val, f.OutIterVar)
 	if hasExecCtx != nil && hasExecCtx[0] {
 		f.block = newBlockCtx(p.nestDepth+1, p.varManager)
 		p.varManager = &f.block.varManager

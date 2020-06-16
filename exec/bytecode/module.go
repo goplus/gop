@@ -45,8 +45,8 @@ func (p *Package) NewLabel(name string) exec.Label {
 }
 
 // NewForPhrase creates a new ForPhrase instance.
-func (p *Package) NewForPhrase(in reflect.Type) exec.ForPhrase {
-	return NewForPhrase(in)
+func (p *Package) NewForPhrase(in reflect.Type, isOutIter ...bool) exec.ForPhrase {
+	return NewForPhrase(in, isOutIter...)
 }
 
 // NewComprehension creates a new Comprehension instance.
