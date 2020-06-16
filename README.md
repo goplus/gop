@@ -137,7 +137,7 @@ go install -v ./...
 
 ## Tutorials
 
-* https://github.com/qiniu/goplus/tree/master/tutorial
+See https://github.com/qiniu/goplus/tree/master/tutorial
 
 
 ## Go+ features
