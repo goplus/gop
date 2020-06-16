@@ -122,6 +122,18 @@ gop install ./... # Convert Go+ packages and go install ./...
 
 Go [tutorial/14-Using-goplus-in-Go](https://github.com/qiniu/goplus/tree/master/tutorial/14-Using-goplus-in-Go) to get the source code.
 
+Note: The `gop` command isn't provided currently (in alpha stage). Instead, we provide `qrun` and `qgo` commands.
+
+
+## How to build
+
+Current version: [![GitHub release](https://img.shields.io/github/v/tag/qiniu/goplus.svg?label=release)]
+
+```go
+go get github.com/qiniu/goplus@vX.X.XX
+cd goplus
+go install -v ./...
+```
 
 ## Tutorials
 
