@@ -127,9 +127,9 @@ Note: The `gop` command isn't provided currently (in alpha stage). Instead, we p
 
 ## How to build
 
-Current version: [![GitHub release](https://img.shields.io/github/v/tag/qiniu/goplus.svg?label=release)](https://github.com/qiniu/goplus/releases)
+Current version: [![GitHub release](https://img.shields.io/github/v/tag/qiniu/goplus.svg?label=)](https://github.com/qiniu/goplus/releases)
 
-```go
+```bash
 go get github.com/qiniu/goplus@vX.X.XX
 cd goplus
 go install -v ./...
