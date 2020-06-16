@@ -131,6 +131,7 @@ Current version: [![GitHub release](https://img.shields.io/github/v/tag/qiniu/go
 
 ```bash
 go get github.com/qiniu/goplus@vX.X.XX
+#or: git clone git@github.com:qiniu/goplus.git
 cd goplus
 go install -v ./...
 ```
