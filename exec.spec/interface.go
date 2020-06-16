@@ -353,7 +353,7 @@ type Package interface {
 	NewLabel(name string) Label
 
 	// NewForPhrase creates a new ForPhrase instance.
-	NewForPhrase(in reflect.Type) ForPhrase
+	NewForPhrase(in reflect.Type, isOutIter ...bool) ForPhrase
 
 	// NewComprehension creates a new Comprehension instance.
 	NewComprehension(out reflect.Type) Comprehension
