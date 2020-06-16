@@ -54,41 +54,36 @@ func (c *ForPhrase) exec(p *Context) {
 	}
 }
 
-func (c *ForPhrase) execListRange(data reflect.Value, ctx *Context) {
-	data = reflect.Indirect(data)
-	var n = data.Len()
-	var ip, ipCond, ipEnd = ctx.ip, c.Cond, c.End
-	var key, val = c.Key, c.Value
-	var blockScope = c.block != nil
-	var old savedScopeCtx
-	for i := 0; i < n; i++ {
-		if key != nil {
-			ctx.setVar(key.idx, i)
-		}
-		if val != nil {
-			ctx.setVar(val.idx, data.Index(i).Interface())
-		}
-		if blockScope { // TODO: move out of `for` statement
-			parent := ctx.varScope
-			old = ctx.switchScope(&parent, &c.block.varManager)
-		}
-		if ipCond > 0 {
-			ctx.Exec(ip, ipCond)
-			if ok := ctx.Pop().(bool); ok {
-				ctx.Exec(ipCond, ipEnd)
-			}
-		} else {
-			ctx.Exec(ip, ipEnd)
-		}
-		if blockScope {
-			ctx.restoreScope(old)
-		}
-	}
-	ctx.ip = ipEnd
+type rangeIter interface {
+	Next() bool
+	Key() reflect.Value
+	Value() reflect.Value
 }
 
-func (c *ForPhrase) execMapRange(data reflect.Value, ctx *Context) {
-	var iter = data.MapRange()
+type listRangeIter struct {
+	size   int
+	cursor int
+	pre    int
+	data   reflect.Value
+}
+
+func (l *listRangeIter) Next() bool {
+	next := l.cursor < l.size
+	if next {
+		l.pre = l.cursor
+	}
+	l.cursor++
+	return next
+}
+func (l *listRangeIter) Key() (v reflect.Value) {
+	return reflect.ValueOf(l.pre)
+}
+func (l *listRangeIter) Value() (v reflect.Value) {
+	v = l.data.Index(l.pre)
+	return
+}
+
+func (c *ForPhrase) execRange(iter rangeIter, ctx *Context) {
 	var ip, ipCond, ipEnd = ctx.ip, c.Cond, c.End
 	var key, val = c.Key, c.Value
 	var blockScope = c.block != nil
@@ -117,6 +112,14 @@ func (c *ForPhrase) execMapRange(data reflect.Value, ctx *Context) {
 		}
 	}
 	ctx.ip = ipEnd
+}
+
+func (c *ForPhrase) execListRange(data reflect.Value, ctx *Context) {
+	c.execRange(&listRangeIter{data: reflect.Indirect(data), size: data.Len()}, ctx)
+}
+
+func (c *ForPhrase) execMapRange(data reflect.Value, ctx *Context) {
+	c.execRange(data.MapRange(), ctx)
 }
 
 func execMakeArray(i Instr, p *Context) {
