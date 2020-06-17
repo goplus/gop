@@ -661,33 +661,49 @@ type testData struct {
 }
 
 var testForRangeClauses = map[string]testData{
-	"no_kv_range": {`sum:=0
+	"no_kv_range_list": {`sum:=0
 					for range [1,3,5,7] {
 						sum++
 					}
 					println(sum)
 					`, []string{"4"}},
-	"only_k_range": {`sum:=0
+	"no_kv_range_map": {`sum:=0
+					for range {1:1,2:2,3:3} {
+						sum++
+					}
+					println(sum)
+					`, []string{"3"}},
+	"only_k_range_list": {`sum:=0
 					for k :=range [1,3,5,7]{
 						sum+=k
 					}
 					println(sum)
 					`, []string{"6"}},
-	"both_kv_range": {`sum:=0
+	"only_k_range_map": {`sum:=0
+					for k :=range {1:1,2:4,3:8,4:16}{
+						sum+=k
+					}
+					println(sum)
+					`, []string{"10"}},
+	"only_v_range_list": {`sum:=0
+					for _,v :=range [1,3,5,7]{
+						sum+=v
+					}
+					println(sum)
+					`, []string{"16"}},
+	"only_v_range_map": {`sum:=0
+					for _,v :=range {1:1,2:4,3:8,4:16}{
+						sum+=v
+					}
+					println(sum)
+					`, []string{"29"}},
+	"both_kv_range_list": {`sum:=0
 					for k,v:=range [1,3,5,7]{
 						// 0*1+1*3+2*5+3*7
 						sum+=k*v
 					}
 					println(sum)
 					`, []string{"34"}},
-	// "outside_k_range": {`
-	// 				k:=10
-	// 				v:=10
-	// 				for k,v=range [1,3,5,7]{
-	// 				}
-	// 				println(k)
-	// 				println(v)
-	// 				`, []string{"3", "7"}},
 	"both_kv_range_map": {`sum:=0
 					m:={1:2,2:4,3:8}
 					for k,v:=range m { 
