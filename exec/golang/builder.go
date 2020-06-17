@@ -25,6 +25,7 @@ import (
 	"io"
 	"path"
 	"reflect"
+	"sort"
 	"strconv"
 
 	"github.com/qiniu/goplus/exec.spec"
@@ -167,15 +168,25 @@ func (p *Builder) resolveImports() *ast.GenDecl {
 		return nil
 	}
 	specs := make([]ast.Spec, 0, n)
-	for pkgPath, name := range p.imports {
+
+	// stable sort import path
+	var pkgs []string
+	for k, _ := range p.imports {
+		pkgs = append(pkgs, k)
+	}
+	sort.Strings(pkgs)
+
+	for _, pkg := range pkgs {
+		name := p.imports[pkg]
 		spec := &ast.ImportSpec{
-			Path: StringConst(pkgPath),
+			Path: StringConst(pkg),
 		}
 		if name != "" {
 			spec.Name = Ident(name)
 		}
 		specs = append(specs, spec)
 	}
+
 	return &ast.GenDecl{
 		Tok:   token.IMPORT,
 		Specs: specs,
