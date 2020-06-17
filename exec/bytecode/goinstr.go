@@ -32,6 +32,8 @@ func execListComprehension(i Instr, p *Context) {
 }
 
 func execMapComprehension(i Instr, p *Context) {
+	a, b := 0, 0
+	a += b
 	addr := i & bitsOperand
 	c := p.code.comprehens[addr]
 	base := len(p.data)
@@ -54,32 +56,41 @@ func (c *ForPhrase) exec(p *Context) {
 	}
 }
 
-type rangeIter interface {
-	Next() bool
-	Key() reflect.Value
-	Value() reflect.Value
+func (c *ForPhrase) execListRange(data reflect.Value, ctx *Context) {
+	data = reflect.Indirect(data)
+	var n = data.Len()
+	var ip, ipCond, ipEnd = ctx.ip, c.Cond, c.End
+	var key, val = c.Key, c.Value
+	var blockScope = c.block != nil
+	var old savedScopeCtx
+	for i := 0; i < n; i++ {
+		if key != nil {
+			ctx.setVar(key.idx, i)
+		}
+		if val != nil {
+			ctx.setVar(val.idx, data.Index(i).Interface())
+		}
+		if blockScope { // TODO: move out of `for` statement
+			parent := ctx.varScope
+			old = ctx.switchScope(&parent, &c.block.varManager)
+		}
+		if ipCond > 0 {
+			ctx.Exec(ip, ipCond)
+			if ok := ctx.Pop().(bool); ok {
+				ctx.Exec(ipCond, ipEnd)
+			}
+		} else {
+			ctx.Exec(ip, ipEnd)
+		}
+		if blockScope {
+			ctx.restoreScope(old)
+		}
+	}
+	ctx.ip = ipEnd
 }
 
-type listRangeIter struct {
-	size   int
-	cursor int
-	pre    int
-	data   reflect.Value
-}
-
-func (l *listRangeIter) Next() bool {
-	l.pre = l.cursor
-	l.cursor++
-	return l.pre < l.size
-}
-func (l *listRangeIter) Key() (v reflect.Value) {
-	return reflect.ValueOf(l.pre)
-}
-func (l *listRangeIter) Value() (v reflect.Value) {
-	return l.data.Index(l.pre)
-}
-
-func (c *ForPhrase) execRange(iter rangeIter, ctx *Context) {
+func (c *ForPhrase) execMapRange(data reflect.Value, ctx *Context) {
+	var iter = data.MapRange()
 	var ip, ipCond, ipEnd = ctx.ip, c.Cond, c.End
 	var key, val = c.Key, c.Value
 	var blockScope = c.block != nil
@@ -108,15 +119,6 @@ func (c *ForPhrase) execRange(iter rangeIter, ctx *Context) {
 		}
 	}
 	ctx.ip = ipEnd
-}
-
-func (c *ForPhrase) execListRange(data reflect.Value, ctx *Context) {
-	data = reflect.Indirect(data)
-	c.execRange(&listRangeIter{data: data, size: data.Len()}, ctx)
-}
-
-func (c *ForPhrase) execMapRange(data reflect.Value, ctx *Context) {
-	c.execRange(data.MapRange(), ctx)
 }
 
 func execMakeArray(i Instr, p *Context) {
