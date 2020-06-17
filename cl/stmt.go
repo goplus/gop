@@ -21,6 +21,7 @@ import (
 
 	"github.com/qiniu/goplus/ast"
 	"github.com/qiniu/goplus/exec.spec"
+	"github.com/qiniu/goplus/token"
 	"github.com/qiniu/x/log"
 )
 
@@ -79,6 +80,9 @@ func compileForPhraseStmt(parent *blockCtx, v *ast.ForPhraseStmt) {
 }
 
 func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
+	if v.Tok == token.ASSIGN {
+		log.Panicln("compileRangeStmt with = (for k,v=range x): todo")
+	}
 	noExecCtx := isNoExecCtx(parent, v.Body)
 	f := ast.ForPhrase{
 		For: v.For,

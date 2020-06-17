@@ -33,8 +33,3 @@ for k,x:=range m{
     sum+=x+k
 }
 println("sum==19",sum==19)
-
-x:=100
-for _,x=range arr{
-}
-println("x==7",x==7)

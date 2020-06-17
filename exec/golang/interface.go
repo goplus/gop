@@ -44,8 +44,8 @@ func (p *interfaceImpl) NewLabel(name string) exec.Label {
 }
 
 // NewForPhrase creates a new ForPhrase instance.
-func (p *interfaceImpl) NewForPhrase(in reflect.Type, isOutIter ...bool) exec.ForPhrase {
-	return NewForPhrase(in, isOutIter...)
+func (p *interfaceImpl) NewForPhrase(in reflect.Type) exec.ForPhrase {
+	return NewForPhrase(in)
 }
 
 // NewComprehension creates a new Comprehension instance.
