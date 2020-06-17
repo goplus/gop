@@ -21,6 +21,7 @@ import (
 
 	"github.com/qiniu/goplus/ast"
 	"github.com/qiniu/goplus/exec.spec"
+	"github.com/qiniu/goplus/token"
 	"github.com/qiniu/x/log"
 )
 
@@ -79,9 +80,32 @@ func compileForPhraseStmt(parent *blockCtx, v *ast.ForPhraseStmt) {
 }
 
 func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
-	log.Panicln("compileRangeStmt: todo")
+	if v.Tok == token.ASSIGN {
+		log.Panicln("compileRangeStmt with = (for k,v=range x): todo")
+	}
+	noExecCtx := isNoExecCtx(parent, v.Body)
+	f := ast.ForPhrase{
+		For:    v.For,
+		Key:    toIdent(v.Key),
+		Value:  toIdent(v.Value),
+		TokPos: v.TokPos,
+		Tok:    v.Tok,
+		X:      v.X,
+	}
+	ctx, exprFor := compileForPhrase(parent, f, noExecCtx)
+	exprFor(func() {
+		compileBlockStmtWithout(ctx, v.Body)
+	})
 }
-
+func toIdent(e ast.Expr) *ast.Ident {
+	if e == nil {
+		return nil
+	}
+	if i, ok := e.(*ast.Ident); ok {
+		return i
+	}
+	panic("compileRangeStmt ident expr is required")
+}
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	var defaultBody []ast.Stmt
 	var ctxSw *blockCtx

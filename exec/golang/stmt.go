@@ -281,7 +281,12 @@ func (p *Builder) EndForPhrase(f *ForPhrase) *Builder {
 		}}
 	}
 	p.rhs.Push(&ast.RangeStmt{
-		Key:   toVarExpr(f.Key, unnamedVar),
+		Key: func() ast.Expr {
+			if f.Key == nil && f.Value == nil {
+				return nil
+			}
+			return toVarExpr(f.Key, unnamedVar)
+		}(),
 		Value: toVarExpr(f.Value, nil),
 		Tok:   token.DEFINE,
 		X:     f.X,
