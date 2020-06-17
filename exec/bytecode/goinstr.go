@@ -32,8 +32,6 @@ func execListComprehension(i Instr, p *Context) {
 }
 
 func execMapComprehension(i Instr, p *Context) {
-	a, b := 0, 0
-	a += b
 	addr := i & bitsOperand
 	c := p.code.comprehens[addr]
 	base := len(p.data)

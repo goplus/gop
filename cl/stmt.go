@@ -85,19 +85,9 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 	}
 	noExecCtx := isNoExecCtx(parent, v.Body)
 	f := ast.ForPhrase{
-		For: v.For,
-		Key: func() *ast.Ident {
-			if v.Key == nil {
-				return nil
-			}
-			return v.Key.(*ast.Ident)
-		}(),
-		Value: func() *ast.Ident {
-			if v.Value == nil {
-				return nil
-			}
-			return v.Value.(*ast.Ident)
-		}(),
+		For:    v.For,
+		Key:    toIdent(v.Key),
+		Value:  toIdent(v.Value),
 		TokPos: v.TokPos,
 		Tok:    v.Tok,
 		X:      v.X,
@@ -107,7 +97,15 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 		compileBlockStmtWithout(ctx, v.Body)
 	})
 }
-
+func toIdent(e ast.Expr) *ast.Ident {
+	if e == nil {
+		return nil
+	}
+	if i, ok := e.(*ast.Ident); ok {
+		return i
+	}
+	panic("compileRangeStmt ident expr is required")
+}
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	var defaultBody []ast.Stmt
 	var ctxSw *blockCtx
