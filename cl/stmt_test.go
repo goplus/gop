@@ -680,14 +680,14 @@ var testForRangeClauses = map[string]testData{
 					}
 					println(sum)
 					`, []string{"34"}},
-	"outside_k_range": {`
-					k:=10
-					v:=10
-					for k,v=range [1,3,5,7]{
-					}
-					println(k)
-					println(v)
-					`, []string{"3", "7"}},
+	// "outside_k_range": {`
+	// 				k:=10
+	// 				v:=10
+	// 				for k,v=range [1,3,5,7]{
+	// 				}
+	// 				println(k)
+	// 				println(v)
+	// 				`, []string{"3", "7"}},
 	"both_kv_range_map": {`sum:=0
 					m:={1:2,2:4,3:8}
 					for k,v:=range m { 

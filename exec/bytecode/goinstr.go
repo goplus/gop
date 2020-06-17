@@ -68,19 +68,15 @@ type listRangeIter struct {
 }
 
 func (l *listRangeIter) Next() bool {
-	next := l.cursor < l.size
-	if next {
-		l.pre = l.cursor
-	}
+	l.pre = l.cursor
 	l.cursor++
-	return next
+	return l.pre < l.size
 }
 func (l *listRangeIter) Key() (v reflect.Value) {
 	return reflect.ValueOf(l.pre)
 }
 func (l *listRangeIter) Value() (v reflect.Value) {
-	v = l.data.Index(l.pre)
-	return
+	return l.data.Index(l.pre)
 }
 
 func (c *ForPhrase) execRange(iter rangeIter, ctx *Context) {
@@ -310,13 +306,12 @@ type ForPhrase struct {
 	Key, Value *Var // Key, Value may be nil
 	Cond, End  int
 	TypeIn     reflect.Type
-	OutIterVar bool
 	block      *blockCtx
 }
 
 // NewForPhrase creates a new ForPhrase instance.
-func NewForPhrase(in reflect.Type, isOutIter ...bool) *ForPhrase {
-	return &ForPhrase{TypeIn: in, OutIterVar: append(isOutIter, false)[0]}
+func NewForPhrase(in reflect.Type) *ForPhrase {
+	return &ForPhrase{TypeIn: in}
 }
 
 // Comprehension represents a list/map comprehension.
@@ -330,28 +325,15 @@ func NewComprehension(out reflect.Type) *Comprehension {
 	return &Comprehension{TypeOut: out}
 }
 
-// defineForPhraseVar define new var or re-use in varManager
-func (p *Builder) defineForPhraseVar(src *Var, outIter bool) *Var {
-	if src == nil {
-		return nil
-	}
-	if !outIter {
-		p.DefineVar(src)
-		return src
-	}
-	for i := len(p.vlist); i > 0; i-- {
-		if p.vlist[i-1].name == src.name && p.vlist[i-1].typ == src.typ {
-			src.idx = p.vlist[i-1].idx
-			return src
-		}
-	}
-	return nil
-}
-
 // ForPhrase instr
 func (p *Builder) ForPhrase(f *ForPhrase, key, val *Var, hasExecCtx ...bool) *Builder {
-	f.Key = p.defineForPhraseVar(key, f.OutIterVar)
-	f.Value = p.defineForPhraseVar(val, f.OutIterVar)
+	f.Key, f.Value = key, val
+	if key != nil {
+		p.DefineVar(key)
+	}
+	if val != nil {
+		p.DefineVar(val)
+	}
 	if hasExecCtx != nil && hasExecCtx[0] {
 		f.block = newBlockCtx(p.nestDepth+1, p.varManager)
 		p.varManager = &f.block.varManager
