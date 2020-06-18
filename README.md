@@ -125,6 +125,17 @@ Go [tutorial/14-Using-goplus-in-Go](https://github.com/qiniu/goplus/tree/master/
 Note: The `gop` command isn't provided currently (in alpha stage). Instead, we provide `qrun` and `qgo` commands.
 
 
+## Playground
+
+Playground based on GopherJS:
+* https://qiniu.github.io/goplus-play/
+
+
+## Tutorials
+
+See https://github.com/qiniu/goplus/tree/master/tutorial
+
+
 ## How to build
 
 Current version: [![GitHub release](https://img.shields.io/github/v/tag/qiniu/goplus.svg?label=)](https://github.com/qiniu/goplus/releases)
@@ -135,11 +146,6 @@ go get github.com/qiniu/goplus@vX.X.XX
 cd goplus
 go install -v ./...
 ```
-
-## Tutorials
-
-See https://github.com/qiniu/goplus/tree/master/tutorial
-
 
 ## Go+ features
 
