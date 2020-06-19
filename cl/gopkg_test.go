@@ -295,3 +295,207 @@ import (
 		}
 	}
 }
+
+func TestPkgGoVarMap(t *testing.T) {
+	var I = exec.NewGoPackage("pkg_test_var_map")
+	m1 := make(map[int]string)
+	m1[0] = "hello"
+	m1[1] = "world"
+	m1_1 := make(map[int]string)
+	m1_1[0] = "001"
+	m1_1[1] = "002"
+
+	m2 := make(map[string]int)
+	m2["0"] = 100
+	m2["1"] = 200
+	m2_1 := make(map[string]int)
+	m2_1["0"] = -200
+	m2_1["1"] = -100
+	infos := []testStoreGoVarInfo{
+		{"M1", &m1, m1_1, `pkg.M1[0],pkg.M1[1]="001","002"`},
+		{"M2", &m2, m2_1, `pkg.M2["0"],pkg.M2["1"]=-200,-100`},
+	}
+
+	var vars []exec.GoVarInfo
+	for _, info := range infos {
+		vars = append(vars, I.Var(info.Name, info.Addr))
+	}
+	I.RegisterVars(vars...)
+
+	var testSource string
+	testSource = `package main
+
+import (
+	pkg "pkg_test_var_map"
+)
+
+`
+
+	for _, info := range infos {
+		testSource += fmt.Sprintf("%v\n", info.Gop)
+	}
+
+	// make println
+	for _, info := range infos {
+		testSource += fmt.Sprintf("println(pkg.%v)\n", info.Name)
+	}
+
+	fsTestPkgConst := asttest.NewSingleFileFS("/foo", "bar.gop", testSource)
+	t.Log(testSource)
+
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestPkgConst, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, _, err = newPackage(b, bar, fset)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+
+	for _, info := range infos {
+		v := reflect.ValueOf(info.Addr).Elem().Interface()
+		if !reflect.DeepEqual(v, info.Store) {
+			t.Fatalf("%v, %v(%T), %v(%T)\n", info.Name, v, v, info.Store, info.Store)
+		}
+	}
+}
+
+func TestPkgGoVarSlice(t *testing.T) {
+	var I = exec.NewGoPackage("pkg_test_var_slice")
+
+	var s1 []string
+	s1 = append(s1, "hello")
+	s1 = append(s1, "world")
+	var s1_1 []string
+	s1_1 = append(s1_1, "001")
+	s1_1 = append(s1_1, "002")
+
+	infos := []testStoreGoVarInfo{
+		{"S1", &s1, s1_1, `pkg.S1[0],pkg.S1[1]="001","002"`},
+	}
+
+	var vars []exec.GoVarInfo
+	for _, info := range infos {
+		vars = append(vars, I.Var(info.Name, info.Addr))
+	}
+	I.RegisterVars(vars...)
+
+	var testSource string
+	testSource = `package main
+
+import (
+	pkg "pkg_test_var_slice"
+)
+
+`
+
+	for _, info := range infos {
+		testSource += fmt.Sprintf("%v\n", info.Gop)
+	}
+
+	// make println
+	for _, info := range infos {
+		testSource += fmt.Sprintf("println(pkg.%v)\n", info.Name)
+	}
+
+	fsTestPkgConst := asttest.NewSingleFileFS("/foo", "bar.gop", testSource)
+	t.Log(testSource)
+
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestPkgConst, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, _, err = newPackage(b, bar, fset)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+
+	for _, info := range infos {
+		v := reflect.ValueOf(info.Addr).Elem().Interface()
+		if !reflect.DeepEqual(v, info.Store) {
+			t.Fatalf("%v, %v(%T), %v(%T)\n", info.Name, v, v, info.Store, info.Store)
+		}
+	}
+}
+
+// TODO pkg.array set bug
+func _TestPkgGoVarArray(t *testing.T) {
+	var I = exec.NewGoPackage("pkg_test_var_array")
+	var ar1 [2]string
+	ar1[0] = "hello"
+	ar1[1] = "world"
+	var ar1_1 [2]string
+	ar1_1[0] = "001"
+	ar1_1[1] = "002"
+
+	infos := []testStoreGoVarInfo{
+		{"A1", &ar1, ar1_1, `pkg.A1[0],pkg.A1[1]="001","002"`},
+	}
+
+	var vars []exec.GoVarInfo
+	for _, info := range infos {
+		vars = append(vars, I.Var(info.Name, info.Addr))
+	}
+	I.RegisterVars(vars...)
+
+	var testSource string
+	testSource = `package main
+
+import (
+	pkg "pkg_test_var_array"
+)
+
+`
+
+	for _, info := range infos {
+		testSource += fmt.Sprintf("%v\n", info.Gop)
+	}
+
+	// make println
+	for _, info := range infos {
+		testSource += fmt.Sprintf("println(pkg.%v)\n", info.Name)
+	}
+
+	fsTestPkgConst := asttest.NewSingleFileFS("/foo", "bar.gop", testSource)
+	t.Log(testSource)
+
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestPkgConst, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, _, err = newPackage(b, bar, fset)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+
+	for _, info := range infos {
+		v := reflect.ValueOf(info.Addr).Elem().Interface()
+		if !reflect.DeepEqual(v, info.Store) {
+			t.Fatalf("%v, %v(%T), %v(%T)\n", info.Name, v, v, info.Store, info.Store)
+		}
+	}
+}

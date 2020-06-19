@@ -362,6 +362,7 @@ func isNoExecCtxIdentLHS(ctx *blockCtx, name string, mode compleMode) bool {
 	return true
 }
 
+// TODO
 func isNoExecCtxSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compleMode) bool {
 	if noExecCtx := isNoExecCtxExpr(ctx, v.X); !noExecCtx {
 		return false
