@@ -37,7 +37,7 @@ func main() {
 
 Of course, we don't only do less-typing things.
 
-For example, we  support `list comprehension`, which make data processing easier.
+For example, we  support [list comprehension](https://en.wikipedia.org/wiki/List_comprehension), which make data processing easier.
 
 ```go
 a := [1, 3, 5, 7, 11]
