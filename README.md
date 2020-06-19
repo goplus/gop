@@ -107,7 +107,7 @@ func main() {
 }
 ```
 
-How to compile this exmaple?
+How to compile this example?
 
 ```bash
 gop go tutorial/ # Convert all Go+ packages in tutorial/ into Go packages
