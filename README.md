@@ -6,6 +6,7 @@ GoPlus - The Go+ language for data science
 [![Go Report Card](https://goreportcard.com/badge/github.com/qiniu/goplus)](https://goreportcard.com/report/github.com/qiniu/goplus)
 [![GitHub release](https://img.shields.io/github/v/tag/qiniu/goplus.svg?label=release)](https://github.com/qiniu/goplus/releases)
 [![Coverage Status](https://codecov.io/gh/qiniu/goplus/branch/master/graph/badge.svg)](https://codecov.io/gh/qiniu/goplus)
+[![TODOs](https://badgen.net/https/api.tickgit.com/badgen/github.com/qiniu/goplus)](https://www.tickgit.com/browse?repo=github.com/qiniu/goplus)
 [![GoDoc](https://img.shields.io/badge/Godoc-reference-blue.svg)](https://godoc.org/github.com/qiniu/goplus)
 
 
@@ -306,6 +307,8 @@ Here are [list of Go+ Contributors](https://github.com/qiniu/goplus/wiki/Goplus-
 ```bash
 git config --global user.email XXX@goplus.org
 ```
+
+If you did this, remember to add your `XXX@goplus.org` email to https://github.com/settings/emails.
 
 What does `a contributor of Go+` means? He must meet one of the following conditions: 
 
