@@ -62,7 +62,6 @@ func (c *ForPhrase) execNormalFor(ctx *Context) {
 	var ip, ipInit, ipCond, ipPost, ipEnd = ctx.ip, c.Init, c.Cond, c.Post, c.End
 	var blockScope = c.block != nil
 	var old savedScopeCtx
-
 	if ipInit == 0 {
 		ipInit = ip
 	}
@@ -72,13 +71,14 @@ func (c *ForPhrase) execNormalFor(ctx *Context) {
 	if ipPost == 0 {
 		ipPost = ipCond
 	}
-	ctx.Exec(ip, ipInit)
+	if c.Init > 0 {
+		ctx.Exec(ip, ipInit)
+	}
 	for {
 		if blockScope {
 			parent := ctx.varScope
 			old = ctx.switchScope(&parent, &c.block.varManager)
 		}
-
 		if c.Cond > 0 {
 			ctx.Exec(ipInit, ipCond)
 			if ok := ctx.Pop().(bool); ok {

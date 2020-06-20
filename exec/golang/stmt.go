@@ -256,17 +256,13 @@ func NewComprehension(out reflect.Type) *Comprehension {
 
 // ForPhrase instr
 func (p *Builder) ForPhrase(f *ForPhrase, key, val *Var, hasExecCtx ...bool) *Builder {
-	if f.TypeIn == nil {
-		f.initStmts()
-		f.saveEnv(p)
-		p.scopeCtx = &f.scopeCtx
-		return p
-	}
 	f.initStmts()
 	f.saveEnv(p)
 	p.scopeCtx = &f.scopeCtx
-	f.Key, f.Value = key, val
-	f.X = p.rhs.Pop().(ast.Expr)
+	if f.TypeIn != nil {
+		f.Key, f.Value = key, val
+		f.X = p.rhs.Pop().(ast.Expr)
+	}
 	return p
 }
 

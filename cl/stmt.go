@@ -104,7 +104,6 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	ctx = newNormBlockCtx(ctx)
 	phrase := ctx.NewForPhrase(nil)
 	ctx.out.ForPhrase(phrase, nil, nil, !isNoExecCtx(ctx, v.Body))
-
 	if v.Init != nil {
 		compileStmt(ctx, v.Init)
 		ctx.out.InitForPhrase(phrase)
@@ -114,12 +113,10 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 		checkBool(ctx.infer.Pop())
 		ctx.out.FilterForPhrase(phrase)
 	}
-
 	if v.Post != nil {
 		compileStmt(ctx, v.Post)
 		ctx.out.PostForPhrase(phrase)
 	}
-
 	compileBlockStmtWithout(ctx, v.Body)
 	ctx.out.EndForPhrase(phrase)
 }
