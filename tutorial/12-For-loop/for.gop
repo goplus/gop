@@ -34,3 +34,31 @@ for k,x := range m {
     sum += x+k
 }
 println("sum==19",sum == 19)
+
+// normal for
+sum = 0
+for i :=0 ; i<len(arr) ; i++ {
+    sum += arr[i]
+}
+println("sum==16", sum == 16 , sum)
+
+i := 1
+sum = 0
+for ; i<len(arr) ; i++ {
+    sum += arr[i]
+}
+println("sum==15", sum == 15 , sum)
+
+i = 0
+sum = 0
+for ; i<len(arr) ; i += 2 {
+    sum += arr[i]
+}
+println("sum==6", sum == 6 , sum)
+
+sum = 0
+for i = 0 ; i<len(arr) ; {
+    sum += arr[i]
+    i++
+}
+println("sum==16", sum == 16 , sum)
