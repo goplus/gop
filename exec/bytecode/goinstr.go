@@ -45,6 +45,10 @@ func execForPhrase(i Instr, p *Context) {
 }
 
 func (c *ForPhrase) exec(p *Context) {
+	if c.TypeIn == nil {
+		c.execNormalFor(p)
+		return
+	}
 	data := reflect.ValueOf(p.Pop())
 	switch data.Kind() {
 	case reflect.Map:
@@ -52,6 +56,47 @@ func (c *ForPhrase) exec(p *Context) {
 	default:
 		c.execListRange(data, p)
 	}
+}
+
+func (c *ForPhrase) execNormalFor(ctx *Context) {
+	var ip, ipInit, ipCond, ipPost, ipEnd = ctx.ip, c.Init, c.Cond, c.Post, c.End
+	var blockScope = c.block != nil
+	var old savedScopeCtx
+
+	if ipInit == 0 {
+		ipInit = ip
+	}
+	if ipCond == 0 {
+		ipCond = ipInit
+	}
+	if ipPost == 0 {
+		ipPost = ipCond
+	}
+	ctx.Exec(ip, ipInit)
+	for {
+		if blockScope {
+			parent := ctx.varScope
+			old = ctx.switchScope(&parent, &c.block.varManager)
+		}
+
+		if c.Cond > 0 {
+			ctx.Exec(ipInit, ipCond)
+			if ok := ctx.Pop().(bool); ok {
+				ctx.Exec(ipPost, ipEnd)
+			} else {
+				break
+			}
+		} else {
+			ctx.Exec(ipPost, ipEnd)
+		}
+		if c.Post > 0 {
+			ctx.Exec(ipCond, ipPost)
+		}
+		if blockScope {
+			ctx.restoreScope(old)
+		}
+	}
+	ctx.ip = ipEnd
 }
 
 func (c *ForPhrase) execListRange(data reflect.Value, ctx *Context) {
@@ -303,10 +348,10 @@ func ToValues(args []interface{}) []reflect.Value {
 
 // ForPhrase represents a for range phrase.
 type ForPhrase struct {
-	Key, Value *Var // Key, Value may be nil
-	Cond, End  int
-	TypeIn     reflect.Type
-	block      *blockCtx
+	Key, Value            *Var // Key, Value may be nil
+	Init, Cond, Post, End int
+	TypeIn                reflect.Type
+	block                 *blockCtx
 }
 
 // NewForPhrase creates a new ForPhrase instance.
@@ -346,9 +391,21 @@ func (p *Builder) ForPhrase(f *ForPhrase, key, val *Var, hasExecCtx ...bool) *Bu
 	return p
 }
 
+// InitForPhrase instr
+func (p *Builder) InitForPhrase(f *ForPhrase) *Builder {
+	f.Init = len(p.code.data)
+	return p
+}
+
 // FilterForPhrase instr
 func (p *Builder) FilterForPhrase(f *ForPhrase) *Builder {
 	f.Cond = len(p.code.data)
+	return p
+}
+
+// PostForPhrase instr
+func (p *Builder) PostForPhrase(f *ForPhrase) *Builder {
+	f.Post = len(p.code.data)
 	return p
 }
 

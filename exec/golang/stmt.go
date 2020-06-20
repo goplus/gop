@@ -230,9 +230,10 @@ func (p *blockCtx) restoreEnv(b *Builder) {
 
 // ForPhrase represents a for range phrase.
 type ForPhrase struct {
-	Key, Value *Var // Key, Value may be nil
-	X, Cond    ast.Expr
-	TypeIn     reflect.Type
+	hasInit, hasPost bool
+	Key, Value       *Var // Key, Value may be nil
+	X, Cond          ast.Expr
+	TypeIn           reflect.Type
 	scopeCtx
 	blockCtx
 }
@@ -255,6 +256,12 @@ func NewComprehension(out reflect.Type) *Comprehension {
 
 // ForPhrase instr
 func (p *Builder) ForPhrase(f *ForPhrase, key, val *Var, hasExecCtx ...bool) *Builder {
+	if f.TypeIn == nil {
+		f.initStmts()
+		f.saveEnv(p)
+		p.scopeCtx = &f.scopeCtx
+		return p
+	}
 	f.initStmts()
 	f.saveEnv(p)
 	p.scopeCtx = &f.scopeCtx
@@ -263,14 +270,60 @@ func (p *Builder) ForPhrase(f *ForPhrase, key, val *Var, hasExecCtx ...bool) *Bu
 	return p
 }
 
+// InitForPhrase instr
+func (p *Builder) InitForPhrase(f *ForPhrase) *Builder {
+	f.hasInit = true
+	return p
+}
+
 // FilterForPhrase instr
 func (p *Builder) FilterForPhrase(f *ForPhrase) *Builder {
-	f.Cond = p.rhs.Pop().(ast.Expr)
+	if p.rhs.Len() > 0 {
+		f.Cond = p.rhs.Pop().(ast.Expr)
+	}
+	return p
+}
+
+// PostForPhrase instr
+func (p *Builder) PostForPhrase(f *ForPhrase) *Builder {
+	f.hasPost = true
 	return p
 }
 
 // EndForPhrase instr
 func (p *Builder) EndForPhrase(f *ForPhrase) *Builder {
+	if f.TypeIn == nil {
+		l := f.getStmts(p)
+		forStmt := &ast.ForStmt{Cond: f.Cond, Body: &ast.BlockStmt{List: []ast.Stmt{}}}
+		if len(l) > 0 {
+			cur := 0
+			if f.hasInit {
+				if _, ok := l[0].(*ast.DeclStmt); ok {
+					if len(l) > 1 {
+						forStmt.Init = l[1].(*printer.CommentedStmt).Stmt
+						if v, ok := forStmt.Init.(*ast.AssignStmt); ok {
+							v.Tok = token.DEFINE
+						}
+					}
+					cur++
+				} else {
+					forStmt.Init = l[0].(*printer.CommentedStmt).Stmt
+				}
+				cur++
+			}
+			if f.hasPost {
+				if len(l) > cur {
+					forStmt.Post = l[cur].(*printer.CommentedStmt).Stmt
+					cur++
+				}
+			}
+			forStmt.Body = &ast.BlockStmt{List: l[cur:]}
+		}
+		p.rhs.Push(forStmt)
+		f.restoreEnv(p)
+		return p
+	}
+
 	if p.comprehens != nil {
 		p.comprehens()
 	}
