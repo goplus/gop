@@ -173,9 +173,21 @@ func toVar(v exec.Var) *Var {
 	return v.(*Var)
 }
 
+// InitForPhrase instr
+func (p *iBuilder) InitForPhrase(f exec.ForPhrase) exec.Builder {
+	((*Builder)(p)).InitForPhrase(f.(*ForPhrase))
+	return p
+}
+
 // FilterForPhrase instr
 func (p *iBuilder) FilterForPhrase(f exec.ForPhrase) exec.Builder {
 	((*Builder)(p)).FilterForPhrase(f.(*ForPhrase))
+	return p
+}
+
+// PostForPhrase instr
+func (p *iBuilder) PostForPhrase(f exec.ForPhrase) exec.Builder {
+	((*Builder)(p)).PostForPhrase(f.(*ForPhrase))
 	return p
 }
 

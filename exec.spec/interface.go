@@ -205,8 +205,14 @@ type Builder interface {
 	// ForPhrase instr
 	ForPhrase(f ForPhrase, key, val Var, hasExecCtx ...bool) Builder
 
+	// InitForPhrase instr
+	InitForPhrase(f ForPhrase) Builder
+
 	// FilterForPhrase instr
 	FilterForPhrase(f ForPhrase) Builder
+
+	// PostForPhrase instr
+	PostForPhrase(f ForPhrase) Builder
 
 	// EndForPhrase instr
 	EndForPhrase(f ForPhrase) Builder
