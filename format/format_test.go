@@ -130,7 +130,7 @@ println(1/3r + 2/7r*2)
 
 arr := [1, 3, 5, 7, 11, 13, 17, 19]
 println(arr)
-println([x * x for x <- arr, x > 3])
+println([x*x for x <- arr, x > 3])
 
 m := {"Hi": 1, "Go+": 2}
 println(m)

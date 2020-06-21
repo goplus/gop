@@ -973,13 +973,13 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		p.print(token.RBRACK)
 	case *ast.ListComprehensionExpr:
 		p.print(token.LBRACK)
-		p.expr(x.Elt)
+		p.expr0(x.Elt, depth+1)
 		p.print(blank)
 		p.listForPhrase(x.Lbrack, x.Fors, depth, x.Rbrack)
 		p.print(token.RBRACK)
 	case *ast.MapComprehensionExpr:
 		p.print(token.LBRACE)
-		p.expr(x.Elt)
+		p.expr0(x.Elt, depth+1)
 		p.print(blank)
 		p.listForPhrase(x.Lbrace, x.Fors, depth, x.Rbrace)
 		p.print(token.RBRACE)
