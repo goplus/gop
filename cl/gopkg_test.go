@@ -179,11 +179,11 @@ import (
 
 	testSource += strings.Join(retList, "\n")
 
-	fsTestPkgConst := asttest.NewSingleFileFS("/foo", "bar.gop", testSource)
+	fsTestPkgVar := asttest.NewSingleFileFS("/foo", "bar.gop", testSource)
 	t.Log(testSource)
 
 	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestPkgConst, "/foo", nil, 0)
+	pkgs, err := parser.ParseFSDir(fset, fsTestPkgVar, "/foo", nil, 0)
 	if err != nil || len(pkgs) != 1 {
 		t.Fatal("ParseFSDir failed:", err, len(pkgs))
 	}
@@ -268,11 +268,11 @@ import (
 		testSource += fmt.Sprintf("println(pkg.%v)\n", info.Name)
 	}
 
-	fsTestPkgConst := asttest.NewSingleFileFS("/foo", "bar.gop", testSource)
+	fsTestPkgVar := asttest.NewSingleFileFS("/foo", "bar.gop", testSource)
 	t.Log(testSource)
 
 	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestPkgConst, "/foo", nil, 0)
+	pkgs, err := parser.ParseFSDir(fset, fsTestPkgVar, "/foo", nil, 0)
 	if err != nil || len(pkgs) != 1 {
 		t.Fatal("ParseFSDir failed:", err, len(pkgs))
 	}
@@ -340,11 +340,11 @@ import (
 		testSource += fmt.Sprintf("println(pkg.%v)\n", info.Name)
 	}
 
-	fsTestPkgConst := asttest.NewSingleFileFS("/foo", "bar.gop", testSource)
+	fsTestPkgVar := asttest.NewSingleFileFS("/foo", "bar.gop", testSource)
 	t.Log(testSource)
 
 	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestPkgConst, "/foo", nil, 0)
+	pkgs, err := parser.ParseFSDir(fset, fsTestPkgVar, "/foo", nil, 0)
 	if err != nil || len(pkgs) != 1 {
 		t.Fatal("ParseFSDir failed:", err, len(pkgs))
 	}
@@ -406,11 +406,11 @@ import (
 		testSource += fmt.Sprintf("println(pkg.%v)\n", info.Name)
 	}
 
-	fsTestPkgConst := asttest.NewSingleFileFS("/foo", "bar.gop", testSource)
+	fsTestPkgVar := asttest.NewSingleFileFS("/foo", "bar.gop", testSource)
 	t.Log(testSource)
 
 	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestPkgConst, "/foo", nil, 0)
+	pkgs, err := parser.ParseFSDir(fset, fsTestPkgVar, "/foo", nil, 0)
 	if err != nil || len(pkgs) != 1 {
 		t.Fatal("ParseFSDir failed:", err, len(pkgs))
 	}
@@ -472,11 +472,11 @@ import (
 		testSource += fmt.Sprintf("println(pkg.%v)\n", info.Name)
 	}
 
-	fsTestPkgConst := asttest.NewSingleFileFS("/foo", "bar.gop", testSource)
+	fsTestPkgVar := asttest.NewSingleFileFS("/foo", "bar.gop", testSource)
 	t.Log(testSource)
 
 	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestPkgConst, "/foo", nil, 0)
+	pkgs, err := parser.ParseFSDir(fset, fsTestPkgVar, "/foo", nil, 0)
 	if err != nil || len(pkgs) != 1 {
 		t.Fatal("ParseFSDir failed:", err, len(pkgs))
 	}
