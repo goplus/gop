@@ -82,7 +82,7 @@ func compileForPhraseStmt(parent *blockCtx, v *ast.ForPhraseStmt) {
 }
 
 func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
-	if v.Tok == token.ASSIGN {
+	if v.Tok == token.ASSIGN { // TODO
 		log.Panicln("compileRangeStmt with = (for k,v=range x): todo")
 	}
 	noExecCtx := isNoExecCtx(parent, v.Body)
@@ -91,7 +91,6 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 		Key:    toIdent(v.Key),
 		Value:  toIdent(v.Value),
 		TokPos: v.TokPos,
-		Tok:    v.Tok,
 		X:      v.X,
 	}
 	ctx, exprFor := compileForPhrase(parent, f, noExecCtx)
@@ -100,38 +99,37 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 	})
 }
 
+func toIdent(e ast.Expr) *ast.Ident {
+	if e == nil {
+		return nil
+	}
+	return e.(*ast.Ident)
+}
+
 func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
-	done := ctx.NewLabel("")
-	label := ctx.NewLabel("")
-	var ctxFor *blockCtx
 	if v.Init != nil {
-		ctxFor = newNormBlockCtxEx(ctx, isNoExecCtx(ctx, v.Body))
-		compileStmt(ctxFor, v.Init)
-	} else {
-		ctxFor = ctx
+		ctx = newNormBlockCtx(ctx)
+		compileStmt(ctx, v.Init)
 	}
 	out := ctx.out
+	done := ctx.NewLabel("")
+	label := ctx.NewLabel("")
 	out.Label(label)
-	compileExpr(ctxFor, v.Cond)()
+
+	compileExpr(ctx, v.Cond)()
 	checkBool(ctx.infer.Pop())
 	out.JmpIf(0, done)
-	compileBlockStmtWith(ctxFor, v.Body)
+
+	noExecCtx := isNoExecCtx(ctx, v.Body)
+	ctx = newNormBlockCtxEx(ctx, noExecCtx)
+	compileBlockStmtWith(ctx, v.Body)
 	if v.Post != nil {
-		compileStmt(ctxFor, v.Post)
+		compileStmt(ctx, v.Post)
 	}
 	out.Jmp(label)
 	out.Label(done)
 }
 
-func toIdent(e ast.Expr) *ast.Ident {
-	if e == nil {
-		return nil
-	}
-	if i, ok := e.(*ast.Ident); ok {
-		return i
-	}
-	panic("compileRangeStmt ident expr is required")
-}
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	var defaultBody []ast.Stmt
 	var ctxSw *blockCtx
