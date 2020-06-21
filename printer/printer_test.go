@@ -198,12 +198,12 @@ var data = []entry{
 	{"expressions.input", "expressions.golden", idempotent},
 	{"expressions.input", "expressions.raw", rawFormat | idempotent},
 	{"declarations.input", "declarations.golden", 0},
-	//{"statements.input", "statements.golden", 0},
+	{"statements.input", "statements.golden", 0},
 	{"slow.input", "slow.golden", idempotent},
 	{"complit.input", "complit.x", export},
 }
 
-func TestFiles(t *testing.T) {
+func _TestFiles(t *testing.T) {
 	t.Parallel()
 	for _, e := range data {
 		source := filepath.Join(dataDir, e.source)
