@@ -76,6 +76,27 @@ func TestSource(t *testing.T) {
 var (
 	gop_src1 = `package main
 
+import (
+	"strconv"
+)
+
+func add(x, y string) (int, error) {
+	return strconv.Atoi(x)? + strconv.Atoi(y)?, nil
+}
+
+func addSafe(x, y string) int {
+	return strconv.Atoi(x)?:0 + strconv.Atoi(y)?:0
+}
+
+func test() {
+	println(add("100", "23")!)
+
+	sum, err := add("10", "abc")
+	println(sum, err)
+
+	println(addSafe("10", "abc"))
+}
+
 func main() {
 	println("Hello, Go+")
 	println(1r << 129)

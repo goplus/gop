@@ -983,6 +983,13 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		p.print(blank)
 		p.listForPhrase(x.Lbrace, x.Fors, depth, x.Rbrace)
 		p.print(token.RBRACE)
+	case *ast.ErrWrapExpr:
+		p.expr(x.X)
+		p.print(x.Tok)
+		if x.Default != nil {
+			p.print(token.COLON)
+			p.expr(x.Default)
+		}
 	default:
 		log.Fatalf("unreachable %T\n", x)
 	}
