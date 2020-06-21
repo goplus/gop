@@ -21,6 +21,7 @@ import (
 
 	"github.com/qiniu/goplus/ast"
 	"github.com/qiniu/goplus/exec.spec"
+	"github.com/qiniu/goplus/token"
 	"github.com/qiniu/x/log"
 )
 
@@ -145,6 +146,25 @@ func isNoExecCtxForPhraseStmt(parent *blockCtx, v *ast.ForPhraseStmt) bool {
 	return isNoExecCtx(ctx, v.Body)
 }
 
+func isNoExecCtxRangeStmt(parent *blockCtx, v *ast.RangeStmt) bool {
+	ctx := newBlockCtxWithFlag(parent)
+	for _, e := range []ast.Expr{v.X, v.Key, v.Value} {
+		if e == nil {
+			continue
+		}
+		if v.Tok == token.DEFINE {
+			if id, ok := e.(*ast.Ident); ok {
+				ctx.insertVar(id.Name, exec.TyEmptyInterface, true)
+				continue
+			}
+		}
+		if noExecCtx := isNoExecCtxExpr(parent, e); !noExecCtx {
+			return false
+		}
+	}
+	return isNoExecCtx(ctx, v.Body)
+}
+
 func isNoExecForStmt(parent *blockCtx, v *ast.ForStmt) bool {
 	ctx := newBlockCtxWithFlag(parent)
 	if noExecCtx := isNoExecCtxExpr(ctx, v.Cond); !noExecCtx {
@@ -155,19 +175,6 @@ func isNoExecForStmt(parent *blockCtx, v *ast.ForStmt) bool {
 			continue
 		}
 		if noExecCtx := isNoExecCtxStmt(parent, e); !noExecCtx {
-			return false
-		}
-	}
-	return isNoExecCtx(ctx, v.Body)
-}
-
-func isNoExecCtxRangeStmt(parent *blockCtx, v *ast.RangeStmt) bool {
-	ctx := newBlockCtxWithFlag(parent)
-	for _, e := range []ast.Expr{v.X, v.Key, v.Value} {
-		if e == nil {
-			continue
-		}
-		if noExecCtx := isNoExecCtxExpr(parent, e); !noExecCtx {
 			return false
 		}
 	}

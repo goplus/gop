@@ -274,6 +274,7 @@ func (p *Builder) EndForPhrase(f *ForPhrase) *Builder {
 	if p.comprehens != nil {
 		p.comprehens()
 	}
+	p.endBlockStmt(0)
 	body := &ast.BlockStmt{List: f.getStmts(p)}
 	if f.Cond != nil {
 		body = &ast.BlockStmt{List: []ast.Stmt{
