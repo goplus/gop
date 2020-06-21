@@ -103,21 +103,21 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	done := ctx.NewLabel("")
 	label := ctx.NewLabel("")
-	var ctxIf *blockCtx
+	var ctxFor *blockCtx
 	if v.Init != nil {
-		ctxIf = newNormBlockCtx(ctx)
-		compileStmt(ctxIf, v.Init)
+		ctxFor = newNormBlockCtxEx(ctx, isNoExecCtx(ctx, v.Body))
+		compileStmt(ctxFor, v.Init)
 	} else {
-		ctxIf = ctx
+		ctxFor = ctx
 	}
 	out := ctx.out
 	out.Label(label)
-	compileExpr(ctxIf, v.Cond)()
+	compileExpr(ctxFor, v.Cond)()
 	checkBool(ctx.infer.Pop())
 	out.JmpIf(0, done)
-	compileBlockStmtWith(ctxIf, v.Body)
+	compileBlockStmtWith(ctxFor, v.Body)
 	if v.Post != nil {
-		compileStmt(ctxIf, v.Post)
+		compileStmt(ctxFor, v.Post)
 	}
 	out.Jmp(label)
 	out.Label(done)
