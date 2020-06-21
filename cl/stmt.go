@@ -110,7 +110,6 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	} else {
 		ctxIf = ctx
 	}
-
 	out := ctx.out
 	out.Label(label)
 	compileExpr(ctxIf, v.Cond)()
