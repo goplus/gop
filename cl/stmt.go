@@ -59,6 +59,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileForPhraseStmt(ctx, v)
 	case *ast.RangeStmt:
 		compileRangeStmt(ctx, v)
+	case *ast.ForStmt:
+		compileForStmt(ctx, v)
 	case *ast.BlockStmt:
 		compileBlockStmtWith(ctx, v)
 	case *ast.ReturnStmt:
@@ -97,6 +99,31 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 		compileBlockStmtWithout(ctx, v.Body)
 	})
 }
+
+func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
+	done := ctx.NewLabel("")
+	label := ctx.NewLabel("")
+	var ctxIf *blockCtx
+	if v.Init != nil {
+		ctxIf = newNormBlockCtx(ctx)
+		compileStmt(ctxIf, v.Init)
+	} else {
+		ctxIf = ctx
+	}
+
+	out := ctx.out
+	out.Label(label)
+	compileExpr(ctxIf, v.Cond)()
+	checkBool(ctx.infer.Pop())
+	out.JmpIf(0, done)
+	compileBlockStmtWith(ctxIf, v.Body)
+	if v.Post != nil {
+		compileStmt(ctxIf, v.Post)
+	}
+	out.Jmp(label)
+	out.Label(done)
+}
+
 func toIdent(e ast.Expr) *ast.Ident {
 	if e == nil {
 		return nil
