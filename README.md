@@ -128,6 +128,9 @@ Note: The `gop` command isn't provided currently (in alpha stage). Instead, we p
 
 ## Playground
 
+Playground based on Docker:
+* https://play.goplus.org/
+
 Playground based on GopherJS:
 * https://qiniu.github.io/goplus-play/
 
