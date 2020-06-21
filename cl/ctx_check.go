@@ -52,6 +52,10 @@ func isNoExecCtxStmt(ctx *blockCtx, stmt ast.Stmt) bool {
 		return isNoExecCtxIfStmt(ctx, v)
 	case *ast.ForPhraseStmt:
 		return isNoExecCtxForPhraseStmt(ctx, v)
+	case *ast.RangeStmt:
+		return isNoExecCtxRangeStmt(ctx, v)
+	case *ast.ForStmt:
+		return isNoExecForStmt(ctx, v)
 	case *ast.SwitchStmt:
 		return isNoExecCtxSwitchStmt(ctx, v)
 	case *ast.BlockStmt:
@@ -60,8 +64,6 @@ func isNoExecCtxStmt(ctx *blockCtx, stmt ast.Stmt) bool {
 		return isNoExecCtxExprs(ctx, v.Results)
 	case *ast.IncDecStmt:
 		return isNoExecCtxExpr(ctx, v.X)
-	case *ast.RangeStmt:
-		return isNoExecCtxRangeStmt(ctx, v)
 	default:
 		log.Panicln("isNoExecCtxStmt failed: unknown -", reflect.TypeOf(v))
 	}
@@ -139,6 +141,22 @@ func isNoExecCtxForPhraseStmt(parent *blockCtx, v *ast.ForPhraseStmt) bool {
 	ctx, noExecCtx := isNoExecCtxForPhrase(parent, v.ForPhrase)
 	if !noExecCtx {
 		return false
+	}
+	return isNoExecCtx(ctx, v.Body)
+}
+
+func isNoExecForStmt(parent *blockCtx, v *ast.ForStmt) bool {
+	ctx := newBlockCtxWithFlag(parent)
+	if noExecCtx := isNoExecCtxExpr(ctx, v.Cond); !noExecCtx {
+		return false
+	}
+	for _, e := range []ast.Stmt{v.Init, v.Post} {
+		if e == nil {
+			continue
+		}
+		if noExecCtx := isNoExecCtxStmt(parent, e); !noExecCtx {
+			return false
+		}
 	}
 	return isNoExecCtx(ctx, v.Body)
 }
