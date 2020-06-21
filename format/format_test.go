@@ -83,7 +83,24 @@ func main() {
 
 	arr := [1, 3, 5, 7, 11, 13, 17, 19]
 	println(arr)
-	println([x*x for x <- arr, x > 3])
+
+	e := [[a, b] for a <- arr, a < b for b <- arr, b > 2]
+
+	x := {x: i for i, x <- [1, 3, 5, 7, 11]}
+	y := {x: i for i, x <- [1, 3, 5, 7, 11], i%2 == 1}
+	z := {v: k for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "Go+"}, k > 3}
+
+	m := {"Hi": 1, "Go+": 2}
+	println(m)
+	println({v: k for k, v <- m})
+	println([k for k, _ <- m])
+	println([v for v <- m])
+
+	sum := 0
+	for x <- [1, 3, 5, 7, 11], x > 3 {
+		sum += x
+	}
+	println("sum(5,7,11):", sum)
 }
 `
 	gop_src2 = `
@@ -93,7 +110,7 @@ println(1/3r + 2/7r * 2)
 
 arr := [1, 3, 5, 7, 11, 13, 17, 19]
 println(arr)
-println([x*x for x <- arr, x > 3])
+println([x * x for x <- arr, x > 3])
 
 m := {"Hi": 1, "Go+": 2}
 println(m)

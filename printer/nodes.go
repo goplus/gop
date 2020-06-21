@@ -969,30 +969,42 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		p.expr(x.Value)
 	case *ast.SliceLit:
 		p.print(token.LBRACK)
-		p.exprList(x.Lbrack, x.Elts, 1, commaTerm, x.Rbrack, x.Incomplete)
+		p.exprList(x.Lbrack, x.Elts, depth, commaTerm, x.Rbrack, x.Incomplete)
 		p.print(token.RBRACK)
 	case *ast.ListComprehensionExpr:
 		p.print(token.LBRACK)
 		p.expr(x.Elt)
-		for _, f := range x.Fors {
-			p.print(" ")
-			p.print(token.FOR)
-			if f.Key != nil {
-				p.print(" ")
-				p.expr(f.Key)
-			}
-			if f.Value != nil {
-				p.print(" ")
-				p.expr(f.Value)
-			}
-			p.print(f.Tok)
-			p.expr(f.X)
-			p.print(token.COMMA)
-			p.expr(f.Cond)
-		}
+		p.print(blank)
+		p.listForPhrase(x.Lbrack, x.Fors, depth, x.Rbrack)
 		p.print(token.RBRACK)
+	case *ast.MapComprehensionExpr:
+		p.print(token.LBRACE)
+		p.expr(x.Elt)
+		p.print(blank)
+		p.listForPhrase(x.Lbrace, x.Fors, depth, x.Rbrace)
+		p.print(token.RBRACE)
 	default:
 		log.Fatalf("unreachable %T\n", x)
+	}
+}
+
+func (p *printer) listForPhrase(prev0 token.Pos, list []ast.ForPhrase, depth int, next0 token.Pos) {
+	for i, x := range list {
+		if i > 0 {
+			p.print(blank)
+		}
+		p.print(token.FOR, blank)
+		if x.Key != nil {
+			p.expr(x.Key)
+			p.print(token.COMMA, blank)
+		}
+		p.print(x.Value, blank)
+		p.print(x.TokPos, x.Tok, blank)
+		p.expr(x.X)
+		if x.Cond != nil {
+			p.print(x.Cond.Pos(), token.COMMA, blank)
+			p.expr(x.Cond)
+		}
 	}
 }
 
@@ -1371,9 +1383,23 @@ func (p *printer) stmt(stmt ast.Stmt, nextIsRBrace bool) {
 		p.expr(stripParens(s.X))
 		p.print(blank)
 		p.block(s.Body, 1)
-
+	case *ast.ForPhraseStmt:
+		p.print(token.FOR, blank)
+		if s.Key != nil {
+			p.expr(s.Key)
+			p.print(token.COMMA, blank)
+		}
+		p.expr(s.Value)
+		p.print(blank, s.TokPos, s.Tok, blank)
+		p.expr(s.X)
+		if s.Cond != nil {
+			p.print(s.Cond.Pos(), token.COMMA, blank)
+			p.expr(s.Cond)
+		}
+		p.print(blank)
+		p.block(s.Body, 1)
 	default:
-		panic("unreachable")
+		log.Printf("unreachable %T\n", s)
 	}
 }
 
