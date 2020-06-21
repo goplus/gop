@@ -144,6 +144,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	out := ctx.out
 	done := ctx.NewLabel("")
 	hasTag := v.Tag != nil
+	hasCaseClause := false
 	if hasTag {
 		if len(v.Body.List) == 0 {
 			return
@@ -159,6 +160,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 				defaultBody = c.Body
 				continue
 			}
+			hasCaseClause = true
 			for _, caseExp := range c.List {
 				compileExpr(ctxSw, caseExp)()
 				checkCaseCompare(tag, ctx.infer.Pop(), out)
@@ -180,6 +182,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 				defaultBody = c.Body
 				continue
 			}
+			hasCaseClause = true
 			next := ctx.NewLabel("")
 			last := len(c.List) - 1
 			if last == 0 {
@@ -206,7 +209,9 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	if defaultBody != nil {
 		compileBodyWith(ctxSw, defaultBody)
 	}
-	out.Label(done)
+	if hasCaseClause {
+		out.Label(done)
+	}
 }
 
 func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
