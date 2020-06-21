@@ -2314,7 +2314,7 @@ func (p *parser) parseForPhrase() ast.ForPhrase { // for k, v <- listOrMap, cond
 		p.next()
 		cond = p.parseExpr(false)
 	}
-	return ast.ForPhrase{For: pos, Key: k, Value: v, TokPos: tokPos, X: x, Cond: cond}
+	return ast.ForPhrase{For: pos, Key: k, Value: v, TokPos: tokPos, Tok: token.ARROW, X: x, Cond: cond}
 }
 
 func (p *parser) parseForStmt() ast.Stmt {
