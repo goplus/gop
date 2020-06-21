@@ -42,6 +42,29 @@ func parse(fset *token.FileSet, filename string, src []byte, fragmentOk bool) (
 	}
 
 nopkg:
+	// go+ source, if not find package name, parser auto insert package main and init
+	qsrc := append(append([]byte("package main\n\nfunc init() {"), src...), '\n', '\n', '}')
+	file, err = parser.ParseFile(fset, filename, qsrc, parserMode)
+	if err == nil {
+		sourceAdj = func(src []byte, indent int) []byte {
+			// Cap adjusted indent to zero.
+			if indent < 0 {
+				indent = 0
+			}
+			// Remove the wrapping.
+			// Gofmt has turned the ';' into a '\n'.
+			// There will be two non-blank lines with indent, hence 2*indent.
+			src = src[2*indent+len("package main\n\nfunc init() {"):]
+			// Remove only the "}\n" suffix: remaining whitespaces will be trimmed anyway
+			src = src[:len(src)-len("}\n")]
+			return bytes.TrimSpace(src)
+		}
+		// Gofmt has also indented the function body one level.
+		// Adjust that with indentAdj.
+		indentAdj = -1
+		return
+	}
+
 	// If this is a declaration list, make it a source file
 	// by inserting a package clause.
 	// Insert using a ';', not a newline, so that the line numbers

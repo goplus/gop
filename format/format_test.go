@@ -124,10 +124,9 @@ func main() {
 	println("sum(5,7,11):", sum)
 }
 `
-	gop_src2 = `
-println("Hello, Go+")
+	gop_src2 = `println("Hello, Go+")
 println(1r << 129)
-println(1/3r + 2/7r * 2)
+println(1/3r + 2/7r*2)
 
 arr := [1, 3, 5, 7, 11, 13, 17, 19]
 println(arr)
@@ -141,7 +140,7 @@ println([v for v <- m])`
 )
 
 func TestGopSource(t *testing.T) {
-	src := []byte(gop_src1)
+	src := []byte(gop_src2)
 	res, err := Source(src)
 	if err != nil {
 		t.Fatal("Source failed:", err)
