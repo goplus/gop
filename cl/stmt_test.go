@@ -229,10 +229,6 @@ var fsTestSw3 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	switch t {
 	default:
 		x = 7
-	case "world", "hi":
-		x = 5
-	case "xsw":
-		x = 3
 	}
 	x
 `)
