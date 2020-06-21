@@ -38,3 +38,15 @@ default:
     x = 11
 }
 println("x:", x)
+
+switch{}
+
+switch v {
+default:
+    println(v)
+}
+
+switch y:=v; y {
+default:
+    println(y)
+}
