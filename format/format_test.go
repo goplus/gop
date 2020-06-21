@@ -6,7 +6,6 @@ package format
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"strings"
 	"testing"
@@ -124,7 +123,8 @@ func main() {
 	println("sum(5,7,11):", sum)
 }
 `
-	gop_src2 = `println("Hello, Go+")
+	gop_src2 = `
+println("Hello, Go+")
 println(1r << 129)
 println(1/3r + 2/7r*2)
 
@@ -139,13 +139,21 @@ println([k for k, _ <- m])
 println([v for v <- m])`
 )
 
-func TestGopSource(t *testing.T) {
+func TestGopSourceMain(t *testing.T) {
+	src := []byte(gop_src1)
+	res, err := Source(src)
+	if err != nil {
+		t.Fatal("Source failed:", err)
+	}
+	diff(t, res, src)
+}
+
+func TestGopSourceNoMain(t *testing.T) {
 	src := []byte(gop_src2)
 	res, err := Source(src)
 	if err != nil {
 		t.Fatal("Source failed:", err)
 	}
-	fmt.Println(string(res))
 	diff(t, res, src)
 }
 
