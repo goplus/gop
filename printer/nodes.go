@@ -10,6 +10,7 @@ package printer
 
 import (
 	"bytes"
+	"log"
 	"math"
 	"strconv"
 	"strings"
@@ -966,9 +967,32 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		}
 		p.print(blank)
 		p.expr(x.Value)
-
+	case *ast.SliceLit:
+		p.print(token.LBRACK)
+		p.exprList(x.Lbrack, x.Elts, 1, commaTerm, x.Rbrack, x.Incomplete)
+		p.print(token.RBRACK)
+	case *ast.ListComprehensionExpr:
+		p.print(token.LBRACK)
+		p.expr(x.Elt)
+		for _, f := range x.Fors {
+			p.print(" ")
+			p.print(token.FOR)
+			if f.Key != nil {
+				p.print(" ")
+				p.expr(f.Key)
+			}
+			if f.Value != nil {
+				p.print(" ")
+				p.expr(f.Value)
+			}
+			p.print(f.Tok)
+			p.expr(f.X)
+			p.print(token.COMMA)
+			p.expr(f.Cond)
+		}
+		p.print(token.RBRACK)
 	default:
-		panic("unreachable")
+		log.Fatalf("unreachable %T\n", x)
 	}
 }
 

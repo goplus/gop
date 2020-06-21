@@ -6,6 +6,7 @@ package format
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"strings"
 	"testing"
@@ -69,6 +70,45 @@ func TestSource(t *testing.T) {
 		t.Fatal("Source failed:", err)
 	}
 
+	diff(t, res, src)
+}
+
+var (
+	gop_src1 = `package main
+
+func main() {
+	println("Hello, Go+")
+	println(1r << 129)
+	println(1/3r + 2/7r*2)
+
+	arr := [1, 3, 5, 7, 11, 13, 17, 19]
+	println(arr)
+	println([x*x for x <- arr, x > 3])
+}
+`
+	gop_src2 = `
+println("Hello, Go+")
+println(1r << 129)
+println(1/3r + 2/7r * 2)
+
+arr := [1, 3, 5, 7, 11, 13, 17, 19]
+println(arr)
+println([x*x for x <- arr, x > 3])
+
+m := {"Hi": 1, "Go+": 2}
+println(m)
+println({v: k for k, v <- m})
+println([k for k, _ <- m])
+println([v for v <- m])`
+)
+
+func TestGopSource(t *testing.T) {
+	src := []byte(gop_src1)
+	res, err := Source(src)
+	if err != nil {
+		t.Fatal("Source failed:", err)
+	}
+	fmt.Println(string(res))
 	diff(t, res, src)
 }
 
