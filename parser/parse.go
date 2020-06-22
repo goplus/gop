@@ -130,9 +130,11 @@ func ParseFSFile(fset *token.FileSet, fs FileSystem, filename string, src interf
 	return parseFileEx(fset, filename, code, mode)
 }
 
+// ParseFileEx parses the source code of a single Go+ source file and returns the corresponding ast.File node and source adjust.
 func ParseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (f *ast.File, sourceAdj func(src []byte, indentAdj int) []byte, indentAdj int, err error) {
 	var b []byte
 	var isMod, hasUnnamed bool
+	var pkgAdjust int
 	var fsetTmp = token.NewFileSet()
 	f, err = parseFile(fsetTmp, filename, code, PackageClauseOnly)
 	if err != nil {
@@ -145,6 +147,7 @@ func ParseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (
 			src = src[indent+len("package main\n"):]
 			return bytes.TrimSpace(src)
 		}
+		pkgAdjust = 13
 	} else {
 		isMod = f.Name.Name != "main"
 	}
@@ -164,20 +167,16 @@ func ParseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (
 				} else {
 					copy(b[idx:], "func main(){")
 				}
-				lastSourceAdj := sourceAdj
+				var source []byte
 				sourceAdj = func(_ []byte, indent int) []byte {
-					var src []byte
-					offset := idx
-					if lastSourceAdj != nil {
-						src = lastSourceAdj(code, 0)
-						offset -= 13
-					} else {
-						src = make([]byte, len(code))
-						copy(src, code)
+					if source == nil {
+						source = make([]byte, len(code)-pkgAdjust)
+						offset := idx - pkgAdjust
+						copy(source, code[pkgAdjust:])
+						copy(source[offset:], source[offset+12:])
+						source = source[:len(source)-13]
 					}
-					copy(src[offset:], src[offset+12:])
-					src = src[:len(src)-13]
-					return bytes.TrimSpace(src)
+					return bytes.TrimSpace(source)
 				}
 				indentAdj = -1
 
