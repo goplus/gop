@@ -99,7 +99,7 @@ func Source(src []byte) ([]byte, error) {
 	if sourceAdj == nil {
 		// Complete source file.
 		// TODO(gri) consider doing this always.
-		//ast.SortImports(fset, file)
+		ast.SortImports(fset, file)
 	}
 
 	return format(fset, file, sourceAdj, indentAdj, src, config)
