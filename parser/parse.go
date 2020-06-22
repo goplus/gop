@@ -130,8 +130,8 @@ func ParseFSFile(fset *token.FileSet, fs FileSystem, filename string, src interf
 	return parseFileEx(fset, filename, code, mode)
 }
 
-// ParseFileEx parses the source code of a single Go+ source file and returns the corresponding ast.File node and source adjust.
-func ParseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (f *ast.File, sourceAdj func(src []byte, indentAdj int) []byte, indentAdj int, err error) {
+// ParseSource parses the source code of a single Go+ source file and returns the corresponding ast.File node and source adjust.
+func ParseSource(fset *token.FileSet, filename string, code []byte, mode Mode) (f *ast.File, sourceAdj func(src []byte, indentAdj int) []byte, indentAdj int, err error) {
 	var b []byte
 	var isMod, hasUnnamed bool
 	var pkgAdjust int
