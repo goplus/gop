@@ -125,8 +125,7 @@ func main() {
 	println("sum(5,7,11):", sum)
 }
 `
-	gop_src2 = `
-println("Hello, Go+")
+	gop_src2 = `println("Hello, Go+")
 println(1r << 129)
 println(1/3r + 2/7r*2)
 
@@ -138,7 +137,17 @@ m := {"Hi": 1, "Go+": 2}
 println(m)
 println({v: k for k, v <- m})
 println([k for k, _ <- m])
-println([v for v <- m])`
+println([v for v <- m])
+`
+	gop_src3 = `import (
+	"fmt"
+	"strings"
+)
+
+func main() {
+	x := strings.NewReplacer("?", "!").Replace("hello, world???")
+	fmt.Println("x:", x)
+}`
 )
 
 func TestGopSourceMain(t *testing.T) {
@@ -156,6 +165,16 @@ func TestGopSourceNoMain(t *testing.T) {
 	if err != nil {
 		t.Fatal("Source failed:", err)
 	}
+	diff(t, res, src)
+}
+
+func TestGopSourceImportsNoMain(t *testing.T) {
+	src := []byte(gop_src3)
+	res, err := Source(src)
+	if err != nil {
+		t.Fatal("Source failed:", err)
+	}
+	t.Log(string(res))
 	diff(t, res, src)
 }
 

@@ -130,6 +130,73 @@ func ParseFSFile(fset *token.FileSet, fs FileSystem, filename string, src interf
 	return parseFileEx(fset, filename, code, mode)
 }
 
+func ParseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (f *ast.File, sourceAdj func(src []byte, indentAdj int) []byte, indentAdj int, err error) {
+	var b []byte
+	var isMod, hasUnnamed bool
+	var fsetTmp = token.NewFileSet()
+	f, err = parseFile(fsetTmp, filename, code, PackageClauseOnly)
+	if err != nil {
+		n := len(code)
+		b = make([]byte, n+28)
+		copy(b, "package main;")
+		copy(b[13:], code)
+		code = b[:n+13]
+		sourceAdj = func(src []byte, indent int) []byte {
+			src = src[indent+len("package main\n"):]
+			return bytes.TrimSpace(src)
+		}
+	} else {
+		isMod = f.Name.Name != "main"
+	}
+	_, err = parseFile(fsetTmp, filename, code, mode)
+	if err != nil {
+		if errlist, ok := err.(scanner.ErrorList); ok {
+			if e := errlist[0]; strings.HasPrefix(e.Msg, "expected declaration") {
+				n := len(code)
+				idx := e.Pos.Offset
+				if b == nil {
+					b = make([]byte, n+13)
+					copy(b, code[:idx])
+				}
+				copy(b[idx+12:], code[idx:n])
+				if isMod {
+					copy(b[idx:], "func init(){")
+				} else {
+					copy(b[idx:], "func main(){")
+				}
+				lastSourceAdj := sourceAdj
+				sourceAdj = func(_ []byte, indent int) []byte {
+					var src []byte
+					offset := idx
+					if lastSourceAdj != nil {
+						src = lastSourceAdj(code, 0)
+						offset -= 13
+					} else {
+						src = make([]byte, len(code))
+						copy(src, code)
+					}
+					copy(src[offset:], src[offset+12:])
+					src = src[:len(src)-13]
+					return bytes.TrimSpace(src)
+				}
+				indentAdj = -1
+
+				b[n+12] = '}'
+				code = b[:n+13]
+				hasUnnamed = true
+				err = nil
+			}
+		}
+	}
+	if err == nil {
+		f, err = parseFile(fset, filename, code, mode)
+		if err == nil {
+			f.HasUnnamed = hasUnnamed
+		}
+	}
+	return
+}
+
 func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (f *ast.File, err error) {
 	var b []byte
 	var isMod, hasUnnamed bool

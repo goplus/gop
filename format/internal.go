@@ -11,7 +11,7 @@ package format
 
 import (
 	"bytes"
-	goparser "go/parser"
+	//goparser "go/parser"
 	"strings"
 
 	"github.com/qiniu/goplus/ast"
@@ -28,20 +28,15 @@ func parse(fset *token.FileSet, filename string, src []byte, fragmentOk bool) (
 	indentAdj int,
 	err error,
 ) {
-	_, _err := goparser.ParseFile(fset, filename, src, goparser.PackageClauseOnly)
-	if _err != nil {
-		goto nopkg
-	}
-	// Try as whole source file.
-	file, err = parser.ParseFile(fset, filename, src, parserMode)
+	file, sourceAdj, indentAdj, err = parser.ParseFileEx(fset, filename, src, parserMode)
 	// If there's no error, return. If the error is that the source file didn't begin with a
 	// package line and source fragments are ok, fall through to
 	// try as a source fragment. Stop and return on any other error.
 	if err == nil || !fragmentOk || !strings.Contains(err.Error(), "expected 'package'") {
 		return
 	}
+	return
 
-nopkg:
 	// go+ source, if not find package name, parser auto insert package main and init
 	qsrc := append(append([]byte("package main\n\nfunc init() {"), src...), '\n', '\n', '}')
 	file, err = parser.ParseFile(fset, filename, qsrc, parserMode)
@@ -62,8 +57,8 @@ nopkg:
 		// Gofmt has also indented the function body one level.
 		// Adjust that with indentAdj.
 		indentAdj = -1
-		return
 	}
+	return
 
 	// If this is a declaration list, make it a source file
 	// by inserting a package clause.
