@@ -4,7 +4,7 @@ go:
 install:
   - go get golang.org/x/tools/cmd/goimports
   - go get github.com/golangci/gocyclo/cmd/gocyclo
-  - sudo pip install pre-commit
+  - sudo pip --quiet install pre-commit
 script:
   - export GO111MODULE="on"
   - go install -v ./...
