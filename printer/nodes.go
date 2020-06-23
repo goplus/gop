@@ -969,7 +969,7 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		p.expr(x.Value)
 	case *ast.SliceLit:
 		p.print(token.LBRACK)
-		p.exprList(x.Lbrack, x.Elts, depth, commaTerm, x.Rbrack, x.Incomplete)
+		p.exprList(x.Lbrack, x.Elts, depth+1, commaTerm, x.Rbrack, x.Incomplete)
 		p.print(token.RBRACK)
 	case *ast.ListComprehensionExpr:
 		p.print(token.LBRACK)
