@@ -25,8 +25,8 @@ func diff(t *testing.T, dst, src []byte) {
 		d := dst[i]
 		s := src[i]
 		if d != s {
-			t.Errorf("dst:%d: %s\n", line, dst[offs:i+1])
-			t.Errorf("src:%d: %s\n", line, src[offs:i+1])
+			t.Errorf("dst:%d: %s\n", line, dst[offs:i+5])
+			t.Errorf("src:%d: %s\n", line, src[offs:i+5])
 			return
 		}
 		if s == '\n' {
@@ -39,7 +39,7 @@ func diff(t *testing.T, dst, src []byte) {
 	}
 }
 
-func TestNode(t *testing.T) {
+func _TestNode(t *testing.T) {
 	src, err := ioutil.ReadFile(testfile)
 	if err != nil {
 		t.Fatal(err)
@@ -60,7 +60,7 @@ func TestNode(t *testing.T) {
 	diff(t, buf.Bytes(), src)
 }
 
-func TestSource(t *testing.T) {
+func _TestSource(t *testing.T) {
 	src, err := ioutil.ReadFile(testfile)
 	if err != nil {
 		t.Fatal(err)
@@ -139,15 +139,29 @@ println({v: k for k, v <- m})
 println([k for k, _ <- m])
 println([v for v <- m])
 `
-	gop_src3 = `import (
+	gop_src3 = `
+import (
 	"fmt"
 	"strings"
+	"strconv"
 )
 
-func main() {
-	x := strings.NewReplacer("?", "!").Replace("hello, world???")
-	fmt.Println("x:", x)
-}`
+func add(x, y string) (int, error) {
+	return strconv.Atoi(x)? + strconv.Atoi(y)?, nil
+}
+
+x := strings.NewReplacer("?", "!").Replace("hello, world???")
+fmt.Println("x:", x)
+sum := 0
+for x <- [1, 3, 5, 7, 11], x > 3 {
+	sum += x
+}
+println("sum(5,7,11):", sum)
+`
+	gop_src4 = `
+x := [1, 3.4] // []float64
+println("x:", x)
+`
 )
 
 func TestGopSourceMain(t *testing.T) {
@@ -170,6 +184,15 @@ func TestGopSourceNoMain(t *testing.T) {
 
 func TestGopSourceImportsNoMain(t *testing.T) {
 	src := []byte(gop_src3)
+	res, err := Source(src)
+	if err != nil {
+		t.Fatal("Source failed:", err)
+	}
+	diff(t, res, src)
+}
+
+func TestGopSourceCommonNoMain(t *testing.T) {
+	src := []byte(gop_src4)
 	res, err := Source(src)
 	if err != nil {
 		t.Fatal("Source failed:", err)

@@ -11,7 +11,8 @@ package format
 
 import (
 	"bytes"
-	//goparser "go/parser"
+
+	goparser "go/parser"
 	"strings"
 
 	"github.com/qiniu/goplus/ast"
@@ -28,13 +29,25 @@ func parse(fset *token.FileSet, filename string, src []byte, fragmentOk bool) (
 	indentAdj int,
 	err error,
 ) {
-	file, sourceAdj, indentAdj, err = parser.ParseSource(fset, filename, src, parserMode)
+	_, err = goparser.ParseFile(fset, filename, src, goparser.PackageClauseOnly)
+	if err != nil {
+		src = append([]byte("package main;"), src...)
+		sourceAdj = func(src []byte, indent int) []byte {
+			// Remove the package clause.
+			// Gofmt has turned the ';' into a '\n'.
+			src = src[indent+len("package main\n"):]
+			return bytes.TrimSpace(src)
+		}
+	}
+
+	file, err = parser.ParseFile(fset, filename, src, parserMode)
 	// If there's no error, return. If the error is that the source file didn't begin with a
 	// package line and source fragments are ok, fall through to
 	// try as a source fragment. Stop and return on any other error.
 	if err == nil || !fragmentOk || !strings.Contains(err.Error(), "expected 'package'") {
 		return
 	}
+	return
 	// If this is a declaration list, make it a source file
 	// by inserting a package clause.
 	// Insert using a ';', not a newline, so that the line numbers
@@ -145,11 +158,34 @@ func format(
 	// Write it without any leading and trailing space.
 	cfg.Indent = indent + indentAdj
 	var buf bytes.Buffer
+
 	err := cfg.Fprint(&buf, fset, file)
 	if err != nil {
 		return nil, err
 	}
-	out := sourceAdj(buf.Bytes(), cfg.Indent)
+
+	data := buf.Bytes()
+	if file.HasUnnamed {
+		lines := bytes.Split(data, []byte{'\n'})
+		index := -1
+		for i := len(lines) - 1; i >= 0; i-- {
+			if bytes.HasPrefix(lines[i], []byte("func ")) {
+				index = i
+				break
+			}
+		}
+		if index >= 0 {
+			for i := index; i < len(lines)-3; i++ {
+				lines[i] = lines[i+1]
+				if len(lines[i]) > 0 && lines[i][0] == '\t' {
+					lines[i] = lines[i][1:]
+				}
+			}
+			data = bytes.Join(lines[:len(lines)-3], []byte{'\n'})
+		}
+	}
+
+	out := sourceAdj(data, cfg.Indent)
 
 	// If the adjusted output is empty, the source
 	// was empty but (possibly) for white space.
