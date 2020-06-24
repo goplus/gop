@@ -936,3 +936,84 @@ func TestForIncDecStmt(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
+var testFallthroughClauses = map[string]testData{
+	"switch_all_fallthrough": {`
+					x:=0
+					switch x {
+					case 0:
+						println(x)
+						fallthrough
+					case 1:
+						x++
+						println(x)
+						fallthrough
+					default:
+						x=7
+						println(x)
+					}
+					`, []string{"0", "1", "7"}},
+	"switch_one_fallthrough": {`
+					x:=0
+					switch x {
+					case 0,1,2:
+						println(x)
+						fallthrough
+					case 3:
+						x++
+						println(x)
+					default:
+						x=7
+						println(x)
+					}
+					`, []string{"0", "1"}},
+	"switch__fallthrough": {`
+					x:=0
+					switch x {
+					case 0:
+						println(x)
+						fallthrough
+					case 1:
+						x++
+						println(x)
+					default:
+						x=7
+						println(x)
+					}
+					`, []string{"0", "1"}},
+	"switch_no_tag_fallthrough": {`
+					x:=0
+					switch {
+					case x==0:
+						println(x)
+						fallthrough
+					case x==1:
+						x++
+						println(x)
+						fallthrough
+					default:
+						x=7
+						println(x)
+					}
+					`, []string{"0", "1", "7"}},
+	"switch_no_tag_one_fallthrough": {`
+					x:=0
+					switch x {
+					case 0:
+						println(x)
+						fallthrough
+					case 1:
+						x++
+						println(x)
+					default:
+						x=7
+						println(x)
+					}
+					`, []string{"0", "1"}},
+}
+
+func TestFallthroughStmt(t *testing.T) {
+	for name, clause := range testFallthroughClauses {
+		testForRangeStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
+	}
+}
