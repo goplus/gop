@@ -1,6 +1,6 @@
-a := 1r << 65   // bigint, large than int64
-b := 4/5r       // bigrat
-c := b - 1/3r + 3 * 1/2r
+a := 1r << 65 // bigint, large than int64
+b := 4/5r     // bigrat
+c := b - 1/3r + 3*1/2r
 println(a, b, c)
 
 x := 3.14159265358979323846264338327950288419716939937510582097494459r

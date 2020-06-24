@@ -1,6 +1,6 @@
 import (
-    "fmt"
-    "strings"
+	"fmt"
+	"strings"
 )
 
 x := strings.NewReplacer("?", "!").Replace("hello, world???")
