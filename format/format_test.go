@@ -39,7 +39,7 @@ func diff(t *testing.T, dst, src []byte) {
 	}
 }
 
-func _TestNode(t *testing.T) {
+func TestNode(t *testing.T) {
 	src, err := ioutil.ReadFile(testfile)
 	if err != nil {
 		t.Fatal(err)
@@ -60,7 +60,7 @@ func _TestNode(t *testing.T) {
 	diff(t, buf.Bytes(), src)
 }
 
-func _TestSource(t *testing.T) {
+func TestSource(t *testing.T) {
 	src, err := ioutil.ReadFile(testfile)
 	if err != nil {
 		t.Fatal(err)
@@ -75,7 +75,7 @@ func _TestSource(t *testing.T) {
 }
 
 var (
-	gop_src1 = `package main
+	gop_main_pkg = `package main
 
 import (
 	"strconv"
@@ -125,7 +125,7 @@ func main() {
 	println("sum(5,7,11):", sum)
 }
 `
-	gop_src2 = `println("Hello, Go+")
+	gop_nopkg = `println("Hello, Go+")
 println(1r << 129)
 println(1/3r + 2/7r*2)
 
@@ -139,7 +139,7 @@ println({v: k for k, v <- m})
 println([k for k, _ <- m])
 println([v for v <- m])
 `
-	gop_src3 = `
+	gop_nopkg_import = `
 import (
 	"fmt"
 	"strings"
@@ -158,21 +158,61 @@ for x <- [1, 3, 5, 7, 11], x > 3 {
 }
 println("sum(5,7,11):", sum)
 `
-	gop_src4 = `
+	gop_depth = `
 x := [1, 3.4] // []float64
 println("x:", x)
-`
-	gop_src5 = `
-z = {v+t: k+i for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "Go+"}, k > 3 for i, t <- ["a"]}
+
+z := {v+t: k+i for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "Go+"}, k > 3 for i, t <- ["a"]}
 println(z)
+
+y := 1 + 2*4/5r
+
+a := [1, 3, 5, 7, 11]
+b := [x*x for x <- a, x > 3]
+println(b) // output: [25 49 121]
+
+mapData := {"Hi": 1, "Hello": 2, "Go+": 3}
+reversedMap := {v: k for k, v <- mapData}
+println(reversedMap) // output: map[1:Hi 2:Hello 3:Go+]
 `
-	gop_src6 = `
-	4/5r
-	`
+
+	gop_list_map = `
+a := [x*x for x <- [1, 3, 5, 7, 11]]
+b := [x*x for x <- [1, 3, 5, 7, 11], x > 3]
+c := [i+v for i, v <- [1, 3, 5, 7, 11], i%2 == 1]
+d := [k+","+s for k, s <- {"Hello": "xsw", "Hi": "Go+"}]
+
+arr := [1, 2, 3, 4, 5, 6]
+e := [[a, b] for a <- arr, a < b for b <- arr, b > 2]
+
+x := {x: i for i, x <- [1, 3, 5, 7, 11]}
+y := {x: i for i, x <- [1, 3, 5, 7, 11], i%2 == 1}
+z := {v: k for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "Go+"}, k > 3}
+`
+	gop_err_handle = `
+import (
+	"strconv"
 )
 
-func _TestGopSourceMain(t *testing.T) {
-	src := []byte(gop_src1)
+func add(x, y string) (int, error) {
+	return strconv.Atoi(x)? + strconv.Atoi(y)?, nil
+}
+
+func addSafe(x, y string) int {
+	return strconv.Atoi(x)?:0 + strconv.Atoi(y)?:0
+}
+
+println("add", add("100", "23")!)
+
+sum, err := add("10", "abc")
+println("add", sum, err)
+
+println("addSafe", addSafe("10", "abc"))
+`
+)
+
+func TestGopSourceMain(t *testing.T) {
+	src := []byte(gop_main_pkg)
 	res, err := Source(src)
 	if err != nil {
 		t.Fatal("Source failed:", err)
@@ -180,8 +220,8 @@ func _TestGopSourceMain(t *testing.T) {
 	diff(t, res, src)
 }
 
-func _TestGopSourceNoMain(t *testing.T) {
-	src := []byte(gop_src2)
+func TestGopSourceNoMain(t *testing.T) {
+	src := []byte(gop_nopkg)
 	res, err := Source(src)
 	if err != nil {
 		t.Fatal("Source failed:", err)
@@ -189,8 +229,8 @@ func _TestGopSourceNoMain(t *testing.T) {
 	diff(t, res, src)
 }
 
-func _TestGopSourceImportsNoMain(t *testing.T) {
-	src := []byte(gop_src3)
+func TestGopSourceImportsNoMain(t *testing.T) {
+	src := []byte(gop_nopkg_import)
 	res, err := Source(src)
 	if err != nil {
 		t.Fatal("Source failed:", err)
@@ -198,8 +238,26 @@ func _TestGopSourceImportsNoMain(t *testing.T) {
 	diff(t, res, src)
 }
 
-func TestGopSourceCommonNoMain(t *testing.T) {
-	src := []byte(gop_src6)
+func TestGopSourceDepth(t *testing.T) {
+	src := []byte(gop_depth)
+	res, err := Source(src)
+	if err != nil {
+		t.Fatal("Source failed:", err)
+	}
+	diff(t, res, src)
+}
+
+func TestGopSourceListMap(t *testing.T) {
+	src := []byte(gop_list_map)
+	res, err := Source(src)
+	if err != nil {
+		t.Fatal("Source failed:", err)
+	}
+	diff(t, res, src)
+}
+
+func TestGopSourceErrorHandle(t *testing.T) {
+	src := []byte(gop_err_handle)
 	res, err := Source(src)
 	if err != nil {
 		t.Fatal("Source failed:", err)
