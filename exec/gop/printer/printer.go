@@ -7,13 +7,14 @@ package printer
 
 import (
 	"fmt"
-	"github.com/qiniu/goplus/ast"
-	"github.com/qiniu/goplus/token"
 	"io"
 	"os"
 	"strings"
 	"text/tabwriter"
 	"unicode"
+
+	"github.com/qiniu/goplus/ast"
+	"github.com/qiniu/goplus/token"
 )
 
 const (

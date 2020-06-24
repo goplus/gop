@@ -18,6 +18,7 @@ package format
 
 import (
 	"bytes"
+
 	"github.com/qiniu/goplus/ast"
 	"github.com/qiniu/goplus/exec/gop/printer"
 	"github.com/qiniu/goplus/token"

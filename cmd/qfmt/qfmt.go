@@ -24,8 +24,6 @@ import (
 	//"bytes"
 	"flag"
 	"fmt"
-	"github.com/qiniu/goplus/exec/gop/format"
-	"github.com/qiniu/goplus/scanner"
 	"go/printer"
 	"io"
 	"io/ioutil"
@@ -33,6 +31,9 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/qiniu/goplus/exec/gop/format"
+	"github.com/qiniu/goplus/scanner"
 )
 
 var (
@@ -133,7 +134,6 @@ func processFile(filename string, in io.Reader, out io.Writer, stdin bool) error
 	if err != nil {
 		return err
 	}
-
 
 	if *write {
 		// make a temporary backup before overwriting original

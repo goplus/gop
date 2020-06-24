@@ -10,13 +10,14 @@ package printer
 
 import (
 	"bytes"
-	"github.com/qiniu/goplus/ast"
-	"github.com/qiniu/goplus/token"
 	"math"
 	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/qiniu/goplus/ast"
+	"github.com/qiniu/goplus/token"
 )
 
 // Formatting issues:
@@ -835,7 +836,7 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		p.expr1(x.X, token.HighestPrec, 1)
 		p.expr0(x.Cond, 1)
 		p.print(x.Question, token.QUESTION)
-		p.expr0(x.Y, depth + 1)
+		p.expr0(x.Y, depth+1)
 		p.print(x.Colon, token.COLON)
 		p.expr0(x.Y, depth+1)
 
@@ -843,7 +844,7 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		p.print(x.Lbrack, token.LBRACK)
 		for i, expr := range x.Elts {
 			p.expr0(expr, depth+1)
-			if i < len(x.Elts) - 1{
+			if i < len(x.Elts)-1 {
 				p.print(token.COMMA)
 				p.print(blank)
 			}
@@ -855,13 +856,12 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 			p.expr1(x.Key, token.HighestPrec, 1)
 			p.print(token.COMMA)
 		}
-		
+
 		p.expr0(x.Value, 1)
 		p.print(blank)
 		p.print(x.TokPos, token.ARROW)
 		p.print(blank)
 		p.expr0(x.X, 1)
-
 
 	case *ast.ListComprehensionExpr:
 		p.print(x.Lbrack, token.LBRACK)

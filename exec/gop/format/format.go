@@ -39,6 +39,5 @@ func Source(src []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return format(fset, file,  src, config)
+	return format(fset, file, src, config)
 }
-
