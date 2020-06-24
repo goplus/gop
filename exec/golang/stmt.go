@@ -116,9 +116,20 @@ func (p *Builder) CaseNE(l *Label, arity int) *Builder {
 		})
 		args[0] = x
 	}
+	var cond *ast.BinaryExpr
 	for i := 1; i <= arity; i++ {
-		p.emitStmt(GotoIf(p, &ast.BinaryExpr{X: x, Op: token.NEQ, Y: args[i].(ast.Expr)}, l))
+		if cond == nil {
+			cond = &ast.BinaryExpr{X: x, Op: token.NEQ, Y: args[i].(ast.Expr)}
+		} else {
+			cond = &ast.BinaryExpr{
+				X:     cond,
+				OpPos: 0,
+				Op:    token.LAND,
+				Y:     &ast.BinaryExpr{X: x, Op: token.NEQ, Y: args[i].(ast.Expr)},
+			}
+		}
 	}
+	p.emitStmt(GotoIf(p, cond, l))
 	p.rhs.PopN(arity)
 	return p
 }
