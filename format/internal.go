@@ -13,7 +13,6 @@ import (
 	"bytes"
 
 	goparser "go/parser"
-	"strings"
 
 	"github.com/qiniu/goplus/ast"
 	"github.com/qiniu/goplus/parser"
@@ -44,60 +43,6 @@ func parse(fset *token.FileSet, filename string, src []byte, fragmentOk bool) (
 	// If there's no error, return. If the error is that the source file didn't begin with a
 	// package line and source fragments are ok, fall through to
 	// try as a source fragment. Stop and return on any other error.
-	if err == nil || !fragmentOk || !strings.Contains(err.Error(), "expected 'package'") {
-		return
-	}
-	return
-	// If this is a declaration list, make it a source file
-	// by inserting a package clause.
-	// Insert using a ';', not a newline, so that the line numbers
-	// in psrc match the ones in src.
-	psrc := append([]byte("package p;"), src...)
-	file, err = parser.ParseFile(fset, filename, psrc, parserMode)
-	if err == nil {
-		sourceAdj = func(src []byte, indent int) []byte {
-			// Remove the package clause.
-			// Gofmt has turned the ';' into a '\n'.
-			src = src[indent+len("package p\n"):]
-			return bytes.TrimSpace(src)
-		}
-		return
-	}
-	// If the error is that the source file didn't begin with a
-	// declaration, fall through to try as a statement list.
-	// Stop and return on any other error.
-	if !strings.Contains(err.Error(), "expected declaration") {
-		return
-	}
-
-	// If this is a statement list, make it a source file
-	// by inserting a package clause and turning the list
-	// into a function body. This handles expressions too.
-	// Insert using a ';', not a newline, so that the line numbers
-	// in fsrc match the ones in src. Add an extra '\n' before the '}'
-	// to make sure comments are flushed before the '}'.
-	fsrc := append(append([]byte("package p; func _() {"), src...), '\n', '\n', '}')
-	file, err = parser.ParseFile(fset, filename, fsrc, parserMode)
-	if err == nil {
-		sourceAdj = func(src []byte, indent int) []byte {
-			// Cap adjusted indent to zero.
-			if indent < 0 {
-				indent = 0
-			}
-			// Remove the wrapping.
-			// Gofmt has turned the ';' into a '\n'.
-			// There will be two non-blank lines with indent, hence 2*indent.
-			src = src[2*indent+len("package p\n\nfunc _() {"):]
-			// Remove only the "}\n" suffix: remaining whitespaces will be trimmed anyway
-			src = src[:len(src)-len("}\n")]
-			return bytes.TrimSpace(src)
-		}
-		// Gofmt has also indented the function body one level.
-		// Adjust that with indentAdj.
-		indentAdj = -1
-	}
-
-	// Succeeded, or out of options.
 	return
 }
 
@@ -163,26 +108,6 @@ func format(
 	if err != nil {
 		return nil, err
 	}
-
-	// if file.HasUnnamed {
-	// 	lines := bytes.Split(data, []byte{'\n'})
-	// 	index := -1
-	// 	for i := len(lines) - 1; i >= 0; i-- {
-	// 		if bytes.HasPrefix(lines[i], []byte("func ")) {
-	// 			index = i
-	// 			break
-	// 		}
-	// 	}
-	// 	if index >= 0 {
-	// 		for i := index; i < len(lines)-3; i++ {
-	// 			lines[i] = lines[i+1]
-	// 			if len(lines[i]) > 0 && lines[i][0] == '\t' {
-	// 				lines[i] = lines[i][1:]
-	// 			}
-	// 		}
-	// 		data = bytes.Join(lines[:len(lines)-3], []byte{'\n'})
-	// 	}
-	// }
 
 	out := sourceAdj(buf.Bytes(), cfg.Indent)
 
