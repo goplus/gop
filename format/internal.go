@@ -120,17 +120,7 @@ func format(
 
 	// Otherwise, append output to leading space.
 	res = append(res, out...)
-
-	// Determine and append trailing space.
-	i = len(src)
-	for i > 0 && isSpace(src[i-1]) {
-		i--
-	}
-	if len(src[i:]) == 0 {
-		return append(res, '\n'), nil
-	}
-
-	return append(res, src[i:]...), nil
+	return append(res, '\n'), nil
 }
 
 // isSpace reports whether the byte is a space character.
