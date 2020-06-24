@@ -162,9 +162,16 @@ println("sum(5,7,11):", sum)
 x := [1, 3.4] // []float64
 println("x:", x)
 `
+	gop_src5 = `
+z = {v+t: k+i for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "Go+"}, k > 3 for i, t <- ["a"]}
+println(z)
+`
+	gop_src6 = `
+	4/5r
+	`
 )
 
-func TestGopSourceMain(t *testing.T) {
+func _TestGopSourceMain(t *testing.T) {
 	src := []byte(gop_src1)
 	res, err := Source(src)
 	if err != nil {
@@ -173,7 +180,7 @@ func TestGopSourceMain(t *testing.T) {
 	diff(t, res, src)
 }
 
-func TestGopSourceNoMain(t *testing.T) {
+func _TestGopSourceNoMain(t *testing.T) {
 	src := []byte(gop_src2)
 	res, err := Source(src)
 	if err != nil {
@@ -182,7 +189,7 @@ func TestGopSourceNoMain(t *testing.T) {
 	diff(t, res, src)
 }
 
-func TestGopSourceImportsNoMain(t *testing.T) {
+func _TestGopSourceImportsNoMain(t *testing.T) {
 	src := []byte(gop_src3)
 	res, err := Source(src)
 	if err != nil {
@@ -192,7 +199,7 @@ func TestGopSourceImportsNoMain(t *testing.T) {
 }
 
 func TestGopSourceCommonNoMain(t *testing.T) {
-	src := []byte(gop_src3)
+	src := []byte(gop_src6)
 	res, err := Source(src)
 	if err != nil {
 		t.Fatal("Source failed:", err)

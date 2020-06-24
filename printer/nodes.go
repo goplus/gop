@@ -754,6 +754,9 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 			p.internalError("depth < 1:", depth)
 			depth = 1
 		}
+		if v, ok := x.Y.(*ast.BasicLit); ok && v.Kind == token.RAT {
+			depth++
+		}
 		p.binaryExpr(x, prec1, cutoff(x, depth), depth)
 
 	case *ast.KeyValueExpr:
