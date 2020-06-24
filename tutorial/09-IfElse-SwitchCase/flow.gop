@@ -38,3 +38,29 @@ default:
     x = 11
 }
 println("x:", x)
+
+switch v {
+case "Hello":
+    println(v)
+    fallthrough
+case "hi":
+    println(v)
+    fallthrough
+default:
+    println(v)
+}
+
+z:=3
+switch {
+case z<10:
+      println(z)
+      fallthrough
+case z==10:
+      println(z)
+      fallthrough
+case z>10:
+      println(z)
+      fallthrough
+default:
+    println(z)
+}
