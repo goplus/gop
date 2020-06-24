@@ -136,7 +136,6 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 	if v.Tok == token.FALLTHROUGH {
 		log.Panicln("fallthrough statement out of place")
 	}
-	log.Panicln("unsupported token found", v)
 }
 
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
@@ -239,7 +238,7 @@ func checkFinalFallthrough(body []ast.Stmt) {
 	if len(body) > 0 {
 		bs, ok := body[len(body)-1].(*ast.BranchStmt)
 		if ok && bs.Tok == token.FALLTHROUGH {
-			log.Panic(" cannot fallthrough final case in switch")
+			log.Panic("cannot fallthrough final case in switch")
 		}
 	}
 }

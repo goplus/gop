@@ -1010,10 +1010,46 @@ var testFallthroughClauses = map[string]testData{
 						println(x)
 					}
 					`, []string{"0", "1"}},
+	"switch_fallthrough_panic": {`
+					x:=0
+					switch x {
+					case 0:
+						println(x)
+						fallthrough
+					default:
+						x=7
+						println(x)
+					case 1:
+						x++
+						println(x)
+					fallthrough
+					}
+					`, []string{"0", "1"}},
+	"switch_fallthrough_out_panic": {`
+					x:=0
+					switch x {
+					case 0:
+						println(x)
+						fallthrough
+					default:
+						x=7
+						println(x)
+					case 1:
+						x++
+						println(x)
+					}
+					fallthrough
+					`, []string{"0", "1"}},
 }
 
 func TestFallthroughStmt(t *testing.T) {
 	for name, clause := range testFallthroughClauses {
-		testForRangeStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+				}
+			}()
+			testForRangeStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
+		}()
 	}
 }
