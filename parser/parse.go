@@ -130,6 +130,8 @@ func ParseFSFile(fset *token.FileSet, fs FileSystem, filename string, src interf
 	return parseFileEx(fset, filename, code, mode)
 }
 
+// TODO: should not add package info and init|main function.
+// If do this, parsing will display error line number when error occur
 func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (f *ast.File, err error) {
 	var b []byte
 	var isMod, hasUnnamed bool
@@ -151,7 +153,7 @@ func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (
 				n := len(code)
 				idx := e.Pos.Offset
 				if b == nil {
-					b = make([]byte, n+13)
+					b = make([]byte, n+14)
 					copy(b, code[:idx])
 				}
 				copy(b[idx+12:], code[idx:n])
@@ -160,8 +162,9 @@ func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (
 				} else {
 					copy(b[idx:], "func main(){")
 				}
-				b[n+12] = '}'
-				code = b[:n+13]
+				b[n+12] = '\n'
+				b[n+13] = '}'
+				code = b[:n+14]
 				hasUnnamed = true
 				err = nil
 			}
