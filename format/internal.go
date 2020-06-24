@@ -126,6 +126,10 @@ func format(
 	for i > 0 && isSpace(src[i-1]) {
 		i--
 	}
+	if len(src[i:]) == 0 {
+		return append(res, '\n'), nil
+	}
+
 	return append(res, src[i:]...), nil
 }
 

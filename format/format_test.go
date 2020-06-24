@@ -331,7 +331,7 @@ func TestPartial(t *testing.T) {
 			res, err := String(src)
 			if err != nil {
 				t.Errorf("formatting failed (%s):\n%q", err, src)
-			} else if res != src {
+			} else if strings.TrimSpace(res) != src {
 				t.Errorf("formatting incorrect:\nsource: %q\nresult: %q", src, res)
 			}
 		}
