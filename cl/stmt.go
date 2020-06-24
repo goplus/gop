@@ -149,10 +149,14 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 		}
 		compileExpr(ctxSw, v.Tag)()
 		tag := ctx.infer.Pop()
+		var withoutCheck exec.Label
 		for _, item := range v.Body.List {
 			c, ok := item.(*ast.CaseClause)
 			if !ok {
 				log.Panicln("compile SwitchStmt failed: case clause expected.")
+			}
+			if len(c.Body) == 0 {
+				continue
 			}
 			if c.List == nil { // default
 				defaultBody = c.Body
@@ -164,17 +168,43 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 				checkCaseCompare(tag, ctx.infer.Pop(), out)
 			}
 			next := ctx.NewLabel("")
-			out.CaseNE(next, len(c.List))
-			compileBodyWith(ctxSw, c.Body)
-			out.Jmp(done)
+			bsIdx := len(c.Body) - 1
+			if bs, ok := c.Body[bsIdx].(*ast.BranchStmt); ok && bs.Tok == token.FALLTHROUGH {
+				out.CaseNE(next, len(c.List))
+				if withoutCheck != nil {
+					out.Label(withoutCheck)
+					withoutCheck = nil
+				}
+				if bsIdx != 0 {
+					compileBodyWith(ctxSw, c.Body[0:bsIdx])
+				}
+				withoutCheck = ctx.NewLabel("")
+				out.Jmp(withoutCheck)
+			} else {
+				out.CaseNE(next, len(c.List))
+				if withoutCheck != nil {
+					out.Label(withoutCheck)
+					withoutCheck = nil
+				}
+				compileBodyWith(ctxSw, c.Body)
+				out.Jmp(done)
+			}
 			out.Label(next)
+		}
+		if withoutCheck != nil {
+			out.Label(withoutCheck)
+			withoutCheck = nil
 		}
 		out.Default()
 	} else {
+		var withoutCheck exec.Label
 		for _, item := range v.Body.List {
 			c, ok := item.(*ast.CaseClause)
 			if !ok {
 				log.Panicln("compile SwitchStmt failed: case clause expected.")
+			}
+			if len(c.Body) == 0 {
+				continue
 			}
 			if c.List == nil { // default
 				defaultBody = c.Body
@@ -199,13 +229,33 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 				out.JmpIf(0, next)
 				out.Label(start)
 			}
-			compileBodyWith(ctxSw, c.Body)
-			out.Jmp(done)
+			if withoutCheck != nil {
+				out.Label(withoutCheck)
+				withoutCheck = nil
+			}
+			bsIdx := len(c.Body) - 1
+			if bs, ok := c.Body[bsIdx].(*ast.BranchStmt); ok && bs.Tok == token.FALLTHROUGH {
+				if bsIdx > 0 {
+					compileBodyWith(ctxSw, c.Body[0:bsIdx])
+				}
+				withoutCheck = ctx.NewLabel("")
+				out.Jmp(withoutCheck)
+			} else {
+				compileBodyWith(ctxSw, c.Body)
+				out.Jmp(done)
+			}
 			out.Label(next)
+		}
+		if withoutCheck != nil {
+			out.Label(withoutCheck)
+			withoutCheck = nil
 		}
 	}
 	if defaultBody != nil {
 		compileBodyWith(ctxSw, defaultBody)
+		if hasCaseClause {
+			out.Jmp(done)
+		}
 	}
 	if hasCaseClause {
 		out.Label(done)
