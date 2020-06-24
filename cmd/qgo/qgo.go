@@ -39,6 +39,10 @@ import (
 	_ "github.com/qiniu/goplus/lib"
 )
 
+var (
+	exitCode = 0
+)
+
 func saveGoFile(dir string, code *golang.Code) error {
 	err := os.MkdirAll(dir, 0777)
 	if err != nil {
@@ -100,6 +104,7 @@ func testPkg(dir string) {
 	if err != nil {
 		os.Stderr.Write(gorun)
 		fmt.Fprintf(os.Stderr, "[ERROR] `%v` failed: %v\n", cmd1, err)
+		exitCode = -1
 		return
 	}
 	cmd2 := exec.Command("qrun", "-quiet", dir) // -quiet: don't generate any log
@@ -107,6 +112,7 @@ func testPkg(dir string) {
 	if err != nil {
 		os.Stderr.Write(qrun)
 		fmt.Fprintf(os.Stderr, "[ERROR] `%v` failed: %v\n", cmd2, err)
+		exitCode = -1
 		return
 	}
 	if !bytes.Equal(gorun, qrun) {
@@ -115,6 +121,7 @@ func testPkg(dir string) {
 		os.Stderr.Write(gorun)
 		fmt.Fprintf(os.Stderr, "\n>>> Output of `%v`:\n", cmd2)
 		os.Stderr.Write(qrun)
+		exitCode = -1
 	}
 }
 
@@ -124,6 +131,7 @@ func genGo(dir string, test bool) {
 	fis, err := ioutil.ReadDir(dir)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "ReadDir failed:", err)
+		exitCode = -1
 		return
 	}
 	var isPkg bool
@@ -142,6 +150,7 @@ func genGo(dir string, test bool) {
 		isPkg, err = genGopkg(dir)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "[ERROR] %v\n\n", err)
+			exitCode = -1
 		} else if isPkg && test {
 			fmt.Printf("Testing %s ...\n", dir)
 			testPkg(dir)
@@ -166,6 +175,7 @@ func main() {
 	cl.CallBuiltinOp = bytecode.CallBuiltinOp
 	log.SetFlags(log.Ldefault &^ log.LstdFlags)
 	genGo(dir, *flagTest)
+	os.Exit(exitCode)
 }
 
 // -----------------------------------------------------------------------------
