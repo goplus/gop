@@ -55,27 +55,27 @@ default:
 println("fallthrough with tag")
 switch v {
 case "Hello":
-    println(v)
-    fallthrough
+	println(v)
+	fallthrough
 case "hi":
-    println(v)
-    fallthrough
+	println(v)
+	fallthrough
 default:
-    println(v)
+	println(v)
 }
 println("fallthrough without tag")
 
-z:=3
+z := 3
 switch {
-case z<10:
-      println(z)
-      fallthrough
-case z==10:
-      println(z)
-      fallthrough
-case z>10:
-      println(z)
-      fallthrough
+case z < 10:
+	println(z)
+	fallthrough
+case z == 10:
+	println(z)
+	fallthrough
+case z > 10:
+	println(z)
+	fallthrough
 default:
-    println(z)
+	println(z)
 }

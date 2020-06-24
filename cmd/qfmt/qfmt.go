@@ -32,7 +32,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/qiniu/goplus/exec/gop/format"
+	"github.com/qiniu/goplus/format"
 	"github.com/qiniu/goplus/scanner"
 )
 
