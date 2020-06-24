@@ -970,6 +970,13 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		}
 		p.print(blank)
 		p.expr(x.Value)
+	case *ast.TernaryExpr:
+		p.expr1(x.X, token.HighestPrec, 1)
+		p.expr0(x.Cond, 1)
+		p.print(x.Question, token.QUESTION)
+		p.expr0(x.Y, depth+1)
+		p.print(x.Colon, token.COLON)
+		p.expr0(x.Y, depth+1)
 	case *ast.SliceLit:
 		p.print(token.LBRACK)
 		p.exprList(x.Lbrack, x.Elts, depth+1, commaTerm, x.Rbrack, x.Incomplete)
