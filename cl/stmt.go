@@ -59,6 +59,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileForPhraseStmt(ctx, v)
 	case *ast.RangeStmt:
 		compileRangeStmt(ctx, v)
+	case *ast.ForStmt:
+		compileForStmt(ctx, v)
 	case *ast.BlockStmt:
 		compileBlockStmtWith(ctx, v)
 	case *ast.ReturnStmt:
@@ -80,7 +82,7 @@ func compileForPhraseStmt(parent *blockCtx, v *ast.ForPhraseStmt) {
 }
 
 func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
-	if v.Tok == token.ASSIGN {
+	if v.Tok == token.ASSIGN { // TODO
 		log.Panicln("compileRangeStmt with = (for k,v=range x): todo")
 	}
 	noExecCtx := isNoExecCtx(parent, v.Body)
@@ -89,7 +91,6 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 		Key:    toIdent(v.Key),
 		Value:  toIdent(v.Value),
 		TokPos: v.TokPos,
-		Tok:    v.Tok,
 		X:      v.X,
 	}
 	ctx, exprFor := compileForPhrase(parent, f, noExecCtx)
@@ -97,15 +98,38 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 		compileBlockStmtWithout(ctx, v.Body)
 	})
 }
+
 func toIdent(e ast.Expr) *ast.Ident {
 	if e == nil {
 		return nil
 	}
-	if i, ok := e.(*ast.Ident); ok {
-		return i
-	}
-	panic("compileRangeStmt ident expr is required")
+	return e.(*ast.Ident)
 }
+
+func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
+	if v.Init != nil {
+		ctx = newNormBlockCtx(ctx)
+		compileStmt(ctx, v.Init)
+	}
+	out := ctx.out
+	done := ctx.NewLabel("")
+	label := ctx.NewLabel("")
+	out.Label(label)
+
+	compileExpr(ctx, v.Cond)()
+	checkBool(ctx.infer.Pop())
+	out.JmpIf(0, done)
+
+	noExecCtx := isNoExecCtx(ctx, v.Body)
+	ctx = newNormBlockCtxEx(ctx, noExecCtx)
+	compileBlockStmtWith(ctx, v.Body)
+	if v.Post != nil {
+		compileStmt(ctx, v.Post)
+	}
+	out.Jmp(label)
+	out.Label(done)
+}
+
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	var defaultBody []ast.Stmt
 	var ctxSw *blockCtx
@@ -118,6 +142,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	out := ctx.out
 	done := ctx.NewLabel("")
 	hasTag := v.Tag != nil
+	hasCaseClause := false
 	if hasTag {
 		if len(v.Body.List) == 0 {
 			return
@@ -133,6 +158,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 				defaultBody = c.Body
 				continue
 			}
+			hasCaseClause = true
 			for _, caseExp := range c.List {
 				compileExpr(ctxSw, caseExp)()
 				checkCaseCompare(tag, ctx.infer.Pop(), out)
@@ -154,6 +180,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 				defaultBody = c.Body
 				continue
 			}
+			hasCaseClause = true
 			next := ctx.NewLabel("")
 			last := len(c.List) - 1
 			if last == 0 {
@@ -180,7 +207,9 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	if defaultBody != nil {
 		compileBodyWith(ctxSw, defaultBody)
 	}
-	out.Label(done)
+	if hasCaseClause {
+		out.Label(done)
+	}
 }
 
 func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {

@@ -1,9 +1,15 @@
 language: go
 go:
   - "1.14"
+install:
+  - go get golang.org/x/tools/cmd/goimports
+  - go get github.com/golangci/gocyclo/cmd/gocyclo
+  - sudo pip --quiet install pre-commit
 script:
   - export GO111MODULE="on"
   - go install -v ./...
   - go test -race -coverprofile=coverage.txt -covermode=atomic ./...
+  - find ./ -name "gop_autogen.go"|grep "testdata" |xargs -n 1 go build
+  - pre-commit run --all
 after_success:
   - bash <(curl -s https://codecov.io/bash)

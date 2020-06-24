@@ -229,10 +229,6 @@ var fsTestSw3 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	switch t {
 	default:
 		x = 7
-	case "world", "hi":
-		x = 5
-	case "xsw":
-		x = 3
 	}
 	x
 `)
@@ -574,10 +570,10 @@ func TestClosurev(t *testing.T) {
 
 var fsTestForPhraseStmt = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	sum := 0
-	for x <- [1, 3, 5, 7], x < 7 {
+	for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
 		sum += x
 	}
-	println("sum(1,3,5):", sum)
+	sum
 `)
 
 func TestForPhraseStmt(t *testing.T) {
@@ -597,18 +593,48 @@ func TestForPhraseStmt(t *testing.T) {
 
 	ctx := exec.NewContext(code)
 	ctx.Exec(0, code.Len())
-	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
-	if v := ctx.Get(-1); v != nil {
-		t.Fatal("error:", v)
-	}
-	if v := ctx.Get(-2); v != int(14) {
-		t.Fatal("n:", v)
+	if v := ctx.Get(-1); v != 53 {
+		t.Fatal("v:", v)
 	}
 }
 
 // -----------------------------------------------------------------------------
 
 var fsTestForPhraseStmt2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
+	sum := 0
+	for x <- [1, 3, 5, 7, 11, 13, 17] {
+		if x > 3 {
+			sum += x
+		}
+	}
+	sum
+`)
+
+func TestForPhraseStmt2(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestForPhraseStmt2, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, noExecCtx, err := newPackage(b, bar, fset)
+	if err != nil || !noExecCtx {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := ctx.Get(-1); v != 53 {
+		t.Fatal("v:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+var fsTestForPhraseStmt3 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	fns := make([]func() int, 3)
 	for i, x <- [3, 15, 777] {
 		v := x
@@ -619,9 +645,9 @@ var fsTestForPhraseStmt2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	println("values:", fns[0](), fns[1](), fns[2]())
 `)
 
-func TestForPhraseStmt2(t *testing.T) {
+func TestForPhraseStmt3(t *testing.T) {
 	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestForPhraseStmt2, "/foo", nil, 0)
+	pkgs, err := parser.ParseFSDir(fset, fsTestForPhraseStmt3, "/foo", nil, 0)
 	if err != nil || len(pkgs) != 1 {
 		t.Fatal("ParseFSDir failed:", err, len(pkgs))
 	}
@@ -646,14 +672,6 @@ func TestForPhraseStmt2(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
-
-var fsTestForRangeStmt = asttest.NewSingleFileFS("/foo", "bar.gop", `
-sum := 0
-for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
-    sum += x
-}
-println("sum(5,7,11,13,17):", sum)
-`)
 
 type testData struct {
 	clause string
@@ -720,6 +738,128 @@ func TestRangeStmt(t *testing.T) {
 	}
 }
 
+// -----------------------------------------------------------------------------
+
+var fsTestRangeStmt2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
+	sum := 0
+	for _, x := range [1, 3, 5, 7, 11, 13, 17] {
+		if x > 3 {
+			sum += x
+		}
+	}
+	sum
+`)
+
+func TestRangeStmt2(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestRangeStmt2, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, noExecCtx, err := newPackage(b, bar, fset)
+	if err != nil || !noExecCtx {
+		t.Fatal("Compile failed:", err, "noExecCtx:", noExecCtx)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := ctx.Get(-1); v != 53 {
+		t.Fatal("v:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+var fsTestForStmt = asttest.NewSingleFileFS("/foo", "bar.gop", `
+	fns := make([]func() int, 3)
+	arr := [3, 15, 777]
+	sum := 0
+	for i := 0; i < len(arr); i++ {
+		v := arr[i]
+		fns[i] = func() int {
+			return v
+		}
+	}
+	println("values:", fns[0](), fns[1](), fns[2]())
+`)
+
+func _TestForStmt(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestForStmt, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, noExecCtx, err := newPackage(b, bar, fset)
+	if err != nil || noExecCtx {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != 17 {
+		t.Fatal("n:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+var testNormalForClauses = map[string]testData{
+	"for_with_init_cond_post": {`
+					sum := 0
+					arr := [1,3,5,7]
+					for i := 0; i < len(arr); i++ {
+						sum+=arr[i]
+					}
+					println(sum)
+					`, []string{"16"}},
+	"for_with_cond_post": {`
+					sum := 0
+					arr := [1,3,5,7]
+					i := 0
+					for ; i < len(arr); i+=2 {
+						sum+=arr[i]
+					}
+					println(sum)
+					`, []string{"6"}},
+	"for_with_cond": {`
+					arr := [1,3,5,7]
+					i := 0
+					sum := 0
+					for ; i < len(arr) && i < 2; {
+						sum+=arr[i]
+						i++
+					}
+					println(sum)
+					`, []string{"4"}},
+	"for_with_init_cond": {`
+					arr := [1,3,5,7]
+					sum := 0
+					for i:=0; i < len(arr); {
+						sum+=arr[i]
+						i++
+					}
+					println(sum)
+					`, []string{"16"}},
+}
+
+func TestNormalForStmt(t *testing.T) {
+	for name, clause := range testNormalForClauses {
+		testForRangeStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
+	}
+}
+
 func testForRangeStmt(name string, t *testing.T, fs *asttest.MemFS, wants []string) {
 	var results []string
 	selfPrintln := func(arity int, p *gop.Context) {
@@ -751,11 +891,11 @@ func testForRangeStmt(name string, t *testing.T, fs *asttest.MemFS, wants []stri
 		t.Fatal(name+" :n:", v)
 	}
 	if len(wants) != len(results) {
-		t.Fatal(name+" exec fail", wants, results)
+		t.Fatal(name+" exec fail , wants", wants, ",actually", results)
 	}
 	for i := 0; i < len(wants); i++ {
 		if wants[i]+"\n" != results[i] {
-			t.Fatal(name+" exec fail", wants[i], results[i])
+			t.Fatal(name+" exec fail", i, "result wants", wants[i], ",actually", results[i])
 		}
 	}
 }

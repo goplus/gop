@@ -21,6 +21,8 @@ import (
 	"go/parser"
 	"go/token"
 	"io"
+	"sort"
+	"strconv"
 
 	"github.com/qiniu/goplus/exec/golang/internal/go/printer"
 )
@@ -105,20 +107,30 @@ func Source(src []byte) ([]byte, error) {
 	return format(fset, file, sourceAdj, indentAdj, src, config)
 }
 
+func importPath(s ast.Spec) string {
+	t, err := strconv.Unquote(s.(*ast.ImportSpec).Path.Value)
+	if err == nil {
+		return t
+	}
+	return ""
+}
+
 func hasUnsortedImports(file *ast.File) bool {
+	var importPaths []string
 	for _, d := range file.Decls {
 		d, ok := d.(*ast.GenDecl)
-		if !ok || d.Tok != token.IMPORT {
+		if !ok {
 			// Not an import declaration, so we're done.
 			// Imports are always first.
 			return false
 		}
-		if d.Lparen.IsValid() {
-			// For now assume all grouped imports are unsorted.
-			// TODO(gri) Should check if they are sorted already.
-			return true
+
+		if d.Tok == token.IMPORT {
+			for _, spec := range d.Specs {
+				importPaths = append(importPaths, importPath(spec))
+			}
 		}
-		// Ungrouped imports are sorted by default.
 	}
-	return false
+
+	return !sort.StringsAreSorted(importPaths)
 }

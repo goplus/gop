@@ -18,7 +18,7 @@ What are mainly impressions about Go+?
 - Fully compatible with [the Go language](https://github.com/golang/go).
 - Script-like style, and more readable code for data science than Go.
 
-For example, the following is a legal Go+ source code:
+For example, the following is legal Go+ source code:
 
 ```go
 a := [1, 2, 3.4]
@@ -38,7 +38,7 @@ func main() {
 
 Of course, we don't only do less-typing things.
 
-For example, we  support [list comprehension](https://en.wikipedia.org/wiki/List_comprehension), which make data processing easier.
+For example, we support [list comprehension](https://en.wikipedia.org/wiki/List_comprehension), which makes data processing easier.
 
 ```go
 a := [1, 3, 5, 7, 11]
@@ -77,7 +77,7 @@ fmt.Println("x:", x)
 
 Be interested in how it works? See [Dive into Go+](https://github.com/qiniu/goplus/wiki/Dive-into-Goplus).
 
-**Also, all Go+ packages can be converted into Go packages, and then be imported by Go.**
+**Also, all Go+ packages can be converted into Go packages and imported in Go programs.**
 
 First, let's make a directory named `tutorial/14-Using-goplus-in-Go`.
 
@@ -128,6 +128,9 @@ Note: The `gop` command isn't provided currently (in alpha stage). Instead, we p
 
 ## Playground
 
+Playground based on Docker:
+* https://play.goplus.org/
+
 Playground based on GopherJS:
 * https://qiniu.github.io/goplus-play/
 
@@ -152,7 +155,7 @@ go install -v ./...
 
 ### Bytecode vs. Go code
 
-Go+ suppports bytecode backend or generating Go code.
+Go+ supports bytecode backend and Go code generation.
 
 When we use `gop go` or `gop install` command, it generates Go code to covert Go+ package into Go packages.
 
@@ -185,7 +188,7 @@ Note:
 
 ### Rational number: bigint, bigrat, bigfloat
 
-We introduce rational number as native Go+ types. We use -r suffix as a rational constant. For example, (1r << 200) means a big int whose value is equal to 2<sup>200</sup>. And 4/5r means the rational constant 4/5.
+We introduce the rational number as native Go+ types. We use suffix `r` to denote rational literals. For example, (1r << 200) means a big int whose value is equal to 2<sup>200</sup>. And 4/5r means the rational constant 4/5.
 
 ```go
 a := 1r << 65   // bigint, large than int64
@@ -242,7 +245,7 @@ for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
 
 ### Error handling
 
-We reinvent error handling specification in Go+. We call them `ErrWrap expressions`:
+We reinvent the error handling specification in Go+. We call them `ErrWrap expressions`:
 
 ```go
 expr! // panic if err
@@ -310,8 +313,8 @@ git config --global user.email XXX@goplus.org
 
 If you did this, remember to add your `XXX@goplus.org` email to https://github.com/settings/emails.
 
-What does `a contributor of Go+` means? He must meet one of the following conditions: 
+What does `a contributor to Go+` mean? He must meet one of the following conditions:
 
-* At least one pull request of a full feature implemention.
+* At least one pull request of a full-featured implemention.
 * At least three pull requests of feature enhancements.
 * At least ten pull requests of any kind issues.

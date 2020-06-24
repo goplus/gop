@@ -10,7 +10,6 @@ package printer
 
 import (
 	"bytes"
-	"log"
 	"math"
 	"strconv"
 	"strings"
@@ -754,9 +753,6 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 			p.internalError("depth < 1:", depth)
 			depth = 1
 		}
-		if v, ok := x.Y.(*ast.BasicLit); ok && v.Kind == token.RAT {
-			depth++
-		}
 		p.binaryExpr(x, prec1, cutoff(x, depth), depth)
 
 	case *ast.KeyValueExpr:
@@ -835,6 +831,72 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		p.print(x.Lbrack, token.LBRACK)
 		p.expr0(x.Index, depth+1)
 		p.print(x.Rbrack, token.RBRACK)
+
+	case *ast.TernaryExpr:
+		p.expr1(x.X, token.HighestPrec, 1)
+		p.expr0(x.Cond, 1)
+		p.print(x.Question, token.QUESTION)
+		p.expr0(x.Y, depth+1)
+		p.print(x.Colon, token.COLON)
+		p.expr0(x.Y, depth+1)
+
+	case *ast.SliceLit:
+		p.print(x.Lbrack, token.LBRACK)
+		for i, expr := range x.Elts {
+			p.expr0(expr, depth+1)
+			if i < len(x.Elts)-1 {
+				p.print(token.COMMA)
+				p.print(blank)
+			}
+		}
+		p.print(x.Rbrack, token.RBRACK)
+
+	case *ast.ForPhrase:
+		if x.Key != nil {
+			p.expr1(x.Key, token.HighestPrec, 1)
+			p.print(token.COMMA)
+		}
+
+		p.expr0(x.Value, 1)
+		p.print(blank)
+		p.print(x.TokPos, token.ARROW)
+		p.print(blank)
+		p.expr0(x.X, 1)
+
+	case *ast.ListComprehensionExpr:
+		p.print(x.Lbrack, token.LBRACK)
+		p.expr0(x.Elt, 0)
+		p.print(blank)
+		p.print(token.FOR)
+		p.print(blank)
+
+		for _, For := range x.Fors {
+			p.expr1(&For, token.HighestPrec, 1)
+		}
+
+		p.print(x.Rbrack, token.RBRACK)
+
+	case *ast.MapComprehensionExpr:
+		p.print(x.Lbrace, token.LBRACE)
+		p.expr0(x.Elt, 0)
+		p.print(blank)
+		p.print(token.FOR)
+		p.print(blank)
+
+		for _, For := range x.Fors {
+			p.expr1(&For, token.HighestPrec, 1)
+		}
+
+		p.print(x.Rbrace, token.RBRACE)
+
+	case *ast.ErrWrapExpr:
+		p.expr1(x.X, token.HighestPrec, 1)
+		p.print(token.QUESTION)
+		if x.Default != nil {
+			p.print(blank)
+			p.print(token.COLON)
+			p.print(x.Default)
+		}
 
 	case *ast.SliceExpr:
 		// TODO(gri): should treat[] like parentheses and undo one level of depth
@@ -970,53 +1032,11 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		}
 		p.print(blank)
 		p.expr(x.Value)
-	case *ast.SliceLit:
-		p.print(token.LBRACK)
-		p.exprList(x.Lbrack, x.Elts, depth+1, commaTerm, x.Rbrack, x.Incomplete)
-		p.print(token.RBRACK)
-	case *ast.ListComprehensionExpr:
-		p.print(token.LBRACK)
-		p.expr0(x.Elt, depth+1)
-		p.print(blank)
-		p.listForPhrase(x.Lbrack, x.Fors, depth, x.Rbrack)
-		p.print(token.RBRACK)
-	case *ast.MapComprehensionExpr:
-		p.print(token.LBRACE)
-		p.expr0(x.Elt.Key, depth+1)
-		p.print(x.Elt.Colon, token.COLON, blank)
-		p.expr0(x.Elt.Value, depth+1)
-		p.print(blank)
-		p.listForPhrase(x.Lbrace, x.Fors, depth, x.Rbrace)
-		p.print(token.RBRACE)
-	case *ast.ErrWrapExpr:
-		p.expr(x.X)
-		p.print(x.Tok)
-		if x.Default != nil {
-			p.print(token.COLON)
-			p.expr(x.Default)
-		}
-	default:
-		log.Fatalf("unreachable %T\n", x)
-	}
-}
 
-func (p *printer) listForPhrase(prev0 token.Pos, list []ast.ForPhrase, depth int, next0 token.Pos) {
-	for i, x := range list {
-		if i > 0 {
-			p.print(blank)
-		}
-		p.print(token.FOR, blank)
-		if x.Key != nil {
-			p.expr(x.Key)
-			p.print(token.COMMA, blank)
-		}
-		p.print(x.Value, blank)
-		p.print(x.TokPos, token.ARROW, blank)
-		p.expr(x.X)
-		if x.Cond != nil {
-			p.print(x.Cond.Pos(), token.COMMA, blank)
-			p.expr(x.Cond)
-		}
+	case *ReservedExpr:
+		p.expr(x.Expr)
+	default:
+		panic("unreachable")
 	}
 }
 
@@ -1379,6 +1399,23 @@ func (p *printer) stmt(stmt ast.Stmt, nextIsRBrace bool) {
 		p.controlClause(true, s.Init, s.Cond, s.Post)
 		p.block(s.Body, 1)
 
+	case *ast.ForPhraseStmt:
+		p.print(token.FOR, blank)
+		if s.Key != nil {
+			p.expr(s.Key)
+			if s.Value != nil {
+				// use position of value following the comma as
+				// comma position for correct comment placement
+				p.print(s.Value.Pos(), token.COMMA, blank)
+				p.expr(s.Value)
+			}
+			p.print(blank, s.TokPos)
+		}
+		p.print(token.ARROW, blank)
+		p.expr(stripParens(s.X))
+		p.print(blank)
+		p.block(s.Body, 1)
+
 	case *ast.RangeStmt:
 		p.print(token.FOR, blank)
 		if s.Key != nil {
@@ -1395,24 +1432,25 @@ func (p *printer) stmt(stmt ast.Stmt, nextIsRBrace bool) {
 		p.expr(stripParens(s.X))
 		p.print(blank)
 		p.block(s.Body, 1)
-	case *ast.ForPhraseStmt:
-		p.print(token.FOR, blank)
-		if s.Key != nil {
-			p.expr(s.Key)
-			p.print(token.COMMA, blank)
-		}
-		p.expr(s.Value)
-		p.print(blank, s.TokPos, token.ARROW, blank)
-		p.expr(s.X)
-		if s.Cond != nil {
-			p.print(s.Cond.Pos(), token.COMMA, blank)
-			p.expr(s.Cond)
-		}
-		p.print(blank)
-		p.block(s.Body, 1)
+
+	case *CommentedStmt:
+		p.setComment(s.Comments)
+		p.stmt(s.Stmt, nextIsRBrace)
+
 	default:
-		log.Printf("unreachable %T\n", s)
+		panic("unreachable statement")
 	}
+}
+
+// CommentedStmt represents a statement with comments.
+type CommentedStmt struct {
+	Comments *ast.CommentGroup
+	ast.Stmt
+}
+
+// ReservedExpr represents a reserved expression.
+type ReservedExpr struct {
+	ast.Expr
 }
 
 // ----------------------------------------------------------------------------
@@ -1597,7 +1635,7 @@ func (p *printer) spec(spec ast.Spec, n int, doIndent bool) {
 		p.setComment(s.Comment)
 
 	default:
-		panic("unreachable")
+		panic("unreachable spec")
 	}
 }
 
@@ -1755,71 +1793,6 @@ func (p *printer) funcBody(headerSize int, sep whiteSpace, b *ast.BlockStmt) {
 	p.block(b, 1)
 }
 
-// funcBodyUnnamed prints a function body following a function header of given headerSize.
-// If the header's and block's size are "small enough" and the block is "simple enough",
-// the block is printed on the current line, without line breaks, spaced from the header
-// by sep. Otherwise the block's opening "{" is printed on the current line, followed by
-// lines for the block's statements and its closing "}".
-//
-func (p *printer) funcBodyUnnamed(headerSize int, sep whiteSpace, b *ast.BlockStmt) {
-	if b == nil {
-		return
-	}
-
-	// save/restore composite literal nesting level
-	defer func(level int) {
-		p.level = level
-	}(p.level)
-	p.level = 0
-
-	const maxSize = 100
-	if headerSize+p.bodySize(b, maxSize) <= maxSize {
-		if len(b.List) > 0 {
-			p.print(blank)
-			for i, s := range b.List {
-				if i > 0 {
-					p.print(token.SEMICOLON, blank)
-				}
-				p.stmt(s, i == len(b.List)-1)
-			}
-			p.print(blank)
-		}
-		return
-	}
-
-	if sep != ignore {
-		//	p.print(blank) // always use blank
-	}
-	var line int
-	i := 0
-	for _, s := range b.List {
-		// ignore empty statements (was issue 3466)
-		if _, isEmpty := s.(*ast.EmptyStmt); !isEmpty {
-			// nindent == 0 only for lists of switch/select case clauses;
-			// in those cases each clause is a new section
-			if len(p.output) > 0 && i > 0 {
-				// only print line break if we are not at the beginning of the output
-				// (i.e., we are not printing only a partial program)
-				p.linebreak(p.lineFor(s.Pos()), 1, ignore, p.linesFrom(line) > 0)
-			}
-			p.recordLine(&line)
-			p.stmt(s, true && i == len(b.List)-1)
-			// labeled statements put labels on a separate line, but here
-			// we only care about the start line of the actual statement
-			// without label - correct line for each label
-			for t := s; ; {
-				lt, _ := t.(*ast.LabeledStmt)
-				if lt == nil {
-					break
-				}
-				line++
-				t = lt.Stmt
-			}
-			i++
-		}
-	}
-}
-
 // distanceFrom returns the column difference between p.out (the current output
 // position) and startOutCol. If the start position is on a different line from
 // the current position (or either is unknown), the result is infinity.
@@ -1832,12 +1805,6 @@ func (p *printer) distanceFrom(startPos token.Pos, startOutCol int) int {
 
 func (p *printer) funcDecl(d *ast.FuncDecl) {
 	p.setComment(d.Doc)
-
-	if p.unnamedFuncName == d.Name.Name {
-		p.funcBodyUnnamed(0, vtab, d.Body)
-		return
-	}
-
 	p.print(d.Pos(), token.FUNC, blank)
 	// We have to save startCol only after emitting FUNC; otherwise it can be on a
 	// different line (all whitespace preceding the FUNC is emitted only when the
@@ -1861,7 +1828,7 @@ func (p *printer) decl(decl ast.Decl) {
 	case *ast.FuncDecl:
 		p.funcDecl(d)
 	default:
-		panic("unreachable")
+		panic("unreachable decl")
 	}
 }
 
@@ -1907,17 +1874,9 @@ func (p *printer) declList(list []ast.Decl) {
 }
 
 func (p *printer) file(src *ast.File) {
-	if src.HasUnnamed {
-		if src.Name.Name == "main" {
-			p.unnamedFuncName = "main"
-		} else {
-			p.unnamedFuncName = "init"
-		}
-	}
 	p.setComment(src.Doc)
 	p.print(src.Pos(), token.PACKAGE, blank)
 	p.expr(src.Name)
 	p.declList(src.Decls)
 	p.print(newline)
-	p.unnamedFuncName = ""
 }

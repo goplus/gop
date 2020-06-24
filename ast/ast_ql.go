@@ -346,13 +346,22 @@ func (*ErrWrapExpr) exprNode() {}
 
 // ForPhrase represents `for k, v <- listOrMap`
 type ForPhrase struct {
-	For        token.Pos   // position of "for" keyword
-	Key, Value *Ident      // Key may be nil
-	TokPos     token.Pos   // position of "<-" operator
-	Tok        token.Token // ARROW, ASSIGN, DEFINE
-	X          Expr        // value to range over, must be list or map
-	Cond       Expr        // value filter, can be nil
+	For        token.Pos // position of "for" keyword
+	Key, Value *Ident    // Key may be nil
+	TokPos     token.Pos // position of "<-" operator
+	X          Expr      // value to range over, must be list or map
+	Cond       Expr      // value filter, can be nil
 }
+
+func (p *ForPhrase) Pos() token.Pos {
+	return p.For
+}
+
+func (p *ForPhrase) End() token.Pos {
+	return p.X.End()
+}
+
+func (p *ForPhrase) exprNode() {}
 
 // ListComprehensionExpr represents `[expr for k1, v1 <- listOrMap1, cond1 ...]`
 type ListComprehensionExpr struct {
