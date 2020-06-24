@@ -353,6 +353,16 @@ type ForPhrase struct {
 	Cond       Expr      // value filter, can be nil
 }
 
+func (p *ForPhrase) Pos() token.Pos {
+	return p.For
+}
+
+func (p *ForPhrase) End() token.Pos {
+	return p.X.End()
+}
+
+func (p *ForPhrase) exprNode() {}
+
 // ListComprehensionExpr represents `[expr for k1, v1 <- listOrMap1, cond1 ...]`
 type ListComprehensionExpr struct {
 	Lbrack token.Pos // position of "["

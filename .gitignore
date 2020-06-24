@@ -31,3 +31,5 @@ gop_autogen.go
 
 .vscode
 .idea
+
+cmd/qfmt/qfmt
