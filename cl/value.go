@@ -390,7 +390,7 @@ func boundConst(v interface{}, t reflect.Type) interface{} {
 		}
 	} else if kind >= exec.BigInt {
 		val := reflect.New(t.Elem())
-		skind := sval.Kind()
+		skind := kindOf(st)
 		switch {
 		case skind >= reflect.Int && skind <= reflect.Int64:
 			sval = sval.Convert(exec.TyInt64)
