@@ -164,28 +164,27 @@ func format(
 		return nil, err
 	}
 
-	data := buf.Bytes()
-	if file.HasUnnamed {
-		lines := bytes.Split(data, []byte{'\n'})
-		index := -1
-		for i := len(lines) - 1; i >= 0; i-- {
-			if bytes.HasPrefix(lines[i], []byte("func ")) {
-				index = i
-				break
-			}
-		}
-		if index >= 0 {
-			for i := index; i < len(lines)-3; i++ {
-				lines[i] = lines[i+1]
-				if len(lines[i]) > 0 && lines[i][0] == '\t' {
-					lines[i] = lines[i][1:]
-				}
-			}
-			data = bytes.Join(lines[:len(lines)-3], []byte{'\n'})
-		}
-	}
+	// if file.HasUnnamed {
+	// 	lines := bytes.Split(data, []byte{'\n'})
+	// 	index := -1
+	// 	for i := len(lines) - 1; i >= 0; i-- {
+	// 		if bytes.HasPrefix(lines[i], []byte("func ")) {
+	// 			index = i
+	// 			break
+	// 		}
+	// 	}
+	// 	if index >= 0 {
+	// 		for i := index; i < len(lines)-3; i++ {
+	// 			lines[i] = lines[i+1]
+	// 			if len(lines[i]) > 0 && lines[i][0] == '\t' {
+	// 				lines[i] = lines[i][1:]
+	// 			}
+	// 		}
+	// 		data = bytes.Join(lines[:len(lines)-3], []byte{'\n'})
+	// 	}
+	// }
 
-	out := sourceAdj(data, cfg.Indent)
+	out := sourceAdj(buf.Bytes(), cfg.Indent)
 
 	// If the adjusted output is empty, the source
 	// was empty but (possibly) for white space.

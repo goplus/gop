@@ -90,6 +90,8 @@ type printer struct {
 	// Cache of most recently computed line position.
 	cachedPos  token.Pos
 	cachedLine int // line corresponding to cachedPos
+
+	unnamedFuncName string // ast.File HasUnnamed
 }
 
 func (p *printer) init(cfg *Config, fset *token.FileSet, nodeSizes map[ast.Node]int) {

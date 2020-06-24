@@ -1750,6 +1750,71 @@ func (p *printer) funcBody(headerSize int, sep whiteSpace, b *ast.BlockStmt) {
 	p.block(b, 1)
 }
 
+// funcBodyUnnamed prints a function body following a function header of given headerSize.
+// If the header's and block's size are "small enough" and the block is "simple enough",
+// the block is printed on the current line, without line breaks, spaced from the header
+// by sep. Otherwise the block's opening "{" is printed on the current line, followed by
+// lines for the block's statements and its closing "}".
+//
+func (p *printer) funcBodyUnnamed(headerSize int, sep whiteSpace, b *ast.BlockStmt) {
+	if b == nil {
+		return
+	}
+
+	// save/restore composite literal nesting level
+	defer func(level int) {
+		p.level = level
+	}(p.level)
+	p.level = 0
+
+	const maxSize = 100
+	if headerSize+p.bodySize(b, maxSize) <= maxSize {
+		if len(b.List) > 0 {
+			p.print(blank)
+			for i, s := range b.List {
+				if i > 0 {
+					p.print(token.SEMICOLON, blank)
+				}
+				p.stmt(s, i == len(b.List)-1)
+			}
+			p.print(blank)
+		}
+		return
+	}
+
+	if sep != ignore {
+		//	p.print(blank) // always use blank
+	}
+	var line int
+	i := 0
+	for _, s := range b.List {
+		// ignore empty statements (was issue 3466)
+		if _, isEmpty := s.(*ast.EmptyStmt); !isEmpty {
+			// nindent == 0 only for lists of switch/select case clauses;
+			// in those cases each clause is a new section
+			if len(p.output) > 0 && i > 0 {
+				// only print line break if we are not at the beginning of the output
+				// (i.e., we are not printing only a partial program)
+				p.linebreak(p.lineFor(s.Pos()), 1, ignore, p.linesFrom(line) > 0)
+			}
+			p.recordLine(&line)
+			p.stmt(s, true && i == len(b.List)-1)
+			// labeled statements put labels on a separate line, but here
+			// we only care about the start line of the actual statement
+			// without label - correct line for each label
+			for t := s; ; {
+				lt, _ := t.(*ast.LabeledStmt)
+				if lt == nil {
+					break
+				}
+				line++
+				t = lt.Stmt
+			}
+			i++
+		}
+	}
+}
+
 // distanceFrom returns the column difference between p.out (the current output
 // position) and startOutCol. If the start position is on a different line from
 // the current position (or either is unknown), the result is infinity.
@@ -1762,6 +1827,12 @@ func (p *printer) distanceFrom(startPos token.Pos, startOutCol int) int {
 
 func (p *printer) funcDecl(d *ast.FuncDecl) {
 	p.setComment(d.Doc)
+
+	if p.unnamedFuncName == d.Name.Name {
+		p.funcBodyUnnamed(0, vtab, d.Body)
+		return
+	}
+
 	p.print(d.Pos(), token.FUNC, blank)
 	// We have to save startCol only after emitting FUNC; otherwise it can be on a
 	// different line (all whitespace preceding the FUNC is emitted only when the
@@ -1831,9 +1902,17 @@ func (p *printer) declList(list []ast.Decl) {
 }
 
 func (p *printer) file(src *ast.File) {
+	if src.HasUnnamed {
+		if src.Name.Name == "main" {
+			p.unnamedFuncName = "main"
+		} else {
+			p.unnamedFuncName = "init"
+		}
+	}
 	p.setComment(src.Doc)
 	p.print(src.Pos(), token.PACKAGE, blank)
 	p.expr(src.Name)
 	p.declList(src.Decls)
 	p.print(newline)
+	p.unnamedFuncName = ""
 }

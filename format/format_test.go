@@ -192,12 +192,11 @@ func TestGopSourceImportsNoMain(t *testing.T) {
 }
 
 func TestGopSourceCommonNoMain(t *testing.T) {
-	src := []byte(gop_src4)
+	src := []byte(gop_src3)
 	res, err := Source(src)
 	if err != nil {
 		t.Fatal("Source failed:", err)
 	}
-	t.Log(string(res))
 	diff(t, res, src)
 }
 
