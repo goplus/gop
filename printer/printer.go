@@ -90,6 +90,8 @@ type printer struct {
 	// Cache of most recently computed line position.
 	cachedPos  token.Pos
 	cachedLine int // line corresponding to cachedPos
+
+	unnamedFuncName string // ast.File HasUnnamed
 }
 
 func (p *printer) init(cfg *Config, fset *token.FileSet, nodeSizes map[ast.Node]int) {
@@ -1158,7 +1160,7 @@ func (p *printer) printNode(node interface{}) error {
 	return nil
 
 unsupported:
-	return fmt.Errorf("gop/printer: unsupported node type %T", node)
+	return fmt.Errorf("go/printer: unsupported node type %T", node)
 }
 
 // ----------------------------------------------------------------------------
@@ -1273,14 +1275,10 @@ func (p *trimmer) Write(data []byte) (n int, err error) {
 type Mode uint
 
 const (
-	// RawFormat - do not use a tabwriter; if set, UseSpaces is ignored
-	RawFormat Mode = 1 << iota
-	// TabIndent - use tabs for indentation independent of UseSpaces
-	TabIndent
-	// UseSpaces - use spaces instead of tabs for alignment
-	UseSpaces
-	// SourcePos - emit //line directives to preserve original source positions
-	SourcePos
+	RawFormat Mode = 1 << iota // do not use a tabwriter; if set, UseSpaces is ignored
+	TabIndent                  // use tabs for indentation independent of UseSpaces
+	UseSpaces                  // use spaces instead of tabs for alignment
+	SourcePos                  // emit //line directives to preserve original source positions
 )
 
 // A Config node controls the output of Fprint.
@@ -1359,7 +1357,7 @@ func (cfg *Config) Fprint(output io.Writer, fset *token.FileSet, node interface{
 // Fprint "pretty-prints" an AST node to output.
 // It calls Config.Fprint with default settings.
 // Note that gofmt uses tabs for indentation but spaces for alignment;
-// use format.Node (package golang/format) for output that matches gofmt.
+// use format.Node (package go/format) for output that matches gofmt.
 //
 func Fprint(output io.Writer, fset *token.FileSet, node interface{}) error {
 	return (&Config{Tabwidth: 8}).Fprint(output, fset, node)
