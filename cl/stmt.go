@@ -67,6 +67,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileReturnStmt(ctx, v)
 	case *ast.IncDecStmt:
 		compileIncDecStmt(ctx, v)
+	case *ast.BranchStmt:
+		compileBranchStmt(ctx, v)
 	default:
 		log.Panicln("compileStmt failed: unknown -", reflect.TypeOf(v))
 	}
@@ -130,6 +132,12 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	out.Label(done)
 }
 
+func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
+	if v.Tok == token.FALLTHROUGH {
+		log.Panicln("fallthrough statement out of place")
+	}
+}
+
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	var defaultBody []ast.Stmt
 	var ctxSw *blockCtx
@@ -143,13 +151,14 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	done := ctx.NewLabel("")
 	hasTag := v.Tag != nil
 	hasCaseClause := false
+	var withoutCheck exec.Label
 	if hasTag {
 		if len(v.Body.List) == 0 {
 			return
 		}
 		compileExpr(ctxSw, v.Tag)()
 		tag := ctx.infer.Pop()
-		for _, item := range v.Body.List {
+		for idx, item := range v.Body.List {
 			c, ok := item.(*ast.CaseClause)
 			if !ok {
 				log.Panicln("compile SwitchStmt failed: case clause expected.")
@@ -157,6 +166,9 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 			if c.List == nil { // default
 				defaultBody = c.Body
 				continue
+			}
+			if idx == len(v.Body.List)-1 {
+				checkFinalFallthrough(c.Body)
 			}
 			hasCaseClause = true
 			for _, caseExp := range c.List {
@@ -165,13 +177,15 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 			}
 			next := ctx.NewLabel("")
 			out.CaseNE(next, len(c.List))
-			compileBodyWith(ctxSw, c.Body)
-			out.Jmp(done)
-			out.Label(next)
+			withoutCheck = compileCaseClause(c, ctxSw, done, next, withoutCheck)
+		}
+		if withoutCheck != nil {
+			out.Label(withoutCheck)
+			withoutCheck = nil
 		}
 		out.Default()
 	} else {
-		for _, item := range v.Body.List {
+		for idx, item := range v.Body.List {
 			c, ok := item.(*ast.CaseClause)
 			if !ok {
 				log.Panicln("compile SwitchStmt failed: case clause expected.")
@@ -179,6 +193,9 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 			if c.List == nil { // default
 				defaultBody = c.Body
 				continue
+			}
+			if idx == len(v.Body.List)-1 {
+				checkFinalFallthrough(c.Body)
 			}
 			hasCaseClause = true
 			next := ctx.NewLabel("")
@@ -199,17 +216,53 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 				out.JmpIf(0, next)
 				out.Label(start)
 			}
-			compileBodyWith(ctxSw, c.Body)
-			out.Jmp(done)
-			out.Label(next)
+			withoutCheck = compileCaseClause(c, ctxSw, done, next, withoutCheck)
+		}
+		if withoutCheck != nil {
+			out.Label(withoutCheck)
+			withoutCheck = nil
 		}
 	}
 	if defaultBody != nil {
+		checkFinalFallthrough(defaultBody)
 		compileBodyWith(ctxSw, defaultBody)
+		if hasCaseClause {
+			out.Jmp(done)
+		}
 	}
 	if hasCaseClause {
 		out.Label(done)
 	}
+}
+func checkFinalFallthrough(body []ast.Stmt) {
+	if len(body) > 0 {
+		bs, ok := body[len(body)-1].(*ast.BranchStmt)
+		if ok && bs.Tok == token.FALLTHROUGH {
+			log.Panic("cannot fallthrough final case in switch")
+		}
+	}
+}
+
+func compileCaseClause(c *ast.CaseClause, ctxSw *blockCtx, done exec.Label, next exec.Label, withoutCheck exec.Label) exec.Label {
+	if withoutCheck != nil {
+		ctxSw.out.Label(withoutCheck)
+		withoutCheck = nil
+	}
+	fallNext := false
+	if len(c.Body) > 0 {
+		bs, ok := c.Body[len(c.Body)-1].(*ast.BranchStmt)
+		fallNext = ok && bs.Tok == token.FALLTHROUGH
+	}
+	if fallNext {
+		compileBodyWith(ctxSw, c.Body[0:len(c.Body)-1])
+		withoutCheck = ctxSw.NewLabel("")
+		ctxSw.out.Jmp(withoutCheck)
+	} else {
+		compileBodyWith(ctxSw, c.Body)
+		ctxSw.out.Jmp(done)
+	}
+	ctxSw.out.Label(next)
+	return withoutCheck
 }
 
 func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
