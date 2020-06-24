@@ -67,6 +67,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileReturnStmt(ctx, v)
 	case *ast.IncDecStmt:
 		compileIncDecStmt(ctx, v)
+	case *ast.BranchStmt:
+		compileBranchStmt(ctx, v)
 	default:
 		log.Panicln("compileStmt failed: unknown -", reflect.TypeOf(v))
 	}
@@ -128,6 +130,13 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	}
 	out.Jmp(label)
 	out.Label(done)
+}
+
+func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
+	if v.Tok == token.FALLTHROUGH {
+		log.Panicln("fallthrough statement out of place")
+	}
+	log.Panicln("unsupported token found", v)
 }
 
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
