@@ -41,6 +41,7 @@ const (
 // -----------------------------------------------------------------------------
 
 func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compleMode) {
+	ctx.checkLHS = true
 	switch v := expr.(type) {
 	case *ast.Ident:
 		compileIdentLHS(ctx, v.Name, mode)
@@ -51,6 +52,7 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compleMode) {
 	default:
 		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
 	}
+	ctx.checkLHS = false
 }
 
 func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
@@ -152,7 +154,11 @@ func compileIdent(ctx *blockCtx, name string) func() {
 		case *execVar:
 			ctx.infer.Push(&goValue{t: v.v.Type()})
 			return func() {
-				ctx.out.LoadVar(v.v)
+				if ctx.checkLHS && v.v.Type().Kind() == reflect.Array {
+					ctx.out.AddrVar(v.v)
+				} else {
+					ctx.out.LoadVar(v.v)
+				}
 			}
 		case *stackVar:
 			ctx.infer.Push(&goValue{t: v.typ})
@@ -961,7 +967,11 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 				vt := reflect.ValueOf(info.This)
 				ctx.infer.Ret(1, &goValue{t: vt.Elem().Type()})
 				return func() {
-					ctx.out.LoadGoVar(exec.GoVarAddr(addr))
+					if ctx.checkLHS && vt.Elem().Kind() == reflect.Array {
+						ctx.out.AddrGoVar(exec.GoVarAddr(addr))
+					} else {
+						ctx.out.LoadGoVar(exec.GoVarAddr(addr))
+					}
 				}
 			default:
 				log.Panicln("compileSelectorExpr: unknown GoPackage symbol kind -", kind)

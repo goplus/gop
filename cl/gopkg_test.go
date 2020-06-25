@@ -434,8 +434,7 @@ import (
 	}
 }
 
-// TODO pkg.array set bug
-func _TestPkgGoVarArray(t *testing.T) {
+func TestPkgGoVarArray(t *testing.T) {
 	var I = exec.NewGoPackage("pkg_test_var_array")
 	var ar1 [2]string
 	ar1[0] = "hello"
