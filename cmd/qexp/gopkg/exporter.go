@@ -18,15 +18,13 @@ package gopkg
 
 import (
 	"fmt"
+	"go/types"
 	"io"
 	"log"
 	"path"
-	"reflect"
 	"sort"
 	"strconv"
 	"strings"
-
-	"github.com/qiniu/goplus/exec.spec"
 )
 
 // -----------------------------------------------------------------------------
@@ -50,10 +48,12 @@ type Exporter struct {
 }
 
 // NewExporter creates a go package exporter.
-func NewExporter(w io.Writer, pkg, pkgPath string) *Exporter {
+func NewExporter(w io.Writer, pkgObj *types.Package) *Exporter {
 	const gopPath = "github.com/qiniu/goplus/gop"
 	imports := map[string]string{gopPath: "gop"}
 	importPkgs := map[string]string{"gop": gopPath}
+	pkg := pkgObj.Name()
+	pkgPath := pkgObj.Path()
 	p := &Exporter{w: w, pkgExport: pkg, pkgPath: pkgPath, imports: imports, importPkgs: importPkgs}
 	p.pkgDot = p.importPkg(pkg, pkgPath) + "."
 	return p
@@ -88,19 +88,23 @@ func (p *Exporter) importPkg(pkg, pkgPath string) string {
 }
 
 // ExportFunc exports a go function/method.
-func (p *Exporter) ExportFunc(name string, fn interface{}) {
-	tfn := reflect.TypeOf(fn)
-	isVariadic := tfn.IsVariadic()
-	isMethod := isMethod(name)
-	numIn := tfn.NumIn()
-	numOut := tfn.NumOut()
+func (p *Exporter) ExportFunc(fn *types.Func) {
+	tfn := fn.Type().(*types.Signature)
+	isVariadic := tfn.Variadic()
+	isMethod := tfn.Recv() != nil
+	numIn := tfn.Params().Len()
+	numOut := tfn.Results().Len()
 	args := make([]string, numIn)
+	from := 0
+	if isMethod {
+		from = 1
+	}
 	var arityName, arity, fnName, retAssign, retReturn string
 	if isVariadic {
 		arityName, arity = "arity", "arity"
 		numIn--
 	} else {
-		arityName, arity = "_", strconv.Itoa(numIn)
+		arityName, arity = "_", strconv.Itoa(numIn+from)
 	}
 	if numOut > 0 {
 		retOut := make([]string, numOut)
@@ -114,8 +118,8 @@ func (p *Exporter) ExportFunc(name string, fn interface{}) {
 		retReturn = arity
 	}
 	for i := 0; i < numIn; i++ {
-		t := tfn.In(i)
-		args[i] = fmt.Sprintf("args[%d].(%s)", i, t.String())
+		t := tfn.Params().At(i).Type()
+		args[i] = fmt.Sprintf("args[%d].(%s)", i+from, t.String())
 	}
 	if isVariadic {
 		var varg string
@@ -124,23 +128,30 @@ func (p *Exporter) ExportFunc(name string, fn interface{}) {
 		} else {
 			varg = fmt.Sprintf("args[%d:]", numIn)
 		}
-		switch tyElem := tfn.In(numIn).Elem(); tyElem {
-		case exec.TyEmptyInterface:
-		case exec.TyString:
-			varg = "gop.ToStrings(" + varg + ")"
+		tyElem := tfn.Params().At(numIn).Type().(*types.Slice).Elem()
+		switch e := tyElem.(type) {
+		case *types.Interface:
+			if !e.Empty() {
+				panic("not empty interface") // TODO
+			}
+		case *types.Basic:
+			uName := strings.Title(e.Name())
+			varg = "gop.To" + uName + "s(" + varg + ")"
 		default:
 			log.Panicf("ExportFunc: unsupported type - ...%v\n", tyElem)
 		}
 		args[numIn] = varg + "..."
 	}
+	name := fn.Name()
+	exec := name
+	fmt.Println("==>", fn.Name(), fn.FullName(), fn.Pkg().Name())
 	if isMethod {
-		pos := strings.Index(name, ".")
-		fnName = args[0] + "." + name[pos+1:]
-		args = args[1:]
+		fullName := fn.FullName()
+		exec = typeName(tfn.Recv().Type()) + name
+		name, fnName = withoutPkg(fullName), "args[0]."+fullName
 	} else {
 		fnName = p.pkgDot + name
 	}
-	exec := strings.Map(skipNsymch, name)
 	repl := strings.NewReplacer(
 		"$name", exec,
 		"$ariName", arityName,
@@ -165,15 +176,36 @@ func exec$name($ariName int, p *gop.Context) {
 	}
 }
 
-func isMethod(name string) bool {
-	return strings.HasPrefix(name, "(")
+func withoutPkg(fullName string) string {
+	pos := strings.Index(fullName, ")")
+	if pos < 0 {
+		return fullName
+	}
+	dot := strings.Index(fullName[:pos], ".")
+	if dot < 0 {
+		return fullName
+	}
+	start := strings.IndexFunc(fullName[:dot], func(c rune) bool {
+		return c != '(' && c != '*'
+	})
+	if start < 0 {
+		return fullName
+	}
+	return fullName[:start] + fullName[dot+1:]
 }
 
-func skipNsymch(c rune) rune {
-	if c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '_' || c >= 0x80 {
-		return c
+func typeName(typ types.Type) string {
+	switch t := typ.(type) {
+	case *types.Pointer:
+		return typeName(t.Elem())
+	case *types.Named:
+		return t.Obj().Name()
 	}
-	return -1
+	panic("not here")
+}
+
+func isMethod(name string) bool {
+	return strings.HasPrefix(name, "(")
 }
 
 func exportFns(w io.Writer, pkgDot string, fns []exportedFunc, tag string) {

@@ -3,7 +3,8 @@ package gopkg
 import (
 	"bytes"
 	"fmt"
-	"strings"
+	"go/importer"
+	"go/types"
 	"testing"
 )
 
@@ -47,17 +48,30 @@ func init() {
 }
 `
 
+func getMethod(o *types.Named, name string) *types.Func {
+	n := o.NumMethods()
+	for i := 0; i < n; i++ {
+		m := o.Method(i)
+		if m.Name() == name {
+			return m
+		}
+	}
+	return nil
+}
+
 func Test(t *testing.T) {
-	exports := []goFunc{
-		{"NewReplacer", strings.NewReplacer},
-		{"(*Replacer).Replace", (*strings.Replacer).Replace},
+	pkg, err := importer.Default().Import("strings")
+	if err != nil {
+		t.Fatal("Import failed:", err)
 	}
+	gbl := pkg.Scope()
+	newReplacer := gbl.Lookup("NewReplacer").(*types.Func)
+	replacer := gbl.Lookup("Replacer").(*types.TypeName).Type().(*types.Named)
 	b := bytes.NewBuffer(nil)
-	e := NewExporter(b, "strings", "strings")
+	e := NewExporter(b, pkg)
 	e.importPkg("", "fmt")
-	for _, gof := range exports {
-		e.ExportFunc(gof.Name, gof.This)
-	}
+	e.ExportFunc(newReplacer)
+	e.ExportFunc(getMethod(replacer, "Replace"))
 	e.Close()
 	if real := b.String(); real != expected {
 		fmt.Println(real)
