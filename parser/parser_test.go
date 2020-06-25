@@ -232,7 +232,7 @@ func TestFromTestdata(t *testing.T) {
 	if err != nil {
 		t.Fatal("Getwd failed:", err)
 	}
-	dir = path.Join(dir, "../exec/golang/testdata")
+	dir = path.Join(dir, "../cl/cltest/testdata")
 	fis, err := ioutil.ReadDir(dir)
 	if err != nil {
 		t.Fatal("ReadDir failed:", err)
