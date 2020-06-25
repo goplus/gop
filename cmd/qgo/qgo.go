@@ -167,7 +167,7 @@ var (
 func main() {
 	flag.Parse()
 	if flag.NArg() < 1 {
-		fmt.Println("Usage: qgo [-test] <gopSrcDir>")
+		fmt.Fprintf(os.Stderr, "Usage: qgo [-test] <gopSrcDir>")
 		flag.PrintDefaults()
 		return
 	}

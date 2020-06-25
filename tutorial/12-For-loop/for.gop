@@ -17,7 +17,7 @@ for i, x <- [3, 15, 777] {
 println("values:", fns[0](), fns[1](), fns[2]())
 
 // -----------------------------------------------------------------------------
-// for with range
+// for with range with define tok (k,v := range x)
 
 sum = 0
 for _, x := range [1, 3, 5, 7, 11, 13, 17] {
@@ -35,6 +35,23 @@ for i, x := range [3, 15, 777] {
 	}
 }
 println("values:", fns[0](), fns[1](), fns[2]())
+
+// -----------------------------------------------------------------------------
+// for with range with define tok (k,v = range x)
+
+sum = 0
+rangeX := 0
+for _, rangeX = range [1, 3, 5, 7, 11] {
+    if rangeX > 3 {
+        sum += rangeX
+    }
+}
+println("rangeX:", rangeX == 11, rangeX)
+println("sum(1, 3, 5, 7, 11):(>3)", sum == 23, sum)
+
+for _, _ = range [1,3,5,7] {
+}
+
 
 // -----------------------------------------------------------------------------
 // normal for
