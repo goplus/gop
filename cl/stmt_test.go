@@ -749,6 +749,16 @@ var testForRangeClauses = map[string]testData{
 					println(m[2])
 					println(sum)
 					`, []string{"1", "22", "34"}},
+	"both_kv_assign_range_map": {` sum:=0
+					m:={3:8}
+					arr:=[11,22]
+					for arr[0],arr[1]=range m{
+					    sum+=arr[0]+arr[1]
+					}
+					println(arr[0])
+					println(arr[1])
+					println(sum)
+					`, []string{"3", "8", "11"}},
 }
 
 func TestRangeStmt(t *testing.T) {
