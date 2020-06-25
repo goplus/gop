@@ -84,9 +84,6 @@ func compileForPhraseStmt(parent *blockCtx, v *ast.ForPhraseStmt) {
 }
 
 func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
-	if v.Tok == token.ASSIGN { // TODO
-		log.Panicln("compileRangeStmt with = (for k,v=range x): todo")
-	}
 	noExecCtx := isNoExecCtx(parent, v.Body)
 	f := ast.ForPhrase{
 		For:    v.For,
@@ -95,8 +92,30 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 		TokPos: v.TokPos,
 		X:      v.X,
 	}
+
+	k0 := ast.NewObj(ast.Var, "_gop_k")
+	v0 := ast.NewObj(ast.Var, "_gop_v")
+	if v.Tok == token.ASSIGN {
+		f.Key = &ast.Ident{
+			Name: k0.Name,
+			Obj:  k0,
+		}
+		f.Value = &ast.Ident{
+			Name: v0.Name,
+			Obj:  v0,
+		}
+	}
+	a := &ast.AssignStmt{
+		Lhs:    []ast.Expr{v.Key, v.Value},
+		TokPos: 0,
+		Tok:    token.ASSIGN,
+		Rhs:    []ast.Expr{f.Key, f.Value},
+	}
 	ctx, exprFor := compileForPhrase(parent, f, noExecCtx)
 	exprFor(func() {
+		v.Body.List = append([]ast.Stmt{
+			a,
+		}, v.Body.List...)
 		compileBlockStmtWithout(ctx, v.Body)
 	})
 }
