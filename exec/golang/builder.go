@@ -143,7 +143,7 @@ func (p *Builder) Resolve() *Code {
 	if gblvars != nil {
 		decls = append(decls, gblvars)
 	}
-	p.endBlockStmt()
+	p.endBlockStmt(0)
 	if len(p.gblScope.stmts) != 0 {
 		body := &ast.BlockStmt{List: p.gblScope.stmts}
 		fn := &ast.FuncDecl{
@@ -170,8 +170,8 @@ func (p *Builder) resolveImports() *ast.GenDecl {
 	specs := make([]ast.Spec, 0, n)
 
 	// stable sort import path
-	var pkgs []string
-	for k, _ := range p.imports {
+	pkgs := make([]string, 0, len(p.imports))
+	for k := range p.imports {
 		pkgs = append(pkgs, k)
 	}
 	sort.Strings(pkgs)
@@ -264,19 +264,19 @@ func (p *Builder) emitStmt(node ast.Stmt) {
 		}
 		node = &printer.CommentedStmt{Comments: Comment(line), Stmt: node}
 	}
-	p.stmts = append(p.stmts, p.labeled(node))
+	p.stmts = append(p.stmts, p.labeled(node, 0))
 }
 
-func (p *Builder) endBlockStmt() {
-	if stmt := p.labeled(nil); stmt != nil {
+func (p *Builder) endBlockStmt(isEndFunc int) {
+	if stmt := p.labeled(nil, isEndFunc); stmt != nil {
 		p.stmts = append(p.stmts, stmt)
 	}
 }
 
-func (p *Builder) labeled(stmt ast.Stmt) ast.Stmt {
+func (p *Builder) labeled(stmt ast.Stmt, isEndFunc int) ast.Stmt {
 	if p.labels != nil {
 		if stmt == nil {
-			stmt = &ast.ReturnStmt{}
+			stmt = endStmts[isEndFunc]
 		}
 		for _, l := range p.labels {
 			stmt = &ast.LabeledStmt{
@@ -287,6 +287,11 @@ func (p *Builder) labeled(stmt ast.Stmt) ast.Stmt {
 		p.labels = nil
 	}
 	return stmt
+}
+
+var endStmts = [2]ast.Stmt{
+	&ast.EmptyStmt{},
+	&ast.ReturnStmt{},
 }
 
 // Import imports a package by pkgPath.

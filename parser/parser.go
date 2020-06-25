@@ -2272,7 +2272,7 @@ func (p *parser) parseForPhraseStmtPart(lhs []ast.Expr) *ast.ForPhraseStmt {
 		cond = p.parseExpr(false)
 	}
 
-	stmt := &ast.ForPhraseStmt{ForPhrase: ast.ForPhrase{Tok: token.ARROW, TokPos: tokPos, X: x, Cond: cond}}
+	stmt := &ast.ForPhraseStmt{ForPhrase: ast.ForPhrase{TokPos: tokPos, X: x, Cond: cond}}
 	switch len(lhs) {
 	case 1:
 		stmt.Value = toIdent(lhs[0])

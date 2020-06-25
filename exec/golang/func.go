@@ -188,7 +188,7 @@ func (p *Builder) Return(n int32) *Builder {
 
 // EndFunc instr
 func (p *Builder) EndFunc(fun *FuncInfo) *Builder {
-	p.endBlockStmt()
+	p.endBlockStmt(1)
 	body := &ast.BlockStmt{List: fun.getStmts(p)}
 	name := fun.name
 	if name != "" {

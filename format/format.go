@@ -17,14 +17,12 @@ package format
 import (
 	"bytes"
 	"fmt"
-	"go/ast"
-	"go/parser"
-	"go/token"
 	"io"
-	"sort"
-	"strconv"
 
-	"github.com/qiniu/goplus/exec/golang/internal/go/printer"
+	"github.com/qiniu/goplus/ast"
+	"github.com/qiniu/goplus/parser"
+	"github.com/qiniu/goplus/printer"
+	"github.com/qiniu/goplus/token"
 )
 
 var config = printer.Config{Mode: printer.UseSpaces | printer.TabIndent, Tabwidth: 8}
@@ -107,30 +105,20 @@ func Source(src []byte) ([]byte, error) {
 	return format(fset, file, sourceAdj, indentAdj, src, config)
 }
 
-func importPath(s ast.Spec) string {
-	t, err := strconv.Unquote(s.(*ast.ImportSpec).Path.Value)
-	if err == nil {
-		return t
-	}
-	return ""
-}
-
 func hasUnsortedImports(file *ast.File) bool {
-	var importPaths []string
 	for _, d := range file.Decls {
 		d, ok := d.(*ast.GenDecl)
-		if !ok {
+		if !ok || d.Tok != token.IMPORT {
 			// Not an import declaration, so we're done.
 			// Imports are always first.
 			return false
 		}
-
-		if d.Tok == token.IMPORT {
-			for _, spec := range d.Specs {
-				importPaths = append(importPaths, importPath(spec))
-			}
+		if d.Lparen.IsValid() {
+			// For now assume all grouped imports are unsorted.
+			// TODO(gri) Should check if they are sorted already.
+			return true
 		}
+		// Ungrouped imports are sorted by default.
 	}
-
-	return !sort.StringsAreSorted(importPaths)
+	return false
 }

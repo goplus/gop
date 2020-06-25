@@ -1,6 +1,6 @@
 package foo
 
-func ReverseMap(_arg_0 map[string]int) (_ret_1 map[int]string) { 
+func ReverseMap(_arg_0 map[string]int) (_ret_1 map[int]string) {
 //line ./foo.gop:4
 	return func() (_gop_ret map[int]string) {
 		_gop_ret = make(map[int]string)
