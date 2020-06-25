@@ -85,9 +85,10 @@ func testFrom(t *testing.T, pkgDir, sel, exclude string) {
 		p.Ret(arity, n, err)
 	}
 	libbuiltin.I.RegisterFuncvs(libbuiltin.I.Funcv("println", fmt.Println, selfPrintln))
-	libfmt.I.RegisterFuncvs(libfmt.I.Funcv("Printf", fmt.Printf, selfPrintf))
-	libfmt.I.RegisterFuncvs(libfmt.I.Funcv("Println", fmt.Println, selfPrintln))
-
+	libfmt.I.RegisterFuncvs(
+		libfmt.I.Funcv("Printf", fmt.Printf, selfPrintf),
+		libfmt.I.Funcv("Println", fmt.Println, selfPrintln),
+	)
 	if sel != "" && !strings.Contains(pkgDir, sel) {
 		return
 	}
@@ -100,7 +101,6 @@ func testFrom(t *testing.T, pkgDir, sel, exclude string) {
 	if err != nil || len(pkgs) != 1 {
 		t.Fatal("ParseDir failed:", err, len(pkgs))
 	}
-
 	bar := getPkg(pkgs)
 	b := exec.NewBuilder(nil)
 	_, err = cl.NewPackage(b.Interface(), bar, fset, cl.PkgActClMain)
@@ -111,7 +111,6 @@ func testFrom(t *testing.T, pkgDir, sel, exclude string) {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
-
 	ctx := exec.NewContext(code)
 	ctx.Exec(0, code.Len())
 	out, _ := shell.Command("go", "run", pkgDir).CombinedOutput()
