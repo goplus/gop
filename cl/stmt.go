@@ -87,8 +87,6 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 	noExecCtx := isNoExecCtx(parent, v.Body)
 	f := ast.ForPhrase{
 		For:    v.For,
-		Key:    toIdent(v.Key),
-		Value:  toIdent(v.Value),
 		TokPos: v.TokPos,
 		X:      v.X,
 	}
@@ -104,6 +102,9 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 			Name: v0.Name,
 			Obj:  v0,
 		}
+	} else {
+		f.Key = toIdent(v.Key)
+		f.Value = toIdent(v.Value)
 	}
 	a := &ast.AssignStmt{
 		Lhs:    []ast.Expr{v.Key, v.Value},
