@@ -49,7 +49,6 @@ func TestFromTestdata(t *testing.T) {
 	}
 	dir = path.Join(dir, "./testdata")
 	fromTestdata(t, dir, sel, exclude)
-	clTest()
 }
 
 // FromTestdata - run test cases from a directory

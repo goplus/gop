@@ -6,4 +6,3 @@ repos:
       - id: go-imports
       - id: go-cyclo
         args: [-over=100]
-      - id: no-go-testing
