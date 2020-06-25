@@ -759,6 +759,36 @@ var testForRangeClauses = map[string]testData{
 					println(arr[1])
 					println(sum)
 					`, []string{"3", "8", "11"}},
+	"only_v_assign_range": {` sum:=0
+					m:={3:8}
+					arr:=[11,22]
+					for _,arr[1]=range m{
+					    sum+=arr[0]+arr[1]
+					}
+					println(arr[0])
+					println(arr[1])
+					println(sum)
+					`, []string{"11", "8", "19"}},
+	"only_k_assign_range": {` sum:=0
+					m:={3:8}
+					arr:=[11,22]
+					for arr[0],_=range m{
+					    sum+=arr[0]+arr[1]
+					}
+					println(arr[0])
+					println(arr[1])
+					println(sum)
+					`, []string{"3", "22", "25"}},
+	"none_kv_assign_range": {` sum:=0
+					m:={3:8}
+					arr:=[11,22]
+					for _,_=range m{
+					    sum+=arr[0]+arr[1]
+					}
+					println(arr[0])
+					println(arr[1])
+					println(sum)
+					`, []string{"11", "22", "33"}},
 }
 
 func TestRangeStmt(t *testing.T) {
