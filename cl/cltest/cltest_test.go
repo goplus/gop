@@ -48,11 +48,11 @@ func TestFromTestdata(t *testing.T) {
 		t.Fatal("Getwd failed:", err)
 	}
 	dir = path.Join(dir, "./testdata")
-	FromTestdata(t, dir, sel, exclude)
+	fromTestdata(t, dir, sel, exclude)
 }
 
 // FromTestdata - run test cases from a directory
-func FromTestdata(t *testing.T, dir, sel, exclude string) {
+func fromTestdata(t *testing.T, dir, sel, exclude string) {
 	cl.CallBuiltinOp = exec.CallBuiltinOp
 	fis, err := ioutil.ReadDir(dir)
 	if err != nil {
