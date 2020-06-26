@@ -130,7 +130,8 @@ func (p *Exporter) toType(typ types.Type) string {
 		}
 	}
 	idx := toTypeName(len(p.toTypes))
-	typStr := simpleType(typ.String())
+
+	var typStr = p.typeString(typ)
 	p.execs = append(p.execs, fmt.Sprintf(`
 func %s(v interface{}) %s {
 	if v == nil {
@@ -141,20 +142,6 @@ func %s(v interface{}) %s {
 `, idx, typStr, typStr))
 	p.toTypes = append(p.toTypes, typ)
 	return idx
-}
-
-func simpleType(src string) string {
-	re, _ := regexp.Compile("[\\w\\./]+")
-	return re.ReplaceAllStringFunc(src, func(s string) string {
-		r := s
-		if i := strings.LastIndex(s, "/"); i != -1 {
-			r = s[i+1:]
-		}
-		if strings.Count(r, ".") > 1 {
-			r = r[strings.Index(r, ".")+1:]
-		}
-		return r
-	})
 }
 
 func toTypeName(i int) string {
@@ -173,7 +160,7 @@ func (p *Exporter) toSlice(tyElem types.Type) string {
 	}
 	idx := toSliceName(len(p.toSlices))
 	typCast := p.typeCast("arg", tyElem)
-	typStr := simpleType(tyElem.String())
+	typStr := p.typeString(tyElem)
 	p.execs = append(p.execs, fmt.Sprintf(`
 func %s(args []interface{}) []%v {
 	ret := make([]%v, len(args))
@@ -208,8 +195,33 @@ func (p *Exporter) typeCast(varg string, typ types.Type) string {
 		}
 		return p.toType(typ) + "(" + varg + ")"
 	}
-	typStr := simpleType(typ.String())
+	typStr := p.typeString(typ)
 	return varg + ".(" + typStr + ")"
+}
+
+var (
+	reTyp, _ = regexp.Compile("[\\w\\./]+")
+)
+
+func (p *Exporter) typeString(typ types.Type) string {
+	typStr := typ.String()
+	if !strings.Contains(typStr, ".") {
+		return typStr
+	}
+	return p.fixPkgString(typ.String())
+}
+
+func (p *Exporter) fixPkgString(typ string) string {
+	return reTyp.ReplaceAllStringFunc(typ, func(s string) string {
+		pos := strings.Index(s, ".")
+		if pos > 0 {
+			pkg := s[:pos]
+			if r, ok := p.imports[pkg]; ok {
+				return r + s[pos:]
+			}
+		}
+		return s
+	})
 }
 
 // ExportFunc exports a go function/method.
