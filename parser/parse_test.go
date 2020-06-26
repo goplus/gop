@@ -53,19 +53,8 @@ func TestParseBarPackage(t *testing.T) {
 	bar := pkgs["bar"]
 	file := bar.Files["/foo/bar.gop"]
 	fmt.Println("Pkg:", file.Name)
-	for _, decl := range file.Decls {
-		fmt.Println("decl:", reflect.TypeOf(decl))
-		switch d := decl.(type) {
-		case *ast.GenDecl:
-			for _, spec := range d.Specs {
-				switch v := spec.(type) {
-				case *ast.ImportSpec:
-					fmt.Println(" - import:", v.Path.Value)
-				}
-			}
-		case *ast.FuncDecl:
-			fmt.Println(" - func:", d.Name.Name)
-		}
+	if !checkFSTest(file, []string{`"io"`}, []string{"init", "New"}) {
+		t.Error("file check file")
 	}
 }
 
@@ -94,6 +83,68 @@ func TestParseNoPackageAndGlobalCode(t *testing.T) {
 	}
 	file := bar.Files["/foo/bar.gop"]
 	fmt.Println("Pkg:", file.Name)
+	if !checkFSTest(file, []string{`"io"`}, []string{"New", "main"}) {
+		t.Error("file check file")
+	}
+}
+
+// -----------------------------------------------------------------------------
+var fsTest3 = asttest.NewSingleFileFS("/foo", "bar.gop", `package bar; import "io"
+func New() (*Bar, error) {
+	return nil, io.EOF
+}
+
+bar, err := New()
+if err != nil {
+	log.Println(err)
+}`)
+
+func TestParseGopFiles(t *testing.T) {
+	fset := token.NewFileSet()
+	local = fsTest3
+	// test parse directory
+	pkgs, err := ParseGopFiles(fset, "/foo", 0)
+	if err != nil {
+		t.Error("parse err!", err)
+		return
+	}
+	pkg, ok := pkgs["bar"]
+	if ok != true {
+		t.Error("pkg not found")
+		return
+	}
+	file, ok := pkg.Files["/foo/bar.gop"]
+	if ok != true {
+		t.Error("file not found")
+		return
+	}
+	if !checkFSTest(file, []string{`"io"`}, []string{"init", "New"}) {
+		t.Error("file check file")
+	}
+
+	// test parse file
+	pkgs, err = ParseGopFiles(fset, "/foo/bar.gop", 0)
+	if err != nil {
+		t.Error("parse err!", err)
+		return
+	}
+	pkg, ok = pkgs["bar"]
+	if ok != true {
+		t.Error("pkg not found")
+		return
+	}
+	file, ok = pkg.Files["/foo/bar.gop"]
+	if ok != true {
+		t.Error("file not found")
+		return
+	}
+	if !checkFSTest(file, []string{`"io"`}, []string{"init", "New"}) {
+		t.Error("file check file")
+	}
+
+}
+func checkFSTest(file *ast.File, targetImport []string, targetFuncDecl []string) (pass bool) {
+	var foundImport, foundFunc int
 	for _, decl := range file.Decls {
 		fmt.Println("decl:", reflect.TypeOf(decl))
 		switch d := decl.(type) {
@@ -101,13 +152,27 @@ func TestParseNoPackageAndGlobalCode(t *testing.T) {
 			for _, spec := range d.Specs {
 				switch v := spec.(type) {
 				case *ast.ImportSpec:
-					fmt.Println(" - import:", v.Path.Value)
+					for _, ti := range targetImport {
+						if ti == v.Path.Value {
+							foundImport++
+						}
+					}
 				}
 			}
 		case *ast.FuncDecl:
-			fmt.Println(" - func:", d.Name.Name)
+			fmt.Println(d.Name.Name)
+			for _, tfd := range targetFuncDecl {
+				if tfd == d.Name.Name {
+					foundFunc++
+				}
+			}
 		}
 	}
+	if foundFunc != len(targetFuncDecl) || foundImport != len(targetImport) {
+		fmt.Println("invalid check", foundImport, foundFunc)
+		return false
+	}
+	return true
 }
 
 // -----------------------------------------------------------------------------
