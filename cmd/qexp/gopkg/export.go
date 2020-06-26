@@ -118,7 +118,7 @@ func goplusRoot() (root string, err error) {
 		}
 		next := filepath.Dir(dir)
 		if dir == next {
-			return "", errors.New("go.mod not found")
+			return "", errors.New("go.mod not found, please run under goplus root")
 		}
 		dir = next
 	}

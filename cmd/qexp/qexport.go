@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/qiniu/goplus/cmd/qexp/gopkg"
-	"github.com/qiniu/x/log"
 )
 
 var (
@@ -35,7 +34,8 @@ func main() {
 	}()
 	err := gopkg.Export(pkgPath, createExportFile)
 	if err != nil {
-		log.Panicln("export failed:", err)
+		fmt.Fprintln(os.Stderr, "export failed:", err)
+		os.Exit(1)
 	}
 	exportFile = "" // don't remove file if success
 }
