@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"go/types"
 	"io"
-	"log"
 	"sort"
 	"strconv"
 	"strings"
@@ -40,6 +39,7 @@ type Exporter struct {
 	pkgDot     string
 	execs      []string
 	toTypes    []types.Type
+	toSlices   []types.Type
 	imports    map[string]string // pkgPath => pkg
 	importPkgs map[string]string // pkg => pkgPath
 	exportFns  []exportedFunc
@@ -140,6 +140,55 @@ func toTypeName(i int) string {
 	return "toType" + strconv.Itoa(i)
 }
 
+func toSliceName(i int) string {
+	return "toSlice" + strconv.Itoa(i)
+}
+
+func (p *Exporter) toSlice(tyElem types.Type) string {
+	for i, t := range p.toSlices {
+		if types.Identical(tyElem, t) {
+			return toSliceName(i)
+		}
+	}
+	idx := toSliceName(len(p.toSlices))
+	typCast := p.typeCast("arg", tyElem)
+	p.execs = append(p.execs, fmt.Sprintf(`
+func %s(args []interface{}) []%v {
+	ret := make([]%v, len(args))
+	for i, arg := range args {
+		ret[i] = %s
+	}
+	return ret
+}
+`, idx, tyElem, tyElem, typCast))
+	p.toSlices = append(p.toSlices, tyElem)
+	return idx
+}
+
+func (p *Exporter) sliceCast(varg string, tyElem types.Type) string {
+	if e, ok := tyElem.(*types.Basic); ok {
+		uName := strings.Title(e.Name())
+		varg = "gop.To" + uName + "s(" + varg + ")"
+	} else {
+		tyElemIntf, isInterface := tyElem.Underlying().(*types.Interface)
+		if !(isInterface && tyElemIntf.Empty()) { // is not empty interface
+			varg = p.toSlice(tyElem) + "(" + varg + ")"
+		}
+	}
+	return varg
+}
+
+func (p *Exporter) typeCast(varg string, typ types.Type) string {
+	typIntf, isInterface := typ.Underlying().(*types.Interface)
+	if isInterface {
+		if typIntf.Empty() {
+			return varg
+		}
+		return p.toType(typ) + "(" + varg + ")"
+	}
+	return varg + ".(" + typ.String() + ")"
+}
+
 // ExportFunc exports a go function/method.
 func (p *Exporter) ExportFunc(fn *types.Func) {
 	tfn := fn.Type().(*types.Signature)
@@ -173,16 +222,7 @@ func (p *Exporter) ExportFunc(fn *types.Func) {
 	for i := 0; i < numIn; i++ {
 		typ := tfn.Params().At(i).Type()
 		p.useType(typ)
-		typIntf, isInterface := typ.Underlying().(*types.Interface)
-		if isInterface {
-			if !typIntf.Empty() {
-				args[i] = fmt.Sprintf("%s(args[%d])", p.toType(typ), i+from)
-			} else {
-				args[i] = fmt.Sprintf("args[%d]", i+from)
-			}
-		} else {
-			args[i] = fmt.Sprintf("args[%d].(%s)", i+from, typ.String())
-		}
+		args[i] = p.typeCast("args["+strconv.Itoa(i+from)+"]", typ)
 	}
 	if isVariadic {
 		var varg string
@@ -192,18 +232,8 @@ func (p *Exporter) ExportFunc(fn *types.Func) {
 			varg = fmt.Sprintf("args[%d:]", numIn)
 		}
 		tyElem := tfn.Params().At(numIn).Type().(*types.Slice).Elem()
-		switch e := tyElem.(type) {
-		case *types.Interface:
-			if !e.Empty() {
-				panic("not empty interface") // TODO
-			}
-		case *types.Basic:
-			uName := strings.Title(e.Name())
-			varg = "gop.To" + uName + "s(" + varg + ")"
-		default:
-			log.Panicf("ExportFunc: unsupported type - ...%v\n", tyElem)
-		}
-		args[numIn] = varg + "..."
+		p.useType(tyElem)
+		args[numIn] = p.sliceCast(varg, tyElem) + "..."
 	}
 	name := fn.Name()
 	exec := name
@@ -270,6 +300,14 @@ func isMethod(name string) bool {
 	return strings.HasPrefix(name, "(")
 }
 
+func withPkg(pkgDot, name string) string {
+	if isMethod(name) {
+		n := len(name) - len(strings.TrimLeft(name[1:], "*"))
+		return name[:n] + pkgDot + name[n:]
+	}
+	return pkgDot + name
+}
+
 func exportFns(w io.Writer, pkgDot string, fns []exportedFunc, tag string) {
 	if len(fns) == 0 {
 		return
@@ -277,12 +315,7 @@ func exportFns(w io.Writer, pkgDot string, fns []exportedFunc, tag string) {
 	fmt.Fprintf(w, `	I.Register%ss(
 `, tag)
 	for _, fn := range fns {
-		name := fn.name
-		if isMethod(name) {
-			name = name[:2] + pkgDot + name[2:]
-		} else {
-			name = pkgDot + name
-		}
+		name := withPkg(pkgDot, fn.name)
 		fmt.Fprintf(w, `		I.%s("%s", %s, exec%s),
 `, tag, fn.name, name, fn.exec)
 	}

@@ -111,4 +111,11 @@ func TestExportStrconv(t *testing.T) {
 	}
 }
 
+func TestExportReflect(t *testing.T) {
+	err := Export("reflect", nilExportFile)
+	if err != nil {
+		t.Fatal("TestExport failed:", err)
+	}
+}
+
 // -----------------------------------------------------------------------------
