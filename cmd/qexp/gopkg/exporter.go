@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"go/types"
 	"io"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -129,7 +130,7 @@ func (p *Exporter) toType(typ types.Type) string {
 		}
 	}
 	idx := toTypeName(len(p.toTypes))
-	typStr := typ.String()
+	typStr := simpleType(typ.String())
 	p.execs = append(p.execs, fmt.Sprintf(`
 func %s(v interface{}) %s {
 	if v == nil {
@@ -140,6 +141,20 @@ func %s(v interface{}) %s {
 `, idx, typStr, typStr))
 	p.toTypes = append(p.toTypes, typ)
 	return idx
+}
+
+func simpleType(src string) string {
+	re, _ := regexp.Compile("[\\w\\./]+")
+	return re.ReplaceAllStringFunc(src, func(s string) string {
+		r := s
+		if i := strings.LastIndex(s, "/"); i != -1 {
+			r = s[i+1:]
+		}
+		if strings.Count(r, ".") > 1 {
+			r = r[strings.Index(r, ".")+1:]
+		}
+		return r
+	})
 }
 
 func toTypeName(i int) string {
@@ -158,6 +173,7 @@ func (p *Exporter) toSlice(tyElem types.Type) string {
 	}
 	idx := toSliceName(len(p.toSlices))
 	typCast := p.typeCast("arg", tyElem)
+	typStr := simpleType(tyElem.String())
 	p.execs = append(p.execs, fmt.Sprintf(`
 func %s(args []interface{}) []%v {
 	ret := make([]%v, len(args))
@@ -166,7 +182,7 @@ func %s(args []interface{}) []%v {
 	}
 	return ret
 }
-`, idx, tyElem, tyElem, typCast))
+`, idx, typStr, typStr, typCast))
 	p.toSlices = append(p.toSlices, tyElem)
 	return idx
 }
@@ -192,7 +208,8 @@ func (p *Exporter) typeCast(varg string, typ types.Type) string {
 		}
 		return p.toType(typ) + "(" + varg + ")"
 	}
-	return varg + ".(" + typ.String() + ")"
+	typStr := simpleType(typ.String())
+	return varg + ".(" + typStr + ")"
 }
 
 // ExportFunc exports a go function/method.
@@ -255,8 +272,13 @@ func (p *Exporter) ExportFunc(fn *types.Func) {
 	if arity != "0" {
 		argsAssign = "	args := p.GetArgs(" + arity + ")\n"
 	}
+	if isMethod {
+		exec = "execm" + exec
+	} else {
+		exec = "exec" + exec
+	}
 	repl := strings.NewReplacer(
-		"$name", exec,
+		"$execFunc", exec,
 		"$ariName", arityName,
 		"$args", strings.Join(args, ", "),
 		"$argInit", argsAssign,
@@ -265,7 +287,7 @@ func (p *Exporter) ExportFunc(fn *types.Func) {
 		"$fn", fnName,
 	)
 	p.execs = append(p.execs, repl.Replace(`
-func exec$name($ariName int, p *gop.Context) {
+func $execFunc($ariName int, p *gop.Context) {
 $argInit	$retAssign$fn($args)
 	p.$retReturn
 }
@@ -326,7 +348,7 @@ func exportFns(w io.Writer, pkgDot string, fns []exportedFunc, tag string) {
 `, tag)
 	for _, fn := range fns {
 		name := withPkg(pkgDot, fn.name)
-		fmt.Fprintf(w, `		I.%s("%s", %s, exec%s),
+		fmt.Fprintf(w, `		I.%s("%s", %s, %s),
 `, tag, fn.name, name, fn.exec)
 	}
 	fmt.Fprintf(w, "	)\n")

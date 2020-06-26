@@ -32,7 +32,7 @@ func execNewReplacer(arity int, p *gop.Context) {
 	p.Ret(arity, ret0)
 }
 
-func execReplacerReplace(_ int, p *gop.Context) {
+func execmReplacerReplace(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0 := args[0].(*strings.Replacer).Replace(args[1].(string))
 	p.Ret(2, ret0)
@@ -43,7 +43,7 @@ var I = gop.NewGoPackage("strings")
 
 func init() {
 	I.RegisterFuncs(
-		I.Func("(*Replacer).Replace", (*strings.Replacer).Replace, execReplacerReplace),
+		I.Func("(*Replacer).Replace", (*strings.Replacer).Replace, execmReplacerReplace),
 	)
 	I.RegisterFuncvs(
 		I.Funcv("NewReplacer", strings.NewReplacer, execNewReplacer),
