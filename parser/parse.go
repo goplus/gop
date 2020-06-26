@@ -1,5 +1,5 @@
 /*
- Copyright 2020 Qiniu Cloud (qiniu.com)
+ Copyright 2020 The GoPlus Authors (goplus.org)
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -55,8 +55,29 @@ func (p localFS) Join(elem ...string) string {
 
 var local FileSystem = localFS{}
 
-// -----------------------------------------------------------------------------
+// ParseGOPFiles parses the Go+ source files under directory or single Go+ source file.
+// The target specifies the directory or single Go+ source file.
+//
+// The ParseGOPFiles should return the map of packages to run Go+ script, even the target is single file.
+//
+// If the file or directory couldn't be read, a nil map and the respective error are
+// returned.
+// If the target is directory and a parse error occurred, a non-nil but incomplete map and the first error encountered are returned.
+func ParseGopFiles(fset *token.FileSet, target string, mode Mode) (pkgs map[string]*ast.Package, err error) {
+	if strings.HasSuffix(target, ".gop") {
+		file, err := ParseFile(fset, target, nil, mode)
+		if err != nil {
+			return pkgs, err
+		}
+		pkgs = make(map[string]*ast.Package)
+		pkg := astFileToPkg(file, target)
+		pkgs[file.Name.Name] = pkg
+		return pkgs, nil
+	}
+	return ParseDir(fset, target, nil, mode)
+}
 
+// -----------------------------------------------------------------------------
 // ParseDir calls ParseFSDir by passing a local filesystem.
 //
 func ParseDir(fset *token.FileSet, path string, filter func(os.FileInfo) bool, mode Mode) (pkgs map[string]*ast.Package, first error) {
@@ -81,7 +102,6 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, filter func(os.
 	if err != nil {
 		return nil, err
 	}
-
 	pkgs = make(map[string]*ast.Package)
 	for _, d := range list {
 		if strings.HasSuffix(d.Name(), ".gop") && (filter == nil || filter(d)) {
@@ -220,6 +240,16 @@ func newSliceLit(lbrack, rbrack token.Pos, len ast.Expr) ast.Expr {
 		elts = []ast.Expr{len}
 	}
 	return &ast.SliceLit{Lbrack: lbrack, Elts: elts, Rbrack: rbrack}
+}
+
+// astFileToPkg translate ast.File to ast.Package
+func astFileToPkg(file *ast.File, fileName string) (pkg *ast.Package) {
+	pkg = &ast.Package{
+		Name:  file.Name.Name,
+		Files: make(map[string]*ast.File),
+	}
+	pkg.Files[fileName] = file
+	return
 }
 
 // -----------------------------------------------------------------------------
