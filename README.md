@@ -173,11 +173,11 @@ gop install ./... # Convert all Go+ packages under ./ and go install ./...
 The `gop` command isn't provided currently (in alpha stage). Instead, we provide the following commands:
 
 ```bash
-qrun <gopSrcDir> # gop run <gopSrcDir>
-qrun -asm <gopSrcDir> # generates `asm` code of Go+ bytecode backend
-qrun -quiet <gopSrcDir> # don't generate any compiling stage log
-qrun -debug <gopSrcDir> # print debug information
-qrun -prof <gopSrcDir> # do profile and generate profile report
+qrun <gopSrcDir | gopSrcFile> # gop run <gopSrcDir | gopSrcFile>
+qrun -asm <gopSrcDir | gopSrcFile> # generates `asm` code of Go+ bytecode backend
+qrun -quiet <gopSrcDir | gopSrcFile> # don't generate any compiling stage log
+qrun -debug <gopSrcDir | gopSrcFile> # print debug information
+qrun -prof <gopSrcDir | gopSrcFile> # do profile and generate profile report
 qgo <gopSrcDir> # gop go <gopSrcDir>
 qgo -test <gopSrcDir>
 ```
