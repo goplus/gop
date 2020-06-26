@@ -1,5 +1,5 @@
 /*
- Copyright 2020 Qiniu Cloud (qiniu.com)
+ Copyright 2020 The GoPlus Authors (goplus.org)
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -390,7 +390,7 @@ func boundConst(v interface{}, t reflect.Type) interface{} {
 		}
 	} else if kind >= exec.BigInt {
 		val := reflect.New(t.Elem())
-		skind := sval.Kind()
+		skind := kindOf(st)
 		switch {
 		case skind >= reflect.Int && skind <= reflect.Int64:
 			sval = sval.Convert(exec.TyInt64)

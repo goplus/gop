@@ -1,5 +1,5 @@
 /*
- Copyright 2020 Qiniu Cloud (qiniu.com)
+ Copyright 2020 The GoPlus Authors (goplus.org)
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ var (
 func main() {
 	flag.Parse()
 	if flag.NArg() < 1 {
-		fmt.Println("Usage: qrun [-asm -quiet -debug -prof] <gopSrcDir | gopSrcFile>")
+		fmt.Fprintf(os.Stderr, "Usage: qrun [-asm -quiet -debug -prof] <gopSrcDir | gopSrcFile>")
 		flag.PrintDefaults()
 		return
 	}

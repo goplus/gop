@@ -1,5 +1,5 @@
 /*
- Copyright 2020 Qiniu Cloud (qiniu.com)
+ Copyright 2020 The GoPlus Authors (goplus.org)
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -84,16 +84,48 @@ func compileForPhraseStmt(parent *blockCtx, v *ast.ForPhraseStmt) {
 }
 
 func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
-	if v.Tok == token.ASSIGN { // TODO
-		log.Panicln("compileRangeStmt with = (for k,v=range x): todo")
-	}
 	noExecCtx := isNoExecCtx(parent, v.Body)
 	f := ast.ForPhrase{
 		For:    v.For,
-		Key:    toIdent(v.Key),
-		Value:  toIdent(v.Value),
 		TokPos: v.TokPos,
 		X:      v.X,
+	}
+	switch v.Tok {
+	case token.DEFINE:
+		f.Key = toIdent(v.Key)
+		f.Value = toIdent(v.Value)
+	case token.ASSIGN:
+		var lhs, rhs [2]ast.Expr
+		var idx int
+		if v.Key != nil {
+			assign := true
+			if id, ok := v.Key.(*ast.Ident); ok && id.Name == "_" {
+				assign = false
+			}
+			if assign {
+				k0 := ast.NewObj(ast.Var, "_gop_k")
+				f.Key = &ast.Ident{Name: k0.Name, Obj: k0}
+				lhs[idx], rhs[idx] = v.Key, f.Key
+				idx++
+			}
+		}
+		if v.Value != nil {
+			assign := true
+			if id, ok := v.Value.(*ast.Ident); ok && id.Name == "_" {
+				assign = false
+			}
+			if assign {
+				v0 := ast.NewObj(ast.Var, "_gop_v")
+				f.Value = &ast.Ident{Name: v0.Name, Obj: v0}
+				lhs[idx], rhs[idx] = v.Value, f.Value
+				idx++
+			}
+		}
+		v.Body.List = append([]ast.Stmt{&ast.AssignStmt{
+			Lhs: lhs[0:idx],
+			Tok: token.ASSIGN,
+			Rhs: rhs[0:idx],
+		}}, v.Body.List...)
 	}
 	ctx, exprFor := compileForPhrase(parent, f, noExecCtx)
 	exprFor(func() {
