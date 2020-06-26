@@ -53,9 +53,8 @@ func exportVar(o *types.Var) (err error) {
 	return nil
 }
 
-func createExportFile(pkgDir string) (f io.WriteCloser, err error) {
-	os.MkdirAll(pkgDir, 0777)
-	return os.Create(pkgDir + "/gomod_export.go")
+func exportConst(o *types.Const) (err error) {
+	return nil
 }
 
 // Export utility
@@ -70,9 +69,6 @@ func Export(pkgPath string, createFile func(string) (io.WriteCloser, error)) (er
 		return
 	}
 	pkgDir := filepath.Join(goplus, "lib", pkg.Path())
-	if createFile == nil {
-		createFile = createExportFile
-	}
 	f, err := createFile(pkgDir)
 	if err != nil {
 		return
@@ -89,6 +85,8 @@ func Export(pkgPath string, createFile func(string) (io.WriteCloser, error)) (er
 		switch o := obj.(type) {
 		case *types.Var:
 			err = exportVar(o)
+		case *types.Const:
+			err = exportConst(o)
 		case *types.TypeName:
 			err = exportTypeName(e, o)
 		case *types.Func:

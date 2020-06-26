@@ -7,6 +7,7 @@ import (
 	"go/types"
 	"io"
 	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -17,7 +18,8 @@ type goFunc struct {
 	This interface{}
 }
 
-const expected = `package strings
+const expected = `// Package strings provide Go+ "strings" package, as "strings" package in Go.
+package strings
 
 import (
 	gop "github.com/qiniu/goplus/gop"
@@ -87,12 +89,23 @@ type nopCloser struct {
 
 func (nopCloser) Close() error { return nil }
 
-func createNilExportFile(pkgDir string) (f io.WriteCloser, err error) {
+func nilExportFile(pkgDir string) (f io.WriteCloser, err error) {
 	return &nopCloser{ioutil.Discard}, nil
 }
 
-func TestExport(t *testing.T) {
-	err := Export("strings", createNilExportFile)
+func stdoutExportFile(pkgDir string) (f io.WriteCloser, err error) {
+	return &nopCloser{os.Stdout}, nil
+}
+
+func TestExportStrings(t *testing.T) {
+	err := Export("strings", nilExportFile)
+	if err != nil {
+		t.Fatal("TestExport failed:", err)
+	}
+}
+
+func TestExportStrconv(t *testing.T) {
+	err := Export("strconv", nilExportFile)
 	if err != nil {
 		t.Fatal("TestExport failed:", err)
 	}
