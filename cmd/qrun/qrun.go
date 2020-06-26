@@ -43,7 +43,7 @@ var (
 func main() {
 	flag.Parse()
 	if flag.NArg() < 1 {
-		fmt.Println("Usage: qrun [-asm -quiet -debug -prof] <gopSrcDir>")
+		fmt.Println("Usage: qrun [-asm -quiet -debug -prof] <gopSrcDir | gopSrcFile>")
 		flag.PrintDefaults()
 		return
 	}
