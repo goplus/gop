@@ -76,7 +76,7 @@ func genGopkg(pkgDir string) (mainPkg bool, err error) {
 		return
 	}
 	if len(pkgs) != 1 {
-		return false, fmt.Errorf("too many package in the same directory")
+		return false, fmt.Errorf("too many packages (%d) in the same directory", len(pkgs))
 	}
 
 	pkg := getPkg(pkgs)
@@ -167,7 +167,7 @@ var (
 func main() {
 	flag.Parse()
 	if flag.NArg() < 1 {
-		fmt.Fprintf(os.Stderr, "Usage: qgo [-test] <gopSrcDir>")
+		fmt.Fprintf(os.Stderr, "Usage: qgo [-test] <gopSrcDir>\n")
 		flag.PrintDefaults()
 		return
 	}
