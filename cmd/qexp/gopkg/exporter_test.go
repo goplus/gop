@@ -118,4 +118,11 @@ func TestExportReflect(t *testing.T) {
 	}
 }
 
+func TestExportSyncAtomic(t *testing.T) {
+	err := Export("sync/atomic", stdoutExportFile)
+	if err != nil {
+		t.Fatal("TestExport failed:", err)
+	}
+}
+
 // -----------------------------------------------------------------------------

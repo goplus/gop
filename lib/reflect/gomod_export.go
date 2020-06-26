@@ -248,7 +248,7 @@ func execValueCap(_ int, p *gop.Context) {
 func execValueClose(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	args[0].(reflect.Value).Close()
-	p.Ret(1)
+	p.PopN(1)
 }
 
 func execValueComplex(_ int, p *gop.Context) {
@@ -434,79 +434,79 @@ func execValueRecv(_ int, p *gop.Context) {
 func execValueSend(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(reflect.Value).Send(args[1].(reflect.Value))
-	p.Ret(2)
+	p.PopN(2)
 }
 
 func execValueSet(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(reflect.Value).Set(args[1].(reflect.Value))
-	p.Ret(2)
+	p.PopN(2)
 }
 
 func execValueSetBool(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(reflect.Value).SetBool(args[1].(bool))
-	p.Ret(2)
+	p.PopN(2)
 }
 
 func execValueSetBytes(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(reflect.Value).SetBytes(args[1].([]byte))
-	p.Ret(2)
+	p.PopN(2)
 }
 
 func execValueSetComplex(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(reflect.Value).SetComplex(args[1].(complex128))
-	p.Ret(2)
+	p.PopN(2)
 }
 
 func execValueSetFloat(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(reflect.Value).SetFloat(args[1].(float64))
-	p.Ret(2)
+	p.PopN(2)
 }
 
 func execValueSetInt(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(reflect.Value).SetInt(args[1].(int64))
-	p.Ret(2)
+	p.PopN(2)
 }
 
 func execValueSetLen(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(reflect.Value).SetLen(args[1].(int))
-	p.Ret(2)
+	p.PopN(2)
 }
 
 func execValueSetCap(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(reflect.Value).SetCap(args[1].(int))
-	p.Ret(2)
+	p.PopN(2)
 }
 
 func execValueSetMapIndex(_ int, p *gop.Context) {
 	args := p.GetArgs(3)
 	args[0].(reflect.Value).SetMapIndex(args[1].(reflect.Value), args[2].(reflect.Value))
-	p.Ret(3)
+	p.PopN(3)
 }
 
 func execValueSetUint(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(reflect.Value).SetUint(args[1].(uint64))
-	p.Ret(2)
+	p.PopN(2)
 }
 
 func execValueSetPointer(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(reflect.Value).SetPointer(args[1].(unsafe.Pointer))
-	p.Ret(2)
+	p.PopN(2)
 }
 
 func execValueSetString(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(reflect.Value).SetString(args[1].(string))
-	p.Ret(2)
+	p.PopN(2)
 }
 
 func execValueSlice(_ int, p *gop.Context) {

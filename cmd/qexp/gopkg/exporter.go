@@ -218,10 +218,10 @@ func (p *Exporter) ExportFunc(fn *types.Func) {
 			retOut[i] = "ret" + strconv.Itoa(i)
 		}
 		retAssign = strings.Join(retOut, ", ")
-		retReturn = arity + ", " + retAssign
+		retReturn = "Ret(" + arity + ", " + retAssign + ")"
 		retAssign += " := "
 	} else {
-		retReturn = arity
+		retReturn = "PopN(" + arity + ")"
 	}
 	for i := 0; i < numIn; i++ {
 		typ := tfn.Params().At(i).Type()
@@ -261,7 +261,7 @@ func (p *Exporter) ExportFunc(fn *types.Func) {
 func exec$name($ariName int, p *gop.Context) {
 	args := p.GetArgs($arity)
 	$retAssign$fn($args)
-	p.Ret($retReturn)
+	p.$retReturn
 }
 `))
 	exported := exportedFunc{name: name, exec: exec}

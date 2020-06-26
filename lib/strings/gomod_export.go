@@ -30,13 +30,13 @@ func execBuilderCap(_ int, p *gop.Context) {
 func execBuilderReset(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	args[0].(*strings.Builder).Reset()
-	p.Ret(1)
+	p.PopN(1)
 }
 
 func execBuilderGrow(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(*strings.Builder).Grow(args[1].(int))
-	p.Ret(2)
+	p.PopN(2)
 }
 
 func execBuilderWrite(_ int, p *gop.Context) {
@@ -271,7 +271,7 @@ func execReaderWriteTo(_ int, p *gop.Context) {
 func execReaderReset(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(*strings.Reader).Reset(args[1].(string))
-	p.Ret(2)
+	p.PopN(2)
 }
 
 func execRepeat(_ int, p *gop.Context) {
