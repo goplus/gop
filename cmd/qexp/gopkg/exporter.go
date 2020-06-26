@@ -79,6 +79,10 @@ func (p *Exporter) importPkg(pkgObj *types.Package) string {
 func (p *Exporter) useType(typ types.Type) {
 	switch t := typ.(type) {
 	case *types.Basic:
+		if t.Kind() == types.UnsafePointer {
+			p.imports["unsafe"] = "unsafe"
+			p.importPkgs["unsafe"] = "unsafe"
+		}
 	case *types.Pointer:
 		p.useType(t.Elem())
 	case *types.Slice:
