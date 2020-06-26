@@ -57,12 +57,12 @@ func main() {
 	if *flagProf {
 		exec.SetProfile(true)
 	}
-
 	fset := token.NewFileSet()
-	pkgDir, _ := filepath.Abs(flag.Arg(0))
-	pkgs, err := parser.ParseDir(fset, pkgDir, nil, 0)
+
+	target, _ := filepath.Abs(flag.Arg(0))
+	pkgs, err := parser.ParseGopFiles(fset, target, 0)
 	if err != nil {
-		log.Fatalln("ParseDir failed:", err)
+		log.Fatalln("ParseGopFiles failed:", err)
 	}
 	cl.CallBuiltinOp = exec.CallBuiltinOp
 
