@@ -108,7 +108,9 @@ func (p *Exporter) useType(typ types.Type) {
 			p.useType(t.At(i).Type())
 		}
 	case *types.Named:
-		p.importPkg(t.Obj().Pkg())
+		if pkg := t.Obj().Pkg(); pkg != nil {
+			p.importPkg(pkg)
+		}
 	case *types.Interface:
 		n := t.NumMethods()
 		for i := 0; i < n; i++ {
@@ -249,19 +251,22 @@ func (p *Exporter) ExportFunc(fn *types.Func) {
 	} else {
 		fnName = p.pkgDot + name
 	}
+	var argsAssign string
+	if arity != "0" {
+		argsAssign = "	args := p.GetArgs(" + arity + ")\n"
+	}
 	repl := strings.NewReplacer(
 		"$name", exec,
 		"$ariName", arityName,
-		"$arity", arity,
 		"$args", strings.Join(args, ", "),
+		"$argInit", argsAssign,
 		"$retAssign", retAssign,
 		"$retReturn", retReturn,
 		"$fn", fnName,
 	)
 	p.execs = append(p.execs, repl.Replace(`
 func exec$name($ariName int, p *gop.Context) {
-	args := p.GetArgs($arity)
-	$retAssign$fn($args)
+$argInit	$retAssign$fn($args)
 	p.$retReturn
 }
 `))

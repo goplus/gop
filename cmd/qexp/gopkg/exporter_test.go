@@ -118,8 +118,15 @@ func TestExportReflect(t *testing.T) {
 	}
 }
 
+func TestExportIo(t *testing.T) {
+	err := Export("io", stdoutExportFile)
+	if err != nil {
+		t.Fatal("TestExport failed:", err)
+	}
+}
+
 func TestExportGoTypes(t *testing.T) {
-	err := Export("go/types", stdoutExportFile)
+	err := Export("go/types", nilExportFile)
 	if err != nil {
 		t.Fatal("TestExport failed:", err)
 	}
