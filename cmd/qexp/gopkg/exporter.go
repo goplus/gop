@@ -21,7 +21,6 @@ import (
 	"go/types"
 	"io"
 	"log"
-	"path"
 	"sort"
 	"strconv"
 	"strings"
@@ -37,10 +36,10 @@ type exportedFunc struct {
 // Exporter represents a go package exporter.
 type Exporter struct {
 	w          io.Writer
+	pkg        *types.Package
 	pkgDot     string
-	pkgPath    string
-	pkgExport  string
 	execs      []string
+	toTypes    []types.Type
 	imports    map[string]string // pkgPath => pkg
 	importPkgs map[string]string // pkg => pkgPath
 	exportFns  []exportedFunc
@@ -48,31 +47,21 @@ type Exporter struct {
 }
 
 // NewExporter creates a go package exporter.
-func NewExporter(w io.Writer, pkgObj *types.Package) *Exporter {
+func NewExporter(w io.Writer, pkg *types.Package) *Exporter {
 	const gopPath = "github.com/qiniu/goplus/gop"
 	imports := map[string]string{gopPath: "gop"}
 	importPkgs := map[string]string{"gop": gopPath}
-	pkg := pkgObj.Name()
-	pkgPath := pkgObj.Path()
-	p := &Exporter{w: w, pkgExport: pkg, pkgPath: pkgPath, imports: imports, importPkgs: importPkgs}
-	p.pkgDot = p.importPkg(pkg, pkgPath) + "."
+	p := &Exporter{w: w, pkg: pkg, imports: imports, importPkgs: importPkgs}
+	p.pkgDot = p.importPkg(pkg) + "."
 	return p
 }
 
-func (p *Exporter) importPkg(pkg, pkgPath string) string {
+func (p *Exporter) importPkg(pkgObj *types.Package) string {
+	pkgPath := pkgObj.Path()
 	if name, ok := p.imports[pkgPath]; ok {
 		return name
 	}
-	if pkg == "" {
-		pkg = path.Base(pkgPath)
-		pos := strings.IndexAny(pkg, ".-")
-		if pos >= 0 {
-			pkg = pkg[:pos]
-		}
-		if pkg == "" {
-			pkg = "p"
-		}
-	}
+	pkg := pkgObj.Name()
 	n := len(pkg)
 	idx := 1
 	for {
@@ -85,6 +74,70 @@ func (p *Exporter) importPkg(pkg, pkgPath string) string {
 	p.imports[pkgPath] = pkg
 	p.importPkgs[pkg] = pkgPath
 	return pkg
+}
+
+func (p *Exporter) useType(typ types.Type) {
+	switch t := typ.(type) {
+	case *types.Basic:
+	case *types.Pointer:
+		p.useType(t.Elem())
+	case *types.Slice:
+		p.useType(t.Elem())
+	case *types.Map:
+		p.useType(t.Key())
+		p.useType(t.Elem())
+	case *types.Chan:
+		p.useType(t.Elem())
+	case *types.Array:
+		p.useType(t.Elem())
+	case *types.Struct:
+		n := t.NumFields()
+		for i := 0; i < n; i++ {
+			p.useType(t.Field(i).Type())
+		}
+	case *types.Signature:
+		p.useType(t.Params())
+		p.useType(t.Results())
+	case *types.Tuple:
+		n := t.Len()
+		for i := 0; i < n; i++ {
+			p.useType(t.At(i).Type())
+		}
+	case *types.Named:
+		p.importPkg(t.Obj().Pkg())
+	case *types.Interface:
+		n := t.NumMethods()
+		for i := 0; i < n; i++ {
+			m := t.Method(i)
+			p.useType(m.Type())
+		}
+	default:
+		panic("not here")
+	}
+}
+
+func (p *Exporter) toType(typ types.Type) string {
+	for i, t := range p.toTypes {
+		if types.Identical(typ, t) {
+			return toTypeName(i)
+		}
+	}
+	idx := toTypeName(len(p.toTypes))
+	typStr := typ.String()
+	p.execs = append(p.execs, fmt.Sprintf(`
+func %s(v interface{}) %s {
+	if v == nil {
+		return nil
+	}
+	return v.(%s)
+}
+`, idx, typStr, typStr))
+	p.toTypes = append(p.toTypes, typ)
+	return idx
+}
+
+func toTypeName(i int) string {
+	return "toType" + strconv.Itoa(i)
 }
 
 // ExportFunc exports a go function/method.
@@ -118,8 +171,18 @@ func (p *Exporter) ExportFunc(fn *types.Func) {
 		retReturn = arity
 	}
 	for i := 0; i < numIn; i++ {
-		t := tfn.Params().At(i).Type()
-		args[i] = fmt.Sprintf("args[%d].(%s)", i+from, t.String())
+		typ := tfn.Params().At(i).Type()
+		p.useType(typ)
+		typIntf, isInterface := typ.Underlying().(*types.Interface)
+		if isInterface {
+			if !typIntf.Empty() {
+				args[i] = fmt.Sprintf("%s(args[%d])", p.toType(typ), i+from)
+			} else {
+				args[i] = fmt.Sprintf("args[%d]", i+from)
+			}
+		} else {
+			args[i] = fmt.Sprintf("args[%d].(%s)", i+from, typ.String())
+		}
 	}
 	if isVariadic {
 		var varg string
@@ -144,7 +207,6 @@ func (p *Exporter) ExportFunc(fn *types.Func) {
 	}
 	name := fn.Name()
 	exec := name
-	fmt.Println("==>", fn.Name(), fn.FullName(), fn.Pkg().Name())
 	if isMethod {
 		fullName := fn.FullName()
 		exec = typeName(tfn.Recv().Type()) + name
@@ -252,7 +314,7 @@ func (p *Exporter) Close() error {
 		pkgs = append(pkgs, pkg)
 	}
 	sort.Strings(pkgs)
-	fmt.Fprintf(p.w, gopkgExportHeader, p.pkgExport)
+	fmt.Fprintf(p.w, gopkgExportHeader, p.pkg.Name())
 	for _, pkg := range pkgs {
 		pkgPath := p.importPkgs[pkg]
 		fmt.Fprintf(p.w, `	%s "%s"
@@ -262,7 +324,7 @@ func (p *Exporter) Close() error {
 	for _, exec := range p.execs {
 		io.WriteString(p.w, exec)
 	}
-	fmt.Fprintf(p.w, gopkgInitExportHeader, p.pkgPath)
+	fmt.Fprintf(p.w, gopkgInitExportHeader, p.pkg.Path())
 	pkgDot := p.pkgDot
 	exportFns(p.w, pkgDot, p.exportFns, "Func")
 	exportFns(p.w, pkgDot, p.exportFnvs, "Funcv")

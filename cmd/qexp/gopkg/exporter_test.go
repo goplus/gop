@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"go/importer"
 	"go/types"
+	"io"
+	"io/ioutil"
 	"testing"
 )
 
@@ -18,7 +20,6 @@ type goFunc struct {
 const expected = `package strings
 
 import (
-	fmt "fmt"
 	gop "github.com/qiniu/goplus/gop"
 	strings "strings"
 )
@@ -59,7 +60,7 @@ func getMethod(o *types.Named, name string) *types.Func {
 	return nil
 }
 
-func Test(t *testing.T) {
+func TestBasic(t *testing.T) {
 	pkg, err := importer.Default().Import("strings")
 	if err != nil {
 		t.Fatal("Import failed:", err)
@@ -69,13 +70,31 @@ func Test(t *testing.T) {
 	replacer := gbl.Lookup("Replacer").(*types.TypeName).Type().(*types.Named)
 	b := bytes.NewBuffer(nil)
 	e := NewExporter(b, pkg)
-	e.importPkg("", "fmt")
 	e.ExportFunc(newReplacer)
 	e.ExportFunc(getMethod(replacer, "Replace"))
 	e.Close()
 	if real := b.String(); real != expected {
 		fmt.Println(real)
 		t.Fatal("Test failed")
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+type nopCloser struct {
+	io.Writer
+}
+
+func (nopCloser) Close() error { return nil }
+
+func createNilExportFile(pkgDir string) (f io.WriteCloser, err error) {
+	return &nopCloser{ioutil.Discard}, nil
+}
+
+func TestExport(t *testing.T) {
+	err := Export("strings", createNilExportFile)
+	if err != nil {
+		t.Fatal("TestExport failed:", err)
 	}
 }
 

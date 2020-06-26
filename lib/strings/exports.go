@@ -17,6 +17,7 @@
 // Package strings provide Go+ "strings" package, as "strings" package in Go.
 package strings
 
+/*
 import (
 	"strings"
 
@@ -50,5 +51,5 @@ func init() {
 		I.Func("(*Replacer).Replace", (*strings.Replacer).Replace, execReplacerReplace),
 	)
 }
-
+*/
 // -----------------------------------------------------------------------------
