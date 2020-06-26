@@ -102,6 +102,9 @@ if err != nil {
 func TestParseGopFiles(t *testing.T) {
 	fset := token.NewFileSet()
 	local = fsTest3
+	defer func() {
+		local = localFS{}
+	}()
 	// test parse directory
 	pkgs, err := ParseGopFiles(fset, "/foo", 0)
 	if err != nil {
