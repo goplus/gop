@@ -244,7 +244,8 @@ func (p *Exporter) ExportFunc(fn *types.Func) {
 	if isMethod {
 		fullName := fn.FullName()
 		exec = typeName(tfn.Recv().Type()) + name
-		name, fnName = withoutPkg(fullName), "args[0]."+fullName
+		name = withoutPkg(fullName)
+		fnName = "args[0]." + withPkg(p.pkgDot, name)
 	} else {
 		fnName = p.pkgDot + name
 	}
