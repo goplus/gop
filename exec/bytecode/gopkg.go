@@ -63,6 +63,30 @@ func execAddrGoVar(i Instr, p *Context) {
 	p.Push(govars[idx].Addr)
 }
 
+func execLoadGoField(i Instr, p *Context) {
+	index := p.Pop()
+	v := reflect.ValueOf(p.Pop())
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	p.Push(v.FieldByIndex(index.([]int)).Interface())
+}
+
+func execStoreGoField(i Instr, p *Context) {
+	index := p.Pop()
+	v := reflect.ValueOf(p.Pop())
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	v.FieldByIndex(index.([]int)).Set(reflect.ValueOf(p.Pop()))
+}
+
+func execAddrGoField(i Instr, p *Context) {
+	index := p.Pop()
+	v := reflect.ValueOf(p.Pop()).Elem()
+	p.Push(v.FieldByIndex(index.([]int)).Addr().Interface())
+}
+
 // -----------------------------------------------------------------------------
 
 // A ConstKind represents the specific kind of type that a Type represents.
@@ -389,6 +413,30 @@ func (p *Builder) StoreGoVar(addr GoVarAddr) *Builder {
 // AddrGoVar instr
 func (p *Builder) AddrGoVar(addr GoVarAddr) *Builder {
 	i := (opAddrGoVar << bitsOpShift) | uint32(addr)
+	p.code.data = append(p.code.data, i)
+	return p
+}
+
+// LoadGoField instr
+func (p *Builder) LoadGoField(index []int) *Builder {
+	p.Push(index)
+	i := (opLoadGoField << bitsOpShift) | uint32(len(index))
+	p.code.data = append(p.code.data, uint32(i))
+	return p
+}
+
+// StoreGoField instr
+func (p *Builder) StoreGoField(index []int) *Builder {
+	p.Push(index)
+	i := (opStoreGoField << bitsOpShift) | (uint32(len(index)))
+	p.code.data = append(p.code.data, i)
+	return p
+}
+
+// AddrGoField instr
+func (p *Builder) AddrGoField(index []int) *Builder {
+	p.Push(index)
+	i := (opAddrGoField << bitsOpShift) | uint32(len(index))
 	p.code.data = append(p.code.data, i)
 	return p
 }

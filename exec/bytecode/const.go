@@ -127,7 +127,7 @@ func (p *Builder) pushInstr(val interface{}) (i Instr) {
 		return iPushFalse
 	} else if kind != reflect.String && !(kind >= reflect.Float32 && kind <= reflect.Complex128) {
 		if !(kind == reflect.Ptr && v.Type().Elem().PkgPath() == "math/big") {
-			log.Panicln("Push failed: unsupported type:", reflect.TypeOf(val), "-", val)
+			//	log.Panicln("Push failed: unsupported type:", reflect.TypeOf(val), "-", val)
 		}
 	}
 	code := p.code
