@@ -62,8 +62,7 @@ var local FileSystem = localFS{}
 //
 // If the file or directory couldn't be read, a nil map and the respective error are
 // returned.
-// If the target is directory and a parse error occurred, a non-nil but incomplete map and the
-// first error encountered are returned.
+// If the target is directory and a parse error occurred, a non-nil but incomplete map and the first error encountered are returned.
 func ParseGopFiles(fset *token.FileSet, target string, mode Mode) (pkgs map[string]*ast.Package, err error) {
 	if strings.HasSuffix(target, ".gop") {
 		file, err := ParseFile(fset, target, nil, mode)
