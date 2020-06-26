@@ -81,6 +81,23 @@ func TestBasic(t *testing.T) {
 	}
 }
 
+func TestFixPkgString(t *testing.T) {
+	pkg, _ := importer.Default().Import("go/types")
+	b := bytes.NewBuffer(nil)
+	e := NewExporter(b, pkg)
+	e.imports["io"] = "io1"
+	e.imports["go/types"] = "types1"
+	if v := e.fixPkgString("*go/types.Interface"); v != "*types1.Interface" {
+		t.Fatal(v)
+	}
+	if v := e.fixPkgString("[]*go/types.Package"); v != "[]*types1.Package" {
+		t.Fatal(v)
+	}
+	if v := e.fixPkgString("io.Writer"); v != "io1.Writer" {
+		t.Fatal(v)
+	}
+}
+
 // -----------------------------------------------------------------------------
 
 type nopCloser struct {

@@ -208,7 +208,11 @@ func (p *Exporter) typeString(typ types.Type) string {
 	if !strings.Contains(typStr, ".") {
 		return typStr
 	}
-	return reTyp.ReplaceAllStringFunc(typStr, func(s string) string {
+	return p.fixPkgString(typ.String())
+}
+
+func (p *Exporter) fixPkgString(typ string) string {
+	return reTyp.ReplaceAllStringFunc(typ, func(s string) string {
 		pos := strings.Index(s, ".")
 		if pos > 0 {
 			pkg := s[:pos]
