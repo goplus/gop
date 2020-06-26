@@ -1,10 +1,12 @@
+// Package strings provide Go+ "strings" package, as "strings" package in Go.
 package strings
 
 import (
-	gop "github.com/qiniu/goplus/gop"
 	io "io"
 	strings "strings"
 	unicode "unicode"
+
+	gop "github.com/qiniu/goplus/gop"
 )
 
 func execBuilderString(_ int, p *gop.Context) {

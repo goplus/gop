@@ -299,7 +299,8 @@ func init() {
 const gopkgInitExportFooter = `}
 `
 
-const gopkgExportHeader = `package %s
+const gopkgExportHeader = `// Package %s provide Go+ "%s" package, as "%s" package in Go.
+package %s
 
 import (
 `
@@ -314,7 +315,8 @@ func (p *Exporter) Close() error {
 		pkgs = append(pkgs, pkg)
 	}
 	sort.Strings(pkgs)
-	fmt.Fprintf(p.w, gopkgExportHeader, p.pkg.Name())
+	pkg, pkgPath := p.pkg.Name(), p.pkg.Path()
+	fmt.Fprintf(p.w, gopkgExportHeader, pkg, pkgPath, pkgPath, pkg)
 	for _, pkg := range pkgs {
 		pkgPath := p.importPkgs[pkg]
 		fmt.Fprintf(p.w, `	%s "%s"
@@ -324,7 +326,7 @@ func (p *Exporter) Close() error {
 	for _, exec := range p.execs {
 		io.WriteString(p.w, exec)
 	}
-	fmt.Fprintf(p.w, gopkgInitExportHeader, p.pkg.Path())
+	fmt.Fprintf(p.w, gopkgInitExportHeader, pkgPath)
 	pkgDot := p.pkgDot
 	exportFns(p.w, pkgDot, p.exportFns, "Func")
 	exportFns(p.w, pkgDot, p.exportFnvs, "Funcv")
