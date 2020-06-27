@@ -1,5 +1,5 @@
 /*
- Copyright 2020 Qiniu Cloud (qiniu.com)
+ Copyright 2020 The GoPlus Authors (goplus.org)
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ var (
 func main() {
 	flag.Parse()
 	if flag.NArg() < 1 {
-		fmt.Println("Usage: qrun [-asm -quiet -debug -prof] <gopSrcDir>")
+		fmt.Fprintf(os.Stderr, "Usage: qrun [-asm -quiet -debug -prof] <gopSrcDir | gopSrcFile>\n")
 		flag.PrintDefaults()
 		return
 	}
@@ -57,12 +57,12 @@ func main() {
 	if *flagProf {
 		exec.SetProfile(true)
 	}
-
 	fset := token.NewFileSet()
-	pkgDir, _ := filepath.Abs(flag.Arg(0))
-	pkgs, err := parser.ParseDir(fset, pkgDir, nil, 0)
+
+	target, _ := filepath.Abs(flag.Arg(0))
+	pkgs, err := parser.ParseGopFiles(fset, target, 0)
 	if err != nil {
-		log.Fatalln("ParseDir failed:", err)
+		log.Fatalln("ParseGopFiles failed:", err)
 	}
 	cl.CallBuiltinOp = exec.CallBuiltinOp
 

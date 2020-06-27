@@ -1,5 +1,5 @@
 /*
- Copyright 2020 Qiniu Cloud (qiniu.com)
+ Copyright 2020 The GoPlus Authors (goplus.org)
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -1170,6 +1170,35 @@ func TestRational4(t *testing.T) {
 	ctx := exec.NewContext(code)
 	ctx.Exec(0, code.Len())
 	if v := ctx.Get(-1); v.(*big.Rat).Cmp(big.NewRat(7, 4)) != 0 {
+		t.Fatal("v:", v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+var fsTestRational5 = asttest.NewSingleFileFS("/foo", "bar.gop", `
+	x := 1/3r + 1r*2r
+	x
+`)
+
+func TestRational5(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestRational5, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, _, err = newPackage(b, bar, fset)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := ctx.Get(-1); v.(*big.Rat).Cmp(big.NewRat(7, 3)) != 0 {
 		t.Fatal("v:", v)
 	}
 }

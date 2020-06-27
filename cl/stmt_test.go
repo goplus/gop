@@ -1,5 +1,5 @@
 /*
- Copyright 2020 Qiniu Cloud (qiniu.com)
+ Copyright 2020 The GoPlus Authors (goplus.org)
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -730,6 +730,65 @@ var testForRangeClauses = map[string]testData{
 					}
 					println(sum)
 					`, []string{"34"}},
+	"both_kv_assign_simple_range": {` sum:=0
+					k,v:=0,0
+					for k,v=range [1,2,3,4,5]{
+						sum+=k+v
+					}
+					println(k)
+					println(v)
+					println(sum)
+					`, []string{"4", "5", "25"}},
+	"both_kv_assign_range_list": {` sum:=0
+					m:={1:2,2:4,3:8}
+					arr:=[11,22]
+					for m[1],m[2]=range arr{
+					    sum+=m[1]+m[2]
+					}
+					println(m[1])
+					println(m[2])
+					println(sum)
+					`, []string{"1", "22", "34"}},
+	"both_kv_assign_range_map": {` sum:=0
+					m:={3:8}
+					arr:=[11,22]
+					for arr[0],arr[1]=range m{
+					    sum+=arr[0]+arr[1]
+					}
+					println(arr[0])
+					println(arr[1])
+					println(sum)
+					`, []string{"3", "8", "11"}},
+	"only_v_assign_range": {` sum:=0
+					m:={3:8}
+					arr:=[11,22]
+					for _,arr[1]=range m{
+					    sum+=arr[0]+arr[1]
+					}
+					println(arr[0])
+					println(arr[1])
+					println(sum)
+					`, []string{"11", "8", "19"}},
+	"only_k_assign_range": {` sum:=0
+					m:={3:8}
+					arr:=[11,22]
+					for arr[0],_=range m{
+					    sum+=arr[0]+arr[1]
+					}
+					println(arr[0])
+					println(arr[1])
+					println(sum)
+					`, []string{"3", "22", "25"}},
+	"none_kv_assign_range": {` sum:=0
+					m:={3:8}
+					arr:=[11,22]
+					for _,_=range m{
+					    sum+=arr[0]+arr[1]
+					}
+					println(arr[0])
+					println(arr[1])
+					println(sum)
+					`, []string{"11", "22", "33"}},
 }
 
 func TestRangeStmt(t *testing.T) {

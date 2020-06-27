@@ -35,6 +35,30 @@ for k, x := range m {
 }
 println("sum==19", sum == 19)
 
+sum = 0
+rangeX := 0
+for _, rangeX = range [1, 3, 5, 7, 11] {
+    if rangeX > 3 {
+        sum += rangeX
+    }
+}
+println("rangeX:", rangeX == 11, rangeX)
+println("sum(1, 3, 5, 7, 11):", sum == 23, sum)
+
+sum = 0
+rangeX = 0
+for _, rangeX = range [1, 3, 5] {
+    sum += rangeX
+    for rangeX, _ =range [0,2] {
+        sum += rangeX
+    }
+}
+println("rangeX:", rangeX == 1, rangeX)
+println("sum(1, 3, 5)(0,2):", sum == 12, sum)
+
+for _, _ = range [1,3,5,7] {
+}
+
 // normal for
 i := 10
 sum = 0
