@@ -57,9 +57,9 @@ type Decl interface {
 // ----------------------------------------------------------------------------
 // Comments
 
-// A Comment node represents a single //-style or /*-style comment.
+// A Comment node represents a single //-style 、#-style or /*-style comment.
 type Comment struct {
-	Slash token.Pos // position of "/" starting the comment
+	Slash token.Pos // position of "/" or # starting the comment
 	Text  string    // comment text (excluding '\n' for //-style comments)
 }
 
