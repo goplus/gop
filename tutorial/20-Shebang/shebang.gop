@@ -1,3 +1,0 @@
-#! /usr/bin/env qrun
-
-println("Hello, Go+")
