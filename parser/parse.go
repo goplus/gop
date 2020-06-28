@@ -55,10 +55,10 @@ func (p localFS) Join(elem ...string) string {
 
 var local FileSystem = localFS{}
 
-// ParseGOPFiles parses the Go+ source files under directory or single Go+ source file.
+// ParseGopFiles parses the Go+ source files under directory or single Go+ source file.
 // The target specifies the directory or single Go+ source file.
 //
-// The ParseGOPFiles should return the map of packages to run Go+ script, even the target is single file.
+// The ParseGopFiles should return the map of packages to run Go+ script, even the target is single file.
 //
 // If the file or directory couldn't be read, a nil map and the respective error are
 // returned.
