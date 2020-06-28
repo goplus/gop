@@ -87,17 +87,12 @@ func main() {
 		exec.ProfileReport()
 	}
 }
-func IsDir(target string) (isDir bool, err error) {
-	switch dir, err := os.Stat(target); {
-	case err != nil:
-		log.Fatalln("invalid input: ", err)
-		return isDir, err
-	case dir.IsDir():
-		isDir = true
-	default:
-		isDir = false
+func IsDir(target string) (bool, error) {
+	fi, err := os.Stat(target)
+	if err != nil {
+		return false, err
 	}
-	return
+	return fi.IsDir(), nil
 }
 
 // -----------------------------------------------------------------------------
