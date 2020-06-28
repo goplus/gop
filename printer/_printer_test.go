@@ -226,6 +226,7 @@ func TestLineComments(t *testing.T) {
 	const src = `// comment 1
 	// comment 2
 	// comment 3
+	# comment 4
 	package main
 	`
 
@@ -238,7 +239,6 @@ func TestLineComments(t *testing.T) {
 	var buf bytes.Buffer
 	fset = token.NewFileSet() // use the wrong file set
 	Fprint(&buf, fset, f)
-
 	nlines := 0
 	for _, ch := range buf.Bytes() {
 		if ch == '\n' {
@@ -246,7 +246,7 @@ func TestLineComments(t *testing.T) {
 		}
 	}
 
-	const expected = 3
+	const expected = 4
 	if nlines < expected {
 		t.Errorf("got %d, expected %d\n", nlines, expected)
 		t.Errorf("result:\n%s", buf.Bytes())

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package format implements standard formatting of Go source.
+// Package format implements standard formatting of Go+ source.
 //
 // Note that formatting of Go source code changes over time, so tools relying on
 // consistent formatting should execute a specific version of the gofmt binary
