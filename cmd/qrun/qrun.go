@@ -60,7 +60,12 @@ func main() {
 	fset := token.NewFileSet()
 
 	target, _ := filepath.Abs(flag.Arg(0))
-	pkgs, err := parser.ParseGopFiles(fset, target, 0)
+
+	isDir, err := IsDir(target)
+	if err != nil {
+		log.Fatalln("parse input arg %v failed:%v", target, err)
+	}
+	pkgs, err := parser.ParseGopFiles(fset, target, isDir, 0)
 	if err != nil {
 		log.Fatalln("ParseGopFiles failed:", err)
 	}
@@ -81,6 +86,18 @@ func main() {
 	if *flagProf {
 		exec.ProfileReport()
 	}
+}
+func IsDir(target string) (isDir bool, err error) {
+	switch dir, err := os.Stat(target); {
+	case err != nil:
+		log.Fatalf("input wrong arg %v , err: %v ", target, err)
+		return isDir, err
+	case dir.IsDir():
+		isDir = true
+	default:
+		isDir = false
+	}
+	return
 }
 
 // -----------------------------------------------------------------------------
