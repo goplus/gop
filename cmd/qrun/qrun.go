@@ -64,7 +64,6 @@ func main() {
 	isDir, err := IsDir(target)
 	if err != nil {
 		log.Fatalln("input arg check failed:", err)
-		return
 	}
 	pkgs, err := parser.ParseGopFiles(fset, target, isDir, 0)
 	if err != nil {
