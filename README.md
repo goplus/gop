@@ -317,7 +317,7 @@ println([k for k, _ <- m])
 println([v for v <- m])
 ```
 
-Go [tutorial/20-Unix-Shebang](https://github.com/qiniu/goplus/blob/master/tutorial/20-Unix-Shebang/shebang) to get the source code.
+Go [tutorial/20-Unix-Shebang/shebang](https://github.com/qiniu/goplus/blob/master/tutorial/20-Unix-Shebang/shebang) to get the source code.
 
 
 ### Go features
