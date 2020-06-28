@@ -296,6 +296,8 @@ How these `ErrWrap expressions` work? See [Error Handling](https://github.com/qi
 
 ### Unix shebang
 
+You can use Go+ programs as shell scripts now. For example:
+
 ```go
 #!/usr/bin/env qrun
 
