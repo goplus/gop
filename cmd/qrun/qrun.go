@@ -34,8 +34,8 @@ import (
 // -----------------------------------------------------------------------------
 
 var (
-	flagAsm   = flag.Bool("asm", false, "generate asm code")
-	flagQuiet = flag.Bool("quiet", false, "don't generate any log")
+	flagAsm   = flag.Bool("asm", false, "generates `asm` code of Go+ bytecode backend")
+	flagQuiet = flag.Bool("quiet", false, "don't generate any compiling stage log")
 	flagDebug = flag.Bool("debug", false, "print debug information")
 	flagProf  = flag.Bool("prof", false, "do profile and generate profile report")
 )
@@ -43,7 +43,7 @@ var (
 func main() {
 	flag.Parse()
 	if flag.NArg() < 1 {
-		fmt.Fprintf(os.Stderr, "Usage: qrun [-asm -quiet -debug -prof] <gopSrcDir | gopSrcFile>\n")
+		fmt.Fprintf(os.Stderr, "Usage: qrun [-asm -quiet -debug -prof] <gopSrcDir|gopSrcFile>\n")
 		flag.PrintDefaults()
 		return
 	}
@@ -87,6 +87,7 @@ func main() {
 	}
 }
 
+// IsDir checks a target path is dir or not.
 func IsDir(target string) (bool, error) {
 	fi, err := os.Stat(target)
 	if err != nil {

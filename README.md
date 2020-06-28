@@ -164,27 +164,25 @@ When we use `gop run` command, it doesn't call `go run` command. It generates by
 ### Commands
 
 ```bash
-gop go <gopSrcDir> # Convert all Go+ packages under <gopSrcDir> into Go packages, recursively
+gop go [-test] <gopSrcDir> # Convert all Go+ packages under <gopSrcDir> into Go packages, recursively
 gop run <gopSrcDir> # Running <gopSrcDir> as a Go+ main package
 gop run <gopSrcFile> # Running <gopSrcFile> as a Go+ script
 gop install ./... # Convert all Go+ packages under ./ and go install ./...
+gop fmt ./... # Format all Go+ packages under ./
+gop export <goPkgPath> # Generate a Go+ package that wraps a Go package automatically
 ```
 
 The `gop` command isn't provided currently (in alpha stage). Instead, we provide the following commands:
 
-```bash
-qrun <gopSrcDir | gopSrcFile> # gop run <gopSrcDir | gopSrcFile>
-qrun -asm <gopSrcDir | gopSrcFile> # generates `asm` code of Go+ bytecode backend
-qrun -quiet <gopSrcDir | gopSrcFile> # don't generate any compiling stage log
-qrun -debug <gopSrcDir | gopSrcFile> # print debug information
-qrun -prof <gopSrcDir | gopSrcFile> # do profile and generate profile report
-qgo <gopSrcDir> # gop go <gopSrcDir>
-qgo -test <gopSrcDir>
-```
+* [qrun](https://github.com/qiniu/goplus/wiki/Commands#qrun): Similar to `gop run`
+* [qfmt](https://github.com/qiniu/goplus/wiki/Commands#qfmt): Similar to `gop fmt`
+* [qexp](https://github.com/qiniu/goplus/wiki/Commands#qexp): Similar to `gop export`
+* [qgo](https://github.com/qiniu/goplus/wiki/Commands#qgo): Similar to `gop go`
 
 Note:
 
 * `qgo -test <gopSrcDir>` converts Go+ packages into Go packages, and for every package, it call `go run <gopPkgDir>/gop_autogen.go` and `qrun -quiet <gopPkgDir>` to compare their outputs. If their outputs aren't equal, the test case fails.
+
 
 ### Rational number: bigint, bigrat, bigfloat
 
@@ -295,11 +293,37 @@ And the most interesting thing is, the return error contains the full error stac
 
 How these `ErrWrap expressions` work? See [Error Handling](https://github.com/qiniu/goplus/wiki/Error-Handling) for more information.
 
+
+### Unix shebang
+
+```go
+#!/usr/bin/env qrun
+
+println("Hello, Go+")
+
+println(1r << 129)
+println(1/3r + 2/7r*2)
+
+arr := [1, 3, 5, 7, 11, 13, 17, 19]
+println(arr)
+println([x*x for x <- arr, x > 3])
+
+m := {"Hi": 1, "Go+": 2}
+println(m)
+println({v: k for k, v <- m})
+println([k for k, _ <- m])
+println([v for v <- m])
+```
+
+Go [tutorial/20-Unix-Shebang](https://github.com/qiniu/goplus/blob/master/tutorial/20-Unix-Shebang/shebang) to get the source code.
+
+
 ### Go features
 
 All Go features (not including `cgo`) will be supported.
 
 * See [supported the Go language features](https://github.com/qiniu/goplus/wiki/Supported-Go-features).
+
 
 ## Contributing
 
