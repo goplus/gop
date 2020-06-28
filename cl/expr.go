@@ -983,7 +983,15 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 		n, t := countPtr(vx.t)
 		name := v.Sel.Name
 		if sf, ok := t.FieldByName(name); ok {
-			log.Panicln("compileSelectorExpr todo: structField -", t, sf)
+			exprX()
+			ctx.infer.Ret(1, &goValue{t: sf.Type})
+			return func() {
+				if ctx.inLHS {
+					ctx.out.AddrGoField(sf.Index)
+				} else {
+					ctx.out.LoadGoField(sf.Index)
+				}
+			}
 		}
 		pkgPath, method := normalizeMethod(n, t, name)
 		pkg := ctx.FindGoPackage(pkgPath)
