@@ -502,3 +502,106 @@ import (
 		}
 	}
 }
+
+type testFieldPoint struct {
+	X int
+	Y int
+}
+
+type testFieldInfo struct {
+	V1  bool
+	V2  rune
+	V3  string
+	V4  int
+	V5  []int
+	V6  []string
+	V7  map[int]string
+	V8  testFieldPoint
+	V9  *testFieldPoint
+	V10 []testFieldPoint
+	V11 []*testFieldPoint
+}
+
+func TestPkgLoadField(t *testing.T) {
+	var I = exec.NewGoPackage("pkg_test_field_load")
+
+	m := make(map[int]string)
+	m[1] = "hello"
+	m[2] = "world"
+
+	var ar [11]interface{}
+	ar[0] = true
+	ar[1] = 'A'
+	ar[2] = "Info"
+	ar[3] = -100
+	ar[4] = []int{100, 200}
+	ar[5] = []string{"hello", "world"}
+	ar[6] = m
+	ar[7] = testFieldPoint{10, 20}
+	ar[8] = &testFieldPoint{-10, -20}
+	ar[9] = []testFieldPoint{{100, 200}, {300, 400}}
+	ar[10] = []*testFieldPoint{&testFieldPoint{100, 200}, &testFieldPoint{300, 400}}
+
+	info := &testFieldInfo{}
+	info.V7 = make(map[int]string)
+	v := reflect.ValueOf(info).Elem()
+	for i := 0; i < v.NumField(); i++ {
+		v.Field(i).Set(reflect.ValueOf(ar[i]))
+	}
+
+	var out [11]interface{}
+	I.RegisterVars(
+		I.Var("Info", &info),
+		I.Var("Out", &out),
+	)
+
+	var testSource string
+	testSource = `package main
+
+import (
+	pkg "pkg_test_field_load"
+)
+
+`
+	const N = 11
+	// make println
+	for i := 0; i < N; i++ {
+		testSource += fmt.Sprintf("println(\"pkg.Info.V%v = \", pkg.Info.V%v)\n", i+1, i+1)
+	}
+	// make ret
+	var retList []string
+	var name string
+	for i := 0; i < N; i++ {
+		name = fmt.Sprintf("pkg.Out[%v] = pkg.Info.V%v", i, i+1)
+		retList = append(retList, name)
+	}
+
+	testSource += strings.Join(retList, "\n")
+
+	fsTestPkgVar := asttest.NewSingleFileFS("/foo", "bar.gop", testSource)
+	t.Log(testSource)
+
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestPkgVar, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, _, err = newPackage(b, bar, fset)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+
+	t.Log(out)
+	for i := 0; i < N; i++ {
+		if !reflect.DeepEqual(ar[i], out[i]) {
+			t.Fatal(i, ar[i], out[i])
+		}
+	}
+}

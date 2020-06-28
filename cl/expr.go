@@ -153,8 +153,10 @@ func compileIdent(ctx *blockCtx, name string) func() {
 		switch v := sym.(type) {
 		case *execVar:
 			ctx.infer.Push(&goValue{t: v.v.Type()})
+			kind := v.v.Type().Kind()
 			return func() {
-				if ctx.inLHS && v.v.Type().Kind() == reflect.Array {
+				if ctx.inLHS && (kind == reflect.Array ||
+					kind == reflect.Struct) {
 					ctx.out.AddrVar(v.v)
 				} else {
 					ctx.out.LoadVar(v.v)
@@ -697,7 +699,7 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compleMode) {
 	}
 	if cons, ok := val.(*constVal); ok {
 		cons.bound(typElem, ctx.out)
-	} else if t := val.(iValue).Type(); t != typElem {
+	} else if t := val.(iValue).Type(); t != typElem && typElem.Kind() != reflect.Interface {
 		log.Panicf("compileIndexExprLHS: can't assign `%v`[i] = `%v`\n", typ, t)
 	}
 	exprIdx := compileExpr(ctx, v.Index)
@@ -930,7 +932,9 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compleMode)
 		_, t := countPtr(vx.t)
 		name := v.Sel.Name
 		if sf, ok := t.FieldByName(name); ok {
-			log.Panicln("compileSelectorExprLHS todo: structField -", t, sf)
+			checkType(sf.Type, in, ctx.out)
+			exprX()
+			ctx.out.StoreGoField(sf.Index)
 		}
 	default:
 		log.Panicln("compileSelectorExprLHS failed: unknown -", reflect.TypeOf(vx))
