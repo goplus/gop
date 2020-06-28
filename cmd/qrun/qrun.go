@@ -63,7 +63,8 @@ func main() {
 
 	isDir, err := IsDir(target)
 	if err != nil {
-		log.Fatalln("parse input arg %v failed:%v", target, err)
+		log.Fatalln("input arg check failed:", err)
+		return
 	}
 	pkgs, err := parser.ParseGopFiles(fset, target, isDir, 0)
 	if err != nil {
@@ -90,7 +91,7 @@ func main() {
 func IsDir(target string) (isDir bool, err error) {
 	switch dir, err := os.Stat(target); {
 	case err != nil:
-		log.Fatalf("input wrong arg %v , err: %v ", target, err)
+		log.Fatalln("invalid input: ", err)
 		return isDir, err
 	case dir.IsDir():
 		isDir = true
