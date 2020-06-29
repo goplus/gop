@@ -83,6 +83,11 @@ func compileForPhraseStmt(parent *blockCtx, v *ast.ForPhraseStmt) {
 	})
 }
 
+var rangeVarName = struct {
+	keyName   string
+	valueName string
+}{"_gop_k", "gop_v"}
+
 func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 	noExecCtx := isNoExecCtx(parent, v.Body)
 	f := ast.ForPhrase{
@@ -97,29 +102,13 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 	case token.ASSIGN:
 		var lhs, rhs [2]ast.Expr
 		var idx int
-		if v.Key != nil {
-			assign := true
-			if id, ok := v.Key.(*ast.Ident); ok && id.Name == "_" {
-				assign = false
-			}
-			if assign {
-				k0 := ast.NewObj(ast.Var, "_gop_k")
-				f.Key = &ast.Ident{Name: k0.Name, Obj: k0}
-				lhs[idx], rhs[idx] = v.Key, f.Key
-				idx++
-			}
+		if v.Key, f.Key = toAssign(v.Key, rangeVarName.keyName); f.Key != nil {
+			lhs[idx], rhs[idx] = v.Key, f.Key
+			idx++
 		}
-		if v.Value != nil {
-			assign := true
-			if id, ok := v.Value.(*ast.Ident); ok && id.Name == "_" {
-				assign = false
-			}
-			if assign {
-				v0 := ast.NewObj(ast.Var, "_gop_v")
-				f.Value = &ast.Ident{Name: v0.Name, Obj: v0}
-				lhs[idx], rhs[idx] = v.Value, f.Value
-				idx++
-			}
+		if v.Value, f.Value = toAssign(v.Value, rangeVarName.valueName); f.Value != nil {
+			lhs[idx], rhs[idx] = v.Value, f.Value
+			idx++
 		}
 		v.Body.List = append([]ast.Stmt{&ast.AssignStmt{
 			Lhs: lhs[0:idx],
@@ -138,6 +127,16 @@ func toIdent(e ast.Expr) *ast.Ident {
 		return nil
 	}
 	return e.(*ast.Ident)
+}
+
+func toAssign(e ast.Expr, name string) (ast.Expr, *ast.Ident) {
+	if e == nil {
+		return e, nil
+	}
+	if id, ok := e.(*ast.Ident); ok && id.Name == "_" {
+		return e, nil
+	}
+	return e, &ast.Ident{Name: name, Obj: ast.NewObj(ast.Var, name)}
 }
 
 var branchLabel = struct {
