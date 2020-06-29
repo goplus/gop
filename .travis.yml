@@ -10,6 +10,7 @@ script:
   - go install -v ./...
   - go test -race -coverprofile=coverage.txt -covermode=atomic ./...
   - find ./exec/golang/testdata -type d|grep -v "./exec/golang/testdata/15.pkg\|./exec/golang/testdata$"|xargs -n 1 -I file bash -c 'echo file;diff <(qrun file) <(go run file/gop_autogen.go)'
+  - find ./ -type f -name "*.gop"|xargs -n 1 qfmt -w
   - pre-commit run --all
 after_success:
   - bash <(curl -s https://codecov.io/bash)

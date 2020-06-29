@@ -2,6 +2,7 @@ n := 2
 a := make([]int, uint64(n))
 a = append(a, 1, 2, 3)
 println(a)
+
 // cap has different results between golang and goplus , but both are right
 // println("len:", len(a), "cap:", cap(a))
 println("len:", len(a))
