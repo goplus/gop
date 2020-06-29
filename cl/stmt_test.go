@@ -793,7 +793,7 @@ var testForRangeClauses = map[string]testData{
 
 func TestRangeStmt(t *testing.T) {
 	for name, clause := range testForRangeClauses {
-		testForRangeStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
+		testSingleStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
 	}
 }
 
@@ -911,15 +911,74 @@ var testNormalForClauses = map[string]testData{
 					}
 					println(sum)
 					`, []string{"16"}},
+	"for_with_continue": {`
+					arr := [1,3,5,7]
+					sum := 0
+					for i:=0; i < len(arr);i++ {
+						if arr[i]<5{
+							continue
+						}
+						sum+=arr[i]
+					}
+					println(sum)
+					`, []string{"12"}},
+	"for_with_break": {`
+					arr := [1,3,5,7]
+					sum := 0
+					for i:=0; i < len(arr);i++ {
+						if arr[i]>5{
+							break
+						}
+						sum+=arr[i]
+					}
+					println(sum)
+					`, []string{"9"}},
+	"for_with_continue_break": {`
+					arr := [1,3,5,7]
+					sum := 0
+					for i:=0; i < len(arr);i++ {
+						if arr[i]>5{
+							break
+						}
+						for j:=0;j<len(arr);j++{
+							if arr[j]<5{
+								continue
+							}
+							sum+=arr[j]
+						}
+					}
+					println(sum)
+					`, []string{"36"}},
+	"for_with_continue_panic": {`
+					arr := [1,3,5,7]
+					sum := 0
+					for i:=0; i < len(arr);i++ {
+					}
+					continue
+					println(sum)
+					`, []string{""}},
+	"for_with_break_panic": {`
+					arr := [1,3,5,7]
+					sum := 0
+					for i:=0; i < len(arr);i++ {
+					}
+					break	
+					println(sum)
+					`, []string{""}},
 }
 
 func TestNormalForStmt(t *testing.T) {
 	for name, clause := range testNormalForClauses {
-		testForRangeStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
+		testSingleStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
 	}
 }
 
-func testForRangeStmt(name string, t *testing.T, fs *asttest.MemFS, wants []string) {
+func testSingleStmt(name string, t *testing.T, fs *asttest.MemFS, wants []string) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Log(r)
+		}
+	}()
 	var results []string
 	selfPrintln := func(arity int, p *gop.Context) {
 		args := p.GetArgs(arity)
@@ -1103,12 +1162,6 @@ var testFallthroughClauses = map[string]testData{
 
 func TestFallthroughStmt(t *testing.T) {
 	for name, clause := range testFallthroughClauses {
-		func() {
-			defer func() {
-				if r := recover(); r != nil {
-				}
-			}()
-			testForRangeStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
-		}()
+		testSingleStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
 	}
 }
