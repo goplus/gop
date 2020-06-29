@@ -140,33 +140,54 @@ func toIdent(e ast.Expr) *ast.Ident {
 	return e.(*ast.Ident)
 }
 
+var branchLabel = struct {
+	continueLabel string
+	breakLabel    string
+}{"_gop_for_continue_label", "_gop_for_break_label"}
+
 func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	if v.Init != nil {
 		ctx = newNormBlockCtx(ctx)
 		compileStmt(ctx, v.Init)
 	}
 	out := ctx.out
+	start := ctx.NewLabel("")
+	post := ctx.NewLabel("")
 	done := ctx.NewLabel("")
-	label := ctx.NewLabel("")
-	out.Label(label)
-
+	ctx.insert(branchLabel.continueLabel, post)
+	ctx.insert(branchLabel.breakLabel, done)
+	out.Label(start)
 	compileExpr(ctx, v.Cond)()
 	checkBool(ctx.infer.Pop())
 	out.JmpIf(0, done)
-
 	noExecCtx := isNoExecCtx(ctx, v.Body)
 	ctx = newNormBlockCtxEx(ctx, noExecCtx)
 	compileBlockStmtWith(ctx, v.Body)
+	out.Jmp(post)
+	out.Label(post)
 	if v.Post != nil {
 		compileStmt(ctx, v.Post)
 	}
-	out.Jmp(label)
+	out.Jmp(start)
 	out.Label(done)
 }
 
 func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
-	if v.Tok == token.FALLTHROUGH {
+	switch v.Tok {
+	case token.FALLTHROUGH:
 		log.Panicln("fallthrough statement out of place")
+	case token.BREAK:
+		if label, ok := ctx.find(branchLabel.breakLabel); ok {
+			ctx.out.Jmp(label.(exec.Label))
+			return
+		}
+		log.Panicln("break statement out of for/switch/select statements")
+	case token.CONTINUE:
+		if label, ok := ctx.find(branchLabel.continueLabel); ok {
+			ctx.out.Jmp(label.(exec.Label))
+			return
+		}
+		log.Panicln("continue statement out of for statements")
 	}
 }
 
