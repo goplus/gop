@@ -143,7 +143,7 @@ func toIdent(e ast.Expr) *ast.Ident {
 var branchLabel = struct {
 	continueLabel string
 	breakLabel    string
-}{"_gop_for_continue_label", "_gop_for_break_label"}
+}{"_gop_branch_continue_label", "_gop_branch_break_label"}
 
 func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	if v.Init != nil {

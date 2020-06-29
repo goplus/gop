@@ -1021,10 +1021,17 @@ func testSingleStmt(name string, t *testing.T, fs *asttest.MemFS, wants []string
 // -----------------------------------------------------------------------------
 
 var fsTestForIncDecStmt = asttest.NewSingleFileFS("/foo", "bar.gop", `
-	a,b:=10,2
-	{a--;a--;a--}
-	{b++;b++;b++}
-	println(a,b,a*b)
+x:=0
+y:=2
+switch x{
+case 0:
+	if y>0{
+		println("break")
+		break
+	}
+		println("gone")
+default:
+}
 `)
 
 func TestForIncDecStmt(t *testing.T) {
@@ -1055,7 +1062,7 @@ func TestForIncDecStmt(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var testFallthroughClauses = map[string]testData{
+var testSwitchBranchClauses = map[string]testData{
 	"switch_all_fallthrough": {`
 					x:=0
 					switch x {
@@ -1140,7 +1147,7 @@ var testFallthroughClauses = map[string]testData{
 					case 1:
 						x++
 						println(x)
-					fallthrough
+						fallthrough
 					}
 					`, []string{"0", "1"}},
 	"switch_fallthrough_out_panic": {`
@@ -1158,10 +1165,25 @@ var testFallthroughClauses = map[string]testData{
 					}
 					fallthrough
 					`, []string{"0", "1"}},
+	"switch_break": {`
+					x:=0
+					y:=2
+					switch x {
+					case 0:
+						if y>0{
+							println(y)
+							break	
+						}
+						println(x)
+					default:
+						x=7
+						println(x)
+					}
+					`, []string{"2"}},
 }
 
-func TestFallthroughStmt(t *testing.T) {
-	for name, clause := range testFallthroughClauses {
+func TestSwitchBranchStmt(t *testing.T) {
+	for name, clause := range testSwitchBranchClauses {
 		testSingleStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
 	}
 }
