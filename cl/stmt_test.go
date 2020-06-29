@@ -1021,17 +1021,10 @@ func testSingleStmt(name string, t *testing.T, fs *asttest.MemFS, wants []string
 // -----------------------------------------------------------------------------
 
 var fsTestForIncDecStmt = asttest.NewSingleFileFS("/foo", "bar.gop", `
-x:=0
-y:=2
-switch x{
-case 0:
-	if y>0{
-		println("break")
-		break
-	}
-		println("gone")
-default:
-}
+	a,b:=10,2
+	{a--;a--;a--}
+	{b++;b++;b++}
+	println(a,b,a*b)
 `)
 
 func TestForIncDecStmt(t *testing.T) {
