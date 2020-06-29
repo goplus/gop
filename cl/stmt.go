@@ -156,6 +156,9 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	done := ctx.NewLabel("")
 	ctx.insert(branchLabel.continueLabel, post)
 	ctx.insert(branchLabel.breakLabel, done)
+	defer func() {
+		ctx.delete(branchLabel.continueLabel, branchLabel.breakLabel)
+	}()
 	out.Label(start)
 	compileExpr(ctx, v.Cond)()
 	checkBool(ctx.infer.Pop())
@@ -203,6 +206,9 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	out := ctx.out
 	done := ctx.NewLabel("")
 	ctx.insert(branchLabel.breakLabel, done)
+	defer func() {
+		ctx.delete(branchLabel.breakLabel)
+	}()
 	hasTag := v.Tag != nil
 	hasCaseClause := false
 	var withoutCheck exec.Label

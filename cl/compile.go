@@ -285,6 +285,12 @@ func (p *blockCtx) insert(name string, v interface{}) {
 	return
 }
 
+func (p *blockCtx) delete(names ...string) {
+	for _, name := range names {
+		delete(p.syms, name)
+	}
+}
+
 func (p *blockCtx) findType(name string) (decl *typeDecl, err error) {
 	v, ok := p.find(name)
 	if !ok {
