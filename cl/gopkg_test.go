@@ -563,20 +563,23 @@ import (
 )
 
 `
-	const N = 11
+	const nField = len(ar)
 	// make println
-	for i := 0; i < N; i++ {
+	for i := 0; i < nField; i++ {
 		testSource += fmt.Sprintf("println(\"pkg.Info.V%v = \", pkg.Info.V%v)\n", i+1, i+1)
 	}
-	// make ret
-	var retList []string
-	var name string
-	for i := 0; i < N; i++ {
-		name = fmt.Sprintf("pkg.Out[%v] = pkg.Info.V%v", i, i+1)
-		retList = append(retList, name)
+
+	for i := 0; i < nField; i++ {
+		testSource += fmt.Sprintf("pkg.Out[%v] = pkg.Info.V%v\n", i, i+1)
 	}
 
-	testSource += strings.Join(retList, "\n")
+	testSource += `
+	pkg.Info.V5[0] = -100
+	println("pkg.Info.V5", pkg.Info.V5)
+	println("pkg.Info.V11[0]",pkg.Info.V11[0])
+	pkg.Info.V11[0] = nil
+	println("pkg.Info.V11",pkg.Info.V11)
+	`
 
 	fsTestPkgVar := asttest.NewSingleFileFS("/foo", "bar.gop", testSource)
 	t.Log(testSource)
@@ -598,10 +601,15 @@ import (
 	ctx := exec.NewContext(code)
 	ctx.Exec(0, code.Len())
 
-	t.Log(out)
-	for i := 0; i < N; i++ {
+	for i := 0; i < nField; i++ {
 		if !reflect.DeepEqual(ar[i], out[i]) {
 			t.Fatal(i, ar[i], out[i])
 		}
+	}
+	if info.V5[0] != -100 {
+		t.Fatal("V5", info.V5)
+	}
+	if info.V11[0] != nil {
+		t.Fatal("V11[0]", info.V11[0])
 	}
 }

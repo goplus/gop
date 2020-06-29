@@ -231,7 +231,11 @@ func execIndex(i Instr, p *Context) {
 	n := len(p.data)
 	v := reflect.Indirect(reflect.ValueOf(p.data[n-1])).Index(idx)
 	if (i & setIndexFlag) != 0 { // value sliceData $idx $setIndex
-		v.Set(reflect.ValueOf(p.data[n-2]))
+		if p.data[n-2] == nil {
+			v.Set(reflect.Zero(v.Type()))
+		} else {
+			v.Set(reflect.ValueOf(p.data[n-2]))
+		}
 		p.PopN(2)
 	} else { // sliceData $idx $setIndex
 		p.data[n-1] = v.Interface()
