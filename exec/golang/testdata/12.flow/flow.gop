@@ -79,3 +79,15 @@ case z > 10:
 default:
 	println(z)
 }
+
+// switch with break
+switch z {
+case 3:
+	if v == "Hello" {
+		println("break")
+		break
+	}
+	println("break fail")
+default:
+	println(z)
+}
