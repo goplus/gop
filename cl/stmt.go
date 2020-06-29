@@ -202,6 +202,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	}
 	out := ctx.out
 	done := ctx.NewLabel("")
+	ctx.insert(branchLabel.breakLabel, done)
 	hasTag := v.Tag != nil
 	hasCaseClause := false
 	var withoutCheck exec.Label
