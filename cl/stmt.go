@@ -179,13 +179,13 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 	case token.FALLTHROUGH:
 		log.Panicln("fallthrough statement out of place")
 	case token.BREAK:
-		if label, ok := ctx.find(branchLabel.breakLabel); ok {
+		if label, ok := ctx.find(branchLabel.breakLabel); ok && v.Label == nil {
 			ctx.out.Jmp(label.(exec.Label))
 			return
 		}
 		log.Panicln("break statement out of for/switch/select statements")
 	case token.CONTINUE:
-		if label, ok := ctx.find(branchLabel.continueLabel); ok {
+		if label, ok := ctx.find(branchLabel.continueLabel); ok && v.Label == nil {
 			ctx.out.Jmp(label.(exec.Label))
 			return
 		}
