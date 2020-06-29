@@ -66,11 +66,11 @@ default:
 }
 switch z {
 case 3:
-    if v == "Hello" {
-        println("break")
-        break
-    }
-    println("break fail")
+	if v == "Hello" {
+		println("break")
+		break
+	}
+	println("break fail")
 default:
 	println(z)
 }

@@ -66,10 +66,10 @@ sum = 0
 arr = [1, 3, 5, 7, 11, 13, 17]
 for i = 0; i < len(arr); i++ {
 	if arr[i] < 3 {
-	    continue
+		continue
 	}
 	if arr[i] > 11 {
-	    break
+		break
 	}
 	sum += arr[i]
 }
