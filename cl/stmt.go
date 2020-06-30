@@ -185,10 +185,10 @@ func compileLabeledStmt(ctx *blockCtx, v *ast.LabeledStmt) {
 
 func toLabel(ctx *blockCtx, labelName string) exec.Label {
 	labelName = "_gop_label_" + labelName
-	label, ok := ctx.find(labelName)
+	label, ok := ctx.findLabel(labelName)
 	if !ok {
 		label = ctx.NewLabel("")
-		ctx.insert(labelName, label)
+		ctx.insertLabel(labelName, label)
 	}
 	return label.(exec.Label)
 }

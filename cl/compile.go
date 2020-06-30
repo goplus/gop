@@ -198,11 +198,29 @@ func (p *stackVar) getType() reflect.Type {
 
 // -----------------------------------------------------------------------------
 
+type funcCtx struct {
+	fun    exec.FuncInfo
+	labels map[string]exec.Label
+}
+
+func (fc *funcCtx) findLabel(name string) (v exec.Label, ok bool) {
+	v, ok = fc.labels[name]
+	return
+}
+
+func (fc *funcCtx) insertLabel(name string, v exec.Label) {
+	if _, ok := fc.labels[name]; ok {
+		log.Panicln("insert interface{} failed: symbol exists -", name)
+	}
+	fc.labels[name] = v
+	return
+}
+
 type blockCtx struct {
 	*pkgCtx
+	*funcCtx
 	file      *fileCtx
 	parent    *blockCtx
-	fun       exec.FuncInfo
 	syms      map[string]iSymbol
 	noExecCtx bool
 	checkFlag bool
@@ -229,7 +247,7 @@ func newNormBlockCtxEx(parent *blockCtx, noExecCtx bool) *blockCtx {
 		pkgCtx:    parent.pkgCtx,
 		file:      parent.file,
 		parent:    parent,
-		fun:       parent.fun,
+		funcCtx:   parent.funcCtx,
 		syms:      make(map[string]iSymbol),
 		noExecCtx: noExecCtx,
 	}
@@ -242,6 +260,7 @@ func newGblBlockCtx(pkg *pkgCtx) *blockCtx {
 		parent:    nil,
 		syms:      make(map[string]iSymbol),
 		noExecCtx: true,
+		funcCtx:   &funcCtx{labels: map[string]exec.Label{}},
 	}
 }
 
