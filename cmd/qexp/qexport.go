@@ -17,43 +17,108 @@
 package main
 
 import (
+	"bytes"
+	"errors"
 	"flag"
 	"fmt"
-	"io"
+	"go/format"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"github.com/qiniu/goplus/cmd/qexp/gopkg"
 )
 
 var (
-	exportFile string
+	flagExportDir string
 )
 
-func createExportFile(pkgDir string) (f io.WriteCloser, err error) {
-	os.MkdirAll(pkgDir, 0777)
-	exportFile = pkgDir + "/gomod_export.go"
-	return os.Create(exportFile)
+func init() {
+	flag.StringVar(&flagExportDir, "outdir", "", "optional set export lib path, default goplus/lib path")
 }
 
 func main() {
 	flag.Parse()
 	if flag.NArg() < 1 {
-		fmt.Fprintf(os.Stderr, "Usage: qexp <goPkgPath>\n")
+		fmt.Fprintf(os.Stderr, "Usage: qexp [packages]\n")
 		flag.PrintDefaults()
 		return
 	}
-	pkgPath := flag.Arg(0)
-	defer func() {
-		if exportFile != "" {
-			os.Remove(exportFile)
+	var libDir string
+	if flagExportDir != "" {
+		libDir = flagExportDir
+	} else {
+		root, err := goplusRoot()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "find goplus root failed:", err)
+			os.Exit(-1)
 		}
-	}()
-	err := gopkg.Export(pkgPath, createExportFile)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "export failed:", err)
-		os.Exit(1)
+		libDir = filepath.Join(root, "lib")
 	}
-	exportFile = "" // don't remove file if success
+
+	for _, pkgPath := range flag.Args() {
+		err := exportPkg(pkgPath, libDir)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "export pkg failed:", err)
+		} else {
+			fmt.Fprintln(os.Stdout, "export pkg success:", pkgPath)
+		}
+	}
+}
+
+func exportPkg(pkgPath string, libDir string) error {
+	pkg, err := gopkg.Import(pkgPath)
+	if err != nil {
+		return err
+	}
+	var buf bytes.Buffer
+	err = gopkg.ExportPackage(pkg, &buf)
+	if err != nil {
+		return err
+	}
+	data, err := format.Source(buf.Bytes())
+	if err != nil {
+		return err
+	}
+	dir := filepath.Join(libDir, pkg.Path())
+	os.MkdirAll(dir, 0777)
+	err = ioutil.WriteFile(filepath.Join(dir, "gomod_export.go"), data, 0666)
+	return err
+}
+
+func goplusRoot() (root string, err error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return
+	}
+	for {
+		modfile := filepath.Join(dir, "go.mod")
+		if hasFile(modfile) {
+			if isGoplus(modfile) {
+				return dir, nil
+			}
+			return "", errors.New("current directory is not under goplus root")
+		}
+		next := filepath.Dir(dir)
+		if dir == next {
+			return "", errors.New("go.mod not found, please run under goplus root")
+		}
+		dir = next
+	}
+}
+
+func isGoplus(modfile string) bool {
+	b, err := ioutil.ReadFile(modfile)
+	return err == nil && bytes.HasPrefix(b, goplusPrefix)
+}
+
+var (
+	goplusPrefix = []byte("module github.com/qiniu/goplus")
+)
+
+func hasFile(path string) bool {
+	fi, err := os.Stat(path)
+	return err == nil && fi.Mode().IsRegular()
 }
 
 // -----------------------------------------------------------------------------
