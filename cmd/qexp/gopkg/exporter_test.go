@@ -134,4 +134,15 @@ func TestExportGoTypes(t *testing.T) {
 	}
 }
 
+func TestPackage(t *testing.T) {
+	pkg, err := Import("go/build")
+	if err != nil {
+		t.Fatal("TestPackage Import failed:", err)
+	}
+	err = ExportPackage(pkg, ioutil.Discard)
+	if err != nil {
+		t.Fatal("TestPackage ExportPackage failed:", err)
+	}
+}
+
 // -----------------------------------------------------------------------------
