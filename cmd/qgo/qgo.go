@@ -21,6 +21,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"go/format"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -52,7 +53,11 @@ func saveGoFile(dir string, code *golang.Code) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(dir+"/gop_autogen.go", b, 0666)
+	data, err := format.Source(b)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(dir+"/gop_autogen.go", data, 0666)
 }
 
 func genGopkg(pkgDir string) (mainPkg bool, err error) {
