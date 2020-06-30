@@ -1112,3 +1112,40 @@ func TestFallthroughStmt(t *testing.T) {
 		}()
 	}
 }
+
+// -----------------------------------------------------------------------------
+
+var testGotoLabelClauses = map[string]testData{
+	"goto_before_label": {`
+					goto L
+					println("before")
+					L:
+					println("over")
+					`, []string{"over"}},
+	"goto_after_label": {`
+					i:=0
+					L: 
+						if i<3{
+							println(i)
+							i++
+							goto L	
+						}
+					println("over")
+					`, []string{"0", "1", "2", "over"}},
+	"goto_nil_label": {`
+					goto;
+					println("over")
+					`, []string{""}},
+}
+
+func TestGotoLabelStmt(t *testing.T) {
+	for name, clause := range testGotoLabelClauses {
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+				}
+			}()
+			testForRangeStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
+		}()
+	}
+}
