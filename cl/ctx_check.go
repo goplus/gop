@@ -103,6 +103,8 @@ func isNoExecCtxExpr(ctx *blockCtx, expr ast.Expr) bool {
 		return isNoExecCtxListComprehensionExpr(ctx, v)
 	case *ast.MapComprehensionExpr:
 		return isNoExecCtxMapComprehensionExpr(ctx, v)
+	case *ast.ArrayType:
+		return true
 	case *ast.Ellipsis:
 		return true
 	case *ast.KeyValueExpr:
