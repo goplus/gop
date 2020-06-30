@@ -40,7 +40,7 @@ func init() {
 func main() {
 	flag.Parse()
 	if flag.NArg() < 1 {
-		fmt.Fprintf(os.Stderr, "Usage: qexp <goPkgPath>\n")
+		fmt.Fprintf(os.Stderr, "Usage: qexp [packages]\n")
 		flag.PrintDefaults()
 		return
 	}
