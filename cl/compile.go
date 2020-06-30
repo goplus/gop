@@ -206,15 +206,18 @@ type funcCtx struct {
 type flowLabel struct {
 	ctx *blockCtx
 	exec.Label
-	// 0 - first define by Label,1-first define by Branch (goto break continue)
+	// 0 - define by Label,1-define by Branch (goto break continue)
 	defineType int
 }
 
-func (fc *funcCtx) findLabel(name string) (exec.Label, bool) {
+func (fc *funcCtx) findLabel(name string, ctx *blockCtx, fromLabelStmt bool) exec.Label {
 	if bv, ok := fc.labels[name]; ok {
-		return bv.Label, ok
+		if fromLabelStmt && bv.defineType == 0 {
+			log.Panicf("label %s already defined at other position \n", name)
+		}
+		return bv.Label
 	}
-	return nil, false
+	return fc.insertLabel(name, ctx, fromLabelStmt)
 }
 
 func (fc *funcCtx) checkLabel(name string, ctx *blockCtx) bool {
@@ -234,16 +237,13 @@ func (fc *funcCtx) checkLabel(name string, ctx *blockCtx) bool {
 	return false
 }
 
-func (fc *funcCtx) insertLabel(name string, ctx *blockCtx, fromLabelStmt ...bool) exec.Label {
-	if _, ok := fc.labels[name]; ok {
-		log.Panicln("insert interface{} failed: symbol exists -", name)
-	}
+func (fc *funcCtx) insertLabel(name string, ctx *blockCtx, fromLabelStmt bool) exec.Label {
 	v := ctx.NewLabel("")
 	fc.labels[name] = &flowLabel{
 		ctx:   ctx,
 		Label: v,
 		defineType: func() (dt int) {
-			if !append(fromLabelStmt, false)[0] {
+			if !fromLabelStmt {
 				dt = 1
 			}
 			return
