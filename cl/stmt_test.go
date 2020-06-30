@@ -1148,6 +1148,7 @@ var testGotoLabelClauses = map[string]testData{
 						}
 					L3:
 					println("over")
+					L4:
 					`, []string{"0", "1", "2", "over"}},
 	"goto_nil_label": {`
 					goto;
@@ -1157,6 +1158,7 @@ var testGotoLabelClauses = map[string]testData{
 					goto L
 					{
 						L:
+						println("L")
 					}
 					`, []string{"_panic"}},
 	"goto_redefine_block": {`

@@ -71,6 +71,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileBranchStmt(ctx, v)
 	case *ast.LabeledStmt:
 		compileLabeledStmt(ctx, v)
+	case *ast.EmptyStmt:
+		// do nothing
 	default:
 		log.Panicln("compileStmt failed: unknown -", reflect.TypeOf(v))
 	}
