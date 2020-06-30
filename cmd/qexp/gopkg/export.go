@@ -17,15 +17,10 @@
 package gopkg
 
 import (
-	"bytes"
-	"errors"
 	"go/importer"
 	"go/types"
 	"io"
-	"io/ioutil"
 	"log"
-	"os"
-	"path/filepath"
 	"reflect"
 )
 
@@ -57,26 +52,19 @@ func exportConst(o *types.Const) (err error) {
 	return nil
 }
 
-// Export utility
-func Export(pkgPath string, createFile func(string) (io.WriteCloser, error)) (err error) {
-	imp := importer.Default()
-	pkg, err := imp.Import(pkgPath)
+func Import(pkgPath string) (*types.Package, error) {
+	pkg, err := importer.Default().Import(pkgPath)
 	if err != nil {
-		return
+		return nil, err
 	}
-	goplus, err := goplusRoot()
-	if err != nil {
-		return
-	}
-	pkgDir := filepath.Join(goplus, "lib", pkg.Path())
-	f, err := createFile(pkgDir)
-	if err != nil {
-		return
-	}
-	defer f.Close()
+	return pkg, nil
+}
+
+// ExportPackage export types.Package to io.Writer
+func ExportPackage(pkg *types.Package, w io.Writer) (err error) {
 	gbl := pkg.Scope()
 	names := gbl.Names()
-	e := NewExporter(f, pkg)
+	e := NewExporter(w, pkg)
 	for _, name := range names {
 		obj := gbl.Lookup(name)
 		if !obj.Exported() {
@@ -101,41 +89,11 @@ func Export(pkgPath string, createFile func(string) (io.WriteCloser, error)) (er
 	return e.Close()
 }
 
-// -----------------------------------------------------------------------------
-
-func goplusRoot() (root string, err error) {
-	dir, err := os.Getwd()
+// Export utility
+func Export(pkgPath string, w io.Writer) (err error) {
+	pkg, err := Import(pkgPath)
 	if err != nil {
-		return
+		return err
 	}
-	for {
-		modfile := filepath.Join(dir, "go.mod")
-		if hasFile(modfile) {
-			if isGoplus(modfile) {
-				return dir, nil
-			}
-			return "", errors.New("current directory is not under goplus root")
-		}
-		next := filepath.Dir(dir)
-		if dir == next {
-			return "", errors.New("go.mod not found, please run under goplus root")
-		}
-		dir = next
-	}
+	return ExportPackage(pkg, w)
 }
-
-func isGoplus(modfile string) bool {
-	b, err := ioutil.ReadFile(modfile)
-	return err == nil && bytes.HasPrefix(b, goplusPrefix)
-}
-
-var (
-	goplusPrefix = []byte("module github.com/qiniu/goplus")
-)
-
-func hasFile(path string) bool {
-	fi, err := os.Stat(path)
-	return err == nil && fi.Mode().IsRegular()
-}
-
-// -----------------------------------------------------------------------------

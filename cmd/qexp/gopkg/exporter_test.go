@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"go/importer"
 	"go/types"
-	"io"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -100,50 +99,36 @@ func TestFixPkgString(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-type nopCloser struct {
-	io.Writer
-}
-
-func (nopCloser) Close() error { return nil }
-
-func nilExportFile(pkgDir string) (f io.WriteCloser, err error) {
-	return &nopCloser{ioutil.Discard}, nil
-}
-
-func stdoutExportFile(pkgDir string) (f io.WriteCloser, err error) {
-	return &nopCloser{os.Stdout}, nil
-}
-
 func TestExportStrings(t *testing.T) {
-	err := Export("strings", nilExportFile)
+	err := Export("strings", ioutil.Discard)
 	if err != nil {
 		t.Fatal("TestExport failed:", err)
 	}
 }
 
 func TestExportStrconv(t *testing.T) {
-	err := Export("strconv", nilExportFile)
+	err := Export("strconv", ioutil.Discard)
 	if err != nil {
 		t.Fatal("TestExport failed:", err)
 	}
 }
 
 func TestExportReflect(t *testing.T) {
-	err := Export("reflect", nilExportFile)
+	err := Export("reflect", ioutil.Discard)
 	if err != nil {
 		t.Fatal("TestExport failed:", err)
 	}
 }
 
 func TestExportIo(t *testing.T) {
-	err := Export("io", stdoutExportFile)
+	err := Export("io", os.Stdout)
 	if err != nil {
 		t.Fatal("TestExport failed:", err)
 	}
 }
 
 func TestExportGoTypes(t *testing.T) {
-	err := Export("go/types", nilExportFile)
+	err := Export("go/types", ioutil.Discard)
 	if err != nil {
 		t.Fatal("TestExport failed:", err)
 	}
