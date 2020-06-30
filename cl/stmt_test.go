@@ -1125,11 +1125,28 @@ var testGotoLabelClauses = map[string]testData{
 	"goto_after_label": {`
 					i:=0
 					L: 
-						if i<3{
+						if i < 3 {
 							println(i)
 							i++
 							goto L	
 						}
+					println("over")
+					`, []string{"0", "1", "2", "over"}},
+	"goto_multi_labels": {`
+					i:=0
+					L: 
+						if i < 3  {
+						goto L1
+							println(i)
+						L1:
+							println(i)
+							i++
+							if i==4{
+								goto L3
+							}
+							goto L	
+						}
+					L3:
 					println("over")
 					`, []string{"0", "1", "2", "over"}},
 	"goto_nil_label": {`
