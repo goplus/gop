@@ -18,8 +18,10 @@ package gopkg
 
 import (
 	"fmt"
+	"go/constant"
 	"go/types"
 	"io"
+	"log"
 	"regexp"
 	"sort"
 	"strconv"
@@ -33,25 +35,34 @@ type exportedFunc struct {
 	exec string
 }
 
+type exportedConst struct {
+	name string
+	kind string
+	val  string
+}
+
 // Exporter represents a go package exporter.
 type Exporter struct {
-	w          io.Writer
-	pkg        *types.Package
-	pkgDot     string
-	execs      []string
-	toTypes    []types.Type
-	toSlices   []types.Type
-	imports    map[string]string // pkgPath => pkg
-	importPkgs map[string]string // pkg => pkgPath
-	exportFns  []exportedFunc
-	exportFnvs []exportedFunc
+	w            io.Writer
+	pkg          *types.Package
+	pkgDot       string
+	execs        []string
+	toTypes      []types.Type
+	toSlices     []types.Type
+	imports      map[string]string // pkgPath => pkg
+	importPkgs   map[string]string // pkg => pkgPath
+	exportFns    []exportedFunc
+	exportFnvs   []exportedFunc
+	exportConsts []exportedConst
 }
 
 // NewExporter creates a go package exporter.
 func NewExporter(w io.Writer, pkg *types.Package) *Exporter {
 	const gopPath = "github.com/qiniu/goplus/gop"
-	imports := map[string]string{gopPath: "gop"}
-	importPkgs := map[string]string{"gop": gopPath}
+	const specPath = "github.com/qiniu/goplus/exec.spec"
+	const reflectPath = "reflect"
+	imports := map[string]string{gopPath: "gop", specPath: "spec", reflectPath: "reflect"}
+	importPkgs := map[string]string{"gop": gopPath, "spec": specPath, "reflect": reflectPath}
 	p := &Exporter{w: w, pkg: pkg, imports: imports, importPkgs: importPkgs}
 	p.pkgDot = p.importPkg(pkg) + "."
 	return p
@@ -312,6 +323,66 @@ $argInit	$retAssign$fn($args)
 	}
 }
 
+const (
+	specName = "spec"
+)
+
+// ExportConst exports a go consts.
+func (p *Exporter) ExportConst(typ *types.Const) {
+	kind, err := constKind(typ, specName)
+	if err != nil {
+		log.Println("parse const failed:", typ, err)
+	}
+	fullName := typ.Pkg().Name() + "." + typ.Name()
+	var c exportedConst
+	c.name = typ.Name()
+	c.kind = kind
+	c.val = fullName
+	if typ.Val().Kind() == constant.Int {
+		value := typ.Val().String()
+		_, err := strconv.ParseInt(value, 10, 32)
+		if err != nil {
+			if value[0] == '-' {
+				c.kind = specName + "." + ".Int64"
+				c.val = "int64(" + fullName + ")"
+			} else {
+				c.kind = specName + "." + "Uint64"
+				c.val = "uint64(" + fullName + ")"
+			}
+		}
+	}
+	fmt.Println(c)
+	p.exportConsts = append(p.exportConsts, c)
+}
+
+func constKind(typ *types.Const, pkg string) (string, error) {
+	baisc, ok := typ.Type().Underlying().(*types.Basic)
+	if !ok {
+		return "", fmt.Errorf("unparse basic of const %v", typ)
+	}
+	switch baisc.Kind() {
+	case types.UntypedBool:
+		return "reflect.Bool", nil
+	case types.UntypedInt:
+		return pkg + ".ConstUnboundInt", nil
+	case types.UntypedRune:
+		return pkg + ".ConstBoundRune", nil
+	case types.UntypedFloat:
+		return pkg + ".ConstUnboundFloat", nil
+	case types.UntypedComplex:
+		return pkg + ".ConstUnboundComplex", nil
+	case types.UntypedString:
+		return pkg + ".ConstBoundString", nil
+	case types.UntypedNil:
+		return pkg + ".ConstUnboundPtr", nil
+	case types.Byte:
+		return "reflect.Uint8", nil
+	case types.Rune:
+		return "reflect.Uint32", nil
+	}
+	return "reflect." + strings.Title(baisc.Name()), nil
+}
+
 func withoutPkg(fullName string) string {
 	pos := strings.Index(fullName, ")")
 	if pos < 0 {
@@ -366,6 +437,19 @@ func exportFns(w io.Writer, pkgDot string, fns []exportedFunc, tag string) {
 	fmt.Fprintf(w, "	)\n")
 }
 
+func exportConsts(w io.Writer, pkgDot string, consts []exportedConst) {
+	if len(consts) == 0 {
+		return
+	}
+	fmt.Fprintf(w, `	I.RegisterConsts(
+`)
+	for _, c := range consts {
+		fmt.Fprintf(w, `		I.Const("%s", %s, %s),
+`, c.name, c.kind, c.val)
+	}
+	fmt.Fprintf(w, "	)\n")
+}
+
 const gopkgInitExportHeader = `
 // I is a Go package instance.
 var I = gop.NewGoPackage("%s")
@@ -407,6 +491,7 @@ func (p *Exporter) Close() error {
 	pkgDot := p.pkgDot
 	exportFns(p.w, pkgDot, p.exportFns, "Func")
 	exportFns(p.w, pkgDot, p.exportFnvs, "Funcv")
+	exportConsts(p.w, pkgDot, p.exportConsts)
 	fmt.Fprintf(p.w, gopkgInitExportFooter)
 	return nil
 }
