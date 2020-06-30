@@ -1159,6 +1159,17 @@ var testGotoLabelClauses = map[string]testData{
 						L:
 					}
 					`, []string{"_panic"}},
+	"goto_redefine_block": {`
+					{
+						L:
+						println("L")
+					}
+					{
+						L:
+						println("L")
+					}
+					goto L
+					`, []string{"_panic"}},
 }
 
 func TestGotoLabelStmt(t *testing.T) {
