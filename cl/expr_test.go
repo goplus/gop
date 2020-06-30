@@ -17,6 +17,7 @@
 package cl
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
 	"testing"
@@ -62,14 +63,14 @@ func TestUnbound(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestTILDE = asttest.NewSingleFileFS("/foo", "bar.gop", `
-	x := uint32(1)
-	println(^x, ^uint32(1), +3)
+var fsTestTypeCast = asttest.NewSingleFileFS("/foo", "bar.gop", `
+	x := []byte("hello")
+	x
 `)
 
-func TestTILDE(t *testing.T) {
+func TestTypeCast(t *testing.T) {
 	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestTILDE, "/foo", nil, 0)
+	pkgs, err := parser.ParseFSDir(fset, fsTestTypeCast, "/foo", nil, 0)
 	if err != nil || len(pkgs) != 1 {
 		t.Fatal("ParseFSDir failed:", err, len(pkgs))
 	}
@@ -84,12 +85,8 @@ func TestTILDE(t *testing.T) {
 
 	ctx := exec.NewContext(code)
 	ctx.Exec(0, code.Len())
-	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
-	if v := ctx.Get(-1); v != nil {
-		t.Fatal("error:", v)
-	}
-	if v := ctx.Get(-2); v != int(24) {
-		t.Fatal("n:", v)
+	if v := ctx.Get(-1); !bytes.Equal(v.([]byte), []byte("hello")) {
+		t.Fatal("v:", v)
 	}
 }
 

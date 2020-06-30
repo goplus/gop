@@ -83,6 +83,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 		return compileListComprehensionExpr(ctx, v)
 	case *ast.MapComprehensionExpr:
 		return compileMapComprehensionExpr(ctx, v)
+	case *ast.ArrayType:
+		return compileArrayType(ctx, v)
 	case *ast.Ellipsis:
 		return compileEllipsis(ctx, v)
 	case *ast.KeyValueExpr:
@@ -198,6 +200,12 @@ func compileIdent(ctx *blockCtx, name string) func() {
 		}
 		log.Panicln("compileIdent failed: unknown -", name)
 	}
+	return nil
+}
+
+func compileArrayType(ctx *blockCtx, v *ast.ArrayType) func() {
+	typ := toArrayType(ctx, v)
+	ctx.infer.Push(&nonValue{typ})
 	return nil
 }
 
