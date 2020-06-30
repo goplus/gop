@@ -203,53 +203,65 @@ type funcCtx struct {
 	labels map[string]*flowLabel
 }
 
+func newFuncCtx() *funcCtx {
+	return &funcCtx{labels: map[string]*flowLabel{}}
+}
+
 type flowLabel struct {
 	ctx *blockCtx
 	exec.Label
-	// 0 - define by Label,1-define by Branch (goto break continue)
-	defineType int
+	jumps []*blockCtx
 }
 
-func (fc *funcCtx) findLabel(name string, ctx *blockCtx, fromLabelStmt bool) exec.Label {
-	if bv, ok := fc.labels[name]; ok {
-		if fromLabelStmt && bv.defineType == 0 {
-			log.Panicf("label %s already defined at other position \n", name)
+func (fc *funcCtx) requireLabel(name string, ctx *blockCtx, fromLabelStmt bool) exec.Label {
+	if fl, ok := fc.labels[name]; ok {
+		if fromLabelStmt {
+			if fl.ctx != nil {
+				log.Panicf("label %s already defined at other position \n", name)
+			} else {
+				fl.ctx = ctx
+			}
+		} else {
+			fl.jumps = append(fl.jumps, ctx)
 		}
-		return bv.Label
+		return fl.Label
 	}
 	return fc.insertLabel(name, ctx, fromLabelStmt)
 }
-
-func (fc *funcCtx) checkLabel(name string, ctx *blockCtx) bool {
-	from, to := ctx, fc.labels[name].ctx
-	if fc.labels[name].defineType != 0 {
-		from, to = to, from
+func (fc *funcCtx) checkLabel(name string) bool {
+	fl := fc.labels[name]
+	if fl.ctx == nil {
+		return true
 	}
-	for {
-		if from == nil {
-			break
+	jump := len(fl.jumps)
+	for _, g := range fl.jumps {
+		from, to := g, fl.ctx
+		for {
+			if from == nil {
+				break
+			}
+			if from == to {
+				jump--
+				break
+			}
+			from = from.parent
 		}
-		if from == to {
-			return true
-		}
-		from = from.parent
 	}
-	return false
+	return jump == 0
 }
 
 func (fc *funcCtx) insertLabel(name string, ctx *blockCtx, fromLabelStmt bool) exec.Label {
-	v := ctx.NewLabel("")
-	fc.labels[name] = &flowLabel{
+	fl := &flowLabel{
 		ctx:   ctx,
-		Label: v,
-		defineType: func() (dt int) {
-			if !fromLabelStmt {
-				dt = 1
-			}
-			return
-		}(),
+		Label: ctx.NewLabel(name),
 	}
-	return v
+	if !fromLabelStmt {
+		fl.ctx = nil
+		fl.jumps = append(fl.jumps, ctx)
+	}
+	fc.labels[name] = fl
+
+	return fl.Label
 }
 
 type blockCtx struct {
@@ -296,7 +308,7 @@ func newGblBlockCtx(pkg *pkgCtx) *blockCtx {
 		parent:    nil,
 		syms:      make(map[string]iSymbol),
 		noExecCtx: true,
-		funcCtx:   &funcCtx{labels: map[string]*flowLabel{}},
+		funcCtx:   newFuncCtx(),
 	}
 }
 
