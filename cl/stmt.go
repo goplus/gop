@@ -185,8 +185,7 @@ func compileLabeledStmt(ctx *blockCtx, v *ast.LabeledStmt) {
 
 func toLabel(ctx *blockCtx, labelName string, fromLabelStmt ...bool) exec.Label {
 	labelName = "_gop_label_" + labelName
-	fromLabelStmt = append(fromLabelStmt, false)
-	label := ctx.findLabel(labelName, ctx, fromLabelStmt[0])
+	label := ctx.findLabel(labelName, ctx, append(fromLabelStmt, false)[0])
 	if !ctx.checkLabel(labelName, ctx) {
 		log.Panicf("goto %s jumps into illegal block\n", labelName)
 	}
