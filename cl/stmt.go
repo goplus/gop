@@ -179,18 +179,20 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 }
 
 func compileLabeledStmt(ctx *blockCtx, v *ast.LabeledStmt) {
-	ctx.out.Label(toLabel(ctx, v.Label.Name))
+	ctx.out.Label(toLabel(ctx, v.Label.Name, true))
 	compileStmt(ctx, v.Stmt)
 }
 
-func toLabel(ctx *blockCtx, labelName string) exec.Label {
+func toLabel(ctx *blockCtx, labelName string, fromLabelStmt ...bool) exec.Label {
 	labelName = "_gop_label_" + labelName
 	label, ok := ctx.findLabel(labelName)
 	if !ok {
-		label = ctx.NewLabel("")
-		ctx.insertLabel(labelName, label)
+		label = ctx.insertLabel(labelName, ctx, fromLabelStmt...)
 	}
-	return label.(exec.Label)
+	if !ctx.checkLabel(labelName, ctx) {
+		log.Panicf("goto %s jumps into illegal block\n", labelName)
+	}
+	return label
 }
 
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {

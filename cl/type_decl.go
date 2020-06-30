@@ -337,7 +337,7 @@ func (p *FuncDecl) Compile() exec.FuncInfo {
 		ctx := p.ctx
 		out := ctx.out
 		out.DefineFunc(fun)
-		ctx.funcCtx = &funcCtx{fun: fun, labels: map[string]exec.Label{}}
+		ctx.funcCtx = &funcCtx{fun: fun, labels: map[string]*flowLabel{}}
 		compileBlockStmtWithout(ctx, p.body)
 		ctx.fun = nil
 		out.EndFunc(fun)

@@ -200,20 +200,56 @@ func (p *stackVar) getType() reflect.Type {
 
 type funcCtx struct {
 	fun    exec.FuncInfo
-	labels map[string]exec.Label
+	labels map[string]*flowLabel
 }
 
-func (fc *funcCtx) findLabel(name string) (v exec.Label, ok bool) {
-	v, ok = fc.labels[name]
-	return
+type flowLabel struct {
+	ctx *blockCtx
+	exec.Label
+	// 0 - first define by Label,1-first define by Branch (goto break continue)
+	defineType int
 }
 
-func (fc *funcCtx) insertLabel(name string, v exec.Label) {
+func (fc *funcCtx) findLabel(name string) (exec.Label, bool) {
+	if bv, ok := fc.labels[name]; ok {
+		return bv.Label, ok
+	}
+	return nil, false
+}
+
+func (fc *funcCtx) checkLabel(name string, ctx *blockCtx) bool {
+	from, to := ctx, fc.labels[name].ctx
+	if fc.labels[name].defineType != 0 {
+		from, to = to, from
+	}
+	for {
+		if from == nil {
+			break
+		}
+		if from == to {
+			return true
+		}
+		from = from.parent
+	}
+	return false
+}
+
+func (fc *funcCtx) insertLabel(name string, ctx *blockCtx, fromLabelStmt ...bool) exec.Label {
 	if _, ok := fc.labels[name]; ok {
 		log.Panicln("insert interface{} failed: symbol exists -", name)
 	}
-	fc.labels[name] = v
-	return
+	v := ctx.NewLabel("")
+	fc.labels[name] = &flowLabel{
+		ctx:   ctx,
+		Label: v,
+		defineType: func() (dt int) {
+			if !append(fromLabelStmt, false)[0] {
+				dt = 1
+			}
+			return
+		}(),
+	}
+	return v
 }
 
 type blockCtx struct {
@@ -260,7 +296,7 @@ func newGblBlockCtx(pkg *pkgCtx) *blockCtx {
 		parent:    nil,
 		syms:      make(map[string]iSymbol),
 		noExecCtx: true,
-		funcCtx:   &funcCtx{labels: map[string]exec.Label{}},
+		funcCtx:   &funcCtx{labels: map[string]*flowLabel{}},
 	}
 }
 
