@@ -277,6 +277,20 @@ func (p *blockCtx) find(name string) (sym interface{}, ok bool) {
 	return
 }
 
+func (p *blockCtx) insert(name string, v interface{}) {
+	if p.exists(name) {
+		log.Panicln("insert interface{} failed: symbol exists -", name)
+	}
+	p.syms[name] = v
+	return
+}
+
+func (p *blockCtx) delete(names ...string) {
+	for _, name := range names {
+		delete(p.syms, name)
+	}
+}
+
 func (p *blockCtx) findType(name string) (decl *typeDecl, err error) {
 	v, ok := p.find(name)
 	if !ok {

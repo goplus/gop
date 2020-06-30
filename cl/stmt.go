@@ -69,6 +69,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileIncDecStmt(ctx, v)
 	case *ast.BranchStmt:
 		compileBranchStmt(ctx, v)
+	case *ast.LabeledStmt:
+		compileLabeledStmt(ctx, v)
 	default:
 		log.Panicln("compileStmt failed: unknown -", reflect.TypeOf(v))
 	}
@@ -165,9 +167,30 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 }
 
 func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
-	if v.Tok == token.FALLTHROUGH {
+	switch v.Tok {
+	case token.FALLTHROUGH:
 		log.Panicln("fallthrough statement out of place")
+	case token.GOTO:
+		if v.Label == nil {
+			log.Panicln("label not defined")
+		}
+		ctx.out.Jmp(toLabel(ctx, v.Label.Name))
 	}
+}
+
+func compileLabeledStmt(ctx *blockCtx, v *ast.LabeledStmt) {
+	ctx.out.Label(toLabel(ctx, v.Label.Name))
+	compileStmt(ctx, v.Stmt)
+}
+
+func toLabel(ctx *blockCtx, labelName string) exec.Label {
+	labelName = "_gop_label_" + labelName
+	label, ok := ctx.find(labelName)
+	if !ok {
+		label = ctx.NewLabel("")
+		ctx.insert(labelName, label)
+	}
+	return label.(exec.Label)
 }
 
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
