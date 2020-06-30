@@ -218,15 +218,15 @@ func (fc *funcCtx) requireLabel(name string, ctx *blockCtx, fromLabelStmt bool) 
 		if fromLabelStmt {
 			if fl.ctx != nil {
 				log.Panicf("label %s already defined at other position \n", name)
-			} else {
-				fl.ctx = ctx
 			}
+			fl.ctx = ctx
 		} else {
 			fl.jumps = append(fl.jumps, ctx)
 		}
 		return fl.Label
 	}
-	return fc.insertLabel(name, ctx, fromLabelStmt)
+
+	return fc.defineLabel(name, ctx, fromLabelStmt)
 }
 func (fc *funcCtx) checkLabel(name string) bool {
 	fl := fc.labels[name]
@@ -250,7 +250,7 @@ func (fc *funcCtx) checkLabel(name string) bool {
 	return jump == 0
 }
 
-func (fc *funcCtx) insertLabel(name string, ctx *blockCtx, fromLabelStmt bool) exec.Label {
+func (fc *funcCtx) defineLabel(name string, ctx *blockCtx, fromLabelStmt bool) exec.Label {
 	fl := &flowLabel{
 		ctx:   ctx,
 		Label: ctx.NewLabel(name),
