@@ -102,11 +102,11 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 	case token.ASSIGN:
 		var lhs, rhs [2]ast.Expr
 		var idx int
-		if v.Key, f.Key = toAssign(v.Key, rangeVarName.keyName); f.Key != nil {
+		if f.Key = toIdent(v.Key, rangeVarName.keyName); f.Key != nil {
 			lhs[idx], rhs[idx] = v.Key, f.Key
 			idx++
 		}
-		if v.Value, f.Value = toAssign(v.Value, rangeVarName.valueName); f.Value != nil {
+		if f.Value = toIdent(v.Value, rangeVarName.valueName); f.Value != nil {
 			lhs[idx], rhs[idx] = v.Value, f.Value
 			idx++
 		}
@@ -122,21 +122,20 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 	})
 }
 
-func toIdent(e ast.Expr) *ast.Ident {
+// toIdent converts e from RangeStmt (Key or Value) into *ast.Ident
+// If names is not nil , the return value will be right side expr of AssignStmt
+func toIdent(e ast.Expr, names ...string) *ast.Ident {
 	if e == nil {
 		return nil
 	}
-	return e.(*ast.Ident)
-}
-
-func toAssign(e ast.Expr, name string) (ast.Expr, *ast.Ident) {
-	if e == nil {
-		return e, nil
+	name := append(names, "")[0]
+	if name == "" {
+		return e.(*ast.Ident)
 	}
 	if id, ok := e.(*ast.Ident); ok && id.Name == "_" {
-		return e, nil
+		return nil
 	}
-	return e, &ast.Ident{Name: name, Obj: ast.NewObj(ast.Var, name)}
+	return &ast.Ident{Name: name, Obj: ast.NewObj(ast.Var, name)}
 }
 
 var branchLabel = struct {
