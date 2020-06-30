@@ -1124,17 +1124,17 @@ var testGotoLabelClauses = map[string]testData{
 					`, []string{"over"}},
 	"goto_after_label": {`
 					i:=0
-					L: 
+					L:
 						if i < 3 {
 							println(i)
 							i++
-							goto L	
+							goto L
 						}
 					println("over")
 					`, []string{"0", "1", "2", "over"}},
 	"goto_multi_labels": {`
 					i:=0
-					L: 
+					L:
 						if i < 3  {
 						goto L1
 							println(i)
@@ -1144,7 +1144,7 @@ var testGotoLabelClauses = map[string]testData{
 							if i==4{
 								goto L3
 							}
-							goto L	
+							goto L
 						}
 					L3:
 					println("over")
@@ -1152,7 +1152,13 @@ var testGotoLabelClauses = map[string]testData{
 	"goto_nil_label": {`
 					goto;
 					println("over")
-					`, []string{""}},
+					`, []string{"_panic"}},
+	"goto_illegal_block": {`
+					goto L
+					{
+						L:
+					}
+					`, []string{"_panic"}},
 }
 
 func TestGotoLabelStmt(t *testing.T) {
@@ -1160,6 +1166,10 @@ func TestGotoLabelStmt(t *testing.T) {
 		func() {
 			defer func() {
 				if r := recover(); r != nil {
+					if len(clause.wants) > 0 && clause.wants[0] == "_panic" {
+						return
+					}
+					t.Fail()
 				}
 			}()
 			testForRangeStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
