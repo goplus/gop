@@ -203,8 +203,8 @@ type funcCtx struct {
 	labels map[string]*flowLabel
 }
 
-func newFuncCtx() *funcCtx {
-	return &funcCtx{labels: map[string]*flowLabel{}}
+func newFuncCtx(fun exec.FuncInfo) *funcCtx {
+	return &funcCtx{labels: map[string]*flowLabel{}, fun: fun}
 }
 
 type flowLabel struct {
@@ -308,7 +308,7 @@ func newGblBlockCtx(pkg *pkgCtx) *blockCtx {
 		parent:    nil,
 		syms:      make(map[string]iSymbol),
 		noExecCtx: true,
-		funcCtx:   newFuncCtx(),
+		funcCtx:   newFuncCtx(nil),
 	}
 }
 

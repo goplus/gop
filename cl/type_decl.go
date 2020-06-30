@@ -337,7 +337,7 @@ func (p *FuncDecl) Compile() exec.FuncInfo {
 		ctx := p.ctx
 		out := ctx.out
 		out.DefineFunc(fun)
-		ctx.funcCtx = newFuncCtx()
+		ctx.funcCtx = newFuncCtx(fun)
 		compileBlockStmtWithout(ctx, p.body)
 		ctx.fun = nil
 		out.EndFunc(fun)
