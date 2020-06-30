@@ -351,10 +351,10 @@ func (p *Exporter) ExportConst(typ *types.Const) error {
 		_, err := strconv.ParseInt(value, 10, 32)
 		if err != nil {
 			if value[0] == '-' {
-				c.kind = specName + "." + ".Int64"
+				c.kind = specName + ".Int64"
 				c.val = "int64(" + fullName + ")"
 			} else {
-				c.kind = specName + "." + "Uint64"
+				c.kind = specName + ".Uint64"
 				c.val = "uint64(" + fullName + ")"
 			}
 		}

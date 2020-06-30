@@ -49,8 +49,7 @@ func exportVar(o *types.Var) (err error) {
 }
 
 func exportConst(e *Exporter, o *types.Const) (err error) {
-	e.ExportConst(o)
-	return nil
+	return e.ExportConst(o)
 }
 
 func Import(pkgPath string) (*types.Package, error) {
