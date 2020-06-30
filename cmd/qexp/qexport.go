@@ -21,6 +21,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"go/format"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -75,9 +76,13 @@ func exportPkg(pkgPath string, libDir string) error {
 	if err != nil {
 		return err
 	}
+	data, err := format.Source(buf.Bytes())
+	if err != nil {
+		return err
+	}
 	dir := filepath.Join(libDir, pkg.Path())
 	os.MkdirAll(dir, 0777)
-	err = ioutil.WriteFile(filepath.Join(dir, "gomod_export.go"), buf.Bytes(), 0666)
+	err = ioutil.WriteFile(filepath.Join(dir, "gomod_export.go"), data, 0666)
 	return err
 }
 
