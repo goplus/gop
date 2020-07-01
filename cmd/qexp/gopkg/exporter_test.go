@@ -97,8 +97,6 @@ func TestFixPkgString(t *testing.T) {
 	}
 }
 
-// -----------------------------------------------------------------------------
-
 func TestExportStrings(t *testing.T) {
 	err := Export("strings", ioutil.Discard)
 	if err != nil {
