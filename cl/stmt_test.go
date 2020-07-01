@@ -898,6 +898,34 @@ var testNormalForClauses = map[string]testData{
 					}
 					println(sum)
 					`, []string{"9"}},
+	"for_with_break_label": {`
+					arr := [1,3,5,7]
+					sum := 0
+					L:
+					for i:=0; i < len(arr);i++ {
+						for j:=0;j<len(arr);j++{
+							if j>2{
+								break L
+							}
+							sum+=arr[i]+arr[j]
+						}	
+					}
+					println(sum)
+					`, []string{"12"}}, // (1+1)+(1+3)+(1+5)
+	"for_with_continue_label": {`
+					arr := [1,3,5,7]
+					sum := 0
+					L:
+					for i:=0; i < len(arr);i++ {
+						for j:=0;j<len(arr);j++{
+							if j>1{
+								continue L
+							}
+							sum+=arr[i]+arr[j]
+						}	
+					}
+					println(sum)
+					`, []string{"48"}}, // (1+3+5+7)*2+(1+3)*4
 	"for_with_continue_break": {`
 					arr := [1,3,5,7]
 					sum := 0
