@@ -134,7 +134,38 @@ func TestExportGoTypes(t *testing.T) {
 	}
 }
 
-func TestPackage(t *testing.T) {
+func TestExportMath(t *testing.T) {
+	err := Export("math", ioutil.Discard)
+	if err != nil {
+		t.Fatal("TestExport failed:", err)
+	}
+}
+
+func TestImport(t *testing.T) {
+	pkg, err := Import("go/types")
+	if err != nil {
+		t.Fatal("TestImport failed:", err)
+	}
+	if pkg.Path() != "go/types" {
+		t.Fatal(pkg.Path())
+	}
+}
+
+func TestBadImport(t *testing.T) {
+	_, err := Import("go/badtypes")
+	if err == nil {
+		t.Fatal("TestBadImport failed")
+	}
+}
+
+func TestBadExport(t *testing.T) {
+	err := Export("go/badtypes", ioutil.Discard)
+	if err == nil {
+		t.Fatal("TestBadExport failed")
+	}
+}
+
+func TestExportPackage(t *testing.T) {
 	pkg, err := Import("go/build")
 	if err != nil {
 		t.Fatal("TestPackage Import failed:", err)
