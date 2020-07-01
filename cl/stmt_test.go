@@ -794,7 +794,7 @@ var testForRangeClauses = map[string]testData{
 
 func TestRangeStmt(t *testing.T) {
 	for name, clause := range testForRangeClauses {
-		testForRangeStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
+		testSingleStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
 	}
 }
 
@@ -876,51 +876,96 @@ func _TestForStmt(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 var testNormalForClauses = map[string]testData{
-	"for_with_init_cond_post": {`
-					sum := 0
+	"for_with_continue": {`
 					arr := [1,3,5,7]
-					for i := 0; i < len(arr); i++ {
+					sum := 0
+					for i:=0; i < len(arr);i++ {
+						if arr[i]<5{
+							continue
+						}
 						sum+=arr[i]
 					}
 					println(sum)
-					`, []string{"16"}},
-	"for_with_cond_post": {`
-					sum := 0
+					`, []string{"12"}},
+	"for_with_break": {`
 					arr := [1,3,5,7]
-					i := 0
-					for ; i < len(arr); i+=2 {
+					sum := 0
+					for i:=0; i < len(arr);i++ {
+						if arr[i]>5{
+							break
+						}
 						sum+=arr[i]
 					}
 					println(sum)
-					`, []string{"6"}},
-	"for_with_cond": {`
-					arr := [1,3,5,7]
-					i := 0
-					sum := 0
-					for ; i < len(arr) && i < 2; {
-						sum+=arr[i]
-						i++
-					}
-					println(sum)
-					`, []string{"4"}},
-	"for_with_init_cond": {`
+					`, []string{"9"}},
+	"for_with_continue_break": {`
 					arr := [1,3,5,7]
 					sum := 0
-					for i:=0; i < len(arr); {
-						sum+=arr[i]
-						i++
+					for i:=0; i < len(arr);i++ {
+						if arr[i]>5{
+							break
+						}
+						for j:=0;j<len(arr);j++{
+							if arr[j]<5{
+								continue
+							}
+							sum+=arr[j]
+						}
 					}
 					println(sum)
-					`, []string{"16"}},
+					`, []string{"36"}},
+	"for_with_continue_break_break": {`
+					arr := [1,3,5,7]
+					sum := 0
+					L1:
+					for i:=0; i < len(arr);i++ {
+						if arr[i]>5{
+							break
+						}
+						for j:=i;j<len(arr);j++{
+							println("in",i,j)
+							if arr[j]<5{
+								continue L1
+							}
+							println("out",i,j)
+							sum+=arr[j]
+						}
+					}
+					println(sum)
+					`, []string{"5"}},
+	"for_with_continue_panic": {`
+					arr := [1,3,5,7]
+					sum := 0
+					for i:=0; i < len(arr);i++ {
+					}
+					continue
+					println(sum)
+					`, []string{""}},
+	"for_with_break_panic": {`
+					arr := [1,3,5,7]
+					sum := 0
+					for i:=0; i < len(arr);i++ {
+					}
+					break
+					println(sum)
+					`, []string{""}},
 }
 
 func TestNormalForStmt(t *testing.T) {
 	for name, clause := range testNormalForClauses {
-		testForRangeStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
+		testSingleStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
 	}
 }
 
-func testForRangeStmt(name string, t *testing.T, fs *asttest.MemFS, wants []string) {
+func testSingleStmt(name string, t *testing.T, fs *asttest.MemFS, wants []string) {
+	defer func() {
+		if r := recover(); r != nil {
+			if len(wants) > 0 && wants[0] == "_panic" {
+				return
+			}
+			t.Fatal(name, "-", r)
+		}
+	}()
 	var results []string
 	selfPrintln := func(arity int, p *gop.Context) {
 		args := p.GetArgs(arity)
@@ -1084,7 +1129,7 @@ var testFallthroughClauses = map[string]testData{
 						println(x)
 					fallthrough
 					}
-					`, []string{"0", "1"}},
+					`, []string{"_panic"}},
 	"switch_fallthrough_out_panic": {`
 					x:=0
 					switch x {
@@ -1099,18 +1144,12 @@ var testFallthroughClauses = map[string]testData{
 						println(x)
 					}
 					fallthrough
-					`, []string{"0", "1"}},
+					`, []string{"_panic"}},
 }
 
 func TestFallthroughStmt(t *testing.T) {
 	for name, clause := range testFallthroughClauses {
-		func() {
-			defer func() {
-				if r := recover(); r != nil {
-				}
-			}()
-			testForRangeStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
-		}()
+		testSingleStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
 	}
 }
 
@@ -1182,16 +1221,6 @@ var testGotoLabelClauses = map[string]testData{
 func TestGotoLabelStmt(t *testing.T) {
 	for name, clause := range testGotoLabelClauses {
 		log.Info("===> TestGotoLabelStmt", name)
-		func() {
-			defer func() {
-				if r := recover(); r != nil {
-					if len(clause.wants) > 0 && clause.wants[0] == "_panic" {
-						return
-					}
-					t.Fatal(name, "-", r)
-				}
-			}()
-			testForRangeStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
-		}()
+		testSingleStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
 	}
 }
