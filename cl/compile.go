@@ -198,11 +198,54 @@ func (p *stackVar) getType() reflect.Type {
 
 // -----------------------------------------------------------------------------
 
+type funcCtx struct {
+	fun    exec.FuncInfo
+	labels map[string]*flowLabel
+}
+
+func newFuncCtx(fun exec.FuncInfo) *funcCtx {
+	return &funcCtx{labels: map[string]*flowLabel{}, fun: fun}
+}
+
+type flowLabel struct {
+	ctx *blockCtx
+	exec.Label
+	jumps []*blockCtx
+}
+
+func (fc *funcCtx) checkLabels() {
+	for name, fl := range fc.labels {
+		if fl.ctx == nil {
+			log.Panicf("label %s not defined\n", name)
+		}
+		if checkLabel(fl) {
+			log.Panicf("goto %s jumps into illegal block\n", name)
+		}
+	}
+}
+func checkLabel(fl *flowLabel) bool {
+	jump := len(fl.jumps)
+	for _, g := range fl.jumps {
+		from, to := g, fl.ctx
+		for {
+			if from == nil {
+				break
+			}
+			if from == to {
+				jump--
+				break
+			}
+			from = from.parent
+		}
+	}
+	return jump == 0
+}
+
 type blockCtx struct {
 	*pkgCtx
+	*funcCtx
 	file      *fileCtx
 	parent    *blockCtx
-	fun       exec.FuncInfo
 	syms      map[string]iSymbol
 	noExecCtx bool
 	checkFlag bool
@@ -229,7 +272,7 @@ func newNormBlockCtxEx(parent *blockCtx, noExecCtx bool) *blockCtx {
 		pkgCtx:    parent.pkgCtx,
 		file:      parent.file,
 		parent:    parent,
-		fun:       parent.fun,
+		funcCtx:   parent.funcCtx,
 		syms:      make(map[string]iSymbol),
 		noExecCtx: noExecCtx,
 	}
@@ -242,7 +285,37 @@ func newGblBlockCtx(pkg *pkgCtx) *blockCtx {
 		parent:    nil,
 		syms:      make(map[string]iSymbol),
 		noExecCtx: true,
+		funcCtx:   newFuncCtx(nil),
 	}
+}
+
+func (bc *blockCtx) requireLabel(name string) exec.Label {
+	fl := bc.labels[name]
+	if fl == nil {
+		fl = &flowLabel{
+			Label: bc.NewLabel(name),
+		}
+		bc.labels[name] = fl
+	}
+	fl.jumps = append(fl.jumps, bc)
+	return fl.Label
+}
+
+func (bc *blockCtx) defineLabel(name string) exec.Label {
+	fl, ok := bc.labels[name]
+	if ok {
+		if fl.ctx != nil {
+			log.Panicf("label %s already defined at other position \n", name)
+		}
+		fl.ctx = bc
+	} else {
+		fl = &flowLabel{
+			ctx:   bc,
+			Label: bc.NewLabel(name),
+		}
+		bc.labels[name] = fl
+	}
+	return fl.Label
 }
 
 func (p *blockCtx) getNestDepth() (nestDepth uint32) {
@@ -440,6 +513,7 @@ func NewPackage(out exec.Builder, pkg *ast.Package, fset *token.FileSet, act Pkg
 		out.Return(-1)
 	}
 	ctxPkg.resolveFuncs()
+	ctx.checkLabels()
 	p.syms = ctx.syms
 	return
 }
@@ -561,6 +635,7 @@ func loadFunc(ctx *blockCtx, d *ast.FuncDecl, isUnnamed bool) {
 	} else {
 		funCtx := newExecBlockCtx(ctx)
 		funCtx.noExecCtx = isUnnamed
+		funCtx.funcCtx = newFuncCtx(nil)
 		ctx.insertFunc(name, newFuncDecl(name, d.Type, d.Body, funCtx))
 	}
 }

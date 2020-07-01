@@ -79,3 +79,17 @@ case z > 10:
 default:
 	println(z)
 }
+
+goto L
+println("before")
+L:
+	println("over")
+
+	i := 0
+L2:
+	if i < 3 {
+		println(i)
+		i++
+		goto L2
+	}
+	println("over")

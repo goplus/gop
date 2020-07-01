@@ -69,6 +69,10 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileIncDecStmt(ctx, v)
 	case *ast.BranchStmt:
 		compileBranchStmt(ctx, v)
+	case *ast.LabeledStmt:
+		compileLabeledStmt(ctx, v)
+	case *ast.EmptyStmt:
+		// do nothing
 	default:
 		log.Panicln("compileStmt failed: unknown -", reflect.TypeOf(v))
 	}
@@ -165,9 +169,20 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 }
 
 func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
-	if v.Tok == token.FALLTHROUGH {
+	switch v.Tok {
+	case token.FALLTHROUGH:
 		log.Panicln("fallthrough statement out of place")
+	case token.GOTO:
+		if v.Label == nil {
+			log.Panicln("label not defined")
+		}
+		ctx.out.Jmp(ctx.requireLabel(v.Label.Name))
 	}
+}
+
+func compileLabeledStmt(ctx *blockCtx, v *ast.LabeledStmt) {
+	ctx.out.Label(ctx.defineLabel(v.Label.Name))
+	compileStmt(ctx, v.Stmt)
 }
 
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {

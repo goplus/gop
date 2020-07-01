@@ -1112,3 +1112,84 @@ func TestFallthroughStmt(t *testing.T) {
 		}()
 	}
 }
+
+// -----------------------------------------------------------------------------
+
+var testGotoLabelClauses = map[string]testData{
+	"goto_before_label": {`
+					goto L
+					println("before")
+					L:
+					println("over")
+					`, []string{"over"}},
+	"goto_after_label": {`
+					i:=0
+					L:
+						if i < 3 {
+							println(i)
+							i++
+							goto L
+						}
+					println("over")
+					`, []string{"0", "1", "2", "over"}},
+	"goto_multi_labels": {`
+					i:=0
+					L:
+						if i < 3  {
+						goto L1
+							println(i)
+						L1:
+							println(i)
+							i++
+							if i==4{
+								goto L3
+							}
+							goto L
+						}
+					L3:
+					println("over")
+					L4:
+					`, []string{"0", "1", "2", "over"}},
+	"goto_nil_label": {`
+					goto;
+					println("over")
+					`, []string{"_panic"}},
+	"goto_not_define_label": {`
+					goto L
+					println("over")
+					`, []string{"_panic"}},
+	"goto_illegal_block": {`
+					goto L
+					{
+						L:
+						println("L")
+					}
+					`, []string{"_panic"}},
+	"goto_redefine_block": {`
+					{
+						L:
+						println("L")
+					}
+					{
+						L:
+						println("L")
+					}
+					goto L
+					`, []string{"_panic"}},
+}
+
+func TestGotoLabelStmt(t *testing.T) {
+	for name, clause := range testGotoLabelClauses {
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					if len(clause.wants) > 0 && clause.wants[0] == "_panic" {
+						return
+					}
+					t.Fail()
+				}
+			}()
+			testForRangeStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
+		}()
+	}
+}
