@@ -339,7 +339,8 @@ func (p *FuncDecl) Compile() exec.FuncInfo {
 		out.DefineFunc(fun)
 		ctx.funcCtx = newFuncCtx(fun)
 		compileBlockStmtWithout(ctx, p.body)
-		ctx.fun = nil
+		ctx.funcCtx.checkLabels()
+		ctx.funcCtx = nil
 		out.EndFunc(fun)
 		p.compiled = true
 	}

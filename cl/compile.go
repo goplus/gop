@@ -213,20 +213,12 @@ type flowLabel struct {
 	jumps []*blockCtx
 }
 
-func (fc *funcCtx) requireLabel(name string, ctx *blockCtx, fromLabelStmt bool) exec.Label {
-	if fl, ok := fc.labels[name]; ok {
-		if fromLabelStmt {
-			if fl.ctx != nil {
-				log.Panicf("label %s already defined at other position \n", name)
-			}
-			fl.ctx = ctx
-		} else {
-			fl.jumps = append(fl.jumps, ctx)
+func (fc *funcCtx) checkLabels() {
+	for name, _ := range fc.labels {
+		if !fc.checkLabel(name) {
+			log.Panicf("goto %s jumps into illegal block\n", name)
 		}
-		return fl.Label
 	}
-
-	return fc.defineLabel(name, ctx, fromLabelStmt)
 }
 func (fc *funcCtx) checkLabel(name string) bool {
 	fl := fc.labels[name]
@@ -248,20 +240,6 @@ func (fc *funcCtx) checkLabel(name string) bool {
 		}
 	}
 	return jump == 0
-}
-
-func (fc *funcCtx) defineLabel(name string, ctx *blockCtx, fromLabelStmt bool) exec.Label {
-	fl := &flowLabel{
-		ctx:   ctx,
-		Label: ctx.NewLabel(name),
-	}
-	if !fromLabelStmt {
-		fl.ctx = nil
-		fl.jumps = append(fl.jumps, ctx)
-	}
-	fc.labels[name] = fl
-
-	return fl.Label
 }
 
 type blockCtx struct {
@@ -310,6 +288,35 @@ func newGblBlockCtx(pkg *pkgCtx) *blockCtx {
 		noExecCtx: true,
 		funcCtx:   newFuncCtx(nil),
 	}
+}
+
+func (bc *blockCtx) requireLabel(name string) exec.Label {
+	fl := bc.labels[name]
+	if fl == nil {
+		fl = &flowLabel{
+			Label: bc.NewLabel(name),
+		}
+		bc.labels[name] = fl
+	}
+	fl.jumps = append(fl.jumps, bc)
+	return fl.Label
+}
+
+func (bc *blockCtx) defineLabel(name string) exec.Label {
+	fl, ok := bc.labels[name]
+	if ok {
+		if fl.ctx != nil {
+			log.Panicf("label %s already defined at other position \n", name)
+		}
+		fl.ctx = bc
+	} else {
+		fl = &flowLabel{
+			ctx:   bc,
+			Label: bc.NewLabel(name),
+		}
+		bc.labels[name] = fl
+	}
+	return fl.Label
 }
 
 func (p *blockCtx) getNestDepth() (nestDepth uint32) {
@@ -507,6 +514,7 @@ func NewPackage(out exec.Builder, pkg *ast.Package, fset *token.FileSet, act Pkg
 		out.Return(-1)
 	}
 	ctxPkg.resolveFuncs()
+	ctx.checkLabels()
 	p.syms = ctx.syms
 	return
 }
@@ -628,6 +636,7 @@ func loadFunc(ctx *blockCtx, d *ast.FuncDecl, isUnnamed bool) {
 	} else {
 		funCtx := newExecBlockCtx(ctx)
 		funCtx.noExecCtx = isUnnamed
+		funCtx.funcCtx = newFuncCtx(nil)
 		ctx.insertFunc(name, newFuncDecl(name, d.Type, d.Body, funCtx))
 	}
 }

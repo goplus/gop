@@ -176,21 +176,13 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 		if v.Label == nil {
 			log.Panicln("label not defined")
 		}
-		ctx.out.Jmp(toLabel(ctx, v.Label.Name))
+		ctx.out.Jmp(ctx.requireLabel(v.Label.Name))
 	}
 }
 
 func compileLabeledStmt(ctx *blockCtx, v *ast.LabeledStmt) {
-	ctx.out.Label(toLabel(ctx, v.Label.Name, true))
+	ctx.out.Label(ctx.defineLabel(v.Label.Name))
 	compileStmt(ctx, v.Stmt)
-}
-
-func toLabel(ctx *blockCtx, labelName string, fromLabelStmt ...bool) exec.Label {
-	label := ctx.requireLabel(labelName, ctx, append(fromLabelStmt, false)[0])
-	if !ctx.checkLabel(labelName) {
-		log.Panicf("goto %s jumps into illegal block\n", labelName)
-	}
-	return label
 }
 
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
