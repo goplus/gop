@@ -42,28 +42,24 @@ type exportedConst struct {
 
 // Exporter represents a go package exporter.
 type Exporter struct {
-	w             io.Writer
-	pkg           *types.Package
-	pkgDot        string
-	execs         []string
-	toTypes       []types.Type
-	toSlices      []types.Type
-	imports       map[string]string // pkgPath => pkg
-	importPkgs    map[string]string // pkg => pkgPath
-	exportFns     []exportedFunc
-	exportFnvs    []exportedFunc
-	exportConsts  []exportedConst
-	hasReflectPkg bool
-	hasSpecPkg    bool
+	w            io.Writer
+	pkg          *types.Package
+	pkgDot       string
+	execs        []string
+	toTypes      []types.Type
+	toSlices     []types.Type
+	imports      map[string]string // pkgPath => pkg
+	importPkgs   map[string]string // pkg => pkgPath
+	exportFns    []exportedFunc
+	exportFnvs   []exportedFunc
+	exportConsts []exportedConst
 }
 
 // NewExporter creates a go package exporter.
 func NewExporter(w io.Writer, pkg *types.Package) *Exporter {
 	const gopPath = "github.com/qiniu/goplus/gop"
-	const specPath = "github.com/qiniu/goplus/exec.spec"
-	const reflectPath = "reflect"
-	imports := map[string]string{gopPath: "gop", specPath: "spec", reflectPath: "reflect"}
-	importPkgs := map[string]string{"gop": gopPath, "spec": specPath, "reflect": reflectPath}
+	imports := map[string]string{gopPath: "gop"}
+	importPkgs := map[string]string{"gop": gopPath}
 	p := &Exporter{w: w, pkg: pkg, imports: imports, importPkgs: importPkgs}
 	p.pkgDot = p.importPkg(pkg) + "."
 	return p
@@ -325,66 +321,65 @@ $argInit	$retAssign$fn($args)
 	return nil
 }
 
+var (
+	qspecPkg = types.NewPackage("github.com/qiniu/goplus/exec.spec", "qspec")
+)
+
 // ExportConst exports a go consts.
 func (p *Exporter) ExportConst(typ *types.Const) error {
-	kind, err := constKind(typ, "spec")
+	kind, err := constKind(typ)
 	if err != nil {
 		return err
 	}
-	if strings.HasPrefix(kind, "reflect.") {
-		p.hasReflectPkg = true
-	}
-	if strings.HasPrefix(kind, "spec.") {
-		p.hasSpecPkg = true
-	}
-	fullName := p.pkgDot + typ.Name()
-	var c exportedConst
-	c.name = typ.Name()
-	c.kind = kind
-	c.val = fullName
-	if kind == "spec.ConstUnboundInt" && typ.Val().Kind() == constant.Int {
+	pkg := p.importPkg(qspecPkg)
+	val := p.pkgDot + typ.Name()
+	if typ.Val().Kind() == constant.Int && kind == "ConstUnboundInt" {
 		value := typ.Val().String()
 		_, err := strconv.ParseInt(value, 10, 32)
 		if err != nil {
 			if value[0] == '-' {
-				c.kind = "spec.Int64"
-				c.val = "int64(" + fullName + ")"
+				kind = "Int64"
+				val = "int64(" + val + ")"
 			} else {
-				c.kind = "spec.Uint64"
-				c.val = "uint64(" + fullName + ")"
+				kind = "Uint64"
+				val = "uint64(" + val + ")"
 			}
 		}
 	}
+	var c exportedConst
+	c.name = typ.Name()
+	c.kind = pkg + "." + kind
+	c.val = val
 	p.exportConsts = append(p.exportConsts, c)
 	return nil
 }
 
-func constKind(typ *types.Const, pkg string) (string, error) {
+func constKind(typ *types.Const) (string, error) {
 	baisc, ok := typ.Type().Underlying().(*types.Basic)
 	if !ok {
 		return "", fmt.Errorf("unparse basic of const %v", typ)
 	}
 	switch baisc.Kind() {
 	case types.UntypedBool:
-		return "reflect.Bool", nil
+		return "Bool", nil
 	case types.UntypedInt:
-		return pkg + ".ConstUnboundInt", nil
+		return "ConstUnboundInt", nil
 	case types.UntypedRune:
-		return pkg + ".ConstBoundRune", nil
+		return "ConstBoundRune", nil
 	case types.UntypedFloat:
-		return pkg + ".ConstUnboundFloat", nil
+		return "ConstUnboundFloat", nil
 	case types.UntypedComplex:
-		return pkg + ".ConstUnboundComplex", nil
+		return "ConstUnboundComplex", nil
 	case types.UntypedString:
-		return pkg + ".ConstBoundString", nil
+		return "ConstBoundString", nil
 	case types.UntypedNil:
-		return pkg + ".ConstUnboundPtr", nil
+		return "ConstUnboundPtr", nil
 	case types.Byte:
-		return "reflect.Uint8", nil
+		return "Uint8", nil
 	case types.Rune:
-		return "reflect.Uint32", nil
+		return "Uint32", nil
 	}
-	return "reflect." + strings.Title(baisc.Name()), nil
+	return strings.Title(baisc.Name()), nil
 }
 
 func withoutPkg(fullName string) string {
@@ -477,12 +472,6 @@ const gopkgExportFooter = `)
 func (p *Exporter) Close() error {
 	pkgs := make([]string, 0, len(p.importPkgs))
 	for pkg := range p.importPkgs {
-		if pkg == "reflect" && !p.hasReflectPkg {
-			continue
-		}
-		if pkg == "spec" && !p.hasSpecPkg {
-			continue
-		}
 		pkgs = append(pkgs, pkg)
 	}
 	sort.Strings(pkgs)
