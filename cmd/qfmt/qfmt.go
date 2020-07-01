@@ -30,6 +30,7 @@ const (
 )
 
 var (
+	// 0-do nothing,1-formatted,2-error
 	exitCode = 0
 )
 
@@ -67,13 +68,13 @@ func backupFile(filename string, data []byte, perm os.FileMode) (string, error) 
 	if err != nil {
 		return "", err
 	}
-	bakname := f.Name()
+	backupName := f.Name()
 	if chmodSupported {
 		err = f.Chmod(perm)
 		if err != nil {
 			f.Close()
-			os.Remove(bakname)
-			return bakname, err
+			os.Remove(backupName)
+			return backupName, err
 		}
 	}
 
@@ -83,7 +84,7 @@ func backupFile(filename string, data []byte, perm os.FileMode) (string, error) 
 		err = err1
 	}
 
-	return bakname, err
+	return backupName, err
 }
 
 // If in == nil, the source is the contents of the file with the given filename.
@@ -113,18 +114,19 @@ func processFile(filename string, in io.Reader, out io.Writer, stdin bool) error
 		return err
 	}
 
-	if *write {
+	if *write && string(src) != string(res) {
+		exitCode = 1
 		// make a temporary backup before overwriting original
-		bakname, err := backupFile(filename+".", src, perm)
+		backupName, err := backupFile(filename+".", src, perm)
 		if err != nil {
 			return err
 		}
 		err = ioutil.WriteFile(filename, res, perm)
 		if err != nil {
-			os.Rename(bakname, filename)
+			os.Rename(backupName, filename)
 			return err
 		}
-		err = os.Remove(bakname)
+		err = os.Remove(backupName)
 		if err != nil {
 			return err
 		}
