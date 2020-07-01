@@ -218,12 +218,12 @@ func (fc *funcCtx) checkLabels() {
 		if fl.ctx == nil {
 			log.Panicf("label %s not defined\n", name)
 		}
-		if !fc.checkLabel(fl) {
+		if checkLabel(fl) {
 			log.Panicf("goto %s jumps into illegal block\n", name)
 		}
 	}
 }
-func (fc *funcCtx) checkLabel(fl *flowLabel) bool {
+func checkLabel(fl *flowLabel) bool {
 	jump := len(fl.jumps)
 	for _, g := range fl.jumps {
 		from, to := g, fl.ctx
