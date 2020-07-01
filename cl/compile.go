@@ -199,10 +199,11 @@ func (p *stackVar) getType() reflect.Type {
 // -----------------------------------------------------------------------------
 
 type funcCtx struct {
-	fun       exec.FuncInfo
-	labels    map[string]*flowLabel
-	branches  map[string]*branchCtx
-	curBranch *branchCtx
+	fun         exec.FuncInfo
+	labels      map[string]*flowLabel
+	branches    map[string]*branchCtx
+	curBreak    *branchCtx
+	curContinue *branchCtx
 }
 
 func newFuncCtx(fun exec.FuncInfo) *funcCtx {
