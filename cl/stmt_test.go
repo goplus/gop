@@ -19,7 +19,6 @@ package cl
 import (
 	"fmt"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/qiniu/goplus/ast/asttest"
@@ -1118,13 +1117,13 @@ func TestFallthroughStmt(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 var testGotoLabelClauses = map[string]testData{
-	"_goto_before_label": {`
+	"goto_before_label": {`
 					goto L
 					println("before")
 					L:
 					println("over")
 					`, []string{"over"}},
-	"_goto_after_label": {`
+	"goto_after_label": {`
 					i:=0
 					L:
 						if i < 3 {
@@ -1134,7 +1133,7 @@ var testGotoLabelClauses = map[string]testData{
 						}
 					println("over")
 					`, []string{"0", "1", "2", "over"}},
-	"_goto_multi_labels": {`
+	"goto_multi_labels": {`
 					i:=0
 					L:
 						if i < 3  {
@@ -1160,7 +1159,7 @@ var testGotoLabelClauses = map[string]testData{
 					goto L
 					println("over")
 					`, []string{"_panic"}},
-	"_goto_illegal_block": {`
+	"goto_illegal_block": {`
 					goto L
 					{
 						L:
@@ -1182,9 +1181,6 @@ var testGotoLabelClauses = map[string]testData{
 
 func TestGotoLabelStmt(t *testing.T) {
 	for name, clause := range testGotoLabelClauses {
-		if strings.HasPrefix(name, "_") { // skip
-			continue
-		}
 		log.Info("===> TestGotoLabelStmt", name)
 		func() {
 			defer func() {

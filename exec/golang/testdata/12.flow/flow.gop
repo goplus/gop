@@ -80,7 +80,6 @@ default:
 	println(z)
 }
 
-/*
 goto L
 println("before")
 L:
@@ -94,4 +93,3 @@ L2:
 		goto L2
 	}
 	println("over")
-*/
