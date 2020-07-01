@@ -199,18 +199,25 @@ func (p *stackVar) getType() reflect.Type {
 // -----------------------------------------------------------------------------
 
 type funcCtx struct {
-	fun    exec.FuncInfo
-	labels map[string]*flowLabel
+	fun       exec.FuncInfo
+	labels    map[string]*flowLabel
+	branches  map[string]*branchCtx
+	curBranch *branchCtx
 }
 
 func newFuncCtx(fun exec.FuncInfo) *funcCtx {
-	return &funcCtx{labels: map[string]*flowLabel{}, fun: fun}
+	return &funcCtx{labels: map[string]*flowLabel{}, fun: fun, branches: map[string]*branchCtx{}}
 }
 
 type flowLabel struct {
 	ctx *blockCtx
 	exec.Label
 	jumps []*blockCtx
+}
+type branchCtx struct {
+	name      string
+	postLabel exec.Label
+	doneLabel exec.Label
 }
 
 func (fc *funcCtx) checkLabels() {
