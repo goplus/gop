@@ -289,31 +289,31 @@ func newGblBlockCtx(pkg *pkgCtx) *blockCtx {
 	}
 }
 
-func (bc *blockCtx) requireLabel(name string) exec.Label {
-	fl := bc.labels[name]
+func (p *blockCtx) requireLabel(name string) exec.Label {
+	fl := p.labels[name]
 	if fl == nil {
 		fl = &flowLabel{
-			Label: bc.NewLabel(name),
+			Label: p.NewLabel(name),
 		}
-		bc.labels[name] = fl
+		p.labels[name] = fl
 	}
-	fl.jumps = append(fl.jumps, bc)
+	fl.jumps = append(fl.jumps, p)
 	return fl.Label
 }
 
-func (bc *blockCtx) defineLabel(name string) exec.Label {
-	fl, ok := bc.labels[name]
+func (p *blockCtx) defineLabel(name string) exec.Label {
+	fl, ok := p.labels[name]
 	if ok {
 		if fl.ctx != nil {
 			log.Panicf("label %s already defined at other position \n", name)
 		}
-		fl.ctx = bc
+		fl.ctx = p
 	} else {
 		fl = &flowLabel{
-			ctx:   bc,
-			Label: bc.NewLabel(name),
+			ctx:   p,
+			Label: p.NewLabel(name),
 		}
-		bc.labels[name] = fl
+		p.labels[name] = fl
 	}
 	return fl.Label
 }

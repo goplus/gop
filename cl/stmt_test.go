@@ -19,6 +19,7 @@ package cl
 import (
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/qiniu/goplus/ast/asttest"
@@ -1116,13 +1117,13 @@ func TestFallthroughStmt(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 var testGotoLabelClauses = map[string]testData{
-	"goto_before_label": {`
+	"_goto_before_label": {`
 					goto L
 					println("before")
 					L:
 					println("over")
 					`, []string{"over"}},
-	"goto_after_label": {`
+	"_goto_after_label": {`
 					i:=0
 					L:
 						if i < 3 {
@@ -1132,7 +1133,7 @@ var testGotoLabelClauses = map[string]testData{
 						}
 					println("over")
 					`, []string{"0", "1", "2", "over"}},
-	"goto_multi_labels": {`
+	"_goto_multi_labels": {`
 					i:=0
 					L:
 						if i < 3  {
@@ -1158,7 +1159,7 @@ var testGotoLabelClauses = map[string]testData{
 					goto L
 					println("over")
 					`, []string{"_panic"}},
-	"goto_illegal_block": {`
+	"_goto_illegal_block": {`
 					goto L
 					{
 						L:
@@ -1180,13 +1181,16 @@ var testGotoLabelClauses = map[string]testData{
 
 func TestGotoLabelStmt(t *testing.T) {
 	for name, clause := range testGotoLabelClauses {
+		if strings.HasPrefix(name, "_") { // skip
+			continue
+		}
 		func() {
 			defer func() {
 				if r := recover(); r != nil {
 					if len(clause.wants) > 0 && clause.wants[0] == "_panic" {
 						return
 					}
-					t.Fail()
+					t.Fatal(name, "-", r)
 				}
 			}()
 			testForRangeStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
