@@ -1,11 +1,9 @@
 println("start")
 
-/*
 goto L
 println("before")
 L:
 	println("over")
-
 	i := 0
 L2:
 	if i < 3 {
@@ -14,4 +12,3 @@ L2:
 		goto L2
 	}
 	println("over")
-*/
