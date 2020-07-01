@@ -17,7 +17,6 @@
 package cl
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/qiniu/goplus/ast"
@@ -151,24 +150,18 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 		compileStmt(ctx, v.Init)
 	}
 	out := ctx.out
-	done := ctx.NewLabel("")
-	label := ctx.NewLabel("")
+	start := ctx.NewLabel("")
 	post := ctx.NewLabel("")
-	fc := ctx.branches[fmt.Sprint(v.For)]
-	if fc == nil {
-		fc = &branchCtx{}
-	}
-	fc.doneLabel = done
-	fc.postLabel = post
-	oldBreak := ctx.curBreak
-	oldContinue := ctx.curContinue
-	ctx.curBreak = fc
-	ctx.curContinue = fc
+	done := ctx.NewLabel("")
+
+	fc := ctx.requireBranchByPos(v.For, done, post)
+	oldBreak, oldContinue := ctx.breakBranch, ctx.continueBranch
 	defer func() {
-		ctx.curBreak = oldBreak
-		ctx.curContinue = oldContinue
+		ctx.breakBranch, ctx.continueBranch = oldBreak, oldContinue
 	}()
-	out.Label(label)
+	ctx.breakBranch, ctx.continueBranch = fc, fc
+
+	out.Label(start)
 	compileExpr(ctx, v.Cond)()
 	checkBool(ctx.infer.Pop())
 	out.JmpIf(0, done)
@@ -180,7 +173,7 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	if v.Post != nil {
 		compileStmt(ctx, v.Post)
 	}
-	out.Jmp(label)
+	out.Jmp(start)
 	out.Label(done)
 }
 
@@ -194,22 +187,22 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 		}
 		ctx.out.Jmp(ctx.requireLabel(v.Label.Name))
 	case token.BREAK:
-		fc := ctx.curBreak
+		bc := ctx.breakBranch
 		if v.Label != nil {
-			fc = ctx.branches[v.Label.Name]
+			bc = ctx.getBranchByName(v.Label.Name)
 		}
-		if fc != nil {
-			ctx.out.Jmp(fc.doneLabel)
+		if bc != nil {
+			ctx.out.Jmp(bc.doneLabel)
 			return
 		}
 		log.Panicln("break statement out of for/switch/select statements")
 	case token.CONTINUE:
-		fc := ctx.curContinue
+		bc := ctx.continueBranch
 		if v.Label != nil {
-			fc = ctx.branches[v.Label.Name]
+			bc = ctx.getBranchByName(v.Label.Name)
 		}
-		if fc != nil {
-			ctx.out.Jmp(fc.postLabel)
+		if bc != nil {
+			ctx.out.Jmp(bc.postLabel)
 			return
 		}
 		log.Panicln("continue statement out of for statements")
@@ -221,16 +214,7 @@ func compileLabeledStmt(ctx *blockCtx, v *ast.LabeledStmt) {
 	// make sure all labels in golang code  will be used
 	ctx.out.Jmp(label)
 	ctx.out.Label(label)
-	switch vs := v.Stmt.(type) {
-	case *ast.ForStmt:
-		f := &branchCtx{name: v.Label.Name}
-		ctx.branches[f.name] = f
-		ctx.branches[fmt.Sprint(vs.For)] = f
-	case *ast.SwitchStmt:
-		f := &branchCtx{name: v.Label.Name}
-		ctx.branches[f.name] = f
-		ctx.branches[fmt.Sprint(vs.Switch)] = f
-	}
+	ctx.insertBranch(v.Label.Name, v.Stmt.Pos())
 	compileStmt(ctx, v.Stmt)
 }
 
@@ -245,16 +229,13 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	}
 	out := ctx.out
 	done := ctx.NewLabel("")
-	fc := ctx.branches[fmt.Sprint(v.Switch)]
-	if fc == nil {
-		fc = &branchCtx{}
-	}
-	fc.doneLabel = done
-	oldBreak := ctx.curBreak
-	ctx.curBreak = fc
+
+	bc := ctx.requireBranchByPos(v.Switch, done, nil)
+	oldBreak := ctx.breakBranch
 	defer func() {
-		ctx.curBreak = oldBreak
+		ctx.breakBranch = oldBreak
 	}()
+	ctx.breakBranch = bc
 
 	hasTag := v.Tag != nil
 	hasCaseClause := false
