@@ -17,6 +17,7 @@
 package cl
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/qiniu/goplus/ast"
@@ -152,15 +153,27 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	out := ctx.out
 	done := ctx.NewLabel("")
 	label := ctx.NewLabel("")
+	post := ctx.NewLabel("")
+	fc := ctx.branches[fmt.Sprint(v.For)]
+	if fc == nil {
+		fc = &branchCtx{}
+	}
+	fc.doneLabel = done
+	fc.postLabel = post
+	old := ctx.curBranch
+	ctx.curBranch = fc
+	defer func() {
+		ctx.curBranch = old
+	}()
 	out.Label(label)
-
 	compileExpr(ctx, v.Cond)()
 	checkBool(ctx.infer.Pop())
 	out.JmpIf(0, done)
-
 	noExecCtx := isNoExecCtx(ctx, v.Body)
 	ctx = newNormBlockCtxEx(ctx, noExecCtx)
 	compileBlockStmtWith(ctx, v.Body)
+	out.Jmp(post)
+	out.Label(post)
 	if v.Post != nil {
 		compileStmt(ctx, v.Post)
 	}
@@ -177,11 +190,35 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 			log.Panicln("label not defined")
 		}
 		ctx.out.Jmp(ctx.requireLabel(v.Label.Name))
+	case token.BREAK:
+		fc := ctx.curBranch
+		if v.Label != nil {
+			fc = ctx.branches[v.Label.Name]
+		}
+		if fc != nil {
+			ctx.out.Jmp(fc.doneLabel)
+		}
+		log.Panicln("break statement out of for/switch/select statements")
+	case token.CONTINUE:
+		fc := ctx.curBranch
+		if v.Label != nil {
+			fc = ctx.branches[v.Label.Name]
+		}
+		if fc != nil {
+			ctx.out.Jmp(fc.postLabel)
+		}
+		log.Panicln("continue statement out of for statements")
 	}
 }
 
 func compileLabeledStmt(ctx *blockCtx, v *ast.LabeledStmt) {
 	ctx.out.Label(ctx.defineLabel(v.Label.Name))
+	switch vs := v.Stmt.(type) {
+	case *ast.ForStmt:
+		f := &branchCtx{name: v.Label.Name}
+		ctx.branches[f.name] = f
+		ctx.branches[fmt.Sprint(vs.For)] = f
+	}
 	compileStmt(ctx, v.Stmt)
 }
 
