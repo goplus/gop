@@ -133,6 +133,9 @@ func testPkg(dir string) {
 // -----------------------------------------------------------------------------
 
 func genGo(dir string, test bool) {
+	if strings.HasPrefix(dir, "_") {
+		return
+	}
 	fis, err := ioutil.ReadDir(dir)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "ReadDir failed:", err)
