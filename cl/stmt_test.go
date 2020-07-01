@@ -876,6 +876,42 @@ func _TestForStmt(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 var testNormalForClauses = map[string]testData{
+	"for_with_init_cond_post": {`
+					sum := 0
+					arr := [1,3,5,7]
+					for i := 0; i < len(arr); i++ {
+						sum+=arr[i]
+					}
+					println(sum)
+					`, []string{"16"}},
+	"for_with_cond_post": {`
+					sum := 0
+					arr := [1,3,5,7]
+					i := 0
+					for ; i < len(arr); i+=2 {
+						sum+=arr[i]
+					}
+					println(sum)
+					`, []string{"6"}},
+	"for_with_cond": {`
+					arr := [1,3,5,7]
+					i := 0
+					sum := 0
+					for ; i < len(arr) && i < 2; {
+						sum+=arr[i]
+						i++
+					}
+					println(sum)
+					`, []string{"4"}},
+	"for_with_init_cond": {`
+					arr := [1,3,5,7]
+					sum := 0
+					for i:=0; i < len(arr); {
+						sum+=arr[i]
+						i++
+					}
+					println(sum)
+					`, []string{"16"}},
 	"for_with_continue": {`
 					arr := [1,3,5,7]
 					sum := 0
