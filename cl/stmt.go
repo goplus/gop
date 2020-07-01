@@ -160,10 +160,13 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	}
 	fc.doneLabel = done
 	fc.postLabel = post
-	old := ctx.curBranch
-	ctx.curBranch = fc
+	oldBreak := ctx.curBreak
+	oldContinue := ctx.curContinue
+	ctx.curBreak = fc
+	ctx.curContinue = fc
 	defer func() {
-		ctx.curBranch = old
+		ctx.curBreak = oldBreak
+		ctx.curContinue = oldContinue
 	}()
 	out.Label(label)
 	compileExpr(ctx, v.Cond)()
@@ -191,7 +194,7 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 		}
 		ctx.out.Jmp(ctx.requireLabel(v.Label.Name))
 	case token.BREAK:
-		fc := ctx.curBranch
+		fc := ctx.curBreak
 		if v.Label != nil {
 			fc = ctx.branches[v.Label.Name]
 		}
@@ -201,7 +204,7 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 		}
 		log.Panicln("break statement out of for/switch/select statements")
 	case token.CONTINUE:
-		fc := ctx.curBranch
+		fc := ctx.curContinue
 		if v.Label != nil {
 			fc = ctx.branches[v.Label.Name]
 		}
@@ -244,10 +247,10 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 		fc = &branchCtx{}
 	}
 	fc.doneLabel = done
-	old := ctx.curBranch
-	ctx.curBranch = fc
+	oldBreak := ctx.curBreak
+	ctx.curBreak = fc
 	defer func() {
-		ctx.curBranch = old
+		ctx.curBreak = oldBreak
 	}()
 
 	hasTag := v.Tag != nil
