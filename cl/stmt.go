@@ -220,6 +220,10 @@ func compileLabeledStmt(ctx *blockCtx, v *ast.LabeledStmt) {
 		f := &branchCtx{name: v.Label.Name}
 		ctx.branches[f.name] = f
 		ctx.branches[fmt.Sprint(vs.For)] = f
+	case *ast.SwitchStmt:
+		f := &branchCtx{name: v.Label.Name}
+		ctx.branches[f.name] = f
+		ctx.branches[fmt.Sprint(vs.Switch)] = f
 	}
 	compileStmt(ctx, v.Stmt)
 }
@@ -235,6 +239,17 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	}
 	out := ctx.out
 	done := ctx.NewLabel("")
+	fc := ctx.branches[fmt.Sprint(v.Switch)]
+	if fc == nil {
+		fc = &branchCtx{}
+	}
+	fc.doneLabel = done
+	old := ctx.curBranch
+	ctx.curBranch = fc
+	defer func() {
+		ctx.curBranch = old
+	}()
+
 	hasTag := v.Tag != nil
 	hasCaseClause := false
 	var withoutCheck exec.Label

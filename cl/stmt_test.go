@@ -1171,6 +1171,37 @@ var testFallthroughClauses = map[string]testData{
 					}
 					fallthrough
 					`, []string{"_panic"}},
+	"switch_break": {`
+					x:=0
+					y:=2
+					switch x {
+					case 0:
+						if y>0{
+							println(y)
+							break	
+						}
+						println(x)
+					default:
+						x=7
+						println(x)
+					}
+					`, []string{"2"}},
+	"switch_break_label": {`
+					x:=0
+					y:=2
+					L:
+					switch x {
+					case 0:
+						if y>0{
+							println(y)
+							break L
+						}
+						println(x)
+					default:
+						x=7
+						println(x)
+					}
+					`, []string{"2"}},
 }
 
 func TestFallthroughStmt(t *testing.T) {
