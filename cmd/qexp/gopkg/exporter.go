@@ -387,7 +387,7 @@ func withoutPkg(fullName string) string {
 	if pos < 0 {
 		return fullName
 	}
-	dot := strings.Index(fullName[:pos], ".")
+	dot := strings.LastIndex(fullName[:pos], ".")
 	if dot < 0 {
 		return fullName
 	}

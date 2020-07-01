@@ -78,6 +78,7 @@ func exportPkg(pkgPath string, libDir string) error {
 	}
 	data, err := format.Source(buf.Bytes())
 	if err != nil {
+		fmt.Println(buf.String())
 		return err
 	}
 	dir := filepath.Join(libDir, pkg.Path())
