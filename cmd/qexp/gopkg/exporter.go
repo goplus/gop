@@ -221,7 +221,7 @@ func (p *Exporter) typeString(typ types.Type) string {
 
 func (p *Exporter) fixPkgString(typ string) string {
 	return reTyp.ReplaceAllStringFunc(typ, func(s string) string {
-		pos := strings.Index(s, ".")
+		pos := strings.LastIndex(s, ".")
 		if pos > 0 {
 			pkg := s[:pos]
 			if r, ok := p.imports[pkg]; ok {
