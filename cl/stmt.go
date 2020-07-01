@@ -197,6 +197,7 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 		}
 		if fc != nil {
 			ctx.out.Jmp(fc.doneLabel)
+			return
 		}
 		log.Panicln("break statement out of for/switch/select statements")
 	case token.CONTINUE:
@@ -206,6 +207,7 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 		}
 		if fc != nil {
 			ctx.out.Jmp(fc.postLabel)
+			return
 		}
 		log.Panicln("continue statement out of for statements")
 	}
