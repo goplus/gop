@@ -214,17 +214,16 @@ type flowLabel struct {
 }
 
 func (fc *funcCtx) checkLabels() {
-	for name, _ := range fc.labels {
-		if !fc.checkLabel(name) {
+	for name, fl := range fc.labels {
+		if fl.ctx == nil {
+			log.Panicf("label %s not defined\n", name)
+		}
+		if !fc.checkLabel(fl) {
 			log.Panicf("goto %s jumps into illegal block\n", name)
 		}
 	}
 }
-func (fc *funcCtx) checkLabel(name string) bool {
-	fl := fc.labels[name]
-	if fl.ctx == nil {
-		return true
-	}
+func (fc *funcCtx) checkLabel(fl *flowLabel) bool {
 	jump := len(fl.jumps)
 	for _, g := range fl.jumps {
 		from, to := g, fl.ctx

@@ -1154,6 +1154,10 @@ var testGotoLabelClauses = map[string]testData{
 					goto;
 					println("over")
 					`, []string{"_panic"}},
+	"goto_not_define_label": {`
+					goto L
+					println("over")
+					`, []string{"_panic"}},
 	"goto_illegal_block": {`
 					goto L
 					{
