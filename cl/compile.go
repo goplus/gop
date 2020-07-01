@@ -218,7 +218,7 @@ func (fc *funcCtx) checkLabels() {
 		if fl.ctx == nil {
 			log.Panicf("label %s not defined\n", name)
 		}
-		if checkLabel(fl) {
+		if !checkLabel(fl) {
 			log.Panicf("goto %s jumps into illegal block\n", name)
 		}
 	}
