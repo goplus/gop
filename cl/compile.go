@@ -199,15 +199,15 @@ func (p *stackVar) getType() reflect.Type {
 // -----------------------------------------------------------------------------
 
 type funcCtx struct {
-	fun         exec.FuncInfo
-	labels      map[string]*flowLabel
-	branches    map[string]*branchCtx
-	curBreak    *branchCtx
-	curContinue *branchCtx
+	fun            exec.FuncInfo
+	labels         map[string]*flowLabel
+	branches       map[string]*branchLabel
+	breakBranch    *branchLabel
+	continueBranch *branchLabel
 }
 
 func newFuncCtx(fun exec.FuncInfo) *funcCtx {
-	return &funcCtx{labels: map[string]*flowLabel{}, fun: fun, branches: map[string]*branchCtx{}}
+	return &funcCtx{labels: map[string]*flowLabel{}, fun: fun, branches: map[string]*branchLabel{}}
 }
 
 type flowLabel struct {
@@ -215,10 +215,30 @@ type flowLabel struct {
 	exec.Label
 	jumps []*blockCtx
 }
-type branchCtx struct {
+type branchLabel struct {
 	name      string
 	postLabel exec.Label
 	doneLabel exec.Label
+}
+
+func (fc *funcCtx) insertBranch(name string, pos token.Pos) {
+	bc := &branchLabel{name: name}
+	fc.branches[name] = bc
+	fc.branches[fmt.Sprint(pos)] = bc
+}
+
+func (fc *funcCtx) requireBranchByPos(pos token.Pos, done, post exec.Label) *branchLabel {
+	bc := fc.branches[fmt.Sprint(pos)]
+	if bc == nil {
+		bc = &branchLabel{}
+	}
+	bc.postLabel = post
+	bc.doneLabel = done
+	return bc
+}
+
+func (fc *funcCtx) getBranchByName(name string) *branchLabel {
+	return fc.branches[name]
 }
 
 func (fc *funcCtx) checkLabels() {
