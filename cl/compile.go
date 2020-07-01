@@ -222,23 +222,17 @@ func (fc *funcCtx) checkLabels() {
 			log.Panicf("goto %s jumps into illegal block\n", name)
 		}
 	}
+	fc.labels = map[string]*flowLabel{}
 }
+
 func checkLabel(fl *flowLabel) bool {
-	jump := len(fl.jumps)
-	for _, g := range fl.jumps {
-		from, to := g, fl.ctx
-		for {
-			if from == nil {
-				break
-			}
-			if from == to {
-				jump--
-				break
-			}
-			from = from.parent
+	to := fl.ctx
+	for _, j := range fl.jumps {
+		if !j.canJmpTo(to) {
+			return false
 		}
 	}
-	return jump == 0
+	return true
 }
 
 type blockCtx struct {
@@ -316,6 +310,15 @@ func (p *blockCtx) defineLabel(name string) exec.Label {
 		p.labels[name] = fl
 	}
 	return fl.Label
+}
+
+func (p *blockCtx) canJmpTo(to *blockCtx) bool {
+	for from := p; from != nil; from = from.parent {
+		if from == to {
+			return true
+		}
+	}
+	return false
 }
 
 func (p *blockCtx) getNestDepth() (nestDepth uint32) {
@@ -506,6 +509,7 @@ func NewPackage(out exec.Builder, pkg *ast.Package, fset *token.FileSet, act Pkg
 		if entry.ctx.noExecCtx {
 			ctx.file = entry.ctx.file
 			compileBlockStmtWithout(ctx, entry.body)
+			ctx.checkLabels()
 		} else {
 			out.CallFunc(entry.Get(), 0)
 			ctxPkg.use(entry)
@@ -513,7 +517,6 @@ func NewPackage(out exec.Builder, pkg *ast.Package, fset *token.FileSet, act Pkg
 		out.Return(-1)
 	}
 	ctxPkg.resolveFuncs()
-	ctx.checkLabels()
 	p.syms = ctx.syms
 	return
 }

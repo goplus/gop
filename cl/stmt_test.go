@@ -26,6 +26,7 @@ import (
 	"github.com/qiniu/goplus/gop"
 	"github.com/qiniu/goplus/parser"
 	"github.com/qiniu/goplus/token"
+	"github.com/qiniu/x/log"
 
 	exec "github.com/qiniu/goplus/exec/bytecode"
 	libbuiltin "github.com/qiniu/goplus/lib/builtin"
@@ -1184,6 +1185,7 @@ func TestGotoLabelStmt(t *testing.T) {
 		if strings.HasPrefix(name, "_") { // skip
 			continue
 		}
+		log.Info("===> TestGotoLabelStmt", name)
 		func() {
 			defer func() {
 				if r := recover(); r != nil {
