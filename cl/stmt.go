@@ -217,7 +217,10 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 }
 
 func compileLabeledStmt(ctx *blockCtx, v *ast.LabeledStmt) {
-	ctx.out.Label(ctx.defineLabel(v.Label.Name))
+	label := ctx.defineLabel(v.Label.Name)
+	// make sure all labels in golang code  will be used
+	ctx.out.Jmp(label)
+	ctx.out.Label(label)
 	switch vs := v.Stmt.(type) {
 	case *ast.ForStmt:
 		f := &branchCtx{name: v.Label.Name}
