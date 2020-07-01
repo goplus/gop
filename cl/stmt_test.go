@@ -914,7 +914,7 @@ var testNormalForClauses = map[string]testData{
 					}
 					println(sum)
 					`, []string{"36"}},
-	"for_with_continue_break_break": {`
+	"for_with_continue_break_continue": {`
 					arr := [1,3,5,7]
 					sum := 0
 					L1:
@@ -923,16 +923,14 @@ var testNormalForClauses = map[string]testData{
 							break
 						}
 						for j:=i;j<len(arr);j++{
-							println("in",i,j)
 							if arr[j]<5{
 								continue L1
 							}
-							println("out",i,j)
 							sum+=arr[j]
 						}
 					}
 					println(sum)
-					`, []string{"5"}},
+					`, []string{"12"}},
 	"for_with_continue_panic": {`
 					arr := [1,3,5,7]
 					sum := 0
@@ -940,7 +938,7 @@ var testNormalForClauses = map[string]testData{
 					}
 					continue
 					println(sum)
-					`, []string{""}},
+					`, []string{"_panic"}},
 	"for_with_break_panic": {`
 					arr := [1,3,5,7]
 					sum := 0
@@ -948,7 +946,7 @@ var testNormalForClauses = map[string]testData{
 					}
 					break
 					println(sum)
-					`, []string{""}},
+					`, []string{"_panic"}},
 }
 
 func TestNormalForStmt(t *testing.T) {
