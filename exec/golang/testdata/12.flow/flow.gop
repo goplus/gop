@@ -80,6 +80,18 @@ default:
 	println(z)
 }
 
+// switch with break
+switch z {
+case 3:
+	if v == "Hello" {
+		println("break")
+		break
+	}
+	println("break fail")
+default:
+	println(z)
+}
+
 goto L
 println("before")
 L:
@@ -93,3 +105,26 @@ L2:
 		goto L2
 	}
 	println("over")
+
+	x = 0
+L3:
+	for i := 0; i < 5; i++ {
+		switch i {
+		case 1:
+			println(x)
+			x++
+			continue L3
+		case 2:
+			println(x)
+			x++
+			break
+		case 3:
+			println(x)
+			break L3
+		case 4:
+			println(x)
+		default:
+			x = 7
+			println(x)
+		}
+	}
