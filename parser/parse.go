@@ -104,7 +104,7 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, filter func(os.
 	}
 	pkgs = make(map[string]*ast.Package)
 	for _, d := range list {
-		if strings.HasSuffix(d.Name(), ".gop") && (filter == nil || filter(d)) {
+		if !strings.HasPrefix(d.Name(), "_") && strings.HasSuffix(d.Name(), ".gop") && (filter == nil || filter(d)) {
 			filename := fs.Join(path, d.Name())
 			if filedata, err := fs.ReadFile(filename); err == nil {
 				if src, err := ParseFSFile(fset, fs, filename, filedata, mode); err == nil {
