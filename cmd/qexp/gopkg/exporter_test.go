@@ -3,10 +3,13 @@ package gopkg
 import (
 	"bytes"
 	"fmt"
+	"go/format"
 	"go/importer"
 	"go/types"
 	"io/ioutil"
-	"os"
+	"log"
+	"os/exec"
+	"strings"
 	"testing"
 )
 
@@ -86,6 +89,7 @@ func TestFixPkgString(t *testing.T) {
 	e := NewExporter(b, pkg)
 	e.imports["io"] = "io1"
 	e.imports["go/types"] = "types1"
+	e.imports["golang.org/x/crypto/chacha20"] = "chacha20"
 	if v := e.fixPkgString("*go/types.Interface"); v != "*types1.Interface" {
 		t.Fatal(v)
 	}
@@ -95,9 +99,10 @@ func TestFixPkgString(t *testing.T) {
 	if v := e.fixPkgString("io.Writer"); v != "io1.Writer" {
 		t.Fatal(v)
 	}
+	if v := e.fixPkgString("*golang.org/x/crypto/chacha20.Cipher"); v != "*chacha20.Cipher" {
+		t.Fatal(v)
+	}
 }
-
-// -----------------------------------------------------------------------------
 
 func TestExportStrings(t *testing.T) {
 	err := Export("strings", ioutil.Discard)
@@ -121,7 +126,7 @@ func TestExportReflect(t *testing.T) {
 }
 
 func TestExportIo(t *testing.T) {
-	err := Export("io", os.Stdout)
+	err := Export("io", ioutil.Discard)
 	if err != nil {
 		t.Fatal("TestExport failed:", err)
 	}
@@ -134,7 +139,38 @@ func TestExportGoTypes(t *testing.T) {
 	}
 }
 
-func TestPackage(t *testing.T) {
+func TestExportMath(t *testing.T) {
+	err := Export("math", ioutil.Discard)
+	if err != nil {
+		t.Fatal("TestExport failed:", err)
+	}
+}
+
+func TestImport(t *testing.T) {
+	pkg, err := Import("go/types")
+	if err != nil {
+		t.Fatal("TestImport failed:", err)
+	}
+	if pkg.Path() != "go/types" {
+		t.Fatal(pkg.Path())
+	}
+}
+
+func TestBadImport(t *testing.T) {
+	_, err := Import("go/badtypes")
+	if err == nil {
+		t.Fatal("TestBadImport failed")
+	}
+}
+
+func TestBadExport(t *testing.T) {
+	err := Export("go/badtypes", ioutil.Discard)
+	if err == nil {
+		t.Fatal("TestBadExport failed")
+	}
+}
+
+func TestExportPackage(t *testing.T) {
 	pkg, err := Import("go/build")
 	if err != nil {
 		t.Fatal("TestPackage Import failed:", err)
@@ -142,6 +178,39 @@ func TestPackage(t *testing.T) {
 	err = ExportPackage(pkg, ioutil.Discard)
 	if err != nil {
 		t.Fatal("TestPackage ExportPackage failed:", err)
+	}
+}
+
+func TestExportStd(t *testing.T) {
+	out, err := exec.Command("go", "list", "-e", "std").Output()
+	if err != nil {
+		log.Fatal(err)
+	}
+	pkgs := strings.Fields(string(out))
+	for _, pkg := range pkgs {
+		if pkg == "unsafe" {
+			continue
+		}
+		if strings.Contains(pkg, "internal") {
+			continue
+		}
+		if strings.HasPrefix(pkg, "vendor/") {
+			continue
+		}
+		p, err := Import(pkg)
+		if err != nil {
+			t.Fatal("import error:", pkg, err)
+		}
+		var buf bytes.Buffer
+		err = ExportPackage(p, &buf)
+		if err != nil {
+			t.Fatal("export error:", pkg, err)
+		}
+		_, err = format.Source(buf.Bytes())
+		if err != nil {
+			t.Log(buf.String())
+			t.Fatal("format error:", pkg, err)
+		}
 	}
 }
 
