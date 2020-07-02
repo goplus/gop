@@ -9,7 +9,8 @@ script:
   - export GO111MODULE="on"
   - go install -v ./...
   - go test -race -coverprofile=coverage.txt -covermode=atomic ./...
-  - find ./ -name "gop_autogen.go"|grep "testdata" |xargs -n 1 go build
+  - qgo -test ./exec/golang/testdata
+  - find ./ -type f -name "*.gop"|xargs -n 1 qfmt -w
   - pre-commit run --all
 after_success:
   - bash <(curl -s https://codecov.io/bash)
