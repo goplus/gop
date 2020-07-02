@@ -2,10 +2,11 @@
 package os
 
 import (
-	qspec "github.com/qiniu/goplus/exec.spec"
-	gop "github.com/qiniu/goplus/gop"
 	os "os"
 	time "time"
+
+	qspec "github.com/qiniu/goplus/exec.spec"
+	gop "github.com/qiniu/goplus/gop"
 )
 
 func execChdir(_ int, p *gop.Context) {

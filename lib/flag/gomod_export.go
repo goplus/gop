@@ -3,10 +3,11 @@ package flag
 
 import (
 	flag "flag"
-	qspec "github.com/qiniu/goplus/exec.spec"
-	gop "github.com/qiniu/goplus/gop"
 	io "io"
 	time "time"
+
+	qspec "github.com/qiniu/goplus/exec.spec"
+	gop "github.com/qiniu/goplus/gop"
 )
 
 func execArg(_ int, p *gop.Context) {
