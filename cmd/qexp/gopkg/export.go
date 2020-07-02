@@ -44,7 +44,8 @@ func exportTypeName(e *Exporter, o *types.TypeName) (err error) {
 	return nil
 }
 
-func exportVar(o *types.Var) (err error) {
+func exportVar(e *Exporter, o *types.Var) (err error) {
+	e.ExportVar(o)
 	return nil
 }
 
@@ -72,7 +73,7 @@ func ExportPackage(pkg *types.Package, w io.Writer) (err error) {
 		}
 		switch o := obj.(type) {
 		case *types.Var:
-			err = exportVar(o)
+			err = exportVar(e, o)
 		case *types.Const:
 			err = exportConst(e, o)
 		case *types.TypeName:

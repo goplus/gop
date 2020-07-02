@@ -34,6 +34,11 @@ type exportedFunc struct {
 	exec string
 }
 
+type exportedVar struct {
+	name string
+	addr string
+}
+
 type exportedConst struct {
 	name string
 	kind string
@@ -52,6 +57,7 @@ type Exporter struct {
 	importPkgs   map[string]string // pkg => pkgPath
 	exportFns    []exportedFunc
 	exportFnvs   []exportedFunc
+	exportedVars []exportedVar
 	exportConsts []exportedConst
 }
 
@@ -321,11 +327,19 @@ $argInit	$retAssign$fn($args)
 	return nil
 }
 
+// ExportVar exports a go var.
+func (p *Exporter) ExportVar(typ *types.Var) {
+	name := typ.Name()
+	pkg := p.importPkg(typ.Pkg())
+	addr := pkg + "." + name
+	p.exportedVars = append(p.exportedVars, exportedVar{name, addr})
+}
+
 var (
 	qspecPkg = types.NewPackage("github.com/qiniu/goplus/exec.spec", "qspec")
 )
 
-// ExportConst exports a go consts.
+// ExportConst exports a go const.
 func (p *Exporter) ExportConst(typ *types.Const) error {
 	kind, err := constKind(typ)
 	if err != nil {
@@ -436,6 +450,19 @@ func registerFns(w io.Writer, pkgDot string, fns []exportedFunc, tag string) {
 	fmt.Fprintf(w, "	)\n")
 }
 
+func registerVars(w io.Writer, vars []exportedVar) {
+	if len(vars) == 0 {
+		return
+	}
+	fmt.Fprintf(w, `	I.RegisterVars(
+`)
+	for _, v := range vars {
+		fmt.Fprintf(w, `		I.Var("%s", &%s),
+`, v.name, v.addr)
+	}
+	fmt.Fprintf(w, "	)\n")
+}
+
 func registerConsts(w io.Writer, consts []exportedConst) {
 	if len(consts) == 0 {
 		return
@@ -490,6 +517,7 @@ func (p *Exporter) Close() error {
 	pkgDot := p.pkgDot
 	registerFns(p.w, pkgDot, p.exportFns, "Func")
 	registerFns(p.w, pkgDot, p.exportFnvs, "Funcv")
+	registerVars(p.w, p.exportedVars)
 	registerConsts(p.w, p.exportConsts)
 	fmt.Fprintf(p.w, gopkgInitExportFooter)
 	return nil
