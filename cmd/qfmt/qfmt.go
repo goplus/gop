@@ -151,8 +151,15 @@ func main() {
 	flag.Parse()
 
 	narg := flag.NArg()
-	if narg < 1 {
-		usage()
+	if narg == 0 {
+		if *write {
+			fmt.Fprintln(os.Stderr, "error: cannot use -w with standard input")
+			exitCode = 2
+			return
+		}
+		if err := processFile("<standard input>", os.Stdin, os.Stdout, true); err != nil {
+			report(err)
+		}
 		return
 	}
 	for i := 0; i < narg; i++ {
