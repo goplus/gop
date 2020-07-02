@@ -19,6 +19,7 @@ package parser
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -153,16 +154,13 @@ func ParseFSFile(fset *token.FileSet, fs FileSystem, filename string, src interf
 // TODO: should not add package info and init|main function.
 // If do this, parsing will display error line number when error occur
 func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (f *ast.File, err error) {
-	var b []byte
+	var b bytes.Buffer
 	var isMod, hasUnnamed bool
 	var fsetTmp = token.NewFileSet()
 	f, err = parseFile(fsetTmp, filename, code, PackageClauseOnly)
 	if err != nil {
-		n := len(code)
-		b = make([]byte, n+28)
-		copy(b, "package main;")
-		copy(b[13:], code)
-		code = b[:n+13]
+		fmt.Fprintf(&b, "package main;%s", code)
+		code = b.Bytes()
 	} else {
 		isMod = f.Name.Name != "main"
 	}
@@ -170,21 +168,14 @@ func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (
 	if err != nil {
 		if errlist, ok := err.(scanner.ErrorList); ok {
 			if e := errlist[0]; strings.HasPrefix(e.Msg, "expected declaration") {
-				n := len(code)
 				idx := e.Pos.Offset
-				if b == nil {
-					b = make([]byte, n+14)
-					copy(b, code[:idx])
+				entrypoint := map[bool]string{
+					true:  "func init(){",
+					false: "func main(){",
 				}
-				copy(b[idx+12:], code[idx:n])
-				if isMod {
-					copy(b[idx:], "func init(){")
-				} else {
-					copy(b[idx:], "func main(){")
-				}
-				b[n+12] = '\n'
-				b[n+13] = '}'
-				code = b[:n+14]
+				b.Reset()
+				fmt.Fprintf(&b, "%s%s%s\n}", code[:idx], entrypoint[isMod], code[idx:])
+				code = b.Bytes()
 				hasUnnamed = true
 				err = nil
 			}
