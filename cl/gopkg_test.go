@@ -460,6 +460,10 @@ import (
 	pkg "pkg_test_var_array"
 )
 
+	A0 := pkg.A1
+	A0[0], A0[1] = "003", "004"
+	println(A0)
+
 `
 
 	for _, info := range infos {
