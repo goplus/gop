@@ -78,7 +78,18 @@ func ParseGopFiles(fset *token.FileSet, target string, isDir bool, mode Mode) (p
 	return ParseDir(fset, target, nil, mode)
 }
 
+// astFileToPkg translate ast.File to ast.Package
+func astFileToPkg(file *ast.File, fileName string) (pkg *ast.Package) {
+	pkg = &ast.Package{
+		Name:  file.Name.Name,
+		Files: make(map[string]*ast.File),
+	}
+	pkg.Files[fileName] = file
+	return
+}
+
 // -----------------------------------------------------------------------------
+
 // ParseDir calls ParseFSDir by passing a local filesystem.
 //
 func ParseDir(fset *token.FileSet, path string, filter func(os.FileInfo) bool, mode Mode) (pkgs map[string]*ast.Package, first error) {
@@ -105,8 +116,12 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, filter func(os.
 	}
 	pkgs = make(map[string]*ast.Package)
 	for _, d := range list {
-		if !strings.HasPrefix(d.Name(), "_") && strings.HasSuffix(d.Name(), ".gop") && (filter == nil || filter(d)) {
-			filename := fs.Join(path, d.Name())
+		if d.IsDir() {
+			continue
+		}
+		fname := d.Name()
+		if strings.HasSuffix(fname, ".gop") && !strings.HasPrefix(fname, "_") && (filter == nil || filter(d)) {
+			filename := fs.Join(path, fname)
 			if filedata, err := fs.ReadFile(filename); err == nil {
 				if src, err := ParseFSFile(fset, fs, filename, filedata, mode); err == nil {
 					name := src.Name.Name
@@ -209,18 +224,6 @@ func readSource(src interface{}) ([]byte, error) {
 		return ioutil.ReadAll(s)
 	}
 	return nil, errInvalidSource
-}
-
-// -----------------------------------------------------------------------------
-
-// astFileToPkg translate ast.File to ast.Package
-func astFileToPkg(file *ast.File, fileName string) (pkg *ast.Package) {
-	pkg = &ast.Package{
-		Name:  file.Name.Name,
-		Files: make(map[string]*ast.File),
-	}
-	pkg.Files[fileName] = file
-	return
 }
 
 // -----------------------------------------------------------------------------
