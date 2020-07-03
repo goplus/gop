@@ -202,12 +202,18 @@ func (p *Exporter) sliceCast(varg string, tyElem types.Type) string {
 }
 
 func (p *Exporter) typeCast(varg string, typ types.Type) string {
-	typIntf, isInterface := typ.Underlying().(*types.Interface)
-	if isInterface {
-		if typIntf.Empty() {
+	switch vt := typ.Underlying().(type) {
+	case *types.Interface:
+		if vt.Empty() {
 			return varg
 		}
 		return p.toType(typ) + "(" + varg + ")"
+	case *types.Basic:
+		basic := vt.String()
+		typStr := p.typeString(typ)
+		if basic != typStr {
+			return typStr + "(" + varg + ".(" + basic + "))"
+		}
 	}
 	typStr := p.typeString(typ)
 	return varg + ".(" + typStr + ")"
