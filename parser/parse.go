@@ -222,26 +222,6 @@ func readSource(src interface{}) ([]byte, error) {
 
 // -----------------------------------------------------------------------------
 
-func (p *parser) parseSliceLit(lbrack token.Pos, len ast.Expr) ast.Expr {
-	elts := make([]ast.Expr, 1, 8)
-	elts[0] = len
-	for p.tok == token.COMMA {
-		p.next()
-		elt := p.parseRHS()
-		elts = append(elts, elt)
-	}
-	rbrack := p.expect(token.RBRACK)
-	return &ast.SliceLit{Lbrack: lbrack, Elts: elts, Rbrack: rbrack}
-}
-
-func newSliceLit(lbrack, rbrack token.Pos, len ast.Expr) ast.Expr {
-	var elts []ast.Expr
-	if len != nil {
-		elts = []ast.Expr{len}
-	}
-	return &ast.SliceLit{Lbrack: lbrack, Elts: elts, Rbrack: rbrack}
-}
-
 // astFileToPkg translate ast.File to ast.Package
 func astFileToPkg(file *ast.File, fileName string) (pkg *ast.Package) {
 	pkg = &ast.Package{
