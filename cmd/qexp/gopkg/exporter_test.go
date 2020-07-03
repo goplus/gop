@@ -24,8 +24,9 @@ const expected = `// Package strings provide Go+ "strings" package, as "strings"
 package strings
 
 import (
-	gop "github.com/qiniu/goplus/gop"
 	strings "strings"
+
+	gop "github.com/qiniu/goplus/gop"
 )
 
 func execNewReplacer(arity int, p *gop.Context) {

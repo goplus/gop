@@ -498,10 +498,16 @@ const gopkgExportFooter = `)
 // Close finishes go package export.
 func (p *Exporter) Close() error {
 	pkgs := make([]string, 0, len(p.importPkgs))
-	for pkg := range p.importPkgs {
-		pkgs = append(pkgs, pkg)
+	opkgs := make([]string, 0, len(p.importPkgs))
+	for pkg, pkgPath := range p.importPkgs {
+		if strings.ContainsAny(pkgPath, ".-_") {
+			opkgs = append(opkgs, pkg)
+		} else {
+			pkgs = append(pkgs, pkg)
+		}
 	}
 	sort.Strings(pkgs)
+	sort.Strings(opkgs)
 	pkg, pkgPath := p.pkg.Name(), p.pkg.Path()
 	fmt.Fprintf(p.w, gopkgExportHeader, pkg, pkgPath, pkgPath, pkg)
 	for _, pkg := range pkgs {
@@ -509,7 +515,14 @@ func (p *Exporter) Close() error {
 		fmt.Fprintf(p.w, `	%s "%s"
 `, pkg, pkgPath)
 	}
+	fmt.Fprintf(p.w, "\n")
+	for _, pkg := range opkgs {
+		pkgPath := p.importPkgs[pkg]
+		fmt.Fprintf(p.w, `	%s "%s"
+`, pkg, pkgPath)
+	}
 	fmt.Fprintf(p.w, gopkgExportFooter)
+
 	for _, exec := range p.execs {
 		io.WriteString(p.w, exec)
 	}
