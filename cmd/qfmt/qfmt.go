@@ -149,6 +149,14 @@ func usage() {
 }
 
 func main() {
+	// call qfmtMain in a separate function
+	// so that it can use defer and have them
+	// run before the exit.
+	qfmtMain()
+	os.Exit(exitCode)
+}
+
+func qfmtMain() {
 	flag.Usage = usage
 	flag.Parse()
 
@@ -177,5 +185,4 @@ func main() {
 			}
 		}
 	}
-	os.Exit(exitCode)
 }
