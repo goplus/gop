@@ -155,7 +155,7 @@ func ParseFSFile(fset *token.FileSet, fs FileSystem, filename string, src interf
 // If do this, parsing will display error line number when error occur
 func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (f *ast.File, err error) {
 	var b bytes.Buffer
-	var isMod, hasUnnamed bool
+	var isMod, noEntrypoint bool
 	var fsetTmp = token.NewFileSet()
 	f, err = parseFile(fsetTmp, filename, code, PackageClauseOnly)
 	if err != nil {
@@ -176,7 +176,7 @@ func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (
 				b.Reset()
 				fmt.Fprintf(&b, "%s %s{%s}", code[:idx], entrypoint[isMod], code[idx:])
 				code = b.Bytes()
-				hasUnnamed = true
+				noEntrypoint = true
 				err = nil
 			}
 		}
@@ -184,7 +184,7 @@ func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (
 	if err == nil {
 		f, err = parseFile(fset, filename, code, mode)
 		if err == nil {
-			f.HasUnnamed = hasUnnamed
+			f.NoEntrypoint = noEntrypoint
 		}
 	}
 	return

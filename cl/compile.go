@@ -560,7 +560,7 @@ func loadFile(ctx *blockCtx, f *ast.File) {
 	for i, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
-			loadFunc(ctx, d, f.HasUnnamed && i == last)
+			loadFunc(ctx, d, f.NoEntrypoint && i == last)
 		case *ast.GenDecl:
 			switch d.Tok {
 			case token.IMPORT:
