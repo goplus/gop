@@ -29,6 +29,27 @@ import (
 	"github.com/qiniu/x/log"
 )
 
+// A Mode value is a set of flags (or 0).
+// They control the amount of source code parsed and other optional
+// parser functionality.
+//
+type Mode uint
+
+const (
+	// PackageClauseOnly - stop parsing after package clause
+	PackageClauseOnly Mode = 1 << iota
+	// ImportsOnly - stop parsing after import declarations
+	ImportsOnly
+	// ParseComments - parse comments and add them to AST
+	ParseComments
+	// Trace - print a trace of parsed productions
+	Trace
+	// DeclarationErrors - report declaration errors
+	DeclarationErrors
+	// AllErrors - report all errors (not just the first 10 on different lines)
+	AllErrors
+)
+
 // The parser structure holds the parser's internal state.
 type parser struct {
 	file    *token.File

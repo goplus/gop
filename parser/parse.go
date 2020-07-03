@@ -227,3 +227,65 @@ func readSource(src interface{}) ([]byte, error) {
 }
 
 // -----------------------------------------------------------------------------
+
+// ParseFile parses the source code of a single Go source file and returns
+// the corresponding ast.File node. The source code may be provided via
+// the filename of the source file, or via the src parameter.
+//
+// If src != nil, ParseFile parses the source from src and the filename is
+// only used when recording position information. The type of the argument
+// for the src parameter must be string, []byte, or io.Reader.
+// If src == nil, ParseFile parses the file specified by filename.
+//
+// The mode parameter controls the amount of source text parsed and other
+// optional parser functionality. Position information is recorded in the
+// file set fset, which must not be nil.
+//
+// If the source couldn't be read, the returned AST is nil and the error
+// indicates the specific failure. If the source was read but syntax
+// errors were found, the result is a partial AST (with ast.Bad* nodes
+// representing the fragments of erroneous source code). Multiple errors
+// are returned via a scanner.ErrorList which is sorted by source position.
+//
+func parseFile(fset *token.FileSet, filename string, src interface{}, mode Mode) (f *ast.File, err error) {
+	if fset == nil {
+		panic("parser.ParseFile: no token.FileSet provided (fset == nil)")
+	}
+
+	// get source
+	text, err := readSource(src)
+	if err != nil {
+		return nil, err
+	}
+
+	var p parser
+	defer func() {
+		if e := recover(); e != nil {
+			// resume same panic if it's not a bailout
+			if _, ok := e.(bailout); !ok {
+				panic(e)
+			}
+		}
+
+		// set result values
+		if f == nil {
+			// source is not a valid Go source file - satisfy
+			// ParseFile API and return a valid (but) empty
+			// *ast.File
+			f = &ast.File{
+				Name:  new(ast.Ident),
+				Scope: ast.NewScope(nil),
+			}
+		}
+		f.Code = text
+
+		p.errors.Sort()
+		err = p.errors.Err()
+	}()
+
+	// parse source
+	p.init(fset, filename, text, mode)
+	f = p.parseFile()
+
+	return
+}
