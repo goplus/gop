@@ -1914,7 +1914,7 @@ func (p *printer) declList(list []ast.Decl) {
 }
 
 func (p *printer) file(src *ast.File) {
-	if src.HasUnnamed {
+	if src.NoEntrypoint {
 		if src.Name.Name == "main" {
 			p.unnamedFuncName = "main"
 		} else {
