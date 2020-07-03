@@ -87,6 +87,7 @@ func newParser(fset *token.FileSet, filename string, src []byte, mode Mode) *par
 	p.trace = mode&Trace != 0 // for convenience (p.trace is used frequently)
 
 	p.next()
+	return p
 }
 
 // ----------------------------------------------------------------------------
