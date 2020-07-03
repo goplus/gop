@@ -71,6 +71,11 @@ func NewExporter(w io.Writer, pkg *types.Package) *Exporter {
 	return p
 }
 
+func (p *Exporter) IsEmpty() bool {
+	return len(p.exportFns) == 0 && len(p.exportFnvs) == 0 &&
+		len(p.exportedVars) == 0 && len(p.exportConsts) == 0
+}
+
 func (p *Exporter) importPkg(pkgObj *types.Package) string {
 	pkgPath := pkgObj.Path()
 	if name, ok := p.imports[pkgPath]; ok {
@@ -270,6 +275,12 @@ func (p *Exporter) ExportFunc(fn *types.Func) error {
 	}
 	for i := 0; i < numIn; i++ {
 		typ := tfn.Params().At(i).Type()
+		if named, ok := typ.(*types.Named); ok {
+			if !named.Obj().Exported() && named.String() != "error" {
+				fmt.Println("ignore", fn)
+				return nil
+			}
+		}
 		p.useType(typ)
 		args[i] = p.typeCast("args["+strconv.Itoa(i+from)+"]", typ)
 	}

@@ -17,6 +17,7 @@
 package gopkg
 
 import (
+	"errors"
 	"go/importer"
 	"go/types"
 	"io"
@@ -61,6 +62,10 @@ func Import(pkgPath string) (*types.Package, error) {
 	return pkg, nil
 }
 
+var (
+	ErrorIgnore = errors.New("ignore empty exported pkg")
+)
+
 // ExportPackage export types.Package to io.Writer
 func ExportPackage(pkg *types.Package, w io.Writer) (err error) {
 	gbl := pkg.Scope()
@@ -86,6 +91,9 @@ func ExportPackage(pkg *types.Package, w io.Writer) (err error) {
 		if err != nil {
 			return
 		}
+	}
+	if e.IsEmpty() {
+		return ErrorIgnore
 	}
 	return e.Close()
 }
