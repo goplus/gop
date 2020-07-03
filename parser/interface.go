@@ -62,7 +62,19 @@ func parseFile(fset *token.FileSet, filename string, src interface{}, mode Mode)
 		return nil, err
 	}
 
-	var p parser
+	// set result values
+	if f == nil {
+		// source is not a valid Go source file - satisfy
+		// ParseFile API and return a valid (but) empty
+		// *ast.File
+		f = &ast.File{
+			Name:  new(ast.Ident),
+			Scope: ast.NewScope(nil),
+		}
+	}
+	f.Code = text
+
+	p := newParser(fset, filename, text, mode)
 	defer func() {
 		if e := recover(); e != nil {
 			// resume same panic if it's not a bailout
@@ -70,25 +82,9 @@ func parseFile(fset *token.FileSet, filename string, src interface{}, mode Mode)
 				panic(e)
 			}
 		}
-
-		// set result values
-		if f == nil {
-			// source is not a valid Go source file - satisfy
-			// ParseFile API and return a valid (but) empty
-			// *ast.File
-			f = &ast.File{
-				Name:  new(ast.Ident),
-				Scope: ast.NewScope(nil),
-			}
-		}
-		f.Code = text
-
 		p.errors.Sort()
 		err = p.errors.Err()
 	}()
-
-	// parse source
-	p.init(fset, filename, text, mode)
 	f = p.parseFile()
 
 	return
