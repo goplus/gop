@@ -17,7 +17,7 @@ func execChdir(_ int, p *gop.Context) {
 
 func execChmod(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
-	ret0 := os.Chmod(args[0].(string), args[1].(os.FileMode))
+	ret0 := os.Chmod(args[0].(string), os.FileMode(args[1].(uint32)))
 	p.Ret(2, ret0)
 }
 
@@ -128,7 +128,7 @@ func execmFileWriteString(_ int, p *gop.Context) {
 
 func execmFileChmod(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
-	ret0 := args[0].(*os.File).Chmod(args[1].(os.FileMode))
+	ret0 := args[0].(*os.File).Chmod(os.FileMode(args[1].(uint32)))
 	p.Ret(2, ret0)
 }
 
@@ -359,13 +359,13 @@ func execLstat(_ int, p *gop.Context) {
 
 func execMkdir(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
-	ret0 := os.Mkdir(args[0].(string), args[1].(os.FileMode))
+	ret0 := os.Mkdir(args[0].(string), os.FileMode(args[1].(uint32)))
 	p.Ret(2, ret0)
 }
 
 func execMkdirAll(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
-	ret0 := os.MkdirAll(args[0].(string), args[1].(os.FileMode))
+	ret0 := os.MkdirAll(args[0].(string), os.FileMode(args[1].(uint32)))
 	p.Ret(2, ret0)
 }
 
@@ -389,7 +389,7 @@ func execOpen(_ int, p *gop.Context) {
 
 func execOpenFile(_ int, p *gop.Context) {
 	args := p.GetArgs(3)
-	ret0, ret1 := os.OpenFile(args[0].(string), args[1].(int), args[2].(os.FileMode))
+	ret0, ret1 := os.OpenFile(args[0].(string), args[1].(int), os.FileMode(args[2].(uint32)))
 	p.Ret(3, ret0, ret1)
 }
 

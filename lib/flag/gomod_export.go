@@ -35,13 +35,13 @@ func execBoolVar(_ int, p *gop.Context) {
 
 func execDuration(_ int, p *gop.Context) {
 	args := p.GetArgs(3)
-	ret0 := flag.Duration(args[0].(string), args[1].(time.Duration), args[2].(string))
+	ret0 := flag.Duration(args[0].(string), time.Duration(args[1].(int64)), args[2].(string))
 	p.Ret(3, ret0)
 }
 
 func execDurationVar(_ int, p *gop.Context) {
 	args := p.GetArgs(4)
-	flag.DurationVar(args[0].(*time.Duration), args[1].(string), args[2].(time.Duration), args[3].(string))
+	flag.DurationVar(args[0].(*time.Duration), args[1].(string), time.Duration(args[2].(int64)), args[3].(string))
 	p.PopN(4)
 }
 
@@ -216,13 +216,13 @@ func execmFlagSetFloat64(_ int, p *gop.Context) {
 
 func execmFlagSetDurationVar(_ int, p *gop.Context) {
 	args := p.GetArgs(5)
-	args[0].(*flag.FlagSet).DurationVar(args[1].(*time.Duration), args[2].(string), args[3].(time.Duration), args[4].(string))
+	args[0].(*flag.FlagSet).DurationVar(args[1].(*time.Duration), args[2].(string), time.Duration(args[3].(int64)), args[4].(string))
 	p.PopN(5)
 }
 
 func execmFlagSetDuration(_ int, p *gop.Context) {
 	args := p.GetArgs(4)
-	ret0 := args[0].(*flag.FlagSet).Duration(args[1].(string), args[2].(time.Duration), args[3].(string))
+	ret0 := args[0].(*flag.FlagSet).Duration(args[1].(string), time.Duration(args[2].(int64)), args[3].(string))
 	p.Ret(4, ret0)
 }
 
@@ -253,7 +253,7 @@ func execmFlagSetParsed(_ int, p *gop.Context) {
 
 func execmFlagSetInit(_ int, p *gop.Context) {
 	args := p.GetArgs(3)
-	args[0].(*flag.FlagSet).Init(args[1].(string), args[2].(flag.ErrorHandling))
+	args[0].(*flag.FlagSet).Init(args[1].(string), flag.ErrorHandling(args[2].(int)))
 	p.PopN(3)
 }
 
@@ -311,7 +311,7 @@ func execNFlag(_ int, p *gop.Context) {
 
 func execNewFlagSet(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
-	ret0 := flag.NewFlagSet(args[0].(string), args[1].(flag.ErrorHandling))
+	ret0 := flag.NewFlagSet(args[0].(string), flag.ErrorHandling(args[1].(int)))
 	p.Ret(2, ret0)
 }
 
