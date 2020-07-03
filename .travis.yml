@@ -8,9 +8,13 @@ install:
 script:
   - export GO111MODULE="on"
   - go install -v ./...
-  - go test -race -coverprofile=coverage.txt -covermode=atomic ./...
+  # check: results of go+ and go
   - qgo -test ./exec/golang/testdata
+  # check: format gop file
   - find ./ -type f -name "*.gop"|xargs -n 1 qfmt -w
+  # check: imported go package
+  - diff -b  <(cat lib/default.go|grep github) <(find lib -type d|grep -v "lib$"|xargs -n 1 -I file bash -c 'echo -e \\t_ \"github.com/qiniu/goplus/file\"'|sort)
+  - go test -race -coverprofile=coverage.txt -covermode=atomic ./...
   - pre-commit run --all
 after_success:
   - bash <(curl -s https://codecov.io/bash)
