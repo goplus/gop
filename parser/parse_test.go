@@ -89,6 +89,7 @@ func TestParseNoPackageAndGlobalCode(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
 var fsTest3 = asttest.NewSingleFileFS("/foo", "bar.gop", `package bar; import "io"
 func New() (*Bar, error) {
 	return nil, io.EOF
