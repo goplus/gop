@@ -199,15 +199,13 @@ func (p *stackVar) getType() reflect.Type {
 // -----------------------------------------------------------------------------
 
 type funcCtx struct {
-	fun            exec.FuncInfo
-	labels         map[string]*flowLabel
-	branches       map[string]*branchLabel
-	breakBranch    *branchLabel
-	continueBranch *branchLabel
+	fun       exec.FuncInfo
+	labels    map[string]*flowLabel
+	branchCtx *flowCtx
 }
 
 func newFuncCtx(fun exec.FuncInfo) *funcCtx {
-	return &funcCtx{labels: map[string]*flowLabel{}, fun: fun, branches: map[string]*branchLabel{}}
+	return &funcCtx{labels: map[string]*flowLabel{}, fun: fun}
 }
 
 type flowLabel struct {
@@ -215,30 +213,43 @@ type flowLabel struct {
 	exec.Label
 	jumps []*blockCtx
 }
-type branchLabel struct {
+type flowCtx struct {
+	parent    *flowCtx
 	name      string
+	tok       token.Token
+	pos       token.Pos
 	postLabel exec.Label
 	doneLabel exec.Label
 }
 
-func (fc *funcCtx) insertBranch(name string, pos token.Pos) {
-	bc := &branchLabel{name: name}
-	fc.branches[name] = bc
-	fc.branches[fmt.Sprint(pos)] = bc
+func (fc *funcCtx) nextBranch(name string, pos token.Pos, tok token.Token) {
+	fc.branchCtx = &flowCtx{parent: fc.branchCtx, name: name, pos: pos, tok: tok}
 }
 
-func (fc *funcCtx) requireBranchByPos(pos token.Pos, done, post exec.Label) *branchLabel {
-	bc := fc.branches[fmt.Sprint(pos)]
-	if bc == nil {
-		bc = &branchLabel{}
+func (fc *funcCtx) breakCtx(label *ast.Ident) *flowCtx {
+	if fc.branchCtx == nil {
+		return nil
 	}
-	bc.postLabel = post
-	bc.doneLabel = done
-	return bc
+	return fc.branchCtx.getLabel(label, token.FOR, token.SWITCH)
 }
-
-func (fc *funcCtx) getBranchByName(name string) *branchLabel {
-	return fc.branches[name]
+func (fc *funcCtx) continueCtx(label *ast.Ident) *flowCtx {
+	if fc.branchCtx == nil {
+		return nil
+	}
+	return fc.branchCtx.getLabel(label, token.FOR, token.FOR)
+}
+func (fc *flowCtx) getLabel(label *ast.Ident, t1 token.Token, t2 token.Token) *flowCtx {
+	for i := fc; i != nil; i = i.parent {
+		if i.tok == t1 || i.tok == t2 {
+			if label == nil {
+				return i
+			}
+			if i.name == label.Name {
+				return i
+			}
+		}
+	}
+	return nil
 }
 
 func (fc *funcCtx) checkLabels() {
