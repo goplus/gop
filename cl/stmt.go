@@ -189,14 +189,14 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 		}
 		ctx.out.Jmp(ctx.requireLabel(v.Label.Name))
 	case token.BREAK:
-		bl := ctx.breakCtx(v.Label)
+		bl := ctx.breakFlow(v.Label)
 		if bl != nil {
 			ctx.out.Jmp(bl.doneLabel)
 			return
 		}
 		log.Panicln("break statement out of for/switch/select statements")
 	case token.CONTINUE:
-		bl := ctx.continueCtx(v.Label)
+		bl := ctx.continueFlow(v.Label)
 		if bl != nil {
 			ctx.out.Jmp(bl.postLabel)
 			return
