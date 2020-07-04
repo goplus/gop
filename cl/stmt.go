@@ -154,13 +154,13 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	post := ctx.NewLabel("")
 	done := ctx.NewLabel("")
 
-	if ctx.branchCtx == nil || ctx.branchCtx.pos != v.Pos() {
+	if ctx.currentFlow == nil || ctx.currentFlow.pos != v.Pos() {
 		ctx.nextBranch("", v.For, token.FOR)
 	}
-	ctx.branchCtx.postLabel = post
-	ctx.branchCtx.doneLabel = done
+	ctx.currentFlow.postLabel = post
+	ctx.currentFlow.doneLabel = done
 	defer func() {
-		ctx.branchCtx = ctx.branchCtx.parent
+		ctx.currentFlow = ctx.currentFlow.parent
 	}()
 
 	out.Label(start)
@@ -233,12 +233,12 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	out := ctx.out
 	done := ctx.NewLabel("")
 
-	if ctx.branchCtx == nil || ctx.branchCtx.pos != v.Pos() {
+	if ctx.currentFlow == nil || ctx.currentFlow.pos != v.Pos() {
 		ctx.nextBranch("", v.Switch, token.SWITCH)
 	}
-	ctx.branchCtx.doneLabel = done
+	ctx.currentFlow.doneLabel = done
 	defer func() {
-		ctx.branchCtx = ctx.branchCtx.parent
+		ctx.currentFlow = ctx.currentFlow.parent
 	}()
 
 	hasTag := v.Tag != nil
