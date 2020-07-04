@@ -154,12 +154,14 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	post := ctx.NewLabel("")
 	done := ctx.NewLabel("")
 
-	fc := ctx.requireBranchByPos(v.For, done, post)
-	oldBreak, oldContinue := ctx.breakBranch, ctx.continueBranch
+	if ctx.branchCtx == nil || ctx.branchCtx.pos != v.Pos() {
+		ctx.nextBranch("", v.For, token.FOR)
+	}
+	ctx.branchCtx.postLabel = post
+	ctx.branchCtx.doneLabel = done
 	defer func() {
-		ctx.breakBranch, ctx.continueBranch = oldBreak, oldContinue
+		ctx.branchCtx = ctx.branchCtx.parent
 	}()
-	ctx.breakBranch, ctx.continueBranch = fc, fc
 
 	out.Label(start)
 	compileExpr(ctx, v.Cond)()
@@ -187,22 +189,16 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 		}
 		ctx.out.Jmp(ctx.requireLabel(v.Label.Name))
 	case token.BREAK:
-		bc := ctx.breakBranch
-		if v.Label != nil {
-			bc = ctx.getBranchByName(v.Label.Name)
-		}
-		if bc != nil {
-			ctx.out.Jmp(bc.doneLabel)
+		bl := ctx.breakCtx(v.Label)
+		if bl != nil {
+			ctx.out.Jmp(bl.doneLabel)
 			return
 		}
 		log.Panicln("break statement out of for/switch/select statements")
 	case token.CONTINUE:
-		bc := ctx.continueBranch
-		if v.Label != nil {
-			bc = ctx.getBranchByName(v.Label.Name)
-		}
-		if bc != nil {
-			ctx.out.Jmp(bc.postLabel)
+		bl := ctx.continueCtx(v.Label)
+		if bl != nil {
+			ctx.out.Jmp(bl.postLabel)
 			return
 		}
 		log.Panicln("continue statement out of for statements")
@@ -214,7 +210,14 @@ func compileLabeledStmt(ctx *blockCtx, v *ast.LabeledStmt) {
 	// make sure all labels in golang code  will be used
 	ctx.out.Jmp(label)
 	ctx.out.Label(label)
-	ctx.insertBranch(v.Label.Name, v.Stmt.Pos())
+	if v.Stmt != nil {
+		switch v.Stmt.(type) {
+		case *ast.ForStmt:
+			ctx.nextBranch(v.Label.Name, v.Stmt.Pos(), token.FOR)
+		case *ast.SwitchStmt:
+			ctx.nextBranch(v.Label.Name, v.Stmt.Pos(), token.SWITCH)
+		}
+	}
 	compileStmt(ctx, v.Stmt)
 }
 
@@ -230,12 +233,13 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	out := ctx.out
 	done := ctx.NewLabel("")
 
-	bc := ctx.requireBranchByPos(v.Switch, done, nil)
-	oldBreak := ctx.breakBranch
+	if ctx.branchCtx == nil || ctx.branchCtx.pos != v.Pos() {
+		ctx.nextBranch("", v.Switch, token.SWITCH)
+	}
+	ctx.branchCtx.doneLabel = done
 	defer func() {
-		ctx.breakBranch = oldBreak
+		ctx.branchCtx = ctx.branchCtx.parent
 	}()
-	ctx.breakBranch = bc
 
 	hasTag := v.Tag != nil
 	hasCaseClause := false
