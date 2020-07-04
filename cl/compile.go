@@ -226,21 +226,21 @@ func (fc *funcCtx) nextFlow(name string, pos token.Pos, tok token.Token) {
 	fc.currentFlow = &flowCtx{parent: fc.currentFlow, name: name, pos: pos, tok: tok}
 }
 
-func (fc *funcCtx) breakCtx(label *ast.Ident) *flowCtx {
+func (fc *funcCtx) breakFlow(label *ast.Ident) *flowCtx {
 	if fc.currentFlow == nil {
 		return nil
 	}
 	return fc.currentFlow.getLabel(label, token.FOR, token.SWITCH)
 }
-func (fc *funcCtx) continueCtx(label *ast.Ident) *flowCtx {
+func (fc *funcCtx) continueFlow(label *ast.Ident) *flowCtx {
 	if fc.currentFlow == nil {
 		return nil
 	}
 	return fc.currentFlow.getLabel(label, token.FOR, token.FOR)
 }
-func (fc *flowCtx) getLabel(label *ast.Ident, t1 token.Token, t2 token.Token) *flowCtx {
+func (fc *flowCtx) getLabel(label *ast.Ident, tokes ...token.Token) *flowCtx {
 	for i := fc; i != nil; i = i.parent {
-		if i.tok == t1 || i.tok == t2 {
+		if tokenMatch(i.tok, tokes...) {
 			if label == nil {
 				return i
 			}
@@ -250,6 +250,14 @@ func (fc *flowCtx) getLabel(label *ast.Ident, t1 token.Token, t2 token.Token) *f
 		}
 	}
 	return nil
+}
+func tokenMatch(src token.Token, dst ...token.Token) bool {
+	for _, t := range dst {
+		if src == t {
+			return true
+		}
+	}
+	return false
 }
 
 func (fc *funcCtx) checkLabels() {
