@@ -222,23 +222,23 @@ type flowCtx struct {
 	doneLabel exec.Label
 }
 
-func (fc *funcCtx) nextFlow(name string, pos token.Pos, tok token.Token) {
-	fc.currentFlow = &flowCtx{parent: fc.currentFlow, name: name, pos: pos, tok: tok}
+func (fc *funcCtx) nextFlow(pos token.Pos, tok token.Token, names ...string) {
+	fc.currentFlow = &flowCtx{parent: fc.currentFlow, name: append(names, "")[0], pos: pos, tok: tok}
 }
 
 func (fc *funcCtx) breakFlow(label *ast.Ident) *flowCtx {
 	if fc.currentFlow == nil {
 		return nil
 	}
-	return fc.currentFlow.getLabel(label, token.FOR, token.SWITCH)
+	return fc.currentFlow.getFlow(label, token.FOR, token.SWITCH)
 }
 func (fc *funcCtx) continueFlow(label *ast.Ident) *flowCtx {
 	if fc.currentFlow == nil {
 		return nil
 	}
-	return fc.currentFlow.getLabel(label, token.FOR, token.FOR)
+	return fc.currentFlow.getFlow(label, token.FOR, token.FOR)
 }
-func (fc *flowCtx) getLabel(label *ast.Ident, tokes ...token.Token) *flowCtx {
+func (fc *flowCtx) getFlow(label *ast.Ident, tokes ...token.Token) *flowCtx {
 	for i := fc; i != nil; i = i.parent {
 		if tokenMatch(i.tok, tokes...) {
 			if label == nil {
@@ -251,9 +251,9 @@ func (fc *flowCtx) getLabel(label *ast.Ident, tokes ...token.Token) *flowCtx {
 	}
 	return nil
 }
-func tokenMatch(src token.Token, dst ...token.Token) bool {
-	for _, t := range dst {
-		if src == t {
+func tokenMatch(tok token.Token, tokes ...token.Token) bool {
+	for _, t := range tokes {
+		if tok == t {
 			return true
 		}
 	}

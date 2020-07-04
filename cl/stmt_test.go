@@ -1003,6 +1003,14 @@ var testNormalForClauses = map[string]testData{
 					continue
 					println(sum)
 					`, []string{"_panic"}},
+	"for_with_continue_label_panic": {`
+					arr := [1,3,5,7]
+					sum := 0
+					for i:=0; i < len(arr);i++ {
+						continue L
+					}
+					println(sum)
+					`, []string{"_panic"}},
 	"for_with_break_panic": {`
 					arr := [1,3,5,7]
 					sum := 0

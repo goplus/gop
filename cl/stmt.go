@@ -155,7 +155,7 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	done := ctx.NewLabel("")
 
 	if ctx.currentFlow == nil || ctx.currentFlow.pos != v.Pos() {
-		ctx.nextFlow("", v.For, token.FOR)
+		ctx.nextFlow(v.For, token.FOR)
 	}
 	ctx.currentFlow.postLabel = post
 	ctx.currentFlow.doneLabel = done
@@ -213,9 +213,9 @@ func compileLabeledStmt(ctx *blockCtx, v *ast.LabeledStmt) {
 	if v.Stmt != nil {
 		switch v.Stmt.(type) {
 		case *ast.ForStmt:
-			ctx.nextFlow(v.Label.Name, v.Stmt.Pos(), token.FOR)
+			ctx.nextFlow(v.Stmt.Pos(), token.FOR, v.Label.Name)
 		case *ast.SwitchStmt:
-			ctx.nextFlow(v.Label.Name, v.Stmt.Pos(), token.SWITCH)
+			ctx.nextFlow(v.Stmt.Pos(), token.SWITCH, v.Label.Name)
 		}
 	}
 	compileStmt(ctx, v.Stmt)
@@ -234,7 +234,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	done := ctx.NewLabel("")
 
 	if ctx.currentFlow == nil || ctx.currentFlow.pos != v.Pos() {
-		ctx.nextFlow("", v.Switch, token.SWITCH)
+		ctx.nextFlow(v.Switch, token.SWITCH)
 	}
 	ctx.currentFlow.doneLabel = done
 	defer func() {
