@@ -59,9 +59,9 @@ func main() {
 	for _, pkgPath := range flag.Args() {
 		err := exportPkg(pkgPath, libDir)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "export pkg failed:", err)
+			fmt.Fprintf(os.Stderr, "export pkg %q failed, %v\n", pkgPath, err)
 		} else {
-			fmt.Fprintln(os.Stdout, "export pkg success:", pkgPath)
+			fmt.Fprintf(os.Stdout, "export pkg %q success\n", pkgPath)
 		}
 	}
 }

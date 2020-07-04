@@ -204,7 +204,7 @@ func TestExportStd(t *testing.T) {
 		}
 		var buf bytes.Buffer
 		err = ExportPackage(p, &buf)
-		if err != nil {
+		if err != nil && err != ErrorIgnore {
 			t.Fatal("export error:", pkg, err)
 		}
 		_, err = format.Source(buf.Bytes())
