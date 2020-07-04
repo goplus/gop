@@ -199,9 +199,9 @@ func (p *stackVar) getType() reflect.Type {
 // -----------------------------------------------------------------------------
 
 type funcCtx struct {
-	fun       exec.FuncInfo
-	labels    map[string]*flowLabel
-	branchCtx *flowCtx
+	fun         exec.FuncInfo
+	labels      map[string]*flowLabel
+	currentFlow *flowCtx
 }
 
 func newFuncCtx(fun exec.FuncInfo) *funcCtx {
@@ -223,20 +223,20 @@ type flowCtx struct {
 }
 
 func (fc *funcCtx) nextBranch(name string, pos token.Pos, tok token.Token) {
-	fc.branchCtx = &flowCtx{parent: fc.branchCtx, name: name, pos: pos, tok: tok}
+	fc.currentFlow = &flowCtx{parent: fc.currentFlow, name: name, pos: pos, tok: tok}
 }
 
 func (fc *funcCtx) breakCtx(label *ast.Ident) *flowCtx {
-	if fc.branchCtx == nil {
+	if fc.currentFlow == nil {
 		return nil
 	}
-	return fc.branchCtx.getLabel(label, token.FOR, token.SWITCH)
+	return fc.currentFlow.getLabel(label, token.FOR, token.SWITCH)
 }
 func (fc *funcCtx) continueCtx(label *ast.Ident) *flowCtx {
-	if fc.branchCtx == nil {
+	if fc.currentFlow == nil {
 		return nil
 	}
-	return fc.branchCtx.getLabel(label, token.FOR, token.FOR)
+	return fc.currentFlow.getLabel(label, token.FOR, token.FOR)
 }
 func (fc *flowCtx) getLabel(label *ast.Ident, t1 token.Token, t2 token.Token) *flowCtx {
 	for i := fc; i != nil; i = i.parent {
