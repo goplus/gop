@@ -222,7 +222,7 @@ type flowCtx struct {
 	doneLabel exec.Label
 }
 
-func (fc *funcCtx) nextBranch(name string, pos token.Pos, tok token.Token) {
+func (fc *funcCtx) nextFlow(name string, pos token.Pos, tok token.Token) {
 	fc.currentFlow = &flowCtx{parent: fc.currentFlow, name: name, pos: pos, tok: tok}
 }
 
