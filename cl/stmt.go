@@ -155,10 +155,11 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	done := ctx.NewLabel("")
 
 	if ctx.currentFlow == nil || ctx.currentFlow.pos != v.Pos() {
-		ctx.nextFlow(v.For, token.FOR)
+		ctx.nextFlow(v.For, post, done)
+	} else {
+		post = ctx.getContinueLabel("")
+		done = ctx.getBreakLabel("")
 	}
-	ctx.currentFlow.postLabel = post
-	ctx.currentFlow.doneLabel = done
 	defer func() {
 		ctx.currentFlow = ctx.currentFlow.parent
 	}()
@@ -189,16 +190,24 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 		}
 		ctx.out.Jmp(ctx.requireLabel(v.Label.Name))
 	case token.BREAK:
-		bl := ctx.breakFlow(v.Label)
-		if bl != nil {
-			ctx.out.Jmp(bl.doneLabel)
+		var labelName string
+		if v.Label != nil {
+			labelName = v.Label.Name
+		}
+		label := ctx.getBreakLabel(labelName)
+		if label != nil {
+			ctx.out.Jmp(label)
 			return
 		}
 		log.Panicln("break statement out of for/switch/select statements")
 	case token.CONTINUE:
-		bl := ctx.continueFlow(v.Label)
-		if bl != nil {
-			ctx.out.Jmp(bl.postLabel)
+		var labelName string
+		if v.Label != nil {
+			labelName = v.Label.Name
+		}
+		label := ctx.getContinueLabel(labelName)
+		if label != nil {
+			ctx.out.Jmp(label)
 			return
 		}
 		log.Panicln("continue statement out of for statements")
@@ -213,9 +222,9 @@ func compileLabeledStmt(ctx *blockCtx, v *ast.LabeledStmt) {
 	if v.Stmt != nil {
 		switch v.Stmt.(type) {
 		case *ast.ForStmt:
-			ctx.nextFlow(v.Stmt.Pos(), token.FOR, v.Label.Name)
+			ctx.nextFlow(v.Stmt.Pos(), ctx.NewLabel(""), ctx.NewLabel(""), v.Label.Name)
 		case *ast.SwitchStmt:
-			ctx.nextFlow(v.Stmt.Pos(), token.SWITCH, v.Label.Name)
+			ctx.nextFlow(v.Stmt.Pos(), nil, ctx.NewLabel(""), v.Label.Name)
 		}
 	}
 	compileStmt(ctx, v.Stmt)
@@ -234,7 +243,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	done := ctx.NewLabel("")
 
 	if ctx.currentFlow == nil || ctx.currentFlow.pos != v.Pos() {
-		ctx.nextFlow(v.Switch, token.SWITCH)
+		ctx.nextFlow(v.Switch, nil, done)
 	}
 	ctx.currentFlow.doneLabel = done
 	defer func() {
