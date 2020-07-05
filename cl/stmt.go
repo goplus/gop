@@ -153,17 +153,14 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	start := ctx.NewLabel("")
 	post := ctx.NewLabel("")
 	done := ctx.NewLabel("")
-	// for without labelName || for with labelName,but not this stmt
-	if ctx.currentLabel == nil || ctx.currentLabel.Stmt != v {
-		ctx.nextFlow(post, done)
-	} else {
-		ctx.nextFlow(post, done, ctx.currentLabel.Label.Name)
+	labelName := ""
+	if ctx.currentLabel != nil && ctx.currentLabel.Stmt == v {
+		labelName = ctx.currentLabel.Label.Name
 	}
-
+	ctx.nextFlow(post, done, labelName)
 	defer func() {
 		ctx.currentFlow = ctx.currentFlow.parent
 	}()
-
 	out.Label(start)
 	compileExpr(ctx, v.Cond)()
 	checkBool(ctx.infer.Pop())
@@ -217,7 +214,7 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 func compileLabeledStmt(ctx *blockCtx, v *ast.LabeledStmt) {
 	label := ctx.defineLabel(v.Label.Name)
 	// make sure all labels in golang code  will be used
-	ctx.out.Jmp(label)
+	// ctx.out.Jmp(label)
 	ctx.out.Label(label)
 	ctx.currentLabel = v
 	compileStmt(ctx, v.Stmt)
@@ -234,18 +231,14 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	}
 	out := ctx.out
 	done := ctx.NewLabel("")
-
-	// switch without labelName || switch with labelName,but not this stmt
-	if ctx.currentLabel == nil || ctx.currentLabel.Stmt != v {
-		ctx.nextFlow(nil, done)
-	} else {
-		ctx.nextFlow(nil, done, ctx.currentLabel.Label.Name)
+	labelName := ""
+	if ctx.currentLabel != nil && ctx.currentLabel.Stmt == v {
+		labelName = ctx.currentLabel.Label.Name
 	}
-
+	ctx.nextFlow(nil, done, labelName)
 	defer func() {
 		ctx.currentFlow = ctx.currentFlow.parent
 	}()
-
 	hasTag := v.Tag != nil
 	hasCaseClause := false
 	var withoutCheck exec.Label

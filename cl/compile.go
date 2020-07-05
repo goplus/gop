@@ -221,10 +221,10 @@ type flowCtx struct {
 	doneLabel exec.Label
 }
 
-func (fc *funcCtx) nextFlow(post, done exec.Label, names ...string) {
+func (fc *funcCtx) nextFlow(post, done exec.Label, name string) {
 	fc.currentFlow = &flowCtx{
 		parent:    fc.currentFlow,
-		name:      append(names, "")[0],
+		name:      name,
 		postLabel: post,
 		doneLabel: done,
 	}
