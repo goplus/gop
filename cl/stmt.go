@@ -153,16 +153,15 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	start := ctx.NewLabel("")
 	post := ctx.NewLabel("")
 	done := ctx.NewLabel("")
-
-	if ctx.currentFlow == nil || ctx.currentLabel == nil || ctx.currentLabel.Stmt != v {
+	// for without labelName || for with labelName,but not this stmt
+	if ctx.currentLabel == nil || ctx.currentLabel.Stmt != v {
 		ctx.nextFlow(post, done)
 	} else {
-		post = ctx.getContinueLabel(ctx.currentLabel.Label.Name)
-		done = ctx.getBreakLabel(ctx.currentLabel.Label.Name)
+		ctx.nextFlow(post, done, ctx.currentLabel.Label.Name)
 	}
+
 	defer func() {
 		ctx.currentFlow = ctx.currentFlow.parent
-		ctx.currentLabel = nil
 	}()
 
 	out.Label(start)
@@ -220,16 +219,7 @@ func compileLabeledStmt(ctx *blockCtx, v *ast.LabeledStmt) {
 	// make sure all labels in golang code  will be used
 	ctx.out.Jmp(label)
 	ctx.out.Label(label)
-	if v.Stmt != nil {
-		switch v.Stmt.(type) {
-		case *ast.ForStmt:
-			ctx.currentLabel = v
-			ctx.nextFlow(ctx.NewLabel(""), ctx.NewLabel(""), v.Label.Name)
-		case *ast.SwitchStmt:
-			ctx.currentLabel = v
-			ctx.nextFlow(nil, ctx.NewLabel(""), v.Label.Name)
-		}
-	}
+	ctx.currentLabel = v
 	compileStmt(ctx, v.Stmt)
 }
 
@@ -245,16 +235,15 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	out := ctx.out
 	done := ctx.NewLabel("")
 
-	if ctx.currentFlow == nil || ctx.currentLabel == nil || ctx.currentLabel.Stmt != v {
+	// switch without labelName || switch with labelName,but not this stmt
+	if ctx.currentLabel == nil || ctx.currentLabel.Stmt != v {
 		ctx.nextFlow(nil, done)
 	} else {
-		done = ctx.getBreakLabel(ctx.currentLabel.Label.Name)
+		ctx.nextFlow(nil, done, ctx.currentLabel.Label.Name)
 	}
 
-	ctx.currentFlow.doneLabel = done
 	defer func() {
 		ctx.currentFlow = ctx.currentFlow.parent
-		ctx.currentLabel = nil
 	}()
 
 	hasTag := v.Tag != nil
