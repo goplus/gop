@@ -237,7 +237,7 @@ func execIndex(i Instr, p *Context) {
 			v.Set(reflect.ValueOf(p.data[n-2]))
 		}
 		p.PopN(2)
-	} else { // sliceData $idx $setIndex
+	} else {
 		p.data[n-1] = v.Interface()
 	}
 }

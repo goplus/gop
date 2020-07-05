@@ -78,9 +78,6 @@ func execStoreGoField(i Instr, p *Context) {
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
-
-	log.Printf("--> %v %v\n", v, index)
-
 	v.FieldByIndex(index.([]int)).Set(reflect.ValueOf(p.Pop()))
 }
 

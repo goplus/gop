@@ -815,7 +815,11 @@ func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr) func() { // x[i]
 		switch kind {
 		case reflect.String, reflect.Slice, reflect.Array:
 			n := compileIdx(ctx, v.Index, 1<<30, kind)
-			ctx.out.Index(n)
+			if ctx.inLHS {
+				ctx.out.AddrIndex(n)
+			} else {
+				ctx.out.Index(n)
+			}
 		case reflect.Map:
 			typIdx := typ.Key()
 			compileExpr(ctx, v.Index)()
