@@ -1201,3 +1201,76 @@ func TestRational5(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
+var testDeleteClauses = map[string]testData{
+	"delete_int_key": {`
+					m:={1:1,2:2}
+					delete(m,1)
+					println(m)
+					delete(m,3)
+					println(m)
+					delete(m,2)
+					println(m)
+					`, []string{"map[2:2]", "map[2:2]", "map[]"}},
+	"delete_string_key": {`
+					m:={"hello":1,"Go+":2}
+					delete(m,"hello")
+					println(m)
+					delete(m,"hi")
+					println(m)
+					delete(m,"Go+")
+					println(m)
+					`, []string{"map[Go+:2]", "map[Go+:2]", "map[]"}},
+	"delete_var_string_key": {`
+					m:={"hello":1,"Go+":2}
+					delete(m,"hello")
+					println(m)
+					a:="hi"
+					delete(m,a)
+					println(m)
+					arr:=["Go+"]
+					delete(m,arr[0])
+					println(m)
+					`, []string{"map[Go+:2]", "map[Go+:2]", "map[]"}},
+	"delete_var_map_string_key": {`
+					ma:=[{"hello":1,"Go+":2}]
+					delete(ma[0],"hello")
+					println(ma[0])
+					a:="hi"
+					delete(ma[0],a)
+					println(ma[0])
+					arr:=["Go+"]
+					delete(ma[0],arr[0])
+					println(ma[0])
+					`, []string{"map[Go+:2]", "map[Go+:2]", "map[]"}},
+	"delete_no_key_panic": {`
+					m:={"hello":1,"Go+":2}
+					delete(m)
+					`, []string{"_panic"}},
+	"delete_multi_key_panic": {`
+					m:={"hello":1,"Go+":2}
+					delete(m,"hi","hi")
+					`, []string{"_panic"}},
+	"delete_not_map_panic": {`
+					m:=[1,2,3]
+					delete(m,1)
+					`, []string{"_panic"}},
+}
+
+func TestDelete(t *testing.T) {
+	for name, clause := range testDeleteClauses {
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					if len(clause.wants) > 0 && clause.wants[0] == "_panic" {
+						return
+					}
+					t.Fatal(name, "-", r)
+				}
+			}()
+			testForRangeStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
+		}()
+	}
+}
+
+// -----------------------------------------------------------------------------

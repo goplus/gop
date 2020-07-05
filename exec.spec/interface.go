@@ -304,6 +304,9 @@ type Builder interface {
 	// SetMapIndex instr
 	SetMapIndex() Builder
 
+	// Delete instr
+	Delete() Builder
+
 	// Index instr
 	Index(idx int) Builder
 
