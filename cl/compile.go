@@ -199,9 +199,10 @@ func (p *stackVar) getType() reflect.Type {
 // -----------------------------------------------------------------------------
 
 type funcCtx struct {
-	fun         exec.FuncInfo
-	labels      map[string]*flowLabel
-	currentFlow *flowCtx
+	fun          exec.FuncInfo
+	labels       map[string]*flowLabel
+	currentFlow  *flowCtx
+	currentLabel *ast.LabeledStmt
 }
 
 func newFuncCtx(fun exec.FuncInfo) *funcCtx {
@@ -216,16 +217,14 @@ type flowLabel struct {
 type flowCtx struct {
 	parent    *flowCtx
 	name      string
-	pos       token.Pos
 	postLabel exec.Label
 	doneLabel exec.Label
 }
 
-func (fc *funcCtx) nextFlow(pos token.Pos, post, done exec.Label, names ...string) {
+func (fc *funcCtx) nextFlow(post, done exec.Label, names ...string) {
 	fc.currentFlow = &flowCtx{
 		parent:    fc.currentFlow,
 		name:      append(names, "")[0],
-		pos:       pos,
 		postLabel: post,
 		doneLabel: done,
 	}

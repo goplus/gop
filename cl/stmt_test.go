@@ -1037,6 +1037,42 @@ var testNormalForClauses = map[string]testData{
 					}
 					println(sum)
 					`, []string{"_panic"}},
+	"for_with_many_labels": {`
+					arr := [1,3,5,7]
+					sum := 0
+					L:
+					for i:=0; i < len(arr);i++ {
+						if arr[i]<7{
+								continue L
+						}
+						L1:
+						for j:=0;j<len(arr);j++{
+							if arr[j]>1{
+								break L1
+							}	
+							sum+=arr[i]+arr[j]
+						}
+					}
+					println(sum)
+					`, []string{"8"}},
+	"for_with_many_labels_break": {`
+					arr := [1,3,5,7]
+					sum := 0
+					L:
+					for i:=0; i < len(arr);i++ {
+						if arr[i]<7{
+								continue L
+						}
+						L1:
+						for j:=0;j<len(arr);j++{
+							if arr[j]>3{
+								break L
+							}	
+							sum+=arr[i]+arr[j]
+						}
+					}
+					println(sum)
+					`, []string{"18"}},
 }
 
 func TestNormalForStmt(t *testing.T) {
