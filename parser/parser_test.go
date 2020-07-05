@@ -242,4 +242,13 @@ func TestFromTestdata(t *testing.T) {
 	}
 }
 
+func TestFromTestdata2(t *testing.T) {
+	dir, err := os.Getwd()
+	if err != nil {
+		t.Fatal("Getwd failed:", err)
+	}
+	dir = path.Join(dir, "./testdata")
+	testFrom(t, dir, "")
+}
+
 // -----------------------------------------------------------------------------
