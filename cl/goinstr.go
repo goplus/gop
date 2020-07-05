@@ -104,7 +104,29 @@ func igoCopy(ctx *blockCtx, v *ast.CallExpr) func() {
 
 // func delete(m map[Type]Type1, key Type)
 func igoDelete(ctx *blockCtx, v *ast.CallExpr) func() {
-	panic("todo")
+	if len(v.Args) < 2 {
+		log.Panicln("missing second (key) argument to delete")
+	}
+	if len(v.Args) > 2 {
+		log.Panicln("too many arguments to delete")
+	}
+	mapExpr := compileExpr(ctx, v.Args[0])
+	mapType := ctx.infer.Get(-1).(iValue).Type()
+	if mapType.Kind() != reflect.Map {
+		log.Panicln(" first argument to delete must be map; have", mapType.Kind())
+	}
+	return func() {
+		mapExpr()
+		n1 := len(v.Args) - 1
+		for i := 1; i <= n1; i++ {
+			compileExpr(ctx, v.Args[i])()
+		}
+		args := ctx.infer.GetArgs(n1)
+		elem := mapType.Key()
+		checkType(elem, args[0], ctx.out)
+		ctx.infer.PopN(n1)
+		ctx.out.Delete()
+	}
 }
 
 // func len/cap(v Type) int
