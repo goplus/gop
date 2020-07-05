@@ -123,14 +123,14 @@ func (p *Builder) autoIdent() string {
 }
 
 var (
-	tyMainFunc = reflect.TypeOf((*func())(nil)).Elem()
-	unnamedVar = Ident("_")
-	gopRet     = Ident("_gop_ret")
-	appendIden = Ident("append")
-	makeIden   = Ident("make")
-	newIden    = Ident("new")
-	nilIden    = Ident("nil")
-	deleteIden = Ident("delete")
+	tyMainFunc  = reflect.TypeOf((*func())(nil)).Elem()
+	unnamedVar  = Ident("_")
+	gopRet      = Ident("_gop_ret")
+	appendIdent = Ident("append")
+	makeIdent   = Ident("make")
+	newIdent    = Ident("new")
+	nilIdent    = Ident("nil")
+	deleteIdent = Ident("delete")
 )
 
 // Resolve resolves all unresolved labels/functions/consts/etc.

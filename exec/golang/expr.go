@@ -115,7 +115,7 @@ func ComplexConst(v complex128) ast.Expr {
 func NewGopkgType(p *Builder, pkgPath, typName string) ast.Expr {
 	typ := p.GoSymIdent(pkgPath, typName)
 	args := []ast.Expr{typ}
-	return &ast.CallExpr{Fun: newIden, Args: args}
+	return &ast.CallExpr{Fun: newIdent, Args: args}
 }
 
 func valBySetString(p *Builder, typ reflect.Type, x ast.Expr, args ...ast.Expr) ast.Expr {
@@ -187,7 +187,7 @@ func BigFloatConst(p *Builder, v *big.Float) ast.Expr {
 // Const instr
 func Const(p *Builder, val interface{}) ast.Expr {
 	if val == nil {
-		return nilIden
+		return nilIdent
 	}
 	v := reflect.ValueOf(val)
 	kind := v.Kind()
@@ -427,7 +427,7 @@ func (p *Builder) AddrGoVar(addr exec.GoVarAddr) *Builder {
 
 // Append instr
 func (p *Builder) Append(typ reflect.Type, arity int) *Builder {
-	p.rhs.Push(appendIden)
+	p.rhs.Push(appendIdent)
 	var ellipsis bool
 	if arity == -1 {
 		ellipsis = true
@@ -439,7 +439,7 @@ func (p *Builder) Append(typ reflect.Type, arity int) *Builder {
 
 // Make instr
 func (p *Builder) Make(typ reflect.Type, arity int) *Builder {
-	p.rhs.Push(makeIden)
+	p.rhs.Push(makeIdent)
 	p.Call(arity, false, Type(p, typ))
 	return p
 }
@@ -494,7 +494,7 @@ func (p *Builder) SetMapIndex() *Builder {
 
 // SetMapIndex instr
 func (p *Builder) Delete() *Builder {
-	p.rhs.Push(deleteIden)
+	p.rhs.Push(deleteIdent)
 	p.Call(2, false)
 	return p
 }

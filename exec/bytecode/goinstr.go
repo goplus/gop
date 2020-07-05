@@ -243,7 +243,7 @@ func execMapIndex(i Instr, p *Context) {
 	key := reflect.ValueOf(p.data[n-1])
 	v := reflect.ValueOf(p.data[n-2])
 	switch i & bitsOperand {
-	case mapDeleteFlag: // delete(mapData %key)
+	case mapDeleteFlag: // delete(mapData $key)
 		v.SetMapIndex(key, reflect.Value{})
 		p.PopN(2)
 	case setMapIndexFlag: // value mapData $key $setMapIndex
