@@ -614,3 +614,26 @@ func TestTypeCast(t *testing.T) {
 		t.Fatal("`5` `6` add != `56`, ret =", v)
 	}
 }
+
+func TestDelete(t *testing.T) {
+	m := NewVar(reflect.MapOf(TyString, TyInt), "")
+	code := newBuilder().
+		DefineVar(m).
+		Push("Hello").
+		Push(1).
+		Push("Go+").
+		Push(2).
+		MakeMap(reflect.MapOf(TyString, TyInt), 2).
+		StoreVar(m).
+		LoadVar(m).
+		Push("Hello").
+		Delete().
+		LoadVar(m).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); !reflect.DeepEqual(v, map[string]int{"Go+": 2}) {
+		t.Fatal("expected: {`Go+`: 2}, ret =", v)
+	}
+}
