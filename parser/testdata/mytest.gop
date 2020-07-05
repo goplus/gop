@@ -1,8 +1,8 @@
 package testdata
 
 import (
-    "os"
-    "go/token"
+	"go/token"
+	"os"
 )
 
 var stmtStart = map[token.Token]bool{
@@ -49,30 +49,30 @@ type FileSystem interface {
 type IF = FileSystem
 
 type Foo struct {
-    a, b map[string]struct{}
+	a, b map[string]struct{}
 }
 
 func (p *Foo) bar() {
 }
 
 func init() {
-    f, err := os.Open("a")
-    if err != nil {
-        return
-    }
-    defer f.Close()
+	f, err := os.Open("a")
+	if err != nil {
+		return
+	}
+	defer f.Close()
 
-    ch := make(chan bool, 100)
-    select {
-    case <-ch:
-        println("1")
-    case ch <- true:
-        println("2")
-    }
+	ch := make(chan bool, 100)
+	select {
+	case <-ch:
+		println("1")
+	case ch <- true:
+		println("2")
+	}
 
-    go func(fs FileSystem) {
-        if foo, ok := fs.(*Foo); ok {
-            println(foo)
-        }
-    }(nil)
+	go func(fs FileSystem) {
+		if foo, ok := fs.(*Foo); ok {
+			println(foo)
+		}
+	}(nil)
 }
