@@ -34,13 +34,13 @@ var (
 )
 
 func init() {
-	flag.StringVar(&flagExportDir, "outdir", "", "optional set export lib path, default goplus/lib path")
+	flag.StringVar(&flagExportDir, "outdir", "", "optional set export lib path, default is $GoPlusRoot/lib path")
 }
 
 func main() {
 	flag.Parse()
 	if flag.NArg() < 1 {
-		fmt.Fprintf(os.Stderr, "Usage: qexp [packages]\n")
+		fmt.Fprintf(os.Stderr, "Usage: qexp [-outdir <outRootDir>] [packages]\n")
 		flag.PrintDefaults()
 		return
 	}
