@@ -1259,17 +1259,7 @@ var testDeleteClauses = map[string]testData{
 
 func TestDelete(t *testing.T) {
 	for name, clause := range testDeleteClauses {
-		func() {
-			defer func() {
-				if r := recover(); r != nil {
-					if len(clause.wants) > 0 && clause.wants[0] == "_panic" {
-						return
-					}
-					t.Fatal(name, "-", r)
-				}
-			}()
-			testForRangeStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
-		}()
+		testSingleStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
 	}
 }
 
