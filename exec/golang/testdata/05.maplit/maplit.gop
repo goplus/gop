@@ -1,20 +1,20 @@
 x := {"Hello": 1, "xsw": 3.4} // map[string]float64
 println("x:", x)
-delete(x,"Hello")
+delete(x, "Hello")
 println("x:", x)
-delete(x,"hi")
+delete(x, "hi")
 println("x:", x)
 
 y := {"Hello": 1, "xsw": "Go+"} // map[string]interface{}
 println("y:", y)
-delete(y,"Hello")
+delete(y, "Hello")
 println("y:", y)
-delete(y,"hi")
+delete(y, "hi")
 println("x:", y)
 
-println({"Hello": 1, "xsw": 3}) // map[string]int
-delete({"Hello": 1, "xsw": 3},"Hello") // delete map[string]int
-println({1: 1.4, 3: "Go+"})     // map[int]interface{}
-delete({1: 1.4, 3: "Go+"},1)     // delete map[int]interface{}
+println({"Hello": 1, "xsw": 3})         // map[string]int
+delete({"Hello": 1, "xsw": 3}, "Hello") // delete map[string]int
+println({1: 1.4, 3: "Go+"})             // map[int]interface{}
+delete({1: 1.4, 3: "Go+"}, 1)           // delete map[int]interface{}
 
 println("empty map:", {}) // map[string]interface{}
