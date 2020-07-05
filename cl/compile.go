@@ -216,48 +216,52 @@ type flowLabel struct {
 type flowCtx struct {
 	parent    *flowCtx
 	name      string
-	tok       token.Token
 	pos       token.Pos
 	postLabel exec.Label
 	doneLabel exec.Label
 }
 
-func (fc *funcCtx) nextFlow(pos token.Pos, tok token.Token, names ...string) {
-	fc.currentFlow = &flowCtx{parent: fc.currentFlow, name: append(names, "")[0], pos: pos, tok: tok}
+func (fc *funcCtx) nextFlow(pos token.Pos, post, done exec.Label, names ...string) {
+	fc.currentFlow = &flowCtx{
+		parent:    fc.currentFlow,
+		name:      append(names, "")[0],
+		pos:       pos,
+		postLabel: post,
+		doneLabel: done,
+	}
 }
 
-func (fc *funcCtx) breakFlow(label *ast.Ident) *flowCtx {
+func (fc *funcCtx) getBreakLabel(labelName string) exec.Label {
 	if fc.currentFlow == nil {
 		return nil
 	}
-	return fc.currentFlow.getFlow(label, token.FOR, token.SWITCH)
-}
-func (fc *funcCtx) continueFlow(label *ast.Ident) *flowCtx {
-	if fc.currentFlow == nil {
-		return nil
-	}
-	return fc.currentFlow.getFlow(label, token.FOR, token.FOR)
-}
-func (fc *flowCtx) getFlow(label *ast.Ident, tokes ...token.Token) *flowCtx {
-	for i := fc; i != nil; i = i.parent {
-		if tokenMatch(i.tok, tokes...) {
-			if label == nil {
-				return i
+	for i := fc.currentFlow; i != nil; i = i.parent {
+		if i.doneLabel != nil {
+			if labelName == "" {
+				return i.doneLabel
 			}
-			if i.name == label.Name {
-				return i
+			if i.name == labelName {
+				return i.doneLabel
 			}
 		}
 	}
 	return nil
 }
-func tokenMatch(tok token.Token, tokes ...token.Token) bool {
-	for _, t := range tokes {
-		if tok == t {
-			return true
+func (fc *funcCtx) getContinueLabel(labelName string) exec.Label {
+	if fc.currentFlow == nil {
+		return nil
+	}
+	for i := fc.currentFlow; i != nil; i = i.parent {
+		if i.postLabel != nil {
+			if labelName == "" {
+				return i.postLabel
+			}
+			if i.name == labelName {
+				return i.postLabel
+			}
 		}
 	}
-	return false
+	return nil
 }
 
 func (fc *funcCtx) checkLabels() {
