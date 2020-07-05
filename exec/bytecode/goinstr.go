@@ -243,10 +243,10 @@ func execMapIndex(i Instr, p *Context) {
 	key := reflect.ValueOf(p.data[n-1])
 	v := reflect.ValueOf(p.data[n-2])
 	switch i & bitsOperand {
-	case mapDeleteFlag: // delete(mapData $key)
+	case mapDeleteOperand: // delete(mapData $key)
 		v.SetMapIndex(key, reflect.Value{})
 		p.PopN(2)
-	case setMapIndexFlag: // value mapData $key $setMapIndex
+	case setMapIndexOperand: // value mapData $key $setMapIndex
 		v.SetMapIndex(key, reflect.ValueOf(p.data[n-3]))
 		p.PopN(3)
 	default: // mapData $key $mapIndex
@@ -448,13 +448,13 @@ func (p *Builder) MapIndex() *Builder {
 
 // SetMapIndex instr
 func (p *Builder) SetMapIndex() *Builder {
-	p.code.data = append(p.code.data, (opMapIndex<<bitsOpShift)|setMapIndexFlag)
+	p.code.data = append(p.code.data, (opMapIndex<<bitsOpShift)|setMapIndexOperand)
 	return p
 }
 
 // Delete instr
 func (p *Builder) Delete() *Builder {
-	p.code.data = append(p.code.data, (opMapIndex<<bitsOpShift)|mapDeleteFlag)
+	p.code.data = append(p.code.data, (opMapIndex<<bitsOpShift)|mapDeleteOperand)
 	return p
 }
 
@@ -481,11 +481,11 @@ func (p *Builder) SetIndex(idx int) *Builder {
 }
 
 const (
-	mapDeleteFlag   = 2
-	setMapIndexFlag = 3
-	setIndexFlag    = (1 << 25)
-	setIndexOperand = setIndexFlag - 1
-	sliceIndexMask  = (1 << 13) - 1
+	mapDeleteOperand   = 2
+	setMapIndexOperand = 3
+	setIndexFlag       = (1 << 25)
+	setIndexOperand    = setIndexFlag - 1
+	sliceIndexMask     = (1 << 13) - 1
 	// SliceConstIndexLast - slice const index max
 	SliceConstIndexLast = exec.SliceConstIndexLast
 	// SliceDefaultIndex - unspecified index
