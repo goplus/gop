@@ -236,10 +236,7 @@ func (fc *funcCtx) getBreakLabel(labelName string) exec.Label {
 	}
 	for i := fc.currentFlow; i != nil; i = i.parent {
 		if i.doneLabel != nil {
-			if labelName == "" {
-				return i.doneLabel
-			}
-			if i.name == labelName {
+			if labelName == "" || i.name == labelName {
 				return i.doneLabel
 			}
 		}
@@ -252,10 +249,7 @@ func (fc *funcCtx) getContinueLabel(labelName string) exec.Label {
 	}
 	for i := fc.currentFlow; i != nil; i = i.parent {
 		if i.postLabel != nil {
-			if labelName == "" {
-				return i.postLabel
-			}
-			if i.name == labelName {
+			if labelName == "" || i.name == labelName {
 				return i.postLabel
 			}
 		}
