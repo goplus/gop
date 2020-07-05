@@ -492,6 +492,13 @@ func (p *Builder) SetMapIndex() *Builder {
 	return p
 }
 
+// SetMapIndex instr
+func (p *Builder) Delete() *Builder {
+	p.rhs.Push(deleteIden)
+	p.Call(2, false)
+	return p
+}
+
 // Index instr
 func (p *Builder) Index(idx int) *Builder {
 	p.rhs.Push(IndexWith(p, idx))

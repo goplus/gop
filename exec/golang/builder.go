@@ -130,6 +130,7 @@ var (
 	makeIden   = Ident("make")
 	newIden    = Ident("new")
 	nilIden    = Ident("nil")
+	deleteIden = Ident("delete")
 )
 
 // Resolve resolves all unresolved labels/functions/consts/etc.
