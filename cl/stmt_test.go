@@ -794,7 +794,7 @@ var testForRangeClauses = map[string]testData{
 
 func TestRangeStmt(t *testing.T) {
 	for name, clause := range testForRangeClauses {
-		testForRangeStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
+		testSingleStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
 	}
 }
 
@@ -912,15 +912,184 @@ var testNormalForClauses = map[string]testData{
 					}
 					println(sum)
 					`, []string{"16"}},
+	"for_with_continue": {`
+					arr := [1,3,5,7]
+					sum := 0
+					for i:=0; i < len(arr);i++ {
+						if arr[i]<5{
+							continue
+						}
+						sum+=arr[i]
+					}
+					println(sum)
+					`, []string{"12"}},
+	"for_with_break": {`
+					arr := [1,3,5,7]
+					sum := 0
+					for i:=0; i < len(arr);i++ {
+						if arr[i]>5{
+							break
+						}
+						sum+=arr[i]
+					}
+					println(sum)
+					`, []string{"9"}},
+	"for_with_break_label": {`
+					arr := [1,3,5,7]
+					sum := 0
+					L:
+					for i:=0; i < len(arr);i++ {
+						for j:=0;j<len(arr);j++{
+							if j>2{
+								break L
+							}
+							sum+=arr[i]+arr[j]
+						}	
+					}
+					println(sum)
+					`, []string{"12"}}, // (1+1)+(1+3)+(1+5)
+	"for_with_continue_label": {`
+					arr := [1,3,5,7]
+					sum := 0
+					L:
+					for i:=0; i < len(arr);i++ {
+						for j:=0;j<len(arr);j++{
+							if j>1{
+								continue L
+							}
+							sum+=arr[i]+arr[j]
+						}	
+					}
+					println(sum)
+					`, []string{"48"}}, // (1+3+5+7)*2+(1+3)*4
+	"for_with_continue_break": {`
+					arr := [1,3,5,7]
+					sum := 0
+					for i:=0; i < len(arr);i++ {
+						if arr[i]>5{
+							break
+						}
+						for j:=0;j<len(arr);j++{
+							if arr[j]<5{
+								continue
+							}
+							sum+=arr[j]
+						}
+					}
+					println(sum)
+					`, []string{"36"}},
+	"for_with_continue_break_continue": {`
+					arr := [1,3,5,7]
+					sum := 0
+					L1:
+					for i:=0; i < len(arr);i++ {
+						if arr[i]>5{
+							break
+						}
+						for j:=i;j<len(arr);j++{
+							if arr[j]<5{
+								continue L1
+							}
+							sum+=arr[j]
+						}
+					}
+					println(sum)
+					`, []string{"12"}},
+	"for_with_continue_panic": {`
+					arr := [1,3,5,7]
+					sum := 0
+					for i:=0; i < len(arr);i++ {
+					}
+					continue
+					println(sum)
+					`, []string{"_panic"}},
+	"for_with_continue_no_label_panic": {`
+					arr := [1,3,5,7]
+					sum := 0
+					for i:=0; i < len(arr);i++ {
+						continue L
+					}
+					println(sum)
+					`, []string{"_panic"}},
+	"for_with_break_panic": {`
+					arr := [1,3,5,7]
+					sum := 0
+					for i:=0; i < len(arr);i++ {
+					}
+					break
+					println(sum)
+					`, []string{"_panic"}},
+	"for_with_break_label_panic": {`
+					arr := [1,3,5,7]
+					L:
+					sum := 0
+					for i:=0; i < len(arr);i++ {
+						break L
+					}
+					println(sum)
+					`, []string{"_panic"}},
+	"for_with_continue_wrong_label_panic": {`
+					arr := [1,3,5,7]
+					L:
+					sum := 0
+					for i:=0; i < len(arr);i++ {
+						continue L
+					}
+					println(sum)
+					`, []string{"_panic"}},
+	"for_with_many_labels": {`
+					arr := [1,3,5,7]
+					sum := 0
+					L:
+					for i:=0; i < len(arr);i++ {
+						if arr[i]<7{
+								continue L
+						}
+						L1:
+						for j:=0;j<len(arr);j++{
+							if arr[j]>1{
+								break L1
+							}	
+							sum+=arr[i]+arr[j]
+						}
+					}
+					println(sum)
+					`, []string{"8"}},
+	"for_with_many_labels_break": {`
+					arr := [1,3,5,7]
+					sum := 0
+					L:
+					for i:=0; i < len(arr);i++ {
+						if arr[i]<7{
+								continue L
+						}
+						L1:
+						for j:=0;j<len(arr);j++{
+							if arr[j]>3{
+								break L
+							}	
+							sum+=arr[i]+arr[j]
+						}
+					}
+					println(sum)
+					`, []string{"18"}},
 }
 
 func TestNormalForStmt(t *testing.T) {
 	for name, clause := range testNormalForClauses {
-		testForRangeStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
+		testSingleStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
 	}
 }
 
-func testForRangeStmt(name string, t *testing.T, fs *asttest.MemFS, wants []string) {
+func testSingleStmt(name string, t *testing.T, fs *asttest.MemFS, wants []string) {
+	defer func() {
+		if r := recover(); r != nil {
+			if len(wants) > 0 && wants[0] == "_panic" {
+				return
+			}
+			t.Fatal(name, "-", r)
+		}
+	}()
 	var results []string
 	selfPrintln := func(arity int, p *gop.Context) {
 		args := p.GetArgs(arity)
@@ -997,7 +1166,7 @@ func TestForIncDecStmt(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var testFallthroughClauses = map[string]testData{
+var testSwitchBranchClauses = map[string]testData{
 	"switch_all_fallthrough": {`
 					x:=0
 					switch x {
@@ -1084,7 +1253,7 @@ var testFallthroughClauses = map[string]testData{
 						println(x)
 					fallthrough
 					}
-					`, []string{"0", "1"}},
+					`, []string{"_panic"}},
 	"switch_fallthrough_out_panic": {`
 					x:=0
 					switch x {
@@ -1099,18 +1268,75 @@ var testFallthroughClauses = map[string]testData{
 						println(x)
 					}
 					fallthrough
-					`, []string{"0", "1"}},
+					`, []string{"_panic"}},
+	"switch_break": {`
+					x:=0
+					y:=2
+					switch x {
+					case 0:
+						if y>0{
+							println(y)
+							break
+						}
+						println(x)
+					default:
+						x=7
+						println(x)
+					}
+					`, []string{"2"}},
+	"switch_break_label": {`
+					x:=0
+					y:=2
+					L:
+					switch x {
+					case 0:
+						if y>0{
+							println(y)
+							break L
+						}
+						println(x)
+					default:
+						x=7
+						println(x)
+					}
+					`, []string{"2"}},
+	"switch_for_continue_label": {`
+					x:=0
+					y:=2
+					L:
+					for i:=0;i<5;i++{
+						switch i {
+						case 0:
+							if y>0{
+								println(y)
+								continue L
+							}
+							println(x)
+						case 1:
+							println(x)  
+							x++	
+							continue L
+						case 2:
+							println(x)  
+							x++
+							break 
+						case 3:
+							println(x)
+							break L
+						case 4:
+							println(x)
+						default:
+							x=7
+							println(x)
+						}
+					}
+				
+					`, []string{"2", "0", "1", "2"}},
 }
 
-func TestFallthroughStmt(t *testing.T) {
-	for name, clause := range testFallthroughClauses {
-		func() {
-			defer func() {
-				if r := recover(); r != nil {
-				}
-			}()
-			testForRangeStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
-		}()
+func TestSwitchBranchStmt(t *testing.T) {
+	for name, clause := range testSwitchBranchClauses {
+		testSingleStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
 	}
 }
 
@@ -1182,16 +1408,6 @@ var testGotoLabelClauses = map[string]testData{
 func TestGotoLabelStmt(t *testing.T) {
 	for name, clause := range testGotoLabelClauses {
 		log.Info("===> TestGotoLabelStmt", name)
-		func() {
-			defer func() {
-				if r := recover(); r != nil {
-					if len(clause.wants) > 0 && clause.wants[0] == "_panic" {
-						return
-					}
-					t.Fatal(name, "-", r)
-				}
-			}()
-			testForRangeStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
-		}()
+		testSingleStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
 	}
 }

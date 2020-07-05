@@ -199,8 +199,10 @@ func (p *stackVar) getType() reflect.Type {
 // -----------------------------------------------------------------------------
 
 type funcCtx struct {
-	fun    exec.FuncInfo
-	labels map[string]*flowLabel
+	fun          exec.FuncInfo
+	labels       map[string]*flowLabel
+	currentFlow  *flowCtx
+	currentLabel *ast.LabeledStmt
 }
 
 func newFuncCtx(fun exec.FuncInfo) *funcCtx {
@@ -211,6 +213,48 @@ type flowLabel struct {
 	ctx *blockCtx
 	exec.Label
 	jumps []*blockCtx
+}
+type flowCtx struct {
+	parent    *flowCtx
+	name      string
+	postLabel exec.Label
+	doneLabel exec.Label
+}
+
+func (fc *funcCtx) nextFlow(post, done exec.Label, name string) {
+	fc.currentFlow = &flowCtx{
+		parent:    fc.currentFlow,
+		name:      name,
+		postLabel: post,
+		doneLabel: done,
+	}
+}
+
+func (fc *funcCtx) getBreakLabel(labelName string) exec.Label {
+	if fc.currentFlow == nil {
+		return nil
+	}
+	for i := fc.currentFlow; i != nil; i = i.parent {
+		if i.doneLabel != nil {
+			if labelName == "" || i.name == labelName {
+				return i.doneLabel
+			}
+		}
+	}
+	return nil
+}
+func (fc *funcCtx) getContinueLabel(labelName string) exec.Label {
+	if fc.currentFlow == nil {
+		return nil
+	}
+	for i := fc.currentFlow; i != nil; i = i.parent {
+		if i.postLabel != nil {
+			if labelName == "" || i.name == labelName {
+				return i.postLabel
+			}
+		}
+	}
+	return nil
 }
 
 func (fc *funcCtx) checkLabels() {
