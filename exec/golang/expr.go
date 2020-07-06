@@ -425,6 +425,31 @@ func (p *Builder) AddrGoVar(addr exec.GoVarAddr) *Builder {
 	return p
 }
 
+// LoadGoField instr
+func (p *Builder) LoadGoField(sf reflect.StructField) *Builder {
+	p.rhs.Push(&ast.SelectorExpr{
+		X:   p.rhs.Pop().(ast.Expr),
+		Sel: Ident(sf.Name),
+	})
+	return p
+}
+
+// StoreGoField instr
+func (p *Builder) StoreGoField(sf reflect.StructField) *Builder {
+	log.Println("->", p.rhs.Get(-1))
+	// p.lhs.Push(&ast.SelectorExpr{
+	// 	X:   p.lhs.Pop().(ast.Expr),
+	// 	Sel: Ident(sf.Name),
+	// })
+	p.lhs.Push(Ident(sf.Name))
+	return p
+}
+
+// AddrGoField instr
+func (p *Builder) AddrGoField(sf reflect.StructField) *Builder {
+	return p
+}
+
 // Append instr
 func (p *Builder) Append(typ reflect.Type, arity int) *Builder {
 	p.rhs.Push(appendIdent)
@@ -501,6 +526,12 @@ func (p *Builder) Index(idx int) *Builder {
 // SetIndex instr
 func (p *Builder) SetIndex(idx int) *Builder {
 	p.lhs.Push(IndexWith(p, idx))
+	return p
+}
+
+// AddrIndex instr
+func (p *Builder) AddrIndex(idx int) *Builder {
+	p.rhs.Push(IndexWith(p, idx))
 	return p
 }
 

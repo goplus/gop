@@ -328,6 +328,24 @@ func (p *iBuilder) AddrGoVar(addr exec.GoVarAddr) exec.Builder {
 	return p
 }
 
+// LoadGoField instr
+func (p *iBuilder) LoadGoField(sf reflect.StructField) exec.Builder {
+	((*Builder)(p)).LoadGoField(sf)
+	return p
+}
+
+// StoreGoField instr
+func (p *iBuilder) StoreGoField(sf reflect.StructField) exec.Builder {
+	((*Builder)(p)).StoreGoField(sf)
+	return p
+}
+
+// AddrGoField instr
+func (p *iBuilder) AddrGoField(sf reflect.StructField) exec.Builder {
+	((*Builder)(p)).AddrGoField(sf)
+	return p
+}
+
 // AddrOp instr
 func (p *iBuilder) AddrOp(kind exec.Kind, op exec.AddrOperator) exec.Builder {
 	((*Builder)(p)).AddrOp(kind, op)
@@ -379,6 +397,12 @@ func (p *iBuilder) Index(idx int) exec.Builder {
 // SetIndex instr
 func (p *iBuilder) SetIndex(idx int) exec.Builder {
 	((*Builder)(p)).SetIndex(idx)
+	return p
+}
+
+// SetIndex instr
+func (p *iBuilder) AddrIndex(idx int) exec.Builder {
+	((*Builder)(p)).AddrIndex(idx)
 	return p
 }
 

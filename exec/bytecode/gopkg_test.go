@@ -200,16 +200,20 @@ func TestGoField(t *testing.T) {
 
 	x := NewVar(TyInt, "x")
 	b := newBuilder()
+	rt := reflect.TypeOf(v)
+
+	sf0, _ := rt.FieldByName("Info")
+	sf1, _ := rt.FieldByName("X")
 	code := b.
 		DefineVar(x).
 		Push("hello").
 		AddrGoVar(i).
-		StoreGoField([]int{0, 0}).
+		StoreGoField(sf0).
 		Push(-1).
 		StoreVar(x).
 		LoadVar(x).
 		AddrGoVar(i).
-		StoreGoField([]int{1}).
+		StoreGoField(sf1).
 		Resolve()
 
 	ctx := NewContext(code)

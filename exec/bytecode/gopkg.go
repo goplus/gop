@@ -418,25 +418,25 @@ func (p *Builder) AddrGoVar(addr GoVarAddr) *Builder {
 }
 
 // LoadGoField instr
-func (p *Builder) LoadGoField(index []int) *Builder {
-	p.Push(index)
-	i := (opLoadGoField << bitsOpShift) | uint32(len(index))
+func (p *Builder) LoadGoField(sf reflect.StructField) *Builder {
+	p.Push(sf.Index)
+	i := (opLoadGoField << bitsOpShift) | uint32(len(sf.Index))
 	p.code.data = append(p.code.data, uint32(i))
 	return p
 }
 
 // StoreGoField instr
-func (p *Builder) StoreGoField(index []int) *Builder {
-	p.Push(index)
-	i := (opStoreGoField << bitsOpShift) | (uint32(len(index)))
+func (p *Builder) StoreGoField(sf reflect.StructField) *Builder {
+	p.Push(sf.Index)
+	i := (opStoreGoField << bitsOpShift) | (uint32(len(sf.Index)))
 	p.code.data = append(p.code.data, i)
 	return p
 }
 
 // AddrGoField instr
-func (p *Builder) AddrGoField(index []int) *Builder {
-	p.Push(index)
-	i := (opAddrGoField << bitsOpShift) | uint32(len(index))
+func (p *Builder) AddrGoField(sf reflect.StructField) *Builder {
+	p.Push(sf.Index)
+	i := (opAddrGoField << bitsOpShift) | uint32(len(sf.Index))
 	p.code.data = append(p.code.data, i)
 	return p
 }

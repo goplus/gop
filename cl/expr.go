@@ -901,11 +901,23 @@ func getFuncInfo(fun exec.FuncInfo) (name string, narg int) {
 	return "main", 0
 }
 
+func parserSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) (sym string) {
+	switch x := v.X.(type) {
+	case *ast.Ident:
+		return x.Name
+	case *ast.SelectorExpr:
+		
+	}
+	return ""
+}
+
 func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compleMode) {
 	if mode == lhsDefine {
 		log.Panicln("compileSelectorExprLHS: `:=` can't be used for index expression")
 	}
 	in := ctx.infer.Get(-1)
+	parserSelectorExpr(ctx, v)
+
 	exprX := compileExpr(ctx, v.X)
 	x := ctx.infer.Get(-1)
 	ctx.infer.PopN(2)
@@ -938,7 +950,7 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compleMode)
 		if sf, ok := t.FieldByName(name); ok {
 			checkType(sf.Type, in, ctx.out)
 			exprX()
-			ctx.out.StoreGoField(sf.Index)
+			ctx.out.StoreGoField(sf)
 		}
 	default:
 		log.Panicln("compileSelectorExprLHS failed: unknown -", reflect.TypeOf(vx))
@@ -995,9 +1007,9 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 			ctx.infer.Ret(1, &goValue{t: sf.Type})
 			return func() {
 				if ctx.inLHS {
-					ctx.out.AddrGoField(sf.Index)
+					ctx.out.AddrGoField(sf)
 				} else {
-					ctx.out.LoadGoField(sf.Index)
+					ctx.out.LoadGoField(sf)
 				}
 			}
 		}

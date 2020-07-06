@@ -284,13 +284,13 @@ type Builder interface {
 	AddrGoVar(addr GoVarAddr) Builder
 
 	// LoadGoField instr
-	LoadGoField(index []int) Builder
+	LoadGoField(sf reflect.StructField) Builder
 
 	// StoreGoField instr
-	StoreGoField(index []int) Builder
+	StoreGoField(sf reflect.StructField) Builder
 
 	// AddrGoField instr
-	AddrGoField(index []int) Builder
+	AddrGoField(sf reflect.StructField) Builder
 
 	// AddrOp instr
 	AddrOp(kind Kind, op AddrOperator) Builder
