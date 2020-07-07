@@ -110,10 +110,11 @@ const (
 	opTypeCast      = 37 // type(26)
 	opSlice         = 38 // i(13) j(13)
 	opSlice3        = 39 // i(13) j(13)
-	opMapIndex      = 40 // reserved(25) set(1)
+	opMapIndex      = 40 // reserved(24) set(2)
 	opGoBuiltin     = 41 // op(26)
 	opErrWrap       = 42 // idx(26)
 	opWrapIfErr     = 43 // reserved(2) offset(24)
+	opCopy          = 44 // reserved(26)
 )
 
 const (
@@ -192,10 +193,11 @@ var instrInfos = []InstrInfo{
 	opTypeCast:      {"typeCast", "", "type", 26},                         // type(26)
 	opSlice:         {"slice", "i", "j", (13 << 8) | 13},                  // i(13) j(13)
 	opSlice3:        {"slice3", "i", "j", (13 << 8) | 13},                 // i(13) j(13)
-	opMapIndex:      {"mapIndex", "", "set", 26},                          // reserved(25) set(1)
+	opMapIndex:      {"mapIndex", "", "set", 26},                          // reserved(24) set(2)
 	opGoBuiltin:     {"goBuiltin", "", "op", 26},                          // op(26)
 	opErrWrap:       {"errWrap", "", "idx", 26},                           // idx(26)
 	opWrapIfErr:     {"wrapIfErr", "", "offset", 26},                      // reserved(2) offset(24)
+	opCopy:          {"copy", "", "set", 26},                              // reserved(26)
 }
 
 // -----------------------------------------------------------------------------

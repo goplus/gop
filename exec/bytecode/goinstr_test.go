@@ -637,3 +637,49 @@ func TestDelete(t *testing.T) {
 		t.Fatal("expected: {`Go+`: 2}, ret =", v)
 	}
 }
+
+func TestCopy(t *testing.T) {
+	a := NewVar(reflect.SliceOf(TyInt), "")
+	b := NewVar(reflect.SliceOf(TyInt), "")
+	code := newBuilder().
+		DefineVar(a).
+		DefineVar(b).
+		Push(1).
+		Push(2).
+		Push(3).
+		MakeArray(reflect.SliceOf(TyInt), 3).
+		StoreVar(a).
+		Push(11).
+		MakeArray(reflect.SliceOf(TyInt), 1).
+		StoreVar(b).
+		LoadVar(b).
+		LoadVar(a).
+		Copy().
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); true {
+		t.Log(v)
+	}
+}
+
+func TestCopy2(t *testing.T) {
+	a := NewVar(reflect.SliceOf(TyByte), "")
+	code := newBuilder().
+		DefineVar(a).
+		Push(byte(56)).
+		Push(byte(57)).
+		MakeArray(reflect.SliceOf(TyByte), 2).
+		StoreVar(a).
+		LoadVar(a).
+		Push("hello").
+		Copy().
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); true {
+		t.Fatal(v)
+	}
+}
