@@ -1,10 +1,10 @@
 GoPlus - The Go+ language for data science
 ========
 
-[![LICENSE](https://img.shields.io/github/license/qiniu/goplus.svg)](https://github.com/goplus/gop/blob/master/LICENSE)
-[![Build Status](https://travis-ci.org/qiniu/goplus.png?branch=master)](https://travis-ci.org/qiniu/goplus)
+[![LICENSE](https://img.shields.io/github/license/goplus/gop.svg)](https://github.com/goplus/gop/blob/master/LICENSE)
+[![Build Status](https://travis-ci.org/goplus/gop.png?branch=master)](https://travis-ci.org/goplus/gop)
 [![Go Report Card](https://goreportcard.com/badge/github.com/goplus/gop)](https://goreportcard.com/report/github.com/goplus/gop)
-[![GitHub release](https://img.shields.io/github/v/tag/qiniu/goplus.svg?label=release)](https://github.com/goplus/gop/releases)
+[![GitHub release](https://img.shields.io/github/v/tag/goplus/gop.svg?label=release)](https://github.com/goplus/gop/releases)
 [![Coverage Status](https://codecov.io/gh/goplus/gop/branch/master/graph/badge.svg)](https://codecov.io/gh/goplus/gop)
 [![TODOs](https://badgen.net/https/api.tickgit.com/badgen/github.com/goplus/gop)](https://www.tickgit.com/browse?repo=github.com/goplus/gop)
 [![GoDoc](https://img.shields.io/badge/Godoc-reference-blue.svg)](https://pkg.go.dev/mod/github.com/goplus/gop)
@@ -142,12 +142,12 @@ See https://github.com/goplus/gop/tree/master/tutorial
 
 ## How to build
 
-Current version: [![GitHub release](https://img.shields.io/github/v/tag/qiniu/goplus.svg?label=)](https://github.com/goplus/gop/releases)
+Current version: [![GitHub release](https://img.shields.io/github/v/tag/goplus/gop.svg?label=)](https://github.com/goplus/gop/releases)
 
 ```bash
-go get github.com/goplus/gop@vX.X.XX
-#or: git clone git@github.com:qiniu/goplus.git
-cd goplus
+git clone git@github.com:goplus/gop.git
+#or: go get github.com/goplus/gop@vX.X.XX
+cd gop
 go install -v ./...
 ```
 
