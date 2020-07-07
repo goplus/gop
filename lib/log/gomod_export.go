@@ -5,8 +5,8 @@ import (
 	io "io"
 	log "log"
 
-	qspec "github.com/qiniu/goplus/exec.spec"
-	gop "github.com/qiniu/goplus/gop"
+	qspec "github.com/goplus/gop/exec.spec"
+	gop "github.com/goplus/gop/gop"
 )
 
 func execFlags(_ int, p *gop.Context) {

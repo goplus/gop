@@ -7,7 +7,7 @@ package ast
 import (
 	"sort"
 
-	"github.com/qiniu/goplus/token"
+	"github.com/goplus/gop/token"
 )
 
 // ----------------------------------------------------------------------------

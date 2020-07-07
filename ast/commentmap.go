@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/qiniu/goplus/token"
+	"github.com/goplus/gop/token"
 )
 
 type byPos []*CommentGroup

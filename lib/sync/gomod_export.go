@@ -4,7 +4,7 @@ package sync
 import (
 	sync "sync"
 
-	gop "github.com/qiniu/goplus/gop"
+	gop "github.com/goplus/gop/gop"
 )
 
 func execCondWait(_ int, p *gop.Context) {

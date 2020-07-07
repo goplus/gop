@@ -19,8 +19,8 @@ package golang
 import (
 	"reflect"
 
-	"github.com/qiniu/goplus/exec.spec"
-	"github.com/qiniu/goplus/exec/bytecode"
+	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/exec/bytecode"
 	"github.com/qiniu/x/errors"
 )
 

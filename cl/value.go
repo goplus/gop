@@ -19,8 +19,8 @@ package cl
 import (
 	"reflect"
 
-	"github.com/qiniu/goplus/ast/astutil"
-	"github.com/qiniu/goplus/exec.spec"
+	"github.com/goplus/gop/ast/astutil"
+	"github.com/goplus/gop/exec.spec"
 	"github.com/qiniu/x/log"
 )
 

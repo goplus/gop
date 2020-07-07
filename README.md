@@ -1,13 +1,13 @@
 GoPlus - The Go+ language for data science
 ========
 
-[![LICENSE](https://img.shields.io/github/license/qiniu/goplus.svg)](https://github.com/qiniu/goplus/blob/master/LICENSE)
+[![LICENSE](https://img.shields.io/github/license/qiniu/goplus.svg)](https://github.com/goplus/gop/blob/master/LICENSE)
 [![Build Status](https://travis-ci.org/qiniu/goplus.png?branch=master)](https://travis-ci.org/qiniu/goplus)
-[![Go Report Card](https://goreportcard.com/badge/github.com/qiniu/goplus)](https://goreportcard.com/report/github.com/qiniu/goplus)
-[![GitHub release](https://img.shields.io/github/v/tag/qiniu/goplus.svg?label=release)](https://github.com/qiniu/goplus/releases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/goplus/gop)](https://goreportcard.com/report/github.com/goplus/gop)
+[![GitHub release](https://img.shields.io/github/v/tag/qiniu/goplus.svg?label=release)](https://github.com/goplus/gop/releases)
 [![Coverage Status](https://codecov.io/gh/qiniu/goplus/branch/master/graph/badge.svg)](https://codecov.io/gh/qiniu/goplus)
-[![TODOs](https://badgen.net/https/api.tickgit.com/badgen/github.com/qiniu/goplus)](https://www.tickgit.com/browse?repo=github.com/qiniu/goplus)
-[![GoDoc](https://img.shields.io/badge/Godoc-reference-blue.svg)](https://godoc.org/github.com/qiniu/goplus)
+[![TODOs](https://badgen.net/https/api.tickgit.com/badgen/github.com/goplus/gop)](https://www.tickgit.com/browse?repo=github.com/goplus/gop)
+[![GoDoc](https://img.shields.io/badge/Godoc-reference-blue.svg)](https://godoc.org/github.com/goplus/gop)
 
 
 ## Summary about Go+
@@ -61,7 +61,7 @@ It's for Go, and it's also for Go+.
 
 All Go features (not including `cgo`) will be supported.
 
-* See [supported the Go language features](https://github.com/qiniu/goplus/wiki/Supported-Go-features).
+* See [supported the Go language features](https://github.com/goplus/gop/wiki/Supported-Go-features).
 
 **All Go packages (even these packages use `cgo`) can be imported by Go+.**
 
@@ -75,7 +75,7 @@ x := strings.NewReplacer("?", "!").Replace("hello, world???")
 fmt.Println("x:", x)
 ```
 
-Be interested in how it works? See [Dive into Go+](https://github.com/qiniu/goplus/wiki/Dive-into-Goplus).
+Be interested in how it works? See [Dive into Go+](https://github.com/goplus/gop/wiki/Dive-into-Goplus).
 
 **Also, all Go+ packages can be converted into Go packages and imported in Go programs.**
 
@@ -99,7 +99,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/qiniu/goplus/tutorial/14-Using-goplus-in-Go/foo"
+	"github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/foo"
 )
 
 func main() {
@@ -121,7 +121,7 @@ Or:
 gop install ./... # Convert Go+ packages and go install ./...
 ```
 
-Go [tutorial/14-Using-goplus-in-Go](https://github.com/qiniu/goplus/tree/master/tutorial/14-Using-goplus-in-Go) to get the source code.
+Go [tutorial/14-Using-goplus-in-Go](https://github.com/goplus/gop/tree/master/tutorial/14-Using-goplus-in-Go) to get the source code.
 
 Note: The `gop` command isn't provided currently (in alpha stage). Instead, we provide `qrun` and `qgo` commands.
 
@@ -137,15 +137,15 @@ Playground based on GopherJS:
 
 ## Tutorials
 
-See https://github.com/qiniu/goplus/tree/master/tutorial
+See https://github.com/goplus/gop/tree/master/tutorial
 
 
 ## How to build
 
-Current version: [![GitHub release](https://img.shields.io/github/v/tag/qiniu/goplus.svg?label=)](https://github.com/qiniu/goplus/releases)
+Current version: [![GitHub release](https://img.shields.io/github/v/tag/qiniu/goplus.svg?label=)](https://github.com/goplus/gop/releases)
 
 ```bash
-go get github.com/qiniu/goplus@vX.X.XX
+go get github.com/goplus/gop@vX.X.XX
 #or: git clone git@github.com:qiniu/goplus.git
 cd goplus
 go install -v ./...
@@ -174,10 +174,10 @@ gop export <goPkgPath> # Generate a Go+ package that wraps a Go package automati
 
 The `gop` command isn't provided currently (in alpha stage). Instead, we provide the following commands:
 
-* [qrun](https://github.com/qiniu/goplus/wiki/Commands#qrun): Similar to `gop run`
-* [qfmt](https://github.com/qiniu/goplus/wiki/Commands#qfmt): Similar to `gop fmt`
-* [qexp](https://github.com/qiniu/goplus/wiki/Commands#qexp): Similar to `gop export`
-* [qgo](https://github.com/qiniu/goplus/wiki/Commands#qgo): Similar to `gop go`
+* [qrun](https://github.com/goplus/gop/wiki/Commands#qrun): Similar to `gop run`
+* [qfmt](https://github.com/goplus/gop/wiki/Commands#qfmt): Similar to `gop fmt`
+* [qexp](https://github.com/goplus/gop/wiki/Commands#qexp): Similar to `gop export`
+* [qgo](https://github.com/goplus/gop/wiki/Commands#qgo): Similar to `gop go`
 
 Note:
 
@@ -291,7 +291,7 @@ Compared to corresponding Go code, It is clear and more readable.
 
 And the most interesting thing is, the return error contains the full error stack. When we got an error, it is very easy to position what the root cause is.
 
-How these `ErrWrap expressions` work? See [Error Handling](https://github.com/qiniu/goplus/wiki/Error-Handling) for more information.
+How these `ErrWrap expressions` work? See [Error Handling](https://github.com/goplus/gop/wiki/Error-Handling) for more information.
 
 
 ### Unix shebang
@@ -317,21 +317,21 @@ println([k for k, _ <- m])
 println([v for v <- m])
 ```
 
-Go [tutorial/20-Unix-Shebang/shebang](https://github.com/qiniu/goplus/blob/master/tutorial/20-Unix-Shebang/shebang) to get the source code.
+Go [tutorial/20-Unix-Shebang/shebang](https://github.com/goplus/gop/blob/master/tutorial/20-Unix-Shebang/shebang) to get the source code.
 
 
 ### Go features
 
 All Go features (not including `cgo`) will be supported.
 
-* See [supported the Go language features](https://github.com/qiniu/goplus/wiki/Supported-Go-features).
+* See [supported the Go language features](https://github.com/goplus/gop/wiki/Supported-Go-features).
 
 
 ## Contributing
 
 The Go+ project welcomes all contributors. We appreciate your help!
 
-Here are [list of Go+ Contributors](https://github.com/qiniu/goplus/wiki/Goplus-Contributors). We award an email account (XXX@goplus.org) for every contributor. And we suggest you commit code by using this email account:
+Here are [list of Go+ Contributors](https://github.com/goplus/gop/wiki/Goplus-Contributors). We award an email account (XXX@goplus.org) for every contributor. And we suggest you commit code by using this email account:
 
 ```bash
 git config --global user.email XXX@goplus.org

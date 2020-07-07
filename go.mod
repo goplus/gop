@@ -1,4 +1,4 @@
-module github.com/qiniu/goplus
+module github.com/goplus/gop
 
 go 1.14
 

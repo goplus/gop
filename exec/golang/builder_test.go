@@ -20,12 +20,12 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/qiniu/goplus/cl"
-	"github.com/qiniu/goplus/exec.spec"
+	"github.com/goplus/gop/cl"
+	"github.com/goplus/gop/exec.spec"
 	"github.com/qiniu/x/log"
 
-	qexec "github.com/qiniu/goplus/exec/bytecode"
-	_ "github.com/qiniu/goplus/lib"
+	qexec "github.com/goplus/gop/exec/bytecode"
+	_ "github.com/goplus/gop/lib"
 )
 
 // I is a Go package instance.

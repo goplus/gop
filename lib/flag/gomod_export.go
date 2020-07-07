@@ -6,8 +6,8 @@ import (
 	io "io"
 	time "time"
 
-	qspec "github.com/qiniu/goplus/exec.spec"
-	gop "github.com/qiniu/goplus/gop"
+	qspec "github.com/goplus/gop/exec.spec"
+	gop "github.com/goplus/gop/gop"
 )
 
 func execArg(_ int, p *gop.Context) {

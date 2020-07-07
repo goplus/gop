@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/qiniu/goplus/tutorial/14-Using-goplus-in-Go/foo"
+	"github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/foo"
 )
 
 func main() {

@@ -24,8 +24,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/qiniu/goplus/exec.spec"
-	"github.com/qiniu/goplus/lib/builtin"
+	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/lib/builtin"
 	"github.com/qiniu/x/log"
 )
 

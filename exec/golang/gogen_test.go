@@ -22,10 +22,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/qiniu/goplus/ast"
-	"github.com/qiniu/goplus/cl"
-	"github.com/qiniu/goplus/parser"
-	"github.com/qiniu/goplus/token"
+	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/cl"
+	"github.com/goplus/gop/parser"
+	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/log"
 )
 

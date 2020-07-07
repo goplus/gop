@@ -21,14 +21,14 @@ import (
 	"os"
 	"testing"
 
-	"github.com/qiniu/goplus/ast/asttest"
-	"github.com/qiniu/goplus/gop"
-	"github.com/qiniu/goplus/parser"
-	"github.com/qiniu/goplus/token"
+	"github.com/goplus/gop/ast/asttest"
+	"github.com/goplus/gop/gop"
+	"github.com/goplus/gop/parser"
+	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/log"
 
-	exec "github.com/qiniu/goplus/exec/bytecode"
-	libbuiltin "github.com/qiniu/goplus/lib/builtin"
+	exec "github.com/goplus/gop/exec/bytecode"
+	libbuiltin "github.com/goplus/gop/lib/builtin"
 )
 
 // -----------------------------------------------------------------------------

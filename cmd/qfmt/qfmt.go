@@ -16,7 +16,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/qiniu/goplus/format"
+	"github.com/goplus/gop/format"
 )
 
 var (

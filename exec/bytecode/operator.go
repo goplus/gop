@@ -21,7 +21,7 @@ import (
 	"math/big"
 	"reflect"
 
-	"github.com/qiniu/goplus/exec.spec"
+	"github.com/goplus/gop/exec.spec"
 	"github.com/qiniu/x/log"
 )
 

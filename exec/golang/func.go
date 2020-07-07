@@ -22,8 +22,8 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/qiniu/goplus/exec.spec"
-	"github.com/qiniu/goplus/exec/golang/internal/go/printer"
+	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/exec/golang/internal/go/printer"
 	"github.com/qiniu/x/log"
 )
 

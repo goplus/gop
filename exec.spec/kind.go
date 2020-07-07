@@ -21,7 +21,7 @@ import (
 	"reflect"
 	"unsafe"
 
-	"github.com/qiniu/goplus/ast/spec"
+	"github.com/goplus/gop/ast/spec"
 )
 
 // -----------------------------------------------------------------------------

@@ -26,9 +26,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/qiniu/goplus/ast"
-	"github.com/qiniu/goplus/scanner"
-	"github.com/qiniu/goplus/token"
+	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/scanner"
+	"github.com/goplus/gop/token"
 )
 
 // -----------------------------------------------------------------------------

@@ -5,7 +5,7 @@ import (
 	reflect "reflect"
 	unsafe "unsafe"
 
-	gop "github.com/qiniu/goplus/gop"
+	gop "github.com/goplus/gop/gop"
 )
 
 func toSlice0(args []interface{}) []reflect.Value {
