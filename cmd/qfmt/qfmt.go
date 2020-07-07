@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"go/printer"
+	"go/scanner"
 	"io"
 	"io/ioutil"
 	"os"
@@ -16,7 +17,6 @@ import (
 	"strings"
 
 	"github.com/qiniu/goplus/format"
-	"github.com/qiniu/goplus/scanner"
 )
 
 var (
