@@ -7,6 +7,7 @@ import (
 	_ "github.com/qiniu/goplus/lib/fmt"
 	_ "github.com/qiniu/goplus/lib/io"
 	_ "github.com/qiniu/goplus/lib/io/ioutil"
+	_ "github.com/qiniu/goplus/lib/log"
 	_ "github.com/qiniu/goplus/lib/os"
 	_ "github.com/qiniu/goplus/lib/reflect"
 	_ "github.com/qiniu/goplus/lib/strconv"
