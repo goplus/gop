@@ -302,17 +302,23 @@ func Lookup(ident string) Token {
 // IsLiteral returns true for tokens corresponding to identifiers
 // and basic type literals; it returns false otherwise.
 //
-func (tok Token) IsLiteral() bool { return literal_beg < tok && tok <= literal_end }
+func (tok Token) IsLiteral() bool {
+	return literal_beg < tok && tok <= literal_end
+}
 
 // IsOperator returns true for tokens corresponding to operators and
 // delimiters; it returns false otherwise.
 //
-func (tok Token) IsOperator() bool { return operator_beg < tok && tok <= operator_end }
+func (tok Token) IsOperator() bool {
+	return operator_beg < tok && tok <= operator_end
+}
 
 // IsKeyword returns true for tokens corresponding to keywords;
 // it returns false otherwise.
 //
-func (tok Token) IsKeyword() bool { return keyword_beg < tok && tok < keyword_end }
+func (tok Token) IsKeyword() bool {
+	return keyword_beg < tok && tok < keyword_end
+}
 
 // IsExported reports whether name starts with an upper-case letter.
 //
