@@ -5,7 +5,7 @@ GoPlus - The Go+ language for data science
 [![Build Status](https://travis-ci.org/qiniu/goplus.png?branch=master)](https://travis-ci.org/qiniu/goplus)
 [![Go Report Card](https://goreportcard.com/badge/github.com/goplus/gop)](https://goreportcard.com/report/github.com/goplus/gop)
 [![GitHub release](https://img.shields.io/github/v/tag/qiniu/goplus.svg?label=release)](https://github.com/goplus/gop/releases)
-[![Coverage Status](https://codecov.io/gh/qiniu/goplus/branch/master/graph/badge.svg)](https://codecov.io/gh/qiniu/goplus)
+[![Coverage Status](https://codecov.io/gh/goplus/gop/branch/master/graph/badge.svg)](https://codecov.io/gh/goplus/gop)
 [![TODOs](https://badgen.net/https/api.tickgit.com/badgen/github.com/goplus/gop)](https://www.tickgit.com/browse?repo=github.com/goplus/gop)
 [![GoDoc](https://img.shields.io/badge/Godoc-reference-blue.svg)](https://godoc.org/github.com/goplus/gop)
 
