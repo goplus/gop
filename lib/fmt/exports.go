@@ -20,8 +20,8 @@ package fmt
 import (
 	"fmt"
 
-	"github.com/qiniu/goplus/gop"
-	"github.com/qiniu/goplus/lib/builtin"
+	"github.com/goplus/gop/gop"
+	"github.com/goplus/gop/lib/builtin"
 )
 
 // -----------------------------------------------------------------------------

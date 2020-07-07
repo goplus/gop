@@ -12,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/qiniu/goplus/parser"
-	"github.com/qiniu/goplus/token"
+	"github.com/goplus/gop/parser"
+	"github.com/goplus/gop/token"
 )
 
 const testfile = "format_test.go"

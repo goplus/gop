@@ -23,11 +23,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/qiniu/goplus/ast/asttest"
-	qspec "github.com/qiniu/goplus/exec.spec"
-	exec "github.com/qiniu/goplus/exec/bytecode"
-	"github.com/qiniu/goplus/parser"
-	"github.com/qiniu/goplus/token"
+	"github.com/goplus/gop/ast/asttest"
+	qspec "github.com/goplus/gop/exec.spec"
+	exec "github.com/goplus/gop/exec/bytecode"
+	"github.com/goplus/gop/parser"
+	"github.com/goplus/gop/token"
 )
 
 type testConstInfo struct {

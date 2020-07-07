@@ -12,7 +12,7 @@ import (
 	"os"
 	"reflect"
 
-	"github.com/qiniu/goplus/token"
+	"github.com/goplus/gop/token"
 )
 
 // A FieldFilter may be provided to Fprint to control the output.

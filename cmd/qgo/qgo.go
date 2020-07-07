@@ -29,15 +29,15 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/qiniu/goplus/ast"
-	"github.com/qiniu/goplus/cl"
-	"github.com/qiniu/goplus/exec/bytecode"
-	"github.com/qiniu/goplus/exec/golang"
-	"github.com/qiniu/goplus/parser"
-	"github.com/qiniu/goplus/token"
+	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/cl"
+	"github.com/goplus/gop/exec/bytecode"
+	"github.com/goplus/gop/exec/golang"
+	"github.com/goplus/gop/parser"
+	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/log"
 
-	_ "github.com/qiniu/goplus/lib"
+	_ "github.com/goplus/gop/lib"
 )
 
 var (

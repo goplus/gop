@@ -5,7 +5,7 @@ import (
 	atomic "sync/atomic"
 	unsafe "unsafe"
 
-	gop "github.com/qiniu/goplus/gop"
+	gop "github.com/goplus/gop/gop"
 )
 
 func execAddInt32(_ int, p *gop.Context) {

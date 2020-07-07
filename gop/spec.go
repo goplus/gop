@@ -19,7 +19,7 @@
 package gop
 
 import (
-	exec "github.com/qiniu/goplus/exec/bytecode"
+	exec "github.com/goplus/gop/exec/bytecode"
 )
 
 // -----------------------------------------------------------------------------

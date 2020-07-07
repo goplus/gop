@@ -26,7 +26,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/qiniu/goplus/cmd/qexp/gopkg"
+	"github.com/goplus/gop/cmd/qexp/gopkg"
 )
 
 var (
@@ -114,7 +114,7 @@ func isGoplus(modfile string) bool {
 }
 
 var (
-	goplusPrefix = []byte("module github.com/qiniu/goplus")
+	goplusPrefix = []byte("module github.com/goplus/gop")
 )
 
 func hasFile(path string) bool {

@@ -22,11 +22,11 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/qiniu/goplus/ast/asttest"
-	"github.com/qiniu/goplus/parser"
-	"github.com/qiniu/goplus/token"
+	"github.com/goplus/gop/ast/asttest"
+	"github.com/goplus/gop/parser"
+	"github.com/goplus/gop/token"
 
-	exec "github.com/qiniu/goplus/exec/bytecode"
+	exec "github.com/goplus/gop/exec/bytecode"
 )
 
 // -----------------------------------------------------------------------------

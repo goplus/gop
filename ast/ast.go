@@ -10,7 +10,7 @@ package ast
 import (
 	"strings"
 
-	"github.com/qiniu/goplus/token"
+	"github.com/goplus/gop/token"
 )
 
 // ----------------------------------------------------------------------------

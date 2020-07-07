@@ -25,10 +25,10 @@ import (
 	"reflect"
 	"syscall"
 
-	"github.com/qiniu/goplus/ast"
-	"github.com/qiniu/goplus/ast/astutil"
-	"github.com/qiniu/goplus/exec.spec"
-	"github.com/qiniu/goplus/token"
+	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/ast/astutil"
+	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/log"
 )
 

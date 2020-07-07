@@ -63,7 +63,7 @@ type Exporter struct {
 
 // NewExporter creates a go package exporter.
 func NewExporter(w io.Writer, pkg *types.Package) *Exporter {
-	const gopPath = "github.com/qiniu/goplus/gop"
+	const gopPath = "github.com/goplus/gop/gop"
 	imports := map[string]string{gopPath: "gop"}
 	importPkgs := map[string]string{"gop": gopPath}
 	p := &Exporter{w: w, pkg: pkg, imports: imports, importPkgs: importPkgs}
@@ -347,7 +347,7 @@ func (p *Exporter) ExportVar(typ *types.Var) {
 }
 
 var (
-	qspecPkg = types.NewPackage("github.com/qiniu/goplus/exec.spec", "qspec")
+	qspecPkg = types.NewPackage("github.com/goplus/gop/exec.spec", "qspec")
 )
 
 // ExportConst exports a go const.

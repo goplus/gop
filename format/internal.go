@@ -14,10 +14,10 @@ import (
 
 	goparser "go/parser"
 
-	"github.com/qiniu/goplus/ast"
-	"github.com/qiniu/goplus/parser"
-	"github.com/qiniu/goplus/printer"
-	"github.com/qiniu/goplus/token"
+	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/parser"
+	"github.com/goplus/gop/printer"
+	"github.com/goplus/gop/token"
 )
 
 // parse parses src, which was read from the named file,

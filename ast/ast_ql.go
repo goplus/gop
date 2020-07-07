@@ -17,7 +17,7 @@
 package ast
 
 import (
-	"github.com/qiniu/goplus/token"
+	"github.com/goplus/gop/token"
 )
 
 // ----------------------------------------------------------------------------

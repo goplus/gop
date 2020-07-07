@@ -22,13 +22,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/qiniu/goplus/cl"
-	"github.com/qiniu/goplus/parser"
-	"github.com/qiniu/goplus/token"
+	"github.com/goplus/gop/cl"
+	"github.com/goplus/gop/parser"
+	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/log"
 
-	exec "github.com/qiniu/goplus/exec/bytecode"
-	_ "github.com/qiniu/goplus/lib"
+	exec "github.com/goplus/gop/exec/bytecode"
+	_ "github.com/goplus/gop/lib"
 )
 
 // -----------------------------------------------------------------------------
