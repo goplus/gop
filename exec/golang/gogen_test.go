@@ -78,7 +78,7 @@ func testGenGo(t *testing.T, pkgDir, sel, exclude string) {
 }
 
 func TestGenGofile(t *testing.T) {
-	sel, exclude := "", ""
+	sel, exclude := "", "23"
 	dir, err := os.Getwd()
 	if err != nil {
 		t.Fatal("Getwd failed:", err)

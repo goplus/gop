@@ -492,7 +492,7 @@ func (p *Builder) SetMapIndex() *Builder {
 	return p
 }
 
-// SetMapIndex instr
+// Delete instr
 func (p *Builder) Delete() *Builder {
 	p.rhs.Push(deleteIdent)
 	p.Call(2, false)
