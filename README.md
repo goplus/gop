@@ -75,7 +75,7 @@ x := strings.NewReplacer("?", "!").Replace("hello, world???")
 fmt.Println("x:", x)
 ```
 
-Be interested in how it works? See [Dive into Go+](https://github.com/goplus/gop/wiki/Dive-into-Goplus).
+Be interested in how it works? See [Import Go packages in Go programs](https://github.com/goplus/gop/wiki/Import-Go-packages-in-Go--programs).
 
 **Also, all Go+ packages can be converted into Go packages and imported in Go programs.**
 
