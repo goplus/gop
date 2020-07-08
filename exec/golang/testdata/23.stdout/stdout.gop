@@ -1,3 +1,4 @@
+/*TODO
 import (
 	"log"
 	"os"
@@ -7,3 +8,4 @@ log.Println("hello", true)
 
 logger := log.New(os.Stdout, "logger: ", log.Lshortfile)
 logger.Println("foo", "bar", false, 666)
+*/

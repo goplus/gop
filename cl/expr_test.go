@@ -1264,3 +1264,63 @@ func TestDelete(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
+var testCopyClauses = map[string]testData{
+	"copy_int": {`
+					a:=[1,2,3]
+					b:=[4,5,6]
+					n:=copy(b,a)
+					println(n)
+					println(b)
+					`, []string{"3", "[1 2 3]"}},
+	"copy_string": {`
+					a:=["hello"]
+					b:=["hi"]
+					n:=copy(b,a)
+					println(n)
+					println(b)
+					`, []string{"1", "[hello]"}},
+	"copy_byte_string": {`
+					a:=[byte(65),byte(66),byte(67)]
+					println(string(a))
+					n:=copy(a,"abc")
+					println(n)
+					println(a)
+					println(string(a))
+					`, []string{"ABC", "3", "[97 98 99]", "abc"}},
+	"copy_one_args_panic": {`
+					a:=[1,2,3]
+					copy(a)
+					println(a)
+					`, []string{"_panic"}},
+	"copy_multi_args_panic": {`
+					a:=[1,2,3]
+					copy(a,a,a)
+					println(a)
+					`, []string{"_panic"}},
+	"copy_string_panic": {`
+					a:=[65,66,67]
+					copy(a,"abc")
+					println(a)
+					`, []string{"_panic"}},
+	"copy_different_type_panic": {`
+					a:=[65,66,67]
+					b:=[1.2,1.5,1.7]
+					copy(b,a)
+					copy(b,a)
+					println(b)
+					`, []string{"_panic"}},
+	"copy_with_operation": {`
+					a:=[65,66,67]
+					b:=[1]
+					println(copy(a,b)+copy(b,a)==2)
+					`, []string{"true"}},
+}
+
+func TestCopy(t *testing.T) {
+	for name, clause := range testCopyClauses {
+		testSingleStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
+	}
+}
+
+// -----------------------------------------------------------------------------

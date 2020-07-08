@@ -655,12 +655,15 @@ func TestCopy(t *testing.T) {
 		LoadVar(b).
 		LoadVar(a).
 		Copy().
+		LoadVar(b).
 		Resolve()
 
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
-	if v := checkPop(ctx); true {
-		t.Log(v)
+	arr := ctx.Pop().([]int)
+	n := ctx.Pop().(int)
+	if n != 1 || reflect.DeepEqual(arr, []int{11, 2, 3}) {
+		t.Fatal("copy failed")
 	}
 }
 
@@ -668,18 +671,21 @@ func TestCopy2(t *testing.T) {
 	a := NewVar(reflect.SliceOf(TyByte), "")
 	code := newBuilder().
 		DefineVar(a).
-		Push(byte(56)).
-		Push(byte(57)).
+		Push(byte(96)).
+		Push(byte(97)).
 		MakeArray(reflect.SliceOf(TyByte), 2).
 		StoreVar(a).
 		LoadVar(a).
 		Push("hello").
 		Copy().
+		LoadVar(a).
 		Resolve()
 
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
-	if v := checkPop(ctx); true {
-		t.Fatal(v)
+	arr := ctx.Pop().([]byte)
+	n := ctx.Pop().(int)
+	if n != 2 || string(arr) != "he" {
+		t.Fatal("copy failed")
 	}
 }
