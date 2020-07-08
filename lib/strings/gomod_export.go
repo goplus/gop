@@ -6,7 +6,7 @@ import (
 	strings "strings"
 	unicode "unicode"
 
-	gop "github.com/goplus/gop/gop"
+	gop "github.com/goplus/gop"
 )
 
 func execBuilderString(_ int, p *gop.Context) {

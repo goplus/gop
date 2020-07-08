@@ -63,7 +63,7 @@ type Exporter struct {
 
 // NewExporter creates a go package exporter.
 func NewExporter(w io.Writer, pkg *types.Package) *Exporter {
-	const gopPath = "github.com/goplus/gop/gop"
+	const gopPath = "github.com/goplus/gop"
 	imports := map[string]string{gopPath: "gop"}
 	importPkgs := map[string]string{"gop": gopPath}
 	p := &Exporter{w: w, pkg: pkg, imports: imports, importPkgs: importPkgs}
