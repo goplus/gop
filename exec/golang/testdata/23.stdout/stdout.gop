@@ -1,9 +1,9 @@
 import (
-    "log"
-    "os"
+	"log"
+	"os"
 )
 
 log.Println("hello", true)
 
 logger := log.New(os.Stdout, "logger: ", log.Lshortfile)
-logger.Println("foo","bar", false, 666)
+logger.Println("foo", "bar", false, 666)
