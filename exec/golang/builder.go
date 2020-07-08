@@ -131,6 +131,7 @@ var (
 	newIdent    = Ident("new")
 	nilIdent    = Ident("nil")
 	deleteIdent = Ident("delete")
+	copyIdent   = Ident("copy")
 )
 
 // Resolve resolves all unresolved labels/functions/consts/etc.

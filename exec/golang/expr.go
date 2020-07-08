@@ -499,6 +499,13 @@ func (p *Builder) Delete() *Builder {
 	return p
 }
 
+// Copy instr
+func (p *Builder) Copy() *Builder {
+	p.rhs.Push(copyIdent)
+	p.Call(2, false)
+	return p
+}
+
 // Index instr
 func (p *Builder) Index(idx int) *Builder {
 	p.rhs.Push(IndexWith(p, idx))
