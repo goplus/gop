@@ -26,7 +26,7 @@ package strings
 import (
 	strings "strings"
 
-	gop "github.com/goplus/gop/gop"
+	gop "github.com/goplus/gop"
 )
 
 func execNewReplacer(arity int, p *gop.Context) {

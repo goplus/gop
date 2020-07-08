@@ -24,7 +24,7 @@ import (
 	"io"
 	"reflect"
 
-	"github.com/goplus/gop/gop"
+	"github.com/goplus/gop"
 
 	qspec "github.com/goplus/gop/exec.spec"
 	exec "github.com/goplus/gop/exec/bytecode"

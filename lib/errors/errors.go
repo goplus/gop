@@ -3,7 +3,7 @@ package errors
 import (
 	"reflect"
 
-	"github.com/goplus/gop/gop"
+	"github.com/goplus/gop"
 	"github.com/qiniu/x/errors"
 )
 

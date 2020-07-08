@@ -4,7 +4,7 @@ package strconv
 import (
 	strconv "strconv"
 
-	gop "github.com/goplus/gop/gop"
+	gop "github.com/goplus/gop"
 )
 
 func execAppendBool(_ int, p *gop.Context) {

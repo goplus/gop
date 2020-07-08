@@ -21,8 +21,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/goplus/gop"
 	"github.com/goplus/gop/ast/asttest"
-	"github.com/goplus/gop/gop"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/log"

@@ -6,7 +6,7 @@ import (
 	ioutil "io/ioutil"
 	os "os"
 
-	gop "github.com/goplus/gop/gop"
+	gop "github.com/goplus/gop"
 )
 
 func toType0(v interface{}) io.Reader {

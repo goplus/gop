@@ -5,8 +5,8 @@ import (
 	os "os"
 	time "time"
 
+	gop "github.com/goplus/gop"
 	qspec "github.com/goplus/gop/exec.spec"
-	gop "github.com/goplus/gop/gop"
 )
 
 func execChdir(_ int, p *gop.Context) {

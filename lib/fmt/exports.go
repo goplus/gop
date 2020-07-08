@@ -20,7 +20,7 @@ package fmt
 import (
 	"fmt"
 
-	"github.com/goplus/gop/gop"
+	"github.com/goplus/gop"
 	"github.com/goplus/gop/lib/builtin"
 )
 
