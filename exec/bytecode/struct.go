@@ -101,7 +101,9 @@ func (ctx *varScope) setVar(idx uint32, v interface{}) {
 
 func (ctx *varScope) setVarField(idx uint32, v interface{}, index interface{}) {
 	x := ctx.vars.Field(int(idx))
-	setValue(x.FieldByIndex(index.([]int)), v)
+	x = reflect.Indirect(x)
+	field := x.FieldByIndex(index.([]int))
+	setValue(field, v)
 }
 
 func setValue(x reflect.Value, v interface{}) {

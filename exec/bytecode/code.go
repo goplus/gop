@@ -115,9 +115,10 @@ const (
 	opErrWrap         = 42 // idx(26)
 	opWrapIfErr       = 43 // reserved(2) offset(24)
 	opLoadGoField     = 44
-	opStoreGoVarField = 45
-	opStoreVarField   = 46
-	opAddrGoField     = 47
+	opStoreVarField   = 45
+	opStoreGoVarField = 46
+	opStoreNoVarField = 47
+	opAddrGoField     = 48
 )
 
 const (
@@ -203,6 +204,7 @@ var instrInfos = []InstrInfo{
 	opLoadGoField:     {"loadGoField", "", "index", 26},                     // addr(26)
 	opStoreGoVarField: {"storeGoVarField", "addr", "index", 26},             // addr(26)
 	opStoreVarField:   {"storeVarField", "addr", "index", 26},               // addr(26)
+	opStoreNoVarField: {"storeNoVarField", "addr", "index", 26},             // addr(26)
 	opAddrGoField:     {"addrGoField", "", "index", 26},                     // addr(26)
 }
 

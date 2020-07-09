@@ -657,6 +657,9 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) func() {
 			case exec.SymbolFuncv:
 				ctx.out.CallGoFuncv(exec.GoFuncvAddr(vfn.addr), nexpr, arity)
 			}
+			if ctx.inLHS {
+				ctx.inVar = ret.Type()
+			}
 		}
 	case *goValue:
 		if vfn.t.Kind() != reflect.Func {
@@ -943,12 +946,7 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compleMode)
 		if sf, ok := t.FieldByName(name); ok {
 			checkType(sf.Type, in, ctx.out)
 			// TODO
-			switch v := ctx.inVar.(type) {
-			case exec.GoVarAddr:
-				ctx.out.StoreGoVarField(v, append(ctx.inFieldIndex, sf.Index...))
-			case exec.Var:
-				ctx.out.StoreVarField(v, append(ctx.inFieldIndex, sf.Index...))
-			}
+			ctx.out.StoreGoField(ctx.inVar, append(ctx.inFieldIndex, sf.Index...))
 		}
 	default:
 		log.Panicln("compileSelectorExprLHS failed: unknown -", reflect.TypeOf(vx))
@@ -999,7 +997,8 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 			}
 			switch kind {
 			case exec.SymbolFunc, exec.SymbolFuncv:
-				ctx.infer.Ret(1, newGoFunc(addr, kind, 0, ctx))
+				fn := newGoFunc(addr, kind, 0, ctx)
+				ctx.infer.Ret(1, fn)
 				return func() {
 					log.Panicln("compileSelectorExpr: todo")
 				}
@@ -1029,10 +1028,14 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 		if sf, ok := t.FieldByName(name); ok {
 			ctx.infer.Ret(1, &goValue{t: sf.Type})
 			if ctx.inLHS {
+				if ctx.inVar == nil {
+					exprX()
+				}
 				ctx.inFieldIndex = append(ctx.inFieldIndex, sf.Index...)
+				return func() {}
 			}
+			exprX()
 			return func() {
-				exprX()
 				ctx.out.LoadGoField(sf)
 			}
 		}

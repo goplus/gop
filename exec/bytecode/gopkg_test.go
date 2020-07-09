@@ -208,12 +208,12 @@ func TestGoField(t *testing.T) {
 		DefineVar(x).
 		Push("hello").
 		AddrGoVar(i).
-		StoreGoVarField(sf0).
+		StoreGoField(sf0).
 		Push(-1).
 		StoreVar(x).
 		LoadVar(x).
 		AddrGoVar(i).
-		StoreGoVarField(sf1).
+		StoreGoField(sf1).
 		Resolve()
 
 	ctx := NewContext(code)

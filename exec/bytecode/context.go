@@ -243,7 +243,6 @@ var _execTable = [...]func(i Instr, p *Context){
 	opPop:             execPop,
 	opLoadVar:         execLoadVar,
 	opStoreVar:        execStoreVar,
-	opStoreVarField:   execStoreVarField,
 	opAddrVar:         execAddrVar,
 	opAddrOp:          execAddrOp,
 	opLoadGoVar:       execLoadGoVar,
@@ -269,7 +268,9 @@ var _execTable = [...]func(i Instr, p *Context){
 	opErrWrap:         execErrWrap,
 	opWrapIfErr:       execWrapIfErr,
 	opLoadGoField:     execLoadGoField,
+	opStoreVarField:   execStoreVarField,
 	opStoreGoVarField: execStoreGoVarField,
+	opStoreNoVarField: execStoreNoVarField,
 	opAddrGoField:     execAddrGoField,
 }
 

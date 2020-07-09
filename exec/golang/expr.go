@@ -434,11 +434,25 @@ func (p *Builder) LoadGoField(sf reflect.StructField) *Builder {
 	return p
 }
 
-// StoreGoVarField instr
-func (p *Builder) StoreGoVarField(addr exec.GoVarAddr, index []int) *Builder {
-	gvi := defaultImpl.GetGoVarInfo(addr)
-	typ := reflect.TypeOf(gvi.This).Elem()
-	expr := &ast.SelectorExpr{X: p.GoSymIdent(gvi.Pkg.PkgPath(), gvi.Name)}
+// StoreGoField instr
+func (p *Builder) StoreGoField(v interface{}, index []int) *Builder {
+	var typ reflect.Type
+	expr := &ast.SelectorExpr{}
+	switch x := v.(type) {
+	case exec.GoVarAddr:
+		gvi := defaultImpl.GetGoVarInfo(x)
+		typ = reflect.TypeOf(gvi.This).Elem()
+		expr.X = p.GoSymIdent(gvi.Pkg.PkgPath(), gvi.Name)
+	case exec.Var:
+		typ = x.Type()
+		expr.X = Ident(x.Name())
+	case reflect.Type:
+		typ = x
+		expr.X = p.rhs.Pop().(ast.Expr)
+	}
+	if typ.Kind() == reflect.Ptr {
+		typ = typ.Elem()
+	}
 	for i := 0; i < len(index); i++ {
 		sf := typ.FieldByIndex(index[:i+1])
 		if sf.Anonymous {

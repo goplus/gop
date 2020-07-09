@@ -245,8 +245,6 @@ func (p *Builder) storeVar(addr tAddress) *Builder {
 
 // StoreVarField instr
 func (p *Builder) storeVarField(addr tAddress, index []int) *Builder {
-	p.Push(index)
-	p.code.data = append(p.code.data, (opStoreVarField<<bitsOpShift)|uint32(addr))
 	return p
 }
 

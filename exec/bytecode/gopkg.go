@@ -80,6 +80,18 @@ func execStoreGoVarField(i Instr, p *Context) {
 	setValue(v.FieldByIndex(index.([]int)), value)
 }
 
+func execStoreNoVarField(i Instr, p *Context) {
+	index := p.Pop()
+	val := p.Pop()
+	value := p.Pop()
+	v := reflect.ValueOf(val)
+	v = reflect.Indirect(v)
+	if !v.CanSet() {
+		log.Panicf("cannot assign to %v\n", v)
+	}
+	setValue(v.FieldByIndex(index.([]int)), value)
+}
+
 func execAddrGoField(i Instr, p *Context) {
 	index := p.Pop()
 	v := reflect.ValueOf(p.Pop()).Elem()
@@ -424,14 +436,22 @@ func (p *Builder) LoadGoField(sf reflect.StructField) *Builder {
 	return p
 }
 
-// StoreGoVarField instr
-func (p *Builder) StoreGoVarField(addr GoVarAddr, index []int) *Builder {
+// StoreGoField instr
+func (p *Builder) StoreGoField(v interface{}, index []int) *Builder {
 	p.Push(index)
-	i := (opStoreGoVarField << bitsOpShift) | uint32(addr)
-	p.code.data = append(p.code.data, i)
+	switch x := v.(type) {
+	case exec.GoVarAddr:
+		i := (opStoreGoVarField << bitsOpShift) | uint32(x)
+		p.code.data = append(p.code.data, i)
+	case *Var:
+		addr := makeAddr(p.nestDepth-x.nestDepth, x.idx)
+		p.code.data = append(p.code.data, (opStoreVarField<<bitsOpShift)|uint32(addr))
+	case reflect.Type:
+		i := (opStoreNoVarField << bitsOpShift)
+		p.code.data = append(p.code.data, uint32(i))
+	}
 	return p
 }
-
 
 // AddrGoField instr
 func (p *Builder) AddrGoField(sf reflect.StructField) *Builder {
