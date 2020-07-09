@@ -945,7 +945,6 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compleMode)
 		name := v.Sel.Name
 		if sf, ok := t.FieldByName(name); ok {
 			checkType(sf.Type, in, ctx.out)
-			// TODO
 			ctx.out.StoreGoField(ctx.inVar, append(ctx.inFieldIndex, sf.Index...))
 		}
 	default:

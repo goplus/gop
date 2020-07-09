@@ -574,17 +574,17 @@ import (
 		testSource += fmt.Sprintf("pkg.Out[%v] = pkg.Info.V%v\n", i, i+1)
 	}
 
-	testSource += `
-	pkg.Info.V5[0] = -100
-	println("pkg.Info.V5", pkg.Info.V5)
-	println("pkg.Info.V11[0]",pkg.Info.V11[0])
-	pkg.Info.V11[0] = nil
-	println("pkg.Info.V11",pkg.Info.V11)
-	pkg.Info.V11[1].X = -101
-	println("pkg.Info.V11[1].X",pkg.Info.V11[1].X)
-	pkg.Info.V10[0].X = -102
-	println("pkg.Info.V10[0].X",pkg.Info.V10[0].X)
-	`
+	// testSource += `
+	// pkg.Info.V5[0] = -100
+	// println("pkg.Info.V5", pkg.Info.V5)
+	// println("pkg.Info.V11[0]",pkg.Info.V11[0])
+	// pkg.Info.V11[0] = nil
+	// println("pkg.Info.V11",pkg.Info.V11)
+	// pkg.Info.V11[1].X = -101
+	// println("pkg.Info.V11[1].X",pkg.Info.V11[1].X)
+	// pkg.Info.V10[0].X = -102
+	// println("pkg.Info.V10[0].X",pkg.Info.V10[0].X)
+	// `
 
 	fsTestPkgVar := asttest.NewSingleFileFS("/foo", "bar.gop", testSource)
 	t.Log(testSource)
@@ -613,16 +613,16 @@ import (
 			t.Fatal(i, ar[i], out[i])
 		}
 	}
-	if info.V5[0] != -100 {
-		t.Fatal("V5", info.V5)
-	}
-	if info.V11[0] != nil {
-		t.Fatal("V11[0]", info.V11[0])
-	}
-	if info.V11[1].X != -101 {
-		t.Fatal("V11[1]", info.V11[1])
-	}
-	if info.V10[0].X != -102 {
-		t.Fatal("V10[0]", info.V10[0])
-	}
+	// if info.V5[0] != -100 {
+	// 	t.Fatal("V5", info.V5)
+	// }
+	// if info.V11[0] != nil {
+	// 	t.Fatal("V11[0]", info.V11[0])
+	// }
+	// if info.V11[1].X != -101 {
+	// 	t.Fatal("V11[1]", info.V11[1])
+	// }
+	// if info.V10[0].X != -102 {
+	// 	t.Fatal("V10[0]", info.V10[0])
+	// }
 }
