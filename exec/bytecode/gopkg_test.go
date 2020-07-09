@@ -184,17 +184,6 @@ type testPoint struct {
 	Ar [5]testBaseInfo
 }
 
-type testBaseInfo struct {
-	Info string
-}
-
-type testPoint struct {
-	testBaseInfo
-	X  int
-	Y  int
-	Ar [5]testBaseInfo
-}
-
 func TestGoField(t *testing.T) {
 	pkg := NewGoPackage("pkg_field")
 
