@@ -275,7 +275,7 @@ func ToComplex(x Value) Value {
 // If y is Unknown, the result is Unknown.
 //
 func UnaryOp(op token.Token, y Value, prec uint) Value {
-	return constant.UnaryOp(op, y, prec)
+	return constant.UnaryOp(gotoken.Token(op), y, prec)
 }
 
 // BinaryOp returns the result of the binary expression x op y.
@@ -289,7 +289,7 @@ func UnaryOp(op token.Token, y Value, prec uint) Value {
 // Division by zero leads to a run-time panic.
 //
 func BinaryOp(x Value, op token.Token, y Value) Value {
-	return constant.BinaryOp(x, op, y)
+	return constant.BinaryOp(x, gotoken.Token(op), y)
 }
 
 // Shift returns the result of the shift expression x op s
@@ -297,7 +297,7 @@ func BinaryOp(x Value, op token.Token, y Value) Value {
 // an Int or an Unknown. If x is Unknown, the result is x.
 //
 func Shift(x Value, op token.Token, s uint) Value {
-	return constant.Shift(x, op, s)
+	return constant.Shift(x, gotoken.Token(op), s)
 }
 
 // Compare returns the result of the comparison x op y.
@@ -306,7 +306,7 @@ func Shift(x Value, op token.Token, s uint) Value {
 // false.
 //
 func Compare(x Value, op token.Token, y Value) bool {
-	return constant.Compare(x, op, y)
+	return constant.Compare(x, gotoken.Token(op), y)
 }
 
 // ----------------------------------------------------------------------------

@@ -126,7 +126,7 @@ const (
 	keyword_end
 
 	RAT      = literal_end  // 123.5r
-	QUESTION = operator_end // ~
+	QUESTION = operator_end // ?
 )
 
 var tokens = [...]string{
