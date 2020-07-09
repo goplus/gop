@@ -41,9 +41,9 @@ const (
 // -----------------------------------------------------------------------------
 
 func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compleMode) {
-	ctx.inLHS = true
-	ctx.inVar = nil
-	ctx.inFieldIndex = nil
+	ctx.inLhsMode = true
+	ctx.inLhsVar = nil
+	ctx.inLhsFieldIndex = nil
 	switch v := expr.(type) {
 	case *ast.Ident:
 		compileIdentLHS(ctx, v.Name, mode)
@@ -54,7 +54,7 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compleMode) {
 	default:
 		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
 	}
-	ctx.inLHS = false
+	ctx.inLhsMode = false
 }
 
 func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
@@ -156,11 +156,11 @@ func compileIdent(ctx *blockCtx, name string) func() {
 		case *execVar:
 			ctx.infer.Push(&goValue{t: v.v.Type()})
 			kind := v.v.Type().Kind()
-			if ctx.inLHS {
-				ctx.inVar = v.v
+			if ctx.inLhsMode {
+				ctx.inLhsVar = v.v
 			}
 			return func() {
-				if ctx.inLHS && (kind == reflect.Array ||
+				if ctx.inLhsMode && (kind == reflect.Array ||
 					kind == reflect.Struct) {
 					ctx.out.AddrVar(v.v)
 				} else {
@@ -657,8 +657,8 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) func() {
 			case exec.SymbolFuncv:
 				ctx.out.CallGoFuncv(exec.GoFuncvAddr(vfn.addr), nexpr, arity)
 			}
-			if ctx.inLHS {
-				ctx.inVar = ret.Type()
+			if ctx.inLhsMode {
+				ctx.inLhsVar = ret.Type()
 			}
 		}
 	case *goValue:
@@ -941,7 +941,7 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compleMode)
 		name := v.Sel.Name
 		if sf, ok := t.FieldByName(name); ok {
 			checkType(sf.Type, in, ctx.out)
-			ctx.out.StoreGoField(ctx.inVar, append(ctx.inFieldIndex, sf.Index...))
+			ctx.out.StoreGoField(ctx.inLhsVar, append(ctx.inLhsFieldIndex, sf.Index...))
 		}
 	default:
 		log.Panicln("compileSelectorExprLHS failed: unknown -", reflect.TypeOf(vx))
@@ -1001,11 +1001,11 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 				info := ctx.GetGoVarInfo(exec.GoVarAddr(addr))
 				vt := reflect.ValueOf(info.This)
 				ctx.infer.Ret(1, &goValue{t: vt.Elem().Type()})
-				if ctx.inLHS {
-					ctx.inVar = exec.GoVarAddr(addr)
+				if ctx.inLhsMode {
+					ctx.inLhsVar = exec.GoVarAddr(addr)
 				}
 				return func() {
-					if ctx.inLHS && vt.Elem().Kind() == reflect.Array {
+					if ctx.inLhsMode && vt.Elem().Kind() == reflect.Array {
 						ctx.out.AddrGoVar(exec.GoVarAddr(addr))
 					} else {
 						ctx.out.LoadGoVar(exec.GoVarAddr(addr))
@@ -1022,11 +1022,11 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 		name := v.Sel.Name
 		if sf, ok := t.FieldByName(name); ok {
 			ctx.infer.Ret(1, &goValue{t: sf.Type})
-			if ctx.inLHS {
-				if ctx.inVar == nil {
+			if ctx.inLhsMode {
+				if ctx.inLhsVar == nil {
 					exprX()
 				}
-				ctx.inFieldIndex = append(ctx.inFieldIndex, sf.Index...)
+				ctx.inLhsFieldIndex = append(ctx.inLhsFieldIndex, sf.Index...)
 				return func() {}
 			}
 			exprX()
