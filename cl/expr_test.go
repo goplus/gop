@@ -1288,6 +1288,18 @@ var testCopyClauses = map[string]testData{
 					println(a)
 					println(string(a))
 					`, []string{"ABC", "3", "[97 98 99]", "abc"}},
+	"copy_first_not_slice_panic": {`
+					a:=1
+					b:=[1,2,3]
+					copy(a,b)
+					println(a)
+					`, []string{"_panic"}},
+	"copy_second_not_slice_panic": {`
+					a:=1
+					b:=[1,2,3]
+					copy(b,a)
+					println(b)
+					`, []string{"_panic"}},
 	"copy_one_args_panic": {`
 					a:=[1,2,3]
 					copy(a)
