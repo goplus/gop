@@ -123,4 +123,63 @@ func main() {
 	}
 }
 
+type testBaseInfo struct {
+	Info string
+}
+
+type testPoint struct {
+	testBaseInfo
+	X  int
+	Y  int
+	Ar [5]testBaseInfo
+}
+
+func TestGoField(t *testing.T) {
+	codeExp := `package main
+
+import pkg_field "pkg_field"
+
+var x int
+
+func main() {
+	pkg_field.Pt.Info = "hello"
+	x = -1
+	pkg_field.Pt.X = x
+}
+`
+	pkg := qexec.NewGoPackage("pkg_field")
+
+	v := testPoint{}
+	v.Info = "Info"
+	pkg.RegisterVars(
+		pkg.Var("Pt", &v),
+	)
+
+	i, ok := pkg.FindVar("Pt")
+	if !ok {
+		t.Fatal("FindVar failed:", i)
+	}
+
+	x := NewVar(exec.TyInt, "x")
+
+	code := NewBuilder("main", nil, nil).
+		DefineVar(x).
+		Push("hello").
+		StoreGoField(i, []int{0, 0}).
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Push(-1).
+		StoreVar(x).
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		LoadVar(x).
+		StoreGoField(i, []int{1}).
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Resolve()
+
+	codeGen := code.String()
+	if codeGen != codeExp {
+		fmt.Println(codeGen)
+		t.Fatal("TestGoVar failed: codeGen != codeExp")
+	}
+}
+
 // -----------------------------------------------------------------------------
