@@ -44,7 +44,7 @@ func init() {
 // Cmd - gop go
 var Cmd = &base.Command{
 	UsageLine: "gop export [-outdir <outRootDir>] [packages]",
-	Short:     "Convert Go+ packages into Go packages",
+	Short:     "Export Go packages for Go+ programs",
 }
 
 func init() {
