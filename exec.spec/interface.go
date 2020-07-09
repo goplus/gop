@@ -170,6 +170,11 @@ type Code interface {
 	Len() int
 }
 
+type FieldInfo struct {
+	Var   interface{} // Var or GoVarInfo
+	Index []int
+}
+
 // Builder represents a executing byte code generator.
 type Builder interface {
 	// Push instr
@@ -287,7 +292,7 @@ type Builder interface {
 	LoadGoField(sf reflect.StructField) Builder
 
 	// StoreGoField instr
-	StoreGoField(sf reflect.StructField) Builder
+	StoreGoField(addr GoVarAddr, index []int) Builder
 
 	// AddrGoField instr
 	AddrGoField(sf reflect.StructField) Builder

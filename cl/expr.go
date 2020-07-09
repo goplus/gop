@@ -42,6 +42,8 @@ const (
 
 func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compleMode) {
 	ctx.inLHS = true
+	ctx.inVar = nil
+	ctx.inFieldIndex = nil
 	switch v := expr.(type) {
 	case *ast.Ident:
 		compileIdentLHS(ctx, v.Name, mode)
@@ -154,6 +156,9 @@ func compileIdent(ctx *blockCtx, name string) func() {
 		case *execVar:
 			ctx.infer.Push(&goValue{t: v.v.Type()})
 			kind := v.v.Type().Kind()
+			if ctx.inLHS {
+				ctx.inVar = v.v
+			}
 			return func() {
 				if ctx.inLHS && (kind == reflect.Array ||
 					kind == reflect.Struct) {
@@ -901,24 +906,15 @@ func getFuncInfo(fun exec.FuncInfo) (name string, narg int) {
 	return "main", 0
 }
 
-func parserSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) (sym string) {
-	switch x := v.X.(type) {
-	case *ast.Ident:
-		return x.Name
-	case *ast.SelectorExpr:
-		
-	}
-	return ""
-}
-
 func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compleMode) {
 	if mode == lhsDefine {
 		log.Panicln("compileSelectorExprLHS: `:=` can't be used for index expression")
 	}
 	in := ctx.infer.Get(-1)
-	parserSelectorExpr(ctx, v)
-
 	exprX := compileExpr(ctx, v.X)
+	//log.Println("-->", v.X, v.Sel, ctx.inStack)
+	log.Println(ctx.inFieldIndex)
+
 	x := ctx.infer.Get(-1)
 	ctx.infer.PopN(2)
 	switch vx := x.(type) {
@@ -949,14 +945,38 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compleMode)
 		name := v.Sel.Name
 		if sf, ok := t.FieldByName(name); ok {
 			checkType(sf.Type, in, ctx.out)
-			exprX()
-			ctx.out.StoreGoField(sf)
+			// TODO
+			log.Println("->", ctx.inVar, ctx.inFieldIndex, sf.Index)
+			ctx.out.StoreGoField(ctx.inVar.(exec.GoVarAddr), append(ctx.inFieldIndex, sf.Index...))
 		}
 	default:
 		log.Panicln("compileSelectorExprLHS failed: unknown -", reflect.TypeOf(vx))
 	}
 	_ = exprX
 }
+
+type Selection struct {
+	recv  reflect.Type // type of x
+	obj   interface{}
+	index []int
+}
+
+// func findSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) interface{} {
+// 	switch x := v.X.(type) {
+// 	case *ast.Ident:
+// 		if sym, ok := ctx.find(x.Name); ok {
+// 			switch v := sym.(type) {
+// 			case *exec.Var:
+// 			case *stackVar:
+// 			case string:
+// 				types.Selection
+// 				ctx.FindGoPackage(v)
+// 			}
+// 		}
+// 	case *ast.SelectorExpr:
+// 		findSelectorExpr(ctx, x)
+// 	}
+// }
 
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 	exprX := compileExpr(ctx, v.X)
@@ -986,6 +1006,9 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 				info := ctx.GetGoVarInfo(exec.GoVarAddr(addr))
 				vt := reflect.ValueOf(info.This)
 				ctx.infer.Ret(1, &goValue{t: vt.Elem().Type()})
+				if ctx.inLHS {
+					ctx.inVar = exec.GoVarAddr(addr)
+				}
 				return func() {
 					if ctx.inLHS && vt.Elem().Kind() == reflect.Array {
 						ctx.out.AddrGoVar(exec.GoVarAddr(addr))
@@ -1005,6 +1028,9 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 		if sf, ok := t.FieldByName(name); ok {
 			exprX()
 			ctx.infer.Ret(1, &goValue{t: sf.Type})
+			if ctx.inLHS {
+				ctx.inFieldIndex = append(ctx.inFieldIndex, sf.Index...)
+			}
 			return func() {
 				if ctx.inLHS {
 					ctx.out.AddrGoField(sf)

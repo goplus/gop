@@ -200,7 +200,7 @@ var instrInfos = []InstrInfo{
 	opErrWrap:       {"errWrap", "", "idx", 26},                           // idx(26)
 	opWrapIfErr:     {"wrapIfErr", "", "offset", 26},                      // reserved(2) offset(24)
 	opLoadGoField:   {"loadGoField", "", "index", 26},                     // addr(26)
-	opStoreGoField:  {"storeGoField", "", "index", 26},                    // addr(26)
+	opStoreGoField:  {"storeGoField", "addr", "index", 26},                // addr(26)
 	opAddrGoField:   {"addrGoField", "", "index", 26},                     // addr(26)
 }
 

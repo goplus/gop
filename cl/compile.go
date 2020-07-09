@@ -282,12 +282,14 @@ func checkLabel(fl *flowLabel) bool {
 type blockCtx struct {
 	*pkgCtx
 	*funcCtx
-	file      *fileCtx
-	parent    *blockCtx
-	syms      map[string]iSymbol
-	noExecCtx bool
-	checkFlag bool
-	inLHS     bool
+	file         *fileCtx
+	parent       *blockCtx
+	syms         map[string]iSymbol
+	noExecCtx    bool
+	checkFlag    bool
+	inLHS        bool
+	inVar        interface{}
+	inFieldIndex []int
 }
 
 // function block ctx

@@ -320,8 +320,8 @@ func (p *iBuilder) LoadGoField(sf reflect.StructField) exec.Builder {
 }
 
 // StoreGoField instr
-func (p *iBuilder) StoreGoField(sf reflect.StructField) exec.Builder {
-	((*Builder)(p)).StoreGoField(sf)
+func (p *iBuilder) StoreGoField(addr GoVarAddr, index []int) exec.Builder {
+	((*Builder)(p)).StoreGoField(addr, index)
 	return p
 }
 
@@ -382,12 +382,6 @@ func (p *iBuilder) Index(idx int) exec.Builder {
 // SetIndex instr
 func (p *iBuilder) SetIndex(idx int) exec.Builder {
 	((*Builder)(p)).SetIndex(idx)
-	return p
-}
-
-// AddrIndex instr
-func (p *iBuilder) AddrIndex(idx int) exec.Builder {
-	((*Builder)(p)).AddrIndex(idx)
 	return p
 }
 
