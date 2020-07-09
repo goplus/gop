@@ -32,14 +32,14 @@ import (
 
 // -----------------------------------------------------------------------------
 
-// CmdRun - go run
-var CmdRun = &base.Command{
+// Cmd - gop run
+var Cmd = &base.Command{
 	UsageLine: "gop run [-asm -quiet -debug -prof] <gopSrcDir|gopSrcFile>",
 	Short:     "run a Go+ program",
 }
 
 var (
-	flag      = &CmdRun.Flag
+	flag      = &Cmd.Flag
 	flagAsm   = flag.Bool("asm", false, "generates `asm` code of Go+ bytecode backend")
 	flagQuiet = flag.Bool("quiet", false, "don't generate any compiling stage log")
 	flagDebug = flag.Bool("debug", false, "print debug information")
@@ -47,10 +47,10 @@ var (
 )
 
 func init() {
-	CmdRun.Run = runRun
+	Cmd.Run = runCmd
 }
 
-func runRun(cmd *base.Command, args []string) {
+func runCmd(cmd *base.Command, args []string) {
 	flag.Parse(args)
 	if flag.NArg() < 1 {
 		cmd.Usage()

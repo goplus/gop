@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/cmd/internal/gengo"
 	"github.com/goplus/gop/cmd/internal/help"
 	"github.com/goplus/gop/cmd/internal/run"
 )
@@ -19,7 +20,8 @@ func mainUsage() {
 func init() {
 	base.Usage = mainUsage
 	base.Gop.Commands = []*base.Command{
-		run.CmdRun,
+		run.Cmd,
+		gengo.Cmd,
 	}
 }
 
