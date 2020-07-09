@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/cmd/internal/export"
 	"github.com/goplus/gop/cmd/internal/gengo"
 	"github.com/goplus/gop/cmd/internal/gopfmt"
 	"github.com/goplus/gop/cmd/internal/help"
@@ -24,6 +25,7 @@ func init() {
 		run.Cmd,
 		gengo.Cmd,
 		gopfmt.Cmd,
+		export.Cmd,
 	}
 }
 

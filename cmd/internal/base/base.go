@@ -84,3 +84,12 @@ var Usage func()
 
 // CmdName - "build", "install", "list", "mod tidy", etc.
 var CmdName string
+
+// Main runs a command.
+func Main(c *Command, app string, args []string) {
+	name := c.UsageLine
+	if i := strings.Index(name, " ["); i >= 0 {
+		c.UsageLine = app + name[i:]
+	}
+	c.Run(c, args)
+}
