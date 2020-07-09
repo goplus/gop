@@ -154,6 +154,25 @@ func (p *Builder) StoreVar(v exec.Var) *Builder {
 	return p
 }
 
+// StoreVarField instr
+func (p *Builder) StoreVarField(v exec.Var, index []int) *Builder {
+	typ := v.Type()
+	expr := &ast.SelectorExpr{X: Ident(v.Name())}
+	for i := 0; i < len(index); i++ {
+		sf := typ.FieldByIndex(index[:i+1])
+		if sf.Anonymous {
+			continue
+		}
+		if expr.Sel != nil {
+			expr.X = &ast.SelectorExpr{expr.X, expr.Sel}
+		}
+		expr.Sel = Ident(sf.Name)
+	}
+	p.lhs.Push(expr)
+
+	return p
+}
+
 // AddrVar instr
 func (p *Builder) AddrVar(v exec.Var) *Builder {
 	p.rhs.Push(&ast.UnaryExpr{

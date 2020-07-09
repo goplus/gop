@@ -72,7 +72,7 @@ func execLoadGoField(i Instr, p *Context) {
 	p.Push(v.FieldByIndex(index.([]int)).Interface())
 }
 
-func execStoreGoField(i Instr, p *Context) {
+func execStoreGoVarField(i Instr, p *Context) {
 	index := p.Pop()
 	value := p.Pop()
 	idx := i & bitsOperand
@@ -424,13 +424,14 @@ func (p *Builder) LoadGoField(sf reflect.StructField) *Builder {
 	return p
 }
 
-// StoreGoField instr
-func (p *Builder) StoreGoField(addr GoVarAddr, index []int) *Builder {
+// StoreGoVarField instr
+func (p *Builder) StoreGoVarField(addr GoVarAddr, index []int) *Builder {
 	p.Push(index)
-	i := (opStoreGoField << bitsOpShift) | uint32(addr)
+	i := (opStoreGoVarField << bitsOpShift) | uint32(addr)
 	p.code.data = append(p.code.data, i)
 	return p
 }
+
 
 // AddrGoField instr
 func (p *Builder) AddrGoField(sf reflect.StructField) *Builder {

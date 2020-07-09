@@ -291,8 +291,11 @@ type Builder interface {
 	// LoadGoField instr
 	LoadGoField(sf reflect.StructField) Builder
 
-	// StoreGoField instr
-	StoreGoField(addr GoVarAddr, index []int) Builder
+	// StoreGoVarField instr
+	StoreGoVarField(addr GoVarAddr, index []int) Builder
+
+	// StoreVarField instr
+	StoreVarField(addr Var, index []int) Builder
 
 	// AddrGoField instr
 	AddrGoField(sf reflect.StructField) Builder

@@ -304,6 +304,12 @@ func (p *iBuilder) StoreVar(v exec.Var) exec.Builder {
 	return p
 }
 
+// StoreVarField instr
+func (p *iBuilder) StoreVarField(v exec.Var, index []int) exec.Builder {
+	((*Builder)(p)).StoreVarField(v, index)
+	return p
+}
+
 // AddrVar instr
 func (p *iBuilder) AddrVar(v exec.Var) exec.Builder {
 	((*Builder)(p)).AddrVar(v.(*Var))
@@ -334,9 +340,9 @@ func (p *iBuilder) LoadGoField(sf reflect.StructField) exec.Builder {
 	return p
 }
 
-// StoreGoField instr
-func (p *iBuilder) StoreGoField(sf reflect.StructField) exec.Builder {
-	((*Builder)(p)).StoreGoField(sf)
+// StoreGoVarField instr
+func (p *iBuilder) StoreGoVarField(addr exec.GoVarAddr, index []int) exec.Builder {
+	((*Builder)(p)).StoreGoVarField(addr, index)
 	return p
 }
 

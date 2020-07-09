@@ -434,14 +434,22 @@ func (p *Builder) LoadGoField(sf reflect.StructField) *Builder {
 	return p
 }
 
-// StoreGoField instr
-func (p *Builder) StoreGoField(sf reflect.StructField) *Builder {
-	log.Println("->", p.rhs.Get(-1))
-	// p.lhs.Push(&ast.SelectorExpr{
-	// 	X:   p.lhs.Pop().(ast.Expr),
-	// 	Sel: Ident(sf.Name),
-	// })
-	p.lhs.Push(Ident(sf.Name))
+// StoreGoVarField instr
+func (p *Builder) StoreGoVarField(addr exec.GoVarAddr, index []int) *Builder {
+	gvi := defaultImpl.GetGoVarInfo(addr)
+	typ := reflect.TypeOf(gvi.This).Elem()
+	expr := &ast.SelectorExpr{X: p.GoSymIdent(gvi.Pkg.PkgPath(), gvi.Name)}
+	for i := 0; i < len(index); i++ {
+		sf := typ.FieldByIndex(index[:i+1])
+		if sf.Anonymous {
+			continue
+		}
+		if expr.Sel != nil {
+			expr.X = &ast.SelectorExpr{expr.X, expr.Sel}
+		}
+		expr.Sel = Ident(sf.Name)
+	}
+	p.lhs.Push(expr)
 	return p
 }
 

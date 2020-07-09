@@ -70,53 +70,54 @@ const (
 type Instr = uint32
 
 const (
-	opInvalid       = 0
-	opCallGoFunc    = 1  // addr(26) - call a Go function
-	opCallGoFuncv   = 2  // funvArity(10) addr(16) - call a Go function with variadic args
-	opPushInt       = 3  // intKind(3) intVal(23)
-	opPushUint      = 4  // intKind(3) intVal(23)
-	opPushValSpec   = 5  // valSpec(26) - false=0, true=1
-	opPushConstR    = 6  // idx(26)
-	opIndex         = 7  // set(1) idx(25)
-	opMake          = 8  // funvArity(10) type(16)
-	opAppend        = 9  // arity(26)
-	opBuiltinOp     = 10 // reserved(16) kind(5) builtinOp(5)
-	opJmp           = 11 // reserved(2) offset(24)
-	opJmpIf         = 12 // cond(2) offset(24)
-	opCaseNE        = 13 // n(10) offset(16)
-	opPop           = 14 // n(26)
-	opLoadVar       = 15 // varScope(6) addr(20)
-	opStoreVar      = 16 // varScope(6) addr(20)
-	opAddrVar       = 17 // varScope(6) addr(20) - load a variable's address
-	opLoadGoVar     = 18 // addr(26)
-	opStoreGoVar    = 19 // addr(26)
-	opAddrGoVar     = 20 // addr(26)
-	opAddrOp        = 21 // reserved(17) addressOp(4) kind(5)
-	opCallFunc      = 22 // addr(26)
-	opCallFuncv     = 23 // funvArity(10) addr(16)
-	opReturn        = 24 // n(26)
-	opLoad          = 25 // index(26)
-	opStore         = 26 // index(26)
-	opClosure       = 27 // funcKind(2) addr(24)
-	opCallClosure   = 28 // arity(26)
-	opGoClosure     = 29 // funcKind(2) addr(24)
-	opCallGoClosure = 30 // arity(26)
-	opMakeArray     = 31 // funvArity(10) type(16)
-	opMakeMap       = 32 // funvArity(10) type(16)
-	opZero          = 33 // type(26)
-	opForPhrase     = 34 // addr(26)
-	opLstComprehens = 35 // addr(26)
-	opMapComprehens = 36 // addr(26)
-	opTypeCast      = 37 // type(26)
-	opSlice         = 38 // i(13) j(13)
-	opSlice3        = 39 // i(13) j(13)
-	opMapIndex      = 40 // reserved(25) set(1)
-	opGoBuiltin     = 41 // op(26)
-	opErrWrap       = 42 // idx(26)
-	opWrapIfErr     = 43 // reserved(2) offset(24)
-	opLoadGoField   = 44
-	opStoreGoField  = 45
-	opAddrGoField   = 46
+	opInvalid         = 0
+	opCallGoFunc      = 1  // addr(26) - call a Go function
+	opCallGoFuncv     = 2  // funvArity(10) addr(16) - call a Go function with variadic args
+	opPushInt         = 3  // intKind(3) intVal(23)
+	opPushUint        = 4  // intKind(3) intVal(23)
+	opPushValSpec     = 5  // valSpec(26) - false=0, true=1
+	opPushConstR      = 6  // idx(26)
+	opIndex           = 7  // set(1) idx(25)
+	opMake            = 8  // funvArity(10) type(16)
+	opAppend          = 9  // arity(26)
+	opBuiltinOp       = 10 // reserved(16) kind(5) builtinOp(5)
+	opJmp             = 11 // reserved(2) offset(24)
+	opJmpIf           = 12 // cond(2) offset(24)
+	opCaseNE          = 13 // n(10) offset(16)
+	opPop             = 14 // n(26)
+	opLoadVar         = 15 // varScope(6) addr(20)
+	opStoreVar        = 16 // varScope(6) addr(20)
+	opAddrVar         = 17 // varScope(6) addr(20) - load a variable's address
+	opLoadGoVar       = 18 // addr(26)
+	opStoreGoVar      = 19 // addr(26)
+	opAddrGoVar       = 20 // addr(26)
+	opAddrOp          = 21 // reserved(17) addressOp(4) kind(5)
+	opCallFunc        = 22 // addr(26)
+	opCallFuncv       = 23 // funvArity(10) addr(16)
+	opReturn          = 24 // n(26)
+	opLoad            = 25 // index(26)
+	opStore           = 26 // index(26)
+	opClosure         = 27 // funcKind(2) addr(24)
+	opCallClosure     = 28 // arity(26)
+	opGoClosure       = 29 // funcKind(2) addr(24)
+	opCallGoClosure   = 30 // arity(26)
+	opMakeArray       = 31 // funvArity(10) type(16)
+	opMakeMap         = 32 // funvArity(10) type(16)
+	opZero            = 33 // type(26)
+	opForPhrase       = 34 // addr(26)
+	opLstComprehens   = 35 // addr(26)
+	opMapComprehens   = 36 // addr(26)
+	opTypeCast        = 37 // type(26)
+	opSlice           = 38 // i(13) j(13)
+	opSlice3          = 39 // i(13) j(13)
+	opMapIndex        = 40 // reserved(25) set(1)
+	opGoBuiltin       = 41 // op(26)
+	opErrWrap         = 42 // idx(26)
+	opWrapIfErr       = 43 // reserved(2) offset(24)
+	opLoadGoField     = 44
+	opStoreGoVarField = 45
+	opStoreVarField   = 46
+	opAddrGoField     = 47
 )
 
 const (
@@ -155,53 +156,54 @@ type InstrInfo struct {
 }
 
 var instrInfos = []InstrInfo{
-	opInvalid:       {"invalid", "", "", 0},
-	opCallGoFunc:    {"callGoFunc", "", "addr", 26},                       // addr(26) - call a Go function
-	opCallGoFuncv:   {"callGoFuncv", "funvArity", "addr", (10 << 8) | 16}, // funvArity(10) addr(16) - call a Go function with variadic args
-	opPushInt:       {"pushInt", "intKind", "intVal", (3 << 8) | 23},      // intKind(3) intVal(23)
-	opPushUint:      {"pushUint", "intKind", "intVal", (3 << 8) | 23},     // intKind(3) intVal(23)
-	opPushValSpec:   {"pushValSpec", "", "valSpec", 26},                   // valSpec(26) - false=0, true=1
-	opPushConstR:    {"pushConstR", "", "idx", 26},                        // idx(26)
-	opIndex:         {"index", "set", "idx", (1 << 8) | 25},               // set(1) idx(25)
-	opMake:          {"make", "funvArity", "type", (10 << 8) | 16},        // funvArity(10) type(16)
-	opAppend:        {"append", "", "arity", 26},                          // arity(26)
-	opBuiltinOp:     {"builtinOp", "kind", "op", (21 << 8) | 5},           // reserved(16) kind(5) builtinOp(5)
-	opJmp:           {"jmp", "", "offset", 26},                            // offset(26)
-	opJmpIf:         {"jmpIf", "cond", "offset", (2 << 8) | 24},           // cond(2) offset(24)
-	opCaseNE:        {"caseNE", "n", "offset", (10 << 8) | 16},            // n(10) offset(16)
-	opPop:           {"pop", "", "n", 26},                                 // n(26)
-	opLoadVar:       {"loadVar", "varScope", "addr", (6 << 8) | 20},       // varScope(6) addr(20)
-	opStoreVar:      {"storeVar", "varScope", "addr", (6 << 8) | 20},      // varScope(6) addr(20)
-	opAddrVar:       {"addrVar", "varScope", "addr", (6 << 8) | 20},       // varScope(6) addr(20) - load a variable's address
-	opLoadGoVar:     {"loadGoVar", "", "addr", 26},                        // addr(26)
-	opStoreGoVar:    {"storeGoVar", "", "addr", 26},                       // addr(26)
-	opAddrGoVar:     {"addrGoVar", "", "addr", 26},                        // addr(26)
-	opAddrOp:        {"addrOp", "op", "kind", (21 << 8) | 5},              // reserved(17) addressOp(4) kind(5)
-	opCallFunc:      {"callFunc", "", "addr", 26},                         // addr(26)
-	opCallFuncv:     {"callFuncv", "funvArity", "addr", (10 << 8) | 16},   // funvArity(10) addr(16)
-	opReturn:        {"return", "", "n", 26},                              // n(26)
-	opLoad:          {"load", "", "index", 26},                            // index(26)
-	opStore:         {"store", "", "index", 26},                           // index(26)
-	opClosure:       {"closure", "funcKind", "addr", (2 << 8) | 24},       // funcKind(2) addr(24)
-	opCallClosure:   {"callClosure", "", "arity", 26},                     // arity(26)
-	opGoClosure:     {"closureGo", "funcKind", "addr", (2 << 8) | 24},     // funcKind(2) addr(24)
-	opCallGoClosure: {"callGoClosure", "", "arity", 26},                   // arity(26)
-	opMakeArray:     {"makeArray", "funvArity", "type", (10 << 8) | 16},   // funvArity(10) type(16)
-	opMakeMap:       {"makeMap", "funvArity", "type", (10 << 8) | 16},     // funvArity(10) type(16)
-	opZero:          {"zero", "", "type", 26},                             // type(26)
-	opForPhrase:     {"forPhrase", "", "addr", 26},                        // addr(26)
-	opLstComprehens: {"listComprehension", "", "addr", 26},                // addr(26)
-	opMapComprehens: {"mapComprehension", "", "addr", 26},                 // addr(26)
-	opTypeCast:      {"typeCast", "", "type", 26},                         // type(26)
-	opSlice:         {"slice", "i", "j", (13 << 8) | 13},                  // i(13) j(13)
-	opSlice3:        {"slice3", "i", "j", (13 << 8) | 13},                 // i(13) j(13)
-	opMapIndex:      {"mapIndex", "", "set", 26},                          // reserved(25) set(1)
-	opGoBuiltin:     {"goBuiltin", "", "op", 26},                          // op(26)
-	opErrWrap:       {"errWrap", "", "idx", 26},                           // idx(26)
-	opWrapIfErr:     {"wrapIfErr", "", "offset", 26},                      // reserved(2) offset(24)
-	opLoadGoField:   {"loadGoField", "", "index", 26},                     // addr(26)
-	opStoreGoField:  {"storeGoField", "addr", "index", 26},                // addr(26)
-	opAddrGoField:   {"addrGoField", "", "index", 26},                     // addr(26)
+	opInvalid:         {"invalid", "", "", 0},
+	opCallGoFunc:      {"callGoFunc", "", "addr", 26},                       // addr(26) - call a Go function
+	opCallGoFuncv:     {"callGoFuncv", "funvArity", "addr", (10 << 8) | 16}, // funvArity(10) addr(16) - call a Go function with variadic args
+	opPushInt:         {"pushInt", "intKind", "intVal", (3 << 8) | 23},      // intKind(3) intVal(23)
+	opPushUint:        {"pushUint", "intKind", "intVal", (3 << 8) | 23},     // intKind(3) intVal(23)
+	opPushValSpec:     {"pushValSpec", "", "valSpec", 26},                   // valSpec(26) - false=0, true=1
+	opPushConstR:      {"pushConstR", "", "idx", 26},                        // idx(26)
+	opIndex:           {"index", "set", "idx", (1 << 8) | 25},               // set(1) idx(25)
+	opMake:            {"make", "funvArity", "type", (10 << 8) | 16},        // funvArity(10) type(16)
+	opAppend:          {"append", "", "arity", 26},                          // arity(26)
+	opBuiltinOp:       {"builtinOp", "kind", "op", (21 << 8) | 5},           // reserved(16) kind(5) builtinOp(5)
+	opJmp:             {"jmp", "", "offset", 26},                            // offset(26)
+	opJmpIf:           {"jmpIf", "cond", "offset", (2 << 8) | 24},           // cond(2) offset(24)
+	opCaseNE:          {"caseNE", "n", "offset", (10 << 8) | 16},            // n(10) offset(16)
+	opPop:             {"pop", "", "n", 26},                                 // n(26)
+	opLoadVar:         {"loadVar", "varScope", "addr", (6 << 8) | 20},       // varScope(6) addr(20)
+	opStoreVar:        {"storeVar", "varScope", "addr", (6 << 8) | 20},      // varScope(6) addr(20)
+	opAddrVar:         {"addrVar", "varScope", "addr", (6 << 8) | 20},       // varScope(6) addr(20) - load a variable's address
+	opLoadGoVar:       {"loadGoVar", "", "addr", 26},                        // addr(26)
+	opStoreGoVar:      {"storeGoVar", "", "addr", 26},                       // addr(26)
+	opAddrGoVar:       {"addrGoVar", "", "addr", 26},                        // addr(26)
+	opAddrOp:          {"addrOp", "op", "kind", (21 << 8) | 5},              // reserved(17) addressOp(4) kind(5)
+	opCallFunc:        {"callFunc", "", "addr", 26},                         // addr(26)
+	opCallFuncv:       {"callFuncv", "funvArity", "addr", (10 << 8) | 16},   // funvArity(10) addr(16)
+	opReturn:          {"return", "", "n", 26},                              // n(26)
+	opLoad:            {"load", "", "index", 26},                            // index(26)
+	opStore:           {"store", "", "index", 26},                           // index(26)
+	opClosure:         {"closure", "funcKind", "addr", (2 << 8) | 24},       // funcKind(2) addr(24)
+	opCallClosure:     {"callClosure", "", "arity", 26},                     // arity(26)
+	opGoClosure:       {"closureGo", "funcKind", "addr", (2 << 8) | 24},     // funcKind(2) addr(24)
+	opCallGoClosure:   {"callGoClosure", "", "arity", 26},                   // arity(26)
+	opMakeArray:       {"makeArray", "funvArity", "type", (10 << 8) | 16},   // funvArity(10) type(16)
+	opMakeMap:         {"makeMap", "funvArity", "type", (10 << 8) | 16},     // funvArity(10) type(16)
+	opZero:            {"zero", "", "type", 26},                             // type(26)
+	opForPhrase:       {"forPhrase", "", "addr", 26},                        // addr(26)
+	opLstComprehens:   {"listComprehension", "", "addr", 26},                // addr(26)
+	opMapComprehens:   {"mapComprehension", "", "addr", 26},                 // addr(26)
+	opTypeCast:        {"typeCast", "", "type", 26},                         // type(26)
+	opSlice:           {"slice", "i", "j", (13 << 8) | 13},                  // i(13) j(13)
+	opSlice3:          {"slice3", "i", "j", (13 << 8) | 13},                 // i(13) j(13)
+	opMapIndex:        {"mapIndex", "", "set", 26},                          // reserved(25) set(1)
+	opGoBuiltin:       {"goBuiltin", "", "op", 26},                          // op(26)
+	opErrWrap:         {"errWrap", "", "idx", 26},                           // idx(26)
+	opWrapIfErr:       {"wrapIfErr", "", "offset", 26},                      // reserved(2) offset(24)
+	opLoadGoField:     {"loadGoField", "", "index", 26},                     // addr(26)
+	opStoreGoVarField: {"storeGoVarField", "addr", "index", 26},             // addr(26)
+	opStoreVarField:   {"storeVarField", "addr", "index", 26},               // addr(26)
+	opAddrGoField:     {"addrGoField", "", "index", 26},                     // addr(26)
 }
 
 // -----------------------------------------------------------------------------

@@ -912,9 +912,6 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compleMode)
 	}
 	in := ctx.infer.Get(-1)
 	exprX := compileExpr(ctx, v.X)
-	//log.Println("-->", v.X, v.Sel, ctx.inStack)
-	log.Println(ctx.inFieldIndex)
-
 	x := ctx.infer.Get(-1)
 	ctx.infer.PopN(2)
 	switch vx := x.(type) {
@@ -946,8 +943,12 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compleMode)
 		if sf, ok := t.FieldByName(name); ok {
 			checkType(sf.Type, in, ctx.out)
 			// TODO
-			log.Println("->", ctx.inVar, ctx.inFieldIndex, sf.Index)
-			ctx.out.StoreGoField(ctx.inVar.(exec.GoVarAddr), append(ctx.inFieldIndex, sf.Index...))
+			switch v := ctx.inVar.(type) {
+			case exec.GoVarAddr:
+				ctx.out.StoreGoVarField(v, append(ctx.inFieldIndex, sf.Index...))
+			case exec.Var:
+				ctx.out.StoreVarField(v, append(ctx.inFieldIndex, sf.Index...))
+			}
 		}
 	default:
 		log.Panicln("compileSelectorExprLHS failed: unknown -", reflect.TypeOf(vx))
@@ -1026,17 +1027,13 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 		n, t := countPtr(vx.t)
 		name := v.Sel.Name
 		if sf, ok := t.FieldByName(name); ok {
-			exprX()
 			ctx.infer.Ret(1, &goValue{t: sf.Type})
 			if ctx.inLHS {
 				ctx.inFieldIndex = append(ctx.inFieldIndex, sf.Index...)
 			}
 			return func() {
-				if ctx.inLHS {
-					ctx.out.AddrGoField(sf)
-				} else {
-					ctx.out.LoadGoField(sf)
-				}
+				exprX()
+				ctx.out.LoadGoField(sf)
 			}
 		}
 		pkgPath, method := normalizeMethod(n, t, name)

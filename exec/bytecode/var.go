@@ -201,6 +201,17 @@ func execStoreVar(i Instr, p *Context) {
 	getParentCtx(p, tAddress(idx)).setVar(idx&bitsOpVarOperand, val)
 }
 
+func execStoreVarField(i Instr, p *Context) {
+	index := p.Pop()
+	idx := i & bitsOperand
+	val := p.Pop()
+	if idx <= bitsOpVarOperand {
+		p.setVarField(idx, val, index)
+		return
+	}
+	getParentCtx(p, tAddress(idx)).setVarField(idx&bitsOpVarOperand, val, index)
+}
+
 // -----------------------------------------------------------------------------
 
 // Address represents a variable address.
@@ -229,6 +240,13 @@ func (p *Builder) loadVar(addr tAddress) *Builder {
 // StoreVar instr
 func (p *Builder) storeVar(addr tAddress) *Builder {
 	p.code.data = append(p.code.data, (opStoreVar<<bitsOpShift)|uint32(addr))
+	return p
+}
+
+// StoreVarField instr
+func (p *Builder) storeVarField(addr tAddress, index []int) *Builder {
+	p.Push(index)
+	p.code.data = append(p.code.data, (opStoreVarField<<bitsOpShift)|uint32(addr))
 	return p
 }
 
@@ -355,6 +373,12 @@ func (p *Builder) LoadVar(v *Var) *Builder {
 // StoreVar instr
 func (p *Builder) StoreVar(v *Var) *Builder {
 	p.storeVar(makeAddr(p.nestDepth-v.nestDepth, v.idx))
+	return p
+}
+
+// StoreVarField instr
+func (p *Builder) StoreVarField(v *Var, index []int) *Builder {
+	p.storeVarField(makeAddr(p.nestDepth-v.nestDepth, v.idx), index)
 	return p
 }
 
