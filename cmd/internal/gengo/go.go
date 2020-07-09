@@ -185,8 +185,7 @@ func init() {
 func runCmd(cmd *base.Command, args []string) {
 	flag.Parse(args)
 	if flag.NArg() < 1 {
-		fmt.Fprintf(os.Stderr, "Usage: qgo [-test] <gopSrcDir>\n")
-		flag.PrintDefaults()
+		cmd.Usage()
 		return
 	}
 	dir := flag.Arg(0)

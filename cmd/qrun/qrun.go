@@ -17,83 +17,14 @@
 package main
 
 import (
-	"flag"
-	"fmt"
 	"os"
-	"path/filepath"
 
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/token"
-	"github.com/qiniu/x/log"
-
-	exec "github.com/goplus/gop/exec/bytecode"
-	_ "github.com/goplus/gop/lib"
-)
-
-// -----------------------------------------------------------------------------
-
-var (
-	flagAsm   = flag.Bool("asm", false, "generates `asm` code of Go+ bytecode backend")
-	flagQuiet = flag.Bool("quiet", false, "don't generate any compiling stage log")
-	flagDebug = flag.Bool("debug", false, "print debug information")
-	flagProf  = flag.Bool("prof", false, "do profile and generate profile report")
+	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/cmd/internal/run"
 )
 
 func main() {
-	flag.Parse()
-	if flag.NArg() < 1 {
-		fmt.Fprintf(os.Stderr, "Usage: qrun [-asm -quiet -debug -prof] <gopSrcDir|gopSrcFile>\n")
-		flag.PrintDefaults()
-		return
-	}
-
-	log.SetFlags(log.Ldefault &^ log.LstdFlags)
-	if *flagQuiet {
-		log.SetOutputLevel(0x7000)
-	} else if *flagDebug {
-		log.SetOutputLevel(log.Ldebug)
-	}
-	if *flagProf {
-		exec.SetProfile(true)
-	}
-	fset := token.NewFileSet()
-
-	target, _ := filepath.Abs(flag.Arg(0))
-	isDir, err := IsDir(target)
-	if err != nil {
-		log.Fatalln("input arg check failed:", err)
-	}
-	pkgs, err := parser.ParseGopFiles(fset, target, isDir, 0)
-	if err != nil {
-		log.Fatalln("ParseGopFiles failed:", err)
-	}
-	cl.CallBuiltinOp = exec.CallBuiltinOp
-
-	b := exec.NewBuilder(nil)
-	_, err = cl.NewPackage(b.Interface(), pkgs["main"], fset, cl.PkgActClMain)
-	if err != nil {
-		log.Fatalln("cl.NewPackage failed:", err)
-	}
-	code := b.Resolve()
-	if *flagAsm {
-		code.Dump(os.Stdout)
-		return
-	}
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-	if *flagProf {
-		exec.ProfileReport()
-	}
-}
-
-// IsDir checks a target path is dir or not.
-func IsDir(target string) (bool, error) {
-	fi, err := os.Stat(target)
-	if err != nil {
-		return false, err
-	}
-	return fi.IsDir(), nil
+	base.Main(run.Cmd, "qrun", os.Args[1:])
 }
 
 // -----------------------------------------------------------------------------
