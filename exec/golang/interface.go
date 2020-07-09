@@ -400,12 +400,6 @@ func (p *iBuilder) SetIndex(idx int) exec.Builder {
 	return p
 }
 
-// SetIndex instr
-func (p *iBuilder) AddrIndex(idx int) exec.Builder {
-	((*Builder)(p)).AddrIndex(idx)
-	return p
-}
-
 // Slice instr
 func (p *iBuilder) Slice(i, j int) exec.Builder {
 	((*Builder)(p)).Slice(i, j)

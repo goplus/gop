@@ -324,9 +324,6 @@ type Builder interface {
 	// SetIndex instr
 	SetIndex(idx int) Builder
 
-	// AddrIndex instr
-	AddrIndex(idx int) Builder
-
 	// Slice instr
 	Slice(i, j int) Builder
 

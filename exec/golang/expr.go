@@ -551,12 +551,6 @@ func (p *Builder) SetIndex(idx int) *Builder {
 	return p
 }
 
-// AddrIndex instr
-func (p *Builder) AddrIndex(idx int) *Builder {
-	p.rhs.Push(IndexWith(p, idx))
-	return p
-}
-
 // Index instr
 func Index(p *Builder) *ast.IndexExpr {
 	idx := p.rhs.Pop().(ast.Expr)
