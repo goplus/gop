@@ -66,8 +66,9 @@ func (c *Command) Name() string {
 
 // Usage show the command usage.
 func (c *Command) Usage() {
-	fmt.Fprintf(os.Stderr, "Usage: %s\n", c.UsageLine)
+	fmt.Fprintf(os.Stderr, "%s\n\nUsage: %s\n", c.Short, c.UsageLine)
 	c.Flag.PrintDefaults()
+	fmt.Fprintln(os.Stderr)
 	os.Exit(2)
 }
 

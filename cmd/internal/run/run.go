@@ -35,7 +35,7 @@ import (
 // Cmd - gop run
 var Cmd = &base.Command{
 	UsageLine: "gop run [-asm -quiet -debug -prof] <gopSrcDir|gopSrcFile>",
-	Short:     "run a Go+ program",
+	Short:     "Run a Go+ program",
 }
 
 var (
