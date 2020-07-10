@@ -355,12 +355,6 @@ func (p *iBuilder) SetMapIndex() exec.Builder {
 	return p
 }
 
-// Delete instr
-func (p *iBuilder) Delete() exec.Builder {
-	((*Builder)(p)).Delete()
-	return p
-}
-
 // Index instr
 func (p *iBuilder) Index(idx int) exec.Builder {
 	((*Builder)(p)).Index(idx)

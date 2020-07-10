@@ -128,7 +128,7 @@ func igoCopy(ctx *blockCtx, v *ast.CallExpr) func() {
 			log.Panicln("second argument to copy should be slice or string; have", srcTy.Kind())
 		}
 		ctx.infer.Pop()
-		ctx.out.GoBuiltin(nil, exec.GobCopy)
+		ctx.out.GoBuiltin(dstTy, exec.GobCopy)
 	}
 }
 
@@ -155,7 +155,7 @@ func igoDelete(ctx *blockCtx, v *ast.CallExpr) func() {
 		elem := mapType.Key()
 		checkType(elem, args[0], ctx.out)
 		ctx.infer.PopN(n1)
-		ctx.out.Delete()
+		ctx.out.GoBuiltin(mapType, exec.GobDelete)
 	}
 }
 
