@@ -165,13 +165,6 @@ func execAppend(i Instr, p *Context) {
 	}
 }
 
-func execCopy(i Instr, p *Context) {
-	n := len(p.data)
-	src := reflect.ValueOf(p.data[n-1])
-	dst := reflect.ValueOf(p.data[n-2])
-	p.Ret(2, reflect.Copy(dst, src))
-}
-
 func execMake(i Instr, p *Context) {
 	typ := getType(i&bitsOpCallFuncvOperand, p)
 	arity := int((i >> bitsOpCallFuncvShift) & bitsFuncvArityOperand)
