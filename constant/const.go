@@ -1,8 +1,33 @@
+/*
+ Copyright 2020 The GoPlus Authors (goplus.org)
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+*/
+
+// Package constant implements Values representing untyped
+// Go+ constants and their corresponding operations.
+//
+// A special Unknown value may be used when a value
+// is unknown due to an error. Operations on unknown
+// values produce unknown values unless specified
+// otherwise.
+//
 package constant
 
 import (
 	"go/constant"
 	gotoken "go/token"
+	"math/big"
 
 	"github.com/goplus/gop/token"
 )
@@ -86,9 +111,17 @@ func MakeFloat64(x float64) Value {
 }
 
 // MakeRat returns the Rat value of x.
-func MakeRat(x string) Value {
-	//TODO:
-	return &ratVal{nil}
+func MakeRat(x interface{}) Value {
+	return &ratVal{constant.Make(x)}
+}
+
+// MakeRatFromString returns the Rat value of x.
+func MakeRatFromString(x string) Value {
+	v := constant.MakeFromLiteral(x, gotoken.FLOAT, 0)
+	if v.Kind() != Unknown {
+		v = &ratVal{v}
+	}
+	return v
 }
 
 // MakeFromLiteral returns the corresponding integer, floating-point,
@@ -97,8 +130,9 @@ func MakeRat(x string) Value {
 // token.CHAR, token.STRING or token.RAT. The final argument must be zero.
 // If the literal string syntax is invalid, the result is an Unknown.
 func MakeFromLiteral(lit string, tok token.Token, zero uint) Value {
-	if tok == token.RAT {
-		return MakeRat(lit[:len(lit)-1])
+	switch tok {
+	case token.RAT:
+		return MakeRatFromString(lit[:len(lit)-1])
 	}
 	return constant.MakeFromLiteral(lit, gotoken.Token(tok), zero)
 }
@@ -275,6 +309,10 @@ func ToComplex(x Value) Value {
 // If y is Unknown, the result is Unknown.
 //
 func UnaryOp(op token.Token, y Value, prec uint) Value {
+	if v, ok := y.(*ratVal); ok {
+		ret := constant.UnaryOp(gotoken.Token(op), v.Value, prec)
+		return &ratVal{ret}
+	}
 	return constant.UnaryOp(gotoken.Token(op), y, prec)
 }
 
@@ -289,6 +327,18 @@ func UnaryOp(op token.Token, y Value, prec uint) Value {
 // Division by zero leads to a run-time panic.
 //
 func BinaryOp(x Value, op token.Token, y Value) Value {
+	vx, okx := x.(*ratVal)
+	vy, oky := y.(*ratVal)
+	if okx || oky {
+		if okx {
+			x = vx.Value
+		}
+		if oky {
+			y = vy.Value
+		}
+		ret := constant.BinaryOp(x, gotoken.Token(op), y)
+		return &ratVal{ret}
+	}
 	return constant.BinaryOp(x, gotoken.Token(op), y)
 }
 
@@ -297,6 +347,15 @@ func BinaryOp(x Value, op token.Token, y Value) Value {
 // an Int or an Unknown. If x is Unknown, the result is x.
 //
 func Shift(x Value, op token.Token, s uint) Value {
+	if v, ok := x.(*ratVal); ok {
+		vx := v.Value
+		val := constant.Val(vx)
+		if rat, ok := val.(*big.Rat); ok && rat.IsInt() {
+			vx = constant.Num(vx)
+		}
+		ret := constant.Shift(vx, gotoken.Token(op), s)
+		return &ratVal{ret}
+	}
 	return constant.Shift(x, gotoken.Token(op), s)
 }
 
@@ -306,6 +365,12 @@ func Shift(x Value, op token.Token, s uint) Value {
 // false.
 //
 func Compare(x Value, op token.Token, y Value) bool {
+	if vx, ok := x.(*ratVal); ok {
+		x = vx.Value
+	}
+	if vy, ok := y.(*ratVal); ok {
+		y = vy.Value
+	}
 	return constant.Compare(x, gotoken.Token(op), y)
 }
 
