@@ -128,7 +128,7 @@ func igoCopy(ctx *blockCtx, v *ast.CallExpr) func() {
 			log.Panicln("second argument to copy should be slice or string; have", srcTy.Kind())
 		}
 		ctx.infer.Pop()
-		ctx.out.Copy()
+		ctx.out.GoBuiltin(nil, exec.GobCopy)
 	}
 }
 

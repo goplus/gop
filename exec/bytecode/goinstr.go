@@ -408,12 +408,6 @@ func (p *Builder) Append(typ reflect.Type, arity int) *Builder {
 	return p
 }
 
-// Copy instr
-func (p *Builder) Copy() *Builder {
-	p.code.data = append(p.code.data, opCopy<<bitsOpShift)
-	return p
-}
-
 // MakeArray instr
 func (p *Builder) MakeArray(typ reflect.Type, arity int) *Builder {
 	if arity < 0 {

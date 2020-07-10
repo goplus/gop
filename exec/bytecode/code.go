@@ -114,7 +114,6 @@ const (
 	opGoBuiltin     = 41 // op(26)
 	opErrWrap       = 42 // idx(26)
 	opWrapIfErr     = 43 // reserved(2) offset(24)
-	opCopy          = 44 // reserved(26)
 )
 
 const (
@@ -197,7 +196,6 @@ var instrInfos = []InstrInfo{
 	opGoBuiltin:     {"goBuiltin", "", "op", 26},                          // op(26)
 	opErrWrap:       {"errWrap", "", "idx", 26},                           // idx(26)
 	opWrapIfErr:     {"wrapIfErr", "", "offset", 26},                      // reserved(2) offset(24)
-	opCopy:          {"copy", "", "set", 26},                              // reserved(26)
 }
 
 // -----------------------------------------------------------------------------

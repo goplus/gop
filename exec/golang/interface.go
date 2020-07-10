@@ -376,12 +376,6 @@ func (p *iBuilder) Delete() exec.Builder {
 	return p
 }
 
-// Copy instr
-func (p *iBuilder) Copy() exec.Builder {
-	((*Builder)(p)).Copy()
-	return p
-}
-
 // Index instr
 func (p *iBuilder) Index(idx int) exec.Builder {
 	((*Builder)(p)).Index(idx)

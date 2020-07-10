@@ -307,9 +307,6 @@ type Builder interface {
 	// Delete instr
 	Delete() Builder
 
-	// Copy instr
-	Copy() Builder
-
 	// Index instr
 	Index(idx int) Builder
 
