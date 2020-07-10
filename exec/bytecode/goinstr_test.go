@@ -616,18 +616,19 @@ func TestTypeCast(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	m := NewVar(reflect.MapOf(TyString, TyInt), "")
+	tyMap := reflect.MapOf(TyString, TyInt)
+	m := NewVar(tyMap, "")
 	code := newBuilder().
 		DefineVar(m).
 		Push("Hello").
 		Push(1).
 		Push("Go+").
 		Push(2).
-		MakeMap(reflect.MapOf(TyString, TyInt), 2).
+		MakeMap(tyMap, 2).
 		StoreVar(m).
 		LoadVar(m).
 		Push("Hello").
-		Delete().
+		GoBuiltin(tyMap, GobDelete).
 		LoadVar(m).
 		Resolve()
 
