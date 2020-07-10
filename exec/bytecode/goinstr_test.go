@@ -637,3 +637,55 @@ func TestDelete(t *testing.T) {
 		t.Fatal("expected: {`Go+`: 2}, ret =", v)
 	}
 }
+
+func TestCopy(t *testing.T) {
+	a := NewVar(reflect.SliceOf(TyInt), "")
+	b := NewVar(reflect.SliceOf(TyInt), "")
+	code := newBuilder().
+		DefineVar(a).
+		DefineVar(b).
+		Push(1).
+		Push(2).
+		Push(3).
+		MakeArray(reflect.SliceOf(TyInt), 3).
+		StoreVar(a).
+		Push(11).
+		MakeArray(reflect.SliceOf(TyInt), 1).
+		StoreVar(b).
+		LoadVar(b).
+		LoadVar(a).
+		GoBuiltin(nil, GobCopy).
+		LoadVar(b).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	arr := ctx.Pop().([]int)
+	n := ctx.Pop().(int)
+	if n != 1 || reflect.DeepEqual(arr, []int{11, 2, 3}) {
+		t.Fatal("copy failed")
+	}
+}
+
+func TestCopy2(t *testing.T) {
+	a := NewVar(reflect.SliceOf(TyByte), "")
+	code := newBuilder().
+		DefineVar(a).
+		Push(byte(96)).
+		Push(byte(97)).
+		MakeArray(reflect.SliceOf(TyByte), 2).
+		StoreVar(a).
+		LoadVar(a).
+		Push("hello").
+		GoBuiltin(nil, GobCopy).
+		LoadVar(a).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	arr := ctx.Pop().([]byte)
+	n := ctx.Pop().(int)
+	if n != 2 || string(arr) != "he" {
+		t.Fatal("copy failed")
+	}
+}

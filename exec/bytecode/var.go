@@ -129,6 +129,11 @@ func execGoBuiltin(i Instr, p *Context) {
 	case GobCap:
 		v := reflect.ValueOf(p.data[n-1])
 		p.data[n-1] = reflect.Indirect(v).Cap()
+	case GobCopy:
+		n := len(p.data)
+		src := reflect.ValueOf(p.data[n-1])
+		dst := reflect.ValueOf(p.data[n-2])
+		p.Ret(2, reflect.Copy(dst, src))
 	default:
 		log.Panicln("execGoBuiltin: todo -", i)
 	}

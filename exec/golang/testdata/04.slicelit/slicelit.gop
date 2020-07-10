@@ -12,3 +12,8 @@ println([5+6i])         // []complex128
 println(["xsw", 3])     // []interface{}
 
 println("empty slice:", []) // []interface{}
+
+a := [1, 2, 3]
+b := [4, 5]
+println(copy(a, b))
+println("slice [4 5 3]", a)

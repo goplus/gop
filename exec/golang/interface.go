@@ -370,7 +370,7 @@ func (p *iBuilder) SetMapIndex() exec.Builder {
 	return p
 }
 
-// SetMapIndex instr
+// Delete instr
 func (p *iBuilder) Delete() exec.Builder {
 	((*Builder)(p)).Delete()
 	return p

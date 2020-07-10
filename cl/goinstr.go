@@ -99,7 +99,37 @@ func igoAppend(ctx *blockCtx, v *ast.CallExpr) func() {
 
 // func copy(dst, src []Type) int
 func igoCopy(ctx *blockCtx, v *ast.CallExpr) func() {
-	panic("todo")
+	if len(v.Args) < 2 {
+		log.Panicln("not enough arguments in call to copy")
+	}
+	if len(v.Args) > 2 {
+		log.Panicln("too many arguments in call to copy")
+	}
+	dstExpr := compileExpr(ctx, v.Args[0])
+	dstTy := ctx.infer.Get(-1).(iValue).Type()
+	if dstTy.Kind() != reflect.Slice {
+		log.Panicln("arguments to copy must be slices; have ", dstTy.Kind())
+	}
+	ctx.infer.Ret(1, &goValue{exec.TyInt})
+	return func() {
+		dstExpr()
+		compileExpr(ctx, v.Args[1])()
+		srcTy := ctx.infer.Get(-1).(iValue).Type()
+		switch srcTy.Kind() {
+		case reflect.Slice:
+			if srcTy.Elem().Kind() != dstTy.Elem().Kind() {
+				log.Panicf("arguments to copy have different element types: %s(%s) %s(%s)", dstTy.Kind(), dstTy.Elem().Kind(), srcTy.Kind(), srcTy.Elem().Kind())
+			}
+		case reflect.String:
+			if dstTy.Elem().Kind() != reflect.Uint8 {
+				log.Panicln("arguments to copy have different element types:", dstTy.Kind(), srcTy.Kind())
+			}
+		default:
+			log.Panicln("second argument to copy should be slice or string; have", srcTy.Kind())
+		}
+		ctx.infer.Pop()
+		ctx.out.GoBuiltin(nil, exec.GobCopy)
+	}
 }
 
 // func delete(m map[Type]Type1, key Type)
