@@ -159,6 +159,9 @@ func StringVal(x Value) string {
 // x must be an Int or an Unknown. If the result is not exact, its value is undefined.
 // If x is Unknown, the result is (0, false).
 func Int64Val(x Value) (int64, bool) {
+	if v, ok := x.(*ratVal); ok {
+		x = v.Value
+	}
 	return constant.Int64Val(x)
 }
 
@@ -166,11 +169,17 @@ func Int64Val(x Value) (int64, bool) {
 // x must be an Int or an Unknown. If the result is not exact, its value is undefined.
 // If x is Unknown, the result is (0, false).
 func Uint64Val(x Value) (uint64, bool) {
+	if v, ok := x.(*ratVal); ok {
+		x = v.Value
+	}
 	return constant.Uint64Val(x)
 }
 
 // Float32Val is like Float64Val but for float32 instead of float64.
 func Float32Val(x Value) (float32, bool) {
+	if v, ok := x.(*ratVal); ok {
+		x = v.Value
+	}
 	return constant.Float32Val(x)
 }
 
@@ -180,6 +189,9 @@ func Float32Val(x Value) (float32, bool) {
 // matches the sign of x, even for 0.
 // If x is Unknown, the result is (0, false).
 func Float64Val(x Value) (float64, bool) {
+	if v, ok := x.(*ratVal); ok {
+		x = v.Value
+	}
 	return constant.Float64Val(x)
 }
 
@@ -193,10 +205,13 @@ func Float64Val(x Value) (float64, bool) {
 //    String             string
 //    Int                int64 or *big.Int
 //    Float              *big.Float or *big.Rat
-//    Rat                *big.Rat or *big.Int
+//    Rat                int64, *big.Int, *big.Float or *big.Rat
 //    everything else    nil
 //
 func Val(x Value) interface{} {
+	if v, ok := x.(*ratVal); ok {
+		x = v.Value
+	}
 	return constant.Val(x)
 }
 
@@ -227,6 +242,9 @@ func BitLen(x Value) int {
 // x must be numeric or Unknown. For complex values x, the sign is 0 if x == 0,
 // otherwise it is != 0. If x is Unknown, the result is 1.
 func Sign(x Value) int {
+	if v, ok := x.(*ratVal); ok {
+		x = v.Value
+	}
 	return constant.Sign(x)
 }
 
@@ -250,6 +268,9 @@ func MakeFromBytes(bytes []byte) Value {
 // fraction, the result is Unknown. Otherwise the result is an Int
 // with the same sign as x.
 func Num(x Value) Value {
+	if v, ok := x.(*ratVal); ok {
+		x = v.Value
+	}
 	return constant.Num(x)
 }
 
@@ -257,6 +278,9 @@ func Num(x Value) Value {
 // If x is Unknown, or if it is too large or small to represent as a
 // fraction, the result is Unknown. Otherwise the result is an Int >= 1.
 func Denom(x Value) Value {
+	if v, ok := x.(*ratVal); ok {
+		x = v.Value
+	}
 	return constant.Denom(x)
 }
 
@@ -264,39 +288,68 @@ func Denom(x Value) Value {
 // x must be Int, Float, or Unknown.
 // If x is Unknown, the result is Unknown.
 func MakeImag(x Value) Value {
+	if v, ok := x.(*ratVal); ok {
+		x = v.Value
+	}
 	return constant.MakeImag(x)
 }
 
 // Real returns the real part of x, which must be a numeric or unknown value.
 // If x is Unknown, the result is Unknown.
 func Real(x Value) Value {
+	if _, ok := x.(*ratVal); ok {
+		return x
+	}
 	return constant.Real(x)
 }
 
 // Imag returns the imaginary part of x, which must be a numeric or unknown value.
 // If x is Unknown, the result is Unknown.
 func Imag(x Value) Value {
+	if _, ok := x.(*ratVal); ok {
+		return constant.MakeInt64(0)
+	}
 	return constant.Imag(x)
 }
 
 // ----------------------------------------------------------------------------
 // Numeric conversions
 
+// IsInt returns whether x is an integer.
+func IsInt(x Value) bool {
+	switch v := Val(x).(type) {
+	case int64, *big.Int:
+		return true
+	case *big.Rat:
+		return v.IsInt()
+	}
+	return false
+}
+
 // ToInt converts x to an Int value if x is representable as an Int.
 // Otherwise it returns an Unknown.
 func ToInt(x Value) Value {
+	if v, ok := x.(*ratVal); ok {
+		x = v.Value
+	}
 	return constant.ToInt(x)
 }
 
 // ToFloat converts x to a Float value if x is representable as a Float.
 // Otherwise it returns an Unknown.
 func ToFloat(x Value) Value {
+	if v, ok := x.(*ratVal); ok {
+		x = v.Value
+	}
 	return constant.ToFloat(x)
 }
 
 // ToComplex converts x to a Complex value if x is representable as a Complex.
 // Otherwise it returns an Unknown.
 func ToComplex(x Value) Value {
+	if v, ok := x.(*ratVal); ok {
+		x = v.Value
+	}
 	return constant.ToComplex(x)
 }
 
