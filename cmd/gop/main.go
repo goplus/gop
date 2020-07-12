@@ -12,6 +12,8 @@ import (
 	"github.com/goplus/gop/cmd/internal/gopfmt"
 	"github.com/goplus/gop/cmd/internal/help"
 	"github.com/goplus/gop/cmd/internal/run"
+
+	_ "github.com/goplus/gop/lib"
 )
 
 func mainUsage() {
