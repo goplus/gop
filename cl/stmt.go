@@ -73,6 +73,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileLabeledStmt(ctx, v)
 	case *ast.EmptyStmt:
 		// do nothing
+	// case *ast.DeferStmt:
+	// compileDeferStmt(ctx, v)
 	default:
 		log.Panicln("compileStmt failed: unknown -", reflect.TypeOf(v))
 	}
@@ -219,6 +221,10 @@ func compileLabeledStmt(ctx *blockCtx, v *ast.LabeledStmt) {
 	ctx.out.Label(label)
 	ctx.currentLabel = v
 	compileStmt(ctx, v.Stmt)
+}
+
+func compileDeferStmt(ctx *blockCtx, v *ast.DeferStmt) {
+	ctx.pushDefer(v)
 }
 
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
@@ -384,6 +390,13 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 }
 
 func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
+	// defer func() {
+	// 	for i := 0; i < ctx.defers.Len(); i++ {
+	// 		if deferStmt, ok := ctx.defers.Pop().(*ast.DeferStmt); ok {
+	// 			compileCallExpr(ctx, deferStmt.Call)
+	// 		}
+	// 	}
+	// }()
 	fun := ctx.fun
 	if fun == nil {
 		if expr.Results == nil { // return in main
