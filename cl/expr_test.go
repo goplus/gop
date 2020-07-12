@@ -17,7 +17,6 @@
 package cl
 
 import (
-	"bytes"
 	"fmt"
 	"math/big"
 	"testing"
@@ -28,67 +27,6 @@ import (
 
 	exec "github.com/goplus/gop/exec/bytecode"
 )
-
-// -----------------------------------------------------------------------------
-
-var fsTestUnbound = asttest.NewSingleFileFS("/foo", "bar.gop", `
-	println("Hello " + "qiniu:", 123, 4.5, 7i)
-`)
-
-func TestUnbound(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestUnbound, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
-
-	bar := pkgs["main"]
-	b := exec.NewBuilder(nil)
-	_, _, err = newPackage(b, bar, fset)
-	if err != nil {
-		t.Fatal("Compile failed:", err)
-	}
-	code := b.Resolve()
-
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
-	if v := ctx.Get(-1); v != nil {
-		t.Fatal("error:", v)
-	}
-	if v := ctx.Get(-2); v != int(28) {
-		t.Fatal("n:", v)
-	}
-}
-
-// -----------------------------------------------------------------------------
-
-var fsTestTypeCast = asttest.NewSingleFileFS("/foo", "bar.gop", `
-	x := []byte("hello")
-	x
-`)
-
-func TestTypeCast(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestTypeCast, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
-
-	bar := pkgs["main"]
-	b := exec.NewBuilder(nil)
-	_, _, err = newPackage(b, bar, fset)
-	if err != nil {
-		t.Fatal("Compile failed:", err)
-	}
-	code := b.Resolve()
-
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-	if v := ctx.Get(-1); !bytes.Equal(v.([]byte), []byte("hello")) {
-		t.Fatal("v:", v)
-	}
-}
 
 // -----------------------------------------------------------------------------
 

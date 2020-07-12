@@ -27,6 +27,14 @@ import (
 
 // -----------------------------------------------------------------------------
 
+// Debug only
+func Debug(pkg *Package) {
+	if _, v, ok := pkg.Find("main"); ok {
+		fn := v.(*funcDecl)
+		isNoExecCtx(fn.ctx, fn.body)
+	}
+}
+
 func newBlockCtxWithFlag(parent *blockCtx) *blockCtx {
 	ctx := newNormBlockCtx(parent)
 	ctx.checkFlag = true
@@ -340,6 +348,8 @@ func isNoExecCtxExprLHS(ctx *blockCtx, expr ast.Expr, mode compleMode) bool {
 		return isNoExecCtxIdentLHS(ctx, v.Name, mode)
 	case *ast.IndexExpr:
 		return isNoExecCtxIndexExprLHS(ctx, v, mode)
+	case *ast.SelectorExpr:
+		return isNoExecCtxSelectorExprLHS(ctx, v, mode)
 	default:
 		log.Panicln("isNoExecCtxExprLHS failed: unknown -", reflect.TypeOf(v))
 	}
@@ -356,6 +366,13 @@ func isNoExecCtxIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compleMode) b
 func isNoExecCtxIdentLHS(ctx *blockCtx, name string, mode compleMode) bool {
 	if mode == lhsDefine && !ctx.exists(name) {
 		ctx.insertVar(name, exec.TyEmptyInterface, true)
+	}
+	return true
+}
+
+func isNoExecCtxSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compleMode) bool {
+	if noExecCtx := isNoExecCtxExpr(ctx, v.X); !noExecCtx {
+		return false
 	}
 	return true
 }

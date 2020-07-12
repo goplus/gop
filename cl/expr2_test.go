@@ -14,19 +14,34 @@
  limitations under the License.
 */
 
-package main
+package cl_test
 
 import (
-	"os"
+	"testing"
 
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/cmd/internal/gengo"
-
-	_ "github.com/goplus/gop/lib"
+	"github.com/goplus/gop/cl/cltest"
 )
 
-func main() {
-	base.Main(gengo.Cmd, "qgo", os.Args[1:])
+// -----------------------------------------------------------------------------
+
+func TestUnbound(t *testing.T) {
+	cltest.Expect(t,
+		`println("Hello " + "qiniu:", 123, 4.5, 7i)`,
+		"Hello qiniu: 123 4.5 (0+7i)\n",
+	)
+}
+
+func TestPanic(t *testing.T) {
+	cltest.Expect(t,
+		`panic("Helo")`, "", "Helo",
+	)
+}
+
+func TestTypeCast(t *testing.T) {
+	cltest.Call(t, `
+	x := []byte("hello")
+	x
+	`).Equal([]byte("hello"))
 }
 
 // -----------------------------------------------------------------------------
