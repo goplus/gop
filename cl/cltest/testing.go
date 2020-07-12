@@ -42,7 +42,7 @@ func Expect(t *testing.T, script string, expected string, panicMsg ...interface{
 // -----------------------------------------------------------------------------
 
 // Call runs a script and gets the last expression value to check
-func Call(t *testing.T, script string) *ts.TestCase {
+func Call(t *testing.T, script string, idx ...int) *ts.TestCase {
 	fset := token.NewFileSet()
 	fs := asttest.NewSingleFileFS("/foo", "bar.gop", script)
 	pkgs, err := parser.ParseFSDir(fset, fs, "/foo", nil, 0)
@@ -62,7 +62,7 @@ func Call(t *testing.T, script string) *ts.TestCase {
 	ctx := exec.NewContext(code)
 	return ts.New(t).Call(func() interface{} {
 		ctx.Exec(0, code.Len())
-		return ctx.Get(-1)
+		return ctx.Get(append(idx, -1)[0])
 	})
 }
 
