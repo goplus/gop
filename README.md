@@ -6,9 +6,10 @@ GoPlus - The Go+ language for data science
 [![GitHub release](https://img.shields.io/github/v/tag/goplus/gop.svg?label=release)](https://github.com/goplus/gop/releases)
 [![Coverage Status](https://codecov.io/gh/goplus/gop/branch/master/graph/badge.svg)](https://codecov.io/gh/goplus/gop)
 [![Hacker News](https://img.shields.io/badge/hackernews-140%2B-orange)](https://news.ycombinator.com/item?id=23550042)
+[![Playground](https://img.shields.io/badge/playground-Go+-teal.svg)](https://play.goplus.org/)
+[![VSCode](https://img.shields.io/badge/vscode-Go+-teal.svg)](https://github.com/gopcode/vscode-goplus)
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://pkg.go.dev/mod/github.com/goplus/gop)
-[![VSCode](https://img.shields.io/badge/vscode-Go+-blue.svg)](https://github.com/gopcode/vscode-goplus)
-[![TODOs](https://badgen.net/https/api.tickgit.com/badgen/github.com/goplus/gop)](https://www.tickgit.com/browse?repo=github.com/goplus/gop)
+
 
 ## Summary about Go+
 
@@ -132,7 +133,7 @@ Playground based on Docker:
 * https://play.goplus.org/
 
 Playground based on GopherJS:
-* https://qiniu.github.io/goplus-play/
+* https://goplusjs.github.io/play/
 
 
 ## Tutorials
@@ -324,6 +325,11 @@ All Go features (not including `cgo`) will be supported.
 * See [supported the Go language features](https://github.com/goplus/gop/wiki/Supported-Go-features).
 
 
+## IDE Plugins
+
+* vscode: https://github.com/gopcode/vscode-goplus
+
+
 ## Contributing
 
 The Go+ project welcomes all contributors. We appreciate your help!
@@ -341,3 +347,8 @@ What does `a contributor to Go+` mean? He must meet one of the following conditi
 * At least one pull request of a full-featured implemention.
 * At least three pull requests of feature enhancements.
 * At least ten pull requests of any kind issues.
+
+Where can you start?
+
+* [![Issues](https://img.shields.io/badge/ISSUEs-Go+-blue.svg)](https://github.com/goplus/gop/issues)
+* [![TODOs](https://badgen.net/https/api.tickgit.com/badgen/github.com/goplus/gop)](https://www.tickgit.com/browse?repo=github.com/goplus/gop)
