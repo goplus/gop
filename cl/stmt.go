@@ -399,7 +399,7 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 }
 
 func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
-	var re int32
+	var ret int32
 	defer func() {
 		len := ctx.defers.Len()
 		for i := 0; i < len; i++ {
@@ -408,12 +408,12 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 				compileCallExpr(ctx, deferStmt.Call)()
 			}
 		}
-		ctx.out.Return(re)
+		ctx.out.Return(ret)
 	}()
 	fun := ctx.fun
 	if fun == nil {
 		if expr.Results == nil { // return in main
-			re = 0
+			ret = 0
 			return
 		}
 		log.Panicln("compileReturnStmt failed: return statement not in a function.")
@@ -442,7 +442,7 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 		checkType(v.Type(), result, ctx.out)
 	}
 	ctx.infer.SetLen(0)
-	re = int32(n)
+	ret = int32(n)
 }
 
 func compileExprStmt(ctx *blockCtx, expr *ast.ExprStmt) {
