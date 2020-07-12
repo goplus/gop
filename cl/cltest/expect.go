@@ -26,10 +26,11 @@ func Expect(t *testing.T, script string, expected string, panicMsg ...interface{
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = cl.NewPackage(b.Interface(), bar, fset, cl.PkgActClMain)
+	pkg, err := cl.NewPackage(b.Interface(), bar, fset, cl.PkgActClMain)
 	if err != nil {
 		t.Fatal("Compile failed:", err)
 	}
+	cl.Debug(pkg)
 	code := b.Resolve()
 
 	ctx := exec.NewContext(code)
@@ -52,10 +53,11 @@ func Call(t *testing.T, script string) *ts.TestCase {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = cl.NewPackage(b.Interface(), bar, fset, cl.PkgActClMain)
+	pkg, err := cl.NewPackage(b.Interface(), bar, fset, cl.PkgActClMain)
 	if err != nil {
 		t.Fatal("Compile failed:", err)
 	}
+	cl.Debug(pkg)
 	code := b.Resolve()
 
 	ctx := exec.NewContext(code)
