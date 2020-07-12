@@ -32,6 +32,14 @@ func compileBlockStmtWith(ctx *blockCtx, body *ast.BlockStmt) {
 }
 
 func compileBlockStmtWithout(ctx *blockCtx, body *ast.BlockStmt) {
+	defer func() {
+		for i := 0; i < ctx.defers.Len(); i++ {
+			if deferStmt, ok := ctx.defers.Pop().(*ast.DeferStmt); ok {
+				compileExpr(ctx, deferStmt.Call.Fun)
+				compileCallExpr(ctx, deferStmt.Call)()
+			}
+		}
+	}()
 	for _, stmt := range body.List {
 		compileStmt(ctx, stmt)
 	}
@@ -73,8 +81,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileLabeledStmt(ctx, v)
 	case *ast.EmptyStmt:
 		// do nothing
-	// case *ast.DeferStmt:
-	// compileDeferStmt(ctx, v)
+	case *ast.DeferStmt:
+		compileDeferStmt(ctx, v)
 	default:
 		log.Panicln("compileStmt failed: unknown -", reflect.TypeOf(v))
 	}
@@ -390,17 +398,20 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 }
 
 func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
-	// defer func() {
-	// 	for i := 0; i < ctx.defers.Len(); i++ {
-	// 		if deferStmt, ok := ctx.defers.Pop().(*ast.DeferStmt); ok {
-	// 			compileCallExpr(ctx, deferStmt.Call)
-	// 		}
-	// 	}
-	// }()
+	var re int32
+	defer func() {
+		for i := 0; i < ctx.defers.Len(); i++ {
+			if deferStmt, ok := ctx.defers.Pop().(*ast.DeferStmt); ok {
+				compileExpr(ctx, deferStmt.Call.Fun)
+				compileCallExpr(ctx, deferStmt.Call)()
+			}
+		}
+		ctx.out.Return(re)
+	}()
 	fun := ctx.fun
 	if fun == nil {
 		if expr.Results == nil { // return in main
-			ctx.out.Return(0)
+			re = 0
 			return
 		}
 		log.Panicln("compileReturnStmt failed: return statement not in a function.")
@@ -429,7 +440,7 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 		checkType(v.Type(), result, ctx.out)
 	}
 	ctx.infer.SetLen(0)
-	ctx.out.Return(int32(n))
+	re = int32(n)
 }
 
 func compileExprStmt(ctx *blockCtx, expr *ast.ExprStmt) {

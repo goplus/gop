@@ -1,0 +1,3 @@
+
+defer println("Hello, defer!")
+println("Hello, world!")

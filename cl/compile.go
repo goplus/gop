@@ -199,15 +199,16 @@ func (p *stackVar) getType() reflect.Type {
 // -----------------------------------------------------------------------------
 
 type funcCtx struct {
-	fun    exec.FuncInfo
-	labels map[string]*flowLabel
-	// defers       exec.Stack
+	fun          exec.FuncInfo
+	labels       map[string]*flowLabel
+	defers       exec.Stack
 	currentFlow  *flowCtx
 	currentLabel *ast.LabeledStmt
 }
 
 func newFuncCtx(fun exec.FuncInfo) *funcCtx {
 	ctx := &funcCtx{labels: map[string]*flowLabel{}, fun: fun}
+	ctx.defers.Init()
 	return ctx
 }
 
@@ -360,7 +361,7 @@ func (p *blockCtx) defineLabel(name string) exec.Label {
 }
 
 func (p *blockCtx) pushDefer(deferStmt *ast.DeferStmt) {
-	// p.defers.Push(deferStmt)
+	p.defers.Push(deferStmt)
 }
 
 func (p *blockCtx) canJmpTo(to *blockCtx) bool {

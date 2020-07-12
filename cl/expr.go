@@ -17,6 +17,7 @@
 package cl
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 	"syscall"
@@ -618,6 +619,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) func() {
 	fn := ctx.infer.Pop()
 	switch vfn := fn.(type) {
 	case *qlFunc:
+		fmt.Println("???")
 		ret := vfn.Results()
 		ctx.infer.Push(ret)
 		return func() {
