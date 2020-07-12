@@ -27,6 +27,14 @@ import (
 
 // -----------------------------------------------------------------------------
 
+// Debug only
+func Debug(pkg *Package) {
+	if _, v, ok := pkg.Find("main"); ok {
+		fn := v.(*funcDecl)
+		isNoExecCtx(fn.ctx, fn.body)
+	}
+}
+
 func newBlockCtxWithFlag(parent *blockCtx) *blockCtx {
 	ctx := newNormBlockCtx(parent)
 	ctx.checkFlag = true
