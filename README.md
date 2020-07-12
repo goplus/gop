@@ -142,11 +142,8 @@ See https://github.com/goplus/gop/tree/master/tutorial
 
 ## How to build
 
-Current version: [![GitHub release](https://img.shields.io/github/v/tag/goplus/gop.svg?label=)](https://github.com/goplus/gop/releases)
-
 ```bash
 git clone git@github.com:goplus/gop.git
-#or: go get github.com/goplus/gop@vX.X.XX
 cd gop
 go install -v ./...
 ```
