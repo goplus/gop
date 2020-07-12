@@ -41,18 +41,14 @@ const (
 // -----------------------------------------------------------------------------
 
 func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compleMode) {
-	ctx.inLHS = true
 	switch v := expr.(type) {
 	case *ast.Ident:
 		compileIdentLHS(ctx, v.Name, mode)
 	case *ast.IndexExpr:
 		compileIndexExprLHS(ctx, v, mode)
-	case *ast.SelectorExpr:
-		compileSelectorExprLHS(ctx, v, mode)
 	default:
 		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
 	}
-	ctx.inLHS = false
 }
 
 func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
@@ -154,11 +150,7 @@ func compileIdent(ctx *blockCtx, name string) func() {
 		case *execVar:
 			ctx.infer.Push(&goValue{t: v.v.Type()})
 			return func() {
-				if ctx.inLHS && v.v.Type().Kind() == reflect.Array {
-					ctx.out.AddrVar(v.v)
-				} else {
-					ctx.out.LoadVar(v.v)
-				}
+				ctx.out.LoadVar(v.v)
 			}
 		case *stackVar:
 			ctx.infer.Push(&goValue{t: v.typ})
@@ -895,49 +887,6 @@ func getFuncInfo(fun exec.FuncInfo) (name string, narg int) {
 	return "main", 0
 }
 
-func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compleMode) {
-	if mode == lhsDefine {
-		log.Panicln("compileSelectorExprLHS: `:=` can't be used for index expression")
-	}
-	in := ctx.infer.Get(-1)
-	exprX := compileExpr(ctx, v.X)
-	x := ctx.infer.Get(-1)
-	ctx.infer.PopN(2)
-	switch vx := x.(type) {
-	case *nonValue:
-		switch nv := vx.v.(type) {
-		case exec.GoPackage:
-			if c, ok := nv.FindConst(v.Sel.Name); ok {
-				log.Panicln("cannot assign to ", c.Pkg.PkgPath()+"."+c.Name)
-			}
-			addr, kind, ok := nv.Find(v.Sel.Name)
-			if !ok {
-				log.Panicln("compileSelectorExprLHS: not found -", nv.PkgPath(), v.Sel.Name)
-			}
-			switch kind {
-			case exec.SymbolVar:
-				info := ctx.GetGoVarInfo(exec.GoVarAddr(addr))
-				t := reflect.TypeOf(info.This).Elem()
-				checkType(t, in, ctx.out)
-				ctx.out.StoreGoVar(exec.GoVarAddr(addr))
-			default:
-				log.Panicln("compileSelectorExprLHS: unknown GoPackage symbol kind -", kind)
-			}
-		default:
-			log.Panicln("compileSelectorExprLHS: unknown nonValue -", reflect.TypeOf(nv))
-		}
-	case *goValue:
-		_, t := countPtr(vx.t)
-		name := v.Sel.Name
-		if sf, ok := t.FieldByName(name); ok {
-			log.Panicln("compileSelectorExprLHS todo: structField -", t, sf)
-		}
-	default:
-		log.Panicln("compileSelectorExprLHS failed: unknown -", reflect.TypeOf(vx))
-	}
-	_ = exprX
-}
-
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 	exprX := compileExpr(ctx, v.X)
 	x := ctx.infer.Get(-1)
@@ -961,17 +910,6 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 				ctx.infer.Ret(1, newGoFunc(addr, kind, 0, ctx))
 				return func() {
 					log.Panicln("compileSelectorExpr: todo")
-				}
-			case exec.SymbolVar:
-				info := ctx.GetGoVarInfo(exec.GoVarAddr(addr))
-				vt := reflect.ValueOf(info.This)
-				ctx.infer.Ret(1, &goValue{t: vt.Elem().Type()})
-				return func() {
-					if ctx.inLHS && vt.Elem().Kind() == reflect.Array {
-						ctx.out.AddrGoVar(exec.GoVarAddr(addr))
-					} else {
-						ctx.out.LoadGoVar(exec.GoVarAddr(addr))
-					}
 				}
 			default:
 				log.Panicln("compileSelectorExpr: unknown GoPackage symbol kind -", kind)
