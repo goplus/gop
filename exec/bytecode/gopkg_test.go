@@ -173,49 +173,65 @@ func TestGoVar(t *testing.T) {
 	}
 }
 
-type testBaseInfo struct {
+type testPoint struct {
+	X int
+	Y int
+}
+
+type testInfo struct {
 	Info string
 }
 
-type testPoint struct {
-	testBaseInfo
-	X  int
-	Y  int
-	Ar [5]testBaseInfo
+type testRect struct {
+	testInfo
+	Pt1 testPoint
+	Pt2 *testPoint
 }
 
 func TestGoField(t *testing.T) {
+	sprint, ok := I.FindFuncv("Sprint")
+
 	pkg := NewGoPackage("pkg_field")
 
-	v := testPoint{}
-	v.Info = "Info"
+	rc := testRect{}
+	rc.Info = "Info"
+	rc.Pt1 = testPoint{10, 20}
+	rc.Pt2 = &testPoint{30, 40}
 	pkg.RegisterVars(
-		I.Var("pt", &v),
+		I.Var("Rect", &rc),
 	)
 
-	i, ok := pkg.FindVar("pt")
+	x, ok := pkg.FindVar("Rect")
 	if !ok {
-		t.Fatal("FindVar failed:", i)
+		t.Fatal("FindVar failed:", x)
 	}
+	it := reflect.TypeOf(rc)
 
-	x := NewVar(TyInt, "x")
+	y := NewVar(it, "y")
 	b := newBuilder()
 
+	//	sfInfo, _ := it.FieldByName("Info")
+
 	code := b.
-		DefineVar(x).
+		DefineVar(y). // y
+		LoadGoVar(x).
+		StoreVar(y). // y = x
 		Push("hello").
-		StoreGoField(i, []int{0, 0}).
+		StoreGoField(x, []int{0, 0}). // pkg_field.Rect.Info = "hello"
 		Push(-1).
-		StoreVar(x).
-		LoadVar(x).
-		StoreGoField(i, []int{1}).
+		StoreGoField(x, []int{1, 0}). // pkg_field.Rect.Pt1.X = -1
+		Push(-2).
+		StoreGoField(x, []int{2, 1}). // pkg_field.Rect.Pt2.Y = -2
+		LoadGoVar(x).
+		LoadGoField(it.FieldByIndex([]int{1, 1})).
+		CallGoFuncv(sprint, 1, 1). // print(pkg_field.V.Info)
 		Resolve()
 
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
 
-	if v.Info != "hello" || v.X != -1 {
-		t.Fatal("pt", v)
+	if rc.Info != "hello" || rc.Pt1.X != -1 || rc.Pt2.Y != -2 {
+		t.Fatal("V", rc)
 	}
 }
 

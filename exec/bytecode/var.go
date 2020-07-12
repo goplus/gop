@@ -374,12 +374,6 @@ func (p *Builder) StoreVar(v *Var) *Builder {
 	return p
 }
 
-// StoreVarField instr
-func (p *Builder) StoreVarField(v *Var, index []int) *Builder {
-	p.storeVarField(makeAddr(p.nestDepth-v.nestDepth, v.idx), index)
-	return p
-}
-
 // AddrVar instr
 func (p *Builder) AddrVar(v *Var) *Builder {
 	if v.Type().Kind() == reflect.Ptr {
