@@ -124,8 +124,6 @@ gop install ./... # Convert Go+ packages and go install ./...
 
 Go [tutorial/14-Using-goplus-in-Go](https://github.com/goplus/gop/tree/master/tutorial/14-Using-goplus-in-Go) to get the source code.
 
-Note: The `gop` command isn't provided currently (in alpha stage). Instead, we provide `qrun` and `qgo` commands.
-
 
 ## Playground
 
@@ -162,24 +160,17 @@ When we use `gop run` command, it doesn't call `go run` command. It generates by
 ### Commands
 
 ```bash
-gop go [-test] <gopSrcDir> # Convert all Go+ packages under <gopSrcDir> into Go packages, recursively
-gop run <gopSrcDir> # Running <gopSrcDir> as a Go+ main package
-gop run <gopSrcFile> # Running <gopSrcFile> as a Go+ script
-gop install ./... # Convert all Go+ packages under ./ and go install ./...
-gop fmt ./... # Format all Go+ packages under ./
-gop export <goPkgPath> # Generate a Go+ package that wraps a Go package automatically
+gop run         # Run a Go+ program
+gop go [-test]  # Convert Go+ packages into Go packages. If -test specified, it tests related packages.
+gop fmt         # Format Go+ packages
+gop export      # Export Go packages for Go+ programs
 ```
 
-The `gop` command isn't provided currently (in alpha stage). Instead, we provide the following commands:
-
-* [qrun](https://github.com/goplus/gop/wiki/Commands#qrun): Similar to `gop run`
-* [qfmt](https://github.com/goplus/gop/wiki/Commands#qfmt): Similar to `gop fmt`
-* [qexp](https://github.com/goplus/gop/wiki/Commands#qexp): Similar to `gop export`
-* [qgo](https://github.com/goplus/gop/wiki/Commands#qgo): Similar to `gop go`
+See https://github.com/goplus/gop/wiki/Commands for details.
 
 Note:
 
-* `qgo -test <gopSrcDir>` converts Go+ packages into Go packages, and for every package, it call `go run <gopPkgDir>/gop_autogen.go` and `qrun -quiet <gopPkgDir>` to compare their outputs. If their outputs aren't equal, the test case fails.
+* `gop go -test <gopSrcDir>` converts Go+ packages into Go packages, and for every package, it call `go run <gopPkgDir>/gop_autogen.go` and `gop run -quiet <gopPkgDir>` to compare their outputs. If their outputs aren't equal, the test case fails.
 
 
 ### Rational number: bigint, bigrat, bigfloat
@@ -351,4 +342,6 @@ What does `a contributor to Go+` mean? He must meet one of the following conditi
 Where can you start?
 
 * [![Issues](https://img.shields.io/badge/ISSUEs-Go+-blue.svg)](https://github.com/goplus/gop/issues)
+* [![Issues](https://img.shields.io/badge/ISSUEs-NumGo+-blue.svg)](https://github.com/numgoplus/ng/issues)
+* [![Issues](https://img.shields.io/badge/ISSUEs-vscode%20Go+-blue.svg)](https://github.com/gopcode/vscode-goplus/issues)
 * [![TODOs](https://badgen.net/https/api.tickgit.com/badgen/github.com/goplus/gop)](https://www.tickgit.com/browse?repo=github.com/goplus/gop)
