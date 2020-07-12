@@ -1,7 +1,7 @@
 GoPlus - The Go+ language for data science
 ========
 
-[![LICENSE](https://img.shields.io/badge/license-Apache-green.svg)](https://github.com/goplus/gop/blob/master/LICENSE)
+[![LICENSE](https://img.shields.io/github/license/goplus/gop.svg)](https://github.com/goplus/gop/blob/master/LICENSE)
 [![Build Status](https://travis-ci.org/goplus/gop.png?branch=master)](https://travis-ci.org/goplus/gop)
 [![Go Report Card](https://goreportcard.com/badge/github.com/goplus/gop)](https://goreportcard.com/report/github.com/goplus/gop)
 [![GitHub release](https://img.shields.io/github/v/tag/goplus/gop.svg?label=release)](https://github.com/goplus/gop/releases)
