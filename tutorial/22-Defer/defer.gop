@@ -1,5 +1,19 @@
 
-defer println("Hello, defer1!")
-defer println("Hello, defer2!")
-defer println("Hello, defer3!")
+func test() {
+	defer func() {
+		println("Hello, test defer!")
+	}()
+	println("Hello, test!")
+}
+
+defer func() {
+	println("Hello, defer1!")
+}()
+defer func() {
+	println("Hello, defer2!")
+}()
+defer func() {
+	println("Hello, defer3!")
+}()
 println("Hello, world!")
+test()
