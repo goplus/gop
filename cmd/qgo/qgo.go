@@ -21,6 +21,8 @@ import (
 
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/cmd/internal/gengo"
+
+	_ "github.com/goplus/gop/lib"
 )
 
 func main() {
