@@ -1,3 +1,5 @@
 
-defer println("Hello, defer!")
+defer println("Hello, defer1!")
+defer println("Hello, defer2!")
+defer println("Hello, defer3!")
 println("Hello, world!")

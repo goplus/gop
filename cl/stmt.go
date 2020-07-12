@@ -33,7 +33,8 @@ func compileBlockStmtWith(ctx *blockCtx, body *ast.BlockStmt) {
 
 func compileBlockStmtWithout(ctx *blockCtx, body *ast.BlockStmt) {
 	defer func() {
-		for i := 0; i < ctx.defers.Len(); i++ {
+		len := ctx.defers.Len()
+		for i := 0; i < len; i++ {
 			if deferStmt, ok := ctx.defers.Pop().(*ast.DeferStmt); ok {
 				compileExpr(ctx, deferStmt.Call.Fun)
 				compileCallExpr(ctx, deferStmt.Call)()
@@ -400,7 +401,8 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 	var re int32
 	defer func() {
-		for i := 0; i < ctx.defers.Len(); i++ {
+		len := ctx.defers.Len()
+		for i := 0; i < len; i++ {
 			if deferStmt, ok := ctx.defers.Pop().(*ast.DeferStmt); ok {
 				compileExpr(ctx, deferStmt.Call.Fun)
 				compileCallExpr(ctx, deferStmt.Call)()
