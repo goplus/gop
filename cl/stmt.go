@@ -421,7 +421,7 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 		if fun.IsUnnamedOut() {
 			log.Panicln("compileReturnStmt failed: return without values -", fun.Name())
 		}
-		ctx.out.Return(-1)
+		ret = -1
 		return
 	}
 	for _, ret := range rets {
