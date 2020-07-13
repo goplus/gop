@@ -390,7 +390,6 @@ var testDeleteClauses = map[string]testData{
 
 func TestDelete(t *testing.T) {
 	testScripts(t, "TestDelete", testDeleteClauses)
-
 }
 
 // -----------------------------------------------------------------------------
@@ -481,6 +480,8 @@ func testSingleScript(name string, t *testing.T, script string, wants []string) 
 	}()
 	if len(wants) > 0 && wants[0] != "_panic" {
 		cltest.Expect(t, script, strings.Join(wants, "\n")+"\n")
+	} else {
+		cltest.Expect(t, script, "", "")
 	}
 }
 
