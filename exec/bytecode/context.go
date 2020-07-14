@@ -271,7 +271,6 @@ var _execTable = [...]func(i Instr, p *Context){
 	opStoreVarField:   execStoreVarField,
 	opStoreGoVarField: execStoreGoVarField,
 	opStoreNoVarField: execStoreNoVarField,
-	opAddrGoField:     execAddrGoField,
 }
 
 var execTable []func(i Instr, p *Context)

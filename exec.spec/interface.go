@@ -294,9 +294,6 @@ type Builder interface {
 	// StoreGoField instr
 	StoreGoField(v interface{}, index []int) Builder
 
-	// AddrGoField instr
-	AddrGoField(sf reflect.StructField) Builder
-
 	// AddrOp instr
 	AddrOp(kind Kind, op AddrOperator) Builder
 

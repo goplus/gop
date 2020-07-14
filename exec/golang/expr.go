@@ -470,11 +470,6 @@ func (p *Builder) StoreGoField(v interface{}, index []int) *Builder {
 	return p
 }
 
-// AddrGoField instr
-func (p *Builder) AddrGoField(sf reflect.StructField) *Builder {
-	return p
-}
-
 // Append instr
 func (p *Builder) Append(typ reflect.Type, arity int) *Builder {
 	p.rhs.Push(appendIdent)

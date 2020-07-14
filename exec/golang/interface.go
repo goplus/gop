@@ -340,12 +340,6 @@ func (p *iBuilder) StoreGoField(v interface{}, index []int) exec.Builder {
 	return p
 }
 
-// AddrGoField instr
-func (p *iBuilder) AddrGoField(sf reflect.StructField) exec.Builder {
-	((*Builder)(p)).AddrGoField(sf)
-	return p
-}
-
 // AddrOp instr
 func (p *iBuilder) AddrOp(kind exec.Kind, op exec.AddrOperator) exec.Builder {
 	((*Builder)(p)).AddrOp(kind, op)

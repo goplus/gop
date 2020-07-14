@@ -92,12 +92,6 @@ func execStoreNoVarField(i Instr, p *Context) {
 	setValue(v.FieldByIndex(index.([]int)), value)
 }
 
-func execAddrGoField(i Instr, p *Context) {
-	index := p.Pop()
-	v := reflect.ValueOf(p.Pop()).Elem()
-	p.Push(v.FieldByIndex(index.([]int)).Addr().Interface())
-}
-
 // -----------------------------------------------------------------------------
 
 // A ConstKind represents the specific kind of type that a Type represents.
@@ -457,14 +451,6 @@ func (p *Builder) StoreGoField(v interface{}, index []int) *Builder {
 		i := (opStoreNoVarField << bitsOpShift)
 		p.code.data = append(p.code.data, uint32(i))
 	}
-	return p
-}
-
-// AddrGoField instr
-func (p *Builder) AddrGoField(sf reflect.StructField) *Builder {
-	p.Push(sf.Index)
-	i := (opAddrGoField << bitsOpShift) | uint32(len(sf.Index))
-	p.code.data = append(p.code.data, i)
 	return p
 }
 

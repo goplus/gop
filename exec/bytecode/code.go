@@ -118,7 +118,6 @@ const (
 	opStoreVarField   = 48
 	opStoreGoVarField = 49
 	opStoreNoVarField = 50
-	opAddrGoField     = 51
 )
 
 const (
@@ -205,7 +204,6 @@ var instrInfos = []InstrInfo{
 	opStoreGoVarField: {"storeGoVarField", "addr", "index", 26},             // addr(26)
 	opStoreVarField:   {"storeVarField", "addr", "index", 26},               // addr(26)
 	opStoreNoVarField: {"storeNoVarField", "addr", "index", 26},             // addr(26)
-	opAddrGoField:     {"addrGoField", "", "index", 26},                     // addr(26)
 }
 
 // -----------------------------------------------------------------------------
