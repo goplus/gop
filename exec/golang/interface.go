@@ -329,8 +329,8 @@ func (p *iBuilder) AddrGoVar(addr exec.GoVarAddr) exec.Builder {
 }
 
 // LoadGoField instr
-func (p *iBuilder) LoadGoField(sf reflect.StructField) exec.Builder {
-	((*Builder)(p)).LoadGoField(sf)
+func (p *iBuilder) LoadGoField(v interface{}, index []int) exec.Builder {
+	((*Builder)(p)).LoadGoField(v, index)
 	return p
 }
 

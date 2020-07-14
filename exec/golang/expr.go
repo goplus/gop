@@ -425,17 +425,7 @@ func (p *Builder) AddrGoVar(addr exec.GoVarAddr) *Builder {
 	return p
 }
 
-// LoadGoField instr
-func (p *Builder) LoadGoField(sf reflect.StructField) *Builder {
-	p.rhs.Push(&ast.SelectorExpr{
-		X:   p.rhs.Pop().(ast.Expr),
-		Sel: Ident(sf.Name),
-	})
-	return p
-}
-
-// StoreGoField instr
-func (p *Builder) StoreGoField(v interface{}, index []int) *Builder {
+func (p *Builder) fieldExpr(v interface{}, index []int) ast.Expr {
 	var typ reflect.Type
 	expr := &ast.SelectorExpr{}
 	switch x := v.(type) {
@@ -463,6 +453,19 @@ func (p *Builder) StoreGoField(v interface{}, index []int) *Builder {
 		}
 		expr.Sel = Ident(sf.Name)
 	}
+	return expr
+}
+
+// LoadGoField instr
+func (p *Builder) LoadGoField(v interface{}, index []int) *Builder {
+	expr := p.fieldExpr(v, index)
+	p.rhs.Push(expr)
+	return p
+}
+
+// StoreGoField instr
+func (p *Builder) StoreGoField(v interface{}, index []int) *Builder {
+	expr := p.fieldExpr(v, index)
 	p.lhs.Push(expr)
 	return p
 }

@@ -255,12 +255,6 @@ func TestGoField(t *testing.T) {
 		StoreGoField(x, []int{1, 0}). // pkg_field.Rect.Pt1.X = -1
 		Push(-2).
 		StoreGoField(x, []int{2, 1}). // pkg_field.Rect.Pt2.Y = -2
-		LoadGoVar(x).
-		LoadGoField(it.FieldByIndex([]int{1, 1})).
-		LoadGoVar(x).
-		LoadGoField(it.FieldByIndex([]int{2})).
-		LoadGoField(it.FieldByIndex([]int{1})).
-		CallGoFuncv(sprint, 2, 2). // print(pkg_field.Rect.Info,pkg_field.Rect.Pt2.Y)
 		Push("world").
 		StoreGoField(y, []int{0, 0}). // y.Info = "world"
 		Push(-10).
@@ -278,19 +272,31 @@ func TestGoField(t *testing.T) {
 		StoreGoField(it2, []int{2, 1}). // pkg_field.GetRect().Pt2.Y = 102
 		LoadVar(y).
 		StoreGoVar(x2). // pkg_field.Rect2 = y
+		LoadGoField(x, []int{0, 0}).
+		LoadGoField(x, []int{2, 1}).
+		LoadGoField(y, []int{0, 0}).
+		LoadGoField(y, []int{2, 1}).
+		CallGoFunc(fnTestRect, 0).
+		LoadGoField(it2, []int{0, 0}).
+		CallGoFunc(fnTestRect, 0).
+		LoadGoField(it2, []int{2, 1}).
+		CallGoFuncv(sprint, 6, 6). // print(pkg_field.Info,pkg_field.Pt2.Y,y.Info,y.Pt2.Y,pkg_field.GetRect().Info,pkg_field.GetRect().Pt2.Y)
 		Resolve()
 
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
 
 	if rc.Info != "hello" || rc.Pt1.X != -1 || rc.Pt2.Y != -2 {
-		log.Fatal("Rect", rc)
+		t.Fatal("Rect", rc)
 	}
 	if rc2.Info != "world" || rc2.Pt1.X != -10 || rc2.Pt2.Y != -20 {
-		log.Fatal("Rect2", rc2)
+		t.Fatal("Rect2", rc2)
 	}
 	if g_Rect.Info != "next" || g_Rect.Pt1.X != 101 || g_Rect.Pt2.Y != 102 {
-		log.Fatal("g_Rect", g_Rect)
+		t.Fatal("g_Rect", g_Rect)
+	}
+	if v := ctx.Get(-1); v != "hello-2world-20next102" {
+		t.Fatal("LoadGoField", v)
 	}
 }
 

@@ -42,8 +42,7 @@ const (
 
 func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compleMode) {
 	ctx.inLhsMode = true
-	ctx.inLhsVar = nil
-	ctx.inLhsFieldIndex = nil
+	ctx.resetFieldVar(nil)
 	switch v := expr.(type) {
 	case *ast.Ident:
 		compileIdentLHS(ctx, v.Name, mode)
@@ -156,10 +155,9 @@ func compileIdent(ctx *blockCtx, name string) func() {
 		case *execVar:
 			ctx.infer.Push(&goValue{t: v.v.Type()})
 			kind := v.v.Type().Kind()
-			if ctx.inLhsMode {
-				ctx.inLhsVar = v.v
-			}
+			ctx.resetFieldVar(v.v)
 			return func() {
+				ctx.resetFieldVar(nil)
 				if ctx.inLhsMode && (kind == reflect.Array ||
 					kind == reflect.Struct) {
 					ctx.out.AddrVar(v.v)
@@ -657,8 +655,10 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) func() {
 			case exec.SymbolFuncv:
 				ctx.out.CallGoFuncv(exec.GoFuncvAddr(vfn.addr), nexpr, arity)
 			}
-			if ctx.inLhsMode {
-				ctx.inLhsVar = ret.Type()
+			if ret.NumValues() > 0 {
+				ctx.resetFieldVar(ret.Value(0).Type())
+			} else {
+				ctx.resetFieldVar(nil)
 			}
 		}
 	case *goValue:
@@ -941,36 +941,17 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compleMode)
 		name := v.Sel.Name
 		if sf, ok := t.FieldByName(name); ok {
 			checkType(sf.Type, in, ctx.out)
-			ctx.out.StoreGoField(ctx.inLhsVar, append(ctx.inLhsFieldIndex, sf.Index...))
+			if ctx.fieldVar == nil {
+				exprX()
+			}
+			ctx.out.StoreGoField(ctx.fieldVar, append(ctx.fieldIndex, sf.Index...))
+			ctx.resetFieldVar(nil)
 		}
 	default:
 		log.Panicln("compileSelectorExprLHS failed: unknown -", reflect.TypeOf(vx))
 	}
 	_ = exprX
 }
-
-type Selection struct {
-	recv  reflect.Type // type of x
-	obj   interface{}
-	index []int
-}
-
-// func findSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) interface{} {
-// 	switch x := v.X.(type) {
-// 	case *ast.Ident:
-// 		if sym, ok := ctx.find(x.Name); ok {
-// 			switch v := sym.(type) {
-// 			case *exec.Var:
-// 			case *stackVar:
-// 			case string:
-// 				types.Selection
-// 				ctx.FindGoPackage(v)
-// 			}
-// 		}
-// 	case *ast.SelectorExpr:
-// 		findSelectorExpr(ctx, x)
-// 	}
-// }
 
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 	exprX := compileExpr(ctx, v.X)
@@ -1001,10 +982,9 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 				info := ctx.GetGoVarInfo(exec.GoVarAddr(addr))
 				vt := reflect.ValueOf(info.This)
 				ctx.infer.Ret(1, &goValue{t: vt.Elem().Type()})
-				if ctx.inLhsMode {
-					ctx.inLhsVar = exec.GoVarAddr(addr)
-				}
+				ctx.resetFieldVar(exec.GoVarAddr(addr))
 				return func() {
+					ctx.resetFieldVar(nil)
 					if ctx.inLhsMode && vt.Elem().Kind() == reflect.Array {
 						ctx.out.AddrGoVar(exec.GoVarAddr(addr))
 					} else {
@@ -1022,16 +1002,13 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 		name := v.Sel.Name
 		if sf, ok := t.FieldByName(name); ok {
 			ctx.infer.Ret(1, &goValue{t: sf.Type})
-			if ctx.inLhsMode {
-				if ctx.inLhsVar == nil {
-					exprX()
-				}
-				ctx.inLhsFieldIndex = append(ctx.inLhsFieldIndex, sf.Index...)
-				return func() {}
+			if ctx.fieldVar == nil {
+				exprX()
 			}
-			exprX()
+			ctx.fieldIndex = append(ctx.fieldIndex, sf.Index...)
 			return func() {
-				ctx.out.LoadGoField(sf)
+				ctx.out.LoadGoField(ctx.fieldVar, ctx.fieldIndex)
+				ctx.resetFieldVar(nil)
 			}
 		}
 		pkgPath, method := normalizeMethod(n, t, name)

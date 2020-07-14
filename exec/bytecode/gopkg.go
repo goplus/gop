@@ -429,9 +429,16 @@ func (p *Builder) AddrGoVar(addr GoVarAddr) *Builder {
 }
 
 // LoadGoField instr
-func (p *Builder) LoadGoField(sf reflect.StructField) *Builder {
-	p.Push(sf.Index)
-	i := (opLoadGoField << bitsOpShift) | uint32(len(sf.Index))
+func (p *Builder) LoadGoField(v interface{}, index []int) *Builder {
+	switch x := v.(type) {
+	case exec.GoVarAddr:
+		p.LoadGoVar(x)
+	case *Var:
+		p.LoadVar(x)
+	case reflect.Type:
+	}
+	p.Push(index)
+	i := (opLoadGoField << bitsOpShift)
 	p.code.data = append(p.code.data, uint32(i))
 	return p
 }

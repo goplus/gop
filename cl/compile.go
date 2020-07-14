@@ -282,14 +282,19 @@ func checkLabel(fl *flowLabel) bool {
 type blockCtx struct {
 	*pkgCtx
 	*funcCtx
-	file            *fileCtx
-	parent          *blockCtx
-	syms            map[string]iSymbol
-	noExecCtx       bool
-	checkFlag       bool
-	inLhsMode       bool
-	inLhsVar        interface{}
-	inLhsFieldIndex []int
+	file       *fileCtx
+	parent     *blockCtx
+	syms       map[string]iSymbol
+	noExecCtx  bool
+	checkFlag  bool
+	inLhsMode  bool
+	fieldVar   interface{}
+	fieldIndex []int
+}
+
+func (ctx *blockCtx) resetFieldVar(v interface{}) {
+	ctx.fieldVar = v
+	ctx.fieldIndex = nil
 }
 
 // function block ctx

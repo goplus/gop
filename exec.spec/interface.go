@@ -289,7 +289,7 @@ type Builder interface {
 	AddrGoVar(addr GoVarAddr) Builder
 
 	// LoadGoField instr
-	LoadGoField(sf reflect.StructField) Builder
+	LoadGoField(v interface{}, index []int) Builder
 
 	// StoreGoField instr
 	StoreGoField(v interface{}, index []int) Builder
