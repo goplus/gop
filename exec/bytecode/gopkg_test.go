@@ -243,8 +243,6 @@ func TestGoField(t *testing.T) {
 	y := NewVar(it, "y")
 	b := newBuilder()
 
-	//	sfInfo, _ := it.FieldByName("Info")
-
 	code := b.
 		DefineVar(y). // y
 		LoadGoVar(x2).
