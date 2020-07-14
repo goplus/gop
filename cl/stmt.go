@@ -84,47 +84,43 @@ func compileForPhraseStmt(parent *blockCtx, v *ast.ForPhraseStmt) {
 	noExecCtx := isNoExecCtx(parent, v.Body)
 	ctx, exprFor := compileForPhrase(parent, v.ForPhrase, noExecCtx)
 	exprFor(func() {
-		defer func() {
-			ctx.currentFlow = ctx.currentFlow.parent
-		}()
-		preCompileForPhrase(v, ctx, v.Body)
-		compileBlockStmtWithout(ctx, v.Body)
+		compileForPhraseBody(v, ctx, v.Body)
 	})
 }
 
-func preCompileForPhrase(v ast.Stmt, ctx *blockCtx, body *ast.BlockStmt) {
-	tokPos := v.Pos()
-	post := ctx.requireLabel(fmt.Sprintf("_gop_continue_%d", tokPos))
-	done := ctx.requireLabel(fmt.Sprintf("_gop_break_%d", tokPos))
+func compileForPhraseBody(v ast.Stmt, ctx *blockCtx, body *ast.BlockStmt) {
+	post := ctx.requireLabel(fmt.Sprintf("_gop_continue_%d", v.Pos()))
+	done := ctx.requireLabel(fmt.Sprintf("_gop_break_%d", v.Pos()))
 	labelName := ""
 	if ctx.currentLabel != nil && ctx.currentLabel.Stmt == v {
 		labelName = ctx.currentLabel.Label.Name
 	}
 	ctx.nextFlow(post, done, labelName)
-
+	defer func() {
+		ctx.currentFlow = ctx.currentFlow.parent
+	}()
 	labelEnd := &ast.Ident{
-		NamePos: tokPos,
+		NamePos: v.Pos(),
 		Name:    post.Name(),
 		Obj:     ast.NewObj(ast.Lbl, post.Name()),
 	}
-	labelBreak := &ast.Ident{
-		NamePos: tokPos,
-		Name:    done.Name(),
-		Obj:     ast.NewObj(ast.Lbl, done.Name()),
-	}
 	body.List = append(body.List, []ast.Stmt{
 		&ast.BranchStmt{
-			TokPos: tokPos,
+			TokPos: v.Pos(),
 			Tok:    token.GOTO,
 			Label:  labelEnd,
 		},
 		&ast.LabeledStmt{
-			Label: labelBreak,
+			Label: &ast.Ident{
+				NamePos: v.Pos(),
+				Name:    done.Name(),
+				Obj:     ast.NewObj(ast.Lbl, done.Name()),
+			},
 			Stmt: &ast.AssignStmt{
 				Lhs: []ast.Expr{&ast.Ident{
-					NamePos: tokPos,
-					Name:    getBreakVarName(tokPos),
-					Obj:     ast.NewObj(ast.Var, getBreakVarName(tokPos)),
+					NamePos: v.Pos(),
+					Name:    getBreakVarName(v.Pos()),
+					Obj:     ast.NewObj(ast.Var, getBreakVarName(v.Pos())),
 				}},
 				Tok: token.ASSIGN,
 				Rhs: []ast.Expr{&ast.BasicLit{
@@ -136,10 +132,11 @@ func preCompileForPhrase(v ast.Stmt, ctx *blockCtx, body *ast.BlockStmt) {
 		&ast.LabeledStmt{
 			Label: labelEnd,
 			Stmt: &ast.EmptyStmt{
-				Semicolon: tokPos,
+				Semicolon: v.Pos(),
 				Implicit:  true,
 			},
 		}}...)
+	compileBlockStmtWithout(ctx, body)
 }
 
 func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
@@ -188,11 +185,7 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 	}
 	ctx, exprFor := compileForPhrase(parent, f, noExecCtx)
 	exprFor(func() {
-		defer func() {
-			ctx.currentFlow = ctx.currentFlow.parent
-		}()
-		preCompileForPhrase(v, ctx, v.Body)
-		compileBlockStmtWithout(ctx, v.Body)
+		compileForPhraseBody(v, ctx, v.Body)
 	})
 }
 
