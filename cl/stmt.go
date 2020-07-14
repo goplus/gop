@@ -17,6 +17,7 @@
 package cl
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/goplus/gop/ast"
@@ -83,8 +84,62 @@ func compileForPhraseStmt(parent *blockCtx, v *ast.ForPhraseStmt) {
 	noExecCtx := isNoExecCtx(parent, v.Body)
 	ctx, exprFor := compileForPhrase(parent, v.ForPhrase, noExecCtx)
 	exprFor(func() {
+		defer func() {
+			ctx.currentFlow = ctx.currentFlow.parent
+		}()
+		preCompileForPhrase(v, ctx, v.Body)
 		compileBlockStmtWithout(ctx, v.Body)
 	})
+}
+
+func preCompileForPhrase(v ast.Stmt, ctx *blockCtx, body *ast.BlockStmt) {
+	tokPos := v.Pos()
+	post := ctx.requireLabel(fmt.Sprintf("_gop_continue_%d", tokPos))
+	done := ctx.requireLabel(fmt.Sprintf("_gop_break_%d", tokPos))
+	labelName := ""
+	if ctx.currentLabel != nil && ctx.currentLabel.Stmt == v {
+		labelName = ctx.currentLabel.Label.Name
+	}
+	ctx.nextFlow(post, done, labelName)
+
+	labelEnd := &ast.Ident{
+		NamePos: tokPos,
+		Name:    post.Name(),
+		Obj:     ast.NewObj(ast.Lbl, post.Name()),
+	}
+	labelBreak := &ast.Ident{
+		NamePos: tokPos,
+		Name:    done.Name(),
+		Obj:     ast.NewObj(ast.Lbl, done.Name()),
+	}
+	body.List = append(body.List, []ast.Stmt{
+		&ast.BranchStmt{
+			TokPos: tokPos,
+			Tok:    token.GOTO,
+			Label:  labelEnd,
+		},
+		&ast.LabeledStmt{
+			Label: labelBreak,
+			Stmt: &ast.AssignStmt{
+				Lhs: []ast.Expr{&ast.Ident{
+					NamePos: tokPos,
+					Name:    getBreakVarName(tokPos),
+					Obj:     ast.NewObj(ast.Var, getBreakVarName(tokPos)),
+				}},
+				Tok: token.ASSIGN,
+				Rhs: []ast.Expr{&ast.BasicLit{
+					Kind:  token.INT,
+					Value: "1",
+				}},
+			},
+		},
+		&ast.LabeledStmt{
+			Label: labelEnd,
+			Stmt: &ast.EmptyStmt{
+				Semicolon: tokPos,
+				Implicit:  true,
+			},
+		}}...)
 }
 
 func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
@@ -133,6 +188,10 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 	}
 	ctx, exprFor := compileForPhrase(parent, f, noExecCtx)
 	exprFor(func() {
+		defer func() {
+			ctx.currentFlow = ctx.currentFlow.parent
+		}()
+		preCompileForPhrase(v, ctx, v.Body)
 		compileBlockStmtWithout(ctx, v.Body)
 	})
 }

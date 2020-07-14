@@ -265,7 +265,7 @@ func NewComprehension(out reflect.Type) *Comprehension {
 }
 
 // ForPhrase instr
-func (p *Builder) ForPhrase(f *ForPhrase, key, val *Var, hasExecCtx ...bool) *Builder {
+func (p *Builder) ForPhrase(f *ForPhrase, key, val, brk *Var, hasExecCtx ...bool) *Builder {
 	f.initStmts()
 	f.saveEnv(p)
 	p.scopeCtx = &f.scopeCtx
@@ -287,12 +287,24 @@ func (p *Builder) EndForPhrase(f *ForPhrase) *Builder {
 	}
 	p.endBlockStmt(0)
 	body := &ast.BlockStmt{List: f.getStmts(p)}
+	var labeledStmt ast.Stmt
+	if len(body.List) > 0 {
+		if v, ok := body.List[0].(*ast.LabeledStmt); ok {
+			labeledStmt = v
+			body.List[0] = v.Stmt
+		}
+	}
+	if n := len(body.List); n > 3 {
+		if v, ok := body.List[n-3].(*ast.LabeledStmt); ok {
+			v.Stmt = &ast.BranchStmt{Tok: token.BREAK}
+		}
+	}
 	if f.Cond != nil {
 		body = &ast.BlockStmt{List: []ast.Stmt{
 			&ast.IfStmt{Cond: f.Cond, Body: body},
 		}}
 	}
-	p.rhs.Push(&ast.RangeStmt{
+	rangeStmt := &ast.RangeStmt{
 		Key: func() ast.Expr {
 			if f.Key == nil && f.Value == nil {
 				return nil
@@ -303,7 +315,13 @@ func (p *Builder) EndForPhrase(f *ForPhrase) *Builder {
 		Tok:   token.DEFINE,
 		X:     f.X,
 		Body:  body,
-	})
+	}
+	if labeledStmt != nil {
+		labeledStmt.(*ast.LabeledStmt).Stmt = rangeStmt
+		p.rhs.Push(labeledStmt)
+	} else {
+		p.rhs.Push(rangeStmt)
+	}
 	f.restoreEnv(p)
 	return p
 }

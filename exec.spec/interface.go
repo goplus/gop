@@ -203,7 +203,7 @@ type Builder interface {
 	ErrWrap(nret int, retErr Var, frame *errors.Frame, narg int) Builder
 
 	// ForPhrase instr
-	ForPhrase(f ForPhrase, key, val Var, hasExecCtx ...bool) Builder
+	ForPhrase(f ForPhrase, key, val, brk Var, hasExecCtx ...bool) Builder
 
 	// FilterForPhrase instr
 	FilterForPhrase(f ForPhrase) Builder
