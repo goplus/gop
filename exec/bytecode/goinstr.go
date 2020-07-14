@@ -61,6 +61,7 @@ func (c *ForPhrase) execListRange(data reflect.Value, ctx *Context) {
 	var key, val, brk = c.Key, c.Value, c.Brk
 	var blockScope = c.block != nil
 	var old savedScopeCtx
+	var breakNow bool
 	for i := 0; i < n; i++ {
 		if key != nil {
 			ctx.setVar(key.idx, i)
@@ -86,11 +87,14 @@ func (c *ForPhrase) execListRange(data reflect.Value, ctx *Context) {
 				blk = old.varScope
 			}
 			if blk.getVar(brk.idx).(int) == 1 {
-				break
+				breakNow = true
 			}
 		}
 		if blockScope {
 			ctx.restoreScope(old)
+		}
+		if breakNow {
+			break
 		}
 	}
 	ctx.ip = ipEnd
@@ -102,6 +106,7 @@ func (c *ForPhrase) execMapRange(data reflect.Value, ctx *Context) {
 	var key, val, brk = c.Key, c.Value, c.Brk
 	var blockScope = c.block != nil
 	var old savedScopeCtx
+	var breakNow bool
 	for iter.Next() {
 		if key != nil {
 			ctx.setVar(key.idx, iter.Key().Interface())
@@ -127,11 +132,14 @@ func (c *ForPhrase) execMapRange(data reflect.Value, ctx *Context) {
 				blk = old.varScope
 			}
 			if blk.getVar(brk.idx).(int) == 1 {
-				break
+				breakNow = true
 			}
 		}
 		if blockScope {
 			ctx.restoreScope(old)
+		}
+		if breakNow {
+			break
 		}
 	}
 	ctx.ip = ipEnd
