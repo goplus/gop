@@ -149,3 +149,19 @@ L4:
 		}
 		println(k, v)
 	}
+
+	mapData := {0: 1, 1: 3, 2: 5, 3: 7}
+	sum := 0
+LM:
+	for i, _ <- mapData {
+		if mapData[i] < 7 {
+			continue LM
+		}
+		for j := 0; j < len(mapData); j++ {
+			if mapData[j] > 3 {
+				break LM
+			}
+			sum += mapData[i] + mapData[j]
+		}
+	}
+	println(sum)
