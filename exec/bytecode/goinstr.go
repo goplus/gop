@@ -99,7 +99,7 @@ func (c *ForPhrase) execListRange(data reflect.Value, ctx *Context) {
 func (c *ForPhrase) execMapRange(data reflect.Value, ctx *Context) {
 	var iter = data.MapRange()
 	var ip, ipCond, ipEnd = ctx.ip, c.Cond, c.End
-	var key, val = c.Key, c.Value
+	var key, val, brk = c.Key, c.Value, c.Brk
 	var blockScope = c.block != nil
 	var old savedScopeCtx
 	for iter.Next() {
@@ -120,6 +120,15 @@ func (c *ForPhrase) execMapRange(data reflect.Value, ctx *Context) {
 			}
 		} else {
 			ctx.Exec(ip, ipEnd)
+		}
+		if brk != nil {
+			blk := ctx.varScope
+			if blockScope {
+				blk = old.varScope
+			}
+			if blk.getVar(brk.idx).(int) == 1 {
+				break
+			}
 		}
 		if blockScope {
 			ctx.restoreScope(old)

@@ -1256,3 +1256,185 @@ var testForPhraseWithBranchClauses = map[string]testData{
 func TestForPhraseWithBranch(t *testing.T) {
 	testScripts(t, "TestForPhraseWithBranch", testForPhraseWithBranchClauses)
 }
+
+// -----------------------------------------------------------------------------
+
+var testRangeMapWithBranchClauses = map[string]testData{
+	"map_for_with_continue": {`
+					arr := {1:1,2:3,3:5,4:7}
+					sum := 0
+					for i, _ <- arr {
+						if arr[i]<5{
+							continue
+						}
+						sum+=arr[i]
+					}
+					println(sum)
+					`, []string{"12"}},
+	"map_for_with_break": {`
+					arr := {1:1,2:3,3:5,4:7}
+					sum := 0
+					for i, _ <- arr {
+						if arr[i]>0{
+							break
+						}
+						sum+=arr[i]
+					}
+					println(sum)
+					`, []string{"0"}},
+	"map_for_with_break_label": {`
+					arr := {0:1,1:3,2:5,3:7}
+					sum := 0
+					L:
+					for i, _ <- arr {
+						for j:=0;j<len(arr);j++{
+							if j>2{
+								break L
+							}
+							sum+=arr[j]
+						}
+					}
+					println(sum)
+					`, []string{"9"}},
+	"map_for_with_continue_label": {`
+					arr := {0:1,1:3,2:5,3:7}
+					sum := 0
+					L:
+					for i, _ <- arr {
+						for j:=0;j<len(arr);j++{
+							if j>1{
+								continue L
+							}
+							sum+=arr[i]+arr[j]
+						}
+					}
+					println(sum)
+					`, []string{"48"}}, // (1+3+5+7)*2+(1+3)*4
+	"map_for_with_many_labels": {`
+					arr := {0:1,1:3,2:5,3:7}
+					sum := 0
+					L:
+					for i, _ <- arr {
+						if arr[i]<7{
+								continue L
+						}
+						L1:
+						for j:=0;j<len(arr);j++{
+							if arr[j]>1{
+								break L1
+							}
+							sum+=arr[i]+arr[j]
+						}
+					}
+					println(sum)
+					`, []string{"8"}},
+	"map_for_range_many_labels_break": {`
+					arr := {0:1,1:3,2:5,3:7}
+					sum := 0
+					L:
+					for i, _ <- arr {
+						if arr[i]<7{
+								continue L
+						}
+						L1:
+						for j:=0;j<len(arr);j++{
+							if arr[j]>3{
+								break L
+							}
+							sum+=arr[i]+arr[j]
+						}
+					}
+					println(sum)
+					`, []string{"18"}},
+
+	"map_for_range_continue": {`
+					arr := {1:1,2:3,3:5,4:7}
+					sum := 0
+					for i, _ <- arr {
+						if arr[i]<5{
+							continue
+						}
+						sum+=arr[i]
+					}
+					println(sum)
+					`, []string{"12"}},
+	"map_for_range_break": {`
+					arr := {1:1,2:3,3:5,4:7}
+					sum := 0
+					for i, _ <- arr {
+						if arr[i]>0{
+							break
+						}
+						sum+=arr[i]
+					}
+					println(sum)
+					`, []string{"0"}},
+	"map_for_range_break_label": {`
+					arr := {0:1,1:3,2:5,3:7}
+					sum := 0
+					L:
+					for i, _ <- arr {
+						for j:=0;j<len(arr);j++{
+							if j>2{
+								break L
+							}
+							sum+=arr[j]
+						}
+					}
+					println(sum)
+					`, []string{"9"}},
+	"map_for_range_continue_label": {`
+					arr := {0:1,1:3,2:5,3:7}
+					sum := 0
+					L:
+					for i, _ <- arr {
+						for j:=0;j<len(arr);j++{
+							if j>1{
+								continue L
+							}
+							sum+=arr[i]+arr[j]
+						}
+					}
+					println(sum)
+					`, []string{"48"}}, // (1+3+5+7)*2+(1+3)*4
+	"map_for_range_many_labels": {`
+					arr := {0:1,1:3,2:5,3:7}
+					sum := 0
+					L:
+					for i, _ <- arr {
+						if arr[i]<7{
+								continue L
+						}
+						L1:
+						for j:=0;j<len(arr);j++{
+							if arr[j]>1{
+								break L1
+							}
+							sum+=arr[i]+arr[j]
+						}
+					}
+					println(sum)
+					`, []string{"8"}},
+	"map_for_with_many_labels_break": {`
+					arr := {0:1,1:3,2:5,3:7}
+					sum := 0
+					L:
+					for i, _ <- arr {
+						if arr[i]<7{
+								continue L
+						}
+						L1:
+						for j:=0;j<len(arr);j++{
+							if arr[j]>3{
+								break L
+							}
+							sum+=arr[i]+arr[j]
+						}
+					}
+					println(sum)
+					`, []string{"18"}},
+}
+
+func TestMapForPhraseWithBranch(t *testing.T) {
+	testScripts(t, "TestMapForPhraseWithBranch", testRangeMapWithBranchClauses)
+}
