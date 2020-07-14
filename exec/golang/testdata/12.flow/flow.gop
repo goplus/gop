@@ -128,3 +128,24 @@ L3:
 			println(x)
 		}
 	}
+
+	for k, v <- [1, 2, 3] {
+		if k < 1 {
+			continue
+		}
+		if k > 1 {
+			break
+		}
+		println(k, v)
+	}
+
+	L4
+	for k, v <- [1, 2, 3] {
+		if k < 1 {
+			continue L4
+		}
+		if k > 1 {
+			break L4
+		}
+		println(k, v)
+	}
