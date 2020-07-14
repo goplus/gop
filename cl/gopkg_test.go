@@ -565,6 +565,12 @@ import (
 
 `
 	const nField = len(ar)
+
+	// make set
+	for i := 0; i < nField; i++ {
+		testSource += fmt.Sprintf("pkg.Info.V%v = pkg.Info.V%v\n", i+1, i+1)
+	}
+
 	// make println
 	for i := 0; i < nField; i++ {
 		testSource += fmt.Sprintf("println(\"pkg.Info.V%v = \", pkg.Info.V%v)\n", i+1, i+1)
