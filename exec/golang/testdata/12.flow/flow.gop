@@ -139,7 +139,7 @@ L3:
 		println(k, v)
 	}
 
-	L4
+L4:
 	for k, v <- [1, 2, 3] {
 		if k < 1 {
 			continue L4
