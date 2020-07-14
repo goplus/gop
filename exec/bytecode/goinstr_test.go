@@ -129,7 +129,7 @@ func TestMapComprehension(t *testing.T) {
 		Push("xsw").
 		Push(1).
 		MakeMap(typData, 2).
-		ForPhrase(f, key, val, true).
+		ForPhrase(f, key, val, nil, true).
 		LoadVar(val).
 		LoadVar(key).
 		EndForPhrase(f).
@@ -156,7 +156,7 @@ func TestMapComprehensionFilter(t *testing.T) {
 		Push("xsw").
 		Push(1).
 		MakeMap(typData, 2).
-		ForPhrase(f, key, val).
+		ForPhrase(f, key, val, nil).
 		LoadVar(val).
 		Push(2).
 		BuiltinOp(Int, OpLE).
@@ -186,7 +186,7 @@ func TestListComprehension(t *testing.T) {
 		Push(5).
 		Push(7).
 		MakeArray(typData, 4).
-		ForPhrase(f, nil, x).
+		ForPhrase(f, nil, x, nil).
 		LoadVar(x).
 		LoadVar(x).
 		BuiltinOp(Int, OpMul).
@@ -213,7 +213,7 @@ func TestListComprehensionFilter(t *testing.T) {
 		Push(5).
 		Push(7).
 		MakeArray(typData, 4).
-		ForPhrase(f, nil, x).
+		ForPhrase(f, nil, x, nil).
 		LoadVar(x).
 		Push(3).
 		BuiltinOp(Int, OpGT). // x > 3
@@ -245,7 +245,7 @@ func TestMapComprehension2(t *testing.T) {
 		Push(5).
 		Push(7).
 		MakeArray(typData, 4).
-		ForPhrase(f, i, x).
+		ForPhrase(f, i, x, nil).
 		LoadVar(x).
 		LoadVar(x).
 		BuiltinOp(Int, OpMul).
@@ -274,13 +274,13 @@ func TestListComprehensionEx(t *testing.T) {
 		Push(6).
 		Push(7).
 		MakeArray(typData, 3).
-		ForPhrase(fb, nil, b).
+		ForPhrase(fb, nil, b, nil).
 		Push(1).
 		Push(2).
 		Push(3).
 		Push(4).
 		MakeArray(typData, 4).
-		ForPhrase(fa, nil, a).
+		ForPhrase(fa, nil, a, nil).
 		LoadVar(a).
 		Push(1).
 		BuiltinOp(Int, OpGT). // a > 1

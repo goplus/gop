@@ -17,6 +17,7 @@
 package cl
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 	"syscall"
@@ -354,11 +355,12 @@ func compileForPhrase(parent *blockCtx, f ast.ForPhrase, noExecCtx bool) (*block
 		typVal = typData.Elem()
 		varVal = ctx.insertVar(f.Value.Name, typVal, true).v
 	}
+	brkVal := ctx.insertVar(getBreakVarName(f.For), exec.TyInt, true).v
 	return ctx, func(exprElt func()) {
 		exprX()
 		out := ctx.out
 		c := ctx.NewForPhrase(typData)
-		out.ForPhrase(c, varKey, varVal, !noExecCtx)
+		out.ForPhrase(c, varKey, varVal, brkVal, !noExecCtx)
 		if f.Cond != nil {
 			compileExpr(ctx, f.Cond)()
 			checkBool(ctx.infer.Pop())
@@ -367,6 +369,9 @@ func compileForPhrase(parent *blockCtx, f ast.ForPhrase, noExecCtx bool) (*block
 		exprElt()
 		out.EndForPhrase(c)
 	}
+}
+func getBreakVarName(pos token.Pos) string {
+	return fmt.Sprintf("_gop_break_%d", pos)
 }
 
 func compileForPhrases(ctx *blockCtx, fors []ast.ForPhrase) (*blockCtx, []func(exprElt func())) {

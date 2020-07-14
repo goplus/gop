@@ -58,7 +58,7 @@ func (c *ForPhrase) execListRange(data reflect.Value, ctx *Context) {
 	data = reflect.Indirect(data)
 	var n = data.Len()
 	var ip, ipCond, ipEnd = ctx.ip, c.Cond, c.End
-	var key, val = c.Key, c.Value
+	var key, val, brk = c.Key, c.Value, c.Brk
 	var blockScope = c.block != nil
 	var old savedScopeCtx
 	for i := 0; i < n; i++ {
@@ -79,6 +79,15 @@ func (c *ForPhrase) execListRange(data reflect.Value, ctx *Context) {
 			}
 		} else {
 			ctx.Exec(ip, ipEnd)
+		}
+		if brk != nil {
+			blk := ctx.varScope
+			if blockScope {
+				blk = old.varScope
+			}
+			if blk.getVar(brk.idx).(int) == 1 {
+				break
+			}
 		}
 		if blockScope {
 			ctx.restoreScope(old)
@@ -304,10 +313,10 @@ func ToValues(args []interface{}) []reflect.Value {
 
 // ForPhrase represents a for range phrase.
 type ForPhrase struct {
-	Key, Value *Var // Key, Value may be nil
-	Cond, End  int
-	TypeIn     reflect.Type
-	block      *blockCtx
+	Key, Value, Brk *Var // Key, Value may be nil
+	Cond, End       int
+	TypeIn          reflect.Type
+	block           *blockCtx
 }
 
 // NewForPhrase creates a new ForPhrase instance.
@@ -327,13 +336,16 @@ func NewComprehension(out reflect.Type) *Comprehension {
 }
 
 // ForPhrase instr
-func (p *Builder) ForPhrase(f *ForPhrase, key, val *Var, hasExecCtx ...bool) *Builder {
-	f.Key, f.Value = key, val
+func (p *Builder) ForPhrase(f *ForPhrase, key, val, brk *Var, hasExecCtx ...bool) *Builder {
+	f.Key, f.Value, f.Brk = key, val, brk
 	if key != nil {
 		p.DefineVar(key)
 	}
 	if val != nil {
 		p.DefineVar(val)
+	}
+	if brk != nil {
+		p.DefineVar(brk)
 	}
 	if hasExecCtx != nil && hasExecCtx[0] {
 		f.block = newBlockCtx(p.nestDepth+1, p.varManager)

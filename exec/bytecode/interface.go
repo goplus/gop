@@ -140,8 +140,8 @@ func (p *iBuilder) ErrWrap(nret int, retErr exec.Var, frame *errors.Frame, narg 
 }
 
 // ForPhrase instr
-func (p *iBuilder) ForPhrase(f exec.ForPhrase, key, val exec.Var, hasExecCtx ...bool) exec.Builder {
-	((*Builder)(p)).ForPhrase(f.(*ForPhrase), toVar(key), toVar(val), hasExecCtx...)
+func (p *iBuilder) ForPhrase(f exec.ForPhrase, key, val, brk exec.Var, hasExecCtx ...bool) exec.Builder {
+	((*Builder)(p)).ForPhrase(f.(*ForPhrase), toVar(key), toVar(val), toVar(brk), hasExecCtx...)
 	return p
 }
 
