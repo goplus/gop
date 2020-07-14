@@ -165,3 +165,12 @@ LM:
 		}
 	}
 	println(sum)
+
+	fns := make([]func() int, 3)
+	for mi, mx <- {0: 3, 1: 15, 2: 777} {
+		mv := mx
+		fns[mi] = func() int {
+			return mv
+		}
+	}
+	println("values:", fns[0](), fns[1](), fns[2]())
