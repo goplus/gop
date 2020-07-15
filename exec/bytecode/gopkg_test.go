@@ -248,36 +248,36 @@ func TestGoField(t *testing.T) {
 		LoadGoVar(x2).
 		StoreVar(y). // y = pkg_field.Rect2
 		Push("hello").
-		StoreGoField(x, []int{0, 0}). // pkg_field.Rect.Info = "hello"
+		StoreField(x, []int{0, 0}). // pkg_field.Rect.Info = "hello"
 		Push(-1).
-		StoreGoField(x, []int{1, 0}). // pkg_field.Rect.Pt1.X = -1
+		StoreField(x, []int{1, 0}). // pkg_field.Rect.Pt1.X = -1
 		Push(-2).
-		StoreGoField(x, []int{2, 1}). // pkg_field.Rect.Pt2.Y = -2
+		StoreField(x, []int{2, 1}). // pkg_field.Rect.Pt2.Y = -2
 		Push("world").
-		StoreGoField(y, []int{0, 0}). // y.Info = "world"
+		StoreField(y, []int{0, 0}). // y.Info = "world"
 		Push(-10).
-		StoreGoField(y, []int{1, 0}). // y.Pt1.X = -10
+		StoreField(y, []int{1, 0}). // y.Pt1.X = -10
 		Push(-20).
-		StoreGoField(y, []int{2, 1}). // y.Pt2.Y = -20
+		StoreField(y, []int{2, 1}). // y.Pt2.Y = -20
 		Push("next").
 		CallGoFunc(fnTestRect, 0).
-		StoreGoField(it2, []int{0, 0}). // pkg_field.GetRect().Info = "next"
+		StoreField(it2, []int{0, 0}). // pkg_field.GetRect().Info = "next"
 		Push(101).
 		CallGoFunc(fnTestRect, 0).
-		StoreGoField(it2, []int{1, 0}). // pkg_field.GetRect().Pt1.X = 101
+		StoreField(it2, []int{1, 0}). // pkg_field.GetRect().Pt1.X = 101
 		Push(102).
 		CallGoFunc(fnTestRect, 0).
-		StoreGoField(it2, []int{2, 1}). // pkg_field.GetRect().Pt2.Y = 102
+		StoreField(it2, []int{2, 1}). // pkg_field.GetRect().Pt2.Y = 102
 		LoadVar(y).
 		StoreGoVar(x2). // pkg_field.Rect2 = y
-		LoadGoField(x, []int{0, 0}).
-		LoadGoField(x, []int{2, 1}).
-		LoadGoField(y, []int{0, 0}).
-		LoadGoField(y, []int{2, 1}).
+		LoadField(x, []int{0, 0}).
+		LoadField(x, []int{2, 1}).
+		LoadField(y, []int{0, 0}).
+		LoadField(y, []int{2, 1}).
 		CallGoFunc(fnTestRect, 0).
-		LoadGoField(it2, []int{0, 0}).
+		LoadField(it2, []int{0, 0}).
 		CallGoFunc(fnTestRect, 0).
-		LoadGoField(it2, []int{2, 1}).
+		LoadField(it2, []int{2, 1}).
 		CallGoFuncv(sprint, 6, 6). // print(pkg_field.Info,pkg_field.Pt2.Y,y.Info,y.Pt2.Y,pkg_field.GetRect().Info,pkg_field.GetRect().Pt2.Y)
 		Resolve()
 
@@ -294,7 +294,7 @@ func TestGoField(t *testing.T) {
 		t.Fatal("g_Rect", g_Rect)
 	}
 	if v := ctx.Get(-1); v != "hello-2world-20next102" {
-		t.Fatal("LoadGoField", v)
+		t.Fatal("LoadField", v)
 	}
 }
 

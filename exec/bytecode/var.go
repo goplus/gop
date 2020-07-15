@@ -201,17 +201,6 @@ func execStoreVar(i Instr, p *Context) {
 	getParentCtx(p, tAddress(idx)).setVar(idx&bitsOpVarOperand, val)
 }
 
-func execStoreVarField(i Instr, p *Context) {
-	index := p.Pop()
-	idx := i & bitsOperand
-	val := p.Pop()
-	if idx <= bitsOpVarOperand {
-		p.setVarField(idx, val, index)
-		return
-	}
-	getParentCtx(p, tAddress(idx)).setVarField(idx&bitsOpVarOperand, val, index)
-}
-
 // -----------------------------------------------------------------------------
 
 // Address represents a variable address.

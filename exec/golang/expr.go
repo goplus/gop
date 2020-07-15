@@ -456,15 +456,15 @@ func (p *Builder) fieldExpr(v interface{}, index []int) ast.Expr {
 	return expr
 }
 
-// LoadGoField instr
-func (p *Builder) LoadGoField(v interface{}, index []int) *Builder {
+// LoadField instr
+func (p *Builder) LoadField(v interface{}, index []int) *Builder {
 	expr := p.fieldExpr(v, index)
 	p.rhs.Push(expr)
 	return p
 }
 
-// StoreGoField instr
-func (p *Builder) StoreGoField(v interface{}, index []int) *Builder {
+// StoreField instr
+func (p *Builder) StoreField(v interface{}, index []int) *Builder {
 	expr := p.fieldExpr(v, index)
 	p.lhs.Push(expr)
 	return p

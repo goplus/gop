@@ -944,7 +944,7 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compleMode)
 			if ctx.fieldVar == nil {
 				exprX()
 			}
-			ctx.out.StoreGoField(ctx.fieldVar, append(ctx.fieldIndex, sf.Index...))
+			ctx.out.StoreField(ctx.fieldVar, append(ctx.fieldIndex, sf.Index...))
 			ctx.resetFieldVar(nil)
 		}
 	default:
@@ -1007,7 +1007,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 			}
 			ctx.fieldIndex = append(ctx.fieldIndex, sf.Index...)
 			return func() {
-				ctx.out.LoadGoField(ctx.fieldVar, ctx.fieldIndex)
+				ctx.out.LoadField(ctx.fieldVar, ctx.fieldIndex)
 				ctx.resetFieldVar(nil)
 			}
 		}

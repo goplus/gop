@@ -63,28 +63,26 @@ func execAddrGoVar(i Instr, p *Context) {
 	p.Push(govars[idx].Addr)
 }
 
-func execLoadGoField(i Instr, p *Context) {
+func execLoadField(i Instr, p *Context) {
 	index := p.Pop()
 	v := reflect.ValueOf(p.Pop())
 	v = reflect.Indirect(v)
 	p.Push(v.FieldByIndex(index.([]int)).Interface())
 }
 
-func execStoreGoVarField(i Instr, p *Context) {
-	index := p.Pop()
-	value := p.Pop()
-	idx := i & bitsOperand
-	v := reflect.ValueOf(govars[idx].Addr).Elem()
-	v = reflect.Indirect(v)
-	setValue(v.FieldByIndex(index.([]int)), value)
+func toElem(v reflect.Value) reflect.Value {
+	for v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	return v
 }
 
-func execStoreNoVarField(i Instr, p *Context) {
+func execStoreField(i Instr, p *Context) {
 	index := p.Pop()
 	val := p.Pop()
 	value := p.Pop()
 	v := reflect.ValueOf(val)
-	v = reflect.Indirect(v)
+	v = toElem(v)
 	if !v.CanSet() {
 		log.Panicf("cannot assign to %v\n", v)
 	}
@@ -421,8 +419,8 @@ func (p *Builder) AddrGoVar(addr GoVarAddr) *Builder {
 	return p
 }
 
-// LoadGoField instr
-func (p *Builder) LoadGoField(v interface{}, index []int) *Builder {
+// LoadField instr
+func (p *Builder) LoadField(v interface{}, index []int) *Builder {
 	switch x := v.(type) {
 	case exec.GoVarAddr:
 		p.LoadGoVar(x)
@@ -431,25 +429,23 @@ func (p *Builder) LoadGoField(v interface{}, index []int) *Builder {
 	case reflect.Type:
 	}
 	p.Push(index)
-	i := (opLoadGoField << bitsOpShift)
+	i := (opLoadField << bitsOpShift)
 	p.code.data = append(p.code.data, uint32(i))
 	return p
 }
 
-// StoreGoField instr
-func (p *Builder) StoreGoField(v interface{}, index []int) *Builder {
-	p.Push(index)
+// StoreField instr
+func (p *Builder) StoreField(v interface{}, index []int) *Builder {
 	switch x := v.(type) {
 	case exec.GoVarAddr:
-		i := (opStoreGoVarField << bitsOpShift) | uint32(x)
-		p.code.data = append(p.code.data, i)
+		p.AddrGoVar(x)
 	case *Var:
-		addr := makeAddr(p.nestDepth-x.nestDepth, x.idx)
-		p.code.data = append(p.code.data, (opStoreVarField<<bitsOpShift)|uint32(addr))
+		p.AddrVar(x)
 	case reflect.Type:
-		i := (opStoreNoVarField << bitsOpShift)
-		p.code.data = append(p.code.data, uint32(i))
 	}
+	p.Push(index)
+	i := (opStoreField << bitsOpShift)
+	p.code.data = append(p.code.data, uint32(i))
 	return p
 }
 

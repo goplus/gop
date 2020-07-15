@@ -226,46 +226,46 @@ func main() {
 		StoreVar(y). // y = pkg_field.Rect2
 		EndStmt(nil, &stmtState{rhsBase: 0}).
 		Push("hello").
-		StoreGoField(x, []int{0, 0}). // pkg_field.Rect.Info = "hello"
+		StoreField(x, []int{0, 0}). // pkg_field.Rect.Info = "hello"
 		EndStmt(nil, &stmtState{rhsBase: 0}).
 		Push(-1).
-		StoreGoField(x, []int{1, 0}). // pkg_field.Rect.Pt1.X = -1
+		StoreField(x, []int{1, 0}). // pkg_field.Rect.Pt1.X = -1
 		EndStmt(nil, &stmtState{rhsBase: 0}).
 		Push(-2).
-		StoreGoField(x, []int{2, 1}). // pkg_field.Rect.Pt2.Y = -2
+		StoreField(x, []int{2, 1}). // pkg_field.Rect.Pt2.Y = -2
 		EndStmt(nil, &stmtState{rhsBase: 0}).
 		Push("world").
-		StoreGoField(y, []int{0, 0}). // y.Info = "world"
+		StoreField(y, []int{0, 0}). // y.Info = "world"
 		EndStmt(nil, &stmtState{rhsBase: 0}).
 		Push(-10).
-		StoreGoField(y, []int{1, 0}). // y.Pt1.X = -10
+		StoreField(y, []int{1, 0}). // y.Pt1.X = -10
 		EndStmt(nil, &stmtState{rhsBase: 0}).
 		Push(-20).
-		StoreGoField(y, []int{2, 1}). // y.Pt2.Y = -20
+		StoreField(y, []int{2, 1}). // y.Pt2.Y = -20
 		EndStmt(nil, &stmtState{rhsBase: 0}).
 		Push("next").
 		CallGoFunc(fnTestRect, 0).
-		StoreGoField(it2, []int{0, 0}). // pkg_field.GetRect().Info = "next"
+		StoreField(it2, []int{0, 0}). // pkg_field.GetRect().Info = "next"
 		EndStmt(nil, &stmtState{rhsBase: 0}).
 		Push(101).
 		CallGoFunc(fnTestRect, 0).
-		StoreGoField(it2, []int{1, 0}). // pkg_field.GetRect().Pt1.X = 101
+		StoreField(it2, []int{1, 0}). // pkg_field.GetRect().Pt1.X = 101
 		EndStmt(nil, &stmtState{rhsBase: 0}).
 		Push(102).
 		CallGoFunc(fnTestRect, 0).
-		StoreGoField(it2, []int{2, 1}). // pkg_field.GetRect().Pt2.Y = 102
+		StoreField(it2, []int{2, 1}). // pkg_field.GetRect().Pt2.Y = 102
 		EndStmt(nil, &stmtState{rhsBase: 0}).
 		LoadVar(y).
 		StoreGoVar(x2). // pkg_field.Rect2 = y
 		EndStmt(nil, &stmtState{rhsBase: 0}).
-		LoadGoField(x, []int{0, 0}).
-		LoadGoField(x, []int{2, 1}).
-		LoadGoField(y, []int{0, 0}).
-		LoadGoField(y, []int{2, 1}).
+		LoadField(x, []int{0, 0}).
+		LoadField(x, []int{2, 1}).
+		LoadField(y, []int{0, 0}).
+		LoadField(y, []int{2, 1}).
 		CallGoFunc(fnTestRect, 0).
-		LoadGoField(it2, []int{0, 0}).
+		LoadField(it2, []int{0, 0}).
 		CallGoFunc(fnTestRect, 0).
-		LoadGoField(it2, []int{2, 1}).
+		LoadField(it2, []int{2, 1}).
 		CallGoFuncv(println, 6, 6). // print(pkg_field.Info,pkg_field.Pt2.Y,y.Info,y.Pt2.Y,pkg_field.GetRect().Info,pkg_field.GetRect().Pt2.Y)
 		EndStmt(nil, &stmtState{rhsBase: 0}).
 		Resolve()
