@@ -14,60 +14,42 @@
  limitations under the License.
 */
 
-package cl
+package cl_test
 
 import (
-	"fmt"
-	"os"
 	"testing"
 
-	"github.com/goplus/gop"
-	"github.com/goplus/gop/ast/asttest"
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/token"
-	"github.com/qiniu/x/log"
-
-	exec "github.com/goplus/gop/exec/bytecode"
-	libbuiltin "github.com/goplus/gop/lib/builtin"
+	"github.com/goplus/gop/cl/cltest"
 )
 
 // -----------------------------------------------------------------------------
 
-var fsTestAssign = asttest.NewSingleFileFS("/foo", "bar.gop", `
+var testAssign = `
 	x, y := 123, "Hello"
 	x
 	y
-`)
+`
 
 func TestAssign(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestAssign, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
-
-	bar := pkgs["main"]
-	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar, fset)
-	if err != nil || !noExecCtx {
-		t.Fatal("Compile failed:", err)
-	}
-	code := b.Resolve()
-
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-	fmt.Println("x, y:", ctx.Get(-2), ctx.Get(-1))
-	if v := ctx.Get(-2); v != 123 {
-		t.Fatal("x:", v)
-	}
-	if v := ctx.Get(-1); v != "Hello" {
-		t.Fatal("y:", v)
-	}
+	cltest.Call(t, testAssign).Equal("Hello")
+	cltest.Call(t, testAssign, -2).Equal(123)
 }
 
 // -----------------------------------------------------------------------------
 
-var fsTestSwif = asttest.NewSingleFileFS("/foo", "bar.gop", `
+func TestSwitch(t *testing.T) {
+	testScripts(t, "TestSwitch", testSwitchIfScripts)
+}
+
+var testSwitchIfScripts = map[string]testData{
+	"switch_into_case":            {testSwif, []string{"5"}},
+	"switch_into_default":         {testSwif2, []string{"7"}},
+	"switch_into_case_with_cond":  {testSw, []string{"5"}},
+	"switch_into_case_with_empty": {testSw2, []string{"5"}},
+	"switch_with_no_case":         {testSw3, []string{"7"}},
+}
+
+var testSwif = `
 	x := 0
 	t := "Hello"
 	switch {
@@ -78,35 +60,10 @@ var fsTestSwif = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	default:
 		x = 7
 	}
-	x
-`)
+	println(x)
+`
 
-func TestSwitchIf(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestSwif, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
-
-	bar := pkgs["main"]
-	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar, fset)
-	if err != nil || !noExecCtx {
-		t.Fatal("Compile failed:", err)
-	}
-	code := b.Resolve()
-
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-	fmt.Println("x:", ctx.Get(-1))
-	if v := ctx.Get(-1); v != 5 {
-		t.Fatal("x:", v)
-	}
-}
-
-// -----------------------------------------------------------------------------
-
-var fsTestSwif2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
+var testSwif2 = `
 	x := 0
 	t := "Hello"
 	switch {
@@ -117,37 +74,10 @@ var fsTestSwif2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	default:
 		x = 7
 	}
-	x
-`)
+	println(x)
+`
 
-func TestSwitchIfDefault(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestSwif2, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
-
-	bar := pkgs["main"]
-	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar, fset)
-	if err != nil || !noExecCtx {
-		t.Fatal("Compile failed:", err)
-	}
-	code := b.Resolve()
-
-	code.Dump(os.Stdout)
-
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-	fmt.Println("x:", ctx.Get(-1))
-	if v := ctx.Get(-1); v != 7 {
-		t.Fatal("x:", v)
-	}
-}
-
-// -----------------------------------------------------------------------------
-
-var fsTestSw = asttest.NewSingleFileFS("/foo", "bar.gop", `
+var testSw = `
 	x := 0
 	switch t := "Hello"; t {
 	case "xsw":
@@ -157,35 +87,11 @@ var fsTestSw = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	default:
 		x= 7
 	}
-	x
-`)
+	println(x)
 
-func TestSwitch(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestSw, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
+`
 
-	bar := pkgs["main"]
-	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar, fset)
-	if err != nil || !noExecCtx {
-		t.Fatal("Compile failed:", err)
-	}
-	code := b.Resolve()
-
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-	fmt.Println("x:", ctx.Get(-1))
-	if v := ctx.Get(-1); v != 5 {
-		t.Fatal("x:", v)
-	}
-}
-
-// -----------------------------------------------------------------------------
-
-var fsTestSw2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
+var testSw2 = `
 	x := 0
 	t := "Hello"
 	switch t {
@@ -196,138 +102,52 @@ var fsTestSw2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	case "xsw":
 		x = 3
 	}
-	x
-`)
+	println(x)
+x
+`
 
-func TestSwitch2(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestSw2, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
-
-	bar := pkgs["main"]
-	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar, fset)
-	if err != nil || !noExecCtx {
-		t.Fatal("Compile failed:", err)
-	}
-	code := b.Resolve()
-
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-	fmt.Println("x:", ctx.Get(-1))
-	if v := ctx.Get(-1); v != 5 {
-		t.Fatal("x:", v)
-	}
-}
-
-// -----------------------------------------------------------------------------
-
-var fsTestSw3 = asttest.NewSingleFileFS("/foo", "bar.gop", `
+var testSw3 = `
 	x := 0
 	t := "Hello"
 	switch t {
 	default:
 		x = 7
 	}
-	x
-`)
-
-func TestDefault(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestSw3, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
-
-	bar := pkgs["main"]
-	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar, fset)
-	if err != nil || !noExecCtx {
-		t.Fatal("Compile failed:", err)
-	}
-	code := b.Resolve()
-
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-	fmt.Println("x:", ctx.Get(-1))
-	if v := ctx.Get(-1); v != 7 {
-		t.Fatal("x:", v)
-	}
-}
+	println(x)
+`
 
 // -----------------------------------------------------------------------------
 
-var fsTestIf = asttest.NewSingleFileFS("/foo", "bar.gop", `
+var testIfScripts = map[string]testData{
+	"if_with_else":    {testIf, []string{"5"}},
+	"if_without_else": {testIf2, []string{"3"}},
+}
+
+var testIf = `
 	x := 0
 	if t := false; t {
 		x = 3
 	} else {
 		x = 5
 	}
-	x
-`)
+	println(x)
+`
 
-func TestIf(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestIf, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
-
-	bar := pkgs["main"]
-	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar, fset)
-	if err != nil || !noExecCtx {
-		t.Fatal("Compile failed:", err)
-	}
-	code := b.Resolve()
-
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-	fmt.Println("x:", ctx.Get(-1))
-	if v := ctx.Get(-1); v != 5 {
-		t.Fatal("x:", v)
-	}
-}
-
-// -----------------------------------------------------------------------------
-
-var fsTestIf2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
+var testIf2 = `
 	x := 5
 	if true {
 		x = 3
 	}
-	x
-`)
+		println(x)
+`
 
-func TestIf2(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestIf2, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
-
-	bar := pkgs["main"]
-	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar, fset)
-	if err != nil || !noExecCtx {
-		t.Fatal("Compile failed:", err)
-	}
-	code := b.Resolve()
-
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-	fmt.Println("x:", ctx.Get(-1))
-	if v := ctx.Get(-1); v != 3 {
-		t.Fatal("x:", v)
-	}
+func TestIf(t *testing.T) {
+	testScripts(t, "TestIf", testIfScripts)
 }
 
 // -----------------------------------------------------------------------------
 
-var fsTestReturn = asttest.NewSingleFileFS("/foo", "bar.gop", `
+var testReturn = `
 	import (
 		"fmt"
 		"strings"
@@ -338,37 +158,15 @@ var fsTestReturn = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	}
 
 	fmt.Println(foo("Hello, world???"))
-`)
+`
 
 func TestReturn(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestReturn, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
-
-	bar := pkgs["main"]
-	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar, fset)
-	if err != nil || !noExecCtx {
-		t.Fatal("Compile failed:", err)
-	}
-	code := b.Resolve()
-
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
-	if v := ctx.Get(-1); v != nil {
-		t.Fatal("error:", v)
-	}
-	if v := ctx.Get(-2); v != int(16) {
-		t.Fatal("n:", v)
-	}
+	cltest.Expect(t, testReturn, "Hello, world!!!\n")
 }
 
 // -----------------------------------------------------------------------------
 
-var fsTestReturn2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
+var testReturn2 = `
 	func max(a, b int) int {
 		if a < b {
 			a = b
@@ -377,37 +175,15 @@ var fsTestReturn2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	}
 
 	println("max(23,345):", max(23,345))
-`)
+`
 
 func TestReturn2(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestReturn2, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
-
-	bar := pkgs["main"]
-	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar, fset)
-	if err != nil || !noExecCtx {
-		t.Fatal("Compile failed:", err)
-	}
-	code := b.Resolve()
-
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
-	if v := ctx.Get(-1); v != nil {
-		t.Fatal("error:", v)
-	}
-	if v := ctx.Get(-2); v != int(17) {
-		t.Fatal("n:", v)
-	}
+	cltest.Expect(t, testReturn2, "max(23,345): 345\n")
 }
 
 // -----------------------------------------------------------------------------
 
-var fsTestFunc = asttest.NewSingleFileFS("/foo", "bar.gop", `
+var testFunc = `
 	import "fmt"
 
 	func foo(x string) (n int, err error) {
@@ -416,37 +192,15 @@ var fsTestFunc = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	}
 
 	foo("Hello, world!")
-`)
+`
 
 func TestFunc(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestFunc, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
-
-	bar := pkgs["main"]
-	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar, fset)
-	if err != nil || !noExecCtx {
-		t.Fatal("Compile failed:", err)
-	}
-	code := b.Resolve()
-
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
-	if v := ctx.Get(-1); v != nil {
-		t.Fatal("error:", v)
-	}
-	if v := ctx.Get(-2); v != int(17) {
-		t.Fatal("n:", v)
-	}
+	cltest.Expect(t, testFunc, "x: Hello, world!\n")
 }
 
 // -----------------------------------------------------------------------------
 
-var fsTestFuncv = asttest.NewSingleFileFS("/foo", "bar.gop", `
+var testFuncv = `
 	import "fmt"
 
 	func foo(format string, args ...interface{}) (n int, err error) {
@@ -460,37 +214,15 @@ var fsTestFuncv = asttest.NewSingleFileFS("/foo", "bar.gop", `
 
 	bar(foo)
 	println(foo("Hello, %v!\n", 123))
-`)
+`
 
 func TestFuncv(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestFuncv, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
-
-	bar := pkgs["main"]
-	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar, fset)
-	if err != nil || !noExecCtx {
-		t.Fatal("Compile failed:", err)
-	}
-	code := b.Resolve()
-
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
-	if v := ctx.Get(-1); v != nil {
-		t.Fatal("error:", v)
-	}
-	if v := ctx.Get(-2); v != int(9) {
-		t.Fatal("n:", v)
-	}
+	cltest.Expect(t, testFuncv, "Hello, glang!\n"+"Hello, 123!\n"+"12 <nil>\n")
 }
 
 // -----------------------------------------------------------------------------
 
-var fsTestClosure = asttest.NewSingleFileFS("/foo", "bar.gop", `
+var testClosure = `
 	import "fmt"
 
 	foo := func(prompt string) (n int, err error) {
@@ -500,37 +232,15 @@ var fsTestClosure = asttest.NewSingleFileFS("/foo", "bar.gop", `
 
 	x := "Hello, world!"
 	foo("x: ")
-`)
+`
 
 func TestClosure(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestClosure, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
-
-	bar := pkgs["main"]
-	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar, fset)
-	if err != nil || noExecCtx {
-		t.Fatal("Compile failed:", err)
-	}
-	code := b.Resolve()
-
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
-	if v := ctx.Get(-1); v != nil {
-		t.Fatal("error:", v)
-	}
-	if v := ctx.Get(-2); v != int(17) {
-		t.Fatal("n:", v)
-	}
+	cltest.Expect(t, testClosure, "x: Hello, world!\n")
 }
 
 // -----------------------------------------------------------------------------
 
-var fsTestClosurev = asttest.NewSingleFileFS("/foo", "bar.gop", `
+var testClosurev = `
 	import "fmt"
 
 	foo := func(format string, args ...interface{}) (n int, err error) {
@@ -539,69 +249,30 @@ var fsTestClosurev = asttest.NewSingleFileFS("/foo", "bar.gop", `
 	}
 
 	foo("Hello, %v!\n", "xsw")
-`)
+`
 
 func TestClosurev(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestClosurev, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
+	cltest.Expect(t, testClosurev, "Hello, xsw!\n")
 
-	bar := pkgs["main"]
-	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar, fset)
-	if err != nil || noExecCtx {
-		t.Fatal("Compile failed:", err)
-	}
-	code := b.Resolve()
-
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
-	if v := ctx.Get(-1); v != nil {
-		t.Fatal("error:", v)
-	}
-	if v := ctx.Get(-2); v != int(12) {
-		t.Fatal("n:", v)
-	}
 }
 
 // -----------------------------------------------------------------------------
 
-var fsTestForPhraseStmt = asttest.NewSingleFileFS("/foo", "bar.gop", `
+var testForPhraseStmt = `
 	sum := 0
 	for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
 		sum += x
 	}
 	sum
-`)
+`
 
 func TestForPhraseStmt(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestForPhraseStmt, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
-
-	bar := pkgs["main"]
-	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar, fset)
-	if err != nil || !noExecCtx {
-		t.Fatal("Compile failed:", err)
-	}
-	code := b.Resolve()
-
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-	if v := ctx.Get(-1); v != 53 {
-		t.Fatal("v:", v)
-	}
+	cltest.Call(t, testForPhraseStmt).Equal(53)
 }
 
 // -----------------------------------------------------------------------------
 
-var fsTestForPhraseStmt2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
+var testForPhraseStmt2 = `
 	sum := 0
 	for x <- [1, 3, 5, 7, 11, 13, 17] {
 		if x > 3 {
@@ -609,33 +280,15 @@ var fsTestForPhraseStmt2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 		}
 	}
 	sum
-`)
+`
 
 func TestForPhraseStmt2(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestForPhraseStmt2, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
-
-	bar := pkgs["main"]
-	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar, fset)
-	if err != nil || !noExecCtx {
-		t.Fatal("Compile failed:", err)
-	}
-	code := b.Resolve()
-
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-	if v := ctx.Get(-1); v != 53 {
-		t.Fatal("v:", v)
-	}
+	cltest.Call(t, testForPhraseStmt2).Equal(53)
 }
 
 // -----------------------------------------------------------------------------
 
-var fsTestForPhraseStmt3 = asttest.NewSingleFileFS("/foo", "bar.gop", `
+var testForPhraseStmt3 = `
 	fns := make([]func() int, 3)
 	for i, x <- [3, 15, 777] {
 		v := x
@@ -644,40 +297,13 @@ var fsTestForPhraseStmt3 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 		}
 	}
 	println("values:", fns[0](), fns[1](), fns[2]())
-`)
+`
 
 func TestForPhraseStmt3(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestForPhraseStmt3, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
-
-	bar := pkgs["main"]
-	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar, fset)
-	if err != nil || noExecCtx {
-		t.Fatal("Compile failed:", err)
-	}
-	code := b.Resolve()
-
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
-	if v := ctx.Get(-1); v != nil {
-		t.Fatal("error:", v)
-	}
-	if v := ctx.Get(-2); v != 17 {
-		t.Fatal("n:", v)
-	}
+	cltest.Expect(t, testForPhraseStmt3, "values: 3 15 777\n")
 }
 
 // -----------------------------------------------------------------------------
-
-type testData struct {
-	clause string
-	wants  []string
-}
 
 var testForRangeClauses = map[string]testData{
 	"no_kv_range_list": {`sum:=0
@@ -725,7 +351,7 @@ var testForRangeClauses = map[string]testData{
 					`, []string{"34"}},
 	"both_kv_range_map": {`sum:=0
 					m:={1:2,2:4,3:8}
-					for k,v:=range m { 
+					for k,v:=range m {
 						//1*2+2*4+3*8=34
 						sum+=k*v
 					}
@@ -793,14 +419,12 @@ var testForRangeClauses = map[string]testData{
 }
 
 func TestRangeStmt(t *testing.T) {
-	for name, clause := range testForRangeClauses {
-		testSingleStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
-	}
+	testScripts(t, "TestRangeStmt", testForRangeClauses)
 }
 
 // -----------------------------------------------------------------------------
 
-var fsTestRangeStmt2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
+var testRangeStmt2 = `
 	sum := 0
 	for _, x := range [1, 3, 5, 7, 11, 13, 17] {
 		if x > 3 {
@@ -808,33 +432,15 @@ var fsTestRangeStmt2 = asttest.NewSingleFileFS("/foo", "bar.gop", `
 		}
 	}
 	sum
-`)
+`
 
 func TestRangeStmt2(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestRangeStmt2, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
-
-	bar := pkgs["main"]
-	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar, fset)
-	if err != nil || !noExecCtx {
-		t.Fatal("Compile failed:", err, "noExecCtx:", noExecCtx)
-	}
-	code := b.Resolve()
-
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-	if v := ctx.Get(-1); v != 53 {
-		t.Fatal("v:", v)
-	}
+	cltest.Call(t, testRangeStmt2).Equal(53)
 }
 
 // -----------------------------------------------------------------------------
 
-var fsTestForStmt = asttest.NewSingleFileFS("/foo", "bar.gop", `
+var testForStmt = `
 	fns := make([]func() int, 3)
 	arr := [3, 15, 777]
 	sum := 0
@@ -845,32 +451,10 @@ var fsTestForStmt = asttest.NewSingleFileFS("/foo", "bar.gop", `
 		}
 	}
 	println("values:", fns[0](), fns[1](), fns[2]())
-`)
+`
 
 func _TestForStmt(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestForStmt, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
-
-	bar := pkgs["main"]
-	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar, fset)
-	if err != nil || noExecCtx {
-		t.Fatal("Compile failed:", err)
-	}
-	code := b.Resolve()
-
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
-	if v := ctx.Get(-1); v != nil {
-		t.Fatal("error:", v)
-	}
-	if v := ctx.Get(-2); v != 17 {
-		t.Fatal("n:", v)
-	}
+	cltest.Expect(t, testForStmt, "values: 3 15 777\n")
 }
 
 // -----------------------------------------------------------------------------
@@ -944,7 +528,7 @@ var testNormalForClauses = map[string]testData{
 								break L
 							}
 							sum+=arr[i]+arr[j]
-						}	
+						}
 					}
 					println(sum)
 					`, []string{"12"}}, // (1+1)+(1+3)+(1+5)
@@ -958,7 +542,7 @@ var testNormalForClauses = map[string]testData{
 								continue L
 							}
 							sum+=arr[i]+arr[j]
-						}	
+						}
 					}
 					println(sum)
 					`, []string{"48"}}, // (1+3+5+7)*2+(1+3)*4
@@ -1049,7 +633,7 @@ var testNormalForClauses = map[string]testData{
 						for j:=0;j<len(arr);j++{
 							if arr[j]>1{
 								break L1
-							}	
+							}
 							sum+=arr[i]+arr[j]
 						}
 					}
@@ -1067,7 +651,7 @@ var testNormalForClauses = map[string]testData{
 						for j:=0;j<len(arr);j++{
 							if arr[j]>3{
 								break L
-							}	
+							}
 							sum+=arr[i]+arr[j]
 						}
 					}
@@ -1076,92 +660,18 @@ var testNormalForClauses = map[string]testData{
 }
 
 func TestNormalForStmt(t *testing.T) {
-	for name, clause := range testNormalForClauses {
-		testSingleStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
-	}
+	testScripts(t, "TestNormalForStmt", testNormalForClauses)
 }
 
-func testSingleStmt(name string, t *testing.T, fs *asttest.MemFS, wants []string) {
-	defer func() {
-		if r := recover(); r != nil {
-			if len(wants) > 0 && wants[0] == "_panic" {
-				return
-			}
-			t.Fatal(name, "-", r)
-		}
-	}()
-	var results []string
-	selfPrintln := func(arity int, p *gop.Context) {
-		args := p.GetArgs(arity)
-		results = append(results, fmt.Sprintln(args...))
-		n, err := fmt.Println(args...)
-		p.Ret(arity, n, err)
-	}
-	libbuiltin.I.RegisterFuncvs(libbuiltin.I.Funcv("println", fmt.Print, selfPrintln))
-
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fs, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal(name+" : ParseFSDir failed:", err, len(pkgs))
-	}
-	bar := pkgs["main"]
-	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar, fset)
-	if err != nil || !noExecCtx {
-		t.Fatal(name+" :Compile failed:", err)
-	}
-	code := b.Resolve()
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-	if v := ctx.Get(-1); v != nil {
-		t.Fatal(name+" :error:", v)
-	}
-	if v := ctx.Get(-2); v != len(results[len(results)-1]) {
-		t.Fatal(name+" :n:", v)
-	}
-	if len(wants) != len(results) {
-		t.Fatal(name+" exec fail , wants", wants, ",actually", results)
-	}
-	for i := 0; i < len(wants); i++ {
-		if wants[i]+"\n" != results[i] {
-			t.Fatal(name+" exec fail", i, "result wants", wants[i], ",actually", results[i])
-		}
-	}
-}
-
-// -----------------------------------------------------------------------------
-
-var fsTestForIncDecStmt = asttest.NewSingleFileFS("/foo", "bar.gop", `
+var testForIncDecStmt = `
 	a,b:=10,2
 	{a--;a--;a--}
 	{b++;b++;b++}
 	println(a,b,a*b)
-`)
+`
 
 func TestForIncDecStmt(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseFSDir(fset, fsTestForIncDecStmt, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
-
-	bar := pkgs["main"]
-	b := exec.NewBuilder(nil)
-	_, noExecCtx, err := newPackage(b, bar, fset)
-	if err != nil || !noExecCtx {
-		t.Fatal("Compile failed:", err)
-	}
-	code := b.Resolve()
-
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-	fmt.Println("results:", ctx.Get(-2), ctx.Get(-1))
-	if v := ctx.Get(-1); v != nil {
-		t.Fatal("error:", v)
-	}
-	if v := ctx.Get(-2); v != int(7) {
-		t.Fatal("n:", v)
-	}
+	cltest.Expect(t, testForIncDecStmt, "7 5 35\n")
 }
 
 // -----------------------------------------------------------------------------
@@ -1313,13 +823,13 @@ var testSwitchBranchClauses = map[string]testData{
 							}
 							println(x)
 						case 1:
-							println(x)  
-							x++	
+							println(x)
+							x++
 							continue L
 						case 2:
-							println(x)  
+							println(x)
 							x++
-							break 
+							break
 						case 3:
 							println(x)
 							break L
@@ -1330,14 +840,12 @@ var testSwitchBranchClauses = map[string]testData{
 							println(x)
 						}
 					}
-				
+
 					`, []string{"2", "0", "1", "2"}},
 }
 
 func TestSwitchBranchStmt(t *testing.T) {
-	for name, clause := range testSwitchBranchClauses {
-		testSingleStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
-	}
+	testScripts(t, "TestSwitchBranchStmt", testSwitchBranchClauses)
 }
 
 // -----------------------------------------------------------------------------
@@ -1406,8 +914,5 @@ var testGotoLabelClauses = map[string]testData{
 }
 
 func TestGotoLabelStmt(t *testing.T) {
-	for name, clause := range testGotoLabelClauses {
-		log.Info("===> TestGotoLabelStmt", name)
-		testSingleStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
-	}
+	testScripts(t, "TestGotoLabelStmt", testGotoLabelClauses)
 }
