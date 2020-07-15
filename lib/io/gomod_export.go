@@ -5,6 +5,7 @@ import (
 	io "io"
 
 	gop "github.com/goplus/gop"
+	qspec "github.com/goplus/gop/exec.spec"
 )
 
 func toType0(v interface{}) io.Writer {
@@ -45,7 +46,7 @@ func execLimitReader(_ int, p *gop.Context) {
 	p.Ret(2, ret0)
 }
 
-func execLimitedReaderRead(_ int, p *gop.Context) {
+func execmLimitedReaderRead(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0, ret1 := args[0].(*io.LimitedReader).Read(args[1].([]byte))
 	p.Ret(2, ret0, ret1)
@@ -97,13 +98,13 @@ func execPipe(_ int, p *gop.Context) {
 	p.Ret(0, ret0, ret1)
 }
 
-func execPipeReaderRead(_ int, p *gop.Context) {
+func execmPipeReaderRead(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0, ret1 := args[0].(*io.PipeReader).Read(args[1].([]byte))
 	p.Ret(2, ret0, ret1)
 }
 
-func execPipeReaderClose(_ int, p *gop.Context) {
+func execmPipeReaderClose(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(*io.PipeReader).Close()
 	p.Ret(1, ret0)
@@ -116,25 +117,25 @@ func toType3(v interface{}) error {
 	return v.(error)
 }
 
-func execPipeReaderCloseWithError(_ int, p *gop.Context) {
+func execmPipeReaderCloseWithError(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0 := args[0].(*io.PipeReader).CloseWithError(toType3(args[1]))
 	p.Ret(2, ret0)
 }
 
-func execPipeWriterWrite(_ int, p *gop.Context) {
+func execmPipeWriterWrite(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0, ret1 := args[0].(*io.PipeWriter).Write(args[1].([]byte))
 	p.Ret(2, ret0, ret1)
 }
 
-func execPipeWriterClose(_ int, p *gop.Context) {
+func execmPipeWriterClose(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(*io.PipeWriter).Close()
 	p.Ret(1, ret0)
 }
 
-func execPipeWriterCloseWithError(_ int, p *gop.Context) {
+func execmPipeWriterCloseWithError(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0 := args[0].(*io.PipeWriter).CloseWithError(toType3(args[1]))
 	p.Ret(2, ret0)
@@ -152,25 +153,25 @@ func execReadFull(_ int, p *gop.Context) {
 	p.Ret(2, ret0, ret1)
 }
 
-func execSectionReaderRead(_ int, p *gop.Context) {
+func execmSectionReaderRead(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0, ret1 := args[0].(*io.SectionReader).Read(args[1].([]byte))
 	p.Ret(2, ret0, ret1)
 }
 
-func execSectionReaderSeek(_ int, p *gop.Context) {
+func execmSectionReaderSeek(_ int, p *gop.Context) {
 	args := p.GetArgs(3)
 	ret0, ret1 := args[0].(*io.SectionReader).Seek(args[1].(int64), args[2].(int))
 	p.Ret(3, ret0, ret1)
 }
 
-func execSectionReaderReadAt(_ int, p *gop.Context) {
+func execmSectionReaderReadAt(_ int, p *gop.Context) {
 	args := p.GetArgs(3)
 	ret0, ret1 := args[0].(*io.SectionReader).ReadAt(args[1].([]byte), args[2].(int64))
 	p.Ret(3, ret0, ret1)
 }
 
-func execSectionReaderSize(_ int, p *gop.Context) {
+func execmSectionReaderSize(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(*io.SectionReader).Size()
 	p.Ret(1, ret0)
@@ -197,26 +198,39 @@ func init() {
 		I.Func("CopyBuffer", io.CopyBuffer, execCopyBuffer),
 		I.Func("CopyN", io.CopyN, execCopyN),
 		I.Func("LimitReader", io.LimitReader, execLimitReader),
-		I.Func("(*LimitedReader).Read", (*io.LimitedReader).Read, execLimitedReaderRead),
+		I.Func("(*LimitedReader).Read", (*io.LimitedReader).Read, execmLimitedReaderRead),
 		I.Func("NewSectionReader", io.NewSectionReader, execNewSectionReader),
 		I.Func("Pipe", io.Pipe, execPipe),
-		I.Func("(*PipeReader).Read", (*io.PipeReader).Read, execPipeReaderRead),
-		I.Func("(*PipeReader).Close", (*io.PipeReader).Close, execPipeReaderClose),
-		I.Func("(*PipeReader).CloseWithError", (*io.PipeReader).CloseWithError, execPipeReaderCloseWithError),
-		I.Func("(*PipeWriter).Write", (*io.PipeWriter).Write, execPipeWriterWrite),
-		I.Func("(*PipeWriter).Close", (*io.PipeWriter).Close, execPipeWriterClose),
-		I.Func("(*PipeWriter).CloseWithError", (*io.PipeWriter).CloseWithError, execPipeWriterCloseWithError),
+		I.Func("(*PipeReader).Read", (*io.PipeReader).Read, execmPipeReaderRead),
+		I.Func("(*PipeReader).Close", (*io.PipeReader).Close, execmPipeReaderClose),
+		I.Func("(*PipeReader).CloseWithError", (*io.PipeReader).CloseWithError, execmPipeReaderCloseWithError),
+		I.Func("(*PipeWriter).Write", (*io.PipeWriter).Write, execmPipeWriterWrite),
+		I.Func("(*PipeWriter).Close", (*io.PipeWriter).Close, execmPipeWriterClose),
+		I.Func("(*PipeWriter).CloseWithError", (*io.PipeWriter).CloseWithError, execmPipeWriterCloseWithError),
 		I.Func("ReadAtLeast", io.ReadAtLeast, execReadAtLeast),
 		I.Func("ReadFull", io.ReadFull, execReadFull),
-		I.Func("(*SectionReader).Read", (*io.SectionReader).Read, execSectionReaderRead),
-		I.Func("(*SectionReader).Seek", (*io.SectionReader).Seek, execSectionReaderSeek),
-		I.Func("(*SectionReader).ReadAt", (*io.SectionReader).ReadAt, execSectionReaderReadAt),
-		I.Func("(*SectionReader).Size", (*io.SectionReader).Size, execSectionReaderSize),
+		I.Func("(*SectionReader).Read", (*io.SectionReader).Read, execmSectionReaderRead),
+		I.Func("(*SectionReader).Seek", (*io.SectionReader).Seek, execmSectionReaderSeek),
+		I.Func("(*SectionReader).ReadAt", (*io.SectionReader).ReadAt, execmSectionReaderReadAt),
+		I.Func("(*SectionReader).Size", (*io.SectionReader).Size, execmSectionReaderSize),
 		I.Func("TeeReader", io.TeeReader, execTeeReader),
 		I.Func("WriteString", io.WriteString, execWriteString),
 	)
 	I.RegisterFuncvs(
 		I.Funcv("MultiReader", io.MultiReader, execMultiReader),
 		I.Funcv("MultiWriter", io.MultiWriter, execMultiWriter),
+	)
+	I.RegisterVars(
+		I.Var("EOF", &io.EOF),
+		I.Var("ErrClosedPipe", &io.ErrClosedPipe),
+		I.Var("ErrNoProgress", &io.ErrNoProgress),
+		I.Var("ErrShortBuffer", &io.ErrShortBuffer),
+		I.Var("ErrShortWrite", &io.ErrShortWrite),
+		I.Var("ErrUnexpectedEOF", &io.ErrUnexpectedEOF),
+	)
+	I.RegisterConsts(
+		I.Const("SeekCurrent", qspec.ConstUnboundInt, io.SeekCurrent),
+		I.Const("SeekEnd", qspec.ConstUnboundInt, io.SeekEnd),
+		I.Const("SeekStart", qspec.ConstUnboundInt, io.SeekStart),
 	)
 }
