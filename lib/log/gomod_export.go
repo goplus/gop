@@ -59,19 +59,19 @@ func execmLoggerPrintf(arity int, p *gop.Context) {
 
 func execmLoggerPrint(arity int, p *gop.Context) {
 	args := p.GetArgs(arity)
-	args[0].(*log.Logger).Print(args...)
+	args[0].(*log.Logger).Print(args[1:]...)
 	p.PopN(arity)
 }
 
 func execmLoggerPrintln(arity int, p *gop.Context) {
 	args := p.GetArgs(arity)
-	args[0].(*log.Logger).Println(args...)
+	args[0].(*log.Logger).Println(args[1:]...)
 	p.PopN(arity)
 }
 
 func execmLoggerFatal(arity int, p *gop.Context) {
 	args := p.GetArgs(arity)
-	args[0].(*log.Logger).Fatal(args...)
+	args[0].(*log.Logger).Fatal(args[1:]...)
 	p.PopN(arity)
 }
 
@@ -83,13 +83,13 @@ func execmLoggerFatalf(arity int, p *gop.Context) {
 
 func execmLoggerFatalln(arity int, p *gop.Context) {
 	args := p.GetArgs(arity)
-	args[0].(*log.Logger).Fatalln(args...)
+	args[0].(*log.Logger).Fatalln(args[1:]...)
 	p.PopN(arity)
 }
 
 func execmLoggerPanic(arity int, p *gop.Context) {
 	args := p.GetArgs(arity)
-	args[0].(*log.Logger).Panic(args...)
+	args[0].(*log.Logger).Panic(args[1:]...)
 	p.PopN(arity)
 }
 
@@ -101,7 +101,7 @@ func execmLoggerPanicf(arity int, p *gop.Context) {
 
 func execmLoggerPanicln(arity int, p *gop.Context) {
 	args := p.GetArgs(arity)
-	args[0].(*log.Logger).Panicln(args...)
+	args[0].(*log.Logger).Panicln(args[1:]...)
 	p.PopN(arity)
 }
 

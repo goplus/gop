@@ -288,6 +288,9 @@ func (p *Exporter) ExportFunc(fn *types.Func) error {
 		var varg string
 		if numIn == 0 {
 			varg = "args"
+			if from == 1 {
+				varg = "args[1:]"
+			}
 		} else {
 			varg = fmt.Sprintf("args[%d:]", numIn+from)
 		}
