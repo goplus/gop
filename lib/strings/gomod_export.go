@@ -9,55 +9,55 @@ import (
 	gop "github.com/goplus/gop"
 )
 
-func execBuilderString(_ int, p *gop.Context) {
+func execmBuilderString(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(*strings.Builder).String()
 	p.Ret(1, ret0)
 }
 
-func execBuilderLen(_ int, p *gop.Context) {
+func execmBuilderLen(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(*strings.Builder).Len()
 	p.Ret(1, ret0)
 }
 
-func execBuilderCap(_ int, p *gop.Context) {
+func execmBuilderCap(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(*strings.Builder).Cap()
 	p.Ret(1, ret0)
 }
 
-func execBuilderReset(_ int, p *gop.Context) {
+func execmBuilderReset(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	args[0].(*strings.Builder).Reset()
 	p.PopN(1)
 }
 
-func execBuilderGrow(_ int, p *gop.Context) {
+func execmBuilderGrow(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(*strings.Builder).Grow(args[1].(int))
 	p.PopN(2)
 }
 
-func execBuilderWrite(_ int, p *gop.Context) {
+func execmBuilderWrite(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0, ret1 := args[0].(*strings.Builder).Write(args[1].([]byte))
 	p.Ret(2, ret0, ret1)
 }
 
-func execBuilderWriteByte(_ int, p *gop.Context) {
+func execmBuilderWriteByte(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0 := args[0].(*strings.Builder).WriteByte(args[1].(byte))
 	p.Ret(2, ret0)
 }
 
-func execBuilderWriteRune(_ int, p *gop.Context) {
+func execmBuilderWriteRune(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0, ret1 := args[0].(*strings.Builder).WriteRune(args[1].(rune))
 	p.Ret(2, ret0, ret1)
 }
 
-func execBuilderWriteString(_ int, p *gop.Context) {
+func execmBuilderWriteString(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0, ret1 := args[0].(*strings.Builder).WriteString(args[1].(string))
 	p.Ret(2, ret0, ret1)
@@ -201,55 +201,55 @@ func execNewReplacer(arity int, p *gop.Context) {
 	p.Ret(arity, ret0)
 }
 
-func execReaderLen(_ int, p *gop.Context) {
+func execmReaderLen(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(*strings.Reader).Len()
 	p.Ret(1, ret0)
 }
 
-func execReaderSize(_ int, p *gop.Context) {
+func execmReaderSize(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(*strings.Reader).Size()
 	p.Ret(1, ret0)
 }
 
-func execReaderRead(_ int, p *gop.Context) {
+func execmReaderRead(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0, ret1 := args[0].(*strings.Reader).Read(args[1].([]byte))
 	p.Ret(2, ret0, ret1)
 }
 
-func execReaderReadAt(_ int, p *gop.Context) {
+func execmReaderReadAt(_ int, p *gop.Context) {
 	args := p.GetArgs(3)
 	ret0, ret1 := args[0].(*strings.Reader).ReadAt(args[1].([]byte), args[2].(int64))
 	p.Ret(3, ret0, ret1)
 }
 
-func execReaderReadByte(_ int, p *gop.Context) {
+func execmReaderReadByte(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0, ret1 := args[0].(*strings.Reader).ReadByte()
 	p.Ret(1, ret0, ret1)
 }
 
-func execReaderUnreadByte(_ int, p *gop.Context) {
+func execmReaderUnreadByte(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(*strings.Reader).UnreadByte()
 	p.Ret(1, ret0)
 }
 
-func execReaderReadRune(_ int, p *gop.Context) {
+func execmReaderReadRune(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0, ret1, ret2 := args[0].(*strings.Reader).ReadRune()
 	p.Ret(1, ret0, ret1, ret2)
 }
 
-func execReaderUnreadRune(_ int, p *gop.Context) {
+func execmReaderUnreadRune(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(*strings.Reader).UnreadRune()
 	p.Ret(1, ret0)
 }
 
-func execReaderSeek(_ int, p *gop.Context) {
+func execmReaderSeek(_ int, p *gop.Context) {
 	args := p.GetArgs(3)
 	ret0, ret1 := args[0].(*strings.Reader).Seek(args[1].(int64), args[2].(int))
 	p.Ret(3, ret0, ret1)
@@ -262,13 +262,13 @@ func toType0(v interface{}) io.Writer {
 	return v.(io.Writer)
 }
 
-func execReaderWriteTo(_ int, p *gop.Context) {
+func execmReaderWriteTo(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0, ret1 := args[0].(*strings.Reader).WriteTo(toType0(args[1]))
 	p.Ret(2, ret0, ret1)
 }
 
-func execReaderReset(_ int, p *gop.Context) {
+func execmReaderReset(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(*strings.Reader).Reset(args[1].(string))
 	p.PopN(2)
@@ -292,13 +292,13 @@ func execReplaceAll(_ int, p *gop.Context) {
 	p.Ret(3, ret0)
 }
 
-func execReplacerReplace(_ int, p *gop.Context) {
+func execmReplacerReplace(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0 := args[0].(*strings.Replacer).Replace(args[1].(string))
 	p.Ret(2, ret0)
 }
 
-func execReplacerWriteString(_ int, p *gop.Context) {
+func execmReplacerWriteString(_ int, p *gop.Context) {
 	args := p.GetArgs(3)
 	ret0, ret1 := args[0].(*strings.Replacer).WriteString(toType0(args[1]), args[2].(string))
 	p.Ret(3, ret0, ret1)
@@ -435,15 +435,15 @@ var I = gop.NewGoPackage("strings")
 
 func init() {
 	I.RegisterFuncs(
-		I.Func("(*Builder).String", (*strings.Builder).String, execBuilderString),
-		I.Func("(*Builder).Len", (*strings.Builder).Len, execBuilderLen),
-		I.Func("(*Builder).Cap", (*strings.Builder).Cap, execBuilderCap),
-		I.Func("(*Builder).Reset", (*strings.Builder).Reset, execBuilderReset),
-		I.Func("(*Builder).Grow", (*strings.Builder).Grow, execBuilderGrow),
-		I.Func("(*Builder).Write", (*strings.Builder).Write, execBuilderWrite),
-		I.Func("(*Builder).WriteByte", (*strings.Builder).WriteByte, execBuilderWriteByte),
-		I.Func("(*Builder).WriteRune", (*strings.Builder).WriteRune, execBuilderWriteRune),
-		I.Func("(*Builder).WriteString", (*strings.Builder).WriteString, execBuilderWriteString),
+		I.Func("(*Builder).String", (*strings.Builder).String, execmBuilderString),
+		I.Func("(*Builder).Len", (*strings.Builder).Len, execmBuilderLen),
+		I.Func("(*Builder).Cap", (*strings.Builder).Cap, execmBuilderCap),
+		I.Func("(*Builder).Reset", (*strings.Builder).Reset, execmBuilderReset),
+		I.Func("(*Builder).Grow", (*strings.Builder).Grow, execmBuilderGrow),
+		I.Func("(*Builder).Write", (*strings.Builder).Write, execmBuilderWrite),
+		I.Func("(*Builder).WriteByte", (*strings.Builder).WriteByte, execmBuilderWriteByte),
+		I.Func("(*Builder).WriteRune", (*strings.Builder).WriteRune, execmBuilderWriteRune),
+		I.Func("(*Builder).WriteString", (*strings.Builder).WriteString, execmBuilderWriteString),
 		I.Func("Compare", strings.Compare, execCompare),
 		I.Func("Contains", strings.Contains, execContains),
 		I.Func("ContainsAny", strings.ContainsAny, execContainsAny),
@@ -466,22 +466,22 @@ func init() {
 		I.Func("LastIndexFunc", strings.LastIndexFunc, execLastIndexFunc),
 		I.Func("Map", strings.Map, execMap),
 		I.Func("NewReader", strings.NewReader, execNewReader),
-		I.Func("(*Reader).Len", (*strings.Reader).Len, execReaderLen),
-		I.Func("(*Reader).Size", (*strings.Reader).Size, execReaderSize),
-		I.Func("(*Reader).Read", (*strings.Reader).Read, execReaderRead),
-		I.Func("(*Reader).ReadAt", (*strings.Reader).ReadAt, execReaderReadAt),
-		I.Func("(*Reader).ReadByte", (*strings.Reader).ReadByte, execReaderReadByte),
-		I.Func("(*Reader).UnreadByte", (*strings.Reader).UnreadByte, execReaderUnreadByte),
-		I.Func("(*Reader).ReadRune", (*strings.Reader).ReadRune, execReaderReadRune),
-		I.Func("(*Reader).UnreadRune", (*strings.Reader).UnreadRune, execReaderUnreadRune),
-		I.Func("(*Reader).Seek", (*strings.Reader).Seek, execReaderSeek),
-		I.Func("(*Reader).WriteTo", (*strings.Reader).WriteTo, execReaderWriteTo),
-		I.Func("(*Reader).Reset", (*strings.Reader).Reset, execReaderReset),
+		I.Func("(*Reader).Len", (*strings.Reader).Len, execmReaderLen),
+		I.Func("(*Reader).Size", (*strings.Reader).Size, execmReaderSize),
+		I.Func("(*Reader).Read", (*strings.Reader).Read, execmReaderRead),
+		I.Func("(*Reader).ReadAt", (*strings.Reader).ReadAt, execmReaderReadAt),
+		I.Func("(*Reader).ReadByte", (*strings.Reader).ReadByte, execmReaderReadByte),
+		I.Func("(*Reader).UnreadByte", (*strings.Reader).UnreadByte, execmReaderUnreadByte),
+		I.Func("(*Reader).ReadRune", (*strings.Reader).ReadRune, execmReaderReadRune),
+		I.Func("(*Reader).UnreadRune", (*strings.Reader).UnreadRune, execmReaderUnreadRune),
+		I.Func("(*Reader).Seek", (*strings.Reader).Seek, execmReaderSeek),
+		I.Func("(*Reader).WriteTo", (*strings.Reader).WriteTo, execmReaderWriteTo),
+		I.Func("(*Reader).Reset", (*strings.Reader).Reset, execmReaderReset),
 		I.Func("Repeat", strings.Repeat, execRepeat),
 		I.Func("Replace", strings.Replace, execReplace),
 		I.Func("ReplaceAll", strings.ReplaceAll, execReplaceAll),
-		I.Func("(*Replacer).Replace", (*strings.Replacer).Replace, execReplacerReplace),
-		I.Func("(*Replacer).WriteString", (*strings.Replacer).WriteString, execReplacerWriteString),
+		I.Func("(*Replacer).Replace", (*strings.Replacer).Replace, execmReplacerReplace),
+		I.Func("(*Replacer).WriteString", (*strings.Replacer).WriteString, execmReplacerWriteString),
 		I.Func("Split", strings.Split, execSplit),
 		I.Func("SplitAfter", strings.SplitAfter, execSplitAfter),
 		I.Func("SplitAfterN", strings.SplitAfterN, execSplitAfterN),

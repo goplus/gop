@@ -9,7 +9,7 @@ script:
   - export GO111MODULE="on"
   - go install -v ./...
   # check: results of go+ and go
-  # - gop go -test ./exec/golang/testdata
+  - gop go -test ./exec/golang/testdata
   # check: format gop file
   - find ./ -type f -name "*.gop"|xargs -n 1 gop fmt -w
   # check: imported go package

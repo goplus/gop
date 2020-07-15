@@ -288,8 +288,11 @@ func (p *Exporter) ExportFunc(fn *types.Func) error {
 		var varg string
 		if numIn == 0 {
 			varg = "args"
+			if from == 1 {
+				varg = "args[1:]"
+			}
 		} else {
-			varg = fmt.Sprintf("args[%d:]", numIn)
+			varg = fmt.Sprintf("args[%d:]", numIn+from)
 		}
 		tyElem := tfn.Params().At(numIn).Type().(*types.Slice).Elem()
 		p.useType(tyElem)
