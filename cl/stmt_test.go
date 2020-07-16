@@ -1,19 +1,55 @@
+/*
+ Copyright 2020 The GoPlus Authors (goplus.org)
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+*/
+
 package cl_test
 
 import (
 	"testing"
+
 	"github.com/goplus/gop/cl/cltest"
 )
 
-func TestAssign(t *testing.T)  {
-	cltest.Call(t, `
+// -----------------------------------------------------------------------------
+
+var testAssign = `
 	x, y := 123, "Hello"
 	x
-	y`, ).Equal("Hello")
+	y
+`
+
+func TestAssign(t *testing.T) {
+	cltest.Call(t, testAssign).Equal("Hello")
+	cltest.Call(t, testAssign, -2).Equal(123)
 }
 
-func TestSwitchIf(t *testing.T)  {
-	cltest.Call(t, `
+// -----------------------------------------------------------------------------
+
+func TestSwitch(t *testing.T) {
+	testScripts(t, "TestSwitch", testSwitchIfScripts)
+}
+
+var testSwitchIfScripts = map[string]testData{
+	"switch_into_case":            {testSwif, []string{"5"}},
+	"switch_into_default":         {testSwif2, []string{"7"}},
+	"switch_into_case_with_cond":  {testSw, []string{"5"}},
+	"switch_into_case_with_empty": {testSw2, []string{"5"}},
+	"switch_with_no_case":         {testSw3, []string{"7"}},
+}
+
+var testSwif = `
 	x := 0
 	t := "Hello"
 	switch {
@@ -24,12 +60,10 @@ func TestSwitchIf(t *testing.T)  {
 	default:
 		x = 7
 	}
-	x
-	`).Equal(5)
-}
+	println(x)
+`
 
-func TestSwitchIfDefault(t *testing.T) {
-	cltest.Call(t, `
+var testSwif2 = `
 	x := 0
 	t := "Hello"
 	switch {
@@ -40,12 +74,10 @@ func TestSwitchIfDefault(t *testing.T) {
 	default:
 		x = 7
 	}
-	x
-	`).Equal(7)
-}
+	println(x)
+`
 
-func TestSwitch(t *testing.T) {
-	cltest.Call(t, `
+var testSw = `
 	x := 0
 	switch t := "Hello"; t {
 	case "xsw":
@@ -55,11 +87,11 @@ func TestSwitch(t *testing.T) {
 	default:
 		x= 7
 	}
-	x`).Equal(5)
-}
+	println(x)
 
-func TestSwitch2(t *testing.T) {
-	cltest.Call(t, `
+`
+
+var testSw2 = `
 	x := 0
 	t := "Hello"
 	switch t {
@@ -70,42 +102,52 @@ func TestSwitch2(t *testing.T) {
 	case "xsw":
 		x = 3
 	}
-	x`).Equal(5)
-}
+	println(x)
+x
+`
 
-func TestDefault(t *testing.T) {
-	cltest.Call(t, `
+var testSw3 = `
 	x := 0
 	t := "Hello"
 	switch t {
 	default:
 		x = 7
 	}
-	x`).Equal(7)
+	println(x)
+`
+
+// -----------------------------------------------------------------------------
+
+var testIfScripts = map[string]testData{
+	"if_with_else":    {testIf, []string{"5"}},
+	"if_without_else": {testIf2, []string{"3"}},
 }
 
-func TestIf(t *testing.T) {
-	cltest.Call(t, `
+var testIf = `
 	x := 0
 	if t := false; t {
 		x = 3
 	} else {
 		x = 5
 	}
-	x`).Equal(5)
-}
+	println(x)
+`
 
-func TestIf2(t *testing.T) {
-	cltest.Call(t,`
+var testIf2 = `
 	x := 5
 	if true {
 		x = 3
 	}
-	x`).Equal(3)
+		println(x)
+`
+
+func TestIf(t *testing.T) {
+	testScripts(t, "TestIf", testIfScripts)
 }
 
-func TestReturn(t *testing.T) {
-	cltest.Expect(t, `
+// -----------------------------------------------------------------------------
+
+var testReturn = `
 	import (
 		"fmt"
 		"strings"
@@ -116,12 +158,15 @@ func TestReturn(t *testing.T) {
 	}
 
 	fmt.Println(foo("Hello, world???"))
-	`,
-	"Hello, world!!!\n")
+`
+
+func TestReturn(t *testing.T) {
+	cltest.Expect(t, testReturn, "Hello, world!!!\n")
 }
 
-func TestReturn2(t *testing.T) {
-	cltest.Expect(t, `
+// -----------------------------------------------------------------------------
+
+var testReturn2 = `
 	func max(a, b int) int {
 		if a < b {
 			a = b
@@ -129,12 +174,16 @@ func TestReturn2(t *testing.T) {
 		return a
 	}
 
-	println("max(23,345):", max(23,345))`, 
-	"max(23,345): 345\n")
+	println("max(23,345):", max(23,345))
+`
+
+func TestReturn2(t *testing.T) {
+	cltest.Expect(t, testReturn2, "max(23,345): 345\n")
 }
 
-func TestFunc(t *testing.T) {
-	cltest.Expect(t, `
+// -----------------------------------------------------------------------------
+
+var testFunc = `
 	import "fmt"
 
 	func foo(x string) (n int, err error) {
@@ -142,12 +191,16 @@ func TestFunc(t *testing.T) {
 		return
 	}
 
-	foo("Hello, world!")`,
-	"x: Hello, world!\n")	
+	foo("Hello, world!")
+`
+
+func TestFunc(t *testing.T) {
+	cltest.Expect(t, testFunc, "x: Hello, world!\n")
 }
 
-func TestFuncv(t *testing.T) {
-	cltest.Expect(t, `
+// -----------------------------------------------------------------------------
+
+var testFuncv = `
 	import "fmt"
 
 	func foo(format string, args ...interface{}) (n int, err error) {
@@ -161,12 +214,15 @@ func TestFuncv(t *testing.T) {
 
 	bar(foo)
 	println(foo("Hello, %v!\n", 123))
-	`, 
-	"Hello, glang!\nHello, 123!\n12 <nil>\n")	
+`
+
+func TestFuncv(t *testing.T) {
+	cltest.Expect(t, testFuncv, "Hello, glang!\n"+"Hello, 123!\n"+"12 <nil>\n")
 }
 
-func TestClosure(t *testing.T)  {
-	cltest.Expect(t, `
+// -----------------------------------------------------------------------------
+
+var testClosure = `
 	import "fmt"
 
 	foo := func(prompt string) (n int, err error) {
@@ -176,12 +232,15 @@ func TestClosure(t *testing.T)  {
 
 	x := "Hello, world!"
 	foo("x: ")
-	`, 
-	"x: Hello, world!\n")
+`
+
+func TestClosure(t *testing.T) {
+	cltest.Expect(t, testClosure, "x: Hello, world!\n")
 }
 
-func TestClosurev(t *testing.T)  {
-	cltest.Expect(t, `
+// -----------------------------------------------------------------------------
+
+var testClosurev = `
 	import "fmt"
 
 	foo := func(format string, args ...interface{}) (n int, err error) {
@@ -190,22 +249,30 @@ func TestClosurev(t *testing.T)  {
 	}
 
 	foo("Hello, %v!\n", "xsw")
-	`,
-	"Hello, xsw!\n")
+`
+
+func TestClosurev(t *testing.T) {
+	cltest.Expect(t, testClosurev, "Hello, xsw!\n")
+
 }
 
-func TestForPhraseStmt(t *testing.T)  {
-	cltest.Call(t, `
+// -----------------------------------------------------------------------------
+
+var testForPhraseStmt = `
 	sum := 0
 	for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
 		sum += x
 	}
 	sum
-	`).Equal(53)
+`
+
+func TestForPhraseStmt(t *testing.T) {
+	cltest.Call(t, testForPhraseStmt).Equal(53)
 }
 
-func TestForPhraseStmt2(t *testing.T)  {
-	cltest.Call(t, `
+// -----------------------------------------------------------------------------
+
+var testForPhraseStmt2 = `
 	sum := 0
 	for x <- [1, 3, 5, 7, 11, 13, 17] {
 		if x > 3 {
@@ -213,11 +280,15 @@ func TestForPhraseStmt2(t *testing.T)  {
 		}
 	}
 	sum
-	`).Equal(53)
+`
+
+func TestForPhraseStmt2(t *testing.T) {
+	cltest.Call(t, testForPhraseStmt2).Equal(53)
 }
 
-func TestForPhraseStmt3(t *testing.T)  {
-	cltest.Expect(t, `
+// -----------------------------------------------------------------------------
+
+var testForPhraseStmt3 = `
 	fns := make([]func() int, 3)
 	for i, x <- [3, 15, 777] {
 		v := x
@@ -226,9 +297,13 @@ func TestForPhraseStmt3(t *testing.T)  {
 		}
 	}
 	println("values:", fns[0](), fns[1](), fns[2]())
-	`, 
-	"values: 3 15 777\n")
+`
+
+func TestForPhraseStmt3(t *testing.T) {
+	cltest.Expect(t, testForPhraseStmt3, "values: 3 15 777\n")
 }
+
+// -----------------------------------------------------------------------------
 
 var testForRangeClauses = map[string]testData{
 	"no_kv_range_list": {`sum:=0
@@ -276,7 +351,7 @@ var testForRangeClauses = map[string]testData{
 					`, []string{"34"}},
 	"both_kv_range_map": {`sum:=0
 					m:={1:2,2:4,3:8}
-					for k,v:=range m { 
+					for k,v:=range m {
 						//1*2+2*4+3*8=34
 						sum+=k*v
 					}
@@ -347,8 +422,9 @@ func TestRangeStmt(t *testing.T) {
 	testScripts(t, "TestRangeStmt", testForRangeClauses)
 }
 
-func TestRangeStmt2(t *testing.T)  {
-	cltest.Call(t, `
+// -----------------------------------------------------------------------------
+
+var testRangeStmt2 = `
 	sum := 0
 	for _, x := range [1, 3, 5, 7, 11, 13, 17] {
 		if x > 3 {
@@ -356,8 +432,32 @@ func TestRangeStmt2(t *testing.T)  {
 		}
 	}
 	sum
-	`).Equal(53)
+`
+
+func TestRangeStmt2(t *testing.T) {
+	cltest.Call(t, testRangeStmt2).Equal(53)
 }
+
+// -----------------------------------------------------------------------------
+
+var testForStmt = `
+	fns := make([]func() int, 3)
+	arr := [3, 15, 777]
+	sum := 0
+	for i := 0; i < len(arr); i++ {
+		v := arr[i]
+		fns[i] = func() int {
+			return v
+		}
+	}
+	println("values:", fns[0](), fns[1](), fns[2]())
+`
+
+func _TestForStmt(t *testing.T) {
+	cltest.Expect(t, testForStmt, "values: 3 15 777\n")
+}
+
+// -----------------------------------------------------------------------------
 
 var testNormalForClauses = map[string]testData{
 	"for_with_init_cond_post": {`
@@ -428,7 +528,7 @@ var testNormalForClauses = map[string]testData{
 								break L
 							}
 							sum+=arr[i]+arr[j]
-						}	
+						}
 					}
 					println(sum)
 					`, []string{"12"}}, // (1+1)+(1+3)+(1+5)
@@ -442,7 +542,7 @@ var testNormalForClauses = map[string]testData{
 								continue L
 							}
 							sum+=arr[i]+arr[j]
-						}	
+						}
 					}
 					println(sum)
 					`, []string{"48"}}, // (1+3+5+7)*2+(1+3)*4
@@ -533,7 +633,7 @@ var testNormalForClauses = map[string]testData{
 						for j:=0;j<len(arr);j++{
 							if arr[j]>1{
 								break L1
-							}	
+							}
 							sum+=arr[i]+arr[j]
 						}
 					}
@@ -551,7 +651,7 @@ var testNormalForClauses = map[string]testData{
 						for j:=0;j<len(arr);j++{
 							if arr[j]>3{
 								break L
-							}	
+							}
 							sum+=arr[i]+arr[j]
 						}
 					}
@@ -563,15 +663,18 @@ func TestNormalForStmt(t *testing.T) {
 	testScripts(t, "TestNormalForStmt", testNormalForClauses)
 }
 
-func TestForIncDecStmt(t *testing.T)  {
-	cltest.Expect(t, `
+var testForIncDecStmt = `
 	a,b:=10,2
 	{a--;a--;a--}
 	{b++;b++;b++}
 	println(a,b,a*b)
-	`, 
-	"7 5 35\n")
+`
+
+func TestForIncDecStmt(t *testing.T) {
+	cltest.Expect(t, testForIncDecStmt, "7 5 35\n")
 }
+
+// -----------------------------------------------------------------------------
 
 var testSwitchBranchClauses = map[string]testData{
 	"switch_all_fallthrough": {`
@@ -720,13 +823,13 @@ var testSwitchBranchClauses = map[string]testData{
 							}
 							println(x)
 						case 1:
-							println(x)  
-							x++	
+							println(x)
+							x++
 							continue L
 						case 2:
-							println(x)  
+							println(x)
 							x++
-							break 
+							break
 						case 3:
 							println(x)
 							break L
@@ -737,13 +840,15 @@ var testSwitchBranchClauses = map[string]testData{
 							println(x)
 						}
 					}
-				
+
 					`, []string{"2", "0", "1", "2"}},
 }
 
 func TestSwitchBranchStmt(t *testing.T) {
 	testScripts(t, "TestSwitchBranchStmt", testSwitchBranchClauses)
 }
+
+// -----------------------------------------------------------------------------
 
 var testGotoLabelClauses = map[string]testData{
 	"goto_before_label": {`

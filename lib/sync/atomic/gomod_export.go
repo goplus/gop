@@ -182,13 +182,13 @@ func execSwapUintptr(_ int, p *gop.Context) {
 	p.Ret(2, ret0)
 }
 
-func execValueLoad(_ int, p *gop.Context) {
+func execmValueLoad(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(*atomic.Value).Load()
 	p.Ret(1, ret0)
 }
 
-func execValueStore(_ int, p *gop.Context) {
+func execmValueStore(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(*atomic.Value).Store(args[1])
 	p.PopN(2)
@@ -228,7 +228,7 @@ func init() {
 		I.Func("SwapUint32", atomic.SwapUint32, execSwapUint32),
 		I.Func("SwapUint64", atomic.SwapUint64, execSwapUint64),
 		I.Func("SwapUintptr", atomic.SwapUintptr, execSwapUintptr),
-		I.Func("(*Value).Load", (*atomic.Value).Load, execValueLoad),
-		I.Func("(*Value).Store", (*atomic.Value).Store, execValueStore),
+		I.Func("(*Value).Load", (*atomic.Value).Load, execmValueLoad),
+		I.Func("(*Value).Store", (*atomic.Value).Store, execmValueStore),
 	)
 }

@@ -71,4 +71,7 @@ func init() {
 		I.Func("TempFile", ioutil.TempFile, execTempFile),
 		I.Func("WriteFile", ioutil.WriteFile, execWriteFile),
 	)
+	I.RegisterVars(
+		I.Var("Discard", &ioutil.Discard),
+	)
 }
