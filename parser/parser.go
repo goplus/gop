@@ -702,6 +702,9 @@ func (p *parser) parseArrayTypeOrSliceLit(allowSliceLit bool) (expr ast.Expr, is
 
 	var elt ast.Expr
 	if allowSliceLit {
+		if rbrack.IsValid() {
+			return newSliceLit(lbrack, rbrack, len), true
+		}
 		elt = p.tryType()
 		if elt == nil { // [a]
 			return newSliceLit(lbrack, rbrack, len), true
