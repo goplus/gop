@@ -4,6 +4,7 @@ delete(x, "Hello")
 println("x:", x)
 delete(x, "hi")
 println("x:", x)
+println(x["Hello"])
 
 y := {"Hello": 1, "xsw": "Go+"} // map[string]interface{}
 println("y:", y)
