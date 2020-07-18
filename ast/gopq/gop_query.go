@@ -55,6 +55,29 @@ type NodeSet struct {
 	Err  error
 }
 
+// NewSource calls ParseFile for all files with names ending in ".gop" in the
+// directory specified by path and returns a map of package name -> package
+// AST with all the packages found.
+//
+// If filter != nil, only the files with os.FileInfo entries passing through
+// the filter (and ending in ".gop") are considered. The mode bits are passed
+// to ParseFile unchanged. Position information is recorded in fset, which
+// must not be nil.
+//
+// If the directory couldn't be read, a nil map and the respective error are
+// returned. If a parse error occurred, a non-nil but incomplete map and the
+// first error encountered are returned.
+func NewSource(
+	fset *token.FileSet, path string,
+	filter func(os.FileInfo) bool, mode parser.Mode) (doc NodeSet, err error) {
+
+	pkgs, err := parser.ParseDir(fset, path, filter, mode)
+	if err != nil {
+		return
+	}
+	return NodeSet{Data: &oneNode{astPackages(pkgs)}}, nil
+}
+
 // NewSourceFrom calls ParseFile for all files with names ending in ".gop" in the
 // directory specified by path and returns a map of package name -> package
 // AST with all the packages found.
@@ -78,44 +101,45 @@ func NewSourceFrom(
 	return NodeSet{Data: &oneNode{astPackages(pkgs)}}, nil
 }
 
-// Funcs returns *ast.FuncDecl node set.
-func (p NodeSet) Funcs() NodeSet {
+// Ok returns if node set is valid or not.
+func (p NodeSet) Ok() bool {
+	return p.Err == nil
+}
+
+// FuncDecl returns *ast.FuncDecl node set.
+func (p NodeSet) FuncDecl() NodeSet {
 	return p.Match(func(node Node) bool {
 		_, ok := node.Obj().(*ast.FuncDecl)
 		return ok
 	})
 }
 
-// Types returns types *ast.GenDecl node set.
-func (p NodeSet) Types() NodeSet {
+// GenDecl returns *ast.GenDecl node set.
+func (p NodeSet) GenDecl(tok token.Token) NodeSet {
 	return p.Match(func(node Node) bool {
 		decl, ok := node.Obj().(*ast.GenDecl)
-		return ok && decl.Tok == token.TYPE
+		return ok && decl.Tok == tok
 	})
 }
 
-// Vars returns variables *ast.GenDecl node set.
-func (p NodeSet) Vars() NodeSet {
-	return p.Match(func(node Node) bool {
-		decl, ok := node.Obj().(*ast.GenDecl)
-		return ok && decl.Tok == token.VAR
-	})
+// TypeSpec returns *ast.TypeSpec node set.
+func (p NodeSet) TypeSpec() NodeSet {
+	return p.GenDecl(token.TYPE).Child()
 }
 
-// Consts returns constants *ast.GenDecl node set.
-func (p NodeSet) Consts() NodeSet {
-	return p.Match(func(node Node) bool {
-		decl, ok := node.Obj().(*ast.GenDecl)
-		return ok && decl.Tok == token.CONST
-	})
+// VarSpec returns variables *ast.ValueSpec node set.
+func (p NodeSet) VarSpec() NodeSet {
+	return p.GenDecl(token.VAR).Child()
 }
 
-// Imports returns imports *ast.GenDecl node set.
-func (p NodeSet) Imports() NodeSet {
-	return p.Match(func(node Node) bool {
-		decl, ok := node.Obj().(*ast.GenDecl)
-		return ok && decl.Tok == token.IMPORT
-	})
+// ConstSpec returns constants *ast.ValueSpec node set.
+func (p NodeSet) ConstSpec() NodeSet {
+	return p.GenDecl(token.CONST).Child()
+}
+
+// ImportSpec returns *ast.ImportSpec node set.
+func (p NodeSet) ImportSpec() NodeSet {
+	return p.GenDecl(token.IMPORT).Child()
 }
 
 // -----------------------------------------------------------------------------
@@ -265,6 +289,23 @@ func (p NodeSet) Match(match func(node Node) bool) (ret NodeSet) {
 }
 
 // -----------------------------------------------------------------------------
+
+// Name returns names of the node set.
+func (p NodeSet) Name() []string {
+	return p.ToString(NameOf)
+}
+
+// ToString returns string values of the node set.
+func (p NodeSet) ToString(str func(node Node) string) (items []string) {
+	if p.Err != nil {
+		return nil
+	}
+	p.Data.ForEach(func(node Node) error {
+		items = append(items, str(node))
+		return nil
+	})
+	return
+}
 
 // Collect collects all nodes of the node set.
 func (p NodeSet) Collect() (items []Node, err error) {
