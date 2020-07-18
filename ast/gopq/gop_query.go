@@ -101,6 +101,7 @@ func NewSourceFrom(
 	return NodeSet{Data: &oneNode{astPackages(pkgs)}}, nil
 }
 
+<<<<<<< HEAD
 // Ok returns if node set is valid or not.
 func (p NodeSet) Ok() bool {
 	return p.Err == nil
@@ -108,12 +109,17 @@ func (p NodeSet) Ok() bool {
 
 // FuncDecl returns *ast.FuncDecl node set.
 func (p NodeSet) FuncDecl() NodeSet {
+=======
+// Funcs returns *ast.FuncDecl node set.
+func (p NodeSet) Funcs() NodeSet {
+>>>>>>> 6cf1ac381646e6fb9fbbf299a361dc02b066d3af
 	return p.Match(func(node Node) bool {
 		_, ok := node.Obj().(*ast.FuncDecl)
 		return ok
 	})
 }
 
+<<<<<<< HEAD
 // GenDecl returns *ast.GenDecl node set.
 func (p NodeSet) GenDecl(tok token.Token) NodeSet {
 	return p.Match(func(node Node) bool {
@@ -140,6 +146,38 @@ func (p NodeSet) ConstSpec() NodeSet {
 // ImportSpec returns *ast.ImportSpec node set.
 func (p NodeSet) ImportSpec() NodeSet {
 	return p.GenDecl(token.IMPORT).Child()
+=======
+// Types returns types *ast.GenDecl node set.
+func (p NodeSet) Types() NodeSet {
+	return p.Match(func(node Node) bool {
+		decl, ok := node.Obj().(*ast.GenDecl)
+		return ok && decl.Tok == token.TYPE
+	})
+}
+
+// Vars returns variables *ast.GenDecl node set.
+func (p NodeSet) Vars() NodeSet {
+	return p.Match(func(node Node) bool {
+		decl, ok := node.Obj().(*ast.GenDecl)
+		return ok && decl.Tok == token.VAR
+	})
+}
+
+// Consts returns constants *ast.GenDecl node set.
+func (p NodeSet) Consts() NodeSet {
+	return p.Match(func(node Node) bool {
+		decl, ok := node.Obj().(*ast.GenDecl)
+		return ok && decl.Tok == token.CONST
+	})
+}
+
+// Imports returns imports *ast.GenDecl node set.
+func (p NodeSet) Imports() NodeSet {
+	return p.Match(func(node Node) bool {
+		decl, ok := node.Obj().(*ast.GenDecl)
+		return ok && decl.Tok == token.IMPORT
+	})
+>>>>>>> 6cf1ac381646e6fb9fbbf299a361dc02b066d3af
 }
 
 // -----------------------------------------------------------------------------
@@ -290,6 +328,7 @@ func (p NodeSet) Match(match func(node Node) bool) (ret NodeSet) {
 
 // -----------------------------------------------------------------------------
 
+<<<<<<< HEAD
 // Name returns names of the node set.
 func (p NodeSet) Name() []string {
 	return p.ToString(NameOf)
@@ -307,6 +346,8 @@ func (p NodeSet) ToString(str func(node Node) string) (items []string) {
 	return
 }
 
+=======
+>>>>>>> 6cf1ac381646e6fb9fbbf299a361dc02b066d3af
 // Collect collects all nodes of the node set.
 func (p NodeSet) Collect() (items []Node, err error) {
 	if p.Err != nil {

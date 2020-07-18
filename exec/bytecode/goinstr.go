@@ -247,7 +247,11 @@ func execMapIndex(i Instr, p *Context) {
 		v.SetMapIndex(key, reflect.ValueOf(p.data[n-3]))
 		p.PopN(3)
 	default: // mapData $key $mapIndex
-		p.Ret(2, v.MapIndex(key).Interface())
+		value := v.MapIndex(key)
+		if !value.IsValid() {
+			value = reflect.Zero(v.Type().Elem())
+		}
+		p.Ret(2, value.Interface())
 	}
 }
 
