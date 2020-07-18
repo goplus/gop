@@ -71,6 +71,7 @@ func NewExporter(w io.Writer, pkg *types.Package) *Exporter {
 	return p
 }
 
+// IsEmpty checks if there is nothing to exmport or not.
 func (p *Exporter) IsEmpty() bool {
 	return len(p.exportFns) == 0 && len(p.exportFnvs) == 0 &&
 		len(p.exportedVars) == 0 && len(p.exportConsts) == 0
