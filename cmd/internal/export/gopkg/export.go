@@ -17,12 +17,22 @@
 package gopkg
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"go/importer"
+	"go/token"
 	"go/types"
 	"io"
-	"log"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"reflect"
+	"strings"
+	"sync"
+
+	"github.com/goplus/gop/mod/semver"
+	"github.com/qiniu/x/log"
 )
 
 // -----------------------------------------------------------------------------
@@ -54,16 +64,105 @@ func exportConst(e *Exporter, o *types.Const) (err error) {
 	return e.ExportConst(o)
 }
 
-func Import(pkgPath string) (*types.Package, error) {
-	pkg, err := importer.Default().Import(pkgPath)
+func findLastVerPkg(pkgDirBase string, name string) (verName string) {
+	verName = name
+	fis, err := ioutil.ReadDir(pkgDirBase)
 	if err != nil {
-		return nil, err
+		return
 	}
-	return pkg, nil
+	name += "@"
+	var verMax string
+	for _, fi := range fis {
+		if fi.IsDir() {
+			if v := fi.Name(); strings.HasPrefix(v, name) {
+				ver := v[len(name):]
+				if verMax == "" || semver.Compare(verMax, ver) < 0 {
+					verName, verMax = v, ver
+				}
+			}
+		}
+	}
+	return
+}
+
+const (
+	pkgStandard = 0
+	pkgExternal = 1
+	pkgGoplus   = 2
+)
+
+const (
+	github    = "github.com/"
+	goplus    = "goplus/gop"
+	githubLen = len(github)
+	pkgGopLen = len(goplus) + githubLen
+)
+
+func getPkgKind(pkgPath string) int {
+	if strings.HasPrefix(pkgPath, github) {
+		if strings.HasPrefix(pkgPath[githubLen:], goplus) {
+			if len(pkgPath) == pkgGopLen || pkgPath[pkgGopLen] == '/' {
+				return pkgGoplus
+			}
+		}
+		return pkgExternal
+	}
+	return pkgStandard
+}
+
+// Import imports a Go package.
+func Import(pkgPath string) (*types.Package, error) {
+	var imp types.Importer
+	var srcDir string
+	switch getPkgKind(pkgPath) {
+	case pkgExternal:
+		parts := strings.Split(pkgPath, "/")
+		n := len(parts)
+		if n < 3 {
+			return nil, ErrInvalidPkgPath
+		}
+		srcDir = filepath.Join(getModRoot(), parts[0], parts[1])
+		noVer := strings.Index(parts[2], "@") == -1
+		if noVer {
+			parts[2] = findLastVerPkg(srcDir, parts[2])
+		}
+		srcDir = filepath.Join(srcDir, parts[2])
+		if n > 3 {
+			srcDir += "/" + strings.Join(parts[3:], "/")
+		}
+		fmt.Fprintln(os.Stderr, "export", srcDir)
+		imp = importer.ForCompiler(token.NewFileSet(), "source", nil)
+	case pkgGoplus:
+		goplusRoot, err := GoPlusRoot()
+		if err != nil {
+			return nil, err
+		}
+		srcDir = goplusRoot + pkgPath[pkgGopLen:]
+		fmt.Fprintln(os.Stderr, "export", srcDir)
+		imp = importer.ForCompiler(token.NewFileSet(), "source", nil)
+	default:
+		imp = importer.Default()
+	}
+	return imp.(types.ImporterFrom).ImportFrom(pkgPath, srcDir, 0)
 }
 
 var (
-	ErrorIgnore = errors.New("ignore empty exported pkg")
+	gModRoot string
+	gOnce    sync.Once
+)
+
+func getModRoot() string {
+	gOnce.Do(func() {
+		gModRoot = os.Getenv("GOPATH") + "/pkg/mod"
+	})
+	return gModRoot
+}
+
+var (
+	// ErrIgnore error
+	ErrIgnore = errors.New("ignore empty exported package")
+	// ErrInvalidPkgPath error
+	ErrInvalidPkgPath = errors.New("invalid package path")
 )
 
 // ExportPackage export types.Package to io.Writer
@@ -93,7 +192,7 @@ func ExportPackage(pkg *types.Package, w io.Writer) (err error) {
 		}
 	}
 	if e.IsEmpty() {
-		return ErrorIgnore
+		return ErrIgnore
 	}
 	return e.Close()
 }
@@ -106,3 +205,43 @@ func Export(pkgPath string, w io.Writer) (err error) {
 	}
 	return ExportPackage(pkg, w)
 }
+
+// -----------------------------------------------------------------------------
+
+// GoPlusRoot returns Go+ root path.
+func GoPlusRoot() (root string, err error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return
+	}
+	for {
+		modfile := filepath.Join(dir, "go.mod")
+		if hasFile(modfile) {
+			if isGoplus(modfile) {
+				return dir, nil
+			}
+			return "", errors.New("current directory is not under goplus root")
+		}
+		next := filepath.Dir(dir)
+		if dir == next {
+			return "", errors.New("go.mod not found, please run under goplus root")
+		}
+		dir = next
+	}
+}
+
+func isGoplus(modfile string) bool {
+	b, err := ioutil.ReadFile(modfile)
+	return err == nil && bytes.HasPrefix(b, goplusPrefix)
+}
+
+var (
+	goplusPrefix = []byte("module github.com/goplus/gop")
+)
+
+func hasFile(path string) bool {
+	fi, err := os.Stat(path)
+	return err == nil && fi.Mode().IsRegular()
+}
+
+// -----------------------------------------------------------------------------

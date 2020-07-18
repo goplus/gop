@@ -37,6 +37,15 @@ func NewGoPackage(pkgPath string) *GoPackage {
 	return exec.NewGoPackage(pkgPath)
 }
 
+// ToBools converts []interface{} into []bool.
+func ToBools(args []interface{}) []bool {
+	ret := make([]bool, len(args))
+	for i, arg := range args {
+		ret[i] = arg.(bool)
+	}
+	return ret
+}
+
 // ToStrings converts []interface{} into []string.
 func ToStrings(args []interface{}) []string {
 	ret := make([]string, len(args))

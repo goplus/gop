@@ -7,10 +7,11 @@ import (
 	"go/importer"
 	"go/types"
 	"io/ioutil"
-	"log"
 	"os/exec"
 	"strings"
 	"testing"
+
+	"github.com/qiniu/x/log"
 )
 
 // -----------------------------------------------------------------------------
@@ -204,7 +205,7 @@ func TestExportStd(t *testing.T) {
 		}
 		var buf bytes.Buffer
 		err = ExportPackage(p, &buf)
-		if err != nil && err != ErrorIgnore {
+		if err != nil && err != ErrIgnore {
 			t.Fatal("export error:", pkg, err)
 		}
 		_, err = format.Source(buf.Bytes())

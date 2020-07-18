@@ -19,7 +19,6 @@ package export
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"go/format"
 	"io/ioutil"
@@ -61,7 +60,7 @@ func runCmd(cmd *base.Command, args []string) {
 	if flagExportDir != "" {
 		libDir = flagExportDir
 	} else {
-		root, err := goplusRoot()
+		root, err := gopkg.GoPlusRoot()
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "find goplus root failed:", err)
 			os.Exit(-1)
@@ -98,41 +97,6 @@ func exportPkg(pkgPath string, libDir string) error {
 	os.MkdirAll(dir, 0777)
 	err = ioutil.WriteFile(filepath.Join(dir, "gomod_export.go"), data, 0666)
 	return err
-}
-
-func goplusRoot() (root string, err error) {
-	dir, err := os.Getwd()
-	if err != nil {
-		return
-	}
-	for {
-		modfile := filepath.Join(dir, "go.mod")
-		if hasFile(modfile) {
-			if isGoplus(modfile) {
-				return dir, nil
-			}
-			return "", errors.New("current directory is not under goplus root")
-		}
-		next := filepath.Dir(dir)
-		if dir == next {
-			return "", errors.New("go.mod not found, please run under goplus root")
-		}
-		dir = next
-	}
-}
-
-func isGoplus(modfile string) bool {
-	b, err := ioutil.ReadFile(modfile)
-	return err == nil && bytes.HasPrefix(b, goplusPrefix)
-}
-
-var (
-	goplusPrefix = []byte("module github.com/goplus/gop")
-)
-
-func hasFile(path string) bool {
-	fi, err := os.Stat(path)
-	return err == nil && fi.Mode().IsRegular()
 }
 
 // -----------------------------------------------------------------------------
