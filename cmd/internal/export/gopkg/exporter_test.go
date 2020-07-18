@@ -162,6 +162,13 @@ func TestExportX(t *testing.T) {
 	}
 }
 
+func TestExportNotFound(t *testing.T) {
+	err := Export("github.com/qiniu", ioutil.Discard)
+	if err != ErrInvalidPkgPath {
+		t.Fatal("TestExport failed:", err)
+	}
+}
+
 func TestImport(t *testing.T) {
 	pkg, err := Import("go/types")
 	if err != nil {
