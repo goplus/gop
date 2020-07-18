@@ -25,6 +25,7 @@ import (
 	"github.com/goplus/gop/ast/astutil"
 	"github.com/goplus/gop/exec.spec"
 	"github.com/goplus/gop/token"
+	"github.com/qiniu/x/ctype"
 	"github.com/qiniu/x/errors"
 	"github.com/qiniu/x/log"
 )
@@ -985,6 +986,14 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 		if sf, ok := t.FieldByName(name); ok {
 			log.Panicln("compileSelectorExpr todo: structField -", t, sf)
 		}
+		if _, ok := vx.t.MethodByName(name); !ok && isLower(name) {
+			name = strings.Title(name)
+			if _, ok = vx.t.MethodByName(name); !ok {
+				log.Panicln("compileSelectorExpr: symbol not found -", v.Sel.Name)
+			}
+			v.Sel.Name = name
+			return compileCallExpr(ctx, &ast.CallExpr{Fun: v})
+		}
 		pkgPath, method := normalizeMethod(n, t, name)
 		pkg := ctx.FindGoPackage(pkgPath)
 		if pkg == nil {
@@ -1003,6 +1012,13 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 	}
 	_ = exprX
 	return nil
+}
+
+func isLower(name string) bool {
+	for _, c := range name {
+		return ctype.Is(ctype.LOWER, c)
+	}
+	return false
 }
 
 func countPtr(t reflect.Type) (int, reflect.Type) {

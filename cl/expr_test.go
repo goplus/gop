@@ -17,7 +17,6 @@ package cl_test
 
 import (
 	"math/big"
-	"strings"
 	"testing"
 
 	"github.com/goplus/gop/cl/cltest"
@@ -25,7 +24,7 @@ import (
 
 // -----------------------------------------------------------------------------
 
-func TestAutoPropertyTodo(t *testing.T) {
+func TestAutoProperty(t *testing.T) {
 	cltest.Expect(t, `
 		import "bytes"
 		import "os"
@@ -33,9 +32,21 @@ func TestAutoPropertyTodo(t *testing.T) {
 		b := bytes.NewBuffer(nil)
 		b.WriteString("Hello, ")
 		b.WriteString("Go+")
-		println(b.String())
+		println(b.string)
 		`,
 		"Hello, Go+\n",
+	)
+	cltest.Expect(t, `
+		import "bytes"
+		import "os"
+
+		b := bytes.NewBuffer(nil)
+		b.WriteString("Hello, ")
+		b.WriteString("Go+")
+		println(b.string2)
+		`,
+		"",
+		nil, // panic
 	)
 }
 
@@ -49,7 +60,9 @@ func TestUnbound(t *testing.T) {
 
 func TestPanic(t *testing.T) {
 	cltest.Expect(t,
-		`panic("Helo")`, "", "Helo",
+		`panic("Helo")`,
+		"",
+		"Helo", // panicMsg
 	)
 }
 
@@ -334,7 +347,8 @@ func TestRational(t *testing.T) {
 
 type testData struct {
 	clause string
-	wants  []string
+	want   string
+	panic  bool
 }
 
 var testDeleteClauses = map[string]testData{
@@ -346,7 +360,7 @@ var testDeleteClauses = map[string]testData{
 					println(m)
 					delete(m,2)
 					println(m)
-					`, []string{"map[2:2]", "map[2:2]", "map[]"}},
+					`, "map[2:2]\nmap[2:2]\nmap[]\n", false},
 	"delete_string_key": {`
 					m:={"hello":1,"Go+":2}
 					delete(m,"hello")
@@ -355,7 +369,7 @@ var testDeleteClauses = map[string]testData{
 					println(m)
 					delete(m,"Go+")
 					println(m)
-					`, []string{"map[Go+:2]", "map[Go+:2]", "map[]"}},
+					`, "map[Go+:2]\nmap[Go+:2]\nmap[]\n", false},
 	"delete_var_string_key": {`
 					m:={"hello":1,"Go+":2}
 					delete(m,"hello")
@@ -366,7 +380,7 @@ var testDeleteClauses = map[string]testData{
 					arr:=["Go+"]
 					delete(m,arr[0])
 					println(m)
-					`, []string{"map[Go+:2]", "map[Go+:2]", "map[]"}},
+					`, "map[Go+:2]\nmap[Go+:2]\nmap[]\n", false},
 	"delete_var_map_string_key": {`
 					ma:=[{"hello":1,"Go+":2}]
 					delete(ma[0],"hello")
@@ -377,19 +391,19 @@ var testDeleteClauses = map[string]testData{
 					arr:=["Go+"]
 					delete(ma[0],arr[0])
 					println(ma[0])
-					`, []string{"map[Go+:2]", "map[Go+:2]", "map[]"}},
+					`, "map[Go+:2]\nmap[Go+:2]\nmap[]\n", false},
 	"delete_no_key_panic": {`
 					m:={"hello":1,"Go+":2}
 					delete(m)
-					`, []string{"_panic"}},
+					`, "", true},
 	"delete_multi_key_panic": {`
 					m:={"hello":1,"Go+":2}
 					delete(m,"hi","hi")
-					`, []string{"_panic"}},
+					`, "", true},
 	"delete_not_map_panic": {`
 					m:=[1,2,3]
 					delete(m,1)
-					`, []string{"_panic"}},
+					`, "", true},
 }
 
 func TestDelete(t *testing.T) {
@@ -405,14 +419,14 @@ var testCopyClauses = map[string]testData{
 					n:=copy(b,a)
 					println(n)
 					println(b)
-					`, []string{"3", "[1 2 3]"}},
+					`, "3\n[1 2 3]\n", false},
 	"copy_string": {`
 					a:=["hello"]
 					b:=["hi"]
 					n:=copy(b,a)
 					println(n)
 					println(b)
-					`, []string{"1", "[hello]"}},
+					`, "1\n[hello]\n", false},
 	"copy_byte_string": {`
 					a:=[byte(65),byte(66),byte(67)]
 					println(string(a))
@@ -420,46 +434,46 @@ var testCopyClauses = map[string]testData{
 					println(n)
 					println(a)
 					println(string(a))
-					`, []string{"ABC", "3", "[97 98 99]", "abc"}},
+					`, "ABC\n3\n[97 98 99]\nabc\n", false},
 	"copy_first_not_slice_panic": {`
 					a:=1
 					b:=[1,2,3]
 					copy(a,b)
 					println(a)
-					`, []string{"_panic"}},
+					`, "", true},
 	"copy_second_not_slice_panic": {`
 					a:=1
 					b:=[1,2,3]
 					copy(b,a)
 					println(b)
-					`, []string{"_panic"}},
+					`, "", true},
 	"copy_one_args_panic": {`
 					a:=[1,2,3]
 					copy(a)
 					println(a)
-					`, []string{"_panic"}},
+					`, "", true},
 	"copy_multi_args_panic": {`
 					a:=[1,2,3]
 					copy(a,a,a)
 					println(a)
-					`, []string{"_panic"}},
+					`, "", true},
 	"copy_string_panic": {`
 					a:=[65,66,67]
 					copy(a,"abc")
 					println(a)
-					`, []string{"_panic"}},
+					`, "", true},
 	"copy_different_type_panic": {`
 					a:=[65,66,67]
 					b:=[1.2,1.5,1.7]
 					copy(b,a)
 					copy(b,a)
 					println(b)
-					`, []string{"_panic"}},
+					`, "", true},
 	"copy_with_operation": {`
 					a:=[65,66,67]
 					b:=[1]
 					println(copy(a,b)+copy(b,a)==2)
-					`, []string{"true"}},
+					`, "true\n", false},
 }
 
 func TestCopy(t *testing.T) {
@@ -469,23 +483,11 @@ func TestCopy(t *testing.T) {
 func testScripts(t *testing.T, testName string, scripts map[string]testData) {
 	for name, script := range scripts {
 		t.Log("Run " + testName + "---" + name)
-		testSingleScript(name, t, script.clause, script.wants)
-	}
-}
-
-func testSingleScript(name string, t *testing.T, script string, wants []string) {
-	defer func() {
-		if r := recover(); r != nil {
-			if len(wants) > 0 && wants[0] == "_panic" {
-				return
-			}
-			t.Fatal(name, "-", r)
+		var panicMsg []interface{}
+		if script.panic {
+			panicMsg = append(panicMsg, nil)
 		}
-	}()
-	if len(wants) > 0 && wants[0] != "_panic" {
-		cltest.Expect(t, script, strings.Join(wants, "\n")+"\n")
-	} else {
-		cltest.Expect(t, script, "", "")
+		cltest.Expect(t, script.clause, script.want, panicMsg...)
 	}
 }
 
