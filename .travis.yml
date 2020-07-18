@@ -13,7 +13,7 @@ script:
   # check: format gop file
   - find ./ -type f -name "*.gop"|xargs -n 1 gop fmt -w
   # check: imported go package
-  - diff -b  <(cat lib/default.go|grep github) <(find lib -type d|grep -v "lib$"|xargs -n 1 -I file bash -c 'echo -e \\t_ \"github.com/goplus/gop/file\"'|sort)
+  # - diff -b  <(cat lib/default.go|grep github) <(find lib -type d|grep -v "lib$"|xargs -n 1 -I file bash -c 'echo -e \\t_ \"github.com/goplus/gop/file\"'|sort)
   - go test -race -coverprofile=coverage.txt -covermode=atomic ./...
   - pre-commit run --all
 after_success:

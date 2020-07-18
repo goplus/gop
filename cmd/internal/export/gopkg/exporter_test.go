@@ -148,6 +148,20 @@ func TestExportMath(t *testing.T) {
 	}
 }
 
+func TestExportGopQ(t *testing.T) {
+	err := Export("github.com/goplus/gop/ast/gopq", ioutil.Discard)
+	if err != nil {
+		t.Fatal("TestExport failed:", err)
+	}
+}
+
+func TestExportX(t *testing.T) {
+	err := Export("github.com/qiniu/x/log", ioutil.Discard)
+	if err != nil {
+		t.Fatal("TestExport failed:", err)
+	}
+}
+
 func TestImport(t *testing.T) {
 	pkg, err := Import("go/types")
 	if err != nil {
