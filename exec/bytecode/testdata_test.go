@@ -27,7 +27,7 @@ import (
 // -----------------------------------------------------------------------------
 
 func TestFromTestdata(t *testing.T) {
-	sel, exclude := "", "23"
+	sel, exclude := "", ""
 	dir, err := os.Getwd()
 	if err != nil {
 		t.Fatal("Getwd failed:", err)
