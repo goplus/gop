@@ -29,9 +29,9 @@ func TestAutoProperty(t *testing.T) {
 		import "bytes"
 		import "os"
 
-		b := bytes.NewBuffer(nil)
-		b.WriteString("Hello, ")
-		b.WriteString("Go+")
+		b := bytes.newBuffer(nil)
+		b.writeString("Hello, ")
+		b.writeString("Go+")
 		println(b.string)
 		`,
 		"Hello, Go+\n",
@@ -40,10 +40,18 @@ func TestAutoProperty(t *testing.T) {
 		import "bytes"
 		import "os"
 
-		b := bytes.NewBuffer(nil)
-		b.WriteString("Hello, ")
-		b.WriteString("Go+")
+		b := bytes.newBuffer(nil)
+		b.writeString("Hello, ")
+		b.writeString("Go+")
 		println(b.string2)
+		`,
+		"",
+		nil, // panic
+	)
+	cltest.Expect(t, `
+		import "bytes"
+
+		bytes.newBuf()
 		`,
 		"",
 		nil, // panic
