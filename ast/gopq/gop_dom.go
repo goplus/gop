@@ -89,11 +89,45 @@ type astDecl struct {
 }
 
 func (p *astDecl) ForEach(filter func(node Node) error) error {
+	if decl, ok := p.Decl.(*ast.GenDecl); ok {
+		for _, spec := range decl.Specs {
+			node := &astSpec{spec}
+			if err := filter(node); err == ErrBreak {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
 func (p *astDecl) Obj() interface{} {
 	return p.Decl
+}
+
+// -----------------------------------------------------------------------------
+
+type astSpec struct {
+	ast.Spec
+}
+
+func (p *astSpec) ForEach(filter func(node Node) error) error {
+	return nil
+}
+
+func (p *astSpec) Obj() interface{} {
+	return p.Spec
+}
+
+// -----------------------------------------------------------------------------
+
+// NameOf returns name of an ast node.
+func NameOf(node Node) string {
+	switch v := node.Obj().(type) {
+	case *ast.FuncDecl:
+		return v.Name.Name
+	default:
+		panic("node doesn't contain the `name` property")
+	}
 }
 
 // -----------------------------------------------------------------------------

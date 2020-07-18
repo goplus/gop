@@ -145,8 +145,8 @@ func TestParseGopFiles(t *testing.T) {
 	if !checkFSTest(file, []string{`"io"`}, []string{"init", "New"}) {
 		t.Error("file check file")
 	}
-
 }
+
 func checkFSTest(file *ast.File, targetImport []string, targetFuncDecl []string) (pass bool) {
 	var foundImport, foundFunc int
 	for _, decl := range file.Decls {
