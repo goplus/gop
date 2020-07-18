@@ -52,33 +52,25 @@ func TestMake(t *testing.T) {
 		println(a)`,
 		"[1 2 3]\n",
 	)
-}
-
-func TestMake2(t *testing.T) {
 	cltest.Expect(t, `
 		a := make([]int, 0, 4)
 		a = append(a, [1, 2, 3]...)
 		println(a)`,
 		"[1 2 3]\n",
 	)
-}
-
-func TestMake3(t *testing.T) {
 	cltest.Expect(t, `
 		n := 4
 		a := make(map[string]interface{}, uint16(n))
 		println(a)`,
 		"map[]\n",
 	)
-}
-
-func TestMake4(t *testing.T) {
 	cltest.Expect(t, `
 		import "reflect"
 
 		a := make(chan *func(), uint16(4))
 		println(reflect.TypeOf(a))`,
-		"chan *func()\n")
+		"chan *func()\n",
+	)
 }
 
 func TestOperator(t *testing.T) {
@@ -101,7 +93,8 @@ func TestVarOp(t *testing.T) {
 		println("Hello", y + 10)
 		n, err := println("Hello", y + 10)
 		println("ret:", n << 1, err)`,
-		"Hello 134.1\nHello 134.1\nret: 24 <nil>\n")
+		"Hello 134.1\nHello 134.1\nret: 24 <nil>\n",
+	)
 }
 
 func TestGoPackage(t *testing.T) {
@@ -111,37 +104,38 @@ func TestGoPackage(t *testing.T) {
 
 		x := gostrings.NewReplacer("?", "!").Replace("hello, world???")
 		fmt.Println("x: " + x)`,
-		"x: hello, world!!!\n")
+		"x: hello, world!!!\n",
+	)
 }
 
 func TestSlice(t *testing.T) {
 	cltest.Expect(t, `
 		x := []float64{1, 2.3, 3.6}
 		println("x:", x)`,
-		"x: [1 2.3 3.6]\n")
-}
-
-func TestSlice2(t *testing.T) {
+		"x: [1 2.3 3.6]\n",
+	)
 	cltest.Expect(t, `
 		x := []float64{1, 2: 3.4, 5}
 		println("x:", x)`,
-		"x: [1 0 3.4 5]\n")
+		"x: [1 0 3.4 5]\n",
+	)
 }
+
 func TestArray(t *testing.T) {
 	cltest.Expect(t, `
 		x := [4]float64{1, 2.3, 3.6}
 		println("x:", x)
 
 		y := [...]float64{1, 2.3, 3.6}
-		println("y:", y)`, "x: &[2.3 3.6 0 0]\ny: &[1 2.3 3.6]\n")
-}
-
-func TestArray2(t *testing.T) {
+		println("y:", y)`,
+		"x: &[2.3 3.6 0 0]\ny: &[1 2.3 3.6]\n",
+	)
 	cltest.Expect(t, `
 		x := [...]float64{1, 3: 3.4, 5}
 		x[1] = 217
 		println("x:", x, "x[1]:", x[1])`,
-		"x: &[1 217 0 3.4 5] x[1]: 217\n")
+		"x: &[1 217 0 3.4 5] x[1]: 217\n",
+	)
 }
 
 func TestMap(t *testing.T) {
@@ -155,16 +149,15 @@ func TestMapLit(t *testing.T) {
 	cltest.Expect(t, `
 		x := {"Hello": 1, "xsw": 3.4}
 		println("x:", x)`,
-		"x: map[Hello:1 xsw:3.4]\n")
-}
-
-func TestMapLit2(t *testing.T) {
+		"x: map[Hello:1 xsw:3.4]\n",
+	)
 	cltest.Expect(t, `
 		x := {"Hello": 1, "xsw": "3.4"}
 		println("x:", x)
 
 		println("empty map:", {})`,
-		"x: map[Hello:1 xsw:3.4]\nempty map: map[]\n")
+		"x: map[Hello:1 xsw:3.4]\nempty map: map[]\n",
+	)
 }
 
 func TestMapIdx(t *testing.T) {
@@ -177,7 +170,8 @@ func TestMapIdx(t *testing.T) {
 		x["xsw"], y[i] = 3.1415926, q
 		println("x:", x, "y:", y)
 		println("x[key]:", x[key], "y[1]:", y[1])`,
-		"x: map[Hello:1 xsw:3.1415926] y: map[1:Q 5:Hi]\nx[key]: 3.1415926 y[1]: Q\n")
+		"x: map[Hello:1 xsw:3.1415926] y: map[1:Q 5:Hi]\nx[key]: 3.1415926 y[1]: Q\n",
+	)
 }
 
 func TestSliceLit(t *testing.T) {
@@ -210,16 +204,10 @@ func TestListComprehension(t *testing.T) {
 		y := [i+x for i, x <- [1, 2, 3, 4]]
 		println("y:", y)`,
 		"y: [1 3 5 7]\n")
-}
-
-func TestListComprehension2(t *testing.T) {
 	cltest.Call(t, `
 		y := [i+x for i, x <- {3: 1, 5: 2, 7: 3, 11: 4}]
 		println("y:", y)
 	`, -2).Equal(15)
-}
-
-func TestListComprehensionFilter(t *testing.T) {
 	cltest.Call(t, `
 		y := [i+x for i, x <- {3: 1, 5: 2, 7: 3, 11: 4}, x % 2 == 1]
 		println("y:", y)
@@ -230,31 +218,23 @@ func TestMapComprehension(t *testing.T) {
 	cltest.Expect(t, `
 		y := {x: i for i, x <- [3, 5, 7, 11, 13]}
 		println("y:", y)`,
-		"y: map[3:0 5:1 7:2 11:3 13:4]\n")
-}
-
-func TestMapComprehensionFilter(t *testing.T) {
+		"y: map[3:0 5:1 7:2 11:3 13:4]\n",
+	)
 	cltest.Expect(t, `
 		y := {x: i for i, x <- [3, 5, 7, 11, 13], i % 2 == 1}
 		println("y:", y)`,
-		"y: map[5:1 11:3]\n")
-}
-
-func TestMapComprehension2(t *testing.T) {
+		"y: map[5:1 11:3]\n",
+	)
 	cltest.Expect(t, `
 		y := {v: k for k, v <- {"Hello": "xsw", "Hi": "glang"}}
 		println("y:", y)`,
-		"y: map[glang:Hi xsw:Hello]\n")
-}
-
-func TestMapComprehension3(t *testing.T) {
+		"y: map[glang:Hi xsw:Hello]\n",
+	)
 	cltest.Expect(t, `
 		println({x: i for i, x <- [3, 5, 7, 11, 13]})
 		println({x: i for i, x <- [3, 5, 7, 11, 13]})`,
-		"map[3:0 5:1 7:2 11:3 13:4]\nmap[3:0 5:1 7:2 11:3 13:4]\n")
-}
-
-func TestMapComprehension4(t *testing.T) {
+		"map[3:0 5:1 7:2 11:3 13:4]\nmap[3:0 5:1 7:2 11:3 13:4]\n",
+	)
 	cltest.Expect(t, `
 		arr := [1, 2, 3, 4, 5, 6]
 		x := [[a, b] for a <- arr, a < b for b <- arr, b > 2]
@@ -267,9 +247,6 @@ func TestErrWrapExpr(t *testing.T) {
 		x := println("Hello qiniu")!
 		x
 	`).Equal(12)
-}
-
-func TestErrWrapExpr2(t *testing.T) {
 	cltest.Call(t, `
 		import (
 			"strconv"
@@ -289,17 +266,11 @@ func TestRational(t *testing.T) {
 		x := 3/4r + 5/7r
 		x
 	`).Equal(big.NewRat(41, 28))
-}
-
-func TestRational2(t *testing.T) {
 	cltest.Call(t, `
 		a := 3/4r
 		x := a + 5/7r
 		x
 	`).Equal(big.NewRat(41, 28))
-}
-
-func TestRational3(t *testing.T) {
 	y, _ := new(big.Float).SetString(
 		"3.14159265358979323846264338327950288419716939937510582097494459")
 	y.Mul(y, big.NewFloat(2))
@@ -308,9 +279,6 @@ func TestRational3(t *testing.T) {
 		y *= 2
 		y
 	`).Equal(y)
-}
-
-func TestRational4(t *testing.T) {
 	cltest.Call(t, `
 		a := 3/4r
 		b := 5/7r
@@ -319,9 +287,6 @@ func TestRational4(t *testing.T) {
 		}
 		a
 	`).Equal(big.NewRat(7, 4))
-}
-
-func TestRational5(t *testing.T) {
 	cltest.Call(t, `
 		x := 1/3r + 1r*2r
 		x
