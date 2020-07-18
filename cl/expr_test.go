@@ -25,9 +25,24 @@ import (
 
 // -----------------------------------------------------------------------------
 
+func TestAutoPropertyTodo(t *testing.T) {
+	cltest.Expect(t, `
+		import "bytes"
+		import "os"
+
+		b := bytes.NewBuffer(nil)
+		b.WriteString("Hello, ")
+		b.WriteString("Go+")
+		println(b.String())
+		`,
+		"Hello, Go+\n",
+	)
+}
+
 func TestUnbound(t *testing.T) {
-	cltest.Expect(t,
-		`println("Hello " + "qiniu:", 123, 4.5, 7i)`,
+	cltest.Expect(t, `
+		println("Hello " + "qiniu:", 123, 4.5, 7i)
+		`,
 		"Hello qiniu: 123 4.5 (0+7i)\n",
 	)
 }
@@ -49,40 +64,46 @@ func TestMake(t *testing.T) {
 	cltest.Expect(t, `
 		a := make([]int, 0, 4)
 		a = append(a, 1, 2, 3)
-		println(a)`,
+		println(a)
+		`,
 		"[1 2 3]\n",
 	)
 	cltest.Expect(t, `
 		a := make([]int, 0, 4)
 		a = append(a, [1, 2, 3]...)
-		println(a)`,
+		println(a)
+		`,
 		"[1 2 3]\n",
 	)
 	cltest.Expect(t, `
 		n := 4
 		a := make(map[string]interface{}, uint16(n))
-		println(a)`,
+		println(a)
+		`,
 		"map[]\n",
 	)
 	cltest.Expect(t, `
 		import "reflect"
 
 		a := make(chan *func(), uint16(4))
-		println(reflect.TypeOf(a))`,
+		println(reflect.TypeOf(a))
+		`,
 		"chan *func()\n",
 	)
 }
 
 func TestOperator(t *testing.T) {
 	cltest.Expect(t, `
-		println("Hello", 123 * 4.5, 1 + 7i)`,
+		println("Hello", 123 * 4.5, 1 + 7i)
+		`,
 		"Hello 553.5 (1+7i)\n")
 }
 
 func TestVar(t *testing.T) {
 	cltest.Expect(t, `
 		x := 123.1
-		println("Hello", x)`,
+		println("Hello", x)
+		`,
 		"Hello 123.1\n")
 }
 
@@ -92,7 +113,8 @@ func TestVarOp(t *testing.T) {
 		y := 1 + x
 		println("Hello", y + 10)
 		n, err := println("Hello", y + 10)
-		println("ret:", n << 1, err)`,
+		println("ret:", n << 1, err)
+		`,
 		"Hello 134.1\nHello 134.1\nret: 24 <nil>\n",
 	)
 }
@@ -103,7 +125,8 @@ func TestGoPackage(t *testing.T) {
 		import gostrings "strings"
 
 		x := gostrings.NewReplacer("?", "!").Replace("hello, world???")
-		fmt.Println("x: " + x)`,
+		fmt.Println("x: " + x)
+		`,
 		"x: hello, world!!!\n",
 	)
 }
@@ -111,12 +134,14 @@ func TestGoPackage(t *testing.T) {
 func TestSlice(t *testing.T) {
 	cltest.Expect(t, `
 		x := []float64{1, 2.3, 3.6}
-		println("x:", x)`,
+		println("x:", x)
+		`,
 		"x: [1 2.3 3.6]\n",
 	)
 	cltest.Expect(t, `
 		x := []float64{1, 2: 3.4, 5}
-		println("x:", x)`,
+		println("x:", x)
+		`,
 		"x: [1 0 3.4 5]\n",
 	)
 }
@@ -127,35 +152,40 @@ func TestArray(t *testing.T) {
 		println("x:", x)
 
 		y := [...]float64{1, 2.3, 3.6}
-		println("y:", y)`,
+		println("y:", y)
+		`,
 		"x: &[2.3 3.6 0 0]\ny: &[1 2.3 3.6]\n",
 	)
 	cltest.Expect(t, `
 		x := [...]float64{1, 3: 3.4, 5}
 		x[1] = 217
-		println("x:", x, "x[1]:", x[1])`,
+		println("x:", x, "x[1]:", x[1])
+		`,
 		"x: &[1 217 0 3.4 5] x[1]: 217\n",
 	)
 }
 
 func TestMap(t *testing.T) {
 	cltest.Expect(t, `
-	x := map[string]float64{"Hello": 1, "xsw": 3.4}
-	println("x:", x)`,
+		x := map[string]float64{"Hello": 1, "xsw": 3.4}
+		println("x:", x)
+		`,
 		"x: map[Hello:1 xsw:3.4]\n")
 }
 
 func TestMapLit(t *testing.T) {
 	cltest.Expect(t, `
 		x := {"Hello": 1, "xsw": 3.4}
-		println("x:", x)`,
+		println("x:", x)
+		`,
 		"x: map[Hello:1 xsw:3.4]\n",
 	)
 	cltest.Expect(t, `
 		x := {"Hello": 1, "xsw": "3.4"}
 		println("x:", x)
 
-		println("empty map:", {})`,
+		println("empty map:", {})
+		`,
 		"x: map[Hello:1 xsw:3.4]\nempty map: map[]\n",
 	)
 }
@@ -169,7 +199,8 @@ func TestMapIdx(t *testing.T) {
 		key := "xsw"
 		x["xsw"], y[i] = 3.1415926, q
 		println("x:", x, "y:", y)
-		println("x[key]:", x[key], "y[1]:", y[1])`,
+		println("x[key]:", x[key], "y[1]:", y[1])
+		`,
 		"x: map[Hello:1 xsw:3.1415926] y: map[1:Q 5:Hi]\nx[key]: 3.1415926 y[1]: Q\n",
 	)
 }
@@ -185,60 +216,68 @@ func TestSliceLit(t *testing.T) {
 		z := [1+2i, "xsw"]
 		println("z:", z)
 
-		println("empty slice:", [])`,
+		println("empty slice:", [])
+		`,
 		"x: [1 3.4]\ny: [1]\nz: [(1+2i) xsw]\nempty slice: []\n")
 }
 
 func TestSliceIdx(t *testing.T) {
 	cltest.Expect(t, `
-	x := [1, 3.4, 17]
-	n, m := 1, uint16(0)
-	x[1] = 32.7
-	x[m] = 36.86
-	println("x:", x[2], x[m], x[n])`,
+		x := [1, 3.4, 17]
+		n, m := 1, uint16(0)
+		x[1] = 32.7
+		x[m] = 36.86
+		println("x:", x[2], x[m], x[n])
+		`,
 		"x: 17 36.86 32.7\n")
 }
 
 func TestListComprehension(t *testing.T) {
 	cltest.Expect(t, `
 		y := [i+x for i, x <- [1, 2, 3, 4]]
-		println("y:", y)`,
+		println("y:", y)
+		`,
 		"y: [1 3 5 7]\n")
 	cltest.Call(t, `
 		y := [i+x for i, x <- {3: 1, 5: 2, 7: 3, 11: 4}]
 		println("y:", y)
-	`, -2).Equal(15)
+		`, -2).Equal(15)
 	cltest.Call(t, `
 		y := [i+x for i, x <- {3: 1, 5: 2, 7: 3, 11: 4}, x % 2 == 1]
 		println("y:", y)
-	`, -2).Equal(10)
+		`, -2).Equal(10)
 }
 
 func TestMapComprehension(t *testing.T) {
 	cltest.Expect(t, `
 		y := {x: i for i, x <- [3, 5, 7, 11, 13]}
-		println("y:", y)`,
+		println("y:", y)
+		`,
 		"y: map[3:0 5:1 7:2 11:3 13:4]\n",
 	)
 	cltest.Expect(t, `
 		y := {x: i for i, x <- [3, 5, 7, 11, 13], i % 2 == 1}
-		println("y:", y)`,
+		println("y:", y)
+		`,
 		"y: map[5:1 11:3]\n",
 	)
 	cltest.Expect(t, `
 		y := {v: k for k, v <- {"Hello": "xsw", "Hi": "glang"}}
-		println("y:", y)`,
+		println("y:", y)
+		`,
 		"y: map[glang:Hi xsw:Hello]\n",
 	)
 	cltest.Expect(t, `
 		println({x: i for i, x <- [3, 5, 7, 11, 13]})
-		println({x: i for i, x <- [3, 5, 7, 11, 13]})`,
+		println({x: i for i, x <- [3, 5, 7, 11, 13]})
+		`,
 		"map[3:0 5:1 7:2 11:3 13:4]\nmap[3:0 5:1 7:2 11:3 13:4]\n",
 	)
 	cltest.Expect(t, `
 		arr := [1, 2, 3, 4, 5, 6]
 		x := [[a, b] for a <- arr, a < b for b <- arr, b > 2]
-		println("x:", x)`,
+		println("x:", x)
+		`,
 		"x: [[1 3] [2 3] [1 4] [2 4] [3 4] [1 5] [2 5] [3 5] [4 5] [1 6] [2 6] [3 6] [4 6] [5 6]]\n")
 }
 
@@ -246,7 +285,7 @@ func TestErrWrapExpr(t *testing.T) {
 	cltest.Call(t, `
 		x := println("Hello qiniu")!
 		x
-	`).Equal(12)
+		`).Equal(12)
 	cltest.Call(t, `
 		import (
 			"strconv"
@@ -258,7 +297,7 @@ func TestErrWrapExpr(t *testing.T) {
 	
 		x := add("100", "23")!
 		x
-	`).Equal(123)
+		`).Equal(123)
 }
 
 func TestRational(t *testing.T) {

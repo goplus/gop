@@ -125,15 +125,24 @@ func (p *Builder) pushInstr(val interface{}) (i Instr) {
 			return iPushTrue
 		}
 		return iPushFalse
-	} else if kind != reflect.String && !(kind >= reflect.Float32 && kind <= reflect.Complex128) {
-		if !(kind == reflect.Ptr && v.Type().Elem().PkgPath() == "math/big") {
-			log.Panicln("Push failed: unsupported type:", reflect.TypeOf(val), "-", val)
-		}
+	} else if kind == reflect.String || (kind >= reflect.Float32 && kind <= reflect.Complex128) {
+		// noop
+	} else if !isNilOrRatConst(kind, v) {
+		log.Panicln("Push failed: unsupported type:", reflect.TypeOf(val), "-", val)
 	}
 	code := p.code
 	i = (opPushConstR << bitsOpShift) | uint32(len(code.valConsts))
 	code.valConsts = append(code.valConsts, val)
 	return
+}
+
+func isNilOrRatConst(kind reflect.Kind, v reflect.Value) bool {
+	if (kind >= reflect.Chan && kind <= reflect.Slice) || kind == reflect.UnsafePointer {
+		if v.IsNil() || (kind == reflect.Ptr && v.Type().Elem().PkgPath() == "math/big") {
+			return true
+		}
+	}
+	return false
 }
 
 // Push instr
