@@ -89,7 +89,6 @@ type astDecl struct {
 }
 
 func (p *astDecl) ForEach(filter func(node Node) error) error {
-<<<<<<< HEAD
 	if decl, ok := p.Decl.(*ast.GenDecl); ok {
 		for _, spec := range decl.Specs {
 			node := &astSpec{spec}
@@ -98,8 +97,6 @@ func (p *astDecl) ForEach(filter func(node Node) error) error {
 			}
 		}
 	}
-=======
->>>>>>> 6cf1ac381646e6fb9fbbf299a361dc02b066d3af
 	return nil
 }
 
