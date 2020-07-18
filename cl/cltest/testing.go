@@ -24,19 +24,21 @@ func Expect(t *testing.T, script string, expected string, panicMsg ...interface{
 		t.Fatal("ParseFSDir failed:", err, len(pkgs))
 	}
 
-	bar := pkgs["main"]
-	b := exec.NewBuilder(nil)
-	pkg, err := cl.NewPackage(b.Interface(), bar, fset, cl.PkgActClMain)
-	if err != nil {
-		t.Fatal("Compile failed:", err)
-	}
-	cl.Debug(pkg)
-	code := b.Resolve()
-
-	ctx := exec.NewContext(code)
 	e := ts.StartExpecting(t, ts.CapStdout)
 	defer e.Close()
-	e.Call(ctx.Exec, 0, code.Len()).Expect(expected).Panic(panicMsg...)
+
+	e.Call(func() {
+		bar := pkgs["main"]
+		b := exec.NewBuilder(nil)
+		pkg, err := cl.NewPackage(b.Interface(), bar, fset, cl.PkgActClMain)
+		if err != nil {
+			t.Fatal("Compile failed:", err)
+		}
+		cl.Debug(pkg)
+		code := b.Resolve()
+		ctx := exec.NewContext(code)
+		ctx.Exec(0, code.Len())
+	}).Expect(expected).Panic(panicMsg...)
 }
 
 // -----------------------------------------------------------------------------
@@ -50,17 +52,16 @@ func Call(t *testing.T, script string, idx ...int) *ts.TestCase {
 		t.Fatal("ParseFSDir failed:", err, len(pkgs))
 	}
 
-	bar := pkgs["main"]
-	b := exec.NewBuilder(nil)
-	pkg, err := cl.NewPackage(b.Interface(), bar, fset, cl.PkgActClMain)
-	if err != nil {
-		t.Fatal("Compile failed:", err)
-	}
-	cl.Debug(pkg)
-	code := b.Resolve()
-
-	ctx := exec.NewContext(code)
 	return ts.New(t).Call(func() interface{} {
+		bar := pkgs["main"]
+		b := exec.NewBuilder(nil)
+		pkg, err := cl.NewPackage(b.Interface(), bar, fset, cl.PkgActClMain)
+		if err != nil {
+			t.Fatal("Compile failed:", err)
+		}
+		cl.Debug(pkg)
+		code := b.Resolve()
+		ctx := exec.NewContext(code)
 		ctx.Exec(0, code.Len())
 		return ctx.Get(append(idx, -1)[0])
 	})

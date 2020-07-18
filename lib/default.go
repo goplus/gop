@@ -2,6 +2,7 @@ package lib
 
 import (
 	_ "github.com/goplus/gop/lib/builtin" // builtin
+	_ "github.com/goplus/gop/lib/bytes"
 	_ "github.com/goplus/gop/lib/errors"
 	_ "github.com/goplus/gop/lib/flag"
 	_ "github.com/goplus/gop/lib/fmt"

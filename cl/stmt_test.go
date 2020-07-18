@@ -42,11 +42,11 @@ func TestSwitch(t *testing.T) {
 }
 
 var testSwitchIfScripts = map[string]testData{
-	"switch_into_case":            {testSwif, []string{"5"}},
-	"switch_into_default":         {testSwif2, []string{"7"}},
-	"switch_into_case_with_cond":  {testSw, []string{"5"}},
-	"switch_into_case_with_empty": {testSw2, []string{"5"}},
-	"switch_with_no_case":         {testSw3, []string{"7"}},
+	"switch_into_case":            {testSwif, "5\n", false},
+	"switch_into_default":         {testSwif2, "7\n", false},
+	"switch_into_case_with_cond":  {testSw, "5\n", false},
+	"switch_into_case_with_empty": {testSw2, "5\n", false},
+	"switch_with_no_case":         {testSw3, "7\n", false},
 }
 
 var testSwif = `
@@ -119,8 +119,8 @@ var testSw3 = `
 // -----------------------------------------------------------------------------
 
 var testIfScripts = map[string]testData{
-	"if_with_else":    {testIf, []string{"5"}},
-	"if_without_else": {testIf2, []string{"3"}},
+	"if_with_else":    {testIf, "5\n", false},
+	"if_without_else": {testIf2, "3\n", false},
 }
 
 var testIf = `
@@ -311,44 +311,44 @@ var testForRangeClauses = map[string]testData{
 						sum++
 					}
 					println(sum)
-					`, []string{"4"}},
+					`, "4\n", false},
 	"no_kv_range_map": {`sum:=0
 					for range {1:1,2:2,3:3} {
 						sum++
 					}
 					println(sum)
-					`, []string{"3"}},
+					`, "3\n", false},
 	"only_k_range_list": {`sum:=0
 					for k :=range [1,3,5,7]{
 						sum+=k
 					}
 					println(sum)
-					`, []string{"6"}},
+					`, "6\n", false},
 	"only_k_range_map": {`sum:=0
 					for k :=range {1:1,2:4,3:8,4:16}{
 						sum+=k
 					}
 					println(sum)
-					`, []string{"10"}},
+					`, "10\n", false},
 	"only_v_range_list": {`sum:=0
 					for _,v :=range [1,3,5,7]{
 						sum+=v
 					}
 					println(sum)
-					`, []string{"16"}},
+					`, "16\n", false},
 	"only_v_range_map": {`sum:=0
 					for _,v :=range {1:1,2:4,3:8,4:16}{
 						sum+=v
 					}
 					println(sum)
-					`, []string{"29"}},
+					`, "29\n", false},
 	"both_kv_range_list": {`sum:=0
 					for k,v:=range [1,3,5,7]{
 						// 0*1+1*3+2*5+3*7
 						sum+=k*v
 					}
 					println(sum)
-					`, []string{"34"}},
+					`, "34\n", false},
 	"both_kv_range_map": {`sum:=0
 					m:={1:2,2:4,3:8}
 					for k,v:=range m {
@@ -356,7 +356,7 @@ var testForRangeClauses = map[string]testData{
 						sum+=k*v
 					}
 					println(sum)
-					`, []string{"34"}},
+					`, "34\n", false},
 	"both_kv_assign_simple_range": {` sum:=0
 					k,v:=0,0
 					for k,v=range [1,2,3,4,5]{
@@ -365,7 +365,7 @@ var testForRangeClauses = map[string]testData{
 					println(k)
 					println(v)
 					println(sum)
-					`, []string{"4", "5", "25"}},
+					`, "4\n5\n25\n", false},
 	"both_kv_assign_range_list": {` sum:=0
 					m:={1:2,2:4,3:8}
 					arr:=[11,22]
@@ -375,7 +375,7 @@ var testForRangeClauses = map[string]testData{
 					println(m[1])
 					println(m[2])
 					println(sum)
-					`, []string{"1", "22", "34"}},
+					`, "1\n22\n34\n", false},
 	"both_kv_assign_range_map": {` sum:=0
 					m:={3:8}
 					arr:=[11,22]
@@ -385,7 +385,7 @@ var testForRangeClauses = map[string]testData{
 					println(arr[0])
 					println(arr[1])
 					println(sum)
-					`, []string{"3", "8", "11"}},
+					`, "3\n8\n11\n", false},
 	"only_v_assign_range": {` sum:=0
 					m:={3:8}
 					arr:=[11,22]
@@ -395,7 +395,7 @@ var testForRangeClauses = map[string]testData{
 					println(arr[0])
 					println(arr[1])
 					println(sum)
-					`, []string{"11", "8", "19"}},
+					`, "11\n8\n19\n", false},
 	"only_k_assign_range": {` sum:=0
 					m:={3:8}
 					arr:=[11,22]
@@ -405,7 +405,7 @@ var testForRangeClauses = map[string]testData{
 					println(arr[0])
 					println(arr[1])
 					println(sum)
-					`, []string{"3", "22", "25"}},
+					`, "3\n22\n25\n", false},
 	"none_kv_assign_range": {` sum:=0
 					m:={3:8}
 					arr:=[11,22]
@@ -415,7 +415,7 @@ var testForRangeClauses = map[string]testData{
 					println(arr[0])
 					println(arr[1])
 					println(sum)
-					`, []string{"11", "22", "33"}},
+					`, "11\n22\n33\n", false},
 }
 
 func TestRangeStmt(t *testing.T) {
@@ -467,7 +467,7 @@ var testNormalForClauses = map[string]testData{
 						sum+=arr[i]
 					}
 					println(sum)
-					`, []string{"16"}},
+					`, "16\n", false},
 	"for_with_cond_post": {`
 					sum := 0
 					arr := [1,3,5,7]
@@ -476,7 +476,7 @@ var testNormalForClauses = map[string]testData{
 						sum+=arr[i]
 					}
 					println(sum)
-					`, []string{"6"}},
+					`, "6\n", false},
 	"for_with_cond": {`
 					arr := [1,3,5,7]
 					i := 0
@@ -486,7 +486,7 @@ var testNormalForClauses = map[string]testData{
 						i++
 					}
 					println(sum)
-					`, []string{"4"}},
+					`, "4\n", false},
 	"for_with_init_cond": {`
 					arr := [1,3,5,7]
 					sum := 0
@@ -495,7 +495,7 @@ var testNormalForClauses = map[string]testData{
 						i++
 					}
 					println(sum)
-					`, []string{"16"}},
+					`, "16\n", false},
 	"for_with_continue": {`
 					arr := [1,3,5,7]
 					sum := 0
@@ -506,7 +506,7 @@ var testNormalForClauses = map[string]testData{
 						sum+=arr[i]
 					}
 					println(sum)
-					`, []string{"12"}},
+					`, "12\n", false},
 	"for_with_break": {`
 					arr := [1,3,5,7]
 					sum := 0
@@ -517,7 +517,7 @@ var testNormalForClauses = map[string]testData{
 						sum+=arr[i]
 					}
 					println(sum)
-					`, []string{"9"}},
+					`, "9\n", false},
 	"for_with_break_label": {`
 					arr := [1,3,5,7]
 					sum := 0
@@ -531,7 +531,7 @@ var testNormalForClauses = map[string]testData{
 						}
 					}
 					println(sum)
-					`, []string{"12"}}, // (1+1)+(1+3)+(1+5)
+					`, "12\n", false}, // (1+1)+(1+3)+(1+5)
 	"for_with_continue_label": {`
 					arr := [1,3,5,7]
 					sum := 0
@@ -545,7 +545,7 @@ var testNormalForClauses = map[string]testData{
 						}
 					}
 					println(sum)
-					`, []string{"48"}}, // (1+3+5+7)*2+(1+3)*4
+					`, "48\n", false}, // (1+3+5+7)*2+(1+3)*4
 	"for_with_continue_break": {`
 					arr := [1,3,5,7]
 					sum := 0
@@ -561,7 +561,7 @@ var testNormalForClauses = map[string]testData{
 						}
 					}
 					println(sum)
-					`, []string{"36"}},
+					`, "36\n", false},
 	"for_with_continue_break_continue": {`
 					arr := [1,3,5,7]
 					sum := 0
@@ -578,7 +578,7 @@ var testNormalForClauses = map[string]testData{
 						}
 					}
 					println(sum)
-					`, []string{"12"}},
+					`, "12\n", false},
 	"for_with_continue_panic": {`
 					arr := [1,3,5,7]
 					sum := 0
@@ -586,7 +586,7 @@ var testNormalForClauses = map[string]testData{
 					}
 					continue
 					println(sum)
-					`, []string{"_panic"}},
+					`, "", true},
 	"for_with_continue_no_label_panic": {`
 					arr := [1,3,5,7]
 					sum := 0
@@ -594,7 +594,7 @@ var testNormalForClauses = map[string]testData{
 						continue L
 					}
 					println(sum)
-					`, []string{"_panic"}},
+					`, "", true},
 	"for_with_break_panic": {`
 					arr := [1,3,5,7]
 					sum := 0
@@ -602,7 +602,7 @@ var testNormalForClauses = map[string]testData{
 					}
 					break
 					println(sum)
-					`, []string{"_panic"}},
+					`, "", true},
 	"for_with_break_label_panic": {`
 					arr := [1,3,5,7]
 					L:
@@ -611,7 +611,7 @@ var testNormalForClauses = map[string]testData{
 						break L
 					}
 					println(sum)
-					`, []string{"_panic"}},
+					`, "", true},
 	"for_with_continue_wrong_label_panic": {`
 					arr := [1,3,5,7]
 					L:
@@ -620,7 +620,7 @@ var testNormalForClauses = map[string]testData{
 						continue L
 					}
 					println(sum)
-					`, []string{"_panic"}},
+					`, "", true},
 	"for_with_many_labels": {`
 					arr := [1,3,5,7]
 					sum := 0
@@ -638,7 +638,7 @@ var testNormalForClauses = map[string]testData{
 						}
 					}
 					println(sum)
-					`, []string{"8"}},
+					`, "8\n", false},
 	"for_with_many_labels_break": {`
 					arr := [1,3,5,7]
 					sum := 0
@@ -656,7 +656,7 @@ var testNormalForClauses = map[string]testData{
 						}
 					}
 					println(sum)
-					`, []string{"18"}},
+					`, "18\n", false},
 }
 
 func TestNormalForStmt(t *testing.T) {
@@ -691,7 +691,7 @@ var testSwitchBranchClauses = map[string]testData{
 						x=7
 						println(x)
 					}
-					`, []string{"0", "1", "7"}},
+					`, "0\n1\n7\n", false},
 	"switch_one_fallthrough": {`
 					x:=0
 					switch x {
@@ -705,7 +705,7 @@ var testSwitchBranchClauses = map[string]testData{
 						x=7
 						println(x)
 					}
-					`, []string{"0", "1"}},
+					`, "0\n1\n", false},
 	"switch__fallthrough": {`
 					x:=0
 					switch x {
@@ -719,7 +719,7 @@ var testSwitchBranchClauses = map[string]testData{
 						x=7
 						println(x)
 					}
-					`, []string{"0", "1"}},
+					`, "0\n1\n", false},
 	"switch_no_tag_fallthrough": {`
 					x:=0
 					switch {
@@ -734,7 +734,7 @@ var testSwitchBranchClauses = map[string]testData{
 						x=7
 						println(x)
 					}
-					`, []string{"0", "1", "7"}},
+					`, "0\n1\n7\n", false},
 	"switch_no_tag_one_fallthrough": {`
 					x:=0
 					switch x {
@@ -748,7 +748,7 @@ var testSwitchBranchClauses = map[string]testData{
 						x=7
 						println(x)
 					}
-					`, []string{"0", "1"}},
+					`, "0\n1\n", false},
 	"switch_fallthrough_panic": {`
 					x:=0
 					switch x {
@@ -763,7 +763,7 @@ var testSwitchBranchClauses = map[string]testData{
 						println(x)
 					fallthrough
 					}
-					`, []string{"_panic"}},
+					`, "", true},
 	"switch_fallthrough_out_panic": {`
 					x:=0
 					switch x {
@@ -778,7 +778,7 @@ var testSwitchBranchClauses = map[string]testData{
 						println(x)
 					}
 					fallthrough
-					`, []string{"_panic"}},
+					`, "", true},
 	"switch_break": {`
 					x:=0
 					y:=2
@@ -793,7 +793,7 @@ var testSwitchBranchClauses = map[string]testData{
 						x=7
 						println(x)
 					}
-					`, []string{"2"}},
+					`, "2\n", false},
 	"switch_break_label": {`
 					x:=0
 					y:=2
@@ -809,7 +809,7 @@ var testSwitchBranchClauses = map[string]testData{
 						x=7
 						println(x)
 					}
-					`, []string{"2"}},
+					`, "2\n", false},
 	"switch_for_continue_label": {`
 					x:=0
 					y:=2
@@ -840,8 +840,7 @@ var testSwitchBranchClauses = map[string]testData{
 							println(x)
 						}
 					}
-
-					`, []string{"2", "0", "1", "2"}},
+					`, "2\n0\n1\n2\n", false},
 }
 
 func TestSwitchBranchStmt(t *testing.T) {
@@ -856,7 +855,7 @@ var testGotoLabelClauses = map[string]testData{
 					println("before")
 					L:
 					println("over")
-					`, []string{"over"}},
+					`, "over\n", false},
 	"goto_after_label": {`
 					i:=0
 					L:
@@ -866,7 +865,7 @@ var testGotoLabelClauses = map[string]testData{
 							goto L
 						}
 					println("over")
-					`, []string{"0", "1", "2", "over"}},
+					`, "0\n1\n2\nover\n", false},
 	"goto_multi_labels": {`
 					i:=0
 					L:
@@ -884,22 +883,22 @@ var testGotoLabelClauses = map[string]testData{
 					L3:
 					println("over")
 					L4:
-					`, []string{"0", "1", "2", "over"}},
+					`, "0\n1\n2\nover\n", false},
 	"goto_nil_label": {`
 					goto;
 					println("over")
-					`, []string{"_panic"}},
+					`, "", true},
 	"goto_not_define_label": {`
 					goto L
 					println("over")
-					`, []string{"_panic"}},
+					`, "", true},
 	"goto_illegal_block": {`
 					goto L
 					{
 						L:
 						println("L")
 					}
-					`, []string{"_panic"}},
+					`, "", true},
 	"goto_redefine_block": {`
 					{
 						L:
@@ -910,7 +909,7 @@ var testGotoLabelClauses = map[string]testData{
 						println("L")
 					}
 					goto L
-					`, []string{"_panic"}},
+					`, "", true},
 }
 
 func TestGotoLabelStmt(t *testing.T) {
