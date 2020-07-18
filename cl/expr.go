@@ -946,16 +946,17 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 	case *nonValue:
 		switch nv := vx.v.(type) {
 		case exec.GoPackage:
-			if c, ok := nv.FindConst(v.Sel.Name); ok {
+			name := strings.Title(v.Sel.Name)
+			if c, ok := nv.FindConst(name); ok {
 				ret := newConstVal(c.Value, c.Kind)
 				ctx.infer.Ret(1, ret)
 				return func() {
 					pushConstVal(ctx.out, ret)
 				}
 			}
-			addr, kind, ok := nv.Find(v.Sel.Name)
+			addr, kind, ok := nv.Find(name)
 			if !ok {
-				log.Panicln("compileSelectorExpr: not found -", nv.PkgPath(), v.Sel.Name)
+				log.Panicln("compileSelectorExpr: not found -", nv.PkgPath(), name)
 			}
 			switch kind {
 			case exec.SymbolFunc, exec.SymbolFuncv:
@@ -988,11 +989,14 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) func() {
 		}
 		if _, ok := vx.t.MethodByName(name); !ok && isLower(name) {
 			name = strings.Title(name)
-			if _, ok = vx.t.MethodByName(name); !ok {
+			if m, ok := vx.t.MethodByName(name); ok {
+				if m.Type.NumIn() == 1 {
+					v.Sel.Name = name
+					return compileCallExpr(ctx, &ast.CallExpr{Fun: v})
+				}
+			} else {
 				log.Panicln("compileSelectorExpr: symbol not found -", v.Sel.Name)
 			}
-			v.Sel.Name = name
-			return compileCallExpr(ctx, &ast.CallExpr{Fun: v})
 		}
 		pkgPath, method := normalizeMethod(n, t, name)
 		pkg := ctx.FindGoPackage(pkgPath)
