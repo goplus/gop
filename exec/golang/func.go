@@ -175,11 +175,11 @@ func (p *Builder) Return(n int32) *Builder {
 	var results []ast.Expr
 	var stmt ast.Stmt
 	switch n {
-	case -2:
+	case exec.BreakAsReturn:
 		stmt = &ast.BranchStmt{
 			Tok: token.BREAK,
 		}
-	case -3:
+	case exec.ContinueAsReturn:
 		stmt = &ast.BranchStmt{
 			Tok: token.CONTINUE,
 		}
