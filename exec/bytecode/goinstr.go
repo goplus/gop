@@ -61,6 +61,7 @@ func (c *ForPhrase) execListRange(data reflect.Value, ctx *Context) {
 	var key, val = c.Key, c.Value
 	var blockScope = c.block != nil
 	var old savedScopeCtx
+Loop:
 	for i := 0; i < n; i++ {
 		if key != nil {
 			ctx.setVar(key.idx, i)
@@ -87,7 +88,7 @@ func (c *ForPhrase) execListRange(data reflect.Value, ctx *Context) {
 		case iReturn, ipReturnN:
 			return
 		case iBreak:
-			break
+			break Loop
 		case iContinue:
 			continue
 		}
@@ -101,6 +102,7 @@ func (c *ForPhrase) execMapRange(data reflect.Value, ctx *Context) {
 	var key, val = c.Key, c.Value
 	var blockScope = c.block != nil
 	var old savedScopeCtx
+Loop:
 	for iter.Next() {
 		if key != nil {
 			ctx.setVar(key.idx, iter.Key().Interface())
@@ -127,7 +129,7 @@ func (c *ForPhrase) execMapRange(data reflect.Value, ctx *Context) {
 		case iReturn, ipReturnN:
 			return
 		case iBreak:
-			break
+			break Loop
 		case iContinue:
 			continue
 		}

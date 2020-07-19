@@ -72,15 +72,6 @@ for k, v <- {k: k for k, _ <- make([]int, 20)} {
 	}
 }
 
-for k, v <- {k: k for k, _ <- make([]int, 20)} {
-	if k < 10 {
-		continue
-	}
-	if k > 15 {
-		println("map reach break", v > 15)
-		break
-	}
-}
 
 println("fallthrough with tag")
 switch v {
