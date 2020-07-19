@@ -72,7 +72,6 @@ for k, v <- {k: k for k, _ <- make([]int, 20)} {
 	}
 }
 
-
 println("fallthrough with tag")
 switch v {
 case "Hello":
