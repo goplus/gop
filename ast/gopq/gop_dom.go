@@ -125,6 +125,11 @@ func NameOf(node Node) string {
 	switch v := node.Obj().(type) {
 	case *ast.FuncDecl:
 		return v.Name.Name
+	case *ast.ImportSpec:
+		if v.Name == nil {
+			return ""
+		}
+		return v.Name.Name
 	default:
 		panic("node doesn't contain the `name` property")
 	}
