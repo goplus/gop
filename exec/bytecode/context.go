@@ -204,11 +204,10 @@ func (ctx *Context) Exec(ip, ipEnd int) {
 		case opCallGoFuncv:
 			execGoFuncv(i, ctx)
 		case opReturn:
-			if i == iBreak || i == iContinue {
+			ctx.ip = int(i)
+			if i == iBreak || i == iContinue || i == iReturn {
 				ctx.ip = int(i)
-				continue
-			}
-			if i != iReturn {
+			} else {
 				ctx.ip = ipReturnN
 			}
 			goto finished

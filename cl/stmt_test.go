@@ -958,6 +958,36 @@ var testRangeStmtWithBranchClauses = map[string]testData{
 					}
 					println(sum)
 					`, want: "36\n"},
+	"range_with_return_value": {clause: `
+					func foo() int{
+						arr := [1,2,3,4]
+						sum := 0
+						for i, _ <- arr {
+							if arr[i]>0{
+								return 1
+							}
+							sum+=arr[i]
+						}
+						return 0
+					}
+					println(foo())
+					`, want: "1\n"},
+	"range_with_only_return": {clause: `
+					func foo() {
+						arr := [1,2,3,4]
+						sum := 0
+						for i, _ <- arr {
+							if arr[i]>0{
+								println("1")
+								return 
+							}
+							sum+=arr[i]
+						}
+						println("0")
+						return 
+					}
+					foo()
+					`, want: "1\n"},
 }
 
 func TestRangeStmtWithBranch(t *testing.T) {
@@ -1005,6 +1035,36 @@ var testForPhraseWithBranchClauses = map[string]testData{
 					}
 					println(sum)
 					`, want: "36\n"},
+	"for_phrase_with_return_value": {clause: `
+					func foo() int{
+						arr := [1,2,3,4]
+						sum := 0
+						for i, _ <- arr {
+							if arr[i]>0{
+								return 1
+							}
+							sum+=arr[i]
+						}
+						return 0
+					}
+					println(foo())
+					`, want: "1\n"},
+	"for_phrase_with_only_return": {clause: `
+					func foo() {
+						arr := [1,2,3,4]
+						sum := 0
+						for i, _ <- arr {
+							if arr[i]>0{
+								println("1")
+								return 
+							}
+							sum+=arr[i]
+						}
+						println("0")
+						return 
+					}
+					foo()
+					`, want: "1\n"},
 }
 
 func TestForPhraseWithBranch(t *testing.T) {
@@ -1059,6 +1119,36 @@ var testRangeMapWithBranchClauses = map[string]testData{
 					}
 					println(sum)
 					`, want: "0\n"},
+	"map_for_range_return_value": {clause: `
+					func foo() int{
+						arr := {1:1,2:3,3:5,4:7}
+						sum := 0
+						for i, _ <- arr {
+							if arr[i]>0{
+								return 1
+							}
+							sum+=arr[i]
+						}
+						return 0
+					}
+					println(foo())
+					`, want: "1\n"},
+	"map_for_range_only_return": {clause: `
+					func foo() {
+						arr := {1:1,2:3,3:5,4:7}
+						sum := 0
+						for i, _ <- arr {
+							if arr[i]>0{
+								println("1")
+								return 
+							}
+							sum+=arr[i]
+						}
+						println("0")
+						return 
+					}
+					foo()
+					`, want: "1\n"},
 }
 
 func TestMapForPhraseWithBranch(t *testing.T) {

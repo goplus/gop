@@ -83,10 +83,12 @@ func (c *ForPhrase) execListRange(data reflect.Value, ctx *Context) {
 		if blockScope {
 			ctx.restoreScope(old)
 		}
-		if ctx.ip == iBreak {
+		switch ctx.ip {
+		case iReturn, ipReturnN:
+			return
+		case iBreak:
 			break
-		}
-		if ctx.ip == iContinue {
+		case iContinue:
 			continue
 		}
 	}
@@ -121,10 +123,12 @@ func (c *ForPhrase) execMapRange(data reflect.Value, ctx *Context) {
 		if blockScope {
 			ctx.restoreScope(old)
 		}
-		if ctx.ip == iBreak {
+		switch ctx.ip {
+		case iReturn, ipReturnN:
+			return
+		case iBreak:
 			break
-		}
-		if ctx.ip == iContinue {
+		case iContinue:
 			continue
 		}
 	}
