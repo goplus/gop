@@ -915,3 +915,152 @@ var testGotoLabelClauses = map[string]testData{
 func TestGotoLabelStmt(t *testing.T) {
 	testScripts(t, "TestGotoLabelStmt", testGotoLabelClauses)
 }
+
+// -----------------------------------------------------------------------------
+
+var testRangeStmtWithBranchClauses = map[string]testData{
+	"range_with_continue": {clause: `
+					arr := [1,3,5,7]
+					sum := 0
+					for i,_:=range arr {
+						if arr[i]<5{
+							continue
+						}
+						sum+=arr[i]
+					}
+					println(sum)
+					`, want: "12\n"},
+	"range_with_break": {clause: `
+					arr := [1,3,5,7]
+					sum := 0
+					for i,_:=range arr {
+						if arr[i]>5{
+							break
+						}
+						sum+=arr[i]
+					}
+					println(sum)
+					`, want: "9\n"},
+
+	"range_with_continue_break": {clause: `
+					arr := [1,3,5,7]
+					sum := 0
+					for i,_:=range arr {
+						if arr[i]>5{
+							break
+						}
+						for j:=0;j<len(arr);j++{
+							if arr[j]<5{
+								continue
+							}
+							sum+=arr[j]
+						}
+					}
+					println(sum)
+					`, want: "36\n"},
+}
+
+func TestRangeStmtWithBranch(t *testing.T) {
+	testScripts(t, "TestRangeStmtWithBranch", testRangeStmtWithBranchClauses)
+}
+
+// -----------------------------------------------------------------------------
+
+var testForPhraseWithBranchClauses = map[string]testData{
+	"for_phrase_with_continue": {clause: `
+					arr := [1,3,5,7]
+					sum := 0
+					for i, _ <- arr {
+						if arr[i]<5{
+							continue
+						}
+						sum+=arr[i]
+					}
+					println(sum)
+					`, want: "12\n"},
+	"for_phrase_with_break": {clause: `
+					arr := [1,3,5,7]
+					sum := 0
+					for i, _ <- arr {
+						if arr[i]>5{
+							break
+						}
+						sum+=arr[i]
+					}
+					println(sum)
+					`, want: "9\n"},
+	"for_phrase_with_continue_break": {clause: `
+					arr := [1,3,5,7]
+					sum := 0
+					for i, _ <- arr {
+						if arr[i]>5{
+							break
+						}
+						for j:=0;j<len(arr);j++{
+							if arr[j]<5{
+								continue
+							}
+							sum+=arr[j]
+						}
+					}
+					println(sum)
+					`, want: "36\n"},
+}
+
+func TestForPhraseWithBranch(t *testing.T) {
+	testScripts(t, "TestForPhraseWithBranch", testForPhraseWithBranchClauses)
+}
+
+// -----------------------------------------------------------------------------
+
+var testRangeMapWithBranchClauses = map[string]testData{
+	"map_for_with_continue": {clause: `
+					arr := {1:1,2:3,3:5,4:7}
+					sum := 0
+					for i, _ <- arr {
+						if arr[i]<5{
+							continue
+						}
+						sum+=arr[i]
+					}
+					println(sum)
+					`, want: "12\n"},
+	"map_for_with_break": {clause: `
+					arr := {1:1,2:3,3:5,4:7}
+					sum := 0
+					for i, _ <- arr {
+						if arr[i]>0{
+							break
+						}
+						sum+=arr[i]
+					}
+					println(sum)
+					`, want: "0\n"},
+
+	"map_for_range_continue": {clause: `
+					arr := {1:1,2:3,3:5,4:7}
+					sum := 0
+					for i, _ <- arr {
+						if arr[i]<5{
+							continue
+						}
+						sum+=arr[i]
+					}
+					println(sum)
+					`, want: "12\n"},
+	"map_for_range_break": {clause: `
+					arr := {1:1,2:3,3:5,4:7}
+					sum := 0
+					for i, _ <- arr {
+						if arr[i]>0{
+							break
+						}
+						sum+=arr[i]
+					}
+					println(sum)
+					`, want: "0\n"},
+}
+
+func TestMapForPhraseWithBranch(t *testing.T) {
+	testScripts(t, "TestMapForPhraseWithBranch", testRangeMapWithBranchClauses)
+}
