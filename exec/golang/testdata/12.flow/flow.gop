@@ -52,6 +52,36 @@ default:
 	println(y)
 }
 
+for k, v := range [k for k, _ <- make([]int, 20)] {
+	if k < 10 {
+		continue
+	}
+	if k > 15 {
+		break
+	}
+	println(k, v)
+}
+
+for k, v <- {k: k for k, _ <- make([]int, 20)} {
+	if k < 10 {
+		continue
+	}
+	if k > 15 {
+		println("map reach break", v > 15)
+		break
+	}
+}
+
+for k, v <- {k: k for k, _ <- make([]int, 20)} {
+	if k < 10 {
+		continue
+	}
+	if k > 15 {
+		println("map reach break", v > 15)
+		break
+	}
+}
+
 println("fallthrough with tag")
 switch v {
 case "Hello":

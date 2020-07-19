@@ -196,6 +196,10 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 			ctx.out.Jmp(label)
 			return
 		}
+		if ctx.forNestDepth > 0 {
+			ctx.out.Return(-2)
+			return
+		}
 		log.Panicln("break statement out of for/switch/select statements")
 	case token.CONTINUE:
 		var labelName string
@@ -205,6 +209,10 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 		label := ctx.getContinueLabel(labelName)
 		if label != nil {
 			ctx.out.Jmp(label)
+			return
+		}
+		if ctx.forNestDepth > 0 {
+			ctx.out.Return(-3)
 			return
 		}
 		log.Panicln("continue statement out of for statements")

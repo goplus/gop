@@ -203,6 +203,7 @@ type funcCtx struct {
 	labels       map[string]*flowLabel
 	currentFlow  *flowCtx
 	currentLabel *ast.LabeledStmt
+	forNestDepth int
 }
 
 func newFuncCtx(fun exec.FuncInfo) *funcCtx {
