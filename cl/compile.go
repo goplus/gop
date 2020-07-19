@@ -230,31 +230,37 @@ func (fc *funcCtx) nextFlow(post, done exec.Label, name string) {
 	}
 }
 
-func (fc *funcCtx) getBreakLabel(labelName string) exec.Label {
+func (fc *funcCtx) getBreakLabel(labelName string) (label exec.Label, rangeFor bool) {
 	if fc.currentFlow == nil {
-		return nil
+		return nil, false
+	}
+	if fc.currentFlow.postLabel == nil && fc.currentFlow.doneLabel == nil {
+		return nil, true
 	}
 	for i := fc.currentFlow; i != nil; i = i.parent {
 		if i.doneLabel != nil {
 			if labelName == "" || i.name == labelName {
-				return i.doneLabel
+				return i.doneLabel, false
 			}
 		}
 	}
-	return nil
+	return nil, false
 }
-func (fc *funcCtx) getContinueLabel(labelName string) exec.Label {
+func (fc *funcCtx) getContinueLabel(labelName string) (label exec.Label, rangeFor bool) {
 	if fc.currentFlow == nil {
-		return nil
+		return nil, false
+	}
+	if fc.currentFlow.postLabel == nil && fc.currentFlow.doneLabel == nil {
+		return nil, true
 	}
 	for i := fc.currentFlow; i != nil; i = i.parent {
 		if i.postLabel != nil {
 			if labelName == "" || i.name == labelName {
-				return i.postLabel
+				return i.postLabel, false
 			}
 		}
 	}
-	return nil
+	return nil, false
 }
 
 func (fc *funcCtx) checkLabels() {

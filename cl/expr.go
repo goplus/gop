@@ -356,6 +356,10 @@ func compileForPhrase(parent *blockCtx, f ast.ForPhrase, noExecCtx bool) (*block
 		varVal = ctx.insertVar(f.Value.Name, typVal, true).v
 	}
 	return ctx, func(exprElt func()) {
+		ctx.nextFlow(nil, nil, "")
+		defer func() {
+			ctx.currentFlow = ctx.currentFlow.parent
+		}()
 		exprX()
 		out := ctx.out
 		c := ctx.NewForPhrase(typData)
