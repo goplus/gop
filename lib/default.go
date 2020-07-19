@@ -7,6 +7,7 @@ import (
 	_ "github.com/goplus/gop/lib/flag"
 	_ "github.com/goplus/gop/lib/fmt"
 	_ "github.com/goplus/gop/lib/github.com/goplus/gop/ast/gopq"
+	_ "github.com/goplus/gop/lib/github.com/goplus/gop/ast/goptest"
 	_ "github.com/goplus/gop/lib/io"
 	_ "github.com/goplus/gop/lib/io/ioutil"
 	_ "github.com/goplus/gop/lib/log"

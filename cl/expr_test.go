@@ -16,6 +16,7 @@
 package cl_test
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -25,6 +26,35 @@ import (
 // -----------------------------------------------------------------------------
 
 func TestAutoProperty(t *testing.T) {
+	script := `
+		import "io"
+
+		func New() (*Bar, error) {
+			return nil, io.EOF
+		}
+
+		bar, err := New()
+		if err != nil {
+			log.Println(err)
+		}
+	`
+	gopcode := `
+		import (
+			"github.com/goplus/gop/ast/goptest"
+		)
+
+		script := %s
+
+		doc := goptest.New(script)!
+		println(doc.any.funcDecl.name)
+	`
+	cltest.Expect(t,
+		fmt.Sprintf(gopcode, "`"+script+"`"),
+		"[New main]\n",
+	)
+}
+
+func TestAutoProperty2(t *testing.T) {
 	cltest.Expect(t, `
 		import "bytes"
 		import "os"

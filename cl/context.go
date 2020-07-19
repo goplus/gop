@@ -109,6 +109,7 @@ type flowLabel struct {
 	exec.Label
 	jumps []*blockCtx
 }
+
 type flowCtx struct {
 	parent    *flowCtx
 	name      string
@@ -141,6 +142,7 @@ func (fc *funcCtx) getBreakLabel(labelName string) (label exec.Label, rangeFor b
 	}
 	return nil, false
 }
+
 func (fc *funcCtx) getContinueLabel(labelName string) (label exec.Label, rangeFor bool) {
 	if fc.currentFlow == nil {
 		return nil, false
