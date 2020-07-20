@@ -282,7 +282,7 @@ And the most interesting thing is, the return error contains the full error stac
 How these `ErrWrap expressions` work? See [Error Handling](https://github.com/goplus/gop/wiki/Error-Handling) for more information.
 
 
-### Auto Property
+### Auto property
 
 Let's see an example written in Go+:
 
