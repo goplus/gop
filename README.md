@@ -5,7 +5,6 @@ GoPlus - The Go+ language for data science
 [![Go Report Card](https://goreportcard.com/badge/github.com/goplus/gop)](https://goreportcard.com/report/github.com/goplus/gop)
 [![GitHub release](https://img.shields.io/github/v/tag/goplus/gop.svg?label=release)](https://github.com/goplus/gop/releases)
 [![Coverage Status](https://codecov.io/gh/goplus/gop/branch/master/graph/badge.svg)](https://codecov.io/gh/goplus/gop)
-[![Hacker News](https://img.shields.io/badge/hackernews-140%2B-orange)](https://news.ycombinator.com/item?id=23550042)
 [![Playground](https://img.shields.io/badge/playground-Go+-blue.svg)](https://play.goplus.org/)
 [![VSCode](https://img.shields.io/badge/vscode-Go+-blue.svg)](https://github.com/gopcode/vscode-goplus)
 [![GoDoc](https://img.shields.io/badge/godoc-reference-teal.svg)](https://pkg.go.dev/mod/github.com/goplus/gop)
@@ -124,8 +123,6 @@ gop install ./... # Convert Go+ packages and go install ./...
 
 Go [tutorial/14-Using-goplus-in-Go](https://github.com/goplus/gop/tree/master/tutorial/14-Using-goplus-in-Go) to get the source code.
 
-Note: The `gop` command isn't provided currently (in alpha stage). Instead, we provide `qrun` and `qgo` commands.
-
 
 ## Playground
 
@@ -162,24 +159,17 @@ When we use `gop run` command, it doesn't call `go run` command. It generates by
 ### Commands
 
 ```bash
-gop go [-test] <gopSrcDir> # Convert all Go+ packages under <gopSrcDir> into Go packages, recursively
-gop run <gopSrcDir> # Running <gopSrcDir> as a Go+ main package
-gop run <gopSrcFile> # Running <gopSrcFile> as a Go+ script
-gop install ./... # Convert all Go+ packages under ./ and go install ./...
-gop fmt ./... # Format all Go+ packages under ./
-gop export <goPkgPath> # Generate a Go+ package that wraps a Go package automatically
+gop run         # Run a Go+ program
+gop go [-test]  # Convert Go+ packages into Go packages. If -test specified, it tests related packages.
+gop fmt         # Format Go+ packages
+gop export      # Export Go packages for Go+ programs
 ```
 
-The `gop` command isn't provided currently (in alpha stage). Instead, we provide the following commands:
-
-* [qrun](https://github.com/goplus/gop/wiki/Commands#qrun): Similar to `gop run`
-* [qfmt](https://github.com/goplus/gop/wiki/Commands#qfmt): Similar to `gop fmt`
-* [qexp](https://github.com/goplus/gop/wiki/Commands#qexp): Similar to `gop export`
-* [qgo](https://github.com/goplus/gop/wiki/Commands#qgo): Similar to `gop go`
+See https://github.com/goplus/gop/wiki/Commands for details.
 
 Note:
 
-* `qgo -test <gopSrcDir>` converts Go+ packages into Go packages, and for every package, it call `go run <gopPkgDir>/gop_autogen.go` and `qrun -quiet <gopPkgDir>` to compare their outputs. If their outputs aren't equal, the test case fails.
+* `gop go -test <gopSrcDir>` converts Go+ packages into Go packages, and for every package, it call `go run <gopPkgDir>/gop_autogen.go` and `gop run -quiet <gopPkgDir>` to compare their outputs. If their outputs aren't equal, the test case fails.
 
 
 ### Rational number: bigint, bigrat, bigfloat
@@ -292,6 +282,33 @@ And the most interesting thing is, the return error contains the full error stac
 How these `ErrWrap expressions` work? See [Error Handling](https://github.com/goplus/gop/wiki/Error-Handling) for more information.
 
 
+### Auto property
+
+Let's see an example written in Go+:
+
+```go
+import "github.com/goplus/gop/ast/goptest"
+
+doc := goptest.New(`... Go+ code ...`)!
+
+println(doc.Any().FuncDecl().Name())
+```
+
+In many languages, there is a concept named `property` who has `get` and `set` methods.
+
+Suppose we have `get property`, the above example will be:
+
+```go
+import "github.com/goplus/gop/ast/goptest"
+
+doc := goptest.New(`... Go+ code ...`)!
+
+println(doc.any.funcDecl.name)
+```
+
+In Go+, we introduce a concept named `auto property`. It is a `get property`, but is implemented automatically. If we have a method named `Bar()`, then we will have a `get property` named `bar` at the same time.
+
+
 ### Unix shebang
 
 You can use Go+ programs as shell scripts now. For example:
@@ -351,4 +368,7 @@ What does `a contributor to Go+` mean? He must meet one of the following conditi
 Where can you start?
 
 * [![Issues](https://img.shields.io/badge/ISSUEs-Go+-blue.svg)](https://github.com/goplus/gop/issues)
+* [![Issues](https://img.shields.io/badge/ISSUEs-NumGo+-blue.svg)](https://github.com/numgoplus/ng/issues)
+* [![Issues](https://img.shields.io/badge/ISSUEs-PandasGo+-blue.svg)](https://github.com/goplus/pandas/issues)
+* [![Issues](https://img.shields.io/badge/ISSUEs-vscode%20Go+-blue.svg)](https://github.com/gopcode/vscode-goplus/issues)
 * [![TODOs](https://badgen.net/https/api.tickgit.com/badgen/github.com/goplus/gop)](https://www.tickgit.com/browse?repo=github.com/goplus/gop)

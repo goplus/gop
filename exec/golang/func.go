@@ -173,16 +173,29 @@ func (p *Builder) DefineFunc(fun exec.FuncInfo) *Builder {
 // Return instr
 func (p *Builder) Return(n int32) *Builder {
 	var results []ast.Expr
-	if n > 0 {
-		arity := int(n)
-		args := p.rhs.GetArgs(arity)
-		results = make([]ast.Expr, n)
-		for i, arg := range args {
-			results[i] = arg.(ast.Expr)
+	var stmt ast.Stmt
+	switch n {
+	case exec.BreakAsReturn:
+		stmt = &ast.BranchStmt{
+			Tok: token.BREAK,
 		}
-		p.rhs.PopN(arity)
+	case exec.ContinueAsReturn:
+		stmt = &ast.BranchStmt{
+			Tok: token.CONTINUE,
+		}
+	default:
+		if n > 0 {
+			arity := int(n)
+			args := p.rhs.GetArgs(arity)
+			results = make([]ast.Expr, n)
+			for i, arg := range args {
+				results[i] = arg.(ast.Expr)
+			}
+			p.rhs.PopN(arity)
+		}
+		stmt = &ast.ReturnStmt{Results: results}
 	}
-	p.rhs.Push(&ast.ReturnStmt{Results: results})
+	p.rhs.Push(stmt)
 	return p
 }
 

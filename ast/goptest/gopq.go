@@ -14,34 +14,22 @@
  limitations under the License.
 */
 
-package cl_test
+package goptest
 
 import (
-	"testing"
+	"go/token"
 
-	"github.com/goplus/gop/cl/cltest"
+	"github.com/goplus/gop/ast/asttest"
+	"github.com/goplus/gop/ast/gopq"
 )
 
 // -----------------------------------------------------------------------------
 
-func TestUnbound(t *testing.T) {
-	cltest.Expect(t,
-		`println("Hello " + "qiniu:", 123, 4.5, 7i)`,
-		"Hello qiniu: 123 4.5 (0+7i)\n",
-	)
-}
-
-func TestPanic(t *testing.T) {
-	cltest.Expect(t,
-		`panic("Helo")`, "", "Helo",
-	)
-}
-
-func TestTypeCast(t *testing.T) {
-	cltest.Call(t, `
-	x := []byte("hello")
-	x
-	`).Equal([]byte("hello"))
+// New creates a nodeset object that represents a Go+ dom tree.
+func New(script string) (gopq.NodeSet, error) {
+	fset := token.NewFileSet()
+	fs := asttest.NewSingleFileFS("/foo", "bar.gop", script)
+	return gopq.NewSourceFrom(fset, fs, "/foo", nil, 0)
 }
 
 // -----------------------------------------------------------------------------

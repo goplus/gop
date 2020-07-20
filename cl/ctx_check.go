@@ -29,6 +29,7 @@ import (
 
 // Debug only
 func Debug(pkg *Package) {
+	isLower("")
 	if _, v, ok := pkg.Find("main"); ok {
 		fn := v.(*funcDecl)
 		isNoExecCtx(fn.ctx, fn.body)

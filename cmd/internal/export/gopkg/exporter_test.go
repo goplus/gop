@@ -7,10 +7,11 @@ import (
 	"go/importer"
 	"go/types"
 	"io/ioutil"
-	"log"
 	"os/exec"
 	"strings"
 	"testing"
+
+	"github.com/qiniu/x/log"
 )
 
 // -----------------------------------------------------------------------------
@@ -147,6 +148,27 @@ func TestExportMath(t *testing.T) {
 	}
 }
 
+func TestExportGopQ(t *testing.T) {
+	err := Export("github.com/goplus/gop/ast/gopq", ioutil.Discard)
+	if err != nil {
+		t.Fatal("TestExport failed:", err)
+	}
+}
+
+func TestExportX(t *testing.T) {
+	err := Export("github.com/qiniu/x/log", ioutil.Discard)
+	if err != nil {
+		t.Fatal("TestExport failed:", err)
+	}
+}
+
+func TestExportNotFound(t *testing.T) {
+	err := Export("github.com/qiniu", ioutil.Discard)
+	if err != ErrInvalidPkgPath {
+		t.Fatal("TestExport failed:", err)
+	}
+}
+
 func TestImport(t *testing.T) {
 	pkg, err := Import("go/types")
 	if err != nil {
@@ -204,7 +226,7 @@ func TestExportStd(t *testing.T) {
 		}
 		var buf bytes.Buffer
 		err = ExportPackage(p, &buf)
-		if err != nil && err != ErrorIgnore {
+		if err != nil && err != ErrIgnore {
 			t.Fatal("export error:", pkg, err)
 		}
 		_, err = format.Source(buf.Bytes())

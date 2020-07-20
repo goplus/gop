@@ -374,7 +374,7 @@ func boundConst(v interface{}, t reflect.Type) interface{} {
 	kind := kindOf(t)
 	if v == nil {
 		if kind >= reflect.Chan && kind <= reflect.Slice {
-			return nil
+			return reflect.Zero(t).Interface()
 		}
 		log.Panicln("boundConst: can't convert nil into", t)
 	}

@@ -71,6 +71,7 @@ func NewExporter(w io.Writer, pkg *types.Package) *Exporter {
 	return p
 }
 
+// IsEmpty checks if there is nothing to exmport or not.
 func (p *Exporter) IsEmpty() bool {
 	return len(p.exportFns) == 0 && len(p.exportFnvs) == 0 &&
 		len(p.exportedVars) == 0 && len(p.exportConsts) == 0
@@ -288,8 +289,11 @@ func (p *Exporter) ExportFunc(fn *types.Func) error {
 		var varg string
 		if numIn == 0 {
 			varg = "args"
+			if from == 1 {
+				varg = "args[1:]"
+			}
 		} else {
-			varg = fmt.Sprintf("args[%d:]", numIn)
+			varg = fmt.Sprintf("args[%d:]", numIn+from)
 		}
 		tyElem := tfn.Params().At(numIn).Type().(*types.Slice).Elem()
 		p.useType(tyElem)

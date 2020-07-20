@@ -63,6 +63,12 @@ func (p Reserved) Set(b Builder, instr Instr) {
 	b.ReservedAsInstr(p, instr)
 }
 
+// BreakAsReturn
+const BreakAsReturn = -2
+
+// ContinueAsReturn
+const ContinueAsReturn = -3
+
 // ForPhrase represents a for range phrase.
 type ForPhrase interface {
 }

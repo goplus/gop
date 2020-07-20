@@ -61,6 +61,7 @@ func (c *ForPhrase) execListRange(data reflect.Value, ctx *Context) {
 	var key, val = c.Key, c.Value
 	var blockScope = c.block != nil
 	var old savedScopeCtx
+Loop:
 	for i := 0; i < n; i++ {
 		if key != nil {
 			ctx.setVar(key.idx, i)
@@ -83,6 +84,14 @@ func (c *ForPhrase) execListRange(data reflect.Value, ctx *Context) {
 		if blockScope {
 			ctx.restoreScope(old)
 		}
+		switch ctx.ip {
+		case iReturn, ipReturnN:
+			return
+		case iBreak:
+			break Loop
+		case iContinue:
+			continue
+		}
 	}
 	ctx.ip = ipEnd
 }
@@ -93,6 +102,7 @@ func (c *ForPhrase) execMapRange(data reflect.Value, ctx *Context) {
 	var key, val = c.Key, c.Value
 	var blockScope = c.block != nil
 	var old savedScopeCtx
+Loop:
 	for iter.Next() {
 		if key != nil {
 			ctx.setVar(key.idx, iter.Key().Interface())
@@ -114,6 +124,14 @@ func (c *ForPhrase) execMapRange(data reflect.Value, ctx *Context) {
 		}
 		if blockScope {
 			ctx.restoreScope(old)
+		}
+		switch ctx.ip {
+		case iReturn, ipReturnN:
+			return
+		case iBreak:
+			break Loop
+		case iContinue:
+			continue
 		}
 	}
 	ctx.ip = ipEnd
@@ -247,7 +265,11 @@ func execMapIndex(i Instr, p *Context) {
 		v.SetMapIndex(key, reflect.ValueOf(p.data[n-3]))
 		p.PopN(3)
 	default: // mapData $key $mapIndex
-		p.Ret(2, v.MapIndex(key).Interface())
+		value := v.MapIndex(key)
+		if !value.IsValid() {
+			value = reflect.Zero(v.Type().Elem())
+		}
+		p.Ret(2, value.Interface())
 	}
 }
 

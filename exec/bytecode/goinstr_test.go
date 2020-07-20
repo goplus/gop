@@ -75,20 +75,30 @@ func TestMap(t *testing.T) {
 }
 
 func TestMapIndex(t *testing.T) {
+	m := NewVar(reflect.MapOf(TyString, TyFloat64), "")
 	code := newBuilder().
+		DefineVar(m).
 		Push("Hello").
 		Push(3.2).
 		Push("xsw").
 		Push(1.0).
 		MakeMap(reflect.MapOf(TyString, TyFloat64), 2).
+		StoreVar(m).
+		LoadVar(m).
+		Push("go+").
+		MapIndex().
+		LoadVar(m).
 		Push("xsw").
 		MapIndex().
 		Resolve()
 
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
-	if v := checkPop(ctx); v != 1.0 {
+	if v := ctx.Get(-1); v != 1.0 {
 		t.Fatal("{`Hello`: 3.2, `xsw`: 1.0}[`xsw`] != 1.0, ret =", v)
+	}
+	if v := ctx.Get(-2); v != 0.0 {
+		t.Fatal("{`Hello`: 3.2, `xsw`: 1.0}[`go+`] != 1.0, ret =", v)
 	}
 }
 

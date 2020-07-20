@@ -6,6 +6,7 @@ import (
 	unsafe "unsafe"
 
 	gop "github.com/goplus/gop"
+	qspec "github.com/goplus/gop/exec.spec"
 )
 
 func toSlice0(args []interface{}) []reflect.Value {
@@ -41,7 +42,7 @@ func execArrayOf(_ int, p *gop.Context) {
 	p.Ret(2, ret0)
 }
 
-func execChanDirString(_ int, p *gop.Context) {
+func execmChanDirString(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.ChanDir).String()
 	p.Ret(1, ret0)
@@ -77,7 +78,7 @@ func execIndirect(_ int, p *gop.Context) {
 	p.Ret(1, ret0)
 }
 
-func execKindString(_ int, p *gop.Context) {
+func execmKindString(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Kind).String()
 	p.Ret(1, ret0)
@@ -113,19 +114,19 @@ func execMakeSlice(_ int, p *gop.Context) {
 	p.Ret(3, ret0)
 }
 
-func execMapIterKey(_ int, p *gop.Context) {
+func execmMapIterKey(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(*reflect.MapIter).Key()
 	p.Ret(1, ret0)
 }
 
-func execMapIterValue(_ int, p *gop.Context) {
+func execmMapIterValue(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(*reflect.MapIter).Value()
 	p.Ret(1, ret0)
 }
 
-func execMapIterNext(_ int, p *gop.Context) {
+func execmMapIterNext(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(*reflect.MapIter).Next()
 	p.Ret(1, ret0)
@@ -173,13 +174,13 @@ func execStructOf(_ int, p *gop.Context) {
 	p.Ret(1, ret0)
 }
 
-func execStructTagGet(_ int, p *gop.Context) {
+func execmStructTagGet(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0 := args[0].(reflect.StructTag).Get(args[1].(string))
 	p.Ret(2, ret0)
 }
 
-func execStructTagLookup(_ int, p *gop.Context) {
+func execmStructTagLookup(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0, ret1 := args[0].(reflect.StructTag).Lookup(args[1].(string))
 	p.Ret(2, ret0, ret1)
@@ -197,373 +198,373 @@ func execTypeOf(_ int, p *gop.Context) {
 	p.Ret(1, ret0)
 }
 
-func execValueAddr(_ int, p *gop.Context) {
+func execmValueAddr(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).Addr()
 	p.Ret(1, ret0)
 }
 
-func execValueBool(_ int, p *gop.Context) {
+func execmValueBool(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).Bool()
 	p.Ret(1, ret0)
 }
 
-func execValueBytes(_ int, p *gop.Context) {
+func execmValueBytes(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).Bytes()
 	p.Ret(1, ret0)
 }
 
-func execValueCanAddr(_ int, p *gop.Context) {
+func execmValueCanAddr(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).CanAddr()
 	p.Ret(1, ret0)
 }
 
-func execValueCanSet(_ int, p *gop.Context) {
+func execmValueCanSet(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).CanSet()
 	p.Ret(1, ret0)
 }
 
-func execValueCall(_ int, p *gop.Context) {
+func execmValueCall(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0 := args[0].(reflect.Value).Call(args[1].([]reflect.Value))
 	p.Ret(2, ret0)
 }
 
-func execValueCallSlice(_ int, p *gop.Context) {
+func execmValueCallSlice(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0 := args[0].(reflect.Value).CallSlice(args[1].([]reflect.Value))
 	p.Ret(2, ret0)
 }
 
-func execValueCap(_ int, p *gop.Context) {
+func execmValueCap(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).Cap()
 	p.Ret(1, ret0)
 }
 
-func execValueClose(_ int, p *gop.Context) {
+func execmValueClose(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	args[0].(reflect.Value).Close()
 	p.PopN(1)
 }
 
-func execValueComplex(_ int, p *gop.Context) {
+func execmValueComplex(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).Complex()
 	p.Ret(1, ret0)
 }
 
-func execValueElem(_ int, p *gop.Context) {
+func execmValueElem(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).Elem()
 	p.Ret(1, ret0)
 }
 
-func execValueField(_ int, p *gop.Context) {
+func execmValueField(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0 := args[0].(reflect.Value).Field(args[1].(int))
 	p.Ret(2, ret0)
 }
 
-func execValueFieldByIndex(_ int, p *gop.Context) {
+func execmValueFieldByIndex(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0 := args[0].(reflect.Value).FieldByIndex(args[1].([]int))
 	p.Ret(2, ret0)
 }
 
-func execValueFieldByName(_ int, p *gop.Context) {
+func execmValueFieldByName(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0 := args[0].(reflect.Value).FieldByName(args[1].(string))
 	p.Ret(2, ret0)
 }
 
-func execValueFieldByNameFunc(_ int, p *gop.Context) {
+func execmValueFieldByNameFunc(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0 := args[0].(reflect.Value).FieldByNameFunc(args[1].(func(string) bool))
 	p.Ret(2, ret0)
 }
 
-func execValueFloat(_ int, p *gop.Context) {
+func execmValueFloat(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).Float()
 	p.Ret(1, ret0)
 }
 
-func execValueIndex(_ int, p *gop.Context) {
+func execmValueIndex(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0 := args[0].(reflect.Value).Index(args[1].(int))
 	p.Ret(2, ret0)
 }
 
-func execValueInt(_ int, p *gop.Context) {
+func execmValueInt(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).Int()
 	p.Ret(1, ret0)
 }
 
-func execValueCanInterface(_ int, p *gop.Context) {
+func execmValueCanInterface(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).CanInterface()
 	p.Ret(1, ret0)
 }
 
-func execValueInterface(_ int, p *gop.Context) {
+func execmValueInterface(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).Interface()
 	p.Ret(1, ret0)
 }
 
-func execValueInterfaceData(_ int, p *gop.Context) {
+func execmValueInterfaceData(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).InterfaceData()
 	p.Ret(1, ret0)
 }
 
-func execValueIsNil(_ int, p *gop.Context) {
+func execmValueIsNil(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).IsNil()
 	p.Ret(1, ret0)
 }
 
-func execValueIsValid(_ int, p *gop.Context) {
+func execmValueIsValid(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).IsValid()
 	p.Ret(1, ret0)
 }
 
-func execValueIsZero(_ int, p *gop.Context) {
+func execmValueIsZero(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).IsZero()
 	p.Ret(1, ret0)
 }
 
-func execValueKind(_ int, p *gop.Context) {
+func execmValueKind(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).Kind()
 	p.Ret(1, ret0)
 }
 
-func execValueLen(_ int, p *gop.Context) {
+func execmValueLen(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).Len()
 	p.Ret(1, ret0)
 }
 
-func execValueMapIndex(_ int, p *gop.Context) {
+func execmValueMapIndex(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0 := args[0].(reflect.Value).MapIndex(args[1].(reflect.Value))
 	p.Ret(2, ret0)
 }
 
-func execValueMapKeys(_ int, p *gop.Context) {
+func execmValueMapKeys(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).MapKeys()
 	p.Ret(1, ret0)
 }
 
-func execValueMapRange(_ int, p *gop.Context) {
+func execmValueMapRange(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).MapRange()
 	p.Ret(1, ret0)
 }
 
-func execValueMethod(_ int, p *gop.Context) {
+func execmValueMethod(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0 := args[0].(reflect.Value).Method(args[1].(int))
 	p.Ret(2, ret0)
 }
 
-func execValueNumMethod(_ int, p *gop.Context) {
+func execmValueNumMethod(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).NumMethod()
 	p.Ret(1, ret0)
 }
 
-func execValueMethodByName(_ int, p *gop.Context) {
+func execmValueMethodByName(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0 := args[0].(reflect.Value).MethodByName(args[1].(string))
 	p.Ret(2, ret0)
 }
 
-func execValueNumField(_ int, p *gop.Context) {
+func execmValueNumField(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).NumField()
 	p.Ret(1, ret0)
 }
 
-func execValueOverflowComplex(_ int, p *gop.Context) {
+func execmValueOverflowComplex(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0 := args[0].(reflect.Value).OverflowComplex(args[1].(complex128))
 	p.Ret(2, ret0)
 }
 
-func execValueOverflowFloat(_ int, p *gop.Context) {
+func execmValueOverflowFloat(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0 := args[0].(reflect.Value).OverflowFloat(args[1].(float64))
 	p.Ret(2, ret0)
 }
 
-func execValueOverflowInt(_ int, p *gop.Context) {
+func execmValueOverflowInt(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0 := args[0].(reflect.Value).OverflowInt(args[1].(int64))
 	p.Ret(2, ret0)
 }
 
-func execValueOverflowUint(_ int, p *gop.Context) {
+func execmValueOverflowUint(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0 := args[0].(reflect.Value).OverflowUint(args[1].(uint64))
 	p.Ret(2, ret0)
 }
 
-func execValuePointer(_ int, p *gop.Context) {
+func execmValuePointer(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).Pointer()
 	p.Ret(1, ret0)
 }
 
-func execValueRecv(_ int, p *gop.Context) {
+func execmValueRecv(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0, ret1 := args[0].(reflect.Value).Recv()
 	p.Ret(1, ret0, ret1)
 }
 
-func execValueSend(_ int, p *gop.Context) {
+func execmValueSend(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(reflect.Value).Send(args[1].(reflect.Value))
 	p.PopN(2)
 }
 
-func execValueSet(_ int, p *gop.Context) {
+func execmValueSet(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(reflect.Value).Set(args[1].(reflect.Value))
 	p.PopN(2)
 }
 
-func execValueSetBool(_ int, p *gop.Context) {
+func execmValueSetBool(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(reflect.Value).SetBool(args[1].(bool))
 	p.PopN(2)
 }
 
-func execValueSetBytes(_ int, p *gop.Context) {
+func execmValueSetBytes(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(reflect.Value).SetBytes(args[1].([]byte))
 	p.PopN(2)
 }
 
-func execValueSetComplex(_ int, p *gop.Context) {
+func execmValueSetComplex(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(reflect.Value).SetComplex(args[1].(complex128))
 	p.PopN(2)
 }
 
-func execValueSetFloat(_ int, p *gop.Context) {
+func execmValueSetFloat(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(reflect.Value).SetFloat(args[1].(float64))
 	p.PopN(2)
 }
 
-func execValueSetInt(_ int, p *gop.Context) {
+func execmValueSetInt(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(reflect.Value).SetInt(args[1].(int64))
 	p.PopN(2)
 }
 
-func execValueSetLen(_ int, p *gop.Context) {
+func execmValueSetLen(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(reflect.Value).SetLen(args[1].(int))
 	p.PopN(2)
 }
 
-func execValueSetCap(_ int, p *gop.Context) {
+func execmValueSetCap(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(reflect.Value).SetCap(args[1].(int))
 	p.PopN(2)
 }
 
-func execValueSetMapIndex(_ int, p *gop.Context) {
+func execmValueSetMapIndex(_ int, p *gop.Context) {
 	args := p.GetArgs(3)
 	args[0].(reflect.Value).SetMapIndex(args[1].(reflect.Value), args[2].(reflect.Value))
 	p.PopN(3)
 }
 
-func execValueSetUint(_ int, p *gop.Context) {
+func execmValueSetUint(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(reflect.Value).SetUint(args[1].(uint64))
 	p.PopN(2)
 }
 
-func execValueSetPointer(_ int, p *gop.Context) {
+func execmValueSetPointer(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(reflect.Value).SetPointer(args[1].(unsafe.Pointer))
 	p.PopN(2)
 }
 
-func execValueSetString(_ int, p *gop.Context) {
+func execmValueSetString(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	args[0].(reflect.Value).SetString(args[1].(string))
 	p.PopN(2)
 }
 
-func execValueSlice(_ int, p *gop.Context) {
+func execmValueSlice(_ int, p *gop.Context) {
 	args := p.GetArgs(3)
 	ret0 := args[0].(reflect.Value).Slice(args[1].(int), args[2].(int))
 	p.Ret(3, ret0)
 }
 
-func execValueSlice3(_ int, p *gop.Context) {
+func execmValueSlice3(_ int, p *gop.Context) {
 	args := p.GetArgs(4)
 	ret0 := args[0].(reflect.Value).Slice3(args[1].(int), args[2].(int), args[3].(int))
 	p.Ret(4, ret0)
 }
 
-func execValueString(_ int, p *gop.Context) {
+func execmValueString(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).String()
 	p.Ret(1, ret0)
 }
 
-func execValueTryRecv(_ int, p *gop.Context) {
+func execmValueTryRecv(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0, ret1 := args[0].(reflect.Value).TryRecv()
 	p.Ret(1, ret0, ret1)
 }
 
-func execValueTrySend(_ int, p *gop.Context) {
+func execmValueTrySend(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0 := args[0].(reflect.Value).TrySend(args[1].(reflect.Value))
 	p.Ret(2, ret0)
 }
 
-func execValueType(_ int, p *gop.Context) {
+func execmValueType(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).Type()
 	p.Ret(1, ret0)
 }
 
-func execValueUint(_ int, p *gop.Context) {
+func execmValueUint(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).Uint()
 	p.Ret(1, ret0)
 }
 
-func execValueUnsafeAddr(_ int, p *gop.Context) {
+func execmValueUnsafeAddr(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(reflect.Value).UnsafeAddr()
 	p.Ret(1, ret0)
 }
 
-func execValueConvert(_ int, p *gop.Context) {
+func execmValueConvert(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0 := args[0].(reflect.Value).Convert(toType0(args[1]))
 	p.Ret(2, ret0)
 }
 
-func execValueErrorError(_ int, p *gop.Context) {
+func execmValueErrorError(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(*reflect.ValueError).Error()
 	p.Ret(1, ret0)
@@ -588,21 +589,21 @@ func init() {
 	I.RegisterFuncs(
 		I.Func("AppendSlice", reflect.AppendSlice, execAppendSlice),
 		I.Func("ArrayOf", reflect.ArrayOf, execArrayOf),
-		I.Func("(ChanDir).String", (reflect.ChanDir).String, execChanDirString),
+		I.Func("(ChanDir).String", (reflect.ChanDir).String, execmChanDirString),
 		I.Func("ChanOf", reflect.ChanOf, execChanOf),
 		I.Func("Copy", reflect.Copy, execCopy),
 		I.Func("DeepEqual", reflect.DeepEqual, execDeepEqual),
 		I.Func("FuncOf", reflect.FuncOf, execFuncOf),
 		I.Func("Indirect", reflect.Indirect, execIndirect),
-		I.Func("(Kind).String", (reflect.Kind).String, execKindString),
+		I.Func("(Kind).String", (reflect.Kind).String, execmKindString),
 		I.Func("MakeChan", reflect.MakeChan, execMakeChan),
 		I.Func("MakeFunc", reflect.MakeFunc, execMakeFunc),
 		I.Func("MakeMap", reflect.MakeMap, execMakeMap),
 		I.Func("MakeMapWithSize", reflect.MakeMapWithSize, execMakeMapWithSize),
 		I.Func("MakeSlice", reflect.MakeSlice, execMakeSlice),
-		I.Func("(*MapIter).Key", (*reflect.MapIter).Key, execMapIterKey),
-		I.Func("(*MapIter).Value", (*reflect.MapIter).Value, execMapIterValue),
-		I.Func("(*MapIter).Next", (*reflect.MapIter).Next, execMapIterNext),
+		I.Func("(*MapIter).Key", (*reflect.MapIter).Key, execmMapIterKey),
+		I.Func("(*MapIter).Value", (*reflect.MapIter).Value, execmMapIterValue),
+		I.Func("(*MapIter).Next", (*reflect.MapIter).Next, execmMapIterNext),
 		I.Func("MapOf", reflect.MapOf, execMapOf),
 		I.Func("New", reflect.New, execNew),
 		I.Func("NewAt", reflect.NewAt, execNewAt),
@@ -610,76 +611,111 @@ func init() {
 		I.Func("Select", reflect.Select, execSelect),
 		I.Func("SliceOf", reflect.SliceOf, execSliceOf),
 		I.Func("StructOf", reflect.StructOf, execStructOf),
-		I.Func("(StructTag).Get", (reflect.StructTag).Get, execStructTagGet),
-		I.Func("(StructTag).Lookup", (reflect.StructTag).Lookup, execStructTagLookup),
+		I.Func("(StructTag).Get", (reflect.StructTag).Get, execmStructTagGet),
+		I.Func("(StructTag).Lookup", (reflect.StructTag).Lookup, execmStructTagLookup),
 		I.Func("Swapper", reflect.Swapper, execSwapper),
 		I.Func("TypeOf", reflect.TypeOf, execTypeOf),
-		I.Func("(Value).Addr", (reflect.Value).Addr, execValueAddr),
-		I.Func("(Value).Bool", (reflect.Value).Bool, execValueBool),
-		I.Func("(Value).Bytes", (reflect.Value).Bytes, execValueBytes),
-		I.Func("(Value).CanAddr", (reflect.Value).CanAddr, execValueCanAddr),
-		I.Func("(Value).CanSet", (reflect.Value).CanSet, execValueCanSet),
-		I.Func("(Value).Call", (reflect.Value).Call, execValueCall),
-		I.Func("(Value).CallSlice", (reflect.Value).CallSlice, execValueCallSlice),
-		I.Func("(Value).Cap", (reflect.Value).Cap, execValueCap),
-		I.Func("(Value).Close", (reflect.Value).Close, execValueClose),
-		I.Func("(Value).Complex", (reflect.Value).Complex, execValueComplex),
-		I.Func("(Value).Elem", (reflect.Value).Elem, execValueElem),
-		I.Func("(Value).Field", (reflect.Value).Field, execValueField),
-		I.Func("(Value).FieldByIndex", (reflect.Value).FieldByIndex, execValueFieldByIndex),
-		I.Func("(Value).FieldByName", (reflect.Value).FieldByName, execValueFieldByName),
-		I.Func("(Value).FieldByNameFunc", (reflect.Value).FieldByNameFunc, execValueFieldByNameFunc),
-		I.Func("(Value).Float", (reflect.Value).Float, execValueFloat),
-		I.Func("(Value).Index", (reflect.Value).Index, execValueIndex),
-		I.Func("(Value).Int", (reflect.Value).Int, execValueInt),
-		I.Func("(Value).CanInterface", (reflect.Value).CanInterface, execValueCanInterface),
-		I.Func("(Value).Interface", (reflect.Value).Interface, execValueInterface),
-		I.Func("(Value).InterfaceData", (reflect.Value).InterfaceData, execValueInterfaceData),
-		I.Func("(Value).IsNil", (reflect.Value).IsNil, execValueIsNil),
-		I.Func("(Value).IsValid", (reflect.Value).IsValid, execValueIsValid),
-		I.Func("(Value).IsZero", (reflect.Value).IsZero, execValueIsZero),
-		I.Func("(Value).Kind", (reflect.Value).Kind, execValueKind),
-		I.Func("(Value).Len", (reflect.Value).Len, execValueLen),
-		I.Func("(Value).MapIndex", (reflect.Value).MapIndex, execValueMapIndex),
-		I.Func("(Value).MapKeys", (reflect.Value).MapKeys, execValueMapKeys),
-		I.Func("(Value).MapRange", (reflect.Value).MapRange, execValueMapRange),
-		I.Func("(Value).Method", (reflect.Value).Method, execValueMethod),
-		I.Func("(Value).NumMethod", (reflect.Value).NumMethod, execValueNumMethod),
-		I.Func("(Value).MethodByName", (reflect.Value).MethodByName, execValueMethodByName),
-		I.Func("(Value).NumField", (reflect.Value).NumField, execValueNumField),
-		I.Func("(Value).OverflowComplex", (reflect.Value).OverflowComplex, execValueOverflowComplex),
-		I.Func("(Value).OverflowFloat", (reflect.Value).OverflowFloat, execValueOverflowFloat),
-		I.Func("(Value).OverflowInt", (reflect.Value).OverflowInt, execValueOverflowInt),
-		I.Func("(Value).OverflowUint", (reflect.Value).OverflowUint, execValueOverflowUint),
-		I.Func("(Value).Pointer", (reflect.Value).Pointer, execValuePointer),
-		I.Func("(Value).Recv", (reflect.Value).Recv, execValueRecv),
-		I.Func("(Value).Send", (reflect.Value).Send, execValueSend),
-		I.Func("(Value).Set", (reflect.Value).Set, execValueSet),
-		I.Func("(Value).SetBool", (reflect.Value).SetBool, execValueSetBool),
-		I.Func("(Value).SetBytes", (reflect.Value).SetBytes, execValueSetBytes),
-		I.Func("(Value).SetComplex", (reflect.Value).SetComplex, execValueSetComplex),
-		I.Func("(Value).SetFloat", (reflect.Value).SetFloat, execValueSetFloat),
-		I.Func("(Value).SetInt", (reflect.Value).SetInt, execValueSetInt),
-		I.Func("(Value).SetLen", (reflect.Value).SetLen, execValueSetLen),
-		I.Func("(Value).SetCap", (reflect.Value).SetCap, execValueSetCap),
-		I.Func("(Value).SetMapIndex", (reflect.Value).SetMapIndex, execValueSetMapIndex),
-		I.Func("(Value).SetUint", (reflect.Value).SetUint, execValueSetUint),
-		I.Func("(Value).SetPointer", (reflect.Value).SetPointer, execValueSetPointer),
-		I.Func("(Value).SetString", (reflect.Value).SetString, execValueSetString),
-		I.Func("(Value).Slice", (reflect.Value).Slice, execValueSlice),
-		I.Func("(Value).Slice3", (reflect.Value).Slice3, execValueSlice3),
-		I.Func("(Value).String", (reflect.Value).String, execValueString),
-		I.Func("(Value).TryRecv", (reflect.Value).TryRecv, execValueTryRecv),
-		I.Func("(Value).TrySend", (reflect.Value).TrySend, execValueTrySend),
-		I.Func("(Value).Type", (reflect.Value).Type, execValueType),
-		I.Func("(Value).Uint", (reflect.Value).Uint, execValueUint),
-		I.Func("(Value).UnsafeAddr", (reflect.Value).UnsafeAddr, execValueUnsafeAddr),
-		I.Func("(Value).Convert", (reflect.Value).Convert, execValueConvert),
-		I.Func("(*ValueError).Error", (*reflect.ValueError).Error, execValueErrorError),
+		I.Func("(Value).Addr", (reflect.Value).Addr, execmValueAddr),
+		I.Func("(Value).Bool", (reflect.Value).Bool, execmValueBool),
+		I.Func("(Value).Bytes", (reflect.Value).Bytes, execmValueBytes),
+		I.Func("(Value).CanAddr", (reflect.Value).CanAddr, execmValueCanAddr),
+		I.Func("(Value).CanSet", (reflect.Value).CanSet, execmValueCanSet),
+		I.Func("(Value).Call", (reflect.Value).Call, execmValueCall),
+		I.Func("(Value).CallSlice", (reflect.Value).CallSlice, execmValueCallSlice),
+		I.Func("(Value).Cap", (reflect.Value).Cap, execmValueCap),
+		I.Func("(Value).Close", (reflect.Value).Close, execmValueClose),
+		I.Func("(Value).Complex", (reflect.Value).Complex, execmValueComplex),
+		I.Func("(Value).Elem", (reflect.Value).Elem, execmValueElem),
+		I.Func("(Value).Field", (reflect.Value).Field, execmValueField),
+		I.Func("(Value).FieldByIndex", (reflect.Value).FieldByIndex, execmValueFieldByIndex),
+		I.Func("(Value).FieldByName", (reflect.Value).FieldByName, execmValueFieldByName),
+		I.Func("(Value).FieldByNameFunc", (reflect.Value).FieldByNameFunc, execmValueFieldByNameFunc),
+		I.Func("(Value).Float", (reflect.Value).Float, execmValueFloat),
+		I.Func("(Value).Index", (reflect.Value).Index, execmValueIndex),
+		I.Func("(Value).Int", (reflect.Value).Int, execmValueInt),
+		I.Func("(Value).CanInterface", (reflect.Value).CanInterface, execmValueCanInterface),
+		I.Func("(Value).Interface", (reflect.Value).Interface, execmValueInterface),
+		I.Func("(Value).InterfaceData", (reflect.Value).InterfaceData, execmValueInterfaceData),
+		I.Func("(Value).IsNil", (reflect.Value).IsNil, execmValueIsNil),
+		I.Func("(Value).IsValid", (reflect.Value).IsValid, execmValueIsValid),
+		I.Func("(Value).IsZero", (reflect.Value).IsZero, execmValueIsZero),
+		I.Func("(Value).Kind", (reflect.Value).Kind, execmValueKind),
+		I.Func("(Value).Len", (reflect.Value).Len, execmValueLen),
+		I.Func("(Value).MapIndex", (reflect.Value).MapIndex, execmValueMapIndex),
+		I.Func("(Value).MapKeys", (reflect.Value).MapKeys, execmValueMapKeys),
+		I.Func("(Value).MapRange", (reflect.Value).MapRange, execmValueMapRange),
+		I.Func("(Value).Method", (reflect.Value).Method, execmValueMethod),
+		I.Func("(Value).NumMethod", (reflect.Value).NumMethod, execmValueNumMethod),
+		I.Func("(Value).MethodByName", (reflect.Value).MethodByName, execmValueMethodByName),
+		I.Func("(Value).NumField", (reflect.Value).NumField, execmValueNumField),
+		I.Func("(Value).OverflowComplex", (reflect.Value).OverflowComplex, execmValueOverflowComplex),
+		I.Func("(Value).OverflowFloat", (reflect.Value).OverflowFloat, execmValueOverflowFloat),
+		I.Func("(Value).OverflowInt", (reflect.Value).OverflowInt, execmValueOverflowInt),
+		I.Func("(Value).OverflowUint", (reflect.Value).OverflowUint, execmValueOverflowUint),
+		I.Func("(Value).Pointer", (reflect.Value).Pointer, execmValuePointer),
+		I.Func("(Value).Recv", (reflect.Value).Recv, execmValueRecv),
+		I.Func("(Value).Send", (reflect.Value).Send, execmValueSend),
+		I.Func("(Value).Set", (reflect.Value).Set, execmValueSet),
+		I.Func("(Value).SetBool", (reflect.Value).SetBool, execmValueSetBool),
+		I.Func("(Value).SetBytes", (reflect.Value).SetBytes, execmValueSetBytes),
+		I.Func("(Value).SetComplex", (reflect.Value).SetComplex, execmValueSetComplex),
+		I.Func("(Value).SetFloat", (reflect.Value).SetFloat, execmValueSetFloat),
+		I.Func("(Value).SetInt", (reflect.Value).SetInt, execmValueSetInt),
+		I.Func("(Value).SetLen", (reflect.Value).SetLen, execmValueSetLen),
+		I.Func("(Value).SetCap", (reflect.Value).SetCap, execmValueSetCap),
+		I.Func("(Value).SetMapIndex", (reflect.Value).SetMapIndex, execmValueSetMapIndex),
+		I.Func("(Value).SetUint", (reflect.Value).SetUint, execmValueSetUint),
+		I.Func("(Value).SetPointer", (reflect.Value).SetPointer, execmValueSetPointer),
+		I.Func("(Value).SetString", (reflect.Value).SetString, execmValueSetString),
+		I.Func("(Value).Slice", (reflect.Value).Slice, execmValueSlice),
+		I.Func("(Value).Slice3", (reflect.Value).Slice3, execmValueSlice3),
+		I.Func("(Value).String", (reflect.Value).String, execmValueString),
+		I.Func("(Value).TryRecv", (reflect.Value).TryRecv, execmValueTryRecv),
+		I.Func("(Value).TrySend", (reflect.Value).TrySend, execmValueTrySend),
+		I.Func("(Value).Type", (reflect.Value).Type, execmValueType),
+		I.Func("(Value).Uint", (reflect.Value).Uint, execmValueUint),
+		I.Func("(Value).UnsafeAddr", (reflect.Value).UnsafeAddr, execmValueUnsafeAddr),
+		I.Func("(Value).Convert", (reflect.Value).Convert, execmValueConvert),
+		I.Func("(*ValueError).Error", (*reflect.ValueError).Error, execmValueErrorError),
 		I.Func("ValueOf", reflect.ValueOf, execValueOf),
 		I.Func("Zero", reflect.Zero, execZero),
 	)
 	I.RegisterFuncvs(
 		I.Funcv("Append", reflect.Append, execAppend),
+	)
+	I.RegisterConsts(
+		I.Const("Array", qspec.Uint, reflect.Array),
+		I.Const("Bool", qspec.Uint, reflect.Bool),
+		I.Const("BothDir", qspec.Int, reflect.BothDir),
+		I.Const("Chan", qspec.Uint, reflect.Chan),
+		I.Const("Complex128", qspec.Uint, reflect.Complex128),
+		I.Const("Complex64", qspec.Uint, reflect.Complex64),
+		I.Const("Float32", qspec.Uint, reflect.Float32),
+		I.Const("Float64", qspec.Uint, reflect.Float64),
+		I.Const("Func", qspec.Uint, reflect.Func),
+		I.Const("Int", qspec.Uint, reflect.Int),
+		I.Const("Int16", qspec.Uint, reflect.Int16),
+		I.Const("Int32", qspec.Uint, reflect.Int32),
+		I.Const("Int64", qspec.Uint, reflect.Int64),
+		I.Const("Int8", qspec.Uint, reflect.Int8),
+		I.Const("Interface", qspec.Uint, reflect.Interface),
+		I.Const("Invalid", qspec.Uint, reflect.Invalid),
+		I.Const("Map", qspec.Uint, reflect.Map),
+		I.Const("Ptr", qspec.Uint, reflect.Ptr),
+		I.Const("RecvDir", qspec.Int, reflect.RecvDir),
+		I.Const("SelectDefault", qspec.Int, reflect.SelectDefault),
+		I.Const("SelectRecv", qspec.Int, reflect.SelectRecv),
+		I.Const("SelectSend", qspec.Int, reflect.SelectSend),
+		I.Const("SendDir", qspec.Int, reflect.SendDir),
+		I.Const("Slice", qspec.Uint, reflect.Slice),
+		I.Const("String", qspec.Uint, reflect.String),
+		I.Const("Struct", qspec.Uint, reflect.Struct),
+		I.Const("Uint", qspec.Uint, reflect.Uint),
+		I.Const("Uint16", qspec.Uint, reflect.Uint16),
+		I.Const("Uint32", qspec.Uint, reflect.Uint32),
+		I.Const("Uint64", qspec.Uint, reflect.Uint64),
+		I.Const("Uint8", qspec.Uint, reflect.Uint8),
+		I.Const("Uintptr", qspec.Uint, reflect.Uintptr),
+		I.Const("UnsafePointer", qspec.Uint, reflect.UnsafePointer),
 	)
 }
