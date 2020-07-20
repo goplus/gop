@@ -32,14 +32,6 @@ func compileBlockStmtWith(ctx *blockCtx, body *ast.BlockStmt) {
 }
 
 func compileBlockStmtWithout(ctx *blockCtx, body *ast.BlockStmt) {
-	defer func() {
-		len := ctx.defers.Len()
-		for i := 0; i < len; i++ {
-			if deferStmt, ok := ctx.defers.Pop().(*ast.DeferStmt); ok {
-				compileCallExpr(ctx, deferStmt.Call)()
-			}
-		}
-	}()
 	for _, stmt := range body.List {
 		compileStmt(ctx, stmt)
 	}
@@ -79,10 +71,10 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileBranchStmt(ctx, v)
 	case *ast.LabeledStmt:
 		compileLabeledStmt(ctx, v)
-	case *ast.EmptyStmt:
-		// do nothing
 	case *ast.DeferStmt:
 		compileDeferStmt(ctx, v)
+	case *ast.EmptyStmt:
+		// do nothing
 	default:
 		log.Panicln("compileStmt failed: unknown -", reflect.TypeOf(v))
 	}
@@ -232,7 +224,88 @@ func compileLabeledStmt(ctx *blockCtx, v *ast.LabeledStmt) {
 }
 
 func compileDeferStmt(ctx *blockCtx, v *ast.DeferStmt) {
-	ctx.pushDefer(v)
+	var instr exec.Reserved
+	out := ctx.out
+	start := ctx.NewLabel("")
+	end := ctx.NewLabel("")
+
+	var f func()
+	exprFun := compileExpr(ctx, v.Call.Fun)
+	fn := ctx.infer.Pop()
+	switch vfn := fn.(type) {
+	case *qlFunc:
+		ret := vfn.Results()
+		ctx.infer.Push(ret)
+
+		for _, arg := range v.Call.Args {
+			compileExpr(ctx, arg)()
+		}
+		instr = ctx.out.Reserve()
+		out.Label(start)
+		f = func() {
+			arity := checkFuncCall(vfn.Proto(), 0, v.Call, ctx)
+			fun := vfn.FuncInfo()
+			if fun.IsVariadic() {
+				ctx.out.CallFuncv(fun, len(v.Call.Args), arity)
+			} else {
+				ctx.out.CallFunc(fun, len(v.Call.Args))
+			}
+		}
+	case *goFunc:
+		ret := vfn.Results()
+		ctx.infer.Push(ret)
+
+		for _, arg := range v.Call.Args {
+			compileExpr(ctx, arg)()
+		}
+		instr = ctx.out.Reserve()
+		out.Label(start)
+		f = func() {
+			if vfn.isMethod != 0 {
+				compileExpr(ctx, v.Call.Fun.(*ast.SelectorExpr).X)()
+			}
+			nexpr := len(v.Call.Args) + vfn.isMethod
+			arity := checkFuncCall(vfn.Proto(), vfn.isMethod, v.Call, ctx)
+			switch vfn.kind {
+			case exec.SymbolFunc:
+				ctx.out.CallGoFunc(exec.GoFuncAddr(vfn.addr), nexpr)
+			case exec.SymbolFuncv:
+				ctx.out.CallGoFuncv(exec.GoFuncvAddr(vfn.addr), nexpr, arity)
+			}
+		}
+	case *goValue:
+		if vfn.t.Kind() != reflect.Func {
+			log.Panicln("compileCallExpr failed: call a non function.")
+		}
+		ret := newFuncResults(vfn.t)
+		ctx.infer.Push(ret)
+
+		for _, arg := range v.Call.Args {
+			compileExpr(ctx, arg)()
+		}
+		instr = ctx.out.Reserve()
+		out.Label(start)
+		f = func() {
+			exprFun()
+			arity, ellipsis := checkFuncCall(vfn.t, 0, v.Call, ctx), false
+			if arity == -1 {
+				arity, ellipsis = len(v.Call.Args), true
+			}
+			ctx.out.CallGoClosure(len(v.Call.Args), arity, ellipsis)
+		}
+	case *nonValue:
+		switch nv := vfn.v.(type) {
+		case goInstr:
+			f = nv(ctx, v.Call)
+		case reflect.Type:
+			f = compileTypeCast(nv, ctx, v.Call)
+		}
+	}
+
+	f()
+
+	out.Label(end)
+	instr.Set(out, out.Defer(start, end))
 }
 
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
@@ -398,20 +471,10 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 }
 
 func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
-	var ret int32
-	defer func() {
-		len := ctx.defers.Len()
-		for i := 0; i < len; i++ {
-			if deferStmt, ok := ctx.defers.Pop().(*ast.DeferStmt); ok {
-				compileCallExpr(ctx, deferStmt.Call)()
-			}
-		}
-		ctx.out.Return(ret)
-	}()
 	fun := ctx.fun
 	if fun == nil {
 		if expr.Results == nil { // return in main
-			ret = 0
+			ctx.out.Return(0)
 			return
 		}
 		log.Panicln("compileReturnStmt failed: return statement not in a function.")
@@ -421,7 +484,7 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 		if fun.IsUnnamedOut() {
 			log.Panicln("compileReturnStmt failed: return without values -", fun.Name())
 		}
-		ret = -1
+		ctx.out.Return(-1)
 		return
 	}
 	for _, ret := range rets {
@@ -440,7 +503,7 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 		checkType(v.Type(), result, ctx.out)
 	}
 	ctx.infer.SetLen(0)
-	ret = int32(n)
+	ctx.out.Return(int32(n))
 }
 
 func compileExprStmt(ctx *blockCtx, expr *ast.ExprStmt) {

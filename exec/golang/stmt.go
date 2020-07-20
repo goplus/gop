@@ -393,4 +393,9 @@ func (p *Builder) EndComprehension(c *Comprehension) *Builder {
 	return p
 }
 
+func (p *Builder) Defer(start, end *Label) exec.Instr {
+	// TODO
+	return nil
+}
+
 // ----------------------------------------------------------------------------

@@ -77,6 +77,8 @@ func isNoExecCtxStmt(ctx *blockCtx, stmt ast.Stmt) bool {
 		return true
 	case *ast.LabeledStmt:
 		return true
+	case *ast.DeferStmt:
+		return isNoExecCtxCallExpr(ctx, v.Call)
 	default:
 		log.Panicln("isNoExecCtxStmt failed: unknown -", reflect.TypeOf(v))
 	}
@@ -236,7 +238,7 @@ func isNoExecCtxSliceExpr(ctx *blockCtx, v *ast.SliceExpr) bool {
 
 func isNoExecCtxFuncLit(ctx *blockCtx, v *ast.FuncLit) bool {
 	// TODO: log.Warn("isNoExecCtxFuncLit: to be optimized")
-	return false
+	return true
 }
 
 func isNoExecCtx2nd(ctx *blockCtx, a, b ast.Expr) bool {

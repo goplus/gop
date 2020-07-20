@@ -19,6 +19,7 @@ package bytecode
 import (
 	"reflect"
 
+	"github.com/goplus/gop/exec.spec"
 	"github.com/qiniu/x/log"
 )
 
@@ -145,6 +146,11 @@ func (p *Builder) Push(val interface{}) *Builder {
 // ReservedAsPush sets Reserved as Push(v)
 func (p *Builder) ReservedAsPush(r Reserved, val interface{}) {
 	p.code.data[r] = p.pushInstr(val)
+}
+
+// ReservedAsInstr sets Reserved as Instr
+func (p *Builder) ReservedAsInstr(r Reserved, instr exec.Instr) {
+	p.code.data[r] = instr.Val().(Instr)
 }
 
 // Pop instr

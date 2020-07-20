@@ -101,9 +101,10 @@ type varScope struct {
 type Context struct {
 	Stack
 	varScope
-	code *Code
-	ip   int
-	base int
+	code   *Code
+	defers *theDefer
+	ip     int
+	base   int
 }
 
 func newSimpleContext(data []interface{}) *Context {
@@ -184,6 +185,8 @@ func (ctx *Context) Exec(ip, ipEnd int) {
 			}
 		case opBuiltinOp:
 			execBuiltinOp(i, ctx)
+		case opDeferOp:
+			execDeferOp(i, ctx)
 		case opCallFunc:
 			fun := ctx.code.funs[i&bitsOperand]
 			fun.exec(ctx, ctx.getScope(fun.nestDepth > 1))
@@ -219,6 +222,7 @@ func (ctx *Context) Exec(ip, ipEnd int) {
 		}
 	}
 finished:
+	execDefers(ctx)
 	if allowProfile && doProfile {
 		if lastInstr != 0 {
 			instrProfile(lastInstr, time.Since(start))
@@ -267,6 +271,7 @@ var _execTable = [...]func(i Instr, p *Context){
 	opGoBuiltin:     execGoBuiltin,
 	opErrWrap:       execErrWrap,
 	opWrapIfErr:     execWrapIfErr,
+	opDeferOp:       execDeferOp,
 }
 
 var execTable []func(i Instr, p *Context)

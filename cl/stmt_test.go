@@ -1108,7 +1108,7 @@ func testSingleStmt(name string, t *testing.T, fs *asttest.MemFS, wants []string
 	b := exec.NewBuilder(nil)
 	_, noExecCtx, err := newPackage(b, bar, fset)
 	if err != nil || !noExecCtx {
-		t.Fatal(name+" :Compile failed:", err)
+		t.Fatal(name+" :Compile failed:", err, noExecCtx)
 	}
 	code := b.Resolve()
 	ctx := exec.NewContext(code)
@@ -1408,6 +1408,48 @@ var testGotoLabelClauses = map[string]testData{
 func TestGotoLabelStmt(t *testing.T) {
 	for name, clause := range testGotoLabelClauses {
 		log.Info("===> TestGotoLabelStmt", name)
+		testSingleStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+var testDeferClauses = map[string]testData{
+	"func_in_defer_func": {`
+		defer println(println("hello world"))
+		println("test defer")
+		`, []string{"hello world", "test defer", "12 <nil>"}},
+	"func_in_defer_for": {`
+		for i:=0;i<10;i++ {
+			defer println(i)
+		}
+		println("test defer")
+		`, []string{"test defer", "9", "8", "7", "6", "5", "4", "3", "2", "1", "0"}},
+	"multi_defer": {`
+	func test() {
+		defer func() {
+			println("Hello, test defer!")
+		}()
+		println("Hello, test!")
+	}
+	
+	defer func() {
+		println("Hello, defer1!")
+	}()
+	defer func() {
+		println("Hello, defer2!")
+	}()
+	defer func() {
+		println("Hello, defer3!")
+	}()
+	println("Hello, world!")
+	test()
+		`, []string{"Hello, world!", "Hello, test!", "Hello, test defer!", "Hello, defer3!", "Hello, defer2!", "Hello, defer1!"}},
+}
+
+func TestDeferStmt(t *testing.T) {
+	for name, clause := range testDeferClauses {
+		log.Info("===> TestDeferStmt", name)
 		testSingleStmt(name, t, asttest.NewSingleFileFS("/foo", "bar.gop", clause.clause), clause.wants)
 	}
 }
