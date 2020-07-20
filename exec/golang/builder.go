@@ -322,7 +322,7 @@ func (p *Builder) ReservedAsPush(r exec.Reserved, v interface{}) {
 	p.reserveds[r].Expr = Const(p, v)
 }
 
-// ReservedAsInstr sets Reserved as Push(v)
+// ReservedAsInstr sets Reserved as Instr
 func (p *Builder) ReservedAsInstr(r exec.Reserved, v exec.Instr) {
 	log.Panicln("todo")
 }

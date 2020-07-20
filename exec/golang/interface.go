@@ -438,7 +438,7 @@ func (p *iBuilder) ReservedAsPush(r exec.Reserved, v interface{}) {
 	((*Builder)(p)).ReservedAsPush(r, v)
 }
 
-// ReservedAsInstr sets Reserved as Push(v)
+// ReservedAsInstr sets Reserved as Instr
 func (p *iBuilder) ReservedAsInstr(r exec.Reserved, instr exec.Instr) {
 	((*Builder)(p)).ReservedAsInstr(r, instr)
 }
