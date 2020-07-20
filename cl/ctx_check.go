@@ -239,7 +239,7 @@ func isNoExecCtxSliceExpr(ctx *blockCtx, v *ast.SliceExpr) bool {
 
 func isNoExecCtxFuncLit(ctx *blockCtx, v *ast.FuncLit) bool {
 	// TODO: log.Warn("isNoExecCtxFuncLit: to be optimized")
-	return true
+	return false
 }
 
 func isNoExecCtx2nd(ctx *blockCtx, a, b ast.Expr) bool {

@@ -1170,21 +1170,13 @@ var testDeferClauses = map[string]testData{
 		`, want: "test defer\n9\n8\n7\n6\n5\n4\n3\n2\n1\n0\n"},
 	"multi_defer": {clause: `
 	func test() {
-		defer func() {
-			println("Hello, test defer!")
-		}()
+		defer println("Hello, test defer!")
 		println("Hello, test!")
 	}
 	
-	defer func() {
-		println("Hello, defer1!")
-	}()
-	defer func() {
-		println("Hello, defer2!")
-	}()
-	defer func() {
-		println("Hello, defer3!")
-	}()
+	defer println("Hello, defer1!")
+	defer println("Hello, defer2!")
+	defer println("Hello, defer3!")
 	println("Hello, world!")
 	test()
 		`, want: "Hello, world!\nHello, test!\nHello, test defer!\nHello, defer3!\nHello, defer2!\nHello, defer1!\n"},
