@@ -1177,9 +1177,36 @@ var testDeferClauses = map[string]testData{
 	defer println("Hello, defer1!")
 	defer println("Hello, defer2!")
 	defer println("Hello, defer3!")
+	defer test()
 	println("Hello, world!")
-	test()
 		`, want: "Hello, world!\nHello, test!\nHello, test defer!\nHello, defer3!\nHello, defer2!\nHello, defer1!\n"},
+	"multi_defer_args": {clause: `
+	func test(i int) {
+		defer println("Hello, test defer!")
+		println("Hello, test!",i)
+	}
+	
+	defer println("Hello, defer1!")
+	defer println("Hello, defer2!")
+	defer println("Hello, defer3!")
+	defer test(1)
+	println("Hello, world!")
+		`, want: "Hello, world!\nHello, test! 1\nHello, test defer!\nHello, defer3!\nHello, defer2!\nHello, defer1!\n"},
+	"multi_defer_goval": {clause: `
+	import "fmt"
+	import gostrings "strings"
+	func test(i int) {
+		defer println("Hello, test defer!")
+		println("Hello, test!",i)
+	}
+
+    defer println(gostrings.NewReplacer("?", "!").Replace("hello, world???"))
+	defer println("Hello, defer1!")
+	defer println("Hello, defer2!")
+	defer println("Hello, defer3!")
+	defer test(1)
+	println("Hello, world!")
+		`, want: "Hello, world!\nHello, test! 1\nHello, test defer!\nHello, defer3!\nHello, defer2!\nHello, defer1!\nhello, world!!!\n"},
 }
 
 func TestDeferStmt(t *testing.T) {
