@@ -282,6 +282,33 @@ And the most interesting thing is, the return error contains the full error stac
 How these `ErrWrap expressions` work? See [Error Handling](https://github.com/goplus/gop/wiki/Error-Handling) for more information.
 
 
+### Auto Property
+
+Let's see an example written in Go+:
+
+```go
+import "github.com/goplus/gop/ast/goptest"
+
+doc := goptest.New(`... Go+ code ...`)!
+
+println(doc.Any().FuncDecl().Name())
+```
+
+In many languages, there is a concept named `property` who has `get` and `set` methods.
+
+Suppose we have `get property`, the above example will be:
+
+```go
+import "github.com/goplus/gop/ast/goptest"
+
+doc := goptest.New(`... Go+ code ...`)!
+
+println(doc.any.funcDecl.name)
+```
+
+In Go+, we introduce a concept named `auto property`. It is a `get property`, but is implemented automatically. If we have a method named `Bar()`, then we will have a `get property` named `bar` at the same time.
+
+
 ### Unix shebang
 
 You can use Go+ programs as shell scripts now. For example:
