@@ -18,6 +18,7 @@ package golang
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/goplus/gop/cl"
@@ -120,6 +121,158 @@ func main() {
 	if codeGen != codeExp {
 		fmt.Println(codeGen)
 		t.Fatal("TestGoVar failed: codeGen != codeExp")
+	}
+}
+
+type testInfo struct {
+	Info string
+}
+
+type testPoint struct {
+	X int
+	Y int
+}
+
+type testRect struct {
+	testInfo
+	Pt1 testPoint
+	Pt2 *testPoint
+}
+
+var g_Rect *testRect
+
+func init() {
+	g_Rect = &testRect{}
+	g_Rect.Pt2 = &testPoint{}
+}
+
+func getTestRect() *testRect {
+	return g_Rect
+}
+
+func execTestRect(_ int, p *qexec.Context) {
+	p.Ret(0, getTestRect())
+}
+
+func TestGoField(t *testing.T) {
+	codeExp := `package main
+
+import (
+	fmt "fmt"
+	pkg_field "pkg_field"
+)
+
+var y golang.testRect
+
+func main() {
+	y = pkg_field.Rect2
+	pkg_field.Rect.Info = "hello"
+	pkg_field.Rect.Pt1.X = -1
+	pkg_field.Rect.Pt2.Y = -2
+	y.Info = "world"
+	y.Pt1.X = -10
+	y.Pt2.Y = -20
+	pkg_field.GetRect().Info = "next"
+	pkg_field.GetRect().Pt1.X = 101
+	pkg_field.GetRect().Pt2.Y = 102
+	pkg_field.Rect2 = y
+	fmt.Println(pkg_field.Rect.Info, pkg_field.Rect.Pt2.Y, y.Info, y.Pt2.Y, pkg_field.GetRect().Info, pkg_field.GetRect().Pt2.Y)
+}
+`
+	println, _ := I.FindFuncv("println")
+
+	pkg := qexec.NewGoPackage("pkg_field")
+
+	rc := testRect{}
+	rc.Info = "Info"
+	rc.Pt1 = testPoint{10, 20}
+	rc.Pt2 = &testPoint{30, 40}
+
+	rc2 := testRect{}
+	rc2.Pt2 = &testPoint{}
+
+	pkg.RegisterVars(
+		pkg.Var("Rect", &rc),
+		pkg.Var("Rect2", &rc2),
+	)
+	pkg.RegisterFuncs(
+		pkg.Func("GetRect", getTestRect, execTestRect),
+	)
+
+	x, ok := pkg.FindVar("Rect")
+	if !ok {
+		t.Fatal("FindVar failed:", x)
+	}
+	x2, ok := pkg.FindVar("Rect2")
+	if !ok {
+		t.Fatal("FindVar failed:", x2)
+	}
+	fnTestRect, ok := pkg.FindFunc("GetRect")
+	if !ok {
+		t.Fatal("FindFunc failed:", fnTestRect)
+	}
+
+	it := reflect.TypeOf(rc)
+	it2 := reflect.TypeOf(g_Rect)
+
+	y := NewVar(it, "y")
+
+	b := NewBuilder("main", nil, nil)
+
+	code := b.Interface().
+		DefineVar(y). // y
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		LoadGoVar(x2).
+		StoreVar(y). // y = pkg_field.Rect2
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Push("hello").
+		StoreField(x, []int{0, 0}). // pkg_field.Rect.Info = "hello"
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Push(-1).
+		StoreField(x, []int{1, 0}). // pkg_field.Rect.Pt1.X = -1
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Push(-2).
+		StoreField(x, []int{2, 1}). // pkg_field.Rect.Pt2.Y = -2
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Push("world").
+		StoreField(y, []int{0, 0}). // y.Info = "world"
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Push(-10).
+		StoreField(y, []int{1, 0}). // y.Pt1.X = -10
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Push(-20).
+		StoreField(y, []int{2, 1}). // y.Pt2.Y = -20
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Push("next").
+		CallGoFunc(fnTestRect, 0).
+		StoreField(it2, []int{0, 0}). // pkg_field.GetRect().Info = "next"
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Push(101).
+		CallGoFunc(fnTestRect, 0).
+		StoreField(it2, []int{1, 0}). // pkg_field.GetRect().Pt1.X = 101
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Push(102).
+		CallGoFunc(fnTestRect, 0).
+		StoreField(it2, []int{2, 1}). // pkg_field.GetRect().Pt2.Y = 102
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		LoadVar(y).
+		StoreGoVar(x2). // pkg_field.Rect2 = y
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		LoadField(x, []int{0, 0}).
+		LoadField(x, []int{2, 1}).
+		LoadField(y, []int{0, 0}).
+		LoadField(y, []int{2, 1}).
+		CallGoFunc(fnTestRect, 0).
+		LoadField(it2, []int{0, 0}).
+		CallGoFunc(fnTestRect, 0).
+		LoadField(it2, []int{2, 1}).
+		CallGoFuncv(println, 6, 6). // print(pkg_field.Info,pkg_field.Pt2.Y,y.Info,y.Pt2.Y,pkg_field.GetRect().Info,pkg_field.GetRect().Pt2.Y)
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Resolve()
+
+	if v := code.(*Code); v.String() != codeExp {
+		fmt.Println(v.String())
+		log.Fatal("TestGoVar failed: codeGen != codeExp")
 	}
 }
 

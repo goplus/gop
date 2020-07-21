@@ -232,6 +232,11 @@ func (p *Builder) storeVar(addr tAddress) *Builder {
 	return p
 }
 
+// StoreVarField instr
+func (p *Builder) storeVarField(addr tAddress, index []int) *Builder {
+	return p
+}
+
 // -----------------------------------------------------------------------------
 
 // Var represents a variable.

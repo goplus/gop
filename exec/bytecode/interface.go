@@ -313,6 +313,18 @@ func (p *iBuilder) AddrGoVar(addr GoVarAddr) exec.Builder {
 	return p
 }
 
+// LoadField instr
+func (p *iBuilder) LoadField(v interface{}, index []int) exec.Builder {
+	((*Builder)(p)).LoadField(v, index)
+	return p
+}
+
+// StoreField instr
+func (p *iBuilder) StoreField(v interface{}, index []int) exec.Builder {
+	((*Builder)(p)).StoreField(v, index)
+	return p
+}
+
 // AddrOp instr
 func (p *iBuilder) AddrOp(kind exec.Kind, op exec.AddrOperator) exec.Builder {
 	((*Builder)(p)).AddrOp(kind, op)

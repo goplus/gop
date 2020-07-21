@@ -270,6 +270,8 @@ var _execTable = [...]func(i Instr, p *Context){
 	opGoBuiltin:     execGoBuiltin,
 	opErrWrap:       execErrWrap,
 	opWrapIfErr:     execWrapIfErr,
+	opLoadField:     execLoadField,
+	opStoreField:    execStoreField,
 }
 
 var execTable []func(i Instr, p *Context)
