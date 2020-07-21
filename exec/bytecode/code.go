@@ -115,6 +115,8 @@ const (
 	opErrWrap       = 42 // idx(26)
 	opWrapIfErr     = 43 // reserved(2) offset(24)
 	opDeferOp       = 44 // reserved(2) offset(24)
+	opLoadField     = 45 // op(26)
+	opStoreField    = 46 // op(26)
 )
 
 const (
@@ -200,6 +202,8 @@ var instrInfos = []InstrInfo{
 	opErrWrap:       {"errWrap", "", "idx", 26},                           // idx(26)
 	opWrapIfErr:     {"wrapIfErr", "", "offset", 26},                      // reserved(2) offset(24)
 	opDeferOp:       {"opDeferOp", "", "offset", 26},                      // reserved(2) offset(24)
+	opLoadField:     {"loadField", "", "", 26},                            // addr(26)
+	opStoreField:    {"storeField", "", "", 26},                           // addr(26)
 }
 
 // -----------------------------------------------------------------------------

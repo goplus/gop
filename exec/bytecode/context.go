@@ -275,6 +275,8 @@ var _execTable = [...]func(i Instr, p *Context){
 	opErrWrap:       execErrWrap,
 	opWrapIfErr:     execWrapIfErr,
 	opDeferOp:       execDeferOp,
+	opLoadField:     execLoadField,
+	opStoreField:    execStoreField,
 }
 
 var execTable []func(i Instr, p *Context)
