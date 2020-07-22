@@ -311,6 +311,7 @@ func compileDeferStmt(ctx *blockCtx, v *ast.DeferStmt) {
 	}
 
 	f()
+	ctx.infer.Pop()
 
 	out.Label(end)
 	instr.Set(out, out.Defer(start, end))

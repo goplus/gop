@@ -1207,6 +1207,91 @@ var testDeferClauses = map[string]testData{
 	defer test(1)
 	println("Hello, world!")
 		`, want: "Hello, world!\nHello, test! 1\nHello, test defer!\nHello, defer3!\nHello, defer2!\nHello, defer1!\nhello, world!!!\n"},
+
+	"unnamed_func": {clause: `
+		f := func(i int) {
+			defer println(i)
+			println("hello")
+		}
+		defer f(1+1)
+		println("hello1")
+		`, want: "hello1\nhello\n2\n"},
+	"unnamed_func2": {clause: `
+		f2:= func(i int,err error) {
+			defer println(i)
+			println(err)
+			println("hello")
+		}
+		defer f2(println("hello world"))
+		println("hello1")
+		`, want: "hello world\nhello1\n<nil>\nhello\n12\n"},
+	"unnamed_func3": {clause: `
+		import (
+			"fmt"
+		)
+		
+		myprint := func(format string, a ...interface{}) {
+			format = "this is test print: " + format
+			fmt.Printf(format, a...)
+		}
+		
+		defer myprint("hello %s\n", "defer")
+		myprint("hello %s\n", "world")
+		`, want: "this is test print: hello world\nthis is test print: hello defer\n"},
+	"unnamed_func4": {clause: `
+	import "strings"
+
+	f2 := func(s string, s2 string) {
+		defer func() {
+			println(s)
+			println(s2)
+		}()
+		s = strings.Replace(s, "?", "!", -1)
+		s2 = strings.Replace(s2, "?", "!", -1)
+	}
+	s := "hello world???"
+	s2 := "hello world????"
+	defer f2(s, s2)
+	
+	println(s)
+	println(s2)
+		`, want: "hello world???\nhello world????\nhello world!!!\nhello world!!!!\n"},
+	"unnamed_func5": {clause: `
+	import (
+		"fmt"
+	)
+	
+	defer func(format string, a ...interface{}) {
+		format = format
+		fmt.Printf(format, a...)
+	}("hello %s\n", "defer")
+	
+	printf("hello %s\n", "world")
+		`, want: "hello world\nhello defer\n"},
+	"unnamed_func6": {clause: `
+	import (
+		"fmt"
+	)
+	
+	myprint := func() {
+		fmt.Printf("hello defer\n")
+	}
+	
+	defer myprint()
+	printf("hello %s\n", "world")
+		`, want: "hello world\nhello defer\n"},
+	"unnamed_func7": {clause: `
+	import (
+		"fmt"
+	)
+	
+	myprint := func() {
+		fmt.Printf("hello world\n")
+	}
+	
+	defer fmt.Println("hello defer")
+	myprint()
+		`, want: "hello world\nhello defer\n"},
 }
 
 func TestDeferStmt(t *testing.T) {
