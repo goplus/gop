@@ -1154,3 +1154,154 @@ var testRangeMapWithBranchClauses = map[string]testData{
 func TestMapForPhraseWithBranch(t *testing.T) {
 	testScripts(t, "TestMapForPhraseWithBranch", testRangeMapWithBranchClauses)
 }
+
+// -----------------------------------------------------------------------------
+
+var testDeferClauses = map[string]testData{
+	"func_in_defer_func": {clause: `
+		defer println(println("hello world"))
+		println("test defer")
+		`, want: "hello world\ntest defer\n12 <nil>\n"},
+	"func_in_defer_for": {clause: `
+		for i:=0;i<10;i++ {
+			defer println(i)
+		}
+		println("test defer")
+		`, want: "test defer\n9\n8\n7\n6\n5\n4\n3\n2\n1\n0\n"},
+	"multi_defer": {clause: `
+	func test() {
+		defer println("Hello, test defer!")
+		println("Hello, test!")
+	}
+	
+	defer println("Hello, defer1!")
+	defer println("Hello, defer2!")
+	defer println("Hello, defer3!")
+	defer test()
+	println("Hello, world!")
+		`, want: "Hello, world!\nHello, test!\nHello, test defer!\nHello, defer3!\nHello, defer2!\nHello, defer1!\n"},
+	"multi_defer_args": {clause: `
+	func test(i int) {
+		defer println("Hello, test defer!")
+		println("Hello, test!",i)
+	}
+	
+	defer println("Hello, defer1!")
+	defer println("Hello, defer2!")
+	defer println("Hello, defer3!")
+	defer test(1)
+	println("Hello, world!")
+		`, want: "Hello, world!\nHello, test! 1\nHello, test defer!\nHello, defer3!\nHello, defer2!\nHello, defer1!\n"},
+	"multi_defer_goval": {clause: `
+	import "fmt"
+	import gostrings "strings"
+	func test(i int) {
+		defer println("Hello, test defer!")
+		println("Hello, test!",i)
+	}
+
+    defer println(gostrings.NewReplacer("?", "!").Replace("hello, world???"))
+	defer println("Hello, defer1!")
+	defer println("Hello, defer2!")
+	defer println("Hello, defer3!")
+	defer test(1)
+	println("Hello, world!")
+		`, want: "Hello, world!\nHello, test! 1\nHello, test defer!\nHello, defer3!\nHello, defer2!\nHello, defer1!\nhello, world!!!\n"},
+
+	"unnamed_func": {clause: `
+		f := func(i int) {
+			defer println(i)
+			println("hello")
+		}
+		defer f(1+1)
+		println("hello1")
+		`, want: "hello1\nhello\n2\n"},
+	"unnamed_func2": {clause: `
+		f2:= func(i int,err error) {
+			defer println(i)
+			println(err)
+			println("hello")
+		}
+		defer f2(println("hello world"))
+		println("hello1")
+		`, want: "hello world\nhello1\n<nil>\nhello\n12\n"},
+	"unnamed_func3": {clause: `
+		import (
+			"fmt"
+		)
+		
+		myprint := func(format string, a ...interface{}) {
+			format = "this is test print: " + format
+			fmt.Printf(format, a...)
+		}
+		
+		defer myprint("hello %s\n", "defer")
+		myprint("hello %s\n", "world")
+		`, want: "this is test print: hello world\nthis is test print: hello defer\n"},
+	"unnamed_func4": {clause: `
+	import "strings"
+
+	f2 := func(s string, s2 string) {
+		defer func() {
+			println(s)
+			println(s2)
+		}()
+		s = strings.Replace(s, "?", "!", -1)
+		s2 = strings.Replace(s2, "?", "!", -1)
+	}
+	s := "hello world???"
+	s2 := "hello world????"
+	defer f2(s, s2)
+	
+	println(s)
+	println(s2)
+		`, want: "hello world???\nhello world????\nhello world!!!\nhello world!!!!\n"},
+	"unnamed_func5": {clause: `
+	import (
+		"fmt"
+	)
+	
+	defer func(format string, a ...interface{}) {
+		format = format
+		fmt.Printf(format, a...)
+	}("hello %s\n", "defer")
+	
+	printf("hello %s\n", "world")
+		`, want: "hello world\nhello defer\n"},
+	"unnamed_func6": {clause: `
+	import (
+		"fmt"
+	)
+	
+	myprint := func() {
+		fmt.Printf("hello defer\n")
+	}
+	
+	defer myprint()
+	printf("hello %s\n", "world")
+		`, want: "hello world\nhello defer\n"},
+	"unnamed_func7": {clause: `
+	import (
+		"fmt"
+	)
+	
+	myprint := func() {
+		fmt.Printf("hello world\n")
+	}
+	
+	defer fmt.Println("hello defer")
+	myprint()
+		`, want: "hello world\nhello defer\n"},
+	"nonvalue": {clause: `
+	a := [1, 2, 3]
+	b := [4, 5, 6]
+	defer func() {
+		println(b)
+	}()
+	defer copy(b, a)
+		`, want: "[1 2 3]\n"},
+}
+
+func TestDeferStmt(t *testing.T) {
+	testScripts(t, "TestDeferStmt", testDeferClauses)
+}

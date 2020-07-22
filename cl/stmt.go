@@ -71,6 +71,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileBranchStmt(ctx, v)
 	case *ast.LabeledStmt:
 		compileLabeledStmt(ctx, v)
+	case *ast.DeferStmt:
+		compileDeferStmt(ctx, v)
 	case *ast.EmptyStmt:
 		// do nothing
 	default:
@@ -227,6 +229,95 @@ func compileLabeledStmt(ctx *blockCtx, v *ast.LabeledStmt) {
 	ctx.out.Label(label)
 	ctx.currentLabel = v
 	compileStmt(ctx, v.Stmt)
+}
+
+func compileDeferStmt(ctx *blockCtx, v *ast.DeferStmt) {
+	var instr exec.Reserved
+	out := ctx.out
+	start := ctx.NewLabel("")
+	end := ctx.NewLabel("")
+
+	var f func()
+	exprFun := compileExpr(ctx, v.Call.Fun)
+	fn := ctx.infer.Pop()
+	switch vfn := fn.(type) {
+	case *qlFunc:
+		ret := vfn.Results()
+		ctx.infer.Push(ret)
+
+		for _, arg := range v.Call.Args {
+			compileExpr(ctx, arg)()
+		}
+		instr = ctx.out.Reserve()
+		out.Label(start)
+		f = func() {
+			arity := checkFuncCall(vfn.Proto(), 0, v.Call, ctx)
+			fun := vfn.FuncInfo()
+			if fun.IsVariadic() {
+				ctx.out.CallFuncv(fun, len(v.Call.Args), arity)
+			} else {
+				ctx.out.CallFunc(fun, len(v.Call.Args))
+			}
+		}
+	case *goFunc:
+		ret := vfn.Results()
+		ctx.infer.Push(ret)
+
+		for _, arg := range v.Call.Args {
+			compileExpr(ctx, arg)()
+		}
+		instr = ctx.out.Reserve()
+		out.Label(start)
+		f = func() {
+			if vfn.isMethod != 0 {
+				compileExpr(ctx, v.Call.Fun.(*ast.SelectorExpr).X)()
+			}
+			nexpr := len(v.Call.Args) + vfn.isMethod
+			arity := checkFuncCall(vfn.Proto(), vfn.isMethod, v.Call, ctx)
+			switch vfn.kind {
+			case exec.SymbolFunc:
+				ctx.out.CallGoFunc(exec.GoFuncAddr(vfn.addr), nexpr)
+			case exec.SymbolFuncv:
+				ctx.out.CallGoFuncv(exec.GoFuncvAddr(vfn.addr), nexpr, arity)
+			}
+		}
+	case *goValue:
+		if vfn.t.Kind() != reflect.Func {
+			log.Panicln("compileCallExpr failed: call a non function.")
+		}
+		ret := newFuncResults(vfn.t)
+		ctx.infer.Push(ret)
+
+		for _, arg := range v.Call.Args {
+			compileExpr(ctx, arg)()
+		}
+		instr = ctx.out.Reserve()
+		out.Label(start)
+		f = func() {
+			exprFun()
+			arity, ellipsis := checkFuncCall(vfn.t, 0, v.Call, ctx), false
+			if arity == -1 {
+				arity, ellipsis = len(v.Call.Args), true
+			}
+			ctx.out.CallGoClosure(len(v.Call.Args), arity, ellipsis)
+		}
+	case *nonValue:
+		instr = ctx.out.Reserve()
+		out.Label(start)
+		// TODO compile args before compileCallExpr
+		switch nv := vfn.v.(type) {
+		case goInstr:
+			f = nv(ctx, v.Call)
+		case reflect.Type:
+			f = compileTypeCast(nv, ctx, v.Call)
+		}
+	}
+
+	f()
+	ctx.infer.Pop()
+
+	out.Label(end)
+	instr.Set(out, out.Defer(start, end))
 }
 
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {

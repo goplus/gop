@@ -127,6 +127,11 @@ func (p *iBuilder) Default() exec.Builder {
 	return p
 }
 
+// Default instr
+func (p *iBuilder) Defer(start, end exec.Label) exec.Instr {
+	return ((*Builder)(p)).Defer(start.(*Label), end.(*Label))
+}
+
 // WrapIfErr instr
 func (p *iBuilder) WrapIfErr(nret int, l exec.Label) exec.Builder {
 	((*Builder)(p)).WrapIfErr(nret, l.(*Label))
@@ -415,6 +420,11 @@ func (p *iBuilder) Reserve() exec.Reserved {
 // ReservedAsPush sets Reserved as Push(v)
 func (p *iBuilder) ReservedAsPush(r exec.Reserved, v interface{}) {
 	((*Builder)(p)).ReservedAsPush(r, v)
+}
+
+// ReservedAsInstr sets Reserved as Instr
+func (p *iBuilder) ReservedAsInstr(r exec.Reserved, instr exec.Instr) {
+	((*Builder)(p)).ReservedAsInstr(r, instr)
 }
 
 // GetPackage returns the Go+ package that the Builder works for.
