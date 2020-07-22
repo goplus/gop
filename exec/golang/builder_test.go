@@ -18,6 +18,8 @@ package golang
 
 import (
 	"fmt"
+	"go/ast"
+	"reflect"
 	"testing"
 
 	"github.com/goplus/gop/cl"
@@ -124,3 +126,12 @@ func main() {
 }
 
 // -----------------------------------------------------------------------------
+
+func TestReserved(t *testing.T) {
+	code := NewBuilder("main", nil, nil)
+	off := code.Reserve()
+	code.ReservedAsPush(off, 123)
+	if !reflect.DeepEqual(code.reserveds[off].Expr.(*ast.BasicLit), IntConst(123)) {
+		t.Fatal("TestReserved failed: reserveds is not set to", 123)
+	}
+}
