@@ -135,3 +135,28 @@ func TestReserved(t *testing.T) {
 		t.Fatal("TestReserved failed: reserveds is not set to", 123)
 	}
 }
+
+func TestReserved2(t *testing.T) {
+	code := NewBuilder("main", nil, nil)
+	defer func() {
+		err := recover()
+		if !reflect.DeepEqual(err, "The method defer under the builder of golang is not yet supported") {
+			t.Fatal("TestReserved failed: Defer is not yet supported now")
+		}
+	}()
+	var start = NewLabel("")
+	var end = NewLabel("")
+	code.Interface().Defer(start, end)
+}
+
+func TestReserved3(t *testing.T) {
+	code := NewBuilder("main", nil, nil)
+	off := code.Reserve()
+	defer func() {
+		err := recover()
+		if !reflect.DeepEqual(err, "todo\n") {
+			t.Fatal("TestReserved failed: ReservedAsInstr is todo now")
+		}
+	}()
+	code.Interface().ReservedAsInstr(off, nil)
+}
