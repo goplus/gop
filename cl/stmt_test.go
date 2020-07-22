@@ -1292,6 +1292,14 @@ var testDeferClauses = map[string]testData{
 	defer fmt.Println("hello defer")
 	myprint()
 		`, want: "hello world\nhello defer\n"},
+	"nonvalue": {clause: `
+	a := [1, 2, 3]
+	b := [4, 5, 6]
+	defer func() {
+		println(b)
+	}()
+	defer copy(b, a)
+		`, want: "[1 2 3]\n"},
 }
 
 func TestDeferStmt(t *testing.T) {

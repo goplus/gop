@@ -302,6 +302,9 @@ func compileDeferStmt(ctx *blockCtx, v *ast.DeferStmt) {
 			ctx.out.CallGoClosure(len(v.Call.Args), arity, ellipsis)
 		}
 	case *nonValue:
+		instr = ctx.out.Reserve()
+		out.Label(start)
+		// TODO compile args before compileCallExpr
 		switch nv := vfn.v.(type) {
 		case goInstr:
 			f = nv(ctx, v.Call)
