@@ -171,7 +171,7 @@ func (p *iBuilder) Defer(start, end exec.Label) exec.Instr {
 	return ((*Builder)(p)).Defer(end.(*Label), end.(*Label))
 }
 
-// Defer instr
+// Goroutine instr
 func (p *iBuilder) Goroutine(start, end exec.Label) exec.Instr {
 	return ((*Builder)(p)).Goroutine(end.(*Label), end.(*Label))
 }
