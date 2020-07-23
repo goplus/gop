@@ -322,6 +322,9 @@ type Builder interface {
 	// Index instr
 	Index(idx int) Builder
 
+	// AddrIndex instr
+	AddrIndex(idx int) Builder
+
 	// SetIndex instr
 	SetIndex(idx int) Builder
 

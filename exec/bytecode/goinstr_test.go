@@ -357,6 +357,28 @@ func TestIndex2(t *testing.T) {
 	}
 }
 
+func TestAddrIndex(t *testing.T) {
+	a := NewVar(reflect.SliceOf(TyFloat64), "")
+	code := newBuilder().
+		DefineVar(a).
+		Push(3.2).
+		Push(1.2).
+		Push(2.4).
+		MakeArray(reflect.SliceOf(TyFloat64), 3).
+		StoreVar(a).
+		LoadVar(a).
+		Push(1).
+		AddrIndex(-1).
+		AddrOp(Int, OpAddrVal).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := ctx.Get(-1); v != 1.2 {
+		t.Fatal("*&[3.2, 1.2 0.7][1]:", v)
+	}
+}
+
 func TestSetIndex(t *testing.T) {
 	a := NewVar(reflect.SliceOf(TyFloat64), "")
 	code := newBuilder().
@@ -384,14 +406,14 @@ func TestSetLargeIndex(t *testing.T) {
 	a := NewVar(reflect.SliceOf(TyFloat64), "")
 	code := newBuilder().
 		DefineVar(a).
-		Push(setIndexOperand+1).
+		Push(opIndexOperand+1).
 		Make(reflect.SliceOf(TyFloat64), 1).
 		StoreVar(a).
 		Push(1.7).
 		LoadVar(a).
-		SetIndex(setIndexOperand).
+		SetIndex(opIndexOperand).
 		LoadVar(a).
-		Index(setIndexOperand).
+		Index(opIndexOperand).
 		Resolve()
 
 	ctx := NewContext(code)

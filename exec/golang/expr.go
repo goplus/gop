@@ -498,6 +498,15 @@ func (p *Builder) Index(idx int) *Builder {
 	return p
 }
 
+// AddrIndex instr
+func (p *Builder) AddrIndex(idx int) *Builder {
+	p.rhs.Push(&ast.UnaryExpr{
+		Op: token.AND,
+		X:  IndexWith(p, idx),
+	})
+	return p
+}
+
 // SetIndex instr
 func (p *Builder) SetIndex(idx int) *Builder {
 	p.lhs.Push(IndexWith(p, idx))
