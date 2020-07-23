@@ -103,6 +103,12 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 func compileIdentLHS(ctx *blockCtx, name string, mode compleMode) {
 	in := ctx.infer.Get(-1)
 	addr, err := ctx.findVar(name)
+	if mode == lhsDefine {
+		addr, err = ctx.getCtxVar(name)
+		if addr != nil {
+			log.Panicf("compileIdentLHS failed: %s redeclared in this block\n", name)
+		}
+	}
 	if err == nil {
 		if mode == lhsDefine && !addr.inCurrentCtx(ctx) {
 			log.Warn("requireVar: variable is shadowed -", name)
