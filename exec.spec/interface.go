@@ -304,6 +304,9 @@ type Builder interface {
 	// StoreField instr
 	StoreField(v interface{}, index []int) Builder
 
+	// AddrField instr
+	AddrField(v interface{}, index []int) Builder
+
 	// AddrOp instr
 	AddrOp(kind Kind, op AddrOperator) Builder
 

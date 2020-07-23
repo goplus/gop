@@ -339,6 +339,12 @@ func (p *iBuilder) LoadField(v interface{}, index []int) exec.Builder {
 	return p
 }
 
+// AddrField instr
+func (p *iBuilder) AddrField(v interface{}, index []int) exec.Builder {
+	((*Builder)(p)).AddrField(v, index)
+	return p
+}
+
 // StoreField instr
 func (p *iBuilder) StoreField(v interface{}, index []int) exec.Builder {
 	((*Builder)(p)).StoreField(v, index)

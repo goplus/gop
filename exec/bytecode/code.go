@@ -117,6 +117,7 @@ const (
 	opDeferOp       = 44 // reserved(2) offset(24)
 	opLoadField     = 45 // op(26)
 	opStoreField    = 46 // op(26)
+	opAddrField     = 47 // op(26)
 )
 
 const (
@@ -204,6 +205,7 @@ var instrInfos = []InstrInfo{
 	opDeferOp:       {"opDeferOp", "", "offset", 26},                      // reserved(2) offset(24)
 	opLoadField:     {"loadField", "", "", 26},                            // addr(26)
 	opStoreField:    {"storeField", "", "", 26},                           // addr(26)
+	opAddrField:     {"addrField", "", "", 26},                            // addr(26)
 }
 
 // -----------------------------------------------------------------------------

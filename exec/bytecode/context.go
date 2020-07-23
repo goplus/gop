@@ -277,6 +277,7 @@ var _execTable = [...]func(i Instr, p *Context){
 	opDeferOp:       execDeferOp,
 	opLoadField:     execLoadField,
 	opStoreField:    execStoreField,
+	opAddrField:     execAddrField,
 }
 
 var execTable []func(i Instr, p *Context)

@@ -278,7 +278,11 @@ func TestGoField(t *testing.T) {
 		LoadField(it2, []int{0, 0}).
 		CallGoFunc(fnTestRect, 0).
 		LoadField(it2, []int{2, 1}).
-		CallGoFuncv(sprint, 6, 6). // print(pkg_field.Info,pkg_field.Pt2.Y,y.Info,y.Pt2.Y,pkg_field.GetRect().Info,pkg_field.GetRect().Pt2.Y)
+		AddrField(x, []int{1}).
+		AddrField(y, []int{1}).
+		CallGoFunc(fnTestRect, 0).
+		AddrField(it2, []int{1}).
+		CallGoFuncv(sprint, 9, 9). // print(pkg_field.Info,pkg_field.Pt2.Y,y.Info,y.Pt2.Y,pkg_field.GetRect().Info,pkg_field.GetRect().Pt2.Y)
 		Resolve()
 
 	ctx := NewContext(code)
@@ -293,7 +297,7 @@ func TestGoField(t *testing.T) {
 	if g_Rect.Info != "next" || g_Rect.Pt1.X != 101 || g_Rect.Pt2.Y != 102 {
 		t.Fatal("g_Rect", g_Rect)
 	}
-	if v := ctx.Get(-1); v != "hello-2world-20next102" {
+	if v := ctx.Get(-1); v != "hello-2world-20next102 &{-1 20} &{-10 0} &{101 0}" {
 		t.Fatal("LoadField", v)
 	}
 }

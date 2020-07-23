@@ -159,8 +159,7 @@ func compileIdent(ctx *blockCtx, name string) func() {
 			ctx.resetFieldVar(v.v)
 			return func() {
 				ctx.resetFieldVar(nil)
-				if ctx.inLHS && (kind == reflect.Array ||
-					kind == reflect.Struct) {
+				if ctx.inLHS && (kind == reflect.Array) {
 					ctx.out.AddrVar(v.v)
 				} else {
 					ctx.out.LoadVar(v.v)
@@ -834,13 +833,16 @@ func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr) func() { // x[i]
 		typElem = typ.Elem()
 	}
 	ctx.infer.Ret(1, &goValue{typElem})
+	ctx.resetFieldVar(nil)
 	return func() {
-		exprX()
 		switch kind {
 		case reflect.String, reflect.Slice, reflect.Array:
+			exprX()
 			n := compileIdx(ctx, v.Index, 1<<30, kind)
 			ctx.out.Index(n)
+			ctx.resetFieldVar(typElem)
 		case reflect.Map:
+			exprX()
 			typIdx := typ.Key()
 			compileExpr(ctx, v.Index)()
 			i := ctx.infer.Pop()
@@ -993,7 +995,8 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 			}
 			switch kind {
 			case exec.SymbolFunc, exec.SymbolFuncv:
-				ctx.infer.Ret(1, newGoFunc(addr, kind, 0, ctx))
+				fn := newGoFunc(addr, kind, 0, ctx)
+				ctx.infer.Ret(1, fn)
 				return func() {
 					log.Panicln("compileSelectorExpr: todo")
 				}
@@ -1026,13 +1029,18 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 				ctx.fieldExprX = exprX
 			}
 			ctx.fieldIndex = append(ctx.fieldIndex, sf.Index...)
-			index := ctx.fieldIndex
-			fn := ctx.fieldExprX
+			fieldIndex := ctx.fieldIndex
+			fieldExprX := ctx.fieldExprX
 			return func() {
-				if fn != nil {
-					fn()
+				if fieldExprX != nil {
+					fieldExprX()
 				}
-				ctx.out.LoadField(ctx.fieldVar, index)
+				if ctx.inLHS && sf.Type.Kind() == reflect.Array {
+					ctx.out.AddrField(ctx.fieldVar, fieldIndex)
+				} else {
+					ctx.out.LoadField(ctx.fieldVar, fieldIndex)
+				}
+				ctx.resetFieldVar(nil)
 			}
 		}
 		if _, ok := vx.t.MethodByName(name); !ok && isLower(name) {

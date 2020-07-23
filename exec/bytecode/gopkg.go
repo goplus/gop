@@ -70,6 +70,13 @@ func execLoadField(i Instr, p *Context) {
 	p.Push(v.FieldByIndex(index.([]int)).Interface())
 }
 
+func execAddrField(i Instr, p *Context) {
+	index := p.Pop()
+	v := reflect.ValueOf(p.Pop())
+	v = toElem(v)
+	p.Push(v.FieldByIndex(index.([]int)).Addr().Interface())
+}
+
 func toElem(v reflect.Value) reflect.Value {
 	for v.Kind() == reflect.Ptr {
 		v = v.Elem()
@@ -430,6 +437,21 @@ func (p *Builder) LoadField(v interface{}, index []int) *Builder {
 	}
 	p.Push(index)
 	i := (opLoadField << bitsOpShift)
+	p.code.data = append(p.code.data, uint32(i))
+	return p
+}
+
+// AddrField instr
+func (p *Builder) AddrField(v interface{}, index []int) *Builder {
+	switch x := v.(type) {
+	case exec.GoVarAddr:
+		p.AddrGoVar(x)
+	case *Var:
+		p.AddrVar(x)
+	case reflect.Type:
+	}
+	p.Push(index)
+	i := (opAddrField << bitsOpShift)
 	p.code.data = append(p.code.data, uint32(i))
 	return p
 }

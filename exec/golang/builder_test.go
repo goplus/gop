@@ -177,7 +177,7 @@ func main() {
 	pkg_field.GetRect().Pt1.X = 101
 	pkg_field.GetRect().Pt2.Y = 102
 	pkg_field.Rect2 = y
-	fmt.Println(pkg_field.Rect.Info, pkg_field.Rect.Pt2.Y, y.Info, y.Pt2.Y, pkg_field.GetRect().Info, pkg_field.GetRect().Pt2.Y)
+	fmt.Println(pkg_field.Rect.Info, pkg_field.Rect.Pt2.Y, y.Info, y.Pt2.Y, pkg_field.GetRect().Info, pkg_field.GetRect().Pt2.Y, &pkg_field.Rect.Pt1, &y.Pt1, &pkg_field.GetRect().Pt1)
 }
 `
 	println, _ := I.FindFuncv("println")
@@ -267,7 +267,11 @@ func main() {
 		LoadField(it2, []int{0, 0}).
 		CallGoFunc(fnTestRect, 0).
 		LoadField(it2, []int{2, 1}).
-		CallGoFuncv(println, 6, 6). // print(pkg_field.Info,pkg_field.Pt2.Y,y.Info,y.Pt2.Y,pkg_field.GetRect().Info,pkg_field.GetRect().Pt2.Y)
+		AddrField(x, []int{1}).
+		AddrField(y, []int{1}).
+		CallGoFunc(fnTestRect, 0).
+		AddrField(it2, []int{1}).
+		CallGoFuncv(println, 9, 9). // println(pkg_field.Rect.Info, pkg_field.Rect.Pt2.Y, y.Info, y.Pt2.Y, pkg_field.GetRect().Info, pkg_field.GetRect().Pt2.Y, &pkg_field.Rect.Pt1, &y.Pt1, &pkg_field.GetRect().Pt1)
 		EndStmt(nil, &stmtState{rhsBase: 0}).
 		Resolve()
 

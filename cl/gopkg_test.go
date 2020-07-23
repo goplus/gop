@@ -521,6 +521,8 @@ type testFieldInfo struct {
 	V9  *testFieldPoint
 	V10 []testFieldPoint
 	V11 []*testFieldPoint
+	V12 [2]testFieldPoint
+	V13 [2]*testFieldPoint
 }
 
 func testNewPoint(x int, y int) *testFieldPoint {
@@ -540,7 +542,7 @@ func TestPkgField(t *testing.T) {
 	m[1] = "hello"
 	m[2] = "world"
 
-	var ar [11]interface{}
+	var ar [13]interface{}
 	ar[0] = true
 	ar[1] = 'A'
 	ar[2] = "Info"
@@ -552,6 +554,8 @@ func TestPkgField(t *testing.T) {
 	ar[8] = &testFieldPoint{-10, -20}
 	ar[9] = []testFieldPoint{{100, 200}, {300, 400}}
 	ar[10] = []*testFieldPoint{&testFieldPoint{100, 200}, &testFieldPoint{300, 400}}
+	ar[11] = [2]testFieldPoint{{100, 200}, {300, 400}}
+	ar[12] = [2]*testFieldPoint{&testFieldPoint{100, 200}, &testFieldPoint{300, 400}}
 
 	info := &testFieldInfo{}
 	info.V7 = make(map[int]string)
@@ -560,7 +564,7 @@ func TestPkgField(t *testing.T) {
 		v.Field(i).Set(reflect.ValueOf(ar[i]))
 	}
 
-	var out [11]interface{}
+	var out [13]interface{}
 	var sum int
 	I.RegisterVars(
 		I.Var("Info", &info),
@@ -597,6 +601,17 @@ import (
 
 	testSource += `
 	pkg.Sum = 1+pkg.Info.V4+pkg.NewPoint(1000,200).X+pkg.Info.V8.X-pkg.Info.V9.X
+	pkg.Info.V5[0] = -100
+	println("pkg.Info.V5", pkg.Info.V5)
+	println("pkg.Info.V11[0]",pkg.Info.V11[0])
+	pkg.Info.V11[0] = nil
+	println("pkg.Info.V11",pkg.Info.V11)
+	pkg.Info.V11[1].X = -101
+	println("pkg.Info.V11[1].X",pkg.Info.V11[1].X)
+	pkg.Info.V13[0] = nil
+	println("pkg.Info.V13",pkg.Info.V13)
+	pkg.Info.V13[1].X = -102
+	println("pkg.Info.V13[1].X",pkg.Info.V13[1].X)
 	`
 
 	fsTestPkgVar := asttest.NewSingleFileFS("/foo", "bar.gop", testSource)
@@ -627,5 +642,14 @@ import (
 	}
 	if sum != 921 {
 		t.Fatal("binary expr check fail", sum)
+	}
+	if info.V5[0] != -100 {
+		t.Fatal("V5", info.V5)
+	}
+	if info.V11[0] != nil || info.V11[1].X != -101 {
+		t.Fatal("V11", info.V11)
+	}
+	if info.V13[0] != nil || info.V13[1].X != -102 {
+		t.Fatal("V13", info.V13)
 	}
 }

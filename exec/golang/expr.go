@@ -463,6 +463,16 @@ func (p *Builder) LoadField(v interface{}, index []int) *Builder {
 	return p
 }
 
+// AddrField instr
+func (p *Builder) AddrField(v interface{}, index []int) *Builder {
+	expr := p.fieldExpr(v, index)
+	p.rhs.Push(&ast.UnaryExpr{
+		Op: token.AND,
+		X:  expr,
+	})
+	return p
+}
+
 // StoreField instr
 func (p *Builder) StoreField(v interface{}, index []int) *Builder {
 	expr := p.fieldExpr(v, index)
