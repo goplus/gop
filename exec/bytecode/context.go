@@ -187,6 +187,8 @@ func (ctx *Context) Exec(ip, ipEnd int) {
 			execBuiltinOp(i, ctx)
 		case opDeferOp:
 			execDeferOp(i, ctx)
+		case opGoroutineOp:
+			execGoroutineOp(i, ctx)
 		case opCallFunc:
 			fun := ctx.code.funs[i&bitsOperand]
 			fun.exec(ctx, ctx.getScope(fun.nestDepth > 1))

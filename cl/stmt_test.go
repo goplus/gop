@@ -1305,3 +1305,22 @@ var testDeferClauses = map[string]testData{
 func TestDeferStmt(t *testing.T) {
 	testScripts(t, "TestDeferStmt", testDeferClauses)
 }
+
+var testGoroutineClauses = map[string]testData{
+	"goroutine_func": {clause: `
+	go println("hello goroutine")
+	println("test world")
+	`, want: "test world\n"},
+	"goroutine_func1": {clause: `
+		import (
+			"time"
+		)
+		go println("hello goroutine")
+		println("test world")
+		time.Sleep(1 * time.Second)
+		`, want: "test world\nhello goroutine\n"},
+}
+
+func TestGoroutineStmt(t *testing.T) {
+	testScripts(t, "TestGoroutineStmt", testGoroutineClauses)
+}

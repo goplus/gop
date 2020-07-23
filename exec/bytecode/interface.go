@@ -127,9 +127,14 @@ func (p *iBuilder) Default() exec.Builder {
 	return p
 }
 
-// Default instr
+// Defer instr
 func (p *iBuilder) Defer(start, end exec.Label) exec.Instr {
 	return ((*Builder)(p)).Defer(start.(*Label), end.(*Label))
+}
+
+// Goroutine instr
+func (p *iBuilder) Goroutine(start, end exec.Label) exec.Instr {
+	return ((*Builder)(p)).Goroutine(start.(*Label), end.(*Label))
 }
 
 // WrapIfErr instr

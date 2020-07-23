@@ -171,6 +171,11 @@ func (p *iBuilder) Defer(start, end exec.Label) exec.Instr {
 	return ((*Builder)(p)).Defer(end.(*Label), end.(*Label))
 }
 
+// Defer instr
+func (p *iBuilder) Goroutine(start, end exec.Label) exec.Instr {
+	return ((*Builder)(p)).Goroutine(end.(*Label), end.(*Label))
+}
+
 func toVar(v exec.Var) *Var {
 	if v == nil {
 		return nil

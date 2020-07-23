@@ -393,8 +393,14 @@ func (p *Builder) EndComprehension(c *Comprehension) *Builder {
 	return p
 }
 
+// Defer instr
 func (p *Builder) Defer(start, end *Label) exec.Instr {
 	panic("The method defer under the builder of golang is not yet supported")
+}
+
+// Goroutine instr
+func (p *Builder) Goroutine(start, end *Label) exec.Instr {
+	panic("The method Goroutine under the builder of golang is not yet supported")
 }
 
 // ----------------------------------------------------------------------------

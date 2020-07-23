@@ -1,0 +1,2 @@
+go println("hello goroutine")
+println("test world")

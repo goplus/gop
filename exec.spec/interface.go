@@ -363,6 +363,9 @@ type Builder interface {
 
 	// Defer instr
 	Defer(start, end Label) Instr
+
+	// Goroutine instr
+	Goroutine(start, end Label) Instr
 }
 
 // Package represents a Go+ package.
