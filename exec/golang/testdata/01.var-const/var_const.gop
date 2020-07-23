@@ -1,0 +1,23 @@
+println("Hello "+"qiniu:", 123, 4.5, 7i)
+
+i := 0
+{
+	i := 0
+	i++
+	println("inner is", i)
+}
+println("outer is", i)
+println("start")
+{
+	i := 0
+	{
+		j := 2
+		{
+			c := 3
+			println(i, j, c)
+		}
+		println(i, j)
+	}
+	println(i)
+}
+println("end")
