@@ -407,7 +407,7 @@ func (p *Builder) DefineBlock() *Builder {
 //  EndBlock ends a  block
 func (p *Builder) EndBlock() *Builder {
 	p.endBlockStmt(0)
-	blockStmt := endBlockStmt(p)
+	blockStmt := getBlockStmts(p)
 	if p.parentCtx == nil {
 		p.rhs.Push(blockStmt)
 	} else {
@@ -417,9 +417,9 @@ func (p *Builder) EndBlock() *Builder {
 	return p
 }
 
-// endBlockStmt check whether the first stmt in block is labeledStmt.
+// getBlockStmts will check whether the first stmt in block stmts is labeledStmt.
 // if true ,the whole block should be labeled
-func endBlockStmt(p *Builder) ast.Stmt {
+func getBlockStmts(p *Builder) ast.Stmt {
 	body := &ast.BlockStmt{List: p.getStmts(p)}
 	if len(body.List) > 0 {
 		for i := 0; i < len(body.List); i++ {
