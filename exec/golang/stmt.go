@@ -397,4 +397,24 @@ func (p *Builder) Defer(start, end *Label) exec.Instr {
 	panic("The method defer under the builder of golang is not yet supported")
 }
 
+// DefineBlock starts a new block
+func (p *Builder) DefineBlock() *Builder {
+	p.scopeCtx = &scopeCtx{}
+	p.initStmts()
+	return p
+}
+
+//  EndBlock ends a  block
+func (p *Builder) EndBlock() *Builder {
+	p.endBlockStmt(0)
+	if p.cfun == nil {
+		p.scopeCtx = &p.gblScope
+	} else {
+		p.scopeCtx = &p.cfun.scopeCtx
+	}
+	body := &ast.BlockStmt{List: p.getStmts(p)}
+	p.rhs.Push(body)
+	return p
+}
+
 // ----------------------------------------------------------------------------

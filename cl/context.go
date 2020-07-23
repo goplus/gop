@@ -323,6 +323,18 @@ func (p *blockCtx) findFunc(name string) (addr *funcDecl, err error) {
 	return nil, ErrSymbolNotFunc
 }
 
+// getCtxVar finds a var in currentCtx only
+func (p *blockCtx) getCtxVar(name string) (addr iVar, err error) {
+	v, ok := p.syms[name]
+	if !ok {
+		return nil, ErrNotFound
+	}
+	if addr, ok = v.(iVar); ok {
+		return
+	}
+	return nil, ErrSymbolNotVariable
+}
+
 func (p *blockCtx) findVar(name string) (addr iVar, err error) {
 	v, ok := p.find(name)
 	if !ok {
