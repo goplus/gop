@@ -19,7 +19,6 @@ package cl
 import (
 	"reflect"
 	"strings"
-	"syscall"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/astutil"
@@ -32,16 +31,16 @@ import (
 
 // -----------------------------------------------------------------------------
 
-type compleMode = token.Token
+type compileMode = token.Token
 
 const (
-	lhsAssign compleMode = token.ASSIGN // leftHandSide = ...
-	lhsDefine compleMode = token.DEFINE // leftHandSide := ...
+	lhsAssign compileMode = token.ASSIGN // leftHandSide = ...
+	lhsDefine compileMode = token.DEFINE // leftHandSide := ...
 )
 
 // -----------------------------------------------------------------------------
 
-func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compleMode) {
+func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compileMode) {
 	ctx.inLHS = true
 	switch v := expr.(type) {
 	case *ast.Ident:
@@ -100,7 +99,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 	}
 }
 
-func compileIdentLHS(ctx *blockCtx, name string, mode compleMode) {
+func compileIdentLHS(ctx *blockCtx, name string, mode compileMode) {
 	in := ctx.infer.Get(-1)
 	addr, err := ctx.findVar(name)
 	if mode == lhsDefine {
@@ -113,7 +112,7 @@ func compileIdentLHS(ctx *blockCtx, name string, mode compleMode) {
 		if mode == lhsDefine && !addr.inCurrentCtx(ctx) {
 			log.Warn("requireVar: variable is shadowed -", name)
 		}
-	} else if mode == lhsAssign || err != syscall.ENOENT {
+	} else if mode == lhsAssign || err != ErrNotFound {
 		log.Panicln("compileIdentLHS failed:", err, "-", name)
 	} else {
 		typ := boundType(in.(iValue))
@@ -701,7 +700,7 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr) func() 
 	return nil
 }
 
-func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compleMode) {
+func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 	if mode == lhsDefine {
 		log.Panicln("compileIndexExprLHS: `:=` can't be used for index expression")
 	}
@@ -916,7 +915,7 @@ func getFuncInfo(fun exec.FuncInfo) (name string, narg int) {
 	return "main", 0
 }
 
-func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compleMode) {
+func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compileMode) {
 	if mode == lhsDefine {
 		log.Panicln("compileSelectorExprLHS: `:=` can't be used for index expression")
 	}
