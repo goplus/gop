@@ -152,6 +152,8 @@ func toIdent(e ast.Expr) *ast.Ident {
 	return e.(*ast.Ident)
 }
 
+var cnt = 0
+
 func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	if init := v.Init; init != nil {
 		v.Init = nil
