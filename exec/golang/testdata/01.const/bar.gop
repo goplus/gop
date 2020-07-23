@@ -1,1 +1,8 @@
 println("Hello "+"qiniu:", 123, 4.5, 7i)
+i := 0
+{
+	i := 0
+	i++
+	println("inner is", i)
+}
+println("outer is", i)
