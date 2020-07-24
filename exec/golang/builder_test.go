@@ -85,7 +85,7 @@ func main() {
 `
 	println, _ := I.FindFuncv("println")
 	a := NewVar(reflect.SliceOf(exec.TyFloat64), "a")
-	code := NewBuilder("main", nil, nil).
+	code := NewBuilder("main", nil, nil).Interface().
 		DefineVar(a).
 		EndStmt(nil, &stmtState{rhsBase: 0}).
 		Push(3.2).
@@ -107,7 +107,7 @@ func main() {
 		EndStmt(nil, &stmtState{rhsBase: 0}).
 		Resolve()
 
-	codeGen := code.String()
+	codeGen := code.(*Code).String()
 	if codeGen != codeExp {
 		fmt.Println(codeGen)
 		t.Fatal("TestBasic failed: codeGen != codeExp")
@@ -145,7 +145,7 @@ func main() {
 		t.Fatal("FindVar failed:", y)
 	}
 
-	code := NewBuilder("main", nil, nil).
+	code := NewBuilder("main", nil, nil).Interface().
 		Push(5).
 		Push(6).
 		StoreGoVar(y).
@@ -162,7 +162,7 @@ func main() {
 		EndStmt(nil, &stmtState{rhsBase: 0}).
 		Resolve()
 
-	codeGen := code.String()
+	codeGen := code.(*Code).String()
 	if codeGen != codeExp {
 		fmt.Println(codeGen)
 		t.Fatal("TestGoVar failed: codeGen != codeExp")
