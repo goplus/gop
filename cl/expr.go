@@ -700,13 +700,6 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compleMode) {
 
 	typ := ctx.infer.Get(-1).(iValue).Type()
 	typElem := typ.Elem()
-	if typ.Kind() == reflect.Ptr {
-		if typElem.Kind() != reflect.Array {
-			logPanic(ctx, v, `type %v does not support indexing`, typ)
-		}
-		typ = typElem
-		typElem = typElem.Elem()
-	}
 	if cons, ok := val.(*constVal); ok {
 		cons.bound(typElem, ctx.out)
 	} else if t := val.(iValue).Type(); t != typElem {

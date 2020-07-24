@@ -171,12 +171,6 @@ func igoLenOrCap(ctx *blockCtx, v *ast.CallExpr, op exec.GoBuiltin) func() {
 	x := ctx.infer.Get(-1)
 	typ := x.(iValue).Type()
 	kind := typ.Kind()
-	if kind == reflect.Ptr {
-		typ = typ.Elem()
-		if kind = typ.Kind(); kind != reflect.Array {
-			logPanic(ctx, v, `invalid argument a (type *%v) for %v`, typ, op)
-		}
-	}
 	switch kind {
 	case reflect.Array:
 		n := typ.Len()

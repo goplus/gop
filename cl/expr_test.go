@@ -214,6 +214,13 @@ func TestArray(t *testing.T) {
 		`,
 		"x: [1 217 0 3.4 5] x[1]: 217\n",
 	)
+	cltest.Expect(t, `
+		x := [...]float64{1, 2.3, 3, 4}
+		x[2] = 3.1
+		println("x[1:]:", x[1:])
+		println(len(x))
+	`,
+		"x[1:]: [2.3 3.1 4]\n4\n")
 }
 
 func TestMap(t *testing.T) {
