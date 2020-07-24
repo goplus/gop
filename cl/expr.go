@@ -42,7 +42,6 @@ const (
 // -----------------------------------------------------------------------------
 
 func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compleMode) {
-	ctx.checkArrayAddr = true
 	switch v := expr.(type) {
 	case *ast.Ident:
 		compileIdentLHS(ctx, v.Name, mode)
@@ -53,7 +52,6 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compleMode) {
 	default:
 		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
 	}
-	ctx.checkArrayAddr = false
 }
 
 func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
@@ -695,7 +693,11 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compleMode) {
 		log.Panicln("compileIndexExprLHS: `:=` can't be used for index expression")
 	}
 	val := ctx.infer.Get(-1)
+
+	ctx.checkArrayAddr = true
 	compileExpr(ctx, v.X)()
+	ctx.checkArrayAddr = false
+
 	typ := ctx.infer.Get(-1).(iValue).Type()
 	typElem := typ.Elem()
 	if typ.Kind() == reflect.Ptr {
