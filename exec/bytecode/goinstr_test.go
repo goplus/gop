@@ -361,21 +361,46 @@ func TestAddrIndex(t *testing.T) {
 	a := NewVar(reflect.SliceOf(TyFloat64), "")
 	code := newBuilder().
 		DefineVar(a).
+		Push(0.7).
 		Push(3.2).
 		Push(1.2).
 		Push(2.4).
 		MakeArray(reflect.SliceOf(TyFloat64), 3).
 		StoreVar(a).
 		LoadVar(a).
-		Push(1).
-		AddrIndex(-1).
-		AddrOp(Int, OpAddrVal).
+		Push(2).
+		SetIndex(-1).
+		LoadVar(a).
+		AddrIndex(2).
+		AddrOp(Float64, OpAddrVal).
 		Resolve()
 
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
-	if v := ctx.Get(-1); v != 1.2 {
-		t.Fatal("*&[3.2, 1.2 0.7][1]:", v)
+	if v := checkPop(ctx); v != 0.7 {
+		t.Fatal("[3.2, 1.2, 0.7], ret:", v)
+	}
+}
+
+func TestAddrLargeIndex(t *testing.T) {
+	a := NewVar(reflect.SliceOf(TyFloat64), "")
+	code := newBuilder().
+		DefineVar(a).
+		Push(opIndexOperand+1).
+		Make(reflect.SliceOf(TyFloat64), 1).
+		StoreVar(a).
+		Push(1.7).
+		LoadVar(a).
+		SetIndex(opIndexOperand).
+		LoadVar(a).
+		AddrIndex(opIndexOperand).
+		AddrOp(Float64, OpAddrVal).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != 1.7 {
+		t.Fatal("v != 1.7, ret:", v)
 	}
 }
 
