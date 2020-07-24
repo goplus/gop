@@ -42,7 +42,7 @@ const (
 // -----------------------------------------------------------------------------
 
 func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compleMode) {
-	ctx.inLHS = true
+	ctx.reqArrayAddr = true
 	switch v := expr.(type) {
 	case *ast.Ident:
 		compileIdentLHS(ctx, v.Name, mode)
@@ -53,7 +53,7 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compleMode) {
 	default:
 		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
 	}
-	ctx.inLHS = false
+	ctx.reqArrayAddr = false
 }
 
 func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
@@ -155,7 +155,7 @@ func compileIdent(ctx *blockCtx, name string) func() {
 		case *execVar:
 			ctx.infer.Push(&goValue{t: v.v.Type()})
 			return func() {
-				if ctx.inLHS && v.v.Type().Kind() == reflect.Array {
+				if ctx.reqArrayAddr && v.v.Type().Kind() == reflect.Array {
 					ctx.out.AddrVar(v.v)
 				} else {
 					ctx.out.LoadVar(v.v)
@@ -233,19 +233,14 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 	typ := toType(ctx, v.Type)
 	switch kind := typ.Kind(); kind {
 	case reflect.Slice, reflect.Array:
-		var typSlice, typRet reflect.Type
+		var typSlice reflect.Type
 		if t, ok := typ.(*unboundArrayType); ok {
 			n := toBoundArrayLen(ctx, v)
 			typSlice = reflect.ArrayOf(n, t.elem)
 		} else {
 			typSlice = typ.(reflect.Type)
 		}
-		if typSlice.Kind() == reflect.Array {
-			typRet = reflect.PtrTo(typSlice)
-		} else {
-			typRet = typSlice
-		}
-		ctx.infer.Push(&goValue{t: typRet})
+		ctx.infer.Push(&goValue{t: typSlice})
 		return func() {
 			var nLen int
 			if kind == reflect.Array {
@@ -763,7 +758,9 @@ func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) func() { // x[i:j:k]
 		ctx.infer.Ret(1, &goValue{typ})
 	}
 	return func() {
+		ctx.reqArrayAddr = true
 		exprX()
+		ctx.reqArrayAddr = false
 		i, j, k := exec.SliceDefaultIndex, exec.SliceDefaultIndex, exec.SliceDefaultIndex
 		if v.Low != nil {
 			i = compileIdx(ctx, v.Low, exec.SliceConstIndexLast, kind)
@@ -986,7 +983,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 				vt := reflect.ValueOf(info.This)
 				ctx.infer.Ret(1, &goValue{t: vt.Elem().Type()})
 				return func() {
-					if ctx.inLHS && vt.Elem().Kind() == reflect.Array {
+					if ctx.reqArrayAddr && vt.Elem().Kind() == reflect.Array {
 						ctx.out.AddrGoVar(exec.GoVarAddr(addr))
 					} else {
 						ctx.out.LoadGoVar(exec.GoVarAddr(addr))
