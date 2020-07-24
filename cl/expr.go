@@ -799,12 +799,7 @@ func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr) func() { // x[i]
 	exprX := compileExpr(ctx, v.X)
 	x := ctx.infer.Get(-1)
 	typ := x.(iValue).Type()
-	if kind = typ.Kind(); kind == reflect.Ptr {
-		typ = typ.Elem()
-		if kind = typ.Kind(); kind != reflect.Array {
-			logPanic(ctx, v, `type *%v does not support indexing`, typ)
-		}
-	}
+	kind = typ.Kind()
 	if kind == reflect.String {
 		typElem = exec.TyByte
 	} else {
