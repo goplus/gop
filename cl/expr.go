@@ -42,7 +42,7 @@ const (
 // -----------------------------------------------------------------------------
 
 func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compleMode) {
-	ctx.reqArrayAddr = true
+	ctx.checkArrayAddr = true
 	switch v := expr.(type) {
 	case *ast.Ident:
 		compileIdentLHS(ctx, v.Name, mode)
@@ -53,7 +53,7 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compleMode) {
 	default:
 		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
 	}
-	ctx.reqArrayAddr = false
+	ctx.checkArrayAddr = false
 }
 
 func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
@@ -155,7 +155,7 @@ func compileIdent(ctx *blockCtx, name string) func() {
 		case *execVar:
 			ctx.infer.Push(&goValue{t: v.v.Type()})
 			return func() {
-				if ctx.reqArrayAddr && v.v.Type().Kind() == reflect.Array {
+				if ctx.checkArrayAddr && v.v.Type().Kind() == reflect.Array {
 					ctx.out.AddrVar(v.v)
 				} else {
 					ctx.out.LoadVar(v.v)
@@ -758,9 +758,9 @@ func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) func() { // x[i:j:k]
 		ctx.infer.Ret(1, &goValue{typ})
 	}
 	return func() {
-		ctx.reqArrayAddr = true
+		ctx.checkArrayAddr = true
 		exprX()
-		ctx.reqArrayAddr = false
+		ctx.checkArrayAddr = false
 		i, j, k := exec.SliceDefaultIndex, exec.SliceDefaultIndex, exec.SliceDefaultIndex
 		if v.Low != nil {
 			i = compileIdx(ctx, v.Low, exec.SliceConstIndexLast, kind)
@@ -983,7 +983,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 				vt := reflect.ValueOf(info.This)
 				ctx.infer.Ret(1, &goValue{t: vt.Elem().Type()})
 				return func() {
-					if ctx.reqArrayAddr && vt.Elem().Kind() == reflect.Array {
+					if ctx.checkArrayAddr && vt.Elem().Kind() == reflect.Array {
 						ctx.out.AddrGoVar(exec.GoVarAddr(addr))
 					} else {
 						ctx.out.LoadGoVar(exec.GoVarAddr(addr))

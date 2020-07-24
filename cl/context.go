@@ -185,12 +185,12 @@ func checkLabel(fl *flowLabel) bool {
 type blockCtx struct {
 	*pkgCtx
 	*funcCtx
-	file         *fileCtx
-	parent       *blockCtx
-	syms         map[string]iSymbol
-	noExecCtx    bool
-	checkFlag    bool
-	reqArrayAddr bool
+	file           *fileCtx
+	parent         *blockCtx
+	syms           map[string]iSymbol
+	noExecCtx      bool
+	checkFlag      bool
+	checkArrayAddr bool
 }
 
 // function block ctx
