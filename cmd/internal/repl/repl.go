@@ -46,7 +46,7 @@ type repl struct {
 	ip           int          // store the ip after exec
 	prompt       string       // the prompt type in console
 	continueMode bool         // switch to control the promot type
-	liner        *liner.State
+	liner        *liner.State // liner instance
 }
 
 const (
