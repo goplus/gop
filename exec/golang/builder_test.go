@@ -18,14 +18,16 @@ package golang
 
 import (
 	"fmt"
+	"go/ast"
+	"reflect"
 	"testing"
 
-	"github.com/qiniu/goplus/cl"
-	"github.com/qiniu/goplus/exec.spec"
+	"github.com/goplus/gop/cl"
+	"github.com/goplus/gop/exec.spec"
 	"github.com/qiniu/x/log"
 
-	qexec "github.com/qiniu/goplus/exec/bytecode"
-	_ "github.com/qiniu/goplus/lib"
+	qexec "github.com/goplus/gop/exec/bytecode"
+	_ "github.com/goplus/gop/lib"
 )
 
 // I is a Go package instance.
@@ -124,3 +126,37 @@ func main() {
 }
 
 // -----------------------------------------------------------------------------
+
+func TestReserved(t *testing.T) {
+	code := NewBuilder("main", nil, nil)
+	off := code.Reserve()
+	code.ReservedAsPush(off, 123)
+	if !reflect.DeepEqual(code.reserveds[off].Expr.(*ast.BasicLit), IntConst(123)) {
+		t.Fatal("TestReserved failed: reserveds is not set to", 123)
+	}
+}
+
+func TestReserved2(t *testing.T) {
+	code := NewBuilder("main", nil, nil)
+	defer func() {
+		err := recover()
+		if !reflect.DeepEqual(err, "The method defer under the builder of golang is not yet supported") {
+			t.Fatal("TestReserved failed: Defer is not yet supported now")
+		}
+	}()
+	var start = NewLabel("")
+	var end = NewLabel("")
+	code.Interface().Defer(start, end)
+}
+
+func TestReserved3(t *testing.T) {
+	code := NewBuilder("main", nil, nil)
+	off := code.Reserve()
+	defer func() {
+		err := recover()
+		if !reflect.DeepEqual(err, "todo\n") {
+			t.Fatal("TestReserved failed: ReservedAsInstr is todo now")
+		}
+	}()
+	code.Interface().ReservedAsInstr(off, nil)
+}

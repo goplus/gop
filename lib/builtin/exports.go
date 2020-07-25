@@ -24,10 +24,10 @@ import (
 	"io"
 	"reflect"
 
-	"github.com/qiniu/goplus/gop"
+	"github.com/goplus/gop"
 
-	qspec "github.com/qiniu/goplus/exec.spec"
-	exec "github.com/qiniu/goplus/exec/bytecode"
+	qspec "github.com/goplus/gop/exec.spec"
+	exec "github.com/goplus/gop/exec/bytecode"
 )
 
 // -----------------------------------------------------------------------------

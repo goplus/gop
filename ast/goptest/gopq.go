@@ -14,29 +14,22 @@
  limitations under the License.
 */
 
-// Package fmt provide Go+ "fmt" package, as "fmt" package in Go.
-package fmt
+package goptest
 
 import (
-	"fmt"
+	"go/token"
 
-	"github.com/qiniu/goplus/gop"
-	"github.com/qiniu/goplus/lib/builtin"
+	"github.com/goplus/gop/ast/asttest"
+	"github.com/goplus/gop/ast/gopq"
 )
 
 // -----------------------------------------------------------------------------
 
-// I is a Go package instance.
-var I = gop.NewGoPackage("fmt")
-
-func init() {
-	I.RegisterFuncvs(
-		I.Funcv("errorf", fmt.Errorf, builtin.QexecErrorf),
-		I.Funcv("Print", fmt.Print, builtin.QexecPrint),
-		I.Funcv("Printf", fmt.Printf, builtin.QexecPrintf),
-		I.Funcv("Println", fmt.Println, builtin.QexecPrintln),
-		I.Funcv("Fprintln", fmt.Fprintln, builtin.QexecFprintln),
-	)
+// New creates a nodeset object that represents a Go+ dom tree.
+func New(script string) (gopq.NodeSet, error) {
+	fset := token.NewFileSet()
+	fs := asttest.NewSingleFileFS("/foo", "bar.gop", script)
+	return gopq.NewSourceFrom(fset, fs, "/foo", nil, 0)
 }
 
 // -----------------------------------------------------------------------------

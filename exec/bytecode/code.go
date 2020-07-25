@@ -23,7 +23,7 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/qiniu/goplus/exec.spec"
+	"github.com/goplus/gop/exec.spec"
 )
 
 // -----------------------------------------------------------------------------
@@ -114,6 +114,7 @@ const (
 	opGoBuiltin     = 41 // op(26)
 	opErrWrap       = 42 // idx(26)
 	opWrapIfErr     = 43 // reserved(2) offset(24)
+	opDeferOp       = 44 // reserved(2) offset(24)
 )
 
 const (
@@ -123,6 +124,8 @@ const (
 	iPushNil        = (opPushValSpec << bitsOpShift) | 2
 	iPushUnresolved = (opInvalid << bitsOpShift)
 	iReturn         = (opReturn << bitsOpShift) | (0xffffffff & bitsOperand)
+	iBreak          = (opReturn << bitsOpShift) | (0xfffffffe & bitsOperand)
+	iContinue       = (opReturn << bitsOpShift) | (0xfffffffd & bitsOperand)
 )
 
 const (
@@ -196,6 +199,7 @@ var instrInfos = []InstrInfo{
 	opGoBuiltin:     {"goBuiltin", "", "op", 26},                          // op(26)
 	opErrWrap:       {"errWrap", "", "idx", 26},                           // idx(26)
 	opWrapIfErr:     {"wrapIfErr", "", "offset", 26},                      // reserved(2) offset(24)
+	opDeferOp:       {"opDeferOp", "", "offset", 26},                      // reserved(2) offset(24)
 }
 
 // -----------------------------------------------------------------------------

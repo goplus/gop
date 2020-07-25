@@ -21,7 +21,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/qiniu/goplus/cl/cltest"
+	"github.com/goplus/gop/cl/cltest"
 )
 
 // -----------------------------------------------------------------------------

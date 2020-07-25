@@ -23,9 +23,9 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/qiniu/goplus/ast"
-	"github.com/qiniu/goplus/scanner"
-	"github.com/qiniu/goplus/token"
+	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/scanner"
+	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/log"
 )
 
@@ -714,6 +714,26 @@ func (p *parser) parseArrayTypeOrSliceLit(allowSliceLit bool) (expr ast.Expr, is
 		log.Debug("parseArrayType:", len, "elt:", elt)
 	}
 	return &ast.ArrayType{Lbrack: lbrack, Len: len, Elt: elt}, false
+}
+
+func (p *parser) parseSliceLit(lbrack token.Pos, len ast.Expr) ast.Expr {
+	elts := make([]ast.Expr, 1, 8)
+	elts[0] = len
+	for p.tok == token.COMMA {
+		p.next()
+		elt := p.parseRHS()
+		elts = append(elts, elt)
+	}
+	rbrack := p.expect(token.RBRACK)
+	return &ast.SliceLit{Lbrack: lbrack, Elts: elts, Rbrack: rbrack}
+}
+
+func newSliceLit(lbrack, rbrack token.Pos, len ast.Expr) ast.Expr {
+	var elts []ast.Expr
+	if len != nil {
+		elts = []ast.Expr{len}
+	}
+	return &ast.SliceLit{Lbrack: lbrack, Elts: elts, Rbrack: rbrack}
 }
 
 func (p *parser) makeIdentList(list []ast.Expr) []*ast.Ident {

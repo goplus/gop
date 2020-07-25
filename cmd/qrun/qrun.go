@@ -17,70 +17,16 @@
 package main
 
 import (
-	"flag"
-	"fmt"
 	"os"
-	"path/filepath"
 
-	"github.com/qiniu/goplus/cl"
-	"github.com/qiniu/goplus/parser"
-	"github.com/qiniu/goplus/token"
-	"github.com/qiniu/x/log"
+	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/cmd/internal/run"
 
-	exec "github.com/qiniu/goplus/exec/bytecode"
-	_ "github.com/qiniu/goplus/lib"
-)
-
-// -----------------------------------------------------------------------------
-
-var (
-	flagAsm   = flag.Bool("asm", false, "generate asm code")
-	flagQuiet = flag.Bool("quiet", false, "don't generate any log")
-	flagDebug = flag.Bool("debug", false, "print debug information")
-	flagProf  = flag.Bool("prof", false, "do profile and generate profile report")
+	_ "github.com/goplus/gop/lib"
 )
 
 func main() {
-	flag.Parse()
-	if flag.NArg() < 1 {
-		fmt.Fprintf(os.Stderr, "Usage: qrun [-asm -quiet -debug -prof] <gopSrcDir | gopSrcFile>\n")
-		flag.PrintDefaults()
-		return
-	}
-
-	log.SetFlags(log.Ldefault &^ log.LstdFlags)
-	if *flagQuiet {
-		log.SetOutputLevel(0x7000)
-	} else if *flagDebug {
-		log.SetOutputLevel(log.Ldebug)
-	}
-	if *flagProf {
-		exec.SetProfile(true)
-	}
-	fset := token.NewFileSet()
-
-	target, _ := filepath.Abs(flag.Arg(0))
-	pkgs, err := parser.ParseGopFiles(fset, target, 0)
-	if err != nil {
-		log.Fatalln("ParseGopFiles failed:", err)
-	}
-	cl.CallBuiltinOp = exec.CallBuiltinOp
-
-	b := exec.NewBuilder(nil)
-	_, err = cl.NewPackage(b.Interface(), pkgs["main"], fset, cl.PkgActClMain)
-	if err != nil {
-		log.Fatalln("cl.NewPackage failed:", err)
-	}
-	code := b.Resolve()
-	if *flagAsm {
-		code.Dump(os.Stdout)
-		return
-	}
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
-	if *flagProf {
-		exec.ProfileReport()
-	}
+	base.Main(run.Cmd, "qrun", os.Args[1:])
 }
 
 // -----------------------------------------------------------------------------

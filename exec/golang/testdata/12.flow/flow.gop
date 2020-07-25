@@ -52,6 +52,26 @@ default:
 	println(y)
 }
 
+for k, v := range [k for k, _ <- make([]int, 20)] {
+	if k < 10 {
+		continue
+	}
+	if k > 15 {
+		break
+	}
+	println(k, v)
+}
+
+for k, v <- {k: k for k, _ <- make([]int, 20)} {
+	if k < 10 {
+		continue
+	}
+	if k > 15 {
+		println("map reach break", v > 15)
+		break
+	}
+}
+
 println("fallthrough with tag")
 switch v {
 case "Hello":
@@ -79,3 +99,54 @@ case z > 10:
 default:
 	println(z)
 }
+
+// switch with break
+switch z {
+case 3:
+	if v == "Hello" {
+		println("break")
+		break
+	}
+	println("break fail")
+default:
+	println(z)
+}
+
+goto L
+println("before")
+L:
+	println("over")
+
+	i := 0
+L2:
+	if i < 3 {
+		println(i)
+		i++
+		goto L2
+	}
+	println("over")
+
+	x = 0
+L3:
+	for i := 0; i < 5; i++ {
+		switch i {
+		case 1:
+			println(x)
+			x++
+			continue L3
+		case 2:
+			println(x)
+			x++
+			break
+		case 3:
+			println(x)
+			break L3
+		case 4:
+			println(x)
+		default:
+			x = 7
+			println(x)
+		}
+	}
+	println(forFoo1())
+	fooFoo2()

@@ -19,8 +19,8 @@ package cl
 import (
 	"reflect"
 
-	"github.com/qiniu/goplus/ast/astutil"
-	"github.com/qiniu/goplus/exec.spec"
+	"github.com/goplus/gop/ast/astutil"
+	"github.com/goplus/gop/exec.spec"
 	"github.com/qiniu/x/log"
 )
 
@@ -374,7 +374,7 @@ func boundConst(v interface{}, t reflect.Type) interface{} {
 	kind := kindOf(t)
 	if v == nil {
 		if kind >= reflect.Chan && kind <= reflect.Slice {
-			return nil
+			return reflect.Zero(t).Interface()
 		}
 		log.Panicln("boundConst: can't convert nil into", t)
 	}

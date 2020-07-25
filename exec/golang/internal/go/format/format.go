@@ -24,7 +24,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/qiniu/goplus/exec/golang/internal/go/printer"
+	"github.com/goplus/gop/exec/golang/internal/go/printer"
 )
 
 var config = printer.Config{Mode: printer.UseSpaces | printer.TabIndent, Tabwidth: 8}

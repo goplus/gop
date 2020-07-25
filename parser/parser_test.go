@@ -25,9 +25,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/qiniu/goplus/ast"
-	"github.com/qiniu/goplus/ast/asttest"
-	"github.com/qiniu/goplus/token"
+	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/ast/asttest"
+	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/log"
 )
 
@@ -240,6 +240,15 @@ func TestFromTestdata(t *testing.T) {
 	for _, fi := range fis {
 		testFrom(t, dir+"/"+fi.Name(), sel)
 	}
+}
+
+func TestFromTestdata2(t *testing.T) {
+	dir, err := os.Getwd()
+	if err != nil {
+		t.Fatal("Getwd failed:", err)
+	}
+	dir = path.Join(dir, "./testdata")
+	testFrom(t, dir, "")
 }
 
 // -----------------------------------------------------------------------------

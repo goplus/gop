@@ -19,15 +19,16 @@ package parser
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/qiniu/goplus/ast"
-	"github.com/qiniu/goplus/scanner"
-	"github.com/qiniu/goplus/token"
+	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/scanner"
+	"github.com/goplus/gop/token"
 )
 
 // -----------------------------------------------------------------------------
@@ -55,16 +56,16 @@ func (p localFS) Join(elem ...string) string {
 
 var local FileSystem = localFS{}
 
-// ParseGOPFiles parses the Go+ source files under directory or single Go+ source file.
+// ParseGopFiles parses the Go+ source files under directory or single Go+ source file.
 // The target specifies the directory or single Go+ source file.
 //
-// The ParseGOPFiles should return the map of packages to run Go+ script, even the target is single file.
+// The ParseGopFiles should return the map of packages to run Go+ script, even the target is single file.
 //
 // If the file or directory couldn't be read, a nil map and the respective error are
 // returned.
 // If the target is directory and a parse error occurred, a non-nil but incomplete map and the first error encountered are returned.
-func ParseGopFiles(fset *token.FileSet, target string, mode Mode) (pkgs map[string]*ast.Package, err error) {
-	if strings.HasSuffix(target, ".gop") {
+func ParseGopFiles(fset *token.FileSet, target string, isDir bool, mode Mode) (pkgs map[string]*ast.Package, err error) {
+	if !isDir {
 		file, err := ParseFile(fset, target, nil, mode)
 		if err != nil {
 			return pkgs, err
@@ -77,7 +78,18 @@ func ParseGopFiles(fset *token.FileSet, target string, mode Mode) (pkgs map[stri
 	return ParseDir(fset, target, nil, mode)
 }
 
+// astFileToPkg translate ast.File to ast.Package
+func astFileToPkg(file *ast.File, fileName string) (pkg *ast.Package) {
+	pkg = &ast.Package{
+		Name:  file.Name.Name,
+		Files: make(map[string]*ast.File),
+	}
+	pkg.Files[fileName] = file
+	return
+}
+
 // -----------------------------------------------------------------------------
+
 // ParseDir calls ParseFSDir by passing a local filesystem.
 //
 func ParseDir(fset *token.FileSet, path string, filter func(os.FileInfo) bool, mode Mode) (pkgs map[string]*ast.Package, first error) {
@@ -104,8 +116,12 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, filter func(os.
 	}
 	pkgs = make(map[string]*ast.Package)
 	for _, d := range list {
-		if strings.HasSuffix(d.Name(), ".gop") && (filter == nil || filter(d)) {
-			filename := fs.Join(path, d.Name())
+		if d.IsDir() {
+			continue
+		}
+		fname := d.Name()
+		if strings.HasSuffix(fname, ".gop") && !strings.HasPrefix(fname, "_") && (filter == nil || filter(d)) {
+			filename := fs.Join(path, fname)
 			if filedata, err := fs.ReadFile(filename); err == nil {
 				if src, err := ParseFSFile(fset, fs, filename, filedata, mode); err == nil {
 					name := src.Name.Name
@@ -153,16 +169,13 @@ func ParseFSFile(fset *token.FileSet, fs FileSystem, filename string, src interf
 // TODO: should not add package info and init|main function.
 // If do this, parsing will display error line number when error occur
 func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (f *ast.File, err error) {
-	var b []byte
-	var isMod, hasUnnamed bool
+	var b bytes.Buffer
+	var isMod, noEntrypoint bool
 	var fsetTmp = token.NewFileSet()
 	f, err = parseFile(fsetTmp, filename, code, PackageClauseOnly)
 	if err != nil {
-		n := len(code)
-		b = make([]byte, n+28)
-		copy(b, "package main;")
-		copy(b[13:], code)
-		code = b[:n+13]
+		fmt.Fprintf(&b, "package main;%s", code)
+		code = b.Bytes()
 	} else {
 		isMod = f.Name.Name != "main"
 	}
@@ -170,22 +183,15 @@ func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (
 	if err != nil {
 		if errlist, ok := err.(scanner.ErrorList); ok {
 			if e := errlist[0]; strings.HasPrefix(e.Msg, "expected declaration") {
-				n := len(code)
 				idx := e.Pos.Offset
-				if b == nil {
-					b = make([]byte, n+14)
-					copy(b, code[:idx])
+				entrypoint := map[bool]string{
+					true:  "func init()",
+					false: "func main()",
 				}
-				copy(b[idx+12:], code[idx:n])
-				if isMod {
-					copy(b[idx:], "func init(){")
-				} else {
-					copy(b[idx:], "func main(){")
-				}
-				b[n+12] = '\n'
-				b[n+13] = '}'
-				code = b[:n+14]
-				hasUnnamed = true
+				b.Reset()
+				fmt.Fprintf(&b, "%s %s{%s}", code[:idx], entrypoint[isMod], code[idx:])
+				code = b.Bytes()
+				noEntrypoint = true
 				err = nil
 			}
 		}
@@ -193,7 +199,7 @@ func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (
 	if err == nil {
 		f, err = parseFile(fset, filename, code, mode)
 		if err == nil {
-			f.HasUnnamed = hasUnnamed
+			f.NoEntrypoint = noEntrypoint
 		}
 	}
 	return
@@ -218,38 +224,6 @@ func readSource(src interface{}) ([]byte, error) {
 		return ioutil.ReadAll(s)
 	}
 	return nil, errInvalidSource
-}
-
-// -----------------------------------------------------------------------------
-
-func (p *parser) parseSliceLit(lbrack token.Pos, len ast.Expr) ast.Expr {
-	elts := make([]ast.Expr, 1, 8)
-	elts[0] = len
-	for p.tok == token.COMMA {
-		p.next()
-		elt := p.parseRHS()
-		elts = append(elts, elt)
-	}
-	rbrack := p.expect(token.RBRACK)
-	return &ast.SliceLit{Lbrack: lbrack, Elts: elts, Rbrack: rbrack}
-}
-
-func newSliceLit(lbrack, rbrack token.Pos, len ast.Expr) ast.Expr {
-	var elts []ast.Expr
-	if len != nil {
-		elts = []ast.Expr{len}
-	}
-	return &ast.SliceLit{Lbrack: lbrack, Elts: elts, Rbrack: rbrack}
-}
-
-// astFileToPkg translate ast.File to ast.Package
-func astFileToPkg(file *ast.File, fileName string) (pkg *ast.Package) {
-	pkg = &ast.Package{
-		Name:  file.Name.Name,
-		Files: make(map[string]*ast.File),
-	}
-	pkg.Files[fileName] = file
-	return
 }
 
 // -----------------------------------------------------------------------------

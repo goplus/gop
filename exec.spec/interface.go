@@ -43,6 +43,11 @@ type Label interface {
 	Name() string
 }
 
+type Instr interface {
+	// The val of instr
+	Val() interface{}
+}
+
 // Reserved represents a reserved instruction position.
 type Reserved int
 
@@ -53,6 +58,16 @@ const InvalidReserved Reserved = -1
 func (p Reserved) Push(b Builder, val interface{}) {
 	b.ReservedAsPush(p, val)
 }
+
+func (p Reserved) Set(b Builder, instr Instr) {
+	b.ReservedAsInstr(p, instr)
+}
+
+// BreakAsReturn
+const BreakAsReturn = -2
+
+// ContinueAsReturn
+const ContinueAsReturn = -3
 
 // ForPhrase represents a for range phrase.
 type ForPhrase interface {
@@ -337,11 +352,17 @@ type Builder interface {
 	// ReservedAsPush sets Reserved as Push(v)
 	ReservedAsPush(r Reserved, v interface{})
 
+	// ReservedAsInstr set Reserved as instr
+	ReservedAsInstr(r Reserved, instr Instr)
+
 	// GetPackage returns the Go+ package that the Builder works for.
 	GetPackage() Package
 
 	// Resolve resolves all unresolved labels/functions/consts/etc.
 	Resolve() Code
+
+	// Defer instr
+	Defer(start, end Label) Instr
 }
 
 // Package represents a Go+ package.

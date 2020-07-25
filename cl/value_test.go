@@ -19,7 +19,7 @@ package cl
 import (
 	"testing"
 
-	exec "github.com/qiniu/goplus/exec.spec"
+	exec "github.com/goplus/gop/exec.spec"
 )
 
 // -----------------------------------------------------------------------------

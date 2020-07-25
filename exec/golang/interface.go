@@ -19,8 +19,8 @@ package golang
 import (
 	"reflect"
 
-	"github.com/qiniu/goplus/exec.spec"
-	"github.com/qiniu/goplus/exec/bytecode"
+	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/exec/bytecode"
 	"github.com/qiniu/x/errors"
 )
 
@@ -164,6 +164,11 @@ func (p *iBuilder) ErrWrap(nret int, retErr exec.Var, frame *errors.Frame, narg 
 func (p *iBuilder) ForPhrase(f exec.ForPhrase, key, val exec.Var, hasExecCtx ...bool) exec.Builder {
 	((*Builder)(p)).ForPhrase(f.(*ForPhrase), toVar(key), toVar(val), hasExecCtx...)
 	return p
+}
+
+// Defer instr
+func (p *iBuilder) Defer(start, end exec.Label) exec.Instr {
+	return ((*Builder)(p)).Defer(end.(*Label), end.(*Label))
 }
 
 func toVar(v exec.Var) *Var {
@@ -431,6 +436,11 @@ func (p *iBuilder) Reserve() exec.Reserved {
 // ReservedAsPush sets Reserved as Push(v)
 func (p *iBuilder) ReservedAsPush(r exec.Reserved, v interface{}) {
 	((*Builder)(p)).ReservedAsPush(r, v)
+}
+
+// ReservedAsInstr sets Reserved as Instr
+func (p *iBuilder) ReservedAsInstr(r exec.Reserved, instr exec.Instr) {
+	((*Builder)(p)).ReservedAsInstr(r, instr)
 }
 
 // GetPackage returns the Go+ package that the Builder works for.

@@ -19,7 +19,7 @@
 package gop
 
 import (
-	exec "github.com/qiniu/goplus/exec/bytecode"
+	exec "github.com/goplus/gop/exec/bytecode"
 )
 
 // -----------------------------------------------------------------------------
@@ -35,6 +35,15 @@ type GoPackage = exec.GoPackage
 // NewGoPackage creates a new builtin Go Package.
 func NewGoPackage(pkgPath string) *GoPackage {
 	return exec.NewGoPackage(pkgPath)
+}
+
+// ToBools converts []interface{} into []bool.
+func ToBools(args []interface{}) []bool {
+	ret := make([]bool, len(args))
+	for i, arg := range args {
+		ret[i] = arg.(bool)
+	}
+	return ret
 }
 
 // ToStrings converts []interface{} into []string.

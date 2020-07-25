@@ -1,0 +1,23 @@
+import (
+	"github.com/goplus/gop/ast/goptest"
+)
+
+script := `
+    import (
+        gio "io"
+    )
+
+    func New() (*Bar, error) {
+        return nil, gio.EOF
+    }
+
+    bar, err := New()
+    if err != nil {
+        log.Println(err)
+    }
+`
+
+doc := goptest.New(script)!
+
+println(doc.any.funcDecl.name)
+println(doc.any.importSpec.name)

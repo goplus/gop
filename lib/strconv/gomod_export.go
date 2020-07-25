@@ -4,7 +4,8 @@ package strconv
 import (
 	strconv "strconv"
 
-	gop "github.com/qiniu/goplus/gop"
+	gop "github.com/goplus/gop"
+	qspec "github.com/goplus/gop/exec.spec"
 )
 
 func execAppendBool(_ int, p *gop.Context) {
@@ -121,13 +122,13 @@ func execItoa(_ int, p *gop.Context) {
 	p.Ret(1, ret0)
 }
 
-func execNumErrorError(_ int, p *gop.Context) {
+func execmNumErrorError(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(*strconv.NumError).Error()
 	p.Ret(1, ret0)
 }
 
-func execNumErrorUnwrap(_ int, p *gop.Context) {
+func execmNumErrorUnwrap(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(*strconv.NumError).Unwrap()
 	p.Ret(1, ret0)
@@ -229,8 +230,8 @@ func init() {
 		I.Func("IsGraphic", strconv.IsGraphic, execIsGraphic),
 		I.Func("IsPrint", strconv.IsPrint, execIsPrint),
 		I.Func("Itoa", strconv.Itoa, execItoa),
-		I.Func("(*NumError).Error", (*strconv.NumError).Error, execNumErrorError),
-		I.Func("(*NumError).Unwrap", (*strconv.NumError).Unwrap, execNumErrorUnwrap),
+		I.Func("(*NumError).Error", (*strconv.NumError).Error, execmNumErrorError),
+		I.Func("(*NumError).Unwrap", (*strconv.NumError).Unwrap, execmNumErrorUnwrap),
 		I.Func("ParseBool", strconv.ParseBool, execParseBool),
 		I.Func("ParseFloat", strconv.ParseFloat, execParseFloat),
 		I.Func("ParseInt", strconv.ParseInt, execParseInt),
@@ -243,5 +244,12 @@ func init() {
 		I.Func("QuoteToGraphic", strconv.QuoteToGraphic, execQuoteToGraphic),
 		I.Func("Unquote", strconv.Unquote, execUnquote),
 		I.Func("UnquoteChar", strconv.UnquoteChar, execUnquoteChar),
+	)
+	I.RegisterVars(
+		I.Var("ErrRange", &strconv.ErrRange),
+		I.Var("ErrSyntax", &strconv.ErrSyntax),
+	)
+	I.RegisterConsts(
+		I.Const("IntSize", qspec.ConstUnboundInt, strconv.IntSize),
 	)
 }

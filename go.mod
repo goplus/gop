@@ -1,7 +1,7 @@
-module github.com/qiniu/goplus
+module github.com/goplus/gop
 
 go 1.14
 
 require (
-	github.com/qiniu/x v1.10.5
+	github.com/qiniu/x v1.11.5
 )

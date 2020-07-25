@@ -28,9 +28,9 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/qiniu/goplus/exec.spec"
-	"github.com/qiniu/goplus/exec/golang/internal/go/format"
-	"github.com/qiniu/goplus/exec/golang/internal/go/printer"
+	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/exec/golang/internal/go/format"
+	"github.com/goplus/gop/exec/golang/internal/go/printer"
 	"github.com/qiniu/x/log"
 )
 
@@ -123,13 +123,13 @@ func (p *Builder) autoIdent() string {
 }
 
 var (
-	tyMainFunc = reflect.TypeOf((*func())(nil)).Elem()
-	unnamedVar = Ident("_")
-	gopRet     = Ident("_gop_ret")
-	appendIden = Ident("append")
-	makeIden   = Ident("make")
-	newIden    = Ident("new")
-	nilIden    = Ident("nil")
+	tyMainFunc  = reflect.TypeOf((*func())(nil)).Elem()
+	unnamedVar  = Ident("_")
+	gopRet      = Ident("_gop_ret")
+	appendIdent = Ident("append")
+	makeIdent   = Ident("make")
+	newIdent    = Ident("new")
+	nilIdent    = Ident("nil")
 )
 
 // Resolve resolves all unresolved labels/functions/consts/etc.
@@ -320,6 +320,11 @@ func (p *Builder) Reserve() exec.Reserved {
 // ReservedAsPush sets Reserved as Push(v)
 func (p *Builder) ReservedAsPush(r exec.Reserved, v interface{}) {
 	p.reserveds[r].Expr = Const(p, v)
+}
+
+// ReservedAsInstr sets Reserved as Instr
+func (p *Builder) ReservedAsInstr(r exec.Reserved, v exec.Instr) {
+	log.Panicln("todo")
 }
 
 // Pop instr

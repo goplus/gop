@@ -21,8 +21,8 @@ import (
 	"go/token"
 	"reflect"
 
-	"github.com/qiniu/goplus/exec.spec"
-	"github.com/qiniu/goplus/exec/golang/internal/go/printer"
+	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/exec/golang/internal/go/printer"
 	"github.com/qiniu/x/errors"
 )
 
@@ -94,9 +94,9 @@ func (p *Builder) JmpIf(jc exec.JmpCond, l *Label) *Builder {
 	case exec.JcFalse:
 		cond = &ast.UnaryExpr{Op: token.NOT, X: cond}
 	case exec.JcNil:
-		cond = &ast.BinaryExpr{Op: token.EQL, X: cond, Y: nilIden}
+		cond = &ast.BinaryExpr{Op: token.EQL, X: cond, Y: nilIdent}
 	case exec.JcNotNil:
-		cond = &ast.BinaryExpr{Op: token.NEQ, X: cond, Y: nilIden}
+		cond = &ast.BinaryExpr{Op: token.NEQ, X: cond, Y: nilIdent}
 	}
 	p.emitStmt(GotoIf(p, cond, l))
 	return p
@@ -150,7 +150,7 @@ func (p *Builder) WrapIfErr(nret int, l *Label) *Builder {
 		Rhs: []ast.Expr{reservedExpr},
 	}
 	ifStmt := &ast.IfStmt{
-		Cond: &ast.BinaryExpr{X: args[nret-1], Op: token.NEQ, Y: nilIden},
+		Cond: &ast.BinaryExpr{X: args[nret-1], Op: token.NEQ, Y: nilIdent},
 		Body: &ast.BlockStmt{
 			List: []ast.Stmt{assignVal},
 		},
@@ -212,7 +212,7 @@ func (p *Builder) ErrWrap(nret int, retErr exec.Var, frame *errors.Frame, narg i
 		}
 	}
 	ifStmt := &ast.IfStmt{
-		Cond: &ast.BinaryExpr{X: args[nret-1], Op: token.NEQ, Y: nilIden},
+		Cond: &ast.BinaryExpr{X: args[nret-1], Op: token.NEQ, Y: nilIdent},
 		Body: body,
 	}
 	p.emitStmt(ifStmt)
@@ -326,7 +326,7 @@ func (p *Builder) ListComprehension(c *Comprehension) *Builder {
 		}
 		x := v.(ast.Expr)
 		appendExpr := &ast.CallExpr{
-			Fun:  appendIden,
+			Fun:  appendIdent,
 			Args: []ast.Expr{gopRet, x},
 		}
 		assign := &ast.AssignStmt{
@@ -375,7 +375,7 @@ func (p *Builder) EndComprehension(c *Comprehension) *Builder {
 	if c.TypeOut.Kind() == reflect.Slice {
 		makeArgs = append(makeArgs, IntConst(0), IntConst(4))
 	}
-	makeExpr := &ast.CallExpr{Fun: makeIden, Args: makeArgs}
+	makeExpr := &ast.CallExpr{Fun: makeIdent, Args: makeArgs}
 	stmt := p.rhs.Pop().(ast.Stmt)
 	stmtInit := &ast.AssignStmt{
 		Lhs: []ast.Expr{gopRet},
@@ -391,6 +391,10 @@ func (p *Builder) EndComprehension(c *Comprehension) *Builder {
 	})
 	p.comprehens = c.old
 	return p
+}
+
+func (p *Builder) Defer(start, end *Label) exec.Instr {
+	panic("The method defer under the builder of golang is not yet supported")
 }
 
 // ----------------------------------------------------------------------------

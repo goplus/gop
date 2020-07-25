@@ -6,7 +6,7 @@ import (
 	ioutil "io/ioutil"
 	os "os"
 
-	gop "github.com/qiniu/goplus/gop"
+	gop "github.com/goplus/gop"
 )
 
 func toType0(v interface{}) io.Reader {
@@ -70,5 +70,8 @@ func init() {
 		I.Func("TempDir", ioutil.TempDir, execTempDir),
 		I.Func("TempFile", ioutil.TempFile, execTempFile),
 		I.Func("WriteFile", ioutil.WriteFile, execWriteFile),
+	)
+	I.RegisterVars(
+		I.Var("Discard", &ioutil.Discard),
 	)
 }

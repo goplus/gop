@@ -21,9 +21,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/qiniu/goplus/ast"
-	"github.com/qiniu/goplus/ast/asttest"
-	"github.com/qiniu/goplus/token"
+	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/ast/asttest"
+	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/log"
 )
 
@@ -89,6 +89,7 @@ func TestParseNoPackageAndGlobalCode(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
 var fsTest3 = asttest.NewSingleFileFS("/foo", "bar.gop", `package bar; import "io"
 func New() (*Bar, error) {
 	return nil, io.EOF
@@ -106,7 +107,7 @@ func TestParseGopFiles(t *testing.T) {
 		local = localFS{}
 	}()
 	// test parse directory
-	pkgs, err := ParseGopFiles(fset, "/foo", 0)
+	pkgs, err := ParseGopFiles(fset, "/foo", true, 0)
 	if err != nil {
 		t.Error("parse err!", err)
 		return
@@ -126,7 +127,7 @@ func TestParseGopFiles(t *testing.T) {
 	}
 
 	// test parse file
-	pkgs, err = ParseGopFiles(fset, "/foo/bar.gop", 0)
+	pkgs, err = ParseGopFiles(fset, "/foo/bar.gop", false, 0)
 	if err != nil {
 		t.Error("parse err!", err)
 		return
@@ -144,8 +145,8 @@ func TestParseGopFiles(t *testing.T) {
 	if !checkFSTest(file, []string{`"io"`}, []string{"init", "New"}) {
 		t.Error("file check file")
 	}
-
 }
+
 func checkFSTest(file *ast.File, targetImport []string, targetFuncDecl []string) (pass bool) {
 	var foundImport, foundFunc int
 	for _, decl := range file.Decls {

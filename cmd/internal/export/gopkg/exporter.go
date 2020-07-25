@@ -18,6 +18,7 @@ package gopkg
 
 import (
 	"fmt"
+	"go/constant"
 	"go/types"
 	"io"
 	"regexp"
@@ -33,28 +34,47 @@ type exportedFunc struct {
 	exec string
 }
 
+type exportedVar struct {
+	name string
+	addr string
+}
+
+type exportedConst struct {
+	name string
+	kind string
+	val  string
+}
+
 // Exporter represents a go package exporter.
 type Exporter struct {
-	w          io.Writer
-	pkg        *types.Package
-	pkgDot     string
-	execs      []string
-	toTypes    []types.Type
-	toSlices   []types.Type
-	imports    map[string]string // pkgPath => pkg
-	importPkgs map[string]string // pkg => pkgPath
-	exportFns  []exportedFunc
-	exportFnvs []exportedFunc
+	w            io.Writer
+	pkg          *types.Package
+	pkgDot       string
+	execs        []string
+	toTypes      []types.Type
+	toSlices     []types.Type
+	imports      map[string]string // pkgPath => pkg
+	importPkgs   map[string]string // pkg => pkgPath
+	exportFns    []exportedFunc
+	exportFnvs   []exportedFunc
+	exportedVars []exportedVar
+	exportConsts []exportedConst
 }
 
 // NewExporter creates a go package exporter.
 func NewExporter(w io.Writer, pkg *types.Package) *Exporter {
-	const gopPath = "github.com/qiniu/goplus/gop"
+	const gopPath = "github.com/goplus/gop"
 	imports := map[string]string{gopPath: "gop"}
 	importPkgs := map[string]string{"gop": gopPath}
 	p := &Exporter{w: w, pkg: pkg, imports: imports, importPkgs: importPkgs}
 	p.pkgDot = p.importPkg(pkg) + "."
 	return p
+}
+
+// IsEmpty checks if there is nothing to exmport or not.
+func (p *Exporter) IsEmpty() bool {
+	return len(p.exportFns) == 0 && len(p.exportFnvs) == 0 &&
+		len(p.exportedVars) == 0 && len(p.exportConsts) == 0
 }
 
 func (p *Exporter) importPkg(pkgObj *types.Package) string {
@@ -213,7 +233,7 @@ func (p *Exporter) typeString(typ types.Type) string {
 
 func (p *Exporter) fixPkgString(typ string) string {
 	return reTyp.ReplaceAllStringFunc(typ, func(s string) string {
-		pos := strings.Index(s, ".")
+		pos := strings.LastIndex(s, ".")
 		if pos > 0 {
 			pkg := s[:pos]
 			if r, ok := p.imports[pkg]; ok {
@@ -225,7 +245,7 @@ func (p *Exporter) fixPkgString(typ string) string {
 }
 
 // ExportFunc exports a go function/method.
-func (p *Exporter) ExportFunc(fn *types.Func) {
+func (p *Exporter) ExportFunc(fn *types.Func) error {
 	tfn := fn.Type().(*types.Signature)
 	isVariadic := tfn.Variadic()
 	isMethod := tfn.Recv() != nil
@@ -256,6 +276,12 @@ func (p *Exporter) ExportFunc(fn *types.Func) {
 	}
 	for i := 0; i < numIn; i++ {
 		typ := tfn.Params().At(i).Type()
+		if named, ok := typ.(*types.Named); ok {
+			if !named.Obj().Exported() && named.String() != "error" {
+				fmt.Println("ignore", fn)
+				return nil
+			}
+		}
 		p.useType(typ)
 		args[i] = p.typeCast("args["+strconv.Itoa(i+from)+"]", typ)
 	}
@@ -263,8 +289,11 @@ func (p *Exporter) ExportFunc(fn *types.Func) {
 		var varg string
 		if numIn == 0 {
 			varg = "args"
+			if from == 1 {
+				varg = "args[1:]"
+			}
 		} else {
-			varg = fmt.Sprintf("args[%d:]", numIn)
+			varg = fmt.Sprintf("args[%d:]", numIn+from)
 		}
 		tyElem := tfn.Params().At(numIn).Type().(*types.Slice).Elem()
 		p.useType(tyElem)
@@ -310,6 +339,76 @@ $argInit	$retAssign$fn($args)
 	} else {
 		p.exportFns = append(p.exportFns, exported)
 	}
+	return nil
+}
+
+// ExportVar exports a go var.
+func (p *Exporter) ExportVar(typ *types.Var) {
+	name := typ.Name()
+	pkg := p.importPkg(typ.Pkg())
+	addr := pkg + "." + name
+	p.exportedVars = append(p.exportedVars, exportedVar{name, addr})
+}
+
+var (
+	qspecPkg = types.NewPackage("github.com/goplus/gop/exec.spec", "qspec")
+)
+
+// ExportConst exports a go const.
+func (p *Exporter) ExportConst(typ *types.Const) error {
+	kind, err := constKind(typ)
+	if err != nil {
+		return err
+	}
+	pkg := p.importPkg(qspecPkg)
+	val := p.pkgDot + typ.Name()
+	if typ.Val().Kind() == constant.Int && kind == "ConstUnboundInt" {
+		value := typ.Val().String()
+		_, err := strconv.ParseInt(value, 10, 32)
+		if err != nil {
+			if value[0] == '-' {
+				kind = "Int64"
+				val = "int64(" + val + ")"
+			} else {
+				kind = "Uint64"
+				val = "uint64(" + val + ")"
+			}
+		}
+	}
+	var c exportedConst
+	c.name = typ.Name()
+	c.kind = pkg + "." + kind
+	c.val = val
+	p.exportConsts = append(p.exportConsts, c)
+	return nil
+}
+
+func constKind(typ *types.Const) (string, error) {
+	baisc, ok := typ.Type().Underlying().(*types.Basic)
+	if !ok {
+		return "", fmt.Errorf("unparse basic of const %v", typ)
+	}
+	switch baisc.Kind() {
+	case types.UntypedBool:
+		return "Bool", nil
+	case types.UntypedInt:
+		return "ConstUnboundInt", nil
+	case types.UntypedRune:
+		return "ConstBoundRune", nil
+	case types.UntypedFloat:
+		return "ConstUnboundFloat", nil
+	case types.UntypedComplex:
+		return "ConstUnboundComplex", nil
+	case types.UntypedString:
+		return "ConstBoundString", nil
+	case types.UntypedNil:
+		return "ConstUnboundPtr", nil
+	case types.Byte:
+		return "Uint8", nil
+	case types.Rune:
+		return "Uint32", nil
+	}
+	return strings.Title(baisc.Name()), nil
 }
 
 func withoutPkg(fullName string) string {
@@ -317,7 +416,7 @@ func withoutPkg(fullName string) string {
 	if pos < 0 {
 		return fullName
 	}
-	dot := strings.Index(fullName[:pos], ".")
+	dot := strings.LastIndex(fullName[:pos], ".")
 	if dot < 0 {
 		return fullName
 	}
@@ -352,7 +451,7 @@ func withPkg(pkgDot, name string) string {
 	return pkgDot + name
 }
 
-func exportFns(w io.Writer, pkgDot string, fns []exportedFunc, tag string) {
+func registerFns(w io.Writer, pkgDot string, fns []exportedFunc, tag string) {
 	if len(fns) == 0 {
 		return
 	}
@@ -362,6 +461,32 @@ func exportFns(w io.Writer, pkgDot string, fns []exportedFunc, tag string) {
 		name := withPkg(pkgDot, fn.name)
 		fmt.Fprintf(w, `		I.%s("%s", %s, %s),
 `, tag, fn.name, name, fn.exec)
+	}
+	fmt.Fprintf(w, "	)\n")
+}
+
+func registerVars(w io.Writer, vars []exportedVar) {
+	if len(vars) == 0 {
+		return
+	}
+	fmt.Fprintf(w, `	I.RegisterVars(
+`)
+	for _, v := range vars {
+		fmt.Fprintf(w, `		I.Var("%s", &%s),
+`, v.name, v.addr)
+	}
+	fmt.Fprintf(w, "	)\n")
+}
+
+func registerConsts(w io.Writer, consts []exportedConst) {
+	if len(consts) == 0 {
+		return
+	}
+	fmt.Fprintf(w, `	I.RegisterConsts(
+`)
+	for _, c := range consts {
+		fmt.Fprintf(w, `		I.Const("%s", %s, %s),
+`, c.name, c.kind, c.val)
 	}
 	fmt.Fprintf(w, "	)\n")
 }
@@ -388,10 +513,16 @@ const gopkgExportFooter = `)
 // Close finishes go package export.
 func (p *Exporter) Close() error {
 	pkgs := make([]string, 0, len(p.importPkgs))
-	for pkg := range p.importPkgs {
-		pkgs = append(pkgs, pkg)
+	opkgs := make([]string, 0, len(p.importPkgs))
+	for pkg, pkgPath := range p.importPkgs {
+		if strings.ContainsAny(pkgPath, ".-_") {
+			opkgs = append(opkgs, pkg)
+		} else {
+			pkgs = append(pkgs, pkg)
+		}
 	}
 	sort.Strings(pkgs)
+	sort.Strings(opkgs)
 	pkg, pkgPath := p.pkg.Name(), p.pkg.Path()
 	fmt.Fprintf(p.w, gopkgExportHeader, pkg, pkgPath, pkgPath, pkg)
 	for _, pkg := range pkgs {
@@ -399,14 +530,23 @@ func (p *Exporter) Close() error {
 		fmt.Fprintf(p.w, `	%s "%s"
 `, pkg, pkgPath)
 	}
+	fmt.Fprintf(p.w, "\n")
+	for _, pkg := range opkgs {
+		pkgPath := p.importPkgs[pkg]
+		fmt.Fprintf(p.w, `	%s "%s"
+`, pkg, pkgPath)
+	}
 	fmt.Fprintf(p.w, gopkgExportFooter)
+
 	for _, exec := range p.execs {
 		io.WriteString(p.w, exec)
 	}
 	fmt.Fprintf(p.w, gopkgInitExportHeader, pkgPath)
 	pkgDot := p.pkgDot
-	exportFns(p.w, pkgDot, p.exportFns, "Func")
-	exportFns(p.w, pkgDot, p.exportFnvs, "Funcv")
+	registerFns(p.w, pkgDot, p.exportFns, "Func")
+	registerFns(p.w, pkgDot, p.exportFnvs, "Funcv")
+	registerVars(p.w, p.exportedVars)
+	registerConsts(p.w, p.exportConsts)
 	fmt.Fprintf(p.w, gopkgInitExportFooter)
 	return nil
 }

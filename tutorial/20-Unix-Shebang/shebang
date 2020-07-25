@@ -1,4 +1,4 @@
-#! /usr/bin/env qrun
+#!/usr/bin/env gop run
 
 println("Hello, Go+")
 

@@ -11,12 +11,13 @@ package scanner
 import (
 	"bytes"
 	"fmt"
+	"go/scanner"
 	"path/filepath"
 	"strconv"
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/qiniu/goplus/token"
+	"github.com/goplus/gop/token"
 )
 
 // An ErrorHandler may be provided to Scanner.Init. If a syntax error is
@@ -24,7 +25,7 @@ import (
 // position and an error message. The position points to the beginning of
 // the offending token.
 //
-type ErrorHandler func(pos token.Position, msg string)
+type ErrorHandler = scanner.ErrorHandler
 
 // A Scanner holds the scanner's internal state while processing
 // a given text. It can be allocated as part of another data

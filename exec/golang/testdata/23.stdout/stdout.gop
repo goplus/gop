@@ -1,0 +1,10 @@
+import (
+	"log"
+	"os"
+)
+
+log.SetFlags(log.Ldate)
+log.Println("hello", true)
+
+logger := log.New(os.Stdout, "logger: ", log.Ldate)
+logger.Println("foo", "bar", false, 666)

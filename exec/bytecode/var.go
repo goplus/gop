@@ -19,7 +19,7 @@ package bytecode
 import (
 	"reflect"
 
-	"github.com/qiniu/goplus/exec.spec"
+	"github.com/goplus/gop/exec.spec"
 	"github.com/qiniu/x/log"
 )
 
@@ -129,6 +129,16 @@ func execGoBuiltin(i Instr, p *Context) {
 	case GobCap:
 		v := reflect.ValueOf(p.data[n-1])
 		p.data[n-1] = reflect.Indirect(v).Cap()
+	case GobCopy:
+		n := len(p.data)
+		src := reflect.ValueOf(p.data[n-1])
+		dst := reflect.ValueOf(p.data[n-2])
+		p.Ret(2, reflect.Copy(dst, src))
+	case GobDelete:
+		key := reflect.ValueOf(p.data[n-1])
+		v := reflect.ValueOf(p.data[n-2])
+		v.SetMapIndex(key, reflect.Value{})
+		p.PopN(2)
 	default:
 		log.Panicln("execGoBuiltin: todo -", i)
 	}
