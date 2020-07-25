@@ -21,6 +21,7 @@ package base
 import (
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 )
@@ -77,10 +78,15 @@ func (c *Command) Name() string {
 }
 
 // Usage show the command usage.
-func (c *Command) Usage() {
-	fmt.Fprintf(os.Stderr, "%s\n\nUsage: %s\n", c.Short, c.UsageLine)
+func (c *Command) Usage(w io.Writer) {
+	fmt.Fprintf(w, "%s\n\nUsage: %s\n", c.Short, c.UsageLine)
+
+	// restore output of flag
+	defer c.Flag.SetOutput(c.Flag.Output())
+
+	c.Flag.SetOutput(w)
 	c.Flag.PrintDefaults()
-	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(w)
 	os.Exit(2)
 }
 

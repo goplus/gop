@@ -53,7 +53,7 @@ func init() {
 func runCmd(cmd *base.Command, args []string) {
 	flag.Parse(args)
 	if flag.NArg() < 1 {
-		cmd.Usage()
+		cmd.Usage(os.Stderr)
 		return
 	}
 	var libDir string
