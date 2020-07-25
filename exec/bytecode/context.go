@@ -145,7 +145,14 @@ func (ctx *Context) restoreScope(old savedScopeCtx) {
 	ctx.base = old.base
 	ctx.varScope = old.varScope
 }
-
+func (ctx *Context) CloneSetterScope(new *Context) {
+	if !ctx.vars.IsValid() {
+		return
+	}
+	for i := 0; i < ctx.vars.NumField(); i++ {
+		new.varScope.setVar(uint32(i), ctx.varScope.getVar(uint32(i)))
+	}
+}
 func (ctx *Context) getScope(local bool) *varScope {
 	scope := ctx.parent
 	if scope == nil || local {
@@ -159,7 +166,7 @@ func (ctx *Context) getScope(local bool) *varScope {
 }
 
 // Exec executes a code block from ip to ipEnd.
-func (ctx *Context) Exec(ip, ipEnd int) {
+func (ctx *Context) Exec(ip, ipEnd int) (currentIp int) {
 	const allowProfile = true
 	var lastInstr Instr
 	var start time.Time
@@ -207,7 +214,8 @@ func (ctx *Context) Exec(ip, ipEnd int) {
 		case opCallGoFuncv:
 			execGoFuncv(i, ctx)
 		case opReturn:
-			ctx.ip = int(i)
+			currentIp = ctx.ip
+			ctx.ip = int(i) // i to ip, is it right??
 			if i == iBreak || i == iContinue || i == iReturn {
 				ctx.ip = int(i)
 			} else {
@@ -231,6 +239,7 @@ finished:
 			instrProfile(lastInstr, time.Since(start))
 		}
 	}
+	return
 }
 
 var _execTable = [...]func(i Instr, p *Context){

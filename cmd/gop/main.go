@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/goplus/gop/cmd/internal/repl"
 	"os"
 	"strings"
 
@@ -28,6 +29,7 @@ func init() {
 		gengo.Cmd,
 		gopfmt.Cmd,
 		export.Cmd,
+		repl.Cmd,
 	}
 }
 

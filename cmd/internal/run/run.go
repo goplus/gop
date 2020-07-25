@@ -72,7 +72,7 @@ func runCmd(cmd *base.Command, args []string) {
 	if err != nil {
 		log.Fatalln("input arg check failed:", err)
 	}
-	pkgs, err := parser.ParseGopFiles(fset, target, isDir, 0)
+	pkgs, err := parser.ParseGopFiles(fset, target, isDir, nil, 0)
 	if err != nil {
 		log.Fatalln("ParseGopFiles failed:", err)
 	}
