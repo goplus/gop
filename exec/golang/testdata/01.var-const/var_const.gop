@@ -16,8 +16,11 @@ println("start")
 			c := 3
 			println(i, j, c)
 		}
+		j++
+		i++
 		println(i, j)
 	}
+	i++
 	println(i)
 }
 println("end")
