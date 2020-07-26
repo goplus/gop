@@ -135,4 +135,51 @@ func TestAddrVar(t *testing.T) {
 	}
 }
 
+func TestContext_CloneSetVarScope(t *testing.T) {
+	sprint, ok := I.FindFuncv("Sprint")
+	strcat, ok2 := I.FindFunc("strcat")
+	if !ok || !ok2 {
+		t.Fatal("FindFunc failed: Sprintf/strcat")
+	}
+
+	x := defaultImpl.NewVar(TyString, "x").(*Var)
+	y := NewVar(TyString, "y")
+	b := newBuilder()
+	code := b.
+		DefineVar(x, y).
+		Push(5).
+		Push("32").
+		CallGoFuncv(sprint, 2, 2).
+		StoreVar(x). // x = sprint(5, "32")
+		Push("78").
+		LoadVar(x).
+		CallGoFunc(strcat, 2).
+		StoreVar(y). // y = strcat("78", x)
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+
+	z := defaultImpl.NewVar(TyString, "z").(*Var)
+	h := NewVar(TyString, "h")
+	b1 := newBuilder()
+	code = b1.
+		DefineVar(z, h).
+		Push(5).
+		Push("32").
+		CallGoFuncv(sprint, 2, 2).
+		StoreVar(z).
+		Push("78").
+		LoadVar(z).
+		CallGoFunc(strcat, 2).
+		StoreVar(h).
+		Resolve()
+
+	ctxNew := NewContext(code)
+	ctx.CloneSetVarScope(ctxNew)
+	if ctxNew.GetVar(y) != ctx.GetVar(y) {
+		t.Fatal("clone set var scop err")
+	}
+}
+
 // -----------------------------------------------------------------------------
