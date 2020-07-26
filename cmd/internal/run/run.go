@@ -21,6 +21,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/parser"
@@ -72,9 +73,14 @@ func runCmd(cmd *base.Command, args []string) {
 	if err != nil {
 		log.Fatalln("input arg check failed:", err)
 	}
-	pkgs, err := parser.ParseGopFiles(fset, target, isDir, nil, 0)
+	var pkgs map[string]*ast.Package
+	if isDir {
+		pkgs, err = parser.ParseDir(fset, target, nil, 0)
+	} else {
+		pkgs, err = parser.Parse(fset, target, nil, 0)
+	}
 	if err != nil {
-		log.Fatalln("ParseGopFiles failed:", err)
+		log.Fatalln("parser.Parse failed:", err)
 	}
 	cl.CallBuiltinOp = exec.CallBuiltinOp
 

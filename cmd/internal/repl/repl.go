@@ -14,7 +14,7 @@
  limitations under the License.
 */
 
-// Package run implements the ``gop repl'' command.
+// Package repl implements the ``gop repl'' command.
 package repl
 
 import (
@@ -25,16 +25,18 @@ import (
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
-	exec "github.com/goplus/gop/exec/bytecode"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
 	"github.com/peterh/liner"
+
+	exec "github.com/goplus/gop/exec/bytecode"
 )
 
 func init() {
 	Cmd.Run = runCmd
 }
 
+// Cmd - gop repl
 var Cmd = &base.Command{
 	UsageLine: "repl",
 	Short:     "Play Go+ in console",
@@ -50,8 +52,8 @@ type repl struct {
 }
 
 const (
-	continuePrompt string = "..."
-	standardPrompt string = ">>>"
+	continuePrompt string = "... "
+	standardPrompt string = ">>> "
 	welcome        string = "welcome to Go+ console!"
 )
 
@@ -115,7 +117,7 @@ func (r *repl) run(newLine string) (err error) {
 		}
 	}()
 	fset := token.NewFileSet()
-	pkgs, err := parser.ParseGopFiles(fset, "", false, src, 0)
+	pkgs, err := parser.Parse(fset, "", src, 0)
 	if err != nil {
 		// check if into continue mode
 		if strings.Contains(err.Error(), `expected ')', found 'EOF'`) ||
@@ -147,11 +149,11 @@ func (r *repl) run(newLine string) (err error) {
 		// if it is not the first time, restore pre var
 		r.preContext.CloneSetVarScope(ctx)
 	}
-	currentIp := ctx.Exec(r.ip, code.Len())
+	currentIP := ctx.Exec(r.ip, code.Len())
 	r.preContext = *ctx
 	// "currentip - 1" is the index of `return`
 	// next time it will replace by new code from newLine
-	r.ip = currentIp - 1
+	r.ip = currentIP - 1
 	return
 }
 

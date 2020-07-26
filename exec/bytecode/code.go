@@ -123,9 +123,10 @@ const (
 	iPushTrue       = (opPushValSpec << bitsOpShift) | 1
 	iPushNil        = (opPushValSpec << bitsOpShift) | 2
 	iPushUnresolved = (opInvalid << bitsOpShift)
-	iReturn         = (opReturn << bitsOpShift) | (0xffffffff & bitsOperand)
-	iBreak          = (opReturn << bitsOpShift) | (0xfffffffe & bitsOperand)
-	iContinue       = (opReturn << bitsOpShift) | (0xfffffffd & bitsOperand)
+
+	iReturn   = (opReturn << bitsOpShift) | (0xffffffff & bitsOperand)
+	iBreak    = (opReturn << bitsOpShift) | (0xfffffffe & bitsOperand)
+	iContinue = (opReturn << bitsOpShift) | (0xfffffffd & bitsOperand)
 )
 
 const (

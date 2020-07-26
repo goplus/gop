@@ -124,6 +124,16 @@ func NewContext(in exec.Code) *Context {
 	return p
 }
 
+// CloneSetVarScope clone already set varScope to new context
+func (ctx *Context) CloneSetVarScope(new *Context) {
+	if !ctx.vars.IsValid() {
+		return
+	}
+	for i := 0; i < ctx.vars.NumField(); i++ {
+		new.varScope.setVar(uint32(i), ctx.varScope.getVar(uint32(i)))
+	}
+}
+
 type savedScopeCtx struct {
 	base int
 	ip   int
@@ -146,15 +156,6 @@ func (ctx *Context) restoreScope(old savedScopeCtx) {
 	ctx.varScope = old.varScope
 }
 
-// CloneSetVarScope clone already set varScope to new context
-func (ctx *Context) CloneSetVarScope(new *Context) {
-	if !ctx.vars.IsValid() {
-		return
-	}
-	for i := 0; i < ctx.vars.NumField(); i++ {
-		new.varScope.setVar(uint32(i), ctx.varScope.getVar(uint32(i)))
-	}
-}
 func (ctx *Context) getScope(local bool) *varScope {
 	scope := ctx.parent
 	if scope == nil || local {
@@ -168,7 +169,7 @@ func (ctx *Context) getScope(local bool) *varScope {
 }
 
 // Exec executes a code block from ip to ipEnd.
-func (ctx *Context) Exec(ip, ipEnd int) (currentIp int) {
+func (ctx *Context) Exec(ip, ipEnd int) (currentIP int) {
 	const allowProfile = true
 	var lastInstr Instr
 	var start time.Time
@@ -216,8 +217,7 @@ func (ctx *Context) Exec(ip, ipEnd int) (currentIp int) {
 		case opCallGoFuncv:
 			execGoFuncv(i, ctx)
 		case opReturn:
-			currentIp = ctx.ip
-			ctx.ip = int(i) // i to ip, is it right??
+			currentIP = ctx.ip
 			if i == iBreak || i == iContinue || i == iReturn {
 				ctx.ip = int(i)
 			} else {
