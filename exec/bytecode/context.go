@@ -145,7 +145,9 @@ func (ctx *Context) restoreScope(old savedScopeCtx) {
 	ctx.base = old.base
 	ctx.varScope = old.varScope
 }
-func (ctx *Context) CloneSetterScope(new *Context) {
+
+// CloneSetVarScope clone already set varScope to new context
+func (ctx *Context) CloneSetVarScope(new *Context) {
 	if !ctx.vars.IsValid() {
 		return
 	}

@@ -81,25 +81,23 @@ func (r *repl) replOneLine(line string) {
 		// mainly for scroll up
 		r.liner.AppendHistory(line)
 	}
-	canRun := true
 	if r.continueMode {
-		canRun = r.continueModeByLine(line)
+		r.continueModeByLine(line)
 	}
-	if canRun {
+	if !r.continueMode {
 		r.run(line)
 	}
 }
 
-// handleContinueMode check if continue-mode should continue :)
-func (r *repl) continueModeByLine(line string) (canRun bool) {
+// continueModeByLine check if continue-mode should continue :)
+func (r *repl) continueModeByLine(line string) {
 	if line != "" {
 		r.src += line + "\n"
-		return false
+		return
 	}
 	// input nothing means jump out continue mode
 	r.continueMode = false
 	r.prompt = standardPrompt
-	return true
 }
 
 // run execute the input line
@@ -119,6 +117,7 @@ func (r *repl) run(newLine string) (err error) {
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseGopFiles(fset, "", false, src, 0)
 	if err != nil {
+		// check if into continue mode
 		if strings.Contains(err.Error(), `expected ')', found 'EOF'`) ||
 			strings.Contains(err.Error(), "expected '}', found 'EOF'") {
 			r.prompt = continuePrompt
@@ -145,7 +144,7 @@ func (r *repl) run(newLine string) (err error) {
 	code := b.Resolve()
 	ctx := exec.NewContext(code)
 	if r.ip != 0 {
-		// not first time, restore pre var
+		// if it is not the first time, restore pre var
 		r.preContext.CloneSetVarScope(ctx)
 	}
 	currentIp := ctx.Exec(r.ip, code.Len())
