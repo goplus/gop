@@ -157,17 +157,24 @@ func execMakeArray(i Instr, p *Context) {
 func makeArray(typSlice reflect.Type, arity int, p *Context) {
 	args := p.GetArgs(arity)
 	var ret, set reflect.Value
-	if typSlice.Kind() == reflect.Slice {
+	kind := typSlice.Kind()
+	if kind == reflect.Slice {
 		ret = reflect.MakeSlice(typSlice, arity, arity)
 		set = ret
-	} else {
+	} else if kind == reflect.Array {
 		ret = reflect.New(typSlice)
 		set = ret.Elem()
+	} else {
+		log.Panic("makeArray bad type:", typSlice)
 	}
 	for i, arg := range args {
 		set.Index(i).Set(getElementOf(arg, typSlice))
 	}
-	p.Ret(arity, ret.Interface())
+	if kind == reflect.Slice {
+		p.Ret(arity, ret.Interface())
+	} else {
+		p.Ret(arity, ret.Elem().Interface())
+	}
 }
 
 func execAppend(i Instr, p *Context) {

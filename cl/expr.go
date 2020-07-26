@@ -42,7 +42,6 @@ const (
 // -----------------------------------------------------------------------------
 
 func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compleMode) {
-	ctx.inLHS = true
 	switch v := expr.(type) {
 	case *ast.Ident:
 		compileIdentLHS(ctx, v.Name, mode)
@@ -53,7 +52,6 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compleMode) {
 	default:
 		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
 	}
-	ctx.inLHS = false
 }
 
 func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
@@ -155,7 +153,7 @@ func compileIdent(ctx *blockCtx, name string) func() {
 		case *execVar:
 			ctx.infer.Push(&goValue{t: v.v.Type()})
 			return func() {
-				if ctx.inLHS && v.v.Type().Kind() == reflect.Array {
+				if ctx.checkArrayAddr && v.v.Type().Kind() == reflect.Array {
 					ctx.out.AddrVar(v.v)
 				} else {
 					ctx.out.LoadVar(v.v)
@@ -233,19 +231,14 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 	typ := toType(ctx, v.Type)
 	switch kind := typ.Kind(); kind {
 	case reflect.Slice, reflect.Array:
-		var typSlice, typRet reflect.Type
+		var typSlice reflect.Type
 		if t, ok := typ.(*unboundArrayType); ok {
 			n := toBoundArrayLen(ctx, v)
 			typSlice = reflect.ArrayOf(n, t.elem)
 		} else {
 			typSlice = typ.(reflect.Type)
 		}
-		if typSlice.Kind() == reflect.Array {
-			typRet = reflect.PtrTo(typSlice)
-		} else {
-			typRet = typSlice
-		}
-		ctx.infer.Push(&goValue{t: typRet})
+		ctx.infer.Push(&goValue{t: typSlice})
 		return func() {
 			var nLen int
 			if kind == reflect.Array {
@@ -700,16 +693,13 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compleMode) {
 		log.Panicln("compileIndexExprLHS: `:=` can't be used for index expression")
 	}
 	val := ctx.infer.Get(-1)
+
+	ctx.checkArrayAddr = true
 	compileExpr(ctx, v.X)()
+	ctx.checkArrayAddr = false
+
 	typ := ctx.infer.Get(-1).(iValue).Type()
 	typElem := typ.Elem()
-	if typ.Kind() == reflect.Ptr {
-		if typElem.Kind() != reflect.Array {
-			logPanic(ctx, v, `type %v does not support indexing`, typ)
-		}
-		typ = typElem
-		typElem = typElem.Elem()
-	}
 	if cons, ok := val.(*constVal); ok {
 		cons.bound(typElem, ctx.out)
 	} else if t := val.(iValue).Type(); t != typElem {
@@ -754,16 +744,14 @@ func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) func() { // x[i:j:k]
 	exprX := compileExpr(ctx, v.X)
 	x := ctx.infer.Get(-1)
 	typ := x.(iValue).Type()
-	if kind = typ.Kind(); kind == reflect.Ptr {
-		typ = typ.Elem()
-		if kind = typ.Kind(); kind != reflect.Array {
-			logPanic(ctx, v, `cannot slice a (type *%v)`, typ)
-		}
+	if kind = typ.Kind(); kind == reflect.Array {
 		typ = reflect.SliceOf(typ.Elem())
 		ctx.infer.Ret(1, &goValue{typ})
 	}
 	return func() {
+		ctx.checkArrayAddr = true
 		exprX()
+		ctx.checkArrayAddr = false
 		i, j, k := exec.SliceDefaultIndex, exec.SliceDefaultIndex, exec.SliceDefaultIndex
 		if v.Low != nil {
 			i = compileIdx(ctx, v.Low, exec.SliceConstIndexLast, kind)
@@ -811,12 +799,7 @@ func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr) func() { // x[i]
 	exprX := compileExpr(ctx, v.X)
 	x := ctx.infer.Get(-1)
 	typ := x.(iValue).Type()
-	if kind = typ.Kind(); kind == reflect.Ptr {
-		typ = typ.Elem()
-		if kind = typ.Kind(); kind != reflect.Array {
-			logPanic(ctx, v, `type *%v does not support indexing`, typ)
-		}
-	}
+	kind = typ.Kind()
 	if kind == reflect.String {
 		typElem = exec.TyByte
 	} else {
@@ -986,7 +969,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 				vt := reflect.ValueOf(info.This)
 				ctx.infer.Ret(1, &goValue{t: vt.Elem().Type()})
 				return func() {
-					if ctx.inLHS && vt.Elem().Kind() == reflect.Array {
+					if ctx.checkArrayAddr && vt.Elem().Kind() == reflect.Array {
 						ctx.out.AddrGoVar(exec.GoVarAddr(addr))
 					} else {
 						ctx.out.LoadGoVar(exec.GoVarAddr(addr))

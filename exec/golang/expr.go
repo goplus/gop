@@ -455,9 +455,6 @@ func (p *Builder) MakeArray(typ reflect.Type, arity int) *Builder {
 		Type: typExpr,
 		Elts: elts,
 	}
-	if typ.Kind() == reflect.Array {
-		xExpr = &ast.UnaryExpr{Op: token.AND, X: xExpr}
-	}
 	p.rhs.Ret(arity, xExpr)
 	return p
 }
