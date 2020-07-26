@@ -14,7 +14,6 @@
  limitations under the License.
 */
 
-// Package bytecode implements a bytecode backend for the Go+ language.
 package bytecode
 
 import (
@@ -63,6 +62,7 @@ func execDeferOp(i Instr, p *Context) {
 	p.defers = def
 }
 
+// Defer instr
 func (p *Builder) Defer(start, end *Label) exec.Instr {
 	return &iDefer{start: p.labels[start], end: p.labels[end]}
 }
