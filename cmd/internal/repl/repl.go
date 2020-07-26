@@ -14,7 +14,7 @@
  limitations under the License.
 */
 
-// Package run implements the ``gop repl'' command.
+// Package repl implements the ``gop repl'' command.
 package repl
 
 import (
@@ -25,16 +25,18 @@ import (
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
-	exec "github.com/goplus/gop/exec/bytecode"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
 	"github.com/peterh/liner"
+
+	exec "github.com/goplus/gop/exec/bytecode"
 )
 
 func init() {
 	Cmd.Run = runCmd
 }
 
+// Cmd - gop repl
 var Cmd = &base.Command{
 	UsageLine: "repl",
 	Short:     "Play Go+ in console",
