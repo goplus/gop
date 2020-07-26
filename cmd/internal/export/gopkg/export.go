@@ -64,6 +64,18 @@ func exportConst(e *Exporter, o *types.Const) (err error) {
 	return e.ExportConst(o)
 }
 
+func cleanPkgVer(pkgPath string) string {
+	i := strings.Index(pkgPath, "@")
+	if i == -1 {
+		return pkgPath
+	}
+	j := strings.Index(pkgPath[i:], "/")
+	if j == -1 {
+		return pkgPath[:i]
+	}
+	return pkgPath[:i] + pkgPath[i:][j:]
+}
+
 func findLastVerPkg(pkgDirBase string, name string) (verName string) {
 	verName = name
 	fis, err := ioutil.ReadDir(pkgDirBase)
@@ -110,6 +122,33 @@ func getPkgKind(pkgPath string) int {
 	return pkgStandard
 }
 
+// LookupMod looup pkgPath srcDir from GOMOD root
+// github.com/qiniu/x/log
+// github.com/qiniu/x@v1.11.5/log
+func LookupMod(pkgPath string) (srcDir string, err error) {
+	parts := strings.Split(pkgPath, "/")
+	n := len(parts)
+	if n < 3 {
+		return "", ErrInvalidPkgPath
+	}
+	srcDir = filepath.Join(getModRoot(), parts[0], parts[1])
+	noVer := strings.Index(parts[2], "@") == -1
+	if noVer {
+		parts[2] = findLastVerPkg(srcDir, parts[2])
+	}
+	srcDir = filepath.Join(srcDir, parts[2])
+	if n > 3 {
+		srcDir += "/" + strings.Join(parts[3:], "/")
+	}
+	return srcDir, nil
+}
+
+// ImportSource import a Go package from pkgPath and srcDir
+func ImportSource(pkgPath string, srcDir string) (*types.Package, error) {
+	imp := importer.ForCompiler(token.NewFileSet(), "source", nil)
+	return imp.(types.ImporterFrom).ImportFrom(pkgPath, srcDir, 0)
+}
+
 // Import imports a Go package.
 func Import(pkgPath string) (*types.Package, error) {
 	var imp types.Importer
@@ -125,6 +164,8 @@ func Import(pkgPath string) (*types.Package, error) {
 		noVer := strings.Index(parts[2], "@") == -1
 		if noVer {
 			parts[2] = findLastVerPkg(srcDir, parts[2])
+		} else {
+			pkgPath = cleanPkgVer(pkgPath)
 		}
 		srcDir = filepath.Join(srcDir, parts[2])
 		if n > 3 {
@@ -153,7 +194,11 @@ var (
 
 func getModRoot() string {
 	gOnce.Do(func() {
-		gModRoot = os.Getenv("GOPATH") + "/pkg/mod"
+		gModRoot = os.Getenv("GOMODCACHE")
+		if gModRoot == "" {
+			paths := strings.Split(os.Getenv("GOPATH"), string(filepath.ListSeparator))
+			gModRoot = paths[0] + "/pkg/mod"
+		}
 	})
 	return gModRoot
 }

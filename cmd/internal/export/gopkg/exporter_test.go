@@ -8,6 +8,7 @@ import (
 	"go/types"
 	"io/ioutil"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -176,6 +177,61 @@ func TestImport(t *testing.T) {
 	}
 	if pkg.Path() != "go/types" {
 		t.Fatal(pkg.Path())
+	}
+}
+
+func TestLooupMod(t *testing.T) {
+	dir, err := LookupMod("github.com/qiniu/x/log")
+	if err != nil {
+		t.Fatal("LookupMod failed:", err)
+	}
+	i := strings.Index(dir, "github.com")
+	dir1, err := LookupMod(filepath.ToSlash(dir[i:]))
+	if err != nil {
+		t.Fatal("LookupMod failed:", err)
+	}
+	if dir != dir1 {
+		t.Fatal("LookupMod failed:", dir, dir1)
+	}
+}
+
+func TestExportVersion(t *testing.T) {
+	pkgPath := "github.com/qiniu/x/log"
+	dir, err := LookupMod(pkgPath)
+	if err != nil {
+		t.Fatal("LookupMod failed:", err)
+	}
+	pkgPath = filepath.ToSlash(dir[len(getModRoot())+1:])
+	err = Export(pkgPath, ioutil.Discard)
+	if err != nil {
+		t.Fatal("TestExport failed:", err)
+	}
+}
+
+func TestCleanVersion(t *testing.T) {
+	pkg := cleanPkgVer("github.com/qiniu/x@v1.11.5/log")
+	if pkg != "github.com/qiniu/x/log" {
+		t.Fatal("cleanPkgVer failed:", pkg)
+	}
+	pkg = cleanPkgVer("github.com/qiniu/x@v1.11.5")
+	if pkg != "github.com/qiniu/x" {
+		t.Fatal("cleanPkgVer failed:", pkg)
+	}
+}
+
+func TestImportSource(t *testing.T) {
+	pkgPath := "github.com/qiniu/x/log"
+	dir, err := LookupMod(pkgPath)
+	if err != nil {
+		t.Fatal("LookupMod failed:", err)
+	}
+	pkg, err := ImportSource(pkgPath, dir)
+	if err != nil {
+		t.Fatal("ImportSource failed:", err)
+	}
+	err = ExportPackage(pkg, ioutil.Discard)
+	if err != nil {
+		t.Fatal("ExportPackage failed:", err)
 	}
 }
 
