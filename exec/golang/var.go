@@ -69,8 +69,9 @@ func (p *Var) setScope(where *scopeCtx) {
 // -----------------------------------------------------------------------------
 
 type scopeCtx struct {
-	vlist []exec.Var
-	stmts []ast.Stmt
+	parentCtx *scopeCtx
+	vlist     []exec.Var
+	stmts     []ast.Stmt
 }
 
 func (p *scopeCtx) addVar(vars ...exec.Var) {

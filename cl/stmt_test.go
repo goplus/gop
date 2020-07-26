@@ -1305,3 +1305,28 @@ var testDeferClauses = map[string]testData{
 func TestDeferStmt(t *testing.T) {
 	testScripts(t, "TestDeferStmt", testDeferClauses)
 }
+
+// -----------------------------------------------------------------------------
+
+var testVarScopeClauses = map[string]testData{
+	"variable_redefinition_#issue304": {`
+						a := []float64{1, 2, 3.4}
+						println(a)
+						
+						a := []float64{1, 2, 3.4}
+						println(a)
+					`, "", true},
+	"variable_scope_bug_#issue303": {`
+						i:=0
+						{
+						    i:=0
+						    i++
+						    println("inner is",i)
+						}
+						println("outer is",i)
+					`, "inner is 1\nouter is 0\n", false},
+}
+
+func TestVarScopeStmt(t *testing.T) {
+	testScripts(t, "TestVarScopeStmt", testVarScopeClauses)
+}

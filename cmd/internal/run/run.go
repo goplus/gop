@@ -53,7 +53,7 @@ func init() {
 func runCmd(cmd *base.Command, args []string) {
 	flag.Parse(args)
 	if flag.NArg() < 1 {
-		cmd.Usage()
+		cmd.Usage(os.Stderr)
 	}
 
 	log.SetFlags(log.Ldefault &^ log.LstdFlags)
@@ -72,7 +72,7 @@ func runCmd(cmd *base.Command, args []string) {
 	if err != nil {
 		log.Fatalln("input arg check failed:", err)
 	}
-	pkgs, err := parser.ParseGopFiles(fset, target, isDir, 0)
+	pkgs, err := parser.ParseGopFiles(fset, target, isDir, nil, 0)
 	if err != nil {
 		log.Fatalln("ParseGopFiles failed:", err)
 	}

@@ -41,9 +41,9 @@ Args:
 	}
 
 	if len(cmd.Commands) > 0 {
-		PrintUsage(os.Stdout, cmd)
+		PrintUsage(w, cmd)
 	} else {
-		cmd.Usage()
+		cmd.Usage(w)
 	}
 	// not exit 2: succeeded at 'gop help cmd'.
 	return

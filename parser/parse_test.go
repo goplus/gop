@@ -107,7 +107,7 @@ func TestParseGopFiles(t *testing.T) {
 		local = localFS{}
 	}()
 	// test parse directory
-	pkgs, err := ParseGopFiles(fset, "/foo", true, 0)
+	pkgs, err := ParseGopFiles(fset, "/foo", true, nil, 0)
 	if err != nil {
 		t.Error("parse err!", err)
 		return
@@ -127,7 +127,7 @@ func TestParseGopFiles(t *testing.T) {
 	}
 
 	// test parse file
-	pkgs, err = ParseGopFiles(fset, "/foo/bar.gop", false, 0)
+	pkgs, err = ParseGopFiles(fset, "/foo/bar.gop", false, nil, 0)
 	if err != nil {
 		t.Error("parse err!", err)
 		return
