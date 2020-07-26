@@ -163,6 +163,7 @@ gop run         # Run a Go+ program
 gop go [-test]  # Convert Go+ packages into Go packages. If -test specified, it tests related packages.
 gop fmt         # Format Go+ packages
 gop export      # Export Go packages for Go+ programs
+gop repl        # Run Go+ in REPL/Console mode
 ```
 
 See https://github.com/goplus/gop/wiki/Commands for details.
