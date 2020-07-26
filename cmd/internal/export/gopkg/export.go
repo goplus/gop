@@ -180,8 +180,11 @@ var (
 
 func getModRoot() string {
 	gOnce.Do(func() {
-		paths := strings.Split(os.Getenv("GOPATH"), string(filepath.ListSeparator))
-		gModRoot = paths[0] + "/pkg/mod"
+		gModRoot = os.Getenv("GOMODCACHE")
+		if gModRoot == "" {
+			paths := strings.Split(os.Getenv("GOPATH"), string(filepath.ListSeparator))
+			gModRoot = paths[0] + "/pkg/mod"
+		}
 	})
 	return gModRoot
 }
