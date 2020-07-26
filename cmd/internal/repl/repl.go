@@ -43,9 +43,9 @@ var Cmd = &base.Command{
 }
 
 type repl struct {
-	src          string // the whole source code from repl
-	code         *exec.Code
-	savedCtx     interface{}  // store the context after exec
+	src          string       // the whole source code from repl
+	preContext   exec.Context // store the context after exec
+	ip           int          // store the ip after exec
 	prompt       string       // the prompt type in console
 	continueMode bool         // switch to control the promot type
 	liner        *liner.State // liner instance
@@ -60,8 +60,7 @@ const (
 func runCmd(cmd *base.Command, args []string) {
 	fmt.Println(welcome)
 	liner := liner.NewLiner()
-	code := exec.NewCode()
-	rInstance := repl{prompt: standardPrompt, liner: liner, code: code}
+	rInstance := repl{prompt: standardPrompt, liner: liner}
 	defer rInstance.liner.Close()
 
 	for {
@@ -133,8 +132,8 @@ func (r *repl) run(newLine string) (err error) {
 	}
 	cl.CallBuiltinOp = exec.CallBuiltinOp
 
-	ip := r.code.Len()
-	b := exec.NewBuilder(r.code)
+	b := exec.NewBuilder(nil)
+
 	_, err = cl.NewPackage(b.Interface(), pkgs["main"], fset, cl.PkgActClMain)
 	if err != nil {
 		if err == cl.ErrMainFuncNotFound {
@@ -146,9 +145,15 @@ func (r *repl) run(newLine string) (err error) {
 	}
 	code := b.Resolve()
 	ctx := exec.NewContext(code)
-	ctx.Restore(r.savedCtx)
-	ctx.Exec(ip, code.Len())
-	r.savedCtx = ctx.Save()
+	if r.ip != 0 {
+		// if it is not the first time, restore pre var
+		r.preContext.CloneSetVarScope(ctx)
+	}
+	currentIP := ctx.Exec(r.ip, code.Len())
+	r.preContext = *ctx
+	// "currentip - 1" is the index of `return`
+	// next time it will replace by new code from newLine
+	r.ip = currentIP - 1
 	return
 }
 

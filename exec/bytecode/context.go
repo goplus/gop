@@ -124,24 +124,13 @@ func NewContext(in exec.Code) *Context {
 	return p
 }
 
-// Save saves values of all variables in the executing context.
-func (ctx *Context) Save() interface{} {
-	vars := ctx.vars
-	if !vars.IsValid() {
-		return nil
-	}
-	return vars
-}
-
-// Restore restores values of all variables in the executing context.
-func (ctx *Context) Restore(v interface{}) {
-	if v == nil {
+// CloneSetVarScope clone already set varScope to new context
+func (ctx *Context) CloneSetVarScope(new *Context) {
+	if !ctx.vars.IsValid() {
 		return
 	}
-	vars := v.(varsContext)
-	n := vars.NumField()
-	for i := 0; i < n; i++ {
-		ctx.vars.Field(i).Set(vars.Field(i))
+	for i := 0; i < ctx.vars.NumField(); i++ {
+		new.varScope.setVar(uint32(i), ctx.varScope.getVar(uint32(i)))
 	}
 }
 
@@ -180,7 +169,7 @@ func (ctx *Context) getScope(local bool) *varScope {
 }
 
 // Exec executes a code block from ip to ipEnd.
-func (ctx *Context) Exec(ip, ipEnd int) {
+func (ctx *Context) Exec(ip, ipEnd int) (currentIP int) {
 	const allowProfile = true
 	var lastInstr Instr
 	var start time.Time
@@ -228,6 +217,7 @@ func (ctx *Context) Exec(ip, ipEnd int) {
 		case opCallGoFuncv:
 			execGoFuncv(i, ctx)
 		case opReturn:
+			currentIP = ctx.ip
 			if i == iBreak || i == iContinue || i == iReturn {
 				ctx.ip = int(i)
 			} else {
