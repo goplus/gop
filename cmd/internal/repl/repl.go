@@ -149,7 +149,7 @@ func (r *repl) run(newLine string) (err error) {
 	}
 	currentIp := ctx.Exec(r.ip, code.Len())
 	r.preContext = *ctx
-	// currentip - 1 iif t := false; t {s the index of `return`
+	// "currentip - 1" is the index of `return`
 	// next time it will replace by new code from newLine
 	r.ip = currentIp - 1
 	return
