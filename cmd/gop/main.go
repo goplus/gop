@@ -11,6 +11,7 @@ import (
 	"github.com/goplus/gop/cmd/internal/gengo"
 	"github.com/goplus/gop/cmd/internal/gopfmt"
 	"github.com/goplus/gop/cmd/internal/help"
+	"github.com/goplus/gop/cmd/internal/repl"
 	"github.com/goplus/gop/cmd/internal/run"
 
 	_ "github.com/goplus/gop/lib"
@@ -28,6 +29,7 @@ func init() {
 		gengo.Cmd,
 		gopfmt.Cmd,
 		export.Cmd,
+		repl.Cmd,
 	}
 }
 
