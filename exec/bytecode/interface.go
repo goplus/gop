@@ -437,4 +437,14 @@ func (p *iBuilder) Resolve() exec.Code {
 	return ((*Builder)(p)).Resolve()
 }
 
+// DefineBlock
+func (p *iBuilder) DefineBlock() exec.Builder {
+	return p
+}
+
+// EndBlock
+func (p *iBuilder) EndBlock() exec.Builder {
+	return p
+}
+
 // -----------------------------------------------------------------------------

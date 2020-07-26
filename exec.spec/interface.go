@@ -363,6 +363,12 @@ type Builder interface {
 
 	// Defer instr
 	Defer(start, end Label) Instr
+
+	// DefineBlock instr
+	DefineBlock() Builder
+
+	// EndBlock instr
+	EndBlock() Builder
 }
 
 // Package represents a Go+ package.

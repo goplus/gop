@@ -37,6 +37,12 @@ func compileBlockStmtWithout(ctx *blockCtx, body *ast.BlockStmt) {
 	}
 }
 
+func compileNewBlock(ctx *blockCtx, block *ast.BlockStmt) {
+	ctx.out.DefineBlock()
+	compileBlockStmtWith(ctx, block)
+	ctx.out.EndBlock()
+}
+
 func compileBodyWith(ctx *blockCtx, body []ast.Stmt) {
 	ctxWith := newNormBlockCtx(ctx)
 	for _, stmt := range body {
@@ -62,7 +68,7 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	case *ast.ForStmt:
 		compileForStmt(ctx, v)
 	case *ast.BlockStmt:
-		compileBlockStmtWith(ctx, v)
+		compileNewBlock(ctx, v)
 	case *ast.ReturnStmt:
 		compileReturnStmt(ctx, v)
 	case *ast.IncDecStmt:
@@ -147,9 +153,11 @@ func toIdent(e ast.Expr) *ast.Ident {
 }
 
 func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
-	if v.Init != nil {
-		ctx = newNormBlockCtx(ctx)
-		compileStmt(ctx, v.Init)
+	if init := v.Init; init != nil {
+		v.Init = nil
+		block := &ast.BlockStmt{List: []ast.Stmt{init, v}}
+		compileNewBlock(ctx, block)
+		return
 	}
 	out := ctx.out
 	start := ctx.NewLabel("")
@@ -477,7 +485,11 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 	}
 	out.Label(label)
 	if hasElse {
-		compileStmt(ctxIf, v.Else)
+		if ve, ok := v.Else.(*ast.BlockStmt); ok {
+			compileBlockStmtWithout(ctx, ve)
+		} else {
+			compileStmt(ctxIf, v.Else)
+		}
 		out.Label(done)
 	}
 }
