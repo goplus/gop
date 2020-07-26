@@ -195,6 +195,30 @@ func TestLooupMod(t *testing.T) {
 	}
 }
 
+func TestExportVersion(t *testing.T) {
+	pkgPath := "github.com/qiniu/x/log"
+	dir, err := LookupMod(pkgPath)
+	if err != nil {
+		t.Fatal("LookupMod failed:", err)
+	}
+	pkgPath = filepath.ToSlash(dir[len(getModRoot())+1:])
+	err = Export(pkgPath, ioutil.Discard)
+	if err != nil {
+		t.Fatal("TestExport failed:", err)
+	}
+}
+
+func TestCleanVersion(t *testing.T) {
+	pkg := cleanPkgVer("github.com/qiniu/x@v1.11.5/log")
+	if pkg != "github.com/qiniu/x/log" {
+		t.Fatal("cleanPkgVer failed:", pkg)
+	}
+	pkg = cleanPkgVer("github.com/qiniu/x@v1.11.5")
+	if pkg != "github.com/qiniu/x" {
+		t.Fatal("cleanPkgVer failed:", pkg)
+	}
+}
+
 func TestImportSource(t *testing.T) {
 	pkgPath := "github.com/qiniu/x/log"
 	dir, err := LookupMod(pkgPath)

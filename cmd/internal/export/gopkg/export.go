@@ -64,6 +64,18 @@ func exportConst(e *Exporter, o *types.Const) (err error) {
 	return e.ExportConst(o)
 }
 
+func cleanPkgVer(pkgPath string) string {
+	i := strings.Index(pkgPath, "@")
+	if i == -1 {
+		return pkgPath
+	}
+	j := strings.Index(pkgPath[i:], "/")
+	if j == -1 {
+		return pkgPath[:i]
+	}
+	return pkgPath[:i] + pkgPath[i:][j:]
+}
+
 func findLastVerPkg(pkgDirBase string, name string) (verName string) {
 	verName = name
 	fis, err := ioutil.ReadDir(pkgDirBase)
@@ -152,6 +164,8 @@ func Import(pkgPath string) (*types.Package, error) {
 		noVer := strings.Index(parts[2], "@") == -1
 		if noVer {
 			parts[2] = findLastVerPkg(srcDir, parts[2])
+		} else {
+			pkgPath = cleanPkgVer(pkgPath)
 		}
 		srcDir = filepath.Join(srcDir, parts[2])
 		if n > 3 {
