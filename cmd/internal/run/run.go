@@ -94,8 +94,7 @@ func runCmd(cmd *base.Command, args []string) {
 		code.Dump(os.Stdout)
 		return
 	}
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
+	exec.NewContext(code).Run()
 	if *flagProf {
 		exec.ProfileReport()
 	}
