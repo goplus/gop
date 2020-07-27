@@ -29,6 +29,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/cmd/internal/export/gopkg"
@@ -86,13 +87,14 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 
 	for _, pkgPath := range flag.Args() {
-		pkg, err := checkPkg(pkgPath)
+		pkg, err := LookupPkg(pkgPath)
 		if err != nil {
 			log.Printf("export %q error: %v", pkgPath, err)
 			continue
 		}
-		if pkg.info != nil && pkg.info.Dir == pkg.Dir {
-			exportDir(pkg.info)
+		fmt.Printf("source %v\n", pkg.Dir)
+		if pkg.Module != nil && pkg.Module.Dir == pkg.Dir {
+			exportDir(pkg.Module)
 			continue
 		}
 		if pkg.Goroot {
@@ -109,14 +111,51 @@ func runCmd(cmd *base.Command, args []string) {
 }
 
 type ModInfo struct {
-	Path     string
-	Version  string
-	Info     string
-	GoMod    string
-	Zip      string
-	Dir      string
-	Sum      string
-	GoModSum string
+	Path    string // module path
+	Version string // module version
+	Dir     string // directory holding files for this module, if any
+}
+
+// type ModInfo struct {
+// 	Path     string
+// 	Version  string
+// 	Info     string
+// 	GoMod    string
+// 	Zip      string
+// 	Dir      string
+// 	Sum      string
+// 	GoModSum string
+// }
+
+type Module struct {
+	Path      string       // module path
+	Version   string       // module version
+	Versions  []string     // available module versions (with -versions)
+	Replace   *Module      // replaced by this module
+	Time      *time.Time   // time version was created
+	Update    *Module      // available update, if any (with -u)
+	Main      bool         // is this the main module?
+	Indirect  bool         // is this module only an indirect dependency of main module?
+	Dir       string       // directory holding files for this module, if any
+	GoMod     string       // path to go.mod file used when loading this module, if any
+	GoVersion string       // go version used in module
+	Error     *ModuleError // error loading module
+}
+
+type ModuleError struct {
+	Err string // the error itself
+}
+
+type ModuleInfo struct {
+	Path     string // module path
+	Version  string // module version
+	Error    string // error loading module
+	Info     string // absolute path to cached .info file
+	GoMod    string // absolute path to cached .mod file
+	Zip      string // absolute path to cached .zip file
+	Dir      string // absolute path to cached source root directory
+	Sum      string // checksum for path, version (as in go.sum)
+	GoModSum string // checksum for go.mod (as in go.sum)
 }
 
 func downloadMod(pkgPath string) (*ModInfo, error) {
@@ -152,9 +191,9 @@ func exportDir(info *ModInfo) error {
 				continue
 			}
 			if err == nil {
-				fmt.Println("export pkg", pkg)
+				fmt.Printf("export %q success\n", pkg)
 			} else if err != gopkg.ErrIgnore {
-				fmt.Printf("export %v error,%v", pkg, err)
+				fmt.Printf("export %v error,%v\n", pkg, err)
 			}
 		}
 	}
@@ -166,7 +205,7 @@ type Package struct {
 	ImportPath string
 	Dir        string
 	Goroot     bool
-	info       *ModInfo
+	Module     *ModInfo
 }
 
 func checkGoList(pkgPath string) (*Package, error) {
@@ -183,7 +222,7 @@ func checkGoList(pkgPath string) (*Package, error) {
 	return &pkg, nil
 }
 
-func checkPkg(pkgPath string) (*Package, error) {
+func LookupPkg(pkgPath string) (*Package, error) {
 	// check go list
 	if !strings.Contains(pkgPath, "@") {
 		pkg, err := checkGoList(pkgPath)
@@ -203,15 +242,15 @@ func checkPkg(pkgPath string) (*Package, error) {
 	if err != nil {
 		return nil, fmt.Errorf("download %q failed, %v", mod, err)
 	}
-	return &Package{ImportPath: pkg, Dir: info.Dir, info: info}, nil
+	return &Package{ImportPath: pkg, Dir: info.Dir, Module: info}, nil
 }
 
 func exportPkg(pkgPath string, srcDir string) (err error) {
 	var pkg *types.Package
 	if srcDir == "" {
-		pkg, err = gopkg.ImportSource(pkgPath, srcDir)
-	} else {
 		pkg, err = gopkg.Import(pkgPath)
+	} else {
+		pkg, err = gopkg.ImportSource(pkgPath, srcDir)
 	}
 	if err != nil {
 		log.Printf("import %q failed: %v", pkgPath, err)
@@ -235,26 +274,5 @@ func exportPkg(pkgPath string, srcDir string) (err error) {
 	err = ioutil.WriteFile(filepath.Join(dir, "gomod_export.go"), data, 0666)
 	return
 }
-
-// func exportPkg(pkgPath string) error {
-// 	pkg, err := gopkg.Import(pkgPath)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	var buf bytes.Buffer
-// 	err = gopkg.ExportPackage(pkg, &buf)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	data, err := format.Source(buf.Bytes())
-// 	if err != nil {
-// 		fmt.Println(buf.String())
-// 		return err
-// 	}
-// 	dir := filepath.Join(libDir, pkg.Path())
-// 	os.MkdirAll(dir, 0777)
-// 	err = ioutil.WriteFile(filepath.Join(dir, "gomod_export.go"), data, 0666)
-// 	return err
-// }
 
 // -----------------------------------------------------------------------------
