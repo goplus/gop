@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/format"
+	"go/types"
 	"io/ioutil"
 	"log"
 	"os"
@@ -85,7 +86,25 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 
 	for _, pkgPath := range flag.Args() {
-		checkPkg(pkgPath)
+		pkg, err := checkPkg(pkgPath)
+		if err != nil {
+			log.Printf("export %q error: %v", pkgPath, err)
+			continue
+		}
+		if pkg.info != nil && pkg.info.Dir == pkg.Dir {
+			exportDir(pkg.info)
+			continue
+		}
+		if pkg.Goroot {
+			err = exportPkg(pkg.ImportPath, "")
+		} else {
+			err = exportPkg(pkg.ImportPath, pkg.Dir)
+		}
+		if err != nil {
+			fmt.Printf("export %q error: %v\n", pkg.ImportPath, err)
+		} else {
+			fmt.Printf("export %q success\n", pkg.ImportPath)
+		}
 	}
 }
 
@@ -100,7 +119,7 @@ type ModInfo struct {
 	GoModSum string
 }
 
-func downMod(pkgPath string) (*ModInfo, error) {
+func downloadMod(pkgPath string) (*ModInfo, error) {
 	fmt.Println("go download mod", pkgPath)
 	cmd := exec.Command(gobin, "mod", "download", "-json", pkgPath)
 	data, err := cmd.Output()
@@ -128,7 +147,7 @@ func exportDir(info *ModInfo) error {
 		ar := strings.Split(line, " ")
 		if len(ar) == 2 {
 			pkg, dir := ar[0], ar[1]
-			err := exportMod(pkg, dir)
+			err := exportPkg(pkg, dir)
 			if strings.Contains(pkg, "internal") || strings.Contains(pkg, "vendor") {
 				continue
 			}
@@ -147,6 +166,7 @@ type Package struct {
 	ImportPath string
 	Dir        string
 	Goroot     bool
+	info       *ModInfo
 }
 
 func checkGoList(pkgPath string) (*Package, error) {
@@ -163,39 +183,38 @@ func checkGoList(pkgPath string) (*Package, error) {
 	return &pkg, nil
 }
 
-func checkPkg(pkgPath string) error {
+func checkPkg(pkgPath string) (*Package, error) {
+	// check go list
 	if !strings.Contains(pkgPath, "@") {
 		pkg, err := checkGoList(pkgPath)
 		if err == nil {
-			if pkg.Goroot {
-				return exportMod(pkgPath, "")
-			} else {
-				return exportMod(pkgPath, pkg.Dir)
-			}
+			return pkg, nil
 		}
 	}
-	// check mod
-	src, err := gopkg.LookupMod(pkgPath)
+	// check go mod
+	srcDir, err := gopkg.LookupMod(pkgPath)
 	if err == nil {
 		_, pkgPath = gopkg.ParsePkgVer(pkgPath)
-		return exportMod(pkgPath, src)
+		return &Package{ImportPath: pkgPath, Dir: srcDir}, nil
 	}
-	mpkg, pkg := gopkg.ParsePkgVer(pkgPath)
-	mod, err := downMod(mpkg)
+	// check download mod
+	mod, pkg := gopkg.ParsePkgVer(pkgPath)
+	info, err := downloadMod(mod)
 	if err != nil {
-		log.Println("download pkg failed:", err)
+		return nil, fmt.Errorf("download %q failed, %v", mod, err)
 	}
-	if pkg == mod.Path {
-		exportDir(mod)
-	} else {
-		exportMod(pkg, mod.Dir)
-	}
-	return nil
+	return &Package{ImportPath: pkg, Dir: info.Dir, info: info}, nil
 }
 
-func exportMod(pkgPath string, srcDir string) error {
-	pkg, err := gopkg.ImportSource(pkgPath, srcDir)
+func exportPkg(pkgPath string, srcDir string) (err error) {
+	var pkg *types.Package
+	if srcDir == "" {
+		pkg, err = gopkg.ImportSource(pkgPath, srcDir)
+	} else {
+		pkg, err = gopkg.Import(pkgPath)
+	}
 	if err != nil {
+		log.Printf("import %q failed: %v", pkgPath, err)
 		return err
 	}
 	if pkg.Name() == "main" {
@@ -214,28 +233,28 @@ func exportMod(pkgPath string, srcDir string) error {
 	dir := filepath.Join(libDir, pkg.Path())
 	os.MkdirAll(dir, 0777)
 	err = ioutil.WriteFile(filepath.Join(dir, "gomod_export.go"), data, 0666)
-	return err
+	return
 }
 
-func exportPkg(pkgPath string) error {
-	pkg, err := gopkg.Import(pkgPath)
-	if err != nil {
-		return err
-	}
-	var buf bytes.Buffer
-	err = gopkg.ExportPackage(pkg, &buf)
-	if err != nil {
-		return err
-	}
-	data, err := format.Source(buf.Bytes())
-	if err != nil {
-		fmt.Println(buf.String())
-		return err
-	}
-	dir := filepath.Join(libDir, pkg.Path())
-	os.MkdirAll(dir, 0777)
-	err = ioutil.WriteFile(filepath.Join(dir, "gomod_export.go"), data, 0666)
-	return err
-}
+// func exportPkg(pkgPath string) error {
+// 	pkg, err := gopkg.Import(pkgPath)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	var buf bytes.Buffer
+// 	err = gopkg.ExportPackage(pkg, &buf)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	data, err := format.Source(buf.Bytes())
+// 	if err != nil {
+// 		fmt.Println(buf.String())
+// 		return err
+// 	}
+// 	dir := filepath.Join(libDir, pkg.Path())
+// 	os.MkdirAll(dir, 0777)
+// 	err = ioutil.WriteFile(filepath.Join(dir, "gomod_export.go"), data, 0666)
+// 	return err
+// }
 
 // -----------------------------------------------------------------------------
