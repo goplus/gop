@@ -176,37 +176,8 @@ type Code interface {
 	Len() int
 }
 
-// Deferable represents a defer caller.
-type Deferable interface {
-	// CallClosure instr
-	CallClosure(nexpr, arity int, ellipsis bool) Builder
-
-	// CallGoClosure instr
-	CallGoClosure(nexpr, arity int, ellipsis bool) Builder
-
-	// CallFunc instr
-	CallFunc(fun FuncInfo, nexpr int) Builder
-
-	// CallFuncv instr
-	CallFuncv(fun FuncInfo, nexpr, arity int) Builder
-
-	// CallGoFunc instr
-	CallGoFunc(fun GoFuncAddr, nexpr int) Builder
-
-	// CallGoFuncv instr
-	CallGoFuncv(fun GoFuncvAddr, nexpr, arity int) Builder
-
-	// Append instr
-	Append(typ reflect.Type, arity int) Builder
-
-	// GoBuiltin instr
-	GoBuiltin(typ reflect.Type, op GoBuiltin) Builder
-}
-
 // Builder represents a executing byte code generator.
 type Builder interface {
-	Deferable
-
 	// Push instr
 	Push(val interface{}) Builder
 
@@ -261,8 +232,32 @@ type Builder interface {
 	// GoClosure instr
 	GoClosure(fun FuncInfo) Builder
 
+	// CallClosure instr
+	CallClosure(nexpr, arity int, ellipsis bool) Builder
+
+	// CallGoClosure instr
+	CallGoClosure(nexpr, arity int, ellipsis bool) Builder
+
+	// CallFunc instr
+	CallFunc(fun FuncInfo, nexpr int) Builder
+
+	// CallFuncv instr
+	CallFuncv(fun FuncInfo, nexpr, arity int) Builder
+
+	// CallGoFunc instr
+	CallGoFunc(fun GoFuncAddr, nexpr int) Builder
+
+	// CallGoFuncv instr
+	CallGoFuncv(fun GoFuncvAddr, nexpr, arity int) Builder
+
+	// Append instr
+	Append(typ reflect.Type, arity int) Builder
+
+	// GoBuiltin instr
+	GoBuiltin(typ reflect.Type, op GoBuiltin) Builder
+
 	// Defer instr
-	Defer() Deferable
+	Defer() Builder
 
 	// DefineFunc instr
 	DefineFunc(fun FuncInfo) Builder

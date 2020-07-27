@@ -16,12 +16,6 @@
 
 package bytecode
 
-import (
-	"reflect"
-
-	"github.com/goplus/gop/exec.spec"
-)
-
 // -----------------------------------------------------------------------------
 
 type theDefer struct {
@@ -50,54 +44,10 @@ func execDefer(i Instr, ctx *Context) {
 	}
 }
 
-// -----------------------------------------------------------------------------
-
-type deferable iBuilder
-
-// CallClosure instr
-func (p *deferable) CallClosure(nexpr, arity int, ellipsis bool) exec.Builder {
-	return ((*iBuilder)(p)).CallClosure(nexpr, arity, ellipsis)
-}
-
-// CallGoClosure instr
-func (p *deferable) CallGoClosure(nexpr, arity int, ellipsis bool) exec.Builder {
-	return ((*iBuilder)(p)).CallGoClosure(nexpr, arity, ellipsis)
-}
-
-// CallFunc instr
-func (p *deferable) CallFunc(fun exec.FuncInfo, nexpr int) exec.Builder {
-	return ((*iBuilder)(p)).CallFunc(fun, nexpr)
-}
-
-// CallFuncv instr
-func (p *deferable) CallFuncv(fun exec.FuncInfo, nexpr, arity int) exec.Builder {
-	return ((*iBuilder)(p)).CallFuncv(fun, nexpr, arity)
-}
-
-// CallGoFunc instr
-func (p *deferable) CallGoFunc(fun exec.GoFuncAddr, nexpr int) exec.Builder {
-	return ((*iBuilder)(p)).CallGoFunc(fun, nexpr)
-}
-
-// CallGoFuncv instr
-func (p *deferable) CallGoFuncv(fun exec.GoFuncvAddr, nexpr, arity int) exec.Builder {
-	return ((*iBuilder)(p)).CallGoFuncv(fun, nexpr, arity)
-}
-
-// Append instr
-func (p *deferable) Append(typ reflect.Type, arity int) exec.Builder {
-	return ((*iBuilder)(p)).Append(typ, arity)
-}
-
-// GoBuiltin instr
-func (p *deferable) GoBuiltin(typ reflect.Type, op GoBuiltin) exec.Builder {
-	return ((*iBuilder)(p)).GoBuiltin(typ, op)
-}
-
 // Defer instr
-func (p *Builder) Defer() exec.Deferable {
+func (p *Builder) Defer() *Builder {
 	p.code.data = append(p.code.data, opDefer<<bitsOpShift)
-	return (*deferable)(p)
+	return p
 }
 
 // -----------------------------------------------------------------------------

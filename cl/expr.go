@@ -702,11 +702,11 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, isDefer
 	return nil
 }
 
-func builder(ctx *blockCtx, isDefer bool) exec.Deferable {
-	if isDefer {
-		return ctx.out.Defer()
+func builder(ctx *blockCtx, isDefer bool) (out exec.Builder) {
+	if out = ctx.out; isDefer {
+		out.Defer()
 	}
-	return ctx.out
+	return
 }
 
 func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {

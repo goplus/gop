@@ -128,8 +128,9 @@ func (p *iBuilder) Default() exec.Builder {
 }
 
 // Default instr
-func (p *iBuilder) Defer() exec.Deferable {
-	return ((*Builder)(p)).Defer()
+func (p *iBuilder) Defer() exec.Builder {
+	((*Builder)(p)).Defer()
+	return p
 }
 
 // WrapIfErr instr
