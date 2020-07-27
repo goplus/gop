@@ -168,6 +168,12 @@ func (ctx *Context) getScope(local bool) *varScope {
 	return scope
 }
 
+// Run executes the code.
+func (ctx *Context) Run() {
+	defer ctx.execDefers()
+	ctx.Exec(0, ctx.code.Len())
+}
+
 // Exec executes a code block from ip to ipEnd.
 func (ctx *Context) Exec(ip, ipEnd int) (currentIP int) {
 	const allowProfile = true
@@ -195,8 +201,6 @@ func (ctx *Context) Exec(ip, ipEnd int) (currentIP int) {
 			}
 		case opBuiltinOp:
 			execBuiltinOp(i, ctx)
-		case opDeferOp:
-			execDeferOp(i, ctx)
 		case opCallFunc:
 			fun := ctx.code.funs[i&bitsOperand]
 			fun.exec(ctx, ctx.getScope(fun.nestDepth > 1))
@@ -235,7 +239,6 @@ func (ctx *Context) Exec(ip, ipEnd int) (currentIP int) {
 		}
 	}
 finished:
-	execDefers(ctx)
 	if allowProfile && doProfile {
 		if lastInstr != 0 {
 			instrProfile(lastInstr, time.Since(start))
@@ -247,6 +250,8 @@ finished:
 var _execTable = [...]func(i Instr, p *Context){
 	opCallGoFunc:    execGoFunc,
 	opCallGoFuncv:   execGoFuncv,
+	opCallFunc:      execFunc,
+	opCallFuncv:     execFuncv,
 	opPushInt:       execPushInt,
 	opPushUint:      execPushUint,
 	opPushValSpec:   execPushValSpec,
@@ -285,7 +290,7 @@ var _execTable = [...]func(i Instr, p *Context){
 	opGoBuiltin:     execGoBuiltin,
 	opErrWrap:       execErrWrap,
 	opWrapIfErr:     execWrapIfErr,
-	opDeferOp:       execDeferOp,
+	opDefer:         execDefer,
 }
 
 var execTable []func(i Instr, p *Context)

@@ -96,6 +96,7 @@ type Builder struct {
 	comprehens  func() // current comprehension
 	identBase   int    // auo-increasement ident index
 	*scopeCtx          // current block scope
+	inDefer     bool   // in defer statement currently
 }
 
 // NewBuilder creates a new Code Builder instance.
@@ -320,11 +321,6 @@ func (p *Builder) Reserve() exec.Reserved {
 // ReservedAsPush sets Reserved as Push(v)
 func (p *Builder) ReservedAsPush(r exec.Reserved, v interface{}) {
 	p.reserveds[r].Expr = Const(p, v)
-}
-
-// ReservedAsInstr sets Reserved as Instr
-func (p *Builder) ReservedAsInstr(r exec.Reserved, v exec.Instr) {
-	log.Panicln("todo")
 }
 
 // Pop instr

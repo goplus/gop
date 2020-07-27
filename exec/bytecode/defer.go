@@ -16,63 +16,41 @@
 
 package bytecode
 
-import (
-	"github.com/goplus/gop/exec.spec"
-)
+// -----------------------------------------------------------------------------
 
 type theDefer struct {
-	next *theDefer
-	Stack
-	start int
-	end   int
+	next  *theDefer
+	state varScope // block state
+	n     int      // stack len
+	i     Instr
 }
 
-const (
-	bitsOpDefer        = bitsOp + 2
-	bitsOpDeferOperand = bitsOpDefer - 1
-)
-
-func execDefers(ctx *Context) {
+func (ctx *Context) execDefers() {
 	d := ctx.defers
-	if d == nil {
-		return
-	}
-
 	ctx.defers = nil
-	for {
-		ctx.Stack = d.Stack
-		ctx.Exec(d.start, d.end)
+	for d != nil {
+		ctx.data = ctx.data[:d.n]
+		ctx.varScope = d.state
+		execTable[d.i>>bitsOpShift](d.i, ctx)
 		d = d.next
-		if d == nil {
-			break
-		}
 	}
 }
 
-func execDeferOp(i Instr, p *Context) {
-	end := i & bitsOpDeferOperand << bitsOpDefer >> bitsOpDefer
-	def := &theDefer{
-		Stack: p.Stack,
-		next:  p.defers,
-		start: p.ip,
+func execDefer(i Instr, ctx *Context) {
+	i = ctx.code.data[ctx.ip]
+	ctx.ip++
+	ctx.defers = &theDefer{
+		next:  ctx.defers,
+		state: ctx.varScope,
+		n:     len(ctx.data),
+		i:     i,
 	}
-
-	p.ip += int(end)
-	def.end = p.ip
-	p.defers = def
 }
 
 // Defer instr
-func (p *Builder) Defer(start, end *Label) exec.Instr {
-	return &iDefer{start: p.labels[start], end: p.labels[end]}
+func (p *Builder) Defer() *Builder {
+	p.code.data = append(p.code.data, opDefer<<bitsOpShift)
+	return p
 }
 
-type iDefer struct {
-	start int
-	end   int
-}
-
-func (c *iDefer) Val() interface{} {
-	instr := opDeferOp<<bitsOpShift | uint32(c.end-c.start)&bitsOpDeferOperand
-	return Instr(instr)
-}
+// -----------------------------------------------------------------------------

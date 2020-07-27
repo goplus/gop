@@ -1,6 +1,8 @@
 package cltest
 
 import (
+	"fmt"
+	"os"
 	"testing"
 
 	"github.com/goplus/gop/ast/asttest"
@@ -36,9 +38,10 @@ func Expect(t *testing.T, script string, expected string, panicMsg ...interface{
 		}
 		cl.Debug(pkg)
 		code := b.Resolve()
-		ctx := exec.NewContext(code)
-		ctx.Exec(0, code.Len())
-	}).Expect(expected).Panic(panicMsg...)
+		code.Dump(os.Stderr)
+		fmt.Fprintln(os.Stderr)
+		exec.NewContext(code).Run()
+	}).Panic(panicMsg...).Expect(expected)
 }
 
 // -----------------------------------------------------------------------------
@@ -62,7 +65,7 @@ func Call(t *testing.T, script string, idx ...int) *ts.TestCase {
 		cl.Debug(pkg)
 		code := b.Resolve()
 		ctx := exec.NewContext(code)
-		ctx.Exec(0, code.Len())
+		ctx.Run()
 		return ctx.Get(append(idx, -1)[0])
 	})
 }

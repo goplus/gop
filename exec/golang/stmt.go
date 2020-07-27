@@ -393,18 +393,20 @@ func (p *Builder) EndComprehension(c *Comprehension) *Builder {
 	return p
 }
 
-func (p *Builder) Defer(start, end *Label) exec.Instr {
-	panic("The method defer under the builder of golang is not yet supported")
+// Defer instr
+func (p *Builder) Defer() *Builder {
+	p.inDefer = true
+	return p
 }
 
-// DefineBlock starts a new block
+// DefineBlock starts a new block.
 func (p *Builder) DefineBlock() *Builder {
 	p.scopeCtx = &scopeCtx{parentCtx: p.scopeCtx}
 	p.initStmts()
 	return p
 }
 
-//  EndBlock ends a  block
+// EndBlock ends a block.
 func (p *Builder) EndBlock() *Builder {
 	p.endBlockStmt(0)
 	blockStmt := getBlockStmts(p)

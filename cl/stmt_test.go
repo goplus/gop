@@ -1158,16 +1158,6 @@ func TestMapForPhraseWithBranch(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 var testDeferClauses = map[string]testData{
-	"func_in_defer_func": {clause: `
-		defer println(println("hello world"))
-		println("test defer")
-		`, want: "hello world\ntest defer\n12 <nil>\n"},
-	"func_in_defer_for": {clause: `
-		for i:=0;i<10;i++ {
-			defer println(i)
-		}
-		println("test defer")
-		`, want: "test defer\n9\n8\n7\n6\n5\n4\n3\n2\n1\n0\n"},
 	"multi_defer": {clause: `
 	func test() {
 		defer println("Hello, test defer!")
@@ -1185,7 +1175,7 @@ var testDeferClauses = map[string]testData{
 		defer println("Hello, test defer!")
 		println("Hello, test!",i)
 	}
-	
+
 	defer println("Hello, defer1!")
 	defer println("Hello, defer2!")
 	defer println("Hello, defer3!")
@@ -1238,45 +1228,15 @@ var testDeferClauses = map[string]testData{
 		defer myprint("hello %s\n", "defer")
 		myprint("hello %s\n", "world")
 		`, want: "this is test print: hello world\nthis is test print: hello defer\n"},
-	"unnamed_func4": {clause: `
-	import "strings"
-
-	f2 := func(s string, s2 string) {
-		defer func() {
-			println(s)
-			println(s2)
-		}()
-		s = strings.Replace(s, "?", "!", -1)
-		s2 = strings.Replace(s2, "?", "!", -1)
-	}
-	s := "hello world???"
-	s2 := "hello world????"
-	defer f2(s, s2)
-	
-	println(s)
-	println(s2)
-		`, want: "hello world???\nhello world????\nhello world!!!\nhello world!!!!\n"},
-	"unnamed_func5": {clause: `
-	import (
-		"fmt"
-	)
-	
-	defer func(format string, a ...interface{}) {
-		format = format
-		fmt.Printf(format, a...)
-	}("hello %s\n", "defer")
-	
-	printf("hello %s\n", "world")
-		`, want: "hello world\nhello defer\n"},
 	"unnamed_func6": {clause: `
 	import (
 		"fmt"
 	)
-	
+
 	myprint := func() {
 		fmt.Printf("hello defer\n")
 	}
-	
+
 	defer myprint()
 	printf("hello %s\n", "world")
 		`, want: "hello world\nhello defer\n"},
@@ -1292,18 +1252,139 @@ var testDeferClauses = map[string]testData{
 	defer fmt.Println("hello defer")
 	myprint()
 		`, want: "hello world\nhello defer\n"},
-	"nonvalue": {clause: `
-	a := [1, 2, 3]
-	b := [4, 5, 6]
-	defer func() {
-		println(b)
-	}()
-	defer copy(b, a)
-		`, want: "[1 2 3]\n"},
 }
 
 func TestDeferStmt(t *testing.T) {
 	testScripts(t, "TestDeferStmt", testDeferClauses)
+}
+
+func TestDeferCopy(t *testing.T) {
+	cltest.Expect(t, `
+		a := [1, 2, 3]
+		b := [4, 5, 6]
+		defer func() {
+			println(b)
+		}()
+		defer copy(b, a)
+		`,
+		"[1 2 3]\n",
+	)
+}
+
+func TestDefer1(t *testing.T) {
+	cltest.Expect(t, `
+		defer println(println("hello world"))
+		println("test defer")
+		`,
+		"hello world\ntest defer\n12 <nil>\n",
+	)
+}
+
+func TestDeferInFunc(t *testing.T) {
+	cltest.Expect(t, `
+		func f() {
+			defer println(println("hello world"))
+			println("test defer")
+		}
+		defer println("hello main")
+		f()
+		f()
+		`,
+		"hello world\ntest defer\n12 <nil>\n"+
+			"hello world\ntest defer\n12 <nil>\n"+
+			"hello main\n",
+	)
+}
+
+func TestDeferInClosure(t *testing.T) {
+	cltest.Expect(t, `
+		defer func() {
+			defer println(println("hello world"))
+			println("test defer")
+		}()
+		`,
+		"hello world\ntest defer\n12 <nil>\n",
+	)
+}
+
+func TestDeferInFor(t *testing.T) {
+	cltest.Expect(t, `
+		for i:=0;i<10;i++ {
+			defer println(i)
+		}
+		println("test defer")
+		`,
+		"test defer\n9\n8\n7\n6\n5\n4\n3\n2\n1\n0\n",
+	)
+}
+
+func TestDefer4(t *testing.T) {
+	cltest.Expect(t, `
+		import "strings"
+
+		f2 := func(s string, s2 string) {
+			defer func() {
+				println(s)
+				println(s2)
+			}()
+			s = strings.Replace(s, "?", "!", -1)
+			s2 = strings.Replace(s2, "?", "!", -1)
+		}
+		s := "hello world???"
+		s2 := "hello world????"
+		defer f2(s, s2)
+
+		println(s)
+		println(s2)
+		`,
+		"hello world???\nhello world????\nhello world!!!\nhello world!!!!\n",
+	)
+}
+
+func TestDefer5(t *testing.T) {
+	cltest.Expect(t, `
+		import "fmt"
+
+		defer func(format string, a ...interface{}) {
+			format = format
+			fmt.Printf(format, a...)
+		}("hello %s\n", "defer")
+
+		printf("hello %s\n", "world")
+		`,
+		"hello world\nhello defer\n",
+	)
+}
+
+func TestDefer6(t *testing.T) {
+	cltest.Expect(t, `
+		func f() (x int) {
+			defer func() {
+				x = 3
+			}()
+			return 1
+		}
+		println(f())
+		`,
+		"3\n",
+	)
+}
+
+func TestDefer7(t *testing.T) {
+	cltest.Expect(t, `
+		func h() (x int) {
+			for i <- [3, 2, 1] {
+				v := i
+				defer func() {
+					x = v
+				}()
+			}
+			return
+		}
+		println(h())
+		`,
+		"3\n",
+	)
 }
 
 // -----------------------------------------------------------------------------

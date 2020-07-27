@@ -60,7 +60,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 	case *ast.BasicLit:
 		return compileBasicLit(ctx, v)
 	case *ast.CallExpr:
-		return compileCallExpr(ctx, v)
+		return compileCallExpr(ctx, v, false)
 	case *ast.BinaryExpr:
 		return compileBinaryExpr(ctx, v)
 	case *ast.UnaryExpr:
@@ -616,7 +616,7 @@ var binaryOps = [...]exec.Operator{
 	token.LOR:     exec.OpLOr,
 }
 
-func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) func() {
+func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, isDefer bool) func() {
 	var exprFun func()
 	switch f := v.Fun.(type) {
 	case *ast.SelectorExpr:
@@ -624,15 +624,17 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) func() {
 	default:
 		exprFun = compileExpr(ctx, f)
 	}
-	return compileCallExprCall(ctx, exprFun, v)
+	return compileCallExprCall(ctx, exprFun, v, isDefer)
 }
 
-func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr) func() {
+func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, isDefer bool) func() {
 	fn := ctx.infer.Pop()
 	switch vfn := fn.(type) {
 	case *qlFunc:
-		ret := vfn.Results()
-		ctx.infer.Push(ret)
+		if !isDefer {
+			ret := vfn.Results()
+			ctx.infer.Push(ret)
+		}
 		return func() {
 			for _, arg := range v.Args {
 				compileExpr(ctx, arg)()
@@ -640,14 +642,16 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr) func() 
 			arity := checkFuncCall(vfn.Proto(), 0, v, ctx)
 			fun := vfn.FuncInfo()
 			if fun.IsVariadic() {
-				ctx.out.CallFuncv(fun, len(v.Args), arity)
+				builder(ctx, isDefer).CallFuncv(fun, len(v.Args), arity)
 			} else {
-				ctx.out.CallFunc(fun, len(v.Args))
+				builder(ctx, isDefer).CallFunc(fun, len(v.Args))
 			}
 		}
 	case *goFunc:
-		ret := vfn.Results()
-		ctx.infer.Push(ret)
+		if !isDefer {
+			ret := vfn.Results()
+			ctx.infer.Push(ret)
+		}
 		return func() {
 			if vfn.isMethod != 0 {
 				compileExpr(ctx, v.Fun.(*ast.SelectorExpr).X)()
@@ -659,17 +663,19 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr) func() 
 			arity := checkFuncCall(vfn.Proto(), vfn.isMethod, v, ctx)
 			switch vfn.kind {
 			case exec.SymbolFunc:
-				ctx.out.CallGoFunc(exec.GoFuncAddr(vfn.addr), nexpr)
+				builder(ctx, isDefer).CallGoFunc(exec.GoFuncAddr(vfn.addr), nexpr)
 			case exec.SymbolFuncv:
-				ctx.out.CallGoFuncv(exec.GoFuncvAddr(vfn.addr), nexpr, arity)
+				builder(ctx, isDefer).CallGoFuncv(exec.GoFuncvAddr(vfn.addr), nexpr, arity)
 			}
 		}
 	case *goValue:
 		if vfn.t.Kind() != reflect.Func {
 			log.Panicln("compileCallExpr failed: call a non function.")
 		}
-		ret := newFuncResults(vfn.t)
-		ctx.infer.Push(ret)
+		if !isDefer {
+			ret := newFuncResults(vfn.t)
+			ctx.infer.Push(ret)
+		}
 		return func() {
 			for _, arg := range v.Args {
 				compileExpr(ctx, arg)()
@@ -679,18 +685,28 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr) func() 
 			if arity == -1 {
 				arity, ellipsis = len(v.Args), true
 			}
-			ctx.out.CallGoClosure(len(v.Args), arity, ellipsis)
+			builder(ctx, isDefer).CallGoClosure(len(v.Args), arity, ellipsis)
 		}
 	case *nonValue:
 		switch nv := vfn.v.(type) {
 		case goInstr:
-			return nv(ctx, v)
+			return nv(ctx, v, isDefer)
 		case reflect.Type:
+			if isDefer {
+				log.Panicln("defer requires function call, not conversion")
+			}
 			return compileTypeCast(nv, ctx, v)
 		}
 	}
 	log.Panicln("compileCallExpr failed: unknown -", reflect.TypeOf(fn))
 	return nil
+}
+
+func builder(ctx *blockCtx, isDefer bool) (out exec.Builder) {
+	if out = ctx.out; isDefer {
+		out.Defer()
+	}
+	return
 }
 
 func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
@@ -1017,7 +1033,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 			call := &ast.CallExpr{Fun: &copy}
 			v.X = call
 			v.Sel = nil
-			return compileCallExprCall(ctx, nil, call)
+			return compileCallExprCall(ctx, nil, call, false)
 		}
 		return func() {
 			log.Panicln("compileSelectorExpr: todo")

@@ -10,5 +10,5 @@ import (
 )
 
 func main() {
-	base.Main(repl.Cmd, "repl", os.Args[1:])
+	base.Main(repl.Cmd, "igop", os.Args[1:])
 }
