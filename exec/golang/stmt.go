@@ -394,7 +394,7 @@ func (p *Builder) EndComprehension(c *Comprehension) *Builder {
 }
 
 // Defer instr
-func (p *Builder) Defer(start, end *Label) exec.Instr {
+func (p *Builder) Defer() *Builder {
 	panic("The method defer under the builder of golang is not yet supported")
 }
 
