@@ -395,7 +395,8 @@ func (p *Builder) EndComprehension(c *Comprehension) *Builder {
 
 // Defer instr
 func (p *Builder) Defer() *Builder {
-	panic("The method defer under the builder of golang is not yet supported")
+	p.inDefer = true
+	return p
 }
 
 // DefineBlock starts a new block.

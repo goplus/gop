@@ -96,6 +96,7 @@ type Builder struct {
 	comprehens  func() // current comprehension
 	identBase   int    // auo-increasement ident index
 	*scopeCtx          // current block scope
+	inDefer     bool   // in defer statement currently
 }
 
 // NewBuilder creates a new Code Builder instance.

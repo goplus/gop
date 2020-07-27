@@ -366,7 +366,14 @@ func (p *Builder) Call(narg int, ellipsis bool, args ...ast.Expr) *Builder {
 	if ellipsis {
 		expr.Ellipsis++
 	}
-	p.rhs.Push(expr)
+	if p.inDefer {
+		p.inDefer = false
+		p.rhs.Push(&ast.DeferStmt{
+			Call: expr,
+		})
+	} else {
+		p.rhs.Push(expr)
+	}
 	return p
 }
 
