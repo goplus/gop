@@ -43,6 +43,12 @@ func execStrcat(arity int, p *Context) {
 	p.Ret(2, ret)
 }
 
+func execPrintln(arity int, p *Context) {
+	args := p.GetArgs(arity)
+	n, err := fmt.Println(args...)
+	p.Ret(arity, n, err)
+}
+
 func execSprint(arity int, p *Context) {
 	args := p.GetArgs(arity)
 	s := fmt.Sprint(args...)
@@ -69,6 +75,7 @@ func init() {
 		I.Funcv("Sprint", fmt.Sprint, execSprint),
 		I.Funcv("Sprintf", fmt.Sprintf, execSprintf),
 		I.Funcv("Errorf", fmt.Errorf, execErrorf),
+		I.Funcv("Println", fmt.Println, execPrintln),
 	)
 	I.RegisterFuncs(
 		I.Func("strcat", Strcat, execStrcat),

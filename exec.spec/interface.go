@@ -43,11 +43,6 @@ type Label interface {
 	Name() string
 }
 
-type Instr interface {
-	// The val of instr
-	Val() interface{}
-}
-
 // Reserved represents a reserved instruction position.
 type Reserved int
 
@@ -59,14 +54,10 @@ func (p Reserved) Push(b Builder, val interface{}) {
 	b.ReservedAsPush(p, val)
 }
 
-func (p Reserved) Set(b Builder, instr Instr) {
-	b.ReservedAsInstr(p, instr)
-}
-
-// BreakAsReturn
+// BreakAsReturn - todo
 const BreakAsReturn = -2
 
-// ContinueAsReturn
+// ContinueAsReturn - todo
 const ContinueAsReturn = -3
 
 // ForPhrase represents a for range phrase.
@@ -185,8 +176,37 @@ type Code interface {
 	Len() int
 }
 
+// Deferable represents a defer caller.
+type Deferable interface {
+	// CallClosure instr
+	CallClosure(nexpr, arity int, ellipsis bool) Builder
+
+	// CallGoClosure instr
+	CallGoClosure(nexpr, arity int, ellipsis bool) Builder
+
+	// CallFunc instr
+	CallFunc(fun FuncInfo, nexpr int) Builder
+
+	// CallFuncv instr
+	CallFuncv(fun FuncInfo, nexpr, arity int) Builder
+
+	// CallGoFunc instr
+	CallGoFunc(fun GoFuncAddr, nexpr int) Builder
+
+	// CallGoFuncv instr
+	CallGoFuncv(fun GoFuncvAddr, nexpr, arity int) Builder
+
+	// Append instr
+	Append(typ reflect.Type, arity int) Builder
+
+	// GoBuiltin instr
+	GoBuiltin(typ reflect.Type, op GoBuiltin) Builder
+}
+
 // Builder represents a executing byte code generator.
 type Builder interface {
+	Deferable
+
 	// Push instr
 	Push(val interface{}) Builder
 
@@ -241,23 +261,8 @@ type Builder interface {
 	// GoClosure instr
 	GoClosure(fun FuncInfo) Builder
 
-	// CallClosure instr
-	CallClosure(nexpr, arity int, ellipsis bool) Builder
-
-	// CallGoClosure instr
-	CallGoClosure(nexpr, arity int, ellipsis bool) Builder
-
-	// CallFunc instr
-	CallFunc(fun FuncInfo, nexpr int) Builder
-
-	// CallFuncv instr
-	CallFuncv(fun FuncInfo, nexpr, arity int) Builder
-
-	// CallGoFunc instr
-	CallGoFunc(fun GoFuncAddr, nexpr int) Builder
-
-	// CallGoFuncv instr
-	CallGoFuncv(fun GoFuncvAddr, nexpr, arity int) Builder
+	// Defer instr
+	Defer() Deferable
 
 	// DefineFunc instr
 	DefineFunc(fun FuncInfo) Builder
@@ -301,9 +306,6 @@ type Builder interface {
 	// AddrOp instr
 	AddrOp(kind Kind, op AddrOperator) Builder
 
-	// Append instr
-	Append(typ reflect.Type, arity int) Builder
-
 	// MakeArray instr
 	MakeArray(typ reflect.Type, arity int) Builder
 
@@ -334,9 +336,6 @@ type Builder interface {
 	// TypeCast instr
 	TypeCast(from, to reflect.Type) Builder
 
-	// GoBuiltin instr
-	GoBuiltin(typ reflect.Type, op GoBuiltin) Builder
-
 	// Zero instr
 	Zero(typ reflect.Type) Builder
 
@@ -352,17 +351,11 @@ type Builder interface {
 	// ReservedAsPush sets Reserved as Push(v)
 	ReservedAsPush(r Reserved, v interface{})
 
-	// ReservedAsInstr set Reserved as instr
-	ReservedAsInstr(r Reserved, instr Instr)
-
 	// GetPackage returns the Go+ package that the Builder works for.
 	GetPackage() Package
 
 	// Resolve resolves all unresolved labels/functions/consts/etc.
 	Resolve() Code
-
-	// Defer instr
-	Defer(start, end Label) Instr
 
 	// DefineBlock instr
 	DefineBlock() Builder

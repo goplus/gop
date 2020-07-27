@@ -26,7 +26,7 @@ import (
 
 // -----------------------------------------------------------------------------
 
-type goInstr = func(ctx *blockCtx, v *ast.CallExpr) func()
+type goInstr = func(ctx *blockCtx, v *ast.CallExpr, isDefer bool) func()
 
 type goInstrInfo struct {
 	instr goInstr
@@ -65,7 +65,7 @@ func checkSliceType(args []interface{}, i int) (typ reflect.Type, ok bool) {
 */
 
 // func append(slice []Type, elems ...Type) []Type
-func igoAppend(ctx *blockCtx, v *ast.CallExpr) func() {
+func igoAppend(ctx *blockCtx, v *ast.CallExpr, isDefer bool) func() {
 	if len(v.Args) < 2 {
 		log.Panicln("append: argument count not enough")
 	}
@@ -73,6 +73,9 @@ func igoAppend(ctx *blockCtx, v *ast.CallExpr) func() {
 	sliceTy := ctx.infer.Get(-1).(iValue).Type()
 	if sliceTy.Kind() != reflect.Slice {
 		log.Panicln("append: first argument not a slice")
+	}
+	if isDefer {
+		ctx.infer.PopN(1)
 	}
 	return func() {
 		sliceExpr()
@@ -88,17 +91,17 @@ func igoAppend(ctx *blockCtx, v *ast.CallExpr) func() {
 			}
 			checkType(sliceTy, args[0], ctx.out)
 			ctx.infer.PopN(1)
-			ctx.out.Append(elem, -1)
+			builder(ctx, isDefer).Append(elem, -1)
 		} else {
 			checkElementType(elem, args, 0, n1, 1, ctx.out)
 			ctx.infer.PopN(n1)
-			ctx.out.Append(elem, n1+1)
+			builder(ctx, isDefer).Append(elem, n1+1)
 		}
 	}
 }
 
 // func copy(dst, src []Type) int
-func igoCopy(ctx *blockCtx, v *ast.CallExpr) func() {
+func igoCopy(ctx *blockCtx, v *ast.CallExpr, isDefer bool) func() {
 	if len(v.Args) < 2 {
 		log.Panicln("not enough arguments in call to copy")
 	}
@@ -110,7 +113,9 @@ func igoCopy(ctx *blockCtx, v *ast.CallExpr) func() {
 	if dstTy.Kind() != reflect.Slice {
 		log.Panicln("arguments to copy must be slices; have ", dstTy.Kind())
 	}
-	ctx.infer.Ret(1, &goValue{exec.TyInt})
+	if !isDefer {
+		ctx.infer.Ret(1, &goValue{exec.TyInt})
+	}
 	return func() {
 		dstExpr()
 		compileExpr(ctx, v.Args[1])()
@@ -128,12 +133,12 @@ func igoCopy(ctx *blockCtx, v *ast.CallExpr) func() {
 			log.Panicln("second argument to copy should be slice or string; have", srcTy.Kind())
 		}
 		ctx.infer.Pop()
-		ctx.out.GoBuiltin(dstTy, exec.GobCopy)
+		builder(ctx, isDefer).GoBuiltin(dstTy, exec.GobCopy)
 	}
 }
 
 // func delete(m map[Type]Type1, key Type)
-func igoDelete(ctx *blockCtx, v *ast.CallExpr) func() {
+func igoDelete(ctx *blockCtx, v *ast.CallExpr, isDefer bool) func() {
 	if len(v.Args) < 2 {
 		log.Panicln("missing second (key) argument to delete")
 	}
@@ -155,7 +160,7 @@ func igoDelete(ctx *blockCtx, v *ast.CallExpr) func() {
 		elem := mapType.Key()
 		checkType(elem, args[0], ctx.out)
 		ctx.infer.PopN(n1)
-		ctx.out.GoBuiltin(mapType, exec.GobDelete)
+		builder(ctx, isDefer).GoBuiltin(mapType, exec.GobDelete)
 	}
 }
 
@@ -208,17 +213,26 @@ func igoLenOrCap(ctx *blockCtx, v *ast.CallExpr, op exec.GoBuiltin) func() {
 }
 
 // func len(v Type) int
-func igoLen(ctx *blockCtx, v *ast.CallExpr) func() {
+func igoLen(ctx *blockCtx, v *ast.CallExpr, isDefer bool) func() {
+	if isDefer {
+		log.Panicln("defer discards result of", ctx.code(v))
+	}
 	return igoLenOrCap(ctx, v, exec.GobLen)
 }
 
 // func cap(v Type) int
-func igoCap(ctx *blockCtx, v *ast.CallExpr) func() {
+func igoCap(ctx *blockCtx, v *ast.CallExpr, isDefer bool) func() {
+	if isDefer {
+		log.Panicln("defer discards result of", ctx.code(v))
+	}
 	return igoLenOrCap(ctx, v, exec.GobCap)
 }
 
 // func make(t Type, size ...IntegerType) Type
-func igoMake(ctx *blockCtx, v *ast.CallExpr) func() {
+func igoMake(ctx *blockCtx, v *ast.CallExpr, isDefer bool) func() {
+	if isDefer {
+		log.Panicln("defer discards result of", ctx.code(v))
+	}
 	if len(v.Args) < 1 {
 		logPanic(ctx, v, `missing argument to make: %v`, ctx.code(v))
 	}
@@ -245,32 +259,44 @@ func igoMake(ctx *blockCtx, v *ast.CallExpr) func() {
 }
 
 // func new(Type) *Type
-func igoNew(ctx *blockCtx, v *ast.CallExpr) func() {
+func igoNew(ctx *blockCtx, v *ast.CallExpr, isDefer bool) func() {
+	if isDefer {
+		log.Panicln("defer discards result of", ctx.code(v))
+	}
 	panic("todo")
 }
 
 // func complex(r, i FloatType) ComplexType
-func igoComplex(ctx *blockCtx, v *ast.CallExpr) func() {
+func igoComplex(ctx *blockCtx, v *ast.CallExpr, isDefer bool) func() {
+	if isDefer {
+		log.Panicln("defer discards result of", ctx.code(v))
+	}
 	panic("todo")
 }
 
 // func real(c ComplexType) FloatType
-func igoReal(ctx *blockCtx, v *ast.CallExpr) func() {
+func igoReal(ctx *blockCtx, v *ast.CallExpr, isDefer bool) func() {
+	if isDefer {
+		log.Panicln("defer discards result of", ctx.code(v))
+	}
 	panic("todo")
 }
 
 // func imag(c ComplexType) FloatType
-func igoImag(ctx *blockCtx, v *ast.CallExpr) func() {
+func igoImag(ctx *blockCtx, v *ast.CallExpr, isDefer bool) func() {
+	if isDefer {
+		log.Panicln("defer discards result of", ctx.code(v))
+	}
 	panic("todo")
 }
 
 // func close(c chan<- Type)
-func igoClose(ctx *blockCtx, v *ast.CallExpr) func() {
+func igoClose(ctx *blockCtx, v *ast.CallExpr, isDefer bool) func() {
 	panic("todo")
 }
 
 // func recover() interface{}
-func igoRecover(ctx *blockCtx, v *ast.CallExpr) func() {
+func igoRecover(ctx *blockCtx, v *ast.CallExpr, isDefer bool) func() {
 	panic("todo")
 }
 

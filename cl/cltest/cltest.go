@@ -48,9 +48,7 @@ func testFrom(t *testing.T, pkgDir, sel, exclude string) {
 		t.Fatal("Compile failed:", err)
 	}
 	code := b.Resolve()
-
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
+	exec.NewContext(code).Run()
 }
 
 // FromTestdata - run test cases from a directory

@@ -276,7 +276,7 @@ func (p *FuncInfo) Type() reflect.Type {
 
 func (p *FuncInfo) exec(ctx *Context, parent *varScope) {
 	old := ctx.switchScope(parent, &p.varManager)
-	ctx.Exec(p.funEntry, p.funEnd)
+	ctx.ExecFunc(p.funEntry, p.funEnd)
 	if ctx.ip == ipReturnN {
 		n := len(ctx.data)
 		ctx.data = append(ctx.data[:ctx.base-len(p.in)], ctx.data[n-p.numOut:]...)

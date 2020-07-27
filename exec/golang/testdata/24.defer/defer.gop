@@ -1,4 +1,2 @@
-/*
 defer println(println("Hello, defer"))
 println("Hello, Go+")
-*/

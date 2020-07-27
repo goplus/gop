@@ -16,45 +16,29 @@
 package bytecode
 
 import (
+	"os"
 	"testing"
 )
 
-func TestDefer1(t *testing.T) {
-	b := newBuilder()
-	off := b.Reserve()
-	b.ReservedAsInstr(off, &iDefer{start: 1, end: 3})
-	code := b.Resolve()
-
-	ctx := NewContext(code)
-
-	if i := ctx.code.data[0] >> bitsOpShift; i != opDeferOp {
-		t.Fatal("opDeferOp != opDeferOp, ret =", i)
+func TestDefer(t *testing.T) {
+	println, ok := I.FindFuncv("Println")
+	if !ok {
+		t.Fatal("FindFuncv failed: Println")
 	}
-}
-
-func TestDefer2(t *testing.T) {
 	b := newBuilder()
-	l1 := NewLabel("")
-	l2 := NewLabel("")
-	off := b.Reserve()
-	b.Label(l1)
-	b.Push(1)
-	b.Push(2)
-	b.Push(3)
-	b.Label(l2)
-	b.ReservedAsInstr(off, b.Defer(l1, l2))
-	code := b.Resolve()
-	ctx := NewContext(code)
-	ctx.Exec(0, code.Len())
-	var i = 3
-	for {
-		if ctx.Len() < 1 {
-			break
-		}
-		v := ctx.Pop()
-		if v != i {
-			t.Fatalf("v != %d, ret = %v", i, v)
-		}
-		i--
-	}
+	expect(t,
+		func() {
+			b.Push("Hello, defer")
+			b.CallGoFuncv(println, 1, 1)
+			b.Defer().CallGoFuncv(println, 1, 2)
+			b.Push("Hello, Go+")
+			b.CallGoFuncv(println, 1, 1)
+			code := b.Resolve()
+			code.(*Code).Dump(os.Stderr)
+			ctx := NewContext(code)
+			ctx.Exec(0, code.Len())
+			ctx.execDefers()
+		},
+		"Hello, defer\nHello, Go+\n13 <nil>\n",
+	)
 }

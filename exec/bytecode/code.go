@@ -114,7 +114,7 @@ const (
 	opGoBuiltin     = 41 // op(26)
 	opErrWrap       = 42 // idx(26)
 	opWrapIfErr     = 43 // reserved(2) offset(24)
-	opDeferOp       = 44 // reserved(2) offset(24)
+	opDefer         = 44
 )
 
 const (
@@ -200,7 +200,7 @@ var instrInfos = []InstrInfo{
 	opGoBuiltin:     {"goBuiltin", "", "op", 26},                          // op(26)
 	opErrWrap:       {"errWrap", "", "idx", 26},                           // idx(26)
 	opWrapIfErr:     {"wrapIfErr", "", "offset", 26},                      // reserved(2) offset(24)
-	opDeferOp:       {"opDeferOp", "", "offset", 26},                      // reserved(2) offset(24)
+	opDefer:         {"defer", "", "", 0},
 }
 
 // -----------------------------------------------------------------------------
@@ -231,8 +231,13 @@ func (p *Code) Len() int {
 
 // Dump dumps code.
 func (p *Code) Dump(w io.Writer) {
+	DumpCodeBlock(w, p.data...)
+}
+
+// DumpCodeBlock dumps a code block.
+func DumpCodeBlock(w io.Writer, data ...Instr) {
 	b := bufio.NewWriter(w)
-	for _, i := range p.data {
+	for _, i := range data {
 		v, p1, p2 := DecodeInstr(i)
 		b.WriteString(v.Name)
 		b.WriteByte(' ')
