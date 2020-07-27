@@ -85,12 +85,7 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 
 	for _, pkgPath := range flag.Args() {
-		err := checkPkg(pkgPath)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "export pkg %q failed, %v\n", pkgPath, err)
-		} else {
-			fmt.Fprintf(os.Stdout, "export pkg %q success\n", pkgPath)
-		}
+		checkPkg(pkgPath)
 	}
 }
 
@@ -105,22 +100,22 @@ type ModInfo struct {
 	GoModSum string
 }
 
-func downMod(pkgPath string) error {
-	cmd := exec.Command(gobin, "mod", "download", "-json", pkgPath)
+func downMod(pkgPath string) (*ModInfo, error) {
 	fmt.Println("go download mod", pkgPath)
+	cmd := exec.Command(gobin, "mod", "download", "-json", pkgPath)
 	data, err := cmd.Output()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	var info ModInfo
 	err = json.Unmarshal(data, &info)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return exportDir(info)
+	return &info, nil
 }
 
-func exportDir(info ModInfo) error {
+func exportDir(info *ModInfo) error {
 	cmd := exec.Command(gobin, "list", "-f", "{{.ImportPath}} {{.Dir}}", "./...")
 	cmd.Dir = info.Dir
 	data, err := cmd.CombinedOutput()
@@ -132,11 +127,15 @@ func exportDir(info ModInfo) error {
 	for _, line := range lines {
 		ar := strings.Split(line, " ")
 		if len(ar) == 2 {
-			err := exportMod(ar[0], ar[1])
+			pkg, dir := ar[0], ar[1]
+			err := exportMod(pkg, dir)
+			if strings.Contains(pkg, "internal") || strings.Contains(pkg, "vendor") {
+				continue
+			}
 			if err == nil {
-				fmt.Println("export mod", ar[1])
+				fmt.Println("export pkg", pkg)
 			} else if err != gopkg.ErrIgnore {
-				fmt.Printf("export %v error,%v", ar[1], err)
+				fmt.Printf("export %v error,%v", pkg, err)
 			}
 		}
 	}
@@ -144,11 +143,54 @@ func exportDir(info ModInfo) error {
 	return nil
 }
 
-func checkPkg(pkgPath string) error {
-	if strings.Contains(pkgPath, "@") {
-		return downMod(pkgPath)
+type Package struct {
+	ImportPath string
+	Dir        string
+	Goroot     bool
+}
+
+func checkGoList(pkgPath string) (*Package, error) {
+	cmd := exec.Command(gobin, "list", "-json", pkgPath)
+	data, err := cmd.Output()
+	if err != nil {
+		return nil, err
 	}
-	return exportPkg(pkgPath)
+	var pkg Package
+	err = json.Unmarshal(data, &pkg)
+	if err != nil {
+		return nil, err
+	}
+	return &pkg, nil
+}
+
+func checkPkg(pkgPath string) error {
+	if !strings.Contains(pkgPath, "@") {
+		pkg, err := checkGoList(pkgPath)
+		if err == nil {
+			if pkg.Goroot {
+				return exportMod(pkgPath, "")
+			} else {
+				return exportMod(pkgPath, pkg.Dir)
+			}
+		}
+	}
+	// check mod
+	src, err := gopkg.LookupMod(pkgPath)
+	if err == nil {
+		_, pkgPath = gopkg.ParsePkgVer(pkgPath)
+		return exportMod(pkgPath, src)
+	}
+	mpkg, pkg := gopkg.ParsePkgVer(pkgPath)
+	mod, err := downMod(mpkg)
+	if err != nil {
+		log.Println("download pkg failed:", err)
+	}
+	if pkg == mod.Path {
+		exportDir(mod)
+	} else {
+		exportMod(pkg, mod.Dir)
+	}
+	return nil
 }
 
 func exportMod(pkgPath string, srcDir string) error {

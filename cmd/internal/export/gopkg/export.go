@@ -64,16 +64,17 @@ func exportConst(e *Exporter, o *types.Const) (err error) {
 	return e.ExportConst(o)
 }
 
-func cleanPkgVer(pkgPath string) string {
+// github.com/qiniu/x@v1.11.5/log => github.com/qiniu/x/@v1.11.5 github.com/qiniu/x/log
+func ParsePkgVer(pkgPath string) (base string, pkg string) {
 	i := strings.Index(pkgPath, "@")
 	if i == -1 {
-		return pkgPath
+		return pkgPath, pkgPath
 	}
 	j := strings.Index(pkgPath[i:], "/")
 	if j == -1 {
-		return pkgPath[:i]
+		return pkgPath, pkgPath[:i]
 	}
-	return pkgPath[:i] + pkgPath[i:][j:]
+	return pkgPath[:i+j], pkgPath[:i] + pkgPath[i:][j:]
 }
 
 func findLastVerPkg(pkgDirBase string, name string) (verName string) {
@@ -138,9 +139,16 @@ func LookupMod(pkgPath string) (srcDir string, err error) {
 	}
 	srcDir = filepath.Join(srcDir, parts[2])
 	if n > 3 {
-		srcDir += "/" + strings.Join(parts[3:], "/")
+		srcDir = filepath.Join(srcDir, filepath.Join(parts[3:]...))
 	}
-	return srcDir, nil
+	s, err := os.Stat(srcDir)
+	if err != nil {
+		return "", err
+	}
+	if !s.IsDir() {
+		return "", os.ErrInvalid
+	}
+	return
 }
 
 // ImportSource import a Go package from pkgPath and srcDir
@@ -165,7 +173,7 @@ func Import(pkgPath string) (*types.Package, error) {
 		if noVer {
 			parts[2] = findLastVerPkg(srcDir, parts[2])
 		} else {
-			pkgPath = cleanPkgVer(pkgPath)
+			_, pkgPath = ParsePkgVer(pkgPath)
 		}
 		srcDir = filepath.Join(srcDir, parts[2])
 		if n > 3 {
