@@ -19,9 +19,10 @@ package bytecode
 // -----------------------------------------------------------------------------
 
 type theDefer struct {
-	next *theDefer
-	n    int // stack len
-	i    Instr
+	next  *theDefer
+	state varScope // block state
+	n     int      // stack len
+	i     Instr
 }
 
 func (ctx *Context) execDefers() {
@@ -29,6 +30,7 @@ func (ctx *Context) execDefers() {
 	ctx.defers = nil
 	for d != nil {
 		ctx.data = ctx.data[:d.n]
+		ctx.varScope = d.state
 		execTable[d.i>>bitsOpShift](d.i, ctx)
 		d = d.next
 	}
@@ -38,9 +40,10 @@ func execDefer(i Instr, ctx *Context) {
 	i = ctx.code.data[ctx.ip]
 	ctx.ip++
 	ctx.defers = &theDefer{
-		next: ctx.defers,
-		n:    len(ctx.data),
-		i:    i,
+		next:  ctx.defers,
+		state: ctx.varScope,
+		n:     len(ctx.data),
+		i:     i,
 	}
 }
 

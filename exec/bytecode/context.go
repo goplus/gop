@@ -170,18 +170,8 @@ func (ctx *Context) getScope(local bool) *varScope {
 
 // Run executes the code.
 func (ctx *Context) Run() {
-	ctx.ExecFunc(0, ctx.code.Len())
-}
-
-// ExecFunc executes the code block of a function.
-func (ctx *Context) ExecFunc(ip, ipEnd int) {
-	old := ctx.defers
-	ctx.defers = nil
-	defer func() {
-		ctx.execDefers()
-		ctx.defers = old
-	}()
-	ctx.Exec(ip, ipEnd)
+	defer ctx.execDefers()
+	ctx.Exec(0, ctx.code.Len())
 }
 
 // Exec executes a code block from ip to ipEnd.

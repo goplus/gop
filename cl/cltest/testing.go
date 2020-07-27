@@ -41,7 +41,7 @@ func Expect(t *testing.T, script string, expected string, panicMsg ...interface{
 		code.Dump(os.Stderr)
 		fmt.Fprintln(os.Stderr)
 		exec.NewContext(code).Run()
-	}).Expect(expected).Panic(panicMsg...)
+	}).Panic(panicMsg...).Expect(expected)
 }
 
 // -----------------------------------------------------------------------------

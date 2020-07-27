@@ -115,7 +115,7 @@ func checkPop(ctx *Context) interface{} {
 func expect(t *testing.T, f func(), expected string, panicMsg ...interface{}) {
 	e := ts.StartExpecting(t, ts.CapStdout)
 	defer e.Close()
-	e.Call(f).Expect(expected).Panic(panicMsg...)
+	e.Call(f).Panic(panicMsg...).Expect(expected)
 }
 
 // -----------------------------------------------------------------------------

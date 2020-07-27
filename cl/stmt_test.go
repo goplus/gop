@@ -1356,6 +1356,37 @@ func TestDefer5(t *testing.T) {
 	)
 }
 
+func TestDefer6(t *testing.T) {
+	cltest.Expect(t, `
+		func f() (x int) {
+			defer func() {
+				x = 3
+			}()
+			return 1
+		}
+		println(f())
+		`,
+		"3\n",
+	)
+}
+
+func TestDefer7(t *testing.T) {
+	cltest.Expect(t, `
+		func h() (x int) {
+			for i <- [3, 2, 1] {
+				v := i
+				defer func() {
+					x = v
+				}()
+			}
+			return
+		}
+		println(h())
+		`,
+		"3\n",
+	)
+}
+
 // -----------------------------------------------------------------------------
 
 var testVarScopeClauses = map[string]testData{
