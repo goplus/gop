@@ -193,6 +193,22 @@ func TestLooupMod(t *testing.T) {
 	if dir != dir1 {
 		t.Fatal("LookupMod failed:", dir, dir1)
 	}
+
+}
+
+func TestBadLooupMod(t *testing.T) {
+	dir, err := LookupMod("github.com/qiniu/x/log2")
+	if err == nil {
+		t.Fatal("LookupMod bad:", dir)
+	}
+	dir, err = LookupMod("github.com/qiniu/x/doc.go")
+	if err == nil {
+		t.Fatal("LookupMod bad:", dir)
+	}
+	dir, err = LookupMod("unicode")
+	if err == nil {
+		t.Fatal("LookupMod bad:", dir)
+	}
 }
 
 func TestExportVersion(t *testing.T) {
@@ -208,14 +224,36 @@ func TestExportVersion(t *testing.T) {
 	}
 }
 
-func TestCleanVersion(t *testing.T) {
-	pkg := cleanPkgVer("github.com/qiniu/x@v1.11.5/log")
+func TestParsePkgVer(t *testing.T) {
+	pkg, mod, sub := ParsePkgVer("github.com/qiniu/x@v1.11.5/log")
 	if pkg != "github.com/qiniu/x/log" {
-		t.Fatal("cleanPkgVer failed:", pkg)
+		t.Fatal("ParsePkgVer failed:", pkg)
 	}
-	pkg = cleanPkgVer("github.com/qiniu/x@v1.11.5")
+	if mod != "github.com/qiniu/x@v1.11.5" {
+		t.Fatal("ParsePkgVer failed:", mod)
+	}
+	if sub != "log" {
+		t.Fatal("ParsePkgVer failed:", sub)
+	}
+	pkg, mod, sub = ParsePkgVer("github.com/qiniu/x@v1.11.5")
 	if pkg != "github.com/qiniu/x" {
-		t.Fatal("cleanPkgVer failed:", pkg)
+		t.Fatal("ParsePkgVer failed:", pkg)
+	}
+	if mod != "github.com/qiniu/x@v1.11.5" {
+		t.Fatal("ParsePkgVer failed:", mod)
+	}
+	if sub != "" {
+		t.Fatal("ParsePkgVer failed:", sub)
+	}
+	pkg, mod, sub = ParsePkgVer("github.com/qiniu/x")
+	if pkg != "github.com/qiniu/x" {
+		t.Fatal("ParsePkgVer failed:", pkg)
+	}
+	if mod != "" {
+		t.Fatal("ParsePkgVer failed:", mod)
+	}
+	if sub != "" {
+		t.Fatal("ParsePkgVer failed:", sub)
 	}
 }
 
