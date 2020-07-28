@@ -24,7 +24,6 @@ import (
 	"go/format"
 	"go/types"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -64,7 +63,7 @@ func init() {
 	var err error
 	gobin, err = exec.LookPath("go")
 	if err != nil {
-		log.Fatalln("not found go bin in PATH", err)
+		panic("not found go bin in PATH")
 	}
 }
 
@@ -175,7 +174,6 @@ func exportDir(pkgPath string, dir string) error {
 	cmd.Dir = dir
 	data, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Println(string(data))
 		return err
 	}
 	lines := strings.Split(string(data), "\n")
@@ -219,8 +217,7 @@ func exportPkg(pkgPath string, srcDir string) (err error) {
 		pkg, err = gopkg.ImportSource(pkgPath, srcDir)
 	}
 	if err != nil {
-		log.Printf("import %q failed: %v", pkgPath, err)
-		return err
+		return fmt.Errorf("import %q failed: %v", pkgPath, err)
 	}
 	if pkg.Name() == "main" {
 		return gopkg.ErrIgnore
