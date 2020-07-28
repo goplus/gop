@@ -229,6 +229,16 @@ func TestParsePkgVer(t *testing.T) {
 	if sub != "" {
 		t.Fatal("ParsePkgVer failed:", sub)
 	}
+	pkg, mod, sub = ParsePkgVer("github.com/qiniu/x")
+	if pkg != "github.com/qiniu/x" {
+		t.Fatal("ParsePkgVer failed:", pkg)
+	}
+	if mod != "" {
+		t.Fatal("ParsePkgVer failed:", mod)
+	}
+	if sub != "" {
+		t.Fatal("ParsePkgVer failed:", sub)
+	}
 }
 
 func TestImportSource(t *testing.T) {
