@@ -386,14 +386,14 @@ func TestAddrLargeIndex(t *testing.T) {
 	a := NewVar(reflect.SliceOf(TyFloat64), "")
 	code := newBuilder().
 		DefineVar(a).
-		Push(opIndexOperand+1).
+		Push(bitsOpIndexOperand+1).
 		Make(reflect.SliceOf(TyFloat64), 1).
 		StoreVar(a).
 		Push(1.7).
 		LoadVar(a).
-		SetIndex(opIndexOperand).
+		SetIndex(bitsOpIndexOperand).
 		LoadVar(a).
-		AddrIndex(opIndexOperand).
+		AddrIndex(bitsOpIndexOperand).
 		AddrOp(Float64, OpAddrVal).
 		Resolve()
 
@@ -431,14 +431,14 @@ func TestSetLargeIndex(t *testing.T) {
 	a := NewVar(reflect.SliceOf(TyFloat64), "")
 	code := newBuilder().
 		DefineVar(a).
-		Push(opIndexOperand+1).
+		Push(bitsOpIndexOperand+1).
 		Make(reflect.SliceOf(TyFloat64), 1).
 		StoreVar(a).
 		Push(1.7).
 		LoadVar(a).
-		SetIndex(opIndexOperand).
+		SetIndex(bitsOpIndexOperand).
 		LoadVar(a).
-		Index(opIndexOperand).
+		Index(bitsOpIndexOperand).
 		Resolve()
 
 	ctx := NewContext(code)

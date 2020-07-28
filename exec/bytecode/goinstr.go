@@ -248,20 +248,29 @@ func execTypeCast(i Instr, p *Context) {
 	args[0] = reflect.ValueOf(args[0]).Convert(typ).Interface()
 }
 
+const (
+	indexOpGet  = 0
+	indexOpSet  = 1
+	indexOpAddr = 2
+)
+
 func execIndex(i Instr, p *Context) {
-	idx := int(i & opIndexOperand)
-	if idx == opIndexOperand {
+	idx := int(i & bitsOpIndexOperand)
+	if idx == bitsOpIndexOperand {
 		idx = p.Pop().(int)
 	}
 	n := len(p.data)
 	v := reflect.Indirect(reflect.ValueOf(p.data[n-1])).Index(idx)
-	if (i & setIndexFlag) != 0 { // value sliceData $idx $setIndex
+	switch (i >> bitsOpIndexShift) & ((1 << bitsIndexOp) - 1) {
+	case indexOpGet: // sliceData $idx $getIndex
+		p.data[n-1] = v.Interface()
+	case indexOpSet: // value sliceData $idx $setIndex
 		v.Set(reflect.ValueOf(p.data[n-2]))
 		p.PopN(2)
-	} else if (i & addrIndexFlag) != 0 { // sliceData $idx $setIndex
+	case indexOpAddr: // sliceData $idx $setIndex
 		p.data[n-1] = v.Addr().Interface()
-	} else { // sliceData $idx $setIndex
-		p.data[n-1] = v.Interface()
+	default:
+		panic("execIndex: unexpected indexOp")
 	}
 }
 
@@ -281,6 +290,10 @@ func execMapIndex(i Instr, p *Context) {
 		p.Ret(2, value.Interface())
 	}
 }
+
+const (
+	sliceIndexMask = (1 << 13) - 1
+)
 
 func popSliceIndexs(instr Instr, p *Context) (i, j int) {
 	instr &= bitsOperand
@@ -480,44 +493,32 @@ func (p *Builder) SetMapIndex() *Builder {
 	return p
 }
 
-// Index instr
-func (p *Builder) Index(idx int) *Builder {
-	if idx >= opIndexOperand {
+func (p *Builder) doIndex(indexOp uint32, idx int) *Builder {
+	if idx >= bitsOpIndexOperand {
 		p.Push(idx)
-		idx = -1
+		idx = bitsOpIndexOperand
 	}
-	i := (opIndex << bitsOpShift) | uint32(idx&opIndexOperand)
+	i := (opIndex << bitsOpShift) | (indexOp << bitsOpIndexShift) | uint32(idx&bitsOpIndexOperand)
 	p.code.data = append(p.code.data, i)
 	return p
+}
+
+// Index instr
+func (p *Builder) Index(idx int) *Builder {
+	return p.doIndex(indexOpGet, idx)
 }
 
 // SetIndex instr
 func (p *Builder) SetIndex(idx int) *Builder {
-	if idx >= opIndexOperand {
-		p.Push(idx)
-		idx = -1
-	}
-	i := (opIndex<<bitsOpShift | setIndexFlag) | uint32(idx&opIndexOperand)
-	p.code.data = append(p.code.data, i)
-	return p
+	return p.doIndex(indexOpSet, idx)
 }
 
 // AddrIndex instr
 func (p *Builder) AddrIndex(idx int) *Builder {
-	if idx >= opIndexOperand {
-		p.Push(idx)
-		idx = -1
-	}
-	i := (opIndex<<bitsOpShift | addrIndexFlag) | uint32(idx&opIndexOperand)
-	p.code.data = append(p.code.data, i)
-	return p
+	return p.doIndex(indexOpAddr, idx)
 }
 
 const (
-	setIndexFlag   = 1 << 23
-	addrIndexFlag  = 1 << 25
-	opIndexOperand = (1 << 23) - 1
-	sliceIndexMask = (1 << 13) - 1
 	// SliceConstIndexLast - slice const index max
 	SliceConstIndexLast = exec.SliceConstIndexLast
 	// SliceDefaultIndex - unspecified index

@@ -37,9 +37,13 @@ const (
 	bitsFuncvArity = 10
 	bitsVarScope   = 6
 	bitsAssignOp   = 4
+	bitsIndexOp    = 2
 
 	bitsOpShift = bitsInstr - bitsOp
 	bitsOperand = (1 << bitsOpShift) - 1
+
+	bitsOpIndexShift   = bitsInstr - (bitsOp + bitsIndexOp)
+	bitsOpIndexOperand = (1 << bitsOpIndexShift) - 1
 
 	bitsOpInt        = bitsOp + bitsIntKind
 	bitsOpIntShift   = bitsInstr - bitsOpInt
@@ -77,7 +81,7 @@ const (
 	opPushUint      = 4  // intKind(3) intVal(23)
 	opPushValSpec   = 5  // valSpec(26) - false=0, true=1
 	opPushConstR    = 6  // idx(26)
-	opIndex         = 7  // set(3) idx(23)
+	opIndex         = 7  // indexOp(2) idx(24)
 	opMake          = 8  // funvArity(10) type(16)
 	opAppend        = 9  // arity(26)
 	opBuiltinOp     = 10 // reserved(16) kind(5) builtinOp(5)
@@ -163,7 +167,7 @@ var instrInfos = []InstrInfo{
 	opPushUint:      {"pushUint", "intKind", "intVal", (3 << 8) | 23},     // intKind(3) intVal(23)
 	opPushValSpec:   {"pushValSpec", "", "valSpec", 26},                   // valSpec(26) - false=0, true=1
 	opPushConstR:    {"pushConstR", "", "idx", 26},                        // idx(26)
-	opIndex:         {"index", "set", "idx", (3 << 8) | 23},               // set(3) idx(23)
+	opIndex:         {"index", "indexOp", "idx", (2 << 8) | 24},           // indexOp(2) idx(24)
 	opMake:          {"make", "funvArity", "type", (10 << 8) | 16},        // funvArity(10) type(16)
 	opAppend:        {"append", "", "arity", 26},                          // arity(26)
 	opBuiltinOp:     {"builtinOp", "kind", "op", (21 << 8) | 5},           // reserved(16) kind(5) builtinOp(5)
