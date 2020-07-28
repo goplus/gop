@@ -193,6 +193,18 @@ func TestLooupMod(t *testing.T) {
 	if dir != dir1 {
 		t.Fatal("LookupMod failed:", dir, dir1)
 	}
+
+}
+
+func TestBadLooupMod(t *testing.T) {
+	dir, err := LookupMod("github.com/qiniu/x/log2")
+	if err == nil {
+		t.Fatal("LookupMod bad:", dir)
+	}
+	dir, err = LookupMod("unicode")
+	if err == nil {
+		t.Fatal("LookupMod bad:", dir)
+	}
 }
 
 func TestExportVersion(t *testing.T) {
