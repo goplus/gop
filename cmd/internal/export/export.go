@@ -26,7 +26,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -134,8 +133,7 @@ func LookupPkg(pkgPath string) (*Package, error) {
 		pkgPath, _, _ = gopkg.ParsePkgVer(pkgPath)
 		rpkg, _ := checkGoPkg(srcDir)
 		if rpkg != pkgPath {
-			fmt.Printf("warning, found replace %v => %v\n", rpkg, pkgPath)
-			pkgPath = rpkg
+			return nil, fmt.Errorf("unsupport replace pkg %q", rpkg)
 		}
 		return &Package{ImportPath: pkgPath, Dir: srcDir}, nil
 	}
@@ -148,8 +146,7 @@ func LookupPkg(pkgPath string) (*Package, error) {
 	dir := filepath.Join(info.Dir, sub)
 	rpkg, _ := checkGoPkg(info.Dir)
 	if rpkg != info.Path {
-		fmt.Printf("warning, found replace %v => %v\n", rpkg, info.Path)
-		pkg = path.Join(rpkg, sub)
+		return nil, fmt.Errorf("unsupport replace pkg %q", rpkg)
 	}
 	return &Package{ImportPath: pkg, Dir: dir}, nil
 }
