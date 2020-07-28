@@ -209,19 +209,25 @@ func TestExportVersion(t *testing.T) {
 }
 
 func TestParsePkgVer(t *testing.T) {
-	mod, pkg := ParsePkgVer("github.com/qiniu/x@v1.11.5/log")
-	if mod != "github.com/qiniu/x@v1.11.5" {
-		t.Fatal("SplitPkgVer failed:", mod)
-	}
+	pkg, mod, sub := ParsePkgVer("github.com/qiniu/x@v1.11.5/log")
 	if pkg != "github.com/qiniu/x/log" {
-		t.Fatal("cleanPkgVer failed:", pkg)
+		t.Fatal("ParsePkgVer failed:", pkg)
 	}
-	mod, pkg = ParsePkgVer("github.com/qiniu/x@v1.11.5")
 	if mod != "github.com/qiniu/x@v1.11.5" {
-		t.Fatal("SplitPkgVer failed:", mod)
+		t.Fatal("ParsePkgVer failed:", mod)
 	}
+	if sub != "log" {
+		t.Fatal("ParsePkgVer failed:", sub)
+	}
+	pkg, mod, sub = ParsePkgVer("github.com/qiniu/x@v1.11.5")
 	if pkg != "github.com/qiniu/x" {
-		t.Fatal("cleanPkgVer failed:", pkg)
+		t.Fatal("ParsePkgVer failed:", pkg)
+	}
+	if mod != "github.com/qiniu/x@v1.11.5" {
+		t.Fatal("ParsePkgVer failed:", mod)
+	}
+	if sub != "" {
+		t.Fatal("ParsePkgVer failed:", sub)
 	}
 }
 

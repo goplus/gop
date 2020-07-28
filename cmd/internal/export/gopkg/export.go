@@ -64,17 +64,18 @@ func exportConst(e *Exporter, o *types.Const) (err error) {
 	return e.ExportConst(o)
 }
 
-// github.com/qiniu/x@v1.11.5/log => github.com/qiniu/x/@v1.11.5 github.com/qiniu/x/log
-func ParsePkgVer(pkgPath string) (base string, pkg string) {
+// ParsePkgVer
+// github.com/qiniu/x@v1.11.5/log => github.com/qiniu/x/@v1.11.5 github.com/qiniu/x/log log
+func ParsePkgVer(pkgPath string) (pkg string, mod string, sub string) {
 	i := strings.Index(pkgPath, "@")
 	if i == -1 {
-		return pkgPath, pkgPath
+		return pkgPath, "", ""
 	}
 	j := strings.Index(pkgPath[i:], "/")
 	if j == -1 {
-		return pkgPath, pkgPath[:i]
+		return pkgPath[:i], pkgPath, ""
 	}
-	return pkgPath[:i+j], pkgPath[:i] + pkgPath[i:][j:]
+	return pkgPath[:i] + pkgPath[i:][j:], pkgPath[:i+j], pkgPath[i+j+1:]
 }
 
 func findLastVerPkg(pkgDirBase string, name string) (verName string) {
@@ -173,7 +174,7 @@ func Import(pkgPath string) (*types.Package, error) {
 		if noVer {
 			parts[2] = findLastVerPkg(srcDir, parts[2])
 		} else {
-			_, pkgPath = ParsePkgVer(pkgPath)
+			pkgPath, _, _ = ParsePkgVer(pkgPath)
 		}
 		srcDir = filepath.Join(srcDir, parts[2])
 		if n > 3 {

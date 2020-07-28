@@ -26,6 +26,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -130,16 +131,27 @@ func LookupPkg(pkgPath string) (*Package, error) {
 	// check go mod
 	srcDir, err := gopkg.LookupMod(pkgPath)
 	if err == nil {
-		_, pkgPath = gopkg.ParsePkgVer(pkgPath)
+		pkgPath, _, _ = gopkg.ParsePkgVer(pkgPath)
+		rpkg, _ := checkGoPkg(srcDir)
+		if rpkg != pkgPath {
+			fmt.Printf("warning, found replace %v => %v\n", rpkg, pkgPath)
+			pkgPath = rpkg
+		}
 		return &Package{ImportPath: pkgPath, Dir: srcDir}, nil
 	}
 	// check download mod
-	mod, pkg := gopkg.ParsePkgVer(pkgPath)
+	pkg, mod, sub := gopkg.ParsePkgVer(pkgPath)
 	info, err := downloadMod(mod)
 	if err != nil {
 		return nil, fmt.Errorf("download %q failed, %v", mod, err)
 	}
-	return &Package{ImportPath: pkg, Dir: info.Dir}, nil
+	dir := filepath.Join(info.Dir, sub)
+	rpkg, _ := checkGoPkg(info.Dir)
+	if rpkg != info.Path {
+		fmt.Printf("warning, found replace %v => %v\n", rpkg, info.Path)
+		pkg = path.Join(rpkg, sub)
+	}
+	return &Package{ImportPath: pkg, Dir: dir}, nil
 }
 
 type ModInfo struct {
@@ -170,9 +182,9 @@ func downloadMod(pkgPath string) (*ModInfo, error) {
 }
 
 func exportDir(pkgPath string, dir string) error {
-	cmd := exec.Command(gobin, "list", "-f", "{{.ImportPath}} {{.Dir}}", pkgPath+"/...")
+	cmd := exec.Command(gobin, "list", "-f", "{{.ImportPath}} {{.Dir}}", "./...")
 	cmd.Dir = dir
-	data, err := cmd.CombinedOutput()
+	data, err := cmd.Output()
 	if err != nil {
 		return err
 	}
@@ -207,6 +219,16 @@ func checkGoList(pkgPath string) (*Package, error) {
 		return nil, err
 	}
 	return &pkg, nil
+}
+
+func checkGoPkg(srcDir string) (string, error) {
+	cmd := exec.Command(gobin, "list")
+	cmd.Dir = srcDir
+	data, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(data)), nil
 }
 
 func exportPkg(pkgPath string, srcDir string) (err error) {
