@@ -249,8 +249,8 @@ func execTypeCast(i Instr, p *Context) {
 }
 
 func execIndex(i Instr, p *Context) {
-	idx := int(i & setIndexOperand)
-	if idx == setIndexOperand {
+	idx := int(i & opIndexOperand)
+	if idx == opIndexOperand {
 		idx = p.Pop().(int)
 	}
 	n := len(p.data)
@@ -258,6 +258,8 @@ func execIndex(i Instr, p *Context) {
 	if (i & setIndexFlag) != 0 { // value sliceData $idx $setIndex
 		v.Set(reflect.ValueOf(p.data[n-2]))
 		p.PopN(2)
+	} else if (i & addrIndexFlag) != 0 { // sliceData $idx $setIndex
+		p.data[n-1] = v.Addr().Interface()
 	} else { // sliceData $idx $setIndex
 		p.data[n-1] = v.Interface()
 	}
@@ -480,30 +482,42 @@ func (p *Builder) SetMapIndex() *Builder {
 
 // Index instr
 func (p *Builder) Index(idx int) *Builder {
-	if idx >= setIndexOperand {
+	if idx >= opIndexOperand {
 		p.Push(idx)
 		idx = -1
 	}
-	i := (opIndex << bitsOpShift) | uint32(idx&setIndexOperand)
+	i := (opIndex << bitsOpShift) | uint32(idx&opIndexOperand)
 	p.code.data = append(p.code.data, i)
 	return p
 }
 
 // SetIndex instr
 func (p *Builder) SetIndex(idx int) *Builder {
-	if idx >= setIndexOperand {
+	if idx >= opIndexOperand {
 		p.Push(idx)
 		idx = -1
 	}
-	i := (opIndex<<bitsOpShift | setIndexFlag) | uint32(idx&setIndexOperand)
+	i := (opIndex<<bitsOpShift | setIndexFlag) | uint32(idx&opIndexOperand)
+	p.code.data = append(p.code.data, i)
+	return p
+}
+
+// AddrIndex instr
+func (p *Builder) AddrIndex(idx int) *Builder {
+	if idx >= opIndexOperand {
+		p.Push(idx)
+		idx = -1
+	}
+	i := (opIndex<<bitsOpShift | addrIndexFlag) | uint32(idx&opIndexOperand)
 	p.code.data = append(p.code.data, i)
 	return p
 }
 
 const (
-	setIndexFlag    = (1 << 25)
-	setIndexOperand = setIndexFlag - 1
-	sliceIndexMask  = (1 << 13) - 1
+	setIndexFlag   = 1 << 23
+	addrIndexFlag  = 1 << 25
+	opIndexOperand = (1 << 23) - 1
+	sliceIndexMask = (1 << 13) - 1
 	// SliceConstIndexLast - slice const index max
 	SliceConstIndexLast = exec.SliceConstIndexLast
 	// SliceDefaultIndex - unspecified index
