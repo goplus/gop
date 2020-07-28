@@ -98,7 +98,7 @@ func runCmd(cmd *base.Command, args []string) {
 		}
 		fmt.Printf("source %v\n", pkg.Dir)
 		if exporAll {
-			exportDir(pkg.Dir)
+			exportDir(pkg.ImportPath, pkg.Dir)
 			continue
 		}
 		if pkg.Goroot {
@@ -170,8 +170,8 @@ func downloadMod(pkgPath string) (*ModInfo, error) {
 	return &info, nil
 }
 
-func exportDir(dir string) error {
-	cmd := exec.Command(gobin, "list", "-f", "{{.ImportPath}} {{.Dir}}", "./...")
+func exportDir(pkgPath string, dir string) error {
+	cmd := exec.Command(gobin, "list", "-f", "{{.ImportPath}} {{.Dir}}", pkgPath+"/...")
 	cmd.Dir = dir
 	data, err := cmd.CombinedOutput()
 	if err != nil {
