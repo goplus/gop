@@ -133,7 +133,7 @@ func LookupPkg(pkgPath string) (*Package, error) {
 		pkgPath, _, _ = gopkg.ParsePkgVer(pkgPath)
 		rpkg, _ := checkGoPkg(srcDir)
 		if rpkg != pkgPath {
-			return nil, fmt.Errorf("unsupport replace pkg %q", rpkg)
+			return nil, fmt.Errorf("unsupport replace module %q", rpkg)
 		}
 		return &Package{ImportPath: pkgPath, Dir: srcDir}, nil
 	}
@@ -146,7 +146,7 @@ func LookupPkg(pkgPath string) (*Package, error) {
 	dir := filepath.Join(info.Dir, sub)
 	rpkg, _ := checkGoPkg(info.Dir)
 	if rpkg != info.Path {
-		return nil, fmt.Errorf("unsupport replace pkg %q", rpkg)
+		return nil, fmt.Errorf("unsupport replace module %q", rpkg)
 	}
 	return &Package{ImportPath: pkg, Dir: dir}, nil
 }
