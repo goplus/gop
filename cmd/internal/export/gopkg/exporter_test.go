@@ -201,6 +201,10 @@ func TestBadLooupMod(t *testing.T) {
 	if err == nil {
 		t.Fatal("LookupMod bad:", dir)
 	}
+	dir, err = LookupMod("github.com/qiniu/x/doc.go")
+	if err == nil {
+		t.Fatal("LookupMod bad:", dir)
+	}
 	dir, err = LookupMod("unicode")
 	if err == nil {
 		t.Fatal("LookupMod bad:", dir)
