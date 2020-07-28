@@ -13,36 +13,27 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 */
+
 package bytecode
 
 import (
-	"os"
 	"testing"
+
+	"github.com/qiniu/x/ts"
 )
 
 // -----------------------------------------------------------------------------
 
-func TestDefer(t *testing.T) {
-	println, ok := I.FindFuncv("Println")
-	if !ok {
-		t.Fatal("FindFuncv failed: Println")
-	}
-	b := newBuilder()
-	expect(t,
-		func() {
-			b.Push("Hello, defer")
-			b.CallGoFuncv(println, 1, 1)
-			b.Defer().CallGoFuncv(println, 1, 2)
-			b.Push("Hello, Go+")
-			b.CallGoFuncv(println, 1, 1)
-			code := b.Resolve()
-			code.(*Code).Dump(os.Stderr)
-			ctx := NewContext(code)
-			ctx.Exec(0, code.Len())
-			ctx.execDefers()
-		},
-		"Hello, defer\nHello, Go+\n13 <nil>\n",
-	)
+func TestStack(test *testing.T) {
+	t := ts.New(test)
+	stk := NewStack()
+	stk.Push(1)
+	stk.Push(2)
+	stk.Push(3)
+	stk.Set(-1, 4)
+	t.Call(stk.Get, -1).Equal(4)
+	stk.SetLen(2)
+	t.Call(stk.Get, -1).Equal(2)
 }
 
 // -----------------------------------------------------------------------------
