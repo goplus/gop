@@ -21,7 +21,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"go/build"
 	"go/format"
+	"go/token"
 	"go/types"
 	"io/ioutil"
 	"os"
@@ -31,6 +33,7 @@ import (
 
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/cmd/internal/export/gopkg"
+	"github.com/goplus/gop/cmd/internal/export/srcimporter"
 )
 
 var (
@@ -90,68 +93,72 @@ func runCmd(cmd *base.Command, args []string) {
 			pkgPath = pkgPath[:len(pkgPath)-4]
 			exporAll = true
 		}
-		pkg, err := LookupPkg(pkgPath)
+		pkgs, err := LookupPkgList(pkgPath, exporAll)
 		if err != nil {
-			fmt.Printf("lookup %q source error: %v\n", pkgPath, err)
+			fmt.Fprintf(os.Stderr, "go: lookup pkg %q error: %v\n", pkgPath, err)
 			continue
 		}
-		fmt.Printf("source %v\n", pkg.Dir)
-		if exporAll {
-			exportDir(pkg.ImportPath, pkg.Dir)
-			continue
+		var goMod string
+		var exportList []string
+		for _, pkg := range pkgs {
+			if pkg.Name == "main" || isIgnorePkg(pkg.ImportPath) {
+				continue
+			}
+			if pkg.Module != nil && pkg.Module.GoMod != goMod {
+				goMod = pkg.Module.GoMod
+				fmt.Fprintf(os.Stderr, "go: finding module in %v\n", pkg.Module.Dir)
+			}
+			err := exportPkg(pkg.ImportPath, pkg.Dir, pkg.Goroot)
+			if err == nil {
+				exportList = append(exportList, pkg.ImportPath)
+				fmt.Fprintf(os.Stdout, "export %q success\n", pkg.ImportPath)
+			} else if err != gopkg.ErrIgnore {
+				fmt.Fprintf(os.Stderr, "export %q error: %v\n", pkg.ImportPath, err)
+			}
 		}
-		if pkg.Goroot {
-			err = exportPkg(pkg.ImportPath, "")
-		} else {
-			err = exportPkg(pkg.ImportPath, pkg.Dir)
-		}
-		if err != nil {
-			fmt.Printf("export %q error: %v\n", pkg.ImportPath, err)
-		} else {
-			fmt.Printf("export %q success\n", pkg.ImportPath)
+		if len(exportList) == 0 {
+			fmt.Fprintf(os.Stderr, "export %q error: empty exported package\n", pkgPath)
 		}
 	}
 }
 
-type Package struct {
-	Dir        string // directory containing package sources
-	ImportPath string // import path of package in dir
-	Goroot     bool   // is this package in the Go root?
+func isIgnorePkg(pkg string) bool {
+	for _, a := range strings.Split(pkg, "/") {
+		if a == "vendor" || a == "internal" {
+			return true
+		}
+	}
+	return false
 }
 
-func LookupPkg(pkgPath string) (*Package, error) {
+func LookupPkgList(pkgPath string, exporAll bool) ([]*jsonPackage, error) {
 	// check go list
 	if !strings.Contains(pkgPath, "@") {
-		pkg, err := checkGoList(pkgPath)
-		if err == nil {
-			return pkg, nil
+		if pkgs, err := checkGoPkgList(pkgPath, "", exporAll); err != nil || len(pkgs) > 0 {
+			return pkgs, err
 		}
 	}
-	// check go mod
-	srcDir, err := gopkg.LookupMod(pkgPath)
-	if err == nil {
-		pkgPath, _, _ = gopkg.ParsePkgVer(pkgPath)
-		rpkg, _ := checkGoPkg(srcDir)
-		if rpkg != pkgPath {
-			return nil, fmt.Errorf("unsupport replace module %q", rpkg)
+	// check go mod cache
+	if srcDir, err := gopkg.LookupMod(pkgPath); err == nil {
+		pkg, _, _ := gopkg.ParsePkgVer(pkgPath)
+		if pkgs, err := checkGoPkgList(pkg, srcDir, exporAll); err != nil || len(pkgs) > 0 {
+			return pkgs, err
 		}
-		return &Package{ImportPath: pkgPath, Dir: srcDir}, nil
 	}
-	// check download mod
+	// check go mod download
 	pkg, mod, sub := gopkg.ParsePkgVer(pkgPath)
 	info, err := downloadMod(mod)
 	if err != nil {
 		return nil, fmt.Errorf("download %q failed, %v", mod, err)
 	}
 	dir := filepath.Join(info.Dir, sub)
-	rpkg, _ := checkGoPkg(info.Dir)
-	if rpkg != info.Path {
-		return nil, fmt.Errorf("unsupport replace module %q", rpkg)
+	if pkgs, err := checkGoPkgList(pkg, dir, exporAll); err != nil || len(pkgs) > 0 {
+		return pkgs, err
 	}
-	return &Package{ImportPath: pkg, Dir: dir}, nil
+	return nil, gopkg.ErrInvalidPkgPath
 }
 
-type ModInfo struct {
+type jsonModInfo struct {
 	Path     string // module path
 	Version  string // module version
 	Error    string // error loading module
@@ -163,14 +170,14 @@ type ModInfo struct {
 	GoModSum string // checksum for go.mod (as in go.sum)
 }
 
-func downloadMod(pkgPath string) (*ModInfo, error) {
-	fmt.Println("exec: go download mod", pkgPath)
+func downloadMod(pkgPath string) (*jsonModInfo, error) {
+	fmt.Println("go: downloading module", pkgPath)
 	cmd := exec.Command(gobin, "mod", "download", "-json", pkgPath)
 	data, err := cmd.Output()
 	if err != nil {
 		return nil, err
 	}
-	var info ModInfo
+	var info jsonModInfo
 	err = json.Unmarshal(data, &info)
 	if err != nil {
 		return nil, err
@@ -178,68 +185,21 @@ func downloadMod(pkgPath string) (*ModInfo, error) {
 	return &info, nil
 }
 
-func exportDir(pkgPath string, dir string) error {
-	cmd := exec.Command(gobin, "list", "-f", "{{.ImportPath}} {{.Dir}}", "./...")
-	cmd.Dir = dir
-	data, err := cmd.Output()
-	if err != nil {
-		return err
-	}
-	lines := strings.Split(string(data), "\n")
-	for _, line := range lines {
-		ar := strings.Split(line, " ")
-		if len(ar) == 2 {
-			pkg, dir := ar[0], ar[1]
-			err := exportPkg(pkg, dir)
-			if strings.Contains(pkg, "internal") || strings.Contains(pkg, "vendor") {
-				continue
-			}
-			if err == nil {
-				fmt.Printf("export %q success\n", pkg)
-			} else if err != gopkg.ErrIgnore {
-				fmt.Printf("export %v error,%v\n", pkg, err)
-			}
-		}
-	}
-	return nil
-}
-
-func checkGoList(pkgPath string) (*Package, error) {
-	cmd := exec.Command(gobin, "list", "-json", pkgPath)
-	data, err := cmd.Output()
-	if err != nil {
-		return nil, err
-	}
-	var pkg Package
-	err = json.Unmarshal(data, &pkg)
-	if err != nil {
-		return nil, err
-	}
-	return &pkg, nil
-}
-
-func checkGoPkg(srcDir string) (string, error) {
-	cmd := exec.Command(gobin, "list")
-	cmd.Dir = srcDir
-	data, err := cmd.Output()
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(string(data)), nil
-}
-
-func exportPkg(pkgPath string, srcDir string) (err error) {
+func exportPkg(pkgPath string, srcDir string, goRoot bool) (err error) {
 	var pkg *types.Package
-	if srcDir == "" {
+	if goRoot {
 		pkg, err = gopkg.Import(pkgPath)
 	} else {
-		pkg, err = gopkg.ImportSource(pkgPath, srcDir)
+		imp := srcimporter.New(&build.Default, token.NewFileSet(), make(map[string]*types.Package))
+		pkg, err = imp.ImportFrom(pkgPath, srcDir, 0)
 	}
 	if err != nil {
 		return fmt.Errorf("import %q failed: %v", pkgPath, err)
 	}
-	if pkg.Name() == "main" {
-		return gopkg.ErrIgnore
+	for _, im := range pkg.Imports() {
+		if isIgnorePkg(im.Path()) {
+			return gopkg.ErrIgnore
+		}
 	}
 	var buf bytes.Buffer
 	err = gopkg.ExportPackage(pkg, &buf)
