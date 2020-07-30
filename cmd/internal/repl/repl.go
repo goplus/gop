@@ -106,14 +106,14 @@ func (r *repl) continueModeByLine(line string) {
 func (r *repl) run(newLine string) (err error) {
 	src := r.src + newLine + "\n"
 	defer func() {
-		if err == nil {
-			r.src = src
-		}
 		if errR := recover(); errR != nil {
 			replErr(newLine, errR)
 			err = errors.New("panic err")
 			// TODO: Need a better way to log and show the stack when crash
 			// It is too long to print stack on terminal even only print part of the them; not friendly to user
+		}
+		if err == nil {
+			r.src = src
 		}
 	}()
 	fset := token.NewFileSet()
