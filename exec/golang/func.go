@@ -172,16 +172,22 @@ func (p *Builder) DefineFunc(fun exec.FuncInfo) *Builder {
 
 // Return instr
 func (p *Builder) Return(n int32) *Builder {
+	return p.doReturn(n, "")
+}
+
+func (p *Builder) doReturn(n int32, labelName string) *Builder {
 	var results []ast.Expr
 	var stmt ast.Stmt
 	switch n {
 	case exec.BreakAsReturn:
 		stmt = &ast.BranchStmt{
-			Tok: token.BREAK,
+			Tok:   token.BREAK,
+			Label: Ident(labelName),
 		}
 	case exec.ContinueAsReturn:
 		stmt = &ast.BranchStmt{
-			Tok: token.CONTINUE,
+			Tok:   token.CONTINUE,
+			Label: Ident(labelName),
 		}
 	default:
 		if n > 0 {
@@ -196,6 +202,12 @@ func (p *Builder) Return(n int32) *Builder {
 		stmt = &ast.ReturnStmt{Results: results}
 	}
 	p.rhs.Push(stmt)
+	return p
+}
+
+// Branch instr
+func (p *Builder) Branch(branch int, labelName string) *Builder {
+	p.doReturn(int32(branch), labelName)
 	return p
 }
 

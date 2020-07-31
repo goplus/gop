@@ -289,12 +289,30 @@ func (p *Builder) EndForPhrase(f *ForPhrase) *Builder {
 	}
 	p.endBlockStmt(0)
 	body := &ast.BlockStmt{List: f.getStmts(p)}
+	var labeledStmt ast.Stmt
+	if len(body.List) > 0 {
+		for i := 0; i < len(body.List); i++ {
+			if _, ok := body.List[i].(*ast.DeclStmt); ok {
+				continue
+			}
+			if v, ok := body.List[i].(*ast.LabeledStmt); ok {
+				labeledStmt = v
+				body.List[i] = v.Stmt
+			}
+			break
+		}
+	}
+	if n := len(body.List); n > 3 {
+		if v, ok := body.List[n-3].(*ast.LabeledStmt); ok {
+			v.Stmt = &ast.BranchStmt{Tok: token.BREAK}
+		}
+	}
 	if f.Cond != nil {
 		body = &ast.BlockStmt{List: []ast.Stmt{
 			&ast.IfStmt{Cond: f.Cond, Body: body},
 		}}
 	}
-	p.rhs.Push(&ast.RangeStmt{
+	rangeStmt := &ast.RangeStmt{
 		Key: func() ast.Expr {
 			if f.Key == nil && f.Value == nil {
 				return nil
@@ -305,7 +323,13 @@ func (p *Builder) EndForPhrase(f *ForPhrase) *Builder {
 		Tok:   token.DEFINE,
 		X:     f.X,
 		Body:  body,
-	})
+	}
+	if labeledStmt != nil {
+		labeledStmt.(*ast.LabeledStmt).Stmt = rangeStmt
+		p.rhs.Push(labeledStmt)
+	} else {
+		p.rhs.Push(rangeStmt)
+	}
 	f.restoreEnv(p)
 	return p
 }
