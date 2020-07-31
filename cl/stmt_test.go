@@ -25,14 +25,26 @@ import (
 // -----------------------------------------------------------------------------
 
 var testAssign = `
-	x, y := 123, "Hello"
-	x
-	y
+		L:
+					for k,v:=range [1,2]{
+					M:
+						for t,w:=range [3,4]{
+					K:
+							for l,m:=range[5,6]{
+								println(k,v,t,w,l,m)
+								if m==5{
+									continue M
+								}
+								println("unreachable")
+							}
+						}
+					}
 `
 
 func TestAssign(t *testing.T) {
-	cltest.Call(t, testAssign).Equal("Hello")
-	cltest.Call(t, testAssign, -2).Equal(123)
+	cltest.Call(t, testAssign)
+	// cltest.Call(t, testAssign).Equal("Hello")
+	// cltest.Call(t, testAssign, -2).Equal(123)
 }
 
 // -----------------------------------------------------------------------------
@@ -1428,4 +1440,107 @@ var testVarScopeClauses = map[string]testData{
 
 func TestVarScopeStmt(t *testing.T) {
 	testScripts(t, "TestVarScopeStmt", testVarScopeClauses)
+}
+
+// -----------------------------------------------------------------------------
+
+var testRangeLabelBranchClauses = map[string]testData{
+	"for_range_with_label_branch": {clause: `
+					arr := [1,3,5,7]
+					sum := 0
+					L:
+					for i, _ <- arr {
+						if arr[i]<5{
+							continue L
+						}
+						if arr[i]>5{
+							break L
+						}
+						sum+=arr[i]
+					}
+					println(sum)
+					`, want: "5\n"},
+	"for_range_with_nested_labels": {clause: `
+					arr := [1,3,5,7]
+					sum := 0
+					L:
+					for i, _ <- arr {
+						if arr[i]<5{
+							continue L
+						}
+						if arr[i]>5{
+							break L
+						}
+						sum+=arr[i]
+						M:
+						for j,_ :=range arr{
+							if arr[j]<5{
+								continue M
+							}
+							if arr[j]>5{
+								break M
+							}
+							sum+=arr[j]
+						}	
+					}
+					println(sum)
+					`, want: "10\n"},
+	"for_range_with_nested_labels_continue": {clause: `
+					arr := [1,3,5,7]
+					sum := 0
+					L:
+					for i, _ <- arr {
+						if arr[i]<5{
+							continue L
+						}
+						if arr[i]>5{
+							break L
+						}
+						sum+=arr[i]
+						M:
+						for j,_ :=range arr{
+							if arr[j]<5{
+								continue L
+							}
+							sum+=arr[j]
+						}	
+					}
+					println(sum)
+					`, want: "5\n"},
+	"for_range_with_nested_labels_break": {clause: `
+					arr := [1,3,5,7]
+					sum := 0
+					L:
+					for i, _ <- arr {
+						sum+=arr[i]
+						M:
+						for j,_ :=range arr{
+							if arr[j]<5{
+								break L
+							}
+							sum+=arr[j]
+						}	
+					}
+					println(sum)
+					`, want: "1\n"},
+	"for_range_with_nested_labels_continue_break": {clause: `
+					L:
+					for k,v:=range [1,2]{
+					M:
+						for t,w:=range [3,4]{
+					K:
+							for l,m:=range[5,6]{
+								println(k,v,t,w,l,m)
+								if m==5{
+									continue M
+								}
+								println("unreachable")
+							}
+						}
+					}
+					`, want: "0 1 0 3 0 5\n0 1 1 4 0 5\n1 2 0 3 0 5\n1 2 1 4 0 5\n"},
+}
+
+func TestRangeBranchStmt(t *testing.T) {
+	testScripts(t, "TestVarScopeStmt", testRangeLabelBranchClauses)
 }
