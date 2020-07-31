@@ -77,15 +77,17 @@ for k, v <- {k: k for k, _ <- make([]int, 20)} {
 	if k > 15 {
 		println("map reach break", v > 15)
 		break
+	}else{
+        continue
 	}
 }
 
 FL01:
 	for k, v := range [1, 2, 3] {
-		if k < 10 {
+		if k < 2 {
 			continue FL01
 		}
-		if k > 15 {
+		if k > 2 {
 			println("range list")
 			break FL01
 		}
@@ -94,12 +96,14 @@ FL01:
 
 FL02:
 	for k, v <- {1: 1, 2: 2, 3: 3} {
-		if k < 10 {
+		if k < 2 {
 			continue FL02
 		}
-		if k > 15 {
-			println("map reach break", v > 15)
+		if k > 2 {
+			println("map reach break", v > 2)
 			break FL02
+		}else{
+		    continue
 		}
 	}
 

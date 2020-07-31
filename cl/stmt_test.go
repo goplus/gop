@@ -25,26 +25,14 @@ import (
 // -----------------------------------------------------------------------------
 
 var testAssign = `
-		L:
-					for k,v:=range [1,2]{
-					M:
-						for t,w:=range [3,4]{
-					K:
-							for l,m:=range[5,6]{
-								println(k,v,t,w,l,m)
-								if m==5{
-									continue M
-								}
-								println("unreachable")
-							}
-						}
-					}
+	x, y := 123, "Hello"
+	x
+	y
 `
 
 func TestAssign(t *testing.T) {
-	cltest.Call(t, testAssign)
-	// cltest.Call(t, testAssign).Equal("Hello")
-	// cltest.Call(t, testAssign, -2).Equal(123)
+	cltest.Call(t, testAssign).Equal("Hello")
+	cltest.Call(t, testAssign, -2).Equal(123)
 }
 
 // -----------------------------------------------------------------------------
