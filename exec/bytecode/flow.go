@@ -219,14 +219,4 @@ func (p *Builder) ErrWrap(nret int, retErr exec.Var, frame *errors.Frame, narg i
 	return p
 }
 
-// Branch instr
-func (p *Builder) Branch(branch int, arity int) *Builder {
-	op := bitsRtnBrkOperand
-	if branch == exec.ContinueAsReturn {
-		op = bitsRtnCtnOperand
-	}
-	p.code.data = append(p.code.data, opReturn<<bitsOpShift|(op<<bitsOpReturnShift)|uint32(arity)&bitsOpReturnOperand)
-	return p
-}
-
 // -----------------------------------------------------------------------------

@@ -438,16 +438,6 @@ func (p *Builder) CallFuncv(fun *FuncInfo, arity int) *Builder {
 	return p
 }
 
-// Return instr
-func (p *Builder) Return(n int32) *Builder {
-	returnTyp := bitsRtnMultiOperand
-	if n < 0 {
-		returnTyp = bitsRtnNoneOperand
-	}
-	p.code.data = append(p.code.data, opReturn<<bitsOpShift|returnTyp<<bitsOpReturnShift)
-	return p
-}
-
 // Load instr
 func (p *Builder) Load(idx int32) *Builder {
 	p.code.data = append(p.code.data, (opLoad<<bitsOpShift)|(uint32(idx)&bitsOperand))

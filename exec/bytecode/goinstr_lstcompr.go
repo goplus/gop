@@ -45,10 +45,6 @@ func execForPhrase(i Instr, p *Context) {
 }
 
 func (c *ForPhrase) exec(p *Context) {
-	if p.Len() == 0 {
-		c.execIterRange(newIter(nil), p)
-		return
-	}
 	c.execIterRange(newIter(p.Pop()), p)
 }
 

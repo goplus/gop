@@ -16,6 +16,10 @@
 
 package bytecode
 
+import (
+	"github.com/goplus/gop/exec.spec"
+)
+
 const (
 	bitsOpReturn        = bitsOp + 3
 	bitsOpReturnShift   = bitsInstr - bitsOpReturn
@@ -29,3 +33,23 @@ const (
 	bitsRtnCtnOperand   = uint32(3)
 	bitsRtnGotoOperand  = uint32(4)
 )
+
+// Return instr
+func (p *Builder) Return(n int32) *Builder {
+	returnTyp := bitsRtnMultiOperand
+	if n < 0 {
+		returnTyp = bitsRtnNoneOperand
+	}
+	p.code.data = append(p.code.data, opReturn<<bitsOpShift|returnTyp<<bitsOpReturnShift)
+	return p
+}
+
+// Branch instr
+func (p *Builder) Branch(branch int, arity int) *Builder {
+	op := bitsRtnBrkOperand
+	if branch == exec.ContinueAsReturn {
+		op = bitsRtnCtnOperand
+	}
+	p.code.data = append(p.code.data, opReturn<<bitsOpShift|(op<<bitsOpReturnShift)|uint32(arity)&bitsOpReturnOperand)
+	return p
+}
