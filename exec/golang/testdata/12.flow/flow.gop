@@ -64,6 +64,7 @@ for k, v := range [k for k, _ <- make([]int, 20)] {
 		continue
 	}
 	if k > 15 {
+        println("range end")
 		break
 	}
 	println(k, v)
@@ -80,70 +81,70 @@ for k, v <- {k: k for k, _ <- make([]int, 20)} {
 }
 
 FL01:
-for k, v := range [1,2,3] {
-	if k < 10 {
-		continue FL01
+	for k, v := range [1, 2, 3] {
+		if k < 10 {
+			continue FL01
+		}
+		if k > 15 {
+			println("range list")
+			break FL01
+		}
+		println(k, v)
 	}
-	if k > 15 {
-        println("range list")
-		break FL01
-	}
-	println(k, v)
-}
 
 FL02:
-for k, v <- {1:1,2:2,3:3} {
-	if k < 10 {
-		continue FL02
+	for k, v <- {1: 1, 2: 2, 3: 3} {
+		if k < 10 {
+			continue FL02
+		}
+		if k > 15 {
+			println("map reach break", v > 15)
+			break FL02
+		}
 	}
-	if k > 15 {
-		println("map reach break", v > 15)
-		break FL02
+
+	println("fallthrough with tag")
+	switch v {
+	case "Hello":
+		println(v)
+		fallthrough
+	case "hi":
+		println(v)
+		fallthrough
+	default:
+		println(v)
 	}
-}
+	println("fallthrough without tag")
 
-println("fallthrough with tag")
-switch v {
-case "Hello":
-	println(v)
-	fallthrough
-case "hi":
-	println(v)
-	fallthrough
-default:
-	println(v)
-}
-println("fallthrough without tag")
-
-z := 3
-switch {
-case z < 10:
-	println(z)
-	fallthrough
-case z == 10:
-	println(z)
-	fallthrough
-case z > 10:
-	println(z)
-	fallthrough
-default:
-	println(z)
-}
-
-// switch with break
-switch z {
-case 3:
-	if v == "Hello" {
-		println("break")
-		break
+	z := 3
+	switch {
+	case z < 10:
+		println(z)
+		fallthrough
+	case z == 10:
+		println(z)
+		fallthrough
+	case z > 10:
+		println(z)
+		fallthrough
+	default:
+		println(z)
 	}
-	println("break fail")
-default:
-	println(z)
-}
 
-goto L
-println("before")
+	// switch with break
+	switch z {
+	case 3:
+		if v == "Hello" {
+			println("break")
+			break
+		}
+		println("break fail")
+	default:
+		println(z)
+	}
+
+	goto L
+	println("before")
 L:
 	println("over")
 
