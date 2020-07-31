@@ -64,7 +64,7 @@ for k, v := range [k for k, _ <- make([]int, 20)] {
 		continue
 	}
 	if k > 15 {
-        println("range end")
+		println("range end")
 		break
 	}
 	println(k, v)
@@ -77,8 +77,8 @@ for k, v <- {k: k for k, _ <- make([]int, 20)} {
 	if k > 15 {
 		println("map reach break", v > 15)
 		break
-	}else{
-        continue
+	} else {
+		continue
 	}
 }
 
@@ -102,8 +102,8 @@ FL02:
 		if k > 2 {
 			println("map reach break", v > 2)
 			break FL02
-		}else{
-		    continue
+		} else {
+			continue
 		}
 	}
 
