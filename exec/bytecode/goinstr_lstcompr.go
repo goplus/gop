@@ -45,29 +45,91 @@ func execForPhrase(i Instr, p *Context) {
 }
 
 func (c *ForPhrase) exec(p *Context) {
-	data := reflect.ValueOf(p.Pop())
+	if p.Len() == 0 {
+		c.execIterRange(newIter(nil), p)
+		return
+	}
+	c.execIterRange(newIter(p.Pop()), p)
+}
+
+type forPhraseIterType int
+
+const (
+	arrayIterType forPhraseIterType = iota
+	mapIterType
+	noneIterType
+)
+
+type forPhraseIter struct {
+	typ         forPhraseIterType
+	array       reflect.Value
+	arrayLen    int
+	arrayCursor int
+	mapIter     *reflect.MapIter
+}
+
+func newIter(d interface{}) *forPhraseIter {
+	f := &forPhraseIter{typ: noneIterType}
+	data := reflect.ValueOf(d)
 	switch data.Kind() {
 	case reflect.Map:
-		c.execMapRange(data, p)
+		f.typ = mapIterType
+		f.mapIter = data.MapRange()
 	default:
-		c.execListRange(data, p)
+		f.typ = arrayIterType
+		f.array = reflect.Indirect(data)
+		f.arrayLen = f.array.Len()
+	}
+	return f
+}
+
+func (p *forPhraseIter) next() bool {
+	switch p.typ {
+	case mapIterType:
+		return p.mapIter.Next()
+	case arrayIterType:
+		p.arrayCursor++
+		return p.arrayCursor-1 < p.arrayLen
+	default:
+		return true
 	}
 }
 
-func (c *ForPhrase) execListRange(data reflect.Value, ctx *Context) {
-	data = reflect.Indirect(data)
-	var n = data.Len()
+var emptyValue = reflect.Value{}
+
+func (p *forPhraseIter) key() reflect.Value {
+	switch p.typ {
+	case mapIterType:
+		return p.mapIter.Key()
+	case arrayIterType:
+		return reflect.ValueOf(p.arrayCursor - 1)
+	default:
+		return emptyValue
+	}
+}
+func (p *forPhraseIter) value() reflect.Value {
+	switch p.typ {
+	case mapIterType:
+		return p.mapIter.Value()
+	case arrayIterType:
+		return p.array.Index(p.arrayCursor - 1)
+	default:
+		return emptyValue
+	}
+}
+
+func (c *ForPhrase) execIterRange(iter *forPhraseIter, ctx *Context) {
 	var ip, ipCond, ipEnd = ctx.ip, c.Cond, c.End
 	var key, val = c.Key, c.Value
 	var blockScope = c.block != nil
 	var old savedScopeCtx
 Loop:
-	for i := 0; i < n; i++ {
+	for iter.next() {
 		if key != nil {
-			ctx.setVar(key.idx, i)
+			ctx.setValue(key.idx, iter.key())
 		}
 		if val != nil {
-			ctx.setVar(val.idx, data.Index(i).Interface())
+			ctx.setValue(val.idx, iter.value())
 		}
 		if blockScope { // TODO: move out of `for` statement
 			parent := ctx.varScope
@@ -84,54 +146,31 @@ Loop:
 		if blockScope {
 			ctx.restoreScope(old)
 		}
-		switch ctx.ip {
-		case iReturn, ipReturnN:
-			return
-		case iBreak:
-			break Loop
-		case iContinue:
-			continue
-		}
-	}
-	ctx.ip = ipEnd
-}
-
-func (c *ForPhrase) execMapRange(data reflect.Value, ctx *Context) {
-	var iter = data.MapRange()
-	var ip, ipCond, ipEnd = ctx.ip, c.Cond, c.End
-	var key, val = c.Key, c.Value
-	var blockScope = c.block != nil
-	var old savedScopeCtx
-Loop:
-	for iter.Next() {
-		if key != nil {
-			ctx.setVar(key.idx, iter.Key().Interface())
-		}
-		if val != nil {
-			ctx.setVar(val.idx, iter.Value().Interface())
-		}
-		if blockScope {
-			parent := ctx.varScope
-			old = ctx.switchScope(&parent, &c.block.varManager)
-		}
-		if ipCond > 0 {
-			ctx.Exec(ip, ipCond)
-			if ok := ctx.Pop().(bool); ok {
-				ctx.Exec(ipCond, ipEnd)
+		if instr := ctx.code.data[ctx.ip-1]; instr>>bitsOpShift == opReturn {
+			ctx.ip--
+			switch op := (instr >> bitsOpReturnShift) & 0b0111; op {
+			case bitsRtnNoneOperand, bitsRtnMultiOperand:
+				return
+			case bitsRtnBrkOperand, bitsRtnCtnOperand:
+				depth := instr
+				if v, ok := ctx.forDepths[instr]; ok {
+					depth = v
+				} else {
+					ctx.forDepths[instr] = instr
+				}
+				delta := depth & bitsOpReturnOperand
+				if delta == 0 {
+					delete(ctx.forDepths, instr)
+					if op == bitsRtnBrkOperand {
+						break Loop
+					} else {
+						continue Loop
+					}
+				}
+				depth--
+				ctx.forDepths[instr] = depth
+				return
 			}
-		} else {
-			ctx.Exec(ip, ipEnd)
-		}
-		if blockScope {
-			ctx.restoreScope(old)
-		}
-		switch ctx.ip {
-		case iReturn, ipReturnN:
-			return
-		case iBreak:
-			break Loop
-		case iContinue:
-			continue
 		}
 	}
 	ctx.ip = ipEnd
@@ -358,11 +397,12 @@ type ForPhrase struct {
 	Cond, End  int
 	TypeIn     reflect.Type
 	block      *blockCtx
+	depths     map[uint32]uint32
 }
 
 // NewForPhrase creates a new ForPhrase instance.
 func NewForPhrase(in reflect.Type) *ForPhrase {
-	return &ForPhrase{TypeIn: in}
+	return &ForPhrase{TypeIn: in, depths: map[uint32]uint32{}}
 }
 
 // Comprehension represents a list/map comprehension.
