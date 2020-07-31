@@ -34,21 +34,23 @@ type varScope struct {
 type Context struct {
 	Stack
 	varScope
-	code   *Code
-	defers *theDefer
-	ip     int
-	base   int
+	code      *Code
+	defers    *theDefer
+	ip        int
+	base      int
+	forDepths map[uint32]uint32
 }
 
 func newSimpleContext(data []interface{}) *Context {
-	return &Context{Stack: Stack{data: data}}
+	return &Context{Stack: Stack{data: data}, forDepths: map[uint32]uint32{}}
 }
 
 // NewContext returns a new context of an executor.
 func NewContext(in exec.Code) *Context {
 	code := in.(*Code)
 	p := &Context{
-		code: code,
+		code:      code,
+		forDepths: map[uint32]uint32{},
 	}
 	p.Init()
 	if len(code.vlist) > 0 {
@@ -169,11 +171,6 @@ func (ctx *Context) Exec(ip, ipEnd int) (currentIP int) {
 			execGoFuncv(i, ctx)
 		case opReturn:
 			currentIP = ctx.ip
-			if i == iBreak || i == iContinue || i == iReturn {
-				ctx.ip = int(i)
-			} else {
-				ctx.ip = ipReturnN
-			}
 			goto finished
 		case opPushUint:
 			execPushUint(i, ctx)
