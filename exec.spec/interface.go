@@ -265,6 +265,9 @@ type Builder interface {
 	// Return instr
 	Return(n int32) Builder
 
+	// Branch instr
+	Branch(branch int, labelName string, arity int) Builder
+
 	// Load instr
 	Load(idx int32) Builder
 

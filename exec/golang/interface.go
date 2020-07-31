@@ -275,6 +275,12 @@ func (p *iBuilder) Return(n int32) exec.Builder {
 	return p
 }
 
+// Branch instr
+func (p *iBuilder) Branch(branch int, labelName string, arity int) exec.Builder {
+	((*Builder)(p)).Branch(branch, labelName)
+	return p
+}
+
 // Load instr
 func (p *iBuilder) Load(idx int32) exec.Builder {
 	((*Builder)(p)).Load(idx)
