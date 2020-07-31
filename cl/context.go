@@ -111,10 +111,11 @@ type flowLabel struct {
 }
 
 type flowCtx struct {
-	parent    *flowCtx
-	name      string
-	postLabel exec.Label
-	doneLabel exec.Label
+	parent       *flowCtx
+	name         string
+	postLabel    exec.Label
+	doneLabel    exec.Label
+	forNestDepth int
 }
 
 func (fc *funcCtx) nextFlow(post, done exec.Label, name string) {
@@ -124,40 +125,51 @@ func (fc *funcCtx) nextFlow(post, done exec.Label, name string) {
 		postLabel: post,
 		doneLabel: done,
 	}
+	if fc.currentFlow.parent != nil && post == nil && done == nil {
+		fc.currentFlow.forNestDepth = fc.currentFlow.parent.forNestDepth + 1
+	}
 }
 
-func (fc *funcCtx) getBreakLabel(labelName string) (label exec.Label, rangeFor bool) {
+func (fc *funcCtx) getBreakLabel(labelName string) (label exec.Label, rangeFor bool, depth int) {
 	if fc.currentFlow == nil {
-		return nil, false
+		return nil, false, -1
 	}
-	if fc.currentFlow.postLabel == nil && fc.currentFlow.doneLabel == nil {
-		return nil, true
-	}
+	rangeFor = fc.currentFlow.postLabel == nil && fc.currentFlow.doneLabel == nil
 	for i := fc.currentFlow; i != nil; i = i.parent {
-		if i.doneLabel != nil {
-			if labelName == "" || i.name == labelName {
-				return i.doneLabel, false
-			}
+		// TODO: not support break between normal for and range for
+		if rangeFor && i.doneLabel != nil {
+			break
+		}
+		if !rangeFor && i.doneLabel == nil {
+			break
+		}
+
+		if labelName == "" || i.name == labelName {
+			return i.doneLabel, rangeFor, i.forNestDepth
 		}
 	}
-	return nil, false
+	return nil, rangeFor, -1
 }
 
-func (fc *funcCtx) getContinueLabel(labelName string) (label exec.Label, rangeFor bool) {
+func (fc *funcCtx) getContinueLabel(labelName string) (label exec.Label, rangeFor bool, depth int) {
 	if fc.currentFlow == nil {
-		return nil, false
+		return nil, false, -1
 	}
-	if fc.currentFlow.postLabel == nil && fc.currentFlow.doneLabel == nil {
-		return nil, true
-	}
+	rangeFor = fc.currentFlow.postLabel == nil && fc.currentFlow.doneLabel == nil
 	for i := fc.currentFlow; i != nil; i = i.parent {
-		if i.postLabel != nil {
-			if labelName == "" || i.name == labelName {
-				return i.postLabel, false
-			}
+		// TODO: not support break between normal for and range for
+		if rangeFor && i.doneLabel != nil {
+			break
+		}
+		if !rangeFor && i.doneLabel == nil {
+			break
+		}
+
+		if labelName == "" || i.name == labelName {
+			return i.postLabel, rangeFor, i.forNestDepth
 		}
 	}
-	return nil, false
+	return nil, false, -1
 }
 
 func (fc *funcCtx) checkLabels() {

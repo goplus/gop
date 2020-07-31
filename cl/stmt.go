@@ -89,21 +89,37 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	ctx.out.EndStmt(stmt, start)
 }
 
-func compileForPhraseStmt(parent *blockCtx, v *ast.ForPhraseStmt) {
-	noExecCtx := isNoExecCtx(parent, v.Body)
-	ctx, exprFor := compileForPhrase(parent, v.ForPhrase, noExecCtx)
+func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
+	labelName := ""
+	if ctx.currentLabel != nil && ctx.currentLabel.Stmt == v {
+		labelName = ctx.currentLabel.Label.Name
+	}
+	ctx.nextFlow(nil, nil, labelName)
+	defer func() {
+		ctx.currentFlow = ctx.currentFlow.parent
+	}()
+	noExecCtx := isNoExecCtx(ctx, v.Body)
+	ctxFor, exprFor := compileForPhrase(ctx, v.ForPhrase, noExecCtx)
 	exprFor(func() {
-		compileBlockStmtWithout(ctx, v.Body)
+		compileBlockStmtWithout(ctxFor, v.Body)
 	})
 }
 
-func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
-	noExecCtx := isNoExecCtx(parent, v.Body)
+func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
+	noExecCtx := isNoExecCtx(ctx, v.Body)
 	f := ast.ForPhrase{
 		For:    v.For,
 		TokPos: v.TokPos,
 		X:      v.X,
 	}
+	labelName := ""
+	if ctx.currentLabel != nil && ctx.currentLabel.Stmt == v {
+		labelName = ctx.currentLabel.Label.Name
+	}
+	ctx.nextFlow(nil, nil, labelName)
+	defer func() {
+		ctx.currentFlow = ctx.currentFlow.parent
+	}()
 	switch v.Tok {
 	case token.DEFINE:
 		f.Key = toIdent(v.Key)
@@ -141,9 +157,9 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 			Rhs: rhs[0:idx],
 		}}, v.Body.List...)
 	}
-	ctx, exprFor := compileForPhrase(parent, f, noExecCtx)
+	ctxFor, exprFor := compileForPhrase(ctx, f, noExecCtx)
 	exprFor(func() {
-		compileBlockStmtWithout(ctx, v.Body)
+		compileBlockStmtWithout(ctxFor, v.Body)
 	})
 }
 
@@ -203,14 +219,21 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 		if v.Label != nil {
 			labelName = v.Label.Name
 		}
-		label, rangeFor := ctx.getBreakLabel(labelName)
-		if label != nil {
-			ctx.out.Jmp(label)
-			return
-		}
+		label, rangeFor, depth := ctx.getBreakLabel(labelName)
 		if rangeFor {
-			ctx.out.Return(exec.BreakAsReturn)
-			return
+			if depth >= 0 {
+				if ctx.currentFlow != nil {
+					if depth := ctx.currentFlow.forNestDepth - depth; depth >= 0 {
+						ctx.out.Branch(exec.BreakAsReturn, labelName, depth)
+						return
+					}
+				}
+			}
+		} else {
+			if label != nil {
+				ctx.out.Jmp(label)
+				return
+			}
 		}
 		log.Panicln("break statement out of for/switch/select statements")
 	case token.CONTINUE:
@@ -218,14 +241,21 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 		if v.Label != nil {
 			labelName = v.Label.Name
 		}
-		label, rangeFor := ctx.getContinueLabel(labelName)
-		if label != nil {
-			ctx.out.Jmp(label)
-			return
-		}
+		label, rangeFor, depth := ctx.getContinueLabel(labelName)
 		if rangeFor {
-			ctx.out.Return(exec.ContinueAsReturn)
-			return
+			if depth >= 0 {
+				if ctx.currentFlow != nil {
+					if depth := ctx.currentFlow.forNestDepth - depth; depth >= 0 {
+						ctx.out.Branch(exec.ContinueAsReturn, labelName, depth)
+						return
+					}
+				}
+			}
+		} else {
+			if label != nil {
+				ctx.out.Jmp(label)
+				return
+			}
 		}
 		log.Panicln("continue statement out of for statements")
 	}
