@@ -223,7 +223,7 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 		if rangeFor {
 			if depth >= 0 {
 				if ctx.currentFlow != nil {
-					if depth := ctx.currentFlow.forNestDepth - depth; depth >= 0 {
+					if depth = ctx.currentFlow.forNestDepth - depth; depth >= 0 {
 						ctx.out.Branch(exec.BreakAsReturn, labelName, depth)
 						return
 					}
