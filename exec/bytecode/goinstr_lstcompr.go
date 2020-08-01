@@ -53,7 +53,6 @@ type forPhraseIterType int
 const (
 	arrayIterType forPhraseIterType = iota
 	mapIterType
-	noneIterType
 )
 
 type forPhraseIter struct {
@@ -65,7 +64,7 @@ type forPhraseIter struct {
 }
 
 func newIter(d interface{}) *forPhraseIter {
-	f := &forPhraseIter{typ: noneIterType}
+	f := &forPhraseIter{}
 	data := reflect.ValueOf(d)
 	switch data.Kind() {
 	case reflect.Map:

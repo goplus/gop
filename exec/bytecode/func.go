@@ -299,7 +299,7 @@ func (p *FuncInfo) execFunc(ctx *Context) {
 func (p *FuncInfo) exec(ctx *Context, parent *varScope) {
 	old := ctx.switchScope(parent, &p.varManager)
 	p.execFunc(ctx)
-	if !(ctx.ip == ipMultiReturn) {
+	if ctx.ip != ipMultiReturn {
 		ctx.data = ctx.data[:ctx.base-len(p.in)]
 		n := uint32(p.numOut)
 		for i := uint32(0); i < n; i++ {
