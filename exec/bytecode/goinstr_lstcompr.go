@@ -383,12 +383,11 @@ type ForPhrase struct {
 	Cond, End  int
 	TypeIn     reflect.Type
 	block      *blockCtx
-	depths     map[uint32]uint32
 }
 
 // NewForPhrase creates a new ForPhrase instance.
 func NewForPhrase(in reflect.Type) *ForPhrase {
-	return &ForPhrase{TypeIn: in, depths: map[uint32]uint32{}}
+	return &ForPhrase{TypeIn: in}
 }
 
 // Comprehension represents a list/map comprehension.
