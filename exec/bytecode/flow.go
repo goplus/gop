@@ -204,7 +204,7 @@ func execErrWrap(i Instr, ctx *Context) {
 		panic(&frame)
 	}
 	ctx.setVar(ew.retErr.(*Var).idx, &frame)
-	ctx.ip = int(opReturn<<bitsOpShift | bitsRtnNoneOperand<<bitsOpReturnShift)
+	ctx.ip = ipNoneReturn
 }
 
 // ErrWrap instr

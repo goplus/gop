@@ -34,6 +34,11 @@ const (
 	bitsRtnGotoOperand  = uint32(4)
 )
 
+const (
+	ipNoneReturn  = int(opReturn<<bitsOpShift | bitsRtnNoneOperand<<bitsOpReturnShift)
+	ipMultiReturn = int(opReturn<<bitsOpShift | bitsRtnMultiOperand<<bitsOpReturnShift)
+)
+
 // Return instr
 func (p *Builder) Return(n int32) *Builder {
 	returnTyp := bitsRtnMultiOperand
