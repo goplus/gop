@@ -1530,7 +1530,7 @@ var testRangeLabelBranchClauses = map[string]testData{
 }
 
 func TestRangeBranchStmt(t *testing.T) {
-	testScripts(t, "TestVarScopeStmt", testRangeLabelBranchClauses)
+	testScripts(t, "TestRangeBranchStmt", testRangeLabelBranchClauses)
 }
 
 var testBranchPanicClauses = map[string]testData{
@@ -1553,5 +1553,5 @@ var testBranchPanicClauses = map[string]testData{
 }
 
 func TestBranchPanicStmt(t *testing.T) {
-	testScripts(t, "TestVarScopeStmt", testBranchPanicClauses)
+	testScripts(t, "TestBranchPanicStmt", testBranchPanicClauses)
 }
