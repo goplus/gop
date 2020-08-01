@@ -1532,3 +1532,26 @@ var testRangeLabelBranchClauses = map[string]testData{
 func TestRangeBranchStmt(t *testing.T) {
 	testScripts(t, "TestVarScopeStmt", testRangeLabelBranchClauses)
 }
+
+var testBranchPanicClauses = map[string]testData{
+	"break_between_normal_for_and_range_1": {`
+L:
+for i:=0;i<2;i++{
+	for j<-[1,2]{
+		break L
+	}
+}
+					`, "", true},
+	"break_between_normal_for_and_range_2": {`
+L:
+for j<-[1,2]{
+	for i:=0;i<2;i++{
+		continue L
+	}
+}
+					`, "", true},
+}
+
+func TestBranchPanicStmt(t *testing.T) {
+	testScripts(t, "TestVarScopeStmt", testBranchPanicClauses)
+}

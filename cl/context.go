@@ -131,27 +131,24 @@ func (fc *funcCtx) nextFlow(post, done exec.Label, name string) {
 }
 
 func (fc *funcCtx) getBreakLabel(labelName string) (label exec.Label, rangeFor bool, depth int) {
-	if fc.currentFlow == nil {
-		return nil, false, -1
+	var f *flowCtx
+	f, rangeFor, depth = fc.getBranchLabel(labelName)
+	if f != nil {
+		label = f.doneLabel
 	}
-	rangeFor = fc.currentFlow.postLabel == nil && fc.currentFlow.doneLabel == nil
-	for i := fc.currentFlow; i != nil; i = i.parent {
-		// TODO: not support break between normal for and range for
-		if rangeFor && i.doneLabel != nil {
-			break
-		}
-		if !rangeFor && i.doneLabel == nil {
-			break
-		}
-
-		if labelName == "" || i.name == labelName {
-			return i.doneLabel, rangeFor, i.forNestDepth
-		}
-	}
-	return nil, rangeFor, -1
+	return
 }
 
 func (fc *funcCtx) getContinueLabel(labelName string) (label exec.Label, rangeFor bool, depth int) {
+	var f *flowCtx
+	f, rangeFor, depth = fc.getBranchLabel(labelName)
+	if f != nil {
+		label = f.postLabel
+	}
+	return
+}
+
+func (fc *funcCtx) getBranchLabel(labelName string) (f *flowCtx, rangeFor bool, depth int) {
 	if fc.currentFlow == nil {
 		return nil, false, -1
 	}
@@ -166,7 +163,7 @@ func (fc *funcCtx) getContinueLabel(labelName string) (label exec.Label, rangeFo
 		}
 
 		if labelName == "" || i.name == labelName {
-			return i.postLabel, rangeFor, i.forNestDepth
+			return i, rangeFor, i.forNestDepth
 		}
 	}
 	return nil, false, -1
