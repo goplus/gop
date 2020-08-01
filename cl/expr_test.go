@@ -20,6 +20,8 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/goplus/gop/exec/bytecode"
+
 	"github.com/goplus/gop/cl/cltest"
 )
 
@@ -392,12 +394,65 @@ func TestRational(t *testing.T) {
 
 func TestPkgInterfaceMethod(t *testing.T) {
 	cltest.Expect(t, `
-import (
-	"reflect"
-)
-println(reflect.ValueOf("hello").Kind())
+	import (
+		"reflect"
+	)
+	println(reflect.TypeOf("hello").Kind())
 	`,
 		"string\n",
+	)
+	cltest.Expect(t, `
+	import (
+		"reflect"
+	)
+	t := reflect.TypeOf(100)
+	println(t.ConvertibleTo(reflect.TypeOf(1.1)))
+	`,
+		"true\n",
+	)
+}
+
+type testDynamicI interface {
+	Printf(format string, a ...interface{})
+	Value() int
+	SetValue(i int)
+}
+
+type testDynamic struct {
+	v int
+}
+
+func (t *testDynamic) Printf(format string, a ...interface{}) {
+	fmt.Printf(format, a...)
+}
+
+func (t *testDynamic) Value() int {
+	return t.v
+}
+
+func (t *testDynamic) SetValue(i int) {
+	t.v = i
+}
+
+func (t *testDynamic) Interface() testDynamicI {
+	return t
+}
+
+func TestDynamicMethod(t *testing.T) {
+	I := bytecode.NewGoPackage("test_dynamic_method")
+	v := &testDynamic{100}
+	I.RegisterVars(I.Var("V", &v))
+	cltest.Expect(t, `
+	import (
+		"test_dynamic_method"
+	)
+	v := test_dynamic_method.V
+	println(v.Value())
+	v.Printf("test %v,%v,%v\n",100,200,v)
+	v.SetValue(200)
+	println(v.value,v.Interface().value)
+	`,
+		"100\ntest 100,200,&{100}\n200 200\n",
 	)
 }
 
