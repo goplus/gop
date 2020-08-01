@@ -390,6 +390,17 @@ func TestRational(t *testing.T) {
 	`).Equal(big.NewRat(7, 3))
 }
 
+func TestPkgInterfaceMethod(t *testing.T) {
+	cltest.Expect(t, `
+import (
+	"reflect"
+)
+println(reflect.ValueOf("hello").Kind())
+	`,
+		"string\n",
+	)
+}
+
 type testData struct {
 	clause string
 	want   string
