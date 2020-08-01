@@ -282,9 +282,9 @@ func (p *FuncInfo) execFunc(ctx *Context) {
 		ctx.defers = oldDefers
 	}()
 	ctx.Exec(p.funEntry, p.funEnd)
-	if ((ctx.code.data[ctx.ip-1] >> bitsOpReturnShift) & 0b0111) == bitsRtnMultiOperand { // TODO: optimize
+	if ((uint32(ctx.ip) >> bitsOpReturnShift) & 0b0111) == bitsRtnMultiOperand { // TODO: optimize
 		if ctx.defers != nil {
-			ctx.code.data[ctx.ip-1] = opReturn<<bitsOpShift | bitsRtnNoneOperand<<bitsOpReturnShift
+			ctx.ip = int(opReturn<<bitsOpShift | bitsRtnNoneOperand<<bitsOpReturnShift)
 			rets := ctx.GetArgs(p.numOut)
 			for i, v := range rets {
 				ctx.setVar(uint32(i), v)
@@ -299,7 +299,7 @@ func (p *FuncInfo) execFunc(ctx *Context) {
 func (p *FuncInfo) exec(ctx *Context, parent *varScope) {
 	old := ctx.switchScope(parent, &p.varManager)
 	p.execFunc(ctx)
-	if ((ctx.code.data[ctx.ip-1] >> bitsOpReturnShift) & 0b0111) != bitsRtnMultiOperand {
+	if ((uint32(ctx.ip) >> bitsOpReturnShift) & 0b0111) != bitsRtnMultiOperand {
 		ctx.data = ctx.data[:ctx.base-len(p.in)]
 		n := uint32(p.numOut)
 		for i := uint32(0); i < n; i++ {

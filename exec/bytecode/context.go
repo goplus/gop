@@ -171,6 +171,7 @@ func (ctx *Context) Exec(ip, ipEnd int) (currentIP int) {
 			execGoFuncv(i, ctx)
 		case opReturn:
 			currentIP = ctx.ip
+			ctx.ip = int(i)
 			goto finished
 		case opPushUint:
 			execPushUint(i, ctx)

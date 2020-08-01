@@ -142,8 +142,7 @@ Loop:
 		if blockScope {
 			ctx.restoreScope(old)
 		}
-		if instr := ctx.code.data[ctx.ip-1]; instr>>bitsOpShift == opReturn {
-			ctx.ip--
+		if instr := uint32(ctx.ip); instr>>bitsOpShift == opReturn {
 			switch op := (instr >> bitsOpReturnShift) & 0b0111; op {
 			case bitsRtnNoneOperand, bitsRtnMultiOperand:
 				return
