@@ -302,11 +302,6 @@ func (p *Builder) EndForPhrase(f *ForPhrase) *Builder {
 			break
 		}
 	}
-	if n := len(body.List); n > 3 {
-		if v, ok := body.List[n-3].(*ast.LabeledStmt); ok {
-			v.Stmt = &ast.BranchStmt{Tok: token.BREAK}
-		}
-	}
 	if f.Cond != nil {
 		body = &ast.BlockStmt{List: []ast.Stmt{
 			&ast.IfStmt{Cond: f.Cond, Body: body},

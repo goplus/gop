@@ -83,34 +83,26 @@ func (p *forPhraseIter) next() bool {
 	switch p.typ {
 	case mapIterType:
 		return p.mapIter.Next()
-	case arrayIterType:
+	default:
 		p.arrayCursor++
 		return p.arrayCursor-1 < p.arrayLen
-	default:
-		return true
 	}
 }
-
-var emptyValue = reflect.Value{}
 
 func (p *forPhraseIter) key() reflect.Value {
 	switch p.typ {
 	case mapIterType:
 		return p.mapIter.Key()
-	case arrayIterType:
-		return reflect.ValueOf(p.arrayCursor - 1)
 	default:
-		return emptyValue
+		return reflect.ValueOf(p.arrayCursor - 1)
 	}
 }
 func (p *forPhraseIter) value() reflect.Value {
 	switch p.typ {
 	case mapIterType:
 		return p.mapIter.Value()
-	case arrayIterType:
-		return p.array.Index(p.arrayCursor - 1)
 	default:
-		return emptyValue
+		return p.array.Index(p.arrayCursor - 1)
 	}
 }
 
