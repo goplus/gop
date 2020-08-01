@@ -20,6 +20,8 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/goplus/gop/exec/bytecode"
+
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/astutil"
 	"github.com/goplus/gop/exec.spec"
@@ -1006,26 +1008,39 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 		n, t := countPtr(vx.t)
 		autoCall := false
 		name := v.Sel.Name
-		if sf, ok := t.FieldByName(name); ok {
-			log.Panicln("compileSelectorExpr todo: structField -", t, sf)
+		if t.Kind() == reflect.Struct {
+			if sf, ok := t.FieldByName(name); ok {
+				log.Panicln("compileSelectorExpr todo: structField -", t, sf)
+			}
 		}
-		if _, ok := vx.t.MethodByName(name); !ok && isLower(name) {
+		var fun reflect.Value
+		var typ reflect.Type
+		if method, ok := vx.t.MethodByName(name); !ok && isLower(name) {
 			name = strings.Title(name)
-			if _, ok = vx.t.MethodByName(name); ok {
+			if method, ok = vx.t.MethodByName(name); ok {
 				v.Sel.Name = name
 				autoCall = allowAutoCall
 			} else {
 				log.Panicln("compileSelectorExpr: symbol not found -", v.Sel.Name)
 			}
+			typ = method.Type
+			fun = method.Func
+		} else {
+			typ = method.Type
+			fun = method.Func
 		}
-		pkgPath, method := normalizeMethod(n, t, name)
+		pkgPath, fnname := normalizeMethod(n, t, name)
+		var addr uint32
+		var kind exec.SymbolKind
+		var ok bool
 		pkg := ctx.FindGoPackage(pkgPath)
 		if pkg == nil {
-			log.Panicln("compileSelectorExpr failed: package not found -", pkgPath)
+			pkg = bytecode.NewGoPackage(pkgPath)
+		} else {
+			addr, kind, ok = pkg.Find(fnname)
 		}
-		addr, kind, ok := pkg.Find(method)
 		if !ok {
-			log.Panicln("compileSelectorExpr: method not found -", method)
+			addr, kind = registerMethod(pkg, fnname, vx.t, name, fun, typ)
 		}
 		ctx.infer.Ret(1, newGoFunc(addr, kind, 1, ctx))
 		if autoCall { // change AST tree
@@ -1067,6 +1082,74 @@ func normalizeMethod(n int, t reflect.Type, name string) (pkgPath string, formal
 		typName = strings.Repeat("*", n) + typName
 	}
 	return t.PkgPath(), "(" + typName + ")." + name
+}
+
+func registerMethod(pkg exec.GoPackage, fnname string, t reflect.Type, name string, fun reflect.Value, typ reflect.Type) (addr uint32, kind exec.SymbolKind) {
+	var tin []reflect.Type
+	var fnInterface interface{}
+	isVariadic := typ.IsVariadic()
+	numIn := typ.NumIn()
+	numOut := typ.NumOut()
+	if !fun.IsNil() { // type method
+		tin = make([]reflect.Type, numIn)
+		for i := 0; i < numIn; i++ {
+			tin[i] = typ.In(i)
+		}
+		fnInterface = fun.Interface()
+	} else { // interface method
+		tin = make([]reflect.Type, numIn+1)
+		tin[0] = t
+		for i := 1; i < numIn+1; i++ {
+			tin[i] = typ.In(i)
+		}
+		tout := make([]reflect.Type, numOut)
+		for i := 0; i < numOut; i++ {
+			tout[i] = typ.Out(i)
+		}
+		typFunc := reflect.FuncOf(tin, tout, isVariadic)
+		fnInterface = reflect.Zero(typFunc).Interface()
+	}
+	fnExec := func(arity int, p *bytecode.Context) {
+		if !isVariadic {
+			arity = numIn
+		}
+		args := p.GetArgs(arity)
+		in := make([]reflect.Value, arity)
+		for i, arg := range args {
+			if arg != nil {
+				in[i] = reflect.ValueOf(arg)
+			} else if i >= numIn {
+				in[i] = reflect.Zero(tin[numIn-1])
+			} else {
+				in[i] = reflect.Zero(tin[i])
+			}
+		}
+		var out []reflect.Value
+		if !fun.IsNil() {
+			out = fun.Call(in)
+		} else {
+			out = in[0].MethodByName(name).Call(in[1:])
+		}
+		if numOut > 0 {
+			iout := make([]interface{}, numOut)
+			for i := 0; i < numOut; i++ {
+				iout[i] = out[i].Interface()
+			}
+			p.Ret(arity, iout...)
+		}
+	}
+	if isVariadic {
+		info := pkg.(*bytecode.GoPackage).Funcv(fnname, fnInterface, fnExec)
+		base := pkg.(*bytecode.GoPackage).RegisterFuncvs(info)
+		addr = uint32(base)
+		kind = exec.SymbolFuncv
+	} else {
+		info := pkg.(*bytecode.GoPackage).Func(fnname, fnInterface, fnExec)
+		base := pkg.(*bytecode.GoPackage).RegisterFuncs(info)
+		addr = uint32(base)
+		kind = exec.SymbolFunc
+	}
+	return
 }
 
 // -----------------------------------------------------------------------------
