@@ -196,11 +196,6 @@ func exportPkg(pkgPath string, srcDir string, goRoot bool) (err error) {
 	if err != nil {
 		return fmt.Errorf("import %q failed: %v", pkgPath, err)
 	}
-	for _, im := range pkg.Imports() {
-		if isIgnorePkg(im.Path()) {
-			return gopkg.ErrIgnore
-		}
-	}
 	var buf bytes.Buffer
 	err = gopkg.ExportPackage(pkg, &buf)
 	if err != nil {
