@@ -204,6 +204,12 @@ func TestIgnorePkg(t *testing.T) {
 	}
 }
 
+func TestWithoutPkg(t *testing.T) {
+	if withoutPkg("github.com/qiniu/x/log") != "github.com/qiniu/x/log" {
+		t.Fatal()
+	}
+}
+
 func TestBadLooupMod(t *testing.T) {
 	dir, err := LookupMod("github.com/qiniu/x/log2")
 	if err == nil {
