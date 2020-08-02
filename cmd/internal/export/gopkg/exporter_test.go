@@ -193,7 +193,15 @@ func TestLooupMod(t *testing.T) {
 	if dir != dir1 {
 		t.Fatal("LookupMod failed:", dir, dir1)
 	}
+}
 
+func TestIgnorePkg(t *testing.T) {
+	if !isInternalPkg("golang.org/x/tools/internal/span") {
+		t.Fatal("must ignore")
+	}
+	if isInternalPkg("golang.org/x/tools") {
+		t.Fatal("not ignore")
+	}
 }
 
 func TestBadLooupMod(t *testing.T) {
