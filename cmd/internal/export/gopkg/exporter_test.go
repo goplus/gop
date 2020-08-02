@@ -197,10 +197,10 @@ func TestLooupMod(t *testing.T) {
 
 func TestIgnorePkg(t *testing.T) {
 	if !isInternalPkg("golang.org/x/tools/internal/span") {
-		t.Fatal("must ignore")
+		t.Fatal("is internal pkg")
 	}
 	if isInternalPkg("golang.org/x/tools") {
-		t.Fatal("not ignore")
+		t.Fatal("not internal pkg")
 	}
 }
 
