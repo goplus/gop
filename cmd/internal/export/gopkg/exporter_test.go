@@ -135,6 +135,13 @@ func TestExportIo(t *testing.T) {
 	}
 }
 
+func TestExportIoUtil(t *testing.T) {
+	err := Export("io/ioutil", ioutil.Discard)
+	if err != nil {
+		t.Fatal("TestExport failed:", err)
+	}
+}
+
 func TestExportGoTypes(t *testing.T) {
 	err := Export("go/types", ioutil.Discard)
 	if err != nil {
