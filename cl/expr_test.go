@@ -70,7 +70,24 @@ func TestNew2(t *testing.T) {
 	)
 }
 
-// -----------------------------------------------------------------------------
+func TestBadIndex(t *testing.T) {
+	cltest.Expect(t, `
+		a := new(int)
+		println(a[0])
+		`,
+		"",
+		nil,
+	)
+	cltest.Expect(t, `
+		a := new(int)
+		a[0] = 2
+		`,
+		"",
+		nil,
+	)
+}
+
+// -------------------`----------------------------------------------------------
 
 func TestAutoProperty(t *testing.T) {
 	script := `
