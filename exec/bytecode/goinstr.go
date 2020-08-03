@@ -331,8 +331,14 @@ func execSlice3(instr Instr, p *Context) {
 }
 
 func execZero(i Instr, p *Context) {
-	typ := getType(i&bitsOperand, p)
-	p.Push(reflect.Zero(typ).Interface())
+	var v reflect.Value
+	typ := getType(i&bitsOpZeroOperand, p)
+	if (i & (1 << bitsOpZeroShift)) != 0 { // isPtr
+		v = reflect.New(typ)
+	} else {
+		v = reflect.Zero(typ)
+	}
+	p.Push(v.Interface())
 }
 
 // ToValues converts []interface{} into []reflect.Value.
@@ -558,6 +564,13 @@ func (p *Builder) Slice3(i, j, k int) *Builder {
 // TypeCast instr
 func (p *Builder) TypeCast(from, to reflect.Type) *Builder {
 	i := (opTypeCast << bitsOpShift) | p.requireType(to)
+	p.code.data = append(p.code.data, i)
+	return p
+}
+
+// New instr
+func (p *Builder) New(typ reflect.Type) *Builder {
+	i := (opZero << bitsOpShift) | (1 << bitsOpZeroShift) | p.requireType(typ)
 	p.code.data = append(p.code.data, i)
 	return p
 }

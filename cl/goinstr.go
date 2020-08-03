@@ -263,7 +263,18 @@ func igoNew(ctx *blockCtx, v *ast.CallExpr, isDefer bool) func() {
 	if isDefer {
 		log.Panicln("defer discards result of", ctx.code(v))
 	}
-	panic("todo")
+	if n := len(v.Args); n != 1 {
+		if n == 0 {
+			log.Panicln("missing argument to new")
+		}
+		log.Panicf("too many arguments to new(%v)\n", ctx.code(v.Args[0]))
+	}
+	t := toType(ctx, v.Args[0]).(reflect.Type)
+	ptrT := reflect.PtrTo(t)
+	ctx.infer.Push(&goValue{t: ptrT})
+	return func() {
+		ctx.out.New(t)
+	}
 }
 
 // func complex(r, i FloatType) ComplexType

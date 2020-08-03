@@ -418,6 +418,12 @@ func (p *iBuilder) GoBuiltin(typ reflect.Type, op exec.GoBuiltin) exec.Builder {
 	return p
 }
 
+// New instr
+func (p *iBuilder) New(typ reflect.Type) exec.Builder {
+	((*Builder)(p)).New(typ)
+	return p
+}
+
 // Zero instr
 func (p *iBuilder) Zero(typ reflect.Type) exec.Builder {
 	((*Builder)(p)).Zero(typ)
