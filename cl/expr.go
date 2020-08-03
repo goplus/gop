@@ -721,6 +721,14 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 
 	typ := ctx.infer.Get(-1).(iValue).Type()
 	typElem := typ.Elem()
+	if typ.Kind() == reflect.Ptr {
+		if typElem.Kind() != reflect.Array {
+			logPanic(ctx, v, `type %v does not support indexing`, typ)
+		}
+		typ = typElem
+		typElem = typElem.Elem()
+	}
+
 	if cons, ok := val.(*constVal); ok {
 		cons.bound(typElem, ctx.out)
 	} else if t := val.(iValue).Type(); t != typElem {
@@ -821,6 +829,12 @@ func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr) func() { // x[i]
 	x := ctx.infer.Get(-1)
 	typ := x.(iValue).Type()
 	kind = typ.Kind()
+	if kind == reflect.Ptr {
+		typ = typ.Elem()
+		if kind = typ.Kind(); kind != reflect.Array {
+			logPanic(ctx, v, `type *%v does not support indexing`, typ)
+		}
+	}
 	if kind == reflect.String {
 		typElem = exec.TyByte
 	} else {

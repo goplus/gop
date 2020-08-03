@@ -46,13 +46,27 @@ func TestNew(t *testing.T) {
 	)
 }
 
-func _TestNew2(t *testing.T) {
+func TestNew2(t *testing.T) {
 	cltest.Expect(t, `
 		a := new([2]int)
 		a[0] = 2
 		println("a:", a[0])
 		`,
 		"a: 2\n",
+	)
+	cltest.Expect(t, `
+		a := new([2]float64)
+		a[0] = 1.1
+		println("a:", a[0])
+		`,
+		"a: 1.1\n",
+	)
+	cltest.Expect(t, `
+		a := new([2]string)
+		a[0] = "gop"
+		println("a:", a[0])
+		`,
+		"a: gop\n",
 	)
 }
 
