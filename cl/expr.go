@@ -1042,8 +1042,8 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 			log.Panicln("compileSelectorExpr: unknown nonValue -", reflect.TypeOf(nv))
 		}
 	case *goValue:
-		_, t := countPtr(vx.t)
-		// autoCall := false
+		n, t := countPtr(vx.t)
+		autoCall := false
 		name := v.Sel.Name
 		if _, ok := t.FieldByName(name); ok {
 			return func() {
@@ -1056,17 +1056,42 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 			name = strings.Title(name)
 			if _, ok = vx.t.MethodByName(name); ok {
 				v.Sel.Name = name
-				// autoCall = allowAutoCall
+				autoCall = allowAutoCall
 			} else {
 				log.Panicln("compileSelectorExpr: symbol not found -", v.Sel.Name)
 			}
 		}
 
-		expr := compileIdent(ctx, t.String()+name)
-		return func() {
-			exprX()
-			expr()
+		if t.Name() == "" {
+			expr := compileIdent(ctx, t.String()+name)
+			return func() {
+				exprX()
+				expr()
+			}
 		}
+
+		pkgPath, method := normalizeMethod(n, t, name)
+
+		pkg := ctx.FindGoPackage(pkgPath)
+		if pkg == nil {
+			log.Panicln("compileSelectorExpr failed: package not found -", pkgPath)
+		}
+		addr, kind, ok := pkg.Find(method)
+		if !ok {
+			log.Panicln("compileSelectorExpr: method not found -", method)
+		}
+		ctx.infer.Ret(1, newGoFunc(addr, kind, 1, ctx))
+		if autoCall { // change AST tree
+			copy := *v
+			call := &ast.CallExpr{Fun: &copy}
+			v.X = call
+			v.Sel = nil
+			return compileCallExprCall(ctx, nil, call, false)
+		}
+		return func() {
+			log.Panicln("compileSelectorExpr: todo")
+		}
+
 	default:
 		log.Panicln("compileSelectorExpr failed: unknown -", reflect.TypeOf(vx))
 	}
