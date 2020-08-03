@@ -1,19 +1,17 @@
-import (
-	"fmt"
-)
-
 type Person struct {
 	Name string
 	Age  int
 }
 
-func (p Person) GetName() {
-	println(p)
+func (p *Person) SetName(name string) {
+	p.Name = name
 }
 
-p := Person{
+p := &Person{
 	Name: "bar",
 	Age:  30,
 }
 
-p.GetName()
+p.SetName("foo")
+
+println(p.Name)

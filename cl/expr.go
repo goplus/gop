@@ -317,7 +317,11 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 					}
 				}
 			}
-			ctx.out.StoreVal(val.Interface())
+			if ctx.takeAddr {
+				ctx.out.StoreVal(val.Addr().Interface())
+			} else {
+				ctx.out.StoreVal(val.Interface())
+			}
 		}
 	default:
 		log.Panicln("compileCompositeLit failed: unknown -", reflect.TypeOf(typ))
@@ -1045,7 +1049,9 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 		n, t := countPtr(vx.t)
 		autoCall := false
 		name := v.Sel.Name
-		if _, ok := t.FieldByName(name); ok {
+		if f, ok := t.FieldByName(name); ok {
+			ctx.infer.PopN(1)
+			ctx.infer.Push(&goValue{t: f.Type})
 			return func() {
 				exprX()
 				ctx.out.StoreVal(name)
@@ -1063,6 +1069,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 		}
 
 		if t.Name() == "" {
+			ctx.infer.PopN(1)
 			expr := compileIdent(ctx, t.String()+name)
 			return func() {
 				exprX()

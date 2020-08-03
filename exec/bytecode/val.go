@@ -56,26 +56,6 @@ func execSetField(i Instr, stk *Context) {
 		v = v2
 	}
 
-	// t := reflect.TypeOf(p)
-	// if t.Kind() == reflect.Ptr {
-	// 	t = t.Elem()
-	// }
-
-	// v2 := reflect.New(t).Elem()
-
-	// for i := 0; i < t.NumField(); i++ {
-	// 	field := t.Field(i)
-	// 	if field.Name == f {
-	// 		v2.Field(i).Set(reflect.ValueOf(d))
-	// 	} else {
-	// 		v2.Field(i).Set(v.Elem().Field(i))
-	// 	}
-	// }
-
-	// v = v.FieldByName(f)
-
-	// v.Set(reflect.ValueOf(d))
-
 	stk.Push(v.Interface())
 }
 
