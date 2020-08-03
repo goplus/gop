@@ -257,6 +257,18 @@ func (p *iBuilder) CallGoFuncv(fun exec.GoFuncvAddr, nexpr, arity int) exec.Buil
 	return p
 }
 
+// CallField instr
+func (p *iBuilder) CallField() exec.Builder {
+	((*Builder)(p)).CallField()
+	return p
+}
+
+// SetField instr
+func (p *iBuilder) SetField() exec.Builder {
+	((*Builder)(p)).SetField()
+	return p
+}
+
 // DefineFunc instr
 func (p *iBuilder) DefineFunc(fun exec.FuncInfo) exec.Builder {
 	((*Builder)(p)).DefineFunc(fun)
@@ -361,6 +373,12 @@ func (p *iBuilder) MakeMap(typ reflect.Type, arity int) exec.Builder {
 // Make instr
 func (p *iBuilder) Make(typ reflect.Type, arity int) exec.Builder {
 	((*Builder)(p)).Make(typ, arity)
+	return p
+}
+
+// StoreVal instr
+func (p *iBuilder) StoreVal(val interface{}) exec.Builder {
+	((*Builder)(p)).StoreVal(val)
 	return p
 }
 

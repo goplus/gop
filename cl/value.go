@@ -34,6 +34,7 @@ type iKind = astutil.ConstKind
 //  - *funcResult
 type iValue interface {
 	Type() reflect.Type
+	Val() reflect.Value
 	Kind() iKind
 	Value(i int) iValue
 	NumValues() int
@@ -47,6 +48,8 @@ func isBool(v iValue) bool {
 
 type goValue struct {
 	t reflect.Type
+
+	sym interface{}
 }
 
 func (p *goValue) Kind() iKind {
@@ -63,6 +66,10 @@ func (p *goValue) NumValues() int {
 
 func (p *goValue) Value(i int) iValue {
 	return p
+}
+
+func (p *goValue) Val() reflect.Value {
+	return reflect.Value{}
 }
 
 // -----------------------------------------------------------------------------
@@ -85,6 +92,10 @@ func (p *nonValue) NumValues() int {
 
 func (p *nonValue) Value(i int) iValue {
 	return p
+}
+
+func (p *nonValue) Val() reflect.Value {
+	return reflect.ValueOf(p.v)
 }
 
 // -----------------------------------------------------------------------------
@@ -115,6 +126,10 @@ func (p *wrapValue) Value(i int) iValue {
 	return p.x.Value(i)
 }
 
+func (p *wrapValue) Val() reflect.Value {
+	return p.x.Val()
+}
+
 // -----------------------------------------------------------------------------
 
 type funcResults struct {
@@ -135,6 +150,10 @@ func (p *funcResults) NumValues() int {
 
 func (p *funcResults) Value(i int) iValue {
 	return &goValue{t: p.tfn.Out(i)}
+}
+
+func (p *funcResults) Val() reflect.Value {
+	return reflect.Value{}
 }
 
 func newFuncResults(tfn reflect.Type) iValue {
@@ -170,6 +189,10 @@ func (p *qlFunc) NumValues() int {
 
 func (p *qlFunc) Value(i int) iValue {
 	return p
+}
+
+func (p *qlFunc) Val() reflect.Value {
+	return reflect.Value{}
 }
 
 func (p *qlFunc) Results() iValue {
@@ -218,6 +241,10 @@ func (p *goFunc) Value(i int) iValue {
 	return p
 }
 
+func (p *goFunc) Val() reflect.Value {
+	return reflect.Value{}
+}
+
 func (p *goFunc) Results() iValue {
 	return newFuncResults(p.t)
 }
@@ -260,6 +287,9 @@ func (p *constVal) NumValues() int {
 
 func (p *constVal) Value(i int) iValue {
 	return p
+}
+func (p *constVal) Val() reflect.Value {
+	return reflect.ValueOf(p.v)
 }
 
 func (p *constVal) boundKind() reflect.Kind {

@@ -1,0 +1,19 @@
+import (
+	"fmt"
+)
+
+type Person struct {
+	Name string
+	Age  int
+}
+
+func (p Person) GetName() {
+	println(p)
+}
+
+p := Person{
+	Name: "bar",
+	Age:  30,
+}
+
+p.GetName()

@@ -156,16 +156,18 @@ func compileIdent(ctx *blockCtx, name string) func() {
 	if sym, ok := ctx.find(name); ok {
 		switch v := sym.(type) {
 		case *execVar:
-			ctx.infer.Push(&goValue{t: v.v.Type()})
+			ctx.infer.Push(&goValue{t: v.v.Type(), sym: sym})
 			return func() {
 				if ctx.checkArrayAddr && v.v.Type().Kind() == reflect.Array {
+					ctx.out.AddrVar(v.v)
+				} else if ctx.takeAddr {
 					ctx.out.AddrVar(v.v)
 				} else {
 					ctx.out.LoadVar(v.v)
 				}
 			}
 		case *stackVar:
-			ctx.infer.Push(&goValue{t: v.typ})
+			ctx.infer.Push(&goValue{t: v.typ, sym: sym})
 			return func() {
 				ctx.out.Load(v.index)
 			}
@@ -293,6 +295,29 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 				}
 			}
 			ctx.out.MakeMap(typMap, len(v.Elts))
+		}
+	case reflect.Struct:
+		t := typ.(reflect.Type)
+
+		ctx.infer.Push(&goValue{t: t})
+		return func() {
+			val := reflect.New(t).Elem()
+			for _, elt := range v.Elts {
+				switch e := elt.(type) {
+				case *ast.KeyValueExpr:
+					ident := e.Key.(*ast.Ident)
+					compileExpr(ctx, e.Value)
+					if ival, ok := ctx.infer.Pop().(iValue); ok {
+						f, _ := t.FieldByName(ident.Name)
+						if f.Type.Kind() == reflect.Int {
+							val.FieldByName(ident.Name).SetInt(ival.Val().Int())
+						} else {
+							val.FieldByName(ident.Name).Set(ival.Val())
+						}
+					}
+				}
+			}
+			ctx.out.StoreVal(val.Interface())
 		}
 	default:
 		log.Panicln("compileCompositeLit failed: unknown -", reflect.TypeOf(typ))
@@ -506,6 +531,17 @@ func compileUnaryExpr(ctx *blockCtx, v *ast.UnaryExpr) func() {
 	if op == 0 {
 		if v.Op == token.ADD { // +x
 			return exprX
+		}
+		if v.Op == token.AND {
+			vx := x.(iValue)
+			t := reflect.TypeOf(reflect.New(vx.Type()).Interface())
+			ret := &goValue{t: t}
+			ctx.infer.Ret(1, ret)
+			return func() {
+				ctx.takeAddr = true
+				exprX()
+				ctx.takeAddr = false
+			}
 		}
 	}
 	xcons, xok := x.(*constVal)
@@ -767,7 +803,7 @@ func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) func() { // x[i:j:k]
 	typ := x.(iValue).Type()
 	if kind = typ.Kind(); kind == reflect.Array {
 		typ = reflect.SliceOf(typ.Elem())
-		ctx.infer.Ret(1, &goValue{typ})
+		ctx.infer.Ret(1, &goValue{t: typ})
 	}
 	return func() {
 		ctx.checkArrayAddr = true
@@ -826,7 +862,7 @@ func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr) func() { // x[i]
 	} else {
 		typElem = typ.Elem()
 	}
-	ctx.infer.Ret(1, &goValue{typElem})
+	ctx.infer.Ret(1, &goValue{t: typElem})
 	return func() {
 		exprX()
 		switch kind {
@@ -948,8 +984,11 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compileMode
 	case *goValue:
 		_, t := countPtr(vx.t)
 		name := v.Sel.Name
-		if sf, ok := t.FieldByName(name); ok {
-			log.Panicln("compileSelectorExprLHS todo: structField -", t, sf)
+		if _, ok := t.FieldByName(name); ok {
+			exprX()
+			ctx.out.StoreVal(name)
+			ctx.out.SetField()
+			storeSym(ctx, vx.sym)
 		}
 	default:
 		log.Panicln("compileSelectorExprLHS failed: unknown -", reflect.TypeOf(vx))
@@ -1003,40 +1042,30 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 			log.Panicln("compileSelectorExpr: unknown nonValue -", reflect.TypeOf(nv))
 		}
 	case *goValue:
-		n, t := countPtr(vx.t)
-		autoCall := false
+		_, t := countPtr(vx.t)
+		// autoCall := false
 		name := v.Sel.Name
-		if sf, ok := t.FieldByName(name); ok {
-			log.Panicln("compileSelectorExpr todo: structField -", t, sf)
+		if _, ok := t.FieldByName(name); ok {
+			return func() {
+				exprX()
+				ctx.out.StoreVal(name)
+				ctx.out.CallField()
+			}
 		}
 		if _, ok := vx.t.MethodByName(name); !ok && isLower(name) {
 			name = strings.Title(name)
 			if _, ok = vx.t.MethodByName(name); ok {
 				v.Sel.Name = name
-				autoCall = allowAutoCall
+				// autoCall = allowAutoCall
 			} else {
 				log.Panicln("compileSelectorExpr: symbol not found -", v.Sel.Name)
 			}
 		}
-		pkgPath, method := normalizeMethod(n, t, name)
-		pkg := ctx.FindGoPackage(pkgPath)
-		if pkg == nil {
-			log.Panicln("compileSelectorExpr failed: package not found -", pkgPath)
-		}
-		addr, kind, ok := pkg.Find(method)
-		if !ok {
-			log.Panicln("compileSelectorExpr: method not found -", method)
-		}
-		ctx.infer.Ret(1, newGoFunc(addr, kind, 1, ctx))
-		if autoCall { // change AST tree
-			copy := *v
-			call := &ast.CallExpr{Fun: &copy}
-			v.X = call
-			v.Sel = nil
-			return compileCallExprCall(ctx, nil, call, false)
-		}
+
+		expr := compileIdent(ctx, t.String()+name)
 		return func() {
-			log.Panicln("compileSelectorExpr: todo")
+			exprX()
+			expr()
 		}
 	default:
 		log.Panicln("compileSelectorExpr failed: unknown -", reflect.TypeOf(vx))
@@ -1067,6 +1096,15 @@ func normalizeMethod(n int, t reflect.Type, name string) (pkgPath string, formal
 		typName = strings.Repeat("*", n) + typName
 	}
 	return t.PkgPath(), "(" + typName + ")." + name
+}
+
+func storeSym(ctx *blockCtx, sym interface{}) {
+	switch v := sym.(type) {
+	case *execVar:
+		ctx.out.StoreVar(v.v)
+	case *stackVar:
+		ctx.out.Store(v.index)
+	}
 }
 
 // -----------------------------------------------------------------------------

@@ -189,6 +189,7 @@ type blockCtx struct {
 	parent         *blockCtx
 	syms           map[string]iSymbol
 	noExecCtx      bool
+	takeAddr       bool
 	checkFlag      bool
 	checkArrayAddr bool
 }
@@ -388,7 +389,7 @@ func (p *blockCtx) insertFunc(name string, fun *funcDecl) {
 	p.syms[name] = fun
 }
 
-func (p *blockCtx) insertMethod(typeName, methodName string, method *methodDecl) {
+func (p *blockCtx) insertMethod(typeName, methodName string, method *methodDecl) string {
 	if p.parent != nil {
 		log.Panicln("insertMethod failed: unexpected - non global method declaration?")
 	}
@@ -401,14 +402,22 @@ func (p *blockCtx) insertMethod(typeName, methodName string, method *methodDecl)
 	} else if typ.Alias {
 		log.Panicln("insertMethod failed: alias?")
 	}
-	if typ.Methods == nil {
-		typ.Methods = map[string]*methodDecl{methodName: method}
+	t, err := p.findType(typ.Type.String())
+	if err == ErrNotFound {
+		p.syms[typ.Type.String()] = typ
+	} else if err != nil {
+		log.Panicln("insertMethod failed:", err)
+	}
+	if t.Methods == nil {
+		t.Methods = map[string]*methodDecl{methodName: method}
 	} else {
-		if _, ok := typ.Methods[methodName]; ok {
+		if _, ok := t.Methods[methodName]; ok {
 			log.Panicln("insertMethod failed: method exists -", typeName, methodName)
 		}
-		typ.Methods[methodName] = method
+		t.Methods[methodName] = method
 	}
+	typ.Methods = t.Methods
+	return typ.Type.String() + methodName
 }
 
 // -----------------------------------------------------------------------------

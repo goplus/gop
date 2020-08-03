@@ -310,6 +310,15 @@ type Builder interface {
 	// Make instr
 	Make(typ reflect.Type, arity int) Builder
 
+	// Val instr
+	StoreVal(val interface{}) Builder
+
+	// StructField instr
+	CallField() Builder
+
+	// SetField() Builder
+	SetField() Builder
+
 	// MapIndex instr
 	MapIndex() Builder
 

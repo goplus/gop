@@ -119,6 +119,9 @@ const (
 	opErrWrap       = 42 // idx(26)
 	opWrapIfErr     = 43 // reserved(2) offset(24)
 	opDefer         = 44
+	opStoreVal      = 45
+	opCallField     = 46
+	opSetField      = 47
 )
 
 const (
@@ -205,6 +208,9 @@ var instrInfos = []InstrInfo{
 	opErrWrap:       {"errWrap", "", "idx", 26},                           // idx(26)
 	opWrapIfErr:     {"wrapIfErr", "", "offset", 26},                      // reserved(2) offset(24)
 	opDefer:         {"defer", "", "", 0},
+	opStoreVal:      {"storeVal", "", "idx", 26},
+	opCallField:     {"opCallField", "", "", 0},
+	opSetField:      {"opSetField", "", "", 0},
 }
 
 // -----------------------------------------------------------------------------
@@ -213,6 +219,7 @@ var instrInfos = []InstrInfo{
 type Code struct {
 	data       []Instr
 	valConsts  []interface{}
+	vals       []interface{}
 	funs       []*FuncInfo
 	funvs      []*FuncInfo
 	comprehens []*Comprehension

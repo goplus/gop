@@ -301,6 +301,12 @@ func (p *iBuilder) AddrVar(v exec.Var) exec.Builder {
 	return p
 }
 
+// StoreVar instr
+func (p *iBuilder) CallField() exec.Builder {
+	((*Builder)(p)).CallField()
+	return p
+}
+
 // LoadGoVar instr
 func (p *iBuilder) LoadGoVar(addr GoVarAddr) exec.Builder {
 	((*Builder)(p)).LoadGoVar(addr)
@@ -325,6 +331,12 @@ func (p *iBuilder) AddrOp(kind exec.Kind, op exec.AddrOperator) exec.Builder {
 	return p
 }
 
+// SetField instr
+func (p *iBuilder) SetField() exec.Builder {
+	((*Builder)(p)).SetField()
+	return p
+}
+
 // Append instr
 func (p *iBuilder) Append(typ reflect.Type, arity int) exec.Builder {
 	((*Builder)(p)).Append(typ, arity)
@@ -346,6 +358,12 @@ func (p *iBuilder) MakeMap(typ reflect.Type, arity int) exec.Builder {
 // Make instr
 func (p *iBuilder) Make(typ reflect.Type, arity int) exec.Builder {
 	((*Builder)(p)).Make(typ, arity)
+	return p
+}
+
+// StoreVal instr
+func (p *iBuilder) StoreVal(val interface{}) exec.Builder {
+	((*Builder)(p)).StoreVal(val)
 	return p
 }
 

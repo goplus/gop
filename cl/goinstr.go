@@ -114,7 +114,7 @@ func igoCopy(ctx *blockCtx, v *ast.CallExpr, isDefer bool) func() {
 		log.Panicln("arguments to copy must be slices; have ", dstTy.Kind())
 	}
 	if !isDefer {
-		ctx.infer.Ret(1, &goValue{exec.TyInt})
+		ctx.infer.Ret(1, &goValue{t: exec.TyInt})
 	}
 	return func() {
 		dstExpr()
@@ -315,7 +315,7 @@ func compileTypeCast(typ reflect.Type, ctx *blockCtx, v *ast.CallExpr) func() {
 			}
 		}
 	}
-	ctx.infer.Ret(1, &goValue{typ})
+	ctx.infer.Ret(1, &goValue{t: typ})
 	return func() {
 		xExpr()
 		iv := in.(iValue)

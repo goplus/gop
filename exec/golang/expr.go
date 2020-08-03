@@ -400,6 +400,16 @@ func (p *Builder) CallGoFuncv(fun exec.GoFuncvAddr, nexpr, arity int) *Builder {
 	return p.Call(nexpr, arity == -1)
 }
 
+// CallField instr
+func (p *Builder) CallField() *Builder {
+	return p
+}
+
+// SetField instr
+func (p *Builder) SetField() *Builder {
+	return p
+}
+
 var builtinFnvs = map[string][2]string{
 	"errorf":  {"fmt", "Errorf"},
 	"print":   {"fmt", "Print"},
@@ -448,6 +458,12 @@ func (p *Builder) Append(typ reflect.Type, arity int) *Builder {
 func (p *Builder) Make(typ reflect.Type, arity int) *Builder {
 	p.rhs.Push(makeIdent)
 	p.Call(arity, false, Type(p, typ))
+	return p
+}
+
+// StoreVal instr
+func (p *Builder) StoreVal(typ interface{}) *Builder {
+	log.Panicln("todo")
 	return p
 }
 
