@@ -409,6 +409,12 @@ func (p *iBuilder) Zero(typ reflect.Type) exec.Builder {
 	return p
 }
 
+// New instr
+func (p *iBuilder) New(typ reflect.Type) exec.Builder {
+	((*Builder)(p)).New(typ)
+	return p
+}
+
 // StartStmt receives a `StartStmt` event.
 func (p *iBuilder) StartStmt(stmt interface{}) interface{} {
 	return nil

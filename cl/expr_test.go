@@ -25,6 +25,27 @@ import (
 
 // -----------------------------------------------------------------------------
 
+func TestNew(t *testing.T) {
+	cltest.Expect(t, `
+		a := new([2]int)
+		println("a:", a)
+		`,
+		"a: &[0 0]\n",
+	)
+}
+
+func _TestNew2(t *testing.T) {
+	cltest.Expect(t, `
+		a := new([2]int)
+		a[0] = 2
+		println("a:", a[0])
+		`,
+		"a: 2\n",
+	)
+}
+
+// -----------------------------------------------------------------------------
+
 func TestAutoProperty(t *testing.T) {
 	script := `
 		import "io"

@@ -337,6 +337,9 @@ type Builder interface {
 	// Zero instr
 	Zero(typ reflect.Type) Builder
 
+	// New instr
+	New(typ reflect.Type) Builder
+
 	// StartStmt emit a `StartStmt` event.
 	StartStmt(stmt interface{}) interface{}
 

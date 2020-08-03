@@ -444,6 +444,13 @@ func (p *Builder) Append(typ reflect.Type, arity int) *Builder {
 	return p
 }
 
+// New instr
+func (p *Builder) New(typ reflect.Type) *Builder {
+	p.rhs.Push(newIdent)
+	p.Call(0, false, Type(p, typ))
+	return p
+}
+
 // Make instr
 func (p *Builder) Make(typ reflect.Type, arity int) *Builder {
 	p.rhs.Push(makeIdent)

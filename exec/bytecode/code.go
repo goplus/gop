@@ -38,12 +38,16 @@ const (
 	bitsVarScope   = 6
 	bitsAssignOp   = 4
 	bitsIndexOp    = 2
+	bitsIsPtr      = 2
 
 	bitsOpShift = bitsInstr - bitsOp
 	bitsOperand = (1 << bitsOpShift) - 1
 
 	bitsOpIndexShift   = bitsInstr - (bitsOp + bitsIndexOp)
 	bitsOpIndexOperand = (1 << bitsOpIndexShift) - 1
+
+	bitsOpZeroShift   = bitsInstr - (bitsOp + bitsIsPtr)
+	bitsOpZeroOperand = (1 << bitsOpZeroShift) - 1
 
 	bitsOpInt        = bitsOp + bitsIntKind
 	bitsOpIntShift   = bitsInstr - bitsOpInt
@@ -107,7 +111,7 @@ const (
 	opCallGoClosure = 30 // arity(26)
 	opMakeArray     = 31 // funvArity(10) type(16)
 	opMakeMap       = 32 // funvArity(10) type(16)
-	opZero          = 33 // type(26)
+	opZero          = 33 // isPtr(2) type(24)
 	opForPhrase     = 34 // addr(26)
 	opLstComprehens = 35 // addr(26)
 	opMapComprehens = 36 // addr(26)
@@ -193,7 +197,7 @@ var instrInfos = []InstrInfo{
 	opCallGoClosure: {"callGoClosure", "", "arity", 26},                   // arity(26)
 	opMakeArray:     {"makeArray", "funvArity", "type", (10 << 8) | 16},   // funvArity(10) type(16)
 	opMakeMap:       {"makeMap", "funvArity", "type", (10 << 8) | 16},     // funvArity(10) type(16)
-	opZero:          {"zero", "", "type", 26},                             // type(26)
+	opZero:          {"zero", "isPtr", "type", (2 << 8) | 24},             // isPtr(2) type(24)
 	opForPhrase:     {"forPhrase", "", "addr", 26},                        // addr(26)
 	opLstComprehens: {"listComprehension", "", "addr", 26},                // addr(26)
 	opMapComprehens: {"mapComprehension", "", "addr", 26},                 // addr(26)
