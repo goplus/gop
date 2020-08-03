@@ -14,75 +14,54 @@
  limitations under the License.
 */
 
-// Package repl implements the ``gop repl'' command.
 package repl
 
 import (
 	"errors"
-	"fmt"
-	"io"
 	"strings"
 
 	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
-	"github.com/peterh/liner"
 
 	exec "github.com/goplus/gop/exec/bytecode"
 )
 
-func init() {
-	Cmd.Run = runCmd
+// UI represents the UserInterface interacting abstraction.
+type UI interface {
+	SetPrompt(prompt string)
+	Printf(format string, a ...interface{})
 }
 
-// Cmd - gop repl
-var Cmd = &base.Command{
-	UsageLine: "repl",
-	Short:     "Play Go+ in console",
-}
-
-type repl struct {
+// REPL type
+type REPL struct {
 	src          string       // the whole source code from repl
 	preContext   exec.Context // store the context after exec
 	ip           int          // store the ip after exec
-	prompt       string       // the prompt type in console
 	continueMode bool         // switch to control the promot type
-	liner        *liner.State // liner instance
+	term         UI           // liner instance
 }
 
 const (
-	continuePrompt string = "... "
-	standardPrompt string = ">>> "
-	welcome        string = "welcome to Go+ console!"
+	// ContinuePrompt - the current code statement is not completed.
+	ContinuePrompt string = "... "
+	// NormalPrompt - start of a code statement.
+	NormalPrompt string = ">>> "
 )
 
-func runCmd(cmd *base.Command, args []string) {
-	fmt.Println(welcome)
-	liner := liner.NewLiner()
-	rInstance := repl{prompt: standardPrompt, liner: liner}
-	defer rInstance.liner.Close()
-
-	for {
-		l, err := rInstance.liner.Prompt(string(rInstance.prompt))
-		if err != nil {
-			if err == io.EOF {
-				fmt.Printf("\n")
-				break
-			}
-			fmt.Printf("Problem reading line: %v\n", err)
-			continue
-		}
-		rInstance.replOneLine(l)
-	}
+// New creates a REPL object.
+func New() *REPL {
+	return &REPL{}
 }
 
-// replOneLine handle one line
-func (r *repl) replOneLine(line string) {
-	if line != "" {
-		// mainly for scroll up
-		r.liner.AppendHistory(line)
-	}
+// SetUI initializes UI.
+func (r *REPL) SetUI(term UI) {
+	r.term = term
+	term.SetPrompt(NormalPrompt)
+}
+
+// Run handles one line.
+func (r *REPL) Run(line string) {
 	if r.continueMode {
 		r.continueModeByLine(line)
 	}
@@ -92,22 +71,22 @@ func (r *repl) replOneLine(line string) {
 }
 
 // continueModeByLine check if continue-mode should continue :)
-func (r *repl) continueModeByLine(line string) {
+func (r *REPL) continueModeByLine(line string) {
 	if line != "" {
 		r.src += line + "\n"
 		return
 	}
 	// input nothing means jump out continue mode
 	r.continueMode = false
-	r.prompt = standardPrompt
+	r.term.SetPrompt(NormalPrompt)
 }
 
 // run execute the input line
-func (r *repl) run(newLine string) (err error) {
+func (r *REPL) run(newLine string) (err error) {
 	src := r.src + newLine + "\n"
 	defer func() {
 		if errR := recover(); errR != nil {
-			replErr(newLine, errR)
+			r.dumpErr(newLine, errR)
 			err = errors.New("panic err")
 			// TODO: Need a better way to log and show the stack when crash
 			// It is too long to print stack on terminal even only print part of the them; not friendly to user
@@ -122,12 +101,12 @@ func (r *repl) run(newLine string) (err error) {
 		// check if into continue mode
 		if strings.Contains(err.Error(), `expected ')', found 'EOF'`) ||
 			strings.Contains(err.Error(), "expected '}', found 'EOF'") {
-			r.prompt = continuePrompt
+			r.term.SetPrompt(ContinuePrompt)
 			r.continueMode = true
 			err = nil
 			return
 		}
-		fmt.Println("ParseGopFiles err", err)
+		r.term.Printf("ParseGopFiles err: %v\n", err)
 		return
 	}
 	cl.CallBuiltinOp = exec.CallBuiltinOp
@@ -140,7 +119,7 @@ func (r *repl) run(newLine string) (err error) {
 			err = nil
 			return
 		}
-		fmt.Printf("NewPackage err %+v\n", err)
+		r.term.Printf("NewPackage err %+v\n", err)
 		return
 	}
 	code := b.Resolve()
@@ -157,7 +136,7 @@ func (r *repl) run(newLine string) (err error) {
 	return
 }
 
-func replErr(line string, err interface{}) {
-	fmt.Println("code run fail : ", line)
-	fmt.Println("repl err: ", err)
+func (r *REPL) dumpErr(line string, err interface{}) {
+	r.term.Printf("code run fail : %v\n", line)
+	r.term.Printf("repl err: %v\n", err)
 }

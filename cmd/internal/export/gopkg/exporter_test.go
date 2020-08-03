@@ -135,6 +135,13 @@ func TestExportIo(t *testing.T) {
 	}
 }
 
+func TestExportIoUtil(t *testing.T) {
+	err := Export("io/ioutil", ioutil.Discard)
+	if err != nil {
+		t.Fatal("TestExport failed:", err)
+	}
+}
+
 func TestExportGoTypes(t *testing.T) {
 	err := Export("go/types", ioutil.Discard)
 	if err != nil {
@@ -193,7 +200,21 @@ func TestLooupMod(t *testing.T) {
 	if dir != dir1 {
 		t.Fatal("LookupMod failed:", dir, dir1)
 	}
+}
 
+func TestIgnorePkg(t *testing.T) {
+	if !isInternalPkg("golang.org/x/tools/internal/span") {
+		t.Fatal("is internal pkg")
+	}
+	if isInternalPkg("golang.org/x/tools") {
+		t.Fatal("not internal pkg")
+	}
+}
+
+func TestWithoutPkg(t *testing.T) {
+	if withoutPkg("github.com/qiniu/x/log") != "github.com/qiniu/x/log" {
+		t.Fatal()
+	}
 }
 
 func TestBadLooupMod(t *testing.T) {
