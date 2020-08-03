@@ -32,6 +32,18 @@ func TestNew(t *testing.T) {
 		`,
 		"a: &[0 0]\n",
 	)
+	cltest.Expect(t, `
+		println(new())
+		`,
+		"",
+		"missing argument to new\n",
+	)
+	cltest.Expect(t, `
+		println(new(int, float64))
+		`,
+		"",
+		"too many arguments to new(int)\n",
+	)
 }
 
 func _TestNew2(t *testing.T) {
