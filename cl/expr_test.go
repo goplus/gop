@@ -175,6 +175,28 @@ func TestTypeCast(t *testing.T) {
 	`).Equal([]byte("hello"))
 }
 
+func TestAppendErr(t *testing.T) {
+	cltest.Expect(t, `
+		append()
+		`,
+		"",
+		"append: argument count not enough\n",
+	)
+	cltest.Expect(t, `
+		x := 1
+		append(x, 2)
+		`,
+		"",
+		"append: first argument not a slice\n",
+	)
+	cltest.Expect(t, `
+		defer append([]int{1}, 2)
+		`,
+		"",
+		"defer discards result of append([]int{1}, 2)\n",
+	)
+}
+
 func TestMake(t *testing.T) {
 	cltest.Expect(t, `
 		a := make([]int, 0, 4)
