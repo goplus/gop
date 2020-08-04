@@ -144,8 +144,7 @@ Loop:
 				} else {
 					ctx.forDepths[instr] = instr
 				}
-				delta := depth & bitsOpReturnOperand
-				if delta == 0 {
+				if depth&bitsOpReturnOperand == 1 {
 					delete(ctx.forDepths, instr)
 					if op == bitsRtnBrkOperand {
 						break Loop
@@ -155,6 +154,25 @@ Loop:
 				}
 				depth--
 				ctx.forDepths[instr] = depth
+				return
+			case bitsRtnGotoOperand:
+				depth := instr
+				if v, ok := ctx.forDepths[instr]; ok {
+					depth = v
+				} else {
+					ctx.forDepths[instr] = instr
+				}
+				if depth&bitsOpReturnOperand == 1 {
+					delete(ctx.forDepths, instr)
+					ctx.ip = ctx.code.nextIp
+					if ctx.code.nextIp >= ip && ctx.code.nextIp < ipEnd {
+						// go on to exec left []instr
+						ctx.Exec(ctx.ip, ipEnd)
+					}
+				} else {
+					depth--
+					ctx.forDepths[instr] = depth
+				}
 				return
 			}
 		}
@@ -379,10 +397,10 @@ func ToValues(args []interface{}) []reflect.Value {
 
 // ForPhrase represents a for range phrase.
 type ForPhrase struct {
-	Key, Value *Var // Key, Value may be nil
-	Cond, End  int
-	TypeIn     reflect.Type
-	block      *blockCtx
+	Key, Value       *Var // Key, Value may be nil
+	Start, Cond, End int
+	TypeIn           reflect.Type
+	block            *blockCtx
 }
 
 // NewForPhrase creates a new ForPhrase instance.
@@ -418,6 +436,7 @@ func (p *Builder) ForPhrase(f *ForPhrase, key, val *Var, hasExecCtx ...bool) *Bu
 	code := p.code
 	addr := uint32(len(code.fors))
 	code.fors = append(code.fors, f)
+	f.Start = len(code.data)
 	code.data = append(code.data, (opForPhrase<<bitsOpShift)|addr)
 	return p
 }

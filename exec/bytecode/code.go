@@ -224,12 +224,14 @@ type Code struct {
 	types      []reflect.Type
 	structs    []StructInfo
 	errWraps   []errWrap
+	gotosDepth map[int]int
+	nextIp     int
 	varManager
 }
 
 // NewCode returns a new Code object.
 func NewCode() *Code {
-	return &Code{data: make([]Instr, 0, 64)}
+	return &Code{data: make([]Instr, 0, 64), gotosDepth: map[int]int{}}
 }
 
 // Len returns code length.

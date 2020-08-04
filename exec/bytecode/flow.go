@@ -34,7 +34,12 @@ const (
 
 func execJmp(i Instr, ctx *Context) {
 	delta := int32(i&bitsOpJmpOperand) << bitsOpJmp >> bitsOpJmp
-	ctx.ip += int(delta)
+	if depth := ctx.code.gotosDepth[ctx.ip]; depth == 0 {
+		ctx.ip += int(delta)
+	} else {
+		ctx.code.nextIp = ctx.ip + int(delta)
+		ctx.ip = opReturn<<bitsOpShift | (int(bitsRtnGotoOperand) << bitsOpReturnShift) | depth&bitsOpReturnOperand
+	}
 }
 
 func execWrapIfErr(i Instr, ctx *Context) {
@@ -117,19 +122,53 @@ func (p *Label) Name() string {
 
 func (p *Builder) resolveLabels() {
 	data := p.code.data
+	depths := p.labelDepths()
 	for l, pos := range p.labels {
 		if pos < 0 {
 			log.Panicln("resolveLabels failed: label is not defined -", l.name)
 		}
 		for _, off := range l.offs {
-			if (data[off] >> bitsOpShift) == opCaseNE {
+			switch data[off] >> bitsOpShift {
+			case opCaseNE:
 				data[off] |= uint32(int16(pos - (off + 1)))
-			} else {
+			case opJmp:
+				big, small := len(depths[off]), len(depths[pos])
+				if big < small {
+					big, small = small, big
+				}
+				p.code.gotosDepth[off+1] = big - small
+				fallthrough
+			default:
 				data[off] |= uint32(pos-(off+1)) & bitsOpJmpOperand
 			}
 		}
 		l.offs = nil
 	}
+}
+
+func (p *Builder) labelDepths() map[int]map[int]bool {
+	depths := map[int]map[int]bool{}
+	put := func(pos int, f *ForPhrase) {
+		// if ip of label/goto in forPhrase
+		if pos > f.Start && pos <= f.End {
+			if v, ok := depths[pos]; ok {
+				v[f.Start] = true
+			} else {
+				v = map[int]bool{}
+				v[f.Start] = true
+				depths[pos] = v
+			}
+		}
+	}
+	for _, f := range p.code.fors {
+		for l, pos := range p.labels {
+			put(pos, f)
+			for _, off := range l.offs {
+				put(off, f)
+			}
+		}
+	}
+	return depths
 }
 
 func (p *Builder) labelOp(op uint32, l *Label) *Builder {
