@@ -127,10 +127,15 @@ func (p *iBuilder) Default() exec.Builder {
 	return p
 }
 
-// Default instr
+// Defer instr
 func (p *iBuilder) Defer() exec.Builder {
 	((*Builder)(p)).Defer()
 	return p
+}
+
+// Go instr
+func (p *iBuilder) Go() exec.Builder {
+	return ((*Builder)(p)).Go()
 }
 
 // WrapIfErr instr

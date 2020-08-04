@@ -175,7 +175,50 @@ func TestTypeCast(t *testing.T) {
 	`).Equal([]byte("hello"))
 }
 
+func TestAppendErr(t *testing.T) {
+	cltest.Expect(t, `
+		append()
+		`,
+		"",
+		"append: argument count not enough\n",
+	)
+	cltest.Expect(t, `
+		x := 1
+		append(x, 2)
+		`,
+		"",
+		"append: first argument not a slice\n",
+	)
+	cltest.Expect(t, `
+		defer append([]int{1}, 2)
+		`,
+		"",
+		"defer discards result of append([]int{1}, 2)\n",
+	)
+}
+
+func TestLenErr(t *testing.T) {
+	cltest.Expect(t, `
+		len()
+		`,
+		"",
+		"missing argument to len: len()\n",
+	)
+	cltest.Expect(t, `
+		len("a", "b")
+		`,
+		"",
+		`too many arguments to len: len("a", "b")`+"\n",
+	)
+}
+
 func TestMake(t *testing.T) {
+	cltest.Expect(t, `
+		make()
+		`,
+		"",
+		"missing argument to make: make()\n",
+	)
 	cltest.Expect(t, `
 		a := make([]int, 0, 4)
 		a = append(a, 1, 2, 3)

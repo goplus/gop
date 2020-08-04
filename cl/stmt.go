@@ -79,6 +79,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileLabeledStmt(ctx, v)
 	case *ast.DeferStmt:
 		compileDeferStmt(ctx, v)
+	case *ast.GoStmt:
+		compileGoStmt(ctx, v)
 	case *ast.EmptyStmt:
 		// do nothing
 	default:
@@ -239,8 +241,26 @@ func compileLabeledStmt(ctx *blockCtx, v *ast.LabeledStmt) {
 	compileStmt(ctx, v.Stmt)
 }
 
+type callType int
+
+const (
+	callExpr callType = iota
+	callByDefer
+	callByGo
+)
+
+var gCallTypes = []string{
+	"",
+	"defer",
+	"go",
+}
+
+func compileGoStmt(ctx *blockCtx, v *ast.GoStmt) {
+	compileCallExpr(ctx, v.Call, callByGo)()
+}
+
 func compileDeferStmt(ctx *blockCtx, v *ast.DeferStmt) {
-	compileCallExpr(ctx, v.Call, true)()
+	compileCallExpr(ctx, v.Call, callByDefer)()
 }
 
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
