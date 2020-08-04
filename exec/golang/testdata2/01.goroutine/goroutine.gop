@@ -1,14 +1,14 @@
 import (
-    "os"
-    "time"
+	"os"
+	"time"
 )
 
 func f(args ...interface{}) {
-    println(args...)
+	println(args...)
 }
 
 go func() {
-    println("Hello, goroutine!")
+	println("Hello, goroutine!")
 }()
 
 a := [1, 2]
