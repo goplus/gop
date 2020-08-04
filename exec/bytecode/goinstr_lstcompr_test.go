@@ -768,3 +768,144 @@ func TestCopy2(t *testing.T) {
 		t.Fatal("copy failed")
 	}
 }
+
+func TestBreakFor(t *testing.T) {
+	typData := reflect.SliceOf(TyInt)
+	s := NewVar(TyInt, "s")
+	a := NewVar(TyInt, "a")
+	b := NewVar(TyInt, "b")
+	fa := NewForPhrase(typData)
+	fb := NewForPhrase(typData)
+	code := newBuilder().
+		DefineVar(s).
+		Push(0).
+		StoreVar(s).
+		Push(1).
+		MakeArray(typData, 1).
+		ForPhrase(fb, nil, b).
+		Push(2).
+		MakeArray(typData, 1).
+		ForPhrase(fa, nil, a).
+		LoadVar(b).
+		LoadVar(a).
+		BuiltinOp(Int, OpAdd).
+		StoreVar(s).
+		Branch(exec.BreakAsReturn, "", 2).
+		EndForPhrase(fa).
+		EndForPhrase(fb).
+		LoadVar(s).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); !reflect.DeepEqual(v, 3) {
+		t.Fatal(`3`, v)
+	}
+}
+
+func TestReturnFor(t *testing.T) {
+	typData := reflect.SliceOf(TyInt)
+	s := NewVar(TyInt, "s")
+	a := NewVar(TyInt, "a")
+	b := NewVar(TyInt, "b")
+	fa := NewForPhrase(typData)
+	fb := NewForPhrase(typData)
+	code := newBuilder().
+		DefineVar(s).
+		Push(0).
+		StoreVar(s).
+		Push(1).
+		MakeArray(typData, 1).
+		ForPhrase(fb, nil, b).
+		Push(2).
+		MakeArray(typData, 1).
+		ForPhrase(fa, nil, a).
+		LoadVar(b).
+		LoadVar(a).
+		BuiltinOp(Int, OpAdd).
+		StoreVar(s).
+		LoadVar(s).
+		Return(-1).
+		EndForPhrase(fa).
+		EndForPhrase(fb).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); !reflect.DeepEqual(v, 3) {
+		t.Fatal(`3`, v)
+	}
+}
+
+func TestContinueFor(t *testing.T) {
+	typData := reflect.SliceOf(TyInt)
+	s := NewVar(TyInt, "s")
+	a := NewVar(TyInt, "a")
+	b := NewVar(TyInt, "b")
+	fa := NewForPhrase(typData)
+	fb := NewForPhrase(typData)
+	code := newBuilder().
+		DefineVar(s).
+		Push(0).
+		StoreVar(s).
+		Push(1).
+		Push(3).
+		MakeArray(typData, 2).
+		ForPhrase(fb, nil, b).
+		Push(2).
+		MakeArray(typData, 1).
+		ForPhrase(fa, nil, a).
+		LoadVar(b).
+		LoadVar(a).
+		BuiltinOp(Int, OpAdd).
+		StoreVar(s).
+		Branch(exec.ContinueAsReturn, "", 2).
+		EndForPhrase(fa).
+		EndForPhrase(fb).
+		LoadVar(s).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); !reflect.DeepEqual(v, 5) {
+		t.Fatal(`3`, v)
+	}
+}
+
+func TestGotoFor(t *testing.T) {
+	done := NewLabel("done")
+	typData := reflect.SliceOf(TyInt)
+	s := NewVar(TyInt, "s")
+	a := NewVar(TyInt, "a")
+	b := NewVar(TyInt, "b")
+	fa := NewForPhrase(typData)
+	fb := NewForPhrase(typData)
+	code := newBuilder().
+		DefineVar(s).
+		Push(0).
+		StoreVar(s).
+		Push(1).
+		Push(3).
+		MakeArray(typData, 2).
+		ForPhrase(fb, nil, b).
+		Push(7).
+		Push(2).
+		MakeArray(typData, 2).
+		ForPhrase(fa, nil, a).
+		LoadVar(b).
+		LoadVar(a).
+		BuiltinOp(Int, OpAdd).
+		StoreVar(s).
+		Jmp(done).
+		EndForPhrase(fa).
+		EndForPhrase(fb).
+		Label(done).
+		LoadVar(s).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); !reflect.DeepEqual(v, 8) {
+		t.Fatal(`3`, v)
+	}
+}
