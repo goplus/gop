@@ -101,3 +101,7 @@ for i := 0; i < len(arr); i++ {
 	}
 }
 println("sum==36", sum == 36, sum)
+for1()
+for2()
+for3()
+for4()

@@ -1533,25 +1533,94 @@ func TestRangeBranchStmt(t *testing.T) {
 	testScripts(t, "TestRangeBranchStmt", testRangeLabelBranchClauses)
 }
 
-var testBranchPanicClauses = map[string]testData{
+var testBranchGotoClauses = map[string]testData{
 	"break_between_normal_for_and_range_1": {`
+					package main
+					
+					func main() {
+						arr := []int{1, 2, 3}
+						arr2 := []int{4, 5, 6}
 					L:
-					for i:=0;i<2;i++{
-						for j<-[1,2]{
-							break L
+						for k, v := range arr {
+						M:
+							for i := 0; i < len(arr2); i++ {
+								println(k, v, i, arr2[i])
+								if arr2[i] == 4 {
+									continue M
+								}
+								if arr2[i] == 5 {
+									continue L
+								}
+								if arr2[i] == 6 {
+									break L
+								}
+							}
 						}
 					}
-					`, "", true},
+					`, "0 1 0 4\n0 1 1 5\n1 2 0 4\n1 2 1 5\n2 3 0 4\n2 3 1 5\n", false},
 	"break_between_normal_for_and_range_2": {`
+					package main
+					
+					func main() {
+						arr := []int{1, 2, 3}
+						arr2 := []int{4, 5, 6}
 					L:
-					for j<-[1,2]{
-						for i:=0;i<2;i++{
-							continue L
+						for k, v := range arr {
+						M:
+							for i := 0; i < len(arr2); i++ {
+								println(k, v, i, arr2[i])
+								if arr2[i] == 4 {
+									continue M
+								}
+								if arr2[i] == 5 {
+									continue L
+								}
+								if arr2[i] == 6 {
+									break L
+								}
+							}
 						}
 					}
-					`, "", true},
+					`, "0 1 0 4\n0 1 1 5\n1 2 0 4\n1 2 1 5\n2 3 0 4\n2 3 1 5\n", false},
+	"break_between_normal_for_and_range_3": {`
+					package main
+					
+					func main() {
+						arr := []int{1, 2, 3}
+						arr2 := []int{4, 5, 6}
+					L:
+						for k, v := range arr {
+						M:
+							for i := 0; i < len(arr2); i++ {
+								println(k, v, i, arr2[i])
+								if arr2[i] == 6 {
+									break L
+								}
+								continue M
+							}
+						}
+					}
+					`, "0 1 0 4\n0 1 1 5\n0 1 2 6\n", false},
+	"break_between_normal_for_and_range_4": {`
+					package main
+					
+					func main() {
+						arr := []int{1, 2, 3}
+						for _, i := range arr {
+							println(i)
+							switch i {
+							case 1:
+								println("case", i)
+								continue
+							default:
+								println("default", i)
+							}
+							println("hello,there")
+						}
+					}
+					`, "1\ncase 1\n2\ndefault 2\nhello,there\n3\ndefault 3\nhello,there\n", false},
 }
 
-func TestBranchPanicStmt(t *testing.T) {
-	testScripts(t, "TestBranchPanicStmt", testBranchPanicClauses)
+func TestBranchGotoStmt(t *testing.T) {
+	testScripts(t, "TestBranchGotoStmt", testBranchGotoClauses)
 }
