@@ -127,10 +127,13 @@ Go [tutorial/14-Using-goplus-in-Go](https://github.com/goplus/gop/tree/master/tu
 
 ## Playground
 
-Playground based on Docker:
+Go+ REPL based on GopherJS/WASM:
+* https://repl.goplus.org/
+
+Go+ Playground based on Docker:
 * https://play.goplus.org/
 
-Playground based on GopherJS:
+Go+ Playground based on GopherJS:
 * https://goplusjs.github.io/play/
 
 
