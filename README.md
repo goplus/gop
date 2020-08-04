@@ -125,7 +125,7 @@ gop install ./... # Convert Go+ packages and go install ./...
 Go [tutorial/14-Using-goplus-in-Go](https://github.com/goplus/gop/tree/master/tutorial/14-Using-goplus-in-Go) to get the source code.
 
 
-## Playground
+## REPL/Playground
 
 Go+ REPL based on GopherJS/WASM:
 * https://repl.goplus.org/
