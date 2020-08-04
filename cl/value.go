@@ -69,7 +69,7 @@ func (p *goValue) Value(i int) iValue {
 }
 
 func (p *goValue) Val() reflect.Value {
-	return reflect.Value{}
+	panic("don't call me")
 }
 
 // -----------------------------------------------------------------------------
@@ -153,7 +153,7 @@ func (p *funcResults) Value(i int) iValue {
 }
 
 func (p *funcResults) Val() reflect.Value {
-	return reflect.Value{}
+	panic("don't call me")
 }
 
 func newFuncResults(tfn reflect.Type) iValue {
@@ -192,7 +192,7 @@ func (p *qlFunc) Value(i int) iValue {
 }
 
 func (p *qlFunc) Val() reflect.Value {
-	return reflect.Value{}
+	panic("don't call me")
 }
 
 func (p *qlFunc) Results() iValue {
@@ -242,7 +242,7 @@ func (p *goFunc) Value(i int) iValue {
 }
 
 func (p *goFunc) Val() reflect.Value {
-	return reflect.Value{}
+	panic("don't call me")
 }
 
 func (p *goFunc) Results() iValue {

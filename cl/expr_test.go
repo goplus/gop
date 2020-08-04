@@ -627,7 +627,7 @@ var testStructClauses = map[string]testData{
 
 	"method func no args": {`
 					type Person struct {
-						Name string
+						Name string ` + "`json:\"name\"`" + `
 						Age  int
 					}
 

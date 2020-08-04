@@ -67,3 +67,43 @@ func TestVals(t *testing.T) {
 		"&{bar 30}\n&{foo 30}\nfoo\n",
 	)
 }
+
+func TestVals2(t *testing.T) {
+	println, ok := I.FindFuncv("Println")
+	if !ok {
+		t.Fatal("FindFuncv failed: Println")
+	}
+
+	b := newBuilder()
+	p := Person{
+		Name: "bar",
+		Age:  30,
+	}
+
+	v := NewVar(reflect.TypeOf(p), "p")
+	expect(t,
+		func() {
+			b.DefineVar(v)
+			b.StoreVal(reflect.ValueOf(p).Interface())
+			b.StoreVar(v)
+			b.LoadVar(v)
+			b.CallGoFuncv(println, 1, 1)
+			b.Push("foo")
+			b.LoadVar(v)
+			b.StoreVal("Name")
+			b.SetField()
+			b.StoreVal(v)
+			b.LoadVar(v)
+			b.CallGoFuncv(println, 1, 1)
+			b.LoadVar(v)
+			b.StoreVal("Name")
+			b.CallField()
+			b.CallGoFuncv(println, 1, 1)
+			code := b.Resolve()
+			code.(*Code).Dump(os.Stderr)
+			ctx := NewContext(code)
+			ctx.Exec(0, code.Len())
+		},
+		"{bar 30}\n{bar 30}\nbar\n",
+	)
+}

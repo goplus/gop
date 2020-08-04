@@ -402,11 +402,13 @@ func (p *Builder) CallGoFuncv(fun exec.GoFuncvAddr, nexpr, arity int) *Builder {
 
 // CallField instr
 func (p *Builder) CallField() *Builder {
+	log.Panicln("todo")
 	return p
 }
 
 // SetField instr
 func (p *Builder) SetField() *Builder {
+	log.Panicln("todo")
 	return p
 }
 
