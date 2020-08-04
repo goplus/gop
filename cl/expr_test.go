@@ -214,6 +214,12 @@ func TestLenErr(t *testing.T) {
 
 func TestMake(t *testing.T) {
 	cltest.Expect(t, `
+		make()
+		`,
+		"",
+		"missing argument to make: make()\n",
+	)
+	cltest.Expect(t, `
 		a := make([]int, 0, 4)
 		a = append(a, 1, 2, 3)
 		println(a)
