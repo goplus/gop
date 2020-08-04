@@ -221,13 +221,9 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 		}
 		label, rangeFor, depth := ctx.getBreakLabel(labelName)
 		if rangeFor {
-			if depth >= 0 {
-				if ctx.currentFlow != nil {
-					if depth = ctx.currentFlow.forNestDepth - depth; depth >= 0 {
-						ctx.out.Branch(exec.BreakAsReturn, labelName, depth)
-						return
-					}
-				}
+			if depth > 0 && ctx.currentFlow != nil {
+				ctx.out.Branch(exec.BreakAsReturn, labelName, depth)
+				return
 			}
 		} else {
 			if label != nil {
@@ -243,13 +239,9 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 		}
 		label, rangeFor, depth := ctx.getContinueLabel(labelName)
 		if rangeFor {
-			if depth >= 0 {
-				if ctx.currentFlow != nil {
-					if depth = ctx.currentFlow.forNestDepth - depth; depth >= 0 {
-						ctx.out.Branch(exec.ContinueAsReturn, labelName, depth)
-						return
-					}
-				}
+			if depth > 0 && ctx.currentFlow != nil {
+				ctx.out.Branch(exec.ContinueAsReturn, labelName, depth)
+				return
 			}
 		} else {
 			if label != nil {

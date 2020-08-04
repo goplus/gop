@@ -111,11 +111,14 @@ type flowLabel struct {
 }
 
 type flowCtx struct {
-	parent       *flowCtx
-	name         string
-	postLabel    exec.Label
-	doneLabel    exec.Label
-	forNestDepth int
+	parent    *flowCtx
+	name      string
+	postLabel exec.Label
+	doneLabel exec.Label
+}
+
+func (p *flowCtx) isRange() bool {
+	return p.doneLabel == nil && p.postLabel == nil
 }
 
 func (fc *funcCtx) nextFlow(post, done exec.Label, name string) {
@@ -125,45 +128,41 @@ func (fc *funcCtx) nextFlow(post, done exec.Label, name string) {
 		postLabel: post,
 		doneLabel: done,
 	}
-	if fc.currentFlow.parent != nil && post == nil && done == nil {
-		fc.currentFlow.forNestDepth = fc.currentFlow.parent.forNestDepth + 1
-	}
 }
 
 func (fc *funcCtx) getBreakLabel(labelName string) (label exec.Label, rangeFor bool, depth int) {
-	var f *flowCtx
-	f, rangeFor, depth = fc.getBranchLabel(labelName)
-	if f != nil {
-		label = f.doneLabel
-	}
-	return
-}
-
-func (fc *funcCtx) getContinueLabel(labelName string) (label exec.Label, rangeFor bool, depth int) {
-	var f *flowCtx
-	f, rangeFor, depth = fc.getBranchLabel(labelName)
-	if f != nil {
-		label = f.postLabel
-	}
-	return
-}
-
-func (fc *funcCtx) getBranchLabel(labelName string) (f *flowCtx, rangeFor bool, depth int) {
 	if fc.currentFlow == nil {
 		return nil, false, -1
 	}
-	rangeFor = fc.currentFlow.postLabel == nil && fc.currentFlow.doneLabel == nil
 	for i := fc.currentFlow; i != nil; i = i.parent {
-		// TODO: not support break between normal for and range for
-		if rangeFor && i.doneLabel != nil {
-			break
+		if i.isRange() {
+			depth++
 		}
-		if !rangeFor && i.doneLabel == nil {
-			break
-		}
-
 		if labelName == "" || i.name == labelName {
-			return i, rangeFor, i.forNestDepth
+			return i.doneLabel, i.isRange(), depth
+		}
+	}
+	return nil, false, -1
+}
+
+func (fc *funcCtx) getContinueLabel(labelName string) (label exec.Label, rangeFor bool, depth int) {
+	if fc.currentFlow == nil {
+		return nil, false, -1
+	}
+	for i := fc.currentFlow; i != nil; i = i.parent {
+		if i.isRange() {
+			depth++
+		}
+		if labelName == "" || i.name == labelName {
+			if i.isRange() {
+				return i.postLabel, i.isRange(), depth
+			} else {
+				// skip continue in switch
+				if i.postLabel != nil {
+					return i.postLabel, i.isRange(), depth
+				}
+			}
+
 		}
 	}
 	return nil, false, -1
