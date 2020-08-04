@@ -868,11 +868,12 @@ func TestContinueFor(t *testing.T) {
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
 	if v := checkPop(ctx); !reflect.DeepEqual(v, 5) {
-		t.Fatal(`3`, v)
+		t.Fatal(`5`, v)
 	}
 }
 
 func TestGotoFor(t *testing.T) {
+	start := NewLabel("start")
 	done := NewLabel("done")
 	typData := reflect.SliceOf(TyInt)
 	s := NewVar(TyInt, "s")
@@ -884,6 +885,11 @@ func TestGotoFor(t *testing.T) {
 		DefineVar(s).
 		Push(0).
 		StoreVar(s).
+		Label(start).
+		LoadVar(s).
+		Push(0).
+		BuiltinOp(Int, OpGT).
+		JmpIf(1, done).
 		Push(1).
 		Push(3).
 		MakeArray(typData, 2).
@@ -896,7 +902,7 @@ func TestGotoFor(t *testing.T) {
 		LoadVar(a).
 		BuiltinOp(Int, OpAdd).
 		StoreVar(s).
-		Jmp(done).
+		Jmp(start).
 		EndForPhrase(fa).
 		EndForPhrase(fb).
 		Label(done).
@@ -906,6 +912,6 @@ func TestGotoFor(t *testing.T) {
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
 	if v := checkPop(ctx); !reflect.DeepEqual(v, 8) {
-		t.Fatal(`3`, v)
+		t.Fatal(`8`, v)
 	}
 }

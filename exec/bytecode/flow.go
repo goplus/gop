@@ -132,7 +132,7 @@ func (p *Builder) resolveLabels() {
 			case opCaseNE:
 				data[off] |= uint32(int16(pos - (off + 1)))
 			case opJmp:
-				big, small := len(depths[off]), len(depths[pos])
+				big, small := len(depths[pos]), len(depths[off])
 				if big < small {
 					big, small = small, big
 				}
