@@ -1393,15 +1393,15 @@ func TestGo(t *testing.T) {
 	cltest.Expect(t, `
 		import "time"
 
-		n := 0
+		n := 1
 		go func() {
 			println("Hello, goroutine!")
 			n++
+			println(n)
 		}()
 		time.Sleep(1e8)
-		println(n)
 		`,
-		"Hello, goroutine!\n1\n",
+		"Hello, goroutine!\n2\n",
 	)
 }
 
