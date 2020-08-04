@@ -93,4 +93,20 @@ func TestGenGofile(t *testing.T) {
 	}
 }
 
+func TestGenGofile2(t *testing.T) {
+	sel, exclude := "", ""
+	dir, err := os.Getwd()
+	if err != nil {
+		t.Fatal("Getwd failed:", err)
+	}
+	dir += "/testdata2"
+	fis, err := ioutil.ReadDir(dir)
+	if err != nil {
+		t.Fatal("ReadDir failed:", err)
+	}
+	for _, fi := range fis {
+		testGenGo(t, dir+"/"+fi.Name(), sel, exclude)
+	}
+}
+
 // -----------------------------------------------------------------------------
