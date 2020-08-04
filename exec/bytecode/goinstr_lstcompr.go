@@ -165,10 +165,6 @@ Loop:
 				if depth&bitsOpReturnOperand == 1 {
 					delete(ctx.forDepths, instr)
 					ctx.ip = ctx.code.nextIp
-					if ctx.code.nextIp >= ip && ctx.code.nextIp < ipEnd {
-						// go on to exec left []instr
-						ctx.Exec(ctx.ip, ipEnd)
-					}
 				} else {
 					depth--
 					ctx.forDepths[instr] = depth

@@ -150,7 +150,7 @@ func (p *Builder) labelDepths() map[int]map[int]bool {
 	depths := map[int]map[int]bool{}
 	put := func(pos int, f *ForPhrase) {
 		// if ip of label/goto in forPhrase
-		if pos > f.Start && pos <= f.End {
+		if pos > f.Start && pos < f.End {
 			if v, ok := depths[pos]; ok {
 				v[f.Start] = true
 			} else {

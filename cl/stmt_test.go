@@ -1619,6 +1619,55 @@ var testBranchGotoClauses = map[string]testData{
 						}
 					}
 					`, "1\ncase 1\n2\ndefault 2\nhello,there\n3\ndefault 3\nhello,there\n", false},
+	"break_between_normal_for_and_goto1": {`
+					for i <- [1, 2] {
+						for j <- [3, 4] {
+							println(i, j)
+							goto L
+						}
+					}
+					L:
+					`, "1 3\n", false},
+	"break_between_normal_for_and_goto2": {`
+					for i <- [1, 2] {
+						for j <- [3, 4] {
+							goto M
+						M:
+							println(i, j)
+							goto L
+						}
+					}
+					L:
+					`, "1 3\n", false},
+	"break_between_normal_for_and_goto3": {`
+					for i <- [1, 2] {
+						for j <- [3, 4] {
+							if i == 1 {
+								goto M
+							}
+							if i == 2 {
+								println("goto L")
+								goto L
+							}
+						}
+					M:
+						println(i, "m")
+					}
+					L:
+					`, "1 m\ngoto L\n", false},
+	"break_between_normal_for_and_goto4": {`
+cnt := 0
+					L:
+						for i <- [1, 2] {
+							for j <- [3, 4] {
+								if cnt <= 2 {
+									println(cnt, i, j)
+									cnt++
+									goto L
+								}
+							}
+						}
+					`, "0 1 3\n1 1 3\n2 1 3\n", false},
 }
 
 func TestBranchGotoStmt(t *testing.T) {
