@@ -705,9 +705,9 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 func builder(ctx *blockCtx, ct callType) (out exec.Builder) {
 	switch out = ctx.out; ct {
 	case callByDefer:
-		out.Defer()
+		return out.Defer()
 	case callByGo:
-		out.Go()
+		return out.Go()
 	}
 	return
 }

@@ -210,7 +210,7 @@ var instrInfos = []InstrInfo{
 	opErrWrap:       {"errWrap", "", "idx", 26},                           // idx(26)
 	opWrapIfErr:     {"wrapIfErr", "", "offset", 26},                      // reserved(2) offset(24)
 	opDefer:         {"defer", "", "", 0},                                 // reserved(26)
-	opGo:            {"go", "arity", "", 26},                              // arity(26)
+	opGo:            {"go", "", "arity", 26},                              // arity(26)
 }
 
 // -----------------------------------------------------------------------------
