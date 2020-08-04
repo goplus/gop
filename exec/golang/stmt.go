@@ -395,7 +395,13 @@ func (p *Builder) EndComprehension(c *Comprehension) *Builder {
 
 // Defer instr
 func (p *Builder) Defer() *Builder {
-	p.inDefer = true
+	p.inDeferOrGo = callByDefer
+	return p
+}
+
+// Go instr
+func (p *Builder) Go() *Builder {
+	p.inDeferOrGo = callByGo
 	return p
 }
 

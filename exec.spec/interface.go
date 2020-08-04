@@ -250,14 +250,14 @@ type Builder interface {
 	// CallGoFuncv instr
 	CallGoFuncv(fun GoFuncvAddr, nexpr, arity int) Builder
 
-	// Append instr
-	Append(typ reflect.Type, arity int) Builder
-
 	// GoBuiltin instr
 	GoBuiltin(typ reflect.Type, op GoBuiltin) Builder
 
 	// Defer instr
 	Defer() Builder
+
+	// Go instr
+	Go() Builder
 
 	// DefineFunc instr
 	DefineFunc(fun FuncInfo) Builder
@@ -309,6 +309,9 @@ type Builder interface {
 
 	// Make instr
 	Make(typ reflect.Type, arity int) Builder
+
+	// Append instr
+	Append(typ reflect.Type, arity int) Builder
 
 	// MapIndex instr
 	MapIndex() Builder

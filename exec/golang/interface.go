@@ -172,6 +172,12 @@ func (p *iBuilder) Defer() exec.Builder {
 	return p
 }
 
+// Go instr
+func (p *iBuilder) Go() exec.Builder {
+	((*Builder)(p)).Go()
+	return p
+}
+
 func toVar(v exec.Var) *Var {
 	if v == nil {
 		return nil

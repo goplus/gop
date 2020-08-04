@@ -32,7 +32,7 @@ func TestDeferFileNotFound(t *testing.T) {
 	ts.New(t).Call(func() {
 		fn := &ast.Ident{Name: "len"}
 		expr := &ast.CallExpr{Fun: fn}
-		igoLen(ctx, expr, true)
+		igoLen(ctx, expr, callByDefer)
 	}).Panic(
 		"pkgCtx.getCodeInfo failed: file not found - \n",
 	)
@@ -56,7 +56,7 @@ func TestDeferDiscardsResult(t *testing.T) {
 		ts.New(t).Call(func() {
 			fn := &ast.Ident{NamePos: 1, Name: k}
 			expr := &ast.CallExpr{Fun: fn, Rparen: token.Pos(len(k) + 2)}
-			v.instr(ctx, expr, true)
+			v.instr(ctx, expr, callByDefer)
 		}).Panic(
 			"defer discards result of " + k + "()\n",
 		)
