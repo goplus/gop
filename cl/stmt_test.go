@@ -1395,12 +1395,13 @@ func TestGo(t *testing.T) {
 
 		n := 0
 		go func() {
+			println("Hello, goroutine!")
 			n++
 		}()
 		time.Sleep(1e8)
 		println(n)
 		`,
-		"1\n",
+		"Hello, goroutine!\n1\n",
 	)
 }
 

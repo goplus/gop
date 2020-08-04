@@ -62,13 +62,12 @@ func (p *Builder) Defer() *Builder {
 // -----------------------------------------------------------------------------
 
 func execGo(i Instr, ctx *Context) {
-	base := len(ctx.data) - int(i&bitsOperand)
-	goctx := NewContext(ctx.code)
-	goctx.data = append(goctx.data, ctx.data[base:]...)
-	ctx.data = ctx.data[:base]
+	arity := int(i & bitsOperand)
 	i = ctx.code.data[ctx.ip]
 	ctx.ip++
-	go execTable[i>>bitsOpShift](i, goctx)
+	ctx.Go(arity, func(goctx *Context) {
+		execTable[i>>bitsOpShift](i, goctx)
+	})
 }
 
 type goBuilder struct {
