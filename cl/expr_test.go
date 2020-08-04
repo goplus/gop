@@ -197,6 +197,21 @@ func TestAppendErr(t *testing.T) {
 	)
 }
 
+func TestLenErr(t *testing.T) {
+	cltest.Expect(t, `
+		len()
+		`,
+		"",
+		"missing argument to len: len()\n",
+	)
+	cltest.Expect(t, `
+		len("a", "b")
+		`,
+		"",
+		`too many arguments to len: len("a", "b")`+"\n",
+	)
+}
+
 func TestMake(t *testing.T) {
 	cltest.Expect(t, `
 		a := make([]int, 0, 4)
