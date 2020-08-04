@@ -3,12 +3,14 @@ package bytecode
 import (
 	"fmt"
 	"sort"
+	"sync"
 	"time"
 )
 
 // -----------------------------------------------------------------------------
 
 var (
+	mutexProf    sync.Mutex
 	doProfile    bool
 	gOpCalls     [64]uint64
 	gOpDurations [64]time.Duration
@@ -24,6 +26,8 @@ var (
 )
 
 func instrProfile(i Instr, dur time.Duration) {
+	mutexProf.Lock()
+	defer mutexProf.Unlock()
 	op := i >> bitsOpShift
 	gOpCalls[op]++
 	gOpDurations[op] += dur
