@@ -132,11 +132,7 @@ func (p *Builder) resolveLabels() {
 			case opCaseNE:
 				data[off] |= uint32(int16(pos - (off + 1)))
 			case opJmp:
-				big, small := len(depths[pos]), len(depths[off])
-				if big < small {
-					big, small = small, big
-				}
-				p.code.gotosDepth[off+1] = big - small
+				p.code.gotosDepth[off+1] = len(depths[off]) - len(depths[pos])
 				fallthrough
 			default:
 				data[off] |= uint32(pos-(off+1)) & bitsOpJmpOperand
