@@ -18,6 +18,7 @@ package repl
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/goplus/gop/cl"
@@ -134,8 +135,12 @@ func (r *REPL) run(newLine string) (err error) {
 	// next time it will replace by new code from newLine
 	r.ip = currentIP - 1
 	size := ctx.Len()
+	var dump []string
 	for i := 0; i < size; i++ {
-		r.term.Printf("%v\n", ctx.Get(i-size))
+		dump = append(dump, fmt.Sprintf("%v", ctx.Get(i-size)))
+	}
+	if len(dump) > 0 {
+		r.term.Printf("%v\n", strings.Join(dump, ","))
 	}
 	return
 }
