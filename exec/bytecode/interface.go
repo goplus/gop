@@ -18,6 +18,11 @@ func (p *iFuncInfo) Name() string {
 }
 
 // Type returns type of this function.
+func (p *iFuncInfo) Recv() exec.RecvInfo {
+	return ((*FuncInfo)(p)).Recv()
+}
+
+// Type returns type of this function.
 func (p *iFuncInfo) Type() reflect.Type {
 	return ((*FuncInfo)(p)).Type()
 }
@@ -361,12 +366,6 @@ func (p *iBuilder) Make(typ reflect.Type, arity int) exec.Builder {
 	return p
 }
 
-// StoreVal instr
-func (p *iBuilder) StoreVal(val interface{}) exec.Builder {
-	((*Builder)(p)).StoreVal(val)
-	return p
-}
-
 // MapIndex instr
 func (p *iBuilder) MapIndex() exec.Builder {
 	((*Builder)(p)).MapIndex()
@@ -394,6 +393,12 @@ func (p *iBuilder) AddrIndex(idx int) exec.Builder {
 // SetIndex instr
 func (p *iBuilder) SetIndex(idx int) exec.Builder {
 	((*Builder)(p)).SetIndex(idx)
+	return p
+}
+
+// Struct instr
+func (p *iBuilder) Struct(typ reflect.Type, arity int) exec.Builder {
+	((*Builder)(p)).Struct(typ, arity)
 	return p
 }
 

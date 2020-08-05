@@ -54,6 +54,11 @@ func (p *Package) NewComprehension(out reflect.Type) exec.Comprehension {
 	return NewComprehension(out)
 }
 
+// NewMethod create a Go+ function.
+func (p *Package) NewMethod(recv exec.RecvInfo, name string, nestDepth uint32) exec.FuncInfo {
+	return (*iFuncInfo)(newMethod(p, recv, name, nestDepth))
+}
+
 // NewFunc create a Go+ function.
 func (p *Package) NewFunc(name string, nestDepth uint32) exec.FuncInfo {
 	return (*iFuncInfo)(newFuncWith(p, name, nestDepth))

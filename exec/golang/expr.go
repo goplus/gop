@@ -463,9 +463,21 @@ func (p *Builder) Make(typ reflect.Type, arity int) *Builder {
 	return p
 }
 
-// StoreVal instr
-func (p *Builder) StoreVal(typ interface{}) *Builder {
-	log.Panicln("todo")
+// Struct instr
+func (p *Builder) Struct(typ reflect.Type, arity int) *Builder {
+	typExpr := Type(p, typ)
+	elts := make([]ast.Expr, arity)
+	args := p.rhs.GetArgs(arity << 1)
+	for i := 0; i < arity; i++ {
+		elts[i] = &ast.KeyValueExpr{
+			Key:   args[i<<1].(ast.Expr),
+			Value: args[(i<<1)+1].(ast.Expr),
+		}
+	}
+	p.rhs.Ret(arity<<1, &ast.CompositeLit{
+		Type: typExpr,
+		Elts: elts,
+	})
 	return p
 }
 

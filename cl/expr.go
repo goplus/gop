@@ -156,7 +156,7 @@ func compileIdent(ctx *blockCtx, name string) func() {
 	if sym, ok := ctx.find(name); ok {
 		switch v := sym.(type) {
 		case *execVar:
-			ctx.infer.Push(&goValue{t: v.v.Type(), sym: sym})
+			ctx.infer.Push(&goValue{t: v.v.Type()})
 			return func() {
 				if ctx.checkArrayAddr && v.v.Type().Kind() == reflect.Array {
 					ctx.out.AddrVar(v.v)
@@ -167,7 +167,7 @@ func compileIdent(ctx *blockCtx, name string) func() {
 				}
 			}
 		case *stackVar:
-			ctx.infer.Push(&goValue{t: v.typ, sym: sym})
+			ctx.infer.Push(&goValue{t: v.typ})
 			return func() {
 				ctx.out.Load(v.index)
 			}
@@ -181,6 +181,13 @@ func compileIdent(ctx *blockCtx, name string) func() {
 		case *funcDecl:
 			fn := newQlFunc(v)
 			ctx.use(v)
+			ctx.infer.Push(fn)
+			return func() { // TODO: maybe slowly, use Closure instead of GoClosure
+				ctx.out.GoClosure(fn.fi)
+			}
+		case *methodDecl:
+			fn := newQlMethod(v)
+			ctx.useMethod(v)
 			ctx.infer.Push(fn)
 			return func() { // TODO: maybe slowly, use Closure instead of GoClosure
 				ctx.out.GoClosure(fn.fi)
@@ -297,30 +304,27 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 			ctx.out.MakeMap(typMap, len(v.Elts))
 		}
 	case reflect.Struct:
-		t := typ.(reflect.Type)
-
-		ctx.infer.Push(&goValue{t: t})
+		typStruct := typ.(reflect.Type)
+		ctx.infer.Push(&goValue{t: typStruct})
 		return func() {
-			val := reflect.New(t).Elem()
 			for _, elt := range v.Elts {
 				switch e := elt.(type) {
 				case *ast.KeyValueExpr:
-					ident := e.Key.(*ast.Ident)
-					compileExpr(ctx, e.Value)
-					if ival, ok := ctx.infer.Pop().(iValue); ok {
-						f, _ := t.FieldByName(ident.Name)
-						if f.Type.Kind() == reflect.Int {
-							val.FieldByName(ident.Name).SetInt(ival.Val().Int())
-						} else {
-							val.FieldByName(ident.Name).Set(ival.Val())
-						}
-					}
+					fieldName := e.Key.(*ast.Ident).Name
+					ctx.out.Push(fieldName)
+					field, _ := typStruct.FieldByName(fieldName)
+					typVal := field.Type
+					compileExpr(ctx, e.Value)()
+					checkType(typVal, ctx.infer.Pop(), ctx.out)
+				default:
+					log.Panicln("compileCompositeLit: map requires key-value expr.")
 				}
 			}
+
 			if ctx.takeAddr {
-				ctx.out.StoreVal(val.Addr().Interface())
+				ctx.out.Struct(reflect.PtrTo(typStruct), len(v.Elts))
 			} else {
-				ctx.out.StoreVal(val.Interface())
+				ctx.out.Struct(typStruct, len(v.Elts))
 			}
 		}
 	default:
@@ -687,6 +691,31 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, isDefer
 				builder(ctx, isDefer).CallFunc(fun, len(v.Args))
 			}
 		}
+	case *qlMethod:
+		if !isDefer {
+			ret := vfn.Results()
+			ctx.infer.Push(ret)
+		}
+		return func() {
+			recvInfo := vfn.FuncInfo().Recv()
+			if recvInfo.Type.Kind() == reflect.Ptr {
+				ctx.takeAddr = true
+				compileIdent(ctx, recvInfo.Name)()
+				ctx.takeAddr = false
+			} else {
+				compileIdent(ctx, recvInfo.Name)()
+			}
+			for _, arg := range v.Args {
+				compileExpr(ctx, arg)()
+			}
+			arity := checkFuncCall(vfn.Proto(), 1, v, ctx)
+			fun := vfn.FuncInfo()
+			if fun.IsVariadic() {
+				builder(ctx, isDefer).CallFuncv(fun, len(v.Args), arity)
+			} else {
+				builder(ctx, isDefer).CallFunc(fun, len(v.Args))
+			}
+		}
 	case *goFunc:
 		if !isDefer {
 			ret := vfn.Results()
@@ -987,13 +1016,22 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compileMode
 		}
 	case *goValue:
 		_, t := countPtr(vx.t)
-		name := v.Sel.Name
-		if _, ok := t.FieldByName(name); ok {
-			exprX()
-			ctx.out.StoreVal(name)
-			ctx.out.SetField()
-			storeSym(ctx, vx.sym)
+		if t.Kind() == reflect.Struct {
+			x := v.X.(*ast.Ident)
+			addr, err := ctx.findVar(x.Name)
+			if err != nil {
+				log.Panicf("compileSelectorExprLHS failed: get var %s error %v\n", x.Name, err)
+			}
+
+			name := v.Sel.Name
+			if _, ok := t.FieldByName(name); ok {
+				exprX()
+				ctx.out.Push(name)
+				ctx.out.SetField()
+				storeVar(ctx, addr)
+			}
 		}
+
 	default:
 		log.Panicln("compileSelectorExprLHS failed: unknown -", reflect.TypeOf(vx))
 	}
@@ -1054,10 +1092,12 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 			ctx.infer.Push(&goValue{t: f.Type})
 			return func() {
 				exprX()
-				ctx.out.StoreVal(name)
+				ctx.out.Push(name)
 				ctx.out.CallField()
 			}
 		}
+
+		// fmt.Println(vx.t.MethodByName(name))
 		if _, ok := vx.t.MethodByName(name); !ok && isLower(name) {
 			name = strings.Title(name)
 			if _, ok = vx.t.MethodByName(name); ok {
@@ -1070,7 +1110,8 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 
 		if t.Name() == "" {
 			ctx.infer.PopN(1)
-			expr := compileIdent(ctx, t.String()+name)
+			// ctx.infer.Push(&goValue{t: vx.t})
+			expr := compileIdent(ctx, vx.t.String()+name)
 			return func() {
 				exprX()
 				expr()
@@ -1130,7 +1171,7 @@ func normalizeMethod(n int, t reflect.Type, name string) (pkgPath string, formal
 	return t.PkgPath(), "(" + typName + ")." + name
 }
 
-func storeSym(ctx *blockCtx, sym interface{}) {
+func storeVar(ctx *blockCtx, sym iVar) {
 	switch v := sym.(type) {
 	case *execVar:
 		ctx.out.StoreVar(v.v)

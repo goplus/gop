@@ -26,6 +26,19 @@ import (
 
 // -----------------------------------------------------------------------------
 
+// StructType instr
+func StructType(p *Builder, typ reflect.Type) *ast.StructType {
+	fieldList := &ast.FieldList{}
+	for i := 0; i < typ.NumField(); i++ {
+		field := typ.Field(i)
+		fieldList.List = append(fieldList.List, &ast.Field{
+			Names: []*ast.Ident{Ident(field.Name)},
+			Type:  Type(p, field.Type),
+		})
+	}
+	return &ast.StructType{Fields: fieldList}
+}
+
 // MapType instr
 func MapType(p *Builder, typ reflect.Type) *ast.MapType {
 	key := Type(p, typ.Key())
@@ -140,6 +153,7 @@ func Type(p *Builder, typ reflect.Type) ast.Expr {
 		return InterfaceType(p, typ)
 	case reflect.Chan:
 	case reflect.Struct:
+		return StructType(p, typ)
 	}
 	log.Panicln("Type: unknown type -", typ)
 	return nil

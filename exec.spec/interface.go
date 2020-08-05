@@ -76,6 +76,9 @@ type FuncInfo interface {
 	// Type returns type of this function.
 	Type() reflect.Type
 
+	// Type returns type of this function.
+	Recv() RecvInfo
+
 	// Args sets argument types of a Go+ function.
 	Args(in ...reflect.Type) FuncInfo
 
@@ -311,7 +314,7 @@ type Builder interface {
 	Make(typ reflect.Type, arity int) Builder
 
 	// Val instr
-	StoreVal(val interface{}) Builder
+	Struct(typ reflect.Type, arity int) Builder
 
 	// StructField instr
 	CallField() Builder
@@ -387,6 +390,9 @@ type Package interface {
 
 	// NewFunc creates a Go+ function.
 	NewFunc(name string, nestDepth uint32) FuncInfo
+
+	// NewMethod creates a Go+ function.
+	NewMethod(typ RecvInfo, name string, nestDepth uint32) FuncInfo
 
 	// FindGoPackage lookups a Go package by pkgPath. It returns nil if not found.
 	FindGoPackage(pkgPath string) GoPackage

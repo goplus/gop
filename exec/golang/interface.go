@@ -53,6 +53,13 @@ func (p *interfaceImpl) NewComprehension(out reflect.Type) exec.Comprehension {
 	return NewComprehension(out)
 }
 
+func (p *interfaceImpl) NewMethod(recv exec.RecvInfo, name string, nestDepth uint32) exec.FuncInfo {
+	if nestDepth == 0 {
+		return nil
+	}
+	return NewMethod(recv, name, nestDepth)
+}
+
 // NewFunc create a Go+ function.
 func (p *interfaceImpl) NewFunc(name string, nestDepth uint32) exec.FuncInfo {
 	if nestDepth == 0 {
@@ -376,9 +383,9 @@ func (p *iBuilder) Make(typ reflect.Type, arity int) exec.Builder {
 	return p
 }
 
-// StoreVal instr
-func (p *iBuilder) StoreVal(val interface{}) exec.Builder {
-	((*Builder)(p)).StoreVal(val)
+// Struct instr
+func (p *iBuilder) Struct(typ reflect.Type, arity int) exec.Builder {
+	((*Builder)(p)).Struct(typ, arity)
 	return p
 }
 

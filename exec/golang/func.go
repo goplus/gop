@@ -37,6 +37,7 @@ const (
 
 // FuncInfo represents a Go+ function information.
 type FuncInfo struct {
+	recv    exec.RecvInfo
 	name    string
 	closure *printer.ReservedExpr // only when name="" (closure)
 	t       reflect.Type
@@ -54,6 +55,14 @@ func NewFunc(name string, nestDepth uint32) *FuncInfo {
 	return &FuncInfo{closure: &printer.ReservedExpr{}}
 }
 
+// NewFunc create a Go+ function.
+func NewMethod(recv exec.RecvInfo, name string, nestDepth uint32) *FuncInfo {
+	if name != "" {
+		return &FuncInfo{recv: recv, name: name}
+	}
+	return &FuncInfo{closure: &printer.ReservedExpr{}}
+}
+
 func (p *FuncInfo) getFuncExpr() ast.Expr {
 	if p.name != "" {
 		return Ident(p.name)
@@ -64,6 +73,10 @@ func (p *FuncInfo) getFuncExpr() ast.Expr {
 // Name returns the function name.
 func (p *FuncInfo) Name() string {
 	return p.name
+}
+
+func (p *FuncInfo) Recv() exec.RecvInfo {
+	return exec.RecvInfo{}
 }
 
 // Type returns type of this function.

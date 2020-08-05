@@ -1,0 +1,12 @@
+type Person struct {
+	Name    string
+	Age     int
+	Friends []string
+}
+
+p := &Person{
+	Name: "bar",
+	Age:  30,
+}
+
+println(p)

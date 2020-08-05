@@ -159,6 +159,8 @@ const (
 // FuncInfo represents a Go+ function information.
 type FuncInfo struct {
 	Pkg      *Package
+	isMethod int
+	recv     exec.RecvInfo
 	name     string
 	funEntry int
 	funEnd   int
@@ -173,6 +175,17 @@ type FuncInfo struct {
 // NewFunc create a Go+ function.
 func NewFunc(name string, nestDepth uint32) *FuncInfo {
 	f := &FuncInfo{
+		name:       name,
+		varManager: varManager{nestDepth: nestDepth},
+	}
+	return f
+}
+
+func newMethod(pkg *Package, recv exec.RecvInfo, name string, nestDepth uint32) *FuncInfo {
+	f := &FuncInfo{
+		Pkg:        pkg,
+		isMethod:   1,
+		recv:       recv,
 		name:       name,
 		varManager: varManager{nestDepth: nestDepth},
 	}
@@ -195,7 +208,7 @@ func (p *FuncInfo) Name() string {
 
 // NumIn returns a function's input parameter count.
 func (p *FuncInfo) NumIn() int {
-	return len(p.in)
+	return len(p.in) + p.isMethod
 }
 
 // NumOut returns a function's output parameter count.
@@ -263,13 +276,23 @@ func (p *FuncInfo) setVariadic(nVariadic uint16) {
 }
 
 // Type returns type of this function.
+func (p *FuncInfo) Recv() exec.RecvInfo {
+	return p.recv
+}
+
+// Type returns type of this function.
 func (p *FuncInfo) Type() reflect.Type {
 	if p.t == nil {
 		out := make([]reflect.Type, p.numOut)
 		for i := 0; i < p.numOut; i++ {
 			out[i] = p.vlist[i].typ
 		}
-		p.t = reflect.FuncOf(p.in, out, p.IsVariadic())
+		in := make([]reflect.Type, 0, p.NumIn())
+		if p.recv.Type != nil {
+			in = append(in, p.recv.Type)
+		}
+		in = append(in, p.in...)
+		p.t = reflect.FuncOf(in, out, p.IsVariadic())
 	}
 	return p.t
 }
@@ -291,7 +314,7 @@ func (p *FuncInfo) execFunc(ctx *Context) {
 			}
 		} else {
 			n := len(ctx.data)
-			ctx.data = append(ctx.data[:ctx.base-len(p.in)], ctx.data[n-p.numOut:]...)
+			ctx.data = append(ctx.data[:ctx.base-(len(p.in)+p.isMethod)], ctx.data[n-p.numOut:]...)
 		}
 	}
 }
@@ -300,7 +323,7 @@ func (p *FuncInfo) exec(ctx *Context, parent *varScope) {
 	old := ctx.switchScope(parent, &p.varManager)
 	p.execFunc(ctx)
 	if ctx.ip != ipReturnN {
-		ctx.data = ctx.data[:ctx.base-len(p.in)]
+		ctx.data = ctx.data[:ctx.base-(len(p.in)+p.isMethod)]
 		n := uint32(p.numOut)
 		for i := uint32(0); i < n; i++ {
 			ctx.data = append(ctx.data, ctx.getVar(i))
@@ -313,7 +336,7 @@ func (p *FuncInfo) execVariadic(arity uint32, ctx *Context, parent *varScope) {
 	var n = uint32(len(p.in) - 1)
 	if arity > n {
 		tVariadic := p.in[n]
-		nVariadic := int(arity - n)
+		nVariadic := int(arity-n) + p.isMethod
 		if tVariadic == exec.TyEmptyInterfaceSlice {
 			var empty []interface{}
 			ctx.Ret(nVariadic, append(empty, ctx.GetArgs(nVariadic)...))

@@ -34,7 +34,6 @@ type iKind = astutil.ConstKind
 //  - *funcResult
 type iValue interface {
 	Type() reflect.Type
-	Val() reflect.Value
 	Kind() iKind
 	Value(i int) iValue
 	NumValues() int
@@ -48,8 +47,6 @@ func isBool(v iValue) bool {
 
 type goValue struct {
 	t reflect.Type
-
-	sym interface{}
 }
 
 func (p *goValue) Kind() iKind {
@@ -66,10 +63,6 @@ func (p *goValue) NumValues() int {
 
 func (p *goValue) Value(i int) iValue {
 	return p
-}
-
-func (p *goValue) Val() reflect.Value {
-	panic("don't call me")
 }
 
 // -----------------------------------------------------------------------------
@@ -92,10 +85,6 @@ func (p *nonValue) NumValues() int {
 
 func (p *nonValue) Value(i int) iValue {
 	return p
-}
-
-func (p *nonValue) Val() reflect.Value {
-	return reflect.ValueOf(p.v)
 }
 
 // -----------------------------------------------------------------------------
@@ -126,10 +115,6 @@ func (p *wrapValue) Value(i int) iValue {
 	return p.x.Value(i)
 }
 
-func (p *wrapValue) Val() reflect.Value {
-	return p.x.Val()
-}
-
 // -----------------------------------------------------------------------------
 
 type funcResults struct {
@@ -152,15 +137,47 @@ func (p *funcResults) Value(i int) iValue {
 	return &goValue{t: p.tfn.Out(i)}
 }
 
-func (p *funcResults) Val() reflect.Value {
-	panic("don't call me")
-}
-
 func newFuncResults(tfn reflect.Type) iValue {
 	if tfn.NumOut() == 1 {
 		return &goValue{t: tfn.Out(0)}
 	}
 	return &funcResults{tfn: tfn}
+}
+
+// -----------------------------------------------------------------------------
+
+type qlMethod methodDecl
+
+func newQlMethod(f *methodDecl) *qlMethod {
+	return (*qlMethod)(f)
+}
+
+func (p *qlMethod) FuncInfo() exec.FuncInfo {
+	return ((*methodDecl)(p)).Get()
+}
+
+func (p *qlMethod) Kind() iKind {
+	return reflect.Func
+}
+
+func (p *qlMethod) Type() reflect.Type {
+	return ((*methodDecl)(p)).Type()
+}
+
+func (p *qlMethod) NumValues() int {
+	return 1
+}
+
+func (p *qlMethod) Value(i int) iValue {
+	return p
+}
+
+func (p *qlMethod) Results() iValue {
+	return newFuncResults(p.Type())
+}
+
+func (p *qlMethod) Proto() iFuncType {
+	return p.Type()
 }
 
 // -----------------------------------------------------------------------------
@@ -189,10 +206,6 @@ func (p *qlFunc) NumValues() int {
 
 func (p *qlFunc) Value(i int) iValue {
 	return p
-}
-
-func (p *qlFunc) Val() reflect.Value {
-	panic("don't call me")
 }
 
 func (p *qlFunc) Results() iValue {
@@ -241,10 +254,6 @@ func (p *goFunc) Value(i int) iValue {
 	return p
 }
 
-func (p *goFunc) Val() reflect.Value {
-	panic("don't call me")
-}
-
 func (p *goFunc) Results() iValue {
 	return newFuncResults(p.t)
 }
@@ -287,9 +296,6 @@ func (p *constVal) NumValues() int {
 
 func (p *constVal) Value(i int) iValue {
 	return p
-}
-func (p *constVal) Val() reflect.Value {
-	return reflect.ValueOf(p.v)
 }
 
 func (p *constVal) boundKind() reflect.Kind {

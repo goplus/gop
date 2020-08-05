@@ -143,3 +143,92 @@ func getRetOf(v interface{}, fun *FuncInfo, i int) reflect.Value {
 }
 
 // -----------------------------------------------------------------------------
+
+// Struct instr
+func (p *Builder) Struct(typ reflect.Type, arity int) *Builder {
+	if arity < 0 {
+		log.Panicln("Struct failed: can't be variadic.")
+	} else if arity >= bitsFuncvArityMax {
+		p.Push(arity - bitsFuncvArityMax)
+		arity = bitsFuncvArityMax
+	}
+	i := (opStruct << bitsOpShift) | (uint32(arity) << bitsOpCallFuncvShift) | p.newType(typ)
+	p.code.data = append(p.code.data, i)
+	return p
+}
+
+func execStruct(i Instr, p *Context) {
+	typStruct := getType(i&bitsOpCallFuncvOperand, p)
+	arity := int((i >> bitsOpCallFuncvShift) & bitsFuncvArityOperand)
+	if arity == bitsFuncvArityMax {
+		arity = p.Pop().(int) + bitsFuncvArityMax
+	}
+	makeStruct(typStruct, arity, p)
+}
+
+func makeStruct(typStruct reflect.Type, arity int, p *Context) {
+	n := arity << 1
+	args := p.GetArgs(n)
+
+	var ptr bool
+	if typStruct.Kind() == reflect.Ptr {
+		ptr = true
+		typStruct = typStruct.Elem()
+	}
+	v := reflect.New(typStruct).Elem()
+	for i := 0; i < n; i += 2 {
+		fieldName := args[i].(string)
+		v.FieldByName(fieldName).Set(reflect.ValueOf(args[i+1]))
+	}
+	if ptr {
+		p.Ret(n, v.Addr().Interface())
+	} else {
+		p.Ret(n, v.Interface())
+	}
+}
+
+func (p *Builder) SetField() *Builder {
+	p.code.data = append(p.code.data, opSetField<<bitsOpShift)
+	return p
+}
+
+func execSetField(i Instr, stk *Context) {
+	args := stk.GetArgs(3)
+	d := args[0]
+	p := args[1]
+	field := args[2]
+	v := reflect.ValueOf(p)
+	f := field.(string)
+
+	if v.Kind() == reflect.Ptr {
+		v.Elem().FieldByName(f).Set(reflect.ValueOf(d))
+	} else {
+		t := reflect.TypeOf(p)
+		v2 := reflect.New(t).Elem()
+		v2.Set(v)
+		v2.FieldByName(f).Set(reflect.ValueOf(d))
+		v = v2
+	}
+
+	stk.PopN(3)
+	stk.Push(v.Interface())
+}
+
+func (p *Builder) CallField() *Builder {
+	p.code.data = append(p.code.data, opCallField<<bitsOpShift)
+	return p
+}
+
+func execCallField(i Instr, stk *Context) {
+	args := stk.GetArgs(2)
+	p := args[0]
+	field := args[1]
+	v := reflect.ValueOf(p)
+	f := field.(string)
+
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	v = reflect.Indirect(v).FieldByName(f)
+	stk.Push(v.Interface())
+}
