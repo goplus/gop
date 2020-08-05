@@ -467,6 +467,14 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 
 func compileExprStmt(ctx *blockCtx, expr *ast.ExprStmt) {
 	compileExpr(ctx, expr.X)()
+	if ctx.infer.Len() > 0 {
+		in := ctx.infer.Get(-1)
+		if v, ok := in.(*constVal); ok {
+			for i := 0; i < v.NumValues(); i++ {
+				checkType(exec.TyEmptyInterface, v.Value(i), ctx.out)
+			}
+		}
+	}
 	ctx.infer.PopN(1)
 }
 
