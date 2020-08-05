@@ -82,6 +82,9 @@ func runCmd(cmd *base.Command, args []string) {
 			fmt.Printf("Problem reading line: %v\n", err)
 			continue
 		}
+		if line != "" {
+			state.AppendHistory(line)
+		}
 		repl.Run(line)
 	}
 }
