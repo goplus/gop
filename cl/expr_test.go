@@ -160,6 +160,40 @@ func TestUnbound(t *testing.T) {
 	)
 }
 
+func TestUnboundInt(t *testing.T) {
+	cltest.Expect(t, `
+	import "reflect"
+	printf("%T",100)
+	`,
+		"int",
+	)
+	cltest.Expect(t, `
+	import "reflect"
+	printf("%T",-100)
+	`,
+		"int",
+	)
+}
+
+func TestOverflowsInt(t *testing.T) {
+	cltest.Expect(t, `
+	println(9223372036854775807)
+	`,
+		"9223372036854775807\n",
+	)
+	cltest.Expect(t, `
+	println(-9223372036854775808)
+	`,
+		"-9223372036854775808\n",
+	)
+	cltest.Expect(t, `
+	println(9223372036854775808)
+	`,
+		"",
+		nil,
+	)
+}
+
 func TestPanic(t *testing.T) {
 	cltest.Expect(t,
 		`panic("Helo")`,
