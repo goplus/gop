@@ -132,10 +132,15 @@ func (p *iBuilder) Default() exec.Builder {
 	return p
 }
 
-// Default instr
+// Defer instr
 func (p *iBuilder) Defer() exec.Builder {
 	((*Builder)(p)).Defer()
 	return p
+}
+
+// Go instr
+func (p *iBuilder) Go() exec.Builder {
+	return ((*Builder)(p)).Go()
 }
 
 // WrapIfErr instr
@@ -429,6 +434,12 @@ func (p *iBuilder) GoBuiltin(typ reflect.Type, op exec.GoBuiltin) exec.Builder {
 // Zero instr
 func (p *iBuilder) Zero(typ reflect.Type) exec.Builder {
 	((*Builder)(p)).Zero(typ)
+	return p
+}
+
+// New instr
+func (p *iBuilder) New(typ reflect.Type) exec.Builder {
+	((*Builder)(p)).New(typ)
 	return p
 }
 

@@ -179,6 +179,12 @@ func (p *iBuilder) Defer() exec.Builder {
 	return p
 }
 
+// Go instr
+func (p *iBuilder) Go() exec.Builder {
+	((*Builder)(p)).Go()
+	return p
+}
+
 func toVar(v exec.Var) *Var {
 	if v == nil {
 		return nil
@@ -440,6 +446,12 @@ func (p *iBuilder) TypeCast(from, to reflect.Type) exec.Builder {
 // GoBuiltin instr
 func (p *iBuilder) GoBuiltin(typ reflect.Type, op exec.GoBuiltin) exec.Builder {
 	((*Builder)(p)).GoBuiltin(typ, op)
+	return p
+}
+
+// New instr
+func (p *iBuilder) New(typ reflect.Type) exec.Builder {
+	((*Builder)(p)).New(typ)
 	return p
 }
 

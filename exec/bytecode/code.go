@@ -38,12 +38,16 @@ const (
 	bitsVarScope   = 6
 	bitsAssignOp   = 4
 	bitsIndexOp    = 2
+	bitsIsPtr      = 2
 
 	bitsOpShift = bitsInstr - bitsOp
 	bitsOperand = (1 << bitsOpShift) - 1
 
 	bitsOpIndexShift   = bitsInstr - (bitsOp + bitsIndexOp)
 	bitsOpIndexOperand = (1 << bitsOpIndexShift) - 1
+
+	bitsOpZeroShift   = bitsInstr - (bitsOp + bitsIsPtr)
+	bitsOpZeroOperand = (1 << bitsOpZeroShift) - 1
 
 	bitsOpInt        = bitsOp + bitsIntKind
 	bitsOpIntShift   = bitsInstr - bitsOpInt
@@ -107,7 +111,7 @@ const (
 	opCallGoClosure = 30 // arity(26)
 	opMakeArray     = 31 // funvArity(10) type(16)
 	opMakeMap       = 32 // funvArity(10) type(16)
-	opZero          = 33 // type(26)
+	opZero          = 33 // isPtr(2) type(24)
 	opForPhrase     = 34 // addr(26)
 	opLstComprehens = 35 // addr(26)
 	opMapComprehens = 36 // addr(26)
@@ -118,10 +122,11 @@ const (
 	opGoBuiltin     = 41 // op(26)
 	opErrWrap       = 42 // idx(26)
 	opWrapIfErr     = 43 // reserved(2) offset(24)
-	opDefer         = 44
-	opStruct        = 45
-	opCallField     = 46
-	opSetField      = 47
+	opDefer         = 44 // reserved(26)
+	opGo            = 45 // arity(26)
+	opStruct        = 46
+	opCallField     = 47
+	opSetField      = 48
 )
 
 const (
@@ -196,7 +201,7 @@ var instrInfos = []InstrInfo{
 	opCallGoClosure: {"callGoClosure", "", "arity", 26},                   // arity(26)
 	opMakeArray:     {"makeArray", "funvArity", "type", (10 << 8) | 16},   // funvArity(10) type(16)
 	opMakeMap:       {"makeMap", "funvArity", "type", (10 << 8) | 16},     // funvArity(10) type(16)
-	opZero:          {"zero", "", "type", 26},                             // type(26)
+	opZero:          {"zero", "isPtr", "type", (2 << 8) | 24},             // isPtr(2) type(24)
 	opForPhrase:     {"forPhrase", "", "addr", 26},                        // addr(26)
 	opLstComprehens: {"listComprehension", "", "addr", 26},                // addr(26)
 	opMapComprehens: {"mapComprehension", "", "addr", 26},                 // addr(26)
@@ -207,10 +212,11 @@ var instrInfos = []InstrInfo{
 	opGoBuiltin:     {"goBuiltin", "", "op", 26},                          // op(26)
 	opErrWrap:       {"errWrap", "", "idx", 26},                           // idx(26)
 	opWrapIfErr:     {"wrapIfErr", "", "offset", 26},                      // reserved(2) offset(24)
-	opDefer:         {"defer", "", "", 0},
+	opDefer:         {"defer", "", "", 0},                                 // reserved(26)
+	opGo:            {"go", "", "arity", 26},
 	opStruct:        {"struct", "funvArity", "type", (10 << 8) | 16},
 	opCallField:     {"opCallField", "", "", 0},
-	opSetField:      {"opSetField", "", "", 0},
+	opSetField:      {"opSetField", "", "", 0}, // arity(26)
 }
 
 // -----------------------------------------------------------------------------

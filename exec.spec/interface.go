@@ -253,14 +253,14 @@ type Builder interface {
 	// CallGoFuncv instr
 	CallGoFuncv(fun GoFuncvAddr, nexpr, arity int) Builder
 
-	// Append instr
-	Append(typ reflect.Type, arity int) Builder
-
 	// GoBuiltin instr
 	GoBuiltin(typ reflect.Type, op GoBuiltin) Builder
 
 	// Defer instr
 	Defer() Builder
+
+	// Go instr
+	Go() Builder
 
 	// DefineFunc instr
 	DefineFunc(fun FuncInfo) Builder
@@ -321,6 +321,8 @@ type Builder interface {
 
 	// SetField() Builder
 	SetField() Builder
+	// Append instr
+	Append(typ reflect.Type, arity int) Builder
 
 	// MapIndex instr
 	MapIndex() Builder
@@ -348,6 +350,9 @@ type Builder interface {
 
 	// Zero instr
 	Zero(typ reflect.Type) Builder
+
+	// New instr
+	New(typ reflect.Type) Builder
 
 	// StartStmt emit a `StartStmt` event.
 	StartStmt(stmt interface{}) interface{}

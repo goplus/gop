@@ -36,4 +36,14 @@ func TestFromTestdata(t *testing.T) {
 	cltest.FromTestdata(t, dir, sel, exclude)
 }
 
+func TestFromTestdata2(t *testing.T) {
+	sel, exclude := "", ""
+	dir, err := os.Getwd()
+	if err != nil {
+		t.Fatal("Getwd failed:", err)
+	}
+	dir = path.Join(dir, "../golang/testdata2")
+	cltest.FromTestdata(t, dir, sel, exclude)
+}
+
 // -----------------------------------------------------------------------------

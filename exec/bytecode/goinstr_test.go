@@ -19,6 +19,8 @@ package bytecode
 import (
 	"reflect"
 	"testing"
+
+	"github.com/goplus/gop/exec.spec"
 )
 
 func TestLargeSlice(t *testing.T) {
@@ -556,6 +558,25 @@ func TestAppend2(t *testing.T) {
 	sliceTy := reflect.SliceOf(TyFloat64)
 	code := newBuilder().
 		Zero(sliceTy).
+		Push(3.2).
+		Push(1.2).
+		Push(2.4).
+		MakeArray(sliceTy, 3).
+		Append(TyFloat64, -1).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); !reflect.DeepEqual(v, []float64{3.2, 1.2, 2.4}) {
+		t.Fatal("ret != [3.2, 1.2, 2.4], ret:", v)
+	}
+}
+
+func TestAppend3(t *testing.T) {
+	sliceTy := reflect.SliceOf(TyFloat64)
+	code := newBuilder().
+		New(sliceTy).
+		AddrOp(reflect.Slice, exec.OpAddrVal).
 		Push(3.2).
 		Push(1.2).
 		Push(2.4).

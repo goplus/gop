@@ -25,6 +25,70 @@ import (
 
 // -----------------------------------------------------------------------------
 
+func TestNew(t *testing.T) {
+	cltest.Expect(t, `
+		a := new([2]int)
+		println("a:", a)
+		`,
+		"a: &[0 0]\n",
+	)
+	cltest.Expect(t, `
+		println(new())
+		`,
+		"",
+		"missing argument to new\n",
+	)
+	cltest.Expect(t, `
+		println(new(int, float64))
+		`,
+		"",
+		"too many arguments to new(int)\n",
+	)
+}
+
+func TestNew2(t *testing.T) {
+	cltest.Expect(t, `
+		a := new([2]int)
+		a[0] = 2
+		println("a:", a[0])
+		`,
+		"a: 2\n",
+	)
+	cltest.Expect(t, `
+		a := new([2]float64)
+		a[0] = 1.1
+		println("a:", a[0])
+		`,
+		"a: 1.1\n",
+	)
+	cltest.Expect(t, `
+		a := new([2]string)
+		a[0] = "gop"
+		println("a:", a[0])
+		`,
+		"a: gop\n",
+	)
+}
+
+func TestBadIndex(t *testing.T) {
+	cltest.Expect(t, `
+		a := new(int)
+		println(a[0])
+		`,
+		"",
+		nil,
+	)
+	cltest.Expect(t, `
+		a := new(int)
+		a[0] = 2
+		`,
+		"",
+		nil,
+	)
+}
+
+// -------------------`----------------------------------------------------------
+
 func TestAutoProperty(t *testing.T) {
 	script := `
 		import "io"
@@ -96,6 +160,40 @@ func TestUnbound(t *testing.T) {
 	)
 }
 
+func TestUnboundInt(t *testing.T) {
+	cltest.Expect(t, `
+	import "reflect"
+	printf("%T",100)
+	`,
+		"int",
+	)
+	cltest.Expect(t, `
+	import "reflect"
+	printf("%T",-100)
+	`,
+		"int",
+	)
+}
+
+func TestOverflowsInt(t *testing.T) {
+	cltest.Expect(t, `
+	println(9223372036854775807)
+	`,
+		"9223372036854775807\n",
+	)
+	cltest.Expect(t, `
+	println(-9223372036854775808)
+	`,
+		"-9223372036854775808\n",
+	)
+	cltest.Expect(t, `
+	println(9223372036854775808)
+	`,
+		"",
+		nil,
+	)
+}
+
 func TestPanic(t *testing.T) {
 	cltest.Expect(t,
 		`panic("Helo")`,
@@ -111,7 +209,50 @@ func TestTypeCast(t *testing.T) {
 	`).Equal([]byte("hello"))
 }
 
+func TestAppendErr(t *testing.T) {
+	cltest.Expect(t, `
+		append()
+		`,
+		"",
+		"append: argument count not enough\n",
+	)
+	cltest.Expect(t, `
+		x := 1
+		append(x, 2)
+		`,
+		"",
+		"append: first argument not a slice\n",
+	)
+	cltest.Expect(t, `
+		defer append([]int{1}, 2)
+		`,
+		"",
+		"defer discards result of append([]int{1}, 2)\n",
+	)
+}
+
+func TestLenErr(t *testing.T) {
+	cltest.Expect(t, `
+		len()
+		`,
+		"",
+		"missing argument to len: len()\n",
+	)
+	cltest.Expect(t, `
+		len("a", "b")
+		`,
+		"",
+		`too many arguments to len: len("a", "b")`+"\n",
+	)
+}
+
 func TestMake(t *testing.T) {
+	cltest.Expect(t, `
+		make()
+		`,
+		"",
+		"missing argument to make: make()\n",
+	)
 	cltest.Expect(t, `
 		a := make([]int, 0, 4)
 		a = append(a, 1, 2, 3)

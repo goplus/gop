@@ -57,6 +57,20 @@ func NewContext(in exec.Code) *Context {
 	return p
 }
 
+// Go starts a new goroutine to run.
+func (ctx *Context) Go(arity int, f func(goctx *Context)) {
+	goctx := &Context{
+		code: ctx.code,
+	}
+	goctx.Init()
+	base := len(ctx.data) - arity
+	parent := ctx.varScope
+	goctx.parent = &parent
+	goctx.data = append(goctx.data, ctx.data[base:]...)
+	ctx.data = ctx.data[:base]
+	go f(goctx)
+}
+
 // CloneSetVarScope clone already set varScope to new context
 func (ctx *Context) CloneSetVarScope(new *Context) {
 	if !ctx.vars.IsValid() {
@@ -225,6 +239,7 @@ var _execTable = [...]func(i Instr, p *Context){
 	opErrWrap:       execErrWrap,
 	opWrapIfErr:     execWrapIfErr,
 	opDefer:         execDefer,
+	opGo:            execGo,
 	opStruct:        execStruct,
 	opCallField:     execCallField,
 	opSetField:      execSetField,

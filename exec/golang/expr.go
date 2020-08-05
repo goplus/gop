@@ -366,13 +366,19 @@ func (p *Builder) Call(narg int, ellipsis bool, args ...ast.Expr) *Builder {
 	if ellipsis {
 		expr.Ellipsis++
 	}
-	if p.inDefer {
-		p.inDefer = false
-		p.rhs.Push(&ast.DeferStmt{
-			Call: expr,
-		})
-	} else {
+	if ct := p.inDeferOrGo; ct == callExpr {
 		p.rhs.Push(expr)
+	} else {
+		p.inDeferOrGo = callExpr
+		if ct == callByDefer {
+			p.rhs.Push(&ast.DeferStmt{
+				Call: expr,
+			})
+		} else {
+			p.rhs.Push(&ast.GoStmt{
+				Call: expr,
+			})
+		}
 	}
 	return p
 }
@@ -453,6 +459,13 @@ func (p *Builder) Append(typ reflect.Type, arity int) *Builder {
 		arity = 2
 	}
 	p.Call(arity, ellipsis)
+	return p
+}
+
+// New instr
+func (p *Builder) New(typ reflect.Type) *Builder {
+	p.rhs.Push(newIdent)
+	p.Call(0, false, Type(p, typ))
 	return p
 }
 
