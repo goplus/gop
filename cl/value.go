@@ -372,16 +372,19 @@ func kindOf(t reflect.Type) exec.Kind {
 	return kind
 }
 
-func isOverflowsIntByInt64(v int64) bool {
-	if strconv.IntSize == 32 {
+const (
+	intSize = strconv.IntSize
+)
+
+func isOverflowsIntByInt64(v int64, intSize int) bool {
+	if intSize == 32 {
 		return v < int64(math.MinInt32) || v > int64(math.MaxInt32)
-	} else {
-		return v < int64(math.MinInt64) || v > int64(math.MaxInt64)
 	}
+	return false
 }
 
-func isOverflowsIntByUint64(v uint64) bool {
-	if strconv.IntSize == 32 {
+func isOverflowsIntByUint64(v uint64, intSize int) bool {
+	if intSize == 32 {
 		return v > uint64(math.MaxInt32)
 	} else {
 		return v > uint64(math.MaxInt64)
@@ -405,13 +408,13 @@ func boundConst(v interface{}, t reflect.Type) interface{} {
 		skind := sval.Kind()
 		if skind == reflect.Uint64 {
 			v := sval.Uint()
-			if isOverflowsIntByUint64(v) {
+			if isOverflowsIntByUint64(v, intSize) {
 				log.Panicf("constant %v overflows int\n", v)
 			}
 			return int(v)
 		} else if skind == reflect.Int64 {
 			v := sval.Int()
-			if isOverflowsIntByInt64(v) {
+			if isOverflowsIntByInt64(v, intSize) {
 				log.Panicf("constant %v overflows int\n", v)
 			}
 			return int(v)
