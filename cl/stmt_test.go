@@ -487,6 +487,16 @@ var testNormalForClauses = map[string]testData{
 					}
 					println(sum)
 					`, "4\n", false},
+	"for_without_cond": {`
+					for ; ; {
+						println("without_cond")	
+						break
+					}
+					for {
+						println("without_cond")	
+						break
+					}
+					`, "without_cond\nwithout_cond\n", false},
 	"for_with_init_cond": {`
 					arr := [1,3,5,7]
 					sum := 0
