@@ -36,8 +36,8 @@ func execLoadField(i Instr, p *Context) {
 		field = field.Elem()
 	}
 
-	field.FieldByName(name.(string))
-	p.Push(field.Interface())
+	f := field.FieldByName(name.(string))
+	p.Push(f.Interface())
 }
 
 func execStore(i Instr, p *Context) {

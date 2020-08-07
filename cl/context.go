@@ -471,7 +471,6 @@ func (p *blockCtx) insertMethod(recv astutil.RecvInfo, methodName string, ftyp *
 	}
 
 	m := typ.Type.Type().String() + methodName
-
 	if p.exists(m) {
 		log.Panicln("insertMethod failed: symbol exists -", m)
 	}

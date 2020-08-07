@@ -92,7 +92,7 @@ type Builder struct {
 	lhs, rhs    exec.Stack
 	out         *Code                    // golang code
 	pkgName     string                   // package name
-	types       map[reflect.Type]*GoType // pkgPath => aliasName
+	types       map[reflect.Type]*GoType // type => gotype
 	imports     map[string]string        // pkgPath => aliasName
 	importPaths map[string]string        // aliasName => pkgPath
 	gblScope    scopeCtx                 // global scope
@@ -213,8 +213,12 @@ func (p *Builder) resolveTypes() *ast.GenDecl {
 	specs := make([]ast.Spec, 0, n)
 	for _, t := range p.types {
 		fieldList := &ast.FieldList{}
-		for i := 0; i < t.Type().NumField(); i++ {
-			field := t.Type().Field(i)
+		typ := t.Type()
+		if typ.Kind() == reflect.Ptr {
+			typ = typ.Elem()
+		}
+		for i := 0; i < typ.NumField(); i++ {
+			field := typ.Field(i)
 			fieldList.List = append(fieldList.List, &ast.Field{
 				Names: []*ast.Ident{Ident(field.Name)},
 				Type:  Type(p, field.Type),

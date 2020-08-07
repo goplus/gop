@@ -217,17 +217,3 @@ func execOpCopy(i Instr, stk *Context) {
 	}
 	stk.Ret(1, v.Interface())
 }
-
-// func execCallField(i Instr, stk *Context) {
-// 	args := stk.GetArgs(2)
-// 	p := args[0]
-// 	field := args[1]
-// 	v := reflect.ValueOf(p)
-// 	f := field.(string)
-
-// 	if v.Kind() == reflect.Ptr {
-// 		v = v.Elem()
-// 	}
-// 	v = reflect.Indirect(v).FieldByName(f)
-// 	stk.Push(v.Interface())
-// }

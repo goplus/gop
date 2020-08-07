@@ -215,6 +215,8 @@ const (
 	SymFunc
 	// SymType - symbol is a type
 	SymType
+	// SymMethod - symbol is a method
+	SymMethod
 )
 
 // Find lookups a symbol and returns it's kind and the object instance.
@@ -230,7 +232,7 @@ func (p *Package) Find(name string) (kind SymKind, v interface{}, ok bool) {
 	case *typeDecl:
 		kind = SymType
 	case *methodDecl:
-		kind = SymFunc
+		kind = SymMethod
 	default:
 		log.Panicln("Package.Find: unknown symbol type -", reflect.TypeOf(v))
 	}

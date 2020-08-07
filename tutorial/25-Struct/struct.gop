@@ -1,11 +1,9 @@
 type Person struct {
-	Name    string
-	Age     int
-	Friends []string
+	Name string
+	Age  int
 }
 
-func (p *Person) SetName(name string, age int) {
-	p.Age = age
+func (p *Person) SetName(name string) {
 	p.Name = name
 }
 
@@ -14,9 +12,6 @@ p := &Person{
 	Age:  30,
 }
 
-p.Name, p.Age = "bar2", 31
-println(p)
+p.SetName("foo")
 
-p.SetName("foo", 33)
-
-println(p)
+println(p.Name)

@@ -406,35 +406,6 @@ func (p *Builder) CallGoFuncv(fun exec.GoFuncvAddr, nexpr, arity int) *Builder {
 	return p.Call(nexpr, arity == -1)
 }
 
-// CallField instr
-// func (p *Builder) CallField() *Builder {
-// 	args := p.rhs.GetArgs(2)
-
-// 	ret := &ast.SelectorExpr{
-// 		X:   args[0].(ast.Expr),
-// 		Sel: toField(args[1].(ast.Expr)),
-// 	}
-
-// 	p.rhs.Ret(2, ret)
-// 	return p
-// }
-
-// SetField instr
-func (p *Builder) SetField() *Builder {
-	args := p.rhs.GetArgs(3)
-	var lhs []interface{}
-	var rhs []interface{}
-	lhs = append(lhs, &ast.SelectorExpr{
-		X:   args[1].(ast.Expr),
-		Sel: toField(args[2].(ast.Expr)),
-	})
-	rhs = append(rhs, args[0].(ast.Expr))
-
-	p.lhs.Ret(0, lhs...)
-	p.rhs.Ret(3, rhs...)
-	return p
-}
-
 var builtinFnvs = map[string][2]string{
 	"errorf":  {"fmt", "Errorf"},
 	"print":   {"fmt", "Print"},

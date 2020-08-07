@@ -785,6 +785,68 @@ var testStructClauses = map[string]testData{
 
 
 					`, "bar\n", false},
+	"method ptr struct no prt": {`
+					type Person struct {
+						Name string ` + "`json:\"name\"`" + `
+						Age  int
+					}
+
+					func (p *Person) PrintName() {
+						println(p.Name)
+					}
+					
+					p := Person{
+						Name: "bar",
+						Age:  30,
+					}
+					
+					p.PrintName()
+
+
+					`, "bar\n", false},
+
+	"method load field": {`
+					type Person struct {
+						Name string
+						Age  int
+					}
+
+					func (p *Person) SetName(name string,age int) {
+						p.Name = name
+						p.Age = age
+						println(name)
+						println(p.Age)
+					}
+					
+					p := Person{
+						Name: "bar",
+						Age:  30,
+					}
+					
+					p.SetName("foo",31)
+
+
+					`, "foo\n31\n", false},
+	"method recv is not ptr": {`
+					type Person struct {
+						Name string
+						Age  int
+					}
+
+					func (p Person) SetName(name string,age int) {
+						p.Name = name
+						p.Age = age
+					}
+					
+					p := &Person{
+						Name: "bar",
+						Age:  30,
+					}
+					
+					p.SetName("foo",31)
+					println(p)
+
+					`, "&{bar 30}\n", false},
 }
 
 func TestStruct(t *testing.T) {

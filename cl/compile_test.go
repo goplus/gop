@@ -281,10 +281,26 @@ func TestType(t *testing.T) {
 
 	bar := pkgs["main"]
 	b := exec.NewBuilder(nil)
-	_, err = NewPackage(b.Interface(), bar, fset, PkgActClMain)
+	pkg, err := NewPackage(b.Interface(), bar, fset, PkgActClMain)
 	if err != nil {
 		t.Fatal("Compile failed:", err)
 	}
+
+	kind, _, ok := pkg.Find("Person")
+	if !ok {
+		t.Fatal("pkg.Find failed: ReverseMap not found")
+	}
+	if kind != SymType {
+		t.Fatal("pkg.Find failed: kind != SymType")
+	}
+	kind, _, ok = pkg.Find("struct { Name string; Age int }GetName")
+	if !ok {
+		t.Fatal("pkg.Find failed: ReverseMap not found")
+	}
+	if kind != SymMethod {
+		t.Fatal("pkg.Find failed: kind != SymType")
+	}
+
 	code := b.Resolve()
 
 	ctx := exec.NewContext(code)

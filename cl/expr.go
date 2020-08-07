@@ -162,14 +162,12 @@ func compileIdent(ctx *blockCtx, name string) func() {
 					ctx.out.AddrVar(v.v)
 				} else if ctx.takeAddr {
 					ctx.out.AddrVar(v.v)
+				} else if ctx.setField {
+					ctx.out.StoreVarField(v.v)
+				} else if ctx.takeField {
+					ctx.out.LoadVarField(v.v)
 				} else {
-					if ctx.takeField {
-						ctx.out.LoadVarField(v.v)
-					} else if ctx.setField {
-						ctx.out.StoreVarField(v.v)
-					} else {
-						ctx.out.LoadVar(v.v)
-					}
+					ctx.out.LoadVar(v.v)
 				}
 			}
 		case *stackVar:
@@ -866,7 +864,7 @@ func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) func() { // x[i:j:k]
 	typ := x.(iValue).Type()
 	if kind = typ.Kind(); kind == reflect.Array {
 		typ = reflect.SliceOf(typ.Elem())
-		ctx.infer.Ret(1, &goValue{t: typ})
+		ctx.infer.Ret(1, &goValue{typ})
 	}
 	return func() {
 		ctx.checkArrayAddr = true
@@ -931,7 +929,7 @@ func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr) func() { // x[i]
 	} else {
 		typElem = typ.Elem()
 	}
-	ctx.infer.Ret(1, &goValue{t: typElem})
+	ctx.infer.Ret(1, &goValue{typElem})
 	return func() {
 		exprX()
 		switch kind {

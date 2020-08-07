@@ -15,6 +15,12 @@
 */
 package bytecode
 
+import (
+	"os"
+	"reflect"
+	"testing"
+)
+
 // -----------------------------------------------------------------------------
 
 type Person struct {
@@ -22,88 +28,84 @@ type Person struct {
 	Age  int
 }
 
-// func TestStruct(t *testing.T) {
-// 	println, ok := I.FindFuncv("Println")
-// 	if !ok {
-// 		t.Fatal("FindFuncv failed: Println")
-// 	}
+func TestStruct(t *testing.T) {
+	println, ok := I.FindFuncv("Println")
+	if !ok {
+		t.Fatal("FindFuncv failed: Println")
+	}
 
-// 	b := newBuilder()
-// 	p := &Person{
-// 		Name: "bar",
-// 		Age:  30,
-// 	}
+	b := newBuilder()
+	p := &Person{
+		Name: "bar",
+		Age:  30,
+	}
 
-// 	v := NewVar(reflect.TypeOf(p), "p")
-// 	expect(t,
-// 		func() {
-// 			b.DefineVar(v)
-// 			b.Push("Name")
-// 			b.Push("bar")
-// 			b.Push("Age")
-// 			b.Push(30)
-// 			b.Struct(reflect.TypeOf(p), 2)
-// 			b.StoreVar(v)
-// 			b.LoadVar(v)
-// 			b.CallGoFuncv(println, 1, 1)
-// 			b.Push("foo")
-// 			b.LoadVar(v)
-// 			b.Push("Name")
-// 			b.SetField()
-// 			b.LoadVar(v)
-// 			b.CallGoFuncv(println, 1, 1)
-// 			b.LoadVar(v)
-// 			b.Push("Name")
-// 			b.CallField()
-// 			b.CallGoFuncv(println, 1, 1)
-// 			code := b.Resolve()
-// 			code.(*Code).Dump(os.Stderr)
-// 			ctx := NewContext(code)
-// 			ctx.Exec(0, code.Len())
-// 		},
-// 		"&{bar 30}\n&{foo 30}\nfoo\n",
-// 	)
-// }
+	v := NewVar(reflect.TypeOf(p), "p")
+	expect(t,
+		func() {
+			b.DefineVar(v)
+			b.Push("Name")
+			b.Push("bar")
+			b.Push("Age")
+			b.Push(30)
+			b.Struct(reflect.TypeOf(p), 2)
+			b.StoreVar(v)
+			b.LoadVar(v)
+			b.CallGoFuncv(println, 1, 1)
+			b.Push("foo")
+			b.Push("Name")
+			b.StoreVarField(v)
+			b.LoadVar(v)
+			b.CallGoFuncv(println, 1, 1)
+			b.Push("Name")
+			b.LoadVarField(v)
+			b.CallGoFuncv(println, 1, 1)
+			code := b.Resolve()
+			code.(*Code).Dump(os.Stderr)
+			ctx := NewContext(code)
+			ctx.Exec(0, code.Len())
+		},
+		"&{bar 30}\n&{foo 30}\nfoo\n",
+	)
+}
 
-// func TestStruct2(t *testing.T) {
-// 	println, ok := I.FindFuncv("Println")
-// 	if !ok {
-// 		t.Fatal("FindFuncv failed: Println")
-// 	}
+func TestStruct2(t *testing.T) {
+	println, ok := I.FindFuncv("Println")
+	if !ok {
+		t.Fatal("FindFuncv failed: Println")
+	}
 
-// 	b := newBuilder()
-// 	p := Person{
-// 		Name: "bar",
-// 		Age:  30,
-// 	}
+	b := newBuilder()
+	p := Person{
+		Name: "bar",
+		Age:  30,
+	}
 
-// 	v := NewVar(reflect.TypeOf(p), "p")
-// 	expect(t,
-// 		func() {
-// 			b.DefineVar(v)
-// 			b.Push("Name")
-// 			b.Push("bar")
-// 			b.Push("Age")
-// 			b.Push(30)
-// 			b.Struct(reflect.TypeOf(p), 2)
-// 			b.StoreVar(v)
-// 			b.LoadVar(v)
-// 			b.CallGoFuncv(println, 1, 1)
-// 			b.Push("foo")
-// 			b.LoadVar(v)
-// 			b.Push("Name")
-// 			b.SetField()
-// 			b.LoadVar(v)
-// 			b.CallGoFuncv(println, 1, 1)
-// 			b.LoadVar(v)
-// 			b.Push("Name")
-// 			b.CallField()
-// 			b.CallGoFuncv(println, 1, 1)
-// 			code := b.Resolve()
-// 			code.(*Code).Dump(os.Stderr)
-// 			ctx := NewContext(code)
-// 			ctx.Exec(0, code.Len())
-// 		},
-// 		"{bar 30}\n{bar 30}\nbar\n",
-// 	)
-// }
+	v := NewVar(reflect.TypeOf(p), "p")
+	expect(t,
+		func() {
+			b.DefineVar(v)
+			b.Push("Name")
+			b.Push("bar")
+			b.Push("Age")
+			b.Push(30)
+			b.Struct(reflect.TypeOf(p), 2)
+			b.StoreVar(v)
+			b.LoadVar(v)
+			b.CallGoFuncv(println, 1, 1)
+			b.Push("foo")
+			b.Push("Name")
+			b.StoreVarField(v)
+			b.LoadVar(v)
+			b.CallGoFuncv(println, 1, 1)
+			b.Push("Name")
+			b.LoadVarField(v)
+			b.CallGoFuncv(println, 1, 1)
+			code := b.Resolve()
+			code.(*Code).Dump(os.Stderr)
+			ctx := NewContext(code)
+			ctx.Exec(0, code.Len())
+		},
+		"{bar 30}\n{foo 30}\nfoo\n",
+	)
+}

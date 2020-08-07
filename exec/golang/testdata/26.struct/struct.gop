@@ -6,6 +6,12 @@ type Person struct {
 
 func (p *Person) SetName(name string) {
 	p.Name = name
+	println(p.Name)
+}
+
+func (p Person) SetAge(age int) {
+	p.Age = age
+	println(p.Age)
 }
 
 p := &Person{
@@ -13,8 +19,10 @@ p := &Person{
 	Age:  30,
 }
 
-p.Name = "bar2"
+p.Name, p.Age = "bar2", 31
 
 p.SetName("foo")
+p.SetAge(31)
 
 println(p.Name)
+println(p.Age)
