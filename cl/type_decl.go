@@ -256,7 +256,7 @@ func toIdentType(ctx *blockCtx, ident string) iType {
 		log.Panicln("toIdentType failed: findType error", err)
 		return nil
 	}
-	return typ.Type
+	return typ.Type.Type()
 }
 
 func toArrayType(ctx *blockCtx, v *ast.ArrayType) iType {
@@ -336,7 +336,7 @@ func buildField(ctx *blockCtx, field *ast.Field, anonymous bool, fieldName strin
 
 type typeDecl struct {
 	Methods map[string]*methodDecl
-	Type    reflect.Type
+	Type    exec.Type
 	Name    string
 	Alias   bool
 }

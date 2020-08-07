@@ -94,8 +94,25 @@ func (ctx *varScope) getVar(idx uint32) interface{} {
 	return ctx.vars.Field(int(idx)).Interface()
 }
 
+func (ctx *varScope) getVarFieldByName(idx uint32, name string) interface{} {
+	if ctx.vars.Field(int(idx)).Kind() == reflect.Ptr {
+		return ctx.vars.Field(int(idx)).Elem().FieldByName(name).Interface()
+	}
+	return ctx.vars.Field(int(idx)).FieldByName(name).Interface()
+}
+
 func (ctx *varScope) setVar(idx uint32, v interface{}) {
 	x := ctx.vars.Field(int(idx))
+	setValue(x, v)
+}
+
+func (ctx *varScope) setVarFieldByName(idx uint32, name string, v interface{}) {
+	field := ctx.vars.Field(int(idx))
+	if field.Kind() == reflect.Ptr {
+		field = field.Elem()
+	}
+	x := field.FieldByName(name)
+
 	setValue(x, v)
 }
 
@@ -187,48 +204,30 @@ func makeStruct(typStruct reflect.Type, arity int, p *Context) {
 	}
 }
 
-func (p *Builder) SetField() *Builder {
-	p.code.data = append(p.code.data, opSetField<<bitsOpShift)
+func (p *Builder) Copy() *Builder {
+	p.code.data = append(p.code.data, opCopy<<bitsOpShift)
 	return p
 }
 
-func execSetField(i Instr, stk *Context) {
-	args := stk.GetArgs(3)
-	d := args[0]
-	p := args[1]
-	field := args[2]
-	v := reflect.ValueOf(p)
-	f := field.(string)
-
-	if v.Kind() == reflect.Ptr {
-		v.Elem().FieldByName(f).Set(reflect.ValueOf(d))
-	} else {
-		t := reflect.TypeOf(p)
-		v2 := reflect.New(t).Elem()
-		v2.Set(v)
-		v2.FieldByName(f).Set(reflect.ValueOf(d))
-		v = v2
-	}
-
-	stk.PopN(3)
-	stk.Push(v.Interface())
-}
-
-func (p *Builder) CallField() *Builder {
-	p.code.data = append(p.code.data, opCallField<<bitsOpShift)
-	return p
-}
-
-func execCallField(i Instr, stk *Context) {
-	args := stk.GetArgs(2)
-	p := args[0]
-	field := args[1]
-	v := reflect.ValueOf(p)
-	f := field.(string)
-
+func execOpCopy(i Instr, stk *Context) {
+	args := stk.GetArgs(1)
+	v := reflect.ValueOf(args[0])
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
-	v = reflect.Indirect(v).FieldByName(f)
-	stk.Push(v.Interface())
+	stk.Ret(1, v.Interface())
 }
+
+// func execCallField(i Instr, stk *Context) {
+// 	args := stk.GetArgs(2)
+// 	p := args[0]
+// 	field := args[1]
+// 	v := reflect.ValueOf(p)
+// 	f := field.(string)
+
+// 	if v.Kind() == reflect.Ptr {
+// 		v = v.Elem()
+// 	}
+// 	v = reflect.Indirect(v).FieldByName(f)
+// 	stk.Push(v.Interface())
+// }

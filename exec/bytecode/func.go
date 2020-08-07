@@ -28,9 +28,46 @@ func execLoad(i Instr, p *Context) {
 	p.Push(p.data[p.base+int(idx)])
 }
 
+func execLoadField(i Instr, p *Context) {
+	idx := int32(i) << bitsOp >> bitsOp
+	name := p.Pop()
+	field := reflect.ValueOf(p.data[p.base+int(idx)])
+	if field.Kind() == reflect.Ptr {
+		field = field.Elem()
+	}
+
+	field.FieldByName(name.(string))
+	p.Push(field.Interface())
+}
+
 func execStore(i Instr, p *Context) {
 	idx := int32(i) << bitsOp >> bitsOp
 	p.data[p.base+int(idx)] = p.Pop()
+}
+
+func execStoreField(i Instr, p *Context) {
+	idx := int32(i) << bitsOp >> bitsOp
+	args := p.GetArgs(2)
+	val := args[0]
+	name := args[1]
+	v := reflect.ValueOf(p.data[p.base+int(idx)])
+	var ptr bool
+	if v.Kind() == reflect.Ptr {
+		ptr = true
+		v = v.Elem()
+	}
+	if ptr {
+		v.FieldByName(name.(string)).Set(reflect.ValueOf(val))
+		p.data[p.base+int(idx)] = v.Addr().Interface()
+	} else {
+		t := v.Type()
+		v2 := reflect.New(t).Elem()
+		v2.Set(v)
+		v2.FieldByName(name.(string)).Set(reflect.ValueOf(val))
+		v = v2
+		p.data[p.base+int(idx)] = v.Interface()
+	}
+	p.PopN(2)
 }
 
 const (
@@ -473,9 +510,21 @@ func (p *Builder) Load(idx int32) *Builder {
 	return p
 }
 
+// Load instr
+func (p *Builder) LoadField(idx int32) *Builder {
+	p.code.data = append(p.code.data, (opLoadField<<bitsOpShift)|(uint32(idx)&bitsOperand))
+	return p
+}
+
 // Store instr
 func (p *Builder) Store(idx int32) *Builder {
 	p.code.data = append(p.code.data, (opStore<<bitsOpShift)|(uint32(idx)&bitsOperand))
+	return p
+}
+
+// Store instr
+func (p *Builder) StoreField(idx int32) *Builder {
+	p.code.data = append(p.code.data, (opStoreField<<bitsOpShift)|(uint32(idx)&bitsOperand))
 	return p
 }
 

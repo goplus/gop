@@ -212,6 +212,8 @@ type blockCtx struct {
 	syms           map[string]iSymbol
 	noExecCtx      bool
 	takeAddr       bool
+	takeField      bool
+	setField       bool
 	checkFlag      bool
 	checkArrayAddr bool
 }
@@ -451,7 +453,7 @@ func (p *blockCtx) insertMethod(recv astutil.RecvInfo, methodName string, ftyp *
 		log.Panicln("insertMethod failed: alias?")
 	}
 
-	var t reflect.Type = typ.Type
+	var t reflect.Type = typ.Type.Type()
 	pointer := recv.Pointer
 	for pointer > 0 {
 		t = reflect.PtrTo(t)
@@ -468,7 +470,7 @@ func (p *blockCtx) insertMethod(recv astutil.RecvInfo, methodName string, ftyp *
 		typ.Methods[methodName] = method
 	}
 
-	m := t.String() + methodName
+	m := typ.Type.Type().String() + methodName
 
 	if p.exists(m) {
 		log.Panicln("insertMethod failed: symbol exists -", m)

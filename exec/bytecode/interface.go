@@ -270,15 +270,33 @@ func (p *iBuilder) Load(idx int32) exec.Builder {
 	return p
 }
 
+// Load instr
+func (p *iBuilder) LoadField(idx int32) exec.Builder {
+	((*Builder)(p)).LoadField(idx)
+	return p
+}
+
 // Store instr
 func (p *iBuilder) Store(idx int32) exec.Builder {
 	((*Builder)(p)).Store(idx)
 	return p
 }
 
+// Store instr
+func (p *iBuilder) StoreField(idx int32) exec.Builder {
+	((*Builder)(p)).StoreField(idx)
+	return p
+}
+
 // EndFunc instr
 func (p *iBuilder) EndFunc(fun exec.FuncInfo) exec.Builder {
 	((*Builder)(p)).EndFunc((*FuncInfo)(fun.(*iFuncInfo)))
+	return p
+}
+
+// DefineType name string,reflect.Typeinstr
+func (p *iBuilder) DefineType(typ exec.Type) exec.Builder {
+	((*Builder)(p)).DefineType(typ)
 	return p
 }
 
@@ -299,9 +317,21 @@ func (p *iBuilder) LoadVar(v exec.Var) exec.Builder {
 	return p
 }
 
+// LoadVarField instr
+func (p *iBuilder) LoadVarField(v exec.Var) exec.Builder {
+	((*Builder)(p)).LoadVarField(v.(*Var))
+	return p
+}
+
 // StoreVar instr
 func (p *iBuilder) StoreVar(v exec.Var) exec.Builder {
 	((*Builder)(p)).StoreVar(v.(*Var))
+	return p
+}
+
+// StoreVar instr
+func (p *iBuilder) StoreVarField(v exec.Var) exec.Builder {
+	((*Builder)(p)).StoreVarField(v.(*Var))
 	return p
 }
 
@@ -311,11 +341,11 @@ func (p *iBuilder) AddrVar(v exec.Var) exec.Builder {
 	return p
 }
 
-// StoreVar instr
-func (p *iBuilder) CallField() exec.Builder {
-	((*Builder)(p)).CallField()
-	return p
-}
+// // StoreVar instr
+// func (p *iBuilder) LoadVarField(v exec.Var) exec.Builder {
+// 	((*Builder)(p)).LoadVarField(v.(*Var))
+// 	return p
+// }
 
 // LoadGoVar instr
 func (p *iBuilder) LoadGoVar(addr GoVarAddr) exec.Builder {
@@ -338,12 +368,6 @@ func (p *iBuilder) AddrGoVar(addr GoVarAddr) exec.Builder {
 // AddrOp instr
 func (p *iBuilder) AddrOp(kind exec.Kind, op exec.AddrOperator) exec.Builder {
 	((*Builder)(p)).AddrOp(kind, op)
-	return p
-}
-
-// SetField instr
-func (p *iBuilder) SetField() exec.Builder {
-	((*Builder)(p)).SetField()
 	return p
 }
 
@@ -440,6 +464,12 @@ func (p *iBuilder) Zero(typ reflect.Type) exec.Builder {
 // New instr
 func (p *iBuilder) New(typ reflect.Type) exec.Builder {
 	((*Builder)(p)).New(typ)
+	return p
+}
+
+// Copy instr
+func (p *iBuilder) Copy() exec.Builder {
+	((*Builder)(p)).Copy()
 	return p
 }
 

@@ -4,9 +4,17 @@ type Person struct {
 	Friends []string
 }
 
+func (p *Person) SetName(name string) {
+	p.Name = name
+}
+
 p := &Person{
 	Name: "bar",
 	Age:  30,
 }
 
-println(p)
+p.Name = "bar2"
+
+p.SetName("foo")
+
+println(p.Name)

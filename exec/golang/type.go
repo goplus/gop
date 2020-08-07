@@ -20,23 +20,23 @@ import (
 	"go/ast"
 	"go/token"
 	"reflect"
+	"strings"
 
+	"github.com/goplus/gop/exec.spec"
 	"github.com/qiniu/x/log"
 )
 
 // -----------------------------------------------------------------------------
 
 // StructType instr
-func StructType(p *Builder, typ reflect.Type) *ast.StructType {
-	fieldList := &ast.FieldList{}
-	for i := 0; i < typ.NumField(); i++ {
-		field := typ.Field(i)
-		fieldList.List = append(fieldList.List, &ast.Field{
-			Names: []*ast.Ident{Ident(field.Name)},
-			Type:  Type(p, field.Type),
-		})
+func StructType(p *Builder, typ reflect.Type) ast.Expr {
+	if typ.Kind() == reflect.Ptr {
+		return &ast.StarExpr{
+			X: Ident(p.types[typ].Name()),
+		}
+	} else {
+		return Ident(p.types[typ].Name())
 	}
-	return &ast.StructType{Fields: fieldList}
 }
 
 // MapType instr
@@ -160,3 +160,34 @@ func Type(p *Builder, typ reflect.Type) ast.Expr {
 }
 
 // -----------------------------------------------------------------------------
+
+type GoType struct {
+	name string
+	typ  reflect.Type
+}
+
+func NewType(typ reflect.Type, name string) *GoType {
+	return &GoType{
+		name: name,
+		typ:  typ,
+	}
+}
+
+// DefineVar defines types.
+func (p *Builder) DefineType(typ exec.Type) *Builder {
+	p.types[typ.Type()] = typ.(*GoType)
+	return p
+}
+
+func (p *GoType) Type() reflect.Type {
+	return p.typ
+}
+
+// IsUnnamedOut returns if variable unnamed or not.
+func (p *GoType) IsUnnamedOut() bool {
+	return strings.HasPrefix(p.name, "_ret_")
+}
+
+func (p *GoType) Name() string {
+	return p.name
+}

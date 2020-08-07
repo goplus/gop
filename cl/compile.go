@@ -296,9 +296,13 @@ func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
 		log.Panicln("loadType failed: symbol exists -", spec.Name.Name)
 	}
 	t := toType(ctx, spec.Type).(reflect.Type)
+
+	typ := ctx.NewType(t, spec.Name.Name)
+	ctx.out.DefineType(typ)
+
 	ctx.syms[spec.Name.Name] = &typeDecl{
 		Name: spec.Name.Name,
-		Type: t,
+		Type: typ,
 	}
 }
 

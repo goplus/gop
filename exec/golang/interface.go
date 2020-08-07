@@ -38,6 +38,11 @@ func (p *interfaceImpl) NewVar(typ reflect.Type, name string) exec.Var {
 	return NewVar(typ, name)
 }
 
+// NewType creates a type instance.
+func (p *interfaceImpl) NewType(typ reflect.Type, name string) exec.Type {
+	return NewType(typ, name)
+}
+
 // NewLabel creates a label object.
 func (p *interfaceImpl) NewLabel(name string) exec.Label {
 	return NewLabel(name)
@@ -270,15 +275,27 @@ func (p *iBuilder) CallGoFuncv(fun exec.GoFuncvAddr, nexpr, arity int) exec.Buil
 	return p
 }
 
-// CallField instr
-func (p *iBuilder) CallField() exec.Builder {
-	((*Builder)(p)).CallField()
+// LoadVarField instr
+func (p *iBuilder) LoadVarField(v exec.Var) exec.Builder {
+	((*Builder)(p)).LoadVarField(v)
 	return p
 }
 
-// SetField instr
-func (p *iBuilder) SetField() exec.Builder {
-	((*Builder)(p)).SetField()
+// StoreVarField instr
+func (p *iBuilder) StoreVarField(v exec.Var) exec.Builder {
+	((*Builder)(p)).StoreVarField(v)
+	return p
+}
+
+// LoadField instr
+func (p *iBuilder) LoadField(idx int32) exec.Builder {
+	((*Builder)(p)).LoadField(idx)
+	return p
+}
+
+// StoreField instr
+func (p *iBuilder) StoreField(idx int32) exec.Builder {
+	((*Builder)(p)).StoreField(idx)
 	return p
 }
 
@@ -315,6 +332,12 @@ func (p *iBuilder) EndFunc(fun exec.FuncInfo) exec.Builder {
 // DefineVar defines variables.
 func (p *iBuilder) DefineVar(vars ...exec.Var) exec.Builder {
 	((*Builder)(p)).DefineVar(vars...)
+	return p
+}
+
+// DefineType defines variables.
+func (p *iBuilder) DefineType(typ exec.Type) exec.Builder {
+	((*Builder)(p)).DefineType(typ)
 	return p
 }
 
@@ -446,6 +469,12 @@ func (p *iBuilder) TypeCast(from, to reflect.Type) exec.Builder {
 // GoBuiltin instr
 func (p *iBuilder) GoBuiltin(typ reflect.Type, op exec.GoBuiltin) exec.Builder {
 	((*Builder)(p)).GoBuiltin(typ, op)
+	return p
+}
+
+// New instr
+func (p *iBuilder) Copy() exec.Builder {
+	((*Builder)(p)).Copy()
 	return p
 }
 

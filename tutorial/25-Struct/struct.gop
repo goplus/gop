@@ -5,16 +5,18 @@ type Person struct {
 }
 
 func (p *Person) SetName(name string, age int) {
-	p.Name = name
 	p.Age = age
+	p.Name = name
 }
 
 p := &Person{
-	Name:    "bar",
-	Age:     30,
-	Friends: []string{"a", "b", "c"},
+	Name: "bar",
+	Age:  30,
 }
 
-p.SetName("foo", 31)
+p.Name, p.Age = "bar2", 31
+println(p)
+
+p.SetName("foo", 33)
 
 println(p)

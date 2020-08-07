@@ -37,6 +37,17 @@ type Var interface {
 	IsUnnamedOut() bool
 }
 
+type Type interface {
+	// Name returns the type name.
+	Name() string
+
+	// Type returns the type.
+	Type() reflect.Type
+
+	// IsUnnamedOut returns if variable unnamed or not.
+	IsUnnamedOut() bool
+}
+
 // Label represents a label.
 type Label interface {
 	// Name returns the label name.
@@ -316,11 +327,18 @@ type Builder interface {
 	// Val instr
 	Struct(typ reflect.Type, arity int) Builder
 
-	// StructField instr
-	CallField() Builder
+	// LoadVarField instr
+	LoadVarField(v Var) Builder
 
-	// SetField() Builder
-	SetField() Builder
+	// LoadField instr
+	LoadField(idx int32) Builder
+
+	// StoreVarField Builder
+	StoreVarField(v Var) Builder
+
+	// StoreField Builder
+	StoreField(idx int32) Builder
+
 	// Append instr
 	Append(typ reflect.Type, arity int) Builder
 
@@ -354,6 +372,9 @@ type Builder interface {
 	// New instr
 	New(typ reflect.Type) Builder
 
+	// Copy instr
+	Copy() Builder
+
 	// StartStmt emit a `StartStmt` event.
 	StartStmt(stmt interface{}) interface{}
 
@@ -375,6 +396,9 @@ type Builder interface {
 	// DefineBlock instr
 	DefineBlock() Builder
 
+	// DefineType name string,reflect.Typeinstr
+	DefineType(Type) Builder
+
 	// EndBlock instr
 	EndBlock() Builder
 }
@@ -383,6 +407,9 @@ type Builder interface {
 type Package interface {
 	// NewVar creates a variable instance.
 	NewVar(typ reflect.Type, name string) Var
+
+	// NewType creates a variable instance.
+	NewType(typ reflect.Type, name string) Type
 
 	// NewLabel creates a label object.
 	NewLabel(name string) Label

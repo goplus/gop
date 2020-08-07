@@ -39,6 +39,11 @@ func (p *Package) NewVar(typ reflect.Type, name string) exec.Var {
 	return NewVar(typ, name)
 }
 
+// NewType creates a variable instance.
+func (p *Package) NewType(typ reflect.Type, name string) exec.Type {
+	return NewType(typ, name)
+}
+
 // NewLabel creates a label object.
 func (p *Package) NewLabel(name string) exec.Label {
 	return NewLabel(name)

@@ -126,6 +126,26 @@ func (p *Builder) InCurrentCtx(v exec.Var) bool {
 	return p.scopeCtx == v.(*Var).where
 }
 
+// LoadField instr
+func (p *Builder) LoadField(idx int32) *Builder {
+	name := p.rhs.Pop()
+	p.rhs.Push(&ast.SelectorExpr{
+		X:   p.argIdent(idx),
+		Sel: toField(name.(ast.Expr)),
+	})
+	return p
+}
+
+// StoreField instr
+func (p *Builder) StoreField(idx int32) *Builder {
+	name := p.rhs.Pop()
+	p.lhs.Push(&ast.SelectorExpr{
+		X:   p.argIdent(idx),
+		Sel: toField(name.(ast.Expr)),
+	})
+	return p
+}
+
 // Load instr
 func (p *Builder) Load(idx int32) *Builder {
 	p.rhs.Push(p.argIdent(idx))
@@ -140,6 +160,9 @@ func (p *Builder) Store(idx int32) *Builder {
 
 func (p *Builder) argIdent(idx int32) *ast.Ident {
 	i := len(p.cfun.in) + int(idx)
+	if i == -1 {
+		return Ident(p.cfun.recv.Name)
+	}
 	return Ident(toArg(i))
 }
 
@@ -152,6 +175,27 @@ func (p *Builder) LoadVar(v exec.Var) *Builder {
 // StoreVar instr
 func (p *Builder) StoreVar(v exec.Var) *Builder {
 	p.lhs.Push(Ident(v.(*Var).name))
+	return p
+}
+
+// LoadVarField instr
+func (p *Builder) LoadVarField(v exec.Var) *Builder {
+	name := p.rhs.Pop()
+	p.rhs.Push(&ast.SelectorExpr{
+		X:   Ident(v.(*Var).name),
+		Sel: toField(name.(ast.Expr)),
+	})
+	return p
+}
+
+// StoreVarField instr
+func (p *Builder) StoreVarField(v exec.Var) *Builder {
+	name := p.rhs.Pop()
+
+	p.lhs.Push(&ast.SelectorExpr{
+		X:   Ident(v.(*Var).name),
+		Sel: toField(name.(ast.Expr)),
+	})
 	return p
 }
 

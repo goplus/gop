@@ -407,14 +407,31 @@ func (p *Builder) CallGoFuncv(fun exec.GoFuncvAddr, nexpr, arity int) *Builder {
 }
 
 // CallField instr
-func (p *Builder) CallField() *Builder {
-	log.Panicln("todo")
-	return p
-}
+// func (p *Builder) CallField() *Builder {
+// 	args := p.rhs.GetArgs(2)
+
+// 	ret := &ast.SelectorExpr{
+// 		X:   args[0].(ast.Expr),
+// 		Sel: toField(args[1].(ast.Expr)),
+// 	}
+
+// 	p.rhs.Ret(2, ret)
+// 	return p
+// }
 
 // SetField instr
 func (p *Builder) SetField() *Builder {
-	log.Panicln("todo")
+	args := p.rhs.GetArgs(3)
+	var lhs []interface{}
+	var rhs []interface{}
+	lhs = append(lhs, &ast.SelectorExpr{
+		X:   args[1].(ast.Expr),
+		Sel: toField(args[2].(ast.Expr)),
+	})
+	rhs = append(rhs, args[0].(ast.Expr))
+
+	p.lhs.Ret(0, lhs...)
+	p.rhs.Ret(3, rhs...)
 	return p
 }
 
@@ -463,6 +480,11 @@ func (p *Builder) Append(typ reflect.Type, arity int) *Builder {
 }
 
 // New instr
+func (p *Builder) Copy() *Builder {
+	return p
+}
+
+// New instr
 func (p *Builder) New(typ reflect.Type) *Builder {
 	p.rhs.Push(newIdent)
 	p.Call(0, false, Type(p, typ))
@@ -478,19 +500,34 @@ func (p *Builder) Make(typ reflect.Type, arity int) *Builder {
 
 // Struct instr
 func (p *Builder) Struct(typ reflect.Type, arity int) *Builder {
+	var ptr bool
+	if typ.Kind() == reflect.Ptr {
+		ptr = true
+		typ = typ.Elem()
+	}
 	typExpr := Type(p, typ)
 	elts := make([]ast.Expr, arity)
 	args := p.rhs.GetArgs(arity << 1)
 	for i := 0; i < arity; i++ {
 		elts[i] = &ast.KeyValueExpr{
-			Key:   args[i<<1].(ast.Expr),
+			Key:   toField(args[i<<1].(ast.Expr)),
 			Value: args[(i<<1)+1].(ast.Expr),
 		}
 	}
-	p.rhs.Ret(arity<<1, &ast.CompositeLit{
+
+	var ret ast.Expr
+
+	ret = &ast.CompositeLit{
 		Type: typExpr,
 		Elts: elts,
-	})
+	}
+	if ptr {
+		ret = &ast.UnaryExpr{
+			Op: token.AND,
+			X:  ret,
+		}
+	}
+	p.rhs.Ret(arity<<1, ret)
 	return p
 }
 
@@ -647,6 +684,15 @@ func (p *Builder) GoBuiltin(typ reflect.Type, op exec.GoBuiltin) *Builder {
 	arity := goBuiltinArities[op]
 	p.rhs.Push(Ident(op.String()))
 	return p.Call(arity, false)
+}
+
+func toField(expr ast.Expr) *ast.Ident {
+	if ident, ok := expr.(*ast.Ident); ok {
+		return ident
+	}
+	lit := expr.(*ast.BasicLit)
+	field, _ := strconv.Unquote(lit.Value)
+	return Ident(field)
 }
 
 var goBuiltinArities = [...]int{
