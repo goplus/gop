@@ -14,6 +14,10 @@ func (p Person) SetAge(age int) {
 	println(p.Age)
 }
 
+func (p *Person) AddFriends(args ...string) {
+	p.Friends = append(p.Friends, args...)
+}
+
 p := &Person{
 	Name: "bar",
 	Age:  30,
@@ -23,6 +27,8 @@ p.Name, p.Age = "bar2", 31
 
 p.SetName("foo")
 p.SetAge(31)
+p.AddFriends("a", "b", "c")
 
 println(p.Name)
 println(p.Age)
+println(p.Friends)

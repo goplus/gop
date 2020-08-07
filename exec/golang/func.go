@@ -193,8 +193,8 @@ func (p *Builder) CallFunc(fun *FuncInfo, nexpr int) *Builder {
 // CallFuncv instr
 func (p *Builder) CallFuncv(fun *FuncInfo, nexpr, arity int) *Builder {
 	if fun.isMethod == 1 {
-		args := p.rhs.GetArgs(len(fun.in))
-		p.rhs.Ret(fun.NumIn(), args...)
+		args := p.rhs.GetArgs(nexpr)
+		p.rhs.Ret(arity, args...)
 		p.rhs.Push(fun.getMethodExpr())
 		return p.Call(nexpr, arity == -1)
 	}

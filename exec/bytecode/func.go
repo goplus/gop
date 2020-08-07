@@ -373,7 +373,7 @@ func (p *FuncInfo) execVariadic(arity uint32, ctx *Context, parent *varScope) {
 	var n = uint32(len(p.in) - 1)
 	if arity > n {
 		tVariadic := p.in[n]
-		nVariadic := int(arity-n) + p.isMethod
+		nVariadic := int(arity-n) - p.isMethod
 		if tVariadic == exec.TyEmptyInterfaceSlice {
 			var empty []interface{}
 			ctx.Ret(nVariadic, append(empty, ctx.GetArgs(nVariadic)...))
