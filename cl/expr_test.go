@@ -296,6 +296,33 @@ if foo() || bar() || fake() {
 	`, "foo\n")
 }
 
+func TestOpLAndLOr3(t *testing.T) {
+	cltest.Expect(t, `
+func foo() int {
+	println("foo")
+	return 0
+}
+func bar() bool {
+	println("bar")
+	return true
+}
+if foo() || bar() {
+}
+	`, "", nil)
+	cltest.Expect(t, `
+func foo() int {
+	println("foo")
+	return 0
+}
+func bar() bool {
+	println("bar")
+	return true
+}
+if foo() && bar() {
+}
+	`, "", nil)
+}
+
 func TestPanic(t *testing.T) {
 	cltest.Expect(t,
 		`panic("Helo")`,
