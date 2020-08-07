@@ -221,6 +221,81 @@ if fake() && bar() {
 	`, "foo\n---\nfoo\nbar\n---\nfake\n")
 }
 
+func TestOpLAndLOr2(t *testing.T) {
+	cltest.Expect(t, `
+func foo() bool {
+	println("foo")
+	return true
+}
+func bar() bool {
+	println("bar")
+	return true
+}
+
+func fake() bool {
+	println("fake")
+	return true
+}
+
+if foo() && bar() && fake() {
+}
+	`, "foo\nbar\nfake\n")
+	cltest.Expect(t, `
+func foo() bool {
+	println("foo")
+	return true
+}
+func bar() bool {
+	println("bar")
+	return false
+}
+
+func fake() bool {
+	println("fake")
+	return true
+}
+
+if foo() && bar() && fake() {
+}
+	`, "foo\nbar\n")
+	cltest.Expect(t, `
+func foo() bool {
+	println("foo")
+	return false
+}
+func bar() bool {
+	println("bar")
+	return true
+}
+
+func fake() bool {
+	println("fake")
+	return true
+}
+
+if foo() || bar() || fake() {
+}
+	`, "foo\nbar\n")
+	cltest.Expect(t, `
+func foo() bool {
+	println("foo")
+	return true
+}
+func bar() bool {
+	println("bar")
+	return true
+}
+
+func fake() bool {
+	println("fake")
+	return true
+}
+
+if foo() || bar() || fake() {
+}
+	`, "foo\n")
+}
+
 func TestPanic(t *testing.T) {
 	cltest.Expect(t,
 		`panic("Helo")`,
