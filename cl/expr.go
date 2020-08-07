@@ -561,12 +561,14 @@ var (
 	}
 )
 
-func makeOpFuncLit(x ast.Expr, y ast.Expr) *ast.FuncLit {
+func makeOpFuncLit(pos token.Pos, x ast.Expr, y ast.Expr) *ast.FuncLit {
 	ifstmt := &ast.IfStmt{
+		If:   pos,
 		Cond: x,
 		Body: &ast.BlockStmt{
 			List: []ast.Stmt{
 				&ast.ReturnStmt{
+					Return: pos,
 					Results: []ast.Expr{
 						ast.NewIdent("true"),
 					},
@@ -575,6 +577,7 @@ func makeOpFuncLit(x ast.Expr, y ast.Expr) *ast.FuncLit {
 		},
 	}
 	rstmt := &ast.ReturnStmt{
+		Return: pos,
 		Results: []ast.Expr{
 			y,
 		},
@@ -608,11 +611,11 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 	switch op {
 	case exec.OpLOr:
 		ctx.infer.PopN(2)
-		fn := &ast.CallExpr{Fun: makeOpFuncLit(v.X, v.Y)}
+		fn := &ast.CallExpr{Fun: makeOpFuncLit(v.Pos(), v.X, v.Y)}
 		return compileExpr(ctx, fn)
 	case exec.OpLAnd:
 		ctx.infer.PopN(2)
-		fn := &ast.CallExpr{Fun: makeOpFuncLit(&ast.UnaryExpr{Op: token.NOT, X: v.X}, v.Y)}
+		fn := &ast.CallExpr{Fun: makeOpFuncLit(v.Pos(), &ast.UnaryExpr{Op: token.NOT, X: v.X}, v.Y)}
 		return compileExpr(ctx, fn)
 	}
 	kind, ret := binaryOpResult(op, x, y)
