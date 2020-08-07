@@ -608,17 +608,23 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 			ret.reserve = ctx.out.Reserve()
 		}
 	}
+	kind, ret := binaryOpResult(op, x, y)
 	switch op {
 	case exec.OpLOr:
+		if kind != exec.Bool {
+			log.Panicf("invalid operation: && (mismatched types %v)\n", kind)
+		}
 		ctx.infer.PopN(2)
 		fn := &ast.CallExpr{Fun: makeOpFuncLit(v.Pos(), v.X, v.Y)}
 		return compileExpr(ctx, fn)
 	case exec.OpLAnd:
+		if kind != exec.Bool {
+			log.Panicf("invalid operation: && (mismatched types %v)\n", kind)
+		}
 		ctx.infer.PopN(2)
 		fn := &ast.CallExpr{Fun: makeOpFuncLit(v.Pos(), &ast.UnaryExpr{Op: token.NOT, X: v.X}, v.Y)}
 		return compileExpr(ctx, fn)
 	}
-	kind, ret := binaryOpResult(op, x, y)
 	ctx.infer.Ret(2, ret)
 	return func() {
 		exprX()
