@@ -194,6 +194,33 @@ func TestOverflowsInt(t *testing.T) {
 	)
 }
 
+func TestOpLAndLOr(t *testing.T) {
+	cltest.Expect(t, `
+func foo() bool {
+	println("foo")
+	return true
+}
+func bar() bool {
+	println("bar")
+	return true
+}
+
+func fake() bool {
+	println("fake")
+	return false
+}
+
+if foo() || bar() {
+}
+println("---")
+if foo() && bar() {
+}
+println("---")
+if fake() && bar() {
+}
+	`, "foo\n---\nfoo\nbar\n---\nfake\n")
+}
+
 func TestPanic(t *testing.T) {
 	cltest.Expect(t,
 		`panic("Helo")`,

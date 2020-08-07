@@ -548,12 +548,54 @@ var unaryOps = [...]exec.Operator{
 	token.XOR: exec.OpBitNot,
 }
 
+var (
+	boolFunType = &ast.FuncType{
+		Params: &ast.FieldList{},
+		Results: &ast.FieldList{
+			List: []*ast.Field{
+				&ast.Field{
+					Type: ast.NewIdent("bool"),
+				},
+			},
+		},
+	}
+)
+
+func makeOpFuncLit(x ast.Expr, y ast.Expr) *ast.FuncLit {
+	ifstmt := &ast.IfStmt{
+		Cond: x,
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.ReturnStmt{
+					Results: []ast.Expr{
+						ast.NewIdent("true"),
+					},
+				},
+			},
+		},
+	}
+	rstmt := &ast.ReturnStmt{
+		Results: []ast.Expr{
+			y,
+		},
+	}
+	return &ast.FuncLit{
+		Type: boolFunType,
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				ifstmt,
+				rstmt,
+			},
+		},
+	}
+}
+
 func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 	exprX := compileExpr(ctx, v.X)
 	exprY := compileExpr(ctx, v.Y)
+	op := binaryOps[v.Op]
 	x := ctx.infer.Get(-2)
 	y := ctx.infer.Get(-1)
-	op := binaryOps[v.Op]
 	xcons, xok := x.(*constVal)
 	ycons, yok := y.(*constVal)
 	if xok && yok { // <const> op <const>
@@ -562,6 +604,16 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 		return func() {
 			ret.reserve = ctx.out.Reserve()
 		}
+	}
+	switch op {
+	case exec.OpLOr:
+		ctx.infer.PopN(2)
+		fn := &ast.CallExpr{Fun: makeOpFuncLit(v.X, v.Y)}
+		return compileExpr(ctx, fn)
+	case exec.OpLAnd:
+		ctx.infer.PopN(2)
+		fn := &ast.CallExpr{Fun: makeOpFuncLit(&ast.UnaryExpr{Op: token.NOT, X: v.X}, v.Y)}
+		return compileExpr(ctx, fn)
 	}
 	kind, ret := binaryOpResult(op, x, y)
 	ctx.infer.Ret(2, ret)
