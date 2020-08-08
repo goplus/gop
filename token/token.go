@@ -141,6 +141,7 @@ var tokens = [...]string{
 	IMAG:   "IMAG",
 	CHAR:   "CHAR",
 	STRING: "STRING",
+	RAT:    "RAT",
 
 	ADD: "+",
 	SUB: "-",
