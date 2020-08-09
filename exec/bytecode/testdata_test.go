@@ -18,7 +18,7 @@ package bytecode_test
 
 import (
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/goplus/gop/cl/cltest"
@@ -32,7 +32,7 @@ func TestFromTestdata(t *testing.T) {
 	if err != nil {
 		t.Fatal("Getwd failed:", err)
 	}
-	dir = path.Join(dir, "../golang/testdata")
+	dir = filepath.Join(dir, "../golang/testdata")
 	cltest.FromTestdata(t, dir, sel, exclude)
 }
 
@@ -42,7 +42,7 @@ func TestFromTestdata2(t *testing.T) {
 	if err != nil {
 		t.Fatal("Getwd failed:", err)
 	}
-	dir = path.Join(dir, "../golang/testdata2")
+	dir = filepath.Join(dir, "../golang/testdata2")
 	cltest.FromTestdata(t, dir, sel, exclude)
 }
 
