@@ -191,6 +191,16 @@ func execLoadVar(i Instr, p *Context) {
 	p.Push(getParentCtx(p, tAddress(idx)).getVar(idx & bitsOpVarOperand))
 }
 
+func execLoadVarField(i Instr, p *Context) {
+	name := p.Stack.Pop().(string)
+	idx := i & bitsOperand
+	if idx <= bitsOpVarOperand {
+		p.Push(p.getVarFieldByName(idx, name))
+		return
+	}
+	p.Push(getParentCtx(p, tAddress(idx)).getVarFieldByName(idx&bitsOpVarOperand, name))
+}
+
 func execStoreVar(i Instr, p *Context) {
 	idx := i & bitsOperand
 	val := p.Pop()
@@ -199,6 +209,19 @@ func execStoreVar(i Instr, p *Context) {
 		return
 	}
 	getParentCtx(p, tAddress(idx)).setVar(idx&bitsOpVarOperand, val)
+}
+
+func execStoreVarField(i Instr, p *Context) {
+	idx := i & bitsOperand
+	args := p.GetArgs(2)
+	name := args[1].(string)
+	val := args[0]
+	p.PopN(2)
+	if idx <= bitsOpVarOperand {
+		p.setVarFieldByName(idx, name, val)
+		return
+	}
+	getParentCtx(p, tAddress(idx)).setVarFieldByName(idx&bitsOpVarOperand, name, val)
 }
 
 // -----------------------------------------------------------------------------
@@ -226,9 +249,21 @@ func (p *Builder) loadVar(addr tAddress) *Builder {
 	return p
 }
 
+// loadFieldVar instr
+func (p *Builder) loadVarField(addr tAddress) *Builder {
+	p.code.data = append(p.code.data, (opLoadVarField<<bitsOpShift)|uint32(addr))
+	return p
+}
+
 // StoreVar instr
 func (p *Builder) storeVar(addr tAddress) *Builder {
 	p.code.data = append(p.code.data, (opStoreVar<<bitsOpShift)|uint32(addr))
+	return p
+}
+
+// StoreVar instr
+func (p *Builder) storeFieldVar(addr tAddress) *Builder {
+	p.code.data = append(p.code.data, (opStoreVarField<<bitsOpShift)|uint32(addr))
 	return p
 }
 
@@ -352,9 +387,21 @@ func (p *Builder) LoadVar(v *Var) *Builder {
 	return p
 }
 
+// LoadVarField instr
+func (p *Builder) LoadVarField(v *Var) *Builder {
+	p.loadVarField(makeAddr(p.nestDepth-v.nestDepth, v.idx))
+	return p
+}
+
 // StoreVar instr
 func (p *Builder) StoreVar(v *Var) *Builder {
 	p.storeVar(makeAddr(p.nestDepth-v.nestDepth, v.idx))
+	return p
+}
+
+// StoreVarField instr
+func (p *Builder) StoreVarField(v *Var) *Builder {
+	p.storeFieldVar(makeAddr(p.nestDepth-v.nestDepth, v.idx))
 	return p
 }
 

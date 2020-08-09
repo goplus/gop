@@ -22,6 +22,7 @@ import (
 	"reflect"
 
 	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/ast/astutil"
 	"github.com/goplus/gop/exec.spec"
 	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/log"
@@ -31,12 +32,13 @@ import (
 
 type pkgCtx struct {
 	exec.Package
-	infer   exec.Stack
-	builtin exec.GoPackage
-	out     exec.Builder
-	usedfns []*funcDecl
-	pkg     *ast.Package
-	fset    *token.FileSet
+	infer    exec.Stack
+	builtin  exec.GoPackage
+	out      exec.Builder
+	usedfns  []*funcDecl
+	usedmths []*methodDecl
+	pkg      *ast.Package
+	fset     *token.FileSet
 }
 
 func newPkgCtx(out exec.Builder, pkg *ast.Package, fset *token.FileSet) *pkgCtx {
@@ -70,6 +72,14 @@ func (p *pkgCtx) use(f *funcDecl) {
 	f.used = true
 }
 
+func (p *pkgCtx) useMethod(f *methodDecl) {
+	if f.used {
+		return
+	}
+	p.usedmths = append(p.usedmths, f)
+	f.used = true
+}
+
 func (p *pkgCtx) resolveFuncs() {
 	for {
 		n := len(p.usedfns)
@@ -78,6 +88,18 @@ func (p *pkgCtx) resolveFuncs() {
 		}
 		f := p.usedfns[n-1]
 		p.usedfns = p.usedfns[:n-1]
+		f.Compile()
+	}
+}
+
+func (p *pkgCtx) resolveMethods() {
+	for {
+		n := len(p.usedmths)
+		if n == 0 {
+			break
+		}
+		f := p.usedmths[n-1]
+		p.usedmths = p.usedmths[:n-1]
 		f.Compile()
 	}
 }
@@ -189,6 +211,9 @@ type blockCtx struct {
 	parent         *blockCtx
 	syms           map[string]iSymbol
 	noExecCtx      bool
+	takeAddr       bool
+	takeField      bool
+	setField       bool
 	checkFlag      bool
 	checkArrayAddr bool
 }
@@ -346,6 +371,32 @@ func (p *blockCtx) findVar(name string) (addr iVar, err error) {
 	return nil, ErrSymbolNotVariable
 }
 
+func (p *blockCtx) insertMethodVars(recv exec.RecvInfo, in []reflect.Type, args []string, rets []exec.Var) {
+	n := len(args)
+
+	if n > 0 {
+		var i int
+		for i = n - 1; i >= 0; i-- {
+			name := args[i]
+			if name == "" { // unnamed argument
+				continue
+			}
+			if p.exists(name) {
+				log.Panicln("insertStkVars failed: symbol exists -", name)
+			}
+			p.syms[name] = &stackVar{index: int32(i - n), typ: in[i]}
+		}
+		p.syms[recv.Name] = &stackVar{index: int32(i - n), typ: recv.Type}
+	}
+
+	for _, ret := range rets {
+		if ret.IsUnnamedOut() {
+			continue
+		}
+		p.syms[ret.Name()] = &execVar{ret}
+	}
+}
+
 func (p *blockCtx) insertFuncVars(in []reflect.Type, args []string, rets []exec.Var) {
 	n := len(args)
 	if n > 0 {
@@ -388,27 +439,42 @@ func (p *blockCtx) insertFunc(name string, fun *funcDecl) {
 	p.syms[name] = fun
 }
 
-func (p *blockCtx) insertMethod(typeName, methodName string, method *methodDecl) {
+func (p *blockCtx) insertMethod(recv astutil.RecvInfo, methodName string, ftyp *ast.FuncType, body *ast.BlockStmt, file *fileCtx, ctx *blockCtx) {
 	if p.parent != nil {
 		log.Panicln("insertMethod failed: unexpected - non global method declaration?")
 	}
-	typ, err := p.findType(typeName)
+	typ, err := p.findType(recv.Type)
 	if err == ErrNotFound {
 		typ = new(typeDecl)
-		p.syms[typeName] = typ
+		p.syms[recv.Type] = typ
 	} else if err != nil {
 		log.Panicln("insertMethod failed:", err)
 	} else if typ.Alias {
 		log.Panicln("insertMethod failed: alias?")
 	}
+
+	var t reflect.Type = typ.Type.Type()
+	pointer := recv.Pointer
+	for pointer > 0 {
+		t = reflect.PtrTo(t)
+		pointer--
+	}
+
+	method := newMethodDecl(methodName, t, recv, ftyp, body, file, ctx)
 	if typ.Methods == nil {
 		typ.Methods = map[string]*methodDecl{methodName: method}
 	} else {
 		if _, ok := typ.Methods[methodName]; ok {
-			log.Panicln("insertMethod failed: method exists -", typeName, methodName)
+			log.Panicln("insertMethod failed: method exists -", recv.Type, methodName)
 		}
 		typ.Methods[methodName] = method
 	}
+
+	m := typ.Type.Type().String() + methodName
+	if p.exists(m) {
+		log.Panicln("insertMethod failed: symbol exists -", m)
+	}
+	p.syms[m] = method
 }
 
 // -----------------------------------------------------------------------------

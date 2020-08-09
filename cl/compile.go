@@ -198,6 +198,7 @@ func NewPackage(out exec.Builder, pkg *ast.Package, fset *token.FileSet, act Pkg
 		out.Return(-1)
 	}
 	ctxPkg.resolveFuncs()
+	ctxPkg.resolveMethods()
 	p.syms = ctx.syms
 	return
 }
@@ -214,6 +215,8 @@ const (
 	SymFunc
 	// SymType - symbol is a type
 	SymType
+	// SymMethod - symbol is a method
+	SymMethod
 )
 
 // Find lookups a symbol and returns it's kind and the object instance.
@@ -228,6 +231,8 @@ func (p *Package) Find(name string) (kind SymKind, v interface{}, ok bool) {
 		kind = SymFunc
 	case *typeDecl:
 		kind = SymType
+	case *methodDecl:
+		kind = SymMethod
 	default:
 		log.Panicln("Package.Find: unknown symbol type -", reflect.TypeOf(v))
 	}
@@ -289,6 +294,18 @@ func loadTypes(ctx *blockCtx, d *ast.GenDecl) {
 }
 
 func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
+	if ctx.exists(spec.Name.Name) {
+		log.Panicln("loadType failed: symbol exists -", spec.Name.Name)
+	}
+	t := toType(ctx, spec.Type).(reflect.Type)
+
+	typ := ctx.NewType(t, spec.Name.Name)
+	ctx.out.DefineType(typ)
+
+	ctx.syms[spec.Name.Name] = &typeDecl{
+		Name: spec.Name.Name,
+		Type: typ,
+	}
 }
 
 func loadConsts(ctx *blockCtx, d *ast.GenDecl) {
@@ -307,13 +324,10 @@ func loadFunc(ctx *blockCtx, d *ast.FuncDecl, isUnnamed bool) {
 	var name = d.Name.Name
 	if d.Recv != nil {
 		recv := astutil.ToRecv(d.Recv)
-		ctx.insertMethod(recv.Type, name, &methodDecl{
-			recv:    recv.Name,
-			pointer: recv.Pointer,
-			typ:     d.Type,
-			body:    d.Body,
-			file:    ctx.file,
-		})
+		funCtx := newExecBlockCtx(ctx)
+		funCtx.noExecCtx = isUnnamed
+		funCtx.funcCtx = newFuncCtx(nil)
+		ctx.insertMethod(recv, name, d.Type, d.Body, ctx.file, funCtx)
 	} else if name == "init" {
 		log.Panicln("loadFunc TODO: init")
 	} else {

@@ -94,8 +94,25 @@ func (ctx *varScope) getVar(idx uint32) interface{} {
 	return ctx.vars.Field(int(idx)).Interface()
 }
 
+func (ctx *varScope) getVarFieldByName(idx uint32, name string) interface{} {
+	if ctx.vars.Field(int(idx)).Kind() == reflect.Ptr {
+		return ctx.vars.Field(int(idx)).Elem().FieldByName(name).Interface()
+	}
+	return ctx.vars.Field(int(idx)).FieldByName(name).Interface()
+}
+
 func (ctx *varScope) setVar(idx uint32, v interface{}) {
 	x := ctx.vars.Field(int(idx))
+	setValue(x, v)
+}
+
+func (ctx *varScope) setVarFieldByName(idx uint32, name string, v interface{}) {
+	field := ctx.vars.Field(int(idx))
+	if field.Kind() == reflect.Ptr {
+		field = field.Elem()
+	}
+	x := field.FieldByName(name)
+
 	setValue(x, v)
 }
 
@@ -143,3 +160,60 @@ func getRetOf(v interface{}, fun *FuncInfo, i int) reflect.Value {
 }
 
 // -----------------------------------------------------------------------------
+
+// Struct instr
+func (p *Builder) Struct(typ reflect.Type, arity int) *Builder {
+	if arity < 0 {
+		log.Panicln("Struct failed: can't be variadic.")
+	} else if arity >= bitsFuncvArityMax {
+		p.Push(arity - bitsFuncvArityMax)
+		arity = bitsFuncvArityMax
+	}
+	i := (opStruct << bitsOpShift) | (uint32(arity) << bitsOpCallFuncvShift) | p.newType(typ)
+	p.code.data = append(p.code.data, i)
+	return p
+}
+
+func execStruct(i Instr, p *Context) {
+	typStruct := getType(i&bitsOpCallFuncvOperand, p)
+	arity := int((i >> bitsOpCallFuncvShift) & bitsFuncvArityOperand)
+	if arity == bitsFuncvArityMax {
+		arity = p.Pop().(int) + bitsFuncvArityMax
+	}
+	makeStruct(typStruct, arity, p)
+}
+
+func makeStruct(typStruct reflect.Type, arity int, p *Context) {
+	n := arity << 1
+	args := p.GetArgs(n)
+
+	var ptr bool
+	if typStruct.Kind() == reflect.Ptr {
+		ptr = true
+		typStruct = typStruct.Elem()
+	}
+	v := reflect.New(typStruct).Elem()
+	for i := 0; i < n; i += 2 {
+		fieldName := args[i].(string)
+		v.FieldByName(fieldName).Set(reflect.ValueOf(args[i+1]))
+	}
+	if ptr {
+		p.Ret(n, v.Addr().Interface())
+	} else {
+		p.Ret(n, v.Interface())
+	}
+}
+
+func (p *Builder) Copy() *Builder {
+	p.code.data = append(p.code.data, opCopy<<bitsOpShift)
+	return p
+}
+
+func execOpCopy(i Instr, stk *Context) {
+	args := stk.GetArgs(1)
+	v := reflect.ValueOf(args[0])
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	stk.Ret(1, v.Interface())
+}

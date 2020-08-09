@@ -39,6 +39,11 @@ func (p *Package) NewVar(typ reflect.Type, name string) exec.Var {
 	return NewVar(typ, name)
 }
 
+// NewType creates a variable instance.
+func (p *Package) NewType(typ reflect.Type, name string) exec.Type {
+	return NewType(typ, name)
+}
+
 // NewLabel creates a label object.
 func (p *Package) NewLabel(name string) exec.Label {
 	return NewLabel(name)
@@ -52,6 +57,11 @@ func (p *Package) NewForPhrase(in reflect.Type) exec.ForPhrase {
 // NewComprehension creates a new Comprehension instance.
 func (p *Package) NewComprehension(out reflect.Type) exec.Comprehension {
 	return NewComprehension(out)
+}
+
+// NewMethod create a Go+ function.
+func (p *Package) NewMethod(recv exec.RecvInfo, name string, nestDepth uint32) exec.FuncInfo {
+	return (*iFuncInfo)(newMethod(p, recv, name, nestDepth))
 }
 
 // NewFunc create a Go+ function.

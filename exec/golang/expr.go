@@ -451,6 +451,11 @@ func (p *Builder) Append(typ reflect.Type, arity int) *Builder {
 }
 
 // New instr
+func (p *Builder) Copy() *Builder {
+	return p
+}
+
+// New instr
 func (p *Builder) New(typ reflect.Type) *Builder {
 	p.rhs.Push(newIdent)
 	p.Call(0, false, Type(p, typ))
@@ -461,6 +466,39 @@ func (p *Builder) New(typ reflect.Type) *Builder {
 func (p *Builder) Make(typ reflect.Type, arity int) *Builder {
 	p.rhs.Push(makeIdent)
 	p.Call(arity, false, Type(p, typ))
+	return p
+}
+
+// Struct instr
+func (p *Builder) Struct(typ reflect.Type, arity int) *Builder {
+	var ptr bool
+	if typ.Kind() == reflect.Ptr {
+		ptr = true
+		typ = typ.Elem()
+	}
+	typExpr := Type(p, typ)
+	elts := make([]ast.Expr, arity)
+	args := p.rhs.GetArgs(arity << 1)
+	for i := 0; i < arity; i++ {
+		elts[i] = &ast.KeyValueExpr{
+			Key:   toField(args[i<<1].(ast.Expr)),
+			Value: args[(i<<1)+1].(ast.Expr),
+		}
+	}
+
+	var ret ast.Expr
+
+	ret = &ast.CompositeLit{
+		Type: typExpr,
+		Elts: elts,
+	}
+	if ptr {
+		ret = &ast.UnaryExpr{
+			Op: token.AND,
+			X:  ret,
+		}
+	}
+	p.rhs.Ret(arity<<1, ret)
 	return p
 }
 
@@ -617,6 +655,15 @@ func (p *Builder) GoBuiltin(typ reflect.Type, op exec.GoBuiltin) *Builder {
 	arity := goBuiltinArities[op]
 	p.rhs.Push(Ident(op.String()))
 	return p.Call(arity, false)
+}
+
+func toField(expr ast.Expr) *ast.Ident {
+	if ident, ok := expr.(*ast.Ident); ok {
+		return ident
+	}
+	lit := expr.(*ast.BasicLit)
+	field, _ := strconv.Unquote(lit.Value)
+	return Ident(field)
 }
 
 var goBuiltinArities = [...]int{

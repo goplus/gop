@@ -148,6 +148,42 @@ func newFuncResults(tfn reflect.Type) iValue {
 
 // -----------------------------------------------------------------------------
 
+type qlMethod methodDecl
+
+func newQlMethod(f *methodDecl) *qlMethod {
+	return (*qlMethod)(f)
+}
+
+func (p *qlMethod) FuncInfo() exec.FuncInfo {
+	return ((*methodDecl)(p)).Get()
+}
+
+func (p *qlMethod) Kind() iKind {
+	return reflect.Func
+}
+
+func (p *qlMethod) Type() reflect.Type {
+	return ((*methodDecl)(p)).Type()
+}
+
+func (p *qlMethod) NumValues() int {
+	return 1
+}
+
+func (p *qlMethod) Value(i int) iValue {
+	return p
+}
+
+func (p *qlMethod) Results() iValue {
+	return newFuncResults(p.Type())
+}
+
+func (p *qlMethod) Proto() iFuncType {
+	return p.Type()
+}
+
+// -----------------------------------------------------------------------------
+
 type qlFunc funcDecl
 
 func newQlFunc(f *funcDecl) *qlFunc {

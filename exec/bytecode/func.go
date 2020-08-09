@@ -28,9 +28,46 @@ func execLoad(i Instr, p *Context) {
 	p.Push(p.data[p.base+int(idx)])
 }
 
+func execLoadField(i Instr, p *Context) {
+	idx := int32(i) << bitsOp >> bitsOp
+	name := p.Pop()
+	field := reflect.ValueOf(p.data[p.base+int(idx)])
+	if field.Kind() == reflect.Ptr {
+		field = field.Elem()
+	}
+
+	f := field.FieldByName(name.(string))
+	p.Push(f.Interface())
+}
+
 func execStore(i Instr, p *Context) {
 	idx := int32(i) << bitsOp >> bitsOp
 	p.data[p.base+int(idx)] = p.Pop()
+}
+
+func execStoreField(i Instr, p *Context) {
+	idx := int32(i) << bitsOp >> bitsOp
+	args := p.GetArgs(2)
+	val := args[0]
+	name := args[1]
+	v := reflect.ValueOf(p.data[p.base+int(idx)])
+	var ptr bool
+	if v.Kind() == reflect.Ptr {
+		ptr = true
+		v = v.Elem()
+	}
+	if ptr {
+		v.FieldByName(name.(string)).Set(reflect.ValueOf(val))
+		p.data[p.base+int(idx)] = v.Addr().Interface()
+	} else {
+		t := v.Type()
+		v2 := reflect.New(t).Elem()
+		v2.Set(v)
+		v2.FieldByName(name.(string)).Set(reflect.ValueOf(val))
+		v = v2
+		p.data[p.base+int(idx)] = v.Interface()
+	}
+	p.PopN(2)
 }
 
 const (
@@ -159,6 +196,8 @@ const (
 // FuncInfo represents a Go+ function information.
 type FuncInfo struct {
 	Pkg      *Package
+	isMethod int
+	recv     exec.RecvInfo
 	name     string
 	funEntry int
 	funEnd   int
@@ -173,6 +212,17 @@ type FuncInfo struct {
 // NewFunc create a Go+ function.
 func NewFunc(name string, nestDepth uint32) *FuncInfo {
 	f := &FuncInfo{
+		name:       name,
+		varManager: varManager{nestDepth: nestDepth},
+	}
+	return f
+}
+
+func newMethod(pkg *Package, recv exec.RecvInfo, name string, nestDepth uint32) *FuncInfo {
+	f := &FuncInfo{
+		Pkg:        pkg,
+		isMethod:   1,
+		recv:       recv,
 		name:       name,
 		varManager: varManager{nestDepth: nestDepth},
 	}
@@ -195,7 +245,7 @@ func (p *FuncInfo) Name() string {
 
 // NumIn returns a function's input parameter count.
 func (p *FuncInfo) NumIn() int {
-	return len(p.in)
+	return len(p.in) + p.isMethod
 }
 
 // NumOut returns a function's output parameter count.
@@ -263,13 +313,23 @@ func (p *FuncInfo) setVariadic(nVariadic uint16) {
 }
 
 // Type returns type of this function.
+func (p *FuncInfo) Recv() exec.RecvInfo {
+	return p.recv
+}
+
+// Type returns type of this function.
 func (p *FuncInfo) Type() reflect.Type {
 	if p.t == nil {
 		out := make([]reflect.Type, p.numOut)
 		for i := 0; i < p.numOut; i++ {
 			out[i] = p.vlist[i].typ
 		}
-		p.t = reflect.FuncOf(p.in, out, p.IsVariadic())
+		in := make([]reflect.Type, 0, p.NumIn())
+		if p.recv.Type != nil {
+			in = append(in, p.recv.Type)
+		}
+		in = append(in, p.in...)
+		p.t = reflect.FuncOf(in, out, p.IsVariadic())
 	}
 	return p.t
 }
@@ -291,7 +351,7 @@ func (p *FuncInfo) execFunc(ctx *Context) {
 			}
 		} else {
 			n := len(ctx.data)
-			ctx.data = append(ctx.data[:ctx.base-len(p.in)], ctx.data[n-p.numOut:]...)
+			ctx.data = append(ctx.data[:ctx.base-(len(p.in)+p.isMethod)], ctx.data[n-p.numOut:]...)
 		}
 	}
 }
@@ -300,7 +360,7 @@ func (p *FuncInfo) exec(ctx *Context, parent *varScope) {
 	old := ctx.switchScope(parent, &p.varManager)
 	p.execFunc(ctx)
 	if ctx.ip != ipReturnN {
-		ctx.data = ctx.data[:ctx.base-len(p.in)]
+		ctx.data = ctx.data[:ctx.base-(len(p.in)+p.isMethod)]
 		n := uint32(p.numOut)
 		for i := uint32(0); i < n; i++ {
 			ctx.data = append(ctx.data, ctx.getVar(i))
@@ -313,7 +373,7 @@ func (p *FuncInfo) execVariadic(arity uint32, ctx *Context, parent *varScope) {
 	var n = uint32(len(p.in) - 1)
 	if arity > n {
 		tVariadic := p.in[n]
-		nVariadic := int(arity - n)
+		nVariadic := int(arity-n) - p.isMethod
 		if tVariadic == exec.TyEmptyInterfaceSlice {
 			var empty []interface{}
 			ctx.Ret(nVariadic, append(empty, ctx.GetArgs(nVariadic)...))
@@ -450,9 +510,21 @@ func (p *Builder) Load(idx int32) *Builder {
 	return p
 }
 
+// Load instr
+func (p *Builder) LoadField(idx int32) *Builder {
+	p.code.data = append(p.code.data, (opLoadField<<bitsOpShift)|(uint32(idx)&bitsOperand))
+	return p
+}
+
 // Store instr
 func (p *Builder) Store(idx int32) *Builder {
 	p.code.data = append(p.code.data, (opStore<<bitsOpShift)|(uint32(idx)&bitsOperand))
+	return p
+}
+
+// Store instr
+func (p *Builder) StoreField(idx int32) *Builder {
+	p.code.data = append(p.code.data, (opStoreField<<bitsOpShift)|(uint32(idx)&bitsOperand))
 	return p
 }
 

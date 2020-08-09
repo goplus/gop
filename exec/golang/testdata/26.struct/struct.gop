@@ -1,0 +1,34 @@
+type Person struct {
+	Name    string
+	Age     int
+	Friends []string
+}
+
+func (p *Person) SetName(name string) {
+	p.Name = name
+	println(p.Name)
+}
+
+func (p Person) SetAge(age int) {
+	p.Age = age
+	println(p.Age)
+}
+
+func (p *Person) AddFriends(args ...string) {
+	p.Friends = append(p.Friends, args...)
+}
+
+p := &Person{
+	Name: "bar",
+	Age:  30,
+}
+
+p.Name, p.Age = "bar2", 31
+
+p.SetName("foo")
+p.SetAge(31)
+p.AddFriends("a", "b", "c")
+
+println(p.Name)
+println(p.Age)
+println(p.Friends)

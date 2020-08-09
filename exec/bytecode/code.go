@@ -124,6 +124,12 @@ const (
 	opWrapIfErr     = 43 // reserved(2) offset(24)
 	opDefer         = 44 // reserved(26)
 	opGo            = 45 // arity(26)
+	opStruct        = 46
+	opLoadVarField  = 47
+	opStoreVarField = 48
+	opLoadField     = 49
+	opStoreField    = 50
+	opCopy          = 51
 )
 
 const (
@@ -210,7 +216,13 @@ var instrInfos = []InstrInfo{
 	opErrWrap:       {"errWrap", "", "idx", 26},                           // idx(26)
 	opWrapIfErr:     {"wrapIfErr", "", "offset", 26},                      // reserved(2) offset(24)
 	opDefer:         {"defer", "", "", 0},                                 // reserved(26)
-	opGo:            {"go", "", "arity", 26},                              // arity(26)
+	opGo:            {"go", "", "arity", 26},
+	opStruct:        {"struct", "funvArity", "type", (10 << 8) | 16},
+	opLoadVarField:  {"opLoadVarField", "", "", 0},
+	opStoreVarField: {"opStoreVarField", "", "", 0}, // arity(26)
+	opLoadField:     {"opLoadField", "", "", 0},
+	opStoreField:    {"opStoreField", "", "", 0}, // arity(26)
+	opCopy:          {"opCopy", "", "", 0},       // arity(26)
 }
 
 // -----------------------------------------------------------------------------

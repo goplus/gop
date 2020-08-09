@@ -37,6 +37,17 @@ type Var interface {
 	IsUnnamedOut() bool
 }
 
+type Type interface {
+	// Name returns the type name.
+	Name() string
+
+	// Type returns the type.
+	Type() reflect.Type
+
+	// IsUnnamedOut returns if variable unnamed or not.
+	IsUnnamedOut() bool
+}
+
 // Label represents a label.
 type Label interface {
 	// Name returns the label name.
@@ -75,6 +86,9 @@ type FuncInfo interface {
 
 	// Type returns type of this function.
 	Type() reflect.Type
+
+	// Type returns type of this function.
+	Recv() RecvInfo
 
 	// Args sets argument types of a Go+ function.
 	Args(in ...reflect.Type) FuncInfo
@@ -310,6 +324,21 @@ type Builder interface {
 	// Make instr
 	Make(typ reflect.Type, arity int) Builder
 
+	// Val instr
+	Struct(typ reflect.Type, arity int) Builder
+
+	// LoadVarField instr
+	LoadVarField(v Var) Builder
+
+	// LoadField instr
+	LoadField(idx int32) Builder
+
+	// StoreVarField Builder
+	StoreVarField(v Var) Builder
+
+	// StoreField Builder
+	StoreField(idx int32) Builder
+
 	// Append instr
 	Append(typ reflect.Type, arity int) Builder
 
@@ -343,6 +372,9 @@ type Builder interface {
 	// New instr
 	New(typ reflect.Type) Builder
 
+	// Copy instr
+	Copy() Builder
+
 	// StartStmt emit a `StartStmt` event.
 	StartStmt(stmt interface{}) interface{}
 
@@ -364,6 +396,9 @@ type Builder interface {
 	// DefineBlock instr
 	DefineBlock() Builder
 
+	// DefineType name string,reflect.Typeinstr
+	DefineType(Type) Builder
+
 	// EndBlock instr
 	EndBlock() Builder
 }
@@ -372,6 +407,9 @@ type Builder interface {
 type Package interface {
 	// NewVar creates a variable instance.
 	NewVar(typ reflect.Type, name string) Var
+
+	// NewType creates a variable instance.
+	NewType(typ reflect.Type, name string) Type
 
 	// NewLabel creates a label object.
 	NewLabel(name string) Label
@@ -384,6 +422,9 @@ type Package interface {
 
 	// NewFunc creates a Go+ function.
 	NewFunc(name string, nestDepth uint32) FuncInfo
+
+	// NewMethod creates a Go+ function.
+	NewMethod(typ RecvInfo, name string, nestDepth uint32) FuncInfo
 
 	// FindGoPackage lookups a Go package by pkgPath. It returns nil if not found.
 	FindGoPackage(pkgPath string) GoPackage

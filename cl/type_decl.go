@@ -21,6 +21,7 @@ import (
 	"strconv"
 
 	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/ast/astutil"
 	"github.com/goplus/gop/exec.spec"
 	"github.com/qiniu/x/log"
 )
@@ -103,6 +104,18 @@ func toFuncType(ctx *blockCtx, t *ast.FuncType) iType {
 	in, variadic := toTypesEx(ctx, t.Params)
 	out := toTypes(ctx, t.Results)
 	return reflect.FuncOf(in, out, variadic)
+}
+
+func buildMethodType(fi exec.FuncInfo, ctx *blockCtx, t *ast.FuncType) {
+	in, args, variadic := toArgTypes(ctx, t.Params)
+	rets := toReturnTypes(ctx, t.Results)
+	if variadic {
+		fi.Vargs(in...)
+	} else {
+		fi.Args(in...)
+	}
+	fi.Return(rets...)
+	ctx.insertMethodVars(fi.Recv(), in, args, rets)
 }
 
 func buildFuncType(fi exec.FuncInfo, ctx *blockCtx, t *ast.FuncType) {
@@ -214,7 +227,11 @@ func toArgTypes(ctx *blockCtx, fields *ast.FieldList) ([]reflect.Type, []string,
 }
 
 func toStructType(ctx *blockCtx, v *ast.StructType) iType {
-	panic("toStructType: todo")
+	var fields []reflect.StructField
+	for _, field := range v.Fields.List {
+		fields = append(fields, toStructField(ctx, field)...)
+	}
+	return reflect.StructOf(fields)
 }
 
 func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) iType {
@@ -233,8 +250,13 @@ func toIdentType(ctx *blockCtx, ident string) iType {
 	if typ, ok := ctx.builtin.FindType(ident); ok {
 		return typ
 	}
-	log.Panicln("toIdentType failed: unknown ident -", ident)
-	return nil
+
+	typ, err := ctx.findType(ident)
+	if err != nil {
+		log.Panicln("toIdentType failed: findType error", err)
+		return nil
+	}
+	return typ.Type.Type()
 }
 
 func toArrayType(ctx *blockCtx, v *ast.ArrayType) iType {
@@ -281,19 +303,58 @@ func toInt(ctx *blockCtx, e ast.Expr) int {
 	return int(iv)
 }
 
+func toStructField(ctx *blockCtx, field *ast.Field) []reflect.StructField {
+	var fields []reflect.StructField
+	if field.Names == nil {
+		fields = append(fields, buildField(ctx, field, true, ""))
+	} else {
+		for _, name := range field.Names {
+			fields = append(fields, buildField(ctx, field, false, name.Name))
+		}
+	}
+	return fields
+}
+
+func buildField(ctx *blockCtx, field *ast.Field, anonymous bool, fieldName string) reflect.StructField {
+	var f = reflect.StructField{}
+	if !anonymous {
+		f = reflect.StructField{}
+	}
+	f = reflect.StructField{
+		Name:      fieldName,
+		Type:      toType(ctx, field.Type).(reflect.Type),
+		Anonymous: anonymous,
+	}
+	if field.Tag != nil {
+		tag, _ := strconv.Unquote(field.Tag.Value)
+		f.Tag = reflect.StructTag(tag)
+	}
+	return f
+}
+
 // -----------------------------------------------------------------------------
 
 type typeDecl struct {
 	Methods map[string]*methodDecl
+	Type    exec.Type
+	Name    string
 	Alias   bool
 }
 
 type methodDecl struct {
-	recv    string // recv object name
-	pointer int
-	typ     *ast.FuncType
-	body    *ast.BlockStmt
+	recv    astutil.RecvInfo // recv object name
+	pointer int              //
+	name    string           //
+	typ     reflect.Type     //
+	ftyp    *ast.FuncType    //
+	body    *ast.BlockStmt   //
 	file    *fileCtx
+	ctx     *blockCtx     //
+	fi      exec.FuncInfo //
+
+	used     bool
+	cached   bool
+	compiled bool
 }
 
 // FuncDecl represents a function declaration.
@@ -314,6 +375,47 @@ func newFuncDecl(name string, typ *ast.FuncType, body *ast.BlockStmt, ctx *block
 	nestDepth := ctx.getNestDepth()
 	fi := ctx.NewFunc(name, nestDepth)
 	return &FuncDecl{typ: typ, body: body, ctx: ctx, fi: fi}
+}
+
+func newMethodDecl(name string, typ reflect.Type, recv astutil.RecvInfo, ftyp *ast.FuncType, body *ast.BlockStmt, file *fileCtx, ctx *blockCtx) *methodDecl {
+	nestDepth := ctx.getNestDepth()
+	recvInfo := exec.RecvInfo{
+		Name: recv.Name,
+		Type: typ,
+	}
+	fi := ctx.NewMethod(recvInfo, name, nestDepth)
+	return &methodDecl{typ: typ, pointer: recv.Pointer, recv: recv, ftyp: ftyp, body: body, file: file, ctx: ctx, fi: fi}
+}
+
+// Get returns function information.
+func (p *methodDecl) Get() exec.FuncInfo {
+	if !p.cached {
+		buildMethodType(p.fi, p.ctx, p.ftyp)
+		p.cached = true
+	}
+	return p.fi
+}
+
+// Type returns the type of this function.
+func (p *methodDecl) Type() reflect.Type {
+	return p.Get().Type()
+}
+
+// Compile compiles this function
+func (p *methodDecl) Compile() exec.FuncInfo {
+	fun := p.Get()
+	if !p.compiled {
+		ctx := p.ctx
+		out := ctx.out
+		out.DefineFunc(fun)
+		ctx.funcCtx = newFuncCtx(fun)
+		compileBlockStmtWithout(ctx, p.body)
+		ctx.funcCtx.checkLabels()
+		ctx.funcCtx = nil
+		out.EndFunc(fun)
+		p.compiled = true
+	}
+	return fun
 }
 
 // Get returns function information.

@@ -38,6 +38,11 @@ func (p *interfaceImpl) NewVar(typ reflect.Type, name string) exec.Var {
 	return NewVar(typ, name)
 }
 
+// NewType creates a type instance.
+func (p *interfaceImpl) NewType(typ reflect.Type, name string) exec.Type {
+	return NewType(typ, name)
+}
+
 // NewLabel creates a label object.
 func (p *interfaceImpl) NewLabel(name string) exec.Label {
 	return NewLabel(name)
@@ -51,6 +56,13 @@ func (p *interfaceImpl) NewForPhrase(in reflect.Type) exec.ForPhrase {
 // NewComprehension creates a new Comprehension instance.
 func (p *interfaceImpl) NewComprehension(out reflect.Type) exec.Comprehension {
 	return NewComprehension(out)
+}
+
+func (p *interfaceImpl) NewMethod(recv exec.RecvInfo, name string, nestDepth uint32) exec.FuncInfo {
+	if nestDepth == 0 {
+		return nil
+	}
+	return NewMethod(recv, name, nestDepth)
 }
 
 // NewFunc create a Go+ function.
@@ -263,6 +275,30 @@ func (p *iBuilder) CallGoFuncv(fun exec.GoFuncvAddr, nexpr, arity int) exec.Buil
 	return p
 }
 
+// LoadVarField instr
+func (p *iBuilder) LoadVarField(v exec.Var) exec.Builder {
+	((*Builder)(p)).LoadVarField(v)
+	return p
+}
+
+// StoreVarField instr
+func (p *iBuilder) StoreVarField(v exec.Var) exec.Builder {
+	((*Builder)(p)).StoreVarField(v)
+	return p
+}
+
+// LoadField instr
+func (p *iBuilder) LoadField(idx int32) exec.Builder {
+	((*Builder)(p)).LoadField(idx)
+	return p
+}
+
+// StoreField instr
+func (p *iBuilder) StoreField(idx int32) exec.Builder {
+	((*Builder)(p)).StoreField(idx)
+	return p
+}
+
 // DefineFunc instr
 func (p *iBuilder) DefineFunc(fun exec.FuncInfo) exec.Builder {
 	((*Builder)(p)).DefineFunc(fun)
@@ -296,6 +332,12 @@ func (p *iBuilder) EndFunc(fun exec.FuncInfo) exec.Builder {
 // DefineVar defines variables.
 func (p *iBuilder) DefineVar(vars ...exec.Var) exec.Builder {
 	((*Builder)(p)).DefineVar(vars...)
+	return p
+}
+
+// DefineType defines variables.
+func (p *iBuilder) DefineType(typ exec.Type) exec.Builder {
+	((*Builder)(p)).DefineType(typ)
 	return p
 }
 
@@ -370,6 +412,12 @@ func (p *iBuilder) Make(typ reflect.Type, arity int) exec.Builder {
 	return p
 }
 
+// Struct instr
+func (p *iBuilder) Struct(typ reflect.Type, arity int) exec.Builder {
+	((*Builder)(p)).Struct(typ, arity)
+	return p
+}
+
 // MapIndex instr
 func (p *iBuilder) MapIndex() exec.Builder {
 	((*Builder)(p)).MapIndex()
@@ -421,6 +469,12 @@ func (p *iBuilder) TypeCast(from, to reflect.Type) exec.Builder {
 // GoBuiltin instr
 func (p *iBuilder) GoBuiltin(typ reflect.Type, op exec.GoBuiltin) exec.Builder {
 	((*Builder)(p)).GoBuiltin(typ, op)
+	return p
+}
+
+// New instr
+func (p *iBuilder) Copy() exec.Builder {
+	((*Builder)(p)).Copy()
 	return p
 }
 
