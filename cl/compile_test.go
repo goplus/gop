@@ -258,7 +258,6 @@ println(struct {
 	A int
 	B string
 }{1, "Hello"})
-
 println(&struct {
 	A int
 	B string
@@ -285,7 +284,13 @@ func TestStruct(t *testing.T) {
 	if v := ctx.Get(-1); v != nil {
 		t.Fatal("error:", v)
 	}
-	if v := ctx.Get(-2); v != int(10) {
+	if v := ctx.Get(-2); v != int(11) {
+		t.Fatal("n:", v)
+	}
+	if v := ctx.Get(-3); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-4); v != int(10) {
 		t.Fatal("n:", v)
 	}
 }
