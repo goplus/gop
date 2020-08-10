@@ -687,7 +687,7 @@ var testStructClauses = map[string]testData{
 					`, "&{1 Hello}\n", false},
 	"struct_key_value_ptr": {`
 			println(&struct {
-				A int
+				A int  ` + "`json:\"a\"`" + `
 				B string
 			}{A: 1,B: "Hello"})
 					`, "&{1 Hello}\n", false},
