@@ -673,11 +673,23 @@ var testStructClauses = map[string]testData{
 				B string
 			}{1, "Hello"})	
 					`, "{1 Hello}\n", false},
+	"struct_key_value": {`
+			println(struct {
+				A int
+				B string
+			}{A:1,B: "Hello"})	
+					`, "{1 Hello}\n", false},
 	"struct_ptr": {`
 			println(&struct {
 				A int
 				B string
 			}{1, "Hello"})
+					`, "&{1 Hello}\n", false},
+	"struct_key_value_ptr": {`
+			println(&struct {
+				A int
+				B string
+			}{A: 1,B: "Hello"})
 					`, "&{1 Hello}\n", false},
 }
 

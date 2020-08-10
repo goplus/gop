@@ -28,15 +28,11 @@ import (
 
 // StructType instr
 func StructType(p *Builder, typ reflect.Type) ast.Expr {
-	if typ.Kind() == reflect.Ptr {
-		return PtrType(p, typ.Elem())
-	} else {
-		var fields = &ast.FieldList{}
-		for i := 0; i < typ.NumField(); i++ {
-			fields.List = append(fields.List, toStructField(p, typ.Field(i)))
-		}
-		return &ast.StructType{Fields: fields}
+	var fields = &ast.FieldList{}
+	for i := 0; i < typ.NumField(); i++ {
+		fields.List = append(fields.List, toStructField(p, typ.Field(i)))
 	}
+	return &ast.StructType{Fields: fields}
 }
 
 func toStructField(p *Builder, f reflect.StructField) *ast.Field {
