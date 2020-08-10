@@ -666,6 +666,25 @@ func TestCopy(t *testing.T) {
 	testScripts(t, "TestCopy", testCopyClauses)
 }
 
+var testStructClauses = map[string]testData{
+	"struct": {`
+			println(struct {
+				A int
+				B string
+			}{1, "Hello"})	
+					`, "{1 Hello}\n", false},
+	"struct_ptr": {`
+			println(&struct {
+				A int
+				B string
+			}{1, "Hello"})
+					`, "&{1 Hello}\n", false},
+}
+
+func TestStruct2(t *testing.T) {
+	testScripts(t, "TestStruct", testStructClauses)
+}
+
 func testScripts(t *testing.T, testName string, scripts map[string]testData) {
 	for name, script := range scripts {
 		t.Log("Run " + testName + "---" + name)

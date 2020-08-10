@@ -19,7 +19,6 @@ package gengo
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"go/format"
 	"io/ioutil"
@@ -60,18 +59,18 @@ func saveGoFile(dir string, code *golang.Code) error {
 }
 
 func genGopkg(pkgDir string) (mainPkg bool, err error) {
-	defer func() {
-		if e := recover(); e != nil {
-			switch v := e.(type) {
-			case string:
-				err = errors.New(v)
-			case error:
-				err = v
-			default:
-				panic(e)
-			}
-		}
-	}()
+	// defer func() {
+	// 	if e := recover(); e != nil {
+	// 		switch v := e.(type) {
+	// 		case string:
+	// 			err = errors.New(v)
+	// 		case error:
+	// 			err = v
+	// 		default:
+	// 			panic(e)
+	// 		}
+	// 	}
+	// }()
 
 	fset := token.NewFileSet()
 	pkgDir, _ = filepath.Abs(pkgDir)

@@ -631,3 +631,45 @@ var goBuiltinArities = [...]int{
 }
 
 // -----------------------------------------------------------------------------
+
+// Struct instr
+func (p *Builder) Struct(typ reflect.Type, arity int) *Builder {
+	var ptr bool
+	if typ.Kind() == reflect.Ptr {
+		ptr = true
+		typ = typ.Elem()
+	}
+	typExpr := Type(p, typ)
+	elts := make([]ast.Expr, arity)
+	args := p.rhs.GetArgs(arity << 1)
+	for i := 0; i < arity; i++ {
+		elts[i] = &ast.KeyValueExpr{
+			Key:   toField(args[i<<1].(ast.Expr)),
+			Value: args[(i<<1)+1].(ast.Expr),
+		}
+	}
+
+	var ret ast.Expr
+
+	ret = &ast.CompositeLit{
+		Type: typExpr,
+		Elts: elts,
+	}
+	if ptr {
+		ret = &ast.UnaryExpr{
+			Op: token.AND,
+			X:  ret,
+		}
+	}
+	p.rhs.Ret(arity<<1, ret)
+	return p
+}
+
+func toField(expr ast.Expr) *ast.Ident {
+	if ident, ok := expr.(*ast.Ident); ok {
+		return ident
+	}
+	lit := expr.(*ast.BasicLit)
+	field, _ := strconv.Unquote(lit.Value)
+	return Ident(field)
+}
