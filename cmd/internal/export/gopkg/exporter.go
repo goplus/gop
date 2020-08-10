@@ -244,6 +244,15 @@ func (p *Exporter) fixPkgString(typ string) string {
 	})
 }
 
+func isInternalPkg(pkg string) bool {
+	for _, a := range strings.Split(pkg, "/") {
+		if a == "internal" {
+			return true
+		}
+	}
+	return false
+}
+
 // ExportFunc exports a go function/method.
 func (p *Exporter) ExportFunc(fn *types.Func) error {
 	tfn := fn.Type().(*types.Signature)
@@ -278,6 +287,10 @@ func (p *Exporter) ExportFunc(fn *types.Func) error {
 		typ := tfn.Params().At(i).Type()
 		if named, ok := typ.(*types.Named); ok {
 			if !named.Obj().Exported() && named.String() != "error" {
+				fmt.Println("ignore", fn)
+				return nil
+			}
+			if pkg := named.Obj().Pkg(); pkg != nil && isInternalPkg(pkg.Path()) {
 				fmt.Println("ignore", fn)
 				return nil
 			}

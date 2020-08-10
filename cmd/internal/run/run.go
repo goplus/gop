@@ -21,6 +21,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/parser"
@@ -53,7 +54,7 @@ func init() {
 func runCmd(cmd *base.Command, args []string) {
 	flag.Parse(args)
 	if flag.NArg() < 1 {
-		cmd.Usage()
+		cmd.Usage(os.Stderr)
 	}
 
 	log.SetFlags(log.Ldefault &^ log.LstdFlags)
@@ -72,9 +73,14 @@ func runCmd(cmd *base.Command, args []string) {
 	if err != nil {
 		log.Fatalln("input arg check failed:", err)
 	}
-	pkgs, err := parser.ParseGopFiles(fset, target, isDir, 0)
+	var pkgs map[string]*ast.Package
+	if isDir {
+		pkgs, err = parser.ParseDir(fset, target, nil, 0)
+	} else {
+		pkgs, err = parser.Parse(fset, target, nil, 0)
+	}
 	if err != nil {
-		log.Fatalln("ParseGopFiles failed:", err)
+		log.Fatalln("parser.Parse failed:", err)
 	}
 	cl.CallBuiltinOp = exec.CallBuiltinOp
 
@@ -88,8 +94,7 @@ func runCmd(cmd *base.Command, args []string) {
 		code.Dump(os.Stdout)
 		return
 	}
-	ctx := exec.NewContext(code)
-	ctx.Exec(0, code.Len())
+	exec.NewContext(code).Run()
 	if *flagProf {
 		exec.ProfileReport()
 	}

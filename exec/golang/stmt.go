@@ -393,8 +393,56 @@ func (p *Builder) EndComprehension(c *Comprehension) *Builder {
 	return p
 }
 
-func (p *Builder) Defer(start, end *Label) exec.Instr {
-	panic("The method defer under the builder of golang is not yet supported")
+// Defer instr
+func (p *Builder) Defer() *Builder {
+	p.inDeferOrGo = callByDefer
+	return p
+}
+
+// Go instr
+func (p *Builder) Go() *Builder {
+	p.inDeferOrGo = callByGo
+	return p
+}
+
+// DefineBlock starts a new block.
+func (p *Builder) DefineBlock() *Builder {
+	p.scopeCtx = &scopeCtx{parentCtx: p.scopeCtx}
+	p.initStmts()
+	return p
+}
+
+// EndBlock ends a block.
+func (p *Builder) EndBlock() *Builder {
+	p.endBlockStmt(0)
+	blockStmt := getBlockStmts(p)
+	if p.parentCtx == nil {
+		p.rhs.Push(blockStmt)
+	} else {
+		p.parentCtx.stmts = append(p.parentCtx.stmts, blockStmt)
+		p.scopeCtx = p.parentCtx
+	}
+	return p
+}
+
+// getBlockStmts will check whether the first stmt in block stmts is labeledStmt.
+// if true ,the whole block should be labeled
+func getBlockStmts(p *Builder) ast.Stmt {
+	body := &ast.BlockStmt{List: p.getStmts(p)}
+	if len(body.List) > 0 {
+		for i := 0; i < len(body.List); i++ {
+			if _, ok := body.List[i].(*ast.DeclStmt); ok {
+				continue
+			}
+			if v, ok := body.List[i].(*ast.LabeledStmt); ok {
+				body.List[i] = v.Stmt
+				v.Stmt = body
+				return v
+			}
+			break
+		}
+	}
+	return body
 }
 
 // ----------------------------------------------------------------------------

@@ -37,6 +37,12 @@ func compileBlockStmtWithout(ctx *blockCtx, body *ast.BlockStmt) {
 	}
 }
 
+func compileNewBlock(ctx *blockCtx, block *ast.BlockStmt) {
+	ctx.out.DefineBlock()
+	compileBlockStmtWith(ctx, block)
+	ctx.out.EndBlock()
+}
+
 func compileBodyWith(ctx *blockCtx, body []ast.Stmt) {
 	ctxWith := newNormBlockCtx(ctx)
 	for _, stmt := range body {
@@ -63,7 +69,7 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	case *ast.ForStmt:
 		compileForStmt(ctx, v)
 	case *ast.BlockStmt:
-		compileBlockStmtWith(ctx, v)
+		compileNewBlock(ctx, v)
 	case *ast.ReturnStmt:
 		compileReturnStmt(ctx, v)
 	case *ast.IncDecStmt:
@@ -74,6 +80,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileLabeledStmt(ctx, v)
 	case *ast.DeferStmt:
 		compileDeferStmt(ctx, v)
+	case *ast.GoStmt:
+		compileGoStmt(ctx, v)
 	case *ast.EmptyStmt:
 		// do nothing
 	default:
@@ -148,9 +156,11 @@ func toIdent(e ast.Expr) *ast.Ident {
 }
 
 func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
-	if v.Init != nil {
-		ctx = newNormBlockCtx(ctx)
-		compileStmt(ctx, v.Init)
+	if init := v.Init; init != nil {
+		v.Init = nil
+		block := &ast.BlockStmt{List: []ast.Stmt{init, v}}
+		compileNewBlock(ctx, block)
+		return
 	}
 	out := ctx.out
 	start := ctx.NewLabel("")
@@ -232,93 +242,26 @@ func compileLabeledStmt(ctx *blockCtx, v *ast.LabeledStmt) {
 	compileStmt(ctx, v.Stmt)
 }
 
+type callType int
+
+const (
+	callExpr callType = iota
+	callByDefer
+	callByGo
+)
+
+var gCallTypes = []string{
+	"",
+	"defer",
+	"go",
+}
+
+func compileGoStmt(ctx *blockCtx, v *ast.GoStmt) {
+	compileCallExpr(ctx, v.Call, callByGo)()
+}
+
 func compileDeferStmt(ctx *blockCtx, v *ast.DeferStmt) {
-	var instr exec.Reserved
-	out := ctx.out
-	start := ctx.NewLabel("")
-	end := ctx.NewLabel("")
-
-	var f func()
-	exprFun := compileExpr(ctx, v.Call.Fun)
-	fn := ctx.infer.Pop()
-	switch vfn := fn.(type) {
-	case *qlFunc:
-		ret := vfn.Results()
-		ctx.infer.Push(ret)
-
-		for _, arg := range v.Call.Args {
-			compileExpr(ctx, arg)()
-		}
-		instr = ctx.out.Reserve()
-		out.Label(start)
-		f = func() {
-			arity := checkFuncCall(vfn.Proto(), 0, v.Call, ctx)
-			fun := vfn.FuncInfo()
-			if fun.IsVariadic() {
-				ctx.out.CallFuncv(fun, len(v.Call.Args), arity)
-			} else {
-				ctx.out.CallFunc(fun, len(v.Call.Args))
-			}
-		}
-	case *goFunc:
-		ret := vfn.Results()
-		ctx.infer.Push(ret)
-
-		for _, arg := range v.Call.Args {
-			compileExpr(ctx, arg)()
-		}
-		instr = ctx.out.Reserve()
-		out.Label(start)
-		f = func() {
-			if vfn.isMethod != 0 {
-				compileExpr(ctx, v.Call.Fun.(*ast.SelectorExpr).X)()
-			}
-			nexpr := len(v.Call.Args) + vfn.isMethod
-			arity := checkFuncCall(vfn.Proto(), vfn.isMethod, v.Call, ctx)
-			switch vfn.kind {
-			case exec.SymbolFunc:
-				ctx.out.CallGoFunc(exec.GoFuncAddr(vfn.addr), nexpr)
-			case exec.SymbolFuncv:
-				ctx.out.CallGoFuncv(exec.GoFuncvAddr(vfn.addr), nexpr, arity)
-			}
-		}
-	case *goValue:
-		if vfn.t.Kind() != reflect.Func {
-			log.Panicln("compileCallExpr failed: call a non function.")
-		}
-		ret := newFuncResults(vfn.t)
-		ctx.infer.Push(ret)
-
-		for _, arg := range v.Call.Args {
-			compileExpr(ctx, arg)()
-		}
-		instr = ctx.out.Reserve()
-		out.Label(start)
-		f = func() {
-			exprFun()
-			arity, ellipsis := checkFuncCall(vfn.t, 0, v.Call, ctx), false
-			if arity == -1 {
-				arity, ellipsis = len(v.Call.Args), true
-			}
-			ctx.out.CallGoClosure(len(v.Call.Args), arity, ellipsis)
-		}
-	case *nonValue:
-		instr = ctx.out.Reserve()
-		out.Label(start)
-		// TODO compile args before compileCallExpr
-		switch nv := vfn.v.(type) {
-		case goInstr:
-			f = nv(ctx, v.Call)
-		case reflect.Type:
-			f = compileTypeCast(nv, ctx, v.Call)
-		}
-	}
-
-	f()
-	ctx.infer.Pop()
-
-	out.Label(end)
-	instr.Set(out, out.Defer(start, end))
+	compileCallExpr(ctx, v.Call, callByDefer)()
 }
 
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
@@ -478,7 +421,11 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 	}
 	out.Label(label)
 	if hasElse {
-		compileStmt(ctxIf, v.Else)
+		if ve, ok := v.Else.(*ast.BlockStmt); ok {
+			compileBlockStmtWithout(ctx, ve)
+		} else {
+			compileStmt(ctxIf, v.Else)
+		}
 		out.Label(done)
 	}
 }
@@ -521,6 +468,14 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 
 func compileExprStmt(ctx *blockCtx, expr *ast.ExprStmt) {
 	compileExpr(ctx, expr.X)()
+	if ctx.infer.Len() > 0 {
+		in := ctx.infer.Get(-1)
+		if v, ok := in.(*constVal); ok {
+			for i := 0; i < v.NumValues(); i++ {
+				checkType(exec.TyEmptyInterface, v.Value(i), ctx.out)
+			}
+		}
+	}
 	ctx.infer.PopN(1)
 }
 

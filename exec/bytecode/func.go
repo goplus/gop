@@ -274,13 +274,32 @@ func (p *FuncInfo) Type() reflect.Type {
 	return p.t
 }
 
+func (p *FuncInfo) execFunc(ctx *Context) {
+	oldDefers := ctx.defers
+	ctx.defers = nil
+	defer func() {
+		ctx.execDefers()
+		ctx.defers = oldDefers
+	}()
+	ctx.Exec(p.funEntry, p.funEnd)
+	if ctx.ip == ipReturnN { // TODO: optimize
+		if ctx.defers != nil {
+			ctx.ip = ipInvalid
+			rets := ctx.GetArgs(p.numOut)
+			for i, v := range rets {
+				ctx.setVar(uint32(i), v)
+			}
+		} else {
+			n := len(ctx.data)
+			ctx.data = append(ctx.data[:ctx.base-len(p.in)], ctx.data[n-p.numOut:]...)
+		}
+	}
+}
+
 func (p *FuncInfo) exec(ctx *Context, parent *varScope) {
 	old := ctx.switchScope(parent, &p.varManager)
-	ctx.Exec(p.funEntry, p.funEnd)
-	if ctx.ip == ipReturnN {
-		n := len(ctx.data)
-		ctx.data = append(ctx.data[:ctx.base-len(p.in)], ctx.data[n-p.numOut:]...)
-	} else {
+	p.execFunc(ctx)
+	if ctx.ip != ipReturnN {
 		ctx.data = ctx.data[:ctx.base-len(p.in)]
 		n := uint32(p.numOut)
 		for i := uint32(0); i < n; i++ {

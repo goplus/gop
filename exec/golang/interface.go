@@ -167,8 +167,15 @@ func (p *iBuilder) ForPhrase(f exec.ForPhrase, key, val exec.Var, hasExecCtx ...
 }
 
 // Defer instr
-func (p *iBuilder) Defer(start, end exec.Label) exec.Instr {
-	return ((*Builder)(p)).Defer(end.(*Label), end.(*Label))
+func (p *iBuilder) Defer() exec.Builder {
+	((*Builder)(p)).Defer()
+	return p
+}
+
+// Go instr
+func (p *iBuilder) Go() exec.Builder {
+	((*Builder)(p)).Go()
+	return p
 }
 
 func toVar(v exec.Var) *Var {
@@ -399,6 +406,12 @@ func (p *iBuilder) Index(idx int) exec.Builder {
 	return p
 }
 
+// AddrIndex instr
+func (p *iBuilder) AddrIndex(idx int) exec.Builder {
+	((*Builder)(p)).AddrIndex(idx)
+	return p
+}
+
 // SetIndex instr
 func (p *iBuilder) SetIndex(idx int) exec.Builder {
 	((*Builder)(p)).SetIndex(idx)
@@ -429,6 +442,12 @@ func (p *iBuilder) GoBuiltin(typ reflect.Type, op exec.GoBuiltin) exec.Builder {
 	return p
 }
 
+// New instr
+func (p *iBuilder) New(typ reflect.Type) exec.Builder {
+	((*Builder)(p)).New(typ)
+	return p
+}
+
 // Zero instr
 func (p *iBuilder) Zero(typ reflect.Type) exec.Builder {
 	((*Builder)(p)).Zero(typ)
@@ -456,11 +475,6 @@ func (p *iBuilder) ReservedAsPush(r exec.Reserved, v interface{}) {
 	((*Builder)(p)).ReservedAsPush(r, v)
 }
 
-// ReservedAsInstr sets Reserved as Instr
-func (p *iBuilder) ReservedAsInstr(r exec.Reserved, instr exec.Instr) {
-	((*Builder)(p)).ReservedAsInstr(r, instr)
-}
-
 // GetPackage returns the Go+ package that the Builder works for.
 func (p *iBuilder) GetPackage() exec.Package {
 	return defaultImpl
@@ -469,6 +483,18 @@ func (p *iBuilder) GetPackage() exec.Package {
 // Resolve resolves all unresolved labels/functions/consts/etc.
 func (p *iBuilder) Resolve() exec.Code {
 	return ((*Builder)(p)).Resolve()
+}
+
+// DefineBlock
+func (p *iBuilder) DefineBlock() exec.Builder {
+	((*Builder)(p)).DefineBlock()
+	return p
+}
+
+// EndBlock
+func (p *iBuilder) EndBlock() exec.Builder {
+	((*Builder)(p)).EndBlock()
+	return p
 }
 
 // -----------------------------------------------------------------------------

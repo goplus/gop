@@ -26,7 +26,7 @@ import (
 
 // -----------------------------------------------------------------------------
 
-type goInstr = func(ctx *blockCtx, v *ast.CallExpr) func()
+type goInstr = func(ctx *blockCtx, v *ast.CallExpr, ct callType) func()
 
 type goInstrInfo struct {
 	instr goInstr
@@ -65,7 +65,10 @@ func checkSliceType(args []interface{}, i int) (typ reflect.Type, ok bool) {
 */
 
 // func append(slice []Type, elems ...Type) []Type
-func igoAppend(ctx *blockCtx, v *ast.CallExpr) func() {
+func igoAppend(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
+	if ct != callExpr {
+		log.Panicf("%s discards result of %s\n", gCallTypes[ct], ctx.code(v))
+	}
 	if len(v.Args) < 2 {
 		log.Panicln("append: argument count not enough")
 	}
@@ -98,7 +101,7 @@ func igoAppend(ctx *blockCtx, v *ast.CallExpr) func() {
 }
 
 // func copy(dst, src []Type) int
-func igoCopy(ctx *blockCtx, v *ast.CallExpr) func() {
+func igoCopy(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	if len(v.Args) < 2 {
 		log.Panicln("not enough arguments in call to copy")
 	}
@@ -110,7 +113,9 @@ func igoCopy(ctx *blockCtx, v *ast.CallExpr) func() {
 	if dstTy.Kind() != reflect.Slice {
 		log.Panicln("arguments to copy must be slices; have ", dstTy.Kind())
 	}
-	ctx.infer.Ret(1, &goValue{exec.TyInt})
+	if ct == callExpr {
+		ctx.infer.Ret(1, &goValue{exec.TyInt})
+	}
 	return func() {
 		dstExpr()
 		compileExpr(ctx, v.Args[1])()
@@ -128,55 +133,47 @@ func igoCopy(ctx *blockCtx, v *ast.CallExpr) func() {
 			log.Panicln("second argument to copy should be slice or string; have", srcTy.Kind())
 		}
 		ctx.infer.Pop()
-		ctx.out.GoBuiltin(dstTy, exec.GobCopy)
+		builder(ctx, ct).GoBuiltin(dstTy, exec.GobCopy)
 	}
 }
 
 // func delete(m map[Type]Type1, key Type)
-func igoDelete(ctx *blockCtx, v *ast.CallExpr) func() {
-	if len(v.Args) < 2 {
-		log.Panicln("missing second (key) argument to delete")
-	}
-	if len(v.Args) > 2 {
+func igoDelete(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
+	narg := len(v.Args)
+	if narg != 2 {
+		if narg < 2 {
+			log.Panicln("missing second (key) argument to delete")
+		}
 		log.Panicln("too many arguments to delete")
 	}
 	mapExpr := compileExpr(ctx, v.Args[0])
-	mapType := ctx.infer.Get(-1).(iValue).Type()
+	mapType := ctx.infer.Pop().(iValue).Type()
 	if mapType.Kind() != reflect.Map {
-		log.Panicln(" first argument to delete must be map; have", mapType.Kind())
+		log.Panicln("first argument to delete must be map; have", mapType)
 	}
+	ctx.infer.Push(&nonValue{})
 	return func() {
 		mapExpr()
-		n1 := len(v.Args) - 1
-		for i := 1; i <= n1; i++ {
-			compileExpr(ctx, v.Args[i])()
-		}
-		args := ctx.infer.GetArgs(n1)
-		elem := mapType.Key()
-		checkType(elem, args[0], ctx.out)
-		ctx.infer.PopN(n1)
-		ctx.out.GoBuiltin(mapType, exec.GobDelete)
+		compileExpr(ctx, v.Args[1])()
+		key := ctx.infer.Pop().(iValue)
+		checkType(mapType.Key(), key, ctx.out)
+		builder(ctx, ct).GoBuiltin(mapType, exec.GobDelete)
 	}
 }
 
 // func len/cap(v Type) int
 func igoLenOrCap(ctx *blockCtx, v *ast.CallExpr, op exec.GoBuiltin) func() {
-	if len(v.Args) < 1 {
-		logPanic(ctx, v, `missing argument to %v: %v`, op, ctx.code(v))
-	}
-	if len(v.Args) > 1 {
+	narg := len(v.Args)
+	if narg != 1 {
+		if narg < 1 {
+			logPanic(ctx, v, `missing argument to %v: %v`, op, ctx.code(v))
+		}
 		logPanic(ctx, v, `too many arguments to %v: %v`, op, ctx.code(v))
 	}
 	expr := compileExpr(ctx, v.Args[0])
 	x := ctx.infer.Get(-1)
 	typ := x.(iValue).Type()
 	kind := typ.Kind()
-	if kind == reflect.Ptr {
-		typ = typ.Elem()
-		if kind = typ.Kind(); kind != reflect.Array {
-			logPanic(ctx, v, `invalid argument a (type *%v) for %v`, typ, op)
-		}
-	}
 	switch kind {
 	case reflect.Array:
 		n := typ.Len()
@@ -214,17 +211,26 @@ func igoLenOrCap(ctx *blockCtx, v *ast.CallExpr, op exec.GoBuiltin) func() {
 }
 
 // func len(v Type) int
-func igoLen(ctx *blockCtx, v *ast.CallExpr) func() {
+func igoLen(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
+	if ct != callExpr {
+		log.Panicf("%s discards result of %s\n", gCallTypes[ct], ctx.code(v))
+	}
 	return igoLenOrCap(ctx, v, exec.GobLen)
 }
 
 // func cap(v Type) int
-func igoCap(ctx *blockCtx, v *ast.CallExpr) func() {
+func igoCap(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
+	if ct != callExpr {
+		log.Panicf("%s discards result of %s\n", gCallTypes[ct], ctx.code(v))
+	}
 	return igoLenOrCap(ctx, v, exec.GobCap)
 }
 
 // func make(t Type, size ...IntegerType) Type
-func igoMake(ctx *blockCtx, v *ast.CallExpr) func() {
+func igoMake(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
+	if ct != callExpr {
+		log.Panicf("%s discards result of %s\n", gCallTypes[ct], ctx.code(v))
+	}
 	if len(v.Args) < 1 {
 		logPanic(ctx, v, `missing argument to make: %v`, ctx.code(v))
 	}
@@ -251,32 +257,55 @@ func igoMake(ctx *blockCtx, v *ast.CallExpr) func() {
 }
 
 // func new(Type) *Type
-func igoNew(ctx *blockCtx, v *ast.CallExpr) func() {
-	panic("todo")
+func igoNew(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
+	if ct != callExpr {
+		log.Panicf("%s discards result of %s\n", gCallTypes[ct], ctx.code(v))
+	}
+	if n := len(v.Args); n != 1 {
+		if n == 0 {
+			log.Panicln("missing argument to new")
+		}
+		log.Panicf("too many arguments to new(%v)\n", ctx.code(v.Args[0]))
+	}
+	t := toType(ctx, v.Args[0]).(reflect.Type)
+	ptrT := reflect.PtrTo(t)
+	ctx.infer.Push(&goValue{t: ptrT})
+	return func() {
+		ctx.out.New(t)
+	}
 }
 
 // func complex(r, i FloatType) ComplexType
-func igoComplex(ctx *blockCtx, v *ast.CallExpr) func() {
+func igoComplex(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
+	if ct != callExpr {
+		log.Panicf("%s discards result of %s\n", gCallTypes[ct], ctx.code(v))
+	}
 	panic("todo")
 }
 
 // func real(c ComplexType) FloatType
-func igoReal(ctx *blockCtx, v *ast.CallExpr) func() {
+func igoReal(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
+	if ct != callExpr {
+		log.Panicf("%s discards result of %s\n", gCallTypes[ct], ctx.code(v))
+	}
 	panic("todo")
 }
 
 // func imag(c ComplexType) FloatType
-func igoImag(ctx *blockCtx, v *ast.CallExpr) func() {
+func igoImag(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
+	if ct != callExpr {
+		log.Panicf("%s discards result of %s\n", gCallTypes[ct], ctx.code(v))
+	}
 	panic("todo")
 }
 
 // func close(c chan<- Type)
-func igoClose(ctx *blockCtx, v *ast.CallExpr) func() {
+func igoClose(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	panic("todo")
 }
 
 // func recover() interface{}
-func igoRecover(ctx *blockCtx, v *ast.CallExpr) func() {
+func igoRecover(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	panic("todo")
 }
 

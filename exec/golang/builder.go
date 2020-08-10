@@ -79,6 +79,14 @@ func (p *Code) String() string {
 
 // -----------------------------------------------------------------------------
 
+type callType int
+
+const (
+	callExpr callType = iota
+	callByDefer
+	callByGo
+)
+
 // Builder is a class that generates go code.
 type Builder struct {
 	lhs, rhs    exec.Stack
@@ -93,9 +101,10 @@ type Builder struct {
 	cfun        *FuncInfo         // current function
 	cstmt       interface{}       // current statement
 	reserveds   []*printer.ReservedExpr
-	comprehens  func() // current comprehension
-	identBase   int    // auo-increasement ident index
-	*scopeCtx          // current block scope
+	comprehens  func()   // current comprehension
+	identBase   int      // auo-increasement ident index
+	*scopeCtx            // current block scope
+	inDeferOrGo callType // in defer/go statement currently
 }
 
 // NewBuilder creates a new Code Builder instance.
@@ -320,11 +329,6 @@ func (p *Builder) Reserve() exec.Reserved {
 // ReservedAsPush sets Reserved as Push(v)
 func (p *Builder) ReservedAsPush(r exec.Reserved, v interface{}) {
 	p.reserveds[r].Expr = Const(p, v)
-}
-
-// ReservedAsInstr sets Reserved as Instr
-func (p *Builder) ReservedAsInstr(r exec.Reserved, v exec.Instr) {
-	log.Panicln("todo")
 }
 
 // Pop instr

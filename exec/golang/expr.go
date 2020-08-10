@@ -366,7 +366,20 @@ func (p *Builder) Call(narg int, ellipsis bool, args ...ast.Expr) *Builder {
 	if ellipsis {
 		expr.Ellipsis++
 	}
-	p.rhs.Push(expr)
+	if ct := p.inDeferOrGo; ct == callExpr {
+		p.rhs.Push(expr)
+	} else {
+		p.inDeferOrGo = callExpr
+		if ct == callByDefer {
+			p.rhs.Push(&ast.DeferStmt{
+				Call: expr,
+			})
+		} else {
+			p.rhs.Push(&ast.GoStmt{
+				Call: expr,
+			})
+		}
+	}
 	return p
 }
 
@@ -492,6 +505,13 @@ func (p *Builder) Append(typ reflect.Type, arity int) *Builder {
 	return p
 }
 
+// New instr
+func (p *Builder) New(typ reflect.Type) *Builder {
+	p.rhs.Push(newIdent)
+	p.Call(0, false, Type(p, typ))
+	return p
+}
+
 // Make instr
 func (p *Builder) Make(typ reflect.Type, arity int) *Builder {
 	p.rhs.Push(makeIdent)
@@ -509,9 +529,6 @@ func (p *Builder) MakeArray(typ reflect.Type, arity int) *Builder {
 	var xExpr ast.Expr = &ast.CompositeLit{
 		Type: typExpr,
 		Elts: elts,
-	}
-	if typ.Kind() == reflect.Array {
-		xExpr = &ast.UnaryExpr{Op: token.AND, X: xExpr}
 	}
 	p.rhs.Ret(arity, xExpr)
 	return p
@@ -550,6 +567,15 @@ func (p *Builder) SetMapIndex() *Builder {
 // Index instr
 func (p *Builder) Index(idx int) *Builder {
 	p.rhs.Push(IndexWith(p, idx))
+	return p
+}
+
+// AddrIndex instr
+func (p *Builder) AddrIndex(idx int) *Builder {
+	p.rhs.Push(&ast.UnaryExpr{
+		Op: token.AND,
+		X:  IndexWith(p, idx),
+	})
 	return p
 }
 

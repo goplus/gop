@@ -185,15 +185,15 @@ func checkLabel(fl *flowLabel) bool {
 type blockCtx struct {
 	*pkgCtx
 	*funcCtx
-	file       *fileCtx
-	parent     *blockCtx
-	syms       map[string]iSymbol
-	noExecCtx  bool
-	checkFlag  bool
-	inLHS      bool
-	fieldVar   interface{}
-	fieldIndex []int
-	fieldExprX func()
+	file           *fileCtx
+	parent         *blockCtx
+	syms           map[string]iSymbol
+	noExecCtx      bool
+	checkFlag      bool
+	checkArrayAddr bool
+	fieldVar       interface{}
+	fieldIndex     []int
+	fieldExprX     func()
 }
 
 func (ctx *blockCtx) resetFieldVar(v interface{}) {
@@ -330,6 +330,18 @@ func (p *blockCtx) findFunc(name string) (addr *funcDecl, err error) {
 		return
 	}
 	return nil, ErrSymbolNotFunc
+}
+
+// getCtxVar finds a var in currentCtx only
+func (p *blockCtx) getCtxVar(name string) (addr iVar, err error) {
+	v, ok := p.syms[name]
+	if !ok {
+		return nil, ErrNotFound
+	}
+	if addr, ok = v.(iVar); ok {
+		return
+	}
+	return nil, ErrSymbolNotVariable
 }
 
 func (p *blockCtx) findVar(name string) (addr iVar, err error) {

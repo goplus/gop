@@ -127,9 +127,15 @@ func (p *iBuilder) Default() exec.Builder {
 	return p
 }
 
-// Default instr
-func (p *iBuilder) Defer(start, end exec.Label) exec.Instr {
-	return ((*Builder)(p)).Defer(start.(*Label), end.(*Label))
+// Defer instr
+func (p *iBuilder) Defer() exec.Builder {
+	((*Builder)(p)).Defer()
+	return p
+}
+
+// Go instr
+func (p *iBuilder) Go() exec.Builder {
+	return ((*Builder)(p)).Go()
 }
 
 // WrapIfErr instr
@@ -384,6 +390,12 @@ func (p *iBuilder) Index(idx int) exec.Builder {
 	return p
 }
 
+// AddrIndex instr
+func (p *iBuilder) AddrIndex(idx int) exec.Builder {
+	((*Builder)(p)).AddrIndex(idx)
+	return p
+}
+
 // SetIndex instr
 func (p *iBuilder) SetIndex(idx int) exec.Builder {
 	((*Builder)(p)).SetIndex(idx)
@@ -420,6 +432,12 @@ func (p *iBuilder) Zero(typ reflect.Type) exec.Builder {
 	return p
 }
 
+// New instr
+func (p *iBuilder) New(typ reflect.Type) exec.Builder {
+	((*Builder)(p)).New(typ)
+	return p
+}
+
 // StartStmt receives a `StartStmt` event.
 func (p *iBuilder) StartStmt(stmt interface{}) interface{} {
 	return nil
@@ -440,11 +458,6 @@ func (p *iBuilder) ReservedAsPush(r exec.Reserved, v interface{}) {
 	((*Builder)(p)).ReservedAsPush(r, v)
 }
 
-// ReservedAsInstr sets Reserved as Instr
-func (p *iBuilder) ReservedAsInstr(r exec.Reserved, instr exec.Instr) {
-	((*Builder)(p)).ReservedAsInstr(r, instr)
-}
-
 // GetPackage returns the Go+ package that the Builder works for.
 func (p *iBuilder) GetPackage() exec.Package {
 	return NewPackage(p.code)
@@ -453,6 +466,16 @@ func (p *iBuilder) GetPackage() exec.Package {
 // Resolve resolves all unresolved labels/functions/consts/etc.
 func (p *iBuilder) Resolve() exec.Code {
 	return ((*Builder)(p)).Resolve()
+}
+
+// DefineBlock
+func (p *iBuilder) DefineBlock() exec.Builder {
+	return p
+}
+
+// EndBlock
+func (p *iBuilder) EndBlock() exec.Builder {
+	return p
 }
 
 // -----------------------------------------------------------------------------

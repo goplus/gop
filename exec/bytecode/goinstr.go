@@ -157,17 +157,24 @@ func execMakeArray(i Instr, p *Context) {
 func makeArray(typSlice reflect.Type, arity int, p *Context) {
 	args := p.GetArgs(arity)
 	var ret, set reflect.Value
-	if typSlice.Kind() == reflect.Slice {
+	kind := typSlice.Kind()
+	if kind == reflect.Slice {
 		ret = reflect.MakeSlice(typSlice, arity, arity)
 		set = ret
-	} else {
+	} else if kind == reflect.Array {
 		ret = reflect.New(typSlice)
 		set = ret.Elem()
+	} else {
+		log.Panic("makeArray bad type:", typSlice)
 	}
 	for i, arg := range args {
 		set.Index(i).Set(getElementOf(arg, typSlice))
 	}
-	p.Ret(arity, ret.Interface())
+	if kind == reflect.Slice {
+		p.Ret(arity, ret.Interface())
+	} else {
+		p.Ret(arity, ret.Elem().Interface())
+	}
 }
 
 func execAppend(i Instr, p *Context) {
@@ -241,18 +248,29 @@ func execTypeCast(i Instr, p *Context) {
 	args[0] = reflect.ValueOf(args[0]).Convert(typ).Interface()
 }
 
+const (
+	indexOpGet  = 0
+	indexOpSet  = 1
+	indexOpAddr = 2
+)
+
 func execIndex(i Instr, p *Context) {
-	idx := int(i & setIndexOperand)
-	if idx == setIndexOperand {
+	idx := int(i & bitsOpIndexOperand)
+	if idx == bitsOpIndexOperand {
 		idx = p.Pop().(int)
 	}
 	n := len(p.data)
 	v := reflect.Indirect(reflect.ValueOf(p.data[n-1])).Index(idx)
-	if (i & setIndexFlag) != 0 { // value sliceData $idx $setIndex
+	switch (i >> bitsOpIndexShift) & ((1 << bitsIndexOp) - 1) {
+	case indexOpGet: // sliceData $idx $getIndex
+		p.data[n-1] = v.Interface()
+	case indexOpSet: // value sliceData $idx $setIndex
 		setValue(v, p.data[n-2])
 		p.PopN(2)
-	} else { // sliceData $idx $setIndex
-		p.data[n-1] = v.Interface()
+	case indexOpAddr: // sliceData $idx $setIndex
+		p.data[n-1] = v.Addr().Interface()
+	default:
+		panic("execIndex: unexpected indexOp")
 	}
 }
 
@@ -272,6 +290,10 @@ func execMapIndex(i Instr, p *Context) {
 		p.Ret(2, value.Interface())
 	}
 }
+
+const (
+	sliceIndexMask = (1 << 13) - 1
+)
 
 func popSliceIndexs(instr Instr, p *Context) (i, j int) {
 	instr &= bitsOperand
@@ -309,8 +331,14 @@ func execSlice3(instr Instr, p *Context) {
 }
 
 func execZero(i Instr, p *Context) {
-	typ := getType(i&bitsOperand, p)
-	p.Push(reflect.Zero(typ).Interface())
+	var v reflect.Value
+	typ := getType(i&bitsOpZeroOperand, p)
+	if (i & (1 << bitsOpZeroShift)) != 0 { // isPtr
+		v = reflect.New(typ)
+	} else {
+		v = reflect.Zero(typ)
+	}
+	p.Push(v.Interface())
 }
 
 // ToValues converts []interface{} into []reflect.Value.
@@ -471,32 +499,32 @@ func (p *Builder) SetMapIndex() *Builder {
 	return p
 }
 
-// Index instr
-func (p *Builder) Index(idx int) *Builder {
-	if idx >= setIndexOperand {
+func (p *Builder) doIndex(indexOp uint32, idx int) *Builder {
+	if idx >= bitsOpIndexOperand {
 		p.Push(idx)
-		idx = -1
+		idx = bitsOpIndexOperand
 	}
-	i := (opIndex << bitsOpShift) | uint32(idx&setIndexOperand)
+	i := (opIndex << bitsOpShift) | (indexOp << bitsOpIndexShift) | uint32(idx&bitsOpIndexOperand)
 	p.code.data = append(p.code.data, i)
 	return p
+}
+
+// Index instr
+func (p *Builder) Index(idx int) *Builder {
+	return p.doIndex(indexOpGet, idx)
 }
 
 // SetIndex instr
 func (p *Builder) SetIndex(idx int) *Builder {
-	if idx >= setIndexOperand {
-		p.Push(idx)
-		idx = -1
-	}
-	i := (opIndex<<bitsOpShift | setIndexFlag) | uint32(idx&setIndexOperand)
-	p.code.data = append(p.code.data, i)
-	return p
+	return p.doIndex(indexOpSet, idx)
+}
+
+// AddrIndex instr
+func (p *Builder) AddrIndex(idx int) *Builder {
+	return p.doIndex(indexOpAddr, idx)
 }
 
 const (
-	setIndexFlag    = (1 << 25)
-	setIndexOperand = setIndexFlag - 1
-	sliceIndexMask  = (1 << 13) - 1
 	// SliceConstIndexLast - slice const index max
 	SliceConstIndexLast = exec.SliceConstIndexLast
 	// SliceDefaultIndex - unspecified index
@@ -536,6 +564,13 @@ func (p *Builder) Slice3(i, j, k int) *Builder {
 // TypeCast instr
 func (p *Builder) TypeCast(from, to reflect.Type) *Builder {
 	i := (opTypeCast << bitsOpShift) | p.requireType(to)
+	p.code.data = append(p.code.data, i)
+	return p
+}
+
+// New instr
+func (p *Builder) New(typ reflect.Type) *Builder {
+	i := (opZero << bitsOpShift) | (1 << bitsOpZeroShift) | p.requireType(typ)
 	p.code.data = append(p.code.data, i)
 	return p
 }

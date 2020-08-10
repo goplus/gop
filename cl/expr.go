@@ -19,7 +19,6 @@ package cl
 import (
 	"reflect"
 	"strings"
-	"syscall"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/astutil"
@@ -32,17 +31,16 @@ import (
 
 // -----------------------------------------------------------------------------
 
-type compleMode = token.Token
+type compileMode = token.Token
 
 const (
-	lhsAssign compleMode = token.ASSIGN // leftHandSide = ...
-	lhsDefine compleMode = token.DEFINE // leftHandSide := ...
+	lhsAssign compileMode = token.ASSIGN // leftHandSide = ...
+	lhsDefine compileMode = token.DEFINE // leftHandSide := ...
 )
 
 // -----------------------------------------------------------------------------
 
-func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compleMode) {
-	ctx.inLHS = true
+func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compileMode) {
 	ctx.resetFieldVar(nil)
 	switch v := expr.(type) {
 	case *ast.Ident:
@@ -54,7 +52,6 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compleMode) {
 	default:
 		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
 	}
-	ctx.inLHS = false
 }
 
 func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
@@ -64,7 +61,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 	case *ast.BasicLit:
 		return compileBasicLit(ctx, v)
 	case *ast.CallExpr:
-		return compileCallExpr(ctx, v)
+		return compileCallExpr(ctx, v, 0)
 	case *ast.BinaryExpr:
 		return compileBinaryExpr(ctx, v)
 	case *ast.UnaryExpr:
@@ -101,14 +98,20 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 	}
 }
 
-func compileIdentLHS(ctx *blockCtx, name string, mode compleMode) {
+func compileIdentLHS(ctx *blockCtx, name string, mode compileMode) {
 	in := ctx.infer.Get(-1)
 	addr, err := ctx.findVar(name)
+	if mode == lhsDefine {
+		addr, err = ctx.getCtxVar(name)
+		if addr != nil {
+			log.Panicf("compileIdentLHS failed: %s redeclared in this block\n", name)
+		}
+	}
 	if err == nil {
 		if mode == lhsDefine && !addr.inCurrentCtx(ctx) {
 			log.Warn("requireVar: variable is shadowed -", name)
 		}
-	} else if mode == lhsAssign || err != syscall.ENOENT {
+	} else if mode == lhsAssign || err != ErrNotFound {
 		log.Panicln("compileIdentLHS failed:", err, "-", name)
 	} else {
 		typ := boundType(in.(iValue))
@@ -155,11 +158,10 @@ func compileIdent(ctx *blockCtx, name string) func() {
 		switch v := sym.(type) {
 		case *execVar:
 			ctx.infer.Push(&goValue{t: v.v.Type()})
-			kind := v.v.Type().Kind()
 			ctx.resetFieldVar(v.v)
 			return func() {
 				ctx.resetFieldVar(nil)
-				if ctx.inLHS && (kind == reflect.Array) {
+				if ctx.checkArrayAddr && v.v.Type().Kind() == reflect.Array {
 					ctx.out.AddrVar(v.v)
 				} else {
 					ctx.out.LoadVar(v.v)
@@ -237,19 +239,14 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 	typ := toType(ctx, v.Type)
 	switch kind := typ.Kind(); kind {
 	case reflect.Slice, reflect.Array:
-		var typSlice, typRet reflect.Type
+		var typSlice reflect.Type
 		if t, ok := typ.(*unboundArrayType); ok {
 			n := toBoundArrayLen(ctx, v)
 			typSlice = reflect.ArrayOf(n, t.elem)
 		} else {
 			typSlice = typ.(reflect.Type)
 		}
-		if typSlice.Kind() == reflect.Array {
-			typRet = reflect.PtrTo(typSlice)
-		} else {
-			typRet = typSlice
-		}
-		ctx.infer.Push(&goValue{t: typRet})
+		ctx.infer.Push(&goValue{t: typSlice})
 		return func() {
 			var nLen int
 			if kind == reflect.Array {
@@ -622,7 +619,7 @@ var binaryOps = [...]exec.Operator{
 	token.LOR:     exec.OpLOr,
 }
 
-func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) func() {
+func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	var exprFun func()
 	switch f := v.Fun.(type) {
 	case *ast.SelectorExpr:
@@ -630,16 +627,18 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) func() {
 	default:
 		exprFun = compileExpr(ctx, f)
 	}
-	return compileCallExprCall(ctx, exprFun, v)
+	return compileCallExprCall(ctx, exprFun, v, ct)
 }
 
-func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr) func() {
+func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct callType) func() {
 	fn := ctx.infer.Pop()
 	ctx.resetFieldVar(nil)
 	switch vfn := fn.(type) {
 	case *qlFunc:
-		ret := vfn.Results()
-		ctx.infer.Push(ret)
+		if ct == callExpr {
+			ret := vfn.Results()
+			ctx.infer.Push(ret)
+		}
 		return func() {
 			for _, arg := range v.Args {
 				compileExpr(ctx, arg)()
@@ -647,14 +646,17 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr) func() 
 			arity := checkFuncCall(vfn.Proto(), 0, v, ctx)
 			fun := vfn.FuncInfo()
 			if fun.IsVariadic() {
-				ctx.out.CallFuncv(fun, len(v.Args), arity)
+				builder(ctx, ct).CallFuncv(fun, len(v.Args), arity)
 			} else {
-				ctx.out.CallFunc(fun, len(v.Args))
+				builder(ctx, ct).CallFunc(fun, len(v.Args))
 			}
 		}
 	case *goFunc:
-		ret := vfn.Results()
-		ctx.infer.Push(ret)
+		var ret iValue
+		if ct == callExpr {
+			ret = vfn.Results()
+			ctx.infer.Push(ret)
+		}
 		return func() {
 			if vfn.isMethod != 0 {
 				compileExpr(ctx, v.Fun.(*ast.SelectorExpr).X)()
@@ -666,22 +668,26 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr) func() 
 			arity := checkFuncCall(vfn.Proto(), vfn.isMethod, v, ctx)
 			switch vfn.kind {
 			case exec.SymbolFunc:
-				ctx.out.CallGoFunc(exec.GoFuncAddr(vfn.addr), nexpr)
+				builder(ctx, ct).CallGoFunc(exec.GoFuncAddr(vfn.addr), nexpr)
 			case exec.SymbolFuncv:
-				ctx.out.CallGoFuncv(exec.GoFuncvAddr(vfn.addr), nexpr, arity)
+				builder(ctx, ct).CallGoFuncv(exec.GoFuncvAddr(vfn.addr), nexpr, arity)
 			}
-			if ret.NumValues() > 0 {
-				ctx.resetFieldVar(ret.Value(0).Type())
-			} else {
-				ctx.resetFieldVar(nil)
+			if ct == callExpr {
+				if ret.NumValues() > 0 {
+					ctx.resetFieldVar(ret.Value(0).Type())
+				} else {
+					ctx.resetFieldVar(nil)
+				}
 			}
 		}
 	case *goValue:
 		if vfn.t.Kind() != reflect.Func {
 			log.Panicln("compileCallExpr failed: call a non function.")
 		}
-		ret := newFuncResults(vfn.t)
-		ctx.infer.Push(ret)
+		if ct == callExpr {
+			ret := newFuncResults(vfn.t)
+			ctx.infer.Push(ret)
+		}
 		return func() {
 			for _, arg := range v.Args {
 				compileExpr(ctx, arg)()
@@ -691,13 +697,16 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr) func() 
 			if arity == -1 {
 				arity, ellipsis = len(v.Args), true
 			}
-			ctx.out.CallGoClosure(len(v.Args), arity, ellipsis)
+			builder(ctx, ct).CallGoClosure(len(v.Args), arity, ellipsis)
 		}
 	case *nonValue:
 		switch nv := vfn.v.(type) {
 		case goInstr:
-			return nv(ctx, v)
+			return nv(ctx, v, ct)
 		case reflect.Type:
+			if ct != callExpr {
+				log.Panicf("%s requires function call, not conversion\n", gCallTypes[ct])
+			}
 			return compileTypeCast(nv, ctx, v)
 		}
 	}
@@ -705,12 +714,26 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr) func() 
 	return nil
 }
 
-func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compleMode) {
+func builder(ctx *blockCtx, ct callType) (out exec.Builder) {
+	switch out = ctx.out; ct {
+	case callByDefer:
+		return out.Defer()
+	case callByGo:
+		return out.Go()
+	}
+	return
+}
+
+func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 	if mode == lhsDefine {
 		log.Panicln("compileIndexExprLHS: `:=` can't be used for index expression")
 	}
 	val := ctx.infer.Get(-1)
+
+	ctx.checkArrayAddr = true
 	compileExpr(ctx, v.X)()
+	ctx.checkArrayAddr = false
+
 	typ := ctx.infer.Get(-1).(iValue).Type()
 	typElem := typ.Elem()
 	if typ.Kind() == reflect.Ptr {
@@ -720,6 +743,7 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compleMode) {
 		typ = typElem
 		typElem = typElem.Elem()
 	}
+
 	if cons, ok := val.(*constVal); ok {
 		cons.bound(typElem, ctx.out)
 	} else if t := val.(iValue).Type(); t != typElem && typElem.Kind() != reflect.Interface {
@@ -764,16 +788,14 @@ func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) func() { // x[i:j:k]
 	exprX := compileExpr(ctx, v.X)
 	x := ctx.infer.Get(-1)
 	typ := x.(iValue).Type()
-	if kind = typ.Kind(); kind == reflect.Ptr {
-		typ = typ.Elem()
-		if kind = typ.Kind(); kind != reflect.Array {
-			logPanic(ctx, v, `cannot slice a (type *%v)`, typ)
-		}
+	if kind = typ.Kind(); kind == reflect.Array {
 		typ = reflect.SliceOf(typ.Elem())
 		ctx.infer.Ret(1, &goValue{typ})
 	}
 	return func() {
+		ctx.checkArrayAddr = true
 		exprX()
+		ctx.checkArrayAddr = false
 		i, j, k := exec.SliceDefaultIndex, exec.SliceDefaultIndex, exec.SliceDefaultIndex
 		if v.Low != nil {
 			i = compileIdx(ctx, v.Low, exec.SliceConstIndexLast, kind)
@@ -821,7 +843,8 @@ func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr) func() { // x[i]
 	exprX := compileExpr(ctx, v.X)
 	x := ctx.infer.Get(-1)
 	typ := x.(iValue).Type()
-	if kind = typ.Kind(); kind == reflect.Ptr {
+	kind = typ.Kind()
+	if kind == reflect.Ptr {
 		typ = typ.Elem()
 		if kind = typ.Kind(); kind != reflect.Array {
 			logPanic(ctx, v, `type *%v does not support indexing`, typ)
@@ -923,7 +946,7 @@ func getFuncInfo(fun exec.FuncInfo) (name string, narg int) {
 	return "main", 0
 }
 
-func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compleMode) {
+func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compileMode) {
 	if mode == lhsDefine {
 		log.Panicln("compileSelectorExprLHS: `:=` can't be used for index expression")
 	}
@@ -1007,7 +1030,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 				ctx.resetFieldVar(exec.GoVarAddr(addr))
 				return func() {
 					ctx.resetFieldVar(nil)
-					if ctx.inLHS && vt.Elem().Kind() == reflect.Array {
+					if ctx.checkArrayAddr && vt.Elem().Kind() == reflect.Array {
 						ctx.out.AddrGoVar(exec.GoVarAddr(addr))
 					} else {
 						ctx.out.LoadGoVar(exec.GoVarAddr(addr))
@@ -1035,7 +1058,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 				if fieldExprX != nil {
 					fieldExprX()
 				}
-				if ctx.inLHS && sf.Type.Kind() == reflect.Array {
+				if ctx.checkArrayAddr && sf.Type.Kind() == reflect.Array {
 					ctx.out.AddrField(ctx.fieldVar, fieldIndex)
 				} else {
 					ctx.out.LoadField(ctx.fieldVar, fieldIndex)
@@ -1067,7 +1090,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 			call := &ast.CallExpr{Fun: &copy}
 			v.X = call
 			v.Sel = nil
-			return compileCallExprCall(ctx, nil, call)
+			return compileCallExprCall(ctx, nil, call, 0)
 		}
 		return func() {
 			log.Panicln("compileSelectorExpr: todo")

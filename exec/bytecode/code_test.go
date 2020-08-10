@@ -17,8 +17,11 @@
 package bytecode
 
 import (
+	"testing"
+
 	"github.com/goplus/gop/exec.spec"
 	"github.com/qiniu/x/log"
+	"github.com/qiniu/x/ts"
 )
 
 var (
@@ -105,6 +108,14 @@ func checkPop(ctx *Context) interface{} {
 		log.Panicln("checkPop failed: too many data:", ctx.Len())
 	}
 	return v
+}
+
+// -----------------------------------------------------------------------------
+
+func expect(t *testing.T, f func(), expected string, panicMsg ...interface{}) {
+	e := ts.StartExpecting(t, ts.CapStdout)
+	defer e.Close()
+	e.Call(f).Panic(panicMsg...).Expect(expected)
 }
 
 // -----------------------------------------------------------------------------

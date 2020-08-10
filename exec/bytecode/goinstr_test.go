@@ -19,6 +19,8 @@ package bytecode
 import (
 	"reflect"
 	"testing"
+
+	"github.com/goplus/gop/exec.spec"
 )
 
 func TestLargeSlice(t *testing.T) {
@@ -53,7 +55,7 @@ func TestLargeArray(t *testing.T) {
 
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
-	if v := checkPop(ctx); !reflect.DeepEqual(v, &ret) {
+	if v := checkPop(ctx); !reflect.DeepEqual(v, ret) {
 		t.Fatal("32 times(1024) mkslice != `32` times(1024) slice, ret =", v)
 	}
 }
@@ -357,6 +359,53 @@ func TestIndex2(t *testing.T) {
 	}
 }
 
+func TestAddrIndex(t *testing.T) {
+	a := NewVar(reflect.SliceOf(TyFloat64), "")
+	code := newBuilder().
+		DefineVar(a).
+		Push(0.7).
+		Push(3.2).
+		Push(1.2).
+		Push(2.4).
+		MakeArray(reflect.SliceOf(TyFloat64), 3).
+		StoreVar(a).
+		LoadVar(a).
+		Push(2).
+		SetIndex(-1).
+		LoadVar(a).
+		AddrIndex(2).
+		AddrOp(Float64, OpAddrVal).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != 0.7 {
+		t.Fatal("[3.2, 1.2, 0.7], ret:", v)
+	}
+}
+
+func TestAddrLargeIndex(t *testing.T) {
+	a := NewVar(reflect.SliceOf(TyFloat64), "")
+	code := newBuilder().
+		DefineVar(a).
+		Push(bitsOpIndexOperand+1).
+		Make(reflect.SliceOf(TyFloat64), 1).
+		StoreVar(a).
+		Push(1.7).
+		LoadVar(a).
+		SetIndex(bitsOpIndexOperand).
+		LoadVar(a).
+		AddrIndex(bitsOpIndexOperand).
+		AddrOp(Float64, OpAddrVal).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != 1.7 {
+		t.Fatal("v != 1.7, ret:", v)
+	}
+}
+
 func TestSetIndex(t *testing.T) {
 	a := NewVar(reflect.SliceOf(TyFloat64), "")
 	code := newBuilder().
@@ -384,14 +433,14 @@ func TestSetLargeIndex(t *testing.T) {
 	a := NewVar(reflect.SliceOf(TyFloat64), "")
 	code := newBuilder().
 		DefineVar(a).
-		Push(setIndexOperand+1).
+		Push(bitsOpIndexOperand+1).
 		Make(reflect.SliceOf(TyFloat64), 1).
 		StoreVar(a).
 		Push(1.7).
 		LoadVar(a).
-		SetIndex(setIndexOperand).
+		SetIndex(bitsOpIndexOperand).
 		LoadVar(a).
-		Index(setIndexOperand).
+		Index(bitsOpIndexOperand).
 		Resolve()
 
 	ctx := NewContext(code)
@@ -509,6 +558,25 @@ func TestAppend2(t *testing.T) {
 	sliceTy := reflect.SliceOf(TyFloat64)
 	code := newBuilder().
 		Zero(sliceTy).
+		Push(3.2).
+		Push(1.2).
+		Push(2.4).
+		MakeArray(sliceTy, 3).
+		Append(TyFloat64, -1).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); !reflect.DeepEqual(v, []float64{3.2, 1.2, 2.4}) {
+		t.Fatal("ret != [3.2, 1.2, 2.4], ret:", v)
+	}
+}
+
+func TestAppend3(t *testing.T) {
+	sliceTy := reflect.SliceOf(TyFloat64)
+	code := newBuilder().
+		New(sliceTy).
+		AddrOp(reflect.Slice, exec.OpAddrVal).
 		Push(3.2).
 		Push(1.2).
 		Push(2.4).

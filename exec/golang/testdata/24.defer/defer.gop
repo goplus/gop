@@ -1,0 +1,31 @@
+func f() (x int) {
+	defer func() {
+		x = 3
+	}()
+	return 1
+}
+
+func g() (x int) {
+	defer func() {
+		x = 3
+	}()
+	x = 1
+	return
+}
+
+func h() (x int) {
+	for i <- [3, 2, 1] {
+		v := i
+		defer func() {
+			x = v
+		}()
+	}
+	return
+}
+
+println("f-x:", f())
+println("g-x:", g())
+println("h-x:", h())
+
+defer println(println("Hello, defer"))
+println("Hello, Go+")

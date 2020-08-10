@@ -56,26 +56,16 @@ func (p localFS) Join(elem ...string) string {
 
 var local FileSystem = localFS{}
 
-// ParseGopFiles parses the Go+ source files under directory or single Go+ source file.
-// The target specifies the directory or single Go+ source file.
-//
-// The ParseGopFiles should return the map of packages to run Go+ script, even the target is single file.
-//
-// If the file or directory couldn't be read, a nil map and the respective error are
-// returned.
-// If the target is directory and a parse error occurred, a non-nil but incomplete map and the first error encountered are returned.
-func ParseGopFiles(fset *token.FileSet, target string, isDir bool, mode Mode) (pkgs map[string]*ast.Package, err error) {
-	if !isDir {
-		file, err := ParseFile(fset, target, nil, mode)
-		if err != nil {
-			return pkgs, err
-		}
-		pkgs = make(map[string]*ast.Package)
-		pkg := astFileToPkg(file, target)
-		pkgs[file.Name.Name] = pkg
-		return pkgs, nil
+// Parse parses a single Go+ source file. The target specifies the Go+ source file.
+// If the file couldn't be read, a nil map and the respective error are returned.
+func Parse(fset *token.FileSet, target string, src interface{}, mode Mode) (pkgs map[string]*ast.Package, err error) {
+	file, err := ParseFile(fset, target, src, mode)
+	if err != nil {
+		return
 	}
-	return ParseDir(fset, target, nil, mode)
+	pkgs = make(map[string]*ast.Package)
+	pkgs[file.Name.Name] = astFileToPkg(file, target)
+	return
 }
 
 // astFileToPkg translate ast.File to ast.Package

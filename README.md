@@ -5,8 +5,9 @@ GoPlus - The Go+ language for data science
 [![Go Report Card](https://goreportcard.com/badge/github.com/goplus/gop)](https://goreportcard.com/report/github.com/goplus/gop)
 [![GitHub release](https://img.shields.io/github/v/tag/goplus/gop.svg?label=release)](https://github.com/goplus/gop/releases)
 [![Coverage Status](https://codecov.io/gh/goplus/gop/branch/master/graph/badge.svg)](https://codecov.io/gh/goplus/gop)
+[![REPL](https://img.shields.io/badge/repl-iGo+-blue.svg)](https://repl.goplus.org/)
 [![Playground](https://img.shields.io/badge/playground-Go+-blue.svg)](https://play.goplus.org/)
-[![VSCode](https://img.shields.io/badge/vscode-Go+-blue.svg)](https://github.com/gopcode/vscode-goplus)
+[![VSCode](https://img.shields.io/badge/vscode-Go+-teal.svg)](https://github.com/gopcode/vscode-goplus)
 [![GoDoc](https://img.shields.io/badge/godoc-reference-teal.svg)](https://pkg.go.dev/mod/github.com/goplus/gop)
 
 
@@ -124,12 +125,15 @@ gop install ./... # Convert Go+ packages and go install ./...
 Go [tutorial/14-Using-goplus-in-Go](https://github.com/goplus/gop/tree/master/tutorial/14-Using-goplus-in-Go) to get the source code.
 
 
-## Playground
+## Playground/REPL
 
-Playground based on Docker:
+Go+ REPL based on GopherJS/WASM:
+* https://repl.goplus.org/
+
+Go+ Playground based on Docker:
 * https://play.goplus.org/
 
-Playground based on GopherJS:
+Go+ Playground based on GopherJS:
 * https://goplusjs.github.io/play/
 
 
@@ -160,6 +164,7 @@ When we use `gop run` command, it doesn't call `go run` command. It generates by
 
 ```bash
 gop run         # Run a Go+ program
+gop repl        # Run Go+ in REPL/Console mode
 gop go [-test]  # Convert Go+ packages into Go packages. If -test specified, it tests related packages.
 gop fmt         # Format Go+ packages
 gop export      # Export Go packages for Go+ programs

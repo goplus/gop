@@ -11,6 +11,7 @@ import (
 	"github.com/goplus/gop/cmd/internal/gengo"
 	"github.com/goplus/gop/cmd/internal/gopfmt"
 	"github.com/goplus/gop/cmd/internal/help"
+	"github.com/goplus/gop/cmd/internal/repl"
 	"github.com/goplus/gop/cmd/internal/run"
 
 	_ "github.com/goplus/gop/lib"
@@ -28,6 +29,7 @@ func init() {
 		gengo.Cmd,
 		gopfmt.Cmd,
 		export.Cmd,
+		repl.Cmd,
 	}
 }
 
@@ -40,7 +42,7 @@ func main() {
 
 	base.CmdName = args[0] // for error messages
 	if args[0] == "help" {
-		help.Help(os.Stdout, args[1:])
+		help.Help(os.Stderr, args[1:])
 		return
 	}
 
@@ -58,7 +60,7 @@ BigCmdLoop:
 					os.Exit(2)
 				}
 				if args[0] == "help" {
-					help.Help(os.Stdout, append(strings.Split(base.CmdName, " "), args[1:]...))
+					help.Help(os.Stderr, append(strings.Split(base.CmdName, " "), args[1:]...))
 					return
 				}
 				base.CmdName += " " + args[0]

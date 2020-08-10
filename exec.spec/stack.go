@@ -18,6 +18,8 @@ package exec
 
 // -----------------------------------------------------------------------------
 
+const defaultStkSize = 64
+
 // A Stack represents a FILO container.
 type Stack struct {
 	data []interface{}
@@ -25,12 +27,12 @@ type Stack struct {
 
 // NewStack creates a Stack instance.
 func NewStack() (p *Stack) {
-	return &Stack{data: make([]interface{}, 0, 64)}
+	return &Stack{data: make([]interface{}, 0, defaultStkSize)}
 }
 
 // Init initializes this Stack object.
 func (p *Stack) Init() {
-	p.data = make([]interface{}, 0, 64)
+	p.data = make([]interface{}, 0, defaultStkSize)
 }
 
 // Get returns the value at specified index.
