@@ -548,51 +548,6 @@ var unaryOps = [...]exec.Operator{
 	token.XOR: exec.OpBitNot,
 }
 
-var (
-	boolFunType = &ast.FuncType{
-		Params: &ast.FieldList{},
-		Results: &ast.FieldList{
-			List: []*ast.Field{
-				&ast.Field{
-					Type: ast.NewIdent("bool"),
-				},
-			},
-		},
-	}
-)
-
-func makeOpFuncLit(pos token.Pos, x ast.Expr, y ast.Expr) *ast.FuncLit {
-	ifstmt := &ast.IfStmt{
-		If:   pos,
-		Cond: x,
-		Body: &ast.BlockStmt{
-			List: []ast.Stmt{
-				&ast.ReturnStmt{
-					Return: pos,
-					Results: []ast.Expr{
-						ast.NewIdent("true"),
-					},
-				},
-			},
-		},
-	}
-	rstmt := &ast.ReturnStmt{
-		Return: pos,
-		Results: []ast.Expr{
-			y,
-		},
-	}
-	return &ast.FuncLit{
-		Type: boolFunType,
-		Body: &ast.BlockStmt{
-			List: []ast.Stmt{
-				ifstmt,
-				rstmt,
-			},
-		},
-	}
-}
-
 func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 	exprX := compileExpr(ctx, v.X)
 	exprY := compileExpr(ctx, v.Y)
@@ -609,41 +564,6 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 		}
 	}
 	kind, ret := binaryOpResult(op, x, y)
-
-	switch op {
-	case exec.OpLOr:
-		if kind != exec.Bool {
-			log.Panicf("invalid operation: && (mismatched types %v)\n", kind)
-		}
-		if xok {
-			ctx.infer.PopN(1)
-			if xcons.v == true {
-				return func() {
-					ctx.out.Push(true)
-				}
-			}
-			return exprY
-		}
-		ctx.infer.PopN(2)
-		fn := &ast.CallExpr{Fun: makeOpFuncLit(v.Pos(), v.X, v.Y)}
-		return compileExpr(ctx, fn)
-	case exec.OpLAnd:
-		if kind != exec.Bool {
-			log.Panicf("invalid operation: && (mismatched types %v)\n", kind)
-		}
-		if xok {
-			ctx.infer.PopN(1)
-			if xcons.v == false {
-				return func() {
-					ctx.out.Push(false)
-				}
-			}
-			return exprY
-		}
-		ctx.infer.PopN(2)
-		fn := &ast.CallExpr{Fun: makeOpFuncLit(v.Pos(), &ast.UnaryExpr{Op: token.NOT, X: v.X}, v.Y)}
-		return compileExpr(ctx, fn)
-	}
 	ctx.infer.Ret(2, ret)
 	return func() {
 		var label exec.Label
