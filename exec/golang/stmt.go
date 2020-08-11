@@ -416,12 +416,8 @@ func (p *Builder) DefineBlock() *Builder {
 func (p *Builder) EndBlock() *Builder {
 	p.endBlockStmt(0)
 	blockStmt := &ast.BlockStmt{List: p.getStmts(p)}
-	if p.parentCtx == nil {
-		p.rhs.Push(blockStmt)
-	} else {
-		p.scopeCtx = p.parentCtx
-		p.stmts = append(p.stmts, p.labeled(blockStmt, 0))
-	}
+	p.scopeCtx = p.parentCtx
+	p.stmts = append(p.stmts, p.labeled(blockStmt, 0))
 	return p
 }
 
