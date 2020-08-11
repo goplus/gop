@@ -195,15 +195,15 @@ type testRect struct {
 	Pt2 *testPoint
 }
 
-var g_Rect *testRect
+var gRect *testRect
 
 func init() {
-	g_Rect = &testRect{}
-	g_Rect.Pt2 = &testPoint{}
+	gRect = &testRect{}
+	gRect.Pt2 = &testPoint{}
 }
 
 func getTestRect() *testRect {
-	return g_Rect
+	return gRect
 }
 
 func execTestRect(_ int, p *Context) {
@@ -245,7 +245,7 @@ func TestGoField(t *testing.T) {
 	}
 
 	it := reflect.TypeOf(rc)
-	it2 := reflect.TypeOf(g_Rect)
+	it2 := reflect.TypeOf(gRect)
 
 	y := NewVar(it, "y")
 	b := newBuilder()
@@ -301,8 +301,8 @@ func TestGoField(t *testing.T) {
 	if rc2.Info != "world" || rc2.Pt1.X != -10 || rc2.Pt2.Y != -20 {
 		t.Fatal("Rect2", rc2)
 	}
-	if g_Rect.Info != "next" || g_Rect.Pt1.X != 101 || g_Rect.Pt2.Y != 102 {
-		t.Fatal("g_Rect", g_Rect)
+	if gRect.Info != "next" || gRect.Pt1.X != 101 || gRect.Pt2.Y != 102 {
+		t.Fatal("g_Rect", gRect)
 	}
 	if v := ctx.Get(-1); v != "hello-2world-20next102 &{-1 20} &{-10 0} &{101 0}" {
 		t.Fatal("LoadField", v)
