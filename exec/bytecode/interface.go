@@ -384,6 +384,12 @@ func (p *iBuilder) SetIndex(idx int) exec.Builder {
 	return p
 }
 
+// Struct instr
+func (p *iBuilder) Struct(typ reflect.Type, arity int) exec.Builder {
+	((*Builder)(p)).Struct(typ, arity)
+	return p
+}
+
 // Slice instr
 func (p *iBuilder) Slice(i, j int) exec.Builder {
 	((*Builder)(p)).Slice(i, j)
