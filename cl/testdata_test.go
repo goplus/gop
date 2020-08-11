@@ -18,7 +18,7 @@ package cl_test
 
 import (
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/goplus/gop/cl/cltest"
@@ -32,7 +32,7 @@ func TestFromTestdata(t *testing.T) {
 	if err != nil {
 		t.Fatal("Getwd failed:", err)
 	}
-	dir = path.Join(dir, "../exec/golang/testdata")
+	dir = filepath.Join(dir, "../exec/golang/testdata")
 	cltest.FromTestdata(t, dir, sel, exclude)
 }
 

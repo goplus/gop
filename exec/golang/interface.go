@@ -131,7 +131,7 @@ func (p *iBuilder) Jmp(l exec.Label) exec.Builder {
 }
 
 // JmpIf instr
-func (p *iBuilder) JmpIf(cond exec.JmpCond, l exec.Label) exec.Builder {
+func (p *iBuilder) JmpIf(cond exec.JmpFlag, l exec.Label) exec.Builder {
 	((*Builder)(p)).JmpIf(cond, l.(*Label))
 	return p
 }
