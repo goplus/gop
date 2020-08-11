@@ -297,6 +297,35 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 			}
 			ctx.out.MakeMap(typMap, len(v.Elts))
 		}
+	case reflect.Struct:
+		typStruct := typ.(reflect.Type)
+		ctx.infer.Push(&goValue{t: typStruct})
+		return func() {
+			for i, elt := range v.Elts {
+				switch e := elt.(type) {
+				case *ast.KeyValueExpr:
+					fieldName := e.Key.(*ast.Ident).Name
+					ctx.out.Push(fieldName)
+					field, _ := typStruct.FieldByName(fieldName)
+					typVal := field.Type
+					compileExpr(ctx, e.Value)()
+					checkType(typVal, ctx.infer.Pop(), ctx.out)
+				default:
+					// ast.Expr
+					field := typStruct.Field(i)
+					ctx.out.Push(field.Name)
+					typVal := field.Type
+					compileExpr(ctx, elt)()
+					checkType(typVal, ctx.infer.Pop(), ctx.out)
+				}
+			}
+
+			if ctx.takeAddr {
+				ctx.out.Struct(reflect.PtrTo(typStruct), len(v.Elts))
+			} else {
+				ctx.out.Struct(typStruct, len(v.Elts))
+			}
+		}
 	default:
 		log.Panicln("compileCompositeLit failed: unknown -", reflect.TypeOf(typ))
 		return nil
@@ -509,6 +538,17 @@ func compileUnaryExpr(ctx *blockCtx, v *ast.UnaryExpr) func() {
 	if op == 0 {
 		if v.Op == token.ADD { // +x
 			return exprX
+		}
+		if v.Op == token.AND {
+			vx := x.(iValue)
+			t := reflect.TypeOf(reflect.New(vx.Type()).Interface())
+			ret := &goValue{t: t}
+			ctx.infer.Ret(1, ret)
+			return func() {
+				ctx.takeAddr = true
+				exprX()
+				ctx.takeAddr = false
+			}
 		}
 	}
 	xcons, xok := x.(*constVal)

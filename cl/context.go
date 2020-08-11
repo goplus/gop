@@ -189,6 +189,7 @@ type blockCtx struct {
 	parent         *blockCtx
 	syms           map[string]iSymbol
 	noExecCtx      bool
+	takeAddr       bool
 	checkFlag      bool
 	checkArrayAddr bool
 	fieldVar       interface{}

@@ -72,6 +72,7 @@ type scopeCtx struct {
 	parentCtx *scopeCtx
 	vlist     []exec.Var
 	stmts     []ast.Stmt
+	labels    []*Label // labels of current statement
 }
 
 func (p *scopeCtx) addVar(vars ...exec.Var) {

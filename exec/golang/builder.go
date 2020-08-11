@@ -96,7 +96,6 @@ type Builder struct {
 	importPaths map[string]string // aliasName => pkgPath
 	gblScope    scopeCtx          // global scope
 	gblDecls    []ast.Decl        // global declarations
-	labels      []*Label          // labels of current statement
 	fset        *token.FileSet    // fileset of Go+ code
 	cfun        *FuncInfo         // current function
 	cstmt       interface{}       // current statement
