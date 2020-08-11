@@ -320,6 +320,9 @@ type Builder interface {
 	// Make instr
 	Make(typ reflect.Type, arity int) Builder
 
+	// Val instr
+	Struct(typ reflect.Type, arity int) Builder
+
 	// Append instr
 	Append(typ reflect.Type, arity int) Builder
 

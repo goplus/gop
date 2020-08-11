@@ -1,3 +1,10 @@
+func foo() bool {
+	return true
+}
+func bar() bool {
+	return true
+}
+
 x := 0
 if t := false; t {
 	x = 3
@@ -150,3 +157,10 @@ L3:
 	}
 	println(forFoo1())
 	fooFoo2()
+
+	// bugs #533
+	if foo() {
+		println("foo")
+	} else {
+		println("bar")
+	}

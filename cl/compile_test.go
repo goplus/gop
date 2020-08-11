@@ -252,3 +252,45 @@ func TestPkg2(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
+var fsTestType = asttest.NewSingleFileFS("/foo", "bar.gop", `
+println(struct {
+	A int
+	B string
+}{1, "Hello"})
+println(&struct {
+	A int
+	B string
+}{1, "Hello"})
+`)
+
+func TestStruct(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestType, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, err = NewPackage(b.Interface(), bar, fset, PkgActClMain)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(11) {
+		t.Fatal("n:", v)
+	}
+	if v := ctx.Get(-3); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-4); v != int(10) {
+		t.Fatal("n:", v)
+	}
+}

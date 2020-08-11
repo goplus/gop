@@ -171,6 +171,94 @@ func main() {
 
 // -----------------------------------------------------------------------------
 
+func TestStruct(t *testing.T) {
+	println, _ := I.FindFuncv("println")
+
+	codeExp := `package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Println(struct {
+		Name string
+		Age  int
+	}{Name: "bar", Age: 30})
+}
+`
+	fields := []reflect.StructField{
+		{
+			Name: "Name",
+			Type: reflect.TypeOf(""),
+		},
+		{
+			Name: "Age",
+			Type: reflect.TypeOf(0),
+		},
+	}
+	typ := reflect.StructOf(fields)
+
+	code := NewBuilder("main", nil, nil).Interface().
+		Push("Name").
+		Push("bar").
+		Push("Age").
+		Push(30).
+		Struct(typ, 2).
+		CallGoFuncv(println, 1, 1).
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Resolve()
+
+	codeGen := code.(*Code).String()
+	if codeGen != codeExp {
+		fmt.Println(codeGen)
+		fmt.Println(codeExp)
+		t.Fatal("TestStruct failed: codeGen != codeExp")
+	}
+}
+
+func TestStruct2(t *testing.T) {
+	println, _ := I.FindFuncv("println")
+
+	codeExp := `package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Println(&struct {
+		Name string
+		Age  int
+	}{Name: "bar", Age: 30})
+}
+`
+	fields := []reflect.StructField{
+		{
+			Name: "Name",
+			Type: reflect.TypeOf(""),
+		},
+		{
+			Name: "Age",
+			Type: reflect.TypeOf(0),
+		},
+	}
+	typ := reflect.StructOf(fields)
+
+	code := NewBuilder("main", nil, nil).Interface().
+		Push("Name").
+		Push("bar").
+		Push("Age").
+		Push(30).
+		Struct(reflect.PtrTo(typ), 2).
+		CallGoFuncv(println, 1, 1).
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Resolve()
+
+	codeGen := code.(*Code).String()
+	if codeGen != codeExp {
+		fmt.Println(codeGen)
+		fmt.Println(codeExp)
+		t.Fatal("TestStruct failed: codeGen != codeExp")
+	}
+}
+
 func TestReserved(t *testing.T) {
 	code := NewBuilder("main", nil, nil)
 	off := code.Reserve()

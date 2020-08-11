@@ -1,0 +1,9 @@
+println(struct {
+	A int
+	B string
+}{1, "Hello"})
+
+println(&struct {
+	A int
+	B string
+}{1, "Hello"})

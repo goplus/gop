@@ -214,7 +214,11 @@ func toArgTypes(ctx *blockCtx, fields *ast.FieldList) ([]reflect.Type, []string,
 }
 
 func toStructType(ctx *blockCtx, v *ast.StructType) iType {
-	panic("toStructType: todo")
+	var fields []reflect.StructField
+	for _, field := range v.Fields.List {
+		fields = append(fields, toStructField(ctx, field)...)
+	}
+	return reflect.StructOf(fields)
 }
 
 func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) iType {
@@ -279,6 +283,35 @@ func toInt(ctx *blockCtx, e ast.Expr) int {
 		log.Panicln("toInt: constant expr isn't an integer.")
 	}
 	return int(iv)
+}
+
+func toStructField(ctx *blockCtx, field *ast.Field) []reflect.StructField {
+	var fields []reflect.StructField
+	if field.Names == nil {
+		fields = append(fields, buildField(ctx, field, true, ""))
+	} else {
+		for _, name := range field.Names {
+			fields = append(fields, buildField(ctx, field, false, name.Name))
+		}
+	}
+	return fields
+}
+
+func buildField(ctx *blockCtx, field *ast.Field, anonymous bool, fieldName string) reflect.StructField {
+	var f = reflect.StructField{}
+	if !anonymous {
+		f = reflect.StructField{}
+	}
+	f = reflect.StructField{
+		Name:      fieldName,
+		Type:      toType(ctx, field.Type).(reflect.Type),
+		Anonymous: anonymous,
+	}
+	if field.Tag != nil {
+		tag, _ := strconv.Unquote(field.Tag.Value)
+		f.Tag = reflect.StructTag(tag)
+	}
+	return f
 }
 
 // -----------------------------------------------------------------------------

@@ -233,9 +233,6 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 
 func compileLabeledStmt(ctx *blockCtx, v *ast.LabeledStmt) {
 	label := ctx.defineLabel(v.Label.Name)
-	// make sure all labels in golang code  will be used
-	// TODO improvement exec/bytecode not to jump if delta==0
-	ctx.out.Jmp(label)
 	ctx.out.Label(label)
 	ctx.currentLabel = v
 	compileStmt(ctx, v.Stmt)
