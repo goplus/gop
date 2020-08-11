@@ -298,6 +298,15 @@ type Builder interface {
 	// AddrGoVar instr
 	AddrGoVar(addr GoVarAddr) Builder
 
+	// LoadField instr
+	LoadField(v interface{}, index []int) Builder
+
+	// StoreField instr
+	StoreField(v interface{}, index []int) Builder
+
+	// AddrField instr
+	AddrField(v interface{}, index []int) Builder
+
 	// AddrOp instr
 	AddrOp(kind Kind, op AddrOperator) Builder
 
