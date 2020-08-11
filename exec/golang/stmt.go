@@ -91,6 +91,10 @@ func GotoIf(p *Builder, cond ast.Expr, l *Label) *ast.IfStmt {
 
 // JmpIf instr
 func (p *Builder) JmpIf(jc exec.JmpFlag, l *Label) *Builder {
+	if jc.NotPop() {
+		// TODO hard code
+		return p
+	}
 	var cond ast.Expr
 	if jc.NotPop() {
 		cond = p.rhs.Get(-1).(ast.Expr)
