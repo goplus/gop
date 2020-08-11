@@ -25,7 +25,7 @@ import (
 // -----------------------------------------------------------------------------
 
 const (
-	bitsOpJmp              = bitsOp + 3
+	bitsOpJmp              = bitsOp + 4
 	bitsOpJmpIfCond        = bitsInstr - bitsOpJmp
 	bitsOpJmpBoolCondFlag  = 1 << bitsOpJmpIfCond
 	bitsOpJmpPtrCondFlag   = 2 << bitsOpJmpIfCond
