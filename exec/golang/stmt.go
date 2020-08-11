@@ -59,6 +59,8 @@ func (p *Builder) Label(l *Label) *Builder {
 		reservedExpr.Expr = defval
 		return p
 	}
+	// make sure all labels in golang code  will be used
+	p.Jmp(l)
 	p.labels = append(p.labels, l)
 	return p
 }
