@@ -90,14 +90,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 }
 
 func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
-	labelName := ""
-	if ctx.currentLabel != nil && ctx.currentLabel.Stmt == v {
-		labelName = ctx.currentLabel.Label.Name
-	}
-	ctx.nextFlow(nil, nil, labelName)
-	defer func() {
-		ctx.currentFlow = ctx.currentFlow.parent
-	}()
+	ctx.nextFlow(nil, nil, ctx.currentLabel != nil && ctx.currentLabel.Stmt == v)
+	defer ctx.previousFlow()
 	noExecCtx := isNoExecCtx(ctx, v.Body)
 	ctxFor, exprFor := compileForPhrase(ctx, v.ForPhrase, noExecCtx)
 	exprFor(func() {
@@ -112,14 +106,8 @@ func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 		TokPos: v.TokPos,
 		X:      v.X,
 	}
-	labelName := ""
-	if ctx.currentLabel != nil && ctx.currentLabel.Stmt == v {
-		labelName = ctx.currentLabel.Label.Name
-	}
-	ctx.nextFlow(nil, nil, labelName)
-	defer func() {
-		ctx.currentFlow = ctx.currentFlow.parent
-	}()
+	ctx.nextFlow(nil, nil, ctx.currentLabel != nil && ctx.currentLabel.Stmt == v)
+	defer ctx.previousFlow()
 	switch v.Tok {
 	case token.DEFINE:
 		f.Key = toIdent(v.Key)
@@ -181,14 +169,8 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	start := ctx.NewLabel("")
 	post := ctx.NewLabel("")
 	done := ctx.NewLabel("")
-	labelName := ""
-	if ctx.currentLabel != nil && ctx.currentLabel.Stmt == v {
-		labelName = ctx.currentLabel.Label.Name
-	}
-	ctx.nextFlow(post, done, labelName)
-	defer func() {
-		ctx.currentFlow = ctx.currentFlow.parent
-	}()
+	ctx.nextFlow(post, done, ctx.currentLabel != nil && ctx.currentLabel.Stmt == v)
+	defer ctx.previousFlow()
 	out.Label(start)
 	if v.Cond != nil {
 		compileExpr(ctx, v.Cond)()
@@ -295,14 +277,8 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	}
 	out := ctx.out
 	done := ctx.NewLabel("")
-	labelName := ""
-	if ctx.currentLabel != nil && ctx.currentLabel.Stmt == v {
-		labelName = ctx.currentLabel.Label.Name
-	}
-	ctx.nextFlow(nil, done, labelName)
-	defer func() {
-		ctx.currentFlow = ctx.currentFlow.parent
-	}()
+	ctx.nextFlow(nil, done, ctx.currentLabel != nil && ctx.currentLabel.Stmt == v)
+	defer ctx.previousFlow()
 	hasTag := v.Tag != nil
 	hasCaseClause := false
 	var withoutCheck exec.Label

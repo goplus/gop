@@ -121,13 +121,20 @@ func (p *flowCtx) isRange() bool {
 	return p.doneLabel == nil && p.postLabel == nil
 }
 
-func (fc *funcCtx) nextFlow(post, done exec.Label, name string) {
+func (fc *funcCtx) nextFlow(post, done exec.Label, currentStmt bool) {
+	name := ""
+	if currentStmt {
+		name = fc.currentLabel.Label.Name
+	}
 	fc.currentFlow = &flowCtx{
 		parent:    fc.currentFlow,
 		name:      name,
 		postLabel: post,
 		doneLabel: done,
 	}
+}
+func (fc *funcCtx) previousFlow() {
+	fc.currentFlow = fc.currentFlow.parent
 }
 
 func (fc *funcCtx) getBreakLabel(labelName string) (label exec.Label, rangeFor bool, depth int) {
