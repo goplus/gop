@@ -436,7 +436,7 @@ func (p *Builder) LoadField(v interface{}, index []int) *Builder {
 	case reflect.Type:
 	}
 	p.Push(index)
-	i := (opLoadField << bitsOpShift)
+	i := uint32(opLoadField << bitsOpShift)
 	p.code.data = append(p.code.data, uint32(i))
 	return p
 }
@@ -451,7 +451,7 @@ func (p *Builder) AddrField(v interface{}, index []int) *Builder {
 	case reflect.Type:
 	}
 	p.Push(index)
-	i := (opAddrField << bitsOpShift)
+	i := uint32(opAddrField << bitsOpShift)
 	p.code.data = append(p.code.data, uint32(i))
 	return p
 }
@@ -466,7 +466,7 @@ func (p *Builder) StoreField(v interface{}, index []int) *Builder {
 	case reflect.Type:
 	}
 	p.Push(index)
-	i := (opStoreField << bitsOpShift)
+	i := uint32(opStoreField << bitsOpShift)
 	p.code.data = append(p.code.data, uint32(i))
 	return p
 }
