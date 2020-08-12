@@ -611,12 +611,13 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 	return func() {
 		var label exec.Label
 		exprX()
-		if op == exec.OpLAnd {
+		if b := (op == exec.OpLAnd); b || op == exec.OpLOr {
 			label = ctx.NewLabel("")
-			ctx.out.JmpIf(exec.JcFalse|exec.JcNotPopMask, label)
-		} else if op == exec.OpLOr {
-			label = ctx.NewLabel("")
-			ctx.out.JmpIf(exec.JcTrue|exec.JcNotPopMask, label)
+			if b {
+				ctx.out.JmpIf(exec.JcFalse|exec.JcNotPopMask, label)
+			} else {
+				ctx.out.JmpIf(exec.JcTrue|exec.JcNotPopMask, label)
+			}
 		}
 		exprY()
 		checkBinaryOp(kind, op, x, y, ctx.out)
