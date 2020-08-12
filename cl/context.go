@@ -192,6 +192,15 @@ type blockCtx struct {
 	takeAddr       bool
 	checkFlag      bool
 	checkArrayAddr bool
+	fieldVar       interface{}
+	fieldIndex     []int
+	fieldExprX     func()
+}
+
+func (ctx *blockCtx) resetFieldVar(v interface{}) {
+	ctx.fieldVar = v
+	ctx.fieldIndex = nil
+	ctx.fieldExprX = nil
 }
 
 // function block ctx
