@@ -1088,7 +1088,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 		name := v.Sel.Name
 		if sf, ok := t.FieldByName(name); ok {
 			ctx.infer.Ret(1, &goValue{t: sf.Type})
-			if ctx.fieldIndex == nil {
+			if ctx.fieldIndex == nil && ctx.fieldVar == nil {
 				ctx.fieldExprX = exprX
 			}
 			ctx.fieldIndex = append(ctx.fieldIndex, sf.Index...)
