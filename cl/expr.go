@@ -163,6 +163,8 @@ func compileIdent(ctx *blockCtx, name string) func() {
 				ctx.resetFieldVar(nil)
 				if ctx.checkArrayAddr && v.v.Type().Kind() == reflect.Array {
 					ctx.out.AddrVar(v.v)
+				} else if ctx.takeAddr {
+					ctx.out.AddrVar(v.v)
 				} else {
 					ctx.out.LoadVar(v.v)
 				}
@@ -1140,7 +1142,9 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 			ctx.use(fDecl)
 			ctx.infer.Push(fn)
 			return func() {
+				ctx.takeAddr = true
 				exprX()
+				ctx.takeAddr = false
 			}
 		}
 		if _, ok := vx.t.MethodByName(name); !ok && isLower(name) {

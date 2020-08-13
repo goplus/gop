@@ -1,0 +1,16 @@
+type Person struct {
+	Name string
+	Age  int
+}
+
+func (p *Person) SetName(name string) {
+	p.Name = name
+}
+
+p := Person{
+	Name: "bar",
+	Age:  30,
+}
+
+p.SetName("foo")
+println(p.Name)

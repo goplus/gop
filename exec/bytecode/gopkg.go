@@ -86,10 +86,13 @@ func toElem(v reflect.Value) reflect.Value {
 }
 
 func execStoreField(i Instr, p *Context) {
-	idx := int32(i) << bitsOp >> bitsOp
 	index := p.Pop()
 	val := p.Pop()
 	value := p.Pop()
+	idx, isStarkVar := val.(int32)
+	if isStarkVar {
+		val = p.data[p.base+int(idx)]
+	}
 	v := reflect.ValueOf(val)
 	var ptr bool
 	if v.Kind() == reflect.Ptr {
@@ -98,7 +101,7 @@ func execStoreField(i Instr, p *Context) {
 	}
 	if ptr {
 		setValue(v.FieldByIndex(index.([]int)), value)
-		if idx < 0 {
+		if isStarkVar {
 			p.data[p.base+int(idx)] = v.Addr().Interface()
 		}
 	} else {
@@ -108,10 +111,11 @@ func execStoreField(i Instr, p *Context) {
 		fmt.Println(v2)
 		setValue(v2.FieldByIndex(index.([]int)), value)
 		v = v2
-		if idx < 0 {
+		if isStarkVar {
 			p.data[p.base+int(idx)] = v.Interface()
 		}
 	}
+	// v := reflect.ValueOf(val)
 	// v = toElem(v)
 	// if !v.CanSet() {
 	// 	log.Panicf("cannot assign to %v\n", v)
@@ -481,23 +485,17 @@ func (p *Builder) AddrField(v interface{}, index []int) *Builder {
 
 // StoreField instr
 func (p *Builder) StoreField(v interface{}, index []int) *Builder {
-	var stackVar bool
-	var idx int32
 	switch x := v.(type) {
 	case exec.GoVarAddr:
 		p.AddrGoVar(x)
 	case *Var:
 		p.AddrVar(x)
 	case int32:
-		stackVar = true
-		idx = x
+		p.Push(x)
 	case reflect.Type:
 	}
 	p.Push(index)
 	i := (opStoreField << bitsOpShift)
-	if stackVar {
-		i = i | (int(idx) & bitsOperand)
-	}
 	p.code.data = append(p.code.data, uint32(i))
 	return p
 }
