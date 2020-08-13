@@ -17,7 +17,6 @@
 package bytecode
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/goplus/gop/exec.spec"
@@ -108,7 +107,6 @@ func execStoreField(i Instr, p *Context) {
 		t := v.Type()
 		v2 := reflect.New(t).Elem()
 		v2.Set(v)
-		fmt.Println(v2)
 		setValue(v2.FieldByIndex(index.([]int)), value)
 		v = v2
 		if isStarkVar {

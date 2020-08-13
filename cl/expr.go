@@ -676,6 +676,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 
 func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct callType) func() {
 	fn := ctx.infer.Pop()
+	ctx.resetFieldVar(nil)
 	switch vfn := fn.(type) {
 	case *qlFunc:
 		if ct == callExpr {

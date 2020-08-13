@@ -697,165 +697,165 @@ func TestStruct2(t *testing.T) {
 	testScripts(t, "TestStruct", testStructClauses)
 }
 
-// // -----------------------------------------------------------------------------
-// var testMethodClauses = map[string]testData{
-// 	"method set": {`
-// 					type Person struct {
-// 						Name string
-// 						Age  int
-// 					}
-// 					func (p *Person) SetName(name string) {
-// 						p.Name = name
-// 					}
+// -----------------------------------------------------------------------------
+var testMethodClauses = map[string]testData{
+	"method set": {`
+					type Person struct {
+						Name string
+						Age  int
+					}
+					func (p *Person) SetName(name string) {
+						p.Name = name
+					}
 
-// 					p := &Person{
-// 						Name: "bar",
-// 						Age:  30,
-// 					}
+					p := &Person{
+						Name: "bar",
+						Age:  30,
+					}
 
-// 					p.SetName("foo")
-// 					println(p.Name)
-// 					`, "foo\n", false},
-// 	"method get": {`
-// 					type Person struct {
-// 						Name string
-// 						Age  int
-// 					}
-// 					func (p *Person) GetName() string {
-// 						return p.Name
-// 					}
+					p.SetName("foo")
+					println(p.Name)
+					`, "foo\n", false},
+	"method get": {`
+					type Person struct {
+						Name string
+						Age  int
+					}
+					func (p *Person) GetName() string {
+						return p.Name
+					}
 
-// 					p := &Person{
-// 						Name: "bar",
-// 						Age:  30,
-// 					}
+					p := &Person{
+						Name: "bar",
+						Age:  30,
+					}
 
-// 					println(p.GetName())
-// 					`, "bar\n", false},
+					println(p.GetName())
+					`, "bar\n", false},
 
-// 	"struct set ptr": {`
-// 	type Person struct {
-// 		Name string
-// 		Age  int
-// 	}
+	"struct set ptr": {`
+	type Person struct {
+		Name string
+		Age  int
+	}
 
-// 	p := &Person{
-// 		Name: "bar",
-// 		Age:  30,
-// 	}
-// 	p.Name = "foo"
+	p := &Person{
+		Name: "bar",
+		Age:  30,
+	}
+	p.Name = "foo"
 
-// 	println(p)
-// 	`, "&{foo 30}\n", false},
+	println(p)
+	`, "&{foo 30}\n", false},
 
-// 	"struct set": {`
-// 	type Person struct {
-// 		Name string
-// 		Age  int
-// 	}
+	"struct set": {`
+	type Person struct {
+		Name string
+		Age  int
+	}
 
-// 	p := Person{
-// 		Name: "bar",
-// 		Age:  30,
-// 	}
-// 	p.Name = "foo"
+	p := Person{
+		Name: "bar",
+		Age:  30,
+	}
+	p.Name = "foo"
 
-// 	println(p)
-// 	`, "{foo 30}\n", false},
+	println(p)
+	`, "{foo 30}\n", false},
 
-// 	"struct set ptr arg": {`
-// 	type Person struct {
-// 		Name string
-// 		Age  int
-// 	}
-// 	func SetName(p *Person,name string) {
-// 		p.Name = name
-// 	}
+	"struct set ptr arg": {`
+	type Person struct {
+		Name string
+		Age  int
+	}
+	func SetName(p *Person,name string) {
+		p.Name = name
+	}
 
-// 	p := Person{
-// 		Name: "bar",
-// 		Age:  30,
-// 	}
-// 	SetName(&p,"foo")
+	p := Person{
+		Name: "bar",
+		Age:  30,
+	}
+	SetName(&p,"foo")
 
-// 	println(p)
-// 	`, "{foo 30}\n", false},
+	println(p)
+	`, "{foo 30}\n", false},
 
-// 	"method func no args": {`
-// 					type Person struct {
-// 						Name string ` + "`json:\"name\"`" + `
-// 						Age  int
-// 					}
-// 					func (p *Person) PrintName() {
-// 						println(p.Name)
-// 					}
+	"method func no args": {`
+					type Person struct {
+						Name string ` + "`json:\"name\"`" + `
+						Age  int
+					}
+					func (p *Person) PrintName() {
+						println(p.Name)
+					}
 
-// 					p := &Person{
-// 						Name: "bar",
-// 						Age:  30,
-// 					}
+					p := &Person{
+						Name: "bar",
+						Age:  30,
+					}
 
-// 					p.PrintName()
-// 					`, "bar\n", false},
-// 	"method ptr struct no prt": {`
-// 					type Person struct {
-// 						Name string ` + "`json:\"name\"`" + `
-// 						Age  int
-// 					}
-// 					func (p *Person) PrintName() {
-// 						println(p.Name)
-// 					}
+					p.PrintName()
+					`, "bar\n", false},
+	"method ptr struct no prt": {`
+					type Person struct {
+						Name string ` + "`json:\"name\"`" + `
+						Age  int
+					}
+					func (p *Person) PrintName() {
+						println(p.Name)
+					}
 
-// 					p := Person{
-// 						Name: "bar",
-// 						Age:  30,
-// 					}
+					p := Person{
+						Name: "bar",
+						Age:  30,
+					}
 
-// 					p.PrintName()
-// 					`, "bar\n", false},
+					p.PrintName()
+					`, "bar\n", false},
 
-// 	"method load field": {`
-// 					type Person struct {
-// 						Name string
-// 						Age  int
-// 					}
-// 					func (p *Person) SetName(name string,age int) {
-// 						p.Name = name
-// 						p.Age = age
-// 						println(name)
-// 						println(p.Age)
-// 					}
+	"method load field": {`
+					type Person struct {
+						Name string
+						Age  int
+					}
+					func (p *Person) SetName(name string,age int) {
+						p.Name = name
+						p.Age = age
+						println(name)
+						println(p.Age)
+					}
 
-// 					p := Person{
-// 						Name: "bar",
-// 						Age:  30,
-// 					}
+					p := Person{
+						Name: "bar",
+						Age:  30,
+					}
 
-// 					p.SetName("foo",31)
-// 					`, "foo\n31\n", false},
-// 	"method recv is not ptr": {`
-// 					type Person struct {
-// 						Name string
-// 						Age  int
-// 					}
-// 					func (p Person) SetName(name string,age int) {
-// 						p.Name = name
-// 						p.Age = age
-// 					}
+					p.SetName("foo",31)
+					`, "foo\n31\n", false},
+	"method recv is not ptr": {`
+					type Person struct {
+						Name string
+						Age  int
+					}
+					func (p Person) SetName(name string,age int) {
+						p.Name = name
+						p.Age = age
+					}
 
-// 					p := &Person{
-// 						Name: "bar",
-// 						Age:  30,
-// 					}
+					p := &Person{
+						Name: "bar",
+						Age:  30,
+					}
 
-// 					p.SetName("foo",31)
-// 					println(p)
-// 					`, "&{bar 30}\n", false},
-// }
+					p.SetName("foo",31)
+					println(p)
+					`, "&{bar 30}\n", false},
+}
 
-// func TestMethodCases(t *testing.T) {
-// 	testScripts(t, "TestMethod", testMethodClauses)
-// }
+func TestMethodCases(t *testing.T) {
+	testScripts(t, "TestMethod", testMethodClauses)
+}
 
 // -----------------------------------------------------------------------------
 

@@ -3,14 +3,15 @@ type Person struct {
 	Age  int
 }
 
-func (p *Person) SetName(name string) {
+func (p *Person) SetName(name string, age int) {
 	p.Name = name
+	p.Age = age
 }
 
-p := Person{
+p := &Person{
 	Name: "bar",
 	Age:  30,
 }
 
-p.SetName("foo")
-println(p.Name)
+p.SetName("foo", 31)
+println(p)
