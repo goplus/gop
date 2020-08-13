@@ -17,6 +17,7 @@
 package bytecode
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/goplus/gop/exec.spec"
@@ -85,15 +86,37 @@ func toElem(v reflect.Value) reflect.Value {
 }
 
 func execStoreField(i Instr, p *Context) {
+	idx := int32(i) << bitsOp >> bitsOp
 	index := p.Pop()
 	val := p.Pop()
 	value := p.Pop()
 	v := reflect.ValueOf(val)
-	v = toElem(v)
-	if !v.CanSet() {
-		log.Panicf("cannot assign to %v\n", v)
+	var ptr bool
+	if v.Kind() == reflect.Ptr {
+		ptr = true
+		v = v.Elem()
 	}
-	setValue(v.FieldByIndex(index.([]int)), value)
+	if ptr {
+		setValue(v.FieldByIndex(index.([]int)), value)
+		if idx < 0 {
+			p.data[p.base+int(idx)] = v.Addr().Interface()
+		}
+	} else {
+		t := v.Type()
+		v2 := reflect.New(t).Elem()
+		v2.Set(v)
+		fmt.Println(v2)
+		setValue(v2.FieldByIndex(index.([]int)), value)
+		v = v2
+		if idx < 0 {
+			p.data[p.base+int(idx)] = v.Interface()
+		}
+	}
+	// v = toElem(v)
+	// if !v.CanSet() {
+	// 	log.Panicf("cannot assign to %v\n", v)
+	// }
+	// setValue(v.FieldByIndex(index.([]int)), value)
 }
 
 // -----------------------------------------------------------------------------
@@ -458,15 +481,23 @@ func (p *Builder) AddrField(v interface{}, index []int) *Builder {
 
 // StoreField instr
 func (p *Builder) StoreField(v interface{}, index []int) *Builder {
+	var stackVar bool
+	var idx int32
 	switch x := v.(type) {
 	case exec.GoVarAddr:
 		p.AddrGoVar(x)
 	case *Var:
 		p.AddrVar(x)
+	case int32:
+		stackVar = true
+		idx = x
 	case reflect.Type:
 	}
 	p.Push(index)
 	i := (opStoreField << bitsOpShift)
+	if stackVar {
+		i = i | (int(idx) & bitsOperand)
+	}
 	p.code.data = append(p.code.data, uint32(i))
 	return p
 }

@@ -22,6 +22,11 @@ func (p *iFuncInfo) Type() reflect.Type {
 	return ((*FuncInfo)(p)).Type()
 }
 
+// Type returns type of this function.
+func (p *iFuncInfo) Recv() *exec.RecvInfo {
+	return ((*FuncInfo)(p)).Recv()
+}
+
 // NumIn returns a function's input parameter count.
 func (p *iFuncInfo) NumIn() int {
 	return ((*FuncInfo)(p)).NumIn()
@@ -283,6 +288,12 @@ func (p *iBuilder) DefineVar(vars ...exec.Var) exec.Builder {
 	return p
 }
 
+// DefineType name string,reflect.Typeinstr
+func (p *iBuilder) DefineType(typ exec.Type) exec.Builder {
+	((*Builder)(p)).DefineType(typ)
+	return p
+}
+
 // InCurrentCtx returns if a variable is in current context or not.
 func (p *iBuilder) InCurrentCtx(v exec.Var) bool {
 	return ((*Builder)(p)).InCurrentCtx(v.(*Var))
@@ -405,6 +416,12 @@ func (p *iBuilder) SetIndex(idx int) exec.Builder {
 // Struct instr
 func (p *iBuilder) Struct(typ reflect.Type, arity int) exec.Builder {
 	((*Builder)(p)).Struct(typ, arity)
+	return p
+}
+
+// Copy instr
+func (p *iBuilder) Copy() exec.Builder {
+	((*Builder)(p)).Copy()
 	return p
 }
 

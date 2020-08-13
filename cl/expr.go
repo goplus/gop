@@ -169,7 +169,9 @@ func compileIdent(ctx *blockCtx, name string) func() {
 			}
 		case *stackVar:
 			ctx.infer.Push(&goValue{t: v.typ})
+			ctx.resetFieldVar(v.index)
 			return func() {
+				ctx.resetFieldVar(nil)
 				ctx.out.Load(v.index)
 			}
 		case string: // pkgPath
@@ -502,7 +504,7 @@ func compileMapLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 
 func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) func() {
 	funCtx := newExecBlockCtx(ctx)
-	decl := newFuncDecl("", v.Type, v.Body, funCtx)
+	decl := newFuncDecl("", nil, v.Type, v.Body, funCtx)
 	ctx.use(decl)
 	ctx.infer.Push(newQlFunc(decl))
 	return func() { // TODO: maybe slowly, use Closure instead of GoClosure
@@ -672,7 +674,6 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 
 func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct callType) func() {
 	fn := ctx.infer.Pop()
-	ctx.resetFieldVar(nil)
 	switch vfn := fn.(type) {
 	case *qlFunc:
 		if ct == callExpr {
@@ -680,10 +681,37 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 			ctx.infer.Push(ret)
 		}
 		return func() {
+			exprFun()
+			var isMethod int
+			if vfn.recv != nil {
+				isMethod = 1
+				if ct == callExpr {
+					args := ctx.infer.GetArgs(2)
+					temp := args[0]
+					args[0] = args[1]
+					args[1] = temp
+					ctx.infer.Ret(2, args...)
+				}
+				recv := vfn.FuncInfo().Recv()
+				if recv.Type.Kind() != reflect.Ptr {
+					v := ctx.infer.Get(-1)
+					if v.(iValue).Type().Kind() == reflect.Ptr {
+						cp := v.(iValue).Type().Elem()
+						ctx.infer.Ret(1, &goValue{cp})
+						ctx.out.Copy()
+					}
+				} else {
+					v := ctx.infer.Get(-1)
+					if v.(iValue).Type().Kind() != reflect.Ptr {
+						ptr := reflect.PtrTo(v.(iValue).Type())
+						ctx.infer.Ret(1, &goValue{ptr})
+					}
+				}
+			}
 			for _, arg := range v.Args {
 				compileExpr(ctx, arg)()
 			}
-			arity := checkFuncCall(vfn.Proto(), 0, v, ctx)
+			arity := checkFuncCall(vfn.Proto(), isMethod, v, ctx)
 			fun := vfn.FuncInfo()
 			if fun.IsVariadic() {
 				builder(ctx, ct).CallFuncv(fun, len(v.Args), arity)
@@ -1104,6 +1132,15 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 					ctx.out.LoadField(ctx.fieldVar, fieldIndex)
 				}
 				ctx.resetFieldVar(nil)
+			}
+		}
+
+		if fDecl, ok := ctx.findMethod(t, name); ok {
+			fn := newQlFunc(fDecl)
+			ctx.use(fDecl)
+			ctx.infer.Push(fn)
+			return func() {
+				exprX()
 			}
 		}
 		if _, ok := vx.t.MethodByName(name); !ok && isLower(name) {

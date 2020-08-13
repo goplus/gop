@@ -37,6 +37,17 @@ type Var interface {
 	IsUnnamedOut() bool
 }
 
+type Type interface {
+	// Name returns the type name.
+	Name() string
+
+	// Type returns the type.
+	Type() reflect.Type
+
+	// IsUnnamedOut returns if variable unnamed or not.
+	IsUnnamedOut() bool
+}
+
 // Label represents a label.
 type Label interface {
 	// Name returns the label name.
@@ -75,6 +86,9 @@ type FuncInfo interface {
 
 	// Type returns type of this function.
 	Type() reflect.Type
+
+	// Type returns type of this function.
+	Recv() *RecvInfo
 
 	// Args sets argument types of a Go+ function.
 	Args(in ...reflect.Type) FuncInfo
@@ -262,6 +276,9 @@ type Builder interface {
 	// DefineFunc instr
 	DefineFunc(fun FuncInfo) Builder
 
+	// DefineType name string,reflect.Typeinstr
+	DefineType(Type) Builder
+
 	// Return instr
 	Return(n int32) Builder
 
@@ -355,6 +372,9 @@ type Builder interface {
 	// New instr
 	New(typ reflect.Type) Builder
 
+	// Copy instr
+	Copy() Builder
+
 	// StartStmt emit a `StartStmt` event.
 	StartStmt(stmt interface{}) interface{}
 
@@ -385,6 +405,9 @@ type Package interface {
 	// NewVar creates a variable instance.
 	NewVar(typ reflect.Type, name string) Var
 
+	// NewType creates a variable instance.
+	NewType(typ reflect.Type, name string) Type
+
 	// NewLabel creates a label object.
 	NewLabel(name string) Label
 
@@ -395,7 +418,7 @@ type Package interface {
 	NewComprehension(out reflect.Type) Comprehension
 
 	// NewFunc creates a Go+ function.
-	NewFunc(name string, nestDepth uint32) FuncInfo
+	NewFunc(recv *RecvInfo, name string, nestDepth uint32) FuncInfo
 
 	// FindGoPackage lookups a Go package by pkgPath. It returns nil if not found.
 	FindGoPackage(pkgPath string) GoPackage

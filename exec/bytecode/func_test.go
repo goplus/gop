@@ -76,10 +76,10 @@ func TestFuncv(t *testing.T) {
 
 	tyInterfaceSlice := reflect.SliceOf(TyEmptyInterface)
 
-	foo := NewFunc("foo", 1)
+	foo := NewFunc(nil, "foo", 1)
 	_ = foo.IsUnnamedOut()
 
-	bar := NewFunc("bar", 1)
+	bar := NewFunc(nil, "bar", 1)
 	ret1 := NewVar(TyString, "1")
 	ret2 := NewVar(TyString, "1")
 	format := NewVar(TyString, "format")

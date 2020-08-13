@@ -20,7 +20,9 @@ import (
 	"go/ast"
 	"go/token"
 	"reflect"
+	"strings"
 
+	"github.com/goplus/gop/exec.spec"
 	"github.com/qiniu/x/log"
 )
 
@@ -165,3 +167,34 @@ func Type(p *Builder, typ reflect.Type) ast.Expr {
 }
 
 // -----------------------------------------------------------------------------
+
+type GoType struct {
+	name string
+	typ  reflect.Type
+}
+
+func NewType(typ reflect.Type, name string) *GoType {
+	return &GoType{
+		name: name,
+		typ:  typ,
+	}
+}
+
+// DefineVar defines types.
+func (p *Builder) DefineType(typ exec.Type) *Builder {
+	p.types[typ.Type()] = typ.(*GoType)
+	return p
+}
+
+func (p *GoType) Type() reflect.Type {
+	return p.typ
+}
+
+// IsUnnamedOut returns if variable unnamed or not.
+func (p *GoType) IsUnnamedOut() bool {
+	return strings.HasPrefix(p.name, "_ret_")
+}
+
+func (p *GoType) Name() string {
+	return p.name
+}

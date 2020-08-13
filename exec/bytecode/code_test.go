@@ -91,7 +91,7 @@ func newBuilder() exec.Builder {
 }
 
 func newFunc(name string, nestDepth uint32) exec.FuncInfo {
-	return defaultImpl.NewFunc(name, nestDepth)
+	return defaultImpl.NewFunc(nil, name, nestDepth)
 }
 
 func setPackage(f exec.FuncInfo, code exec.Code) {

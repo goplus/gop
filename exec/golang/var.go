@@ -141,6 +141,9 @@ func (p *Builder) Store(idx int32) *Builder {
 
 func (p *Builder) argIdent(idx int32) *ast.Ident {
 	i := len(p.cfun.in) + int(idx)
+	if i == -1 {
+		return Ident(p.cfun.recv.Name)
+	}
 	return Ident(toArg(i))
 }
 

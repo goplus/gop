@@ -105,7 +105,7 @@ func toFuncType(ctx *blockCtx, t *ast.FuncType) iType {
 	return reflect.FuncOf(in, out, variadic)
 }
 
-func buildFuncType(fi exec.FuncInfo, ctx *blockCtx, t *ast.FuncType) {
+func buildFuncType(recv *exec.RecvInfo, fi exec.FuncInfo, ctx *blockCtx, t *ast.FuncType) {
 	in, args, variadic := toArgTypes(ctx, t.Params)
 	rets := toReturnTypes(ctx, t.Results)
 	if variadic {
@@ -114,7 +114,7 @@ func buildFuncType(fi exec.FuncInfo, ctx *blockCtx, t *ast.FuncType) {
 		fi.Args(in...)
 	}
 	fi.Return(rets...)
-	ctx.insertFuncVars(in, args, rets)
+	ctx.insertFuncVars(recv, in, args, rets)
 }
 
 func toTypes(ctx *blockCtx, fields *ast.FieldList) (types []reflect.Type) {
@@ -237,8 +237,12 @@ func toIdentType(ctx *blockCtx, ident string) iType {
 	if typ, ok := ctx.builtin.FindType(ident); ok {
 		return typ
 	}
-	log.Panicln("toIdentType failed: unknown ident -", ident)
-	return nil
+	typ, err := ctx.findType(ident)
+	if err != nil {
+		log.Panicln("toIdentType failed: findType error", err)
+		return nil
+	}
+	return typ.Type.Type()
 }
 
 func toArrayType(ctx *blockCtx, v *ast.ArrayType) iType {
@@ -317,8 +321,18 @@ func buildField(ctx *blockCtx, field *ast.Field, anonymous bool, fieldName strin
 // -----------------------------------------------------------------------------
 
 type typeDecl struct {
-	Methods map[string]*methodDecl
+	Methods map[string]*funcDecl
+	Type    exec.Type
+	Name    string
 	Alias   bool
+}
+
+func (p *typeDecl) Kind() reflect.Kind {
+	return p.Type.Type().Kind()
+}
+
+func (p *typeDecl) Elem() reflect.Type {
+	return p.Type.Type().Elem()
 }
 
 type methodDecl struct {
@@ -334,6 +348,7 @@ type FuncDecl struct {
 	typ      *ast.FuncType
 	body     *ast.BlockStmt
 	ctx      *blockCtx
+	recv     *exec.RecvInfo
 	fi       exec.FuncInfo
 	used     bool
 	cached   bool
@@ -343,16 +358,16 @@ type FuncDecl struct {
 
 type funcDecl = FuncDecl
 
-func newFuncDecl(name string, typ *ast.FuncType, body *ast.BlockStmt, ctx *blockCtx) *FuncDecl {
+func newFuncDecl(name string, recv *exec.RecvInfo, typ *ast.FuncType, body *ast.BlockStmt, ctx *blockCtx) *FuncDecl {
 	nestDepth := ctx.getNestDepth()
-	fi := ctx.NewFunc(name, nestDepth)
-	return &FuncDecl{typ: typ, body: body, ctx: ctx, fi: fi}
+	fi := ctx.NewFunc(recv, name, nestDepth)
+	return &FuncDecl{typ: typ, recv: recv, body: body, ctx: ctx, fi: fi}
 }
 
 // Get returns function information.
 func (p *FuncDecl) Get() exec.FuncInfo {
 	if !p.cached {
-		buildFuncType(p.fi, p.ctx, p.typ)
+		buildFuncType(p.recv, p.fi, p.ctx, p.typ)
 		p.cached = true
 	}
 	return p.fi

@@ -128,6 +128,7 @@ const (
 	opStoreField    = 47 // op(26)
 	opAddrField     = 48 // op(26)
 	opStruct        = 49 // funvArity(10) type(16)
+	opCopy          = 50
 )
 
 const (
@@ -219,6 +220,7 @@ var instrInfos = []InstrInfo{
 	opStoreField:    {"storeField", "", "", 26},                           // addr(26)
 	opAddrField:     {"addrField", "", "", 26},                            // addr(26)
 	opStruct:        {"struct", "funvArity", "type", (10 << 8) | 16},      // funvArity(10) type(16)
+	opCopy:          {"copy", "", "", 26},                                 // addr(26)
 }
 
 // -----------------------------------------------------------------------------

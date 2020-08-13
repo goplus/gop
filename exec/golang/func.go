@@ -37,24 +37,37 @@ const (
 
 // FuncInfo represents a Go+ function information.
 type FuncInfo struct {
-	name    string
-	closure *printer.ReservedExpr // only when name="" (closure)
-	t       reflect.Type
-	in      []reflect.Type
-	out     []exec.Var
+	recv     *exec.RecvInfo
+	isMethod int
+	name     string
+	closure  *printer.ReservedExpr // only when name="" (closure)
+	t        reflect.Type
+	in       []reflect.Type
+	out      []exec.Var
 	scopeCtx
 	nVariadic uint16
 }
 
 // NewFunc create a Go+ function.
-func NewFunc(name string, nestDepth uint32) *FuncInfo {
+func NewFunc(recv *exec.RecvInfo, name string, nestDepth uint32) *FuncInfo {
 	if name != "" {
+		if recv != nil {
+			return &FuncInfo{recv: recv, isMethod: 1, name: name}
+		}
 		return &FuncInfo{name: name}
 	}
 	return &FuncInfo{closure: &printer.ReservedExpr{}}
 }
 
 func (p *FuncInfo) getFuncExpr() ast.Expr {
+	if p.isMethod == 1 {
+		if p.name != "" && p.recv.Name != "" {
+			return &ast.SelectorExpr{
+				X:   Ident(p.recv.Name),
+				Sel: Ident(p.name),
+			}
+		}
+	}
 	if p.name != "" {
 		return Ident(p.name)
 	}
@@ -66,6 +79,10 @@ func (p *FuncInfo) Name() string {
 	return p.name
 }
 
+func (p *FuncInfo) Recv() *exec.RecvInfo {
+	return p.recv
+}
+
 // Type returns type of this function.
 func (p *FuncInfo) Type() reflect.Type {
 	if p.t == nil {
@@ -73,14 +90,20 @@ func (p *FuncInfo) Type() reflect.Type {
 		for i, v := range p.out {
 			out[i] = v.(*Var).typ
 		}
-		p.t = reflect.FuncOf(p.in, out, p.IsVariadic())
+
+		in := make([]reflect.Type, 0, p.NumIn())
+		if p.recv != nil {
+			in = append(in, p.recv.Type)
+		}
+		in = append(in, p.in...)
+		p.t = reflect.FuncOf(in, out, p.IsVariadic())
 	}
 	return p.t
 }
 
 // NumIn returns a function's input parameter count.
 func (p *FuncInfo) NumIn() int {
-	return len(p.in)
+	return len(p.in) + p.isMethod
 }
 
 // NumOut returns a function's output parameter count.
@@ -151,12 +174,20 @@ func (p *Builder) Closure(fun *FuncInfo) *Builder {
 
 // CallFunc instr
 func (p *Builder) CallFunc(fun *FuncInfo, nexpr int) *Builder {
+	if fun.isMethod == 1 {
+		args := p.rhs.GetArgs(len(fun.in))
+		p.rhs.Ret(fun.NumIn(), args...)
+	}
 	p.rhs.Push(fun.getFuncExpr())
 	return p.Call(nexpr, false)
 }
 
 // CallFuncv instr
 func (p *Builder) CallFuncv(fun *FuncInfo, nexpr, arity int) *Builder {
+	if fun.isMethod == 1 {
+		args := p.rhs.GetArgs(nexpr)
+		p.rhs.Ret(arity, args...)
+	}
 	p.rhs.Push(fun.getFuncExpr())
 	return p.Call(nexpr, arity == -1)
 }
@@ -209,6 +240,11 @@ func (p *Builder) EndFunc(fun *FuncInfo) *Builder {
 			Name: Ident(name),
 			Type: toFuncType(p, fun),
 			Body: body,
+		}
+		if fun.isMethod == 1 {
+			params := make([]*ast.Field, 1)
+			params[0] = Field(p, fun.recv.Name, fun.recv.Type, "", false)
+			fn.Recv = &ast.FieldList{Opening: 1, List: params, Closing: 1}
 		}
 		p.gblDecls = append(p.gblDecls, fn)
 	} else {

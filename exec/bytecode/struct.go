@@ -186,3 +186,17 @@ func makeStruct(typStruct reflect.Type, arity int, p *Context) {
 		p.Ret(n, v.Interface())
 	}
 }
+
+func (p *Builder) Copy() *Builder {
+	p.code.data = append(p.code.data, opCopy<<bitsOpShift)
+	return p
+}
+
+func execOpCopy(i Instr, stk *Context) {
+	args := stk.GetArgs(1)
+	v := reflect.ValueOf(args[0])
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	stk.Ret(1, v.Interface())
+}

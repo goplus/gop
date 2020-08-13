@@ -38,6 +38,11 @@ func (p *interfaceImpl) NewVar(typ reflect.Type, name string) exec.Var {
 	return NewVar(typ, name)
 }
 
+// NewType creates a type instance.
+func (p *interfaceImpl) NewType(typ reflect.Type, name string) exec.Type {
+	return NewType(typ, name)
+}
+
 // NewLabel creates a label object.
 func (p *interfaceImpl) NewLabel(name string) exec.Label {
 	return NewLabel(name)
@@ -54,11 +59,11 @@ func (p *interfaceImpl) NewComprehension(out reflect.Type) exec.Comprehension {
 }
 
 // NewFunc create a Go+ function.
-func (p *interfaceImpl) NewFunc(name string, nestDepth uint32) exec.FuncInfo {
+func (p *interfaceImpl) NewFunc(recv *exec.RecvInfo, name string, nestDepth uint32) exec.FuncInfo {
 	if nestDepth == 0 {
 		return nil
 	}
-	return NewFunc(name, nestDepth)
+	return NewFunc(recv, name, nestDepth)
 }
 
 // FindGoPackage lookups a Go package by pkgPath. It returns nil if not found.
@@ -299,6 +304,12 @@ func (p *iBuilder) DefineVar(vars ...exec.Var) exec.Builder {
 	return p
 }
 
+// DefineType defines variables.
+func (p *iBuilder) DefineType(typ exec.Type) exec.Builder {
+	((*Builder)(p)).DefineType(typ)
+	return p
+}
+
 // InCurrentCtx returns if a variable is in current context or not.
 func (p *iBuilder) InCurrentCtx(v exec.Var) bool {
 	return ((*Builder)(p)).InCurrentCtx(v.(*Var))
@@ -451,6 +462,12 @@ func (p *iBuilder) GoBuiltin(typ reflect.Type, op exec.GoBuiltin) exec.Builder {
 // New instr
 func (p *iBuilder) New(typ reflect.Type) exec.Builder {
 	((*Builder)(p)).New(typ)
+	return p
+}
+
+// Copy instr
+func (p *iBuilder) Copy() exec.Builder {
+	((*Builder)(p)).Copy()
 	return p
 }
 
