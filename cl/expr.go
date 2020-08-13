@@ -684,9 +684,9 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 			ctx.infer.Push(ret)
 		}
 		return func() {
-			exprFun()
 			var isMethod int
 			if vfn.recv != nil {
+				exprFun()
 				isMethod = 1
 				if ct == callExpr {
 					args := ctx.infer.GetArgs(2)

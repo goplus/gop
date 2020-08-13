@@ -94,7 +94,7 @@ func execStoreField(i Instr, p *Context) {
 	}
 	v := reflect.ValueOf(val)
 	var ptr bool
-	if v.Kind() == reflect.Ptr {
+	for v.Kind() == reflect.Ptr {
 		ptr = true
 		v = v.Elem()
 	}
