@@ -160,12 +160,12 @@ func compileIdent(ctx *blockCtx, name string) func() {
 			ctx.infer.Push(&goValue{t: v.v.Type()})
 			ctx.resetFieldVar(v.v)
 			return func() {
-				ctx.resetFieldVar(nil)
 				if ctx.checkArrayAddr && v.v.Type().Kind() == reflect.Array {
 					ctx.out.AddrVar(v.v)
 				} else {
 					ctx.out.LoadVar(v.v)
 				}
+				ctx.resetFieldVar(v.v.Type())
 			}
 		case *stackVar:
 			ctx.infer.Push(&goValue{t: v.typ})
@@ -1022,10 +1022,15 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compileMode
 		name := v.Sel.Name
 		if sf, ok := t.FieldByName(name); ok {
 			checkType(sf.Type, in, ctx.out)
+			fieldIndex := append(ctx.fieldIndex, sf.Index...)
 			if ctx.fieldVar == nil {
-				exprX()
+				if ctx.fieldExprX != nil {
+					ctx.fieldExprX()
+				} else {
+					exprX()
+				}
 			}
-			ctx.out.StoreField(ctx.fieldVar, append(ctx.fieldIndex, sf.Index...))
+			ctx.out.StoreField(ctx.fieldVar, fieldIndex)
 			ctx.resetFieldVar(nil)
 		}
 	default:
@@ -1069,12 +1074,12 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 				ctx.infer.Ret(1, &goValue{t: vt.Elem().Type()})
 				ctx.resetFieldVar(exec.GoVarAddr(addr))
 				return func() {
-					ctx.resetFieldVar(nil)
 					if ctx.checkArrayAddr && vt.Elem().Kind() == reflect.Array {
 						ctx.out.AddrGoVar(exec.GoVarAddr(addr))
 					} else {
 						ctx.out.LoadGoVar(exec.GoVarAddr(addr))
 					}
+					ctx.resetFieldVar(vt.Elem().Type())
 				}
 			default:
 				log.Panicln("compileSelectorExpr: unknown GoPackage symbol kind -", kind)
@@ -1088,7 +1093,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 		name := v.Sel.Name
 		if sf, ok := t.FieldByName(name); ok {
 			ctx.infer.Ret(1, &goValue{t: sf.Type})
-			if ctx.fieldIndex == nil && ctx.fieldVar == nil {
+			if ctx.fieldIndex == nil {
 				ctx.fieldExprX = exprX
 			}
 			ctx.fieldIndex = append(ctx.fieldIndex, sf.Index...)
