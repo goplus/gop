@@ -158,14 +158,14 @@ func compileIdent(ctx *blockCtx, name string) func() {
 		switch v := sym.(type) {
 		case *execVar:
 			ctx.infer.Push(&goValue{t: v.v.Type()})
-			ctx.resetFieldVar(v.v)
+			ctx.resetFieldVar(v.v.Type())
 			return func() {
-				if ctx.checkArrayAddr && v.v.Type().Kind() == reflect.Array {
+				if (ctx.checkInLHS && v.v.Type().Kind() != reflect.Slice && v.v.Type().Kind() != reflect.Map && v.v.Type().Kind() != reflect.Ptr) || (ctx.checkArrayAddr && v.v.Type().Kind() == reflect.Array) {
 					ctx.out.AddrVar(v.v)
 				} else {
 					ctx.out.LoadVar(v.v)
 				}
-				ctx.resetFieldVar(v.v.Type())
+				ctx.resetFieldVar(nil)
 			}
 		case *stackVar:
 			ctx.infer.Push(&goValue{t: v.typ})
@@ -696,6 +696,11 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 		if ct == callExpr {
 			ret = vfn.Results()
 			ctx.infer.Push(ret)
+			if ret.NumValues() > 0 {
+				ctx.resetFieldVar(ret.Value(0).Type())
+			} else {
+				ctx.resetFieldVar(nil)
+			}
 		}
 		return func() {
 			if vfn.isMethod != 0 {
@@ -713,11 +718,6 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 				builder(ctx, ct).CallGoFuncv(exec.GoFuncvAddr(vfn.addr), nexpr, arity)
 			}
 			if ct == callExpr {
-				if ret.NumValues() > 0 {
-					ctx.resetFieldVar(ret.Value(0).Type())
-				} else {
-					ctx.resetFieldVar(nil)
-				}
 			}
 		}
 	case *goValue:
@@ -771,8 +771,10 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 	val := ctx.infer.Get(-1)
 
 	ctx.checkArrayAddr = true
+	ctx.checkInLHS = true
 	compileExpr(ctx, v.X)()
 	ctx.checkArrayAddr = false
+	ctx.checkInLHS = false
 
 	typ := ctx.infer.Get(-1).(iValue).Type()
 	typElem := typ.Elem()
@@ -1023,14 +1025,17 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compileMode
 		if sf, ok := t.FieldByName(name); ok {
 			checkType(sf.Type, in, ctx.out)
 			fieldIndex := append(ctx.fieldIndex, sf.Index...)
-			if ctx.fieldVar == nil {
-				if ctx.fieldExprX != nil {
-					ctx.fieldExprX()
-				} else {
-					exprX()
-				}
+			fieldVar := ctx.fieldVar
+			//exprX()
+			log.Println("-->", ctx.fieldVar, ctx.fieldIndex)
+			// if ctx.fieldVar == nil {
+			if ctx.fieldExprX != nil {
+				ctx.fieldExprX()
+			} else {
+				exprX()
 			}
-			ctx.out.StoreField(ctx.fieldVar, fieldIndex)
+			// }
+			ctx.out.StoreField(fieldVar, fieldIndex)
 			ctx.resetFieldVar(nil)
 		}
 	default:
@@ -1072,14 +1077,16 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 				info := ctx.GetGoVarInfo(exec.GoVarAddr(addr))
 				vt := reflect.ValueOf(info.This)
 				ctx.infer.Ret(1, &goValue{t: vt.Elem().Type()})
-				ctx.resetFieldVar(exec.GoVarAddr(addr))
+				ctx.resetFieldVar(vt.Elem().Type())
 				return func() {
-					if ctx.checkArrayAddr && vt.Elem().Kind() == reflect.Array {
+					if (ctx.checkInLHS &&
+						(vt.Elem().Kind() != reflect.Map && vt.Elem().Kind() != reflect.Ptr)) ||
+						(ctx.checkArrayAddr && vt.Elem().Kind() == reflect.Array) {
 						ctx.out.AddrGoVar(exec.GoVarAddr(addr))
 					} else {
 						ctx.out.LoadGoVar(exec.GoVarAddr(addr))
 					}
-					ctx.resetFieldVar(vt.Elem().Type())
+					ctx.resetFieldVar(nil)
 				}
 			default:
 				log.Panicln("compileSelectorExpr: unknown GoPackage symbol kind -", kind)
@@ -1099,14 +1106,17 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 			ctx.fieldIndex = append(ctx.fieldIndex, sf.Index...)
 			fieldIndex := ctx.fieldIndex
 			fieldExprX := ctx.fieldExprX
+			fieldVar := ctx.fieldVar
+			//			log.Println("--->000", ctx.fieldVar, fieldIndex, ctx.fieldExprX)
 			return func() {
 				if fieldExprX != nil {
 					fieldExprX()
 				}
+				log.Println("--->111", fieldVar, fieldIndex)
 				if ctx.checkArrayAddr && sf.Type.Kind() == reflect.Array {
-					ctx.out.AddrField(ctx.fieldVar, fieldIndex)
+					ctx.out.AddrField(fieldVar, fieldIndex)
 				} else {
-					ctx.out.LoadField(ctx.fieldVar, fieldIndex)
+					ctx.out.LoadField(fieldVar, fieldIndex)
 				}
 				ctx.resetFieldVar(nil)
 			}

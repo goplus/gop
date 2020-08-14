@@ -192,6 +192,7 @@ type blockCtx struct {
 	takeAddr       bool
 	checkFlag      bool
 	checkArrayAddr bool
+	checkInLHS     bool
 	fieldVar       interface{}
 	fieldIndex     []int
 	fieldExprX     func()
