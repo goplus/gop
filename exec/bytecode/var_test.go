@@ -65,7 +65,7 @@ func TestParentCtx(t *testing.T) {
 	z := NewVar(TyString, "z")
 	code := newBuilder().
 		DefineVar(z).
-		DefineFunc(newFunc("", 2).Args()).
+		DefineFunc(newFunc(nil, "", 2).Args()).
 		DefineVar(x, y).
 		Push(5).
 		Push("32").
@@ -105,7 +105,7 @@ func TestAddrVar(t *testing.T) {
 	z := NewVar(TyString, "z")
 	code := newBuilder().
 		DefineVar(z).
-		DefineFunc(newFunc("", 2).Args()).
+		DefineFunc(newFunc(nil, "", 2).Args()).
 		DefineVar(x, y).
 		Push(5).
 		Push("32").

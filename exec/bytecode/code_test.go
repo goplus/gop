@@ -90,8 +90,8 @@ func newBuilder() exec.Builder {
 	return NewBuilder(nil).Interface()
 }
 
-func newFunc(name string, nestDepth uint32) exec.FuncInfo {
-	return defaultImpl.NewFunc(nil, name, nestDepth)
+func newFunc(recv *exec.RecvInfo, name string, nestDepth uint32) exec.FuncInfo {
+	return defaultImpl.NewFunc(recv, name, nestDepth)
 }
 
 func setPackage(f exec.FuncInfo, code exec.Code) {

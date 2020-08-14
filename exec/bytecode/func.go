@@ -173,14 +173,10 @@ type FuncInfo struct {
 }
 
 // NewFunc create a Go+ function.
-func NewFunc(recv *exec.RecvInfo, name string, nestDepth uint32) *FuncInfo {
+func NewFunc(name string, nestDepth uint32) *FuncInfo {
 	f := &FuncInfo{
 		name:       name,
 		varManager: varManager{nestDepth: nestDepth},
-	}
-	if recv != nil {
-		f.recv = recv
-		f.isMethod = 1
 	}
 	return f
 }

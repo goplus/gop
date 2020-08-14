@@ -10,6 +10,7 @@ func (p *Person) SetName(name string) {
 }
 
 func (p Person) SetAge(age int) {
+	age = age + 5
 	p.Age = age
 	println(p.Age)
 }

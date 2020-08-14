@@ -30,7 +30,7 @@ func TestFunc(t *testing.T) {
 		t.Fatal("FindFunc failed: strcat")
 	}
 
-	foo := newFunc("foo", 1)
+	foo := newFunc(nil, "foo", 1)
 	ret := NewVar(TyString, "1")
 	code := newBuilder().
 		Push("x").
@@ -76,10 +76,10 @@ func TestFuncv(t *testing.T) {
 
 	tyInterfaceSlice := reflect.SliceOf(TyEmptyInterface)
 
-	foo := NewFunc(nil, "foo", 1)
+	foo := NewFunc("foo", 1)
 	_ = foo.IsUnnamedOut()
 
-	bar := NewFunc(nil, "bar", 1)
+	bar := NewFunc("bar", 1)
 	ret1 := NewVar(TyString, "1")
 	ret2 := NewVar(TyString, "1")
 	format := NewVar(TyString, "format")
@@ -140,8 +140,8 @@ func TestFuncLargeArity(t *testing.T) {
 
 	tyStringSlice := reflect.SliceOf(TyString)
 
-	foo := newFunc("foo", 1)
-	bar := newFunc("bar", 1)
+	foo := newFunc(nil, "foo", 1)
+	bar := newFunc(nil, "bar", 1)
 	ret1 := NewVar(TyString, "1")
 	ret2 := NewVar(TyString, "1")
 	b := newBuilder()
@@ -182,7 +182,7 @@ func TestClosure(t *testing.T) {
 		t.Fatal("FindFunc failed: strcat")
 	}
 
-	foo := newFunc("foo", 1)
+	foo := newFunc(nil, "foo", 1)
 	ret := NewVar(TyString, "1")
 	code := newBuilder().
 		Push("x").
@@ -215,8 +215,8 @@ func TestClosure2(t *testing.T) {
 
 	tyInterfaceSlice := reflect.SliceOf(TyEmptyInterface)
 
-	foo := newFunc("foo", 2)
-	bar := newFunc("bar", 1)
+	foo := newFunc(nil, "foo", 2)
+	bar := newFunc(nil, "bar", 1)
 	ret1 := NewVar(TyString, "1")
 	ret2 := NewVar(TyString, "1")
 	code := newBuilder().
@@ -261,8 +261,8 @@ func TestGoClosure(t *testing.T) {
 
 	tyInterfaceSlice := reflect.SliceOf(TyEmptyInterface)
 
-	foo := newFunc("foo", 2)
-	bar := newFunc("bar", 1)
+	foo := newFunc(nil, "foo", 2)
+	bar := newFunc(nil, "bar", 1)
 	ret1 := NewVar(TyString, "1")
 	ret2 := NewVar(TyString, "1")
 	code := newBuilder().

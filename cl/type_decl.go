@@ -327,14 +327,6 @@ type typeDecl struct {
 	Alias   bool
 }
 
-func (p *typeDecl) Kind() reflect.Kind {
-	return p.Type.Type().Kind()
-}
-
-func (p *typeDecl) Elem() reflect.Type {
-	return p.Type.Type().Elem()
-}
-
 type methodDecl struct {
 	recv    string // recv object name
 	pointer int
