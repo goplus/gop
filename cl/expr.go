@@ -157,10 +157,11 @@ func compileIdent(ctx *blockCtx, name string) func() {
 	if sym, ok := ctx.find(name); ok {
 		switch v := sym.(type) {
 		case *execVar:
-			ctx.infer.Push(&goValue{t: v.v.Type()})
-			ctx.resetFieldVar(v.v.Type())
+			typ := v.v.Type()
+			ctx.infer.Push(&goValue{t: typ})
+			ctx.resetFieldVar(typ)
 			return func() {
-				if (ctx.checkInLHS && v.v.Type().Kind() != reflect.Slice && v.v.Type().Kind() != reflect.Map && v.v.Type().Kind() != reflect.Ptr) || (ctx.checkArrayAddr && v.v.Type().Kind() == reflect.Array) {
+				if ctx.checkLoadAddr {
 					ctx.out.AddrVar(v.v)
 				} else {
 					ctx.out.LoadVar(v.v)
@@ -770,11 +771,7 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 	}
 	val := ctx.infer.Get(-1)
 
-	ctx.checkArrayAddr = true
-	ctx.checkInLHS = true
-	compileExpr(ctx, v.X)()
-	ctx.checkArrayAddr = false
-	ctx.checkInLHS = false
+	exprX := compileExpr(ctx, v.X)
 
 	typ := ctx.infer.Get(-1).(iValue).Type()
 	typElem := typ.Elem()
@@ -785,6 +782,11 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 		typ = typElem
 		typElem = typElem.Elem()
 	}
+	if typ.Kind() == reflect.Array {
+		ctx.checkLoadAddr = true
+	}
+	exprX()
+	ctx.checkLoadAddr = false
 
 	if cons, ok := val.(*constVal); ok {
 		cons.bound(typElem, ctx.out)
@@ -835,9 +837,11 @@ func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) func() { // x[i:j:k]
 		ctx.infer.Ret(1, &goValue{typ})
 	}
 	return func() {
-		ctx.checkArrayAddr = true
+		if kind == reflect.Array {
+			ctx.checkLoadAddr = true
+		}
 		exprX()
-		ctx.checkArrayAddr = false
+		ctx.checkLoadAddr = false
 		i, j, k := exec.SliceDefaultIndex, exec.SliceDefaultIndex, exec.SliceDefaultIndex
 		if v.Low != nil {
 			i = compileIdx(ctx, v.Low, exec.SliceConstIndexLast, kind)
@@ -994,6 +998,7 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compileMode
 	}
 	in := ctx.infer.Get(-1)
 	exprX := compileExpr(ctx, v.X)
+
 	x := ctx.infer.Get(-1)
 	ctx.infer.PopN(2)
 	switch vx := x.(type) {
@@ -1025,16 +1030,14 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compileMode
 		if sf, ok := t.FieldByName(name); ok {
 			checkType(sf.Type, in, ctx.out)
 			fieldIndex := append(ctx.fieldIndex, sf.Index...)
-			fieldVar := ctx.fieldVar
-			//exprX()
-			log.Println("-->", ctx.fieldVar, ctx.fieldIndex)
-			// if ctx.fieldVar == nil {
+			fieldVar := ctx.fieldStructType
+			ctx.checkLoadAddr = true
 			if ctx.fieldExprX != nil {
 				ctx.fieldExprX()
 			} else {
 				exprX()
 			}
-			// }
+			ctx.checkLoadAddr = false
 			ctx.out.StoreField(fieldVar, fieldIndex)
 			ctx.resetFieldVar(nil)
 		}
@@ -1076,12 +1079,11 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 			case exec.SymbolVar:
 				info := ctx.GetGoVarInfo(exec.GoVarAddr(addr))
 				vt := reflect.ValueOf(info.This)
-				ctx.infer.Ret(1, &goValue{t: vt.Elem().Type()})
-				ctx.resetFieldVar(vt.Elem().Type())
+				typ := vt.Elem().Type()
+				ctx.infer.Ret(1, &goValue{t: typ})
+				ctx.resetFieldVar(typ)
 				return func() {
-					if (ctx.checkInLHS &&
-						(vt.Elem().Kind() != reflect.Map && vt.Elem().Kind() != reflect.Ptr)) ||
-						(ctx.checkArrayAddr && vt.Elem().Kind() == reflect.Array) {
+					if ctx.checkLoadAddr {
 						ctx.out.AddrGoVar(exec.GoVarAddr(addr))
 					} else {
 						ctx.out.LoadGoVar(exec.GoVarAddr(addr))
@@ -1106,14 +1108,12 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 			ctx.fieldIndex = append(ctx.fieldIndex, sf.Index...)
 			fieldIndex := ctx.fieldIndex
 			fieldExprX := ctx.fieldExprX
-			fieldVar := ctx.fieldVar
-			//			log.Println("--->000", ctx.fieldVar, fieldIndex, ctx.fieldExprX)
+			fieldVar := ctx.fieldStructType
 			return func() {
 				if fieldExprX != nil {
 					fieldExprX()
 				}
-				log.Println("--->111", fieldVar, fieldIndex)
-				if ctx.checkArrayAddr && sf.Type.Kind() == reflect.Array {
+				if ctx.checkLoadAddr {
 					ctx.out.AddrField(fieldVar, fieldIndex)
 				} else {
 					ctx.out.LoadField(fieldVar, fieldIndex)

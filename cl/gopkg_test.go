@@ -642,6 +642,8 @@ import (
 	pkg.Info.V5[0] = -100
 	println("pkg.Info.V5", pkg.Info.V5)
 	println("pkg.Info.V11[0]",pkg.Info.V11[0])
+	pkg.Info.V7[0] = "hello"
+	println("pkg.Info.V7[0]",pkg.Info.V7[0])
 	pkg.Info.V11[0] = nil
 	println("pkg.Info.V11",pkg.Info.V11)
 	pkg.Info.V11[1].Min.X = -101
