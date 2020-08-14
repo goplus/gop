@@ -438,21 +438,9 @@ func (p *Builder) AddrGoVar(addr exec.GoVarAddr) *Builder {
 	return p
 }
 
-func (p *Builder) fieldExpr(v interface{}, index []int) ast.Expr {
-	var typ reflect.Type
+func (p *Builder) fieldExpr(typ reflect.Type, index []int) ast.Expr {
 	expr := &ast.SelectorExpr{}
-	switch x := v.(type) {
-	case exec.GoVarAddr:
-		gvi := defaultImpl.GetGoVarInfo(x)
-		typ = reflect.TypeOf(gvi.This).Elem()
-		expr.X = p.GoSymIdent(gvi.Pkg.PkgPath(), gvi.Name)
-	case exec.Var:
-		typ = x.Type()
-		expr.X = Ident(x.Name())
-	case reflect.Type:
-		typ = x
-		expr.X = p.rhs.Pop().(ast.Expr)
-	}
+	expr.X = p.rhs.Pop().(ast.Expr)
 	if typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
 	}
@@ -470,15 +458,15 @@ func (p *Builder) fieldExpr(v interface{}, index []int) ast.Expr {
 }
 
 // LoadField instr
-func (p *Builder) LoadField(v interface{}, index []int) *Builder {
-	expr := p.fieldExpr(v, index)
+func (p *Builder) LoadField(typ reflect.Type, index []int) *Builder {
+	expr := p.fieldExpr(typ, index)
 	p.rhs.Push(expr)
 	return p
 }
 
 // AddrField instr
-func (p *Builder) AddrField(v interface{}, index []int) *Builder {
-	expr := p.fieldExpr(v, index)
+func (p *Builder) AddrField(typ reflect.Type, index []int) *Builder {
+	expr := p.fieldExpr(typ, index)
 	p.rhs.Push(&ast.UnaryExpr{
 		Op: token.AND,
 		X:  expr,
@@ -487,8 +475,8 @@ func (p *Builder) AddrField(v interface{}, index []int) *Builder {
 }
 
 // StoreField instr
-func (p *Builder) StoreField(v interface{}, index []int) *Builder {
-	expr := p.fieldExpr(v, index)
+func (p *Builder) StoreField(typ reflect.Type, index []int) *Builder {
+	expr := p.fieldExpr(typ, index)
 	p.lhs.Push(expr)
 	return p
 }

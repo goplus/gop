@@ -427,14 +427,7 @@ func (p *Builder) AddrGoVar(addr GoVarAddr) *Builder {
 }
 
 // LoadField instr
-func (p *Builder) LoadField(v interface{}, index []int) *Builder {
-	switch x := v.(type) {
-	case exec.GoVarAddr:
-		p.LoadGoVar(x)
-	case *Var:
-		p.LoadVar(x)
-	case reflect.Type:
-	}
+func (p *Builder) LoadField(typ reflect.Type, index []int) *Builder {
 	p.Push(index)
 	i := uint32(opLoadField << bitsOpShift)
 	p.code.data = append(p.code.data, uint32(i))
@@ -442,14 +435,7 @@ func (p *Builder) LoadField(v interface{}, index []int) *Builder {
 }
 
 // AddrField instr
-func (p *Builder) AddrField(v interface{}, index []int) *Builder {
-	switch x := v.(type) {
-	case exec.GoVarAddr:
-		p.AddrGoVar(x)
-	case *Var:
-		p.AddrVar(x)
-	case reflect.Type:
-	}
+func (p *Builder) AddrField(typ reflect.Type, index []int) *Builder {
 	p.Push(index)
 	i := uint32(opAddrField << bitsOpShift)
 	p.code.data = append(p.code.data, uint32(i))
@@ -457,14 +443,7 @@ func (p *Builder) AddrField(v interface{}, index []int) *Builder {
 }
 
 // StoreField instr
-func (p *Builder) StoreField(v interface{}, index []int) *Builder {
-	switch x := v.(type) {
-	case exec.GoVarAddr:
-		p.AddrGoVar(x)
-	case *Var:
-		p.AddrVar(x)
-	case reflect.Type:
-	}
+func (p *Builder) StoreField(typ reflect.Type, index []int) *Builder {
 	p.Push(index)
 	i := uint32(opStoreField << bitsOpShift)
 	p.code.data = append(p.code.data, uint32(i))

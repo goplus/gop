@@ -325,20 +325,20 @@ func (p *iBuilder) AddrGoVar(addr GoVarAddr) exec.Builder {
 }
 
 // LoadField instr
-func (p *iBuilder) LoadField(v interface{}, index []int) exec.Builder {
-	((*Builder)(p)).LoadField(v, index)
+func (p *iBuilder) LoadField(typ reflect.Type, index []int) exec.Builder {
+	((*Builder)(p)).LoadField(typ, index)
 	return p
 }
 
 // AddrField instr
-func (p *iBuilder) AddrField(v interface{}, index []int) exec.Builder {
-	((*Builder)(p)).AddrField(v, index)
+func (p *iBuilder) AddrField(typ reflect.Type, index []int) exec.Builder {
+	((*Builder)(p)).AddrField(typ, index)
 	return p
 }
 
 // StoreField instr
-func (p *iBuilder) StoreField(v interface{}, index []int) exec.Builder {
-	((*Builder)(p)).StoreField(v, index)
+func (p *iBuilder) StoreField(typ reflect.Type, index []int) exec.Builder {
+	((*Builder)(p)).StoreField(typ, index)
 	return p
 }
 
