@@ -184,15 +184,15 @@ type testRect struct {
 	Pt2 *testPoint
 }
 
-var g_Rect *testRect
+var gRect *testRect
 
 func init() {
-	g_Rect = &testRect{}
-	g_Rect.Pt2 = &testPoint{}
+	gRect = &testRect{}
+	gRect.Pt2 = &testPoint{}
 }
 
 func getTestRect() *testRect {
-	return g_Rect
+	return gRect
 }
 
 func execTestRect(_ int, p *qexec.Context) {
@@ -258,7 +258,7 @@ func main() {
 	}
 
 	it := reflect.TypeOf(rc)
-	it2 := reflect.TypeOf(g_Rect)
+	it2 := reflect.TypeOf(gRect)
 
 	y := NewVar(it, "y")
 
