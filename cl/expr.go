@@ -611,7 +611,7 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 	return func() {
 		var label exec.Label
 		exprX()
-		if b := (op == exec.OpLAnd); b || op == exec.OpLOr {
+		if b := (op == exec.OpLAnd); b || op == exec.OpLOr { // TODO: optimize to rm calling BuiltinOp
 			label = ctx.NewLabel("")
 			if b {
 				ctx.out.JmpIf(exec.JcFalse|exec.JcNotPopMask, label)
