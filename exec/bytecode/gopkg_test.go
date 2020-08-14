@@ -249,12 +249,7 @@ func TestGoField(t *testing.T) {
 	gtyp := reflect.TypeOf(gRect)
 	ytyp := reflect.TypeOf(rc)
 	y := NewVar(ytyp, "y")
-
 	b := newBuilder()
-
-	_ = sprint
-	_ = gtyp
-	_ = ytyp
 
 	code := b.
 		DefineVar(y). // y
