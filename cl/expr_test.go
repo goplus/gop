@@ -851,6 +851,27 @@ var testMethodClauses = map[string]testData{
 					p.SetName("foo",31)
 					println(p)
 					`, "&{bar 30}\n", false},
+	"method and obj is not ptr": {`
+					type Person struct {
+						Name string
+						Age  int
+					}
+					
+					func (p Person) SetName(name string) {
+						p.Name = name
+						println(p.Name)
+					}
+					
+					p := Person{
+						Name: "bar",
+						Age:  30,
+					}
+					
+					p.SetName("foo")
+					
+					println(p)
+	
+					`, "foo\n{bar 30}\n", false},
 }
 
 func TestMethodCases(t *testing.T) {

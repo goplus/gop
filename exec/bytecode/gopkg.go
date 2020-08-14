@@ -93,32 +93,38 @@ func execStoreField(i Instr, p *Context) {
 		val = p.data[p.base+int(idx)]
 	}
 	v := reflect.ValueOf(val)
-	var ptr bool
-	for v.Kind() == reflect.Ptr {
-		ptr = true
-		v = v.Elem()
+	storeField(v, index.([]int), value)
+	if isStarkVar {
+		p.data[p.base+int(idx)] = v.Interface()
 	}
-	if ptr {
-		setValue(v.FieldByIndex(index.([]int)), value)
-		if isStarkVar {
-			p.data[p.base+int(idx)] = v.Addr().Interface()
-		}
-	} else {
-		t := v.Type()
-		v2 := reflect.New(t).Elem()
-		v2.Set(v)
-		setValue(v2.FieldByIndex(index.([]int)), value)
-		v = v2
-		if isStarkVar {
-			p.data[p.base+int(idx)] = v.Interface()
-		}
-	}
-	// v := reflect.ValueOf(val)
-	// v = toElem(v)
-	// if !v.CanSet() {
-	// 	log.Panicf("cannot assign to %v\n", v)
+	// var ptr bool
+	// for v.Kind() == reflect.Ptr {
+	// 	ptr = true
+	// 	v = v.Elem()
 	// }
-	// setValue(v.FieldByIndex(index.([]int)), value)
+	// if ptr {
+	// 	setValue(v.FieldByIndex(index.([]int)), value)
+	// 	if isStarkVar {
+	// 		p.data[p.base+int(idx)] = v.Addr().Interface()
+	// 	}
+	// } else {
+	// 	t := v.Type()
+	// 	v2 := reflect.New(t).Elem()
+	// 	v2.Set(v)
+	// 	setValue(v2.FieldByIndex(index.([]int)), value)
+	// 	v = v2
+	// 	if isStarkVar {
+	// 		p.data[p.base+int(idx)] = v.Interface()
+	// 	}
+	// }
+}
+
+func storeField(v reflect.Value, index []int, value interface{}) {
+	v = toElem(v)
+	if !v.CanSet() {
+		log.Panicf("cannot assign to %v\n", v)
+	}
+	setValue(v.FieldByIndex(index), value)
 }
 
 // -----------------------------------------------------------------------------
@@ -458,6 +464,8 @@ func (p *Builder) LoadField(v interface{}, index []int) *Builder {
 		p.LoadGoVar(x)
 	case *Var:
 		p.LoadVar(x)
+	case int32:
+		p.Load(x)
 	case reflect.Type:
 	}
 	p.Push(index)

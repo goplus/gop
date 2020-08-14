@@ -701,8 +701,8 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 					if v.(iValue).Type().Kind() == reflect.Ptr {
 						cp := v.(iValue).Type().Elem()
 						ctx.infer.Ret(1, &goValue{cp})
-						ctx.out.Copy()
 					}
+					ctx.out.Copy()
 				} else {
 					v := ctx.infer.Get(-1)
 					if v.(iValue).Type().Kind() != reflect.Ptr {
@@ -1126,7 +1126,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 			fieldIndex := ctx.fieldIndex
 			fieldExprX := ctx.fieldExprX
 			return func() {
-				if fieldExprX != nil {
+				if fieldExprX != nil && ctx.fieldVar == nil {
 					fieldExprX()
 				}
 				if ctx.checkArrayAddr && sf.Type.Kind() == reflect.Array {

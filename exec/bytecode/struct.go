@@ -194,9 +194,15 @@ func (p *Builder) Copy() *Builder {
 
 func execOpCopy(i Instr, stk *Context) {
 	args := stk.GetArgs(1)
+
 	v := reflect.ValueOf(args[0])
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
-	stk.Ret(1, v.Interface())
+	t := v.Type()
+	v2 := reflect.New(t).Elem()
+	v2.Set(v)
+	// v = v2
+
+	stk.Ret(1, v2.Addr().Interface())
 }

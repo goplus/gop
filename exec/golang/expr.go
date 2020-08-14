@@ -449,6 +449,14 @@ func (p *Builder) fieldExpr(v interface{}, index []int) ast.Expr {
 	case exec.Var:
 		typ = x.Type()
 		expr.X = Ident(x.Name())
+	case int32:
+		i := len(p.cfun.in) + int(x)
+		if i == -1 {
+			typ = p.cfun.recv.Type
+		} else {
+			typ = p.cfun.in[i]
+		}
+		expr.X = p.argIdent(x)
 	case reflect.Type:
 		typ = x
 		expr.X = p.rhs.Pop().(ast.Expr)
