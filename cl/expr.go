@@ -594,9 +594,9 @@ var unaryOps = [...]exec.Operator{
 func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 	exprX := compileExpr(ctx, v.X)
 	exprY := compileExpr(ctx, v.Y)
+	op := binaryOps[v.Op]
 	x := ctx.infer.Get(-2)
 	y := ctx.infer.Get(-1)
-	op := binaryOps[v.Op]
 	xcons, xok := x.(*constVal)
 	ycons, yok := y.(*constVal)
 	if xok && yok { // <const> op <const>
@@ -609,10 +609,22 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 	kind, ret := binaryOpResult(op, x, y)
 	ctx.infer.Ret(2, ret)
 	return func() {
+		var label exec.Label
 		exprX()
+		if b := (op == exec.OpLAnd); b || op == exec.OpLOr {
+			label = ctx.NewLabel("")
+			if b {
+				ctx.out.JmpIf(exec.JcFalse|exec.JcNotPopMask, label)
+			} else {
+				ctx.out.JmpIf(exec.JcTrue|exec.JcNotPopMask, label)
+			}
+		}
 		exprY()
 		checkBinaryOp(kind, op, x, y, ctx.out)
 		ctx.out.BuiltinOp(kind, op)
+		if label != nil {
+			ctx.out.Label(label)
+		}
 	}
 }
 
