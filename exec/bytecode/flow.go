@@ -25,11 +25,12 @@ import (
 // -----------------------------------------------------------------------------
 
 const (
-	bitsOpJmp             = bitsOp + 2
-	bitsOpJmpIfCond       = bitsInstr - bitsOpJmp
-	bitsOpJmpBoolCondFlag = 1 << bitsOpJmpIfCond
-	bitsOpJmpPtrCondFlag  = 2 << bitsOpJmpIfCond
-	bitsOpJmpOperand      = bitsOpJmpBoolCondFlag - 1
+	bitsOpJmp              = bitsOp + 4
+	bitsOpJmpIfCond        = bitsInstr - bitsOpJmp
+	bitsOpJmpBoolCondFlag  = 1 << bitsOpJmpIfCond
+	bitsOpJmpPtrCondFlag   = 2 << bitsOpJmpIfCond
+	bitsOpJmpNoPopMaskFlag = 4 << bitsOpJmpIfCond
+	bitsOpJmpOperand       = bitsOpJmpBoolCondFlag - 1
 )
 
 func execJmp(i Instr, ctx *Context) {
@@ -47,7 +48,12 @@ func execWrapIfErr(i Instr, ctx *Context) {
 }
 
 func execJmpIf(i Instr, ctx *Context) {
-	v := ctx.Pop()
+	var v interface{}
+	if i&bitsOpJmpNoPopMaskFlag != 0 {
+		v = ctx.Get(-1)
+	} else {
+		v = ctx.Pop()
+	}
 	if (i & bitsOpJmpPtrCondFlag) != 0 {
 		if (i & bitsOpJmpBoolCondFlag) == 0 {
 			if v != nil {
@@ -157,7 +163,7 @@ func (p *Builder) Jmp(l *Label) *Builder {
 }
 
 // JmpIf instr
-func (p *Builder) JmpIf(cond exec.JmpCond, l *Label) *Builder {
+func (p *Builder) JmpIf(cond exec.JmpCondFlag, l *Label) *Builder {
 	return p.labelOp((opJmpIf<<bitsOpShift)|(uint32(cond)<<bitsOpJmpIfCond), l)
 }
 

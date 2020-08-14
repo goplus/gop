@@ -197,12 +197,6 @@ type blockCtx struct {
 	fieldExprX      func()
 }
 
-func (ctx *blockCtx) resetFieldVar(v reflect.Type) {
-	ctx.fieldStructType = v
-	ctx.fieldIndex = nil
-	ctx.fieldExprX = nil
-}
-
 // function block ctx
 func newExecBlockCtx(parent *blockCtx) *blockCtx {
 	return &blockCtx{
@@ -239,6 +233,12 @@ func newGblBlockCtx(pkg *pkgCtx) *blockCtx {
 		noExecCtx: true,
 		funcCtx:   newFuncCtx(nil),
 	}
+}
+
+func (ctx *blockCtx) resetFieldVar(v reflect.Type) {
+	ctx.fieldStructType = v
+	ctx.fieldIndex = nil
+	ctx.fieldExprX = nil
 }
 
 func (p *blockCtx) requireLabel(name string) exec.Label {

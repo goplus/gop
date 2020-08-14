@@ -595,9 +595,9 @@ var unaryOps = [...]exec.Operator{
 func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 	exprX := compileExpr(ctx, v.X)
 	exprY := compileExpr(ctx, v.Y)
+	op := binaryOps[v.Op]
 	x := ctx.infer.Get(-2)
 	y := ctx.infer.Get(-1)
-	op := binaryOps[v.Op]
 	xcons, xok := x.(*constVal)
 	ycons, yok := y.(*constVal)
 	if xok && yok { // <const> op <const>
@@ -610,10 +610,22 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 	kind, ret := binaryOpResult(op, x, y)
 	ctx.infer.Ret(2, ret)
 	return func() {
+		var label exec.Label
 		exprX()
+		if b := (op == exec.OpLAnd); b || op == exec.OpLOr { // TODO: optimize to rm calling BuiltinOp
+			label = ctx.NewLabel("")
+			if b {
+				ctx.out.JmpIf(exec.JcFalse|exec.JcNotPopMask, label)
+			} else {
+				ctx.out.JmpIf(exec.JcTrue|exec.JcNotPopMask, label)
+			}
+		}
 		exprY()
 		checkBinaryOp(kind, op, x, y, ctx.out)
 		ctx.out.BuiltinOp(kind, op)
+		if label != nil {
+			ctx.out.Label(label)
+		}
 	}
 }
 
@@ -1030,7 +1042,7 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compileMode
 		if sf, ok := t.FieldByName(name); ok {
 			checkType(sf.Type, in, ctx.out)
 			fieldIndex := append(ctx.fieldIndex, sf.Index...)
-			fieldVar := ctx.fieldStructType
+			fieldStructType := ctx.fieldStructType
 			ctx.checkLoadAddr = true
 			if ctx.fieldExprX != nil {
 				ctx.fieldExprX()
@@ -1038,7 +1050,7 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compileMode
 				exprX()
 			}
 			ctx.checkLoadAddr = false
-			ctx.out.StoreField(fieldVar, fieldIndex)
+			ctx.out.StoreField(fieldStructType, fieldIndex)
 			ctx.resetFieldVar(nil)
 		}
 	default:
@@ -1108,15 +1120,15 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 			ctx.fieldIndex = append(ctx.fieldIndex, sf.Index...)
 			fieldIndex := ctx.fieldIndex
 			fieldExprX := ctx.fieldExprX
-			fieldVar := ctx.fieldStructType
+			fieldStructType := ctx.fieldStructType
 			return func() {
 				if fieldExprX != nil {
 					fieldExprX()
 				}
 				if ctx.checkLoadAddr {
-					ctx.out.AddrField(fieldVar, fieldIndex)
+					ctx.out.AddrField(fieldStructType, fieldIndex)
 				} else {
-					ctx.out.LoadField(fieldVar, fieldIndex)
+					ctx.out.LoadField(fieldStructType, fieldIndex)
 				}
 				ctx.resetFieldVar(nil)
 			}

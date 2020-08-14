@@ -102,19 +102,26 @@ type FuncInfo interface {
 	IsUnnamedOut() bool
 }
 
-// JmpCond represents condition of Jmp intruction.
-type JmpCond uint32
+// JmpCondFlag represents condition of Jmp intruction.
+type JmpCondFlag uint32
 
 const (
 	// JcFalse - JmpIfFalse
-	JcFalse JmpCond = 0
+	JcFalse JmpCondFlag = 0
 	// JcTrue - JmpIfTrue
-	JcTrue JmpCond = 1
+	JcTrue JmpCondFlag = 1
 	// JcNil - JmpIfNil
-	JcNil JmpCond = 2
+	JcNil JmpCondFlag = 2
 	// JcNotNil - JmpIfNotNil
-	JcNotNil JmpCond = 3
+	JcNotNil JmpCondFlag = 3
+	// JcNotPopMask - jump but not pop
+	JcNotPopMask JmpCondFlag = 4
 )
+
+// IsNotPop returns to pop condition value or not
+func (v JmpCondFlag) IsNotPop() bool {
+	return v&JcNotPopMask == JcNotPopMask
+}
 
 // SymbolKind represents symbol kind.
 type SymbolKind uint32
@@ -194,7 +201,7 @@ type Builder interface {
 	Jmp(l Label) Builder
 
 	// JmpIf instr
-	JmpIf(cond JmpCond, l Label) Builder
+	JmpIf(cond JmpCondFlag, l Label) Builder
 
 	// CaseNE instr
 	CaseNE(l Label, arity int) Builder

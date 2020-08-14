@@ -450,7 +450,7 @@ func (p *Builder) fieldExpr(typ reflect.Type, index []int) ast.Expr {
 			continue
 		}
 		if expr.Sel != nil {
-			expr.X = &ast.SelectorExpr{expr.X, expr.Sel}
+			expr.X = &ast.SelectorExpr{X: expr.X, Sel: expr.Sel}
 		}
 		expr.Sel = Ident(sf.Name)
 	}
