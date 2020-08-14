@@ -386,9 +386,8 @@ func isOverflowsIntByInt64(v int64, intSize int) bool {
 func isOverflowsIntByUint64(v uint64, intSize int) bool {
 	if intSize == 32 {
 		return v > uint64(math.MaxInt32)
-	} else {
-		return v > uint64(math.MaxInt64)
 	}
+	return v > uint64(math.MaxInt64)
 }
 
 func boundConst(v interface{}, t reflect.Type) interface{} {

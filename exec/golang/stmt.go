@@ -90,12 +90,12 @@ func GotoIf(p *Builder, cond ast.Expr, l *Label) *ast.IfStmt {
 }
 
 // JmpIf instr
-func (p *Builder) JmpIf(jc exec.JmpFlag, l *Label) *Builder {
-	if jc.NotPop() {
+func (p *Builder) JmpIf(jc exec.JmpCondFlag, l *Label) *Builder {
+	if jc.IsNotPop() {
 		return p
 	}
 	cond := p.rhs.Pop().(ast.Expr)
-	switch jc.Cond() {
+	switch jc {
 	case exec.JcFalse:
 		cond = &ast.UnaryExpr{Op: token.NOT, X: cond}
 	case exec.JcNil:

@@ -163,7 +163,7 @@ func (p *Builder) Jmp(l *Label) *Builder {
 }
 
 // JmpIf instr
-func (p *Builder) JmpIf(cond exec.JmpFlag, l *Label) *Builder {
+func (p *Builder) JmpIf(cond exec.JmpCondFlag, l *Label) *Builder {
 	return p.labelOp((opJmpIf<<bitsOpShift)|(uint32(cond)<<bitsOpJmpIfCond), l)
 }
 
