@@ -504,12 +504,17 @@ import (
 	}
 }
 
-type testFieldPoint struct {
+type tpoint struct {
 	X int
 	Y int
 }
 
-type testFieldInfo struct {
+type trect struct {
+	Min tpoint
+	Max tpoint
+}
+
+type tfieldinfo struct {
 	V1  bool
 	V2  rune
 	V3  string
@@ -517,22 +522,52 @@ type testFieldInfo struct {
 	V5  []int
 	V6  []string
 	V7  map[int]string
-	V8  testFieldPoint
-	V9  *testFieldPoint
-	V10 []testFieldPoint
-	V11 []*testFieldPoint
-	V12 [2]testFieldPoint
-	V13 [2]*testFieldPoint
+	V8  trect
+	V9  *trect
+	V10 []trect
+	V11 []*trect
+	V12 [2]trect
+	V13 [2]*trect
 }
 
-func testNewPoint(x int, y int) *testFieldPoint {
-	return &testFieldPoint{x, y}
+func tNewRect(x1 int, y1 int, x2 int, y2 int) *trect {
+	return &trect{tpoint{x1, y1}, tpoint{x2, y2}}
+}
+
+func tMakeRect(x1 int, y1 int, x2 int, y2 int) trect {
+	return trect{tpoint{x1, y1}, tpoint{x2, y2}}
+}
+
+func tNewPoint(x int, y int) *tpoint {
+	return &tpoint{x, y}
+}
+
+func tMakePoint(x int, y int) tpoint {
+	return tpoint{x, y}
 }
 
 func execTestNewPoint(_ int, p *exec.Context) {
 	args := p.GetArgs(2)
-	ret0 := testNewPoint(args[0].(int), args[1].(int))
+	ret0 := tNewPoint(args[0].(int), args[1].(int))
 	p.Ret(2, ret0)
+}
+
+func execTestMakePoint(_ int, p *exec.Context) {
+	args := p.GetArgs(2)
+	ret0 := tMakePoint(args[0].(int), args[1].(int))
+	p.Ret(2, ret0)
+}
+
+func execTestNewRect(_ int, p *exec.Context) {
+	args := p.GetArgs(4)
+	ret0 := tNewRect(args[0].(int), args[1].(int), args[2].(int), args[3].(int))
+	p.Ret(4, ret0)
+}
+
+func execTestMakeRect(_ int, p *exec.Context) {
+	args := p.GetArgs(4)
+	ret0 := tMakeRect(args[0].(int), args[1].(int), args[2].(int), args[3].(int))
+	p.Ret(4, ret0)
 }
 
 func TestPkgField(t *testing.T) {
@@ -550,14 +585,14 @@ func TestPkgField(t *testing.T) {
 	ar[4] = []int{100, 200}
 	ar[5] = []string{"hello", "world"}
 	ar[6] = m
-	ar[7] = testFieldPoint{10, 20}
-	ar[8] = &testFieldPoint{-10, -20}
-	ar[9] = []testFieldPoint{{100, 200}, {300, 400}}
-	ar[10] = []*testFieldPoint{&testFieldPoint{100, 200}, &testFieldPoint{300, 400}}
-	ar[11] = [2]testFieldPoint{{100, 200}, {300, 400}}
-	ar[12] = [2]*testFieldPoint{&testFieldPoint{100, 200}, &testFieldPoint{300, 400}}
+	ar[7] = tMakeRect(10, 20, 100, 200)
+	ar[8] = tNewRect(10, 20, 100, 200)
+	ar[9] = []trect{tMakeRect(10, 20, 30, 40), tMakeRect(50, 60, 70, 80)}
+	ar[10] = []*trect{tNewRect(10, 20, 30, 40), tNewRect(50, 60, 70, 80)}
+	ar[11] = [2]trect{tMakeRect(10, 20, 30, 40), tMakeRect(50, 60, 70, 80)}
+	ar[12] = [2]*trect{tNewRect(10, 20, 30, 40), tNewRect(50, 60, 70, 80)}
 
-	info := &testFieldInfo{}
+	info := &tfieldinfo{}
 	info.V7 = make(map[int]string)
 	v := reflect.ValueOf(info).Elem()
 	for i := 0; i < v.NumField(); i++ {
@@ -572,7 +607,10 @@ func TestPkgField(t *testing.T) {
 		I.Var("Sum", &sum),
 	)
 	I.RegisterFuncs(
-		I.Func("NewPoint", testNewPoint, execTestNewPoint),
+		I.Func("NewRect", tNewRect, execTestNewRect),
+		I.Func("NewPoint", tNewPoint, execTestNewPoint),
+		I.Func("MakeRect", tMakeRect, execTestMakeRect),
+		I.Func("MakePoint", tMakePoint, execTestMakePoint),
 	)
 
 	var testSource string
@@ -600,18 +638,22 @@ import (
 	}
 
 	testSource += `
-	pkg.Sum = 1+pkg.Info.V4+pkg.NewPoint(1000,200).X+pkg.Info.V8.X-pkg.Info.V9.X
+	pkg.Sum = 1+pkg.Info.V4+pkg.NewPoint(1,2).X+pkg.NewRect(10,20,30,40).Max.Y+pkg.Info.V8.Min.X-pkg.Info.V9.Max.Y
 	pkg.Info.V5[0] = -100
 	println("pkg.Info.V5", pkg.Info.V5)
 	println("pkg.Info.V11[0]",pkg.Info.V11[0])
 	pkg.Info.V11[0] = nil
 	println("pkg.Info.V11",pkg.Info.V11)
-	pkg.Info.V11[1].X = -101
-	println("pkg.Info.V11[1].X",pkg.Info.V11[1].X)
+	pkg.Info.V11[1].Min.X = -101
+	println("pkg.Info.V11[1]",pkg.Info.V11[1])
+	println("pkg.Info.V11[1].Min",pkg.Info.V11[1].Min)
+	println("pkg.Info.V11[1].Min.X",pkg.Info.V11[1].Min.X)
 	pkg.Info.V13[0] = nil
 	println("pkg.Info.V13",pkg.Info.V13)
-	pkg.Info.V13[1].X = -102
-	println("pkg.Info.V13[1].X",pkg.Info.V13[1].X)
+	pkg.Info.V13[1].Min = pkg.MakePoint(-105,-106)
+	println("pkg.Info.V13[1].Min",pkg.Info.V13[1].Min)
+	pkg.Info.V13[1].Max.Y = -102
+	println("pkg.Info.V13[1].Max.Y",pkg.Info.V13[1].Max.Y)
 	`
 
 	fsTestPkgVar := asttest.NewSingleFileFS("/foo", "bar.gop", testSource)
@@ -640,16 +682,16 @@ import (
 			t.Fatal(i, ar[i], out[i])
 		}
 	}
-	if sum != 921 {
+	if sum != -248 {
 		t.Fatal("binary expr check fail", sum)
 	}
 	if info.V5[0] != -100 {
 		t.Fatal("V5", info.V5)
 	}
-	if info.V11[0] != nil || info.V11[1].X != -101 {
+	if info.V11[0] != nil || info.V11[1].Min.X != -101 {
 		t.Fatal("V11", info.V11)
 	}
-	if info.V13[0] != nil || info.V13[1].X != -102 {
-		t.Fatal("V13", info.V13)
+	if info.V13[0] != nil || info.V13[1].Min.X != -105 || info.V13[1].Max.Y != -102 {
+		t.Fatal("V13", info.V13[0], info.V13[1])
 	}
 }
