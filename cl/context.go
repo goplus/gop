@@ -207,6 +207,9 @@ type blockCtx struct {
 	takeAddr       bool
 	checkFlag      bool
 	checkArrayAddr bool
+	fieldVar       interface{}
+	fieldIndex     []int
+	fieldExprX     func()
 }
 
 // function block ctx
@@ -245,6 +248,12 @@ func newGblBlockCtx(pkg *pkgCtx) *blockCtx {
 		noExecCtx: true,
 		funcCtx:   newFuncCtx(nil),
 	}
+}
+
+func (p *blockCtx) resetFieldVar(v interface{}) {
+	p.fieldVar = v
+	p.fieldIndex = nil
+	p.fieldExprX = nil
 }
 
 func (p *blockCtx) requireLabel(name string) exec.Label {

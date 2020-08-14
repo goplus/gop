@@ -169,6 +169,162 @@ func main() {
 	}
 }
 
+type testInfo struct {
+	Info string
+}
+
+type testPoint struct {
+	X int
+	Y int
+}
+
+type testRect struct {
+	testInfo
+	Pt1 testPoint
+	Pt2 *testPoint
+}
+
+var gRect *testRect
+
+func init() {
+	gRect = &testRect{}
+	gRect.Pt2 = &testPoint{}
+}
+
+func getTestRect() *testRect {
+	return gRect
+}
+
+func execTestRect(_ int, p *qexec.Context) {
+	p.Ret(0, getTestRect())
+}
+
+func TestGoField(t *testing.T) {
+	codeExp := `package main
+
+import (
+	fmt "fmt"
+	pkg_field "pkg_field"
+)
+
+var y golang.testRect
+
+func main() {
+	y = pkg_field.Rect2
+	pkg_field.Rect.Info = "hello"
+	pkg_field.Rect.Pt1.X = -1
+	pkg_field.Rect.Pt2.Y = -2
+	y.Info = "world"
+	y.Pt1.X = -10
+	y.Pt2.Y = -20
+	pkg_field.GetRect().Info = "next"
+	pkg_field.GetRect().Pt1.X = 101
+	pkg_field.GetRect().Pt2.Y = 102
+	pkg_field.Rect2 = y
+	fmt.Println(pkg_field.Rect.Info, pkg_field.Rect.Pt2.Y, y.Info, y.Pt2.Y, pkg_field.GetRect().Info, pkg_field.GetRect().Pt2.Y, &pkg_field.Rect.Pt1, &y.Pt1, &pkg_field.GetRect().Pt1)
+}
+`
+	println, _ := I.FindFuncv("println")
+
+	pkg := qexec.NewGoPackage("pkg_field")
+
+	rc := testRect{}
+	rc.Info = "Info"
+	rc.Pt1 = testPoint{10, 20}
+	rc.Pt2 = &testPoint{30, 40}
+
+	rc2 := testRect{}
+	rc2.Pt2 = &testPoint{}
+
+	pkg.RegisterVars(
+		pkg.Var("Rect", &rc),
+		pkg.Var("Rect2", &rc2),
+	)
+	pkg.RegisterFuncs(
+		pkg.Func("GetRect", getTestRect, execTestRect),
+	)
+
+	x, ok := pkg.FindVar("Rect")
+	if !ok {
+		t.Fatal("FindVar failed:", x)
+	}
+	x2, ok := pkg.FindVar("Rect2")
+	if !ok {
+		t.Fatal("FindVar failed:", x2)
+	}
+	fnTestRect, ok := pkg.FindFunc("GetRect")
+	if !ok {
+		t.Fatal("FindFunc failed:", fnTestRect)
+	}
+
+	it := reflect.TypeOf(rc)
+	it2 := reflect.TypeOf(gRect)
+
+	y := NewVar(it, "y")
+
+	b := NewBuilder("main", nil, nil)
+
+	code := b.Interface().
+		DefineVar(y). // y
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		LoadGoVar(x2).
+		StoreVar(y). // y = pkg_field.Rect2
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Push("hello").
+		StoreField(x, []int{0, 0}). // pkg_field.Rect.Info = "hello"
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Push(-1).
+		StoreField(x, []int{1, 0}). // pkg_field.Rect.Pt1.X = -1
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Push(-2).
+		StoreField(x, []int{2, 1}). // pkg_field.Rect.Pt2.Y = -2
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Push("world").
+		StoreField(y, []int{0, 0}). // y.Info = "world"
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Push(-10).
+		StoreField(y, []int{1, 0}). // y.Pt1.X = -10
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Push(-20).
+		StoreField(y, []int{2, 1}). // y.Pt2.Y = -20
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Push("next").
+		CallGoFunc(fnTestRect, 0).
+		StoreField(it2, []int{0, 0}). // pkg_field.GetRect().Info = "next"
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Push(101).
+		CallGoFunc(fnTestRect, 0).
+		StoreField(it2, []int{1, 0}). // pkg_field.GetRect().Pt1.X = 101
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Push(102).
+		CallGoFunc(fnTestRect, 0).
+		StoreField(it2, []int{2, 1}). // pkg_field.GetRect().Pt2.Y = 102
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		LoadVar(y).
+		StoreGoVar(x2). // pkg_field.Rect2 = y
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		LoadField(x, []int{0, 0}).
+		LoadField(x, []int{2, 1}).
+		LoadField(y, []int{0, 0}).
+		LoadField(y, []int{2, 1}).
+		CallGoFunc(fnTestRect, 0).
+		LoadField(it2, []int{0, 0}).
+		CallGoFunc(fnTestRect, 0).
+		LoadField(it2, []int{2, 1}).
+		AddrField(x, []int{1}).
+		AddrField(y, []int{1}).
+		CallGoFunc(fnTestRect, 0).
+		AddrField(it2, []int{1}).
+		CallGoFuncv(println, 9, 9). // println(pkg_field.Rect.Info, pkg_field.Rect.Pt2.Y, y.Info, y.Pt2.Y, pkg_field.GetRect().Info, pkg_field.GetRect().Pt2.Y, &pkg_field.Rect.Pt1, &y.Pt1, &pkg_field.GetRect().Pt1)
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Resolve()
+
+	if v := code.(*Code); v.String() != codeExp {
+		fmt.Println(v.String())
+		log.Fatal("TestGoVar failed: codeGen != codeExp")
+	}
+}
+
 // -----------------------------------------------------------------------------
 
 func TestStruct(t *testing.T) {

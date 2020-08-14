@@ -1,0 +1,23 @@
+func foo() bool {
+	println("foo")
+	return true
+}
+
+func bar() bool {
+	println("bar")
+	return true
+}
+
+func fake() bool {
+	println("fake")
+	return false
+}
+
+if foo() || bar() {
+}
+println("---")
+if foo() && bar() {
+}
+println("---")
+if fake() && bar() {
+}

@@ -41,6 +41,7 @@ const (
 // -----------------------------------------------------------------------------
 
 func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compileMode) {
+	ctx.resetFieldVar(nil)
 	switch v := expr.(type) {
 	case *ast.Ident:
 		compileIdentLHS(ctx, v.Name, mode)
@@ -157,12 +158,14 @@ func compileIdent(ctx *blockCtx, name string) func() {
 		switch v := sym.(type) {
 		case *execVar:
 			ctx.infer.Push(&goValue{t: v.v.Type()})
+			ctx.resetFieldVar(v.v)
 			return func() {
 				if ctx.checkArrayAddr && v.v.Type().Kind() == reflect.Array {
 					ctx.out.AddrVar(v.v)
 				} else {
 					ctx.out.LoadVar(v.v)
 				}
+				ctx.resetFieldVar(v.v.Type())
 			}
 		case *stackVar:
 			ctx.infer.Push(&goValue{t: v.typ})
@@ -587,9 +590,9 @@ var unaryOps = [...]exec.Operator{
 func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 	exprX := compileExpr(ctx, v.X)
 	exprY := compileExpr(ctx, v.Y)
+	op := binaryOps[v.Op]
 	x := ctx.infer.Get(-2)
 	y := ctx.infer.Get(-1)
-	op := binaryOps[v.Op]
 	xcons, xok := x.(*constVal)
 	ycons, yok := y.(*constVal)
 	if xok && yok { // <const> op <const>
@@ -602,10 +605,22 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 	kind, ret := binaryOpResult(op, x, y)
 	ctx.infer.Ret(2, ret)
 	return func() {
+		var label exec.Label
 		exprX()
+		if b := (op == exec.OpLAnd); b || op == exec.OpLOr { // TODO: optimize to rm calling BuiltinOp
+			label = ctx.NewLabel("")
+			if b {
+				ctx.out.JmpIf(exec.JcFalse|exec.JcNotPopMask, label)
+			} else {
+				ctx.out.JmpIf(exec.JcTrue|exec.JcNotPopMask, label)
+			}
+		}
 		exprY()
 		checkBinaryOp(kind, op, x, y, ctx.out)
 		ctx.out.BuiltinOp(kind, op)
+		if label != nil {
+			ctx.out.Label(label)
+		}
 	}
 }
 
@@ -665,6 +680,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 
 func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct callType) func() {
 	fn := ctx.infer.Pop()
+	ctx.resetFieldVar(nil)
 	switch vfn := fn.(type) {
 	case *qlFunc:
 		if ct == callExpr {
@@ -684,8 +700,9 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 			}
 		}
 	case *goFunc:
+		var ret iValue
 		if ct == callExpr {
-			ret := vfn.Results()
+			ret = vfn.Results()
 			ctx.infer.Push(ret)
 		}
 		return func() {
@@ -702,6 +719,13 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 				builder(ctx, ct).CallGoFunc(exec.GoFuncAddr(vfn.addr), nexpr)
 			case exec.SymbolFuncv:
 				builder(ctx, ct).CallGoFuncv(exec.GoFuncvAddr(vfn.addr), nexpr, arity)
+			}
+			if ct == callExpr {
+				if ret.NumValues() > 0 {
+					ctx.resetFieldVar(ret.Value(0).Type())
+				} else {
+					ctx.resetFieldVar(nil)
+				}
 			}
 		}
 	case *goValue:
@@ -770,7 +794,7 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 
 	if cons, ok := val.(*constVal); ok {
 		cons.bound(typElem, ctx.out)
-	} else if t := val.(iValue).Type(); t != typElem {
+	} else if t := val.(iValue).Type(); t != typElem && typElem.Kind() != reflect.Interface {
 		log.Panicf("compileIndexExprLHS: can't assign `%v`[i] = `%v`\n", typ, t)
 	}
 	exprIdx := compileExpr(ctx, v.Index)
@@ -880,13 +904,16 @@ func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr) func() { // x[i]
 		typElem = typ.Elem()
 	}
 	ctx.infer.Ret(1, &goValue{typElem})
+	ctx.resetFieldVar(nil)
 	return func() {
-		exprX()
 		switch kind {
 		case reflect.String, reflect.Slice, reflect.Array:
+			exprX()
 			n := compileIdx(ctx, v.Index, 1<<30, kind)
 			ctx.out.Index(n)
+			ctx.resetFieldVar(typElem)
 		case reflect.Map:
+			exprX()
 			typIdx := typ.Key()
 			compileExpr(ctx, v.Index)()
 			i := ctx.infer.Pop()
@@ -1002,7 +1029,17 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compileMode
 		_, t := countPtr(vx.t)
 		name := v.Sel.Name
 		if sf, ok := t.FieldByName(name); ok {
-			log.Panicln("compileSelectorExprLHS todo: structField -", t, sf)
+			checkType(sf.Type, in, ctx.out)
+			fieldIndex := append(ctx.fieldIndex, sf.Index...)
+			if ctx.fieldVar == nil {
+				if ctx.fieldExprX != nil {
+					ctx.fieldExprX()
+				} else {
+					exprX()
+				}
+			}
+			ctx.out.StoreField(ctx.fieldVar, fieldIndex)
+			ctx.resetFieldVar(nil)
 		}
 	default:
 		log.Panicln("compileSelectorExprLHS failed: unknown -", reflect.TypeOf(vx))
@@ -1034,7 +1071,8 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 			}
 			switch kind {
 			case exec.SymbolFunc, exec.SymbolFuncv:
-				ctx.infer.Ret(1, newGoFunc(addr, kind, 0, ctx))
+				fn := newGoFunc(addr, kind, 0, ctx)
+				ctx.infer.Ret(1, fn)
 				return func() {
 					log.Panicln("compileSelectorExpr: todo")
 				}
@@ -1042,12 +1080,14 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 				info := ctx.GetGoVarInfo(exec.GoVarAddr(addr))
 				vt := reflect.ValueOf(info.This)
 				ctx.infer.Ret(1, &goValue{t: vt.Elem().Type()})
+				ctx.resetFieldVar(exec.GoVarAddr(addr))
 				return func() {
 					if ctx.checkArrayAddr && vt.Elem().Kind() == reflect.Array {
 						ctx.out.AddrGoVar(exec.GoVarAddr(addr))
 					} else {
 						ctx.out.LoadGoVar(exec.GoVarAddr(addr))
 					}
+					ctx.resetFieldVar(vt.Elem().Type())
 				}
 			default:
 				log.Panicln("compileSelectorExpr: unknown GoPackage symbol kind -", kind)
@@ -1060,7 +1100,24 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 		autoCall := false
 		name := v.Sel.Name
 		if sf, ok := t.FieldByName(name); ok {
-			log.Panicln("compileSelectorExpr todo: structField -", t, sf)
+			ctx.infer.Ret(1, &goValue{t: sf.Type})
+			if ctx.fieldIndex == nil {
+				ctx.fieldExprX = exprX
+			}
+			ctx.fieldIndex = append(ctx.fieldIndex, sf.Index...)
+			fieldIndex := ctx.fieldIndex
+			fieldExprX := ctx.fieldExprX
+			return func() {
+				if fieldExprX != nil {
+					fieldExprX()
+				}
+				if ctx.checkArrayAddr && sf.Type.Kind() == reflect.Array {
+					ctx.out.AddrField(ctx.fieldVar, fieldIndex)
+				} else {
+					ctx.out.LoadField(ctx.fieldVar, fieldIndex)
+				}
+				ctx.resetFieldVar(nil)
+			}
 		}
 		if _, ok := vx.t.MethodByName(name); !ok && isLower(name) {
 			name = strings.Title(name)

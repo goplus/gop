@@ -304,7 +304,7 @@ func execIndex(i Instr, p *Context) {
 	case indexOpGet: // sliceData $idx $getIndex
 		p.data[n-1] = v.Interface()
 	case indexOpSet: // value sliceData $idx $setIndex
-		v.Set(reflect.ValueOf(p.data[n-2]))
+		setValue(v, p.data[n-2])
 		p.PopN(2)
 	case indexOpAddr: // sliceData $idx $setIndex
 		p.data[n-1] = v.Addr().Interface()

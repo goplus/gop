@@ -102,6 +102,8 @@ func isNoExecCtxExpr(ctx *blockCtx, expr ast.Expr) bool {
 		return isNoExecCtxExpr(ctx, v.X)
 	case *ast.SelectorExpr:
 		return isNoExecCtxExpr(ctx, v.X)
+	case *ast.ParenExpr:
+		return isNoExecCtxExpr(ctx, v.X)
 	case *ast.ErrWrapExpr:
 		return isNoExecCtx2nd(ctx, v.X, v.Default)
 	case *ast.IndexExpr:

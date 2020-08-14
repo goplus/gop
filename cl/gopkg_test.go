@@ -19,6 +19,7 @@ package cl
 import (
 	"fmt"
 	"math"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -500,5 +501,197 @@ import (
 		if !reflect.DeepEqual(v, info.Store) {
 			t.Fatalf("%v, %v(%T), %v(%T)\n", info.Name, v, v, info.Store, info.Store)
 		}
+	}
+}
+
+type tpoint struct {
+	X int
+	Y int
+}
+
+type trect struct {
+	Min tpoint
+	Max tpoint
+}
+
+type tfieldinfo struct {
+	V1  bool
+	V2  rune
+	V3  string
+	V4  int
+	V5  []int
+	V6  []string
+	V7  map[int]string
+	V8  trect
+	V9  *trect
+	V10 []trect
+	V11 []*trect
+	V12 [2]trect
+	V13 [2]*trect
+}
+
+func tNewRect(x1 int, y1 int, x2 int, y2 int) *trect {
+	return &trect{tpoint{x1, y1}, tpoint{x2, y2}}
+}
+
+func tMakeRect(x1 int, y1 int, x2 int, y2 int) trect {
+	return trect{tpoint{x1, y1}, tpoint{x2, y2}}
+}
+
+func tNewPoint(x int, y int) *tpoint {
+	return &tpoint{x, y}
+}
+
+func tMakePoint(x int, y int) tpoint {
+	return tpoint{x, y}
+}
+
+func execTestNewPoint(_ int, p *exec.Context) {
+	args := p.GetArgs(2)
+	ret0 := tNewPoint(args[0].(int), args[1].(int))
+	p.Ret(2, ret0)
+}
+
+func execTestMakePoint(_ int, p *exec.Context) {
+	args := p.GetArgs(2)
+	ret0 := tMakePoint(args[0].(int), args[1].(int))
+	p.Ret(2, ret0)
+}
+
+func execTestNewRect(_ int, p *exec.Context) {
+	args := p.GetArgs(4)
+	ret0 := tNewRect(args[0].(int), args[1].(int), args[2].(int), args[3].(int))
+	p.Ret(4, ret0)
+}
+
+func execTestMakeRect(_ int, p *exec.Context) {
+	args := p.GetArgs(4)
+	ret0 := tMakeRect(args[0].(int), args[1].(int), args[2].(int), args[3].(int))
+	p.Ret(4, ret0)
+}
+
+func TestPkgField(t *testing.T) {
+	var I = exec.NewGoPackage("pkg_test_field")
+
+	m := make(map[int]string)
+	m[1] = "hello"
+	m[2] = "world"
+
+	var ar [13]interface{}
+	ar[0] = true
+	ar[1] = 'A'
+	ar[2] = "Info"
+	ar[3] = -100
+	ar[4] = []int{100, 200}
+	ar[5] = []string{"hello", "world"}
+	ar[6] = m
+	ar[7] = tMakeRect(10, 20, 100, 200)
+	ar[8] = tNewRect(10, 20, 100, 200)
+	ar[9] = []trect{tMakeRect(10, 20, 30, 40), tMakeRect(50, 60, 70, 80)}
+	ar[10] = []*trect{tNewRect(10, 20, 30, 40), tNewRect(50, 60, 70, 80)}
+	ar[11] = [2]trect{tMakeRect(10, 20, 30, 40), tMakeRect(50, 60, 70, 80)}
+	ar[12] = [2]*trect{tNewRect(10, 20, 30, 40), tNewRect(50, 60, 70, 80)}
+
+	info := &tfieldinfo{}
+	info.V7 = make(map[int]string)
+	v := reflect.ValueOf(info).Elem()
+	for i := 0; i < v.NumField(); i++ {
+		v.Field(i).Set(reflect.ValueOf(ar[i]))
+	}
+
+	var out [13]interface{}
+	var sum int
+	I.RegisterVars(
+		I.Var("Info", &info),
+		I.Var("Out", &out),
+		I.Var("Sum", &sum),
+	)
+	I.RegisterFuncs(
+		I.Func("NewRect", tNewRect, execTestNewRect),
+		I.Func("NewPoint", tNewPoint, execTestNewPoint),
+		I.Func("MakeRect", tMakeRect, execTestMakeRect),
+		I.Func("MakePoint", tMakePoint, execTestMakePoint),
+	)
+
+	var testSource string
+	testSource = `package main
+
+import (
+	pkg "pkg_test_field"
+)
+
+`
+	const nField = len(ar)
+
+	// make set
+	for i := 0; i < nField; i++ {
+		testSource += fmt.Sprintf("pkg.Info.V%v = pkg.Info.V%v\n", i+1, i+1)
+	}
+
+	// make println
+	for i := 0; i < nField; i++ {
+		testSource += fmt.Sprintf("println(\"pkg.Info.V%v = \", pkg.Info.V%v)\n", i+1, i+1)
+	}
+
+	for i := 0; i < nField; i++ {
+		testSource += fmt.Sprintf("pkg.Out[%v] = pkg.Info.V%v\n", i, i+1)
+	}
+
+	testSource += `
+	pkg.Sum = 1+pkg.Info.V4+pkg.NewPoint(1,2).X+pkg.NewRect(10,20,30,40).Max.Y+pkg.Info.V8.Min.X-pkg.Info.V9.Max.Y
+	pkg.Info.V5[0] = -100
+	println("pkg.Info.V5", pkg.Info.V5)
+	println("pkg.Info.V11[0]",pkg.Info.V11[0])
+	pkg.Info.V11[0] = nil
+	println("pkg.Info.V11",pkg.Info.V11)
+	pkg.Info.V11[1].Min.X = -101
+	println("pkg.Info.V11[1]",pkg.Info.V11[1])
+	println("pkg.Info.V11[1].Min",pkg.Info.V11[1].Min)
+	println("pkg.Info.V11[1].Min.X",pkg.Info.V11[1].Min.X)
+	pkg.Info.V13[0] = nil
+	println("pkg.Info.V13",pkg.Info.V13)
+	pkg.Info.V13[1].Min = pkg.MakePoint(-105,-106)
+	println("pkg.Info.V13[1].Min",pkg.Info.V13[1].Min)
+	pkg.Info.V13[1].Max.Y = -102
+	println("pkg.Info.V13[1].Max.Y",pkg.Info.V13[1].Max.Y)
+	`
+
+	fsTestPkgVar := asttest.NewSingleFileFS("/foo", "bar.gop", testSource)
+	t.Log(testSource)
+
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestPkgVar, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, _, err = newPackage(b, bar, fset)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+	code.Dump(os.Stdout)
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+
+	for i := 0; i < nField; i++ {
+		if !reflect.DeepEqual(ar[i], out[i]) {
+			t.Fatal(i, ar[i], out[i])
+		}
+	}
+	if sum != -248 {
+		t.Fatal("binary expr check fail", sum)
+	}
+	if info.V5[0] != -100 {
+		t.Fatal("V5", info.V5)
+	}
+	if info.V11[0] != nil || info.V11[1].Min.X != -101 {
+		t.Fatal("V11", info.V11)
+	}
+	if info.V13[0] != nil || info.V13[1].Min.X != -105 || info.V13[1].Max.Y != -102 {
+		t.Fatal("V13", info.V13[0], info.V13[1])
 	}
 }

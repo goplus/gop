@@ -131,7 +131,7 @@ func (p *iBuilder) Jmp(l exec.Label) exec.Builder {
 }
 
 // JmpIf instr
-func (p *iBuilder) JmpIf(cond exec.JmpCond, l exec.Label) exec.Builder {
+func (p *iBuilder) JmpIf(cond exec.JmpCondFlag, l exec.Label) exec.Builder {
 	((*Builder)(p)).JmpIf(cond, l.(*Label))
 	return p
 }
@@ -343,6 +343,24 @@ func (p *iBuilder) StoreGoVar(addr exec.GoVarAddr) exec.Builder {
 // AddrGoVar instr
 func (p *iBuilder) AddrGoVar(addr exec.GoVarAddr) exec.Builder {
 	((*Builder)(p)).AddrGoVar(addr)
+	return p
+}
+
+// LoadField instr
+func (p *iBuilder) LoadField(v interface{}, index []int) exec.Builder {
+	((*Builder)(p)).LoadField(v, index)
+	return p
+}
+
+// AddrField instr
+func (p *iBuilder) AddrField(v interface{}, index []int) exec.Builder {
+	((*Builder)(p)).AddrField(v, index)
+	return p
+}
+
+// StoreField instr
+func (p *iBuilder) StoreField(v interface{}, index []int) exec.Builder {
+	((*Builder)(p)).StoreField(v, index)
 	return p
 }
 
