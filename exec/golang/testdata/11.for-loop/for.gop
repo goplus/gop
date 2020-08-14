@@ -101,3 +101,8 @@ for i := 0; i < len(arr); i++ {
 	}
 }
 println("sum==36", sum == 36, sum)
+
+// issues #545
+for k <- [1, 2] {
+	println(k, (k+1)%2)
+}

@@ -24,12 +24,12 @@ import (
 
 func TestConst1(t *testing.T) {
 	code := newBuilder().
-		Push(1 << 32).
+		Push(int64(1 << 32)).
 		Resolve()
 
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
-	if v := checkPop(ctx); v != 1<<32 {
+	if v := checkPop(ctx); v != int64(1<<32) {
 		t.Fatal("1<<32 != 1<<32, ret =", v)
 	}
 }
