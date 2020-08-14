@@ -51,7 +51,7 @@ func compileBodyWith(ctx *blockCtx, body []ast.Stmt) {
 }
 
 func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
-	ctx.resetFieldVar(nil)
+	ctx.resetFieldStructType(nil)
 	start := ctx.out.StartStmt(stmt)
 	switch v := stmt.(type) {
 	case *ast.ExprStmt:
