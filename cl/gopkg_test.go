@@ -697,3 +697,54 @@ import (
 		t.Fatal("V13", info.V13[0], info.V13[1])
 	}
 }
+
+func TestPkgFieldBadSet(t *testing.T) {
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Fatalf("must panic")
+		} else {
+			t.Log("panic info", r)
+		}
+	}()
+
+	var I = exec.NewGoPackage("pkg_test_field_bad")
+
+	I.RegisterFuncs(
+		I.Func("NewRect", tNewRect, execTestNewRect),
+		I.Func("NewPoint", tNewPoint, execTestNewPoint),
+		I.Func("MakeRect", tMakeRect, execTestMakeRect),
+		I.Func("MakePoint", tMakePoint, execTestMakePoint),
+	)
+
+	var testSource string
+	testSource = `package main
+
+import (
+	pkg "pkg_test_field_bad"
+)
+
+pkg.MakeRect(10,20,100,200).Min.X = 10
+
+`
+	fsTestPkgVar := asttest.NewSingleFileFS("/foo", "bar.gop", testSource)
+	t.Log(testSource)
+
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestPkgVar, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, _, err = newPackage(b, bar, fset)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+	code.Dump(os.Stdout)
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+}

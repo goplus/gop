@@ -333,7 +333,7 @@ func main() {
 
 	if v := code.(*Code); v.String() != codeExp {
 		fmt.Println(v.String())
-		log.Fatal("TestGoVar failed: codeGen != codeExp")
+		t.Fatal("TestGoVar failed: codeGen != codeExp")
 	}
 }
 
