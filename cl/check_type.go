@@ -78,7 +78,7 @@ func checkFuncCall(tfn iFuncType, isMethod int, v *ast.CallExpr, ctx *blockCtx) 
 		}
 		if !variadic {
 			if len(args) != nargExp {
-				log.Panicln("checkFuncCall: call with unexpected argument count", len(args), nargExp)
+				log.Panicln("checkFuncCall: call with unexpected argument count")
 			}
 			checkFuncArgs(tfn, args, ctx.out)
 		} else {

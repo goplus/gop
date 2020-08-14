@@ -415,6 +415,64 @@ func main() {
 	}
 }
 
+type Person struct {
+	Name string
+	Age  int
+}
+
+func TestType(t *testing.T) {
+	println, _ := I.FindFuncv("println")
+
+	codeExp := `package main
+
+import (
+	fmt "fmt"
+	golang "github.com/goplus/gop/exec/golang"
+)
+
+type Person struct {
+	Name string
+	Age  int
+}
+
+var p golang.Person
+
+func main() {
+	p = golang.Person{Name: "bar", Age: 30}
+	fmt.Println(p)
+}
+`
+	typ := reflect.TypeOf(Person{})
+
+	person := NewType(typ, "Person")
+	_ = person.IsUnnamedOut()
+
+	p := NewVar(typ, "p")
+
+	code := NewBuilder("main", nil, nil).Interface().
+		DefineVar(p).
+		DefineType(person).
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Push("Name").
+		Push("bar").
+		Push("Age").
+		Push(30).
+		Struct(typ, 2).
+		StoreVar(p).
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		LoadVar(p).
+		CallGoFuncv(println, 1, 1).
+		EndStmt(nil, &stmtState{rhsBase: 0}).
+		Resolve()
+
+	codeGen := code.(*Code).String()
+	if codeGen != codeExp {
+		fmt.Println(codeGen)
+		fmt.Println(codeExp)
+		t.Fatal("TestStruct failed: codeGen != codeExp")
+	}
+}
+
 func TestReserved(t *testing.T) {
 	code := NewBuilder("main", nil, nil)
 	off := code.Reserve()
