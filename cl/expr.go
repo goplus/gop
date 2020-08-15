@@ -158,10 +158,11 @@ func compileIdent(ctx *blockCtx, name string) func() {
 		switch v := sym.(type) {
 		case *execVar:
 			typ := v.v.Type()
+			kind := typ.Kind()
 			ctx.infer.Push(&goValue{t: typ})
 			ctx.resetFieldStructType(typ)
 			return func() {
-				if ctx.checkLoadAddr {
+				if ctx.checkLoadAddr && kind != reflect.Slice && kind != reflect.Map {
 					ctx.out.AddrVar(v.v)
 				} else {
 					ctx.out.LoadVar(v.v)
@@ -1096,10 +1097,11 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 				info := ctx.GetGoVarInfo(exec.GoVarAddr(addr))
 				vt := reflect.ValueOf(info.This)
 				typ := vt.Elem().Type()
+				kind := typ.Kind()
 				ctx.infer.Ret(1, &goValue{t: typ})
 				ctx.resetFieldStructType(typ)
 				return func() {
-					if ctx.checkLoadAddr {
+					if ctx.checkLoadAddr && kind != reflect.Slice && kind != reflect.Map {
 						ctx.out.AddrGoVar(exec.GoVarAddr(addr))
 					} else {
 						ctx.out.LoadGoVar(exec.GoVarAddr(addr))
