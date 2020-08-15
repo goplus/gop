@@ -390,6 +390,42 @@ func TestMapBadStoreField(t *testing.T) {
 	ctx.Exec(0, code.Len())
 }
 
+func TestSliceField(t *testing.T) {
+	pkg := NewGoPackage("pkg_slice_field")
+
+	rcm := []testPoint{testPoint{10, 20}, testPoint{100, 200}, testPoint{200, 300}}
+
+	pkg.RegisterVars(pkg.Var("M", &rcm))
+	x, ok := pkg.FindVar("M")
+	if !ok {
+		t.Fatal("FindVar failed: M")
+	}
+	typ := reflect.TypeOf(rcm[0])
+
+	b := newBuilder()
+	code := b.
+		Push(-10).
+		LoadGoVar(x).
+		AddrIndex(1).
+		StoreField(typ, []int{0}). // pkg.M[1].X = -10
+		LoadGoVar(x).
+		Index(0).
+		LoadGoVar(x).
+		SetIndex(2). // pkg.M[2] = pkg.M[0]
+		LoadGoVar(x).
+		Index(2).
+		LoadField(typ, []int{1}). // pkg.M[2]
+		Resolve()
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := ctx.Get(-1); v != rcm[0].Y {
+		t.Fatal("v", v)
+	}
+	if rcm[1].X != -10 {
+		t.Fatal("rcm[1] =", rcm[1])
+	}
+}
+
 func TestArrayBadStoreField(t *testing.T) {
 	defer func() {
 		r := recover()
