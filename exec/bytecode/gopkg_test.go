@@ -390,6 +390,37 @@ func TestMapBadStoreField(t *testing.T) {
 	ctx.Exec(0, code.Len())
 }
 
+func TestArrayBadStoreField(t *testing.T) {
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Fatal("must panic")
+		}
+	}()
+
+	pkg := NewGoPackage("pkg_array_bad_store_field")
+
+	rcm := [2]testPoint{testPoint{10, 20}, testPoint{100, 200}}
+
+	pkg.RegisterVars(pkg.Var("M", &rcm))
+	x, ok := pkg.FindVar("M")
+	if !ok {
+		t.Fatal("FindVar failed: M")
+	}
+	typ := reflect.TypeOf(rcm)
+
+	b := newBuilder()
+	code := b.
+		Push(-1).
+		LoadGoVar(x).
+		Index(0).
+		StoreField(typ, []int{1}). // pkg.M[0].Y = -1 , cannot assign
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+}
+
 func TestSprint(t *testing.T) {
 	sprint, ok := I.FindFuncv("Sprint")
 	if !ok {
