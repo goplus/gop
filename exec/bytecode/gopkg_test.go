@@ -322,8 +322,8 @@ func TestGoField(t *testing.T) {
 	}
 }
 
-func TestMapLoadField(t *testing.T) {
-	pkg := NewGoPackage("pkg_map_load_field")
+func TestMapField(t *testing.T) {
+	pkg := NewGoPackage("pkg_map_field")
 
 	rcm := make(map[int]testPoint)
 	rcm[0] = testPoint{10, 20}
@@ -341,7 +341,13 @@ func TestMapLoadField(t *testing.T) {
 		LoadGoVar(x).
 		Push(0).
 		MapIndex().
-		LoadField(typ, []int{1}).
+		LoadGoVar(x).
+		Push(5).
+		SetMapIndex(). // pkg.M[5] = pkg.M[0]
+		LoadGoVar(x).
+		Push(5).
+		MapIndex().
+		LoadField(typ, []int{1}). // pkg.M[5]
 		Resolve()
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
@@ -377,7 +383,7 @@ func TestMapBadStoreField(t *testing.T) {
 		LoadGoVar(x).
 		Push(0).
 		MapIndex().
-		StoreField(typ, []int{1}).
+		StoreField(typ, []int{1}). // pkg.M[0].Y = -1 , cannot assign
 		Resolve()
 
 	ctx := NewContext(code)
