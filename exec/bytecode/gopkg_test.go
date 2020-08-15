@@ -105,6 +105,10 @@ func TestBadRegisterPkg(t *testing.T) {
 			t.Fatal("must panic")
 		}
 	}()
+	p := FindGoPackage("foo")
+	if p == nil {
+		t.Fatal("find pkg foo failed")
+	}
 	NewGoPackage("foo")
 }
 
