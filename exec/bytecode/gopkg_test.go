@@ -322,6 +322,68 @@ func TestGoField(t *testing.T) {
 	}
 }
 
+func TestMapLoadField(t *testing.T) {
+	pkg := NewGoPackage("pkg_map_load_field")
+
+	rcm := make(map[int]testPoint)
+	rcm[0] = testPoint{10, 20}
+	rcm[1] = testPoint{100, 200}
+
+	pkg.RegisterVars(pkg.Var("M", &rcm))
+	x, ok := pkg.FindVar("M")
+	if !ok {
+		t.Fatal("FindVar failed: M")
+	}
+	typ := reflect.TypeOf(rcm[0])
+
+	b := newBuilder()
+	code := b.
+		LoadGoVar(x).
+		Push(0).
+		MapIndex().
+		LoadField(typ, []int{1}).
+		Resolve()
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := ctx.Get(-1); v != rcm[0].Y {
+		t.Fatal("v", v)
+	}
+}
+
+func TestMapBadStoreField(t *testing.T) {
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Fatal("must panic")
+		}
+	}()
+
+	pkg := NewGoPackage("pkg_map_bad_store_field")
+
+	rcm := make(map[int]testPoint)
+	rcm[0] = testPoint{10, 20}
+	rcm[1] = testPoint{100, 200}
+
+	pkg.RegisterVars(pkg.Var("M", &rcm))
+	x, ok := pkg.FindVar("M")
+	if !ok {
+		t.Fatal("FindVar failed: M")
+	}
+	typ := reflect.TypeOf(rcm)
+
+	b := newBuilder()
+	code := b.
+		Push(-1).
+		LoadGoVar(x).
+		Push(0).
+		MapIndex().
+		StoreField(typ, []int{1}).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+}
+
 func TestSprint(t *testing.T) {
 	sprint, ok := I.FindFuncv("Sprint")
 	if !ok {
