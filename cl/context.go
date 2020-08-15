@@ -235,8 +235,8 @@ func newGblBlockCtx(pkg *pkgCtx) *blockCtx {
 	}
 }
 
-func (ctx *blockCtx) resetFieldStructType(v reflect.Type) {
-	ctx.fieldStructType = v
+func (ctx *blockCtx) resetFieldIndex() {
+	ctx.fieldStructType = nil
 	ctx.fieldIndex = nil
 	ctx.fieldExprX = nil
 }
