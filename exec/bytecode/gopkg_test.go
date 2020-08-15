@@ -98,6 +98,16 @@ func init() {
 	_ = I.PkgPath()
 }
 
+func TestBadRegisterPkg(t *testing.T) {
+	defer func() {
+		err := recover()
+		if err == nil {
+			t.Fatal("must panic")
+		}
+	}()
+	NewGoPackage("foo")
+}
+
 func TestVarAndConst(t *testing.T) {
 	if ci, ok := I.FindConst("true"); !ok || ci.Value != true {
 		t.Fatal("FindConst failed:", ci.Value)
