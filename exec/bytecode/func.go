@@ -291,7 +291,7 @@ func (p *FuncInfo) execFunc(ctx *Context) {
 			}
 		} else {
 			n := len(ctx.data)
-			ctx.data = append(ctx.data[:ctx.base-(len(p.in))], ctx.data[n-p.numOut:]...)
+			ctx.data = append(ctx.data[:ctx.base-len(p.in)], ctx.data[n-p.numOut:]...)
 		}
 	}
 }
@@ -300,7 +300,7 @@ func (p *FuncInfo) exec(ctx *Context, parent *varScope) {
 	old := ctx.switchScope(parent, &p.varManager)
 	p.execFunc(ctx)
 	if ctx.ip != ipReturnN {
-		ctx.data = ctx.data[:ctx.base-(len(p.in))]
+		ctx.data = ctx.data[:ctx.base-len(p.in)]
 		n := uint32(p.numOut)
 		for i := uint32(0); i < n; i++ {
 			ctx.data = append(ctx.data, ctx.getVar(i))

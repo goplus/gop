@@ -431,16 +431,6 @@ func (p *Builder) AddrGoVar(addr GoVarAddr) *Builder {
 }
 
 // LoadField instr
-// func (p *Builder) LoadField(v interface{}, index []int) *Builder {
-// 	switch x := v.(type) {
-// 	case exec.GoVarAddr:
-// 		p.LoadGoVar(x)
-// 	case *Var:
-// 		p.LoadVar(x)
-// 	case int32:
-// 		p.Load(x)
-// 	case reflect.Type:
-// 	}
 func (p *Builder) LoadField(typ reflect.Type, index []int) *Builder {
 	p.Push(index)
 	i := uint32(opLoadField << bitsOpShift)
