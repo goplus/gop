@@ -697,28 +697,24 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 		return func() {
 			var isMethod int
 			if vfn.recv != nil {
-				exprFun()
 				isMethod = 1
-				if ct == callExpr {
-					args := ctx.infer.GetArgs(2)
-					temp := args[0]
-					args[0] = args[1]
-					args[1] = temp
-					ctx.infer.Ret(2, args...)
-				}
+				exprX := compileExpr(ctx, v.Fun.(*ast.SelectorExpr).X)
+				recv := ctx.infer.Get(-1).(*goValue)
 
 				if astutil.ToRecv(vfn.recv).Pointer == 0 {
-					v := ctx.infer.Get(-1)
-					if v.(iValue).Type().Kind() == reflect.Ptr {
-						cp := v.(iValue).Type().Elem()
-						ctx.infer.Ret(1, &goValue{cp})
+					exprX()
+					if recv.Kind() == reflect.Ptr {
+						recv.t = recv.t.Elem()
+						ctx.infer.Ret(1, recv)
+						ctx.out.AddrOp(recv.t.Kind(), exec.OpAddrVal) // Ptr => Elem()
 					}
-					ctx.out.Copy()
 				} else {
-					v := ctx.infer.Get(-1)
-					if v.(iValue).Type().Kind() != reflect.Ptr {
-						ptr := reflect.PtrTo(v.(iValue).Type())
-						ctx.infer.Ret(1, &goValue{ptr})
+					ctx.checkLoadAddr = true
+					exprX()
+					ctx.checkLoadAddr = false
+					if recv.Kind() != reflect.Ptr {
+						recv.t = reflect.PtrTo(recv.t)
+						ctx.infer.Ret(1, recv)
 					}
 				}
 			}
@@ -1165,14 +1161,11 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 		}
 
 		if fDecl, ok := ctx.findMethod(t, name); ok {
+			ctx.infer.Pop()
 			fn := newQlFunc(fDecl)
 			ctx.use(fDecl)
 			ctx.infer.Push(fn)
-			return func() {
-				ctx.takeAddr = true
-				exprX()
-				ctx.takeAddr = false
-			}
+			return func() {}
 		}
 		if _, ok := vx.t.MethodByName(name); !ok && isLower(name) {
 			name = strings.Title(name)

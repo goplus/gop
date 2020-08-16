@@ -9,7 +9,7 @@ func (p *Person) SetName(name string) {
 	println(p.Name)
 }
 
-func (p Person) SetAge(age int) {
+func (p *Person) SetAge(age int) {
 	age = age + 5
 	p.Age = age
 	println(p.Age)
