@@ -460,12 +460,6 @@ func (p *iBuilder) New(typ reflect.Type) exec.Builder {
 	return p
 }
 
-// Copy instr
-func (p *iBuilder) Copy() exec.Builder {
-	((*Builder)(p)).Copy()
-	return p
-}
-
 // Zero instr
 func (p *iBuilder) Zero(typ reflect.Type) exec.Builder {
 	((*Builder)(p)).Zero(typ)

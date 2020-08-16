@@ -414,12 +414,6 @@ func (p *iBuilder) Struct(typ reflect.Type, arity int) exec.Builder {
 	return p
 }
 
-// Copy instr
-func (p *iBuilder) Copy() exec.Builder {
-	((*Builder)(p)).Copy()
-	return p
-}
-
 // Slice instr
 func (p *iBuilder) Slice(i, j int) exec.Builder {
 	((*Builder)(p)).Slice(i, j)

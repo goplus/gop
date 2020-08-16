@@ -243,7 +243,6 @@ var _execTable = [...]func(i Instr, p *Context){
 	opStoreField:    execStoreField,
 	opAddrField:     execAddrField,
 	opStruct:        execStruct,
-	opCopy:          execOpCopy,
 }
 
 var execTable []func(i Instr, p *Context)

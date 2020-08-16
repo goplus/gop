@@ -504,11 +504,6 @@ func (p *Builder) New(typ reflect.Type) *Builder {
 	return p
 }
 
-// New instr
-func (p *Builder) Copy() *Builder {
-	return p
-}
-
 // Make instr
 func (p *Builder) Make(typ reflect.Type, arity int) *Builder {
 	p.rhs.Push(makeIdent)

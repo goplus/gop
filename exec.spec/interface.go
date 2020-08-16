@@ -365,9 +365,6 @@ type Builder interface {
 	// New instr
 	New(typ reflect.Type) Builder
 
-	// Copy instr
-	Copy() Builder
-
 	// StartStmt emit a `StartStmt` event.
 	StartStmt(stmt interface{}) interface{}
 
