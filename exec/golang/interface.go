@@ -38,11 +38,6 @@ func (p *interfaceImpl) NewVar(typ reflect.Type, name string) exec.Var {
 	return NewVar(typ, name)
 }
 
-// NewType creates a type instance.
-func (p *interfaceImpl) NewType(typ reflect.Type, name string) exec.Type {
-	return NewType(typ, name)
-}
-
 // NewLabel creates a label object.
 func (p *interfaceImpl) NewLabel(name string) exec.Label {
 	return NewLabel(name)
@@ -59,11 +54,11 @@ func (p *interfaceImpl) NewComprehension(out reflect.Type) exec.Comprehension {
 }
 
 // NewFunc create a Go+ function.
-func (p *interfaceImpl) NewFunc(recv *exec.RecvInfo, name string, nestDepth uint32) exec.FuncInfo {
+func (p *interfaceImpl) NewFunc(name string, nestDepth uint32, funcType ...int) exec.FuncInfo {
 	if nestDepth == 0 {
 		return nil
 	}
-	return NewFunc(recv, name, nestDepth)
+	return NewFunc(name, nestDepth, funcType[0])
 }
 
 // FindGoPackage lookups a Go package by pkgPath. It returns nil if not found.
@@ -305,8 +300,8 @@ func (p *iBuilder) DefineVar(vars ...exec.Var) exec.Builder {
 }
 
 // DefineType defines variables.
-func (p *iBuilder) DefineType(typ exec.Type) exec.Builder {
-	((*Builder)(p)).DefineType(typ)
+func (p *iBuilder) DefineType(typ reflect.Type, name string) exec.Builder {
+	((*Builder)(p)).DefineType(typ, name)
 	return p
 }
 

@@ -695,8 +695,8 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 					args[1] = temp
 					ctx.infer.Ret(2, args...)
 				}
-				recv := vfn.FuncInfo().Recv()
-				if recv.Type.Kind() != reflect.Ptr {
+
+				if astutil.ToRecv(vfn.recv).Pointer == 0 {
 					v := ctx.infer.Get(-1)
 					if v.(iValue).Type().Kind() == reflect.Ptr {
 						cp := v.(iValue).Type().Elem()

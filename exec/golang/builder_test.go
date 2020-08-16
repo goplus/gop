@@ -444,14 +444,11 @@ func main() {
 `
 	typ := reflect.TypeOf(Person{})
 
-	person := NewType(typ, "Person")
-	_ = person.IsUnnamedOut()
-
 	p := NewVar(typ, "p")
 
 	code := NewBuilder("main", nil, nil).Interface().
 		DefineVar(p).
-		DefineType(person).
+		DefineType(typ, "Person").
 		EndStmt(nil, &stmtState{rhsBase: 0}).
 		Push("Name").
 		Push("bar").

@@ -294,11 +294,10 @@ func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
 	}
 	t := toType(ctx, spec.Type).(reflect.Type)
 
-	typ := ctx.NewType(t, spec.Name.Name)
-	ctx.out.DefineType(typ)
+	ctx.out.DefineType(t, spec.Name.Name)
 
 	tDecl := &typeDecl{
-		Type: typ,
+		Type: t,
 	}
 	ctx.syms[spec.Name.Name] = tDecl
 	ctx.types[t] = tDecl
@@ -323,7 +322,7 @@ func loadFunc(ctx *blockCtx, d *ast.FuncDecl, isUnnamed bool) {
 		funCtx := newExecBlockCtx(ctx)
 		funCtx.noExecCtx = isUnnamed
 		funCtx.funcCtx = newFuncCtx(nil)
-		ctx.insertMethod(recv, name, d.Type, d.Body, funCtx)
+		ctx.insertMethod(recv, name, d, funCtx)
 	} else if name == "init" {
 		log.Panicln("loadFunc TODO: init")
 	} else {

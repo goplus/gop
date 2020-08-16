@@ -452,7 +452,7 @@ func (p *Builder) fieldExpr(v interface{}, index []int) ast.Expr {
 	case int32:
 		i := len(p.cfun.in) + int(x)
 		if i == -1 {
-			typ = p.cfun.recv.Type
+			typ = p.cfun.recv
 		} else {
 			typ = p.cfun.in[i]
 		}

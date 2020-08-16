@@ -22,11 +22,6 @@ func (p *iFuncInfo) Type() reflect.Type {
 	return ((*FuncInfo)(p)).Type()
 }
 
-// Type returns type of this function.
-func (p *iFuncInfo) Recv() *exec.RecvInfo {
-	return ((*FuncInfo)(p)).Recv()
-}
-
 // NumIn returns a function's input parameter count.
 func (p *iFuncInfo) NumIn() int {
 	return ((*FuncInfo)(p)).NumIn()
@@ -288,9 +283,9 @@ func (p *iBuilder) DefineVar(vars ...exec.Var) exec.Builder {
 	return p
 }
 
-// DefineType name string,reflect.Typeinstr
-func (p *iBuilder) DefineType(typ exec.Type) exec.Builder {
-	((*Builder)(p)).DefineType(typ)
+// DefineType name string,reflect.Type instr
+func (p *iBuilder) DefineType(typ reflect.Type, name string) exec.Builder {
+	// Nothing todo in bytecode
 	return p
 }
 

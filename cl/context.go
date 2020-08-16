@@ -359,11 +359,10 @@ func (p *blockCtx) findVar(name string) (addr iVar, err error) {
 	return nil, ErrSymbolNotVariable
 }
 
-func (p *blockCtx) insertFuncVars(recv *exec.RecvInfo, in []reflect.Type, args []string, rets []exec.Var) {
+func (p *blockCtx) insertFuncVars(in []reflect.Type, args []string, rets []exec.Var) {
 	n := len(args)
 	if n > 0 {
-		var i int
-		for i = n - 1; i >= 0; i-- {
+		for i := n - 1; i >= 0; i-- {
 			name := args[i]
 			if name == "" { // unnamed argument
 				continue
@@ -372,10 +371,6 @@ func (p *blockCtx) insertFuncVars(recv *exec.RecvInfo, in []reflect.Type, args [
 				log.Panicln("insertStkVars failed: symbol exists -", name)
 			}
 			p.syms[name] = &stackVar{index: int32(i - n), typ: in[i]}
-		}
-
-		if recv != nil {
-			p.syms[recv.Name] = &stackVar{index: int32(i - n), typ: recv.Type}
 		}
 	}
 	for _, ret := range rets {
@@ -406,7 +401,7 @@ func (p *blockCtx) insertFunc(name string, fun *funcDecl) {
 	p.syms[name] = fun
 }
 
-func (p *blockCtx) insertMethod(recv astutil.RecvInfo, methodName string, ftyp *ast.FuncType, body *ast.BlockStmt, ctx *blockCtx) {
+func (p *blockCtx) insertMethod(recv astutil.RecvInfo, methodName string, decl *ast.FuncDecl, ctx *blockCtx) {
 	if p.parent != nil {
 		log.Panicln("insertMethod failed: unexpected - non global method declaration?")
 	}
@@ -420,19 +415,14 @@ func (p *blockCtx) insertMethod(recv astutil.RecvInfo, methodName string, ftyp *
 		log.Panicln("insertMethod failed: alias?")
 	}
 
-	var t reflect.Type = typ.Type.Type()
+	var t reflect.Type = typ.Type
 	pointer := recv.Pointer
 	for pointer > 0 {
 		t = reflect.PtrTo(t)
 		pointer--
 	}
 
-	recvInfo := &exec.RecvInfo{
-		Name: recv.Name,
-		Type: t,
-	}
-
-	method := newFuncDecl(methodName, recvInfo, ftyp, body, ctx)
+	method := newFuncDecl(methodName, decl.Recv, decl.Type, decl.Body, ctx)
 
 	if typ.Methods == nil {
 		typ.Methods = map[string]*funcDecl{methodName: method}
