@@ -174,13 +174,6 @@ type GoType struct {
 	typ  reflect.Type
 }
 
-func NewType(typ reflect.Type, name string) *GoType {
-	return &GoType{
-		name: name,
-		typ:  typ,
-	}
-}
-
 // DefineVar defines types.
 func (p *Builder) DefineType(typ reflect.Type, name string) *Builder {
 	p.types[typ] = &GoType{
