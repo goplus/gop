@@ -41,7 +41,6 @@ const (
 // -----------------------------------------------------------------------------
 
 func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compileMode) {
-	ctx.resetFieldVar(nil)
 	switch v := expr.(type) {
 	case *ast.Ident:
 		compileIdentLHS(ctx, v.Name, mode)
@@ -157,15 +156,16 @@ func compileIdent(ctx *blockCtx, name string) func() {
 	if sym, ok := ctx.find(name); ok {
 		switch v := sym.(type) {
 		case *execVar:
-			ctx.infer.Push(&goValue{t: v.v.Type()})
-			ctx.resetFieldVar(v.v)
+			typ := v.v.Type()
+			kind := typ.Kind()
+			ctx.infer.Push(&goValue{t: typ})
+			ctx.resetFieldIndex()
 			return func() {
-				if ctx.checkArrayAddr && v.v.Type().Kind() == reflect.Array {
+				if ctx.checkLoadAddr && kind != reflect.Slice && kind != reflect.Map {
 					ctx.out.AddrVar(v.v)
 				} else {
 					ctx.out.LoadVar(v.v)
 				}
-				ctx.resetFieldVar(v.v.Type())
 			}
 		case *stackVar:
 			ctx.infer.Push(&goValue{t: v.typ})
@@ -684,7 +684,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 
 func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct callType) func() {
 	fn := ctx.infer.Pop()
-	ctx.resetFieldVar(nil)
+	ctx.resetFieldIndex()
 	switch vfn := fn.(type) {
 	case *qlFunc:
 		if ct == callExpr {
@@ -725,11 +725,6 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 				builder(ctx, ct).CallGoFuncv(exec.GoFuncvAddr(vfn.addr), nexpr, arity)
 			}
 			if ct == callExpr {
-				if ret.NumValues() > 0 {
-					ctx.resetFieldVar(ret.Value(0).Type())
-				} else {
-					ctx.resetFieldVar(nil)
-				}
 			}
 		}
 	case *goValue:
@@ -782,9 +777,7 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 	}
 	val := ctx.infer.Get(-1)
 
-	ctx.checkArrayAddr = true
-	compileExpr(ctx, v.X)()
-	ctx.checkArrayAddr = false
+	exprX := compileExpr(ctx, v.X)
 
 	typ := ctx.infer.Get(-1).(iValue).Type()
 	typElem := typ.Elem()
@@ -795,6 +788,11 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 		typ = typElem
 		typElem = typElem.Elem()
 	}
+	if typ.Kind() == reflect.Array {
+		ctx.checkLoadAddr = true
+	}
+	exprX()
+	ctx.checkLoadAddr = false
 
 	if cons, ok := val.(*constVal); ok {
 		cons.bound(typElem, ctx.out)
@@ -804,6 +802,7 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 	exprIdx := compileExpr(ctx, v.Index)
 	i := ctx.infer.Get(-1)
 	ctx.infer.PopN(3)
+
 	switch typ.Kind() {
 	case reflect.Slice, reflect.Array:
 		if cons, ok := i.(*constVal); ok {
@@ -845,9 +844,11 @@ func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) func() { // x[i:j:k]
 		ctx.infer.Ret(1, &goValue{typ})
 	}
 	return func() {
-		ctx.checkArrayAddr = true
+		if kind == reflect.Array {
+			ctx.checkLoadAddr = true
+		}
 		exprX()
-		ctx.checkArrayAddr = false
+		ctx.checkLoadAddr = false
 		i, j, k := exec.SliceDefaultIndex, exec.SliceDefaultIndex, exec.SliceDefaultIndex
 		if v.Low != nil {
 			i = compileIdx(ctx, v.Low, exec.SliceConstIndexLast, kind)
@@ -908,14 +909,17 @@ func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr) func() { // x[i]
 		typElem = typ.Elem()
 	}
 	ctx.infer.Ret(1, &goValue{typElem})
-	ctx.resetFieldVar(nil)
+	ctx.resetFieldIndex()
 	return func() {
 		switch kind {
 		case reflect.String, reflect.Slice, reflect.Array:
 			exprX()
 			n := compileIdx(ctx, v.Index, 1<<30, kind)
-			ctx.out.Index(n)
-			ctx.resetFieldVar(typElem)
+			if ctx.checkLoadAddr {
+				ctx.out.AddrIndex(n)
+			} else {
+				ctx.out.Index(n)
+			}
 		case reflect.Map:
 			exprX()
 			typIdx := typ.Key()
@@ -1004,6 +1008,7 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compileMode
 	}
 	in := ctx.infer.Get(-1)
 	exprX := compileExpr(ctx, v.X)
+
 	x := ctx.infer.Get(-1)
 	ctx.infer.PopN(2)
 	switch vx := x.(type) {
@@ -1034,16 +1039,19 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compileMode
 		name := v.Sel.Name
 		if sf, ok := t.FieldByName(name); ok {
 			checkType(sf.Type, in, ctx.out)
-			fieldIndex := append(ctx.fieldIndex, sf.Index...)
-			if ctx.fieldVar == nil {
-				if ctx.fieldExprX != nil {
-					ctx.fieldExprX()
-				} else {
-					exprX()
-				}
+			if ctx.fieldIndex == nil {
+				ctx.fieldStructType = vx.t
 			}
-			ctx.out.StoreField(ctx.fieldVar, fieldIndex)
-			ctx.resetFieldVar(nil)
+			fieldIndex := append(ctx.fieldIndex, sf.Index...)
+			fieldStructType := ctx.fieldStructType
+			ctx.checkLoadAddr = true
+			if ctx.fieldExprX != nil {
+				ctx.fieldExprX()
+			} else {
+				exprX()
+			}
+			ctx.checkLoadAddr = false
+			ctx.out.StoreField(fieldStructType, fieldIndex)
 		}
 	default:
 		log.Panicln("compileSelectorExprLHS failed: unknown -", reflect.TypeOf(vx))
@@ -1083,15 +1091,16 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 			case exec.SymbolVar:
 				info := ctx.GetGoVarInfo(exec.GoVarAddr(addr))
 				vt := reflect.ValueOf(info.This)
-				ctx.infer.Ret(1, &goValue{t: vt.Elem().Type()})
-				ctx.resetFieldVar(exec.GoVarAddr(addr))
+				typ := vt.Elem().Type()
+				kind := typ.Kind()
+				ctx.infer.Ret(1, &goValue{t: typ})
+				ctx.resetFieldIndex()
 				return func() {
-					if ctx.checkArrayAddr && vt.Elem().Kind() == reflect.Array {
+					if ctx.checkLoadAddr && kind != reflect.Slice && kind != reflect.Map {
 						ctx.out.AddrGoVar(exec.GoVarAddr(addr))
 					} else {
 						ctx.out.LoadGoVar(exec.GoVarAddr(addr))
 					}
-					ctx.resetFieldVar(vt.Elem().Type())
 				}
 			default:
 				log.Panicln("compileSelectorExpr: unknown GoPackage symbol kind -", kind)
@@ -1107,20 +1116,21 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 			ctx.infer.Ret(1, &goValue{t: sf.Type})
 			if ctx.fieldIndex == nil {
 				ctx.fieldExprX = exprX
+				ctx.fieldStructType = vx.t
 			}
 			ctx.fieldIndex = append(ctx.fieldIndex, sf.Index...)
 			fieldIndex := ctx.fieldIndex
 			fieldExprX := ctx.fieldExprX
+			fieldStructType := ctx.fieldStructType
 			return func() {
 				if fieldExprX != nil {
 					fieldExprX()
 				}
-				if ctx.checkArrayAddr && sf.Type.Kind() == reflect.Array {
-					ctx.out.AddrField(ctx.fieldVar, fieldIndex)
+				if ctx.checkLoadAddr {
+					ctx.out.AddrField(fieldStructType, fieldIndex)
 				} else {
-					ctx.out.LoadField(ctx.fieldVar, fieldIndex)
+					ctx.out.LoadField(fieldStructType, fieldIndex)
 				}
-				ctx.resetFieldVar(nil)
 			}
 		}
 		if _, ok := vx.t.MethodByName(name); !ok && isLower(name) {

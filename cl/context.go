@@ -185,16 +185,16 @@ func checkLabel(fl *flowLabel) bool {
 type blockCtx struct {
 	*pkgCtx
 	*funcCtx
-	file           *fileCtx
-	parent         *blockCtx
-	syms           map[string]iSymbol
-	noExecCtx      bool
-	takeAddr       bool
-	checkFlag      bool
-	checkArrayAddr bool
-	fieldVar       interface{}
-	fieldIndex     []int
-	fieldExprX     func()
+	file            *fileCtx
+	parent          *blockCtx
+	syms            map[string]iSymbol
+	noExecCtx       bool
+	takeAddr        bool
+	checkFlag       bool
+	checkLoadAddr   bool
+	fieldStructType reflect.Type
+	fieldIndex      []int
+	fieldExprX      func()
 }
 
 // function block ctx
@@ -235,10 +235,10 @@ func newGblBlockCtx(pkg *pkgCtx) *blockCtx {
 	}
 }
 
-func (p *blockCtx) resetFieldVar(v interface{}) {
-	p.fieldVar = v
-	p.fieldIndex = nil
-	p.fieldExprX = nil
+func (ctx *blockCtx) resetFieldIndex() {
+	ctx.fieldStructType = nil
+	ctx.fieldIndex = nil
+	ctx.fieldExprX = nil
 }
 
 func (p *blockCtx) requireLabel(name string) exec.Label {
