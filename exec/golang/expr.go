@@ -441,6 +441,9 @@ func (p *Builder) AddrGoVar(addr exec.GoVarAddr) *Builder {
 func (p *Builder) fieldExpr(typ reflect.Type, index []int) ast.Expr {
 	expr := &ast.SelectorExpr{}
 	expr.X = p.rhs.Pop().(ast.Expr)
+	if unary, ok := expr.X.(*ast.UnaryExpr); ok {
+		expr.X = unary.X
+	}
 	if typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
 	}

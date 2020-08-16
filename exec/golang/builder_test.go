@@ -211,17 +211,17 @@ var y golang.testRect
 
 func main() {
 	y = pkg_field.Rect2
-	(&pkg_field.Rect).Info = "hello"
-	(&pkg_field.Rect).Pt1.X = -1
-	(&pkg_field.Rect).Pt2.Y = -2
-	(&y).Info = "world"
-	(&y).Pt1.X = -10
-	(&y).Pt2.Y = -20
+	pkg_field.Rect.Info = "hello"
+	pkg_field.Rect.Pt1.X = -1
+	pkg_field.Rect.Pt2.Y = -2
+	y.Info = "world"
+	y.Pt1.X = -10
+	y.Pt2.Y = -20
 	pkg_field.GetRect().Info = "next"
 	pkg_field.GetRect().Pt1.X = 101
 	pkg_field.GetRect().Pt2.Y = 102
 	pkg_field.Rect2 = y
-	fmt.Println(pkg_field.Rect.Info, pkg_field.Rect.Pt2.Y, y.Info, y.Pt2.Y, pkg_field.GetRect().Info, pkg_field.GetRect().Pt2.Y, &(&pkg_field.Rect).Pt1, &(&y).Pt1, &pkg_field.GetRect().Pt1)
+	fmt.Println(pkg_field.Rect.Info, pkg_field.Rect.Pt2.Y, y.Info, y.Pt2.Y, pkg_field.GetRect().Info, pkg_field.GetRect().Pt2.Y, &pkg_field.Rect.Pt1, &y.Pt1, &pkg_field.GetRect().Pt1)
 }
 `
 	println, _ := I.FindFuncv("println")
