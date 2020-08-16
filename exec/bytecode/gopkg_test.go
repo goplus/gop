@@ -98,6 +98,20 @@ func init() {
 	_ = I.PkgPath()
 }
 
+func TestBadRegisterPkg(t *testing.T) {
+	defer func() {
+		err := recover()
+		if err == nil {
+			t.Fatal("must panic")
+		}
+	}()
+	p := FindGoPackage("foo")
+	if p == nil {
+		t.Fatal("find pkg foo failed")
+	}
+	NewGoPackage("foo")
+}
+
 func TestVarAndConst(t *testing.T) {
 	if ci, ok := I.FindConst("true"); !ok || ci.Value != true {
 		t.Fatal("FindConst failed:", ci.Value)
@@ -235,6 +249,8 @@ func TestGoField(t *testing.T) {
 	if !ok {
 		t.Fatal("FindVar failed:", x)
 	}
+	xtyp := reflect.TypeOf(rc)
+
 	x2, ok := pkg.FindVar("Rect2")
 	if !ok {
 		t.Fatal("FindVar failed:", x2)
@@ -244,10 +260,9 @@ func TestGoField(t *testing.T) {
 		t.Fatal("FindFunc failed:", fnTestRect)
 	}
 
-	it := reflect.TypeOf(rc)
-	it2 := reflect.TypeOf(gRect)
-
-	y := NewVar(it, "y")
+	gtyp := reflect.TypeOf(gRect)
+	ytyp := reflect.TypeOf(rc)
+	y := NewVar(ytyp, "y")
 	b := newBuilder()
 
 	code := b.
@@ -255,40 +270,52 @@ func TestGoField(t *testing.T) {
 		LoadGoVar(x2).
 		StoreVar(y). // y = pkg_field.Rect2
 		Push("hello").
-		StoreField(x, []int{0, 0}). // pkg_field.Rect.Info = "hello"
+		AddrGoVar(x).
+		StoreField(xtyp, []int{0, 0}). // pkg_field.Rect.Info = "hello"
 		Push(-1).
-		StoreField(x, []int{1, 0}). // pkg_field.Rect.Pt1.X = -1
+		AddrGoVar(x).
+		StoreField(xtyp, []int{1, 0}). // pkg_field.Rect.Pt1.X = -1
 		Push(-2).
-		StoreField(x, []int{2, 1}). // pkg_field.Rect.Pt2.Y = -2
+		AddrGoVar(x).
+		StoreField(xtyp, []int{2, 1}). // pkg_field.Rect.Pt2.Y = -2
 		Push("world").
-		StoreField(y, []int{0, 0}). // y.Info = "world"
+		AddrVar(y).
+		StoreField(ytyp, []int{0, 0}). // y.Info = "world"
 		Push(-10).
-		StoreField(y, []int{1, 0}). // y.Pt1.X = -10
+		AddrVar(y).
+		StoreField(ytyp, []int{1, 0}). // y.Pt1.X = -10
 		Push(-20).
-		StoreField(y, []int{2, 1}). // y.Pt2.Y = -20
+		AddrVar(y).
+		StoreField(ytyp, []int{2, 1}). // y.Pt2.Y = -20
 		Push("next").
 		CallGoFunc(fnTestRect, 0).
-		StoreField(it2, []int{0, 0}). // pkg_field.GetRect().Info = "next"
+		StoreField(gtyp, []int{0, 0}). // pkg_field.GetRect().Info = "next"
 		Push(101).
 		CallGoFunc(fnTestRect, 0).
-		StoreField(it2, []int{1, 0}). // pkg_field.GetRect().Pt1.X = 101
+		StoreField(gtyp, []int{1, 0}). // pkg_field.GetRect().Pt1.X = 101
 		Push(102).
 		CallGoFunc(fnTestRect, 0).
-		StoreField(it2, []int{2, 1}). // pkg_field.GetRect().Pt2.Y = 102
+		StoreField(gtyp, []int{2, 1}). // pkg_field.GetRect().Pt2.Y = 102
 		LoadVar(y).
 		StoreGoVar(x2). // pkg_field.Rect2 = y
-		LoadField(x, []int{0, 0}).
-		LoadField(x, []int{2, 1}).
-		LoadField(y, []int{0, 0}).
-		LoadField(y, []int{2, 1}).
+		LoadGoVar(x).
+		LoadField(xtyp, []int{0, 0}).
+		LoadGoVar(x).
+		LoadField(xtyp, []int{2, 1}).
+		LoadVar(y).
+		LoadField(ytyp, []int{0, 0}).
+		LoadVar(y).
+		LoadField(ytyp, []int{2, 1}).
 		CallGoFunc(fnTestRect, 0).
-		LoadField(it2, []int{0, 0}).
+		LoadField(gtyp, []int{0, 0}).
 		CallGoFunc(fnTestRect, 0).
-		LoadField(it2, []int{2, 1}).
-		AddrField(x, []int{1}).
-		AddrField(y, []int{1}).
+		LoadField(gtyp, []int{2, 1}).
+		AddrGoVar(x).
+		AddrField(xtyp, []int{1}).
+		AddrVar(y).
+		AddrField(ytyp, []int{1}).
 		CallGoFunc(fnTestRect, 0).
-		AddrField(it2, []int{1}).
+		AddrField(gtyp, []int{1}).
 		CallGoFuncv(sprint, 9, 9). // print(pkg_field.Info,pkg_field.Pt2.Y,y.Info,y.Pt2.Y,pkg_field.GetRect().Info,pkg_field.GetRect().Pt2.Y)
 		Resolve()
 
@@ -307,6 +334,141 @@ func TestGoField(t *testing.T) {
 	if v := ctx.Get(-1); v != "hello-2world-20next102 &{-1 20} &{-10 0} &{101 0}" {
 		t.Fatal("LoadField", v)
 	}
+}
+
+func TestMapField(t *testing.T) {
+	pkg := NewGoPackage("pkg_map_field")
+
+	rcm := make(map[int]testPoint)
+	rcm[0] = testPoint{10, 20}
+	rcm[1] = testPoint{100, 200}
+
+	pkg.RegisterVars(pkg.Var("M", &rcm))
+	x, ok := pkg.FindVar("M")
+	if !ok {
+		t.Fatal("FindVar failed: M")
+	}
+	typ := reflect.TypeOf(rcm[0])
+
+	b := newBuilder()
+	code := b.
+		LoadGoVar(x).
+		Push(0).
+		MapIndex().
+		LoadGoVar(x).
+		Push(5).
+		SetMapIndex(). // pkg.M[5] = pkg.M[0]
+		LoadGoVar(x).
+		Push(5).
+		MapIndex().
+		LoadField(typ, []int{1}). // pkg.M[5]
+		Resolve()
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := ctx.Get(-1); v != rcm[0].Y {
+		t.Fatal("v", v)
+	}
+}
+
+func TestMapBadStoreField(t *testing.T) {
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Fatal("must panic")
+		}
+	}()
+
+	pkg := NewGoPackage("pkg_map_bad_store_field")
+
+	rcm := make(map[int]testPoint)
+	rcm[0] = testPoint{10, 20}
+	rcm[1] = testPoint{100, 200}
+
+	pkg.RegisterVars(pkg.Var("M", &rcm))
+	x, ok := pkg.FindVar("M")
+	if !ok {
+		t.Fatal("FindVar failed: M")
+	}
+	typ := reflect.TypeOf(rcm)
+
+	b := newBuilder()
+	code := b.
+		Push(-1).
+		LoadGoVar(x).
+		Push(0).
+		MapIndex().
+		StoreField(typ, []int{1}). // pkg.M[0].Y = -1 , cannot assign
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+}
+
+func TestSliceField(t *testing.T) {
+	pkg := NewGoPackage("pkg_slice_field")
+
+	rcm := []testPoint{testPoint{10, 20}, testPoint{100, 200}, testPoint{200, 300}}
+
+	pkg.RegisterVars(pkg.Var("M", &rcm))
+	x, ok := pkg.FindVar("M")
+	if !ok {
+		t.Fatal("FindVar failed: M")
+	}
+	typ := reflect.TypeOf(rcm[0])
+
+	b := newBuilder()
+	code := b.
+		Push(-10).
+		LoadGoVar(x).
+		AddrIndex(1).
+		StoreField(typ, []int{0}). // pkg.M[1].X = -10
+		LoadGoVar(x).
+		Index(0).
+		LoadGoVar(x).
+		SetIndex(2). // pkg.M[2] = pkg.M[0]
+		LoadGoVar(x).
+		Index(2).
+		LoadField(typ, []int{1}). // pkg.M[2]
+		Resolve()
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := ctx.Get(-1); v != rcm[0].Y {
+		t.Fatal("v", v)
+	}
+	if rcm[1].X != -10 {
+		t.Fatal("rcm[1] =", rcm[1])
+	}
+}
+
+func TestArrayBadStoreField(t *testing.T) {
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Fatal("must panic")
+		}
+	}()
+
+	pkg := NewGoPackage("pkg_array_bad_store_field")
+
+	rcm := [2]testPoint{testPoint{10, 20}, testPoint{100, 200}}
+
+	pkg.RegisterVars(pkg.Var("M", &rcm))
+	x, ok := pkg.FindVar("M")
+	if !ok {
+		t.Fatal("FindVar failed: M")
+	}
+	typ := reflect.TypeOf(rcm)
+
+	b := newBuilder()
+	code := b.
+		Push(-1).
+		LoadGoVar(x).
+		Index(0).
+		StoreField(typ, []int{1}). // pkg.M[0].Y = -1 , cannot assign
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
 }
 
 func TestSprint(t *testing.T) {

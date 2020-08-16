@@ -88,35 +88,8 @@ func execStoreField(i Instr, p *Context) {
 	index := p.Pop()
 	val := p.Pop()
 	value := p.Pop()
-	idx, isStarkVar := val.(int32)
-	if isStarkVar {
-		val = p.data[p.base+int(idx)]
-	}
 	v := reflect.ValueOf(val)
 	storeField(v, index.([]int), value)
-	if isStarkVar {
-		p.data[p.base+int(idx)] = v.Interface()
-	}
-	// var ptr bool
-	// for v.Kind() == reflect.Ptr {
-	// 	ptr = true
-	// 	v = v.Elem()
-	// }
-	// if ptr {
-	// 	setValue(v.FieldByIndex(index.([]int)), value)
-	// 	if isStarkVar {
-	// 		p.data[p.base+int(idx)] = v.Addr().Interface()
-	// 	}
-	// } else {
-	// 	t := v.Type()
-	// 	v2 := reflect.New(t).Elem()
-	// 	v2.Set(v)
-	// 	setValue(v2.FieldByIndex(index.([]int)), value)
-	// 	v = v2
-	// 	if isStarkVar {
-	// 		p.data[p.base+int(idx)] = v.Interface()
-	// 	}
-	// }
 }
 
 func storeField(v reflect.Value, index []int, value interface{}) {
@@ -458,50 +431,35 @@ func (p *Builder) AddrGoVar(addr GoVarAddr) *Builder {
 }
 
 // LoadField instr
-func (p *Builder) LoadField(v interface{}, index []int) *Builder {
-	switch x := v.(type) {
-	case exec.GoVarAddr:
-		p.LoadGoVar(x)
-	case *Var:
-		p.LoadVar(x)
-	case int32:
-		p.Load(x)
-	case reflect.Type:
-	}
+// func (p *Builder) LoadField(v interface{}, index []int) *Builder {
+// 	switch x := v.(type) {
+// 	case exec.GoVarAddr:
+// 		p.LoadGoVar(x)
+// 	case *Var:
+// 		p.LoadVar(x)
+// 	case int32:
+// 		p.Load(x)
+// 	case reflect.Type:
+// 	}
+func (p *Builder) LoadField(typ reflect.Type, index []int) *Builder {
 	p.Push(index)
-	i := (opLoadField << bitsOpShift)
+	i := uint32(opLoadField << bitsOpShift)
 	p.code.data = append(p.code.data, uint32(i))
 	return p
 }
 
 // AddrField instr
-func (p *Builder) AddrField(v interface{}, index []int) *Builder {
-	switch x := v.(type) {
-	case exec.GoVarAddr:
-		p.AddrGoVar(x)
-	case *Var:
-		p.AddrVar(x)
-	case reflect.Type:
-	}
+func (p *Builder) AddrField(typ reflect.Type, index []int) *Builder {
 	p.Push(index)
-	i := (opAddrField << bitsOpShift)
+	i := uint32(opAddrField << bitsOpShift)
 	p.code.data = append(p.code.data, uint32(i))
 	return p
 }
 
 // StoreField instr
-func (p *Builder) StoreField(v interface{}, index []int) *Builder {
-	switch x := v.(type) {
-	case exec.GoVarAddr:
-		p.AddrGoVar(x)
-	case *Var:
-		p.AddrVar(x)
-	case int32:
-		p.Push(x)
-	case reflect.Type:
-	}
+func (p *Builder) StoreField(typ reflect.Type, index []int) *Builder {
 	p.Push(index)
-	i := (opStoreField << bitsOpShift)
+	i := uint32(opStoreField << bitsOpShift)
 	p.code.data = append(p.code.data, uint32(i))
 	return p
 }
