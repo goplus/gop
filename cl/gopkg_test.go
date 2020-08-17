@@ -698,6 +698,95 @@ import (
 	}
 }
 
+func TestPkgTakeAddr(t *testing.T) {
+	var I = exec.NewGoPackage("pkg_test_takeaddr")
+	rc := tMakeRect(10, 20, 100, 200)
+	ar := [2]trect{tMakeRect(1, 2, 10, 20), tMakeRect(10, 20, 100, 200)}
+	slice := []trect{tMakeRect(1, 2, 10, 20), tMakeRect(10, 20, 100, 200)}
+	m := make(map[int]trect)
+	m[1] = tMakeRect(1, 2, 10, 20)
+	m[2] = tMakeRect(10, 20, 100, 200)
+	I.RegisterVars(
+		I.Var("RC", &rc),
+		I.Var("Ar", &ar),
+		I.Var("Slice", &slice),
+		I.Var("M", &m),
+	)
+	var testSource = `
+	import pkg "pkg_test_takeaddr"
+
+	&pkg.M
+	&pkg.Ar
+	&pkg.Ar[0]
+	&pkg.Ar[0].Min
+	&pkg.Ar[1].Max.Y
+	&pkg.Slice
+	&pkg.Slice[0]
+	&pkg.Slice[0].Min
+	&pkg.Slice[1].Max.Y
+	&pkg.RC
+	&pkg.RC.Min
+	&pkg.RC.Max.Y
+	`
+
+	fsTestPkgVar := asttest.NewSingleFileFS("/foo", "bar.gop", testSource)
+	t.Log(testSource)
+
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestPkgVar, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, _, err = newPackage(b, bar, fset)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+	code.Dump(os.Stdout)
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := ctx.Get(-12); v != &m {
+		t.Fatal("takeAddr &m", v)
+	}
+	if v := ctx.Get(-11); v != &ar {
+		t.Fatal("takeAddr &ar", v)
+	}
+	if v := ctx.Get(-10); v != &ar[0] {
+		t.Fatal("takeAddr &ar[0]", v)
+	}
+	if v := ctx.Get(-9); v != &ar[0].Min {
+		t.Fatal("takeAddr &ar[0].Min", v)
+	}
+	if v := ctx.Get(-8); v != &ar[1].Max.Y {
+		t.Fatal("takeAddr &ar[1].Max.Y", v)
+	}
+	if v := ctx.Get(-7); v != &slice {
+		t.Fatal("takeAddr &slice", v)
+	}
+	if v := ctx.Get(-6); v != &slice[0] {
+		t.Fatal("takeAddr &slice[0]", v)
+	}
+	if v := ctx.Get(-5); v != &slice[0].Min {
+		t.Fatal("takeAddr &slice[0].Min", v)
+	}
+	if v := ctx.Get(-4); v != &slice[1].Max.Y {
+		t.Fatal("takeAddr &slice[1].Max.Y", v)
+	}
+	if v := ctx.Get(-3); v != &rc {
+		t.Fatal("takeAddr &rc", v)
+	}
+	if v := ctx.Get(-2); v != &rc.Min {
+		t.Fatal("takeAddr &rc.Min", v)
+	}
+	if v := ctx.Get(-1); v != &rc.Max.Y {
+		t.Fatal("takeAddr &rc.Max.Y", v)
+	}
+}
+
 func TestPkgFieldBadSet(t *testing.T) {
 	defer func() {
 		r := recover()

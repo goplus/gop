@@ -366,6 +366,33 @@ func TestPanic(t *testing.T) {
 	)
 }
 
+func TestTakeAddrMap(t *testing.T) {
+	cltest.Expect(t, `
+		m := {1:"hello",2:"ok"}
+		println(m)
+		println(&m)
+		`,
+		"map[1:hello 2:ok]\n&map[1:hello 2:ok]\n")
+}
+
+func TestTakeAddrMapIndexBad(t *testing.T) {
+	cltest.Expect(t, `
+		m := {1:"hello",2:"ok"}
+		println(&m[1])
+		`,
+		"",
+		"cannot take the address of m[1]\n")
+}
+
+func TestTakeAddrStringBad(t *testing.T) {
+	cltest.Expect(t, `
+		m := "hello"
+		println(&m[1])
+		`,
+		"",
+		"cannot take the address of m[1]\n")
+}
+
 func TestTypeCast(t *testing.T) {
 	cltest.Call(t, `
 	x := []byte("hello")

@@ -161,9 +161,7 @@ func compileIdent(ctx *blockCtx, name string) func() {
 			ctx.infer.Push(&goValue{t: typ})
 			ctx.resetFieldIndex()
 			return func() {
-				if ctx.checkLoadAddr && kind != reflect.Slice && kind != reflect.Map {
-					ctx.out.AddrVar(v.v)
-				} else if ctx.takeAddr {
+				if ctx.takeAddr || (ctx.checkLoadAddr && kind != reflect.Slice && kind != reflect.Map) {
 					ctx.out.AddrVar(v.v)
 				} else {
 					ctx.out.LoadVar(v.v)
@@ -937,17 +935,29 @@ func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr) func() { // x[i]
 	ctx.infer.Ret(1, &goValue{typElem})
 	ctx.resetFieldIndex()
 	return func() {
+		if ctx.takeAddr {
+			if kind == reflect.String || kind == reflect.Map {
+				_, info := ctx.getCodeInfo(v)
+				log.Panicf("cannot take the address of %v\n", info)
+			} else if kind == reflect.Slice {
+				ctx.takeAddr = false
+				exprX()
+				ctx.takeAddr = true
+			} else {
+				exprX()
+			}
+		} else {
+			exprX()
+		}
 		switch kind {
 		case reflect.String, reflect.Slice, reflect.Array:
-			exprX()
 			n := compileIdx(ctx, v.Index, 1<<30, kind)
-			if ctx.checkLoadAddr {
+			if ctx.takeAddr || ctx.checkLoadAddr {
 				ctx.out.AddrIndex(n)
 			} else {
 				ctx.out.Index(n)
 			}
 		case reflect.Map:
-			exprX()
 			typIdx := typ.Key()
 			compileExpr(ctx, v.Index)()
 			i := ctx.infer.Pop()
@@ -1122,7 +1132,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 				ctx.infer.Ret(1, &goValue{t: typ})
 				ctx.resetFieldIndex()
 				return func() {
-					if ctx.checkLoadAddr && kind != reflect.Slice && kind != reflect.Map {
+					if ctx.takeAddr || (ctx.checkLoadAddr && kind != reflect.Slice && kind != reflect.Map) {
 						ctx.out.AddrGoVar(exec.GoVarAddr(addr))
 					} else {
 						ctx.out.LoadGoVar(exec.GoVarAddr(addr))
@@ -1152,7 +1162,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 				if fieldExprX != nil {
 					fieldExprX()
 				}
-				if ctx.checkLoadAddr {
+				if ctx.takeAddr || ctx.checkLoadAddr {
 					ctx.out.AddrField(fieldStructType, fieldIndex)
 				} else {
 					ctx.out.LoadField(fieldStructType, fieldIndex)
