@@ -38,12 +38,16 @@ const (
 	bitsVarScope   = 6
 	bitsAssignOp   = 4
 	bitsIndexOp    = 2
+	bitsIsPtr      = 2
 
 	bitsOpShift = bitsInstr - bitsOp
 	bitsOperand = (1 << bitsOpShift) - 1
 
 	bitsOpIndexShift   = bitsInstr - (bitsOp + bitsIndexOp)
 	bitsOpIndexOperand = (1 << bitsOpIndexShift) - 1
+
+	bitsOpZeroShift   = bitsInstr - (bitsOp + bitsIsPtr)
+	bitsOpZeroOperand = (1 << bitsOpZeroShift) - 1
 
 	bitsOpInt        = bitsOp + bitsIntKind
 	bitsOpIntShift   = bitsInstr - bitsOpInt
@@ -86,7 +90,7 @@ const (
 	opAppend        = 9  // arity(26)
 	opBuiltinOp     = 10 // reserved(16) kind(5) builtinOp(5)
 	opJmp           = 11 // reserved(2) offset(24)
-	opJmpIf         = 12 // cond(2) offset(24)
+	opJmpIf         = 12 // flag(4) offset(22)
 	opCaseNE        = 13 // n(10) offset(16)
 	opPop           = 14 // n(26)
 	opLoadVar       = 15 // varScope(6) addr(20)
@@ -107,7 +111,7 @@ const (
 	opCallGoClosure = 30 // arity(26)
 	opMakeArray     = 31 // funvArity(10) type(16)
 	opMakeMap       = 32 // funvArity(10) type(16)
-	opZero          = 33 // type(26)
+	opZero          = 33 // isPtr(2) type(24)
 	opForPhrase     = 34 // addr(26)
 	opLstComprehens = 35 // addr(26)
 	opMapComprehens = 36 // addr(26)
@@ -118,7 +122,12 @@ const (
 	opGoBuiltin     = 41 // op(26)
 	opErrWrap       = 42 // idx(26)
 	opWrapIfErr     = 43 // reserved(2) offset(24)
-	opDefer         = 44
+	opDefer         = 44 // reserved(26)
+	opGo            = 45 // arity(26)
+	opLoadField     = 46 // op(26)
+	opStoreField    = 47 // op(26)
+	opAddrField     = 48 // op(26)
+	opStruct        = 49 // funvArity(10) type(16)
 )
 
 const (
@@ -172,7 +181,7 @@ var instrInfos = []InstrInfo{
 	opAppend:        {"append", "", "arity", 26},                          // arity(26)
 	opBuiltinOp:     {"builtinOp", "kind", "op", (21 << 8) | 5},           // reserved(16) kind(5) builtinOp(5)
 	opJmp:           {"jmp", "", "offset", 26},                            // offset(26)
-	opJmpIf:         {"jmpIf", "cond", "offset", (2 << 8) | 24},           // cond(2) offset(24)
+	opJmpIf:         {"jmpIf", "flag", "offset", (4 << 8) | 22},           // flag(4) offset(22)
 	opCaseNE:        {"caseNE", "n", "offset", (10 << 8) | 16},            // n(10) offset(16)
 	opPop:           {"pop", "", "n", 26},                                 // n(26)
 	opLoadVar:       {"loadVar", "varScope", "addr", (6 << 8) | 20},       // varScope(6) addr(20)
@@ -193,7 +202,7 @@ var instrInfos = []InstrInfo{
 	opCallGoClosure: {"callGoClosure", "", "arity", 26},                   // arity(26)
 	opMakeArray:     {"makeArray", "funvArity", "type", (10 << 8) | 16},   // funvArity(10) type(16)
 	opMakeMap:       {"makeMap", "funvArity", "type", (10 << 8) | 16},     // funvArity(10) type(16)
-	opZero:          {"zero", "", "type", 26},                             // type(26)
+	opZero:          {"zero", "isPtr", "type", (2 << 8) | 24},             // isPtr(2) type(24)
 	opForPhrase:     {"forPhrase", "", "addr", 26},                        // addr(26)
 	opLstComprehens: {"listComprehension", "", "addr", 26},                // addr(26)
 	opMapComprehens: {"mapComprehension", "", "addr", 26},                 // addr(26)
@@ -204,7 +213,12 @@ var instrInfos = []InstrInfo{
 	opGoBuiltin:     {"goBuiltin", "", "op", 26},                          // op(26)
 	opErrWrap:       {"errWrap", "", "idx", 26},                           // idx(26)
 	opWrapIfErr:     {"wrapIfErr", "", "offset", 26},                      // reserved(2) offset(24)
-	opDefer:         {"defer", "", "", 0},
+	opDefer:         {"defer", "", "", 0},                                 // reserved(26)
+	opGo:            {"go", "", "arity", 26},                              // arity(26)
+	opLoadField:     {"loadField", "", "", 26},                            // addr(26)
+	opStoreField:    {"storeField", "", "", 26},                           // addr(26)
+	opAddrField:     {"addrField", "", "", 26},                            // addr(26)
+	opStruct:        {"struct", "funvArity", "type", (10 << 8) | 16},      // funvArity(10) type(16)
 }
 
 // -----------------------------------------------------------------------------

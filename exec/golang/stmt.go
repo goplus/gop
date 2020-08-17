@@ -59,6 +59,8 @@ func (p *Builder) Label(l *Label) *Builder {
 		reservedExpr.Expr = defval
 		return p
 	}
+	// make sure all labels in golang code  will be used
+	p.Jmp(l)
 	p.labels = append(p.labels, l)
 	return p
 }
@@ -88,7 +90,10 @@ func GotoIf(p *Builder, cond ast.Expr, l *Label) *ast.IfStmt {
 }
 
 // JmpIf instr
-func (p *Builder) JmpIf(jc exec.JmpCond, l *Label) *Builder {
+func (p *Builder) JmpIf(jc exec.JmpCondFlag, l *Label) *Builder {
+	if jc.IsNotPop() {
+		return p
+	}
 	cond := p.rhs.Pop().(ast.Expr)
 	switch jc {
 	case exec.JcFalse:
@@ -395,7 +400,13 @@ func (p *Builder) EndComprehension(c *Comprehension) *Builder {
 
 // Defer instr
 func (p *Builder) Defer() *Builder {
-	p.inDefer = true
+	p.inDeferOrGo = callByDefer
+	return p
+}
+
+// Go instr
+func (p *Builder) Go() *Builder {
+	p.inDeferOrGo = callByGo
 	return p
 }
 
@@ -409,34 +420,10 @@ func (p *Builder) DefineBlock() *Builder {
 // EndBlock ends a block.
 func (p *Builder) EndBlock() *Builder {
 	p.endBlockStmt(0)
-	blockStmt := getBlockStmts(p)
-	if p.parentCtx == nil {
-		p.rhs.Push(blockStmt)
-	} else {
-		p.parentCtx.stmts = append(p.parentCtx.stmts, blockStmt)
-		p.scopeCtx = p.parentCtx
-	}
+	blockStmt := &ast.BlockStmt{List: p.getStmts(p)}
+	p.scopeCtx = p.parentCtx
+	p.stmts = append(p.stmts, p.labeled(blockStmt, 0))
 	return p
-}
-
-// getBlockStmts will check whether the first stmt in block stmts is labeledStmt.
-// if true ,the whole block should be labeled
-func getBlockStmts(p *Builder) ast.Stmt {
-	body := &ast.BlockStmt{List: p.getStmts(p)}
-	if len(body.List) > 0 {
-		for i := 0; i < len(body.List); i++ {
-			if _, ok := body.List[i].(*ast.DeclStmt); ok {
-				continue
-			}
-			if v, ok := body.List[i].(*ast.LabeledStmt); ok {
-				body.List[i] = v.Stmt
-				v.Stmt = body
-				return v
-			}
-			break
-		}
-	}
-	return body
 }
 
 // ----------------------------------------------------------------------------

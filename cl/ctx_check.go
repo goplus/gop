@@ -80,6 +80,8 @@ func isNoExecCtxStmt(ctx *blockCtx, stmt ast.Stmt) bool {
 		return true
 	case *ast.DeferStmt:
 		return isNoExecCtxCallExpr(ctx, v.Call)
+	case *ast.GoStmt:
+		return isNoExecCtxCallExpr(ctx, v.Call)
 	default:
 		log.Panicln("isNoExecCtxStmt failed: unknown -", reflect.TypeOf(v))
 	}
@@ -99,6 +101,8 @@ func isNoExecCtxExpr(ctx *blockCtx, expr ast.Expr) bool {
 	case *ast.UnaryExpr:
 		return isNoExecCtxExpr(ctx, v.X)
 	case *ast.SelectorExpr:
+		return isNoExecCtxExpr(ctx, v.X)
+	case *ast.ParenExpr:
 		return isNoExecCtxExpr(ctx, v.X)
 	case *ast.ErrWrapExpr:
 		return isNoExecCtx2nd(ctx, v.X, v.Default)

@@ -1,0 +1,23 @@
+import (
+	"os"
+	"time"
+)
+
+func f(args ...interface{}) {
+	println(args...)
+}
+
+go func() {
+	println("Hello, goroutine!")
+}()
+
+a := [1, 2]
+go copy(a, [3, 4])
+
+go println("Hello, goroutine2!")
+
+go os.Stdout.Write([]byte("Hello, goroutine3!"))
+
+go f("Hello, goroutine4!")
+
+time.Sleep(1e8)

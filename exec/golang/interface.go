@@ -54,11 +54,11 @@ func (p *interfaceImpl) NewComprehension(out reflect.Type) exec.Comprehension {
 }
 
 // NewFunc create a Go+ function.
-func (p *interfaceImpl) NewFunc(name string, nestDepth uint32) exec.FuncInfo {
+func (p *interfaceImpl) NewFunc(name string, nestDepth uint32, funcType ...int) exec.FuncInfo {
 	if nestDepth == 0 {
 		return nil
 	}
-	return NewFunc(name, nestDepth)
+	return NewFunc(name, nestDepth, funcType[0])
 }
 
 // FindGoPackage lookups a Go package by pkgPath. It returns nil if not found.
@@ -131,7 +131,7 @@ func (p *iBuilder) Jmp(l exec.Label) exec.Builder {
 }
 
 // JmpIf instr
-func (p *iBuilder) JmpIf(cond exec.JmpCond, l exec.Label) exec.Builder {
+func (p *iBuilder) JmpIf(cond exec.JmpCondFlag, l exec.Label) exec.Builder {
 	((*Builder)(p)).JmpIf(cond, l.(*Label))
 	return p
 }
@@ -169,6 +169,12 @@ func (p *iBuilder) ForPhrase(f exec.ForPhrase, key, val exec.Var, hasExecCtx ...
 // Defer instr
 func (p *iBuilder) Defer() exec.Builder {
 	((*Builder)(p)).Defer()
+	return p
+}
+
+// Go instr
+func (p *iBuilder) Go() exec.Builder {
+	((*Builder)(p)).Go()
 	return p
 }
 
@@ -293,6 +299,12 @@ func (p *iBuilder) DefineVar(vars ...exec.Var) exec.Builder {
 	return p
 }
 
+// DefineType defines variables.
+func (p *iBuilder) DefineType(typ reflect.Type, name string) exec.Builder {
+	((*Builder)(p)).DefineType(typ, name)
+	return p
+}
+
 // InCurrentCtx returns if a variable is in current context or not.
 func (p *iBuilder) InCurrentCtx(v exec.Var) bool {
 	return ((*Builder)(p)).InCurrentCtx(v.(*Var))
@@ -331,6 +343,24 @@ func (p *iBuilder) StoreGoVar(addr exec.GoVarAddr) exec.Builder {
 // AddrGoVar instr
 func (p *iBuilder) AddrGoVar(addr exec.GoVarAddr) exec.Builder {
 	((*Builder)(p)).AddrGoVar(addr)
+	return p
+}
+
+// LoadField instr
+func (p *iBuilder) LoadField(typ reflect.Type, index []int) exec.Builder {
+	((*Builder)(p)).LoadField(typ, index)
+	return p
+}
+
+// AddrField instr
+func (p *iBuilder) AddrField(typ reflect.Type, index []int) exec.Builder {
+	((*Builder)(p)).AddrField(typ, index)
+	return p
+}
+
+// StoreField instr
+func (p *iBuilder) StoreField(typ reflect.Type, index []int) exec.Builder {
+	((*Builder)(p)).StoreField(typ, index)
 	return p
 }
 
@@ -394,6 +424,12 @@ func (p *iBuilder) SetIndex(idx int) exec.Builder {
 	return p
 }
 
+// Struct instr
+func (p *iBuilder) Struct(typ reflect.Type, arity int) exec.Builder {
+	((*Builder)(p)).Struct(typ, arity)
+	return p
+}
+
 // Slice instr
 func (p *iBuilder) Slice(i, j int) exec.Builder {
 	((*Builder)(p)).Slice(i, j)
@@ -415,6 +451,12 @@ func (p *iBuilder) TypeCast(from, to reflect.Type) exec.Builder {
 // GoBuiltin instr
 func (p *iBuilder) GoBuiltin(typ reflect.Type, op exec.GoBuiltin) exec.Builder {
 	((*Builder)(p)).GoBuiltin(typ, op)
+	return p
+}
+
+// New instr
+func (p *iBuilder) New(typ reflect.Type) exec.Builder {
+	((*Builder)(p)).New(typ)
 	return p
 }
 

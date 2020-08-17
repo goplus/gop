@@ -348,6 +348,78 @@ func TestIf44(t *testing.T) {
 	}
 }
 
+func TestLOr1(t *testing.T) {
+	label1 := NewLabel("a")
+	code := newBuilder().
+		Push(true).
+		JmpIf(exec.JcTrue|exec.JcNotPopMask, label1).
+		Push(false).
+		BuiltinOp(exec.Bool, exec.OpLOr).
+		Label(label1).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != true {
+		t.Fatal("must ret true, ret =", v)
+	}
+	_ = label1.Name()
+}
+
+func TestLOr2(t *testing.T) {
+	label1 := NewLabel("a")
+	code := newBuilder().
+		Push(false).
+		JmpIf(exec.JcTrue|exec.JcNotPopMask, label1).
+		Push(true).
+		BuiltinOp(exec.Bool, exec.OpLOr).
+		Label(label1).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != true {
+		t.Fatal("must ret true, ret =", v)
+	}
+	_ = label1.Name()
+}
+
+func TestLAnd1(t *testing.T) {
+	label1 := NewLabel("a")
+	code := newBuilder().
+		Push(true).
+		JmpIf(exec.JcFalse|exec.JcNotPopMask, label1).
+		Push(true).
+		BuiltinOp(exec.Bool, exec.OpLAnd).
+		Label(label1).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != true {
+		t.Fatal("must ret true, ret =", v)
+	}
+	_ = label1.Name()
+}
+
+func TestLAnd2(t *testing.T) {
+	label1 := NewLabel("a")
+	code := newBuilder().
+		Push(false).
+		JmpIf(exec.JcFalse|exec.JcNotPopMask, label1).
+		Push(true).
+		BuiltinOp(exec.Bool, exec.OpLAnd).
+		Label(label1).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != false {
+		t.Fatal("must ret false, ret =", v)
+	}
+	_ = label1.Name()
+}
+
 // -----------------------------------------------------------------------------
 
 func TestCase1(t *testing.T) {

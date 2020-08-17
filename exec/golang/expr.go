@@ -366,13 +366,19 @@ func (p *Builder) Call(narg int, ellipsis bool, args ...ast.Expr) *Builder {
 	if ellipsis {
 		expr.Ellipsis++
 	}
-	if p.inDefer {
-		p.inDefer = false
-		p.rhs.Push(&ast.DeferStmt{
-			Call: expr,
-		})
-	} else {
+	if ct := p.inDeferOrGo; ct == callExpr {
 		p.rhs.Push(expr)
+	} else {
+		p.inDeferOrGo = callExpr
+		if ct == callByDefer {
+			p.rhs.Push(&ast.DeferStmt{
+				Call: expr,
+			})
+		} else {
+			p.rhs.Push(&ast.GoStmt{
+				Call: expr,
+			})
+		}
 	}
 	return p
 }
@@ -432,6 +438,53 @@ func (p *Builder) AddrGoVar(addr exec.GoVarAddr) *Builder {
 	return p
 }
 
+func (p *Builder) fieldExpr(typ reflect.Type, index []int) ast.Expr {
+	expr := &ast.SelectorExpr{}
+	expr.X = p.rhs.Pop().(ast.Expr)
+	if unary, ok := expr.X.(*ast.UnaryExpr); ok {
+		expr.X = unary.X
+	}
+	if typ.Kind() == reflect.Ptr {
+		typ = typ.Elem()
+	}
+	for i := 0; i < len(index); i++ {
+		sf := typ.FieldByIndex(index[:i+1])
+		if sf.Anonymous {
+			continue
+		}
+		if expr.Sel != nil {
+			expr.X = &ast.SelectorExpr{X: expr.X, Sel: expr.Sel}
+		}
+		expr.Sel = Ident(sf.Name)
+	}
+
+	return expr
+}
+
+// LoadField instr
+func (p *Builder) LoadField(typ reflect.Type, index []int) *Builder {
+	expr := p.fieldExpr(typ, index)
+	p.rhs.Push(expr)
+	return p
+}
+
+// AddrField instr
+func (p *Builder) AddrField(typ reflect.Type, index []int) *Builder {
+	expr := p.fieldExpr(typ, index)
+	p.rhs.Push(&ast.UnaryExpr{
+		Op: token.AND,
+		X:  expr,
+	})
+	return p
+}
+
+// StoreField instr
+func (p *Builder) StoreField(typ reflect.Type, index []int) *Builder {
+	expr := p.fieldExpr(typ, index)
+	p.lhs.Push(expr)
+	return p
+}
+
 // Append instr
 func (p *Builder) Append(typ reflect.Type, arity int) *Builder {
 	p.rhs.Push(appendIdent)
@@ -441,6 +494,13 @@ func (p *Builder) Append(typ reflect.Type, arity int) *Builder {
 		arity = 2
 	}
 	p.Call(arity, ellipsis)
+	return p
+}
+
+// New instr
+func (p *Builder) New(typ reflect.Type) *Builder {
+	p.rhs.Push(newIdent)
+	p.Call(0, false, Type(p, typ))
 	return p
 }
 
@@ -618,3 +678,45 @@ var goBuiltinArities = [...]int{
 }
 
 // -----------------------------------------------------------------------------
+
+// Struct instr
+func (p *Builder) Struct(typ reflect.Type, arity int) *Builder {
+	var ptr bool
+	if typ.Kind() == reflect.Ptr {
+		ptr = true
+		typ = typ.Elem()
+	}
+	typExpr := Type(p, typ)
+	elts := make([]ast.Expr, arity)
+	args := p.rhs.GetArgs(arity << 1)
+	for i := 0; i < arity; i++ {
+		elts[i] = &ast.KeyValueExpr{
+			Key:   toField(args[i<<1].(ast.Expr)),
+			Value: args[(i<<1)+1].(ast.Expr),
+		}
+	}
+
+	var ret ast.Expr
+
+	ret = &ast.CompositeLit{
+		Type: typExpr,
+		Elts: elts,
+	}
+	if ptr {
+		ret = &ast.UnaryExpr{
+			Op: token.AND,
+			X:  ret,
+		}
+	}
+	p.rhs.Ret(arity<<1, ret)
+	return p
+}
+
+func toField(expr ast.Expr) *ast.Ident {
+	if ident, ok := expr.(*ast.Ident); ok {
+		return ident
+	}
+	lit := expr.(*ast.BasicLit)
+	field, _ := strconv.Unquote(lit.Value)
+	return Ident(field)
+}

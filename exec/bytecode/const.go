@@ -127,6 +127,8 @@ func (p *Builder) pushInstr(val interface{}) (i Instr) {
 		return iPushFalse
 	} else if kind == reflect.String || (kind >= reflect.Float32 && kind <= reflect.Complex128) {
 		// noop
+	} else if kind == reflect.Slice && v.Type().Elem().Kind() == reflect.Int {
+		// []int
 	} else if !isNilOrRatConst(kind, v) {
 		log.Panicln("Push failed: unsupported type:", reflect.TypeOf(val), "-", val)
 	}

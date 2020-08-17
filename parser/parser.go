@@ -2435,7 +2435,7 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 		s = &ast.DeclStmt{Decl: p.parseDecl(stmtStart)}
 	case
 		// tokens that may start an expression
-		token.IDENT, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING, token.FUNC, token.LPAREN, // operands
+		token.IDENT, token.INT, token.FLOAT, token.IMAG, token.RAT, token.CHAR, token.STRING, token.FUNC, token.LPAREN, // operands
 		token.LBRACK, token.STRUCT, token.MAP, token.CHAN, token.INTERFACE, // composite types
 		token.ADD, token.SUB, token.MUL, token.AND, token.XOR, token.ARROW, token.NOT: // unary operators
 		s, _ = p.parseSimpleStmt(labelOk)
@@ -2565,7 +2565,6 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 			p.error(pos, "missing constant value")
 		}
 	}
-
 	// Go spec: The scope of a constant or variable identifier declared inside
 	// a function begins at the end of the ConstSpec or VarSpec and ends at
 	// the end of the innermost containing block.
@@ -2705,7 +2704,6 @@ func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
 	if p.trace {
 		defer un(trace(p, "Declaration"))
 	}
-
 	var f parseSpecFunction
 	switch p.tok {
 	case token.CONST, token.VAR:

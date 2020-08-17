@@ -79,24 +79,32 @@ func (p *Code) String() string {
 
 // -----------------------------------------------------------------------------
 
+type callType int
+
+const (
+	callExpr callType = iota
+	callByDefer
+	callByGo
+)
+
 // Builder is a class that generates go code.
 type Builder struct {
 	lhs, rhs    exec.Stack
-	out         *Code             // golang code
-	pkgName     string            // package name
-	imports     map[string]string // pkgPath => aliasName
-	importPaths map[string]string // aliasName => pkgPath
-	gblScope    scopeCtx          // global scope
-	gblDecls    []ast.Decl        // global declarations
-	labels      []*Label          // labels of current statement
-	fset        *token.FileSet    // fileset of Go+ code
-	cfun        *FuncInfo         // current function
-	cstmt       interface{}       // current statement
+	out         *Code                    // golang code
+	pkgName     string                   // package name
+	types       map[reflect.Type]*GoType // type => gotype
+	imports     map[string]string        // pkgPath => aliasName
+	importPaths map[string]string        // aliasName => pkgPath
+	gblScope    scopeCtx                 // global scope
+	gblDecls    []ast.Decl               // global declarations
+	fset        *token.FileSet           // fileset of Go+ code
+	cfun        *FuncInfo                // current function
+	cstmt       interface{}              // current statement
 	reserveds   []*printer.ReservedExpr
-	comprehens  func() // current comprehension
-	identBase   int    // auo-increasement ident index
-	*scopeCtx          // current block scope
-	inDefer     bool   // in defer statement currently
+	comprehens  func()   // current comprehension
+	identBase   int      // auo-increasement ident index
+	*scopeCtx            // current block scope
+	inDeferOrGo callType // in defer/go statement currently
 }
 
 // NewBuilder creates a new Code Builder instance.
@@ -107,6 +115,7 @@ func NewBuilder(pkgName string, code *Code, fset *token.FileSet) *Builder {
 	p := &Builder{
 		out:         code,
 		gblDecls:    make([]ast.Decl, 0, 4),
+		types:       make(map[reflect.Type]*GoType),
 		imports:     make(map[string]string),
 		importPaths: make(map[string]string),
 		fset:        fset,
@@ -139,6 +148,10 @@ func (p *Builder) Resolve() *Code {
 	imports := p.resolveImports()
 	if imports != nil {
 		decls = append(decls, imports)
+	}
+	types := p.resolveTypes()
+	if types != nil {
+		decls = append(decls, types)
 	}
 	gblvars := p.gblScope.toGenDecl(p)
 	if gblvars != nil {
@@ -192,6 +205,39 @@ func (p *Builder) resolveImports() *ast.GenDecl {
 		Tok:   token.IMPORT,
 		Specs: specs,
 	}
+}
+
+func (p *Builder) resolveTypes() *ast.GenDecl {
+	n := len(p.types)
+	specs := make([]ast.Spec, 0, n)
+	for _, t := range p.types {
+		fieldList := &ast.FieldList{}
+		typ := t.Type()
+		if typ.Kind() == reflect.Ptr {
+			typ = typ.Elem()
+		}
+		for i := 0; i < typ.NumField(); i++ {
+			field := typ.Field(i)
+			fieldList.List = append(fieldList.List, &ast.Field{
+				Names: []*ast.Ident{Ident(field.Name)},
+				Type:  Type(p, field.Type),
+			})
+		}
+
+		StructType := &ast.StructType{Fields: fieldList}
+		spec := &ast.TypeSpec{
+			Name: Ident(t.Name()),
+			Type: StructType,
+		}
+		specs = append(specs, spec)
+	}
+	if len(specs) > 0 {
+		return &ast.GenDecl{
+			Tok:   token.TYPE,
+			Specs: specs,
+		}
+	}
+	return nil
 }
 
 // Comment instr

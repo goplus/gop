@@ -55,7 +55,7 @@ func (p *Package) NewComprehension(out reflect.Type) exec.Comprehension {
 }
 
 // NewFunc create a Go+ function.
-func (p *Package) NewFunc(name string, nestDepth uint32) exec.FuncInfo {
+func (p *Package) NewFunc(name string, nestDepth uint32, funcType ...int) exec.FuncInfo {
 	return (*iFuncInfo)(newFuncWith(p, name, nestDepth))
 }
 

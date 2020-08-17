@@ -1389,6 +1389,24 @@ func TestDefer7(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
+func TestGo(t *testing.T) {
+	cltest.Expect(t, `
+		import "time"
+
+		n := 1
+		go func() {
+			println("Hello, goroutine!")
+			n++
+			println(n)
+		}()
+		time.Sleep(1e8)
+		`,
+		"Hello, goroutine!\n2\n",
+	)
+}
+
+// -----------------------------------------------------------------------------
+
 var testVarScopeClauses = map[string]testData{
 	"variable_redefinition_#issue304": {`
 						a := []float64{1, 2, 3.4}

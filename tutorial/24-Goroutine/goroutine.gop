@@ -1,0 +1,7 @@
+import "time"
+
+go func() {
+	println("Hello, goroutine!")
+}()
+
+time.Sleep(1e8)

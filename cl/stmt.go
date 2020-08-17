@@ -79,6 +79,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileLabeledStmt(ctx, v)
 	case *ast.DeferStmt:
 		compileDeferStmt(ctx, v)
+	case *ast.GoStmt:
+		compileGoStmt(ctx, v)
 	case *ast.EmptyStmt:
 		// do nothing
 	default:
@@ -231,16 +233,31 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 
 func compileLabeledStmt(ctx *blockCtx, v *ast.LabeledStmt) {
 	label := ctx.defineLabel(v.Label.Name)
-	// make sure all labels in golang code  will be used
-	// TODO improvement exec/bytecode not to jump if delta==0
-	ctx.out.Jmp(label)
 	ctx.out.Label(label)
 	ctx.currentLabel = v
 	compileStmt(ctx, v.Stmt)
 }
 
+type callType int
+
+const (
+	callExpr callType = iota
+	callByDefer
+	callByGo
+)
+
+var gCallTypes = []string{
+	"",
+	"defer",
+	"go",
+}
+
+func compileGoStmt(ctx *blockCtx, v *ast.GoStmt) {
+	compileCallExpr(ctx, v.Call, callByGo)()
+}
+
 func compileDeferStmt(ctx *blockCtx, v *ast.DeferStmt) {
-	compileCallExpr(ctx, v.Call, true)()
+	compileCallExpr(ctx, v.Call, callByDefer)()
 }
 
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
@@ -447,6 +464,14 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 
 func compileExprStmt(ctx *blockCtx, expr *ast.ExprStmt) {
 	compileExpr(ctx, expr.X)()
+	if ctx.infer.Len() > 0 {
+		in := ctx.infer.Get(-1)
+		if v, ok := in.(*constVal); ok {
+			for i := 0; i < v.NumValues(); i++ {
+				checkType(exec.TyEmptyInterface, v.Value(i), ctx.out)
+			}
+		}
+	}
 	ctx.infer.PopN(1)
 }
 

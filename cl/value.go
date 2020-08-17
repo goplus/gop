@@ -17,7 +17,9 @@
 package cl
 
 import (
+	"math"
 	"reflect"
+	"strconv"
 
 	"github.com/goplus/gop/ast/astutil"
 	"github.com/goplus/gop/exec.spec"
@@ -370,6 +372,24 @@ func kindOf(t reflect.Type) exec.Kind {
 	return kind
 }
 
+const (
+	intSize = strconv.IntSize
+)
+
+func isOverflowsIntByInt64(v int64, intSize int) bool {
+	if intSize == 32 {
+		return v < int64(math.MinInt32) || v > int64(math.MaxInt32)
+	}
+	return false
+}
+
+func isOverflowsIntByUint64(v uint64, intSize int) bool {
+	if intSize == 32 {
+		return v > uint64(math.MaxInt32)
+	}
+	return v > uint64(math.MaxInt64)
+}
+
 func boundConst(v interface{}, t reflect.Type) interface{} {
 	kind := kindOf(t)
 	if v == nil {
@@ -383,7 +403,22 @@ func boundConst(v interface{}, t reflect.Type) interface{} {
 	if t == st {
 		return v
 	}
-	if kind == reflect.Complex128 || kind == reflect.Complex64 {
+	if kind == reflect.Interface {
+		skind := sval.Kind()
+		if skind == reflect.Uint64 {
+			v := sval.Uint()
+			if isOverflowsIntByUint64(v, intSize) {
+				log.Panicf("constant %v overflows int\n", v)
+			}
+			return int(v)
+		} else if skind == reflect.Int64 {
+			v := sval.Int()
+			if isOverflowsIntByInt64(v, intSize) {
+				log.Panicf("constant %v overflows int\n", v)
+			}
+			return int(v)
+		}
+	} else if kind == reflect.Complex128 || kind == reflect.Complex64 {
 		if skind := sval.Kind(); skind >= reflect.Int && skind <= reflect.Float64 {
 			fval := sval.Convert(exec.TyFloat64).Float()
 			return complex(fval, 0)

@@ -27,6 +27,70 @@ import (
 
 // -----------------------------------------------------------------------------
 
+func TestNew(t *testing.T) {
+	cltest.Expect(t, `
+		a := new([2]int)
+		println("a:", a)
+		`,
+		"a: &[0 0]\n",
+	)
+	cltest.Expect(t, `
+		println(new())
+		`,
+		"",
+		"missing argument to new\n",
+	)
+	cltest.Expect(t, `
+		println(new(int, float64))
+		`,
+		"",
+		"too many arguments to new(int)\n",
+	)
+}
+
+func TestNew2(t *testing.T) {
+	cltest.Expect(t, `
+		a := new([2]int)
+		a[0] = 2
+		println("a:", a[0])
+		`,
+		"a: 2\n",
+	)
+	cltest.Expect(t, `
+		a := new([2]float64)
+		a[0] = 1.1
+		println("a:", a[0])
+		`,
+		"a: 1.1\n",
+	)
+	cltest.Expect(t, `
+		a := new([2]string)
+		a[0] = "gop"
+		println("a:", a[0])
+		`,
+		"a: gop\n",
+	)
+}
+
+func TestBadIndex(t *testing.T) {
+	cltest.Expect(t, `
+		a := new(int)
+		println(a[0])
+		`,
+		"",
+		nil,
+	)
+	cltest.Expect(t, `
+		a := new(int)
+		a[0] = 2
+		`,
+		"",
+		nil,
+	)
+}
+
+// -------------------`----------------------------------------------------------
+
 func TestAutoProperty(t *testing.T) {
 	script := `
 		import "io"
@@ -98,12 +162,237 @@ func TestUnbound(t *testing.T) {
 	)
 }
 
+func TestUnboundInt(t *testing.T) {
+	cltest.Expect(t, `
+	import "reflect"
+	printf("%T",100)
+	`,
+		"int",
+	)
+	cltest.Expect(t, `
+	import "reflect"
+	printf("%T",-100)
+	`,
+		"int",
+	)
+}
+
+func TestOverflowsInt(t *testing.T) {
+	cltest.Expect(t, `
+	println(9223372036854775807)
+	`,
+		"9223372036854775807\n",
+	)
+	cltest.Expect(t, `
+	println(-9223372036854775808)
+	`,
+		"-9223372036854775808\n",
+	)
+	cltest.Expect(t, `
+	println(9223372036854775808)
+	`,
+		"",
+		nil,
+	)
+}
+
+func TestOpLAndLOr(t *testing.T) {
+	cltest.Expect(t, `
+func foo() bool {
+	println("foo")
+	return true
+}
+func bar() bool {
+	println("bar")
+	return true
+}
+
+func fake() bool {
+	println("fake")
+	return false
+}
+
+if foo() || bar() {
+}
+println("---")
+if foo() && bar() {
+}
+println("---")
+if fake() && bar() {
+}
+	`, "foo\n---\nfoo\nbar\n---\nfake\n")
+}
+
+func TestOpLAndLOr2(t *testing.T) {
+	cltest.Expect(t, `
+func foo() bool {
+	println("foo")
+	return true
+}
+func bar() bool {
+	println("bar")
+	return true
+}
+
+func fake() bool {
+	println("fake")
+	return true
+}
+
+if foo() && bar() && fake() {
+}
+	`, "foo\nbar\nfake\n")
+	cltest.Expect(t, `
+func foo() bool {
+	println("foo")
+	return true
+}
+func bar() bool {
+	println("bar")
+	return false
+}
+
+func fake() bool {
+	println("fake")
+	return true
+}
+
+if foo() && bar() && fake() {
+}
+	`, "foo\nbar\n")
+	cltest.Expect(t, `
+func foo() bool {
+	println("foo")
+	return false
+}
+func bar() bool {
+	println("bar")
+	return true
+}
+
+func fake() bool {
+	println("fake")
+	return true
+}
+
+if foo() || bar() || fake() {
+}
+	`, "foo\nbar\n")
+	cltest.Expect(t, `
+func foo() bool {
+	println("foo")
+	return true
+}
+func bar() bool {
+	println("bar")
+	return true
+}
+
+func fake() bool {
+	println("fake")
+	return true
+}
+
+if foo() || bar() || fake() {
+}
+	`, "foo\n")
+}
+
+func TestOpLAndLOr3(t *testing.T) {
+	cltest.Expect(t, `
+func foo() int {
+	println("foo")
+	return 0
+}
+func bar() bool {
+	println("bar")
+	return true
+}
+if foo() || bar() {
+}
+	`, "", nil)
+	cltest.Expect(t, `
+func foo() int {
+	println("foo")
+	return 0
+}
+func bar() bool {
+	println("bar")
+	return true
+}
+if foo() && bar() {
+}
+	`, "", nil)
+}
+
+func TestOpLAndLOr4(t *testing.T) {
+	cltest.Expect(t, `
+func foo() bool {
+	println("foo")
+	return true
+}
+if true || foo() {
+}
+	`, "")
+	cltest.Expect(t, `
+func foo() bool {
+	println("foo")
+	return true
+}
+if false || foo() {
+}
+	`, "foo\n")
+	cltest.Expect(t, `
+func foo() bool {
+	println("foo")
+	return true
+}
+if true && foo() {
+}
+	`, "foo\n")
+	cltest.Expect(t, `
+func foo() bool {
+	println("foo")
+	return true
+}
+if false && foo() {
+}
+	`, "")
+}
+
 func TestPanic(t *testing.T) {
 	cltest.Expect(t,
 		`panic("Helo")`,
 		"",
 		"Helo", // panicMsg
 	)
+}
+
+func TestTakeAddrMap(t *testing.T) {
+	cltest.Expect(t, `
+		m := {1:"hello",2:"ok"}
+		println(m)
+		println(&m)
+		`,
+		"map[1:hello 2:ok]\n&map[1:hello 2:ok]\n")
+}
+
+func TestTakeAddrMapIndexBad(t *testing.T) {
+	cltest.Expect(t, `
+		m := {1:"hello",2:"ok"}
+		println(&m[1])
+		`,
+		"",
+		"cannot take the address of m[1]\n")
+}
+
+func TestTakeAddrStringBad(t *testing.T) {
+	cltest.Expect(t, `
+		m := "hello"
+		println(&m[1])
+		`,
+		"",
+		"cannot take the address of m[1]\n")
 }
 
 func TestTypeCast(t *testing.T) {
@@ -113,7 +402,50 @@ func TestTypeCast(t *testing.T) {
 	`).Equal([]byte("hello"))
 }
 
+func TestAppendErr(t *testing.T) {
+	cltest.Expect(t, `
+		append()
+		`,
+		"",
+		"append: argument count not enough\n",
+	)
+	cltest.Expect(t, `
+		x := 1
+		append(x, 2)
+		`,
+		"",
+		"append: first argument not a slice\n",
+	)
+	cltest.Expect(t, `
+		defer append([]int{1}, 2)
+		`,
+		"",
+		"defer discards result of append([]int{1}, 2)\n",
+	)
+}
+
+func TestLenErr(t *testing.T) {
+	cltest.Expect(t, `
+		len()
+		`,
+		"",
+		"missing argument to len: len()\n",
+	)
+	cltest.Expect(t, `
+		len("a", "b")
+		`,
+		"",
+		`too many arguments to len: len("a", "b")`+"\n",
+	)
+}
+
 func TestMake(t *testing.T) {
+	cltest.Expect(t, `
+		make()
+		`,
+		"",
+		"missing argument to make: make()\n",
+	)
 	cltest.Expect(t, `
 		a := make([]int, 0, 4)
 		a = append(a, 1, 2, 3)
@@ -590,6 +922,181 @@ var testCopyClauses = map[string]testData{
 func TestCopy(t *testing.T) {
 	testScripts(t, "TestCopy", testCopyClauses)
 }
+
+var testStructClauses = map[string]testData{
+	"struct": {`
+			println(struct {
+				A int
+				B string
+			}{1, "Hello"})	
+					`, "{1 Hello}\n", false},
+	"struct_key_value": {`
+			println(struct {
+				A int
+				B string
+			}{A:1,B: "Hello"})	
+					`, "{1 Hello}\n", false},
+	"struct_ptr": {`
+			println(&struct {
+				A int
+				B string
+			}{1, "Hello"})
+					`, "&{1 Hello}\n", false},
+	"struct_key_value_ptr": {`
+			println(&struct {
+				A int  ` + "`json:\"a\"`" + `
+				B string
+			}{A: 1,B: "Hello"})
+					`, "&{1 Hello}\n", false},
+}
+
+func TestStruct2(t *testing.T) {
+	testScripts(t, "TestStruct", testStructClauses)
+}
+
+// -----------------------------------------------------------------------------
+var testMethodClauses = map[string]testData{
+	"method set": {`
+					type Person struct {
+						Name string
+						Age  int
+					}
+					func (p *Person) SetName(name string) {
+						p.Name = name
+					}
+
+					p := &Person{
+						Name: "bar",
+						Age:  30,
+					}
+
+					p.SetName("foo")
+					println(p.Name)
+					`, "foo\n", false},
+	"method get": {`
+					type Person struct {
+						Name string
+						Age  int
+					}
+					func (p *Person) GetName() string {
+						return p.Name
+					}
+
+					p := &Person{
+						Name: "bar",
+						Age:  30,
+					}
+
+					println(p.GetName())
+					`, "bar\n", false},
+
+	"struct set ptr": {`
+	type Person struct {
+		Name string
+		Age  int
+	}
+
+	p := &Person{
+		Name: "bar",
+		Age:  30,
+	}
+	p.Name = "foo"
+
+	println(p)
+	`, "&{foo 30}\n", false},
+
+	"struct set": {`
+	type Person struct {
+		Name string
+		Age  int
+	}
+
+	p := Person{
+		Name: "bar",
+		Age:  30,
+	}
+	p.Name = "foo"
+
+	println(p)
+	`, "{foo 30}\n", false},
+
+	"struct set ptr arg": {`
+	type Person struct {
+		Name string
+		Age  int
+	}
+	func SetName(p *Person,name string) {
+		p.Name = name
+	}
+
+	p := Person{
+		Name: "bar",
+		Age:  30,
+	}
+	SetName(&p,"foo")
+
+	println(p)
+	`, "{foo 30}\n", false},
+
+	"method func no args": {`
+					type Person struct {
+						Name string ` + "`json:\"name\"`" + `
+						Age  int
+					}
+					func (p *Person) PrintName() {
+						println(p.Name)
+					}
+
+					p := &Person{
+						Name: "bar",
+						Age:  30,
+					}
+
+					p.PrintName()
+					`, "bar\n", false},
+	"method ptr struct no prt": {`
+					type Person struct {
+						Name string ` + "`json:\"name\"`" + `
+						Age  int
+					}
+					func (p *Person) PrintName() {
+						println(p.Name)
+					}
+
+					p := Person{
+						Name: "bar",
+						Age:  30,
+					}
+
+					p.PrintName()
+					`, "bar\n", false},
+
+	"method load field": {`
+					type Person struct {
+						Name string
+						Age  int
+					}
+					func (p *Person) SetName(name string,age int) {
+						p.Name = name
+						p.Age = age
+						println(name)
+						println(p.Age)
+					}
+
+					p := Person{
+						Name: "bar",
+						Age:  30,
+					}
+
+					p.SetName("foo",31)
+					`, "foo\n31\n", false},
+}
+
+func TestMethodCases(t *testing.T) {
+	testScripts(t, "TestMethod", testMethodClauses)
+}
+
+// -----------------------------------------------------------------------------
 
 func testScripts(t *testing.T, testName string, scripts map[string]testData) {
 	for name, script := range scripts {
