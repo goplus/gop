@@ -1,9 +1,19 @@
-println(struct {
+a := struct {
 	A int
 	B string
-}{1, "Hello"})
+}{1, "Hello"}
 
-println(&struct {
+println(a)
+
+b := &struct {
 	A int
 	B string
-}{1, "Hello"})
+}{1, "Hello"}
+
+println(b)
+
+a.A, a.B = 2, "Hi"
+println(a)
+
+b.B = "Hi"
+println(b)

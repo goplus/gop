@@ -269,6 +269,9 @@ type Builder interface {
 	// DefineFunc instr
 	DefineFunc(fun FuncInfo) Builder
 
+	// DefineType name string,reflect.Typeinstr
+	DefineType(typ reflect.Type, name string) Builder
+
 	// Return instr
 	Return(n int32) Builder
 
@@ -402,7 +405,7 @@ type Package interface {
 	NewComprehension(out reflect.Type) Comprehension
 
 	// NewFunc creates a Go+ function.
-	NewFunc(name string, nestDepth uint32) FuncInfo
+	NewFunc(name string, nestDepth uint32, funcType ...int) FuncInfo
 
 	// FindGoPackage lookups a Go package by pkgPath. It returns nil if not found.
 	FindGoPackage(pkgPath string) GoPackage

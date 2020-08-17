@@ -289,6 +289,18 @@ func loadTypes(ctx *blockCtx, d *ast.GenDecl) {
 }
 
 func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
+	if ctx.exists(spec.Name.Name) {
+		log.Panicln("loadType failed: symbol exists -", spec.Name.Name)
+	}
+	t := toType(ctx, spec.Type).(reflect.Type)
+
+	ctx.out.DefineType(t, spec.Name.Name)
+
+	tDecl := &typeDecl{
+		Type: t,
+	}
+	ctx.syms[spec.Name.Name] = tDecl
+	ctx.types[t] = tDecl
 }
 
 func loadConsts(ctx *blockCtx, d *ast.GenDecl) {
@@ -307,20 +319,17 @@ func loadFunc(ctx *blockCtx, d *ast.FuncDecl, isUnnamed bool) {
 	var name = d.Name.Name
 	if d.Recv != nil {
 		recv := astutil.ToRecv(d.Recv)
-		ctx.insertMethod(recv.Type, name, &methodDecl{
-			recv:    recv.Name,
-			pointer: recv.Pointer,
-			typ:     d.Type,
-			body:    d.Body,
-			file:    ctx.file,
-		})
+		funCtx := newExecBlockCtx(ctx)
+		funCtx.noExecCtx = isUnnamed
+		funCtx.funcCtx = newFuncCtx(nil)
+		ctx.insertMethod(recv, name, d, funCtx)
 	} else if name == "init" {
 		log.Panicln("loadFunc TODO: init")
 	} else {
 		funCtx := newExecBlockCtx(ctx)
 		funCtx.noExecCtx = isUnnamed
 		funCtx.funcCtx = newFuncCtx(nil)
-		ctx.insertFunc(name, newFuncDecl(name, d.Type, d.Body, funCtx))
+		ctx.insertFunc(name, newFuncDecl(name, nil, d.Type, d.Body, funCtx))
 	}
 }
 

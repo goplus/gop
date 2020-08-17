@@ -407,7 +407,7 @@ func TestMapBadStoreField(t *testing.T) {
 func TestSliceField(t *testing.T) {
 	pkg := NewGoPackage("pkg_slice_field")
 
-	rcm := []testPoint{testPoint{10, 20}, testPoint{100, 200}, testPoint{200, 300}}
+	rcm := []testPoint{{10, 20}, {100, 200}, {200, 300}}
 
 	pkg.RegisterVars(pkg.Var("M", &rcm))
 	x, ok := pkg.FindVar("M")
@@ -450,7 +450,7 @@ func TestArrayBadStoreField(t *testing.T) {
 
 	pkg := NewGoPackage("pkg_array_bad_store_field")
 
-	rcm := [2]testPoint{testPoint{10, 20}, testPoint{100, 200}}
+	rcm := [2]testPoint{{10, 20}, {100, 200}}
 
 	pkg.RegisterVars(pkg.Var("M", &rcm))
 	x, ok := pkg.FindVar("M")

@@ -283,6 +283,12 @@ func (p *iBuilder) DefineVar(vars ...exec.Var) exec.Builder {
 	return p
 }
 
+// DefineType name string,reflect.Type instr
+func (p *iBuilder) DefineType(typ reflect.Type, name string) exec.Builder {
+	// Nothing todo in bytecode
+	return p
+}
+
 // InCurrentCtx returns if a variable is in current context or not.
 func (p *iBuilder) InCurrentCtx(v exec.Var) bool {
 	return ((*Builder)(p)).InCurrentCtx(v.(*Var))

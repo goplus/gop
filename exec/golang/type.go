@@ -28,6 +28,9 @@ import (
 
 // StructType instr
 func StructType(p *Builder, typ reflect.Type) ast.Expr {
+	if gtype, ok := p.types[typ]; ok {
+		return Ident(gtype.Name())
+	}
 	var fields = &ast.FieldList{}
 	for i := 0; i < typ.NumField(); i++ {
 		fields.List = append(fields.List, toStructField(p, typ.Field(i)))
@@ -165,3 +168,25 @@ func Type(p *Builder, typ reflect.Type) ast.Expr {
 }
 
 // -----------------------------------------------------------------------------
+
+type GoType struct {
+	name string
+	typ  reflect.Type
+}
+
+// DefineVar defines types.
+func (p *Builder) DefineType(typ reflect.Type, name string) *Builder {
+	p.types[typ] = &GoType{
+		name: name,
+		typ:  typ,
+	}
+	return p
+}
+
+func (p *GoType) Type() reflect.Type {
+	return p.typ
+}
+
+func (p *GoType) Name() string {
+	return p.name
+}

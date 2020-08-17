@@ -163,12 +163,15 @@ func compileIdent(ctx *blockCtx, name string) func() {
 			return func() {
 				if ctx.checkLoadAddr && kind != reflect.Slice && kind != reflect.Map {
 					ctx.out.AddrVar(v.v)
+				} else if ctx.takeAddr {
+					ctx.out.AddrVar(v.v)
 				} else {
 					ctx.out.LoadVar(v.v)
 				}
 			}
 		case *stackVar:
 			ctx.infer.Push(&goValue{t: v.typ})
+			ctx.resetFieldIndex()
 			return func() {
 				ctx.out.Load(v.index)
 			}
@@ -502,7 +505,7 @@ func compileMapLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 
 func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) func() {
 	funCtx := newExecBlockCtx(ctx)
-	decl := newFuncDecl("", v.Type, v.Body, funCtx)
+	decl := newFuncDecl("", nil, v.Type, v.Body, funCtx)
 	ctx.use(decl)
 	ctx.infer.Push(newQlFunc(decl))
 	return func() { // TODO: maybe slowly, use Closure instead of GoClosure
@@ -692,10 +695,33 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 			ctx.infer.Push(ret)
 		}
 		return func() {
+			var isMethod int
+			if vfn.recv != nil {
+				isMethod = 1
+				exprX := compileExpr(ctx, v.Fun.(*ast.SelectorExpr).X)
+				recv := ctx.infer.Get(-1).(*goValue)
+
+				if astutil.ToRecv(vfn.recv).Pointer == 0 {
+					exprX()
+					if recv.Kind() == reflect.Ptr {
+						recv.t = recv.t.Elem()
+						ctx.infer.Ret(1, recv)
+						ctx.out.AddrOp(recv.t.Kind(), exec.OpAddrVal) // Ptr => Elem()
+					}
+				} else {
+					ctx.checkLoadAddr = true
+					exprX()
+					ctx.checkLoadAddr = false
+					if recv.Kind() != reflect.Ptr {
+						recv.t = reflect.PtrTo(recv.t)
+						ctx.infer.Ret(1, recv)
+					}
+				}
+			}
 			for _, arg := range v.Args {
 				compileExpr(ctx, arg)()
 			}
-			arity := checkFuncCall(vfn.Proto(), 0, v, ctx)
+			arity := checkFuncCall(vfn.Proto(), isMethod, v, ctx)
 			fun := vfn.FuncInfo()
 			if fun.IsVariadic() {
 				builder(ctx, ct).CallFuncv(fun, len(v.Args), arity)
@@ -1132,6 +1158,14 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 					ctx.out.LoadField(fieldStructType, fieldIndex)
 				}
 			}
+		}
+
+		if fDecl, ok := ctx.findMethod(t, name); ok {
+			ctx.infer.Pop()
+			fn := newQlFunc(fDecl)
+			ctx.use(fDecl)
+			ctx.infer.Push(fn)
+			return func() {}
 		}
 		if _, ok := vx.t.MethodByName(name); !ok && isLower(name) {
 			name = strings.Title(name)

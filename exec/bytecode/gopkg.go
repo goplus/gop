@@ -89,11 +89,15 @@ func execStoreField(i Instr, p *Context) {
 	val := p.Pop()
 	value := p.Pop()
 	v := reflect.ValueOf(val)
+	storeField(v, index.([]int), value)
+}
+
+func storeField(v reflect.Value, index []int, value interface{}) {
 	v = toElem(v)
 	if !v.CanSet() {
 		log.Panicf("cannot assign to %v\n", v)
 	}
-	setValue(v.FieldByIndex(index.([]int)), value)
+	setValue(v.FieldByIndex(index), value)
 }
 
 // -----------------------------------------------------------------------------
