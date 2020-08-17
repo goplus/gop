@@ -161,9 +161,7 @@ func compileIdent(ctx *blockCtx, name string) func() {
 			ctx.infer.Push(&goValue{t: typ})
 			ctx.resetFieldIndex()
 			return func() {
-				if ctx.checkLoadAddr && kind != reflect.Slice && kind != reflect.Map {
-					ctx.out.AddrVar(v.v)
-				} else if ctx.takeAddr {
+				if ctx.takeAddr && kind != reflect.Slice && kind != reflect.Map {
 					ctx.out.AddrVar(v.v)
 				} else {
 					ctx.out.LoadVar(v.v)
@@ -709,9 +707,9 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 						ctx.out.AddrOp(recv.t.Kind(), exec.OpAddrVal) // Ptr => Elem()
 					}
 				} else {
-					ctx.checkLoadAddr = true
+					ctx.takeAddr = true
 					exprX()
-					ctx.checkLoadAddr = false
+					ctx.takeAddr = false
 					if recv.Kind() != reflect.Ptr {
 						recv.t = reflect.PtrTo(recv.t)
 						ctx.infer.Ret(1, recv)
@@ -815,10 +813,10 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 		typElem = typElem.Elem()
 	}
 	if typ.Kind() == reflect.Array {
-		ctx.checkLoadAddr = true
+		ctx.takeAddr = true
 	}
 	exprX()
-	ctx.checkLoadAddr = false
+	ctx.takeAddr = false
 
 	if cons, ok := val.(*constVal); ok {
 		cons.bound(typElem, ctx.out)
@@ -871,10 +869,10 @@ func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) func() { // x[i:j:k]
 	}
 	return func() {
 		if kind == reflect.Array {
-			ctx.checkLoadAddr = true
+			ctx.takeAddr = true
 		}
 		exprX()
-		ctx.checkLoadAddr = false
+		ctx.takeAddr = false
 		i, j, k := exec.SliceDefaultIndex, exec.SliceDefaultIndex, exec.SliceDefaultIndex
 		if v.Low != nil {
 			i = compileIdx(ctx, v.Low, exec.SliceConstIndexLast, kind)
@@ -941,7 +939,7 @@ func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr) func() { // x[i]
 		case reflect.String, reflect.Slice, reflect.Array:
 			exprX()
 			n := compileIdx(ctx, v.Index, 1<<30, kind)
-			if ctx.checkLoadAddr {
+			if ctx.takeAddr {
 				ctx.out.AddrIndex(n)
 			} else {
 				ctx.out.Index(n)
@@ -1070,13 +1068,13 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compileMode
 			}
 			fieldIndex := append(ctx.fieldIndex, sf.Index...)
 			fieldStructType := ctx.fieldStructType
-			ctx.checkLoadAddr = true
+			ctx.takeAddr = true
 			if ctx.fieldExprX != nil {
 				ctx.fieldExprX()
 			} else {
 				exprX()
 			}
-			ctx.checkLoadAddr = false
+			ctx.takeAddr = false
 			ctx.out.StoreField(fieldStructType, fieldIndex)
 		}
 	default:
@@ -1122,7 +1120,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 				ctx.infer.Ret(1, &goValue{t: typ})
 				ctx.resetFieldIndex()
 				return func() {
-					if ctx.checkLoadAddr && kind != reflect.Slice && kind != reflect.Map {
+					if ctx.takeAddr && kind != reflect.Slice && kind != reflect.Map {
 						ctx.out.AddrGoVar(exec.GoVarAddr(addr))
 					} else {
 						ctx.out.LoadGoVar(exec.GoVarAddr(addr))
@@ -1152,7 +1150,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 				if fieldExprX != nil {
 					fieldExprX()
 				}
-				if ctx.checkLoadAddr {
+				if ctx.takeAddr {
 					ctx.out.AddrField(fieldStructType, fieldIndex)
 				} else {
 					ctx.out.LoadField(fieldStructType, fieldIndex)

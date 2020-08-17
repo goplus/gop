@@ -192,9 +192,8 @@ type blockCtx struct {
 	parent          *blockCtx
 	syms            map[string]iSymbol
 	noExecCtx       bool
-	takeAddr        bool
 	checkFlag       bool
-	checkLoadAddr   bool
+	takeAddr        bool
 	fieldStructType reflect.Type
 	fieldIndex      []int
 	fieldExprX      func()
