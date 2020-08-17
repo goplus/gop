@@ -698,6 +698,51 @@ import (
 	}
 }
 
+func TestPkgTakeAddr(t *testing.T) {
+	var I = exec.NewGoPackage("pkg_test_takeaddr")
+	rc := tMakeRect(10, 20, 100, 200)
+	I.RegisterVars(
+		I.Var("RC", &rc),
+	)
+	var testSource = `
+	import pkg "pkg_test_takeaddr"
+
+	&pkg.RC
+	&pkg.RC.Min
+	&pkg.RC.Max.Y
+	`
+
+	fsTestPkgVar := asttest.NewSingleFileFS("/foo", "bar.gop", testSource)
+	t.Log(testSource)
+
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestPkgVar, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, _, err = newPackage(b, bar, fset)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+	code.Dump(os.Stdout)
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := ctx.Get(-3); v != &rc {
+		t.Fatal("takeAddr", v)
+	}
+	if v := ctx.Get(-2); v != &rc.Min {
+		t.Fatal("takeAddr", v)
+	}
+	if v := ctx.Get(-1); v != &rc.Max.Y {
+		t.Fatal("takeAddr", v)
+	}
+}
+
 func TestPkgFieldBadSet(t *testing.T) {
 	defer func() {
 		r := recover()
