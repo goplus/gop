@@ -701,12 +701,23 @@ import (
 func TestPkgTakeAddr(t *testing.T) {
 	var I = exec.NewGoPackage("pkg_test_takeaddr")
 	rc := tMakeRect(10, 20, 100, 200)
+	ar := [2]trect{tMakeRect(1, 2, 10, 20), tMakeRect(10, 20, 100, 200)}
+	m := make(map[int]trect)
+	m[1] = tMakeRect(1, 2, 10, 20)
+	m[2] = tMakeRect(10, 20, 100, 200)
 	I.RegisterVars(
 		I.Var("RC", &rc),
+		I.Var("Ar", &ar),
+		I.Var("M", &m),
 	)
 	var testSource = `
 	import pkg "pkg_test_takeaddr"
 
+	&pkg.M
+	&pkg.Ar
+	&pkg.Ar[0]
+	&pkg.Ar[0].Min
+	&pkg.Ar[1].Max.Y
 	&pkg.RC
 	&pkg.RC.Min
 	&pkg.RC.Max.Y
@@ -732,6 +743,21 @@ func TestPkgTakeAddr(t *testing.T) {
 
 	ctx := exec.NewContext(code)
 	ctx.Exec(0, code.Len())
+	if v := ctx.Get(-8); v != &m {
+		t.Fatal("takeAddr", v)
+	}
+	if v := ctx.Get(-7); v != &ar {
+		t.Fatal("takeAddr", v)
+	}
+	if v := ctx.Get(-6); v != &ar[0] {
+		t.Fatal("takeAddr", v)
+	}
+	if v := ctx.Get(-5); v != &ar[0].Min {
+		t.Fatal("takeAddr", v)
+	}
+	if v := ctx.Get(-4); v != &ar[1].Max.Y {
+		t.Fatal("takeAddr", v)
+	}
 	if v := ctx.Get(-3); v != &rc {
 		t.Fatal("takeAddr", v)
 	}
