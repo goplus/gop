@@ -238,6 +238,13 @@ func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) iType {
 }
 
 func toExternalType(ctx *blockCtx, v *ast.SelectorExpr) iType {
+	if ident, ok := v.X.(*ast.Ident); ok {
+		if pkg := ctx.FindGoPackage(ident.Name); pkg != nil {
+			if typ, ok := pkg.FindType(v.Sel.Name); ok {
+				return typ.Elem()
+			}
+		}
+	}
 	panic("toExternalType: todo")
 }
 
