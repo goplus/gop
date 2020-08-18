@@ -60,7 +60,7 @@ It's for Go, and it's also for Go+.
 
 ## Compatibility with Go
 
-All Go features (not including `cgo`) will be supported.
+All Go features will be supported (including partially support `cgo`, see [below](#bytecode-vs-go-code)).
 
 * See [supported the Go language features](https://github.com/goplus/gop/wiki/Supported-Go-features).
 
@@ -159,6 +159,9 @@ Go+ supports bytecode backend and Go code generation.
 When we use `gop go` or `gop install` command, it generates Go code to covert Go+ package into Go packages.
 
 When we use `gop run` command, it doesn't call `go run` command. It generates bytecode to execute.
+
+In bytecode mode, Go+ doesn't support `cgo`. However, in Go-code-generation mode, Go+ fully supports `cgo`.
+
 
 ### Commands
 
