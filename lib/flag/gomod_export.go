@@ -4,6 +4,7 @@ package flag
 import (
 	flag "flag"
 	io "io"
+	reflect "reflect"
 	time "time"
 
 	gop "github.com/goplus/gop"
@@ -469,6 +470,13 @@ func init() {
 		I.Var("CommandLine", &flag.CommandLine),
 		I.Var("ErrHelp", &flag.ErrHelp),
 		I.Var("Usage", &flag.Usage),
+	)
+	I.RegisterTypes(
+		I.Type("ErrorHandling", reflect.TypeOf((*flag.ErrorHandling)(nil)).Elem()),
+		I.Type("Flag", reflect.TypeOf((*flag.Flag)(nil)).Elem()),
+		I.Type("FlagSet", reflect.TypeOf((*flag.FlagSet)(nil)).Elem()),
+		I.Type("Getter", reflect.TypeOf((*flag.Getter)(nil)).Elem()),
+		I.Type("Value", reflect.TypeOf((*flag.Value)(nil)).Elem()),
 	)
 	I.RegisterConsts(
 		I.Const("ContinueOnError", qspec.Int, flag.ContinueOnError),

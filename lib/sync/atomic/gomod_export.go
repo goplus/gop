@@ -2,6 +2,7 @@
 package atomic
 
 import (
+	reflect "reflect"
 	atomic "sync/atomic"
 	unsafe "unsafe"
 
@@ -230,5 +231,8 @@ func init() {
 		I.Func("SwapUintptr", atomic.SwapUintptr, execSwapUintptr),
 		I.Func("(*Value).Load", (*atomic.Value).Load, execmValueLoad),
 		I.Func("(*Value).Store", (*atomic.Value).Store, execmValueStore),
+	)
+	I.RegisterTypes(
+		I.Type("Value", reflect.TypeOf((*atomic.Value)(nil)).Elem()),
 	)
 }

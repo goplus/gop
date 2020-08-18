@@ -3,6 +3,7 @@ package io
 
 import (
 	io "io"
+	reflect "reflect"
 
 	gop "github.com/goplus/gop"
 	qspec "github.com/goplus/gop/exec.spec"
@@ -227,6 +228,33 @@ func init() {
 		I.Var("ErrShortBuffer", &io.ErrShortBuffer),
 		I.Var("ErrShortWrite", &io.ErrShortWrite),
 		I.Var("ErrUnexpectedEOF", &io.ErrUnexpectedEOF),
+	)
+	I.RegisterTypes(
+		I.Type("ByteReader", reflect.TypeOf((*io.ByteReader)(nil)).Elem()),
+		I.Type("ByteScanner", reflect.TypeOf((*io.ByteScanner)(nil)).Elem()),
+		I.Type("ByteWriter", reflect.TypeOf((*io.ByteWriter)(nil)).Elem()),
+		I.Type("Closer", reflect.TypeOf((*io.Closer)(nil)).Elem()),
+		I.Type("LimitedReader", reflect.TypeOf((*io.LimitedReader)(nil)).Elem()),
+		I.Type("PipeReader", reflect.TypeOf((*io.PipeReader)(nil)).Elem()),
+		I.Type("PipeWriter", reflect.TypeOf((*io.PipeWriter)(nil)).Elem()),
+		I.Type("ReadCloser", reflect.TypeOf((*io.ReadCloser)(nil)).Elem()),
+		I.Type("ReadSeeker", reflect.TypeOf((*io.ReadSeeker)(nil)).Elem()),
+		I.Type("ReadWriteCloser", reflect.TypeOf((*io.ReadWriteCloser)(nil)).Elem()),
+		I.Type("ReadWriteSeeker", reflect.TypeOf((*io.ReadWriteSeeker)(nil)).Elem()),
+		I.Type("ReadWriter", reflect.TypeOf((*io.ReadWriter)(nil)).Elem()),
+		I.Type("Reader", reflect.TypeOf((*io.Reader)(nil)).Elem()),
+		I.Type("ReaderAt", reflect.TypeOf((*io.ReaderAt)(nil)).Elem()),
+		I.Type("ReaderFrom", reflect.TypeOf((*io.ReaderFrom)(nil)).Elem()),
+		I.Type("RuneReader", reflect.TypeOf((*io.RuneReader)(nil)).Elem()),
+		I.Type("RuneScanner", reflect.TypeOf((*io.RuneScanner)(nil)).Elem()),
+		I.Type("SectionReader", reflect.TypeOf((*io.SectionReader)(nil)).Elem()),
+		I.Type("Seeker", reflect.TypeOf((*io.Seeker)(nil)).Elem()),
+		I.Type("StringWriter", reflect.TypeOf((*io.StringWriter)(nil)).Elem()),
+		I.Type("WriteCloser", reflect.TypeOf((*io.WriteCloser)(nil)).Elem()),
+		I.Type("WriteSeeker", reflect.TypeOf((*io.WriteSeeker)(nil)).Elem()),
+		I.Type("Writer", reflect.TypeOf((*io.Writer)(nil)).Elem()),
+		I.Type("WriterAt", reflect.TypeOf((*io.WriterAt)(nil)).Elem()),
+		I.Type("WriterTo", reflect.TypeOf((*io.WriterTo)(nil)).Elem()),
 	)
 	I.RegisterConsts(
 		I.Const("SeekCurrent", qspec.ConstUnboundInt, io.SeekCurrent),
