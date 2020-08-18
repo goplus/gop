@@ -709,6 +709,9 @@ func TestPkgType(t *testing.T) {
 	import pkg "pkg_test_type"
 
 	pkg.Rect{pkg.Point{1,2},pkg.Point{3,4}}
+	pkg.Rect{pkg.Point{X:5,Y:6},pkg.Point{X:7,Y:8}}
+	&pkg.Rect{pkg.Point{1,2},pkg.Point{3,4}}
+	&pkg.Rect{pkg.Point{X:5,Y:6},pkg.Point{X:7,Y:8}}
 	pkg.Point{1,2}
 	pkg.Point{X:3,Y:4}
 	&pkg.Point{5,6}
@@ -735,7 +738,16 @@ func TestPkgType(t *testing.T) {
 
 	ctx := exec.NewContext(code)
 	ctx.Exec(0, code.Len())
-	if v := ctx.Get(-5); v != nil && !reflect.DeepEqual(v, tMakeRect(1, 2, 3, 4)) {
+	if v := ctx.Get(-8); v != nil && !reflect.DeepEqual(v, tMakeRect(1, 2, 3, 4)) {
+		t.Fatal("check rect", v)
+	}
+	if v := ctx.Get(-7); v != nil && !reflect.DeepEqual(v, tMakeRect(5, 6, 7, 8)) {
+		t.Fatal("check rect", v)
+	}
+	if v := ctx.Get(-6); v != nil && !reflect.DeepEqual(v, tNewRect(1, 2, 3, 4)) {
+		t.Fatal("check rect", v)
+	}
+	if v := ctx.Get(-5); v != nil && !reflect.DeepEqual(v, tNewRect(5, 6, 7, 8)) {
 		t.Fatal("check rect", v)
 	}
 	if v := ctx.Get(-4); v != nil && !reflect.DeepEqual(v, tpoint{1, 2}) {
