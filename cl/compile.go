@@ -308,11 +308,39 @@ func loadConsts(ctx *blockCtx, d *ast.GenDecl) {
 
 func loadVars(ctx *blockCtx, d *ast.GenDecl) {
 	for _, item := range d.Specs {
-		loadVar(ctx, item.(*ast.ValueSpec))
+		loadVarSpec(ctx, item.(*ast.ValueSpec))
 	}
 }
 
-func loadVar(ctx *blockCtx, spec *ast.ValueSpec) {
+func loadVarSpec(ctx *blockCtx, spec *ast.ValueSpec) {
+	for i := 0; i < len(spec.Names); i++ {
+		name := spec.Names[i].Name
+		if len(spec.Values) > i {
+			loadVar(ctx, name, spec.Type, spec.Values[i])
+		} else {
+			loadVar(ctx, name, spec.Type, nil)
+		}
+	}
+}
+
+func loadVar(ctx *blockCtx, name string, typ ast.Expr, value ast.Expr) {
+	var t reflect.Type
+	if typ != nil {
+		t = toType(ctx, typ).(reflect.Type)
+	}
+	if value != nil {
+		compileExpr(ctx, value)()
+		in := ctx.infer.Get(-1)
+		if t == nil {
+			t = boundType(in.(iValue))
+		}
+		addr := ctx.insertVar(name, t)
+		checkType(addr.getType(), in, ctx.out)
+		ctx.infer.PopN(1)
+		ctx.out.StoreVar(addr.v)
+	} else {
+		ctx.insertVar(name, t)
+	}
 }
 
 func loadFunc(ctx *blockCtx, d *ast.FuncDecl, isUnnamed bool) {

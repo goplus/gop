@@ -81,6 +81,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileDeferStmt(ctx, v)
 	case *ast.GoStmt:
 		compileGoStmt(ctx, v)
+	case *ast.DeclStmt:
+		compileDeclStmt(ctx, v)
 	case *ast.EmptyStmt:
 		// do nothing
 	default:
@@ -473,6 +475,22 @@ func compileExprStmt(ctx *blockCtx, expr *ast.ExprStmt) {
 		}
 	}
 	ctx.infer.PopN(1)
+}
+
+func compileDeclStmt(ctx *blockCtx, expr *ast.DeclStmt) {
+	switch d := expr.Decl.(type) {
+	case *ast.GenDecl:
+		switch d.Tok {
+		case token.TYPE:
+			loadTypes(ctx, d)
+		case token.CONST:
+			loadConsts(ctx, d)
+		case token.VAR:
+			loadVars(ctx, d)
+		default:
+			log.Panicln("tok:", d.Tok, "spec:", reflect.TypeOf(d.Specs).Elem())
+		}
+	}
 }
 
 func compileIncDecStmt(ctx *blockCtx, expr *ast.IncDecStmt) {
