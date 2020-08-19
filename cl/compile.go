@@ -304,6 +304,23 @@ func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
 }
 
 func loadConsts(ctx *blockCtx, d *ast.GenDecl) {
+	for _, item := range d.Specs {
+		loadConstSpec(ctx, item.(*ast.ValueSpec))
+	}
+}
+
+func loadConstSpec(ctx *blockCtx, spec *ast.ValueSpec) {
+	for i := 0; i < len(spec.Names); i++ {
+		name := spec.Names[i].Name
+		if len(spec.Values) > i {
+			loadConst(ctx, name, spec.Type, spec.Values[i])
+		} else {
+			loadConst(ctx, name, spec.Type, nil)
+		}
+	}
+}
+
+func loadConst(ctx *blockCtx, name string, typ ast.Expr, value ast.Expr) {
 }
 
 func loadVars(ctx *blockCtx, d *ast.GenDecl) {
