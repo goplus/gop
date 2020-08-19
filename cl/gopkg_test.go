@@ -698,6 +698,73 @@ import (
 	}
 }
 
+func TestPkgType(t *testing.T) {
+	var I = exec.NewGoPackage("pkg_test_type")
+	I.RegisterTypes(
+		I.Type("Rect", reflect.TypeOf((*trect)(nil)).Elem()),
+		I.Type("Point", reflect.TypeOf((*tpoint)(nil)).Elem()),
+	)
+
+	var testSource = `
+	import pkg "pkg_test_type"
+
+	pkg.Rect{pkg.Point{1,2},pkg.Point{3,4}}
+	pkg.Rect{pkg.Point{X:5,Y:6},pkg.Point{X:7,Y:8}}
+	&pkg.Rect{pkg.Point{1,2},pkg.Point{3,4}}
+	&pkg.Rect{pkg.Point{X:5,Y:6},pkg.Point{X:7,Y:8}}
+	pkg.Point{1,2}
+	pkg.Point{X:3,Y:4}
+	&pkg.Point{5,6}
+	&pkg.Point{X:7,Y:8}
+	`
+
+	fsTestPkgVar := asttest.NewSingleFileFS("/foo", "bar.gop", testSource)
+	t.Log(testSource)
+
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseFSDir(fset, fsTestPkgVar, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	_, _, err = newPackage(b, bar, fset)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+	code.Dump(os.Stdout)
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := ctx.Get(-8); v != nil && !reflect.DeepEqual(v, tMakeRect(1, 2, 3, 4)) {
+		t.Fatal("check rect", v)
+	}
+	if v := ctx.Get(-7); v != nil && !reflect.DeepEqual(v, tMakeRect(5, 6, 7, 8)) {
+		t.Fatal("check rect", v)
+	}
+	if v := ctx.Get(-6); v != nil && !reflect.DeepEqual(v, tNewRect(1, 2, 3, 4)) {
+		t.Fatal("check rect", v)
+	}
+	if v := ctx.Get(-5); v != nil && !reflect.DeepEqual(v, tNewRect(5, 6, 7, 8)) {
+		t.Fatal("check rect", v)
+	}
+	if v := ctx.Get(-4); v != nil && !reflect.DeepEqual(v, tpoint{1, 2}) {
+		t.Fatal("check point", v)
+	}
+	if v := ctx.Get(-3); v != nil && !reflect.DeepEqual(v, tpoint{X: 3, Y: 4}) {
+		t.Fatal("check point", v)
+	}
+	if v := ctx.Get(-2); v != nil && !reflect.DeepEqual(v, &tpoint{5, 6}) {
+		t.Fatal("check point", v)
+	}
+	if v := ctx.Get(-1); v != nil && !reflect.DeepEqual(v, &tpoint{X: 7, Y: 8}) {
+		t.Fatal("check point", v)
+	}
+
+}
+
 func TestPkgTakeAddr(t *testing.T) {
 	var I = exec.NewGoPackage("pkg_test_takeaddr")
 	rc := tMakeRect(10, 20, 100, 200)

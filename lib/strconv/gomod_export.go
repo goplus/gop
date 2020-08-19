@@ -2,6 +2,7 @@
 package strconv
 
 import (
+	reflect "reflect"
 	strconv "strconv"
 
 	gop "github.com/goplus/gop"
@@ -248,6 +249,9 @@ func init() {
 	I.RegisterVars(
 		I.Var("ErrRange", &strconv.ErrRange),
 		I.Var("ErrSyntax", &strconv.ErrSyntax),
+	)
+	I.RegisterTypes(
+		I.Type("NumError", reflect.TypeOf((*strconv.NumError)(nil)).Elem()),
 	)
 	I.RegisterConsts(
 		I.Const("IntSize", qspec.ConstUnboundInt, strconv.IntSize),

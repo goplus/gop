@@ -4,6 +4,7 @@ package bytes
 import (
 	bytes "bytes"
 	io "io"
+	reflect "reflect"
 	unicode "unicode"
 
 	gop "github.com/goplus/gop"
@@ -606,6 +607,10 @@ func init() {
 	)
 	I.RegisterVars(
 		I.Var("ErrTooLarge", &bytes.ErrTooLarge),
+	)
+	I.RegisterTypes(
+		I.Type("Buffer", reflect.TypeOf((*bytes.Buffer)(nil)).Elem()),
+		I.Type("Reader", reflect.TypeOf((*bytes.Reader)(nil)).Elem()),
 	)
 	I.RegisterConsts(
 		I.Const("MinRead", qspec.ConstUnboundInt, bytes.MinRead),

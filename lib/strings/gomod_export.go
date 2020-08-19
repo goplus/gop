@@ -3,6 +3,7 @@ package strings
 
 import (
 	io "io"
+	reflect "reflect"
 	strings "strings"
 	unicode "unicode"
 
@@ -506,5 +507,10 @@ func init() {
 	)
 	I.RegisterFuncvs(
 		I.Funcv("NewReplacer", strings.NewReplacer, execNewReplacer),
+	)
+	I.RegisterTypes(
+		I.Type("Builder", reflect.TypeOf((*strings.Builder)(nil)).Elem()),
+		I.Type("Reader", reflect.TypeOf((*strings.Reader)(nil)).Elem()),
+		I.Type("Replacer", reflect.TypeOf((*strings.Replacer)(nil)).Elem()),
 	)
 }

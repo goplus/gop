@@ -4,6 +4,7 @@ package gopq
 import (
 	token "go/token"
 	os "os"
+	reflect "reflect"
 
 	gop "github.com/goplus/gop"
 	gopq "github.com/goplus/gop/ast/gopq"
@@ -192,5 +193,10 @@ func init() {
 		I.Var("ErrBreak", &gopq.ErrBreak),
 		I.Var("ErrNotFound", &gopq.ErrNotFound),
 		I.Var("ErrTooManyNodes", &gopq.ErrTooManyNodes),
+	)
+	I.RegisterTypes(
+		I.Type("Node", reflect.TypeOf((*gopq.Node)(nil)).Elem()),
+		I.Type("NodeEnum", reflect.TypeOf((*gopq.NodeEnum)(nil)).Elem()),
+		I.Type("NodeSet", reflect.TypeOf((*gopq.NodeSet)(nil)).Elem()),
 	)
 }
