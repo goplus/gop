@@ -381,13 +381,6 @@ func (p *blockCtx) insertFuncVars(in []reflect.Type, args []string, rets []exec.
 	}
 }
 
-func (p *blockCtx) insertConst(name string, c *constVal) {
-	if p.exists(name) {
-		log.Panicln("insertConst failed: symbol exists -", name)
-	}
-	p.syms[name] = c
-}
-
 func (p *blockCtx) insertVar(name string, typ reflect.Type, inferOnly ...bool) *execVar {
 	if p.exists(name) {
 		log.Panicln("insertVar failed: symbol exists -", name)
