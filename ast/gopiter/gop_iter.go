@@ -5,71 +5,31 @@ import (
 	"reflect"
 )
 
-type rangeIterType int
-
-const (
-	arrayIterType rangeIterType = iota
-	mapIterType
-	iterHolderType
-)
-
-type rangeIter struct {
-	typ         rangeIterType
-	array       reflect.Value
-	arrayLen    int
-	arrayCursor int
-	mapIter     *reflect.MapIter
-	holderIter  Iterator
+type sliceIter struct {
+	slice    reflect.Value
+	sliceLen int
+	cursor   int
 }
 
-func newIter(d interface{}) *rangeIter {
-	f := &rangeIter{}
-	data := reflect.ValueOf(d)
-	switch data.Kind() {
-	case reflect.Map:
-		f.typ = mapIterType
-		f.mapIter = data.MapRange()
-	case reflect.Slice, reflect.Array, reflect.String:
-		f.typ = arrayIterType
-		f.array = reflect.Indirect(data)
-		f.arrayLen = f.array.Len()
-	case reflect.Struct:
-		if v, ok := d.(Iterator); ok {
-			f.typ = iterHolderType
-			f.holderIter = v
-		} else {
-			log.Panicln("iter must be Iterator")
-		}
-	}
-	return f
-}
-
-func (p *rangeIter) Next() bool {
-	switch p.typ {
-	case mapIterType:
-		return p.mapIter.Next()
-	default:
-		p.arrayCursor++
-		return p.arrayCursor-1 < p.arrayLen
+func newSliceIter(val reflect.Value) *sliceIter {
+	return &sliceIter{
+		slice:    val,
+		sliceLen: val.Len(),
+		cursor:   0,
 	}
 }
 
-func (p *rangeIter) Key() reflect.Value {
-	switch p.typ {
-	case mapIterType:
-		return p.mapIter.Key()
-	default:
-		return reflect.ValueOf(p.arrayCursor - 1)
-	}
+func (p *sliceIter) Next() bool {
+	p.cursor++
+	return p.cursor-1 < p.sliceLen
 }
 
-func (p *rangeIter) Value() reflect.Value {
-	switch p.typ {
-	case mapIterType:
-		return p.mapIter.Value()
-	default:
-		return p.array.Index(p.arrayCursor - 1)
-	}
+func (p *sliceIter) Key() reflect.Value {
+	return reflect.ValueOf(p.cursor - 1)
+}
+
+func (p *sliceIter) Value() reflect.Value {
+	return p.slice.Index(p.cursor - 1)
 }
 
 type Iterator interface {
@@ -78,8 +38,21 @@ type Iterator interface {
 	Value() reflect.Value
 }
 
-func NewIter(container interface{}) Iterator {
-	return newIter(container)
+func NewIter(container interface{}) (iter Iterator) {
+	data := reflect.ValueOf(container)
+	switch data.Kind() {
+	case reflect.Map:
+		iter = data.MapRange()
+	case reflect.Slice, reflect.Array, reflect.String:
+		iter = newSliceIter(reflect.Indirect(data))
+	case reflect.Struct:
+		if v, ok := container.(Iterator); ok {
+			iter = v
+		} else {
+			log.Panicln("iter must be Iterator")
+		}
+	}
+	return
 }
 
 func Key(i Iterator, key interface{}) {
