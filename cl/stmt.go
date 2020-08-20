@@ -148,15 +148,20 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 	typData := boundType(parent.infer.Pop().(iValue))
 	var typKey, typVal reflect.Type
 	var forStmts []ast.Stmt
+	switch kind := typData.Kind(); kind {
+	case reflect.String:
+		typKey = exec.TyInt
+		typVal = exec.TyByte
+	case reflect.Slice, reflect.Array:
+		typKey = exec.TyInt
+		typVal = typData.Elem()
+	case reflect.Map:
+		typKey = typData.Key()
+		typVal = typData.Elem()
+	default:
+		log.Panicln("compileRangeStmt: require slice, array or map")
+	}
 	if keyIdent != nil {
-		switch kind := typData.Kind(); kind {
-		case reflect.Slice, reflect.Array:
-			typKey = exec.TyInt
-		case reflect.Map:
-			typKey = typData.Key()
-		default:
-			log.Panicln("compileListComprehensionExpr: require slice, array or map")
-		}
 		// Key(iter,&k)
 		if id, ok := v.Key.(*ast.Ident); !ok || (ok && id.Name != "_") {
 			kvDef[keyIdent.Name] = typKey
@@ -170,7 +175,6 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 		}
 	}
 	if valIdent != nil {
-		typVal = typData.Elem()
 		// Value(iter,&v)
 		if id, ok := v.Value.(*ast.Ident); !ok || (ok && id.Name != "_") {
 			kvDef[valIdent.Name] = typVal
