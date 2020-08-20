@@ -597,6 +597,19 @@ func TestLoadVar2(t *testing.T) {
 			println("x:",x1,x2,x3)
 		}`,
 		"x: {0 0} {10 20} {-10 -20}\n")
+
+	cltest.Expect(t, `
+		func main() {
+			type Point struct {
+				X int
+				Y int
+			}
+			var x1 Point
+			var x2 Point = Point{10,20}
+			var x3 = Point{-10,-20}
+			println("x:",x1,x2,x3)
+		}`,
+		"x: {0 0} {10 20} {-10 -20}\n")
 }
 
 func TestLoadVar3(t *testing.T) {
