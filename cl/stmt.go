@@ -486,7 +486,7 @@ func compileDeclStmt(ctx *blockCtx, expr *ast.DeclStmt) {
 		case token.CONST:
 			loadConsts(ctx, d)
 		case token.VAR:
-			loadVars(ctx, d)
+			loadVars(ctx, d, expr)
 		default:
 			log.Panicln("tok:", d.Tok, "spec:", reflect.TypeOf(d.Specs).Elem())
 		}

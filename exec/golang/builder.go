@@ -158,10 +158,18 @@ func (p *Builder) Resolve() *Code {
 		decls = append(decls, gblvars)
 	}
 	p.endBlockStmt(0)
+
 	if len(p.gblScope.stmts) != 0 {
+		fnName := "main"
+		for _, decl := range p.gblDecls {
+			if d, ok := decl.(*ast.FuncDecl); ok && d.Name.Name == "main" {
+				fnName = "init"
+				break
+			}
+		}
 		body := &ast.BlockStmt{List: p.gblScope.stmts}
 		fn := &ast.FuncDecl{
-			Name: Ident("main"),
+			Name: Ident(fnName),
 			Type: FuncType(p, tyMainFunc),
 			Body: body,
 		}

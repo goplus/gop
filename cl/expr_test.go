@@ -599,6 +599,21 @@ func TestLoadVar2(t *testing.T) {
 		"x: {0 0} {10 20} {-10 -20}\n")
 }
 
+func TestLoadVar3(t *testing.T) {
+	cltest.Expect(t, `
+		var x1,x2,x3 = 10,20,x1+x2
+		println("x:",x1,x2,x3)
+		`,
+		"x: 10 20 30\n")
+	cltest.Expect(t, `
+		var x1,x2,x3 = 10,20,x1+x2
+		func main() {
+			println("x:",x1,x2,x3)
+		}
+		`,
+		"x: 10 20 30\n")
+}
+
 func TestMap(t *testing.T) {
 	cltest.Expect(t, `
 		x := map[string]float64{"Hello": 1, "xsw": 3.4}
