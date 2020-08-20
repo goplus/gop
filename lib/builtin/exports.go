@@ -119,11 +119,15 @@ func execPanic(_ int, p *gop.Context) {
 var I = gop.NewGoPackage("")
 
 var builtinFnvs = map[string][2]string{
-	"errorf":  {"fmt", "Errorf"},
-	"print":   {"fmt", "Print"},
-	"printf":  {"fmt", "Printf"},
-	"println": {"fmt", "Println"},
-	"fprintf": {"fmt", "Fprintf"},
+	"errorf":       {"fmt", "Errorf"},
+	"print":        {"fmt", "Print"},
+	"printf":       {"fmt", "Printf"},
+	"println":      {"fmt", "Println"},
+	"fprintf":      {"fmt", "Fprintf"},
+	"_gop_NewIter": {"github.com/goplus/gop/ast/gopiter", "NewIter"},
+	"_gop_Next":    {"github.com/goplus/gop/ast/gopiter", "Next"},
+	"_gop_Key":     {"github.com/goplus/gop/ast/gopiter", "Key"},
+	"_gop_Value":   {"github.com/goplus/gop/ast/gopiter", "Value"},
 }
 
 func init() {
@@ -131,9 +135,9 @@ func init() {
 		I.Func("panic", qlPanic, execPanic),
 		I.Func("is", errors.Is, QexecIs),
 		I.Func("_gop_NewIter", gopiter.NewIter, QNewIter),
+		I.Func("_gop_Next", gopiter.Next, QNext),
 		I.Func("_gop_Key", gopiter.Key, QKey),
 		I.Func("_gop_Value", gopiter.Value, QValue),
-		I.Func("_gop_Next", gopiter.Next, QNext),
 	)
 	I.RegisterFuncvs(
 		I.Funcv("errorf", fmt.Errorf, QexecErrorf),

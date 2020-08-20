@@ -387,6 +387,11 @@ func (p *Builder) Call(narg int, ellipsis bool, args ...ast.Expr) *Builder {
 func (p *Builder) CallGoFunc(fun exec.GoFuncAddr, nexpr int) *Builder {
 	gfi := defaultImpl.GetGoFuncInfo(fun)
 	pkgPath, name := gfi.Pkg.PkgPath(), gfi.Name
+	if pkgPath == "" {
+		if alias, ok := builtin.FuncGoInfo(name); ok {
+			pkgPath, name = alias[0], alias[1]
+		}
+	}
 	fn := p.GoSymIdent(pkgPath, name)
 	p.rhs.Push(fn)
 	return p.Call(nexpr, false)
@@ -404,14 +409,6 @@ func (p *Builder) CallGoFuncv(fun exec.GoFuncvAddr, nexpr, arity int) *Builder {
 	fn := p.GoSymIdent(pkgPath, name)
 	p.rhs.Push(fn)
 	return p.Call(nexpr, arity == -1)
-}
-
-var builtinFnvs = map[string][2]string{
-	"errorf":  {"fmt", "Errorf"},
-	"print":   {"fmt", "Print"},
-	"printf":  {"fmt", "Printf"},
-	"println": {"fmt", "Println"},
-	"fprintf": {"fmt", "Fprintf"},
 }
 
 // LoadGoVar instr
