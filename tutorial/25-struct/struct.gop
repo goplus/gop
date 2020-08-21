@@ -1,3 +1,7 @@
+import (
+	"sync"
+)
+
 a := struct {
 	A int
 	B string
