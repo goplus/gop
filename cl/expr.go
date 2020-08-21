@@ -17,6 +17,7 @@
 package cl
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 
@@ -238,6 +239,7 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 		return compileMapLit(ctx, v)
 	}
 	typ := toType(ctx, v.Type)
+
 	switch kind := typ.Kind(); kind {
 	case reflect.Slice, reflect.Array:
 		var typSlice reflect.Type
@@ -300,6 +302,7 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 		}
 	case reflect.Struct:
 		typStruct := typ.(reflect.Type)
+		fmt.Println("=====>", typStruct.PkgPath())
 		ctx.infer.Push(&goValue{t: typStruct})
 		return func() {
 			old := ctx.takeAddr
@@ -308,7 +311,7 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 				switch e := elt.(type) {
 				case *ast.KeyValueExpr:
 					fieldName := e.Key.(*ast.Ident).Name
-					field, _ := ctx.findStructField(typStruct, fieldName)
+					field, _ := typStruct.FieldByName(fieldName)
 					ctx.out.Push(field.Name)
 					typVal := field.Type
 					compileExpr(ctx, e.Value)()
@@ -1076,7 +1079,7 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compileMode
 		_, t := countPtr(vx.t)
 		name := v.Sel.Name
 		if t.PkgPath() != "" && ast.IsExported(name) || t.PkgPath() == "" {
-			if sf, ok := ctx.findStructField(t, name); ok {
+			if sf, ok := t.FieldByName(name); ok {
 				checkType(sf.Type, in, ctx.out)
 				if ctx.fieldIndex == nil {
 					ctx.fieldStructType = vx.t
@@ -1155,7 +1158,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 		autoCall := false
 		name := v.Sel.Name
 		if t.PkgPath() != "" && ast.IsExported(name) || t.PkgPath() == "" {
-			if sf, ok := ctx.findStructField(t, name); ok {
+			if sf, ok := t.FieldByName(name); ok {
 				ctx.infer.Ret(1, &goValue{t: sf.Type})
 				if ctx.fieldIndex == nil {
 					ctx.fieldExprX = exprX

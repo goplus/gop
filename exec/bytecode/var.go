@@ -17,6 +17,7 @@
 package bytecode
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/goplus/gop/exec.spec"
@@ -240,11 +241,14 @@ type Var struct {
 	name      string
 	nestDepth uint32
 	idx       uint32
+	pkgs      []string
 }
 
 // NewVar creates a variable instance.
 func NewVar(typ reflect.Type, name string) *Var {
-	return &Var{typ: typ, name: "Q" + name, idx: 0xffffffff}
+	fmt.Println(typ.PkgPath())
+	typ, pkgs := toType(typ)
+	return &Var{typ: typ, name: "Q" + name, idx: 0xffffffff, pkgs: pkgs}
 }
 
 func (p *Var) isGlobal() bool {
@@ -253,7 +257,7 @@ func (p *Var) isGlobal() bool {
 
 // Type returns variable's type.
 func (p *Var) Type() reflect.Type {
-	return p.typ
+	return extractType(p.typ, p.pkgs)
 }
 
 // Name returns variable's name.
@@ -306,6 +310,60 @@ func (p *varManager) addVars(vars ...exec.Var) {
 		log.Debug("DefineVar:", v.Name(), "nestDepth:", nestDepth)
 		p.vlist = append(p.vlist, v)
 	}
+}
+
+func toType(typ reflect.Type) (reflect.Type, []string) {
+	var ptr bool
+	var pkgPath []string
+	if typ.Kind() == reflect.Ptr {
+		ptr = true
+		typ = typ.Elem()
+	}
+
+	if typ.Kind() == reflect.Struct {
+		var fields = make([]StructField, 0, typ.NumField())
+		for i := 0; i < typ.NumField(); i++ {
+			field := typ.Field(i)
+			pkgPath = append(pkgPath, field.PkgPath)
+			fields = append(fields, StructField{
+				Type: field.Type,
+				Name: "Q" + field.Name,
+			})
+		}
+
+		typ = Struct(fields).Type()
+	}
+	if ptr {
+		typ = reflect.PtrTo(typ)
+	}
+	return typ, pkgPath
+}
+
+func extractType(typ reflect.Type, pkgs []string) reflect.Type {
+	var ptr bool
+	if typ.Kind() == reflect.Ptr {
+		ptr = true
+		typ = typ.Elem()
+	}
+
+	if typ.Kind() == reflect.Struct {
+		var fields = make([]StructField, 0, typ.NumField())
+		for i := 0; i < typ.NumField(); i++ {
+			field := typ.Field(i)
+			fields = append(fields, StructField{
+				Type:    field.Type,
+				Name:    field.Name[1:],
+				PkgPath: pkgs[i],
+			})
+		}
+
+		typ = Struct(fields).Type()
+	}
+
+	if ptr {
+		typ = reflect.PtrTo(typ)
+	}
+	return typ
 }
 
 type blockCtx struct {

@@ -514,7 +514,7 @@ type trect struct {
 	Max tpoint
 }
 
-type tfieldinfo struct {
+type Tfieldinfo struct {
 	V1  bool
 	V2  rune
 	V3  string
@@ -592,7 +592,7 @@ func TestPkgField(t *testing.T) {
 	ar[11] = [2]trect{tMakeRect(10, 20, 30, 40), tMakeRect(50, 60, 70, 80)}
 	ar[12] = [2]*trect{tNewRect(10, 20, 30, 40), tNewRect(50, 60, 70, 80)}
 
-	info := &tfieldinfo{}
+	info := &Tfieldinfo{}
 	info.V7 = make(map[int]string)
 	v := reflect.ValueOf(info).Elem()
 	for i := 0; i < v.NumField(); i++ {
