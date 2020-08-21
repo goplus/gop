@@ -485,7 +485,6 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		log.Panicln("compileAssignStmt internal error: infer stack is not empty.")
 	}
 	if len(expr.Rhs) == 1 {
-		ast.Print(token.NewFileSet(), expr.Rhs[0])
 		compileExpr(ctx, expr.Rhs[0])()
 		v := ctx.infer.Get(-1).(iValue)
 		n := v.NumValues()

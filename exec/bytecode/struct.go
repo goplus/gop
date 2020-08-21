@@ -17,6 +17,7 @@
 package bytecode
 
 import (
+	"fmt"
 	"reflect"
 	"strconv"
 
@@ -176,6 +177,7 @@ func makeStruct(typStruct reflect.Type, arity int, p *Context) {
 		ptr = true
 		typStruct = typStruct.Elem()
 	}
+	fmt.Println("=====>", typStruct)
 	v := reflect.New(typStruct).Elem()
 	for i := 0; i < n; i += 2 {
 		fieldName := args[i].(string)

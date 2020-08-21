@@ -10,6 +10,11 @@ b := &struct {
 	B string
 }{1, "Hello"}
 
+c := &struct {
+	a int
+	b string
+}{1, "Hello"}
+
 println(b)
 
 a.A, a.B = 2, "Hi"
@@ -17,3 +22,6 @@ println(a)
 
 b.B = "Hi"
 println(b)
+
+c.a, c.b = 2, "Hi"
+println(c)

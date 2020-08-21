@@ -17,7 +17,6 @@
 package bytecode
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/goplus/gop/exec.spec"
@@ -246,7 +245,6 @@ type Var struct {
 
 // NewVar creates a variable instance.
 func NewVar(typ reflect.Type, name string) *Var {
-	fmt.Println(typ.PkgPath())
 	typ, pkgs := toType(typ)
 	return &Var{typ: typ, name: "Q" + name, idx: 0xffffffff, pkgs: pkgs}
 }
@@ -313,55 +311,62 @@ func (p *varManager) addVars(vars ...exec.Var) {
 }
 
 func toType(typ reflect.Type) (reflect.Type, []string) {
-	var ptr bool
 	var pkgPath []string
 	if typ.Kind() == reflect.Ptr {
-		ptr = true
-		typ = typ.Elem()
+		temp := typ.Elem()
+		if temp.Kind() == reflect.Struct {
+			if temp.Name() == "" {
+				structType, pkgPath := toType(temp)
+				return reflect.PtrTo(structType), pkgPath
+			}
+		}
+		return typ, pkgPath
 	}
 
 	if typ.Kind() == reflect.Struct {
-		var fields = make([]StructField, 0, typ.NumField())
-		for i := 0; i < typ.NumField(); i++ {
-			field := typ.Field(i)
-			pkgPath = append(pkgPath, field.PkgPath)
-			fields = append(fields, StructField{
-				Type: field.Type,
-				Name: "Q" + field.Name,
-			})
-		}
+		if typ.Name() == "" {
+			var fields = make([]StructField, 0, typ.NumField())
+			for i := 0; i < typ.NumField(); i++ {
+				field := typ.Field(i)
+				pkgPath = append(pkgPath, field.PkgPath)
+				fields = append(fields, StructField{
+					Type: field.Type,
+					Name: "Q" + field.Name,
+				})
+			}
 
-		typ = Struct(fields).Type()
-	}
-	if ptr {
-		typ = reflect.PtrTo(typ)
+			typ = Struct(fields).Type()
+		}
 	}
 	return typ, pkgPath
 }
 
 func extractType(typ reflect.Type, pkgs []string) reflect.Type {
-	var ptr bool
 	if typ.Kind() == reflect.Ptr {
-		ptr = true
-		typ = typ.Elem()
+		temp := typ.Elem()
+		if temp.Kind() == reflect.Struct {
+			if temp.Name() == "" {
+				structType := extractType(temp, pkgs)
+				return reflect.PtrTo(structType)
+			}
+		}
+		return typ
 	}
 
 	if typ.Kind() == reflect.Struct {
-		var fields = make([]StructField, 0, typ.NumField())
-		for i := 0; i < typ.NumField(); i++ {
-			field := typ.Field(i)
-			fields = append(fields, StructField{
-				Type:    field.Type,
-				Name:    field.Name[1:],
-				PkgPath: pkgs[i],
-			})
+		if typ.Name() == "" {
+			var fields = make([]StructField, 0, typ.NumField())
+			for i := 0; i < typ.NumField(); i++ {
+				field := typ.Field(i)
+				fields = append(fields, StructField{
+					Type:    field.Type,
+					Name:    field.Name[1:],
+					PkgPath: pkgs[i],
+				})
+			}
+
+			typ = Struct(fields).Type()
 		}
-
-		typ = Struct(fields).Type()
-	}
-
-	if ptr {
-		typ = reflect.PtrTo(typ)
 	}
 	return typ
 }

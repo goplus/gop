@@ -17,7 +17,6 @@
 package cl
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 
@@ -302,7 +301,6 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 		}
 	case reflect.Struct:
 		typStruct := typ.(reflect.Type)
-		fmt.Println("=====>", typStruct.PkgPath())
 		ctx.infer.Push(&goValue{t: typStruct})
 		return func() {
 			old := ctx.takeAddr
