@@ -16,7 +16,6 @@ func Test_Slice(t *testing.T) {
 	for iter.Next() {
 		Key(iter, &k)
 		Value(iter, &v)
-		fmt.Println(cnt, k, v)
 		keySum += k
 		valSum += v
 		cnt++

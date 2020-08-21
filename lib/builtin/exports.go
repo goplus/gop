@@ -81,6 +81,12 @@ func QNewIter(_ int, p *gop.Context) {
 	p.Ret(1, gopiter.NewIter(args[0]))
 }
 
+// QNext instr
+func QNext(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	p.Ret(1, gopiter.Next(args[0].(gopiter.Iterator)))
+}
+
 // QKey instr
 func QKey(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
@@ -93,12 +99,6 @@ func QValue(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	gopiter.Value(args[0].(gopiter.Iterator), args[1])
 	p.PopN(2)
-}
-
-// QNext instr
-func QNext(_ int, p *gop.Context) {
-	args := p.GetArgs(1)
-	p.Ret(1, gopiter.Next(args[0].(gopiter.Iterator)))
 }
 
 // FuncGoInfo returns Go package and function name of a Go+ builtin function.
