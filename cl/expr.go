@@ -306,8 +306,8 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 				switch e := elt.(type) {
 				case *ast.KeyValueExpr:
 					fieldName := e.Key.(*ast.Ident).Name
-					ctx.out.Push(fieldName)
-					field, _ := typStruct.FieldByName(fieldName)
+					field, _ := ctx.findStructField(typStruct, fieldName)
+					ctx.out.Push(field.Name)
 					typVal := field.Type
 					compileExpr(ctx, e.Value)()
 					checkType(typVal, ctx.infer.Pop(), ctx.out)
@@ -1073,7 +1073,7 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compileMode
 	case *goValue:
 		_, t := countPtr(vx.t)
 		name := v.Sel.Name
-		if sf, ok := t.FieldByName(name); ok {
+		if sf, ok := ctx.findStructField(t, name); ok {
 			checkType(sf.Type, in, ctx.out)
 			if ctx.fieldIndex == nil {
 				ctx.fieldStructType = vx.t
@@ -1148,7 +1148,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 		n, t := countPtr(vx.t)
 		autoCall := false
 		name := v.Sel.Name
-		if sf, ok := t.FieldByName(name); ok {
+		if sf, ok := ctx.findStructField(t, name); ok {
 			ctx.infer.Ret(1, &goValue{t: sf.Type})
 			if ctx.fieldIndex == nil {
 				ctx.fieldExprX = exprX

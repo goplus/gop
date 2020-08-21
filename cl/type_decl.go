@@ -315,7 +315,7 @@ func buildField(ctx *blockCtx, field *ast.Field, anonymous bool, fieldName strin
 		f = reflect.StructField{}
 	}
 	f = reflect.StructField{
-		Name:      fieldName,
+		Name:      "Q" + fieldName, // For unexported fields, values ​​cannot be set by reflect, so the prefix ’Q’ is added
 		Type:      toType(ctx, field.Type).(reflect.Type),
 		Anonymous: anonymous,
 	}
@@ -324,6 +324,10 @@ func buildField(ctx *blockCtx, field *ast.Field, anonymous bool, fieldName strin
 		f.Tag = reflect.StructTag(tag)
 	}
 	return f
+}
+
+func (c *blockCtx) findStructField(typ reflect.Type, fieldName string) (reflect.StructField, bool) {
+	return typ.FieldByName("Q" + fieldName)
 }
 
 // -----------------------------------------------------------------------------

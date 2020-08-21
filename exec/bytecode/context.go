@@ -137,6 +137,7 @@ func (ctx *Context) Exec(ip, ipEnd int) (currentIP int) {
 			}
 			lastInstr, start = i, time.Now()
 		}
+		// fmt.Println(instrInfos[i>>bitsOpShift], ctx.Stack.data)
 		switch i >> bitsOpShift {
 		case opPushInt:
 			const mask = uint32(bitsOpIntOperand >> 1)
