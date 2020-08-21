@@ -4,6 +4,7 @@ package fmt
 import (
 	fmt "fmt"
 	io "io"
+	reflect "reflect"
 
 	gop "github.com/goplus/gop"
 )
@@ -160,5 +161,13 @@ func init() {
 		I.Funcv("Sscan", fmt.Sscan, execSscan),
 		I.Funcv("Sscanf", fmt.Sscanf, execSscanf),
 		I.Funcv("Sscanln", fmt.Sscanln, execSscanln),
+	)
+	I.RegisterTypes(
+		I.Type("Formatter", reflect.TypeOf((*fmt.Formatter)(nil)).Elem()),
+		I.Type("GoStringer", reflect.TypeOf((*fmt.GoStringer)(nil)).Elem()),
+		I.Type("ScanState", reflect.TypeOf((*fmt.ScanState)(nil)).Elem()),
+		I.Type("Scanner", reflect.TypeOf((*fmt.Scanner)(nil)).Elem()),
+		I.Type("State", reflect.TypeOf((*fmt.State)(nil)).Elem()),
+		I.Type("Stringer", reflect.TypeOf((*fmt.Stringer)(nil)).Elem()),
 	)
 }

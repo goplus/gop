@@ -4,6 +4,7 @@ package log
 import (
 	io "io"
 	log "log"
+	reflect "reflect"
 
 	gop "github.com/goplus/gop"
 	qspec "github.com/goplus/gop/exec.spec"
@@ -251,6 +252,9 @@ func init() {
 		I.Funcv("Print", log.Print, execPrint),
 		I.Funcv("Printf", log.Printf, execPrintf),
 		I.Funcv("Println", log.Println, execPrintln),
+	)
+	I.RegisterTypes(
+		I.Type("Logger", reflect.TypeOf((*log.Logger)(nil)).Elem()),
 	)
 	I.RegisterConsts(
 		I.Const("LUTC", qspec.ConstUnboundInt, log.LUTC),

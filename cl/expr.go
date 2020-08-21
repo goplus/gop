@@ -302,6 +302,8 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 		typStruct := typ.(reflect.Type)
 		ctx.infer.Push(&goValue{t: typStruct})
 		return func() {
+			old := ctx.takeAddr
+			ctx.takeAddr = false
 			for i, elt := range v.Elts {
 				switch e := elt.(type) {
 				case *ast.KeyValueExpr:
@@ -320,7 +322,7 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 					checkType(typVal, ctx.infer.Pop(), ctx.out)
 				}
 			}
-
+			ctx.takeAddr = old
 			if ctx.takeAddr {
 				ctx.out.Struct(reflect.PtrTo(typStruct), len(v.Elts))
 			} else {

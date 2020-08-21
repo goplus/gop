@@ -683,6 +683,21 @@ func init() {
 	I.RegisterFuncvs(
 		I.Funcv("Append", reflect.Append, execAppend),
 	)
+	I.RegisterTypes(
+		I.Type("ChanDir", reflect.TypeOf((*reflect.ChanDir)(nil)).Elem()),
+		I.Type("Kind", reflect.TypeOf((*reflect.Kind)(nil)).Elem()),
+		I.Type("MapIter", reflect.TypeOf((*reflect.MapIter)(nil)).Elem()),
+		I.Type("Method", reflect.TypeOf((*reflect.Method)(nil)).Elem()),
+		I.Type("SelectCase", reflect.TypeOf((*reflect.SelectCase)(nil)).Elem()),
+		I.Type("SelectDir", reflect.TypeOf((*reflect.SelectDir)(nil)).Elem()),
+		I.Type("SliceHeader", reflect.TypeOf((*reflect.SliceHeader)(nil)).Elem()),
+		I.Type("StringHeader", reflect.TypeOf((*reflect.StringHeader)(nil)).Elem()),
+		I.Type("StructField", reflect.TypeOf((*reflect.StructField)(nil)).Elem()),
+		I.Type("StructTag", reflect.TypeOf((*reflect.StructTag)(nil)).Elem()),
+		I.Type("Type", reflect.TypeOf((*reflect.Type)(nil)).Elem()),
+		I.Type("Value", reflect.TypeOf((*reflect.Value)(nil)).Elem()),
+		I.Type("ValueError", reflect.TypeOf((*reflect.ValueError)(nil)).Elem()),
+	)
 	I.RegisterConsts(
 		I.Const("Array", qspec.Uint, reflect.Array),
 		I.Const("Bool", qspec.Uint, reflect.Bool),

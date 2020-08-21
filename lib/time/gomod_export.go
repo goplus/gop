@@ -2,6 +2,7 @@
 package time
 
 import (
+	reflect "reflect"
 	time "time"
 
 	gop "github.com/goplus/gop"
@@ -520,6 +521,16 @@ func init() {
 	I.RegisterVars(
 		I.Var("Local", &time.Local),
 		I.Var("UTC", &time.UTC),
+	)
+	I.RegisterTypes(
+		I.Type("Duration", reflect.TypeOf((*time.Duration)(nil)).Elem()),
+		I.Type("Location", reflect.TypeOf((*time.Location)(nil)).Elem()),
+		I.Type("Month", reflect.TypeOf((*time.Month)(nil)).Elem()),
+		I.Type("ParseError", reflect.TypeOf((*time.ParseError)(nil)).Elem()),
+		I.Type("Ticker", reflect.TypeOf((*time.Ticker)(nil)).Elem()),
+		I.Type("Time", reflect.TypeOf((*time.Time)(nil)).Elem()),
+		I.Type("Timer", reflect.TypeOf((*time.Timer)(nil)).Elem()),
+		I.Type("Weekday", reflect.TypeOf((*time.Weekday)(nil)).Elem()),
 	)
 	I.RegisterConsts(
 		I.Const("ANSIC", qspec.ConstBoundString, time.ANSIC),
