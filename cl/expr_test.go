@@ -906,6 +906,13 @@ var testStructClauses = map[string]testData{
 				b string
 			}{1, "Hello"})	
 					`, "&{1 Hello}\n", false},
+	"struct_store_field_panic": {`
+				import "sync"
+
+				mu := sync.WaitGroup{}
+				
+				mu.noCopy = struct{}{}
+					`, "", true},
 }
 
 func TestStruct2(t *testing.T) {
