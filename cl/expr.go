@@ -189,9 +189,7 @@ func compileIdent(ctx *blockCtx, name string) func() {
 			}
 		case *typeDecl:
 			ctx.infer.Push(&nonValue{v.Type})
-			return func() {
-				log.Panicln("TODO")
-			}
+			return nil
 		default:
 			log.Panicln("compileIdent failed: unknown -", reflect.TypeOf(sym))
 		}
