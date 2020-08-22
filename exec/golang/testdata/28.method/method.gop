@@ -32,7 +32,8 @@ p := &Person{
 
 p.Name, p.Age = "bar2", 31
 
-m := M(0)
+a := int32(0)
+m := M(a)
 
 p.SetName("foo")
 p.SetAge(32)

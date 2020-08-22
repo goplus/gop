@@ -36,7 +36,8 @@ p.SetName("foo")
 p.SetAge(32)
 p.AddFriends("a", "b", "c")
 
-m := M(0)
+a := int32(0)
+m := M(a)
 m.Foo()
 
 println(p.Name)
