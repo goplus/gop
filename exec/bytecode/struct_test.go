@@ -41,9 +41,11 @@ func TestStruct(t *testing.T) {
 	expect(t,
 		func() {
 			b.DefineVar(v)
-			b.Push("Name")
+			b.Push(0)
+			b.MakeArray(reflect.TypeOf([]int{0}), 1)
 			b.Push("bar")
-			b.Push("Age")
+			b.Push(1)
+			b.MakeArray(reflect.TypeOf([]int{1}), 1)
 			b.Push(30)
 			b.Struct(reflect.TypeOf(p), 2)
 			b.StoreVar(v)
@@ -74,9 +76,11 @@ func TestStruct2(t *testing.T) {
 	expect(t,
 		func() {
 			b.DefineVar(v)
-			b.Push("Name")
+			b.Push(0)
+			b.MakeArray(reflect.TypeOf([]int{0}), 1)
 			b.Push("bar")
-			b.Push("Age")
+			b.Push(1)
+			b.MakeArray(reflect.TypeOf([]int{1}), 1)
 			b.Push(30)
 			b.Struct(reflect.TypeOf(p), 2)
 			b.StoreVar(v)

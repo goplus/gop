@@ -366,9 +366,11 @@ func main() {
 	typ := reflect.StructOf(fields)
 
 	code := NewBuilder("main", nil, nil).Interface().
-		Push("Name").
+		Push(0).
+		MakeArray(reflect.TypeOf([]int{0}), 1).
 		Push("bar").
-		Push("Age").
+		Push(1).
+		MakeArray(reflect.TypeOf([]int{1}), 1).
 		Push(30).
 		Struct(typ, 2).
 		CallGoFuncv(println, 1, 1).
@@ -410,9 +412,11 @@ func main() {
 	typ := reflect.StructOf(fields)
 
 	code := NewBuilder("main", nil, nil).Interface().
-		Push("Name").
+		Push(0).
+		MakeArray(reflect.TypeOf([]int{0}), 1).
 		Push("bar").
-		Push("Age").
+		Push(1).
+		MakeArray(reflect.TypeOf([]int{1}), 1).
 		Push(30).
 		Struct(reflect.PtrTo(typ), 2).
 		CallGoFuncv(println, 1, 1).
@@ -462,9 +466,11 @@ func main() {
 		DefineVar(p).
 		DefineType(typ, "Person").
 		EndStmt(nil, &stmtState{rhsBase: 0}).
-		Push("Name").
+		Push(0).
+		MakeArray(reflect.TypeOf([]int{0}), 1).
 		Push("bar").
-		Push("Age").
+		Push(1).
+		MakeArray(reflect.TypeOf([]int{1}), 1).
 		Push(30).
 		Struct(typ, 2).
 		StoreVar(p).

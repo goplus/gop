@@ -237,16 +237,16 @@ func (p *Builder) storeVar(addr tAddress) *Builder {
 // Var represents a variable.
 type Var struct {
 	typ       reflect.Type
+	actualTyp reflect.Type
 	name      string
 	nestDepth uint32
 	idx       uint32
-	pkgs      []string
 }
 
 // NewVar creates a variable instance.
 func NewVar(typ reflect.Type, name string) *Var {
-	typ, pkgs := toType(typ)
-	return &Var{typ: typ, name: "Q" + name, idx: 0xffffffff, pkgs: pkgs}
+	totyp, _ := toType(typ)
+	return &Var{typ: totyp, name: "Q" + name, idx: 0xffffffff, actualTyp: typ}
 }
 
 func (p *Var) isGlobal() bool {
@@ -255,7 +255,7 @@ func (p *Var) isGlobal() bool {
 
 // Type returns variable's type.
 func (p *Var) Type() reflect.Type {
-	return extractType(p.typ, p.pkgs)
+	return p.actualTyp
 }
 
 // Name returns variable's name.
@@ -314,61 +314,24 @@ func toType(typ reflect.Type) (reflect.Type, []string) {
 	var pkgPath []string
 	if typ.Kind() == reflect.Ptr {
 		temp := typ.Elem()
-		if temp.Kind() == reflect.Struct {
-			if temp.Name() == "" {
-				structType, pkgPath := toType(temp)
-				return reflect.PtrTo(structType), pkgPath
-			}
-		}
-		return typ, pkgPath
+		structType, pkgPath := toType(temp)
+		return reflect.PtrTo(structType), pkgPath
 	}
 
-	if typ.Kind() == reflect.Struct {
-		if typ.Name() == "" {
-			var fields = make([]StructField, 0, typ.NumField())
-			for i := 0; i < typ.NumField(); i++ {
-				field := typ.Field(i)
-				pkgPath = append(pkgPath, field.PkgPath)
-				fields = append(fields, StructField{
-					Type: field.Type,
-					Name: "Q" + field.Name,
-				})
-			}
-
-			typ = Struct(fields).Type()
+	if typ.Kind() == reflect.Struct && typ.Name() == "" {
+		var fields = make([]StructField, 0, typ.NumField())
+		for i := 0; i < typ.NumField(); i++ {
+			field := typ.Field(i)
+			pkgPath = append(pkgPath, field.PkgPath)
+			fields = append(fields, StructField{
+				Type: field.Type,
+				Name: "Q" + field.Name,
+			})
 		}
+
+		typ = Struct(fields).Type()
 	}
 	return typ, pkgPath
-}
-
-func extractType(typ reflect.Type, pkgs []string) reflect.Type {
-	if typ.Kind() == reflect.Ptr {
-		temp := typ.Elem()
-		if temp.Kind() == reflect.Struct {
-			if temp.Name() == "" {
-				structType := extractType(temp, pkgs)
-				return reflect.PtrTo(structType)
-			}
-		}
-		return typ
-	}
-
-	if typ.Kind() == reflect.Struct {
-		if typ.Name() == "" {
-			var fields = make([]StructField, 0, typ.NumField())
-			for i := 0; i < typ.NumField(); i++ {
-				field := typ.Field(i)
-				fields = append(fields, StructField{
-					Type:    field.Type,
-					Name:    field.Name[1:],
-					PkgPath: pkgs[i],
-				})
-			}
-
-			typ = Struct(fields).Type()
-		}
-	}
-	return typ
 }
 
 type blockCtx struct {

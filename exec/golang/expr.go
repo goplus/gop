@@ -691,7 +691,7 @@ func (p *Builder) Struct(typ reflect.Type, arity int) *Builder {
 	args := p.rhs.GetArgs(arity << 1)
 	for i := 0; i < arity; i++ {
 		elts[i] = &ast.KeyValueExpr{
-			Key:   toField(args[i<<1].(ast.Expr)),
+			Key:   toField(args[i<<1].(ast.Expr), typ),
 			Value: args[(i<<1)+1].(ast.Expr),
 		}
 	}
@@ -712,11 +712,22 @@ func (p *Builder) Struct(typ reflect.Type, arity int) *Builder {
 	return p
 }
 
-func toField(expr ast.Expr) *ast.Ident {
-	if ident, ok := expr.(*ast.Ident); ok {
-		return ident
+func toField(expr ast.Expr, typ reflect.Type) *ast.Ident {
+	if clit, ok := expr.(*ast.CompositeLit); ok {
+		if _, ok := clit.Type.(*ast.ArrayType); ok {
+			var idx []int
+			for _, elt := range clit.Elts {
+				if blit, ok := elt.(*ast.BasicLit); ok {
+					i, err := strconv.Atoi(blit.Value)
+					if err == nil {
+						idx = append(idx, i)
+					}
+				}
+			}
+			field := typ.FieldByIndex(idx)
+			return Ident(field.Name)
+		}
 	}
-	lit := expr.(*ast.BasicLit)
-	field, _ := strconv.Unquote(lit.Value)
-	return Ident(field)
+	log.Panicln("toField expression must be arrayType")
+	return nil
 }
