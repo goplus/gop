@@ -314,7 +314,6 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 						ctx.out.Push(idx)
 					}
 					ctx.out.MakeArray(reflect.TypeOf(field.Index), len(field.Index))
-					// ctx.out.Push(field.Index)
 					typVal := field.Type
 					compileExpr(ctx, e.Value)()
 					checkType(typVal, ctx.infer.Pop(), ctx.out)
@@ -325,7 +324,6 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 						ctx.out.Push(idx)
 					}
 					ctx.out.MakeArray(reflect.TypeOf(field.Index), len(field.Index))
-					// ctx.out.Push(field.Index)
 					typVal := field.Type
 					compileExpr(ctx, elt)()
 					checkType(typVal, ctx.infer.Pop(), ctx.out)
