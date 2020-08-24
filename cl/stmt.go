@@ -98,16 +98,18 @@ func compileForPhraseStmt(parent *blockCtx, v *ast.ForPhraseStmt) {
 }
 
 func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
-	noExecCtx := isNoExecCtx(parent, v.Body)
-	f := ast.ForPhrase{
-		For:    v.For,
-		TokPos: v.TokPos,
-		X:      v.X,
-	}
+	kvDef := map[string]reflect.Type{}
+	newIterName := "_gop_NewIter"
+	nextName := "_gop_Next"
+	keyName := "_gop_Key"
+	valueName := "_gop_Value"
+	iter := &ast.Ident{Name: "_gop_iter", NamePos: v.For}
+
+	var keyIdent, valIdent *ast.Ident
 	switch v.Tok {
 	case token.DEFINE:
-		f.Key = toIdent(v.Key)
-		f.Value = toIdent(v.Value)
+		keyIdent = toIdent(v.Key)
+		valIdent = toIdent(v.Value)
 	case token.ASSIGN:
 		var lhs, rhs [2]ast.Expr
 		var idx int
@@ -118,8 +120,8 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 			}
 			if assign {
 				k0 := ast.NewObj(ast.Var, "_gop_k")
-				f.Key = &ast.Ident{Name: k0.Name, Obj: k0}
-				lhs[idx], rhs[idx] = v.Key, f.Key
+				keyIdent = &ast.Ident{Name: k0.Name, Obj: k0}
+				lhs[idx], rhs[idx] = v.Key, keyIdent
 				idx++
 			}
 		}
@@ -130,8 +132,8 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 			}
 			if assign {
 				v0 := ast.NewObj(ast.Var, "_gop_v")
-				f.Value = &ast.Ident{Name: v0.Name, Obj: v0}
-				lhs[idx], rhs[idx] = v.Value, f.Value
+				valIdent = &ast.Ident{Name: v0.Name, Obj: v0}
+				lhs[idx], rhs[idx] = v.Value, valIdent
 				idx++
 			}
 		}
@@ -141,10 +143,86 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 			Rhs: rhs[0:idx],
 		}}, v.Body.List...)
 	}
-	ctx, exprFor := compileForPhrase(parent, f, noExecCtx)
-	exprFor(func() {
-		compileBlockStmtWithout(ctx, v.Body)
-	})
+
+	compileExpr(parent, v.X)
+	typData := boundType(parent.infer.Pop().(iValue))
+	var typKey, typVal reflect.Type
+	var forStmts []ast.Stmt
+	switch kind := typData.Kind(); kind {
+	case reflect.String:
+		typKey = exec.TyInt
+		typVal = exec.TyByte
+	case reflect.Slice, reflect.Array:
+		typKey = exec.TyInt
+		typVal = typData.Elem()
+	case reflect.Map:
+		typKey = typData.Key()
+		typVal = typData.Elem()
+	default:
+		log.Panicln("compileRangeStmt: require slice, array or map")
+	}
+	if keyIdent != nil {
+		// Key(iter,&k)
+		if id, ok := v.Key.(*ast.Ident); !ok || (ok && id.Name != "_") {
+			kvDef[keyIdent.Name] = typKey
+			forStmts = append(forStmts, &ast.ExprStmt{X: &ast.CallExpr{
+				Fun: &ast.Ident{Name: keyName, NamePos: v.For},
+				Args: []ast.Expr{iter, &ast.UnaryExpr{
+					Op: token.AND,
+					X:  keyIdent,
+				}},
+			}})
+		}
+	}
+	if valIdent != nil {
+		// Value(iter,&v)
+		if id, ok := v.Value.(*ast.Ident); !ok || (ok && id.Name != "_") {
+			kvDef[valIdent.Name] = typVal
+			forStmts = append(forStmts, &ast.ExprStmt{X: &ast.CallExpr{
+				Fun: &ast.Ident{Name: valueName, NamePos: v.For},
+				Args: []ast.Expr{iter, &ast.UnaryExpr{
+					Op: token.AND,
+					X:  valIdent,
+				}},
+			}})
+		}
+	}
+	// iter:=_gop_NewIter(obj)
+	init := &ast.AssignStmt{
+		Lhs: []ast.Expr{iter},
+		Tok: token.DEFINE,
+		Rhs: []ast.Expr{&ast.CallExpr{
+			Fun:    &ast.Ident{Name: newIterName},
+			Lparen: v.For,
+			Rparen: v.For,
+			Args:   []ast.Expr{v.X},
+		}},
+		TokPos: v.For,
+	}
+	// range => for
+	fs := &ast.ForStmt{
+		For: v.For,
+		Cond: &ast.CallExpr{
+			Fun:    &ast.Ident{Name: nextName},
+			Lparen: v.For,
+			Rparen: v.For,
+			Args:   []ast.Expr{iter},
+		},
+		Post: nil,
+		Body: &ast.BlockStmt{
+			Lbrace: v.Body.Lbrace,
+			List:   append(forStmts, v.Body.List...),
+			Rbrace: v.Body.Rbrace,
+		},
+	}
+	parent.out.DefineBlock()
+	defer parent.out.EndBlock()
+	ctx := newNormBlockCtx(parent)
+	for k, v := range kvDef {
+		ctx.insertVar(k, v)
+	}
+	compileStmt(ctx, init)
+	compileStmt(ctx, fs)
 }
 
 func toIdent(e ast.Expr) *ast.Ident {
