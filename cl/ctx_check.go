@@ -363,6 +363,11 @@ func isNoExecCtxDeclStmt(ctx *blockCtx, expr *ast.DeclStmt) bool {
 						return false
 					}
 				}
+				for i := len(vs.Names) - 1; i >= 0; i-- {
+					if noExecCtx := isNoExecCtxExprLHS(ctx, vs.Names[i], lhsAssign); !noExecCtx {
+						return false
+					}
+				}
 			}
 		}
 	}
