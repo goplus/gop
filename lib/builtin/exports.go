@@ -25,6 +25,7 @@ import (
 	"reflect"
 
 	"github.com/goplus/gop"
+	"github.com/goplus/gop/ast/gopiter"
 
 	qspec "github.com/goplus/gop/exec.spec"
 	exec "github.com/goplus/gop/exec/bytecode"
@@ -74,6 +75,32 @@ func QexecIs(_ int, p *gop.Context) {
 	p.Ret(2, is)
 }
 
+// QNewIter instr
+func QNewIter(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	p.Ret(1, gopiter.NewIter(args[0]))
+}
+
+// QNext instr
+func QNext(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	p.Ret(1, gopiter.Next(args[0].(gopiter.Iterator)))
+}
+
+// QKey instr
+func QKey(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	gopiter.Key(args[0].(gopiter.Iterator), args[1])
+	p.PopN(2)
+}
+
+// QValue instr
+func QValue(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	gopiter.Value(args[0].(gopiter.Iterator), args[1])
+	p.PopN(2)
+}
+
 // FuncGoInfo returns Go package and function name of a Go+ builtin function.
 func FuncGoInfo(f string) ([2]string, bool) {
 	fi, ok := builtinFnvs[f]
@@ -92,17 +119,25 @@ func execPanic(_ int, p *gop.Context) {
 var I = gop.NewGoPackage("")
 
 var builtinFnvs = map[string][2]string{
-	"errorf":  {"fmt", "Errorf"},
-	"print":   {"fmt", "Print"},
-	"printf":  {"fmt", "Printf"},
-	"println": {"fmt", "Println"},
-	"fprintf": {"fmt", "Fprintf"},
+	"errorf":       {"fmt", "Errorf"},
+	"print":        {"fmt", "Print"},
+	"printf":       {"fmt", "Printf"},
+	"println":      {"fmt", "Println"},
+	"fprintf":      {"fmt", "Fprintf"},
+	"_gop_NewIter": {"github.com/goplus/gop/ast/gopiter", "NewIter"},
+	"_gop_Next":    {"github.com/goplus/gop/ast/gopiter", "Next"},
+	"_gop_Key":     {"github.com/goplus/gop/ast/gopiter", "Key"},
+	"_gop_Value":   {"github.com/goplus/gop/ast/gopiter", "Value"},
 }
 
 func init() {
 	I.RegisterFuncs(
 		I.Func("panic", qlPanic, execPanic),
 		I.Func("is", errors.Is, QexecIs),
+		I.Func("_gop_NewIter", gopiter.NewIter, QNewIter),
+		I.Func("_gop_Next", gopiter.Next, QNext),
+		I.Func("_gop_Key", gopiter.Key, QKey),
+		I.Func("_gop_Value", gopiter.Value, QValue),
 	)
 	I.RegisterFuncvs(
 		I.Funcv("errorf", fmt.Errorf, QexecErrorf),

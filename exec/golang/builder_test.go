@@ -427,34 +427,35 @@ func main() {
 	}
 }
 
-type Person struct {
-	Name string
-	Age  int
-}
-
 func TestType(t *testing.T) {
 	println, _ := I.FindFuncv("println")
 
 	codeExp := `package main
 
-import (
-	fmt "fmt"
-	golang "github.com/goplus/gop/exec/golang"
-)
+import fmt "fmt"
 
 type Person struct {
 	Name string
 	Age  int
 }
 
-var p golang.Person
+var p Person
 
 func main() {
-	p = golang.Person{Name: "bar", Age: 30}
+	p = Person{Name: "bar", Age: 30}
 	fmt.Println(p)
 }
 `
-	typ := reflect.TypeOf(Person{})
+	typ := reflect.StructOf([]reflect.StructField{
+		{
+			Name: "Name",
+			Type: exec.TyString,
+		},
+		{
+			Name: "Age",
+			Type: exec.TyInt,
+		},
+	})
 
 	p := NewVar(typ, "p")
 

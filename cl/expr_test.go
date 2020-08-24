@@ -1096,6 +1096,18 @@ var testMethodClauses = map[string]testData{
 
 					p.SetName("foo",31)
 					`, "foo\n31\n", false},
+	"method int type": {`
+					
+					type M int
+
+					func (m M) Foo() {
+						println("foo", m)
+					}
+
+					m := M(0)
+					m.Foo()
+					println(m)
+					`, "foo 0\n0\n", false},
 }
 
 func TestMethodCases(t *testing.T) {
