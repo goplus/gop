@@ -19,6 +19,12 @@ func (p *Person) AddFriends(args ...string) {
 	p.Friends = append(p.Friends, args...)
 }
 
+type M int
+
+func (m M) Foo() {
+	println("foo", m)
+}
+
 p := Person{
 	Name: "bar",
 	Age:  30,
@@ -30,6 +36,11 @@ p.SetName("foo")
 p.SetAge(32)
 p.AddFriends("a", "b", "c")
 
+a := int32(0)
+m := M(a)
+m.Foo()
+
 println(p.Name)
 println(p.Age)
 println(p.Friends)
+println(m)

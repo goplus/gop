@@ -28,9 +28,6 @@ import (
 
 // StructType instr
 func StructType(p *Builder, typ reflect.Type) ast.Expr {
-	if gtype, ok := p.types[typ]; ok {
-		return Ident(gtype.Name())
-	}
 	var fields = &ast.FieldList{}
 	for i := 0; i < typ.NumField(); i++ {
 		fields.List = append(fields.List, toStructField(p, typ.Field(i)))
@@ -137,7 +134,12 @@ func FuncType(p *Builder, typ reflect.Type) *ast.FuncType {
 }
 
 // Type instr
-func Type(p *Builder, typ reflect.Type) ast.Expr {
+func Type(p *Builder, typ reflect.Type, actualTypes ...bool) ast.Expr {
+	if len(actualTypes) == 0 || (len(actualTypes) > 0 && !actualTypes[0]) {
+		if gtype, ok := p.types[typ]; ok {
+			return Ident(gtype.Name())
+		}
+	}
 	pkgPath, name := typ.PkgPath(), typ.Name()
 	log.Debug(typ, "-", "pkgPath:", pkgPath, "name:", name)
 	if name != "" {

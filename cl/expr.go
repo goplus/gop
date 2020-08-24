@@ -187,6 +187,9 @@ func compileIdent(ctx *blockCtx, name string) func() {
 			return func() { // TODO: maybe slowly, use Closure instead of GoClosure
 				ctx.out.GoClosure(fn.fi)
 			}
+		case *typeDecl:
+			ctx.infer.Push(&nonValue{v.Type})
+			return nil
 		default:
 			log.Panicln("compileIdent failed: unknown -", reflect.TypeOf(sym))
 		}
@@ -1083,21 +1086,23 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compileMode
 		_, t := countPtr(vx.t)
 		name := v.Sel.Name
 		if t.PkgPath() != "" && ast.IsExported(name) || t.PkgPath() == "" {
-			if sf, ok := t.FieldByName(name); ok {
-				checkType(sf.Type, in, ctx.out)
-				if ctx.fieldIndex == nil {
-					ctx.fieldStructType = vx.t
+			if t.Kind() == reflect.Struct {
+				if sf, ok := t.FieldByName(name); ok {
+					checkType(sf.Type, in, ctx.out)
+					if ctx.fieldIndex == nil {
+						ctx.fieldStructType = vx.t
+					}
+					fieldIndex := append(ctx.fieldIndex, sf.Index...)
+					fieldStructType := ctx.fieldStructType
+					ctx.checkLoadAddr = true
+					if ctx.fieldExprX != nil {
+						ctx.fieldExprX()
+					} else {
+						exprX()
+					}
+					ctx.checkLoadAddr = false
+					ctx.out.StoreField(fieldStructType, fieldIndex)
 				}
-				fieldIndex := append(ctx.fieldIndex, sf.Index...)
-				fieldStructType := ctx.fieldStructType
-				ctx.checkLoadAddr = true
-				if ctx.fieldExprX != nil {
-					ctx.fieldExprX()
-				} else {
-					exprX()
-				}
-				ctx.checkLoadAddr = false
-				ctx.out.StoreField(fieldStructType, fieldIndex)
 			}
 		} else if t.PkgPath() != "" && !ast.IsExported(name) {
 			log.Panicf("%s.%s.%s undefined (cannot refer to unexported field or method %s)\n", t.PkgPath(), t.Name(), name, name)
@@ -1162,24 +1167,26 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 		autoCall := false
 		name := v.Sel.Name
 		if t.PkgPath() != "" && ast.IsExported(name) || t.PkgPath() == "" {
-			if sf, ok := t.FieldByName(name); ok {
-				ctx.infer.Ret(1, &goValue{t: sf.Type})
-				if ctx.fieldIndex == nil {
-					ctx.fieldExprX = exprX
-					ctx.fieldStructType = vx.t
-				}
-				ctx.fieldIndex = append(ctx.fieldIndex, sf.Index...)
-				fieldIndex := ctx.fieldIndex
-				fieldExprX := ctx.fieldExprX
-				fieldStructType := ctx.fieldStructType
-				return func() {
-					if fieldExprX != nil {
-						fieldExprX()
+			if t.Kind() == reflect.Struct {
+				if sf, ok := t.FieldByName(name); ok {
+					ctx.infer.Ret(1, &goValue{t: sf.Type})
+					if ctx.fieldIndex == nil {
+						ctx.fieldExprX = exprX
+						ctx.fieldStructType = vx.t
 					}
-					if ctx.takeAddr || ctx.checkLoadAddr {
-						ctx.out.AddrField(fieldStructType, fieldIndex)
-					} else {
-						ctx.out.LoadField(fieldStructType, fieldIndex)
+					ctx.fieldIndex = append(ctx.fieldIndex, sf.Index...)
+					fieldIndex := ctx.fieldIndex
+					fieldExprX := ctx.fieldExprX
+					fieldStructType := ctx.fieldStructType
+					return func() {
+						if fieldExprX != nil {
+							fieldExprX()
+						}
+						if ctx.takeAddr || ctx.checkLoadAddr {
+							ctx.out.AddrField(fieldStructType, fieldIndex)
+						} else {
+							ctx.out.LoadField(fieldStructType, fieldIndex)
+						}
 					}
 				}
 			}
