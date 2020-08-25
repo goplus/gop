@@ -188,8 +188,10 @@ func isNoExecCtxRangeStmt(parent *blockCtx, v *ast.RangeStmt) bool {
 
 func isNoExecForStmt(parent *blockCtx, v *ast.ForStmt) bool {
 	ctx := newBlockCtxWithFlag(parent)
-	if noExecCtx := isNoExecCtxExpr(ctx, v.Cond); !noExecCtx {
-		return false
+	if v.Cond != nil {
+		if noExecCtx := isNoExecCtxExpr(ctx, v.Cond); !noExecCtx {
+			return false
+		}
 	}
 	for _, e := range []ast.Stmt{v.Init, v.Post} {
 		if e == nil {

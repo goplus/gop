@@ -252,9 +252,11 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 		ctx.currentFlow = ctx.currentFlow.parent
 	}()
 	out.Label(start)
-	compileExpr(ctx, v.Cond)()
-	checkBool(ctx.infer.Pop())
-	out.JmpIf(0, done)
+	if v.Cond != nil {
+		compileExpr(ctx, v.Cond)()
+		checkBool(ctx.infer.Pop())
+		out.JmpIf(0, done)
+	}
 	noExecCtx := isNoExecCtx(ctx, v.Body)
 	ctx = newNormBlockCtxEx(ctx, noExecCtx)
 	compileBlockStmtWith(ctx, v.Body)
