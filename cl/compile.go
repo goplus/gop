@@ -108,7 +108,8 @@ type iVar interface {
 }
 
 type execVar struct {
-	v exec.Var
+	v        exec.Var
+	typeDecl *typeDecl
 }
 
 func (p *execVar) inCurrentCtx(ctx *blockCtx) bool {
@@ -298,6 +299,7 @@ func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
 
 	tDecl := &typeDecl{
 		Type: t,
+		Name: spec.Name.Name,
 	}
 	ctx.syms[spec.Name.Name] = tDecl
 	ctx.types[t] = tDecl

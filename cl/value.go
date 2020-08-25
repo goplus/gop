@@ -48,7 +48,8 @@ func isBool(v iValue) bool {
 // -----------------------------------------------------------------------------
 
 type goValue struct {
-	t reflect.Type
+	t        reflect.Type
+	typeDecl *typeDecl
 }
 
 func (p *goValue) Kind() iKind {

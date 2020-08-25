@@ -377,7 +377,7 @@ func (p *blockCtx) insertFuncVars(in []reflect.Type, args []string, rets []exec.
 		if ret.IsUnnamedOut() {
 			continue
 		}
-		p.syms[ret.Name()] = &execVar{ret}
+		p.syms[ret.Name()] = &execVar{v: ret}
 	}
 }
 
@@ -389,7 +389,7 @@ func (p *blockCtx) insertVar(name string, typ reflect.Type, inferOnly ...bool) *
 	if inferOnly == nil {
 		p.out.DefineVar(v)
 	}
-	ev := &execVar{v}
+	ev := &execVar{v: v}
 	p.syms[name] = ev
 	return ev
 }

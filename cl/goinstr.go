@@ -114,7 +114,7 @@ func igoCopy(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 		log.Panicln("arguments to copy must be slices; have ", dstTy.Kind())
 	}
 	if ct == callExpr {
-		ctx.infer.Ret(1, &goValue{exec.TyInt})
+		ctx.infer.Ret(1, &goValue{t: exec.TyInt})
 	}
 	return func() {
 		dstExpr()
@@ -324,7 +324,40 @@ func compileTypeCast(typ reflect.Type, ctx *blockCtx, v *ast.CallExpr) func() {
 			}
 		}
 	}
-	ctx.infer.Ret(1, &goValue{typ})
+	ctx.infer.Ret(1, &goValue{t: typ})
+	return func() {
+		xExpr()
+		iv := in.(iValue)
+		n := iv.NumValues()
+		if n != 1 {
+			panicExprNotValue(n)
+		}
+		tIn := iv.Type()
+		if !tIn.ConvertibleTo(typ) {
+			log.Panicf("compileTypeCast: can't convert type `%v` to `%v`\n", tIn, typ)
+		}
+		ctx.out.TypeCast(tIn, typ)
+	}
+}
+
+func compileTypeDeclCast(decl *typeDecl, ctx *blockCtx, v *ast.CallExpr) func() {
+	if len(v.Args) != 1 {
+		log.Panicln("compileTypeCast: invalid argument count, please use `type(expr)`")
+	}
+	typ := decl.Type
+	xExpr := compileExpr(ctx, v.Args[0])
+	in := ctx.infer.Get(-1)
+	kind := typ.Kind()
+	if kind <= reflect.Complex128 || kind == reflect.String { // can be constant
+		if cons, ok := in.(*constVal); ok {
+			cons.kind = typ.Kind()
+			ctx.infer.Ret(1, &goValue{typ, decl})
+			return func() {
+				pushConstVal(ctx.out, cons)
+			}
+		}
+	}
+	ctx.infer.Ret(1, &goValue{typ, decl})
 	return func() {
 		xExpr()
 		iv := in.(iValue)

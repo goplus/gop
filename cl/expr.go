@@ -115,6 +115,9 @@ func compileIdentLHS(ctx *blockCtx, name string, mode compileMode) {
 	} else {
 		typ := boundType(in.(iValue))
 		addr = ctx.insertVar(name, typ)
+		if v, ok := in.(*goValue); ok {
+			addr.(*execVar).typeDecl = v.typeDecl
+		}
 	}
 	checkType(addr.getType(), in, ctx.out)
 	ctx.infer.PopN(1)
@@ -158,7 +161,7 @@ func compileIdent(ctx *blockCtx, name string) func() {
 		case *execVar:
 			typ := v.v.Type()
 			kind := typ.Kind()
-			ctx.infer.Push(&goValue{t: typ})
+			ctx.infer.Push(&goValue{t: typ, typeDecl: v.typeDecl})
 			ctx.resetFieldIndex()
 			return func() {
 				if ctx.takeAddr || (ctx.checkLoadAddr && kind != reflect.Slice && kind != reflect.Map) {
@@ -188,7 +191,7 @@ func compileIdent(ctx *blockCtx, name string) func() {
 				ctx.out.GoClosure(fn.fi)
 			}
 		case *typeDecl:
-			ctx.infer.Push(&nonValue{v.Type})
+			ctx.infer.Push(&nonValue{v})
 			return nil
 		default:
 			log.Panicln("compileIdent failed: unknown -", reflect.TypeOf(sym))
@@ -784,6 +787,8 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 				log.Panicf("%s requires function call, not conversion\n", gCallTypes[ct])
 			}
 			return compileTypeCast(nv, ctx, v)
+		case *typeDecl:
+			return compileTypeDeclCast(nv, ctx, v)
 		}
 	}
 	log.Panicln("compileCallExpr failed: unknown -", reflect.TypeOf(fn))
@@ -870,7 +875,7 @@ func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) func() { // x[i:j:k]
 	typ := x.(iValue).Type()
 	if kind = typ.Kind(); kind == reflect.Array {
 		typ = reflect.SliceOf(typ.Elem())
-		ctx.infer.Ret(1, &goValue{typ})
+		ctx.infer.Ret(1, &goValue{t: typ})
 	}
 	return func() {
 		if kind == reflect.Array {
@@ -937,7 +942,7 @@ func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr) func() { // x[i]
 	} else {
 		typElem = typ.Elem()
 	}
-	ctx.infer.Ret(1, &goValue{typElem})
+	ctx.infer.Ret(1, &goValue{t: typElem})
 	ctx.resetFieldIndex()
 	return func() {
 		if ctx.takeAddr {
@@ -1176,6 +1181,15 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 						ctx.out.LoadField(fieldStructType, fieldIndex)
 					}
 				}
+			}
+		}
+		if vx.typeDecl != nil {
+			if fDecl, ok := vx.typeDecl.Methods[name]; ok {
+				ctx.infer.Pop()
+				fn := newQlFunc(fDecl)
+				ctx.use(fDecl)
+				ctx.infer.Push(fn)
+				return func() {}
 			}
 		}
 

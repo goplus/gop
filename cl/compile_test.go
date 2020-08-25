@@ -96,7 +96,7 @@ func TestBasic(t *testing.T) {
 	_, _ = NewPackage(nil, nil, nil, 0)
 	e := newError(nil, "cannot slice a (type *%v)", "[]int")
 	_ = e.Error()
-	ev := &execVar{exec.NewVar(reflect.TypeOf(0), "")}
+	ev := &execVar{v: exec.NewVar(reflect.TypeOf(0), "")}
 	_ = ev.getType()
 	_ = ev.inCurrentCtx(bctx)
 	sv := new(stackVar)
