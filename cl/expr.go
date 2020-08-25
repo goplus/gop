@@ -786,9 +786,9 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 			if ct != callExpr {
 				log.Panicf("%s requires function call, not conversion\n", gCallTypes[ct])
 			}
-			return compileTypeCast(nv, ctx, v)
+			return compileTypeCast(nv, nil, ctx, v)
 		case *typeDecl:
-			return compileTypeDeclCast(nv, ctx, v)
+			return compileTypeCast(nv.Type, nv, ctx, v)
 		}
 	}
 	log.Panicln("compileCallExpr failed: unknown -", reflect.TypeOf(fn))
