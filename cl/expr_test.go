@@ -1056,13 +1056,18 @@ var testMethodClauses = map[string]testData{
 					`, "foo 0\nfoo2 1\n0\n1\n", false},
 	"method int type conv": {`
 					type M int
+					type M2 int
 
 					func (m M) Foo() {
 						println("foo", m)
 					}
 
+					func (m M2) Foo() {
+						println("foo2", m)
+					}
 					M(10).Foo()
-					`, "foo 10\n", false},
+					M2(11).Foo()
+					`, "foo 10\nfoo2 11\n", false},
 }
 
 func TestMethodCases(t *testing.T) {
