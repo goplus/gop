@@ -436,7 +436,11 @@ func (p *blockCtx) insertMethod(recv astutil.RecvInfo, methodName string, decl *
 
 // -----------------------------------------------------------------------------
 
-func (c *blockCtx) findMethod(typ reflect.Type, methodName string) (*funcDecl, bool) {
+func (c *blockCtx) findMethod(typ reflect.Type, typeDecl *typeDecl, methodName string) (*funcDecl, bool) {
+	if typeDecl != nil {
+		fDecl, ok := typeDecl.Methods[methodName]
+		return fDecl, ok
+	}
 	if typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
 	}

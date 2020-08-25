@@ -1183,17 +1183,8 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 				}
 			}
 		}
-		if vx.typeDecl != nil {
-			if fDecl, ok := vx.typeDecl.Methods[name]; ok {
-				ctx.infer.Pop()
-				fn := newQlFunc(fDecl)
-				ctx.use(fDecl)
-				ctx.infer.Push(fn)
-				return func() {}
-			}
-		}
 
-		if fDecl, ok := ctx.findMethod(t, name); ok {
+		if fDecl, ok := ctx.findMethod(t, vx.typeDecl, name); ok {
 			ctx.infer.Pop()
 			fn := newQlFunc(fDecl)
 			ctx.use(fDecl)
