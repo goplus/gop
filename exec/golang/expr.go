@@ -710,18 +710,10 @@ func (p *Builder) Struct(typ reflect.Type, arity int) *Builder {
 }
 
 func toField(expr ast.Expr, typ reflect.Type) *ast.Ident {
-	if clit, ok := expr.(*ast.CompositeLit); ok {
-		if _, ok := clit.Type.(*ast.ArrayType); ok {
-			var idx []int
-			for _, elt := range clit.Elts {
-				if blit, ok := elt.(*ast.BasicLit); ok {
-					i, err := strconv.Atoi(blit.Value)
-					if err == nil {
-						idx = append(idx, i)
-					}
-				}
-			}
-			field := typ.FieldByIndex(idx)
+	if blit, ok := expr.(*ast.BasicLit); ok {
+		i, err := strconv.Atoi(blit.Value)
+		if err == nil {
+			field := typ.Field(i)
 			return Ident(field.Name)
 		}
 	}

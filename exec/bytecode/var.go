@@ -245,7 +245,7 @@ type Var struct {
 
 // NewVar creates a variable instance.
 func NewVar(typ reflect.Type, name string) *Var {
-	totyp, _ := toType(typ)
+	totyp := toType(typ)
 	return &Var{typ: totyp, name: "Q" + name, idx: 0xffffffff, actualTyp: typ}
 }
 
@@ -310,28 +310,26 @@ func (p *varManager) addVars(vars ...exec.Var) {
 	}
 }
 
-func toType(typ reflect.Type) (reflect.Type, []string) {
-	var pkgPath []string
+func toType(typ reflect.Type) reflect.Type {
 	if typ.Kind() == reflect.Ptr {
 		temp := typ.Elem()
-		structType, pkgPath := toType(temp)
-		return reflect.PtrTo(structType), pkgPath
+		structType := toType(temp)
+		return reflect.PtrTo(structType)
 	}
 
 	if typ.Kind() == reflect.Struct && typ.Name() == "" {
 		var fields = make([]StructField, 0, typ.NumField())
 		for i := 0; i < typ.NumField(); i++ {
 			field := typ.Field(i)
-			pkgPath = append(pkgPath, field.PkgPath)
 			fields = append(fields, StructField{
-				Type: field.Type,
+				Type: toType(field.Type),
 				Name: "Q" + field.Name,
 			})
 		}
 
 		typ = Struct(fields).Type()
 	}
-	return typ, pkgPath
+	return typ
 }
 
 type blockCtx struct {

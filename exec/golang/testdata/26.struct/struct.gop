@@ -1,7 +1,13 @@
+type C struct {
+	D int
+	F string
+}
+
 a := struct {
 	A int
 	B string
-}{1, "Hello"}
+	C C
+}{1, "Hello", C{2, "World"}}
 
 println(a)
 

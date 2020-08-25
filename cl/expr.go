@@ -313,20 +313,14 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 				case *ast.KeyValueExpr:
 					fieldName := e.Key.(*ast.Ident).Name
 					field, _ := typStruct.FieldByName(fieldName)
-					for _, idx := range field.Index {
-						ctx.out.Push(idx)
-					}
-					ctx.out.MakeArray(reflect.TypeOf(field.Index), len(field.Index))
+					ctx.out.Push(field.Index[0])
 					typVal := field.Type
 					compileExpr(ctx, e.Value)()
 					checkType(typVal, ctx.infer.Pop(), ctx.out)
 				default:
 					// ast.Expr
 					field := typStruct.Field(i)
-					for _, idx := range field.Index {
-						ctx.out.Push(idx)
-					}
-					ctx.out.MakeArray(reflect.TypeOf(field.Index), len(field.Index))
+					ctx.out.Push(field.Index[0])
 					typVal := field.Type
 					compileExpr(ctx, elt)()
 					checkType(typVal, ctx.infer.Pop(), ctx.out)
