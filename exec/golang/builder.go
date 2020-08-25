@@ -223,29 +223,12 @@ func (p *Builder) resolveTypes() *ast.GenDecl {
 		if typ.Kind() == reflect.Ptr {
 			typ = typ.Elem()
 		}
-		if typ.Kind() == reflect.Struct {
-			fieldList := &ast.FieldList{}
-			for i := 0; i < typ.NumField(); i++ {
-				field := typ.Field(i)
-				fieldList.List = append(fieldList.List, &ast.Field{
-					Names: []*ast.Ident{Ident(field.Name)},
-					Type:  Type(p, field.Type),
-				})
-			}
 
-			StructType := &ast.StructType{Fields: fieldList}
-			spec := &ast.TypeSpec{
-				Name: Ident(t.Name()),
-				Type: StructType,
-			}
-			specs = append(specs, spec)
-		} else {
-			spec := &ast.TypeSpec{
-				Name: Ident(t.Name()),
-				Type: Type(p, t.Type()),
-			}
-			specs = append(specs, spec)
+		spec := &ast.TypeSpec{
+			Name: Ident(t.Name()),
+			Type: Type(p, typ, true),
 		}
+		specs = append(specs, spec)
 	}
 	if len(specs) > 0 {
 		return &ast.GenDecl{
