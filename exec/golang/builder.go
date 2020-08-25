@@ -93,13 +93,14 @@ type Builder struct {
 	out         *Code                    // golang code
 	pkgName     string                   // package name
 	types       map[reflect.Type]*GoType // type => gotype
-	imports     map[string]string        // pkgPath => aliasName
-	importPaths map[string]string        // aliasName => pkgPath
-	gblScope    scopeCtx                 // global scope
-	gblDecls    []ast.Decl               // global declarations
-	fset        *token.FileSet           // fileset of Go+ code
-	cfun        *FuncInfo                // current function
-	cstmt       interface{}              // current statement
+	typeList    []*GoType
+	imports     map[string]string // pkgPath => aliasName
+	importPaths map[string]string // aliasName => pkgPath
+	gblScope    scopeCtx          // global scope
+	gblDecls    []ast.Decl        // global declarations
+	fset        *token.FileSet    // fileset of Go+ code
+	cfun        *FuncInfo         // current function
+	cstmt       interface{}       // current statement
 	reserveds   []*printer.ReservedExpr
 	comprehens  func()   // current comprehension
 	identBase   int      // auo-increasement ident index

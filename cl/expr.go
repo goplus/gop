@@ -114,9 +114,10 @@ func compileIdentLHS(ctx *blockCtx, name string, mode compileMode) {
 		log.Panicln("compileIdentLHS failed:", err, "-", name)
 	} else {
 		typ := boundType(in.(iValue))
-		addr = ctx.insertVar(name, typ)
 		if v, ok := in.(*goValue); ok {
-			addr.(*execVar).typeDecl = v.typeDecl
+			addr = ctx.insertVarEx(name, typ, v.typeDecl)
+		} else {
+			addr = ctx.insertVar(name, typ)
 		}
 	}
 	checkType(addr.getType(), in, ctx.out)

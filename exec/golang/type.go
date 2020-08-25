@@ -182,6 +182,7 @@ func (p *Builder) DefineType(typ reflect.Type, name string) *Builder {
 		name: name,
 		typ:  typ,
 	}
+	p.typeList = append(p.typeList, &GoType{name: name, typ: typ})
 	return p
 }
 
