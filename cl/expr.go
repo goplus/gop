@@ -241,6 +241,7 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 		return compileMapLit(ctx, v)
 	}
 	typ := toType(ctx, v.Type)
+
 	switch kind := typ.Kind(); kind {
 	case reflect.Slice, reflect.Array:
 		var typSlice reflect.Type
@@ -311,15 +312,15 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 				switch e := elt.(type) {
 				case *ast.KeyValueExpr:
 					fieldName := e.Key.(*ast.Ident).Name
-					ctx.out.Push(fieldName)
 					field, _ := typStruct.FieldByName(fieldName)
+					ctx.out.Push(field.Index[0])
 					typVal := field.Type
 					compileExpr(ctx, e.Value)()
 					checkType(typVal, ctx.infer.Pop(), ctx.out)
 				default:
 					// ast.Expr
 					field := typStruct.Field(i)
-					ctx.out.Push(field.Name)
+					ctx.out.Push(field.Index[0])
 					typVal := field.Type
 					compileExpr(ctx, elt)()
 					checkType(typVal, ctx.infer.Pop(), ctx.out)
@@ -1078,23 +1079,27 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compileMode
 	case *goValue:
 		_, t := countPtr(vx.t)
 		name := v.Sel.Name
-		if t.Kind() == reflect.Struct {
-			if sf, ok := t.FieldByName(name); ok {
-				checkType(sf.Type, in, ctx.out)
-				if ctx.fieldIndex == nil {
-					ctx.fieldStructType = vx.t
+		if t.PkgPath() != "" && ast.IsExported(name) || t.PkgPath() == "" {
+			if t.Kind() == reflect.Struct {
+				if sf, ok := t.FieldByName(name); ok {
+					checkType(sf.Type, in, ctx.out)
+					if ctx.fieldIndex == nil {
+						ctx.fieldStructType = vx.t
+					}
+					fieldIndex := append(ctx.fieldIndex, sf.Index...)
+					fieldStructType := ctx.fieldStructType
+					ctx.checkLoadAddr = true
+					if ctx.fieldExprX != nil {
+						ctx.fieldExprX()
+					} else {
+						exprX()
+					}
+					ctx.checkLoadAddr = false
+					ctx.out.StoreField(fieldStructType, fieldIndex)
 				}
-				fieldIndex := append(ctx.fieldIndex, sf.Index...)
-				fieldStructType := ctx.fieldStructType
-				ctx.checkLoadAddr = true
-				if ctx.fieldExprX != nil {
-					ctx.fieldExprX()
-				} else {
-					exprX()
-				}
-				ctx.checkLoadAddr = false
-				ctx.out.StoreField(fieldStructType, fieldIndex)
 			}
+		} else if t.PkgPath() != "" && !ast.IsExported(name) {
+			log.Panicf("%s.%s.%s undefined (cannot refer to unexported field or method %s)\n", t.PkgPath(), t.Name(), name, name)
 		}
 	default:
 		log.Panicln("compileSelectorExprLHS failed: unknown -", reflect.TypeOf(vx))
@@ -1155,37 +1160,39 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 		n, t := countPtr(vx.t)
 		autoCall := false
 		name := v.Sel.Name
-		if t.Kind() == reflect.Struct {
-			if sf, ok := t.FieldByName(name); ok {
-				ctx.infer.Ret(1, &goValue{t: sf.Type})
-				if ctx.fieldIndex == nil {
-					ctx.fieldExprX = exprX
-					ctx.fieldStructType = vx.t
-				}
-				ctx.fieldIndex = append(ctx.fieldIndex, sf.Index...)
-				fieldIndex := ctx.fieldIndex
-				fieldExprX := ctx.fieldExprX
-				fieldStructType := ctx.fieldStructType
-				return func() {
-					if fieldExprX != nil {
-						fieldExprX()
+		if t.PkgPath() != "" && ast.IsExported(name) || t.PkgPath() == "" {
+			if t.Kind() == reflect.Struct {
+				if sf, ok := t.FieldByName(name); ok {
+					ctx.infer.Ret(1, &goValue{t: sf.Type})
+					if ctx.fieldIndex == nil {
+						ctx.fieldExprX = exprX
+						ctx.fieldStructType = vx.t
 					}
-					if ctx.takeAddr || ctx.checkLoadAddr {
-						ctx.out.AddrField(fieldStructType, fieldIndex)
-					} else {
-						ctx.out.LoadField(fieldStructType, fieldIndex)
+					ctx.fieldIndex = append(ctx.fieldIndex, sf.Index...)
+					fieldIndex := ctx.fieldIndex
+					fieldExprX := ctx.fieldExprX
+					fieldStructType := ctx.fieldStructType
+					return func() {
+						if fieldExprX != nil {
+							fieldExprX()
+						}
+						if ctx.takeAddr || ctx.checkLoadAddr {
+							ctx.out.AddrField(fieldStructType, fieldIndex)
+						} else {
+							ctx.out.LoadField(fieldStructType, fieldIndex)
+						}
 					}
 				}
 			}
+			if fDecl, ok := ctx.findMethod(t, name); ok {
+				ctx.infer.Pop()
+				fn := newQlFunc(fDecl)
+				ctx.use(fDecl)
+				ctx.infer.Push(fn)
+				return func() {}
+			}
 		}
 
-		if fDecl, ok := ctx.findMethod(t, name); ok {
-			ctx.infer.Pop()
-			fn := newQlFunc(fDecl)
-			ctx.use(fDecl)
-			ctx.infer.Push(fn)
-			return func() {}
-		}
 		if _, ok := vx.t.MethodByName(name); !ok && isLower(name) {
 			name = strings.Title(name)
 			if _, ok = vx.t.MethodByName(name); ok {
