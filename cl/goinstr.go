@@ -322,6 +322,10 @@ func compileTypeCast(typ reflect.Type, ctx *blockCtx, v *ast.CallExpr) func() {
 			cons.kind = typ.Kind()
 			if reflectx.IsUserType(typ) {
 				ctx.infer.Ret(1, &goValue{typ})
+				return func() {
+					pushConstVal(ctx.out, cons)
+					ctx.out.TypeCast(cons.Type(), typ)
+				}
 			}
 			return func() {
 				pushConstVal(ctx.out, cons)
