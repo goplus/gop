@@ -28,6 +28,13 @@ func (t *UserType) FieldByName(name string) (sf reflect.StructField, ok bool) {
 	return t.Type.FieldByName(name)
 }
 
+func (t *UserType) Field(i int) reflect.StructField {
+	if st, ok := t.value.([]reflect.StructField); ok {
+		return st[i]
+	}
+	return t.Type.Field(i)
+}
+
 func NewUserType(t reflect.Type, value interface{}) reflect.Type {
 	return &UserType{Type: t, value: value}
 }
