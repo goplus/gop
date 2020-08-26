@@ -23,6 +23,7 @@ import (
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/astutil"
 	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/reflectx"
 	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/ctype"
 	"github.com/qiniu/x/errors"
@@ -716,7 +717,7 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 					exprX()
 					ctx.checkLoadAddr = false
 					if recv.Kind() != reflect.Ptr {
-						recv.t = reflect.PtrTo(recv.t)
+						recv.t = reflectx.PtrTo(recv.t)
 						ctx.infer.Ret(1, recv)
 					}
 				}

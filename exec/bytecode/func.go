@@ -20,6 +20,7 @@ import (
 	"reflect"
 
 	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/reflectx"
 	"github.com/qiniu/x/log"
 )
 
@@ -269,7 +270,7 @@ func (p *FuncInfo) Type() reflect.Type {
 		for i := 0; i < p.numOut; i++ {
 			out[i] = p.vlist[i].typ
 		}
-		p.t = reflect.FuncOf(p.in, out, p.IsVariadic())
+		p.t = reflectx.FuncOf(p.in, out, p.IsVariadic())
 	}
 	return p.t
 }

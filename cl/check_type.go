@@ -20,6 +20,8 @@ import (
 	"errors"
 	"reflect"
 
+	"github.com/goplus/gop/reflectx"
+
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/exec.spec"
 	"github.com/goplus/gop/token"
@@ -146,6 +148,8 @@ func checkType(t reflect.Type, v interface{}, b exec.Builder) {
 			panicExprNotValue(n)
 		}
 		typVal := iv.Type()
+		t = reflectx.ToType(t)
+		typVal = reflectx.ToType(typVal)
 		if kind := t.Kind(); kind == reflect.Interface {
 			if !typVal.Implements(t) {
 				log.Panicf("checkType: type `%v` doesn't implments interface `%v`", typVal, t)

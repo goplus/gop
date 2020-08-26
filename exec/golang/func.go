@@ -24,6 +24,7 @@ import (
 
 	"github.com/goplus/gop/exec.spec"
 	"github.com/goplus/gop/exec/golang/internal/go/printer"
+	"github.com/goplus/gop/reflectx"
 	"github.com/qiniu/x/log"
 )
 
@@ -91,7 +92,7 @@ func (p *FuncInfo) Type() reflect.Type {
 			in = append(in, p.recv)
 		}
 		in = append(in, p.in...)
-		p.t = reflect.FuncOf(in, out, p.IsVariadic())
+		p.t = reflectx.FuncOf(in, out, p.IsVariadic())
 	}
 	return p.t
 }

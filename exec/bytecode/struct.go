@@ -20,6 +20,7 @@ import (
 	"reflect"
 	"strconv"
 
+	"github.com/goplus/gop/reflectx"
 	"github.com/qiniu/x/log"
 )
 
@@ -175,7 +176,7 @@ func makeStruct(typStruct reflect.Type, arity int, p *Context) {
 		ptr = true
 		typStruct = typStruct.Elem()
 	}
-	v := reflect.New(typStruct).Elem()
+	v := reflectx.New(typStruct).Elem()
 	for i := 0; i < n; i += 2 {
 		fieldName := args[i].(string)
 		v.FieldByName(fieldName).Set(reflect.ValueOf(args[i+1]))

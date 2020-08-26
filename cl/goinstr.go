@@ -20,6 +20,8 @@ import (
 	"log"
 	"reflect"
 
+	"github.com/goplus/gop/reflectx"
+
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/exec.spec"
 )
@@ -319,6 +321,9 @@ func compileTypeCast(typ reflect.Type, ctx *blockCtx, v *ast.CallExpr) func() {
 	if kind <= reflect.Complex128 || kind == reflect.String { // can be constant
 		if cons, ok := in.(*constVal); ok {
 			cons.kind = typ.Kind()
+			if reflectx.IsUserType(typ) {
+				ctx.infer.Ret(1, &goValue{typ})
+			}
 			return func() {
 				pushConstVal(ctx.out, cons)
 			}

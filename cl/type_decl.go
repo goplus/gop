@@ -22,6 +22,7 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/reflectx"
 	"github.com/qiniu/x/log"
 )
 
@@ -66,7 +67,7 @@ func toType(ctx *blockCtx, typ ast.Expr) iType {
 		return toExternalType(ctx, v)
 	case *ast.StarExpr:
 		elem := toType(ctx, v.X)
-		return reflect.PtrTo(elem.(reflect.Type))
+		return reflectx.PtrTo(elem.(reflect.Type))
 	case *ast.ArrayType:
 		return toArrayType(ctx, v)
 	case *ast.FuncType:

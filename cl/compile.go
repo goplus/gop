@@ -25,6 +25,8 @@ import (
 	"reflect"
 	"syscall"
 
+	"github.com/goplus/gop/reflectx"
+
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/astutil"
 	"github.com/goplus/gop/exec.spec"
@@ -296,11 +298,13 @@ func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
 
 	ctx.out.DefineType(t, spec.Name.Name)
 
+	ut := &reflectx.UserType{t, spec.Name.Name}
+
 	tDecl := &typeDecl{
-		Type: t,
+		Type: ut,
 	}
 	ctx.syms[spec.Name.Name] = tDecl
-	ctx.types[t] = tDecl
+	ctx.types[ut] = tDecl
 }
 
 func loadConsts(ctx *blockCtx, d *ast.GenDecl) {

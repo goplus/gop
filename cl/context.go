@@ -24,6 +24,7 @@ import (
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/astutil"
 	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/reflectx"
 	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/log"
 )
@@ -418,7 +419,7 @@ func (p *blockCtx) insertMethod(recv astutil.RecvInfo, methodName string, decl *
 	var t reflect.Type = typ.Type
 	pointer := recv.Pointer
 	for pointer > 0 {
-		t = reflect.PtrTo(t)
+		t = reflectx.PtrTo(t)
 		pointer--
 	}
 
