@@ -504,17 +504,17 @@ import (
 	}
 }
 
-type tpoint struct {
+type Tpoint struct {
 	X int
 	Y int
 }
 
-type trect struct {
-	Min tpoint
-	Max tpoint
+type Trect struct {
+	Min Tpoint
+	Max Tpoint
 }
 
-type tfieldinfo struct {
+type Tfieldinfo struct {
 	V1  bool
 	V2  rune
 	V3  string
@@ -522,28 +522,28 @@ type tfieldinfo struct {
 	V5  []int
 	V6  []string
 	V7  map[int]string
-	V8  trect
-	V9  *trect
-	V10 []trect
-	V11 []*trect
-	V12 [2]trect
-	V13 [2]*trect
+	V8  Trect
+	V9  *Trect
+	V10 []Trect
+	V11 []*Trect
+	V12 [2]Trect
+	V13 [2]*Trect
 }
 
-func tNewRect(x1 int, y1 int, x2 int, y2 int) *trect {
-	return &trect{tpoint{x1, y1}, tpoint{x2, y2}}
+func tNewRect(x1 int, y1 int, x2 int, y2 int) *Trect {
+	return &Trect{Tpoint{x1, y1}, Tpoint{x2, y2}}
 }
 
-func tMakeRect(x1 int, y1 int, x2 int, y2 int) trect {
-	return trect{tpoint{x1, y1}, tpoint{x2, y2}}
+func tMakeRect(x1 int, y1 int, x2 int, y2 int) Trect {
+	return Trect{Tpoint{x1, y1}, Tpoint{x2, y2}}
 }
 
-func tNewPoint(x int, y int) *tpoint {
-	return &tpoint{x, y}
+func tNewPoint(x int, y int) *Tpoint {
+	return &Tpoint{x, y}
 }
 
-func tMakePoint(x int, y int) tpoint {
-	return tpoint{x, y}
+func tMakePoint(x int, y int) Tpoint {
+	return Tpoint{x, y}
 }
 
 func execTestNewPoint(_ int, p *exec.Context) {
@@ -587,12 +587,12 @@ func TestPkgField(t *testing.T) {
 	ar[6] = m
 	ar[7] = tMakeRect(10, 20, 100, 200)
 	ar[8] = tNewRect(10, 20, 100, 200)
-	ar[9] = []trect{tMakeRect(10, 20, 30, 40), tMakeRect(50, 60, 70, 80)}
-	ar[10] = []*trect{tNewRect(10, 20, 30, 40), tNewRect(50, 60, 70, 80)}
-	ar[11] = [2]trect{tMakeRect(10, 20, 30, 40), tMakeRect(50, 60, 70, 80)}
-	ar[12] = [2]*trect{tNewRect(10, 20, 30, 40), tNewRect(50, 60, 70, 80)}
+	ar[9] = []Trect{tMakeRect(10, 20, 30, 40), tMakeRect(50, 60, 70, 80)}
+	ar[10] = []*Trect{tNewRect(10, 20, 30, 40), tNewRect(50, 60, 70, 80)}
+	ar[11] = [2]Trect{tMakeRect(10, 20, 30, 40), tMakeRect(50, 60, 70, 80)}
+	ar[12] = [2]*Trect{tNewRect(10, 20, 30, 40), tNewRect(50, 60, 70, 80)}
 
-	info := &tfieldinfo{}
+	info := &Tfieldinfo{}
 	info.V7 = make(map[int]string)
 	v := reflect.ValueOf(info).Elem()
 	for i := 0; i < v.NumField(); i++ {
@@ -701,8 +701,8 @@ import (
 func TestPkgType(t *testing.T) {
 	var I = exec.NewGoPackage("pkg_test_type")
 	I.RegisterTypes(
-		I.Type("Rect", reflect.TypeOf((*trect)(nil)).Elem()),
-		I.Type("Point", reflect.TypeOf((*tpoint)(nil)).Elem()),
+		I.Type("Rect", reflect.TypeOf((*Trect)(nil)).Elem()),
+		I.Type("Point", reflect.TypeOf((*Tpoint)(nil)).Elem()),
 	)
 
 	var testSource = `
@@ -750,16 +750,16 @@ func TestPkgType(t *testing.T) {
 	if v := ctx.Get(-5); v != nil && !reflect.DeepEqual(v, tNewRect(5, 6, 7, 8)) {
 		t.Fatal("check rect", v)
 	}
-	if v := ctx.Get(-4); v != nil && !reflect.DeepEqual(v, tpoint{1, 2}) {
+	if v := ctx.Get(-4); v != nil && !reflect.DeepEqual(v, Tpoint{1, 2}) {
 		t.Fatal("check point", v)
 	}
-	if v := ctx.Get(-3); v != nil && !reflect.DeepEqual(v, tpoint{X: 3, Y: 4}) {
+	if v := ctx.Get(-3); v != nil && !reflect.DeepEqual(v, Tpoint{X: 3, Y: 4}) {
 		t.Fatal("check point", v)
 	}
-	if v := ctx.Get(-2); v != nil && !reflect.DeepEqual(v, &tpoint{5, 6}) {
+	if v := ctx.Get(-2); v != nil && !reflect.DeepEqual(v, &Tpoint{5, 6}) {
 		t.Fatal("check point", v)
 	}
-	if v := ctx.Get(-1); v != nil && !reflect.DeepEqual(v, &tpoint{X: 7, Y: 8}) {
+	if v := ctx.Get(-1); v != nil && !reflect.DeepEqual(v, &Tpoint{X: 7, Y: 8}) {
 		t.Fatal("check point", v)
 	}
 
@@ -768,9 +768,9 @@ func TestPkgType(t *testing.T) {
 func TestPkgTakeAddr(t *testing.T) {
 	var I = exec.NewGoPackage("pkg_test_takeaddr")
 	rc := tMakeRect(10, 20, 100, 200)
-	ar := [2]trect{tMakeRect(1, 2, 10, 20), tMakeRect(10, 20, 100, 200)}
-	slice := []trect{tMakeRect(1, 2, 10, 20), tMakeRect(10, 20, 100, 200)}
-	m := make(map[int]trect)
+	ar := [2]Trect{tMakeRect(1, 2, 10, 20), tMakeRect(10, 20, 100, 200)}
+	slice := []Trect{tMakeRect(1, 2, 10, 20), tMakeRect(10, 20, 100, 200)}
+	m := make(map[int]Trect)
 	m[1] = tMakeRect(1, 2, 10, 20)
 	m[2] = tMakeRect(10, 20, 100, 200)
 	I.RegisterVars(

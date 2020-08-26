@@ -159,7 +159,8 @@ func (p *Builder) Struct(typ reflect.Type, arity int) *Builder {
 }
 
 func execStruct(i Instr, p *Context) {
-	typStruct := getType(i&bitsOpCallFuncvOperand, p)
+	typ := getType(i&bitsOpCallFuncvOperand, p)
+	typStruct := toType(typ)
 	arity := int((i >> bitsOpCallFuncvShift) & bitsFuncvArityOperand)
 	if arity == bitsFuncvArityMax {
 		arity = p.Pop().(int) + bitsFuncvArityMax
@@ -178,8 +179,8 @@ func makeStruct(typStruct reflect.Type, arity int, p *Context) {
 	}
 	v := reflectx.New(typStruct).Elem()
 	for i := 0; i < n; i += 2 {
-		fieldName := args[i].(string)
-		v.FieldByName(fieldName).Set(reflect.ValueOf(args[i+1]))
+		index := args[i].(int)
+		v.Field(index).Set(reflect.ValueOf(args[i+1]))
 	}
 	if ptr {
 		p.Ret(n, v.Addr().Interface())

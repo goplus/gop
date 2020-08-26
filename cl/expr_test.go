@@ -882,6 +882,37 @@ var testStructClauses = map[string]testData{
 				B string
 			}{A: 1,B: "Hello"})
 					`, "&{1 Hello}\n", false},
+	"struct_key_value_ptr_unexport_field": {`
+			println(&struct {
+				a int  ` + "`json:\"a\"`" + `
+				b string
+			}{a: 1,b: "Hello"})
+					`, "&{1 Hello}\n", false},
+	"struct_key_value_unexport_field": {`
+			println(struct {
+				a int  ` + "`json:\"a\"`" + `
+				b string
+			}{a: 1,b: "Hello"})
+					`, "{1 Hello}\n", false},
+	"struct_unexport_field": {`
+			println(struct {
+				a int
+				b string
+			}{1, "Hello"})	
+					`, "{1 Hello}\n", false},
+	"struct_ptr_unexport_field": {`
+			println(&struct {
+				a int
+				b string
+			}{1, "Hello"})	
+					`, "&{1 Hello}\n", false},
+	"struct_store_field_panic": {`
+				import "sync"
+
+				mu := sync.WaitGroup{}
+				
+				mu.noCopy = struct{}{}
+					`, "", true},
 }
 
 func TestStruct2(t *testing.T) {
