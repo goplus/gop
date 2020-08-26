@@ -296,7 +296,7 @@ func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
 	}
 	t := toType(ctx, spec.Type).(reflect.Type)
 
-	t = reflectx.NewUserType(t, spec.Name.Name)
+	t = reflectx.NewUserType(t)
 	ctx.out.DefineType(t, spec.Name.Name)
 
 	tDecl := &typeDecl{

@@ -6,19 +6,7 @@ import (
 
 type UserType struct {
 	reflect.Type
-	name string
 	elem *UserType
-}
-
-func (t *UserType) TypeName() string {
-	return t.name
-}
-
-func (t *UserType) Name() string {
-	if t.Type.Kind() == reflect.Ptr {
-		return "*" + t.name
-	}
-	return t.Type.Name()
 }
 
 func (t *UserType) Elem() reflect.Type {
@@ -28,13 +16,13 @@ func (t *UserType) Elem() reflect.Type {
 	return t.Type.Elem()
 }
 
-func NewUserType(t reflect.Type, name string) reflect.Type {
-	return &UserType{Type: t, name: name}
+func NewUserType(t reflect.Type) reflect.Type {
+	return &UserType{Type: t}
 }
 
 func PtrTo(t reflect.Type) reflect.Type {
 	if ut, ok := t.(*UserType); ok {
-		return &UserType{reflect.PtrTo(ut.Type), ut.name, ut}
+		return &UserType{reflect.PtrTo(ut.Type), ut}
 	}
 	return reflect.PtrTo(t)
 }
