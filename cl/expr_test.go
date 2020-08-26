@@ -1039,15 +1039,12 @@ var testMethodClauses = map[string]testData{
 	"method two int type": {`
  					type M int
  					type M2 int
-
  					func (m M) Foo() {
  						println("foo", m)
  					}
-
  					func (m M2) Foo() {
  						println("foo2", m)
  					}
-
  					m := M(0)
  					m.Foo()
  					m2 := M2(1)
@@ -1062,10 +1059,10 @@ var testMethodClauses = map[string]testData{
  					func (m M) Foo() {
  						println("foo", m)
  					}
-
  					func (m M2) Foo() {
  						println("foo2", m)
  					}
+
  					M(10).Foo()
  					M2(11).Foo()
  					`, "foo 10\nfoo2 11\n", false},
@@ -1074,30 +1071,41 @@ var testMethodClauses = map[string]testData{
 						X int
 						Y int
 					}
-					
 					func (p *Pt1) Test() {
 						println("pt1", p)
 					}
-					
 					type Pt2 struct {
 						X int
 						Y int
 					}
-					
 					func (p *Pt2) Test() {
 						println("pt2",p)
 					}
-					
+
 					pt1 := Pt1{1,2}
 					pt2 := Pt2{3,4}
 					pt3 := &Pt1{5,6}
 					pt4 := &Pt2{7,8}
-					
+
 					pt1.Test()
 					pt2.Test()
 					pt3.Test()
 					pt4.Test()
 					`, "pt1 &{1 2}\npt2 &{3 4}\npt1 &{5 6}\npt2 &{7 8}\n", false},
+	"method struct field type": {`
+ 					type M int
+ 					func (m M) Foo() {
+ 						println("foo", m)
+ 					}
+					type Pt struct {
+						X M
+						Y M
+					}
+
+					pt := &Pt{10,20}
+					pt.Y.Foo()
+					M(11).Foo()
+ 					`, "foo 20\nfoo 11\n", false},
 }
 
 func TestMethodCases(t *testing.T) {

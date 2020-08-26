@@ -222,11 +222,19 @@ func toArgTypes(ctx *blockCtx, recv, fields *ast.FieldList) ([]reflect.Type, []s
 	return types, names, false
 }
 
-func toStructType(ctx *blockCtx, v *ast.StructType) iType {
+func toStructFieldList(ctx *blockCtx, v *ast.StructType) []reflect.StructField {
 	var fields []reflect.StructField
 	for _, field := range v.Fields.List {
 		fields = append(fields, toStructField(ctx, field)...)
 	}
+	for i := 0; i < len(fields); i++ {
+		fields[i].Index = []int{i}
+	}
+	return fields
+}
+
+func toStructType(ctx *blockCtx, v *ast.StructType) iType {
+	fields := toStructFieldList(ctx, v)
 	return reflect.StructOf(fields)
 }
 

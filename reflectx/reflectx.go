@@ -6,7 +6,8 @@ import (
 
 type UserType struct {
 	reflect.Type
-	elem *UserType
+	elem  *UserType
+	value interface{}
 }
 
 func (t *UserType) Elem() reflect.Type {
@@ -16,13 +17,29 @@ func (t *UserType) Elem() reflect.Type {
 	return t.Type.Elem()
 }
 
-func NewUserType(t reflect.Type) reflect.Type {
-	return &UserType{Type: t}
+func (t *UserType) FieldByName(name string) (sf reflect.StructField, ok bool) {
+	if st, ok := t.value.([]reflect.StructField); ok {
+		for _, t := range st {
+			if t.Name == name {
+				return t, true
+			}
+		}
+	}
+	return t.Type.FieldByName(name)
+}
+
+func NewUserType(t reflect.Type, value interface{}) reflect.Type {
+	return &UserType{Type: t, value: value}
+}
+
+func StructOf(fields []reflect.StructField) reflect.Type {
+	t := reflect.StructOf(fields)
+	return &UserType{Type: t, value: fields}
 }
 
 func PtrTo(t reflect.Type) reflect.Type {
 	if ut, ok := t.(*UserType); ok {
-		return &UserType{reflect.PtrTo(ut.Type), ut}
+		return &UserType{Type: reflect.PtrTo(ut.Type), elem: ut}
 	}
 	return reflect.PtrTo(t)
 }
