@@ -337,8 +337,7 @@ func compileTypeCast(typ reflect.Type, ctx *blockCtx, v *ast.CallExpr) func() {
 			panicExprNotValue(n)
 		}
 		tIn := iv.Type()
-		typ = reflectx.ToType(typ)
-		if !tIn.ConvertibleTo(typ) {
+		if !tIn.ConvertibleTo(reflectx.ToType(typ)) {
 			log.Panicf("compileTypeCast: can't convert type `%v` to `%v`\n", tIn, typ)
 		}
 		ctx.out.TypeCast(tIn, typ)
