@@ -20,10 +20,9 @@ import (
 	"log"
 	"reflect"
 
-	"github.com/goplus/gop/reflectx"
-
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/reflectx"
 )
 
 // -----------------------------------------------------------------------------

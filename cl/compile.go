@@ -25,11 +25,10 @@ import (
 	"reflect"
 	"syscall"
 
-	"github.com/goplus/gop/reflectx"
-
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/astutil"
 	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/reflectx"
 	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/log"
 )
