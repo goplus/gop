@@ -296,15 +296,14 @@ func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
 	}
 	t := toType(ctx, spec.Type).(reflect.Type)
 
+	t = reflectx.NewUserType(t, spec.Name.Name)
 	ctx.out.DefineType(t, spec.Name.Name)
 
-	ut := &reflectx.UserType{t, spec.Name.Name}
-
 	tDecl := &typeDecl{
-		Type: ut,
+		Type: t,
 	}
 	ctx.syms[spec.Name.Name] = tDecl
-	ctx.types[ut] = tDecl
+	ctx.types[t] = tDecl
 }
 
 func loadConsts(ctx *blockCtx, d *ast.GenDecl) {

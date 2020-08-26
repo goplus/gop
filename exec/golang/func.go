@@ -253,6 +253,7 @@ func (p *Builder) EndFunc(fun *FuncInfo) *Builder {
 			Type: toFuncType(p, fun),
 			Body: body,
 		}
+
 		if fun.isMethod == 1 {
 			params := make([]*ast.Field, 1)
 			params[0] = Field(p, "recv", fun.recv, "", false)

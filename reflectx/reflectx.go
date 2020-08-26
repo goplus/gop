@@ -6,12 +6,35 @@ import (
 
 type UserType struct {
 	reflect.Type
-	User interface{}
+	name string
+	elem *UserType
+}
+
+func (t *UserType) TypeName() string {
+	return t.name
+}
+
+func (t *UserType) Name() string {
+	if t.Type.Kind() == reflect.Ptr {
+		return "*" + t.name
+	}
+	return t.Type.Name()
+}
+
+func (t *UserType) Elem() reflect.Type {
+	if t.elem != nil {
+		return t.elem
+	}
+	return t.Type.Elem()
+}
+
+func NewUserType(t reflect.Type, name string) reflect.Type {
+	return &UserType{Type: t, name: name}
 }
 
 func PtrTo(t reflect.Type) reflect.Type {
 	if ut, ok := t.(*UserType); ok {
-		return &UserType{reflect.PtrTo(ut.Type), ut.User}
+		return &UserType{reflect.PtrTo(ut.Type), ut.name, ut}
 	}
 	return reflect.PtrTo(t)
 }
@@ -28,16 +51,16 @@ func ToType(t reflect.Type) reflect.Type {
 	return t
 }
 
-func ToTypes(in []reflect.Type) []reflect.Type {
-	out := make([]reflect.Type, len(in))
-	for i := 0; i < len(in); i++ {
-		if ut, ok := in[i].(*UserType); ok {
-			out[i] = ut.Type
+func ToTypes(typs []reflect.Type) []reflect.Type {
+	ret := make([]reflect.Type, len(typs))
+	for i := 0; i < len(typs); i++ {
+		if ut, ok := typs[i].(*UserType); ok {
+			ret[i] = ut.Type
 		} else {
-			out[i] = in[i]
+			ret[i] = typs[i]
 		}
 	}
-	return out
+	return ret
 }
 
 func FuncOf(in, out []reflect.Type, variadic bool) reflect.Type {

@@ -328,7 +328,7 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 			}
 			ctx.takeAddr = old
 			if ctx.takeAddr {
-				ctx.out.Struct(reflect.PtrTo(typStruct), len(v.Elts))
+				ctx.out.Struct(reflectx.PtrTo(typStruct), len(v.Elts))
 			} else {
 				ctx.out.Struct(typStruct, len(v.Elts))
 			}
@@ -548,7 +548,7 @@ func compileUnaryExpr(ctx *blockCtx, v *ast.UnaryExpr) func() {
 		}
 		if v.Op == token.AND {
 			vx := x.(iValue)
-			t := reflect.TypeOf(reflect.New(vx.Type()).Interface())
+			t := reflectx.PtrTo(vx.Type())
 			ret := &goValue{t: t}
 			ctx.infer.Ret(1, ret)
 			return func() {
@@ -1179,7 +1179,6 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 				}
 			}
 		}
-
 		if fDecl, ok := ctx.findMethod(t, name); ok {
 			ctx.infer.Pop()
 			fn := newQlFunc(fDecl)
