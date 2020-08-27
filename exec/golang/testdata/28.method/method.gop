@@ -44,3 +44,20 @@ println(p.Name)
 println(p.Age)
 println(p.Friends)
 println(m)
+
+ar1 := make([]M, 1, 1)
+ar1[0] = 10
+ar1[0].Foo()
+
+ar2 := [2]M{10, 11}
+ar2[0].Foo()
+
+ar3 := []M{12}
+ar3[0].Foo()
+
+m1 := make(map[int]M)
+m1[0] = 13
+m1[0].Foo()
+
+m2 := map[int]M{0: 14}
+m2[0].Foo()

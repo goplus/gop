@@ -51,13 +51,6 @@ func MapType(p *Builder, typ reflect.Type) *ast.MapType {
 	return &ast.MapType{Key: key, Value: val}
 }
 
-// ChanType instr
-func ChanType(p *Builder, typ reflect.Type) *ast.ChanType {
-	dir := typ.ChanDir()
-	val := Type(p, typ.Elem())
-	return &ast.ChanType{Dir: ast.ChanDir(dir), Value: val}
-}
-
 // ArrayType instr
 func ArrayType(p *Builder, typ reflect.Type) *ast.ArrayType {
 	var len ast.Expr
@@ -169,7 +162,6 @@ func Type(p *Builder, typ reflect.Type, actualTypes ...bool) ast.Expr {
 	case reflect.Interface:
 		return InterfaceType(p, typ)
 	case reflect.Chan:
-		return ChanType(p, typ)
 	case reflect.Struct:
 		return StructType(p, typ)
 	}
