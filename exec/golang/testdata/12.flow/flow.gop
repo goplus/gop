@@ -106,48 +106,48 @@ FL02:
 		}
 	}
 
-println("fallthrough with tag")
-switch v {
-case "Hello":
-	println(v)
-	fallthrough
-case "hi":
-	println(v)
-	fallthrough
-default:
-	println(v)
-}
-println("fallthrough without tag")
-
-z := 3
-switch {
-case z < 10:
-	println(z)
-	fallthrough
-case z == 10:
-	println(z)
-	fallthrough
-case z > 10:
-	println(z)
-	fallthrough
-default:
-	println(z)
-}
-
-// switch with break
-switch z {
-case 3:
-	if v == "Hello" {
-		println("break")
-		break
+	println("fallthrough with tag")
+	switch v {
+	case "Hello":
+		println(v)
+		fallthrough
+	case "hi":
+		println(v)
+		fallthrough
+	default:
+		println(v)
 	}
-	println("break fail")
-default:
-	println(z)
-}
+	println("fallthrough without tag")
 
-goto L
-println("before")
+	z := 3
+	switch {
+	case z < 10:
+		println(z)
+		fallthrough
+	case z == 10:
+		println(z)
+		fallthrough
+	case z > 10:
+		println(z)
+		fallthrough
+	default:
+		println(z)
+	}
+
+	// switch with break
+	switch z {
+	case 3:
+		if v == "Hello" {
+			println("break")
+			break
+		}
+		println("break fail")
+	default:
+		println(z)
+	}
+
+	goto L
+	println("before")
 L:
 	println("over")
 
