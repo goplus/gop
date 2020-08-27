@@ -20,6 +20,7 @@ import (
 	"reflect"
 
 	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/reflectx"
 	"github.com/qiniu/x/log"
 )
 
@@ -159,10 +160,10 @@ func makeArray(typSlice reflect.Type, arity int, p *Context) {
 	var ret, set reflect.Value
 	kind := typSlice.Kind()
 	if kind == reflect.Slice {
-		ret = reflect.MakeSlice(typSlice, arity, arity)
+		ret = reflectx.MakeSlice(typSlice, arity, arity)
 		set = ret
 	} else if kind == reflect.Array {
-		ret = reflect.New(typSlice)
+		ret = reflectx.New(typSlice)
 		set = ret.Elem()
 	} else {
 		log.Panic("makeArray bad type:", typSlice)
@@ -202,20 +203,20 @@ func execMake(i Instr, p *Context) {
 		} else {
 			len = cap
 		}
-		p.Ret(arity, reflect.MakeSlice(typ, len, cap).Interface())
+		p.Ret(arity, reflectx.MakeSlice(typ, len, cap).Interface())
 	case reflect.Map:
 		if arity == 0 {
-			p.Push(reflect.MakeMap(typ).Interface())
+			p.Push(reflectx.MakeMap(typ).Interface())
 			return
 		}
 		n := p.Get(-1).(int)
-		p.Ret(arity, reflect.MakeMapWithSize(typ, n).Interface())
+		p.Ret(arity, reflectx.MakeMapWithSize(typ, n).Interface())
 	case reflect.Chan:
 		var buffer int
 		if arity > 0 {
 			buffer = p.Get(-1).(int)
 		}
-		p.Ret(arity, reflect.MakeChan(typ, buffer).Interface())
+		p.Ret(arity, reflectx.MakeChan(typ, buffer).Interface())
 	default:
 		panic("make: unexpected type")
 	}
@@ -233,7 +234,7 @@ func execMakeMap(i Instr, p *Context) {
 func makeMap(typMap reflect.Type, arity int, p *Context) {
 	n := arity << 1
 	args := p.GetArgs(n)
-	ret := reflect.MakeMapWithSize(typMap, arity)
+	ret := reflectx.MakeMapWithSize(typMap, arity)
 	for i := 0; i < n; i += 2 {
 		key := getKeyOf(args[i], typMap)
 		val := getElementOf(args[i+1], typMap)

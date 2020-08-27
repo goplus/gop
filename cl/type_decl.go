@@ -79,10 +79,10 @@ func toType(ctx *blockCtx, typ ast.Expr) iType {
 	case *ast.MapType:
 		key := toType(ctx, v.Key)
 		elem := toType(ctx, v.Value)
-		return reflect.MapOf(key.(reflect.Type), elem.(reflect.Type))
+		return reflectx.MapOf(key.(reflect.Type), elem.(reflect.Type))
 	case *ast.ChanType:
 		val := toType(ctx, v.Value)
-		return reflect.ChanOf(toChanDir(v.Dir), val.(reflect.Type))
+		return reflectx.ChanOf(toChanDir(v.Dir), val.(reflect.Type))
 	case *ast.Ellipsis:
 		return nil
 	}
@@ -279,7 +279,7 @@ func toIdentType(ctx *blockCtx, ident string) iType {
 func toArrayType(ctx *blockCtx, v *ast.ArrayType) iType {
 	elem := toType(ctx, v.Elt)
 	if v.Len == nil {
-		return reflect.SliceOf(elem.(reflect.Type))
+		return reflectx.SliceOf(elem.(reflect.Type))
 	}
 	compileExpr(ctx, v.Len)
 	n := ctx.infer.Pop()
@@ -288,7 +288,7 @@ func toArrayType(ctx *blockCtx, v *ast.ArrayType) iType {
 			if iv < 0 {
 				return &unboundArrayType{elem: elem.(reflect.Type)}
 			}
-			return reflect.ArrayOf(int(iv), elem.(reflect.Type))
+			return reflectx.ArrayOf(int(iv), elem.(reflect.Type))
 		}
 	}
 	log.Panicln("toArrayType failed: unknown -", reflect.TypeOf(n))
