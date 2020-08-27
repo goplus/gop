@@ -90,11 +90,28 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 }
 
 func compileForPhraseStmt(parent *blockCtx, v *ast.ForPhraseStmt) {
-	noExecCtx := isNoExecCtx(parent, v.Body)
-	ctx, exprFor := compileForPhrase(parent, v.ForPhrase, noExecCtx)
-	exprFor(func() {
-		compileBlockStmtWithout(ctx, v.Body)
-	})
+	if v.Cond != nil {
+		v.Body.List = append([]ast.Stmt{&ast.IfStmt{
+			Cond: &ast.UnaryExpr{
+				Op: token.NOT,
+				X:  v.Cond,
+			},
+			Body: &ast.BlockStmt{List: []ast.Stmt{&ast.BranchStmt{Tok: token.CONTINUE}}},
+		}}, v.Body.List...)
+	}
+	rangeStmt := &ast.RangeStmt{
+		For:    v.For,
+		Key:    v.Key,
+		Value:  v.Value,
+		TokPos: v.TokPos,
+		Tok:    token.DEFINE,
+		X:      v.X,
+		Body:   v.Body,
+	}
+	if parent.currentLabel != nil && parent.currentLabel.Stmt == v {
+		parent.currentLabel.Stmt = rangeStmt
+	}
+	compileRangeStmt(parent, rangeStmt)
 }
 
 func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
@@ -208,7 +225,6 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 			Rparen: v.For,
 			Args:   []ast.Expr{iter},
 		},
-		Post: nil,
 		Body: &ast.BlockStmt{
 			Lbrace: v.Body.Lbrace,
 			List:   append(forStmts, v.Body.List...),
@@ -218,6 +234,9 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 	parent.out.DefineBlock()
 	defer parent.out.EndBlock()
 	ctx := newNormBlockCtx(parent)
+	if ctx.currentLabel != nil && ctx.currentLabel.Stmt == v {
+		ctx.currentLabel.Stmt = fs
+	}
 	for k, v := range kvDef {
 		ctx.insertVar(k, v)
 	}

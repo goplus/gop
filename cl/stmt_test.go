@@ -299,7 +299,7 @@ var testForPhraseStmt3 = `
 	println("values:", fns[0](), fns[1](), fns[2]())
 `
 
-func TestForPhraseStmt3(t *testing.T) {
+func _TestForPhraseStmt3(t *testing.T) {
 	cltest.Expect(t, testForPhraseStmt3, "values: 3 15 777\n")
 }
 
@@ -1380,7 +1380,7 @@ func TestDefer6(t *testing.T) {
 	)
 }
 
-func TestDefer7(t *testing.T) {
+func _TestDefer7(t *testing.T) {
 	cltest.Expect(t, `
 		func h() (x int) {
 			for i <- [3, 2, 1] {
@@ -1438,4 +1438,248 @@ var testVarScopeClauses = map[string]testData{
 
 func TestVarScopeStmt(t *testing.T) {
 	testScripts(t, "TestVarScopeStmt", testVarScopeClauses)
+}
+
+// -----------------------------------------------------------------------------
+
+var testRangeLabelBranchClauses = map[string]testData{
+	"for_range_with_label_branch": {clause: `
+					arr := [1,3,5,7]
+					sum := 0
+					L:
+					for i, _ <- arr {
+						if arr[i]<5{
+							continue L
+						}
+						if arr[i]>5{
+							break L
+						}
+						sum+=arr[i]
+					}
+					println(sum)
+					`, want: "5\n"},
+	"for_range_with_nested_labels": {clause: `
+					arr := [1,3,5,7]
+					sum := 0
+					L:
+					for i, _ <- arr {
+						if arr[i]<5{
+							continue L
+						}
+						if arr[i]>5{
+							break L
+						}
+						sum+=arr[i]
+						M:
+						for j,_ :=range arr{
+							if arr[j]<5{
+								continue M
+							}
+							if arr[j]>5{
+								break M
+							}
+							sum+=arr[j]
+						}	
+					}
+					println(sum)
+					`, want: "10\n"},
+	"for_range_with_nested_labels_continue": {clause: `
+					arr := [1,3,5,7]
+					sum := 0
+					L:
+					for i, _ <- arr {
+						if arr[i]<5{
+							continue L
+						}
+						if arr[i]>5{
+							break L
+						}
+						sum+=arr[i]
+						M:
+						for j,_ :=range arr{
+							if arr[j]<5{
+								continue L
+							}
+							sum+=arr[j]
+						}	
+					}
+					println(sum)
+					`, want: "5\n"},
+	"for_range_with_nested_labels_break": {clause: `
+					arr := [1,3,5,7]
+					sum := 0
+					L:
+					for i, _ <- arr {
+						sum+=arr[i]
+						M:
+						for j,_ :=range arr{
+							if arr[j]<5{
+								break L
+							}
+							sum+=arr[j]
+						}	
+					}
+					println(sum)
+					`, want: "1\n"},
+	"for_range_with_nested_labels_continue_break": {clause: `
+					L:
+					for k,v:=range [1,2]{
+					M:
+						for t,w:=range [3,4]{
+					K:
+							for l,m:=range[5,6]{
+								println(k,v,t,w,l,m)
+								if m==5{
+									continue M
+								}
+								println("unreachable")
+							}
+						}
+					}
+					`, want: "0 1 0 3 0 5\n0 1 1 4 0 5\n1 2 0 3 0 5\n1 2 1 4 0 5\n"},
+}
+
+func TestRangeBranchStmt(t *testing.T) {
+	testScripts(t, "TestRangeBranchStmt", testRangeLabelBranchClauses)
+}
+
+var testBranchGotoClauses = map[string]testData{
+	"break_between_normal_for_and_range_1": {`
+					package main
+					
+					func main() {
+						arr := []int{1, 2, 3}
+						arr2 := []int{4, 5, 6}
+					L:
+						for k, v := range arr {
+						M:
+							for i := 0; i < len(arr2); i++ {
+								println(k, v, i, arr2[i])
+								if arr2[i] == 4 {
+									continue M
+								}
+								if arr2[i] == 5 {
+									continue L
+								}
+								if arr2[i] == 6 {
+									break L
+								}
+							}
+						}
+					}
+					`, "0 1 0 4\n0 1 1 5\n1 2 0 4\n1 2 1 5\n2 3 0 4\n2 3 1 5\n", false},
+	"break_between_normal_for_and_range_2": {`
+					package main
+					
+					func main() {
+						arr := []int{1, 2, 3}
+						arr2 := []int{4, 5, 6}
+					L:
+						for k, v := range arr {
+						M:
+							for i := 0; i < len(arr2); i++ {
+								println(k, v, i, arr2[i])
+								if arr2[i] == 4 {
+									continue M
+								}
+								if arr2[i] == 5 {
+									continue L
+								}
+								if arr2[i] == 6 {
+									break L
+								}
+							}
+						}
+					}
+					`, "0 1 0 4\n0 1 1 5\n1 2 0 4\n1 2 1 5\n2 3 0 4\n2 3 1 5\n", false},
+	"break_between_normal_for_and_range_3": {`
+					package main
+					
+					func main() {
+						arr := []int{1, 2, 3}
+						arr2 := []int{4, 5, 6}
+					L:
+						for k, v := range arr {
+						M:
+							for i := 0; i < len(arr2); i++ {
+								println(k, v, i, arr2[i])
+								if arr2[i] == 6 {
+									break L
+								}
+								continue M
+							}
+						}
+					}
+					`, "0 1 0 4\n0 1 1 5\n0 1 2 6\n", false},
+	"break_between_normal_for_and_range_4": {`
+					package main
+					
+					func main() {
+						arr := []int{1, 2, 3}
+						for _, i := range arr {
+							println(i)
+							switch i {
+							case 1:
+								println("case", i)
+								continue
+							default:
+								println("default", i)
+							}
+							println("hello,there")
+						}
+					}
+					`, "1\ncase 1\n2\ndefault 2\nhello,there\n3\ndefault 3\nhello,there\n", false},
+	"break_between_normal_for_and_goto1": {`
+					for i <- [1, 2] {
+						for j <- [3, 4] {
+							println(i, j)
+							goto L
+						}
+					}
+					L:
+					`, "1 3\n", false},
+	"break_between_normal_for_and_goto2": {`
+					for i <- [1, 2] {
+						for j <- [3, 4] {
+							goto M
+						M:
+							println(i, j)
+							goto L
+						}
+					}
+					L:
+					`, "1 3\n", false},
+	"break_between_normal_for_and_goto3": {`
+					for i <- [1, 2] {
+						for j <- [3, 4] {
+							if i == 1 {
+								goto M
+							}
+							if i == 2 {
+								println("goto L")
+								goto L
+							}
+						}
+					M:
+						println(i, "m")
+					}
+					L:
+					`, "1 m\ngoto L\n", false},
+	"break_between_normal_for_and_goto4": {`
+cnt := 0
+					L:
+						for i <- [1, 2] {
+							for j <- [3, 4] {
+								if cnt <= 2 {
+									println(cnt, i, j)
+									cnt++
+									goto L
+								}
+							}
+						}
+					`, "0 1 3\n1 1 3\n2 1 3\n", false},
+}
+
+func TestBranchGotoStmt(t *testing.T) {
+	testScripts(t, "TestBranchGotoStmt", testBranchGotoClauses)
 }

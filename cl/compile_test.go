@@ -23,6 +23,7 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/asttest"
+	"github.com/goplus/gop/ast/gopiter"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/log"
@@ -293,4 +294,54 @@ func TestStruct(t *testing.T) {
 	if v := ctx.Get(-4); v != int(10) {
 		t.Fatal("n:", v)
 	}
+}
+
+var fns []func() int
+
+func TestMmMMM2(t *testing.T) {
+	//line ./b.gop:1
+	fns = make([]func() int, 3)
+	{
+		var (
+			i         int
+			x         int
+			_gop_iter gopiter.Iterator
+		)
+		//line ./b.gop:2
+		_gop_iter = gopiter.NewIter([]int{3, 15, 777})
+		//line ./b.gop:2
+		goto _gop_1
+	_gop_1:
+		//line ./b.gop:2
+		if !gopiter.Next(_gop_iter) {
+			goto _gop_2
+		}
+		//line ./b.gop:2
+		gopiter.Key(_gop_iter, &i)
+		//line ./b.gop:2
+		gopiter.Value(_gop_iter, &x)
+		//line ./b.gop:3
+		{
+
+			var v int
+			v = x
+			//line ./b.gop:4
+			fns[i] = func() (_ret_1 int) {
+				//line ./b.gop:5
+				return v
+			}
+		}
+		//line ./b.gop:2
+		goto _gop_3
+		//line ./b.gop:2
+		goto _gop_3
+	_gop_3:
+		//line ./b.gop:2
+		goto _gop_1
+		//line ./b.gop:2
+		goto _gop_2
+	_gop_2:
+	}
+	//line ./b.gop:8
+	fmt.Println("values:", fns[0](), fns[1](), fns[2]())
 }
