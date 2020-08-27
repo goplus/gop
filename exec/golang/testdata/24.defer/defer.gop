@@ -27,6 +27,7 @@ func h() (x int) {
 
 println("f-x:", f())
 println("g-x:", g())
+
 /*TODO
 println("h-x:", h())
 */
