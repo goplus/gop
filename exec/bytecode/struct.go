@@ -99,6 +99,10 @@ func (ctx *varScope) setVar(idx uint32, v interface{}) {
 	setValue(x, v)
 }
 
+func (ctx *varScope) setValue(idx uint32, v reflect.Value) {
+	ctx.vars.Field(int(idx)).Set(v)
+}
+
 func setValue(x reflect.Value, v interface{}) {
 	if v != nil {
 		x.Set(reflect.ValueOf(v))
