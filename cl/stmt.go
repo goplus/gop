@@ -92,11 +92,12 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 func compileForPhraseStmt(parent *blockCtx, v *ast.ForPhraseStmt) {
 	if v.Cond != nil {
 		v.Body.List = append([]ast.Stmt{&ast.IfStmt{
+			If: v.TokPos,
 			Cond: &ast.UnaryExpr{
 				Op: token.NOT,
 				X:  v.Cond,
 			},
-			Body: &ast.BlockStmt{List: []ast.Stmt{&ast.BranchStmt{Tok: token.CONTINUE}}},
+			Body: &ast.BlockStmt{List: []ast.Stmt{&ast.BranchStmt{Tok: token.CONTINUE, TokPos: v.TokPos}}},
 		}}, v.Body.List...)
 	}
 	rangeStmt := &ast.RangeStmt{
