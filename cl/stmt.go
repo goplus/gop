@@ -302,13 +302,9 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 		if v.Label != nil {
 			labelName = v.Label.Name
 		}
-		label, rangeFor := ctx.getBreakLabel(labelName)
+		label := ctx.getBreakLabel(labelName)
 		if label != nil {
 			ctx.out.Jmp(label)
-			return
-		}
-		if rangeFor {
-			ctx.out.Return(exec.BreakAsReturn)
 			return
 		}
 		log.Panicln("break statement out of for/switch/select statements")
@@ -317,13 +313,9 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 		if v.Label != nil {
 			labelName = v.Label.Name
 		}
-		label, rangeFor := ctx.getContinueLabel(labelName)
+		label := ctx.getContinueLabel(labelName)
 		if label != nil {
 			ctx.out.Jmp(label)
-			return
-		}
-		if rangeFor {
-			ctx.out.Return(exec.ContinueAsReturn)
 			return
 		}
 		log.Panicln("continue statement out of for statements")
