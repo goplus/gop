@@ -17,10 +17,10 @@
 package bytecode
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/reflect"
 )
 
 func TestLargeSlice(t *testing.T) {

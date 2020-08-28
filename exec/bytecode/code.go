@@ -20,7 +20,7 @@ package bytecode
 import (
 	"bufio"
 	"io"
-	"reflect"
+	"github.com/goplus/gop/reflect"
 	"strconv"
 
 	"github.com/goplus/gop/exec.spec"

@@ -18,10 +18,10 @@ package exec
 
 import (
 	"math/big"
-	"reflect"
 	"unsafe"
 
 	"github.com/goplus/gop/ast/spec"
+	"github.com/goplus/gop/reflect"
 )
 
 // -----------------------------------------------------------------------------

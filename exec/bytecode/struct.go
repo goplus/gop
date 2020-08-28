@@ -17,9 +17,9 @@
 package bytecode
 
 import (
-	"reflect"
 	"strconv"
 
+	"github.com/goplus/gop/reflect"
 	"github.com/qiniu/x/log"
 )
 

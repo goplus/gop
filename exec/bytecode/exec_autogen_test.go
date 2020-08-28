@@ -19,11 +19,11 @@ package bytecode
 import (
 	"fmt"
 	"os"
-	"reflect"
 	"strings"
 	"testing"
 
 	exec "github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/reflect"
 )
 
 const (

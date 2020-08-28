@@ -22,12 +22,12 @@ import (
 	"errors"
 	"fmt"
 	"path"
-	"reflect"
 	"syscall"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/astutil"
 	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/reflect"
 	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/log"
 )
@@ -293,6 +293,9 @@ func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
 		log.Panicln("loadType failed: symbol exists -", spec.Name.Name)
 	}
 	t := toType(ctx, spec.Type).(reflect.Type)
+	if !reflect.IsUserType(t) {
+		t = reflect.NewUserType(t)
+	}
 
 	ctx.out.DefineType(t, spec.Name.Name)
 

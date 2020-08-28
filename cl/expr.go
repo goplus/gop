@@ -17,12 +17,12 @@
 package cl
 
 import (
-	"reflect"
 	"strings"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/astutil"
 	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/reflect"
 	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/ctype"
 	"github.com/qiniu/x/errors"
@@ -548,7 +548,7 @@ func compileUnaryExpr(ctx *blockCtx, v *ast.UnaryExpr) func() {
 		}
 		if v.Op == token.AND {
 			vx := x.(iValue)
-			t := reflect.TypeOf(reflect.New(vx.Type()).Interface())
+			t := reflect.PtrTo(vx.Type())
 			ret := &goValue{t: t}
 			ctx.infer.Ret(1, ret)
 			return func() {

@@ -17,11 +17,11 @@
 package cl
 
 import (
-	"reflect"
 	"strconv"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/reflect"
 	"github.com/qiniu/x/log"
 )
 
@@ -225,6 +225,9 @@ func toStructType(ctx *blockCtx, v *ast.StructType) iType {
 	var fields []reflect.StructField
 	for _, field := range v.Fields.List {
 		fields = append(fields, toStructField(ctx, field)...)
+	}
+	for i := 0; i < len(fields); i++ {
+		fields[i].Index = []int{i}
 	}
 	return reflect.StructOf(fields)
 }

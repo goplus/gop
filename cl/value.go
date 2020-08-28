@@ -18,11 +18,11 @@ package cl
 
 import (
 	"math"
-	"reflect"
 	"strconv"
 
 	"github.com/goplus/gop/ast/astutil"
 	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/reflect"
 	"github.com/qiniu/x/log"
 )
 

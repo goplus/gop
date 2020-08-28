@@ -18,10 +18,10 @@ package cl
 
 import (
 	"log"
-	"reflect"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/reflect"
 )
 
 // -----------------------------------------------------------------------------
@@ -319,6 +319,14 @@ func compileTypeCast(typ reflect.Type, ctx *blockCtx, v *ast.CallExpr) func() {
 	if kind <= reflect.Complex128 || kind == reflect.String { // can be constant
 		if cons, ok := in.(*constVal); ok {
 			cons.kind = typ.Kind()
+
+			if reflect.IsUserType(typ) {
+				ctx.infer.Ret(1, &goValue{typ})
+				return func() {
+					pushConstVal(ctx.out, cons)
+					ctx.out.TypeCast(cons.Type(), typ)
+				}
+			}
 			return func() {
 				pushConstVal(ctx.out, cons)
 			}
@@ -333,7 +341,7 @@ func compileTypeCast(typ reflect.Type, ctx *blockCtx, v *ast.CallExpr) func() {
 			panicExprNotValue(n)
 		}
 		tIn := iv.Type()
-		if !tIn.ConvertibleTo(typ) {
+		if !reflect.ConvertibleTo(tIn, typ) {
 			log.Panicf("compileTypeCast: can't convert type `%v` to `%v`\n", tIn, typ)
 		}
 		ctx.out.TypeCast(tIn, typ)

@@ -18,10 +18,10 @@ package cl
 
 import (
 	"errors"
-	"reflect"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/reflect"
 	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/log"
 )
@@ -150,7 +150,7 @@ func checkType(t reflect.Type, v interface{}, b exec.Builder) {
 			if !typVal.Implements(t) {
 				log.Panicf("checkType: type `%v` doesn't implments interface `%v`", typVal, t)
 			}
-		} else if t != typVal {
+		} else if !reflect.EqualType(t, typVal) {
 			log.Panicf("checkType: unexptected value type, require `%v`, but got `%v`\n", t, typVal)
 		}
 	}

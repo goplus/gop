@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -28,6 +27,7 @@ import (
 	qspec "github.com/goplus/gop/exec.spec"
 	exec "github.com/goplus/gop/exec/bytecode"
 	"github.com/goplus/gop/parser"
+	"github.com/goplus/gop/reflect"
 	"github.com/goplus/gop/token"
 )
 

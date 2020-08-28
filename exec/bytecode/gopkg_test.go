@@ -18,7 +18,7 @@ package bytecode
 
 import (
 	"fmt"
-	"reflect"
+	"github.com/goplus/gop/reflect"
 	"testing"
 
 	"github.com/qiniu/x/log"

@@ -19,11 +19,11 @@ package golang
 import (
 	"fmt"
 	"go/ast"
-	"reflect"
 	"testing"
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/reflect"
 	"github.com/qiniu/x/log"
 
 	qexec "github.com/goplus/gop/exec/bytecode"
