@@ -1,0 +1,73 @@
+type M int
+type M2 int
+
+func (m M) Foo() {
+	println("foo", m)
+}
+func (m M2) Foo() {
+	println("foo2", m)
+}
+
+type Pt1 struct {
+	X int
+	Y int
+}
+
+func (p *Pt1) Test() {
+	println("pt1", p)
+}
+
+type Pt2 struct {
+	X int
+	Y int
+}
+
+func (p *Pt2) Test() {
+	println("pt2", p)
+}
+
+type Pt3 struct {
+	X M
+	Y M2
+}
+
+type Rect struct {
+	Pt1 Pt1
+	Pt3 Pt3
+}
+
+m := M(10)
+m2 := M2(11)
+
+m.Foo()  // foo 10
+m2.Foo() // foo2 11
+
+M(12).Foo() // foo 12
+
+pt1 := &Pt1{10, 20}
+pt2 := Pt2{1, 2}
+pt3 := &Pt3{100, 200}
+
+pt1.Test()  // pt1 &{10 20}
+pt2.Test()  // pt2 &{1 2}
+pt3.Y.Foo() // foo2 100
+
+ar1 := []M{M(10), M(20)}
+ar1[0].Foo()
+
+ar2 := make([]M, 10)
+ar2[0] = M(10)
+ar2[0].Foo()
+
+ar3 := [2]M{M(10), M(20)}
+ar3[0].Foo()
+
+map1 := make(map[string]M)
+map1["hello"] = M(20)
+map1["hello"].Foo()
+
+map2 := {1: M(10), 2: M(20)}
+map2[1].Foo()
+
+rc := &Rect{Pt1{10, 20}, Pt3{20, 30}}
+rc.Pt3.X.Foo()
