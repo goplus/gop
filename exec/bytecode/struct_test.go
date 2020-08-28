@@ -14,8 +14,9 @@ package bytecode
 
 import (
 	"os"
-	"github.com/goplus/gop/reflect"
 	"testing"
+
+	"github.com/goplus/gop/reflect"
 )
 
 // -----------------------------------------------------------------------------
