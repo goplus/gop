@@ -400,6 +400,26 @@ func TestTypeCast(t *testing.T) {
 	`).Equal([]byte("hello"))
 }
 
+func TestTypeCast2(t *testing.T) {
+	cltest.Expect(t, `
+	type M int
+	func (m M) Foo() {
+		println("foo",m)
+	}
+	m := M(10)
+	m.Foo()
+	`, "foo 10\n")
+	cltest.Expect(t, `
+	type Point struct {
+	}
+	type M int
+	func (m M) Foo() {
+		println("foo",m)
+	}
+	m := M(&Point{})
+	`, "", nil)
+}
+
 func TestAppendErr(t *testing.T) {
 	cltest.Expect(t, `
 		append()
