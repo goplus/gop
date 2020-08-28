@@ -18,12 +18,12 @@ package cl
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/asttest"
 	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/reflect"
 	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/log"
 
