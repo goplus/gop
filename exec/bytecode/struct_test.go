@@ -90,3 +90,33 @@ func TestStruct2(t *testing.T) {
 		"&{bar 30}\n",
 	)
 }
+
+func TestCloneStruct(t *testing.T) {
+	type obj struct {
+		a int
+	}
+	v1 := reflect.ValueOf(obj{a: 10})
+	v2 := cloneStruct(v1)
+
+	t.Logf("v1: %+v , v2: %+v", v1.Interface(), v2.Interface())
+
+	if !reflect.DeepEqual(v1.Interface(), v2.Interface()) {
+		t.Fatalf("v1: %+v , v2: %+v", v1.Interface(), v2.Interface())
+	}
+
+	if !reflect.DeepEqual(v1.Interface(), InterfaceOf(v1)) {
+		t.Fatalf("v1 interface:  %+v  |  %+v", v1.Interface(), InterfaceOf(v1))
+	}
+
+	if !reflect.DeepEqual(v1.Interface(), InterfaceOf(v1.Interface())) {
+		t.Fatalf("v1 interface:  %+v  |  %+v", v1.Interface(), InterfaceOf(v1.Interface()))
+	}
+
+	if !reflect.DeepEqual(v1, valueOf(v1)) {
+		t.Fatalf("valueOf(v1) :  %+v  |  %+v", v1, valueOf(v1))
+	}
+
+	if !reflect.DeepEqual(v1, valueOf(InterfaceOf(v1))) {
+		t.Fatalf("valueOf(v1) :  %+v  |  %+v", v1, valueOf(InterfaceOf(v1)))
+	}
+}
