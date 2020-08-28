@@ -12,6 +12,13 @@ import (
 	token1 "github.com/goplus/gop/token"
 )
 
+func interfaceOf(v interface{}) interface{} {
+	if vv, ok := v.(reflect.Value); ok {
+		return vv.Interface()
+	}
+	return v
+}
+
 func toType0(v interface{}) gopq.Node {
 	if v == nil {
 		return nil
@@ -21,7 +28,7 @@ func toType0(v interface{}) gopq.Node {
 
 func execNameOf(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
-	ret0 := gopq.NameOf(toType0(args[0]))
+	ret0 := gopq.NameOf(toType0(interfaceOf(args[0])))
 	p.Ret(1, ret0)
 }
 
@@ -46,104 +53,105 @@ func execNewSourceFrom(_ int, p *gop.Context) {
 
 func execmNodeSetOk(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
-	ret0 := args[0].(gopq.NodeSet).Ok()
+	ret0 := interfaceOf(args[0]).(gopq.NodeSet).Ok()
 	p.Ret(1, ret0)
 }
 
 func execmNodeSetFuncDecl(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
-	ret0 := args[0].(gopq.NodeSet).FuncDecl()
+	ret0 := interfaceOf(args[0]).(gopq.NodeSet).FuncDecl()
 	p.Ret(1, ret0)
 }
 
 func execmNodeSetGenDecl(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
-	ret0 := args[0].(gopq.NodeSet).GenDecl(args[1].(token1.Token))
+	ret0 := interfaceOf(args[0]).(gopq.NodeSet).GenDecl(args[1].(token1.Token))
 	p.Ret(2, ret0)
 }
 
 func execmNodeSetTypeSpec(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
-	ret0 := args[0].(gopq.NodeSet).TypeSpec()
+	ret0 := interfaceOf(args[0]).(gopq.NodeSet).TypeSpec()
 	p.Ret(1, ret0)
 }
 
 func execmNodeSetVarSpec(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
-	ret0 := args[0].(gopq.NodeSet).VarSpec()
+	ret0 := interfaceOf(args[0]).(gopq.NodeSet).VarSpec()
 	p.Ret(1, ret0)
 }
 
 func execmNodeSetConstSpec(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
-	ret0 := args[0].(gopq.NodeSet).ConstSpec()
+	ret0 := interfaceOf(args[0]).(gopq.NodeSet).ConstSpec()
 	p.Ret(1, ret0)
 }
 
 func execmNodeSetImportSpec(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
-	ret0 := args[0].(gopq.NodeSet).ImportSpec()
+	ret0 := interfaceOf(args[0]).(gopq.NodeSet).ImportSpec()
 	p.Ret(1, ret0)
 }
 
 func execmNodeSetOne(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
-	ret0 := args[0].(gopq.NodeSet).One()
+	ret0 := interfaceOf(args[0]).(gopq.NodeSet).One()
 	p.Ret(1, ret0)
 }
 
 func execmNodeSetCache(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
-	ret0 := args[0].(gopq.NodeSet).Cache()
+	ret0 := interfaceOf(args[0]).(gopq.NodeSet).Cache()
 	p.Ret(1, ret0)
 }
 
 func execmNodeSetAny(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
-	ret0 := args[0].(gopq.NodeSet).Any()
+
+	ret0 := interfaceOf(args[0]).(gopq.NodeSet).Any()
 	p.Ret(1, ret0)
 }
 
 func execmNodeSetChild(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
-	ret0 := args[0].(gopq.NodeSet).Child()
+	ret0 := interfaceOf(args[0]).(gopq.NodeSet).Child()
 	p.Ret(1, ret0)
 }
 
 func execmNodeSetMatch(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
-	ret0 := args[0].(gopq.NodeSet).Match(args[1].(func(node gopq.Node) bool))
+	ret0 := interfaceOf(args[0]).(gopq.NodeSet).Match(args[1].(func(node gopq.Node) bool))
 	p.Ret(2, ret0)
 }
 
 func execmNodeSetName(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
-	ret0 := args[0].(gopq.NodeSet).Name()
+	ret0 := interfaceOf(args[0]).(gopq.NodeSet).Name()
 	p.Ret(1, ret0)
 }
 
 func execmNodeSetToString(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
-	ret0 := args[0].(gopq.NodeSet).ToString(args[1].(func(node gopq.Node) string))
+	ret0 := interfaceOf(args[0]).(gopq.NodeSet).ToString(args[1].(func(node gopq.Node) string))
 	p.Ret(2, ret0)
 }
 
 func execmNodeSetCollect(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
-	ret0, ret1 := args[0].(gopq.NodeSet).Collect()
+	ret0, ret1 := interfaceOf(args[0]).(gopq.NodeSet).Collect()
 	p.Ret(1, ret0, ret1)
 }
 
 func execmNodeSetCollectOne(arity int, p *gop.Context) {
 	args := p.GetArgs(arity)
-	ret0, ret1 := args[0].(gopq.NodeSet).CollectOne(gop.ToBools(args[1:])...)
+	ret0, ret1 := interfaceOf(args[0]).(gopq.NodeSet).CollectOne(gop.ToBools(args[1:])...)
 	p.Ret(arity, ret0, ret1)
 }
 
 func toSlice0(args []interface{}) []gopq.Node {
 	ret := make([]gopq.Node, len(args))
 	for i, arg := range args {
-		ret[i] = toType0(arg)
+		ret[i] = toType0(interfaceOf(arg))
 	}
 	return ret
 }
@@ -156,7 +164,7 @@ func execNodes(arity int, p *gop.Context) {
 
 func execOne(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
-	ret0 := gopq.One(toType0(args[0]))
+	ret0 := gopq.One(toType0(interfaceOf(args[0])))
 	p.Ret(1, ret0)
 }
 

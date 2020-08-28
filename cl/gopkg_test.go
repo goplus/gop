@@ -738,28 +738,28 @@ func TestPkgType(t *testing.T) {
 
 	ctx := exec.NewContext(code)
 	ctx.Exec(0, code.Len())
-	if v := ctx.Get(-8); v != nil && !reflect.DeepEqual(v, tMakeRect(1, 2, 3, 4)) {
+	if v := exec.InterfaceOf(ctx.Get(-8)); v != nil && !reflect.DeepEqual(v, tMakeRect(1, 2, 3, 4)) {
 		t.Fatal("check rect", v)
 	}
-	if v := ctx.Get(-7); v != nil && !reflect.DeepEqual(v, tMakeRect(5, 6, 7, 8)) {
+	if v := exec.InterfaceOf(ctx.Get(-7)); v != nil && !reflect.DeepEqual(v, tMakeRect(5, 6, 7, 8)) {
 		t.Fatal("check rect", v)
 	}
-	if v := ctx.Get(-6); v != nil && !reflect.DeepEqual(v, tNewRect(1, 2, 3, 4)) {
+	if v := exec.InterfaceOf(ctx.Get(-6)); v != nil && !reflect.DeepEqual(v, tNewRect(1, 2, 3, 4)) {
 		t.Fatal("check rect", v)
 	}
-	if v := ctx.Get(-5); v != nil && !reflect.DeepEqual(v, tNewRect(5, 6, 7, 8)) {
+	if v := exec.InterfaceOf(ctx.Get(-5)); v != nil && !reflect.DeepEqual(v, tNewRect(5, 6, 7, 8)) {
 		t.Fatal("check rect", v)
 	}
-	if v := ctx.Get(-4); v != nil && !reflect.DeepEqual(v, Tpoint{1, 2}) {
+	if v := exec.InterfaceOf(ctx.Get(-4)); v != nil && !reflect.DeepEqual(v, Tpoint{1, 2}) {
 		t.Fatal("check point", v)
 	}
-	if v := ctx.Get(-3); v != nil && !reflect.DeepEqual(v, Tpoint{X: 3, Y: 4}) {
+	if v := exec.InterfaceOf(ctx.Get(-3)); v != nil && !reflect.DeepEqual(v, Tpoint{X: 3, Y: 4}) {
 		t.Fatal("check point", v)
 	}
-	if v := ctx.Get(-2); v != nil && !reflect.DeepEqual(v, &Tpoint{5, 6}) {
+	if v := exec.InterfaceOf(ctx.Get(-2)); v != nil && !reflect.DeepEqual(v, &Tpoint{5, 6}) {
 		t.Fatal("check point", v)
 	}
-	if v := ctx.Get(-1); v != nil && !reflect.DeepEqual(v, &Tpoint{X: 7, Y: 8}) {
+	if v := exec.InterfaceOf(ctx.Get(-1)); v != nil && !reflect.DeepEqual(v, &Tpoint{X: 7, Y: 8}) {
 		t.Fatal("check point", v)
 	}
 

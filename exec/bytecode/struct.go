@@ -99,9 +99,13 @@ func (ctx *varScope) setVar(idx uint32, v interface{}) {
 	setValue(x, v)
 }
 
+func (ctx *varScope) getVarValue(idx uint32) reflect.Value {
+	return ctx.vars.Field(int(idx))
+}
+
 func setValue(x reflect.Value, v interface{}) {
 	if v != nil {
-		x.Set(reflect.ValueOf(v))
+		x.Set(valueOf(v))
 		return
 	}
 	x.Set(reflect.Zero(x.Type()))
@@ -179,11 +183,32 @@ func makeStruct(typStruct reflect.Type, arity int, p *Context) {
 	v := reflect.New(typStruct).Elem()
 	for i := 0; i < n; i += 2 {
 		index := args[i].(int)
-		v.Field(index).Set(reflect.ValueOf(args[i+1]))
+		v.Field(index).Set(valueOf(args[i+1]))
 	}
 	if ptr {
 		p.Ret(n, v.Addr().Interface())
 	} else {
-		p.Ret(n, v.Interface())
+		p.Ret(n, v)
 	}
+}
+
+func cloneStruct(src reflect.Value) reflect.Value {
+	dst := reflect.New(src.Type()).Elem()
+	dst.Set(src)
+	return dst
+}
+
+func valueOf(v interface{}) reflect.Value {
+	if vv, ok := v.(reflect.Value); ok {
+		return vv
+	}
+	return reflect.ValueOf(v)
+}
+
+// InterfaceOf returns v's interface{} if v is a type of reflect.Value
+func InterfaceOf(v interface{}) interface{} {
+	if vv, ok := v.(reflect.Value); ok {
+		return vv.Interface()
+	}
+	return v
 }

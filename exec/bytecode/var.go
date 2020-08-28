@@ -184,11 +184,18 @@ func execAddrVar(i Instr, p *Context) {
 
 func execLoadVar(i Instr, p *Context) {
 	idx := i & bitsOperand
+	var varValue reflect.Value
 	if idx <= bitsOpVarOperand {
-		p.Push(p.getVar(idx))
-		return
+		varValue = p.getVarValue(idx)
+	} else {
+		varValue = getParentCtx(p, tAddress(idx)).getVarValue(idx & bitsOpVarOperand)
 	}
-	p.Push(getParentCtx(p, tAddress(idx)).getVar(idx & bitsOpVarOperand))
+	if varValue.Kind() == reflect.Struct {
+		stackValue := cloneStruct(varValue)
+		p.Push(stackValue)
+	} else {
+		p.Push(varValue.Interface())
+	}
 }
 
 func execStoreVar(i Instr, p *Context) {

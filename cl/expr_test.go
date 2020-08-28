@@ -919,6 +919,58 @@ func TestStruct2(t *testing.T) {
 	testScripts(t, "TestStruct", testStructClauses)
 }
 
+var testStructAsParamClauses = map[string]testData{
+	"struct": {`
+			type User struct {
+				Name  string
+			}
+			func f(a User, name string)  {
+				a.Name = name
+				printf(a.Name)
+			}
+			u := User{Name: "a"}
+			f(u, "b")
+			println(u.Name)
+		`,
+		"ba\n",
+		false,
+	},
+	"struct_ptr": {`
+			type User struct {
+				Name  string
+			}
+			func f(a *User, name string)  {
+				a.Name = name
+				printf(a.Name)
+			}
+			u := User{Name: "a"}
+			f(&u, "b")
+			println(u.Name)
+		`,
+		"bb\n",
+		false,
+	},
+	"struct_ptr_2": {`
+			type User struct {
+				Name  string
+			}
+			func f(a *User, name string)  {
+				a.Name = name
+				printf(a.Name)
+			}
+			u := &User{Name: "a"}
+			f(u, "b")
+			println(u.Name)
+		`,
+		"bb\n",
+		false,
+	},
+}
+
+func TestStructAsParam(t *testing.T) {
+	testScripts(t, "TestStructAsParam", testStructAsParamClauses)
+}
+
 // -----------------------------------------------------------------------------
 var testMethodClauses = map[string]testData{
 	"method set": {`
