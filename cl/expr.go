@@ -1268,10 +1268,8 @@ func compileStarExpr(ctx *blockCtx, v *ast.StarExpr) func() {
 			exprX()
 			ctx.out.AddrOp(kindOf(vx.t), exec.OpAddrVal)
 		}
-	default:
-		log.Panicln("compileStarExpr failed: unknown -", reflect.TypeOf(vx))
 	}
-	_ = exprX
+	log.Panicln("compileStarExpr failed: unknown -", reflect.TypeOf(x))
 	return nil
 }
 

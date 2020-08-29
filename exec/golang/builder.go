@@ -272,9 +272,6 @@ func (p *Builder) EndStmt(stmt, start interface{}) *Builder {
 		p.rhs.PopN(rhsLen)
 		node = &ast.AssignStmt{Lhs: lhs, Tok: token.ASSIGN, Rhs: rhs}
 	} else {
-		// for p.rhs.Len() > 0 {
-		// 	ast.Print(token.NewFileSet(), p.rhs.Pop())
-		// }
 		if rhsLen := p.rhs.Len() - state.rhsBase; rhsLen != 1 {
 			if rhsLen == 0 {
 				return p
