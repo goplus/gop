@@ -1,6 +1,6 @@
 /*
  Copyright 2020 The GoPlus Authors (goplus.org)
-
+ 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
@@ -919,7 +919,7 @@ func TestStruct2(t *testing.T) {
 	testScripts(t, "TestStruct", testStructClauses)
 }
 
-var testStructAsParamClauses = map[string]testData{
+var testStructAsFunctionParamClauses = map[string]testData{
 	"struct": {`
 			type User struct {
 				Name  string
@@ -965,10 +965,82 @@ var testStructAsParamClauses = map[string]testData{
 		"bb\n",
 		false,
 	},
+
+	"struct_nesting_1": {`
+			type Obj struct {
+            Bar string
+        }
+        type T struct {
+            B Obj
+        }
+        func f(a Obj, bar string) {
+            a.Bar = bar
+            printf(a.Bar)
+        }
+        obj := Obj{
+            Bar: "a",
+        }
+        t := T{
+            B: obj,
+        }
+        f(t.B, "b")
+		println(t.B.Bar)
+
+		`,
+		"ba\n",
+		false,
+	},
+	"struct_nesting_2": {`
+			type Obj struct {
+            Bar string
+        }
+        type T struct {
+            B Obj
+        }
+        func f(a *Obj, bar string) {
+            a.Bar = bar
+            printf(a.Bar)
+        }
+        obj := Obj{
+            Bar: "a",
+        }
+        t := T{
+            B: obj,
+        }
+        f(&t.B, "b")
+		println(t.B.Bar)
+
+		`,
+		"bb\n",
+		false,
+	},
+	"struct_nesting_3": {`
+			type Obj struct {
+            Bar string
+        }
+        type T struct {
+            B *Obj
+        }
+        func f(a *Obj, bar string) {
+            a.Bar = bar
+            printf(a.Bar)
+        }
+        obj := Obj{
+            Bar: "a",
+        }
+        t := T{
+            B: &obj,
+        }
+        f(t.B, "b")
+		println(t.B.Bar)
+		`,
+		"bb\n",
+		false,
+	},
 }
 
-func TestStructAsParam(t *testing.T) {
-	testScripts(t, "TestStructAsParam", testStructAsParamClauses)
+func TestStructAsFunctionParam(t *testing.T) {
+	testScripts(t, "TestStructAsFunctionParam", testStructAsFunctionParamClauses)
 }
 
 // -----------------------------------------------------------------------------
