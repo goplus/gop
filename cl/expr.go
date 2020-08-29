@@ -835,7 +835,9 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 	}
 	exprX()
 	ctx.checkLoadAddr = false
-
+	if ctx.indirect {
+		typElem = typElem.Elem()
+	}
 	if cons, ok := val.(*constVal); ok {
 		cons.bound(typElem, ctx.out)
 	} else if t := val.(iValue).Type(); t != typElem && typElem.Kind() != reflect.Interface {
@@ -849,7 +851,11 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 	case reflect.Slice, reflect.Array:
 		if cons, ok := i.(*constVal); ok {
 			n := boundConst(cons.v, exec.TyInt)
-			ctx.out.SetIndex(n.(int))
+			if ctx.indirect {
+				ctx.out.Index(n.(int)).AddrOp(kindOf(typElem), exec.OpAssign)
+			} else {
+				ctx.out.SetIndex(n.(int))
+			}
 			return
 		}
 		exprIdx()
@@ -860,7 +866,11 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 				log.Panicln("compileIndexExprLHS: index expression value type is invalid")
 			}
 		}
-		ctx.out.SetIndex(-1)
+		if ctx.indirect {
+			ctx.out.Index(-1).AddrOp(kindOf(typElem), exec.OpAssign)
+		} else {
+			ctx.out.SetIndex(-1)
+		}
 	case reflect.Map:
 		exprIdx()
 		typIdx := typ.Key()
@@ -870,7 +880,11 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 		if t := i.(iValue).Type(); t != typIdx {
 			logIllTypeMapIndexPanic(ctx, v, t, typIdx)
 		}
-		ctx.out.SetMapIndex()
+		if ctx.indirect {
+			ctx.out.MapIndex().AddrOp(kindOf(typElem), exec.OpAssign)
+		} else {
+			ctx.out.SetMapIndex()
+		}
 	default:
 		log.Panicln("compileIndexExprLHS: unknown -", typ)
 	}

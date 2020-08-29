@@ -1078,24 +1078,42 @@ func TestMethodCases(t *testing.T) {
 // -----------------------------------------------------------------------------
 var testStarExprClauses = map[string]testData{
 	"star expr": {`
-				func A(a *int, c *struct{ b *int }) {
+				func A(a *int, c *struct {
+					b *int
+					m map[string]*int
+					s []*int
+				}) {
 					*a = 5
 					*c.b = 3
+					*c.m["foo"] = 7
+					*c.s[0] = 9
 				}
-				
-				a := 6
+
+				a1 := 6
+				a2 := 6
+				a3 := 6
 				c := struct {
 					b *int
+					m map[string]*int
+					s []*int
 				}{
-					b: &a,
+					b: &a1,
+					m: map[string]*int{
+						"foo": &a2,
+					},
+					s: []*int{&a3},
 				}
-				A(&a, &c)
-				println(a, *c.b)
-					`, "3\n3\n", false},
+				A(&a1, &c)
+				*c.m["foo"] = 8
+				*c.s[0] = 10
+				*c.s[0+0] = 10
+				println(a1, *c.b, *c.m["foo"], *c.s[0], *c.s[0+0])
+
+					`, "3 3 8 10 10\n", false},
 }
 
 func TestStarExpr(t *testing.T) {
-	testScripts(t, "TestMethod", testMethodClauses)
+	testScripts(t, "TestStarExpr", testStarExprClauses)
 }
 
 func testScripts(t *testing.T, testName string, scripts map[string]testData) {
