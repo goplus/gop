@@ -1,6 +1,6 @@
 /*
  Copyright 2020 The GoPlus Authors (goplus.org)
- 
+
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
@@ -967,7 +967,7 @@ var testStructAsFunctionParamClauses = map[string]testData{
 	},
 
 	"struct_nesting_1": {`
-			type Obj struct {
+        type Obj struct {
             Bar string
         }
         type T struct {
@@ -985,13 +985,12 @@ var testStructAsFunctionParamClauses = map[string]testData{
         }
         f(t.B, "b")
 		println(t.B.Bar)
-
 		`,
 		"ba\n",
 		false,
 	},
 	"struct_nesting_2": {`
-			type Obj struct {
+        type Obj struct {
             Bar string
         }
         type T struct {
@@ -1009,13 +1008,12 @@ var testStructAsFunctionParamClauses = map[string]testData{
         }
         f(&t.B, "b")
 		println(t.B.Bar)
-
 		`,
 		"bb\n",
 		false,
 	},
 	"struct_nesting_3": {`
-			type Obj struct {
+        type Obj struct {
             Bar string
         }
         type T struct {
