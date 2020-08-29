@@ -262,7 +262,7 @@ func isNoExecCtxStarExpr(ctx *blockCtx, v *ast.StarExpr) bool {
 	if noExecCtx := isNoExecCtxExpr(ctx, v.X); !noExecCtx {
 		return false
 	}
-	return false
+	return true
 }
 
 func isNoExecCtxCallExpr(ctx *blockCtx, v *ast.CallExpr) bool {
