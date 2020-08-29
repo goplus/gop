@@ -794,6 +794,19 @@ func TestRational(t *testing.T) {
 	`).Equal(big.NewRat(7, 3))
 }
 
+func TestIsNoExecCtx(t *testing.T) {
+	cltest.Expect(t, `
+	fns := make([]func() int, 3)
+	for i, x <- [3, 15, 777] {
+		var v = x
+		var fn = func() int {
+			return v
+		}
+		fns[i] = fn
+	}
+	println("values:", fns[0](), fns[1](), fns[2]())`, "values: 3 15 777\n")
+}
+
 type testData struct {
 	clause string
 	want   string
