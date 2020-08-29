@@ -1144,6 +1144,43 @@ var testStarExprClauses = map[string]testData{
 						println(a1, *c.b, *c.m["foo"], *c.s[0], *c.s[0+0])
 					}
 						`, "3 3 8 10 10\n", false},
+	"star expr lhs slice index func": {`
+					func A(a *int, c *struct {
+						b *int
+						m map[string]*int
+						s []*int
+					}) {
+						*a = 5
+						*c.b = 3
+						*c.m["foo"] = 7
+						*c.s[0] = 9
+					}
+					
+					func Index() int {
+						return 0
+					}
+					
+					a1 := 6
+					a2 := 6
+					a3 := 6
+					c := struct {
+						b *int
+						m map[string]*int
+						s []*int
+					}{
+						b: &a1,
+						m: map[string]*int{
+							"foo": &a2,
+						},
+						s: []*int{&a3},
+					}
+					A(&a1, &c)
+					*c.m["foo"] = 8
+					*c.s[0] = 10
+					*c.s[Index()] = 11
+					println(a1, *c.b, *c.m["foo"], *c.s[0])
+	
+						`, "3 3 8 11\n", false},
 }
 
 func TestStarExpr(t *testing.T) {
