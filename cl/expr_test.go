@@ -1075,6 +1075,29 @@ func TestMethodCases(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
+// -----------------------------------------------------------------------------
+var testStarExprClauses = map[string]testData{
+	"star expr": {`
+				func A(a *int, c *struct{ b *int }) {
+					*a = 5
+					*c.b = 3
+				}
+				
+				a := 6
+				c := struct {
+					b *int
+				}{
+					b: &a,
+				}
+				A(&a, &c)
+				println(a, *c.b)
+					`, "3\n3\n", false},
+}
+
+func TestStarExpr(t *testing.T) {
+	testScripts(t, "TestMethod", testMethodClauses)
+}
+
 func testScripts(t *testing.T, testName string, scripts map[string]testData) {
 	for name, script := range scripts {
 		t.Log("Run " + testName + "---" + name)

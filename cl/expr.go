@@ -1207,9 +1207,6 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 						} else {
 							ctx.out.LoadField(fieldStructType, fieldIndex)
 						}
-						if ctx.indirect {
-							ctx.out.AddrOp(kindOf(fieldStructType), exec.OpAddrVal)
-						}
 					}
 				}
 			}
@@ -1259,12 +1256,23 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 }
 
 func compileStarExpr(ctx *blockCtx, v *ast.StarExpr) func() {
-	expr := compileExpr(ctx, v.X)
-	return func() {
-		ctx.indirect = true
-		expr()
-		ctx.indirect = false
+	exprX := compileExpr(ctx, v.X)
+	x := ctx.infer.Get(-1)
+	switch vx := x.(type) {
+	case *nonValue:
+	case *goValue:
+		if vx.Kind() == reflect.Ptr {
+			ctx.infer.Ret(1, &goValue{vx.t.Elem()})
+		}
+		return func() {
+			exprX()
+			ctx.out.AddrOp(kindOf(vx.t), exec.OpAddrVal)
+		}
+	default:
+		log.Panicln("compileStarExpr failed: unknown -", reflect.TypeOf(vx))
 	}
+	_ = exprX
+	return nil
 }
 
 func isLower(name string) bool {
