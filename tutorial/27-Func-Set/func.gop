@@ -1,0 +1,14 @@
+
+func A(a *int, c *struct{ b *int }) {
+	*a = 5
+	*c.b = 3
+}
+
+a := 6
+c := struct {
+	b *int
+}{
+	b: &a,
+}
+A(&a, &c)
+println(a, *c.b)
