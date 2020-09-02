@@ -173,9 +173,11 @@ func compileIdent(ctx *blockCtx, name string) func() {
 			return func() {
 				ctx.out.Load(v.index)
 				if v.typ.Kind() == reflect.Struct {
-					newExecVar := ctx.replaceVar(name, v.typ)
-					ctx.out.StoreVar(newExecVar.v)
-					ctx.out.AddrVar(newExecVar.v)
+					newVar := ctx.replaceVar(name, v.typ)
+					if newVar != nil {
+						ctx.out.StoreVar(newVar.v)
+						ctx.out.AddrVar(newVar.v)
+					}
 				}
 			}
 		case string: // pkgPath

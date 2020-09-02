@@ -395,13 +395,18 @@ func (p *blockCtx) insertVar(name string, typ reflect.Type, inferOnly ...bool) *
 }
 
 func (p *blockCtx) replaceVar(name string, typ reflect.Type, inferOnly ...bool) *execVar {
-	v := p.NewVar(typ, name)
-	if inferOnly == nil {
-		p.out.DefineVar(v)
+	for ctx := p; ctx != nil; ctx = ctx.parent {
+		if _, ok := ctx.syms[name]; ok {
+			v := ctx.NewVar(typ, name)
+			if inferOnly == nil {
+				ctx.out.DefineVar(v)
+			}
+			ev := &execVar{v}
+			ctx.syms[name] = ev
+			return ev
+		}
 	}
-	ev := &execVar{v}
-	p.syms[name] = ev
-	return ev
+	return nil
 }
 
 func (p *blockCtx) insertFunc(name string, fun *funcDecl) {

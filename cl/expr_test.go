@@ -924,8 +924,11 @@ var testStructAsFunctionParamClauses = map[string]testData{
 			type User struct {
 				Name string
 			}
-
 			func f(a User, name string) {
+				if name != "" {
+					a.Name = "c"
+				}
+				printf(a.Name)
 				a.Name = name
 				printf(a.Name)
 			}
@@ -933,7 +936,7 @@ var testStructAsFunctionParamClauses = map[string]testData{
 			f(u, "b")
 			println(u.Name)
 		`,
-		"ba\n",
+		"cba\n",
 		false,
 	},
 	"struct_ptr": {`
