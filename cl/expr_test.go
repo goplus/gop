@@ -919,6 +919,130 @@ func TestStruct2(t *testing.T) {
 	testScripts(t, "TestStruct", testStructClauses)
 }
 
+var testStructAsFunctionParamClauses = map[string]testData{
+	"struct": {`
+			type User struct {
+				Name string
+			}
+
+			func f(a User, name string) {
+				a.Name = name
+				printf(a.Name)
+			}
+			u := User{Name: "a"}
+			f(u, "b")
+			println(u.Name)
+		`,
+		"ba\n",
+		false,
+	},
+	"struct_ptr": {`
+			type User struct {
+				Name string
+			}
+			func f(a *User, name string) {
+				a.Name = name
+				printf(a.Name)
+			}
+			u := User{Name: "a"}
+			f(&u, "b")
+			println(u.Name)
+		`,
+		"bb\n",
+		false,
+	},
+	"struct_ptr_2": {`
+			type User struct {
+				Name string
+			}
+			func f(a *User, name string) {
+				a.Name = name
+				printf(a.Name)
+			}
+			u := &User{Name: "a"}
+			f(u, "b")
+			println(u.Name)
+		`,
+		"bb\n",
+		false,
+	},
+
+	"struct_nesting_1": {`
+			type Obj struct {
+				Bar string
+			}
+			type T struct {
+				B Obj
+			}
+
+			func f(a Obj, bar string) {
+				a.Bar = bar
+				printf(a.Bar)
+			}
+			obj := Obj{
+				Bar: "a",
+			}
+			t := T{
+				B: obj,
+			}
+			f(t.B, "b")
+			println(t.B.Bar)
+		`,
+		"ba\n",
+		false,
+	},
+	"struct_nesting_2": {`
+			type Obj struct {
+				Bar string
+			}
+			type T struct {
+				B Obj
+			}
+			func f(a *Obj, bar string) {
+				a.Bar = bar
+				printf(a.Bar)
+			}
+			obj := Obj{
+				Bar: "a",
+			}
+			t := T{
+				B: obj,
+			}
+			f(&t.B, "b")
+			println(t.B.Bar)
+		`,
+		"bb\n",
+		false,
+	},
+	"struct_nesting_3": {`
+			type Obj struct {
+				Bar string
+			}
+			type T struct {
+				B *Obj
+			}
+			func f(a *Obj, bar string) {
+				a.Bar = bar
+				printf(a.Bar)
+			}
+			obj := Obj{
+				Bar: "a",
+			}
+			t := T{
+				B: &obj,
+			}
+			f(t.B, "b")
+			println(t.B.Bar)
+		`,
+		"bb\n",
+		false,
+	},
+}
+
+func TestStructAsFunctionParam(t *testing.T) {
+	testScripts(t, "TestStructAsFunctionParam", testStructAsFunctionParamClauses)
+}
+
 // -----------------------------------------------------------------------------
 var testMethodClauses = map[string]testData{
 	"method set": {`

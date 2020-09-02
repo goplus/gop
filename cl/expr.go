@@ -172,6 +172,11 @@ func compileIdent(ctx *blockCtx, name string) func() {
 			ctx.resetFieldIndex()
 			return func() {
 				ctx.out.Load(v.index)
+				if v.typ.Kind() == reflect.Struct {
+					newExecVar := ctx.replaceVar(name, v.typ)
+					ctx.out.StoreVar(newExecVar.v)
+					ctx.out.AddrVar(newExecVar.v)
+				}
 			}
 		case string: // pkgPath
 			pkg := ctx.FindGoPackage(v)
@@ -984,7 +989,7 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr) func() {
 	exprX := compileExpr(ctx, v.X)
 	x := ctx.infer.Get(-1).(iValue)
 	nx := x.NumValues()
-	if nx < 1 || !x.Value(nx-1).Type().Implements(exec.TyError) {
+	if nx < 1 || !x.Value(nx - 1).Type().Implements(exec.TyError) {
 		log.Panicln("last output parameter doesn't implement `error` interface")
 	}
 	ctx.infer.Ret(1, &wrapValue{x})
