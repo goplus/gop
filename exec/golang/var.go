@@ -220,6 +220,16 @@ func (p *Builder) AddrOp(kind exec.Kind, op exec.AddrOperator) *Builder {
 		})
 		return p
 	}
+	if op == exec.OpAssign {
+		p.emitStmt(&ast.AssignStmt{
+			Lhs: []ast.Expr{&ast.StarExpr{
+				X: p.rhs.Pop().(ast.Expr),
+			}},
+			Tok: token.ASSIGN,
+			Rhs: []ast.Expr{p.rhs.Pop().(ast.Expr)},
+		})
+		return p
+	}
 	var stmt ast.Stmt
 	var x = p.rhs.Pop()
 	var val = p.rhs.Pop().(ast.Expr)

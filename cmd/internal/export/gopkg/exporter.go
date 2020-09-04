@@ -45,6 +45,11 @@ type exportedConst struct {
 	val  string
 }
 
+type exportedType struct {
+	name string
+	kind string
+}
+
 // Exporter represents a go package exporter.
 type Exporter struct {
 	w            io.Writer
@@ -59,6 +64,7 @@ type Exporter struct {
 	exportFnvs   []exportedFunc
 	exportedVars []exportedVar
 	exportConsts []exportedConst
+	exportTypes  []exportedType
 }
 
 // NewExporter creates a go package exporter.
@@ -363,8 +369,16 @@ func (p *Exporter) ExportVar(typ *types.Var) {
 	p.exportedVars = append(p.exportedVars, exportedVar{name, addr})
 }
 
+// ExportType export a go type
+func (p *Exporter) ExportType(typ *types.TypeName) {
+	name := typ.Name()
+	kind := fmt.Sprintf("%v.TypeOf((*%v)(nil)).Elem()", p.importPkg(reflectPkg), p.importPkg(typ.Pkg())+"."+name)
+	p.exportTypes = append(p.exportTypes, exportedType{name, kind})
+}
+
 var (
-	qspecPkg = types.NewPackage("github.com/goplus/gop/exec.spec", "qspec")
+	qspecPkg   = types.NewPackage("github.com/goplus/gop/exec.spec", "qspec")
+	reflectPkg = types.NewPackage("reflect", "reflect")
 )
 
 // ExportConst exports a go const.
@@ -478,6 +492,19 @@ func registerFns(w io.Writer, pkgDot string, fns []exportedFunc, tag string) {
 	fmt.Fprintf(w, "	)\n")
 }
 
+func registerTypes(w io.Writer, types []exportedType) {
+	if len(types) == 0 {
+		return
+	}
+	fmt.Fprintf(w, `	I.RegisterTypes(
+`)
+	for _, v := range types {
+		fmt.Fprintf(w, `		I.Type("%s", %s),
+`, v.name, v.kind)
+	}
+	fmt.Fprintf(w, "	)\n")
+}
+
 func registerVars(w io.Writer, vars []exportedVar) {
 	if len(vars) == 0 {
 		return
@@ -559,6 +586,7 @@ func (p *Exporter) Close() error {
 	registerFns(p.w, pkgDot, p.exportFns, "Func")
 	registerFns(p.w, pkgDot, p.exportFnvs, "Funcv")
 	registerVars(p.w, p.exportedVars)
+	registerTypes(p.w, p.exportTypes)
 	registerConsts(p.w, p.exportConsts)
 	fmt.Fprintf(p.w, gopkgInitExportFooter)
 	return nil

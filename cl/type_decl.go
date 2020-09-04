@@ -238,6 +238,20 @@ func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) iType {
 }
 
 func toExternalType(ctx *blockCtx, v *ast.SelectorExpr) iType {
+	if ident, ok := v.X.(*ast.Ident); ok {
+		if sym, ok := ctx.find(ident.Name); ok {
+			switch t := sym.(type) {
+			case string:
+				pkg := ctx.FindGoPackage(t)
+				if pkg == nil {
+					log.Panicln("toExternalType failed: package not found -", v)
+				}
+				if typ, ok := pkg.FindType(v.Sel.Name); ok {
+					return typ
+				}
+			}
+		}
+	}
 	panic("toExternalType: todo")
 }
 
@@ -318,6 +332,12 @@ func buildField(ctx *blockCtx, field *ast.Field, anonymous bool, fieldName strin
 		Name:      fieldName,
 		Type:      toType(ctx, field.Type).(reflect.Type),
 		Anonymous: anonymous,
+	}
+	if fieldName != "" {
+		c := fieldName[0]
+		if 'a' <= c && c <= 'z' || c == '_' {
+			f.PkgPath = ctx.pkg.Name
+		}
 	}
 	if field.Tag != nil {
 		tag, _ := strconv.Unquote(field.Tag.Value)

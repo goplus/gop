@@ -387,6 +387,11 @@ func (p *Builder) Call(narg int, ellipsis bool, args ...ast.Expr) *Builder {
 func (p *Builder) CallGoFunc(fun exec.GoFuncAddr, nexpr int) *Builder {
 	gfi := defaultImpl.GetGoFuncInfo(fun)
 	pkgPath, name := gfi.Pkg.PkgPath(), gfi.Name
+	if pkgPath == "" {
+		if alias, ok := builtin.FuncGoInfo(name); ok {
+			pkgPath, name = alias[0], alias[1]
+		}
+	}
 	fn := p.GoSymIdent(pkgPath, name)
 	p.rhs.Push(fn)
 	return p.Call(nexpr, false)
@@ -404,14 +409,6 @@ func (p *Builder) CallGoFuncv(fun exec.GoFuncvAddr, nexpr, arity int) *Builder {
 	fn := p.GoSymIdent(pkgPath, name)
 	p.rhs.Push(fn)
 	return p.Call(nexpr, arity == -1)
-}
-
-var builtinFnvs = map[string][2]string{
-	"errorf":  {"fmt", "Errorf"},
-	"print":   {"fmt", "Print"},
-	"printf":  {"fmt", "Printf"},
-	"println": {"fmt", "Println"},
-	"fprintf": {"fmt", "Fprintf"},
 }
 
 // LoadGoVar instr
@@ -691,7 +688,7 @@ func (p *Builder) Struct(typ reflect.Type, arity int) *Builder {
 	args := p.rhs.GetArgs(arity << 1)
 	for i := 0; i < arity; i++ {
 		elts[i] = &ast.KeyValueExpr{
-			Key:   toField(args[i<<1].(ast.Expr)),
+			Key:   toField(args[i<<1].(ast.Expr), typ),
 			Value: args[(i<<1)+1].(ast.Expr),
 		}
 	}
@@ -712,11 +709,14 @@ func (p *Builder) Struct(typ reflect.Type, arity int) *Builder {
 	return p
 }
 
-func toField(expr ast.Expr) *ast.Ident {
-	if ident, ok := expr.(*ast.Ident); ok {
-		return ident
+func toField(expr ast.Expr, typ reflect.Type) *ast.Ident {
+	if blit, ok := expr.(*ast.BasicLit); ok {
+		i, err := strconv.Atoi(blit.Value)
+		if err == nil {
+			field := typ.Field(i)
+			return Ident(field.Name)
+		}
 	}
-	lit := expr.(*ast.BasicLit)
-	field, _ := strconv.Unquote(lit.Value)
-	return Ident(field)
+	log.Panicln("toField expression must be arrayType")
+	return nil
 }

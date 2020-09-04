@@ -1,5 +1,8 @@
 package lib
 
+//go:generate go run ../cmd/qexp bytes flag fmt io/... log os reflect strconv strings sync/... time
+//go:generate go run ../cmd/qexp github.com/goplus/gop/ast/gopq github.com/goplus/gop/ast/goptest
+
 import (
 	_ "github.com/goplus/gop/lib/builtin" // builtin
 	_ "github.com/goplus/gop/lib/bytes"

@@ -3,6 +3,7 @@ package os
 
 import (
 	os "os"
+	reflect "reflect"
 	time "time"
 
 	gop "github.com/goplus/gop"
@@ -731,6 +732,18 @@ func init() {
 		I.Var("Stderr", &os.Stderr),
 		I.Var("Stdin", &os.Stdin),
 		I.Var("Stdout", &os.Stdout),
+	)
+	I.RegisterTypes(
+		I.Type("File", reflect.TypeOf((*os.File)(nil)).Elem()),
+		I.Type("FileInfo", reflect.TypeOf((*os.FileInfo)(nil)).Elem()),
+		I.Type("FileMode", reflect.TypeOf((*os.FileMode)(nil)).Elem()),
+		I.Type("LinkError", reflect.TypeOf((*os.LinkError)(nil)).Elem()),
+		I.Type("PathError", reflect.TypeOf((*os.PathError)(nil)).Elem()),
+		I.Type("ProcAttr", reflect.TypeOf((*os.ProcAttr)(nil)).Elem()),
+		I.Type("Process", reflect.TypeOf((*os.Process)(nil)).Elem()),
+		I.Type("ProcessState", reflect.TypeOf((*os.ProcessState)(nil)).Elem()),
+		I.Type("Signal", reflect.TypeOf((*os.Signal)(nil)).Elem()),
+		I.Type("SyscallError", reflect.TypeOf((*os.SyscallError)(nil)).Elem()),
 	)
 	I.RegisterConsts(
 		I.Const("DevNull", qspec.ConstBoundString, os.DevNull),

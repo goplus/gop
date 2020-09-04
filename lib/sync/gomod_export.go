@@ -2,6 +2,7 @@
 package sync
 
 import (
+	reflect "reflect"
 	sync "sync"
 
 	gop "github.com/goplus/gop"
@@ -173,5 +174,15 @@ func init() {
 		I.Func("(*WaitGroup).Add", (*sync.WaitGroup).Add, execmWaitGroupAdd),
 		I.Func("(*WaitGroup).Done", (*sync.WaitGroup).Done, execmWaitGroupDone),
 		I.Func("(*WaitGroup).Wait", (*sync.WaitGroup).Wait, execmWaitGroupWait),
+	)
+	I.RegisterTypes(
+		I.Type("Cond", reflect.TypeOf((*sync.Cond)(nil)).Elem()),
+		I.Type("Locker", reflect.TypeOf((*sync.Locker)(nil)).Elem()),
+		I.Type("Map", reflect.TypeOf((*sync.Map)(nil)).Elem()),
+		I.Type("Mutex", reflect.TypeOf((*sync.Mutex)(nil)).Elem()),
+		I.Type("Once", reflect.TypeOf((*sync.Once)(nil)).Elem()),
+		I.Type("Pool", reflect.TypeOf((*sync.Pool)(nil)).Elem()),
+		I.Type("RWMutex", reflect.TypeOf((*sync.RWMutex)(nil)).Elem()),
+		I.Type("WaitGroup", reflect.TypeOf((*sync.WaitGroup)(nil)).Elem()),
 	)
 }
