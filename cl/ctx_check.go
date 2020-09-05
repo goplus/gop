@@ -82,6 +82,8 @@ func isNoExecCtxStmt(ctx *blockCtx, stmt ast.Stmt) bool {
 		return isNoExecCtxCallExpr(ctx, v.Call)
 	case *ast.GoStmt:
 		return isNoExecCtxCallExpr(ctx, v.Call)
+	case *ast.DeclStmt:
+		return isNoExecCtxDeclStmt(ctx, v)
 	default:
 		log.Panicln("isNoExecCtxStmt failed: unknown -", reflect.TypeOf(v))
 	}
@@ -353,6 +355,29 @@ func isNoExecCtxAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) bool {
 	for i := len(expr.Lhs) - 1; i >= 0; i-- {
 		if noExecCtx := isNoExecCtxExprLHS(ctx, expr.Lhs[i], expr.Tok); !noExecCtx {
 			return false
+		}
+	}
+	return true
+}
+
+func isNoExecCtxDeclStmt(ctx *blockCtx, expr *ast.DeclStmt) bool {
+	switch d := expr.Decl.(type) {
+	case *ast.GenDecl:
+		switch d.Tok {
+		case token.VAR, token.CONST:
+			for _, spec := range d.Specs {
+				vs := spec.(*ast.ValueSpec)
+				if vs.Values != nil {
+					if noExecCtx := isNoExecCtxExprs(ctx, vs.Values); !noExecCtx {
+						return false
+					}
+				}
+				for i := len(vs.Names) - 1; i >= 0; i-- {
+					if noExecCtx := isNoExecCtxExprLHS(ctx, vs.Names[i], lhsAssign); !noExecCtx {
+						return false
+					}
+				}
+			}
 		}
 	}
 	return true

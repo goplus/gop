@@ -555,6 +555,78 @@ func TestArray(t *testing.T) {
 		"x[1:]: [2.3 3.1 4]\n4\n")
 }
 
+func TestLoadVar(t *testing.T) {
+	cltest.Expect(t, `
+		var x1 int
+		var x2 int = 10
+		var x3 = 10
+		println("x:",x1,x2,x3)
+		`,
+		"x: 0 10 10\n")
+	cltest.Expect(t, `
+		type Point struct {
+			X int
+			Y int
+		}
+		var x1 Point
+		var x2 Point = Point{10,20}
+		var x3 = Point{-10,-20}
+		println("x:",x1,x2,x3)
+		`,
+		"x: {0 0} {10 20} {-10 -20}\n")
+}
+
+func TestLoadVar2(t *testing.T) {
+	cltest.Expect(t, `
+		func main() {
+			var x1 int
+			var x2 int = 10
+			var x3 = 10
+			println("x:",x1,x2,x3)
+		}`,
+		"x: 0 10 10\n")
+	cltest.Expect(t, `
+		type Point struct {
+			X int
+			Y int
+		}
+		func main() {
+			var x1 Point
+			var x2 Point = Point{10,20}
+			var x3 = Point{-10,-20}
+			println("x:",x1,x2,x3)
+		}`,
+		"x: {0 0} {10 20} {-10 -20}\n")
+
+	cltest.Expect(t, `
+		func main() {
+			type Point struct {
+				X int
+				Y int
+			}
+			var x1 Point
+			var x2 Point = Point{10,20}
+			var x3 = Point{-10,-20}
+			println("x:",x1,x2,x3)
+		}`,
+		"x: {0 0} {10 20} {-10 -20}\n")
+}
+
+func TestLoadVar3(t *testing.T) {
+	cltest.Expect(t, `
+		var x1,x2,x3 = 10,20,x1+x2
+		println("x:",x1,x2,x3)
+		`,
+		"x: 10 20 30\n")
+	cltest.Expect(t, `
+		var x1,x2,x3 = 10,20,x1+x2
+		func main() {
+			println("x:",x1,x2,x3)
+		}
+		`,
+		"x: 10 20 30\n")
+}
+
 func TestMap(t *testing.T) {
 	cltest.Expect(t, `
 		x := map[string]float64{"Hello": 1, "xsw": 3.4}
@@ -720,6 +792,19 @@ func TestRational(t *testing.T) {
 		x := 1/3r + 1r*2r
 		x
 	`).Equal(big.NewRat(7, 3))
+}
+
+func TestIsNoExecCtx(t *testing.T) {
+	cltest.Expect(t, `
+	fns := make([]func() int, 3)
+	for i, x <- [3, 15, 777] {
+		var v = x
+		var fn = func() int {
+			return v
+		}
+		fns[i] = fn
+	}
+	println("values:", fns[0](), fns[1](), fns[2]())`, "values: 3 15 777\n")
 }
 
 type testData struct {
