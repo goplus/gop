@@ -352,8 +352,14 @@ func equalTypeMethod(t Type, u Type) bool {
 }
 
 func Implements(t Type, u Type) bool {
+	if u == nil {
+		panic("reflect: nil type passed to Type.Implements")
+	}
 	if u.Kind() != Interface {
-		return false
+		panic("reflect: non-interface type passed to Type.Implements")
+	}
+	if t.Kind() != Interface && !IsUserType(u) {
+		return toType(t).Implements(u)
 	}
 	ucount := u.NumMethod()
 	if ucount == 0 {
