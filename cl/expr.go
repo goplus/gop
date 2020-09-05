@@ -826,7 +826,7 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 
 	if cons, ok := val.(*constVal); ok {
 		cons.bound(typElem, ctx.out)
-	} else if t := val.(iValue).Type(); t != typElem && typElem.Kind() != reflect.Interface {
+	} else if t := val.(iValue).Type(); !reflect.EqualType(t, typElem) && typElem.Kind() != reflect.Interface {
 		log.Panicf("compileIndexExprLHS: can't assign `%v`[i] = `%v`\n", typ, t)
 	}
 	exprIdx := compileExpr(ctx, v.Index)

@@ -76,12 +76,34 @@ type StructField = reflect.StructField
 // A StructTag is the tag string in a struct field.
 type StructTag = reflect.StructTag
 
+// Method represents a single method.
+type Method = reflect.Method
+
 // UserType is user-defined struct and type
 type UserType struct {
 	Type
-	elem  Type
-	key   Type
-	field []StructField
+	elem   Type
+	key    Type
+	field  []StructField
+	method []Method
+	in     []Type
+	out    []Type
+}
+
+func (t *UserType) NumIn() int {
+	return len(t.in)
+}
+
+func (t *UserType) In(i int) Type {
+	return t.in[i]
+}
+
+func (t *UserType) NumOut() int {
+	return len(t.out)
+}
+
+func (t *UserType) Out(i int) Type {
+	return t.out[i]
 }
 
 func (t *UserType) Elem() Type {
@@ -96,6 +118,29 @@ func (t *UserType) Key() Type {
 		return t.key
 	}
 	return t.Type.Key()
+}
+
+func (t *UserType) NumMethod() int {
+	if t.method != nil {
+		return len(t.method)
+	}
+	return t.Type.NumMethod()
+}
+
+func (t *UserType) Method(i int) reflect.Method {
+	if t.method != nil {
+		return t.method[i]
+	}
+	return t.Type.Method(i)
+}
+
+func (t *UserType) MethodByName(name string) (reflect.Method, bool) {
+	for _, m := range t.method {
+		if m.Name == name {
+			return m, true
+		}
+	}
+	return t.Type.MethodByName(name)
 }
 
 func (t *UserType) FieldByName(name string) (sf StructField, ok bool) {
@@ -133,6 +178,10 @@ func (t *UserType) ConvertibleTo(u Type) bool {
 	return t.Type.ConvertibleTo(toType(u))
 }
 
+func (t *UserType) Implements(u Type) bool {
+	return Implements(t, u)
+}
+
 func NewUserType(t Type) Type {
 	return &UserType{Type: t}
 }
@@ -166,6 +215,14 @@ func StructOf(fields []StructField) Type {
 	return &UserType{Type: t, field: fields}
 }
 
+var (
+	emptyInterface = reflect.TypeOf((*interface{})(nil)).Elem()
+)
+
+func InterfaceOf(methods []Method) Type {
+	return &UserType{Type: emptyInterface, method: methods}
+}
+
 func PtrTo(t Type) Type {
 	if ut, ok := t.(*UserType); ok {
 		return &UserType{Type: reflect.PtrTo(ut.Type), elem: ut}
@@ -174,7 +231,7 @@ func PtrTo(t Type) Type {
 }
 
 func FuncOf(in, out []Type, variadic bool) Type {
-	return reflect.FuncOf(toTypes(in), toTypes(out), variadic)
+	return &UserType{Type: reflect.FuncOf(toTypes(in), toTypes(out), variadic), in: in, out: out}
 }
 
 func SliceOf(t Type) Type {
@@ -268,6 +325,65 @@ func DeepEqual(x interface{}, y interface{}) bool {
 
 func ConvertibleTo(from Type, to Type) bool {
 	return toType(from).ConvertibleTo(toType(to))
+}
+
+func Convert(v Value, t Type) Value {
+	return v.Convert(toType(t))
+}
+
+func equalTypeMethod(t Type, u Type) bool {
+	if t.NumIn() != u.NumIn()+1 {
+		return false
+	}
+	if t.NumOut() != u.NumOut() {
+		return false
+	}
+	for i := 0; i < u.NumIn(); i++ {
+		if t.In(i+1) != u.In(i) {
+			return false
+		}
+	}
+	for i := 0; i < u.NumOut(); i++ {
+		if t.Out(i) != u.Out(i) {
+			return false
+		}
+	}
+	return true
+}
+
+func Implements(t Type, u Type) bool {
+	if u.Kind() != Interface {
+		return false
+	}
+	ucount := u.NumMethod()
+	if ucount == 0 {
+		return true
+	}
+	tcount := t.NumMethod()
+	if t.Kind() == reflect.Interface {
+		i := 0
+		for j := 0; j < tcount; j++ {
+			tm := t.Method(j)
+			um := u.Method(i)
+			if tm.Name == um.Name && EqualType(tm.Type, um.Type) {
+				if i++; i >= ucount {
+					return true
+				}
+			}
+		}
+	} else {
+		i := 0
+		for j := 0; j < tcount; j++ {
+			tm := t.Method(j)
+			um := u.Method(i)
+			if tm.Name == um.Name && equalTypeMethod(tm.Type, um.Type) {
+				if i++; i >= ucount {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 func Zero(t Type) Value {
