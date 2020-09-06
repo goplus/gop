@@ -807,6 +807,20 @@ func TestIsNoExecCtx(t *testing.T) {
 	println("values:", fns[0](), fns[1](), fns[2]())`, "values: 3 15 777\n")
 }
 
+func TestResult(t *testing.T) {
+	cltest.Expect(t, `
+	import "fmt"
+	type Writer struct {
+	}
+	func (w *Writer) Write(data string) (n int, err error) {
+		return fmt.Println(data)
+	}
+	w := &Writer{}
+	n, err := w.Write("hello")
+	println(n,err)
+	`, "hello\n6 <nil>\n")
+}
+
 type testData struct {
 	clause string
 	want   string
