@@ -238,6 +238,7 @@ func loadFile(ctx *blockCtx, f *ast.File) {
 	file := newFileCtx(ctx)
 	last := len(f.Decls) - 1
 	ctx.file = file
+
 	for i, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
@@ -251,7 +252,7 @@ func loadFile(ctx *blockCtx, f *ast.File) {
 			case token.CONST:
 				loadConsts(ctx, d)
 			case token.VAR:
-				loadVars(ctx, d)
+				compileStmt(ctx, &ast.DeclStmt{decl})
 			default:
 				log.Panicln("tok:", d.Tok, "spec:", reflect.TypeOf(d.Specs).Elem())
 			}
@@ -306,13 +307,41 @@ func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
 func loadConsts(ctx *blockCtx, d *ast.GenDecl) {
 }
 
-func loadVars(ctx *blockCtx, d *ast.GenDecl) {
+func loadVars(ctx *blockCtx, d *ast.GenDecl, stmt ast.Stmt) {
 	for _, item := range d.Specs {
-		loadVar(ctx, item.(*ast.ValueSpec))
+		spec := item.(*ast.ValueSpec)
+		for i := 0; i < len(spec.Names); i++ {
+			start := ctx.out.StartStmt(stmt)
+			name := spec.Names[i].Name
+			if len(spec.Values) > i {
+				loadVar(ctx, name, spec.Type, spec.Values[i])
+			} else {
+				loadVar(ctx, name, spec.Type, nil)
+			}
+			ctx.out.EndStmt(stmt, start)
+		}
 	}
 }
 
-func loadVar(ctx *blockCtx, spec *ast.ValueSpec) {
+func loadVar(ctx *blockCtx, name string, typ ast.Expr, value ast.Expr) {
+	var t reflect.Type
+	if typ != nil {
+		t = toType(ctx, typ).(reflect.Type)
+	}
+	if value != nil {
+		expr := compileExpr(ctx, value)
+		in := ctx.infer.Get(-1)
+		if t == nil {
+			t = boundType(in.(iValue))
+		}
+		expr()
+		addr := ctx.insertVar(name, t)
+		checkType(addr.getType(), in, ctx.out)
+		ctx.infer.PopN(1)
+		ctx.out.StoreVar(addr.v)
+	} else {
+		ctx.insertVar(name, t)
+	}
 }
 
 func loadFunc(ctx *blockCtx, d *ast.FuncDecl, isUnnamed bool) {
