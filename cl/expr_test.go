@@ -851,6 +851,32 @@ func TestResult(t *testing.T) {
 	`, "hello\n6 <nil>\n")
 }
 
+func TestBadResult(t *testing.T) {
+	cltest.Expect(t, `
+	import "fmt"
+	type Writer struct {
+	}
+	func (w *Writer) Write(data string) (error) {
+		err := fmt.Println(data)
+		return err
+	}
+	w := &Writer{}
+	n, err := w.Write("hello")
+	println(n,err)
+	`, "", nil)
+	cltest.Expect(t, `
+	import "fmt"
+	type Writer struct {
+	}
+	func (w *Writer) Write(data string) (err error) {
+		return fmt.Println(data)
+	}
+	w := &Writer{}
+	n, err := w.Write("hello")
+	println(n,err)
+	`, "", nil)
+}
+
 type testData struct {
 	clause string
 	want   string
