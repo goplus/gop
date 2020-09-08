@@ -333,6 +333,12 @@ func buildField(ctx *blockCtx, field *ast.Field, anonymous bool, fieldName strin
 		Type:      toType(ctx, field.Type).(reflect.Type),
 		Anonymous: anonymous,
 	}
+	if fieldName != "" {
+		c := fieldName[0]
+		if 'a' <= c && c <= 'z' || c == '_' {
+			f.PkgPath = ctx.pkg.Name
+		}
+	}
 	if field.Tag != nil {
 		tag, _ := strconv.Unquote(field.Tag.Value)
 		f.Tag = reflect.StructTag(tag)

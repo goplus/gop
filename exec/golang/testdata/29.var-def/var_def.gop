@@ -1,0 +1,16 @@
+type Point struct {
+	X int
+	Y int
+}
+
+var (
+	i, j, k int = 100, 200, i + j
+)
+
+func main() {
+	var x = Point{10, 20}
+	var pt Point
+	pt.X = 10
+	pt.Y = -10
+	println(i, j, k, x, pt)
+}

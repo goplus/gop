@@ -1,13 +1,24 @@
+type C struct {
+	D int
+	F string
+}
+
 a := struct {
 	A int
 	B string
-}{1, "Hello"}
+	C C
+}{1, "Hello", C{2, "World"}}
 
 println(a)
 
 b := &struct {
 	A int
 	B string
+}{1, "Hello"}
+
+c := &struct {
+	a int
+	b string
 }{1, "Hello"}
 
 println(b)
@@ -17,3 +28,6 @@ println(a)
 
 b.B = "Hi"
 println(b)
+
+c.a, c.b = 2, "Hi"
+println(c)
