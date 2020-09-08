@@ -1,0 +1,34 @@
+import "fmt"
+
+type Writer struct {
+}
+
+func (w *Writer) Write(data string) (n int, err error) {
+	return fmt.Println(data)
+}
+
+func myint(n int) int {
+	return n
+}
+
+func myerr(err error) error {
+	return err
+}
+
+func (w *Writer) Write2(data string) (int, error) {
+	fmt.Println(data)
+	return len(data) + 1, nil
+}
+
+func (w *Writer) Write3(data string) (int, error) {
+	n, err := fmt.Println(data)
+	return myint(n), myerr(err)
+}
+
+w := &Writer{}
+n, err := w.Write("hello")
+println(n, err)
+n, err = w.Write2("hello")
+println(n, err)
+n, err = w.Write3("hello")
+println(n, err)

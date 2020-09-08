@@ -527,6 +527,18 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 		compileExpr(ctx, ret)()
 	}
 	n := len(rets)
+	if n == 1 && ctx.infer.Len() == 1 {
+		if ret, ok := ctx.infer.Get(-1).(*funcResults); ok {
+			n := ret.NumValues()
+			if fun.NumOut() != n {
+				log.Panicln("compileReturnStmt failed: mismatched count of return values -", fun.Name())
+			}
+			ctx.infer.SetLen(0)
+			ctx.out.Return(int32(n))
+			return
+		}
+	}
+
 	if fun.NumOut() != n {
 		log.Panicln("compileReturnStmt failed: mismatched count of return values -", fun.Name())
 	}

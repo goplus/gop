@@ -229,10 +229,12 @@ func (p *Builder) Return(n int32) *Builder {
 		if n > 0 {
 			arity := int(n)
 			args := p.rhs.GetArgs(arity)
-			results = make([]ast.Expr, n)
-			for i, arg := range args {
-				results[i] = arg.(ast.Expr)
+			for _, arg := range args {
+				if v, ok := arg.(ast.Expr); ok {
+					results = append(results, v)
+				}
 			}
+			arity = len(results)
 			p.rhs.PopN(arity)
 		}
 		stmt = &ast.ReturnStmt{Results: results}
