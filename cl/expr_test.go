@@ -807,6 +807,31 @@ func TestIsNoExecCtx(t *testing.T) {
 	println("values:", fns[0](), fns[1](), fns[2]())`, "values: 3 15 777\n")
 }
 
+func TestPkgMethod(t *testing.T) {
+	cltest.Expect(t, `
+	import "bytes"
+	buf := bytes.NewBuffer([]byte("hello"))
+	println(buf.String())
+	`, "hello\n")
+	cltest.Expect(t, `
+	import "bytes"
+	var buf bytes.Buffer
+	buf.Write([]byte("hello"))
+	println(buf.String())
+	`, "hello\n")
+	cltest.Expect(t, `
+	import "reflect"
+	v := reflect.ValueOf(100)
+	println(v.Kind())
+	`, "int\n")
+	cltest.Expect(t, `
+	import "reflect"
+	v := reflect.ValueOf(100)
+	p := &v
+	println(p.Kind())
+	`, "int\n")
+}
+
 type testData struct {
 	clause string
 	want   string
