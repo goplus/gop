@@ -832,6 +832,76 @@ func TestPkgMethod(t *testing.T) {
 	`, "int\n")
 }
 
+func TestResult(t *testing.T) {
+	cltest.Expect(t, `
+	import "fmt"
+	type Writer struct {
+	}
+	func (w *Writer) Write(data string) (n int, err error) {
+		return fmt.Println(data)
+	}
+	w := &Writer{}
+	n, err := w.Write("hello")
+	println(n,err)
+	`, "hello\n6 <nil>\n")
+	cltest.Expect(t, `
+	import "fmt"
+	type Writer struct {
+	}
+	func (w *Writer) Write(data string) (int, error) {
+		fmt.Println(data)
+		return len(data)+1,nil
+	}
+	w := &Writer{}
+	n, err := w.Write("hello")
+	println(n,err)
+	`, "hello\n6 <nil>\n")
+	cltest.Expect(t, `
+	import "fmt"
+	type Writer struct {
+	}
+	func myint(n int) int {
+		return n
+	}
+	func myerr(err error) error {
+		return err
+	}
+	func (w *Writer) Write(data string) (int, error) {
+		n, err := fmt.Println(data)
+		return myint(n),myerr(err)
+	}
+	w := &Writer{}
+	n, err := w.Write("hello")
+	println(n,err)
+	`, "hello\n6 <nil>\n")
+}
+
+func TestBadResult(t *testing.T) {
+	cltest.Expect(t, `
+	import "fmt"
+	type Writer struct {
+	}
+	func (w *Writer) Write(data string) (error) {
+		err := fmt.Println(data)
+		return err
+	}
+	w := &Writer{}
+	n, err := w.Write("hello")
+	println(n,err)
+	`, "", nil)
+	cltest.Expect(t, `
+	import "fmt"
+	type Writer struct {
+	}
+	func (w *Writer) Write(data string) (err error) {
+		return fmt.Println(data)
+	}
+	w := &Writer{}
+	n, err := w.Write("hello")
+	println(n,err)
+	`, "", nil)
+}
+
 type testData struct {
 	clause string
 	want   string
