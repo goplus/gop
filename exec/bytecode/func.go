@@ -29,7 +29,7 @@ func execLoad(i Instr, p *Context) {
 	if p.addrs[index].Kind() == reflect.Struct {
 		p.Push(p.addrs[index].Interface())
 	} else {
-		p.Push(p.data[p.base+int(idx)])
+		p.Push(p.data[index])
 	}
 }
 
@@ -39,7 +39,7 @@ func execAddr(i Instr, p *Context) {
 	if p.addrs[index].Kind() == reflect.Struct {
 		p.Push(p.addrs[index].Addr().Interface())
 	} else {
-		p.Push(p.data[p.base+int(idx)])
+		p.Push(p.data[index])
 	}
 }
 
@@ -49,7 +49,7 @@ func execStore(i Instr, p *Context) {
 	if p.addrs[index].Kind() == reflect.Struct {
 		p.addrs[index].Set(reflect.ValueOf(p.Pop()))
 	} else {
-		p.data[p.base+int(idx)] = p.Pop()
+		p.data[index] = p.Pop()
 	}
 }
 
