@@ -1,0 +1,56 @@
+type Point struct {
+	X int
+	Y int
+}
+
+func (p *Point) SetX(x int) {
+	p.X = x
+}
+
+func (p Point) UnsetX(x int) {
+	p.X = x
+	println(p)
+}
+
+func Test(x int, y int, p Point) {
+	p.X = x
+	p.Y = y
+	println(p)
+}
+
+func Test1(x int, y int, p Point) {
+	p.SetX(x)
+	p.Y = y
+	println(p)
+}
+
+func Test2(x int, y int, p Point) {
+	p = Point{x, y}
+	println(p)
+}
+
+func TestSet(x int, y int, p *Point) {
+	p.X = x
+	p.Y = y
+	println(p)
+}
+
+var p Point
+
+p.SetX(10)
+println(p)
+
+TestSet(10, -10, &p)
+println(p)
+
+p.UnsetX(100)
+println(p)
+
+Test(100, 200, p)
+println(p)
+
+Test1(100, 200, p)
+println(p)
+
+Test2(100, 200, p)
+println(p)
