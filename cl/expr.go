@@ -183,7 +183,11 @@ func compileIdent(ctx *blockCtx, name string) func() {
 			ctx.infer.Push(&goValue{t: v.typ})
 			ctx.resetFieldIndex()
 			return func() {
-				ctx.out.Load(v.index)
+				if ctx.checkLoadAddr {
+					ctx.out.Addr(v.index)
+				} else {
+					ctx.out.Load(v.index)
+				}
 			}
 		case string: // pkgPath
 			pkg := ctx.FindGoPackage(v)

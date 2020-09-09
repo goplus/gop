@@ -265,6 +265,12 @@ func (p *iBuilder) Load(idx int32) exec.Builder {
 	return p
 }
 
+// Addr instr
+func (p *iBuilder) Addr(idx int32) exec.Builder {
+	((*Builder)(p)).Addr(idx)
+	return p
+}
+
 // Store instr
 func (p *iBuilder) Store(idx int32) exec.Builder {
 	((*Builder)(p)).Store(idx)

@@ -133,6 +133,12 @@ func (p *Builder) Load(idx int32) *Builder {
 	return p
 }
 
+// Addr instr
+func (p *Builder) Addr(idx int32) *Builder {
+	p.rhs.Push(p.argIdent(idx))
+	return p
+}
+
 // Store instr
 func (p *Builder) Store(idx int32) *Builder {
 	p.lhs.Push(p.argIdent(idx))
