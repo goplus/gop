@@ -181,9 +181,10 @@ func compileIdent(ctx *blockCtx, name string) func() {
 			}
 		case *stackVar:
 			ctx.infer.Push(&goValue{t: v.typ})
+			kind := v.typ.Kind()
 			ctx.resetFieldIndex()
 			return func() {
-				if ctx.checkLoadAddr {
+				if ctx.takeAddr || (ctx.checkLoadAddr && kind != reflect.Slice && kind != reflect.Map) {
 					ctx.out.Addr(v.index)
 				} else {
 					ctx.out.Load(v.index)
