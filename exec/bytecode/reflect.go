@@ -17,9 +17,10 @@
 package bytecode
 
 import (
-	"go/ast"
 	"reflect"
 	"unsafe"
+
+	"github.com/goplus/gop/ast"
 )
 
 type Value struct {
