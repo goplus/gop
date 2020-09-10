@@ -42,13 +42,6 @@ const (
 	flagRO          flag = flagStickyRO | flagEmbedRO
 )
 
-func (f flag) ro() flag {
-	if f&flagRO != 0 {
-		return flagStickyRO
-	}
-	return 0
-}
-
 func Field(v reflect.Value, i int) reflect.Value {
 	sf := v.Type().Field(i)
 	if !ast.IsExported(sf.Name) {
