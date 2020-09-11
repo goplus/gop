@@ -164,3 +164,12 @@ L3:
 	} else {
 		println("bar")
 	}
+
+	// #590
+	if v := x; v > 0 {
+		println(v)
+	}
+	switch v := x + 1; v {
+	default:
+		println(v)
+	}
