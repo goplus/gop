@@ -72,7 +72,9 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 	case *ast.ErrWrapExpr:
 		return compileErrWrapExpr(ctx, v)
 	case *ast.IndexExpr:
-		return compileIndexExpr(ctx, v)
+		return compileIndexExpr(ctx, v, false)
+	case *ast.TwoValueIndexExpr:
+		return compileIndexExpr(ctx, v.IndexExpr, true)
 	case *ast.SliceExpr:
 		return compileSliceExpr(ctx, v)
 	case *ast.CompositeLit:
@@ -881,7 +883,7 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 			logIllTypeMapIndexPanic(ctx, v, t, typIdx)
 		}
 		if ctx.indirect {
-			ctx.out.MapIndex().AddrOp(kindOf(typElem), exec.OpAssign)
+			ctx.out.MapIndex(false).AddrOp(kindOf(typElem), exec.OpAssign)
 		} else {
 			ctx.out.SetMapIndex()
 		}
@@ -946,7 +948,7 @@ func compileIdx(ctx *blockCtx, v ast.Expr, nlast int, kind reflect.Kind) int {
 	return -1
 }
 
-func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr) func() { // x[i]
+func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr, twoValue bool) func() { // x[i]
 	var kind reflect.Kind
 	var typElem reflect.Type
 	exprX := compileExpr(ctx, v.X)
@@ -999,7 +1001,11 @@ func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr) func() { // x[i]
 			if t := i.(iValue).Type(); t != typIdx {
 				logIllTypeMapIndexPanic(ctx, v, t, typIdx)
 			}
-			ctx.out.MapIndex()
+			if twoValue {
+				// ctx.infer.Ret(1, &goValue{typElem}, &goValue{t: exec.TyBool})
+				ctx.infer.Push(&goValue{t: exec.TyBool})
+			}
+			ctx.out.MapIndex(twoValue)
 		default:
 			log.Panicln("compileIndexExpr: unknown -", typ)
 		}
