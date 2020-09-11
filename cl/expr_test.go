@@ -1068,6 +1068,24 @@ var testStructClauses = map[string]testData{
 				
 				mu.noCopy = struct{}{}
 					`, "", true},
+	"struct_array": {`
+	type Point struct {
+		X int
+		Y int
+	}
+	ar := []Point{}
+	ar = append(ar,Point{10,20})
+	println(ar)
+	`, "[{10 20}]\n", false},
+	"struct_ptr_array": {`
+	type Point struct {
+		X int
+		Y int
+	}
+	ar := []*Point{}
+	ar = append(ar,&Point{10,20})
+	println(ar[0])
+	`, "&{10 20}\n", false},
 }
 
 func TestStruct2(t *testing.T) {
