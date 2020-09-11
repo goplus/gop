@@ -593,7 +593,11 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		log.Panicln("compileAssignStmt internal error: infer stack is not empty.")
 	}
 	if len(expr.Rhs) == 1 {
-		compileExpr(ctx, expr.Rhs[0])()
+		rhsExpr := expr.Rhs[0]
+		if ie, ok := rhsExpr.(*ast.IndexExpr); ok && len(expr.Lhs) == 2 {
+			rhsExpr = &ast.TwoValueIndexExpr{IndexExpr: ie}
+		}
+		compileExpr(ctx, rhsExpr)()
 		v := ctx.infer.Get(-1).(iValue)
 		n := v.NumValues()
 		if n != 1 {
