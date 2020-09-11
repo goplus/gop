@@ -1002,7 +1002,6 @@ func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr, twoValue bool) func() { /
 				logIllTypeMapIndexPanic(ctx, v, t, typIdx)
 			}
 			if twoValue {
-				// ctx.infer.Ret(1, &goValue{typElem}, &goValue{t: exec.TyBool})
 				ctx.infer.Push(&goValue{t: exec.TyBool})
 			}
 			ctx.out.MapIndex(twoValue)

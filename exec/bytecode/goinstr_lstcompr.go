@@ -285,13 +285,12 @@ func execMapIndex(i Instr, p *Context) {
 	default: // mapData $key $mapIndex
 		value := v.MapIndex(key)
 		valid := value.IsValid()
-		if !value.IsValid() {
+		if !valid {
 			value = reflect.Zero(v.Type().Elem())
 		}
+		p.Ret(2, value.Interface())
 		if op == 2 {
-			p.Ret(2, value.Interface(), valid)
-		} else {
-			p.Ret(2, value.Interface())
+			p.Push(valid)
 		}
 	}
 }
