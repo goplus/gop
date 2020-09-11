@@ -341,14 +341,14 @@ func compileDeferStmt(ctx *blockCtx, v *ast.DeferStmt) {
 }
 
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
-	var defaultBody []ast.Stmt
-	var ctxSw *blockCtx
-	if v.Init != nil {
-		ctxSw = newNormBlockCtx(ctx)
-		compileStmt(ctxSw, v.Init)
-	} else {
-		ctxSw = ctx
+	if init := v.Init; init != nil {
+		v.Init = nil
+		block := &ast.BlockStmt{List: []ast.Stmt{init, v}}
+		compileNewBlock(ctx, block)
+		return
 	}
+	var defaultBody []ast.Stmt
+	ctxSw := ctx
 	out := ctx.out
 	done := ctx.NewLabel("")
 	labelName := ""
@@ -476,14 +476,14 @@ func compileCaseClause(c *ast.CaseClause, ctxSw *blockCtx, done exec.Label, next
 }
 
 func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
-	var done exec.Label
-	var ctxIf *blockCtx
-	if v.Init != nil {
-		ctxIf = newNormBlockCtx(ctx)
-		compileStmt(ctxIf, v.Init)
-	} else {
-		ctxIf = ctx
+	if init := v.Init; init != nil {
+		v.Init = nil
+		block := &ast.BlockStmt{List: []ast.Stmt{init, v}}
+		compileNewBlock(ctx, block)
+		return
 	}
+	var done exec.Label
+	ctxIf := ctx
 	compileExpr(ctxIf, v.Cond)()
 	checkBool(ctx.infer.Pop())
 	out := ctx.out
