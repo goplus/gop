@@ -336,7 +336,7 @@ type Builder interface {
 	Append(typ reflect.Type, arity int) Builder
 
 	// MapIndex instr
-	MapIndex() Builder
+	MapIndex(twoValue bool) Builder
 
 	// SetMapIndex instr
 	SetMapIndex() Builder
