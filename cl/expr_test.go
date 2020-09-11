@@ -1273,6 +1273,22 @@ func TestStructEmbedded(t *testing.T) {
 	m.Y = 200
 	println(m.Info,m.X,m.Y)
 	`, "hello 10 20\nworld -10 -20\ngoplus 100 200\n")
+	cltest.Expect(t, `
+	import "bytes"
+	type Buf struct {
+		*bytes.Buffer
+	}
+	buf := &Buf{bytes.NewBufferString("hello")}
+	println(buf)
+	`, "&{hello}\n")
+	cltest.Expect(t, `
+	import "reflect"
+	type Value struct {
+		reflect.Value
+	}
+	v := Value{reflect.ValueOf(100)}
+	println(v.Value)
+	`, "100\n")
 }
 
 // -----------------------------------------------------------------------------
