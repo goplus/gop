@@ -88,18 +88,21 @@ func TestMapIndex(t *testing.T) {
 		StoreVar(m).
 		LoadVar(m).
 		Push("go+").
-		MapIndex().
+		MapIndex(false).
 		LoadVar(m).
 		Push("xsw").
-		MapIndex().
+		MapIndex(true).
 		Resolve()
 
 	ctx := NewContext(code)
 	ctx.Exec(0, code.Len())
-	if v := ctx.Get(-1); v != 1.0 {
+	if v := ctx.Get(-1); v != true {
+		t.Fatal("{`Hello`: 3.2, `xsw`: 1.0}[`xsw`] != 1.0,true, ret =", v)
+	}
+	if v := ctx.Get(-2); v != 1.0 {
 		t.Fatal("{`Hello`: 3.2, `xsw`: 1.0}[`xsw`] != 1.0, ret =", v)
 	}
-	if v := ctx.Get(-2); v != 0.0 {
+	if v := ctx.Get(-3); v != 0.0 {
 		t.Fatal("{`Hello`: 3.2, `xsw`: 1.0}[`go+`] != 1.0, ret =", v)
 	}
 }
