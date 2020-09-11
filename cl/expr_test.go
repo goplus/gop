@@ -1230,7 +1230,6 @@ func TestMethodCases(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-// -----------------------------------------------------------------------------
 var testStarExprClauses = map[string]testData{
 	"star expr": {`
 				func A(a *int, c *struct {
@@ -1354,3 +1353,14 @@ func testScripts(t *testing.T, testName string, scripts map[string]testData) {
 }
 
 // -----------------------------------------------------------------------------
+
+func TestTwoValueExpr(t *testing.T) {
+	clause := `m:={2:3,1:2}
+			if v,ok:=m[m[1]];ok{
+				println(1,v,ok)
+			}
+			if v,ok:=m[m[3]];!ok{
+				println(3,v,ok)
+			}`
+	cltest.Expect(t, clause, "1 3 true\n3 0 false\n")
+}
