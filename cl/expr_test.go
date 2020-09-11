@@ -1228,6 +1228,53 @@ func TestMethodCases(t *testing.T) {
 	testScripts(t, "TestMethod", testMethodClauses)
 }
 
+func TestStructEmbedded(t *testing.T) {
+	cltest.Expect(t, `
+	type Base struct {
+		Info string
+	}
+	type Point struct {
+		X int
+		Y int
+	}
+	type My struct {
+		Base
+		Point
+	}
+	m := &My{Base:Base{"hello"},Point{10,20}}
+	println(m.Info,m.X,m.Y)
+	m.Info = "world"
+	m.Point = Point{-10,-20}
+	println(m.Info,m.X,m.Y)
+	m.Base = Base{"goplus"}
+	m.Point.X = 100
+	m.Y = 200
+	println(m.Info,m.X,m.Y)
+	`, "hello 10 20\nworld -10 -20\ngoplus 100 200\n")
+	cltest.Expect(t, `
+	type Base struct {
+		Info string
+	}
+	type Point struct {
+		X int
+		Y int
+	}
+	type My struct {
+		Base
+		*Point
+	}
+	m := &My{Base:Base{"hello"},&Point{10,20}}
+	println(m.Info,m.X,m.Y)
+	m.Info = "world"
+	m.Point = &Point{-10,-20}
+	println(m.Info,m.X,m.Y)
+	m.Base = Base{"goplus"}
+	m.Point.X = 100
+	m.Y = 200
+	println(m.Info,m.X,m.Y)
+	`, "hello 10 20\nworld -10 -20\ngoplus 100 200\n")
+}
+
 // -----------------------------------------------------------------------------
 
 // -----------------------------------------------------------------------------

@@ -446,9 +446,6 @@ func (p *Builder) fieldExpr(typ reflect.Type, index []int) ast.Expr {
 	}
 	for i := 0; i < len(index); i++ {
 		sf := typ.FieldByIndex(index[:i+1])
-		if sf.Anonymous {
-			continue
-		}
 		if expr.Sel != nil {
 			expr.X = &ast.SelectorExpr{X: expr.X, Sel: expr.Sel}
 		}

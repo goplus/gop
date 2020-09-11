@@ -37,8 +37,10 @@ func StructType(p *Builder, typ reflect.Type) ast.Expr {
 
 func toStructField(p *Builder, f reflect.StructField) *ast.Field {
 	var field = &ast.Field{}
-	field.Names = []*ast.Ident{
-		Ident(f.Name),
+	if !f.Anonymous {
+		field.Names = []*ast.Ident{
+			Ident(f.Name),
+		}
 	}
 	field.Type = Type(p, f.Type)
 	return field
