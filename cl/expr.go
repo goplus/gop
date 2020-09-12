@@ -1238,7 +1238,7 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 				ctx.infer.Push(fn)
 				return func() {}
 			}
-			if call != nil {
+			if call != nil && isUserStruct(t) {
 				for i := 0; i < t.NumField(); i++ {
 					sf := t.Field(i)
 					if sf.Anonymous {
