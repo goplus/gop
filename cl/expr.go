@@ -1258,9 +1258,9 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 				}
 			}
 		}
-		if _, found := vx.t.MethodByName(name); !found && isLower(name) {
+		if _, ok := vx.t.MethodByName(name); !ok && isLower(name) {
 			name = strings.Title(name)
-			if _, found = vx.t.MethodByName(name); found {
+			if _, ok = vx.t.MethodByName(name); ok {
 				v.Sel.Name = name
 				autoCall = allowAutoCall
 			} else {
