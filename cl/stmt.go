@@ -592,6 +592,7 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 	if ctx.infer.Len() != 0 {
 		log.Panicln("compileAssignStmt internal error: infer stack is not empty.")
 	}
+	ctx.lhsSize = len(expr.Lhs)
 	if len(expr.Rhs) == 1 {
 		compileExpr(ctx, expr.Rhs[0])()
 		v := ctx.infer.Get(-1).(iValue)
@@ -614,6 +615,7 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 			}
 		}
 	}
+	ctx.lhsSize = 0
 	if ctx.infer.Len() != len(expr.Lhs) {
 		log.Panicln("compileAssignStmt: assign statement has mismatched variables count -", ctx.infer.Len())
 	}

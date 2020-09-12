@@ -379,8 +379,8 @@ func (p *iBuilder) Make(typ reflect.Type, arity int) exec.Builder {
 }
 
 // MapIndex instr
-func (p *iBuilder) MapIndex() exec.Builder {
-	((*Builder)(p)).MapIndex()
+func (p *iBuilder) MapIndex(checkExist bool) exec.Builder {
+	((*Builder)(p)).MapIndex(checkExist)
 	return p
 }
 

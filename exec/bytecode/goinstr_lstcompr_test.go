@@ -88,10 +88,10 @@ func TestMapIndex(t *testing.T) {
 		StoreVar(m).
 		LoadVar(m).
 		Push("go+").
-		MapIndex().
+		MapIndex(false).
 		LoadVar(m).
 		Push("xsw").
-		MapIndex().
+		MapIndex(false).
 		Resolve()
 
 	ctx := NewContext(code)

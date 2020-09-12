@@ -278,16 +278,22 @@ func execMapIndex(i Instr, p *Context) {
 	n := len(p.data)
 	key := reflect.ValueOf(p.data[n-1])
 	v := reflect.ValueOf(p.data[n-2])
-	switch i & bitsOperand {
+	op := i & bitsOperand
+	switch op {
 	case 1: // value mapData $key $setMapIndex
 		v.SetMapIndex(key, reflect.ValueOf(p.data[n-3]))
 		p.PopN(3)
 	default: // mapData $key $mapIndex
+		var exist = true
 		value := v.MapIndex(key)
 		if !value.IsValid() {
 			value = reflect.Zero(v.Type().Elem())
+			exist = false
 		}
 		p.Ret(2, value.Interface())
+		if op == 2 { // lhs check exist flag
+			p.Push(exist)
+		}
 	}
 }
 
@@ -488,8 +494,12 @@ func (p *Builder) Make(typ reflect.Type, arity int) *Builder {
 }
 
 // MapIndex instr
-func (p *Builder) MapIndex() *Builder {
-	p.code.data = append(p.code.data, opMapIndex<<bitsOpShift)
+func (p *Builder) MapIndex(checkExist bool) *Builder {
+	infer := opMapIndex << bitsOpShift
+	if checkExist {
+		infer |= 2
+	}
+	p.code.data = append(p.code.data, uint32(infer))
 	return p
 }
 

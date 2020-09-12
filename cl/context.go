@@ -196,6 +196,7 @@ type blockCtx struct {
 	indirect        bool
 	checkFlag       bool
 	checkLoadAddr   bool
+	lhsSize         int
 	fieldStructType reflect.Type
 	fieldIndex      []int
 	fieldExprX      func()

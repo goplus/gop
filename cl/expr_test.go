@@ -375,6 +375,18 @@ func TestTakeAddrMap(t *testing.T) {
 		"map[1:hello 2:ok]\n&map[1:hello 2:ok]\n")
 }
 
+func TestMapCheckIdxExist(t *testing.T) {
+	cltest.Expect(t, `
+		m := {1: 2, 2: 3}
+
+		if v, ok := m[2]; ok {
+			println(v)
+		}
+	
+		`,
+		"3\n")
+}
+
 func TestTakeAddrMapIndexBad(t *testing.T) {
 	cltest.Expect(t, `
 		m := {1:"hello",2:"ok"}
