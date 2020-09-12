@@ -68,7 +68,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 	case *ast.UnaryExpr:
 		return compileUnaryExpr(ctx, v)
 	case *ast.SelectorExpr:
-		return compileSelectorExpr(ctx, v, true)
+		return compileSelectorExpr(ctx, nil, v, true)
 	case *ast.ErrWrapExpr:
 		return compileErrWrapExpr(ctx, v)
 	case *ast.IndexExpr:
@@ -694,7 +694,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	var exprFun func()
 	switch f := v.Fun.(type) {
 	case *ast.SelectorExpr:
-		exprFun = compileSelectorExpr(ctx, f, false)
+		exprFun = compileSelectorExpr(ctx, v, f, false)
 	default:
 		exprFun = compileExpr(ctx, f)
 	}
@@ -1147,7 +1147,14 @@ func compileStarExprLHS(ctx *blockCtx, v *ast.StarExpr, mode compileMode) {
 	ctx.indirect = false
 }
 
-func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool) func() {
+func isUserStruct(t reflect.Type) bool {
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+	return t.Kind() == reflect.Struct && (t.PkgPath() == "" || t.PkgPath() == "main")
+}
+
+func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr, allowAutoCall bool) func() {
 	exprX := compileExpr(ctx, v.X)
 	if v.Sel == nil {
 		return exprX
@@ -1231,11 +1238,29 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 				ctx.infer.Push(fn)
 				return func() {}
 			}
+			if call != nil {
+				for i := 0; i < t.NumField(); i++ {
+					sf := t.Field(i)
+					if sf.Anonymous {
+						var found bool
+						if isUserStruct(sf.Type) {
+							_, found = ctx.findMethod(sf.Type, name)
+						} else {
+							_, found = sf.Type.MethodByName(name)
+						}
+						if found {
+							ctx.infer.Pop()
+							fun := &ast.SelectorExpr{X: &ast.SelectorExpr{X: v.X, Sel: &ast.Ident{Name: sf.Name}}, Sel: v.Sel}
+							call.Fun = fun
+							return compileSelectorExpr(ctx, call, fun, allowAutoCall)
+						}
+					}
+				}
+			}
 		}
-
-		if _, ok := vx.t.MethodByName(name); !ok && isLower(name) {
+		if _, found := vx.t.MethodByName(name); !found && isLower(name) {
 			name = strings.Title(name)
-			if _, ok = vx.t.MethodByName(name); ok {
+			if _, found = vx.t.MethodByName(name); found {
 				v.Sel.Name = name
 				autoCall = allowAutoCall
 			} else {
