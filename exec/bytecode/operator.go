@@ -157,27 +157,69 @@ var refTypeOps = [...]func(i Instr, p *Context){
 // -------------------------------------------------------------------------
 func execSliceEQ(i Instr, p *Context) {
 	n := len(p.data)
-	p.data[n-1] = p.data[n-2] == p.data[n-1]
+	arg1 := reflect.ValueOf(p.data[n-2])
+	arg2 := reflect.ValueOf(p.data[n-1])
+	if p.data[n-1] == nil && arg1.Type().Kind() == reflect.Slice {
+		p.Ret(2, arg1.IsNil())
+	}
+	if p.data[n-2] == nil && arg2.Type().Kind() == reflect.Slice {
+		p.Ret(2, arg2.IsNil())
+	}
 }
 func execMapEQ(i Instr, p *Context) {
 	n := len(p.data)
-	p.data[n-1] = p.data[n-2] == p.data[n-1]
+	arg1 := reflect.ValueOf(p.data[n-2])
+	arg2 := reflect.ValueOf(p.data[n-1])
+	if p.data[n-1] == nil && arg1.Type().Kind() == reflect.Map {
+		p.Ret(2, arg1.IsNil())
+	}
+	if p.data[n-2] == nil && arg2.Type().Kind() == reflect.Map {
+		p.Ret(2, arg2.IsNil())
+	}
 }
 func execChanEQ(i Instr, p *Context) {
 	n := len(p.data)
-	p.data[n-1] = p.data[n-2] == p.data[n-1]
+	arg1 := reflect.ValueOf(p.data[n-2])
+	arg2 := reflect.ValueOf(p.data[n-1])
+	if p.data[n-1] == nil && arg1.Type().Kind() == reflect.Chan {
+		p.Ret(2, arg1.IsNil())
+	}
+	if p.data[n-2] == nil && arg2.Type().Kind() == reflect.Chan {
+		p.Ret(2, arg2.IsNil())
+	}
 }
 func execSliceNEQ(i Instr, p *Context) {
 	n := len(p.data)
-	p.data[n-1] = p.data[n-2] != p.data[n-1]
+	arg1 := reflect.ValueOf(p.data[n-2])
+	arg2 := reflect.ValueOf(p.data[n-1])
+	if p.data[n-1] == nil && arg1.Type().Kind() == reflect.Slice {
+		p.Ret(2, !arg1.IsNil())
+	}
+	if p.data[n-2] == nil && arg2.Type().Kind() == reflect.Slice {
+		p.Ret(2, !arg2.IsNil())
+	}
 }
 func execMapNEQ(i Instr, p *Context) {
 	n := len(p.data)
-	p.data[n-1] = p.data[n-2] != p.data[n-1]
+	arg1 := reflect.ValueOf(p.data[n-2])
+	arg2 := reflect.ValueOf(p.data[n-1])
+	if p.data[n-1] == nil && arg1.Type().Kind() == reflect.Map {
+		p.Ret(2, !arg1.IsNil())
+	}
+	if p.data[n-2] == nil && arg2.Type().Kind() == reflect.Map {
+		p.Ret(2, !arg2.IsNil())
+	}
 }
 func execChanNEQ(i Instr, p *Context) {
 	n := len(p.data)
-	p.data[n-1] = p.data[n-2] != p.data[n-1]
+	arg1 := reflect.ValueOf(p.data[n-2])
+	arg2 := reflect.ValueOf(p.data[n-1])
+	if p.data[n-1] == nil && arg1.Type().Kind() == reflect.Chan {
+		p.Ret(2, !arg1.IsNil())
+	}
+	if p.data[n-2] == nil && arg2.Type().Kind() == reflect.Chan {
+		p.Ret(2, !arg2.IsNil())
+	}
 }
 
 // -------------------------------------------------------------------------

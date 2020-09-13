@@ -117,8 +117,12 @@ func checkUnaryOp(kind exec.Kind, op exec.Operator, x interface{}, b exec.Builde
 func checkBinaryOp(kind exec.Kind, op exec.Operator, x, y interface{}, b exec.Builder) {
 	if xcons, xok := x.(*constVal); xok {
 		if xcons.reserve != -1 {
-			xv := boundConst(xcons.v, exec.TypeFromKind(kind))
-			xcons.reserve.Push(b, xv)
+			if xcons.kind == exec.ConstUnboundPtr {
+				xcons.reserve.Push(b, nil)
+			} else {
+				xv := boundConst(xcons.v, exec.TypeFromKind(kind))
+				xcons.reserve.Push(b, xv)
+			}
 		}
 	}
 	if ycons, yok := y.(*constVal); yok {

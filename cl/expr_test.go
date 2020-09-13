@@ -1370,6 +1370,34 @@ var testRefTypeClauses = map[string]testData{
 		println("foo2")
 	}
 						`, "foo\nfoo1\nfoo2\n", false},
+	"ref type 2": {`
+	func foo() []int {
+		return nil
+	}
+	
+	func foo1() map[int]int {
+		return make(map[int]int, 10)
+	}
+	
+	func foo2() chan int {
+		return make(chan int, 10)
+	}
+	
+	println(foo() == nil)
+	println(nil == foo())
+	println(foo() != nil)
+	println(nil != foo())
+	
+	println(foo1() == nil)
+	println(nil == foo1())
+	println(foo1() != nil)
+	println(nil != foo1())
+	
+	println(foo2() == nil)
+	println(nil == foo2())
+	println(foo2() != nil)
+	println(nil != foo2())
+						`, "true\ntrue\nfalse\nfalse\nfalse\nfalse\ntrue\ntrue\nfalse\nfalse\ntrue\ntrue\n", false},
 }
 
 func TestRefType(t *testing.T) {
