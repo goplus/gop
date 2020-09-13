@@ -145,6 +145,43 @@ const (
 
 // -----------------------------------------------------------------------------
 
+var refTypeOps = [...]func(i Instr, p *Context){
+	(int(reflect.Slice) << bitsOperator) | int(OpEQ): execSliceEQ,
+	(int(reflect.Map) << bitsOperator) | int(OpEQ):   execMapEQ,
+	(int(reflect.Chan) << bitsOperator) | int(OpEQ):  execChanEQ,
+	(int(reflect.Slice) << bitsOperator) | int(OpNE): execSliceNEQ,
+	(int(reflect.Map) << bitsOperator) | int(OpNE):   execMapNEQ,
+	(int(reflect.Chan) << bitsOperator) | int(OpNE):  execChanNEQ,
+}
+
+// -------------------------------------------------------------------------
+func execSliceEQ(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-1] = p.data[n-2] == p.data[n-1]
+}
+func execMapEQ(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-1] = p.data[n-2] == p.data[n-1]
+}
+func execChanEQ(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-1] = p.data[n-2] == p.data[n-1]
+}
+func execSliceNEQ(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-1] = p.data[n-2] != p.data[n-1]
+}
+func execMapNEQ(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-1] = p.data[n-2] != p.data[n-1]
+}
+func execChanNEQ(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-1] = p.data[n-2] != p.data[n-1]
+}
+
+// -------------------------------------------------------------------------
+
 func toUint(v interface{}) uint {
 	switch n := v.(type) {
 	case int:
@@ -185,6 +222,14 @@ func execBuiltinOp(i Instr, p *Context) {
 	log.Panicln("execBuiltinOp: invalid instr -", i)
 }
 
+func execRefTypeOp(i Instr, p *Context) {
+	if fn := refTypeOps[int(i&bitsOperand)]; fn != nil {
+		fn(0, p)
+		return
+	}
+	log.Panicln("execBuiltinOp: invalid instr -", i)
+}
+
 // -----------------------------------------------------------------------------
 
 const (
@@ -219,6 +264,23 @@ func (p *Code) builtinOp(kind Kind, op Operator) error {
 func (p *Builder) BuiltinOp(kind Kind, op Operator) *Builder {
 	log.Debug("BuiltinOp:", kind, op)
 	err := p.code.builtinOp(kind, op)
+	if err != nil {
+		panic(err)
+	}
+	return p
+}
+
+func (p *Code) refTypeOp(kind Kind, op Operator) error {
+	i := (int(kind) << bitsOperator) | int(op)
+	if fn := refTypeOps[i]; fn != nil {
+		p.data = append(p.data, (opRefTypeOp<<bitsOpShift)|uint32(i))
+		return nil
+	}
+	return fmt.Errorf("builtinOp: type %v doesn't support operator %v", kind, op)
+}
+
+func (p *Builder) RefTypeOp(kind Kind, op Operator) *Builder {
+	err := p.code.refTypeOp(kind, op)
 	if err != nil {
 		panic(err)
 	}

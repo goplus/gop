@@ -640,9 +640,16 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 		}
 		exprY()
 		checkBinaryOp(kind, op, x, y, ctx.out)
-		ctx.out.BuiltinOp(kind, op)
-		if label != nil {
-			ctx.out.Label(label)
+		if exec.TypeFromKind(kind) != nil {
+			ctx.out.BuiltinOp(kind, op)
+			if label != nil {
+				ctx.out.Label(label)
+			}
+		} else {
+			ctx.out.RefTypeOp(kind, op)
+			if label != nil {
+				ctx.out.Label(label)
+			}
 		}
 	}
 }

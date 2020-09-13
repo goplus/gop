@@ -130,8 +130,12 @@ func checkBinaryOp(kind exec.Kind, op exec.Operator, x, y interface{}, b exec.Bu
 			kind = ycons.boundKind()
 		}
 		if ycons.reserve != -1 {
-			yv := boundConst(ycons.v, exec.TypeFromKind(kind))
-			ycons.reserve.Push(b, yv)
+			if ycons.kind == exec.ConstUnboundPtr {
+				ycons.reserve.Push(b, nil)
+			} else {
+				yv := boundConst(ycons.v, exec.TypeFromKind(kind))
+				ycons.reserve.Push(b, yv)
+			}
 		}
 	}
 }

@@ -97,6 +97,12 @@ func (p *iBuilder) BuiltinOp(kind exec.Kind, op exec.Operator) exec.Builder {
 	return p
 }
 
+// RefTypeOp instr
+func (p *iBuilder) RefTypeOp(kind exec.Kind, op exec.Operator) exec.Builder {
+	((*Builder)(p)).RefTypeOp(kind, op)
+	return p
+}
+
 // Label defines a label to jmp here.
 func (p *iBuilder) Label(l exec.Label) exec.Builder {
 	((*Builder)(p)).Label(l.(*Label))

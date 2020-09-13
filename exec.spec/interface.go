@@ -194,6 +194,9 @@ type Builder interface {
 	// BuiltinOp instr
 	BuiltinOp(kind Kind, op Operator) Builder
 
+	// BuiltinOp instr
+	RefTypeOp(kind Kind, op Operator) Builder
+
 	// Label defines a label to jmp here.
 	Label(l Label) Builder
 
