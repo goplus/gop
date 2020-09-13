@@ -9,6 +9,10 @@ func foo1() map[int]int {
 func foo2() chan int {
 	return make(chan int, 10)
 }
+
+func foo3() *int {
+	return nil
+}
 a := foo()
 if a != nil {
 	println("foo")
@@ -21,4 +25,9 @@ if a1 != nil {
 a2 := foo2()
 if a2 != nil {
 	println("foo2")
+}
+
+a3 := foo3()
+if a3 == nil {
+	println("foo3")
 }

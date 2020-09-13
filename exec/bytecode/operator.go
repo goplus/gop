@@ -146,78 +146,49 @@ const (
 // -----------------------------------------------------------------------------
 
 var refTypeOps = [...]func(i Instr, p *Context){
-	(int(reflect.Slice) << bitsOperator) | int(OpEQ): execSliceEQ,
-	(int(reflect.Map) << bitsOperator) | int(OpEQ):   execMapEQ,
-	(int(reflect.Chan) << bitsOperator) | int(OpEQ):  execChanEQ,
-	(int(reflect.Slice) << bitsOperator) | int(OpNE): execSliceNEQ,
-	(int(reflect.Map) << bitsOperator) | int(OpNE):   execMapNEQ,
-	(int(reflect.Chan) << bitsOperator) | int(OpNE):  execChanNEQ,
+	(int(reflect.Slice) << bitsOperator) | int(OpEQ): execRefTypeEQ,
+	(int(reflect.Map) << bitsOperator) | int(OpEQ):   execRefTypeEQ,
+	(int(reflect.Chan) << bitsOperator) | int(OpEQ):  execRefTypeEQ,
+	(int(reflect.Ptr) << bitsOperator) | int(OpEQ):   execRefTypeEQ,
+	(int(reflect.Slice) << bitsOperator) | int(OpNE): execRefTypeNEQ,
+	(int(reflect.Map) << bitsOperator) | int(OpNE):   execRefTypeNEQ,
+	(int(reflect.Chan) << bitsOperator) | int(OpNE):  execRefTypeNEQ,
+	(int(reflect.Ptr) << bitsOperator) | int(OpNE):   execRefTypeNEQ,
 }
 
 // -------------------------------------------------------------------------
-func execSliceEQ(i Instr, p *Context) {
+func execRefTypeEQ(i Instr, p *Context) {
 	n := len(p.data)
 	arg1 := reflect.ValueOf(p.data[n-2])
 	arg2 := reflect.ValueOf(p.data[n-1])
-	if p.data[n-1] == nil && arg1.Type().Kind() == reflect.Slice {
+	if p.data[n-1] == nil && (arg1.Type().Kind() == reflect.Slice ||
+		arg1.Type().Kind() == reflect.Map ||
+		arg1.Type().Kind() == reflect.Chan ||
+		arg1.Type().Kind() == reflect.Ptr) {
 		p.Ret(2, arg1.IsNil())
 	}
-	if p.data[n-2] == nil && arg2.Type().Kind() == reflect.Slice {
+	if p.data[n-2] == nil && (arg2.Type().Kind() == reflect.Slice ||
+		arg2.Type().Kind() == reflect.Map ||
+		arg2.Type().Kind() == reflect.Chan ||
+		arg2.Type().Kind() == reflect.Ptr) {
 		p.Ret(2, arg2.IsNil())
 	}
 }
-func execMapEQ(i Instr, p *Context) {
+
+func execRefTypeNEQ(i Instr, p *Context) {
 	n := len(p.data)
 	arg1 := reflect.ValueOf(p.data[n-2])
 	arg2 := reflect.ValueOf(p.data[n-1])
-	if p.data[n-1] == nil && arg1.Type().Kind() == reflect.Map {
-		p.Ret(2, arg1.IsNil())
-	}
-	if p.data[n-2] == nil && arg2.Type().Kind() == reflect.Map {
-		p.Ret(2, arg2.IsNil())
-	}
-}
-func execChanEQ(i Instr, p *Context) {
-	n := len(p.data)
-	arg1 := reflect.ValueOf(p.data[n-2])
-	arg2 := reflect.ValueOf(p.data[n-1])
-	if p.data[n-1] == nil && arg1.Type().Kind() == reflect.Chan {
-		p.Ret(2, arg1.IsNil())
-	}
-	if p.data[n-2] == nil && arg2.Type().Kind() == reflect.Chan {
-		p.Ret(2, arg2.IsNil())
-	}
-}
-func execSliceNEQ(i Instr, p *Context) {
-	n := len(p.data)
-	arg1 := reflect.ValueOf(p.data[n-2])
-	arg2 := reflect.ValueOf(p.data[n-1])
-	if p.data[n-1] == nil && arg1.Type().Kind() == reflect.Slice {
+	if p.data[n-1] == nil && (arg1.Type().Kind() == reflect.Slice ||
+		arg1.Type().Kind() == reflect.Map ||
+		arg1.Type().Kind() == reflect.Chan ||
+		arg1.Type().Kind() == reflect.Ptr) {
 		p.Ret(2, !arg1.IsNil())
 	}
-	if p.data[n-2] == nil && arg2.Type().Kind() == reflect.Slice {
-		p.Ret(2, !arg2.IsNil())
-	}
-}
-func execMapNEQ(i Instr, p *Context) {
-	n := len(p.data)
-	arg1 := reflect.ValueOf(p.data[n-2])
-	arg2 := reflect.ValueOf(p.data[n-1])
-	if p.data[n-1] == nil && arg1.Type().Kind() == reflect.Map {
-		p.Ret(2, !arg1.IsNil())
-	}
-	if p.data[n-2] == nil && arg2.Type().Kind() == reflect.Map {
-		p.Ret(2, !arg2.IsNil())
-	}
-}
-func execChanNEQ(i Instr, p *Context) {
-	n := len(p.data)
-	arg1 := reflect.ValueOf(p.data[n-2])
-	arg2 := reflect.ValueOf(p.data[n-1])
-	if p.data[n-1] == nil && arg1.Type().Kind() == reflect.Chan {
-		p.Ret(2, !arg1.IsNil())
-	}
-	if p.data[n-2] == nil && arg2.Type().Kind() == reflect.Chan {
+	if p.data[n-2] == nil && (arg2.Type().Kind() == reflect.Slice ||
+		arg2.Type().Kind() == reflect.Map ||
+		arg2.Type().Kind() == reflect.Chan ||
+		arg2.Type().Kind() == reflect.Ptr) {
 		p.Ret(2, !arg2.IsNil())
 	}
 }
