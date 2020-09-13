@@ -3,5 +3,5 @@ func foo() []int {
 }
 a := foo()
 if a != nil {
-    println("foo")
+	println("foo")
 }
