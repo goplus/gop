@@ -1382,6 +1382,10 @@ var testRefTypeClauses = map[string]testData{
 	func foo2() chan int {
 		return make(chan int, 10)
 	}
+
+	func foo3() *int {
+		return nil
+	}
 	
 	println(foo() == nil)
 	println(nil == foo())
@@ -1397,7 +1401,12 @@ var testRefTypeClauses = map[string]testData{
 	println(nil == foo2())
 	println(foo2() != nil)
 	println(nil != foo2())
-						`, "true\ntrue\nfalse\nfalse\nfalse\nfalse\ntrue\ntrue\nfalse\nfalse\ntrue\ntrue\n", false},
+	
+	println(foo3() == nil)
+	println(nil == foo3())
+	println(foo3() != nil)
+	println(nil != foo3())
+						`, "true\ntrue\nfalse\nfalse\nfalse\nfalse\ntrue\ntrue\nfalse\nfalse\ntrue\ntrue\ntrue\ntrue\nfalse\nfalse\n", false},
 }
 
 func TestRefType(t *testing.T) {

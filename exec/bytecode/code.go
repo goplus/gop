@@ -89,7 +89,7 @@ const (
 	opMake          = 8  // funvArity(10) type(16)
 	opAppend        = 9  // arity(26)
 	opBuiltinOp     = 10 // reserved(16) kind(5) builtinOp(5)
-	opRefTypeOp     = 11 // reserved(16) kind(5) builtinOp(5)
+	opRefTypeOp     = 11 // reserved(16) kind(5) refTypeOp(5)
 	opJmp           = 12 // reserved(2) offset(24)
 	opJmpIf         = 13 // flag(4) offset(22)
 	opCaseNE        = 14 // n(10) offset(16)
