@@ -124,10 +124,8 @@ const (
 	opWrapIfErr     = 43 // reserved(2) offset(24)
 	opDefer         = 44 // reserved(26)
 	opGo            = 45 // arity(26)
-	opLoadField     = 46 // op(26)
-	opStoreField    = 47 // op(26)
-	opAddrField     = 48 // op(26)
-	opStruct        = 49 // funvArity(10) type(16)
+	opField         = 46 // op(26)
+	opStruct        = 47 // funvArity(10) type(16)
 )
 
 const (
@@ -215,9 +213,7 @@ var instrInfos = []InstrInfo{
 	opWrapIfErr:     {"wrapIfErr", "", "offset", 26},                      // reserved(2) offset(24)
 	opDefer:         {"defer", "", "", 0},                                 // reserved(26)
 	opGo:            {"go", "", "arity", 26},                              // arity(26)
-	opLoadField:     {"loadField", "", "", 26},                            // addr(26)
-	opStoreField:    {"storeField", "", "", 26},                           // addr(26)
-	opAddrField:     {"addrField", "", "", 26},                            // addr(26)
+	opField:         {"field", "", "op", 26},                              // field(26)
 	opStruct:        {"struct", "funvArity", "type", (10 << 8) | 16},      // funvArity(10) type(16)
 }
 

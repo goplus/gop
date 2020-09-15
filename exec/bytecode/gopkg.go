@@ -63,6 +63,18 @@ func execAddrGoVar(i Instr, p *Context) {
 	p.Push(govars[idx].Addr)
 }
 
+func execField(i Instr, p *Context) {
+	op := i & bitsOperand
+	switch op {
+	case fieldOpLoad:
+		execLoadField(i, p)
+	case fieldOpStore:
+		execStoreField(i, p)
+	case fieldOpAddr:
+		execAddrField(i, p)
+	}
+}
+
 func execLoadField(i Instr, p *Context) {
 	index := p.Pop()
 	v := reflect.ValueOf(p.Pop())
@@ -430,27 +442,30 @@ func (p *Builder) AddrGoVar(addr GoVarAddr) *Builder {
 	return p
 }
 
+const (
+	fieldOpLoad  = 0
+	fieldOpStore = 1
+	fieldOpAddr  = 2
+)
+
 // LoadField instr
 func (p *Builder) LoadField(typ reflect.Type, index []int) *Builder {
 	p.Push(index)
-	i := uint32(opLoadField << bitsOpShift)
-	p.code.data = append(p.code.data, uint32(i))
+	p.code.data = append(p.code.data, (opField<<bitsOpShift)|uint32(fieldOpLoad))
 	return p
 }
 
 // AddrField instr
 func (p *Builder) AddrField(typ reflect.Type, index []int) *Builder {
 	p.Push(index)
-	i := uint32(opAddrField << bitsOpShift)
-	p.code.data = append(p.code.data, uint32(i))
+	p.code.data = append(p.code.data, (opField<<bitsOpShift)|uint32(fieldOpAddr))
 	return p
 }
 
 // StoreField instr
 func (p *Builder) StoreField(typ reflect.Type, index []int) *Builder {
 	p.Push(index)
-	i := uint32(opStoreField << bitsOpShift)
-	p.code.data = append(p.code.data, uint32(i))
+	p.code.data = append(p.code.data, (opField<<bitsOpShift)|uint32(fieldOpStore))
 	return p
 }
 
