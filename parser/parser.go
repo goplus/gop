@@ -2659,9 +2659,6 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 	}
 
 	ident := p.parseIdent()
-	if p.errors.Len() != 0 {
-		return nil
-	}
 
 	params, results := p.parseSignature(scope)
 
@@ -2722,10 +2719,11 @@ func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
 
 	case token.FUNC:
 		decl := p.parseFuncDecl()
-		if decl != nil {
-			return decl
+		if p.errors.Len() != 0 {
+			p.errorExpected(pos, "declaration")
+			p.advance(sync)
 		}
-		fallthrough
+		return decl
 	default:
 		p.errorExpected(pos, "declaration")
 		p.advance(sync)
