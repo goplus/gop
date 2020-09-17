@@ -40,9 +40,9 @@ type FuncInfo struct {
 	isMethod int
 	name     string
 	closure  *printer.ReservedExpr // only when name="" (closure)
-	recv     reflect.Type
 	t        reflect.Type
-	in       []reflect.Type
+	recv     exec.Var
+	in       []exec.Var
 	out      []exec.Var
 	scopeCtx
 	nVariadic uint16
@@ -88,9 +88,11 @@ func (p *FuncInfo) Type() reflect.Type {
 		}
 		in := make([]reflect.Type, 0, p.NumIn())
 		if p.isMethod == 1 {
-			in = append(in, p.recv)
+			in = append(in, p.recv.Type())
 		}
-		in = append(in, p.in...)
+		for _, v := range p.in {
+			in = append(in, v.(*Var).typ)
+		}
 		p.t = reflect.FuncOf(in, out, p.IsVariadic())
 	}
 	return p.t
@@ -113,7 +115,7 @@ func (p *FuncInfo) Out(i int) exec.Var {
 }
 
 // Args sets argument types of a Go+ function.
-func (p *FuncInfo) Args(in ...reflect.Type) exec.FuncInfo {
+func (p *FuncInfo) Args(in ...exec.Var) exec.FuncInfo {
 	if p.isMethod == 1 {
 		p.recv = in[0]
 		in = in[1:]
@@ -124,8 +126,8 @@ func (p *FuncInfo) Args(in ...reflect.Type) exec.FuncInfo {
 }
 
 // Vargs sets argument types of a variadic Go+ function.
-func (p *FuncInfo) Vargs(in ...reflect.Type) exec.FuncInfo {
-	if in[len(in)-1].Kind() != reflect.Slice {
+func (p *FuncInfo) Vargs(in ...exec.Var) exec.FuncInfo {
+	if in[len(in)-1].Type().Kind() != reflect.Slice {
 		log.Panicln("Vargs failed: last argument must be a slice.")
 	}
 	if p.isMethod == 1 {
@@ -256,7 +258,7 @@ func (p *Builder) EndFunc(fun *FuncInfo) *Builder {
 		}
 		if fun.isMethod == 1 {
 			params := make([]*ast.Field, 1)
-			params[0] = Field(p, "recv", fun.recv, "", false)
+			params[0] = Field(p, fun.recv.Name(), fun.recv.Type(), "", false)
 			fn.Recv = &ast.FieldList{Opening: 1, List: params, Closing: 1}
 		}
 		p.gblDecls = append(p.gblDecls, fn)
@@ -282,17 +284,19 @@ func toFuncType(p *Builder, typ *FuncInfo) *ast.FuncType {
 			numIn--
 		}
 		for i := 0; i < numIn; i++ {
-			params[i] = Field(p, toArg(i), typ.in[i], "", false)
+			in := typ.in[i].(*Var)
+			params[i] = Field(p, in.ValidName(), in.typ, "", false)
 		}
 		if variadic {
-			params[numIn] = Field(p, toArg(numIn), typ.in[numIn], "", true)
+			in := typ.in[numIn].(*Var)
+			params[numIn] = Field(p, in.ValidName(), in.typ, "", true)
 		}
 	}
 	if numOut > 0 {
 		results = make([]*ast.Field, numOut)
 		for i := 0; i < numOut; i++ {
 			out := typ.Out(i).(*Var)
-			results[i] = Field(p, out.name, out.typ, "", false)
+			results[i] = Field(p, out.ValidName(), out.typ, "", false)
 		}
 		opening++
 	}

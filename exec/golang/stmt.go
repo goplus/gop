@@ -183,7 +183,7 @@ func (p *Builder) wrapCall(nret int) []ast.Expr {
 }
 
 // ErrWrap instr
-func (p *Builder) ErrWrap(nret int, retErr exec.Var, frame *errors.Frame, narg int) *Builder {
+func (p *Builder) ErrWrap(fun exec.FuncInfo, nret int, retErr exec.Var, frame *errors.Frame, narg int) *Builder {
 	args := p.wrapCall(nret)
 	frameFun := p.GoSymIdent("github.com/qiniu/x/errors", "NewFrame")
 	frameArgs := make([]ast.Expr, narg+6)
@@ -194,7 +194,7 @@ func (p *Builder) ErrWrap(nret int, retErr exec.Var, frame *errors.Frame, narg i
 	frameArgs[4] = StringConst(frame.Pkg)
 	frameArgs[5] = StringConst(frame.Func)
 	for i := 0; i < narg; i++ {
-		frameArgs[6+i] = Ident(toArg(i))
+		frameArgs[6+i] = Ident(fun.(*FuncInfo).in[i].(*Var).ValidName()) //Ident(toArg(i))
 	}
 	frameErr := &ast.CallExpr{Fun: frameFun, Args: frameArgs}
 	var body *ast.BlockStmt

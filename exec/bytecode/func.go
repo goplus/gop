@@ -163,7 +163,7 @@ type FuncInfo struct {
 	funEntry int
 	funEnd   int
 	t        reflect.Type
-	in       []reflect.Type
+	in       []*Var
 	anyUnresolved
 	numOut int
 	varManager
@@ -220,18 +220,22 @@ func (p *FuncInfo) IsUnnamedOut() bool {
 }
 
 // Args sets argument types of a Go+ function.
-func (p *FuncInfo) Args(in ...reflect.Type) *FuncInfo {
-	p.in = in
+func (p *FuncInfo) Args(ins ...exec.Var) *FuncInfo {
+	for _, in := range ins {
+		p.in = append(p.in, in.(*Var))
+	}
 	p.setVariadic(nVariadicFixedArgs)
 	return p
 }
 
-// Vargs sets argument types of a variadic Go+ function.
-func (p *FuncInfo) Vargs(in ...reflect.Type) *FuncInfo {
-	if in[len(in)-1].Kind() != reflect.Slice {
+// Vargs sets argument types of  variadic Go+ function.
+func (p *FuncInfo) Vargs(ins ...exec.Var) *FuncInfo {
+	if ins[len(ins)-1].Type().Kind() != reflect.Slice {
 		log.Panicln("Vargs failed: last argument must be a slice.")
 	}
-	p.in = in
+	for _, in := range ins {
+		p.in = append(p.in, in.(*Var))
+	}
 	p.setVariadic(nVariadicVariadicArgs)
 	return p
 }
@@ -265,11 +269,15 @@ func (p *FuncInfo) setVariadic(nVariadic uint16) {
 // Type returns type of this function.
 func (p *FuncInfo) Type() reflect.Type {
 	if p.t == nil {
+		in := make([]reflect.Type, len(p.in))
+		for i := 0; i < len(p.in); i++ {
+			in[i] = p.in[i].Type()
+		}
 		out := make([]reflect.Type, p.numOut)
 		for i := 0; i < p.numOut; i++ {
 			out[i] = p.vlist[i].typ
 		}
-		p.t = reflect.FuncOf(p.in, out, p.IsVariadic())
+		p.t = reflect.FuncOf(in, out, p.IsVariadic())
 	}
 	return p.t
 }
@@ -312,7 +320,7 @@ func (p *FuncInfo) exec(ctx *Context, parent *varScope) {
 func (p *FuncInfo) execVariadic(arity uint32, ctx *Context, parent *varScope) {
 	var n = uint32(len(p.in) - 1)
 	if arity > n {
-		tVariadic := p.in[n]
+		tVariadic := p.in[n].typ
 		nVariadic := int(arity - n)
 		if tVariadic == exec.TyEmptyInterfaceSlice {
 			var empty []interface{}

@@ -77,10 +77,10 @@ type FuncInfo interface {
 	Type() reflect.Type
 
 	// Args sets argument types of a Go+ function.
-	Args(in ...reflect.Type) FuncInfo
+	Args(in ...Var) FuncInfo
 
 	// Vargs sets argument types of a variadic Go+ function.
-	Vargs(in ...reflect.Type) FuncInfo
+	Vargs(in ...Var) FuncInfo
 
 	// Return sets return types of a Go+ function.
 	Return(out ...Var) FuncInfo
@@ -213,7 +213,7 @@ type Builder interface {
 	WrapIfErr(nret int, l Label) Builder
 
 	// ErrWrap instr
-	ErrWrap(nret int, retErr Var, frame *errors.Frame, narg int) Builder
+	ErrWrap(fun FuncInfo, nret int, retErr Var, frame *errors.Frame, narg int) Builder
 
 	// ForPhrase instr
 	ForPhrase(f ForPhrase, key, val Var, hasExecCtx ...bool) Builder

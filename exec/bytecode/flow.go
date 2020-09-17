@@ -214,7 +214,7 @@ func execErrWrap(i Instr, ctx *Context) {
 }
 
 // ErrWrap instr
-func (p *Builder) ErrWrap(nret int, retErr exec.Var, frame *errors.Frame, narg int) *Builder {
+func (p *Builder) ErrWrap(fun exec.FuncInfo, nret int, retErr exec.Var, frame *errors.Frame, narg int) *Builder {
 	code := p.code
 	idx := len(code.errWraps)
 	code.errWraps = append(

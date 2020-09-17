@@ -360,18 +360,18 @@ func (p *blockCtx) findVar(name string) (addr iVar, err error) {
 	return nil, ErrSymbolNotVariable
 }
 
-func (p *blockCtx) insertFuncVars(in []reflect.Type, args []string, rets []exec.Var) {
-	n := len(args)
+func (p *blockCtx) insertFuncVars(in []exec.Var, rets []exec.Var) {
+	n := len(in)
 	if n > 0 {
 		for i := n - 1; i >= 0; i-- {
-			name := args[i]
+			name := in[i].Name()
 			if name == "" { // unnamed argument
 				continue
 			}
 			if p.exists(name) {
 				log.Panicln("insertStkVars failed: symbol exists -", name)
 			}
-			p.syms[name] = &stackVar{index: int32(i - n), typ: in[i]}
+			p.syms[name] = &stackVar{index: int32(i - n), typ: in[i].Type()}
 		}
 	}
 	for _, ret := range rets {

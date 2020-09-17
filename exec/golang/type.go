@@ -72,7 +72,7 @@ func Field(p *Builder, name string, typ reflect.Type, tag string, ellipsis bool)
 	var names []*ast.Ident
 	var ftag *ast.BasicLit
 	var typExpr ast.Expr
-	if name != "" {
+	if name != "" && !(name[0] >= '0' && name[0] <= '9') {
 		names = []*ast.Ident{Ident(name)}
 	}
 	if tag != "" {

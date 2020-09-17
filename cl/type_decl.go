@@ -106,7 +106,7 @@ func toFuncType(ctx *blockCtx, t *ast.FuncType) iType {
 }
 
 func buildFuncType(recv *ast.FieldList, fi exec.FuncInfo, ctx *blockCtx, t *ast.FuncType) {
-	in, args, variadic := toArgTypes(ctx, recv, t.Params)
+	in, variadic := toArgTypes(ctx, recv, t.Params)
 	rets := toReturnTypes(ctx, t.Results)
 	if variadic {
 		fi.Vargs(in...)
@@ -114,7 +114,7 @@ func buildFuncType(recv *ast.FieldList, fi exec.FuncInfo, ctx *blockCtx, t *ast.
 		fi.Args(in...)
 	}
 	fi.Return(rets...)
-	ctx.insertFuncVars(in, args, rets)
+	ctx.insertFuncVars(in, rets)
 }
 
 func toTypes(ctx *blockCtx, fields *ast.FieldList) (types []reflect.Type) {
@@ -184,41 +184,36 @@ func toReturnTypes(ctx *blockCtx, fields *ast.FieldList) (vars []exec.Var) {
 	return
 }
 
-func toArgTypes(ctx *blockCtx, recv, fields *ast.FieldList) ([]reflect.Type, []string, bool) {
-	var types []reflect.Type
-	var names []string
+func toArgTypes(ctx *blockCtx, recv, fields *ast.FieldList) ([]exec.Var, bool) {
+	var vars []exec.Var
 	if recv != nil {
+		var name string
 		for _, fld := range recv.List[0].Names {
-			names = append(names, fld.Name)
+			name = fld.Name
 			break
 		}
 		typ, _ := toTypeEx(ctx, recv.List[0].Type)
-		types = append(types, typ.(reflect.Type))
+		vars = append(vars, ctx.NewVar(typ.(reflect.Type), name))
 	}
 	last := len(fields.List) - 1
 	for i := 0; i <= last; i++ {
 		field := fields.List[i]
-		n := len(field.Names)
-		if n == 0 {
-			names = append(names, "")
-			n = 1
+		typ, variadic := toTypeEx(ctx, field.Type)
+		if len(field.Names) == 0 {
+			vars = append(vars, ctx.NewVar(typ.(reflect.Type), ""))
 		} else {
 			for _, fld := range field.Names {
-				names = append(names, fld.Name)
+				vars = append(vars, ctx.NewVar(typ.(reflect.Type), fld.Name))
 			}
-		}
-		typ, variadic := toTypeEx(ctx, field.Type)
-		for i := 0; i < n; i++ {
-			types = append(types, typ.(reflect.Type))
 		}
 		if variadic {
 			if i != last {
 				log.Panicln("toTypes failed: the variadic type isn't last argument?")
 			}
-			return types, names, true
+			return vars, true
 		}
 	}
-	return types, names, false
+	return vars, false
 }
 
 func toStructType(ctx *blockCtx, v *ast.StructType) iType {

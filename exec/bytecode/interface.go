@@ -39,13 +39,13 @@ func (p *iFuncInfo) Out(i int) exec.Var {
 }
 
 // Args sets argument types of a Go+ function.
-func (p *iFuncInfo) Args(in ...reflect.Type) exec.FuncInfo {
+func (p *iFuncInfo) Args(in ...exec.Var) exec.FuncInfo {
 	((*FuncInfo)(p)).Args(in...)
 	return p
 }
 
 // Vargs sets argument types of a variadic Go+ function.
-func (p *iFuncInfo) Vargs(in ...reflect.Type) exec.FuncInfo {
+func (p *iFuncInfo) Vargs(in ...exec.Var) exec.FuncInfo {
 	((*FuncInfo)(p)).Vargs(in...)
 	return p
 }
@@ -145,8 +145,8 @@ func (p *iBuilder) WrapIfErr(nret int, l exec.Label) exec.Builder {
 }
 
 // ErrWrap instr
-func (p *iBuilder) ErrWrap(nret int, retErr exec.Var, frame *errors.Frame, narg int) exec.Builder {
-	((*Builder)(p)).ErrWrap(nret, retErr, frame, narg)
+func (p *iBuilder) ErrWrap(fun exec.FuncInfo, nret int, retErr exec.Var, frame *errors.Frame, narg int) exec.Builder {
+	((*Builder)(p)).ErrWrap(fun, nret, retErr, frame, narg)
 	return p
 }
 
