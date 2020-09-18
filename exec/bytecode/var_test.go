@@ -182,4 +182,107 @@ func TestContext_CloneSetVarScope(t *testing.T) {
 	}
 }
 
+func TestContext_CloneSetVarScope2(t *testing.T) {
+	x := NewVar(TyString, "x")
+	foo := newFunc("foo", 1)
+	ret := NewVar(TyString, "ret")
+	code := newBuilder().
+		DefineVar(ret).
+		DefineVar(x).
+		Push("001").
+		StoreVar(x).
+		Closure(foo).
+		CallClosure(0, 0, false).
+		Return(-1).
+		DefineFunc(foo.Args()).
+		LoadVar(x).
+		StoreVar(ret).
+		EndFunc(foo).
+		Resolve()
+
+	ctx := NewContext(code)
+	ip := ctx.Exec(0, code.Len())
+
+	x2 := NewVar(TyString, "x2")
+	foo2 := newFunc("foo2", 1)
+	ret2 := NewVar(TyString, "x2")
+
+	code2 := newBuilder().
+		DefineVar(ret2).
+		DefineVar(x2).
+		Push("001").
+		StoreVar(x2).
+		Closure(foo2).
+		CallClosure(0, 0, false).
+		Push("002").
+		StoreVar(x2).
+		Closure(foo2).
+		CallClosure(0, 0, false).
+		Return(-1).
+		DefineFunc(foo2.Args()).
+		LoadVar(x2).
+		StoreVar(ret2).
+		EndFunc(foo2).
+		Resolve()
+
+	ctxNew := NewContext(code2)
+	ctx.CloneSetVarScope(ctxNew)
+	ctxNew.Exec(ip-1, code2.Len())
+
+	if v := ctxNew.GetVar(ret2); v != "002" {
+		t.Fatal("clone set var scop closure err", v)
+	}
+}
+
+func TestContext_UpdateCode(t *testing.T) {
+	x := NewVar(TyString, "x")
+	foo := newFunc("foo", 1)
+	ret := NewVar(TyString, "ret")
+	code := newBuilder().
+		DefineVar(ret).
+		DefineVar(x).
+		Push("001").
+		StoreVar(x).
+		Closure(foo).
+		CallClosure(0, 0, false).
+		Return(-1).
+		DefineFunc(foo.Args()).
+		LoadVar(x).
+		StoreVar(ret).
+		EndFunc(foo).
+		Resolve()
+
+	ctx := NewContext(code)
+	ip := ctx.Exec(0, code.Len())
+
+	x2 := NewVar(TyString, "x2")
+	foo2 := newFunc("foo2", 1)
+	ret2 := NewVar(TyString, "x2")
+
+	code2 := newBuilder().
+		DefineVar(ret2).
+		DefineVar(x2).
+		Push("001").
+		StoreVar(x2).
+		Closure(foo2).
+		CallClosure(0, 0, false).
+		Push("002").
+		StoreVar(x2).
+		Closure(foo2).
+		CallClosure(0, 0, false).
+		Return(-1).
+		DefineFunc(foo2.Args()).
+		LoadVar(x2).
+		StoreVar(ret2).
+		EndFunc(foo2).
+		Resolve()
+
+	ctx.UpdateCode(code2)
+	ctx.Exec(ip-1, code2.Len())
+
+	if v := ctx.GetVar(ret2); v != "002" {
+		t.Fatal("update code closure err", v)
+	}
+}
+
 // -----------------------------------------------------------------------------
