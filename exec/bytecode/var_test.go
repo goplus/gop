@@ -234,7 +234,7 @@ func _TestContext_CloneSetVarScope2(t *testing.T) {
 	}
 }
 
-func TestContext_UpdateCode(t *testing.T) {
+func _TestContext_UpdateCode(t *testing.T) {
 	x := NewVar(TyString, "x")
 	foo := newFunc("foo", 1)
 	ret := NewVar(TyString, "ret")
