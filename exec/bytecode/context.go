@@ -74,15 +74,15 @@ func (ctx *Context) Go(arity int, f func(goctx *Context)) {
 
 // CloneSetVarScope clone already set varScope to new context
 func (ctx *Context) CloneSetVarScope(new *Context) {
-	new.defers = ctx.defers
-	new.closures = ctx.closures
-	for _, c := range new.closures {
-		c.updateScope(new)
-	}
 	if ctx.vars.IsValid() {
 		for i := 0; i < ctx.vars.NumField(); i++ {
 			new.varScope.setVar(uint32(i), ctx.varScope.getVar(uint32(i)))
 		}
+	}
+	new.defers = ctx.defers
+	new.closures = ctx.closures
+	for _, c := range new.closures {
+		c.updateScope(new)
 	}
 }
 
