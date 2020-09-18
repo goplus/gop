@@ -41,7 +41,7 @@ type Context struct {
 	base    int
 }
 
-func (p *Context) addUpdate(fn func(*Context)) {
+func (p *Context) regUpdate(fn func(*Context)) {
 	p.updates = append(p.updates, fn)
 }
 
