@@ -36,11 +36,11 @@ type UI interface {
 
 // REPL type
 type REPL struct {
-	src          string       // the whole source code from repl
-	preContext   exec.Context // store the context after exec
-	ip           int          // store the ip after exec
-	continueMode bool         // switch to control the promot type
-	term         UI           // liner instance
+	src          string        // the whole source code from repl
+	ctx          *exec.Context // exec context
+	ip           int           // store the ip after exec
+	continueMode bool          // switch to control the promot type
+	term         UI            // liner instance
 }
 
 const (
@@ -52,7 +52,7 @@ const (
 
 // New creates a REPL object.
 func New() *REPL {
-	return &REPL{}
+	return &REPL{ctx: &exec.Context{}}
 }
 
 // SetUI initializes UI.
@@ -124,20 +124,15 @@ func (r *REPL) run(newLine string) (err error) {
 		return
 	}
 	code := b.Resolve()
-	ctx := exec.NewContext(code)
-	if r.ip != 0 {
-		// if it is not the first time, restore pre var
-		r.preContext.CloneSetVarScope(ctx)
-	}
-	currentIP := ctx.Exec(r.ip, code.Len())
-	r.preContext = *ctx
+	r.ctx.UpdateCode(code)
+	currentIP := r.ctx.Exec(r.ip, code.Len())
 	// "currentip - 1" is the index of `return`
 	// next time it will replace by new code from newLine
 	r.ip = currentIP - 1
-	size := ctx.Len()
+	size := r.ctx.Len()
 	var dump []string
 	for i := 0; i < size; i++ {
-		dump = append(dump, fmt.Sprintf("%v", ctx.Get(i-size)))
+		dump = append(dump, fmt.Sprintf("%v", r.ctx.Get(i-size)))
 	}
 	if len(dump) > 0 {
 		r.term.Printf("%v\n", strings.Join(dump, ","))
