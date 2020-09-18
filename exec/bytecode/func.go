@@ -50,6 +50,7 @@ func makeClosure(i Instr, p *Context) Closure {
 
 func execGoClosure(i Instr, p *Context) {
 	closure := makeClosure(i, p)
+	p.addUpdate(closure.updateScope)
 	v := reflect.MakeFunc(closure.fun.Type(), closure.Call)
 	p.Push(v.Interface())
 }
@@ -83,6 +84,7 @@ func execCallGoClosure(i Instr, p *Context) {
 
 func execClosure(i Instr, ctx *Context) {
 	closure := makeClosure(i, ctx)
+	ctx.addUpdate(closure.updateScope)
 	ctx.Push(&closure)
 }
 
@@ -130,6 +132,10 @@ type Closure struct {
 	fun    *FuncInfo
 	recv   interface{}
 	parent *varScope
+}
+
+func (p *Closure) updateScope(ctx *Context) {
+	p.parent = ctx.getScope(p.fun.nestDepth > 1)
 }
 
 // Call calls a closure.
