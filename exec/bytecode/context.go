@@ -34,10 +34,11 @@ type varScope struct {
 type Context struct {
 	Stack
 	varScope
-	code   *Code
-	defers *theDefer
-	ip     int
-	base   int
+	code     *Code
+	defers   *theDefer
+	closures []*Closure
+	ip       int
+	base     int
 }
 
 func newSimpleContext(data []interface{}) *Context {
@@ -73,11 +74,15 @@ func (ctx *Context) Go(arity int, f func(goctx *Context)) {
 
 // CloneSetVarScope clone already set varScope to new context
 func (ctx *Context) CloneSetVarScope(new *Context) {
-	if !ctx.vars.IsValid() {
-		return
+	new.defers = ctx.defers
+	new.closures = ctx.closures
+	for _, c := range new.closures {
+		c.updateScope(new)
 	}
-	for i := 0; i < ctx.vars.NumField(); i++ {
-		new.varScope.setVar(uint32(i), ctx.varScope.getVar(uint32(i)))
+	if ctx.vars.IsValid() {
+		for i := 0; i < ctx.vars.NumField(); i++ {
+			new.varScope.setVar(uint32(i), ctx.varScope.getVar(uint32(i)))
+		}
 	}
 }
 
@@ -119,6 +124,25 @@ func (ctx *Context) getScope(local bool) *varScope {
 func (ctx *Context) Run() {
 	defer ctx.execDefers()
 	ctx.Exec(0, ctx.code.Len())
+}
+
+// UpdateCode update increasable code for current context
+func (ctx *Context) UpdateCode(in exec.Code) {
+	code := in.(*Code)
+	ctx.Init()
+	if len(code.vlist) > 0 {
+		vars := code.makeVarsContext(ctx)
+		if ctx.vars.IsValid() {
+			for i := 0; i < ctx.vars.NumField(); i++ {
+				vars.Field(i).Set(ctx.vars.Field(i))
+			}
+		}
+		ctx.vars = vars
+	}
+	for _, c := range ctx.closures {
+		c.updateScope(ctx)
+	}
+	ctx.code = code
 }
 
 // Exec executes a code block from ip to ipEnd.
