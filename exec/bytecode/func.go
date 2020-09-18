@@ -50,7 +50,7 @@ func makeClosure(i Instr, p *Context) *Closure {
 
 func execGoClosure(i Instr, p *Context) {
 	closure := makeClosure(i, p)
-	p.closures = append(p.closures, closure)
+	p.addUpdate(closure.updateScope)
 	v := reflect.MakeFunc(closure.fun.Type(), closure.Call)
 	p.Push(v.Interface())
 }
@@ -84,7 +84,7 @@ func execCallGoClosure(i Instr, p *Context) {
 
 func execClosure(i Instr, ctx *Context) {
 	closure := makeClosure(i, ctx)
-	ctx.closures = append(ctx.closures, closure)
+	ctx.addUpdate(closure.updateScope)
 	ctx.Push(closure)
 }
 

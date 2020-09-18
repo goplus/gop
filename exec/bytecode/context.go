@@ -34,11 +34,15 @@ type varScope struct {
 type Context struct {
 	Stack
 	varScope
-	code     *Code
-	defers   *theDefer
-	closures []*Closure
-	ip       int
-	base     int
+	code    *Code
+	defers  *theDefer
+	updates []func(*Context)
+	ip      int
+	base    int
+}
+
+func (p *Context) addUpdate(fn func(*Context)) {
+	p.updates = append(p.updates, fn)
 }
 
 func newSimpleContext(data []interface{}) *Context {
@@ -80,9 +84,9 @@ func (ctx *Context) CloneSetVarScope(new *Context) {
 		}
 	}
 	new.defers = ctx.defers
-	new.closures = ctx.closures
-	for _, c := range new.closures {
-		c.updateScope(new)
+	new.updates = ctx.updates
+	for _, fn := range new.updates {
+		fn(new)
 	}
 }
 
@@ -139,8 +143,8 @@ func (ctx *Context) UpdateCode(in exec.Code) {
 		}
 		ctx.vars = vars
 	}
-	for _, c := range ctx.closures {
-		c.updateScope(ctx)
+	for _, fn := range ctx.updates {
+		fn(ctx)
 	}
 	ctx.code = code
 }
