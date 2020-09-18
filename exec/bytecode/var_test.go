@@ -184,7 +184,7 @@ func TestContext_CloneSetVarScope(t *testing.T) {
 
 func TestContext_CloneSetVarScope2(t *testing.T) {
 	x := NewVar(TyString, "x")
-	foo := newFunc("foo", 1)
+	foo := newFunc("", 1)
 	ret := NewVar(TyString, "ret")
 	code := newBuilder().
 		DefineVar(ret).
@@ -204,7 +204,7 @@ func TestContext_CloneSetVarScope2(t *testing.T) {
 	ip := ctx.Exec(0, code.Len())
 
 	x2 := NewVar(TyString, "x2")
-	foo2 := newFunc("foo2", 1)
+	foo2 := newFunc("", 1)
 	ret2 := NewVar(TyString, "x2")
 
 	code2 := newBuilder().
