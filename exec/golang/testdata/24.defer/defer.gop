@@ -13,6 +13,7 @@ func g() (x int) {
 	return
 }
 
+/*TODO
 func h() (x int) {
 	for i <- [3, 2, 1] {
 		v := i
@@ -22,10 +23,14 @@ func h() (x int) {
 	}
 	return
 }
+*/
 
 println("f-x:", f())
 println("g-x:", g())
+
+/*TODO
 println("h-x:", h())
+*/
 
 defer println(println("Hello, defer"))
 println("Hello, Go+")
