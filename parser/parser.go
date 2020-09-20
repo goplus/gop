@@ -2709,6 +2709,7 @@ func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
 		defer un(trace(p, "Declaration"))
 	}
 	var f parseSpecFunction
+	pos := p.pos
 	switch p.tok {
 	case token.CONST, token.VAR:
 		f = p.parseValueSpec
@@ -2717,10 +2718,13 @@ func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
 		f = p.parseTypeSpec
 
 	case token.FUNC:
-		return p.parseFuncDecl()
-
+		decl := p.parseFuncDecl()
+		if p.errors.Len() != 0 {
+			p.errorExpected(pos, "declaration")
+			p.advance(sync)
+		}
+		return decl
 	default:
-		pos := p.pos
 		p.errorExpected(pos, "declaration")
 		p.advance(sync)
 		return &ast.BadDecl{From: pos, To: p.pos}
