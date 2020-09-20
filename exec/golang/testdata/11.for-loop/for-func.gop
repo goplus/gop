@@ -1,0 +1,71 @@
+func for1() {
+	arr := []int{1, 2, 3}
+	arr2 := []int{4, 5, 6}
+L:
+	for k, v := range arr {
+	M:
+		for i := 0; i < len(arr2); i++ {
+			println(k, v, i, arr2[i])
+			if arr2[i] == 4 {
+				continue M
+			}
+			if arr2[i] == 5 {
+				continue L
+			}
+			if arr2[i] == 6 {
+				break L
+			}
+		}
+	}
+}
+
+func for2() {
+	arr := []int{1, 2, 3}
+	arr2 := []int{4, 5, 6}
+L:
+	for k, v := range arr {
+	M:
+		for i := 0; i < len(arr2); i++ {
+			println(k, v, i, arr2[i])
+			if arr2[i] == 4 {
+				continue M
+			}
+			if arr2[i] == 5 {
+				continue L
+			}
+			if arr2[i] == 6 {
+				break L
+			}
+		}
+	}
+}
+func for3() {
+	arr := []int{1, 2, 3}
+	arr2 := []int{4, 5, 6}
+L:
+	for k, v := range arr {
+	M:
+		for i := 0; i < len(arr2); i++ {
+			println(k, v, i, arr2[i])
+			if arr2[i] == 6 {
+				break L
+			}
+			continue M
+		}
+	}
+}
+
+func for4() {
+	arr := []int{1, 2, 3}
+	for _, i := range arr {
+		println(i)
+		switch i {
+		case 1:
+			println("case", i)
+			continue
+		default:
+			println("default", i)
+		}
+		println("hello,there")
+	}
+}
