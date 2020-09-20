@@ -19,6 +19,7 @@ package bytecode
 import (
 	"reflect"
 
+	"github.com/goplus/gop/ast/gopiter"
 	"github.com/goplus/gop/exec.spec"
 	"github.com/qiniu/x/log"
 )
@@ -44,30 +45,18 @@ func execForPhrase(i Instr, p *Context) {
 	p.code.fors[addr].exec(p)
 }
 
-func (c *ForPhrase) exec(p *Context) {
-	data := reflect.ValueOf(p.Pop())
-	switch data.Kind() {
-	case reflect.Map:
-		c.execMapRange(data, p)
-	default:
-		c.execListRange(data, p)
-	}
-}
-
-func (c *ForPhrase) execListRange(data reflect.Value, ctx *Context) {
-	data = reflect.Indirect(data)
-	var n = data.Len()
+func (c *ForPhrase) exec(ctx *Context) {
+	iter := gopiter.NewIter(ctx.Pop())
 	var ip, ipCond, ipEnd = ctx.ip, c.Cond, c.End
 	var key, val = c.Key, c.Value
 	var blockScope = c.block != nil
 	var old savedScopeCtx
-Loop:
-	for i := 0; i < n; i++ {
+	for iter.Next() {
 		if key != nil {
-			ctx.setVar(key.idx, i)
+			ctx.setValue(key.idx, iter.Key())
 		}
 		if val != nil {
-			ctx.setVar(val.idx, data.Index(i).Interface())
+			ctx.setValue(val.idx, iter.Value())
 		}
 		if blockScope { // TODO: move out of `for` statement
 			parent := ctx.varScope
@@ -83,55 +72,6 @@ Loop:
 		}
 		if blockScope {
 			ctx.restoreScope(old)
-		}
-		switch ctx.ip {
-		case iReturn, ipReturnN:
-			return
-		case iBreak:
-			break Loop
-		case iContinue:
-			continue
-		}
-	}
-	ctx.ip = ipEnd
-}
-
-func (c *ForPhrase) execMapRange(data reflect.Value, ctx *Context) {
-	var iter = data.MapRange()
-	var ip, ipCond, ipEnd = ctx.ip, c.Cond, c.End
-	var key, val = c.Key, c.Value
-	var blockScope = c.block != nil
-	var old savedScopeCtx
-Loop:
-	for iter.Next() {
-		if key != nil {
-			ctx.setVar(key.idx, iter.Key().Interface())
-		}
-		if val != nil {
-			ctx.setVar(val.idx, iter.Value().Interface())
-		}
-		if blockScope {
-			parent := ctx.varScope
-			old = ctx.switchScope(&parent, &c.block.varManager)
-		}
-		if ipCond > 0 {
-			ctx.Exec(ip, ipCond)
-			if ok := ctx.Pop().(bool); ok {
-				ctx.Exec(ipCond, ipEnd)
-			}
-		} else {
-			ctx.Exec(ip, ipEnd)
-		}
-		if blockScope {
-			ctx.restoreScope(old)
-		}
-		switch ctx.ip {
-		case iReturn, ipReturnN:
-			return
-		case iBreak:
-			break Loop
-		case iContinue:
-			continue
 		}
 	}
 	ctx.ip = ipEnd

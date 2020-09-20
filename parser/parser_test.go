@@ -252,3 +252,33 @@ func TestFromTestdata2(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+
+var fsTestArray = asttest.NewSingleFileFS("/foo", "bar.gop", `
+println([1][0])
+println([1,2][0])
+`)
+
+func TestArray(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := ParseFSDir(fset, fsTestArray, "/foo", nil, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+	bar := pkgs["main"]
+	file := bar.Files["/foo/bar.gop"]
+	fmt.Println("Pkg:", file.Name)
+	for _, decl := range file.Decls {
+		fmt.Println("decl:", reflect.TypeOf(decl))
+		switch d := decl.(type) {
+		case *ast.GenDecl:
+			for _, spec := range d.Specs {
+				switch v := spec.(type) {
+				case *ast.ImportSpec:
+					fmt.Println(" - import:", v.Path.Value)
+				}
+			}
+		case *ast.FuncDecl:
+			fmt.Println(" - func:", d.Name.Name)
+		}
+	}
+}
