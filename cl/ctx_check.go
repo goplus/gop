@@ -192,8 +192,10 @@ func isNoExecCtxRangeStmt(parent *blockCtx, v *ast.RangeStmt) bool {
 
 func isNoExecForStmt(parent *blockCtx, v *ast.ForStmt) bool {
 	ctx := newBlockCtxWithFlag(parent)
-	if noExecCtx := isNoExecCtxExpr(ctx, v.Cond); !noExecCtx {
-		return false
+	if v.Cond != nil {
+		if noExecCtx := isNoExecCtxExpr(ctx, v.Cond); !noExecCtx {
+			return false
+		}
 	}
 	for _, e := range []ast.Stmt{v.Init, v.Post} {
 		if e == nil {
@@ -293,15 +295,7 @@ func isNoExecCtxExprs(ctx *blockCtx, exprs []ast.Expr) bool {
 }
 
 func isNoExecCtxSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) bool {
-	var ctxSw *blockCtx
-	if v.Init != nil {
-		ctxSw = newBlockCtxWithFlag(ctx)
-		if noExecCtx := isNoExecCtxStmt(ctxSw, v.Init); !noExecCtx {
-			return false
-		}
-	} else {
-		ctxSw = ctx
-	}
+	ctxSw := ctx
 	if v.Tag != nil {
 		if noExecCtx := isNoExecCtxExpr(ctxSw, v.Tag); !noExecCtx {
 			return false
@@ -326,15 +320,7 @@ func isNoExecCtxSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) bool {
 }
 
 func isNoExecCtxIfStmt(ctx *blockCtx, v *ast.IfStmt) bool {
-	var ctxIf *blockCtx
-	if v.Init != nil {
-		ctxIf = newBlockCtxWithFlag(ctx)
-		if noExecCtx := isNoExecCtxStmt(ctxIf, v.Init); !noExecCtx {
-			return false
-		}
-	} else {
-		ctxIf = ctx
-	}
+	ctxIf := ctx
 	if noExecCtx := isNoExecCtxExpr(ctxIf, v.Cond); !noExecCtx {
 		return false
 	}

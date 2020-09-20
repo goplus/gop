@@ -197,7 +197,7 @@ func (ctx *Context) Exec(ip, ipEnd int) (currentIP int) {
 			execGoFuncv(i, ctx)
 		case opReturn:
 			currentIP = ctx.ip
-			if i == iBreak || i == iContinue || i == iReturn {
+			if i == iReturn {
 				ctx.ip = int(i)
 			} else {
 				ctx.ip = ipReturnN
