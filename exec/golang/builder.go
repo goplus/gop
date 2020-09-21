@@ -129,7 +129,7 @@ func NewBuilder(pkgName string, code *Code, fset *token.FileSet) *Builder {
 
 func (p *Builder) autoIdent() string {
 	p.identBase++
-	return "_gop_" + strconv.Itoa(p.identBase)
+	return "_gop_id_" + strconv.Itoa(p.identBase)
 }
 
 var (
