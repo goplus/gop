@@ -92,11 +92,29 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 }
 
 func compileForPhraseStmt(parent *blockCtx, v *ast.ForPhraseStmt) {
-	noExecCtx := isNoExecCtx(parent, v.Body)
-	ctx, exprFor := compileForPhrase(parent, v.ForPhrase, noExecCtx)
-	exprFor(func() {
-		compileBlockStmtWithout(ctx, v.Body)
-	})
+	if v.Cond != nil {
+		v.Body.List = append([]ast.Stmt{&ast.IfStmt{
+			If: v.TokPos,
+			Cond: &ast.UnaryExpr{
+				Op: token.NOT,
+				X:  v.Cond,
+			},
+			Body: &ast.BlockStmt{List: []ast.Stmt{&ast.BranchStmt{Tok: token.CONTINUE, TokPos: v.TokPos}}},
+		}}, v.Body.List...)
+	}
+	rangeStmt := &ast.RangeStmt{
+		For:    v.For,
+		Key:    v.Key,
+		Value:  v.Value,
+		TokPos: v.TokPos,
+		Tok:    token.DEFINE,
+		X:      v.X,
+		Body:   v.Body,
+	}
+	if parent.currentLabel != nil && parent.currentLabel.Stmt == v {
+		parent.currentLabel.Stmt = rangeStmt
+	}
+	compileRangeStmt(parent, rangeStmt)
 }
 
 func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
@@ -210,7 +228,6 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 			Rparen: v.For,
 			Args:   []ast.Expr{iter},
 		},
-		Post: nil,
 		Body: &ast.BlockStmt{
 			Lbrace: v.Body.Lbrace,
 			List:   append(forStmts, v.Body.List...),
@@ -220,6 +237,9 @@ func compileRangeStmt(parent *blockCtx, v *ast.RangeStmt) {
 	parent.out.DefineBlock()
 	defer parent.out.EndBlock()
 	ctx := newNormBlockCtx(parent)
+	if ctx.currentLabel != nil && ctx.currentLabel.Stmt == v {
+		ctx.currentLabel.Stmt = fs
+	}
 	for k, v := range kvDef {
 		ctx.insertVar(k, v)
 	}
@@ -254,9 +274,11 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 		ctx.currentFlow = ctx.currentFlow.parent
 	}()
 	out.Label(start)
-	compileExpr(ctx, v.Cond)()
-	checkBool(ctx.infer.Pop())
-	out.JmpIf(0, done)
+	if v.Cond != nil {
+		compileExpr(ctx, v.Cond)()
+		checkBool(ctx.infer.Pop())
+		out.JmpIf(0, done)
+	}
 	noExecCtx := isNoExecCtx(ctx, v.Body)
 	ctx = newNormBlockCtxEx(ctx, noExecCtx)
 	compileBlockStmtWith(ctx, v.Body)
@@ -283,13 +305,9 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 		if v.Label != nil {
 			labelName = v.Label.Name
 		}
-		label, rangeFor := ctx.getBreakLabel(labelName)
+		label := ctx.getBreakLabel(labelName)
 		if label != nil {
 			ctx.out.Jmp(label)
-			return
-		}
-		if rangeFor {
-			ctx.out.Return(exec.BreakAsReturn)
 			return
 		}
 		log.Panicln("break statement out of for/switch/select statements")
@@ -298,13 +316,9 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 		if v.Label != nil {
 			labelName = v.Label.Name
 		}
-		label, rangeFor := ctx.getContinueLabel(labelName)
+		label := ctx.getContinueLabel(labelName)
 		if label != nil {
 			ctx.out.Jmp(label)
-			return
-		}
-		if rangeFor {
-			ctx.out.Return(exec.ContinueAsReturn)
 			return
 		}
 		log.Panicln("continue statement out of for statements")
@@ -341,14 +355,14 @@ func compileDeferStmt(ctx *blockCtx, v *ast.DeferStmt) {
 }
 
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
-	var defaultBody []ast.Stmt
-	var ctxSw *blockCtx
-	if v.Init != nil {
-		ctxSw = newNormBlockCtx(ctx)
-		compileStmt(ctxSw, v.Init)
-	} else {
-		ctxSw = ctx
+	if init := v.Init; init != nil {
+		v.Init = nil
+		block := &ast.BlockStmt{List: []ast.Stmt{init, v}}
+		compileNewBlock(ctx, block)
+		return
 	}
+	var defaultBody []ast.Stmt
+	ctxSw := ctx
 	out := ctx.out
 	done := ctx.NewLabel("")
 	labelName := ""
@@ -476,14 +490,14 @@ func compileCaseClause(c *ast.CaseClause, ctxSw *blockCtx, done exec.Label, next
 }
 
 func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
-	var done exec.Label
-	var ctxIf *blockCtx
-	if v.Init != nil {
-		ctxIf = newNormBlockCtx(ctx)
-		compileStmt(ctxIf, v.Init)
-	} else {
-		ctxIf = ctx
+	if init := v.Init; init != nil {
+		v.Init = nil
+		block := &ast.BlockStmt{List: []ast.Stmt{init, v}}
+		compileNewBlock(ctx, block)
+		return
 	}
+	var done exec.Label
+	ctxIf := ctx
 	compileExpr(ctxIf, v.Cond)()
 	checkBool(ctx.infer.Pop())
 	out := ctx.out

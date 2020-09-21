@@ -54,12 +54,6 @@ func (p Reserved) Push(b Builder, val interface{}) {
 	b.ReservedAsPush(p, val)
 }
 
-// BreakAsReturn - todo
-const BreakAsReturn = -2
-
-// ContinueAsReturn - todo
-const ContinueAsReturn = -3
-
 // ForPhrase represents a for range phrase.
 type ForPhrase interface {
 }
