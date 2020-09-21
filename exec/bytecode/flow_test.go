@@ -55,7 +55,7 @@ func TestErrWrap(t *testing.T) {
 		Push(123).
 		Push("not found").
 		CallGoFuncv(errorf, 1, 1).
-		ErrWrap(2, nil, frame, 3).
+		ErrWrap(nil, 2, nil, frame, 3).
 		Resolve()
 
 	ctx := NewContext(code)
@@ -88,7 +88,7 @@ func TestErrWrap1(t *testing.T) {
 		Push(123).
 		Push("not found").
 		CallGoFuncv(errorf, 1, 1).
-		ErrWrap(2, retErr, frame, 3).
+		ErrWrap(nil, 2, retErr, frame, 3).
 		Resolve()
 
 	ctx := NewContext(code)
@@ -110,7 +110,7 @@ func TestErrWrap2(t *testing.T) {
 	code := newBuilder().
 		Push(123).
 		Push(nil).
-		ErrWrap(2, nil, nil, 0).
+		ErrWrap(nil, 2, nil, nil, 0).
 		Resolve()
 
 	ctx := NewContext(code)
