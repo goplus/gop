@@ -58,7 +58,7 @@ func (p *Var) Name() string {
 // IsUnnamedOut returns if variable unnamed or not.
 func (p *Var) IsUnnamedOut() bool {
 	if p.name == "" {
-		return false
+		return true
 	}
 	c := p.name[0]
 	return c >= '0' && c <= '9'
