@@ -155,8 +155,8 @@ func (p *iBuilder) WrapIfErr(nret int, l exec.Label) exec.Builder {
 }
 
 // ErrWrap instr
-func (p *iBuilder) ErrWrap(fun exec.FuncInfo, nret int, retErr exec.Var, frame *errors.Frame, narg int) exec.Builder {
-	((*Builder)(p)).ErrWrap(fun, nret, retErr, frame, narg)
+func (p *iBuilder) ErrWrap(nret int, retErr exec.Var, frame *errors.Frame, narg int, fun exec.FuncInfo) exec.Builder {
+	((*Builder)(p)).ErrWrap(nret, retErr, frame, narg, fun)
 	return p
 }
 

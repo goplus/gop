@@ -20,7 +20,6 @@ import (
 	"go/ast"
 	"go/token"
 	"reflect"
-	"strconv"
 
 	"github.com/goplus/gop/exec.spec"
 	"github.com/goplus/gop/exec/golang/internal/go/printer"
@@ -293,8 +292,4 @@ func toFuncType(p *Builder, typ *FuncInfo) *ast.FuncType {
 		Params:  &ast.FieldList{Opening: 1, List: params, Closing: 1},
 		Results: &ast.FieldList{Opening: opening, List: results, Closing: opening},
 	}
-}
-
-func toArg(i int) string {
-	return "_arg_" + strconv.Itoa(i)
 }

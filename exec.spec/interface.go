@@ -207,7 +207,7 @@ type Builder interface {
 	WrapIfErr(nret int, l Label) Builder
 
 	// ErrWrap instr
-	ErrWrap(fun FuncInfo, nret int, retErr Var, frame *errors.Frame, narg int) Builder
+	ErrWrap(nret int, retErr Var, frame *errors.Frame, narg int, fun FuncInfo) Builder
 
 	// ForPhrase instr
 	ForPhrase(f ForPhrase, key, val Var, hasExecCtx ...bool) Builder

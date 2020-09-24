@@ -1036,7 +1036,7 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr) func() {
 				File: pos.Filename,
 				Line: pos.Line,
 			}
-			ctx.out.ErrWrap(fun, nx, retErr, frame, narg)
+			ctx.out.ErrWrap(nx, retErr, frame, narg, fun)
 			return
 		}
 		if nx != 2 {
