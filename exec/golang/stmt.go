@@ -194,7 +194,12 @@ func (p *Builder) ErrWrap(fun exec.FuncInfo, nret int, retErr exec.Var, frame *e
 	frameArgs[4] = StringConst(frame.Pkg)
 	frameArgs[5] = StringConst(frame.Func)
 	for i := 0; i < narg; i++ {
-		frameArgs[6+i] = Ident(fun.(*FuncInfo).in[i].(*Var).ValidName()) //Ident(toArg(i))
+		v := fun.(*FuncInfo).in[i].(*Var)
+		var name string
+		if !v.IsUnnamedOut() {
+			name = v.name
+		}
+		frameArgs[6+i] = Ident(name) //Ident(toArg(i))
 	}
 	frameErr := &ast.CallExpr{Fun: frameFun, Args: frameArgs}
 	var body *ast.BlockStmt

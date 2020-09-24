@@ -36,12 +36,6 @@ type Var struct {
 
 // NewVar creates a variable instance.
 func NewVar(typ reflect.Type, name string) *Var {
-	if name != "" {
-		c := name[0]
-		if c >= '0' && c <= '9' {
-			name = "_gop_ret_" + name
-		}
-	}
 	return &Var{typ: typ, name: name}
 }
 
@@ -69,13 +63,6 @@ func (p *Var) setScope(where *scopeCtx) {
 		panic("Var.setScope: variable already defined")
 	}
 	p.where = where
-}
-
-func (p *Var) ValidName() string {
-	if p.IsUnnamedOut() {
-		return ""
-	}
-	return p.name
 }
 
 // -----------------------------------------------------------------------------
