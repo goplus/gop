@@ -16,6 +16,10 @@ func bar(foo func(string, ...interface{}) (int, error)) {
 	foo("Hello, %v!\n", "Go+")
 }
 
+func unnamed(int) int {
+	return 100
+}
+
 func() {
 	println("hello,go+")
 }()
@@ -23,3 +27,4 @@ func() {
 bar(printf)
 fmt.Println(foo("Hello, world???"))
 fmt.Println(printf("Hello, %v\n", "Go+"))
+fmt.Println(unnamed(1))
