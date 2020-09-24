@@ -637,7 +637,7 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		compileExprLHS(ctx, expr.Lhs[i], expr.Tok)
 	}
 	if ctx.underscore == count && expr.Tok == token.DEFINE {
-		log.Panic("no new variables on left side of :=")
+		log.Panicln("no new variables on left side of :=")
 	}
 }
 

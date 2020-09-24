@@ -173,6 +173,9 @@ var addrops = map[token.Token]exec.AddrOperator{
 }
 
 func compileIdent(ctx *blockCtx, name string) func() {
+	if name == "_" {
+		log.Panicln("cannot use _ as value")
+	}
 	if sym, ok := ctx.find(name); ok {
 		switch v := sym.(type) {
 		case *execVar:
