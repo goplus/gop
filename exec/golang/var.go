@@ -65,6 +65,20 @@ func (p *Var) setScope(where *scopeCtx) {
 	p.where = where
 }
 
+func getVarInName(v *Var) string {
+	if v.IsUnnamedOut() {
+		return ""
+	}
+	return v.name
+}
+
+func getVarOutName(v *Var) string {
+	if v.IsUnnamedOut() {
+		return "_gop_ret_" + v.name
+	}
+	return v.name
+}
+
 // -----------------------------------------------------------------------------
 
 type scopeCtx struct {

@@ -195,16 +195,12 @@ func (p *Builder) ErrWrap(fun exec.FuncInfo, nret int, retErr exec.Var, frame *e
 	frameArgs[5] = StringConst(frame.Func)
 	for i := 0; i < narg; i++ {
 		v := fun.(*FuncInfo).in[i].(*Var)
-		var name string
-		if !v.IsUnnamedOut() {
-			name = v.name
-		}
-		frameArgs[6+i] = Ident(name) //Ident(toArg(i))
+		frameArgs[6+i] = Ident(getVarInName(v)) //Ident(toArg(i))
 	}
 	frameErr := &ast.CallExpr{Fun: frameFun, Args: frameArgs}
 	var body *ast.BlockStmt
 	if retErr != nil {
-		outErr := Ident(retErr.Name())
+		outErr := Ident(getVarOutName(retErr.(*Var)))
 		assignErr := &ast.AssignStmt{
 			Lhs: []ast.Expr{outErr},
 			Tok: token.ASSIGN,

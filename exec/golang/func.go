@@ -274,30 +274,18 @@ func toFuncType(p *Builder, typ *FuncInfo) *ast.FuncType {
 		}
 		for i := 0; i < numIn; i++ {
 			in := typ.in[i].(*Var)
-			var name string
-			if !in.IsUnnamedOut() {
-				name = in.name
-			}
-			params[i] = Field(p, name, in.typ, "", false)
+			params[i] = Field(p, getVarInName(in), in.typ, "", false)
 		}
 		if variadic {
 			in := typ.in[numIn].(*Var)
-			var name string
-			if !in.IsUnnamedOut() {
-				name = in.name
-			}
-			params[numIn] = Field(p, name, in.typ, "", true)
+			params[numIn] = Field(p, getVarInName(in), in.typ, "", true)
 		}
 	}
 	if numOut > 0 {
 		results = make([]*ast.Field, numOut)
 		for i := 0; i < numOut; i++ {
 			out := typ.Out(i).(*Var)
-			name := out.name
-			if out.IsUnnamedOut() {
-				name = "_gop_ret_" + out.name
-			}
-			results[i] = Field(p, name, out.typ, "", false)
+			results[i] = Field(p, getVarOutName(out), out.typ, "", false)
 		}
 		opening++
 	}
