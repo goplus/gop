@@ -49,8 +49,8 @@ func (p *Var) Name() string {
 	return p.name
 }
 
-// IsUnnamedOut returns if variable unnamed or not.
-func (p *Var) IsUnnamedOut() bool {
+// IsUnnamed returns if variable unnamed or not.
+func (p *Var) IsUnnamed() bool {
 	if p.name == "" {
 		return true
 	}
@@ -66,14 +66,14 @@ func (p *Var) setScope(where *scopeCtx) {
 }
 
 func getVarInName(v *Var) string {
-	if v.IsUnnamedOut() {
+	if v.IsUnnamed() {
 		return ""
 	}
 	return v.name
 }
 
 func getVarOutName(v *Var) string {
-	if v.IsUnnamedOut() {
+	if v.IsUnnamed() {
 		return "_gop_ret_" + v.name
 	}
 	return v.name
@@ -160,7 +160,7 @@ func (p *Builder) argIdent(idx int32) *ast.Ident {
 	} else {
 		v = p.cfun.in[i].(*Var)
 	}
-	if v.IsUnnamedOut() {
+	if v.IsUnnamed() {
 		return &ast.Ident{}
 	}
 	return Ident(v.name)

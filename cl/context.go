@@ -352,10 +352,10 @@ func (p *blockCtx) insertFuncVars(in []exec.Var, rets []exec.Var) {
 	n := len(in)
 	if n > 0 {
 		for i := n - 1; i >= 0; i-- {
-			name := in[i].Name()
-			if name == "" { // unnamed argument
+			if in[i].IsUnnamed() { // unnamed argument
 				continue
 			}
+			name := in[i].Name()
 			if p.exists(name) {
 				log.Panicln("insertStkVars failed: symbol exists -", name)
 			}
@@ -363,7 +363,7 @@ func (p *blockCtx) insertFuncVars(in []exec.Var, rets []exec.Var) {
 		}
 	}
 	for _, ret := range rets {
-		if ret.IsUnnamedOut() {
+		if ret.IsUnnamed() {
 			continue
 		}
 		p.syms[ret.Name()] = &execVar{ret}

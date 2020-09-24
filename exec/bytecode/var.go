@@ -263,8 +263,11 @@ func (p *Var) Name() string {
 	return p.name[1:]
 }
 
-// IsUnnamedOut returns if variable unnamed or not.
-func (p *Var) IsUnnamedOut() bool {
+// IsUnnamed returns if variable unnamed or not.
+func (p *Var) IsUnnamed() bool {
+	if len(p.name) <= 1 {
+		return true
+	}
 	c := p.name[1]
 	return c >= '0' && c <= '9'
 }

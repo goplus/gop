@@ -33,8 +33,8 @@ type Var interface {
 	// Type returns the variable type.
 	Type() reflect.Type
 
-	// IsUnnamedOut returns if variable unnamed or not.
-	IsUnnamedOut() bool
+	// IsUnnamed returns if variable unnamed or not.
+	IsUnnamed() bool
 }
 
 // Label represents a label.

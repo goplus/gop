@@ -148,7 +148,7 @@ func (p *FuncInfo) Return(out ...exec.Var) exec.FuncInfo {
 // IsUnnamedOut returns if function results unnamed or not.
 func (p *FuncInfo) IsUnnamedOut() bool {
 	if len(p.out) > 0 {
-		return p.out[0].IsUnnamedOut()
+		return p.out[0].IsUnnamed()
 	}
 	return false
 }

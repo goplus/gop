@@ -214,7 +214,7 @@ func (p *FuncInfo) Out(i int) *Var {
 // IsUnnamedOut returns if function results unnamed or not.
 func (p *FuncInfo) IsUnnamedOut() bool {
 	if p.numOut > 0 {
-		return p.vlist[0].IsUnnamedOut()
+		return p.vlist[0].IsUnnamed()
 	}
 	return false
 }
