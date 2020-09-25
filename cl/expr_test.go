@@ -911,6 +911,8 @@ func TestBadVar(t *testing.T) {
 	cltest.Expect(t, `
 	var a int
 	var a string`, "", nil)
+	cltest.Expect(t, `
+	a = 10`, "", nil)
 }
 
 type testData struct {
