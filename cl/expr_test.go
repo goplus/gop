@@ -893,12 +893,16 @@ func TestUnderscore(t *testing.T) {
 
 func TestBadUnderscore(t *testing.T) {
 	cltest.Expect(t, `
+	println(_)
+	`, "", nil)
+	cltest.Expect(t, `
 	_ := 100
 	`, "", nil)
 	cltest.Expect(t, `
 	_,_ := 100,"hello"
 	`, "", nil)
 	cltest.Expect(t, `
+	import "fmt"
 	_, _ := fmt.Println("Hello World")
 	`, "", nil)
 }
