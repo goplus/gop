@@ -907,6 +907,12 @@ func TestBadUnderscore(t *testing.T) {
 	`, "", nil)
 }
 
+func TestBadVar(t *testing.T) {
+	cltest.Expect(t, `
+	var a int
+	var a string`, "", nil)
+}
+
 type testData struct {
 	clause string
 	want   string
