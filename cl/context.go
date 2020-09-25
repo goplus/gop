@@ -372,7 +372,7 @@ func (p *blockCtx) insertFuncVars(in []reflect.Type, args []string, rets []exec.
 }
 
 func (p *blockCtx) insertVar(name string, typ reflect.Type, inferOnly ...bool) *execVar {
-	if p.exists(name) {
+	if name != "_" && p.exists(name) {
 		log.Panicln("insertVar failed: symbol exists -", name)
 	}
 	v := p.NewVar(typ, name)

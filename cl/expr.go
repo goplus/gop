@@ -106,9 +106,7 @@ func compileIdentLHS(ctx *blockCtx, name string, mode compileMode) {
 	addr, err := ctx.findVar(name)
 	if name == "_" {
 		ctx.underscore++
-		if err == ErrNotFound {
-			addr = ctx.insertVar(name, exec.TyEmptyInterface)
-		}
+		addr = ctx.insertVar(name, exec.TyEmptyInterface)
 	} else {
 		if mode == lhsDefine {
 			addr, err = ctx.getCtxVar(name)
