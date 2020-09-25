@@ -103,11 +103,14 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 
 func compileIdentLHS(ctx *blockCtx, name string, mode compileMode) {
 	in := ctx.infer.Get(-1)
-	addr, err := ctx.findVar(name)
+	var addr iVar
 	if name == "_" {
 		ctx.underscore++
-		addr = ctx.insertVar(name, exec.TyEmptyInterface)
+		typ := boundType(in.(iValue))
+		addr = ctx.insertVar(name, typ)
 	} else {
+		var err error
+		addr, err = ctx.findVar(name)
 		if mode == lhsDefine {
 			addr, err = ctx.getCtxVar(name)
 			if addr != nil {
