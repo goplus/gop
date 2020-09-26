@@ -263,10 +263,12 @@ func main() {
 	gtyp := reflect.TypeOf(gRect)
 	ytyp := reflect.TypeOf(rc)
 	y := NewVar(ytyp, "y")
+	u := NewVar(exec.TyInt, "_")
 	b := NewBuilder("main", nil, nil)
 
 	code := b.Interface().
-		DefineVar(y). // y
+		DefineVar(y). // var y testRect
+		DefineVar(u). // var _ int
 		EndStmt(nil, &stmtState{rhsBase: 0}).
 		LoadGoVar(x2).
 		StoreVar(y). // y = pkg_field.Rect2
