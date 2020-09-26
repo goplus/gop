@@ -204,6 +204,7 @@ func TestGoField(t *testing.T) {
 
 import (
 	fmt "fmt"
+	golang "github.com/goplus/gop/exec/golang"
 	pkg_field "pkg_field"
 )
 
