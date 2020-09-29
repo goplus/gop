@@ -1151,7 +1151,11 @@ func compileStarExprLHS(ctx *blockCtx, v *ast.StarExpr, mode compileMode) {
 func methodToClosure(ctx *blockCtx, fun *ast.SelectorExpr, fDecl *funcDecl) *funcDecl {
 	typ := &ast.FuncType{Params: &ast.FieldList{}, Results: fDecl.typ.Results}
 	var args []ast.Expr
+	var ellipsis bool
 	for i, field := range fDecl.typ.Params.List {
+		if _, ok := field.Type.(*ast.Ellipsis); ok {
+			ellipsis = true
+		}
 		if field.Names != nil {
 			for _, name := range field.Names {
 				args = append(args, name)
@@ -1168,6 +1172,9 @@ func methodToClosure(ctx *blockCtx, fun *ast.SelectorExpr, fDecl *funcDecl) *fun
 	}
 	var body *ast.BlockStmt
 	call := &ast.CallExpr{Fun: fun, Args: args}
+	if ellipsis {
+		call.Ellipsis++
+	}
 	if typ.Results == nil {
 		body = &ast.BlockStmt{List: []ast.Stmt{&ast.ExprStmt{X: call}}}
 	} else {

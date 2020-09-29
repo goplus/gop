@@ -254,17 +254,23 @@ var testMethodClosure = `
 		fmt.Println(m.Sym)
 	}
 	
+	func (m *M) Test3(s string,n ...int) {
+		fmt.Println(m.Sym,s,n)
+	}
+	
 	m := &M{"#"}
 	foo := m.Test
 	foo2 := m.Test2
+	foo3 := m.Test3
 
 	x := "Hello, world!"
 	foo("x: ")
 	foo2(0)
+	foo3("a",100,200)
 `
 
 func TestMethodClosure(t *testing.T) {
-	cltest.Expect(t, testMethodClosure, "x: #Hello, world!\n#\n")
+	cltest.Expect(t, testMethodClosure, "x: #Hello, world!\n#\n# a [100 200]\n")
 }
 
 // -----------------------------------------------------------------------------
