@@ -238,6 +238,35 @@ func TestClosure(t *testing.T) {
 	cltest.Expect(t, testClosure, "x: Hello, world!\n")
 }
 
+var testMethodClosure = `
+	import "fmt"
+
+	type M struct {
+		Sym string
+	}
+	
+	func (m *M) Test(prompt string) (n int, err error) {
+		n, err = fmt.Println(prompt + m.Sym + x)
+		return
+	}
+	
+	func (m *M) Test2(int) {
+		fmt.Println(m.Sym)
+	}
+	
+	m := &M{"#"}
+	foo := m.Test
+	foo2 := m.Test2
+
+	x := "Hello, world!"
+	foo("x: ")
+	foo2(0)
+`
+
+func TestMethodClosure(t *testing.T) {
+	cltest.Expect(t, testMethodClosure, "x: #Hello, world!\n#\n")
+}
+
 // -----------------------------------------------------------------------------
 
 var testClosurev = `
