@@ -18,6 +18,7 @@ package cl
 
 import (
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/goplus/gop/ast"
@@ -1147,6 +1148,35 @@ func compileStarExprLHS(ctx *blockCtx, v *ast.StarExpr, mode compileMode) {
 	ctx.indirect = false
 }
 
+func methodToClosure(ctx *blockCtx, fun *ast.SelectorExpr, fDecl *funcDecl) *funcDecl {
+	typ := &ast.FuncType{Params: &ast.FieldList{}, Results: fDecl.typ.Results}
+	var args []ast.Expr
+	for i, field := range fDecl.typ.Params.List {
+		if field.Names != nil {
+			for _, name := range field.Names {
+				args = append(args, name)
+			}
+			typ.Params.List = append(typ.Params.List, field)
+		} else {
+			ident := &ast.Ident{Name: strconv.Itoa(i)}
+			args = append(args, ident)
+			typ.Params.List = append(typ.Params.List, &ast.Field{
+				Names: []*ast.Ident{ident},
+				Type:  field.Type,
+			})
+		}
+	}
+	var body *ast.BlockStmt
+	call := &ast.CallExpr{Fun: fun, Args: args}
+	if typ.Results == nil {
+		body = &ast.BlockStmt{List: []ast.Stmt{&ast.ExprStmt{X: call}}}
+	} else {
+		body = &ast.BlockStmt{List: []ast.Stmt{&ast.ReturnStmt{Return: fun.Pos(), Results: []ast.Expr{call}}}}
+	}
+	funCtx := newExecBlockCtx(ctx)
+	return newFuncDecl("", nil, typ, body, funCtx)
+}
+
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool) func() {
 	exprX := compileExpr(ctx, v.X)
 	if v.Sel == nil {
@@ -1225,11 +1255,21 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 				}
 			}
 			if fDecl, ok := ctx.findMethod(t, name); ok {
-				ctx.infer.Pop()
-				fn := newQlFunc(fDecl)
-				ctx.use(fDecl)
-				ctx.infer.Push(fn)
-				return func() {}
+				if !allowAutoCall {
+					ctx.infer.Pop()
+					fn := newQlFunc(fDecl)
+					ctx.use(fDecl)
+					ctx.infer.Push(fn)
+					return func() {}
+				} else {
+					ctx.infer.Pop()
+					decl := methodToClosure(ctx, v, fDecl)
+					ctx.use(decl)
+					ctx.infer.Push(newQlFunc(decl))
+					return func() {
+						ctx.out.GoClosure(decl.fi)
+					}
+				}
 			}
 		}
 
