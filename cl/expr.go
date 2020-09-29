@@ -69,7 +69,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 	case *ast.UnaryExpr:
 		return compileUnaryExpr(ctx, v)
 	case *ast.SelectorExpr:
-		return compileSelectorExpr(ctx, v, true)
+		return compileSelectorExpr(ctx, v, false)
 	case *ast.ErrWrapExpr:
 		return compileErrWrapExpr(ctx, v)
 	case *ast.IndexExpr:
@@ -695,7 +695,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	var exprFun func()
 	switch f := v.Fun.(type) {
 	case *ast.SelectorExpr:
-		exprFun = compileSelectorExpr(ctx, f, false)
+		exprFun = compileSelectorExpr(ctx, f, true)
 	default:
 		exprFun = compileExpr(ctx, f)
 	}
@@ -1184,7 +1184,7 @@ func methodToClosure(ctx *blockCtx, fun *ast.SelectorExpr, fDecl *funcDecl) *fun
 	return newFuncDecl("", nil, typ, body, funCtx)
 }
 
-func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool) func() {
+func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, compileByCallExpr bool) func() {
 	exprX := compileExpr(ctx, v.X)
 	if v.Sel == nil {
 		return exprX
@@ -1262,7 +1262,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 				}
 			}
 			if fDecl, ok := ctx.findMethod(t, name); ok {
-				if !allowAutoCall {
+				if compileByCallExpr {
 					ctx.infer.Pop()
 					fn := newQlFunc(fDecl)
 					ctx.use(fDecl)
@@ -1284,7 +1284,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 			name = strings.Title(name)
 			if _, ok = vx.t.MethodByName(name); ok {
 				v.Sel.Name = name
-				autoCall = allowAutoCall
+				autoCall = !compileByCallExpr
 			} else {
 				log.Panicln("compileSelectorExpr: symbol not found -", v.Sel.Name)
 			}
