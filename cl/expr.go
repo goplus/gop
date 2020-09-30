@@ -1148,11 +1148,11 @@ func compileStarExprLHS(ctx *blockCtx, v *ast.StarExpr, mode compileMode) {
 	ctx.indirect = false
 }
 
-func methodToClosure(ctx *blockCtx, fun *ast.SelectorExpr, fDecl *funcDecl) *funcDecl {
-	typ := &ast.FuncType{Params: &ast.FieldList{}, Results: fDecl.typ.Results}
+func methodToClosure(ctx *blockCtx, fun *ast.SelectorExpr, ftyp *ast.FuncType) *funcDecl {
+	typ := &ast.FuncType{Params: &ast.FieldList{}, Results: ftyp.Results}
 	var args []ast.Expr
 	var ellipsis bool
-	for i, field := range fDecl.typ.Params.List {
+	for i, field := range ftyp.Params.List {
 		if _, ok := field.Type.(*ast.Ellipsis); ok {
 			ellipsis = true
 		}
@@ -1270,7 +1270,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, compileByCallExpr b
 					return func() {}
 				} else {
 					ctx.infer.Pop()
-					decl := methodToClosure(ctx, v, fDecl)
+					decl := methodToClosure(ctx, v, fDecl.typ)
 					ctx.use(decl)
 					ctx.infer.Push(newQlFunc(decl))
 					return func() {
