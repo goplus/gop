@@ -59,7 +59,7 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compileMode) {
 func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 	switch v := expr.(type) {
 	case *ast.Ident:
-		return compileIdent(ctx, v.Name)
+		return compileIdent(ctx, v, false)
 	case *ast.BasicLit:
 		return compileBasicLit(ctx, v)
 	case *ast.CallExpr:
@@ -165,7 +165,8 @@ var addrops = map[token.Token]exec.AddrOperator{
 	token.DEC:            exec.OpDec,
 }
 
-func compileIdent(ctx *blockCtx, name string) func() {
+func compileIdent(ctx *blockCtx, ident *ast.Ident, compileByCallExpr bool) func() {
+	name := ident.Name
 	if sym, ok := ctx.find(name); ok {
 		switch v := sym.(type) {
 		case *execVar:
@@ -211,10 +212,19 @@ func compileIdent(ctx *blockCtx, name string) func() {
 			switch kind {
 			case exec.SymbolVar:
 			case exec.SymbolFunc, exec.SymbolFuncv:
-				fn := newGoFunc(addr, kind, 0, ctx)
-				ctx.infer.Push(fn)
-				return func() {
-					log.Panicln("compileIdent todo: goFunc")
+				if compileByCallExpr {
+					fn := newGoFunc(addr, kind, 0, ctx)
+					ctx.infer.Push(fn)
+					return func() {}
+				} else {
+					fn := newGoFunc(addr, kind, 0, ctx)
+					ftyp := astutil.FuncType(fn.t)
+					decl := funcToClosure(ctx, ident, ftyp)
+					ctx.use(decl)
+					ctx.infer.Push(newQlFunc(decl))
+					return func() {
+						ctx.out.GoClosure(decl.fi)
+					}
 				}
 			}
 			log.Panicln("compileIdent todo: var -", kind, addr)
@@ -696,6 +706,8 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	switch f := v.Fun.(type) {
 	case *ast.SelectorExpr:
 		exprFun = compileSelectorExpr(ctx, f, true)
+	case *ast.Ident:
+		exprFun = compileIdent(ctx, f, true)
 	default:
 		exprFun = compileExpr(ctx, f)
 	}
@@ -1170,11 +1182,11 @@ func funcToClosure(ctx *blockCtx, fun ast.Expr, ftyp *ast.FuncType) *funcDecl {
 			})
 		}
 	}
-	var body *ast.BlockStmt
 	call := &ast.CallExpr{Fun: fun, Args: args}
 	if ellipsis {
 		call.Ellipsis++
 	}
+	var body *ast.BlockStmt
 	if typ.Results == nil {
 		body = &ast.BlockStmt{List: []ast.Stmt{&ast.ExprStmt{X: call}}}
 	} else {
@@ -1208,10 +1220,21 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, compileByCallExpr b
 			}
 			switch kind {
 			case exec.SymbolFunc, exec.SymbolFuncv:
-				fn := newGoFunc(addr, kind, 0, ctx)
-				ctx.infer.Ret(1, fn)
-				return func() {
-					log.Panicln("compileSelectorExpr: todo")
+				if compileByCallExpr {
+					fn := newGoFunc(addr, kind, 0, ctx)
+					ctx.infer.Ret(1, fn)
+					return func() {
+					}
+				} else {
+					ctx.infer.Pop()
+					fn := newGoFunc(addr, kind, 0, ctx)
+					ftyp := astutil.FuncType(fn.t)
+					decl := funcToClosure(ctx, v, ftyp)
+					ctx.use(decl)
+					ctx.infer.Push(newQlFunc(decl))
+					return func() {
+						ctx.out.GoClosure(decl.fi)
+					}
 				}
 			case exec.SymbolVar:
 				info := ctx.GetGoVarInfo(exec.GoVarAddr(addr))
@@ -1297,6 +1320,18 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, compileByCallExpr b
 		addr, kind, ok := pkg.Find(method)
 		if !ok {
 			log.Panicln("compileSelectorExpr: method not found -", method)
+		}
+		if !compileByCallExpr && !autoCall {
+			ctx.infer.Pop()
+			fn := newGoFunc(addr, kind, 1, ctx)
+			ftyp := astutil.FuncType(fn.t)
+			ftyp.Params.List = ftyp.Params.List[1:]
+			decl := funcToClosure(ctx, v, ftyp)
+			ctx.use(decl)
+			ctx.infer.Push(newQlFunc(decl))
+			return func() {
+				ctx.out.GoClosure(decl.fi)
+			}
 		}
 		ctx.infer.Ret(1, newGoFunc(addr, kind, 1, ctx))
 		if autoCall { // change AST tree
