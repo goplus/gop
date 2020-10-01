@@ -215,7 +215,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, compileByCallExpr bool) func(
 				if compileByCallExpr {
 					fn := newGoFunc(addr, kind, 0, ctx)
 					ctx.infer.Push(fn)
-					return func() {}
+					return nil
 				} else {
 					fn := newGoFunc(addr, kind, 0, ctx)
 					ftyp := astutil.FuncType(fn.t)
@@ -704,10 +704,10 @@ var binaryOps = [...]exec.Operator{
 func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	var exprFun func()
 	switch f := v.Fun.(type) {
-	case *ast.SelectorExpr:
-		exprFun = compileSelectorExpr(ctx, f, true)
 	case *ast.Ident:
 		exprFun = compileIdent(ctx, f, true)
+	case *ast.SelectorExpr:
+		exprFun = compileSelectorExpr(ctx, f, true)
 	default:
 		exprFun = compileExpr(ctx, f)
 	}
@@ -1223,8 +1223,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, compileByCallExpr b
 				if compileByCallExpr {
 					fn := newGoFunc(addr, kind, 0, ctx)
 					ctx.infer.Ret(1, fn)
-					return func() {
-					}
+					return nil
 				} else {
 					ctx.infer.Pop()
 					fn := newGoFunc(addr, kind, 0, ctx)
@@ -1290,7 +1289,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, compileByCallExpr b
 					fn := newQlFunc(fDecl)
 					ctx.use(fDecl)
 					ctx.infer.Push(fn)
-					return func() {}
+					return nil
 				} else {
 					ctx.infer.Pop()
 					decl := funcToClosure(ctx, v, fDecl.typ)
@@ -1341,9 +1340,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, compileByCallExpr b
 			v.Sel = nil
 			return compileCallExprCall(ctx, nil, call, 0)
 		}
-		return func() {
-			log.Panicln("compileSelectorExpr: todo")
-		}
+		return nil
 	default:
 		log.Panicln("compileSelectorExpr failed: unknown -", reflect.TypeOf(vx))
 	}

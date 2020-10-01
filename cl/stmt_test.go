@@ -273,6 +273,28 @@ func TestMethodClosure(t *testing.T) {
 	cltest.Expect(t, testMethodClosure, "x: #Hello, world!\n#\n# a [100 200]\n")
 }
 
+var testGopkgClosure = `
+	import (
+		"fmt"
+		"bytes"
+	)
+
+	fn1 := println
+	fn1("hello",123)
+
+	fn2 := fmt.Println
+	fn2("hello",456)
+
+	buf := &bytes.Buffer{}
+	fn3 := buf.Write
+	fn3([]byte("world"))
+	fn1(buf)
+`
+
+func TestGopkgClosure(t *testing.T) {
+	cltest.Expect(t, testGopkgClosure, "hello 123\nhello 456\nworld\n")
+}
+
 // -----------------------------------------------------------------------------
 
 var testClosurev = `
