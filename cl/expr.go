@@ -197,9 +197,14 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, compileByCallExpr bool) func(
 			}
 		case *stackVar:
 			ctx.infer.Push(&goValue{t: v.typ})
+			kind := v.typ.Kind()
 			ctx.resetFieldIndex()
 			return func() {
-				ctx.out.Load(v.index)
+				if ctx.takeAddr || (ctx.checkLoadAddr && kind != reflect.Slice && kind != reflect.Map) {
+					ctx.out.Addr(v.index)
+				} else {
+					ctx.out.Load(v.index)
+				}
 			}
 		case string: // pkgPath
 			pkg := ctx.FindGoPackage(v)
