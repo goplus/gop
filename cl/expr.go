@@ -18,6 +18,7 @@ package cl
 
 import (
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/goplus/gop/ast"
@@ -58,7 +59,7 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compileMode) {
 func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 	switch v := expr.(type) {
 	case *ast.Ident:
-		return compileIdent(ctx, v.Name)
+		return compileIdent(ctx, v, false)
 	case *ast.BasicLit:
 		return compileBasicLit(ctx, v)
 	case *ast.CallExpr:
@@ -68,7 +69,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 	case *ast.UnaryExpr:
 		return compileUnaryExpr(ctx, v)
 	case *ast.SelectorExpr:
-		return compileSelectorExpr(ctx, v, true)
+		return compileSelectorExpr(ctx, v, false)
 	case *ast.ErrWrapExpr:
 		return compileErrWrapExpr(ctx, v)
 	case *ast.IndexExpr:
@@ -173,7 +174,8 @@ var addrops = map[token.Token]exec.AddrOperator{
 	token.DEC:            exec.OpDec,
 }
 
-func compileIdent(ctx *blockCtx, name string) func() {
+func compileIdent(ctx *blockCtx, ident *ast.Ident, compileByCallExpr bool) func() {
+	name := ident.Name
 	if name == "_" {
 		log.Panicln("cannot use _ as value")
 	}
@@ -222,10 +224,19 @@ func compileIdent(ctx *blockCtx, name string) func() {
 			switch kind {
 			case exec.SymbolVar:
 			case exec.SymbolFunc, exec.SymbolFuncv:
-				fn := newGoFunc(addr, kind, 0, ctx)
-				ctx.infer.Push(fn)
-				return func() {
-					log.Panicln("compileIdent todo: goFunc")
+				if compileByCallExpr {
+					fn := newGoFunc(addr, kind, 0, ctx)
+					ctx.infer.Push(fn)
+					return nil
+				} else {
+					fn := newGoFunc(addr, kind, 0, ctx)
+					ftyp := astutil.FuncType(fn.t)
+					decl := funcToClosure(ctx, ident, ftyp)
+					ctx.use(decl)
+					ctx.infer.Push(newQlFunc(decl))
+					return func() {
+						ctx.out.GoClosure(decl.fi)
+					}
 				}
 			}
 			log.Panicln("compileIdent todo: var -", kind, addr)
@@ -705,8 +716,10 @@ var binaryOps = [...]exec.Operator{
 func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	var exprFun func()
 	switch f := v.Fun.(type) {
+	case *ast.Ident:
+		exprFun = compileIdent(ctx, f, true)
 	case *ast.SelectorExpr:
-		exprFun = compileSelectorExpr(ctx, f, false)
+		exprFun = compileSelectorExpr(ctx, f, true)
 	default:
 		exprFun = compileExpr(ctx, f)
 	}
@@ -1159,7 +1172,43 @@ func compileStarExprLHS(ctx *blockCtx, v *ast.StarExpr, mode compileMode) {
 	ctx.indirect = false
 }
 
-func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool) func() {
+func funcToClosure(ctx *blockCtx, fun ast.Expr, ftyp *ast.FuncType) *funcDecl {
+	typ := &ast.FuncType{Params: &ast.FieldList{}, Results: ftyp.Results}
+	var args []ast.Expr
+	var ellipsis bool
+	for i, field := range ftyp.Params.List {
+		if _, ok := field.Type.(*ast.Ellipsis); ok {
+			ellipsis = true
+		}
+		if field.Names != nil {
+			for _, name := range field.Names {
+				args = append(args, name)
+			}
+			typ.Params.List = append(typ.Params.List, field)
+		} else {
+			ident := &ast.Ident{Name: strconv.Itoa(i)}
+			args = append(args, ident)
+			typ.Params.List = append(typ.Params.List, &ast.Field{
+				Names: []*ast.Ident{ident},
+				Type:  field.Type,
+			})
+		}
+	}
+	call := &ast.CallExpr{Fun: fun, Args: args}
+	if ellipsis {
+		call.Ellipsis++
+	}
+	var body *ast.BlockStmt
+	if typ.Results == nil {
+		body = &ast.BlockStmt{List: []ast.Stmt{&ast.ExprStmt{X: call}}}
+	} else {
+		body = &ast.BlockStmt{List: []ast.Stmt{&ast.ReturnStmt{Return: fun.Pos(), Results: []ast.Expr{call}}}}
+	}
+	funCtx := newExecBlockCtx(ctx)
+	return newFuncDecl("", nil, typ, body, funCtx)
+}
+
+func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, compileByCallExpr bool) func() {
 	exprX := compileExpr(ctx, v.X)
 	if v.Sel == nil {
 		return exprX
@@ -1183,10 +1232,20 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 			}
 			switch kind {
 			case exec.SymbolFunc, exec.SymbolFuncv:
-				fn := newGoFunc(addr, kind, 0, ctx)
-				ctx.infer.Ret(1, fn)
-				return func() {
-					log.Panicln("compileSelectorExpr: todo")
+				if compileByCallExpr {
+					fn := newGoFunc(addr, kind, 0, ctx)
+					ctx.infer.Ret(1, fn)
+					return nil
+				} else {
+					ctx.infer.Pop()
+					fn := newGoFunc(addr, kind, 0, ctx)
+					ftyp := astutil.FuncType(fn.t)
+					decl := funcToClosure(ctx, v, ftyp)
+					ctx.use(decl)
+					ctx.infer.Push(newQlFunc(decl))
+					return func() {
+						ctx.out.GoClosure(decl.fi)
+					}
 				}
 			case exec.SymbolVar:
 				info := ctx.GetGoVarInfo(exec.GoVarAddr(addr))
@@ -1237,11 +1296,21 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 				}
 			}
 			if fDecl, ok := ctx.findMethod(t, name); ok {
-				ctx.infer.Pop()
-				fn := newQlFunc(fDecl)
-				ctx.use(fDecl)
-				ctx.infer.Push(fn)
-				return func() {}
+				if compileByCallExpr {
+					ctx.infer.Pop()
+					fn := newQlFunc(fDecl)
+					ctx.use(fDecl)
+					ctx.infer.Push(fn)
+					return nil
+				} else {
+					ctx.infer.Pop()
+					decl := funcToClosure(ctx, v, fDecl.typ)
+					ctx.use(decl)
+					ctx.infer.Push(newQlFunc(decl))
+					return func() {
+						ctx.out.GoClosure(decl.fi)
+					}
+				}
 			}
 		}
 
@@ -1249,7 +1318,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 			name = strings.Title(name)
 			if _, ok = vx.t.MethodByName(name); ok {
 				v.Sel.Name = name
-				autoCall = allowAutoCall
+				autoCall = !compileByCallExpr
 			} else {
 				log.Panicln("compileSelectorExpr: symbol not found -", v.Sel.Name)
 			}
@@ -1263,6 +1332,18 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 		if !ok {
 			log.Panicln("compileSelectorExpr: method not found -", method)
 		}
+		if !compileByCallExpr && !autoCall {
+			ctx.infer.Pop()
+			fn := newGoFunc(addr, kind, 1, ctx)
+			ftyp := astutil.FuncType(fn.t)
+			ftyp.Params.List = ftyp.Params.List[1:]
+			decl := funcToClosure(ctx, v, ftyp)
+			ctx.use(decl)
+			ctx.infer.Push(newQlFunc(decl))
+			return func() {
+				ctx.out.GoClosure(decl.fi)
+			}
+		}
 		ctx.infer.Ret(1, newGoFunc(addr, kind, 1, ctx))
 		if autoCall { // change AST tree
 			copy := *v
@@ -1271,9 +1352,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, allowAutoCall bool)
 			v.Sel = nil
 			return compileCallExprCall(ctx, nil, call, 0)
 		}
-		return func() {
-			log.Panicln("compileSelectorExpr: todo")
-		}
+		return nil
 	default:
 		log.Panicln("compileSelectorExpr failed: unknown -", reflect.TypeOf(vx))
 	}
