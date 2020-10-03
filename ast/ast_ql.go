@@ -426,3 +426,10 @@ func (p *ForPhraseStmt) End() token.Pos {
 func (*ForPhraseStmt) stmtNode() {}
 
 // -----------------------------------------------------------------------------
+
+// A TwoValueIndexExpr node represents a two-value assignment expression (v, ok := m["key"])
+type TwoValueIndexExpr struct {
+	*IndexExpr
+}
+
+// -----------------------------------------------------------------------------
