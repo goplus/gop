@@ -118,7 +118,16 @@ func (p *scopeCtx) initStmts() {
 
 // DefineVar defines variables.
 func (p *Builder) DefineVar(vars ...exec.Var) *Builder {
-	p.addVar(vars...)
+	var vlist []exec.Var
+	for _, v := range vars {
+		if pkgPath := v.Type().PkgPath(); pkgPath != "" {
+			p.Import(pkgPath)
+		} else if v.Name() == "_" {
+			continue
+		}
+		vlist = append(vlist, v)
+	}
+	p.addVar(vlist...)
 	return p
 }
 

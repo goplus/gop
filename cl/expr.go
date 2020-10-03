@@ -103,23 +103,32 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 
 func compileIdentLHS(ctx *blockCtx, name string, mode compileMode) {
 	in := ctx.infer.Get(-1)
-	addr, err := ctx.findVar(name)
-	if mode == lhsDefine {
-		addr, err = ctx.getCtxVar(name)
-		if addr != nil {
-			log.Panicf("compileIdentLHS failed: %s redeclared in this block\n", name)
-		}
-	}
-	if err == nil {
-		if mode == lhsDefine && !addr.inCurrentCtx(ctx) {
-			log.Warn("requireVar: variable is shadowed -", name)
-		}
-	} else if mode == lhsAssign || err != ErrNotFound {
-		log.Panicln("compileIdentLHS failed:", err, "-", name)
-	} else {
+	var addr iVar
+	if name == "_" {
+		ctx.underscore++
 		typ := boundType(in.(iValue))
 		addr = ctx.insertVar(name, typ)
+	} else {
+		var err error
+		addr, err = ctx.findVar(name)
+		if mode == lhsDefine {
+			addr, err = ctx.getCtxVar(name)
+			if addr != nil {
+				log.Panicf("compileIdentLHS failed: %s redeclared in this block\n", name)
+			}
+		}
+		if err == nil {
+			if mode == lhsDefine && !addr.inCurrentCtx(ctx) {
+				log.Warn("requireVar: variable is shadowed -", name)
+			}
+		} else if mode == lhsAssign || err != ErrNotFound {
+			log.Panicln("compileIdentLHS failed:", err, "-", name)
+		} else {
+			typ := boundType(in.(iValue))
+			addr = ctx.insertVar(name, typ)
+		}
 	}
+
 	typ := addr.getType()
 	if ctx.indirect {
 		typ = typ.Elem()
@@ -165,6 +174,9 @@ var addrops = map[token.Token]exec.AddrOperator{
 }
 
 func compileIdent(ctx *blockCtx, name string) func() {
+	if name == "_" {
+		log.Panicln("cannot use _ as value")
+	}
 	if sym, ok := ctx.find(name); ok {
 		switch v := sym.(type) {
 		case *execVar:
