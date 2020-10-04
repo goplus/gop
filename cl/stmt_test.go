@@ -238,6 +238,63 @@ func TestClosure(t *testing.T) {
 	cltest.Expect(t, testClosure, "x: Hello, world!\n")
 }
 
+var testMethodClosure = `
+	import "fmt"
+
+	type M struct {
+		Sym string
+	}
+	
+	func (m *M) Test(prompt string) (n int, err error) {
+		n, err = fmt.Println(prompt + m.Sym + x)
+		return
+	}
+	
+	func (m *M) Test2(int) {
+		fmt.Println(m.Sym)
+	}
+	
+	func (m *M) Test3(s string,n ...int) {
+		fmt.Println(m.Sym,s,n)
+	}
+	
+	m := &M{"#"}
+	foo := m.Test
+	foo2 := m.Test2
+	foo3 := m.Test3
+
+	x := "Hello, world!"
+	foo("x: ")
+	foo2(0)
+	foo3("a",100,200)
+`
+
+func TestMethodClosure(t *testing.T) {
+	cltest.Expect(t, testMethodClosure, "x: #Hello, world!\n#\n# a [100 200]\n")
+}
+
+var testGopkgClosure = `
+	import (
+		"fmt"
+		"bytes"
+	)
+
+	fn1 := println
+	fn1("hello",123)
+
+	fn2 := fmt.Println
+	fn2("hello",456)
+
+	buf := &bytes.Buffer{}
+	fn3 := buf.Write
+	fn3([]byte("world"))
+	fn1(buf)
+`
+
+func TestGopkgClosure(t *testing.T) {
+	cltest.Expect(t, testGopkgClosure, "hello 123\nhello 456\nworld\n")
+}
+
 // -----------------------------------------------------------------------------
 
 var testClosurev = `

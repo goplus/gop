@@ -25,12 +25,32 @@ import (
 
 func execLoad(i Instr, p *Context) {
 	idx := int32(i) << bitsOp >> bitsOp
-	p.Push(p.data[p.base+int(idx)])
+	index := p.base + int(idx)
+	if p.addrs[index].Kind() == reflect.Struct {
+		p.Push(p.addrs[index].Interface())
+	} else {
+		p.Push(p.data[index])
+	}
+}
+
+func execAddr(i Instr, p *Context) {
+	idx := int32(i) << bitsOp >> bitsOp
+	index := (p.base + int(idx))
+	if p.addrs[index].Kind() == reflect.Struct {
+		p.Push(p.addrs[index].Addr().Interface())
+	} else {
+		p.Push(p.data[index])
+	}
 }
 
 func execStore(i Instr, p *Context) {
 	idx := int32(i) << bitsOp >> bitsOp
-	p.data[p.base+int(idx)] = p.Pop()
+	index := p.base + int(idx)
+	if p.addrs[index].Kind() == reflect.Struct {
+		p.addrs[index].Set(reflect.ValueOf(p.Pop()))
+	} else {
+		p.data[index] = p.Pop()
+	}
 }
 
 const (
@@ -447,6 +467,12 @@ func (p *Builder) Return(n int32) *Builder {
 // Load instr
 func (p *Builder) Load(idx int32) *Builder {
 	p.code.data = append(p.code.data, (opLoad<<bitsOpShift)|(uint32(idx)&bitsOperand))
+	return p
+}
+
+// Addr instr
+func (p *Builder) Addr(idx int32) *Builder {
+	p.code.data = append(p.code.data, (opAddr<<bitsOpShift)|(uint32(idx)&bitsOperand))
 	return p
 }
 
