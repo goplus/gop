@@ -354,13 +354,13 @@ func TestMapField(t *testing.T) {
 	code := b.
 		LoadGoVar(x).
 		Push(0).
-		MapIndex().
+		MapIndex(false).
 		LoadGoVar(x).
 		Push(5).
 		SetMapIndex(). // pkg.M[5] = pkg.M[0]
 		LoadGoVar(x).
 		Push(5).
-		MapIndex().
+		MapIndex(false).
 		LoadField(typ, []int{1}). // pkg.M[5]
 		Resolve()
 	ctx := NewContext(code)
@@ -396,7 +396,7 @@ func TestMapBadStoreField(t *testing.T) {
 		Push(-1).
 		LoadGoVar(x).
 		Push(0).
-		MapIndex().
+		MapIndex(false).
 		StoreField(typ, []int{1}). // pkg.M[0].Y = -1 , cannot assign
 		Resolve()
 
