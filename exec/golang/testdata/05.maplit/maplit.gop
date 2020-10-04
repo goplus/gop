@@ -19,3 +19,12 @@ println({1: 1.4, 3: "Go+"})             // map[int]interface{}
 delete({1: 1.4, 3: "Go+"}, 1)           // delete map[int]interface{}
 
 println("empty map:", {}) // map[string]interface{}
+
+m := {2: 3, 1: 2}
+v, ok := m[m[1]]
+if ok {
+	println(1, v, ok)
+}
+if v, ok = m[m[3]]; !ok {
+	println(1, v, ok)
+}

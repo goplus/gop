@@ -192,10 +192,14 @@ func (p *Builder) CallFunc(fun *FuncInfo, nexpr int) *Builder {
 // CallFuncv instr
 func (p *Builder) CallFuncv(fun *FuncInfo, nexpr, arity int) *Builder {
 	if fun.isMethod == 1 {
-		args := p.rhs.GetArgs(arity)
+		n := arity
+		if arity < 0 {
+			n = len(fun.in) + 1
+		}
+		args := p.rhs.GetArgs(n)
 		recv := args[0]
 		args = args[1:]
-		p.rhs.Ret(arity, args...)
+		p.rhs.Ret(n, args...)
 		p.rhs.Push(fun.getFuncExpr(recv.(ast.Expr)))
 	} else {
 		p.rhs.Push(fun.getFuncExpr(nil))
