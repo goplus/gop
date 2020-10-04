@@ -95,6 +95,7 @@ type Builder struct {
 	types       map[reflect.Type]*GoType // type => gotype
 	imports     map[string]string        // pkgPath => aliasName
 	importPaths map[string]string        // aliasName => pkgPath
+	identVar    map[int]string           // ident param var name
 	gblScope    scopeCtx                 // global scope
 	gblDecls    []ast.Decl               // global declarations
 	fset        *token.FileSet           // fileset of Go+ code
@@ -118,6 +119,7 @@ func NewBuilder(pkgName string, code *Code, fset *token.FileSet) *Builder {
 		types:       make(map[reflect.Type]*GoType),
 		imports:     make(map[string]string),
 		importPaths: make(map[string]string),
+		identVar:    make(map[int]string),
 		fset:        fset,
 		pkgName:     pkgName,
 	}
@@ -372,6 +374,37 @@ func (p *Builder) ReservedAsPush(r exec.Reserved, v interface{}) {
 func (p *Builder) Pop(n int) *Builder {
 	log.Panicln("todo")
 	return p
+}
+
+func (p *Builder) hasName(name string) bool {
+	for _, v := range p.vlist {
+		if v.Name() == name {
+			return true
+		}
+	}
+	for _, v := range p.identVar {
+		if v == name {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *Builder) toArg(i int) string {
+	name, ok := p.identVar[i]
+	if ok {
+		return name
+	}
+	n := i
+	for {
+		name = "_arg_" + strconv.Itoa(n)
+		if !p.hasName(name) {
+			break
+		}
+		n++
+	}
+	p.identVar[i] = name
+	return name
 }
 
 // -----------------------------------------------------------------------------

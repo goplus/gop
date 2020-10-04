@@ -194,7 +194,7 @@ func (p *Builder) ErrWrap(nret int, retErr exec.Var, frame *errors.Frame, narg i
 	frameArgs[4] = StringConst(frame.Pkg)
 	frameArgs[5] = StringConst(frame.Func)
 	for i := 0; i < narg; i++ {
-		frameArgs[6+i] = Ident(toArg(i))
+		frameArgs[6+i] = Ident(p.toArg(i))
 	}
 	frameErr := &ast.CallExpr{Fun: frameFun, Args: frameArgs}
 	var body *ast.BlockStmt

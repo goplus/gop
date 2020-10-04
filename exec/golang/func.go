@@ -20,7 +20,6 @@ import (
 	"go/ast"
 	"go/token"
 	"reflect"
-	"strconv"
 
 	"github.com/goplus/gop/exec.spec"
 	"github.com/goplus/gop/exec/golang/internal/go/printer"
@@ -275,10 +274,10 @@ func toFuncType(p *Builder, typ *FuncInfo) *ast.FuncType {
 			numIn--
 		}
 		for i := 0; i < numIn; i++ {
-			params[i] = Field(p, toArg(i), typ.in[i], "", false)
+			params[i] = Field(p, p.toArg(i), typ.in[i], "", false)
 		}
 		if variadic {
-			params[numIn] = Field(p, toArg(numIn), typ.in[numIn], "", true)
+			params[numIn] = Field(p, p.toArg(numIn), typ.in[numIn], "", true)
 		}
 	}
 	if numOut > 0 {
@@ -293,8 +292,4 @@ func toFuncType(p *Builder, typ *FuncInfo) *ast.FuncType {
 		Params:  &ast.FieldList{Opening: 1, List: params, Closing: 1},
 		Results: &ast.FieldList{Opening: opening, List: results, Closing: opening},
 	}
-}
-
-func toArg(i int) string {
-	return "_arg_" + strconv.Itoa(i)
 }

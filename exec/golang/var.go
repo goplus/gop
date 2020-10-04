@@ -159,7 +159,7 @@ func (p *Builder) argIdent(idx int32) *ast.Ident {
 	if i == -1 {
 		return Ident("recv")
 	}
-	return Ident(toArg(i))
+	return Ident(p.toArg(i))
 }
 
 // LoadVar instr
