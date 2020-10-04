@@ -607,7 +607,11 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		log.Panicln("compileAssignStmt internal error: infer stack is not empty.")
 	}
 	if len(expr.Rhs) == 1 {
-		compileExpr(ctx, expr.Rhs[0])()
+		rhsExpr := expr.Rhs[0]
+		if ie, ok := rhsExpr.(*ast.IndexExpr); ok && len(expr.Lhs) == 2 {
+			rhsExpr = &ast.TwoValueIndexExpr{IndexExpr: ie}
+		}
+		compileExpr(ctx, rhsExpr)()
 		v := ctx.infer.Get(-1).(iValue)
 		n := v.NumValues()
 		if n != 1 {
@@ -631,8 +635,13 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 	if ctx.infer.Len() != len(expr.Lhs) {
 		log.Panicln("compileAssignStmt: assign statement has mismatched variables count -", ctx.infer.Len())
 	}
+	count := len(expr.Lhs)
+	ctx.underscore = 0
 	for i := len(expr.Lhs) - 1; i >= 0; i-- {
 		compileExprLHS(ctx, expr.Lhs[i], expr.Tok)
+	}
+	if ctx.underscore == count && expr.Tok == token.DEFINE {
+		log.Panicln("no new variables on left side of :=")
 	}
 }
 
