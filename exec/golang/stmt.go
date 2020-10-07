@@ -404,6 +404,18 @@ func (p *Builder) Defer() *Builder {
 	return p
 }
 
+// Send instr
+func (p *Builder) Send() *Builder {
+	// p.inDeferOrGo = callByDefer
+	return p
+}
+
+// Recv instr
+func (p *Builder) Recv() *Builder {
+	// p.inDeferOrGo = callByDefer
+	return p
+}
+
 // Go instr
 func (p *Builder) Go() *Builder {
 	p.inDeferOrGo = callByGo
