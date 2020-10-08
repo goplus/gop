@@ -1842,6 +1842,10 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 			p.shortVarDecl(as, x)
 		}
 		return as, isRange
+	case token.ARROW:
+		if mode == rangeOk {
+			return p.parseForPhraseStmtPart(x), true
+		}
 	}
 
 	if len(x) > 1 {
@@ -2362,13 +2366,7 @@ func (p *parser) parseForStmt() ast.Stmt {
 				s2 = &ast.AssignStmt{Rhs: y}
 				isRange = true
 			} else {
-				x := p.parseLHSList()
-				if p.tok == token.ARROW {
-					s2 = p.parseForPhraseStmtPart(x)
-					isRange = true
-				} else {
-					s2, isRange = p.parseSimpleStmt(rangeOk)
-				}
+				s2, isRange = p.parseSimpleStmt(rangeOk)
 			}
 		}
 		if !isRange && p.tok == token.SEMICOLON {
