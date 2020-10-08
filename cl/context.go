@@ -129,38 +129,26 @@ func (fc *funcCtx) nextFlow(post, done exec.Label, name string) {
 	}
 }
 
-func (fc *funcCtx) getBreakLabel(labelName string) (label exec.Label, rangeFor bool) {
-	if fc.currentFlow == nil {
-		return nil, false
-	}
-	if fc.currentFlow.postLabel == nil && fc.currentFlow.doneLabel == nil {
-		return nil, true
-	}
+func (fc *funcCtx) getBreakLabel(labelName string) (label exec.Label) {
 	for i := fc.currentFlow; i != nil; i = i.parent {
 		if i.doneLabel != nil {
 			if labelName == "" || i.name == labelName {
-				return i.doneLabel, false
+				return i.doneLabel
 			}
 		}
 	}
-	return nil, false
+	return nil
 }
 
-func (fc *funcCtx) getContinueLabel(labelName string) (label exec.Label, rangeFor bool) {
-	if fc.currentFlow == nil {
-		return nil, false
-	}
-	if fc.currentFlow.postLabel == nil && fc.currentFlow.doneLabel == nil {
-		return nil, true
-	}
+func (fc *funcCtx) getContinueLabel(labelName string) (label exec.Label) {
 	for i := fc.currentFlow; i != nil; i = i.parent {
 		if i.postLabel != nil {
 			if labelName == "" || i.name == labelName {
-				return i.postLabel, false
+				return i.postLabel
 			}
 		}
 	}
-	return nil, false
+	return nil
 }
 
 func (fc *funcCtx) checkLabels() {
@@ -199,6 +187,7 @@ type blockCtx struct {
 	fieldStructType reflect.Type
 	fieldIndex      []int
 	fieldExprX      func()
+	underscore      int
 }
 
 // function block ctx
@@ -383,7 +372,7 @@ func (p *blockCtx) insertFuncVars(in []reflect.Type, args []string, rets []exec.
 }
 
 func (p *blockCtx) insertVar(name string, typ reflect.Type, inferOnly ...bool) *execVar {
-	if p.exists(name) {
+	if name != "_" && p.exists(name) {
 		log.Panicln("insertVar failed: symbol exists -", name)
 	}
 	v := p.NewVar(typ, name)

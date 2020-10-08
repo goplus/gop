@@ -17,6 +17,7 @@
 package bytecode
 
 import (
+	"reflect"
 	"time"
 
 	"github.com/goplus/gop/exec.spec"
@@ -27,6 +28,7 @@ import (
 
 type varScope struct {
 	vars   varsContext
+	addrs  []reflect.Value
 	parent *varScope
 }
 
@@ -94,6 +96,19 @@ func (ctx *Context) switchScope(parent *varScope, vmgr *varManager) (old savedSc
 	ctx.base = len(ctx.data)
 	ctx.parent = parent
 	ctx.vars = vmgr.makeVarsContext(ctx)
+
+	size := ctx.Len()
+	ctx.addrs = make([]reflect.Value, size)
+	for i := size; i > 0; i-- {
+		v := reflect.ValueOf(ctx.Get(-i))
+		if v.Kind() == reflect.Struct {
+			nv := reflect.New(v.Type()).Elem()
+			nv.Set(v)
+			ctx.addrs[size-i] = nv
+		} else {
+			ctx.addrs[size-i] = v
+		}
+	}
 	return
 }
 
@@ -101,6 +116,7 @@ func (ctx *Context) restoreScope(old savedScopeCtx) {
 	ctx.ip = old.ip
 	ctx.base = old.base
 	ctx.varScope = old.varScope
+	ctx.addrs = old.addrs
 }
 
 func (ctx *Context) getScope(local bool) *varScope {
@@ -169,7 +185,7 @@ func (ctx *Context) Exec(ip, ipEnd int) (currentIP int) {
 			execGoFuncv(i, ctx)
 		case opReturn:
 			currentIP = ctx.ip
-			if i == iBreak || i == iContinue || i == iReturn {
+			if i == iReturn {
 				ctx.ip = int(i)
 			} else {
 				ctx.ip = ipReturnN
@@ -220,6 +236,7 @@ var _execTable = [...]func(i Instr, p *Context){
 	opStoreGoVar:    execStoreGoVar,
 	opAddrGoVar:     execAddrGoVar,
 	opLoad:          execLoad,
+	opAddr:          execAddr,
 	opStore:         execStore,
 	opClosure:       execClosure,
 	opCallClosure:   execCallClosure,

@@ -287,6 +287,12 @@ func (p *iBuilder) Load(idx int32) exec.Builder {
 	return p
 }
 
+// Addr instr
+func (p *iBuilder) Addr(idx int32) exec.Builder {
+	((*Builder)(p)).Addr(idx)
+	return p
+}
+
 // Store instr
 func (p *iBuilder) Store(idx int32) exec.Builder {
 	((*Builder)(p)).Store(idx)
@@ -401,7 +407,7 @@ func (p *iBuilder) Make(typ reflect.Type, arity int) exec.Builder {
 }
 
 // MapIndex instr
-func (p *iBuilder) MapIndex() exec.Builder {
+func (p *iBuilder) MapIndex(twoValue bool) exec.Builder {
 	((*Builder)(p)).MapIndex()
 	return p
 }

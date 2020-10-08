@@ -794,7 +794,8 @@ func TestRational(t *testing.T) {
 	`).Equal(big.NewRat(7, 3))
 }
 
-func TestIsNoExecCtx(t *testing.T) {
+// TODO #575
+func _TestIsNoExecCtx(t *testing.T) {
 	cltest.Expect(t, `
 	fns := make([]func() int, 3)
 	for i, x <- [3, 15, 777] {
@@ -875,6 +876,43 @@ func TestBadResult(t *testing.T) {
 	n, err := w.Write("hello")
 	println(n,err)
 	`, "", nil)
+}
+
+func TestUnderscore(t *testing.T) {
+	cltest.Expect(t, `
+	import "fmt"
+	var _ int
+	var _ string
+	_ = 100
+	_ = "hello"
+	_, a := 100,"world"
+	b, _ := fmt.Println("Hello World")
+	println(a,b)
+	`, "Hello World\nworld 12\n")
+}
+
+func TestBadUnderscore(t *testing.T) {
+	cltest.Expect(t, `
+	println(_)
+	`, "", nil)
+	cltest.Expect(t, `
+	_ := 100
+	`, "", nil)
+	cltest.Expect(t, `
+	_,_ := 100,"hello"
+	`, "", nil)
+	cltest.Expect(t, `
+	import "fmt"
+	_, _ := fmt.Println("Hello World")
+	`, "", nil)
+}
+
+func TestBadVar(t *testing.T) {
+	cltest.Expect(t, `
+	var a int
+	var a string`, "", nil)
+	cltest.Expect(t, `
+	a = 10`, "", nil)
 }
 
 type testData struct {
@@ -1230,7 +1268,6 @@ func TestMethodCases(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-// -----------------------------------------------------------------------------
 var testStarExprClauses = map[string]testData{
 	"star expr": {`
 				func A(a *int, c *struct {
@@ -1425,3 +1462,14 @@ func testScripts(t *testing.T, testName string, scripts map[string]testData) {
 }
 
 // -----------------------------------------------------------------------------
+
+func TestTwoValueExpr(t *testing.T) {
+	clause := `m:={2:3,1:2}
+			if v,ok:=m[m[1]];ok{
+				println(1,v,ok)
+			}
+			if v,ok:=m[m[3]];!ok{
+				println(3,v,ok)
+			}`
+	cltest.Expect(t, clause, "1 3 true\n3 0 false\n")
+}

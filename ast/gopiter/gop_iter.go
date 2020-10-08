@@ -45,12 +45,14 @@ func NewIter(container interface{}) (iter Iterator) {
 		iter = data.MapRange()
 	case reflect.Slice, reflect.Array, reflect.String:
 		iter = newSliceIter(reflect.Indirect(data))
-	case reflect.Struct:
+	case reflect.Ptr:
 		if v, ok := container.(Iterator); ok {
 			iter = v
 		} else {
 			log.Panicln("iter must be Iterator")
 		}
+	default:
+		log.Panicln("Iterator not support")
 	}
 	return
 }
