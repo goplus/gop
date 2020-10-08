@@ -677,9 +677,6 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 			}
 		} else { // reference type operator
 			ctx.out.RefTypeOp(kind, op)
-			if label != nil {
-				ctx.out.Label(label)
-			}
 		}
 	}
 }
