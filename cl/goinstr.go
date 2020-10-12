@@ -317,8 +317,7 @@ func igoComplex(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 		elem = exec.TyFloat64
 		typ = exec.TyComplex128
 	}
-	ctx.infer.PopN(2)
-	ctx.infer.Push(&goValue{typ})
+	ctx.infer.Ret(2, &goValue{typ})
 	return func() {
 		xExpr()
 		yExpr()
@@ -337,7 +336,31 @@ func igoReal(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	if ct != callExpr {
 		log.Panicf("%s discards result of %s\n", gCallTypes[ct], ctx.code(v))
 	}
-	panic("todo")
+	expr := compileExpr(ctx, v.Args[0])
+	in := ctx.infer.Get(-1).(iValue)
+	kind := in.Kind()
+	switch kind {
+	case spec.ConstUnboundInt, spec.ConstUnboundFloat, spec.ConstUnboundComplex, reflect.Complex64, reflect.Complex128:
+	default:
+		log.Fatalf("invalid argument %v (type %v) for real\n", ctx.code(v.Args[0]), kind)
+	}
+	var ctyp reflect.Type
+	var typ reflect.Type
+	if kind == reflect.Complex64 {
+		ctyp = exec.TyComplex64
+		typ = exec.TyFloat32
+	} else {
+		ctyp = exec.TyComplex128
+		typ = exec.TyFloat64
+	}
+	ctx.infer.Ret(1, &goValue{typ})
+	return func() {
+		expr()
+		if c, ok := in.(*constVal); ok {
+			c.bound(ctyp, ctx.out)
+		}
+		ctx.out.GoBuiltin(typ, exec.GobReal)
+	}
 }
 
 // func imag(c ComplexType) FloatType
@@ -345,7 +368,38 @@ func igoImag(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	if ct != callExpr {
 		log.Panicf("%s discards result of %s\n", gCallTypes[ct], ctx.code(v))
 	}
-	panic("todo")
+	if n := len(v.Args); n != 1 {
+		if n == 0 {
+			log.Panicln("missing argument to imag:", ctx.code(v))
+		} else {
+			log.Panicln("too many arguments to imag:", ctx.code(v))
+		}
+	}
+	expr := compileExpr(ctx, v.Args[0])
+	in := ctx.infer.Get(-1).(iValue)
+	kind := in.Kind()
+	switch kind {
+	case spec.ConstUnboundInt, spec.ConstUnboundFloat, spec.ConstUnboundComplex, reflect.Complex64, reflect.Complex128:
+	default:
+		log.Fatalf("invalid argument %v (type %v) for imag\n", ctx.code(v.Args[0]), kind)
+	}
+	var ctyp reflect.Type
+	var typ reflect.Type
+	if kind == reflect.Complex64 {
+		ctyp = exec.TyComplex64
+		typ = exec.TyFloat32
+	} else {
+		ctyp = exec.TyComplex128
+		typ = exec.TyFloat64
+	}
+	ctx.infer.Ret(1, &goValue{typ})
+	return func() {
+		expr()
+		if c, ok := in.(*constVal); ok {
+			c.bound(ctyp, ctx.out)
+		}
+		ctx.out.GoBuiltin(typ, exec.GobImag)
+	}
 }
 
 // func close(c chan<- Type)

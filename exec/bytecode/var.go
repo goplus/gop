@@ -146,8 +146,20 @@ func execGoBuiltin(i Instr, p *Context) {
 		} else {
 			p.Ret(2, complex(p.data[n-1].(float64), p.data[n-2].(float64)))
 		}
+	case GobImag:
+		if kind == reflect.Float32 {
+			p.data[n-1] = imag(p.data[n-1].(complex64))
+		} else {
+			p.data[n-1] = imag(p.data[n-1].(complex128))
+		}
+	case GobReal:
+		if kind == reflect.Float32 {
+			p.data[n-1] = real(p.data[n-1].(complex64))
+		} else {
+			p.data[n-1] = real(p.data[n-1].(complex128))
+		}
 	default:
-		log.Panicln("execGoBuiltin: todo -", i)
+		log.Panicln("execGoBuiltin: todo -", op)
 	}
 }
 
