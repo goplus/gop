@@ -21,6 +21,7 @@ import (
 	"reflect"
 
 	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/ast/spec"
 	"github.com/goplus/gop/exec.spec"
 )
 
@@ -280,7 +281,55 @@ func igoComplex(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	if ct != callExpr {
 		log.Panicf("%s discards result of %s\n", gCallTypes[ct], ctx.code(v))
 	}
-	panic("todo")
+	if n := len(v.Args); n != 2 {
+		if n < 2 {
+			log.Panicln("not enough arguments in call to", ctx.code(v))
+		} else {
+			log.Panicln("too many arguments in call to", ctx.code(v))
+		}
+	}
+	xExpr := compileExpr(ctx, v.Args[0])
+	yExpr := compileExpr(ctx, v.Args[1])
+	xin := ctx.infer.Get(-1).(iValue)
+	yin := ctx.infer.Get(-2).(iValue)
+	xkind := xin.Kind()
+	ykind := yin.Kind()
+	switch xkind {
+	case spec.ConstUnboundInt, spec.ConstUnboundFloat, reflect.Float32, reflect.Float64:
+	default:
+		log.Fatalf("invalid operation: %v (arguments have type %v, expected floating-point)\n", ctx.code(v), xkind)
+	}
+	switch ykind {
+	case spec.ConstUnboundInt, spec.ConstUnboundFloat, reflect.Float32, reflect.Float64:
+	default:
+		log.Fatalf("invalid operation: %v (arguments have type %v, expected floating-point)\n", ctx.code(v), ykind)
+	}
+	if (xkind == reflect.Float32 && ykind == reflect.Float64) ||
+		(xkind == reflect.Float64 && ykind == reflect.Float32) {
+		log.Fatalf("invalid operation: %v) (mismatched types %v and %v)", ctx.code(v), xkind, ykind)
+	}
+	var elem reflect.Type
+	var typ reflect.Type
+	if xkind == reflect.Float32 || ykind == reflect.Float32 {
+		elem = exec.TyFloat32
+		typ = exec.TyComplex64
+	} else {
+		elem = exec.TyFloat64
+		typ = exec.TyComplex128
+	}
+	ctx.infer.PopN(2)
+	ctx.infer.Push(&goValue{typ})
+	return func() {
+		xExpr()
+		yExpr()
+		if c, ok := xin.(*constVal); ok {
+			c.bound(elem, ctx.out)
+		}
+		if c, ok := yin.(*constVal); ok {
+			c.bound(elem, ctx.out)
+		}
+		ctx.out.GoBuiltin(typ, exec.GobComplex)
+	}
 }
 
 // func real(c ComplexType) FloatType
