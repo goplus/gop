@@ -331,16 +331,13 @@ func igoComplex(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	}
 }
 
-// func real(c ComplexType) FloatType
-func igoReal(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
-	if ct != callExpr {
-		log.Panicf("%s discards result of %s\n", gCallTypes[ct], ctx.code(v))
-	}
+// func real/imag(ComplexType) func
+func igoRealOrImag(ctx *blockCtx, v *ast.CallExpr, op exec.GoBuiltin) func() {
 	if n := len(v.Args); n != 1 {
 		if n == 0 {
-			log.Panicln("missing argument to real:", ctx.code(v))
+			log.Panicf("missing argument to %v: %v", op, ctx.code(v))
 		} else {
-			log.Panicln("too many arguments to real:", ctx.code(v))
+			log.Panicf("too many arguments to %v: %v", op, ctx.code(v))
 		}
 	}
 	expr := compileExpr(ctx, v.Args[0])
@@ -349,7 +346,7 @@ func igoReal(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	switch kind {
 	case spec.ConstUnboundInt, spec.ConstUnboundFloat, spec.ConstUnboundComplex, reflect.Complex64, reflect.Complex128:
 	default:
-		log.Panicf("invalid argument %v (type %v) for real\n", ctx.code(v.Args[0]), kind)
+		log.Panicf("invalid argument %v (type %v) for %v\n", ctx.code(v.Args[0]), kind, op)
 	}
 	var ctyp reflect.Type
 	var typ reflect.Type
@@ -366,8 +363,16 @@ func igoReal(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 		if c, ok := in.(*constVal); ok {
 			c.bound(ctyp, ctx.out)
 		}
-		ctx.out.GoBuiltin(typ, exec.GobReal)
+		ctx.out.GoBuiltin(typ, op)
 	}
+}
+
+// func real(c ComplexType) FloatType
+func igoReal(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
+	if ct != callExpr {
+		log.Panicf("%s discards result of %s\n", gCallTypes[ct], ctx.code(v))
+	}
+	return igoRealOrImag(ctx, v, exec.GobReal)
 }
 
 // func imag(c ComplexType) FloatType
@@ -375,38 +380,7 @@ func igoImag(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	if ct != callExpr {
 		log.Panicf("%s discards result of %s\n", gCallTypes[ct], ctx.code(v))
 	}
-	if n := len(v.Args); n != 1 {
-		if n == 0 {
-			log.Panicln("missing argument to imag:", ctx.code(v))
-		} else {
-			log.Panicln("too many arguments to imag:", ctx.code(v))
-		}
-	}
-	expr := compileExpr(ctx, v.Args[0])
-	in := ctx.infer.Get(-1).(iValue)
-	kind := in.Kind()
-	switch kind {
-	case spec.ConstUnboundInt, spec.ConstUnboundFloat, spec.ConstUnboundComplex, reflect.Complex64, reflect.Complex128:
-	default:
-		log.Panicf("invalid argument %v (type %v) for imag\n", ctx.code(v.Args[0]), kind)
-	}
-	var ctyp reflect.Type
-	var typ reflect.Type
-	if kind == reflect.Complex64 {
-		ctyp = exec.TyComplex64
-		typ = exec.TyFloat32
-	} else {
-		ctyp = exec.TyComplex128
-		typ = exec.TyFloat64
-	}
-	ctx.infer.Ret(1, &goValue{typ})
-	return func() {
-		expr()
-		if c, ok := in.(*constVal); ok {
-			c.bound(ctyp, ctx.out)
-		}
-		ctx.out.GoBuiltin(typ, exec.GobImag)
-	}
+	return igoRealOrImag(ctx, v, exec.GobImag)
 }
 
 // func close(c chan<- Type)
