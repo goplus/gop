@@ -771,3 +771,77 @@ func TestCopy2(t *testing.T) {
 		t.Fatal("copy failed")
 	}
 }
+
+func TestComplex1(t *testing.T) {
+	code := newBuilder().
+		Push(float64(1)).
+		Push(float64(2)).
+		GoBuiltin(exec.TyComplex128, exec.GobComplex).
+		Resolve()
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != complex128(1+2i) {
+		t.Fatal("complex(1,2)`, ret =", v)
+	}
+}
+
+func TestComplex2(t *testing.T) {
+	code := newBuilder().
+		Push(float32(1)).
+		Push(float32(2)).
+		GoBuiltin(exec.TyComplex64, exec.GobComplex).
+		Resolve()
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != complex64(1+2i) {
+		t.Fatal("complex(1,2)`, ret =", v)
+	}
+}
+
+func TestReal1(t *testing.T) {
+	code := newBuilder().
+		Push(complex128(1+2i)).
+		GoBuiltin(exec.TyFloat64, exec.GobReal).
+		Resolve()
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != real(complex128(1+2i)) || reflect.ValueOf(v).Kind() != reflect.Float64 {
+		t.Fatal("real(1+2i)`, ret =", v)
+	}
+}
+
+func TestReal2(t *testing.T) {
+	code := newBuilder().
+		Push(complex64(1+2i)).
+		GoBuiltin(exec.TyFloat32, exec.GobReal).
+		Resolve()
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != real(complex64(1+2i)) || reflect.ValueOf(v).Kind() != reflect.Float32 {
+		t.Fatal("real(complex64(1+2i))`, ret =", v)
+	}
+}
+
+func TestImag1(t *testing.T) {
+	code := newBuilder().
+		Push(complex128(1+2i)).
+		GoBuiltin(exec.TyFloat64, exec.GobImag).
+		Resolve()
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != imag(complex128(1+2i)) || reflect.ValueOf(v).Kind() != reflect.Float64 {
+		t.Fatal("imag(1+2i)`, ret =", v)
+	}
+}
+
+func TestImag2(t *testing.T) {
+	code := newBuilder().
+		Push(complex64(1+2i)).
+		GoBuiltin(exec.TyFloat32, exec.GobImag).
+		Resolve()
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != imag(complex64(1+2i)) || reflect.ValueOf(v).Kind() != reflect.Float32 {
+		t.Fatal("imag(complex64(1+2i))`, ret =", v)
+	}
+}
