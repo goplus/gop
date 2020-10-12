@@ -297,16 +297,16 @@ func igoComplex(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	switch xkind {
 	case spec.ConstUnboundInt, spec.ConstUnboundFloat, reflect.Float32, reflect.Float64:
 	default:
-		log.Fatalf("invalid operation: %v (arguments have type %v, expected floating-point)\n", ctx.code(v), xkind)
+		log.Panicf("invalid operation: %v (arguments have type %v, expected floating-point)\n", ctx.code(v), xkind)
 	}
 	switch ykind {
 	case spec.ConstUnboundInt, spec.ConstUnboundFloat, reflect.Float32, reflect.Float64:
 	default:
-		log.Fatalf("invalid operation: %v (arguments have type %v, expected floating-point)\n", ctx.code(v), ykind)
+		log.Panicf("invalid operation: %v (arguments have type %v, expected floating-point)\n", ctx.code(v), ykind)
 	}
 	if (xkind == reflect.Float32 && ykind == reflect.Float64) ||
 		(xkind == reflect.Float64 && ykind == reflect.Float32) {
-		log.Fatalf("invalid operation: %v) (mismatched types %v and %v)", ctx.code(v), xkind, ykind)
+		log.Panicf("invalid operation: %v) (mismatched types %v and %v)", ctx.code(v), ykind, xkind)
 	}
 	var elem reflect.Type
 	var typ reflect.Type
@@ -336,13 +336,20 @@ func igoReal(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	if ct != callExpr {
 		log.Panicf("%s discards result of %s\n", gCallTypes[ct], ctx.code(v))
 	}
+	if n := len(v.Args); n != 1 {
+		if n == 0 {
+			log.Panicln("missing argument to real:", ctx.code(v))
+		} else {
+			log.Panicln("too many arguments to real:", ctx.code(v))
+		}
+	}
 	expr := compileExpr(ctx, v.Args[0])
 	in := ctx.infer.Get(-1).(iValue)
 	kind := in.Kind()
 	switch kind {
 	case spec.ConstUnboundInt, spec.ConstUnboundFloat, spec.ConstUnboundComplex, reflect.Complex64, reflect.Complex128:
 	default:
-		log.Fatalf("invalid argument %v (type %v) for real\n", ctx.code(v.Args[0]), kind)
+		log.Panicf("invalid argument %v (type %v) for real\n", ctx.code(v.Args[0]), kind)
 	}
 	var ctyp reflect.Type
 	var typ reflect.Type
@@ -381,7 +388,7 @@ func igoImag(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	switch kind {
 	case spec.ConstUnboundInt, spec.ConstUnboundFloat, spec.ConstUnboundComplex, reflect.Complex64, reflect.Complex128:
 	default:
-		log.Fatalf("invalid argument %v (type %v) for imag\n", ctx.code(v.Args[0]), kind)
+		log.Panicf("invalid argument %v (type %v) for imag\n", ctx.code(v.Args[0]), kind)
 	}
 	var ctyp reflect.Type
 	var typ reflect.Type

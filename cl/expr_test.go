@@ -875,6 +875,45 @@ func TestComplex(t *testing.T) {
 	`, "2 float32\n")
 }
 
+func TestBadComplex(t *testing.T) {
+	cltest.Expect(t, `
+	complex(1)
+	`, "", nil)
+	cltest.Expect(t, `
+	complex(1,2,3)
+	`, "", nil)
+	cltest.Expect(t, `
+	complex(float32(1),float64(2))
+	`, "", nil)
+	cltest.Expect(t, `
+	func test() int { return 100 }
+	complex(test(),2)
+	`, "", nil)
+	cltest.Expect(t, `
+	complex(1,int(2))
+	`, "", nil)
+
+	cltest.Expect(t, `
+	real()
+	`, "", nil)
+	cltest.Expect(t, `
+	real(1,2)
+	`, "", nil)
+	cltest.Expect(t, `
+	real(int(1))
+	`, "", nil)
+
+	cltest.Expect(t, `
+	imag()
+	`, "", nil)
+	cltest.Expect(t, `
+	imag(1,2)
+	`, "", nil)
+	cltest.Expect(t, `
+	imag(int(1))
+	`, "", nil)
+}
+
 func TestResult(t *testing.T) {
 	cltest.Expect(t, `
 	import "fmt"
