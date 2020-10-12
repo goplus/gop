@@ -142,9 +142,9 @@ func execGoBuiltin(i Instr, p *Context) {
 		p.PopN(2)
 	case GobComplex:
 		if kind == reflect.Complex64 {
-			p.Ret(2, complex(p.data[n-1].(float32), p.data[n-2].(float32)))
+			p.Ret(2, complex(p.data[n-2].(float32), p.data[n-1].(float32)))
 		} else {
-			p.Ret(2, complex(p.data[n-1].(float64), p.data[n-2].(float64)))
+			p.Ret(2, complex(p.data[n-2].(float64), p.data[n-1].(float64)))
 		}
 	case GobImag:
 		if kind == reflect.Float32 {
