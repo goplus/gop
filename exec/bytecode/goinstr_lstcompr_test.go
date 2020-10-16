@@ -736,7 +736,7 @@ func TestCopy(t *testing.T) {
 		StoreVar(b).
 		LoadVar(b).
 		LoadVar(a).
-		GoBuiltin(nil, GobCopy).
+		GoBuiltin(reflect.SliceOf(TyInt), GobCopy).
 		LoadVar(b).
 		Resolve()
 
@@ -759,7 +759,7 @@ func TestCopy2(t *testing.T) {
 		StoreVar(a).
 		LoadVar(a).
 		Push("hello").
-		GoBuiltin(nil, GobCopy).
+		GoBuiltin(reflect.SliceOf(TyByte), GobCopy).
 		LoadVar(a).
 		Resolve()
 

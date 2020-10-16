@@ -419,10 +419,7 @@ func (p *Builder) AddrOp(kind Kind, op AddrOperator) *Builder {
 
 // GoBuiltin instr
 func (p *Builder) GoBuiltin(typ reflect.Type, op GoBuiltin) *Builder {
-	i := (int(op) << bitsKind)
-	if typ != nil {
-		i |= int(typ.Kind())
-	}
+	i := (int(op) << bitsKind) | int(typ.Kind())
 	p.code.data = append(p.code.data, (opGoBuiltin<<bitsOpShift)|uint32(i))
 	return p
 }
