@@ -120,7 +120,8 @@ func execAddrOp(i Instr, p *Context) {
 }
 
 func execGoBuiltin(i Instr, p *Context) {
-	op := i & bitsOperand
+	op := (i & bitsOperand) >> bitsKind
+	kind := Kind(i & ((1 << bitsKind) - 1))
 	n := len(p.data)
 	switch exec.GoBuiltin(op) {
 	case GobLen:
@@ -139,8 +140,26 @@ func execGoBuiltin(i Instr, p *Context) {
 		v := reflect.ValueOf(p.data[n-2])
 		v.SetMapIndex(key, reflect.Value{})
 		p.PopN(2)
+	case GobComplex:
+		if kind == reflect.Complex64 {
+			p.Ret(2, complex(p.data[n-2].(float32), p.data[n-1].(float32)))
+		} else {
+			p.Ret(2, complex(p.data[n-2].(float64), p.data[n-1].(float64)))
+		}
+	case GobImag:
+		if kind == reflect.Float32 {
+			p.data[n-1] = imag(p.data[n-1].(complex64))
+		} else {
+			p.data[n-1] = imag(p.data[n-1].(complex128))
+		}
+	case GobReal:
+		if kind == reflect.Float32 {
+			p.data[n-1] = real(p.data[n-1].(complex64))
+		} else {
+			p.data[n-1] = real(p.data[n-1].(complex128))
+		}
 	default:
-		log.Panicln("execGoBuiltin: todo -", i)
+		log.Panicln("execGoBuiltin: todo -", op)
 	}
 }
 
@@ -400,7 +419,8 @@ func (p *Builder) AddrOp(kind Kind, op AddrOperator) *Builder {
 
 // GoBuiltin instr
 func (p *Builder) GoBuiltin(typ reflect.Type, op GoBuiltin) *Builder {
-	p.code.data = append(p.code.data, (opGoBuiltin<<bitsOpShift)|uint32(op))
+	i := (int(op) << bitsKind) | int(typ.Kind())
+	p.code.data = append(p.code.data, (opGoBuiltin<<bitsOpShift)|uint32(i))
 	return p
 }
 
