@@ -599,6 +599,17 @@ func compileUnaryExpr(ctx *blockCtx, v *ast.UnaryExpr) func() {
 				ctx.takeAddr = false
 			}
 		}
+		if v.Op == token.ARROW { // <- x
+			vx := x.(iValue)
+			if vx.Type().Kind() == reflect.Chan {
+				ret := &goValue{t: vx.Type().Elem()}
+				ctx.infer.Ret(1, ret)
+				return func() {
+					exprX()
+					ctx.out.Recv()
+				}
+			}
+		}
 	}
 	xcons, xok := x.(*constVal)
 	if xok { // op <const>

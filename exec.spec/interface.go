@@ -385,6 +385,12 @@ type Builder interface {
 
 	// EndBlock instr
 	EndBlock() Builder
+
+	// Send instr
+	Send() Builder
+
+	// Recv instr
+	Recv() Builder
 }
 
 // Package represents a Go+ package.

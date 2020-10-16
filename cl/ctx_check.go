@@ -84,6 +84,8 @@ func isNoExecCtxStmt(ctx *blockCtx, stmt ast.Stmt) bool {
 		return isNoExecCtxCallExpr(ctx, v.Call)
 	case *ast.DeclStmt:
 		return isNoExecCtxDeclStmt(ctx, v)
+	case *ast.SendStmt:
+		return true
 	default:
 		log.Panicln("isNoExecCtxStmt failed: unknown -", reflect.TypeOf(v))
 	}

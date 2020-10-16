@@ -1740,3 +1740,16 @@ cnt := 0
 func TestBranchGotoStmt(t *testing.T) {
 	testScripts(t, "TestBranchGotoStmt", testBranchGotoClauses)
 }
+
+var testChannelClauses = map[string]testData{
+	"channel_basic": {`
+	c := make(chan int, 10)
+	c <- 3
+	d := <-c
+	println(d)	
+					`, "3\n", false},
+}
+
+func TestSendStmt(t *testing.T) {
+	testScripts(t, "TestSendStmt", testChannelClauses)
+}
