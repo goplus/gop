@@ -125,6 +125,10 @@ func (p *Builder) DefineVar(vars ...exec.Var) *Builder {
 		} else if v.Name() == "_" {
 			continue
 		}
+		pv := v.(*Var)
+		if strings.HasPrefix(pv.name, "_") {
+			pv.name = "_q" + pv.name
+		}
 		vlist = append(vlist, v)
 	}
 	p.addVar(vlist...)
@@ -157,7 +161,7 @@ func (p *Builder) Store(idx int32) *Builder {
 func (p *Builder) argIdent(idx int32) *ast.Ident {
 	i := len(p.cfun.in) + int(idx)
 	if i == -1 {
-		return Ident("recv")
+		return Ident("_recv")
 	}
 	return Ident(toArg(i))
 }

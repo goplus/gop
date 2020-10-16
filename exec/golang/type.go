@@ -44,6 +44,11 @@ func toStructField(p *Builder, f reflect.StructField) *ast.Field {
 	return field
 }
 
+// ChanType instr
+func ChanType(p *Builder, typ reflect.Type) *ast.ChanType {
+	return &ast.ChanType{Dir: ast.SEND | ast.RECV, Value: Ident(typ.Elem().String())}
+}
+
 // MapType instr
 func MapType(p *Builder, typ reflect.Type) *ast.MapType {
 	key := Type(p, typ.Key())
@@ -162,6 +167,7 @@ func Type(p *Builder, typ reflect.Type, actualTypes ...bool) ast.Expr {
 	case reflect.Interface:
 		return InterfaceType(p, typ)
 	case reflect.Chan:
+		return ChanType(p, typ)
 	case reflect.Struct:
 		return StructType(p, typ)
 	}
