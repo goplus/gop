@@ -52,4 +52,24 @@ func IsConstBound(kind ConstKind) bool {
 	return kind <= BigFloat
 }
 
+func KindName(kind ConstKind) string {
+	switch kind {
+	case BigInt:
+		return "bigint"
+	case BigRat:
+		return "bigrat"
+	case BigFloat:
+		return "bigfloat"
+	case ConstUnboundInt:
+		return "unbound int"
+	case ConstUnboundFloat:
+		return "unbound float"
+	case ConstUnboundComplex:
+		return "unbound complex"
+	case ConstUnboundPtr:
+		return "unbound ptr"
+	}
+	return kind.String()
+}
+
 // -----------------------------------------------------------------------------
