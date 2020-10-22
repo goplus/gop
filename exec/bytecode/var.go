@@ -158,6 +158,9 @@ func execGoBuiltin(i Instr, p *Context) {
 		} else {
 			p.data[n-1] = real(p.data[n-1].(complex128))
 		}
+	case GobClose:
+		v := reflect.ValueOf(p.Pop())
+		v.Close()
 	default:
 		log.Panicln("execGoBuiltin: todo -", op)
 	}
