@@ -1749,31 +1749,35 @@ var testChannelClauses = map[string]testData{
 	println(d)`, "3\n", false},
 }
 
+func TestSendStmt(t *testing.T) {
+	testScripts(t, "TestSendStmt", testChannelClauses)
+}
+
 var testCloseClauses = map[string]testData{
 	"close_channel": {`
 	c := make(chan int, 10)
 	close(c)
 	d := <-c
 	println(d)`, "0\n", false},
+	"go_close_channel": {`
+	c := make(chan int, 10)
+	go close(c)
+	printf("%v\n",<-c)`, "0\n", false},
 	"defer_close_channel": {`
 	c := make(chan int, 10)
 	defer close(c)
 	a := 10
-	printf("%T\n",a)`, "chan int\n", false},
-	"bad close non-chan": {`
+	printf("%T\n",a)`, "int\n", false},
+	"bad_close_non-chan": {`
 	close(0)`, "", true},
-	"bad close receive-only": {`
+	"bad_close_receive-only": {`
 	c := make(<-chan int)
 	close(c)`, "", true},
-	"bad close too arguments": {`
+	"bad_close_too_arguments": {`
 	c := make(chan int)
 	close(c,10)`, "", true},
-	"bad close missing argument": {`
+	"bad_close_missing_argument": {`
 	close()`, "", true},
-}
-
-func TestSendStmt(t *testing.T) {
-	testScripts(t, "TestSendStmt", testChannelClauses)
 }
 
 func TestCloseStmt(t *testing.T) {
