@@ -45,6 +45,14 @@ const (
 	ConstUnboundComplex = ConstKind(reflect.UnsafePointer + 6)
 	// ConstUnboundPtr - nil: unbound ptr
 	ConstUnboundPtr = ConstKind(reflect.UnsafePointer + 7)
+	// Slice - bound type: slice
+	Slice = reflect.Slice
+	// Map - bound type: map
+	Map = reflect.Map
+	// Chan - bound type: chan
+	Chan = reflect.Chan
+	// Ptr - bound type: ptr
+	Ptr = reflect.Ptr
 )
 
 // IsConstBound checks a const is bound or not.

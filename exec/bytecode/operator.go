@@ -141,20 +141,15 @@ const (
 	BigRat = exec.BigRat
 	// BigFloat type
 	BigFloat = exec.BigFloat
+	// Slice type
+	Slice = exec.Slice
+	// Map type
+	Map = exec.Map
+	// Chan type
+	Chan = exec.Chan
+	// Ptr type
+	Ptr = exec.Ptr
 )
-
-// -----------------------------------------------------------------------------
-
-var refTypeOps = [...]func(i Instr, p *Context){
-	(int(reflect.Slice) << bitsOperator) | int(OpEQ): execRefTypeEQ,
-	(int(reflect.Map) << bitsOperator) | int(OpEQ):   execRefTypeEQ,
-	(int(reflect.Chan) << bitsOperator) | int(OpEQ):  execRefTypeEQ,
-	(int(reflect.Ptr) << bitsOperator) | int(OpEQ):   execRefTypeEQ,
-	(int(reflect.Slice) << bitsOperator) | int(OpNE): execRefTypeNEQ,
-	(int(reflect.Map) << bitsOperator) | int(OpNE):   execRefTypeNEQ,
-	(int(reflect.Chan) << bitsOperator) | int(OpNE):  execRefTypeNEQ,
-	(int(reflect.Ptr) << bitsOperator) | int(OpNE):   execRefTypeNEQ,
-}
 
 // -------------------------------------------------------------------------
 func execRefTypeEQ(i Instr, p *Context) {

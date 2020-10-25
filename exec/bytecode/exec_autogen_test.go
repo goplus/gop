@@ -231,6 +231,17 @@ func _TestOpAutogen(t *testing.T) {
 
 func newKindValue(kind Kind) reflect.Value {
 	t := exec.TypeFromKind(kind)
+	if t == nil {
+		if kind == reflect.Slice {
+			t = reflect.SliceOf(TyEmptyInterface)
+		} else if kind == reflect.Map {
+			t = reflect.MapOf(TyEmptyInterface, TyEmptyInterface)
+		} else if kind == reflect.Chan {
+			t = reflect.ChanOf(reflect.BothDir, TyEmptyInterface)
+		} else if kind == reflect.Ptr {
+			t = TyUnsafePointer
+		}
+	}
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
