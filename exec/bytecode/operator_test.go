@@ -388,7 +388,7 @@ func TestRefTypeOp(t *testing.T) {
 		Push(1.0).
 		MakeMap(reflect.MapOf(TyString, TyFloat64), 2).
 		Push(nil).
-		RefTypeOp(reflect.Map, OpEQ).
+		BuiltinOp(reflect.Map, OpEQ).
 		Resolve()
 
 	ctx := NewContext(code)
@@ -406,7 +406,7 @@ func TestRefTypeOp1(t *testing.T) {
 		Push(1.0).
 		MakeMap(reflect.MapOf(TyString, TyFloat64), 2).
 		Push(nil).
-		RefTypeOp(reflect.Map, OpNE).
+		BuiltinOp(reflect.Map, OpNE).
 		Resolve()
 
 	ctx := NewContext(code)
@@ -424,7 +424,7 @@ func TestRefTypeOp2(t *testing.T) {
 		Push(3).
 		Push(4).
 		MakeArray(typData, 4).
-		RefTypeOp(reflect.Slice, OpEQ).
+		BuiltinOp(reflect.Slice, OpEQ).
 		Resolve()
 
 	ctx := NewContext(code)
@@ -443,7 +443,7 @@ func TestRefTypeOp3(t *testing.T) {
 		Push(3).
 		Push(4).
 		MakeArray(typData, 4).
-		RefTypeOp(reflect.Slice, OpNE).
+		BuiltinOp(reflect.Slice, OpNE).
 		Resolve()
 
 	ctx := NewContext(code)

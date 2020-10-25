@@ -188,9 +188,6 @@ type Builder interface {
 	// BuiltinOp instr
 	BuiltinOp(kind Kind, op Operator) Builder
 
-	// RefTypeOp instr
-	RefTypeOp(kind Kind, op Operator) Builder
-
 	// Label defines a label to jmp here.
 	Label(l Label) Builder
 
@@ -388,6 +385,12 @@ type Builder interface {
 
 	// EndBlock instr
 	EndBlock() Builder
+
+	// Send instr
+	Send() Builder
+
+	// Recv instr
+	Recv() Builder
 }
 
 // Package represents a Go+ package.

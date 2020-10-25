@@ -118,12 +118,6 @@ func (p *iBuilder) BuiltinOp(kind exec.Kind, op exec.Operator) exec.Builder {
 	return p
 }
 
-// BuiltinOp instr
-func (p *iBuilder) RefTypeOp(kind exec.Kind, op exec.Operator) exec.Builder {
-	((*Builder)(p)).BuiltinOp(kind, op)
-	return p
-}
-
 // Label defines a label to jmp here.
 func (p *iBuilder) Label(l exec.Label) exec.Builder {
 	((*Builder)(p)).Label(l.(*Label))
@@ -175,6 +169,18 @@ func (p *iBuilder) ForPhrase(f exec.ForPhrase, key, val exec.Var, hasExecCtx ...
 // Defer instr
 func (p *iBuilder) Defer() exec.Builder {
 	((*Builder)(p)).Defer()
+	return p
+}
+
+// Send instr
+func (p *iBuilder) Send() exec.Builder {
+	((*Builder)(p)).Send()
+	return p
+}
+
+// Recv instr
+func (p *iBuilder) Recv() exec.Builder {
+	((*Builder)(p)).Recv()
 	return p
 }
 

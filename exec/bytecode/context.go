@@ -223,7 +223,6 @@ var _execTable = [...]func(i Instr, p *Context){
 	opMake:          execMake,
 	opAppend:        execAppend,
 	opBuiltinOp:     execBuiltinOp,
-	opRefTypeOp:     execRefTypeOp,
 	opJmp:           execJmp,
 	opJmpIf:         execJmpIf,
 	opCaseNE:        execCaseNE,
@@ -261,6 +260,8 @@ var _execTable = [...]func(i Instr, p *Context){
 	opStoreField:    execStoreField,
 	opAddrField:     execAddrField,
 	opStruct:        execStruct,
+	opSend:          execSend,
+	opRecv:          execRecv,
 }
 
 var execTable []func(i Instr, p *Context)

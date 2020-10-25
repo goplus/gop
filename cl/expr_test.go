@@ -808,6 +808,112 @@ func _TestIsNoExecCtx(t *testing.T) {
 	println("values:", fns[0](), fns[1](), fns[2]())`, "values: 3 15 777\n")
 }
 
+func TestComplex(t *testing.T) {
+	cltest.Expect(t, `
+	c := complex(1,2)
+	printf("%v %T\n",c,c)
+	`, "(1+2i) complex128\n")
+	cltest.Expect(t, `
+	c := complex(float64(1),2)
+	printf("%v %T\n",c,c)
+	`, "(1+2i) complex128\n")
+	cltest.Expect(t, `
+	c := complex(float32(1),2)
+	printf("%v %T\n",c,c)
+	`, "(1+2i) complex64\n")
+	cltest.Expect(t, `
+	func test() float64 { return 1 }
+	c := complex(test(),2)
+	printf("%v %T\n",c,c)
+	`, "(1+2i) complex128\n")
+	cltest.Expect(t, `
+	func test() float32 { return 1 }
+	c := complex(test(),2)
+	printf("%v %T\n",c,c)
+	`, "(1+2i) complex64\n")
+
+	cltest.Expect(t, `
+	c := real(1+2i)
+	printf("%v %T\n",c,c)
+	`, "1 float64\n")
+	cltest.Expect(t, `
+	c := real(complex128(1+2i))
+	printf("%v %T\n",c,c)
+	`, "1 float64\n")
+	cltest.Expect(t, `
+	c := real(complex64(1+2i))
+	printf("%v %T\n",c,c)
+	`, "1 float32\n")
+	cltest.Expect(t, `
+	c := real(complex(1,2))
+	printf("%v %T\n",c,c)
+	`, "1 float64\n")
+	cltest.Expect(t, `
+	c := real(complex(1,float32(2)))
+	printf("%v %T\n",c,c)
+	`, "1 float32\n")
+
+	cltest.Expect(t, `
+	c := imag(1+2i)
+	printf("%v %T\n",c,c)
+	`, "2 float64\n")
+	cltest.Expect(t, `
+	c := imag(complex128(1+2i))
+	printf("%v %T\n",c,c)
+	`, "2 float64\n")
+	cltest.Expect(t, `
+	c := imag(complex64(1+2i))
+	printf("%v %T\n",c,c)
+	`, "2 float32\n")
+	cltest.Expect(t, `
+	c := imag(complex(1,2))
+	printf("%v %T\n",c,c)
+	`, "2 float64\n")
+	cltest.Expect(t, `
+	c := imag(complex(float32(1),2))
+	printf("%v %T\n",c,c)
+	`, "2 float32\n")
+}
+
+func TestBadComplex(t *testing.T) {
+	cltest.Expect(t, `
+	complex(1)
+	`, "", nil)
+	cltest.Expect(t, `
+	complex(1,2,3)
+	`, "", nil)
+	cltest.Expect(t, `
+	complex(float32(1),float64(2))
+	`, "", nil)
+	cltest.Expect(t, `
+	func test() int { return 100 }
+	complex(test(),2)
+	`, "", nil)
+	cltest.Expect(t, `
+	complex(1,int(2))
+	`, "", nil)
+
+	cltest.Expect(t, `
+	real()
+	`, "", nil)
+	cltest.Expect(t, `
+	real(1,2)
+	`, "", nil)
+	cltest.Expect(t, `
+	real(int(1))
+	`, "", nil)
+
+	cltest.Expect(t, `
+	imag()
+	`, "", nil)
+	cltest.Expect(t, `
+	imag(1,2)
+	`, "", nil)
+	cltest.Expect(t, `
+	imag(int(1))
+	`, "", nil)
+}
+
 func TestResult(t *testing.T) {
 	cltest.Expect(t, `
 	import "fmt"

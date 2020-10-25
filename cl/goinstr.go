@@ -21,6 +21,7 @@ import (
 	"reflect"
 
 	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/ast/spec"
 	"github.com/goplus/gop/exec.spec"
 )
 
@@ -280,7 +281,90 @@ func igoComplex(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	if ct != callExpr {
 		log.Panicf("%s discards result of %s\n", gCallTypes[ct], ctx.code(v))
 	}
-	panic("todo")
+	if n := len(v.Args); n != 2 {
+		if n < 2 {
+			log.Panicln("not enough arguments in call to", ctx.code(v))
+		} else {
+			log.Panicln("too many arguments in call to", ctx.code(v))
+		}
+	}
+	xExpr := compileExpr(ctx, v.Args[0])
+	yExpr := compileExpr(ctx, v.Args[1])
+	xin := ctx.infer.Get(-1).(iValue)
+	yin := ctx.infer.Get(-2).(iValue)
+	xkind := xin.Kind()
+	ykind := yin.Kind()
+	switch xkind {
+	case spec.ConstUnboundInt, spec.ConstUnboundFloat, reflect.Float32, reflect.Float64:
+	default:
+		log.Panicf("invalid operation: %v (arguments have type %v, expected floating-point)\n", ctx.code(v), xkind)
+	}
+	switch ykind {
+	case spec.ConstUnboundInt, spec.ConstUnboundFloat, reflect.Float32, reflect.Float64:
+	default:
+		log.Panicf("invalid operation: %v (arguments have type %v, expected floating-point)\n", ctx.code(v), ykind)
+	}
+	if (xkind == reflect.Float32 && ykind == reflect.Float64) ||
+		(xkind == reflect.Float64 && ykind == reflect.Float32) {
+		log.Panicf("invalid operation: %v) (mismatched types %v and %v)", ctx.code(v), ykind, xkind)
+	}
+	var elem reflect.Type
+	var typ reflect.Type
+	if xkind == reflect.Float32 || ykind == reflect.Float32 {
+		elem = exec.TyFloat32
+		typ = exec.TyComplex64
+	} else {
+		elem = exec.TyFloat64
+		typ = exec.TyComplex128
+	}
+	ctx.infer.Ret(2, &goValue{typ})
+	return func() {
+		xExpr()
+		yExpr()
+		if c, ok := xin.(*constVal); ok {
+			c.bound(elem, ctx.out)
+		}
+		if c, ok := yin.(*constVal); ok {
+			c.bound(elem, ctx.out)
+		}
+		ctx.out.GoBuiltin(typ, exec.GobComplex)
+	}
+}
+
+// func real/imag(ComplexType) func
+func igoRealOrImag(ctx *blockCtx, v *ast.CallExpr, op exec.GoBuiltin) func() {
+	if n := len(v.Args); n != 1 {
+		if n == 0 {
+			log.Panicf("missing argument to %v: %v", op, ctx.code(v))
+		} else {
+			log.Panicf("too many arguments to %v: %v", op, ctx.code(v))
+		}
+	}
+	expr := compileExpr(ctx, v.Args[0])
+	in := ctx.infer.Get(-1).(iValue)
+	kind := in.Kind()
+	switch kind {
+	case spec.ConstUnboundInt, spec.ConstUnboundFloat, spec.ConstUnboundComplex, reflect.Complex64, reflect.Complex128:
+	default:
+		log.Panicf("invalid argument %v (type %v) for %v\n", ctx.code(v.Args[0]), kind, op)
+	}
+	var ctyp reflect.Type
+	var typ reflect.Type
+	if kind == reflect.Complex64 {
+		ctyp = exec.TyComplex64
+		typ = exec.TyFloat32
+	} else {
+		ctyp = exec.TyComplex128
+		typ = exec.TyFloat64
+	}
+	ctx.infer.Ret(1, &goValue{typ})
+	return func() {
+		expr()
+		if c, ok := in.(*constVal); ok {
+			c.bound(ctyp, ctx.out)
+		}
+		ctx.out.GoBuiltin(typ, op)
+	}
 }
 
 // func real(c ComplexType) FloatType
@@ -288,7 +372,7 @@ func igoReal(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	if ct != callExpr {
 		log.Panicf("%s discards result of %s\n", gCallTypes[ct], ctx.code(v))
 	}
-	panic("todo")
+	return igoRealOrImag(ctx, v, exec.GobReal)
 }
 
 // func imag(c ComplexType) FloatType
@@ -296,7 +380,7 @@ func igoImag(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	if ct != callExpr {
 		log.Panicf("%s discards result of %s\n", gCallTypes[ct], ctx.code(v))
 	}
-	panic("todo")
+	return igoRealOrImag(ctx, v, exec.GobImag)
 }
 
 // func close(c chan<- Type)

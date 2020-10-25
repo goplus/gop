@@ -83,6 +83,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileGoStmt(ctx, v)
 	case *ast.DeclStmt:
 		compileDeclStmt(ctx, v)
+	case *ast.SendStmt:
+		compileSendStmt(ctx, v)
 	case *ast.EmptyStmt:
 		// do nothing
 	default:
@@ -595,6 +597,14 @@ func compileDeclStmt(ctx *blockCtx, expr *ast.DeclStmt) {
 			log.Panicln("tok:", d.Tok, "spec:", reflect.TypeOf(d.Specs).Elem())
 		}
 	}
+}
+
+func compileSendStmt(ctx *blockCtx, expr *ast.SendStmt) {
+	compileExpr(ctx, expr.Chan)()
+	compileExpr(ctx, expr.Value)()
+	checkType(ctx.infer.Get(-2).(iValue).Type().Elem(), ctx.infer.Get(-1), ctx.out)
+	ctx.out.Send()
+	ctx.infer.PopN(2)
 }
 
 func compileIncDecStmt(ctx *blockCtx, expr *ast.IncDecStmt) {

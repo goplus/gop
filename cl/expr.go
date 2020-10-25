@@ -599,6 +599,17 @@ func compileUnaryExpr(ctx *blockCtx, v *ast.UnaryExpr) func() {
 				ctx.takeAddr = false
 			}
 		}
+		if v.Op == token.ARROW { // <- x
+			vx := x.(iValue)
+			if vx.Type().Kind() == reflect.Chan {
+				ret := &goValue{t: vx.Type().Elem()}
+				ctx.infer.Ret(1, ret)
+				return func() {
+					exprX()
+					ctx.out.Recv()
+				}
+			}
+		}
 	}
 	xcons, xok := x.(*constVal)
 	if xok { // op <const>
@@ -670,13 +681,9 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 		}
 		exprY()
 		checkBinaryOp(kind, op, x, y, ctx.out)
-		if exec.TypeFromKind(kind) != nil { // buildin type operator
-			ctx.out.BuiltinOp(kind, op)
-			if label != nil {
-				ctx.out.Label(label)
-			}
-		} else { // reference type operator
-			ctx.out.RefTypeOp(kind, op)
+		ctx.out.BuiltinOp(kind, op)
+		if label != nil {
+			ctx.out.Label(label)
 		}
 	}
 }
