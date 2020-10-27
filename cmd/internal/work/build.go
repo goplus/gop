@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-// NewBuild creates a Build struct which can build from goc temporary directory,
+// NewBuild creates a Build struct which can build from gop temporary directory,
 // and generate binary in current working directory
 func NewBuild(buildflags string, args []string, workingDir string, outputDir string) (*Build, error) {
 	b := &Build{
