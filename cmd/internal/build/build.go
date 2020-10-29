@@ -14,7 +14,7 @@
  limitations under the License.
 */
 
-// Package gengo implements the ``gop build'' command.
+// Package build implements the ``gop build'' command.
 package build
 
 import (

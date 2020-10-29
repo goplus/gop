@@ -14,7 +14,7 @@
  limitations under the License.
 */
 
-// Package gengo implements the ``gop install'' command.
+// Package install implements the ``gop install'' command.
 package install
 
 import (
