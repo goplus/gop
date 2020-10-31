@@ -1747,7 +1747,7 @@ var testChannelClauses = map[string]testData{
 	c <- 3
 	d := <-c
 	println(d)	
-					`, "3\n", false},
+	`, "3\n", false},
 }
 
 func TestSendStmt(t *testing.T) {
