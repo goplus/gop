@@ -155,7 +155,14 @@ func execMake(i Instr, p *Context) {
 		if arity > 0 {
 			buffer = p.Get(-1).(int)
 		}
-		p.Ret(arity, reflect.MakeChan(typ, buffer).Interface())
+		var result interface{}
+		if typ.ChanDir() == reflect.BothDir {
+			result = reflect.MakeChan(typ, buffer).Interface()
+		} else {
+			tt := reflect.ChanOf(reflect.BothDir, typ.Elem())
+			result = reflect.MakeChan(tt, buffer).Convert(typ).Interface()
+		}
+		p.Ret(arity, result)
 	default:
 		panic("make: unexpected type")
 	}

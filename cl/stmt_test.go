@@ -1747,9 +1747,76 @@ var testChannelClauses = map[string]testData{
 	c <- 3
 	d := <-c
 	println(d)	
-					`, "3\n", false},
+	`, "3\n", false},
 }
 
 func TestSendStmt(t *testing.T) {
 	testScripts(t, "TestSendStmt", testChannelClauses)
+}
+
+var testChannelConvClauses = map[string]testData{
+	"channel_both_both": {`
+	func test(chan int){
+		println(3)
+	}
+	c := make(chan int, 10)
+	test(c)`, "3\n", false},
+	"channel_both_recv": {`
+	func test(<-chan int){
+		println(3)
+	}
+	c := make(chan int, 10)
+	test(c)`, "3\n", false},
+	"channel_both_send": {`
+	func test(<-chan int){
+		println(3)
+	}
+	c := make(chan int, 10)
+	test(c)`, "3\n", false},
+	"channel_bad_recv_both": {`
+	func test(chan int){
+		println(3)
+	}
+	c := make(<-chan int, 10)
+	test(c)`, "", true},
+	"channel_bad_recv_send": {`
+	func test(chan<- int){
+		println(3)
+	}
+	c := make(<-chan int, 10)
+	test(c)`, "", true},
+	"channel_bad_send_both": {`
+	func test(chan int){
+		println(3)
+	}
+	func test2(ch chan<- int) {
+		test(ch)
+	}
+	c := make(chan int, 10)
+	test2(c)`, "", true},
+	"channel_bad_send_recv": {`
+	func test(<-chan int){
+		println(3)
+	}
+	func test2(ch chan<- int) {
+		test(ch)
+	}
+	c := make(chan int, 10)
+	test2(c)`, "", true},
+	"channel_bad_type1": {`
+	func test(int){
+		println(3)
+	}
+	c := make(chan int, 10)
+	test(c)`, "", true},
+	"channel_bad_type2": {`
+	func test(chan int){
+		println(3)
+	}
+	c := make([]int,10)
+	test(c)`, "", true},
+}
+
+func TestChannelConvStmt(t *testing.T) {
+	testScripts(t, "TestSendStmt", testChannelConvClauses)
 }

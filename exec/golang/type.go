@@ -46,7 +46,16 @@ func toStructField(p *Builder, f reflect.StructField) *ast.Field {
 
 // ChanType instr
 func ChanType(p *Builder, typ reflect.Type) *ast.ChanType {
-	return &ast.ChanType{Dir: ast.SEND | ast.RECV, Value: Ident(typ.Elem().String())}
+	var dir ast.ChanDir
+	switch typ.ChanDir() {
+	case reflect.RecvDir:
+		dir = ast.RECV
+	case reflect.SendDir:
+		dir = ast.SEND
+	case reflect.BothDir:
+		dir = ast.RECV | ast.SEND
+	}
+	return &ast.ChanType{Dir: dir, Value: Ident(typ.Elem().String())}
 }
 
 // MapType instr
