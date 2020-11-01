@@ -404,6 +404,28 @@ func (p *Builder) Defer() *Builder {
 	return p
 }
 
+// Send instr
+func (p *Builder) Send() *Builder {
+	args := p.rhs.GetArgs(2)
+	p.rhs.PopN(2)
+	stmt := &ast.SendStmt{
+		Chan:  args[0].(ast.Expr),
+		Value: args[1].(ast.Expr),
+	}
+	p.emitStmt(stmt)
+	return p
+}
+
+// Recv instr
+func (p *Builder) Recv() *Builder {
+	expr := &ast.UnaryExpr{
+		Op: token.ARROW,
+		X:  p.rhs.Get(-1).(ast.Expr),
+	}
+	p.rhs.Ret(1, expr)
+	return p
+}
+
 // Go instr
 func (p *Builder) Go() *Builder {
 	p.inDeferOrGo = callByGo

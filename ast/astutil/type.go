@@ -46,6 +46,20 @@ func toField(f reflect.StructField) *ast.Field {
 	return field
 }
 
+// ChanType instr
+func ChanType(typ reflect.Type) *ast.ChanType {
+	var dir ast.ChanDir
+	switch typ.ChanDir() {
+	case reflect.RecvDir:
+		dir = ast.RECV
+	case reflect.SendDir:
+		dir = ast.SEND
+	case reflect.BothDir:
+		dir = ast.RECV | ast.SEND
+	}
+	return &ast.ChanType{Dir: dir, Value: Ident(typ.Elem().String())}
+}
+
 // MapType instr
 func MapType(typ reflect.Type) *ast.MapType {
 	key := Type(typ.Key())
@@ -158,6 +172,7 @@ func Type(typ reflect.Type) ast.Expr {
 	case reflect.Interface:
 		return InterfaceType(typ)
 	case reflect.Chan:
+		return ChanType(typ)
 	case reflect.Struct:
 		return StructType(typ)
 	}

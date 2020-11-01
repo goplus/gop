@@ -7,10 +7,12 @@ import (
 	"strings"
 
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/cmd/internal/build"
 	"github.com/goplus/gop/cmd/internal/export"
 	"github.com/goplus/gop/cmd/internal/gengo"
 	"github.com/goplus/gop/cmd/internal/gopfmt"
 	"github.com/goplus/gop/cmd/internal/help"
+	"github.com/goplus/gop/cmd/internal/install"
 	"github.com/goplus/gop/cmd/internal/repl"
 	"github.com/goplus/gop/cmd/internal/run"
 
@@ -30,6 +32,8 @@ func init() {
 		gopfmt.Cmd,
 		export.Cmd,
 		repl.Cmd,
+		install.Cmd,
+		build.Cmd,
 	}
 }
 

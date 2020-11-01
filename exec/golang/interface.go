@@ -172,6 +172,18 @@ func (p *iBuilder) Defer() exec.Builder {
 	return p
 }
 
+// Send instr
+func (p *iBuilder) Send() exec.Builder {
+	((*Builder)(p)).Send()
+	return p
+}
+
+// Recv instr
+func (p *iBuilder) Recv() exec.Builder {
+	((*Builder)(p)).Recv()
+	return p
+}
+
 // Go instr
 func (p *iBuilder) Go() exec.Builder {
 	((*Builder)(p)).Go()

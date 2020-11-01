@@ -141,9 +141,54 @@ const (
 	BigRat = exec.BigRat
 	// BigFloat type
 	BigFloat = exec.BigFloat
+	// Slice type
+	Slice = exec.Slice
+	// Map type
+	Map = exec.Map
+	// Chan type
+	Chan = exec.Chan
+	// Ptr type
+	Ptr = exec.Ptr
 )
 
-// -----------------------------------------------------------------------------
+// -------------------------------------------------------------------------
+func execRefTypeEQ(i Instr, p *Context) {
+	n := len(p.data)
+	arg1 := reflect.ValueOf(p.data[n-2])
+	arg2 := reflect.ValueOf(p.data[n-1])
+	if p.data[n-1] == nil && (arg1.Type().Kind() == reflect.Slice ||
+		arg1.Type().Kind() == reflect.Map ||
+		arg1.Type().Kind() == reflect.Chan ||
+		arg1.Type().Kind() == reflect.Ptr) {
+		p.Ret(2, arg1.IsNil())
+	}
+	if p.data[n-2] == nil && (arg2.Type().Kind() == reflect.Slice ||
+		arg2.Type().Kind() == reflect.Map ||
+		arg2.Type().Kind() == reflect.Chan ||
+		arg2.Type().Kind() == reflect.Ptr) {
+		p.Ret(2, arg2.IsNil())
+	}
+}
+
+func execRefTypeNEQ(i Instr, p *Context) {
+	n := len(p.data)
+	arg1 := reflect.ValueOf(p.data[n-2])
+	arg2 := reflect.ValueOf(p.data[n-1])
+	if p.data[n-1] == nil && (arg1.Type().Kind() == reflect.Slice ||
+		arg1.Type().Kind() == reflect.Map ||
+		arg1.Type().Kind() == reflect.Chan ||
+		arg1.Type().Kind() == reflect.Ptr) {
+		p.Ret(2, !arg1.IsNil())
+	}
+	if p.data[n-2] == nil && (arg2.Type().Kind() == reflect.Slice ||
+		arg2.Type().Kind() == reflect.Map ||
+		arg2.Type().Kind() == reflect.Chan ||
+		arg2.Type().Kind() == reflect.Ptr) {
+		p.Ret(2, !arg2.IsNil())
+	}
+}
+
+// -------------------------------------------------------------------------
 
 func toUint(v interface{}) uint {
 	switch n := v.(type) {

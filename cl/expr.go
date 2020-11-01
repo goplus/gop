@@ -601,6 +601,17 @@ func compileUnaryExpr(ctx *blockCtx, v *ast.UnaryExpr) func() {
 				ctx.takeAddr = false
 			}
 		}
+		if v.Op == token.ARROW { // <- x
+			vx := x.(iValue)
+			if vx.Type().Kind() == reflect.Chan {
+				ret := &goValue{t: vx.Type().Elem()}
+				ctx.infer.Ret(1, ret)
+				return func() {
+					exprX()
+					ctx.out.Recv()
+				}
+			}
+		}
 	}
 	xcons, xok := x.(*constVal)
 	if xok { // op <const>
@@ -787,7 +798,26 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 		}
 		return func() {
 			if vfn.isMethod != 0 {
-				compileExpr(ctx, v.Fun.(*ast.SelectorExpr).X)()
+				exprX := compileExpr(ctx, v.Fun.(*ast.SelectorExpr).X)
+				recv := ctx.infer.Get(-1).(*goValue)
+				if vfn.Type().In(0).Kind() != reflect.Ptr {
+					exprX()
+					if recv.Kind() == reflect.Ptr {
+						recv.t = recv.t.Elem()
+						ctx.infer.Ret(1, recv)
+						ctx.out.AddrOp(recv.t.Kind(), exec.OpAddrVal) // Ptr => Elem()
+					}
+				} else {
+					if recv.Kind() == reflect.Ptr {
+						exprX()
+					} else {
+						ctx.checkLoadAddr = true
+						exprX()
+						ctx.checkLoadAddr = false
+						recv.t = reflect.PtrTo(recv.t)
+						ctx.infer.Ret(1, recv)
+					}
+				}
 			}
 			for _, arg := range v.Args {
 				compileExpr(ctx, arg)()
@@ -1349,6 +1379,14 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, compileByCallExpr b
 			pkg = bytecode.NewGoPackage(pkgPath)
 		} else {
 			addr, kind, found = pkg.Find(fnname)
+			if !found {
+				cn := 0
+				if n == 0 {
+					cn = 1
+				}
+				_, cm := normalizeMethod(cn, t, name)
+				addr, kind, found = pkg.Find(cm)
+			}
 		}
 		if !found {
 			addr, kind = registerMethod(pkg, fnname, vx.t, name, method.Func, method.Type)
