@@ -796,7 +796,26 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 		}
 		return func() {
 			if vfn.isMethod != 0 {
-				compileExpr(ctx, v.Fun.(*ast.SelectorExpr).X)()
+				exprX := compileExpr(ctx, v.Fun.(*ast.SelectorExpr).X)
+				recv := ctx.infer.Get(-1).(*goValue)
+				if vfn.Type().In(0).Kind() != reflect.Ptr {
+					exprX()
+					if recv.Kind() == reflect.Ptr {
+						recv.t = recv.t.Elem()
+						ctx.infer.Ret(1, recv)
+						ctx.out.AddrOp(recv.t.Kind(), exec.OpAddrVal) // Ptr => Elem()
+					}
+				} else {
+					if recv.Kind() == reflect.Ptr {
+						exprX()
+					} else {
+						ctx.checkLoadAddr = true
+						exprX()
+						ctx.checkLoadAddr = false
+						recv.t = reflect.PtrTo(recv.t)
+						ctx.infer.Ret(1, recv)
+					}
+				}
 			}
 			for _, arg := range v.Args {
 				compileExpr(ctx, arg)()
@@ -1350,6 +1369,14 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, compileByCallExpr b
 			log.Panicln("compileSelectorExpr failed: package not found -", pkgPath)
 		}
 		addr, kind, ok := pkg.Find(method)
+		if !ok {
+			cn := 0
+			if n == 0 {
+				cn = 1
+			}
+			_, cm := normalizeMethod(cn, t, name)
+			addr, kind, ok = pkg.Find(cm)
+		}
 		if !ok {
 			log.Panicln("compileSelectorExpr: method not found -", method)
 		}

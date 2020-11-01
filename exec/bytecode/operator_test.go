@@ -17,6 +17,7 @@
 package bytecode
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -374,6 +375,81 @@ func TestCallBuiltinOp(t *testing.T) {
 	ret = CallBuiltinOp(Int, OpAdd, 5, 6)
 	if ret.(int) != 11 {
 		t.Fatal("CallBuiltinOp failed: ret =", ret)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+func TestRefTypeOp(t *testing.T) {
+	code := newBuilder().
+		Push("Hello").
+		Push(3.2).
+		Push("wyvern").
+		Push(1.0).
+		MakeMap(reflect.MapOf(TyString, TyFloat64), 2).
+		Push(nil).
+		BuiltinOp(reflect.Map, OpEQ).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != false {
+		t.Fatal("ref type of map is not false", v)
+	}
+}
+
+func TestRefTypeOp1(t *testing.T) {
+	code := newBuilder().
+		Push("Hello").
+		Push(3.2).
+		Push("wyvern").
+		Push(1.0).
+		MakeMap(reflect.MapOf(TyString, TyFloat64), 2).
+		Push(nil).
+		BuiltinOp(reflect.Map, OpNE).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != true {
+		t.Fatal("ref type of map is not false", v)
+	}
+}
+func TestRefTypeOp2(t *testing.T) {
+	typData := reflect.SliceOf(TyInt)
+	code := newBuilder().
+		Push(nil).
+		Push(1).
+		Push(2).
+		Push(3).
+		Push(4).
+		MakeArray(typData, 4).
+		BuiltinOp(reflect.Slice, OpEQ).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != false {
+		t.Fatal("ref type of map is not false", v)
+	}
+}
+
+func TestRefTypeOp3(t *testing.T) {
+	typData := reflect.SliceOf(TyInt)
+	code := newBuilder().
+		Push(nil).
+		Push(1).
+		Push(2).
+		Push(3).
+		Push(4).
+		MakeArray(typData, 4).
+		BuiltinOp(reflect.Slice, OpNE).
+		Resolve()
+
+	ctx := NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := checkPop(ctx); v != true {
+		t.Fatal("ref type of map is not false", v)
 	}
 }
 

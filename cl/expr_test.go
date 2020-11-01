@@ -808,6 +808,31 @@ func _TestIsNoExecCtx(t *testing.T) {
 	println("values:", fns[0](), fns[1](), fns[2]())`, "values: 3 15 777\n")
 }
 
+func TestPkgMethod(t *testing.T) {
+	cltest.Expect(t, `
+	import "bytes"
+	buf := bytes.NewBuffer([]byte("hello"))
+	println(buf.String())
+	`, "hello\n")
+	cltest.Expect(t, `
+	import "bytes"
+	var buf bytes.Buffer
+	buf.Write([]byte("hello"))
+	println(buf.String())
+	`, "hello\n")
+	cltest.Expect(t, `
+	import "reflect"
+	v := reflect.ValueOf(100)
+	println(v.Kind())
+	`, "int\n")
+	cltest.Expect(t, `
+	import "reflect"
+	v := reflect.ValueOf(100)
+	p := &v
+	println(p.Kind())
+	`, "int\n")
+}
+
 func TestComplex(t *testing.T) {
 	cltest.Expect(t, `
 	c := complex(1,2)
@@ -1483,6 +1508,77 @@ var testStarExprClauses = map[string]testData{
 
 func TestStarExpr(t *testing.T) {
 	testScripts(t, "TestStarExpr", testStarExprClauses)
+}
+
+// -----------------------------------------------------------------------------
+var testRefTypeClauses = map[string]testData{
+	"ref type": {`
+	func foo() []int {
+		return make([]int, 10)
+	}
+	
+	func foo1() map[int]int {
+		return make(map[int]int, 10)
+	}
+	
+	func foo2() chan int {
+		return make(chan int, 10)
+	}
+	a := foo()
+	if a != nil {
+		println("foo")
+	}
+	
+	a1 := foo1()
+	if a1 != nil {
+		println("foo1")
+	}
+	a2 := foo2()
+	if a2 != nil {
+		println("foo2")
+	}
+						`, "foo\nfoo1\nfoo2\n", false},
+	"ref type 2": {`
+	func foo() []int {
+		return nil
+	}
+	
+	func foo1() map[int]int {
+		return make(map[int]int, 10)
+	}
+	
+	func foo2() chan int {
+		return make(chan int, 10)
+	}
+
+	func foo3() *int {
+		return nil
+	}
+	
+	println(foo() == nil)
+	println(nil == foo())
+	println(foo() != nil)
+	println(nil != foo())
+	
+	println(foo1() == nil)
+	println(nil == foo1())
+	println(foo1() != nil)
+	println(nil != foo1())
+	
+	println(foo2() == nil)
+	println(nil == foo2())
+	println(foo2() != nil)
+	println(nil != foo2())
+	
+	println(foo3() == nil)
+	println(nil == foo3())
+	println(foo3() != nil)
+	println(nil != foo3())
+						`, "true\ntrue\nfalse\nfalse\nfalse\nfalse\ntrue\ntrue\nfalse\nfalse\ntrue\ntrue\ntrue\ntrue\nfalse\nfalse\n", false},
+}
+
+func TestRefType(t *testing.T) {
+	testScripts(t, "TestRefType", testRefTypeClauses)
 }
 
 func testScripts(t *testing.T, testName string, scripts map[string]testData) {
