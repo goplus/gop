@@ -1356,10 +1356,14 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, compileByCallExpr b
 			}
 		}
 
-		method, ok := vx.t.MethodByName(name)
+		vt := vx.t
+		if vt.Kind() == reflect.Struct {
+			vt = reflect.PtrTo(vt)
+		}
+		method, ok := vt.MethodByName(name)
 		if !ok && isLower(name) {
 			name = strings.Title(name)
-			method, ok = vx.t.MethodByName(name)
+			method, ok = vt.MethodByName(name)
 			if ok {
 				v.Sel.Name = name
 				autoCall = !compileByCallExpr
