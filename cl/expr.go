@@ -1250,6 +1250,16 @@ func funcToClosure(ctx *blockCtx, fun ast.Expr, ftyp *ast.FuncType) *funcDecl {
 	return newFuncDecl("", nil, typ, body, funCtx)
 }
 
+func findMethod(t reflect.Type, name string) (method reflect.Method, toptr bool, found bool) {
+	method, found = t.MethodByName(name)
+	if !found && t.Kind() == reflect.Struct {
+		t = reflect.PtrTo(t)
+		toptr = true
+		method, found = t.MethodByName(name)
+	}
+	return
+}
+
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, compileByCallExpr bool) func() {
 	exprX := compileExpr(ctx, v.X)
 	if v.Sel == nil {
@@ -1355,24 +1365,19 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, compileByCallExpr b
 				}
 			}
 		}
-
-		vt := vx.t
-		if vt.Kind() == reflect.Struct {
-			vt = reflect.PtrTo(vt)
-		}
-		method, ok := vt.MethodByName(name)
+		method, toptr, ok := findMethod(vx.t, name)
 		if !ok && isLower(name) {
 			name = strings.Title(name)
-			method, ok = vt.MethodByName(name)
-			if ok {
+			if method, toptr, ok = findMethod(vx.t, name); ok {
 				v.Sel.Name = name
 				autoCall = !compileByCallExpr
-			} else {
-				log.Panicln("compileSelectorExpr: symbol not found -", v.Sel.Name)
 			}
 		}
 		if !ok {
-			log.Panicln("compileSelectorExpr: symbol not found -", v.Sel.Name)
+			log.Panicln("compileSelectorExpr: symbol not found -", vx.t, v.Sel.Name)
+		}
+		if toptr {
+			n = 1
 		}
 		pkgPath, fnname := normalizeMethod(n, t, name)
 		pkg := ctx.FindGoPackage(pkgPath)
@@ -1383,14 +1388,6 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, compileByCallExpr b
 			pkg = bytecode.NewGoPackage(pkgPath)
 		} else {
 			addr, kind, found = pkg.Find(fnname)
-			if !found {
-				cn := 0
-				if n == 0 {
-					cn = 1
-				}
-				_, cm := normalizeMethod(cn, t, name)
-				addr, kind, found = pkg.Find(cm)
-			}
 		}
 		if !found {
 			addr, kind = registerMethod(pkg, fnname, vx.t, name, method.Func, method.Type)
