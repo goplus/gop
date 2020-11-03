@@ -833,6 +833,20 @@ func TestPkgMethod(t *testing.T) {
 	`, "int\n")
 }
 
+func TestPkgMethodBadCall(t *testing.T) {
+	cltest.Expect(t, `
+	import "bytes"
+	buf := bytes.NewBuffer([]byte("hello"))
+	println((&buf).String())
+	`, "", nil)
+	cltest.Expect(t, `
+	import "reflect"
+	v := reflect.ValueOf(100)
+	p := &v
+	println((&p).Kind())
+	`, "", nil)
+}
+
 func TestComplex(t *testing.T) {
 	cltest.Expect(t, `
 	c := complex(1,2)

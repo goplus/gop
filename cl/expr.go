@@ -1354,31 +1354,34 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, compileByCallExpr b
 			}
 		}
 
-		if _, ok := vx.t.MethodByName(name); !ok && isLower(name) {
+		_, toptr, ok := findMethod(t, name)
+		if !ok && isLower(name) {
 			name = strings.Title(name)
-			if _, ok = vx.t.MethodByName(name); ok {
+			if _, toptr, ok = findMethod(t, name); ok {
 				v.Sel.Name = name
 				autoCall = !compileByCallExpr
-			} else {
-				log.Panicln("compileSelectorExpr: symbol not found -", v.Sel.Name)
 			}
 		}
-		pkgPath, method := normalizeMethod(n, t, name)
+		if !ok {
+			log.Panicln("compileSelectorExpr: symbol not found -", vx.t, v.Sel.Name)
+		}
+		if n > 1 {
+			log.Panicf("calling method %v with receiver %v (type %v) requires explicit dereference", v.Sel.Name, ctx.code(v.X), vx.t)
+		}
+		pkgPath := t.PkgPath()
 		pkg := ctx.FindGoPackage(pkgPath)
 		if pkg == nil {
 			log.Panicln("compileSelectorExpr failed: package not found -", pkgPath)
 		}
-		addr, kind, ok := pkg.Find(method)
-		if !ok {
-			cn := 0
-			if n == 0 {
-				cn = 1
-			}
-			_, cm := normalizeMethod(cn, t, name)
-			addr, kind, ok = pkg.Find(cm)
+		var fnname string
+		if toptr {
+			fnname = "(*" + t.Name() + ")." + name
+		} else {
+			fnname = "(" + t.Name() + ")." + name
 		}
+		addr, kind, ok := pkg.Find(fnname)
 		if !ok {
-			log.Panicln("compileSelectorExpr: method not found -", method)
+			log.Panicln("compileSelectorExpr: method not found -", fnname)
 		}
 		if !compileByCallExpr && !autoCall {
 			ctx.infer.Pop()
@@ -1442,12 +1445,14 @@ func countPtr(t reflect.Type) (int, reflect.Type) {
 	return n, t
 }
 
-func normalizeMethod(n int, t reflect.Type, name string) (pkgPath string, formalName string) {
-	typName := t.Name()
-	if n > 0 {
-		typName = strings.Repeat("*", n) + typName
+func findMethod(t reflect.Type, name string) (method reflect.Method, toptr bool, found bool) {
+	method, found = t.MethodByName(name)
+	if !found && t.Kind() == reflect.Struct {
+		t = reflect.PtrTo(t)
+		toptr = true
+		method, found = t.MethodByName(name)
 	}
-	return t.PkgPath(), "(" + typName + ")." + name
+	return
 }
 
 // -----------------------------------------------------------------------------
