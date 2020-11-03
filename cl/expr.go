@@ -1250,16 +1250,6 @@ func funcToClosure(ctx *blockCtx, fun ast.Expr, ftyp *ast.FuncType) *funcDecl {
 	return newFuncDecl("", nil, typ, body, funCtx)
 }
 
-func findMethod(t reflect.Type, name string) (method reflect.Method, toptr bool, found bool) {
-	method, found = t.MethodByName(name)
-	if !found && t.Kind() == reflect.Struct {
-		t = reflect.PtrTo(t)
-		toptr = true
-		method, found = t.MethodByName(name)
-	}
-	return
-}
-
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, compileByCallExpr bool) func() {
 	exprX := compileExpr(ctx, v.X)
 	if v.Sel == nil {
@@ -1365,10 +1355,10 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, compileByCallExpr b
 				}
 			}
 		}
-		method, toptr, ok := findMethod(vx.t, name)
+		method, toptr, ok := findMethod(t, name)
 		if !ok && isLower(name) {
 			name = strings.Title(name)
-			if method, toptr, ok = findMethod(vx.t, name); ok {
+			if method, toptr, ok = findMethod(t, name); ok {
 				v.Sel.Name = name
 				autoCall = !compileByCallExpr
 			}
@@ -1379,11 +1369,20 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, compileByCallExpr b
 		if toptr {
 			n = 1
 		}
-		pkgPath, fnname := normalizeMethod(n, t, name)
-		pkg := ctx.FindGoPackage(pkgPath)
+		if n > 1 {
+			log.Panicf("calling method %v with receiver %v (type %v) requires explicit dereference", v.Sel.Name, ctx.code(v.X), vx.t)
+		}
+		var fnname string
+		if toptr {
+			fnname = "(*" + t.Name() + ")." + name
+		} else {
+			fnname = "(" + t.Name() + ")." + name
+		}
 		var addr uint32
 		var kind exec.SymbolKind
 		var found bool
+		pkgPath := t.PkgPath()
+		pkg := ctx.FindGoPackage(pkgPath)
 		if pkg == nil {
 			pkg = bytecode.NewGoPackage(pkgPath)
 		} else {
@@ -1454,12 +1453,14 @@ func countPtr(t reflect.Type) (int, reflect.Type) {
 	return n, t
 }
 
-func normalizeMethod(n int, t reflect.Type, name string) (pkgPath string, formalName string) {
-	typName := t.Name()
-	if n > 0 {
-		typName = strings.Repeat("*", n) + typName
+func findMethod(t reflect.Type, name string) (method reflect.Method, toptr bool, found bool) {
+	method, found = t.MethodByName(name)
+	if !found && t.Kind() == reflect.Struct {
+		t = reflect.PtrTo(t)
+		toptr = true
+		method, found = t.MethodByName(name)
 	}
-	return t.PkgPath(), "(" + typName + ")." + name
+	return
 }
 
 func registerMethod(pkg exec.GoPackage, fnname string, t reflect.Type, name string, fun reflect.Value, typ reflect.Type) (addr uint32, kind exec.SymbolKind) {
