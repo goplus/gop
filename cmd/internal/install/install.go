@@ -18,7 +18,10 @@
 package install
 
 import (
+	"fmt"
+	"go/token"
 	"os"
+	"path/filepath"
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
@@ -38,45 +41,50 @@ var Cmd = &base.Command{
 }
 
 var (
-	flag = &Cmd.Flag
+	flag        = &Cmd.Flag
+	flagVerbose bool
 )
 
 func init() {
 	Cmd.Run = runCmd
+	flag.BoolVar(&flagVerbose, "v", false, "print the names of packages as they are compiled.")
 }
 
 func runCmd(cmd *base.Command, args []string) {
-	flag.Parse(args)
-	if flag.NArg() < 1 {
+	err := flag.Parse(args)
+	if err != nil {
 		cmd.Usage(os.Stderr)
 		return
 	}
-	dir, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("Fail to build: %v", err)
+
+	paths := flag.Args()
+	if len(paths) == 0 {
+		paths = append(paths, ".")
 	}
 
 	cl.CallBuiltinOp = bytecode.CallBuiltinOp
 	log.SetFlags(log.Ldefault &^ log.LstdFlags)
-	err = runInstall(args, dir)
-	if err != nil {
-		exitCode = -1
-	}
-	os.Exit(exitCode)
-}
 
-// -----------------------------------------------------------------------------
-
-func runInstall(args []string, wd string) error {
-	gopInstall, err := work.NewInstall("", args, wd)
-	if err != nil {
-		log.Fatalf("Fail to install: %v", err)
-		return err
+	fset := token.NewFileSet()
+	pkgs, errs := work.LoadPackages(fset, paths)
+	if len(errs) > 0 {
+		log.Fatalf("load packages error: %v\n", errs)
 	}
-
-	err = gopInstall.Install()
-	if err != nil {
-		return err
+	for _, pkg := range pkgs {
+		if pkg.Name != "main" {
+			continue
+		}
+		err := work.GenGoPkg(fset, pkg.Pkg, pkg.Dir)
+		if err != nil {
+			log.Fatalf("generate go package error: %v\n", err)
+		}
+		target := filepath.Join(work.GOPBIN(), pkg.Target)
+		err = work.GoBuild(pkg.Dir, target)
+		if err != nil {
+			log.Fatalf("go build error: %v\n", err)
+		}
+		if flagVerbose {
+			fmt.Printf("gop install %v\n", target)
+		}
 	}
-	return nil
 }

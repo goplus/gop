@@ -18,8 +18,10 @@
 package build
 
 import (
+	"fmt"
 	"go/token"
 	"os"
+	"path/filepath"
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
@@ -36,62 +38,64 @@ var (
 
 // Cmd - gop go
 var Cmd = &base.Command{
-	UsageLine: "gop build [-v] <gopSrcDir|gopSrcFile>",
+	UsageLine: "gop build [-v] [-o output] <gopSrcDir|gopSrcFile>",
 	Short:     "Build for all go+ files and execute go build command",
 }
 
 var (
-	buildOutput string
-	flag        = &Cmd.Flag
+	flagBuildOutput string
+	flagVerbose     bool
+	flag            = &Cmd.Flag
 )
 
 func init() {
-	flag.StringVar(&buildOutput, "o", "", "write result to (source) file instead of stdout")
+	flag.StringVar(&flagBuildOutput, "o", "", "go build output file")
+	flag.BoolVar(&flagVerbose, "v", false, "print the names of packages as they are compiled.")
 	Cmd.Run = runCmd
 }
 
 func runCmd(cmd *base.Command, args []string) {
-	flag.Parse(args)
-	if flag.NArg() < 1 {
+	err := flag.Parse(args)
+	if err != nil {
 		cmd.Usage(os.Stderr)
 		return
 	}
+
 	dir, err := os.Getwd()
 	if err != nil {
 		log.Fatalf("Fail to build: %v", err)
+	}
+
+	paths := flag.Args()
+	if len(paths) == 0 {
+		paths = append(paths, ".")
 	}
 
 	cl.CallBuiltinOp = bytecode.CallBuiltinOp
 	log.SetFlags(log.Ldefault &^ log.LstdFlags)
 
 	fset := token.NewFileSet()
-	_ = fset
-
-	pkgs := work.LoadPackages(fset, flag.Args())
+	pkgs, errs := work.LoadPackages(fset, paths)
+	if len(errs) > 0 {
+		log.Fatalf("load packages error: %v\n", errs)
+	}
 	for _, pkg := range pkgs {
-		log.Println(pkg)
+		err := work.GenGoPkg(fset, pkg.Pkg, pkg.Dir)
+		if err != nil {
+			log.Fatalf("generate go package error: %v\n", err)
+		}
+		var target string
+		if flagBuildOutput != "" {
+			target = filepath.Join(dir, flagBuildOutput)
+		} else {
+			target = pkg.Target
+		}
+		err = work.GoBuild(pkg.Dir, target)
+		if err != nil {
+			log.Fatalf("go build error: %v\n", err)
+		}
+		if flagVerbose {
+			fmt.Printf("gop build %v\n", target)
+		}
 	}
-	return
-
-	err = runBuild(args, dir, buildOutput)
-	if err != nil {
-		exitCode = -1
-	}
-	os.Exit(exitCode)
-}
-
-// -----------------------------------------------------------------------------
-
-func runBuild(args []string, wd, output string) error {
-	gopBuild, err := work.NewBuild("", args, wd, output)
-	if err != nil {
-		log.Fatalf("Fail to install: %v", err)
-		return err
-	}
-
-	err = gopBuild.Build()
-	if err != nil {
-		return err
-	}
-	return nil
 }

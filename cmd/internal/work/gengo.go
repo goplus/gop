@@ -122,3 +122,25 @@ func getPkg(pkgs map[string]*ast.Package) *ast.Package {
 	}
 	return nil
 }
+
+func GenGoPkg(fset *token.FileSet, pkg *ast.Package, dir string) (err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			switch v := e.(type) {
+			case string:
+				err = errors.New(v)
+			case error:
+				err = v
+			default:
+				panic(e)
+			}
+		}
+	}()
+	b := golang.NewBuilder(pkg.Name, nil, fset)
+	_, err = cl.NewPackage(b.Interface(), pkg, fset, cl.PkgActClAll)
+	if err != nil {
+		return
+	}
+	code := b.Resolve()
+	return saveGoFile(dir, code)
+}

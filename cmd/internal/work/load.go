@@ -3,6 +3,7 @@ package work
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/parser"
@@ -10,45 +11,56 @@ import (
 )
 
 type Package struct {
-	Name   string       // package name
-	Dir    string       // package source dir
-	Pkg    *ast.Package // ast.Package
-	Target string       // target name
-	Input  string       // package input argument
-	Error  error        // parser Error
+	Name      string       // package name
+	Dir       string       // package source dir
+	Pkg       *ast.Package // ast.Package
+	Target    string       // build target
+	Input     string       // input argument
+	GenGoFile string       // generate go file path
 }
 
-func LoadPackages(fset *token.FileSet, args []string) []*Package {
-	var all []*Package
+func LoadPackages(fset *token.FileSet, args []string) (pkgs []*Package, errs []error) {
 	for _, arg := range args {
 		path, err := filepath.Abs(arg)
 		if err != nil {
-			all = append(all, &Package{Input: arg, Error: err})
+			errs = append(errs, err)
 			continue
 		}
 		fi, err := os.Stat(path)
 		if err != nil {
-			all = append(all, &Package{Input: arg, Error: err})
+			errs = append(errs, err)
 			continue
 		}
-		var pkgs map[string]*ast.Package
+		var apkgs map[string]*ast.Package
 		var dir string
-		_, target := filepath.Split(path)
+		var target string
 		if fi.IsDir() {
 			dir = path
-			pkgs, err = parser.ParseDir(fset, path, nil, 0)
+			_, target = filepath.Split(path)
+			apkgs, err = parser.ParseDir(fset, path, nil, 0)
 		} else {
-			dir, _ = filepath.Split(path)
+			dir, target = filepath.Split(path)
 			dir = filepath.Clean(dir)
 			ext := filepath.Ext(target)
 			target = target[:len(target)-len(ext)]
-			pkgs, err = parser.Parse(fset, path, nil, 0)
+			apkgs, err = parser.Parse(fset, path, nil, 0)
 		}
-		for name, pkg := range pkgs {
-			all = append(all, &Package{Input: arg, Name: name, Dir: dir, Pkg: pkg, Target: target, Error: err})
+		if runtime.GOOS == "window" {
+			target += ".exe"
+		}
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		for name, pkg := range apkgs {
+			var mainTraget string
+			if pkg.Name == "main" {
+				mainTraget = target
+			}
+			pkgs = append(pkgs, &Package{Input: arg, Name: name, Dir: dir, Pkg: pkg, Target: mainTraget})
 		}
 	}
-	return all
+	return
 }
 
 // func ParserPackage(fset *token.FileSet, path string) (*ast.Package, error) {

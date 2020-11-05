@@ -26,6 +26,14 @@ import (
 	"strings"
 )
 
+func GoBuild(dir string, target string) error {
+	cmd := exec.Command("go", "build", "-o", target)
+	cmd.Dir = dir
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
 // NewBuild creates a Build struct which can build from gop temporary directory,
 // and generate binary in current working directory
 func NewBuild(buildflags string, args []string, workingDir string, outputDir string) (*Build, error) {
