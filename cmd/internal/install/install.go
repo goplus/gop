@@ -20,7 +20,6 @@ package install
 import (
 	"fmt"
 	"go/token"
-	"os"
 	"path/filepath"
 
 	"github.com/goplus/gop/cl"
@@ -51,11 +50,7 @@ func init() {
 }
 
 func runCmd(cmd *base.Command, args []string) {
-	err := flag.Parse(args)
-	if err != nil {
-		cmd.Usage(os.Stderr)
-		return
-	}
+	flag.Parse(args)
 
 	paths := flag.Args()
 	if len(paths) == 0 {

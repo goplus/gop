@@ -55,11 +55,7 @@ func init() {
 }
 
 func runCmd(cmd *base.Command, args []string) {
-	err := flag.Parse(args)
-	if err != nil {
-		cmd.Usage(os.Stderr)
-		return
-	}
+	flag.Parse(args)
 
 	dir, err := os.Getwd()
 	if err != nil {
