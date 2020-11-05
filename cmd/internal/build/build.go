@@ -18,6 +18,7 @@
 package build
 
 import (
+	"go/token"
 	"os"
 
 	"github.com/goplus/gop/cl"
@@ -35,7 +36,7 @@ var (
 
 // Cmd - gop go
 var Cmd = &base.Command{
-	UsageLine: "gop build [-v] <gopSrcDir>",
+	UsageLine: "gop build [-v] <gopSrcDir|gopSrcFile>",
 	Short:     "Build for all go+ files and execute go build command",
 }
 
@@ -62,6 +63,15 @@ func runCmd(cmd *base.Command, args []string) {
 
 	cl.CallBuiltinOp = bytecode.CallBuiltinOp
 	log.SetFlags(log.Ldefault &^ log.LstdFlags)
+
+	fset := token.NewFileSet()
+	_ = fset
+
+	pkgs := work.LoadPackages(fset, flag.Args())
+	for _, pkg := range pkgs {
+		log.Println(pkg)
+	}
+	return
 
 	err = runBuild(args, dir, buildOutput)
 	if err != nil {
