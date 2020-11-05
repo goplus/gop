@@ -31,7 +31,7 @@ type Package struct {
 	Dir       string       // package source dir
 	Pkg       *ast.Package // ast.Package
 	Target    string       // build target
-	Input     string       // input argument
+	IsDir     bool         // build input is dir
 	GenGoFile string       // generate go file path
 }
 
@@ -50,7 +50,8 @@ func LoadPackages(fset *token.FileSet, args []string) (pkgs []*Package, errs []e
 		var apkgs map[string]*ast.Package
 		var dir string
 		var target string
-		if fi.IsDir() {
+		isDir := fi.IsDir()
+		if isDir {
 			dir = path
 			_, target = filepath.Split(path)
 			apkgs, err = parser.ParseDir(fset, path, nil, 0)
@@ -73,7 +74,7 @@ func LoadPackages(fset *token.FileSet, args []string) (pkgs []*Package, errs []e
 			if pkg.Name == "main" {
 				mainTraget = target
 			}
-			pkgs = append(pkgs, &Package{Input: arg, Name: name, Dir: dir, Pkg: pkg, Target: mainTraget})
+			pkgs = append(pkgs, &Package{IsDir: isDir, Name: name, Dir: dir, Pkg: pkg, Target: mainTraget})
 		}
 	}
 	return

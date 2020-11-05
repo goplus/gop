@@ -17,18 +17,20 @@
 package work
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 )
 
-func GoBuild(dir string, target string) error {
+func GoInstall(dir string) error {
 	gobin, err := exec.LookPath("go")
 	if err != nil {
 		return err
 	}
-	cmd := exec.Command(gobin, "build", "-o", target)
+	cmd := exec.Command(gobin, "install")
 	cmd.Dir = dir
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	cmd.Env = append(os.Environ(), fmt.Sprintf("GOBIN=%v", GOPBIN()))
 	return cmd.Run()
 }

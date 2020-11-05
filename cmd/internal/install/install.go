@@ -29,14 +29,10 @@ import (
 	"github.com/qiniu/x/log"
 )
 
-var (
-	exitCode = 0
-)
-
-// Cmd - gop go
+// Cmd - gop install
 var Cmd = &base.Command{
-	UsageLine: "gop install [-v] <gopSrcDir>",
-	Short:     "Install compiles and installs the packages named by the import paths.",
+	UsageLine: "gop install [-v] <gopSrcDir|gopSrcFile>",
+	Short:     "Build go+ files and install target to GOBIN",
 }
 
 var (
@@ -66,20 +62,21 @@ func runCmd(cmd *base.Command, args []string) {
 		log.Fatalf("load packages error: %v\n", errs)
 	}
 	for _, pkg := range pkgs {
-		if pkg.Name != "main" {
-			continue
-		}
 		err := work.GenGoPkg(fset, pkg.Pkg, pkg.Dir)
 		if err != nil {
 			log.Fatalf("generate go package error: %v\n", err)
 		}
 		target := filepath.Join(work.GOPBIN(), pkg.Target)
-		err = work.GoBuild(pkg.Dir, target)
+		if pkg.IsDir {
+			err = work.GoInstall(pkg.Dir)
+		} else {
+			err = work.GoBuild(pkg.Dir, target)
+		}
 		if err != nil {
 			log.Fatalf("go build error: %v\n", err)
 		}
-		if flagVerbose {
-			fmt.Printf("gop install %v\n", target)
+		if flagVerbose && pkg.Name == "main" {
+			fmt.Println(target)
 		}
 	}
 }

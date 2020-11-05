@@ -30,16 +30,12 @@ import (
 	"github.com/qiniu/x/log"
 )
 
-var (
-	exitCode = 0
-)
-
 // -----------------------------------------------------------------------------
 
-// Cmd - gop go
+// Cmd - gop build
 var Cmd = &base.Command{
 	UsageLine: "gop build [-v] [-o output] <gopSrcDir|gopSrcFile>",
-	Short:     "Build for all go+ files and execute go build command",
+	Short:     "Build go+ files and execute go build command",
 }
 
 var (
