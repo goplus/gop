@@ -80,14 +80,14 @@ func runCmd(cmd *base.Command, args []string) {
 		if flagBuildOutput != "" {
 			target = filepath.Join(dir, flagBuildOutput)
 		} else {
-			target = pkg.Target
+			target = filepath.Join(pkg.Dir, pkg.Target)
 		}
 		err = work.GoBuild(pkg.Dir, target)
 		if err != nil {
 			log.Fatalf("go build error: %v\n", err)
 		}
-		if flagVerbose {
-			fmt.Printf("gop build %v\n", target)
+		if flagVerbose && pkg.Name == "main" {
+			fmt.Println(target)
 		}
 	}
 }
