@@ -86,7 +86,11 @@ func runCmd(cmd *base.Command, args []string) {
 		if !filepath.IsAbs(target) {
 			target = filepath.Join(dir, target)
 		}
-		err = work.GoBuild(pkg.Dir, target)
+		if pkg.IsDir {
+			err = work.GoBuild(pkg.Dir, target)
+		} else {
+			err = work.GoBuild(pkg.Dir, target, "gop_autogen.go")
+		}
 		if err != nil {
 			log.Fatalf("go build error: %v\n", err)
 		}

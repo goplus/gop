@@ -22,12 +22,12 @@ import (
 	"os/exec"
 )
 
-func GoInstall(dir string) error {
+func GoInstall(dir string, args ...string) error {
 	gobin, err := exec.LookPath("go")
 	if err != nil {
 		return err
 	}
-	cmd := exec.Command(gobin, "install")
+	cmd := exec.Command(gobin, append([]string{gobin, "install"}, args...)...)
 	cmd.Dir = dir
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

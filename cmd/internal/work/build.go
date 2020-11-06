@@ -21,12 +21,12 @@ import (
 	"os/exec"
 )
 
-func GoBuild(dir string, target string) error {
+func GoBuild(dir string, target string, args ...string) error {
 	gobin, err := exec.LookPath("go")
 	if err != nil {
 		return err
 	}
-	cmd := exec.Command(gobin, "build", "-o", target)
+	cmd := exec.Command(gobin, append([]string{"build", "-o", target}, args...)...)
 	cmd.Dir = dir
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

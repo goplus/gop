@@ -79,7 +79,7 @@ func runCmd(cmd *base.Command, args []string) {
 		if pkg.IsDir {
 			err = work.GoInstall(pkg.Dir)
 		} else {
-			err = work.GoBuild(pkg.Dir, target)
+			err = work.GoBuild(pkg.Dir, target, "gop_autogen.go")
 		}
 		if err != nil {
 			log.Fatalf("go build error: %v\n", err)
