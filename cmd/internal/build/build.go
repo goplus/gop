@@ -79,11 +79,12 @@ func runCmd(cmd *base.Command, args []string) {
 		if err != nil {
 			log.Fatalf("generate go package error: %v\n", err)
 		}
-		var target string
+		target := pkg.Target
 		if flagBuildOutput != "" {
-			target = filepath.Join(dir, flagBuildOutput)
-		} else {
-			target = filepath.Join(pkg.Dir, pkg.Target)
+			target = flagBuildOutput
+		}
+		if !filepath.IsAbs(target) {
+			target = filepath.Join(dir, target)
 		}
 		err = work.GoBuild(pkg.Dir, target)
 		if err != nil {
