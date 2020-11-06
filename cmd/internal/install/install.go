@@ -20,6 +20,7 @@ package install
 import (
 	"fmt"
 	"go/token"
+	"os"
 	"path/filepath"
 
 	"github.com/goplus/gop/cl"
@@ -48,9 +49,14 @@ func init() {
 func runCmd(cmd *base.Command, args []string) {
 	flag.Parse(args)
 
+	dir, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("Fail to build: %v", err)
+	}
+
 	paths := flag.Args()
 	if len(paths) == 0 {
-		paths = append(paths, ".")
+		paths = append(paths, dir)
 	}
 
 	cl.CallBuiltinOp = bytecode.CallBuiltinOp
@@ -60,6 +66,9 @@ func runCmd(cmd *base.Command, args []string) {
 	pkgs, errs := work.LoadPackages(fset, paths)
 	if len(errs) > 0 {
 		log.Fatalf("load packages error: %v\n", errs)
+	}
+	if len(pkgs) == 0 {
+		fmt.Println("no Go+ files in ", paths)
 	}
 	for _, pkg := range pkgs {
 		err := work.GenGoPkg(fset, pkg.Pkg, pkg.Dir)

@@ -62,9 +62,6 @@ func LoadPackages(fset *token.FileSet, args []string) (pkgs []*Package, errs []e
 			target = target[:len(target)-len(ext)]
 			apkgs, err = parser.Parse(fset, path, nil, 0)
 		}
-		if runtime.GOOS == "window" {
-			target += ".exe"
-		}
 		if err != nil {
 			errs = append(errs, err)
 			continue
@@ -73,6 +70,9 @@ func LoadPackages(fset *token.FileSet, args []string) (pkgs []*Package, errs []e
 			var mainTraget string
 			if pkg.Name == "main" {
 				mainTraget = target
+				if runtime.GOOS == "window" {
+					target += ".exe"
+				}
 			}
 			pkgs = append(pkgs, &Package{IsDir: isDir, Name: name, Dir: dir, Pkg: pkg, Target: mainTraget})
 		}
