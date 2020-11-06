@@ -25,12 +25,14 @@ func GOPROOT() string {
 	if gopbin := os.Getenv("GOPROOT"); gopbin != "" {
 		return gopbin
 	}
-	return filepath.Join(os.Getenv("HOME"), "gop")
+	home, _ := os.UserHomeDir()
+	return filepath.Join(home, "gop")
 }
 
 func GOPBIN() string {
 	if gopbin := os.Getenv("GOPBIN"); gopbin != "" {
 		return gopbin
 	}
-	return filepath.Join(os.Getenv("HOME"), "gop", "bin")
+	home, _ := os.UserHomeDir()
+	return filepath.Join(home, "gop", "bin")
 }
