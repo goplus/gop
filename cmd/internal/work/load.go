@@ -66,7 +66,7 @@ func LoadPackages(fset *token.FileSet, args []string) (pkgs []*Package, errs []e
 			errs = append(errs, err)
 			continue
 		}
-		if runtime.GOOS == "window" {
+		if runtime.GOOS == "windows" {
 			target += ".exe"
 		}
 		for name, pkg := range apkgs {
