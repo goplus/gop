@@ -18,17 +18,21 @@ package work
 
 import (
 	"os"
-	"os/exec"
+	"path/filepath"
 )
 
-func GoBuild(dir string, target string, args ...string) error {
-	gobin, err := exec.LookPath("go")
-	if err != nil {
-		return err
+func GOPROOT() string {
+	if gopbin := os.Getenv("GOPROOT"); gopbin != "" {
+		return gopbin
 	}
-	cmd := exec.Command(gobin, append([]string{"build", "-o", target}, args...)...)
-	cmd.Dir = dir
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	home, _ := os.UserHomeDir()
+	return filepath.Join(home, "gop")
+}
+
+func GOPBIN() string {
+	if gopbin := os.Getenv("GOPBIN"); gopbin != "" {
+		return gopbin
+	}
+	home, _ := os.UserHomeDir()
+	return filepath.Join(home, "gop", "bin")
 }
