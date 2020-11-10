@@ -67,14 +67,14 @@ func execLoadField(i Instr, p *Context) {
 	index := p.Pop()
 	v := reflect.ValueOf(p.Pop())
 	v = toElem(v)
-	p.Push(v.FieldByIndex(index.([]int)).Interface())
+	p.Push(FieldByIndex(v, index.([]int)).Interface())
 }
 
 func execAddrField(i Instr, p *Context) {
 	index := p.Pop()
 	v := reflect.ValueOf(p.Pop())
 	v = toElem(v)
-	p.Push(v.FieldByIndex(index.([]int)).Addr().Interface())
+	p.Push(FieldByIndex(v, index.([]int)).Addr().Interface())
 }
 
 func toElem(v reflect.Value) reflect.Value {
@@ -97,7 +97,7 @@ func storeField(v reflect.Value, index []int, value interface{}) {
 	if !v.CanSet() {
 		log.Panicf("cannot assign to %v\n", v)
 	}
-	setValue(v.FieldByIndex(index), value)
+	setValue(FieldByIndex(v, index), value)
 }
 
 // -----------------------------------------------------------------------------

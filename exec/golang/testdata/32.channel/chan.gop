@@ -1,0 +1,7 @@
+c := make(chan int, 10)
+c <- 3
+d := <-c
+println(d)
+
+e := make(<-chan int, 10)
+printf("%T\n", e)

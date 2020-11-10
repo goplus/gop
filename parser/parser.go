@@ -1843,7 +1843,9 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 		}
 		return as, isRange
 	case token.ARROW:
-		return p.parseForPhraseStmtPart(x), true
+		if mode == rangeOk {
+			return p.parseForPhraseStmtPart(x), true
+		}
 	}
 
 	if len(x) > 1 {

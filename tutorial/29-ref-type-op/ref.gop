@@ -1,0 +1,35 @@
+func foo() []int {
+	return nil
+}
+
+func foo1() map[int]int {
+	return make(map[int]int, 10)
+}
+
+func foo2() chan int {
+	return make(chan int, 10)
+}
+
+func foo3() *int {
+	return nil
+}
+
+println(foo() == nil)
+println(nil == foo())
+println(foo() != nil)
+println(nil != foo())
+
+println(foo1() == nil)
+println(nil == foo1())
+println(foo1() != nil)
+println(nil != foo1())
+
+println(foo2() == nil)
+println(nil == foo2())
+println(foo2() != nil)
+println(nil != foo2())
+
+println(foo3() == nil)
+println(nil == foo3())
+println(foo3() != nil)
+println(nil != foo3())

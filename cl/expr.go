@@ -599,6 +599,17 @@ func compileUnaryExpr(ctx *blockCtx, v *ast.UnaryExpr) func() {
 				ctx.takeAddr = false
 			}
 		}
+		if v.Op == token.ARROW { // <- x
+			vx := x.(iValue)
+			if vx.Type().Kind() == reflect.Chan {
+				ret := &goValue{t: vx.Type().Elem()}
+				ctx.infer.Ret(1, ret)
+				return func() {
+					exprX()
+					ctx.out.Recv()
+				}
+			}
+		}
 	}
 	xcons, xok := x.(*constVal)
 	if xok { // op <const>
@@ -785,7 +796,26 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 		}
 		return func() {
 			if vfn.isMethod != 0 {
-				compileExpr(ctx, v.Fun.(*ast.SelectorExpr).X)()
+				exprX := compileExpr(ctx, v.Fun.(*ast.SelectorExpr).X)
+				recv := ctx.infer.Get(-1).(*goValue)
+				if vfn.Type().In(0).Kind() != reflect.Ptr {
+					exprX()
+					if recv.Kind() == reflect.Ptr {
+						recv.t = recv.t.Elem()
+						ctx.infer.Ret(1, recv)
+						ctx.out.AddrOp(recv.t.Kind(), exec.OpAddrVal) // Ptr => Elem()
+					}
+				} else {
+					if recv.Kind() == reflect.Ptr {
+						exprX()
+					} else {
+						ctx.checkLoadAddr = true
+						exprX()
+						ctx.checkLoadAddr = false
+						recv.t = reflect.PtrTo(recv.t)
+						ctx.infer.Ret(1, recv)
+					}
+				}
 			}
 			for _, arg := range v.Args {
 				compileExpr(ctx, arg)()
@@ -1364,6 +1394,14 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 			log.Panicln("compileSelectorExpr failed: package not found -", pkgPath)
 		}
 		addr, kind, ok := pkg.Find(method)
+		if !ok {
+			cn := 0
+			if n == 0 {
+				cn = 1
+			}
+			_, cm := normalizeMethod(cn, t, name)
+			addr, kind, ok = pkg.Find(cm)
+		}
 		if !ok {
 			log.Panicln("compileSelectorExpr: method not found -", method)
 		}

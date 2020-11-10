@@ -301,6 +301,14 @@ var builtinOps = [...]func(i Instr, p *Context){
 	(int(Uint64) << bitsOperator) | int(OpBitNot):  execBitNotUint64,
 	(int(Uintptr) << bitsOperator) | int(OpBitNot): execBitNotUintptr,
 	(int(BigInt) << bitsOperator) | int(OpBitNot):  execBitNotBigInt,
+	(int(Slice) << bitsOperator) | int(OpEQ):       execRefTypeEQ,
+	(int(Map) << bitsOperator) | int(OpEQ):         execRefTypeEQ,
+	(int(Chan) << bitsOperator) | int(OpEQ):        execRefTypeEQ,
+	(int(Ptr) << bitsOperator) | int(OpEQ):         execRefTypeEQ,
+	(int(Slice) << bitsOperator) | int(OpNE):       execRefTypeNEQ,
+	(int(Map) << bitsOperator) | int(OpNE):         execRefTypeNEQ,
+	(int(Chan) << bitsOperator) | int(OpNE):        execRefTypeNEQ,
+	(int(Ptr) << bitsOperator) | int(OpNE):         execRefTypeNEQ,
 }
 
 func execAddInt(i Instr, p *Context) {

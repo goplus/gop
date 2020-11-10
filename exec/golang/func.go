@@ -249,7 +249,7 @@ func (p *Builder) EndFunc(fun *FuncInfo) *Builder {
 		}
 		if fun.isMethod == 1 {
 			params := make([]*ast.Field, 1)
-			params[0] = Field(p, "recv", fun.recv, "", false)
+			params[0] = Field(p, "_recv", fun.recv, "", false)
 			fn.Recv = &ast.FieldList{Opening: 1, List: params, Closing: 1}
 		}
 		p.gblDecls = append(p.gblDecls, fn)
