@@ -66,7 +66,7 @@ func execAddrGoVar(i Instr, p *Context) {
 func execLoadField(i Instr, p *Context) {
 	index := p.Pop()
 	v := reflect.ValueOf(p.Pop())
-	v = reflect.Indirect(v)
+	v = toElem(v)
 	p.Push(FieldByIndex(v, index.([]int)).Interface())
 }
 
