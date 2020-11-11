@@ -67,7 +67,7 @@ func execLoadField(i Instr, p *Context) {
 	index := p.Pop()
 	v := reflect.ValueOf(p.Pop())
 	v = toElem(v)
-	p.Push(v.FieldByIndex(index.([]int)).Interface())
+	p.Push(FieldByIndex(v, index.([]int)).Interface())
 }
 
 func execAddrField(i Instr, p *Context) {

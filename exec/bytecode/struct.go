@@ -162,7 +162,8 @@ func (p *Builder) Struct(typ reflect.Type, arity int) *Builder {
 }
 
 func execStruct(i Instr, p *Context) {
-	typStruct := getType(i&bitsOpCallFuncvOperand, p)
+	typ := getType(i&bitsOpCallFuncvOperand, p)
+	typStruct := toType(typ)
 	arity := int((i >> bitsOpCallFuncvShift) & bitsFuncvArityOperand)
 	if arity == bitsFuncvArityMax {
 		arity = p.Pop().(int) + bitsFuncvArityMax
@@ -175,7 +176,7 @@ func makeStruct(typStruct reflect.Type, arity int, p *Context) {
 	args := p.GetArgs(n)
 
 	var ptr bool
-	if typStruct.Kind() == reflect.Ptr {
+	for typStruct.Kind() == reflect.Ptr {
 		ptr = true
 		typStruct = typStruct.Elem()
 	}
@@ -189,4 +190,33 @@ func makeStruct(typStruct reflect.Type, arity int, p *Context) {
 	} else {
 		p.Ret(n, v.Interface())
 	}
+}
+
+// fix anonymous for user-struct
+func toType(typ reflect.Type) reflect.Type {
+	switch typ.Kind() {
+	case reflect.Ptr:
+		return reflect.PtrTo(toType(typ.Elem()))
+	case reflect.Slice:
+		return reflect.SliceOf(toType(typ.Elem()))
+	case reflect.Array:
+		return reflect.ArrayOf(typ.Len(), toType(typ.Elem()))
+	case reflect.Map:
+		return reflect.MapOf(toType(typ.Key()), toType(typ.Elem()))
+	case reflect.Struct:
+		if typ.Name() == "" {
+			var fields = make([]StructField, 0, typ.NumField())
+			for i := 0; i < typ.NumField(); i++ {
+				field := typ.Field(i)
+				fields = append(fields, StructField{
+					Type:      field.Type,
+					Name:      field.Name,
+					PkgPath:   field.PkgPath,
+					Anonymous: false, // field.Anonymous,
+				})
+			}
+			return reflect.StructOf(fields)
+		}
+	}
+	return typ
 }
