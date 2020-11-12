@@ -1569,6 +1569,24 @@ func TestEmbeddedMethod(t *testing.T) {
 	m := &My{&Point{10,20}}
 	m.Test()
 	`, "10 20\n")
+	cltest.Expect(t, `
+	type Point struct {
+		X int
+		Y int
+	}
+	func (p *Point) Test() {
+		println(p.X,p.Y)
+	}
+	type Base struct {
+		*Point
+	}
+	type My struct {
+		Base
+	}
+	m := &My{}
+	m.Point = &Point{10,20}
+	m.Test()
+	`, "10 20\n")
 }
 
 // -----------------------------------------------------------------------------

@@ -1248,11 +1248,40 @@ func funcToClosure(ctx *blockCtx, fun ast.Expr, ftyp *ast.FuncType) *funcDecl {
 	return newFuncDecl("", nil, typ, body, funCtx)
 }
 
-func isUserStruct(t reflect.Type) bool {
+func toElem(t reflect.Type) reflect.Type {
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
+	return t
+}
+
+func isUserStruct(t reflect.Type) bool {
+	t = toElem(t)
 	return t.Kind() == reflect.Struct && (t.PkgPath() == "" || t.PkgPath() == "main")
+}
+
+func findUserStructAnonymous(ctx *blockCtx, t reflect.Type, name string) []string {
+	t = toElem(t)
+	for i := 0; i < t.NumField(); i++ {
+		sf := t.Field(i)
+		if sf.Anonymous {
+			var found bool
+			if isUserStruct(sf.Type) {
+				_, found = ctx.findMethod(sf.Type, name)
+				if !found {
+					if names := findUserStructAnonymous(ctx, sf.Type, name); names != nil {
+						return append([]string{sf.Name}, names...)
+					}
+				}
+			} else {
+				_, found = sf.Type.MethodByName(name)
+			}
+			if found {
+				return []string{sf.Name}
+			}
+		}
+	}
+	return nil
 }
 
 func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr, compileByCallExpr bool) func() {
@@ -1360,22 +1389,16 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 				}
 			}
 			if call != nil && isUserStruct(t) {
-				for i := 0; i < t.NumField(); i++ {
-					sf := t.Field(i)
-					if sf.Anonymous {
-						var found bool
-						if isUserStruct(sf.Type) {
-							_, found = ctx.findMethod(sf.Type, name)
-						} else {
-							_, found = sf.Type.MethodByName(name)
-						}
-						if found {
-							ctx.infer.Pop()
-							fun := &ast.SelectorExpr{X: &ast.SelectorExpr{X: v.X, Sel: &ast.Ident{Name: sf.Name}}, Sel: v.Sel}
-							call.Fun = fun
-							return compileSelectorExpr(ctx, call, fun, compileByCallExpr)
-						}
+				if names := findUserStructAnonymous(ctx, t, name); names != nil {
+					ctx.infer.Pop()
+					x := &ast.SelectorExpr{X: v.X}
+					for i := 0; i < len(names)-1; i++ {
+						x.X = &ast.SelectorExpr{X: x.X, Sel: &ast.Ident{Name: names[i]}}
 					}
+					x.Sel = &ast.Ident{Name: names[len(names)-1]}
+					fun := &ast.SelectorExpr{X: x, Sel: v.Sel}
+					call.Fun = fun
+					return compileSelectorExpr(ctx, call, fun, compileByCallExpr)
 				}
 			}
 		}
