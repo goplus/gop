@@ -838,13 +838,13 @@ func TestPkgMethodBadCall(t *testing.T) {
 	import "bytes"
 	buf := bytes.NewBuffer([]byte("hello"))
 	println((&buf).String())
-	`, "", nil)
+	`, "", "calling method String with receiver &buf (type **bytes.Buffer) requires explicit dereference.")
 	cltest.Expect(t, `
 	import "reflect"
 	v := reflect.ValueOf(100)
 	p := &v
 	println((&p).Kind())
-	`, "", nil)
+	`, "", "calling method Kind with receiver &p (type **reflect.Value) requires explicit dereference.")
 }
 
 func TestComplex(t *testing.T) {

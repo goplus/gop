@@ -1366,7 +1366,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, compileByCallExpr b
 			log.Panicln("compileSelectorExpr: symbol not found -", vx.t, v.Sel.Name)
 		}
 		if n > 1 {
-			log.Panicf("calling method %v with receiver %v (type %v) requires explicit dereference", v.Sel.Name, ctx.code(v.X), vx.t)
+			log.Panicf("calling method %v with receiver %v (type %v) requires explicit dereference.", v.Sel.Name, ctx.code(v.X), vx.t)
 		}
 		pkgPath := t.PkgPath()
 		pkg := ctx.FindGoPackage(pkgPath)
