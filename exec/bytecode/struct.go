@@ -20,6 +20,8 @@ import (
 	"reflect"
 	"strconv"
 
+	"github.com/goplusjs/reflectx"
+
 	"github.com/qiniu/x/log"
 )
 
@@ -163,12 +165,11 @@ func (p *Builder) Struct(typ reflect.Type, arity int) *Builder {
 
 func execStruct(i Instr, p *Context) {
 	typ := getType(i&bitsOpCallFuncvOperand, p)
-	typStruct := toType(typ)
 	arity := int((i >> bitsOpCallFuncvShift) & bitsFuncvArityOperand)
 	if arity == bitsFuncvArityMax {
 		arity = p.Pop().(int) + bitsFuncvArityMax
 	}
-	makeStruct(typStruct, arity, p)
+	makeStruct(typ, arity, p)
 }
 
 func makeStruct(typStruct reflect.Type, arity int, p *Context) {
@@ -183,40 +184,11 @@ func makeStruct(typStruct reflect.Type, arity int, p *Context) {
 	v := reflect.New(typStruct).Elem()
 	for i := 0; i < n; i += 2 {
 		index := args[i].(int)
-		Field(v, index).Set(reflect.ValueOf(args[i+1]))
+		reflectx.Field(v, index).Set(reflect.ValueOf(args[i+1]))
 	}
 	if ptr {
 		p.Ret(n, v.Addr().Interface())
 	} else {
 		p.Ret(n, v.Interface())
 	}
-}
-
-// fix anonymous for user-struct
-func toType(typ reflect.Type) reflect.Type {
-	switch typ.Kind() {
-	case reflect.Ptr:
-		return reflect.PtrTo(toType(typ.Elem()))
-	case reflect.Slice:
-		return reflect.SliceOf(toType(typ.Elem()))
-	case reflect.Array:
-		return reflect.ArrayOf(typ.Len(), toType(typ.Elem()))
-	case reflect.Map:
-		return reflect.MapOf(toType(typ.Key()), toType(typ.Elem()))
-	case reflect.Struct:
-		if typ.Name() == "" {
-			var fields = make([]StructField, 0, typ.NumField())
-			for i := 0; i < typ.NumField(); i++ {
-				field := typ.Field(i)
-				fields = append(fields, StructField{
-					Type:      field.Type,
-					Name:      field.Name,
-					PkgPath:   field.PkgPath,
-					Anonymous: false, // field.Anonymous,
-				})
-			}
-			return reflect.StructOf(fields)
-		}
-	}
-	return typ
 }

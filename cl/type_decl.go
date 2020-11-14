@@ -22,6 +22,7 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/exec.spec"
+	"github.com/goplusjs/reflectx"
 	"github.com/qiniu/x/log"
 )
 
@@ -226,7 +227,7 @@ func toStructType(ctx *blockCtx, v *ast.StructType) iType {
 	for _, field := range v.Fields.List {
 		fields = append(fields, toStructField(ctx, field)...)
 	}
-	return reflect.StructOf(fields)
+	return reflectx.StructOf(fields)
 }
 
 func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) iType {

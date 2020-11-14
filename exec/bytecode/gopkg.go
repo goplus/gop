@@ -19,6 +19,8 @@ package bytecode
 import (
 	"reflect"
 
+	"github.com/goplusjs/reflectx"
+
 	"github.com/goplus/gop/exec.spec"
 	"github.com/qiniu/x/log"
 )
@@ -67,14 +69,14 @@ func execLoadField(i Instr, p *Context) {
 	index := p.Pop()
 	v := reflect.ValueOf(p.Pop())
 	v = toElem(v)
-	p.Push(FieldByIndex(v, index.([]int)).Interface())
+	p.Push(reflectx.FieldByIndex(v, index.([]int)).Interface())
 }
 
 func execAddrField(i Instr, p *Context) {
 	index := p.Pop()
 	v := reflect.ValueOf(p.Pop())
 	v = toElem(v)
-	p.Push(FieldByIndex(v, index.([]int)).Addr().Interface())
+	p.Push(reflectx.FieldByIndex(v, index.([]int)).Addr().Interface())
 }
 
 func toElem(v reflect.Value) reflect.Value {
@@ -97,7 +99,7 @@ func storeField(v reflect.Value, index []int, value interface{}) {
 	if !v.CanSet() {
 		log.Panicf("cannot assign to %v\n", v)
 	}
-	setValue(FieldByIndex(v, index), value)
+	setValue(reflectx.FieldByIndex(v, index), value)
 }
 
 // -----------------------------------------------------------------------------

@@ -1498,6 +1498,16 @@ func TestEmbeddedMethod(t *testing.T) {
 	println(buf.String())
 	`, "hello\n")
 	cltest.Expect(t, `
+	import "bytes"
+	type Buf struct {
+		*bytes.Buffer
+		size int
+	}
+	buf := Buf{&bytes.Buffer{},1}
+	buf.Write([]byte("hello"))
+	println(buf)
+	`, "{hello 1}\n")
+	cltest.Expect(t, `
 	import "reflect"
 	type Value struct {
 		reflect.Value
@@ -1585,6 +1595,24 @@ func TestEmbeddedMethod(t *testing.T) {
 	}
 	m := &My{}
 	m.Point = &Point{10,20}
+	m.Test()
+	`, "10 20\n")
+	cltest.Expect(t, `
+	type Point struct {
+		X int
+		Y int
+	}
+	func (p *Point) Test() {
+		println(p.X,p.Y)
+	}
+	type Base struct {
+		*Point
+	}
+	type My struct {
+		*Base
+		size int
+	}
+	m := &My{&Base{&Point{10,20}},1}
 	m.Test()
 	`, "10 20\n")
 }
