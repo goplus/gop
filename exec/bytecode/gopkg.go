@@ -19,9 +19,8 @@ package bytecode
 import (
 	"reflect"
 
-	"github.com/goplusjs/reflectx"
-
 	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/reflectx"
 	"github.com/qiniu/x/log"
 )
 

@@ -22,7 +22,7 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/exec.spec"
-	"github.com/goplusjs/reflectx"
+	"github.com/goplus/reflectx"
 	"github.com/qiniu/x/log"
 )
 
