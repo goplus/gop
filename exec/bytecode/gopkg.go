@@ -20,6 +20,7 @@ import (
 	"reflect"
 
 	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/reflectx"
 	"github.com/qiniu/x/log"
 )
 
@@ -66,15 +67,15 @@ func execAddrGoVar(i Instr, p *Context) {
 func execLoadField(i Instr, p *Context) {
 	index := p.Pop()
 	v := reflect.ValueOf(p.Pop())
-	v = reflect.Indirect(v)
-	p.Push(v.FieldByIndex(index.([]int)).Interface())
+	v = toElem(v)
+	p.Push(reflectx.FieldByIndex(v, index.([]int)).Interface())
 }
 
 func execAddrField(i Instr, p *Context) {
 	index := p.Pop()
 	v := reflect.ValueOf(p.Pop())
 	v = toElem(v)
-	p.Push(v.FieldByIndex(index.([]int)).Addr().Interface())
+	p.Push(reflectx.FieldByIndex(v, index.([]int)).Addr().Interface())
 }
 
 func toElem(v reflect.Value) reflect.Value {
@@ -97,7 +98,7 @@ func storeField(v reflect.Value, index []int, value interface{}) {
 	if !v.CanSet() {
 		log.Panicf("cannot assign to %v\n", v)
 	}
-	setValue(v.FieldByIndex(index), value)
+	setValue(reflectx.FieldByIndex(v, index), value)
 }
 
 // -----------------------------------------------------------------------------

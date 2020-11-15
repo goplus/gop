@@ -90,3 +90,13 @@ func TestStruct2(t *testing.T) {
 		"&{bar 30}\n",
 	)
 }
+
+func TestValueOf(t *testing.T) {
+	typ := reflect.TypeOf(100)
+	if v := getValueOf(100, typ); v.Int() != 100 {
+		t.Fatal("getValueOf", v)
+	}
+	if v := getValueOf(nil, typ); v.Int() != 0 {
+		t.Fatal("getValueOf", v)
+	}
+}
