@@ -69,7 +69,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 	case *ast.UnaryExpr:
 		return compileUnaryExpr(ctx, v)
 	case *ast.SelectorExpr:
-		return compileSelectorExpr(ctx, v, false)
+		return compileSelectorExpr(ctx, nil, v, false)
 	case *ast.ErrWrapExpr:
 		return compileErrWrapExpr(ctx, v)
 	case *ast.IndexExpr:
@@ -737,7 +737,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	case *ast.Ident:
 		exprFun = compileIdent(ctx, f, true)
 	case *ast.SelectorExpr:
-		exprFun = compileSelectorExpr(ctx, f, true)
+		exprFun = compileSelectorExpr(ctx, v, f, true)
 	default:
 		exprFun = compileExpr(ctx, f)
 	}
@@ -796,7 +796,26 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 		}
 		return func() {
 			if vfn.isMethod != 0 {
-				compileExpr(ctx, v.Fun.(*ast.SelectorExpr).X)()
+				exprX := compileExpr(ctx, v.Fun.(*ast.SelectorExpr).X)
+				recv := ctx.infer.Get(-1).(*goValue)
+				if vfn.Type().In(0).Kind() != reflect.Ptr {
+					exprX()
+					if recv.Kind() == reflect.Ptr {
+						recv.t = recv.t.Elem()
+						ctx.infer.Ret(1, recv)
+						ctx.out.AddrOp(recv.t.Kind(), exec.OpAddrVal) // Ptr => Elem()
+					}
+				} else {
+					if recv.Kind() == reflect.Ptr {
+						exprX()
+					} else {
+						ctx.checkLoadAddr = true
+						exprX()
+						ctx.checkLoadAddr = false
+						recv.t = reflect.PtrTo(recv.t)
+						ctx.infer.Ret(1, recv)
+					}
+				}
 			}
 			for _, arg := range v.Args {
 				compileExpr(ctx, arg)()
@@ -1229,7 +1248,43 @@ func funcToClosure(ctx *blockCtx, fun ast.Expr, ftyp *ast.FuncType) *funcDecl {
 	return newFuncDecl("", nil, typ, body, funCtx)
 }
 
-func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, compileByCallExpr bool) func() {
+func toElem(t reflect.Type) reflect.Type {
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+	return t
+}
+
+func isUserStruct(t reflect.Type) bool {
+	t = toElem(t)
+	return t.Kind() == reflect.Struct && (t.PkgPath() == "" || t.PkgPath() == "main")
+}
+
+func findUserStructAnonymous(ctx *blockCtx, t reflect.Type, name string) []string {
+	t = toElem(t)
+	for i := 0; i < t.NumField(); i++ {
+		sf := t.Field(i)
+		if sf.Anonymous {
+			var found bool
+			if isUserStruct(sf.Type) {
+				_, found = ctx.findMethod(sf.Type, name)
+				if !found {
+					if names := findUserStructAnonymous(ctx, sf.Type, name); names != nil {
+						return append([]string{sf.Name}, names...)
+					}
+				}
+			} else {
+				_, found = sf.Type.MethodByName(name)
+			}
+			if found {
+				return []string{sf.Name}
+			}
+		}
+	}
+	return nil
+}
+
+func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr, compileByCallExpr bool) func() {
 	exprX := compileExpr(ctx, v.X)
 	if v.Sel == nil {
 		return exprX
@@ -1333,8 +1388,20 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, compileByCallExpr b
 					}
 				}
 			}
+			if call != nil && isUserStruct(t) {
+				if names := findUserStructAnonymous(ctx, t, name); names != nil {
+					ctx.infer.Pop()
+					x := &ast.SelectorExpr{X: v.X}
+					for i := 0; i < len(names)-1; i++ {
+						x.X = &ast.SelectorExpr{X: x.X, Sel: &ast.Ident{Name: names[i]}}
+					}
+					x.Sel = &ast.Ident{Name: names[len(names)-1]}
+					fun := &ast.SelectorExpr{X: x, Sel: v.Sel}
+					call.Fun = fun
+					return compileSelectorExpr(ctx, call, fun, compileByCallExpr)
+				}
+			}
 		}
-
 		if _, ok := vx.t.MethodByName(name); !ok && isLower(name) {
 			name = strings.Title(name)
 			if _, ok = vx.t.MethodByName(name); ok {
@@ -1350,6 +1417,14 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, compileByCallExpr b
 			log.Panicln("compileSelectorExpr failed: package not found -", pkgPath)
 		}
 		addr, kind, ok := pkg.Find(method)
+		if !ok {
+			cn := 0
+			if n == 0 {
+				cn = 1
+			}
+			_, cm := normalizeMethod(cn, t, name)
+			addr, kind, ok = pkg.Find(cm)
+		}
 		if !ok {
 			log.Panicln("compileSelectorExpr: method not found -", method)
 		}
