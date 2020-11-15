@@ -904,13 +904,13 @@ func TestPkgMethodBadCall(t *testing.T) {
 	import "bytes"
 	buf := bytes.NewBuffer([]byte("hello"))
 	println((&buf).String())
-	`, "", nil)
+	`, "", "calling method String with receiver &buf (type **bytes.Buffer) requires explicit dereference.")
 	cltest.Expect(t, `
 	import "reflect"
 	v := reflect.ValueOf(100)
 	p := &v
 	println((&p).Kind())
-	`, "", nil)
+	`, "", "calling method Kind with receiver &p (type **reflect.Value) requires explicit dereference.")
 }
 
 func TestComplex(t *testing.T) {
@@ -1317,6 +1317,24 @@ var testStructClauses = map[string]testData{
 				
 				mu.noCopy = struct{}{}
 					`, "", true},
+	"struct_array": {`
+	type Point struct {
+		X int
+		Y int
+	}
+	ar := []Point{}
+	ar = append(ar,Point{10,20})
+	println(ar)
+	`, "[{10 20}]\n", false},
+	"struct_ptr_array": {`
+	type Point struct {
+		X int
+		Y int
+	}
+	ar := []*Point{}
+	ar = append(ar,&Point{10,20})
+	println(ar[0])
+	`, "&{10 20}\n", false},
 }
 
 func TestStruct2(t *testing.T) {
@@ -1475,6 +1493,208 @@ var testMethodClauses = map[string]testData{
 
 func TestMethodCases(t *testing.T) {
 	testScripts(t, "TestMethod", testMethodClauses)
+}
+
+func TestEmbeddedField(t *testing.T) {
+	cltest.Expect(t, `
+	type Base struct {
+		Info string
+	}
+	type Point struct {
+		X int
+		Y int
+	}
+	type My struct {
+		Base
+		Point
+	}
+	m := &My{Base:Base{"hello"},Point{10,20}}
+	println(m.Info,m.X,m.Y)
+	m.Info = "world"
+	m.Point = Point{-10,-20}
+	println(m.Info,m.X,m.Y)
+	m.Base = Base{"goplus"}
+	m.Point.X = 100
+	m.Y = 200
+	println(m.Info,m.X,m.Y)
+	`, "hello 10 20\nworld -10 -20\ngoplus 100 200\n")
+	cltest.Expect(t, `
+	type Base struct {
+		Info string
+	}
+	type Point struct {
+		X int
+		Y int
+	}
+	type My struct {
+		Base
+		*Point
+	}
+	m := &My{Base:Base{"hello"},&Point{10,20}}
+	println(m.Info,m.X,m.Y)
+	m.Info = "world"
+	m.Point = &Point{-10,-20}
+	println(m.Info,m.X,m.Y)
+	m.Base = Base{"goplus"}
+	m.Point.X = 100
+	m.Y = 200
+	println(m.Info,m.X,m.Y)
+	`, "hello 10 20\nworld -10 -20\ngoplus 100 200\n")
+	cltest.Expect(t, `
+	import "bytes"
+	type Buf struct {
+		*bytes.Buffer
+	}
+	buf := &Buf{bytes.NewBufferString("hello")}
+	println(buf)
+	`, "&{hello}\n")
+	cltest.Expect(t, `
+	import "reflect"
+	type Value struct {
+		reflect.Value
+	}
+	v := Value{reflect.ValueOf(100)}
+	println(v.Value)
+	`, "100\n")
+}
+
+func TestEmbeddedMethod(t *testing.T) {
+	cltest.Expect(t, `
+	import "bytes"
+	type Buf struct {
+		*bytes.Buffer
+	}
+	buf := &Buf{&bytes.Buffer{}}
+	buf.Write([]byte("hello"))
+	println(buf.String())
+	`, "hello\n")
+	cltest.Expect(t, `
+	import "bytes"
+	type Buf struct {
+		*bytes.Buffer
+	}
+	buf := Buf{&bytes.Buffer{}}
+	buf.Write([]byte("hello"))
+	println(buf.String())
+	`, "hello\n")
+	cltest.Expect(t, `
+	import "bytes"
+	type Buf struct {
+		*bytes.Buffer
+		size int
+	}
+	buf := Buf{&bytes.Buffer{},1}
+	buf.Write([]byte("hello"))
+	println(buf)
+	`, "{hello 1}\n")
+	cltest.Expect(t, `
+	import "reflect"
+	type Value struct {
+		reflect.Value
+	}
+	v := Value{reflect.ValueOf(100)}
+	println(v.Kind())
+	`, "int\n")
+	cltest.Expect(t, `
+	import "reflect"
+	type Value struct {
+		reflect.Value
+	}
+	v := &Value{reflect.ValueOf(100)}
+	println(v.Kind())
+	`, "int\n")
+	cltest.Expect(t, `
+	type Point struct {
+		X int
+		Y int
+	}
+	func (p Point) Test() {
+		println(p.X,p.Y)
+	}
+	type My struct {
+		Point
+	}
+	m := &My{Point{10,20}}
+	m.Test()
+	`, "10 20\n")
+	cltest.Expect(t, `
+	type Point struct {
+		X int
+		Y int
+	}
+	func (p Point) Test() {
+		println(p.X,p.Y)
+	}
+	type My struct {
+		Point
+	}
+	m := My{Point{10,20}}
+	m.Test()
+	`, "10 20\n")
+	cltest.Expect(t, `
+	type Point struct {
+		X int
+		Y int
+	}
+	func (p *Point) Test() {
+		println(p.X,p.Y)
+	}
+	type My struct {
+		Point
+	}
+	m := &My{Point{10,20}}
+	m.Test()
+	`, "10 20\n")
+	cltest.Expect(t, `
+	type Point struct {
+		X int
+		Y int
+	}
+	func (p *Point) Test() {
+		println(p.X,p.Y)
+	}
+	type My struct {
+		*Point
+	}
+	m := &My{&Point{10,20}}
+	m.Test()
+	`, "10 20\n")
+	cltest.Expect(t, `
+	type Point struct {
+		X int
+		Y int
+	}
+	func (p *Point) Test() {
+		println(p.X,p.Y)
+	}
+	type Base struct {
+		*Point
+	}
+	type My struct {
+		Base
+	}
+	m := &My{}
+	m.Point = &Point{10,20}
+	m.Test()
+	`, "10 20\n")
+	cltest.Expect(t, `
+	type Point struct {
+		X int
+		Y int
+	}
+	func (p *Point) Test() {
+		println(p.X,p.Y)
+	}
+	type Base struct {
+		*Point
+	}
+	type My struct {
+		*Base
+		size int
+	}
+	m := &My{&Base{&Point{10,20}},1}
+	m.Test()
+	`, "10 20\n")
 }
 
 // -----------------------------------------------------------------------------
