@@ -120,7 +120,8 @@ func execAddrOp(i Instr, p *Context) {
 }
 
 func execGoBuiltin(i Instr, p *Context) {
-	op := i & bitsOperand
+	op := (i & bitsOperand) >> bitsKind
+	kind := Kind(i & ((1 << bitsKind) - 1))
 	n := len(p.data)
 	switch exec.GoBuiltin(op) {
 	case GobLen:
@@ -139,8 +140,26 @@ func execGoBuiltin(i Instr, p *Context) {
 		v := reflect.ValueOf(p.data[n-2])
 		v.SetMapIndex(key, reflect.Value{})
 		p.PopN(2)
+	case GobComplex:
+		if kind == reflect.Complex64 {
+			p.Ret(2, complex(p.data[n-2].(float32), p.data[n-1].(float32)))
+		} else {
+			p.Ret(2, complex(p.data[n-2].(float64), p.data[n-1].(float64)))
+		}
+	case GobImag:
+		if kind == reflect.Float32 {
+			p.data[n-1] = imag(p.data[n-1].(complex64))
+		} else {
+			p.data[n-1] = imag(p.data[n-1].(complex128))
+		}
+	case GobReal:
+		if kind == reflect.Float32 {
+			p.data[n-1] = real(p.data[n-1].(complex64))
+		} else {
+			p.data[n-1] = real(p.data[n-1].(complex128))
+		}
 	default:
-		log.Panicln("execGoBuiltin: todo -", i)
+		log.Panicln("execGoBuiltin: todo -", op)
 	}
 }
 
@@ -237,7 +256,6 @@ func (p *Builder) storeVar(addr tAddress) *Builder {
 // Var represents a variable.
 type Var struct {
 	typ       reflect.Type
-	actualTyp reflect.Type
 	name      string
 	nestDepth uint32
 	idx       uint32
@@ -245,8 +263,7 @@ type Var struct {
 
 // NewVar creates a variable instance.
 func NewVar(typ reflect.Type, name string) *Var {
-	totyp := toType(typ)
-	return &Var{typ: totyp, name: "Q" + name, idx: 0xffffffff, actualTyp: typ}
+	return &Var{typ: typ, name: "Q" + name, idx: 0xffffffff}
 }
 
 func (p *Var) isGlobal() bool {
@@ -255,7 +272,7 @@ func (p *Var) isGlobal() bool {
 
 // Type returns variable's type.
 func (p *Var) Type() reflect.Type {
-	return p.actualTyp
+	return p.typ
 }
 
 // Name returns variable's name.
@@ -308,28 +325,6 @@ func (p *varManager) addVars(vars ...exec.Var) {
 		log.Debug("DefineVar:", v.Name(), "nestDepth:", nestDepth)
 		p.vlist = append(p.vlist, v)
 	}
-}
-
-func toType(typ reflect.Type) reflect.Type {
-	if typ.Kind() == reflect.Ptr {
-		temp := typ.Elem()
-		structType := toType(temp)
-		return reflect.PtrTo(structType)
-	}
-
-	if typ.Kind() == reflect.Struct && typ.Name() == "" {
-		var fields = make([]StructField, 0, typ.NumField())
-		for i := 0; i < typ.NumField(); i++ {
-			field := typ.Field(i)
-			fields = append(fields, StructField{
-				Type: toType(field.Type),
-				Name: "Q" + field.Name,
-			})
-		}
-
-		typ = Struct(fields).Type()
-	}
-	return typ
 }
 
 type blockCtx struct {
@@ -400,7 +395,8 @@ func (p *Builder) AddrOp(kind Kind, op AddrOperator) *Builder {
 
 // GoBuiltin instr
 func (p *Builder) GoBuiltin(typ reflect.Type, op GoBuiltin) *Builder {
-	p.code.data = append(p.code.data, (opGoBuiltin<<bitsOpShift)|uint32(op))
+	i := (int(op) << bitsKind) | int(typ.Kind())
+	p.code.data = append(p.code.data, (opGoBuiltin<<bitsOpShift)|uint32(i))
 	return p
 }
 

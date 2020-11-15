@@ -20,83 +20,36 @@ import (
 
 // -----------------------------------------------------------------------------
 
-type Person struct {
-	Name string
-	Age  int
-}
-
-func TestStruct(t *testing.T) {
+func TestChan(t *testing.T) {
 	println, ok := I.FindFuncv("Println")
 	if !ok {
 		t.Fatal("FindFuncv failed: Println")
 	}
 
 	b := newBuilder()
-	p := Person{
-		Name: "bar",
-		Age:  30,
-	}
 
-	v := NewVar(reflect.TypeOf(p), "p")
+	v := NewVar(reflect.ChanOf(3, reflect.TypeOf(0)), "p")
+	i := NewVar(reflect.TypeOf(0), "i")
 	expect(t,
 		func() {
 			b.DefineVar(v)
-			b.Push(0)
-			b.Push("bar")
-			b.Push(1)
-			b.Push(30)
-			b.Struct(reflect.TypeOf(p), 2)
+			b.DefineVar(i)
+			b.Push(10)
+			b.Make(reflect.ChanOf(3, reflect.TypeOf(0)), 1)
 			b.StoreVar(v)
 			b.LoadVar(v)
+			b.Push(3)
+			b.Send()
+			b.LoadVar(v)
+			b.Recv()
+			b.StoreVar(i)
+			b.LoadVar(i)
 			b.CallGoFuncv(println, 1, 1)
 			code := b.Resolve()
 			code.(*Code).Dump(os.Stderr)
 			ctx := NewContext(code)
 			ctx.Exec(0, code.Len())
 		},
-		"{bar 30}\n",
+		"3\n",
 	)
-}
-
-func TestStruct2(t *testing.T) {
-	println, ok := I.FindFuncv("Println")
-	if !ok {
-		t.Fatal("FindFuncv failed: Println")
-	}
-
-	b := newBuilder()
-	p := &Person{
-		Name: "bar",
-		Age:  30,
-	}
-
-	v := NewVar(reflect.TypeOf(p), "p")
-	expect(t,
-		func() {
-			b.DefineVar(v)
-			b.Push(0)
-			b.Push("bar")
-			b.Push(1)
-			b.Push(30)
-			b.Struct(reflect.TypeOf(p), 2)
-			b.StoreVar(v)
-			b.LoadVar(v)
-			b.CallGoFuncv(println, 1, 1)
-			code := b.Resolve()
-			code.(*Code).Dump(os.Stderr)
-			ctx := NewContext(code)
-			ctx.Exec(0, code.Len())
-		},
-		"&{bar 30}\n",
-	)
-}
-
-func TestValueOf(t *testing.T) {
-	typ := reflect.TypeOf(100)
-	if v := getValueOf(100, typ); v.Int() != 100 {
-		t.Fatal("getValueOf", v)
-	}
-	if v := getValueOf(nil, typ); v.Int() != 0 {
-		t.Fatal("getValueOf", v)
-	}
 }

@@ -129,6 +129,8 @@ const (
 	opStoreField    = 48 // op(26)
 	opAddrField     = 49 // op(26)
 	opStruct        = 50 // funvArity(10) type(16)
+	opSend          = 51 // reserved(26)
+	opRecv          = 52 // reserved(26)
 )
 
 const (
@@ -219,6 +221,8 @@ var instrInfos = []InstrInfo{
 	opStoreField:    {"storeField", "", "", 26},                           // addr(26)
 	opAddrField:     {"addrField", "", "", 26},                            // addr(26)
 	opStruct:        {"struct", "funvArity", "type", (10 << 8) | 16},      // funvArity(10) type(16)
+	opSend:          {"send", "", "", 0},                                  // reserved(26)
+	opRecv:          {"recv", "", "", 0},                                  // reserved(26)
 }
 
 // -----------------------------------------------------------------------------

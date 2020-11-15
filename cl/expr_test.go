@@ -808,6 +808,137 @@ func _TestIsNoExecCtx(t *testing.T) {
 	println("values:", fns[0](), fns[1](), fns[2]())`, "values: 3 15 777\n")
 }
 
+func TestPkgMethod(t *testing.T) {
+	cltest.Expect(t, `
+	import "bytes"
+	buf := bytes.NewBuffer([]byte("hello"))
+	println(buf.String())
+	`, "hello\n")
+	cltest.Expect(t, `
+	import "bytes"
+	var buf bytes.Buffer
+	buf.Write([]byte("hello"))
+	println(buf.String())
+	`, "hello\n")
+	cltest.Expect(t, `
+	import "reflect"
+	v := reflect.ValueOf(100)
+	println(v.Kind())
+	`, "int\n")
+	cltest.Expect(t, `
+	import "reflect"
+	v := reflect.ValueOf(100)
+	p := &v
+	println(p.Kind())
+	`, "int\n")
+}
+
+func TestComplex(t *testing.T) {
+	cltest.Expect(t, `
+	c := complex(1,2)
+	printf("%v %T\n",c,c)
+	`, "(1+2i) complex128\n")
+	cltest.Expect(t, `
+	c := complex(float64(1),2)
+	printf("%v %T\n",c,c)
+	`, "(1+2i) complex128\n")
+	cltest.Expect(t, `
+	c := complex(float32(1),2)
+	printf("%v %T\n",c,c)
+	`, "(1+2i) complex64\n")
+	cltest.Expect(t, `
+	func test() float64 { return 1 }
+	c := complex(test(),2)
+	printf("%v %T\n",c,c)
+	`, "(1+2i) complex128\n")
+	cltest.Expect(t, `
+	func test() float32 { return 1 }
+	c := complex(test(),2)
+	printf("%v %T\n",c,c)
+	`, "(1+2i) complex64\n")
+
+	cltest.Expect(t, `
+	c := real(1+2i)
+	printf("%v %T\n",c,c)
+	`, "1 float64\n")
+	cltest.Expect(t, `
+	c := real(complex128(1+2i))
+	printf("%v %T\n",c,c)
+	`, "1 float64\n")
+	cltest.Expect(t, `
+	c := real(complex64(1+2i))
+	printf("%v %T\n",c,c)
+	`, "1 float32\n")
+	cltest.Expect(t, `
+	c := real(complex(1,2))
+	printf("%v %T\n",c,c)
+	`, "1 float64\n")
+	cltest.Expect(t, `
+	c := real(complex(1,float32(2)))
+	printf("%v %T\n",c,c)
+	`, "1 float32\n")
+
+	cltest.Expect(t, `
+	c := imag(1+2i)
+	printf("%v %T\n",c,c)
+	`, "2 float64\n")
+	cltest.Expect(t, `
+	c := imag(complex128(1+2i))
+	printf("%v %T\n",c,c)
+	`, "2 float64\n")
+	cltest.Expect(t, `
+	c := imag(complex64(1+2i))
+	printf("%v %T\n",c,c)
+	`, "2 float32\n")
+	cltest.Expect(t, `
+	c := imag(complex(1,2))
+	printf("%v %T\n",c,c)
+	`, "2 float64\n")
+	cltest.Expect(t, `
+	c := imag(complex(float32(1),2))
+	printf("%v %T\n",c,c)
+	`, "2 float32\n")
+}
+
+func TestBadComplex(t *testing.T) {
+	cltest.Expect(t, `
+	complex(1)
+	`, "", nil)
+	cltest.Expect(t, `
+	complex(1,2,3)
+	`, "", nil)
+	cltest.Expect(t, `
+	complex(float32(1),float64(2))
+	`, "", nil)
+	cltest.Expect(t, `
+	func test() int { return 100 }
+	complex(test(),2)
+	`, "", nil)
+	cltest.Expect(t, `
+	complex(1,int(2))
+	`, "", nil)
+
+	cltest.Expect(t, `
+	real()
+	`, "", nil)
+	cltest.Expect(t, `
+	real(1,2)
+	`, "", nil)
+	cltest.Expect(t, `
+	real(int(1))
+	`, "", nil)
+
+	cltest.Expect(t, `
+	imag()
+	`, "", nil)
+	cltest.Expect(t, `
+	imag(1,2)
+	`, "", nil)
+	cltest.Expect(t, `
+	imag(int(1))
+	`, "", nil)
+}
+
 func TestResult(t *testing.T) {
 	cltest.Expect(t, `
 	import "fmt"
@@ -1106,6 +1237,24 @@ var testStructClauses = map[string]testData{
 				
 				mu.noCopy = struct{}{}
 					`, "", true},
+	"struct_array": {`
+	type Point struct {
+		X int
+		Y int
+	}
+	ar := []Point{}
+	ar = append(ar,Point{10,20})
+	println(ar)
+	`, "[{10 20}]\n", false},
+	"struct_ptr_array": {`
+	type Point struct {
+		X int
+		Y int
+	}
+	ar := []*Point{}
+	ar = append(ar,&Point{10,20})
+	println(ar[0])
+	`, "&{10 20}\n", false},
 }
 
 func TestStruct2(t *testing.T) {
@@ -1266,6 +1415,208 @@ func TestMethodCases(t *testing.T) {
 	testScripts(t, "TestMethod", testMethodClauses)
 }
 
+func TestEmbeddedField(t *testing.T) {
+	cltest.Expect(t, `
+	type Base struct {
+		Info string
+	}
+	type Point struct {
+		X int
+		Y int
+	}
+	type My struct {
+		Base
+		Point
+	}
+	m := &My{Base:Base{"hello"},Point{10,20}}
+	println(m.Info,m.X,m.Y)
+	m.Info = "world"
+	m.Point = Point{-10,-20}
+	println(m.Info,m.X,m.Y)
+	m.Base = Base{"goplus"}
+	m.Point.X = 100
+	m.Y = 200
+	println(m.Info,m.X,m.Y)
+	`, "hello 10 20\nworld -10 -20\ngoplus 100 200\n")
+	cltest.Expect(t, `
+	type Base struct {
+		Info string
+	}
+	type Point struct {
+		X int
+		Y int
+	}
+	type My struct {
+		Base
+		*Point
+	}
+	m := &My{Base:Base{"hello"},&Point{10,20}}
+	println(m.Info,m.X,m.Y)
+	m.Info = "world"
+	m.Point = &Point{-10,-20}
+	println(m.Info,m.X,m.Y)
+	m.Base = Base{"goplus"}
+	m.Point.X = 100
+	m.Y = 200
+	println(m.Info,m.X,m.Y)
+	`, "hello 10 20\nworld -10 -20\ngoplus 100 200\n")
+	cltest.Expect(t, `
+	import "bytes"
+	type Buf struct {
+		*bytes.Buffer
+	}
+	buf := &Buf{bytes.NewBufferString("hello")}
+	println(buf)
+	`, "&{hello}\n")
+	cltest.Expect(t, `
+	import "reflect"
+	type Value struct {
+		reflect.Value
+	}
+	v := Value{reflect.ValueOf(100)}
+	println(v.Value)
+	`, "100\n")
+}
+
+func TestEmbeddedMethod(t *testing.T) {
+	cltest.Expect(t, `
+	import "bytes"
+	type Buf struct {
+		*bytes.Buffer
+	}
+	buf := &Buf{&bytes.Buffer{}}
+	buf.Write([]byte("hello"))
+	println(buf.String())
+	`, "hello\n")
+	cltest.Expect(t, `
+	import "bytes"
+	type Buf struct {
+		*bytes.Buffer
+	}
+	buf := Buf{&bytes.Buffer{}}
+	buf.Write([]byte("hello"))
+	println(buf.String())
+	`, "hello\n")
+	cltest.Expect(t, `
+	import "bytes"
+	type Buf struct {
+		*bytes.Buffer
+		size int
+	}
+	buf := Buf{&bytes.Buffer{},1}
+	buf.Write([]byte("hello"))
+	println(buf)
+	`, "{hello 1}\n")
+	cltest.Expect(t, `
+	import "reflect"
+	type Value struct {
+		reflect.Value
+	}
+	v := Value{reflect.ValueOf(100)}
+	println(v.Kind())
+	`, "int\n")
+	cltest.Expect(t, `
+	import "reflect"
+	type Value struct {
+		reflect.Value
+	}
+	v := &Value{reflect.ValueOf(100)}
+	println(v.Kind())
+	`, "int\n")
+	cltest.Expect(t, `
+	type Point struct {
+		X int
+		Y int
+	}
+	func (p Point) Test() {
+		println(p.X,p.Y)
+	}
+	type My struct {
+		Point
+	}
+	m := &My{Point{10,20}}
+	m.Test()
+	`, "10 20\n")
+	cltest.Expect(t, `
+	type Point struct {
+		X int
+		Y int
+	}
+	func (p Point) Test() {
+		println(p.X,p.Y)
+	}
+	type My struct {
+		Point
+	}
+	m := My{Point{10,20}}
+	m.Test()
+	`, "10 20\n")
+	cltest.Expect(t, `
+	type Point struct {
+		X int
+		Y int
+	}
+	func (p *Point) Test() {
+		println(p.X,p.Y)
+	}
+	type My struct {
+		Point
+	}
+	m := &My{Point{10,20}}
+	m.Test()
+	`, "10 20\n")
+	cltest.Expect(t, `
+	type Point struct {
+		X int
+		Y int
+	}
+	func (p *Point) Test() {
+		println(p.X,p.Y)
+	}
+	type My struct {
+		*Point
+	}
+	m := &My{&Point{10,20}}
+	m.Test()
+	`, "10 20\n")
+	cltest.Expect(t, `
+	type Point struct {
+		X int
+		Y int
+	}
+	func (p *Point) Test() {
+		println(p.X,p.Y)
+	}
+	type Base struct {
+		*Point
+	}
+	type My struct {
+		Base
+	}
+	m := &My{}
+	m.Point = &Point{10,20}
+	m.Test()
+	`, "10 20\n")
+	cltest.Expect(t, `
+	type Point struct {
+		X int
+		Y int
+	}
+	func (p *Point) Test() {
+		println(p.X,p.Y)
+	}
+	type Base struct {
+		*Point
+	}
+	type My struct {
+		*Base
+		size int
+	}
+	m := &My{&Base{&Point{10,20}},1}
+	m.Test()
+	`, "10 20\n")
+}
+
 // -----------------------------------------------------------------------------
 
 var testStarExprClauses = map[string]testData{
@@ -1377,6 +1728,77 @@ var testStarExprClauses = map[string]testData{
 
 func TestStarExpr(t *testing.T) {
 	testScripts(t, "TestStarExpr", testStarExprClauses)
+}
+
+// -----------------------------------------------------------------------------
+var testRefTypeClauses = map[string]testData{
+	"ref type": {`
+	func foo() []int {
+		return make([]int, 10)
+	}
+	
+	func foo1() map[int]int {
+		return make(map[int]int, 10)
+	}
+	
+	func foo2() chan int {
+		return make(chan int, 10)
+	}
+	a := foo()
+	if a != nil {
+		println("foo")
+	}
+	
+	a1 := foo1()
+	if a1 != nil {
+		println("foo1")
+	}
+	a2 := foo2()
+	if a2 != nil {
+		println("foo2")
+	}
+						`, "foo\nfoo1\nfoo2\n", false},
+	"ref type 2": {`
+	func foo() []int {
+		return nil
+	}
+	
+	func foo1() map[int]int {
+		return make(map[int]int, 10)
+	}
+	
+	func foo2() chan int {
+		return make(chan int, 10)
+	}
+
+	func foo3() *int {
+		return nil
+	}
+	
+	println(foo() == nil)
+	println(nil == foo())
+	println(foo() != nil)
+	println(nil != foo())
+	
+	println(foo1() == nil)
+	println(nil == foo1())
+	println(foo1() != nil)
+	println(nil != foo1())
+	
+	println(foo2() == nil)
+	println(nil == foo2())
+	println(foo2() != nil)
+	println(nil != foo2())
+	
+	println(foo3() == nil)
+	println(nil == foo3())
+	println(foo3() != nil)
+	println(nil != foo3())
+						`, "true\ntrue\nfalse\nfalse\nfalse\nfalse\ntrue\ntrue\nfalse\nfalse\ntrue\ntrue\ntrue\ntrue\nfalse\nfalse\n", false},
+}
+
+func TestRefType(t *testing.T) {
+	testScripts(t, "TestRefType", testRefTypeClauses)
 }
 
 func testScripts(t *testing.T, testName string, scripts map[string]testData) {

@@ -72,6 +72,14 @@ const (
 	BigRat = spec.BigRat
 	// BigFloat type
 	BigFloat = spec.BigFloat
+	// Slice type
+	Slice = spec.Slice
+	// Map type
+	Map = spec.Map
+	// Chan type
+	Chan = spec.Chan
+	// Ptr type
+	Ptr = spec.Ptr
 )
 
 var (
@@ -131,6 +139,14 @@ var (
 
 	// TyEmptyInterfaceSlice type
 	TyEmptyInterfaceSlice = reflect.SliceOf(TyEmptyInterface)
+	// TySlice type
+	TySlice = reflect.SliceOf(TyEmptyInterface)
+	// TyMap type
+	TyMap = reflect.MapOf(TyEmptyInterface, TyEmptyInterface)
+	// Chan type
+	TyChan = reflect.ChanOf(reflect.BothDir, TyEmptyInterface)
+	// TyPtr type
+	TyPtr = TyUnsafePointer
 )
 
 type bTI struct { // builtin type info

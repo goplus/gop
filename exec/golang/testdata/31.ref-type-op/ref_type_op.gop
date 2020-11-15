@@ -1,0 +1,7 @@
+func foo() []int {
+	return make([]int, 10)
+}
+a := foo()
+if a != nil {
+	println("foo")
+}
