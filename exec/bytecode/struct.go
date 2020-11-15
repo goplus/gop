@@ -20,6 +20,7 @@ import (
 	"reflect"
 	"strconv"
 
+	"github.com/goplus/reflectx"
 	"github.com/qiniu/x/log"
 )
 
@@ -162,12 +163,12 @@ func (p *Builder) Struct(typ reflect.Type, arity int) *Builder {
 }
 
 func execStruct(i Instr, p *Context) {
-	typStruct := getType(i&bitsOpCallFuncvOperand, p)
+	typ := getType(i&bitsOpCallFuncvOperand, p)
 	arity := int((i >> bitsOpCallFuncvShift) & bitsFuncvArityOperand)
 	if arity == bitsFuncvArityMax {
 		arity = p.Pop().(int) + bitsFuncvArityMax
 	}
-	makeStruct(typStruct, arity, p)
+	makeStruct(typ, arity, p)
 }
 
 func makeStruct(typStruct reflect.Type, arity int, p *Context) {
@@ -175,14 +176,14 @@ func makeStruct(typStruct reflect.Type, arity int, p *Context) {
 	args := p.GetArgs(n)
 
 	var ptr bool
-	if typStruct.Kind() == reflect.Ptr {
+	for typStruct.Kind() == reflect.Ptr {
 		ptr = true
 		typStruct = typStruct.Elem()
 	}
 	v := reflect.New(typStruct).Elem()
 	for i := 0; i < n; i += 2 {
 		index := args[i].(int)
-		Field(v, index).Set(reflect.ValueOf(args[i+1]))
+		reflectx.Field(v, index).Set(reflect.ValueOf(args[i+1]))
 	}
 	if ptr {
 		p.Ret(n, v.Addr().Interface())

@@ -22,6 +22,7 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/reflectx"
 	"github.com/qiniu/x/log"
 )
 
@@ -226,7 +227,7 @@ func toStructType(ctx *blockCtx, v *ast.StructType) iType {
 	for _, field := range v.Fields.List {
 		fields = append(fields, toStructField(ctx, field)...)
 	}
-	return reflect.StructOf(fields)
+	return reflectx.StructOf(fields)
 }
 
 func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) iType {
@@ -323,10 +324,25 @@ func toStructField(ctx *blockCtx, field *ast.Field) []reflect.StructField {
 	return fields
 }
 
+func typeName(typ ast.Expr) string {
+	switch v := typ.(type) {
+	case *ast.Ident:
+		return v.Name
+	case *ast.SelectorExpr:
+		return typeName(v.Sel)
+	case *ast.StarExpr:
+		return typeName(v.X)
+	}
+	return ""
+}
+
 func buildField(ctx *blockCtx, field *ast.Field, anonymous bool, fieldName string) reflect.StructField {
 	var f = reflect.StructField{}
 	if !anonymous {
 		f = reflect.StructField{}
+	}
+	if anonymous {
+		fieldName = typeName(field.Type)
 	}
 	f = reflect.StructField{
 		Name:      fieldName,
