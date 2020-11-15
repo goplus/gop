@@ -259,7 +259,6 @@ func (p *Builder) storeVar(addr tAddress) *Builder {
 // Var represents a variable.
 type Var struct {
 	typ       reflect.Type
-	actualTyp reflect.Type
 	name      string
 	nestDepth uint32
 	idx       uint32
@@ -267,8 +266,7 @@ type Var struct {
 
 // NewVar creates a variable instance.
 func NewVar(typ reflect.Type, name string) *Var {
-	totyp := toType(typ)
-	return &Var{typ: totyp, name: "Q" + name, idx: 0xffffffff, actualTyp: typ}
+	return &Var{typ: typ, name: "Q" + name, idx: 0xffffffff}
 }
 
 func (p *Var) isGlobal() bool {
@@ -277,7 +275,7 @@ func (p *Var) isGlobal() bool {
 
 // Type returns variable's type.
 func (p *Var) Type() reflect.Type {
-	return p.actualTyp
+	return p.typ
 }
 
 // Name returns variable's name.
@@ -330,28 +328,6 @@ func (p *varManager) addVars(vars ...exec.Var) {
 		log.Debug("DefineVar:", v.Name(), "nestDepth:", nestDepth)
 		p.vlist = append(p.vlist, v)
 	}
-}
-
-func toType(typ reflect.Type) reflect.Type {
-	if typ.Kind() == reflect.Ptr {
-		temp := typ.Elem()
-		structType := toType(temp)
-		return reflect.PtrTo(structType)
-	}
-
-	if typ.Kind() == reflect.Struct && typ.Name() == "" {
-		var fields = make([]StructField, 0, typ.NumField())
-		for i := 0; i < typ.NumField(); i++ {
-			field := typ.Field(i)
-			fields = append(fields, StructField{
-				Type: toType(field.Type),
-				Name: "Q" + field.Name,
-			})
-		}
-
-		typ = Struct(fields).Type()
-	}
-	return typ
 }
 
 type blockCtx struct {

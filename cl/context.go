@@ -51,6 +51,9 @@ func newPkgCtx(out exec.Builder, pkg *ast.Package, fset *token.FileSet) *pkgCtx 
 }
 
 func (p *pkgCtx) code(v ast.Node) string {
+	if expr, ok := v.(*ast.ParenExpr); ok {
+		v = expr.X
+	}
 	_, code := p.getCodeInfo(v)
 	return code
 }
