@@ -21,6 +21,7 @@ var builtinAddrOps = [...]func(i Instr, p *Context){
 	(int(OpAddAssign) << bitsKind) | int(Complex64):  execAddAssignComplex64,
 	(int(OpAddAssign) << bitsKind) | int(Complex128): execAddAssignComplex128,
 	(int(OpAddAssign) << bitsKind) | int(String):     execAddAssignString,
+	(int(OpAddAssign) << bitsKind) | int(BigInt):     execAddAssignBigInt,
 	(int(OpAddAssign) << bitsKind) | int(BigRat):     execAddAssignBigRat,
 	(int(OpAddAssign) << bitsKind) | int(BigFloat):   execAddAssignBigFloat,
 	(int(OpSubAssign) << bitsKind) | int(Int):        execSubAssignInt,
@@ -38,6 +39,7 @@ var builtinAddrOps = [...]func(i Instr, p *Context){
 	(int(OpSubAssign) << bitsKind) | int(Float64):    execSubAssignFloat64,
 	(int(OpSubAssign) << bitsKind) | int(Complex64):  execSubAssignComplex64,
 	(int(OpSubAssign) << bitsKind) | int(Complex128): execSubAssignComplex128,
+	(int(OpSubAssign) << bitsKind) | int(BigInt):     execSubAssignBigInt,
 	(int(OpSubAssign) << bitsKind) | int(BigRat):     execSubAssignBigRat,
 	(int(OpSubAssign) << bitsKind) | int(BigFloat):   execSubAssignBigFloat,
 	(int(OpMulAssign) << bitsKind) | int(Int):        execMulAssignInt,
@@ -55,6 +57,7 @@ var builtinAddrOps = [...]func(i Instr, p *Context){
 	(int(OpMulAssign) << bitsKind) | int(Float64):    execMulAssignFloat64,
 	(int(OpMulAssign) << bitsKind) | int(Complex64):  execMulAssignComplex64,
 	(int(OpMulAssign) << bitsKind) | int(Complex128): execMulAssignComplex128,
+	(int(OpMulAssign) << bitsKind) | int(BigInt):     execMulAssignBigInt,
 	(int(OpMulAssign) << bitsKind) | int(BigRat):     execMulAssignBigRat,
 	(int(OpMulAssign) << bitsKind) | int(BigFloat):   execMulAssignBigFloat,
 	(int(OpQuoAssign) << bitsKind) | int(Int):        execQuoAssignInt,
@@ -72,6 +75,7 @@ var builtinAddrOps = [...]func(i Instr, p *Context){
 	(int(OpQuoAssign) << bitsKind) | int(Float64):    execQuoAssignFloat64,
 	(int(OpQuoAssign) << bitsKind) | int(Complex64):  execQuoAssignComplex64,
 	(int(OpQuoAssign) << bitsKind) | int(Complex128): execQuoAssignComplex128,
+	(int(OpQuoAssign) << bitsKind) | int(BigInt):     execQuoAssignBigInt,
 	(int(OpQuoAssign) << bitsKind) | int(BigRat):     execQuoAssignBigRat,
 	(int(OpQuoAssign) << bitsKind) | int(BigFloat):   execQuoAssignBigFloat,
 	(int(OpModAssign) << bitsKind) | int(Int):        execModAssignInt,
@@ -166,6 +170,7 @@ var builtinAddrOps = [...]func(i Instr, p *Context){
 	(int(OpInc) << bitsKind) | int(Float64):          execIncFloat64,
 	(int(OpInc) << bitsKind) | int(Complex64):        execIncComplex64,
 	(int(OpInc) << bitsKind) | int(Complex128):       execIncComplex128,
+	(int(OpInc) << bitsKind) | int(BigInt):           execIncBigInt,
 	(int(OpInc) << bitsKind) | int(BigRat):           execIncBigRat,
 	(int(OpInc) << bitsKind) | int(BigFloat):         execIncBigFloat,
 	(int(OpDec) << bitsKind) | int(Int):              execDecInt,
@@ -183,6 +188,7 @@ var builtinAddrOps = [...]func(i Instr, p *Context){
 	(int(OpDec) << bitsKind) | int(Float64):          execDecFloat64,
 	(int(OpDec) << bitsKind) | int(Complex64):        execDecComplex64,
 	(int(OpDec) << bitsKind) | int(Complex128):       execDecComplex128,
+	(int(OpDec) << bitsKind) | int(BigInt):           execDecBigInt,
 	(int(OpDec) << bitsKind) | int(BigRat):           execDecBigRat,
 	(int(OpDec) << bitsKind) | int(BigFloat):         execDecBigFloat,
 }
@@ -280,6 +286,13 @@ func execAddAssignComplex128(i Instr, p *Context) {
 func execAddAssignString(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*string) += p.data[n-2].(string)
+	p.data = p.data[:n-2]
+}
+
+func execAddAssignBigInt(i Instr, p *Context) {
+	n := len(p.data)
+	x := p.data[n-1].(*big.Int)
+	x.Add(x, p.data[n-2].(*big.Int))
 	p.data = p.data[:n-2]
 }
 
@@ -387,6 +400,13 @@ func execSubAssignComplex128(i Instr, p *Context) {
 	p.data = p.data[:n-2]
 }
 
+func execSubAssignBigInt(i Instr, p *Context) {
+	n := len(p.data)
+	x := p.data[n-1].(*big.Int)
+	x.Sub(x, p.data[n-2].(*big.Int))
+	p.data = p.data[:n-2]
+}
+
 func execSubAssignBigRat(i Instr, p *Context) {
 	n := len(p.data)
 	x := p.data[n-1].(*big.Rat)
@@ -491,6 +511,13 @@ func execMulAssignComplex128(i Instr, p *Context) {
 	p.data = p.data[:n-2]
 }
 
+func execMulAssignBigInt(i Instr, p *Context) {
+	n := len(p.data)
+	x := p.data[n-1].(*big.Int)
+	x.Mul(x, p.data[n-2].(*big.Int))
+	p.data = p.data[:n-2]
+}
+
 func execMulAssignBigRat(i Instr, p *Context) {
 	n := len(p.data)
 	x := p.data[n-1].(*big.Rat)
@@ -592,6 +619,13 @@ func execQuoAssignComplex64(i Instr, p *Context) {
 func execQuoAssignComplex128(i Instr, p *Context) {
 	n := len(p.data)
 	*p.data[n-1].(*complex128) /= p.data[n-2].(complex128)
+	p.data = p.data[:n-2]
+}
+
+func execQuoAssignBigInt(i Instr, p *Context) {
+	n := len(p.data)
+	x := p.data[n-1].(*big.Int)
+	x.Quo(x, p.data[n-2].(*big.Int))
 	p.data = p.data[:n-2]
 }
 
@@ -1161,6 +1195,13 @@ func execIncComplex128(i Instr, p *Context) {
 	p.data = p.data[:n-1]
 }
 
+func execIncBigInt(i Instr, p *Context) {
+	n := len(p.data)
+	x := p.data[n-1].(*big.Int)
+	x.Add(x, bigIntOne)
+	p.data = p.data[:n-1]
+}
+
 func execIncBigRat(i Instr, p *Context) {
 	n := len(p.data)
 	x := p.data[n-1].(*big.Rat)
@@ -1262,6 +1303,13 @@ func execDecComplex64(i Instr, p *Context) {
 func execDecComplex128(i Instr, p *Context) {
 	n := len(p.data)
 	(*p.data[n-1].(*complex128))--
+	p.data = p.data[:n-1]
+}
+
+func execDecBigInt(i Instr, p *Context) {
+	n := len(p.data)
+	x := p.data[n-1].(*big.Int)
+	x.Sub(x, bigIntOne)
 	p.data = p.data[:n-1]
 }
 
