@@ -293,10 +293,14 @@ func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
 	if ctx.exists(spec.Name.Name) {
 		log.Panicln("loadType failed: symbol exists -", spec.Name.Name)
 	}
-	t := toType(ctx, spec.Type).(reflect.Type)
-
+	var t reflect.Type
+	switch v := spec.Type.(type) {
+	case *ast.StructType:
+		t = toNamedStructType(ctx, spec.Name.Name, v).(reflect.Type)
+	default:
+		t = toType(ctx, v).(reflect.Type)
+	}
 	ctx.out.DefineType(t, spec.Name.Name)
-
 	tDecl := &typeDecl{
 		Type: t,
 	}

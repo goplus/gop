@@ -230,6 +230,14 @@ func toStructType(ctx *blockCtx, v *ast.StructType) iType {
 	return reflectx.StructOf(fields)
 }
 
+func toNamedStructType(ctx *blockCtx, name string, v *ast.StructType) iType {
+	var fields []reflect.StructField
+	for _, field := range v.Fields.List {
+		fields = append(fields, toStructField(ctx, field)...)
+	}
+	return reflectx.NamedStructOf(name, fields)
+}
+
 func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) iType {
 	methods := v.Methods.List
 	if methods == nil {
