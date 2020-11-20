@@ -184,6 +184,12 @@ func (p *iBuilder) Recv() exec.Builder {
 	return p
 }
 
+// Recv instr
+func (p *iBuilder) Recover() exec.Builder {
+	((*Builder)(p)).Recover()
+	return p
+}
+
 // Go instr
 func (p *iBuilder) Go() exec.Builder {
 	((*Builder)(p)).Go()
