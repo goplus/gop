@@ -18,7 +18,10 @@
 package install
 
 import (
+	"fmt"
+	"go/token"
 	"os"
+	"path/filepath"
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
@@ -27,56 +30,62 @@ import (
 	"github.com/qiniu/x/log"
 )
 
-var (
-	exitCode = 0
-)
-
-// Cmd - gop go
+// Cmd - gop install
 var Cmd = &base.Command{
-	UsageLine: "gop install [-v] <gopSrcDir>",
-	Short:     "Install compiles and installs the packages named by the import paths.",
+	UsageLine: "gop install [-v] <gopSrcDir|gopSrcFile>",
+	Short:     "Build go+ files and install target to GOBIN",
 }
 
 var (
-	flag = &Cmd.Flag
+	flag        = &Cmd.Flag
+	flagVerbose bool
 )
 
 func init() {
 	Cmd.Run = runCmd
+	flag.BoolVar(&flagVerbose, "v", false, "print the names of packages as they are compiled.")
 }
 
 func runCmd(cmd *base.Command, args []string) {
 	flag.Parse(args)
-	if flag.NArg() < 1 {
-		cmd.Usage(os.Stderr)
-		return
-	}
+
 	dir, err := os.Getwd()
 	if err != nil {
 		log.Fatalf("Fail to build: %v", err)
 	}
 
+	paths := flag.Args()
+	if len(paths) == 0 {
+		paths = append(paths, dir)
+	}
+
 	cl.CallBuiltinOp = bytecode.CallBuiltinOp
 	log.SetFlags(log.Ldefault &^ log.LstdFlags)
-	err = runInstall(args, dir)
-	if err != nil {
-		exitCode = -1
-	}
-	os.Exit(exitCode)
-}
 
-// -----------------------------------------------------------------------------
-
-func runInstall(args []string, wd string) error {
-	gopInstall, err := work.NewInstall("", args, wd)
-	if err != nil {
-		log.Fatalf("Fail to install: %v", err)
-		return err
+	fset := token.NewFileSet()
+	pkgs, errs := work.LoadPackages(fset, paths)
+	if len(errs) > 0 {
+		log.Fatalf("load packages error: %v\n", errs)
 	}
-
-	err = gopInstall.Install()
-	if err != nil {
-		return err
+	if len(pkgs) == 0 {
+		fmt.Println("no Go+ files in ", paths)
 	}
-	return nil
+	for _, pkg := range pkgs {
+		err := work.GenGoPkg(fset, pkg.Pkg, pkg.Dir)
+		if err != nil {
+			log.Fatalf("generate go package error: %v\n", err)
+		}
+		target := filepath.Join(work.GOPBIN(), pkg.Target)
+		if pkg.IsDir {
+			err = work.GoInstall(pkg.Dir)
+		} else {
+			err = work.GoBuild(pkg.Dir, target, "gop_autogen.go")
+		}
+		if err != nil {
+			log.Fatalf("go build error: %v\n", err)
+		}
+		if flagVerbose && pkg.Name == "main" {
+			fmt.Println(target)
+		}
+	}
 }
