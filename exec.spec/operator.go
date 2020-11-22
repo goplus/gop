@@ -270,6 +270,8 @@ const (
 	GobImag
 	// GobClose - close: 8
 	GobClose
+	// GobRecover - recover:9
+	GobRecover
 )
 
 var goBuiltinNames = [...]string{
@@ -281,6 +283,7 @@ var goBuiltinNames = [...]string{
 	GobReal:    "real",
 	GobImag:    "imag",
 	GobClose:   "close",
+	GobRecover: "recover",
 }
 
 // -----------------------------------------------------------------------------

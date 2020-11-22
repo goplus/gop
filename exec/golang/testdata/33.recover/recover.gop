@@ -1,0 +1,7 @@
+defer func() {
+	if err:= recover();err!=nil{
+		println(err)
+	}
+}()
+
+panic("hello recover")

@@ -400,7 +400,7 @@ func igoRecover(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 		ctx.infer.Push(&goValue{t: typ})
 	}
 	return func() {
-		builder(ctx, ct).Recover()
+		builder(ctx, ct).GoBuiltin(typ, exec.GobRecover)
 	}
 }
 

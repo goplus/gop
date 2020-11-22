@@ -150,12 +150,6 @@ func (p *iBuilder) Recv() exec.Builder {
 	return p
 }
 
-// Recover instr
-func (p *iBuilder) Recover() exec.Builder {
-	((*Builder)(p)).Recover()
-	return p
-}
-
 // WrapIfErr instr
 func (p *iBuilder) WrapIfErr(nret int, l exec.Label) exec.Builder {
 	((*Builder)(p)).WrapIfErr(nret, l.(*Label))

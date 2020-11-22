@@ -672,6 +672,7 @@ var goBuiltinArities = [...]int{
 	exec.GobReal:    1,
 	exec.GobImag:    1,
 	exec.GobClose:   1,
+	exec.GobRecover: 0,
 }
 
 // -----------------------------------------------------------------------------

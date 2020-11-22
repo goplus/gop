@@ -455,9 +455,3 @@ func (p *Builder) StoreField(typ reflect.Type, index []int) *Builder {
 }
 
 // -----------------------------------------------------------------------------
-
-// Recover instr
-func (p *Builder) Recover() *Builder {
-	p.code.data = append(p.code.data, opRecover<<bitsOpShift)
-	return p
-}

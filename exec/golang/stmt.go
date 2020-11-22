@@ -432,12 +432,6 @@ func (p *Builder) Go() *Builder {
 	return p
 }
 
-// Recover instr
-func (p *Builder) Recover() *Builder {
-	p.rhs.Push(Ident("recover"))
-	return p.Call(0, false)
-}
-
 // DefineBlock starts a new block.
 func (p *Builder) DefineBlock() *Builder {
 	p.scopeCtx = &scopeCtx{parentCtx: p.scopeCtx}

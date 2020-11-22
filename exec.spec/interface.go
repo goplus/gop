@@ -391,9 +391,6 @@ type Builder interface {
 
 	// Recv instr
 	Recv() Builder
-
-	// Recover instr
-	Recover() Builder
 }
 
 // Package represents a Go+ package.
