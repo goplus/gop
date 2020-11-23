@@ -1,6 +1,6 @@
 defer func() {
 	var err interface{}
-	if err = recover();err!=nil{
+	if err = recover(); err != nil {
 		println(err)
 	}
 }()
