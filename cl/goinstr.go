@@ -17,7 +17,6 @@
 package cl
 
 import (
-	"errors"
 	"log"
 	"reflect"
 
@@ -391,11 +390,10 @@ func igoClose(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 
 // func recover() interface{}
 func igoRecover(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
-	var err error = errors.New("test")
 	if n := len(v.Args); n != 0 {
 		log.Panicf("too many arguments to recover: %v", ctx.code(v))
 	}
-	typ := reflect.TypeOf(err)
+	typ := exec.TyEmptyInterface
 	if ct == callExpr {
 		ctx.infer.Push(&goValue{t: typ})
 	}
