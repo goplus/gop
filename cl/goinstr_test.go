@@ -8,6 +8,7 @@ import (
 	"github.com/qiniu/x/ts"
 
 	exec "github.com/goplus/gop/exec/bytecode"
+	"github.com/goplus/gop/exec/golang"
 )
 
 // -----------------------------------------------------------------------------
@@ -36,6 +37,20 @@ func TestDeferFileNotFound(t *testing.T) {
 	}).Panic(
 		"pkgCtx.getCodeInfo failed: file not found - \n",
 	)
+}
+
+func TestGolangRecover(t *testing.T) {
+	pkg := &ast.Package{
+		Files: map[string]*ast.File{},
+	}
+	b := golang.NewBuilder(pkg.Name, nil, token.NewFileSet())
+	pkgCtx := newPkgCtx(b.Interface(), pkg, token.NewFileSet())
+	ctx := newGblBlockCtx(pkgCtx)
+	ts.New(t).Call(func() {
+		fn := &ast.Ident{Name: "recover"}
+		expr := &ast.CallExpr{Fun: fn}
+		igoRecover(ctx, expr, callByDefer)()
+	}).Panic()
 }
 
 func TestDeferDiscardsResult(t *testing.T) {

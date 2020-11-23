@@ -394,9 +394,7 @@ func igoRecover(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 		log.Panicf("too many arguments to recover: %v", ctx.code(v))
 	}
 	typ := exec.TyEmptyInterface
-	if ct == callExpr {
-		ctx.infer.Push(&goValue{t: typ})
-	}
+	ctx.infer.Push(&goValue{t: typ})
 	return func() {
 		builder(ctx, ct).GoBuiltin(typ, exec.GobRecover)
 	}
