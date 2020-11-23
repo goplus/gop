@@ -53,6 +53,20 @@ func TestGolangRecover(t *testing.T) {
 	}).Panic()
 }
 
+func TestGolangRecoverPanic(t *testing.T) {
+	pkg := &ast.Package{
+		Files: map[string]*ast.File{},
+	}
+	b := golang.NewBuilder(pkg.Name, nil, token.NewFileSet())
+	pkgCtx := newPkgCtx(b.Interface(), pkg, token.NewFileSet())
+	ctx := newGblBlockCtx(pkgCtx)
+	ts.New(t).Call(func() {
+		fn := &ast.Ident{Name: "recover"}
+		expr := &ast.CallExpr{Fun: fn, Args: []ast.Expr{&ast.BadExpr{}}}
+		igoRecover(ctx, expr, callByDefer)()
+	}).Panic("pkgCtx.getCodeInfo failed: file not found - \n")
+}
+
 func TestDeferDiscardsResult(t *testing.T) {
 	for k, v := range instrDeferDiscardsResult {
 		b := exec.NewBuilder(nil)
