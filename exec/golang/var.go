@@ -120,7 +120,7 @@ func (p *scopeCtx) initStmts() {
 func (p *Builder) DefineVar(vars ...exec.Var) *Builder {
 	var vlist []exec.Var
 	for _, v := range vars {
-		if pkgPath := v.Type().PkgPath(); pkgPath != "" {
+		if pkgPath := v.Type().PkgPath(); pkgPath != "" && pkgPath != "main" {
 			p.Import(pkgPath)
 		} else if v.Name() == "_" {
 			continue
