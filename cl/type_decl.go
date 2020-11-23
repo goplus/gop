@@ -235,7 +235,7 @@ func toNamedStructType(ctx *blockCtx, name string, v *ast.StructType) iType {
 	for _, field := range v.Fields.List {
 		fields = append(fields, toStructField(ctx, field)...)
 	}
-	return reflectx.NamedStructOf(name, fields)
+	return reflectx.NamedStructOf(ctx.pkg.Name, name, fields)
 }
 
 func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) iType {
