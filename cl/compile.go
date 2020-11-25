@@ -297,6 +297,8 @@ func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
 	switch v := spec.Type.(type) {
 	case *ast.StructType:
 		t = toNamedStructType(ctx, spec.Name.Name, v).(reflect.Type)
+	case *ast.Ident:
+		t = toNamedType(ctx, spec.Name.Name, v).(reflect.Type)
 	default:
 		t = toType(ctx, v).(reflect.Type)
 	}
