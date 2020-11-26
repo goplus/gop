@@ -403,6 +403,9 @@ func compileTypeCast(typ reflect.Type, ctx *blockCtx, v *ast.CallExpr) func() {
 	if kind <= reflect.Complex128 || kind == reflect.String { // can be constant
 		if cons, ok := in.(*constVal); ok {
 			cons.kind = typ.Kind()
+			if typ.PkgPath() != "" {
+				ctx.infer.Ret(1, &goValue{typ})
+			}
 			return func() {
 				pushConstVal(ctx.out, cons)
 			}

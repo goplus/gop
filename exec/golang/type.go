@@ -21,6 +21,8 @@ import (
 	"go/token"
 	"reflect"
 
+	"github.com/goplus/reflectx"
+
 	"github.com/qiniu/x/log"
 )
 
@@ -165,6 +167,17 @@ func Type(p *Builder, typ reflect.Type, actualTypes ...bool) ast.Expr {
 		}
 		return Ident(name)
 	}
+	if named, ok := reflectx.ToNamed(typ); ok {
+		if named.Kind == reflectx.TkType {
+			pkgPath := named.From.PkgPath()
+			name := named.From.Name()
+			if pkgPath != "" && pkgPath != p.pkgName {
+				pkg := p.Import(pkgPath)
+				return &ast.SelectorExpr{X: Ident(pkg), Sel: Ident(name)}
+			}
+			return Ident(name)
+		}
+	}
 	kind := typ.Kind()
 	switch kind {
 	case reflect.Slice, reflect.Array:
@@ -181,8 +194,9 @@ func Type(p *Builder, typ reflect.Type, actualTypes ...bool) ast.Expr {
 		return ChanType(p, typ)
 	case reflect.Struct:
 		return StructType(p, typ)
+	default:
+		log.Panicln("Type: unknown type -", typ)
 	}
-	log.Panicln("Type: unknown type -", typ)
 	return nil
 }
 
