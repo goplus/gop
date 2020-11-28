@@ -1524,10 +1524,13 @@ var testMethodClauses = map[string]testData{
 						X M
 						Y M
 					}
+					type Pt2 Pt
 					pt := &Pt{10,20}
 					pt.Y.Foo()
+					pt2 := &Pt2{30,40}
+					pt2.Y.Foo()
 					M(11).Foo()
-				`, "foo 20\nfoo 11\n", false},
+				`, "foo 20\nfoo 40\nfoo 11\n", false},
 }
 
 func TestMethodCases(t *testing.T) {
