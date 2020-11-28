@@ -1542,11 +1542,11 @@ func TestBadType(t *testing.T) {
 	type M int
 	type M int
 	println(M(10))
-	`, "", "loadType failed: symbol exists - M\n")
+	`, "", nil)
 	cltest.Expect(t, `
 	type M2 M
 	println(M2(10))
-	`, "", "toNamedType failed: findType error no such file or directory\n")
+	`, "", nil)
 }
 
 func TestEmbeddedField(t *testing.T) {

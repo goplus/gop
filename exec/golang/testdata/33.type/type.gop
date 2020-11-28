@@ -1,6 +1,7 @@
 import "bytes"
 
 type M int
+type N *int
 
 func (m M) Foo() {
 	println("foo", m)
@@ -41,3 +42,8 @@ println(my)
 
 var buf Buffer
 println(buf)
+
+var i = 10
+var n N
+n = &i
+println(*n)

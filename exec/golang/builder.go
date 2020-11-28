@@ -220,10 +220,6 @@ func (p *Builder) resolveTypes() *ast.GenDecl {
 	specs := make([]ast.Spec, 0, n)
 	for _, t := range p.types {
 		typ := t.Type()
-		if typ.Kind() == reflect.Ptr {
-			typ = typ.Elem()
-		}
-
 		spec := &ast.TypeSpec{
 			Name: Ident(t.Name()),
 			Type: Type(p, typ, true),
