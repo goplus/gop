@@ -1,0 +1,43 @@
+import "bytes"
+
+type M int
+
+func (m M) Foo() {
+	println("foo", m)
+}
+
+type M2 int
+
+func (m M2) Foo() {
+	println("foo2", m)
+}
+
+type Pt struct {
+	X M
+	Y M2
+}
+
+func (p Pt) Test() {
+	println("pt", p)
+}
+
+type Pt2 Pt
+
+func (p Pt2) Test() {
+	println("pt2", p)
+}
+
+type My interface{}
+type Buffer bytes.Buffer
+
+M(11).Foo()
+var m M2
+m = 12
+m.Foo()
+
+var my My
+my = m
+println(my)
+
+var buf Buffer
+println(buf)
