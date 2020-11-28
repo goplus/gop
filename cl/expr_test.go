@@ -1537,6 +1537,13 @@ func TestMethodCases(t *testing.T) {
 	testScripts(t, "TestMethod", testMethodClauses)
 }
 
+func TestBadType(t *testing.T) {
+	cltest.Expect(t, `
+	type M2 M
+	println(M2(10))
+	`, "", "toNamedType failed: findType error no such file or directory\n")
+}
+
 func TestEmbeddedField(t *testing.T) {
 	cltest.Expect(t, `
 	type Base struct {

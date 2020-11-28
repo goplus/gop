@@ -244,7 +244,7 @@ func toNamedType(ctx *blockCtx, name string, v *ast.Ident) iType {
 	}
 	typ, err := ctx.findType(v.Name)
 	if err != nil {
-		log.Panicln("toIdentType failed: findType error", err)
+		log.Panicln("toNamedType failed: findType error", err)
 		return nil
 	}
 	return reflectx.NamedTypeOf(ctx.pkg.Name, name, typ.Type)
