@@ -169,13 +169,7 @@ func Type(p *Builder, typ reflect.Type, actualTypes ...bool) ast.Expr {
 	}
 	if named, ok := reflectx.ToNamedType(typ); ok {
 		if named.Kind == reflectx.TkType {
-			pkgPath := named.From.PkgPath()
-			name := named.From.Name()
-			if pkgPath != "" && pkgPath != p.pkgName {
-				pkg := p.Import(pkgPath)
-				return &ast.SelectorExpr{X: Ident(pkg), Sel: Ident(name)}
-			}
-			return Ident(name)
+			return Ident(named.From.Name())
 		}
 	}
 	kind := typ.Kind()
