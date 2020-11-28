@@ -22,7 +22,6 @@ import (
 	"reflect"
 
 	"github.com/goplus/reflectx"
-
 	"github.com/qiniu/x/log"
 )
 
