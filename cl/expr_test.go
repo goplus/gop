@@ -1531,6 +1531,50 @@ var testMethodClauses = map[string]testData{
 					pt2.Y.Foo()
 					M(11).Foo()
 				`, "foo 20\nfoo 40\nfoo 11\n", false},
+	"method two [5]byte type": {`
+					type T1 [5]byte
+					type T2 [5]byte
+					func (t T1) Test() { println(t) }
+					func (t T2) Test() { println(t) }
+					var t1 T1
+					var t2 T2
+					t1 = T1{'h','e','l','l','o'}
+					t2 = T2{'w','o','r','l','d'}
+					t1.Test()
+					t2.Test()
+					`, "[104 101 108 108 111]\n[119 111 114 108 100]\n", false},
+	"method two []byte type": {`
+					type TByte []byte
+					type TByte2 []byte
+					func (t TByte) Test() { println(string(t)) }
+					func (t TByte2) Test() { println(string(t)) }
+					TByte("byte1").Test()
+					TByte2("byte2").Test()
+					`, "byte1\nbyte2\n", false},
+	"method two []string type": {`
+					type T1 []string
+					type T2 []string
+					func (t T1) Test() { println(t) }
+					func (t T2) Test() { println(t) }
+					var t1 T1
+					var t2 T2
+					t1 = append(t1,"hello")
+					t2 = append(t2,"world")
+					t1.Test()
+					t2.Test()
+					`, "[hello]\n[world]\n", false},
+	"method two map[int]string type": {`
+					type T1 map[int]string
+					type T2 map[int]string
+					func (t T1) Test() { println(t) }
+					func (t T2) Test() { println(t) }
+					t1 := make(T1)
+					t2 := make(T2)
+					t1[10] = "hello"
+					t2[20] = "world"
+					t1.Test()
+					t2.Test()
+					`, "map[10:hello]\nmap[20:world]\n", false},
 }
 
 func TestMethodCases(t *testing.T) {

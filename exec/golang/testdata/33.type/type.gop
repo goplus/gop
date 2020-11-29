@@ -1,14 +1,9 @@
-import "bytes"
-
 type M int
-type N *int
+type M2 int
 
 func (m M) Foo() {
 	println("foo", m)
 }
-
-type M2 int
-
 func (m M2) Foo() {
 	println("foo2", m)
 }
@@ -29,21 +24,23 @@ func (p Pt2) Test() {
 }
 
 type My interface{}
-type Buffer bytes.Buffer
+type T []int
 
 M(11).Foo()
 var m M2
 m = 12
 m.Foo()
 
+pt1 := &Pt{10, 20}
+pt1.Test()
+pt2 := &Pt2{30, 40}
+pt2.Test()
+
 var my My
 my = m
 println(my)
 
-var buf Buffer
-println(buf)
-
-var i = 10
-var n N
-n = &i
-println(*n)
+var ar T
+ar = append(ar, 100)
+ar = append(ar, 200)
+println(ar)

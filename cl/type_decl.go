@@ -230,26 +230,6 @@ func toStructType(ctx *blockCtx, v *ast.StructType) iType {
 	return reflectx.StructOf(fields)
 }
 
-func toNamedStructType(ctx *blockCtx, name string, v *ast.StructType) iType {
-	var fields []reflect.StructField
-	for _, field := range v.Fields.List {
-		fields = append(fields, toStructField(ctx, field)...)
-	}
-	return reflectx.NamedStructOf(ctx.pkg.Name, name, fields)
-}
-
-func toNamedType(ctx *blockCtx, name string, v *ast.Ident) iType {
-	if typ, ok := ctx.builtin.FindType(v.Name); ok {
-		return reflectx.NamedTypeOf(ctx.pkg.Name, name, typ)
-	}
-	typ, err := ctx.findType(v.Name)
-	if err != nil {
-		log.Panicln("toNamedType failed: findType error", err)
-		return nil
-	}
-	return reflectx.NamedTypeOf(ctx.pkg.Name, name, typ.Type)
-}
-
 func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) iType {
 	methods := v.Methods.List
 	if methods == nil {

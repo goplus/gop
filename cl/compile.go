@@ -29,6 +29,7 @@ import (
 	"github.com/goplus/gop/ast/astutil"
 	"github.com/goplus/gop/exec.spec"
 	"github.com/goplus/gop/token"
+	"github.com/goplus/reflectx"
 	"github.com/qiniu/x/log"
 )
 
@@ -293,21 +294,24 @@ func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
 	if ctx.exists(spec.Name.Name) {
 		log.Panicln("loadType failed: symbol exists -", spec.Name.Name)
 	}
-	var t reflect.Type
+	var typ reflect.Type
 	switch v := spec.Type.(type) {
 	case *ast.StructType:
-		t = toNamedStructType(ctx, spec.Name.Name, v).(reflect.Type)
-	case *ast.Ident:
-		t = toNamedType(ctx, spec.Name.Name, v).(reflect.Type)
+		var fields []reflect.StructField
+		for _, field := range v.Fields.List {
+			fields = append(fields, toStructField(ctx, field)...)
+		}
+		typ = reflectx.NamedStructOf(ctx.pkg.Name, spec.Name.Name, fields)
 	default:
-		t = toType(ctx, v).(reflect.Type)
+		typ = toType(ctx, v).(reflect.Type)
+		typ = reflectx.NamedTypeOf(ctx.pkg.Name, spec.Name.Name, typ)
 	}
-	ctx.out.DefineType(t, spec.Name.Name)
+	ctx.out.DefineType(typ, spec.Name.Name)
 	tDecl := &typeDecl{
-		Type: t,
+		Type: typ,
 	}
 	ctx.syms[spec.Name.Name] = tDecl
-	ctx.types[t] = tDecl
+	ctx.types[typ] = tDecl
 }
 
 func loadConsts(ctx *blockCtx, d *ast.GenDecl) {
