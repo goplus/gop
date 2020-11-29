@@ -21,8 +21,6 @@ package cl
 import (
 	"reflect"
 
-	"github.com/goplus/reflectx"
-
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/astutil"
 	"github.com/goplus/gop/exec.spec"
@@ -432,7 +430,7 @@ func (p *blockCtx) insertMethod(recv astutil.RecvInfo, methodName string, decl *
 // -----------------------------------------------------------------------------
 
 func (c *blockCtx) findMethod(typ reflect.Type, methodName string) (*funcDecl, bool) {
-	if typ.Kind() == reflect.Ptr && !reflectx.IsNamed(typ) {
+	if typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
 	}
 	if tDecl, ok := c.types[typ]; ok {
