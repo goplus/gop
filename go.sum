@@ -1,6 +1,8 @@
 github.com/goplus/gop v0.7.15/go.mod h1:gmw+qgryU6Gju869uxVKRJunUoUTp6mZPLER/O+RlPY=
 github.com/goplus/reflectx v0.3.10 h1:BlcvWttoe+RH24O3fvodoQ4AqRBWgDU1mixwIaqprEI=
 github.com/goplus/reflectx v0.3.10/go.mod h1:XPDe5lYQ/8FN05bhqv6r1hhLxwmYIkZ5UvIkN1GNRYg=
+github.com/goplus/reflectx v0.3.11 h1:APQAzscD+Tssb8dHttiay6/i3LdAv5WkA0WKakuryQ0=
+github.com/goplus/reflectx v0.3.11/go.mod h1:XPDe5lYQ/8FN05bhqv6r1hhLxwmYIkZ5UvIkN1GNRYg=
 github.com/mattn/go-runewidth v0.0.3 h1:a+kO+98RDGEfo6asOGMmpodZq4FNtnGP54yps8BzLR4=
 github.com/mattn/go-runewidth v0.0.3/go.mod h1:LwmH8dsx7+W8Uxz3IHJYH5QSwggIsqBzpuz5H//U1FU=
 github.com/peterh/liner v1.2.0 h1:w/UPXyl5GfahFxcTOz2j9wCIHNI+pUPr2laqpojKNCg=
