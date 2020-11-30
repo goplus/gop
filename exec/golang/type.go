@@ -166,10 +166,8 @@ func Type(p *Builder, typ reflect.Type, actualTypes ...bool) ast.Expr {
 		}
 		return Ident(name)
 	}
-	if named, ok := reflectx.ToNamed(typ); ok {
-		if named.Kind == reflectx.TkType {
-			return Ident(named.From.Name())
-		}
+	if named, ok := reflectx.ToNamed(typ); ok && named.Kind == reflectx.TkType {
+		return Type(p, named.From)
 	}
 	kind := typ.Kind()
 	switch kind {

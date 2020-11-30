@@ -1,3 +1,5 @@
+import "bytes"
+
 type M int
 type M2 int
 
@@ -24,7 +26,9 @@ func (p Pt2) Test() {
 }
 
 type My interface{}
+type TBuf bytes.Buffer
 type T []int
+type Func func(string) int
 
 M(11).Foo()
 var m M2
@@ -40,7 +44,14 @@ var my My
 my = m
 println(my)
 
+var buf TBuf
+println(buf)
+
 var ar T
-ar = append(ar, 100)
-ar = append(ar, 200)
+ar = append(ar, 100, 200)
 println(ar)
+
+var fn Func = func(a string) int {
+	return len(a)
+}
+println(fn("hello"))
