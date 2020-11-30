@@ -54,4 +54,5 @@ println(ar)
 var fn Func = func(a string) int {
 	return len(a)
 }
+
 println(fn("hello"))
