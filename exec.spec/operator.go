@@ -212,10 +212,10 @@ type AddrOperatorInfo struct {
 }
 
 var addropInfos = [...]AddrOperatorInfo{
-	OpAddAssign:    {"+=", bitsAllNumber | bitString, bitSameAsFirst},
-	OpSubAssign:    {"-=", bitsAllNumber, bitSameAsFirst},
-	OpMulAssign:    {"*=", bitsAllNumber, bitSameAsFirst},
-	OpQuoAssign:    {"/=", bitsAllNumber, bitSameAsFirst},
+	OpAddAssign:    {"+=", bitsAllNumber | bitString | bitBigInt, bitSameAsFirst},
+	OpSubAssign:    {"-=", bitsAllNumber | bitBigInt, bitSameAsFirst},
+	OpMulAssign:    {"*=", bitsAllNumber | bitBigInt, bitSameAsFirst},
+	OpQuoAssign:    {"/=", bitsAllNumber | bitBigInt, bitSameAsFirst},
 	OpModAssign:    {"%=", bitsAllIntUint, bitSameAsFirst},
 	OpAndAssign:    {"&=", bitsAllIntUint, bitSameAsFirst},
 	OpOrAssign:     {"|=", bitsAllIntUint, bitSameAsFirst},
@@ -223,8 +223,8 @@ var addropInfos = [...]AddrOperatorInfo{
 	OpAndNotAssign: {"&^=", bitsAllIntUint, bitSameAsFirst},
 	OpLshAssign:    {"<<=", bitsAllIntUint, bitsAllIntUint},
 	OpRshAssign:    {">>=", bitsAllIntUint, bitsAllIntUint},
-	OpInc:          {"++", bitsAllNumber, bitNone},
-	OpDec:          {"--", bitsAllNumber, bitNone},
+	OpInc:          {"++", bitsAllNumber | bitBigInt, bitNone},
+	OpDec:          {"--", bitsAllNumber | bitBigInt, bitNone},
 }
 
 // GetInfo returns the information of this operator.
