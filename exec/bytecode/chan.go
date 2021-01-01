@@ -26,8 +26,6 @@ func execSend(i Instr, ctx *Context) {
 func execRecv(i Instr, p *Context) {
 	n := len(p.data)
 	v := reflect.ValueOf(p.data[n-1])
-	x, ok := v.Recv()
-	if ok {
-		p.Ret(1, x.Interface())
-	}
+	x, _ := v.Recv()
+	p.Ret(1, x.Interface())
 }

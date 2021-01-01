@@ -385,7 +385,31 @@ func igoImag(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 
 // func close(c chan<- Type)
 func igoClose(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
-	panic("todo")
+	if n := len(v.Args); n != 1 {
+		if n == 0 {
+			log.Panicf("missing argument to close: %v", ctx.code(v))
+		} else {
+			log.Panicf("too many arguments to close: %v", ctx.code(v))
+		}
+	}
+	arg := v.Args[0]
+	expr := compileExpr(ctx, arg)
+	in := ctx.infer.Pop().(iValue)
+	kind := in.Kind()
+	if kind != reflect.Chan {
+		log.Panicf("invalid operation: close(%v) (non-chan type %v)", ctx.code(arg), spec.KindName(kind))
+	}
+	typ := in.Type()
+	if typ.ChanDir() == reflect.RecvDir {
+		log.Panicf("invalid operation: close(%v) (cannot close receive-only channel)", ctx.code(arg))
+	}
+	if ct == callExpr {
+		ctx.infer.Push(&nonValue{})
+	}
+	return func() {
+		expr()
+		builder(ctx, ct).GoBuiltin(typ, exec.GobClose)
+	}
 }
 
 // func recover() interface{}

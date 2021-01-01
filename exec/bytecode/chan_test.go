@@ -53,3 +53,36 @@ func TestChan(t *testing.T) {
 		"3\n",
 	)
 }
+
+func TestChanClose(t *testing.T) {
+	println, ok := I.FindFuncv("Println")
+	if !ok {
+		t.Fatal("FindFuncv failed: Println")
+	}
+
+	b := newBuilder()
+	typ := reflect.ChanOf(3, reflect.TypeOf(0))
+	v := NewVar(typ, "p")
+	i := NewVar(reflect.TypeOf(0), "i")
+	expect(t,
+		func() {
+			b.DefineVar(v)
+			b.DefineVar(i)
+			b.Push(10)
+			b.Make(typ, 1)
+			b.StoreVar(v)
+			b.LoadVar(v)
+			b.GoBuiltin(typ, GobClose)
+			b.LoadVar(v)
+			b.Recv()
+			b.StoreVar(i)
+			b.LoadVar(i)
+			b.CallGoFuncv(println, 1, 1)
+			code := b.Resolve()
+			code.(*Code).Dump(os.Stderr)
+			ctx := NewContext(code)
+			ctx.Exec(0, code.Len())
+		},
+		"0\n",
+	)
+}
