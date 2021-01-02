@@ -198,6 +198,25 @@ func (p *Builder) bigAddrOp(kind exec.Kind, op exec.AddrOperator) *Builder {
 	var expr ast.Expr
 	var x = p.rhs.Pop()
 	var val = p.rhs.Pop().(ast.Expr)
+	if op == exec.OpInc || op == exec.OpDec {
+		pkg := p.Import("math/big")
+		var fnName string
+		switch kind {
+		case exec.BigInt:
+			fnName = "NewInt"
+		case exec.BigRat:
+			fnName = "NewRat"
+		case exec.BigFloat:
+			fnName = "NewFloat"
+		}
+		val = &ast.CallExpr{
+			Fun: &ast.SelectorExpr{
+				&ast.Ident{Name: pkg},
+				&ast.Ident{Name: fnName},
+			},
+			Args: []ast.Expr{&ast.Ident{Name: "1"}},
+		}
+	}
 	switch v := x.(type) {
 	case *ast.UnaryExpr:
 		if v.Op != token.AND {
