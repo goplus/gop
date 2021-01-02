@@ -199,18 +199,22 @@ func (p *Builder) bigAddrOp(kind exec.Kind, op exec.AddrOperator) *Builder {
 	var x = p.rhs.Pop()
 	var val = p.rhs.Pop().(ast.Expr)
 	if op == exec.OpInc || op == exec.OpDec {
-		var fnName string
 		switch kind {
 		case exec.BigInt:
-			fnName = "NewInt"
+			val = &ast.CallExpr{
+				Fun:  p.GoSymIdent("math/big", "NewInt"),
+				Args: []ast.Expr{&ast.Ident{Name: "1"}},
+			}
 		case exec.BigRat:
-			fnName = "NewRat"
+			val = &ast.CallExpr{
+				Fun:  p.GoSymIdent("math/big", "NewRat"),
+				Args: []ast.Expr{&ast.Ident{Name: "1"}, &ast.Ident{Name: "1"}},
+			}
 		case exec.BigFloat:
-			fnName = "NewFloat"
-		}
-		val = &ast.CallExpr{
-			Fun:  p.GoSymIdent(p.Import("math/big"), fnName),
-			Args: []ast.Expr{&ast.Ident{Name: "1"}},
+			val = &ast.CallExpr{
+				Fun:  p.GoSymIdent("math/big", "NewFloat"),
+				Args: []ast.Expr{&ast.Ident{Name: "1"}},
+			}
 		}
 	}
 	switch v := x.(type) {
