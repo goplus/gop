@@ -294,18 +294,8 @@ func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
 	if ctx.exists(spec.Name.Name) {
 		log.Panicln("loadType failed: symbol exists -", spec.Name.Name)
 	}
-	var typ reflect.Type
-	switch v := spec.Type.(type) {
-	case *ast.StructType:
-		var fields []reflect.StructField
-		for _, field := range v.Fields.List {
-			fields = append(fields, toStructField(ctx, field)...)
-		}
-		typ = reflectx.NamedStructOf(ctx.pkg.Name, spec.Name.Name, fields)
-	default:
-		typ = toType(ctx, v).(reflect.Type)
-		typ = reflectx.NamedTypeOf(ctx.pkg.Name, spec.Name.Name, typ)
-	}
+	t := toType(ctx, spec.Type).(reflect.Type)
+	typ := reflectx.NamedTypeOf(ctx.pkg.Name, spec.Name.Name, t)
 	ctx.out.DefineType(typ, spec.Name.Name)
 	tDecl := &typeDecl{
 		Type: typ,
