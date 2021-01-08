@@ -1,5 +1,5 @@
-github.com/goplus/reflectx v0.3.12 h1:9ZFwmPKaousVhzkyL+shOAxZUVnGCq0MY6+FExdf9rY=
-github.com/goplus/reflectx v0.3.12/go.mod h1:XPDe5lYQ/8FN05bhqv6r1hhLxwmYIkZ5UvIkN1GNRYg=
+github.com/goplus/reflectx v0.4.1 h1:pQ8V6GSjszhrvSCjoAcOBmNPPurkppYkh3W6qz7elII=
+github.com/goplus/reflectx v0.4.1/go.mod h1:XPDe5lYQ/8FN05bhqv6r1hhLxwmYIkZ5UvIkN1GNRYg=
 github.com/mattn/go-runewidth v0.0.3/go.mod h1:LwmH8dsx7+W8Uxz3IHJYH5QSwggIsqBzpuz5H//U1FU=
 github.com/peterh/liner v1.2.0/go.mod h1:CRroGNssyjTd/qIG2FyxByd2S8JEAZXBl4qUrZf8GS0=
 github.com/qiniu/x v1.11.5 h1:TYr5cl4g2yoHAZeDK4MTjKF6CMoG+IHlCDvvM5qym6U=
