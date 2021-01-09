@@ -10,6 +10,7 @@ GoPlus - The Go+ language for data science
 [![VSCode](https://img.shields.io/badge/vscode-Go+-teal.svg)](https://github.com/gopcode/vscode-goplus)
 [![GoDoc](https://img.shields.io/badge/godoc-reference-teal.svg)](https://pkg.go.dev/mod/github.com/goplus/gop)
 
+NOTE: Go+ is still under heavy developement. Please don't use it in production environment. 
 
 ## Summary about Go+
 
