@@ -1181,7 +1181,7 @@ type File struct {
 	Unresolved   []*Ident        // unresolved identifiers in this file
 	Comments     []*CommentGroup // list of all comments in the source file
 	Code         []byte
-	NoEntrypoint bool
+	NoEntrypoint bool // no `main` or `init` func to indicate the module entry point.
 }
 
 // Pos returns position of first character belonging to the node.

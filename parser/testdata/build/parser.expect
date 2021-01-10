@@ -1,0 +1,60 @@
+package main
+
+file build.gop
+noEntrypoint
+ast.GenDecl:
+  Tok: type
+  ast.TypeSpec:
+    ast.Ident:
+      Name: cstring
+    ast.Ident:
+      Name: string
+ast.FuncDecl:
+  ast.Ident:
+    Name: main
+  ast.FuncType:
+    ast.FieldList:
+  ast.BlockStmt:
+    ast.AssignStmt:
+      ast.Ident:
+        Name: title
+      Tok: :=
+      ast.BasicLit:
+        Kind: STRING
+        Value: "Hello,world!2020-05-27"
+    ast.AssignStmt:
+      ast.Ident:
+        Name: s
+      Tok: :=
+      ast.CallExpr:
+        ast.ParenExpr:
+          ast.StarExpr:
+            ast.Ident:
+              Name: cstring
+        ast.UnaryExpr:
+          Op: &
+          ast.Ident:
+            Name: title
+    ast.ExprStmt:
+      ast.CallExpr:
+        ast.Ident:
+          Name: println
+        ast.SliceExpr:
+          ast.Ident:
+            Name: title
+          ast.BasicLit:
+            Kind: INT
+            Value: 0
+          ast.BinaryExpr:
+            ast.CallExpr:
+              ast.Ident:
+                Name: len
+              ast.Ident:
+                Name: title
+            Op: -
+            ast.CallExpr:
+              ast.Ident:
+                Name: len
+              ast.BasicLit:
+                Kind: STRING
+                Value: "2006-01-02"

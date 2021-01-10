@@ -17,11 +17,8 @@
 package parser
 
 import (
-	"fmt"
-	"reflect"
 	"testing"
 
-	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/parser/parsertest"
 	"github.com/goplus/gop/token"
 )
@@ -67,177 +64,162 @@ func TestStd(t *testing.T) {
 		t.Fatal("ParseFSDir failed:", err, len(pkgs))
 	}
 	bar := pkgs["bar"]
-	file := bar.Files["/foo/bar.gop"]
-	fmt.Println("Pkg:", file.Name)
-	for _, decl := range file.Decls {
-		fmt.Println("decl:", reflect.TypeOf(decl))
-		switch d := decl.(type) {
-		case *ast.GenDecl:
-			for _, spec := range d.Specs {
-				switch v := spec.(type) {
-				case *ast.ImportSpec:
-					fmt.Println(" - import:", v.Path.Value)
-				}
-			}
-		case *ast.FuncDecl:
-			fmt.Println(" - func:", d.Name.Name)
-		}
-	}
-}
+	parsertest.Expect(t, bar, `package bar
 
-// -----------------------------------------------------------------------------
-/*
-var fsTestStd2 = memfs.NewSingleFileFS("/foo", "bar.gop", `package bar; import "io"
-	x := []float64{1, 3.4, 5}
-	y := map[string]float64{"Hello": 1, "xsw": 3.4}
-	println("x:", x, "y:", y)
-
-	a := [...]float64{1, 3.4, 5}
-	b := [...]float64{1, 3: 3.4, 5}
-	c := []float64{2: 1.2, 3, 6: 4.5}
-	println("a:", a, "b:", b, "c:", c)
+file bar.gop
+noEntrypoint
+ast.GenDecl:
+  Tok: import
+  ast.ImportSpec:
+    ast.BasicLit:
+      Kind: STRING
+      Value: "io"
+ast.FuncDecl:
+  ast.Ident:
+    Name: init
+  ast.FuncType:
+    ast.FieldList:
+  ast.BlockStmt:
+    ast.AssignStmt:
+      ast.Ident:
+        Name: x
+      Tok: :=
+      ast.BasicLit:
+        Kind: INT
+        Value: 0
+    ast.IfStmt:
+      ast.AssignStmt:
+        ast.Ident:
+          Name: t
+        Tok: :=
+        ast.Ident:
+          Name: false
+      ast.Ident:
+        Name: t
+      ast.BlockStmt:
+        ast.AssignStmt:
+          ast.Ident:
+            Name: x
+          Tok: =
+          ast.BasicLit:
+            Kind: INT
+            Value: 3
+      ast.BlockStmt:
+        ast.AssignStmt:
+          ast.Ident:
+            Name: x
+          Tok: =
+          ast.BasicLit:
+            Kind: INT
+            Value: 5
+    ast.ExprStmt:
+      ast.CallExpr:
+        ast.Ident:
+          Name: println
+        ast.BasicLit:
+          Kind: STRING
+          Value: "x:"
+        ast.Ident:
+          Name: x
+    ast.AssignStmt:
+      ast.Ident:
+        Name: x
+      Tok: =
+      ast.BasicLit:
+        Kind: INT
+        Value: 0
+    ast.SwitchStmt:
+      ast.AssignStmt:
+        ast.Ident:
+          Name: s
+        Tok: :=
+        ast.BasicLit:
+          Kind: STRING
+          Value: "Hello"
+      ast.Ident:
+        Name: s
+      ast.BlockStmt:
+        ast.CaseClause:
+          ast.AssignStmt:
+            ast.Ident:
+              Name: x
+            Tok: =
+            ast.BasicLit:
+              Kind: INT
+              Value: 7
+        ast.CaseClause:
+          ast.BasicLit:
+            Kind: STRING
+            Value: "world"
+          ast.BasicLit:
+            Kind: STRING
+            Value: "hi"
+          ast.AssignStmt:
+            ast.Ident:
+              Name: x
+            Tok: =
+            ast.BasicLit:
+              Kind: INT
+              Value: 5
+        ast.CaseClause:
+          ast.BasicLit:
+            Kind: STRING
+            Value: "xsw"
+          ast.AssignStmt:
+            ast.Ident:
+              Name: x
+            Tok: =
+            ast.BasicLit:
+              Kind: INT
+              Value: 3
+    ast.ExprStmt:
+      ast.CallExpr:
+        ast.Ident:
+          Name: println
+        ast.BasicLit:
+          Kind: STRING
+          Value: "x:"
+        ast.Ident:
+          Name: x
+    ast.AssignStmt:
+      ast.Ident:
+        Name: c
+      Tok: :=
+      ast.CallExpr:
+        ast.Ident:
+          Name: make
+        ast.ChanType:
+          ast.Ident:
+            Name: bool
+        ast.BasicLit:
+          Kind: INT
+          Value: 100
+    ast.SelectStmt:
+      ast.BlockStmt:
+        ast.CommClause:
+          ast.SendStmt:
+            ast.Ident:
+              Name: c
+            ast.Ident:
+              Name: true
+        ast.CommClause:
+          ast.AssignStmt:
+            ast.Ident:
+              Name: v
+            Tok: :=
+            ast.UnaryExpr:
+              Op: <-
+              ast.Ident:
+                Name: c
+        ast.CommClause:
+          ast.ExprStmt:
+            ast.CallExpr:
+              ast.Ident:
+                Name: panic
+              ast.BasicLit:
+                Kind: STRING
+                Value: "error"
 `)
-
-func TestStd2(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := ParseFSDir(fset, fsTestStd2, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
-	bar := pkgs["bar"]
-	file := bar.Files["/foo/bar.gop"]
-	fmt.Println("Pkg:", file.Name)
-	for _, decl := range file.Decls {
-		fmt.Println("decl:", reflect.TypeOf(decl))
-		switch d := decl.(type) {
-		case *ast.GenDecl:
-			for _, spec := range d.Specs {
-				switch v := spec.(type) {
-				case *ast.ImportSpec:
-					fmt.Println(" - import:", v.Path.Value)
-				}
-			}
-		case *ast.FuncDecl:
-			fmt.Println(" - func:", d.Name.Name)
-		}
-	}
 }
-
-// -----------------------------------------------------------------------------
-
-var fsTestStdFor = memfs.NewSingleFileFS("/foo", "bar.gop", `
-	n := 0
-	for range [1, 3, 5, 7, 11] {
-		n++
-	}
-	println("n:", n)
-
-	sum := 0
-	for _, x := range [1, 3, 5, 7, 11] {
-		if x > 3 {
-			sum += x
-		}
-	}
-	println("sum(1,3,5,7,11):", sum)
-
-	sum = 0
-	for i := 1; i < 100; i++ {
-		sum += i
-	}
-	println("sum(1-100):", sum)
-`)
-
-func TestStdFor(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := ParseFSDir(fset, fsTestStdFor, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
-	bar := pkgs["main"]
-	file := bar.Files["/foo/bar.gop"]
-	fmt.Println("Pkg:", file.Name)
-	for _, decl := range file.Decls {
-		fmt.Println("decl:", reflect.TypeOf(decl))
-		switch d := decl.(type) {
-		case *ast.GenDecl:
-			for _, spec := range d.Specs {
-				switch v := spec.(type) {
-				case *ast.ImportSpec:
-					fmt.Println(" - import:", v.Path.Value)
-				}
-			}
-		case *ast.FuncDecl:
-			fmt.Println(" - func:", d.Name.Name)
-		}
-	}
-}
-
-// -----------------------------------------------------------------------------
-
-var fsTestBuild = memfs.NewSingleFileFS("/foo", "bar.gop", `
-	type cstring string
-
-	title := "Hello,world!2020-05-27"
-	s := (*cstring)(&title)
-	println(title[0:len(title)-len("2006-01-02")])
-`)
-
-func TestBuild(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := ParseFSDir(fset, fsTestBuild, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
-	bar := pkgs["main"]
-	file := bar.Files["/foo/bar.gop"]
-	fmt.Println("Pkg:", file.Name)
-	for _, decl := range file.Decls {
-		fmt.Println("decl:", reflect.TypeOf(decl))
-		switch d := decl.(type) {
-		case *ast.GenDecl:
-			for _, spec := range d.Specs {
-				switch v := spec.(type) {
-				case *ast.ImportSpec:
-					fmt.Println(" - import:", v.Path.Value)
-				}
-			}
-		case *ast.FuncDecl:
-			fmt.Println(" - func:", d.Name.Name)
-		}
-	}
-}
-
-// -----------------------------------------------------------------------------
-
-var fsTestArray = memfs.NewSingleFileFS("/foo", "bar.gop", `
-println([1][0])
-println([1,2][0])
-`)
-
-func TestArray(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := ParseFSDir(fset, fsTestArray, "/foo", nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
-	}
-	bar := pkgs["main"]
-	file := bar.Files["/foo/bar.gop"]
-	fmt.Println("Pkg:", file.Name)
-	for _, decl := range file.Decls {
-		fmt.Println("decl:", reflect.TypeOf(decl))
-		switch d := decl.(type) {
-		case *ast.GenDecl:
-			for _, spec := range d.Specs {
-				switch v := spec.(type) {
-				case *ast.ImportSpec:
-					fmt.Println(" - import:", v.Path.Value)
-				}
-			}
-		case *ast.FuncDecl:
-			fmt.Println(" - func:", d.Name.Name)
-		}
-	}
-}
-*/
 
 // -----------------------------------------------------------------------------

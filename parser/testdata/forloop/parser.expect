@@ -1,0 +1,145 @@
+package main
+
+file forloop.gop
+noEntrypoint
+ast.FuncDecl:
+  ast.Ident:
+    Name: main
+  ast.FuncType:
+    ast.FieldList:
+  ast.BlockStmt:
+    ast.AssignStmt:
+      ast.Ident:
+        Name: n
+      Tok: :=
+      ast.BasicLit:
+        Kind: INT
+        Value: 0
+    ast.RangeStmt:
+      Tok: ILLEGAL
+      ast.SliceLit:
+        ast.BasicLit:
+          Kind: INT
+          Value: 1
+        ast.BasicLit:
+          Kind: INT
+          Value: 3
+        ast.BasicLit:
+          Kind: INT
+          Value: 5
+        ast.BasicLit:
+          Kind: INT
+          Value: 7
+        ast.BasicLit:
+          Kind: INT
+          Value: 11
+      ast.BlockStmt:
+        ast.IncDecStmt:
+          ast.Ident:
+            Name: n
+          Tok: ++
+    ast.ExprStmt:
+      ast.CallExpr:
+        ast.Ident:
+          Name: println
+        ast.BasicLit:
+          Kind: STRING
+          Value: "n:"
+        ast.Ident:
+          Name: n
+    ast.AssignStmt:
+      ast.Ident:
+        Name: sum
+      Tok: :=
+      ast.BasicLit:
+        Kind: INT
+        Value: 0
+    ast.RangeStmt:
+      ast.Ident:
+        Name: _
+      ast.Ident:
+        Name: x
+      Tok: :=
+      ast.SliceLit:
+        ast.BasicLit:
+          Kind: INT
+          Value: 1
+        ast.BasicLit:
+          Kind: INT
+          Value: 3
+        ast.BasicLit:
+          Kind: INT
+          Value: 5
+        ast.BasicLit:
+          Kind: INT
+          Value: 7
+        ast.BasicLit:
+          Kind: INT
+          Value: 11
+      ast.BlockStmt:
+        ast.IfStmt:
+          ast.BinaryExpr:
+            ast.Ident:
+              Name: x
+            Op: >
+            ast.BasicLit:
+              Kind: INT
+              Value: 3
+          ast.BlockStmt:
+            ast.AssignStmt:
+              ast.Ident:
+                Name: sum
+              Tok: +=
+              ast.Ident:
+                Name: x
+    ast.ExprStmt:
+      ast.CallExpr:
+        ast.Ident:
+          Name: println
+        ast.BasicLit:
+          Kind: STRING
+          Value: "sum(1,3,5,7,11):"
+        ast.Ident:
+          Name: sum
+    ast.AssignStmt:
+      ast.Ident:
+        Name: sum
+      Tok: =
+      ast.BasicLit:
+        Kind: INT
+        Value: 0
+    ast.ForStmt:
+      ast.AssignStmt:
+        ast.Ident:
+          Name: i
+        Tok: :=
+        ast.BasicLit:
+          Kind: INT
+          Value: 1
+      ast.BinaryExpr:
+        ast.Ident:
+          Name: i
+        Op: <
+        ast.BasicLit:
+          Kind: INT
+          Value: 100
+      ast.IncDecStmt:
+        ast.Ident:
+          Name: i
+        Tok: ++
+      ast.BlockStmt:
+        ast.AssignStmt:
+          ast.Ident:
+            Name: sum
+          Tok: +=
+          ast.Ident:
+            Name: i
+    ast.ExprStmt:
+      ast.CallExpr:
+        ast.Ident:
+          Name: println
+        ast.BasicLit:
+          Kind: STRING
+          Value: "sum(1-100):"
+        ast.Ident:
+          Name: sum

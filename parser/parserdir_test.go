@@ -23,6 +23,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/goplus/gop/parser/parsertest"
 	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/log"
 )
@@ -39,15 +40,23 @@ func testFrom(t *testing.T, pkgDir, sel string) {
 	if err != nil || len(pkgs) != 1 {
 		t.Fatal("ParseDir failed:", err, len(pkgs))
 	}
+	for _, pkg := range pkgs {
+		b, err := ioutil.ReadFile(pkgDir + "/parser.expect")
+		if err != nil {
+			t.Fatal("Parsing", pkgDir, "-", err)
+		}
+		parsertest.Expect(t, pkg, string(b))
+		return
+	}
 }
 
-func _TestFromTestdata2(t *testing.T) {
+func TestFromTestdata(t *testing.T) {
 	sel := ""
 	dir, err := os.Getwd()
 	if err != nil {
 		t.Fatal("Getwd failed:", err)
 	}
-	dir = path.Join(dir, "../exec/golang/testdata")
+	dir = path.Join(dir, "./testdata")
 	fis, err := ioutil.ReadDir(dir)
 	if err != nil {
 		t.Fatal("ReadDir failed:", err)
@@ -55,15 +64,6 @@ func _TestFromTestdata2(t *testing.T) {
 	for _, fi := range fis {
 		testFrom(t, dir+"/"+fi.Name(), sel)
 	}
-}
-
-func _TestFromTestdata(t *testing.T) {
-	dir, err := os.Getwd()
-	if err != nil {
-		t.Fatal("Getwd failed:", err)
-	}
-	dir = path.Join(dir, "./testdata")
-	testFrom(t, dir, "")
 }
 
 // -----------------------------------------------------------------------------

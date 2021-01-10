@@ -1,0 +1,37 @@
+package main
+
+file slice.gop
+noEntrypoint
+ast.FuncDecl:
+  ast.Ident:
+    Name: main
+  ast.FuncType:
+    ast.FieldList:
+  ast.BlockStmt:
+    ast.ExprStmt:
+      ast.CallExpr:
+        ast.Ident:
+          Name: println
+        ast.IndexExpr:
+          ast.SliceLit:
+            ast.BasicLit:
+              Kind: INT
+              Value: 1
+          ast.BasicLit:
+            Kind: INT
+            Value: 0
+    ast.ExprStmt:
+      ast.CallExpr:
+        ast.Ident:
+          Name: println
+        ast.IndexExpr:
+          ast.SliceLit:
+            ast.BasicLit:
+              Kind: INT
+              Value: 1
+            ast.BasicLit:
+              Kind: INT
+              Value: 2
+          ast.BasicLit:
+            Kind: INT
+            Value: 0
