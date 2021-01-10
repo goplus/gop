@@ -18,22 +18,17 @@ package parser
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path"
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/parser/memfs"
+	"github.com/goplus/gop/parser/parsertest"
 	"github.com/goplus/gop/token"
-	"github.com/qiniu/x/log"
 )
 
 // -----------------------------------------------------------------------------
 
-var fsTestStd = memfs.NewSingleFileFS("/foo", "bar.gop", `package bar; import "io"
+var fsTestStd = parsertest.NewSingleFileFS("/foo", "bar.gop", `package bar; import "io"
 	// comment
 	x := 0
 	if t := false; t {
@@ -91,7 +86,7 @@ func TestStd(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
-
+/*
 var fsTestStd2 = memfs.NewSingleFileFS("/foo", "bar.gop", `package bar; import "io"
 	x := []float64{1, 3.4, 5}
 	y := map[string]float64{"Hello": 1, "xsw": 3.4}
@@ -214,45 +209,6 @@ func TestBuild(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-func testFrom(t *testing.T, pkgDir, sel string) {
-	if sel != "" && !strings.Contains(pkgDir, sel) {
-		return
-	}
-	log.Debug("Parsing", pkgDir)
-	fset := token.NewFileSet()
-	pkgs, err := ParseDir(fset, pkgDir, nil, 0)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseDir failed:", err, len(pkgs))
-	}
-}
-
-func _TestFromTestdata2(t *testing.T) {
-	sel := ""
-	dir, err := os.Getwd()
-	if err != nil {
-		t.Fatal("Getwd failed:", err)
-	}
-	dir = path.Join(dir, "../exec/golang/testdata")
-	fis, err := ioutil.ReadDir(dir)
-	if err != nil {
-		t.Fatal("ReadDir failed:", err)
-	}
-	for _, fi := range fis {
-		testFrom(t, dir+"/"+fi.Name(), sel)
-	}
-}
-
-func TestFromTestdata(t *testing.T) {
-	dir, err := os.Getwd()
-	if err != nil {
-		t.Fatal("Getwd failed:", err)
-	}
-	dir = path.Join(dir, "./testdata")
-	testFrom(t, dir, "")
-}
-
-// -----------------------------------------------------------------------------
-
 var fsTestArray = memfs.NewSingleFileFS("/foo", "bar.gop", `
 println([1][0])
 println([1,2][0])
@@ -282,3 +238,6 @@ func TestArray(t *testing.T) {
 		}
 	}
 }
+*/
+
+// -----------------------------------------------------------------------------
