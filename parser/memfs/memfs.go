@@ -14,7 +14,7 @@
  limitations under the License.
 */
 
-package asttest
+package memfs
 
 import (
 	"os"
@@ -59,8 +59,8 @@ type MemFS struct {
 	files map[string]string
 }
 
-// NewMemFS creates a MemFS instance.
-func NewMemFS(dirs map[string][]string, files map[string]string) *MemFS {
+// New creates a MemFS instance.
+func New(dirs map[string][]string, files map[string]string) *MemFS {
 	return &MemFS{dirs: dirs, files: files}
 }
 
@@ -101,7 +101,7 @@ func (p *MemFS) Join(elem ...string) string {
 
 // NewSingleFileFS creates a file system that only contains a single file.
 func NewSingleFileFS(dir string, fname string, data string) *MemFS {
-	return NewMemFS(map[string][]string{
+	return New(map[string][]string{
 		dir: {fname},
 	}, map[string]string{
 		path.Join(dir, fname): data,

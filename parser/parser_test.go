@@ -26,14 +26,14 @@ import (
 	"testing"
 
 	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/ast/asttest"
+	"github.com/goplus/gop/parser/memfs"
 	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/log"
 )
 
 // -----------------------------------------------------------------------------
 
-var fsTestStd = asttest.NewSingleFileFS("/foo", "bar.gop", `package bar; import "io"
+var fsTestStd = memfs.NewSingleFileFS("/foo", "bar.gop", `package bar; import "io"
 	// comment
 	x := 0
 	if t := false; t {
@@ -92,7 +92,7 @@ func TestStd(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestStd2 = asttest.NewSingleFileFS("/foo", "bar.gop", `package bar; import "io"
+var fsTestStd2 = memfs.NewSingleFileFS("/foo", "bar.gop", `package bar; import "io"
 	x := []float64{1, 3.4, 5}
 	y := map[string]float64{"Hello": 1, "xsw": 3.4}
 	println("x:", x, "y:", y)
@@ -130,7 +130,7 @@ func TestStd2(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestStdFor = asttest.NewSingleFileFS("/foo", "bar.gop", `
+var fsTestStdFor = memfs.NewSingleFileFS("/foo", "bar.gop", `
 	n := 0
 	for range [1, 3, 5, 7, 11] {
 		n++
@@ -179,7 +179,7 @@ func TestStdFor(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestBuild = asttest.NewSingleFileFS("/foo", "bar.gop", `
+var fsTestBuild = memfs.NewSingleFileFS("/foo", "bar.gop", `
 	type cstring string
 
 	title := "Hello,world!2020-05-27"
@@ -226,7 +226,7 @@ func testFrom(t *testing.T, pkgDir, sel string) {
 	}
 }
 
-func TestFromTestdata(t *testing.T) {
+func _TestFromTestdata2(t *testing.T) {
 	sel := ""
 	dir, err := os.Getwd()
 	if err != nil {
@@ -242,7 +242,7 @@ func TestFromTestdata(t *testing.T) {
 	}
 }
 
-func TestFromTestdata2(t *testing.T) {
+func TestFromTestdata(t *testing.T) {
 	dir, err := os.Getwd()
 	if err != nil {
 		t.Fatal("Getwd failed:", err)
@@ -253,7 +253,7 @@ func TestFromTestdata2(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var fsTestArray = asttest.NewSingleFileFS("/foo", "bar.gop", `
+var fsTestArray = memfs.NewSingleFileFS("/foo", "bar.gop", `
 println([1][0])
 println([1,2][0])
 `)
