@@ -26,8 +26,9 @@ package constant
 
 import (
 	"go/constant"
-	gotoken "go/token"
 	"math/big"
+
+	gotoken "go/token"
 
 	"github.com/goplus/gop/token"
 )
