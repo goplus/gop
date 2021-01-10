@@ -30,25 +30,25 @@ import (
 // That position information is needed to properly position comments
 // when printing the construct.
 
-// All node types implement the Node interface.
+// Node interface: all node types implement the Node interface.
 type Node interface {
 	Pos() token.Pos // position of first character belonging to the node
 	End() token.Pos // position of first character immediately after the node
 }
 
-// All expression nodes implement the Expr interface.
+// Expr interface: all expression nodes implement the Expr interface.
 type Expr interface {
 	Node
 	exprNode()
 }
 
-// All statement nodes implement the Stmt interface.
+// Stmt interface: all statement nodes implement the Stmt interface.
 type Stmt interface {
 	Node
 	stmtNode()
 }
 
-// All declaration nodes implement the Decl interface.
+// Decl interface: all declaration nodes implement the Decl interface.
 type Decl interface {
 	Node
 	declNode()
@@ -63,7 +63,10 @@ type Comment struct {
 	Text  string    // comment text (excluding '\n' for //-style comments)
 }
 
+// Pos returns position of first character belonging to the node.
 func (c *Comment) Pos() token.Pos { return c.Slash }
+
+// End returns position of first character immediately after the node.
 func (c *Comment) End() token.Pos { return token.Pos(int(c.Slash) + len(c.Text)) }
 
 // A CommentGroup represents a sequence of comments
@@ -73,7 +76,10 @@ type CommentGroup struct {
 	List []*Comment // len(List) > 0
 }
 
+// Pos returns position of first character belonging to the node.
 func (g *CommentGroup) Pos() token.Pos { return g.List[0].Pos() }
+
+// End returns position of first character immediately after the node.
 func (g *CommentGroup) End() token.Pos { return g.List[len(g.List)-1].End() }
 
 func isWhitespace(ch byte) bool { return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' }
@@ -154,7 +160,6 @@ func (g *CommentGroup) Text() string {
 // in a signature.
 // Field.Names is nil for unnamed parameters (parameter lists which only contain types)
 // and embedded struct fields. In the latter case, the field name is the type name.
-//
 type Field struct {
 	Doc     *CommentGroup // associated documentation; or nil
 	Names   []*Ident      // field/method/parameter names; or nil
@@ -163,6 +168,7 @@ type Field struct {
 	Comment *CommentGroup // line comments; or nil
 }
 
+// Pos returns position of first character belonging to the node.
 func (f *Field) Pos() token.Pos {
 	if len(f.Names) > 0 {
 		return f.Names[0].Pos()
@@ -170,6 +176,7 @@ func (f *Field) Pos() token.Pos {
 	return f.Type.Pos()
 }
 
+// End returns position of first character immediately after the node.
 func (f *Field) End() token.Pos {
 	if f.Tag != nil {
 		return f.Tag.End()
@@ -184,6 +191,7 @@ type FieldList struct {
 	Closing token.Pos // position of closing parenthesis/brace, if any
 }
 
+// Pos returns position of first character belonging to the node.
 func (f *FieldList) Pos() token.Pos {
 	if f.Opening.IsValid() {
 		return f.Opening
@@ -196,6 +204,7 @@ func (f *FieldList) Pos() token.Pos {
 	return token.NoPos
 }
 
+// End returns position of first character immediately after the node.
 func (f *FieldList) End() token.Pos {
 	if f.Closing.IsValid() {
 		return f.Closing + 1
@@ -225,12 +234,10 @@ func (f *FieldList) NumFields() int {
 
 // An expression is represented by a tree consisting of one
 // or more of the following concrete expression nodes.
-//
 type (
 	// A BadExpr node is a placeholder for expressions containing
 	// syntax errors for which no correct expression nodes can be
 	// created.
-	//
 	BadExpr struct {
 		From, To token.Pos // position range of bad expression
 	}
@@ -244,7 +251,6 @@ type (
 
 	// An Ellipsis node stands for the "..." type in a
 	// parameter list or the "..." length in an array type.
-	//
 	Ellipsis struct {
 		Ellipsis token.Pos // position of "..."
 		Elt      Expr      // ellipsis element type (parameter lists only); or nil
@@ -306,7 +312,6 @@ type (
 
 	// A TypeAssertExpr node represents an expression followed by a
 	// type assertion.
-	//
 	TypeAssertExpr struct {
 		X      Expr      // expression
 		Lparen token.Pos // position of "("
@@ -325,7 +330,6 @@ type (
 
 	// A StarExpr node represents an expression of the form "*" Expression.
 	// Semantically it could be a unary "*" expression, or a pointer type.
-	//
 	StarExpr struct {
 		Star token.Pos // position of "*"
 		X    Expr      // operand
@@ -333,7 +337,6 @@ type (
 
 	// A UnaryExpr node represents a unary expression.
 	// Unary "*" expressions are represented via StarExpr nodes.
-	//
 	UnaryExpr struct {
 		OpPos token.Pos   // position of Op
 		Op    token.Token // operator
@@ -350,7 +353,6 @@ type (
 
 	// A KeyValueExpr node represents (key : value) pairs
 	// in composite literals.
-	//
 	KeyValueExpr struct {
 		Key   Expr
 		Colon token.Pos // position of ":"
@@ -358,20 +360,20 @@ type (
 	}
 )
 
-// The direction of a channel type is indicated by a bit
+// ChanDir is the direction of a channel type is indicated by a bit
 // mask including one or both of the following constants.
-//
 type ChanDir int
 
 const (
+	// SEND - ChanDir
 	SEND ChanDir = 1 << iota
+	// RECV - ChanDir
 	RECV
 )
 
 // A type is represented by a tree consisting of one
 // or more of the following type-specific expression
 // nodes.
-//
 type (
 	// An ArrayType node represents an array or slice type.
 	ArrayType struct {
@@ -421,71 +423,157 @@ type (
 
 // Pos and End implementations for expression/type nodes.
 
-func (x *BadExpr) Pos() token.Pos  { return x.From }
-func (x *Ident) Pos() token.Pos    { return x.NamePos }
+// Pos returns position of first character belonging to the node.
+func (x *BadExpr) Pos() token.Pos { return x.From }
+
+// Pos returns position of first character belonging to the node.
+func (x *Ident) Pos() token.Pos { return x.NamePos }
+
+// Pos returns position of first character belonging to the node.
 func (x *Ellipsis) Pos() token.Pos { return x.Ellipsis }
+
+// Pos returns position of first character belonging to the node.
 func (x *BasicLit) Pos() token.Pos { return x.ValuePos }
-func (x *FuncLit) Pos() token.Pos  { return x.Type.Pos() }
+
+// Pos returns position of first character belonging to the node.
+func (x *FuncLit) Pos() token.Pos { return x.Type.Pos() }
+
+// Pos returns position of first character belonging to the node.
 func (x *CompositeLit) Pos() token.Pos {
 	if x.Type != nil {
 		return x.Type.Pos()
 	}
 	return x.Lbrace
 }
-func (x *ParenExpr) Pos() token.Pos      { return x.Lparen }
-func (x *SelectorExpr) Pos() token.Pos   { return x.X.Pos() }
-func (x *IndexExpr) Pos() token.Pos      { return x.X.Pos() }
-func (x *SliceExpr) Pos() token.Pos      { return x.X.Pos() }
+
+// Pos returns position of first character belonging to the node.
+func (x *ParenExpr) Pos() token.Pos { return x.Lparen }
+
+// Pos returns position of first character belonging to the node.
+func (x *SelectorExpr) Pos() token.Pos { return x.X.Pos() }
+
+// Pos returns position of first character belonging to the node.
+func (x *IndexExpr) Pos() token.Pos { return x.X.Pos() }
+
+// Pos returns position of first character belonging to the node.
+func (x *SliceExpr) Pos() token.Pos { return x.X.Pos() }
+
+// Pos returns position of first character belonging to the node.
 func (x *TypeAssertExpr) Pos() token.Pos { return x.X.Pos() }
-func (x *CallExpr) Pos() token.Pos       { return x.Fun.Pos() }
-func (x *StarExpr) Pos() token.Pos       { return x.Star }
-func (x *UnaryExpr) Pos() token.Pos      { return x.OpPos }
-func (x *BinaryExpr) Pos() token.Pos     { return x.X.Pos() }
-func (x *KeyValueExpr) Pos() token.Pos   { return x.Key.Pos() }
-func (x *ArrayType) Pos() token.Pos      { return x.Lbrack }
-func (x *StructType) Pos() token.Pos     { return x.Struct }
+
+// Pos returns position of first character belonging to the node.
+func (x *CallExpr) Pos() token.Pos { return x.Fun.Pos() }
+
+// Pos returns position of first character belonging to the node.
+func (x *StarExpr) Pos() token.Pos { return x.Star }
+
+// Pos returns position of first character belonging to the node.
+func (x *UnaryExpr) Pos() token.Pos { return x.OpPos }
+
+// Pos returns position of first character belonging to the node.
+func (x *BinaryExpr) Pos() token.Pos { return x.X.Pos() }
+
+// Pos returns position of first character belonging to the node.
+func (x *KeyValueExpr) Pos() token.Pos { return x.Key.Pos() }
+
+// Pos returns position of first character belonging to the node.
+func (x *ArrayType) Pos() token.Pos { return x.Lbrack }
+
+// Pos returns position of first character belonging to the node.
+func (x *StructType) Pos() token.Pos { return x.Struct }
+
+// Pos returns position of first character belonging to the node.
 func (x *FuncType) Pos() token.Pos {
 	if x.Func.IsValid() || x.Params == nil { // see issue 3870
 		return x.Func
 	}
 	return x.Params.Pos() // interface method declarations have no "func" keyword
 }
-func (x *InterfaceType) Pos() token.Pos { return x.Interface }
-func (x *MapType) Pos() token.Pos       { return x.Map }
-func (x *ChanType) Pos() token.Pos      { return x.Begin }
 
+// Pos returns position of first character belonging to the node.
+func (x *InterfaceType) Pos() token.Pos { return x.Interface }
+
+// Pos returns position of first character belonging to the node.
+func (x *MapType) Pos() token.Pos { return x.Map }
+
+// Pos returns position of first character belonging to the node.
+func (x *ChanType) Pos() token.Pos { return x.Begin }
+
+// End returns position of first character immediately after the node.
 func (x *BadExpr) End() token.Pos { return x.To }
-func (x *Ident) End() token.Pos   { return token.Pos(int(x.NamePos) + len(x.Name)) }
+
+// End returns position of first character immediately after the node.
+func (x *Ident) End() token.Pos { return token.Pos(int(x.NamePos) + len(x.Name)) }
+
+// End returns position of first character immediately after the node.
 func (x *Ellipsis) End() token.Pos {
 	if x.Elt != nil {
 		return x.Elt.End()
 	}
 	return x.Ellipsis + 3 // len("...")
 }
-func (x *BasicLit) End() token.Pos       { return token.Pos(int(x.ValuePos) + len(x.Value)) }
-func (x *FuncLit) End() token.Pos        { return x.Body.End() }
-func (x *CompositeLit) End() token.Pos   { return x.Rbrace + 1 }
-func (x *ParenExpr) End() token.Pos      { return x.Rparen + 1 }
-func (x *SelectorExpr) End() token.Pos   { return x.Sel.End() }
-func (x *IndexExpr) End() token.Pos      { return x.Rbrack + 1 }
-func (x *SliceExpr) End() token.Pos      { return x.Rbrack + 1 }
+
+// End returns position of first character immediately after the node.
+func (x *BasicLit) End() token.Pos { return token.Pos(int(x.ValuePos) + len(x.Value)) }
+
+// End returns position of first character immediately after the node.
+func (x *FuncLit) End() token.Pos { return x.Body.End() }
+
+// End returns position of first character immediately after the node.
+func (x *CompositeLit) End() token.Pos { return x.Rbrace + 1 }
+
+// End returns position of first character immediately after the node.
+func (x *ParenExpr) End() token.Pos { return x.Rparen + 1 }
+
+// End returns position of first character immediately after the node.
+func (x *SelectorExpr) End() token.Pos { return x.Sel.End() }
+
+// End returns position of first character immediately after the node.
+func (x *IndexExpr) End() token.Pos { return x.Rbrack + 1 }
+
+// End returns position of first character immediately after the node.
+func (x *SliceExpr) End() token.Pos { return x.Rbrack + 1 }
+
+// End returns position of first character immediately after the node.
 func (x *TypeAssertExpr) End() token.Pos { return x.Rparen + 1 }
-func (x *CallExpr) End() token.Pos       { return x.Rparen + 1 }
-func (x *StarExpr) End() token.Pos       { return x.X.End() }
-func (x *UnaryExpr) End() token.Pos      { return x.X.End() }
-func (x *BinaryExpr) End() token.Pos     { return x.Y.End() }
-func (x *KeyValueExpr) End() token.Pos   { return x.Value.End() }
-func (x *ArrayType) End() token.Pos      { return x.Elt.End() }
-func (x *StructType) End() token.Pos     { return x.Fields.End() }
+
+// End returns position of first character immediately after the node.
+func (x *CallExpr) End() token.Pos { return x.Rparen + 1 }
+
+// End returns position of first character immediately after the node.
+func (x *StarExpr) End() token.Pos { return x.X.End() }
+
+// End returns position of first character immediately after the node.
+func (x *UnaryExpr) End() token.Pos { return x.X.End() }
+
+// End returns position of first character immediately after the node.
+func (x *BinaryExpr) End() token.Pos { return x.Y.End() }
+
+// End returns position of first character immediately after the node.
+func (x *KeyValueExpr) End() token.Pos { return x.Value.End() }
+
+// End returns position of first character immediately after the node.
+func (x *ArrayType) End() token.Pos { return x.Elt.End() }
+
+// End returns position of first character immediately after the node.
+func (x *StructType) End() token.Pos { return x.Fields.End() }
+
+// End returns position of first character immediately after the node.
 func (x *FuncType) End() token.Pos {
 	if x.Results != nil {
 		return x.Results.End()
 	}
 	return x.Params.End()
 }
+
+// End returns position of first character immediately after the node.
 func (x *InterfaceType) End() token.Pos { return x.Methods.End() }
-func (x *MapType) End() token.Pos       { return x.Value.End() }
-func (x *ChanType) End() token.Pos      { return x.Value.End() }
+
+// End returns position of first character immediately after the node.
+func (x *MapType) End() token.Pos { return x.Value.End() }
+
+// End returns position of first character immediately after the node.
+func (x *ChanType) End() token.Pos { return x.Value.End() }
 
 // exprNode() ensures that only expression/type nodes can be
 // assigned to an Expr.
@@ -519,20 +607,17 @@ func (*ChanType) exprNode()      {}
 
 // NewIdent creates a new Ident without position.
 // Useful for ASTs generated by code other than the Go parser.
-//
 func NewIdent(name string) *Ident { return &Ident{token.NoPos, name, nil} }
 
 // IsExported reports whether name starts with an upper-case letter.
-//
 func IsExported(name string) bool { return token.IsExported(name) }
 
 // IsExported reports whether id starts with an upper-case letter.
-//
-func (id *Ident) IsExported() bool { return token.IsExported(id.Name) }
+func (x *Ident) IsExported() bool { return token.IsExported(x.Name) }
 
-func (id *Ident) String() string {
-	if id != nil {
-		return id.Name
+func (x *Ident) String() string {
+	if x != nil {
+		return x.Name
 	}
 	return "<nil>"
 }
@@ -598,10 +683,10 @@ type (
 	// a short variable declaration.
 	//
 	AssignStmt struct {
-		Lhs    []Expr
+		Lhs    []Expr      // left hand side expressions
 		TokPos token.Pos   // position of Tok
 		Tok    token.Token // assignment token, DEFINE
-		Rhs    []Expr
+		Rhs    []Expr      // right hand side expressions
 	}
 
 	// A GoStmt node represents a go statement.
@@ -707,57 +792,123 @@ type (
 
 // Pos and End implementations for statement nodes.
 
-func (s *BadStmt) Pos() token.Pos        { return s.From }
-func (s *DeclStmt) Pos() token.Pos       { return s.Decl.Pos() }
-func (s *EmptyStmt) Pos() token.Pos      { return s.Semicolon }
-func (s *LabeledStmt) Pos() token.Pos    { return s.Label.Pos() }
-func (s *ExprStmt) Pos() token.Pos       { return s.X.Pos() }
-func (s *SendStmt) Pos() token.Pos       { return s.Chan.Pos() }
-func (s *IncDecStmt) Pos() token.Pos     { return s.X.Pos() }
-func (s *AssignStmt) Pos() token.Pos     { return s.Lhs[0].Pos() }
-func (s *GoStmt) Pos() token.Pos         { return s.Go }
-func (s *DeferStmt) Pos() token.Pos      { return s.Defer }
-func (s *ReturnStmt) Pos() token.Pos     { return s.Return }
-func (s *BranchStmt) Pos() token.Pos     { return s.TokPos }
-func (s *BlockStmt) Pos() token.Pos      { return s.Lbrace }
-func (s *IfStmt) Pos() token.Pos         { return s.If }
-func (s *CaseClause) Pos() token.Pos     { return s.Case }
-func (s *SwitchStmt) Pos() token.Pos     { return s.Switch }
-func (s *TypeSwitchStmt) Pos() token.Pos { return s.Switch }
-func (s *CommClause) Pos() token.Pos     { return s.Case }
-func (s *SelectStmt) Pos() token.Pos     { return s.Select }
-func (s *ForStmt) Pos() token.Pos        { return s.For }
-func (s *RangeStmt) Pos() token.Pos      { return s.For }
+// Pos returns position of first character belonging to the node.
+func (s *BadStmt) Pos() token.Pos { return s.From }
 
-func (s *BadStmt) End() token.Pos  { return s.To }
+// Pos returns position of first character belonging to the node.
+func (s *DeclStmt) Pos() token.Pos { return s.Decl.Pos() }
+
+// Pos returns position of first character belonging to the node.
+func (s *EmptyStmt) Pos() token.Pos { return s.Semicolon }
+
+// Pos returns position of first character belonging to the node.
+func (s *LabeledStmt) Pos() token.Pos { return s.Label.Pos() }
+
+// Pos returns position of first character belonging to the node.
+func (s *ExprStmt) Pos() token.Pos { return s.X.Pos() }
+
+// Pos returns position of first character belonging to the node.
+func (s *SendStmt) Pos() token.Pos { return s.Chan.Pos() }
+
+// Pos returns position of first character belonging to the node.
+func (s *IncDecStmt) Pos() token.Pos { return s.X.Pos() }
+
+// Pos returns position of first character belonging to the node.
+func (s *AssignStmt) Pos() token.Pos { return s.Lhs[0].Pos() }
+
+// Pos returns position of first character belonging to the node.
+func (s *GoStmt) Pos() token.Pos { return s.Go }
+
+// Pos returns position of first character belonging to the node.
+func (s *DeferStmt) Pos() token.Pos { return s.Defer }
+
+// Pos returns position of first character belonging to the node.
+func (s *ReturnStmt) Pos() token.Pos { return s.Return }
+
+// Pos returns position of first character belonging to the node.
+func (s *BranchStmt) Pos() token.Pos { return s.TokPos }
+
+// Pos returns position of first character belonging to the node.
+func (s *BlockStmt) Pos() token.Pos { return s.Lbrace }
+
+// Pos returns position of first character belonging to the node.
+func (s *IfStmt) Pos() token.Pos { return s.If }
+
+// Pos returns position of first character belonging to the node.
+func (s *CaseClause) Pos() token.Pos { return s.Case }
+
+// Pos returns position of first character belonging to the node.
+func (s *SwitchStmt) Pos() token.Pos { return s.Switch }
+
+// Pos returns position of first character belonging to the node.
+func (s *TypeSwitchStmt) Pos() token.Pos { return s.Switch }
+
+// Pos returns position of first character belonging to the node.
+func (s *CommClause) Pos() token.Pos { return s.Case }
+
+// Pos returns position of first character belonging to the node.
+func (s *SelectStmt) Pos() token.Pos { return s.Select }
+
+// Pos returns position of first character belonging to the node.
+func (s *ForStmt) Pos() token.Pos { return s.For }
+
+// Pos returns position of first character belonging to the node.
+func (s *RangeStmt) Pos() token.Pos { return s.For }
+
+// End returns position of first character immediately after the node.
+func (s *BadStmt) End() token.Pos { return s.To }
+
+// End returns position of first character immediately after the node.
 func (s *DeclStmt) End() token.Pos { return s.Decl.End() }
+
+// End returns position of first character immediately after the node.
 func (s *EmptyStmt) End() token.Pos {
 	if s.Implicit {
 		return s.Semicolon
 	}
 	return s.Semicolon + 1 /* len(";") */
 }
+
+// End returns position of first character immediately after the node.
 func (s *LabeledStmt) End() token.Pos { return s.Stmt.End() }
-func (s *ExprStmt) End() token.Pos    { return s.X.End() }
-func (s *SendStmt) End() token.Pos    { return s.Value.End() }
+
+// End returns position of first character immediately after the node.
+func (s *ExprStmt) End() token.Pos { return s.X.End() }
+
+// End returns position of first character immediately after the node.
+func (s *SendStmt) End() token.Pos { return s.Value.End() }
+
+// End returns position of first character immediately after the node.
 func (s *IncDecStmt) End() token.Pos {
 	return s.TokPos + 2 /* len("++") */
 }
+
+// End returns position of first character immediately after the node.
 func (s *AssignStmt) End() token.Pos { return s.Rhs[len(s.Rhs)-1].End() }
-func (s *GoStmt) End() token.Pos     { return s.Call.End() }
-func (s *DeferStmt) End() token.Pos  { return s.Call.End() }
+
+// End returns position of first character immediately after the node.
+func (s *GoStmt) End() token.Pos { return s.Call.End() }
+
+// End returns position of first character immediately after the node.
+func (s *DeferStmt) End() token.Pos { return s.Call.End() }
+
+// End returns position of first character immediately after the node.
 func (s *ReturnStmt) End() token.Pos {
 	if n := len(s.Results); n > 0 {
 		return s.Results[n-1].End()
 	}
 	return s.Return + 6 // len("return")
 }
+
+// End returns position of first character immediately after the node.
 func (s *BranchStmt) End() token.Pos {
 	if s.Label != nil {
 		return s.Label.End()
 	}
 	return token.Pos(int(s.TokPos) + len(s.Tok.String()))
 }
+
+// End returns position of first character immediately after the node.
 func (s *BlockStmt) End() token.Pos {
 	if s.Rbrace.IsValid() {
 		return s.Rbrace + 1
@@ -767,29 +918,45 @@ func (s *BlockStmt) End() token.Pos {
 	}
 	return s.Lbrace + 1
 }
+
+// End returns position of first character immediately after the node.
 func (s *IfStmt) End() token.Pos {
 	if s.Else != nil {
 		return s.Else.End()
 	}
 	return s.Body.End()
 }
+
+// End returns position of first character immediately after the node.
 func (s *CaseClause) End() token.Pos {
 	if n := len(s.Body); n > 0 {
 		return s.Body[n-1].End()
 	}
 	return s.Colon + 1
 }
-func (s *SwitchStmt) End() token.Pos     { return s.Body.End() }
+
+// End returns position of first character immediately after the node.
+func (s *SwitchStmt) End() token.Pos { return s.Body.End() }
+
+// End returns position of first character immediately after the node.
 func (s *TypeSwitchStmt) End() token.Pos { return s.Body.End() }
+
+// End returns position of first character immediately after the node.
 func (s *CommClause) End() token.Pos {
 	if n := len(s.Body); n > 0 {
 		return s.Body[n-1].End()
 	}
 	return s.Colon + 1
 }
+
+// End returns position of first character immediately after the node.
 func (s *SelectStmt) End() token.Pos { return s.Body.End() }
-func (s *ForStmt) End() token.Pos    { return s.Body.End() }
-func (s *RangeStmt) End() token.Pos  { return s.Body.End() }
+
+// End returns position of first character immediately after the node.
+func (s *ForStmt) End() token.Pos { return s.Body.End() }
+
+// End returns position of first character immediately after the node.
+func (s *RangeStmt) End() token.Pos { return s.Body.End() }
 
 // stmtNode() ensures that only statement nodes can be
 // assigned to a Stmt.
@@ -861,15 +1028,21 @@ type (
 
 // Pos and End implementations for spec nodes.
 
+// Pos returns position of first character belonging to the node.
 func (s *ImportSpec) Pos() token.Pos {
 	if s.Name != nil {
 		return s.Name.Pos()
 	}
 	return s.Path.Pos()
 }
-func (s *ValueSpec) Pos() token.Pos { return s.Names[0].Pos() }
-func (s *TypeSpec) Pos() token.Pos  { return s.Name.Pos() }
 
+// Pos returns position of first character belonging to the node.
+func (s *ValueSpec) Pos() token.Pos { return s.Names[0].Pos() }
+
+// Pos returns position of first character belonging to the node.
+func (s *TypeSpec) Pos() token.Pos { return s.Name.Pos() }
+
+// End returns position of first character immediately after the node.
 func (s *ImportSpec) End() token.Pos {
 	if s.EndPos != 0 {
 		return s.EndPos
@@ -877,6 +1050,7 @@ func (s *ImportSpec) End() token.Pos {
 	return s.Path.End()
 }
 
+// End returns position of first character immediately after the node.
 func (s *ValueSpec) End() token.Pos {
 	if n := len(s.Values); n > 0 {
 		return s.Values[n-1].End()
@@ -886,6 +1060,8 @@ func (s *ValueSpec) End() token.Pos {
 	}
 	return s.Names[len(s.Names)-1].End()
 }
+
+// End returns position of first character immediately after the node.
 func (s *TypeSpec) End() token.Pos { return s.Type.End() }
 
 // specNode() ensures that only spec nodes can be
@@ -938,17 +1114,27 @@ type (
 
 // Pos and End implementations for declaration nodes.
 
-func (d *BadDecl) Pos() token.Pos  { return d.From }
-func (d *GenDecl) Pos() token.Pos  { return d.TokPos }
+// Pos returns position of first character belonging to the node.
+func (d *BadDecl) Pos() token.Pos { return d.From }
+
+// Pos returns position of first character belonging to the node.
+func (d *GenDecl) Pos() token.Pos { return d.TokPos }
+
+// Pos returns position of first character belonging to the node.
 func (d *FuncDecl) Pos() token.Pos { return d.Type.Pos() }
 
+// End returns position of first character immediately after the node.
 func (d *BadDecl) End() token.Pos { return d.To }
+
+// End returns position of first character immediately after the node.
 func (d *GenDecl) End() token.Pos {
 	if d.Rparen.IsValid() {
 		return d.Rparen + 1
 	}
 	return d.Specs[0].End()
 }
+
+// End returns position of first character immediately after the node.
 func (d *FuncDecl) End() token.Pos {
 	if d.Body != nil {
 		return d.Body.End()
@@ -998,7 +1184,10 @@ type File struct {
 	NoEntrypoint bool
 }
 
+// Pos returns position of first character belonging to the node.
 func (f *File) Pos() token.Pos { return f.Package }
+
+// End returns position of first character immediately after the node.
 func (f *File) End() token.Pos {
 	if n := len(f.Decls); n > 0 {
 		return f.Decls[n-1].End()
@@ -1016,5 +1205,8 @@ type Package struct {
 	Files   map[string]*File   // Go source files by filename
 }
 
+// Pos returns position of first character belonging to the node.
 func (p *Package) Pos() token.Pos { return token.NoPos }
+
+// End returns position of first character immediately after the node.
 func (p *Package) End() token.Pos { return token.NoPos }
