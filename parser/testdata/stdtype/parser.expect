@@ -4,152 +4,203 @@ file stdtype.gop
 noEntrypoint
 ast.GenDecl:
   Tok: import
-  ast.ImportSpec:
-    ast.BasicLit:
-      Kind: STRING
-      Value: "io"
+  Specs:
+    ast.ImportSpec:
+      Path:
+        ast.BasicLit:
+          Kind: STRING
+          Value: "io"
 ast.FuncDecl:
-  ast.Ident:
-    Name: init
-  ast.FuncType:
-    ast.FieldList:
-  ast.BlockStmt:
-    ast.AssignStmt:
-      ast.Ident:
-        Name: x
-      Tok: :=
-      ast.CompositeLit:
-        ast.ArrayType:
-          ast.Ident:
-            Name: float64
-        ast.BasicLit:
-          Kind: INT
-          Value: 1
-        ast.BasicLit:
-          Kind: FLOAT
-          Value: 3.4
-        ast.BasicLit:
-          Kind: INT
-          Value: 5
-    ast.AssignStmt:
-      ast.Ident:
-        Name: y
-      Tok: :=
-      ast.CompositeLit:
-        ast.MapType:
-          ast.Ident:
-            Name: string
-          ast.Ident:
-            Name: float64
-        ast.KeyValueExpr:
-          ast.BasicLit:
-            Kind: STRING
-            Value: "Hello"
-          ast.BasicLit:
-            Kind: INT
-            Value: 1
-        ast.KeyValueExpr:
-          ast.BasicLit:
-            Kind: STRING
-            Value: "xsw"
-          ast.BasicLit:
-            Kind: FLOAT
-            Value: 3.4
-    ast.ExprStmt:
-      ast.CallExpr:
-        ast.Ident:
-          Name: println
-        ast.BasicLit:
-          Kind: STRING
-          Value: "x:"
-        ast.Ident:
-          Name: x
-        ast.BasicLit:
-          Kind: STRING
-          Value: "y:"
-        ast.Ident:
-          Name: y
-    ast.AssignStmt:
-      ast.Ident:
-        Name: a
-      Tok: :=
-      ast.CompositeLit:
-        ast.ArrayType:
-          ast.Ellipsis:
-          ast.Ident:
-            Name: float64
-        ast.BasicLit:
-          Kind: INT
-          Value: 1
-        ast.BasicLit:
-          Kind: FLOAT
-          Value: 3.4
-        ast.BasicLit:
-          Kind: INT
-          Value: 5
-    ast.AssignStmt:
-      ast.Ident:
-        Name: b
-      Tok: :=
-      ast.CompositeLit:
-        ast.ArrayType:
-          ast.Ellipsis:
-          ast.Ident:
-            Name: float64
-        ast.BasicLit:
-          Kind: INT
-          Value: 1
-        ast.KeyValueExpr:
-          ast.BasicLit:
-            Kind: INT
-            Value: 3
-          ast.BasicLit:
-            Kind: FLOAT
-            Value: 3.4
-        ast.BasicLit:
-          Kind: INT
-          Value: 5
-    ast.AssignStmt:
-      ast.Ident:
-        Name: c
-      Tok: :=
-      ast.CompositeLit:
-        ast.ArrayType:
-          ast.Ident:
-            Name: float64
-        ast.KeyValueExpr:
-          ast.BasicLit:
-            Kind: INT
-            Value: 2
-          ast.BasicLit:
-            Kind: FLOAT
-            Value: 1.2
-        ast.BasicLit:
-          Kind: INT
-          Value: 3
-        ast.KeyValueExpr:
-          ast.BasicLit:
-            Kind: INT
-            Value: 6
-          ast.BasicLit:
-            Kind: FLOAT
-            Value: 4.5
-    ast.ExprStmt:
-      ast.CallExpr:
-        ast.Ident:
-          Name: println
-        ast.BasicLit:
-          Kind: STRING
-          Value: "a:"
-        ast.Ident:
-          Name: a
-        ast.BasicLit:
-          Kind: STRING
-          Value: "b:"
-        ast.Ident:
-          Name: b
-        ast.BasicLit:
-          Kind: STRING
-          Value: "c:"
-        ast.Ident:
-          Name: c
+  Name:
+    ast.Ident:
+      Name: init
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: x
+          Tok: :=
+          Rhs:
+            ast.CompositeLit:
+              Type:
+                ast.ArrayType:
+                  Elt:
+                    ast.Ident:
+                      Name: float64
+              Elts:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 1
+                ast.BasicLit:
+                  Kind: FLOAT
+                  Value: 3.4
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 5
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: y
+          Tok: :=
+          Rhs:
+            ast.CompositeLit:
+              Type:
+                ast.MapType:
+                  Key:
+                    ast.Ident:
+                      Name: string
+                  Value:
+                    ast.Ident:
+                      Name: float64
+              Elts:
+                ast.KeyValueExpr:
+                  Key:
+                    ast.BasicLit:
+                      Kind: STRING
+                      Value: "Hello"
+                  Value:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 1
+                ast.KeyValueExpr:
+                  Key:
+                    ast.BasicLit:
+                      Kind: STRING
+                      Value: "xsw"
+                  Value:
+                    ast.BasicLit:
+                      Kind: FLOAT
+                      Value: 3.4
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "x:"
+                ast.Ident:
+                  Name: x
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "y:"
+                ast.Ident:
+                  Name: y
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: a
+          Tok: :=
+          Rhs:
+            ast.CompositeLit:
+              Type:
+                ast.ArrayType:
+                  Len:
+                    ast.Ellipsis:
+                  Elt:
+                    ast.Ident:
+                      Name: float64
+              Elts:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 1
+                ast.BasicLit:
+                  Kind: FLOAT
+                  Value: 3.4
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 5
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: b
+          Tok: :=
+          Rhs:
+            ast.CompositeLit:
+              Type:
+                ast.ArrayType:
+                  Len:
+                    ast.Ellipsis:
+                  Elt:
+                    ast.Ident:
+                      Name: float64
+              Elts:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 1
+                ast.KeyValueExpr:
+                  Key:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 3
+                  Value:
+                    ast.BasicLit:
+                      Kind: FLOAT
+                      Value: 3.4
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 5
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: c
+          Tok: :=
+          Rhs:
+            ast.CompositeLit:
+              Type:
+                ast.ArrayType:
+                  Elt:
+                    ast.Ident:
+                      Name: float64
+              Elts:
+                ast.KeyValueExpr:
+                  Key:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 2
+                  Value:
+                    ast.BasicLit:
+                      Kind: FLOAT
+                      Value: 1.2
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 3
+                ast.KeyValueExpr:
+                  Key:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 6
+                  Value:
+                    ast.BasicLit:
+                      Kind: FLOAT
+                      Value: 4.5
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "a:"
+                ast.Ident:
+                  Name: a
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "b:"
+                ast.Ident:
+                  Name: b
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "c:"
+                ast.Ident:
+                  Name: c

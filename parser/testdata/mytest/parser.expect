@@ -3,384 +3,590 @@ package testdata
 file mytest.gop
 ast.GenDecl:
   Tok: import
-  ast.ImportSpec:
-    ast.BasicLit:
-      Kind: STRING
-      Value: "go/token"
-  ast.ImportSpec:
-    ast.BasicLit:
-      Kind: STRING
-      Value: "os"
-ast.GenDecl:
-  Tok: var
-  ast.ValueSpec:
-    ast.Ident:
-      Name: stmtStart
-    ast.CompositeLit:
-      ast.MapType:
-        ast.SelectorExpr:
-          ast.Ident:
-            Name: token
-          ast.Ident:
-            Name: Token
-        ast.Ident:
-          Name: bool
-      ast.KeyValueExpr:
-        ast.SelectorExpr:
-          ast.Ident:
-            Name: token
-          ast.Ident:
-            Name: BREAK
-        ast.Ident:
-          Name: true
-      ast.KeyValueExpr:
-        ast.SelectorExpr:
-          ast.Ident:
-            Name: token
-          ast.Ident:
-            Name: CONST
-        ast.Ident:
-          Name: true
-      ast.KeyValueExpr:
-        ast.SelectorExpr:
-          ast.Ident:
-            Name: token
-          ast.Ident:
-            Name: CONTINUE
-        ast.Ident:
-          Name: true
-      ast.KeyValueExpr:
-        ast.SelectorExpr:
-          ast.Ident:
-            Name: token
-          ast.Ident:
-            Name: DEFER
-        ast.Ident:
-          Name: true
-      ast.KeyValueExpr:
-        ast.SelectorExpr:
-          ast.Ident:
-            Name: token
-          ast.Ident:
-            Name: FALLTHROUGH
-        ast.Ident:
-          Name: true
-      ast.KeyValueExpr:
-        ast.SelectorExpr:
-          ast.Ident:
-            Name: token
-          ast.Ident:
-            Name: FOR
-        ast.Ident:
-          Name: true
-      ast.KeyValueExpr:
-        ast.SelectorExpr:
-          ast.Ident:
-            Name: token
-          ast.Ident:
-            Name: GO
-        ast.Ident:
-          Name: true
-      ast.KeyValueExpr:
-        ast.SelectorExpr:
-          ast.Ident:
-            Name: token
-          ast.Ident:
-            Name: GOTO
-        ast.Ident:
-          Name: true
-      ast.KeyValueExpr:
-        ast.SelectorExpr:
-          ast.Ident:
-            Name: token
-          ast.Ident:
-            Name: IF
-        ast.Ident:
-          Name: true
-      ast.KeyValueExpr:
-        ast.SelectorExpr:
-          ast.Ident:
-            Name: token
-          ast.Ident:
-            Name: RETURN
-        ast.Ident:
-          Name: true
-      ast.KeyValueExpr:
-        ast.SelectorExpr:
-          ast.Ident:
-            Name: token
-          ast.Ident:
-            Name: SELECT
-        ast.Ident:
-          Name: true
-      ast.KeyValueExpr:
-        ast.SelectorExpr:
-          ast.Ident:
-            Name: token
-          ast.Ident:
-            Name: SWITCH
-        ast.Ident:
-          Name: true
-      ast.KeyValueExpr:
-        ast.SelectorExpr:
-          ast.Ident:
-            Name: token
-          ast.Ident:
-            Name: TYPE
-        ast.Ident:
-          Name: true
-      ast.KeyValueExpr:
-        ast.SelectorExpr:
-          ast.Ident:
-            Name: token
-          ast.Ident:
-            Name: VAR
-        ast.Ident:
-          Name: true
-ast.GenDecl:
-  Tok: type
-  ast.TypeSpec:
-    ast.Ident:
-      Name: Mode
-    ast.Ident:
-      Name: uint
-ast.GenDecl:
-  Tok: const
-  ast.ValueSpec:
-    ast.Ident:
-      Name: PackageClauseOnly
-    ast.Ident:
-      Name: Mode
-    ast.BinaryExpr:
-      ast.BasicLit:
-        Kind: INT
-        Value: 1
-      Op: <<
-      ast.Ident:
-        Name: iota
-  ast.ValueSpec:
-    ast.Ident:
-      Name: ImportsOnly
-  ast.ValueSpec:
-    ast.Ident:
-      Name: ParseComments
-  ast.ValueSpec:
-    ast.Ident:
-      Name: Trace
-  ast.ValueSpec:
-    ast.Ident:
-      Name: DeclarationErrors
-  ast.ValueSpec:
-    ast.Ident:
-      Name: AllErrors
-ast.GenDecl:
-  Tok: type
-  ast.TypeSpec:
-    ast.Ident:
-      Name: FileSystem
-    ast.InterfaceType:
-      ast.FieldList:
-        ast.Field:
-          ast.Ident:
-            Name: ReadDir
-          ast.FuncType:
-            ast.FieldList:
-              ast.Field:
-                ast.Ident:
-                  Name: dirname
-                ast.Ident:
-                  Name: string
-            ast.FieldList:
-              ast.Field:
-                ast.ArrayType:
-                  ast.SelectorExpr:
-                    ast.Ident:
-                      Name: os
-                    ast.Ident:
-                      Name: FileInfo
-              ast.Field:
-                ast.Ident:
-                  Name: error
-        ast.Field:
-          ast.Ident:
-            Name: ReadFile
-          ast.FuncType:
-            ast.FieldList:
-              ast.Field:
-                ast.Ident:
-                  Name: filename
-                ast.Ident:
-                  Name: string
-            ast.FieldList:
-              ast.Field:
-                ast.ArrayType:
-                  ast.Ident:
-                    Name: byte
-              ast.Field:
-                ast.Ident:
-                  Name: error
-        ast.Field:
-          ast.Ident:
-            Name: Join
-          ast.FuncType:
-            ast.FieldList:
-              ast.Field:
-                ast.Ident:
-                  Name: elem
-                ast.Ellipsis:
-                  ast.Ident:
-                    Name: string
-            ast.FieldList:
-              ast.Field:
-                ast.Ident:
-                  Name: string
-ast.GenDecl:
-  Tok: type
-  ast.TypeSpec:
-    ast.Ident:
-      Name: IF
-    ast.Ident:
-      Name: FileSystem
-ast.GenDecl:
-  Tok: type
-  ast.TypeSpec:
-    ast.Ident:
-      Name: Foo
-    ast.StructType:
-      ast.FieldList:
-        ast.Field:
-          ast.Ident:
-            Name: a
-          ast.Ident:
-            Name: b
-          ast.MapType:
-            ast.Ident:
-              Name: string
-            ast.StructType:
-              ast.FieldList:
-ast.FuncDecl:
-  ast.FieldList:
-    ast.Field:
-      ast.Ident:
-        Name: p
-      ast.StarExpr:
-        ast.Ident:
-          Name: Foo
-  ast.Ident:
-    Name: bar
-  ast.FuncType:
-    ast.FieldList:
-  ast.BlockStmt:
-ast.FuncDecl:
-  ast.Ident:
-    Name: init
-  ast.FuncType:
-    ast.FieldList:
-  ast.BlockStmt:
-    ast.AssignStmt:
-      ast.Ident:
-        Name: f
-      ast.Ident:
-        Name: err
-      Tok: :=
-      ast.CallExpr:
-        ast.SelectorExpr:
-          ast.Ident:
-            Name: os
-          ast.Ident:
-            Name: Open
+  Specs:
+    ast.ImportSpec:
+      Path:
         ast.BasicLit:
           Kind: STRING
-          Value: "a"
-    ast.IfStmt:
-      ast.BinaryExpr:
-        ast.Ident:
-          Name: err
-        Op: !=
-        ast.Ident:
-          Name: nil
-      ast.BlockStmt:
-        ast.ReturnStmt:
-    ast.DeferStmt:
-      ast.CallExpr:
-        ast.SelectorExpr:
-          ast.Ident:
-            Name: f
-          ast.Ident:
-            Name: Close
-    ast.AssignStmt:
-      ast.Ident:
-        Name: ch
-      Tok: :=
-      ast.CallExpr:
-        ast.Ident:
-          Name: make
-        ast.ChanType:
-          ast.Ident:
-            Name: bool
+          Value: "go/token"
+    ast.ImportSpec:
+      Path:
         ast.BasicLit:
-          Kind: INT
-          Value: 100
-    ast.SelectStmt:
-      ast.BlockStmt:
-        ast.CommClause:
-          ast.ExprStmt:
-            ast.UnaryExpr:
-              Op: <-
-              ast.Ident:
-                Name: ch
-          ast.ExprStmt:
+          Kind: STRING
+          Value: "os"
+ast.GenDecl:
+  Tok: var
+  Specs:
+    ast.ValueSpec:
+      Names:
+        ast.Ident:
+          Name: stmtStart
+      Values:
+        ast.CompositeLit:
+          Type:
+            ast.MapType:
+              Key:
+                ast.SelectorExpr:
+                  X:
+                    ast.Ident:
+                      Name: token
+                  Sel:
+                    ast.Ident:
+                      Name: Token
+              Value:
+                ast.Ident:
+                  Name: bool
+          Elts:
+            ast.KeyValueExpr:
+              Key:
+                ast.SelectorExpr:
+                  X:
+                    ast.Ident:
+                      Name: token
+                  Sel:
+                    ast.Ident:
+                      Name: BREAK
+              Value:
+                ast.Ident:
+                  Name: true
+            ast.KeyValueExpr:
+              Key:
+                ast.SelectorExpr:
+                  X:
+                    ast.Ident:
+                      Name: token
+                  Sel:
+                    ast.Ident:
+                      Name: CONST
+              Value:
+                ast.Ident:
+                  Name: true
+            ast.KeyValueExpr:
+              Key:
+                ast.SelectorExpr:
+                  X:
+                    ast.Ident:
+                      Name: token
+                  Sel:
+                    ast.Ident:
+                      Name: CONTINUE
+              Value:
+                ast.Ident:
+                  Name: true
+            ast.KeyValueExpr:
+              Key:
+                ast.SelectorExpr:
+                  X:
+                    ast.Ident:
+                      Name: token
+                  Sel:
+                    ast.Ident:
+                      Name: DEFER
+              Value:
+                ast.Ident:
+                  Name: true
+            ast.KeyValueExpr:
+              Key:
+                ast.SelectorExpr:
+                  X:
+                    ast.Ident:
+                      Name: token
+                  Sel:
+                    ast.Ident:
+                      Name: FALLTHROUGH
+              Value:
+                ast.Ident:
+                  Name: true
+            ast.KeyValueExpr:
+              Key:
+                ast.SelectorExpr:
+                  X:
+                    ast.Ident:
+                      Name: token
+                  Sel:
+                    ast.Ident:
+                      Name: FOR
+              Value:
+                ast.Ident:
+                  Name: true
+            ast.KeyValueExpr:
+              Key:
+                ast.SelectorExpr:
+                  X:
+                    ast.Ident:
+                      Name: token
+                  Sel:
+                    ast.Ident:
+                      Name: GO
+              Value:
+                ast.Ident:
+                  Name: true
+            ast.KeyValueExpr:
+              Key:
+                ast.SelectorExpr:
+                  X:
+                    ast.Ident:
+                      Name: token
+                  Sel:
+                    ast.Ident:
+                      Name: GOTO
+              Value:
+                ast.Ident:
+                  Name: true
+            ast.KeyValueExpr:
+              Key:
+                ast.SelectorExpr:
+                  X:
+                    ast.Ident:
+                      Name: token
+                  Sel:
+                    ast.Ident:
+                      Name: IF
+              Value:
+                ast.Ident:
+                  Name: true
+            ast.KeyValueExpr:
+              Key:
+                ast.SelectorExpr:
+                  X:
+                    ast.Ident:
+                      Name: token
+                  Sel:
+                    ast.Ident:
+                      Name: RETURN
+              Value:
+                ast.Ident:
+                  Name: true
+            ast.KeyValueExpr:
+              Key:
+                ast.SelectorExpr:
+                  X:
+                    ast.Ident:
+                      Name: token
+                  Sel:
+                    ast.Ident:
+                      Name: SELECT
+              Value:
+                ast.Ident:
+                  Name: true
+            ast.KeyValueExpr:
+              Key:
+                ast.SelectorExpr:
+                  X:
+                    ast.Ident:
+                      Name: token
+                  Sel:
+                    ast.Ident:
+                      Name: SWITCH
+              Value:
+                ast.Ident:
+                  Name: true
+            ast.KeyValueExpr:
+              Key:
+                ast.SelectorExpr:
+                  X:
+                    ast.Ident:
+                      Name: token
+                  Sel:
+                    ast.Ident:
+                      Name: TYPE
+              Value:
+                ast.Ident:
+                  Name: true
+            ast.KeyValueExpr:
+              Key:
+                ast.SelectorExpr:
+                  X:
+                    ast.Ident:
+                      Name: token
+                  Sel:
+                    ast.Ident:
+                      Name: VAR
+              Value:
+                ast.Ident:
+                  Name: true
+ast.GenDecl:
+  Tok: type
+  Specs:
+    ast.TypeSpec:
+      Name:
+        ast.Ident:
+          Name: Mode
+      Type:
+        ast.Ident:
+          Name: uint
+ast.GenDecl:
+  Tok: const
+  Specs:
+    ast.ValueSpec:
+      Names:
+        ast.Ident:
+          Name: PackageClauseOnly
+      Type:
+        ast.Ident:
+          Name: Mode
+      Values:
+        ast.BinaryExpr:
+          X:
+            ast.BasicLit:
+              Kind: INT
+              Value: 1
+          Op: <<
+          Y:
+            ast.Ident:
+              Name: iota
+    ast.ValueSpec:
+      Names:
+        ast.Ident:
+          Name: ImportsOnly
+    ast.ValueSpec:
+      Names:
+        ast.Ident:
+          Name: ParseComments
+    ast.ValueSpec:
+      Names:
+        ast.Ident:
+          Name: Trace
+    ast.ValueSpec:
+      Names:
+        ast.Ident:
+          Name: DeclarationErrors
+    ast.ValueSpec:
+      Names:
+        ast.Ident:
+          Name: AllErrors
+ast.GenDecl:
+  Tok: type
+  Specs:
+    ast.TypeSpec:
+      Name:
+        ast.Ident:
+          Name: FileSystem
+      Type:
+        ast.InterfaceType:
+          Methods:
+            ast.FieldList:
+              List:
+                ast.Field:
+                  Names:
+                    ast.Ident:
+                      Name: ReadDir
+                  Type:
+                    ast.FuncType:
+                      Params:
+                        ast.FieldList:
+                          List:
+                            ast.Field:
+                              Names:
+                                ast.Ident:
+                                  Name: dirname
+                              Type:
+                                ast.Ident:
+                                  Name: string
+                      Results:
+                        ast.FieldList:
+                          List:
+                            ast.Field:
+                              Type:
+                                ast.ArrayType:
+                                  Elt:
+                                    ast.SelectorExpr:
+                                      X:
+                                        ast.Ident:
+                                          Name: os
+                                      Sel:
+                                        ast.Ident:
+                                          Name: FileInfo
+                            ast.Field:
+                              Type:
+                                ast.Ident:
+                                  Name: error
+                ast.Field:
+                  Names:
+                    ast.Ident:
+                      Name: ReadFile
+                  Type:
+                    ast.FuncType:
+                      Params:
+                        ast.FieldList:
+                          List:
+                            ast.Field:
+                              Names:
+                                ast.Ident:
+                                  Name: filename
+                              Type:
+                                ast.Ident:
+                                  Name: string
+                      Results:
+                        ast.FieldList:
+                          List:
+                            ast.Field:
+                              Type:
+                                ast.ArrayType:
+                                  Elt:
+                                    ast.Ident:
+                                      Name: byte
+                            ast.Field:
+                              Type:
+                                ast.Ident:
+                                  Name: error
+                ast.Field:
+                  Names:
+                    ast.Ident:
+                      Name: Join
+                  Type:
+                    ast.FuncType:
+                      Params:
+                        ast.FieldList:
+                          List:
+                            ast.Field:
+                              Names:
+                                ast.Ident:
+                                  Name: elem
+                              Type:
+                                ast.Ellipsis:
+                                  Elt:
+                                    ast.Ident:
+                                      Name: string
+                      Results:
+                        ast.FieldList:
+                          List:
+                            ast.Field:
+                              Type:
+                                ast.Ident:
+                                  Name: string
+ast.GenDecl:
+  Tok: type
+  Specs:
+    ast.TypeSpec:
+      Name:
+        ast.Ident:
+          Name: IF
+      Type:
+        ast.Ident:
+          Name: FileSystem
+ast.GenDecl:
+  Tok: type
+  Specs:
+    ast.TypeSpec:
+      Name:
+        ast.Ident:
+          Name: Foo
+      Type:
+        ast.StructType:
+          Fields:
+            ast.FieldList:
+              List:
+                ast.Field:
+                  Names:
+                    ast.Ident:
+                      Name: a
+                    ast.Ident:
+                      Name: b
+                  Type:
+                    ast.MapType:
+                      Key:
+                        ast.Ident:
+                          Name: string
+                      Value:
+                        ast.StructType:
+                          Fields:
+                            ast.FieldList:
+ast.FuncDecl:
+  Recv:
+    ast.FieldList:
+      List:
+        ast.Field:
+          Names:
+            ast.Ident:
+              Name: p
+          Type:
+            ast.StarExpr:
+              X:
+                ast.Ident:
+                  Name: Foo
+  Name:
+    ast.Ident:
+      Name: bar
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: init
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: f
+            ast.Ident:
+              Name: err
+          Tok: :=
+          Rhs:
             ast.CallExpr:
-              ast.Ident:
-                Name: println
-              ast.BasicLit:
-                Kind: STRING
-                Value: "1"
-        ast.CommClause:
-          ast.SendStmt:
+              Fun:
+                ast.SelectorExpr:
+                  X:
+                    ast.Ident:
+                      Name: os
+                  Sel:
+                    ast.Ident:
+                      Name: Open
+              Args:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "a"
+        ast.IfStmt:
+          Cond:
+            ast.BinaryExpr:
+              X:
+                ast.Ident:
+                  Name: err
+              Op: !=
+              Y:
+                ast.Ident:
+                  Name: nil
+          Body:
+            ast.BlockStmt:
+              List:
+                ast.ReturnStmt:
+        ast.DeferStmt:
+          Call:
+            ast.CallExpr:
+              Fun:
+                ast.SelectorExpr:
+                  X:
+                    ast.Ident:
+                      Name: f
+                  Sel:
+                    ast.Ident:
+                      Name: Close
+        ast.AssignStmt:
+          Lhs:
             ast.Ident:
               Name: ch
-            ast.Ident:
-              Name: true
-          ast.ExprStmt:
+          Tok: :=
+          Rhs:
             ast.CallExpr:
-              ast.Ident:
-                Name: println
-              ast.BasicLit:
-                Kind: STRING
-                Value: "2"
-    ast.GoStmt:
-      ast.CallExpr:
-        ast.FuncLit:
-          ast.FuncType:
-            ast.FieldList:
-              ast.Field:
+              Fun:
                 ast.Ident:
-                  Name: fs
-                ast.Ident:
-                  Name: FileSystem
-          ast.BlockStmt:
-            ast.IfStmt:
-              ast.AssignStmt:
-                ast.Ident:
-                  Name: foo
-                ast.Ident:
-                  Name: ok
-                Tok: :=
-                ast.TypeAssertExpr:
-                  ast.Ident:
-                    Name: fs
-                  ast.StarExpr:
+                  Name: make
+              Args:
+                ast.ChanType:
+                  Value:
                     ast.Ident:
-                      Name: Foo
-              ast.Ident:
-                Name: ok
-              ast.BlockStmt:
-                ast.ExprStmt:
-                  ast.CallExpr:
-                    ast.Ident:
-                      Name: println
-                    ast.Ident:
-                      Name: foo
-        ast.Ident:
-          Name: nil
+                      Name: bool
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 100
+        ast.SelectStmt:
+          Body:
+            ast.BlockStmt:
+              List:
+                ast.CommClause:
+                  Comm:
+                    ast.ExprStmt:
+                      X:
+                        ast.UnaryExpr:
+                          Op: <-
+                          X:
+                            ast.Ident:
+                              Name: ch
+                  Body:
+                    ast.ExprStmt:
+                      X:
+                        ast.CallExpr:
+                          Fun:
+                            ast.Ident:
+                              Name: println
+                          Args:
+                            ast.BasicLit:
+                              Kind: STRING
+                              Value: "1"
+                ast.CommClause:
+                  Comm:
+                    ast.SendStmt:
+                      Chan:
+                        ast.Ident:
+                          Name: ch
+                      Value:
+                        ast.Ident:
+                          Name: true
+                  Body:
+                    ast.ExprStmt:
+                      X:
+                        ast.CallExpr:
+                          Fun:
+                            ast.Ident:
+                              Name: println
+                          Args:
+                            ast.BasicLit:
+                              Kind: STRING
+                              Value: "2"
+        ast.GoStmt:
+          Call:
+            ast.CallExpr:
+              Fun:
+                ast.FuncLit:
+                  Type:
+                    ast.FuncType:
+                      Params:
+                        ast.FieldList:
+                          List:
+                            ast.Field:
+                              Names:
+                                ast.Ident:
+                                  Name: fs
+                              Type:
+                                ast.Ident:
+                                  Name: FileSystem
+                  Body:
+                    ast.BlockStmt:
+                      List:
+                        ast.IfStmt:
+                          Init:
+                            ast.AssignStmt:
+                              Lhs:
+                                ast.Ident:
+                                  Name: foo
+                                ast.Ident:
+                                  Name: ok
+                              Tok: :=
+                              Rhs:
+                                ast.TypeAssertExpr:
+                                  X:
+                                    ast.Ident:
+                                      Name: fs
+                                  Type:
+                                    ast.StarExpr:
+                                      X:
+                                        ast.Ident:
+                                          Name: Foo
+                          Cond:
+                            ast.Ident:
+                              Name: ok
+                          Body:
+                            ast.BlockStmt:
+                              List:
+                                ast.ExprStmt:
+                                  X:
+                                    ast.CallExpr:
+                                      Fun:
+                                        ast.Ident:
+                                          Name: println
+                                      Args:
+                                        ast.Ident:
+                                          Name: foo
+              Args:
+                ast.Ident:
+                  Name: nil

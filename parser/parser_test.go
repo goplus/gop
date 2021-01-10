@@ -70,155 +70,219 @@ file bar.gop
 noEntrypoint
 ast.GenDecl:
   Tok: import
-  ast.ImportSpec:
-    ast.BasicLit:
-      Kind: STRING
-      Value: "io"
+  Specs:
+    ast.ImportSpec:
+      Path:
+        ast.BasicLit:
+          Kind: STRING
+          Value: "io"
 ast.FuncDecl:
-  ast.Ident:
-    Name: init
-  ast.FuncType:
-    ast.FieldList:
-  ast.BlockStmt:
-    ast.AssignStmt:
-      ast.Ident:
-        Name: x
-      Tok: :=
-      ast.BasicLit:
-        Kind: INT
-        Value: 0
-    ast.IfStmt:
-      ast.AssignStmt:
-        ast.Ident:
-          Name: t
-        Tok: :=
-        ast.Ident:
-          Name: false
-      ast.Ident:
-        Name: t
-      ast.BlockStmt:
+  Name:
+    ast.Ident:
+      Name: init
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
         ast.AssignStmt:
-          ast.Ident:
-            Name: x
-          Tok: =
-          ast.BasicLit:
-            Kind: INT
-            Value: 3
-      ast.BlockStmt:
+          Lhs:
+            ast.Ident:
+              Name: x
+          Tok: :=
+          Rhs:
+            ast.BasicLit:
+              Kind: INT
+              Value: 0
+        ast.IfStmt:
+          Init:
+            ast.AssignStmt:
+              Lhs:
+                ast.Ident:
+                  Name: t
+              Tok: :=
+              Rhs:
+                ast.Ident:
+                  Name: false
+          Cond:
+            ast.Ident:
+              Name: t
+          Body:
+            ast.BlockStmt:
+              List:
+                ast.AssignStmt:
+                  Lhs:
+                    ast.Ident:
+                      Name: x
+                  Tok: =
+                  Rhs:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 3
+          Else:
+            ast.BlockStmt:
+              List:
+                ast.AssignStmt:
+                  Lhs:
+                    ast.Ident:
+                      Name: x
+                  Tok: =
+                  Rhs:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 5
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "x:"
+                ast.Ident:
+                  Name: x
         ast.AssignStmt:
-          ast.Ident:
-            Name: x
+          Lhs:
+            ast.Ident:
+              Name: x
           Tok: =
-          ast.BasicLit:
-            Kind: INT
-            Value: 5
-    ast.ExprStmt:
-      ast.CallExpr:
-        ast.Ident:
-          Name: println
-        ast.BasicLit:
-          Kind: STRING
-          Value: "x:"
-        ast.Ident:
-          Name: x
-    ast.AssignStmt:
-      ast.Ident:
-        Name: x
-      Tok: =
-      ast.BasicLit:
-        Kind: INT
-        Value: 0
-    ast.SwitchStmt:
-      ast.AssignStmt:
-        ast.Ident:
-          Name: s
-        Tok: :=
-        ast.BasicLit:
-          Kind: STRING
-          Value: "Hello"
-      ast.Ident:
-        Name: s
-      ast.BlockStmt:
-        ast.CaseClause:
-          ast.AssignStmt:
-            ast.Ident:
-              Name: x
-            Tok: =
+          Rhs:
             ast.BasicLit:
               Kind: INT
-              Value: 7
-        ast.CaseClause:
-          ast.BasicLit:
-            Kind: STRING
-            Value: "world"
-          ast.BasicLit:
-            Kind: STRING
-            Value: "hi"
-          ast.AssignStmt:
+              Value: 0
+        ast.SwitchStmt:
+          Init:
+            ast.AssignStmt:
+              Lhs:
+                ast.Ident:
+                  Name: s
+              Tok: :=
+              Rhs:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "Hello"
+          Tag:
             ast.Ident:
-              Name: x
-            Tok: =
-            ast.BasicLit:
-              Kind: INT
-              Value: 5
-        ast.CaseClause:
-          ast.BasicLit:
-            Kind: STRING
-            Value: "xsw"
-          ast.AssignStmt:
-            ast.Ident:
-              Name: x
-            Tok: =
-            ast.BasicLit:
-              Kind: INT
-              Value: 3
-    ast.ExprStmt:
-      ast.CallExpr:
-        ast.Ident:
-          Name: println
-        ast.BasicLit:
-          Kind: STRING
-          Value: "x:"
-        ast.Ident:
-          Name: x
-    ast.AssignStmt:
-      ast.Ident:
-        Name: c
-      Tok: :=
-      ast.CallExpr:
-        ast.Ident:
-          Name: make
-        ast.ChanType:
-          ast.Ident:
-            Name: bool
-        ast.BasicLit:
-          Kind: INT
-          Value: 100
-    ast.SelectStmt:
-      ast.BlockStmt:
-        ast.CommClause:
-          ast.SendStmt:
+              Name: s
+          Body:
+            ast.BlockStmt:
+              List:
+                ast.CaseClause:
+                  Body:
+                    ast.AssignStmt:
+                      Lhs:
+                        ast.Ident:
+                          Name: x
+                      Tok: =
+                      Rhs:
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 7
+                ast.CaseClause:
+                  List:
+                    ast.BasicLit:
+                      Kind: STRING
+                      Value: "world"
+                    ast.BasicLit:
+                      Kind: STRING
+                      Value: "hi"
+                  Body:
+                    ast.AssignStmt:
+                      Lhs:
+                        ast.Ident:
+                          Name: x
+                      Tok: =
+                      Rhs:
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 5
+                ast.CaseClause:
+                  List:
+                    ast.BasicLit:
+                      Kind: STRING
+                      Value: "xsw"
+                  Body:
+                    ast.AssignStmt:
+                      Lhs:
+                        ast.Ident:
+                          Name: x
+                      Tok: =
+                      Rhs:
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 3
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "x:"
+                ast.Ident:
+                  Name: x
+        ast.AssignStmt:
+          Lhs:
             ast.Ident:
               Name: c
-            ast.Ident:
-              Name: true
-        ast.CommClause:
-          ast.AssignStmt:
-            ast.Ident:
-              Name: v
-            Tok: :=
-            ast.UnaryExpr:
-              Op: <-
-              ast.Ident:
-                Name: c
-        ast.CommClause:
-          ast.ExprStmt:
+          Tok: :=
+          Rhs:
             ast.CallExpr:
-              ast.Ident:
-                Name: panic
-              ast.BasicLit:
-                Kind: STRING
-                Value: "error"
+              Fun:
+                ast.Ident:
+                  Name: make
+              Args:
+                ast.ChanType:
+                  Value:
+                    ast.Ident:
+                      Name: bool
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 100
+        ast.SelectStmt:
+          Body:
+            ast.BlockStmt:
+              List:
+                ast.CommClause:
+                  Comm:
+                    ast.SendStmt:
+                      Chan:
+                        ast.Ident:
+                          Name: c
+                      Value:
+                        ast.Ident:
+                          Name: true
+                ast.CommClause:
+                  Comm:
+                    ast.AssignStmt:
+                      Lhs:
+                        ast.Ident:
+                          Name: v
+                      Tok: :=
+                      Rhs:
+                        ast.UnaryExpr:
+                          Op: <-
+                          X:
+                            ast.Ident:
+                              Name: c
+                ast.CommClause:
+                  Body:
+                    ast.ExprStmt:
+                      X:
+                        ast.CallExpr:
+                          Fun:
+                            ast.Ident:
+                              Name: panic
+                          Args:
+                            ast.BasicLit:
+                              Kind: STRING
+                              Value: "error"
 `)
 }
 

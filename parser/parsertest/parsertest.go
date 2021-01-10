@@ -49,13 +49,16 @@ var (
 )
 
 // FprintNode prints a Go+ AST node.
-func FprintNode(w io.Writer, v interface{}, prefix, indent string) {
+func FprintNode(w io.Writer, lead string, v interface{}, prefix, indent string) {
 	val := reflect.ValueOf(v)
 	switch val.Kind() {
 	case reflect.Slice:
 		n := val.Len()
+		if n > 0 && lead != "" {
+			io.WriteString(w, lead)
+		}
 		for i := 0; i < n; i++ {
-			FprintNode(w, val.Index(i).Interface(), prefix, indent)
+			FprintNode(w, "", val.Index(i).Interface(), prefix, indent)
 		}
 	case reflect.Ptr:
 		t := val.Type()
@@ -63,6 +66,9 @@ func FprintNode(w io.Writer, v interface{}, prefix, indent string) {
 			return
 		}
 		if t.Implements(tyNode) {
+			if lead != "" {
+				io.WriteString(w, lead)
+			}
 			elem, tyElem := val.Elem(), t.Elem()
 			fmt.Fprintf(w, "%s%v:\n", prefix, tyElem)
 			n := elem.NumField()
@@ -74,7 +80,7 @@ func FprintNode(w io.Writer, v interface{}, prefix, indent string) {
 				case tyString, tyToken:
 					fmt.Fprintf(w, "%s%v: %v\n", prefix, sf.Name, sfv)
 				default:
-					FprintNode(w, sfv, prefix, indent)
+					FprintNode(w, fmt.Sprintf("%s%v:\n", prefix, sf.Name), sfv, prefix+indent, indent)
 				}
 			}
 		}
@@ -91,7 +97,7 @@ func Fprint(w io.Writer, pkg *ast.Package) {
 		if file.NoEntrypoint {
 			fmt.Fprintf(w, "noEntrypoint\n")
 		}
-		FprintNode(w, file.Decls, "", "  ")
+		FprintNode(w, "", file.Decls, "", "  ")
 	}
 }
 
