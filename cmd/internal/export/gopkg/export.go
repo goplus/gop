@@ -43,16 +43,16 @@ func exportFunc(e *Exporter, o *types.Func, prefix string) (err error) {
 }
 
 func exportTypeName(e *Exporter, o *types.TypeName) (err error) {
-	t := o.Type().(*types.Named)
-	e.ExportType(o)
-
-	n := t.NumMethods()
-	for i := 0; i < n; i++ {
-		m := t.Method(i)
-		if !m.Exported() {
-			continue
+	if t, ok := o.Type().(*types.Named); ok {
+		e.ExportType(o)
+		n := t.NumMethods()
+		for i := 0; i < n; i++ {
+			m := t.Method(i)
+			if !m.Exported() {
+				continue
+			}
+			exportFunc(e, m, "  ")
 		}
-		exportFunc(e, m, "  ")
 	}
 	return nil
 }
