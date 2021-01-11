@@ -132,30 +132,17 @@ func isIgnorePkg(pkg string) bool {
 }
 
 func LookupPkgList(pkgPath string, exporAll bool) ([]*jsonPackage, error) {
-	// check go list
-	if !strings.Contains(pkgPath, "@") {
-		if pkgs, err := checkGoPkgList(pkgPath, "", exporAll); err != nil || len(pkgs) > 0 {
-			return pkgs, err
+	pkg, path, _ := gopkg.ParsePkgVer(pkgPath)
+	if strings.Contains(path, "@") {
+		cmd := exec.Command(gobin, "get", path)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		err := cmd.Run()
+		if err != nil {
+			return nil, err
 		}
 	}
-	// check go mod cache
-	if srcDir, err := gopkg.LookupMod(pkgPath); err == nil {
-		pkg, _, _ := gopkg.ParsePkgVer(pkgPath)
-		if pkgs, err := checkGoPkgList(pkg, srcDir, exporAll); err != nil || len(pkgs) > 0 {
-			return pkgs, err
-		}
-	}
-	// check go mod download
-	pkg, mod, sub := gopkg.ParsePkgVer(pkgPath)
-	info, err := downloadMod(mod)
-	if err != nil {
-		return nil, fmt.Errorf("download %q failed, %v", mod, err)
-	}
-	dir := filepath.Join(info.Dir, sub)
-	if pkgs, err := checkGoPkgList(pkg, dir, exporAll); err != nil || len(pkgs) > 0 {
-		return pkgs, err
-	}
-	return nil, gopkg.ErrInvalidPkgPath
+	return checkGoPkgList(pkg, "", exporAll)
 }
 
 type jsonModInfo struct {

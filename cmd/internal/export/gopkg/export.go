@@ -67,8 +67,8 @@ func exportConst(e *Exporter, o *types.Const) (err error) {
 }
 
 // ParsePkgVer
-// github.com/qiniu/x@v1.11.5/log => github.com/qiniu/x/@v1.11.5 github.com/qiniu/x/log log
-func ParsePkgVer(pkgPath string) (pkg string, mod string, sub string) {
+// github.com/qiniu/x@v1.11.5/log => github.com/qiniu/x/log github.com/qiniu/x/@v1.11.5 log
+func ParsePkgVer(pkgPath string) (pkg string, path string, sub string) {
 	i := strings.Index(pkgPath, "@")
 	if i == -1 {
 		return pkgPath, "", ""

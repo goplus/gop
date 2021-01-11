@@ -109,20 +109,15 @@ type jsonModuleError struct {
 	Err string // the error itself
 }
 
-func checkGoPkgList(pkgPath string, srcDir string, allpkgs bool) (pkgs []*jsonPackage, err error) {
+func checkGoPkgList(pkgPath string, workDir string, allpkgs bool) (pkgs []*jsonPackage, err error) {
 	spkg := pkgPath
 	if allpkgs && !strings.HasSuffix(pkgPath, "/...") {
 		spkg += "/..."
 	}
 	cmd := exec.Command(gobin, "list", "-json", spkg)
-	cmd.Dir = srcDir
+	cmd.Dir = workDir
 	data, err := cmd.CombinedOutput()
 	if err != nil {
-		if rpkg, err := checkGoPkg(srcDir); err == nil {
-			if rpkg != pkgPath {
-				return nil, fmt.Errorf("unsupport replace module %v", rpkg)
-			}
-		}
 		return nil, err
 	}
 	buf := bytes.NewBuffer(data)
