@@ -21,6 +21,7 @@ import (
 	"go/constant"
 	"go/types"
 	"io"
+	"path"
 	"regexp"
 	"sort"
 	"strconv"
@@ -537,6 +538,12 @@ var I = gop.NewGoPackage("%s")
 
 func init() {
 `
+const gopkgexInitExportHeader = `
+// I is a Go package instance.
+var I = gop.NewGoPackageEx("%s","%s")
+
+func init() {
+`
 
 const gopkgInitExportFooter = `}
 `
@@ -581,7 +588,11 @@ func (p *Exporter) Close() error {
 	for _, exec := range p.execs {
 		io.WriteString(p.w, exec)
 	}
-	fmt.Fprintf(p.w, gopkgInitExportHeader, pkgPath)
+	if pkg != path.Base(pkgPath) {
+		fmt.Fprintf(p.w, gopkgexInitExportHeader, pkgPath, pkg)
+	} else {
+		fmt.Fprintf(p.w, gopkgInitExportHeader, pkgPath)
+	}
 	pkgDot := p.pkgDot
 	registerFns(p.w, pkgDot, p.exportFns, "Func")
 	registerFns(p.w, pkgDot, p.exportFnvs, "Funcv")
