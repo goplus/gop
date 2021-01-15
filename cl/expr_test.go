@@ -366,6 +366,14 @@ func TestPanic(t *testing.T) {
 	)
 }
 
+func TestBadImport(t *testing.T) {
+	cltest.Expect(t,
+		`import "github.com/goplus/gop/bad"`,
+		"",
+		nil,
+	)
+}
+
 func TestTakeAddrMap(t *testing.T) {
 	cltest.Expect(t, `
 		m := {1:"hello",2:"ok"}
