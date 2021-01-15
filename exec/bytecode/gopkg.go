@@ -17,6 +17,7 @@
 package bytecode
 
 import (
+	"path"
 	"reflect"
 
 	"github.com/goplus/gop/exec.spec"
@@ -137,6 +138,7 @@ const (
 // GoPackage represents a Go package.
 type GoPackage struct {
 	pkgPath string
+	name    string
 	syms    map[string]uint32
 	types   map[string]reflect.Type
 	consts  map[string]*GoConstInfo
@@ -144,11 +146,20 @@ type GoPackage struct {
 
 // NewGoPackage creates a new builtin Go Package.
 func NewGoPackage(pkgPath string) *GoPackage {
+	return NewGoPackageEx(pkgPath, "")
+}
+
+// NewGoPackageEx creates a new builtin Go Package.
+func NewGoPackageEx(pkgPath string, name string) *GoPackage {
 	if _, ok := gopkgs[pkgPath]; ok {
 		log.Panicln("NewPackage failed: package exists -", pkgPath)
 	}
+	if name == "" {
+		name = path.Base(pkgPath)
+	}
 	pkg := &GoPackage{
 		pkgPath: pkgPath,
+		name:    name,
 		syms:    make(map[string]uint32),
 		types:   make(map[string]reflect.Type),
 		consts:  make(map[string]*GoConstInfo),
@@ -165,6 +176,10 @@ func FindGoPackage(pkgPath string) exec.GoPackage {
 // PkgPath returns the package path for importing.
 func (p *GoPackage) PkgPath() string {
 	return p.pkgPath
+}
+
+func (p *GoPackage) Name() string {
+	return p.name
 }
 
 // Find lookups a symbol by specified its name.

@@ -345,7 +345,12 @@ func (p *Builder) Import(pkgPath string) string {
 	if name, ok := p.imports[pkgPath]; ok {
 		return name
 	}
-	name := path.Base(pkgPath)
+	var name string
+	if pkg := qexecImpl.FindGoPackage(pkgPath); pkg != nil {
+		name = pkg.Name()
+	} else {
+		name = path.Base(pkgPath)
+	}
 	if _, exists := p.importPaths[name]; exists {
 		name = "q" + strconv.Itoa(len(p.imports)) + name
 	}

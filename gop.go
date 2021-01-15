@@ -37,6 +37,11 @@ func NewGoPackage(pkgPath string) *GoPackage {
 	return exec.NewGoPackage(pkgPath)
 }
 
+// NewGoPackageEx creates a new builtin Go Package.
+func NewGoPackageEx(pkgPath string, name string) *GoPackage {
+	return exec.NewGoPackageEx(pkgPath, name)
+}
+
 // ToBools converts []interface{} into []bool.
 func ToBools(args []interface{}) []bool {
 	ret := make([]bool, len(args))

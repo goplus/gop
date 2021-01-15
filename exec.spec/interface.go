@@ -141,6 +141,7 @@ type GoVarAddr uint32
 // GoPackage represents a Go package.
 type GoPackage interface {
 	PkgPath() string
+	Name() string
 
 	// Find lookups a symbol by specified its name.
 	Find(name string) (addr uint32, kind SymbolKind, ok bool)

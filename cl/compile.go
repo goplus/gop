@@ -278,7 +278,11 @@ func loadImport(ctx *fileCtx, spec *ast.ImportSpec) {
 			panic("not impl")
 		}
 	} else {
-		name = path.Base(pkgPath)
+		if pkg := ctx.FindGoPackage(pkgPath); pkg != nil {
+			name = pkg.Name()
+		} else {
+			name = path.Base(pkgPath)
+		}
 	}
 	ctx.imports[name] = pkgPath
 }
