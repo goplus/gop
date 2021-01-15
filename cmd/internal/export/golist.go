@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -116,7 +117,8 @@ func checkGoPkgList(pkgPath string, workDir string, allpkgs bool) (pkgs []*jsonP
 	}
 	cmd := exec.Command(gobin, "list", "-json", spkg)
 	cmd.Dir = workDir
-	data, err := cmd.CombinedOutput()
+	cmd.Stderr = os.Stderr
+	data, err := cmd.Output()
 	if err != nil {
 		return nil, err
 	}

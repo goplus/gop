@@ -105,7 +105,7 @@ func runCmd(cmd *base.Command, args []string) {
 			}
 			if pkg.Module != nil && pkg.Module.GoMod != goMod {
 				goMod = pkg.Module.GoMod
-				fmt.Fprintf(os.Stderr, "go: finding module in %v\n", pkg.Module.Dir)
+				fmt.Fprintf(os.Stderr, "go: found module in %v\n", pkg.Module.Dir)
 			}
 			err := exportPkg(pkg.ImportPath, pkg.Dir, pkg.Goroot)
 			if err == nil {
