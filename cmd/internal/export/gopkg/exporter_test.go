@@ -3,8 +3,11 @@ package gopkg
 import (
 	"bytes"
 	"fmt"
+	"go/ast"
 	"go/format"
 	"go/importer"
+	"go/parser"
+	"go/token"
 	"go/types"
 	"io/ioutil"
 	"os/exec"
@@ -171,8 +174,21 @@ func TestExportGopQ(t *testing.T) {
 	}
 }
 
-func TestExportX(t *testing.T) {
-	err := Export("github.com/qiniu/x/log", ioutil.Discard)
+func TestExportV2(t *testing.T) {
+	const src = `package x;const Version = "1.0"
+`
+	// type-check src
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "", src, 0)
+	if err != nil {
+		t.Fatalf("parse failed: %s", err)
+	}
+	var conf types.Config
+	pkg, err := conf.Check("github.com/goplus/gop/x/v2", fset, []*ast.File{f}, nil)
+	if err != nil {
+		t.Fatalf("typecheck failed: %s", err)
+	}
+	err = ExportPackage(pkg, ioutil.Discard)
 	if err != nil {
 		t.Fatal("TestExport failed:", err)
 	}
