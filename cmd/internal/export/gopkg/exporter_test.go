@@ -174,19 +174,26 @@ func TestExportGopQ(t *testing.T) {
 	}
 }
 
-func TestExportV2(t *testing.T) {
-	const src = `package x;const Version = "1.0"
-`
+func parseSource(pkgpath string, src string) (*types.Package, error) {
 	// type-check src
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, "", src, 0)
 	if err != nil {
-		t.Fatalf("parse failed: %s", err)
+		return nil, fmt.Errorf("parse failed: %s", err)
 	}
 	var conf types.Config
-	pkg, err := conf.Check("github.com/goplus/gop/x/v2", fset, []*ast.File{f}, nil)
+	pkg, err := conf.Check(pkgpath, fset, []*ast.File{f}, nil)
 	if err != nil {
-		t.Fatalf("typecheck failed: %s", err)
+		return nil, fmt.Errorf("typecheck failed: %s", err)
+	}
+	return pkg, nil
+}
+
+func TestExportV2(t *testing.T) {
+	var src = `package x;const Version = "1.0"`
+	pkg, err := parseSource("github.com/goplus/gop/x/v2", src)
+	if err != nil {
+		t.Fatal("parser source error:", err)
 	}
 	err = ExportPackage(pkg, ioutil.Discard)
 	if err != nil {
