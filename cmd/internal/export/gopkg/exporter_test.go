@@ -218,6 +218,16 @@ func TestImport(t *testing.T) {
 	}
 }
 
+func TestImport2(t *testing.T) {
+	pkg, err := Import("github.com/qiniu/x/log")
+	if err != nil {
+		t.Fatal("TestImport failed:", err)
+	}
+	if pkg.Path() != "github.com/qiniu/x/log" {
+		t.Fatal(pkg.Path())
+	}
+}
+
 func TestLooupMod(t *testing.T) {
 	dir, err := LookupMod("github.com/qiniu/x/log")
 	if err != nil {
