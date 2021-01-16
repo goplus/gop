@@ -174,9 +174,11 @@ func toTypeName(i int) string {
 	return "toType" + strconv.Itoa(i)
 }
 
+// toInts or toSlice1
 func toSliceName(i int, t types.Type) string {
 	if e, ok := t.(*types.Basic); ok {
-		return "to" + strings.Title(e.Name()) + "s"
+		uName := strings.Title(e.Name())
+		return "to" + uName + "s"
 	}
 	return "toSlice" + strconv.Itoa(i)
 }
