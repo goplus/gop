@@ -31,9 +31,17 @@ import (
 	gop "github.com/goplus/gop"
 )
 
+func toStrings(args []interface{}) []string {
+	ret := make([]string, len(args))
+	for i, arg := range args {
+		ret[i] = arg.(string)
+	}
+	return ret
+}
+
 func execNewReplacer(arity int, p *gop.Context) {
 	args := p.GetArgs(arity)
-	ret0 := strings.NewReplacer(gop.ToStrings(args)...)
+	ret0 := strings.NewReplacer(toStrings(args)...)
 	p.Ret(arity, ret0)
 }
 

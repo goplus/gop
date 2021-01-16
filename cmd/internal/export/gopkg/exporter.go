@@ -174,17 +174,21 @@ func toTypeName(i int) string {
 	return "toType" + strconv.Itoa(i)
 }
 
-func toSliceName(i int) string {
+func toSliceName(i int, t types.Type) string {
+	if e, ok := t.(*types.Basic); ok {
+		uName := strings.Title(e.Name())
+		return "to" + uName + "s"
+	}
 	return "toSlice" + strconv.Itoa(i)
 }
 
 func (p *Exporter) toSlice(tyElem types.Type) string {
 	for i, t := range p.toSlices {
 		if types.Identical(tyElem, t) {
-			return toSliceName(i)
+			return toSliceName(i, tyElem)
 		}
 	}
-	idx := toSliceName(len(p.toSlices))
+	idx := toSliceName(len(p.toSlices), tyElem)
 	typCast := p.typeCast("arg", tyElem)
 	typStr := p.typeString(tyElem)
 	p.execs = append(p.execs, fmt.Sprintf(`
@@ -201,14 +205,9 @@ func %s(args []interface{}) []%v {
 }
 
 func (p *Exporter) sliceCast(varg string, tyElem types.Type) string {
-	if e, ok := tyElem.(*types.Basic); ok {
-		uName := strings.Title(e.Name())
-		varg = "gop.To" + uName + "s(" + varg + ")"
-	} else {
-		tyElemIntf, isInterface := tyElem.Underlying().(*types.Interface)
-		if !(isInterface && tyElemIntf.Empty()) { // is not empty interface
-			varg = p.toSlice(tyElem) + "(" + varg + ")"
-		}
+	tyElemIntf, isInterface := tyElem.Underlying().(*types.Interface)
+	if !(isInterface && tyElemIntf.Empty()) { // is not empty interface
+		varg = p.toSlice(tyElem) + "(" + varg + ")"
 	}
 	return varg
 }
