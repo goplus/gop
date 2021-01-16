@@ -3,8 +3,11 @@ package gopkg
 import (
 	"bytes"
 	"fmt"
+	"go/ast"
 	"go/format"
 	"go/importer"
+	"go/parser"
+	"go/token"
 	"go/types"
 	"io/ioutil"
 	"os/exec"
@@ -200,6 +203,65 @@ func TestImport(t *testing.T) {
 	}
 	if pkg.Path() != "go/types" {
 		t.Fatal(pkg.Path())
+	}
+}
+
+func parseSource(pkgpath string, src string) (*types.Package, error) {
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "", src, 0)
+	if err != nil {
+		return nil, fmt.Errorf("parse failed: %s", err)
+	}
+	var conf types.Config
+	pkg, err := conf.Check(pkgpath, fset, []*ast.File{f}, nil)
+	if err != nil {
+		return nil, fmt.Errorf("typecheck failed: %s", err)
+	}
+	return pkg, nil
+}
+
+func TestExportConsts(t *testing.T) {
+	var src = `package x
+const (
+	C1 = false
+	C2 = 0
+	C3 = 0.
+	C4 = 0i
+	C5 = 'A'
+	C6 = "foo"
+)
+
+const (
+	I1 = int8( 1)
+	I2 = int8(-1)
+	I3 = int16( 1)
+	I4 = int16(-1)
+	I5 = int32( 1)
+	I6 = int32(-1)
+	I7 = int64( 1)
+	I8 = int64(-1)
+	I9 = int( 1)
+	I10 = int(-1)
+)
+
+const (
+	E1 = float32( 1e-200)
+	E2 = float32(-1e-200)
+	E3 = float64( 1e-2000)
+	E4 = float64(-1e-2000)
+	E5 = complex64( 1e-200)
+	E6 = complex64(-1e-200)
+	E7 = complex128( 1e-2000)
+	E8 = complex128(-1e-2000)
+)
+`
+	pkg, err := parseSource("x", src)
+	if err != nil {
+		t.Fatal("parser source error:", err)
+	}
+	err = ExportPackage(pkg, ioutil.Discard)
+	if err != nil {
+		t.Fatal("TestExport failed:", err)
 	}
 }
 
