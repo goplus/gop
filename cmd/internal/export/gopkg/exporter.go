@@ -31,6 +31,7 @@ import (
 
 type exportedFunc struct {
 	name string
+	ftyp string
 	exec string
 }
 
@@ -321,11 +322,7 @@ func (p *Exporter) ExportFunc(fn *types.Func, iname string) error {
 	}
 	name := fn.Name()
 	exec := name
-	if isIMethod {
-		exec = iname + name
-		name = "(" + iname + ")." + name
-		fnName = "args[0]." + withPkg(p.pkgDot, name)
-	} else if isMethod {
+	if isMethod {
 		fullName := fn.FullName()
 		exec = typeName(tfn.Recv().Type()) + name
 		name = withoutPkg(fullName)
@@ -344,22 +341,31 @@ func (p *Exporter) ExportFunc(fn *types.Func, iname string) error {
 	} else {
 		exec = "exec" + exec
 	}
-	repl := strings.NewReplacer(
-		"$execFunc", exec,
-		"$ariName", arityName,
-		"$args", strings.Join(args, ", "),
-		"$argInit", argsAssign,
-		"$retAssign", retAssign,
-		"$retReturn", retReturn,
-		"$fn", fnName,
-	)
-	p.execs = append(p.execs, repl.Replace(`
+	ftyp := name
+	var skipExec bool
+	if isIMethod && tfn.Recv().Pkg() == p.pkg &&
+		typeName(tfn.Recv().Type()) != iname {
+		skipExec = true
+		name = "(" + iname + ")." + fn.Name()
+	}
+	if !skipExec {
+		repl := strings.NewReplacer(
+			"$execFunc", exec,
+			"$ariName", arityName,
+			"$args", strings.Join(args, ", "),
+			"$argInit", argsAssign,
+			"$retAssign", retAssign,
+			"$retReturn", retReturn,
+			"$fn", fnName,
+		)
+		p.execs = append(p.execs, repl.Replace(`
 func $execFunc($ariName int, p *gop.Context) {
 $argInit	$retAssign$fn($args)
 	p.$retReturn
 }
 `))
-	exported := exportedFunc{name: name, exec: exec}
+	}
+	exported := exportedFunc{name: name, ftyp: ftyp, exec: exec}
 	if isVariadic {
 		p.exportFnvs = append(p.exportFnvs, exported)
 	} else {
@@ -492,7 +498,7 @@ func registerFns(w io.Writer, pkgDot string, fns []exportedFunc, tag string) {
 	fmt.Fprintf(w, `	I.Register%ss(
 `, tag)
 	for _, fn := range fns {
-		name := withPkg(pkgDot, fn.name)
+		name := withPkg(pkgDot, fn.ftyp)
 		fmt.Fprintf(w, `		I.%s("%s", %s, %s),
 `, tag, fn.name, name, fn.exec)
 	}

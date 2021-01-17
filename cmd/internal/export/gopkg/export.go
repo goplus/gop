@@ -62,7 +62,6 @@ func exportTypeName(e *Exporter, o *types.TypeName) (err error) {
 			if !m.Exported() {
 				continue
 			}
-
 			exportFunc(e, m, o.Name())
 		}
 	}
