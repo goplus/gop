@@ -142,6 +142,17 @@ func checkBinaryOp(kind exec.Kind, op exec.Operator, x, y interface{}, b exec.Bu
 			}
 		}
 	}
+	switch op {
+	case exec.OpEQ, exec.OpNE:
+		ix := x.(iValue)
+		iy := y.(iValue)
+		if ix.Kind() == exec.ConstUnboundPtr || iy.Kind() == exec.ConstUnboundPtr {
+			return
+		}
+		if boundType(ix) != boundType(iy) {
+			log.Fatalf("invalid operation: %v (mismatched types %v and %v)", op, ix.Type(), iy.Type())
+		}
+	}
 }
 
 func checkType(t reflect.Type, v interface{}, b exec.Builder) {
