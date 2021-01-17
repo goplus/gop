@@ -495,4 +495,13 @@ func TestReserved(t *testing.T) {
 	}
 }
 
+func TestConstNil(t *testing.T) {
+	code := NewBuilder("main", nil, nil)
+	off := code.Reserve()
+	code.ReservedAsPush(off, []byte(nil))
+	if code.reserveds[off].Expr.(*ast.Ident).Name != "nil" {
+		t.Fatal("TestConstNil failed: reserveds is not set nil")
+	}
+}
+
 // -----------------------------------------------------------------------------
