@@ -113,6 +113,12 @@ func execPanic(_ int, p *gop.Context) {
 	panic(p.Pop())
 }
 
+func execiErrorError(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(error).Error()
+	p.Ret(1, ret0)
+}
+
 // -----------------------------------------------------------------------------
 
 // I is a Go package instance.
@@ -132,6 +138,7 @@ var builtinFnvs = map[string][2]string{
 
 func init() {
 	I.RegisterFuncs(
+		I.Func("(error).Error", (error).Error, execiErrorError),
 		I.Func("panic", qlPanic, execPanic),
 		I.Func("is", errors.Is, QexecIs),
 		I.Func("_gop_NewIter", gopiter.NewIter, QNewIter),
