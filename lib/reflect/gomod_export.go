@@ -192,6 +192,180 @@ func execSwapper(_ int, p *gop.Context) {
 	p.Ret(1, ret0)
 }
 
+func execiTypeAlign(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(reflect.Type).Align()
+	p.Ret(1, ret0)
+}
+
+func execiTypeAssignableTo(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0 := args[0].(reflect.Type).AssignableTo(toType0(args[1]))
+	p.Ret(2, ret0)
+}
+
+func execiTypeBits(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(reflect.Type).Bits()
+	p.Ret(1, ret0)
+}
+
+func execiTypeChanDir(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(reflect.Type).ChanDir()
+	p.Ret(1, ret0)
+}
+
+func execiTypeComparable(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(reflect.Type).Comparable()
+	p.Ret(1, ret0)
+}
+
+func execiTypeConvertibleTo(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0 := args[0].(reflect.Type).ConvertibleTo(toType0(args[1]))
+	p.Ret(2, ret0)
+}
+
+func execiTypeElem(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(reflect.Type).Elem()
+	p.Ret(1, ret0)
+}
+
+func execiTypeField(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0 := args[0].(reflect.Type).Field(args[1].(int))
+	p.Ret(2, ret0)
+}
+
+func execiTypeFieldAlign(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(reflect.Type).FieldAlign()
+	p.Ret(1, ret0)
+}
+
+func execiTypeFieldByIndex(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0 := args[0].(reflect.Type).FieldByIndex(args[1].([]int))
+	p.Ret(2, ret0)
+}
+
+func execiTypeFieldByName(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0, ret1 := args[0].(reflect.Type).FieldByName(args[1].(string))
+	p.Ret(2, ret0, ret1)
+}
+
+func execiTypeFieldByNameFunc(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0, ret1 := args[0].(reflect.Type).FieldByNameFunc(args[1].(func(string) bool))
+	p.Ret(2, ret0, ret1)
+}
+
+func execiTypeImplements(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0 := args[0].(reflect.Type).Implements(toType0(args[1]))
+	p.Ret(2, ret0)
+}
+
+func execiTypeIn(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0 := args[0].(reflect.Type).In(args[1].(int))
+	p.Ret(2, ret0)
+}
+
+func execiTypeIsVariadic(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(reflect.Type).IsVariadic()
+	p.Ret(1, ret0)
+}
+
+func execiTypeKey(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(reflect.Type).Key()
+	p.Ret(1, ret0)
+}
+
+func execiTypeKind(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(reflect.Type).Kind()
+	p.Ret(1, ret0)
+}
+
+func execiTypeLen(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(reflect.Type).Len()
+	p.Ret(1, ret0)
+}
+
+func execiTypeMethod(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0 := args[0].(reflect.Type).Method(args[1].(int))
+	p.Ret(2, ret0)
+}
+
+func execiTypeMethodByName(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0, ret1 := args[0].(reflect.Type).MethodByName(args[1].(string))
+	p.Ret(2, ret0, ret1)
+}
+
+func execiTypeName(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(reflect.Type).Name()
+	p.Ret(1, ret0)
+}
+
+func execiTypeNumField(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(reflect.Type).NumField()
+	p.Ret(1, ret0)
+}
+
+func execiTypeNumIn(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(reflect.Type).NumIn()
+	p.Ret(1, ret0)
+}
+
+func execiTypeNumMethod(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(reflect.Type).NumMethod()
+	p.Ret(1, ret0)
+}
+
+func execiTypeNumOut(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(reflect.Type).NumOut()
+	p.Ret(1, ret0)
+}
+
+func execiTypeOut(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0 := args[0].(reflect.Type).Out(args[1].(int))
+	p.Ret(2, ret0)
+}
+
+func execiTypePkgPath(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(reflect.Type).PkgPath()
+	p.Ret(1, ret0)
+}
+
+func execiTypeSize(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(reflect.Type).Size()
+	p.Ret(1, ret0)
+}
+
+func execiTypeString(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(reflect.Type).String()
+	p.Ret(1, ret0)
+}
+
 func execTypeOf(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := reflect.TypeOf(args[0])
@@ -614,6 +788,35 @@ func init() {
 		I.Func("(StructTag).Get", (reflect.StructTag).Get, execmStructTagGet),
 		I.Func("(StructTag).Lookup", (reflect.StructTag).Lookup, execmStructTagLookup),
 		I.Func("Swapper", reflect.Swapper, execSwapper),
+		I.Func("(Type).Align", (reflect.Type).Align, execiTypeAlign),
+		I.Func("(Type).AssignableTo", (reflect.Type).AssignableTo, execiTypeAssignableTo),
+		I.Func("(Type).Bits", (reflect.Type).Bits, execiTypeBits),
+		I.Func("(Type).ChanDir", (reflect.Type).ChanDir, execiTypeChanDir),
+		I.Func("(Type).Comparable", (reflect.Type).Comparable, execiTypeComparable),
+		I.Func("(Type).ConvertibleTo", (reflect.Type).ConvertibleTo, execiTypeConvertibleTo),
+		I.Func("(Type).Elem", (reflect.Type).Elem, execiTypeElem),
+		I.Func("(Type).Field", (reflect.Type).Field, execiTypeField),
+		I.Func("(Type).FieldAlign", (reflect.Type).FieldAlign, execiTypeFieldAlign),
+		I.Func("(Type).FieldByIndex", (reflect.Type).FieldByIndex, execiTypeFieldByIndex),
+		I.Func("(Type).FieldByName", (reflect.Type).FieldByName, execiTypeFieldByName),
+		I.Func("(Type).FieldByNameFunc", (reflect.Type).FieldByNameFunc, execiTypeFieldByNameFunc),
+		I.Func("(Type).Implements", (reflect.Type).Implements, execiTypeImplements),
+		I.Func("(Type).In", (reflect.Type).In, execiTypeIn),
+		I.Func("(Type).IsVariadic", (reflect.Type).IsVariadic, execiTypeIsVariadic),
+		I.Func("(Type).Key", (reflect.Type).Key, execiTypeKey),
+		I.Func("(Type).Kind", (reflect.Type).Kind, execiTypeKind),
+		I.Func("(Type).Len", (reflect.Type).Len, execiTypeLen),
+		I.Func("(Type).Method", (reflect.Type).Method, execiTypeMethod),
+		I.Func("(Type).MethodByName", (reflect.Type).MethodByName, execiTypeMethodByName),
+		I.Func("(Type).Name", (reflect.Type).Name, execiTypeName),
+		I.Func("(Type).NumField", (reflect.Type).NumField, execiTypeNumField),
+		I.Func("(Type).NumIn", (reflect.Type).NumIn, execiTypeNumIn),
+		I.Func("(Type).NumMethod", (reflect.Type).NumMethod, execiTypeNumMethod),
+		I.Func("(Type).NumOut", (reflect.Type).NumOut, execiTypeNumOut),
+		I.Func("(Type).Out", (reflect.Type).Out, execiTypeOut),
+		I.Func("(Type).PkgPath", (reflect.Type).PkgPath, execiTypePkgPath),
+		I.Func("(Type).Size", (reflect.Type).Size, execiTypeSize),
+		I.Func("(Type).String", (reflect.Type).String, execiTypeString),
 		I.Func("TypeOf", reflect.TypeOf, execTypeOf),
 		I.Func("(Value).Addr", (reflect.Value).Addr, execmValueAddr),
 		I.Func("(Value).Bool", (reflect.Value).Bool, execmValueBool),

@@ -9,6 +9,36 @@ import (
 	qspec "github.com/goplus/gop/exec.spec"
 )
 
+func execiByteReaderReadByte(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0, ret1 := args[0].(io.ByteReader).ReadByte()
+	p.Ret(1, ret0, ret1)
+}
+
+func execiByteScannerReadByte(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0, ret1 := args[0].(io.ByteScanner).ReadByte()
+	p.Ret(1, ret0, ret1)
+}
+
+func execiByteScannerUnreadByte(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(io.ByteScanner).UnreadByte()
+	p.Ret(1, ret0)
+}
+
+func execiByteWriterWriteByte(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0 := args[0].(io.ByteWriter).WriteByte(args[1].(byte))
+	p.Ret(2, ret0)
+}
+
+func execiCloserClose(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(io.Closer).Close()
+	p.Ret(1, ret0)
+}
+
 func toType0(v interface{}) io.Writer {
 	if v == nil {
 		return nil
@@ -148,10 +178,118 @@ func execReadAtLeast(_ int, p *gop.Context) {
 	p.Ret(3, ret0, ret1)
 }
 
+func execiReadCloserClose(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(io.ReadCloser).Close()
+	p.Ret(1, ret0)
+}
+
+func execiReadCloserRead(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0, ret1 := args[0].(io.ReadCloser).Read(args[1].([]byte))
+	p.Ret(2, ret0, ret1)
+}
+
 func execReadFull(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0, ret1 := io.ReadFull(toType1(args[0]), args[1].([]byte))
 	p.Ret(2, ret0, ret1)
+}
+
+func execiReadSeekerRead(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0, ret1 := args[0].(io.ReadSeeker).Read(args[1].([]byte))
+	p.Ret(2, ret0, ret1)
+}
+
+func execiReadSeekerSeek(_ int, p *gop.Context) {
+	args := p.GetArgs(3)
+	ret0, ret1 := args[0].(io.ReadSeeker).Seek(args[1].(int64), args[2].(int))
+	p.Ret(3, ret0, ret1)
+}
+
+func execiReadWriteCloserClose(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(io.ReadWriteCloser).Close()
+	p.Ret(1, ret0)
+}
+
+func execiReadWriteCloserRead(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0, ret1 := args[0].(io.ReadWriteCloser).Read(args[1].([]byte))
+	p.Ret(2, ret0, ret1)
+}
+
+func execiReadWriteCloserWrite(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0, ret1 := args[0].(io.ReadWriteCloser).Write(args[1].([]byte))
+	p.Ret(2, ret0, ret1)
+}
+
+func execiReadWriteSeekerRead(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0, ret1 := args[0].(io.ReadWriteSeeker).Read(args[1].([]byte))
+	p.Ret(2, ret0, ret1)
+}
+
+func execiReadWriteSeekerSeek(_ int, p *gop.Context) {
+	args := p.GetArgs(3)
+	ret0, ret1 := args[0].(io.ReadWriteSeeker).Seek(args[1].(int64), args[2].(int))
+	p.Ret(3, ret0, ret1)
+}
+
+func execiReadWriteSeekerWrite(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0, ret1 := args[0].(io.ReadWriteSeeker).Write(args[1].([]byte))
+	p.Ret(2, ret0, ret1)
+}
+
+func execiReadWriterRead(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0, ret1 := args[0].(io.ReadWriter).Read(args[1].([]byte))
+	p.Ret(2, ret0, ret1)
+}
+
+func execiReadWriterWrite(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0, ret1 := args[0].(io.ReadWriter).Write(args[1].([]byte))
+	p.Ret(2, ret0, ret1)
+}
+
+func execiReaderRead(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0, ret1 := args[0].(io.Reader).Read(args[1].([]byte))
+	p.Ret(2, ret0, ret1)
+}
+
+func execiReaderAtReadAt(_ int, p *gop.Context) {
+	args := p.GetArgs(3)
+	ret0, ret1 := args[0].(io.ReaderAt).ReadAt(args[1].([]byte), args[2].(int64))
+	p.Ret(3, ret0, ret1)
+}
+
+func execiReaderFromReadFrom(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0, ret1 := args[0].(io.ReaderFrom).ReadFrom(toType1(args[1]))
+	p.Ret(2, ret0, ret1)
+}
+
+func execiRuneReaderReadRune(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0, ret1, ret2 := args[0].(io.RuneReader).ReadRune()
+	p.Ret(1, ret0, ret1, ret2)
+}
+
+func execiRuneScannerReadRune(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0, ret1, ret2 := args[0].(io.RuneScanner).ReadRune()
+	p.Ret(1, ret0, ret1, ret2)
+}
+
+func execiRuneScannerUnreadRune(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(io.RuneScanner).UnreadRune()
+	p.Ret(1, ret0)
 }
 
 func execmSectionReaderRead(_ int, p *gop.Context) {
@@ -178,10 +316,46 @@ func execmSectionReaderSize(_ int, p *gop.Context) {
 	p.Ret(1, ret0)
 }
 
+func execiSeekerSeek(_ int, p *gop.Context) {
+	args := p.GetArgs(3)
+	ret0, ret1 := args[0].(io.Seeker).Seek(args[1].(int64), args[2].(int))
+	p.Ret(3, ret0, ret1)
+}
+
+func execiStringWriterWriteString(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0, ret1 := args[0].(io.StringWriter).WriteString(args[1].(string))
+	p.Ret(2, ret0, ret1)
+}
+
 func execTeeReader(_ int, p *gop.Context) {
 	args := p.GetArgs(2)
 	ret0 := io.TeeReader(toType1(args[0]), toType0(args[1]))
 	p.Ret(2, ret0)
+}
+
+func execiWriteCloserClose(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(io.WriteCloser).Close()
+	p.Ret(1, ret0)
+}
+
+func execiWriteCloserWrite(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0, ret1 := args[0].(io.WriteCloser).Write(args[1].([]byte))
+	p.Ret(2, ret0, ret1)
+}
+
+func execiWriteSeekerSeek(_ int, p *gop.Context) {
+	args := p.GetArgs(3)
+	ret0, ret1 := args[0].(io.WriteSeeker).Seek(args[1].(int64), args[2].(int))
+	p.Ret(3, ret0, ret1)
+}
+
+func execiWriteSeekerWrite(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0, ret1 := args[0].(io.WriteSeeker).Write(args[1].([]byte))
+	p.Ret(2, ret0, ret1)
 }
 
 func execWriteString(_ int, p *gop.Context) {
@@ -190,11 +364,34 @@ func execWriteString(_ int, p *gop.Context) {
 	p.Ret(2, ret0, ret1)
 }
 
+func execiWriterWrite(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0, ret1 := args[0].(io.Writer).Write(args[1].([]byte))
+	p.Ret(2, ret0, ret1)
+}
+
+func execiWriterAtWriteAt(_ int, p *gop.Context) {
+	args := p.GetArgs(3)
+	ret0, ret1 := args[0].(io.WriterAt).WriteAt(args[1].([]byte), args[2].(int64))
+	p.Ret(3, ret0, ret1)
+}
+
+func execiWriterToWriteTo(_ int, p *gop.Context) {
+	args := p.GetArgs(2)
+	ret0, ret1 := args[0].(io.WriterTo).WriteTo(toType0(args[1]))
+	p.Ret(2, ret0, ret1)
+}
+
 // I is a Go package instance.
 var I = gop.NewGoPackage("io")
 
 func init() {
 	I.RegisterFuncs(
+		I.Func("(ByteReader).ReadByte", (io.ByteReader).ReadByte, execiByteReaderReadByte),
+		I.Func("(ByteScanner).ReadByte", (io.ByteScanner).ReadByte, execiByteScannerReadByte),
+		I.Func("(ByteScanner).UnreadByte", (io.ByteScanner).UnreadByte, execiByteScannerUnreadByte),
+		I.Func("(ByteWriter).WriteByte", (io.ByteWriter).WriteByte, execiByteWriterWriteByte),
+		I.Func("(Closer).Close", (io.Closer).Close, execiCloserClose),
 		I.Func("Copy", io.Copy, execCopy),
 		I.Func("CopyBuffer", io.CopyBuffer, execCopyBuffer),
 		I.Func("CopyN", io.CopyN, execCopyN),
@@ -209,13 +406,40 @@ func init() {
 		I.Func("(*PipeWriter).Close", (*io.PipeWriter).Close, execmPipeWriterClose),
 		I.Func("(*PipeWriter).CloseWithError", (*io.PipeWriter).CloseWithError, execmPipeWriterCloseWithError),
 		I.Func("ReadAtLeast", io.ReadAtLeast, execReadAtLeast),
+		I.Func("(ReadCloser).Close", (io.ReadCloser).Close, execiReadCloserClose),
+		I.Func("(ReadCloser).Read", (io.ReadCloser).Read, execiReadCloserRead),
 		I.Func("ReadFull", io.ReadFull, execReadFull),
+		I.Func("(ReadSeeker).Read", (io.ReadSeeker).Read, execiReadSeekerRead),
+		I.Func("(ReadSeeker).Seek", (io.ReadSeeker).Seek, execiReadSeekerSeek),
+		I.Func("(ReadWriteCloser).Close", (io.ReadWriteCloser).Close, execiReadWriteCloserClose),
+		I.Func("(ReadWriteCloser).Read", (io.ReadWriteCloser).Read, execiReadWriteCloserRead),
+		I.Func("(ReadWriteCloser).Write", (io.ReadWriteCloser).Write, execiReadWriteCloserWrite),
+		I.Func("(ReadWriteSeeker).Read", (io.ReadWriteSeeker).Read, execiReadWriteSeekerRead),
+		I.Func("(ReadWriteSeeker).Seek", (io.ReadWriteSeeker).Seek, execiReadWriteSeekerSeek),
+		I.Func("(ReadWriteSeeker).Write", (io.ReadWriteSeeker).Write, execiReadWriteSeekerWrite),
+		I.Func("(ReadWriter).Read", (io.ReadWriter).Read, execiReadWriterRead),
+		I.Func("(ReadWriter).Write", (io.ReadWriter).Write, execiReadWriterWrite),
+		I.Func("(Reader).Read", (io.Reader).Read, execiReaderRead),
+		I.Func("(ReaderAt).ReadAt", (io.ReaderAt).ReadAt, execiReaderAtReadAt),
+		I.Func("(ReaderFrom).ReadFrom", (io.ReaderFrom).ReadFrom, execiReaderFromReadFrom),
+		I.Func("(RuneReader).ReadRune", (io.RuneReader).ReadRune, execiRuneReaderReadRune),
+		I.Func("(RuneScanner).ReadRune", (io.RuneScanner).ReadRune, execiRuneScannerReadRune),
+		I.Func("(RuneScanner).UnreadRune", (io.RuneScanner).UnreadRune, execiRuneScannerUnreadRune),
 		I.Func("(*SectionReader).Read", (*io.SectionReader).Read, execmSectionReaderRead),
 		I.Func("(*SectionReader).Seek", (*io.SectionReader).Seek, execmSectionReaderSeek),
 		I.Func("(*SectionReader).ReadAt", (*io.SectionReader).ReadAt, execmSectionReaderReadAt),
 		I.Func("(*SectionReader).Size", (*io.SectionReader).Size, execmSectionReaderSize),
+		I.Func("(Seeker).Seek", (io.Seeker).Seek, execiSeekerSeek),
+		I.Func("(StringWriter).WriteString", (io.StringWriter).WriteString, execiStringWriterWriteString),
 		I.Func("TeeReader", io.TeeReader, execTeeReader),
+		I.Func("(WriteCloser).Close", (io.WriteCloser).Close, execiWriteCloserClose),
+		I.Func("(WriteCloser).Write", (io.WriteCloser).Write, execiWriteCloserWrite),
+		I.Func("(WriteSeeker).Seek", (io.WriteSeeker).Seek, execiWriteSeekerSeek),
+		I.Func("(WriteSeeker).Write", (io.WriteSeeker).Write, execiWriteSeekerWrite),
 		I.Func("WriteString", io.WriteString, execWriteString),
+		I.Func("(Writer).Write", (io.Writer).Write, execiWriterWrite),
+		I.Func("(WriterAt).WriteAt", (io.WriterAt).WriteAt, execiWriterAtWriteAt),
+		I.Func("(WriterTo).WriteTo", (io.WriterTo).WriteTo, execiWriterToWriteTo),
 	)
 	I.RegisterFuncvs(
 		I.Funcv("MultiReader", io.MultiReader, execMultiReader),

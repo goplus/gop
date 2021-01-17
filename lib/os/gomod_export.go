@@ -199,6 +199,42 @@ func execmFileStat(_ int, p *gop.Context) {
 	p.Ret(1, ret0, ret1)
 }
 
+func execiFileInfoIsDir(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(os.FileInfo).IsDir()
+	p.Ret(1, ret0)
+}
+
+func execiFileInfoModTime(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(os.FileInfo).ModTime()
+	p.Ret(1, ret0)
+}
+
+func execiFileInfoMode(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(os.FileInfo).Mode()
+	p.Ret(1, ret0)
+}
+
+func execiFileInfoName(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(os.FileInfo).Name()
+	p.Ret(1, ret0)
+}
+
+func execiFileInfoSize(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(os.FileInfo).Size()
+	p.Ret(1, ret0)
+}
+
+func execiFileInfoSys(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(os.FileInfo).Sys()
+	p.Ret(1, ret0)
+}
+
 func execmFileModeString(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	ret0 := args[0].(os.FileMode).String()
@@ -545,6 +581,18 @@ func execSetenv(_ int, p *gop.Context) {
 	p.Ret(2, ret0)
 }
 
+func execiSignalSignal(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	args[0].(os.Signal).Signal()
+	p.PopN(1)
+}
+
+func execiSignalString(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(os.Signal).String()
+	p.Ret(1, ret0)
+}
+
 func execStartProcess(_ int, p *gop.Context) {
 	args := p.GetArgs(3)
 	ret0, ret1 := os.StartProcess(args[0].(string), args[1].([]string), args[2].(*os.ProcAttr))
@@ -650,6 +698,12 @@ func init() {
 		I.Func("(*File).Fd", (*os.File).Fd, execmFileFd),
 		I.Func("(*File).Close", (*os.File).Close, execmFileClose),
 		I.Func("(*File).Stat", (*os.File).Stat, execmFileStat),
+		I.Func("(FileInfo).IsDir", (os.FileInfo).IsDir, execiFileInfoIsDir),
+		I.Func("(FileInfo).ModTime", (os.FileInfo).ModTime, execiFileInfoModTime),
+		I.Func("(FileInfo).Mode", (os.FileInfo).Mode, execiFileInfoMode),
+		I.Func("(FileInfo).Name", (os.FileInfo).Name, execiFileInfoName),
+		I.Func("(FileInfo).Size", (os.FileInfo).Size, execiFileInfoSize),
+		I.Func("(FileInfo).Sys", (os.FileInfo).Sys, execiFileInfoSys),
 		I.Func("(FileMode).String", (os.FileMode).String, execmFileModeString),
 		I.Func("(FileMode).IsDir", (os.FileMode).IsDir, execmFileModeIsDir),
 		I.Func("(FileMode).IsRegular", (os.FileMode).IsRegular, execmFileModeIsRegular),
@@ -706,6 +760,8 @@ func init() {
 		I.Func("Rename", os.Rename, execRename),
 		I.Func("SameFile", os.SameFile, execSameFile),
 		I.Func("Setenv", os.Setenv, execSetenv),
+		I.Func("(Signal).Signal", (os.Signal).Signal, execiSignalSignal),
+		I.Func("(Signal).String", (os.Signal).String, execiSignalString),
 		I.Func("StartProcess", os.StartProcess, execStartProcess),
 		I.Func("Stat", os.Stat, execStat),
 		I.Func("Symlink", os.Symlink, execSymlink),
