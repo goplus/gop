@@ -21,6 +21,7 @@ import (
 	"go/ast"
 	"reflect"
 	"testing"
+	"unsafe"
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/exec.spec"
@@ -497,10 +498,21 @@ func TestReserved(t *testing.T) {
 
 func TestConstNil(t *testing.T) {
 	code := NewBuilder("main", nil, nil)
-	off := code.Reserve()
-	code.ReservedAsPush(off, []byte(nil))
-	if code.reserveds[off].Expr.(*ast.Ident).Name != "nil" {
-		t.Fatal("TestConstNil failed: reserveds is not set nil")
+	//Chan, Func, Map, Ptr, UnsafePointer, Interface, Slice
+	for _, v := range []interface{}{
+		(chan int)(nil),
+		(func())(nil),
+		map[int]string(nil),
+		(*struct{})(nil),
+		unsafe.Pointer(nil),
+		interface{}(nil),
+		[]byte(nil),
+	} {
+		off := code.Reserve()
+		code.ReservedAsPush(off, v)
+		if code.reserveds[off].Expr.(*ast.Ident).Name != "nil" {
+			t.Fatal("TestConstNil failed: reserveds is not set nil")
+		}
 	}
 }
 
