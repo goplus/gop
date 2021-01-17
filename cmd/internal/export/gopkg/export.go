@@ -37,22 +37,34 @@ import (
 
 // -----------------------------------------------------------------------------
 
-func exportFunc(e *Exporter, o *types.Func, prefix string) (err error) {
-	e.ExportFunc(o)
+func exportFunc(e *Exporter, o *types.Func, iname string) (err error) {
+	e.ExportFunc(o, iname)
 	return nil
 }
 
 func exportTypeName(e *Exporter, o *types.TypeName) (err error) {
-	t := o.Type().(*types.Named)
 	e.ExportType(o)
-
-	n := t.NumMethods()
-	for i := 0; i < n; i++ {
-		m := t.Method(i)
-		if !m.Exported() {
-			continue
+	if t, ok := o.Type().(*types.Named); ok {
+		n := t.NumMethods()
+		for i := 0; i < n; i++ {
+			m := t.Method(i)
+			if !m.Exported() {
+				continue
+			}
+			exportFunc(e, m, "")
 		}
-		exportFunc(e, m, "  ")
+	}
+	if t, ok := o.Type().Underlying().(*types.Interface); ok {
+		t = t.Complete()
+		n := t.NumMethods()
+		for i := 0; i < n; i++ {
+			m := t.Method(i)
+			if !m.Exported() {
+				continue
+			}
+
+			exportFunc(e, m, o.Name())
+		}
 	}
 	return nil
 }

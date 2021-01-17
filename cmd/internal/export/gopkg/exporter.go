@@ -260,10 +260,11 @@ func isInternalPkg(pkg string) bool {
 }
 
 // ExportFunc exports a go function/method.
-func (p *Exporter) ExportFunc(fn *types.Func) error {
+func (p *Exporter) ExportFunc(fn *types.Func, iname string) error {
 	tfn := fn.Type().(*types.Signature)
 	isVariadic := tfn.Variadic()
 	isMethod := tfn.Recv() != nil
+	isIMethod := iname != ""
 	numIn := tfn.Params().Len()
 	numOut := tfn.Results().Len()
 	args := make([]string, numIn)
@@ -320,7 +321,11 @@ func (p *Exporter) ExportFunc(fn *types.Func) error {
 	}
 	name := fn.Name()
 	exec := name
-	if isMethod {
+	if isIMethod {
+		exec = iname + name
+		name = "(" + iname + ")." + name
+		fnName = "args[0]." + withPkg(p.pkgDot, name)
+	} else if isMethod {
 		fullName := fn.FullName()
 		exec = typeName(tfn.Recv().Type()) + name
 		name = withoutPkg(fullName)
@@ -332,7 +337,9 @@ func (p *Exporter) ExportFunc(fn *types.Func) error {
 	if arity != "0" {
 		argsAssign = "	args := p.GetArgs(" + arity + ")\n"
 	}
-	if isMethod {
+	if isIMethod {
+		exec = "execi" + exec
+	} else if isMethod {
 		exec = "execm" + exec
 	} else {
 		exec = "exec" + exec

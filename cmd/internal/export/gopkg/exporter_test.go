@@ -77,8 +77,8 @@ func TestBasic(t *testing.T) {
 	replacer := gbl.Lookup("Replacer").(*types.TypeName).Type().(*types.Named)
 	b := bytes.NewBuffer(nil)
 	e := NewExporter(b, pkg)
-	e.ExportFunc(newReplacer)
-	e.ExportFunc(getMethod(replacer, "Replace"))
+	e.ExportFunc(newReplacer, "")
+	e.ExportFunc(getMethod(replacer, "Replace"), "")
 	e.Close()
 	if real := b.String(); real != expected {
 		fmt.Println(real)
