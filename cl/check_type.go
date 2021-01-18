@@ -150,14 +150,18 @@ func checkOpMatchType(op exec.Operator, x, y interface{}) error {
 	case exec.OpEQ, exec.OpNE:
 		ix := x.(iValue)
 		iy := y.(iValue)
-		if ix.Kind() == exec.ConstUnboundPtr && !IsPtrKind(iy.Kind()) {
-			return fmt.Errorf("mismatched types nil and %v", boundType(iy))
-		} else if iy.Kind() == exec.ConstUnboundPtr && !IsPtrKind(ix.Kind()) {
-			return fmt.Errorf("mismatched types %v and nil", boundType(ix))
-		}
-		tx := boundType(ix)
-		ty := boundType(iy)
-		if tx != ty {
+		xkind, ykind := ix.Kind(), iy.Kind()
+		if xkind == exec.ConstUnboundPtr && ykind == exec.ConstUnboundPtr {
+			return nil
+		} else if xkind == exec.ConstUnboundPtr {
+			if !IsPtrKind(ykind) {
+				return fmt.Errorf("mismatched types nil and %v", boundType(iy))
+			}
+		} else if ykind == exec.ConstUnboundPtr {
+			if !IsPtrKind(xkind) {
+				return fmt.Errorf("mismatched types %v and nil", boundType(ix))
+			}
+		} else if tx, ty := boundType(ix), boundType(iy); tx != ty {
 			return fmt.Errorf("mismatched types %v and %v", tx, ty)
 		}
 	}
