@@ -18,6 +18,7 @@ package cl
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 
 	"github.com/goplus/gop/ast"
@@ -144,22 +145,23 @@ func checkBinaryOp(kind exec.Kind, op exec.Operator, x, y interface{}, b exec.Bu
 	}
 }
 
-func checkBinaryMatchType(ctx *blockCtx, op exec.Operator, v ast.Expr, x, y interface{}) {
+func checkOpMatchType(op exec.Operator, x, y interface{}) error {
 	switch op {
 	case exec.OpEQ, exec.OpNE:
 		ix := x.(iValue)
 		iy := y.(iValue)
 		if ix.Kind() == exec.ConstUnboundPtr && !IsPtrKind(iy.Kind()) {
-			log.Panicf("invalid operation: %v (mismatched types nil and %v)", ctx.code(v), boundType(iy))
+			return fmt.Errorf("mismatched types nil and %v", boundType(iy))
 		} else if iy.Kind() == exec.ConstUnboundPtr && !IsPtrKind(ix.Kind()) {
-			log.Panicf("invalid operation: %v (mismatched types %v and nil)", ctx.code(v), boundType(ix))
+			return fmt.Errorf("mismatched types %v and nil", boundType(ix))
 		}
 		tx := boundType(ix)
 		ty := boundType(iy)
 		if tx != ty {
-			log.Fatalf("invalid operation: %v (mismatched types %v and %v)", ctx.code(v), tx, ty)
+			return fmt.Errorf("mismatched types %v and %v", tx, ty)
 		}
 	}
+	return nil
 }
 
 func IsPtrKind(kind reflect.Kind) bool {
