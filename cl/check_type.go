@@ -142,17 +142,28 @@ func checkBinaryOp(kind exec.Kind, op exec.Operator, x, y interface{}, b exec.Bu
 			}
 		}
 	}
+}
+
+func checkBinaryMatchType(ctx *blockCtx, op exec.Operator, v ast.Expr, x, y interface{}) {
 	switch op {
 	case exec.OpEQ, exec.OpNE:
 		ix := x.(iValue)
 		iy := y.(iValue)
-		if ix.Kind() == exec.ConstUnboundPtr || iy.Kind() == exec.ConstUnboundPtr {
-			return
+		if ix.Kind() == exec.ConstUnboundPtr && !IsPtrKind(iy.Kind()) {
+			log.Panicf("invalid operation: %v (mismatched types nil and %v)", ctx.code(v), boundType(iy))
+		} else if iy.Kind() == exec.ConstUnboundPtr && !IsPtrKind(ix.Kind()) {
+			log.Panicf("invalid operation: %v (mismatched types %v and nil)", ctx.code(v), boundType(ix))
 		}
-		if boundType(ix) != boundType(iy) {
-			log.Fatalf("invalid operation: %v (mismatched types %v and %v)", op, ix.Type(), iy.Type())
+		tx := boundType(ix)
+		ty := boundType(iy)
+		if tx != ty {
+			log.Fatalf("invalid operation: %v (mismatched types %v and %v)", ctx.code(v), tx, ty)
 		}
 	}
+}
+
+func IsPtrKind(kind reflect.Kind) bool {
+	return kind >= reflect.Chan && kind <= reflect.Slice || kind == reflect.UnsafePointer
 }
 
 func checkType(t reflect.Type, v interface{}, b exec.Builder) {

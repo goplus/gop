@@ -681,6 +681,7 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 		}
 		exprY()
 		checkBinaryOp(kind, op, x, y, ctx.out)
+		checkBinaryMatchType(ctx, op, v, x, y)
 		ctx.out.BuiltinOp(kind, op)
 		if label != nil {
 			ctx.out.Label(label)
