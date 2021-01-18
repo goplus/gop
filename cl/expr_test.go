@@ -1815,6 +1815,29 @@ func TestRefType(t *testing.T) {
 	testScripts(t, "TestRefType", testRefTypeClauses)
 }
 
+func TestMismatchedType(t *testing.T) {
+	cltest.Expect(t, `
+		var v int
+		println(v == nil)
+	`, "", nil)
+	cltest.Expect(t, `
+		var v int
+		println(nil == v)
+	`, "", nil)
+	cltest.Expect(t, `
+		var a int
+		var b uint8
+		println(a == b)
+	`, "", nil)
+	cltest.Expect(t, `
+		var a int
+		switch a {
+			case 0:
+			case uint8(1):
+		}
+	`, "", nil)
+}
+
 func testScripts(t *testing.T, testName string, scripts map[string]testData) {
 	for name, script := range scripts {
 		t.Log("Run " + testName + "---" + name)
