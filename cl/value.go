@@ -20,6 +20,7 @@ import (
 	"math"
 	"reflect"
 	"strconv"
+	"unsafe"
 
 	"github.com/goplus/gop/ast/astutil"
 	"github.com/goplus/gop/exec.spec"
@@ -395,6 +396,8 @@ func boundConst(v interface{}, t reflect.Type) interface{} {
 	if v == nil {
 		if kind >= reflect.Chan && kind <= reflect.Slice {
 			return reflect.Zero(t).Interface()
+		} else if kind == reflect.UnsafePointer {
+			return reflect.ValueOf(unsafe.Pointer(nil)).Interface()
 		}
 		log.Panicln("boundConst: can't convert nil into", t)
 	}
@@ -468,6 +471,8 @@ func realKindOf(kind astutil.ConstKind) reflect.Kind {
 		return reflect.Float64
 	case astutil.ConstUnboundComplex:
 		return reflect.Complex128
+	case astutil.ConstUnboundPtr:
+		return reflect.UnsafePointer
 	default:
 		return kind
 	}

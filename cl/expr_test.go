@@ -1815,27 +1815,30 @@ func TestRefType(t *testing.T) {
 	testScripts(t, "TestRefType", testRefTypeClauses)
 }
 
-func TestMismatchedType(t *testing.T) {
+func TestMatchType(t *testing.T) {
+	cltest.Expect(t, `
+		println(nil == nil,nil != nil)
+	`, "true false\n")
 	cltest.Expect(t, `
 		var v int
 		println(v == nil)
-	`, "", nil)
+	`, "", "invalid operator: v == nil (mismatched types int and nil)")
 	cltest.Expect(t, `
 		var v int
 		println(nil == v)
-	`, "", nil)
+	`, "", "invalid operator: nil == v (mismatched types nil and int)")
 	cltest.Expect(t, `
 		var a int
 		var b uint8
 		println(a == b)
-	`, "", nil)
+	`, "", "invalid operator: a == b (mismatched types int and uint8)")
 	cltest.Expect(t, `
 		var a int
 		switch a {
 			case 0:
 			case uint8(1):
 		}
-	`, "", nil)
+	`, "", "invalid case uint8(1) in switch on a (mismatched types int and uint8)")
 }
 
 func testScripts(t *testing.T, testName string, scripts map[string]testData) {
