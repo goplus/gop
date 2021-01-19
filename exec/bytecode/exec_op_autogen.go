@@ -312,6 +312,8 @@ var builtinOps = [...]func(i Instr, p *Context){
 	(int(Ptr) << bitsOperator) | int(OpNE):               execRefTypeNE,
 	(int(UnsafePointer) << bitsOperator) | int(OpEQ):     execRefTypeEQ,
 	(int(UnsafePointer) << bitsOperator) | int(OpNE):     execRefTypeNE,
+	(int(reflect.Func) << bitsOperator) | int(OpEQ):      execRefTypeEQ,
+	(int(reflect.Func) << bitsOperator) | int(OpNE):      execRefTypeNE,
 	(int(reflect.Interface) << bitsOperator) | int(OpEQ): execInterfaceEQ,
 	(int(reflect.Interface) << bitsOperator) | int(OpNE): execInterfaceNE,
 }

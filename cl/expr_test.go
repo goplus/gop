@@ -1824,6 +1824,26 @@ func TestMatchType(t *testing.T) {
 		println(i == nil,i != nil)
 	`, "true false\n")
 	cltest.Expect(t, `
+		var i *int
+		println(i == nil,i != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
+		var i chan int
+		println(i == nil,i != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
+		var i func()
+		println(i == nil,i != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
+		var i []int
+		println(i == nil,i != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
+		var i map[int]string
+		println(i == nil,i != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
 		var v int
 		println(v == nil)
 	`, "", "invalid operator: v == nil (mismatched types int and nil)")
