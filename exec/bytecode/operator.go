@@ -151,6 +151,16 @@ const (
 	Ptr = exec.Ptr
 )
 
+func execInterfaceEQ(i Instr, p *Context) {
+	n := len(p.data)
+	p.Ret(2, p.data[n-2] == p.data[n-1])
+}
+
+func execInterfaceNE(i Instr, p *Context) {
+	n := len(p.data)
+	p.Ret(2, p.data[n-2] != p.data[n-1])
+}
+
 // -------------------------------------------------------------------------
 func execRefTypeEQ(i Instr, p *Context) {
 	n := len(p.data)
@@ -165,7 +175,7 @@ func execRefTypeEQ(i Instr, p *Context) {
 	}
 }
 
-func execRefTypeNEQ(i Instr, p *Context) {
+func execRefTypeNE(i Instr, p *Context) {
 	n := len(p.data)
 	v1 := p.data[n-2]
 	v2 := p.data[n-1]

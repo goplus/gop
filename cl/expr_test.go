@@ -1820,6 +1820,10 @@ func TestMatchType(t *testing.T) {
 		println(nil == nil,nil != nil)
 	`, "true false\n")
 	cltest.Expect(t, `
+		var i interface{}
+		println(i == nil,i != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
 		var v int
 		println(v == nil)
 	`, "", "invalid operator: v == nil (mismatched types int and nil)")
