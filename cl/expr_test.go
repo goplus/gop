@@ -400,6 +400,15 @@ func TestTypeCast(t *testing.T) {
 	`).Equal([]byte("hello"))
 }
 
+func TestPkgTypeConv(t *testing.T) {
+	cltest.Expect(t, `
+	import "sort"
+	ar := [1,5,3,2]
+	sort.IntSlice(ar).Sort()
+	println(ar)
+	`, "[1 2 3 5]\n")
+}
+
 func TestAppendErr(t *testing.T) {
 	cltest.Expect(t, `
 		append()
