@@ -1302,6 +1302,10 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 					pushConstVal(ctx.out, ret)
 				}
 			}
+			if t, ok := nv.FindType(name); ok {
+				ctx.infer.Ret(1, &nonValue{t})
+				return nil
+			}
 			addr, kind, ok := nv.Find(name)
 			if !ok {
 				log.Panicln("compileSelectorExpr: not found -", nv.PkgPath(), name)
