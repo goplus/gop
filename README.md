@@ -137,6 +137,8 @@ Go+ Playground based on Docker:
 Go+ Playground based on GopherJS:
 * https://goplusjs.github.io/play/
 
+Go+ Jupyter kernel:
+* https://github.com/wangfenjin/gopyter
 
 ## Tutorials
 
