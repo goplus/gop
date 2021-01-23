@@ -1468,6 +1468,11 @@ func compileStarExpr(ctx *blockCtx, v *ast.StarExpr) func() {
 	x := ctx.infer.Get(-1)
 	switch vx := x.(type) {
 	case *nonValue:
+		switch t := vx.v.(type) {
+		case reflect.Type:
+			ctx.infer.Ret(1, &nonValue{reflect.PtrTo(t)})
+			return nil
+		}
 	case *goValue:
 		if vx.Kind() == reflect.Ptr {
 			ctx.infer.Ret(1, &goValue{vx.t.Elem()})
