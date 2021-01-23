@@ -157,6 +157,9 @@ func Type(p *Builder, typ reflect.Type, actualTypes ...bool) ast.Expr {
 		}
 	}
 	pkgPath, name := typ.PkgPath(), typ.Name()
+	if typ.Kind() == reflect.UnsafePointer {
+		pkgPath = "unsafe"
+	}
 	log.Debug(typ, "-", "pkgPath:", pkgPath, "name:", name)
 	if name != "" {
 		if pkgPath != "" {
