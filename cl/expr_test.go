@@ -409,6 +409,16 @@ func TestPkgTypeConv(t *testing.T) {
 	`, "[1 2 3 5]\n")
 }
 
+func TestRuneType(t *testing.T) {
+	cltest.Expect(t, `
+	a := 'a'
+	printf("%T\n",a)
+	`, "int32\n")
+	cltest.Expect(t, `
+	printf("%T\n",'a')
+	`, "int32\n")
+}
+
 func TestAppendErr(t *testing.T) {
 	cltest.Expect(t, `
 		append()
