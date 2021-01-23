@@ -18,6 +18,7 @@ package bytecode
 
 import (
 	"reflect"
+	"unsafe"
 
 	"github.com/goplus/gop/ast/gopiter"
 	"github.com/goplus/gop/exec.spec"
@@ -192,7 +193,29 @@ func makeMap(typMap reflect.Type, arity int, p *Context) {
 func execTypeCast(i Instr, p *Context) {
 	args := p.GetArgs(1)
 	typ := getType(i&bitsOperand, p)
-	args[0] = reflect.ValueOf(args[0]).Convert(typ).Interface()
+	v := reflect.ValueOf(args[0])
+	vk := v.Kind()
+	switch typ.Kind() {
+	case reflect.UnsafePointer:
+		if vk == reflect.Uintptr {
+			args[0] = unsafe.Pointer(uintptr(v.Uint()))
+			return
+		} else if vk == reflect.Ptr {
+			args[0] = unsafe.Pointer(v.Pointer())
+			return
+		}
+	case reflect.Uintptr:
+		if vk == reflect.UnsafePointer {
+			args[0] = v.Pointer()
+			return
+		}
+	case reflect.Ptr:
+		if vk == reflect.UnsafePointer {
+			args[0] = reflect.NewAt(typ.Elem(), unsafe.Pointer(v.Pointer())).Interface()
+			return
+		}
+	}
+	args[0] = v.Convert(typ).Interface()
 }
 
 const (
