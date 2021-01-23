@@ -1747,6 +1747,10 @@ var testStarExprClauses = map[string]testData{
 					println(a1, *c.b, *c.m["foo"], *c.s[0])
 	
 						`, "3 3 8 11\n", false},
+	"start expr ptr conv": {`
+					a := 10
+					println(*(*int)(&a))
+					`, "10\n", false},
 }
 
 func TestStarExpr(t *testing.T) {
