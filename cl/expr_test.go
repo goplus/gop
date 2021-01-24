@@ -409,6 +409,16 @@ func TestPkgTypeConv(t *testing.T) {
 	`, "[1 2 3 5]\n")
 }
 
+func TestRuneType(t *testing.T) {
+	cltest.Expect(t, `
+	a := 'a'
+	printf("%T\n",a)
+	`, "int32\n")
+	cltest.Expect(t, `
+	printf("%T\n",'a')
+	`, "int32\n")
+}
+
 func TestAppendErr(t *testing.T) {
 	cltest.Expect(t, `
 		append()
@@ -1747,6 +1757,10 @@ var testStarExprClauses = map[string]testData{
 					println(a1, *c.b, *c.m["foo"], *c.s[0])
 	
 						`, "3 3 8 11\n", false},
+	"start expr ptr conv": {`
+					a := 10
+					println(*(*int)(&a))
+					`, "10\n", false},
 }
 
 func TestStarExpr(t *testing.T) {
