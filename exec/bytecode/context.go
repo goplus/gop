@@ -40,6 +40,7 @@ type Context struct {
 	defers *theDefer
 	ip     int
 	base   int
+	fdoff  uintptr
 }
 
 func newSimpleContext(data []interface{}) *Context {
