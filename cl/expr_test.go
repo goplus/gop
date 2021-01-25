@@ -366,6 +366,55 @@ func TestPanic(t *testing.T) {
 	)
 }
 
+func TestTakeAddrInFunc(t *testing.T) {
+	cltest.Expect(t, `
+	func test(i int) {
+		printf("%T %T\n",i,&i)
+	}
+	test(100)
+	`, "int *int\n")
+	cltest.Expect(t, `
+	func test(i *int, j int) {
+		*i = 100
+		j = 100
+	}
+	var m1,m2 int
+	test(&m1,m2)
+	println(m1,m2)
+	`, "100 0\n")
+	cltest.Expect(t, `
+	func test(i []int) []int {
+		i = append(i,100)
+		println(i)
+		return i
+	}
+	i := [1,2,3]
+	j := test(i)
+	println(i)
+	println(j)
+	`, "[1 2 3 100]\n[1 2 3]\n[1 2 3 100]\n")
+	cltest.Expect(t, `
+	type M struct {
+		X int
+		Y int
+	}
+	func setx(i *M) {
+		i.X = 100
+	}
+	func test1(i M) {
+		setx(&i)
+		printf("%v %v\n",i.X,i.Y)
+	}
+	func test2(i M) {
+		i.Y = 100
+		printf("%v %v\n",i.X,i.Y)
+	}
+	m := M{1,1}
+	test1(m)
+	test2(m)
+	`, "100 1\n1 100\n")
+}
+
 func TestTakeAddrMap(t *testing.T) {
 	cltest.Expect(t, `
 		m := {1:"hello",2:"ok"}
