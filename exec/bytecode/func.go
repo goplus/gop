@@ -317,7 +317,7 @@ func (p *FuncInfo) execFunc(ctx *Context) {
 }
 
 func (p *FuncInfo) exec(ctx *Context, parent *varScope) {
-	old := ctx.switchScope(parent, &p.varManager)
+	old := ctx.switchScope(parent, &p.varManager, p.in)
 	p.execFunc(ctx)
 	if ctx.ip != ipReturnN {
 		ctx.data = ctx.data[:ctx.base-len(p.in)]

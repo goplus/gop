@@ -89,7 +89,7 @@ type savedScopeCtx struct {
 	varScope
 }
 
-func (ctx *Context) switchScope(parent *varScope, vmgr *varManager) (old savedScopeCtx) {
+func (ctx *Context) switchScope(parent *varScope, vmgr *varManager, ins []reflect.Type) (old savedScopeCtx) {
 	old.base = ctx.base
 	old.ip = ctx.ip
 	old.varScope = ctx.varScope
@@ -99,14 +99,16 @@ func (ctx *Context) switchScope(parent *varScope, vmgr *varManager) (old savedSc
 
 	size := ctx.Len()
 	ctx.addrs = make([]reflect.Value, size)
-	for i := size; i > 0; i-- {
+	for i := len(ins); i > 0; i-- {
 		v := reflect.ValueOf(ctx.Get(-i))
-		if v.Kind() != reflect.Ptr && v.IsValid() {
-			nv := reflect.New(v.Type()).Elem()
-			nv.Set(v)
-			ctx.addrs[size-i] = nv
-		} else {
+		if v.Kind() == reflect.Ptr {
 			ctx.addrs[size-i] = v
+		} else {
+			nv := reflect.New(ins[len(ins)-i]).Elem()
+			if v.IsValid() {
+				nv.Set(v)
+			}
+			ctx.addrs[size-i] = nv
 		}
 	}
 	return

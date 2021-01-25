@@ -81,10 +81,10 @@ func TestParentCtx(t *testing.T) {
 	ctx.SetVar(z, "78")
 
 	p0 := ctx.getScope(true)
-	old := ctx.switchScope(p0, newVarManager())
+	old := ctx.switchScope(p0, newVarManager(), nil)
 
 	p1 := ctx.getScope(true)
-	ctx.switchScope(p1, newVarManager(x, y))
+	ctx.switchScope(p1, newVarManager(x, y), nil)
 
 	ctx.Exec(0, code.Len())
 	ctx.restoreScope(old)
@@ -123,10 +123,10 @@ func TestAddrVar(t *testing.T) {
 	ctx.SetVar(z, "78")
 
 	p0 := ctx.getScope(true)
-	old := ctx.switchScope(p0, newVarManager())
+	old := ctx.switchScope(p0, newVarManager(), nil)
 
 	p1 := ctx.getScope(true)
-	ctx.switchScope(p1, newVarManager(x, y))
+	ctx.switchScope(p1, newVarManager(x, y), nil)
 
 	ctx.Exec(0, code.Len())
 	ctx.restoreScope(old)
