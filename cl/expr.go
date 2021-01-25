@@ -590,7 +590,7 @@ func compileUnaryExpr(ctx *blockCtx, v *ast.UnaryExpr) func() {
 		}
 		if v.Op == token.AND {
 			vx := x.(iValue)
-			t := reflect.TypeOf(reflect.New(vx.Type()).Interface())
+			t := reflect.PtrTo(vx.Type())
 			ret := &goValue{t: t}
 			ctx.infer.Ret(1, ret)
 			return func() {

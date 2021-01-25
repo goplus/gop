@@ -36,7 +36,7 @@ func execLoad(i Instr, p *Context) {
 func execAddr(i Instr, p *Context) {
 	idx := int32(i) << bitsOp >> bitsOp
 	index := (p.base + int(idx))
-	if p.addrs[index].Kind() == reflect.Struct {
+	if p.addrs[index].Kind() != reflect.Ptr {
 		p.Push(p.addrs[index].Addr().Interface())
 	} else {
 		p.Push(p.data[index])

@@ -101,7 +101,7 @@ func (ctx *Context) switchScope(parent *varScope, vmgr *varManager) (old savedSc
 	ctx.addrs = make([]reflect.Value, size)
 	for i := size; i > 0; i-- {
 		v := reflect.ValueOf(ctx.Get(-i))
-		if v.Kind() == reflect.Struct {
+		if v.Kind() != reflect.Ptr && v.IsValid() {
 			nv := reflect.New(v.Type()).Elem()
 			nv.Set(v)
 			ctx.addrs[size-i] = nv

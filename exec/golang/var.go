@@ -148,7 +148,7 @@ func (p *Builder) Load(idx int32) *Builder {
 
 // Addr instr
 func (p *Builder) Addr(idx int32) *Builder {
-	p.rhs.Push(p.argIdent(idx))
+	p.rhs.Push(&ast.UnaryExpr{Op: token.AND, X: p.argIdent(idx)})
 	return p
 }
 
