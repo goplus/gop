@@ -413,6 +413,32 @@ func TestTakeAddrInFunc(t *testing.T) {
 	test1(m)
 	test2(m)
 	`, "100 1\n1 100\n")
+	cltest.Expect(t, `
+	type M struct {
+		X int
+		Y int
+	}
+	func set(s *string, m M) int {
+		*s = "s0"
+		return 100
+	}
+	func set2(s *string, m *M) int {
+		*s = "s3"
+		m.Y = -2
+		return 200
+	}
+	func f2(s string, s2 string, m M) {
+		func() {
+			println("hello",set(&s,m))
+			m.X = -1
+			println(s, s2, m)
+		}()
+		set2(&s2,&m)
+		println(s, s2, m)
+	}
+	m := M{1, 2}
+	f2("s1", "s2", m)
+	`, "hello 100\ns0 s2 {-1 2}\ns0 s3 {-1 -2}\n")
 }
 
 func TestTakeAddrMap(t *testing.T) {
