@@ -394,6 +394,17 @@ func TestTakeAddrInFunc(t *testing.T) {
 	println(j)
 	`, "[1 2 3 100]\n[1 2 3]\n[1 2 3 100]\n")
 	cltest.Expect(t, `
+	import "fmt"
+	func set(e *error) {
+		*e = fmt.Errorf("error")
+	}
+	func fn(err error) {
+		fmt.Println(err)
+		set(&err)
+		fmt.Println(err)
+	}
+	fn(nil)`, "<nil>\nerror\n")
+	cltest.Expect(t, `
 	type M struct {
 		X int
 		Y int
