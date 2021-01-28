@@ -366,6 +366,13 @@ func TestPanic(t *testing.T) {
 	)
 }
 
+func TestBadPkgPath(t *testing.T) {
+	cltest.Expect(t, `
+	import "badpath"
+	println(badpath.Version())
+	`, "", nil)
+}
+
 func TestTakeAddrInFunc(t *testing.T) {
 	cltest.Expect(t, `
 	func test(i int) {
