@@ -148,10 +148,11 @@ func compileIdentLHS(ctx *blockCtx, name string, mode compileMode) {
 		}
 	} else {
 		if mode == token.ASSIGN || mode == token.DEFINE {
+			v := addr.(*stackVar)
 			if ctx.indirect {
-				ctx.out.Load(addr.(*stackVar).index).AddrOp(kindOf(addr.(*stackVar).getType()), exec.OpAssign)
+				ctx.out.Load(v.fun, v.index).AddrOp(kindOf(v.getType()), exec.OpAssign)
 			} else {
-				ctx.out.Store(addr.(*stackVar).index)
+				ctx.out.Store(v.fun, v.index)
 			}
 		} else {
 			panic("compileIdentLHS: todo")
@@ -201,9 +202,9 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, compileByCallExpr bool) func(
 			ctx.resetFieldIndex()
 			return func() {
 				if ctx.takeAddr || (ctx.checkLoadAddr && kind != reflect.Slice && kind != reflect.Map) {
-					ctx.out.Addr(v.index)
+					ctx.out.Addr(v.fun, v.index)
 				} else {
-					ctx.out.Load(v.index)
+					ctx.out.Load(v.fun, v.index)
 				}
 			}
 		case string: // pkgPath

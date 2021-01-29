@@ -115,7 +115,7 @@ func buildFuncType(recv *ast.FieldList, fi exec.FuncInfo, ctx *blockCtx, t *ast.
 		fi.Args(in...)
 	}
 	fi.Return(rets...)
-	ctx.insertFuncVars(in, args, rets)
+	ctx.insertFuncVars(fi, in, args, rets)
 }
 
 func toTypes(ctx *blockCtx, fields *ast.FieldList) (types []reflect.Type) {

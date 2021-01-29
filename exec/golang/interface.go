@@ -288,20 +288,20 @@ func (p *iBuilder) Return(n int32) exec.Builder {
 }
 
 // Load instr
-func (p *iBuilder) Load(idx int32) exec.Builder {
-	((*Builder)(p)).Load(idx)
+func (p *iBuilder) Load(fun exec.FuncInfo, idx int32) exec.Builder {
+	((*Builder)(p)).Load(fun.(*FuncInfo), idx)
 	return p
 }
 
 // Addr instr
-func (p *iBuilder) Addr(idx int32) exec.Builder {
-	((*Builder)(p)).Addr(idx)
+func (p *iBuilder) Addr(fun exec.FuncInfo, idx int32) exec.Builder {
+	((*Builder)(p)).Addr(fun.(*FuncInfo), idx)
 	return p
 }
 
 // Store instr
-func (p *iBuilder) Store(idx int32) exec.Builder {
-	((*Builder)(p)).Store(idx)
+func (p *iBuilder) Store(fun exec.FuncInfo, idx int32) exec.Builder {
+	((*Builder)(p)).Store(fun.(*FuncInfo), idx)
 	return p
 }
 

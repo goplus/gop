@@ -141,19 +141,19 @@ func (p *Builder) InCurrentCtx(v exec.Var) bool {
 }
 
 // Load instr
-func (p *Builder) Load(idx int32) *Builder {
+func (p *Builder) Load(fun *FuncInfo, idx int32) *Builder {
 	p.rhs.Push(p.argIdent(idx))
 	return p
 }
 
 // Addr instr
-func (p *Builder) Addr(idx int32) *Builder {
+func (p *Builder) Addr(fun *FuncInfo, idx int32) *Builder {
 	p.rhs.Push(p.argIdent(idx))
 	return p
 }
 
 // Store instr
-func (p *Builder) Store(idx int32) *Builder {
+func (p *Builder) Store(fun *FuncInfo, idx int32) *Builder {
 	p.lhs.Push(p.argIdent(idx))
 	return p
 }

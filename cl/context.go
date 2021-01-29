@@ -352,7 +352,7 @@ func (p *blockCtx) findVar(name string) (addr iVar, err error) {
 	return nil, ErrSymbolNotVariable
 }
 
-func (p *blockCtx) insertFuncVars(in []reflect.Type, args []string, rets []exec.Var) {
+func (p *blockCtx) insertFuncVars(fi exec.FuncInfo, in []reflect.Type, args []string, rets []exec.Var) {
 	n := len(args)
 	if n > 0 {
 		for i := n - 1; i >= 0; i-- {
@@ -363,7 +363,7 @@ func (p *blockCtx) insertFuncVars(in []reflect.Type, args []string, rets []exec.
 			if p.exists(name) {
 				log.Panicln("insertStkVars failed: symbol exists -", name)
 			}
-			p.syms[name] = &stackVar{index: int32(i - n), typ: in[i]}
+			p.syms[name] = &stackVar{fun: fi, index: int32(i - n), typ: in[i]}
 		}
 	}
 	for _, ret := range rets {

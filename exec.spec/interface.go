@@ -270,13 +270,13 @@ type Builder interface {
 	Return(n int32) Builder
 
 	// Load instr
-	Load(idx int32) Builder
+	Load(fun FuncInfo, idx int32) Builder
 
 	// Addr instr
-	Addr(idx int32) Builder
+	Addr(fun FuncInfo, idx int32) Builder
 
 	// Store instr
-	Store(idx int32) Builder
+	Store(fun FuncInfo, idx int32) Builder
 
 	// EndFunc instr
 	EndFunc(fun FuncInfo) Builder
