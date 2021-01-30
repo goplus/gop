@@ -28,7 +28,7 @@ import (
 
 type varScope struct {
 	vars   varsContext
-	addrs  []reflect.Value
+	args   []reflect.Value
 	parent *varScope
 }
 
@@ -89,24 +89,26 @@ type savedScopeCtx struct {
 	varScope
 }
 
-func (ctx *Context) switchScope(parent *varScope, vmgr *varManager) (old savedScopeCtx) {
+func (ctx *Context) switchScope(parent *varScope, vmgr *varManager, ins []reflect.Type) (old savedScopeCtx) {
 	old.base = ctx.base
 	old.ip = ctx.ip
 	old.varScope = ctx.varScope
+	old.args = ctx.args
 	ctx.base = len(ctx.data)
 	ctx.parent = parent
 	ctx.vars = vmgr.makeVarsContext(ctx)
 
-	size := ctx.Len()
-	ctx.addrs = make([]reflect.Value, size)
-	for i := size; i > 0; i-- {
-		v := reflect.ValueOf(ctx.Get(-i))
-		if v.Kind() == reflect.Struct {
-			nv := reflect.New(v.Type()).Elem()
-			nv.Set(v)
-			ctx.addrs[size-i] = nv
+	ctx.args = make([]reflect.Value, len(ins))
+	off := len(ctx.data) - len(ins)
+	for i, in := range ins {
+		v := reflect.ValueOf(ctx.data[off+i])
+		if v.Kind() == reflect.Ptr {
+			ctx.args[i] = v
 		} else {
-			ctx.addrs[size-i] = v
+			ctx.args[i] = reflect.New(in).Elem()
+			if v.IsValid() {
+				ctx.args[i].Set(v)
+			}
 		}
 	}
 	return
@@ -116,7 +118,7 @@ func (ctx *Context) restoreScope(old savedScopeCtx) {
 	ctx.ip = old.ip
 	ctx.base = old.base
 	ctx.varScope = old.varScope
-	ctx.addrs = old.addrs
+	ctx.args = old.args
 }
 
 func (ctx *Context) getScope(local bool) *varScope {

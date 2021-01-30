@@ -60,7 +60,7 @@ func (c *ForPhrase) exec(ctx *Context) {
 		}
 		if blockScope { // TODO: move out of `for` statement
 			parent := ctx.varScope
-			old = ctx.switchScope(&parent, &c.block.varManager)
+			old = ctx.switchScope(&parent, &c.block.varManager, nil)
 		}
 		if ipCond > 0 {
 			ctx.Exec(ip, ipCond)

@@ -23,34 +23,57 @@ import (
 	"github.com/qiniu/x/log"
 )
 
-func execLoad(i Instr, p *Context) {
-	idx := int32(i) << bitsOp >> bitsOp
-	index := p.base + int(idx)
-	if p.addrs[index].Kind() == reflect.Struct {
-		p.Push(p.addrs[index].Interface())
-	} else {
-		p.Push(p.data[index])
+// tStackAddr represents a stack address.
+type tStackAddr uint32
+
+// makeStackAddr creates a stack address.
+func makeStackAddr(scope, idx uint32) tStackAddr {
+	if scope >= (1<<bitsStackScope) || idx > bitsOpStackOperand {
+		log.Panicln("makeStackAddr failed: invalid scope or stack index -", scope, idx)
 	}
+	return tStackAddr((scope << bitsOpStackShift) | idx)
+}
+
+func getStackScope(p *Context, addr tStackAddr) (*varScope, uint32) {
+	depth := uint32(addr) >> bitsOpStackShift
+	idx := uint32(addr & bitsOpStackOperand)
+	ctxDepth := p.getNestDepth()
+	if depth == ctxDepth {
+		return &p.varScope, idx
+	}
+	scope := ctxDepth - depth
+	pp := p.parent
+	for scope > 1 {
+		pp = pp.parent
+		scope--
+	}
+	return pp, idx
+}
+
+func execLoad(i Instr, p *Context) {
+	idx := i & bitsOperand
+	scope, id := getStackScope(p, tStackAddr(idx))
+	index := len(scope.args) - int(id)
+	p.Push(scope.args[index].Interface())
 }
 
 func execAddr(i Instr, p *Context) {
-	idx := int32(i) << bitsOp >> bitsOp
-	index := (p.base + int(idx))
-	if p.addrs[index].Kind() == reflect.Struct {
-		p.Push(p.addrs[index].Addr().Interface())
+	idx := i & bitsOperand
+	scope, id := getStackScope(p, tStackAddr(idx))
+	index := len(scope.args) - int(id)
+	v := scope.args[index]
+	if v.Kind() != reflect.Ptr {
+		p.Push(v.Addr().Interface())
 	} else {
-		p.Push(p.data[index])
+		p.Push(v.Interface())
 	}
 }
 
 func execStore(i Instr, p *Context) {
-	idx := int32(i) << bitsOp >> bitsOp
-	index := p.base + int(idx)
-	if p.addrs[index].Kind() == reflect.Struct {
-		p.addrs[index].Set(reflect.ValueOf(p.Pop()))
-	} else {
-		p.data[index] = p.Pop()
-	}
+	idx := i & bitsOperand
+	scope, id := getStackScope(p, tStackAddr(idx))
+	index := len(scope.args) - int(id)
+	p.args[index].Set(reflect.ValueOf(p.Pop()))
 }
 
 const (
@@ -317,7 +340,7 @@ func (p *FuncInfo) execFunc(ctx *Context) {
 }
 
 func (p *FuncInfo) exec(ctx *Context, parent *varScope) {
-	old := ctx.switchScope(parent, &p.varManager)
+	old := ctx.switchScope(parent, &p.varManager, p.in)
 	p.execFunc(ctx)
 	if ctx.ip != ipReturnN {
 		ctx.data = ctx.data[:ctx.base-len(p.in)]
@@ -466,19 +489,22 @@ func (p *Builder) Return(n int32) *Builder {
 
 // Load instr
 func (p *Builder) Load(fun *FuncInfo, idx int32) *Builder {
-	p.code.data = append(p.code.data, (opLoad<<bitsOpShift)|(uint32(idx)&bitsOperand))
+	addr := makeStackAddr(fun.nestDepth, uint32(-idx))
+	p.code.data = append(p.code.data, (opLoad<<bitsOpShift)|uint32(addr))
 	return p
 }
 
 // Addr instr
 func (p *Builder) Addr(fun *FuncInfo, idx int32) *Builder {
-	p.code.data = append(p.code.data, (opAddr<<bitsOpShift)|(uint32(idx)&bitsOperand))
+	addr := makeStackAddr(fun.nestDepth, uint32(-idx))
+	p.code.data = append(p.code.data, (opAddr<<bitsOpShift)|uint32(addr))
 	return p
 }
 
 // Store instr
 func (p *Builder) Store(fun *FuncInfo, idx int32) *Builder {
-	p.code.data = append(p.code.data, (opStore<<bitsOpShift)|(uint32(idx)&bitsOperand))
+	addr := makeStackAddr(fun.nestDepth, uint32(-idx))
+	p.code.data = append(p.code.data, (opStore<<bitsOpShift)|uint32(addr))
 	return p
 }
 
