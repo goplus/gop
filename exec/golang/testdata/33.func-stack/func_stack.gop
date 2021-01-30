@@ -9,10 +9,10 @@ func test(v interface{}, s1 string, s2 string) {
 	func(s string) {
 		sets(&s, "s00")
 		sets(&s1, "s11")
-		func() {
+		func(n int) {
 			setv(&v)
-			println("func", v, s, s1, s2)
-		}()
+			println("func", n, v, s, s1, s2)
+		}(10)
 	}("s0")
 	println(v, s1, s2)
 }
