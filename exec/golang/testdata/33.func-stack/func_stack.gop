@@ -1,0 +1,19 @@
+func setv(v *interface{}) {
+	*v = 100
+}
+func sets(s *string, n string) {
+	*s = n
+}
+func test(v interface{}, s1 string, s2 string) {
+	println(v, s1, s2)
+	func(s string) {
+		sets(&s, "s00")
+		sets(&s1, "s11")
+		func() {
+			setv(&v)
+			println("func", v, s, s1, s2)
+		}()
+	}("s0")
+	println(v, s1, s2)
+}
+test(nil, "s1", "s2")
