@@ -460,23 +460,30 @@ func TestTakeAddrInFunc(t *testing.T) {
 		*s = "s0"
 		return 100
 	}
+	func setv(v *int) {
+		*v = 20
+	}
 	func set2(s *string, m *M) int {
 		*s = "s3"
 		m.Y = -2
 		return 200
 	}
-	func f2(s string, s2 string, m M) {
-		func() {
-			println("hello",set(&s,m))
+	func f2(s1 string, s2 string, m M) {
+		func(v int) {
+			println("hello", v, set(&s1,m))
 			m.X = -1
-			println(s, s2, m)
-		}()
+			s2 = "s22"
+			setv(&v)
+			println(s1, s2, v, m)
+		}(10)
+		s1 = "s11"
+		println(s1, s2, m)
 		set2(&s2,&m)
-		println(s, s2, m)
+		println(s1, s2, m)
 	}
 	m := M{1, 2}
 	f2("s1", "s2", m)
-	`, "hello 100\ns0 s2 {-1 2}\ns0 s3 {-1 -2}\n")
+	`, "hello 10 100\ns0 s22 20 {-1 2}\ns11 s22 {-1 2}\ns11 s3 {-1 -2}\n")
 }
 
 func TestTypeCast(t *testing.T) {
