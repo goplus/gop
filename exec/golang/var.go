@@ -142,28 +142,28 @@ func (p *Builder) InCurrentCtx(v exec.Var) bool {
 
 // Load instr
 func (p *Builder) Load(fun *FuncInfo, idx int32) *Builder {
-	p.rhs.Push(p.argIdent(idx))
+	p.rhs.Push(p.argIdent(fun, idx))
 	return p
 }
 
 // Addr instr
 func (p *Builder) Addr(fun *FuncInfo, idx int32) *Builder {
-	p.rhs.Push(p.argIdent(idx))
+	p.rhs.Push(p.argIdent(fun, idx))
 	return p
 }
 
 // Store instr
 func (p *Builder) Store(fun *FuncInfo, idx int32) *Builder {
-	p.lhs.Push(p.argIdent(idx))
+	p.lhs.Push(p.argIdent(fun, idx))
 	return p
 }
 
-func (p *Builder) argIdent(idx int32) *ast.Ident {
-	i := len(p.cfun.in) + int(idx)
+func (p *Builder) argIdent(fun *FuncInfo, idx int32) *ast.Ident {
+	i := len(fun.in) + int(idx)
 	if i == -1 {
 		return Ident("_recv")
 	}
-	return Ident(toArg(i))
+	return Ident(toArg(i, fun.nestDepth))
 }
 
 // LoadVar instr

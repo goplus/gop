@@ -17,10 +17,10 @@
 package golang
 
 import (
+	"fmt"
 	"go/ast"
 	"go/token"
 	"reflect"
-	"strconv"
 
 	"github.com/goplus/gop/exec.spec"
 	"github.com/goplus/gop/exec/golang/internal/go/printer"
@@ -45,15 +45,16 @@ type FuncInfo struct {
 	in       []reflect.Type
 	out      []exec.Var
 	scopeCtx
+	nestDepth uint32
 	nVariadic uint16
 }
 
 // NewFunc create a Go+ function.
 func NewFunc(name string, nestDepth uint32, isMethod int) *FuncInfo {
 	if name != "" {
-		return &FuncInfo{name: name, isMethod: isMethod}
+		return &FuncInfo{name: name, isMethod: isMethod, nestDepth: nestDepth}
 	}
-	return &FuncInfo{closure: &printer.ReservedExpr{}}
+	return &FuncInfo{closure: &printer.ReservedExpr{}, nestDepth: nestDepth}
 }
 
 func (p *FuncInfo) getFuncExpr(recv ast.Expr) ast.Expr {
@@ -275,10 +276,10 @@ func toFuncType(p *Builder, typ *FuncInfo) *ast.FuncType {
 			numIn--
 		}
 		for i := 0; i < numIn; i++ {
-			params[i] = Field(p, toArg(i), typ.in[i], "", false)
+			params[i] = Field(p, toArg(i, typ.nestDepth), typ.in[i], "", false)
 		}
 		if variadic {
-			params[numIn] = Field(p, toArg(numIn), typ.in[numIn], "", true)
+			params[numIn] = Field(p, toArg(numIn, typ.nestDepth), typ.in[numIn], "", true)
 		}
 	}
 	if numOut > 0 {
@@ -295,6 +296,6 @@ func toFuncType(p *Builder, typ *FuncInfo) *ast.FuncType {
 	}
 }
 
-func toArg(i int) string {
-	return "_arg_" + strconv.Itoa(i)
+func toArg(i int, nestDepth uint32) string {
+	return fmt.Sprintf("_args_%v_%v", nestDepth, i)
 }
