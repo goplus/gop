@@ -73,7 +73,7 @@ func execStore(i Instr, p *Context) {
 	idx := i & bitsOperand
 	scope, id := getStackScope(p, tStackAddr(idx))
 	index := len(scope.args) - int(id)
-	p.args[index].Set(reflect.ValueOf(p.Pop()))
+	scope.args[index].Set(reflect.ValueOf(p.Pop()))
 }
 
 const (
