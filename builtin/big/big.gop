@@ -1,0 +1,200 @@
+package _
+
+import (
+	"math/big"
+)
+
+// ----------------------------------------------------------------------------
+
+type +bigint *big.Int
+type +bigrat *big.Rat
+
+func +tmpint(a, b bigint) bigint {
+	if istmp(a) {
+		return a
+	}
+	if istmp(b) {
+		return b
+	}
+	return new(big.Int)
+}
+
+func +tmpint1(a bigint) bigint {
+	if istmp(a) {
+		return a
+	}
+	return new(big.Int)
+}
+
+func +tmprat(a, b bigrat) bigrat {
+	if istmp(a) {
+		return a
+	}
+	if istmp(b) {
+		return b
+	}
+	return new(big.Rat)
+}
+
+func +tmprat1(a bigrat) bigrat {
+	if istmp(a) {
+		return a
+	}
+	return new(big.Rat)
+}
+
+// ----------------------------------------------------------------------------
+
+func (a bigint) + (b bigint) bigint {
+	return tmpint(a, b).Add(a, b)
+}
+
+func (a bigint) - (b bigint) bigint {
+	return tmpint(a, b).Sub(a, b)
+}
+
+func (a bigint) * (b bigint) bigint {
+	return tmpint(a, b).Mul(a, b)
+}
+
+func (a bigint) / (b bigint) bigint {
+	return tmpint(a, b).Quo(a, b)
+}
+
+func (a bigint) % (b bigint) bigint {
+	return tmpint(a, b).Rem(a, b)
+}
+
+func (a bigint) | (b bigint) bigint {
+	return tmpint(a, b).Or(a, b)
+}
+
+func (a bigint) ^ (b bigint) bigint {
+	return tmpint(a, b).Xor(a, b)
+}
+
+func (a bigint) & (b bigint) bigint {
+	return tmpint(a, b).And(a, b)
+}
+
+func (a bigint) &^ (b bigint) bigint {
+	return tmpint(a, b).AndNot(a, b)
+}
+
+func (a bigint) << (n bigint) bigint {
+	return tmpint(a, b).Lsh(a, n)
+}
+
+func (a bigint) >> (n uint) bigint {
+	return tmpint(a, b).Rsh(a, n)
+}
+
+func (a bigint) < (b bigint) bool {
+	return a.Cmp(b) < 0
+}
+
+func (a bigint) <= (b bigint) bool {
+	return a.Cmp(b) <= 0
+}
+
+func (a bigint) <= (b bigint) bool {
+	return a.Cmp(b) <= 0
+}
+
+func (a bigint) > (b bigint) bool {
+	return a.Cmp(b) > 0
+}
+
+func (a bigint) >= (b bigint) bool {
+	return a.Cmp(b) >= 0
+}
+
+func (a bigint) == (b bigint) bool {
+	return a.Cmp(b) == 0
+}
+
+func (a bigint) != (b bigint) bool {
+	return a.Cmp(b) != 0
+}
+
+func -(a bigint) bigint {
+	return tmpint1(a).Neg(a)
+}
+
+func ^(a bigint) bigint {
+	return tmpint1(a).Not(a)
+}
+
+// ----------------------------------------------------------------------------
+
+func (a bigrat) + (b bigrat) bigrat {
+	return tmprat(a, b).Add(a, b)
+}
+
+func (a bigrat) - (b bigrat) bigrat {
+	return tmprat(a, b).Sub(a, b)
+}
+
+func (a bigrat) * (b bigrat) bigrat {
+	return tmprat(a, b).Mul(a, b)
+}
+
+func (a bigrat) / (b bigrat) bigrat {
+	return tmprat(a, b).Quo(a, b)
+}
+
+func (a bigrat) < (b bigrat) bool {
+	return a.Cmp(b) < 0
+}
+
+func (a bigrat) <= (b bigrat) bool {
+	return a.Cmp(b) <= 0
+}
+
+func (a bigrat) > (b bigrat) bool {
+	return a.Cmp(b) > 0
+}
+
+func (a bigrat) >= (b bigrat) bool {
+	return a.Cmp(b) >= 0
+}
+
+func (a bigrat) == (b bigrat) bool {
+	return a.Cmp(b) == 0
+}
+
+func (a bigrat) != (b bigrat) bool {
+	return a.Cmp(b) != 0
+}
+
+func -(a bigrat) bigrat {
+	return tmprat1(a).Neg(a)
+}
+
+func /(a bigrat) bigrat {
+	return tmprat1(a).Inv(a)
+}
+
+// ----------------------------------------------------------------------------
+
+func bigint() Int {
+	return new(big.Int)
+}
+
+func bigint(x int64) Int {
+	return big.NewInt(x)
+}
+
+func bigrat() bigrat {
+	return new(big.Rat)
+}
+
+func bigrat(a bigint) bigrat {
+	return new(big.Rat).SetInt(a)
+}
+
+func bigrat(a, b int64) bigrat {
+	return big.NewRat(a, b)
+}
+
+// ----------------------------------------------------------------------------
