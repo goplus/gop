@@ -92,8 +92,8 @@ func parserImport(line string) (name string, path string, err error) {
 	} else {
 		path, err = strconv.Unquote(line)
 		name = path
-		if pos := strings.Index(path, "/"); pos > 0 {
-			name = path[:pos]
+		if pos := strings.LastIndex(path, "/"); pos > 0 {
+			name = path[pos+1:]
 		}
 	}
 	return
