@@ -527,6 +527,14 @@ func TestSlice(t *testing.T) {
 		`,
 		"x: [1 0 3.4 5]\n",
 	)
+	cltest.Expect(t, `
+		x := []float64{1:1,3:3,4}
+		println("x:", x)
+		y := []float64{3:3,4,1:1}
+		println("y:", x)
+		`,
+		"x: [0 1 0 3 4]\ny: [0 1 0 3 4]\n",
+	)
 }
 
 func TestArray(t *testing.T) {
@@ -537,6 +545,14 @@ func TestArray(t *testing.T) {
 		println("y:", y)
 		`,
 		"x: [1 2.3 3.6 0]\ny: [1 2.3 3.6]\n",
+	)
+	cltest.Expect(t, `
+		x := [5]float64{1:1,3:3,4}
+		println("x:", x)
+		y := [5]float64{3:3,4,1:1}
+		println("y:", x)
+		`,
+		"x: [0 1 0 3 4]\ny: [0 1 0 3 4]\n",
 	)
 	cltest.Expect(t, `
 		x := [...]float64{1, 3: 3.4, 5}
