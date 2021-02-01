@@ -890,15 +890,15 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 
 	typ := ctx.infer.Get(-1).(iValue).Type()
 	typElem := typ.Elem()
+	if typ.Kind() == reflect.Array {
+		ctx.checkLoadAddr = true
+	}
 	if typ.Kind() == reflect.Ptr {
 		if typElem.Kind() != reflect.Array {
 			logPanic(ctx, v, `type %v does not support indexing`, typ)
 		}
 		typ = typElem
 		typElem = typElem.Elem()
-	}
-	if typ.Kind() == reflect.Array {
-		ctx.checkLoadAddr = true
 	}
 	exprX()
 	ctx.checkLoadAddr = false
