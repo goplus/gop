@@ -313,7 +313,6 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 					elts[n] = e
 				}
 			}
-			n++
 			typElem := typSlice.Elem()
 			for _, elt := range elts {
 				if elt != nil {
@@ -323,7 +322,7 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 					ctx.out.Zero(typElem)
 				}
 			}
-			ctx.out.MakeArray(typSlice, n)
+			ctx.out.MakeArray(typSlice, nLen)
 		}
 	case reflect.Map:
 		typMap := typ.(reflect.Type)

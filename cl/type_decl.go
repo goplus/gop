@@ -289,12 +289,20 @@ func toArrayType(ctx *blockCtx, v *ast.ArrayType) iType {
 
 func toBoundArrayLen(ctx *blockCtx, v *ast.CompositeLit) int {
 	n := -1
+	var max int
 	for _, elt := range v.Elts {
 		if e, ok := elt.(*ast.KeyValueExpr); ok {
-			n = toInt(ctx, e.Key)
+			i := toInt(ctx, e.Key)
+			if i < n {
+				max = n
+			}
+			n = i
 		} else {
 			n++
 		}
+	}
+	if n < max {
+		n = max
 	}
 	return n + 1
 }
