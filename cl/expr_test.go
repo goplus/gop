@@ -533,11 +533,10 @@ func TestArray(t *testing.T) {
 	cltest.Expect(t, `
 		x := [4]float64{1, 2.3, 3.6}
 		println("x:", x)
-
 		y := [...]float64{1, 2.3, 3.6}
 		println("y:", y)
 		`,
-		"x: [2.3 3.6 0 0]\ny: [1 2.3 3.6]\n",
+		"x: [1 2.3 3.6 0]\ny: [1 2.3 3.6]\n",
 	)
 	cltest.Expect(t, `
 		x := [...]float64{1, 3: 3.4, 5}
