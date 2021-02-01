@@ -300,12 +300,7 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 		}
 		ctx.infer.Push(&goValue{t: typSlice})
 		return func() {
-			var nLen int
-			if kind == reflect.Array {
-				nLen = typSlice.Len()
-			} else {
-				nLen = toBoundArrayLen(ctx, v)
-			}
+			nLen := toBoundArrayLen(ctx, v)
 			n := -1
 			elts := make([]ast.Expr, nLen)
 			for _, elt := range v.Elts {
