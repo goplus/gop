@@ -25,6 +25,7 @@ import (
 	"github.com/goplus/gop/ast/astutil"
 	"github.com/goplus/gop/exec.spec"
 	"github.com/goplus/gop/token"
+	"github.com/goplus/reflectx"
 	"github.com/qiniu/x/ctype"
 	"github.com/qiniu/x/errors"
 	"github.com/qiniu/x/log"
@@ -1347,7 +1348,7 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 		n, t := countPtr(vx.t)
 		autoCall := false
 		name := v.Sel.Name
-		if t.PkgPath() != "" && ast.IsExported(name) || t.PkgPath() == "" {
+		if t.PkgPath() != "" && ast.IsExported(name) || t.PkgPath() == "" || reflectx.IsNamed(t) {
 			if t.Kind() == reflect.Struct {
 				if sf, ok := t.FieldByName(name); ok {
 					ctx.infer.Ret(1, &goValue{t: sf.Type})
