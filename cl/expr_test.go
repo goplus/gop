@@ -1457,6 +1457,24 @@ var testMethodClauses = map[string]testData{
 					m.Foo()
 					println(m)
 					`, "foo 0\n0\n", false},
+	"method typ/ptr info": {`
+					type Pt struct {
+						X int
+						Y int
+					}
+					func (p *Pt) Test() {
+						println(p)
+					}
+					func (p *Pt) Test2() {
+						println(*p)
+					}
+					pt1 := Pt{1,2}
+					pt2 := &Pt{3,4}
+					pt1.Test()
+					pt1.Test2()
+					pt2.Test()
+					pt2.Test2()
+	`, "&{1 2}\n{1 2}\n&{3 4}\n{3 4}\n", false},
 }
 
 func TestMethodCases(t *testing.T) {
