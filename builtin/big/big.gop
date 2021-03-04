@@ -177,11 +177,11 @@ func /(a bigrat) bigrat {
 
 // ----------------------------------------------------------------------------
 
-func bigint() Int {
+func bigint() bigint {
 	return new(big.Int)
 }
 
-func bigint(x int64) Int {
+func bigint(x int64) bigint {
 	return big.NewInt(x)
 }
 
