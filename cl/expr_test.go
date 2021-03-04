@@ -1470,11 +1470,14 @@ var testMethodClauses = map[string]testData{
 					}
 					pt1 := Pt{1,2}
 					pt2 := &Pt{3,4}
+					pt3 := &pt2
 					pt1.Test()
 					pt1.Test2()
 					pt2.Test()
 					pt2.Test2()
-	`, "&{1 2}\n{1 2}\n&{3 4}\n{3 4}\n", false},
+					(*pt3).Test()
+					(*pt3).Test2()
+	`, "&{1 2}\n{1 2}\n&{3 4}\n{3 4}\n&{3 4}\n{3 4}\n", false},
 }
 
 func TestMethodCases(t *testing.T) {
