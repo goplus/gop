@@ -305,6 +305,9 @@ func (p *constVal) bound(t reflect.Type, b exec.Builder) {
 		}
 		return
 	}
+	if kind == reflect.Interface && astutil.IsConstBound(p.kind) {
+		t = exec.TypeFromKind(p.kind)
+	}
 	v := boundConst(p.v, t)
 	p.v, p.kind = v, kind
 	p.reserve.Push(b, v)

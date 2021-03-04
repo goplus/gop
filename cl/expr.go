@@ -1301,6 +1301,10 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 					pushConstVal(ctx.out, ret)
 				}
 			}
+			if t, ok := nv.FindType(name); ok {
+				ctx.infer.Ret(1, &nonValue{t})
+				return nil
+			}
 			addr, kind, ok := nv.Find(name)
 			if !ok {
 				log.Panicln("compileSelectorExpr: not found -", nv.PkgPath(), name)
@@ -1463,6 +1467,11 @@ func compileStarExpr(ctx *blockCtx, v *ast.StarExpr) func() {
 	x := ctx.infer.Get(-1)
 	switch vx := x.(type) {
 	case *nonValue:
+		switch t := vx.v.(type) {
+		case reflect.Type:
+			ctx.infer.Ret(1, &nonValue{reflect.PtrTo(t)})
+			return nil
+		}
 	case *goValue:
 		if vx.Kind() == reflect.Ptr {
 			ctx.infer.Ret(1, &goValue{vx.t.Elem()})
