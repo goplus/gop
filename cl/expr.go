@@ -53,8 +53,11 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compileMode) {
 		compileStarExprLHS(ctx, v, mode)
 	case *ast.ParenExpr:
 		compileExprLHS(ctx, v.X, mode)
+	case *ast.UnaryExpr:
+		ctx.indirect = !ctx.indirect
+		compileExprLHS(ctx, v.X, mode)
 	default:
-		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
+		log.Panicln("compileExprLHS failed: unknown -", reflect.TypeOf(v))
 	}
 }
 

@@ -1783,7 +1783,9 @@ var testStarExprClauses = map[string]testData{
 					println(a)
 					*(p) = 30
 					println(a)
-	`, "20\n30\n", false},
+					*(&a) = 40
+					println(a)
+	`, "20\n30\n40\n", false},
 }
 
 func TestStarExpr(t *testing.T) {
