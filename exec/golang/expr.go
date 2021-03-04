@@ -191,6 +191,11 @@ func Const(p *Builder, val interface{}) ast.Expr {
 	}
 	v := reflect.ValueOf(val)
 	kind := v.Kind()
+	if (kind >= reflect.Chan && kind <= reflect.Slice) || kind == reflect.UnsafePointer {
+		if v.IsNil() {
+			return nilIdent
+		}
+	}
 	if kind == reflect.String {
 		return StringConst(val.(string))
 	}
