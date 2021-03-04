@@ -151,40 +151,40 @@ const (
 	Ptr = exec.Ptr
 )
 
+func execInterfaceEQ(i Instr, p *Context) {
+	n := len(p.data)
+	p.Ret(2, p.data[n-2] == p.data[n-1])
+}
+
+func execInterfaceNE(i Instr, p *Context) {
+	n := len(p.data)
+	p.Ret(2, p.data[n-2] != p.data[n-1])
+}
+
 // -------------------------------------------------------------------------
 func execRefTypeEQ(i Instr, p *Context) {
 	n := len(p.data)
-	arg1 := reflect.ValueOf(p.data[n-2])
-	arg2 := reflect.ValueOf(p.data[n-1])
-	if p.data[n-1] == nil && (arg1.Type().Kind() == reflect.Slice ||
-		arg1.Type().Kind() == reflect.Map ||
-		arg1.Type().Kind() == reflect.Chan ||
-		arg1.Type().Kind() == reflect.Ptr) {
-		p.Ret(2, arg1.IsNil())
-	}
-	if p.data[n-2] == nil && (arg2.Type().Kind() == reflect.Slice ||
-		arg2.Type().Kind() == reflect.Map ||
-		arg2.Type().Kind() == reflect.Chan ||
-		arg2.Type().Kind() == reflect.Ptr) {
-		p.Ret(2, arg2.IsNil())
+	v1 := p.data[n-2]
+	v2 := p.data[n-1]
+	if v1 == nil {
+		p.Ret(2, reflect.ValueOf(v2).IsNil())
+	} else if v2 == nil {
+		p.Ret(2, reflect.ValueOf(v1).IsNil())
+	} else {
+		p.Ret(2, reflect.ValueOf(v1).Pointer() == reflect.ValueOf(v2).Pointer())
 	}
 }
 
-func execRefTypeNEQ(i Instr, p *Context) {
+func execRefTypeNE(i Instr, p *Context) {
 	n := len(p.data)
-	arg1 := reflect.ValueOf(p.data[n-2])
-	arg2 := reflect.ValueOf(p.data[n-1])
-	if p.data[n-1] == nil && (arg1.Type().Kind() == reflect.Slice ||
-		arg1.Type().Kind() == reflect.Map ||
-		arg1.Type().Kind() == reflect.Chan ||
-		arg1.Type().Kind() == reflect.Ptr) {
-		p.Ret(2, !arg1.IsNil())
-	}
-	if p.data[n-2] == nil && (arg2.Type().Kind() == reflect.Slice ||
-		arg2.Type().Kind() == reflect.Map ||
-		arg2.Type().Kind() == reflect.Chan ||
-		arg2.Type().Kind() == reflect.Ptr) {
-		p.Ret(2, !arg2.IsNil())
+	v1 := p.data[n-2]
+	v2 := p.data[n-1]
+	if v1 == nil {
+		p.Ret(2, !reflect.ValueOf(v2).IsNil())
+	} else if v2 == nil {
+		p.Ret(2, !reflect.ValueOf(v1).IsNil())
+	} else {
+		p.Ret(2, reflect.ValueOf(v1).Pointer() != reflect.ValueOf(v2).Pointer())
 	}
 }
 

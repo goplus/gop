@@ -1853,6 +1853,56 @@ func TestRefType(t *testing.T) {
 	testScripts(t, "TestRefType", testRefTypeClauses)
 }
 
+func TestMatchType(t *testing.T) {
+	cltest.Expect(t, `
+		println(nil == nil,nil != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
+		var i interface{}
+		println(i == nil,i != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
+		var i *int
+		println(i == nil,i != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
+		var i chan int
+		println(i == nil,i != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
+		var i func()
+		println(i == nil,i != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
+		var i []int
+		println(i == nil,i != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
+		var i map[int]string
+		println(i == nil,i != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
+		var v int
+		println(v == nil)
+	`, "", "invalid operator: v == nil (mismatched types int and nil)")
+	cltest.Expect(t, `
+		var v int
+		println(nil == v)
+	`, "", "invalid operator: nil == v (mismatched types nil and int)")
+	cltest.Expect(t, `
+		var a int
+		var b uint8
+		println(a == b)
+	`, "", "invalid operator: a == b (mismatched types int and uint8)")
+	cltest.Expect(t, `
+		var a int
+		switch a {
+			case 0:
+			case uint8(1):
+		}
+	`, "", "invalid case uint8(1) in switch on a (mismatched types int and uint8)")
+}
+
 func testScripts(t *testing.T, testName string, scripts map[string]testData) {
 	for name, script := range scripts {
 		t.Log("Run " + testName + "---" + name)
