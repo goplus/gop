@@ -1776,6 +1776,14 @@ var testStarExprClauses = map[string]testData{
 					a := 10
 					println(*(*int)(&a))
 					`, "10\n", false},
+	"start addr set": {`
+					a := 10
+					p := &a
+					*p = 20
+					println(a)
+					*(p) = 30
+					println(a)
+	`, "20\n30\n", false},
 }
 
 func TestStarExpr(t *testing.T) {

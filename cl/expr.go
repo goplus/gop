@@ -51,6 +51,8 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compileMode) {
 		compileSelectorExprLHS(ctx, v, mode)
 	case *ast.StarExpr:
 		compileStarExprLHS(ctx, v, mode)
+	case *ast.ParenExpr:
+		compileExprLHS(ctx, v.X, mode)
 	default:
 		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
 	}
@@ -140,7 +142,11 @@ func compileIdentLHS(ctx *blockCtx, name string, mode compileMode) {
 	ctx.infer.PopN(1)
 	if v, ok := addr.(*execVar); ok {
 		if mode == token.ASSIGN || mode == token.DEFINE {
-			ctx.out.StoreVar(v.v)
+			if ctx.indirect {
+				ctx.out.LoadVar(v.v).AddrOp(kindOf(typ), exec.OpAssign)
+			} else {
+				ctx.out.StoreVar(v.v)
+			}
 		} else if op, ok := addrops[mode]; ok {
 			typ := v.v.Type()
 			if typ.Kind() == reflect.Ptr {
