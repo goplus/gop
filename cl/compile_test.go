@@ -294,3 +294,30 @@ func TestStruct(t *testing.T) {
 		t.Fatal("n:", v)
 	}
 }
+
+func TestImports(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := parser.Parse(fset, "", `fmt.Println("hello")`, 0)
+	if err != nil || len(pkgs) != 1 {
+		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+	}
+
+	bar := pkgs["main"]
+	b := exec.NewBuilder(nil)
+	imports := make(map[string]string)
+	imports["fmt"] = "fmt"
+	_, err = NewPackageEx(b.Interface(), bar, fset, PkgActClMain, imports)
+	if err != nil {
+		t.Fatal("Compile failed:", err)
+	}
+	code := b.Resolve()
+
+	ctx := exec.NewContext(code)
+	ctx.Exec(0, code.Len())
+	if v := ctx.Get(-1); v != nil {
+		t.Fatal("error:", v)
+	}
+	if v := ctx.Get(-2); v != int(6) {
+		t.Fatal("n:", v)
+	}
+}
