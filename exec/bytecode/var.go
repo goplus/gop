@@ -99,12 +99,7 @@ func execOpAddrVal(i Instr, p *Context) {
 func execOpAssign(i Instr, p *Context) {
 	n := len(p.data)
 	v := reflect.ValueOf(p.data[n-2])
-	typ := v.Type()
-	x := reflect.ValueOf(p.data[n-1]).Elem()
-	for x.Type() != typ {
-		x = x.Elem()
-	}
-	x.Set(v)
+	reflect.ValueOf(p.data[n-1]).Elem().Set(v)
 	p.data = p.data[:n-2]
 }
 

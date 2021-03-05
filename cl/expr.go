@@ -156,7 +156,8 @@ func compileIdentLHS(ctx *blockCtx, name string, mode compileMode) {
 		}
 	}
 
-	typ := addr.getType()
+	addrTyp := addr.getType()
+	typ := addrTyp
 	for i := 0; i < ctx.indirect; i++ {
 		typ = typ.Elem()
 	}
@@ -165,7 +166,13 @@ func compileIdentLHS(ctx *blockCtx, name string, mode compileMode) {
 	if v, ok := addr.(*execVar); ok {
 		if mode == token.ASSIGN || mode == token.DEFINE {
 			if ctx.indirect > 0 {
-				ctx.out.LoadVar(v.v).AddrOp(kindOf(typ), exec.OpAssign)
+				ctx.out.LoadVar(v.v)
+				elem := addrTyp
+				for i := 0; i < ctx.indirect-1; i++ {
+					elem = elem.Elem()
+					ctx.out.AddrOp(kindOf(elem), exec.OpAddrVal)
+				}
+				ctx.out.AddrOp(kindOf(typ), exec.OpAssign)
 			} else {
 				ctx.out.StoreVar(v.v)
 			}
