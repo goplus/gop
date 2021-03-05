@@ -1772,11 +1772,11 @@ var testStarExprClauses = map[string]testData{
 					println(a1, *c.b, *c.m["foo"], *c.s[0])
 	
 						`, "3 3 8 11\n", false},
-	"start expr ptr conv": {`
+	"star expr ptr conv": {`
 					a := 10
 					println(*(*int)(&a))
 					`, "10\n", false},
-	"start addr set": {`
+	"star expr ptr set": {`
 					a := 10
 					p := &a
 					*p = 20
@@ -1786,6 +1786,14 @@ var testStarExprClauses = map[string]testData{
 					*(&a) = 40
 					println(a)
 	`, "20\n30\n40\n", false},
+	"star expr call set": {`
+					func test(v *int) *int {
+						return v
+					}
+					v := 100
+					*test(&v) = 200
+					println(v)
+	`, "200\n", false},
 }
 
 func TestStarExpr(t *testing.T) {
