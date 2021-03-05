@@ -1004,7 +1004,13 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 			logIllTypeMapIndexPanic(ctx, v, t, typIdx)
 		}
 		if ctx.indirect > 0 {
-			ctx.out.MapIndex(false).AddrOp(kindOf(typElem), exec.OpAssign)
+			ctx.out.MapIndex(false)
+			elem := styp
+			for i := 0; i < ctx.indirect-1; i++ {
+				elem = elem.Elem()
+				ctx.out.AddrOp(kindOf(elem), exec.OpAddrVal)
+			}
+			ctx.out.AddrOp(kindOf(typElem), exec.OpAssign)
 		} else {
 			ctx.out.SetMapIndex()
 		}
