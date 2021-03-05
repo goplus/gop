@@ -71,12 +71,18 @@ func compileCallExprLHS(ctx *blockCtx, v *ast.CallExpr, mode token.Token) {
 	compileCallExpr(ctx, v, callExpr)()
 	rv := ctx.infer.Get(-1)
 	lv := ctx.infer.Get(-2)
-	typ := boundType(rv.(iValue))
-	if ctx.indirect > 0 {
+	rt := boundType(rv.(iValue))
+	typ := rt
+	for i := 0; i < ctx.indirect; i++ {
 		typ = typ.Elem()
 	}
 	checkType(typ, lv, ctx.out)
 	ctx.infer.PopN(2)
+	elem := rt
+	for i := 0; i < ctx.indirect-1; i++ {
+		elem = elem.Elem()
+		ctx.out.AddrOp(kindOf(elem), exec.OpAddrVal)
+	}
 	ctx.out.AddrOp(kindOf(typ), exec.OpAssign)
 }
 
