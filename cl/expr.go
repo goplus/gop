@@ -945,7 +945,8 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 	}
 	exprX()
 	ctx.checkLoadAddr = false
-	if ctx.indirect > 0 {
+	styp := typElem
+	for i := 0; i < ctx.indirect; i++ {
 		typElem = typElem.Elem()
 	}
 	if cons, ok := val.(*constVal); ok {
@@ -962,7 +963,13 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 		if cons, ok := i.(*constVal); ok {
 			n := boundConst(cons.v, exec.TyInt)
 			if ctx.indirect > 0 {
-				ctx.out.Index(n.(int)).AddrOp(kindOf(typElem), exec.OpAssign)
+				ctx.out.Index(n.(int))
+				elem := styp
+				for i := 0; i < ctx.indirect-1; i++ {
+					elem = elem.Elem()
+					ctx.out.AddrOp(kindOf(elem), exec.OpAddrVal)
+				}
+				ctx.out.AddrOp(kindOf(typElem), exec.OpAssign)
 			} else {
 				ctx.out.SetIndex(n.(int))
 			}
