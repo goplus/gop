@@ -1827,6 +1827,17 @@ var testStarExprClauses = map[string]testData{
 					**pt.X = 30
 					println(**pt.X)
 	`, "30\n", false},
+	"star stack var multi indirect": {`
+					func test(v ***int) {
+						***v = 30
+						println(***v)
+					}
+					v := 10
+					p1 := &v
+					p2 := &p1
+					test(&p2)
+					println(v)
+	`, "30\n30\n", false},
 }
 
 func TestStarExpr(t *testing.T) {
