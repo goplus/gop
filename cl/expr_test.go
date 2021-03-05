@@ -1804,7 +1804,7 @@ var testStarExprClauses = map[string]testData{
 					***p2 = 30
 					println(v)
 	`, "30\n", false},
-	"start expr multi indirect call": {`
+	"star expr multi indirect call": {`
 					func test(v **int) **int {
 						return v
 					}
@@ -1813,6 +1813,19 @@ var testStarExprClauses = map[string]testData{
 					p1 := &p
 					**test(p1) = 30
 					println(v)
+	`, "30\n", false},
+	"star selection expr multi indirect": {`
+					type Point struct {
+						X **int
+						Y int
+					}
+					v := 10
+					p1 := &v
+					p2 := &p1
+					pt := &Point{}
+					pt.X = p2
+					**pt.X = 30
+					println(**pt.X)
 	`, "30\n", false},
 }
 
