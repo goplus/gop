@@ -984,7 +984,13 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 			}
 		}
 		if ctx.indirect > 0 {
-			ctx.out.Index(-1).AddrOp(kindOf(typElem), exec.OpAssign)
+			ctx.out.Index(-1)
+			elem := styp
+			for i := 0; i < ctx.indirect-1; i++ {
+				elem = elem.Elem()
+				ctx.out.AddrOp(kindOf(elem), exec.OpAddrVal)
+			}
+			ctx.out.AddrOp(kindOf(typElem), exec.OpAssign)
 		} else {
 			ctx.out.SetIndex(-1)
 		}

@@ -1845,9 +1845,12 @@ var testStarExprClauses = map[string]testData{
 					p3 := &p1
 					p4 := &p2
 					v := []***int{&p3, &p4}
+					index := 1
 					***v[0] = 30
+					***v[index] = 40
 					println(***v[0])
-	`, "30\n", false},
+					println(***v[index])
+	`, "30\n40\n", false},
 }
 
 func TestStarExpr(t *testing.T) {
