@@ -1796,6 +1796,14 @@ var testStarExprClauses = map[string]testData{
 					*((*int)(&v)) = 300
 					println(v)
 	`, "200\n300\n", false},
+	"star expr multi indirect": {`
+					v := 10
+					p := &v
+					p1 := &p
+					p2 := &p1
+					***p2 = 30
+					println(v)
+	`, "30\n", false},
 }
 
 func TestStarExpr(t *testing.T) {
