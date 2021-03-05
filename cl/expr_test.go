@@ -1838,13 +1838,26 @@ var testStarExprClauses = map[string]testData{
 					test(&p2)
 					println(v)
 	`, "30\n30\n", false},
-	"star index multi indirect": {`
+	"star slice multi indirect": {`
 					var v1, v2 int
 					p1 := &v1
 					p2 := &v2
 					p3 := &p1
 					p4 := &p2
 					v := []***int{&p3, &p4}
+					index := 1
+					***v[0] = 30
+					***v[index] = 40
+					println(***v[0])
+					println(***v[index])
+	`, "30\n40\n", false},
+	"star array multi indirect": {`
+					var v1, v2 int
+					p1 := &v1
+					p2 := &v2
+					p3 := &p1
+					p4 := &p2
+					v := [2]***int{&p3, &p4}
 					index := 1
 					***v[0] = 30
 					***v[index] = 40
