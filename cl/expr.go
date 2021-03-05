@@ -195,7 +195,12 @@ func compileIdentLHS(ctx *blockCtx, name string, mode compileMode) {
 	} else {
 		if mode == token.ASSIGN || mode == token.DEFINE {
 			if ctx.indirect > 0 {
-				ctx.out.Load(addr.(*stackVar).index).AddrOp(kindOf(addr.(*stackVar).getType()), exec.OpAssign)
+				ctx.out.Load(addr.(*stackVar).index)
+				for i := 0; i < ctx.indirect-1; i++ {
+					typ = reflect.PtrTo(typ)
+					ctx.out.AddrOp(kindOf(typ), exec.OpAddrVal)
+				}
+				ctx.out.AddrOp(kindOf(addrTyp), exec.OpAssign)
 			} else {
 				ctx.out.Store(addr.(*stackVar).index)
 			}
