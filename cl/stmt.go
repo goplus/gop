@@ -651,6 +651,7 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 	}
 	count := len(expr.Lhs)
 	ctx.underscore = 0
+	ctx.indirect = 0
 	for i := len(expr.Lhs) - 1; i >= 0; i-- {
 		compileExprLHS(ctx, expr.Lhs[i], expr.Tok)
 	}
