@@ -184,7 +184,7 @@ type blockCtx struct {
 	syms            map[string]iSymbol
 	noExecCtx       bool
 	takeAddr        bool
-	indirect        bool
+	indirect        int
 	checkFlag       bool
 	checkLoadAddr   bool
 	fieldStructType reflect.Type
