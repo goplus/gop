@@ -1793,7 +1793,9 @@ var testStarExprClauses = map[string]testData{
 					v := 100
 					*test(&v) = 200
 					println(v)
-	`, "200\n", false},
+					*((*int)(&v)) = 300
+					println(v)
+	`, "200\n300\n", false},
 }
 
 func TestStarExpr(t *testing.T) {
