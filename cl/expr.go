@@ -1217,7 +1217,7 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compileMode
 			if t.Kind() == reflect.Struct {
 				if sf, ok := t.FieldByName(name); ok {
 					typ := sf.Type
-					if ctx.indirect > 0 {
+					for i := 0; i < ctx.indirect; i++ {
 						typ = typ.Elem()
 					}
 					checkType(typ, in, ctx.out)
@@ -1234,7 +1234,13 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compileMode
 					}
 					ctx.checkLoadAddr = false
 					if ctx.indirect > 0 {
-						ctx.out.LoadField(fieldStructType, fieldIndex).AddrOp(kindOf(typ), exec.OpAssign)
+						ctx.out.LoadField(fieldStructType, fieldIndex)
+						elem := sf.Type
+						for i := 0; i < ctx.indirect-1; i++ {
+							elem = elem.Elem()
+							ctx.out.AddrOp(kindOf(elem), exec.OpAddrVal)
+						}
+						ctx.out.AddrOp(kindOf(typ), exec.OpAssign)
 					} else {
 						ctx.out.StoreField(fieldStructType, fieldIndex)
 					}
