@@ -26,22 +26,6 @@ import (
 
 func execGoFunc(i Instr, p *Context) {
 	idx := i & bitsOperand
-	info := gofuns[idx]
-	if info.Pkg != nil && info.Pkg.pkgPath == "unsafe" {
-		switch info.Name {
-		case "Sizeof":
-			args := p.GetArgs(1)
-			ret0 := reflect.TypeOf(args[0]).Size()
-			p.Ret(1, ret0)
-		case "Alignof":
-			args := p.GetArgs(1)
-			ret0 := uintptr(reflect.TypeOf(args[0]).Align())
-			p.Ret(1, ret0)
-		case "Offsetof":
-			p.Ret(1, p.fdoff)
-		}
-		return
-	}
 	gofuns[idx].exec(0, p)
 }
 
@@ -84,7 +68,6 @@ func execLoadField(i Instr, p *Context) {
 	index := p.Pop()
 	v := reflect.ValueOf(p.Pop())
 	v = toElem(v)
-	p.fdoff = v.Type().FieldByIndex(index.([]int)).Offset
 	p.Push(reflectx.FieldByIndex(v, index.([]int)).Interface())
 }
 
