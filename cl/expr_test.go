@@ -1958,12 +1958,33 @@ func TestUnsafe(t *testing.T) {
 		Y int
 	}
 	pt := Point{10, 20}
-	println(unsafe.Sizeof(pt),unsafe.Alignof(pt))
-	println(unsafe.Offsetof(pt.X), unsafe.Offsetof(pt.Y))
-	`, "16 8\n0 8\n")
+	pt2 := &Point{10, 20}
+	println(unsafe.Sizeof(pt))
+	println(unsafe.Alignof(pt))
+	println(unsafe.Offsetof(pt.Y))
+	println(unsafe.Offsetof(pt2.Y))
+	`, "16\n8\n8\n8\n")
 	cltest.Expect(t, `
 	import "unsafe"
 	ar := [unsafe.Sizeof(true)]int{}
 	println(len(ar))
 	`, "1\n")
+}
+
+func TestBadUnsafe(t *testing.T) {
+	cltest.Expect(t, `
+	import "unsafe"
+	v := unsafe.Sizeof()
+	println(v)
+	`, "", "missing argument to unsafe.Sizeof: unsafe.Sizeof()")
+	cltest.Expect(t, `
+	import "unsafe"
+	v := unsafe.Sizeof(1,2,3)
+	println(v)
+	`, "", "too many arguments to unsafe.Sizeof: unsafe.Sizeof(1,2,3)")
+	cltest.Expect(t, `
+	import "unsafe"
+	v := unsafe.Offsetof(1)
+	println(v)
+	`, "", "invalid expression unsafe.Offsetof(1)")
 }

@@ -474,14 +474,17 @@ func compileTypeCast(typ reflect.Type, ctx *blockCtx, v *ast.CallExpr) func() {
 	}
 }
 
+// func unsafe.Sizeof(ArbitraryType) uintptr
 func igoSizeof(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	return igoUnsafe(ctx, v, ct, "Sizeof")
 }
 
+// func unsafe.Alignof(ArbitraryType) uintptr
 func igoAlignof(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	return igoUnsafe(ctx, v, ct, "Alignof")
 }
 
+// func unsafe.Offsetof(ArbitraryType) uintptr
 func igoOffsetof(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	return igoUnsafe(ctx, v, ct, "Offsetof")
 }
@@ -517,7 +520,7 @@ func igoUnsafe(ctx *blockCtx, v *ast.CallExpr, ct callType, name string) func() 
 		}
 	case "Offsetof":
 		if ctx.fieldStructType == nil || ctx.fieldIndex == nil {
-			log.Panicln("invalid expression", ctx.code(v))
+			log.Panicf("invalid expression %v", ctx.code(v))
 		}
 		ctx.infer.Pop()
 		typ := ctx.fieldStructType
