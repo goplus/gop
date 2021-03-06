@@ -1,0 +1,28 @@
+import "unsafe"
+
+type SliceHeader struct {
+	Data uintptr
+	Len  int
+	Cap  int
+}
+type StringHeader struct {
+	Data uintptr
+	Len  int
+}
+
+a := "hello"
+b := []byte("world")
+pa := (*StringHeader)(unsafe.Pointer(&a))
+pb := (*SliceHeader)(unsafe.Pointer(&b))
+na := uintptr(unsafe.Pointer(pa))
+nb := uintptr(unsafe.Pointer(pb))
+
+println(*(*string)(unsafe.Pointer(pa)))
+println(*(*[]byte)(unsafe.Pointer(pb)))
+println(*(*string)(unsafe.Pointer(na)))
+println(*(*[]byte)(unsafe.Pointer(nb)))
+
+ar1 := [unsafe.Alignof(pb)]int{}
+ar2 := [unsafe.Offsetof(pb.Cap)]int{}
+ar3 := [unsafe.Sizeof(*pb)]int{}
+println(len(ar1), len(ar2), len(ar3))
