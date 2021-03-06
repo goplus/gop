@@ -183,7 +183,15 @@ func compileIdentLHS(ctx *blockCtx, name string, mode compileMode) {
 				ctx.out.StoreVar(v.v)
 			}
 		} else if op, ok := addrops[mode]; ok {
-			if ctx.indirect > 0 {
+			if typ.Kind() == reflect.Ptr {
+				ctx.out.LoadVar(v.v)
+				elem := addrTyp
+				for i := 0; i < ctx.indirect; i++ {
+					elem = elem.Elem()
+					ctx.out.AddrOp(kindOf(elem), exec.OpAddrVal)
+				}
+				ctx.out.AddrOp(kindOf(typ), op)
+			} else if ctx.indirect > 0 {
 				ctx.out.LoadVar(v.v)
 				elem := addrTyp
 				for i := 0; i < ctx.indirect-1; i++ {
