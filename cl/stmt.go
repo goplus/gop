@@ -613,6 +613,7 @@ func compileSendStmt(ctx *blockCtx, expr *ast.SendStmt) {
 
 func compileIncDecStmt(ctx *blockCtx, expr *ast.IncDecStmt) {
 	compileExpr(ctx, expr.X)()
+	ctx.indirect = 0
 	compileExprLHS(ctx, expr.X, expr.Tok)
 }
 
