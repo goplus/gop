@@ -188,9 +188,6 @@ func (p *Builder) AddrVar(v exec.Var) *Builder {
 }
 
 func (p *Builder) bigAddrOp(kind exec.Kind, op exec.AddrOperator) *Builder {
-	if op == exec.OpAddrVal {
-		return p
-	}
 	method := addropMethods[op]
 	if method == "" {
 		log.Panicln("bigAddrOp: unknown op -", op)
@@ -227,6 +224,9 @@ func (p *Builder) bigAddrOp(kind exec.Kind, op exec.AddrOperator) *Builder {
 	case *ast.Ident:
 		bigOp := &ast.SelectorExpr{X: v, Sel: Ident(method)}
 		expr = &ast.CallExpr{Fun: bigOp, Args: []ast.Expr{v, val}}
+	case *ast.StarExpr:
+		bigOp := &ast.SelectorExpr{X: v, Sel: Ident(method)}
+		expr = &ast.CallExpr{Fun: bigOp, Args: []ast.Expr{v, val}}
 	default:
 		log.Panicln("bigAddrOp: todo")
 	}
@@ -252,14 +252,14 @@ var addropMethods = [...]string{
 
 // AddrOp instr
 func (p *Builder) AddrOp(kind exec.Kind, op exec.AddrOperator) *Builder {
-	if kind >= exec.BigInt {
-		return p.bigAddrOp(kind, op)
-	}
 	if op == exec.OpAddrVal {
 		p.rhs.Push(&ast.StarExpr{
 			X: p.rhs.Pop().(ast.Expr),
 		})
 		return p
+	}
+	if kind >= exec.BigInt {
+		return p.bigAddrOp(kind, op)
 	}
 	if op == exec.OpAssign {
 		p.emitStmt(&ast.AssignStmt{
