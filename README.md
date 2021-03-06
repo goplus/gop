@@ -215,7 +215,7 @@ c := ["xsw", 3] // []interface{}
 empty := [] // []interface{}
 ```
 
-### List/Map comprehension
+### List comprehension
 
 ```go
 a := [x*x for x <- [1, 3, 5, 7, 11]]
@@ -229,6 +229,23 @@ e := [[a, b] for a <- arr, a < b for b <- arr, b > 2]
 x := {x: i for i, x <- [1, 3, 5, 7, 11]}
 y := {x: i for i, x <- [1, 3, 5, 7, 11], i%2 == 1}
 z := {v: k for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "Go+"}, k > 3}
+```
+
+### Select data from a collection
+
+```go
+type student struct {
+    name  string
+    score int
+}
+
+students := [student{"Ken", 90}, student{"Jason", 80}, student{"Lily", 85}]
+
+unknownScore, ok := {x.score for x <- students, x.name == "Unknown"}
+jasonScore := {x.score for x <- students, x.name == "Jason"}
+
+println(unknownScore, ok) // output: 0 false
+println(jasonScore) // output: 80
 ```
 
 ### For loop
