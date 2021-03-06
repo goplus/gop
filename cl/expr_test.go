@@ -1963,4 +1963,9 @@ func TestUnsafe(t *testing.T) {
 	v := uintptr(unsafe.Pointer(&pt)) + unsafe.Offsetof(pt.Y)
 	println(*(*int)(unsafe.Pointer(v)))
 	`, "16 8\n0 8\n20\n")
+	cltest.Expect(t, `
+	import "unsafe"
+	ar := [unsafe.Sizeof(true)]int{}
+	println(len(ar))
+	`, "1\n")
 }
