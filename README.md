@@ -342,7 +342,7 @@ In Go+, we introduce a concept named `auto property`. It is a `get property`, bu
 You can use Go+ programs as shell scripts now. For example:
 
 ```go
-#!/usr/bin/env gop run
+#!/usr/bin/env -S gop run
 
 println("Hello, Go+")
 
