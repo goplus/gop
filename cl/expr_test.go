@@ -1542,13 +1542,9 @@ var testMethodClauses = map[string]testData{
 					}
 					pt1 := Pt1{1,2}
 					pt2 := Pt2{3,4}
-					pt3 := &Pt1{5,6}
-					pt4 := &Pt2{7,8}
 					pt1.Test()
 					pt2.Test()
-					pt3.Test()
-					pt4.Test()
-					`, "pt1 &{1 2}\npt2 &{3 4}\npt1 &{5 6}\npt2 &{7 8}\n", false},
+					`, "pt1 &{1 2}\npt2 &{3 4}\n", false},
 	"method struct field type": {`
 					type M int
 					func (m M) Foo() {
