@@ -284,11 +284,19 @@ func (p *Builder) AddrOp(kind exec.Kind, op exec.AddrOperator) *Builder {
 		} else {
 			stmt = &ast.AssignStmt{Lhs: []ast.Expr{v.X}, Tok: addropTokens[op], Rhs: []ast.Expr{val}}
 		}
-	case *ast.StarExpr:
+	case *ast.Ident:
+		x := &ast.StarExpr{X: v}
 		if op == exec.OpInc || op == exec.OpDec {
-			stmt = &ast.IncDecStmt{X: &ast.StarExpr{X: v}, TokPos: v.Pos(), Tok: addropTokens[op]}
+			stmt = &ast.IncDecStmt{X: x, TokPos: v.Pos(), Tok: addropTokens[op]}
 		} else {
-			stmt = &ast.AssignStmt{Lhs: []ast.Expr{&ast.StarExpr{X: v}}, Tok: addropTokens[op], Rhs: []ast.Expr{val}}
+			stmt = &ast.AssignStmt{Lhs: []ast.Expr{x}, Tok: addropTokens[op], Rhs: []ast.Expr{val}}
+		}
+	case *ast.StarExpr:
+		x := &ast.StarExpr{X: v}
+		if op == exec.OpInc || op == exec.OpDec {
+			stmt = &ast.IncDecStmt{X: x, TokPos: v.Pos(), Tok: addropTokens[op]}
+		} else {
+			stmt = &ast.AssignStmt{Lhs: []ast.Expr{x}, Tok: addropTokens[op], Rhs: []ast.Expr{val}}
 		}
 	default:
 		log.Panicln("AddrOp: todo")
