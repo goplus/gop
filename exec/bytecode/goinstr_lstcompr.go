@@ -190,8 +190,7 @@ func makeMap(typMap reflect.Type, arity int, p *Context) {
 	p.Ret(n, ret.Interface())
 }
 
-//go:nosplit
-//go:norace
+//go:nocheckptr
 func toUnsafePointer(v reflect.Value) unsafe.Pointer {
 	return unsafe.Pointer(uintptr(v.Uint()))
 }
