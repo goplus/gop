@@ -188,6 +188,12 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, compileByCallExpr bool) func(
 	}
 	if sym, ok := ctx.find(name); ok {
 		switch v := sym.(type) {
+		case *constVal:
+			c := newConstVal(v.v, v.Kind())
+			ctx.infer.Push(c)
+			return func() {
+				pushConstVal(ctx.out, c)
+			}
 		case *execVar:
 			typ := v.v.Type()
 			kind := typ.Kind()

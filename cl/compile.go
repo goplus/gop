@@ -212,6 +212,8 @@ type SymKind uint
 const (
 	// SymInvalid - invalid symbol kind
 	SymInvalid SymKind = iota
+	// SymConst - symbol is a const
+	SymConst
 	// SymVar - symbol is a variable
 	SymVar
 	// SymFunc - symbol is a function
@@ -226,6 +228,8 @@ func (p *Package) Find(name string) (kind SymKind, v interface{}, ok bool) {
 		return
 	}
 	switch v.(type) {
+	case *constVal:
+		kind = SymConst
 	case *exec.Var:
 		kind = SymVar
 	case *funcDecl:
@@ -311,6 +315,23 @@ func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
 }
 
 func loadConsts(ctx *blockCtx, d *ast.GenDecl) {
+	var last *ast.ValueSpec
+	for _, item := range d.Specs {
+		spec := item.(*ast.ValueSpec)
+		if spec.Type == nil && len(spec.Values) == 0 {
+			spec.Type = last.Type
+			spec.Values = last.Values
+		}
+		for i := 0; i < len(spec.Names); i++ {
+			name := spec.Names[i].Name
+			if len(spec.Values) > i {
+				loadConst(ctx, name, spec.Type, spec.Values[i])
+			} else {
+				loadConst(ctx, name, spec.Type, nil)
+			}
+		}
+		last = spec
+	}
 }
 
 func loadVars(ctx *blockCtx, d *ast.GenDecl, stmt ast.Stmt) {
@@ -327,6 +348,19 @@ func loadVars(ctx *blockCtx, d *ast.GenDecl, stmt ast.Stmt) {
 			ctx.out.EndStmt(stmt, start)
 		}
 	}
+}
+
+func loadConst(ctx *blockCtx, name string, typ ast.Expr, value ast.Expr) {
+	var t reflect.Type
+	if typ != nil {
+		t = toType(ctx, typ).(reflect.Type)
+	}
+	compileExpr(ctx, value)
+	in := ctx.infer.Pop()
+	if t == nil {
+		t = boundType(in.(iValue))
+	}
+	ctx.syms[name] = in.(*constVal)
 }
 
 func loadVar(ctx *blockCtx, name string, typ ast.Expr, value ast.Expr) {
