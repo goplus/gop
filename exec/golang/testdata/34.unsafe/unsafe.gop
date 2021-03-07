@@ -14,13 +14,11 @@ a := "hello"
 b := []byte("world")
 pa := (*StringHeader)(unsafe.Pointer(&a))
 pb := (*SliceHeader)(unsafe.Pointer(&b))
-na := uintptr(unsafe.Pointer(pa))
-nb := uintptr(unsafe.Pointer(pb))
-
 println(*(*string)(unsafe.Pointer(pa)))
 println(*(*[]byte)(unsafe.Pointer(pb)))
-println(*(*string)(unsafe.Pointer(na)))
-println(*(*[]byte)(unsafe.Pointer(nb)))
+
+var c *byte = &b[0]
+println(*(*byte)(unsafe.Pointer(uintptr(unsafe.Pointer(c)) + uintptr(1))))
 
 ar1 := [unsafe.Alignof(pb)]int{}
 ar2 := [unsafe.Offsetof(pb.Cap)]int{}
