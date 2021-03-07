@@ -190,6 +190,12 @@ func makeMap(typMap reflect.Type, arity int, p *Context) {
 	p.Ret(n, ret.Interface())
 }
 
+//go:nosplit
+//go:norace
+func toUnsafePointer(v reflect.Value) unsafe.Pointer {
+	return unsafe.Pointer(uintptr(v.Uint()))
+}
+
 func execTypeCast(i Instr, p *Context) {
 	args := p.GetArgs(1)
 	typ := getType(i&bitsOperand, p)
@@ -198,7 +204,7 @@ func execTypeCast(i Instr, p *Context) {
 	switch typ.Kind() {
 	case reflect.UnsafePointer:
 		if vk == reflect.Uintptr {
-			args[0] = unsafe.Pointer(uintptr(v.Uint()))
+			args[0] = toUnsafePointer(v)
 			return
 		} else if vk == reflect.Ptr {
 			args[0] = unsafe.Pointer(v.Pointer())
