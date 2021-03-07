@@ -1926,3 +1926,22 @@ func TestTwoValueExpr(t *testing.T) {
 			}`
 	cltest.Expect(t, clause, "1 3 true\n3 0 false\n")
 }
+
+func TestConst(t *testing.T) {
+	cltest.Expect(t, `
+	const v = 100
+	a := v
+	b := int64(v)
+	println(a,b)
+	printf("%T %T\n",a,b)
+	`, "100 100\nint int64\n")
+	cltest.Expect(t, `
+	const (
+		v1 = 100
+		v2
+		v3 = "hello"
+		v4
+	)
+	println(v1,v2,v3,v4)
+	`, "100 100 hello hello\n")
+}
