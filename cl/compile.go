@@ -369,16 +369,16 @@ func loadVars(ctx *blockCtx, d *ast.GenDecl, stmt ast.Stmt) {
 }
 
 func loadConst(ctx *blockCtx, name string, typ ast.Expr, value ast.Expr) {
-	var t reflect.Type
-	if typ != nil {
-		t = toType(ctx, typ).(reflect.Type)
-	}
 	compileExpr(ctx, value)
 	in := ctx.infer.Pop()
-	if t == nil {
-		t = boundType(in.(iValue))
+	c := in.(*constVal)
+	if typ != nil {
+		t := toType(ctx, typ).(reflect.Type)
+		v := boundConst(c.v, t)
+		c.v = v
+		c.kind = t.Kind()
 	}
-	ctx.syms[name] = in.(*constVal)
+	ctx.syms[name] = c
 }
 
 func loadVar(ctx *blockCtx, name string, typ ast.Expr, value ast.Expr) {
