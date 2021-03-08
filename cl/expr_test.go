@@ -1985,24 +1985,35 @@ func TestBadConst(t *testing.T) {
 func TestIota(t *testing.T) {
 	cltest.Expect(t, `
 	const (
-		c0 = iota
-		c1
-		c2
+		c0 = iota  // c0 == 0
+		c1 = iota  // c1 == 1
+		c2 = iota  // c2 == 2
 	)
 	const (
-		a = 2 << iota
-		b
-		c = 3
-		d = 2 << iota
-	)
-	const (
-		u         = iota * 42
-		v float64 = iota * 42
-		w         = iota * 42
+		a = 1 << iota  // a == 1  (iota == 0)
+		b = 1 << iota  // b == 2  (iota == 1)
+		c = 3          // c == 3  (iota == 2, unused)
+		d = 1 << iota  // d == 8  (iota == 3)
 	)
 	println(c0,c1,c2)
 	println(a,b,c,d)
+	`, "0 1 2\n1 2 3 8\n")
+	cltest.Expect(t, `
+	const (
+		u         = iota * 42  // u == 0     (untyped integer constant)
+		v float64 = iota * 42  // v == 42.0  (float64 constant)
+		w         = iota * 42  // w == 84    (untyped integer constant)
+	)
 	println(u,v,w)
 	printf("%T %T %T\n",u,v,w)
-	`, "0 1 2\n2 4 3 8\n0 42 84\nint float64 int\n")
+	`, "0 42 84\nint float64 int\n")
+	cltest.Expect(t, `
+	const (
+		bit0, mask0 = 1 << iota, 1<<iota - 1  // bit0 == 1, mask0 == 0  (iota == 0)
+		bit1, mask1                           // bit1 == 2, mask1 == 1  (iota == 1)
+		_, _                                  //                        (iota == 2, unused)
+		bit3, mask3                           // bit3 == 8, mask3 == 7  (iota == 3)
+	)
+	println(bit0,mask0,bit1,mask1,bit3,mask3)
+	`, "1 0 2 1 8 7\n")
 }
