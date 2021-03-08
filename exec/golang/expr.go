@@ -212,10 +212,7 @@ func Const(p *Builder, val interface{}) ast.Expr {
 	}
 	if kind >= reflect.Float32 && kind <= reflect.Float64 {
 		var expr ast.Expr = FloatConst(v.Float())
-		if t := v.Type(); t != exec.TyFloat64 {
-			expr = TypeCast(p, expr, exec.TyFloat64, t)
-		}
-		return expr
+		return TypeCast(p, expr, exec.TyFloat64, v.Type())
 	}
 	if kind >= reflect.Complex64 && kind <= reflect.Complex128 {
 		var expr ast.Expr = ComplexConst(v.Complex())
