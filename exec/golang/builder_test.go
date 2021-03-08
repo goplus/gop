@@ -79,8 +79,8 @@ import fmt "fmt"
 var a []float64
 
 func main() {
-	a = []float64{3.2, 1.2, 2.4}
-	a[1] = 1.6
+	a = []float64{float64(3.2), float64(1.2), float64(2.4)}
+	a[1] = float64(1.6)
 	fmt.Println(a[0], &a[1])
 }
 `
