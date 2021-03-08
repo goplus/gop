@@ -314,7 +314,18 @@ func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
 	ctx.types[t] = tDecl
 }
 
+var (
+	iotaIndex int
+	iotaInc   bool
+)
+
+func newIotaValue() *constVal {
+	iotaInc = true
+	return newConstVal(iotaIndex, exec.ConstUnboundInt)
+}
+
 func loadConsts(ctx *blockCtx, d *ast.GenDecl) {
+	iotaIndex = 0
 	var last *ast.ValueSpec
 	for _, item := range d.Specs {
 		spec := item.(*ast.ValueSpec)
@@ -329,8 +340,12 @@ func loadConsts(ctx *blockCtx, d *ast.GenDecl) {
 		} else if nvalue > nnames {
 			log.Panicf("extra expression in const declaration")
 		} else {
+			iotaInc = false
 			for i := 0; i < nnames; i++ {
 				loadConst(ctx, spec.Names[i].Name, spec.Type, spec.Values[i])
+			}
+			if iotaInc {
+				iotaIndex++
 			}
 		}
 		last = spec

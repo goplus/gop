@@ -238,6 +238,13 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, compileByCallExpr bool) func(
 			log.Panicln("compileIdent failed: unknown -", reflect.TypeOf(sym))
 		}
 	} else {
+		if name == "iota" {
+			c := newIotaValue()
+			ctx.infer.Push(c)
+			return func() {
+				pushConstVal(ctx.out, c)
+			}
+		}
 		if addr, kind, ok := ctx.builtin.Find(name); ok {
 			switch kind {
 			case exec.SymbolVar:
