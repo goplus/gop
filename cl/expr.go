@@ -241,9 +241,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, compileByCallExpr bool) func(
 		if name == "iota" {
 			c := newIotaValue()
 			ctx.infer.Push(c)
-			return func() {
-				pushConstVal(ctx.out, c)
-			}
+			return nil
 		}
 		if addr, kind, ok := ctx.builtin.Find(name); ok {
 			switch kind {
