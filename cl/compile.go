@@ -318,16 +318,19 @@ func loadConsts(ctx *blockCtx, d *ast.GenDecl) {
 	var last *ast.ValueSpec
 	for _, item := range d.Specs {
 		spec := item.(*ast.ValueSpec)
-		if spec.Type == nil && len(spec.Values) == 0 {
+		if spec.Type == nil && spec.Values == nil {
 			spec.Type = last.Type
 			spec.Values = last.Values
 		}
-		for i := 0; i < len(spec.Names); i++ {
-			name := spec.Names[i].Name
-			if len(spec.Values) > i {
-				loadConst(ctx, name, spec.Type, spec.Values[i])
-			} else {
-				loadConst(ctx, name, spec.Type, nil)
+		nnames := len(spec.Names)
+		nvalue := len(spec.Values)
+		if nvalue < nnames {
+			log.Panicf("missing value in const declaration")
+		} else if nvalue > nnames {
+			log.Panicf("extra expression in const declaration")
+		} else {
+			for i := 0; i < nnames; i++ {
+				loadConst(ctx, spec.Names[i].Name, spec.Type, spec.Values[i])
 			}
 		}
 		last = spec

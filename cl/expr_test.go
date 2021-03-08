@@ -1932,16 +1932,50 @@ func TestConst(t *testing.T) {
 	const v = 100
 	a := v
 	b := int64(v)
-	println(a,b)
-	printf("%T %T\n",a,b)
-	`, "100 100\nint int64\n")
+	println(a,b,v)
+	printf("%T %T %T\n",a,b,v)
+	`, "100 100 100\nint int64 int\n")
 	cltest.Expect(t, `
 	const (
 		v1 = 100
-		v2
-		v3 = "hello"
-		v4
+		v2 = 0x64
+		v3 = uint(100)
+		v4 = 100.1
+		v5 = float32(100.1)
+		v6 = 100r
+		v7 = 'd'
+		v8 = "d"
 	)
-	println(v1,v2,v3,v4)
-	`, "100 100 hello hello\n")
+	println(v1,v2,v3,v4,v5,v6,v7,v8)
+	printf("%T %T %T %T %T %T %T %T\n",v1,v2,v3,v4,v5,v6,v7,v8)
+	`, "100 100 100 100.1 100.1 100 100 d\nint int uint float64 float32 *big.Int int32 string\n")
+	cltest.Expect(t, `
+	const (
+		v1 int = 100
+		v2
+		v3
+	)
+	println(v1,v2,v3)
+	`, "100 100 100\n")
+	cltest.Expect(t, `
+	const (
+		v1,v2,v3 = 100,200,300
+	)
+	println(v1,v2,v3)
+	`, "100 200 300\n")
+}
+
+func TestBadConst(t *testing.T) {
+	cltest.Expect(t, `
+	const (
+		v1,v2 = 100
+	)
+	println(v1,v2)
+	`, "", "missing value in const declaration")
+	cltest.Expect(t, `
+	const (
+		v1,v2 = 100,200,300
+	)
+	println(v1,v2)
+	`, "", "extra expression in const declaration")
 }
