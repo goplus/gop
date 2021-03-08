@@ -1969,6 +1969,11 @@ func TestConst(t *testing.T) {
 
 func TestBadConst(t *testing.T) {
 	cltest.Expect(t, `
+	const x = 0
+	const x = 0
+	println(x)
+	`, "", nil)
+	cltest.Expect(t, `
 	const (
 		v1,v2 = 100
 	)

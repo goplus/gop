@@ -369,6 +369,9 @@ func loadVars(ctx *blockCtx, d *ast.GenDecl, stmt ast.Stmt) {
 }
 
 func loadConst(ctx *blockCtx, name string, typ ast.Expr, value ast.Expr) {
+	if name != "_" && ctx.exists(name) {
+		log.Panicln("loadConst failed: symbol exists -", name)
+	}
 	compileExpr(ctx, value)
 	in := ctx.infer.Pop()
 	c := in.(*constVal)
