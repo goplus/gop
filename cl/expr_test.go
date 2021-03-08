@@ -1953,10 +1953,12 @@ func TestConst(t *testing.T) {
 	const (
 		v1 int = 100
 		v2
-		v3
+		v3 float64 = 100
+		v4 = float64(100)
 	)
-	println(v1,v2,v3)
-	`, "100 100 100\n")
+	println(v1,v2,v3,v4)
+	printf("%T %T %T %T\n",v1,v2,v3,v4)
+	`, "100 100 100 100\nint int float64 float64\n")
 	cltest.Expect(t, `
 	const (
 		v1,v2,v3 = 100,200,300
@@ -1978,4 +1980,29 @@ func TestBadConst(t *testing.T) {
 	)
 	println(v1,v2)
 	`, "", "extra expression in const declaration")
+}
+
+func TestIota(t *testing.T) {
+	cltest.Expect(t, `
+	const (
+		c0 = iota
+		c1
+		c2
+	)
+	const (
+		a = 2 << iota
+		b
+		c = 3
+		d = 2 << iota
+	)
+	const (
+		u         = iota * 42
+		v float64 = iota * 42
+		w         = iota * 42
+	)
+	println(c0,c1,c2)
+	println(a,b,c,d)
+	println(u,v,w)
+	printf("%T %T %T\n",u,v,w)
+	`, "0 1 2\n2 4 3 8\n0 42 84\nint float64 int\n")
 }
