@@ -381,7 +381,9 @@ func loadConst(ctx *blockCtx, name string, typ ast.Expr, value ast.Expr) {
 		c.v = v
 		c.kind = t.Kind()
 	}
-	ctx.syms[name] = c
+	if name != "_" {
+		ctx.syms[name] = c
+	}
 }
 
 func loadVar(ctx *blockCtx, name string, typ ast.Expr, value ast.Expr) {
