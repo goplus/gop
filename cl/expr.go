@@ -656,17 +656,27 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 	op := binaryOps[v.Op]
 	x := ctx.infer.Get(-2)
 	y := ctx.infer.Get(-1)
+
 	xcons, xok := x.(*constVal)
 	ycons, yok := y.(*constVal)
-	if xok && yok { // <const> op <const>
-		ret := binaryOp(op, xcons, ycons)
-		ctx.infer.Ret(2, ret)
-		return func() {
-			ret.reserve = ctx.out.Reserve()
+	var kind reflect.Kind
+	var lshcheck bool
+	if op == exec.OpLsh && xok && !isConstBound(xcons.kind) {
+		kind = xcons.kind
+		lshcheck = true
+		ctx.infer.Ret(2, &lshValue{xcons})
+	} else {
+		if xok && yok { // <const> op <const>
+			ret := binaryOp(op, xcons, ycons)
+			ctx.infer.Ret(2, ret)
+			return func() {
+				ret.reserve = ctx.out.Reserve()
+			}
 		}
+		var ret iValue
+		kind, ret = binaryOpResult(op, x, y)
+		ctx.infer.Ret(2, ret)
 	}
-	kind, ret := binaryOpResult(op, x, y)
-	ctx.infer.Ret(2, ret)
 	return func() {
 		var label exec.Label
 		exprX()
@@ -679,6 +689,13 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 			}
 		}
 		exprY()
+		if lshcheck {
+			if !isConstBound(xcons.kind) {
+				xcons.v = boundConst(xcons.v, exec.TyInt)
+				xcons.kind = exec.Int
+			}
+			kind = xcons.kind
+		}
 		checkBinaryOp(kind, op, x, y, ctx.out)
 		if err := checkOpMatchType(op, x, y); err != nil {
 			log.Panicf("invalid operator: %v (%v)", ctx.code(v), err)
@@ -700,7 +717,15 @@ func binaryOpResult(op exec.Operator, x, y interface{}) (exec.Kind, iValue) {
 	if !isConstBound(kind) {
 		kind = vy.Kind()
 		if !isConstBound(kind) {
-			log.Panicln("binaryOp: expect x, y aren't const values either.")
+			if lsh, ok := y.(*lshValue); ok && lsh.Kind() == exec.ConstUnboundInt {
+				kind = exec.Int
+				lsh.bound(exec.TyInt)
+			} else {
+				log.Panicln("binaryOp: expect x, y aren't const values either.")
+			}
+		}
+		if xlsh, xok := x.(*lshValue); xok {
+			xlsh.bound(vy.Type())
 		}
 	}
 	i := op.GetInfo()
@@ -746,6 +771,14 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	return compileCallExprCall(ctx, exprFun, v, ct)
 }
 
+func funcArgType(typ reflect.Type, i int) reflect.Type {
+	size := typ.NumIn() - 1
+	if typ.IsVariadic() && i >= size {
+		return typ.In(size).Elem()
+	}
+	return typ.In(i)
+}
+
 func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct callType) func() {
 	fn := ctx.infer.Pop()
 	ctx.resetFieldIndex()
@@ -779,8 +812,12 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 					}
 				}
 			}
-			for _, arg := range v.Args {
-				compileExpr(ctx, arg)()
+			for i, arg := range v.Args {
+				expr := compileExpr(ctx, arg)
+				if lsh, ok := ctx.infer.Get(-1).(*lshValue); ok {
+					lsh.bound(funcArgType(vfn.Type(), i))
+				}
+				expr()
 			}
 			arity := checkFuncCall(vfn.Proto(), isMethod, v, ctx)
 			fun := vfn.FuncInfo()
@@ -842,8 +879,12 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 			ctx.infer.Push(ret)
 		}
 		return func() {
-			for _, arg := range v.Args {
-				compileExpr(ctx, arg)()
+			for i, arg := range v.Args {
+				expr := compileExpr(ctx, arg)
+				if lsh, ok := ctx.infer.Get(-1).(*lshValue); ok {
+					lsh.bound(funcArgType(vfn.Type(), i))
+				}
+				expr()
 			}
 			exprFun()
 			arity, ellipsis := checkFuncCall(vfn.t, 0, v, ctx), false
@@ -998,6 +1039,8 @@ func compileIdx(ctx *blockCtx, v ast.Expr, nlast int, kind reflect.Kind) int {
 		}
 		ctx.out.Push(n)
 		return -1
+	} else if lsh, ok := i.(*lshValue); ok {
+		lsh.bound(exec.TyInt)
 	}
 	expr()
 	if typIdx := i.(iValue).Type(); typIdx != exec.TyInt {

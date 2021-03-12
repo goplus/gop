@@ -190,6 +190,7 @@ type blockCtx struct {
 	fieldStructType reflect.Type
 	fieldIndex      []int
 	fieldExprX      func()
+	checkType       reflect.Type
 	underscore      int
 }
 

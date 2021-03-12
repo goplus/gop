@@ -48,6 +48,32 @@ func isBool(v iValue) bool {
 
 // -----------------------------------------------------------------------------
 
+type lshValue struct {
+	x *constVal
+}
+
+func (p *lshValue) bound(t reflect.Type) {
+	v := boundConst(p.x.v, t)
+	p.x.v = v
+	p.x.kind = t.Kind()
+}
+
+func (p *lshValue) Kind() iKind {
+	return p.x.kind
+}
+
+func (p *lshValue) Type() reflect.Type {
+	return boundType(p.x)
+}
+
+func (p *lshValue) NumValues() int {
+	return 1
+}
+
+func (p *lshValue) Value(i int) iValue {
+	return p
+}
+
 type goValue struct {
 	t reflect.Type
 }
@@ -291,6 +317,8 @@ func (p *constVal) boundType() reflect.Type {
 func boundType(in iValue) reflect.Type {
 	if v, ok := in.(*constVal); ok {
 		return v.boundType()
+	} else if v, ok := in.(*lshValue); ok {
+		v.bound(v.x.boundType())
 	}
 	return in.Type()
 }
@@ -302,7 +330,9 @@ func (p *constVal) bound(t reflect.Type, b exec.Builder) {
 			if t == exec.TyEmptyInterface {
 				return
 			}
-			log.Panicln("function call with invalid argument type: requires", t, ", but got", p.kind)
+			p.v = boundConst(p.v, t)
+			p.kind = kind
+			//log.Panicln("function call with invalid argument type: requires", t, ", but got", p.kind)
 		}
 		return
 	}

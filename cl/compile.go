@@ -335,10 +335,13 @@ func loadVar(ctx *blockCtx, name string, typ ast.Expr, value ast.Expr) {
 		t = toType(ctx, typ).(reflect.Type)
 	}
 	if value != nil {
+		ctx.checkType = t
 		expr := compileExpr(ctx, value)
 		in := ctx.infer.Get(-1)
 		if t == nil {
 			t = boundType(in.(iValue))
+		} else if lsh, ok := in.(*lshValue); ok {
+			lsh.bound(t)
 		}
 		expr()
 		addr := ctx.insertVar(name, t)

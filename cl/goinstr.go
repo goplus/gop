@@ -247,7 +247,8 @@ func igoMake(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 	return func() {
 		n1 := len(v.Args) - 1
 		for i := 1; i <= n1; i++ {
-			compileExpr(ctx, v.Args[i])()
+			expr := compileExpr(ctx, v.Args[i])
+			expr()
 			checkIntType(ctx.infer.Pop(), ctx.out)
 		}
 		if kind == reflect.Slice && n1 == 0 {
@@ -437,6 +438,9 @@ func compileTypeCast(typ reflect.Type, ctx *blockCtx, v *ast.CallExpr) func() {
 			return func() {
 				pushConstVal(ctx.out, cons)
 			}
+		}
+		if lsh, ok := in.(*lshValue); ok {
+			lsh.bound(typ)
 		}
 	}
 	ctx.infer.Ret(1, &goValue{typ})
