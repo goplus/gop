@@ -1942,9 +1942,9 @@ func TestOpLsh(t *testing.T) {
 	var p = 1<<s == 1<<33          // 1 has type int; p == true
 	var w int64 = 1.0<<33          // 1.0<<33 is a constant shift expression; w == 1<<33
 	var x = a[1.0<<(s-30)]         // 1.0 has type int
-	var b = make([]byte, 1.0<<s)   // 1.0 has type int; len(b) == 1<<33
-	printf("%T %T %T %T %T %T %T %T %T %T\n",i,j,k,m,n,o,p,w,x,b)
-	`, "int int32 uint64 int bool bool bool int64 uint8 []uint8\n")
+	//var b = make([]byte, 1.0<<s)   // 1.0 has type int; len(b) == 1<<33
+	printf("%T %T %T %T %T %T %T %T %T\n",i,j,k,m,n,o,p,w,x)
+	`, "int int32 uint64 int bool bool bool int64 uint8\n")
 	cltest.Expect(t, `
 	func test1(v int) {
 		printf("%T\n",v)
