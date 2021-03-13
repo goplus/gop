@@ -260,13 +260,13 @@ func (p *Code) builtinOp(kind Kind, op Operator) error {
 	return fmt.Errorf("builtinOp: type %v doesn't support operator %v", kind, op)
 }
 
-func (p *Code) reservedBuiltinOp(index int, kind Kind, op Operator) error {
+func (p *Code) reservedAsOpLsh(index int, kind Kind, op Operator) error {
 	i := (int(kind) << bitsOperator) | int(op)
 	if fn := builtinOps[i]; fn != nil {
 		p.data[index] = (opBuiltinOp << bitsOpShift) | uint32(i)
 		return nil
 	}
-	return fmt.Errorf("builtinOp: type %v doesn't support operator %v", kind, op)
+	return fmt.Errorf("reservedAsOpLsh: type %v doesn't support operator %v", kind, op)
 }
 
 // BuiltinOp instr
@@ -281,8 +281,8 @@ func (p *Builder) BuiltinOp(kind Kind, op Operator) *Builder {
 
 // ReservedAsOpLsh instr
 func (p *Builder) ReservedAsOpLsh(r exec.Reserved, kind exec.Kind, op exec.Operator) *Builder {
-	log.Debug("BuiltinOp:", kind, op)
-	err := p.code.reservedBuiltinOp(int(r), kind, op)
+	log.Debug("ReservedAsOpLsh:", kind, op)
+	err := p.code.reservedAsOpLsh(int(r), kind, op)
 	if err != nil {
 		panic(err)
 	}
