@@ -100,7 +100,7 @@ type Builder struct {
 	fset        *token.FileSet           // fileset of Go+ code
 	cfun        *FuncInfo                // current function
 	cstmt       interface{}              // current statement
-	reserveds   []*printer.ReservedExpr
+	reserveds   []interface{}
 	comprehens  func()   // current comprehension
 	identBase   int      // auo-increasement ident index
 	*scopeCtx            // current block scope
@@ -365,23 +365,32 @@ func (p *Builder) Reserve() exec.Reserved {
 
 // ReservedAsPush sets Reserved as Push(v)
 func (p *Builder) ReservedAsPush(r exec.Reserved, v interface{}) {
-	p.reserveds[r].Expr = Const(p, v)
+	p.reserveds[r].(*printer.ReservedExpr).Expr = Const(p, v)
 }
 
-// ReservedAsBuiltinOp sets Reserved as GoBuiltin
-func (p *Builder) ReservedAsBuiltinOp(r exec.Reserved, kind exec.Kind, op exec.Operator) {
+type reserveLsh struct {
+	expr *printer.ReservedExpr
+	x    ast.Expr
+	y    ast.Expr
+}
+
+// ReserveOpLsh reserves an instruction.
+func (p *Builder) ReserveOpLsh() exec.Reserved {
+	r := &reserveLsh{}
+	r.expr = new(printer.ReservedExpr)
+	r.x = p.rhs.Pop().(ast.Expr)
+	r.y = p.rhs.Pop().(ast.Expr)
+	idx := len(p.reserveds)
+	p.reserveds = append(p.reserveds, r)
+	p.rhs.Push(r.expr)
+	return exec.Reserved(idx)
+}
+
+// ReservedAsOpLsh sets Reserved as GoBuiltin
+func (p *Builder) ReservedAsOpLsh(r exec.Reserved, kind exec.Kind, op exec.Operator) {
 	tok := opTokens[op]
-	if tok == token.ILLEGAL {
-		log.Panicln("BuiltinOp: unsupported op -", op)
-	}
-	oi := op.GetInfo()
-	val := p.reserveds[r].Expr
-	if oi.InSecond == 0 {
-		p.reserveds[r].Expr = &ast.UnaryExpr{Op: tok, X: val}
-		return
-	}
-	x := p.reserveds[r].Expr
-	p.reserveds[r].Expr = &ast.BinaryExpr{Op: tok, X: x, Y: val}
+	rsh := p.reserveds[r].(*reserveLsh)
+	rsh.expr.Expr = &ast.BinaryExpr{Op: tok, X: rsh.x, Y: rsh.y}
 }
 
 // Pop instr

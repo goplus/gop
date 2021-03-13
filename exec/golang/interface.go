@@ -505,9 +505,14 @@ func (p *iBuilder) ReservedAsPush(r exec.Reserved, v interface{}) {
 	((*Builder)(p)).ReservedAsPush(r, v)
 }
 
-// ReservedAsBuiltinOp sets Reserved as GoBuiltin
-func (p *iBuilder) ReservedAsBuiltinOp(r exec.Reserved, kind exec.Kind, op exec.Operator) {
-	((*Builder)(p)).ReservedAsBuiltinOp(r, kind, op)
+// ReserveOpLsh reserves an instruction.
+func (p *iBuilder) ReserveOpLsh() exec.Reserved {
+	return ((*Builder)(p)).ReserveOpLsh()
+}
+
+// ReservedAsOpLsh sets Reserved as GoBuiltin
+func (p *iBuilder) ReservedAsOpLsh(r exec.Reserved, kind exec.Kind, op exec.Operator) {
+	((*Builder)(p)).ReservedAsOpLsh(r, kind, op)
 }
 
 // GetPackage returns the Go+ package that the Builder works for.

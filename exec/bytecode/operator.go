@@ -279,8 +279,8 @@ func (p *Builder) BuiltinOp(kind Kind, op Operator) *Builder {
 	return p
 }
 
-// ReservedAsBuiltinOp instr
-func (p *Builder) ReservedAsBuiltinOp(r exec.Reserved, kind exec.Kind, op exec.Operator) *Builder {
+// ReservedAsOpLsh instr
+func (p *Builder) ReservedAsOpLsh(r exec.Reserved, kind exec.Kind, op exec.Operator) *Builder {
 	log.Debug("BuiltinOp:", kind, op)
 	err := p.code.reservedBuiltinOp(int(r), kind, op)
 	if err != nil {

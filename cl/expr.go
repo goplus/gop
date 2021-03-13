@@ -692,14 +692,14 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 		exprY()
 		if lshcheck {
 			if !isConstBound(xcons.kind) {
-				lsh.r = ctx.out.Reserve()
+				lsh.r = ctx.out.ReserveOpLsh()
 				lsh.update = func(kind reflect.Kind) {
 					xcons.v = boundConst(xcons.v, exec.TypeFromKind(kind))
 					checkBinaryOp(kind, op, x, y, ctx.out)
 					if err := checkOpMatchType(op, x, y); err != nil {
 						log.Panicf("invalid operator: %v (%v)", ctx.code(v), err)
 					}
-					ctx.out.ReservedAsBuiltinOp(lsh.r, kind, op)
+					ctx.out.ReservedAsOpLsh(lsh.r, kind, op)
 				}
 				if label != nil {
 					ctx.out.Label(label)
