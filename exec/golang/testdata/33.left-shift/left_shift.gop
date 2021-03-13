@@ -30,7 +30,7 @@ var p = 1<<s == 1<<33  // 1 has type int; p == true
 var w int64 = 1.0 << 33 // 1.0<<33 is a constant shift expression; w == 1<<33
 // var x = a[1.0<<s]              // panics: 1.0 has type int, but 1<<33 overflows array bounds
 var x = a[1.0<<(s-30)]
-var b = make([]byte, 1.0<<s) // 1.0 has type int; len(b) == 1<<33
+var b = make([]byte, 1.0<<(s-30)) // 1.0 has type int; len(b) == 1<<33
 q = 1.0 << (s - 30)
 
 test1(1 << s)
@@ -48,4 +48,4 @@ printf("%v %T\n", p, p)
 printf("%v %T\n", q, q)
 printf("%v %T\n", w, w)
 printf("%v %T\n", x, x)
-printf("%v %T\n", b[0], b)
+printf("%v %T\n", len(b), b)
