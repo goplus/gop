@@ -1,0 +1,51 @@
+func test1(v int) {
+	printf("test1 %v %T\n", v, v)
+}
+func test2(v int32) {
+	printf("test2 %v %T\n", v, v)
+}
+func test3(v int64) {
+	printf("test3 %v %T\n", v, v)
+}
+func test4(v ...int32) {
+	printf("test4 %v %T\n", v, v)
+}
+
+var a [1024]byte
+var s uint = 33
+var q int16
+
+// The results of the following examples are given for 64-bit ints.
+var i = 1 << s         // 1 has type int
+var j int32 = 1 << s   // 1 has type int32; j == 0
+var k = uint64(1 << s) // 1 has type uint64; k == 1<<33
+var m int = 1.0 << s   // 1.0 has type int; m == 1<<33
+var n = 1.0<<s == j    // 1.0 has type int; n == true
+var o = 1<<s == 2<<s   // 1 and 2 have type int; o == false
+var p = 1<<s == 1<<33  // 1 has type int; p == true
+// var u = 1.0<<s                 // illegal: 1.0 has type float64, cannot shift
+// var u1 = 1.0<<s != 0           // illegal: 1.0 has type float64, cannot shift
+// var u2 = 1<<s != 1.0           // illegal: 1 has type float64, cannot shift
+// var v float32 = 1<<s           // illegal: 1 has type float32, cannot shift
+var w int64 = 1.0 << 33 // 1.0<<33 is a constant shift expression; w == 1<<33
+// var x = a[1.0<<s]              // panics: 1.0 has type int, but 1<<33 overflows array bounds
+var x = a[1.0<<(s-30)]
+var b = make([]byte, 1.0<<s) // 1.0 has type int; len(b) == 1<<33
+q = 1.0 << (s - 30)
+
+test1(1 << s)
+test2(1 << s)
+test3(1 << s)
+test4(1<<s, 1<<(s-2))
+
+printf("%v %T\n", i, i)
+printf("%v %T\n", j, j)
+printf("%v %T\n", k, k)
+printf("%v %T\n", m, m)
+printf("%v %T\n", n, n)
+printf("%v %T\n", o, o)
+printf("%v %T\n", p, p)
+printf("%v %T\n", q, q)
+printf("%v %T\n", w, w)
+printf("%v %T\n", x, x)
+printf("%v %T\n", b[0], b)
