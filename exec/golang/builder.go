@@ -378,8 +378,8 @@ type reserveLsh struct {
 func (p *Builder) ReserveOpLsh() exec.Reserved {
 	r := &reserveLsh{}
 	r.expr = new(printer.ReservedExpr)
-	r.x = p.rhs.Pop().(ast.Expr)
 	r.y = p.rhs.Pop().(ast.Expr)
+	r.x = p.rhs.Pop().(ast.Expr)
 	idx := len(p.reserveds)
 	p.reserveds = append(p.reserveds, r)
 	p.rhs.Push(r.expr)
