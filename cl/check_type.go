@@ -175,6 +175,8 @@ func IsPtrKind(kind reflect.Kind) bool {
 func checkType(t reflect.Type, v interface{}, b exec.Builder) {
 	if cons, ok := v.(*constVal); ok {
 		cons.bound(t, b)
+	} else if lsh, ok := v.(*lshValue); ok {
+		lsh.Update(t)
 	} else {
 		iv := v.(iValue)
 		n := iv.NumValues()

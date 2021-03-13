@@ -48,6 +48,42 @@ func isBool(v iValue) bool {
 
 // -----------------------------------------------------------------------------
 
+type lshValue struct {
+	x      *constVal
+	r      exec.Reserved
+	update func(kind reflect.Kind)
+}
+
+func (p *lshValue) Update(t reflect.Type) {
+	if p.r == exec.InvalidReserved {
+		p.bound(t)
+		return
+	}
+	p.update(t.Kind())
+}
+
+func (p *lshValue) bound(t reflect.Type) {
+	v := boundConst(p.x.v, t)
+	p.x.v = v
+	p.x.kind = t.Kind()
+}
+
+func (p *lshValue) Kind() iKind {
+	return p.x.kind
+}
+
+func (p *lshValue) Type() reflect.Type {
+	return boundType(p.x)
+}
+
+func (p *lshValue) NumValues() int {
+	return 1
+}
+
+func (p *lshValue) Value(i int) iValue {
+	return p
+}
+
 type goValue struct {
 	t reflect.Type
 }

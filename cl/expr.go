@@ -658,15 +658,26 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 	y := ctx.infer.Get(-1)
 	xcons, xok := x.(*constVal)
 	ycons, yok := y.(*constVal)
-	if xok && yok { // <const> op <const>
-		ret := binaryOp(op, xcons, ycons)
-		ctx.infer.Ret(2, ret)
-		return func() {
-			ret.reserve = ctx.out.Reserve()
+	var kind iKind
+	var lshcheck bool
+	var lsh *lshValue
+	if op == exec.OpLsh && xok && !isConstBound(xcons.kind) {
+		kind = xcons.kind
+		lshcheck = true
+		lsh = &lshValue{x: xcons, r: exec.InvalidReserved}
+		ctx.infer.Ret(2, lsh)
+	} else {
+		if xok && yok { // <const> op <const>
+			ret := binaryOp(op, xcons, ycons)
+			ctx.infer.Ret(2, ret)
+			return func() {
+				ret.reserve = ctx.out.Reserve()
+			}
 		}
+		var ret iValue
+		kind, ret = binaryOpResult(op, x, y)
+		ctx.infer.Ret(2, ret)
 	}
-	kind, ret := binaryOpResult(op, x, y)
-	ctx.infer.Ret(2, ret)
 	return func() {
 		var label exec.Label
 		exprX()
@@ -679,6 +690,25 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 			}
 		}
 		exprY()
+		if lshcheck {
+			if !isConstBound(xcons.kind) {
+				lsh.r = ctx.out.Reserve()
+				lsh.update = func(kind reflect.Kind) {
+					xcons.v = boundConst(xcons.v, exec.TypeFromKind(kind))
+					checkBinaryOp(kind, op, x, y, ctx.out)
+					if err := checkOpMatchType(op, x, y); err != nil {
+						log.Panicf("invalid operator: %v (%v)", ctx.code(v), err)
+					}
+					ctx.out.ReservedAsBuiltinOp(lsh.r, kind, op)
+				}
+				if label != nil {
+					ctx.out.Label(label)
+				}
+				return
+			}
+			kind = xcons.kind
+		}
+
 		checkBinaryOp(kind, op, x, y, ctx.out)
 		if err := checkOpMatchType(op, x, y); err != nil {
 			log.Panicf("invalid operator: %v (%v)", ctx.code(v), err)
