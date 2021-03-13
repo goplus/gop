@@ -368,6 +368,22 @@ func (p *Builder) ReservedAsPush(r exec.Reserved, v interface{}) {
 	p.reserveds[r].Expr = Const(p, v)
 }
 
+// ReservedAsBuiltinOp sets Reserved as GoBuiltin
+func (p *Builder) ReservedAsBuiltinOp(r exec.Reserved, kind exec.Kind, op exec.Operator) {
+	tok := opTokens[op]
+	if tok == token.ILLEGAL {
+		log.Panicln("BuiltinOp: unsupported op -", op)
+	}
+	oi := op.GetInfo()
+	val := p.reserveds[r].Expr
+	if oi.InSecond == 0 {
+		p.reserveds[r].Expr = &ast.UnaryExpr{Op: tok, X: val}
+		return
+	}
+	x := p.reserveds[r].Expr
+	p.reserveds[r].Expr = &ast.BinaryExpr{Op: tok, X: x, Y: val}
+}
+
 // Pop instr
 func (p *Builder) Pop(n int) *Builder {
 	log.Panicln("todo")

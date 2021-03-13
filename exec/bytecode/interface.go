@@ -488,6 +488,11 @@ func (p *iBuilder) ReservedAsPush(r exec.Reserved, v interface{}) {
 	((*Builder)(p)).ReservedAsPush(r, v)
 }
 
+// ReservedAsBuiltinOp sets Reserved as GoBuiltin
+func (p *iBuilder) ReservedAsBuiltinOp(r exec.Reserved, kind exec.Kind, op exec.Operator) {
+	((*Builder)(p)).ReservedAsBuiltinOp(r, kind, op)
+}
+
 // GetPackage returns the Go+ package that the Builder works for.
 func (p *iBuilder) GetPackage() exec.Package {
 	return NewPackage(p.code)

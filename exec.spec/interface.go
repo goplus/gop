@@ -374,6 +374,9 @@ type Builder interface {
 	// ReservedAsPush sets Reserved as Push(v)
 	ReservedAsPush(r Reserved, v interface{})
 
+	// ReservedAsBuiltinOp sets Reserved as BuiltinOp instr
+	ReservedAsBuiltinOp(r Reserved, kind Kind, op Operator)
+
 	// GetPackage returns the Go+ package that the Builder works for.
 	GetPackage() Package
 
