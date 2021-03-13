@@ -203,6 +203,8 @@ func checkType(t reflect.Type, v interface{}, b exec.Builder) {
 func checkIntType(v interface{}, b exec.Builder) {
 	if cons, ok := v.(*constVal); ok {
 		cons.bound(exec.TyInt, b)
+	} else if lsh, ok := v.(*lshValue); ok {
+		lsh.Update(exec.TyInt)
 	} else {
 		iv := v.(iValue)
 		n := iv.NumValues()

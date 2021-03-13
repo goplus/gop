@@ -730,7 +730,15 @@ func binaryOpResult(op exec.Operator, x, y interface{}) (exec.Kind, iValue) {
 	if !isConstBound(kind) {
 		kind = vy.Kind()
 		if !isConstBound(kind) {
-			log.Panicln("binaryOp: expect x, y aren't const values either.")
+			if lsh, ok := y.(*lshValue); ok && lsh.Kind() == exec.ConstUnboundInt {
+				kind = exec.Int
+				lsh.Update(exec.TyInt)
+			} else {
+				log.Panicln("binaryOp: expect x, y aren't const values either.")
+			}
+		}
+		if xlsh, xok := x.(*lshValue); xok {
+			xlsh.Update(vy.Type())
 		}
 	}
 	i := op.GetInfo()
@@ -1028,7 +1036,10 @@ func compileIdx(ctx *blockCtx, v ast.Expr, nlast int, kind reflect.Kind) int {
 		}
 		ctx.out.Push(n)
 		return -1
+	} else if lsh, ok := i.(*lshValue); ok {
+		lsh.Update(exec.TyInt)
 	}
+
 	expr()
 	if typIdx := i.(iValue).Type(); typIdx != exec.TyInt {
 		if typIdx.ConvertibleTo(exec.TyInt) {

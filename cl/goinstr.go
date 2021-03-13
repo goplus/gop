@@ -438,6 +438,9 @@ func compileTypeCast(typ reflect.Type, ctx *blockCtx, v *ast.CallExpr) func() {
 				pushConstVal(ctx.out, cons)
 			}
 		}
+		if lsh, ok := in.(*lshValue); ok {
+			lsh.Update(typ)
+		}
 	}
 	ctx.infer.Ret(1, &goValue{typ})
 	return func() {
