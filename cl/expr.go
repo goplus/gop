@@ -659,11 +659,9 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 	xcons, xok := x.(*constVal)
 	ycons, yok := y.(*constVal)
 	var kind iKind
-	var lshcheck bool
 	var lsh *lshValue
 	if op == exec.OpLsh && xok && !isConstBound(xcons.kind) {
 		kind = xcons.kind
-		lshcheck = true
 		lsh = &lshValue{x: xcons, r: exec.InvalidReserved}
 		ctx.infer.Ret(2, lsh)
 	} else {
@@ -690,7 +688,7 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 			}
 		}
 		exprY()
-		if lshcheck {
+		if lsh != nil {
 			if !isConstBound(xcons.kind) {
 				lsh.r = ctx.out.ReserveOpLsh()
 				lsh.update = func(kind reflect.Kind) {
