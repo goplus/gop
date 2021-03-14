@@ -19,6 +19,7 @@ package repl
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/goplus/gop/cl"
@@ -41,6 +42,7 @@ type REPL struct {
 	ip           int           // store the ip after exec
 	continueMode bool          // switch to control the promot type
 	term         UI            // liner instance
+	imports      map[string]string
 }
 
 const (
@@ -52,7 +54,7 @@ const (
 
 // New creates a REPL object.
 func New() *REPL {
-	return &REPL{ctx: &exec.Context{}}
+	return &REPL{ctx: &exec.Context{}, imports: make(map[string]string)}
 }
 
 // SetUI initializes UI.
@@ -82,8 +84,34 @@ func (r *REPL) continueModeByLine(line string) {
 	r.term.SetPrompt(NormalPrompt)
 }
 
+func parserImport(line string) (name string, path string, err error) {
+	// import ioutil "io/ioutil"
+	if pos := strings.Index(line, " "); pos > 0 {
+		name = line[:pos]
+		path, err = strconv.Unquote(line[pos+1:])
+	} else {
+		path, err = strconv.Unquote(line)
+		name = path
+		if pos := strings.LastIndex(path, "/"); pos > 0 {
+			name = path[pos+1:]
+		}
+	}
+	return
+}
+
 // run execute the input line
 func (r *REPL) run(newLine string) (err error) {
+	if strings.HasPrefix(newLine, "import ") {
+		line := strings.TrimSpace(newLine[7:])
+		if len(line) > 2 && line[len(line)-1] == '"' {
+			name, path, err := parserImport(line)
+			if err != nil {
+				return err
+			}
+			r.imports[name] = path
+			return nil
+		}
+	}
 	src := r.src + newLine + "\n"
 	defer func() {
 		if errR := recover(); errR != nil {
@@ -114,7 +142,7 @@ func (r *REPL) run(newLine string) (err error) {
 
 	b := exec.NewBuilder(nil)
 
-	_, err = cl.NewPackage(b.Interface(), pkgs["main"], fset, cl.PkgActClMain)
+	_, err = cl.NewPackageEx(b.Interface(), pkgs["main"], fset, cl.PkgActClMain, r.imports)
 	if err != nil {
 		if err == cl.ErrMainFuncNotFound {
 			err = nil

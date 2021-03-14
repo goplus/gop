@@ -142,7 +142,12 @@ func compileIdentLHS(ctx *blockCtx, name string, mode compileMode) {
 		if mode == token.ASSIGN || mode == token.DEFINE {
 			ctx.out.StoreVar(v.v)
 		} else if op, ok := addrops[mode]; ok {
-			ctx.out.AddrVar(v.v).AddrOp(kindOf(v.v.Type()), op)
+			typ := v.v.Type()
+			if typ.Kind() == reflect.Ptr {
+				ctx.out.LoadVar(v.v).AddrOp(kindOf(typ), op)
+			} else {
+				ctx.out.AddrVar(v.v).AddrOp(kindOf(typ), op)
+			}
 		} else {
 			log.Panicln("compileIdentLHS failed: unknown op -", mode)
 		}
@@ -183,6 +188,12 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, compileByCallExpr bool) func(
 	}
 	if sym, ok := ctx.find(name); ok {
 		switch v := sym.(type) {
+		case *constVal:
+			c := newConstVal(v.v, v.Kind())
+			ctx.infer.Push(c)
+			return func() {
+				pushConstVal(ctx.out, c)
+			}
 		case *execVar:
 			typ := v.v.Type()
 			kind := typ.Kind()
@@ -227,6 +238,11 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, compileByCallExpr bool) func(
 			log.Panicln("compileIdent failed: unknown -", reflect.TypeOf(sym))
 		}
 	} else {
+		if name == "iota" {
+			c := newIotaValue()
+			ctx.infer.Push(c)
+			return nil
+		}
 		if addr, kind, ok := ctx.builtin.Find(name); ok {
 			switch kind {
 			case exec.SymbolVar:
@@ -295,12 +311,7 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 		}
 		ctx.infer.Push(&goValue{t: typSlice})
 		return func() {
-			var nLen int
-			if kind == reflect.Array {
-				nLen = typSlice.Len()
-			} else {
-				nLen = toBoundArrayLen(ctx, v)
-			}
+			nLen := toBoundArrayLen(ctx, v)
 			n := -1
 			elts := make([]ast.Expr, nLen)
 			for _, elt := range v.Elts {
@@ -313,7 +324,6 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 					elts[n] = e
 				}
 			}
-			n++
 			typElem := typSlice.Elem()
 			for _, elt := range elts {
 				if elt != nil {
@@ -323,7 +333,7 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 					ctx.out.Zero(typElem)
 				}
 			}
-			ctx.out.MakeArray(typSlice, n)
+			ctx.out.MakeArray(typSlice, nLen)
 		}
 	case reflect.Map:
 		typMap := typ.(reflect.Type)
@@ -681,6 +691,9 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 		}
 		exprY()
 		checkBinaryOp(kind, op, x, y, ctx.out)
+		if err := checkOpMatchType(op, x, y); err != nil {
+			log.Panicf("invalid operator: %v (%v)", ctx.code(v), err)
+		}
 		ctx.out.BuiltinOp(kind, op)
 		if label != nil {
 			ctx.out.Label(label)
@@ -885,15 +898,15 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 
 	typ := ctx.infer.Get(-1).(iValue).Type()
 	typElem := typ.Elem()
+	if typ.Kind() == reflect.Array {
+		ctx.checkLoadAddr = true
+	}
 	if typ.Kind() == reflect.Ptr {
 		if typElem.Kind() != reflect.Array {
 			logPanic(ctx, v, `type %v does not support indexing`, typ)
 		}
 		typ = typElem
 		typElem = typElem.Elem()
-	}
-	if typ.Kind() == reflect.Array {
-		ctx.checkLoadAddr = true
 	}
 	exprX()
 	ctx.checkLoadAddr = false
@@ -1302,12 +1315,22 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 					pushConstVal(ctx.out, ret)
 				}
 			}
+			if t, ok := nv.FindType(name); ok {
+				ctx.infer.Ret(1, &nonValue{t})
+				return nil
+			}
 			addr, kind, ok := nv.Find(name)
 			if !ok {
 				log.Panicln("compileSelectorExpr: not found -", nv.PkgPath(), name)
 			}
 			switch kind {
 			case exec.SymbolFunc, exec.SymbolFuncv:
+				if nv.PkgPath() == "unsafe" {
+					if gi, ok := goinstrs["unsafe."+name]; ok {
+						ctx.infer.Push(&nonValue{gi.instr})
+						return nil
+					}
+				}
 				if compileByCallExpr {
 					fn := newGoFunc(addr, kind, 0, ctx)
 					ctx.infer.Ret(1, fn)
@@ -1464,6 +1487,11 @@ func compileStarExpr(ctx *blockCtx, v *ast.StarExpr) func() {
 	x := ctx.infer.Get(-1)
 	switch vx := x.(type) {
 	case *nonValue:
+		switch t := vx.v.(type) {
+		case reflect.Type:
+			ctx.infer.Ret(1, &nonValue{reflect.PtrTo(t)})
+			return nil
+		}
 	case *goValue:
 		if vx.Kind() == reflect.Ptr {
 			ctx.infer.Ret(1, &goValue{vx.t.Elem()})

@@ -16,9 +16,11 @@ import (
 	_ "github.com/goplus/gop/lib/log"
 	_ "github.com/goplus/gop/lib/os"
 	_ "github.com/goplus/gop/lib/reflect"
+	_ "github.com/goplus/gop/lib/sort"
 	_ "github.com/goplus/gop/lib/strconv"
 	_ "github.com/goplus/gop/lib/strings"
 	_ "github.com/goplus/gop/lib/sync"
 	_ "github.com/goplus/gop/lib/sync/atomic"
 	_ "github.com/goplus/gop/lib/time"
+	_ "github.com/goplus/gop/lib/unsafe"
 )

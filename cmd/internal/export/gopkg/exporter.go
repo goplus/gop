@@ -226,7 +226,7 @@ func (p *Exporter) typeCast(varg string, typ types.Type) string {
 }
 
 var (
-	reTyp, _ = regexp.Compile("[\\w\\./]+")
+	reTyp, _ = regexp.Compile("[\\w\\.\\-_/]+")
 )
 
 func (p *Exporter) typeString(typ types.Type) string {

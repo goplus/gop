@@ -92,11 +92,19 @@ func TestFixPkgString(t *testing.T) {
 	e := NewExporter(b, pkg)
 	e.imports["io"] = "io1"
 	e.imports["go/types"] = "types1"
+	e.imports["go/types-pkg1"] = "pkg1"
+	e.imports["go/types_pkg2"] = "pkg2"
 	e.imports["golang.org/x/crypto/chacha20"] = "chacha20"
 	if v := e.fixPkgString("*go/types.Interface"); v != "*types1.Interface" {
 		t.Fatal(v)
 	}
 	if v := e.fixPkgString("[]*go/types.Package"); v != "[]*types1.Package" {
+		t.Fatal(v)
+	}
+	if v := e.fixPkgString("*go/types-pkg1.Interface"); v != "*pkg1.Interface" {
+		t.Fatal(v)
+	}
+	if v := e.fixPkgString("*go/types_pkg2.Interface"); v != "*pkg2.Interface" {
 		t.Fatal(v)
 	}
 	if v := e.fixPkgString("io.Writer"); v != "io1.Writer" {
