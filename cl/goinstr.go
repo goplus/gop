@@ -38,18 +38,21 @@ var goinstrs map[string]goInstrInfo
 
 func init() {
 	goinstrs = map[string]goInstrInfo{
-		"append":  {igoAppend},
-		"copy":    {igoCopy},
-		"delete":  {igoDelete},
-		"len":     {igoLen},
-		"cap":     {igoCap},
-		"make":    {igoMake},
-		"new":     {igoNew},
-		"complex": {igoComplex},
-		"real":    {igoReal},
-		"imag":    {igoImag},
-		"close":   {igoClose},
-		"recover": {igoRecover},
+		"append":          {igoAppend},
+		"copy":            {igoCopy},
+		"delete":          {igoDelete},
+		"len":             {igoLen},
+		"cap":             {igoCap},
+		"make":            {igoMake},
+		"new":             {igoNew},
+		"complex":         {igoComplex},
+		"real":            {igoReal},
+		"imag":            {igoImag},
+		"close":           {igoClose},
+		"recover":         {igoRecover},
+		"unsafe.Sizeof":   {igoSizeof},
+		"unsafe.Alignof":  {igoAlignof},
+		"unsafe.Offsetof": {igoOffsetof},
 	}
 }
 
@@ -456,11 +459,90 @@ func compileTypeCast(typ reflect.Type, ctx *blockCtx, v *ast.CallExpr) func() {
 			panicExprNotValue(n)
 		}
 		tIn := iv.Type()
-		if !tIn.ConvertibleTo(typ) {
+		tkind := tIn.Kind()
+		kind := typ.Kind()
+		var conv bool
+		switch kind {
+		case reflect.UnsafePointer:
+			if tkind == reflect.Ptr || tkind == reflect.Uintptr {
+				conv = true
+			}
+		case reflect.Ptr, reflect.Uintptr:
+			if tkind == reflect.UnsafePointer {
+				conv = true
+			}
+		}
+		if !conv {
+			conv = tIn.ConvertibleTo(typ)
+		}
+		if !conv {
 			log.Panicf("compileTypeCast: can't convert type `%v` to `%v`\n", tIn, typ)
 		}
 		ctx.out.TypeCast(tIn, typ)
 	}
+}
+
+// func unsafe.Sizeof(ArbitraryType) uintptr
+func igoSizeof(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
+	return igoUnsafe(ctx, v, ct, "Sizeof")
+}
+
+// func unsafe.Alignof(ArbitraryType) uintptr
+func igoAlignof(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
+	return igoUnsafe(ctx, v, ct, "Alignof")
+}
+
+// func unsafe.Offsetof(ArbitraryType) uintptr
+func igoOffsetof(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
+	return igoUnsafe(ctx, v, ct, "Offsetof")
+}
+
+func igoUnsafe(ctx *blockCtx, v *ast.CallExpr, ct callType, name string) func() {
+	if len(v.Args) == 0 {
+		log.Panicf("missing argument to unsafe.%v: %v", name, ctx.code(v))
+	} else if len(v.Args) > 1 {
+		log.Panicf("too many arguments to unsafe.%v: %v", name, ctx.code(v))
+	}
+	ctx.infer.Pop()
+	for _, arg := range v.Args {
+		compileExpr(ctx, arg)
+	}
+	switch name {
+	case "Sizeof":
+		c := ctx.infer.Get(-1).(iValue)
+		t := boundType(c)
+		ctx.infer.Pop()
+		ret := newConstVal(int64(t.Size()), exec.Uintptr)
+		ctx.infer.Push(ret)
+		return func() {
+			pushConstVal(ctx.out, ret)
+		}
+	case "Alignof":
+		c := ctx.infer.Get(-1).(iValue)
+		t := boundType(c)
+		ctx.infer.Pop()
+		ret := newConstVal(int64(t.Align()), exec.Uintptr)
+		ctx.infer.Push(ret)
+		return func() {
+			pushConstVal(ctx.out, ret)
+		}
+	case "Offsetof":
+		if ctx.fieldStructType == nil || ctx.fieldIndex == nil {
+			log.Panicf("invalid expression %v", ctx.code(v))
+		}
+		ctx.infer.Pop()
+		typ := ctx.fieldStructType
+		for typ.Kind() == reflect.Ptr {
+			typ = typ.Elem()
+		}
+		offset := typ.FieldByIndex(ctx.fieldIndex).Offset
+		ret := newConstVal(int64(offset), exec.Uintptr)
+		ctx.infer.Push(ret)
+		return func() {
+			pushConstVal(ctx.out, ret)
+		}
+	}
+	return nil
 }
 
 // -----------------------------------------------------------------------------
