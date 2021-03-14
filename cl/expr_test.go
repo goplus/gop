@@ -1993,3 +1993,161 @@ func TestOpLsh(t *testing.T) {
 	println(x)
 	`, "", nil)
 }
+
+func TestConst(t *testing.T) {
+	cltest.Expect(t, `
+	const v = 100
+	a := v
+	b := int64(v)
+	println(a,b,v)
+	printf("%T %T %T\n",a,b,v)
+	`, "100 100 100\nint int64 int\n")
+	cltest.Expect(t, `
+	const (
+		v1 = 100
+		v2 = 0x64
+		v3 = uint(100)
+		v4 = 100.1
+		v5 = float32(100.1)
+		v6 = 100r
+		v7 = 'd'
+		v8 = "d"
+	)
+	println(v1,v2,v3,v4,v5,v6,v7,v8)
+	printf("%T %T %T %T %T %T %T %T\n",v1,v2,v3,v4,v5,v6,v7,v8)
+	`, "100 100 100 100.1 100.1 100 100 d\nint int uint float64 float32 *big.Int int32 string\n")
+	cltest.Expect(t, `
+	const (
+		v1 int = 100
+		v2
+		v3 float64 = 100
+		v4 = float64(100)
+	)
+	println(v1,v2,v3,v4)
+	printf("%T %T %T %T\n",v1,v2,v3,v4)
+	`, "100 100 100 100\nint int float64 float64\n")
+	cltest.Expect(t, `
+	const (
+		v1,v2,v3 = 100,200,300
+	)
+	println(v1,v2,v3)
+	`, "100 200 300\n")
+}
+
+func TestBadConst(t *testing.T) {
+	cltest.Expect(t, `
+	const x = 0
+	const x = 0
+	println(x)
+	`, "", nil)
+	cltest.Expect(t, `
+	const (
+		v1,v2 = 100
+	)
+	println(v1,v2)
+	`, "", "missing value in const declaration")
+	cltest.Expect(t, `
+	const (
+		v1,v2 = 100,200,300
+	)
+	println(v1,v2)
+	`, "", "extra expression in const declaration")
+}
+
+func TestIota(t *testing.T) {
+	cltest.Expect(t, `
+	const (
+		c0 = iota  // c0 == 0
+		c1 = iota  // c1 == 1
+		c2 = iota  // c2 == 2
+	)
+	const (
+		a = 1 << iota  // a == 1  (iota == 0)
+		b = 1 << iota  // b == 2  (iota == 1)
+		c = 3          // c == 3  (iota == 2, unused)
+		d = 1 << iota  // d == 8  (iota == 3)
+	)
+	println(c0,c1,c2)
+	println(a,b,c,d)
+	`, "0 1 2\n1 2 3 8\n")
+	cltest.Expect(t, `
+	const (
+		u         = iota * 42  // u == 0     (untyped integer constant)
+		v float64 = iota * 42  // v == 42.0  (float64 constant)
+		w         = iota * 42  // w == 84    (untyped integer constant)
+	)
+	println(u,v,w)
+	printf("%T %T %T\n",u,v,w)
+	`, "0 42 84\nint float64 int\n")
+	cltest.Expect(t, `
+	const (
+		bit0, mask0 = 1 << iota, 1<<iota - 1  // bit0 == 1, mask0 == 0  (iota == 0)
+		bit1, mask1                           // bit1 == 2, mask1 == 1  (iota == 1)
+		_, _                                  //                        (iota == 2, unused)
+		bit3, mask3                           // bit3 == 8, mask3 == 7  (iota == 3)
+	)
+	println(bit0,mask0,bit1,mask1,bit3,mask3)
+	`, "1 0 2 1 8 7\n")
+}
+
+func TestUnsafe(t *testing.T) {
+	cltest.Expect(t, `
+	import (
+		"unsafe"
+	)
+	type SliceHeader struct {
+		Data uintptr
+		Len  int
+		Cap  int
+	}
+	type StringHeader struct {
+		Data uintptr
+		Len  int
+	}
+	a := "hello"
+	b := []byte("world")
+	v := (*StringHeader)(unsafe.Pointer(&a))
+	v2 := (*SliceHeader)(unsafe.Pointer(&b))
+	v3 := (*StringHeader)(unsafe.Pointer(&b))
+	println(*(*string)(unsafe.Pointer(v)))
+	println(string(*(*[]byte)(unsafe.Pointer(v2))))
+	println(*(*string)(unsafe.Pointer(v2)))
+	println(*(*string)(unsafe.Pointer(v3)))
+	`, "hello\nworld\nworld\nworld\n")
+	cltest.Expect(t, `
+	import "unsafe"
+	type Point struct {
+		X int
+		Y int
+	}
+	pt := Point{10, 20}
+	pt2 := &Point{10, 20}
+	println(unsafe.Sizeof(pt))
+	println(unsafe.Alignof(pt))
+	println(unsafe.Offsetof(pt.Y))
+	println(unsafe.Offsetof(pt2.Y))
+	`, "16\n8\n8\n8\n")
+	cltest.Expect(t, `
+	import "unsafe"
+	ar := [unsafe.Sizeof(true)]int{}
+	println(len(ar))
+	`, "1\n")
+}
+
+func TestBadUnsafe(t *testing.T) {
+	cltest.Expect(t, `
+	import "unsafe"
+	v := unsafe.Sizeof()
+	println(v)
+	`, "", "missing argument to unsafe.Sizeof: unsafe.Sizeof()")
+	cltest.Expect(t, `
+	import "unsafe"
+	v := unsafe.Sizeof(1,2,3)
+	println(v)
+	`, "", "too many arguments to unsafe.Sizeof: unsafe.Sizeof(1,2,3)")
+	cltest.Expect(t, `
+	import "unsafe"
+	v := unsafe.Offsetof(1)
+	println(v)
+	`, "", "invalid expression unsafe.Offsetof(1)")
+}

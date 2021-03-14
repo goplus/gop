@@ -48,8 +48,8 @@ b := [x*x for x <- a, x > 3]
 println(b) // output: [25 49 121]
 
 mapData := {"Hi": 1, "Hello": 2, "Go+": 3}
-reversedMap := {v: k for k, v <- mapData}
-println(reversedMap) // output: map[1:Hi 2:Hello 3:Go+]
+reverseMap := {v: k for k, v <- mapData}
+println(reverseMap) // output: map[1:Hi 2:Hello 3:Go+]
 ```
 
 We will keep Go+ simple. This is why we call it Go+, not Go++.
@@ -215,7 +215,7 @@ c := ["xsw", 3] // []interface{}
 empty := [] // []interface{}
 ```
 
-### List/Map comprehension
+### List comprehension
 
 ```go
 a := [x*x for x <- [1, 3, 5, 7, 11]]
@@ -229,6 +229,23 @@ e := [[a, b] for a <- arr, a < b for b <- arr, b > 2]
 x := {x: i for i, x <- [1, 3, 5, 7, 11]}
 y := {x: i for i, x <- [1, 3, 5, 7, 11], i%2 == 1}
 z := {v: k for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "Go+"}, k > 3}
+```
+
+### Select data from a collection
+
+```go
+type student struct {
+    name  string
+    score int
+}
+
+students := [student{"Ken", 90}, student{"Jason", 80}, student{"Lily", 85}]
+
+unknownScore, ok := {x.score for x <- students, x.name == "Unknown"}
+jasonScore := {x.score for x <- students, x.name == "Jason"}
+
+println(unknownScore, ok) // output: 0 false
+println(jasonScore) // output: 80
 ```
 
 ### For loop
@@ -325,7 +342,7 @@ In Go+, we introduce a concept named `auto property`. It is a `get property`, bu
 You can use Go+ programs as shell scripts now. For example:
 
 ```go
-#!/usr/bin/env qrun
+#!/usr/bin/env -S gop run
 
 println("Hello, Go+")
 

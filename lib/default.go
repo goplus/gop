@@ -22,4 +22,5 @@ import (
 	_ "github.com/goplus/gop/lib/sync"
 	_ "github.com/goplus/gop/lib/sync/atomic"
 	_ "github.com/goplus/gop/lib/time"
+	_ "github.com/goplus/gop/lib/unsafe"
 )
