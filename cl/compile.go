@@ -152,6 +152,10 @@ const (
 
 // NewPackage creates a Go+ package instance.
 func NewPackage(out exec.Builder, pkg *ast.Package, fset *token.FileSet, act PkgAct) (p *Package, err error) {
+	return NewPackageEx(out, pkg, fset, act, nil)
+}
+
+func NewPackageEx(out exec.Builder, pkg *ast.Package, fset *token.FileSet, act PkgAct, imports map[string]string) (p *Package, err error) {
 	if pkg == nil {
 		return nil, ErrNotFound
 	}
@@ -162,7 +166,7 @@ func NewPackage(out exec.Builder, pkg *ast.Package, fset *token.FileSet, act Pkg
 	ctxPkg := newPkgCtx(out, pkg, fset)
 	ctx := newGblBlockCtx(ctxPkg)
 	for _, f := range pkg.Files {
-		loadFile(ctx, f)
+		loadFile(ctx, f, imports)
 	}
 	switch act {
 	case PkgActClAll:
@@ -207,6 +211,8 @@ type SymKind uint
 const (
 	// SymInvalid - invalid symbol kind
 	SymInvalid SymKind = iota
+	// SymConst - symbol is a const
+	SymConst
 	// SymVar - symbol is a variable
 	SymVar
 	// SymFunc - symbol is a function
@@ -221,6 +227,8 @@ func (p *Package) Find(name string) (kind SymKind, v interface{}, ok bool) {
 		return
 	}
 	switch v.(type) {
+	case *constVal:
+		kind = SymConst
 	case *exec.Var:
 		kind = SymVar
 	case *funcDecl:
@@ -233,11 +241,13 @@ func (p *Package) Find(name string) (kind SymKind, v interface{}, ok bool) {
 	return
 }
 
-func loadFile(ctx *blockCtx, f *ast.File) {
+func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 	file := newFileCtx(ctx)
 	last := len(f.Decls) - 1
 	ctx.file = file
-
+	for name, pkg := range imports {
+		ctx.file.imports[name] = pkg
+	}
 	for i, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
@@ -307,7 +317,42 @@ func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
 	ctx.types[t] = tDecl
 }
 
+var (
+	iotaIndex int
+	iotaUsed  bool
+)
+
+func newIotaValue() *constVal {
+	iotaUsed = true
+	return newConstVal(iotaIndex, exec.ConstUnboundInt)
+}
+
 func loadConsts(ctx *blockCtx, d *ast.GenDecl) {
+	iotaIndex = 0
+	iotaUsed = false
+	var last *ast.ValueSpec
+	for _, item := range d.Specs {
+		spec := item.(*ast.ValueSpec)
+		if spec.Type == nil && spec.Values == nil {
+			spec.Type = last.Type
+			spec.Values = last.Values
+		}
+		nnames := len(spec.Names)
+		nvalue := len(spec.Values)
+		if nvalue < nnames {
+			log.Panicf("missing value in const declaration")
+		} else if nvalue > nnames {
+			log.Panicf("extra expression in const declaration")
+		} else {
+			for i := 0; i < nnames; i++ {
+				loadConst(ctx, spec.Names[i].Name, spec.Type, spec.Values[i])
+			}
+			if iotaUsed {
+				iotaIndex++
+			}
+		}
+		last = spec
+	}
 }
 
 func loadVars(ctx *blockCtx, d *ast.GenDecl, stmt ast.Stmt) {
@@ -323,6 +368,24 @@ func loadVars(ctx *blockCtx, d *ast.GenDecl, stmt ast.Stmt) {
 			}
 			ctx.out.EndStmt(stmt, start)
 		}
+	}
+}
+
+func loadConst(ctx *blockCtx, name string, typ ast.Expr, value ast.Expr) {
+	if name != "_" && ctx.exists(name) {
+		log.Panicln("loadConst failed: symbol exists -", name)
+	}
+	compileExpr(ctx, value)
+	in := ctx.infer.Pop()
+	c := in.(*constVal)
+	if typ != nil {
+		t := toType(ctx, typ).(reflect.Type)
+		v := boundConst(c.v, t)
+		c.v = v
+		c.kind = t.Kind()
+	}
+	if name != "_" {
+		ctx.syms[name] = c
 	}
 }
 

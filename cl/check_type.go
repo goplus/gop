@@ -18,6 +18,7 @@ package cl
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 
 	"github.com/goplus/gop/ast"
@@ -142,6 +143,33 @@ func checkBinaryOp(kind exec.Kind, op exec.Operator, x, y interface{}, b exec.Bu
 			}
 		}
 	}
+}
+
+func checkOpMatchType(op exec.Operator, x, y interface{}) error {
+	switch op {
+	case exec.OpEQ, exec.OpNE:
+		ix := x.(iValue)
+		iy := y.(iValue)
+		xkind, ykind := ix.Kind(), iy.Kind()
+		if xkind == exec.ConstUnboundPtr && ykind == exec.ConstUnboundPtr {
+			return nil
+		} else if xkind == exec.ConstUnboundPtr {
+			if !IsPtrKind(ykind) {
+				return fmt.Errorf("mismatched types nil and %v", boundType(iy))
+			}
+		} else if ykind == exec.ConstUnboundPtr {
+			if !IsPtrKind(xkind) {
+				return fmt.Errorf("mismatched types %v and nil", boundType(ix))
+			}
+		} else if tx, ty := boundType(ix), boundType(iy); tx != ty {
+			return fmt.Errorf("mismatched types %v and %v", tx, ty)
+		}
+	}
+	return nil
+}
+
+func IsPtrKind(kind reflect.Kind) bool {
+	return kind >= reflect.Chan && kind <= reflect.Slice || kind == reflect.UnsafePointer
 }
 
 func checkType(t reflect.Type, v interface{}, b exec.Builder) {
