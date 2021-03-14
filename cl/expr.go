@@ -669,6 +669,17 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 	y := ctx.infer.Get(-1)
 	xcons, xok := x.(*constVal)
 	ycons, yok := y.(*constVal)
+	if xok && yok { // <const> op <const>
+		if op == exec.OpLsh && xcons.kind == exec.ConstUnboundFloat {
+			// TODO
+			xcons.kind = exec.ConstUnboundInt
+		}
+		ret := binaryOp(op, xcons, ycons)
+		ctx.infer.Ret(2, ret)
+		return func() {
+			ret.reserve = ctx.out.Reserve()
+		}
+	}
 	var kind iKind
 	var lsh *lshValue
 	if op == exec.OpLsh && xok && !isConstBound(xcons.kind) {
@@ -676,13 +687,6 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 		lsh = &lshValue{x: xcons, r: exec.InvalidReserved}
 		ctx.infer.Ret(2, lsh)
 	} else {
-		if xok && yok { // <const> op <const>
-			ret := binaryOp(op, xcons, ycons)
-			ctx.infer.Ret(2, ret)
-			return func() {
-				ret.reserve = ctx.out.Reserve()
-			}
-		}
 		var ret iValue
 		kind, ret = binaryOpResult(op, x, y)
 		ctx.infer.Ret(2, ret)
@@ -702,8 +706,9 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 		if lsh != nil {
 			if !isConstBound(xcons.kind) {
 				lsh.r = ctx.out.ReserveOpLsh()
-				lsh.update = func(kind reflect.Kind) {
-					xcons.v = boundConst(xcons.v, exec.TypeFromKind(kind))
+				lsh.fnCheckType = func(typ reflect.Type) {
+					kind := typ.Kind()
+					xcons.v = boundConst(xcons.v, typ)
 					checkBinaryOp(kind, op, x, y, ctx.out)
 					if err := checkOpMatchType(op, x, y); err != nil {
 						log.Panicf("invalid operator: %v (%v)", ctx.code(v), err)
@@ -738,16 +743,26 @@ func binaryOpResult(op exec.Operator, x, y interface{}) (exec.Kind, iValue) {
 	kind := vx.Kind()
 	if !isConstBound(kind) {
 		kind = vy.Kind()
-		if !isConstBound(kind) {
-			if lsh, ok := y.(*lshValue); ok && lsh.Kind() == exec.ConstUnboundInt {
-				kind = exec.Int
-				lsh.Update(exec.TyInt)
-			} else {
-				log.Panicln("binaryOp: expect x, y aren't const values either.")
-			}
-		}
 		if xlsh, xok := x.(*lshValue); xok {
-			xlsh.Update(vy.Type())
+			var unbound bool
+			if !isConstBound(kind) {
+				if kind != xlsh.Kind() {
+					unbound = true
+				}
+				if c, ok := y.(*constVal); ok {
+					kind = c.boundKind()
+					c.v = boundConst(c.v, c.boundType())
+					c.kind = kind
+				} else if lsh, ok := y.(*lshValue); ok && lsh.Kind() == exec.ConstUnboundInt {
+					kind = exec.Int
+					lsh.bound(exec.TyInt)
+				}
+			}
+			if !unbound {
+				xlsh.bound(vy.Type())
+			}
+		} else if !isConstBound(kind) {
+			log.Panicln("binaryOp: expect x, y aren't const values either.")
 		}
 	}
 	i := op.GetInfo()
@@ -1046,7 +1061,7 @@ func compileIdx(ctx *blockCtx, v ast.Expr, nlast int, kind reflect.Kind) int {
 		ctx.out.Push(n)
 		return -1
 	} else if lsh, ok := i.(*lshValue); ok {
-		lsh.Update(exec.TyInt)
+		lsh.bound(exec.TyInt)
 	}
 
 	expr()

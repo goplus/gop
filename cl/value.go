@@ -49,17 +49,13 @@ func isBool(v iValue) bool {
 // -----------------------------------------------------------------------------
 
 type lshValue struct {
-	x      *constVal
-	r      exec.Reserved
-	update func(kind reflect.Kind)
+	x           *constVal
+	r           exec.Reserved
+	fnCheckType func(typ reflect.Type)
 }
 
-func (p *lshValue) Update(t reflect.Type) {
-	if p.r == exec.InvalidReserved {
-		p.bound(t)
-		return
-	}
-	p.update(t.Kind())
+func (p *lshValue) checkType(t reflect.Type) {
+	p.fnCheckType(t)
 }
 
 func (p *lshValue) bound(t reflect.Type) {
