@@ -154,6 +154,10 @@ const (
 
 // NewPackage creates a Go+ package instance.
 func NewPackage(out exec.Builder, pkg *ast.Package, fset *token.FileSet, act PkgAct) (p *Package, err error) {
+	return NewPackageEx(out, pkg, fset, act, nil)
+}
+
+func NewPackageEx(out exec.Builder, pkg *ast.Package, fset *token.FileSet, act PkgAct, imports map[string]string) (p *Package, err error) {
 	if pkg == nil {
 		return nil, ErrNotFound
 	}
@@ -164,7 +168,7 @@ func NewPackage(out exec.Builder, pkg *ast.Package, fset *token.FileSet, act Pkg
 	ctxPkg := newPkgCtx(out, pkg, fset)
 	ctx := newGblBlockCtx(ctxPkg)
 	for _, f := range pkg.Files {
-		loadFile(ctx, f)
+		loadFile(ctx, f, imports)
 	}
 	switch act {
 	case PkgActClAll:
@@ -235,11 +239,13 @@ func (p *Package) Find(name string) (kind SymKind, v interface{}, ok bool) {
 	return
 }
 
-func loadFile(ctx *blockCtx, f *ast.File) {
+func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 	file := newFileCtx(ctx)
 	last := len(f.Decls) - 1
 	ctx.file = file
-
+	for name, pkg := range imports {
+		ctx.file.imports[name] = pkg
+	}
 	for i, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:

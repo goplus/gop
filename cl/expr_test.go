@@ -493,6 +493,25 @@ func TestTypeCast(t *testing.T) {
 	`).Equal([]byte("hello"))
 }
 
+func TestPkgTypeConv(t *testing.T) {
+	cltest.Expect(t, `
+	import "sort"
+	ar := [1,5,3,2]
+	sort.IntSlice(ar).Sort()
+	println(ar)
+	`, "[1 2 3 5]\n")
+}
+
+func TestRuneType(t *testing.T) {
+	cltest.Expect(t, `
+	a := 'a'
+	printf("%T\n",a)
+	`, "int32\n")
+	cltest.Expect(t, `
+	printf("%T\n",'a')
+	`, "int32\n")
+}
+
 func TestAppendErr(t *testing.T) {
 	cltest.Expect(t, `
 		append()
@@ -620,17 +639,32 @@ func TestSlice(t *testing.T) {
 		`,
 		"x: [1 0 3.4 5]\n",
 	)
+	cltest.Expect(t, `
+		x := []float64{1:1,3:3,4}
+		println("x:", x)
+		y := []float64{3:3,4,1:1}
+		println("y:", x)
+		`,
+		"x: [0 1 0 3 4]\ny: [0 1 0 3 4]\n",
+	)
 }
 
 func TestArray(t *testing.T) {
 	cltest.Expect(t, `
 		x := [4]float64{1, 2.3, 3.6}
 		println("x:", x)
-
 		y := [...]float64{1, 2.3, 3.6}
 		println("y:", y)
 		`,
-		"x: [2.3 3.6 0 0]\ny: [1 2.3 3.6]\n",
+		"x: [1 2.3 3.6 0]\ny: [1 2.3 3.6]\n",
+	)
+	cltest.Expect(t, `
+		x := [5]float64{1:1,3:3,4}
+		println("x:", x)
+		y := [5]float64{3:3,4,1:1}
+		println("y:", x)
+		`,
+		"x: [0 1 0 3 4]\ny: [0 1 0 3 4]\n",
 	)
 	cltest.Expect(t, `
 		x := [...]float64{1, 3: 3.4, 5}
@@ -1831,6 +1865,10 @@ var testStarExprClauses = map[string]testData{
 					println(a1, *c.b, *c.m["foo"], *c.s[0])
 	
 						`, "3 3 8 11\n", false},
+	"start expr ptr conv": {`
+					a := 10
+					println(*(*int)(&a))
+					`, "10\n", false},
 }
 
 func TestStarExpr(t *testing.T) {
@@ -1906,6 +1944,56 @@ var testRefTypeClauses = map[string]testData{
 
 func TestRefType(t *testing.T) {
 	testScripts(t, "TestRefType", testRefTypeClauses)
+}
+
+func TestMatchType(t *testing.T) {
+	cltest.Expect(t, `
+		println(nil == nil,nil != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
+		var i interface{}
+		println(i == nil,i != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
+		var i *int
+		println(i == nil,i != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
+		var i chan int
+		println(i == nil,i != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
+		var i func()
+		println(i == nil,i != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
+		var i []int
+		println(i == nil,i != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
+		var i map[int]string
+		println(i == nil,i != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
+		var v int
+		println(v == nil)
+	`, "", "invalid operator: v == nil (mismatched types int and nil)")
+	cltest.Expect(t, `
+		var v int
+		println(nil == v)
+	`, "", "invalid operator: nil == v (mismatched types nil and int)")
+	cltest.Expect(t, `
+		var a int
+		var b uint8
+		println(a == b)
+	`, "", "invalid operator: a == b (mismatched types int and uint8)")
+	cltest.Expect(t, `
+		var a int
+		switch a {
+			case 0:
+			case uint8(1):
+		}
+	`, "", "invalid case uint8(1) in switch on a (mismatched types int and uint8)")
 }
 
 func testScripts(t *testing.T, testName string, scripts map[string]testData) {

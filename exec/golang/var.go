@@ -227,6 +227,9 @@ func (p *Builder) bigAddrOp(kind exec.Kind, op exec.AddrOperator) *Builder {
 		}
 		bigOp := &ast.SelectorExpr{X: v.X, Sel: Ident(method)}
 		expr = &ast.CallExpr{Fun: bigOp, Args: []ast.Expr{v.X, val}}
+	case *ast.Ident:
+		bigOp := &ast.SelectorExpr{X: v, Sel: Ident(method)}
+		expr = &ast.CallExpr{Fun: bigOp, Args: []ast.Expr{v, val}}
 	default:
 		log.Panicln("bigAddrOp: todo")
 	}

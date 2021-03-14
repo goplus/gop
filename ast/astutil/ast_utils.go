@@ -63,6 +63,8 @@ const (
 	ConstUnboundFloat = spec.ConstUnboundFloat
 	// ConstUnboundComplex - unbound complex type
 	ConstUnboundComplex = spec.ConstUnboundComplex
+	// ConstUnboundPtr - nil: unbound ptr
+	ConstUnboundPtr = spec.ConstUnboundPtr
 )
 
 // IsConstBound checks a const is bound or not.
