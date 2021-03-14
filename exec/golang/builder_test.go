@@ -21,6 +21,7 @@ import (
 	"go/ast"
 	"reflect"
 	"testing"
+	"unsafe"
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/exec.spec"
@@ -78,8 +79,8 @@ import fmt "fmt"
 var a []float64
 
 func main() {
-	a = []float64{3.2, 1.2, 2.4}
-	a[1] = 1.6
+	a = []float64{float64(3.2), float64(1.2), float64(2.4)}
+	a[1] = float64(1.6)
 	fmt.Println(a[0], &a[1])
 }
 `
@@ -492,6 +493,26 @@ func TestReserved(t *testing.T) {
 	code.ReservedAsPush(off, 123)
 	if !reflect.DeepEqual(code.reserveds[off].Expr.(*ast.BasicLit), IntConst(123)) {
 		t.Fatal("TestReserved failed: reserveds is not set to", 123)
+	}
+}
+
+func TestConstNil(t *testing.T) {
+	code := NewBuilder("main", nil, nil)
+	//Chan, Func, Map, Ptr, UnsafePointer, Interface, Slice
+	for _, v := range []interface{}{
+		(chan int)(nil),
+		(func())(nil),
+		map[int]string(nil),
+		(*struct{})(nil),
+		unsafe.Pointer(nil),
+		interface{}(nil),
+		[]byte(nil),
+	} {
+		off := code.Reserve()
+		code.ReservedAsPush(off, v)
+		if code.reserveds[off].Expr.(*ast.Ident).Name != "nil" {
+			t.Fatal("TestConstNil failed: reserveds is not set nil")
+		}
 	}
 }
 
