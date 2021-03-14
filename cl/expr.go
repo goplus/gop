@@ -671,7 +671,10 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 	ycons, yok := y.(*constVal)
 	if xok && yok { // <const> op <const>
 		if op == exec.OpLsh && xcons.kind == exec.ConstUnboundFloat {
-			// TODO
+			v := xcons.v.(float64)
+			if v != float64(int64(v)) {
+				log.Panicf("constant %v truncated to integer", v)
+			}
 			xcons.kind = exec.ConstUnboundInt
 		}
 		ret := binaryOp(op, xcons, ycons)

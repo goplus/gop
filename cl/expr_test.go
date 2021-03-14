@@ -1992,6 +1992,10 @@ func TestOpLsh(t *testing.T) {
 	var x = a[1.0<<s]
 	println(x)
 	`, "", nil)
+	cltest.Expect(t, `
+	var s = 1.1 << 33
+	println(s)
+	`, "", "constant 1.1 truncated to integer")
 }
 
 func TestConst(t *testing.T) {
