@@ -1926,3 +1926,65 @@ func TestTwoValueExpr(t *testing.T) {
 			}`
 	cltest.Expect(t, clause, "1 3 true\n3 0 false\n")
 }
+
+func TestUnsafe(t *testing.T) {
+	cltest.Expect(t, `
+	import (
+		"unsafe"
+	)
+	type SliceHeader struct {
+		Data uintptr
+		Len  int
+		Cap  int
+	}
+	type StringHeader struct {
+		Data uintptr
+		Len  int
+	}
+	a := "hello"
+	b := []byte("world")
+	v := (*StringHeader)(unsafe.Pointer(&a))
+	v2 := (*SliceHeader)(unsafe.Pointer(&b))
+	v3 := (*StringHeader)(unsafe.Pointer(&b))
+	println(*(*string)(unsafe.Pointer(v)))
+	println(string(*(*[]byte)(unsafe.Pointer(v2))))
+	println(*(*string)(unsafe.Pointer(v2)))
+	println(*(*string)(unsafe.Pointer(v3)))
+	`, "hello\nworld\nworld\nworld\n")
+	cltest.Expect(t, `
+	import "unsafe"
+	type Point struct {
+		X int
+		Y int
+	}
+	pt := Point{10, 20}
+	pt2 := &Point{10, 20}
+	println(unsafe.Sizeof(pt))
+	println(unsafe.Alignof(pt))
+	println(unsafe.Offsetof(pt.Y))
+	println(unsafe.Offsetof(pt2.Y))
+	`, "16\n8\n8\n8\n")
+	cltest.Expect(t, `
+	import "unsafe"
+	ar := [unsafe.Sizeof(true)]int{}
+	println(len(ar))
+	`, "1\n")
+}
+
+func TestBadUnsafe(t *testing.T) {
+	cltest.Expect(t, `
+	import "unsafe"
+	v := unsafe.Sizeof()
+	println(v)
+	`, "", "missing argument to unsafe.Sizeof: unsafe.Sizeof()")
+	cltest.Expect(t, `
+	import "unsafe"
+	v := unsafe.Sizeof(1,2,3)
+	println(v)
+	`, "", "too many arguments to unsafe.Sizeof: unsafe.Sizeof(1,2,3)")
+	cltest.Expect(t, `
+	import "unsafe"
+	v := unsafe.Offsetof(1)
+	println(v)
+	`, "", "invalid expression unsafe.Offsetof(1)")
+}
