@@ -1325,6 +1325,12 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 			}
 			switch kind {
 			case exec.SymbolFunc, exec.SymbolFuncv:
+				if nv.PkgPath() == "unsafe" {
+					if gi, ok := goinstrs["unsafe."+name]; ok {
+						ctx.infer.Push(&nonValue{gi.instr})
+						return nil
+					}
+				}
 				if compileByCallExpr {
 					fn := newGoFunc(addr, kind, 0, ctx)
 					ctx.infer.Ret(1, fn)
