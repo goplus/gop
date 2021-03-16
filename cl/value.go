@@ -369,7 +369,9 @@ func binaryOp(op exec.Operator, x, y *constVal) *constVal {
 	xkind := x.kind
 	ykind := y.kind
 	var kind, kindReal astutil.ConstKind
-	if isConstBound(xkind) {
+	if op == exec.OpLsh || op == exec.OpRsh {
+		kind, kindReal = xkind, realKindOf(xkind)
+	} else if isConstBound(xkind) {
 		kind, kindReal = xkind, xkind
 	} else if isConstBound(ykind) {
 		kind, kindReal = ykind, ykind
