@@ -1927,6 +1927,27 @@ func TestTwoValueExpr(t *testing.T) {
 	cltest.Expect(t, clause, "1 3 true\n3 0 false\n")
 }
 
+func TestOpShift(t *testing.T) {
+	cltest.Expect(t, `
+	const u uint32 = 3
+	var a = 1 << u
+	var b = 1024 >> u
+	var c = 1.0 << u
+	var d = 1024.0 >> u
+	printf("%v %T\n",a,a)
+	printf("%v %T\n",b,b)
+	printf("%v %T\n",c,c)
+	printf("%v %T\n",d,d)
+	`, "8 int\n128 int\n8 int\n128 int\n")
+	cltest.Expect(t, `
+	var u uint32 = 3
+	var a = 1 << u
+	var b = 1024 >> u
+	printf("%v %T\n",a,a)
+	printf("%v %T\n",b,b)
+	`, "8 int\n128 int\n")
+}
+
 func TestOpRsh(t *testing.T) {
 	cltest.Expect(t, `
 	var a [1024]byte
