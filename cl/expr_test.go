@@ -1940,12 +1940,16 @@ func TestOpShift(t *testing.T) {
 	printf("%v %T\n",d,d)
 	`, "8 int\n128 int\n8 int\n128 int\n")
 	cltest.Expect(t, `
-	var u uint32 = 3
+	const u uint32 = 3
 	var a = 1 << u
 	var b = 1024 >> u
+	var c int32 = 1.0 << u
+	var d int32 = 1024.0 >> u
 	printf("%v %T\n",a,a)
 	printf("%v %T\n",b,b)
-	`, "8 int\n128 int\n")
+	printf("%v %T\n",c,c)
+	printf("%v %T\n",d,d)
+	`, "8 int\n128 int\n8 int32\n128 int32\n")
 }
 
 func TestOpRsh(t *testing.T) {
