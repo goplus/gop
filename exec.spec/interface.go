@@ -374,6 +374,12 @@ type Builder interface {
 	// ReservedAsPush sets Reserved as Push(v)
 	ReservedAsPush(r Reserved, v interface{})
 
+	// ReserveOpLsh reserves an instruction.
+	ReserveOpLsh() Reserved
+
+	// ReservedAsOpLsh sets Reserved as OpLsh
+	ReservedAsOpLsh(r Reserved, kind Kind, op Operator)
+
 	// GetPackage returns the Go+ package that the Builder works for.
 	GetPackage() Package
 
