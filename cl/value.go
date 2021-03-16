@@ -48,35 +48,35 @@ func isBool(v iValue) bool {
 
 // -----------------------------------------------------------------------------
 
-type lshValue struct {
+type shiftValue struct {
 	x           *constVal
 	r           exec.Reserved
 	fnCheckType func(typ reflect.Type)
 }
 
-func (p *lshValue) checkType(t reflect.Type) {
+func (p *shiftValue) checkType(t reflect.Type) {
 	p.fnCheckType(t)
 }
 
-func (p *lshValue) bound(t reflect.Type) {
+func (p *shiftValue) bound(t reflect.Type) {
 	v := boundConst(p.x.v, t)
 	p.x.v = v
 	p.x.kind = t.Kind()
 }
 
-func (p *lshValue) Kind() iKind {
+func (p *shiftValue) Kind() iKind {
 	return p.x.kind
 }
 
-func (p *lshValue) Type() reflect.Type {
+func (p *shiftValue) Type() reflect.Type {
 	return boundType(p.x)
 }
 
-func (p *lshValue) NumValues() int {
+func (p *shiftValue) NumValues() int {
 	return 1
 }
 
-func (p *lshValue) Value(i int) iValue {
+func (p *shiftValue) Value(i int) iValue {
 	return p
 }
 

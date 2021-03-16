@@ -368,15 +368,15 @@ func (p *Builder) ReservedAsPush(r exec.Reserved, v interface{}) {
 	p.reserveds[r].(*printer.ReservedExpr).Expr = Const(p, v)
 }
 
-type reserveLsh struct {
+type reservedShift struct {
 	expr *printer.ReservedExpr
 	x    ast.Expr
 	y    ast.Expr
 }
 
-// ReserveOpLsh reserves an instruction.
-func (p *Builder) ReserveOpLsh() exec.Reserved {
-	r := &reserveLsh{}
+// ReserveOpShift reserves an instruction.
+func (p *Builder) ReserveOpShift() exec.Reserved {
+	r := &reservedShift{}
 	r.expr = new(printer.ReservedExpr)
 	r.y = p.rhs.Pop().(ast.Expr)
 	r.x = p.rhs.Pop().(ast.Expr)
@@ -386,10 +386,10 @@ func (p *Builder) ReserveOpLsh() exec.Reserved {
 	return exec.Reserved(idx)
 }
 
-// ReservedAsOpLsh sets Reserved as GoBuiltin
-func (p *Builder) ReservedAsOpLsh(r exec.Reserved, kind exec.Kind, op exec.Operator) {
+// ReservedAsOpShift sets Reserved as OpLsh/OpRsh
+func (p *Builder) ReservedAsOpShift(r exec.Reserved, kind exec.Kind, op exec.Operator) {
 	tok := opTokens[op]
-	rsh := p.reserveds[r].(*reserveLsh)
+	rsh := p.reserveds[r].(*reservedShift)
 	rsh.expr.Expr = &ast.BinaryExpr{Op: tok, X: rsh.x, Y: rsh.y}
 }
 
