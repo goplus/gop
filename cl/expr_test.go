@@ -1927,6 +1927,71 @@ func TestTwoValueExpr(t *testing.T) {
 	cltest.Expect(t, clause, "1 3 true\n3 0 false\n")
 }
 
+func TestOpRsh(t *testing.T) {
+	cltest.Expect(t, `
+	var a [1024]byte
+	var s uint = 3
+	// The results of the following examples are given for 64-bit ints.
+	var i = 1024>>s                   // 1 has type int
+	var j int32 = 1024>>s             // 1 has type int32; j == 0
+	var k = uint64(1024>>s)           // 1 has type uint64; k == 1<<33
+	var m int = 1024.0>>s             // 1.0 has type int; m == 1<<33
+	var n = 1024.0>>s == j            // 1.0 has type int; n == true
+	var o = 1024>>s == 2048<<s        // 1 and 2 have type int; o == false
+	var p = 1024>>s == 1024>>3        // 1 has type int; p == true
+	var w int64 = 1024.0>>3           // 1.0<<33 is a constant shift expression; w == 1<<33
+	var x = a[1024.0>>s]              // 1.0 has type int
+	var b = make([]byte, 1024.0>>s)   // 1.0 has type int; len(b) == 1024>>3
+	printf("%T %T %T %T %T %T %T %T %T %T\n",i,j,k,m,n,o,p,w,x,b)
+	`, "int int32 uint64 int bool bool bool int64 uint8 []uint8\n")
+	cltest.Expect(t, `
+	func test1(v int) {
+		printf("%T\n",v)
+	}
+	func test2(v int32) {
+		printf("%T\n",v)
+	}
+	func test3(v int64) {
+		printf("%T\n",v)
+	}
+	func test4(fmt string,v ...int32) {
+		printf(fmt,v)
+	}
+	var s uint = 3
+	test1(1024>>s)
+	test2(1024>>s)
+	test3(1024>>s)
+	test4("%T\n",1024>>s)
+	`, "int\nint32\nint64\n[]int32\n")
+	cltest.Expect(t, `
+	var a int
+	var b int32
+	var c int64
+	var s uint = 3
+	a,b,c = 1024>>s,1024>>s,1024>>s
+	printf("%T %T %T\n",a,b,c)
+	`, "int int32 int64\n")
+	cltest.Expect(t, `
+	var s uint = 3
+	var u = 1024.0<<s
+	println(u)
+	`, "", nil)
+	cltest.Expect(t, `
+	var s uint = 3
+	var u1 = 1024.0>>s != 0
+	println(u1)
+	`, "", nil)
+	cltest.Expect(t, `
+	var s uint = 3
+	var v float32 = 1024>>s
+	println(v)
+	`, "", nil)
+	cltest.Expect(t, `
+	var s = 1.1 >> 3
+	println(s)
+	`, "", "constant 1.1 truncated to integer")
+}
+
 func TestOpLsh(t *testing.T) {
 	cltest.Expect(t, `
 	var a [1024]byte
