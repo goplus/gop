@@ -747,23 +747,23 @@ func binaryOpResult(op exec.Operator, x, y interface{}) (exec.Kind, iValue) {
 	kind := vx.Kind()
 	if !isConstBound(kind) {
 		kind = vy.Kind()
-		if xlsh, xok := x.(*shiftValue); xok {
+		if xshv, xok := x.(*shiftValue); xok {
 			var unbound bool
 			if !isConstBound(kind) {
-				if kind != xlsh.Kind() {
+				if kind != xshv.Kind() {
 					unbound = true
 				}
 				if c, ok := y.(*constVal); ok {
 					kind = c.boundKind()
 					c.v = boundConst(c.v, c.boundType())
 					c.kind = kind
-				} else if lsh, ok := y.(*shiftValue); ok && lsh.Kind() == exec.ConstUnboundInt {
+				} else if shv, ok := y.(*shiftValue); ok && shv.Kind() == exec.ConstUnboundInt {
 					kind = exec.Int
-					lsh.bound(exec.TyInt)
+					shv.bound(exec.TyInt)
 				}
 			}
 			if !unbound {
-				xlsh.bound(vy.Type())
+				xshv.bound(vy.Type())
 			}
 		} else if !isConstBound(kind) {
 			log.Panicln("binaryOp: expect x, y aren't const values either.")
@@ -1064,8 +1064,8 @@ func compileIdx(ctx *blockCtx, v ast.Expr, nlast int, kind reflect.Kind) int {
 		}
 		ctx.out.Push(n)
 		return -1
-	} else if lsh, ok := i.(*shiftValue); ok {
-		lsh.bound(exec.TyInt)
+	} else if shv, ok := i.(*shiftValue); ok {
+		shv.bound(exec.TyInt)
 	}
 
 	expr()

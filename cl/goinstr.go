@@ -441,8 +441,8 @@ func compileTypeCast(typ reflect.Type, ctx *blockCtx, v *ast.CallExpr) func() {
 				pushConstVal(ctx.out, cons)
 			}
 		}
-		if lsh, ok := in.(*shiftValue); ok {
-			lsh.bound(typ)
+		if shv, ok := in.(*shiftValue); ok {
+			shv.bound(typ)
 		}
 	}
 	ctx.infer.Ret(1, &goValue{typ})
