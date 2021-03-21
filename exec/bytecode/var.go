@@ -178,6 +178,22 @@ func getParentCtx(p *Context, idx tAddress) *varScope {
 	return pp
 }
 
+func getVarScope(p *Context, addr tAddress) (*varScope, uint32) {
+	depth := uint32(addr) >> bitsOpVarShift
+	idx := uint32(addr & bitsOpVarOperand)
+	ctxDepth := p.getNestDepth()
+	if depth == ctxDepth {
+		return &p.varScope, idx
+	}
+	scope := ctxDepth - depth
+	pp := p.parent
+	for scope > 1 {
+		pp = pp.parent
+		scope--
+	}
+	return pp, idx
+}
+
 // GetVar func.
 func (ctx *Context) GetVar(x *Var) interface{} {
 	if x.isGlobal() {
@@ -197,30 +213,21 @@ func (ctx *Context) SetVar(x *Var, v interface{}) {
 
 func execAddrVar(i Instr, p *Context) {
 	idx := i & bitsOperand
-	if idx <= bitsOpVarOperand {
-		p.Push(p.addrVar(idx))
-		return
-	}
-	p.Push(getParentCtx(p, tAddress(idx)).addrVar(idx & bitsOpVarOperand))
+	scope, id := getVarScope(p, tAddress(idx))
+	p.Push(scope.addrVar(id))
 }
 
 func execLoadVar(i Instr, p *Context) {
 	idx := i & bitsOperand
-	if idx <= bitsOpVarOperand {
-		p.Push(p.getVar(idx))
-		return
-	}
-	p.Push(getParentCtx(p, tAddress(idx)).getVar(idx & bitsOpVarOperand))
+	scope, id := getVarScope(p, tAddress(idx))
+	p.Push(scope.getVar(id))
 }
 
 func execStoreVar(i Instr, p *Context) {
 	idx := i & bitsOperand
 	val := p.Pop()
-	if idx <= bitsOpVarOperand {
-		p.setVar(idx, val)
-		return
-	}
-	getParentCtx(p, tAddress(idx)).setVar(idx&bitsOpVarOperand, val)
+	scope, id := getVarScope(p, tAddress(idx))
+	scope.setVar(id, val)
 }
 
 // -----------------------------------------------------------------------------
@@ -370,19 +377,19 @@ func (p *Builder) DefineVars(vars ...exec.Var) *Builder {
 
 // LoadVar instr
 func (p *Builder) LoadVar(v *Var) *Builder {
-	p.loadVar(makeAddr(p.nestDepth-v.nestDepth, v.idx))
+	p.loadVar(makeAddr(v.nestDepth, v.idx))
 	return p
 }
 
 // StoreVar instr
 func (p *Builder) StoreVar(v *Var) *Builder {
-	p.storeVar(makeAddr(p.nestDepth-v.nestDepth, v.idx))
+	p.storeVar(makeAddr(v.nestDepth, v.idx))
 	return p
 }
 
 // AddrVar instr
 func (p *Builder) AddrVar(v *Var) *Builder {
-	p.addrVar(makeAddr(p.nestDepth-v.nestDepth, v.idx))
+	p.addrVar(makeAddr(v.nestDepth, v.idx))
 	return p
 }
 
