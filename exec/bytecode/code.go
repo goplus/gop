@@ -136,6 +136,7 @@ const (
 	opStruct        = 50 // funvArity(10) type(16)
 	opSend          = 51 // reserved(26)
 	opRecv          = 52 // reserved(26)
+	opBlock         = 53 // addr(26)
 )
 
 const (
@@ -228,6 +229,7 @@ var instrInfos = []InstrInfo{
 	opStruct:        {"struct", "funvArity", "type", (10 << 8) | 16},      // funvArity(10) type(16)
 	opSend:          {"send", "", "", 0},                                  // reserved(26)
 	opRecv:          {"recv", "", "", 0},                                  // reserved(26)
+	opBlock:         {"block", "", "addr", 26},
 }
 
 // -----------------------------------------------------------------------------
@@ -238,6 +240,7 @@ type Code struct {
 	valConsts  []interface{}
 	funs       []*FuncInfo
 	funvs      []*FuncInfo
+	blocks     []*BlockInfo
 	comprehens []*Comprehension
 	fors       []*ForPhrase
 	types      []reflect.Type
@@ -296,6 +299,7 @@ type Builder struct {
 	labels map[*Label]int
 	funcs  map[*FuncInfo]int
 	types  map[reflect.Type]uint32
+	iblock int
 	*varManager
 }
 

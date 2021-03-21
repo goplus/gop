@@ -88,6 +88,14 @@ func makeClosure(i Instr, p *Context) Closure {
 	} else {
 		fun = p.code.funs[idx]
 	}
+	if p.blockScope != nil {
+		scope := *p.blockScope
+		scope.vars = make([]reflect.Value, len(p.blockScope.vars))
+		for i := 0; i < len(scope.vars); i++ {
+			scope.vars[i] = p.blockScope.vars[i]
+		}
+		return Closure{fun: fun, parent: &scope}
+	}
 	return Closure{fun: fun, parent: p.getScope(fun.nestDepth > 1)}
 }
 

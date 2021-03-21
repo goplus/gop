@@ -36,10 +36,11 @@ type varScope struct {
 type Context struct {
 	Stack
 	varScope
-	code   *Code
-	defers *theDefer
-	ip     int
-	base   int
+	code       *Code
+	defers     *theDefer
+	blockScope *varScope
+	ip         int
+	base       int
 }
 
 func newSimpleContext(data []interface{}) *Context {
@@ -266,6 +267,7 @@ var _execTable = [...]func(i Instr, p *Context){
 	opStruct:        execStruct,
 	opSend:          execSend,
 	opRecv:          execRecv,
+	opBlock:         execBlock,
 }
 
 var execTable []func(i Instr, p *Context)
