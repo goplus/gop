@@ -348,10 +348,9 @@ func execBlock(i Instr, p *Context) {
 		v := reflect.New(p.vars[i].Elem().Type())
 		p.vars[i] = v
 	}
-	p.blockScope = &p.varScope
-	// p.Exec(p.ip, b.End)
-	// p.ip = b.End
-	// p.blockScope = nil
+	p.blockScope = append(p.blockScope, &p.varScope)
+	p.Exec(p.ip, b.End)
+	p.blockScope = p.blockScope[:len(p.blockScope)-1]
 }
 
 func (p *Builder) DefineBlock() {

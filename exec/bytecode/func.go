@@ -88,11 +88,12 @@ func makeClosure(i Instr, p *Context) Closure {
 	} else {
 		fun = p.code.funs[idx]
 	}
-	if p.blockScope != nil {
-		scope := *p.blockScope
-		scope.vars = make([]reflect.Value, len(p.blockScope.vars))
+	if len(p.blockScope) > 0 {
+		bs := p.blockScope[len(p.blockScope)-1]
+		scope := *bs
+		scope.vars = make([]reflect.Value, len(bs.vars))
 		for i := 0; i < len(scope.vars); i++ {
-			scope.vars[i] = p.blockScope.vars[i]
+			scope.vars[i] = bs.vars[i]
 		}
 		return Closure{fun: fun, parent: &scope}
 	}
