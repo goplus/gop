@@ -18,7 +18,6 @@ package bytecode
 
 import (
 	"reflect"
-	"strconv"
 
 	"github.com/goplus/reflectx"
 	"github.com/qiniu/x/log"
@@ -50,58 +49,32 @@ func (p *StructInfo) Type() reflect.Type {
 
 // -----------------------------------------------------------------------------
 
-type varsContext = reflect.Value
-
-func makeVarList(vars []*Var) []StructField {
-	exists := make(map[string]bool, len(vars))
-	items := make([]StructField, len(vars))
-	for i, v := range vars {
-		if _, ok := exists[v.name]; ok {
-			v.name = "Q" + strconv.Itoa(i) + v.name[1:]
-		} else {
-			exists[v.name] = true
-		}
-		items[i].Type = v.typ
-		items[i].Name = v.name
-	}
-	return items
-}
-
-func makeVarsContextType(vars []*Var, ctx *Context) reflect.Type {
-	t := Struct(makeVarList(vars)).Type()
-	if log.CanOutput(log.Ldebug) {
-		nestDepth := ctx.getNestDepth()
-		for i, v := range vars {
-			if v.nestDepth != nestDepth || v.idx != uint32(i) {
-				log.Panicln("makeVarsContext failed: unexpected var -", v.name[1:], v.nestDepth, nestDepth)
-			}
+func (p *varManager) makeVarsContext(ctx *Context) (vars []reflect.Value) {
+	size := len(p.vlist)
+	if size > 0 {
+		vars = make([]reflect.Value, size)
+		for i := 0; i < size; i++ {
+			vars[i] = reflect.New(p.vlist[i].typ)
 		}
 	}
-	return t
-}
-
-func (p *varManager) makeVarsContext(ctx *Context) varsContext {
-	if p.tcache == nil {
-		p.tcache = makeVarsContextType(p.vlist, ctx)
-	}
-	return reflect.New(p.tcache).Elem()
+	return
 }
 
 func (ctx *varScope) addrVar(idx uint32) interface{} {
-	return ctx.vars.Field(int(idx)).Addr().Interface()
+	return ctx.vars[int(idx)].Interface()
 }
 
 func (ctx *varScope) getVar(idx uint32) interface{} {
-	return ctx.vars.Field(int(idx)).Interface()
+	return ctx.vars[int(idx)].Elem().Interface()
 }
 
 func (ctx *varScope) setVar(idx uint32, v interface{}) {
-	x := ctx.vars.Field(int(idx))
+	x := ctx.vars[int(idx)].Elem()
 	setValue(x, v)
 }
 
 func (ctx *varScope) setValue(idx uint32, v reflect.Value) {
-	ctx.vars.Field(int(idx)).Set(v)
+	ctx.vars[int(idx)].Elem().Set(v)
 }
 
 func setValue(x reflect.Value, v interface{}) {
