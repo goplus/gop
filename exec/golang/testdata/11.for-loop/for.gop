@@ -5,7 +5,6 @@ for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
 }
 println("sum(5,7,11,13,17):", sum)
 
-/*TODO
 fns := make([]func() int, 3)
 for i, x <- [3, 15, 777] {
 	v := x
@@ -14,7 +13,6 @@ for i, x <- [3, 15, 777] {
 	}
 }
 println("values:", fns[0](), fns[1](), fns[2]())
-*/
 
 // for with range
 sum = 0
