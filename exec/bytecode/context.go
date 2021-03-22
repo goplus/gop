@@ -38,7 +38,7 @@ type Context struct {
 	varScope
 	code       *Code
 	defers     *theDefer
-	blockScope []*varScope
+	blockScope []varScope
 	ip         int
 	base       int
 }

@@ -332,41 +332,38 @@ func ToValues(args []interface{}) []reflect.Value {
 // -----------------------------------------------------------------------------
 
 type BlockInfo struct {
-	End    int
-	block  *blockCtx
-	scope  *varScope
+	end    int
 	offset int
 }
 
 func execBlock(i Instr, p *Context) {
-	addr := i & bitsOperand
+	addr := (i & bitsOperand)
 	b := p.code.blocks[addr]
-	if b.End == 0 || b.offset == len(p.vars) {
+	if b.offset == len(p.vars) {
 		return
 	}
 	for i := b.offset; i < len(p.vars); i++ {
 		v := reflect.New(p.vars[i].Elem().Type())
 		p.vars[i] = v
 	}
-	p.blockScope = append(p.blockScope, &p.varScope)
-	p.Exec(p.ip, b.End)
+	p.blockScope = append(p.blockScope, p.varScope)
+	p.Exec(p.ip, b.end)
 	p.blockScope = p.blockScope[:len(p.blockScope)-1]
 }
 
 func (p *Builder) DefineBlock() {
 	b := &BlockInfo{}
-	b.block = newBlockCtx(p.nestDepth, p.varManager)
 	b.offset = len(p.varManager.vlist)
 	code := p.code
 	addr := uint32(len(code.blocks))
 	code.blocks = append(code.blocks, b)
 	code.data = append(code.data, (opBlock<<bitsOpShift)|addr)
-	p.iblock++
+	p.iblock = len(code.blocks) - 1
 }
 
 func (p *Builder) EndBlock() {
+	p.code.blocks[p.iblock].end = len(p.code.data)
 	p.iblock--
-	p.code.blocks[p.iblock].End = len(p.code.data)
 }
 
 // ForPhrase represents a for range phrase.

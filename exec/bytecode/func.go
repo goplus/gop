@@ -90,7 +90,7 @@ func makeClosure(i Instr, p *Context) Closure {
 	}
 	if len(p.blockScope) > 0 {
 		bs := p.blockScope[len(p.blockScope)-1]
-		scope := *bs
+		scope := bs
 		scope.vars = make([]reflect.Value, len(bs.vars))
 		for i := 0; i < len(scope.vars); i++ {
 			scope.vars[i] = bs.vars[i]
