@@ -281,13 +281,8 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 		checkBool(ctx.infer.Pop())
 		out.JmpIf(0, done)
 	}
-	// noExecCtx := isNoExecCtx(ctx, v.Body)
-	// ctx = newNormBlockCtxEx(ctx, noExecCtx)
-	// compileBlockStmtWith(ctx, v.Body)
-	// noExecCtx := isNoExecCtx(ctx, v.Body)
 	ctx = newNormBlockCtxEx(ctx, true)
 	compileNewBlock(ctx, v.Body)
-
 	out.Jmp(post)
 	out.Label(post)
 	if v.Post != nil {

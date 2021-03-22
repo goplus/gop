@@ -332,17 +332,17 @@ func ToValues(args []interface{}) []reflect.Value {
 // -----------------------------------------------------------------------------
 
 type BlockInfo struct {
-	end    int
-	offset int
+	end  int
+	nvar int
 }
 
 func execBlock(i Instr, p *Context) {
 	addr := (i & bitsOperand)
 	b := p.code.blocks[addr]
-	if b.offset == len(p.vars) {
+	if b.nvar == len(p.vars) {
 		return
 	}
-	for i := b.offset; i < len(p.vars); i++ {
+	for i := b.nvar; i < len(p.vars); i++ {
 		v := reflect.New(p.vars[i].Elem().Type())
 		p.vars[i] = v
 	}
@@ -353,7 +353,7 @@ func execBlock(i Instr, p *Context) {
 
 func (p *Builder) DefineBlock() {
 	b := &BlockInfo{}
-	b.offset = len(p.varManager.vlist)
+	b.nvar = len(p.varManager.vlist)
 	code := p.code
 	addr := uint32(len(code.blocks))
 	code.blocks = append(code.blocks, b)
