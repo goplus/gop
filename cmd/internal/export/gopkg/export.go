@@ -62,6 +62,16 @@ func exportTypeName(e *Exporter, o *types.TypeName) (err error) {
 			if !m.Exported() {
 				continue
 			}
+			sig := m.Type().(*types.Signature)
+			if sig.Recv().Pkg() != o.Pkg() {
+				nsig := types.NewSignature(
+					types.NewVar(o.Pos(), o.Pkg(), o.Name(), o.Type()),
+					sig.Params(),
+					sig.Results(),
+					sig.Variadic(),
+				)
+				m = types.NewFunc(m.Pos(), o.Pkg(), m.Name(), nsig)
+			}
 			exportFunc(e, m, o.Name())
 		}
 	}
@@ -251,6 +261,8 @@ func ExportPackage(pkg *types.Package, w io.Writer) (err error) {
 			err = exportTypeName(e, o)
 		case *types.Func:
 			err = exportFunc(e, o, "")
+		case *types.Builtin:
+			log.Println("skip builtin", o)
 		default:
 			log.Panicln("export failed: unknown type -", reflect.TypeOf(o))
 		}

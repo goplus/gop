@@ -323,8 +323,9 @@ func (p *Exporter) ExportFunc(fn *types.Func, iname string) error {
 	name := fn.Name()
 	exec := name
 	if isMethod {
+		recv := tfn.Recv()
 		fullName := fn.FullName()
-		exec = typeName(tfn.Recv().Type()) + name
+		exec = typeName(recv.Type()) + name
 		name = withoutPkg(fullName)
 		fnName = "args[0]." + withPkg(p.pkgDot, name)
 	} else {
