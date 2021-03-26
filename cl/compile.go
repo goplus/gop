@@ -377,7 +377,7 @@ func loadConst(ctx *blockCtx, name string, typ ast.Expr, value ast.Expr) {
 	c := in.(*constVal)
 	if typ != nil {
 		t := toType(ctx, typ).(reflect.Type)
-		v := boundConst(c.v, t)
+		v := boundConst(c, t)
 		c.v = v
 		c.kind = t.Kind()
 	}

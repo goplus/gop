@@ -18,14 +18,16 @@ package cl
 
 import (
 	"math"
+	"math/big"
 	"reflect"
 	"strconv"
+	"strings"
 	"unsafe"
 
-	"github.com/goplus/gop/constant"
-
 	"github.com/goplus/gop/ast/astutil"
+	"github.com/goplus/gop/constant"
 	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/log"
 )
 
@@ -61,7 +63,7 @@ func (p *shiftValue) checkType(t reflect.Type) {
 }
 
 func (p *shiftValue) bound(t reflect.Type) {
-	v := boundConst(p.x.v, t)
+	v := boundConst(p.x, t)
 	p.x.v = v
 	p.x.kind = t.Kind()
 }
@@ -286,10 +288,25 @@ func (p *constVal) Kind() iKind {
 
 func (p *constVal) toInt64() (int64, bool) {
 	if cv, ok := p.v.(constant.Value); ok {
+		if cv.Kind() != constant.Int {
+			cv = constant.ToInt(cv)
+		}
 		v, _ := constant.Int64Val(cv)
 		return v, true
 	}
 	v, ok := p.v.(int64)
+	return v, ok
+}
+
+func (p *constVal) toUint64() (uint64, bool) {
+	if cv, ok := p.v.(constant.Value); ok {
+		if cv.Kind() != constant.Int {
+			cv = constant.ToInt(cv)
+		}
+		v, _ := constant.Uint64Val(cv)
+		return v, true
+	}
+	v, ok := p.v.(uint64)
 	return v, ok
 }
 
@@ -361,7 +378,7 @@ func (p *constVal) bound(t reflect.Type, b exec.Builder) {
 	if kind == reflect.Interface && astutil.IsConstBound(p.kind) {
 		t = exec.TypeFromKind(p.kind)
 	}
-	v := boundConst(p.v, t)
+	v := boundConst(p, t)
 	p.v, p.kind = v, kind
 	p.reserve.Push(b, v)
 }
@@ -379,12 +396,12 @@ func unaryOp(op exec.Operator, x *constVal) *constVal {
 		log.Panicln("unaryOp failed: invalid argument type.")
 	}
 	t := exec.TypeFromKind(kindReal)
-	vx := boundConst(x.v, t)
+	vx := boundConst(x, t)
 	v := CallBuiltinOp(kindReal, op, vx)
 	return &constVal{kind: xkind, v: v, reserve: -1}
 }
 
-func binaryOp(op exec.Operator, x, y *constVal) *constVal {
+func binaryOp(xop token.Token, op exec.Operator, x, y *constVal) *constVal {
 	i := op.GetInfo()
 	xkind := x.kind
 	ykind := y.kind
@@ -409,8 +426,20 @@ func binaryOp(op exec.Operator, x, y *constVal) *constVal {
 		kind = i.Out
 	}
 	t := exec.TypeFromKind(kindReal)
-	vx := boundConst(x.v, t)
-	vy := boundConst(y.v, t)
+	cx, xok := x.v.(constant.Value)
+	cy, yok := y.v.(constant.Value)
+	if xok && yok {
+		var v constant.Value
+		if xop == token.SHL || xop == token.SHR {
+			u, _ := y.toUint64()
+			v = constant.Shift(cx, xop, uint(u))
+		} else {
+			v = constant.BinaryOp(cx, xop, cy)
+		}
+		return &constVal{kind: kind, v: v, reserve: -1}
+	}
+	vx := boundConst(x, t)
+	vy := boundConst(y, t)
 	v := CallBuiltinOp(kindReal, op, vx, vy)
 	return &constVal{kind: kind, v: v, reserve: -1}
 }
@@ -448,7 +477,15 @@ func isOverflowsIntByUint64(v uint64, intSize int) bool {
 	return v > uint64(math.MaxInt64)
 }
 
-func constantValue(x constant.Value) interface{} {
+func constantValue(x constant.Value, kind exec.Kind) interface{} {
+	if kind == exec.ConstUnboundInt {
+		if val, ok := constant.Val(x).(*big.Rat); ok {
+			s := val.FloatString(1)
+			pos := strings.Index(s, ".")
+			v, _ := strconv.ParseInt(s[:pos], 0, 64)
+			return v
+		}
+	}
 	var v interface{}
 	switch x.Kind() {
 	case constant.Int:
@@ -463,7 +500,8 @@ func constantValue(x constant.Value) interface{} {
 	return v
 }
 
-func boundConst(v interface{}, t reflect.Type) interface{} {
+func boundConst(x *constVal, t reflect.Type) interface{} {
+	v := x.v
 	kind := kindOf(t)
 	if v == nil {
 		if kind >= reflect.Chan && kind <= reflect.Slice {
@@ -474,7 +512,7 @@ func boundConst(v interface{}, t reflect.Type) interface{} {
 		log.Panicln("boundConst: can't convert nil into", t)
 	}
 	if cv, ok := v.(constant.Value); ok {
-		v = constantValue(cv)
+		v = constantValue(cv, x.kind)
 	}
 	sval := reflect.ValueOf(v)
 	st := sval.Type()

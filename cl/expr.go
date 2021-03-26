@@ -23,6 +23,7 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/astutil"
+	"github.com/goplus/gop/constant"
 	"github.com/goplus/gop/exec.spec"
 	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/ctype"
@@ -585,7 +586,7 @@ func compileConst(ctx *blockCtx, kind astutil.ConstKind, n interface{}) func() {
 func pushConstVal(b exec.Builder, c *constVal) {
 	c.reserve = b.Reserve()
 	if isConstBound(c.kind) {
-		v := boundConst(c.v, exec.TypeFromKind(c.kind))
+		v := boundConst(c, exec.TypeFromKind(c.kind))
 		c.reserve.Push(b, v)
 	}
 }
@@ -676,9 +677,12 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 			if v != float64(int64(v)) {
 				log.Panicf("constant %v truncated to integer", v)
 			}
+			if cv, ok := xcons.v.(constant.Value); ok {
+				xcons.v = constant.ToInt(cv)
+			}
 			xcons.kind = exec.ConstUnboundInt
 		}
-		ret := binaryOp(op, xcons, ycons)
+		ret := binaryOp(v.Op, op, xcons, ycons)
 		ctx.infer.Ret(2, ret)
 		return func() {
 			ret.reserve = ctx.out.Reserve()
@@ -712,7 +716,7 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 				shift.r = ctx.out.ReserveOpShift()
 				shift.fnCheckType = func(typ reflect.Type) {
 					kind := typ.Kind()
-					xcons.v = boundConst(xcons.v, typ)
+					xcons.v = boundConst(xcons, typ)
 					checkBinaryOp(kind, op, x, y, ctx.out)
 					if err := checkOpMatchType(op, x, y); err != nil {
 						log.Panicf("invalid operator: %v (%v)", ctx.code(v), err)
@@ -755,7 +759,7 @@ func binaryOpResult(op exec.Operator, x, y interface{}) (exec.Kind, iValue) {
 				}
 				if c, ok := y.(*constVal); ok {
 					kind = c.boundKind()
-					c.v = boundConst(c.v, c.boundType())
+					c.v = boundConst(c, c.boundType())
 					c.kind = kind
 				} else if shv, ok := y.(*shiftValue); ok && shv.Kind() == exec.ConstUnboundInt {
 					kind = exec.Int
@@ -980,7 +984,7 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 	switch typ.Kind() {
 	case reflect.Slice, reflect.Array:
 		if cons, ok := i.(*constVal); ok {
-			n := boundConst(cons.v, exec.TyInt)
+			n := boundConst(cons, exec.TyInt)
 			if ctx.indirect {
 				ctx.out.Index(n.(int)).AddrOp(kindOf(typElem), exec.OpAssign)
 			} else {
@@ -1057,7 +1061,7 @@ func compileIdx(ctx *blockCtx, v ast.Expr, nlast int, kind reflect.Kind) int {
 	expr := compileExpr(ctx, v)
 	i := ctx.infer.Pop()
 	if cons, ok := i.(*constVal); ok {
-		nv := boundConst(cons.v, exec.TyInt)
+		nv := boundConst(cons, exec.TyInt)
 		n := nv.(int)
 		if n <= nlast {
 			return n
