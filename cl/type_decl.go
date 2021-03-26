@@ -276,7 +276,7 @@ func toArrayType(ctx *blockCtx, v *ast.ArrayType) iType {
 	compileExpr(ctx, v.Len)
 	n := ctx.infer.Pop()
 	if nv, ok := n.(iValue).(*constVal); ok {
-		if iv, ok := nv.v.(int64); ok {
+		if iv, ok := nv.toInt64(); ok {
 			if iv < 0 {
 				return &unboundArrayType{elem: elem.(reflect.Type)}
 			}
@@ -313,7 +313,7 @@ func toInt(ctx *blockCtx, e ast.Expr) int {
 	if !ok {
 		log.Panicln("toInt: require constant expr.")
 	}
-	iv, ok := nv.v.(int64)
+	iv, ok := nv.toInt64()
 	if !ok {
 		log.Panicln("toInt: constant expr isn't an integer.")
 	}

@@ -672,7 +672,7 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 	opShift := (op == exec.OpLsh || op == exec.OpRsh)
 	if xok && yok { // <const> op <const>
 		if opShift && xcons.kind == exec.ConstUnboundFloat {
-			v := xcons.v.(float64)
+			v, _ := xcons.toFloat64()
 			if v != float64(int64(v)) {
 				log.Panicf("constant %v truncated to integer", v)
 			}

@@ -22,6 +22,8 @@ import (
 	"strconv"
 	"unsafe"
 
+	"github.com/goplus/gop/constant"
+
 	"github.com/goplus/gop/ast/astutil"
 	"github.com/goplus/gop/exec.spec"
 	"github.com/qiniu/x/log"
@@ -282,6 +284,24 @@ func (p *constVal) Kind() iKind {
 	return p.kind
 }
 
+func (p *constVal) toInt64() (int64, bool) {
+	if cv, ok := p.v.(constant.Value); ok {
+		v, _ := constant.Int64Val(cv)
+		return v, true
+	}
+	v, ok := p.v.(int64)
+	return v, ok
+}
+
+func (p *constVal) toFloat64() (float64, bool) {
+	if cv, ok := p.v.(constant.Value); ok {
+		v, _ := constant.Float64Val(cv)
+		return v, true
+	}
+	v, ok := p.v.(float64)
+	return v, ok
+}
+
 func (p *constVal) Type() reflect.Type {
 	if isConstBound(p.kind) {
 		return exec.TypeFromKind(p.kind)
@@ -303,7 +323,7 @@ func (p *constVal) boundKind() reflect.Kind {
 	}
 	switch p.kind {
 	case astutil.ConstUnboundInt:
-		if _, ok := p.v.(int64); ok {
+		if _, ok := p.toInt64(); ok {
 			return reflect.Int
 		}
 		return reflect.Uint
@@ -428,6 +448,21 @@ func isOverflowsIntByUint64(v uint64, intSize int) bool {
 	return v > uint64(math.MaxInt64)
 }
 
+func constantValue(x constant.Value) interface{} {
+	var v interface{}
+	switch x.Kind() {
+	case constant.Int:
+		v, _ = constant.Int64Val(x)
+	case constant.Float:
+		v, _ = constant.Float64Val(x)
+	case constant.Complex:
+		r, _ := constant.Float64Val(constant.Real(x))
+		i, _ := constant.Float64Val(constant.Imag(x))
+		v = complex(r, i)
+	}
+	return v
+}
+
 func boundConst(v interface{}, t reflect.Type) interface{} {
 	kind := kindOf(t)
 	if v == nil {
@@ -437,6 +472,9 @@ func boundConst(v interface{}, t reflect.Type) interface{} {
 			return reflect.ValueOf(unsafe.Pointer(nil)).Interface()
 		}
 		log.Panicln("boundConst: can't convert nil into", t)
+	}
+	if cv, ok := v.(constant.Value); ok {
+		v = constantValue(cv)
 	}
 	sval := reflect.ValueOf(v)
 	st := sval.Type()
