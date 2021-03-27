@@ -395,14 +395,30 @@ func unaryOp(xop token.Token, op exec.Operator, x *constVal) *constVal {
 	if (i.InFirst & (1 << kindReal)) == 0 {
 		log.Panicln("unaryOp failed: invalid argument type.")
 	}
-	if cv, ok := x.v.(constant.Value); ok {
+	if cv, ok := x.v.(constant.Value); ok && !isConstBound(xkind) {
 		v := constant.UnaryOp(xop, cv, 0)
 		return &constVal{kind: xkind, v: v, reserve: -1}
 	}
 	t := exec.TypeFromKind(kindReal)
 	vx := boundConst(x, t)
 	v := CallBuiltinOp(kindReal, op, vx)
-	return &constVal{kind: xkind, v: v, reserve: -1}
+	return &constVal{kind: xkind, v: v2cv(v), reserve: -1}
+}
+
+func v2cv(x interface{}) interface{} {
+	v := reflect.ValueOf(x)
+	kind := v.Kind()
+	switch {
+	case kind >= reflect.Int && kind <= reflect.Int64:
+		return constant.MakeInt64(v.Int())
+	case kind >= reflect.Uint && kind <= reflect.Uint64:
+		return constant.MakeUint64(v.Uint())
+	case kind >= reflect.Float32 && kind <= reflect.Float64:
+		return constant.MakeFloat64(v.Float())
+	case kind >= reflect.Complex64 && kind <= reflect.Complex128:
+		return constant.Make(v.Complex())
+	}
+	return x
 }
 
 func binaryOp(xop token.Token, op exec.Operator, x, y *constVal) *constVal {
@@ -506,11 +522,17 @@ func constantValue(cv constant.Value, ckind exec.Kind, kind reflect.Kind) interf
 	var v interface{}
 	switch val := constant.Val(cv).(type) {
 	case int64:
-		if kind >= reflect.Int && kind <= reflect.Uint64 || kind == reflect.Interface {
+		if kind >= reflect.Int && kind <= reflect.Int64 || kind == reflect.Interface {
 			if doesOverflowInt(big.NewInt(val), kind) {
 				log.Panicf("constant %v overflows %v", val, kind)
 			}
+		} else if kind >= reflect.Uint && kind <= reflect.Uint64 {
+			if doesOverflowInt(big.NewInt(val), kind-5) {
+				log.Panicf("constant %v overflows %v", val, kind)
+			}
 		}
+		// if kind >= reflect.Int && kind <= reflect.Uint64 || kind == reflect.Interface {
+		// }
 		v = val
 	case *big.Int:
 		if kind >= reflect.Int && kind <= reflect.Uint64 || kind == reflect.Interface {
