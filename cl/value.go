@@ -383,7 +383,7 @@ func (p *constVal) bound(t reflect.Type, b exec.Builder) {
 	p.reserve.Push(b, v)
 }
 
-func unaryOp(op exec.Operator, x *constVal) *constVal {
+func unaryOp(xop token.Token, op exec.Operator, x *constVal) *constVal {
 	i := op.GetInfo()
 	xkind := x.kind
 	var kindReal astutil.ConstKind
@@ -394,6 +394,10 @@ func unaryOp(op exec.Operator, x *constVal) *constVal {
 	}
 	if (i.InFirst & (1 << kindReal)) == 0 {
 		log.Panicln("unaryOp failed: invalid argument type.")
+	}
+	if cv, ok := x.v.(constant.Value); ok {
+		v := constant.UnaryOp(xop, cv, 0)
+		return &constVal{kind: xkind, v: v, reserve: -1}
 	}
 	t := exec.TypeFromKind(kindReal)
 	vx := boundConst(x, t)
@@ -477,25 +481,53 @@ func isOverflowsIntByUint64(v uint64, intSize int) bool {
 	return v > uint64(math.MaxInt64)
 }
 
-func constantValue(x constant.Value, kind exec.Kind) interface{} {
-	if kind == exec.ConstUnboundInt {
-		if val, ok := constant.Val(x).(*big.Rat); ok {
+func constantValue(cv constant.Value, ckind exec.Kind, kind reflect.Kind) interface{} {
+	if cv.Kind() == constant.Complex {
+		cr := constant.Real(cv)
+		ci := constant.Imag(cv)
+		if kind == reflect.Interface || kind == reflect.Complex64 || kind == reflect.Complex128 {
+			r, _ := constant.Float64Val(cr)
+			i, _ := constant.Float64Val(ci)
+			return complex(r, i)
+		}
+		i, _ := constant.Float64Val(ci)
+		if i != 0 {
+			log.Panicf("constant %v truncated to %v", cv, kind)
+		}
+		cv = cr
+	}
+	if val, ok := constant.Val(cv).(*big.Rat); ok {
+		if ckind == exec.ConstUnboundInt {
 			s := val.FloatString(1)
 			pos := strings.Index(s, ".")
-			v, _ := strconv.ParseInt(s[:pos], 0, 64)
-			return v
+			cv = constant.MakeFromLiteral(s[:pos], token.INT, 0)
 		}
 	}
 	var v interface{}
-	switch x.Kind() {
-	case constant.Int:
-		v, _ = constant.Int64Val(x)
-	case constant.Float:
-		v, _ = constant.Float64Val(x)
-	case constant.Complex:
-		r, _ := constant.Float64Val(constant.Real(x))
-		i, _ := constant.Float64Val(constant.Imag(x))
-		v = complex(r, i)
+	switch val := constant.Val(cv).(type) {
+	case int64:
+		if kind >= reflect.Int && kind <= reflect.Uint64 || kind == reflect.Interface {
+			if doesOverflowInt(big.NewInt(val), kind) {
+				log.Panicf("constant %v overflows %v", val, kind)
+			}
+		}
+		v = val
+	case *big.Int:
+		if kind >= reflect.Int && kind <= reflect.Uint64 || kind == reflect.Interface {
+			if doesOverflowInt(val, kind) {
+				log.Panicf("constant %v overflows %v", val, kind)
+			}
+		}
+		v = val.Int64()
+	case *big.Float:
+		if kind >= reflect.Float32 && kind <= reflect.Float64 {
+			if doesOverflowFloat(val, kind) {
+				log.Panicf("constant %v overflows %v", val, kind)
+			}
+		}
+		v, _ = val.Float64()
+	case *big.Rat:
+		v, _ = val.Float64()
 	}
 	return v
 }
@@ -512,7 +544,7 @@ func boundConst(x *constVal, t reflect.Type) interface{} {
 		log.Panicln("boundConst: can't convert nil into", t)
 	}
 	if cv, ok := v.(constant.Value); ok {
-		v = constantValue(cv, x.kind)
+		v = constantValue(cv, x.kind, kind)
 	}
 	sval := reflect.ValueOf(v)
 	st := sval.Type()

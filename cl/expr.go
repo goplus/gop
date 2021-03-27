@@ -624,7 +624,7 @@ func compileUnaryExpr(ctx *blockCtx, v *ast.UnaryExpr) func() {
 	}
 	xcons, xok := x.(*constVal)
 	if xok { // op <const>
-		ret := unaryOp(op, xcons)
+		ret := unaryOp(v.Op, op, xcons)
 		ctx.infer.Ret(1, ret)
 		return func() {
 			ret.reserve = ctx.out.Reserve()
