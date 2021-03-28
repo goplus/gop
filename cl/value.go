@@ -402,6 +402,9 @@ func unaryOp(xop token.Token, op exec.Operator, x *constVal) *constVal {
 	t := exec.TypeFromKind(kindReal)
 	vx := boundConst(x, t)
 	v := CallBuiltinOp(kindReal, op, vx)
+	if op == exec.OpNeg && xkind >= reflect.Uint && xkind <= reflect.Uintptr {
+		log.Panicf("constant %v overflows %v", v, xkind)
+	}
 	return &constVal{kind: xkind, v: v2cv(v), reserve: -1}
 }
 
@@ -528,6 +531,49 @@ func complexKind(kind reflect.Kind) reflect.Kind {
 		}
 	}
 	return kind
+}
+
+func constantOverflowCheck(cv constant.Value, kind reflect.Kind) {
+	if cv.Kind() == constant.Complex {
+		cr := constant.Real(cv)
+		ci := constant.Imag(cv)
+		if kind == reflect.Interface || kind == reflect.Complex64 || kind == reflect.Complex128 {
+			kind = complexKind(kind)
+			if doesOverflow(cr, kind) {
+				log.Panicf("constant %v overflows %v", cv, kind)
+			}
+			if doesOverflow(ci, kind) {
+				log.Panicf("constant %v overflows %v", cv, kind)
+			}
+		}
+		i, _ := constant.Float64Val(ci)
+		if i != 0 {
+			log.Panicf("constant %v truncated to %v", cv, kind)
+		}
+		cv = cr
+	}
+	switch constant.Val(cv).(type) {
+	case int64:
+		kind = intKind(kind)
+		if doesOverflow(cv, kind) {
+			log.Panicf("constant %v overflows %v", cv, kind)
+		}
+	case *big.Int:
+		kind = intKind(kind)
+		if doesOverflow(cv, kind) {
+			log.Panicf("constant %v overflows %v", cv, kind)
+		}
+	case *big.Float:
+		kind = floatKind(kind)
+		if doesOverflow(cv, kind) {
+			log.Panicf("constant %v overflows %v", cv, kind)
+		}
+	case *big.Rat:
+		kind = floatKind(kind)
+		if doesOverflow(cv, kind) {
+			log.Panicf("constant %v overflows %v", cv, kind)
+		}
+	}
 }
 
 func constantValue(cv constant.Value, ckind exec.Kind, kind reflect.Kind) interface{} {
