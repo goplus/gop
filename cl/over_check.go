@@ -17,64 +17,72 @@
 package cl
 
 import (
-	"math/big"
 	"reflect"
+
+	"github.com/goplus/gop/constant"
+	"github.com/goplus/gop/token"
 )
 
 const ptrSize = 4 << (^uintptr(0) >> 63)
 
-func doesOverflowInt(v *big.Int, kind reflect.Kind) bool {
-	return v.Cmp(minintval[kind]) < 0 || v.Cmp(maxintval[kind]) > 0
-}
-
-func doesOverflowFloat(v *big.Float, kind reflect.Kind) bool {
-	return v.Cmp(minfltval[kind]) < 0 || v.Cmp(maxfltval[kind]) > 0
+func doesOverflow(v constant.Value, kind reflect.Kind) bool {
+	if kind < reflect.Int8 || kind > reflect.Complex128 {
+		return false
+	}
+	return constant.Compare(v, token.LSS, mincval[kind]) || constant.Compare(v, token.GTR, maxcval[kind])
 }
 
 var (
-	maxintval = make(map[reflect.Kind]*big.Int)
-	minintval = make(map[reflect.Kind]*big.Int)
-	maxfltval = make(map[reflect.Kind]*big.Float)
-	minfltval = make(map[reflect.Kind]*big.Float)
+	maxcval = make(map[reflect.Kind]constant.Value)
+	mincval = make(map[reflect.Kind]constant.Value)
 )
 
 func init() {
-	maxintval[reflect.Int8] = new(big.Int).SetInt64(0x7f)
-	minintval[reflect.Int8] = new(big.Int).SetInt64(-0x80)
-	maxintval[reflect.Int16] = new(big.Int).SetInt64(0x7fff)
-	minintval[reflect.Int16] = new(big.Int).SetInt64(-0x8000)
-	maxintval[reflect.Int32] = new(big.Int).SetInt64(0x7fffffff)
-	minintval[reflect.Int32] = new(big.Int).SetInt64(-0x80000000)
-	maxintval[reflect.Int64], _ = new(big.Int).SetString("0x7fffffffffffffff", 0)
-	minintval[reflect.Int64], _ = new(big.Int).SetString("-0x8000000000000000", 0)
+	maxcval[reflect.Int8] = constant.MakeInt64(0x7f)
+	mincval[reflect.Int8] = constant.MakeInt64(-0x80)
+	maxcval[reflect.Int16] = constant.MakeInt64(0x7fff)
+	mincval[reflect.Int16] = constant.MakeInt64(-0x8000)
+	maxcval[reflect.Int32] = constant.MakeInt64(0x7fffffff)
+	mincval[reflect.Int32] = constant.MakeInt64(-0x80000000)
+	maxcval[reflect.Int64] = constant.MakeInt64(0x7fffffffffffffff)
+	mincval[reflect.Int64] = constant.MakeInt64(-0x8000000000000000)
 
-	zero := big.NewInt(0)
-	maxintval[reflect.Uint8] = new(big.Int).SetUint64(0xff)
-	minintval[reflect.Uint8] = zero
-	maxintval[reflect.Uint16] = new(big.Int).SetUint64(0xffff)
-	minintval[reflect.Uint16] = zero
-	maxintval[reflect.Uint32] = new(big.Int).SetUint64(0xffffffff)
-	minintval[reflect.Uint32] = zero
-	maxintval[reflect.Uint64], _ = new(big.Int).SetString("0xffffffffffffffff", 0)
-	minintval[reflect.Uint64] = zero
-
-	minintval[reflect.Uint] = zero
 	if ptrSize == 4 {
-		maxintval[reflect.Int] = maxintval[reflect.Int32]
-		minintval[reflect.Int] = minintval[reflect.Int32]
-		maxintval[reflect.Uint] = maxintval[reflect.Uint32]
+		maxcval[reflect.Int] = maxcval[reflect.Int32]
+		mincval[reflect.Int] = mincval[reflect.Int32]
 	} else {
-		maxintval[reflect.Int] = maxintval[reflect.Int64]
-		minintval[reflect.Int] = minintval[reflect.Int64]
-		maxintval[reflect.Uint] = maxintval[reflect.Uint64]
+		maxcval[reflect.Int] = maxcval[reflect.Int64]
+		mincval[reflect.Int] = mincval[reflect.Int64]
 	}
-	maxintval[reflect.Interface] = maxintval[reflect.Int]
-	minintval[reflect.Interface] = minintval[reflect.Int]
 
-	maxfltval[reflect.Float32], _ = new(big.Float).SetString("33554431p103")
-	minfltval[reflect.Float32], _ = new(big.Float).SetString("-33554431p103")
-	maxfltval[reflect.Float64], _ = new(big.Float).SetString("18014398509481983p970")
-	minfltval[reflect.Float64], _ = new(big.Float).SetString("-18014398509481983p970")
-	maxfltval[reflect.Interface] = maxfltval[reflect.Float64]
-	minfltval[reflect.Interface] = minfltval[reflect.Float64]
+	maxcval[reflect.Uint8] = constant.MakeUint64(0xff)
+	mincval[reflect.Uint8] = constant.MakeUint64(0)
+	maxcval[reflect.Uint16] = constant.MakeUint64(0xffff)
+	mincval[reflect.Uint16] = constant.MakeUint64(0)
+	maxcval[reflect.Uint32] = constant.MakeUint64(0xffffffff)
+	mincval[reflect.Uint32] = constant.MakeUint64(0)
+	maxcval[reflect.Uint64] = constant.MakeUint64(0xffffffffffffffff)
+	mincval[reflect.Uint64] = constant.MakeUint64(0)
+
+	if ptrSize == 4 {
+		maxcval[reflect.Uint] = maxcval[reflect.Uint32]
+		mincval[reflect.Uint] = mincval[reflect.Uint32]
+		maxcval[reflect.Uintptr] = maxcval[reflect.Uint32]
+		mincval[reflect.Uintptr] = mincval[reflect.Uint32]
+	} else {
+		maxcval[reflect.Uint] = maxcval[reflect.Uint64]
+		mincval[reflect.Uint] = mincval[reflect.Uint64]
+		maxcval[reflect.Uintptr] = maxcval[reflect.Uint64]
+		mincval[reflect.Uintptr] = mincval[reflect.Uint64]
+	}
+
+	maxcval[reflect.Float32] = constant.MakeFromLiteral("33554431p103", token.FLOAT, 0)
+	mincval[reflect.Float32] = constant.MakeFromLiteral("-33554431p103", token.FLOAT, 0)
+	maxcval[reflect.Float64] = constant.MakeFromLiteral("18014398509481983p970", token.FLOAT, 0)
+	mincval[reflect.Float64] = constant.MakeFromLiteral("-18014398509481983p970", token.FLOAT, 0)
+
+	maxcval[reflect.Complex64] = maxcval[reflect.Float32]
+	mincval[reflect.Complex64] = mincval[reflect.Float32]
+	maxcval[reflect.Complex128] = maxcval[reflect.Float64]
+	mincval[reflect.Complex128] = mincval[reflect.Float64]
 }

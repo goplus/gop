@@ -497,11 +497,51 @@ func isOverflowsIntByUint64(v uint64, intSize int) bool {
 	return v > uint64(math.MaxInt64)
 }
 
+func intKind(kind reflect.Kind) reflect.Kind {
+	if kind == reflect.Interface {
+		if ptrSize == 4 {
+			return reflect.Int32
+		} else {
+			return reflect.Int64
+		}
+	}
+	return kind
+}
+
+func floatKind(kind reflect.Kind) reflect.Kind {
+	if kind == reflect.Interface {
+		if ptrSize == 4 {
+			return reflect.Float32
+		} else {
+			return reflect.Float64
+		}
+	}
+	return kind
+}
+
+func complexKind(kind reflect.Kind) reflect.Kind {
+	if kind == reflect.Interface {
+		if ptrSize == 4 {
+			return reflect.Complex64
+		} else {
+			return reflect.Complex128
+		}
+	}
+	return kind
+}
+
 func constantValue(cv constant.Value, ckind exec.Kind, kind reflect.Kind) interface{} {
 	if cv.Kind() == constant.Complex {
 		cr := constant.Real(cv)
 		ci := constant.Imag(cv)
 		if kind == reflect.Interface || kind == reflect.Complex64 || kind == reflect.Complex128 {
+			kind = complexKind(kind)
+			if doesOverflow(cr, kind) {
+				log.Panicf("constant %v overflows %v", cv, kind)
+			}
+			if doesOverflow(ci, kind) {
+				log.Panicf("constant %v overflows %v", cv, kind)
+			}
 			r, _ := constant.Float64Val(cr)
 			i, _ := constant.Float64Val(ci)
 			return complex(r, i)
@@ -522,33 +562,28 @@ func constantValue(cv constant.Value, ckind exec.Kind, kind reflect.Kind) interf
 	var v interface{}
 	switch val := constant.Val(cv).(type) {
 	case int64:
-		if kind >= reflect.Int && kind <= reflect.Int64 || kind == reflect.Interface {
-			if doesOverflowInt(big.NewInt(val), kind) {
-				log.Panicf("constant %v overflows %v", val, kind)
-			}
-		} else if kind >= reflect.Uint && kind <= reflect.Uint64 {
-			if doesOverflowInt(big.NewInt(val), kind-5) {
-				log.Panicf("constant %v overflows %v", val, kind)
-			}
+		kind = intKind(kind)
+		if doesOverflow(cv, kind) {
+			log.Panicf("constant %v overflows %v", cv, kind)
 		}
-		// if kind >= reflect.Int && kind <= reflect.Uint64 || kind == reflect.Interface {
-		// }
 		v = val
 	case *big.Int:
-		if kind >= reflect.Int && kind <= reflect.Uint64 || kind == reflect.Interface {
-			if doesOverflowInt(val, kind) {
-				log.Panicf("constant %v overflows %v", val, kind)
-			}
+		kind = intKind(kind)
+		if doesOverflow(cv, kind) {
+			log.Panicf("constant %v overflows %v", cv, kind)
 		}
 		v = val.Int64()
 	case *big.Float:
-		if kind >= reflect.Float32 && kind <= reflect.Float64 {
-			if doesOverflowFloat(val, kind) {
-				log.Panicf("constant %v overflows %v", val, kind)
-			}
+		kind = floatKind(kind)
+		if doesOverflow(cv, kind) {
+			log.Panicf("constant %v overflows %v", cv, kind)
 		}
 		v, _ = val.Float64()
 	case *big.Rat:
+		kind = floatKind(kind)
+		if doesOverflow(cv, kind) {
+			log.Panicf("constant %v overflows %v", cv, kind)
+		}
 		v, _ = val.Float64()
 	}
 	return v
