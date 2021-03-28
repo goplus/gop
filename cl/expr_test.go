@@ -175,6 +175,38 @@ func TestUnboundInt(t *testing.T) {
 	)
 }
 
+func TestOverflowsFloat(t *testing.T) {
+	//-3.40282e+38
+	//-1.79769e+308
+	cltest.Expect(t, `
+	const a float32 = 3.40282e+38
+	const b float32 = -3.40282e+38
+	println(a,b)
+	`, "3.40282e+38 -3.40282e+38\n")
+	cltest.Expect(t, `
+	const a float32 = 3.40283e+38
+	println(a)
+	`, "", "constant 3.40283e+38 overflows float32")
+	cltest.Expect(t, `
+	const a float32 = -3.40283e+38
+	println(a)
+	`, "", "constant -3.40283e+38 overflows float32")
+
+	cltest.Expect(t, `
+	const a float64 = 1.79769e+308
+	const b float64 = -1.79769e+308
+	println(a,b)
+	`, "1.79769e+308 -1.79769e+308\n")
+	cltest.Expect(t, `
+	const a float64 = 1.7977e+308
+	println(a)
+	`, "", "constant 1.7977e+308 overflows float64")
+	cltest.Expect(t, `
+	const a float64 = -1.7977e+308
+	println(a)
+	`, "", "constant -1.7977e+308 overflows float64")
+}
+
 func TestOverflowsInt(t *testing.T) {
 	cltest.Expect(t, `
 	const a int8 = 0x7f
