@@ -175,6 +175,64 @@ func TestUnboundInt(t *testing.T) {
 	)
 }
 
+func TestOverflowsInt(t *testing.T) {
+	cltest.Expect(t, `
+	const a int8 = 0x7f
+	const b int8 = -0x80
+	println(a,b)
+	`, "127 -128\n")
+	cltest.Expect(t, `
+	const a int8 = 0x7f+1
+	println(a)
+	`, "", "constant 128 overflows int8")
+	cltest.Expect(t, `
+	const a int8 = -0x80-1
+	println(a)
+	`, "", "constant -129 overflows int8")
+
+	cltest.Expect(t, `
+	const a int16 = 0x7fff
+	const b int16 = -0x8000
+	println(a,b)
+	`, "32767 -32768\n")
+	cltest.Expect(t, `
+	const a int16 = 0x7fff+1
+	println(a)
+	`, "", "constant 32768 overflows int16")
+	cltest.Expect(t, `
+	const a int16 = -0x8000-1
+	println(a)
+	`, "", "constant -32769 overflows int16")
+
+	cltest.Expect(t, `
+	const a int32 = 0x7fffffff
+	const b int32 = -0x80000000
+	println(a,b)
+	`, "2147483647 -2147483648\n")
+	cltest.Expect(t, `
+	const a int32 = 0x7fffffff+1
+	println(a)
+	`, "", "constant 2147483648 overflows int32")
+	cltest.Expect(t, `
+	const a int32 = -0x80000000-1
+	println(a)
+	`, "", "constant -2147483649 overflows int32")
+
+	cltest.Expect(t, `
+	const a int64 = 0x7fffffffffffffff
+	const b int64 = -0x8000000000000000
+	println(a,b)
+	`, "9223372036854775807 -9223372036854775808\n")
+	cltest.Expect(t, `
+	const a int64 = 0x7fffffffffffffff+1
+	println(a)
+	`, "", "constant 9223372036854775808 overflows int64")
+	cltest.Expect(t, `
+	const a int64 = -0x8000000000000000-1
+	println(a)
+	`, "", "constant -9223372036854775809 overflows int64")
+}
+
 func TestOverflowsUint(t *testing.T) {
 	cltest.Expect(t, `
 	const a uint8 = 0xfff/0x10
