@@ -403,7 +403,7 @@ func unaryOp(xop token.Token, op exec.Operator, x *constVal) *constVal {
 	vx := boundConst(x, t)
 	v := CallBuiltinOp(kindReal, op, vx)
 	if op == exec.OpNeg && xkind >= reflect.Uint && xkind <= reflect.Uintptr {
-		log.Panicf("constant %v overflows %v", v, xkind)
+		log.Panicf("constant -%v overflows %v", vx, xkind)
 	}
 	return &constVal{kind: xkind, v: v2cv(v), reserve: -1}
 }

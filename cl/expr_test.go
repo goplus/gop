@@ -175,6 +175,21 @@ func TestUnboundInt(t *testing.T) {
 	)
 }
 
+func TestOverflows(t *testing.T) {
+	cltest.Expect(t, `
+	const a uint8 = 0xff+1
+	println(a)
+	`, "", "constant 256 overflows uint8")
+	cltest.Expect(t, `
+	const a uint8 = -1
+	println(a)
+	`, "", "constant -1 overflows uint8")
+	cltest.Expect(t, `
+	const a = -uint8(1)
+	println(a)
+	`, "", "constant -1 overflows uint8")
+}
+
 func _TestOverflowsInt(t *testing.T) {
 	cltest.Expect(t, `
 	println(9223372036854775807)
