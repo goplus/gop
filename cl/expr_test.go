@@ -175,6 +175,25 @@ func TestUnboundInt(t *testing.T) {
 	)
 }
 
+func TestComplex2(t *testing.T) {
+	cltest.Expect(t, `
+	const a int = 42+0i
+	println(a)
+	`, "42\n")
+
+	cltest.Expect(t, `
+	const a = 42+1i
+	const b float32 = a-1i
+	println(b)
+	`, "42\n")
+
+	cltest.Expect(t, `
+	const a = 42+1i
+	const b float64 = a-1i
+	println(b)
+	`, "42\n")
+}
+
 func TestOverflowsFloat(t *testing.T) {
 	//-3.40282e+38
 	//-1.79769e+308
