@@ -17,7 +17,6 @@
 package cl
 
 import (
-	"log"
 	"reflect"
 
 	"github.com/goplus/gop/constant"
@@ -81,9 +80,6 @@ func init() {
 	mincval[reflect.Float32] = constant.MakeFromLiteral("-33554431p103", token.FLOAT, 0)
 	maxcval[reflect.Float64] = constant.MakeFromLiteral("18014398509481983p970", token.FLOAT, 0)
 	mincval[reflect.Float64] = constant.MakeFromLiteral("-18014398509481983p970", token.FLOAT, 0)
-
-	log.Println(mincval[reflect.Float32])
-	log.Println(mincval[reflect.Float64])
 
 	maxcval[reflect.Complex64] = maxcval[reflect.Float32]
 	mincval[reflect.Complex64] = mincval[reflect.Float32]
