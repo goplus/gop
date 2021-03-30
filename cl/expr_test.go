@@ -194,6 +194,23 @@ func TestComplex2(t *testing.T) {
 	`, "42\n")
 }
 
+func TestConstUnary(t *testing.T) {
+	cltest.Expect(t, `
+	const (
+		a = ^uint8(1)+1
+		b = -int8(1)+128
+		c = -float32(1)+4097
+		d = -complex64(1+2i)+4097
+		e = !!true
+	)
+	printf("%v %T\n",a,a)
+	printf("%v %T\n",b,b)
+	printf("%v %T\n",c,c)
+	printf("%v %T\n",d,d)
+	printf("%v %T\n",e,e)
+	`, "255 uint8\n127 int8\n4096 float32\n(4096-2i) complex64\ntrue bool\n")
+}
+
 func TestOverflowsFloat(t *testing.T) {
 	//-3.40282e+38
 	//-1.79769e+308

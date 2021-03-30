@@ -419,7 +419,10 @@ func v2cv(x interface{}) interface{} {
 	case kind >= reflect.Float32 && kind <= reflect.Float64:
 		return constant.MakeFloat64(v.Float())
 	case kind >= reflect.Complex64 && kind <= reflect.Complex128:
-		return constant.Make(v.Complex())
+		c := v.Complex()
+		r := constant.MakeFloat64(real(c))
+		i := constant.MakeFloat64(imag(c))
+		return constant.BinaryOp(r, token.ADD, constant.MakeImag(i))
 	}
 	return x
 }
