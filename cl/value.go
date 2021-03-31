@@ -558,15 +558,25 @@ func constantValue(cv constant.Value, ckind exec.Kind, kind reflect.Kind) interf
 		}
 		cv = cr
 	}
-	if val, ok := constant.Val(cv).(*big.Rat); ok {
+	v := constant.Val(cv)
+	switch val := v.(type) {
+	case *big.Rat:
 		if ckind == exec.ConstUnboundInt {
 			s := val.FloatString(1)
 			pos := strings.Index(s, ".")
 			cv = constant.MakeFromLiteral(s[:pos], token.INT, 0)
+			v = constant.Val(cv)
+		} else if ckind == exec.ConstUnboundFloat {
+			if kind >= exec.Int && kind <= exec.Uintptr || kind == exec.BigInt {
+				if !val.IsInt() {
+					log.Panicf("constant %v truncated to integer", cv)
+				}
+				v = val.Num()
+			}
 		}
 	}
-	var v interface{}
-	switch val := constant.Val(cv).(type) {
+
+	switch val := v.(type) {
 	case int64:
 		kind = intKind(kind)
 		if doesOverflow(cv, kind) {
