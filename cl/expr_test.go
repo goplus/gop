@@ -228,6 +228,15 @@ func TestConstTruncated(t *testing.T) {
 	const a = 1r+100.1
 	println(a)
 	`, "", "constant 100.1 truncated to integer")
+	cltest.Expect(t, `
+	const a = 1+1e4096
+	println(a)
+	`, "", "constant 1e+4096 overflows float64")
+	cltest.Expect(t, `
+	const a = 1r+1e4096-1e4096
+	println(a)
+	`, "1\n")
+
 	// cltest.Expect(t, `
 	// const a = 1r+1e4096-1e4096
 	// println(a)

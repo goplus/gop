@@ -26,7 +26,7 @@ import (
 const ptrSize = 4 << (^uintptr(0) >> 63)
 
 func doesOverflow(v constant.Value, kind reflect.Kind) bool {
-	if kind < reflect.Int8 || kind > reflect.Complex128 {
+	if kind < reflect.Int || kind > reflect.Complex128 {
 		return false
 	}
 	return constant.Compare(v, token.LSS, mincval[kind]) || constant.Compare(v, token.GTR, maxcval[kind])
