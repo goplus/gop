@@ -597,29 +597,28 @@ func constantValue(cv constant.Value, ckind exec.Kind, kind reflect.Kind) interf
 		if doesOverflow(cv, kind) {
 			log.Panicf("constant %v overflows %v", cv, kind)
 		}
-		v = val
 	case *big.Int:
 		kind = intKind(kind)
-		if doesOverflow(cv, kind) {
-			log.Panicf("constant %v overflows %v", cv, kind)
-		}
 		if kind >= exec.Int && kind <= exec.Uintptr {
+			if doesOverflow(cv, kind) {
+				log.Panicf("constant %v overflows %v", cv, kind)
+			}
 			v = val.Int64()
 		}
 	case *big.Float:
 		kind = floatKind(kind)
-		if doesOverflow(cv, kind) {
-			log.Panicf("constant %v overflows %v", cv, kind)
-		}
 		if kind >= exec.Float32 && kind <= exec.Complex128 {
+			if doesOverflow(cv, kind) {
+				log.Panicf("constant %v overflows %v", cv, kind)
+			}
 			v, _ = val.Float64()
 		}
 	case *big.Rat:
 		kind = floatKind(kind)
-		if doesOverflow(cv, kind) {
-			log.Panicf("constant %v overflows %v", cv, kind)
-		}
 		if kind >= exec.Float32 && kind <= exec.Complex128 {
+			if doesOverflow(cv, kind) {
+				log.Panicf("constant %v overflows %v", cv, kind)
+			}
 			v, _ = val.Float64()
 		}
 	}
