@@ -232,6 +232,18 @@ func TestConstUbountInt(t *testing.T) {
 	const a = uint8(255)+3/2
 	println(a)
 	`, "", "constant 256 overflows uint8")
+	cltest.Expect(t, `
+	var a = [1]int{}
+	println(a)
+	`, "[0]\n")
+	cltest.Expect(t, `
+	var a = [1.0]int{}
+	println(a)
+	`, "[0]\n")
+	cltest.Expect(t, `
+	var a = [1.1]int{}
+	println(a)
+	`, "", "constant 1.1 truncated to integer")
 }
 
 func TestConstTruncated(t *testing.T) {
