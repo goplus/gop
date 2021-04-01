@@ -314,11 +314,7 @@ func toInt(ctx *blockCtx, e ast.Expr) int {
 	if !ok {
 		log.Panicln("toInt: require constant expr.")
 	}
-	iv, ok := nv.toInt64()
-	if !ok {
-		log.Panicln("toInt: constant expr isn't an integer.")
-	}
-	return int(iv)
+	return boundConst(nv, exec.TyInt).(int)
 }
 
 func toStructField(ctx *blockCtx, field *ast.Field) []reflect.StructField {

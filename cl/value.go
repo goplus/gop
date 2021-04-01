@@ -286,39 +286,6 @@ func (p *constVal) Kind() iKind {
 	return p.kind
 }
 
-func (p *constVal) toInt64() (int64, bool) {
-	if cv, ok := p.v.(constant.Value); ok {
-		if cv.Kind() != constant.Int {
-			cv = constant.ToInt(cv)
-		}
-		v, _ := constant.Int64Val(cv)
-		return v, true
-	}
-	v, ok := p.v.(int64)
-	return v, ok
-}
-
-func (p *constVal) toUint64() (uint64, bool) {
-	if cv, ok := p.v.(constant.Value); ok {
-		if cv.Kind() != constant.Int {
-			cv = constant.ToInt(cv)
-		}
-		v, _ := constant.Uint64Val(cv)
-		return v, true
-	}
-	v, ok := p.v.(uint64)
-	return v, ok
-}
-
-func (p *constVal) toFloat64() (float64, bool) {
-	if cv, ok := p.v.(constant.Value); ok {
-		v, _ := constant.Float64Val(cv)
-		return v, true
-	}
-	v, ok := p.v.(float64)
-	return v, ok
-}
-
 func (p *constVal) Type() reflect.Type {
 	if isConstBound(p.kind) {
 		return exec.TypeFromKind(p.kind)
@@ -454,13 +421,13 @@ func binaryOp(xop token.Token, op exec.Operator, x, y *constVal) *constVal {
 	if xok && yok {
 		var v constant.Value
 		if xop == token.SHL || xop == token.SHR {
-			u, _ := y.toUint64()
-			v = constant.Shift(cx, xop, uint(u))
+			u := boundConst(y, exec.TyUint).(uint)
+			v = constant.Shift(cx, xop, u)
 		} else {
 			v = constant.BinaryOp(cx, xop, cy)
 		}
 		if kind == exec.ConstUnboundInt {
-			v = extraUnboundIntValue(v)
+			v = extractUnboundInt(v, kind)
 		}
 		return &constVal{kind: kind, v: v, reserve: -1}
 	}
@@ -536,16 +503,30 @@ func complexKind(kind reflect.Kind) reflect.Kind {
 	return kind
 }
 
-func extraUnboundIntValue(cv constant.Value) constant.Value {
+func extractUnboundInt(cv constant.Value, kind exec.Kind) constant.Value {
 	switch val := constant.Val(cv).(type) {
 	case *big.Rat:
-		s := val.FloatString(1)
-		pos := strings.Index(s, ".")
-		cv = constant.MakeFromLiteral(s[:pos], token.INT, 0)
+		if kind == exec.ConstUnboundInt {
+			s := val.FloatString(1)
+			pos := strings.Index(s, ".")
+			cv = constant.MakeFromLiteral(s[:pos], token.INT, 0)
+		} else if kind == exec.ConstUnboundFloat {
+			if !val.IsInt() {
+				log.Panicf("constant %v truncated to integer", cv)
+			}
+			cv = constant.ToInt(cv)
+		}
 	case *big.Float:
-		s := val.String()
-		pos := strings.Index(s, ".")
-		cv = constant.MakeFromLiteral(s[:pos], token.INT, 0)
+		if kind == exec.ConstUnboundInt {
+			s := val.String()
+			pos := strings.Index(s, ".")
+			cv = constant.MakeFromLiteral(s[:pos], token.INT, 0)
+		} else if kind == exec.ConstUnboundFloat {
+			if !val.IsInt() {
+				log.Panicf("constant %v truncated to integer", cv)
+			}
+			cv = constant.ToInt(cv)
+		}
 	}
 	return cv
 }
