@@ -462,6 +462,9 @@ func binaryOp(xop token.Token, op exec.Operator, x, y *constVal) *constVal {
 		} else {
 			v = constant.BinaryOp(cx, xop, cy)
 		}
+		if kind == exec.ConstUnboundInt {
+			v = extraUnboundIntValue(v)
+		}
 		return &constVal{kind: kind, v: v, reserve: -1}
 	}
 	vx := boundConst(x, t)
@@ -534,6 +537,20 @@ func complexKind(kind reflect.Kind) reflect.Kind {
 		}
 	}
 	return kind
+}
+
+func extraUnboundIntValue(cv constant.Value) constant.Value {
+	switch val := constant.Val(cv).(type) {
+	case *big.Rat:
+		s := val.FloatString(1)
+		pos := strings.Index(s, ".")
+		cv = constant.MakeFromLiteral(s[:pos], token.INT, 0)
+	case *big.Float:
+		s := val.String()
+		pos := strings.Index(s, ".")
+		cv = constant.MakeFromLiteral(s[:pos], token.INT, 0)
+	}
+	return cv
 }
 
 func constantValue(cv constant.Value, ckind exec.Kind, kind reflect.Kind) interface{} {

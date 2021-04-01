@@ -211,6 +211,29 @@ func TestConstUnary(t *testing.T) {
 	`, "255 uint8\n127 int8\n4096 float32\n(4096-2i) complex64\ntrue bool\n")
 }
 
+func TestConstUbountInt(t *testing.T) {
+	cltest.Expect(t, `
+	const a = 1+3/2
+	println(a)
+	`, "2\n")
+	cltest.Expect(t, `
+	const a = 1.1+3/2
+	println(a)
+	`, "2.1\n")
+	cltest.Expect(t, `
+	const a = (1+2i)+3/2
+	println(a)
+	`, "(2+2i)\n")
+	cltest.Expect(t, `
+	const a = 1/2r+3/2
+	println(a)
+	`, "3/2\n")
+	cltest.Expect(t, `
+	const a = uint8(255)+3/2
+	println(a)
+	`, "", "constant 256 overflows uint8")
+}
+
 func TestConstTruncated(t *testing.T) {
 	cltest.Expect(t, `
 	const a int = 1+100.0
