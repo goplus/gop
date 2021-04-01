@@ -24,6 +24,7 @@ import (
 )
 
 const ptrSize = 4 << (^uintptr(0) >> 63)
+const ptrSizeIndex = ptrSize/4 - 1 // 0 = 32bit, 1 = 64bit
 
 func doesOverflow(v constant.Value, kind reflect.Kind) bool {
 	if kind < reflect.Int || kind > reflect.Complex128 {
@@ -47,13 +48,8 @@ func init() {
 	maxcval[reflect.Int64] = constant.MakeInt64(0x7fffffffffffffff)
 	mincval[reflect.Int64] = constant.MakeInt64(-0x8000000000000000)
 
-	if ptrSize == 4 {
-		maxcval[reflect.Int] = maxcval[reflect.Int32]
-		mincval[reflect.Int] = mincval[reflect.Int32]
-	} else {
-		maxcval[reflect.Int] = maxcval[reflect.Int64]
-		mincval[reflect.Int] = mincval[reflect.Int64]
-	}
+	maxcval[reflect.Int] = []constant.Value{maxcval[reflect.Int32], maxcval[reflect.Int64]}[ptrSizeIndex]
+	mincval[reflect.Int] = []constant.Value{mincval[reflect.Int32], mincval[reflect.Int64]}[ptrSizeIndex]
 
 	maxcval[reflect.Uint8] = constant.MakeUint64(0xff)
 	mincval[reflect.Uint8] = constant.MakeUint64(0)
@@ -64,17 +60,10 @@ func init() {
 	maxcval[reflect.Uint64] = constant.MakeUint64(0xffffffffffffffff)
 	mincval[reflect.Uint64] = constant.MakeUint64(0)
 
-	if ptrSize == 4 {
-		maxcval[reflect.Uint] = maxcval[reflect.Uint32]
-		mincval[reflect.Uint] = mincval[reflect.Uint32]
-		maxcval[reflect.Uintptr] = maxcval[reflect.Uint32]
-		mincval[reflect.Uintptr] = mincval[reflect.Uint32]
-	} else {
-		maxcval[reflect.Uint] = maxcval[reflect.Uint64]
-		mincval[reflect.Uint] = mincval[reflect.Uint64]
-		maxcval[reflect.Uintptr] = maxcval[reflect.Uint64]
-		mincval[reflect.Uintptr] = mincval[reflect.Uint64]
-	}
+	maxcval[reflect.Uint] = []constant.Value{maxcval[reflect.Uint32], maxcval[reflect.Uint64]}[ptrSizeIndex]
+	mincval[reflect.Uint] = []constant.Value{mincval[reflect.Uint32], mincval[reflect.Uint64]}[ptrSizeIndex]
+	maxcval[reflect.Uintptr] = maxcval[reflect.Uint]
+	mincval[reflect.Uintptr] = mincval[reflect.Uint]
 
 	maxcval[reflect.Float32] = constant.MakeFromLiteral("33554431p103", token.FLOAT, 0)
 	mincval[reflect.Float32] = constant.MakeFromLiteral("-33554431p103", token.FLOAT, 0)

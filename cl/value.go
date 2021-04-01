@@ -472,33 +472,21 @@ func isOverflowsIntByUint64(v uint64, intSize int) bool {
 
 func intKind(kind reflect.Kind) reflect.Kind {
 	if kind == reflect.Interface {
-		if ptrSize == 4 {
-			return reflect.Int32
-		} else {
-			return reflect.Int64
-		}
+		return []reflect.Kind{reflect.Int32, reflect.Int64}[ptrSizeIndex]
 	}
 	return kind
 }
 
 func floatKind(kind reflect.Kind) reflect.Kind {
 	if kind == reflect.Interface {
-		if ptrSize == 4 {
-			return reflect.Float32
-		} else {
-			return reflect.Float64
-		}
+		return []reflect.Kind{reflect.Float32, reflect.Float64}[ptrSizeIndex]
 	}
 	return kind
 }
 
 func complexKind(kind reflect.Kind) reflect.Kind {
 	if kind == reflect.Interface {
-		if ptrSize == 4 {
-			return reflect.Complex64
-		} else {
-			return reflect.Complex128
-		}
+		return []reflect.Kind{reflect.Complex64, reflect.Complex128}[ptrSizeIndex]
 	}
 	return kind
 }
