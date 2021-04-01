@@ -276,7 +276,8 @@ func toArrayType(ctx *blockCtx, v *ast.ArrayType) iType {
 	compileExpr(ctx, v.Len)
 	n := ctx.infer.Pop()
 	if nv, ok := n.(iValue).(*constVal); ok {
-		if iv, ok := nv.toInt64(); ok {
+		v := boundConst(nv, exec.TyInt)
+		if iv, ok := v.(int); ok {
 			if iv < 0 {
 				return &unboundArrayType{elem: elem.(reflect.Type)}
 			}
