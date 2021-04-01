@@ -23,8 +23,8 @@ import (
 	"github.com/goplus/gop/token"
 )
 
-const ptrSize = 4 << (^uintptr(0) >> 63)
-const ptrSizeIndex = ptrSize/4 - 1 // 0 = 32bit, 1 = 64bit
+// 0 = 32bit, 1 = 64bit
+const ptrSizeIndex = (^uintptr(0) >> 63)
 
 func doesOverflow(v constant.Value, kind reflect.Kind) bool {
 	if kind < reflect.Int || kind > reflect.Complex128 {
