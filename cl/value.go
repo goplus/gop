@@ -340,10 +340,7 @@ func (p *constVal) boundKind() reflect.Kind {
 	}
 	switch p.kind {
 	case astutil.ConstUnboundInt:
-		if _, ok := p.toInt64(); ok {
-			return reflect.Int
-		}
-		return reflect.Uint
+		return reflect.Int
 	case astutil.ConstUnboundFloat:
 		return reflect.Float64
 	case astutil.ConstUnboundComplex:
