@@ -302,6 +302,14 @@ func TestConstUbountInt(t *testing.T) {
 	println(a)
 	`, "[0]\n")
 	cltest.Expect(t, `
+	const a = int(1)*1e3
+	println(a)
+	`, "1000\n")
+	cltest.Expect(t, `
+	const a = int(1)*1000.1
+	println(a)
+	`, "", "constant 1000.1 truncated to integer")
+	cltest.Expect(t, `
 	var a = [1.1]int{}
 	println(a)
 	`, "", "constant 1.1 truncated to integer")

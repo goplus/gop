@@ -561,13 +561,11 @@ func constantValue(cv constant.Value, ckind exec.Kind, kind reflect.Kind) interf
 			pos := strings.Index(s, ".")
 			cv = constant.MakeFromLiteral(s[:pos], token.INT, 0)
 			v = constant.Val(cv)
-		} else if ckind == exec.ConstUnboundFloat {
-			if kind >= exec.Int && kind <= exec.Uintptr || kind == exec.BigInt {
-				if !val.IsInt() {
-					log.Panicf("constant %v truncated to integer", cv)
-				}
-				v = val.Num()
+		} else if kind >= exec.Int && kind <= exec.Uintptr || kind == exec.BigInt {
+			if !val.IsInt() {
+				log.Panicf("constant %v truncated to integer", cv)
 			}
+			v = val.Num()
 		}
 	case *big.Float:
 		if ckind == exec.ConstUnboundInt {
@@ -575,14 +573,12 @@ func constantValue(cv constant.Value, ckind exec.Kind, kind reflect.Kind) interf
 			pos := strings.Index(s, ".")
 			cv = constant.MakeFromLiteral(s[:pos], token.INT, 0)
 			v = constant.Val(cv)
-		} else if ckind == exec.ConstUnboundFloat {
-			if kind >= exec.Int && kind <= exec.Uintptr || kind == exec.BigInt {
-				if !val.IsInt() {
-					log.Panicf("constant %v truncated to integer", cv)
-				}
-				v, _ = val.Int(nil)
-				cv = constant.Make(v)
+		} else if kind >= exec.Int && kind <= exec.Uintptr || kind == exec.BigInt {
+			if !val.IsInt() {
+				log.Panicf("constant %v truncated to integer", cv)
 			}
+			v, _ = val.Int(nil)
+			cv = constant.Make(v)
 		}
 	}
 	switch val := v.(type) {
