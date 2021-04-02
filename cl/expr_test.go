@@ -194,6 +194,36 @@ func TestComplex2(t *testing.T) {
 	`, "42\n")
 }
 
+func TestConstTyped(t *testing.T) {
+	cltest.Expect(t, `
+	type T uint8
+	const (
+		a T = 1 << iota
+		b
+		c
+	)
+	println(a,b,c)
+	`, "1 2 4\n")
+	cltest.Expect(t, `
+	type T uint8
+	const (
+		a T = 0xff
+		b T = 1
+		c T = a+b
+	)
+	println(a,b,c)
+	`, "", "constant 256 overflows uint8")
+	cltest.Expect(t, `
+	type T int8
+	const (
+		a T = 0x7f
+		b T = 1
+		c T = a+b
+	)
+	println(a,b,c)
+	`, "", "constant 128 overflows int8")
+}
+
 func TestConstUnary(t *testing.T) {
 	cltest.Expect(t, `
 	const (
