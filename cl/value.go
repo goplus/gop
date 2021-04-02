@@ -523,6 +523,9 @@ func extractUnboundInt(cv constant.Value, kind exec.Kind) constant.Value {
 				log.Panicf("constant %v truncated to integer", cv)
 			}
 			cv = constant.ToInt(cv)
+			if cv.Kind() == constant.Unknown {
+				log.Panicf("integer too large")
+			}
 		}
 	}
 	return cv
