@@ -291,7 +291,7 @@ func compileEllipsis(ctx *blockCtx, v *ast.Ellipsis) func() {
 	if v.Elt != nil {
 		log.Panicln("compileEllipsis: todo")
 	}
-	ctx.infer.Push(&constVal{v: int64(-1), kind: astutil.ConstUnboundInt})
+	ctx.infer.Push(&constVal{v: constant.MakeInt64(-1), kind: astutil.ConstUnboundInt})
 	return nil
 }
 

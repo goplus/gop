@@ -272,6 +272,25 @@ func isConstBound(kind astutil.ConstKind) bool {
 	return astutil.IsConstBound(kind)
 }
 
+func v2cv(x interface{}) interface{} {
+	v := reflect.ValueOf(x)
+	kind := v.Kind()
+	switch {
+	case kind >= reflect.Int && kind <= reflect.Int64:
+		return constant.MakeInt64(v.Int())
+	case kind >= reflect.Uint && kind <= reflect.Uintptr:
+		return constant.MakeUint64(v.Uint())
+	case kind >= reflect.Float32 && kind <= reflect.Float64:
+		return constant.MakeFloat64(v.Float())
+	case kind >= reflect.Complex64 && kind <= reflect.Complex128:
+		c := v.Complex()
+		r := constant.MakeFloat64(real(c))
+		i := constant.MakeFloat64(imag(c))
+		return constant.BinaryOp(r, token.ADD, constant.MakeImag(i))
+	}
+	return x
+}
+
 type constVal struct {
 	v       interface{}
 	kind    iKind
@@ -279,15 +298,7 @@ type constVal struct {
 }
 
 func newConstVal(v interface{}, kind iKind) *constVal {
-	sv := reflect.ValueOf(v)
-	skind := sv.Kind()
-	switch {
-	case skind >= exec.Int && skind <= exec.Int64:
-		v = constant.MakeInt64(sv.Int())
-	case skind >= exec.Uint && skind <= exec.Uintptr:
-		v = constant.MakeUint64(sv.Uint())
-	}
-	return &constVal{v: v, kind: kind, reserve: exec.InvalidReserved}
+	return &constVal{v: v2cv(v), kind: kind, reserve: exec.InvalidReserved}
 }
 
 func (p *constVal) Kind() iKind {
@@ -377,26 +388,7 @@ func unaryOp(xop token.Token, op exec.Operator, x *constVal) *constVal {
 	if op == exec.OpNeg && xkind >= reflect.Uint && xkind <= reflect.Uintptr {
 		log.Panicf("constant -%v overflows %v", vx, xkind)
 	}
-	return &constVal{kind: xkind, v: v2cv(v), reserve: -1}
-}
-
-func v2cv(x interface{}) interface{} {
-	v := reflect.ValueOf(x)
-	kind := v.Kind()
-	switch {
-	case kind >= reflect.Int && kind <= reflect.Int64:
-		return constant.MakeInt64(v.Int())
-	case kind >= reflect.Uint && kind <= reflect.Uint64:
-		return constant.MakeUint64(v.Uint())
-	case kind >= reflect.Float32 && kind <= reflect.Float64:
-		return constant.MakeFloat64(v.Float())
-	case kind >= reflect.Complex64 && kind <= reflect.Complex128:
-		c := v.Complex()
-		r := constant.MakeFloat64(real(c))
-		i := constant.MakeFloat64(imag(c))
-		return constant.BinaryOp(r, token.ADD, constant.MakeImag(i))
-	}
-	return x
+	return newConstVal(v, xkind)
 }
 
 func binaryOp(xop token.Token, op exec.Operator, x, y *constVal) *constVal {

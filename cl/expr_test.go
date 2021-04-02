@@ -222,6 +222,20 @@ func TestConstTyped(t *testing.T) {
 	)
 	println(a,b,c)
 	`, "", "constant 128 overflows int8")
+	cltest.Expect(t, `
+	type T float64
+	const (
+		a T = 1e308
+	)
+	println(a*2)
+	`, "", "constant 2e+308 overflows float64")
+	cltest.Expect(t, `
+	type T complex128
+	const (
+		a T = 1e308+2i
+	)
+	println(a*2)
+	`, "", "constant (2e+308 + 4i) overflows complex128")
 }
 
 func TestConstUnary(t *testing.T) {
