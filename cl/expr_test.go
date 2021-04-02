@@ -348,23 +348,14 @@ func TestConstTruncated(t *testing.T) {
 	const a = 1r+1e4096-1e4096
 	println(a)
 	`, "1\n")
-
-	// cltest.Expect(t, `
-	// const a = 1r+1e4096-1e4096
-	// println(a)
-	// `, "1\n")
-	// cltest.Expect(t, `
-	// const a = 1r+0xffffffffffffffff
-	// println(a)
-	// `, "18446744073709551616\n")
-	// cltest.Expect(t, `
-	// const a = 1.1r+1.0
-	// println(a)
-	// `, "2.1\n")
-	// cltest.Expect(t, `
-	// const a = 1r+1.0
-	// println(a)
-	// `, "2\n")
+	cltest.Expect(t, `
+	const a int = 1+0i
+	println(a)
+	`, "1\n")
+	cltest.Expect(t, `
+	const a int = 1+2i
+	println(a)
+	`, "", "constant (1 + 2i) truncated to int")
 }
 
 func TestOverflowsFloat(t *testing.T) {
