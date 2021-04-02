@@ -421,8 +421,17 @@ func binaryOp(xop token.Token, op exec.Operator, x, y *constVal) *constVal {
 	if xok && yok {
 		var v constant.Value
 		if xop == token.SHL || xop == token.SHR {
-			u := boundConst(y, exec.TyUint).(uint)
-			v = constant.Shift(cx, xop, u)
+			var s uint
+			if !isConstBound(y.kind) {
+				i := boundConst(y, exec.TyInt).(int)
+				if i < 0 {
+					log.Panicf("invalid negative shift count: %v", i)
+				}
+				s = uint(i)
+			} else {
+				s = boundConst(y, exec.TyUint).(uint)
+			}
+			v = constant.Shift(cx, xop, s)
 		} else {
 			v = constant.BinaryOp(cx, xop, cy)
 		}
@@ -573,7 +582,6 @@ func constantValue(cv constant.Value, ckind exec.Kind, kind reflect.Kind) interf
 			}
 		}
 	}
-
 	switch val := v.(type) {
 	case int64:
 		kind = intKind(kind)

@@ -305,6 +305,10 @@ func TestConstUbountInt(t *testing.T) {
 	var a = [1.1]int{}
 	println(a)
 	`, "", "constant 1.1 truncated to integer")
+	cltest.Expect(t, `
+	const a = 1024 << -1
+	println(a)
+	`, "", "invalid negative shift count: -1")
 }
 
 func TestConstTruncated(t *testing.T) {
