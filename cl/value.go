@@ -279,6 +279,14 @@ type constVal struct {
 }
 
 func newConstVal(v interface{}, kind iKind) *constVal {
+	sv := reflect.ValueOf(v)
+	skind := sv.Kind()
+	switch {
+	case skind >= exec.Int && skind <= exec.Int64:
+		v = constant.MakeInt64(sv.Int())
+	case skind >= exec.Uint && skind <= exec.Uintptr:
+		v = constant.MakeUint64(sv.Uint())
+	}
 	return &constVal{v: v, kind: kind, reserve: exec.InvalidReserved}
 }
 
