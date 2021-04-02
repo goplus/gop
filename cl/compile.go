@@ -377,6 +377,12 @@ func loadConst(ctx *blockCtx, name string, typ ast.Expr, value ast.Expr) {
 	c := in.(*constVal)
 	if typ != nil {
 		t := toType(ctx, typ).(reflect.Type)
+		if isConstBound(c.kind) {
+			kind := t.Kind()
+			if c.kind != kind {
+				log.Panicf("cannot use a (type %v) as type %v in const initializer", c.kind, kind)
+			}
+		}
 		v := boundConst(c, t)
 		c.v = v
 		c.kind = t.Kind()

@@ -194,6 +194,23 @@ func TestComplex2(t *testing.T) {
 	`, "42\n")
 }
 
+func TestConstInitType(t *testing.T) {
+	cltest.Expect(t, `
+	const (
+		a float64 = 1.1
+		b float32 = float32(a)-0.1
+	)
+	println(a,b)
+	`, "1.1 1\n")
+	cltest.Expect(t, `
+	const (
+		a float64 = 1
+		b float32 = a-0.1
+	)
+	println(a,b)
+	`, "", "cannot use a (type float64) as type float32 in const initializer")
+}
+
 func TestConstTyped(t *testing.T) {
 	cltest.Expect(t, `
 	type T uint8
