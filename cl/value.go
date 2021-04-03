@@ -661,7 +661,11 @@ func boundConst(x *constVal, t reflect.Type) interface{} {
 	} else if kind == reflect.Complex128 || kind == reflect.Complex64 {
 		if skind := sval.Kind(); skind >= reflect.Int && skind <= reflect.Float64 {
 			fval := sval.Convert(exec.TyFloat64).Float()
-			return complex(fval, 0)
+			if kind == reflect.Complex64 {
+				return complex(float32(fval), 0)
+			} else {
+				return complex(fval, 0)
+			}
 		}
 	} else if kind >= exec.BigInt {
 		val := reflect.New(t.Elem())
