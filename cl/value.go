@@ -420,7 +420,8 @@ func binaryOp(xop token.Token, op exec.Operator, x, y *constVal) *constVal {
 	cy, yok := y.v.(constant.Value)
 	if xok && yok {
 		var v constant.Value
-		if xop == token.SHL || xop == token.SHR {
+		switch xop {
+		case token.SHL, token.SHR:
 			var s uint
 			if !isConstBound(y.kind) {
 				i := boundConst(y, exec.TyInt).(int)
@@ -432,7 +433,10 @@ func binaryOp(xop token.Token, op exec.Operator, x, y *constVal) *constVal {
 				s = boundConst(y, exec.TyUint).(uint)
 			}
 			v = constant.Shift(cx, xop, s)
-		} else {
+		case token.EQL, token.NEQ, token.LSS, token.LEQ, token.GTR, token.GEQ:
+			b := constant.Compare(cx, xop, cy)
+			return &constVal{kind: kind, v: b, reserve: -1}
+		default:
 			v = constant.BinaryOp(cx, xop, cy)
 		}
 		if kind == exec.ConstUnboundInt {
@@ -594,6 +598,11 @@ func constantValue(cv constant.Value, ckind exec.Kind, kind reflect.Kind) interf
 				log.Panicf("constant %v overflows %v", cv, kind)
 			}
 			v = val.Int64()
+		} else if kind >= exec.Float32 && kind <= exec.Float64 {
+			if doesOverflow(cv, kind) {
+				log.Panicf("constant %v overflows %v", cv, kind)
+			}
+			v = float64(val.Int64())
 		}
 	case *big.Float:
 		kind = floatKind(kind)
