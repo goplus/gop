@@ -79,15 +79,6 @@ func ToConst(v *ast.BasicLit) (ConstKind, interface{}) {
 	case token.INT:
 		n := constant.MakeFromLiteral(v.Value, v.Kind, 0)
 		return ConstUnboundInt, n
-		// n, err := strconv.ParseInt(v.Value, 0, 0)
-		// if err != nil {
-		// 	n2, err2 := strconv.ParseUint(v.Value, 0, 0)
-		// 	if err2 != nil {
-		// 		log.Fatalln("ToConst: strconv.ParseInt failed:", err2)
-		// 	}
-		// 	return ConstUnboundInt, n2
-		// }
-		// return ConstUnboundInt, n
 	case token.CHAR, token.STRING:
 		n, err := strconv.Unquote(v.Value)
 		if err != nil {
@@ -103,20 +94,9 @@ func ToConst(v *ast.BasicLit) (ConstKind, interface{}) {
 	case token.FLOAT:
 		n := constant.MakeFromLiteral(v.Value, v.Kind, 0)
 		return ConstUnboundFloat, n
-		// n, err := strconv.ParseFloat(v.Value, 64)
-		// if err != nil {
-		// 	log.Fatalln("ToConst: strconv.ParseFloat failed:", err)
-		// }
-		// return ConstUnboundFloat, n
 	case token.IMAG: // 123.45i
 		n := constant.MakeFromLiteral(v.Value, v.Kind, 0)
 		return ConstUnboundComplex, n
-		// val := v.Value
-		// n, err := strconv.ParseFloat(val[:len(val)-1], 64)
-		// if err != nil {
-		// 	log.Fatalln("ToConst: strconv.ParseFloat failed:", err)
-		// }
-		// return ConstUnboundComplex, complex(0, n)
 	case token.RAT:
 		val := v.Value[:len(v.Value)-1]
 		if strings.IndexByte(val, '.') < 0 {
