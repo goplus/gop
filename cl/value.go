@@ -434,6 +434,9 @@ func binaryOp(xop token.Token, op exec.Operator, x, y *constVal) *constVal {
 			}
 			v = constant.Shift(cx, xop, s)
 		case token.EQL, token.NEQ, token.LSS, token.LEQ, token.GTR, token.GEQ:
+			if isBoundNumberType(xkind) || isBoundNumberType(ykind) {
+				goto bound
+			}
 			b := constant.Compare(cx, xop, cy)
 			return &constVal{kind: kind, v: b, reserve: -1}
 		default:
@@ -444,6 +447,7 @@ func binaryOp(xop token.Token, op exec.Operator, x, y *constVal) *constVal {
 		}
 		return &constVal{kind: kind, v: v, reserve: -1}
 	}
+bound:
 	vx := boundConst(x, t)
 	vy := boundConst(y, t)
 	v := CallBuiltinOp(kindReal, op, vx, vy)
