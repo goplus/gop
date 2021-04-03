@@ -662,6 +662,22 @@ var unaryOps = [...]exec.Operator{
 	token.XOR: exec.OpBitNot,
 }
 
+func isUnboundNumberType(kind exec.Kind) bool {
+	return kind == exec.ConstUnboundInt ||
+		kind == exec.ConstUnboundFloat ||
+		kind == exec.ConstUnboundComplex
+}
+
+func isBoundNumberType(kind exec.Kind) bool {
+	return kind >= exec.Int && kind <= exec.Complex128
+}
+
+func isCompareToken(op token.Token) bool {
+	return op == token.EQL || op == token.NEQ ||
+		op == token.LSS || op == token.LEQ ||
+		op == token.GTR || op == token.GEQ
+}
+
 func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 	exprX := compileExpr(ctx, v.X)
 	exprY := compileExpr(ctx, v.Y)
@@ -681,7 +697,16 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 		return func() {
 			ret.reserve = ctx.out.Reserve()
 		}
+	} else if isCompareToken(v.Op) {
+		xkind := x.(iValue).Kind()
+		ykind := y.(iValue).Kind()
+		if xok && isUnboundNumberType(xcons.kind) && isBoundNumberType(ykind) {
+			xcons.kind = ykind
+		} else if yok && isUnboundNumberType(ycons.kind) && isBoundNumberType(xkind) {
+			ycons.kind = xkind
+		}
 	}
+
 	var kind iKind
 	var shift *shiftValue
 	if opShift && xok && !isConstBound(xcons.kind) {
