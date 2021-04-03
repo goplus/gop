@@ -602,7 +602,7 @@ func constantValue(cv constant.Value, ckind exec.Kind, kind reflect.Kind) interf
 			if doesOverflow(cv, kind) {
 				log.Panicf("constant %v overflows %v", cv, kind)
 			}
-			v = float64(val.Int64())
+			v, _ = new(big.Float).SetInt(val).Float64()
 		}
 	case *big.Float:
 		kind = floatKind(kind)
