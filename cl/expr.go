@@ -96,12 +96,20 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 		return compileEllipsis(ctx, v)
 	case *ast.StarExpr:
 		return compileStarExpr(ctx, v)
+	case *ast.InterfaceType:
+		return compileInterfaceType(ctx, v)
 	case *ast.KeyValueExpr:
 		panic("compileExpr: ast.KeyValueExpr unexpected")
 	default:
 		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
 		return nil
 	}
+}
+
+func compileInterfaceType(ctx *blockCtx, v *ast.InterfaceType) func() {
+	typ := toInterfaceType(ctx, v)
+	ctx.infer.Push(&nonValue{typ})
+	return nil
 }
 
 func compileIdentLHS(ctx *blockCtx, name string, mode compileMode) {
