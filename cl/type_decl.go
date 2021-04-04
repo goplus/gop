@@ -231,11 +231,28 @@ func toStructType(ctx *blockCtx, v *ast.StructType) iType {
 }
 
 func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) iType {
-	methods := v.Methods.List
-	if methods == nil {
+	fields := v.Methods.List
+	if fields == nil {
 		return exec.TyEmptyInterface
 	}
-	panic("toInterfaceType: todo")
+	var embedded []reflect.Type
+	var methods []reflectx.Method
+	for _, field := range fields {
+		t := toType(ctx, field.Type).(reflect.Type)
+		kind := t.Kind()
+		if kind == reflect.Func {
+			methods = append(methods, reflectx.Method{
+				Name: field.Names[0].Name,
+				Type: t,
+			})
+		} else {
+			if kind != reflect.Interface {
+				log.Panicf("interface contains embedded non-interface %v", t)
+			}
+			embedded = append(embedded, t)
+		}
+	}
+	return reflectx.InterfaceOf(exec.TyEmptyInterface, embedded, methods)
 }
 
 func toExternalType(ctx *blockCtx, v *ast.SelectorExpr) iType {
