@@ -107,6 +107,11 @@ type Builder struct {
 	inDeferOrGo callType // in defer/go statement currently
 }
 
+func (p *Builder) IsUserType(t reflect.Type) bool {
+	_, ok := p.types[t]
+	return ok
+}
+
 // NewBuilder creates a new Code Builder instance.
 func NewBuilder(pkgName string, code *Code, fset *token.FileSet) *Builder {
 	if code == nil {

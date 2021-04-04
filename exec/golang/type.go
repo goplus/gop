@@ -103,12 +103,19 @@ func Field(p *Builder, name string, typ reflect.Type, tag string, ellipsis bool)
 }
 
 // Methods instr
-func Methods(p *Builder, typ reflect.Type) []*ast.Field {
+func Methods(p *Builder, typ reflect.Type) (fields []*ast.Field) {
 	n := typ.NumMethod()
 	if n == 0 {
 		return nil
 	}
-	panic("Methods: todo")
+	for i := 0; i < n; i++ {
+		m := typ.Method(i)
+		fields = append(fields, &ast.Field{
+			Names: []*ast.Ident{ast.NewIdent(m.Name)},
+			Type:  Type(p, m.Type),
+		})
+	}
+	return
 }
 
 // InterfaceType instr
@@ -161,7 +168,7 @@ func Type(p *Builder, typ reflect.Type, actualTypes ...bool) ast.Expr {
 		pkgPath = "unsafe"
 	}
 	log.Debug(typ, "-", "pkgPath:", pkgPath, "name:", name)
-	if name != "" {
+	if name != "" && !p.IsUserType(typ) {
 		if pkgPath != "" {
 			pkg := p.Import(pkgPath)
 			return &ast.SelectorExpr{X: Ident(pkg), Sel: Ident(name)}
