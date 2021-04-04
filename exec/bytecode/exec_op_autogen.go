@@ -272,6 +272,8 @@ var builtinOps = [...]func(i Instr, p *Context){
 	(int(Bool) << bitsOperator) | int(OpLAnd):            execLAndBool,
 	(int(Bool) << bitsOperator) | int(OpLOr):             execLOrBool,
 	(int(Bool) << bitsOperator) | int(OpLNot):            execLNotBool,
+	(int(Bool) << bitsOperator) | int(OpEQ):              execEQBool,
+	(int(Bool) << bitsOperator) | int(OpNE):              execNEBool,
 	(int(Int) << bitsOperator) | int(OpNeg):              execNegInt,
 	(int(Int8) << bitsOperator) | int(OpNeg):             execNegInt8,
 	(int(Int16) << bitsOperator) | int(OpNeg):            execNegInt16,
@@ -316,6 +318,18 @@ var builtinOps = [...]func(i Instr, p *Context){
 	(int(reflect.Func) << bitsOperator) | int(OpNE):      execRefTypeNE,
 	(int(reflect.Interface) << bitsOperator) | int(OpEQ): execInterfaceEQ,
 	(int(reflect.Interface) << bitsOperator) | int(OpNE): execInterfaceNE,
+}
+
+func execEQBool(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(bool) == p.data[n-1].(bool)
+	p.data = p.data[:n-1]
+}
+
+func execNEBool(i Instr, p *Context) {
+	n := len(p.data)
+	p.data[n-2] = p.data[n-2].(bool) != p.data[n-1].(bool)
+	p.data = p.data[:n-1]
 }
 
 func execAddInt(i Instr, p *Context) {
