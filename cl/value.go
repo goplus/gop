@@ -445,7 +445,11 @@ func binaryOp(xop token.Token, op exec.Operator, x, y *constVal) *constVal {
 		if kind == exec.ConstUnboundInt {
 			v = extractUnboundInt(v, kind)
 		}
-		return &constVal{kind: kind, v: v, reserve: -1}
+		cv := &constVal{kind: kind, v: v, reserve: -1}
+		if isBoundNumberType(kind) {
+			return newConstVal(boundConst(cv, t), kind)
+		}
+		return cv
 	}
 bound:
 	vx := boundConst(x, t)
