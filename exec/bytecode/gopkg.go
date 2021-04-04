@@ -335,6 +335,112 @@ func (p *GoPackage) RegisterTypes(typinfos ...GoTypeInfo) {
 	}
 }
 
+// RegisterTypesEx registers all exported Go types & methods defined by this package.
+func (p *GoPackage) RegisterDynamicTypes(typinfos ...GoTypeInfo) {
+	for _, ti := range typinfos {
+		if p != ti.Pkg {
+			log.Panicln("RegisterTypes failed: unmatched package instance.")
+		}
+		if ti.Name == "" {
+			log.Panicln("RegisterTypes failed: unnamed type? -", ti.Type)
+		}
+		if _, ok := p.types[ti.Name]; ok {
+			continue
+		}
+		p.types[ti.Name] = ti.Type
+		p.registerDynamicType(ti.Type)
+	}
+}
+
+func (p *GoPackage) registerDynamicType(typ reflect.Type) {
+	name := typ.Name()
+	for i := 0; i < typ.NumMethod(); i++ {
+		method := typ.Method(i)
+		fnName := "(" + name + ")." + method.Name
+		p.registerMethod(fnName, typ, method.Name, method.Func, method.Type)
+	}
+	if typ.Kind() == reflect.Struct {
+		typ := reflect.PtrTo(typ)
+		name := "*" + typ.Name()
+		for i := 0; i < typ.NumMethod(); i++ {
+			method := typ.Method(i)
+			fnName := "(" + name + ")" + method.Name
+			p.registerMethod(fnName, typ, method.Name, method.Func, method.Type)
+		}
+	}
+}
+
+func (p *GoPackage) registerMethod(fnname string, t reflect.Type, name string, fun reflect.Value, typ reflect.Type) (addr uint32, kind exec.SymbolKind) {
+	var tin []reflect.Type
+	var fnInterface interface{}
+	isVariadic := typ.IsVariadic()
+	numIn := typ.NumIn()
+	numOut := typ.NumOut()
+	var arity int
+	if fun.IsValid() { // type method
+		tin = make([]reflect.Type, numIn)
+		for i := 0; i < numIn; i++ {
+			tin[i] = typ.In(i)
+		}
+		fnInterface = fun.Interface()
+		arity = numIn
+	} else { // interface method
+		tin = make([]reflect.Type, numIn+1)
+		tin[0] = t
+		for i := 1; i < numIn+1; i++ {
+			tin[i] = typ.In(i - 1)
+		}
+		tout := make([]reflect.Type, numOut)
+		for i := 0; i < numOut; i++ {
+			tout[i] = typ.Out(i)
+		}
+		typFunc := reflect.FuncOf(tin, tout, isVariadic)
+		fnInterface = reflect.Zero(typFunc).Interface()
+		arity = numIn + 1
+	}
+	fnExec := func(i int, p *Context) {
+		if isVariadic {
+			arity = i
+		}
+		args := p.GetArgs(arity)
+		in := make([]reflect.Value, arity)
+		for i, arg := range args {
+			if arg != nil {
+				in[i] = reflect.ValueOf(arg)
+			} else if i >= numIn {
+				in[i] = reflect.Zero(tin[numIn-1])
+			} else {
+				in[i] = reflect.Zero(tin[i])
+			}
+		}
+		var out []reflect.Value
+		if fun.IsValid() {
+			out = fun.Call(in)
+		} else {
+			out = in[0].MethodByName(name).Call(in[1:])
+		}
+		if numOut > 0 {
+			iout := make([]interface{}, numOut)
+			for i := 0; i < numOut; i++ {
+				iout[i] = out[i].Interface()
+			}
+			p.Ret(arity, iout...)
+		}
+	}
+	if isVariadic {
+		info := p.Funcv(fnname, fnInterface, fnExec)
+		base := p.RegisterFuncvs(info)
+		addr = uint32(base)
+		kind = exec.SymbolFuncv
+	} else {
+		info := p.Func(fnname, fnInterface, fnExec)
+		base := p.RegisterFuncs(info)
+		addr = uint32(base)
+		kind = exec.SymbolFunc
+	}
+	return
+}
+
 // -----------------------------------------------------------------------------
 
 var (
