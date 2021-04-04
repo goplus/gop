@@ -44,7 +44,7 @@ func Ident(name string) *ast.Ident {
 
 // GoSymIdent - ast.Ident or ast.SelectorExpr
 func (p *Builder) GoSymIdent(pkgPath, name string) ast.Expr {
-	if pkgPath == "" {
+	if pkgPath == "" || pkgPath == p.pkgName {
 		return Ident(name)
 	}
 	pkg := p.Import(pkgPath)
