@@ -131,6 +131,7 @@ const (
 	opStruct        = 50 // funvArity(10) type(16)
 	opSend          = 51 // reserved(26)
 	opRecv          = 52 // reserved(26)
+	opTypeAssert    = 53 // type(26)
 )
 
 const (
@@ -223,6 +224,7 @@ var instrInfos = []InstrInfo{
 	opStruct:        {"struct", "funvArity", "type", (10 << 8) | 16},      // funvArity(10) type(16)
 	opSend:          {"send", "", "", 0},                                  // reserved(26)
 	opRecv:          {"recv", "", "", 0},                                  // reserved(26)
+	opTypeAssert:    {"typeAssert", "", "type", 26},                       // type(26)
 }
 
 // -----------------------------------------------------------------------------

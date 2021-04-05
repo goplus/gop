@@ -190,6 +190,19 @@ func makeMap(typMap reflect.Type, arity int, p *Context) {
 	p.Ret(n, ret.Interface())
 }
 
+func execTypeAssert(i Instr, p *Context) {
+	args := p.GetArgs(1)
+	typ := getType(i&bitsOperand, p)
+	v := reflect.ValueOf(args[0])
+	if typ == v.Type() || v.Type().Implements(typ) {
+		p.Push(args[0])
+		p.Push(true)
+	} else {
+		p.Push(nil)
+		p.Push(false)
+	}
+}
+
 //go:nocheckptr
 func toUnsafePointer(v reflect.Value) unsafe.Pointer {
 	return unsafe.Pointer(uintptr(v.Uint()))
@@ -547,6 +560,13 @@ func (p *Builder) Slice3(i, j, k int) *Builder {
 // TypeCast instr
 func (p *Builder) TypeCast(from, to reflect.Type) *Builder {
 	i := (opTypeCast << bitsOpShift) | p.requireType(to)
+	p.code.data = append(p.code.data, i)
+	return p
+}
+
+// TypeAssert instr
+func (p *Builder) TypeAssert(from, to reflect.Type) *Builder {
+	i := (opTypeAssert << bitsOpShift) | p.requireType(to)
 	p.code.data = append(p.code.data, i)
 	return p
 }

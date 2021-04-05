@@ -357,6 +357,21 @@ func TypeCast(p *Builder, x ast.Expr, from, to reflect.Type) *ast.CallExpr {
 	}
 }
 
+// TypeAssert instr
+func (p *Builder) TypeAssert(from, to reflect.Type) *Builder {
+	x := p.rhs.Pop().(ast.Expr)
+	p.rhs.Push(TypeAssert(p, x, from, to))
+	return p
+}
+
+func TypeAssert(p *Builder, x ast.Expr, from, to reflect.Type) ast.Expr {
+	t := Type(p, to)
+	return &ast.TypeAssertExpr{
+		X:    x,
+		Type: t,
+	}
+}
+
 // Call instr
 func (p *Builder) Call(narg int, ellipsis bool, args ...ast.Expr) *Builder {
 	fun := p.rhs.Pop().(ast.Expr)

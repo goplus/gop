@@ -98,6 +98,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 		return compileStarExpr(ctx, v)
 	case *ast.InterfaceType:
 		return compileInterfaceType(ctx, v)
+	case *ast.TypeAssertExpr:
+		return compileTypeAssertExpr(ctx, v)
 	case *ast.KeyValueExpr:
 		panic("compileExpr: ast.KeyValueExpr unexpected")
 	default:
@@ -110,6 +112,18 @@ func compileInterfaceType(ctx *blockCtx, v *ast.InterfaceType) func() {
 	typ := toInterfaceType(ctx, v)
 	ctx.infer.Push(&nonValue{typ})
 	return nil
+}
+
+func compileTypeAssertExpr(ctx *blockCtx, v *ast.TypeAssertExpr) func() {
+	exprX := compileExpr(ctx, v.X)
+	xtyp := ctx.infer.Pop().(iValue).Type()
+	typ := toType(ctx, v.Type).(reflect.Type)
+	ctx.infer.Push(&goValue{t: typ})
+	ctx.infer.Push(&goValue{t: exec.TyBool})
+	return func() {
+		exprX()
+		ctx.out.TypeAssert(xtyp, typ)
+	}
 }
 
 func compileIdentLHS(ctx *blockCtx, name string, mode compileMode) {

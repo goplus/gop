@@ -356,6 +356,9 @@ type Builder interface {
 	// TypeCast instr
 	TypeCast(from, to reflect.Type) Builder
 
+	// TypeAssert instr
+	TypeAssert(from, to reflect.Type) Builder
+
 	// Zero instr
 	Zero(typ reflect.Type) Builder
 
