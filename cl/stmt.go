@@ -622,8 +622,13 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 	}
 	if len(expr.Rhs) == 1 {
 		rhsExpr := expr.Rhs[0]
-		if ie, ok := rhsExpr.(*ast.IndexExpr); ok && len(expr.Lhs) == 2 {
-			rhsExpr = &ast.TwoValueIndexExpr{IndexExpr: ie}
+		if len(expr.Lhs) == 2 {
+			switch ie := rhsExpr.(type) {
+			case *ast.IndexExpr:
+				rhsExpr = &ast.TwoValueIndexExpr{IndexExpr: ie}
+			case *ast.TypeAssertExpr:
+				rhsExpr = &ast.TwoValueTypeAssertExpr{TypeAssertExpr: ie}
+			}
 		}
 		compileExpr(ctx, rhsExpr)()
 		v := ctx.infer.Get(-1).(iValue)

@@ -451,8 +451,8 @@ func (p *iBuilder) TypeCast(from, to reflect.Type) exec.Builder {
 }
 
 // TypeAssert instr
-func (p *iBuilder) TypeAssert(from, to reflect.Type) exec.Builder {
-	((*Builder)(p)).TypeAssert(from, to)
+func (p *iBuilder) TypeAssert(from, to reflect.Type, twoValue bool) exec.Builder {
+	((*Builder)(p)).TypeAssert(from, to, twoValue)
 	return p
 }
 

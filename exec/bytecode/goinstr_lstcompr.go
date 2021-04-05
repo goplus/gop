@@ -192,14 +192,22 @@ func makeMap(typMap reflect.Type, arity int, p *Context) {
 
 func execTypeAssert(i Instr, p *Context) {
 	args := p.GetArgs(1)
-	typ := getType(i&bitsOperand, p)
+	typ := getType(i&bitsOpTypeAssertShiftOperand, p)
+	var twoValue bool
+	if (i & (1 << bitsOpTypeAssertShift)) != 0 {
+		twoValue = true
+	}
 	v := reflect.ValueOf(args[0])
 	if typ == v.Type() || v.Type().Implements(typ) {
 		p.Push(args[0])
-		p.Push(true)
+		if twoValue {
+			p.Push(true)
+		}
 	} else {
 		p.Push(nil)
-		p.Push(false)
+		if twoValue {
+			p.Push(false)
+		}
 	}
 }
 
@@ -565,8 +573,11 @@ func (p *Builder) TypeCast(from, to reflect.Type) *Builder {
 }
 
 // TypeAssert instr
-func (p *Builder) TypeAssert(from, to reflect.Type) *Builder {
+func (p *Builder) TypeAssert(from, to reflect.Type, twoValue bool) *Builder {
 	i := (opTypeAssert << bitsOpShift) | p.requireType(to)
+	if twoValue {
+		i |= (1 << bitsOpTypeAssertShift)
+	}
 	p.code.data = append(p.code.data, i)
 	return p
 }

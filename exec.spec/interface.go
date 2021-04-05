@@ -357,7 +357,7 @@ type Builder interface {
 	TypeCast(from, to reflect.Type) Builder
 
 	// TypeAssert instr
-	TypeAssert(from, to reflect.Type) Builder
+	TypeAssert(from, to reflect.Type, twoValue bool) Builder
 
 	// Zero instr
 	Zero(typ reflect.Type) Builder

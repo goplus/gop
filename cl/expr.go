@@ -99,7 +99,9 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 	case *ast.InterfaceType:
 		return compileInterfaceType(ctx, v)
 	case *ast.TypeAssertExpr:
-		return compileTypeAssertExpr(ctx, v)
+		return compileTypeAssertExpr(ctx, v, false)
+	case *ast.TwoValueTypeAssertExpr:
+		return compileTypeAssertExpr(ctx, v.TypeAssertExpr, true)
 	case *ast.KeyValueExpr:
 		panic("compileExpr: ast.KeyValueExpr unexpected")
 	default:
@@ -114,15 +116,17 @@ func compileInterfaceType(ctx *blockCtx, v *ast.InterfaceType) func() {
 	return nil
 }
 
-func compileTypeAssertExpr(ctx *blockCtx, v *ast.TypeAssertExpr) func() {
+func compileTypeAssertExpr(ctx *blockCtx, v *ast.TypeAssertExpr, twoValue bool) func() {
 	exprX := compileExpr(ctx, v.X)
 	xtyp := ctx.infer.Pop().(iValue).Type()
 	typ := toType(ctx, v.Type).(reflect.Type)
 	ctx.infer.Push(&goValue{t: typ})
-	ctx.infer.Push(&goValue{t: exec.TyBool})
+	if twoValue {
+		ctx.infer.Push(&goValue{t: exec.TyBool})
+	}
 	return func() {
 		exprX()
-		ctx.out.TypeAssert(xtyp, typ)
+		ctx.out.TypeAssert(xtyp, typ, twoValue)
 	}
 }
 
