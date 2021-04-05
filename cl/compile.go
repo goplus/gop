@@ -306,8 +306,8 @@ func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
 		log.Panicln("loadType failed: symbol exists -", spec.Name.Name)
 	}
 	t := toType(ctx, spec.Type).(reflect.Type)
-	t = reflectx.NamedTypeOf(ctx.pkg.Name, spec.Name.Name, t)
 	if t.Kind() == reflect.Interface {
+		t = reflectx.NamedTypeOf(ctx.pkg.Name, spec.Name.Name, t)
 		pkg := bytecode.FindGoPackage(ctx.pkg.Name)
 		if pkg == nil {
 			pkg = bytecode.NewGoPackage(ctx.pkg.Name)
