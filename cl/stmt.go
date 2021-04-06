@@ -398,7 +398,10 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 	vinit := &ast.AssignStmt{
 		Lhs: []ast.Expr{xExpr},
 		Tok: token.DEFINE,
-		Rhs: []ast.Expr{xInitExpr},
+		Rhs: []ast.Expr{&ast.TypeAssertExpr{
+			X:    xInitExpr,
+			Type: &ast.InterfaceType{Methods: &ast.FieldList{}},
+		}},
 	}
 	compileStmt(ctx, vinit)
 	uExpr := ast.NewIdent("_")
