@@ -18,6 +18,7 @@ package cl
 
 import (
 	"reflect"
+	"strconv"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/exec.spec"
@@ -358,6 +359,21 @@ func compileDeferStmt(ctx *blockCtx, v *ast.DeferStmt) {
 	compileCallExpr(ctx, v.Call, callByDefer)()
 }
 
+func unusedIdent(ctx *blockCtx, ident string) string {
+	name := ident
+	var ok bool
+	var i int
+	for {
+		_, ok = ctx.find(name)
+		if !ok {
+			break
+		}
+		name = ident + "_" + strconv.Itoa(i)
+		i++
+	}
+	return name
+}
+
 func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 	ctx.out.DefineBlock()
 	defer ctx.out.EndBlock()
@@ -366,17 +382,19 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 	}
 	var xInitExpr ast.Expr
 	var vExpr ast.Expr
+	var vName string
 	var hasValue bool
 	switch assign := v.Assign.(type) {
 	case *ast.AssignStmt:
 		hasValue = true
 		vExpr = assign.Lhs[0]
+		vName = vExpr.(*ast.Ident).Name
 		xInitExpr = assign.Rhs[0].(*ast.TypeAssertExpr).X
 	case *ast.ExprStmt:
 		vExpr = ast.NewIdent("_")
 		xInitExpr = assign.X.(*ast.TypeAssertExpr).X
 	}
-	xExpr := ast.NewIdent("__gop_type_switch_value__")
+	xExpr := ast.NewIdent(unusedIdent(ctx, "_gop_"+vName))
 	vinit := &ast.AssignStmt{
 		Lhs: []ast.Expr{xExpr},
 		Tok: token.DEFINE,
@@ -384,7 +402,7 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 	}
 	compileStmt(ctx, vinit)
 	uExpr := ast.NewIdent("_")
-	vCond := ast.NewIdent("__gop_type_switch_ok__")
+	vCond := ast.NewIdent(unusedIdent(ctx, "ok"))
 	var ifStmt *ast.IfStmt
 	var lastIfStmt *ast.IfStmt
 	var defaultStmt ast.Stmt
@@ -404,9 +422,13 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 						Rhs: []ast.Expr{vExpr},
 					},
 				}
-				defaultStmt = &ast.BlockStmt{List: append(stms, c.Body...)}
+				defaultStmt = &ast.BlockStmt{
+					List: append(stms, &ast.BlockStmt{List: c.Body}),
+				}
 			} else {
-				defaultStmt = &ast.BlockStmt{List: c.Body}
+				defaultStmt = &ast.BlockStmt{
+					List: []ast.Stmt{&ast.BlockStmt{List: c.Body}},
+				}
 			}
 			continue
 		}
@@ -420,11 +442,11 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 				},
 			}
 			body = &ast.BlockStmt{
-				List: append(stms, c.Body...),
+				List: append(stms, &ast.BlockStmt{List: c.Body}),
 			}
 		} else {
 			body = &ast.BlockStmt{
-				List: c.Body,
+				List: []ast.Stmt{&ast.BlockStmt{List: c.Body}},
 			}
 		}
 		stmt := &ast.IfStmt{
