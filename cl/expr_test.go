@@ -2310,3 +2310,47 @@ func TestBadUnsafe(t *testing.T) {
 	println(v)
 	`, "", "invalid expression unsafe.Offsetof(1)")
 }
+
+func TestInterface(t *testing.T) {
+	cltest.Expect(t, `
+	const v = interface{}(nil) == nil
+	println(v)
+	`, "true\n")
+	cltest.Expect(t, `
+	func test(v interface{}) {
+		println(v)
+	}
+	test(true)
+	`, "true\n")
+	cltest.Expect(t, `
+	import "bytes"
+	type Stringer interface {
+		String() string
+	}
+	func test(v Stringer) {
+		println(v.String())
+	}
+	buf := bytes.NewBuffer([]byte("hello"))
+	test(buf)
+	`, "hello\n")
+
+	cltest.Expect(t, `
+	import "bytes"
+	type Stringer interface {
+		String() string
+	}
+	func test1(v interface{}) {
+		if s, ok := v.(Stringer); ok {
+			println(s.String())
+		}
+	}
+	func test2(v interface{}) {
+		if s := v.(Stringer); s != nil {
+			println(s.String())
+		}
+	}
+	buf := bytes.NewBuffer([]byte("hello"))
+	test1(buf)
+	test2(buf)
+	`, "hello\n")
+}
