@@ -359,26 +359,32 @@ func compileDeferStmt(ctx *blockCtx, v *ast.DeferStmt) {
 }
 
 func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
-	if init := v.Init; init != nil {
-		v.Init = nil
-		block := &ast.BlockStmt{List: []ast.Stmt{init, v}}
-		compileNewBlock(ctx, block)
-		return
+	ctx.out.DefineBlock()
+	defer ctx.out.EndBlock()
+	if v.Init != nil {
+		compileStmt(ctx, v.Init)
 	}
+	var xInitExpr ast.Expr
 	var vExpr ast.Expr
-	var xExpr ast.Expr
 	var hasValue bool
 	switch assign := v.Assign.(type) {
 	case *ast.AssignStmt:
 		hasValue = true
 		vExpr = assign.Lhs[0]
-		xExpr = assign.Rhs[0].(*ast.TypeAssertExpr).X
+		xInitExpr = assign.Rhs[0].(*ast.TypeAssertExpr).X
 	case *ast.ExprStmt:
 		vExpr = ast.NewIdent("_")
-		xExpr = assign.X.(*ast.TypeAssertExpr).X
+		xInitExpr = assign.X.(*ast.TypeAssertExpr).X
 	}
+	xExpr := ast.NewIdent("__gop_type_switch_value__")
+	vinit := &ast.AssignStmt{
+		Lhs: []ast.Expr{xExpr},
+		Tok: token.DEFINE,
+		Rhs: []ast.Expr{xInitExpr},
+	}
+	compileStmt(ctx, vinit)
 	uExpr := ast.NewIdent("_")
-	vCond := ast.NewIdent("ok")
+	vCond := ast.NewIdent("__gop_type_switch_ok__")
 	var ifStmt *ast.IfStmt
 	var lastIfStmt *ast.IfStmt
 	var defaultStmt ast.Stmt
@@ -428,8 +434,7 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 					vExpr,
 					vCond,
 				},
-				TokPos: c.Colon,
-				Tok:    token.DEFINE,
+				Tok: token.DEFINE,
 				Rhs: []ast.Expr{
 					&ast.TypeAssertExpr{
 						X:    xExpr,
