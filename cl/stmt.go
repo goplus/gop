@@ -380,8 +380,10 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 	if v.Init != nil {
 		compileStmt(ctx, v.Init)
 	}
+	uExpr := ast.NewIdent("_")
 	var xInitExpr ast.Expr
 	var vExpr ast.Expr
+	var xExpr ast.Expr
 	var vName string
 	var hasValue bool
 	switch assign := v.Assign.(type) {
@@ -391,10 +393,10 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 		vName = vExpr.(*ast.Ident).Name
 		xInitExpr = assign.Rhs[0].(*ast.TypeAssertExpr).X
 	case *ast.ExprStmt:
-		vExpr = ast.NewIdent("_")
+		vExpr = uExpr
 		xInitExpr = assign.X.(*ast.TypeAssertExpr).X
 	}
-	xExpr := ast.NewIdent(unusedIdent(ctx, "_gop_"+vName))
+	xExpr = ast.NewIdent(unusedIdent(ctx, "_gop_"+vName))
 	vinit := &ast.AssignStmt{
 		Lhs: []ast.Expr{xExpr},
 		Tok: token.DEFINE,
@@ -403,8 +405,13 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 			Type: &ast.InterfaceType{Methods: &ast.FieldList{}},
 		}},
 	}
+	vused := &ast.AssignStmt{
+		Lhs: []ast.Expr{uExpr},
+		Tok: token.ASSIGN,
+		Rhs: []ast.Expr{xExpr},
+	}
 	compileStmt(ctx, vinit)
-	uExpr := ast.NewIdent("_")
+	compileStmt(ctx, vused)
 	vCond := ast.NewIdent(unusedIdent(ctx, "ok"))
 	var ifStmt *ast.IfStmt
 	var lastIfStmt *ast.IfStmt
@@ -430,7 +437,7 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 				}
 			} else {
 				defaultStmt = &ast.BlockStmt{
-					List: []ast.Stmt{&ast.BlockStmt{List: c.Body}},
+					List: c.Body,
 				}
 			}
 			continue
@@ -479,6 +486,9 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 		lastIfStmt = stmt
 	}
 	if ifStmt == nil {
+		if defaultStmt != nil {
+			compileStmt(ctx, defaultStmt)
+		}
 		return
 	}
 	if defaultStmt != nil {
