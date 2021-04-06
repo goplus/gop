@@ -306,14 +306,16 @@ func (p *Builder) EndStmt(stmt, start interface{}) *Builder {
 }
 
 func (p *Builder) emitStmt(node ast.Stmt) {
+	if node == nil {
+		panic("node nil")
+	}
 	if stmt := p.cstmt; stmt != nil {
 		start := stmt.(ast.Node).Pos()
 		pos := p.fset.Position(start)
-		line := fmt.Sprintf("\n//line ./%s:%d", path.Base(pos.Filename), pos.Line)
-		if node == nil {
-			panic("node nil")
+		if pos.IsValid() {
+			line := fmt.Sprintf("\n//line ./%s:%d", path.Base(pos.Filename), pos.Line)
+			node = &printer.CommentedStmt{Comments: Comment(line), Stmt: node}
 		}
-		node = &printer.CommentedStmt{Comments: Comment(line), Stmt: node}
 	}
 	p.stmts = append(p.stmts, p.labeled(node, 0))
 }
