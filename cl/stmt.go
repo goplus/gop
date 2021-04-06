@@ -380,6 +380,9 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 	if v.Init != nil {
 		compileStmt(ctx, v.Init)
 	}
+	if len(v.Body.List) == 0 {
+		return
+	}
 	uExpr := ast.NewIdent("_")
 	var xInitExpr ast.Expr
 	var vExpr ast.Expr
