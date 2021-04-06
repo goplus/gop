@@ -18,6 +18,7 @@ package cl
 
 import (
 	"reflect"
+	"strconv"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/exec.spec"
@@ -85,6 +86,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileDeclStmt(ctx, v)
 	case *ast.SendStmt:
 		compileSendStmt(ctx, v)
+	case *ast.TypeSwitchStmt:
+		compileTypeSwitchStmt(ctx, v)
 	case *ast.EmptyStmt:
 		// do nothing
 	default:
@@ -356,6 +359,149 @@ func compileDeferStmt(ctx *blockCtx, v *ast.DeferStmt) {
 	compileCallExpr(ctx, v.Call, callByDefer)()
 }
 
+func unusedIdent(ctx *blockCtx, ident string) string {
+	name := ident
+	var ok bool
+	var i int
+	for {
+		_, ok = ctx.find(name)
+		if !ok {
+			break
+		}
+		name = ident + "_" + strconv.Itoa(i)
+		i++
+	}
+	return name
+}
+
+func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
+	ctx.out.DefineBlock()
+	defer ctx.out.EndBlock()
+	if v.Init != nil {
+		compileStmt(ctx, v.Init)
+	}
+	if len(v.Body.List) == 0 {
+		return
+	}
+	uExpr := ast.NewIdent("_")
+	var xInitExpr ast.Expr
+	var vExpr ast.Expr
+	var xExpr ast.Expr
+	var vName string
+	var hasValue bool
+	switch assign := v.Assign.(type) {
+	case *ast.AssignStmt:
+		hasValue = true
+		vExpr = assign.Lhs[0]
+		vName = vExpr.(*ast.Ident).Name
+		xInitExpr = assign.Rhs[0].(*ast.TypeAssertExpr).X
+	case *ast.ExprStmt:
+		vExpr = uExpr
+		xInitExpr = assign.X.(*ast.TypeAssertExpr).X
+	}
+	xExpr = ast.NewIdent(unusedIdent(ctx, "_gop_"+vName))
+	vinit := &ast.AssignStmt{
+		Lhs: []ast.Expr{xExpr},
+		Tok: token.DEFINE,
+		Rhs: []ast.Expr{&ast.TypeAssertExpr{
+			X:    xInitExpr,
+			Type: &ast.InterfaceType{Methods: &ast.FieldList{}},
+		}},
+	}
+	vused := &ast.AssignStmt{
+		Lhs: []ast.Expr{uExpr},
+		Tok: token.ASSIGN,
+		Rhs: []ast.Expr{xExpr},
+	}
+	compileStmt(ctx, vinit)
+	compileStmt(ctx, vused)
+	vCond := ast.NewIdent(unusedIdent(ctx, "ok"))
+	var ifStmt *ast.IfStmt
+	var lastIfStmt *ast.IfStmt
+	var defaultStmt ast.Stmt
+	for _, item := range v.Body.List {
+		c, _ := item.(*ast.CaseClause)
+		if c.List == nil {
+			if hasValue {
+				stms := []ast.Stmt{
+					&ast.AssignStmt{
+						Lhs: []ast.Expr{vExpr},
+						Tok: token.DEFINE,
+						Rhs: []ast.Expr{xExpr},
+					},
+					&ast.AssignStmt{
+						Lhs: []ast.Expr{uExpr},
+						Tok: token.ASSIGN,
+						Rhs: []ast.Expr{vExpr},
+					},
+				}
+				defaultStmt = &ast.BlockStmt{
+					List: append(stms, &ast.BlockStmt{List: c.Body}),
+				}
+			} else {
+				defaultStmt = &ast.BlockStmt{
+					List: c.Body,
+				}
+			}
+			continue
+		}
+		var body *ast.BlockStmt
+		if hasValue {
+			stms := []ast.Stmt{
+				&ast.AssignStmt{
+					Lhs: []ast.Expr{uExpr},
+					Tok: token.ASSIGN,
+					Rhs: []ast.Expr{vExpr},
+				},
+			}
+			body = &ast.BlockStmt{
+				List: append(stms, &ast.BlockStmt{List: c.Body}),
+			}
+		} else {
+			body = &ast.BlockStmt{
+				List: []ast.Stmt{&ast.BlockStmt{List: c.Body}},
+			}
+		}
+		stmt := &ast.IfStmt{
+			If: c.Pos(),
+			Init: &ast.AssignStmt{
+				Lhs: []ast.Expr{
+					vExpr,
+					vCond,
+				},
+				Tok: token.DEFINE,
+				Rhs: []ast.Expr{
+					&ast.TypeAssertExpr{
+						X:    xExpr,
+						Type: c.List[0],
+					},
+				},
+			},
+			Cond: vCond,
+			Body: body,
+		}
+		if ifStmt == nil {
+			ifStmt = stmt
+		}
+		if lastIfStmt != nil {
+			lastIfStmt.Else = stmt
+		}
+		lastIfStmt = stmt
+	}
+	if ifStmt == nil {
+		if defaultStmt != nil {
+			compileStmt(ctx, defaultStmt)
+		}
+		return
+	}
+	if defaultStmt != nil {
+		lastIfStmt.Else = &ast.BlockStmt{
+			List: []ast.Stmt{defaultStmt},
+		}
+	}
+	compileIfStmt(ctx, ifStmt)
+}
+
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	if init := v.Init; init != nil {
 		v.Init = nil
@@ -622,8 +768,13 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 	}
 	if len(expr.Rhs) == 1 {
 		rhsExpr := expr.Rhs[0]
-		if ie, ok := rhsExpr.(*ast.IndexExpr); ok && len(expr.Lhs) == 2 {
-			rhsExpr = &ast.TwoValueIndexExpr{IndexExpr: ie}
+		if len(expr.Lhs) == 2 {
+			switch ie := rhsExpr.(type) {
+			case *ast.IndexExpr:
+				rhsExpr = &ast.TwoValueIndexExpr{IndexExpr: ie}
+			case *ast.TypeAssertExpr:
+				rhsExpr = &ast.TwoValueTypeAssertExpr{TypeAssertExpr: ie}
+			}
 		}
 		compileExpr(ctx, rhsExpr)()
 		v := ctx.infer.Get(-1).(iValue)

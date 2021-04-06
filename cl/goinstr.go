@@ -449,6 +449,15 @@ func compileTypeCast(typ reflect.Type, ctx *blockCtx, v *ast.CallExpr) func() {
 				pushConstVal(ctx.out, cons)
 			}
 		}
+		if lsh, ok := in.(*lshValue); ok {
+			lsh.bound(typ)
+		}
+	} else if kind == reflect.Interface {
+		if cons, ok := in.(*constVal); ok && cons.kind == exec.ConstUnboundPtr {
+			return func() {
+				pushConstVal(ctx.out, cons)
+			}
+		}
 	}
 	ctx.infer.Ret(1, &goValue{typ})
 	return func() {

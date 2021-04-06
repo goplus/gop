@@ -44,7 +44,7 @@ func Ident(name string) *ast.Ident {
 
 // GoSymIdent - ast.Ident or ast.SelectorExpr
 func (p *Builder) GoSymIdent(pkgPath, name string) ast.Expr {
-	if pkgPath == "" {
+	if pkgPath == "" || pkgPath == p.pkgName {
 		return Ident(name)
 	}
 	pkg := p.Import(pkgPath)
@@ -354,6 +354,21 @@ func TypeCast(p *Builder, x ast.Expr, from, to reflect.Type) *ast.CallExpr {
 	return &ast.CallExpr{
 		Fun:  t,
 		Args: []ast.Expr{x},
+	}
+}
+
+// TypeAssert instr
+func (p *Builder) TypeAssert(from, to reflect.Type, twoValue bool) *Builder {
+	x := p.rhs.Pop().(ast.Expr)
+	p.rhs.Push(TypeAssert(p, x, from, to))
+	return p
+}
+
+func TypeAssert(p *Builder, x ast.Expr, from, to reflect.Type) ast.Expr {
+	t := Type(p, to)
+	return &ast.TypeAssertExpr{
+		X:    x,
+		Type: t,
 	}
 }
 

@@ -248,6 +248,7 @@ var _execTable = [...]func(i Instr, p *Context){
 	opLstComprehens: execListComprehension,
 	opMapComprehens: execMapComprehension,
 	opTypeCast:      execTypeCast,
+	opTypeAssert:    execTypeAssert,
 	opSlice:         execSlice,
 	opSlice3:        execSlice3,
 	opMapIndex:      execMapIndex,

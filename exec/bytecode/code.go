@@ -39,6 +39,7 @@ const (
 	bitsAssignOp   = 4
 	bitsIndexOp    = 2
 	bitsIsPtr      = 2
+	bitsTwoValue   = 2
 
 	bitsOpShift = bitsInstr - bitsOp
 	bitsOperand = (1 << bitsOpShift) - 1
@@ -48,6 +49,9 @@ const (
 
 	bitsOpZeroShift   = bitsInstr - (bitsOp + bitsIsPtr)
 	bitsOpZeroOperand = (1 << bitsOpZeroShift) - 1
+
+	bitsOpTypeAssertShift        = bitsInstr - (bitsOp + bitsTwoValue)
+	bitsOpTypeAssertShiftOperand = (1 << bitsOpTypeAssertShift) - 1
 
 	bitsOpInt        = bitsOp + bitsIntKind
 	bitsOpIntShift   = bitsInstr - bitsOpInt
@@ -131,6 +135,7 @@ const (
 	opStruct        = 50 // funvArity(10) type(16)
 	opSend          = 51 // reserved(26)
 	opRecv          = 52 // reserved(26)
+	opTypeAssert    = 53 // twoValue(2) type(24)
 )
 
 const (
@@ -223,6 +228,7 @@ var instrInfos = []InstrInfo{
 	opStruct:        {"struct", "funvArity", "type", (10 << 8) | 16},      // funvArity(10) type(16)
 	opSend:          {"send", "", "", 0},                                  // reserved(26)
 	opRecv:          {"recv", "", "", 0},                                  // reserved(26)
+	opTypeAssert:    {"typeAssert", "twoValue", "type", (2 << 8) | 24},    // type(26)
 }
 
 // -----------------------------------------------------------------------------

@@ -466,6 +466,12 @@ func (p *iBuilder) TypeCast(from, to reflect.Type) exec.Builder {
 	return p
 }
 
+// TypeAssert instr
+func (p *iBuilder) TypeAssert(from, to reflect.Type, twoValue bool) exec.Builder {
+	((*Builder)(p)).TypeAssert(from, to, twoValue)
+	return p
+}
+
 // GoBuiltin instr
 func (p *iBuilder) GoBuiltin(typ reflect.Type, op exec.GoBuiltin) exec.Builder {
 	((*Builder)(p)).GoBuiltin(typ, op)
@@ -503,6 +509,16 @@ func (p *iBuilder) Reserve() exec.Reserved {
 // ReservedAsPush sets Reserved as Push(v)
 func (p *iBuilder) ReservedAsPush(r exec.Reserved, v interface{}) {
 	((*Builder)(p)).ReservedAsPush(r, v)
+}
+
+// ReserveOpLsh reserves an instruction.
+func (p *iBuilder) ReserveOpLsh() exec.Reserved {
+	return ((*Builder)(p)).ReserveOpLsh()
+}
+
+// ReservedAsOpLsh sets Reserved as GoBuiltin
+func (p *iBuilder) ReservedAsOpLsh(r exec.Reserved, kind exec.Kind, op exec.Operator) {
+	((*Builder)(p)).ReservedAsOpLsh(r, kind, op)
 }
 
 // GetPackage returns the Go+ package that the Builder works for.

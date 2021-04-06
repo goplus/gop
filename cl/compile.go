@@ -28,6 +28,7 @@ import (
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/astutil"
 	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/exec/bytecode"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/reflectx"
 	"github.com/qiniu/x/log"
@@ -306,7 +307,16 @@ func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
 	}
 	t := toType(ctx, spec.Type).(reflect.Type)
 	typ := reflectx.NamedTypeOf(ctx.pkg.Name, spec.Name.Name, t)
+	if t.Kind() == reflect.Interface {
+		pkg := bytecode.FindGoPackage(ctx.pkg.Name)
+		if pkg == nil {
+			pkg = bytecode.NewGoPackage(ctx.pkg.Name)
+		}
+		p := pkg.(*bytecode.GoPackage)
+		p.RegisterDynamicTypes(p.Rtype(typ))
+	}
 	ctx.out.DefineType(typ, spec.Name.Name)
+
 	tDecl := &typeDecl{
 		Type: typ,
 	}

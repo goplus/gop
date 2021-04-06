@@ -432,4 +432,8 @@ type TwoValueIndexExpr struct {
 	*IndexExpr
 }
 
+type TwoValueTypeAssertExpr struct {
+	*TypeAssertExpr
+}
+
 // -----------------------------------------------------------------------------
