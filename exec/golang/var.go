@@ -123,10 +123,11 @@ func (p *Builder) DefineVar(vars ...exec.Var) *Builder {
 		typ := v.Type()
 		if pkgPath := typ.PkgPath(); pkgPath != "" && !p.IsUserType(typ) {
 			p.Import(pkgPath)
-		} else if v.Name() == "_" {
-			continue
 		}
 		pv := v.(*Var)
+		if pv.name == "_" {
+			continue
+		}
 		if strings.HasPrefix(pv.name, "_") {
 			pv.name = "_q" + pv.name
 		}
