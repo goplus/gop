@@ -198,7 +198,7 @@ func execTypeAssert(i Instr, p *Context) {
 		twoValue = true
 	}
 	v := reflect.ValueOf(args[0])
-	if typ == v.Type() || v.Type().Implements(typ) {
+	if typ == v.Type() || (typ.Kind() == reflect.Interface && v.Type().Implements(typ)) {
 		p.Push(args[0])
 		if twoValue {
 			p.Push(true)

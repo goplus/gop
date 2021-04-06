@@ -119,7 +119,12 @@ func compileInterfaceType(ctx *blockCtx, v *ast.InterfaceType) func() {
 func compileTypeAssertExpr(ctx *blockCtx, v *ast.TypeAssertExpr, twoValue bool) func() {
 	exprX := compileExpr(ctx, v.X)
 	xtyp := ctx.infer.Pop().(iValue).Type()
-	typ := toType(ctx, v.Type).(reflect.Type)
+	var typ reflect.Type
+	if v.Type != nil {
+		typ = toType(ctx, v.Type).(reflect.Type)
+	} else {
+		typ = exec.TyEmptyInterface
+	}
 	ctx.infer.Push(&goValue{t: typ})
 	if twoValue {
 		ctx.infer.Push(&goValue{t: exec.TyBool})

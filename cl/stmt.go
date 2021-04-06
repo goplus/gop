@@ -85,6 +85,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileDeclStmt(ctx, v)
 	case *ast.SendStmt:
 		compileSendStmt(ctx, v)
+	case *ast.TypeSwitchStmt:
+		compileTypeSwitchStmt(ctx, v)
 	case *ast.EmptyStmt:
 		// do nothing
 	default:
@@ -354,6 +356,107 @@ func compileGoStmt(ctx *blockCtx, v *ast.GoStmt) {
 
 func compileDeferStmt(ctx *blockCtx, v *ast.DeferStmt) {
 	compileCallExpr(ctx, v.Call, callByDefer)()
+}
+
+func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
+	if init := v.Init; init != nil {
+		v.Init = nil
+		block := &ast.BlockStmt{List: []ast.Stmt{init, v}}
+		compileNewBlock(ctx, block)
+		return
+	}
+	var vExpr ast.Expr
+	var xExpr ast.Expr
+	var hasValue bool
+	switch assign := v.Assign.(type) {
+	case *ast.AssignStmt:
+		hasValue = true
+		vExpr = assign.Lhs[0]
+		xExpr = assign.Rhs[0].(*ast.TypeAssertExpr).X
+	case *ast.ExprStmt:
+		vExpr = ast.NewIdent("_")
+		xExpr = assign.X.(*ast.TypeAssertExpr).X
+	}
+	uExpr := ast.NewIdent("_")
+	vCond := ast.NewIdent("ok")
+	var ifStmt *ast.IfStmt
+	var lastIfStmt *ast.IfStmt
+	var defaultStmt ast.Stmt
+	for _, item := range v.Body.List {
+		c, _ := item.(*ast.CaseClause)
+		if c.List == nil {
+			if hasValue {
+				stms := []ast.Stmt{
+					&ast.AssignStmt{
+						Lhs: []ast.Expr{vExpr},
+						Tok: token.DEFINE,
+						Rhs: []ast.Expr{xExpr},
+					},
+					&ast.AssignStmt{
+						Lhs: []ast.Expr{uExpr},
+						Tok: token.ASSIGN,
+						Rhs: []ast.Expr{vExpr},
+					},
+				}
+				defaultStmt = &ast.BlockStmt{List: append(stms, c.Body...)}
+			} else {
+				defaultStmt = &ast.BlockStmt{List: c.Body}
+			}
+			continue
+		}
+		var body *ast.BlockStmt
+		if hasValue {
+			stms := []ast.Stmt{
+				&ast.AssignStmt{
+					Lhs: []ast.Expr{uExpr},
+					Tok: token.ASSIGN,
+					Rhs: []ast.Expr{vExpr},
+				},
+			}
+			body = &ast.BlockStmt{
+				List: append(stms, c.Body...),
+			}
+		} else {
+			body = &ast.BlockStmt{
+				List: c.Body,
+			}
+		}
+		stmt := &ast.IfStmt{
+			If: c.Pos(),
+			Init: &ast.AssignStmt{
+				Lhs: []ast.Expr{
+					vExpr,
+					vCond,
+				},
+				TokPos: c.Colon,
+				Tok:    token.DEFINE,
+				Rhs: []ast.Expr{
+					&ast.TypeAssertExpr{
+						X:    xExpr,
+						Type: c.List[0],
+					},
+				},
+			},
+			Cond: vCond,
+			Body: body,
+		}
+		if ifStmt == nil {
+			ifStmt = stmt
+		}
+		if lastIfStmt != nil {
+			lastIfStmt.Else = stmt
+		}
+		lastIfStmt = stmt
+	}
+	if ifStmt == nil {
+		return
+	}
+	if defaultStmt != nil {
+		lastIfStmt.Else = &ast.BlockStmt{
+			List: []ast.Stmt{defaultStmt},
+		}
+	}
+	compileIfStmt(ctx, ifStmt)
 }
 
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
