@@ -2313,10 +2313,6 @@ func TestBadUnsafe(t *testing.T) {
 
 func TestInterface(t *testing.T) {
 	cltest.Expect(t, `
-	const v = interface{}(nil) == nil
-	println(v)
-	`, "true\n")
-	cltest.Expect(t, `
 	func test(v interface{}) {
 		println(v)
 	}
@@ -2384,8 +2380,7 @@ func TestInterface(t *testing.T) {
 	test(100)
 	`, "", "interface conversion: int is not main.Stringer")
 	cltest.Expect(t, `
-	n := 100
-	a := interface{}(n)
+	a := interface{}(100)
 	if v, ok := a.(int); ok {
 		println(v)
 	}

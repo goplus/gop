@@ -620,8 +620,12 @@ func compileConst(ctx *blockCtx, kind astutil.ConstKind, n interface{}) func() {
 func pushConstVal(b exec.Builder, c *constVal) {
 	c.reserve = b.Reserve()
 	if isConstBound(c.kind) {
-		v := boundConst(c.v, exec.TypeFromKind(c.kind))
-		c.reserve.Push(b, v)
+		if c.kind == reflect.Interface && c.v == nil {
+			c.reserve.Push(b, nil)
+		} else {
+			v := boundConst(c.v, exec.TypeFromKind(c.kind))
+			c.reserve.Push(b, v)
+		}
 	}
 }
 
