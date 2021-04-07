@@ -2333,7 +2333,6 @@ func TestInterface(t *testing.T) {
 	buf := bytes.NewBuffer([]byte("hello"))
 	test(buf)
 	`, "hello\n")
-
 	cltest.Expect(t, `
 	import "bytes"
 	type Stringer interface {
@@ -2374,4 +2373,21 @@ func TestInterface(t *testing.T) {
 	}
 	test(nil)
 	`, "", "interface conversion: interface is nil, not main.Stringer")
+	cltest.Expect(t, `
+	type Stringer interface {
+		String() string
+	}
+	func test(v interface{}) {
+		s := v.(Stringer)
+		println(s)
+	}
+	test(100)
+	`, "", "interface conversion: int is not main.Stringer")
+	cltest.Expect(t, `
+	a := 100
+	b := 200
+	i := interface{}(a)
+	println(a == i)
+	println(b == i)
+	`, "true\nfalse\n")
 }

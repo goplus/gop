@@ -130,6 +130,8 @@ func isNoExecCtxExpr(ctx *blockCtx, expr ast.Expr) bool {
 		return isNoExecCtxStarExpr(ctx, v)
 	case *ast.TypeAssertExpr:
 		return isNoExecCtxExpr(ctx, v.X)
+	case *ast.InterfaceType:
+		return true
 	case *ast.ChanType:
 		return true
 	case *ast.MapType:

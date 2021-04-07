@@ -151,6 +151,9 @@ func checkOpMatchType(op exec.Operator, x, y interface{}) error {
 		ix := x.(iValue)
 		iy := y.(iValue)
 		xkind, ykind := ix.Kind(), iy.Kind()
+		if xkind == reflect.Interface || ykind == reflect.Interface {
+			return nil
+		}
 		if xkind == exec.ConstUnboundPtr && ykind == exec.ConstUnboundPtr {
 			return nil
 		} else if xkind == exec.ConstUnboundPtr {
