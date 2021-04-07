@@ -2384,6 +2384,19 @@ func TestInterface(t *testing.T) {
 	test(100)
 	`, "", "interface conversion: int is not main.Stringer")
 	cltest.Expect(t, `
+	n := 100
+	a := interface{}(n)
+	if v, ok := a.(int); ok {
+		println(v)
+	}
+	`, "100\n")
+	cltest.Expect(t, `
+	a := 100
+	if v, ok := a.(int); ok {
+		println(v)
+	}
+	`, "", "invalid type assertion: a.(int) (non-interface type int on left)")
+	cltest.Expect(t, `
 	a := 100
 	b := 200
 	i := interface{}(a)
