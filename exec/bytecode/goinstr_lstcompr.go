@@ -197,16 +197,41 @@ func execTypeAssert(i Instr, p *Context) {
 	if (i & (1 << bitsOpTypeAssertShift)) != 0 {
 		twoValue = true
 	}
-	v := reflect.ValueOf(args[0])
-	if typ == v.Type() || (typ.Kind() == reflect.Interface && v.Type().Implements(typ)) {
-		p.Push(args[0])
+	if args[0] == nil {
 		if twoValue {
+			p.Push(nil)
+			p.Push(false)
+		} else {
+			log.Panicf("interface conversion: interface is nil, not %v", typ)
+		}
+		return
+	}
+	if twoValue {
+		v := reflect.ValueOf(args[0])
+		vtyp := v.Type()
+		if typ == vtyp {
+			p.Push(args[0])
 			p.Push(true)
+		} else {
+			if typ.Kind() == reflect.Interface && vtyp.Implements(typ) {
+				p.Push(v.Convert(typ).Interface())
+				p.Push(true)
+			} else {
+				p.Push(nil)
+				p.Push(false)
+			}
 		}
 	} else {
-		p.Push(nil)
-		if twoValue {
-			p.Push(false)
+		v := reflect.ValueOf(args[0])
+		vtyp := v.Type()
+		if typ == vtyp {
+			p.Push(args[0])
+		} else {
+			if typ.Kind() == reflect.Interface && vtyp.Implements(typ) {
+				p.Push(v.Convert(typ).Interface())
+			} else {
+				log.Panicf("interface conversion: %v is not %v", vtyp, typ)
+			}
 		}
 	}
 }
