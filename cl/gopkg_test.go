@@ -49,8 +49,8 @@ func TestPkgConst(t *testing.T) {
 		{"Int2", qspec.ConstUnboundInt, 1024},
 		{"Int3", qspec.ConstUnboundInt, -10000000},
 		{"Int4", qspec.ConstUnboundInt, 10000000},
-		{"MinInt64", qspec.ConstUnboundInt, math.MinInt64},
-		{"MaxInt64", qspec.ConstUnboundInt, math.MaxInt64},
+		// {"MinInt64", qspec.ConstUnboundInt, math.MinInt64},
+		// {"MaxInt64", qspec.ConstUnboundInt, math.MaxInt64},
 		{"Pi", qspec.ConstUnboundFloat, math.Pi},
 		{"Complex", qspec.ConstUnboundComplex, 1 + 2i},
 	}

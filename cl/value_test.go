@@ -48,22 +48,4 @@ func TestValue(t *testing.T) {
 	_ = c.Value(0)
 }
 
-func TestOverflowsIntBy(t *testing.T) {
-	if isOverflowsIntByInt64(1<<63-1, 64) {
-		t.Fatal("not overflows", 1<<63-1)
-	}
-	if !isOverflowsIntByInt64(1<<31, 32) {
-		t.Fatal("overflows", 1<<31)
-	}
-	if isOverflowsIntByUint64(1<<63-1, 64) {
-		t.Fatal("not overflows", uint64(1<<63-1))
-	}
-	if !isOverflowsIntByUint64(1<<64-1, 64) {
-		t.Fatal("not overflows", uint64(1<<64-1))
-	}
-	if !isOverflowsIntByUint64(1<<32, 32) {
-		t.Fatal("overflows", 1<<32)
-	}
-}
-
 // -----------------------------------------------------------------------------

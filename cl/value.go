@@ -17,10 +17,8 @@
 package cl
 
 import (
-	"math"
 	"math/big"
 	"reflect"
-	"strconv"
 	"strings"
 	"unsafe"
 
@@ -473,24 +471,6 @@ func kindOf(t reflect.Type) exec.Kind {
 	return kind
 }
 
-const (
-	intSize = strconv.IntSize
-)
-
-func isOverflowsIntByInt64(v int64, intSize int) bool {
-	if intSize == 32 {
-		return v < int64(math.MinInt32) || v > int64(math.MaxInt32)
-	}
-	return false
-}
-
-func isOverflowsIntByUint64(v uint64, intSize int) bool {
-	if intSize == 32 {
-		return v > uint64(math.MaxInt32)
-	}
-	return v > uint64(math.MaxInt64)
-}
-
 func intKind(kind reflect.Kind) reflect.Kind {
 	if kind == reflect.Interface {
 		return []reflect.Kind{reflect.Int32, reflect.Int64}[ptrSizeIndex]
@@ -500,14 +480,14 @@ func intKind(kind reflect.Kind) reflect.Kind {
 
 func floatKind(kind reflect.Kind) reflect.Kind {
 	if kind == reflect.Interface {
-		return []reflect.Kind{reflect.Float32, reflect.Float64}[ptrSizeIndex]
+		return reflect.Float64
 	}
 	return kind
 }
 
 func complexKind(kind reflect.Kind) reflect.Kind {
 	if kind == reflect.Interface {
-		return []reflect.Kind{reflect.Complex64, reflect.Complex128}[ptrSizeIndex]
+		return reflect.Complex128
 	}
 	return kind
 }
@@ -652,19 +632,8 @@ func boundConst(x *constVal, t reflect.Type) interface{} {
 		return v
 	}
 	if kind == reflect.Interface {
-		skind := sval.Kind()
-		if skind == reflect.Uint64 {
-			v := sval.Uint()
-			if isOverflowsIntByUint64(v, intSize) {
-				log.Panicf("constant %v overflows int\n", v)
-			}
-			return int(v)
-		} else if skind == reflect.Int64 {
-			v := sval.Int()
-			if isOverflowsIntByInt64(v, intSize) {
-				log.Panicf("constant %v overflows int\n", v)
-			}
-			return int(v)
+		if sval.Kind() == reflect.Int64 {
+			return int(sval.Int())
 		}
 	} else if kind == reflect.Complex128 || kind == reflect.Complex64 {
 		if skind := sval.Kind(); skind >= reflect.Int && skind <= reflect.Float64 {

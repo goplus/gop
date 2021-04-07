@@ -18,6 +18,7 @@ package cl_test
 import (
 	"fmt"
 	"math/big"
+	"strconv"
 	"testing"
 
 	"github.com/goplus/gop/cl/cltest"
@@ -2365,6 +2366,9 @@ func TestOpRsh(t *testing.T) {
 }
 
 func TestOpLsh(t *testing.T) {
+	if strconv.IntSize == 32 {
+		return
+	}
 	cltest.Expect(t, `
 	var a [1024]byte
 	var s uint = 33
@@ -2555,6 +2559,7 @@ func TestUnsafe(t *testing.T) {
 	println(*(*string)(unsafe.Pointer(v2)))
 	println(*(*string)(unsafe.Pointer(v3)))
 	`, "hello\nworld\nworld\nworld\n")
+	size := strconv.IntSize / 8
 	cltest.Expect(t, `
 	import "unsafe"
 	type Point struct {
@@ -2567,7 +2572,7 @@ func TestUnsafe(t *testing.T) {
 	println(unsafe.Alignof(pt))
 	println(unsafe.Offsetof(pt.Y))
 	println(unsafe.Offsetof(pt2.Y))
-	`, "16\n8\n8\n8\n")
+	`, fmt.Sprintf("%v\n%v\n%v\n%v\n", size*2, size, size, size))
 	cltest.Expect(t, `
 	import "unsafe"
 	ar := [unsafe.Sizeof(true)]int{}

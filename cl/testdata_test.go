@@ -19,6 +19,7 @@ package cl_test
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/goplus/gop/cl/cltest"
@@ -28,6 +29,9 @@ import (
 
 func TestFromTestdata(t *testing.T) {
 	sel, exclude := "", ""
+	if strconv.IntSize == 32 {
+		exclude = "33.left-shift"
+	}
 	dir, err := os.Getwd()
 	if err != nil {
 		t.Fatal("Getwd failed:", err)
