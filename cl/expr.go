@@ -120,12 +120,7 @@ func compileInterfaceType(ctx *blockCtx, v *ast.InterfaceType) func() {
 func compileTypeAssertExpr(ctx *blockCtx, v *ast.TypeAssertExpr, twoValue bool) func() {
 	exprX := compileExpr(ctx, v.X)
 	xtyp := ctx.infer.Pop().(iValue).Type()
-	var typ reflect.Type
-	if v.Type != nil {
-		typ = toType(ctx, v.Type).(reflect.Type)
-	} else {
-		typ = exec.TyEmptyInterface
-	}
+	typ := toType(ctx, v.Type).(reflect.Type)
 	if xtyp.Kind() != reflect.Interface {
 		log.Panicf("invalid type assertion: %v.(%v) (non-interface type %v on left)", ctx.code(v.X), typ, xtyp)
 	}

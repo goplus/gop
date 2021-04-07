@@ -1850,3 +1850,55 @@ var testChannelConvClauses = map[string]testData{
 func TestChannelConvStmt(t *testing.T) {
 	testScripts(t, "TestSendStmt", testChannelConvClauses)
 }
+
+func TestTypeSwitchStmt(t *testing.T) {
+	cltest.Expect(t, `
+	v := interface{}(100)
+	switch v.(type) {
+	}
+	println(v)
+	`, "100\n")
+	cltest.Expect(t, `
+	v := interface{}(100)
+	switch t := v.(type) {
+	case uint:
+		println("uint", t)
+	case int:
+		println("int", t)
+	}
+	`, "int 100\n")
+	cltest.Expect(t, `
+	v := interface{}(100)
+	switch t := v.(type) {
+	default:
+		println("default", t)
+	case uint:
+		println("uint", t)
+	}
+	`, "default 100\n")
+	cltest.Expect(t, `
+	v := interface{}(100)
+	switch t := v.(type) {
+	default:
+		println("default", t)
+	}
+	`, "default 100\n")
+	cltest.Expect(t, `
+	v := interface{}(100)
+	switch t := v; v.(type) {
+	case uint:
+		println("uint", t)
+	case int:
+		println("int", t)
+	}
+	`, "int 100\n")
+	cltest.Expect(t, `
+	v := interface{}(100)
+	switch t:= v; v.(type) {
+	default:
+		println("default", t)
+	case uint:
+		println("uint", t)
+	}
+	`, "default 100\n")
+}
