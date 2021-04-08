@@ -124,6 +124,11 @@ func compileTypeAssertExpr(ctx *blockCtx, v *ast.TypeAssertExpr, twoValue bool) 
 	if xtyp.Kind() != reflect.Interface {
 		log.Panicf("invalid type assertion: %v.(%v) (non-interface type %v on left)", ctx.code(v.X), typ, xtyp)
 	}
+	if (xtyp.NumMethod() != 0) && typ.Kind() != reflect.Interface {
+		if !typ.Implements(xtyp) {
+			log.Panicf("impossible type assertion: %v does not implement %v", typ, xtyp)
+		}
+	}
 	ctx.infer.Push(&goValue{t: typ})
 	if twoValue {
 		ctx.infer.Push(&goValue{t: exec.TyBool})

@@ -2398,4 +2398,17 @@ func TestInterface(t *testing.T) {
 	println(a == i)
 	println(b == i)
 	`, "true\nfalse\n")
+	cltest.Expect(t, `
+	import "bytes"
+	type Stringer interface {
+		String() string
+	}
+	func test(v Stringer) {
+		if _, ok := v.(int); ok {
+			println(v)
+		}
+	}
+	buf := bytes.NewBuffer([]byte("hello"))
+	test(buf)
+	`, "", "impossible type assertion: int does not implement main.Stringer")
 }
