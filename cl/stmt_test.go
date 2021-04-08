@@ -1901,4 +1901,11 @@ func TestTypeSwitchStmt(t *testing.T) {
 		println("uint", t)
 	}
 	`, "default 100\n")
+	cltest.Expect(t, `
+	v := interface{}(100)
+	switch i := v.(int); i {
+	case 100:
+		println(i)
+	}
+	`, "100\n")
 }
