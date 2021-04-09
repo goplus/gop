@@ -399,14 +399,13 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 		vExpr = uExpr
 		xInitExpr = assign.X.(*ast.TypeAssertExpr).X
 	}
+	compileExpr(ctx, xInitExpr)
+	xtyp := ctx.infer.Pop().(iValue).Type()
 	xExpr = ast.NewIdent(unusedIdent(ctx, "_gop_"+vName))
 	vinit := &ast.AssignStmt{
 		Lhs: []ast.Expr{xExpr},
 		Tok: token.DEFINE,
-		Rhs: []ast.Expr{&ast.TypeAssertExpr{
-			X:    xInitExpr,
-			Type: &ast.InterfaceType{Methods: &ast.FieldList{}},
-		}},
+		Rhs: []ast.Expr{xInitExpr},
 	}
 	vused := &ast.AssignStmt{
 		Lhs: []ast.Expr{uExpr},
@@ -444,6 +443,13 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 				}
 			}
 			continue
+		}
+		typ := toType(ctx, c.List[0]).(reflect.Type)
+		if xtyp.NumMethod() != 0 && typ.Kind() != reflect.Interface {
+			if !typ.Implements(xtyp) {
+				log.Panicf("impossible type switch case: %v (type %v) cannot have dynamic type %v",
+					ctx.code(xInitExpr), xtyp, typ)
+			}
 		}
 		var body *ast.BlockStmt
 		if hasValue {

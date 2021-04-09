@@ -1902,10 +1902,17 @@ func TestTypeSwitchStmt(t *testing.T) {
 	}
 	`, "default 100\n")
 	cltest.Expect(t, `
-	v := interface{}(100)
-	switch i := v.(int); i {
-	case 100:
-		println(i)
+	import "bytes"
+	type Stringer interface {
+		String() string
 	}
-	`, "100\n")
+	func test(v Stringer) {
+		switch v.(type) {
+		case int:
+			println(v)
+		}
+	}
+	buf := bytes.NewBuffer([]byte("hello"))
+	test(buf)
+	`, "", "impossible type switch case: v (type main.Stringer) cannot have dynamic type int")
 }
