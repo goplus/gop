@@ -542,7 +542,13 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 			}
 			stmt = &ast.IfStmt{
 				If: c.Pos(),
-				Init: &ast.AssignStmt{
+				Cond: &ast.CallExpr{
+					Fun: funLit,
+				},
+				Body: body,
+			}
+			if hasValue {
+				stmt.Init = &ast.AssignStmt{
 					Lhs: []ast.Expr{
 						vExpr,
 					},
@@ -550,31 +556,39 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 					Rhs: []ast.Expr{
 						xExpr,
 					},
-				},
-				Cond: &ast.CallExpr{
-					Fun: funLit,
-				},
-				Body: body,
+				}
 			}
 		} else {
 			if isNilExpr(c.List[0]) {
-				stmt = &ast.IfStmt{
-					If: c.Pos(),
-					Init: &ast.AssignStmt{
-						Lhs: []ast.Expr{
-							vExpr,
+				if hasValue {
+					stmt = &ast.IfStmt{
+						If: c.Pos(),
+						Init: &ast.AssignStmt{
+							Lhs: []ast.Expr{
+								vExpr,
+							},
+							Tok: token.DEFINE,
+							Rhs: []ast.Expr{
+								xExpr,
+							},
 						},
-						Tok: token.DEFINE,
-						Rhs: []ast.Expr{
-							xExpr,
+						Cond: &ast.BinaryExpr{
+							X:  vExpr,
+							Op: token.EQL,
+							Y:  c.List[0],
 						},
-					},
-					Cond: &ast.BinaryExpr{
-						X:  vExpr,
-						Op: token.EQL,
-						Y:  c.List[0],
-					},
-					Body: body,
+						Body: body,
+					}
+				} else {
+					stmt = &ast.IfStmt{
+						If: c.Pos(),
+						Cond: &ast.BinaryExpr{
+							X:  xExpr,
+							Op: token.EQL,
+							Y:  c.List[0],
+						},
+						Body: body,
+					}
 				}
 			} else {
 				stmt = &ast.IfStmt{
