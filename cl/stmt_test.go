@@ -1901,6 +1901,9 @@ func TestTypeSwitchStmt(t *testing.T) {
 		println("uint", t)
 	}
 	`, "default 100\n")
+}
+
+func TestTypeSwitchImpossible(t *testing.T) {
 	cltest.Expect(t, `
 	import "bytes"
 	type Stringer interface {
@@ -1915,6 +1918,9 @@ func TestTypeSwitchStmt(t *testing.T) {
 	buf := bytes.NewBuffer([]byte("hello"))
 	test(buf)
 	`, "", "impossible type switch case: v (type main.Stringer) cannot have dynamic type int")
+}
+
+func TestTypeSwitchDuplicate(t *testing.T) {
 	cltest.Expect(t, `
 	func whatis(x interface{}) string {
 		switch x.(type) {

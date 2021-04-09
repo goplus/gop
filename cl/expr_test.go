@@ -2311,7 +2311,7 @@ func TestBadUnsafe(t *testing.T) {
 	`, "", "invalid expression unsafe.Offsetof(1)")
 }
 
-func TestInterface(t *testing.T) {
+func TestTypeAssert(t *testing.T) {
 	cltest.Expect(t, `
 	func test(v interface{}) {
 		println(v)
@@ -2360,6 +2360,16 @@ func TestInterface(t *testing.T) {
 	test(100)
 	`, "<nil>\n")
 	cltest.Expect(t, `
+	a := 100
+	b := 200
+	i := interface{}(a)
+	println(a == i)
+	println(b == i)
+	`, "true\nfalse\n")
+}
+
+func TestTypeAssertInvalid(t *testing.T) {
+	cltest.Expect(t, `
 	type Stringer interface {
 		String() string
 	}
@@ -2391,13 +2401,9 @@ func TestInterface(t *testing.T) {
 		println(v)
 	}
 	`, "", "invalid type assertion: a.(int) (non-interface type int on left)")
-	cltest.Expect(t, `
-	a := 100
-	b := 200
-	i := interface{}(a)
-	println(a == i)
-	println(b == i)
-	`, "true\nfalse\n")
+}
+
+func TestTypAssertImpossible(t *testing.T) {
 	cltest.Expect(t, `
 	import "bytes"
 	type Stringer interface {
