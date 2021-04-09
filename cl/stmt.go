@@ -374,6 +374,13 @@ func unusedIdent(ctx *blockCtx, ident string) string {
 	return name
 }
 
+func isNilExpr(expr ast.Expr) bool {
+	if ident, ok := expr.(*ast.Ident); ok && ident.Name == "nil" {
+		return true
+	}
+	return false
+}
+
 func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 	ctx.out.DefineBlock()
 	defer ctx.out.EndBlock()
@@ -445,6 +452,9 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 			continue
 		}
 		for _, expr := range c.List {
+			if isNilExpr(expr) {
+				continue
+			}
 			typ := toType(ctx, expr).(reflect.Type)
 			if xtyp.NumMethod() != 0 && typ.Kind() != reflect.Interface {
 				if !typ.Implements(xtyp) {
@@ -475,27 +485,44 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 			cond := ast.NewIdent("ok")
 			var stmts []ast.Stmt
 			for _, expr := range c.List {
-				stmts = append(stmts, &ast.IfStmt{
-					Init: &ast.AssignStmt{
-						Lhs: []ast.Expr{
-							uExpr,
-							cond,
+				if isNilExpr(expr) {
+					stmts = append(stmts, &ast.IfStmt{
+						Cond: &ast.BinaryExpr{
+							X:  xExpr,
+							Op: token.EQL,
+							Y:  expr,
 						},
-						Tok: token.ASSIGN,
-						Rhs: []ast.Expr{
-							&ast.TypeAssertExpr{
-								X:    xExpr,
-								Type: expr,
+						Body: &ast.BlockStmt{
+							List: []ast.Stmt{
+								&ast.ReturnStmt{
+									Results: []ast.Expr{ast.NewIdent("true")},
+								},
 							},
 						},
-					},
-					Cond: cond,
-					Body: &ast.BlockStmt{
-						List: []ast.Stmt{
-							&ast.ReturnStmt{},
+					})
+				} else {
+					stmts = append(stmts, &ast.IfStmt{
+						Init: &ast.AssignStmt{
+							Lhs: []ast.Expr{
+								uExpr,
+								cond,
+							},
+							Tok: token.ASSIGN,
+							Rhs: []ast.Expr{
+								&ast.TypeAssertExpr{
+									X:    xExpr,
+									Type: expr,
+								},
+							},
 						},
-					},
-				})
+						Cond: cond,
+						Body: &ast.BlockStmt{
+							List: []ast.Stmt{
+								&ast.ReturnStmt{},
+							},
+						},
+					})
+				}
 			}
 			funLit := &ast.FuncLit{
 				Type: &ast.FuncType{
@@ -530,23 +557,44 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 				Body: body,
 			}
 		} else {
-			stmt = &ast.IfStmt{
-				If: c.Pos(),
-				Init: &ast.AssignStmt{
-					Lhs: []ast.Expr{
-						vExpr,
-						vCond,
-					},
-					Tok: token.DEFINE,
-					Rhs: []ast.Expr{
-						&ast.TypeAssertExpr{
-							X:    xExpr,
-							Type: c.List[0],
+			if isNilExpr(c.List[0]) {
+				stmt = &ast.IfStmt{
+					If: c.Pos(),
+					Init: &ast.AssignStmt{
+						Lhs: []ast.Expr{
+							vExpr,
+						},
+						Tok: token.DEFINE,
+						Rhs: []ast.Expr{
+							xExpr,
 						},
 					},
-				},
-				Cond: vCond,
-				Body: body,
+					Cond: &ast.BinaryExpr{
+						X:  vExpr,
+						Op: token.EQL,
+						Y:  c.List[0],
+					},
+					Body: body,
+				}
+			} else {
+				stmt = &ast.IfStmt{
+					If: c.Pos(),
+					Init: &ast.AssignStmt{
+						Lhs: []ast.Expr{
+							vExpr,
+							vCond,
+						},
+						Tok: token.DEFINE,
+						Rhs: []ast.Expr{
+							&ast.TypeAssertExpr{
+								X:    xExpr,
+								Type: c.List[0],
+							},
+						},
+					},
+					Cond: vCond,
+					Body: body,
+				}
 			}
 		}
 
