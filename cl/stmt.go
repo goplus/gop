@@ -444,11 +444,13 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 			}
 			continue
 		}
-		typ := toType(ctx, c.List[0]).(reflect.Type)
-		if xtyp.NumMethod() != 0 && typ.Kind() != reflect.Interface {
-			if !typ.Implements(xtyp) {
-				log.Panicf("impossible type switch case: %v (type %v) cannot have dynamic type %v",
-					ctx.code(xInitExpr), xtyp, typ)
+		for _, expr := range c.List {
+			typ := toType(ctx, expr).(reflect.Type)
+			if xtyp.NumMethod() != 0 && typ.Kind() != reflect.Interface {
+				if !typ.Implements(xtyp) {
+					log.Panicf("impossible type switch case: %v (type %v) cannot have dynamic type %v",
+						ctx.code(xInitExpr), xtyp, typ)
+				}
 			}
 		}
 		var body *ast.BlockStmt
@@ -468,24 +470,86 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 				List: []ast.Stmt{&ast.BlockStmt{List: c.Body}},
 			}
 		}
-		stmt := &ast.IfStmt{
-			If: c.Pos(),
-			Init: &ast.AssignStmt{
-				Lhs: []ast.Expr{
-					vExpr,
-					vCond,
-				},
-				Tok: token.DEFINE,
-				Rhs: []ast.Expr{
-					&ast.TypeAssertExpr{
-						X:    xExpr,
-						Type: c.List[0],
+		var stmt *ast.IfStmt
+		if len(c.List) > 1 {
+			cond := ast.NewIdent("ok")
+			var stmts []ast.Stmt
+			for _, expr := range c.List {
+				stmts = append(stmts, &ast.IfStmt{
+					Init: &ast.AssignStmt{
+						Lhs: []ast.Expr{
+							uExpr,
+							cond,
+						},
+						Tok: token.ASSIGN,
+						Rhs: []ast.Expr{
+							&ast.TypeAssertExpr{
+								X:    xExpr,
+								Type: expr,
+							},
+						},
+					},
+					Cond: cond,
+					Body: &ast.BlockStmt{
+						List: []ast.Stmt{
+							&ast.ReturnStmt{},
+						},
+					},
+				})
+			}
+			funLit := &ast.FuncLit{
+				Type: &ast.FuncType{
+					Params: &ast.FieldList{},
+					Results: &ast.FieldList{
+						List: []*ast.Field{
+							&ast.Field{
+								Names: []*ast.Ident{cond},
+								Type:  ast.NewIdent("bool"),
+							},
+						},
 					},
 				},
-			},
-			Cond: vCond,
-			Body: body,
+				Body: &ast.BlockStmt{
+					List: append(stmts, &ast.ReturnStmt{}),
+				},
+			}
+			stmt = &ast.IfStmt{
+				If: c.Pos(),
+				Init: &ast.AssignStmt{
+					Lhs: []ast.Expr{
+						vExpr,
+					},
+					Tok: token.DEFINE,
+					Rhs: []ast.Expr{
+						xExpr,
+					},
+				},
+				Cond: &ast.CallExpr{
+					Fun: funLit,
+				},
+				Body: body,
+			}
+		} else {
+			stmt = &ast.IfStmt{
+				If: c.Pos(),
+				Init: &ast.AssignStmt{
+					Lhs: []ast.Expr{
+						vExpr,
+						vCond,
+					},
+					Tok: token.DEFINE,
+					Rhs: []ast.Expr{
+						&ast.TypeAssertExpr{
+							X:    xExpr,
+							Type: c.List[0],
+						},
+					},
+				},
+				Cond: vCond,
+				Body: body,
+			}
 		}
+
 		if ifStmt == nil {
 			ifStmt = stmt
 		}
