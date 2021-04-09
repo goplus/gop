@@ -252,7 +252,7 @@ func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) iType {
 			embedded = append(embedded, t)
 		}
 	}
-	return reflectx.InterfaceOf(exec.TyEmptyInterface, embedded, methods)
+	return reflectx.InterfaceOf(embedded, methods)
 }
 
 func toExternalType(ctx *blockCtx, v *ast.SelectorExpr) iType {

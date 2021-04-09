@@ -608,6 +608,7 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 	var ifStmt *ast.IfStmt
 	var lastIfStmt *ast.IfStmt
 	var defaultStmt ast.Stmt
+	dupcheck := make(map[reflect.Type]bool)
 	for _, item := range v.Body.List {
 		c, _ := item.(*ast.CaseClause)
 		if c.List == nil {
@@ -625,6 +626,10 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 						ctx.code(xInitExpr), xtyp, typ)
 				}
 			}
+			if _, ok := dupcheck[typ]; ok {
+				log.Panicf("duplicate case %v in type switch", typ)
+			}
+			dupcheck[typ] = true
 		}
 		stmt := buildTypeSwitchStmtCase(ctx, c, vExpr, xExpr, hasValue)
 		if ifStmt == nil {
