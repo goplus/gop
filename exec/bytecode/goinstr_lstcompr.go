@@ -191,13 +191,13 @@ func makeMap(typMap reflect.Type, arity int, p *Context) {
 }
 
 func execTypeAssert(i Instr, p *Context) {
-	args := p.GetArgs(1)
+	args := p.Pop()
 	typ := getType(i&bitsOpTypeAssertShiftOperand, p)
 	var twoValue bool
 	if (i & (1 << bitsOpTypeAssertShift)) != 0 {
 		twoValue = true
 	}
-	if args[0] == nil {
+	if args == nil {
 		if twoValue {
 			p.Push(nil)
 			p.Push(false)
@@ -207,10 +207,10 @@ func execTypeAssert(i Instr, p *Context) {
 		return
 	}
 	if twoValue {
-		v := reflect.ValueOf(args[0])
+		v := reflect.ValueOf(args)
 		vtyp := v.Type()
 		if typ == vtyp {
-			p.Push(args[0])
+			p.Push(args)
 			p.Push(true)
 		} else {
 			if typ.Kind() == reflect.Interface && vtyp.Implements(typ) {
@@ -222,10 +222,10 @@ func execTypeAssert(i Instr, p *Context) {
 			}
 		}
 	} else {
-		v := reflect.ValueOf(args[0])
+		v := reflect.ValueOf(args)
 		vtyp := v.Type()
 		if typ == vtyp {
-			p.Push(args[0])
+			p.Push(args)
 		} else {
 			if typ.Kind() == reflect.Interface && vtyp.Implements(typ) {
 				p.Push(v.Convert(typ).Interface())
