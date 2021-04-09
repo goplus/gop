@@ -381,6 +381,190 @@ func isNilExpr(expr ast.Expr) bool {
 	return false
 }
 
+func buildTypeSwitchStmtDefault(ctx *blockCtx, c *ast.CaseClause, vExpr, xExpr ast.Expr, hasValue bool) ast.Stmt {
+	if hasValue {
+		stms := []ast.Stmt{
+			&ast.AssignStmt{
+				Lhs: []ast.Expr{vExpr},
+				Tok: token.DEFINE,
+				Rhs: []ast.Expr{xExpr},
+			},
+			&ast.AssignStmt{
+				Lhs: []ast.Expr{ast.NewIdent("_")},
+				Tok: token.ASSIGN,
+				Rhs: []ast.Expr{vExpr},
+			},
+		}
+		return &ast.BlockStmt{
+			List: append(stms, &ast.BlockStmt{List: c.Body}),
+		}
+	} else {
+		return &ast.BlockStmt{
+			List: c.Body,
+		}
+	}
+}
+
+func buildTypeSwitchStmtCaseStmt(ctx *blockCtx, c *ast.CaseClause, body *ast.BlockStmt, vExpr, xExpr ast.Expr, hasValue bool) *ast.IfStmt {
+	vCond := ast.NewIdent(unusedIdent(ctx, "ok"))
+	if isNilExpr(c.List[0]) {
+		if hasValue {
+			return &ast.IfStmt{
+				If: c.Pos(),
+				Init: &ast.AssignStmt{
+					Lhs: []ast.Expr{
+						vExpr,
+					},
+					Tok: token.DEFINE,
+					Rhs: []ast.Expr{
+						xExpr,
+					},
+				},
+				Cond: &ast.BinaryExpr{
+					X:  vExpr,
+					Op: token.EQL,
+					Y:  c.List[0],
+				},
+				Body: body,
+			}
+		} else {
+			return &ast.IfStmt{
+				If: c.Pos(),
+				Cond: &ast.BinaryExpr{
+					X:  xExpr,
+					Op: token.EQL,
+					Y:  c.List[0],
+				},
+				Body: body,
+			}
+		}
+	} else {
+		return &ast.IfStmt{
+			If: c.Pos(),
+			Init: &ast.AssignStmt{
+				Lhs: []ast.Expr{
+					vExpr,
+					vCond,
+				},
+				Tok: token.DEFINE,
+				Rhs: []ast.Expr{
+					&ast.TypeAssertExpr{
+						X:    xExpr,
+						Type: c.List[0],
+					},
+				},
+			},
+			Cond: vCond,
+			Body: body,
+		}
+	}
+}
+
+func buildTypeSwitchStmtCaseListStmt(ctx *blockCtx, c *ast.CaseClause, body *ast.BlockStmt, vExpr, xExpr ast.Expr, hasValue bool) *ast.IfStmt {
+	cond := ast.NewIdent("ok")
+	var stmts []ast.Stmt
+	for _, expr := range c.List {
+		if isNilExpr(expr) {
+			stmts = append(stmts, &ast.IfStmt{
+				Cond: &ast.BinaryExpr{
+					X:  xExpr,
+					Op: token.EQL,
+					Y:  expr,
+				},
+				Body: &ast.BlockStmt{
+					List: []ast.Stmt{
+						&ast.ReturnStmt{
+							Results: []ast.Expr{ast.NewIdent("true")},
+						},
+					},
+				},
+			})
+		} else {
+			stmts = append(stmts, &ast.IfStmt{
+				Init: &ast.AssignStmt{
+					Lhs: []ast.Expr{
+						ast.NewIdent("_"),
+						cond,
+					},
+					Tok: token.ASSIGN,
+					Rhs: []ast.Expr{
+						&ast.TypeAssertExpr{
+							X:    xExpr,
+							Type: expr,
+						},
+					},
+				},
+				Cond: cond,
+				Body: &ast.BlockStmt{
+					List: []ast.Stmt{
+						&ast.ReturnStmt{},
+					},
+				},
+			})
+		}
+	}
+	funLit := &ast.FuncLit{
+		Type: &ast.FuncType{
+			Params: &ast.FieldList{},
+			Results: &ast.FieldList{
+				List: []*ast.Field{
+					&ast.Field{
+						Names: []*ast.Ident{cond},
+						Type:  ast.NewIdent("bool"),
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: append(stmts, &ast.ReturnStmt{}),
+		},
+	}
+	ifstmt := &ast.IfStmt{
+		If: c.Pos(),
+		Cond: &ast.CallExpr{
+			Fun: funLit,
+		},
+		Body: body,
+	}
+	if hasValue {
+		ifstmt.Init = &ast.AssignStmt{
+			Lhs: []ast.Expr{
+				vExpr,
+			},
+			Tok: token.DEFINE,
+			Rhs: []ast.Expr{
+				xExpr,
+			},
+		}
+	}
+	return ifstmt
+}
+
+func buildTypeSwitchStmtCase(ctx *blockCtx, c *ast.CaseClause, vExpr, xExpr ast.Expr, hasValue bool) *ast.IfStmt {
+	var body *ast.BlockStmt
+	if hasValue {
+		stmts := []ast.Stmt{
+			&ast.AssignStmt{
+				Lhs: []ast.Expr{ast.NewIdent("_")},
+				Tok: token.ASSIGN,
+				Rhs: []ast.Expr{vExpr},
+			},
+		}
+		body = &ast.BlockStmt{
+			List: append(stmts, &ast.BlockStmt{List: c.Body}),
+		}
+	} else {
+		body = &ast.BlockStmt{
+			List: []ast.Stmt{&ast.BlockStmt{List: c.Body}},
+		}
+	}
+	if len(c.List) > 1 {
+		return buildTypeSwitchStmtCaseListStmt(ctx, c, body, vExpr, xExpr, hasValue)
+	} else {
+		return buildTypeSwitchStmtCaseStmt(ctx, c, body, vExpr, xExpr, hasValue)
+	}
+}
+
 func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 	ctx.out.DefineBlock()
 	defer ctx.out.EndBlock()
@@ -421,34 +605,13 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 	}
 	compileStmt(ctx, vinit)
 	compileStmt(ctx, vused)
-	vCond := ast.NewIdent(unusedIdent(ctx, "ok"))
 	var ifStmt *ast.IfStmt
 	var lastIfStmt *ast.IfStmt
 	var defaultStmt ast.Stmt
 	for _, item := range v.Body.List {
 		c, _ := item.(*ast.CaseClause)
 		if c.List == nil {
-			if hasValue {
-				stms := []ast.Stmt{
-					&ast.AssignStmt{
-						Lhs: []ast.Expr{vExpr},
-						Tok: token.DEFINE,
-						Rhs: []ast.Expr{xExpr},
-					},
-					&ast.AssignStmt{
-						Lhs: []ast.Expr{uExpr},
-						Tok: token.ASSIGN,
-						Rhs: []ast.Expr{vExpr},
-					},
-				}
-				defaultStmt = &ast.BlockStmt{
-					List: append(stms, &ast.BlockStmt{List: c.Body}),
-				}
-			} else {
-				defaultStmt = &ast.BlockStmt{
-					List: c.Body,
-				}
-			}
+			defaultStmt = buildTypeSwitchStmtDefault(ctx, c, vExpr, xExpr, hasValue)
 			continue
 		}
 		for _, expr := range c.List {
@@ -463,155 +626,7 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 				}
 			}
 		}
-		var body *ast.BlockStmt
-		if hasValue {
-			stms := []ast.Stmt{
-				&ast.AssignStmt{
-					Lhs: []ast.Expr{uExpr},
-					Tok: token.ASSIGN,
-					Rhs: []ast.Expr{vExpr},
-				},
-			}
-			body = &ast.BlockStmt{
-				List: append(stms, &ast.BlockStmt{List: c.Body}),
-			}
-		} else {
-			body = &ast.BlockStmt{
-				List: []ast.Stmt{&ast.BlockStmt{List: c.Body}},
-			}
-		}
-		var stmt *ast.IfStmt
-		if len(c.List) > 1 {
-			cond := ast.NewIdent("ok")
-			var stmts []ast.Stmt
-			for _, expr := range c.List {
-				if isNilExpr(expr) {
-					stmts = append(stmts, &ast.IfStmt{
-						Cond: &ast.BinaryExpr{
-							X:  xExpr,
-							Op: token.EQL,
-							Y:  expr,
-						},
-						Body: &ast.BlockStmt{
-							List: []ast.Stmt{
-								&ast.ReturnStmt{
-									Results: []ast.Expr{ast.NewIdent("true")},
-								},
-							},
-						},
-					})
-				} else {
-					stmts = append(stmts, &ast.IfStmt{
-						Init: &ast.AssignStmt{
-							Lhs: []ast.Expr{
-								uExpr,
-								cond,
-							},
-							Tok: token.ASSIGN,
-							Rhs: []ast.Expr{
-								&ast.TypeAssertExpr{
-									X:    xExpr,
-									Type: expr,
-								},
-							},
-						},
-						Cond: cond,
-						Body: &ast.BlockStmt{
-							List: []ast.Stmt{
-								&ast.ReturnStmt{},
-							},
-						},
-					})
-				}
-			}
-			funLit := &ast.FuncLit{
-				Type: &ast.FuncType{
-					Params: &ast.FieldList{},
-					Results: &ast.FieldList{
-						List: []*ast.Field{
-							&ast.Field{
-								Names: []*ast.Ident{cond},
-								Type:  ast.NewIdent("bool"),
-							},
-						},
-					},
-				},
-				Body: &ast.BlockStmt{
-					List: append(stmts, &ast.ReturnStmt{}),
-				},
-			}
-			stmt = &ast.IfStmt{
-				If: c.Pos(),
-				Cond: &ast.CallExpr{
-					Fun: funLit,
-				},
-				Body: body,
-			}
-			if hasValue {
-				stmt.Init = &ast.AssignStmt{
-					Lhs: []ast.Expr{
-						vExpr,
-					},
-					Tok: token.DEFINE,
-					Rhs: []ast.Expr{
-						xExpr,
-					},
-				}
-			}
-		} else {
-			if isNilExpr(c.List[0]) {
-				if hasValue {
-					stmt = &ast.IfStmt{
-						If: c.Pos(),
-						Init: &ast.AssignStmt{
-							Lhs: []ast.Expr{
-								vExpr,
-							},
-							Tok: token.DEFINE,
-							Rhs: []ast.Expr{
-								xExpr,
-							},
-						},
-						Cond: &ast.BinaryExpr{
-							X:  vExpr,
-							Op: token.EQL,
-							Y:  c.List[0],
-						},
-						Body: body,
-					}
-				} else {
-					stmt = &ast.IfStmt{
-						If: c.Pos(),
-						Cond: &ast.BinaryExpr{
-							X:  xExpr,
-							Op: token.EQL,
-							Y:  c.List[0],
-						},
-						Body: body,
-					}
-				}
-			} else {
-				stmt = &ast.IfStmt{
-					If: c.Pos(),
-					Init: &ast.AssignStmt{
-						Lhs: []ast.Expr{
-							vExpr,
-							vCond,
-						},
-						Tok: token.DEFINE,
-						Rhs: []ast.Expr{
-							&ast.TypeAssertExpr{
-								X:    xExpr,
-								Type: c.List[0],
-							},
-						},
-					},
-					Cond: vCond,
-					Body: body,
-				}
-			}
-		}
-
+		stmt := buildTypeSwitchStmtCase(ctx, c, vExpr, xExpr, hasValue)
 		if ifStmt == nil {
 			ifStmt = stmt
 		}
