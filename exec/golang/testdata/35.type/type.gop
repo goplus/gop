@@ -26,6 +26,9 @@ func (p Pt2) Test() {
 }
 
 type My interface{}
+type Stringer interface {
+	String() string
+}
 type TBuf bytes.Buffer
 type T []int
 type Func func(string) int
@@ -54,5 +57,8 @@ println(ar)
 var fn Func = func(a string) int {
 	return len(a)
 }
+
+var s Stringer = bytes.NewBuffer([]byte("hello"))
+println(s)
 
 println(fn("hello"))
