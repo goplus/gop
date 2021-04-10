@@ -1944,7 +1944,7 @@ func TestTypeSwitchDuplicate(t *testing.T) {
 		}
 		return ""
 	}
-	whatis(100)
+	whatis(nil)
 	`, "", "duplicate case io.Reader in type switch")
 	cltest.Expect(t, `
 	import "io"
@@ -1963,6 +1963,30 @@ func TestTypeSwitchDuplicate(t *testing.T) {
 		}
 		return ""
 	}
-	whatis(100)
+	whatis(nil)
 	`, "", "duplicate case interface { r(); w() } in type switch")
+	cltest.Expect(t, `
+	type T interface {
+		Test()
+	}
+	type Stringer interface {
+		String() string
+	}
+	func whatis(x interface{}) string {
+		switch x.(type) {
+		case interface {
+			T
+			Stringer
+		}:
+			return "ts1"
+		case interface {	// ERROR "duplicate"
+			Test()
+			String() string
+		}:
+			return "ts2"
+		}
+		return ""
+	}
+	whatis(nil)
+	`, "", "duplicate case interface { String() string; Test() } in type switch")
 }
