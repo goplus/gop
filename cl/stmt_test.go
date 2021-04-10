@@ -1853,54 +1853,76 @@ func TestChannelConvStmt(t *testing.T) {
 
 func TestTypeSwitchStmt(t *testing.T) {
 	cltest.Expect(t, `
-	v := interface{}(100)
-	switch v.(type) {
+	func whatis(x interface{}) string {
+		switch x.(type) {
+		}
+		return "none"
 	}
-	println(v)
-	`, "100\n")
+	println(whatis(100))
+	`, "none\n")
 	cltest.Expect(t, `
-	v := interface{}(100)
-	switch t := v.(type) {
-	case uint:
-		println("uint", t)
-	case int:
-		println("int", t)
+	import "fmt"
+	func whatis(x interface{}) string {
+		switch xx := x.(type) {
+		default:
+			return fmt.Sprint("default ", xx)
+		case int, int8, int16, int32:
+			return fmt.Sprint("signed ", xx)
+		case int64:
+			return fmt.Sprint("signed64 ", int64(xx))
+		case uint, uint8, uint16, uint32:
+			return fmt.Sprint("unsigned ", xx)
+		case uint64:
+			return fmt.Sprint("unsigned64 ", uint64(xx))
+		case nil:
+			return fmt.Sprint("nil ", xx)
+		}
+		panic("not reached")
 	}
+	println(whatis(100))
+	println(whatis(int64(100)))
+	println(whatis("s"))
+	println(whatis(nil))
+	`, "signed 100\nsigned64 100\ndefault s\nnil <nil>\n")
+	cltest.Expect(t, `
+	import "fmt"
+	func whatis(x interface{}) string {
+		switch xx := x.(type) {
+		default:
+			return fmt.Sprint("default ", xx)
+		}
+		panic("not reached")
+	}
+	println(whatis(100))
+	`, "default 100\n")
+	cltest.Expect(t, `
+	import "fmt"
+	func whatis(x interface{}) string {
+		switch xx := x.(type) {
+		default:
+			return fmt.Sprint("default ", xx)
+		case int, nil:
+			return fmt.Sprint("int or nil ", xx)
+		}
+		panic("not reached")
+	}
+	println(whatis(100))
+	`, "int or nil 100\n")
+	cltest.Expect(t, `
+	import "fmt"
+	func whatis(x interface{}) string {
+		var ok bool
+		_ = ok
+		switch xx := x; xx.(type) {
+		default:
+			return fmt.Sprint("default ", xx)
+		case int:
+			return fmt.Sprint("int ", xx)
+		}
+		panic("not reached")
+	}
+	println(whatis(100))
 	`, "int 100\n")
-	cltest.Expect(t, `
-	v := interface{}(100)
-	switch t := v.(type) {
-	default:
-		println("default", t)
-	case uint:
-		println("uint", t)
-	}
-	`, "default 100\n")
-	cltest.Expect(t, `
-	v := interface{}(100)
-	switch t := v.(type) {
-	default:
-		println("default", t)
-	}
-	`, "default 100\n")
-	cltest.Expect(t, `
-	v := interface{}(100)
-	switch t := v; v.(type) {
-	case uint:
-		println("uint", t)
-	case int:
-		println("int", t)
-	}
-	`, "int 100\n")
-	cltest.Expect(t, `
-	v := interface{}(100)
-	switch t:= v; v.(type) {
-	default:
-		println("default", t)
-	case uint:
-		println("uint", t)
-	}
-	`, "default 100\n")
 }
 
 func TestTypeSwitchImpossible(t *testing.T) {
