@@ -612,6 +612,9 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 	for _, item := range v.Body.List {
 		c, _ := item.(*ast.CaseClause)
 		if c.List == nil {
+			if defaultStmt != nil {
+				log.Panicf("multiple defaults in switch")
+			}
 			defaultStmt = buildTypeSwitchStmtDefault(ctx, c, vExpr, xExpr, hasValue)
 			continue
 		}

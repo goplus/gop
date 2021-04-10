@@ -1925,6 +1925,21 @@ func TestTypeSwitchStmt(t *testing.T) {
 	`, "int 100\n")
 }
 
+func TestTypeSwitchStmtMultipeDefaults(t *testing.T) {
+	cltest.Expect(t, `
+	func whatis(x interface{}) string {
+		switch x.(type) {
+		default:
+			return "default"
+		default: 
+			return "default 2"
+		}
+		return ""
+	}
+	whatis(100)	
+	`, "", "multiple defaults in switch")
+}
+
 func TestTypeSwitchImpossible(t *testing.T) {
 	cltest.Expect(t, `
 	import "bytes"
