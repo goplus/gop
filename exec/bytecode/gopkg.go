@@ -361,10 +361,9 @@ func (p *GoPackage) registerDynamicType(typ reflect.Type) {
 	}
 	if typ.Kind() == reflect.Struct {
 		typ := reflect.PtrTo(typ)
-		name := "*" + typ.Name()
 		for i := 0; i < typ.NumMethod(); i++ {
 			method := typ.Method(i)
-			fnName := "(" + name + ")" + method.Name
+			fnName := "(*" + name + ")." + method.Name
 			p.registerMethod(fnName, typ, method.Name, method.Func, method.Type)
 		}
 	}
