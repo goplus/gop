@@ -270,7 +270,6 @@ func toExternalType(ctx *blockCtx, v *ast.SelectorExpr) iType {
 			}
 		}
 	}
-	log.Println("---->ctx", v)
 	panic("toExternalType: todo")
 }
 
