@@ -2311,6 +2311,42 @@ func TestBadUnsafe(t *testing.T) {
 	`, "", "invalid expression unsafe.Offsetof(1)")
 }
 
+func TestInterface(t *testing.T) {
+	cltest.Expect(t, `
+	import (
+		"log"
+		"bytes"
+	)
+	type Logger interface {
+		Printf(fmt string, v ...interface{}) 
+	}
+	var buf bytes.Buffer
+	var i Logger = log.New(&buf,"",0)
+	i.Printf("%v-%v-%v",100,nil,200)
+	println(buf.String())
+	`, "100--200\n\n")
+	cltest.Expect(t, `
+	import (
+		"fmt"
+		"sync"
+	)
+	type Map interface {
+		Load(key interface{}) (value interface{}, ok bool)
+		Store(key, value interface{})
+	}
+	var m Map = new(sync.Map)
+	m.Store(1, 123)
+	v, ok := m.Load(1)
+	fmt.Println(v, ok)
+	m.Store(1, nil)
+	v, ok = m.Load(1)
+	fmt.Println(v, ok)
+	m.Store(nil, 123)
+	v, ok = m.Load(nil)
+	fmt.Println(v, ok)
+	`, "123 true\n<nil> true\n123 true\n")
+}
+
 func TestTypeAssert(t *testing.T) {
 	cltest.Expect(t, `
 	func test(v interface{}) {
@@ -2318,6 +2354,17 @@ func TestTypeAssert(t *testing.T) {
 	}
 	test(true)
 	`, "true\n")
+	cltest.Expect(t, `
+	import "bytes"
+	type Stringer interface {
+		String() string
+	}
+	func test(v Stringer) {
+		println(v.String())
+	}
+	buf := bytes.NewBuffer([]byte("hello"))
+	test(buf)
+	`, "hello\n")
 	cltest.Expect(t, `
 	import (
 		"bytes"
@@ -2341,17 +2388,6 @@ func TestTypeAssert(t *testing.T) {
 		fmt.Println("unknown type %T\n",v)
 	}
 	`, "hello world\n")
-	cltest.Expect(t, `
-	import "bytes"
-	type Stringer interface {
-		String() string
-	}
-	func test(v Stringer) {
-		println(v.String())
-	}
-	buf := bytes.NewBuffer([]byte("hello"))
-	test(buf)
-	`, "hello\n")
 	cltest.Expect(t, `
 	import "bytes"
 	type Stringer interface {
