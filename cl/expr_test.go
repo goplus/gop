@@ -2319,6 +2319,29 @@ func TestTypeAssert(t *testing.T) {
 	test(true)
 	`, "true\n")
 	cltest.Expect(t, `
+	import (
+		"bytes"
+		"fmt"
+	)
+	type B interface {
+		WriteString(s string) (n int, err error)
+	}
+	type T interface {
+		B
+		String() string
+	}
+	b := new(bytes.Buffer)
+	b.WriteString("hello")
+	var t T = b
+	t.WriteString(" world")
+	switch v := t.(type) {
+	case fmt.Stringer:
+		fmt.Println(v)
+	default:
+		fmt.Println("unknown type %T\n",v)
+	}
+	`, "hello world\n")
+	cltest.Expect(t, `
 	import "bytes"
 	type Stringer interface {
 		String() string
