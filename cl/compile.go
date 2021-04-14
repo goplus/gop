@@ -204,6 +204,7 @@ func NewPackageEx(out exec.Builder, pkg *ast.Package, fset *token.FileSet, act P
 		out.Return(-1)
 	}
 	ctxPkg.resolveFuncs()
+
 	p.syms = ctx.syms
 	return
 }
@@ -271,6 +272,15 @@ func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 		default:
 			log.Panicln("gopkg.Package.load: unknown decl -", reflect.TypeOf(decl))
 		}
+	}
+	for typ, decl := range ctx.types {
+		var infos []exec.FuncInfo
+		for _, mfun := range decl.Methods {
+			ctx.use(mfun)
+			infos = append(infos, mfun.Get())
+		}
+		typ2 := ctx.out.MethodOf(typ, infos)
+		decl.Type = typ2
 	}
 }
 
@@ -441,6 +451,14 @@ func registerInterface(pkg *bytecode.GoPackage, typ reflect.Type) {
 		fnName := "(" + name + ")." + method.Name
 		registerInterfaceMethod(pkg, fnName, typ, method.Name, method.Func, method.Type)
 	}
+	if typ.Kind() == reflect.Struct {
+		typ = reflect.PtrTo(typ)
+		for i := 0; i < typ.NumMethod(); i++ {
+			method := typ.Method(i)
+			fnName := "(*" + name + ")." + method.Name
+			registerInterfaceMethod(pkg, fnName, typ, method.Name, method.Func, method.Type)
+		}
+	}
 }
 
 func registerInterfaceMethod(p *bytecode.GoPackage, fnname string, t reflect.Type, name string, fun reflect.Value, typ reflect.Type) (addr uint32, kind exec.SymbolKind) {
@@ -488,7 +506,8 @@ func registerInterfaceMethod(p *bytecode.GoPackage, fnname string, t reflect.Typ
 		}
 		var out []reflect.Value
 		if fun.IsValid() {
-			out = fun.Call(in)
+			//out = fun.Call(in)
+			out = in[0].MethodByName(name).Call(in[1:])
 		} else {
 			out = in[0].MethodByName(name).Call(in[1:])
 		}

@@ -386,6 +386,7 @@ func (p *Builder) DefineFunc(fun *FuncInfo) *Builder {
 		p.funcs[fun] = len(p.code.funs)
 		p.code.funs = append(p.code.funs, fun)
 	}
+	log.Println("----> DefineFunc", fun)
 	return p
 }
 

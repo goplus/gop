@@ -266,6 +266,8 @@ type Builder interface {
 	// DefineType name string,reflect.Typeinstr
 	DefineType(typ reflect.Type, name string) Builder
 
+	MethodOf(typ reflect.Type, infos []FuncInfo) reflect.Type
+
 	// Return instr
 	Return(n int32) Builder
 

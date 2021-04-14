@@ -314,6 +314,7 @@ func (p *iBuilder) InCurrentCtx(v exec.Var) bool {
 
 // LoadVar instr
 func (p *iBuilder) LoadVar(v exec.Var) exec.Builder {
+	log.Println("~~~~~~~~")
 	((*Builder)(p)).LoadVar(v.(*Var))
 	return p
 }
@@ -522,6 +523,10 @@ func (p *iBuilder) DefineBlock() exec.Builder {
 // EndBlock
 func (p *iBuilder) EndBlock() exec.Builder {
 	return p
+}
+
+func (p *iBuilder) MethodOf(typ reflect.Type, infos []exec.FuncInfo) reflect.Type {
+	return ((*Builder)(p)).MethodOf(typ, infos)
 }
 
 // -----------------------------------------------------------------------------

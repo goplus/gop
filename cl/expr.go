@@ -1463,6 +1463,7 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 			log.Panicln("compileSelectorExpr: unknown nonValue -", reflect.TypeOf(nv))
 		}
 	case *goValue:
+		log.Println("-------> govalue", vx.t, vx.t.NumMethod())
 		n, t := countPtr(vx.t)
 		autoCall := false
 		name := v.Sel.Name

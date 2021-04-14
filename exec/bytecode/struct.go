@@ -180,7 +180,7 @@ func makeStruct(typStruct reflect.Type, arity int, p *Context) {
 		ptr = true
 		typStruct = typStruct.Elem()
 	}
-	v := reflect.New(typStruct).Elem()
+	v := reflectx.New(typStruct).Elem()
 	for i := 0; i < n; i += 2 {
 		index := args[i].(int)
 		reflectx.SetValue(reflectx.Field(v, index), reflect.ValueOf(args[i+1]))
