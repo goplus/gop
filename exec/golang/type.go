@@ -173,7 +173,7 @@ func Type(p *Builder, typ reflect.Type, actualTypes ...bool) ast.Expr {
 	}
 	log.Debug(typ, "-", "pkgPath:", pkgPath, "name:", name)
 	if name != "" && !p.IsUserType(typ) {
-		if pkgPath != "" {
+		if pkgPath != "" && pkgPath != p.pkgName {
 			pkg := p.Import(pkgPath)
 			return &ast.SelectorExpr{X: Ident(pkg), Sel: Ident(name)}
 		}
