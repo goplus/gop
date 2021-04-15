@@ -143,6 +143,19 @@ func (ctx *Context) Call(f exec.FuncInfo) {
 	fun.exec(ctx, ctx.getScope(fun.nestDepth > 1))
 }
 
+func (ctx *Context) Callv(f exec.FuncInfo, arity uint32) {
+	fun := (*FuncInfo)(f.(*iFuncInfo))
+	parent := ctx.getScope(fun.nestDepth > 1)
+	if arity == bitsFuncvArityVar {
+		fun.exec(ctx, parent)
+	} else {
+		if arity == bitsFuncvArityMax {
+			arity = uint32(ctx.Pop().(int) + bitsFuncvArityMax)
+		}
+		fun.execVariadic(arity, ctx, parent)
+	}
+}
+
 // -----------------------------------------------------------------------------
 
 // Closure represents a Go+ closure.

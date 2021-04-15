@@ -573,15 +573,18 @@ func registerTypeMethods(pkg *bytecode.GoPackage, typ reflect.Type, imap map[str
 }
 
 func registerTypeMethod(p *bytecode.GoPackage, fnname string, fun reflect.Value, fi exec.FuncInfo) (addr uint32, kind exec.SymbolKind) {
-	fnExec := func(i int, p *bytecode.Context) {
-		p.Call(fi)
-	}
 	if fi.IsVariadic() {
+		fnExec := func(i int, p *bytecode.Context) {
+			p.Callv(fi, uint32(i))
+		}
 		info := p.Funcv(fnname, fun.Interface(), fnExec)
 		base := p.RegisterFuncvs(info)
 		addr = uint32(base)
 		kind = exec.SymbolFuncv
 	} else {
+		fnExec := func(i int, p *bytecode.Context) {
+			p.Call(fi)
+		}
 		info := p.Func(fnname, fun.Interface(), fnExec)
 		base := p.RegisterFuncs(info)
 		addr = uint32(base)
