@@ -20,7 +20,6 @@ package bytecode
 import (
 	"bufio"
 	"io"
-	"log"
 	"reflect"
 	"strconv"
 
@@ -240,22 +239,22 @@ var instrInfos = []InstrInfo{
 
 // A Code represents generated instructions to execute.
 type Code struct {
-	data       []Instr
-	valConsts  []interface{}
-	funs       []*FuncInfo
-	funvs      []*FuncInfo
-	comprehens []*Comprehension
-	fors       []*ForPhrase
-	types      []reflect.Type
-	methods    []*Method
-	structs    []StructInfo
-	errWraps   []errWrap
+	data        []Instr
+	valConsts   []interface{}
+	funs        []*FuncInfo
+	funvs       []*FuncInfo
+	comprehens  []*Comprehension
+	fors        []*ForPhrase
+	types       []reflect.Type
+	structs     []StructInfo
+	errWraps    []errWrap
+	typeMethods map[reflect.Type][]*MethodInfo
 	varManager
 }
 
 // NewCode returns a new Code object.
 func NewCode() *Code {
-	return &Code{data: make([]Instr, 0, 64)}
+	return &Code{data: make([]Instr, 0, 64), typeMethods: make(map[reflect.Type][]*MethodInfo)}
 }
 
 // Len returns code length.
@@ -358,134 +357,81 @@ func extractFuncType(typ reflect.Type) reflect.Type {
 }
 
 func (p *Builder) MethodOf(typ reflect.Type, infos []exec.FuncInfo) reflect.Type {
+	if typ.Kind() == reflect.Interface {
+		return typ
+	}
 	pkg := FindGoPackage(typ.PkgPath())
 	if pkg == nil {
 		pkg = NewGoPackage(typ.PkgPath())
 	}
-	return p.RegisterMethods(pkg.(*GoPackage), typ, infos)
+	return p.methodOf(pkg.(*GoPackage), typ, infos)
 }
 
-type Method struct {
+type MethodInfo struct {
 	fi  *FuncInfo
 	typ reflect.Type
 	fun func([]reflect.Value) []reflect.Value
+	ptr bool
 }
 
-func (p *Builder) RegisterMethods(pkg *GoPackage, typ reflect.Type, infos []exec.FuncInfo) reflect.Type {
+func (p *Builder) methodOf(pkg *GoPackage, typ reflect.Type, infos []exec.FuncInfo) reflect.Type {
+	imap := make(map[string]*MethodInfo)
 	var methods []reflectx.Method
-	for i, fun := range infos {
+	var minfos []*MethodInfo
+	for _, fun := range infos {
 		fi := (*FuncInfo)(fun.(*iFuncInfo))
 		ftyp := extractFuncType(fi.Type())
-		method := &Method{fi, ftyp, nil}
-		name := fi.name
-		n := i
-		m := reflectx.MakeMethod(fi.name, fi.in[0] != typ, ftyp, func(args []reflect.Value) []reflect.Value {
-			log.Println("-----> invoke", n, method.fi.name, name)
-			return method.fun(args)
-			return []reflect.Value{reflect.ValueOf("hello world")}
+		ptr := fi.in[0].Kind() == reflect.Ptr
+		mi := &MethodInfo{fi: fi, typ: ftyp, ptr: ptr}
+		m := reflectx.MakeMethod(fi.name, ptr, ftyp, func(args []reflect.Value) []reflect.Value {
+			return mi.fun(args)
 		})
-		p.code.methods = append(p.code.methods, method)
+		imap[fi.name] = mi
+		minfos = append(minfos, mi)
 		methods = append(methods, m)
 	}
-	typ2 := reflectx.MethodOf(typ, methods)
-	log.Println("=====> init", typ2.NumMethod())
-	i := (opTypeMethod << bitsOpShift) | p.requireType(typ2)
+	typ = reflectx.MethodOf(typ, methods)
+	registerTypeMethods(pkg, typ, imap)
+
+	p.code.typeMethods[typ] = minfos
+	i := (opTypeMethod << bitsOpShift) | p.requireType(typ)
 	p.code.data = append(p.code.data, i)
-	registerInterface(pkg, typ2, infos)
-	return typ2
+	return typ
 }
 
-func registerInterface(pkg *GoPackage, typ reflect.Type, infos []exec.FuncInfo) {
-	log.Println("-----> register", typ, typ.NumMethod())
+func registerTypeMethods(pkg *GoPackage, typ reflect.Type, imap map[string]*MethodInfo) {
 	name := typ.Name()
 	for i := 0; i < typ.NumMethod(); i++ {
 		method := typ.Method(i)
 		fnName := "(" + name + ")." + method.Name
-		registerInterfaceMethod(pkg, fnName, typ, method.Name, method.Func, method.Type, infos, false)
+		m := imap[method.Name]
+		registerTypeMethod(pkg, fnName, method.Func, m.fi)
 	}
 	if typ.Kind() == reflect.Struct {
 		typ = reflect.PtrTo(typ)
 		for i := 0; i < typ.NumMethod(); i++ {
 			method := typ.Method(i)
+			m := imap[method.Name]
+			if !m.ptr {
+				continue
+			}
 			fnName := "(*" + name + ")." + method.Name
-			registerInterfaceMethod(pkg, fnName, typ, method.Name, method.Func, method.Type, infos, true)
+			registerTypeMethod(pkg, fnName, method.Func, m.fi)
 		}
 	}
 }
 
-func registerInterfaceMethod(p *GoPackage, fnname string, t reflect.Type, name string, fun reflect.Value, typ reflect.Type, infos []exec.FuncInfo, ptr bool) (addr uint32, kind exec.SymbolKind) {
-	log.Println("--> reg", fnname, name)
-	var tin []reflect.Type
-	var fnInterface interface{}
-	isVariadic := typ.IsVariadic()
-	numIn := typ.NumIn()
-	numOut := typ.NumOut()
-	var arity int
-	if fun.IsValid() { // type method
-		tin = make([]reflect.Type, numIn)
-		for i := 0; i < numIn; i++ {
-			tin[i] = typ.In(i)
-		}
-		fnInterface = fun.Interface()
-		arity = numIn
-	} else { // interface method
-		tin = make([]reflect.Type, numIn+1)
-		tin[0] = t
-		for i := 1; i < numIn+1; i++ {
-			tin[i] = typ.In(i - 1)
-		}
-		tout := make([]reflect.Type, numOut)
-		for i := 0; i < numOut; i++ {
-			tout[i] = typ.Out(i)
-		}
-		typFunc := reflect.FuncOf(tin, tout, isVariadic)
-		fnInterface = reflect.Zero(typFunc).Interface()
-		arity = numIn + 1
-	}
+func registerTypeMethod(p *GoPackage, fnname string, fun reflect.Value, fi *FuncInfo) (addr uint32, kind exec.SymbolKind) {
 	fnExec := func(i int, p *Context) {
-		if isVariadic {
-			arity = i
-		}
-		args := p.GetArgs(arity)
-		in := make([]reflect.Value, arity)
-		for i, arg := range args {
-			if arg != nil {
-				in[i] = reflect.ValueOf(arg)
-			} else if i >= numIn {
-				in[i] = reflect.Zero(tin[numIn-1])
-			} else {
-				in[i] = reflect.Zero(tin[i])
-			}
-		}
-		var out []reflect.Value
-		if fun.IsValid() {
-			//out = fun.Call(in)
-			//log.Println("--------> fun call", fun.Type(), name, ptr, in[0].NumMethod(), args)
-			// if ptr {
-			// 	in[0].Addr().MethodByName(name).Call(in[1:])
-			// } else {
-			reflectx.StoreMethodValue(in[0])
-			in[0].MethodByName(name).Call(in[1:])
-			numOut = 0
-			// }
-		} else {
-			out = in[0].MethodByName(name).Call(in[1:])
-		}
-		if numOut > 0 {
-			iout := make([]interface{}, numOut)
-			for i := 0; i < numOut; i++ {
-				iout[i] = out[i].Interface()
-			}
-			p.Ret(arity, iout...)
-		}
+		p.Call((*iFuncInfo)(fi))
 	}
-	if isVariadic {
-		info := p.Funcv(fnname, fnInterface, fnExec)
+	if fi.IsVariadic() {
+		info := p.Funcv(fnname, fun.Interface(), fnExec)
 		base := p.RegisterFuncvs(info)
 		addr = uint32(base)
 		kind = exec.SymbolFuncv
 	} else {
-		info := p.Func(fnname, fnInterface, fnExec)
+		info := p.Func(fnname, fun.Interface(), fnExec)
 		base := p.RegisterFuncs(info)
 		addr = uint32(base)
 		kind = exec.SymbolFunc

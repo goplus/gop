@@ -84,7 +84,6 @@ func (p *pkgCtx) resolveFuncs() {
 		}
 		f := p.usedfns[n-1]
 		p.usedfns = p.usedfns[:n-1]
-		log.Println("=======> resolveFuncs", f.fi.Name())
 		f.Compile()
 	}
 }

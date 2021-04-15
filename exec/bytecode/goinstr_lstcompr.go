@@ -192,35 +192,18 @@ func makeMap(typMap reflect.Type, arity int, p *Context) {
 
 func execTypeMethod(i Instr, p *Context) {
 	typ := getType(i&bitsOpTypeAssertShiftOperand, p)
-	log.Println("=====> execTypeMethod", p.code.types, typ, p.code.funs)
-	for i := 0; i < len(p.code.methods); i++ {
-		m := p.code.methods[i]
-		log.Println("execTypeMethod", m.fi.name, m.fi.Type(), m.typ)
+	ms := p.code.typeMethods[typ]
+	for i := 0; i < len(ms); i++ {
+		m := ms[i]
+		numOut := m.typ.NumOut()
 		m.fun = func(args []reflect.Value) (out []reflect.Value) {
-			log.Println("-------> call", m.fi.name)
 			m.fi.exec(p, p.getScope(m.fi.nestDepth > 1))
-			//m.fi.execFunc(p)
-			//log.Println("-------> End", p.Get(-1))
-			for i := 0; i < m.typ.NumOut(); i++ {
-				out = append(out, reflect.ValueOf(p.Get(-i-1)))
+			for i := 0; i < numOut; i++ {
+				out = append(out, reflect.ValueOf(p.Get(i-numOut)))
 			}
-			return //[]reflect.Value{reflect.ValueOf(p.Get(-1))}
+			return
 		}
 	}
-
-	// for i := 0; i < typ.NumMethod(); i++ {
-	// 	log.Println("typ", typ.Method(i))
-	// }
-	// typ = reflect.PtrTo(typ)
-	// for i := 0; i < typ.NumMethod(); i++ {
-	// 	m := typ.Method(i)
-	// 	log.Println("typ", m.Name, m.Func)
-	// 	fn := func(args []reflect.Value) []reflect.Value {
-	// 		log.Println("call", m.Name)
-	// 		return nil
-	// 	}
-	// 	m.Func = reflect.ValueOf(fn)
-	// }
 }
 
 func execTypeAssert(i Instr, p *Context) {

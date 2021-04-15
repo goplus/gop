@@ -314,7 +314,6 @@ func (p *iBuilder) InCurrentCtx(v exec.Var) bool {
 
 // LoadVar instr
 func (p *iBuilder) LoadVar(v exec.Var) exec.Builder {
-	log.Println("~~~~~~~~")
 	((*Builder)(p)).LoadVar(v.(*Var))
 	return p
 }
