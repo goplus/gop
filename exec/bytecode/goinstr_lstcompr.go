@@ -191,13 +191,13 @@ func makeMap(typMap reflect.Type, arity int, p *Context) {
 }
 
 func execTypeMethod(i Instr, p *Context) {
-	typ := getType(i&bitsOpTypeAssertShiftOperand, p)
+	typ := getType(i&bitsOperand, p)
 	ms := p.code.typeMethods[typ]
 	for i := 0; i < len(ms); i++ {
 		m := ms[i]
-		numOut := m.typ.NumOut()
-		m.fun = func(args []reflect.Value) (out []reflect.Value) {
-			m.fi.exec(p, p.getScope(m.fi.nestDepth > 1))
+		numOut := m.Info.NumOut()
+		m.Func = func(args []reflect.Value) (out []reflect.Value) {
+			p.Call(m.Info)
 			for i := 0; i < numOut; i++ {
 				out = append(out, reflect.ValueOf(p.Get(i-numOut)))
 			}

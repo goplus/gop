@@ -23,8 +23,6 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/goplus/reflectx"
-
 	"github.com/goplus/gop/exec.spec"
 )
 
@@ -248,13 +246,13 @@ type Code struct {
 	types       []reflect.Type
 	structs     []StructInfo
 	errWraps    []errWrap
-	typeMethods map[reflect.Type][]*MethodInfo
+	typeMethods map[reflect.Type][]*exec.MethodInfo
 	varManager
 }
 
 // NewCode returns a new Code object.
 func NewCode() *Code {
-	return &Code{data: make([]Instr, 0, 64), typeMethods: make(map[reflect.Type][]*MethodInfo)}
+	return &Code{data: make([]Instr, 0, 64), typeMethods: make(map[reflect.Type][]*exec.MethodInfo)}
 }
 
 // Len returns code length.
@@ -342,101 +340,10 @@ func (p *Builder) Reserve() Reserved {
 	return Reserved(idx)
 }
 
-func extractFuncType(typ reflect.Type) reflect.Type {
-	numIn := typ.NumIn()
-	numOut := typ.NumOut()
-	in := make([]reflect.Type, numIn-1)
-	out := make([]reflect.Type, numOut)
-	for i := 1; i < numIn; i++ {
-		in[i-1] = typ.In(i)
-	}
-	for i := 0; i < numOut; i++ {
-		out[i] = typ.Out(i)
-	}
-	return reflect.FuncOf(in, out, typ.IsVariadic())
-}
-
-func (p *Builder) MethodOf(typ reflect.Type, infos []exec.FuncInfo) reflect.Type {
-	if typ.Kind() == reflect.Interface {
-		return typ
-	}
-	pkg := FindGoPackage(typ.PkgPath())
-	if pkg == nil {
-		pkg = NewGoPackage(typ.PkgPath())
-	}
-	return p.methodOf(pkg.(*GoPackage), typ, infos)
-}
-
-type MethodInfo struct {
-	fi  *FuncInfo
-	typ reflect.Type
-	fun func([]reflect.Value) []reflect.Value
-	ptr bool
-}
-
-func (p *Builder) methodOf(pkg *GoPackage, typ reflect.Type, infos []exec.FuncInfo) reflect.Type {
-	imap := make(map[string]*MethodInfo)
-	var methods []reflectx.Method
-	var minfos []*MethodInfo
-	for _, fun := range infos {
-		fi := (*FuncInfo)(fun.(*iFuncInfo))
-		ftyp := extractFuncType(fi.Type())
-		ptr := fi.in[0].Kind() == reflect.Ptr
-		mi := &MethodInfo{fi: fi, typ: ftyp, ptr: ptr}
-		m := reflectx.MakeMethod(fi.name, ptr, ftyp, func(args []reflect.Value) []reflect.Value {
-			return mi.fun(args)
-		})
-		imap[fi.name] = mi
-		minfos = append(minfos, mi)
-		methods = append(methods, m)
-	}
-	typ = reflectx.MethodOf(typ, methods)
-	registerTypeMethods(pkg, typ, imap)
-
-	p.code.typeMethods[typ] = minfos
+func (p *Builder) MethodOf(typ reflect.Type, infos []*exec.MethodInfo) {
+	p.code.typeMethods[typ] = infos
 	i := (opTypeMethod << bitsOpShift) | p.requireType(typ)
 	p.code.data = append(p.code.data, i)
-	return typ
-}
-
-func registerTypeMethods(pkg *GoPackage, typ reflect.Type, imap map[string]*MethodInfo) {
-	name := typ.Name()
-	for i := 0; i < typ.NumMethod(); i++ {
-		method := typ.Method(i)
-		fnName := "(" + name + ")." + method.Name
-		m := imap[method.Name]
-		registerTypeMethod(pkg, fnName, method.Func, m.fi)
-	}
-	if typ.Kind() == reflect.Struct {
-		typ = reflect.PtrTo(typ)
-		for i := 0; i < typ.NumMethod(); i++ {
-			method := typ.Method(i)
-			m := imap[method.Name]
-			if !m.ptr {
-				continue
-			}
-			fnName := "(*" + name + ")." + method.Name
-			registerTypeMethod(pkg, fnName, method.Func, m.fi)
-		}
-	}
-}
-
-func registerTypeMethod(p *GoPackage, fnname string, fun reflect.Value, fi *FuncInfo) (addr uint32, kind exec.SymbolKind) {
-	fnExec := func(i int, p *Context) {
-		p.Call((*iFuncInfo)(fi))
-	}
-	if fi.IsVariadic() {
-		info := p.Funcv(fnname, fun.Interface(), fnExec)
-		base := p.RegisterFuncvs(info)
-		addr = uint32(base)
-		kind = exec.SymbolFuncv
-	} else {
-		info := p.Func(fnname, fun.Interface(), fnExec)
-		base := p.RegisterFuncs(info)
-		addr = uint32(base)
-		kind = exec.SymbolFunc
-	}
-	return
 }
 
 // -----------------------------------------------------------------------------

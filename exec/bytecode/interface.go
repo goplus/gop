@@ -524,8 +524,9 @@ func (p *iBuilder) EndBlock() exec.Builder {
 	return p
 }
 
-func (p *iBuilder) MethodOf(typ reflect.Type, infos []exec.FuncInfo) reflect.Type {
-	return ((*Builder)(p)).MethodOf(typ, infos)
+func (p *iBuilder) MethodOf(typ reflect.Type, infos []*exec.MethodInfo) exec.Builder {
+	((*Builder)(p)).MethodOf(typ, infos)
+	return p
 }
 
 // -----------------------------------------------------------------------------

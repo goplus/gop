@@ -273,14 +273,26 @@ func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 			log.Panicln("gopkg.Package.load: unknown decl -", reflect.TypeOf(decl))
 		}
 	}
+	pkg := bytecode.FindGoPackage(ctx.pkg.Name)
+	if pkg == nil {
+		pkg = bytecode.NewGoPackage(ctx.pkg.Name)
+	}
 	for typ, decl := range ctx.types {
+		if typ.Kind() == reflect.Interface {
+			registerInterface(pkg.(*bytecode.GoPackage), typ)
+			continue
+		}
 		var infos []exec.FuncInfo
 		for _, mfun := range decl.Methods {
 			ctx.use(mfun)
 			infos = append(infos, mfun.Get())
 		}
-		typ2 := ctx.out.MethodOf(typ, infos)
-		decl.Type = typ2
+		if len(infos) == 0 {
+			continue
+		}
+		mtyp, minfo := registerMethods(pkg.(*bytecode.GoPackage), typ, infos)
+		ctx.out.MethodOf(typ, minfo)
+		decl.Type = mtyp
 	}
 }
 
@@ -317,13 +329,6 @@ func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
 	}
 	t := toType(ctx, spec.Type).(reflect.Type)
 	typ := reflectx.NamedTypeOf(ctx.pkg.Name, spec.Name.Name, t)
-	if t.Kind() == reflect.Interface {
-		pkg := bytecode.FindGoPackage(ctx.pkg.Name)
-		if pkg == nil {
-			pkg = bytecode.NewGoPackage(ctx.pkg.Name)
-		}
-		registerInterface(pkg.(*bytecode.GoPackage), typ)
-	}
 	ctx.out.DefineType(typ, spec.Name.Name)
 
 	tDecl := &typeDecl{
@@ -449,46 +454,28 @@ func registerInterface(pkg *bytecode.GoPackage, typ reflect.Type) {
 	for i := 0; i < typ.NumMethod(); i++ {
 		method := typ.Method(i)
 		fnName := "(" + name + ")." + method.Name
-		registerInterfaceMethod(pkg, fnName, typ, method.Name, method.Func, method.Type)
-	}
-	if typ.Kind() == reflect.Struct {
-		typ = reflect.PtrTo(typ)
-		for i := 0; i < typ.NumMethod(); i++ {
-			method := typ.Method(i)
-			fnName := "(*" + name + ")." + method.Name
-			registerInterfaceMethod(pkg, fnName, typ, method.Name, method.Func, method.Type)
-		}
+		registerInterfaceMethod(pkg, fnName, typ, method.Name, method.Type)
 	}
 }
 
-func registerInterfaceMethod(p *bytecode.GoPackage, fnname string, t reflect.Type, name string, fun reflect.Value, typ reflect.Type) (addr uint32, kind exec.SymbolKind) {
+func registerInterfaceMethod(p *bytecode.GoPackage, fnname string, t reflect.Type, name string, typ reflect.Type) (addr uint32, kind exec.SymbolKind) {
 	var tin []reflect.Type
 	var fnInterface interface{}
 	isVariadic := typ.IsVariadic()
 	numIn := typ.NumIn()
 	numOut := typ.NumOut()
-	var arity int
-	if fun.IsValid() { // type method
-		tin = make([]reflect.Type, numIn)
-		for i := 0; i < numIn; i++ {
-			tin[i] = typ.In(i)
-		}
-		fnInterface = fun.Interface()
-		arity = numIn
-	} else { // interface method
-		tin = make([]reflect.Type, numIn+1)
-		tin[0] = t
-		for i := 1; i < numIn+1; i++ {
-			tin[i] = typ.In(i - 1)
-		}
-		tout := make([]reflect.Type, numOut)
-		for i := 0; i < numOut; i++ {
-			tout[i] = typ.Out(i)
-		}
-		typFunc := reflect.FuncOf(tin, tout, isVariadic)
-		fnInterface = reflect.Zero(typFunc).Interface()
-		arity = numIn + 1
+	tin = make([]reflect.Type, numIn+1)
+	tin[0] = t
+	for i := 1; i < numIn+1; i++ {
+		tin[i] = typ.In(i - 1)
 	}
+	tout := make([]reflect.Type, numOut)
+	for i := 0; i < numOut; i++ {
+		tout[i] = typ.Out(i)
+	}
+	typFunc := reflect.FuncOf(tin, tout, isVariadic)
+	fnInterface = reflect.Zero(typFunc).Interface()
+	arity := numIn + 1
 	fnExec := func(i int, p *bytecode.Context) {
 		if isVariadic {
 			arity = i
@@ -505,12 +492,7 @@ func registerInterfaceMethod(p *bytecode.GoPackage, fnname string, t reflect.Typ
 			}
 		}
 		var out []reflect.Value
-		if fun.IsValid() {
-			//out = fun.Call(in)
-			out = in[0].MethodByName(name).Call(in[1:])
-		} else {
-			out = in[0].MethodByName(name).Call(in[1:])
-		}
+		out = in[0].MethodByName(name).Call(in[1:])
 		if numOut > 0 {
 			iout := make([]interface{}, numOut)
 			for i := 0; i < numOut; i++ {
@@ -526,6 +508,81 @@ func registerInterfaceMethod(p *bytecode.GoPackage, fnname string, t reflect.Typ
 		kind = exec.SymbolFuncv
 	} else {
 		info := p.Func(fnname, fnInterface, fnExec)
+		base := p.RegisterFuncs(info)
+		addr = uint32(base)
+		kind = exec.SymbolFunc
+	}
+	return
+}
+
+func extractFuncType(typ reflect.Type) reflect.Type {
+	numIn := typ.NumIn()
+	numOut := typ.NumOut()
+	in := make([]reflect.Type, numIn-1)
+	out := make([]reflect.Type, numOut)
+	for i := 1; i < numIn; i++ {
+		in[i-1] = typ.In(i)
+	}
+	for i := 0; i < numOut; i++ {
+		out[i] = typ.Out(i)
+	}
+	return reflect.FuncOf(in, out, typ.IsVariadic())
+}
+
+func registerMethods(pkg *bytecode.GoPackage, typ reflect.Type, infos []exec.FuncInfo) (reflect.Type, []*exec.MethodInfo) {
+	imap := make(map[string]*exec.MethodInfo)
+	var methods []reflectx.Method
+	var minfos []*exec.MethodInfo
+	for _, fi := range infos {
+		ftyp := fi.Type()
+		mtyp := extractFuncType(ftyp)
+		ptr := ftyp.In(0).Kind() == reflect.Ptr
+		mi := &exec.MethodInfo{Info: fi}
+		m := reflectx.MakeMethod(fi.Name(), ptr, mtyp, func(args []reflect.Value) []reflect.Value {
+			return mi.Func(args)
+		})
+		imap[fi.Name()] = mi
+		minfos = append(minfos, mi)
+		methods = append(methods, m)
+	}
+	typ = reflectx.MethodOf(typ, methods)
+	registerTypeMethods(pkg, typ, imap)
+	return typ, minfos
+}
+
+func registerTypeMethods(pkg *bytecode.GoPackage, typ reflect.Type, imap map[string]*exec.MethodInfo) {
+	name := typ.Name()
+	skip := make(map[string]bool)
+	for i := 0; i < typ.NumMethod(); i++ {
+		method := typ.Method(i)
+		fnName := "(" + name + ")." + method.Name
+		m := imap[method.Name]
+		skip[method.Name] = true
+		registerTypeMethod(pkg, fnName, method.Func, m.Info)
+	}
+	typ = reflect.PtrTo(typ)
+	for i := 0; i < typ.NumMethod(); i++ {
+		method := typ.Method(i)
+		if skip[method.Name] {
+			continue
+		}
+		m := imap[method.Name]
+		fnName := "(*" + name + ")." + method.Name
+		registerTypeMethod(pkg, fnName, method.Func, m.Info)
+	}
+}
+
+func registerTypeMethod(p *bytecode.GoPackage, fnname string, fun reflect.Value, fi exec.FuncInfo) (addr uint32, kind exec.SymbolKind) {
+	fnExec := func(i int, p *bytecode.Context) {
+		p.Call(fi)
+	}
+	if fi.IsVariadic() {
+		info := p.Funcv(fnname, fun.Interface(), fnExec)
+		base := p.RegisterFuncvs(info)
+		addr = uint32(base)
+		kind = exec.SymbolFuncv
+	} else {
+		info := p.Func(fnname, fun.Interface(), fnExec)
 		base := p.RegisterFuncs(info)
 		addr = uint32(base)
 		kind = exec.SymbolFunc
