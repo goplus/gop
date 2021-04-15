@@ -1490,23 +1490,23 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 					}
 				}
 			}
-			if fDecl, ok := ctx.findMethod(t, name); ok {
-				if compileByCallExpr {
-					ctx.infer.Pop()
-					fn := newQlFunc(fDecl)
-					ctx.use(fDecl)
-					ctx.infer.Push(fn)
-					return nil
-				} else {
-					ctx.infer.Pop()
-					decl := funcToClosure(ctx, v, fDecl.typ)
-					ctx.use(decl)
-					ctx.infer.Push(newQlFunc(decl))
-					return func() {
-						ctx.out.GoClosure(decl.fi)
-					}
-				}
-			}
+			// if fDecl, ok := ctx.findMethod(t, name); ok {
+			// 	if compileByCallExpr {
+			// 		ctx.infer.Pop()
+			// 		fn := newQlFunc(fDecl)
+			// 		ctx.use(fDecl)
+			// 		ctx.infer.Push(fn)
+			// 		return nil
+			// 	} else {
+			// 		ctx.infer.Pop()
+			// 		decl := funcToClosure(ctx, v, fDecl.typ)
+			// 		ctx.use(decl)
+			// 		ctx.infer.Push(newQlFunc(decl))
+			// 		return func() {
+			// 			ctx.out.GoClosure(decl.fi)
+			// 		}
+			// 	}
+			// }
 			if call != nil && isUserStruct(t) {
 				if names := findUserStructAnonymous(ctx, t, name); names != nil {
 					ctx.infer.Pop()

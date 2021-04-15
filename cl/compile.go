@@ -265,7 +265,7 @@ func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 			case token.CONST:
 				loadConsts(ctx, d)
 			case token.VAR:
-				compileStmt(ctx, &ast.DeclStmt{decl})
+				// compileStmt(ctx, &ast.DeclStmt{decl})
 			default:
 				log.Panicln("tok:", d.Tok, "spec:", reflect.TypeOf(d.Specs).Elem())
 			}
@@ -293,6 +293,15 @@ func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 		mtyp, minfo := registerMethods(pkg.(*bytecode.GoPackage), typ, infos)
 		ctx.out.MethodOf(typ, minfo)
 		decl.Type = mtyp
+	}
+	for _, decl := range f.Decls {
+		switch d := decl.(type) {
+		case *ast.GenDecl:
+			switch d.Tok {
+			case token.VAR:
+				compileStmt(ctx, &ast.DeclStmt{decl})
+			}
+		}
 	}
 }
 
@@ -530,6 +539,9 @@ func extractFuncType(typ reflect.Type) reflect.Type {
 }
 
 func registerMethods(pkg *bytecode.GoPackage, typ reflect.Type, infos []exec.FuncInfo) (reflect.Type, []*exec.MethodInfo) {
+	if _, ok := pkg.FindType(typ.Name()); !ok {
+		pkg.RegisterTypes(pkg.Type(typ.Name(), typ))
+	}
 	imap := make(map[string]*exec.MethodInfo)
 	var methods []reflectx.Method
 	var minfos []*exec.MethodInfo
