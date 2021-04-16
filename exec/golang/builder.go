@@ -109,8 +109,6 @@ type Builder struct {
 
 func (p *Builder) IsUserType(t reflect.Type) bool {
 	return t.PkgPath() == p.pkgName
-	_, ok := p.types[t]
-	return ok
 }
 
 // NewBuilder creates a new Code Builder instance.
