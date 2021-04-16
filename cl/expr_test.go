@@ -1714,7 +1714,7 @@ func TestEmbeddedMethod(t *testing.T) {
 	buf := Buf{&bytes.Buffer{},1}
 	buf.Write([]byte("hello"))
 	println(buf)
-	`, "{hello 1}\n")
+	`, "hello\n")
 	cltest.Expect(t, `
 	import "reflect"
 	type Value struct {
