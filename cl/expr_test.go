@@ -1675,7 +1675,7 @@ func TestEmbeddedField(t *testing.T) {
 	}
 	buf := &Buf{bytes.NewBufferString("hello")}
 	println(buf)
-	`, "&{hello}\n")
+	`, "hello\n")
 	cltest.Expect(t, `
 	import "reflect"
 	type Value struct {
