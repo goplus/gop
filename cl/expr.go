@@ -25,7 +25,6 @@ import (
 	"github.com/goplus/gop/ast/astutil"
 	"github.com/goplus/gop/exec.spec"
 	"github.com/goplus/gop/token"
-	"github.com/goplus/reflectx"
 	"github.com/qiniu/x/ctype"
 	"github.com/qiniu/x/errors"
 	"github.com/qiniu/x/log"
@@ -1375,16 +1374,16 @@ func findUserStructAnonymous(ctx *blockCtx, t reflect.Type, name string) []strin
 		sf := t.Field(i)
 		if sf.Anonymous {
 			var found bool
-			if isUserStruct(sf.Type) {
-				_, found = ctx.findMethod(sf.Type, name)
-				if !found {
-					if names := findUserStructAnonymous(ctx, sf.Type, name); names != nil {
-						return append([]string{sf.Name}, names...)
-					}
-				}
-			} else {
-				_, found = sf.Type.MethodByName(name)
-			}
+			// if isUserStruct(sf.Type) {
+			// 	_, found = ctx.findMethod(sf.Type, name)
+			// 	if !found {
+			// 		if names := findUserStructAnonymous(ctx, sf.Type, name); names != nil {
+			// 			return append([]string{sf.Name}, names...)
+			// 		}
+			// 	}
+			// } else {
+			_, found = sf.Type.MethodByName(name)
+			// }
 			if found {
 				return []string{sf.Name}
 			}
@@ -1466,65 +1465,65 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 		n, t := countPtr(vx.t)
 		autoCall := false
 		name := v.Sel.Name
-		if t.PkgPath() != "" && ast.IsExported(name) || t.PkgPath() == "" || reflectx.IsNamed(t) {
-			if t.Kind() == reflect.Struct {
-				if sf, ok := t.FieldByName(name); ok {
-					ctx.infer.Ret(1, &goValue{t: sf.Type})
-					if ctx.fieldIndex == nil {
-						ctx.fieldExprX = exprX
-						ctx.fieldStructType = vx.t
-					}
-					ctx.fieldIndex = append(ctx.fieldIndex, sf.Index...)
-					fieldIndex := ctx.fieldIndex
-					fieldExprX := ctx.fieldExprX
-					fieldStructType := ctx.fieldStructType
-					return func() {
-						if fieldExprX != nil {
-							fieldExprX()
-						}
-						if ctx.takeAddr || ctx.checkLoadAddr {
-							ctx.out.AddrField(fieldStructType, fieldIndex)
-						} else {
-							ctx.out.LoadField(fieldStructType, fieldIndex)
-						}
-					}
+		//if t.PkgPath() != "" && ast.IsExported(name) || t.PkgPath() == "" || reflectx.IsNamed(t) {
+		if t.Kind() == reflect.Struct {
+			if sf, ok := t.FieldByName(name); ok {
+				ctx.infer.Ret(1, &goValue{t: sf.Type})
+				if ctx.fieldIndex == nil {
+					ctx.fieldExprX = exprX
+					ctx.fieldStructType = vx.t
 				}
-			}
-			// if fDecl, ok := ctx.findMethod(t, name); ok {
-			// 	if compileByCallExpr {
-			// 		ctx.infer.Pop()
-			// 		fn := newQlFunc(fDecl)
-			// 		ctx.use(fDecl)
-			// 		ctx.infer.Push(fn)
-			// 		return nil
-			// 	} else {
-			// 		ctx.infer.Pop()
-			// 		decl := funcToClosure(ctx, v, fDecl.typ)
-			// 		ctx.use(decl)
-			// 		ctx.infer.Push(newQlFunc(decl))
-			// 		return func() {
-			// 			ctx.out.GoClosure(decl.fi)
-			// 		}
-			// 	}
-			// }
-			if call != nil && isUserStruct(t) {
-				if names := findUserStructAnonymous(ctx, t, name); names != nil {
-					ctx.infer.Pop()
-					x := &ast.SelectorExpr{X: v.X}
-					for i := 0; i < len(names)-1; i++ {
-						x.X = &ast.SelectorExpr{X: x.X, Sel: &ast.Ident{Name: names[i]}}
+				ctx.fieldIndex = append(ctx.fieldIndex, sf.Index...)
+				fieldIndex := ctx.fieldIndex
+				fieldExprX := ctx.fieldExprX
+				fieldStructType := ctx.fieldStructType
+				return func() {
+					if fieldExprX != nil {
+						fieldExprX()
 					}
-					x.Sel = &ast.Ident{Name: names[len(names)-1]}
-					fun := &ast.SelectorExpr{X: x, Sel: v.Sel}
-					call.Fun = fun
-					return compileSelectorExpr(ctx, call, fun, compileByCallExpr)
+					if ctx.takeAddr || ctx.checkLoadAddr {
+						ctx.out.AddrField(fieldStructType, fieldIndex)
+					} else {
+						ctx.out.LoadField(fieldStructType, fieldIndex)
+					}
 				}
 			}
 		}
-		_, toptr, ok := findMethod(t, name)
+		// if fDecl, ok := ctx.findMethod(t, name); ok {
+		// 	if compileByCallExpr {
+		// 		ctx.infer.Pop()
+		// 		fn := newQlFunc(fDecl)
+		// 		ctx.use(fDecl)
+		// 		ctx.infer.Push(fn)
+		// 		return nil
+		// 	} else {
+		// 		ctx.infer.Pop()
+		// 		decl := funcToClosure(ctx, v, fDecl.typ)
+		// 		ctx.use(decl)
+		// 		ctx.infer.Push(newQlFunc(decl))
+		// 		return func() {
+		// 			ctx.out.GoClosure(decl.fi)
+		// 		}
+		// 	}
+		// }
+		if call != nil && isUserStruct(t) {
+			if names := findUserStructAnonymous(ctx, t, name); names != nil {
+				ctx.infer.Pop()
+				x := &ast.SelectorExpr{X: v.X}
+				for i := 0; i < len(names)-1; i++ {
+					x.X = &ast.SelectorExpr{X: x.X, Sel: &ast.Ident{Name: names[i]}}
+				}
+				x.Sel = &ast.Ident{Name: names[len(names)-1]}
+				fun := &ast.SelectorExpr{X: x, Sel: v.Sel}
+				call.Fun = fun
+				return compileSelectorExpr(ctx, call, fun, compileByCallExpr)
+			}
+		}
+		//}
+		_, toptr, ok := findMethod(ctx, t, name)
 		if !ok && isLower(name) {
 			name = strings.Title(name)
-			if _, toptr, ok = findMethod(t, name); ok {
+			if _, toptr, ok = findMethod(ctx, t, name); ok {
 				v.Sel.Name = name
 				autoCall = !compileByCallExpr
 			}
@@ -1617,7 +1616,7 @@ func countPtr(t reflect.Type) (int, reflect.Type) {
 	return n, t
 }
 
-func findMethod(t reflect.Type, name string) (method reflect.Method, toptr bool, found bool) {
+func findMethod(ctx *blockCtx, t reflect.Type, name string) (method reflect.Method, toptr bool, found bool) {
 	method, found = t.MethodByName(name)
 	if !found && t.Kind() == reflect.Struct {
 		t = reflect.PtrTo(t)

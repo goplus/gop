@@ -265,7 +265,7 @@ func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 			case token.CONST:
 				loadConsts(ctx, d)
 			case token.VAR:
-				// compileStmt(ctx, &ast.DeclStmt{decl})
+			//	compileStmt(ctx, &ast.DeclStmt{decl})
 			default:
 				log.Panicln("tok:", d.Tok, "spec:", reflect.TypeOf(d.Specs).Elem())
 			}
@@ -277,23 +277,27 @@ func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 	if pkg == nil {
 		pkg = bytecode.NewGoPackage(ctx.pkg.Name)
 	}
+
+	var decls []*typeDecl
 	for typ, decl := range ctx.types {
 		if typ.Kind() == reflect.Interface {
 			registerInterface(pkg.(*bytecode.GoPackage), typ)
 			continue
 		}
-		var infos []exec.FuncInfo
-		for _, mfun := range decl.Methods {
-			ctx.use(mfun)
-			infos = append(infos, mfun.Get())
+		if decl.Type.Kind() == reflect.Struct {
+			typ := decl.Type
+			for i := 0; i < typ.NumField(); i++ {
+				ftyp := typ.Field(i).Type
+				if d, ok := ctx.types[ftyp]; ok {
+					decl.Depends = append(decl.Depends, d)
+				}
+			}
 		}
-		if len(infos) == 0 {
-			continue
-		}
-		mtyp, minfo := registerMethods(pkg.(*bytecode.GoPackage), typ, infos)
-		ctx.out.MethodOf(typ, minfo)
-		decl.Type = mtyp
+		decls = append(decls, decl)
 	}
+
+	registerTypeDecls(ctx, pkg.(*bytecode.GoPackage), decls)
+
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.GenDecl:
@@ -303,6 +307,45 @@ func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 			}
 		}
 	}
+}
+
+func registerTypeDecls(ctx *blockCtx, pkg *bytecode.GoPackage, decls []*typeDecl) {
+	for _, decl := range decls {
+		if decl.Register {
+			continue
+		}
+		if len(decl.Depends) > 0 {
+			registerTypeDecls(ctx, pkg, decl.Depends)
+		}
+		decl.Register = true
+		typ := decl.Type
+		var infos []exec.FuncInfo
+		for _, mfun := range decl.Methods {
+			ctx.use(mfun)
+			infos = append(infos, mfun.Get())
+		}
+		styp := typ
+		if typ.Kind() == reflect.Struct {
+			styp = extractStructType(ctx, styp)
+		}
+		mtyp, minfo := registerMethods(pkg, styp, infos)
+		ctx.out.MethodOf(typ, minfo)
+		decl.Type = mtyp
+		ctx.mtype[typ] = mtyp
+	}
+}
+
+func extractStructType(ctx *blockCtx, typ reflect.Type) reflect.Type {
+	n := typ.NumField()
+	fs := make([]reflect.StructField, n, n)
+	for i := 0; i < n; i++ {
+		field := typ.Field(i)
+		if !ast.IsExported(field.Name) {
+			field.PkgPath = ctx.pkg.Name
+		}
+		fs[i] = field
+	}
+	return reflectx.NamedStructOf(typ.PkgPath(), typ.Name(), fs)
 }
 
 func loadImports(ctx *fileCtx, d *ast.GenDecl) {
@@ -568,7 +611,10 @@ func registerTypeMethods(pkg *bytecode.GoPackage, typ reflect.Type, imap map[str
 	for i := 0; i < typ.NumMethod(); i++ {
 		method := typ.Method(i)
 		fnName := "(" + name + ")." + method.Name
-		m := imap[method.Name]
+		m, ok := imap[method.Name]
+		if !ok {
+			continue
+		}
 		skip[method.Name] = true
 		registerTypeMethod(pkg, fnName, method.Func, m.Info)
 	}
@@ -578,7 +624,10 @@ func registerTypeMethods(pkg *bytecode.GoPackage, typ reflect.Type, imap map[str
 		if skip[method.Name] {
 			continue
 		}
-		m := imap[method.Name]
+		m, ok := imap[method.Name]
+		if !ok {
+			continue
+		}
 		fnName := "(*" + name + ")." + method.Name
 		registerTypeMethod(pkg, fnName, method.Func, m.Info)
 	}

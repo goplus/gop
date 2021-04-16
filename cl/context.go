@@ -37,6 +37,7 @@ type pkgCtx struct {
 	out     exec.Builder
 	usedfns []*funcDecl
 	types   map[reflect.Type]*typeDecl
+	mtype   map[reflect.Type]reflect.Type
 	pkg     *ast.Package
 	fset    *token.FileSet
 }
@@ -46,8 +47,20 @@ func newPkgCtx(out exec.Builder, pkg *ast.Package, fset *token.FileSet) *pkgCtx 
 	builtin := pkgOut.FindGoPackage("")
 	p := &pkgCtx{Package: pkgOut, builtin: builtin, out: out, pkg: pkg, fset: fset}
 	p.types = make(map[reflect.Type]*typeDecl)
+	p.mtype = make(map[reflect.Type]reflect.Type)
 	p.infer.Init()
 	return p
+}
+
+func (p *pkgCtx) getRealType(t reflect.Type) reflect.Type {
+	n, vt := countPtr(t)
+	if r, ok := p.mtype[vt]; ok {
+		for i := 0; i < n; i++ {
+			r = reflect.PtrTo(r)
+		}
+		return r
+	}
+	return t
 }
 
 func (p *pkgCtx) code(v ast.Node) string {

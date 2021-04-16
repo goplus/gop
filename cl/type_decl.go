@@ -390,10 +390,12 @@ func buildField(ctx *blockCtx, field *ast.Field, anonymous bool, fieldName strin
 // -----------------------------------------------------------------------------
 
 type typeDecl struct {
-	Methods map[string]*funcDecl
-	Type    reflect.Type
-	Name    string
-	Alias   bool
+	Methods  map[string]*funcDecl
+	Type     reflect.Type
+	Name     string
+	Alias    bool
+	Depends  []*typeDecl
+	Register bool
 }
 
 type methodDecl struct {
