@@ -287,7 +287,7 @@ func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 		if decl.Type.Kind() == reflect.Struct {
 			typ := decl.Type
 			for i := 0; i < typ.NumField(); i++ {
-				ftyp := typ.Field(i).Type
+				_, ftyp := countPtr(typ.Field(i).Type)
 				if d, ok := ctx.types[ftyp]; ok {
 					decl.Depends = append(decl.Depends, d)
 				}
@@ -311,11 +311,11 @@ func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 
 func registerTypeDecls(ctx *blockCtx, pkg *bytecode.GoPackage, decls []*typeDecl) {
 	for _, decl := range decls {
-		if decl.Register {
-			continue
-		}
 		if len(decl.Depends) > 0 {
 			registerTypeDecls(ctx, pkg, decl.Depends)
+		}
+		if decl.Register {
+			continue
 		}
 		decl.Register = true
 		typ := decl.Type
@@ -329,10 +329,21 @@ func registerTypeDecls(ctx *blockCtx, pkg *bytecode.GoPackage, decls []*typeDecl
 			styp = extractStructType(ctx, styp)
 		}
 		mtyp, minfo := registerMethods(pkg, styp, infos)
-		ctx.out.MethodOf(typ, minfo)
+		ctx.out.MethodOf(mtyp, minfo)
 		decl.Type = mtyp
 		ctx.mtype[typ] = mtyp
 	}
+}
+
+func extractRealType(ctx *blockCtx, t reflect.Type) reflect.Type {
+	n, vt := countPtr(t)
+	if r, ok := ctx.mtype[vt]; ok {
+		for i := 0; i < n; i++ {
+			r = reflect.PtrTo(r)
+		}
+		return r
+	}
+	return t
 }
 
 func extractStructType(ctx *blockCtx, typ reflect.Type) reflect.Type {
@@ -343,6 +354,7 @@ func extractStructType(ctx *blockCtx, typ reflect.Type) reflect.Type {
 		if !ast.IsExported(field.Name) {
 			field.PkgPath = ctx.pkg.Name
 		}
+		field.Type = extractRealType(ctx, field.Type)
 		fs[i] = field
 	}
 	return reflectx.NamedStructOf(typ.PkgPath(), typ.Name(), fs)

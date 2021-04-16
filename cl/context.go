@@ -52,17 +52,6 @@ func newPkgCtx(out exec.Builder, pkg *ast.Package, fset *token.FileSet) *pkgCtx 
 	return p
 }
 
-func (p *pkgCtx) getRealType(t reflect.Type) reflect.Type {
-	n, vt := countPtr(t)
-	if r, ok := p.mtype[vt]; ok {
-		for i := 0; i < n; i++ {
-			r = reflect.PtrTo(r)
-		}
-		return r
-	}
-	return t
-}
-
 func (p *pkgCtx) code(v ast.Node) string {
 	if expr, ok := v.(*ast.ParenExpr); ok {
 		v = expr.X
