@@ -172,8 +172,8 @@ func Type(p *Builder, typ reflect.Type, actualTypes ...bool) ast.Expr {
 		pkgPath = "unsafe"
 	}
 	log.Debug(typ, "-", "pkgPath:", pkgPath, "name:", name)
-	if name != "" && !p.IsUserType(typ) {
-		if pkgPath != "" && pkgPath != p.pkgName {
+	if name != "" { //}&& !p.IsUserType(typ) {
+		if pkgPath != "" && !p.IsUserType(typ) {
 			pkg := p.Import(pkgPath)
 			return &ast.SelectorExpr{X: Ident(pkg), Sel: Ident(name)}
 		}
