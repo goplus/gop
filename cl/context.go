@@ -191,6 +191,7 @@ type blockCtx struct {
 	fieldIndex      []int
 	fieldExprX      func()
 	underscore      int
+	newIdentVar     int
 }
 
 // function block ctx

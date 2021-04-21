@@ -116,8 +116,8 @@ func compileIdentLHS(ctx *blockCtx, name string, mode compileMode) {
 		addr, err = ctx.findVar(name)
 		if mode == lhsDefine {
 			addr, err = ctx.getCtxVar(name)
-			if addr != nil {
-				log.Panicf("compileIdentLHS failed: %s redeclared in this block\n", name)
+			if addr == nil {
+				ctx.newIdentVar++
 			}
 		}
 		if err == nil {

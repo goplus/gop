@@ -651,11 +651,21 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 	}
 	count := len(expr.Lhs)
 	ctx.underscore = 0
+	ctx.newIdentVar = 0
 	for i := len(expr.Lhs) - 1; i >= 0; i-- {
 		compileExprLHS(ctx, expr.Lhs[i], expr.Tok)
 	}
-	if ctx.underscore == count && expr.Tok == token.DEFINE {
-		log.Panicln("no new variables on left side of :=")
+	if expr.Tok == token.DEFINE {
+		if ctx.underscore == count {
+			log.Panicln("no new variables on left side of :=")
+		}
+		if ctx.newIdentVar == 0 {
+			if count == 1 {
+				log.Panicf("compileIdentLHS failed: %s redeclared in this block\n", expr.Lhs[0])
+			} else {
+				log.Panicln("no new variables on left side of :=")
+			}
+		}
 	}
 }
 
