@@ -1485,6 +1485,14 @@ var testVarScopeClauses = map[string]testData{
 						a,b:=1,2
 						println(a,b)
 						`, "1 2\n", false},
+	"redeclared_variable_#issue640_3": {`
+						a:=0
+						a,_:=1,1
+						`, "", true},
+	"redeclared_variable_#issue640_4": {`
+						_,b:=1,2
+						println(b)
+						`, "2\n", false},
 	"variable_redefinition_#issue304": {`
 						a := []float64{1, 2, 3.4}
 						println(a)
