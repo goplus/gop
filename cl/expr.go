@@ -108,7 +108,6 @@ func compileIdentLHS(ctx *blockCtx, name string, mode compileMode) {
 	in := ctx.infer.Get(-1)
 	var addr iVar
 	if name == "_" {
-		ctx.underscore++
 		typ := boundType(in.(iValue))
 		addr = ctx.insertVar(name, typ)
 	} else {

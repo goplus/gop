@@ -649,23 +649,12 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 	if ctx.infer.Len() != len(expr.Lhs) {
 		log.Panicln("compileAssignStmt: assign statement has mismatched variables count -", ctx.infer.Len())
 	}
-	count := len(expr.Lhs)
-	ctx.underscore = 0
 	ctx.newIdentVar = 0
 	for i := len(expr.Lhs) - 1; i >= 0; i-- {
 		compileExprLHS(ctx, expr.Lhs[i], expr.Tok)
 	}
-	if expr.Tok == token.DEFINE {
-		if ctx.underscore == count {
-			log.Panicln("no new variables on left side of :=")
-		}
-		if ctx.newIdentVar == 0 {
-			if count == 1 {
-				log.Panicf("compileIdentLHS failed: %s redeclared in this block\n", expr.Lhs[0])
-			} else {
-				log.Panicln("no new variables on left side of :=")
-			}
-		}
+	if ctx.newIdentVar == 0 && expr.Tok == token.DEFINE {
+		log.Panicln("no new variables on left side of :=")
 	}
 }
 
