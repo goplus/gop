@@ -1,6 +1,8 @@
 language: go
 go:
   - "1.14"
+  - "1.15"
+  - "1.16"
 install:
   - go get golang.org/x/tools/cmd/goimports
   - go get github.com/golangci/gocyclo/cmd/gocyclo
