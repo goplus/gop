@@ -197,6 +197,9 @@ func execTypeMethod(i Instr, p *Context) {
 		m := ms[i]
 		numOut := m.Info.NumOut()
 		m.Func = func(args []reflect.Value) (out []reflect.Value) {
+			for _, arg := range args {
+				p.data = append(p.data, arg.Interface())
+			}
 			p.Call(m.Info)
 			for i := 0; i < numOut; i++ {
 				out = append(out, reflect.ValueOf(p.Get(i-numOut)))

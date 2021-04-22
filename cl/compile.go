@@ -245,6 +245,32 @@ func (p *Package) Find(name string) (kind SymKind, v interface{}, ok bool) {
 	return
 }
 
+type namedType struct {
+	name     string
+	methods  []string
+	pmethods []string
+}
+
+func loadNamedType(ctx *blockCtx, d *ast.FuncDecl) {
+	typ := d.Recv.List[0].Type
+	var ptr bool
+	if expr, ok := typ.(*ast.StarExpr); ok {
+		typ = expr.X
+		ptr = true
+	}
+	name := typ.(*ast.Ident).Name
+	nt, ok := ctx.named[name]
+	if !ok {
+		nt = &namedType{name: name}
+		ctx.named[name] = nt
+	}
+	if ptr {
+		nt.pmethods = append(nt.pmethods, d.Name.Name)
+	} else {
+		nt.methods = append(nt.methods, d.Name.Name)
+	}
+}
+
 func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 	file := newFileCtx(ctx)
 	last := len(f.Decls) - 1
@@ -252,6 +278,36 @@ func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 	for name, pkg := range imports {
 		ctx.file.imports[name] = pkg
 	}
+	// load import
+	for _, decl := range f.Decls {
+		switch d := decl.(type) {
+		case *ast.GenDecl:
+			switch d.Tok {
+			case token.IMPORT:
+				loadImports(file, d)
+			}
+		}
+	}
+	//	load named type methods
+	for _, decl := range f.Decls {
+		switch d := decl.(type) {
+		case *ast.FuncDecl:
+			if d.Recv != nil {
+				loadNamedType(ctx, d)
+			}
+		}
+	}
+	// load type
+	for _, decl := range f.Decls {
+		switch d := decl.(type) {
+		case *ast.GenDecl:
+			switch d.Tok {
+			case token.TYPE:
+				loadTypes(ctx, d)
+			}
+		}
+	}
+
 	for i, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
@@ -259,9 +315,9 @@ func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 		case *ast.GenDecl:
 			switch d.Tok {
 			case token.IMPORT:
-				loadImports(file, d)
+			//	loadImports(file, d)
 			case token.TYPE:
-				loadTypes(ctx, d)
+			//	loadTypes(ctx, d)
 			case token.CONST:
 				loadConsts(ctx, d)
 			case token.VAR:
@@ -297,7 +353,21 @@ func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 	}
 
 	registerTypeDecls(ctx, pkg.(*bytecode.GoPackage), decls)
-
+	for _, mt := range ctx.mtypeList {
+		mt.Update(ctx.mtype)
+		mt.RegisterMethod(pkg.(*bytecode.GoPackage))
+		ctx.out.MethodOf(mt.typ, mt.infos)
+	}
+	// for _, p := range ctx.funcs {
+	// 	if p.fi != nil {
+	// 		buildFuncType(p.recv, p.fi, p.ctx, p.typ, true)
+	// 	}
+	// }
+	// for _, decl := range ctx.types {
+	// 	for _, p := range decl.Methods {
+	// 		buildFuncType(p.recv, p.fi, p.ctx, p.typ, true)
+	// 	}
+	// }
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.GenDecl:
@@ -328,10 +398,10 @@ func registerTypeDecls(ctx *blockCtx, pkg *bytecode.GoPackage, decls []*typeDecl
 		if typ.Kind() == reflect.Struct {
 			styp = extractStructType(ctx, styp)
 		}
-		mtyp, minfo := registerMethods(pkg, styp, infos)
-		ctx.out.MethodOf(mtyp, minfo)
-		decl.Type = mtyp
-		ctx.mtype[typ] = mtyp
+		mt := NewMethodType(typ, infos)
+		ctx.mtypeList = append(ctx.mtypeList, mt)
+		decl.Type = mt.typ
+		ctx.mtype[typ] = mt.typ
 	}
 }
 
@@ -387,12 +457,30 @@ func loadTypes(ctx *blockCtx, d *ast.GenDecl) {
 	}
 }
 
+func toMethods(nt *namedType) []reflectx.Method {
+	ftyp := reflect.FuncOf(nil, nil, false)
+	fn := func([]reflect.Value) []reflect.Value { return nil }
+	count := len(nt.methods) + len(nt.pmethods)
+	ms := make([]reflectx.Method, count, count)
+	for i, v := range nt.methods {
+		ms[i] = reflectx.MakeMethod(v, false, ftyp, fn)
+	}
+	sz := len(nt.methods)
+	for i, v := range nt.pmethods {
+		ms[i+sz] = reflectx.MakeMethod(v, true, ftyp, fn)
+	}
+	return ms
+}
+
 func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
 	if ctx.exists(spec.Name.Name) {
 		log.Panicln("loadType failed: symbol exists -", spec.Name.Name)
 	}
 	t := toType(ctx, spec.Type).(reflect.Type)
 	typ := reflectx.NamedTypeOf(ctx.pkg.Name, spec.Name.Name, t)
+	if nt, ok := ctx.named[spec.Name.Name]; ok {
+		typ = reflectx.MethodOf(typ, toMethods(nt))
+	}
 	ctx.out.DefineType(typ, spec.Name.Name)
 
 	tDecl := &typeDecl{
@@ -593,10 +681,14 @@ func extractFuncType(typ reflect.Type) reflect.Type {
 	return reflect.FuncOf(in, out, typ.IsVariadic())
 }
 
-func registerMethods(pkg *bytecode.GoPackage, typ reflect.Type, infos []exec.FuncInfo) (reflect.Type, []*exec.MethodInfo) {
-	if _, ok := pkg.FindType(typ.Name()); !ok {
-		pkg.RegisterTypes(pkg.Type(typ.Name(), typ))
-	}
+type MethodType struct {
+	typ     reflect.Type
+	infos   []*exec.MethodInfo
+	methods []reflectx.Method
+	imap    map[string]*exec.MethodInfo
+}
+
+func NewMethodType(typ reflect.Type, infos []exec.FuncInfo) *MethodType {
 	imap := make(map[string]*exec.MethodInfo)
 	var methods []reflectx.Method
 	var minfos []*exec.MethodInfo
@@ -612,9 +704,25 @@ func registerMethods(pkg *bytecode.GoPackage, typ reflect.Type, infos []exec.Fun
 		minfos = append(minfos, mi)
 		methods = append(methods, m)
 	}
-	typ = reflectx.MethodOf(typ, methods)
-	registerTypeMethods(pkg, typ, imap)
-	return typ, minfos
+	reflectx.UpdateMethod(typ, methods, make(map[reflect.Type]reflect.Type))
+	return &MethodType{
+		typ:     typ,
+		methods: methods,
+		infos:   minfos,
+		imap:    imap,
+	}
+}
+
+func (p *MethodType) Update(rmap map[reflect.Type]reflect.Type) {
+	reflectx.UpdateMethod(p.typ, p.methods, rmap)
+}
+
+func (p *MethodType) RegisterMethod(pkg *bytecode.GoPackage) {
+	name := p.typ.Name()
+	if _, ok := pkg.FindType(name); !ok {
+		pkg.RegisterTypes(pkg.Type(name, p.typ))
+	}
+	registerTypeMethods(pkg, p.typ, p.imap)
 }
 
 func registerTypeMethods(pkg *bytecode.GoPackage, typ reflect.Type, imap map[string]*exec.MethodInfo) {

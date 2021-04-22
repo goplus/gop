@@ -5,7 +5,6 @@ import (
 
 	"github.com/goplus/gop/exec.spec"
 	"github.com/qiniu/x/errors"
-	"github.com/qiniu/x/log"
 )
 
 // -----------------------------------------------------------------------------
@@ -52,9 +51,7 @@ func (p *iFuncInfo) Vargs(in ...reflect.Type) exec.FuncInfo {
 
 // Return sets return types of a Go+ function.
 func (p *iFuncInfo) Return(out ...exec.Var) exec.FuncInfo {
-	if p.vlist != nil {
-		log.Panicln("don't call DefineVar before calling Return.")
-	}
+	p.vlist = nil
 	p.addVars(out...)
 	p.numOut = len(out)
 	return p

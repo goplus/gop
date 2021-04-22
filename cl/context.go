@@ -36,8 +36,10 @@ type pkgCtx struct {
 	builtin exec.GoPackage
 	out     exec.Builder
 	usedfns []*funcDecl
+	funcs   []*funcDecl
 	types   map[reflect.Type]*typeDecl
 	mtype   map[reflect.Type]reflect.Type
+	named   map[string]*namedType
 	pkg     *ast.Package
 	fset    *token.FileSet
 }
@@ -48,6 +50,7 @@ func newPkgCtx(out exec.Builder, pkg *ast.Package, fset *token.FileSet) *pkgCtx 
 	p := &pkgCtx{Package: pkgOut, builtin: builtin, out: out, pkg: pkg, fset: fset}
 	p.types = make(map[reflect.Type]*typeDecl)
 	p.mtype = make(map[reflect.Type]reflect.Type)
+	p.named = make(map[string]*namedType)
 	p.infer.Init()
 	return p
 }
@@ -193,6 +196,7 @@ type blockCtx struct {
 	fieldIndex      []int
 	fieldExprX      func()
 	underscore      int
+	mtypeList       []*MethodType
 }
 
 // function block ctx
@@ -394,6 +398,7 @@ func (p *blockCtx) insertFunc(name string, fun *funcDecl) {
 		log.Panicln("insertFunc failed: symbol exists -", name)
 	}
 	p.syms[name] = fun
+	p.funcs = append(p.funcs, fun)
 }
 
 func (p *blockCtx) insertMethod(recv astutil.RecvInfo, methodName string, decl *ast.FuncDecl, ctx *blockCtx) {

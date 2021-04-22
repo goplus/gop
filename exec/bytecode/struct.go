@@ -88,11 +88,11 @@ func (p *varManager) makeVarsContext(ctx *Context) varsContext {
 }
 
 func (ctx *varScope) addrVar(idx uint32) interface{} {
-	return reflectx.Interface(ctx.vars.Field(int(idx)).Addr())
+	return ctx.vars.Field(int(idx)).Addr().Interface()
 }
 
 func (ctx *varScope) getVar(idx uint32) interface{} {
-	return reflectx.Interface(ctx.vars.Field(int(idx)))
+	return ctx.vars.Field(int(idx)).Interface()
 }
 
 func (ctx *varScope) setVar(idx uint32, v interface{}) {
@@ -180,10 +180,10 @@ func makeStruct(typStruct reflect.Type, arity int, p *Context) {
 		ptr = true
 		typStruct = typStruct.Elem()
 	}
-	v := reflectx.New(typStruct).Elem()
+	v := reflect.New(typStruct).Elem()
 	for i := 0; i < n; i += 2 {
 		index := args[i].(int)
-		reflectx.Field(v, index)
+		//reflectx.Field(v, index)
 		reflectx.SetValue(reflectx.Field(v, index), reflect.ValueOf(args[i+1]))
 	}
 	if ptr {
