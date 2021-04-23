@@ -165,7 +165,9 @@ func NewPackageEx(out exec.Builder, pkg *ast.Package, fset *token.FileSet, act P
 	if CallBuiltinOp == nil {
 		log.Panicln("NewPackage failed: variable CallBuiltinOp is uninitialized")
 	}
-	reflectx.ResetTypeList()
+	// reset reflectx
+	reflectx.Reset()
+	//
 	p = &Package{}
 	ctxPkg := newPkgCtx(out, pkg, fset)
 	ctx := newGblBlockCtx(ctxPkg)
