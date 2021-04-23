@@ -641,9 +641,11 @@ func (p *Builder) Zero(typ reflect.Type) *Builder {
 }
 
 func (p *Builder) requireType(typ reflect.Type) uint32 {
-	kind := typ.Kind()
-	if exec.SizeofKind(kind) > 0 {
-		return uint32(kind)
+	if typ.PkgPath() == "" {
+		kind := typ.Kind()
+		if exec.SizeofKind(kind) > 0 {
+			return uint32(kind)
+		}
 	}
 	return p.newType(typ)
 }
