@@ -164,7 +164,7 @@ func Type(p *Builder, typ reflect.Type, actualTypes ...bool) ast.Expr {
 			return Ident(gtype.Name())
 		}
 	}
-	if named, ok := reflectx.ToNamed(typ); ok && named.Kind == reflectx.TkType {
+	if named, ok := reflectx.ToNamed(typ); ok && named.From != nil {
 		return Type(p, named.From)
 	}
 	pkgPath, name := typ.PkgPath(), typ.Name()
@@ -172,8 +172,8 @@ func Type(p *Builder, typ reflect.Type, actualTypes ...bool) ast.Expr {
 		pkgPath = "unsafe"
 	}
 	log.Debug(typ, "-", "pkgPath:", pkgPath, "name:", name)
-	if name != "" { //}&& !p.IsUserType(typ) {
-		if pkgPath != "" && !p.IsUserType(typ) {
+	if name != "" && !p.IsUserType(typ) {
+		if pkgPath != "" {
 			pkg := p.Import(pkgPath)
 			return &ast.SelectorExpr{X: Ident(pkg), Sel: Ident(name)}
 		}
