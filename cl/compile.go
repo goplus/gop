@@ -165,6 +165,7 @@ func NewPackageEx(out exec.Builder, pkg *ast.Package, fset *token.FileSet, act P
 	if CallBuiltinOp == nil {
 		log.Panicln("NewPackage failed: variable CallBuiltinOp is uninitialized")
 	}
+	reflectx.ResetTypeList()
 	p = &Package{}
 	ctxPkg := newPkgCtx(out, pkg, fset)
 	ctx := newGblBlockCtx(ctxPkg)
@@ -394,10 +395,6 @@ func registerTypeDecls(ctx *blockCtx, pkg *bytecode.GoPackage, decls []*typeDecl
 			ctx.use(mfun)
 			infos = append(infos, mfun.Get())
 		}
-		styp := typ
-		if typ.Kind() == reflect.Struct {
-			styp = extractStructType(ctx, styp)
-		}
 		mt := NewMethodType(typ, infos)
 		ctx.mtypeList = append(ctx.mtypeList, mt)
 		decl.Type = mt.typ
@@ -480,6 +477,8 @@ func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
 	typ := reflectx.NamedTypeOf(ctx.pkg.Name, spec.Name.Name, t)
 	if nt, ok := ctx.named[spec.Name.Name]; ok {
 		typ = reflectx.MethodOf(typ, toMethods(nt))
+	} else if typ.Kind() == reflect.Struct {
+		typ = reflectx.MethodOf(typ, nil)
 	}
 	ctx.out.DefineType(typ, spec.Name.Name)
 
