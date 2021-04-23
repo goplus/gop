@@ -192,11 +192,16 @@ func checkType(t reflect.Type, v interface{}, b exec.Builder) {
 				log.Panicf("checkType: type `%v` doesn't implments interface `%v`", typVal, t)
 			}
 		} else if t != typVal {
-			if typVal.Kind() == reflect.Chan || typVal.Kind() == reflect.Func {
+			switch typVal.Kind() {
+			case reflect.Chan,
+				reflect.Func,
+				reflect.Slice,
+				reflect.Array,
+				reflect.Map:
 				if !typVal.ConvertibleTo(t) {
 					log.Panicf("checkType: cannot use `%v` as type `%v` in argument to produce", typVal, t)
 				}
-			} else {
+			default:
 				log.Panicf("checkType: unexptected value type, require `%v`, but got `%v`\n", t, typVal)
 			}
 		}
