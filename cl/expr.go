@@ -1349,7 +1349,7 @@ func funcToClosure(ctx *blockCtx, fun ast.Expr, ftyp *ast.FuncType) *funcDecl {
 		call.Ellipsis++
 	}
 	var body *ast.BlockStmt
-	if typ.Results == nil {
+	if typ.Results == nil || len(typ.Results.List) == 0 {
 		body = &ast.BlockStmt{List: []ast.Stmt{&ast.ExprStmt{X: call}}}
 	} else {
 		body = &ast.BlockStmt{List: []ast.Stmt{&ast.ReturnStmt{Return: fun.Pos(), Results: []ast.Expr{call}}}}
