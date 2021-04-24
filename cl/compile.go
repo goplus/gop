@@ -361,16 +361,7 @@ func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 		mt.RegisterMethod(pkg.(*bytecode.GoPackage))
 		ctx.out.MethodOf(mt.typ, mt.infos)
 	}
-	// for _, p := range ctx.funcs {
-	// 	if p.fi != nil {
-	// 		buildFuncType(p.recv, p.fi, p.ctx, p.typ, true)
-	// 	}
-	// }
-	// for _, decl := range ctx.types {
-	// 	for _, p := range decl.Methods {
-	// 		buildFuncType(p.recv, p.fi, p.ctx, p.typ, true)
-	// 	}
-	// }
+
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.GenDecl:
@@ -720,9 +711,7 @@ func (p *MethodType) Update(rmap map[reflect.Type]reflect.Type) {
 
 func (p *MethodType) RegisterMethod(pkg *bytecode.GoPackage) {
 	name := p.typ.Name()
-	if _, ok := pkg.FindType(name); !ok {
-		pkg.RegisterTypes(pkg.Type(name, p.typ))
-	}
+	pkg.RegisterTypes(pkg.Type(name, p.typ))
 	registerTypeMethods(pkg, p.typ, p.imap)
 }
 

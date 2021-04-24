@@ -106,7 +106,7 @@ func toFuncType(ctx *blockCtx, t *ast.FuncType) iType {
 	return reflect.FuncOf(in, out, variadic)
 }
 
-func buildFuncType(recv *ast.FieldList, fi exec.FuncInfo, ctx *blockCtx, t *ast.FuncType, insertVar bool) {
+func buildFuncType(recv *ast.FieldList, fi exec.FuncInfo, ctx *blockCtx, t *ast.FuncType) {
 	in, args, variadic := toArgTypes(ctx, recv, t.Params)
 	rets := toReturnTypes(ctx, t.Results)
 	if variadic {
@@ -115,9 +115,7 @@ func buildFuncType(recv *ast.FieldList, fi exec.FuncInfo, ctx *blockCtx, t *ast.
 		fi.Args(in...)
 	}
 	fi.Return(rets...)
-	if insertVar {
-		ctx.insertFuncVars(in, args, rets)
-	}
+	ctx.insertFuncVars(in, args, rets)
 }
 
 func toTypes(ctx *blockCtx, fields *ast.FieldList) (types []reflect.Type) {
@@ -431,7 +429,7 @@ func newFuncDecl(name string, recv *ast.FieldList, typ *ast.FuncType, body *ast.
 // Get returns function information.
 func (p *FuncDecl) Get() exec.FuncInfo {
 	if !p.cached {
-		buildFuncType(p.recv, p.fi, p.ctx, p.typ, true)
+		buildFuncType(p.recv, p.fi, p.ctx, p.typ)
 		p.cached = true
 	}
 	return p.fi

@@ -328,9 +328,6 @@ func (p *GoPackage) RegisterTypes(typinfos ...GoTypeInfo) {
 		if ti.Name == "" {
 			log.Panicln("RegisterTypes failed: unnamed type? -", ti.Type)
 		}
-		if _, ok := p.types[ti.Name]; ok {
-			log.Panicln("RegisterTypes failed: register an existed type -", p.pkgPath, ti.Name)
-		}
 		p.types[ti.Name] = ti.Type
 	}
 }
