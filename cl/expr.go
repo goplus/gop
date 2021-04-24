@@ -17,6 +17,7 @@
 package cl
 
 import (
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -24,6 +25,7 @@ import (
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/astutil"
 	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/exec/bytecode"
 	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/ctype"
 	"github.com/qiniu/x/errors"
@@ -1460,6 +1462,42 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 				}
 			default:
 				log.Panicln("compileSelectorExpr: unknown GoPackage symbol kind -", kind)
+			}
+		case reflect.Type:
+			m, ok := nv.MethodByName(v.Sel.Name)
+			if !ok {
+				log.Panicf("%v undefined (type %v has no method %s)", ctx.code(call.Fun), ctx.code(v.X), ctx.code(v.Sel))
+			}
+			_, t := countPtr(nv)
+			pkg := bytecode.FindGoPackage(t.PkgPath())
+			if pkg == nil {
+				log.Panicln("package not found - %v", t.PkgPath())
+			}
+			var sname string
+			if nv.Kind() == reflect.Ptr {
+				sname = "*" + nv.Elem().Name()
+			} else {
+				sname = nv.Name()
+			}
+			fname := fmt.Sprintf("(%v).%v", sname, m.Name)
+			addr, kind, ok := pkg.Find(fname)
+			if !ok {
+				log.Panicln("method not found -", fname)
+			}
+			if compileByCallExpr {
+				fn := newGoFunc(addr, kind, 0, ctx)
+				ctx.infer.Ret(1, fn)
+				return nil
+			} else {
+				ctx.infer.Pop()
+				fn := newGoFunc(addr, kind, 0, ctx)
+				ftyp := astutil.FuncType(fn.t)
+				decl := funcToClosure(ctx, v, ftyp)
+				ctx.use(decl)
+				ctx.infer.Push(newQlFunc(decl))
+				return func() {
+					ctx.out.GoClosure(decl.fi)
+				}
 			}
 		default:
 			log.Panicln("compileSelectorExpr: unknown nonValue -", reflect.TypeOf(nv))
