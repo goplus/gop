@@ -257,7 +257,15 @@ func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) iType {
 
 func toExternalType(ctx *blockCtx, v *ast.SelectorExpr) iType {
 	if ident, ok := v.X.(*ast.Ident); ok {
-		pkg := ctx.FindGoPackage(ident.Name)
+		var pkgname string
+		if ident.Name == ctx.pkg.Name {
+			pkgname = ident.Name
+		} else {
+			if sym, ok := ctx.find(ident.Name); ok {
+				pkgname = sym.(string)
+			}
+		}
+		pkg := ctx.FindGoPackage(pkgname)
 		if pkg == nil {
 			log.Panicln("toExternalType failed: package not found -", v)
 		}

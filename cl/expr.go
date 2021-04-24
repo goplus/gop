@@ -17,7 +17,6 @@
 package cl
 
 import (
-	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -1464,33 +1463,35 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 				log.Panicln("compileSelectorExpr: unknown GoPackage symbol kind -", kind)
 			}
 		case reflect.Type:
-			m, ok := nv.MethodByName(v.Sel.Name)
-			if !ok {
-				log.Panicf("%v undefined (type %v has no method %s)", ctx.code(call.Fun), ctx.code(v.X), ctx.code(v.Sel))
-			}
+			name := v.Sel.Name
 			_, t := countPtr(nv)
+			method, ptr, ok := foundMethodByName(nv, name)
+			if !ok {
+				log.Panicf("%v undefined (type %v has no method %s)", ctx.code(call.Fun), ctx.code(v.X), name)
+			}
 			pkg := bytecode.FindGoPackage(t.PkgPath())
 			if pkg == nil {
-				log.Panicln("package not found - %v", t.PkgPath())
+				log.Panicln("package not found -", t.PkgPath())
 			}
-			var sname string
-			if nv.Kind() == reflect.Ptr {
-				sname = "*" + nv.Elem().Name()
+			var fnname string
+			if ptr {
+				fnname = "(*" + t.Name() + ")." + name
 			} else {
-				sname = nv.Name()
+				fnname = "(" + t.Name() + ")." + name
 			}
-			fname := fmt.Sprintf("(%v).%v", sname, m.Name)
-			addr, kind, ok := pkg.Find(fname)
+			addr, kind, ok := pkg.Find(fnname)
 			if !ok {
-				log.Panicln("method not found -", fname)
+				log.Panicln("method not found -", fnname)
 			}
 			if compileByCallExpr {
 				fn := newGoFunc(addr, kind, 0, ctx)
+				fn.t = method.Type
 				ctx.infer.Ret(1, fn)
 				return nil
 			} else {
 				ctx.infer.Pop()
 				fn := newGoFunc(addr, kind, 0, ctx)
+				fn.t = method.Type
 				ftyp := astutil.FuncType(fn.t)
 				decl := funcToClosure(ctx, v, ftyp)
 				ctx.use(decl)
@@ -1616,6 +1617,19 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 	}
 	_ = exprX
 	return nil
+}
+
+func foundMethodByName(typ reflect.Type, name string) (method reflect.Method, ptr bool, ok bool) {
+	method, ok = typ.MethodByName(name)
+	if !ok {
+		return
+	}
+	if typ.Kind() == reflect.Ptr {
+		if _, found := typ.Elem().MethodByName(name); !found {
+			ptr = true
+		}
+	}
+	return
 }
 
 func compileStarExpr(ctx *blockCtx, v *ast.StarExpr) func() {
