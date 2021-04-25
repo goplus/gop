@@ -1465,7 +1465,7 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 		case reflect.Type:
 			name := v.Sel.Name
 			_, t := countPtr(nv)
-			method, ptr, ok := foundMethodByName(nv, name)
+			method, ptr, ok := findMethod(t, nv.Kind() == reflect.Ptr, name)
 			if !ok {
 				log.Panicf("%v undefined (type %v has no method %s)", ctx.code(call.Fun), ctx.code(v.X), name)
 			}
@@ -1566,10 +1566,10 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 			}
 		}
 		//}
-		_, toptr, ok := foundMethodByName(vx.t, name)
+		_, toptr, ok := findMethod(t, n > 0, name)
 		if !ok && isLower(name) {
 			name = strings.Title(name)
-			if _, toptr, ok = foundMethodByName(vx.t, name); ok {
+			if _, toptr, ok = findMethod(t, n > 0, name); ok {
 				v.Sel.Name = name
 				autoCall = !compileByCallExpr
 			}
@@ -1623,19 +1623,6 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 	return nil
 }
 
-func foundMethodByName(typ reflect.Type, name string) (method reflect.Method, ptr bool, ok bool) {
-	method, ok = typ.MethodByName(name)
-	if !ok {
-		return
-	}
-	if typ.Kind() == reflect.Ptr {
-		if _, found := typ.Elem().MethodByName(name); !found {
-			ptr = true
-		}
-	}
-	return
-}
-
 func compileStarExpr(ctx *blockCtx, v *ast.StarExpr) func() {
 	exprX := compileExpr(ctx, v.X)
 	x := ctx.infer.Get(-1)
@@ -1675,12 +1662,21 @@ func countPtr(t reflect.Type) (int, reflect.Type) {
 	return n, t
 }
 
-func findMethod(ctx *blockCtx, t reflect.Type, name string) (method reflect.Method, toptr bool, found bool) {
-	method, found = t.MethodByName(name)
-	if !found && t.Kind() == reflect.Struct {
-		t = reflect.PtrTo(t)
-		toptr = true
-		method, found = t.MethodByName(name)
+func findMethod(t reflect.Type, ptr bool, name string) (method reflect.Method, toptr bool, ok bool) {
+	if ptr {
+		if method, ok = reflect.PtrTo(t).MethodByName(name); !ok {
+			return
+		}
+		if _, found := t.MethodByName(name); !found {
+			toptr = true
+		}
+	} else {
+		if method, ok = t.MethodByName(name); ok {
+			return
+		}
+		if method, ok = reflect.PtrTo(t).MethodByName(name); ok {
+			toptr = true
+		}
 	}
 	return
 }
