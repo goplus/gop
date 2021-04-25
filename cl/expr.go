@@ -1357,6 +1357,43 @@ func funcToClosure(ctx *blockCtx, fun ast.Expr, ftyp *ast.FuncType) *funcDecl {
 	return newFuncDecl("", nil, typ, body, funCtx)
 }
 
+func methodToClosure(ctx *blockCtx, sel *ast.Ident, ftyp *ast.FuncType) *funcDecl {
+	typ := &ast.FuncType{Params: &ast.FieldList{}, Results: ftyp.Results}
+	var args []ast.Expr
+	var ellipsis bool
+	for i, field := range ftyp.Params.List {
+		if _, ok := field.Type.(*ast.Ellipsis); ok {
+			ellipsis = true
+		}
+		if field.Names != nil {
+			for _, name := range field.Names {
+				args = append(args, name)
+			}
+			typ.Params.List = append(typ.Params.List, field)
+		} else {
+			ident := &ast.Ident{Name: strconv.Itoa(i)}
+			args = append(args, ident)
+			typ.Params.List = append(typ.Params.List, &ast.Field{
+				Names: []*ast.Ident{ident},
+				Type:  field.Type,
+			})
+		}
+	}
+	fun := &ast.SelectorExpr{X: args[0], Sel: sel}
+	call := &ast.CallExpr{Fun: fun, Args: args[1:]}
+	if ellipsis {
+		call.Ellipsis++
+	}
+	var body *ast.BlockStmt
+	if typ.Results == nil || len(typ.Results.List) == 0 {
+		body = &ast.BlockStmt{List: []ast.Stmt{&ast.ExprStmt{X: call}}}
+	} else {
+		body = &ast.BlockStmt{List: []ast.Stmt{&ast.ReturnStmt{Return: fun.Pos(), Results: []ast.Expr{call}}}}
+	}
+	funCtx := newExecBlockCtx(ctx)
+	return newFuncDecl("", nil, typ, body, funCtx)
+}
+
 func toElem(t reflect.Type) reflect.Type {
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
@@ -1486,7 +1523,9 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 			if compileByCallExpr {
 				fn := newGoFunc(addr, kind, 0, ctx)
 				if nv.Kind() != reflect.Interface {
-					fn.t = method.Type
+					if fn.t.In(0).Kind() != reflect.Ptr && method.Type.In(0).Kind() == reflect.Ptr {
+						call.Args[0] = &ast.StarExpr{X: call.Args[0]}
+					}
 				}
 				ctx.infer.Ret(1, fn)
 				return nil
@@ -1497,7 +1536,7 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 					fn.t = method.Type
 				}
 				ftyp := astutil.FuncType(fn.t)
-				decl := funcToClosure(ctx, v, ftyp)
+				decl := methodToClosure(ctx, v.Sel, ftyp)
 				ctx.use(decl)
 				ctx.infer.Push(newQlFunc(decl))
 				return func() {
