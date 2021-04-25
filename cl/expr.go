@@ -1485,13 +1485,17 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 			}
 			if compileByCallExpr {
 				fn := newGoFunc(addr, kind, 0, ctx)
-				fn.t = method.Type
+				if nv.Kind() != reflect.Interface {
+					fn.t = method.Type
+				}
 				ctx.infer.Ret(1, fn)
 				return nil
 			} else {
 				ctx.infer.Pop()
 				fn := newGoFunc(addr, kind, 0, ctx)
-				fn.t = method.Type
+				if nv.Kind() != reflect.Interface {
+					fn.t = method.Type
+				}
 				ftyp := astutil.FuncType(fn.t)
 				decl := funcToClosure(ctx, v, ftyp)
 				ctx.use(decl)
@@ -1562,10 +1566,10 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 			}
 		}
 		//}
-		_, toptr, ok := findMethod(ctx, t, name)
+		_, toptr, ok := foundMethodByName(vx.t, name)
 		if !ok && isLower(name) {
 			name = strings.Title(name)
-			if _, toptr, ok = findMethod(ctx, t, name); ok {
+			if _, toptr, ok = foundMethodByName(vx.t, name); ok {
 				v.Sel.Name = name
 				autoCall = !compileByCallExpr
 			}

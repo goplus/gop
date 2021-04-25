@@ -558,6 +558,9 @@ func loadVar(ctx *blockCtx, name string, typ ast.Expr, value ast.Expr) {
 	var t reflect.Type
 	if typ != nil {
 		t = toType(ctx, typ).(reflect.Type)
+		if t.Name() == "" && t.Kind() == reflect.Struct {
+			t = reflectx.MethodOf(t, nil)
+		}
 	}
 	if value != nil {
 		expr := compileExpr(ctx, value)
@@ -595,6 +598,8 @@ func loadFunc(ctx *blockCtx, d *ast.FuncDecl, isUnnamed bool) {
 
 func registerInterface(pkg *bytecode.GoPackage, typ reflect.Type) {
 	name := typ.Name()
+	pkg.RegisterTypes(pkg.Type(name, typ))
+
 	for i := 0; i < typ.NumMethod(); i++ {
 		method := typ.Method(i)
 		fnName := "(" + name + ")." + method.Name
