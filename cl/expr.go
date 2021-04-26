@@ -1421,7 +1421,7 @@ func findUserStructAnonymous(ctx *blockCtx, t reflect.Type, name string) []strin
 			// 	}
 			// } else {
 			_, found = sf.Type.MethodByName(name)
-			if !found && sf.Type.Kind() == reflect.Struct {
+			if !found && sf.Type.Kind() != reflect.Ptr {
 				_, found = reflect.PtrTo(sf.Type).MethodByName(name)
 			}
 			// }
