@@ -197,6 +197,7 @@ func checkType(t reflect.Type, v interface{}, b exec.Builder) {
 				reflect.Func,
 				reflect.Slice,
 				reflect.Array,
+				reflect.Struct,
 				reflect.Map:
 				if !typVal.ConvertibleTo(t) {
 					log.Panicf("checkType: cannot use `%v` as type `%v` in argument to produce", typVal, t)

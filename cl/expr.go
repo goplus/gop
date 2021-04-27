@@ -21,6 +21,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/goplus/reflectx"
+
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/astutil"
 	"github.com/goplus/gop/exec.spec"
@@ -99,6 +101,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 		return compileStarExpr(ctx, v)
 	case *ast.InterfaceType:
 		return compileInterfaceType(ctx, v)
+	case *ast.StructType:
+		return compileStructType(ctx, v)
 	case *ast.TypeAssertExpr:
 		return compileTypeAssertExpr(ctx, v, false)
 	case *ast.TwoValueTypeAssertExpr:
@@ -115,6 +119,13 @@ func compileInterfaceType(ctx *blockCtx, v *ast.InterfaceType) func() {
 	typ := toInterfaceType(ctx, v).(reflect.Type)
 	pkg := bytecode.FindGoPackage(typ.PkgPath())
 	registerInterface(pkg.(*bytecode.GoPackage), typ)
+	ctx.infer.Push(&nonValue{typ})
+	return nil
+}
+
+func compileStructType(ctx *blockCtx, v *ast.StructType) func() {
+	typ := toStructType(ctx, v).(reflect.Type)
+	typ = reflectx.MethodOf(typ, nil)
 	ctx.infer.Push(&nonValue{typ})
 	return nil
 }
@@ -1435,6 +1446,26 @@ func findUserStructAnonymous(ctx *blockCtx, t reflect.Type, name string) []strin
 	return nil
 }
 
+func findUserStructAnonymousMethod(ctx *blockCtx, t reflect.Type, name string) (typ reflect.Type, found bool) {
+	for i := 0; i < t.NumField(); i++ {
+		sf := t.Field(i)
+		if sf.Anonymous {
+			_, found = sf.Type.MethodByName(name)
+			if found {
+				return sf.Type, found
+			}
+			if sf.Type.Kind() != reflect.Ptr {
+				ptyp := reflect.PtrTo(sf.Type)
+				_, found = ptyp.MethodByName(name)
+				if found {
+					return ptyp, found
+				}
+			}
+		}
+	}
+	return
+}
+
 func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr, compileByCallExpr bool) func() {
 	exprX := compileExpr(ctx, v.X)
 	if v.Sel == nil {
@@ -1507,6 +1538,12 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 			method, ptr, ok := findMethod(t, nv.Kind() == reflect.Ptr, name)
 			if !ok {
 				log.Panicf("%v undefined (type %v has no method %s)", ctx.code(call.Fun), ctx.code(v.X), name)
+			}
+			// unamed struct
+			if t.Kind() == reflect.Struct && t.Name() == "" {
+				if ft, ok := findUserStructAnonymousMethod(ctx, t, name); ok {
+					t = ft
+				}
 			}
 			pkg := bytecode.FindGoPackage(t.PkgPath())
 			if pkg == nil {
