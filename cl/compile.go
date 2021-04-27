@@ -598,6 +598,9 @@ func loadFunc(ctx *blockCtx, d *ast.FuncDecl, isUnnamed bool) {
 
 func registerInterface(pkg *bytecode.GoPackage, typ reflect.Type) {
 	name := typ.Name()
+	if name == "" {
+		name = typ.String()
+	}
 	pkg.RegisterTypes(pkg.Type(name, typ))
 
 	for i := 0; i < typ.NumMethod(); i++ {

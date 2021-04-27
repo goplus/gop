@@ -112,7 +112,9 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
 }
 
 func compileInterfaceType(ctx *blockCtx, v *ast.InterfaceType) func() {
-	typ := toInterfaceType(ctx, v)
+	typ := toInterfaceType(ctx, v).(reflect.Type)
+	pkg := bytecode.FindGoPackage(typ.PkgPath())
+	registerInterface(pkg.(*bytecode.GoPackage), typ)
 	ctx.infer.Push(&nonValue{typ})
 	return nil
 }
@@ -1510,11 +1512,15 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 			if pkg == nil {
 				log.Panicln("package not found -", t.PkgPath())
 			}
+			tname := t.Name()
+			if tname == "" {
+				tname = t.String()
+			}
 			var fnname string
 			if ptr {
-				fnname = "(*" + t.Name() + ")." + name
+				fnname = "(*" + tname + ")." + name
 			} else {
-				fnname = "(" + t.Name() + ")." + name
+				fnname = "(" + tname + ")." + name
 			}
 			addr, kind, ok := pkg.Find(fnname)
 			if !ok {
@@ -1624,11 +1630,15 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 		if pkg == nil {
 			log.Panicln("compileSelectorExpr failed: package not found -", pkgPath)
 		}
+		tname := t.Name()
+		if tname == "" {
+			tname = t.String()
+		}
 		var fnname string
 		if toptr {
-			fnname = "(*" + t.Name() + ")." + name
+			fnname = "(*" + tname + ")." + name
 		} else {
-			fnname = "(" + t.Name() + ")." + name
+			fnname = "(" + tname + ")." + name
 		}
 		addr, kind, ok := pkg.Find(fnname)
 		if !ok {

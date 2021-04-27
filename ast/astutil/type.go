@@ -108,7 +108,15 @@ func Methods(typ reflect.Type) []*ast.Field {
 	if n == 0 {
 		return nil
 	}
-	panic("Methods: todo")
+	fields := make([]*ast.Field, n, n)
+	for i := 0; i < n; i++ {
+		m := typ.Method(i)
+		fields[i] = &ast.Field{
+			Names: []*ast.Ident{&ast.Ident{Name: m.Name}},
+			Type:  FuncType(m.Type),
+		}
+	}
+	return fields
 }
 
 // InterfaceType instr
