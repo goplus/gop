@@ -1355,51 +1355,46 @@ func TestStruct2(t *testing.T) {
 // -----------------------------------------------------------------------------
 var testMethodClauses = map[string]testData{
 	"method set": {`
-					type Person struct {
-						Name string
-						Age  int
-					}
-					func (p *Person) SetName(name string) {
-						p.Name = name
-					}
+	type Person struct {
+		Name string
+		Age  int
+	}
+	func (p *Person) SetName(name string) {
+		p.Name = name
+	}
+	p := &Person{
+		Name: "bar",
+		Age:  30,
+	}
+	p.SetName("foo")
+	println(p.Name)
+	`, "foo\n", false},
 
-					p := &Person{
-						Name: "bar",
-						Age:  30,
-					}
-
-					p.SetName("foo")
-					println(p.Name)
-					`, "foo\n", false},
 	"method get": {`
-					type Person struct {
-						Name string
-						Age  int
-					}
-					func (p *Person) GetName() string {
-						return p.Name
-					}
-
-					p := &Person{
-						Name: "bar",
-						Age:  30,
-					}
-
-					println(p.GetName())
-					`, "bar\n", false},
+	type Person struct {
+		Name string
+		Age  int
+	}
+	func (p *Person) GetName() string {
+		return p.Name
+	}
+	p := &Person{
+		Name: "bar",
+		Age:  30,
+	}
+	println(p.GetName())
+	`, "bar\n", false},
 
 	"struct set ptr": {`
 	type Person struct {
 		Name string
 		Age  int
 	}
-
 	p := &Person{
 		Name: "bar",
 		Age:  30,
 	}
 	p.Name = "foo"
-
 	println(p)
 	`, "&{foo 30}\n", false},
 
@@ -1408,13 +1403,11 @@ var testMethodClauses = map[string]testData{
 		Name string
 		Age  int
 	}
-
 	p := Person{
 		Name: "bar",
 		Age:  30,
 	}
 	p.Name = "foo"
-
 	println(p)
 	`, "{foo 30}\n", false},
 
@@ -1426,185 +1419,235 @@ var testMethodClauses = map[string]testData{
 	func SetName(p *Person,name string) {
 		p.Name = name
 	}
-
 	p := Person{
 		Name: "bar",
 		Age:  30,
 	}
 	SetName(&p,"foo")
-
 	println(p)
 	`, "{foo 30}\n", false},
 
 	"method func no args": {`
-					type Person struct {
-						Name string ` + "`json:\"name\"`" + `
-						Age  int
-					}
-					func (p *Person) PrintName() {
-						println(p.Name)
-					}
+	type Person struct {
+		Name string ` + "`json:\"name\"`" + `
+		Age  int
+	}
+	func (p *Person) PrintName() {
+		println(p.Name)
+	}
+	p := &Person{
+		Name: "bar",
+		Age:  30,
+	}
+	p.PrintName()
+	`, "bar\n", false},
 
-					p := &Person{
-						Name: "bar",
-						Age:  30,
-					}
-
-					p.PrintName()
-					`, "bar\n", false},
 	"method ptr struct no prt": {`
-					type Person struct {
-						Name string ` + "`json:\"name\"`" + `
-						Age  int
-					}
-					func (p *Person) PrintName() {
-						println(p.Name)
-					}
-
-					p := Person{
-						Name: "bar",
-						Age:  30,
-					}
-
-					p.PrintName()
-					`, "bar\n", false},
+	type Person struct {
+		Name string ` + "`json:\"name\"`" + `
+		Age  int
+	}
+	func (p *Person) PrintName() {
+		println(p.Name)
+	}
+	p := Person{
+		Name: "bar",
+		Age:  30,
+	}
+	p.PrintName()
+	`, "bar\n", false},
 
 	"method load field": {`
-					type Person struct {
-						Name string
-						Age  int
-					}
-					func (p *Person) SetName(name string,age int) {
-						p.Name = name
-						p.Age = age
-						println(name)
-						println(p.Age)
-					}
+	type Person struct {
+		Name string
+		Age  int
+	}
+	func (p *Person) SetName(name string,age int) {
+		p.Name = name
+		p.Age = age
+		println(name)
+		println(p.Age)
+	}
+	p := Person{
+		Name: "bar",
+		Age:  30,
+	}
+	p.SetName("foo",31)
+	`, "foo\n31\n", false},
 
-					p := Person{
-						Name: "bar",
-						Age:  30,
-					}
-
-					p.SetName("foo",31)
-					`, "foo\n31\n", false},
 	"method int type": {`
-					type M int
-					func (m M) Foo() {
-						println("foo", m)
-					}
-					m := M(0)
-					m.Foo()
-					println(m)
-					`, "foo 0\n0\n", false},
+	type M int
+	func (m M) Foo() {
+		println("foo", m)
+	}
+	m := M(0)
+	m.Foo()
+	println(m)
+	`, "foo 0\n0\n", false},
 	"method two int type": {`
-					type M int
-					type M2 int
-					func (m M) Foo() {
-						println("foo", m)
-					}
-					func (m M2) Foo() {
-						println("foo2", m)
-					}
-					m := M(0)
-					m.Foo()
-					m2 := M2(1)
-					m2.Foo()
-					println(m)
-					println(m2)
-					`, "foo 0\nfoo2 1\n0\n1\n", false},
+	type M int
+	type M2 int
+	func (m M) Foo() {
+		println("foo", m)
+	}
+	func (m M2) Foo() {
+		println("foo2", m)
+	}
+	m := M(0)
+	m.Foo()
+	m2 := M2(1)
+	m2.Foo()
+	println(m)
+	println(m2)
+	`, "foo 0\nfoo2 1\n0\n1\n", false},
+
 	"method int type conv": {`
-					type M int
-					type M2 int
-					func (m M) Foo() {
-						println("foo", m)
-					}
-					func (m M2) Foo() {
-						println("foo2", m)
-					}
-					M(10).Foo()
-					M2(11).Foo()
-					`, "foo 10\nfoo2 11\n", false},
+	type M int
+	type M2 int
+	func (m M) Foo() {
+		println("foo", m)
+	}
+	func (m M2) Foo() {
+		println("foo2", m)
+	}
+	M(10).Foo()
+	M2(11).Foo()
+	`, "foo 10\nfoo2 11\n", false},
+
 	"method two struct type": {`
-					type Pt1 struct {
-						X int
-						Y int
-					}
-					func (p *Pt1) Test() {
-						println("pt1", p)
-					}
-					type Pt2 struct {
-						X int
-						Y int
-					}
-					func (p *Pt2) Test() {
-						println("pt2",p)
-					}
-					pt1 := Pt1{1,2}
-					pt2 := Pt2{3,4}
-					pt1.Test()
-					pt2.Test()
-					`, "pt1 &{1 2}\npt2 &{3 4}\n", false},
+	type Pt1 struct {
+		X int
+		Y int
+	}
+	func (p *Pt1) Test() {
+		println("pt1", p)
+	}
+	type Pt2 struct {
+		X int
+		Y int
+	}
+	func (p *Pt2) Test() {
+		println("pt2",p)
+	}
+	pt1 := Pt1{1,2}
+	pt2 := Pt2{3,4}
+	pt1.Test()
+	pt2.Test()
+	`, "pt1 &{1 2}\npt2 &{3 4}\n", false},
+
 	"method struct field type": {`
-					type M int
-					func (m M) Foo() {
-						println("foo", m)
-					}
-					type Pt struct {
-						X M
-						Y M
-					}
-					type Pt2 Pt
-					pt := &Pt{10,20}
-					pt.Y.Foo()
-					pt2 := &Pt2{30,40}
-					pt2.Y.Foo()
-					M(11).Foo()
-				`, "foo 20\nfoo 40\nfoo 11\n", false},
+	type M int
+	func (m M) Foo() {
+		println("foo", m)
+	}
+	type Pt struct {
+		X M
+		Y M
+	}
+	type Pt2 Pt
+	pt := &Pt{10,20}
+	pt.Y.Foo()
+	pt2 := &Pt2{30,40}
+	pt2.Y.Foo()
+	M(11).Foo()
+	`, "foo 20\nfoo 40\nfoo 11\n", false},
 	"method two [5]byte type": {`
-					type T1 [5]byte
-					type T2 [5]byte
-					func (t T1) Test() { println(t) }
-					func (t T2) Test() { println(t) }
-					var t1 T1
-					var t2 T2
-					t1 = T1{'h','e','l','l','o'}
-					t2 = T2{'w','o','r','l','d'}
-					t1.Test()
-					t2.Test()
-					`, "[104 101 108 108 111]\n[119 111 114 108 100]\n", false},
+	type T1 [5]byte
+	type T2 [5]byte
+	func (t T1) Test() { println(t) }
+	func (t T2) Test() { println(t) }
+	var t1 T1
+	var t2 T2
+	t1 = T1{'h','e','l','l','o'}
+	t2 = T2{'w','o','r','l','d'}
+	t1.Test()
+	t2.Test()
+	`, "[104 101 108 108 111]\n[119 111 114 108 100]\n", false},
 	"method two []byte type": {`
-					type TByte []byte
-					type TByte2 []byte
-					func (t TByte) Test() { println(string(t)) }
-					func (t TByte2) Test() { println(string(t)) }
-					TByte("byte1").Test()
-					TByte2("byte2").Test()
-					`, "byte1\nbyte2\n", false},
+	type TByte []byte
+	type TByte2 []byte
+	func (t TByte) Test() { println(string(t)) }
+	func (t TByte2) Test() { println(string(t)) }
+	TByte("byte1").Test()
+	TByte2("byte2").Test()
+	`, "byte1\nbyte2\n", false},
+
 	"method two []string type": {`
-					type T1 []string
-					type T2 []string
-					func (t T1) Test() { println(t) }
-					func (t T2) Test() { println(t) }
-					var t1 T1
-					var t2 T2
-					t1 = append(t1,"hello")
-					t2 = append(t2,"world")
-					t1.Test()
-					t2.Test()
-					`, "[hello]\n[world]\n", false},
+	type T1 []string
+	type T2 []string
+	func (t T1) Test() { println(t) }
+	func (t T2) Test() { println(t) }
+	var t1 T1
+	var t2 T2
+	t1 = append(t1,"hello")
+	t2 = append(t2,"world")
+	t1.Test()
+	t2.Test()
+	`, "[hello]\n[world]\n", false},
+
 	"method two map[int]string type": {`
-					type T1 map[int]string
-					type T2 map[int]string
-					func (t T1) Test() { println(t) }
-					func (t T2) Test() { println(t) }
-					t1 := make(T1)
-					t2 := make(T2)
-					t1[10] = "hello"
-					t2[20] = "world"
-					t1.Test()
-					t2.Test()
-					`, "map[10:hello]\nmap[20:world]\n", false},
+	type T1 map[int]string
+	type T2 map[int]string
+	func (t T1) Test() { println(t) }
+	func (t T2) Test() { println(t) }
+	t1 := make(T1)
+	t2 := make(T2)
+	t1[10] = "hello"
+	t2[20] = "world"
+	t1.Test()
+	t2.Test()
+	`, "map[10:hello]\nmap[20:world]\n", false},
+
+	"method slice": {`
+	type T []int
+	func (t T) Len() int { return len(t) }
+	type I interface {
+		Len() int
+	}
+	var t T = T{0, 1, 2, 3, 4}
+	var i I
+	i = t
+	if i.Len() != 5 {
+		println("i.Len", i.Len())
+		panic("fail")
+	}
+	if T.Len(t) != 5 {
+		println("T.Len", T.Len(t))
+		panic("fail")
+	}
+	if (*T).Len(&t) != 5 {
+		println("(*T).Len", (*T).Len(&t))
+		panic("fail")
+	}
+	`, "", false},
+	"method embedded": {`
+	type C int
+	func (C) f()  {} // value receiver, direct field of A
+	func (*C) g() {} // pointer receiver
+	type D int
+	func (D) h()  {} // value receiver, indirect field of A
+	func (*D) i() {} // pointer receiver
+	type B struct {
+		C
+		*D
+	}
+	type A struct{ B }
+	var a A
+	// Addressable value receiver.
+	a.f()
+	a.g()
+	a.i()
+	// Non-addressable value receiver.
+	A(a).f()
+	A(a).i()
+	// Pointer receiver.
+	(&a).f()
+	(&a).g()
+	(&a).i()
+	c := new(C)
+	c.f() // makes a copy
+	c.g()
+	`, "", false},
 }
 
 func TestMethodCases(t *testing.T) {
