@@ -196,15 +196,32 @@ func execTypeMethod(i Instr, p *Context) {
 	for i := 0; i < len(ms); i++ {
 		m := ms[i]
 		numOut := m.Info.NumOut()
-		m.Func = func(args []reflect.Value) (out []reflect.Value) {
-			for _, arg := range args {
-				p.data = append(p.data, arg.Interface())
+		if m.Info.IsVariadic() {
+			m.Func = func(args []reflect.Value) (out []reflect.Value) {
+				for n, arg := range args {
+					if n == len(args)-1 {
+						p.data = append(p.data, arg.Index(0).Interface())
+					} else {
+						p.data = append(p.data, arg.Interface())
+					}
+				}
+				p.Call(m.Info)
+				for i := 0; i < numOut; i++ {
+					out = append(out, reflect.ValueOf(p.Get(i-numOut)))
+				}
+				return
 			}
-			p.Call(m.Info)
-			for i := 0; i < numOut; i++ {
-				out = append(out, reflect.ValueOf(p.Get(i-numOut)))
+		} else {
+			m.Func = func(args []reflect.Value) (out []reflect.Value) {
+				for _, arg := range args {
+					p.data = append(p.data, arg.Interface())
+				}
+				p.Call(m.Info)
+				for i := 0; i < numOut; i++ {
+					out = append(out, reflect.ValueOf(p.Get(i-numOut)))
+				}
+				return
 			}
-			return
 		}
 	}
 }

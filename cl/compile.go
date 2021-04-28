@@ -650,7 +650,7 @@ func registerInterfaceMethod(p *bytecode.GoPackage, fnname string, t reflect.Typ
 			for i := 0; i < numOut; i++ {
 				iout[i] = out[i].Interface()
 			}
-			p.Ret(arity, iout...)
+			p.Ret(arity+1, iout...)
 		}
 	}
 	if isVariadic {
