@@ -300,43 +300,30 @@ func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 			}
 		}
 	}
-	// load type
+	// load type & const
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.GenDecl:
 			switch d.Tok {
 			case token.TYPE:
 				loadTypes(ctx, d)
+			case token.CONST:
+				loadConsts(ctx, d)
 			}
 		}
 	}
-
+	// load func & method
 	for i, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
 			loadFunc(ctx, d, f.NoEntrypoint && i == last)
-		case *ast.GenDecl:
-			switch d.Tok {
-			case token.IMPORT:
-			//	loadImports(file, d)
-			case token.TYPE:
-			//	loadTypes(ctx, d)
-			case token.CONST:
-				loadConsts(ctx, d)
-			case token.VAR:
-			//	compileStmt(ctx, &ast.DeclStmt{decl})
-			default:
-				log.Panicln("tok:", d.Tok, "spec:", reflect.TypeOf(d.Specs).Elem())
-			}
-		default:
-			log.Panicln("gopkg.Package.load: unknown decl -", reflect.TypeOf(decl))
 		}
 	}
+	// register methods
 	pkg := bytecode.FindGoPackage(ctx.pkg.Name)
 	if pkg == nil {
 		pkg = bytecode.NewGoPackage(ctx.pkg.Name)
 	}
-
 	var decls []*typeDecl
 	for typ, decl := range ctx.types {
 		if typ.Kind() == reflect.Interface {
@@ -354,14 +341,13 @@ func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 		}
 		decls = append(decls, decl)
 	}
-
 	registerTypeDecls(ctx, pkg.(*bytecode.GoPackage), decls)
 	for _, mt := range ctx.mtypeList {
 		mt.Update(ctx.mtype)
 		mt.RegisterMethod(pkg.(*bytecode.GoPackage))
 		ctx.out.MethodOf(mt.typ, mt.infos)
 	}
-
+	// load vars
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.GenDecl:
