@@ -873,33 +873,10 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 			ctx.infer.Push(ret)
 		}
 		return func() {
-			var isMethod int
-			if vfn.recv != nil {
-				isMethod = 1
-				exprX := compileExpr(ctx, v.Fun.(*ast.SelectorExpr).X)
-				recv := ctx.infer.Get(-1).(*goValue)
-
-				if astutil.ToRecv(vfn.recv).Pointer == 0 {
-					exprX()
-					if recv.Kind() == reflect.Ptr {
-						recv.t = recv.t.Elem()
-						ctx.infer.Ret(1, recv)
-						ctx.out.AddrOp(recv.t.Kind(), exec.OpAddrVal) // Ptr => Elem()
-					}
-				} else {
-					ctx.checkLoadAddr = true
-					exprX()
-					ctx.checkLoadAddr = false
-					if recv.Kind() != reflect.Ptr {
-						recv.t = reflect.PtrTo(recv.t)
-						ctx.infer.Ret(1, recv)
-					}
-				}
-			}
 			for _, arg := range v.Args {
 				compileExpr(ctx, arg)()
 			}
-			arity := checkFuncCall(vfn.Proto(), isMethod, v, ctx)
+			arity := checkFuncCall(vfn.Proto(), 0, v, ctx)
 			fun := vfn.FuncInfo()
 			if fun.IsVariadic() {
 				builder(ctx, ct).CallFuncv(fun, len(v.Args), arity)
