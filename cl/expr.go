@@ -404,6 +404,9 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 		}
 	case reflect.Struct:
 		typStruct := typ.(reflect.Type)
+		if typStruct.Name() == "" {
+			typStruct = reflectx.MethodOf(typStruct, nil)
+		}
 		ctx.infer.Push(&goValue{t: typStruct})
 		return func() {
 			old := ctx.takeAddr

@@ -1648,6 +1648,45 @@ var testMethodClauses = map[string]testData{
 	c.f() // makes a copy
 	c.g()
 	`, "", false},
+
+	"method order": {`
+	type T4 struct {
+	}
+	type T3 struct {
+		*T4
+	}
+	type T2 struct {
+		*T3
+	}
+	type T1 struct {
+		T2
+	}
+	func (t4 T4) M(x int, b byte) (byte, int) { return b, x + 40 }
+	func (t4 T4) N(x ...int) (sum int) { 
+		for _, v := range x {
+			sum += v
+		}
+		return
+	}
+	func (t1 T1) N(x ...int) (sum int) { 
+		for _, v := range x {
+			sum -= v
+		}
+		return
+	}
+	t4 := T4{}
+	t3 := T3{&t4}
+	t2 := T2{&t3}
+	t1 := T1{t2}
+	println(t1.N(100,200,300))
+	println(t2.N(100,200,300))
+	println(t3.N(100,200,300))
+	println(t4.N(100,200,300))
+	println(struct{T1}{t1}.N(100,200,300))
+	println(struct{T2}{t2}.N(100,200,300))
+	println(struct{T3}{t3}.N(100,200,300))
+	println(struct{T4}{t4}.N(100,200,300))
+	`, "-600\n600\n600\n600\n-600\n600\n600\n600\n", false},
 }
 
 func TestMethodCases(t *testing.T) {
