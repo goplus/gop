@@ -1611,20 +1611,6 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 		// 		}
 		// 	}
 		// }
-		if call != nil && isUserStruct(t) {
-			if names := findUserStructAnonymous(ctx, t, name); names != nil {
-				ctx.infer.Pop()
-				x := &ast.SelectorExpr{X: v.X}
-				for i := 0; i < len(names)-1; i++ {
-					x.X = &ast.SelectorExpr{X: x.X, Sel: &ast.Ident{Name: names[i]}}
-				}
-				x.Sel = &ast.Ident{Name: names[len(names)-1]}
-				fun := &ast.SelectorExpr{X: x, Sel: v.Sel}
-				call.Fun = fun
-				return compileSelectorExpr(ctx, call, fun, compileByCallExpr)
-			}
-		}
-		//}
 		_, toptr, ok := findMethod(t, n > 0, name)
 		if !ok && isLower(name) {
 			name = strings.Title(name)
@@ -1656,6 +1642,19 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 		}
 		addr, kind, ok := pkg.Find(fnname)
 		if !ok {
+			if names := findUserStructAnonymous(ctx, t, name); names != nil {
+				ctx.infer.Pop()
+				x := &ast.SelectorExpr{X: v.X}
+				for i := 0; i < len(names)-1; i++ {
+					x.X = &ast.SelectorExpr{X: x.X, Sel: &ast.Ident{Name: names[i]}}
+				}
+				x.Sel = &ast.Ident{Name: names[len(names)-1]}
+				fun := &ast.SelectorExpr{X: x, Sel: v.Sel}
+				if call != nil {
+					call.Fun = fun
+				}
+				return compileSelectorExpr(ctx, call, fun, compileByCallExpr)
+			}
 			log.Panicln("compileSelectorExpr: method not found -", fnname)
 		}
 		if !compileByCallExpr && !autoCall {
