@@ -206,6 +206,9 @@ func execTypeMethod(i Instr, p *Context) {
 				for i := 0; i < numOut; i++ {
 					out = append(out, reflect.ValueOf(p.Get(i-numOut)))
 				}
+				if numOut > 0 {
+					p.data = p.data[:len(p.data)-numOut]
+				}
 				return
 			}
 		} else {
@@ -216,6 +219,9 @@ func execTypeMethod(i Instr, p *Context) {
 				p.Call(m.Info)
 				for i := 0; i < numOut; i++ {
 					out = append(out, reflect.ValueOf(p.Get(i-numOut)))
+				}
+				if numOut > 0 {
+					p.data = p.data[:len(p.data)-numOut]
 				}
 				return
 			}

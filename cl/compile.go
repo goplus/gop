@@ -636,11 +636,7 @@ func registerInterfaceMethod(p *bytecode.GoPackage, fnname string, t reflect.Typ
 			for i := 0; i < numOut; i++ {
 				iout[i] = out[i].Interface()
 			}
-			if isVariadic {
-				p.Ret(arity+1, iout...)
-			} else {
-				p.Ret(arity+1, iout...)
-			}
+			p.Ret(arity, iout...)
 		}
 	}
 	if isVariadic {
