@@ -21,8 +21,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/goplus/reflectx"
-
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/astutil"
 	"github.com/goplus/gop/exec.spec"
@@ -125,7 +123,6 @@ func compileInterfaceType(ctx *blockCtx, v *ast.InterfaceType) func() {
 
 func compileStructType(ctx *blockCtx, v *ast.StructType) func() {
 	typ := toStructType(ctx, v).(reflect.Type)
-	typ = reflectx.MethodOf(typ, nil)
 	ctx.infer.Push(&nonValue{typ})
 	return nil
 }
@@ -404,9 +401,6 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 		}
 	case reflect.Struct:
 		typStruct := typ.(reflect.Type)
-		if typStruct.Name() == "" {
-			typStruct = reflectx.MethodOf(typStruct, nil)
-		}
 		ctx.infer.Push(&goValue{t: typStruct})
 		return func() {
 			old := ctx.takeAddr

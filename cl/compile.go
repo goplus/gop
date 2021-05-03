@@ -544,9 +544,6 @@ func loadVar(ctx *blockCtx, name string, typ ast.Expr, value ast.Expr) {
 	var t reflect.Type
 	if typ != nil {
 		t = toType(ctx, typ).(reflect.Type)
-		if t.Name() == "" && t.Kind() == reflect.Struct {
-			t = reflectx.MethodOf(t, nil)
-		}
 	}
 	if value != nil {
 		expr := compileExpr(ctx, value)
