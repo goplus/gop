@@ -1,0 +1,121 @@
+package main
+
+type T4 struct {
+}
+type T3 struct {
+	*T4
+}
+type T2 struct {
+	*T3
+}
+type T1 struct {
+	T2
+}
+
+func (t4 T4) M(x int, b byte) (byte, int) { return b, x + 40 }
+func (t4 T4) N(x ...int) (sum int) {
+	for _, v := range x {
+		sum += v
+	}
+	return
+}
+func (t4 *T4) P(v int) int {
+	return v
+}
+func (t1 T1) N(x ...int) (sum int) {
+	for _, v := range x {
+		sum -= v
+	}
+	return
+}
+
+type I interface {
+	M(x int, b byte) (byte, int)
+	N(x ...int) (sum int)
+}
+
+type P interface {
+	P(int) int
+}
+
+func checkM(fn func(x int, b byte) (byte, int)) {
+	a, b := fn(100, 200)
+	if a != byte(200) || b != 140 {
+		panic("failed")
+	}
+}
+func check(n1 int, n2 int) {
+	if n1 != n2 {
+		panic("failed")
+	}
+}
+func checkN(fn func(x ...int) int) {
+	sum := fn(100, 200, 300)
+	if sum != 600 {
+		panic("failed")
+	}
+}
+func checkN1(fn func(x ...int) int) {
+	sum := fn(100, 200, 300)
+	if sum != -600 {
+		panic("failed")
+	}
+}
+func checkP(i interface{}) {
+	switch v := i.(type) {
+	case P:
+		if v.P(100) != 100 {
+			panic("failed")
+		}
+	default:
+		panic("unsupport")
+	}
+}
+
+func main() {
+	t4 := T4{}
+	t3 := T3{&t4}
+	t2 := T2{&t3}
+	t1 := T1{t2}
+
+	checkM(t1.M)
+	checkM(t2.M)
+	checkM(t3.M)
+	checkM(t4.M)
+
+	checkN1(t1.N)
+	checkN(t2.N)
+	checkN(t3.N)
+	checkN(t4.N)
+
+	var i I
+	i = t1
+	checkM(i.M)
+	checkN1(i.N)
+	checkP(i)
+	i = t2
+	checkM(i.M)
+	checkN(i.N)
+	checkP(i)
+	i = t3
+	checkM(i.M)
+	checkN(i.N)
+	checkP(i)
+	i = t4
+	checkM(i.M)
+	checkN(i.N)
+	//checkP(i)
+	checkP(struct{ T1 }{t1})
+	checkP(struct{ T2 }{t2})
+	checkP(struct{ T3 }{t3})
+	checkP(struct{ *T4 }{&t4})
+
+	check(t1.N(100, 200, 300), -600)
+	check(t2.N(100, 200, 300), 600)
+	check(t3.N(100, 200, 300), 600)
+	check(t4.N(100, 200, 300), 600)
+	check(struct{ T1 }{t1}.N(100, 200, 300), -600)
+	check(struct{ T2 }{t2}.N(100, 200, 300), 600)
+	check(struct{ T3 }{t3}.N(100, 200, 300), 600)
+	check(struct{ T4 }{t4}.N(100, 200, 300), 600)
+}
