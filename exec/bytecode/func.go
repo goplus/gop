@@ -298,8 +298,14 @@ func (p *FuncInfo) execFunc(ctx *Context) {
 	oldDefers := ctx.defers
 	ctx.defers = nil
 	defer func() {
+		if v := recover(); v != nil {
+			ctx.panics = &panicInfo{v, ctx.ip}
+		}
 		ctx.execDefers()
 		ctx.defers = oldDefers
+		if ctx.panics != nil {
+			panic(ctx.panics.v)
+		}
 	}()
 	ctx.Exec(p.funEntry, p.funEnd)
 	if ctx.ip == ipReturnN { // TODO: optimize

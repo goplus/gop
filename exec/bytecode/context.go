@@ -17,6 +17,8 @@
 package bytecode
 
 import (
+	"fmt"
+	"os"
 	"reflect"
 	"time"
 
@@ -32,12 +34,18 @@ type varScope struct {
 	parent *varScope
 }
 
+type panicInfo struct {
+	v  interface{}
+	ip int
+}
+
 // A Context represents the context of an executor.
 type Context struct {
 	Stack
 	varScope
 	code   *Code
 	defers *theDefer
+	panics *panicInfo
 	ip     int
 	base   int
 }
@@ -133,6 +141,12 @@ func (ctx *Context) getScope(local bool) *varScope {
 
 // Run executes the code.
 func (ctx *Context) Run() {
+	defer func() {
+		if v := recover(); v != nil {
+			fmt.Println("panic:", ctx.panics.v)
+			os.Exit(2)
+		}
+	}()
 	defer ctx.execDefers()
 	ctx.Exec(0, ctx.code.Len())
 }
