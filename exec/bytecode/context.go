@@ -17,8 +17,6 @@
 package bytecode
 
 import (
-	"fmt"
-	"os"
 	"reflect"
 	"time"
 
@@ -143,11 +141,13 @@ func (ctx *Context) getScope(local bool) *varScope {
 func (ctx *Context) Run() {
 	defer func() {
 		if v := recover(); v != nil {
-			fmt.Println("panic:", ctx.panics.v)
-			os.Exit(2)
+			ctx.panics = &panicInfo{v, ctx.ip}
+		}
+		ctx.execDefers()
+		if ctx.panics != nil {
+			panic(ctx.panics.v)
 		}
 	}()
-	defer ctx.execDefers()
 	ctx.Exec(0, ctx.code.Len())
 }
 
