@@ -164,8 +164,12 @@ func execGoBuiltin(i Instr, p *Context) {
 		v := reflect.ValueOf(p.Pop())
 		v.Close()
 	case GobRecover:
-		p.Push(p.panics.v)
-		p.panics = nil
+		if p.panics != nil {
+			p.Push(p.panics.v)
+			p.panics = nil
+		} else {
+			p.Push(nil)
+		}
 	default:
 		log.Panicln("execGoBuiltin: todo -", op)
 	}
