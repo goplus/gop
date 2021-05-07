@@ -305,11 +305,11 @@ func (p *FuncInfo) _execFunc(ctx *Context) {
 	oldDefers := ctx.defers
 	ctx.defers = nil
 	defer func() {
-		if ctx.panics == nil || ctx.panics.depth >= p.nestDepth {
-			if v := recover(); v != nil {
-				ctx.panics = &panicInfo{v, ctx.ip, p.nestDepth}
-			}
+		//if ctx.panics == nil { //}|| ctx.panics.depth >= p.nestDepth {
+		if v := recover(); v != nil {
+			ctx.panics = &panicInfo{v, ctx.ip - 1, p.nestDepth, p.name, ctx.panics}
 		}
+		//}
 		ctx.execDefers()
 		ctx.defers = oldDefers
 	}()

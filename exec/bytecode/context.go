@@ -17,6 +17,8 @@
 package bytecode
 
 import (
+	"bytes"
+	"fmt"
 	"reflect"
 	"time"
 
@@ -33,9 +35,11 @@ type varScope struct {
 }
 
 type panicInfo struct {
-	v     interface{}
-	ip    int
-	depth uint32
+	v      interface{}
+	ip     int
+	depth  uint32
+	name   string
+	parent *panicInfo
 }
 
 // A Context represents the context of an executor.
@@ -142,14 +146,26 @@ func (ctx *Context) getScope(local bool) *varScope {
 func (ctx *Context) Run() {
 	ctx.run()
 	if ctx.panics != nil {
-		panic(ctx.panics.v)
+		var buf bytes.Buffer
+		buf.WriteString(fmt.Sprintf("%v", ctx.panics.v))
+		var list []*panicInfo
+		p := ctx.panics.parent
+		for p != nil {
+			list = append([]*panicInfo{p}, list...)
+			p = p.parent
+		}
+		for _, p := range list {
+			buf.WriteString(fmt.Sprintf("\nbytecode main.%v()", p.name))
+			DumpCodeBlock(&buf, Instr(ctx.code.data[p.ip]))
+		}
+		panic(buf.String())
 	}
 }
 
 func (ctx *Context) run() {
 	defer func() {
 		if v := recover(); v != nil {
-			ctx.panics = &panicInfo{v, ctx.ip, 0}
+			ctx.panics = &panicInfo{v, ctx.ip - 1, 0, "main", ctx.panics}
 		}
 		ctx.execDefers()
 	}()
