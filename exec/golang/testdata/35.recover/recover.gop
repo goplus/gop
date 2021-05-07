@@ -9,7 +9,18 @@ func protect(g func()) {
 	g()
 }
 
+defer func() {
+	if v := recover(); v != nil {
+		println("recover", v)
+	}
+	if v := recover(); v != nil {
+		println("error", v)
+	}
+}()
+
 protect(func() {
 	i := 0
 	println(1 / i)
 })
+
+panic("hello")
