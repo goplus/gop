@@ -33,8 +33,9 @@ type varScope struct {
 }
 
 type panicInfo struct {
-	v  interface{}
-	ip int
+	v     interface{}
+	ip    int
+	depth uint32
 }
 
 // A Context represents the context of an executor.
@@ -139,14 +140,18 @@ func (ctx *Context) getScope(local bool) *varScope {
 
 // Run executes the code.
 func (ctx *Context) Run() {
+	ctx.run()
+	if ctx.panics != nil {
+		panic(ctx.panics.v)
+	}
+}
+
+func (ctx *Context) run() {
 	defer func() {
 		if v := recover(); v != nil {
-			ctx.panics = &panicInfo{v, ctx.ip}
+			ctx.panics = &panicInfo{v, ctx.ip, 0}
 		}
 		ctx.execDefers()
-		if ctx.panics != nil {
-			panic(ctx.panics.v)
-		}
 	}()
 	ctx.Exec(0, ctx.code.Len())
 }

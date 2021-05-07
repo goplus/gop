@@ -295,17 +295,23 @@ func (p *FuncInfo) Type() reflect.Type {
 }
 
 func (p *FuncInfo) execFunc(ctx *Context) {
+	p._execFunc(ctx)
+	if ctx.panics != nil && ctx.panics.depth >= p.nestDepth {
+		panic(ctx.panics.v)
+	}
+}
+
+func (p *FuncInfo) _execFunc(ctx *Context) {
 	oldDefers := ctx.defers
 	ctx.defers = nil
 	defer func() {
-		if v := recover(); v != nil {
-			ctx.panics = &panicInfo{v, ctx.ip}
+		if ctx.panics == nil || ctx.panics.depth >= p.nestDepth {
+			if v := recover(); v != nil {
+				ctx.panics = &panicInfo{v, ctx.ip, p.nestDepth}
+			}
 		}
 		ctx.execDefers()
 		ctx.defers = oldDefers
-		if ctx.panics != nil {
-			panic(ctx.panics.v)
-		}
 	}()
 	ctx.Exec(p.funEntry, p.funEnd)
 	if ctx.ip == ipReturnN { // TODO: optimize
