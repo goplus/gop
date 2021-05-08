@@ -239,11 +239,25 @@ type Code struct {
 	structs    []StructInfo
 	errWraps   []errWrap
 	varManager
+	*execInfo
+}
+
+type panicInfo struct {
+	v      interface{}
+	ip     int
+	depth  int
+	name   string
+	parent *panicInfo
+}
+
+type execInfo struct {
+	depth  int
+	panics *panicInfo
 }
 
 // NewCode returns a new Code object.
 func NewCode() *Code {
-	return &Code{data: make([]Instr, 0, 64)}
+	return &Code{data: make([]Instr, 0, 64), execInfo: &execInfo{}}
 }
 
 // Len returns code length.

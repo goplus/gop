@@ -17,8 +17,6 @@
 package bytecode
 
 import (
-	"bytes"
-	"fmt"
 	"reflect"
 	"time"
 
@@ -34,21 +32,12 @@ type varScope struct {
 	parent *varScope
 }
 
-type panicInfo struct {
-	v      interface{}
-	ip     int
-	depth  uint32
-	name   string
-	parent *panicInfo
-}
-
 // A Context represents the context of an executor.
 type Context struct {
 	Stack
 	varScope
 	code   *Code
 	defers *theDefer
-	panics *panicInfo
 	ip     int
 	base   int
 }
@@ -76,6 +65,7 @@ func (ctx *Context) Go(arity int, f func(goctx *Context)) {
 		code: ctx.code,
 	}
 	goctx.Init()
+	goctx.code.execInfo = &execInfo{depth: ctx.code.depth}
 	base := len(ctx.data) - arity
 	parent := ctx.varScope
 	goctx.parent = &parent
@@ -145,27 +135,18 @@ func (ctx *Context) getScope(local bool) *varScope {
 // Run executes the code.
 func (ctx *Context) Run() {
 	ctx.run()
-	if ctx.panics != nil {
-		var buf bytes.Buffer
-		buf.WriteString(fmt.Sprintf("%v", ctx.panics.v))
-		var list []*panicInfo
-		p := ctx.panics.parent
-		for p != nil {
-			list = append([]*panicInfo{p}, list...)
-			p = p.parent
-		}
-		for _, p := range list {
-			buf.WriteString(fmt.Sprintf("\nbytecode main.%v()", p.name))
-			DumpCodeBlock(&buf, Instr(ctx.code.data[p.ip]))
-		}
-		panic(buf.String())
+	if ctx.code.panics != nil {
+		panic(ctx.code.panics.v)
 	}
 }
 
 func (ctx *Context) run() {
+	ctx.code.depth++
+	depth := ctx.code.depth
 	defer func() {
+		ctx.code.depth--
 		if v := recover(); v != nil {
-			ctx.panics = &panicInfo{v, ctx.ip - 1, 0, "main", ctx.panics}
+			ctx.code.panics = &panicInfo{v, ctx.ip - 1, depth, "main", ctx.code.panics}
 		}
 		ctx.execDefers()
 	}()

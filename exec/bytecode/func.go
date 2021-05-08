@@ -296,20 +296,23 @@ func (p *FuncInfo) Type() reflect.Type {
 
 func (p *FuncInfo) execFunc(ctx *Context) {
 	p._execFunc(ctx)
-	if ctx.panics != nil && ctx.panics.depth >= p.nestDepth {
-		panic(ctx.panics.v)
+	if ctx.code.panics != nil && ctx.code.panics.depth >= ctx.code.depth {
+		panic(ctx.code.panics.v)
 	}
 }
 
 func (p *FuncInfo) _execFunc(ctx *Context) {
 	oldDefers := ctx.defers
 	ctx.defers = nil
+	ctx.code.depth++
+	depth := ctx.code.depth
 	defer func() {
-		//if ctx.panics == nil { //}|| ctx.panics.depth >= p.nestDepth {
-		if v := recover(); v != nil {
-			ctx.panics = &panicInfo{v, ctx.ip - 1, p.nestDepth, p.name, ctx.panics}
+		ctx.code.depth--
+		if ctx.code.panics == nil || ctx.code.panics.depth >= ctx.code.depth {
+			if v := recover(); v != nil {
+				ctx.code.panics = &panicInfo{v, ctx.ip - 1, depth, p.name, ctx.code.panics}
+			}
 		}
-		//}
 		ctx.execDefers()
 		ctx.defers = oldDefers
 	}()
