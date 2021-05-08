@@ -164,9 +164,9 @@ func execGoBuiltin(i Instr, p *Context) {
 		v := reflect.ValueOf(p.Pop())
 		v.Close()
 	case GobRecover:
-		if p.code.panics != nil && p.code.depth == p.code.panics.depth {
-			p.Push(p.code.panics.v)
-			p.code.panics = nil
+		if p.exec.panics != nil && p.exec.depth == p.exec.panics.depth {
+			p.Push(p.exec.panics.v)
+			p.exec.panics = nil
 		} else {
 			p.Push(nil)
 		}

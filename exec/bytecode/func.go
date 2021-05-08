@@ -65,7 +65,7 @@ func makeClosure(i Instr, p *Context) Closure {
 	} else {
 		fun = p.code.funs[idx]
 	}
-	return Closure{fun: fun, parent: p.getScope(fun.nestDepth > 1)}
+	return Closure{fun: fun, parent: p.getScope(fun.nestDepth > 1), exec: p.exec}
 }
 
 func execGoClosure(i Instr, p *Context) {
@@ -150,11 +150,13 @@ type Closure struct {
 	fun    *FuncInfo
 	recv   interface{}
 	parent *varScope
+	exec   *execInfo
 }
 
 // Call calls a closure.
 func (p *Closure) Call(in []reflect.Value) (out []reflect.Value) {
 	ctx := NewContext(p.fun.Pkg.code)
+	ctx.exec = p.exec
 	for _, v := range in {
 		ctx.Push(v.Interface())
 	}
@@ -296,21 +298,21 @@ func (p *FuncInfo) Type() reflect.Type {
 
 func (p *FuncInfo) execFunc(ctx *Context) {
 	p._execFunc(ctx)
-	if ctx.code.panics != nil && ctx.code.panics.depth >= ctx.code.depth {
-		panic(ctx.code.panics.v)
+	if ctx.exec.panics != nil && ctx.exec.panics.depth >= ctx.exec.depth {
+		panic(ctx.exec.panics.v)
 	}
 }
 
 func (p *FuncInfo) _execFunc(ctx *Context) {
 	oldDefers := ctx.defers
 	ctx.defers = nil
-	ctx.code.depth++
-	depth := ctx.code.depth
+	ctx.exec.depth++
+	depth := ctx.exec.depth
 	defer func() {
-		ctx.code.depth--
-		if ctx.code.panics == nil || ctx.code.panics.depth >= ctx.code.depth {
+		ctx.exec.depth--
+		if ctx.exec.panics == nil || ctx.exec.panics.depth >= ctx.exec.depth {
 			if v := recover(); v != nil {
-				ctx.code.panics = &panicInfo{v, ctx.ip - 1, depth, p.name, ctx.code.panics}
+				ctx.exec.panics = &panicInfo{v, ctx.ip - 1, depth, p.name, ctx.exec.panics}
 			}
 		}
 		ctx.execDefers()
