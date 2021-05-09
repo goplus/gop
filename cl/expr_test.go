@@ -360,9 +360,123 @@ if false && foo() {
 
 func TestPanic(t *testing.T) {
 	cltest.Expect(t,
-		`panic("Helo")`,
+		`panic("Hello")`,
 		"",
-		"Helo", // panicMsg
+		"Hello", // panicMsg
+	)
+	cltest.Expect(t, `
+		import "fmt"
+		defer func() {
+			v := recover()
+			panic(fmt.Sprintf("recover %v",v))
+		}()
+		panic("Hello")`,
+		"",
+		"recover Hello", // panicMsg
+	)
+	cltest.Expect(t, `
+		import "fmt"
+		func myrecover() {
+			if v := recover(); v != nil {
+				fmt.Printf("recover %v\n",v)
+			}
+		}
+		defer func() {
+			myrecover()
+		}()
+		panic("Hello")`,
+		"",
+		"Hello", // panicMsg
+	)
+	cltest.Expect(t, `
+		func test1() {
+			defer func() {
+				recover()
+			}()
+			panic("test1")
+		}
+		func test2() {
+			panic("test2")
+		}
+		test1()
+		test2()`,
+		"",
+		"test2", // panicMsg
+	)
+	cltest.Expect(t, `
+		func test1() {
+			defer func() {
+				recover()
+			}()
+			panic("test1")
+		}
+		func test2() {
+			test1()
+			panic("test2")
+		}
+		test2()`,
+		"",
+		"test2", // panicMsg
+	)
+	cltest.Expect(t, `
+		func test1() {
+			panic("test1")
+		}
+		func test2() {
+			test1()
+			panic("test2")
+		}
+		test2()`,
+		"",
+		"test1", // panicMsg
+	)
+	cltest.Expect(t, `
+		func test1() {
+			panic("test1")
+		}
+		func test2() {
+			test1()
+			panic("test2")
+		}
+		defer func() {
+			v := recover()
+			println("recover",v)
+		}()
+		test2()`,
+		"recover test1\n",
+	)
+	cltest.Expect(t, `
+		import "fmt"
+		defer func() {
+			v := recover()
+			fmt.Printf("recover %v\n",v)
+		}()
+		panic("Hello")`,
+		"recover Hello\n", // recover
+	)
+	cltest.Expect(t, `
+		import "fmt"
+		func myrecover() {
+			if v := recover(); v != nil {
+				fmt.Printf("recover %v\n",v)
+			}
+		}
+		defer myrecover()
+		panic("Hello")`,
+		"recover Hello\n", // recover
+	)
+	cltest.Expect(t, `
+		import "fmt"
+		func myrecover() func() {
+			return func() {
+				if v := recover(); v != nil {
+					fmt.Printf("recover %v\n",v)
+				}
+			}
+		}
+		defer myrecover()()
+		panic("Hello")`,
+		"recover Hello\n", // recover
 	)
 }
 
