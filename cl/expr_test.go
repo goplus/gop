@@ -430,6 +430,9 @@ func TestPanic(t *testing.T) {
 		"",
 		"test1", // panicMsg
 	)
+}
+
+func TestRecover(t *testing.T) {
 	cltest.Expect(t, `
 		func test1() {
 			panic("test1")
@@ -477,6 +480,39 @@ func TestPanic(t *testing.T) {
 		defer myrecover()()
 		panic("Hello")`,
 		"recover Hello\n", // recover
+	)
+	cltest.Expect(t, `
+		import "time"
+		func myrecover() {
+			if v := recover(); v != nil {
+				println("recover",v)
+			}
+		}
+		func test1() {
+			panic("test1")
+		}
+		func test2() {
+			test1()
+			panic("test2")
+		}
+		func test3() {
+			panic("test3")
+		}
+		defer myrecover()
+		ch := make(chan int)
+		go func() {
+			defer func() {
+				if v := recover(); v != nil {
+					println("recover",v)
+				}
+				ch <- 1			
+			}()
+			test2()
+		}()
+		<-ch
+		test3()
+		test2()`,
+		"recover test1\nrecover test3\n",
 	)
 }
 
