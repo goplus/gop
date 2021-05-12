@@ -281,6 +281,13 @@ func toIdentType(ctx *blockCtx, ident string) iType {
 	if typ, ok := ctx.builtin.FindType(ident); ok {
 		return typ
 	}
+	if t, ok := ctx.decls[ident]; ok {
+		if t.typ != nil {
+			return t.typ
+		}
+		ctx.cdecl.appendDeps(ident)
+		return t.decl
+	}
 	typ, err := ctx.findType(ident)
 	if err != nil {
 		log.Panicln("toIdentType failed: findType error", err)

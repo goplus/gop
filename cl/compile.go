@@ -274,6 +274,18 @@ func loadNamedType(ctx *blockCtx, d *ast.FuncDecl) {
 	}
 }
 
+func loadTypeDecl(ctx *blockCtx, decl *declType) {
+	if decl.complete {
+		return
+	}
+	for _, dep := range decl.deps {
+		loadTypeDecl(ctx, ctx.decls[dep])
+	}
+	log.Println("~~~~ load type", decl)
+	decl.complete = true
+	loadType(ctx, decl.spec)
+}
+
 func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 	file := newFileCtx(ctx)
 	last := len(f.Decls) - 1
@@ -281,7 +293,6 @@ func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 	for name, pkg := range imports {
 		ctx.file.imports[name] = pkg
 	}
-	// load import
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.GenDecl:
@@ -300,13 +311,48 @@ func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 			}
 		}
 	}
+
+	for _, decl := range f.Decls {
+		switch d := decl.(type) {
+		case *ast.GenDecl:
+			switch d.Tok {
+			case token.TYPE:
+				for _, item := range d.Specs {
+					spec := item.(*ast.TypeSpec)
+					name := spec.Name.Name
+					dt := &declType{
+						name: name,
+						spec: spec,
+						decl: reflectx.NamedStructOf(ctx.pkg.Name, spec.Name.Name, nil),
+					}
+					switch spec.Type.(type) {
+					case *ast.InterfaceType:
+						dt.kind = dtInterface
+					case *ast.StructType:
+						dt.kind = dtStruct
+					}
+					ctx.decls[name] = dt
+				}
+			}
+		}
+	}
+	// check depends
+	for _, decl := range ctx.decls {
+		ctx.cdecl = decl
+		decl.typ = toType(ctx, decl.spec.Type).(reflect.Type)
+	}
+	// load decl type
+	for _, decl := range ctx.decls {
+		loadTypeDecl(ctx, decl)
+	}
+
 	// load type & const
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.GenDecl:
 			switch d.Tok {
 			case token.TYPE:
-				loadTypes(ctx, d)
+				// loadTypes(ctx, d)
 			case token.CONST:
 				loadConsts(ctx, d)
 			}
@@ -454,6 +500,7 @@ func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
 	}
 	t := toType(ctx, spec.Type).(reflect.Type)
 	typ := reflectx.NamedTypeOf(ctx.pkg.Name, spec.Name.Name, t)
+	ctx.decls[spec.Name.Name].typ = typ
 	if nt, ok := ctx.named[spec.Name.Name]; ok {
 		typ = reflectx.MethodOf(typ, toMethods(nt))
 	} else if typ.Kind() == reflect.Struct {
