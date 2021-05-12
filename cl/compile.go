@@ -278,10 +278,10 @@ func loadTypeDecl(ctx *blockCtx, decl *declType) {
 	if decl.complete {
 		return
 	}
+	decl.complete = true
 	for _, dep := range decl.deps {
 		loadTypeDecl(ctx, ctx.decls[dep])
 	}
-	decl.complete = true
 	loadType(ctx, decl.spec)
 }
 
@@ -346,11 +346,39 @@ func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 	// check depends
 	for _, decl := range ctx.decls {
 		ctx.cdecl = decl
-		decl.vtyp = toType(ctx, decl.spec.Type).(reflect.Type)
+		typ := toType(ctx, decl.spec.Type).(reflect.Type)
+		if decl.kind == dtStruct {
+			for i := 0; i < typ.NumField(); i++ {
+				t := typ.Field(i).Type
+				if typ.Field(i).Anonymous {
+					_, t = countPtr(t)
+				}
+				if t.PkgPath() != ctx.pkg.Name {
+					continue
+				}
+				tname := t.Name()
+				if tname == decl.name {
+					continue
+				}
+				if _, ok := ctx.decls[tname]; ok {
+					decl.appendDeps(t.Name())
+				}
+			}
+		}
 	}
 	// load decl type
 	for _, decl := range ctx.decls {
 		loadTypeDecl(ctx, decl)
+	}
+	// replace type field
+	rmap := make(map[reflect.Type]reflect.Type)
+	for _, decl := range ctx.decls {
+		rmap[decl.decl] = decl.typ
+	}
+	for _, decl := range ctx.decls {
+		if decl.kind == dtStruct {
+			reflectx.UpdateField(decl.typ, rmap)
+		}
 	}
 
 	// load type & const
@@ -386,8 +414,7 @@ func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 		if decl.Type.Kind() == reflect.Struct {
 			typ := decl.Type
 			for i := 0; i < typ.NumField(); i++ {
-				_, ftyp := countPtr(typ.Field(i).Type)
-				if d, ok := ctx.types[ftyp]; ok {
+				if d, ok := ctx.types[typ.Field(i).Type]; ok {
 					decl.Depends = append(decl.Depends, d)
 				}
 			}

@@ -285,7 +285,9 @@ func toIdentType(ctx *blockCtx, ident string) iType {
 		if t.typ != nil {
 			return t.typ
 		}
-		ctx.cdecl.appendDeps(ident)
+		if ctx.cdecl.kind != dtStruct {
+			ctx.cdecl.appendDeps(ident)
+		}
 		return t.decl
 	}
 	typ, err := ctx.findType(ident)

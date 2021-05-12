@@ -46,6 +46,7 @@ type declType struct {
 	vtyp     reflect.Type
 	kind     declKind
 	deps     []string
+	repl     []string
 	complete bool
 }
 
