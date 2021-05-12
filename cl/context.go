@@ -43,6 +43,7 @@ type declType struct {
 	spec     *ast.TypeSpec
 	decl     reflect.Type
 	typ      reflect.Type
+	vtyp     reflect.Type
 	kind     declKind
 	deps     []string
 	complete bool
