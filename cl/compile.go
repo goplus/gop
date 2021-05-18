@@ -285,20 +285,16 @@ func loadTypeDecl(ctx *blockCtx, decl *declType) {
 	loadType(ctx, decl.spec)
 }
 
-func loadMethodSet(ctx *blockCtx, decl *declType) {
-	loadMethodSetList(ctx, decl, make(map[string]bool))
-}
-
-func loadMethodSetList(ctx *blockCtx, decl *declType, cache map[string]bool) {
+func loadMethodSet(ctx *blockCtx, decl *declType, cache map[string]bool) {
 	if cache[decl.name] {
 		return
 	}
 	cache[decl.name] = true
 	for _, dep := range decl.embed {
-		loadMethodSetList(ctx, ctx.decls[dep], cache)
+		loadMethodSet(ctx, ctx.decls[dep], cache)
 	}
 	for _, dep := range decl.embedptr {
-		loadMethodSetList(ctx, ctx.decls[dep], cache)
+		loadMethodSet(ctx, ctx.decls[dep], cache)
 	}
 	if nt, ok := ctx.named[decl.name]; ok {
 		reflectx.LoadMethodSet(decl.typ, toMethods(nt))
@@ -408,8 +404,10 @@ func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 			reflectx.UpdateField(decl.typ, rmap)
 		}
 	}
+	mcheck := make(map[string]bool)
 	for _, decl := range ctx.decls {
-		loadMethodSet(ctx, decl)
+		mcheck[decl.name] = false
+		loadMethodSet(ctx, decl, mcheck)
 	}
 	// load const
 	for _, decl := range f.Decls {
