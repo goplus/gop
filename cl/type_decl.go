@@ -228,7 +228,7 @@ func toStructType(ctx *blockCtx, v *ast.StructType) iType {
 		fields = append(fields, toStructField(ctx, field)...)
 	}
 	styp := reflectx.StructOf(fields)
-	return reflectx.MethodOf(styp, nil)
+	return reflectx.StructToMethodSet(styp)
 }
 
 func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) iType {

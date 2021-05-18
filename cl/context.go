@@ -46,7 +46,8 @@ type declType struct {
 	vtyp     reflect.Type
 	kind     declKind
 	deps     []string
-	repl     []string
+	embed    []string
+	embedptr []string
 	complete bool
 }
 
@@ -57,16 +58,6 @@ func (d *declType) appendDeps(dep string) {
 		}
 	}
 	d.deps = append(d.deps, dep)
-}
-
-func (decl *declType) defineType(ctx *blockCtx) {
-	decl.complete = true
-	ctx.out.DefineType(decl.typ, decl.name)
-	tDecl := &typeDecl{
-		Type: decl.typ,
-	}
-	ctx.syms[decl.name] = tDecl
-	ctx.types[decl.typ] = tDecl
 }
 
 type pkgCtx struct {
