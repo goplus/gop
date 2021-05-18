@@ -39,16 +39,17 @@ const (
 )
 
 type declType struct {
-	name     string
-	spec     *ast.TypeSpec
-	decl     reflect.Type
-	typ      reflect.Type
-	vtyp     reflect.Type
-	kind     declKind
-	deps     []string
-	embed    []string
-	embedptr []string
-	complete bool
+	name       string
+	spec       *ast.TypeSpec
+	decl       reflect.Type
+	typ        reflect.Type
+	vtyp       reflect.Type
+	kind       declKind
+	deps       []string
+	embed      []string
+	embedptr   []string
+	complete   bool
+	loadmethod bool
 }
 
 func (d *declType) appendDeps(dep string) {

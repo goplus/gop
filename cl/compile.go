@@ -285,9 +285,27 @@ func loadTypeDecl(ctx *blockCtx, decl *declType) {
 	loadType(ctx, decl.spec)
 }
 
-// func checkMethodCount(ctx *blockCtx, decl *declType) (int, int) {
+func loadMethodSet(ctx *blockCtx, decl *declType) {
+	loadMethodSetList(ctx, decl, make(map[string]bool))
+}
 
-// }
+func loadMethodSetList(ctx *blockCtx, decl *declType, cache map[string]bool) {
+	if cache[decl.name] {
+		return
+	}
+	cache[decl.name] = true
+	for _, dep := range decl.embed {
+		loadMethodSetList(ctx, ctx.decls[dep], cache)
+	}
+	for _, dep := range decl.embedptr {
+		loadMethodSetList(ctx, ctx.decls[dep], cache)
+	}
+	if nt, ok := ctx.named[decl.name]; ok {
+		reflectx.LoadMethodSet(decl.typ, toMethods(nt))
+	} else {
+		reflectx.LoadMethodSet(decl.typ, nil)
+	}
+}
 
 func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 	file := newFileCtx(ctx)
@@ -391,20 +409,7 @@ func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 		}
 	}
 	for _, decl := range ctx.decls {
-		if nt, ok := ctx.named[decl.name]; ok {
-			reflectx.LoadMethodSet(decl.typ, toMethods(nt))
-		} else {
-			reflectx.LoadMethodSet(decl.typ, nil)
-		}
-	}
-	for i := 0; i < 4; i++ {
-		for _, decl := range ctx.decls {
-			if nt, ok := ctx.named[decl.name]; ok {
-				reflectx.LoadMethodSet(decl.typ, toMethods(nt))
-			} else {
-				reflectx.LoadMethodSet(decl.typ, nil)
-			}
-		}
+		loadMethodSet(ctx, decl)
 	}
 	// load const
 	for _, decl := range f.Decls {
