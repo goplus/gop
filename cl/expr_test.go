@@ -2676,3 +2676,95 @@ func main() {
 func TestTypeAssertCheck(t *testing.T) {
 	cltest.Expect(t, typeAssertCheck, "hello\n")
 }
+
+func TestLoadType(t *testing.T) {
+	cltest.Expect(t, `
+	type T struct {
+		*T
+	}
+	func (t T) Test1() {
+		println("test1")
+	}	
+	func (t *T) Test2() {
+		println("test2")
+	}
+	var t T
+	t.T = &t
+	t.Test1()
+	t.Test2()
+	`, "test1\ntest2\n")
+	cltest.Expect(t, `
+	type T1 struct {
+		*T2
+	}
+	type T2 struct {
+		*T1
+	}
+	func (t *T1) Test1() {
+		println("test1")
+	}	
+	func (t *T2) Test2() {
+		println("test2")
+	}
+	var t1 T1
+	var t2 T2
+	t1.T2 = &t2
+	t2.T1 = &t1
+	t1.Test1()
+	t1.Test2()
+	t2.Test1()
+	t2.Test2()
+	`, "test1\ntest2\ntest1\ntest2\n")
+	cltest.Expect(t, `
+	type T1 struct {
+		*T2
+	}
+	type T2 struct {
+		*T3
+	}
+	type T3 struct {
+		*T4
+	}
+	type T4 struct {
+		T
+	}
+	type T struct {
+	}
+	func (t T) Test1() {
+		println("test1")
+	}	
+	func (t *T) Test2() {
+		println("test2")
+	}
+	t4 := &T4{}
+	t3 := &T3{t4}
+	t2 := &T2{t3}
+	t1 := &T1{t2}
+	t1.Test1()
+	t1.Test2()
+	`, "test1\ntest2\n")
+	cltest.Expect(t, `
+	type T struct {
+		a []T
+		p []*T
+		m map[int]*T
+	}
+	func (t T) Test1() {
+		println("test1")
+	}	
+	func (t *T) Test2() {
+		println("test2")
+	}
+	var t T
+	t.a = append(t.a,t)
+	t.p = append(t.p,&t)
+	t.m = make(map[int]*T)
+	t.m[1] = &t
+	t.a[0].Test1()
+	t.a[0].Test2()
+	t.p[0].Test1()
+	t.p[0].Test2()
+	t.m[1].Test1()
+	t.m[1].Test2()
+	`, "test1\ntest2\ntest1\ntest2\ntest1\ntest2\n")
+}
