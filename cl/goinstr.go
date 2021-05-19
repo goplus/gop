@@ -203,9 +203,6 @@ func igoLenOrCap(ctx *blockCtx, v *ast.CallExpr, op exec.GoBuiltin) func() {
 	return func() {
 		switch kind {
 		case reflect.Slice, reflect.String, reflect.Map, reflect.Chan:
-			if op == exec.GobCap && kind == reflect.Chan {
-				logPanic(ctx, v, `invalid argument a (type %v) for cap`, typ)
-			}
 			expr()
 			ctx.out.GoBuiltin(typ, op)
 		default:
