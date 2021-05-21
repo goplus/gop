@@ -83,6 +83,8 @@ func toType(ctx *blockCtx, typ ast.Expr) iType {
 	case *ast.ChanType:
 		val := toType(ctx, v.Value)
 		return reflect.ChanOf(toChanDir(v.Dir), val.(reflect.Type))
+	case *ast.ParenExpr:
+		return toType(ctx, v.X)
 	case *ast.Ellipsis:
 		return nil
 	}
