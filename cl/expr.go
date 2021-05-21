@@ -327,6 +327,9 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 			typElem := typSlice.Elem()
 			for _, elt := range elts {
 				if elt != nil {
+					if c, ok := elt.(*ast.CompositeLit); ok && c.Type == nil {
+						c.Type = v.Type.(*ast.ArrayType).Elt
+					}
 					compileExpr(ctx, elt)()
 					checkType(typElem, ctx.infer.Pop(), ctx.out)
 				} else {
@@ -344,8 +347,14 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 			for _, elt := range v.Elts {
 				switch e := elt.(type) {
 				case *ast.KeyValueExpr:
+					if c, ok := e.Key.(*ast.CompositeLit); ok && c.Type == nil {
+						c.Type = v.Type.(*ast.MapType).Key
+					}
 					compileExpr(ctx, e.Key)()
 					checkType(typKey, ctx.infer.Pop(), ctx.out)
+					if c, ok := e.Value.(*ast.CompositeLit); ok && c.Type == nil {
+						c.Type = v.Type.(*ast.MapType).Value
+					}
 					compileExpr(ctx, e.Value)()
 					checkType(typVal, ctx.infer.Pop(), ctx.out)
 				default:
