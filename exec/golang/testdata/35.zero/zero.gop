@@ -1,0 +1,57 @@
+type T struct {
+	X int
+	Y int
+}
+
+println([]bool{
+	0: true,
+	2: false,
+})
+println([]int{
+	0: 100,
+	2: 200,
+})
+println([]uint{
+	0: 100,
+	2: 200,
+})
+println([]float32{
+	0: 100,
+	2: 200,
+})
+println([]float64{
+	0: 100,
+	2: 200,
+})
+println([]complex64{
+	0: 100 + 1i,
+	2: 200 + 1i,
+})
+println([]complex128{
+	0: 100 + 1i,
+	2: 200 + 1i,
+})
+println([]string{
+	0: "hello",
+	2: "world",
+})
+println([]T{
+	0: T{1, 2},
+	2: T{3, 4},
+})
+println([]*T{
+	0: &T{1, 2},
+	2: &T{3, 4},
+}[1])
+println([]func(){
+	0: func() {},
+	2: func() {},
+}[1])
+println([]chan int{
+	0: make(chan int),
+	2: make(chan int),
+}[1])
+println([]interface{}{
+	0: 1,
+	2: "world",
+}[1])
