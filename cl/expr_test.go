@@ -1309,6 +1309,30 @@ func TestStruct2(t *testing.T) {
 	testScripts(t, "TestStruct", testStructClauses)
 }
 
+func TestCompositeLit(t *testing.T) {
+	cltest.Expect(t, `
+	type T struct {
+		X int
+		Y int
+	}
+	ar := []T{
+		{1,2},
+		{3,4},
+	}
+	ar1 := [2]T{
+		{1,2},
+		{3,4},
+	}
+	m := map[T]T{
+		{1,2}:{10,20},
+		{3,4}:{30,40},
+	}
+	println(ar)
+	println(ar1)
+	println(m)
+	`, "[{1 2} {3 4}]\n[{1 2} {3 4}]\nmap[{1 2}:{10 20} {3 4}:{30 40}]\n")
+}
+
 // -----------------------------------------------------------------------------
 var testMethodClauses = map[string]testData{
 	"method set": {`
