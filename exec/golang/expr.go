@@ -645,17 +645,16 @@ func (p *Builder) Zero(typ reflect.Type) *Builder {
 // Zero instr
 func Zero(p *Builder, typ reflect.Type) ast.Expr {
 	kind := typ.Kind()
-	if kind == reflect.String {
-		return StringConst("")
-	}
-	if kind >= reflect.Int && kind <= reflect.Complex128 {
-		return IntConst(0)
-	}
 	if kind == reflect.Bool {
 		return Ident("false")
+	} else if kind == reflect.String {
+		return StringConst("")
+	} else if kind >= reflect.Int && kind <= reflect.Complex128 {
+		return IntConst(0)
+	} else if kind == reflect.Struct || kind == reflect.Array {
+		return &ast.CompositeLit{Type: Type(p, typ)}
 	}
-	log.Panicln("Zero: unknown -", typ)
-	return nil
+	return Ident("nil")
 }
 
 // GoBuiltin instr
