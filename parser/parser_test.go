@@ -256,6 +256,8 @@ func TestFromTestdata2(t *testing.T) {
 var fsTestArray = asttest.NewSingleFileFS("/foo", "bar.gop", `
 println([1][0])
 println([1,2][0])
+println([][]int{})
+println([2][2]int{})
 `)
 
 func TestArray(t *testing.T) {
