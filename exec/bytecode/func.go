@@ -37,17 +37,12 @@ func makeStackAddr(scope, idx uint32) tStackAddr {
 func getStackScope(p *Context, addr tStackAddr) (*varScope, uint32) {
 	depth := uint32(addr) >> bitsOpStackShift
 	idx := uint32(addr & bitsOpStackOperand)
-	ctxDepth := p.getNestDepth()
-	if depth == ctxDepth {
-		return &p.varScope, idx
+	scope := &p.varScope
+	for depth > 0 {
+		scope = scope.parent
+		depth--
 	}
-	scope := ctxDepth - depth
-	pp := p.parent
-	for scope > 1 {
-		pp = pp.parent
-		scope--
-	}
-	return pp, idx
+	return scope, idx
 }
 
 func execLoad(i Instr, p *Context) {
@@ -498,21 +493,21 @@ func (p *Builder) Return(n int32) *Builder {
 
 // Load instr
 func (p *Builder) Load(fun *FuncInfo, idx int32) *Builder {
-	addr := makeStackAddr(fun.nestDepth, uint32(-idx))
+	addr := makeStackAddr(p.nestDepth-fun.nestDepth, uint32(-idx))
 	p.code.data = append(p.code.data, (opLoad<<bitsOpShift)|uint32(addr))
 	return p
 }
 
 // Addr instr
 func (p *Builder) Addr(fun *FuncInfo, idx int32) *Builder {
-	addr := makeStackAddr(fun.nestDepth, uint32(-idx))
+	addr := makeStackAddr(p.nestDepth-fun.nestDepth, uint32(-idx))
 	p.code.data = append(p.code.data, (opAddr<<bitsOpShift)|uint32(addr))
 	return p
 }
 
 // Store instr
 func (p *Builder) Store(fun *FuncInfo, idx int32) *Builder {
-	addr := makeStackAddr(fun.nestDepth, uint32(-idx))
+	addr := makeStackAddr(p.nestDepth-fun.nestDepth, uint32(-idx))
 	p.code.data = append(p.code.data, (opStore<<bitsOpShift)|uint32(addr))
 	return p
 }
