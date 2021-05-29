@@ -17,4 +17,4 @@ sum, err := add("10", "abc")
 println(`add("10", "abc"):`, sum, err)
 
 println(`addSafe("10", "abc"):`, addSafe("10", "abc"))
-println((time.Parse("2006","1989")?:time.Now()).Format("2006")
+println((time.Parse("2006", "1989")?:time.Now()).Format("2006"))
