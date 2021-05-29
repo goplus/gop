@@ -864,7 +864,13 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 		return func() {
 			if vfn.isMethod != 0 {
 				exprX := compileExpr(ctx, v.Fun.(*ast.SelectorExpr).X)
-				recv := ctx.infer.Get(-1).(*goValue)
+				var recv *goValue
+				switch v := ctx.infer.Get(-1); v.(type) {
+				case *goValue:
+					recv = v.(*goValue)
+				case *wrapValue:
+					recv = v.(*wrapValue).x.Value(0).(*goValue)
+				}
 				if vfn.Type().In(0).Kind() != reflect.Ptr {
 					exprX()
 					if recv.Kind() == reflect.Ptr {
@@ -1424,118 +1430,124 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 			log.Panicln("compileSelectorExpr: unknown nonValue -", reflect.TypeOf(nv))
 		}
 	case *goValue:
-		n, t := countPtr(vx.t)
-		autoCall := false
-		name := v.Sel.Name
-		if t.PkgPath() != "" && ast.IsExported(name) || t.PkgPath() == "" {
-			if t.Kind() == reflect.Struct {
-				if sf, ok := t.FieldByName(name); ok {
-					ctx.infer.Ret(1, &goValue{t: sf.Type})
-					if ctx.fieldIndex == nil {
-						ctx.fieldExprX = exprX
-						ctx.fieldStructType = vx.t
-					}
-					ctx.fieldIndex = append(ctx.fieldIndex, sf.Index...)
-					fieldIndex := ctx.fieldIndex
-					fieldExprX := ctx.fieldExprX
-					fieldStructType := ctx.fieldStructType
-					return func() {
-						if fieldExprX != nil {
-							fieldExprX()
-						}
-						if ctx.takeAddr || ctx.checkLoadAddr {
-							ctx.out.AddrField(fieldStructType, fieldIndex)
-						} else {
-							ctx.out.LoadField(fieldStructType, fieldIndex)
-						}
-					}
-				}
-			}
-			if fDecl, ok := ctx.findMethod(t, name); ok {
-				if compileByCallExpr {
-					ctx.infer.Pop()
-					fn := newQlFunc(fDecl)
-					ctx.use(fDecl)
-					ctx.infer.Push(fn)
-					return nil
-				} else {
-					ctx.infer.Pop()
-					decl := funcToClosure(ctx, v, fDecl.typ)
-					ctx.use(decl)
-					ctx.infer.Push(newQlFunc(decl))
-					return func() {
-						ctx.out.GoClosure(decl.fi)
-					}
-				}
-			}
-			if call != nil && isUserStruct(t) {
-				if names := findUserStructAnonymous(ctx, t, name); names != nil {
-					ctx.infer.Pop()
-					x := &ast.SelectorExpr{X: v.X}
-					for i := 0; i < len(names)-1; i++ {
-						x.X = &ast.SelectorExpr{X: x.X, Sel: &ast.Ident{Name: names[i]}}
-					}
-					x.Sel = &ast.Ident{Name: names[len(names)-1]}
-					fun := &ast.SelectorExpr{X: x, Sel: v.Sel}
-					call.Fun = fun
-					return compileSelectorExpr(ctx, call, fun, compileByCallExpr)
-				}
-			}
-		}
-		_, toptr, ok := findMethod(t, name)
-		if !ok && isLower(name) {
-			name = strings.Title(name)
-			if _, toptr, ok = findMethod(t, name); ok {
-				v.Sel.Name = name
-				autoCall = !compileByCallExpr
-			}
-		}
-		if !ok {
-			log.Panicln("compileSelectorExpr: symbol not found -", vx.t, v.Sel.Name)
-		}
-		if n > 1 {
-			log.Panicf("calling method %v with receiver %v (type %v) requires explicit dereference.", v.Sel.Name, ctx.code(v.X), vx.t)
-		}
-		pkgPath := t.PkgPath()
-		pkg := ctx.FindGoPackage(pkgPath)
-		if pkg == nil {
-			log.Panicln("compileSelectorExpr failed: package not found -", pkgPath)
-		}
-		var fnname string
-		if toptr {
-			fnname = "(*" + t.Name() + ")." + name
-		} else {
-			fnname = "(" + t.Name() + ")." + name
-		}
-		addr, kind, ok := pkg.Find(fnname)
-		if !ok {
-			log.Panicln("compileSelectorExpr: method not found -", fnname)
-		}
-		if !compileByCallExpr && !autoCall {
-			ctx.infer.Pop()
-			fn := newGoFunc(addr, kind, 1, ctx)
-			ftyp := astutil.FuncType(fn.t)
-			ftyp.Params.List = ftyp.Params.List[1:]
-			decl := funcToClosure(ctx, v, ftyp)
-			ctx.use(decl)
-			ctx.infer.Push(newQlFunc(decl))
-			return func() {
-				ctx.out.GoClosure(decl.fi)
-			}
-		}
-		ctx.infer.Ret(1, newGoFunc(addr, kind, 1, ctx))
-		if autoCall { // change AST tree
-			copy := *v
-			call := &ast.CallExpr{Fun: &copy}
-			v.X = call
-			v.Sel = nil
-			return compileCallExprCall(ctx, nil, call, 0)
-		}
-		return nil
+		return goValueSelExpr(ctx, call, v, compileByCallExpr, vx, exprX)
+	case *wrapValue:
+		return goValueSelExpr(ctx, call, v, compileByCallExpr, vx.x.Value(0).(*goValue), exprX)
 	default:
 		log.Panicln("compileSelectorExpr failed: unknown -", reflect.TypeOf(vx))
 	}
 	_ = exprX
+	return nil
+}
+
+func goValueSelExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr, compileByCallExpr bool, vx *goValue, exprX func()) func() {
+	n, t := countPtr(vx.t)
+	autoCall := false
+	name := v.Sel.Name
+	if t.PkgPath() != "" && ast.IsExported(name) || t.PkgPath() == "" {
+		if t.Kind() == reflect.Struct {
+			if sf, ok := t.FieldByName(name); ok {
+				ctx.infer.Ret(1, &goValue{t: sf.Type})
+				if ctx.fieldIndex == nil {
+					ctx.fieldExprX = exprX
+					ctx.fieldStructType = vx.t
+				}
+				ctx.fieldIndex = append(ctx.fieldIndex, sf.Index...)
+				fieldIndex := ctx.fieldIndex
+				fieldExprX := ctx.fieldExprX
+				fieldStructType := ctx.fieldStructType
+				return func() {
+					if fieldExprX != nil {
+						fieldExprX()
+					}
+					if ctx.takeAddr || ctx.checkLoadAddr {
+						ctx.out.AddrField(fieldStructType, fieldIndex)
+					} else {
+						ctx.out.LoadField(fieldStructType, fieldIndex)
+					}
+				}
+			}
+		}
+		if fDecl, ok := ctx.findMethod(t, name); ok {
+			if compileByCallExpr {
+				ctx.infer.Pop()
+				fn := newQlFunc(fDecl)
+				ctx.use(fDecl)
+				ctx.infer.Push(fn)
+				return nil
+			} else {
+				ctx.infer.Pop()
+				decl := funcToClosure(ctx, v, fDecl.typ)
+				ctx.use(decl)
+				ctx.infer.Push(newQlFunc(decl))
+				return func() {
+					ctx.out.GoClosure(decl.fi)
+				}
+			}
+		}
+		if call != nil && isUserStruct(t) {
+			if names := findUserStructAnonymous(ctx, t, name); names != nil {
+				ctx.infer.Pop()
+				x := &ast.SelectorExpr{X: v.X}
+				for i := 0; i < len(names)-1; i++ {
+					x.X = &ast.SelectorExpr{X: x.X, Sel: &ast.Ident{Name: names[i]}}
+				}
+				x.Sel = &ast.Ident{Name: names[len(names)-1]}
+				fun := &ast.SelectorExpr{X: x, Sel: v.Sel}
+				call.Fun = fun
+				return compileSelectorExpr(ctx, call, fun, compileByCallExpr)
+			}
+		}
+	}
+	_, toptr, ok := findMethod(t, name)
+	if !ok && isLower(name) {
+		name = strings.Title(name)
+		if _, toptr, ok = findMethod(t, name); ok {
+			v.Sel.Name = name
+			autoCall = !compileByCallExpr
+		}
+	}
+	if !ok {
+		log.Panicln("compileSelectorExpr: symbol not found -", vx.t, v.Sel.Name)
+	}
+	if n > 1 {
+		log.Panicf("calling method %v with receiver %v (type %v) requires explicit dereference.", v.Sel.Name, ctx.code(v.X), vx.t)
+	}
+	pkgPath := t.PkgPath()
+	pkg := ctx.FindGoPackage(pkgPath)
+	if pkg == nil {
+		log.Panicln("compileSelectorExpr failed: package not found -", pkgPath)
+	}
+	var fnname string
+	if toptr {
+		fnname = "(*" + t.Name() + ")." + name
+	} else {
+		fnname = "(" + t.Name() + ")." + name
+	}
+	addr, kind, ok := pkg.Find(fnname)
+	if !ok {
+		log.Panicln("compileSelectorExpr: method not found -", fnname)
+	}
+	if !compileByCallExpr && !autoCall {
+		ctx.infer.Pop()
+		fn := newGoFunc(addr, kind, 1, ctx)
+		ftyp := astutil.FuncType(fn.t)
+		ftyp.Params.List = ftyp.Params.List[1:]
+		decl := funcToClosure(ctx, v, ftyp)
+		ctx.use(decl)
+		ctx.infer.Push(newQlFunc(decl))
+		return func() {
+			ctx.out.GoClosure(decl.fi)
+		}
+	}
+	ctx.infer.Ret(1, newGoFunc(addr, kind, 1, ctx))
+	if autoCall { // change AST tree
+		cp := *v
+		call := &ast.CallExpr{Fun: &cp}
+		v.X = call
+		v.Sel = nil
+		return compileCallExprCall(ctx, nil, call, 0)
+	}
 	return nil
 }
 
