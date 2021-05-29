@@ -2155,3 +2155,16 @@ func TestBadUnsafe(t *testing.T) {
 	println(v)
 	`, "", "invalid expression unsafe.Offsetof(1)")
 }
+
+func TestErrWrap(t *testing.T) {
+	cltest.Expect(t, `
+	import (
+		"strconv"
+	)
+	
+	func a(x, y string) int {
+		return strconv.Atoi(x)?:0 + strconv.Atoi(y)?:0
+	}
+	print(a("3","2-"))
+	`, "3")
+}
