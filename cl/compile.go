@@ -762,7 +762,8 @@ func registerInterfaceMethod(p *bytecode.GoPackage, fnname string, t reflect.Typ
 			}
 		}
 		var out []reflect.Value
-		out = in[0].MethodByName(name).Call(in[1:])
+		fn, _ := reflectx.MethodByName(in[0].Type(), name)
+		out = fn.Func.Call(in)
 		if numOut > 0 {
 			iout := make([]interface{}, numOut)
 			for i := 0; i < numOut; i++ {
