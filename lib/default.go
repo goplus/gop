@@ -89,7 +89,6 @@ import (
 	_ "github.com/goplus/gop/lib/io"
 	_ "github.com/goplus/gop/lib/io/ioutil"
 	_ "github.com/goplus/gop/lib/log"
-	_ "github.com/goplus/gop/lib/log/syslog"
 	_ "github.com/goplus/gop/lib/math"
 	_ "github.com/goplus/gop/lib/math/big"
 	_ "github.com/goplus/gop/lib/math/bits"
