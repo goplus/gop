@@ -119,6 +119,7 @@ import (
 	_ "github.com/goplus/gop/lib/path"
 	_ "github.com/goplus/gop/lib/path/filepath"
 	_ "github.com/goplus/gop/lib/reflect"
+	_ "github.com/goplus/gop/lib/runtime"
 	_ "github.com/goplus/gop/lib/sort"
 	_ "github.com/goplus/gop/lib/strconv"
 	_ "github.com/goplus/gop/lib/strings"
