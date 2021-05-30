@@ -80,6 +80,24 @@ func execmIntSliceSort(_ int, p *gop.Context) {
 	p.PopN(1)
 }
 
+func execiInterfaceLen(_ int, p *gop.Context) {
+	args := p.GetArgs(1)
+	ret0 := args[0].(sort.Interface).Len()
+	p.Ret(1, ret0)
+}
+
+func execiInterfaceLess(_ int, p *gop.Context) {
+	args := p.GetArgs(3)
+	ret0 := args[0].(sort.Interface).Less(args[1].(int), args[2].(int))
+	p.Ret(3, ret0)
+}
+
+func execiInterfaceSwap(_ int, p *gop.Context) {
+	args := p.GetArgs(3)
+	args[0].(sort.Interface).Swap(args[1].(int), args[2].(int))
+	p.PopN(3)
+}
+
 func execInts(_ int, p *gop.Context) {
 	args := p.GetArgs(1)
 	sort.Ints(args[0].([]int))
@@ -224,6 +242,9 @@ func init() {
 		I.Func("(IntSlice).Less", (sort.IntSlice).Less, execmIntSliceLess),
 		I.Func("(IntSlice).Swap", (sort.IntSlice).Swap, execmIntSliceSwap),
 		I.Func("(IntSlice).Sort", (sort.IntSlice).Sort, execmIntSliceSort),
+		I.Func("(Interface).Len", (sort.Interface).Len, execiInterfaceLen),
+		I.Func("(Interface).Less", (sort.Interface).Less, execiInterfaceLess),
+		I.Func("(Interface).Swap", (sort.Interface).Swap, execiInterfaceSwap),
 		I.Func("Ints", sort.Ints, execInts),
 		I.Func("IntsAreSorted", sort.IntsAreSorted, execIntsAreSorted),
 		I.Func("IsSorted", sort.IsSorted, execIsSorted),
