@@ -21,6 +21,7 @@ package lib
 
 import (
 	_ "github.com/goplus/gop/lib/builtin" // builtin
+	_ "github.com/goplus/gop/lib/unsafe"  // unsafe
 
 	_ "github.com/goplus/gop/lib/archive/tar"
 	_ "github.com/goplus/gop/lib/archive/zip"
@@ -69,8 +70,6 @@ import (
 	_ "github.com/goplus/gop/lib/expvar"
 	_ "github.com/goplus/gop/lib/flag"
 	_ "github.com/goplus/gop/lib/fmt"
-	_ "github.com/goplus/gop/lib/github.com/goplus/gop/ast/gopq"
-	_ "github.com/goplus/gop/lib/github.com/goplus/gop/ast/goptest"
 	_ "github.com/goplus/gop/lib/hash"
 	_ "github.com/goplus/gop/lib/hash/adler32"
 	_ "github.com/goplus/gop/lib/hash/crc32"
@@ -128,5 +127,7 @@ import (
 	_ "github.com/goplus/gop/lib/unicode"
 	_ "github.com/goplus/gop/lib/unicode/utf16"
 	_ "github.com/goplus/gop/lib/unicode/utf8"
-	_ "github.com/goplus/gop/lib/unsafe"
+
+	_ "github.com/goplus/gop/lib/github.com/goplus/gop/ast/gopq"
+	_ "github.com/goplus/gop/lib/github.com/goplus/gop/ast/goptest"
 )
