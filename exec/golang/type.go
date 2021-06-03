@@ -160,8 +160,10 @@ func FuncType(p *Builder, typ reflect.Type) *ast.FuncType {
 // Type instr
 func Type(p *Builder, typ reflect.Type, actualTypes ...bool) ast.Expr {
 	if len(actualTypes) == 0 || (len(actualTypes) > 0 && !actualTypes[0]) {
-		if gtype, ok := p.types[typ]; ok {
-			return Ident(gtype.Name())
+		for t, g := range p.types {
+			if t == typ || (t.PkgPath() == typ.PkgPath() && t.Name() == typ.Name()) {
+				return Ident(g.name)
+			}
 		}
 	}
 	if named, ok := reflectx.ToNamed(typ); ok && named.From != nil {
