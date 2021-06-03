@@ -408,6 +408,9 @@ func loadFile(ctx *blockCtx, f *ast.File, imports map[string]string) {
 	for _, decl := range ctx.decls {
 		mcheck[decl.name] = false
 		loadMethodSet(ctx, decl, mcheck)
+		if decl.kind == dtInterface {
+			setInterfaceType(ctx, decl.typ, decl.spec.Type.(*ast.InterfaceType))
+		}
 	}
 	// load const
 	for _, decl := range f.Decls {

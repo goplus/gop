@@ -237,12 +237,12 @@ func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) iType {
 		return exec.TyEmptyInterface
 	}
 	var embedded []reflect.Type
-	var methods []reflectx.Method
+	var methods []reflect.Method
 	for _, field := range fields {
 		t := toType(ctx, field.Type).(reflect.Type)
 		kind := t.Kind()
 		if kind == reflect.Func {
-			methods = append(methods, reflectx.Method{
+			methods = append(methods, reflect.Method{
 				Name: field.Names[0].Name,
 				Type: t,
 			})
@@ -254,6 +254,31 @@ func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) iType {
 		}
 	}
 	return reflectx.InterfaceOf(embedded, methods)
+}
+
+func setInterfaceType(ctx *blockCtx, typ reflect.Type, v *ast.InterfaceType) error {
+	fields := v.Methods.List
+	if fields == nil {
+		return nil
+	}
+	var embedded []reflect.Type
+	var methods []reflect.Method
+	for _, field := range fields {
+		t := toType(ctx, field.Type).(reflect.Type)
+		kind := t.Kind()
+		if kind == reflect.Func {
+			methods = append(methods, reflect.Method{
+				Name: field.Names[0].Name,
+				Type: t,
+			})
+		} else {
+			if kind != reflect.Interface {
+				log.Panicf("interface contains embedded non-interface %v", t)
+			}
+			embedded = append(embedded, t)
+		}
+	}
+	return reflectx.SetInterfaceType(typ, embedded, methods)
 }
 
 func toExternalType(ctx *blockCtx, v *ast.SelectorExpr) iType {
