@@ -846,7 +846,7 @@ func NewMethodType(typ reflect.Type, infos []exec.FuncInfo) *MethodType {
 		minfos = append(minfos, mi)
 		methods = append(methods, m)
 	}
-	reflectx.UpdateMethod(typ, methods, make(map[reflect.Type]reflect.Type))
+	reflectx.LoadMethodSet(typ, methods)
 	return &MethodType{
 		typ:     typ,
 		methods: methods,
@@ -856,7 +856,7 @@ func NewMethodType(typ reflect.Type, infos []exec.FuncInfo) *MethodType {
 }
 
 func (p *MethodType) Update(rmap map[reflect.Type]reflect.Type) {
-	reflectx.UpdateMethod(p.typ, p.methods, rmap)
+	reflectx.LoadMethodSet(p.typ, p.methods)
 }
 
 func (p *MethodType) RegisterMethod(pkg *bytecode.GoPackage) {
