@@ -1766,6 +1766,42 @@ func TestEmbeddedField(t *testing.T) {
 	v := Value{reflect.ValueOf(100)}
 	println(v.Value)
 	`, "100\n")
+	cltest.Expect(t, `
+	type My struct {
+		Position
+	}
+	type Position interface {
+		Pos() (int,int)
+	}
+	type Pos struct {
+		X int
+		Y int
+	}
+	func (p Pos) Pos() (int,int) {
+		return p.X,p.Y
+	}
+	var m My
+	m.Position = &Pos{10,20}
+	println(m.Pos())
+	`, "10 20\n")
+	cltest.Expect(t, `
+	type My struct {
+		Position
+	}
+	type Position interface {
+		Pos() (int,int)
+	}
+	type Pos struct {
+		X int
+		Y int
+	}
+	func (p Pos) Pos() (int,int) {
+		return p.X,p.Y
+	}
+	var m My
+	m.Position1 = &Pos{10,20}
+	println(m.Pos())
+	`, "", "m.Position1 undefined (type main.My has no field or method Position1)")
 }
 
 func TestEmbeddedMethod(t *testing.T) {

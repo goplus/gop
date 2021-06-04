@@ -1291,6 +1291,8 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compileMode
 					} else {
 						ctx.out.StoreField(fieldStructType, fieldIndex)
 					}
+				} else {
+					log.Panicf("%v undefined (type %v has no field or method %v)", ctx.code(v), t, name)
 				}
 			}
 		} else if t.PkgPath() != "" && !ast.IsExported(name) {
