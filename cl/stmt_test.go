@@ -748,7 +748,6 @@ var testSwitchBranchClauses = map[string]testData{
 					x:=0
 					switch x {
 					case 0:
-						println(x)
 						fallthrough
 					case 1:
 						x++
@@ -758,7 +757,21 @@ var testSwitchBranchClauses = map[string]testData{
 						x=7
 						println(x)
 					}
-					`, "0\n1\n7\n", false},
+					`, "1\n7\n", false},
+	"switch_default_before_fallthrough_issue_720": {`
+					x:=0
+					switch x {
+					case 0:
+						println(x)
+						fallthrough
+					default:
+						x=7
+						println(x)
+					case 1:
+						x++
+						println(x)
+					}
+					`, "0\n7\n", false},
 	"switch_one_fallthrough": {`
 					x:=0
 					switch x {
