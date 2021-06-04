@@ -377,26 +377,37 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	}()
 	hasTag := v.Tag != nil
 	hasCaseClause := false
-	var withoutCheck exec.Label
+	var tag interface{}
 	if hasTag {
-		if len(v.Body.List) == 0 {
-			return
-		}
 		compileExpr(ctxSw, v.Tag)()
-		tag := ctx.infer.Pop()
-		for idx, item := range v.Body.List {
-			c, ok := item.(*ast.CaseClause)
-			if !ok {
-				log.Panicln("compile SwitchStmt failed: case clause expected.")
+		tag = ctx.infer.Pop()
+	}
+
+	for idx, item := range v.Body.List {
+		c := item.(*ast.CaseClause)
+		if hasFallthrough(c) {
+			if idx == len(v.Body.List)-1 || c.List == nil {
+				log.Panic("cannot fallthrough final case in switch")
 			}
-			if c.List == nil { // default
-				defaultBody = c.Body
-				continue
+			body := c.Body[:len(c.Body)-1]
+			for i := idx + 1; i < len(v.Body.List); i++ {
+				nc := v.Body.List[i].(*ast.CaseClause)
+				if hasFallthrough(nc) {
+					body = append(body, nc.Body[:len(nc.Body)-1]...)
+					continue
+				}
+				body = append(body, nc.Body[:len(nc.Body)]...)
+				break
 			}
-			if idx == len(v.Body.List)-1 {
-				checkFinalFallthrough(c.Body)
-			}
-			hasCaseClause = true
+			c.Body = body
+		}
+		if c.List == nil { // default case
+			defaultBody = c.Body
+			continue
+		}
+		hasCaseClause = true
+		next := ctx.NewLabel("")
+		if hasTag {
 			for _, caseExp := range c.List {
 				compileExpr(ctxSw, caseExp)()
 				xcase := ctx.infer.Pop()
@@ -405,30 +416,8 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 					log.Panicf("invalid case %v in switch on %v (%v)", ctx.code(caseExp), ctx.code(v.Tag), err)
 				}
 			}
-			next := ctx.NewLabel("")
 			out.CaseNE(next, len(c.List))
-			withoutCheck = compileCaseClause(c, ctxSw, done, next, withoutCheck)
-		}
-		if withoutCheck != nil {
-			out.Label(withoutCheck)
-			withoutCheck = nil
-		}
-		out.Default()
-	} else {
-		for idx, item := range v.Body.List {
-			c, ok := item.(*ast.CaseClause)
-			if !ok {
-				log.Panicln("compile SwitchStmt failed: case clause expected.")
-			}
-			if c.List == nil { // default
-				defaultBody = c.Body
-				continue
-			}
-			if idx == len(v.Body.List)-1 {
-				checkFinalFallthrough(c.Body)
-			}
-			hasCaseClause = true
-			next := ctx.NewLabel("")
+		} else {
 			last := len(c.List) - 1
 			if last == 0 {
 				compileExpr(ctxSw, c.List[0])()
@@ -446,15 +435,15 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 				out.JmpIf(0, next)
 				out.Label(start)
 			}
-			withoutCheck = compileCaseClause(c, ctxSw, done, next, withoutCheck)
 		}
-		if withoutCheck != nil {
-			out.Label(withoutCheck)
-			withoutCheck = nil
-		}
+		compileBodyWith(ctxSw, c.Body)
+		ctxSw.out.Jmp(done)
+		ctxSw.out.Label(next)
+	}
+	if hasTag {
+		out.Default()
 	}
 	if defaultBody != nil {
-		checkFinalFallthrough(defaultBody)
 		compileBodyWith(ctxSw, defaultBody)
 		if hasCaseClause {
 			out.Jmp(done)
@@ -464,35 +453,15 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 		out.Label(done)
 	}
 }
-func checkFinalFallthrough(body []ast.Stmt) {
-	if len(body) > 0 {
-		bs, ok := body[len(body)-1].(*ast.BranchStmt)
+
+func hasFallthrough(stmt *ast.CaseClause) bool {
+	if len(stmt.Body) > 0 {
+		bs, ok := stmt.Body[len(stmt.Body)-1].(*ast.BranchStmt)
 		if ok && bs.Tok == token.FALLTHROUGH {
-			log.Panic("cannot fallthrough final case in switch")
+			return true
 		}
 	}
-}
-
-func compileCaseClause(c *ast.CaseClause, ctxSw *blockCtx, done exec.Label, next exec.Label, withoutCheck exec.Label) exec.Label {
-	if withoutCheck != nil {
-		ctxSw.out.Label(withoutCheck)
-		withoutCheck = nil
-	}
-	fallNext := false
-	if len(c.Body) > 0 {
-		bs, ok := c.Body[len(c.Body)-1].(*ast.BranchStmt)
-		fallNext = ok && bs.Tok == token.FALLTHROUGH
-	}
-	if fallNext {
-		compileBodyWith(ctxSw, c.Body[0:len(c.Body)-1])
-		withoutCheck = ctxSw.NewLabel("")
-		ctxSw.out.Jmp(withoutCheck)
-	} else {
-		compileBodyWith(ctxSw, c.Body)
-		ctxSw.out.Jmp(done)
-	}
-	ctxSw.out.Label(next)
-	return withoutCheck
+	return false
 }
 
 func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
