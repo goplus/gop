@@ -1567,7 +1567,6 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 		n, t := countPtr(vx.t)
 		autoCall := false
 		name := v.Sel.Name
-		//if t.PkgPath() != "" && ast.IsExported(name) || t.PkgPath() == "" || reflectx.IsNamed(t) {
 		if t.Kind() == reflect.Struct {
 			if sf, ok := t.FieldByName(name); ok {
 				ctx.infer.Ret(1, &goValue{t: sf.Type})
@@ -1591,23 +1590,6 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 				}
 			}
 		}
-		// if fDecl, ok := ctx.findMethod(t, name); ok {
-		// 	if compileByCallExpr {
-		// 		ctx.infer.Pop()
-		// 		fn := newQlFunc(fDecl)
-		// 		ctx.use(fDecl)
-		// 		ctx.infer.Push(fn)
-		// 		return nil
-		// 	} else {
-		// 		ctx.infer.Pop()
-		// 		decl := funcToClosure(ctx, v, fDecl.typ)
-		// 		ctx.use(decl)
-		// 		ctx.infer.Push(newQlFunc(decl))
-		// 		return func() {
-		// 			ctx.out.GoClosure(decl.fi)
-		// 		}
-		// 	}
-		// }
 		_, toptr, ok := findMethod(t, n > 0, name)
 		if !ok && isLower(name) {
 			name = strings.Title(name)
