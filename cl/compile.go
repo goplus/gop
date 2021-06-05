@@ -297,9 +297,9 @@ func loadMethodSet(ctx *blockCtx, decl *declType, cache map[string]bool) {
 		loadMethodSet(ctx, ctx.decls[dep], cache)
 	}
 	if nt, ok := ctx.named[decl.name]; ok {
-		reflectx.LoadMethodSet(decl.typ, toMethods(nt))
+		reflectx.SetMethodSet(decl.typ, toMethods(nt))
 	} else {
-		reflectx.LoadMethodSet(decl.typ, nil)
+		reflectx.SetMethodSet(decl.typ, nil)
 	}
 }
 
@@ -613,7 +613,7 @@ func loadType(ctx *blockCtx, spec *ast.TypeSpec) {
 	if decl, ok := ctx.decls[spec.Name.Name]; ok {
 		if decl.kind != dtInterface {
 			m, a := checkTypeMethodCount(ctx, decl)
-			typ = reflectx.MethodSetOf(typ, m, a)
+			typ = reflectx.NewMethodSet(typ, m, a)
 		}
 		decl.typ = typ
 	}
@@ -846,7 +846,7 @@ func NewMethodType(typ reflect.Type, infos []exec.FuncInfo) *MethodType {
 		minfos = append(minfos, mi)
 		methods = append(methods, m)
 	}
-	reflectx.LoadMethodSet(typ, methods)
+	reflectx.SetMethodSet(typ, methods)
 	return &MethodType{
 		typ:     typ,
 		methods: methods,
@@ -856,7 +856,7 @@ func NewMethodType(typ reflect.Type, infos []exec.FuncInfo) *MethodType {
 }
 
 func (p *MethodType) Update(rmap map[reflect.Type]reflect.Type) {
-	reflectx.LoadMethodSet(p.typ, p.methods)
+	reflectx.SetMethodSet(p.typ, p.methods)
 }
 
 func (p *MethodType) RegisterMethod(pkg *bytecode.GoPackage) {
