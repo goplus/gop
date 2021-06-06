@@ -683,7 +683,14 @@ func compileUnaryExpr(ctx *blockCtx, v *ast.UnaryExpr) func() {
 	return func() {
 		exprX()
 		checkUnaryOp(kind, op, x, ctx.out)
-		ctx.out.BuiltinOp(kind, op)
+		xtyp := x.(iValue).Type()
+		if xtyp.PkgPath() == "" {
+			ctx.out.BuiltinOp(kind, op)
+		} else {
+			ctx.out.TypeCast(xtyp, ret.Type())
+			ctx.out.BuiltinOp(kind, op)
+			ctx.out.TypeCast(ret.Type(), xtyp)
+		}
 	}
 }
 
