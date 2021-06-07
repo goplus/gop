@@ -683,13 +683,14 @@ func compileUnaryExpr(ctx *blockCtx, v *ast.UnaryExpr) func() {
 	return func() {
 		exprX()
 		checkUnaryOp(kind, op, x, ctx.out)
-		xtyp := x.(iValue).Type()
-		if xtyp.PkgPath() == "" {
-			ctx.out.BuiltinOp(kind, op)
-		} else {
+		vx := x.(iValue)
+		xtyp := vx.Type()
+		if vx.Kind() == ret.Kind() && xtyp.PkgPath() != "" {
 			ctx.out.TypeCast(xtyp, ret.Type())
 			ctx.out.BuiltinOp(kind, op)
 			ctx.out.TypeCast(ret.Type(), xtyp)
+		} else {
+			ctx.out.BuiltinOp(kind, op)
 		}
 	}
 }
@@ -741,18 +742,26 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 	}
 	var kind iKind
 	var lsh *lshValue
+	var ret iValue
 	if op == exec.OpLsh && xok && !isConstBound(xcons.kind) {
 		kind = xcons.kind
 		lsh = &lshValue{x: xcons, r: exec.InvalidReserved}
 		ctx.infer.Ret(2, lsh)
 	} else {
-		var ret iValue
 		kind, ret = binaryOpResult(op, x, y)
 		ctx.infer.Ret(2, ret)
 	}
 	return func() {
 		var label exec.Label
 		exprX()
+		var ctyp reflect.Type
+		if ret != nil {
+			ctyp = exec.TypeFromKind(kind)
+		}
+		vx := x.(iValue)
+		if ctyp != nil && vx.Kind() == kind && vx.Type().PkgPath() != "" {
+			ctx.out.TypeCast(vx.Type(), ctyp)
+		}
 		if b := (op == exec.OpLAnd); b || op == exec.OpLOr { // TODO: optimize to rm calling BuiltinOp
 			label = ctx.NewLabel("")
 			if b {
@@ -762,6 +771,10 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 			}
 		}
 		exprY()
+		vy := y.(iValue)
+		if ret != nil && ctyp != nil && vy.Kind() == kind && vy.Type().PkgPath() != "" {
+			ctx.out.TypeCast(vy.Type(), ctyp)
+		}
 		if lsh != nil {
 			if !isConstBound(xcons.kind) {
 				lsh.r = ctx.out.ReserveOpLsh()
@@ -781,12 +794,15 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 			}
 			kind = xcons.kind
 		}
-
 		checkBinaryOp(kind, op, x, y, ctx.out)
 		if err := checkOpMatchType(op, x, y); err != nil {
 			log.Panicf("invalid operator: %v (%v)", ctx.code(v), err)
 		}
 		ctx.out.BuiltinOp(kind, op)
+		if !(op >= exec.OpLT && op <= exec.OpNENil) &&
+			ctyp != nil && vx.Kind() == kind && vx.Type().PkgPath() != "" {
+			ctx.out.TypeCast(ctyp, vx.Type())
+		}
 		if label != nil {
 			ctx.out.Label(label)
 		}
