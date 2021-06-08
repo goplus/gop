@@ -388,9 +388,23 @@ func binaryOp(op exec.Operator, x, y *constVal) *constVal {
 		kind = i.Out
 	}
 	t := exec.TypeFromKind(kindReal)
+	var ctyp reflect.Type
+	xtyp := reflect.TypeOf(x.v)
+	if xtyp != nil && xtyp.PkgPath() != "" {
+		ctyp = exec.TypeFromKind(x.kind)
+		x.v = reflect.ValueOf(x.v).Convert(ctyp).Interface()
+	}
+	ytyp := reflect.TypeOf(y.v)
+	if ytyp != nil && ytyp.PkgPath() != "" {
+		ctyp := exec.TypeFromKind(y.kind)
+		y.v = reflect.ValueOf(y.v).Convert(ctyp).Interface()
+	}
 	vx := boundConst(x.v, t)
 	vy := boundConst(y.v, t)
 	v := CallBuiltinOp(kindReal, op, vx, vy)
+	if ctyp != nil {
+		v = reflect.ValueOf(v).Convert(xtyp).Interface()
+	}
 	return &constVal{kind: kind, v: v, reserve: -1}
 }
 
