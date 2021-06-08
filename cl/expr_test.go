@@ -420,6 +420,27 @@ func TestTypeCast2(t *testing.T) {
 	`, "", nil)
 }
 
+func TestTypeCast3(t *testing.T) {
+	cltest.Expect(t, `
+	type Int int
+	v1 := Int(100)
+	v2 := Int(10)
+	println(v1)
+	println(-v1)
+	println(^v1)
+	println(v1 + v2)
+	println(v1 - v2)
+	println(v1 * v2)
+	println(v1 / v2)
+	println(v1 == v2)
+	println(v1 != v2)
+	println(v1 > v2)
+	println(v1 < v2)
+	println(v1 >= v2)
+	println(v1 <= v2)
+	`, "100\n-100\n-101\n110\n90\n1000\n10\nfalse\ntrue\ntrue\nfalse\ntrue\nfalse\n")
+}
+
 func TestDiffrentType(t *testing.T) {
 	cltest.Expect(t, `
 	type Pt1 struct {
