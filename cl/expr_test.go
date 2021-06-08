@@ -2804,3 +2804,88 @@ func TestLoadType(t *testing.T) {
 	t.m[1].Test2()
 	`, "test1\ntest2\ntest1\ntest2\ntest1\ntest2\n")
 }
+
+var testTypedBasicCheck = `true main.Bool
+1 main.Int
+8 main.Int8
+16 main.Int16
+32 main.Int32
+64 main.Int64
+1 main.Uint
+8 main.Uint8
+16 main.Uint16
+32 main.Uint32
+64 main.Uint64
+4097 main.Uintptr
+99 main.Byte
+20013 main.Rune
+s main.String
+32 main.Float32
+64 main.Float64
+(1+64i) main.Complex64
+(1+128i) main.Complex128
+`
+
+func TestTypedBasic(t *testing.T) {
+	cltest.Expect(t, `
+	type Bool bool
+	type Int int
+	type Int8 int8
+	type Int16 int16
+	type Int32 int32
+	type Int64 int64
+	type Uint uint
+	type Uint8 uint8
+	type Uint16 uint16
+	type Uint32 uint32
+	type Uint64 uint64
+	type Uintptr uintptr
+	type Byte byte
+	type Rune rune
+	type String string
+	type Float32 float32
+	type Float64 float64
+	type Complex64 complex64
+	type Complex128 complex128
+	const (
+		b    Bool       = true
+		i    Int        = 1
+		i8   Int8       = 8
+		i16  Int16      = 16
+		i32  Int32      = 32
+		i64  Int64      = 64
+		u    Uint       = 1
+		u8   Uint8      = 8
+		u16  Uint16     = 16
+		u32  Uint32     = 32
+		u64  Uint64     = 64
+		uptr Uintptr    = 0x1001
+		s    String     = "s"
+		c    Byte       = 'c'
+		r    Rune       = '中'
+		f32  Float32    = 32
+		f64  Float64    = 64
+		c64  Complex64  = 1 + 64i
+		c128 Complex128 = 1 + 128i
+	)
+	printf("%v %T\n", b, b)
+	printf("%v %T\n", i, i)
+	printf("%v %T\n", i8, i8)
+	printf("%v %T\n", i16, i16)
+	printf("%v %T\n", i32, i32)
+	printf("%v %T\n", i64, i64)
+	printf("%v %T\n", u, u)
+	printf("%v %T\n", u8, u8)
+	printf("%v %T\n", u16, u16)
+	printf("%v %T\n", u32, u32)
+	printf("%v %T\n", u64, u64)
+	printf("%v %T\n", uptr, uptr)
+	printf("%v %T\n", c, c)
+	printf("%v %T\n", r, r)
+	printf("%v %T\n", s, s)
+	printf("%v %T\n", f32, f32)
+	printf("%v %T\n", f64, f64)
+	printf("%v %T\n", c64, c64)
+	printf("%v %T\n", c128, c128)
+	`, testTypedBasicCheck)
+}
