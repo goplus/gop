@@ -2845,6 +2845,7 @@ s main.String
 64 main.Float64
 (1+64i) main.Complex64
 (1+128i) main.Complex128
+2 main.Int
 `
 
 func TestTypedBasic(t *testing.T) {
@@ -2888,6 +2889,7 @@ func TestTypedBasic(t *testing.T) {
 		f64  Float64    = 64
 		c64  Complex64  = 1 + 64i
 		c128 Complex128 = 1 + 128i
+		i2              = Int(2)
 	)
 	printf("%v %T\n", b, b)
 	printf("%v %T\n", i, i)
@@ -2908,5 +2910,6 @@ func TestTypedBasic(t *testing.T) {
 	printf("%v %T\n", f64, f64)
 	printf("%v %T\n", c64, c64)
 	printf("%v %T\n", c128, c128)
+	printf("%v %T\n", i2, i2)
 	`, testTypedBasicCheck)
 }
