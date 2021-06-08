@@ -196,49 +196,51 @@ func Const(p *Builder, val interface{}) ast.Expr {
 			return nilIdent
 		}
 	}
-	if kind == reflect.String {
-		return StringConst(val.(string))
-	}
-	if kind >= reflect.Int && kind <= reflect.Int64 {
-		var expr ast.Expr = IntConst(v.Int())
+	var expr ast.Expr
+	switch true {
+	case kind == reflect.Bool:
+		if v.Bool() {
+			expr = Ident("true")
+		} else {
+			expr = Ident("false")
+		}
+		if t := v.Type(); t != exec.TyBool {
+			expr = TypeCast(p, expr, exec.TyBool, t)
+		}
+	case kind == reflect.String:
+		expr = StringConst(v.String())
+		if t := v.Type(); t != exec.TyString {
+			expr = TypeCast(p, expr, exec.TyString, t)
+		}
+	case kind >= reflect.Int && kind <= reflect.Int64:
+		expr = IntConst(v.Int())
 		if t := v.Type(); t != exec.TyInt {
 			expr = TypeCast(p, expr, exec.TyInt, t)
 		}
-		return expr
-	}
-	if kind >= reflect.Uint && kind <= reflect.Uintptr {
-		var expr ast.Expr = UintConst(v.Uint())
-		return TypeCast(p, expr, exec.TyInt, v.Type())
-	}
-	if kind >= reflect.Float32 && kind <= reflect.Float64 {
-		var expr ast.Expr = FloatConst(v.Float())
-		return TypeCast(p, expr, exec.TyFloat64, v.Type())
-	}
-	if kind >= reflect.Complex64 && kind <= reflect.Complex128 {
-		var expr ast.Expr = ComplexConst(v.Complex())
+	case kind >= reflect.Uint && kind <= reflect.Uintptr:
+		expr = UintConst(v.Uint())
+		expr = TypeCast(p, expr, exec.TyInt, v.Type())
+	case kind >= reflect.Float32 && kind <= reflect.Float64:
+		expr = FloatConst(v.Float())
+		expr = TypeCast(p, expr, exec.TyFloat64, v.Type())
+	case kind >= reflect.Complex64 && kind <= reflect.Complex128:
+		expr = ComplexConst(v.Complex())
 		if t := v.Type(); t != exec.TyComplex128 {
 			expr = TypeCast(p, expr, exec.TyComplex128, t)
 		}
-		return expr
-	}
-	switch kind {
-	case reflect.Bool:
-		if val.(bool) {
-			return Ident("true")
-		}
-		return Ident("false")
-	case reflect.Ptr:
+	case kind == reflect.Ptr:
 		switch v.Type() {
 		case exec.TyBigRat:
-			return BigRatConst(p, val.(*big.Rat))
+			expr = BigRatConst(p, val.(*big.Rat))
 		case exec.TyBigInt:
-			return BigIntConst(p, val.(*big.Int))
+			expr = BigIntConst(p, val.(*big.Int))
 		case exec.TyBigFloat:
-			return BigFloatConst(p, val.(*big.Float))
+			expr = BigFloatConst(p, val.(*big.Float))
 		}
+	default:
+		log.Panicln("Const: value type is unknown -", v.Type())
 	}
-	log.Panicln("Const: value type is unknown -", v.Type())
-	return nil
+	return expr
 }
 
 // Push instr
