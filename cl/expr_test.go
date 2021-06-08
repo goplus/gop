@@ -2891,4 +2891,14 @@ func TestTypedBasic(t *testing.T) {
 	printf("%v %T\n", c128, c128)
 	printf("%v %T\n", i2, i2)
 	`, testTypedBasicCheck)
+	cltest.Expect(t, `
+	type T int
+	func (t T) Value() int {
+		return int(t)
+	}
+	const (
+		t T = 100
+	)
+	println(t.Value())
+	`, "100\n")
 }

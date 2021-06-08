@@ -890,7 +890,13 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 		return func() {
 			if vfn.isMethod != 0 {
 				exprX := compileExpr(ctx, v.Fun.(*ast.SelectorExpr).X)
-				recv := ctx.infer.Get(-1).(*goValue)
+				x := ctx.infer.Get(-1)
+				if c, ok := x.(*constVal); ok {
+					if t := reflect.TypeOf(c.v); t.PkgPath() != "" {
+						x = &goValue{t: t, c: c}
+					}
+				}
+				recv := x.(*goValue)
 				if vfn.Type().In(0).Kind() != reflect.Ptr {
 					exprX()
 					if recv.Kind() == reflect.Ptr {
@@ -1448,6 +1454,11 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 		return exprX
 	}
 	x := ctx.infer.Get(-1)
+	if c, ok := x.(*constVal); ok {
+		if t := reflect.TypeOf(c.v); t.PkgPath() != "" {
+			x = &goValue{t: t, c: c}
+		}
+	}
 	switch vx := x.(type) {
 	case *nonValue:
 		switch nv := vx.v.(type) {
