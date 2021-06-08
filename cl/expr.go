@@ -772,7 +772,7 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 		}
 		exprY()
 		vy := y.(iValue)
-		if ret != nil && ctyp != nil && vy.Kind() == kind && vy.Type().PkgPath() != "" {
+		if ctyp != nil && vy.Kind() == kind && vy.Type().PkgPath() != "" {
 			ctx.out.TypeCast(vy.Type(), ctyp)
 		}
 		if lsh != nil {
