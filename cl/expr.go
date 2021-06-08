@@ -1052,7 +1052,7 @@ func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) func() { // x[i:j:k]
 	typ := x.(iValue).Type()
 	if kind = typ.Kind(); kind == reflect.Array {
 		typ = reflect.SliceOf(typ.Elem())
-		ctx.infer.Ret(1, &goValue{typ})
+		ctx.infer.Ret(1, &goValue{t: typ})
 	}
 	return func() {
 		if kind == reflect.Array {
@@ -1122,7 +1122,7 @@ func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr, twoValue bool) func() { /
 	} else {
 		typElem = typ.Elem()
 	}
-	ctx.infer.Ret(1, &goValue{typElem})
+	ctx.infer.Ret(1, &goValue{t: typElem})
 	ctx.resetFieldIndex()
 	return func() {
 		if ctx.takeAddr {
@@ -1678,7 +1678,7 @@ func compileStarExpr(ctx *blockCtx, v *ast.StarExpr) func() {
 		}
 	case *goValue:
 		if vx.Kind() == reflect.Ptr {
-			ctx.infer.Ret(1, &goValue{vx.t.Elem()})
+			ctx.infer.Ret(1, &goValue{t: vx.t.Elem()})
 		}
 		return func() {
 			exprX()

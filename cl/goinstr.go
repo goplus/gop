@@ -118,7 +118,7 @@ func igoCopy(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 		log.Panicln("arguments to copy must be slices; have ", dstTy.Kind())
 	}
 	if ct == callExpr {
-		ctx.infer.Ret(1, &goValue{exec.TyInt})
+		ctx.infer.Ret(1, &goValue{t: exec.TyInt})
 	}
 	return func() {
 		dstExpr()
@@ -320,7 +320,7 @@ func igoComplex(ctx *blockCtx, v *ast.CallExpr, ct callType) func() {
 		elem = exec.TyFloat64
 		typ = exec.TyComplex128
 	}
-	ctx.infer.Ret(2, &goValue{typ})
+	ctx.infer.Ret(2, &goValue{t: typ})
 	return func() {
 		xExpr()
 		yExpr()
@@ -360,7 +360,7 @@ func igoRealOrImag(ctx *blockCtx, v *ast.CallExpr, op exec.GoBuiltin) func() {
 		ctyp = exec.TyComplex128
 		typ = exec.TyFloat64
 	}
-	ctx.infer.Ret(1, &goValue{typ})
+	ctx.infer.Ret(1, &goValue{t: typ})
 	return func() {
 		expr()
 		if c, ok := in.(*constVal); ok {
@@ -438,7 +438,7 @@ func compileTypeCast(typ reflect.Type, ctx *blockCtx, v *ast.CallExpr) func() {
 		if cons, ok := in.(*constVal); ok {
 			cons.kind = typ.Kind()
 			if typ.PkgPath() != "" {
-				ctx.infer.Ret(1, &goValue{typ})
+				ctx.infer.Ret(1, &goValue{t: typ, c: cons})
 				return func() {
 					pushConstVal(ctx.out, cons)
 					ctx.out.TypeCast(cons.Type(), typ)
@@ -467,7 +467,7 @@ func compileTypeCast(typ reflect.Type, ctx *blockCtx, v *ast.CallExpr) func() {
 		}
 	}
 
-	ctx.infer.Ret(1, &goValue{typ})
+	ctx.infer.Ret(1, &goValue{t: typ})
 	return func() {
 		xExpr()
 		iv := in.(iValue)

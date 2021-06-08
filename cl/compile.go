@@ -686,7 +686,16 @@ func loadConst(ctx *blockCtx, name string, typ ast.Expr, value ast.Expr) {
 	}
 	compileExpr(ctx, value)
 	in := ctx.infer.Pop()
-	c := in.(*constVal)
+	var c *constVal
+	switch v := in.(type) {
+	case *constVal:
+		c = v
+	case *goValue:
+		if v.c == nil {
+			log.Panicf("invalid constant type %v", v.t)
+		}
+		c = v.c
+	}
 	if typ != nil {
 		t := toType(ctx, typ).(reflect.Type)
 		v := boundConst(c.v, t)

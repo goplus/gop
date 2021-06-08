@@ -107,6 +107,9 @@ func (p *Builder) pushInstr(val interface{}) (i Instr) {
 	}
 	v := reflect.ValueOf(val)
 	kind := v.Kind()
+	if v.Type().PkgPath() != "" {
+		goto end
+	}
 	if kind >= reflect.Int && kind <= reflect.Int64 {
 		iv := v.Int()
 		ivStore := int64(int32(iv) << bitsOpInt >> bitsOpInt)
@@ -132,6 +135,7 @@ func (p *Builder) pushInstr(val interface{}) (i Instr) {
 	} else if !isNilOrRatConst(kind, v) {
 		log.Panicln("Push failed: unsupported type:", reflect.TypeOf(val), "-", val)
 	}
+end:
 	code := p.code
 	i = (opPushConstR << bitsOpShift) | uint32(len(code.valConsts))
 	code.valConsts = append(code.valConsts, val)

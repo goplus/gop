@@ -82,6 +82,7 @@ func (p *lshValue) Value(i int) iValue {
 
 type goValue struct {
 	t reflect.Type
+	c *constVal
 }
 
 func (p *goValue) Kind() iKind {
@@ -438,7 +439,7 @@ func boundConst(v interface{}, t reflect.Type) interface{} {
 	}
 	sval := reflect.ValueOf(v)
 	st := sval.Type()
-	if t == st {
+	if t == st || st.PkgPath() != "" {
 		return v
 	}
 	if kind == reflect.Interface {
