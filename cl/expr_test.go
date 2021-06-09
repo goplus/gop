@@ -2918,6 +2918,7 @@ var testTypedBasicCheck = `100 200 30 50
 100 200 30 50
 -101 -201 -31 -51
 300 80 130 250
+-101 99 69 69
 330 180 330 180
 false true true true false false
 false true false true false true
@@ -2959,6 +2960,7 @@ func TestTypedBasic(t *testing.T) {
 	println(v1.Value(), v2.Value(), c1.Value(), c2.Value())
 	println(^v1, ^v2, ^c1, ^c2)
 	println(v1+v2, c1+c2, v1+c1, c2+v2)
+	println(v1+^v2, ^v1+v2, v1+^c1, ^c1+v1)
 	println(v1+v2+c1, v1+c1+c2, c1+v1+v2, c1+c2+v1)
 	println(d1, d2, d3, d4, d5, d6)
 	println(e1, e2, e3, e4, e5, e6)

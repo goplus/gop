@@ -680,7 +680,12 @@ func compileUnaryExpr(ctx *blockCtx, v *ast.UnaryExpr) func() {
 		}
 	}
 	kind, ret := unaryOpResult(op, x)
-	ctx.infer.Ret(1, ret)
+	vx := x.(iValue)
+	if vx.Type().PkgPath() != "" {
+		ctx.infer.Ret(1, &goValue{t: vx.Type()})
+	} else {
+		ctx.infer.Ret(1, ret)
+	}
 	return func() {
 		exprX()
 		checkUnaryOp(kind, op, x, ctx.out)
