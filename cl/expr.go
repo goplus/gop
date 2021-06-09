@@ -235,6 +235,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, compileByCallExpr bool) func(
 		switch v := sym.(type) {
 		case *constVal:
 			c := newConstVal(v.v, v.Kind())
+			c.typed = v.typed
 			ctx.infer.Push(c)
 			return func() {
 				pushConstVal(ctx.out, c)
@@ -633,7 +634,7 @@ func pushConstVal(b exec.Builder, c *constVal) {
 		if c.kind == reflect.Interface && c.v == nil {
 			c.reserve.Push(b, nil)
 		} else {
-			v := boundConst(c.v, exec.TypeFromKind(c.kind))
+			v := boundConst(c, exec.TypeFromKind(c.kind))
 			c.reserve.Push(b, v)
 		}
 	}
@@ -780,7 +781,7 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 				lsh.r = ctx.out.ReserveOpLsh()
 				lsh.fnCheckType = func(typ reflect.Type) {
 					kind := typ.Kind()
-					xcons.v = boundConst(xcons.v, typ)
+					xcons.v = boundConst(xcons, typ)
 					checkBinaryOp(kind, op, x, y, ctx.out)
 					if err := checkOpMatchType(op, x, y); err != nil {
 						log.Panicf("invalid operator: %v (%v)", ctx.code(v), err)
@@ -826,7 +827,7 @@ func binaryOpResult(op exec.Operator, x, y interface{}) (exec.Kind, iValue) {
 				}
 				if c, ok := y.(*constVal); ok {
 					kind = c.boundKind()
-					c.v = boundConst(c.v, c.boundType())
+					c.v = boundConst(c, c.boundType())
 					c.kind = kind
 				} else if lsh, ok := y.(*lshValue); ok && lsh.Kind() == exec.ConstUnboundInt {
 					kind = exec.Int
@@ -914,10 +915,8 @@ func compileCallExprCall(ctx *blockCtx, exprFun func(), v *ast.CallExpr, ct call
 			if vfn.isMethod != 0 {
 				exprX := compileExpr(ctx, v.Fun.(*ast.SelectorExpr).X)
 				x := ctx.infer.Get(-1)
-				if c, ok := x.(*constVal); ok {
-					if t := reflect.TypeOf(c.v); t.PkgPath() != "" {
-						x = &goValue{t: t, c: c}
-					}
+				if c, ok := x.(*constVal); ok && c.IsTyped() {
+					x = &goValue{t: c.typed, c: c}
 				}
 				recv := x.(*goValue)
 				if vfn.Type().In(0).Kind() != reflect.Ptr {
@@ -1034,7 +1033,7 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 	switch typ.Kind() {
 	case reflect.Slice, reflect.Array:
 		if cons, ok := i.(*constVal); ok {
-			n := boundConst(cons.v, exec.TyInt)
+			n := boundConst(cons, exec.TyInt)
 			if ctx.indirect {
 				ctx.out.Index(n.(int)).AddrOp(kindOf(typElem), exec.OpAssign)
 			} else {
@@ -1111,7 +1110,7 @@ func compileIdx(ctx *blockCtx, v ast.Expr, nlast int, kind reflect.Kind) int {
 	expr := compileExpr(ctx, v)
 	i := ctx.infer.Pop()
 	if cons, ok := i.(*constVal); ok {
-		nv := boundConst(cons.v, exec.TyInt)
+		nv := boundConst(cons, exec.TyInt)
 		n := nv.(int)
 		if n <= nlast {
 			return n
@@ -1477,10 +1476,8 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 		return exprX
 	}
 	x := ctx.infer.Get(-1)
-	if c, ok := x.(*constVal); ok {
-		if t := reflect.TypeOf(c.v); t.PkgPath() != "" {
-			x = &goValue{t: t, c: c}
-		}
+	if c, ok := x.(*constVal); ok && c.IsTyped() {
+		x = &goValue{t: c.typed, c: c}
 	}
 	switch vx := x.(type) {
 	case *nonValue:

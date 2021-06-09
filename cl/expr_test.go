@@ -2848,7 +2848,7 @@ s main.String
 2 main.Int
 `
 
-func TestTypedBasic(t *testing.T) {
+func TestTypedConst(t *testing.T) {
 	cltest.Expect(t, `
 	type Bool bool
 	type Int int
@@ -2918,8 +2918,22 @@ func TestTypedBasic(t *testing.T) {
 		return int(t)
 	}
 	const (
-		t T = 100
+		a  T = 10
+		b    = T(20)
+		c    = a + b
+		d1   = a == b
+		d2   = a != b
+		d3   = a < b
+		d4   = a <= b
+		d5   = a > b
+		d6   = a >= b
 	)
-	println(t.Value())
-	`, "100\n")
+	var (
+		v T = 100
+	)
+	println(c.Value())
+	println(^c, ^v, c+v)
+	println(c == v, c != v, c < v, c <= v, c > v, c >= v)
+	println(d1, d2, d3, d4, d5, d6)
+	`, "30\n-31 -101 130\nfalse true true true false false\nfalse true true true false false\n")
 }

@@ -438,8 +438,8 @@ func compileTypeCast(typ reflect.Type, ctx *blockCtx, v *ast.CallExpr) func() {
 		if cons, ok := in.(*constVal); ok {
 			cons.kind = typ.Kind()
 			if typ.PkgPath() != "" {
-				v := reflect.ValueOf(cons.v).Convert(typ)
-				c := newConstVal(v.Interface(), cons.kind)
+				c := newConstVal(cons.v, cons.kind)
+				c.typed = typ
 				ctx.infer.Ret(1, &goValue{t: typ, c: c})
 				return func() {
 					pushConstVal(ctx.out, c)
@@ -458,7 +458,7 @@ func compileTypeCast(typ reflect.Type, ctx *blockCtx, v *ast.CallExpr) func() {
 				cons.kind = reflect.UnsafePointer
 			} else {
 				kind := cons.boundKind()
-				cons.v = boundConst(cons.v, exec.TypeFromKind(kind))
+				cons.v = boundConst(cons, exec.TypeFromKind(kind))
 				cons.kind = kind
 			}
 		}
