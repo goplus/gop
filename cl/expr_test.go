@@ -2826,7 +2826,7 @@ func TestLoadType(t *testing.T) {
 	`, "test1\ntest2\ntest1\ntest2\ntest1\ntest2\n")
 }
 
-var testTypedBasicCheck = `true main.Bool
+var testTypedConstCheck = `true main.Bool
 1 main.Int
 8 main.Int8
 16 main.Int16
@@ -2911,7 +2911,19 @@ func TestTypedConst(t *testing.T) {
 	printf("%v %T\n", c64, c64)
 	printf("%v %T\n", c128, c128)
 	printf("%v %T\n", i2, i2)
-	`, testTypedBasicCheck)
+	`, testTypedConstCheck)
+}
+
+var testTypedBasicCheck = `100 200 30 50
+100 200 30 50
+-101 -201 -31 -51
+300 80 130 250
+330 180 330 180
+false true true true false false
+false true false true false true
+`
+
+func TestTypedBasic(t *testing.T) {
 	cltest.Expect(t, `
 	type T int
 	func (t T) Value() int {
@@ -2920,20 +2932,35 @@ func TestTypedConst(t *testing.T) {
 	const (
 		a  T = 10
 		b    = T(20)
-		c    = a + b
-		d1   = a == b
-		d2   = a != b
-		d3   = a < b
-		d4   = a <= b
-		d5   = a > b
-		d6   = a >= b
+		c1   = a + b
+		c2   = c1 + 20
+	)
+	const (
+		d1 = a == b
+		d2 = a != b
+		d3 = a < b
+		d4 = a <= b
+		d5 = a > b
+		d6 = a >= b
 	)
 	var (
-		v T = 100
+		v1 T = 100
+		v2   = T(200)
 	)
-	println(c.Value())
-	println(^c, ^v, c+v)
-	println(c == v, c != v, c < v, c <= v, c > v, c >= v)
+	var (
+		e1 = v1 == v2
+		e2 = v1 != v2
+		e3 = c1 == c2
+		e4 = c1 != c2
+		e5 = v1 == c1
+		e6 = v1 != c1
+	)
+	println(v1, v2, c1, c2)
+	println(v1.Value(), v2.Value(), c1.Value(), c2.Value())
+	println(^v1, ^v2, ^c1, ^c2)
+	println(v1+v2, c1+c2, v1+c1, c2+v2)
+	println(v1+v2+c1, v1+c1+c2, c1+v1+v2, c1+c2+v1)
 	println(d1, d2, d3, d4, d5, d6)
-	`, "30\n-31 -101 130\nfalse true true true false false\nfalse true true true false false\n")
+	println(e1, e2, e3, e4, e5, e6)
+	`, testTypedBasicCheck)
 }

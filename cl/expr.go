@@ -750,7 +750,12 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 		ctx.infer.Ret(2, lsh)
 	} else {
 		kind, ret = binaryOpResult(op, x, y)
-		ctx.infer.Ret(2, ret)
+		vx := x.(iValue)
+		if !(op >= exec.OpLT && op <= exec.OpNENil) && vx.Kind() == kind && vx.Type().PkgPath() != "" {
+			ctx.infer.Ret(2, &goValue{t: vx.Type()})
+		} else {
+			ctx.infer.Ret(2, ret)
+		}
 	}
 	return func() {
 		var label exec.Label
