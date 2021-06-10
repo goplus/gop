@@ -774,7 +774,6 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 			}
 			kind = xcons.kind
 		}
-
 		checkBinaryOp(kind, op, x, y, ctx.out)
 		if err := checkOpMatchType(op, x, y); err != nil {
 			log.Panicf("invalid operator: %v (%v)", ctx.code(v), err)
@@ -793,6 +792,11 @@ func binaryOpResult(op exec.Operator, x, y interface{}) (exec.Kind, iValue) {
 		log.Panicln("binaryOp: argument isn't an expr.")
 	}
 	kind := vx.Kind()
+	ykind := vy.Kind()
+	if (op >= exec.OpEQ && op <= exec.OpNENil) &&
+		(kind == reflect.Interface || ykind == reflect.Interface) {
+		return reflect.Interface, &goValue{t: exec.TyBool}
+	}
 	if !isConstBound(kind) {
 		kind = vy.Kind()
 		if xlsh, xok := x.(*lshValue); xok {
