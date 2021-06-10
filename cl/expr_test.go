@@ -2804,3 +2804,44 @@ func TestLoadType(t *testing.T) {
 	t.m[1].Test2()
 	`, "test1\ntest2\ntest1\ntest2\ntest1\ntest2\n")
 }
+
+func TestCompareInterface(t *testing.T) {
+	cltest.Expect(t, `
+	var i interface{} = "hello"
+	println(i == i)
+	println(i != i)
+	println(i == interface{}("hello"))
+	println(i != interface{}("hello"))
+	println(i == "hello")
+	println(i != "hello")
+	println(i == 100)
+	println(i != 100)
+	println(i == nil)
+	println(i != nil)
+	`, "true\nfalse\ntrue\nfalse\ntrue\nfalse\nfalse\ntrue\nfalse\ntrue\n")
+	cltest.Expect(t, `
+	var i interface{}
+	println(i == i)
+	println(i != i)
+	println(i == interface{}("hello"))
+	println(i != interface{}("hello"))
+	println(i == "hello")
+	println(i != "hello")
+	println(i == 100)
+	println(i != 100)
+	println(i == nil)
+	println(i != nil)
+	`, "true\nfalse\nfalse\ntrue\nfalse\ntrue\nfalse\ntrue\ntrue\nfalse\n")
+	cltest.Expect(t, `
+	var t *struct{}
+	var i interface{} = t
+	println(i == t)
+	println(i != t)
+	println(i == i)
+	println(i != i)
+	println(i == nil)
+	println(i != nil)
+	println(i.(*struct{}) == nil)
+	println(i.(*struct{}) != nil)
+	`, "true\nfalse\ntrue\nfalse\nfalse\ntrue\ntrue\nfalse\n")
+}
