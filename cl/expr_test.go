@@ -2820,6 +2820,19 @@ func TestCompareInterface(t *testing.T) {
 	println(i != nil)
 	`, "true\nfalse\ntrue\nfalse\ntrue\nfalse\nfalse\ntrue\nfalse\ntrue\n")
 	cltest.Expect(t, `
+	var i interface{} = 100
+	println(i == i)
+	println(i != i)
+	println(i == interface{}(100))
+	println(i != interface{}(100))
+	println(i == "hello")
+	println(i != "hello")
+	println(i == 100)
+	println(i != 100)
+	println(i == nil)
+	println(i != nil)
+	`, "true\nfalse\ntrue\nfalse\nfalse\ntrue\ntrue\nfalse\nfalse\ntrue\n")
+	cltest.Expect(t, `
 	var i interface{}
 	println(i == i)
 	println(i != i)

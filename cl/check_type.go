@@ -122,7 +122,8 @@ func checkBinaryOp(kind exec.Kind, op exec.Operator, x, y interface{}, b exec.Bu
 				xcons.reserve.Push(b, nil)
 			} else {
 				if kind == reflect.Interface {
-					xcons.reserve.Push(b, xcons.v)
+					xv := boundConst(xcons.v, xcons.boundType())
+					xcons.reserve.Push(b, xv)
 				} else {
 					xv := boundConst(xcons.v, exec.TypeFromKind(kind))
 					xcons.reserve.Push(b, xv)
@@ -143,7 +144,8 @@ func checkBinaryOp(kind exec.Kind, op exec.Operator, x, y interface{}, b exec.Bu
 				ycons.reserve.Push(b, nil)
 			} else {
 				if kind == reflect.Interface {
-					ycons.reserve.Push(b, ycons.v)
+					yv := boundConst(ycons.v, ycons.boundType())
+					ycons.reserve.Push(b, yv)
 				} else {
 					yv := boundConst(ycons.v, exec.TypeFromKind(kind))
 					ycons.reserve.Push(b, yv)
