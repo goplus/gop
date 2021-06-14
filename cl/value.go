@@ -438,6 +438,14 @@ func binaryOp(xop token.Token, op exec.Operator, x, y *constVal) *constVal {
 			b := constant.Compare(cx, xop, cy)
 			return &constVal{kind: kind, v: b, reserve: -1}
 		default:
+			if (kind >= exec.Int && kind <= exec.Uintptr) || kind == exec.BigInt {
+				if !isBoundNumberType(xkind) {
+					cx = extractUnboundInt(cx, xkind)
+				}
+				if !isBoundNumberType(ykind) {
+					cy = extractUnboundInt(cy, ykind)
+				}
+			}
 			v = constant.BinaryOp(cx, xop, cy)
 		}
 		if kind == exec.ConstUnboundInt {
@@ -554,10 +562,16 @@ func constantValue(cv constant.Value, ckind exec.Kind, kind reflect.Kind) interf
 			cv = constant.MakeFromLiteral(s[:pos], token.INT, 0)
 			v = constant.Val(cv)
 		} else if kind >= exec.Int && kind <= exec.Uintptr || kind == exec.BigInt {
-			if !val.IsInt() {
+			if val.IsInt() {
+				v = val.Num()
+			} else if ckind == exec.ConstUnboundFloat {
 				log.Panicf("constant %v truncated to integer", cv)
+			} else {
+				s := val.FloatString(1)
+				pos := strings.Index(s, ".")
+				cv = constant.MakeFromLiteral(s[:pos], token.INT, 0)
+				v = constant.Val(cv)
 			}
-			v = val.Num()
 		}
 	case *big.Float:
 		if ckind == exec.ConstUnboundInt {

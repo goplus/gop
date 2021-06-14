@@ -311,6 +311,10 @@ func TestConstUbountInt(t *testing.T) {
 	println(a)
 	`, "", "constant 1000.1 truncated to integer")
 	cltest.Expect(t, `
+	const a = 1000.1*int(1)
+	println(a)
+	`, "", "constant 1000.1 truncated to integer")
+	cltest.Expect(t, `
 	var a = [1.1]int{}
 	println(a)
 	`, "", "constant 1.1 truncated to integer")
@@ -322,6 +326,9 @@ func TestConstUbountInt(t *testing.T) {
 	const a = (1e4096) >> 10
 	println(a)
 	`, "", "integer too large")
+	cltest.Expect(t, `
+	const a = int(100)/3
+	println(a)`, "33\n")
 }
 
 func TestConstTruncated(t *testing.T) {
