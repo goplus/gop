@@ -595,6 +595,25 @@ func TestVarOp(t *testing.T) {
 	)
 }
 
+func TestStackVar(t *testing.T) {
+	cltest.Expect(t, `
+	func test(x int, y int) {
+		x += 100
+		y *= 100
+		println(x,y)
+	}
+	test(2,2)
+	`, "102 200\n")
+	cltest.Expect(t, `
+	func test(x *int) {
+		*x = 200
+	}
+	x := 100
+	test(&x)
+	println(x)
+	`, "200\n")
+}
+
 func TestGoPackage(t *testing.T) {
 	cltest.Expect(t, `
 		import "fmt"
