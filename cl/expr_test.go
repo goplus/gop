@@ -631,6 +631,14 @@ func TestStackVar(t *testing.T) {
 	test(&x)
 	println(x)
 	`, "200\n")
+	cltest.Expect(t, `
+	func test(x *int) {
+		*x = 200
+	}
+	x := 100
+	test(&x)
+	println(x)
+	`, "200\n")
 }
 
 func TestGoPackage(t *testing.T) {

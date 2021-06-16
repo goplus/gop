@@ -218,7 +218,26 @@ func compileIdentLHS(ctx *blockCtx, name string, mode compileMode) {
 				ctx.out.Store(addr.(*stackVar).index)
 			}
 		} else if op, ok := addrops[mode]; ok {
-			ctx.out.Addr(addr.(*stackVar).index).AddrOp(kindOf(addr.(*stackVar).getType()), op)
+			index := addr.(*stackVar).index
+			if typ.Kind() == reflect.Ptr {
+				ctx.out.Load(index)
+				elem := addrTyp
+				for i := 0; i < ctx.indirect; i++ {
+					elem = elem.Elem()
+					ctx.out.AddrOp(kindOf(elem), exec.OpAddrVal)
+				}
+				ctx.out.AddrOp(kindOf(typ), op)
+			} else if ctx.indirect > 0 {
+				ctx.out.Load(index)
+				elem := addrTyp
+				for i := 0; i < ctx.indirect-1; i++ {
+					elem = elem.Elem()
+					ctx.out.AddrOp(kindOf(elem), exec.OpAddrVal)
+				}
+				ctx.out.AddrOp(kindOf(typ), op)
+			} else {
+				ctx.out.Addr(index).AddrOp(kindOf(typ), op)
+			}
 		} else {
 			log.Panicln("compileIdentLHS failed: unknown op -", mode)
 		}
