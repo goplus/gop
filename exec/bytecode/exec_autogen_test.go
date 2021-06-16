@@ -240,6 +240,12 @@ func newKindValue(kind Kind) reflect.Value {
 			t = reflect.ChanOf(reflect.BothDir, TyEmptyInterface)
 		} else if kind == reflect.Ptr {
 			t = TyUnsafePointer
+		} else if kind == reflect.Interface {
+			t = TyEmptyInterface
+		} else if kind == UnsafePointer {
+			t = TyUnsafePointer
+		} else if kind == reflect.Func {
+			t = reflect.FuncOf(nil, nil, false)
 		}
 	}
 	if t.Kind() == reflect.Ptr {

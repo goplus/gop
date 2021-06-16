@@ -188,9 +188,6 @@ func (p *Builder) AddrVar(v exec.Var) *Builder {
 }
 
 func (p *Builder) bigAddrOp(kind exec.Kind, op exec.AddrOperator) *Builder {
-	if op == exec.OpAddrVal {
-		return p
-	}
 	method := addropMethods[op]
 	if method == "" {
 		log.Panicln("bigAddrOp: unknown op -", op)
@@ -224,6 +221,12 @@ func (p *Builder) bigAddrOp(kind exec.Kind, op exec.AddrOperator) *Builder {
 		}
 		bigOp := &ast.SelectorExpr{X: v.X, Sel: Ident(method)}
 		expr = &ast.CallExpr{Fun: bigOp, Args: []ast.Expr{v.X, val}}
+	case *ast.Ident:
+		bigOp := &ast.SelectorExpr{X: v, Sel: Ident(method)}
+		expr = &ast.CallExpr{Fun: bigOp, Args: []ast.Expr{v, val}}
+	case *ast.StarExpr:
+		bigOp := &ast.SelectorExpr{X: v, Sel: Ident(method)}
+		expr = &ast.CallExpr{Fun: bigOp, Args: []ast.Expr{v, val}}
 	default:
 		log.Panicln("bigAddrOp: todo")
 	}
@@ -249,9 +252,6 @@ var addropMethods = [...]string{
 
 // AddrOp instr
 func (p *Builder) AddrOp(kind exec.Kind, op exec.AddrOperator) *Builder {
-	if kind >= exec.BigInt {
-		return p.bigAddrOp(kind, op)
-	}
 	if op == exec.OpAddrVal {
 		p.rhs.Push(&ast.StarExpr{
 			X: p.rhs.Pop().(ast.Expr),
@@ -268,6 +268,9 @@ func (p *Builder) AddrOp(kind exec.Kind, op exec.AddrOperator) *Builder {
 		})
 		return p
 	}
+	if kind >= exec.BigInt {
+		return p.bigAddrOp(kind, op)
+	}
 	var stmt ast.Stmt
 	var x = p.rhs.Pop()
 	var val = p.rhs.Pop().(ast.Expr)
@@ -280,6 +283,20 @@ func (p *Builder) AddrOp(kind exec.Kind, op exec.AddrOperator) *Builder {
 			stmt = &ast.IncDecStmt{X: v.X, TokPos: v.OpPos, Tok: addropTokens[op]}
 		} else {
 			stmt = &ast.AssignStmt{Lhs: []ast.Expr{v.X}, Tok: addropTokens[op], Rhs: []ast.Expr{val}}
+		}
+	case *ast.Ident:
+		x := &ast.StarExpr{X: v}
+		if op == exec.OpInc || op == exec.OpDec {
+			stmt = &ast.IncDecStmt{X: x, TokPos: v.Pos(), Tok: addropTokens[op]}
+		} else {
+			stmt = &ast.AssignStmt{Lhs: []ast.Expr{x}, Tok: addropTokens[op], Rhs: []ast.Expr{val}}
+		}
+	case *ast.StarExpr:
+		x := &ast.StarExpr{X: v}
+		if op == exec.OpInc || op == exec.OpDec {
+			stmt = &ast.IncDecStmt{X: x, TokPos: v.Pos(), Tok: addropTokens[op]}
+		} else {
+			stmt = &ast.AssignStmt{Lhs: []ast.Expr{x}, Tok: addropTokens[op], Rhs: []ast.Expr{val}}
 		}
 	default:
 		log.Panicln("AddrOp: todo")

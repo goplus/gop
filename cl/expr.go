@@ -51,9 +51,39 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode compileMode) {
 		compileSelectorExprLHS(ctx, v, mode)
 	case *ast.StarExpr:
 		compileStarExprLHS(ctx, v, mode)
+	case *ast.ParenExpr:
+		compileExprLHS(ctx, v.X, mode)
+	case *ast.UnaryExpr:
+		compileUnaryExprLHS(ctx, v, mode)
+	case *ast.CallExpr:
+		compileCallExprLHS(ctx, v, mode)
 	default:
-		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
+		log.Panicln("compileExprLHS failed: unknown -", reflect.TypeOf(v))
 	}
+}
+
+func compileUnaryExprLHS(ctx *blockCtx, v *ast.UnaryExpr, mode token.Token) {
+	ctx.indirect--
+	compileExprLHS(ctx, v.X, mode)
+}
+
+func compileCallExprLHS(ctx *blockCtx, v *ast.CallExpr, mode token.Token) {
+	compileCallExpr(ctx, v, callExpr)()
+	rv := ctx.infer.Get(-1)
+	lv := ctx.infer.Get(-2)
+	rt := boundType(rv.(iValue))
+	typ := rt
+	for i := 0; i < ctx.indirect; i++ {
+		typ = typ.Elem()
+	}
+	checkType(typ, lv, ctx.out)
+	ctx.infer.PopN(2)
+	elem := rt
+	for i := 0; i < ctx.indirect-1; i++ {
+		elem = elem.Elem()
+		ctx.out.AddrOp(kindOf(elem), exec.OpAddrVal)
+	}
+	ctx.out.AddrOp(kindOf(typ), exec.OpAssign)
 }
 
 func compileExpr(ctx *blockCtx, expr ast.Expr) func() {
@@ -132,24 +162,58 @@ func compileIdentLHS(ctx *blockCtx, name string, mode compileMode) {
 		}
 	}
 
-	typ := addr.getType()
-	if ctx.indirect {
+	addrTyp := addr.getType()
+	typ := addrTyp
+	for i := 0; i < ctx.indirect; i++ {
 		typ = typ.Elem()
 	}
 	checkType(typ, in, ctx.out)
 	ctx.infer.PopN(1)
 	if v, ok := addr.(*execVar); ok {
 		if mode == token.ASSIGN || mode == token.DEFINE {
-			ctx.out.StoreVar(v.v)
+			if ctx.indirect > 0 {
+				ctx.out.LoadVar(v.v)
+				elem := addrTyp
+				for i := 0; i < ctx.indirect-1; i++ {
+					elem = elem.Elem()
+					ctx.out.AddrOp(kindOf(elem), exec.OpAddrVal)
+				}
+				ctx.out.AddrOp(kindOf(typ), exec.OpAssign)
+			} else {
+				ctx.out.StoreVar(v.v)
+			}
 		} else if op, ok := addrops[mode]; ok {
-			ctx.out.AddrVar(v.v).AddrOp(kindOf(v.v.Type()), op)
+			if typ.Kind() == reflect.Ptr {
+				ctx.out.LoadVar(v.v)
+				elem := addrTyp
+				for i := 0; i < ctx.indirect; i++ {
+					elem = elem.Elem()
+					ctx.out.AddrOp(kindOf(elem), exec.OpAddrVal)
+				}
+				ctx.out.AddrOp(kindOf(typ), op)
+			} else if ctx.indirect > 0 {
+				ctx.out.LoadVar(v.v)
+				elem := addrTyp
+				for i := 0; i < ctx.indirect-1; i++ {
+					elem = elem.Elem()
+					ctx.out.AddrOp(kindOf(elem), exec.OpAddrVal)
+				}
+				ctx.out.AddrOp(kindOf(typ), op)
+			} else {
+				ctx.out.AddrVar(v.v).AddrOp(kindOf(typ), op)
+			}
 		} else {
 			log.Panicln("compileIdentLHS failed: unknown op -", mode)
 		}
 	} else {
 		if mode == token.ASSIGN || mode == token.DEFINE {
-			if ctx.indirect {
-				ctx.out.Load(addr.(*stackVar).index).AddrOp(kindOf(addr.(*stackVar).getType()), exec.OpAssign)
+			if ctx.indirect > 0 {
+				ctx.out.Load(addr.(*stackVar).index)
+				for i := 0; i < ctx.indirect-1; i++ {
+					typ = reflect.PtrTo(typ)
+					ctx.out.AddrOp(kindOf(typ), exec.OpAddrVal)
+				}
+				ctx.out.AddrOp(kindOf(addrTyp), exec.OpAssign)
 			} else {
 				ctx.out.Store(addr.(*stackVar).index)
 			}
@@ -185,6 +249,12 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, compileByCallExpr bool) func(
 	}
 	if sym, ok := ctx.find(name); ok {
 		switch v := sym.(type) {
+		case *constVal:
+			c := newConstVal(v.v, v.Kind())
+			ctx.infer.Push(c)
+			return func() {
+				pushConstVal(ctx.out, c)
+			}
 		case *execVar:
 			typ := v.v.Type()
 			kind := typ.Kind()
@@ -229,6 +299,11 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, compileByCallExpr bool) func(
 			log.Panicln("compileIdent failed: unknown -", reflect.TypeOf(sym))
 		}
 	} else {
+		if name == "iota" {
+			c := newIotaValue()
+			ctx.infer.Push(c)
+			return nil
+		}
 		if addr, kind, ok := ctx.builtin.Find(name); ok {
 			switch kind {
 			case exec.SymbolVar:
@@ -297,12 +372,7 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 		}
 		ctx.infer.Push(&goValue{t: typSlice})
 		return func() {
-			var nLen int
-			if kind == reflect.Array {
-				nLen = typSlice.Len()
-			} else {
-				nLen = toBoundArrayLen(ctx, v)
-			}
+			nLen := toBoundArrayLen(ctx, v)
 			n := -1
 			elts := make([]ast.Expr, nLen)
 			for _, elt := range v.Elts {
@@ -315,7 +385,6 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 					elts[n] = e
 				}
 			}
-			n++
 			typElem := typSlice.Elem()
 			for _, elt := range elts {
 				if elt != nil {
@@ -325,7 +394,7 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) func() {
 					ctx.out.Zero(typElem)
 				}
 			}
-			ctx.out.MakeArray(typSlice, n)
+			ctx.out.MakeArray(typSlice, nLen)
 		}
 	case reflect.Map:
 		typMap := typ.(reflect.Type)
@@ -683,6 +752,9 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) func() {
 		}
 		exprY()
 		checkBinaryOp(kind, op, x, y, ctx.out)
+		if err := checkOpMatchType(op, x, y); err != nil {
+			log.Panicf("invalid operator: %v (%v)", ctx.code(v), err)
+		}
 		ctx.out.BuiltinOp(kind, op)
 		if label != nil {
 			ctx.out.Label(label)
@@ -887,6 +959,9 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 
 	typ := ctx.infer.Get(-1).(iValue).Type()
 	typElem := typ.Elem()
+	if typ.Kind() == reflect.Array {
+		ctx.checkLoadAddr = true
+	}
 	if typ.Kind() == reflect.Ptr {
 		if typElem.Kind() != reflect.Array {
 			logPanic(ctx, v, `type %v does not support indexing`, typ)
@@ -894,12 +969,10 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 		typ = typElem
 		typElem = typElem.Elem()
 	}
-	if typ.Kind() == reflect.Array {
-		ctx.checkLoadAddr = true
-	}
 	exprX()
 	ctx.checkLoadAddr = false
-	if ctx.indirect {
+	styp := typElem
+	for i := 0; i < ctx.indirect; i++ {
 		typElem = typElem.Elem()
 	}
 	if cons, ok := val.(*constVal); ok {
@@ -915,8 +988,14 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 	case reflect.Slice, reflect.Array:
 		if cons, ok := i.(*constVal); ok {
 			n := boundConst(cons.v, exec.TyInt)
-			if ctx.indirect {
-				ctx.out.Index(n.(int)).AddrOp(kindOf(typElem), exec.OpAssign)
+			if ctx.indirect > 0 {
+				ctx.out.Index(n.(int))
+				elem := styp
+				for i := 0; i < ctx.indirect-1; i++ {
+					elem = elem.Elem()
+					ctx.out.AddrOp(kindOf(elem), exec.OpAddrVal)
+				}
+				ctx.out.AddrOp(kindOf(typElem), exec.OpAssign)
 			} else {
 				ctx.out.SetIndex(n.(int))
 			}
@@ -930,8 +1009,14 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 				log.Panicln("compileIndexExprLHS: index expression value type is invalid")
 			}
 		}
-		if ctx.indirect {
-			ctx.out.Index(-1).AddrOp(kindOf(typElem), exec.OpAssign)
+		if ctx.indirect > 0 {
+			ctx.out.Index(-1)
+			elem := styp
+			for i := 0; i < ctx.indirect-1; i++ {
+				elem = elem.Elem()
+				ctx.out.AddrOp(kindOf(elem), exec.OpAddrVal)
+			}
+			ctx.out.AddrOp(kindOf(typElem), exec.OpAssign)
 		} else {
 			ctx.out.SetIndex(-1)
 		}
@@ -944,8 +1029,14 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr, mode compileMode) {
 		if t := i.(iValue).Type(); t != typIdx {
 			logIllTypeMapIndexPanic(ctx, v, t, typIdx)
 		}
-		if ctx.indirect {
-			ctx.out.MapIndex(false).AddrOp(kindOf(typElem), exec.OpAssign)
+		if ctx.indirect > 0 {
+			ctx.out.MapIndex(false)
+			elem := styp
+			for i := 0; i < ctx.indirect-1; i++ {
+				elem = elem.Elem()
+				ctx.out.AddrOp(kindOf(elem), exec.OpAddrVal)
+			}
+			ctx.out.AddrOp(kindOf(typElem), exec.OpAssign)
 		} else {
 			ctx.out.SetMapIndex()
 		}
@@ -1176,7 +1267,7 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compileMode
 			if t.Kind() == reflect.Struct {
 				if sf, ok := t.FieldByName(name); ok {
 					typ := sf.Type
-					if ctx.indirect {
+					for i := 0; i < ctx.indirect; i++ {
 						typ = typ.Elem()
 					}
 					checkType(typ, in, ctx.out)
@@ -1192,8 +1283,14 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compileMode
 						exprX()
 					}
 					ctx.checkLoadAddr = false
-					if ctx.indirect {
-						ctx.out.LoadField(fieldStructType, fieldIndex).AddrOp(kindOf(typ), exec.OpAssign)
+					if ctx.indirect > 0 {
+						ctx.out.LoadField(fieldStructType, fieldIndex)
+						elem := sf.Type
+						for i := 0; i < ctx.indirect-1; i++ {
+							elem = elem.Elem()
+							ctx.out.AddrOp(kindOf(elem), exec.OpAddrVal)
+						}
+						ctx.out.AddrOp(kindOf(typ), exec.OpAssign)
 					} else {
 						ctx.out.StoreField(fieldStructType, fieldIndex)
 					}
@@ -1209,9 +1306,9 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr, mode compileMode
 }
 
 func compileStarExprLHS(ctx *blockCtx, v *ast.StarExpr, mode compileMode) {
-	ctx.indirect = true
+	ctx.indirect++
 	compileExprLHS(ctx, v.X, mode)
-	ctx.indirect = false
+	ctx.indirect--
 }
 
 func funcToClosure(ctx *blockCtx, fun ast.Expr, ftyp *ast.FuncType) *funcDecl {
@@ -1304,12 +1401,22 @@ func compileSelectorExpr(ctx *blockCtx, call *ast.CallExpr, v *ast.SelectorExpr,
 					pushConstVal(ctx.out, ret)
 				}
 			}
+			if t, ok := nv.FindType(name); ok {
+				ctx.infer.Ret(1, &nonValue{t})
+				return nil
+			}
 			addr, kind, ok := nv.Find(name)
 			if !ok {
 				log.Panicln("compileSelectorExpr: not found -", nv.PkgPath(), name)
 			}
 			switch kind {
 			case exec.SymbolFunc, exec.SymbolFuncv:
+				if nv.PkgPath() == "unsafe" {
+					if gi, ok := goinstrs["unsafe."+name]; ok {
+						ctx.infer.Push(&nonValue{gi.instr})
+						return nil
+					}
+				}
 				if compileByCallExpr {
 					fn := newGoFunc(addr, kind, 0, ctx)
 					ctx.infer.Ret(1, fn)
@@ -1466,6 +1573,11 @@ func compileStarExpr(ctx *blockCtx, v *ast.StarExpr) func() {
 	x := ctx.infer.Get(-1)
 	switch vx := x.(type) {
 	case *nonValue:
+		switch t := vx.v.(type) {
+		case reflect.Type:
+			ctx.infer.Ret(1, &nonValue{reflect.PtrTo(t)})
+			return nil
+		}
 	case *goValue:
 		if vx.Kind() == reflect.Ptr {
 			ctx.infer.Ret(1, &goValue{vx.t.Elem()})

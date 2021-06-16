@@ -493,6 +493,25 @@ func TestTypeCast(t *testing.T) {
 	`).Equal([]byte("hello"))
 }
 
+func TestPkgTypeConv(t *testing.T) {
+	cltest.Expect(t, `
+	import "sort"
+	ar := [1,5,3,2]
+	sort.IntSlice(ar).Sort()
+	println(ar)
+	`, "[1 2 3 5]\n")
+}
+
+func TestRuneType(t *testing.T) {
+	cltest.Expect(t, `
+	a := 'a'
+	printf("%T\n",a)
+	`, "int32\n")
+	cltest.Expect(t, `
+	printf("%T\n",'a')
+	`, "int32\n")
+}
+
 func TestAppendErr(t *testing.T) {
 	cltest.Expect(t, `
 		append()
@@ -639,17 +658,32 @@ func TestSlice(t *testing.T) {
 		`,
 		"x: [1 0 3.4 5]\n",
 	)
+	cltest.Expect(t, `
+		x := []float64{1:1,3:3,4}
+		println("x:", x)
+		y := []float64{3:3,4,1:1}
+		println("y:", x)
+		`,
+		"x: [0 1 0 3 4]\ny: [0 1 0 3 4]\n",
+	)
 }
 
 func TestArray(t *testing.T) {
 	cltest.Expect(t, `
 		x := [4]float64{1, 2.3, 3.6}
 		println("x:", x)
-
 		y := [...]float64{1, 2.3, 3.6}
 		println("y:", y)
 		`,
-		"x: [2.3 3.6 0 0]\ny: [1 2.3 3.6]\n",
+		"x: [1 2.3 3.6 0]\ny: [1 2.3 3.6]\n",
+	)
+	cltest.Expect(t, `
+		x := [5]float64{1:1,3:3,4}
+		println("x:", x)
+		y := [5]float64{3:3,4,1:1}
+		println("y:", x)
+		`,
+		"x: [0 1 0 3 4]\ny: [0 1 0 3 4]\n",
 	)
 	cltest.Expect(t, `
 		x := [...]float64{1, 3: 3.4, 5}
@@ -1850,6 +1884,132 @@ var testStarExprClauses = map[string]testData{
 					println(a1, *c.b, *c.m["foo"], *c.s[0])
 	
 						`, "3 3 8 11\n", false},
+	"star expr ptr conv": {`
+					a := 10
+					println(*(*int)(&a))
+					`, "10\n", false},
+	"star expr ptr set": {`
+					a := 10
+					p := &a
+					*p = 20
+					println(a)
+					*(p) = 30
+					println(a)
+					*(&a) = 40
+					println(a)
+	`, "20\n30\n40\n", false},
+	"star expr call set": {`
+					func test(v *int) *int {
+						return v
+					}
+					v := 100
+					*test(&v) = 200
+					println(v)
+					*((*int)(&v)) = 300
+					println(v)
+	`, "200\n300\n", false},
+	"star expr multi indirect": {`
+					v := 10
+					p := &v
+					p1 := &p
+					p2 := &p1
+					***p2 = 30
+					println(v)
+	`, "30\n", false},
+	"star expr multi indirect call": {`
+					func test(v **int) **int {
+						return v
+					}
+					v := 10
+					p := &v
+					p1 := &p
+					**test(p1) = 30
+					println(v)
+	`, "30\n", false},
+	"star selection expr multi indirect": {`
+					type Point struct {
+						X **int
+						Y int
+					}
+					v := 10
+					p1 := &v
+					p2 := &p1
+					pt := &Point{}
+					pt.X = p2
+					**pt.X = 30
+					println(**pt.X)
+	`, "30\n", false},
+	"star stack var multi indirect": {`
+					func test(v ***int) {
+						***v = 30
+						println(***v)
+					}
+					v := 10
+					p1 := &v
+					p2 := &p1
+					test(&p2)
+					println(v)
+	`, "30\n30\n", false},
+	"star slice multi indirect": {`
+					var v1, v2 int
+					p1 := &v1
+					p2 := &v2
+					p3 := &p1
+					p4 := &p2
+					v := []***int{&p3, &p4}
+					index := 1
+					***v[0] = 30
+					***v[index] = 40
+					println(***v[0])
+					println(***v[index])
+	`, "30\n40\n", false},
+	"star array multi indirect": {`
+					var v1, v2 int
+					p1 := &v1
+					p2 := &v2
+					p3 := &p1
+					p4 := &p2
+					v := [2]***int{&p3, &p4}
+					index := 1
+					***v[0] = 30
+					***v[index] = 40
+					println(***v[0])
+					println(***v[index])
+	`, "30\n40\n", false},
+	"star map multi indirect": {`
+					var v int
+					p1 := &v
+					p2 := &p1
+					m := make(map[int]***int)
+					m[0] = &p2
+					***m[0] = 30
+					println(***m[0])
+	`, "30\n", false},
+	"star inc dec multi indirect": {`
+					v := 30
+					p1 := &v
+					p2 := &p1
+					p3 := &p2
+					v++
+					**p2++
+					***p3++
+					println(v)
+					***p3--
+					println(v)
+	`, "33\n32\n", false},
+	"star big.Int inc dec multi indirect": {`
+					v := 1r
+					p := &v
+					p1 := &p
+					v++
+					println(v)
+					*p++
+					println(v)
+					**p1++
+					println(v)
+					**p1--
+					println(v)
+	`, "2\n3\n4\n3\n", false},
 }
 
 func TestStarExpr(t *testing.T) {
@@ -1927,6 +2087,56 @@ func TestRefType(t *testing.T) {
 	testScripts(t, "TestRefType", testRefTypeClauses)
 }
 
+func TestMatchType(t *testing.T) {
+	cltest.Expect(t, `
+		println(nil == nil,nil != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
+		var i interface{}
+		println(i == nil,i != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
+		var i *int
+		println(i == nil,i != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
+		var i chan int
+		println(i == nil,i != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
+		var i func()
+		println(i == nil,i != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
+		var i []int
+		println(i == nil,i != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
+		var i map[int]string
+		println(i == nil,i != nil)
+	`, "true false\n")
+	cltest.Expect(t, `
+		var v int
+		println(v == nil)
+	`, "", "invalid operator: v == nil (mismatched types int and nil)")
+	cltest.Expect(t, `
+		var v int
+		println(nil == v)
+	`, "", "invalid operator: nil == v (mismatched types nil and int)")
+	cltest.Expect(t, `
+		var a int
+		var b uint8
+		println(a == b)
+	`, "", "invalid operator: a == b (mismatched types int and uint8)")
+	cltest.Expect(t, `
+		var a int
+		switch a {
+			case 0:
+			case uint8(1):
+		}
+	`, "", "invalid case uint8(1) in switch on a (mismatched types int and uint8)")
+}
+
 func testScripts(t *testing.T, testName string, scripts map[string]testData) {
 	for name, script := range scripts {
 		t.Log("Run " + testName + "---" + name)
@@ -1949,4 +2159,162 @@ func TestTwoValueExpr(t *testing.T) {
 				println(3,v,ok)
 			}`
 	cltest.Expect(t, clause, "1 3 true\n3 0 false\n")
+}
+
+func TestConst(t *testing.T) {
+	cltest.Expect(t, `
+	const v = 100
+	a := v
+	b := int64(v)
+	println(a,b,v)
+	printf("%T %T %T\n",a,b,v)
+	`, "100 100 100\nint int64 int\n")
+	cltest.Expect(t, `
+	const (
+		v1 = 100
+		v2 = 0x64
+		v3 = uint(100)
+		v4 = 100.1
+		v5 = float32(100.1)
+		v6 = 100r
+		v7 = 'd'
+		v8 = "d"
+	)
+	println(v1,v2,v3,v4,v5,v6,v7,v8)
+	printf("%T %T %T %T %T %T %T %T\n",v1,v2,v3,v4,v5,v6,v7,v8)
+	`, "100 100 100 100.1 100.1 100 100 d\nint int uint float64 float32 *big.Int int32 string\n")
+	cltest.Expect(t, `
+	const (
+		v1 int = 100
+		v2
+		v3 float64 = 100
+		v4 = float64(100)
+	)
+	println(v1,v2,v3,v4)
+	printf("%T %T %T %T\n",v1,v2,v3,v4)
+	`, "100 100 100 100\nint int float64 float64\n")
+	cltest.Expect(t, `
+	const (
+		v1,v2,v3 = 100,200,300
+	)
+	println(v1,v2,v3)
+	`, "100 200 300\n")
+}
+
+func TestBadConst(t *testing.T) {
+	cltest.Expect(t, `
+	const x = 0
+	const x = 0
+	println(x)
+	`, "", nil)
+	cltest.Expect(t, `
+	const (
+		v1,v2 = 100
+	)
+	println(v1,v2)
+	`, "", "missing value in const declaration")
+	cltest.Expect(t, `
+	const (
+		v1,v2 = 100,200,300
+	)
+	println(v1,v2)
+	`, "", "extra expression in const declaration")
+}
+
+func TestIota(t *testing.T) {
+	cltest.Expect(t, `
+	const (
+		c0 = iota  // c0 == 0
+		c1 = iota  // c1 == 1
+		c2 = iota  // c2 == 2
+	)
+	const (
+		a = 1 << iota  // a == 1  (iota == 0)
+		b = 1 << iota  // b == 2  (iota == 1)
+		c = 3          // c == 3  (iota == 2, unused)
+		d = 1 << iota  // d == 8  (iota == 3)
+	)
+	println(c0,c1,c2)
+	println(a,b,c,d)
+	`, "0 1 2\n1 2 3 8\n")
+	cltest.Expect(t, `
+	const (
+		u         = iota * 42  // u == 0     (untyped integer constant)
+		v float64 = iota * 42  // v == 42.0  (float64 constant)
+		w         = iota * 42  // w == 84    (untyped integer constant)
+	)
+	println(u,v,w)
+	printf("%T %T %T\n",u,v,w)
+	`, "0 42 84\nint float64 int\n")
+	cltest.Expect(t, `
+	const (
+		bit0, mask0 = 1 << iota, 1<<iota - 1  // bit0 == 1, mask0 == 0  (iota == 0)
+		bit1, mask1                           // bit1 == 2, mask1 == 1  (iota == 1)
+		_, _                                  //                        (iota == 2, unused)
+		bit3, mask3                           // bit3 == 8, mask3 == 7  (iota == 3)
+	)
+	println(bit0,mask0,bit1,mask1,bit3,mask3)
+	`, "1 0 2 1 8 7\n")
+}
+
+func TestUnsafe(t *testing.T) {
+	cltest.Expect(t, `
+	import (
+		"unsafe"
+	)
+	type SliceHeader struct {
+		Data uintptr
+		Len  int
+		Cap  int
+	}
+	type StringHeader struct {
+		Data uintptr
+		Len  int
+	}
+	a := "hello"
+	b := []byte("world")
+	v := (*StringHeader)(unsafe.Pointer(&a))
+	v2 := (*SliceHeader)(unsafe.Pointer(&b))
+	v3 := (*StringHeader)(unsafe.Pointer(&b))
+	println(*(*string)(unsafe.Pointer(v)))
+	println(string(*(*[]byte)(unsafe.Pointer(v2))))
+	println(*(*string)(unsafe.Pointer(v2)))
+	println(*(*string)(unsafe.Pointer(v3)))
+	`, "hello\nworld\nworld\nworld\n")
+	cltest.Expect(t, `
+	import "unsafe"
+	type Point struct {
+		X int
+		Y int
+	}
+	pt := Point{10, 20}
+	pt2 := &Point{10, 20}
+	println(unsafe.Sizeof(pt))
+	println(unsafe.Alignof(pt))
+	println(unsafe.Offsetof(pt.Y))
+	println(unsafe.Offsetof(pt2.Y))
+	`, "16\n8\n8\n8\n")
+	cltest.Expect(t, `
+	import "unsafe"
+	ar := [unsafe.Sizeof(true)]int{}
+	println(len(ar))
+	`, "1\n")
+}
+
+func TestBadUnsafe(t *testing.T) {
+	cltest.Expect(t, `
+	import "unsafe"
+	v := unsafe.Sizeof()
+	println(v)
+	`, "", "missing argument to unsafe.Sizeof: unsafe.Sizeof()")
+	cltest.Expect(t, `
+	import "unsafe"
+	v := unsafe.Sizeof(1,2,3)
+	println(v)
+	`, "", "too many arguments to unsafe.Sizeof: unsafe.Sizeof(1,2,3)")
+	cltest.Expect(t, `
+	import "unsafe"
+	v := unsafe.Offsetof(1)
+	println(v)
+	`, "", "invalid expression unsafe.Offsetof(1)")
 }

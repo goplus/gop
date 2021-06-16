@@ -399,7 +399,11 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 			hasCaseClause = true
 			for _, caseExp := range c.List {
 				compileExpr(ctxSw, caseExp)()
-				checkCaseCompare(tag, ctx.infer.Pop(), out)
+				xcase := ctx.infer.Pop()
+				checkCaseCompare(tag, xcase, out)
+				if err := checkOpMatchType(exec.OpEQ, tag, xcase); err != nil {
+					log.Panicf("invalid case %v in switch on %v (%v)", ctx.code(caseExp), ctx.code(v.Tag), err)
+				}
 			}
 			next := ctx.NewLabel("")
 			out.CaseNE(next, len(c.List))
@@ -609,6 +613,7 @@ func compileSendStmt(ctx *blockCtx, expr *ast.SendStmt) {
 
 func compileIncDecStmt(ctx *blockCtx, expr *ast.IncDecStmt) {
 	compileExpr(ctx, expr.X)()
+	ctx.indirect = 0
 	compileExprLHS(ctx, expr.X, expr.Tok)
 }
 
@@ -647,6 +652,7 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 	}
 	count := len(expr.Lhs)
 	ctx.underscore = 0
+	ctx.indirect = 0
 	for i := len(expr.Lhs) - 1; i >= 0; i-- {
 		compileExprLHS(ctx, expr.Lhs[i], expr.Tok)
 	}
