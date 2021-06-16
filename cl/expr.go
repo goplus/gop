@@ -153,8 +153,10 @@ func compileIdentLHS(ctx *blockCtx, name string, mode compileMode) {
 			} else {
 				ctx.out.Store(addr.(*stackVar).index)
 			}
+		} else if op, ok := addrops[mode]; ok {
+			ctx.out.Addr(addr.(*stackVar).index).AddrOp(kindOf(addr.(*stackVar).getType()), op)
 		} else {
-			panic("compileIdentLHS: todo")
+			log.Panicln("compileIdentLHS failed: unknown op -", mode)
 		}
 	}
 }
