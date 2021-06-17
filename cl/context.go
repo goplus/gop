@@ -36,6 +36,7 @@ type pkgCtx struct {
 	builtin exec.GoPackage
 	out     exec.Builder
 	usedfns []*funcDecl
+	inits   []*funcDecl
 	types   map[reflect.Type]*typeDecl
 	pkg     *ast.Package
 	fset    *token.FileSet
@@ -182,7 +183,6 @@ type blockCtx struct {
 	file            *fileCtx
 	parent          *blockCtx
 	syms            map[string]iSymbol
-	inits           []*funcDecl
 	noExecCtx       bool
 	takeAddr        bool
 	indirect        bool
