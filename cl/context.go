@@ -182,6 +182,7 @@ type blockCtx struct {
 	file            *fileCtx
 	parent          *blockCtx
 	syms            map[string]iSymbol
+	inits           []*funcDecl
 	noExecCtx       bool
 	takeAddr        bool
 	indirect        bool
@@ -388,6 +389,10 @@ func (p *blockCtx) insertVar(name string, typ reflect.Type, inferOnly ...bool) *
 }
 
 func (p *blockCtx) insertFunc(name string, fun *funcDecl) {
+	if name == "init" {
+		p.inits = append(p.inits, fun)
+		return
+	}
 	if p.exists(name) {
 		log.Panicln("insertFunc failed: symbol exists -", name)
 	}

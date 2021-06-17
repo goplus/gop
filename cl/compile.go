@@ -184,6 +184,10 @@ func NewPackageEx(out exec.Builder, pkg *ast.Package, fset *token.FileSet, act P
 		if pkg.Name != "main" {
 			return nil, ErrNotAMainPackage
 		}
+		for i := 0; i < len(ctx.inits); i++ {
+			out.CallFunc(ctx.inits[i].Get(), 0)
+			ctx.use(ctx.inits[len(ctx.inits)-1-i])
+		}
 		entry, err := ctx.findFunc("main")
 		if err != nil {
 			if err == ErrNotFound {
@@ -415,8 +419,6 @@ func loadFunc(ctx *blockCtx, d *ast.FuncDecl, isUnnamed bool) {
 		funCtx.noExecCtx = isUnnamed
 		funCtx.funcCtx = newFuncCtx(nil)
 		ctx.insertMethod(recv, name, d, funCtx)
-	} else if name == "init" {
-		log.Panicln("loadFunc TODO: init")
 	} else {
 		funCtx := newExecBlockCtx(ctx)
 		funCtx.noExecCtx = isUnnamed
