@@ -169,6 +169,10 @@ func NewPackageEx(out exec.Builder, pkg *ast.Package, fset *token.FileSet, act P
 	for _, f := range pkg.Files {
 		loadFile(ctx, f, imports)
 	}
+	for i := 0; i < len(ctx.inits); i++ {
+		out.CallFunc(ctx.inits[i].Get(), 0)
+		ctx.use(ctx.inits[len(ctx.inits)-1-i])
+	}
 	switch act {
 	case PkgActClAll:
 		for _, sym := range ctx.syms {
@@ -183,10 +187,6 @@ func NewPackageEx(out exec.Builder, pkg *ast.Package, fset *token.FileSet, act P
 	case PkgActClMain:
 		if pkg.Name != "main" {
 			return nil, ErrNotAMainPackage
-		}
-		for i := 0; i < len(ctx.inits); i++ {
-			out.CallFunc(ctx.inits[i].Get(), 0)
-			ctx.use(ctx.inits[len(ctx.inits)-1-i])
 		}
 		entry, err := ctx.findFunc("main")
 		if err != nil {

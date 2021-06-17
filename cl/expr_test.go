@@ -2155,3 +2155,15 @@ func TestBadUnsafe(t *testing.T) {
 	println(v)
 	`, "", "invalid expression unsafe.Offsetof(1)")
 }
+
+func TestInit(t *testing.T) {
+	cltest.Expect(t, `
+	func init() {
+		println("init1")
+	}
+	func init() {
+		println("init2")
+	}
+	println("main")
+	`, "init1\ninit2\nmain\n")
+}
