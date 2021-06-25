@@ -216,4 +216,53 @@ func readSource(src interface{}) ([]byte, error) {
 	return nil, errInvalidSource
 }
 
+func ParseExpr(x string) (ast.Expr, error) {
+	return ParseExprFrom(token.NewFileSet(), []byte(x), 0)
+}
+
+func ParseExprFrom(fset *token.FileSet, src interface{}, mode Mode) (expr ast.Expr, err error) {
+	if fset == nil {
+		panic("parser.ParseExprFrom: no token.FileSet provided (fset == nil)")
+	}
+
+	// get source
+	text, err := readSource(src)
+	if err != nil {
+		return nil, err
+	}
+
+	var p parser
+	defer func() {
+		if e := recover(); e != nil {
+			// resume same panic if it's not a bailout
+			if _, ok := e.(bailout); !ok {
+				panic(e)
+			}
+		}
+		p.errors.Sort()
+		err = p.errors.Err()
+	}()
+
+	// parse expr
+	p.init(fset, "", text, mode)
+	// Set up pkg-level scopes to avoid nil-pointer errors.
+	// This is not needed for a correct expression x as the
+	// parser will be ok with a nil topScope, but be cautious
+	// in case of an erroneous x.
+	p.openScope()
+	p.pkgScope = p.topScope
+	expr = p.parseRHSOrType()
+	p.closeScope()
+	assert(p.topScope == nil, "unbalanced scopes")
+
+	// If a semicolon was inserted, consume it;
+	// report an error if there's more tokens.
+	if p.tok == token.SEMICOLON && p.lit == "\n" {
+		p.next()
+	}
+	p.expect(token.EOF)
+
+	return
+}
+
 // -----------------------------------------------------------------------------
