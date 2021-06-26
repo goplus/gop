@@ -18,6 +18,7 @@ package cl
 
 import (
 	"reflect"
+	"strconv"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/exec.spec"
@@ -85,6 +86,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileDeclStmt(ctx, v)
 	case *ast.SendStmt:
 		compileSendStmt(ctx, v)
+	case *ast.SelectStmt:
+		compileSelectStmt(ctx, v)
 	case *ast.EmptyStmt:
 		// do nothing
 	default:
@@ -657,6 +660,60 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 	if ctx.underscore == count && expr.Tok == token.DEFINE {
 		log.Panicln("no new variables on left side of :=")
 	}
+}
+
+func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
+	stmt := &ast.SwitchStmt{Body: &ast.BlockStmt{}}
+	var args []ast.Expr
+	var index int
+	for _, item := range v.Body.List {
+		c, ok := item.(*ast.CommClause)
+		if !ok {
+			log.Panicln("compile SelectStmt failed: case clause expected.")
+		}
+		stmt.Body.List = append(stmt.Body.List,
+			&ast.CaseClause{
+				List: []ast.Expr{&ast.BasicLit{
+					Kind:  token.INT,
+					Value: strconv.Itoa(index),
+				}},
+				Body: c.Body,
+			},
+		)
+		index++
+		switch expr := c.Comm.(type) {
+		case *ast.ExprStmt:
+			switch x := expr.X.(type) {
+			case *ast.UnaryExpr:
+				args = append(args,
+					&ast.BasicLit{Kind: token.INT, Value: "2"},
+					x.X,
+					ast.NewIdent("nil"),
+				)
+			}
+		case nil:
+			args = append(args,
+				&ast.BasicLit{Kind: token.INT, Value: "3"},
+				ast.NewIdent("nil"),
+				ast.NewIdent("nil"),
+			)
+		}
+	}
+	stmt.Init = &ast.AssignStmt{
+		Lhs: []ast.Expr{
+			ast.NewIdent("_gop_chosen"),
+			ast.NewIdent("_gop_recv"),
+		},
+		Tok: token.DEFINE,
+		Rhs: []ast.Expr{
+			&ast.CallExpr{
+				Fun:  ast.NewIdent("$select"),
+				Args: args,
+			},
+		},
+	}
+	stmt.Tag = &ast.Ident{Name: "_gop_chosen"}
+	compileSwitchStmt(ctx, stmt)
 }
 
 // -----------------------------------------------------------------------------
