@@ -30,7 +30,9 @@ import (
 // -----------------------------------------------------------------------------
 
 func compileBlockStmtWith(ctx *blockCtx, body *ast.BlockStmt) {
+	ctx.out.DefineBlock()
 	compileBodyWith(ctx, body.List)
+	ctx.out.EndBlock()
 }
 
 func compileBlockStmtWithout(ctx *blockCtx, body *ast.BlockStmt) {
@@ -40,18 +42,14 @@ func compileBlockStmtWithout(ctx *blockCtx, body *ast.BlockStmt) {
 }
 
 func compileNewBlock(ctx *blockCtx, block *ast.BlockStmt) {
-	ctx.out.DefineBlock()
 	compileBlockStmtWith(ctx, block)
-	ctx.out.EndBlock()
 }
 
 func compileBodyWith(ctx *blockCtx, body []ast.Stmt) {
 	ctxWith := newNormBlockCtx(ctx)
-	ctx.out.DefineBlock()
 	for _, stmt := range body {
 		compileStmt(ctxWith, stmt)
 	}
-	ctx.out.EndBlock()
 }
 
 func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
@@ -761,7 +759,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	}
 	if defaultBody != nil {
 		checkFinalFallthrough(defaultBody)
-		compileBodyWith(ctxSw, defaultBody)
+		compileBlockStmtWith(ctxSw, &ast.BlockStmt{List: defaultBody})
 		if hasCaseClause {
 			out.Jmp(done)
 		}
@@ -790,11 +788,11 @@ func compileCaseClause(c *ast.CaseClause, ctxSw *blockCtx, done exec.Label, next
 		fallNext = ok && bs.Tok == token.FALLTHROUGH
 	}
 	if fallNext {
-		compileBodyWith(ctxSw, c.Body[0:len(c.Body)-1])
+		compileBlockStmtWith(ctxSw, &ast.BlockStmt{List: c.Body[0 : len(c.Body)-1]})
 		withoutCheck = ctxSw.NewLabel("")
 		ctxSw.out.Jmp(withoutCheck)
 	} else {
-		compileBodyWith(ctxSw, c.Body)
+		compileBlockStmtWith(ctxSw, &ast.BlockStmt{List: c.Body})
 		ctxSw.out.Jmp(done)
 	}
 	ctxSw.out.Label(next)
