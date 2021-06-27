@@ -21,6 +21,7 @@ import (
 	"strconv"
 
 	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/ast/astutil"
 	"github.com/goplus/gop/exec.spec"
 	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/log"
@@ -88,6 +89,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileSendStmt(ctx, v)
 	case *ast.TypeSwitchStmt:
 		compileTypeSwitchStmt(ctx, v)
+	case *ast.SelectStmt:
+		compileSelectStmt(ctx, v)
 	case *ast.EmptyStmt:
 		// do nothing
 	default:
@@ -963,6 +966,90 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 	if ctx.underscore == count && expr.Tok == token.DEFINE {
 		log.Panicln("no new variables on left side of :=")
 	}
+}
+
+func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
+	stmt := &ast.SwitchStmt{Body: &ast.BlockStmt{}}
+	var args []ast.Expr
+	var index int
+	for _, item := range v.Body.List {
+		c, ok := item.(*ast.CommClause)
+		if !ok {
+			log.Panicln("compile SelectStmt failed: case clause expected.")
+		}
+		body := c.Body
+		switch expr := c.Comm.(type) {
+		case *ast.AssignStmt:
+			x, ok := expr.Rhs[0].(*ast.UnaryExpr)
+			if !ok {
+				log.Panicln("select case must be receive, send or assign recv")
+			}
+			args = append(args,
+				&ast.BasicLit{Kind: token.INT, Value: "2"},
+				x.X,
+				ast.NewIdent("nil"),
+			)
+			compileUnaryExpr(ctx, x)
+			c := ctx.infer.Get(-1)
+			ctx.infer.PopN(1)
+			set := &ast.AssignStmt{
+				TokPos: expr.TokPos,
+				Lhs:    expr.Lhs,
+				Tok:    expr.Tok,
+				Rhs: []ast.Expr{&ast.TypeAssertExpr{
+					X:    ast.NewIdent("_gop_recv"),
+					Type: astutil.Type(c.(iValue).Type()),
+				}},
+			}
+			body = append([]ast.Stmt{set}, body...)
+		case *ast.ExprStmt:
+			x, ok := expr.X.(*ast.UnaryExpr)
+			if !ok {
+				log.Panicln("select case must be receive, send or assign recv")
+			}
+			args = append(args,
+				&ast.BasicLit{Kind: token.INT, Value: "2"},
+				x.X,
+				ast.NewIdent("nil"),
+			)
+		case nil:
+			args = append(args,
+				&ast.BasicLit{Kind: token.INT, Value: "3"},
+				ast.NewIdent("nil"),
+				ast.NewIdent("nil"),
+			)
+		}
+		stmt.Body.List = append(stmt.Body.List,
+			&ast.CaseClause{
+				Case:  c.Case,
+				Colon: c.Colon,
+				List: []ast.Expr{&ast.BasicLit{
+					Kind:  token.INT,
+					Value: strconv.Itoa(index),
+				}},
+				Body: body,
+			},
+		)
+		index++
+	}
+	stmt.Init = &ast.AssignStmt{
+		Lhs: []ast.Expr{
+			&ast.Ident{v.Select, "_gop_chosen", nil},
+			ast.NewIdent("_gop_recv"),
+		},
+		Tok:    token.DEFINE,
+		TokPos: v.Select,
+		Rhs: []ast.Expr{
+			&ast.CallExpr{
+				Fun:  ast.NewIdent("$select"),
+				Args: args,
+			},
+		},
+	}
+	stmt.Switch = v.Select
+	stmt.Tag = &ast.Ident{Name: "_gop_chosen"}
+
+	compileSwitchStmt(ctx, stmt)
 }
 
 // -----------------------------------------------------------------------------

@@ -101,6 +101,28 @@ func QValue(_ int, p *gop.Context) {
 	p.PopN(2)
 }
 
+func _gop_Select(v ...interface{}) (chosen int, recv interface{}) {
+	var cases []reflect.SelectCase
+	for i := 0; i < len(v); i += 3 {
+		cases = append(cases, reflect.SelectCase{
+			Dir:  reflect.SelectDir(v[i].(int)),
+			Chan: reflect.ValueOf(v[i+1]),
+			Send: reflect.ValueOf(v[i+2]),
+		})
+	}
+	if c, r, ok := reflect.Select(cases); ok {
+		chosen = c
+		recv = r.Interface()
+	}
+	return
+}
+
+func QexecSelect(arity int, p *gop.Context) {
+	args := p.GetArgs(arity)
+	chosen, recv := _gop_Select(args...)
+	p.Ret(2, chosen, recv)
+}
+
 // FuncGoInfo returns Go package and function name of a Go+ builtin function.
 func FuncGoInfo(f string) ([2]string, bool) {
 	fi, ok := builtinFnvs[f]
@@ -145,6 +167,7 @@ func init() {
 		I.Funcv("printf", fmt.Printf, QexecPrintf),
 		I.Funcv("println", fmt.Println, QexecPrintln),
 		I.Funcv("fprintln", fmt.Fprintln, QexecFprintln),
+		I.Funcv("$select", _gop_Select, QexecSelect),
 	)
 	I.RegisterConsts(
 		I.Const("true", reflect.Bool, true),
