@@ -671,26 +671,50 @@ func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
 		if !ok {
 			log.Panicln("compile SelectStmt failed: case clause expected.")
 		}
-		stmt.Body.List = append(stmt.Body.List,
-			&ast.CaseClause{
-				List: []ast.Expr{&ast.BasicLit{
-					Kind:  token.INT,
-					Value: strconv.Itoa(index),
-				}},
-				Body: c.Body,
-			},
-		)
-		index++
+		body := c.Body
 		switch expr := c.Comm.(type) {
-		case *ast.ExprStmt:
-			switch x := expr.X.(type) {
-			case *ast.UnaryExpr:
-				args = append(args,
-					&ast.BasicLit{Kind: token.INT, Value: "2"},
-					x.X,
-					ast.NewIdent("nil"),
-				)
+		case *ast.AssignStmt:
+			x, ok := expr.Rhs[0].(*ast.UnaryExpr)
+			if !ok {
+				log.Panicln("select case must be receive, send or assign recv")
 			}
+			args = append(args,
+				&ast.BasicLit{Kind: token.INT, Value: "2"},
+				x.X,
+				ast.NewIdent("nil"),
+			)
+			compileUnaryExpr(ctx, x)
+			//			c := ctx.infer.Get(-1)
+			ctx.infer.PopN(1)
+			set := &ast.AssignStmt{
+				TokPos: expr.TokPos,
+				Lhs:    expr.Lhs,
+				Tok:    expr.Tok,
+				Rhs:    []ast.Expr{ast.NewIdent("_gop_recv")},
+			}
+			body = append([]ast.Stmt{set}, body...)
+			// if expr.Tok == token.DEFINE {
+			// 	ident, ok := expr.Lhs[0].(*ast.Ident)
+			// 	if !ok {
+			// 		log.Panicf("non-name %v on left side of :=", ctx.code(expr.Lhs[0]))
+			// 	}
+			// 	spec := &ast.ValueSpec{
+			// 		Names:  []*ast.Ident{ident},
+			// 		Type:   astutil.Type(c.(iValue).Type()),
+			// 		Values: []ast.Expr{ast.NewIdent("_gop_recv")},
+			// 	}
+			// 	body = append([]ast.Stmt{&ast.DeclStmt{Decl: &ast.GenDecl{Tok: token.VAR, Specs: []ast.Spec{spec}}}}, body...)
+			// }
+		case *ast.ExprStmt:
+			x, ok := expr.X.(*ast.UnaryExpr)
+			if !ok {
+				log.Panicln("select case must be receive, send or assign recv")
+			}
+			args = append(args,
+				&ast.BasicLit{Kind: token.INT, Value: "2"},
+				x.X,
+				ast.NewIdent("nil"),
+			)
 		case nil:
 			args = append(args,
 				&ast.BasicLit{Kind: token.INT, Value: "3"},
@@ -698,13 +722,26 @@ func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
 				ast.NewIdent("nil"),
 			)
 		}
+		stmt.Body.List = append(stmt.Body.List,
+			&ast.CaseClause{
+				Case:  c.Case,
+				Colon: c.Colon,
+				List: []ast.Expr{&ast.BasicLit{
+					Kind:  token.INT,
+					Value: strconv.Itoa(index),
+				}},
+				Body: body,
+			},
+		)
+		index++
 	}
 	stmt.Init = &ast.AssignStmt{
 		Lhs: []ast.Expr{
-			ast.NewIdent("_gop_chosen"),
+			&ast.Ident{v.Select, "_gop_chosen", nil},
 			ast.NewIdent("_gop_recv"),
 		},
-		Tok: token.DEFINE,
+		Tok:    token.DEFINE,
+		TokPos: v.Select,
 		Rhs: []ast.Expr{
 			&ast.CallExpr{
 				Fun:  ast.NewIdent("$select"),
@@ -712,7 +749,9 @@ func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
 			},
 		},
 	}
+	stmt.Switch = v.Select
 	stmt.Tag = &ast.Ident{Name: "_gop_chosen"}
+
 	compileSwitchStmt(ctx, stmt)
 }
 

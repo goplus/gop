@@ -106,7 +106,7 @@ func (ctx *varScope) setValue(idx uint32, v reflect.Value) {
 
 func setValue(x reflect.Value, v interface{}) {
 	if v != nil {
-		x.Set(reflect.ValueOf(v))
+		reflectx.SetValue(x, reflect.ValueOf(v))
 		return
 	}
 	x.Set(reflect.Zero(x.Type()))
