@@ -47,9 +47,11 @@ func compileNewBlock(ctx *blockCtx, block *ast.BlockStmt) {
 
 func compileBodyWith(ctx *blockCtx, body []ast.Stmt) {
 	ctxWith := newNormBlockCtx(ctx)
+	ctx.out.DefineBlock()
 	for _, stmt := range body {
 		compileStmt(ctxWith, stmt)
 	}
+	ctx.out.EndBlock()
 }
 
 func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
