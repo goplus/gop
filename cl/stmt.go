@@ -1039,7 +1039,11 @@ func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
 					Type: astutil.Type(ix.Type().Elem()),
 				}},
 			}
-			body = append([]ast.Stmt{set}, body...)
+			body = []ast.Stmt{
+				&ast.BlockStmt{
+					List: append([]ast.Stmt{set}, body...),
+				},
+			}
 		case *ast.ExprStmt:
 			x, ok := expr.X.(*ast.UnaryExpr)
 			if !ok || x.Op != token.ARROW {
