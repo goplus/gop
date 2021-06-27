@@ -110,8 +110,9 @@ func _gop_Select(v ...interface{}) (chosen int, recv interface{}) {
 			Send: reflect.ValueOf(v[i+2]),
 		})
 	}
-	if c, r, ok := reflect.Select(cases); ok {
-		chosen = c
+	c, r, recvOK := reflect.Select(cases)
+	chosen = c
+	if recvOK {
 		recv = r.Interface()
 	}
 	return
