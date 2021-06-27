@@ -979,6 +979,42 @@ func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
 		}
 		body := c.Body
 		switch expr := c.Comm.(type) {
+		case *ast.SendStmt:
+			compileExpr(ctx, expr.Chan)
+			compileExpr(ctx, expr.Value)
+			x := ctx.infer.Get(-2).(iValue)
+			y := ctx.infer.Get(-1).(iValue)
+			ctx.infer.PopN(2)
+			// Chan <- Send
+			// <- Chan
+			if x.Kind() == reflect.Chan {
+				if y.Kind() == reflect.Chan {
+					log.Panicf("cannot use %v (type %v) as type %v in send", ctx.code(expr.Value), y.Type(), x.Type().Elem())
+				}
+				args = append(args,
+					&ast.BasicLit{Kind: token.INT, Value: "1"},
+					expr.Chan,
+					expr.Value,
+				)
+			} else if y.Kind() == reflect.Chan {
+				args = append(args,
+					&ast.BasicLit{Kind: token.INT, Value: "2"},
+					expr.Value,
+					ast.NewIdent("nil"),
+				)
+				set := &ast.AssignStmt{
+					TokPos: expr.Arrow,
+					Lhs:    []ast.Expr{expr.Chan},
+					Tok:    token.ASSIGN,
+					Rhs: []ast.Expr{&ast.TypeAssertExpr{
+						X:    ast.NewIdent("_gop_recv"),
+						Type: astutil.Type(y.Type().Elem()),
+					}},
+				}
+				body = append([]ast.Stmt{set}, body...)
+			} else {
+				log.Panicf("invalid operation: %v (send to non-chan type %v)", ctx.code(expr), x.Type())
+			}
 		case *ast.AssignStmt:
 			x, ok := expr.Rhs[0].(*ast.UnaryExpr)
 			if !ok {
@@ -989,23 +1025,30 @@ func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
 				x.X,
 				ast.NewIdent("nil"),
 			)
-			compileUnaryExpr(ctx, x)
-			c := ctx.infer.Get(-1)
-			ctx.infer.PopN(1)
+			compileExpr(ctx, x.X)
+			ix := ctx.infer.Pop().(iValue)
+			if ix.Type().Kind() != reflect.Chan {
+				log.Panicf("invalid operation: %v (receive from non-chan type %v)", ctx.code(x), ix.Type())
+			}
 			set := &ast.AssignStmt{
 				TokPos: expr.TokPos,
 				Lhs:    expr.Lhs,
 				Tok:    expr.Tok,
 				Rhs: []ast.Expr{&ast.TypeAssertExpr{
 					X:    ast.NewIdent("_gop_recv"),
-					Type: astutil.Type(c.(iValue).Type()),
+					Type: astutil.Type(ix.Type().Elem()),
 				}},
 			}
 			body = append([]ast.Stmt{set}, body...)
 		case *ast.ExprStmt:
 			x, ok := expr.X.(*ast.UnaryExpr)
-			if !ok {
+			if !ok || x.Op != token.ARROW {
 				log.Panicln("select case must be receive, send or assign recv")
+			}
+			compileExpr(ctx, x.X)
+			ix := ctx.infer.Pop().(iValue)
+			if ix.Type().Kind() != reflect.Chan {
+				log.Panicf("invalid operation: %v (receive from non-chan type %v)", ctx.code(expr), ix.Type())
 			}
 			args = append(args,
 				&ast.BasicLit{Kind: token.INT, Value: "2"},
