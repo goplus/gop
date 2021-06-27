@@ -101,7 +101,7 @@ func QValue(_ int, p *gop.Context) {
 	p.PopN(2)
 }
 
-func _gop_Select(v ...interface{}) (chosen int, recv interface{}) {
+func _gop_Select(v ...interface{}) (int, interface{}) {
 	var cases []reflect.SelectCase
 	for i := 0; i < len(v); i += 3 {
 		cases = append(cases, reflect.SelectCase{
@@ -110,12 +110,11 @@ func _gop_Select(v ...interface{}) (chosen int, recv interface{}) {
 			Send: reflect.ValueOf(v[i+2]),
 		})
 	}
-	c, r, recvOK := reflect.Select(cases)
-	chosen = c
+	chosen, recv, recvOK := reflect.Select(cases)
 	if recvOK {
-		recv = r.Interface()
+		return chosen, recv.Interface()
 	}
-	return
+	return chosen, nil
 }
 
 func QexecSelect(arity int, p *gop.Context) {
