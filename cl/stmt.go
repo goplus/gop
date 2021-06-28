@@ -972,6 +972,7 @@ func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
 	stmt := &ast.SwitchStmt{Body: &ast.BlockStmt{}}
 	var args []ast.Expr
 	var index int
+	var recvUsed bool
 	for _, item := range v.Body.List {
 		c, ok := item.(*ast.CommClause)
 		if !ok {
@@ -1012,6 +1013,7 @@ func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
 					}},
 				}
 				body = append([]ast.Stmt{set}, body...)
+				recvUsed = true
 			} else {
 				log.Panicf("invalid operation: %v (send to non-chan type %v)", ctx.code(expr), x.Type())
 			}
@@ -1040,6 +1042,7 @@ func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
 				}},
 			}
 			body = append([]ast.Stmt{set}, body...)
+			recvUsed = true
 		case *ast.ExprStmt:
 			x, ok := expr.X.(*ast.UnaryExpr)
 			if !ok || x.Op != token.ARROW {
@@ -1075,10 +1078,16 @@ func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
 		)
 		index++
 	}
+	var recvExpr ast.Expr
+	if recvUsed {
+		recvExpr = ast.NewIdent("_gop_recv")
+	} else {
+		recvExpr = ast.NewIdent("_")
+	}
 	stmt.Init = &ast.AssignStmt{
 		Lhs: []ast.Expr{
 			&ast.Ident{v.Select, "_gop_chosen", nil},
-			ast.NewIdent("_gop_recv"),
+			recvExpr,
 		},
 		Tok:    token.DEFINE,
 		TokPos: v.Select,
