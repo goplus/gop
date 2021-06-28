@@ -2804,3 +2804,16 @@ func TestLoadType(t *testing.T) {
 	t.m[1].Test2()
 	`, "test1\ntest2\ntest1\ntest2\ntest1\ntest2\n")
 }
+
+func TestSelect(t *testing.T) {
+	cltest.Expect(t, `
+	c := make(chan int, 1)
+	c <- 42
+	select {
+	case <-c:
+		println("recv")
+	default:
+		println("default")
+	}
+	`, "recv\n")
+}
