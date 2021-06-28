@@ -2816,4 +2816,31 @@ func TestSelect(t *testing.T) {
 		println("default")
 	}
 	`, "recv\n")
+	cltest.Expect(t, `
+	c := make(chan int, 1)
+	c <- 42
+	select {
+	case n := <-c:
+		println("recv",n)
+	default:
+		println("default")
+	}
+	`, "recv 42\n")
+	cltest.Expect(t, `
+	c := make(chan int, 1)
+	select {
+	case c <- 42:
+		println("recv",<-c)
+	default:
+		println("default")
+	}
+	`, "recv 42\n")
+	cltest.Expect(t, `
+	c := make(chan int, 1)
+	c <- 42
+	select {
+	default:
+		println("default")
+	}
+	`, "default\n")
 }
