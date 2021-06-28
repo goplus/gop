@@ -467,8 +467,8 @@ func (p *Builder) Select(nexpr int) *Builder {
 		case 1:
 			stmt.Body.List = append(stmt.Body.List, &ast.CommClause{
 				Comm: &ast.SendStmt{
-					Chan:  args[1],
-					Value: args[2],
+					Chan:  args[i+1],
+					Value: args[i+2],
 				},
 				Body: []ast.Stmt{
 					&ast.ReturnStmt{
@@ -487,7 +487,7 @@ func (p *Builder) Select(nexpr int) *Builder {
 					Rhs: []ast.Expr{
 						&ast.UnaryExpr{
 							Op: token.ARROW,
-							X:  args[1],
+							X:  args[i+1],
 						},
 					},
 				},
