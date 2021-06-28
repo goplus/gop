@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/goplus/gop/exec.spec"
+	"github.com/goplus/gop/exec/golang/internal/go/printer"
 	"github.com/goplus/gop/lib/builtin"
 	"github.com/qiniu/x/log"
 )
@@ -418,6 +419,9 @@ func (p *Builder) CallGoFunc(fun exec.GoFuncAddr, nexpr int) *Builder {
 func (p *Builder) CallGoFuncv(fun exec.GoFuncvAddr, nexpr, arity int) *Builder {
 	gfi := defaultImpl.GetGoFuncvInfo(fun)
 	pkgPath, name := gfi.Pkg.PkgPath(), gfi.Name
+	if name == "$select" {
+		return p.Select(nexpr)
+	}
 	if pkgPath == "" {
 		if alias, ok := builtin.FuncGoInfo(name); ok {
 			pkgPath, name = alias[0], alias[1]
@@ -426,6 +430,109 @@ func (p *Builder) CallGoFuncv(fun exec.GoFuncvAddr, nexpr, arity int) *Builder {
 	fn := p.GoSymIdent(pkgPath, name)
 	p.rhs.Push(fn)
 	return p.Call(nexpr, arity == -1)
+}
+
+func extractInt(expr ast.Expr) (int, bool) {
+	r, ok := expr.(*printer.ReservedExpr)
+	if !ok {
+		return 0, false
+	}
+	b, ok := r.Expr.(*ast.BasicLit)
+	if !ok {
+		return 0, false
+	}
+	if b.Kind != token.INT {
+		return 0, false
+	}
+	n, err := strconv.Atoi(b.Value)
+	if err != nil {
+		return 0, false
+	}
+	return n, true
+}
+
+func (p *Builder) Select(nexpr int) *Builder {
+	var args []ast.Expr
+	for _, item := range p.rhs.GetArgs(nexpr) {
+		args = append(args, item.(ast.Expr))
+	}
+	p.rhs.PopN(nexpr)
+	stmt := &ast.SelectStmt{Body: &ast.BlockStmt{}}
+	for i := 0; i < len(args); i += 3 {
+		dir, ok := extractInt(args[i])
+		if !ok {
+			log.Panicf("parser select dir error: %v", args[i])
+		}
+		switch dir {
+		case 1:
+			stmt.Body.List = append(stmt.Body.List, &ast.CommClause{
+				Comm: &ast.SendStmt{
+					Chan:  args[1],
+					Value: args[2],
+				},
+				Body: []ast.Stmt{
+					&ast.ReturnStmt{
+						Results: []ast.Expr{
+							&ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(i / 3)},
+							ast.NewIdent("nil"),
+						},
+					},
+				},
+			})
+		case 2:
+			stmt.Body.List = append(stmt.Body.List, &ast.CommClause{
+				Comm: &ast.AssignStmt{
+					Lhs: []ast.Expr{ast.NewIdent("v")},
+					Tok: token.DEFINE,
+					Rhs: []ast.Expr{
+						&ast.UnaryExpr{
+							Op: token.ARROW,
+							X:  args[1],
+						},
+					},
+				},
+				Body: []ast.Stmt{
+					&ast.ReturnStmt{
+						Results: []ast.Expr{
+							&ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(i / 3)},
+							ast.NewIdent("v"),
+						},
+					},
+				},
+			})
+		case 3:
+			stmt.Body.List = append(stmt.Body.List, &ast.CommClause{
+				Body: []ast.Stmt{
+					&ast.ReturnStmt{
+						Results: []ast.Expr{
+							&ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(i / 3)},
+							ast.NewIdent("nil"),
+						},
+					},
+				},
+			})
+		}
+	}
+	expr := &ast.FuncLit{
+		Type: &ast.FuncType{
+			Params: &ast.FieldList{},
+			Results: &ast.FieldList{
+				List: []*ast.Field{
+					&ast.Field{
+						Type: ast.NewIdent("int"),
+					},
+					&ast.Field{
+						Type: &ast.InterfaceType{
+							Methods: &ast.FieldList{},
+						},
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{List: []ast.Stmt{stmt}},
+	}
+	p.rhs.Push(&ast.CallExpr{Fun: expr})
+	return p
 }
 
 // LoadGoVar instr
