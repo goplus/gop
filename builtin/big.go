@@ -23,7 +23,7 @@ type untyped_uint = uint
 // type bigint
 
 // A Bigint represents a signed multi-precision integer.
-// The zero value for a Bigint represents the value 0.
+// The zero value for a Bigint represents nil.
 type Bigint = *big.Int
 
 func tmpint(a, b Bigint) Bigint {
@@ -142,6 +142,8 @@ func Gopc_Bigint__1(x int64) Bigint {
 // -----------------------------------------------------------------------------
 // type bigrat
 
+// A Bigrat represents a quotient a/b of arbitrary precision.
+// The zero value for a Bigrat represents nil.
 type Bigrat = *big.Rat
 
 func tmprat(a, b Bigrat) Bigrat {
