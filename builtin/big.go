@@ -129,13 +129,13 @@ func Gopo_Bigint__Not(a Bigint) Bigint {
 	return tmpint1(a).Not(a)
 }
 
-// Gopc_bigint__0: func bigint() bigint
-func Gopc_bigint__0() Bigint {
+// Gopc_Bigint__0: func bigint() bigint
+func Gopc_Bigint__0() Bigint {
 	return new(big.Int)
 }
 
-// Gopc_bigint__1: func bigint(x int64) bigint
-func Gopc_bigint__1(x int64) Bigint {
+// Gopc_Bigint__1: func bigint(x int64) bigint
+func Gopc_Bigint__1(x int64) Bigint {
 	return big.NewInt(x)
 }
 
