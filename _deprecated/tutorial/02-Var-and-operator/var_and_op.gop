@@ -1,3 +1,0 @@
-x := 123.1 - 3i
-y, z := "Hello, ", 123
-println(y+"complex:", x+1, "int:", z)

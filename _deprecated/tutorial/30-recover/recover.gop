@@ -1,8 +1,0 @@
-defer func() {
-	var err interface{}
-	if err = recover(); err != nil {
-		println(err)
-	}
-}()
-
-panic("hello recover")

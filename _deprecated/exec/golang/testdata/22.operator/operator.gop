@@ -1,2 +1,0 @@
-x := uint32(1)
-println(^x, ^uint32(1), +3)

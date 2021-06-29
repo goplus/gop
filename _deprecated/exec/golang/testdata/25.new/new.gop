@@ -1,2 +1,0 @@
-a := new([3]int)
-println("a:", a)
