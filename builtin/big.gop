@@ -19,6 +19,10 @@ import (
 	"math/big"
 )
 
+// Gope: type extend
+// Gopo: operator
+// Gopc: type convert
+
 // -----------------------------------------------------------------------------
 // type bigint
 
@@ -52,6 +56,8 @@ func bigint(x int64) bigint
 // -----------------------------------------------------------------------------
 // type bigrat
 
+// A Gope_bigrat represents a quotient a/b of arbitrary precision.
+// The zero value for a Gope_bigrat represents nil.
 type bigrat < *big.Rat
 
 func (a bigrat) + (b bigrat) bigrat
@@ -74,6 +80,8 @@ func bigrat(a, b int64) bigrat
 // -----------------------------------------------------------------------------
 // type bigfloat
 
+// A Gope_bigfloat represents a multi-precision floating point number.
+// The zero value for a Gope_bigfloat represents nil.
 type bigfloat < *big.Float
 
 // -----------------------------------------------------------------------------
