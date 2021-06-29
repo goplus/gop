@@ -11,7 +11,7 @@
  limitations under the License.
 */
 
-package gop
+package builtin
 
 import (
 	"math/big"
@@ -119,20 +119,113 @@ func Gopo_Bigint__NE(a, b Bigint) bool {
 	return a.Cmp(b) != 0
 }
 
-// Gopo_Bigint__Neg: func -(a bigint) bigint {
+// Gopo_Bigint__Neg: func -(a bigint) bigint
 func Gopo_Bigint__Neg(a Bigint) Bigint {
 	return tmpint1(a).Neg(a)
 }
 
-// Gopo_Bigint__Not: func ^(a bigint) bigint {
+// Gopo_Bigint__Not: func ^(a bigint) bigint
 func Gopo_Bigint__Not(a Bigint) Bigint {
 	return tmpint1(a).Not(a)
+}
+
+// Gopc_bigint__0: func bigint() bigint
+func Gopc_bigint__0() Bigint {
+	return new(big.Int)
+}
+
+// Gopc_bigint__1: func bigint(x int64) bigint
+func Gopc_bigint__1(x int64) Bigint {
+	return big.NewInt(x)
 }
 
 // -----------------------------------------------------------------------------
 // type bigrat
 
 type Bigrat = *big.Rat
+
+func tmprat(a, b Bigrat) Bigrat {
+	return new(big.Rat)
+}
+
+func tmprat1(a Bigrat) Bigrat {
+	return new(big.Rat)
+}
+
+// Gopo_Bigrat__Add: func (a bigrat) + (b bigrat) bigrat
+func Gopo_Bigrat__Add(a, b Bigrat) Bigrat {
+	return tmprat(a, b).Add(a, b)
+}
+
+// Gopo_Bigrat__Sub: func (a bigrat) - (b bigrat) bigrat
+func Gopo_Bigrat__Sub(a, b Bigrat) Bigrat {
+	return tmprat(a, b).Sub(a, b)
+}
+
+// Gopo_Bigrat__Mul: func (a bigrat) * (b bigrat) bigrat
+func Gopo_Bigrat__Mul(a, b Bigrat) Bigrat {
+	return tmprat(a, b).Mul(a, b)
+}
+
+// Gopo_Bigrat__Quo: func (a bigrat) / (b bigrat) bigrat
+func Gopo_Bigrat__Quo(a, b Bigrat) Bigrat {
+	return tmprat(a, b).Quo(a, b)
+}
+
+// Gopo_Bigrat__LT: func (a bigrat) < (b bigrat) bool
+func Gopo_Bigrat__LT(a, b Bigrat) bool {
+	return a.Cmp(b) < 0
+}
+
+// Gopo_Bigrat__LE: func (a bigrat) <= (b bigrat) bool
+func Gopo_Bigrat__LE(a, b Bigrat) bool {
+	return a.Cmp(b) <= 0
+}
+
+// Gopo_Bigrat__GT: func (a bigrat) > (b bigrat) bool
+func Gopo_Bigrat__GT(a, b Bigrat) bool {
+	return a.Cmp(b) > 0
+}
+
+// Gopo_Bigrat__GE: func (a bigrat) >= (b bigrat) bool
+func Gopo_Bigrat__GE(a, b Bigrat) bool {
+	return a.Cmp(b) >= 0
+}
+
+// Gopo_Bigrat__EQ: func (a bigrat) == (b bigrat) bool
+func Gopo_Bigrat__EQ(a, b Bigrat) bool {
+	return a.Cmp(b) == 0
+}
+
+// Gopo_Bigrat__NE: func (a bigrat) != (b bigrat) bool
+func Gopo_Bigrat__NE(a, b Bigrat) bool {
+	return a.Cmp(b) != 0
+}
+
+// Gopo_Bigrat__Neg: func -(a bigrat) bigrat
+func Gopo_Bigrat__Neg(a Bigrat) Bigrat {
+	return tmprat1(a).Neg(a)
+}
+
+// Gopo_Bigrat__Inv: func /(a bigrat) bigrat
+func Gopo_Bigrat__Inv(a Bigrat) Bigrat {
+	return tmprat1(a).Inv(a)
+}
+
+// Gopc_Bigrat__0: func bigrat() bigrat
+func Gopc_Bigrat__0() Bigrat {
+	return new(big.Rat)
+}
+
+// Gopc_Bigrat__1: func bigrat(a bigint) bigrat
+func Gopc_Bigrat__1(a Bigint) Bigrat {
+	return new(big.Rat).SetInt(a)
+}
+
+// Gopc_Bigrat__2: func bigrat(a, b int64) bigrat
+func Gopc_Bigrat__2(a, b int64) Bigrat {
+	return big.NewRat(a, b)
+}
 
 // -----------------------------------------------------------------------------
 // type bigfloat
