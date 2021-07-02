@@ -1,0 +1,89 @@
+package main
+
+file build.gop
+noEntrypoint
+ast.GenDecl:
+  Tok: type
+  Specs:
+    ast.TypeSpec:
+      Name:
+        ast.Ident:
+          Name: cstring
+      Type:
+        ast.Ident:
+          Name: string
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: title
+          Tok: :=
+          Rhs:
+            ast.BasicLit:
+              Kind: STRING
+              Value: "Hello,world!2020-05-27"
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: s
+          Tok: :=
+          Rhs:
+            ast.CallExpr:
+              Fun:
+                ast.ParenExpr:
+                  X:
+                    ast.StarExpr:
+                      X:
+                        ast.Ident:
+                          Name: cstring
+              Args:
+                ast.UnaryExpr:
+                  Op: &
+                  X:
+                    ast.Ident:
+                      Name: title
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.SliceExpr:
+                  X:
+                    ast.Ident:
+                      Name: title
+                  Low:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 0
+                  High:
+                    ast.BinaryExpr:
+                      X:
+                        ast.CallExpr:
+                          Fun:
+                            ast.Ident:
+                              Name: len
+                          Args:
+                            ast.Ident:
+                              Name: title
+                      Op: -
+                      Y:
+                        ast.CallExpr:
+                          Fun:
+                            ast.Ident:
+                              Name: len
+                          Args:
+                            ast.BasicLit:
+                              Kind: STRING
+                              Value: "2006-01-02"
