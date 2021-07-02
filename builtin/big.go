@@ -17,6 +17,11 @@ import (
 	"math/big"
 )
 
+// Gopb: builtin type (of Go+)
+// Gope: type extend
+// Gopo: operator
+// Gopc: type convert
+
 type Gopb_untyped_uint uint
 
 // -----------------------------------------------------------------------------
