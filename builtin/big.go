@@ -17,10 +17,15 @@ import (
 	"math/big"
 )
 
-// Gopb: builtin type (of Go+)
-// Gope: type extend
-// Gopo: operator
-// Gopc: type convert
+//
+// Gopb_: builtin type (of Go+) prefix
+// Gope_: type extend prefix
+// Gopo_: operator prefix
+// Gopc_: type convert prefix
+//
+// type_Op: type operator
+// xxxx__N: the Nth overload function
+//
 
 type Gopb_untyped_uint uint
 
@@ -39,98 +44,98 @@ func tmpint1(a Gope_bigint) Gope_bigint {
 	return new(big.Int)
 }
 
-// Gopo_bigint__Add: func (a bigint) + (b bigint) bigint
-func Gopo_bigint__Add(a, b Gope_bigint) Gope_bigint {
+// Gopo_bigint_Add: func (a bigint) + (b bigint) bigint
+func Gopo_bigint_Add(a, b Gope_bigint) Gope_bigint {
 	return tmpint(a, b).Add(a, b)
 }
 
-// Gopo_bigint__Sub: func (a bigint) - (b bigint) bigint
-func Gopo_bigint__Sub(a, b Gope_bigint) Gope_bigint {
+// Gopo_bigint_Sub: func (a bigint) - (b bigint) bigint
+func Gopo_bigint_Sub(a, b Gope_bigint) Gope_bigint {
 	return tmpint(a, b).Sub(a, b)
 }
 
-// Gopo_bigint__Mul: func (a bigint) * (b bigint) bigint
-func Gopo_bigint__Mul(a, b Gope_bigint) Gope_bigint {
+// Gopo_bigint_Mul: func (a bigint) * (b bigint) bigint
+func Gopo_bigint_Mul(a, b Gope_bigint) Gope_bigint {
 	return tmpint(a, b).Mul(a, b)
 }
 
-// Gopo_bigint__Quo: func (a bigint) / (b bigint) bigint {
-func Gopo_bigint__Quo(a, b Gope_bigint) Gope_bigint {
+// Gopo_bigint_Quo: func (a bigint) / (b bigint) bigint {
+func Gopo_bigint_Quo(a, b Gope_bigint) Gope_bigint {
 	return tmpint(a, b).Quo(a, b)
 }
 
-// Gopo_bigint__Rem: func (a bigint) % (b bigint) bigint
-func Gopo_bigint__Rem(a, b Gope_bigint) Gope_bigint {
+// Gopo_bigint_Rem: func (a bigint) % (b bigint) bigint
+func Gopo_bigint_Rem(a, b Gope_bigint) Gope_bigint {
 	return tmpint(a, b).Rem(a, b)
 }
 
-// Gopo_bigint__Or: func (a bigint) | (b bigint) bigint
-func Gopo_bigint__Or(a, b Gope_bigint) Gope_bigint {
+// Gopo_bigint_Or: func (a bigint) | (b bigint) bigint
+func Gopo_bigint_Or(a, b Gope_bigint) Gope_bigint {
 	return tmpint(a, b).Or(a, b)
 }
 
-// Gopo_bigint__Xor: func (a bigint) ^ (b bigint) bigint
-func Gopo_bigint__Xor(a, b Gope_bigint) Gope_bigint {
+// Gopo_bigint_Xor: func (a bigint) ^ (b bigint) bigint
+func Gopo_bigint_Xor(a, b Gope_bigint) Gope_bigint {
 	return tmpint(a, b).Xor(a, b)
 }
 
-// Gopo_bigint__And: func (a bigint) & (b bigint) bigint
-func Gopo_bigint__And(a, b Gope_bigint) Gope_bigint {
+// Gopo_bigint_And: func (a bigint) & (b bigint) bigint
+func Gopo_bigint_And(a, b Gope_bigint) Gope_bigint {
 	return tmpint(a, b).And(a, b)
 }
 
-// Gopo_bigint__AndNot: func (a bigint) &^ (b bigint) bigint
-func Gopo_bigint__AndNot(a, b Gope_bigint) Gope_bigint {
+// Gopo_bigint_AndNot: func (a bigint) &^ (b bigint) bigint
+func Gopo_bigint_AndNot(a, b Gope_bigint) Gope_bigint {
 	return tmpint(a, b).AndNot(a, b)
 }
 
-// Gopo_bigint__Lsh: func (a bigint) << (n untyped_uint) bigint
-func Gopo_bigint__Lsh(a Gope_bigint, n Gopb_untyped_uint) Gope_bigint {
+// Gopo_bigint_Lsh: func (a bigint) << (n untyped_uint) bigint
+func Gopo_bigint_Lsh(a Gope_bigint, n Gopb_untyped_uint) Gope_bigint {
 	return tmpint1(a).Lsh(a, uint(n))
 }
 
-// Gopo_bigint__Rsh: func (a bigint) >> (n untyped_uint) bigint
-func Gopo_bigint__Rsh(a Gope_bigint, n Gopb_untyped_uint) Gope_bigint {
+// Gopo_bigint_Rsh: func (a bigint) >> (n untyped_uint) bigint
+func Gopo_bigint_Rsh(a Gope_bigint, n Gopb_untyped_uint) Gope_bigint {
 	return tmpint1(a).Rsh(a, uint(n))
 }
 
-// Gopo_bigint__LT: func (a bigint) < (b bigint) bool
-func Gopo_bigint__LT(a, b Gope_bigint) bool {
+// Gopo_bigint_LT: func (a bigint) < (b bigint) bool
+func Gopo_bigint_LT(a, b Gope_bigint) bool {
 	return a.Cmp(b) < 0
 }
 
-// Gopo_bigint__LE: func (a bigint) <= (b bigint) bool
-func Gopo_bigint__LE(a, b Gope_bigint) bool {
+// Gopo_bigint_LE: func (a bigint) <= (b bigint) bool
+func Gopo_bigint_LE(a, b Gope_bigint) bool {
 	return a.Cmp(b) <= 0
 }
 
-// Gopo_bigint__GT: func (a bigint) > (b bigint) bool
-func Gopo_bigint__GT(a, b Gope_bigint) bool {
+// Gopo_bigint_GT: func (a bigint) > (b bigint) bool
+func Gopo_bigint_GT(a, b Gope_bigint) bool {
 	return a.Cmp(b) > 0
 }
 
-// Gopo_bigint__GE: func (a bigint) >= (b bigint) bool
-func Gopo_bigint__GE(a, b Gope_bigint) bool {
+// Gopo_bigint_GE: func (a bigint) >= (b bigint) bool
+func Gopo_bigint_GE(a, b Gope_bigint) bool {
 	return a.Cmp(b) >= 0
 }
 
-// Gopo_bigint__EQ: func (a bigint) == (b bigint) bool
-func Gopo_bigint__EQ(a, b Gope_bigint) bool {
+// Gopo_bigint_EQ: func (a bigint) == (b bigint) bool
+func Gopo_bigint_EQ(a, b Gope_bigint) bool {
 	return a.Cmp(b) == 0
 }
 
-// Gopo_bigint__NE: func (a bigint) != (b bigint) bool
-func Gopo_bigint__NE(a, b Gope_bigint) bool {
+// Gopo_bigint_NE: func (a bigint) != (b bigint) bool
+func Gopo_bigint_NE(a, b Gope_bigint) bool {
 	return a.Cmp(b) != 0
 }
 
-// Gopo_bigint__Neg: func -(a bigint) bigint
-func Gopo_bigint__Neg(a Gope_bigint) Gope_bigint {
+// Gopo_bigint_Neg: func -(a bigint) bigint
+func Gopo_bigint_Neg(a Gope_bigint) Gope_bigint {
 	return tmpint1(a).Neg(a)
 }
 
-// Gopo_bigint__Not: func ^(a bigint) bigint
-func Gopo_bigint__Not(a Gope_bigint) Gope_bigint {
+// Gopo_bigint_Not: func ^(a bigint) bigint
+func Gopo_bigint_Not(a Gope_bigint) Gope_bigint {
 	return tmpint1(a).Not(a)
 }
 
@@ -159,63 +164,63 @@ func tmprat1(a Gope_bigrat) Gope_bigrat {
 	return new(big.Rat)
 }
 
-// Gopo_bigrat__Add: func (a bigrat) + (b bigrat) bigrat
-func Gopo_bigrat__Add(a, b Gope_bigrat) Gope_bigrat {
+// Gopo_bigrat_Add: func (a bigrat) + (b bigrat) bigrat
+func Gopo_bigrat_Add(a, b Gope_bigrat) Gope_bigrat {
 	return tmprat(a, b).Add(a, b)
 }
 
-// Gopo_bigrat__Sub: func (a bigrat) - (b bigrat) bigrat
-func Gopo_bigrat__Sub(a, b Gope_bigrat) Gope_bigrat {
+// Gopo_bigrat_Sub: func (a bigrat) - (b bigrat) bigrat
+func Gopo_bigrat_Sub(a, b Gope_bigrat) Gope_bigrat {
 	return tmprat(a, b).Sub(a, b)
 }
 
-// Gopo_bigrat__Mul: func (a bigrat) * (b bigrat) bigrat
-func Gopo_bigrat__Mul(a, b Gope_bigrat) Gope_bigrat {
+// Gopo_bigrat_Mul: func (a bigrat) * (b bigrat) bigrat
+func Gopo_bigrat_Mul(a, b Gope_bigrat) Gope_bigrat {
 	return tmprat(a, b).Mul(a, b)
 }
 
-// Gopo_bigrat__Quo: func (a bigrat) / (b bigrat) bigrat
-func Gopo_bigrat__Quo(a, b Gope_bigrat) Gope_bigrat {
+// Gopo_bigrat_Quo: func (a bigrat) / (b bigrat) bigrat
+func Gopo_bigrat_Quo(a, b Gope_bigrat) Gope_bigrat {
 	return tmprat(a, b).Quo(a, b)
 }
 
-// Gopo_bigrat__LT: func (a bigrat) < (b bigrat) bool
-func Gopo_bigrat__LT(a, b Gope_bigrat) bool {
+// Gopo_bigrat_LT: func (a bigrat) < (b bigrat) bool
+func Gopo_bigrat_LT(a, b Gope_bigrat) bool {
 	return a.Cmp(b) < 0
 }
 
-// Gopo_bigrat__LE: func (a bigrat) <= (b bigrat) bool
-func Gopo_bigrat__LE(a, b Gope_bigrat) bool {
+// Gopo_bigrat_LE: func (a bigrat) <= (b bigrat) bool
+func Gopo_bigrat_LE(a, b Gope_bigrat) bool {
 	return a.Cmp(b) <= 0
 }
 
-// Gopo_bigrat__GT: func (a bigrat) > (b bigrat) bool
-func Gopo_bigrat__GT(a, b Gope_bigrat) bool {
+// Gopo_bigrat_GT: func (a bigrat) > (b bigrat) bool
+func Gopo_bigrat_GT(a, b Gope_bigrat) bool {
 	return a.Cmp(b) > 0
 }
 
-// Gopo_bigrat__GE: func (a bigrat) >= (b bigrat) bool
-func Gopo_bigrat__GE(a, b Gope_bigrat) bool {
+// Gopo_bigrat_GE: func (a bigrat) >= (b bigrat) bool
+func Gopo_bigrat_GE(a, b Gope_bigrat) bool {
 	return a.Cmp(b) >= 0
 }
 
-// Gopo_bigrat__EQ: func (a bigrat) == (b bigrat) bool
-func Gopo_bigrat__EQ(a, b Gope_bigrat) bool {
+// Gopo_bigrat_EQ: func (a bigrat) == (b bigrat) bool
+func Gopo_bigrat_EQ(a, b Gope_bigrat) bool {
 	return a.Cmp(b) == 0
 }
 
-// Gopo_bigrat__NE: func (a bigrat) != (b bigrat) bool
-func Gopo_bigrat__NE(a, b Gope_bigrat) bool {
+// Gopo_bigrat_NE: func (a bigrat) != (b bigrat) bool
+func Gopo_bigrat_NE(a, b Gope_bigrat) bool {
 	return a.Cmp(b) != 0
 }
 
-// Gopo_bigrat__Neg: func -(a bigrat) bigrat
-func Gopo_bigrat__Neg(a Gope_bigrat) Gope_bigrat {
+// Gopo_bigrat_Neg: func -(a bigrat) bigrat
+func Gopo_bigrat_Neg(a Gope_bigrat) Gope_bigrat {
 	return tmprat1(a).Neg(a)
 }
 
-// Gopo_bigrat__Inv: func /(a bigrat) bigrat
-func Gopo_bigrat__Inv(a Gope_bigrat) Gope_bigrat {
+// Gopo_bigrat_Inv: func /(a bigrat) bigrat
+func Gopo_bigrat_Inv(a Gope_bigrat) Gope_bigrat {
 	return tmprat1(a).Inv(a)
 }
 
