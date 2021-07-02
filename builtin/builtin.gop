@@ -1,0 +1,291 @@
+/*
+ Copyright 2021 The GoPlus Authors (goplus.org)
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+     http://www.apache.org/licenses/LICENSE-2.0
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+*/
+
+// +build ignore
+
+// -----------------------------------------------------------------------------
+// type int
+
+func (a int) + (b int) int
+func (a int) - (b int) int
+func (a int) * (b int) int
+func (a int) / (b int) int
+func (a int) % (b int) int
+
+func (a int) | (b int) int
+func (a int) ^ (b int) int
+func (a int) & (b int) int
+func (a int) &^ (b int) int
+
+func (a int) << (n untyped_uint) int
+func (a int) >> (n untyped_uint) int
+func (a int) < (b int) bool
+func (a int) <= (b int) bool
+func (a int) > (b int) bool
+func (a int) >= (b int) bool
+func (a int) == (b int) bool
+func (a int) != (b int) bool
+func -(a int) int
+func ^(a int) int
+
+// -----------------------------------------------------------------------------
+// type int64
+
+func (a int64) + (b int64) int64
+func (a int64) - (b int64) int64
+func (a int64) * (b int64) int64
+func (a int64) / (b int64) int64
+func (a int64) % (b int64) int64
+
+func (a int64) | (b int64) int64
+func (a int64) ^ (b int64) int64
+func (a int64) & (b int64) int64
+func (a int64) &^ (b int64) int64
+
+func (a int64) << (n untyped_uint) int64
+func (a int64) >> (n untyped_uint) int64
+func (a int64) < (b int64) bool
+func (a int64) <= (b int64) bool
+func (a int64) > (b int64) bool
+func (a int64) >= (b int64) bool
+func (a int64) == (b int64) bool
+func (a int64) != (b int64) bool
+func -(a int64) int64
+func ^(a int64) int64
+
+// -----------------------------------------------------------------------------
+// type int32
+
+func (a int32) + (b int32) int32
+func (a int32) - (b int32) int32
+func (a int32) * (b int32) int32
+func (a int32) / (b int32) int32
+func (a int32) % (b int32) int32
+
+func (a int32) | (b int32) int32
+func (a int32) ^ (b int32) int32
+func (a int32) & (b int32) int32
+func (a int32) &^ (b int32) int32
+
+func (a int32) << (n untyped_uint) int32
+func (a int32) >> (n untyped_uint) int32
+func (a int32) < (b int32) bool
+func (a int32) <= (b int32) bool
+func (a int32) > (b int32) bool
+func (a int32) >= (b int32) bool
+func (a int32) == (b int32) bool
+func (a int32) != (b int32) bool
+func -(a int32) int32
+func ^(a int32) int32
+
+// -----------------------------------------------------------------------------
+// type int16
+
+func (a int16) + (b int16) int16
+func (a int16) - (b int16) int16
+func (a int16) * (b int16) int16
+func (a int16) / (b int16) int16
+func (a int16) % (b int16) int16
+
+func (a int16) | (b int16) int16
+func (a int16) ^ (b int16) int16
+func (a int16) & (b int16) int16
+func (a int16) &^ (b int16) int16
+
+func (a int16) << (n untyped_uint) int16
+func (a int16) >> (n untyped_uint) int16
+func (a int16) < (b int16) bool
+func (a int16) <= (b int16) bool
+func (a int16) > (b int16) bool
+func (a int16) >= (b int16) bool
+func (a int16) == (b int16) bool
+func (a int16) != (b int16) bool
+func -(a int16) int16
+func ^(a int16) int16
+
+// -----------------------------------------------------------------------------
+// type int8
+
+func (a int8) + (b int8) int8
+func (a int8) - (b int8) int8
+func (a int8) * (b int8) int8
+func (a int8) / (b int8) int8
+func (a int8) % (b int8) int8
+
+func (a int8) | (b int8) int8
+func (a int8) ^ (b int8) int8
+func (a int8) & (b int8) int8
+func (a int8) &^ (b int8) int8
+
+func (a int8) << (n untyped_uint) int8
+func (a int8) >> (n untyped_uint) int8
+func (a int8) < (b int8) bool
+func (a int8) <= (b int8) bool
+func (a int8) > (b int8) bool
+func (a int8) >= (b int8) bool
+func (a int8) == (b int8) bool
+func (a int8) != (b int8) bool
+func -(a int8) int8
+func ^(a int8) int8
+
+// -----------------------------------------------------------------------------
+// type uint
+
+func (a uint) + (b uint) uint
+func (a uint) - (b uint) uint
+func (a uint) * (b uint) uint
+func (a uint) / (b uint) uint
+func (a uint) % (b uint) uint
+
+func (a uint) | (b uint) uint
+func (a uint) ^ (b uint) uint
+func (a uint) & (b uint) uint
+func (a uint) &^ (b uint) uint
+
+func (a uint) << (n untyped_uint) uint
+func (a uint) >> (n untyped_uint) uint
+func (a uint) < (b uint) bool
+func (a uint) <= (b uint) bool
+func (a uint) > (b uint) bool
+func (a uint) >= (b uint) bool
+func (a uint) == (b uint) bool
+func (a uint) != (b uint) bool
+func -(a uint) uint
+func ^(a uint) uint
+
+// -----------------------------------------------------------------------------
+// type uintptr
+
+func (a uintptr) + (b uintptr) uintptr
+func (a uintptr) - (b uintptr) uintptr
+func (a uintptr) * (b uintptr) uintptr
+func (a uintptr) / (b uintptr) uintptr
+func (a uintptr) % (b uintptr) uintptr
+
+func (a uintptr) | (b uintptr) uintptr
+func (a uintptr) ^ (b uintptr) uintptr
+func (a uintptr) & (b uintptr) uintptr
+func (a uintptr) &^ (b uintptr) uintptr
+
+func (a uintptr) << (n untyped_uint) uintptr
+func (a uintptr) >> (n untyped_uint) uintptr
+func (a uintptr) < (b uintptr) bool
+func (a uintptr) <= (b uintptr) bool
+func (a uintptr) > (b uintptr) bool
+func (a uintptr) >= (b uintptr) bool
+func (a uintptr) == (b uintptr) bool
+func (a uintptr) != (b uintptr) bool
+func -(a uintptr) uintptr
+func ^(a uintptr) uintptr
+
+// -----------------------------------------------------------------------------
+// type uint64
+
+func (a uint64) + (b uint64) uint64
+func (a uint64) - (b uint64) uint64
+func (a uint64) * (b uint64) uint64
+func (a uint64) / (b uint64) uint64
+func (a uint64) % (b uint64) uint64
+
+func (a uint64) | (b uint64) uint64
+func (a uint64) ^ (b uint64) uint64
+func (a uint64) & (b uint64) uint64
+func (a uint64) &^ (b uint64) uint64
+
+func (a uint64) << (n untyped_uint) uint64
+func (a uint64) >> (n untyped_uint) uint64
+func (a uint64) < (b uint64) bool
+func (a uint64) <= (b uint64) bool
+func (a uint64) > (b uint64) bool
+func (a uint64) >= (b uint64) bool
+func (a uint64) == (b uint64) bool
+func (a uint64) != (b uint64) bool
+func -(a uint64) uint64
+func ^(a uint64) uint64
+
+// -----------------------------------------------------------------------------
+// type uint32
+
+func (a uint32) + (b uint32) uint32
+func (a uint32) - (b uint32) uint32
+func (a uint32) * (b uint32) uint32
+func (a uint32) / (b uint32) uint32
+func (a uint32) % (b uint32) uint32
+
+func (a uint32) | (b uint32) uint32
+func (a uint32) ^ (b uint32) uint32
+func (a uint32) & (b uint32) uint32
+func (a uint32) &^ (b uint32) uint32
+
+func (a uint32) << (n untyped_uint) uint32
+func (a uint32) >> (n untyped_uint) uint32
+func (a uint32) < (b uint32) bool
+func (a uint32) <= (b uint32) bool
+func (a uint32) > (b uint32) bool
+func (a uint32) >= (b uint32) bool
+func (a uint32) == (b uint32) bool
+func (a uint32) != (b uint32) bool
+func -(a uint32) uint32
+func ^(a uint32) uint32
+
+// -----------------------------------------------------------------------------
+// type uint16
+
+func (a uint16) + (b uint16) uint16
+func (a uint16) - (b uint16) uint16
+func (a uint16) * (b uint16) uint16
+func (a uint16) / (b uint16) uint16
+func (a uint16) % (b uint16) uint16
+
+func (a uint16) | (b uint16) uint16
+func (a uint16) ^ (b uint16) uint16
+func (a uint16) & (b uint16) uint16
+func (a uint16) &^ (b uint16) uint16
+
+func (a uint16) << (n untyped_uint) uint16
+func (a uint16) >> (n untyped_uint) uint16
+func (a uint16) < (b uint16) bool
+func (a uint16) <= (b uint16) bool
+func (a uint16) > (b uint16) bool
+func (a uint16) >= (b uint16) bool
+func (a uint16) == (b uint16) bool
+func (a uint16) != (b uint16) bool
+func -(a uint16) uint16
+func ^(a uint16) uint16
+
+// -----------------------------------------------------------------------------
+// type uint8
+
+func (a uint8) + (b uint8) uint8
+func (a uint8) - (b uint8) uint8
+func (a uint8) * (b uint8) uint8
+func (a uint8) / (b uint8) uint8
+func (a uint8) % (b uint8) uint8
+
+func (a uint8) | (b uint8) uint8
+func (a uint8) ^ (b uint8) uint8
+func (a uint8) & (b uint8) uint8
+func (a uint8) &^ (b uint8) uint8
+
+func (a uint8) << (n untyped_uint) uint8
+func (a uint8) >> (n untyped_uint) uint8
+func (a uint8) < (b uint8) bool
+func (a uint8) <= (b uint8) bool
+func (a uint8) > (b uint8) bool
+func (a uint8) >= (b uint8) bool
+func (a uint8) == (b uint8) bool
+func (a uint8) != (b uint8) bool
+func -(a uint8) uint8
+func ^(a uint8) uint8
+
+// -----------------------------------------------------------------------------

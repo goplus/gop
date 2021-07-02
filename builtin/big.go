@@ -17,7 +17,7 @@ import (
 	"math/big"
 )
 
-type untyped_uint = uint
+type Gopb_untyped_uint uint
 
 // -----------------------------------------------------------------------------
 // type bigint
@@ -80,13 +80,13 @@ func Gopo_bigint__AndNot(a, b Gope_bigint) Gope_bigint {
 }
 
 // Gopo_bigint__Lsh: func (a bigint) << (n untyped_uint) bigint
-func Gopo_bigint__Lsh(a Gope_bigint, n untyped_uint) Gope_bigint {
-	return tmpint1(a).Lsh(a, n)
+func Gopo_bigint__Lsh(a Gope_bigint, n Gopb_untyped_uint) Gope_bigint {
+	return tmpint1(a).Lsh(a, uint(n))
 }
 
 // Gopo_bigint__Rsh: func (a bigint) >> (n untyped_uint) bigint
-func Gopo_bigint__Rsh(a Gope_bigint, n untyped_uint) Gope_bigint {
-	return tmpint1(a).Rsh(a, n)
+func Gopo_bigint__Rsh(a Gope_bigint, n Gopb_untyped_uint) Gope_bigint {
+	return tmpint1(a).Rsh(a, uint(n))
 }
 
 // Gopo_bigint__LT: func (a bigint) < (b bigint) bool

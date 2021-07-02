@@ -19,6 +19,7 @@ import (
 	"math/big"
 )
 
+// Gopb: builtin type (of Go+)
 // Gope: type extend
 // Gopo: operator
 // Gopc: type convert
@@ -35,10 +36,12 @@ func (a bigint) - (b bigint) bigint
 func (a bigint) * (b bigint) bigint
 func (a bigint) / (b bigint) bigint
 func (a bigint) % (b bigint) bigint
+
 func (a bigint) | (b bigint) bigint
 func (a bigint) ^ (b bigint) bigint
 func (a bigint) & (b bigint) bigint
 func (a bigint) &^ (b bigint) bigint
+
 func (a bigint) << (n untyped_uint) bigint
 func (a bigint) >> (n untyped_uint) bigint
 func (a bigint) < (b bigint) bool
