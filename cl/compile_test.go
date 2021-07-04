@@ -74,6 +74,9 @@ func main() {
 
 import fmt "fmt"
 
+func foo(fmt string, args ...interface {
+}) {
+}
 func main() {
 }
 `)
