@@ -62,3 +62,19 @@ func main() {
 }
 `)
 }
+
+func _TestFunc(t *testing.T) {
+	gopClTest(t, `import "fmt"
+
+func foo(fmt string, args ...interface{}) {
+}
+
+func main() {
+}`, `package main
+
+import fmt "fmt"
+
+func main() {
+}
+`)
+}
