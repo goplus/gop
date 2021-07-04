@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The GoPlus Authors (goplus.org)
+ Copyright 2021 The GoPlus Authors (goplus.org)
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -16,6 +16,14 @@
 
 package cl
 
+import (
+	"github.com/goplus/gop/ast"
+)
+
+func compileStmt(ctx *loadCtx, stmt ast.Stmt) {
+}
+
+/*
 import (
 	"reflect"
 
@@ -654,5 +662,5 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		log.Panicln("no new variables on left side of :=")
 	}
 }
-
+*/
 // -----------------------------------------------------------------------------

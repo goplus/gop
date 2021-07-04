@@ -14,13 +14,228 @@
  limitations under the License.
 */
 
-// Package cl compiles Go+ syntax trees (ast) into a backend code.
-// For now the supported backends are `bytecode` and `golang`.
+// Package cl compiles Go+ syntax trees (ast).
 package cl
 
 import (
+	"context"
+	"go/types"
+	"log"
+	"path"
+	"reflect"
+	"strconv"
+
+	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/token"
+	"github.com/goplus/gox"
+)
+
+// -----------------------------------------------------------------------------
+
+// Config of loading Go+ packages.
+type Config struct {
+	// Context specifies the context for the load operation.
+	// If the context is cancelled, the loader may stop early
+	// and return an ErrCancelled error.
+	// If Context is nil, the load cannot be cancelled.
+	Context context.Context
+
+	// Logf is the logger for the config.
+	// If the user provides a logger, debug logging is enabled.
+	// If the GOPACKAGESDEBUG environment variable is set to true,
+	// but the logger is nil, default to log.Printf.
+	Logf func(format string, args ...interface{})
+
+	// Dir is the directory in which to run the build system's query tool
+	// that provides information about the packages.
+	// If Dir is empty, the tool is run in the current directory.
+	Dir string
+
+	// Env is the environment to use when invoking the build system's query tool.
+	// If Env is nil, the current environment is used.
+	// As in os/exec's Cmd, only the last value in the slice for
+	// each environment key is used. To specify the setting of only
+	// a few variables, append to the current environment, as in:
+	//
+	//	opt.Env = append(os.Environ(), "GOOS=plan9", "GOARCH=386")
+	//
+	Env []string
+
+	// BuildFlags is a list of command-line flags to be passed through to
+	// the build system's query tool.
+	BuildFlags []string
+}
+
+// NewPackage creates a Go+ package instance.
+func NewPackage(
+	pkgPath string, pkg *ast.Package, fset *token.FileSet, conf *Config) (p *gox.Package, err error) {
+	if conf == nil {
+		conf = &Config{}
+	}
+	confGox := &gox.Config{
+		Context:          conf.Context,
+		Logf:             conf.Logf,
+		Dir:              conf.Dir,
+		Env:              conf.Env,
+		BuildFlags:       conf.BuildFlags,
+		Fset:             fset,
+		ParseFile:        nil, // TODO
+		LoadPkgs:         nil, // TODO
+		Prefix:           nil,
+		Builtin:          nil, // TODO
+		CheckBuiltinType: nil, // TODO
+	}
+	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
+	for _, f := range pkg.Files {
+		loadFile(p, f)
+	}
+	return
+}
+
+type loadCtx struct {
+	pkg  *gox.Package
+	file *fileCtx
+}
+
+type fileCtx struct {
+	*loadCtx
+	imports map[string]*gox.PkgRef
+}
+
+func loadFile(p *gox.Package, f *ast.File) {
+	ctx := &loadCtx{p, nil}
+	file := &fileCtx{ctx, make(map[string]*gox.PkgRef)}
+	ctx.file = file
+	last := len(f.Decls) - 1
+	for i, decl := range f.Decls {
+		switch d := decl.(type) {
+		case *ast.FuncDecl:
+			loadFunc(ctx, d, f.NoEntrypoint && i == last)
+		case *ast.GenDecl:
+			switch d.Tok {
+			case token.IMPORT:
+				loadImports(file, d)
+			case token.TYPE:
+				loadTypes(ctx, d)
+			case token.CONST:
+				loadConsts(ctx, d)
+			case token.VAR:
+				log.Panicln("TODO: varDecl")
+				//compileStmt(ctx, &ast.DeclStmt{Decl: decl})
+			default:
+				log.Panicln("TODO - tok:", d.Tok, "spec:", reflect.TypeOf(d.Specs).Elem())
+			}
+		default:
+			log.Panicln("TODO - gopkg.Package.load: unknown decl -", reflect.TypeOf(decl))
+		}
+	}
+}
+
+func loadFunc(ctx *loadCtx, d *ast.FuncDecl, isUnnamed bool) {
+	pkg := ctx.pkg
+	name := d.Name.Name
+	if d.Recv != nil {
+		log.Panicln("loadFunc TODO: method")
+	} else if name == "init" {
+		log.Panicln("loadFunc TODO: init")
+	} else {
+		sig := toFuncType(pkg, d.Type)
+		fn := pkg.NewFuncWith(name, sig)
+		fn.BodyStart(pkg).End()
+	}
+}
+
+func toFuncType(pkg *gox.Package, typ *ast.FuncType) *types.Signature {
+	params, variadic := toParams(pkg, typ.Params.List)
+	results := toResults(pkg, typ.Results)
+	return types.NewSignature(nil, params, results, variadic)
+}
+
+func toResults(pkg *gox.Package, in *ast.FieldList) *types.Tuple {
+	if in == nil {
+		return nil
+	}
+	flds := in.List
+	n := len(flds)
+	args := make([]*types.Var, 0, n)
+	for _, fld := range flds {
+		args = toParam(pkg, fld, args)
+	}
+	return types.NewTuple(args...)
+}
+
+func toParams(pkg *gox.Package, flds []*ast.Field) (typ *types.Tuple, variadic bool) {
+	n := len(flds)
+	if n == 0 {
+		return nil, false
+	}
+	args := make([]*types.Var, 0, n)
+	for _, fld := range flds {
+		args = toParam(pkg, fld, args)
+	}
+	_, ok := flds[n-1].Type.(*ast.Ellipsis)
+	return types.NewTuple(args...), ok
+}
+
+func toParam(pkg *gox.Package, fld *ast.Field, args []*types.Var) []*gox.Param {
+	typ := toType(fld.Type)
+	for _, name := range fld.Names {
+		args = append(args, pkg.NewParam(name.Name, typ))
+	}
+	return args
+}
+
+func toType(t ast.Expr) types.Type {
+	panic("TODO: toType")
+}
+
+func loadImports(ctx *fileCtx, d *ast.GenDecl) {
+	for _, item := range d.Specs {
+		loadImport(ctx, item.(*ast.ImportSpec))
+	}
+}
+
+func loadImport(ctx *fileCtx, spec *ast.ImportSpec) {
+	pkgPath := toString(spec.Path)
+	pkg := ctx.pkg.Import(pkgPath)
+	var name string
+	if spec.Name != nil {
+		name = spec.Name.Name
+	} else {
+		name = path.Base(pkgPath) // TODO: pkg.Name()
+	}
+	ctx.imports[name] = pkg
+}
+
+func loadTypes(ctx *loadCtx, d *ast.GenDecl) {
+	panic("TODO: loadTypes")
+}
+
+func loadConsts(ctx *loadCtx, d *ast.GenDecl) {
+	panic("TODO: loadConsts")
+}
+
+func loadVars(ctx *loadCtx, d *ast.GenDecl, stmt ast.Stmt) {
+	panic("TODO: loadVars")
+}
+
+// -----------------------------------------------------------------------------
+
+func toString(l *ast.BasicLit) string {
+	if l.Kind == token.STRING {
+		s, err := strconv.Unquote(l.Value)
+		if err == nil {
+			return s
+		}
+	}
+	panic("TODO: toString - convert ast.BasicLit to string failed")
+}
+
+// -----------------------------------------------------------------------------
+
+/*
+import (
 	"errors"
-	"fmt"
 	"path"
 	"reflect"
 	"syscall"
@@ -52,14 +267,9 @@ var (
 	ErrSymbolNotType = errors.New("symbol exists but not a type")
 )
 
-var (
-	// CallBuiltinOp calls BuiltinOp
-	CallBuiltinOp func(kind exec.Kind, op exec.Operator, data ...interface{}) interface{}
-)
-
 // -----------------------------------------------------------------------------
-
 // CompileError represents a compiling time error.
+
 type CompileError struct {
 	At  ast.Node
 	Err error
@@ -94,51 +304,6 @@ func logIllTypeMapIndexPanic(ctx *blockCtx, v ast.Node, t, typIdx reflect.Type) 
 
 // -----------------------------------------------------------------------------
 
-// - varName => *exec.Var
-// - stkVarName => *stackVar
-// - pkgName => pkgPath
-// - funcName => *funcDecl
-// - typeName => *typeDecl
-//
-type iSymbol = interface{}
-
-type iVar interface {
-	inCurrentCtx(ctx *blockCtx) bool
-	getType() reflect.Type
-}
-
-type execVar struct {
-	v exec.Var
-}
-
-func (p *execVar) inCurrentCtx(ctx *blockCtx) bool {
-	return ctx.out.InCurrentCtx(p.v)
-}
-
-func (p *execVar) getType() reflect.Type {
-	return p.v.Type()
-}
-
-type stackVar struct {
-	typ   reflect.Type
-	index int32
-}
-
-func (p *stackVar) inCurrentCtx(ctx *blockCtx) bool {
-	return true
-}
-
-func (p *stackVar) getType() reflect.Type {
-	return p.typ
-}
-
-// -----------------------------------------------------------------------------
-
-// A Package represents a Go+ package.
-type Package struct {
-	syms map[string]iSymbol
-}
-
 // PkgAct represents a package compiling action.
 type PkgAct int
 
@@ -152,12 +317,9 @@ const (
 )
 
 // NewPackage creates a Go+ package instance.
-func NewPackage(out exec.Builder, pkg *ast.Package, fset *token.FileSet, act PkgAct) (p *Package, err error) {
+func NewPackage(pkg *ast.Package, fset *token.FileSet, act PkgAct) (p *gox.Package, err error) {
 	if pkg == nil {
 		return nil, ErrNotFound
-	}
-	if CallBuiltinOp == nil {
-		log.Panicln("NewPackage failed: variable CallBuiltinOp is uninitialized")
 	}
 	p = &Package{}
 	ctxPkg := newPkgCtx(out, pkg, fset)
@@ -361,5 +523,5 @@ func loadFunc(ctx *blockCtx, d *ast.FuncDecl, isUnnamed bool) {
 		ctx.insertFunc(name, newFuncDecl(name, nil, d.Type, d.Body, funCtx))
 	}
 }
-
+*/
 // -----------------------------------------------------------------------------
