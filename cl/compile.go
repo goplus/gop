@@ -137,7 +137,7 @@ func loadFunc(ctx *loadCtx, d *ast.FuncDecl, isUnnamed bool) {
 	} else if name == "init" {
 		log.Panicln("loadFunc TODO: init")
 	} else {
-		sig := toFuncType(pkg, d.Type)
+		sig := toFuncType(ctx, d.Type)
 		fn := pkg.NewFuncWith(name, sig)
 		fn.BodyStart(pkg).End()
 	}

@@ -63,7 +63,7 @@ func main() {
 `)
 }
 
-func _TestFunc(t *testing.T) {
+func TestFunc(t *testing.T) {
 	gopClTest(t, `import "fmt"
 
 func foo(fmt string, args ...interface{}) {
