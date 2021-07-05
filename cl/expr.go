@@ -17,12 +17,12 @@
 package cl
 
 import (
-	"go/types"
 	"log"
 	"reflect"
 
 	goast "go/ast"
 	gotoken "go/token"
+	"go/types"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
@@ -47,39 +47,10 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode token.Token) {
 	}
 }
 
-func compileIdentLHS(ctx *blockCtx, name string, mode token.Token) {
-	if name == "_" {
-		ctx.cb.VarRef(nil)
-	} else {
-		scope := ctx.scope
-		at, o := scope.LookupParent(name, token.NoPos)
-		var v *gox.Var
-		if mode == token.DEFINE {
-			if o == nil || at != scope {
-				if o != nil {
-					log.Panicln("TODO: name redeclared -", at.String())
-				}
-				ctx.cb.NewVar(name, &v)
-				scope.Insert(types.NewVar(token.NoPos, ctx.pkg.Types, name, &varType{v}))
-			} else {
-				v = o.Type().(*varType).Var
-			}
-		} else {
-			if o == nil {
-				panic("TODO: var not found")
-			}
-			v = o.Type().(*varType).Var
-		}
-		ctx.cb.VarRef(v)
-	}
-}
-
-// -----------------------------------------------------------------------------
-
 func compileExpr(ctx *blockCtx, expr ast.Expr) {
 	switch v := expr.(type) {
-	//case *ast.Ident:
-	//	return compileIdent(ctx, v, false)
+	case *ast.Ident:
+		compileIdent(ctx, v)
 	case *ast.BasicLit:
 		compileBasicLit(ctx, v)
 	case *ast.CallExpr:
@@ -148,6 +119,52 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
 		compileExpr(ctx, arg)
 	}
 	ctx.cb.Call(len(v.Args), v.Ellipsis != gotoken.NoPos)
+}
+
+func compileIdentLHS(ctx *blockCtx, name string, mode token.Token) {
+	if name == "_" {
+		ctx.cb.VarRef(nil)
+	} else {
+		scope := ctx.scope
+		at, o := scope.LookupParent(name, token.NoPos)
+		var v *gox.Var
+		if mode == token.DEFINE {
+			if o == nil || at != scope {
+				if o != nil {
+					log.Panicln("TODO: name redeclared -", at.String())
+				}
+				ctx.cb.NewVar(name, &v)
+				scope.Insert(types.NewVar(token.NoPos, ctx.pkg.Types, name, &varType{v}))
+			} else {
+				v = o.Type().(*varType).Var
+			}
+		} else {
+			if o == nil {
+				panic("TODO: var not found")
+			}
+			v = o.Type().(*varType).Var
+		}
+		ctx.cb.VarRef(v)
+	}
+}
+
+func compileIdent(ctx *blockCtx, ident *ast.Ident) {
+	name := ident.Name
+	if name == "_" {
+		log.Panicln("TODO: cannot use _ as value")
+	}
+	at, o := ctx.scope.LookupParent(name, token.NoPos)
+	if o != nil {
+		_ = at
+		switch t := o.Type().(type) {
+		case *varType:
+			ctx.cb.Val(t.Var)
+		default:
+			ctx.cb.Val(o)
+		}
+	} else {
+		log.Panicln("TODO: var not found -", name)
+	}
 }
 
 func compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {

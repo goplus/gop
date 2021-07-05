@@ -152,7 +152,7 @@ func loadFunc(ctx *loadCtx, d *ast.FuncDecl, isUnnamed bool) {
 }
 
 func insertParams(scope *types.Scope, params *types.Tuple) {
-	if params == nil {
+	if params != nil {
 		for i, n := 0, params.Len(); i < n; i++ {
 			v := params.At(i)
 			if name := v.Name(); name != "" {

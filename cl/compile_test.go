@@ -113,3 +113,24 @@ func main() {
 }
 `)
 }
+
+func TestFuncCallEllipsis(t *testing.T) {
+	gopClTest(t, `import "fmt"
+
+func foo(args ...interface{}) {
+	fmt.Println(args...)
+}
+
+func main() {
+}`, `package main
+
+import fmt "fmt"
+
+func foo(args ...interface {
+}) {
+	fmt.Println(args...)
+}
+func main() {
+}
+`)
+}
