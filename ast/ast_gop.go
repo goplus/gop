@@ -173,9 +173,11 @@ func (*ForPhraseStmt) stmtNode() {}
 
 // -----------------------------------------------------------------------------
 
+/* -- TODO: really need it?
 // A TwoValueIndexExpr node represents a two-value assignment expression (v, ok := m["key"])
 type TwoValueIndexExpr struct {
 	*IndexExpr
 }
+*/
 
 // -----------------------------------------------------------------------------

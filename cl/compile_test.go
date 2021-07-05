@@ -81,3 +81,13 @@ func main() {
 }
 `)
 }
+
+func TestUnnamedMainFunc(t *testing.T) {
+	gopClTest(t, `i := 1`, `package main
+
+func main() {
+	var i int
+	i = 1
+}
+`)
+}

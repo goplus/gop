@@ -1,5 +1,5 @@
 /*
- Copyright 2020 The GoPlus Authors (goplus.org)
+ Copyright 2021 The GoPlus Authors (goplus.org)
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -16,6 +16,127 @@
 
 package cl
 
+import (
+	"go/types"
+	"log"
+	"reflect"
+
+	goast "go/ast"
+	gotoken "go/token"
+
+	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/token"
+	"github.com/goplus/gox"
+)
+
+// -----------------------------------------------------------------------------
+
+func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode token.Token) {
+	switch v := expr.(type) {
+	case *ast.Ident:
+		compileIdentLHS(ctx, v.Name, mode)
+		/*	case *ast.IndexExpr:
+				compileIndexExprLHS(ctx, v, mode)
+			case *ast.SelectorExpr:
+				compileSelectorExprLHS(ctx, v, mode)
+			case *ast.StarExpr:
+				compileStarExprLHS(ctx, v, mode)
+		*/
+	default:
+		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
+	}
+}
+
+func compileIdentLHS(ctx *blockCtx, name string, mode token.Token) {
+	if name == "_" {
+		ctx.cb.VarRef(nil)
+	} else {
+		scope := ctx.scope
+		at, o := scope.LookupParent(name, token.NoPos)
+		var v *gox.Var
+		if mode == token.DEFINE {
+			if o == nil || at != scope {
+				if o != nil {
+					log.Panicln("TODO: name redeclared -", at.String())
+				}
+				ctx.cb.NewVar(name, &v)
+				scope.Insert(types.NewVar(token.NoPos, ctx.pkg.Types, name, &varType{v}))
+			} else {
+				v = o.Type().(*varType).Var
+			}
+		} else {
+			if o == nil {
+				panic("TODO: var not found")
+			}
+			v = o.Type().(*varType).Var
+		}
+		ctx.cb.VarRef(v)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+func compileExpr(ctx *blockCtx, expr ast.Expr) {
+	switch v := expr.(type) {
+	//case *ast.Ident:
+	//	return compileIdent(ctx, v, false)
+	case *ast.BasicLit:
+		compileBasicLit(ctx, v)
+		/*	case *ast.CallExpr:
+				return compileCallExpr(ctx, v, 0)
+			case *ast.BinaryExpr:
+				return compileBinaryExpr(ctx, v)
+			case *ast.UnaryExpr:
+				return compileUnaryExpr(ctx, v)
+			case *ast.SelectorExpr:
+				return compileSelectorExpr(ctx, nil, v, false)
+			case *ast.ErrWrapExpr:
+				return compileErrWrapExpr(ctx, v)
+			case *ast.IndexExpr:
+				return compileIndexExpr(ctx, v, false)
+			case *ast.TwoValueIndexExpr:
+				return compileIndexExpr(ctx, v.IndexExpr, true)
+			case *ast.SliceExpr:
+				return compileSliceExpr(ctx, v)
+			case *ast.CompositeLit:
+				return compileCompositeLit(ctx, v)
+			case *ast.SliceLit:
+				return compileSliceLit(ctx, v)
+			case *ast.FuncLit:
+				return compileFuncLit(ctx, v)
+			case *ast.ParenExpr:
+				return compileExpr(ctx, v.X)
+			case *ast.ListComprehensionExpr:
+				return compileListComprehensionExpr(ctx, v)
+			case *ast.MapComprehensionExpr:
+				return compileMapComprehensionExpr(ctx, v)
+			case *ast.ArrayType:
+				return compileArrayType(ctx, v)
+			case *ast.Ellipsis:
+				return compileEllipsis(ctx, v)
+			case *ast.StarExpr:
+				return compileStarExpr(ctx, v)
+			case *ast.KeyValueExpr:
+				panic("compileExpr: ast.KeyValueExpr unexpected")
+		*/
+	default:
+		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
+	}
+}
+
+func compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {
+	if v.Kind == token.RAT {
+		panic("TODO: rational constant")
+	}
+	ctx.cb.Val(&goast.BasicLit{
+		Kind:  gotoken.Token(v.Kind),
+		Value: v.Value,
+	})
+}
+
+// -----------------------------------------------------------------------------
+
+/*
 import (
 	"reflect"
 	"strconv"
@@ -1502,5 +1623,5 @@ func findMethod(t reflect.Type, name string) (method reflect.Method, toptr bool,
 	}
 	return
 }
-
+*/
 // -----------------------------------------------------------------------------

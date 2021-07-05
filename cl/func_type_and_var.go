@@ -29,6 +29,20 @@ import (
 
 // -----------------------------------------------------------------------------
 
+type varType struct {
+	*gox.Var
+}
+
+func (p *varType) Underlying() types.Type {
+	panic("don't call me")
+}
+
+func (p *varType) String() string {
+	panic("don't call me")
+}
+
+// -----------------------------------------------------------------------------
+
 func toFuncType(ctx *loadCtx, typ *ast.FuncType) *types.Signature {
 	params, variadic := toParams(ctx, typ.Params.List)
 	results := toResults(ctx, typ.Results)

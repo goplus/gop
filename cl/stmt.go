@@ -17,11 +17,80 @@
 package cl
 
 import (
+	"go/types"
+	"log"
+	"reflect"
+
 	"github.com/goplus/gop/ast"
+	"github.com/goplus/gox"
 )
 
-func compileStmt(ctx *loadCtx, stmt ast.Stmt) {
+type blockCtx struct {
+	loadCtx
+	cb    *gox.CodeBuilder
+	scope *types.Scope
 }
+
+func compileStmts(ctx *blockCtx, body []ast.Stmt) {
+	for _, stmt := range body {
+		compileStmt(ctx, stmt)
+	}
+}
+
+func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
+	switch v := stmt.(type) {
+	case *ast.ExprStmt:
+		compileExpr(ctx, v.X)
+	case *ast.AssignStmt:
+		compileAssignStmt(ctx, v)
+		/*	case *ast.IfStmt:
+				compileIfStmt(ctx, v)
+			case *ast.SwitchStmt:
+				compileSwitchStmt(ctx, v)
+			case *ast.ForPhraseStmt:
+				compileForPhraseStmt(ctx, v)
+			case *ast.RangeStmt:
+				compileRangeStmt(ctx, v)
+			case *ast.ForStmt:
+				compileForStmt(ctx, v)
+			case *ast.BlockStmt:
+				compileNewBlock(ctx, v)
+			case *ast.ReturnStmt:
+				compileReturnStmt(ctx, v)
+			case *ast.IncDecStmt:
+				compileIncDecStmt(ctx, v)
+			case *ast.BranchStmt:
+				compileBranchStmt(ctx, v)
+			case *ast.LabeledStmt:
+				compileLabeledStmt(ctx, v)
+			case *ast.DeferStmt:
+				compileDeferStmt(ctx, v)
+			case *ast.GoStmt:
+				compileGoStmt(ctx, v)
+			case *ast.DeclStmt:
+				compileDeclStmt(ctx, v)
+			case *ast.SendStmt:
+				compileSendStmt(ctx, v)
+		*/
+	case *ast.EmptyStmt:
+		// do nothing
+	default:
+		log.Panicln("TODO - compileStmt failed: unknown -", reflect.TypeOf(v))
+	}
+	ctx.cb.EndStmt()
+}
+
+func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
+	for _, lhs := range expr.Lhs {
+		compileExprLHS(ctx, lhs, expr.Tok)
+	}
+	for _, rhs := range expr.Rhs {
+		compileExpr(ctx, rhs)
+	}
+	ctx.cb.Assign(len(expr.Rhs), len(expr.Rhs))
+}
+
+// -----------------------------------------------------------------------------
 
 /*
 import (

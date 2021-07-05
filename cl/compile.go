@@ -19,6 +19,7 @@ package cl
 
 import (
 	"context"
+	"go/types"
 	"log"
 	"path"
 	"reflect"
@@ -139,7 +140,25 @@ func loadFunc(ctx *loadCtx, d *ast.FuncDecl, isUnnamed bool) {
 	} else {
 		sig := toFuncType(ctx, d.Type)
 		fn := pkg.NewFuncWith(name, sig)
-		fn.BodyStart(pkg).End()
+		if body := d.Body; body != nil {
+			cb := fn.BodyStart(pkg)
+			scope := types.NewScope(pkg.Types.Scope(), body.Pos(), body.End(), "body of func "+name)
+			insertParams(scope, sig.Params())
+			insertParams(scope, sig.Results())
+			compileStmts(&blockCtx{loadCtx: *ctx, cb: cb, scope: scope}, d.Body.List)
+			cb.End()
+		}
+	}
+}
+
+func insertParams(scope *types.Scope, params *types.Tuple) {
+	if params == nil {
+		for i, n := 0, params.Len(); i < n; i++ {
+			v := params.At(i)
+			if name := v.Name(); name != "" {
+				scope.Insert(v)
+			}
+		}
 	}
 }
 
