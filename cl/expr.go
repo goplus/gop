@@ -82,14 +82,14 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) {
 	//	return compileIdent(ctx, v, false)
 	case *ast.BasicLit:
 		compileBasicLit(ctx, v)
-		/*	case *ast.CallExpr:
-				return compileCallExpr(ctx, v, 0)
-			case *ast.BinaryExpr:
+	case *ast.CallExpr:
+		compileCallExpr(ctx, v)
+	case *ast.SelectorExpr:
+		compileSelectorExpr(ctx, v)
+		/*	case *ast.BinaryExpr:
 				return compileBinaryExpr(ctx, v)
 			case *ast.UnaryExpr:
 				return compileUnaryExpr(ctx, v)
-			case *ast.SelectorExpr:
-				return compileSelectorExpr(ctx, nil, v, false)
 			case *ast.ErrWrapExpr:
 				return compileErrWrapExpr(ctx, v)
 			case *ast.IndexExpr:
@@ -122,6 +122,32 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) {
 	default:
 		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
 	}
+}
+
+func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) {
+	switch x := v.X.(type) {
+	case *ast.Ident:
+		scope, o := ctx.scope.LookupParent(x.Name, token.NoPos)
+		if o != nil {
+			_ = scope
+		} else if at, ok := ctx.file.imports[x.Name]; ok {
+			ctx.cb.Val(at.Ref(v.Sel.Name))
+			return
+		} else {
+			panic("TODO: ident not found")
+		}
+	default:
+		compileExpr(ctx, v.X)
+	}
+	panic("TODO: access object member")
+}
+
+func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
+	compileExpr(ctx, v.Fun)
+	for _, arg := range v.Args {
+		compileExpr(ctx, arg)
+	}
+	ctx.cb.Call(len(v.Args), v.Ellipsis != gotoken.NoPos)
 }
 
 func compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {

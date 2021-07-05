@@ -63,18 +63,27 @@ func main() {
 `)
 }
 
-func TestFunc(t *testing.T) {
-	gopClTest(t, `import "fmt"
+/*
+func TestAnonymousImport(t *testing.T) {
+	gopClTest(t, `println("Hello")`, `package main
 
-func foo(fmt string, args ...interface{}) {
+import fmt "fmt"
+
+func main() {
+	fmt.Println("Hello")
+}
+`)
+}
+*/
+
+func TestFunc(t *testing.T) {
+	gopClTest(t, `func foo(format string, args ...interface{}) {
 }
 
 func main() {
 }`, `package main
 
-import fmt "fmt"
-
-func foo(fmt string, args ...interface {
+func foo(format string, args ...interface {
 }) {
 }
 func main() {
@@ -88,6 +97,19 @@ func TestUnnamedMainFunc(t *testing.T) {
 func main() {
 	var i int
 	i = 1
+}
+`)
+}
+
+func TestFuncCall(t *testing.T) {
+	gopClTest(t, `import "fmt"
+
+fmt.Println("Hello")`, `package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Println("Hello")
 }
 `)
 }
