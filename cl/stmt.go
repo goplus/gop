@@ -87,7 +87,7 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 	for _, rhs := range expr.Rhs {
 		compileExpr(ctx, rhs)
 	}
-	ctx.cb.Assign(len(expr.Rhs), len(expr.Rhs))
+	ctx.cb.Assign(len(expr.Lhs), len(expr.Rhs))
 }
 
 // -----------------------------------------------------------------------------

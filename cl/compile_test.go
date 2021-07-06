@@ -152,3 +152,19 @@ func main() {
 }
 `)
 }
+
+func TestAssignUnderscore(t *testing.T) {
+	gox.SetDebug(true)
+	gopClTest(t, `import log "fmt"
+
+_, err := log.Println("Hello")
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	var err error
+	_, err = fmt.Println("Hello")
+}
+`)
+}
