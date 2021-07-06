@@ -57,11 +57,13 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) {
 		compileCallExpr(ctx, v)
 	case *ast.SelectorExpr:
 		compileSelectorExpr(ctx, v)
-		/*	case *ast.BinaryExpr:
-				return compileBinaryExpr(ctx, v)
-			case *ast.UnaryExpr:
-				return compileUnaryExpr(ctx, v)
-			case *ast.ErrWrapExpr:
+	case *ast.BinaryExpr:
+		compileBinaryExpr(ctx, v)
+	case *ast.UnaryExpr:
+		compileUnaryExpr(ctx, v)
+	case *ast.FuncLit:
+		compileFuncLit(ctx, v)
+		/*	case *ast.ErrWrapExpr:
 				return compileErrWrapExpr(ctx, v)
 			case *ast.IndexExpr:
 				return compileIndexExpr(ctx, v, false)
@@ -73,8 +75,6 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) {
 				return compileCompositeLit(ctx, v)
 			case *ast.SliceLit:
 				return compileSliceLit(ctx, v)
-			case *ast.FuncLit:
-				return compileFuncLit(ctx, v)
 			case *ast.ParenExpr:
 				return compileExpr(ctx, v.X)
 			case *ast.ListComprehensionExpr:
@@ -93,6 +93,17 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) {
 	default:
 		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
 	}
+}
+
+func compileUnaryExpr(ctx *blockCtx, v *ast.UnaryExpr) {
+	compileExpr(ctx, v.X)
+	ctx.cb.UnaryOp(gotoken.Token(v.Op))
+}
+
+func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) {
+	compileExpr(ctx, v.X)
+	compileExpr(ctx, v.Y)
+	ctx.cb.BinaryOp(gotoken.Token(v.Op))
 }
 
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) {

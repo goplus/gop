@@ -76,6 +76,24 @@ func main() {
 }
 */
 
+func TestClosure(t *testing.T) {
+	gopClTest(t, `import "fmt"
+
+func(v string) {
+	fmt.Println(v)
+}("Hello")
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	func(v string) {
+		fmt.Println(v)
+	}("Hello")
+}
+`)
+}
+
 func TestFunc(t *testing.T) {
 	gopClTest(t, `func foo(format string, args ...interface{}) {
 }
@@ -165,6 +183,27 @@ import fmt "fmt"
 func main() {
 	var err error
 	_, err = fmt.Println("Hello")
+}
+`)
+}
+
+func TestOperator(t *testing.T) {
+	gopClTest(t, `
+a := "Hi"
+b := a + "!"
+c := 13
+d := -c
+`, `package main
+
+func main() {
+	var a string
+	a = "Hi"
+	var b string
+	b = a + "!"
+	var c int
+	c = 13
+	var d int
+	d = -c
 }
 `)
 }

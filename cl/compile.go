@@ -130,6 +130,20 @@ func loadFile(p *gox.Package, f *ast.File) {
 	}
 }
 
+func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
+	sig := toFuncType(&ctx.loadCtx, v.Type)
+	fn := ctx.cb.NewClosureWith(sig)
+	if body := v.Body; body != nil {
+		pkg := ctx.pkg
+		cb := fn.BodyStart(pkg)
+		scope := types.NewScope(pkg.Types.Scope(), body.Pos(), body.End(), "body of closure")
+		insertParams(scope, sig.Params())
+		insertParams(scope, sig.Results())
+		compileStmts(&blockCtx{loadCtx: ctx.loadCtx, cb: cb, scope: scope}, body.List)
+		cb.End()
+	}
+}
+
 func loadFunc(ctx *loadCtx, d *ast.FuncDecl, isUnnamed bool) {
 	pkg := ctx.pkg
 	name := d.Name.Name
@@ -145,7 +159,7 @@ func loadFunc(ctx *loadCtx, d *ast.FuncDecl, isUnnamed bool) {
 			scope := types.NewScope(pkg.Types.Scope(), body.Pos(), body.End(), "body of func "+name)
 			insertParams(scope, sig.Params())
 			insertParams(scope, sig.Results())
-			compileStmts(&blockCtx{loadCtx: *ctx, cb: cb, scope: scope}, d.Body.List)
+			compileStmts(&blockCtx{loadCtx: *ctx, cb: cb, scope: scope}, body.List)
 			cb.End()
 		}
 	}
