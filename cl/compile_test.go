@@ -134,3 +134,21 @@ func main() {
 }
 `)
 }
+
+func TestInterfaceMethods(t *testing.T) {
+	gopClTest(t, `package main
+
+func foo(v ...interface { Bar() }) {
+}
+
+func main() {
+}`, `package main
+
+func foo(v ...interface {
+	Bar()
+}) {
+}
+func main() {
+}
+`)
+}

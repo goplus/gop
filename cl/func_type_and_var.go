@@ -137,11 +137,28 @@ func toArrayType(ctx *loadCtx, v *ast.ArrayType) types.Type {
 }
 
 func toInterfaceType(ctx *loadCtx, v *ast.InterfaceType) types.Type {
-	methods := v.Methods.List
-	if methods == nil {
+	methodsList := v.Methods.List
+	if methodsList == nil {
 		return types.NewInterfaceType(nil, nil)
 	}
-	panic("toInterfaceType: todo")
+	var pkg = ctx.pkg.Types
+	var methods []*types.Func
+	var embeddeds []types.Type
+	for _, m := range methodsList {
+		if m.Type == nil { // embedded
+			panic("TODO: embedded")
+		}
+		name := m.Names[0].Name
+		typ, ok := m.Type.(*ast.FuncType)
+		if !ok {
+			panic("TODO: not function type")
+		}
+		sig := toFuncType(ctx, typ)
+		methods = append(methods, types.NewFunc(token.NoPos, pkg, name, sig))
+	}
+	intf := types.NewInterfaceType(methods, embeddeds)
+	intf.Complete()
+	return intf
 }
 
 // -----------------------------------------------------------------------------
