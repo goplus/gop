@@ -54,9 +54,22 @@ func TestImport(t *testing.T) {
 	gopClTest(t, `import "fmt"
 
 func main() {
+	fmt.Println("Hi")
 }`, `package main
 
 import fmt "fmt"
+
+func main() {
+	fmt.Println("Hi")
+}
+`)
+}
+
+func TestImportUnused(t *testing.T) {
+	gopClTest(t, `import "fmt"
+
+func main() {
+}`, `package main
 
 func main() {
 }
@@ -149,6 +162,30 @@ func foo(args ...interface {
 	fmt.Println(args...)
 }
 func main() {
+}
+`)
+}
+
+func TestFuncCallCodeOrder(t *testing.T) {
+	gopClTest(t, `import "fmt"
+
+func main() {
+	foo("Hello", 123)
+}
+
+func foo(args ...interface{}) {
+	fmt.Println(args...)
+}
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	foo("Hello", 123)
+}
+func foo(args ...interface {
+}) {
+	fmt.Println(args...)
 }
 `)
 }

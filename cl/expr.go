@@ -132,6 +132,14 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
 	ctx.cb.Call(len(v.Args), v.Ellipsis != gotoken.NoPos)
 }
 
+func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
+	sig := toFuncType(ctx.loadCtx, v.Type)
+	fn := ctx.cb.NewClosureWith(sig)
+	if body := v.Body; body != nil {
+		loadFuncBody(ctx.loadCtx, fn, body, "closure")
+	}
+}
+
 func compileIdentLHS(ctx *blockCtx, name string, mode token.Token) {
 	if name == "_" {
 		ctx.cb.VarRef(nil)

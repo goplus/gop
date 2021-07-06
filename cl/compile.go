@@ -91,9 +91,24 @@ func NewPackage(
 	return
 }
 
-type loadCtx struct {
-	pkg  *gox.Package
-	file *fileCtx
+type clFuncBody struct {
+	fn   *gox.Func
+	body *ast.BlockStmt
+}
+
+func (p *clFuncBody) load(ctx *loadCtx) {
+	loadFuncBody(ctx, p.fn, p.body, "body of func "+p.fn.Name())
+}
+
+func loadFuncBody(ctx *loadCtx, fn *gox.Func, body *ast.BlockStmt, comment string) {
+	pkg := ctx.pkg
+	sig := fn.Type().(*types.Signature)
+	cb := fn.BodyStart(pkg)
+	scope := types.NewScope(pkg.Types.Scope(), body.Pos(), body.End(), comment)
+	insertParams(scope, sig.Params())
+	insertParams(scope, sig.Results())
+	compileStmts(&blockCtx{loadCtx: ctx, cb: cb, scope: scope}, body.List)
+	cb.End()
 }
 
 type fileCtx struct {
@@ -101,8 +116,21 @@ type fileCtx struct {
 	imports map[string]*gox.PkgRef
 }
 
+type loadCtx struct {
+	pkg  *gox.Package
+	file *fileCtx
+	fns  []*clFuncBody
+}
+
+func (p *loadCtx) complete() {
+	for _, fn := range p.fns {
+		fn.load(p)
+	}
+	p.fns = nil
+}
+
 func loadFile(p *gox.Package, f *ast.File) {
-	ctx := &loadCtx{p, nil}
+	ctx := &loadCtx{pkg: p}
 	file := &fileCtx{ctx, make(map[string]*gox.PkgRef)}
 	ctx.file = file
 	last := len(f.Decls) - 1
@@ -128,20 +156,7 @@ func loadFile(p *gox.Package, f *ast.File) {
 			log.Panicln("TODO - gopkg.Package.load: unknown decl -", reflect.TypeOf(decl))
 		}
 	}
-}
-
-func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
-	sig := toFuncType(&ctx.loadCtx, v.Type)
-	fn := ctx.cb.NewClosureWith(sig)
-	if body := v.Body; body != nil {
-		pkg := ctx.pkg
-		cb := fn.BodyStart(pkg)
-		scope := types.NewScope(pkg.Types.Scope(), body.Pos(), body.End(), "body of closure")
-		insertParams(scope, sig.Params())
-		insertParams(scope, sig.Results())
-		compileStmts(&blockCtx{loadCtx: ctx.loadCtx, cb: cb, scope: scope}, body.List)
-		cb.End()
-	}
+	ctx.complete()
 }
 
 func loadFunc(ctx *loadCtx, d *ast.FuncDecl, isUnnamed bool) {
@@ -155,12 +170,7 @@ func loadFunc(ctx *loadCtx, d *ast.FuncDecl, isUnnamed bool) {
 		sig := toFuncType(ctx, d.Type)
 		fn := pkg.NewFuncWith(name, sig)
 		if body := d.Body; body != nil {
-			cb := fn.BodyStart(pkg)
-			scope := types.NewScope(pkg.Types.Scope(), body.Pos(), body.End(), "body of func "+name)
-			insertParams(scope, sig.Params())
-			insertParams(scope, sig.Results())
-			compileStmts(&blockCtx{loadCtx: *ctx, cb: cb, scope: scope}, body.List)
-			cb.End()
+			ctx.fns = append(ctx.fns, &clFuncBody{fn: fn, body: body})
 		}
 	}
 }

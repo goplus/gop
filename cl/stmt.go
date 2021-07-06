@@ -26,7 +26,7 @@ import (
 )
 
 type blockCtx struct {
-	loadCtx
+	*loadCtx
 	cb    *gox.CodeBuilder
 	scope *types.Scope
 }
