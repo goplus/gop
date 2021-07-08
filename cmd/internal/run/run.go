@@ -51,12 +51,13 @@ func init() {
 	Cmd.Run = runCmd
 }
 
-func saveGoFile(dir string, pkg *gox.Package) error {
+func saveGoFile(gofile string, pkg *gox.Package) error {
+	dir := filepath.Dir(gofile)
 	err := os.MkdirAll(dir, 0777)
 	if err != nil {
 		return err
 	}
-	return gox.WriteFile(dir+"/gop_autogen.go", pkg)
+	return gox.WriteFile(gofile, pkg)
 }
 
 func runCmd(cmd *base.Command, args []string) {
@@ -70,6 +71,7 @@ func runCmd(cmd *base.Command, args []string) {
 		log.SetOutputLevel(0x7000)
 	} else if *flagDebug {
 		log.SetOutputLevel(log.Ldebug)
+		gox.SetDebug(true)
 	}
 	if *flagProf {
 		panic("TODO: profile not impl")
@@ -101,13 +103,12 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 	var gofile string
 	if isDir {
-		err = saveGoFile(target, out)
-		gofile = target
+		gofile = target + "/gop_autogen.go"
 	} else {
 		dir, file := filepath.Split(target)
-		gofile = filepath.Join(dir, file[:len(file)-len(filepath.Ext(file))]+".go")
-		err = gox.WriteFile(gofile, out)
+		gofile = filepath.Join(dir, ".gop", file+".go")
 	}
+	err = saveGoFile(gofile, out)
 	if err != nil {
 		log.Fatalln("saveGoFile failed:", err)
 	}
