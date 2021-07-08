@@ -76,18 +76,19 @@ func main() {
 `)
 }
 
-/*
 func TestAnonymousImport(t *testing.T) {
-	gopClTest(t, `println("Hello")`, `package main
+	gopClTest(t, `println("Hello")
+printf("Hello Go+\n")
+`, `package main
 
 import fmt "fmt"
 
 func main() {
 	fmt.Println("Hello")
+	fmt.Printf("Hello Go+\n")
 }
 `)
 }
-*/
 
 func TestClosure(t *testing.T) {
 	gopClTest(t, `import "fmt"

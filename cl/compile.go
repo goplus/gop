@@ -72,17 +72,17 @@ func NewPackage(
 		conf = &Config{}
 	}
 	confGox := &gox.Config{
-		Context:          conf.Context,
-		Logf:             conf.Logf,
-		Dir:              conf.Dir,
-		Env:              conf.Env,
-		BuildFlags:       conf.BuildFlags,
-		Fset:             fset,
-		ParseFile:        nil, // TODO
-		LoadPkgs:         nil, // TODO
-		Prefix:           nil,
-		Builtin:          nil, // TODO
-		CheckBuiltinType: nil, // TODO
+		Context:    conf.Context,
+		Logf:       conf.Logf,
+		Dir:        conf.Dir,
+		Env:        conf.Env,
+		BuildFlags: conf.BuildFlags,
+		Fset:       fset,
+		ParseFile:  nil, // TODO
+		LoadPkgs:   nil, // TODO
+		Prefix:     nil,
+		Contracts:  nil,
+		NewBuiltin: newBuiltinDefault,
 	}
 	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
 	for _, f := range pkg.Files {

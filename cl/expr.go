@@ -50,7 +50,7 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode token.Token) {
 func compileExpr(ctx *blockCtx, expr ast.Expr) {
 	switch v := expr.(type) {
 	case *ast.Ident:
-		compileIdent(ctx, v)
+		compileIdent(ctx, v, false)
 	case *ast.BasicLit:
 		compileBasicLit(ctx, v)
 	case *ast.CallExpr:
@@ -125,9 +125,16 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) {
 }
 
 func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
-	compileExpr(ctx, v.Fun)
-	for _, arg := range v.Args {
-		compileExpr(ctx, arg)
+	if fn, ok := v.Fun.(*ast.Ident); ok {
+		compileIdent(ctx, fn, true)
+		for _, arg := range v.Args {
+			compileExpr(ctx, arg)
+		}
+	} else {
+		compileExpr(ctx, v.Fun)
+		for _, arg := range v.Args {
+			compileExpr(ctx, arg)
+		}
 	}
 	ctx.cb.Call(len(v.Args), v.Ellipsis != gotoken.NoPos)
 }
@@ -167,7 +174,7 @@ func compileIdentLHS(ctx *blockCtx, name string, mode token.Token) {
 	}
 }
 
-func compileIdent(ctx *blockCtx, ident *ast.Ident) {
+func compileIdent(ctx *blockCtx, ident *ast.Ident, allowBuiltin bool) bool {
 	name := ident.Name
 	if name == "_" {
 		log.Panicln("TODO: cannot use _ as value")
@@ -175,15 +182,25 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident) {
 	at, o := ctx.scope.LookupParent(name, token.NoPos)
 	if o != nil {
 		_ = at
-		switch t := o.Type().(type) {
-		case *varType:
-			ctx.cb.Val(t.Var)
-		default:
-			ctx.cb.Val(o)
+		switch t := o.(type) {
+		case *types.Var:
+			if vt, ok := t.Type().(*varType); ok {
+				ctx.cb.Val(vt.Var)
+				return false
+			}
+		case *types.Builtin:
+			if !allowBuiltin {
+				panic("unexpected builtin: " + name)
+			}
+			if o = ctx.pkg.Builtin().Ref(name); o == nil {
+				log.Panicln("TODO: unsupported builtin -", name)
+			}
 		}
+		ctx.cb.Val(o)
 	} else {
 		log.Panicln("TODO: var not found -", name)
 	}
+	return false
 }
 
 func compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {
