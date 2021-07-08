@@ -100,7 +100,7 @@ func testPkg(dir string) {
 		exitCode = -1
 		return
 	}
-	cmd2 := exec.Command("qrun", "-quiet", dir) // -quiet: don't generate any log
+	cmd2 := exec.Command("gop", "run", "-quiet", dir) // -quiet: don't generate any log
 	qrun, err := cmd2.CombinedOutput()
 	if err != nil {
 		os.Stderr.Write(qrun)
