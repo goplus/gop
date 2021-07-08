@@ -116,12 +116,14 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) {
 			ctx.cb.Val(at.Ref(v.Sel.Name))
 			return
 		} else {
-			panic("TODO: ident not found")
+			log.Panicln("TODO: ident not found -", x.Name)
 		}
 	default:
 		compileExpr(ctx, v.X)
+		ctx.cb.MemberVal(v.Sel.Name)
+		return
 	}
-	panic("TODO: access object member")
+	log.Panicln("TODO: access object member -", v.Sel.Name)
 }
 
 func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {

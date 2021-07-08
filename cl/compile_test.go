@@ -90,6 +90,26 @@ func main() {
 `)
 }
 
+func TestMemberVal(t *testing.T) {
+	gopClTest(t, `import "strings"
+
+x := strings.NewReplacer("?", "!").Replace("hello, world???")
+println("x:", x)
+`, `package main
+
+import (
+	fmt "fmt"
+	strings "strings"
+)
+
+func main() {
+	var x string
+	x = strings.NewReplacer("?", "!").Replace("hello, world???")
+	fmt.Println("x:", x)
+}
+`)
+}
+
 func TestClosure(t *testing.T) {
 	gopClTest(t, `import "fmt"
 
