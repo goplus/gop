@@ -102,7 +102,7 @@ func runCmd(cmd *base.Command, args []string) {
 	var gofile string
 	if isDir {
 		err = saveGoFile(target, out)
-		gofile = filepath.Join(target, "*.go")
+		gofile = target
 	} else {
 		dir, file := filepath.Split(target)
 		gofile = filepath.Join(dir, file[:len(file)-len(filepath.Ext(file))]+".go")
@@ -111,9 +111,14 @@ func runCmd(cmd *base.Command, args []string) {
 	if err != nil {
 		log.Fatalln("saveGoFile failed:", err)
 	}
-	err = exec.Command("go", "run", gofile).Run()
+	err = goRun(gofile)
 	if err != nil {
-		log.Fatalln("go run failed:", err)
+		switch e := err.(type) {
+		case *exec.ExitError:
+			os.Stderr.Write(e.Stderr)
+		default:
+			log.Fatalln("go run failed:", err)
+		}
 	}
 	if *flagProf {
 		panic("TODO: profile not impl")
@@ -127,6 +132,13 @@ func IsDir(target string) (bool, error) {
 		return false, err
 	}
 	return fi.IsDir(), nil
+}
+
+func goRun(target string) error {
+	cmd := exec.Command("go", "run", target)
+	gorun, err := cmd.Output()
+	os.Stdout.Write(gorun)
+	return err
 }
 
 // -----------------------------------------------------------------------------
