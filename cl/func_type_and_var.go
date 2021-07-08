@@ -75,9 +75,12 @@ func toParams(ctx *loadCtx, flds []*ast.Field) (typ *types.Tuple, variadic bool)
 	return types.NewTuple(args...), ok
 }
 
-func toParam(ctx *loadCtx, fld *ast.Field, args []*types.Var) []*gox.Param {
+func toParam(ctx *loadCtx, fld *ast.Field, args []*gox.Param) []*gox.Param {
 	typ := toType(ctx, fld.Type)
 	pkg := ctx.pkg
+	if len(fld.Names) == 0 {
+		return append(args, pkg.NewParam("", typ))
+	}
 	for _, name := range fld.Names {
 		args = append(args, pkg.NewParam(name.Name, typ))
 	}
@@ -97,27 +100,34 @@ func toType(ctx *loadCtx, typ ast.Expr) types.Type {
 	case *ast.Ellipsis:
 		elem := toType(ctx, v.Elt)
 		return types.NewSlice(elem)
+	case *ast.StarExpr:
+		elem := toType(ctx, v.X)
+		return types.NewPointer(elem)
+	case *ast.MapType:
+		key := toType(ctx, v.Key)
+		elem := toType(ctx, v.Value)
+		return types.NewMap(key, elem)
+	case *ast.ChanType:
+		return types.NewChan(typesChanDirs[v.Dir], toType(ctx, v.Value))
+	case *ast.FuncType:
+		return toFuncType(ctx, v)
 		/*	case *ast.SelectorExpr:
 				return toExternalType(ctx, v)
-			case *ast.StarExpr:
-				elem := toType(ctx, v.X)
-				return reflect.PtrTo(elem.(reflect.Type))
-			case *ast.FuncType:
-				return toFuncType(ctx, v)
 			case *ast.StructType:
 				return toStructType(ctx, v)
-			case *ast.MapType:
-				key := toType(ctx, v.Key)
-				elem := toType(ctx, v.Value)
-				return reflect.MapOf(key.(reflect.Type), elem.(reflect.Type))
-			case *ast.ChanType:
-				val := toType(ctx, v.Value)
-				return reflect.ChanOf(toChanDir(v.Dir), val.(reflect.Type))
 		*/
 	}
 	log.Panicln("toType: unknown -", reflect.TypeOf(typ))
 	return nil
 }
+
+var (
+	typesChanDirs = [...]types.ChanDir{
+		ast.RECV:            types.RecvOnly,
+		ast.SEND:            types.SendOnly,
+		ast.SEND | ast.RECV: types.SendRecv,
+	}
+)
 
 func toIdentType(ctx *loadCtx, ident string) types.Type {
 	if _, v := ctx.pkg.Types.Scope().LookupParent(ident, token.NoPos); v != nil {

@@ -153,6 +153,28 @@ func main() {
 `)
 }
 
+func TestFuncAsParam(t *testing.T) {
+	gopClTest(t, `import "fmt"
+
+func bar(foo func(string, ...interface{}) (int, error)) {
+	foo("Hello, %v!\n", "Go+")
+}
+
+bar(fmt.Printf)
+`, `package main
+
+import fmt "fmt"
+
+func bar(foo func( string,  ...interface {
+}) ( int,  error)) {
+	foo("Hello, %v!\n", "Go+")
+}
+func main() {
+	bar(fmt.Printf)
+}
+`)
+}
+
 func TestFuncCall(t *testing.T) {
 	gopClTest(t, `import "fmt"
 
