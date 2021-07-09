@@ -46,7 +46,7 @@ func gopClTest(t *testing.T, gopcode, expected string) {
 	}
 	result := b.String()
 	if result != expected {
-		t.Fatalf("\nResult:\n%s\nExpected:%s\n", result, expected)
+		t.Fatalf("\nResult:\n%s\nExpected:\n%s\n", result, expected)
 	}
 }
 
@@ -106,6 +106,46 @@ func main() {
 	var x string
 	x = strings.NewReplacer("?", "!").Replace("hello, world???")
 	fmt.Println("x:", x)
+}
+`)
+}
+
+func TestReturn(t *testing.T) {
+	gopClTest(t, `
+func foo(format string, args ...interface{}) (int, error) {
+	return println(format, args...)
+}
+
+func main() {
+}
+`, `package main
+
+import fmt "fmt"
+
+func foo(format string, args ...interface {
+}) ( int,  error) {
+	return fmt.Println(format, args...)
+}
+func main() {
+}
+`)
+}
+
+func TestReturnExpr(t *testing.T) {
+	gopClTest(t, `
+func foo(format string, args ...interface{}) (int, error) {
+	return 0, nil
+}
+
+func main() {
+}
+`, `package main
+
+func foo(format string, args ...interface {
+}) ( int,  error) {
+	return 0, nil
+}
+func main() {
 }
 `)
 }
@@ -171,6 +211,55 @@ func bar(foo func( string,  ...interface {
 }
 func main() {
 	bar(fmt.Printf)
+}
+`)
+}
+
+func TestFuncAsParam2(t *testing.T) {
+	gopClTest(t, `import (
+	"fmt"
+	"strings"
+)
+
+func foo(x string) string {
+	return strings.NewReplacer("?", "!").Replace(x)
+}
+
+func printf(format string, args ...interface{}) (n int, err error) {
+	n, err = fmt.Printf(format, args...)
+	return
+}
+
+func bar(foo func(string, ...interface{}) (int, error)) {
+	foo("Hello, %v!\n", "Go+")
+}
+
+bar(printf)
+fmt.Println(foo("Hello, world???"))
+fmt.Println(printf("Hello, %v\n", "Go+"))
+`, `package main
+
+import (
+	fmt "fmt"
+	strings "strings"
+)
+
+func foo(x string) ( string) {
+	return strings.NewReplacer("?", "!").Replace(x)
+}
+func printf(format string, args ...interface {
+}) (n int, err error) {
+	n, err = fmt.Printf(format, args...)
+	return
+}
+func bar(foo func( string,  ...interface {
+}) ( int,  error)) {
+	foo("Hello, %v!\n", "Go+")
+}
+func main() {
+	bar(printf)
+	fmt.Println(foo("Hello, world???"))
+	fmt.Println(printf("Hello, %v\n", "Go+"))
 }
 `)
 }

@@ -43,6 +43,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileExpr(ctx, v.X)
 	case *ast.AssignStmt:
 		compileAssignStmt(ctx, v)
+	case *ast.ReturnStmt:
+		compileReturnStmt(ctx, v)
 		/*	case *ast.IfStmt:
 				compileIfStmt(ctx, v)
 			case *ast.SwitchStmt:
@@ -55,8 +57,6 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 				compileForStmt(ctx, v)
 			case *ast.BlockStmt:
 				compileNewBlock(ctx, v)
-			case *ast.ReturnStmt:
-				compileReturnStmt(ctx, v)
 			case *ast.IncDecStmt:
 				compileIncDecStmt(ctx, v)
 			case *ast.BranchStmt:
@@ -78,6 +78,13 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		log.Panicln("TODO - compileStmt failed: unknown -", reflect.TypeOf(v))
 	}
 	ctx.cb.EndStmt()
+}
+
+func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
+	for _, ret := range expr.Results {
+		compileExpr(ctx, ret)
+	}
+	ctx.cb.Return(len(expr.Results))
 }
 
 func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {

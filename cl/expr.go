@@ -155,25 +155,37 @@ func compileIdentLHS(ctx *blockCtx, name string, mode token.Token) {
 	} else {
 		scope := ctx.scope
 		at, o := scope.LookupParent(name, token.NoPos)
-		var v *gox.Var
+		var v interface{}
 		if mode == token.DEFINE {
 			if o == nil || at != scope {
 				if o != nil {
 					log.Panicln("TODO: name redeclared -", at.String())
 				}
-				ctx.cb.NewVar(name, &v)
-				scope.Insert(types.NewVar(token.NoPos, ctx.pkg.Types, name, &varType{v}))
+				var obj *gox.Var
+				ctx.cb.NewVar(name, &obj)
+				scope.Insert(types.NewVar(token.NoPos, ctx.pkg.Types, name, &varType{obj}))
+				v = obj
 			} else {
-				v = o.Type().(*varType).Var
+				v = varRef(o)
 			}
 		} else {
 			if o == nil {
 				panic("TODO: var not found")
 			}
-			v = o.Type().(*varType).Var
+			v = varRef(o)
 		}
 		ctx.cb.VarRef(v)
 	}
+}
+
+func varRef(o types.Object) interface{} {
+	if v, ok := o.(*types.Var); ok {
+		if t, ok := v.Type().(*varType); ok {
+			return t.Var
+		}
+		return v
+	}
+	panic("TODO: assign to non variable")
 }
 
 func compileIdent(ctx *blockCtx, ident *ast.Ident, allowBuiltin bool) bool {
