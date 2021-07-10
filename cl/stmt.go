@@ -17,19 +17,12 @@
 package cl
 
 import (
-	"go/types"
 	"log"
 	"reflect"
 
 	"github.com/goplus/gop/ast"
-	"github.com/goplus/gox"
+	"github.com/goplus/gop/token"
 )
-
-type blockCtx struct {
-	*loadCtx
-	cb    *gox.CodeBuilder
-	scope *types.Scope
-}
 
 func compileStmts(ctx *blockCtx, body []ast.Stmt) {
 	for _, stmt := range body {
@@ -88,8 +81,24 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 }
 
 func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
+	if expr.Tok == token.DEFINE {
+		names := make([]string, len(expr.Lhs))
+		for i, lhs := range expr.Lhs {
+			if v, ok := lhs.(*ast.Ident); ok {
+				names[i] = v.Name
+			} else {
+				log.Panicln("TODO: non-name $v on left side of :=")
+			}
+		}
+		ctx.cb.DefineVarStart(names...)
+		for _, rhs := range expr.Rhs {
+			compileExpr(ctx, rhs)
+		}
+		ctx.cb.EndInit(len(expr.Rhs))
+		return
+	}
 	for _, lhs := range expr.Lhs {
-		compileExprLHS(ctx, lhs, expr.Tok)
+		compileExprLHS(ctx, lhs)
 	}
 	for _, rhs := range expr.Rhs {
 		compileExpr(ctx, rhs)

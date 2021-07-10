@@ -50,6 +50,15 @@ func gopClTest(t *testing.T, gopcode, expected string) {
 	}
 }
 
+func _TestCompositeLit(t *testing.T) {
+	gopClTest(t, `x := []float64{1, 3.4, 5}`, `package main
+
+func main() {
+	x := []float64{1, 3.4, 5}
+}
+`)
+}
+
 func TestImport(t *testing.T) {
 	gopClTest(t, `import "fmt"
 
@@ -98,13 +107,12 @@ println("x:", x)
 `, `package main
 
 import (
-	fmt "fmt"
 	strings "strings"
+	fmt "fmt"
 )
 
 func main() {
-	var x string
-	x = strings.NewReplacer("?", "!").Replace("hello, world???")
+	x := strings.NewReplacer("?", "!").Replace("hello, world???")
 	fmt.Println("x:", x)
 }
 `)
@@ -187,8 +195,7 @@ func TestUnnamedMainFunc(t *testing.T) {
 	gopClTest(t, `i := 1`, `package main
 
 func main() {
-	var i int
-	i = 1
+	i := 1
 }
 `)
 }
@@ -350,8 +357,7 @@ _, err := log.Println("Hello")
 import fmt "fmt"
 
 func main() {
-	var err error
-	_, err = fmt.Println("Hello")
+	_, err := fmt.Println("Hello")
 }
 `)
 }
@@ -365,14 +371,10 @@ d := -c
 `, `package main
 
 func main() {
-	var a string
-	a = "Hi"
-	var b string
-	b = a + "!"
-	var c int
-	c = 13
-	var d int
-	d = -c
+	a := "Hi"
+	b := a + "!"
+	c := 13
+	d := -c
 }
 `)
 }

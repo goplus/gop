@@ -29,27 +29,13 @@ import (
 
 // -----------------------------------------------------------------------------
 
-type varType struct {
-	*gox.Var
-}
-
-func (p *varType) Underlying() types.Type {
-	panic("don't call me")
-}
-
-func (p *varType) String() string {
-	panic("don't call me")
-}
-
-// -----------------------------------------------------------------------------
-
-func toFuncType(ctx *loadCtx, typ *ast.FuncType) *types.Signature {
+func toFuncType(ctx *blockCtx, typ *ast.FuncType) *types.Signature {
 	params, variadic := toParams(ctx, typ.Params.List)
 	results := toResults(ctx, typ.Results)
 	return types.NewSignature(nil, params, results, variadic)
 }
 
-func toResults(ctx *loadCtx, in *ast.FieldList) *types.Tuple {
+func toResults(ctx *blockCtx, in *ast.FieldList) *types.Tuple {
 	if in == nil {
 		return nil
 	}
@@ -62,7 +48,7 @@ func toResults(ctx *loadCtx, in *ast.FieldList) *types.Tuple {
 	return types.NewTuple(args...)
 }
 
-func toParams(ctx *loadCtx, flds []*ast.Field) (typ *types.Tuple, variadic bool) {
+func toParams(ctx *blockCtx, flds []*ast.Field) (typ *types.Tuple, variadic bool) {
 	n := len(flds)
 	if n == 0 {
 		return nil, false
@@ -75,7 +61,7 @@ func toParams(ctx *loadCtx, flds []*ast.Field) (typ *types.Tuple, variadic bool)
 	return types.NewTuple(args...), ok
 }
 
-func toParam(ctx *loadCtx, fld *ast.Field, args []*gox.Param) []*gox.Param {
+func toParam(ctx *blockCtx, fld *ast.Field, args []*gox.Param) []*gox.Param {
 	typ := toType(ctx, fld.Type)
 	pkg := ctx.pkg
 	if len(fld.Names) == 0 {
@@ -89,7 +75,7 @@ func toParam(ctx *loadCtx, fld *ast.Field, args []*gox.Param) []*gox.Param {
 
 // -----------------------------------------------------------------------------
 
-func toType(ctx *loadCtx, typ ast.Expr) types.Type {
+func toType(ctx *blockCtx, typ ast.Expr) types.Type {
 	switch v := typ.(type) {
 	case *ast.Ident:
 		return toIdentType(ctx, v.Name)
@@ -129,7 +115,7 @@ var (
 	}
 )
 
-func toIdentType(ctx *loadCtx, ident string) types.Type {
+func toIdentType(ctx *blockCtx, ident string) types.Type {
 	if _, v := ctx.pkg.Types.Scope().LookupParent(ident, token.NoPos); v != nil {
 		if t, ok := v.(*types.TypeName); ok {
 			return t.Type()
@@ -138,15 +124,19 @@ func toIdentType(ctx *loadCtx, ident string) types.Type {
 	panic("TODO: not a type")
 }
 
-func toArrayType(ctx *loadCtx, v *ast.ArrayType) types.Type {
+func toArrayType(ctx *blockCtx, v *ast.ArrayType) types.Type {
 	elem := toType(ctx, v.Elt)
 	if v.Len == nil {
 		return types.NewSlice(elem)
 	}
-	panic("TODO: array type")
+	if _, ok := v.Len.(*ast.Ellipsis); ok {
+		return types.NewArray(elem, -1) // A negative length indicates an unknown length
+	}
+	compileExpr(ctx, v.Elt)
+	panic("TODO: array")
 }
 
-func toInterfaceType(ctx *loadCtx, v *ast.InterfaceType) types.Type {
+func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) types.Type {
 	methodsList := v.Methods.List
 	if methodsList == nil {
 		return types.NewInterfaceType(nil, nil)

@@ -25,29 +25,25 @@ import (
 
 // -----------------------------------------------------------------------------
 
-func initDelayedLoad(pkg gox.PkgImporter, gbl *types.Scope, builtin *types.Package, fn string) {
+func initDelayedLoad(pkg gox.PkgImporter, builtin *types.Package, fn string) {
 	fnTitle := string(fn[0]-'a'+'A') + fn[1:]
-	gbl.Insert(gox.NewDelayedLoad(token.NoPos, builtin, fn, func() types.Object {
+	builtin.Scope().Insert(gox.NewDelayedLoad(token.NoPos, builtin, fn, func() types.Object {
 		return pkg.Import("fmt").Ref(fnTitle)
 	}))
 }
 
 func initBuiltin(pkg gox.PkgImporter, builtin *types.Package) {
-	gbl := types.Universe
-	fns := []string{"printf", "errorf", "fprint", "fprintln", "fprintf"}
+	fns := []string{"print", "println", "printf", "errorf", "fprint", "fprintln", "fprintf"}
 	for _, fn := range fns {
-		initDelayedLoad(pkg, gbl, builtin, fn)
+		initDelayedLoad(pkg, builtin, fn)
 	}
 }
 
 func newBuiltinDefault(pkg gox.PkgImporter, prefix *gox.NamePrefix, contracts *gox.BuiltinContracts) *types.Package {
 	builtin := types.NewPackage("", "")
-	gbl := builtin.Scope()
-	initDelayedLoad(pkg, gbl, builtin, "print")
-	initDelayedLoad(pkg, gbl, builtin, "println")
+	initBuiltin(pkg, builtin)
 	gox.InitBuiltinOps(builtin, prefix, contracts)
 	gox.InitBuiltinFuncs(builtin)
-	initBuiltin(pkg, builtin)
 	return builtin
 }
 

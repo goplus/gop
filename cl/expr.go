@@ -31,10 +31,10 @@ import (
 
 // -----------------------------------------------------------------------------
 
-func compileExprLHS(ctx *blockCtx, expr ast.Expr, mode token.Token) {
+func compileExprLHS(ctx *blockCtx, expr ast.Expr) {
 	switch v := expr.(type) {
 	case *ast.Ident:
-		compileIdentLHS(ctx, v.Name, mode)
+		compileIdentLHS(ctx, v.Name)
 		/*	case *ast.IndexExpr:
 				compileIndexExprLHS(ctx, v, mode)
 			case *ast.SelectorExpr:
@@ -109,21 +109,17 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) {
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) {
 	switch x := v.X.(type) {
 	case *ast.Ident:
-		scope, o := ctx.scope.LookupParent(x.Name, token.NoPos)
-		if o != nil {
-			_ = scope
-		} else if at, ok := ctx.file.imports[x.Name]; ok {
+		if o := lookupParent(ctx.cb, x.Name); o != nil {
+			ctx.cb.Val(o)
+		} else if at, ok := ctx.imports[x.Name]; ok {
 			ctx.cb.Val(at.Ref(v.Sel.Name))
-			return
 		} else {
 			log.Panicln("TODO: ident not found -", x.Name)
 		}
 	default:
 		compileExpr(ctx, v.X)
 		ctx.cb.MemberVal(v.Sel.Name)
-		return
 	}
-	log.Panicln("TODO: access object member -", v.Sel.Name)
 }
 
 func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
@@ -142,67 +138,32 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
 }
 
 func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
-	sig := toFuncType(ctx.loadCtx, v.Type)
+	sig := toFuncType(ctx, v.Type)
 	fn := ctx.cb.NewClosureWith(sig)
 	if body := v.Body; body != nil {
-		loadFuncBody(ctx.loadCtx, fn, body, "closure")
+		loadFuncBody(ctx, fn, body)
 	}
 }
 
-func compileIdentLHS(ctx *blockCtx, name string, mode token.Token) {
+func compileIdentLHS(ctx *blockCtx, name string) {
 	if name == "_" {
 		ctx.cb.VarRef(nil)
 	} else {
-		scope := ctx.scope
-		at, o := scope.LookupParent(name, token.NoPos)
-		var v interface{}
-		if mode == token.DEFINE {
-			if o == nil || at != scope {
-				if o != nil {
-					log.Panicln("TODO: name redeclared -", at.String())
-				}
-				var obj *gox.Var
-				ctx.cb.NewVar(name, &obj)
-				scope.Insert(types.NewVar(token.NoPos, ctx.pkg.Types, name, &varType{obj}))
-				v = obj
-			} else {
-				v = varRef(o)
-			}
-		} else {
-			if o == nil {
-				panic("TODO: var not found")
-			}
-			v = varRef(o)
+		_, o := ctx.cb.Scope().LookupParent(name, gotoken.NoPos)
+		if o == nil {
+			panic("TODO: var not found")
 		}
-		ctx.cb.VarRef(v)
+		ctx.cb.VarRef(o)
 	}
 }
 
-func varRef(o types.Object) interface{} {
-	if v, ok := o.(*types.Var); ok {
-		if t, ok := v.Type().(*varType); ok {
-			return t.Var
-		}
-		return v
-	}
-	panic("TODO: assign to non variable")
-}
-
-func compileIdent(ctx *blockCtx, ident *ast.Ident, allowBuiltin bool) bool {
+func compileIdent(ctx *blockCtx, ident *ast.Ident, allowBuiltin bool) {
 	name := ident.Name
 	if name == "_" {
 		log.Panicln("TODO: cannot use _ as value")
 	}
-	at, o := ctx.scope.LookupParent(name, token.NoPos)
-	if o != nil {
-		_ = at
-		switch t := o.(type) {
-		case *types.Var:
-			if vt, ok := t.Type().(*varType); ok {
-				ctx.cb.Val(vt.Var)
-				return false
-			}
-		case *types.Builtin:
+	if o := lookupParent(ctx.cb, name); o != nil {
+		if _, ok := o.(*types.Builtin); ok {
 			if !allowBuiltin {
 				panic("unexpected builtin: " + name)
 			}
@@ -214,7 +175,13 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, allowBuiltin bool) bool {
 	} else {
 		log.Panicln("TODO: var not found -", name)
 	}
-	return false
+}
+
+func lookupParent(cb *gox.CodeBuilder, name string) types.Object {
+	if _, o := cb.Scope().LookupParent(name, token.NoPos); o != nil {
+		return o
+	}
+	return cb.Pkg().Builtin().Ref(name)
 }
 
 func compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {

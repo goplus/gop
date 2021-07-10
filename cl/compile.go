@@ -91,48 +91,37 @@ func NewPackage(
 	return
 }
 
-type clFuncBody struct {
-	fn   *gox.Func
-	body *ast.BlockStmt
-}
-
-func (p *clFuncBody) load(ctx *loadCtx) {
-	loadFuncBody(ctx, p.fn, p.body, "body of func "+p.fn.Name())
-}
-
-func loadFuncBody(ctx *loadCtx, fn *gox.Func, body *ast.BlockStmt, comment string) {
-	pkg := ctx.pkg
-	sig := fn.Type().(*types.Signature)
-	cb := fn.BodyStart(pkg)
-	scope := types.NewScope(pkg.Types.Scope(), body.Pos(), body.End(), comment)
-	insertParams(scope, sig.Params())
-	insertParams(scope, sig.Results())
-	compileStmts(&blockCtx{loadCtx: ctx, cb: cb, scope: scope}, body.List)
-	cb.End()
-}
-
-type fileCtx struct {
-	*loadCtx
+type blockCtx struct {
+	pkg     *gox.Package
+	fns     []*clFuncBody
+	cb      *gox.CodeBuilder
 	imports map[string]*gox.PkgRef
 }
 
-type loadCtx struct {
-	pkg  *gox.Package
-	file *fileCtx
-	fns  []*clFuncBody
-}
-
-func (p *loadCtx) complete() {
+func (p *blockCtx) complete() {
 	for _, fn := range p.fns {
 		fn.load(p)
 	}
 	p.fns = nil
 }
 
+type clFuncBody struct {
+	fn   *gox.Func
+	body *ast.BlockStmt
+}
+
+func (p *clFuncBody) load(ctx *blockCtx) {
+	loadFuncBody(ctx, p.fn, p.body)
+}
+
+func loadFuncBody(ctx *blockCtx, fn *gox.Func, body *ast.BlockStmt) {
+	ctx.cb = fn.BodyStart(ctx.pkg)
+	compileStmts(ctx, body.List)
+	ctx.cb.End()
+}
+
 func loadFile(p *gox.Package, f *ast.File) {
-	ctx := &loadCtx{pkg: p}
-	file := &fileCtx{ctx, make(map[string]*gox.PkgRef)}
-	ctx.file = file
+	ctx := &blockCtx{pkg: p, imports: make(map[string]*gox.PkgRef)}
 	last := len(f.Decls) - 1
 	for i, decl := range f.Decls {
 		switch d := decl.(type) {
@@ -141,7 +130,7 @@ func loadFile(p *gox.Package, f *ast.File) {
 		case *ast.GenDecl:
 			switch d.Tok {
 			case token.IMPORT:
-				loadImports(file, d)
+				loadImports(ctx, d)
 			case token.TYPE:
 				loadTypes(ctx, d)
 			case token.CONST:
@@ -159,7 +148,7 @@ func loadFile(p *gox.Package, f *ast.File) {
 	ctx.complete()
 }
 
-func loadFunc(ctx *loadCtx, d *ast.FuncDecl, isUnnamed bool) {
+func loadFunc(ctx *blockCtx, d *ast.FuncDecl, isUnnamed bool) {
 	pkg := ctx.pkg
 	name := d.Name.Name
 	if d.Recv != nil {
@@ -186,13 +175,13 @@ func insertParams(scope *types.Scope, params *types.Tuple) {
 	}
 }
 
-func loadImports(ctx *fileCtx, d *ast.GenDecl) {
+func loadImports(ctx *blockCtx, d *ast.GenDecl) {
 	for _, item := range d.Specs {
 		loadImport(ctx, item.(*ast.ImportSpec))
 	}
 }
 
-func loadImport(ctx *fileCtx, spec *ast.ImportSpec) {
+func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 	pkgPath := toString(spec.Path)
 	pkg := ctx.pkg.Import(pkgPath)
 	var name string
@@ -204,15 +193,15 @@ func loadImport(ctx *fileCtx, spec *ast.ImportSpec) {
 	ctx.imports[name] = pkg
 }
 
-func loadTypes(ctx *loadCtx, d *ast.GenDecl) {
+func loadTypes(ctx *blockCtx, d *ast.GenDecl) {
 	panic("TODO: loadTypes")
 }
 
-func loadConsts(ctx *loadCtx, d *ast.GenDecl) {
+func loadConsts(ctx *blockCtx, d *ast.GenDecl) {
 	panic("TODO: loadConsts")
 }
 
-func loadVars(ctx *loadCtx, d *ast.GenDecl, stmt ast.Stmt) {
+func loadVars(ctx *blockCtx, d *ast.GenDecl, stmt ast.Stmt) {
 	panic("TODO: loadVars")
 }
 
