@@ -68,6 +68,22 @@ func main() {
 `)
 }
 
+func TestSliceLit(t *testing.T) {
+	gopClTest(t, `
+x := [1, 3.4, 5]
+y := [1]
+z := []
+`, `package main
+
+func main() {
+	x := []float64{1, 3.4, 5}
+	y := []int{1}
+	z := []interface {
+	}{}
+}
+`)
+}
+
 func TestImport(t *testing.T) {
 	gopClTest(t, `import "fmt"
 

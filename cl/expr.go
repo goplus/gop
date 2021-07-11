@@ -65,6 +65,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) {
 		compileFuncLit(ctx, v)
 	case *ast.CompositeLit:
 		compileCompositeLit(ctx, v)
+	case *ast.SliceLit:
+		compileSliceLit(ctx, v)
 		/*	case *ast.ErrWrapExpr:
 				return compileErrWrapExpr(ctx, v)
 			case *ast.IndexExpr:
@@ -73,8 +75,6 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) {
 				return compileIndexExpr(ctx, v.IndexExpr, true)
 			case *ast.SliceExpr:
 				return compileSliceExpr(ctx, v)
-			case *ast.SliceLit:
-				return compileSliceLit(ctx, v)
 			case *ast.ParenExpr:
 				return compileExpr(ctx, v.X)
 			case *ast.ListComprehensionExpr:
@@ -225,23 +225,32 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) {
 	if kind != compositeLitKeyVal {
 		kind = 0
 	}
+	n := len(v.Elts)
 	if v.Type == nil {
-		ctx.cb.MapLit(nil, len(v.Elts)<<1)
+		ctx.cb.MapLit(nil, n<<1)
 		return
 	}
 	typ := toType(ctx, v.Type)
 	switch t := typ.(type) {
 	case *types.Slice:
-		ctx.cb.SliceLit(t, len(v.Elts)<<kind, kind == compositeLitKeyVal)
+		ctx.cb.SliceLit(t, n<<kind, kind == compositeLitKeyVal)
 	case *types.Array:
-		ctx.cb.ArrayLit(t, len(v.Elts)<<kind, kind == compositeLitKeyVal)
+		ctx.cb.ArrayLit(t, n<<kind, kind == compositeLitKeyVal)
 	case *types.Map:
-		ctx.cb.MapLit(t, len(v.Elts)<<1)
+		ctx.cb.MapLit(t, n<<1)
 	case *types.Struct:
 		panic("TODO: compileCompositeLit struct")
 	default:
 		log.Panicln("compileCompositeLit: unknown type -", reflect.TypeOf(typ))
 	}
+}
+
+func compileSliceLit(ctx *blockCtx, v *ast.SliceLit) {
+	n := len(v.Elts)
+	for _, elt := range v.Elts {
+		compileExpr(ctx, elt)
+	}
+	ctx.cb.SliceLit(nil, n)
 }
 
 // -----------------------------------------------------------------------------
