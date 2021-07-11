@@ -67,6 +67,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) {
 		compileCompositeLit(ctx, v)
 	case *ast.SliceLit:
 		compileSliceLit(ctx, v)
+	case *ast.ComprehensionExpr:
+		compileComprehensionExpr(ctx, v)
 		/*	case *ast.ErrWrapExpr:
 				return compileErrWrapExpr(ctx, v)
 			case *ast.IndexExpr:
@@ -77,8 +79,6 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) {
 				return compileSliceExpr(ctx, v)
 			case *ast.ParenExpr:
 				return compileExpr(ctx, v.X)
-			case *ast.ListComprehensionExpr:
-				return compileListComprehensionExpr(ctx, v)
 			case *ast.MapComprehensionExpr:
 				return compileMapComprehensionExpr(ctx, v)
 			case *ast.ArrayType:
@@ -253,6 +253,37 @@ func compileSliceLit(ctx *blockCtx, v *ast.SliceLit) {
 	}
 	ctx.cb.SliceLit(nil, n)
 }
+
+func compileComprehensionExpr(parent *blockCtx, v *ast.ComprehensionExpr) {
+	panic("TODO: compileComprehensionExpr")
+	/*	ctx, fns := compileForPhrases(parent, v.Fors)
+		exprElt := compileExpr(ctx, v.Elt)
+		typElem := boundType(ctx.infer.Get(-1).(iValue))
+		typSlice := reflect.SliceOf(typElem)
+		ctx.infer.Ret(1, &goValue{t: typSlice})
+		return func() {
+			for _, v := range fns {
+				e, fn := exprElt, v
+				exprElt = func() { fn(e) }
+			}
+			c := ctx.NewComprehension(typSlice)
+			ctx.out.ListComprehension(c)
+			exprElt()
+			ctx.out.EndComprehension(c)
+		}
+	*/
+}
+
+/*
+func compileForPhrases(ctx *blockCtx, fors []ast.ForPhrase) (*blockCtx, []func(exprElt func())) {
+	n := len(fors)
+	fns := make([]func(exprElt func()), n)
+	for i := n - 1; i >= 0; i-- {
+		ctx, fns[i] = compileForPhrase(ctx, fors[i], true)
+	}
+	return ctx, fns
+}
+*/
 
 // -----------------------------------------------------------------------------
 

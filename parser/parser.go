@@ -690,9 +690,9 @@ func (p *parser) parseArrayTypeOrSliceLit(allowSliceLit bool) (expr ast.Expr, is
 				phrases := p.parseForPhrases()
 				p.exprLev--
 				rbrack := p.expect(token.RBRACK)
-				return &ast.ListComprehensionExpr{
-					Lbrack: lbrack, Elt: len,
-					Fors: phrases, Rbrack: rbrack,
+				return &ast.ComprehensionExpr{
+					Lpos: lbrack, Tok: token.LBRACK, Elt: len,
+					Fors: phrases, Rpos: rbrack,
 				}, true
 			}
 		}
@@ -1415,7 +1415,7 @@ func (p *parser) parseLiteralValueOrMapComprehension() ast.Expr {
 
 	lbrace := p.expect(token.LBRACE)
 	var elts []ast.Expr
-	var mce *ast.MapComprehensionExpr
+	var mce *ast.ComprehensionExpr
 	p.exprLev++
 	if p.tok != token.RBRACE {
 		elts, mce = p.parseElementListOrMapComprehension()
@@ -1423,13 +1423,13 @@ func (p *parser) parseLiteralValueOrMapComprehension() ast.Expr {
 	p.exprLev--
 	rbrace := p.expectClosing(token.RBRACE, "composite literal")
 	if mce != nil {
-		mce.Lbrace, mce.Rbrace = lbrace, rbrace
+		mce.Lpos, mce.Rpos, mce.Tok = lbrace, rbrace, token.LBRACE
 		return mce
 	}
 	return &ast.CompositeLit{Lbrace: lbrace, Elts: elts, Rbrace: rbrace}
 }
 
-func (p *parser) parseElementListOrMapComprehension() (list []ast.Expr, mce *ast.MapComprehensionExpr) {
+func (p *parser) parseElementListOrMapComprehension() (list []ast.Expr, mce *ast.ComprehensionExpr) {
 	if p.trace {
 		defer un(trace(p, "ElementList"))
 	}
@@ -1445,7 +1445,7 @@ func (p *parser) parseElementListOrMapComprehension() (list []ast.Expr, mce *ast
 				log.Panicln("invalid map comprehension: a `key: value` pair is required.")
 			}
 			phrases := p.parseForPhrases()
-			return nil, &ast.MapComprehensionExpr{Elt: elt, Fors: phrases}
+			return nil, &ast.ComprehensionExpr{Elt: elt, Fors: phrases}
 		}
 		if !p.atComma("composite literal", token.RBRACE) {
 			break
@@ -1496,8 +1496,7 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	case *ast.FuncLit:
 	case *ast.CompositeLit:
 	case *ast.SliceLit:
-	case *ast.ListComprehensionExpr:
-	case *ast.MapComprehensionExpr:
+	case *ast.ComprehensionExpr:
 	case *ast.ParenExpr:
 		panic("unreachable")
 	case *ast.SelectorExpr:

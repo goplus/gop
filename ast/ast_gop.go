@@ -109,47 +109,29 @@ func (p *ForPhrase) End() token.Pos { return p.X.End() }
 
 func (p *ForPhrase) exprNode() {}
 
-// ListComprehensionExpr represents `[expr for k1, v1 <- listOrMap1, cond1 ...]`
-type ListComprehensionExpr struct {
-	Lbrack token.Pos // position of "["
-	Elt    Expr
-	Fors   []ForPhrase
-	Rbrack token.Pos // position of "]"
+// ComprehensionExpr represents
+//    `[vexpr for k1, v1 <- listOrMap1, cond1 ...]` or
+//    `{vexpr for k1, v1 <- listOrMap1, cond1 ...}` or
+//    `{kexpr: vexpr for k1, v1 <- listOrMap1, cond1 ...}`
+type ComprehensionExpr struct {
+	Lpos token.Pos   // position of "[" or "{"
+	Tok  token.Token // token.LBRACK '[' or token.LBRACE '{'
+	Elt  Expr        // *KeyValueExpr or Expr
+	Fors []ForPhrase
+	Rpos token.Pos // position of "]" or "}"
 }
 
 // Pos - position of first character belonging to the node
-func (p *ListComprehensionExpr) Pos() token.Pos {
-	return p.Lbrack
+func (p *ComprehensionExpr) Pos() token.Pos {
+	return p.Lpos
 }
 
 // End - position of first character immediately after the node
-func (p *ListComprehensionExpr) End() token.Pos {
-	return p.Rbrack + 1
+func (p *ComprehensionExpr) End() token.Pos {
+	return p.Rpos + 1
 }
 
-func (*ListComprehensionExpr) exprNode() {}
-
-// -----------------------------------------------------------------------------
-
-// MapComprehensionExpr represents `{kexpr: vexpr for k1, v1 <- listOrMap1, cond1 ...}`
-type MapComprehensionExpr struct {
-	Lbrace token.Pos // position of "{"
-	Elt    *KeyValueExpr
-	Fors   []ForPhrase
-	Rbrace token.Pos // position of "}"
-}
-
-// Pos - position of first character belonging to the node
-func (p *MapComprehensionExpr) Pos() token.Pos {
-	return p.Lbrace
-}
-
-// End - position of first character immediately after the node
-func (p *MapComprehensionExpr) End() token.Pos {
-	return p.Rbrace + 1
-}
-
-func (*MapComprehensionExpr) exprNode() {}
+func (*ComprehensionExpr) exprNode() {}
 
 // -----------------------------------------------------------------------------
 
@@ -170,14 +152,5 @@ func (p *ForPhraseStmt) End() token.Pos {
 }
 
 func (*ForPhraseStmt) stmtNode() {}
-
-// -----------------------------------------------------------------------------
-
-/* -- TODO: really need it?
-// A TwoValueIndexExpr node represents a two-value assignment expression (v, ok := m["key"])
-type TwoValueIndexExpr struct {
-	*IndexExpr
-}
-*/
 
 // -----------------------------------------------------------------------------

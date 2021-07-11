@@ -981,20 +981,24 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		p.print(token.LBRACK)
 		p.exprList(x.Lbrack, x.Elts, depth+1, commaTerm, x.Rbrack, x.Incomplete)
 		p.print(token.RBRACK)
-	case *ast.ListComprehensionExpr:
-		p.print(token.LBRACK)
-		p.expr0(x.Elt, depth+1)
-		p.print(blank)
-		p.listForPhrase(x.Lbrack, x.Fors, depth, x.Rbrack)
-		p.print(token.RBRACK)
-	case *ast.MapComprehensionExpr:
-		p.print(token.LBRACE)
-		p.expr0(x.Elt.Key, depth+1)
-		p.print(x.Elt.Colon, token.COLON, blank)
-		p.expr0(x.Elt.Value, depth+1)
-		p.print(blank)
-		p.listForPhrase(x.Lbrace, x.Fors, depth, x.Rbrace)
-		p.print(token.RBRACE)
+	case *ast.ComprehensionExpr:
+		switch x.Tok {
+		case token.LBRACK: // [...]
+			p.print(token.LBRACK)
+			p.expr0(x.Elt, depth+1)
+			p.print(blank)
+			p.listForPhrase(x.Lpos, x.Fors, depth, x.Rpos)
+			p.print(token.RBRACK)
+		default: // {...}
+			p.print(token.LBRACE)
+			elt := x.Elt.(*ast.KeyValueExpr)
+			p.expr0(elt.Key, depth+1)
+			p.print(elt.Colon, token.COLON, blank)
+			p.expr0(elt.Value, depth+1)
+			p.print(blank)
+			p.listForPhrase(x.Lpos, x.Fors, depth, x.Rpos)
+			p.print(token.RBRACE)
+		}
 	case *ast.ErrWrapExpr:
 		p.expr(x.X)
 		p.print(x.Tok)
