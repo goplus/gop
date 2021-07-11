@@ -38,10 +38,13 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileAssignStmt(ctx, v)
 	case *ast.ReturnStmt:
 		compileReturnStmt(ctx, v)
-		/*	case *ast.IfStmt:
-				compileIfStmt(ctx, v)
-			case *ast.SwitchStmt:
-				compileSwitchStmt(ctx, v)
+	case *ast.IfStmt:
+		compileIfStmt(ctx, v)
+	case *ast.SwitchStmt:
+		compileSwitchStmt(ctx, v)
+	case *ast.BranchStmt:
+		compileBranchStmt(ctx, v)
+		/*
 			case *ast.ForPhraseStmt:
 				compileForPhraseStmt(ctx, v)
 			case *ast.RangeStmt:
@@ -52,8 +55,6 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 				compileNewBlock(ctx, v)
 			case *ast.IncDecStmt:
 				compileIncDecStmt(ctx, v)
-			case *ast.BranchStmt:
-				compileBranchStmt(ctx, v)
 			case *ast.LabeledStmt:
 				compileLabeledStmt(ctx, v)
 			case *ast.DeferStmt:
@@ -104,6 +105,78 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		compileExpr(ctx, rhs)
 	}
 	ctx.cb.Assign(len(expr.Lhs), len(expr.Rhs))
+}
+
+func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
+	/*	cb := ctx.cb
+		cb.If()
+		if v.Init != nil {
+			compileStmt(ctx, v.Init)
+		}
+		compileExpr(ctx, v.Cond)
+		cb.Then()
+		compileStmts(ctx, v.Body.List)
+		if v.Else != nil {
+			cb.Else()
+			compileStmt(ctx, v.Else)
+		}
+		cb.End()
+	*/
+}
+
+func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
+	/*	cb := ctx.cb
+		cb.Switch()
+		if v.Init != nil {
+			compileStmt(ctx, v.Init)
+		}
+		if v.Tag != nil { // switch tag {....}
+			compileExpr(ctx, v.Tag)
+		} else {
+			cb.None() // switch {...}
+		}
+		cb.Then()
+		for _, stmt := range v.Body.List {
+			c, ok := stmt.(*ast.CaseClause)
+			if !ok {
+				log.Panicln("TODO: compile SwitchStmt failed - case clause expected.")
+			}
+			for _, citem := range c.List {
+				compileExpr(ctx, citem)
+			}
+			cb.Case(len(c.List)) // Case(0) means default case
+			body, has := hasFallthrough(c.Body)
+			compileStmts(ctx, body)
+			if has {
+				cb.Fallthrough()
+			}
+			cb.End()
+		}
+		cb.End()
+	*/
+}
+
+func hasFallthrough(body []ast.Stmt) ([]ast.Stmt, bool) {
+	if n := len(body); n > 0 {
+		if bs, ok := body[n-1].(*ast.BranchStmt); ok && bs.Tok == token.FALLTHROUGH {
+			return body[:n-1], true
+		}
+	}
+	return body, false
+}
+
+func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
+	switch v.Tok {
+	case token.FALLTHROUGH:
+		panic("TODO: fallthrough statement out of place")
+	case token.GOTO:
+		if v.Label == nil {
+			log.Panicln("TODO: label not defined")
+		}
+	case token.BREAK:
+	case token.CONTINUE:
+	}
+	panic("TODO: compileBranchStmt")
 }
 
 // -----------------------------------------------------------------------------

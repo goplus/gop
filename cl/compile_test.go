@@ -156,6 +156,114 @@ func main() {
 `)
 }
 
+func TestIf(t *testing.T) {
+	gopClTest(t, `x := 0
+if t := false; t {
+	x = 3
+} else {
+	x = 5
+}
+println("x:", x)
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	x := 0
+	if t := false; t {
+		x = 3
+	} else {
+		x = 5
+	}
+	fmt.Println("x:", x)
+}
+`)
+}
+
+func TestSwitch(t *testing.T) {
+	gopClTest(t, `x := 0
+switch s := "Hello"; s {
+default:
+	x = 7
+case "world", "hi":
+	x = 5
+case "xsw":
+	x = 3
+}
+println("x:", x)
+
+v := "Hello"
+switch {
+case v == "xsw":
+	x = 3
+case v == "hi", v == "world":
+	x = 9
+default:
+	x = 11
+}
+println("x:", x)
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	x := 0
+	switch s := "Hello"; s {
+	default:
+		x = 7
+	case "world", "hi":
+		x = 5
+	case "xsw":
+		x = 3
+	}
+	fmt.Println("x:", x)
+
+	v := "Hello"
+	switch {
+	case v == "xsw":
+		x = 3
+	case v == "hi", v == "world":
+		x = 9
+	default:
+		x = 11
+	}
+	fmt.Println("x:", x)
+}
+`)
+}
+
+func TestSwitchFallthrough(t *testing.T) {
+	gopClTest(t, `v := "Hello"
+switch v {
+case "Hello":
+	println(v)
+	fallthrough
+case "hi":
+	println(v)
+	fallthrough
+default:
+	println(v)
+}
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	v := "Hello"
+	switch v {
+	case "Hello":
+		fmt.Println(v)
+		fallthrough
+	case "hi":
+		fmt.Println(v)
+		fallthrough
+	default:
+		fmt.Println(v)
+	}
+}
+`)
+}
+
 func TestReturn(t *testing.T) {
 	gopClTest(t, `
 func foo(format string, args ...interface{}) (int, error) {
