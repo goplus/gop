@@ -42,6 +42,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileIfStmt(ctx, v)
 	case *ast.SwitchStmt:
 		compileSwitchStmt(ctx, v)
+	case *ast.BlockStmt:
+		compileStmts(ctx, v.List)
 	case *ast.BranchStmt:
 		compileBranchStmt(ctx, v)
 		/*
@@ -51,8 +53,6 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 				compileRangeStmt(ctx, v)
 			case *ast.ForStmt:
 				compileForStmt(ctx, v)
-			case *ast.BlockStmt:
-				compileNewBlock(ctx, v)
 			case *ast.IncDecStmt:
 				compileIncDecStmt(ctx, v)
 			case *ast.LabeledStmt:
@@ -108,52 +108,50 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 }
 
 func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
-	/*	cb := ctx.cb
-		cb.If()
-		if v.Init != nil {
-			compileStmt(ctx, v.Init)
-		}
-		compileExpr(ctx, v.Cond)
-		cb.Then()
-		compileStmts(ctx, v.Body.List)
-		if v.Else != nil {
-			cb.Else()
-			compileStmt(ctx, v.Else)
-		}
-		cb.End()
-	*/
+	cb := ctx.cb
+	cb.If()
+	if v.Init != nil {
+		compileStmt(ctx, v.Init)
+	}
+	compileExpr(ctx, v.Cond)
+	cb.Then()
+	compileStmts(ctx, v.Body.List)
+	if v.Else != nil {
+		cb.Else()
+		compileStmt(ctx, v.Else)
+	}
+	cb.End()
 }
 
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
-	/*	cb := ctx.cb
-		cb.Switch()
-		if v.Init != nil {
-			compileStmt(ctx, v.Init)
+	cb := ctx.cb
+	cb.Switch()
+	if v.Init != nil {
+		compileStmt(ctx, v.Init)
+	}
+	if v.Tag != nil { // switch tag {....}
+		compileExpr(ctx, v.Tag)
+	} else {
+		cb.None() // switch {...}
+	}
+	cb.Then()
+	for _, stmt := range v.Body.List {
+		c, ok := stmt.(*ast.CaseClause)
+		if !ok {
+			log.Panicln("TODO: compile SwitchStmt failed - case clause expected.")
 		}
-		if v.Tag != nil { // switch tag {....}
-			compileExpr(ctx, v.Tag)
-		} else {
-			cb.None() // switch {...}
+		for _, citem := range c.List {
+			compileExpr(ctx, citem)
 		}
-		cb.Then()
-		for _, stmt := range v.Body.List {
-			c, ok := stmt.(*ast.CaseClause)
-			if !ok {
-				log.Panicln("TODO: compile SwitchStmt failed - case clause expected.")
-			}
-			for _, citem := range c.List {
-				compileExpr(ctx, citem)
-			}
-			cb.Case(len(c.List)) // Case(0) means default case
-			body, has := hasFallthrough(c.Body)
-			compileStmts(ctx, body)
-			if has {
-				cb.Fallthrough()
-			}
-			cb.End()
+		cb.Case(len(c.List)) // Case(0) means default case
+		body, has := hasFallthrough(c.Body)
+		compileStmts(ctx, body)
+		if has {
+			cb.Fallthrough()
 		}
 		cb.End()
-	*/
+	}
+	cb.End()
 }
 
 func hasFallthrough(body []ast.Stmt) ([]ast.Stmt, bool) {

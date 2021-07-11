@@ -62,7 +62,7 @@ a := {"Hello": 1, "Go+": 5.1}
 func main() {
 	x := []float64{1, 3.4, 5}
 	y := map[string]int{"Hello": 1, "Go+": 5}
-	z := [...]int{1, 3, 5}
+	z := [3]int{1, 3, 5}
 	a := map[string]float64{"Hello": 1, "Go+": 5.1}
 }
 `)
@@ -217,7 +217,6 @@ func main() {
 		x = 3
 	}
 	fmt.Println("x:", x)
-
 	v := "Hello"
 	switch {
 	case v == "xsw":
