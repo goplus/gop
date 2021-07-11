@@ -84,6 +84,19 @@ func main() {
 `)
 }
 
+func TestKeyValModeLit(t *testing.T) {
+	gopClTest(t, `
+a := [...]float64{1, 3: 3.4, 5}
+b := []float64{2: 1.2, 3, 6: 4.5}
+`, `package main
+
+func main() {
+	a := [5]float64{1, 3: 3.4, 5}
+	b := []float64{2: 1.2, 3, 6: 4.5}
+}
+`)
+}
+
 func TestImport(t *testing.T) {
 	gopClTest(t, `import "fmt"
 

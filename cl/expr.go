@@ -195,36 +195,37 @@ func compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {
 }
 
 const (
-	compositeLitInvalid = 0
-	compositeLitKeyVal  = 1
-	compositeLitVal     = 2
+	compositeLitVal    = 0
+	compositeLitKeyVal = 1
 )
 
-func compileCompositeLitElts(ctx *blockCtx, elts []ast.Expr) (kind int) {
+func checkCompositeLitElts(ctx *blockCtx, elts []ast.Expr) (kind int) {
 	for _, elt := range elts {
-		tkind := compositeLitVal
+		if _, ok := elt.(*ast.KeyValueExpr); ok {
+			return compositeLitKeyVal
+		}
+	}
+	return compositeLitVal
+}
+
+func compileCompositeLitElts(ctx *blockCtx, elts []ast.Expr, kind int) {
+	for _, elt := range elts {
 		if kv, ok := elt.(*ast.KeyValueExpr); ok {
-			tkind = compositeLitKeyVal
 			compileExpr(ctx, kv.Key)
 			compileExpr(ctx, kv.Value)
 		} else {
-			compileExpr(ctx, elt)
-		}
-		if kind != tkind {
-			if kind != 0 {
-				panic("TODO: compileCompositeLitElts - invalid syntax")
+			if kind == compositeLitKeyVal {
+				ctx.cb.None()
 			}
-			kind = tkind
+			compileExpr(ctx, elt)
 		}
 	}
 	return
 }
 
 func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) {
-	kind := compileCompositeLitElts(ctx, v.Elts)
-	if kind != compositeLitKeyVal {
-		kind = 0
-	}
+	kind := checkCompositeLitElts(ctx, v.Elts)
+	compileCompositeLitElts(ctx, v.Elts, kind)
 	n := len(v.Elts)
 	if v.Type == nil {
 		ctx.cb.MapLit(nil, n<<1)
