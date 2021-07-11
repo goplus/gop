@@ -35,6 +35,7 @@ func gopClTest(t *testing.T, gopcode, expected string) {
 		t.Fatal("ParseFSDir:", err)
 	}
 	bar := pkgs["main"]
+	gox.SetDebug(true)
 	pkg, err := cl.NewPackage("", bar, fset, nil)
 	if err != nil {
 		t.Fatal("NewPackage:", err)
@@ -50,11 +51,19 @@ func gopClTest(t *testing.T, gopcode, expected string) {
 	}
 }
 
-func _TestCompositeLit(t *testing.T) {
-	gopClTest(t, `x := []float64{1, 3.4, 5}`, `package main
+func TestCompositeLit(t *testing.T) {
+	gopClTest(t, `
+x := []float64{1, 3.4, 5}
+y := map[string]int{"Hello": 1, "Go+": 5}
+z := [...]int{1, 3, 5}
+a := {"Hello": 1, "Go+": 5.1}
+`, `package main
 
 func main() {
 	x := []float64{1, 3.4, 5}
+	y := map[string]int{"Hello": 1, "Go+": 5}
+	z := [...]int{1, 3, 5}
+	a := map[string]float64{"Hello": 1, "Go+": 5.1}
 }
 `)
 }
@@ -348,7 +357,6 @@ func main() {
 }
 
 func TestAssignUnderscore(t *testing.T) {
-	gox.SetDebug(true)
 	gopClTest(t, `import log "fmt"
 
 _, err := log.Println("Hello")

@@ -17,6 +17,7 @@
 package cl
 
 import (
+	"go/constant"
 	"go/types"
 	"log"
 	"reflect"
@@ -132,8 +133,31 @@ func toArrayType(ctx *blockCtx, v *ast.ArrayType) types.Type {
 	if _, ok := v.Len.(*ast.Ellipsis); ok {
 		return types.NewArray(elem, -1) // A negative length indicates an unknown length
 	}
-	compileExpr(ctx, v.Elt)
-	panic("TODO: array")
+	return types.NewArray(elem, toInt64(ctx, v.Len))
+}
+
+func toBoundArrayLen(ctx *blockCtx, v *ast.CompositeLit) int64 {
+	n := int64(-1)
+	for _, elt := range v.Elts {
+		if e, ok := elt.(*ast.KeyValueExpr); ok {
+			if v := toInt64(ctx, e.Key); v > n {
+				n = v
+			}
+		} else {
+			n++
+		}
+	}
+	return n + 1
+}
+
+func toInt64(ctx *blockCtx, e ast.Expr) int64 {
+	cb := ctx.pkg.ConstStart()
+	compileExpr(ctx, e)
+	tv := cb.EndConst()
+	if v, ok := constant.Int64Val(tv.Value); ok {
+		return v
+	}
+	panic("TODO: require integer constant")
 }
 
 func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) types.Type {

@@ -63,6 +63,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) {
 		compileUnaryExpr(ctx, v)
 	case *ast.FuncLit:
 		compileFuncLit(ctx, v)
+	case *ast.CompositeLit:
+		compileCompositeLit(ctx, v)
 		/*	case *ast.ErrWrapExpr:
 				return compileErrWrapExpr(ctx, v)
 			case *ast.IndexExpr:
@@ -71,8 +73,6 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) {
 				return compileIndexExpr(ctx, v.IndexExpr, true)
 			case *ast.SliceExpr:
 				return compileSliceExpr(ctx, v)
-			case *ast.CompositeLit:
-				return compileCompositeLit(ctx, v)
 			case *ast.SliceLit:
 				return compileSliceLit(ctx, v)
 			case *ast.ParenExpr:
@@ -192,6 +192,56 @@ func compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {
 		Kind:  gotoken.Token(v.Kind),
 		Value: v.Value,
 	})
+}
+
+const (
+	compositeLitInvalid = 0
+	compositeLitKeyVal  = 1
+	compositeLitVal     = 2
+)
+
+func compileCompositeLitElts(ctx *blockCtx, elts []ast.Expr) (kind int) {
+	for _, elt := range elts {
+		tkind := compositeLitVal
+		if kv, ok := elt.(*ast.KeyValueExpr); ok {
+			tkind = compositeLitKeyVal
+			compileExpr(ctx, kv.Key)
+			compileExpr(ctx, kv.Value)
+		} else {
+			compileExpr(ctx, elt)
+		}
+		if kind != tkind {
+			if kind != 0 {
+				panic("TODO: compileCompositeLitElts - invalid syntax")
+			}
+			kind = tkind
+		}
+	}
+	return
+}
+
+func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) {
+	kind := compileCompositeLitElts(ctx, v.Elts)
+	if kind != compositeLitKeyVal {
+		kind = 0
+	}
+	if v.Type == nil {
+		ctx.cb.MapLit(nil, len(v.Elts)<<1)
+		return
+	}
+	typ := toType(ctx, v.Type)
+	switch t := typ.(type) {
+	case *types.Slice:
+		ctx.cb.SliceLit(t, len(v.Elts)<<kind, kind == compositeLitKeyVal)
+	case *types.Array:
+		ctx.cb.ArrayLit(t, len(v.Elts)<<kind, kind == compositeLitKeyVal)
+	case *types.Map:
+		ctx.cb.MapLit(t, len(v.Elts)<<1)
+	case *types.Struct:
+		panic("TODO: compileCompositeLit struct")
+	default:
+		log.Panicln("compileCompositeLit: unknown type -", reflect.TypeOf(typ))
+	}
 }
 
 // -----------------------------------------------------------------------------
