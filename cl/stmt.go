@@ -46,13 +46,13 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileRangeStmt(ctx, v)
 	case *ast.ForStmt:
 		compileForStmt(ctx, v)
+	case *ast.ForPhraseStmt:
+		compileForPhraseStmt(ctx, v)
 	case *ast.BlockStmt:
 		compileStmts(ctx, v.List)
 	case *ast.BranchStmt:
 		compileBranchStmt(ctx, v)
 		/*
-			case *ast.ForPhraseStmt:
-				compileForPhraseStmt(ctx, v)
 			case *ast.IncDecStmt:
 				compileIncDecStmt(ctx, v)
 			case *ast.LabeledStmt:
@@ -144,6 +144,32 @@ func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 	}
 	cb.RangeAssignThen()
 	compileStmts(ctx, v.Body.List)
+	cb.End()
+}
+
+func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
+	cb := ctx.cb
+	names := make([]string, 1, 2)
+	if v.Key == nil {
+		names[0] = "_"
+	} else {
+		names[0] = v.Key.Name
+	}
+	if v.Value != nil {
+		names = append(names, v.Value.Name)
+	}
+	cb.ForRange(names...)
+	compileExpr(ctx, v.X)
+	cb.RangeAssignThen()
+	if v.Cond != nil {
+		cb.If()
+		compileExpr(ctx, v.Cond)
+		cb.Then()
+		compileStmts(ctx, v.Body.List)
+		cb.End()
+	} else {
+		compileStmts(ctx, v.Body.List)
+	}
 	cb.End()
 }
 
