@@ -508,7 +508,7 @@ func main() {
 import fmt "fmt"
 
 func foo(format string, args ...interface {
-}) ( int,  error) {
+}) (int, error) {
 	return fmt.Println(format, args...)
 }
 func main() {
@@ -527,7 +527,7 @@ func main() {
 `, `package main
 
 func foo(format string, args ...interface {
-}) ( int,  error) {
+}) (int, error) {
 	return 0, nil
 }
 func main() {
@@ -589,8 +589,8 @@ bar(fmt.Printf)
 
 import fmt "fmt"
 
-func bar(foo func( string,  ...interface {
-}) ( int,  error)) {
+func bar(foo func(string, ...interface {
+}) (int, error)) {
 	foo("Hello, %v!\n", "Go+")
 }
 func main() {
@@ -628,7 +628,7 @@ import (
 	strings "strings"
 )
 
-func foo(x string) ( string) {
+func foo(x string) string {
 	return strings.NewReplacer("?", "!").Replace(x)
 }
 func printf(format string, args ...interface {
@@ -636,8 +636,8 @@ func printf(format string, args ...interface {
 	n, err = fmt.Printf(format, args...)
 	return
 }
-func bar(foo func( string,  ...interface {
-}) ( int,  error)) {
+func bar(foo func(string, ...interface {
+}) (int, error)) {
 	foo("Hello, %v!\n", "Go+")
 }
 func main() {
