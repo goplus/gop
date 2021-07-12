@@ -175,12 +175,9 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, allowBuiltin bool) {
 		log.Panicln("TODO: cannot use _ as value")
 	}
 	if o := lookupParent(ctx.cb, name); o != nil {
-		if _, ok := o.(*types.Builtin); ok {
-			if !allowBuiltin {
+		if !allowBuiltin {
+			if _, ok := o.(*types.Builtin); ok {
 				panic("unexpected builtin: " + name)
-			}
-			if o = ctx.pkg.Builtin().Ref(name); o == nil {
-				log.Panicln("TODO: unsupported builtin -", name)
 			}
 		}
 		ctx.cb.Val(o)
