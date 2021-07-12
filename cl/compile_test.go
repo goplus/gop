@@ -147,6 +147,41 @@ func main() {
 `)
 }
 
+func _TestMapComprehension(t *testing.T) {
+	gopClTest(t, `
+y := {x: i for i, x <- ["1", "3", "5", "7", "11"]}
+`, `package main
+
+func main() {
+	y := func() (_gop_ret map[string]int) {
+		_gop_ret = map[string]int{}
+		for i, x := range []string{"1", "3", "5", "7", "11"} {
+			_gop_ret[x] = i
+		}
+		return
+	}()
+}
+`)
+}
+
+func _TestSelectComprehension(t *testing.T) {
+	gopClTest(t, `
+y, ok := {i for i, x <- ["1", "3", "5", "7", "11"], x == "5"}
+`, `package main
+
+func main() {
+	y, ok := func() (_gop_ret int, _gop_ok bool) {
+		for i, x := range []string{"1", "3", "5", "7", "11"} {
+			if x == "5" {
+				return i, true
+			}
+		}
+		return
+	}()
+}
+`)
+}
+
 func TestListComprehension(t *testing.T) {
 	gopClTest(t, `
 a := [1, 3.4, 5]

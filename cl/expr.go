@@ -254,13 +254,38 @@ func compileSliceLit(ctx *blockCtx, v *ast.SliceLit) {
 	ctx.cb.SliceLit(nil, n)
 }
 
+const (
+	comprehensionInvalid = iota
+	comprehensionList
+	comprehensionMap
+	comprehensionSelect
+)
+
+func comprehensionKind(v *ast.ComprehensionExpr) int {
+	switch v.Tok {
+	case token.LBRACK: // [
+		return comprehensionList
+	case token.LBRACE: // {
+		if _, ok := v.Elt.(*ast.KeyValueExpr); ok {
+			return comprehensionMap
+		}
+		return comprehensionSelect
+	}
+	panic("TODO: invalid comprehensionExpr")
+}
+
 func compileComprehensionExpr(ctx *blockCtx, v *ast.ComprehensionExpr) {
-	if v.Tok != token.LBRACK {
-		panic("TODO: comprehensionExpr {...} not impl")
+	kind := comprehensionKind(v)
+	if kind == comprehensionSelect {
+		panic("TODO: select comprehension")
 	}
 	pkg, cb := ctx.pkg, ctx.cb
 	ret := pkg.NewAutoParam("_gop_ret")
 	cb.NewClosure(nil, types.NewTuple(ret), false).BodyStart(pkg)
+	if kind == comprehensionMap {
+		// cb.VarRef(ret).ZeroLit(ret.Type()).Assign(1)
+		panic("TODO: map comprehension")
+	}
 	end := 0
 	for i := len(v.Fors) - 1; i >= 0; i-- {
 		names := make([]string, 0, 2)
@@ -282,11 +307,18 @@ func compileComprehensionExpr(ctx *blockCtx, v *ast.ComprehensionExpr) {
 		}
 		end++
 	}
-	cb.VarRef(ret)
-	cb.Val(pkg.Builtin().Ref("append"))
-	cb.Val(ret)
-	compileExpr(ctx, v.Elt)
-	cb.Call(2).Assign(1)
+	switch kind {
+	case comprehensionList:
+		cb.VarRef(ret)
+		cb.Val(pkg.Builtin().Ref("append"))
+		cb.Val(ret)
+		compileExpr(ctx, v.Elt)
+		cb.Call(2).Assign(1)
+	case comprehensionMap:
+		panic("TODO: map comprehension")
+	default:
+		panic("TODO: select comprehension")
+	}
 	for i := 0; i < end; i++ {
 		cb.End()
 	}
