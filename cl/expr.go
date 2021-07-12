@@ -116,7 +116,7 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr) {
 func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr, twoValue bool) { // x[i]
 	compileExpr(ctx, v.X)
 	compileExpr(ctx, v.Index)
-	ctx.cb.IndexGet(1)
+	ctx.cb.IndexGet(1, false)
 }
 
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) {
@@ -296,8 +296,7 @@ func compileComprehensionExpr(ctx *blockCtx, v *ast.ComprehensionExpr) {
 	ret := pkg.NewAutoParam("_gop_ret")
 	cb.NewClosure(nil, types.NewTuple(ret), false).BodyStart(pkg)
 	if kind == comprehensionMap {
-		// cb.VarRef(ret).ZeroLit(ret.Type()).Assign(1)
-		panic("TODO: map comprehension")
+		cb.VarRef(ret).ZeroLit(ret.Type()).Assign(1)
 	}
 	end := 0
 	for i := len(v.Fors) - 1; i >= 0; i-- {
@@ -321,14 +320,19 @@ func compileComprehensionExpr(ctx *blockCtx, v *ast.ComprehensionExpr) {
 		end++
 	}
 	switch kind {
-	case comprehensionList:
+	case comprehensionList: // _gop_ret = append(_gop_ret, elt)
 		cb.VarRef(ret)
 		cb.Val(pkg.Builtin().Ref("append"))
 		cb.Val(ret)
 		compileExpr(ctx, v.Elt)
 		cb.Call(2).Assign(1)
-	case comprehensionMap:
-		panic("TODO: map comprehension")
+	case comprehensionMap: // _gop_ret[key] = val
+		cb.Val(ret)
+		kv := v.Elt.(*ast.KeyValueExpr)
+		compileExpr(ctx, kv.Key)
+		cb.IndexRef(1)
+		compileExpr(ctx, kv.Value)
+		cb.Assign(1)
 	default:
 		panic("TODO: select comprehension")
 	}
