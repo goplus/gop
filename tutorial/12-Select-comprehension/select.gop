@@ -5,3 +5,5 @@ println("19 is at index", where)
 if at, ok := {i for i, v <- a, v == 37}; ok {
 	println("37 is found! index =", at)
 }
+
+println("first element of a is:", {v for v <- a})
