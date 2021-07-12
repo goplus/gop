@@ -63,6 +63,9 @@ type Config struct {
 	// BuildFlags is a list of command-line flags to be passed through to
 	// the build system's query tool.
 	BuildFlags []string
+
+	// LoadPkgs is called to load all import packages.
+	LoadPkgs gox.LoadPkgsFunc
 }
 
 // NewPackage creates a Go+ package instance.
@@ -79,7 +82,7 @@ func NewPackage(
 		BuildFlags: conf.BuildFlags,
 		Fset:       fset,
 		ParseFile:  nil, // TODO
-		LoadPkgs:   nil, // TODO
+		LoadPkgs:   conf.LoadPkgs,
 		Prefix:     nil,
 		Contracts:  nil,
 		NewBuiltin: newBuiltinDefault,

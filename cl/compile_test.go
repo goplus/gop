@@ -27,16 +27,28 @@ import (
 	"github.com/goplus/gox"
 )
 
+var (
+	gblFset     *token.FileSet
+	gblLoadPkgs gox.LoadPkgsFunc
+)
+
+func init() {
+	gox.SetDebug(true)
+	gblFset = token.NewFileSet()
+	gblLoadPkgs = gox.NewLoadPkgsCached(nil)
+}
+
 func gopClTest(t *testing.T, gopcode, expected string) {
-	fset := token.NewFileSet()
+	fset := gblFset
 	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", gopcode)
 	pkgs, err := parser.ParseFSDir(fset, fs, "/foo", nil, 0)
 	if err != nil {
 		t.Fatal("ParseFSDir:", err)
 	}
 	bar := pkgs["main"]
-	gox.SetDebug(true)
-	pkg, err := cl.NewPackage("", bar, fset, nil)
+	pkg, err := cl.NewPackage("", bar, fset, &cl.Config{
+		LoadPkgs: gblLoadPkgs,
+	})
 	if err != nil {
 		t.Fatal("NewPackage:", err)
 	}
