@@ -42,6 +42,10 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileIfStmt(ctx, v)
 	case *ast.SwitchStmt:
 		compileSwitchStmt(ctx, v)
+	case *ast.RangeStmt:
+		compileRangeStmt(ctx, v)
+	case *ast.ForStmt:
+		compileForStmt(ctx, v)
 	case *ast.BlockStmt:
 		compileStmts(ctx, v.List)
 	case *ast.BranchStmt:
@@ -49,10 +53,6 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		/*
 			case *ast.ForPhraseStmt:
 				compileForPhraseStmt(ctx, v)
-			case *ast.RangeStmt:
-				compileRangeStmt(ctx, v)
-			case *ast.ForStmt:
-				compileForStmt(ctx, v)
 			case *ast.IncDecStmt:
 				compileIncDecStmt(ctx, v)
 			case *ast.LabeledStmt:
@@ -105,6 +105,69 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		compileExpr(ctx, rhs)
 	}
 	ctx.cb.Assign(len(expr.Lhs), len(expr.Rhs))
+}
+
+// forRange names... := range x {...}
+// forRange k, v = range x {...}
+func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
+	cb := ctx.cb
+	if v.Tok == token.DEFINE {
+		names := make([]string, 1, 2)
+		if v.Key == nil {
+			names[0] = "_"
+		} else {
+			names[0] = v.Key.(*ast.Ident).Name
+		}
+		if v.Value != nil {
+			names = append(names, v.Value.(*ast.Ident).Name)
+		}
+		cb.ForRange(names...)
+		compileExpr(ctx, v.X)
+	} else {
+		cb.ForRange()
+		n := 0
+		if v.Key == nil {
+			if v.Value != nil {
+				ctx.cb.VarRef(nil) // underscore
+				n++
+			}
+		} else {
+			compileExprLHS(ctx, v.Key)
+			n++
+		}
+		if v.Value != nil {
+			compileExprLHS(ctx, v.Value)
+			n++
+		}
+		compileExpr(ctx, v.X)
+	}
+	cb.RangeAssignThen()
+	compileStmts(ctx, v.Body.List)
+	cb.End()
+}
+
+// for init; cond then
+//    body
+//    post
+// end
+func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
+	cb := ctx.cb
+	cb.For()
+	if v.Init != nil {
+		compileStmt(ctx, v.Init)
+	}
+	if v.Cond != nil {
+		compileExpr(ctx, v.Cond)
+	} else {
+		cb.None()
+	}
+	cb.Then()
+	compileStmts(ctx, v.Body.List)
+	if v.Post != nil {
+		cb.Post()
+		compileStmt(ctx, v.Post)
+	}
+	cb.End()
 }
 
 func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {

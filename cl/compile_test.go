@@ -97,6 +97,90 @@ func main() {
 `)
 }
 
+func TestFor(t *testing.T) {
+	gopClTest(t, `
+a := [1, 3.4, 5]
+for i := 0; i < 3; i=i+1 {
+	println(i)
+}
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	a := []float64{1, 3.4, 5}
+	for i := 0; i < 3; i = i + 1 {
+		fmt.Println(i)
+	}
+}
+`)
+}
+
+func TestRangeStmt(t *testing.T) {
+	gopClTest(t, `
+a := [1, 3.4, 5]
+for _, x := range a {
+	println(x)
+}
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	a := []float64{1, 3.4, 5}
+	for _, x := range a {
+		fmt.Println(x)
+	}
+}
+`)
+}
+
+func TestListComprehension(t *testing.T) {
+	gopClTest(t, `
+a := [1, 3.4, 5]
+b := [x*x for x <- a]
+`, `package main
+
+func main() {
+	a := []float64{1, 3.4, 5}
+	b := func() (_gop_ret []float64) {
+		for _, x := range a {
+			_gop_ret = append(_gop_ret, x*x)
+		}
+		return
+	}()
+}
+`)
+}
+
+func TestListComprehensionMultiLevel(t *testing.T) {
+	gopClTest(t, `
+arr := [1, 2, 3, 4, 5, 6]
+x := [[a, b] for a <- arr, a < b for b <- arr, b > 2]
+println("x:", x)
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	arr := []int{1, 2, 3, 4, 5, 6}
+	x := func() (_gop_ret [][]int) {
+		for _, b := range arr {
+			if b > 2 {
+				for _, a := range arr {
+					if a < b {
+						_gop_ret = append(_gop_ret, []int{a, b})
+					}
+				}
+			}
+		}
+		return
+	}()
+	fmt.Println("x:", x)
+}
+`)
+}
+
 func TestImport(t *testing.T) {
 	gopClTest(t, `import "fmt"
 
