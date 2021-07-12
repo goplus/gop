@@ -1418,7 +1418,7 @@ func (p *parser) parseLiteralValueOrMapComprehension() ast.Expr {
 	var mce *ast.ComprehensionExpr
 	p.exprLev++
 	if p.tok != token.RBRACE {
-		elts, mce = p.parseElementListOrMapComprehension()
+		elts, mce = p.parseElementListOrComprehension()
 	}
 	p.exprLev--
 	rbrace := p.expectClosing(token.RBRACE, "composite literal")
@@ -1429,7 +1429,7 @@ func (p *parser) parseLiteralValueOrMapComprehension() ast.Expr {
 	return &ast.CompositeLit{Lbrace: lbrace, Elts: elts, Rbrace: rbrace}
 }
 
-func (p *parser) parseElementListOrMapComprehension() (list []ast.Expr, mce *ast.ComprehensionExpr) {
+func (p *parser) parseElementListOrComprehension() (list []ast.Expr, mce *ast.ComprehensionExpr) {
 	if p.trace {
 		defer un(trace(p, "ElementList"))
 	}
@@ -1438,14 +1438,10 @@ func (p *parser) parseElementListOrMapComprehension() (list []ast.Expr, mce *ast
 		list = append(list, p.parseElement())
 		if p.tok == token.FOR { // for k, v <- listOrMap
 			if len(list) != 1 {
-				log.Panicln("invalid map comprehension: too may `key: value` pairs.")
-			}
-			elt, ok := list[0].(*ast.KeyValueExpr)
-			if !ok {
-				log.Panicln("invalid map comprehension: a `key: value` pair is required.")
+				log.Panicln("TODO: invalid comprehension: too may elements.")
 			}
 			phrases := p.parseForPhrases()
-			return nil, &ast.ComprehensionExpr{Elt: elt, Fors: phrases}
+			return nil, &ast.ComprehensionExpr{Elt: list[0], Fors: phrases}
 		}
 		if !p.atComma("composite literal", token.RBRACE) {
 			break

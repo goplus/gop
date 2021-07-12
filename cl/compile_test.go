@@ -183,16 +183,16 @@ func main() {
 `)
 }
 
-func _TestSelectComprehension(t *testing.T) {
+func TestSelectComprehension(t *testing.T) {
 	gopClTest(t, `
-y, ok := {i for i, x <- ["1", "3", "5", "7", "11"], x == "5"}
+y := {i for i, x <- ["1", "3", "5", "7", "11"], x == "5"}
 `, `package main
 
 func main() {
-	y, ok := func() (_gop_ret int, _gop_ok bool) {
+	y := func() (_gop_ret int) {
 		for i, x := range []string{"1", "3", "5", "7", "11"} {
 			if x == "5" {
-				return i, true
+				return i
 			}
 		}
 		return

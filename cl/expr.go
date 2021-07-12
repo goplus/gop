@@ -70,7 +70,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) {
 	case *ast.IndexExpr:
 		compileIndexExpr(ctx, v, false)
 	case *ast.ComprehensionExpr:
-		compileComprehensionExpr(ctx, v)
+		compileComprehensionExpr(ctx, v, false)
 		/*	case *ast.ErrWrapExpr:
 				return compileErrWrapExpr(ctx, v)
 			case *ast.TwoValueIndexExpr:
@@ -287,14 +287,19 @@ func comprehensionKind(v *ast.ComprehensionExpr) int {
 	panic("TODO: invalid comprehensionExpr")
 }
 
-func compileComprehensionExpr(ctx *blockCtx, v *ast.ComprehensionExpr) {
+// TODO: how to detect twoValue
+func compileComprehensionExpr(ctx *blockCtx, v *ast.ComprehensionExpr, twoValue bool) {
 	kind := comprehensionKind(v)
-	if kind == comprehensionSelect {
-		panic("TODO: select comprehension")
-	}
 	pkg, cb := ctx.pkg, ctx.cb
 	ret := pkg.NewAutoParam("_gop_ret")
-	cb.NewClosure(nil, types.NewTuple(ret), false).BodyStart(pkg)
+	var results *types.Tuple
+	if kind == comprehensionSelect && twoValue {
+		boolean := pkg.NewParam("_gop_ok", types.Typ[types.Bool])
+		results = types.NewTuple(ret, boolean)
+	} else {
+		results = types.NewTuple(ret)
+	}
+	cb.NewClosure(nil, results, false).BodyStart(pkg)
 	if kind == comprehensionMap {
 		cb.VarRef(ret).ZeroLit(ret.Type()).Assign(1)
 	}
@@ -333,8 +338,14 @@ func compileComprehensionExpr(ctx *blockCtx, v *ast.ComprehensionExpr) {
 		cb.IndexRef(1)
 		compileExpr(ctx, kv.Value)
 		cb.Assign(1)
-	default:
-		panic("TODO: select comprehension")
+	default: // return elt, true
+		compileExpr(ctx, v.Elt)
+		n := 1
+		if twoValue {
+			cb.Val(true)
+			n++
+		}
+		cb.Return(n)
 	}
 	for i := 0; i < end; i++ {
 		cb.End()
