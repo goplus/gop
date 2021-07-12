@@ -35,9 +35,9 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr) {
 	switch v := expr.(type) {
 	case *ast.Ident:
 		compileIdentLHS(ctx, v.Name)
-		/*	case *ast.IndexExpr:
-				compileIndexExprLHS(ctx, v, mode)
-			case *ast.SelectorExpr:
+	case *ast.IndexExpr:
+		compileIndexExprLHS(ctx, v)
+		/*	case *ast.SelectorExpr:
 				compileSelectorExprLHS(ctx, v, mode)
 			case *ast.StarExpr:
 				compileStarExprLHS(ctx, v, mode)
@@ -67,12 +67,12 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) {
 		compileCompositeLit(ctx, v)
 	case *ast.SliceLit:
 		compileSliceLit(ctx, v)
+	case *ast.IndexExpr:
+		compileIndexExpr(ctx, v, false)
 	case *ast.ComprehensionExpr:
 		compileComprehensionExpr(ctx, v)
 		/*	case *ast.ErrWrapExpr:
 				return compileErrWrapExpr(ctx, v)
-			case *ast.IndexExpr:
-				return compileIndexExpr(ctx, v, false)
 			case *ast.TwoValueIndexExpr:
 				return compileIndexExpr(ctx, v.IndexExpr, true)
 			case *ast.SliceExpr:
@@ -104,6 +104,19 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) {
 	compileExpr(ctx, v.X)
 	compileExpr(ctx, v.Y)
 	ctx.cb.BinaryOp(gotoken.Token(v.Op))
+}
+
+func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr) {
+	compileExpr(ctx, v.X)
+	compileExpr(ctx, v.Index)
+	ctx.cb.IndexRef(1)
+}
+
+// TODO: how to detect twoValue
+func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr, twoValue bool) { // x[i]
+	compileExpr(ctx, v.X)
+	compileExpr(ctx, v.Index)
+	ctx.cb.IndexGet(1)
 }
 
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) {

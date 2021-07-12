@@ -228,6 +228,51 @@ func main() {
 `)
 }
 
+func TestIndexGet(t *testing.T) {
+	gopClTest(t, `
+a := [1, 3.4, 5]
+b := a[1]
+`, `package main
+
+func main() {
+	a := []float64{1, 3.4, 5}
+	b := a[1]
+}
+`)
+}
+
+func TestIndexRef(t *testing.T) {
+	gopClTest(t, `
+a := [1, 3.4, 5]
+a[1] = 2.1
+`, `package main
+
+func main() {
+	a := []float64{1, 3.4, 5}
+	a[1] = 2.1
+}
+`)
+}
+
+func TestMemberVal(t *testing.T) {
+	gopClTest(t, `import "strings"
+
+x := strings.NewReplacer("?", "!").Replace("hello, world???")
+println("x:", x)
+`, `package main
+
+import (
+	strings "strings"
+	fmt "fmt"
+)
+
+func main() {
+	x := strings.NewReplacer("?", "!").Replace("hello, world???")
+	fmt.Println("x:", x)
+}
+`)
+}
+
 func TestImport(t *testing.T) {
 	gopClTest(t, `import "fmt"
 
@@ -264,25 +309,6 @@ import fmt "fmt"
 func main() {
 	fmt.Println("Hello")
 	fmt.Printf("Hello Go+\n")
-}
-`)
-}
-
-func TestMemberVal(t *testing.T) {
-	gopClTest(t, `import "strings"
-
-x := strings.NewReplacer("?", "!").Replace("hello, world???")
-println("x:", x)
-`, `package main
-
-import (
-	strings "strings"
-	fmt "fmt"
-)
-
-func main() {
-	x := strings.NewReplacer("?", "!").Replace("hello, world???")
-	fmt.Println("x:", x)
 }
 `)
 }

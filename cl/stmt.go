@@ -228,14 +228,14 @@ func hasFallthrough(body []ast.Stmt) ([]ast.Stmt, bool) {
 
 func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 	switch v.Tok {
-	case token.FALLTHROUGH:
-		panic("TODO: fallthrough statement out of place")
 	case token.GOTO:
 		if v.Label == nil {
 			log.Panicln("TODO: label not defined")
 		}
 	case token.BREAK:
 	case token.CONTINUE:
+	case token.FALLTHROUGH:
+		panic("TODO: fallthrough statement out of place")
 	}
 	panic("TODO: compileBranchStmt")
 }
