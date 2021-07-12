@@ -254,80 +254,44 @@ func compileSliceLit(ctx *blockCtx, v *ast.SliceLit) {
 	ctx.cb.SliceLit(nil, n)
 }
 
-func compileComprehensionExpr(parent *blockCtx, v *ast.ComprehensionExpr) {
-	panic("TODO: compileComprehensionExpr")
-	/*	for i := len(v.Fors) - 1; i >= 0; i-- {
-			ctx, fns[i] = compileForPhrase(ctx, fors[i], true)
+func compileComprehensionExpr(ctx *blockCtx, v *ast.ComprehensionExpr) {
+	if v.Tok != token.LBRACK {
+		panic("TODO: comprehensionExpr {...} not impl")
+	}
+	pkg, cb := ctx.pkg, ctx.cb
+	ret := pkg.NewAutoParam("_gop_ret")
+	cb.NewClosure(nil, types.NewTuple(ret), false).BodyStart(pkg)
+	end := 0
+	for i := len(v.Fors) - 1; i >= 0; i-- {
+		names := make([]string, 0, 2)
+		forStmt := v.Fors[i]
+		if forStmt.Key != nil {
+			names = append(names, forStmt.Key.Name)
+		} else {
+			names = append(names, "_")
 		}
-		ctx, fns := compileForPhrases(parent, v.Fors)
-		exprElt := compileExpr(ctx, v.Elt)
-		typElem := boundType(ctx.infer.Get(-1).(iValue))
-		typSlice := reflect.SliceOf(typElem)
-		ctx.infer.Ret(1, &goValue{t: typSlice})
-		return func() {
-			for _, v := range fns {
-				e, fn := exprElt, v
-				exprElt = func() { fn(e) }
-			}
-			c := ctx.NewComprehension(typSlice)
-			ctx.out.ListComprehension(c)
-			exprElt()
-			ctx.out.EndComprehension(c)
+		names = append(names, forStmt.Value.Name)
+		cb.ForRange(names...)
+		compileExpr(ctx, forStmt.X)
+		cb.RangeAssignThen()
+		if forStmt.Cond != nil {
+			cb.If()
+			compileExpr(ctx, forStmt.Cond)
+			cb.Then()
+			end++
 		}
-	*/
+		end++
+	}
+	cb.VarRef(ret)
+	cb.Val(pkg.Builtin().Ref("append"))
+	cb.Val(ret)
+	compileExpr(ctx, v.Elt)
+	cb.Call(2).Assign(1)
+	for i := 0; i < end; i++ {
+		cb.End()
+	}
+	cb.Return(0).End().Call(0)
 }
-
-/*
-func compileForPhrases(ctx *blockCtx, fors []ast.ForPhrase) (*blockCtx, []func(exprElt func())) {
-	n := len(fors)
-	fns := make([]func(exprElt func()), n)
-	for i := n - 1; i >= 0; i-- {
-		ctx, fns[i] = compileForPhrase(ctx, fors[i], true)
-	}
-	return ctx, fns
-}
-
-func compileForPhrase(parent *blockCtx, f ast.ForPhrase, noExecCtx bool) (*blockCtx, func(exprElt func())) {
-	var typKey, typVal reflect.Type
-	var varKey, varVal exec.Var
-	var ctx = newNormBlockCtxEx(parent, noExecCtx)
-
-	exprX := compileExpr(parent, f.X)
-	typData := boundType(ctx.infer.Pop().(iValue))
-	if f.Key != nil {
-		switch kind := typData.Kind(); kind {
-		case reflect.Slice, reflect.Array:
-			typKey = exec.TyInt
-		case reflect.Map:
-			typKey = typData.Key()
-		default:
-			log.Panicln("compileListComprehensionExpr: require slice, array or map")
-		}
-		varKey = ctx.insertVar(f.Key.Name, typKey, true).v
-	}
-	if f.Value != nil {
-		typVal = typData.Elem()
-		varVal = ctx.insertVar(f.Value.Name, typVal, true).v
-	}
-	return ctx, func(exprElt func()) {
-		ctx.nextFlow(nil, nil, "")
-		defer func() {
-			ctx.currentFlow = ctx.currentFlow.parent
-		}()
-		exprX()
-		out := ctx.out
-		c := ctx.NewForPhrase(typData)
-		out.ForPhrase(c, varKey, varVal, !noExecCtx)
-		if f.Cond != nil {
-			compileExpr(ctx, f.Cond)()
-			checkBool(ctx.infer.Pop())
-			out.FilterForPhrase(c)
-		}
-		exprElt()
-		out.EndForPhrase(c)
-	}
-}
-*/
 
 // -----------------------------------------------------------------------------
 
