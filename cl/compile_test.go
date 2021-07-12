@@ -201,6 +201,24 @@ func main() {
 `)
 }
 
+func TestSelectComprehensionTwoValue(t *testing.T) {
+	gopClTest(t, `
+y, ok := {i for i, x <- ["1", "3", "5", "7", "11"], x == "5"}
+`, `package main
+
+func main() {
+	y, ok := func() (_gop_ret int, _gop_ok bool) {
+		for i, x := range []string{"1", "3", "5", "7", "11"} {
+			if x == "5" {
+				return i, true
+			}
+		}
+		return
+	}()
+}
+`)
+}
+
 func TestListComprehension(t *testing.T) {
 	gopClTest(t, `
 a := [1, 3.4, 5]
@@ -243,6 +261,21 @@ func main() {
 		return
 	}()
 	fmt.Println("x:", x)
+}
+`)
+}
+
+func TestIndexGetTwoValue(t *testing.T) {
+	gopClTest(t, `
+a := {"Hello": 1, "Hi": 3, "xsw": 5, "Go+": 7}
+x, ok := a["Hi"]
+y := a["Go+"]
+`, `package main
+
+func main() {
+	a := map[string]int{"Hello": 1, "Hi": 3, "xsw": 5, "Go+": 7}
+	x, ok := a["Hi"]
+	y := a["Go+"]
 }
 `)
 }

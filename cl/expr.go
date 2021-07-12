@@ -47,7 +47,7 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr) {
 	}
 }
 
-func compileExpr(ctx *blockCtx, expr ast.Expr) {
+func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 	switch v := expr.(type) {
 	case *ast.Ident:
 		compileIdent(ctx, v, false)
@@ -68,9 +68,9 @@ func compileExpr(ctx *blockCtx, expr ast.Expr) {
 	case *ast.SliceLit:
 		compileSliceLit(ctx, v)
 	case *ast.IndexExpr:
-		compileIndexExpr(ctx, v, false)
+		compileIndexExpr(ctx, v, twoValue != nil && twoValue[0])
 	case *ast.ComprehensionExpr:
-		compileComprehensionExpr(ctx, v, false)
+		compileComprehensionExpr(ctx, v, twoValue != nil && twoValue[0])
 		/*	case *ast.ErrWrapExpr:
 				return compileErrWrapExpr(ctx, v)
 			case *ast.TwoValueIndexExpr:
@@ -112,11 +112,10 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr) {
 	ctx.cb.IndexRef(1)
 }
 
-// TODO: how to detect twoValue
 func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr, twoValue bool) { // x[i]
 	compileExpr(ctx, v.X)
 	compileExpr(ctx, v.Index)
-	ctx.cb.IndexGet(1, false)
+	ctx.cb.IndexGet(1, twoValue)
 }
 
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) {
@@ -287,7 +286,6 @@ func comprehensionKind(v *ast.ComprehensionExpr) int {
 	panic("TODO: invalid comprehensionExpr")
 }
 
-// TODO: how to detect twoValue
 func compileComprehensionExpr(ctx *blockCtx, v *ast.ComprehensionExpr, twoValue bool) {
 	kind := comprehensionKind(v)
 	pkg, cb := ctx.pkg, ctx.cb

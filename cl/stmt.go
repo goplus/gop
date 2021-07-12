@@ -82,6 +82,7 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 }
 
 func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
+	twoValue := (len(expr.Lhs) == 2 && len(expr.Rhs) == 1)
 	if expr.Tok == token.DEFINE {
 		names := make([]string, len(expr.Lhs))
 		for i, lhs := range expr.Lhs {
@@ -93,7 +94,7 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		}
 		ctx.cb.DefineVarStart(names...)
 		for _, rhs := range expr.Rhs {
-			compileExpr(ctx, rhs)
+			compileExpr(ctx, rhs, twoValue)
 		}
 		ctx.cb.EndInit(len(expr.Rhs))
 		return
@@ -102,7 +103,7 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		compileExprLHS(ctx, lhs)
 	}
 	for _, rhs := range expr.Rhs {
-		compileExpr(ctx, rhs)
+		compileExpr(ctx, rhs, twoValue)
 	}
 	ctx.cb.Assign(len(expr.Lhs), len(expr.Rhs))
 }
