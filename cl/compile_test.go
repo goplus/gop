@@ -155,7 +155,7 @@ func main() {
 
 func TestListComprehensionMultiLevel(t *testing.T) {
 	gopClTest(t, `
-arr := [1, 2, 3, 4, 5, 6]
+arr := [1, 2, 3, 4.1, 5, 6]
 x := [[a, b] for a <- arr, a < b for b <- arr, b > 2]
 println("x:", x)
 `, `package main
@@ -163,13 +163,13 @@ println("x:", x)
 import fmt "fmt"
 
 func main() {
-	arr := []int{1, 2, 3, 4, 5, 6}
-	x := func() (_gop_ret [][]int) {
+	arr := []float64{1, 2, 3, 4.1, 5, 6}
+	x := func() (_gop_ret [][]float64) {
 		for _, b := range arr {
 			if b > 2 {
 				for _, a := range arr {
 					if a < b {
-						_gop_ret = append(_gop_ret, []int{a, b})
+						_gop_ret = append(_gop_ret, []float64{a, b})
 					}
 				}
 			}
