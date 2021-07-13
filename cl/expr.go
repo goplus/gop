@@ -69,6 +69,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 		compileSliceLit(ctx, v)
 	case *ast.IndexExpr:
 		compileIndexExpr(ctx, v, twoValue != nil && twoValue[0])
+	case *ast.SliceExpr:
+		compileSliceExpr(ctx, v)
 	case *ast.ArrayType:
 		ctx.cb.Typ(toArrayType(ctx, v))
 	case *ast.MapType:
@@ -77,8 +79,6 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 		compileComprehensionExpr(ctx, v, twoValue != nil && twoValue[0])
 		/*	case *ast.ErrWrapExpr:
 				return compileErrWrapExpr(ctx, v)
-			case *ast.SliceExpr:
-				return compileSliceExpr(ctx, v)
 			case *ast.ParenExpr:
 				return compileExpr(ctx, v.X)
 			case *ast.Ellipsis:
@@ -90,6 +90,14 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 		*/
 	default:
 		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
+	}
+}
+
+func compileExprOrNone(ctx *blockCtx, expr ast.Expr) {
+	if expr != nil {
+		compileExpr(ctx, expr)
+	} else {
+		ctx.cb.None()
 	}
 }
 
@@ -114,6 +122,16 @@ func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr, twoValue bool) { // x[i]
 	compileExpr(ctx, v.X)
 	compileExpr(ctx, v.Index)
 	ctx.cb.IndexGet(1, twoValue)
+}
+
+func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) { // x[i:j:k]
+	compileExpr(ctx, v.X)
+	compileExprOrNone(ctx, v.Low)
+	compileExprOrNone(ctx, v.High)
+	if v.Slice3 {
+		compileExprOrNone(ctx, v.Max)
+	}
+	ctx.cb.SliceGet(v.Slice3)
 }
 
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) {
