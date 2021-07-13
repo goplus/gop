@@ -354,6 +354,7 @@ a := [1, 3, 5, 7, 9]
 b := a[:3]
 c := a[1:]
 d := a[1:2:3]
+e := "Hello, Go+"[7:]
 `, `package main
 
 func main() {
@@ -361,6 +362,7 @@ func main() {
 	b := a[:3]
 	c := a[1:]
 	d := a[1:2:3]
+	e := "Hello, Go+"[7:]
 }
 `)
 }
