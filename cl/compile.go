@@ -118,13 +118,13 @@ func (p *clFuncBody) load(ctx *blockCtx) {
 }
 
 func loadFuncBody(ctx *blockCtx, fn *gox.Func, body *ast.BlockStmt) {
-	ctx.cb = fn.BodyStart(ctx.pkg)
+	cb := fn.BodyStart(ctx.pkg)
 	compileStmts(ctx, body.List)
-	ctx.cb.End()
+	cb.End()
 }
 
 func loadFile(p *gox.Package, f *ast.File) {
-	ctx := &blockCtx{pkg: p, imports: make(map[string]*gox.PkgRef)}
+	ctx := &blockCtx{pkg: p, cb: p.CB(), imports: make(map[string]*gox.PkgRef)}
 	last := len(f.Decls) - 1
 	for i, decl := range f.Decls {
 		switch d := decl.(type) {

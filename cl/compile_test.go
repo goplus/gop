@@ -554,13 +554,13 @@ func main() {
 }
 
 func TestFunc(t *testing.T) {
-	gopClTest(t, `func foo(format string, args ...interface{}) {
+	gopClTest(t, `func foo(format string, a [10]int, args ...interface{}) {
 }
 
 func main() {
 }`, `package main
 
-func foo(format string, args ...interface {
+func foo(format string, a [10]int, args ...interface {
 }) {
 }
 func main() {

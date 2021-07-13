@@ -136,20 +136,6 @@ func toArrayType(ctx *blockCtx, v *ast.ArrayType) types.Type {
 	return types.NewArray(elem, toInt64(ctx, v.Len))
 }
 
-func toBoundArrayLen(ctx *blockCtx, v *ast.CompositeLit) int64 {
-	n := int64(-1)
-	for _, elt := range v.Elts {
-		if e, ok := elt.(*ast.KeyValueExpr); ok {
-			if v := toInt64(ctx, e.Key); v > n {
-				n = v
-			}
-		} else {
-			n++
-		}
-	}
-	return n + 1
-}
-
 func toInt64(ctx *blockCtx, e ast.Expr) int64 {
 	cb := ctx.pkg.ConstStart()
 	compileExpr(ctx, e)
