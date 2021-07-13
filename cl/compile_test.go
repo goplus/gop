@@ -98,6 +98,31 @@ var x builtin.Gope_bigint
 `)
 }
 
+func TestTypeConv(t *testing.T) {
+	gopClTest(t, `
+var x uint32 = uint32(0)
+var y *uint32 = (*uint32)(nil)
+`, `package main
+
+var x uint32 = uint32(0)
+var y *uint32 = (*uint32)(nil)
+`)
+}
+
+func TestIncDec(t *testing.T) {
+	gopClTest(t, `
+var x uint32
+x++
+`, `package main
+
+var x uint32
+
+func main() {
+	x++
+}
+`)
+}
+
 func TestCompositeLit(t *testing.T) {
 	gopClTest(t, `
 x := []float64{1, 3.4, 5}

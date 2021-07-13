@@ -20,6 +20,8 @@ import (
 	"log"
 	"reflect"
 
+	gotoken "go/token"
+
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
 )
@@ -48,13 +50,13 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileForStmt(ctx, v)
 	case *ast.ForPhraseStmt:
 		compileForPhraseStmt(ctx, v)
+	case *ast.IncDecStmt:
+		compileIncDecStmt(ctx, v)
 	case *ast.BlockStmt:
 		compileStmts(ctx, v.List)
 	case *ast.BranchStmt:
 		compileBranchStmt(ctx, v)
 		/*
-			case *ast.IncDecStmt:
-				compileIncDecStmt(ctx, v)
 			case *ast.LabeledStmt:
 				compileLabeledStmt(ctx, v)
 			case *ast.DeferStmt:
@@ -79,6 +81,11 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 		compileExpr(ctx, ret)
 	}
 	ctx.cb.Return(len(expr.Results))
+}
+
+func compileIncDecStmt(ctx *blockCtx, expr *ast.IncDecStmt) {
+	compileExprLHS(ctx, expr.X)
+	ctx.cb.IncDec(gotoken.Token(expr.Tok))
 }
 
 func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
