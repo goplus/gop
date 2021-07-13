@@ -117,12 +117,24 @@ var (
 )
 
 func toIdentType(ctx *blockCtx, ident string) types.Type {
-	if _, v := ctx.pkg.Types.Scope().LookupParent(ident, token.NoPos); v != nil {
-		if t, ok := v.(*types.TypeName); ok {
-			return t.Type()
+	pkg := ctx.pkg
+	_, v := pkg.Types.Scope().LookupParent(ident, token.NoPos)
+	if v == nil {
+		tyName := gopTypeExtend + ident
+		if v = pkg.Builtin().Types.Scope().Lookup(tyName); v == nil {
+			log.Panicln("TODO: symbol not found -", ident)
 		}
 	}
+	if t, ok := v.(*types.TypeName); ok {
+		return t.Type()
+	}
 	panic("TODO: not a type")
+}
+
+func toMapType(ctx *blockCtx, v *ast.MapType) *types.Map {
+	key := toType(ctx, v.Key)
+	val := toType(ctx, v.Value)
+	return types.NewMap(key, val)
 }
 
 func toArrayType(ctx *blockCtx, v *ast.ArrayType) types.Type {

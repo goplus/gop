@@ -29,6 +29,13 @@ import (
 	"github.com/goplus/gox"
 )
 
+const (
+	gopBuiltinType = "Gopb_"
+	gopTypeExtend  = "Gope_"
+	gopOperator    = "Gopo_"
+	gopTypeConv    = "Gopc_"
+)
+
 // -----------------------------------------------------------------------------
 
 // Config of loading Go+ packages.
@@ -83,7 +90,12 @@ func NewPackage(
 		Fset:       fset,
 		ParseFile:  nil, // TODO
 		LoadPkgs:   conf.LoadPkgs,
-		Prefix:     nil,
+		Prefix: &gox.NamePrefix{
+			BuiltinType: gopBuiltinType,
+			TypeExtend:  gopTypeExtend,
+			Operator:    gopOperator,
+			TypeConv:    gopTypeConv,
+		},
 		Contracts:  nil,
 		NewBuiltin: newBuiltinDefault,
 	}

@@ -25,17 +25,12 @@ import (
 
 // -----------------------------------------------------------------------------
 
-func initDelayedLoad(pkg gox.PkgImporter, builtin *types.Package, fn string) {
-	fnTitle := string(fn[0]-'a'+'A') + fn[1:]
-	builtin.Scope().Insert(gox.NewDelayedLoad(token.NoPos, builtin, fn, func() types.Object {
-		return pkg.Import("fmt").Ref(fnTitle)
-	}))
-}
-
 func initBuiltin(pkg gox.PkgImporter, builtin *types.Package) {
+	fmt := pkg.Import("fmt")
 	fns := []string{"print", "println", "printf", "errorf", "fprint", "fprintln", "fprintf"}
 	for _, fn := range fns {
-		initDelayedLoad(pkg, builtin, fn)
+		fnTitle := string(fn[0]-'a'+'A') + fn[1:]
+		builtin.Scope().Insert(gox.NewOverloadFunc(token.NoPos, builtin, fn, fmt.Ref(fnTitle)))
 	}
 }
 

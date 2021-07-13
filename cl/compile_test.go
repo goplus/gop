@@ -63,6 +63,19 @@ func gopClTest(t *testing.T, gopcode, expected string) {
 	}
 }
 
+func TestMakeAndNew(t *testing.T) {
+	gopClTest(t, `
+var a *int = new(int)
+var b map[string]int = make(map[string]int)
+var c []byte = make([]byte, 0, 2)
+`, `package main
+
+var a *int = new(int)
+var b map[string]int = make(map[string]int)
+var c []byte = make([]byte, 0, 2)
+`)
+}
+
 func TestVarDecl(t *testing.T) {
 	gopClTest(t, `
 var a int
@@ -359,8 +372,8 @@ println("x:", x)
 `, `package main
 
 import (
-	strings "strings"
 	fmt "fmt"
+	strings "strings"
 )
 
 func main() {

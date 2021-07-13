@@ -69,20 +69,18 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 		compileSliceLit(ctx, v)
 	case *ast.IndexExpr:
 		compileIndexExpr(ctx, v, twoValue != nil && twoValue[0])
+	case *ast.ArrayType:
+		ctx.cb.Typ(toArrayType(ctx, v))
+	case *ast.MapType:
+		ctx.cb.Typ(toMapType(ctx, v))
 	case *ast.ComprehensionExpr:
 		compileComprehensionExpr(ctx, v, twoValue != nil && twoValue[0])
 		/*	case *ast.ErrWrapExpr:
 				return compileErrWrapExpr(ctx, v)
-			case *ast.TwoValueIndexExpr:
-				return compileIndexExpr(ctx, v.IndexExpr, true)
 			case *ast.SliceExpr:
 				return compileSliceExpr(ctx, v)
 			case *ast.ParenExpr:
 				return compileExpr(ctx, v.X)
-			case *ast.MapComprehensionExpr:
-				return compileMapComprehensionExpr(ctx, v)
-			case *ast.ArrayType:
-				return compileArrayType(ctx, v)
 			case *ast.Ellipsis:
 				return compileEllipsis(ctx, v)
 			case *ast.StarExpr:
