@@ -63,6 +63,28 @@ func gopClTest(t *testing.T, gopcode, expected string) {
 	}
 }
 
+func TestVarDecl(t *testing.T) {
+	gopClTest(t, `
+var a int
+var x, y = 1, "Hi"
+`, `package main
+
+var a int
+var x, y = 1, "Hi"
+`)
+}
+
+func _TestBigIntVar(t *testing.T) {
+	gopClTest(t, `
+var x bigint
+`, `package main
+
+import builtin "github.com/goplus/gop/builtin"
+
+var x builtin.Gope_bigint
+`)
+}
+
 func TestCompositeLit(t *testing.T) {
 	gopClTest(t, `
 x := []float64{1, 3.4, 5}

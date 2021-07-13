@@ -139,8 +139,7 @@ func loadFile(p *gox.Package, f *ast.File) {
 			case token.CONST:
 				loadConsts(ctx, d)
 			case token.VAR:
-				log.Panicln("TODO: varDecl")
-				//compileStmt(ctx, &ast.DeclStmt{Decl: decl})
+				loadVars(ctx, d)
 			default:
 				log.Panicln("TODO - tok:", d.Tok, "spec:", reflect.TypeOf(d.Specs).Elem())
 			}
@@ -204,8 +203,32 @@ func loadConsts(ctx *blockCtx, d *ast.GenDecl) {
 	panic("TODO: loadConsts")
 }
 
-func loadVars(ctx *blockCtx, d *ast.GenDecl, stmt ast.Stmt) {
-	panic("TODO: loadVars")
+func loadVars(ctx *blockCtx, d *ast.GenDecl) {
+	for _, spec := range d.Specs {
+		var v = spec.(*ast.ValueSpec)
+		var typ types.Type
+		names := makeNames(v.Names)
+		if v.Type != nil {
+			typ = toType(ctx, v.Type)
+		}
+		pkg, cb := ctx.pkg, ctx.cb
+		varDecl := pkg.NewVar(typ, names...)
+		if v.Values != nil {
+			varDecl.InitStart(pkg)
+			for _, val := range v.Values {
+				compileExpr(ctx, val)
+			}
+			cb.EndInit(len(v.Values))
+		}
+	}
+}
+
+func makeNames(vals []*ast.Ident) []string {
+	names := make([]string, len(vals))
+	for i, v := range vals {
+		names[i] = v.Name
+	}
+	return names
 }
 
 // -----------------------------------------------------------------------------
