@@ -87,7 +87,7 @@ var x, y = 1, "Hi"
 `)
 }
 
-func _TestBigIntVar(t *testing.T) {
+func TestBigIntVar(t *testing.T) {
 	gopClTest(t, `
 var x bigint
 `, `package main
