@@ -75,16 +75,16 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 		ctx.cb.Typ(toArrayType(ctx, v))
 	case *ast.MapType:
 		ctx.cb.Typ(toMapType(ctx, v))
+	case *ast.StarExpr:
+		compileStarExpr(ctx, v)
 	case *ast.ComprehensionExpr:
 		compileComprehensionExpr(ctx, v, twoValue != nil && twoValue[0])
+	case *ast.ParenExpr:
+		compileExpr(ctx, v.X)
 		/*	case *ast.ErrWrapExpr:
 				return compileErrWrapExpr(ctx, v)
-			case *ast.ParenExpr:
-				return compileExpr(ctx, v.X)
 			case *ast.Ellipsis:
 				return compileEllipsis(ctx, v)
-			case *ast.StarExpr:
-				return compileStarExpr(ctx, v)
 			case *ast.KeyValueExpr:
 				panic("compileExpr: ast.KeyValueExpr unexpected")
 		*/
@@ -116,6 +116,11 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr) {
 	compileExpr(ctx, v.X)
 	compileExpr(ctx, v.Index)
 	ctx.cb.IndexRef(1)
+}
+
+func compileStarExpr(ctx *blockCtx, v *ast.StarExpr) { // *x
+	compileExpr(ctx, v.X)
+	ctx.cb.Star()
 }
 
 func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr, twoValue bool) { // x[i]

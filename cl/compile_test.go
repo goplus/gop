@@ -109,6 +109,31 @@ var y *uint32 = (*uint32)(nil)
 `)
 }
 
+func TestStar(t *testing.T) {
+	gopClTest(t, `
+var x *uint32 = (*uint32)(nil)
+var y uint32 = *x
+`, `package main
+
+var x *uint32 = (*uint32)(nil)
+var y uint32 = *x
+`)
+}
+
+func TestSend(t *testing.T) {
+	gopClTest(t, `
+var x chan bool
+x <- true
+`, `package main
+
+var x chan bool
+
+func main() {
+	x <- true
+}
+`)
+}
+
 func TestIncDec(t *testing.T) {
 	gopClTest(t, `
 var x uint32
@@ -175,6 +200,9 @@ a := [1, 3.4, 5]
 for i := 0; i < 3; i=i+1 {
 	println(i)
 }
+for {
+	println("loop")
+}
 `, `package main
 
 import fmt "fmt"
@@ -183,6 +211,9 @@ func main() {
 	a := []float64{1, 3.4, 5}
 	for i := 0; i < 3; i = i + 1 {
 		fmt.Println(i)
+	}
+	for {
+		fmt.Println("loop")
 	}
 }
 `)
@@ -194,6 +225,21 @@ a := [1, 3.4, 5]
 for _, x := range a {
 	println(x)
 }
+for i, x := range a {
+	println(i, x)
+}
+
+var i int
+var x float64
+for _, x = range a {
+	println(i, x)
+}
+for i, x = range a {
+	println(i, x)
+}
+for range a {
+	println("Hi")
+}
 `, `package main
 
 import fmt "fmt"
@@ -202,6 +248,20 @@ func main() {
 	a := []float64{1, 3.4, 5}
 	for _, x := range a {
 		fmt.Println(x)
+	}
+	for i, x := range a {
+		fmt.Println(i, x)
+	}
+	var i int
+	var x float64
+	for _, x = range a {
+		fmt.Println(i, x)
+	}
+	for i, x = range a {
+		fmt.Println(i, x)
+	}
+	for range a {
+		fmt.Println("Hi")
 	}
 }
 `)
@@ -212,6 +272,9 @@ func TestForPhrase(t *testing.T) {
 sum := 0
 for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
 	sum = sum + x
+}
+for i, x <- [1, 3, 5, 7, 11, 13, 17] {
+	sum = sum + i*x
 }
 println("sum(5,7,11,13,17):", sum)
 `, `package main
@@ -224,6 +287,9 @@ func main() {
 		if x > 3 {
 			sum = sum + x
 		}
+	}
+	for i, x := range []int{1, 3, 5, 7, 11, 13, 17} {
+		sum = sum + i*x
 	}
 	fmt.Println("sum(5,7,11,13,17):", sum)
 }
@@ -574,10 +640,41 @@ func main() {
 `)
 }
 
+func TestBranchStmt(t *testing.T) {
+	gopClTest(t, `
+	a := [1, 3.4, 5]
+label:
+	for i := 0; i < 3; i=i+1 {
+		println(i)
+		break
+		break label
+		continue
+		continue label
+		goto label
+	}
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	a := []float64{1, 3.4, 5}
+label:
+	for i := 0; i < 3; i = i + 1 {
+		fmt.Println(i)
+		break
+		break label
+		continue
+		continue label
+		goto label
+	}
+}
+`)
+}
+
 func TestReturn(t *testing.T) {
 	gopClTest(t, `
 func foo(format string, args ...interface{}) (int, error) {
-	return println(format, args...)
+	return printf(format, args...)
 }
 
 func main() {
@@ -588,7 +685,7 @@ import fmt "fmt"
 
 func foo(format string, args ...interface {
 }) (int, error) {
-	return fmt.Println(format, args...)
+	return fmt.Printf(format, args...)
 }
 func main() {
 }
