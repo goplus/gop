@@ -181,6 +181,23 @@ func main() {
 `)
 }
 
+func TestChan(t *testing.T) {
+	gopClTest(t, `
+a := make(chan int, 10)
+a <- 3
+var b int = <-a
+x, ok := <-a
+`, `package main
+
+func main() {
+	a := make(chan int, 10)
+	a <- 3
+	var b int = <-a
+	x, ok := <-a
+}
+`)
+}
+
 func TestKeyValModeLit(t *testing.T) {
 	gopClTest(t, `
 a := [...]float64{1, 3: 3.4, 5}

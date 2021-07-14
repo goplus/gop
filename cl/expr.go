@@ -60,7 +60,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 	case *ast.BinaryExpr:
 		compileBinaryExpr(ctx, v)
 	case *ast.UnaryExpr:
-		compileUnaryExpr(ctx, v)
+		compileUnaryExpr(ctx, v, twoValue != nil && twoValue[0])
 	case *ast.FuncLit:
 		compileFuncLit(ctx, v)
 	case *ast.CompositeLit:
@@ -71,12 +71,14 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 		compileIndexExpr(ctx, v, twoValue != nil && twoValue[0])
 	case *ast.SliceExpr:
 		compileSliceExpr(ctx, v)
+	case *ast.StarExpr:
+		compileStarExpr(ctx, v)
 	case *ast.ArrayType:
 		ctx.cb.Typ(toArrayType(ctx, v))
 	case *ast.MapType:
 		ctx.cb.Typ(toMapType(ctx, v))
-	case *ast.StarExpr:
-		compileStarExpr(ctx, v)
+	case *ast.ChanType:
+		ctx.cb.Typ(toChanType(ctx, v))
 	case *ast.ComprehensionExpr:
 		compileComprehensionExpr(ctx, v, twoValue != nil && twoValue[0])
 	case *ast.ParenExpr:
@@ -101,9 +103,9 @@ func compileExprOrNone(ctx *blockCtx, expr ast.Expr) {
 	}
 }
 
-func compileUnaryExpr(ctx *blockCtx, v *ast.UnaryExpr) {
+func compileUnaryExpr(ctx *blockCtx, v *ast.UnaryExpr, twoValue bool) {
 	compileExpr(ctx, v.X)
-	ctx.cb.UnaryOp(gotoken.Token(v.Op))
+	ctx.cb.UnaryOp(gotoken.Token(v.Op), twoValue)
 }
 
 func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) {

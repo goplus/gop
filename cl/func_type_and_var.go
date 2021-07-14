@@ -91,11 +91,9 @@ func toType(ctx *blockCtx, typ ast.Expr) types.Type {
 		elem := toType(ctx, v.X)
 		return types.NewPointer(elem)
 	case *ast.MapType:
-		key := toType(ctx, v.Key)
-		elem := toType(ctx, v.Value)
-		return types.NewMap(key, elem)
+		return toMapType(ctx, v)
 	case *ast.ChanType:
-		return types.NewChan(typesChanDirs[v.Dir], toType(ctx, v.Value))
+		return toChanType(ctx, v)
 	case *ast.FuncType:
 		return toFuncType(ctx, v)
 		/*	case *ast.SelectorExpr:
@@ -129,6 +127,10 @@ func toIdentType(ctx *blockCtx, ident string) types.Type {
 		return t.Type()
 	}
 	panic("TODO: not a type")
+}
+
+func toChanType(ctx *blockCtx, v *ast.ChanType) *types.Chan {
+	return types.NewChan(typesChanDirs[v.Dir], toType(ctx, v.Value))
 }
 
 func toMapType(ctx *blockCtx, v *ast.MapType) *types.Map {
