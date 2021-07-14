@@ -118,7 +118,7 @@ func toIdentType(ctx *blockCtx, ident string) types.Type {
 	pkg := ctx.pkg
 	_, v := pkg.Types.Scope().LookupParent(ident, token.NoPos)
 	if v == nil {
-		tyName := gopTypeExtend + ident
+		tyName := gopPrefix + ident
 		if v = pkg.Builtin().Types.Scope().Lookup(tyName); v == nil {
 			log.Panicln("TODO: symbol not found -", ident)
 		}

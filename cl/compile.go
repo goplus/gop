@@ -30,10 +30,7 @@ import (
 )
 
 const (
-	gopBuiltinType = "Gopb_"
-	gopTypeExtend  = "Gope_"
-	gopOperator    = "Gopo_"
-	gopTypeConv    = "Gopc_"
+	gopPrefix = "Gop_"
 )
 
 // -----------------------------------------------------------------------------
@@ -90,12 +87,7 @@ func NewPackage(
 		Fset:       fset,
 		ParseFile:  nil, // TODO
 		LoadPkgs:   conf.LoadPkgs,
-		Prefix: &gox.NamePrefix{
-			BuiltinType: gopBuiltinType,
-			TypeExtend:  gopTypeExtend,
-			Operator:    gopOperator,
-			TypeConv:    gopTypeConv,
-		},
+		Prefix:     gopPrefix,
 		Contracts:  nil,
 		NewBuiltin: newBuiltinDefault,
 	}

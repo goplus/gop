@@ -94,7 +94,7 @@ var x bigint
 
 import builtin "github.com/goplus/gop/builtin"
 
-var x builtin.Gope_bigint
+var x builtin.Gop_bigint
 `)
 }
 

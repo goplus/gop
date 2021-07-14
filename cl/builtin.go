@@ -27,7 +27,7 @@ import (
 
 func initGopBuiltin(pkg gox.PkgImporter, builtin *types.Package) {
 	big := pkg.Import("github.com/goplus/gop/builtin")
-	big.Ref("Gope_bigint")
+	big.Ref("Gop_bigint")
 	scope := big.Types.Scope()
 	for i, n := 0, scope.Len(); i < n; i++ {
 		names := scope.Names()
@@ -46,7 +46,7 @@ func initBuiltin(pkg gox.PkgImporter, builtin *types.Package) {
 	}
 }
 
-func newBuiltinDefault(pkg gox.PkgImporter, prefix *gox.NamePrefix, contracts *gox.BuiltinContracts) *types.Package {
+func newBuiltinDefault(pkg gox.PkgImporter, prefix string, contracts *gox.BuiltinContracts) *types.Package {
 	builtin := types.NewPackage("", "")
 	initBuiltin(pkg, builtin)
 	initGopBuiltin(pkg, builtin)

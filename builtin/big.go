@@ -18,246 +18,242 @@ import (
 )
 
 //
-// Gopb_: builtin type (of Go+) prefix
-// Gope_: type extend prefix
-// Gopo_: operator prefix
-// Gopc_: type convert prefix
-//
+// Gop_: Go+ object prefix
 // xxxx__N: the Nth overload function
 //
 
-type Gopb_ninteger uint
+type Gop_ninteger uint
 
 // -----------------------------------------------------------------------------
 // type bigint
 
-// A Gope_bigint represents a signed multi-precision integer.
-// The zero value for a Gope_bigint represents nil.
-type Gope_bigint struct {
+// A Gop_bigint represents a signed multi-precision integer.
+// The zero value for a Gop_bigint represents nil.
+type Gop_bigint struct {
 	*big.Int
 }
 
-func tmpint(a, b Gope_bigint) Gope_bigint {
-	return Gope_bigint{new(big.Int)}
+func tmpint(a, b Gop_bigint) Gop_bigint {
+	return Gop_bigint{new(big.Int)}
 }
 
-func tmpint1(a Gope_bigint) Gope_bigint {
-	return Gope_bigint{new(big.Int)}
+func tmpint1(a Gop_bigint) Gop_bigint {
+	return Gop_bigint{new(big.Int)}
 }
 
 // IsNil returns a bigint object is nil or not
-func (a Gope_bigint) IsNil() bool {
+func (a Gop_bigint) IsNil() bool {
 	return a.Int == nil
 }
 
-// Gopo_Add: func (a bigint) + (b bigint) bigint
-func (a Gope_bigint) Gopo_Add(b Gope_bigint) Gope_bigint {
-	return Gope_bigint{tmpint(a, b).Add(a.Int, b.Int)}
+// Gop_Add: func (a bigint) + (b bigint) bigint
+func (a Gop_bigint) Gop_Add(b Gop_bigint) Gop_bigint {
+	return Gop_bigint{tmpint(a, b).Add(a.Int, b.Int)}
 }
 
-// Gopo_Sub: func (a bigint) - (b bigint) bigint
-func (a Gope_bigint) Gopo_Sub(b Gope_bigint) Gope_bigint {
-	return Gope_bigint{tmpint(a, b).Sub(a.Int, b.Int)}
+// Gop_Sub: func (a bigint) - (b bigint) bigint
+func (a Gop_bigint) Gop_Sub(b Gop_bigint) Gop_bigint {
+	return Gop_bigint{tmpint(a, b).Sub(a.Int, b.Int)}
 }
 
-// Gopo_Mul: func (a bigint) * (b bigint) bigint
-func (a Gope_bigint) Gopo_Mul(b Gope_bigint) Gope_bigint {
-	return Gope_bigint{tmpint(a, b).Mul(a.Int, b.Int)}
+// Gop_Mul: func (a bigint) * (b bigint) bigint
+func (a Gop_bigint) Gop_Mul(b Gop_bigint) Gop_bigint {
+	return Gop_bigint{tmpint(a, b).Mul(a.Int, b.Int)}
 }
 
-// Gopo_Quo: func (a bigint) / (b bigint) bigint {
-func (a Gope_bigint) Gopo_Quo(b Gope_bigint) Gope_bigint {
-	return Gope_bigint{tmpint(a, b).Quo(a.Int, b.Int)}
+// Gop_Quo: func (a bigint) / (b bigint) bigint {
+func (a Gop_bigint) Gop_Quo(b Gop_bigint) Gop_bigint {
+	return Gop_bigint{tmpint(a, b).Quo(a.Int, b.Int)}
 }
 
-// Gopo_Rem: func (a bigint) % (b bigint) bigint
-func (a Gope_bigint) Gopo_Rem(b Gope_bigint) Gope_bigint {
-	return Gope_bigint{tmpint(a, b).Rem(a.Int, b.Int)}
+// Gop_Rem: func (a bigint) % (b bigint) bigint
+func (a Gop_bigint) Gop_Rem(b Gop_bigint) Gop_bigint {
+	return Gop_bigint{tmpint(a, b).Rem(a.Int, b.Int)}
 }
 
-// Gopo_Or: func (a bigint) | (b bigint) bigint
-func (a Gope_bigint) Gopo_Or(b Gope_bigint) Gope_bigint {
-	return Gope_bigint{tmpint(a, b).Or(a.Int, b.Int)}
+// Gop_Or: func (a bigint) | (b bigint) bigint
+func (a Gop_bigint) Gop_Or(b Gop_bigint) Gop_bigint {
+	return Gop_bigint{tmpint(a, b).Or(a.Int, b.Int)}
 }
 
-// Gopo_Xor: func (a bigint) ^ (b bigint) bigint
-func (a Gope_bigint) Gopo_Xor(b Gope_bigint) Gope_bigint {
-	return Gope_bigint{tmpint(a, b).Xor(a.Int, b.Int)}
+// Gop_Xor: func (a bigint) ^ (b bigint) bigint
+func (a Gop_bigint) Gop_Xor(b Gop_bigint) Gop_bigint {
+	return Gop_bigint{tmpint(a, b).Xor(a.Int, b.Int)}
 }
 
-// Gopo_And: func (a bigint) & (b bigint) bigint
-func (a Gope_bigint) Gopo_And(b Gope_bigint) Gope_bigint {
-	return Gope_bigint{tmpint(a, b).And(a.Int, b.Int)}
+// Gop_And: func (a bigint) & (b bigint) bigint
+func (a Gop_bigint) Gop_And(b Gop_bigint) Gop_bigint {
+	return Gop_bigint{tmpint(a, b).And(a.Int, b.Int)}
 }
 
-// Gopo_AndNot: func (a bigint) &^ (b bigint) bigint
-func (a Gope_bigint) Gopo_AndNot(b Gope_bigint) Gope_bigint {
-	return Gope_bigint{tmpint(a, b).AndNot(a.Int, b.Int)}
+// Gop_AndNot: func (a bigint) &^ (b bigint) bigint
+func (a Gop_bigint) Gop_AndNot(b Gop_bigint) Gop_bigint {
+	return Gop_bigint{tmpint(a, b).AndNot(a.Int, b.Int)}
 }
 
-// Gopo_Lsh: func (a bigint) << (n untyped_uint) bigint
-func (a Gope_bigint) Gopo_Lsh(n Gopb_ninteger) Gope_bigint {
-	return Gope_bigint{tmpint1(a).Lsh(a.Int, uint(n))}
+// Gop_Lsh: func (a bigint) << (n untyped_uint) bigint
+func (a Gop_bigint) Gop_Lsh(n Gop_ninteger) Gop_bigint {
+	return Gop_bigint{tmpint1(a).Lsh(a.Int, uint(n))}
 }
 
-// Gopo_Rsh: func (a bigint) >> (n untyped_uint) bigint
-func (a Gope_bigint) Gopo_Rsh(n Gopb_ninteger) Gope_bigint {
-	return Gope_bigint{tmpint1(a).Rsh(a.Int, uint(n))}
+// Gop_Rsh: func (a bigint) >> (n untyped_uint) bigint
+func (a Gop_bigint) Gop_Rsh(n Gop_ninteger) Gop_bigint {
+	return Gop_bigint{tmpint1(a).Rsh(a.Int, uint(n))}
 }
 
-// Gopo_LT: func (a bigint) < (b bigint) bool
-func (a Gope_bigint) Gopo_LT(b Gope_bigint) bool {
+// Gop_LT: func (a bigint) < (b bigint) bool
+func (a Gop_bigint) Gop_LT(b Gop_bigint) bool {
 	return a.Cmp(b.Int) < 0
 }
 
-// (a Gope_bigint) Gopo_LE: func (a bigint) <= (b bigint) bool
-func (a Gope_bigint) Gopo_LE(b Gope_bigint) bool {
+// Gop_LE: func (a bigint) <= (b bigint) bool
+func (a Gop_bigint) Gop_LE(b Gop_bigint) bool {
 	return a.Cmp(b.Int) <= 0
 }
 
-// Gopo_GT: func (a bigint) > (b bigint) bool
-func (a Gope_bigint) Gopo_GT(b Gope_bigint) bool {
+// Gop_GT: func (a bigint) > (b bigint) bool
+func (a Gop_bigint) Gop_GT(b Gop_bigint) bool {
 	return a.Cmp(b.Int) > 0
 }
 
-// Gopo_GE: func (a bigint) >= (b bigint) bool
-func (a Gope_bigint) Gopo_GE(b Gope_bigint) bool {
+// Gop_GE: func (a bigint) >= (b bigint) bool
+func (a Gop_bigint) Gop_GE(b Gop_bigint) bool {
 	return a.Cmp(b.Int) >= 0
 }
 
-// Gopo_EQ: func (a bigint) == (b bigint) bool
-func (a Gope_bigint) Gopo_EQ(b Gope_bigint) bool {
+// Gop_EQ: func (a bigint) == (b bigint) bool
+func (a Gop_bigint) Gop_EQ(b Gop_bigint) bool {
 	return a.Cmp(b.Int) == 0
 }
 
-// Gopo_NE: func (a bigint) != (b bigint) bool
-func (a Gope_bigint) Gopo_NE(b Gope_bigint) bool {
+// Gop_NE: func (a bigint) != (b bigint) bool
+func (a Gop_bigint) Gop_NE(b Gop_bigint) bool {
 	return a.Cmp(b.Int) != 0
 }
 
-// Gopo_Neg: func -(a bigint) bigint
-func (a Gope_bigint) Gopo_Neg() Gope_bigint {
-	return Gope_bigint{tmpint1(a).Neg(a.Int)}
+// Gop_Neg: func -(a bigint) bigint
+func (a Gop_bigint) Gop_Neg() Gop_bigint {
+	return Gop_bigint{tmpint1(a).Neg(a.Int)}
 }
 
-// Gopo_Not: func ^(a bigint) bigint
-func (a Gope_bigint) Gopo_Not() Gope_bigint {
-	return Gope_bigint{tmpint1(a).Not(a.Int)}
+// Gop_Not: func ^(a bigint) bigint
+func (a Gop_bigint) Gop_Not() Gop_bigint {
+	return Gop_bigint{tmpint1(a).Not(a.Int)}
 }
 
-// Gopc_bigint__0: func bigint() bigint
-func Gopc_bigint__0() Gope_bigint {
-	return Gope_bigint{new(big.Int)}
+// Gop_bigint__0: func bigint() bigint
+func Gop_bigint__0() Gop_bigint {
+	return Gop_bigint{new(big.Int)}
 }
 
-// Gopc_bigint__1: func bigint(x int64) bigint
-func Gopc_bigint__1(x int64) Gope_bigint {
-	return Gope_bigint{big.NewInt(x)}
+// Gop_bigint__1: func bigint(x int64) bigint
+func Gop_bigint__1(x int64) Gop_bigint {
+	return Gop_bigint{big.NewInt(x)}
 }
 
 // -----------------------------------------------------------------------------
 // type bigrat
 
-// A Gope_bigrat represents a quotient a/b of arbitrary precision.
-// The zero value for a Gope_bigrat represents nil.
-type Gope_bigrat struct {
+// A Gop_bigrat represents a quotient a/b of arbitrary precision.
+// The zero value for a Gop_bigrat represents nil.
+type Gop_bigrat struct {
 	*big.Rat
 }
 
-func tmprat(a, b Gope_bigrat) Gope_bigrat {
-	return Gope_bigrat{new(big.Rat)}
+func tmprat(a, b Gop_bigrat) Gop_bigrat {
+	return Gop_bigrat{new(big.Rat)}
 }
 
-func tmprat1(a Gope_bigrat) Gope_bigrat {
-	return Gope_bigrat{new(big.Rat)}
+func tmprat1(a Gop_bigrat) Gop_bigrat {
+	return Gop_bigrat{new(big.Rat)}
 }
 
 // IsNil returns a bigrat object is nil or not
-func (a Gope_bigrat) IsNil() bool {
+func (a Gop_bigrat) IsNil() bool {
 	return a.Rat == nil
 }
 
-// Gopo_Add: func (a bigrat) + (b bigrat) bigrat
-func (a Gope_bigrat) Gopo_Add(b Gope_bigrat) Gope_bigrat {
-	return Gope_bigrat{tmprat(a, b).Add(a.Rat, b.Rat)}
+// Gop_Add: func (a bigrat) + (b bigrat) bigrat
+func (a Gop_bigrat) Gop_Add(b Gop_bigrat) Gop_bigrat {
+	return Gop_bigrat{tmprat(a, b).Add(a.Rat, b.Rat)}
 }
 
-// Gopo_Sub: func (a bigrat) - (b bigrat) bigrat
-func (a Gope_bigrat) Gopo_Sub(b Gope_bigrat) Gope_bigrat {
-	return Gope_bigrat{tmprat(a, b).Sub(a.Rat, b.Rat)}
+// Gop_Sub: func (a bigrat) - (b bigrat) bigrat
+func (a Gop_bigrat) Gop_Sub(b Gop_bigrat) Gop_bigrat {
+	return Gop_bigrat{tmprat(a, b).Sub(a.Rat, b.Rat)}
 }
 
-// Gopo_Mul: func (a bigrat) * (b bigrat) bigrat
-func (a Gope_bigrat) Gopo_Mul(b Gope_bigrat) Gope_bigrat {
-	return Gope_bigrat{tmprat(a, b).Mul(a.Rat, b.Rat)}
+// Gop_Mul: func (a bigrat) * (b bigrat) bigrat
+func (a Gop_bigrat) Gop_Mul(b Gop_bigrat) Gop_bigrat {
+	return Gop_bigrat{tmprat(a, b).Mul(a.Rat, b.Rat)}
 }
 
-// Gopo_Quo: func (a bigrat) / (b bigrat) bigrat
-func (a Gope_bigrat) Gopo_Quo(b Gope_bigrat) Gope_bigrat {
-	return Gope_bigrat{tmprat(a, b).Quo(a.Rat, b.Rat)}
+// Gop_Quo: func (a bigrat) / (b bigrat) bigrat
+func (a Gop_bigrat) Gop_Quo(b Gop_bigrat) Gop_bigrat {
+	return Gop_bigrat{tmprat(a, b).Quo(a.Rat, b.Rat)}
 }
 
-// Gopo_LT: func (a bigrat) < (b bigrat) bool
-func (a Gope_bigrat) Gopo_LT(b Gope_bigrat) bool {
+// Gop_LT: func (a bigrat) < (b bigrat) bool
+func (a Gop_bigrat) Gop_LT(b Gop_bigrat) bool {
 	return a.Cmp(b.Rat) < 0
 }
 
-// Gopo_LE: func (a bigrat) <= (b bigrat) bool
-func (a Gope_bigrat) Gopo_LE(b Gope_bigrat) bool {
+// Gop_LE: func (a bigrat) <= (b bigrat) bool
+func (a Gop_bigrat) Gop_LE(b Gop_bigrat) bool {
 	return a.Cmp(b.Rat) <= 0
 }
 
-// Gopo_GT: func (a bigrat) > (b bigrat) bool
-func (a Gope_bigrat) Gopo_GT(b Gope_bigrat) bool {
+// Gop_GT: func (a bigrat) > (b bigrat) bool
+func (a Gop_bigrat) Gop_GT(b Gop_bigrat) bool {
 	return a.Cmp(b.Rat) > 0
 }
 
-// Gopo_GE: func (a bigrat) >= (b bigrat) bool
-func (a Gope_bigrat) Gopo_GE(b Gope_bigrat) bool {
+// Gop_GE: func (a bigrat) >= (b bigrat) bool
+func (a Gop_bigrat) Gop_GE(b Gop_bigrat) bool {
 	return a.Cmp(b.Rat) >= 0
 }
 
-// Gopo_EQ: func (a bigrat) == (b bigrat) bool
-func (a Gope_bigrat) Gopo_EQ(b Gope_bigrat) bool {
+// Gop_EQ: func (a bigrat) == (b bigrat) bool
+func (a Gop_bigrat) Gop_EQ(b Gop_bigrat) bool {
 	return a.Cmp(b.Rat) == 0
 }
 
-// Gopo_NE: func (a bigrat) != (b bigrat) bool
-func (a Gope_bigrat) Gopo_NE(b Gope_bigrat) bool {
+// Gop_NE: func (a bigrat) != (b bigrat) bool
+func (a Gop_bigrat) Gop_NE(b Gop_bigrat) bool {
 	return a.Cmp(b.Rat) != 0
 }
 
-// Gopo_Neg: func -(a bigrat) bigrat
-func (a Gope_bigrat) Gopo_Neg() Gope_bigrat {
-	return Gope_bigrat{tmprat1(a).Neg(a.Rat)}
+// Gop_Neg: func -(a bigrat) bigrat
+func (a Gop_bigrat) Gop_Neg() Gop_bigrat {
+	return Gop_bigrat{tmprat1(a).Neg(a.Rat)}
 }
 
-// Gopo_Inv: func /(a bigrat) bigrat
-func (a Gope_bigrat) Gopo_Inv() Gope_bigrat {
-	return Gope_bigrat{tmprat1(a).Inv(a.Rat)}
+// Gop_Inv: func /(a bigrat) bigrat
+func (a Gop_bigrat) Gop_Inv() Gop_bigrat {
+	return Gop_bigrat{tmprat1(a).Inv(a.Rat)}
 }
 
-// Gopc_bigrat__0: func bigrat() bigrat
-func Gopc_bigrat__0() Gope_bigrat {
-	return Gope_bigrat{new(big.Rat)}
+// Gop__bigrat__0: func bigrat() bigrat
+func Gop__bigrat__0() Gop_bigrat {
+	return Gop_bigrat{new(big.Rat)}
 }
 
-// Gopc_bigrat__1: func bigrat(a bigint) bigrat
-func Gopc_bigrat__1(a Gope_bigint) Gope_bigrat {
-	return Gope_bigrat{new(big.Rat).SetInt(a.Int)}
+// Gop__bigrat__1: func bigrat(a bigint) bigrat
+func Gop__bigrat__1(a Gop_bigint) Gop_bigrat {
+	return Gop_bigrat{new(big.Rat).SetInt(a.Int)}
 }
 
-// Gopc_bigrat__2: func bigrat(a, b int64) bigrat
-func Gopc_bigrat__2(a, b int64) Gope_bigrat {
-	return Gope_bigrat{big.NewRat(a, b)}
+// Gop__bigrat__2: func bigrat(a, b int64) bigrat
+func Gop__bigrat__2(a, b int64) Gop_bigrat {
+	return Gop_bigrat{big.NewRat(a, b)}
 }
 
 // -----------------------------------------------------------------------------
 // type bigfloat
 
-// A Gope_bigfloat represents a multi-precision floating point number.
-// The zero value for a Gope_bigfloat represents nil.
-type Gope_bigfloat struct {
+// A Gop_bigfloat represents a multi-precision floating point number.
+// The zero value for a Gop_bigfloat represents nil.
+type Gop_bigfloat struct {
 	*big.Float
 }
 
