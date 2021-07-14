@@ -212,7 +212,20 @@ func loadTypes(ctx *blockCtx, d *ast.GenDecl) {
 }
 
 func loadConsts(ctx *blockCtx, d *ast.GenDecl) {
-	panic("TODO: loadConsts")
+	for _, spec := range d.Specs {
+		var v = spec.(*ast.ValueSpec)
+		var typ types.Type
+		names := makeNames(v.Names)
+		if v.Type != nil {
+			typ = toType(ctx, v.Type)
+		}
+		pkg := ctx.pkg
+		cb := pkg.NewConstStart(typ, names...)
+		for _, val := range v.Values {
+			compileExpr(ctx, val)
+		}
+		cb.EndInit(len(v.Values))
+	}
 }
 
 func loadVars(ctx *blockCtx, d *ast.GenDecl) {

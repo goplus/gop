@@ -194,6 +194,21 @@ func main() {
 `)
 }
 
+func TestDeferGo(t *testing.T) {
+	gopClTest(t, `
+go println("Hi")
+defer println("Go+")
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	go fmt.Println("Hi")
+	defer fmt.Println("Go+")
+}
+`)
+}
+
 func TestFor(t *testing.T) {
 	gopClTest(t, `
 a := [1, 3.4, 5]
@@ -529,6 +544,45 @@ import fmt "fmt"
 func main() {
 	fmt.Println("Hello")
 	fmt.Printf("Hello Go+\n")
+}
+`)
+}
+
+func TestVarAndConst(t *testing.T) {
+	gopClTest(t, `
+const (
+	i = 1
+	x float64 = 1
+)
+var j int = i
+`, `package main
+
+const i = 1
+const x float64 = 1
+
+var j int = i
+`)
+}
+
+func TestDeclStmt(t *testing.T) {
+	gopClTest(t, `import "fmt"
+
+func main() {
+	const (
+		i = 1
+		x float64 = 1
+	)
+	var j int = i
+	fmt.Println("Hi")
+}`, `package main
+
+import fmt "fmt"
+
+func main() {
+	const i = 1
+	const x float64 = 1
+	var j int = i
+	fmt.Println("Hi")
 }
 `)
 }
