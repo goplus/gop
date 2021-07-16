@@ -87,14 +87,16 @@ var x, y = 1, "Hi"
 `)
 }
 
-func TestBigIntVar(t *testing.T) {
+func TestBigIntAdd(t *testing.T) {
 	gopClTest(t, `
-var x bigint
+var x, y bigint
+var z bigint = x + y
 `, `package main
 
 import builtin "github.com/goplus/gop/builtin"
 
-var x builtin.Gop_bigint
+var x, y builtin.Gop_bigint
+var z builtin.Gop_bigint = x.Gop_Add(y)
 `)
 }
 
