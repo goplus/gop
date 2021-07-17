@@ -63,6 +63,34 @@ func gopClTest(t *testing.T, gopcode, expected string) {
 	}
 }
 
+func TestErrWrap(t *testing.T) {
+	gopClTest(t, `
+import (
+	"strconv"
+)
+
+func add(x, y string) (int, error) {
+	return strconv.Atoi(x)? + strconv.Atoi(y)?, nil
+}
+
+func addSafe(x, y string) int {
+	return strconv.Atoi(x)?:0 + strconv.Atoi(y)?:0
+}
+
+println(`+"`"+`add("100", "23"):`+"`"+`, add("100", "23")!)
+
+sum, err := add("10", "abc")
+println(`+"`"+`add("10", "abc"):`+"`"+`, sum, err)
+
+println(`+"`"+`addSafe("10", "abc"):`+"`"+`, addSafe("10", "abc"))
+`, `package main
+
+var a *int = new(int)
+var b map[string]int = make(map[string]int)
+var c []byte = make([]byte, 0, 2)
+`)
+}
+
 func TestMakeAndNew(t *testing.T) {
 	gopClTest(t, `
 var a *int = new(int)

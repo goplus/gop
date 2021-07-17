@@ -27,6 +27,7 @@ import (
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
+	"github.com/qiniu/x/errors"
 )
 
 // -----------------------------------------------------------------------------
@@ -83,9 +84,9 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 		compileComprehensionExpr(ctx, v, twoValue != nil && twoValue[0])
 	case *ast.ParenExpr:
 		compileExpr(ctx, v.X)
-		/*	case *ast.ErrWrapExpr:
-				return compileErrWrapExpr(ctx, v)
-			case *ast.Ellipsis:
+	case *ast.ErrWrapExpr:
+		compileErrWrapExpr(ctx, v)
+		/*	case *ast.Ellipsis:
 				return compileEllipsis(ctx, v)
 			case *ast.KeyValueExpr:
 				panic("compileExpr: ast.KeyValueExpr unexpected")
@@ -369,6 +370,60 @@ func compileComprehensionExpr(ctx *blockCtx, v *ast.ComprehensionExpr, twoValue 
 		cb.End()
 	}
 	cb.Return(0).End().Call(0)
+}
+
+func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr) {
+	switch v.Tok {
+	case token.QUESTION:
+		if v.Default == nil { // expr?
+			ctx.cb.InlineClosure()
+			compileExpr(ctx, v.X)
+			ctx.cb.Return()
+		}
+		// expr?:val
+	case token.NOT: // expr!
+	}
+
+	x := ctx.infer.Get(-1).(iValue)
+	nx := x.NumValues()
+	if nx < 1 || !x.Value(nx-1).Type().Implements(exec.TyError) {
+		log.Panicln("last output parameter doesn't implement `error` interface")
+	}
+	ctx.infer.Ret(1, &wrapValue{x})
+	return func() {
+		exprX()
+		if v.Default == nil { // expr? or expr!
+			var fun = ctx.fun
+			var ok bool
+			var retErr exec.Var
+			if v.Tok == token.QUESTION {
+				if retErr, ok = returnErr(fun); !ok {
+					log.Panicln("used `expr?` in a function that last output parameter is not an error")
+				}
+			} else if v.Tok == token.NOT {
+				retErr = nil
+			}
+			pos, code := ctx.getCodeInfo(v)
+			fn, narg := getFuncInfo(fun)
+			frame := &errors.Frame{
+				Pkg:  ctx.pkg.Name,
+				Func: fn,
+				Code: code,
+				File: pos.Filename,
+				Line: pos.Line,
+			}
+			ctx.out.ErrWrap(nx, retErr, frame, narg)
+			return
+		}
+		if nx != 2 {
+			log.Panicln("compileErrWrapExpr: output parameters count must be 2")
+		}
+		label := ctx.NewLabel("")
+		ctx.out.WrapIfErr(nx, label)
+		compileExpr(ctx, v.Default)()
+		checkType(x.Value(0).Type(), ctx.infer.Pop(), ctx.out)
+		ctx.out.Label(label)
+	}
 }
 
 // -----------------------------------------------------------------------------
