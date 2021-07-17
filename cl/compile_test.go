@@ -63,6 +63,43 @@ func gopClTest(t *testing.T, gopcode, expected string) {
 	}
 }
 
+func TestErrWrap(t *testing.T) {
+	gopClTest(t, `
+import "strconv"
+
+func add(x, y string) (int, error) {
+	return strconv.Atoi(x)? + strconv.Atoi(y)?, nil
+}
+`, `package main
+
+import strconv "strconv"
+
+func add(x string, y string) (int, error) {
+	var _autoGop_1 int
+	{
+		var _gop_err error
+		_autoGop_1, _gop_err = strconv.Atoi(x)
+		if _gop_err != nil {
+			return 0, _gop_err
+		}
+		goto _autoGop_2
+	_autoGop_2:
+	}
+	var _autoGop_3 int
+	{
+		var _gop_err error
+		_autoGop_3, _gop_err = strconv.Atoi(y)
+		if _gop_err != nil {
+			return 0, _gop_err
+		}
+		goto _autoGop_4
+	_autoGop_4:
+	}
+	return _autoGop_1 + _autoGop_3, nil
+}
+`)
+}
+
 func TestErrWrapDefVal(t *testing.T) {
 	gopClTest(t, `
 import "strconv"

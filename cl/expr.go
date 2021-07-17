@@ -397,7 +397,7 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr) {
 		if inGlobal {
 			panic("TODO: can't use expr? in global")
 		}
-		cb.Return(0, true) // TODO: wrap err & return err
+		cb.Val(err).ReturnErr(true) // TODO: wrap err & return err
 	} else { // expr?:val
 		compileExpr(ctx, v.Default)
 		cb.Return(1)
