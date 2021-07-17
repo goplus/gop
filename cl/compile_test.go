@@ -63,31 +63,60 @@ func gopClTest(t *testing.T, gopcode, expected string) {
 	}
 }
 
-func TestErrWrap(t *testing.T) {
+func TestErrWrapDefVal(t *testing.T) {
 	gopClTest(t, `
-import (
-	"strconv"
-)
-
-func add(x, y string) (int, error) {
-	return strconv.Atoi(x)? + strconv.Atoi(y)?, nil
-}
+import "strconv"
 
 func addSafe(x, y string) int {
 	return strconv.Atoi(x)?:0 + strconv.Atoi(y)?:0
 }
-
-println(`+"`"+`add("100", "23"):`+"`"+`, add("100", "23")!)
-
-sum, err := add("10", "abc")
-println(`+"`"+`add("10", "abc"):`+"`"+`, sum, err)
-
-println(`+"`"+`addSafe("10", "abc"):`+"`"+`, addSafe("10", "abc"))
 `, `package main
 
-var a *int = new(int)
-var b map[string]int = make(map[string]int)
-var c []byte = make([]byte, 0, 2)
+import strconv "strconv"
+
+func addSafe(x string, y string) int {
+	var _autoGop_1 int
+	{
+		var _gop_err error
+		_autoGop_1, _gop_err = strconv.Atoi(x)
+		if _gop_err != nil {
+			_autoGop_1 = 0
+			goto _autoGop_2
+		}
+		goto _autoGop_2
+	_autoGop_2:
+	}
+	var _autoGop_3 int
+	{
+		var _gop_err error
+		_autoGop_3, _gop_err = strconv.Atoi(y)
+		if _gop_err != nil {
+			_autoGop_3 = 0
+			goto _autoGop_4
+		}
+		goto _autoGop_4
+	_autoGop_4:
+	}
+	return _autoGop_1 + _autoGop_3
+}
+`)
+}
+
+func TestErrWrapPanic(t *testing.T) {
+	gopClTest(t, `
+var ret int = println("Hi")!
+`, `package main
+
+import fmt "fmt"
+
+var ret int = func() (_gop_ret int) {
+	var _gop_err error
+	_gop_ret, _gop_err = fmt.Println("Hi")
+	if _gop_err != nil {
+		panic(_gop_err)
+	}
+	return
+}()
 `)
 }
 

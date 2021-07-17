@@ -27,7 +27,6 @@ import (
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
-	"github.com/qiniu/x/errors"
 )
 
 // -----------------------------------------------------------------------------
@@ -372,57 +371,40 @@ func compileComprehensionExpr(ctx *blockCtx, v *ast.ComprehensionExpr, twoValue 
 	cb.Return(0).End().Call(0)
 }
 
-func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr) {
-	switch v.Tok {
-	case token.QUESTION:
-		if v.Default == nil { // expr?
-			ctx.cb.InlineClosure()
-			compileExpr(ctx, v.X)
-			ctx.cb.Return()
-		}
-		// expr?:val
-	case token.NOT: // expr!
-	}
+var (
+	tyError = types.Universe.Lookup("error").Type()
+)
 
-	x := ctx.infer.Get(-1).(iValue)
-	nx := x.NumValues()
-	if nx < 1 || !x.Value(nx-1).Type().Implements(exec.TyError) {
-		log.Panicln("last output parameter doesn't implement `error` interface")
+func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr) {
+	pkg, cb := ctx.pkg, ctx.cb
+	inGlobal := (cb.Scope().Parent() == types.Universe) // not in a function body
+	ret := pkg.NewAutoParam("_gop_ret")
+	sig := types.NewSignature(nil, nil, types.NewTuple(ret), false)
+	if inGlobal {
+		cb.NewClosureWith(sig).BodyStart(pkg)
+	} else {
+		cb.CallInlineClosureStart(sig, 0, false)
 	}
-	ctx.infer.Ret(1, &wrapValue{x})
-	return func() {
-		exprX()
-		if v.Default == nil { // expr? or expr!
-			var fun = ctx.fun
-			var ok bool
-			var retErr exec.Var
-			if v.Tok == token.QUESTION {
-				if retErr, ok = returnErr(fun); !ok {
-					log.Panicln("used `expr?` in a function that last output parameter is not an error")
-				}
-			} else if v.Tok == token.NOT {
-				retErr = nil
-			}
-			pos, code := ctx.getCodeInfo(v)
-			fn, narg := getFuncInfo(fun)
-			frame := &errors.Frame{
-				Pkg:  ctx.pkg.Name,
-				Func: fn,
-				Code: code,
-				File: pos.Filename,
-				Line: pos.Line,
-			}
-			ctx.out.ErrWrap(nx, retErr, frame, narg)
-			return
+	cb.NewVar(tyError, "_gop_err")
+	err := cb.Scope().Lookup("_gop_err")
+	cb.VarRef(ret).VarRef(err)
+	compileExpr(ctx, v.X)
+	cb.Assign(2, 1)
+	cb.If().Val(err).CompareNil(gotoken.NEQ).Then()
+	if v.Tok == token.NOT { // expr!
+		cb.Val(pkg.Builtin().Ref("panic")).Val(err).Call(1).EndStmt() // TODO: wrap err
+	} else if v.Default == nil { // expr?
+		if inGlobal {
+			panic("TODO: can't use expr? in global")
 		}
-		if nx != 2 {
-			log.Panicln("compileErrWrapExpr: output parameters count must be 2")
-		}
-		label := ctx.NewLabel("")
-		ctx.out.WrapIfErr(nx, label)
-		compileExpr(ctx, v.Default)()
-		checkType(x.Value(0).Type(), ctx.infer.Pop(), ctx.out)
-		ctx.out.Label(label)
+		cb.Return(0, true) // TODO: wrap err & return err
+	} else { // expr?:val
+		compileExpr(ctx, v.Default)
+		cb.Return(1)
+	}
+	cb.End().Return(0).End()
+	if inGlobal {
+		cb.Call(0)
 	}
 }
 
