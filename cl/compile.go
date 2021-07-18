@@ -234,16 +234,17 @@ func loadType(ctx *blockCtx, t *ast.TypeSpec) {
 func loadFunc(ctx *blockCtx, d *ast.FuncDecl) {
 	pkg := ctx.pkg
 	name := d.Name.Name
+	var recv *types.Var
 	if d.Recv != nil {
-		log.Panicln("loadFunc TODO: method")
+		ctx.complete()
+		recv = toRecv(ctx, d.Recv)
 	} else if name == "init" {
 		log.Panicln("loadFunc TODO: init")
-	} else {
-		sig := toFuncType(ctx, d.Type)
-		fn := pkg.NewFuncWith(name, sig)
-		if body := d.Body; body != nil {
-			loadFuncBody(ctx, fn, body)
-		}
+	}
+	sig := toFuncType(ctx, d.Type, recv)
+	fn := pkg.NewFuncWith(name, sig)
+	if body := d.Body; body != nil {
+		loadFuncBody(ctx, fn, body)
 	}
 }
 

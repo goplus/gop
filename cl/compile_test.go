@@ -721,6 +721,25 @@ func main() {
 `)
 }
 
+func TestMethod(t *testing.T) {
+	gopClTest(t, `
+type M int
+
+func (m M) Foo() {
+	println("foo", m)
+}
+`, `package main
+
+import fmt "fmt"
+
+type M int
+
+func (m M) Foo() {
+	fmt.Println("foo", m)
+}
+`)
+}
+
 func TestImport(t *testing.T) {
 	gopClTest(t, `import "fmt"
 

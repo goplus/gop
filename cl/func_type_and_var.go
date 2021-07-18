@@ -30,10 +30,15 @@ import (
 
 // -----------------------------------------------------------------------------
 
-func toFuncType(ctx *blockCtx, typ *ast.FuncType) *types.Signature {
+func toFuncType(ctx *blockCtx, typ *ast.FuncType, recv *types.Var) *types.Signature {
 	params, variadic := toParams(ctx, typ.Params.List)
 	results := toResults(ctx, typ.Results)
-	return types.NewSignature(nil, params, results, variadic)
+	return types.NewSignature(recv, params, results, variadic)
+}
+
+func toRecv(ctx *blockCtx, recv *ast.FieldList) *types.Var {
+	v := recv.List[0]
+	return ctx.pkg.NewParam(v.Names[0].Name, toType(ctx, v.Type))
 }
 
 func toResults(ctx *blockCtx, in *ast.FieldList) *types.Tuple {
@@ -97,7 +102,7 @@ func toType(ctx *blockCtx, typ ast.Expr) types.Type {
 	case *ast.ChanType:
 		return toChanType(ctx, v)
 	case *ast.FuncType:
-		return toFuncType(ctx, v)
+		return toFuncType(ctx, v, nil)
 		/*	case *ast.SelectorExpr:
 			return toExternalType(ctx, v)
 		*/
@@ -218,7 +223,7 @@ func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) types.Type {
 		if !ok {
 			panic("TODO: not function type")
 		}
-		sig := toFuncType(ctx, typ)
+		sig := toFuncType(ctx, typ, nil)
 		methods = append(methods, types.NewFunc(token.NoPos, pkg, name, sig))
 	}
 	intf := types.NewInterfaceType(methods, embeddeds)

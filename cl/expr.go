@@ -196,7 +196,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
 }
 
 func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
-	sig := toFuncType(ctx, v.Type)
+	sig := toFuncType(ctx, v.Type, nil)
 	fn := ctx.cb.NewClosureWith(sig)
 	if body := v.Body; body != nil {
 		loadFuncBody(ctx, fn, body)
