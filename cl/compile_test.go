@@ -313,17 +313,32 @@ func main() {
 
 func TestStructLit(t *testing.T) {
 	gopClTest(t, `
+type foo struct {
+	A int
+	B string "tag1:123"
+}
+
 a := struct {
 	A int
 	B string "tag1:123"
 }{1, "Hello"}
+
+b := foo{1, "Hello"}
+c := foo{B: "Hi"}
 `, `package main
+
+type foo struct {
+	A int
+	B string "tag1:123"
+}
 
 func main() {
 	a := struct {
 		A int
 		B string "tag1:123"
 	}{1, "Hello"}
+	b := foo{1, "Hello"}
+	c := foo{B: "Hi"}
 }
 `)
 }

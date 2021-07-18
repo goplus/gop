@@ -260,21 +260,40 @@ func compileCompositeLitElts(ctx *blockCtx, elts []ast.Expr, kind int) {
 			compileExpr(ctx, elt)
 		}
 	}
-	return
 }
 
-func compileStructLitInKeyVal(ctx *blockCtx, v *ast.CompositeLit, t *types.Struct) {
-	panic("TODO: compileStructLitInKeyVal")
+func compileStructLitInKeyVal(ctx *blockCtx, elts []ast.Expr, t *types.Struct, typ types.Type) {
+	for _, elt := range elts {
+		kv := elt.(*ast.KeyValueExpr)
+		name := kv.Key.(*ast.Ident).Name
+		if idx := lookupField(t, name); idx >= 0 {
+			ctx.cb.Val(idx)
+		} else {
+			log.Panicln("TODO: struct member not found -", name)
+		}
+		compileExpr(ctx, kv.Value)
+	}
+	ctx.cb.StructLit(typ, len(elts)<<1, true)
+}
+
+func lookupField(t *types.Struct, name string) int {
+	for i, n := 0, t.NumFields(); i < n; i++ {
+		if fld := t.Field(i); fld.Name() == name {
+			return i
+		}
+	}
+	return -1
 }
 
 func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) {
-	var typ types.Type
+	var typ, underlying types.Type
 	if v.Type != nil {
 		typ = toType(ctx, v.Type)
+		underlying = getUnderlying(ctx, typ)
 	}
 	kind := checkCompositeLitElts(ctx, v.Elts)
-	if t, ok := typ.(*types.Struct); ok && kind == compositeLitKeyVal {
-		compileStructLitInKeyVal(ctx, v, t)
+	if t, ok := underlying.(*types.Struct); ok && kind == compositeLitKeyVal {
+		compileStructLitInKeyVal(ctx, v.Elts, t, typ)
 		return
 	}
 	compileCompositeLitElts(ctx, v.Elts, kind)
@@ -283,17 +302,17 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) {
 		ctx.cb.MapLit(nil, n<<1)
 		return
 	}
-	switch t := typ.(type) {
+	switch underlying.(type) {
 	case *types.Slice:
-		ctx.cb.SliceLit(t, n<<kind, kind == compositeLitKeyVal)
+		ctx.cb.SliceLit(typ, n<<kind, kind == compositeLitKeyVal)
 	case *types.Array:
-		ctx.cb.ArrayLit(t, n<<kind, kind == compositeLitKeyVal)
+		ctx.cb.ArrayLit(typ, n<<kind, kind == compositeLitKeyVal)
 	case *types.Map:
-		ctx.cb.MapLit(t, n<<1)
+		ctx.cb.MapLit(typ, n<<1)
 	case *types.Struct:
-		ctx.cb.StructLit(t, n, false)
+		ctx.cb.StructLit(typ, n, false)
 	default:
-		log.Panicln("compileCompositeLit: unknown type -", reflect.TypeOf(typ))
+		log.Panicln("compileCompositeLit: unknown type -", reflect.TypeOf(underlying))
 	}
 }
 

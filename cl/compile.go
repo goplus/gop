@@ -133,6 +133,15 @@ type blockCtx struct {
 	imports map[string]*gox.PkgRef
 }
 
+func getUnderlying(ctx *blockCtx, typ types.Type) types.Type {
+	t := typ.Underlying()
+	if t == nil {
+		ctx.complete()
+		t = typ.Underlying()
+	}
+	return t
+}
+
 func (p *pkgCtx) complete() {
 retry:
 	if delays := p.delays; delays != nil {
