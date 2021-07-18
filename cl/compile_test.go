@@ -377,6 +377,23 @@ func main() {
 `)
 }
 
+func TestAddr(t *testing.T) {
+	gopClTest(t, `
+a := &struct {
+	A int
+	B string
+}{1, "Hello"}
+`, `package main
+
+func main() {
+	a := &struct {
+		A int
+		B string
+	}{1, "Hello"}
+}
+`)
+}
+
 func TestDeferGo(t *testing.T) {
 	gopClTest(t, `
 go println("Hi")
