@@ -721,6 +721,22 @@ func main() {
 `)
 }
 
+func TestElem(t *testing.T) {
+	gopClTest(t, `
+
+func foo(a *int, b int) {
+	b = *a
+	*a = b
+}
+`, `package main
+
+func foo(a *int, b int) {
+	b = *a
+	*a = b
+}
+`)
+}
+
 func TestMethod(t *testing.T) {
 	gopClTest(t, `
 type M int

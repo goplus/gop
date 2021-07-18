@@ -39,10 +39,8 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr) {
 		compileIndexExprLHS(ctx, v)
 	case *ast.SelectorExpr:
 		compileSelectorExprLHS(ctx, v)
-		/*
-			case *ast.StarExpr:
-				compileStarExprLHS(ctx, v, mode)
-		*/
+	case *ast.StarExpr:
+		compileStarExprLHS(ctx, v)
 	default:
 		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
 	}
@@ -123,7 +121,12 @@ func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr) {
 	ctx.cb.IndexRef(1)
 }
 
-func compileStarExpr(ctx *blockCtx, v *ast.StarExpr) { // *x
+func compileStarExprLHS(ctx *blockCtx, v *ast.StarExpr) { // *x = ...
+	compileExpr(ctx, v.X)
+	ctx.cb.ElemRef()
+}
+
+func compileStarExpr(ctx *blockCtx, v *ast.StarExpr) { // ... = *x
 	compileExpr(ctx, v.X)
 	ctx.cb.Star()
 }
