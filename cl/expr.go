@@ -26,6 +26,7 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
+	"github.com/goplus/gox"
 )
 
 // -----------------------------------------------------------------------------
@@ -36,8 +37,9 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr) {
 		compileIdentLHS(ctx, v.Name)
 	case *ast.IndexExpr:
 		compileIndexExprLHS(ctx, v)
-		/*	case *ast.SelectorExpr:
-				compileSelectorExprLHS(ctx, v, mode)
+	case *ast.SelectorExpr:
+		compileSelectorExprLHS(ctx, v)
+		/*
 			case *ast.StarExpr:
 				compileStarExprLHS(ctx, v, mode)
 		*/
@@ -129,7 +131,7 @@ func compileStarExpr(ctx *blockCtx, v *ast.StarExpr) { // *x
 func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr, twoValue bool) { // x[i]
 	compileExpr(ctx, v.X)
 	compileExpr(ctx, v.Index)
-	ctx.cb.IndexGet(1, twoValue)
+	ctx.cb.Index(1, twoValue)
 }
 
 func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) { // x[i:j:k]
@@ -139,23 +141,43 @@ func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) { // x[i:j:k]
 	if v.Slice3 {
 		compileExprOrNone(ctx, v.Max)
 	}
-	ctx.cb.SliceGet(v.Slice3)
+	ctx.cb.Slice(v.Slice3)
+}
+
+func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr) {
+	switch x := v.X.(type) {
+	case *ast.Ident:
+		o, at := lookupParent(ctx, x.Name)
+		if at != nil {
+			ctx.cb.VarRef(at.Ref(v.Sel.Name))
+			return
+		}
+		if o == nil {
+			log.Panicln("TODO: ident not found -", x.Name)
+		}
+		ctx.cb.Val(o)
+	default:
+		compileExpr(ctx, v.X)
+	}
+	ctx.cb.MemberRef(v.Sel.Name)
 }
 
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) {
 	switch x := v.X.(type) {
 	case *ast.Ident:
-		if o := lookupParent(ctx, x.Name); o != nil {
-			ctx.cb.Val(o)
-		} else if at, ok := ctx.imports[x.Name]; ok {
+		o, at := lookupParent(ctx, x.Name)
+		if at != nil {
 			ctx.cb.Val(at.Ref(v.Sel.Name))
-		} else {
+			return
+		}
+		if o == nil {
 			log.Panicln("TODO: ident not found -", x.Name)
 		}
+		ctx.cb.Val(o)
 	default:
 		compileExpr(ctx, v.X)
-		ctx.cb.MemberVal(v.Sel.Name)
 	}
+	ctx.cb.MemberVal(v.Sel.Name)
 }
 
 func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
@@ -198,7 +220,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, allowBuiltin bool) {
 	if name == "_" {
 		log.Panicln("TODO: cannot use _ as value")
 	}
-	if o := lookupParent(ctx, name); o != nil {
+	if o, _ := lookupParent(ctx, name); o != nil {
 		if !allowBuiltin {
 			if _, ok := o.(*types.Builtin); ok {
 				panic("unexpected builtin: " + name)
@@ -210,18 +232,21 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, allowBuiltin bool) {
 	}
 }
 
-func lookupParent(ctx *blockCtx, name string) types.Object {
+func lookupParent(ctx *blockCtx, name string) (types.Object, *gox.PkgRef) {
 	at, o := ctx.cb.Scope().LookupParent(name, token.NoPos)
 	if o != nil && at != types.Universe {
-		return o
+		return o, nil
 	}
 	if ctx.loadSymbol(name) {
-		return ctx.pkg.Types.Scope().Lookup(name)
+		return ctx.pkg.Types.Scope().Lookup(name), nil
+	}
+	if pkgRef, ok := ctx.imports[name]; ok {
+		return nil, pkgRef
 	}
 	if obj := ctx.pkg.Builtin().Ref(name); obj != nil {
-		return obj
+		return obj, nil
 	}
-	return o
+	return o, nil
 }
 
 func compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {

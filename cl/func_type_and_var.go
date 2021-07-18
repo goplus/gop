@@ -115,7 +115,7 @@ var (
 )
 
 func toIdentType(ctx *blockCtx, ident string) types.Type {
-	v := lookupParent(ctx, ident)
+	v, _ := lookupParent(ctx, ident)
 	if v == nil {
 		tyName := gopPrefix + ident
 		if v = ctx.pkg.Builtin().Types.Scope().Lookup(tyName); v == nil {

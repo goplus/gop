@@ -377,23 +377,6 @@ func main() {
 `)
 }
 
-func TestAddr(t *testing.T) {
-	gopClTest(t, `
-a := &struct {
-	A int
-	B string
-}{1, "Hello"}
-`, `package main
-
-func main() {
-	a := &struct {
-		A int
-		B string
-	}{1, "Hello"}
-}
-`)
-}
-
 func TestDeferGo(t *testing.T) {
 	gopClTest(t, `
 go println("Hi")
@@ -704,6 +687,36 @@ import (
 func main() {
 	x := strings.NewReplacer("?", "!").Replace("hello, world???")
 	fmt.Println("x:", x)
+}
+`)
+}
+
+func TestMember(t *testing.T) {
+	gopClTest(t, `
+
+import "flag"
+
+a := &struct {
+	A int
+	B string
+}{1, "Hello"}
+
+x := a.A
+a.B = "Hi"
+
+flag.Usage = nil
+`, `package main
+
+import flag "flag"
+
+func main() {
+	a := &struct {
+		A int
+		B string
+	}{1, "Hello"}
+	x := a.A
+	a.B = "Hi"
+	flag.Usage = nil
 }
 `)
 }
