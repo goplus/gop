@@ -310,11 +310,21 @@ func compileDeclStmt(ctx *blockCtx, expr *ast.DeclStmt) {
 	case *ast.GenDecl:
 		switch d.Tok {
 		case token.TYPE:
-			loadTypes(ctx, d)
+			for _, spec := range d.Specs {
+				loadType(ctx, spec.(*ast.TypeSpec))
+			}
 		case token.CONST:
-			loadConsts(ctx, d)
+			for _, spec := range d.Specs {
+				v := spec.(*ast.ValueSpec)
+				names := makeNames(v.Names)
+				loadConsts(ctx, names, v)
+			}
 		case token.VAR:
-			loadVars(ctx, d)
+			for _, spec := range d.Specs {
+				v := spec.(*ast.ValueSpec)
+				names := makeNames(v.Names)
+				loadVars(ctx, names, v)
+			}
 		default:
 			log.Panicln("TODO: compileDeclStmt - unknown")
 		}

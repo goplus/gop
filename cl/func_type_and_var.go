@@ -92,14 +92,14 @@ func toType(ctx *blockCtx, typ ast.Expr) types.Type {
 		return types.NewPointer(elem)
 	case *ast.MapType:
 		return toMapType(ctx, v)
+	case *ast.StructType:
+		return toStructType(ctx, v)
 	case *ast.ChanType:
 		return toChanType(ctx, v)
 	case *ast.FuncType:
 		return toFuncType(ctx, v)
 		/*	case *ast.SelectorExpr:
-				return toExternalType(ctx, v)
-			case *ast.StructType:
-				return toStructType(ctx, v)
+			return toExternalType(ctx, v)
 		*/
 	}
 	log.Panicln("toType: unknown -", reflect.TypeOf(typ))
@@ -115,11 +115,10 @@ var (
 )
 
 func toIdentType(ctx *blockCtx, ident string) types.Type {
-	pkg := ctx.pkg
-	_, v := pkg.Types.Scope().LookupParent(ident, token.NoPos)
+	v := lookupParent(ctx, ident)
 	if v == nil {
 		tyName := gopPrefix + ident
-		if v = pkg.Builtin().Types.Scope().Lookup(tyName); v == nil {
+		if v = ctx.pkg.Builtin().Types.Scope().Lookup(tyName); v == nil {
 			log.Panicln("TODO: symbol not found -", ident)
 		}
 	}
@@ -131,6 +130,48 @@ func toIdentType(ctx *blockCtx, ident string) types.Type {
 
 func toChanType(ctx *blockCtx, v *ast.ChanType) *types.Chan {
 	return types.NewChan(typesChanDirs[v.Dir], toType(ctx, v.Value))
+}
+
+func toStructType(ctx *blockCtx, v *ast.StructType) *types.Struct {
+	pkg := ctx.pkg.Types
+	fieldList := v.Fields.List
+	fields := make([]*types.Var, 0, len(fieldList))
+	tags := make([]string, 0, len(fieldList))
+	for _, field := range fieldList {
+		typ := toType(ctx, field.Type)
+		if field.Names == nil { // embedded
+			fld := types.NewField(token.NoPos, pkg, getTypeName(typ), typ, true)
+			fields = append(fields, fld)
+			tags = append(tags, toFieldTag(field.Tag))
+			continue
+		}
+		for _, name := range field.Names {
+			fld := types.NewField(token.NoPos, pkg, name.Name, typ, false)
+			fields = append(fields, fld)
+			tags = append(tags, toFieldTag(field.Tag))
+		}
+	}
+	return types.NewStruct(fields, tags)
+}
+
+func toFieldTag(v *ast.BasicLit) string {
+	if v != nil {
+		tag, err := strconv.Unquote(v.Value)
+		if err != nil {
+			log.Panicln("TODO: toFieldTag -", err)
+		}
+		return tag
+	}
+	return ""
+}
+
+func getTypeName(typ types.Type) string {
+	switch t := typ.(type) {
+	case *types.Named:
+		return t.Obj().Name()
+	default:
+		panic("TODO: getTypeName")
+	}
 }
 
 func toMapType(ctx *blockCtx, v *ast.MapType) *types.Map {

@@ -38,17 +38,21 @@ func init() {
 	gblLoadPkgs = gox.NewLoadPkgsCached(nil)
 }
 
-func gopClTest(t *testing.T, gopcode, expected string) {
+func gopClTest(t *testing.T, gopcode, expected string, nocache ...bool) {
 	fset := gblFset
 	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", gopcode)
 	pkgs, err := parser.ParseFSDir(fset, fs, "/foo", nil, 0)
 	if err != nil {
 		t.Fatal("ParseFSDir:", err)
 	}
-	bar := pkgs["main"]
-	pkg, err := cl.NewPackage("", bar, fset, &cl.Config{
+	conf := &cl.Config{
 		LoadPkgs: gblLoadPkgs,
-	})
+	}
+	if nocache != nil {
+		conf = nil
+	}
+	bar := pkgs["main"]
+	pkg, err := cl.NewPackage("", bar, fset, conf)
 	if err != nil {
 		t.Fatal("NewPackage:", err)
 	}
@@ -255,7 +259,7 @@ a := {"Hello": 1, "Go+": 5.1}
 func main() {
 	x := []float64{1, 3.4, 5}
 	y := map[string]int{"Hello": 1, "Go+": 5}
-	z := [3]int{1, 3, 5}
+	z := [...]int{1, 3, 5}
 	a := map[string]float64{"Hello": 1, "Go+": 5.1}
 }
 `)
@@ -301,8 +305,59 @@ b := []float64{2: 1.2, 3, 6: 4.5}
 `, `package main
 
 func main() {
-	a := [5]float64{1, 3: 3.4, 5}
+	a := [...]float64{1, 3: 3.4, 5}
 	b := []float64{2: 1.2, 3, 6: 4.5}
+}
+`)
+}
+
+func TestStructLit(t *testing.T) {
+	gopClTest(t, `
+a := struct {
+	A int
+	B string "tag1:123"
+}{1, "Hello"}
+`, `package main
+
+func main() {
+	a := struct {
+		A int
+		B string "tag1:123"
+	}{1, "Hello"}
+}
+`)
+}
+
+func TestStructType(t *testing.T) {
+	gopClTest(t, `
+type bar = foo
+
+type foo struct {
+	p *bar
+	A int
+	B string "tag1:123"
+}
+
+func main() {
+	type a struct {
+		p *a
+	}
+	type b = a
+}
+`, `package main
+
+type foo struct {
+	p *foo
+	A int
+	B string "tag1:123"
+}
+type bar = foo
+
+func main() {
+	type a struct {
+		p *a
+	}
+	type b = a
 }
 `)
 }
@@ -917,7 +972,7 @@ func TestUnnamedMainFunc(t *testing.T) {
 func main() {
 	i := 1
 }
-`)
+`, true)
 }
 
 func TestFuncAsParam(t *testing.T) {

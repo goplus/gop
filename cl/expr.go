@@ -26,7 +26,6 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
-	"github.com/goplus/gox"
 )
 
 // -----------------------------------------------------------------------------
@@ -77,6 +76,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 		ctx.cb.Typ(toArrayType(ctx, v))
 	case *ast.MapType:
 		ctx.cb.Typ(toMapType(ctx, v))
+	case *ast.StructType:
+		ctx.cb.Typ(toStructType(ctx, v))
 	case *ast.ChanType:
 		ctx.cb.Typ(toChanType(ctx, v))
 	case *ast.ComprehensionExpr:
@@ -144,7 +145,7 @@ func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) { // x[i:j:k]
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) {
 	switch x := v.X.(type) {
 	case *ast.Ident:
-		if o := lookupParent(ctx.cb, x.Name); o != nil {
+		if o := lookupParent(ctx, x.Name); o != nil {
 			ctx.cb.Val(o)
 		} else if at, ok := ctx.imports[x.Name]; ok {
 			ctx.cb.Val(at.Ref(v.Sel.Name))
@@ -197,7 +198,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, allowBuiltin bool) {
 	if name == "_" {
 		log.Panicln("TODO: cannot use _ as value")
 	}
-	if o := lookupParent(ctx.cb, name); o != nil {
+	if o := lookupParent(ctx, name); o != nil {
 		if !allowBuiltin {
 			if _, ok := o.(*types.Builtin); ok {
 				panic("unexpected builtin: " + name)
@@ -209,11 +210,18 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, allowBuiltin bool) {
 	}
 }
 
-func lookupParent(cb *gox.CodeBuilder, name string) types.Object {
-	if _, o := cb.Scope().LookupParent(name, token.NoPos); o != nil {
+func lookupParent(ctx *blockCtx, name string) types.Object {
+	at, o := ctx.cb.Scope().LookupParent(name, token.NoPos)
+	if o != nil && at != types.Universe {
 		return o
 	}
-	return cb.Pkg().Builtin().Ref(name)
+	if ctx.loadSymbol(name) {
+		return ctx.pkg.Types.Scope().Lookup(name)
+	}
+	if obj := ctx.pkg.Builtin().Ref(name); obj != nil {
+		return obj
+	}
+	return o
 }
 
 func compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {
@@ -255,15 +263,26 @@ func compileCompositeLitElts(ctx *blockCtx, elts []ast.Expr, kind int) {
 	return
 }
 
+func compileStructLitInKeyVal(ctx *blockCtx, v *ast.CompositeLit, t *types.Struct) {
+	panic("TODO: compileStructLitInKeyVal")
+}
+
 func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) {
+	var typ types.Type
+	if v.Type != nil {
+		typ = toType(ctx, v.Type)
+	}
 	kind := checkCompositeLitElts(ctx, v.Elts)
+	if t, ok := typ.(*types.Struct); ok && kind == compositeLitKeyVal {
+		compileStructLitInKeyVal(ctx, v, t)
+		return
+	}
 	compileCompositeLitElts(ctx, v.Elts, kind)
 	n := len(v.Elts)
-	if v.Type == nil {
+	if typ == nil {
 		ctx.cb.MapLit(nil, n<<1)
 		return
 	}
-	typ := toType(ctx, v.Type)
 	switch t := typ.(type) {
 	case *types.Slice:
 		ctx.cb.SliceLit(t, n<<kind, kind == compositeLitKeyVal)
@@ -272,7 +291,7 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) {
 	case *types.Map:
 		ctx.cb.MapLit(t, n<<1)
 	case *types.Struct:
-		panic("TODO: compileCompositeLit struct")
+		ctx.cb.StructLit(t, n, false)
 	default:
 		log.Panicln("compileCompositeLit: unknown type -", reflect.TypeOf(typ))
 	}
