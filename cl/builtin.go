@@ -17,11 +17,133 @@
 package cl
 
 import (
+	"fmt"
 	"go/token"
 	"go/types"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"strings"
+	"syscall"
 
 	"github.com/goplus/gox"
+	"golang.org/x/mod/modfile"
+	"golang.org/x/tools/go/packages"
 )
+
+// -----------------------------------------------------------------------------
+
+func FindGoModFile(dir string) (file string, err error) {
+	if dir == "" {
+		dir = "."
+	}
+	if dir, err = filepath.Abs(dir); err != nil {
+		return
+	}
+	for dir != "" {
+		file = filepath.Join(dir, "go.mod")
+		if fi, e := os.Lstat(file); e == nil && !fi.IsDir() {
+			return
+		}
+		dir, _ = filepath.Split(dir)
+	}
+	return "", syscall.ENOENT
+}
+
+func GetModulePath(file string) (pkgPath string, err error) {
+	src, err := ioutil.ReadFile(file)
+	if err != nil {
+		return
+	}
+	f, err := modfile.ParseLax(file, src, nil)
+	if err != nil {
+		return
+	}
+	return f.Module.Mod.Path, nil
+}
+
+// -----------------------------------------------------------------------------
+
+var (
+	GenGoPkg func(pkgDir string) error
+	GopGo    func(cfg *packages.Config, notFounds []string) error
+)
+
+func GenGoPkgs(cfg *packages.Config, notFounds []string) (err error) {
+	if GenGoPkg == nil {
+		return syscall.ENOENT
+	}
+	file, err := FindGoModFile(cfg.Dir)
+	if err != nil {
+		return
+	}
+	root, _ := filepath.Split(file)
+	pkgPath, err := GetModulePath(file)
+	if err != nil {
+		return
+	}
+	pkgPathSlash := pkgPath + "/"
+	for _, notFound := range notFounds {
+		if strings.HasPrefix(notFound, pkgPathSlash) || notFound == pkgPath {
+			if err = GenGoPkg(root + notFound[len(pkgPath):]); err != nil {
+				return
+			}
+		} else {
+			return syscall.ENOENT
+		}
+	}
+	return nil
+}
+
+func LoadGop(cfg *packages.Config, patterns ...string) ([]*packages.Package, error) {
+retry:
+	loadPkgs, err := packages.Load(cfg, patterns...)
+	if err == nil && GenGoPkg != nil {
+		var notFounds []string
+		packages.Visit(loadPkgs, nil, func(pkg *packages.Package) {
+			const goGetCmd = "go get "
+			for _, err := range pkg.Errors {
+				if pos := strings.LastIndex(err.Msg, goGetCmd); pos > 0 {
+					notFounds = append(notFounds, err.Msg[pos+len(goGetCmd):])
+				}
+			}
+		})
+		if notFounds != nil {
+			gopGenGo := GopGo
+			if gopGenGo == nil {
+				gopGenGo = GenGoPkgs
+			}
+			if e := gopGenGo(cfg, notFounds); e == nil {
+				goto retry
+			}
+		}
+	}
+	return loadPkgs, err
+}
+
+// LoadGopPkgs loads and returns the Go+ packages named by the given pkgPaths.
+func LoadGopPkgs(at *gox.Package, importPkgs map[string]*gox.PkgRef, pkgPaths ...string) int {
+	conf := at.InternalGetLoadConfig()
+	loadPkgs, err := LoadGop(conf, pkgPaths...)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	if n := packages.PrintErrors(loadPkgs); n > 0 {
+		return n
+	}
+	for _, loadPkg := range loadPkgs {
+		if pkg, ok := importPkgs[loadPkg.PkgPath]; ok && pkg.ID == "" {
+			pkg.ID = loadPkg.ID
+			pkg.Errors = loadPkg.Errors
+			pkg.Types = loadPkg.Types
+			pkg.Fset = loadPkg.Fset
+			pkg.Module = loadPkg.Module
+			pkg.IllTyped = loadPkg.IllTyped
+		}
+	}
+	return 0
+}
 
 // -----------------------------------------------------------------------------
 

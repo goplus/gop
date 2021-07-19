@@ -78,6 +78,10 @@ func NewPackage(
 	if conf == nil {
 		conf = &Config{}
 	}
+	loadPkgs := conf.LoadPkgs
+	if loadPkgs == nil {
+		loadPkgs = LoadGopPkgs
+	}
 	confGox := &gox.Config{
 		Context:    conf.Context,
 		Logf:       conf.Logf,
@@ -86,7 +90,7 @@ func NewPackage(
 		BuildFlags: conf.BuildFlags,
 		Fset:       fset,
 		ParseFile:  nil, // TODO
-		LoadPkgs:   conf.LoadPkgs,
+		LoadPkgs:   loadPkgs,
 		Prefix:     gopPrefix,
 		Contracts:  nil,
 		NewBuiltin: newBuiltinDefault,
