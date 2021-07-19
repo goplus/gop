@@ -22,6 +22,10 @@ import (
 	"os"
 	"strings"
 
+	gen "github.com/goplus/gop/cmd/gengo"
+	"github.com/qiniu/x/log"
+
+	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/cmd/internal/build"
 	"github.com/goplus/gop/cmd/internal/gengo"
@@ -45,6 +49,7 @@ func init() {
 		install.Cmd,
 		build.Cmd,
 	}
+	cl.GenGoPkg = gen.NewRunner(nil, nil).GenGoPkg
 }
 
 func main() {
@@ -53,6 +58,7 @@ func main() {
 	if len(args) < 1 {
 		base.Usage()
 	}
+	log.SetFlags(log.Ldefault &^ log.LstdFlags)
 
 	base.CmdName = args[0] // for error messages
 	if args[0] == "help" {

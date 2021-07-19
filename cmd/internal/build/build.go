@@ -42,53 +42,5 @@ func init() {
 }
 
 func runCmd(cmd *base.Command, args []string) {
-	/*	flag.Parse(args)
-
-		dir, err := os.Getwd()
-		if err != nil {
-			log.Fatalf("Fail to build: %v", err)
-		}
-
-		paths := flag.Args()
-		if len(paths) == 0 {
-			paths = append(paths, dir)
-		}
-
-		cl.CallBuiltinOp = bytecode.CallBuiltinOp
-		log.SetFlags(log.Ldefault &^ log.LstdFlags)
-
-		fset := token.NewFileSet()
-		pkgs, errs := work.LoadPackages(fset, paths)
-		if len(errs) > 0 {
-			log.Fatalf("load packages error: %v\n", errs)
-		}
-		if len(pkgs) == 0 {
-			fmt.Println("no Go+ files in ", paths)
-		}
-		for _, pkg := range pkgs {
-			err := work.GenGoPkg(fset, pkg.Pkg, pkg.Dir)
-			if err != nil {
-				log.Fatalf("generate go package error: %v\n", err)
-			}
-			target := pkg.Target
-			if flagBuildOutput != "" {
-				target = flagBuildOutput
-			}
-			if !filepath.IsAbs(target) {
-				target = filepath.Join(dir, target)
-			}
-			if pkg.IsDir {
-				err = work.GoBuild(pkg.Dir, target)
-			} else {
-				err = work.GoBuild(pkg.Dir, target, "gop_autogen.go")
-			}
-			if err != nil {
-				log.Fatalf("go build error: %v\n", err)
-			}
-			if flagVerbose && pkg.Name == "main" {
-				fmt.Println(target)
-			}
-		}
-	*/
-	panic("TODO: go build not impl")
+	panic("TODO: gop build not impl")
 }

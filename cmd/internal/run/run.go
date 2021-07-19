@@ -66,7 +66,6 @@ func runCmd(cmd *base.Command, args []string) {
 		cmd.Usage(os.Stderr)
 	}
 
-	log.SetFlags(log.Ldefault &^ log.LstdFlags)
 	if *flagQuiet {
 		log.SetOutputLevel(0x7000)
 	} else if *flagDebug {
@@ -137,9 +136,11 @@ func IsDir(target string) (bool, error) {
 
 func goRun(target string) error {
 	cmd := exec.Command("go", "run", target)
-	gorun, err := cmd.Output()
-	os.Stdout.Write(gorun)
-	return err
+	cmd.Dir, _ = filepath.Split(target)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Env = os.Environ()
+	return cmd.Run()
 }
 
 // -----------------------------------------------------------------------------

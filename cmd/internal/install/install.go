@@ -18,13 +18,19 @@
 package install
 
 import (
+	"fmt"
+	"os"
+	"os/exec"
+	"strings"
+
+	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/cmd/internal/base"
 )
 
 // Cmd - gop install
 var Cmd = &base.Command{
 	UsageLine: "gop install [-v] <gopSrcDir|gopSrcFile>",
-	Short:     "Build go+ files and install target to GOBIN",
+	Short:     "Build Go+ files and install target to GOBIN",
 }
 
 var (
@@ -38,47 +44,44 @@ func init() {
 }
 
 func runCmd(cmd *base.Command, args []string) {
-	panic("TODO: go install not impl")
-	/*
-		flag.Parse(args)
-
-		dir, err := os.Getwd()
-		if err != nil {
-			log.Fatalf("Fail to build: %v", err)
-		}
-
-		paths := flag.Args()
-		if len(paths) == 0 {
-			paths = append(paths, dir)
-		}
-
-		log.SetFlags(log.Ldefault &^ log.LstdFlags)
-
-		fset := token.NewFileSet()
-		pkgs, errs := work.LoadPackages(fset, paths)
-		if len(errs) > 0 {
-			log.Fatalf("load packages error: %v\n", errs)
-		}
-		if len(pkgs) == 0 {
-			fmt.Println("no Go+ files in ", paths)
-		}
-		for _, pkg := range pkgs {
-			err := work.GenGoPkg(fset, pkg.Pkg, pkg.Dir)
-			if err != nil {
-				log.Fatalf("generate go package error: %v\n", err)
+	flag.Parse(args)
+	if flag.NArg() < 1 {
+		cmd.Usage(os.Stderr)
+		return
+	}
+	var exitCode int
+	var recursive bool
+	var dir = flag.Arg(0)
+	if strings.HasSuffix(dir, "/...") {
+		dir = dir[:len(dir)-4]
+		recursive = true
+	}
+	runner := gengo.NewRunner(nil, nil)
+	runner.SetAfter(func(p *gengo.Runner, dir string, flags int) error {
+		errs := p.ResetErrors()
+		if errs != nil {
+			for _, err := range errs {
+				fmt.Fprintln(os.Stderr, err)
 			}
-			target := filepath.Join(work.GOPBIN(), pkg.Target)
-			if pkg.IsDir {
-				err = work.GoInstall(pkg.Dir)
-			} else {
-				err = work.GoBuild(pkg.Dir, target, "gop_autogen.go")
-			}
-			if err != nil {
-				log.Fatalf("go build error: %v\n", err)
-			}
-			if flagVerbose && pkg.Name == "main" {
-				fmt.Println(target)
-			}
+			fmt.Fprintln(os.Stderr)
 		}
-	*/
+		return nil
+	})
+	runner.GenGo(dir, recursive)
+	goCmd(dir, "install", args...)
+	os.Exit(exitCode)
 }
+
+func goCmd(dir string, op string, args ...string) error {
+	opwargs := make([]string, len(args)+1)
+	opwargs[0] = op
+	copy(opwargs[1:], args)
+	cmd := exec.Command("go", opwargs...)
+	cmd.Dir = dir
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Env = os.Environ()
+	return cmd.Run()
+}
+
+// -----------------------------------------------------------------------------

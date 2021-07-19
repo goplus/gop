@@ -21,92 +21,37 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
-	"path/filepath"
-	"strings"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/cl"
+	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/token"
-	"github.com/goplus/gox"
-	"github.com/qiniu/x/log"
 )
-
-var (
-	exitCode = 0
-)
-
-func saveGoFile(dir string, pkg *gox.Package) error {
-	err := os.MkdirAll(dir, 0777)
-	if err != nil {
-		return err
-	}
-	return gox.WriteFile(dir+"/gop_autogen.go", pkg)
-}
-
-func genGopkg(pkgDir string) (mainPkg bool, err error) {
-	defer func() {
-		if e := recover(); e != nil {
-			switch v := e.(type) {
-			case string:
-				err = errors.New(v)
-			case error:
-				err = v
-			default:
-				panic(e)
-			}
-		}
-	}()
-
-	fset := token.NewFileSet()
-	pkgDir, _ = filepath.Abs(pkgDir)
-	pkgs, err := parser.ParseDir(fset, pkgDir, nil, 0)
-	if err != nil {
-		return
-	}
-	if len(pkgs) != 1 {
-		return false, fmt.Errorf("too many packages (%d) in the same directory", len(pkgs))
-	}
-
-	pkg := getPkg(pkgs)
-	conf := &cl.Config{}
-	out, err := cl.NewPackage("", pkg, fset, conf)
-	if err != nil {
-		return
-	}
-	return pkg.Name == "main", saveGoFile(pkgDir, out)
-}
-
-func getPkg(pkgs map[string]*ast.Package) *ast.Package {
-	for _, pkg := range pkgs {
-		return pkg
-	}
-	return nil
-}
 
 // -----------------------------------------------------------------------------
 
-func testPkg(dir string) {
+var (
+	errTestFailed = errors.New("test failed")
+)
+
+func testPkg(p *gengo.Runner, dir string, flags int) error {
+	if flags == gengo.PkgFlagGo { // don't test Go packages
+		return nil
+	}
 	cmd1 := exec.Command("go", "run", path.Join(dir, "gop_autogen.go"))
 	gorun, err := cmd1.CombinedOutput()
 	if err != nil {
 		os.Stderr.Write(gorun)
 		fmt.Fprintf(os.Stderr, "[ERROR] `%v` failed: %v\n", cmd1, err)
-		exitCode = -1
-		return
+		return err
 	}
 	cmd2 := exec.Command("gop", "run", "-quiet", dir) // -quiet: don't generate any log
 	qrun, err := cmd2.CombinedOutput()
 	if err != nil {
 		os.Stderr.Write(qrun)
 		fmt.Fprintf(os.Stderr, "[ERROR] `%v` failed: %v\n", cmd2, err)
-		exitCode = -1
-		return
+		return err
 	}
 	if !bytes.Equal(gorun, qrun) {
 		fmt.Fprintf(os.Stderr, "[ERROR] Output has differences!\n")
@@ -114,44 +59,9 @@ func testPkg(dir string) {
 		os.Stderr.Write(gorun)
 		fmt.Fprintf(os.Stderr, "\n>>> Output of `%v`:\n", cmd2)
 		os.Stderr.Write(qrun)
-		exitCode = -1
+		return errTestFailed
 	}
-}
-
-// -----------------------------------------------------------------------------
-
-func genGo(dir string, test bool) {
-	if strings.HasPrefix(dir, "_") {
-		return
-	}
-	fis, err := ioutil.ReadDir(dir)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "ReadDir failed:", err)
-		exitCode = -1
-		return
-	}
-	var isPkg bool
-	for _, fi := range fis {
-		if fi.IsDir() {
-			pkgDir := path.Join(dir, fi.Name())
-			genGo(pkgDir, test)
-			continue
-		}
-		if strings.HasSuffix(fi.Name(), ".gop") {
-			isPkg = true
-		}
-	}
-	if isPkg {
-		fmt.Printf("Compiling %s ...\n", dir)
-		isPkg, err = genGopkg(dir)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "[ERROR] %v\n\n", err)
-			exitCode = -1
-		} else if isPkg && test {
-			fmt.Printf("Testing %s ...\n", dir)
-			testPkg(dir)
-		}
-	}
+	return nil
 }
 
 // -----------------------------------------------------------------------------
@@ -178,9 +88,18 @@ func runCmd(cmd *base.Command, args []string) {
 		return
 	}
 	dir := flag.Arg(0)
-	log.SetFlags(log.Ldefault &^ log.LstdFlags)
-	genGo(dir, *flagTest)
-	os.Exit(exitCode)
+	runner := gengo.NewRunner(nil, nil)
+	if *flagTest {
+		runner.SetAfter(testPkg)
+	}
+	runner.GenGo(dir, true)
+	errs := runner.Errors()
+	if errs != nil {
+		for _, err := range errs {
+			fmt.Fprintln(os.Stderr, err)
+		}
+		os.Exit(-1)
+	}
 }
 
 // -----------------------------------------------------------------------------
