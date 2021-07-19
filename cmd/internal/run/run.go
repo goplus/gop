@@ -71,7 +71,7 @@ func runCmd(cmd *base.Command, args []string) {
 		log.SetOutputLevel(0x7000)
 	} else if *flagDebug {
 		log.SetOutputLevel(log.Ldebug)
-		gox.SetDebug(true)
+		gox.SetDebug(gox.DbgFlagAll)
 	}
 	if *flagProf {
 		panic("TODO: profile not impl")

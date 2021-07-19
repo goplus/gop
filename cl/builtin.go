@@ -45,7 +45,9 @@ func FindGoModFile(dir string) (file string, err error) {
 		if fi, e := os.Lstat(file); e == nil && !fi.IsDir() {
 			return
 		}
-		dir, _ = filepath.Split(dir)
+		if dir, file = filepath.Split(strings.TrimRight(dir, "/\\")); file == "" {
+			break
+		}
 	}
 	return "", syscall.ENOENT
 }
@@ -133,14 +135,7 @@ func LoadGopPkgs(at *gox.Package, importPkgs map[string]*gox.PkgRef, pkgPaths ..
 		return n
 	}
 	for _, loadPkg := range loadPkgs {
-		if pkg, ok := importPkgs[loadPkg.PkgPath]; ok && pkg.ID == "" {
-			pkg.ID = loadPkg.ID
-			pkg.Errors = loadPkg.Errors
-			pkg.Types = loadPkg.Types
-			pkg.Fset = loadPkg.Fset
-			pkg.Module = loadPkg.Module
-			pkg.IllTyped = loadPkg.IllTyped
-		}
+		gox.LoadGoPkg(at, importPkgs, loadPkg)
 	}
 	return 0
 }

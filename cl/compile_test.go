@@ -37,7 +37,7 @@ var (
 )
 
 func init() {
-	gox.SetDebug(true)
+	gox.SetDebug(gox.DbgFlagAll)
 	gblFset = token.NewFileSet()
 	gblLoadPkgs = gox.NewLoadPkgsCached(cl.LoadGop)
 	cl.GenGoPkg = genGopkg
@@ -89,6 +89,7 @@ func genGopkg(pkgDir string) (err error) {
 }
 
 func TestImportGopPkg(t *testing.T) {
+	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen.go")
 	gopClTest(t, `import "github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/foo"
 
 rmap := foo.ReverseMap(map[string]int{"Hi": 1, "Hello": 2})
