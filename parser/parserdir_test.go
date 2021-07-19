@@ -30,6 +30,11 @@ import (
 
 // -----------------------------------------------------------------------------
 
+func init() {
+	log.SetOutputLevel(log.Ldebug)
+	log.SetFlags(log.Llevel)
+}
+
 func testFrom(t *testing.T, pkgDir, sel string) {
 	if sel != "" && !strings.Contains(pkgDir, sel) {
 		return
@@ -56,7 +61,7 @@ func TestFromTestdata(t *testing.T) {
 	if err != nil {
 		t.Fatal("Getwd failed:", err)
 	}
-	dir = path.Join(dir, "./testdata")
+	dir = path.Join(dir, "./_testdata")
 	fis, err := ioutil.ReadDir(dir)
 	if err != nil {
 		t.Fatal("ReadDir failed:", err)

@@ -88,9 +88,6 @@ func (p *Runner) ResetErrors() []*Error {
 }
 
 func (p *Runner) GenGo(dir string, recursive bool) {
-	if strings.HasPrefix(dir, "_") {
-		return
-	}
 	fis, err := ioutil.ReadDir(dir)
 	if err != nil {
 		p.addError(dir, "readDir", err)
@@ -101,6 +98,9 @@ func (p *Runner) GenGo(dir string, recursive bool) {
 	var pkgFlags int
 	for _, fi := range fis {
 		fname := fi.Name()
+		if strings.HasPrefix(fname, "_") {
+			continue
+		}
 		if fi.IsDir() {
 			if recursive {
 				pkgDir := path.Join(dir, fname)
@@ -126,7 +126,7 @@ func (p *Runner) GenGo(dir string, recursive bool) {
 		}
 	}
 	if pkgFlags != 0 {
-		if pkgFlags == PkgFlagGo { // a pure Go package
+		if (pkgFlags & PkgFlagGo) != 0 { // a Go package
 			// TODO: depency check
 		} else if gopTime.After(gogenTime) { // update a Go+ package
 			fmt.Printf("GenGoPkg %s ...\n", dir)
