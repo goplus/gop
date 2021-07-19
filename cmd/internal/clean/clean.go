@@ -14,35 +14,73 @@
  limitations under the License.
 */
 
-// Package build implements the ``gop build'' command.
-package build
+package clean
 
 import (
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
+	"path/filepath"
+	"strings"
+
 	"github.com/goplus/gop/cmd/internal/base"
 )
+
+const (
+	autoGenFileName = "gop_autogen.go"
+)
+
+// -----------------------------------------------------------------------------
+
+func cleanAGFiles(dir string) {
+	fis, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return
+	}
+	for _, fi := range fis {
+		fname := fi.Name()
+		if strings.HasPrefix(fname, "_") {
+			continue
+		}
+		if fi.IsDir() {
+			pkgDir := path.Join(dir, fname)
+			cleanAGFiles(pkgDir)
+			continue
+		}
+	}
+	file := filepath.Join(dir, autoGenFileName)
+	if _, err = os.Stat(file); err == nil {
+		fmt.Printf("==> Cleaning %s ...\n", file)
+		os.Remove(file)
+	}
+}
 
 // -----------------------------------------------------------------------------
 
 // Cmd - gop build
 var Cmd = &base.Command{
-	UsageLine: "gop build [-v] [-o output] <gopSrcDir|gopSrcFile>",
-	Short:     "Build Go+ files and execute go build command",
+	UsageLine: "gop clean [-v] <gopSrcDir>",
+	Short:     "Clean all Go+ auto generated files",
 }
 
 var (
-	flagBuildOutput string
-	flagVerbose     bool
-	flag            = &Cmd.Flag
+	flag        = &Cmd.Flag
+	flagVerbose = flag.Bool("v", false, "print verbose information.")
 )
 
 func init() {
-	flag.StringVar(&flagBuildOutput, "o", "", "go build output file")
-	flag.BoolVar(&flagVerbose, "v", false, "print the names of packages as they are compiled.")
 	Cmd.Run = runCmd
 }
 
 func runCmd(cmd *base.Command, args []string) {
-	panic("TODO: gop build not impl")
+	flag.Parse(args)
+	if flag.NArg() < 1 {
+		cmd.Usage(os.Stderr)
+		return
+	}
+	dir := flag.Arg(0)
+	cleanAGFiles(dir)
 }
 
 // -----------------------------------------------------------------------------

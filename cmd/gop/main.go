@@ -28,6 +28,7 @@ import (
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/cmd/internal/build"
+	"github.com/goplus/gop/cmd/internal/clean"
 	"github.com/goplus/gop/cmd/internal/gengo"
 	"github.com/goplus/gop/cmd/internal/gopfmt"
 	"github.com/goplus/gop/cmd/internal/help"
@@ -48,6 +49,7 @@ func init() {
 		gopfmt.Cmd,
 		install.Cmd,
 		build.Cmd,
+		clean.Cmd,
 	}
 	cl.GenGoPkg = gen.NewRunner(nil, nil).GenGoPkg
 }
