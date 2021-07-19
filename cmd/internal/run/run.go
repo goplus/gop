@@ -60,6 +60,30 @@ func saveGoFile(gofile string, pkg *gox.Package) error {
 	return gox.WriteFile(gofile, pkg)
 }
 
+func findGoModFile(dir string) (string, error) {
+	modfile, err := cl.FindGoModFile(dir)
+	if err != nil {
+		home := os.Getenv("HOME")
+		modfile = home + "/gop/go.mod"
+		if fi, e := os.Lstat(modfile); e == nil && !fi.IsDir() {
+			return modfile, nil
+		}
+		modfile = home + "/goplus/go.mod"
+		if fi, e := os.Lstat(modfile); e == nil && !fi.IsDir() {
+			return modfile, nil
+		}
+	}
+	return modfile, err
+}
+
+func findGoModDir(dir string) string {
+	modfile, err := findGoModFile(dir)
+	if err != nil {
+		log.Fatalln("findGoModFile:", err)
+	}
+	return filepath.Dir(modfile)
+}
+
 func runCmd(cmd *base.Command, args []string) {
 	flag.Parse(args)
 	if flag.NArg() < 1 {
@@ -82,17 +106,20 @@ func runCmd(cmd *base.Command, args []string) {
 	if err != nil {
 		log.Fatalln("input arg check failed:", err)
 	}
+	var dir string
 	var pkgs map[string]*ast.Package
 	if isDir {
+		dir = target
 		pkgs, err = parser.ParseDir(fset, target, nil, 0)
 	} else {
+		dir = filepath.Dir(target)
 		pkgs, err = parser.Parse(fset, target, nil, 0)
 	}
 	if err != nil {
 		log.Fatalln("parser.Parse failed:", err)
 	}
 
-	conf := &cl.Config{}
+	conf := &cl.Config{Dir: findGoModDir(dir)}
 	out, err := cl.NewPackage("", pkgs["main"], fset, conf)
 	if err != nil {
 		log.Fatalln("cl.NewPackage failed:", err)
