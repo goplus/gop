@@ -142,8 +142,7 @@ func LoadGopPkgs(at *gox.Package, importPkgs map[string]*gox.PkgRef, pkgPaths ..
 
 // -----------------------------------------------------------------------------
 
-func initGopBuiltin(pkg gox.PkgImporter, builtin *types.Package) {
-	big := pkg.Import("github.com/goplus/gop/builtin")
+func initGopBuiltin(pkg gox.PkgImporter, builtin *types.Package, big *gox.PkgRef) {
 	big.Ref("Gop_bigint")
 	scope := big.Types.Scope()
 	for i, n := 0, scope.Len(); i < n; i++ {
@@ -154,8 +153,7 @@ func initGopBuiltin(pkg gox.PkgImporter, builtin *types.Package) {
 	}
 }
 
-func initBuiltin(pkg gox.PkgImporter, builtin *types.Package) {
-	fmt := pkg.Import("fmt")
+func initBuiltin(pkg gox.PkgImporter, builtin *types.Package, fmt *gox.PkgRef) {
 	fns := []string{"print", "println", "printf", "errorf", "fprint", "fprintln", "fprintf"}
 	for _, fn := range fns {
 		fnTitle := string(fn[0]-'a'+'A') + fn[1:]
@@ -165,8 +163,10 @@ func initBuiltin(pkg gox.PkgImporter, builtin *types.Package) {
 
 func newBuiltinDefault(pkg gox.PkgImporter, prefix string, contracts *gox.BuiltinContracts) *types.Package {
 	builtin := types.NewPackage("", "")
-	initBuiltin(pkg, builtin)
-	initGopBuiltin(pkg, builtin)
+	fmt := pkg.Import("fmt")
+	big := pkg.Import("github.com/goplus/gop/builtin")
+	initBuiltin(pkg, builtin, fmt)
+	initGopBuiltin(pkg, builtin, big)
 	gox.InitBuiltinOps(builtin, prefix, contracts)
 	gox.InitBuiltinFuncs(builtin)
 	return builtin
