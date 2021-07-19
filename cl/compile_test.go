@@ -18,13 +18,11 @@ package cl_test
 
 import (
 	"bytes"
-	"errors"
-	"fmt"
 	"os"
 	"testing"
 
-	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
+	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/parser/parsertest"
 	"github.com/goplus/gop/token"
@@ -40,52 +38,7 @@ func init() {
 	gox.SetDebug(gox.DbgFlagAll)
 	gblFset = token.NewFileSet()
 	gblLoadPkgs = gox.NewLoadPkgsCached(cl.LoadGop)
-	cl.GenGoPkg = genGopkg
-}
-
-func getPkg(pkgs map[string]*ast.Package) *ast.Package {
-	for _, pkg := range pkgs {
-		return pkg
-	}
-	return nil
-}
-
-func genGopkg(pkgDir string) (err error) {
-	defer func() {
-		if e := recover(); e != nil {
-			switch v := e.(type) {
-			case string:
-				err = errors.New(v)
-			case error:
-				err = v
-			default:
-				panic(e)
-			}
-		}
-	}()
-
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseDir(fset, pkgDir, nil, 0)
-	if err != nil {
-		return
-	}
-	if len(pkgs) != 1 {
-		return fmt.Errorf("too many packages (%d) in the same directory", len(pkgs))
-	}
-
-	pkg := getPkg(pkgs)
-	conf := &cl.Config{
-		LoadPkgs: gblLoadPkgs,
-	}
-	out, err := cl.NewPackage("", pkg, fset, conf)
-	if err != nil {
-		return
-	}
-	err = os.MkdirAll(pkgDir, 0777)
-	if err != nil {
-		return
-	}
-	return gox.WriteFile(pkgDir+"/gop_autogen.go", out)
+	cl.GenGoPkg = gengo.NewRunner(nil, nil).GenGoPkg
 }
 
 func TestImportGopPkg(t *testing.T) {
