@@ -23,8 +23,10 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gox"
 )
 
 // Cmd - gop install
@@ -35,12 +37,11 @@ var Cmd = &base.Command{
 
 var (
 	flag        = &Cmd.Flag
-	flagVerbose bool
+	flagVerbose = flag.Bool("v", false, "print the names of packages as they are compiled.")
 )
 
 func init() {
 	Cmd.Run = runCmd
-	flag.BoolVar(&flagVerbose, "v", false, "print the names of packages as they are compiled.")
 }
 
 func runCmd(cmd *base.Command, args []string) {
@@ -56,7 +57,13 @@ func runCmd(cmd *base.Command, args []string) {
 		dir = dir[:len(dir)-4]
 		recursive = true
 	}
-	runner := gengo.NewRunner(nil, nil)
+	var conf *gengo.Config
+	if *flagVerbose {
+		conf = &gengo.Config{
+			LoadPkgs: gox.NewLoadPkgsCached(cl.LoadGop),
+		}
+	}
+	runner := gengo.NewRunner(nil, conf)
 	runner.SetAfter(func(p *gengo.Runner, dir string, flags int) error {
 		errs := p.ResetErrors()
 		if errs != nil {
