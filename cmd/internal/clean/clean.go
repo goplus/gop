@@ -51,7 +51,7 @@ func cleanAGFiles(dir string) {
 	}
 	file := filepath.Join(dir, autoGenFileName)
 	if _, err = os.Stat(file); err == nil {
-		fmt.Printf("==> Cleaning %s ...\n", file)
+		fmt.Printf("Cleaning %s ...\n", file)
 		os.Remove(file)
 	}
 }
