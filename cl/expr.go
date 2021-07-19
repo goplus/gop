@@ -55,7 +55,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 	case *ast.CallExpr:
 		compileCallExpr(ctx, v)
 	case *ast.SelectorExpr:
-		compileSelectorExpr(ctx, v)
+		compileSelectorExpr(ctx, v, true)
 	case *ast.BinaryExpr:
 		compileBinaryExpr(ctx, v)
 	case *ast.UnaryExpr:
@@ -164,35 +164,51 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr) {
 	ctx.cb.MemberRef(v.Sel.Name)
 }
 
-func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr) {
+func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, autoCall bool) {
+	cb := ctx.cb
 	switch x := v.X.(type) {
 	case *ast.Ident:
 		o, at := lookupParent(ctx, x.Name)
 		if at != nil {
-			ctx.cb.Val(at.Ref(v.Sel.Name))
+			cb.Val(at.Ref(v.Sel.Name))
 			return
 		}
 		if o == nil {
 			log.Panicln("TODO: ident not found -", x.Name)
 		}
-		ctx.cb.Val(o)
+		cb.Val(o)
 	default:
 		compileExpr(ctx, v.X)
 	}
-	ctx.cb.MemberVal(v.Sel.Name)
+	var mflag int
+	var name = v.Sel.Name
+	cb.MemberVal(name, &mflag)
+	if mflag == 0 {
+		if c := name[0]; c >= 'a' && c <= 'z' {
+			name = string(rune(c)+('A'-'a')) + name[1:]
+			cb.MemberVal(name, &mflag)
+			if mflag == gox.MFlagMethod {
+				if autoCall {
+					cb.Call(0)
+				}
+				return
+			}
+		}
+		log.Panicln("TODO: member not found -", v.Sel.Name)
+	}
 }
 
 func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
-	if fn, ok := v.Fun.(*ast.Ident); ok {
+	switch fn := v.Fun.(type) {
+	case *ast.Ident:
 		compileIdent(ctx, fn, true)
-		for _, arg := range v.Args {
-			compileExpr(ctx, arg)
-		}
-	} else {
-		compileExpr(ctx, v.Fun)
-		for _, arg := range v.Args {
-			compileExpr(ctx, arg)
-		}
+	case *ast.SelectorExpr:
+		compileSelectorExpr(ctx, fn, false)
+	default:
+		compileExpr(ctx, fn)
+	}
+	for _, arg := range v.Args {
+		compileExpr(ctx, arg)
 	}
 	ctx.cb.Call(len(v.Args), v.Ellipsis != gotoken.NoPos)
 }

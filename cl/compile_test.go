@@ -41,26 +41,6 @@ func init() {
 	cl.GenGoPkg = gengo.NewRunner(nil, nil).GenGoPkg
 }
 
-func TestImportGopPkg(t *testing.T) {
-	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen.go")
-	gopClTest(t, `import "github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/foo"
-
-rmap := foo.ReverseMap(map[string]int{"Hi": 1, "Hello": 2})
-println(rmap)
-`, `package main
-
-import (
-	fmt "fmt"
-	foo "github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/foo"
-)
-
-func main() {
-	rmap := foo.ReverseMap(map[string]int{"Hi": 1, "Hello": 2})
-	fmt.Println(rmap)
-}
-`)
-}
-
 func gopClTest(t *testing.T, gopcode, expected string, nocache ...bool) {
 	fset := gblFset
 	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", gopcode)
@@ -88,6 +68,61 @@ func gopClTest(t *testing.T, gopcode, expected string, nocache ...bool) {
 	if result != expected {
 		t.Fatalf("\nResult:\n%s\nExpected:\n%s\n", result, expected)
 	}
+}
+
+func TestAutoProperty(t *testing.T) {
+	gopClTest(t, `import "github.com/goplus/gop/ast/goptest"
+
+func foo(script string) {
+	doc := goptest.New(script)!
+
+	println(doc.any.funcDecl.name)
+	println(doc.any.importSpec.name)
+}
+`, `package main
+
+import (
+	fmt "fmt"
+	goptest "github.com/goplus/gop/ast/goptest"
+	gopq "github.com/goplus/gop/ast/gopq"
+)
+
+func foo(script string) {
+	var _autoGop_1 gopq.NodeSet
+	{
+		var _gop_err error
+		_autoGop_1, _gop_err = goptest.New(script)
+		if _gop_err != nil {
+			panic(_gop_err)
+		}
+		goto _autoGop_2
+	_autoGop_2:
+	}
+	doc := _autoGop_1
+	fmt.Println(doc.Any().FuncDecl().Name())
+	fmt.Println(doc.Any().ImportSpec().Name())
+}
+`)
+}
+
+func TestImportGopPkg(t *testing.T) {
+	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen.go")
+	gopClTest(t, `import "github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/foo"
+
+rmap := foo.ReverseMap(map[string]int{"Hi": 1, "Hello": 2})
+println(rmap)
+`, `package main
+
+import (
+	fmt "fmt"
+	foo "github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/foo"
+)
+
+func main() {
+	rmap := foo.ReverseMap(map[string]int{"Hi": 1, "Hello": 2})
+	fmt.Println(rmap)
+}
+`)
 }
 
 func TestErrWrap(t *testing.T) {
