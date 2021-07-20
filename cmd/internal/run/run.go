@@ -40,11 +40,12 @@ var Cmd = &base.Command{
 }
 
 var (
-	flag      = &Cmd.Flag
-	flagAsm   = flag.Bool("asm", false, "generates `asm` code of Go+ bytecode backend")
-	flagQuiet = flag.Bool("quiet", false, "don't generate any compiling stage log")
-	flagDebug = flag.Bool("debug", false, "print debug information")
-	flagProf  = flag.Bool("prof", false, "do profile and generate profile report")
+	flag        = &Cmd.Flag
+	flagAsm     = flag.Bool("asm", false, "generates `asm` code of Go+ bytecode backend")
+	flagVerbose = flag.Bool("v", false, "print verbose information")
+	flagQuiet   = flag.Bool("quiet", false, "don't generate any compiling stage log")
+	flagDebug   = flag.Bool("debug", false, "set log level to debug")
+	flagProf    = flag.Bool("prof", false, "do profile and generate profile report")
 )
 
 func init() {
@@ -96,6 +97,11 @@ func runCmd(cmd *base.Command, args []string) {
 		log.SetOutputLevel(log.Ldebug)
 		gox.SetDebug(gox.DbgFlagAll)
 	}
+	if *flagVerbose {
+		gox.SetDebug(gox.DbgFlagAll)
+	} else if *flagAsm {
+		gox.SetDebug(gox.DbgFlagInstruction)
+	}
 	if *flagProf {
 		panic("TODO: profile not impl")
 	}
@@ -123,9 +129,6 @@ func runCmd(cmd *base.Command, args []string) {
 	out, err := cl.NewPackage("", pkgs["main"], fset, conf)
 	if err != nil {
 		log.Fatalln("cl.NewPackage failed:", err)
-	}
-	if *flagAsm {
-		panic("TODO: gop run -asm not impl")
 	}
 	var gofile string
 	if isDir {

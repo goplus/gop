@@ -271,7 +271,6 @@ func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File) {
 				for _, spec := range d.Specs {
 					t := spec.(*ast.TypeSpec)
 					name := t.Name.Name
-					log.Println("TYPE:", name) // TODO: remove
 					ld := getTypeLoader(syms, name)
 					ld.typ = func() {
 						if t.Assign != token.NoPos { // alias type
@@ -323,7 +322,6 @@ func loadType(ctx *blockCtx, t *ast.TypeSpec) {
 func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
 	sig := toFuncType(ctx, d.Type, recv)
 	fn := ctx.pkg.NewFuncWith(d.Name.Name, sig)
-	log.Println("loadFunc:", fn.Name(), fn.String(), fn.FullName()) // TODO: remove
 	if body := d.Body; body != nil {
 		loadFuncBody(ctx, fn, body)
 	}
