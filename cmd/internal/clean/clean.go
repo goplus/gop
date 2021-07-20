@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -44,8 +43,12 @@ func cleanAGFiles(dir string) {
 			continue
 		}
 		if fi.IsDir() {
-			pkgDir := path.Join(dir, fname)
-			cleanAGFiles(pkgDir)
+			pkgDir := filepath.Join(dir, fname)
+			if fname == ".gop" {
+				removeGopDir(pkgDir)
+			} else {
+				cleanAGFiles(pkgDir)
+			}
 			continue
 		}
 	}
@@ -54,6 +57,22 @@ func cleanAGFiles(dir string) {
 		fmt.Printf("Cleaning %s ...\n", file)
 		os.Remove(file)
 	}
+}
+
+func removeGopDir(dir string) {
+	fis, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return
+	}
+	for _, fi := range fis {
+		fname := fi.Name()
+		if strings.HasSuffix(fname, ".gop.go") {
+			genfile := filepath.Join(dir, fname)
+			fmt.Printf("Cleaning %s ...\n", genfile)
+			os.Remove(genfile)
+		}
+	}
+	os.Remove(dir)
 }
 
 // -----------------------------------------------------------------------------
