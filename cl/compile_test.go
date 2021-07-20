@@ -92,9 +92,9 @@ func foo(shape Shape) {
 `)
 }
 
-func _TestInterfaceExample(t *testing.T) {
+// TODO: why Area is comming before Circle?
+func TestInterfaceExample(t *testing.T) {
 	gopClTest(t, `
-
 type Shape interface {
 	Area() float64
 }
@@ -129,6 +129,44 @@ func main() {
 	println(Area(circle, rect))
 }
 `, `package main
+
+import fmt "fmt"
+
+type Shape interface {
+	Area() float64
+}
+type Rect struct {
+	x float64
+	y float64
+	w float64
+	h float64
+}
+
+func (p *Rect) Area() float64 {
+	return p.w * p.h
+}
+func Area(shapes ...Shape) float64 {
+	s := 0.0
+	for _, shape := range shapes {
+		s += shape.Area()
+	}
+	return s
+}
+
+type Circle struct {
+	x float64
+	y float64
+	r float64
+}
+
+func (p *Circle) Area() float64 {
+	return 3.14 * p.r * p.r
+}
+func main() {
+	rect := &Rect{0, 0, 2, 5}
+	circle := &Circle{0, 0, 3}
+	fmt.Println(Area(circle, rect))
+}
 `)
 }
 
