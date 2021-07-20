@@ -70,6 +70,85 @@ func gopClTest(t *testing.T, gopcode, expected string, nocache ...bool) {
 	}
 }
 
+func TestTypeSwitch(t *testing.T) {
+	gopClTest(t, `
+
+func bar(p *interface{}) {
+}
+
+func foo(v interface{}) {
+	switch t := v.(type) {
+	case int, string:
+		bar(&v)
+	case bool:
+		var x bool = t
+	default:
+		bar(nil)
+	}
+}
+`, `package main
+
+func bar(p *interface {
+}) {
+}
+func foo(v interface {
+}) {
+	switch t := v.(type) {
+	case int, string:
+		bar(&v)
+	case bool:
+		var x bool = t
+	default:
+		bar(nil)
+	}
+}
+`)
+}
+
+func TestTypeSwitch2(t *testing.T) {
+	gopClTest(t, `
+
+func bar(p *interface{}) {
+}
+
+func foo(v interface{}) {
+	switch bar(nil); v.(type) {
+	case int, string:
+		bar(&v)
+	}
+}
+`, `package main
+
+func bar(p *interface {
+}) {
+}
+func foo(v interface {
+}) {
+	switch bar(nil); v.(type) {
+	case int, string:
+		bar(&v)
+	}
+}
+`)
+}
+
+func TestTypeAssert(t *testing.T) {
+	gopClTest(t, `
+
+func foo(v interface{}) {
+	x := v.(int)
+	y, ok := v.(string)
+}
+`, `package main
+
+func foo(v interface {
+}) {
+	x := v.(int)
+	y, ok := v.(string)
+}
+`)
+}
+
 func TestInterface(t *testing.T) {
 	gopClTest(t, `
 

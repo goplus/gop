@@ -82,6 +82,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 		ctx.cb.Typ(toChanType(ctx, v))
 	case *ast.ComprehensionExpr:
 		compileComprehensionExpr(ctx, v, twoValue != nil && twoValue[0])
+	case *ast.TypeAssertExpr:
+		compileTypeAssertExpr(ctx, v, twoValue != nil && twoValue[0])
 	case *ast.ParenExpr:
 		compileExpr(ctx, v.X)
 	case *ast.ErrWrapExpr:
@@ -128,6 +130,15 @@ func compileStarExprLHS(ctx *blockCtx, v *ast.StarExpr) { // *x = ...
 func compileStarExpr(ctx *blockCtx, v *ast.StarExpr) { // ... = *x
 	compileExpr(ctx, v.X)
 	ctx.cb.Star()
+}
+
+func compileTypeAssertExpr(ctx *blockCtx, v *ast.TypeAssertExpr, twoValue bool) {
+	compileExpr(ctx, v.X)
+	if v.Type == nil {
+		panic("TODO: x.(type) is only used in type switch")
+	}
+	typ := toType(ctx, v.Type)
+	ctx.cb.TypeAssert(typ, twoValue)
 }
 
 func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr, twoValue bool) { // x[i]

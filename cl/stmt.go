@@ -58,6 +58,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileGoStmt(ctx, v)
 	case *ast.DeclStmt:
 		compileDeclStmt(ctx, v)
+	case *ast.TypeSwitchStmt:
+		compileTypeSwitchStmt(ctx, v)
 	case *ast.SendStmt:
 		compileSendStmt(ctx, v)
 	case *ast.BranchStmt:
@@ -228,6 +230,52 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 	if v.Else != nil {
 		cb.Else()
 		compileStmt(ctx, v.Else)
+	}
+	cb.End()
+}
+
+// typeSwitch(name) init; expr typeAssertThen()
+// type1, type2, ... typeN typeCase(N)
+//    ...
+//    end
+// type1, type2, ... typeM typeCase(M)
+//    ...
+//    end
+// end
+func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
+	var cb = ctx.cb
+	var name string
+	var ta *ast.TypeAssertExpr
+	switch stmt := v.Assign.(type) {
+	case *ast.AssignStmt:
+		if stmt.Tok != token.DEFINE || len(stmt.Lhs) != 1 || len(stmt.Rhs) != 1 {
+			panic("TODO: type switch syntax error")
+		}
+		name = stmt.Lhs[0].(*ast.Ident).Name
+		ta = stmt.Rhs[0].(*ast.TypeAssertExpr)
+	case *ast.ExprStmt:
+		ta = stmt.X.(*ast.TypeAssertExpr)
+	}
+	if ta.Type != nil {
+		panic("TODO: type switch syntax error, please use x.(type)")
+	}
+	cb.TypeSwitch(name)
+	if v.Init != nil {
+		compileStmt(ctx, v.Init)
+	}
+	compileExpr(ctx, ta.X)
+	cb.TypeAssertThen()
+	for _, stmt := range v.Body.List {
+		c, ok := stmt.(*ast.CaseClause)
+		if !ok {
+			log.Panicln("TODO: compile TypeSwitchStmt failed - case clause expected.")
+		}
+		for _, citem := range c.List {
+			compileExpr(ctx, citem)
+		}
+		cb.TypeCase(len(c.List)) // TypeCase(0) means default case
+		compileStmts(ctx, c.Body)
+		cb.End()
 	}
 	cb.End()
 }
