@@ -70,6 +70,68 @@ func gopClTest(t *testing.T, gopcode, expected string, nocache ...bool) {
 	}
 }
 
+func TestInterface(t *testing.T) {
+	gopClTest(t, `
+
+type Shape interface {
+	Area() float64
+}
+
+func foo(shape Shape) {
+	shape.Area()
+}
+`, `package main
+
+type Shape interface {
+	Area() float64
+}
+
+func foo(shape Shape) {
+	shape.Area()
+}
+`)
+}
+
+func _TestInterfaceExample(t *testing.T) {
+	gopClTest(t, `
+
+type Shape interface {
+	Area() float64
+}
+
+type Rect struct {
+	x, y, w, h float64
+}
+
+func (p *Rect) Area() float64 {
+	return p.w * p.h
+}
+
+type Circle struct {
+	x, y, r float64
+}
+
+func (p *Circle) Area() float64 {
+	return 3.14 * p.r * p.r
+}
+
+func Area(shapes ...Shape) float64 {
+	s := 0.0
+	for shape <- shapes {
+		s += shape.Area()
+	}
+	return s
+}
+
+func main() {
+	rect := &Rect{0, 0, 2, 5}
+	circle := &Circle{0, 0, 3}
+	println(Area(circle, rect))
+}
+`, `package main
+`)
+}
+
 func TestAutoProperty(t *testing.T) {
 	gopClTest(t, `import "github.com/goplus/gop/ast/goptest"
 
@@ -302,6 +364,20 @@ var x uint32
 
 func main() {
 	x++
+}
+`)
+}
+
+func TestAssignOp(t *testing.T) {
+	gopClTest(t, `
+var x uint32
+x += 3
+`, `package main
+
+var x uint32
+
+func main() {
+	x += 3
 }
 `)
 }

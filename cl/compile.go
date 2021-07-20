@@ -72,31 +72,54 @@ type Config struct {
 	LoadPkgs gox.LoadPkgsFunc
 }
 
+func getUnderlying(ctx *blockCtx, typ types.Type) types.Type {
+	if t := typ.Underlying(); t != nil {
+		return t
+	}
+	if t, ok := typ.(*types.Named); ok {
+		return doLoadUnderlying(ctx.pkgCtx, t)
+	}
+	panic("TODO: getUnderlying: not named type - " + typ.String())
+}
+
+func doLoadUnderlying(ctx *pkgCtx, typ *types.Named) types.Type {
+	panic("TODO: doLoadUnderlying")
+	/*
+		ld := ctx.syms[typ.Obj().Name()].(*typeLoader)
+		doInitType(ld)
+		return typ.Underlying()
+	*/
+}
+
 // NewPackage creates a Go+ package instance.
 func NewPackage(
 	pkgPath string, pkg *ast.Package, fset *token.FileSet, conf *Config) (p *gox.Package, err error) {
 	if conf == nil {
 		conf = &Config{}
 	}
+	ctx := &pkgCtx{syms: make(map[string]loader)}
+	loadUnderlying := func(at *gox.Package, typ *types.Named) types.Type {
+		return doLoadUnderlying(ctx, typ)
+	}
 	loadPkgs := conf.LoadPkgs
 	if loadPkgs == nil {
 		loadPkgs = LoadGopPkgs
 	}
 	confGox := &gox.Config{
-		Context:    conf.Context,
-		Logf:       conf.Logf,
-		Dir:        conf.Dir,
-		Env:        conf.Env,
-		BuildFlags: conf.BuildFlags,
-		Fset:       fset,
-		ParseFile:  nil, // TODO
-		LoadPkgs:   loadPkgs,
-		Prefix:     gopPrefix,
-		Contracts:  nil,
-		NewBuiltin: newBuiltinDefault,
+		Context:        conf.Context,
+		Logf:           conf.Logf,
+		Dir:            conf.Dir,
+		Env:            conf.Env,
+		BuildFlags:     conf.BuildFlags,
+		Fset:           fset,
+		ParseFile:      nil, // TODO
+		LoadPkgs:       loadPkgs,
+		LoadUnderlying: loadUnderlying,
+		Prefix:         gopPrefix,
+		Contracts:      nil,
+		NewBuiltin:     newBuiltinDefault,
 	}
 	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
-	ctx := &pkgCtx{syms: make(map[string]func())}
 	for _, f := range pkg.Files {
 		loadFile(p, ctx, f)
 	}
@@ -109,7 +132,7 @@ func NewPackage(
 				switch d.Tok {
 				case token.TYPE:
 					for _, spec := range d.Specs {
-						ctx.loadSymbol(spec.(*ast.TypeSpec).Name.Name)
+						ctx.loadType(spec.(*ast.TypeSpec).Name.Name)
 					}
 				case token.CONST, token.VAR:
 					for _, spec := range d.Specs {
@@ -125,9 +148,61 @@ func NewPackage(
 	return
 }
 
+type loader interface {
+	load()
+}
+
+type loaderFunc func()
+
+func (fn loaderFunc) load() {
+	fn()
+}
+
+type typeLoader struct {
+	typ, typInit func()
+	methods      []func()
+}
+
+func getTypeLoader(syms map[string]loader, name string) *typeLoader {
+	t, ok := syms[name]
+	if !ok {
+		t = &typeLoader{}
+		syms[name] = t
+	}
+	return t.(*typeLoader)
+}
+
+func (p *typeLoader) load() {
+	doNewType(p)
+	doInitType(p)
+	doInitMethods(p)
+}
+
+func doNewType(ld *typeLoader) {
+	if typ := ld.typ; typ != nil {
+		ld.typ = nil
+		typ()
+	}
+}
+
+func doInitType(ld *typeLoader) {
+	if typInit := ld.typInit; typInit != nil {
+		ld.typInit = nil
+		typInit()
+	}
+}
+
+func doInitMethods(ld *typeLoader) {
+	if methods := ld.methods; methods != nil {
+		ld.methods = nil
+		for _, method := range methods {
+			method()
+		}
+	}
+}
+
 type pkgCtx struct {
-	delays []func()
-	syms   map[string]func()
+	syms map[string]loader
 }
 
 type blockCtx struct {
@@ -137,32 +212,25 @@ type blockCtx struct {
 	imports map[string]*gox.PkgRef
 }
 
-func getUnderlying(ctx *blockCtx, typ types.Type) types.Type {
-	t := typ.Underlying()
-	if t == nil {
-		ctx.complete()
-		t = typ.Underlying()
-	}
-	return t
+func (p *pkgCtx) complete() {
 }
 
-func (p *pkgCtx) complete() {
-retry:
-	if delays := p.delays; delays != nil {
-		p.delays = nil
-		for _, delay := range delays {
-			delay()
-		}
-		if p.delays != nil {
-			goto retry
+func (p *pkgCtx) loadType(name string) {
+	if sym, ok := p.syms[name]; ok {
+		if ld, ok := sym.(*typeLoader); ok {
+			ld.load()
 		}
 	}
 }
 
 func (p *pkgCtx) loadSymbol(name string) bool {
-	if load, ok := p.syms[name]; ok {
+	if f, ok := p.syms[name]; ok {
+		if ld, ok := f.(*typeLoader); ok {
+			doNewType(ld) // create this type, but don't init
+			return true
+		}
 		delete(p.syms, name)
-		load()
+		f.load()
 		return true
 	}
 	return false
@@ -176,8 +244,22 @@ func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File) {
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
-			syms[d.Name.Name] = func() {
-				loadFunc(ctx, d)
+			if d.Recv == nil {
+				name := d.Name.Name
+				if name == "init" {
+					log.Panicln("loadFunc TODO: init")
+				}
+				syms[name] = loaderFunc(func() {
+					loadFunc(ctx, nil, d)
+				})
+			} else {
+				name := getRecvTypeName(d.Recv)
+				ld := getTypeLoader(syms, name)
+				ld.methods = append(ld.methods, func() {
+					doInitType(ld)
+					recv := toRecv(ctx, d.Recv)
+					loadFunc(ctx, recv, d)
+				})
 			}
 		case *ast.GenDecl:
 			switch d.Tok {
@@ -188,15 +270,18 @@ func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File) {
 			case token.TYPE:
 				for _, spec := range d.Specs {
 					t := spec.(*ast.TypeSpec)
-					ctx.syms[t.Name.Name] = func() {
+					name := t.Name.Name
+					log.Println("TYPE:", name) // TODO: remove
+					ld := getTypeLoader(syms, name)
+					ld.typ = func() {
 						if t.Assign != token.NoPos { // alias type
-							ctx.pkg.AliasType(t.Name.Name, toType(ctx, t.Type))
+							ctx.pkg.AliasType(name, toType(ctx, t.Type))
 							return
 						}
-						decl := ctx.pkg.NewType(t.Name.Name)
-						ctx.delays = append(ctx.delays, func() { // decycle
+						decl := ctx.pkg.NewType(name)
+						ld.typInit = func() { // decycle
 							decl.InitType(ctx.pkg, toType(ctx, t.Type))
-						})
+						}
 					}
 				}
 			case token.CONST:
@@ -235,18 +320,10 @@ func loadType(ctx *blockCtx, t *ast.TypeSpec) {
 	}
 }
 
-func loadFunc(ctx *blockCtx, d *ast.FuncDecl) {
-	pkg := ctx.pkg
-	name := d.Name.Name
-	var recv *types.Var
-	if d.Recv != nil {
-		ctx.complete()
-		recv = toRecv(ctx, d.Recv)
-	} else if name == "init" {
-		log.Panicln("loadFunc TODO: init")
-	}
+func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
 	sig := toFuncType(ctx, d.Type, recv)
-	fn := pkg.NewFuncWith(name, sig)
+	fn := ctx.pkg.NewFuncWith(d.Name.Name, sig)
+	log.Println("loadFunc:", fn.Name(), fn.String(), fn.FullName()) // TODO: remove
 	if body := d.Body; body != nil {
 		loadFuncBody(ctx, fn, body)
 	}
@@ -305,15 +382,15 @@ func makeNames(vals []*ast.Ident) []string {
 	return names
 }
 
-func removeNames(syms map[string]func(), names []string) {
+func removeNames(syms map[string]loader, names []string) {
 	for _, name := range names {
 		delete(syms, name)
 	}
 }
 
-func setNamesLoader(syms map[string]func(), names []string, load func()) {
+func setNamesLoader(syms map[string]loader, names []string, load func()) {
 	for _, name := range names {
-		syms[name] = load
+		syms[name] = loaderFunc(load)
 	}
 }
 

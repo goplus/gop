@@ -93,8 +93,9 @@ func compileSendStmt(ctx *blockCtx, expr *ast.SendStmt) {
 }
 
 func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
+	tok := expr.Tok
 	twoValue := (len(expr.Lhs) == 2 && len(expr.Rhs) == 1)
-	if expr.Tok == token.DEFINE {
+	if tok == token.DEFINE {
 		names := make([]string, len(expr.Lhs))
 		for i, lhs := range expr.Lhs {
 			if v, ok := lhs.(*ast.Ident); ok {
@@ -116,7 +117,14 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 	for _, rhs := range expr.Rhs {
 		compileExpr(ctx, rhs, twoValue)
 	}
-	ctx.cb.Assign(len(expr.Lhs), len(expr.Rhs))
+	if tok == token.ASSIGN {
+		ctx.cb.Assign(len(expr.Lhs), len(expr.Rhs))
+		return
+	}
+	if len(expr.Lhs) != 1 || len(expr.Rhs) != 1 {
+		panic("TODO: invalid syntax of assign by operator")
+	}
+	ctx.cb.AssignOp(gotoken.Token(tok))
 }
 
 // forRange names... := range x {...}

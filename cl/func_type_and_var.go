@@ -41,6 +41,14 @@ func toRecv(ctx *blockCtx, recv *ast.FieldList) *types.Var {
 	return ctx.pkg.NewParam(v.Names[0].Name, toType(ctx, v.Type))
 }
 
+func getRecvTypeName(recv *ast.FieldList) string {
+	typ := recv.List[0].Type
+	if t, ok := typ.(*ast.StarExpr); ok {
+		typ = t.X
+	}
+	return typ.(*ast.Ident).Name
+}
+
 func toResults(ctx *blockCtx, in *ast.FieldList) *types.Tuple {
 	if in == nil {
 		return nil
@@ -85,6 +93,9 @@ func toType(ctx *blockCtx, typ ast.Expr) types.Type {
 	switch v := typ.(type) {
 	case *ast.Ident:
 		return toIdentType(ctx, v.Name)
+	case *ast.StarExpr:
+		elem := toType(ctx, v.X)
+		return types.NewPointer(elem)
 	case *ast.ArrayType:
 		return toArrayType(ctx, v)
 	case *ast.InterfaceType:
@@ -92,9 +103,6 @@ func toType(ctx *blockCtx, typ ast.Expr) types.Type {
 	case *ast.Ellipsis:
 		elem := toType(ctx, v.Elt)
 		return types.NewSlice(elem)
-	case *ast.StarExpr:
-		elem := toType(ctx, v.X)
-		return types.NewPointer(elem)
 	case *ast.MapType:
 		return toMapType(ctx, v)
 	case *ast.StructType:
@@ -226,8 +234,7 @@ func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) types.Type {
 		sig := toFuncType(ctx, typ, nil)
 		methods = append(methods, types.NewFunc(token.NoPos, pkg, name, sig))
 	}
-	intf := types.NewInterfaceType(methods, embeddeds)
-	intf.Complete()
+	intf := types.NewInterfaceType(methods, embeddeds).Complete()
 	return intf
 }
 

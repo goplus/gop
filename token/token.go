@@ -12,7 +12,7 @@ import (
 	"strconv"
 )
 
-// Token is the set of lexical tokens of the Go programming language.
+// Token is the set of lexical tokens of the Go+ programming language.
 type Token int
 
 // The list of tokens.
