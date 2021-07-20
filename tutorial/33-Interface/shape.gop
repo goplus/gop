@@ -1,0 +1,33 @@
+import "math"
+
+type Shape interface {
+	Area() float64
+}
+
+type Rect struct {
+	x, y, w, h float64
+}
+
+func (p *Rect) Area() float64 {
+	return p.w * p.h
+}
+
+type Circle struct {
+	x, y, r float64
+}
+
+func (p *Circle) Area() float64 {
+	return math.Pi * p.r * p.r
+}
+
+func Area(shapes ...Shape) float64 {
+	s := 0.0
+	for shape <- shapes {
+		s += shape.Area()
+	}
+	return s
+}
+
+rect := &Rect{0, 0, 2, 5}
+circle := &Circle{0, 0, 3}
+println("area:", Area(circle, rect))
