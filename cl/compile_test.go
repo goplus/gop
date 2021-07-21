@@ -49,10 +49,11 @@ func gopClTest(t *testing.T, gopcode, expected string, nocache ...bool) {
 		t.Fatal("ParseFSDir:", err)
 	}
 	conf := &cl.Config{
-		LoadPkgs: gblLoadPkgs,
+		LoadPkgs:   gblLoadPkgs,
+		NoFileLine: true,
 	}
 	if nocache != nil {
-		conf = nil
+		conf = &cl.Config{NoFileLine: true}
 	}
 	bar := pkgs["main"]
 	pkg, err := cl.NewPackage("", bar, fset, conf)

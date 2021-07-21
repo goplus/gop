@@ -19,7 +19,7 @@ package cl
 import (
 	"fmt"
 	"log"
-	"path"
+	"path/filepath"
 	"reflect"
 
 	goast "go/ast"
@@ -30,12 +30,15 @@ import (
 )
 
 func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
-	start := stmt.Pos()
-	pos := ctx.fset.Position(start)
-	line := fmt.Sprintf("\n//line ./%s:%d", path.Base(pos.Filename), pos.Line)
-	ctx.cb.SetComments(&goast.CommentGroup{
-		List: []*goast.Comment{{Text: line}},
-	})
+	if ctx.fileLine {
+		start := stmt.Pos()
+		pos := ctx.fset.Position(start)
+		file, _ := filepath.Rel(ctx.baseDir, pos.Filename)
+		line := fmt.Sprintf("\n//line ./%s:%d", file, pos.Line)
+		ctx.cb.SetComments(&goast.CommentGroup{
+			List: []*goast.Comment{{Text: line}},
+		})
+	}
 }
 
 func compileStmts(ctx *blockCtx, body []ast.Stmt) {

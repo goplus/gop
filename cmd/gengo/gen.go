@@ -174,6 +174,7 @@ func (p *Runner) GenGoPkg(pkgDir string) (err error) {
 	}
 
 	pkg := getPkg(pkgs)
+	p.conf.Dir = pkgDir
 	out, err := cl.NewPackage("", pkg, p.fset, p.conf)
 	if err != nil {
 		return p.addError(pkgDir, "compile", err)

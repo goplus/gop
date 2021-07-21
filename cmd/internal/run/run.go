@@ -112,30 +112,26 @@ func runCmd(cmd *base.Command, args []string) {
 	if err != nil {
 		log.Fatalln("input arg check failed:", err)
 	}
-	var dir string
+	var dir, file, gofile string
 	var pkgs map[string]*ast.Package
 	if isDir {
 		dir = target
+		gofile = target + "/gop_autogen.go"
 		pkgs, err = parser.ParseDir(fset, target, nil, 0)
 	} else {
-		dir = filepath.Dir(target)
+		dir, file = filepath.Split(target)
+		dir = filepath.Join(dir, ".gop")
+		gofile = filepath.Join(dir, file+".go")
 		pkgs, err = parser.Parse(fset, target, nil, 0)
 	}
 	if err != nil {
 		log.Fatalln("parser.Parse failed:", err)
 	}
 
-	conf := &cl.Config{Dir: findGoModDir(dir)}
+	conf := &cl.Config{Dir: findGoModDir(dir), TargetDir: dir}
 	out, err := cl.NewPackage("", pkgs["main"], fset, conf)
 	if err != nil {
 		log.Fatalln("cl.NewPackage failed:", err)
-	}
-	var gofile string
-	if isDir {
-		gofile = target + "/gop_autogen.go"
-	} else {
-		dir, file := filepath.Split(target)
-		gofile = filepath.Join(dir, ".gop", file+".go")
 	}
 	err = saveGoFile(gofile, out)
 	if err != nil {

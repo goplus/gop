@@ -21,6 +21,7 @@ import (
 	"context"
 	"go/types"
 	"log"
+	"os"
 	"path"
 	"reflect"
 
@@ -54,6 +55,10 @@ type Config struct {
 	// If Dir is empty, the tool is run in the current directory.
 	Dir string
 
+	// TargetDir is the directory in which to generate Go files.
+	// If TargetDir is empty, it is same as Dir.
+	TargetDir string
+
 	// Env is the environment to use when invoking the build system's query tool.
 	// If Env is nil, the current environment is used.
 	// As in os/exec's Cmd, only the last value in the slice for
@@ -70,6 +75,9 @@ type Config struct {
 
 	// LoadPkgs is called to load all import packages.
 	LoadPkgs gox.LoadPkgsFunc
+
+	// NoFileLine = true means not generate file line comments.
+	NoFileLine bool
 }
 
 func getUnderlying(ctx *blockCtx, typ types.Type) types.Type {
@@ -119,10 +127,18 @@ func NewPackage(
 		Contracts:      nil,
 		NewBuiltin:     newBuiltinDefault,
 	}
+	fileLine := !conf.NoFileLine
+	baseDir := conf.TargetDir
+	if baseDir == "" {
+		baseDir = conf.Dir
+		if baseDir == "" {
+			baseDir, _ = os.Getwd()
+		}
+	}
 	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
 	p.Fset = fset
 	for _, f := range pkg.Files {
-		loadFile(p, ctx, f)
+		loadFile(p, ctx, f, baseDir, fileLine)
 	}
 	for _, f := range pkg.Files {
 		for _, decl := range f.Decls {
@@ -208,10 +224,12 @@ type pkgCtx struct {
 
 type blockCtx struct {
 	*pkgCtx
-	pkg     *gox.Package
-	cb      *gox.CodeBuilder
-	fset    *token.FileSet
-	imports map[string]*gox.PkgRef
+	pkg      *gox.Package
+	cb       *gox.CodeBuilder
+	fset     *token.FileSet
+	baseDir  string
+	fileLine bool
+	imports  map[string]*gox.PkgRef
 }
 
 func (p *pkgCtx) complete() {
@@ -238,10 +256,10 @@ func (p *pkgCtx) loadSymbol(name string) bool {
 	return false
 }
 
-func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File) {
+func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, baseDir string, fileLine bool) {
 	syms := parent.syms
 	ctx := &blockCtx{
-		pkg: p, pkgCtx: parent, cb: p.CB(), fset: p.Fset,
+		pkg: p, pkgCtx: parent, cb: p.CB(), fset: p.Fset, baseDir: baseDir, fileLine: fileLine,
 		imports: make(map[string]*gox.PkgRef),
 	}
 	for _, decl := range f.Decls {
