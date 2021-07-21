@@ -189,7 +189,7 @@ func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 	}
 	cb.RangeAssignThen()
 	compileStmts(ctx, v.Body.List)
-	cb.SetComments(comments, false)
+	cb.SetComments(comments, true)
 	cb.End()
 }
 
@@ -213,12 +213,12 @@ func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
 		compileExpr(ctx, v.Cond)
 		cb.Then()
 		compileStmts(ctx, v.Body.List)
-		cb.SetComments(comments, false)
+		cb.SetComments(comments, true)
 		cb.End()
 	} else {
 		compileStmts(ctx, v.Body.List)
 	}
-	cb.SetComments(comments, false)
+	cb.SetComments(comments, true)
 	cb.End()
 }
 
@@ -244,7 +244,7 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 		cb.Post()
 		compileStmt(ctx, v.Post)
 	}
-	cb.SetComments(comments, false)
+	cb.SetComments(comments, true)
 	cb.End()
 }
 
@@ -265,7 +265,7 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 		cb.Else()
 		compileStmt(ctx, v.Else)
 	}
-	cb.SetComments(comments, false)
+	cb.SetComments(comments, true)
 	cb.End()
 }
 
@@ -314,7 +314,7 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 		commentStmt(ctx, stmt)
 		cb.End()
 	}
-	cb.SetComments(comments, false)
+	cb.SetComments(comments, true)
 	cb.End()
 }
 
@@ -356,7 +356,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 		commentStmt(ctx, stmt)
 		cb.End()
 	}
-	cb.SetComments(comments, false)
+	cb.SetComments(comments, true)
 	cb.End()
 }
 
@@ -400,7 +400,7 @@ func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
 		commentStmt(ctx, stmt)
 		cb.End()
 	}
-	cb.SetComments(comments, false)
+	cb.SetComments(comments, true)
 	cb.End()
 }
 
