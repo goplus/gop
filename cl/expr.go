@@ -80,6 +80,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 		ctx.cb.Typ(toStructType(ctx, v))
 	case *ast.ChanType:
 		ctx.cb.Typ(toChanType(ctx, v))
+	case *ast.InterfaceType:
+		ctx.cb.Typ(toInterfaceType(ctx, v))
 	case *ast.ComprehensionExpr:
 		compileComprehensionExpr(ctx, v, twoValue != nil && twoValue[0])
 	case *ast.TypeAssertExpr:
@@ -88,6 +90,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 		compileExpr(ctx, v.X)
 	case *ast.ErrWrapExpr:
 		compileErrWrapExpr(ctx, v)
+	case *ast.FuncType:
+		ctx.cb.Typ(toFuncType(ctx, v, nil))
 	case *ast.Ellipsis:
 		panic("compileEllipsis: ast.Ellipsis unexpected")
 	case *ast.KeyValueExpr:

@@ -467,10 +467,18 @@ var z builtin.Gop_bigint = x.Gop_Add(y)
 
 func TestTypeConv(t *testing.T) {
 	gopClTest(t, `
+var a = (*struct{})(nil)
+var b = interface{}(nil)
+var c = (func())(nil)
 var x uint32 = uint32(0)
 var y *uint32 = (*uint32)(nil)
 `, `package main
 
+var a = (*struct {
+})(nil)
+var b = interface {
+}(nil)
+var c = (func())(nil)
 var x uint32 = uint32(0)
 var y *uint32 = (*uint32)(nil)
 `)
