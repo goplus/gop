@@ -35,9 +35,10 @@ func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
 		pos := ctx.fset.Position(start)
 		file, _ := filepath.Rel(ctx.baseDir, pos.Filename)
 		line := fmt.Sprintf("\n//line ./%s:%d", file, pos.Line)
-		ctx.cb.SetComments(&goast.CommentGroup{
+		comments := &goast.CommentGroup{
 			List: []*goast.Comment{{Text: line}},
-		})
+		}
+		ctx.cb.SetComments(comments, false)
 	}
 }
 
@@ -155,6 +156,7 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 // end
 func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 	cb := ctx.cb
+	comments := cb.Comments()
 	if v.Tok == token.DEFINE {
 		names := make([]string, 1, 2)
 		if v.Key == nil {
@@ -187,11 +189,13 @@ func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 	}
 	cb.RangeAssignThen()
 	compileStmts(ctx, v.Body.List)
+	cb.SetComments(comments, false)
 	cb.End()
 }
 
 func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
 	cb := ctx.cb
+	comments := cb.Comments()
 	names := make([]string, 1, 2)
 	if v.Key == nil {
 		names[0] = "_"
@@ -209,10 +213,12 @@ func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
 		compileExpr(ctx, v.Cond)
 		cb.Then()
 		compileStmts(ctx, v.Body.List)
+		cb.SetComments(comments, false)
 		cb.End()
 	} else {
 		compileStmts(ctx, v.Body.List)
 	}
+	cb.SetComments(comments, false)
 	cb.End()
 }
 
@@ -222,6 +228,7 @@ func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
 // end
 func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	cb := ctx.cb
+	comments := cb.Comments()
 	cb.For()
 	if v.Init != nil {
 		compileStmt(ctx, v.Init)
@@ -237,6 +244,7 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 		cb.Post()
 		compileStmt(ctx, v.Post)
 	}
+	cb.SetComments(comments, false)
 	cb.End()
 }
 
@@ -245,6 +253,7 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 // end
 func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 	cb := ctx.cb
+	comments := cb.Comments()
 	cb.If()
 	if v.Init != nil {
 		compileStmt(ctx, v.Init)
@@ -256,6 +265,7 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 		cb.Else()
 		compileStmt(ctx, v.Else)
 	}
+	cb.SetComments(comments, false)
 	cb.End()
 }
 
@@ -269,6 +279,7 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 // end
 func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 	var cb = ctx.cb
+	comments := cb.Comments()
 	var name string
 	var ta *ast.TypeAssertExpr
 	switch stmt := v.Assign.(type) {
@@ -300,8 +311,10 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 		}
 		cb.TypeCase(len(c.List)) // TypeCase(0) means default case
 		compileStmts(ctx, c.Body)
+		commentStmt(ctx, stmt)
 		cb.End()
 	}
+	cb.SetComments(comments, false)
 	cb.End()
 }
 
@@ -315,6 +328,7 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 // end
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	cb := ctx.cb
+	comments := cb.Comments()
 	cb.Switch()
 	if v.Init != nil {
 		compileStmt(ctx, v.Init)
@@ -339,8 +353,10 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 		if has {
 			cb.Fallthrough()
 		}
+		commentStmt(ctx, stmt)
 		cb.End()
 	}
+	cb.SetComments(comments, false)
 	cb.End()
 }
 
@@ -367,6 +383,7 @@ func hasFallthrough(body []ast.Stmt) ([]ast.Stmt, bool) {
 // end
 func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
 	cb := ctx.cb
+	comments := cb.Comments()
 	cb.Select()
 	for _, stmt := range v.Body.List {
 		c, ok := stmt.(*ast.CommClause)
@@ -380,8 +397,10 @@ func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
 		}
 		cb.CommCase(n) // CommCase(0) means default case
 		compileStmts(ctx, c.Body)
+		commentStmt(ctx, stmt)
 		cb.End()
 	}
+	cb.SetComments(comments, false)
 	cb.End()
 }
 
