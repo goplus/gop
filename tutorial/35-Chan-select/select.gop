@@ -1,0 +1,32 @@
+var done = make(chan bool, 1)
+var exited = make(chan bool, 1)
+
+func consume(xchg chan int) {
+	for {
+		select {
+		case c := <-xchg:
+			println(c)
+		case <-done:
+			println("done!")
+			exited <- true
+			return
+		}
+	}
+}
+
+func product(xchg chan int, from chan int) {
+	for x <- from {
+		xchg <- x
+	}
+	done <- true
+}
+
+from := make(chan int, 10)
+xchg := make(chan int, 1)
+go consume(xchg)
+go product(xchg, from)
+for i := 1; i <= 10; i++ {
+	from <- i
+}
+close(from)
+<-exited

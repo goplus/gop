@@ -68,6 +68,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		compileLabeledStmt(ctx, v)
 	case *ast.BlockStmt:
 		compileStmts(ctx, v.List)
+	case *ast.SelectStmt:
+		compileSelectStmt(ctx, v)
 	case *ast.EmptyStmt:
 		// do nothing
 	default:
@@ -129,8 +131,12 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 	ctx.cb.AssignOp(gotoken.Token(tok))
 }
 
-// forRange names... := range x {...}
-// forRange k, v = range x {...}
+// forRange(names...) x rangeAssignThen
+//    body
+// end
+// forRange k v x rangeAssignThen
+//    body
+// end
 func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 	cb := ctx.cb
 	if v.Tok == token.DEFINE {
@@ -218,6 +224,9 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	cb.End()
 }
 
+// if init; cond then
+//    body
+// end
 func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 	cb := ctx.cb
 	cb.If()
@@ -235,10 +244,10 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 }
 
 // typeSwitch(name) init; expr typeAssertThen()
-// type1, type2, ... typeN typeCase(N)
+// type1 type2 ... typeN typeCase(N)
 //    ...
 //    end
-// type1, type2, ... typeM typeCase(M)
+// type1 type2 ... typeM typeCase(M)
 //    ...
 //    end
 // end
@@ -280,6 +289,14 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 	cb.End()
 }
 
+// switch init; tag then
+// expr1 expr2 ... exprN case(N)
+//    ...
+//    end
+// expr1 expr2 ... exprM case(M)
+//    ...
+//    end
+// end
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	cb := ctx.cb
 	cb.Switch()
@@ -318,6 +335,38 @@ func hasFallthrough(body []ast.Stmt) ([]ast.Stmt, bool) {
 		}
 	}
 	return body, false
+}
+
+// select
+// stmt1 commCase(1)
+//    ...
+//    end
+// stmt2 commCase(1)
+//    ...
+//    end
+// ...
+// commCase(0)
+//    ...
+//    end
+// end
+func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
+	cb := ctx.cb
+	cb.Select()
+	for _, stmt := range v.Body.List {
+		c, ok := stmt.(*ast.CommClause)
+		if !ok {
+			log.Panicln("TODO: compile SelectStmt failed - comm clause expected.")
+		}
+		var n int
+		if c.Comm != nil {
+			compileStmt(ctx, c.Comm)
+			n = 1
+		}
+		cb.CommCase(n) // CommCase(0) means default case
+		compileStmts(ctx, c.Body)
+		cb.End()
+	}
+	cb.End()
 }
 
 func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {

@@ -70,6 +70,36 @@ func gopClTest(t *testing.T, gopcode, expected string, nocache ...bool) {
 	}
 }
 
+func TestSelect(t *testing.T) {
+	gopClTest(t, `
+
+func consume(xchg chan int) {
+	select {
+	case c := <-xchg:
+		println(c)
+	case xchg <- 1:
+		println("send ok")
+	default:
+		println(0)
+	}
+}
+`, `package main
+
+import fmt "fmt"
+
+func consume(xchg chan int) {
+	select {
+	case c := <-xchg:
+		fmt.Println(c)
+	case xchg <- 1:
+		fmt.Println("send ok")
+	default:
+		fmt.Println(0)
+	}
+}
+`)
+}
+
 func TestTypeSwitch(t *testing.T) {
 	gopClTest(t, `
 
