@@ -120,6 +120,7 @@ func NewPackage(
 		NewBuiltin:     newBuiltinDefault,
 	}
 	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
+	p.Fset = fset
 	for _, f := range pkg.Files {
 		loadFile(p, ctx, f)
 	}
@@ -209,6 +210,7 @@ type blockCtx struct {
 	*pkgCtx
 	pkg     *gox.Package
 	cb      *gox.CodeBuilder
+	fset    *token.FileSet
 	imports map[string]*gox.PkgRef
 }
 
@@ -239,7 +241,8 @@ func (p *pkgCtx) loadSymbol(name string) bool {
 func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File) {
 	syms := parent.syms
 	ctx := &blockCtx{
-		pkg: p, pkgCtx: parent, cb: p.CB(), imports: make(map[string]*gox.PkgRef),
+		pkg: p, pkgCtx: parent, cb: p.CB(), fset: p.Fset,
+		imports: make(map[string]*gox.PkgRef),
 	}
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {

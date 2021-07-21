@@ -17,14 +17,26 @@
 package cl
 
 import (
+	"fmt"
 	"log"
+	"path"
 	"reflect"
 
+	goast "go/ast"
 	gotoken "go/token"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
 )
+
+func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
+	start := stmt.Pos()
+	pos := ctx.fset.Position(start)
+	line := fmt.Sprintf("\n//line ./%s:%d", path.Base(pos.Filename), pos.Line)
+	ctx.cb.SetComments(&goast.CommentGroup{
+		List: []*goast.Comment{{Text: line}},
+	})
+}
 
 func compileStmts(ctx *blockCtx, body []ast.Stmt) {
 	for _, stmt := range body {
@@ -33,6 +45,7 @@ func compileStmts(ctx *blockCtx, body []ast.Stmt) {
 }
 
 func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
+	commentStmt(ctx, stmt)
 	switch v := stmt.(type) {
 	case *ast.ExprStmt:
 		compileExpr(ctx, v.X)

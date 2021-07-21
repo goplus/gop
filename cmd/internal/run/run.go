@@ -98,7 +98,7 @@ func runCmd(cmd *base.Command, args []string) {
 		gox.SetDebug(gox.DbgFlagAll)
 	}
 	if *flagVerbose {
-		gox.SetDebug(gox.DbgFlagAll)
+		gox.SetDebug(gox.DbgFlagAll &^ gox.DbgFlagComments)
 	} else if *flagAsm {
 		gox.SetDebug(gox.DbgFlagInstruction)
 	}
