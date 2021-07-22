@@ -73,11 +73,31 @@ type Config struct {
 	// the build system's query tool.
 	BuildFlags []string
 
-	// LoadPkgs is called to load all import packages.
-	LoadPkgs gox.LoadPkgsFunc
+	// Fset provides source position information for syntax trees and types.
+	// If Fset is nil, Load will use a new fileset, but preserve Fset's value.
+	Fset *token.FileSet
+
+	// GenGoPkg is called to convert a Go+ package into Go.
+	GenGoPkg func(pkgDir string, base *Config) error
+
+	// PkgsLoader is the Go+ packages loader (will be set if it is nil).
+	PkgsLoader *PkgsLoader
+
+	// CacheLoadPkgs set to cache all loaded packages or not.
+	CacheLoadPkgs bool
 
 	// NoFileLine = true means not generate file line comments.
 	NoFileLine bool
+}
+
+func (conf *Config) Ensure() *Config {
+	if conf == nil {
+		conf = &Config{Fset: token.NewFileSet()}
+	}
+	if conf.PkgsLoader == nil {
+		initPkgsLoader(conf)
+	}
+	return conf
 }
 
 func getUnderlying(ctx *blockCtx, typ types.Type) types.Type {
@@ -91,39 +111,29 @@ func getUnderlying(ctx *blockCtx, typ types.Type) types.Type {
 }
 
 func doLoadUnderlying(ctx *pkgCtx, typ *types.Named) types.Type {
-	panic("TODO: doLoadUnderlying")
-	/*
-		ld := ctx.syms[typ.Obj().Name()].(*typeLoader)
-		doInitType(ld)
-		return typ.Underlying()
-	*/
+	ld := ctx.syms[typ.Obj().Name()].(*typeLoader)
+	ld.load()
+	return typ.Underlying()
 }
 
 // NewPackage creates a Go+ package instance.
-func NewPackage(
-	pkgPath string, pkg *ast.Package, fset *token.FileSet, conf *Config) (p *gox.Package, err error) {
-	if conf == nil {
-		conf = &Config{}
-	}
+func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package, err error) {
 	ctx := &pkgCtx{syms: make(map[string]loader)}
 	loadUnderlying := func(at *gox.Package, typ *types.Named) types.Type {
 		return doLoadUnderlying(ctx, typ)
 	}
-	loadPkgs := conf.LoadPkgs
-	if loadPkgs == nil {
-		loadPkgs = LoadGopPkgs
-	}
+	conf = conf.Ensure()
 	confGox := &gox.Config{
 		Context:        conf.Context,
 		Logf:           conf.Logf,
 		Dir:            conf.Dir,
 		Env:            conf.Env,
 		BuildFlags:     conf.BuildFlags,
-		Fset:           fset,
-		ParseFile:      nil, // TODO
-		LoadPkgs:       loadPkgs,
+		Fset:           conf.Fset,
+		LoadPkgs:       conf.PkgsLoader.LoadPkgs,
 		LoadUnderlying: loadUnderlying,
 		Prefix:         gopPrefix,
+		ParseFile:      nil, // TODO
 		Contracts:      nil,
 		NewBuiltin:     newBuiltinDefault,
 	}
@@ -136,7 +146,6 @@ func NewPackage(
 		}
 	}
 	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
-	p.Fset = fset
 	for _, f := range pkg.Files {
 		loadFile(p, ctx, f, baseDir, fileLine)
 	}

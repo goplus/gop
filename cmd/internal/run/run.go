@@ -128,8 +128,8 @@ func runCmd(cmd *base.Command, args []string) {
 		log.Fatalln("parser.Parse failed:", err)
 	}
 
-	conf := &cl.Config{Dir: findGoModDir(dir), TargetDir: dir}
-	out, err := cl.NewPackage("", pkgs["main"], fset, conf)
+	conf := &cl.Config{Dir: findGoModDir(dir), TargetDir: dir, Fset: fset, CacheLoadPkgs: true}
+	out, err := cl.NewPackage("", pkgs["main"], conf)
 	if err != nil {
 		log.Fatalln("cl.NewPackage failed:", err)
 	}

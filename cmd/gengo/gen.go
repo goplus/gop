@@ -57,20 +57,9 @@ func (p *Error) Error() string { // TODO: more friendly
 
 // -----------------------------------------------------------------------------
 
-type Config = cl.Config
-
 type Runner struct {
-	conf  *Config
-	fset  *token.FileSet
 	errs  []*Error
 	after func(p *Runner, dir string, pkgFlags int) error
-}
-
-func NewRunner(fset *token.FileSet, conf *Config) *Runner {
-	if fset == nil {
-		fset = token.NewFileSet()
-	}
-	return &Runner{fset: fset, conf: conf}
 }
 
 func (p *Runner) SetAfter(after func(p *Runner, dir string, flags int) error) {
@@ -87,7 +76,7 @@ func (p *Runner) ResetErrors() []*Error {
 	return errs
 }
 
-func (p *Runner) GenGo(dir string, recursive bool) {
+func (p *Runner) GenGo(dir string, recursive bool, base *cl.Config) {
 	fis, err := ioutil.ReadDir(dir)
 	if err != nil {
 		p.addError(dir, "readDir", err)
@@ -104,7 +93,7 @@ func (p *Runner) GenGo(dir string, recursive bool) {
 		if fi.IsDir() {
 			if recursive {
 				pkgDir := path.Join(dir, fname)
-				p.GenGo(pkgDir, true)
+				p.GenGo(pkgDir, true, base)
 			}
 			continue
 		}
@@ -131,7 +120,7 @@ func (p *Runner) GenGo(dir string, recursive bool) {
 		} else if gopTime.After(gogenTime) { // update a Go+ package
 			fmt.Printf("GenGoPkg %s ...\n", dir)
 			pkgFlags |= PkgFlagGopModified
-			p.GenGoPkg(dir)
+			p.GenGoPkg(dir, base)
 		}
 		if p.after != nil {
 			if err = p.after(p, dir, pkgFlags); err != nil {
@@ -149,7 +138,7 @@ var (
 	}
 )
 
-func (p *Runner) GenGoPkg(pkgDir string) (err error) {
+func (p *Runner) GenGoPkg(pkgDir string, base *cl.Config) (err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			switch v := e.(type) {
@@ -164,7 +153,13 @@ func (p *Runner) GenGoPkg(pkgDir string) (err error) {
 	}()
 
 	pkgDir, _ = filepath.Abs(pkgDir)
-	pkgs, err := parser.ParseDir(p.fset, pkgDir, nil, 0)
+
+	conf := *base.Ensure()
+	conf.Dir = pkgDir
+	if conf.Fset == nil {
+		conf.Fset = token.NewFileSet()
+	}
+	pkgs, err := parser.ParseDir(conf.Fset, pkgDir, nil, 0)
 	if err != nil {
 		return p.addError(pkgDir, "parse", err)
 	}
@@ -174,10 +169,7 @@ func (p *Runner) GenGoPkg(pkgDir string) (err error) {
 	}
 
 	pkg := getPkg(pkgs)
-	if p.conf != nil {
-		p.conf.Dir = pkgDir
-	}
-	out, err := cl.NewPackage("", pkg, p.fset, p.conf)
+	out, err := cl.NewPackage("", pkg, &conf)
 	if err != nil {
 		return p.addError(pkgDir, "compile", err)
 	}

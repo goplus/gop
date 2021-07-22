@@ -22,10 +22,8 @@ import (
 	"os"
 	"strings"
 
-	gen "github.com/goplus/gop/cmd/gengo"
 	"github.com/qiniu/x/log"
 
-	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/cmd/internal/build"
 	"github.com/goplus/gop/cmd/internal/clean"
@@ -51,7 +49,6 @@ func init() {
 		build.Cmd,
 		clean.Cmd,
 	}
-	cl.GenGoPkg = gen.NewRunner(nil, nil).GenGoPkg
 }
 
 func main() {

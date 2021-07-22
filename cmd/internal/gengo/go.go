@@ -25,6 +25,7 @@ import (
 	"os/exec"
 	"path"
 
+	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/cmd/internal/base"
 )
@@ -68,13 +69,14 @@ func testPkg(p *gengo.Runner, dir string, flags int) error {
 
 // Cmd - gop go
 var Cmd = &base.Command{
-	UsageLine: "gop go [-test] <gopSrcDir>",
+	UsageLine: "gop go [-test -slow] <gopSrcDir>",
 	Short:     "Convert Go+ packages into Go packages",
 }
 
 var (
 	flag     = &Cmd.Flag
 	flagTest = flag.Bool("test", false, "test Go+ package")
+	flagSlow = flag.Bool("slow", false, "don't cache imported packages")
 )
 
 func init() {
@@ -88,11 +90,20 @@ func runCmd(cmd *base.Command, args []string) {
 		return
 	}
 	dir := flag.Arg(0)
-	runner := gengo.NewRunner(nil, nil)
-	if *flagTest {
-		runner.SetAfter(testPkg)
-	}
-	runner.GenGo(dir, true)
+	runner := new(gengo.Runner)
+	runner.SetAfter(func(p *gengo.Runner, dir string, flags int) error {
+		errs := p.ResetErrors()
+		if errs != nil {
+			for _, err := range errs {
+				fmt.Fprintln(os.Stderr, err)
+			}
+			fmt.Fprintln(os.Stderr)
+		} else if *flagTest {
+			panic("gop go -test: not impl")
+		}
+		return nil
+	})
+	runner.GenGo(dir, true, &cl.Config{CacheLoadPkgs: !*flagSlow})
 	errs := runner.Errors()
 	if errs != nil {
 		for _, err := range errs {

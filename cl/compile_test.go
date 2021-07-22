@@ -30,33 +30,30 @@ import (
 )
 
 var (
-	gblFset     *token.FileSet
-	gblLoadPkgs gox.LoadPkgsFunc
+	gblFset  *token.FileSet
+	baseConf *cl.Config
 )
 
 func init() {
 	gox.SetDebug(gox.DbgFlagAll)
 	gblFset = token.NewFileSet()
-	gblLoadPkgs = gox.NewLoadPkgsCached(cl.LoadGop)
-	cl.GenGoPkg = gengo.NewRunner(nil, nil).GenGoPkg
+	baseConf = &cl.Config{
+		Fset:          gblFset,
+		GenGoPkg:      new(gengo.Runner).GenGoPkg,
+		CacheLoadPkgs: true,
+		NoFileLine:    true,
+	}
 }
 
-func gopClTest(t *testing.T, gopcode, expected string, nocache ...bool) {
-	fset := gblFset
+func gopClTest(t *testing.T, gopcode, expected string) {
 	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", gopcode)
-	pkgs, err := parser.ParseFSDir(fset, fs, "/foo", nil, 0)
+	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", nil, 0)
 	if err != nil {
 		t.Fatal("ParseFSDir:", err)
 	}
-	conf := &cl.Config{
-		LoadPkgs:   gblLoadPkgs,
-		NoFileLine: true,
-	}
-	if nocache != nil {
-		conf = &cl.Config{NoFileLine: true}
-	}
+	conf := *baseConf.Ensure()
 	bar := pkgs["main"]
-	pkg, err := cl.NewPackage("", bar, fset, conf)
+	pkg, err := cl.NewPackage("", bar, &conf)
 	if err != nil {
 		t.Fatal("NewPackage:", err)
 	}
@@ -69,6 +66,15 @@ func gopClTest(t *testing.T, gopcode, expected string, nocache ...bool) {
 	if result != expected {
 		t.Fatalf("\nResult:\n%s\nExpected:\n%s\n", result, expected)
 	}
+}
+
+func TestNilConf(t *testing.T) {
+	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", `println("Hi")`)
+	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", nil, 0)
+	if err != nil {
+		t.Fatal("ParseFSDir:", err)
+	}
+	cl.NewPackage("", pkgs["main"], nil)
 }
 
 func TestSelect(t *testing.T) {
@@ -1342,7 +1348,7 @@ func TestUnnamedMainFunc(t *testing.T) {
 func main() {
 	i := 1
 }
-`, true)
+`)
 }
 
 func TestFuncAsParam(t *testing.T) {

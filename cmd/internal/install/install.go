@@ -26,7 +26,6 @@ import (
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gox"
 )
 
 // Cmd - gop install
@@ -57,13 +56,8 @@ func runCmd(cmd *base.Command, args []string) {
 		dir = dir[:len(dir)-4]
 		recursive = true
 	}
-	var conf *gengo.Config
-	if *flagVerbose {
-		conf = &gengo.Config{
-			LoadPkgs: gox.NewLoadPkgsCached(cl.LoadGop),
-		}
-	}
-	runner := gengo.NewRunner(nil, conf)
+
+	runner := new(gengo.Runner)
 	runner.SetAfter(func(p *gengo.Runner, dir string, flags int) error {
 		errs := p.ResetErrors()
 		if errs != nil {
@@ -74,7 +68,7 @@ func runCmd(cmd *base.Command, args []string) {
 		}
 		return nil
 	})
-	runner.GenGo(dir, recursive)
+	runner.GenGo(dir, recursive, &cl.Config{CacheLoadPkgs: *flagVerbose})
 	goCmd(dir, "install", args...)
 	os.Exit(exitCode)
 }
