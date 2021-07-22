@@ -230,12 +230,12 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
 
 func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
 	cb := ctx.cb
-	comments := cb.Comments()
+	fileline := cb.FileLine()
 	sig := toFuncType(ctx, v.Type, nil)
 	fn := cb.NewClosureWith(sig)
 	if body := v.Body; body != nil {
 		loadFuncBody(ctx, fn, body)
-		cb.SetComments(comments, false)
+		cb.SetFileLine(fileline, false)
 	}
 }
 

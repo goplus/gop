@@ -153,10 +153,10 @@ func (p *Runner) GenGoPkg(pkgDir string) (err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			switch v := e.(type) {
-			case string:
-				err = p.addError(pkgDir, "recover", errors.New(v))
 			case error:
 				err = p.addError(pkgDir, "recover", v)
+			case string:
+				err = p.addError(pkgDir, "recover", errors.New(v))
 			default:
 				panic(e)
 			}
@@ -174,11 +174,14 @@ func (p *Runner) GenGoPkg(pkgDir string) (err error) {
 	}
 
 	pkg := getPkg(pkgs)
-	p.conf.Dir = pkgDir
+	if p.conf != nil {
+		p.conf.Dir = pkgDir
+	}
 	out, err := cl.NewPackage("", pkg, p.fset, p.conf)
 	if err != nil {
 		return p.addError(pkgDir, "compile", err)
 	}
+
 	err = saveGoFile(pkgDir, out)
 	if err != nil {
 		return p.addError(pkgDir, "save", err)
