@@ -43,6 +43,14 @@ func sourceErrorTest(t *testing.T, msg, src string) {
 	}
 }
 
+func _TestErrNewVar(t *testing.T) {
+	sourceErrorTest(t,
+		``, `
+a := 1
+a := "Hi"
+`)
+}
+
 func TestErrSliceLit(t *testing.T) {
 	sourceErrorTest(t,
 		`./bar.gop:1 cannot use "Hi"+"!" (type untyped string) as type int in slice literal`,
@@ -57,4 +65,19 @@ func TestErrMapLit(t *testing.T) {
 a := map[string]int{1+2: 2}
 b := map[string]int{"Hi": "Go" + "+"}
 `)
+}
+
+func TestErrLabel(t *testing.T) {
+	sourceErrorTest(t,
+		`./bar.gop:4 label foo already defined at ./bar.gop:2
+./bar.gop:2 label foo defined and not used`,
+		`
+foo:
+	i := 1
+foo:
+	i++
+`)
+	sourceErrorTest(t,
+		`./bar.gop:1 label foo is not defined`,
+		`goto foo`)
 }
