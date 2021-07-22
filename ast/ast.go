@@ -8,6 +8,7 @@
 package ast
 
 import (
+	"go/ast"
 	"strings"
 
 	"github.com/goplus/gop/token"
@@ -31,10 +32,7 @@ import (
 // when printing the construct.
 
 // Node interface: all node types implement the Node interface.
-type Node interface {
-	Pos() token.Pos // position of first character belonging to the node
-	End() token.Pos // position of first character immediately after the node
-}
+type Node = ast.Node
 
 // Expr interface: all expression nodes implement the Expr interface.
 type Expr interface {

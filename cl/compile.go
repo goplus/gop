@@ -24,6 +24,7 @@ import (
 	"os"
 	"path"
 	"reflect"
+	"strings"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
@@ -118,11 +119,21 @@ func doLoadUnderlying(ctx *pkgCtx, typ *types.Named) types.Type {
 
 // NewPackage creates a Go+ package instance.
 func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package, err error) {
+	conf = conf.Ensure()
 	ctx := &pkgCtx{syms: make(map[string]loader)}
 	loadUnderlying := func(at *gox.Package, typ *types.Named) types.Type {
 		return doLoadUnderlying(ctx, typ)
 	}
-	conf = conf.Ensure()
+	readSource := func(node ast.Node) string {
+		if node == nil {
+			return ""
+		}
+		start := node.Pos()
+		pos := conf.Fset.Position(start)
+		f := pkg.Files[pos.Filename]
+		n := int(node.End() - start)
+		return string(f.Code[pos.Offset : pos.Offset+n])
+	}
 	confGox := &gox.Config{
 		Context:        conf.Context,
 		Logf:           conf.Logf,
@@ -132,6 +143,8 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		Fset:           conf.Fset,
 		LoadPkgs:       conf.PkgsLoader.LoadPkgs,
 		LoadUnderlying: loadUnderlying,
+		HandleErr:      ctx.handleErr,
+		ReadSource:     readSource,
 		Prefix:         gopPrefix,
 		ParseFile:      nil, // TODO
 		Contracts:      nil,
@@ -170,7 +183,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 			}
 		}
 	}
-	ctx.complete()
+	err = ctx.complete()
 	return
 }
 
@@ -227,8 +240,21 @@ func doInitMethods(ld *typeLoader) {
 	}
 }
 
+type Errors struct {
+	Errs []error
+}
+
+func (p *Errors) Error() string {
+	msgs := make([]string, len(p.Errs))
+	for i, err := range p.Errs {
+		msgs[i] = err.Error()
+	}
+	return strings.Join(msgs, "\n")
+}
+
 type pkgCtx struct {
 	syms map[string]loader
+	errs []error
 }
 
 type blockCtx struct {
@@ -241,7 +267,15 @@ type blockCtx struct {
 	imports  map[string]*gox.PkgRef
 }
 
-func (p *pkgCtx) complete() {
+func (p *pkgCtx) handleErr(err error) {
+	p.errs = append(p.errs, err)
+}
+
+func (p *pkgCtx) complete() error {
+	if p.errs != nil {
+		return &Errors{Errs: p.errs}
+	}
+	return nil
 }
 
 func (p *pkgCtx) loadType(name string) {

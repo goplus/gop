@@ -117,7 +117,7 @@ func compileUnaryExpr(ctx *blockCtx, v *ast.UnaryExpr, twoValue bool) {
 func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) {
 	compileExpr(ctx, v.X)
 	compileExpr(ctx, v.Y)
-	ctx.cb.BinaryOp(gotoken.Token(v.Op))
+	ctx.cb.BinaryOp(gotoken.Token(v.Op), v)
 }
 
 func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr) {
@@ -292,7 +292,7 @@ func compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {
 	ctx.cb.Val(&goast.BasicLit{
 		Kind:  gotoken.Token(v.Kind),
 		Value: v.Value,
-	})
+	}, v)
 }
 
 const (
