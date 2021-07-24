@@ -198,6 +198,9 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 			}
 		}
 	}
+	for _, load := range ctx.inits {
+		load()
+	}
 	err = ctx.complete()
 	return
 }
@@ -268,8 +271,9 @@ func (p *Errors) Error() string {
 }
 
 type pkgCtx struct {
-	syms map[string]loader
-	errs []error
+	syms  map[string]loader
+	inits []func()
+	errs  []error
 }
 
 type blockCtx struct {
@@ -325,12 +329,14 @@ func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, fil
 		case *ast.FuncDecl:
 			if d.Recv == nil {
 				name := d.Name.Name
-				if name == "init" {
-					log.Panicln("loadFunc TODO: init")
-				}
-				syms[name] = loaderFunc(func() {
+				fn := func() {
 					loadFunc(ctx, nil, d)
-				})
+				}
+				if name == "init" {
+					parent.inits = append(parent.inits, fn)
+				} else {
+					syms[name] = loaderFunc(fn)
+				}
 			} else {
 				name := getRecvTypeName(d.Recv)
 				ld := getTypeLoader(syms, name)

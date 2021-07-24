@@ -77,6 +77,20 @@ func TestNilConf(t *testing.T) {
 	cl.NewPackage("", pkgs["main"], nil)
 }
 
+func TestInitFunc(t *testing.T) {
+	gopClTest(t, `
+
+func init() {}
+func init() {}
+`, `package main
+
+func init() {
+}
+func init() {
+}
+`)
+}
+
 func TestSelect(t *testing.T) {
 	gopClTest(t, `
 
