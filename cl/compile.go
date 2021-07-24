@@ -56,10 +56,10 @@ type Config struct {
 	// If Dir is empty, the tool is run in the current directory.
 	Dir string
 
-	// SrcDir is the source code directory.
+	// WorkingDir is the directory in which to run gop compiler.
 	// TargetDir is the directory in which to generate Go files.
 	// If SrcDir or TargetDir is empty, it is same as Dir.
-	SrcDir, TargetDir string
+	WorkingDir, TargetDir string
 
 	// Env is the environment to use when invoking the build system's query tool.
 	// If Env is nil, the current environment is used.
@@ -119,9 +119,9 @@ func doLoadUnderlying(ctx *pkgCtx, typ *types.Named) types.Type {
 }
 
 type nodeInterp struct {
-	fset   *token.FileSet
-	files  map[string]*ast.File
-	srcDir string
+	fset       *token.FileSet
+	files      map[string]*ast.File
+	workingDir string
 }
 
 func (p *nodeInterp) Position(pos token.Pos) token.Position {
@@ -133,7 +133,7 @@ func (p *nodeInterp) LoadExpr(node ast.Node) (src string, pos token.Position) {
 	pos = p.fset.Position(start)
 	f := p.files[pos.Filename]
 	n := int(node.End() - start)
-	pos.Filename = relFile(p.srcDir, pos.Filename)
+	pos.Filename = relFile(p.workingDir, pos.Filename)
 	src = string(f.Code[pos.Offset : pos.Offset+n])
 	return
 }
@@ -145,9 +145,9 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	if dir == "" {
 		dir, _ = os.Getwd()
 	}
-	srcDir := conf.SrcDir
-	if srcDir == "" {
-		srcDir = dir
+	workingDir := conf.WorkingDir
+	if workingDir == "" {
+		workingDir, _ = os.Getwd()
 	}
 	targetDir := conf.TargetDir
 	if targetDir == "" {
@@ -167,7 +167,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		LoadPkgs:        conf.PkgsLoader.LoadPkgs,
 		LoadUnderlying:  loadUnderlying,
 		HandleErr:       ctx.handleErr,
-		NodeInterpreter: &nodeInterp{fset: conf.Fset, files: pkg.Files, srcDir: srcDir},
+		NodeInterpreter: &nodeInterp{fset: conf.Fset, files: pkg.Files, workingDir: workingDir},
 		Prefix:          gopPrefix,
 		ParseFile:       nil, // TODO
 		NewBuiltin:      newBuiltinDefault,

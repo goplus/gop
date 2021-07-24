@@ -32,7 +32,7 @@ func codeErrorTest(t *testing.T, msg, src string) {
 	}
 	conf := *baseConf.Ensure()
 	conf.NoFileLine = false
-	conf.SrcDir = "/foo"
+	conf.WorkingDir = "/foo"
 	conf.TargetDir = "/foo"
 	bar := pkgs["main"]
 	_, err = cl.NewPackage("", bar, &conf)

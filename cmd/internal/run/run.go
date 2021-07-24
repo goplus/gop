@@ -18,6 +18,7 @@
 package run
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -107,31 +108,33 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 	fset := token.NewFileSet()
 
-	target, _ := filepath.Abs(flag.Arg(0))
-	isDir, err := IsDir(target)
+	src, _ := filepath.Abs(flag.Arg(0))
+	isDir, err := IsDir(src)
 	if err != nil {
 		log.Fatalln("input arg check failed:", err)
 	}
-	var dir, file, gofile string
+	var targetDir, file, gofile string
 	var pkgs map[string]*ast.Package
 	if isDir {
-		dir = target
-		gofile = target + "/gop_autogen.go"
-		pkgs, err = parser.ParseDir(fset, target, nil, 0)
+		targetDir = src
+		gofile = src + "/gop_autogen.go"
+		pkgs, err = parser.ParseDir(fset, src, nil, 0)
 	} else {
-		dir, file = filepath.Split(target)
-		dir = filepath.Join(dir, ".gop")
-		gofile = filepath.Join(dir, file+".go")
-		pkgs, err = parser.Parse(fset, target, nil, 0)
+		targetDir, file = filepath.Split(src)
+		targetDir = filepath.Join(targetDir, ".gop")
+		gofile = filepath.Join(targetDir, file+".go")
+		pkgs, err = parser.Parse(fset, src, nil, 0)
 	}
 	if err != nil {
 		log.Fatalln("parser.Parse failed:", err)
 	}
 
-	conf := &cl.Config{Dir: findGoModDir(dir), TargetDir: dir, Fset: fset, CacheLoadPkgs: true}
+	conf := &cl.Config{
+		Dir: findGoModDir(targetDir), TargetDir: targetDir, Fset: fset, CacheLoadPkgs: true}
 	out, err := cl.NewPackage("", pkgs["main"], conf)
 	if err != nil {
-		log.Fatalln("cl.NewPackage failed:", err)
+		fmt.Fprintln(os.Stderr, err)
+		return
 	}
 	err = saveGoFile(gofile, out)
 	if err != nil {

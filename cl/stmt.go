@@ -31,6 +31,9 @@ import (
 
 func relFile(dir string, file string) string {
 	if rel, err := filepath.Rel(dir, file); err == nil {
+		if rel[0] == '.' {
+			return rel
+		}
 		return "./" + rel
 	}
 	return file
