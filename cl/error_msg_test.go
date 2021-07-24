@@ -32,6 +32,7 @@ func codeErrorTest(t *testing.T, msg, src string) {
 	}
 	conf := *baseConf.Ensure()
 	conf.NoFileLine = false
+	conf.SrcDir = "/foo"
 	conf.TargetDir = "/foo"
 	bar := pkgs["main"]
 	_, err = cl.NewPackage("", bar, &conf)
@@ -81,15 +82,16 @@ b := a.x
 
 func TestErrLabel(t *testing.T) {
 	codeErrorTest(t,
-		`./bar.gop:4 label foo already defined at ./bar.gop:2
-./bar.gop:2 label foo defined and not used`,
-		`
+		`./bar.gop:4:1 label foo already defined at ./bar.gop:2:1
+./bar.gop:2:1 label foo defined and not used`,
+		`x := 1
 foo:
 	i := 1
 foo:
 	i++
 `)
 	codeErrorTest(t,
-		`./bar.gop:1 label foo is not defined`,
-		`goto foo`)
+		`./bar.gop:2:6 label foo is not defined`,
+		`x := 1
+goto foo`)
 }

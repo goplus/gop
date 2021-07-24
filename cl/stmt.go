@@ -17,19 +17,20 @@
 package cl
 
 import (
+	"fmt"
 	"log"
 	"path/filepath"
 	"reflect"
 
+	goast "go/ast"
 	gotoken "go/token"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
-	"github.com/goplus/gox"
 )
 
-func relFile(baseDir string, file string) string {
-	if rel, err := filepath.Rel(baseDir, file); err == nil {
+func relFile(dir string, file string) string {
+	if rel, err := filepath.Rel(dir, file); err == nil {
 		return "./" + rel
 	}
 	return file
@@ -39,7 +40,11 @@ func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
 	if ctx.fileLine {
 		start := stmt.Pos()
 		pos := ctx.fset.Position(start)
-		ctx.cb.SetFileLine(&gox.FileLine{File: relFile(ctx.baseDir, pos.Filename), Line: pos.Line}, false)
+		line := fmt.Sprintf("\n//line %s:%d", relFile(ctx.targetDir, pos.Filename), pos.Line)
+		comments := &goast.CommentGroup{
+			List: []*goast.Comment{{Text: line}},
+		}
+		ctx.cb.SetComments(comments, false)
 	}
 }
 
@@ -173,7 +178,7 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 // end
 func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 	cb := ctx.cb
-	fileline := cb.FileLine()
+	comments := cb.Comments()
 	if v.Tok == token.DEFINE {
 		names := make([]string, 1, 2)
 		if v.Key == nil {
@@ -206,13 +211,13 @@ func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 	}
 	cb.RangeAssignThen()
 	compileStmts(ctx, v.Body.List)
-	cb.SetFileLine(fileline, true)
+	cb.SetComments(comments, true)
 	cb.End()
 }
 
 func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
 	cb := ctx.cb
-	fileline := cb.FileLine()
+	comments := cb.Comments()
 	names := make([]string, 1, 2)
 	if v.Key == nil {
 		names[0] = "_"
@@ -230,12 +235,12 @@ func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
 		compileExpr(ctx, v.Cond)
 		cb.Then()
 		compileStmts(ctx, v.Body.List)
-		cb.SetFileLine(fileline, true)
+		cb.SetComments(comments, true)
 		cb.End()
 	} else {
 		compileStmts(ctx, v.Body.List)
 	}
-	cb.SetFileLine(fileline, true)
+	cb.SetComments(comments, true)
 	cb.End()
 }
 
@@ -245,7 +250,7 @@ func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
 // end
 func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	cb := ctx.cb
-	fileline := cb.FileLine()
+	comments := cb.Comments()
 	cb.For()
 	if v.Init != nil {
 		compileStmt(ctx, v.Init)
@@ -261,7 +266,7 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 		cb.Post()
 		compileStmt(ctx, v.Post)
 	}
-	cb.SetFileLine(fileline, true)
+	cb.SetComments(comments, true)
 	cb.End()
 }
 
@@ -270,7 +275,7 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 // end
 func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 	cb := ctx.cb
-	fileline := cb.FileLine()
+	comments := cb.Comments()
 	cb.If()
 	if v.Init != nil {
 		compileStmt(ctx, v.Init)
@@ -282,7 +287,7 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 		cb.Else()
 		compileStmt(ctx, v.Else)
 	}
-	cb.SetFileLine(fileline, true)
+	cb.SetComments(comments, true)
 	cb.End()
 }
 
@@ -296,7 +301,7 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 // end
 func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 	var cb = ctx.cb
-	fileline := cb.FileLine()
+	comments := cb.Comments()
 	var name string
 	var ta *ast.TypeAssertExpr
 	switch stmt := v.Assign.(type) {
@@ -331,7 +336,7 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 		commentStmt(ctx, stmt)
 		cb.End()
 	}
-	cb.SetFileLine(fileline, true)
+	cb.SetComments(comments, true)
 	cb.End()
 }
 
@@ -345,7 +350,7 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 // end
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	cb := ctx.cb
-	fileline := cb.FileLine()
+	comments := cb.Comments()
 	cb.Switch()
 	if v.Init != nil {
 		compileStmt(ctx, v.Init)
@@ -373,7 +378,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 		commentStmt(ctx, stmt)
 		cb.End()
 	}
-	cb.SetFileLine(fileline, true)
+	cb.SetComments(comments, true)
 	cb.End()
 }
 
@@ -400,7 +405,7 @@ func hasFallthrough(body []ast.Stmt) ([]ast.Stmt, bool) {
 // end
 func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
 	cb := ctx.cb
-	fileline := cb.FileLine()
+	comments := cb.Comments()
 	cb.Select()
 	for _, stmt := range v.Body.List {
 		c, ok := stmt.(*ast.CommClause)
@@ -417,29 +422,30 @@ func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
 		commentStmt(ctx, stmt)
 		cb.End()
 	}
-	cb.SetFileLine(fileline, true)
+	cb.SetComments(comments, true)
 	cb.End()
 }
 
 func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
+	label := v.Label
 	switch v.Tok {
 	case token.GOTO:
-		if v.Label == nil {
+		if label == nil {
 			log.Panicln("TODO: label not defined")
 		}
-		ctx.cb.Goto(v.Label.Name)
+		ctx.cb.Goto(label.Name, label)
 	case token.BREAK:
 		var name string
-		if v.Label != nil {
-			name = v.Label.Name
+		if label != nil {
+			name = label.Name
 		}
-		ctx.cb.Break(name)
+		ctx.cb.Break(name, label)
 	case token.CONTINUE:
 		var name string
-		if v.Label != nil {
-			name = v.Label.Name
+		if label != nil {
+			name = label.Name
 		}
-		ctx.cb.Continue(name)
+		ctx.cb.Continue(name, label)
 	case token.FALLTHROUGH:
 		panic("TODO: fallthrough statement out of place")
 	default:
@@ -448,7 +454,7 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 }
 
 func compileLabeledStmt(ctx *blockCtx, v *ast.LabeledStmt) {
-	ctx.cb.Label(v.Label.Name)
+	ctx.cb.Label(v.Label.Name, v.Label)
 	compileStmt(ctx, v.Stmt)
 }
 

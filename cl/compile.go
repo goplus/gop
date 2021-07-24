@@ -56,9 +56,10 @@ type Config struct {
 	// If Dir is empty, the tool is run in the current directory.
 	Dir string
 
+	// SrcDir is the source code directory.
 	// TargetDir is the directory in which to generate Go files.
-	// If TargetDir is empty, it is same as Dir.
-	TargetDir string
+	// If SrcDir or TargetDir is empty, it is same as Dir.
+	SrcDir, TargetDir string
 
 	// Env is the environment to use when invoking the build system's query tool.
 	// If Env is nil, the current environment is used.
@@ -117,51 +118,64 @@ func doLoadUnderlying(ctx *pkgCtx, typ *types.Named) types.Type {
 	return typ.Underlying()
 }
 
+type nodeInterp struct {
+	fset   *token.FileSet
+	files  map[string]*ast.File
+	srcDir string
+}
+
+func (p *nodeInterp) Position(pos token.Pos) token.Position {
+	return p.fset.Position(pos)
+}
+
+func (p *nodeInterp) LoadExpr(node ast.Node) (src string, pos token.Position) {
+	start := node.Pos()
+	pos = p.fset.Position(start)
+	f := p.files[pos.Filename]
+	n := int(node.End() - start)
+	pos.Filename = relFile(p.srcDir, pos.Filename)
+	src = string(f.Code[pos.Offset : pos.Offset+n])
+	return
+}
+
 // NewPackage creates a Go+ package instance.
 func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package, err error) {
 	conf = conf.Ensure()
-	baseDir := conf.TargetDir
-	if baseDir == "" {
-		baseDir = conf.Dir
-		if baseDir == "" {
-			baseDir, _ = os.Getwd()
-		}
+	dir := conf.Dir
+	if dir == "" {
+		dir, _ = os.Getwd()
+	}
+	srcDir := conf.SrcDir
+	if srcDir == "" {
+		srcDir = dir
+	}
+	targetDir := conf.TargetDir
+	if targetDir == "" {
+		targetDir = dir
 	}
 	ctx := &pkgCtx{syms: make(map[string]loader)}
 	loadUnderlying := func(at *gox.Package, typ *types.Named) types.Type {
 		return doLoadUnderlying(ctx, typ)
 	}
-	loadExpr := func(node ast.Node) (string, *token.Position) {
-		if node == nil {
-			return "", nil
-		}
-		start := node.Pos()
-		pos := conf.Fset.Position(start)
-		f := pkg.Files[pos.Filename]
-		n := int(node.End() - start)
-		pos.Filename = relFile(baseDir, pos.Filename)
-		return string(f.Code[pos.Offset : pos.Offset+n]), &pos
-	}
 	confGox := &gox.Config{
-		Context:        conf.Context,
-		Logf:           conf.Logf,
-		Dir:            conf.Dir,
-		Env:            conf.Env,
-		BuildFlags:     conf.BuildFlags,
-		Fset:           conf.Fset,
-		LoadPkgs:       conf.PkgsLoader.LoadPkgs,
-		LoadUnderlying: loadUnderlying,
-		HandleErr:      ctx.handleErr,
-		LoadExpr:       loadExpr,
-		Prefix:         gopPrefix,
-		ParseFile:      nil, // TODO
-		Contracts:      nil,
-		NewBuiltin:     newBuiltinDefault,
+		Context:         conf.Context,
+		Logf:            conf.Logf,
+		Dir:             dir,
+		Env:             conf.Env,
+		BuildFlags:      conf.BuildFlags,
+		Fset:            conf.Fset,
+		LoadPkgs:        conf.PkgsLoader.LoadPkgs,
+		LoadUnderlying:  loadUnderlying,
+		HandleErr:       ctx.handleErr,
+		NodeInterpreter: &nodeInterp{fset: conf.Fset, files: pkg.Files, srcDir: srcDir},
+		Prefix:          gopPrefix,
+		ParseFile:       nil, // TODO
+		NewBuiltin:      newBuiltinDefault,
 	}
 	fileLine := !conf.NoFileLine
 	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
 	for _, f := range pkg.Files {
-		loadFile(p, ctx, f, baseDir, fileLine)
+		loadFile(p, ctx, f, targetDir, fileLine)
 	}
 	for _, f := range pkg.Files {
 		for _, decl := range f.Decls {
@@ -260,12 +274,12 @@ type pkgCtx struct {
 
 type blockCtx struct {
 	*pkgCtx
-	pkg      *gox.Package
-	cb       *gox.CodeBuilder
-	fset     *token.FileSet
-	baseDir  string
-	fileLine bool
-	imports  map[string]*gox.PkgRef
+	pkg       *gox.Package
+	cb        *gox.CodeBuilder
+	fset      *token.FileSet
+	targetDir string
+	fileLine  bool
+	imports   map[string]*gox.PkgRef
 }
 
 func (p *pkgCtx) handleErr(err error) {
@@ -300,10 +314,10 @@ func (p *pkgCtx) loadSymbol(name string) bool {
 	return false
 }
 
-func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, baseDir string, fileLine bool) {
+func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, fileLine bool) {
 	syms := parent.syms
 	ctx := &blockCtx{
-		pkg: p, pkgCtx: parent, cb: p.CB(), fset: p.Fset, baseDir: baseDir, fileLine: fileLine,
+		pkg: p, pkgCtx: parent, cb: p.CB(), fset: p.Fset, targetDir: targetDir, fileLine: fileLine,
 		imports: make(map[string]*gox.PkgRef),
 	}
 	for _, decl := range f.Decls {
@@ -386,7 +400,7 @@ func loadType(ctx *blockCtx, t *ast.TypeSpec) {
 
 func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
 	sig := toFuncType(ctx, d.Type, recv)
-	fn := ctx.pkg.NewFuncWith(d.Name.Name, sig)
+	fn := ctx.pkg.NewFuncWith(d.Pos(), d.Name.Name, sig)
 	if body := d.Body; body != nil {
 		loadFuncBody(ctx, fn, body)
 	}
