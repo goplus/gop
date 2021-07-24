@@ -195,22 +195,24 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, autoCall bool) {
 	default:
 		compileExpr(ctx, v.X)
 	}
-	var mflag int
-	var name = v.Sel.Name
-	cb.MemberVal(name, &mflag)
-	if mflag == 0 {
-		if c := name[0]; c >= 'a' && c <= 'z' {
-			name = string(rune(c)+('A'-'a')) + name[1:]
-			cb.MemberVal(name, &mflag)
-			if mflag == gox.MFlagMethod {
-				if autoCall {
-					cb.Call(0)
-				}
-				return
-			}
-		}
-		log.Panicln("TODO: member not found -", v.Sel.Name)
+	name := v.Sel.Name
+	kind, err := cb.Member(name, v)
+	if kind != 0 {
+		return
 	}
+	if c := name[0]; c >= 'a' && c <= 'z' {
+		name = string(rune(c)+('A'-'a')) + name[1:]
+		switch kind, _ = cb.Member(name, v); kind {
+		case gox.MemberMethod:
+			if autoCall {
+				cb.Call(0)
+			}
+			return
+		case gox.MemberField:
+			return
+		}
+	}
+	panic(err)
 }
 
 func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
@@ -262,7 +264,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, allowBuiltin bool) {
 				panic("unexpected builtin: " + name)
 			}
 		}
-		ctx.cb.Val(o)
+		ctx.cb.Val(o, ident)
 	} else {
 		log.Panicln("TODO: var not found -", name)
 	}

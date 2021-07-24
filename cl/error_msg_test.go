@@ -24,7 +24,7 @@ import (
 	"github.com/goplus/gop/parser/parsertest"
 )
 
-func sourceErrorTest(t *testing.T, msg, src string) {
+func codeErrorTest(t *testing.T, msg, src string) {
 	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", src)
 	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", nil, 0)
 	if err != nil {
@@ -44,7 +44,7 @@ func sourceErrorTest(t *testing.T, msg, src string) {
 }
 
 func _TestErrNewVar(t *testing.T) {
-	sourceErrorTest(t,
+	codeErrorTest(t,
 		``, `
 a := 1
 a := "Hi"
@@ -52,23 +52,35 @@ a := "Hi"
 }
 
 func TestErrSliceLit(t *testing.T) {
-	sourceErrorTest(t,
-		`./bar.gop:1 cannot use "Hi"+"!" (type untyped string) as type int in slice literal`,
-		`a := []int{"Hi"+"!"}`)
+	codeErrorTest(t,
+		`./bar.gop:3:12 cannot use a (type string) as type int in slice literal`,
+		`
+a := "Hi"
+b := []int{a}
+`)
 }
 
 func TestErrMapLit(t *testing.T) {
-	sourceErrorTest(t,
-		`./bar.gop:2 cannot use 1+2 (type untyped int) as type string in map key
-./bar.gop:3 cannot use "Go" + "+" (type untyped string) as type int in map value`,
+	codeErrorTest(t, // TODO: first column need correct
+		`./bar.gop:2:34 cannot use 1+2 (type untyped int) as type string in map key
+./bar.gop:3:27 cannot use "Go" + "+" (type untyped string) as type int in map value`,
 		`
 a := map[string]int{1+2: 2}
 b := map[string]int{"Hi": "Go" + "+"}
 `)
 }
 
+func TestErrMember(t *testing.T) {
+	codeErrorTest(t,
+		`./bar.gop:3:6 a.x undefined (type string has no field or method x)`,
+		`
+a := "Hello"
+b := a.x
+`)
+}
+
 func TestErrLabel(t *testing.T) {
-	sourceErrorTest(t,
+	codeErrorTest(t,
 		`./bar.gop:4 label foo already defined at ./bar.gop:2
 ./bar.gop:2 label foo defined and not used`,
 		`
@@ -77,7 +89,7 @@ foo:
 foo:
 	i++
 `)
-	sourceErrorTest(t,
+	codeErrorTest(t,
 		`./bar.gop:1 label foo is not defined`,
 		`goto foo`)
 }

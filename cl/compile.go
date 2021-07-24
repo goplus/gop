@@ -120,19 +120,27 @@ func doLoadUnderlying(ctx *pkgCtx, typ *types.Named) types.Type {
 // NewPackage creates a Go+ package instance.
 func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package, err error) {
 	conf = conf.Ensure()
+	baseDir := conf.TargetDir
+	if baseDir == "" {
+		baseDir = conf.Dir
+		if baseDir == "" {
+			baseDir, _ = os.Getwd()
+		}
+	}
 	ctx := &pkgCtx{syms: make(map[string]loader)}
 	loadUnderlying := func(at *gox.Package, typ *types.Named) types.Type {
 		return doLoadUnderlying(ctx, typ)
 	}
-	readSource := func(node ast.Node) string {
+	loadExpr := func(node ast.Node) (string, *token.Position) {
 		if node == nil {
-			return ""
+			return "", nil
 		}
 		start := node.Pos()
 		pos := conf.Fset.Position(start)
 		f := pkg.Files[pos.Filename]
 		n := int(node.End() - start)
-		return string(f.Code[pos.Offset : pos.Offset+n])
+		pos.Filename = relFile(baseDir, pos.Filename)
+		return string(f.Code[pos.Offset : pos.Offset+n]), &pos
 	}
 	confGox := &gox.Config{
 		Context:        conf.Context,
@@ -144,20 +152,13 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		LoadPkgs:       conf.PkgsLoader.LoadPkgs,
 		LoadUnderlying: loadUnderlying,
 		HandleErr:      ctx.handleErr,
-		ReadSource:     readSource,
+		LoadExpr:       loadExpr,
 		Prefix:         gopPrefix,
 		ParseFile:      nil, // TODO
 		Contracts:      nil,
 		NewBuiltin:     newBuiltinDefault,
 	}
 	fileLine := !conf.NoFileLine
-	baseDir := conf.TargetDir
-	if baseDir == "" {
-		baseDir = conf.Dir
-		if baseDir == "" {
-			baseDir, _ = os.Getwd()
-		}
-	}
 	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
 	for _, f := range pkg.Files {
 		loadFile(p, ctx, f, baseDir, fileLine)

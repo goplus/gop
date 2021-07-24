@@ -28,12 +28,18 @@ import (
 	"github.com/goplus/gox"
 )
 
+func relFile(baseDir string, file string) string {
+	if rel, err := filepath.Rel(baseDir, file); err == nil {
+		return "./" + rel
+	}
+	return file
+}
+
 func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
 	if ctx.fileLine {
 		start := stmt.Pos()
 		pos := ctx.fset.Position(start)
-		file, _ := filepath.Rel(ctx.baseDir, pos.Filename)
-		ctx.cb.SetFileLine(&gox.FileLine{File: "./" + file, Line: pos.Line}, false)
+		ctx.cb.SetFileLine(&gox.FileLine{File: relFile(ctx.baseDir, pos.Filename), Line: pos.Line}, false)
 	}
 }
 
