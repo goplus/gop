@@ -19,6 +19,7 @@ package cl
 
 import (
 	"context"
+	"fmt"
 	"go/types"
 	"log"
 	"os"
@@ -124,8 +125,10 @@ type nodeInterp struct {
 	workingDir string
 }
 
-func (p *nodeInterp) Position(pos token.Pos) token.Position {
-	return p.fset.Position(pos)
+func (p *nodeInterp) Position(start token.Pos) token.Position {
+	pos := p.fset.Position(start)
+	pos.Filename = relFile(p.workingDir, pos.Filename)
+	return pos
 }
 
 func (p *nodeInterp) LoadExpr(node ast.Node) (src string, pos token.Position) {
@@ -153,7 +156,8 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	if targetDir == "" {
 		targetDir = dir
 	}
-	ctx := &pkgCtx{syms: make(map[string]loader)}
+	interp := &nodeInterp{fset: conf.Fset, files: pkg.Files, workingDir: workingDir}
+	ctx := &pkgCtx{syms: make(map[string]loader), nodeInterp: interp}
 	loadUnderlying := func(at *gox.Package, typ *types.Named) types.Type {
 		return doLoadUnderlying(ctx, typ)
 	}
@@ -167,7 +171,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		LoadPkgs:        conf.PkgsLoader.LoadPkgs,
 		LoadUnderlying:  loadUnderlying,
 		HandleErr:       ctx.handleErr,
-		NodeInterpreter: &nodeInterp{fset: conf.Fset, files: pkg.Files, workingDir: workingDir},
+		NodeInterpreter: interp,
 		Prefix:          gopPrefix,
 		ParseFile:       nil, // TODO
 		NewBuiltin:      newBuiltinDefault,
@@ -181,7 +185,16 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		for _, decl := range f.Decls {
 			switch d := decl.(type) {
 			case *ast.FuncDecl:
-				ctx.loadSymbol(d.Name.Name)
+				if d.Recv == nil {
+					name := d.Name.Name
+					if name != "init" {
+						ctx.loadSymbol(name)
+					}
+				} else {
+					if name, ok := getRecvTypeName(ctx, d.Recv, false); ok {
+						getTypeLoader(ctx.syms, name).load()
+					}
+				}
 			case *ast.GenDecl:
 				switch d.Tok {
 				case token.TYPE:
@@ -235,11 +248,13 @@ func (p *typeLoader) load() {
 	doInitMethods(p)
 }
 
-func doNewType(ld *typeLoader) {
+func doNewType(ld *typeLoader) bool {
 	if typ := ld.typ; typ != nil {
 		ld.typ = nil
 		typ()
+		return true
 	}
+	return false
 }
 
 func doInitType(ld *typeLoader) {
@@ -271,6 +286,7 @@ func (p *Errors) Error() string {
 }
 
 type pkgCtx struct {
+	*nodeInterp
 	syms  map[string]loader
 	inits []func()
 	errs  []error
@@ -284,6 +300,14 @@ type blockCtx struct {
 	targetDir string
 	fileLine  bool
 	imports   map[string]*gox.PkgRef
+}
+
+func newCodeErrorf(pos *token.Position, format string, args ...interface{}) *gox.CodeError {
+	return &gox.CodeError{Pos: pos, Msg: fmt.Sprintf(format, args...)}
+}
+
+func (p *pkgCtx) handleCodeErrorf(pos *token.Position, format string, args ...interface{}) {
+	p.handleErr(newCodeErrorf(pos, format, args...))
 }
 
 func (p *pkgCtx) handleErr(err error) {
@@ -308,8 +332,7 @@ func (p *pkgCtx) loadType(name string) {
 func (p *pkgCtx) loadSymbol(name string) bool {
 	if f, ok := p.syms[name]; ok {
 		if ld, ok := f.(*typeLoader); ok {
-			doNewType(ld) // create this type, but don't init
-			return true
+			return doNewType(ld) // create this type, but don't init
 		}
 		delete(p.syms, name)
 		f.load()
@@ -338,13 +361,14 @@ func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, fil
 					syms[name] = loaderFunc(fn)
 				}
 			} else {
-				name := getRecvTypeName(d.Recv)
-				ld := getTypeLoader(syms, name)
-				ld.methods = append(ld.methods, func() {
-					doInitType(ld)
-					recv := toRecv(ctx, d.Recv)
-					loadFunc(ctx, recv, d)
-				})
+				if name, ok := getRecvTypeName(parent, d.Recv, true); ok {
+					ld := getTypeLoader(syms, name)
+					ld.methods = append(ld.methods, func() {
+						doInitType(ld)
+						recv := toRecv(ctx, d.Recv)
+						loadFunc(ctx, recv, d)
+					})
+				}
 			}
 		case *ast.GenDecl:
 			switch d.Tok {
@@ -406,7 +430,13 @@ func loadType(ctx *blockCtx, t *ast.TypeSpec) {
 
 func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
 	sig := toFuncType(ctx, d.Type, recv)
-	fn := ctx.pkg.NewFuncWith(d.Pos(), d.Name.Name, sig)
+	fn, err := ctx.pkg.NewFuncWith(d.Pos(), d.Name.Name, sig, func() token.Pos {
+		return d.Recv.List[0].Type.Pos()
+	})
+	if err != nil {
+		ctx.handleErr(err)
+		return
+	}
 	if body := d.Body; body != nil {
 		loadFuncBody(ctx, fn, body)
 	}

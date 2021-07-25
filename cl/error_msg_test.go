@@ -44,6 +44,40 @@ func codeErrorTest(t *testing.T, msg, src string) {
 	}
 }
 
+func TestErrInitFunc(t *testing.T) {
+	codeErrorTest(t,
+		`./bar.gop:2:1 func init must have no arguments and no return values`, `
+func init(v byte) {
+}
+`)
+}
+
+func TestErrRecv(t *testing.T) {
+	codeErrorTest(t,
+		`./bar.gop:5:9 invalid receiver type a (a is a pointer type)`, `
+
+type a *int
+
+func (p a) foo() {
+}
+`)
+	codeErrorTest(t,
+		`./bar.gop:2:9 invalid receiver type error (error is an interface type)`, `
+func (p error) foo() {
+}
+`)
+	codeErrorTest(t,
+		`./bar.gop:2:9 invalid receiver type []byte ([]byte is not a defined type)`, `
+func (p []byte) foo() {
+}
+`)
+	codeErrorTest(t,
+		`./bar.gop:2:10 invalid receiver type []byte ([]byte is not a defined type)`, `
+func (p *[]byte) foo() {
+}
+`)
+}
+
 func _TestErrNewVar(t *testing.T) {
 	codeErrorTest(t,
 		``, `

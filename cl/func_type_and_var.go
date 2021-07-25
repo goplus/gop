@@ -38,15 +38,22 @@ func toFuncType(ctx *blockCtx, typ *ast.FuncType, recv *types.Var) *types.Signat
 
 func toRecv(ctx *blockCtx, recv *ast.FieldList) *types.Var {
 	v := recv.List[0]
-	return ctx.pkg.NewParam(v.Names[0].Name, toType(ctx, v.Type))
+	return ctx.pkg.NewParam(v.Pos(), v.Names[0].Name, toType(ctx, v.Type))
 }
 
-func getRecvTypeName(recv *ast.FieldList) string {
+func getRecvTypeName(ctx *pkgCtx, recv *ast.FieldList, handleErr bool) (string, bool) {
 	typ := recv.List[0].Type
 	if t, ok := typ.(*ast.StarExpr); ok {
 		typ = t.X
 	}
-	return typ.(*ast.Ident).Name
+	if t, ok := typ.(*ast.Ident); ok {
+		return t.Name, true
+	}
+	if handleErr {
+		src, pos := ctx.LoadExpr(typ)
+		ctx.handleCodeErrorf(&pos, "invalid receiver type %v (%v is not a defined type)", src, src)
+	}
+	return "", false
 }
 
 func toResults(ctx *blockCtx, in *ast.FieldList) *types.Tuple {
@@ -79,10 +86,10 @@ func toParam(ctx *blockCtx, fld *ast.Field, args []*gox.Param) []*gox.Param {
 	typ := toType(ctx, fld.Type)
 	pkg := ctx.pkg
 	if len(fld.Names) == 0 {
-		return append(args, pkg.NewParam("", typ))
+		return append(args, pkg.NewParam(fld.Pos(), "", typ))
 	}
 	for _, name := range fld.Names {
-		args = append(args, pkg.NewParam(name.Name, typ))
+		args = append(args, pkg.NewParam(name.Pos(), name.Name, typ))
 	}
 	return args
 }

@@ -413,7 +413,7 @@ func compileComprehensionExpr(ctx *blockCtx, v *ast.ComprehensionExpr, twoValue 
 	ret := pkg.NewAutoParam("_gop_ret")
 	var results *types.Tuple
 	if kind == comprehensionSelect && twoValue {
-		boolean := pkg.NewParam("_gop_ok", types.Typ[types.Bool])
+		boolean := pkg.NewParam(token.NoPos, "_gop_ok", types.Typ[types.Bool])
 		results = types.NewTuple(ret, boolean)
 	} else {
 		results = types.NewTuple(ret)
