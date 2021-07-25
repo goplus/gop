@@ -112,12 +112,63 @@ a := struct{x int; y string}{1, x}
 `)
 }
 
+func TestErrArrayLit(t *testing.T) {
+	codeErrorTest(t,
+		`./bar.gop:3:14 cannot use a as index which must be non-negative integer constant`,
+		`
+a := "Hi"
+b := [10]int{a: 1}
+`)
+	codeErrorTest(t,
+		`./bar.gop:3:20 array index 10 out of bounds [0:10]`,
+		`
+a := "Hi"
+b := [10]int{9: 1, 3}
+`)
+	codeErrorTest(t,
+		`./bar.gop:3:16 array index 1 out of bounds [0:1]`,
+		`
+a := "Hi"
+b := [1]int{1, 2}
+`)
+	codeErrorTest(t,
+		`./bar.gop:3:14 array index 12 (value 12) out of bounds [0:10]`,
+		`
+a := "Hi"
+b := [10]int{12: 2}
+`)
+	codeErrorTest(t,
+		`./bar.gop:3:14 cannot use a+"!" (type string) as type int in array literal`,
+		`
+a := "Hi"
+b := [10]int{a+"!"}
+`)
+	codeErrorTest(t,
+		`./bar.gop:3:17 cannot use a (type string) as type int in array literal`,
+		`
+a := "Hi"
+b := [10]int{2: a}
+`)
+}
+
 func TestErrSliceLit(t *testing.T) {
+	codeErrorTest(t,
+		`./bar.gop:3:12 cannot use a as index which must be non-negative integer constant`,
+		`
+a := "Hi"
+b := []int{a: 1}
+`)
 	codeErrorTest(t,
 		`./bar.gop:3:12 cannot use a (type string) as type int in slice literal`,
 		`
 a := "Hi"
 b := []int{a}
+`)
+	codeErrorTest(t,
+		`./bar.gop:3:15 cannot use a (type string) as type int in slice literal`,
+		`
+a := "Hi"
+b := []int{2: a}
 `)
 }
 
