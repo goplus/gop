@@ -182,6 +182,67 @@ b := map[string]int{"Hi": "Go" + "+"}
 `)
 }
 
+func TestErrSlice(t *testing.T) {
+	codeErrorTest(t,
+		`./bar.gop:4:6 cannot slice a (type *byte)`,
+		`
+var a *byte
+x := 1
+b := a[x:2]
+`)
+	codeErrorTest(t,
+		`./bar.gop:3:6 cannot slice a (type bool)`,
+		`
+a := true
+b := a[1:2]
+`)
+	codeErrorTest(t,
+		`./bar.gop:3:6 invalid operation a[1:2:5] (3-index slice of string)`,
+		`
+a := "Hi"
+b := a[1:2:5]
+`)
+}
+
+func TestErrIndex(t *testing.T) {
+	codeErrorTest(t,
+		`./bar.gop:3:10 assignment mismatch: 2 variables but 1 values`,
+		`
+a := "Hi"
+b, ok := a[1]
+`)
+	codeErrorTest(t,
+		`./bar.gop:3:6 invalid operation: a[1] (type bool does not support indexing)`,
+		`
+a := true
+b := a[1]
+`)
+}
+
+func TestErrIndexRef(t *testing.T) {
+	codeErrorTest(t,
+		`./bar.gop:3:1 cannot assign to a[1] (strings are immutable)`,
+		`
+a := "Hi"
+a[1] = 'e'
+`)
+}
+
+func TestErrStar(t *testing.T) {
+	codeErrorTest(t,
+		`./bar.gop:3:2 invalid indirect of a (type string)`,
+		`
+a := "Hi"
+*a = 'e'
+`)
+	codeErrorTest(t,
+		`./bar.gop:3:7 invalid indirect of a (type string)`,
+		`
+a := "Hi"
+b := *a
+`)
+}
+
 func TestErrMember(t *testing.T) {
 	codeErrorTest(t,
 		`./bar.gop:3:6 a.x undefined (type string has no field or method x)`,

@@ -123,7 +123,7 @@ func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) {
 func compileIndexExprLHS(ctx *blockCtx, v *ast.IndexExpr) {
 	compileExpr(ctx, v.X)
 	compileExpr(ctx, v.Index)
-	ctx.cb.IndexRef(1)
+	ctx.cb.IndexRef(1, v)
 }
 
 func compileStarExprLHS(ctx *blockCtx, v *ast.StarExpr) { // *x = ...
@@ -148,7 +148,7 @@ func compileTypeAssertExpr(ctx *blockCtx, v *ast.TypeAssertExpr, twoValue bool) 
 func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr, twoValue bool) { // x[i]
 	compileExpr(ctx, v.X)
 	compileExpr(ctx, v.Index)
-	ctx.cb.Index(1, twoValue)
+	ctx.cb.Index(1, twoValue, v)
 }
 
 func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) { // x[i:j:k]
@@ -158,7 +158,7 @@ func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) { // x[i:j:k]
 	if v.Slice3 {
 		compileExprOrNone(ctx, v.Max)
 	}
-	ctx.cb.Slice(v.Slice3)
+	ctx.cb.Slice(v.Slice3, v)
 }
 
 func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr) {
