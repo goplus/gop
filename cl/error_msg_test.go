@@ -78,7 +78,15 @@ func (p *[]byte) foo() {
 `)
 }
 
-func _TestErrNewVar(t *testing.T) {
+func TestErrNewVar(t *testing.T) {
+	codeErrorTest(t,
+		"./bar.gop:3:5 a redeclared in this block\n\tprevious declaration at ./bar.gop:2:5", `
+var a int
+var a string
+`)
+}
+
+func _TestErrDefineVar(t *testing.T) {
 	codeErrorTest(t,
 		``, `
 a := 1

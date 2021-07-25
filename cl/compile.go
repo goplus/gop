@@ -192,7 +192,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 					}
 				} else {
 					if name, ok := getRecvTypeName(ctx, d.Recv, false); ok {
-						getTypeLoader(ctx.syms, name).load()
+						getTypeLoader(ctx.syms, token.NoPos, name).load()
 					}
 				}
 			case *ast.GenDecl:
@@ -220,26 +220,53 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 
 type loader interface {
 	load()
+	pos() token.Pos
 }
 
-type loaderFunc func()
+type baseLoader struct {
+	fn    func()
+	start token.Pos
+}
 
-func (fn loaderFunc) load() {
-	fn()
+func initLoader(ctx *pkgCtx, syms map[string]loader, start token.Pos, name string, fn func()) {
+	if old, ok := syms[name]; ok && start != token.NoPos {
+		pos := ctx.Position(start)
+		oldpos := ctx.Position(old.pos())
+		ctx.handleCodeErrorf(
+			&pos, "%s redeclared in this block\n\tprevious declaration at %v", name, oldpos)
+	}
+	syms[name] = &baseLoader{start: start, fn: fn}
+}
+
+func (p *baseLoader) load() {
+	p.fn()
+}
+
+func (p *baseLoader) pos() token.Pos {
+	return p.start
 }
 
 type typeLoader struct {
 	typ, typInit func()
 	methods      []func()
+	start        token.Pos
 }
 
-func getTypeLoader(syms map[string]loader, name string) *typeLoader {
+func getTypeLoader(syms map[string]loader, start token.Pos, name string) *typeLoader {
 	t, ok := syms[name]
-	if !ok {
-		t = &typeLoader{}
+	if ok {
+		if start != token.NoPos {
+			panic("TODO: redefine")
+		}
+	} else {
+		t = &typeLoader{start: start}
 		syms[name] = t
 	}
 	return t.(*typeLoader)
+}
+
+func (p *typeLoader) pos() token.Pos {
+	return p.start
 }
 
 func (p *typeLoader) load() {
@@ -351,18 +378,18 @@ func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, fil
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
 			if d.Recv == nil {
-				name := d.Name.Name
+				name := d.Name
 				fn := func() {
 					loadFunc(ctx, nil, d)
 				}
-				if name == "init" {
+				if name.Name == "init" {
 					parent.inits = append(parent.inits, fn)
 				} else {
-					syms[name] = loaderFunc(fn)
+					initLoader(parent, syms, name.Pos(), name.Name, fn)
 				}
 			} else {
 				if name, ok := getRecvTypeName(parent, d.Recv, true); ok {
-					ld := getTypeLoader(syms, name)
+					ld := getTypeLoader(syms, token.NoPos, name)
 					ld.methods = append(ld.methods, func() {
 						doInitType(ld)
 						recv := toRecv(ctx, d.Recv)
@@ -380,7 +407,7 @@ func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, fil
 				for _, spec := range d.Specs {
 					t := spec.(*ast.TypeSpec)
 					name := t.Name.Name
-					ld := getTypeLoader(syms, name)
+					ld := getTypeLoader(syms, t.Name.Pos(), name)
 					ld.typ = func() {
 						if t.Assign != token.NoPos { // alias type
 							ctx.pkg.AliasType(name, toType(ctx, t.Type))
@@ -394,20 +421,26 @@ func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, fil
 				}
 			case token.CONST:
 				for _, spec := range d.Specs {
-					v := spec.(*ast.ValueSpec)
-					names := makeNames(v.Names)
-					setNamesLoader(syms, names, func() {
-						loadConsts(ctx, names, v)
-						removeNames(syms, names)
+					vSpec := spec.(*ast.ValueSpec)
+					setNamesLoader(parent, syms, vSpec.Names, func() {
+						if v := vSpec; v != nil { // only init once
+							vSpec = nil
+							names := makeNames(v.Names)
+							loadConsts(ctx, names, v)
+							removeNames(syms, names)
+						}
 					})
 				}
 			case token.VAR:
 				for _, spec := range d.Specs {
-					v := spec.(*ast.ValueSpec)
-					names := makeNames(v.Names)
-					setNamesLoader(syms, names, func() {
-						loadVars(ctx, names, v)
-						removeNames(syms, names)
+					vSpec := spec.(*ast.ValueSpec)
+					setNamesLoader(parent, syms, vSpec.Names, func() {
+						if v := vSpec; v != nil { // only init once
+							vSpec = nil
+							names := makeNames(v.Names)
+							loadVars(ctx, names, v)
+							removeNames(syms, names)
+						}
 					})
 				}
 			default:
@@ -501,9 +534,9 @@ func removeNames(syms map[string]loader, names []string) {
 	}
 }
 
-func setNamesLoader(syms map[string]loader, names []string, load func()) {
+func setNamesLoader(ctx *pkgCtx, syms map[string]loader, names []*ast.Ident, load func()) {
 	for _, name := range names {
-		syms[name] = loaderFunc(load)
+		initLoader(ctx, syms, name.Pos(), name.Name, load)
 	}
 }
 

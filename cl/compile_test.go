@@ -275,13 +275,6 @@ type Rect struct {
 func (p *Rect) Area() float64 {
 	return p.w * p.h
 }
-func Area(shapes ...Shape) float64 {
-	s := 0.0
-	for _, shape := range shapes {
-		s += shape.Area()
-	}
-	return s
-}
 
 type Circle struct {
 	x float64
@@ -291,6 +284,13 @@ type Circle struct {
 
 func (p *Circle) Area() float64 {
 	return 3.14 * p.r * p.r
+}
+func Area(shapes ...Shape) float64 {
+	s := 0.0
+	for _, shape := range shapes {
+		s += shape.Area()
+	}
+	return s
 }
 func main() {
 	rect := &Rect{0, 0, 2, 5}
