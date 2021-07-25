@@ -94,6 +94,24 @@ a := "Hi"
 `)
 }
 
+func TestErrStructLit(t *testing.T) {
+	codeErrorTest(t,
+		`./bar.gop:3:39 too many values in struct{x int; y string}{...}`, `
+x := 1
+a := struct{x int; y string}{1, "Hi", 2}
+`)
+	codeErrorTest(t,
+		`./bar.gop:3:30 too few values in struct{x int; y string}{...}`, `
+x := 1
+a := struct{x int; y string}{1}
+`)
+	codeErrorTest(t,
+		`./bar.gop:3:33 cannot use x (type int) as type string in value of field y`, `
+x := 1
+a := struct{x int; y string}{1, x}
+`)
+}
+
 func TestErrSliceLit(t *testing.T) {
 	codeErrorTest(t,
 		`./bar.gop:3:12 cannot use a (type string) as type int in slice literal`,
