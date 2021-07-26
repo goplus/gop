@@ -131,6 +131,17 @@ func (p *nodeInterp) Position(start token.Pos) token.Position {
 	return pos
 }
 
+func (p *nodeInterp) Caller(node ast.Node) string {
+	if expr, ok := node.(*ast.CallExpr); ok {
+		start := expr.Pos()
+		pos := p.fset.Position(start)
+		f := p.files[pos.Filename]
+		n := int(node.End() - start)
+		return string(f.Code[pos.Offset : pos.Offset+n])
+	}
+	return "the function call"
+}
+
 func (p *nodeInterp) LoadExpr(node ast.Node) (src string, pos token.Position) {
 	start := node.Pos()
 	pos = p.fset.Position(start)
@@ -498,7 +509,7 @@ func loadConsts(ctx *blockCtx, names []string, v *ast.ValueSpec) {
 	if v.Type != nil {
 		typ = toType(ctx, v.Type)
 	}
-	cb := ctx.pkg.NewConstStart(typ, names...)
+	cb := ctx.pkg.NewConstStart(v.Names[0].Pos(), typ, names...)
 	for _, val := range v.Values {
 		compileExpr(ctx, val)
 	}
@@ -510,7 +521,7 @@ func loadVars(ctx *blockCtx, names []string, v *ast.ValueSpec) {
 	if v.Type != nil {
 		typ = toType(ctx, v.Type)
 	}
-	varDecl := ctx.pkg.NewVar(typ, names...)
+	varDecl := ctx.pkg.NewVar(v.Names[0].Pos(), typ, names...)
 	if v.Values != nil {
 		cb := varDecl.InitStart(ctx.pkg)
 		for _, val := range v.Values {
