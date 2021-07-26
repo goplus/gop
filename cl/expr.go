@@ -34,7 +34,7 @@ import (
 func compileExprLHS(ctx *blockCtx, expr ast.Expr) {
 	switch v := expr.(type) {
 	case *ast.Ident:
-		compileIdentLHS(ctx, v.Name)
+		compileIdentLHS(ctx, v)
 	case *ast.IndexExpr:
 		compileIndexExprLHS(ctx, v)
 	case *ast.SelectorExpr:
@@ -176,7 +176,7 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr) {
 	default:
 		compileExpr(ctx, v.X)
 	}
-	ctx.cb.MemberRef(v.Sel.Name)
+	ctx.cb.MemberRef(v.Sel.Name, v)
 }
 
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, autoCall bool) {
@@ -227,7 +227,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
 	for _, arg := range v.Args {
 		compileExpr(ctx, arg)
 	}
-	ctx.cb.Call(len(v.Args), v.Ellipsis != gotoken.NoPos)
+	ctx.cb.CallWith(len(v.Args), v.Ellipsis != gotoken.NoPos, v)
 }
 
 func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
@@ -241,7 +241,8 @@ func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
 	}
 }
 
-func compileIdentLHS(ctx *blockCtx, name string) {
+func compileIdentLHS(ctx *blockCtx, v *ast.Ident) {
+	name := v.Name
 	if name == "_" {
 		ctx.cb.VarRef(nil)
 	} else {
@@ -249,7 +250,7 @@ func compileIdentLHS(ctx *blockCtx, name string) {
 		if o == nil {
 			panic("TODO: var not found")
 		}
-		ctx.cb.VarRef(o)
+		ctx.cb.VarRef(o, v)
 	}
 }
 

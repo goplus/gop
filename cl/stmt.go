@@ -118,7 +118,7 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 	for _, ret := range expr.Results {
 		compileExpr(ctx, ret)
 	}
-	ctx.cb.Return(len(expr.Results))
+	ctx.cb.Return(len(expr.Results), expr)
 }
 
 func compileIncDecStmt(ctx *blockCtx, expr *ast.IncDecStmt) {
@@ -164,7 +164,7 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		compileExpr(ctx, rhs, twoValue)
 	}
 	if tok == token.ASSIGN {
-		ctx.cb.Assign(len(expr.Lhs), len(expr.Rhs))
+		ctx.cb.AssignWith(len(expr.Lhs), len(expr.Rhs), expr)
 		return
 	}
 	if len(expr.Lhs) != 1 || len(expr.Rhs) != 1 {
