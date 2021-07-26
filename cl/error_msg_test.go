@@ -44,6 +44,123 @@ func codeErrorTest(t *testing.T, msg, src string) {
 	}
 }
 
+func TestErrConst(t *testing.T) {
+	codeErrorTest(t,
+		"./bar.gop:3:7 a redeclared in this block\n\tprevious declaration at ./bar.gop:2:5", `
+var a int
+const a = 1
+`)
+}
+
+func TestErrNewVar(t *testing.T) {
+	codeErrorTest(t,
+		"./bar.gop:3:5 a redeclared in this block\n\tprevious declaration at ./bar.gop:2:5", `
+var a int
+var a string
+`)
+}
+
+func _TestErrDefineVar(t *testing.T) {
+	codeErrorTest(t,
+		``, `
+a := 1
+a := "Hi"
+`)
+}
+
+func TestErrAssign(t *testing.T) {
+	codeErrorTest(t,
+		`./bar.gop:8:1 assignment mismatch: 1 variables but bar returns 2 values`, `
+
+func bar() (n int, err error) {
+	return
+}
+
+x := 1
+x = bar()
+`)
+	codeErrorTest(t,
+		`./bar.gop:4:1 assignment mismatch: 1 variables but 2 values`, `
+
+x := 1
+x = 1, "Hi"
+`)
+}
+
+func TestErrReturn(t *testing.T) {
+	codeErrorTest(t,
+		"./bar.gop:4:2 too few arguments to return\n\thave (untyped int)\n\twant (int, error)", `
+
+func foo() (int, error) {
+	return 1
+}
+`)
+	codeErrorTest(t,
+		"./bar.gop:4:2 too many arguments to return\n\thave (untyped int, untyped int, untyped string)\n\twant (int, error)", `
+
+func foo() (int, error) {
+	return 1, 2, "Hi"
+}
+`)
+	codeErrorTest(t,
+		`./bar.gop:4:12 cannot use "Hi" (type untyped string) as type error in return argument`, `
+
+func foo() (int, error) {
+	return 1, "Hi"
+}
+`)
+	codeErrorTest(t,
+		"./bar.gop:8:2 too few arguments to return\n\thave (byte)\n\twant (int, error)", `
+
+func bar() (v byte) {
+	return
+}
+
+func foo() (int, error) {
+	return bar()
+}
+`)
+	codeErrorTest(t,
+		"./bar.gop:8:2 too many arguments to return\n\thave (n int, err error)\n\twant (v byte)", `
+
+func bar() (n int, err error) {
+	return
+}
+
+func foo() (v byte) {
+	return bar()
+}
+`)
+	codeErrorTest(t,
+		`./bar.gop:8:2 cannot use byte value as type error in return argument`, `
+
+func bar() (n int, v byte) {
+	return
+}
+
+func foo() (int, error) {
+	return bar()
+}
+`)
+	codeErrorTest(t,
+		"./bar.gop:4:2 not enough arguments to return\n\thave ()\n\twant (byte)", `
+
+func foo() byte {
+	return
+}
+`)
+}
+
+func TestErrForRange(t *testing.T) {
+	codeErrorTest(t,
+		`./bar.gop:4:8 cannot assign type string to a (type int) in range`, `
+a := 1
+var b []string
+for _, a = range b {
+}
+`)
+}
+
 func TestErrInitFunc(t *testing.T) {
 	codeErrorTest(t,
 		`./bar.gop:2:1 func init must have no arguments and no return values`, `
@@ -75,22 +192,6 @@ func (p []byte) foo() {
 		`./bar.gop:2:10 invalid receiver type []byte ([]byte is not a defined type)`, `
 func (p *[]byte) foo() {
 }
-`)
-}
-
-func TestErrNewVar(t *testing.T) {
-	codeErrorTest(t,
-		"./bar.gop:3:5 a redeclared in this block\n\tprevious declaration at ./bar.gop:2:5", `
-var a int
-var a string
-`)
-}
-
-func _TestErrDefineVar(t *testing.T) {
-	codeErrorTest(t,
-		``, `
-a := 1
-a := "Hi"
 `)
 }
 
@@ -249,6 +350,37 @@ func TestErrMember(t *testing.T) {
 		`
 a := "Hello"
 b := a.x
+`)
+}
+
+func TestErrMemberRef(t *testing.T) {
+	codeErrorTest(t,
+		`./bar.gop:3:1 a.x undefined (type string has no field or method x)`,
+		`
+a := "Hello"
+a.x = 1
+`)
+	codeErrorTest(t,
+		`./bar.gop:5:1 a.x undefined (type aaa has no field or method x)`,
+		`
+type aaa byte
+
+a := aaa(0)
+a.x = 1
+`)
+	codeErrorTest(t,
+		`./bar.gop:5:1 a.z undefined (type aaa has no field or method z)`,
+		`
+type aaa struct {x int; y string}
+
+a := aaa{}
+a.z = 1
+`)
+	codeErrorTest(t,
+		`./bar.gop:3:1 a.z undefined (type struct{x int; y string} has no field or method z)`,
+		`
+a := struct{x int; y string}{}
+a.z = 1
 `)
 }
 

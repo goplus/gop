@@ -133,7 +133,8 @@ func (p *nodeInterp) Position(start token.Pos) token.Position {
 
 func (p *nodeInterp) Caller(node ast.Node) string {
 	if expr, ok := node.(*ast.CallExpr); ok {
-		start := expr.Pos()
+		node = expr.Fun
+		start := node.Pos()
 		pos := p.fset.Position(start)
 		f := p.files[pos.Filename]
 		n := int(node.End() - start)
