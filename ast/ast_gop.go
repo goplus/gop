@@ -43,7 +43,7 @@ func (p *SliceLit) End() token.Pos {
 func (*SliceLit) exprNode() {}
 
 // -----------------------------------------------------------------------------
-
+/*
 // TernaryExpr represents `cond ? expr1 : expr2`
 type TernaryExpr struct {
 	Cond     Expr
@@ -64,7 +64,7 @@ func (p *TernaryExpr) End() token.Pos {
 }
 
 func (*TernaryExpr) exprNode() {}
-
+*/
 // -----------------------------------------------------------------------------
 
 // ErrWrapExpr represents `expr!`, `expr?` or `expr?: defaultValue`
@@ -112,12 +112,13 @@ func (p *ForPhrase) exprNode() {}
 // ComprehensionExpr represents
 //    `[vexpr for k1, v1 <- listOrMap1, cond1 ...]` or
 //    `{vexpr for k1, v1 <- listOrMap1, cond1 ...}` or
-//    `{kexpr: vexpr for k1, v1 <- listOrMap1, cond1 ...}`
+//    `{kexpr: vexpr for k1, v1 <- listOrMap1, cond1 ...}` or
+//    `{for k1, v1 <- listOrMap1, cond1 ...}` or
 type ComprehensionExpr struct {
 	Lpos token.Pos   // position of "[" or "{"
 	Tok  token.Token // token.LBRACK '[' or token.LBRACE '{'
-	Elt  Expr        // *KeyValueExpr or Expr
-	Fors []ForPhrase
+	Elt  Expr        // *KeyValueExpr or Expr or nil
+	Fors []*ForPhrase
 	Rpos token.Pos // position of "]" or "}"
 }
 

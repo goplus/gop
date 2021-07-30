@@ -56,7 +56,7 @@ func testFrom(t *testing.T, pkgDir, sel string) {
 }
 
 func TestFromTestdata(t *testing.T) {
-	sel := ""
+	sel := "exists"
 	dir, err := os.Getwd()
 	if err != nil {
 		t.Fatal("Getwd failed:", err)

@@ -408,16 +408,25 @@ func comprehensionKind(v *ast.ComprehensionExpr) int {
 	panic("TODO: invalid comprehensionExpr")
 }
 
+// {for k, v <- listOrMap, cond}
+// {expr for k, v <- listOrMap, cond}
+// {kexpr: vexpr for k, v <- listOrMap, cond}
 func compileComprehensionExpr(ctx *blockCtx, v *ast.ComprehensionExpr, twoValue bool) {
 	kind := comprehensionKind(v)
 	pkg, cb := ctx.pkg, ctx.cb
-	ret := pkg.NewAutoParam("_gop_ret")
 	var results *types.Tuple
-	if kind == comprehensionSelect && twoValue {
+	var ret *gox.Param
+	if v.Elt == nil {
 		boolean := pkg.NewParam(token.NoPos, "_gop_ok", types.Typ[types.Bool])
-		results = types.NewTuple(ret, boolean)
+		results = types.NewTuple(boolean)
 	} else {
-		results = types.NewTuple(ret)
+		ret = pkg.NewAutoParam("_gop_ret")
+		if kind == comprehensionSelect && twoValue {
+			boolean := pkg.NewParam(token.NoPos, "_gop_ok", types.Typ[types.Bool])
+			results = types.NewTuple(ret, boolean)
+		} else {
+			results = types.NewTuple(ret)
+		}
 	}
 	cb.NewClosure(nil, results, false).BodyStart(pkg)
 	if kind == comprehensionMap {
@@ -445,27 +454,36 @@ func compileComprehensionExpr(ctx *blockCtx, v *ast.ComprehensionExpr, twoValue 
 		end++
 	}
 	switch kind {
-	case comprehensionList: // _gop_ret = append(_gop_ret, elt)
+	case comprehensionList:
+		// _gop_ret = append(_gop_ret, elt)
 		cb.VarRef(ret)
 		cb.Val(pkg.Builtin().Ref("append"))
 		cb.Val(ret)
 		compileExpr(ctx, v.Elt)
 		cb.Call(2).Assign(1)
-	case comprehensionMap: // _gop_ret[key] = val
+	case comprehensionMap:
+		// _gop_ret[key] = val
 		cb.Val(ret)
 		kv := v.Elt.(*ast.KeyValueExpr)
 		compileExpr(ctx, kv.Key)
 		cb.IndexRef(1)
 		compileExpr(ctx, kv.Value)
 		cb.Assign(1)
-	default: // return elt, true
-		compileExpr(ctx, v.Elt)
-		n := 1
-		if twoValue {
+	default:
+		if v.Elt == nil {
+			// return true
 			cb.Val(true)
-			n++
+			cb.Return(1)
+		} else {
+			// return elt, true
+			compileExpr(ctx, v.Elt)
+			n := 1
+			if twoValue {
+				cb.Val(true)
+				n++
+			}
+			cb.Return(n)
 		}
-		cb.Return(n)
 	}
 	for i := 0; i < end; i++ {
 		cb.End()

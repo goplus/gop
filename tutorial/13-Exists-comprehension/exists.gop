@@ -1,0 +1,12 @@
+type student struct {
+	name  string
+	score int
+}
+
+a := [student{"du", 84}, student{"wang", 70}, student{"ken", 100}]
+
+hasFullMark := {for x <- a, x.score == 100}
+println("is any student full mark:", hasFullMark)
+
+hasFailed := {for x <- a, x.score < 60}
+println("is any student failed:", hasFailed)

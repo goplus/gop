@@ -840,6 +840,24 @@ func main() {
 `)
 }
 
+func TestExistsComprehension(t *testing.T) {
+	gopClTest(t, `
+hasFive := {for x <- ["1", "3", "5", "7", "11"], x == "5"}
+`, `package main
+
+func main() {
+	hasFive := func() (_gop_ok bool) {
+		for _, x := range []string{"1", "3", "5", "7", "11"} {
+			if x == "5" {
+				return true
+			}
+		}
+		return
+	}()
+}
+`)
+}
+
 func TestSelectComprehension(t *testing.T) {
 	gopClTest(t, `
 y := {i for i, x <- ["1", "3", "5", "7", "11"], x == "5"}

@@ -1,3 +1,19 @@
+/*
+ Copyright 2021 The GoPlus Authors (goplus.org)
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+*/
+
 // Copyright 2009 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
@@ -970,13 +986,14 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		}
 		p.print(blank)
 		p.expr(x.Value)
-	case *ast.TernaryExpr:
-		p.expr1(x.X, token.HighestPrec, 1)
-		p.expr0(x.Cond, 1)
-		p.print(x.Question, token.QUESTION)
-		p.expr0(x.Y, depth+1)
-		p.print(x.Colon, token.COLON)
-		p.expr0(x.Y, depth+1)
+		/*	case *ast.TernaryExpr:
+			p.expr1(x.X, token.HighestPrec, 1)
+			p.expr0(x.Cond, 1)
+			p.print(x.Question, token.QUESTION)
+			p.expr0(x.Y, depth+1)
+			p.print(x.Colon, token.COLON)
+			p.expr0(x.Y, depth+1)
+		*/
 	case *ast.SliceLit:
 		p.print(token.LBRACK)
 		p.exprList(x.Lbrack, x.Elts, depth+1, commaTerm, x.Rbrack, x.Incomplete)
@@ -991,11 +1008,16 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 			p.print(token.RBRACK)
 		default: // {...}
 			p.print(token.LBRACE)
-			elt := x.Elt.(*ast.KeyValueExpr)
-			p.expr0(elt.Key, depth+1)
-			p.print(elt.Colon, token.COLON, blank)
-			p.expr0(elt.Value, depth+1)
-			p.print(blank)
+			if x.Elt != nil {
+				if elt, ok := x.Elt.(*ast.KeyValueExpr); ok {
+					p.expr0(elt.Key, depth+1)
+					p.print(elt.Colon, token.COLON, blank)
+					p.expr0(elt.Value, depth+1)
+				} else {
+					p.expr0(x.Elt, depth+1)
+				}
+				p.print(blank)
+			}
 			p.listForPhrase(x.Lpos, x.Fors, depth, x.Rpos)
 			p.print(token.RBRACE)
 		}
@@ -1011,7 +1033,7 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 	}
 }
 
-func (p *printer) listForPhrase(prev0 token.Pos, list []ast.ForPhrase, depth int, next0 token.Pos) {
+func (p *printer) listForPhrase(prev0 token.Pos, list []*ast.ForPhrase, depth int, next0 token.Pos) {
 	for i, x := range list {
 		if i > 0 {
 			p.print(blank)

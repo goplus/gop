@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path"
 	"reflect"
@@ -46,6 +47,7 @@ var (
 	tyString          = reflect.TypeOf("")
 	tyToken           = reflect.TypeOf(token.Token(0))
 	tyCommentGroupPtr = reflect.TypeOf((*ast.CommentGroup)(nil))
+	tyObjectPtr       = reflect.TypeOf((*ast.Object)(nil))
 )
 
 // FprintNode prints a Go+ AST node.
@@ -62,7 +64,7 @@ func FprintNode(w io.Writer, lead string, v interface{}, prefix, indent string) 
 		}
 	case reflect.Ptr:
 		t := val.Type()
-		if val.IsNil() || t == tyCommentGroupPtr {
+		if val.IsNil() || t == tyCommentGroupPtr || t == tyObjectPtr {
 			return
 		}
 		if t.Implements(tyNode) {
@@ -83,7 +85,13 @@ func FprintNode(w io.Writer, lead string, v interface{}, prefix, indent string) 
 					FprintNode(w, fmt.Sprintf("%s%v:\n", prefix, sf.Name), sfv, prefix+indent, indent)
 				}
 			}
+		} else {
+			log.Panicln("FprintNode unexpected type:", t)
 		}
+	case reflect.Int, reflect.Bool, reflect.Invalid:
+		// skip
+	default:
+		log.Panicln("FprintNode unexpected kind:", val.Kind(), "type:", val.Type())
 	}
 }
 

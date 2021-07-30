@@ -1407,7 +1407,9 @@ func (p *parser) parseElement() ast.Expr {
 }
 
 // {k1: v1, k2: v2, ...}
-// {kexpr, vexpr for k, v <- listOrMap}
+// {for k, v <- listOrMap, cond}
+// {expr for k, v <- listOrMap, cond}
+// {kexpr: vexpr for k, v <- listOrMap, cond}
 func (p *parser) parseLiteralValueOrMapComprehension() ast.Expr {
 	if p.trace {
 		defer un(trace(p, "LiteralValue"))
@@ -1434,6 +1436,10 @@ func (p *parser) parseElementListOrComprehension() (list []ast.Expr, mce *ast.Co
 		defer un(trace(p, "ElementList"))
 	}
 
+	if p.tok == token.FOR {
+		phrases := p.parseForPhrases()
+		return nil, &ast.ComprehensionExpr{Fors: phrases}
+	}
 	for p.tok != token.RBRACE && p.tok != token.EOF {
 		list = append(list, p.parseElement())
 		if p.tok == token.FOR { // for k, v <- listOrMap
@@ -1508,7 +1514,7 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	case *ast.StarExpr:
 	case *ast.UnaryExpr:
 	case *ast.BinaryExpr:
-	case *ast.TernaryExpr:
+	//case *ast.TernaryExpr:
 	case *ast.ErrWrapExpr:
 	default:
 		// all other nodes are not proper expressions
@@ -2274,7 +2280,7 @@ func (p *parser) parseSelectStmt() *ast.SelectStmt {
 	return &ast.SelectStmt{Select: pos, Body: body}
 }
 
-func (p *parser) parseForPhrases() (phrases []ast.ForPhrase) {
+func (p *parser) parseForPhrases() (phrases []*ast.ForPhrase) {
 	for {
 		phrase := p.parseForPhrase()
 		phrases = append(phrases, phrase)
@@ -2312,7 +2318,7 @@ func toIdent(e ast.Expr) *ast.Ident {
 	panic("ident expr is required")
 }
 
-func (p *parser) parseForPhrase() ast.ForPhrase { // for k, v <- listOrMap, cond
+func (p *parser) parseForPhrase() *ast.ForPhrase { // for k, v <- listOrMap, cond
 	if p.trace {
 		defer un(trace(p, "ForPhrase"))
 	}
@@ -2335,7 +2341,7 @@ func (p *parser) parseForPhrase() ast.ForPhrase { // for k, v <- listOrMap, cond
 		p.next()
 		cond = p.parseExpr(false)
 	}
-	return ast.ForPhrase{For: pos, Key: k, Value: v, TokPos: tokPos, X: x, Cond: cond}
+	return &ast.ForPhrase{For: pos, Key: k, Value: v, TokPos: tokPos, X: x, Cond: cond}
 }
 
 func (p *parser) parseForStmt() ast.Stmt {
