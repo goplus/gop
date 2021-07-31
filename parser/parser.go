@@ -49,6 +49,11 @@ type parser struct {
 	pos token.Pos   // token position
 	tok token.Token // one token look-ahead
 	lit string      // token literal
+	old struct {
+		pos token.Pos
+		tok token.Token
+		lit string
+	}
 
 	// Error recovery
 	// (used to limit the number of calls to parser.advance
@@ -239,8 +244,19 @@ func un(p *parser) {
 	p.printTrace(")")
 }
 
+func (p *parser) unget(pos token.Pos, tok token.Token, lit string) {
+	p.old.pos, p.old.tok, p.old.lit = p.pos, p.tok, p.lit
+	p.pos, p.tok, p.lit = pos, tok, lit
+}
+
 // Advance to the next token.
 func (p *parser) next0() {
+	if p.old.pos != 0 { // Go+: support unget
+		p.pos, p.tok, p.lit = p.old.pos, p.old.tok, p.old.lit
+		p.old.pos = 0
+		return
+	}
+
 	// Because of one-token look-ahead, print the previous token
 	// when tracing as it provides a more readable output. The
 	// very first token (!p.pos.IsValid()) is not initialized
@@ -586,7 +602,6 @@ func (p *parser) parseExprList(lhs bool) (list []ast.Expr) {
 		p.next()
 		list = append(list, p.checkExpr(p.parseExpr(lhs)))
 	}
-
 	return
 }
 
@@ -1228,6 +1243,15 @@ func (p *parser) parseOperand(lhs bool) ast.Expr {
 		if !lhs { // rhs: mapLit - {k1: v1, k2: v2, ...}
 			return p.parseLiteralValueOrMapComprehension()
 		}
+
+	case token.GOTO, token.BREAK, token.CONTINUE, token.FALLTHROUGH:
+		// Go+: allow goto() as a function
+		p.tok = token.IDENT
+		x := p.parseIdent()
+		if !lhs {
+			p.resolve(x)
+		}
+		return x
 	}
 
 	typ, isSliceLit := p.tryIdentOrType(true)
@@ -1734,7 +1758,7 @@ func (p *parser) parseBinaryExpr(lhs bool, prec1 int) ast.Expr {
 		defer un(trace(p, "BinaryExpr"))
 	}
 
-	x := p.parseErrWrapExpr(lhs)
+	x := p.parseErrWrapExpr(lhs) // TODO: change priority level of ErrWrapExpr
 	for {
 		op, oprec := p.tokPrec()
 		if oprec < prec1 {
@@ -1952,12 +1976,25 @@ func (p *parser) parseReturnStmt() *ast.ReturnStmt {
 	return &ast.ReturnStmt{Return: pos, Results: x}
 }
 
-func (p *parser) parseBranchStmt(tok token.Token) *ast.BranchStmt {
+func (p *parser) parseBranchStmt(tok token.Token) ast.Stmt {
 	if p.trace {
 		defer un(trace(p, "BranchStmt"))
 	}
 
+	oldpos, oldlit := p.pos, p.lit // Go+: save token to allow goto() as a function
 	pos := p.expect(tok)
+	if p.tok == token.LPAREN { // Go+: allow goto() as a function
+		p.unget(oldpos, token.IDENT, oldlit)
+		s, _ := p.parseSimpleStmt(labelOk)
+		// because of the required look-ahead, labeled statements are
+		// parsed by parseSimpleStmt - don't expect a semicolon after
+		// them
+		if _, isLabeledStmt := s.(*ast.LabeledStmt); !isLabeledStmt {
+			p.expectSemi()
+		}
+		return s
+	}
+
 	var label *ast.Ident
 	if tok != token.FALLTHROUGH && p.tok == token.IDENT {
 		label = p.parseIdent()

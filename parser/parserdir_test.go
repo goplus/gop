@@ -20,10 +20,12 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/goplus/gop/parser/parsertest"
+	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/log"
 )
@@ -43,7 +45,12 @@ func testFrom(t *testing.T, pkgDir, sel string) {
 	fset := token.NewFileSet()
 	pkgs, err := ParseDir(fset, pkgDir, nil, 0)
 	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseDir failed:", err, len(pkgs))
+		if errs, ok := err.(scanner.ErrorList); ok {
+			for _, e := range errs {
+				t.Log(e)
+			}
+		}
+		t.Fatal("ParseDir failed:", err, reflect.TypeOf(err), len(pkgs))
 	}
 	for _, pkg := range pkgs {
 		b, err := ioutil.ReadFile(pkgDir + "/parser.expect")
