@@ -1,0 +1,116 @@
+package main
+
+file functype.gop
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: bar
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+      Results:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Type:
+                ast.Ident:
+                  Name: int
+            ast.Field:
+              Type:
+                ast.ChanType:
+                  Value:
+                    ast.Ident:
+                      Name: error
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ReturnStmt:
+          Results:
+            ast.BasicLit:
+              Kind: INT
+              Value: 0
+            ast.CallExpr:
+              Fun:
+                ast.ParenExpr:
+                  X:
+                    ast.ChanType:
+                      Value:
+                        ast.Ident:
+                          Name: error
+              Args:
+                ast.Ident:
+                  Name: nil
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: foo
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: f
+              Type:
+                ast.FuncType:
+                  Params:
+                    ast.FieldList:
+                      List:
+                        ast.Field:
+                          Type:
+                            ast.ArrayType:
+                              Elt:
+                                ast.Ident:
+                                  Name: byte
+                        ast.Field:
+                          Type:
+                            ast.StarExpr:
+                              X:
+                                ast.Ident:
+                                  Name: string
+                        ast.Field:
+                          Type:
+                            ast.StructType:
+                              Fields:
+                                ast.FieldList:
+                                  List:
+                                    ast.Field:
+                                      Names:
+                                        ast.Ident:
+                                          Name: a
+                                      Type:
+                                        ast.Ident:
+                                          Name: int
+                  Results:
+                    ast.FieldList:
+                      List:
+                        ast.Field:
+                          Type:
+                            ast.ChanType:
+                              Value:
+                                ast.Ident:
+                                  Name: int
+      Results:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: v
+              Type:
+                ast.Ident:
+                  Name: int
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: err
+              Type:
+                ast.Ident:
+                  Name: error
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ReturnStmt:

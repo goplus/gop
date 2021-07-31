@@ -1,0 +1,7 @@
+func bar() (int, <-chan error) {
+	return 0, (<-chan error)(nil)
+}
+
+func foo(f func([]byte, *string, struct{ a int }) chan<- int) (v int, err error) {
+	return
+}
