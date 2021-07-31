@@ -1985,13 +1985,8 @@ func (p *parser) parseBranchStmt(tok token.Token) ast.Stmt {
 	pos := p.expect(tok)
 	if p.tok == token.LPAREN { // Go+: allow goto() as a function
 		p.unget(oldpos, token.IDENT, oldlit)
-		s, _ := p.parseSimpleStmt(labelOk)
-		// because of the required look-ahead, labeled statements are
-		// parsed by parseSimpleStmt - don't expect a semicolon after
-		// them
-		if _, isLabeledStmt := s.(*ast.LabeledStmt); !isLabeledStmt {
-			p.expectSemi()
-		}
+		s, _ := p.parseSimpleStmt(basic)
+		p.expectSemi()
 		return s
 	}
 
