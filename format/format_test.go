@@ -358,7 +358,7 @@ func TestFromTestdata(t *testing.T) {
 	if err != nil {
 		t.Fatal("Getwd failed:", err)
 	}
-	dir = filepath.Join(dir, "../exec/golang/testdata")
+	dir = filepath.Join(dir, "../parser/_testdata")
 	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err

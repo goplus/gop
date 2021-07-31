@@ -2,4 +2,4 @@ type cstring string
 
 title := "Hello,world!2020-05-27"
 s := (*cstring)(&title)
-println(title[0:len(title)-len("2006-01-02")])
+println(title[0 : len(title)-len("2006-01-02")])
