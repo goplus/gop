@@ -138,7 +138,7 @@ func (*ComprehensionExpr) exprNode() {}
 
 // A ForPhraseStmt represents a for statement with a for <- clause.
 type ForPhraseStmt struct {
-	ForPhrase
+	*ForPhrase
 	Body *BlockStmt
 }
 

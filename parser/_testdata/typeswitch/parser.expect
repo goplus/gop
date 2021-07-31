@@ -1,0 +1,61 @@
+package main
+
+file typeswitch.gop
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: add
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: v
+              Type:
+                ast.InterfaceType:
+                  Methods:
+                    ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.TypeSwitchStmt:
+          Assign:
+            ast.AssignStmt:
+              Lhs:
+                ast.Ident:
+                  Name: a
+              Tok: :=
+              Rhs:
+                ast.TypeAssertExpr:
+                  X:
+                    ast.Ident:
+                      Name: v
+          Body:
+            ast.BlockStmt:
+              List:
+                ast.CaseClause:
+                  List:
+                    ast.Ident:
+                      Name: int
+                    ast.InterfaceType:
+                      Methods:
+                        ast.FieldList:
+                          List:
+                            ast.Field:
+                              Names:
+                                ast.Ident:
+                                  Name: Foo
+                              Type:
+                                ast.FuncType:
+                                  Params:
+                                    ast.FieldList:
+                ast.CaseClause:
+                  List:
+                    ast.StarExpr:
+                      X:
+                        ast.Ident:
+                          Name: string
+                ast.CaseClause:

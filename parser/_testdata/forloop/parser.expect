@@ -62,6 +62,19 @@ ast.FuncDecl:
                   Value: "n:"
                 ast.Ident:
                   Name: n
+        ast.RangeStmt:
+          Key:
+            ast.Ident:
+              Name: x
+          Tok: :=
+          X:
+            ast.SliceLit:
+              Elts:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 1
+          Body:
+            ast.BlockStmt:
         ast.AssignStmt:
           Lhs:
             ast.Ident:
@@ -193,3 +206,73 @@ ast.FuncDecl:
                   Value: "sum(1-100):"
                 ast.Ident:
                   Name: sum
+        ast.ForPhraseStmt:
+          ForPhrase:
+            ast.ForPhrase:
+              Value:
+                ast.Ident:
+                  Name: x
+              X:
+                ast.SliceLit:
+                  Elts:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 1
+          Body:
+            ast.BlockStmt:
+              List:
+                ast.ExprStmt:
+                  X:
+                    ast.CallExpr:
+                      Fun:
+                        ast.Ident:
+                          Name: println
+                      Args:
+                        ast.Ident:
+                          Name: x
+        ast.ForPhraseStmt:
+          ForPhrase:
+            ast.ForPhrase:
+              Key:
+                ast.Ident:
+                  Name: i
+              Value:
+                ast.Ident:
+                  Name: x
+              X:
+                ast.SliceLit:
+                  Elts:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 1
+              Cond:
+                ast.BinaryExpr:
+                  X:
+                    ast.BinaryExpr:
+                      X:
+                        ast.Ident:
+                          Name: i
+                      Op: %
+                      Y:
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 2
+                  Op: ==
+                  Y:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 0
+          Body:
+            ast.BlockStmt:
+              List:
+                ast.ExprStmt:
+                  X:
+                    ast.CallExpr:
+                      Fun:
+                        ast.Ident:
+                          Name: println
+                      Args:
+                        ast.Ident:
+                          Name: i
+                        ast.Ident:
+                          Name: x

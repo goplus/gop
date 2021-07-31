@@ -1,0 +1,7 @@
+func add(v interface{}) {
+	switch a := v.(type) {
+	case int, interface{ Foo() }:
+	case *string:
+	default:
+	}
+}
