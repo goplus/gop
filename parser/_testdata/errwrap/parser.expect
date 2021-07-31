@@ -1,0 +1,243 @@
+package main
+
+file errwrap.gop
+noEntrypoint
+ast.GenDecl:
+  Tok: import
+  Specs:
+    ast.ImportSpec:
+      Path:
+        ast.BasicLit:
+          Kind: STRING
+          Value: "strconv"
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: add
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: x
+                ast.Ident:
+                  Name: y
+              Type:
+                ast.Ident:
+                  Name: string
+      Results:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Type:
+                ast.Ident:
+                  Name: int
+            ast.Field:
+              Type:
+                ast.Ident:
+                  Name: error
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ReturnStmt:
+          Results:
+            ast.BinaryExpr:
+              X:
+                ast.ErrWrapExpr:
+                  X:
+                    ast.CallExpr:
+                      Fun:
+                        ast.SelectorExpr:
+                          X:
+                            ast.Ident:
+                              Name: strconv
+                          Sel:
+                            ast.Ident:
+                              Name: Atoi
+                      Args:
+                        ast.Ident:
+                          Name: x
+                  Tok: ?
+              Op: +
+              Y:
+                ast.ErrWrapExpr:
+                  X:
+                    ast.CallExpr:
+                      Fun:
+                        ast.SelectorExpr:
+                          X:
+                            ast.Ident:
+                              Name: strconv
+                          Sel:
+                            ast.Ident:
+                              Name: Atoi
+                      Args:
+                        ast.Ident:
+                          Name: y
+                  Tok: ?
+            ast.Ident:
+              Name: nil
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: addSafe
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: x
+                ast.Ident:
+                  Name: y
+              Type:
+                ast.Ident:
+                  Name: string
+      Results:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Type:
+                ast.Ident:
+                  Name: int
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ReturnStmt:
+          Results:
+            ast.BinaryExpr:
+              X:
+                ast.ErrWrapExpr:
+                  X:
+                    ast.CallExpr:
+                      Fun:
+                        ast.SelectorExpr:
+                          X:
+                            ast.Ident:
+                              Name: strconv
+                          Sel:
+                            ast.Ident:
+                              Name: Atoi
+                      Args:
+                        ast.Ident:
+                          Name: x
+                  Tok: ?
+                  Default:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 0
+              Op: +
+              Y:
+                ast.ErrWrapExpr:
+                  X:
+                    ast.CallExpr:
+                      Fun:
+                        ast.SelectorExpr:
+                          X:
+                            ast.Ident:
+                              Name: strconv
+                          Sel:
+                            ast.Ident:
+                              Name: Atoi
+                      Args:
+                        ast.Ident:
+                          Name: y
+                  Tok: ?
+                  Default:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 0
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: `add("100", "23"):`
+                ast.ErrWrapExpr:
+                  X:
+                    ast.CallExpr:
+                      Fun:
+                        ast.Ident:
+                          Name: add
+                      Args:
+                        ast.BasicLit:
+                          Kind: STRING
+                          Value: "100"
+                        ast.BasicLit:
+                          Kind: STRING
+                          Value: "23"
+                  Tok: !
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: sum
+            ast.Ident:
+              Name: err
+          Tok: :=
+          Rhs:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: add
+              Args:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "10"
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "abc"
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: `add("10", "abc"):`
+                ast.Ident:
+                  Name: sum
+                ast.Ident:
+                  Name: err
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: `addSafe("10", "abc"):`
+                ast.CallExpr:
+                  Fun:
+                    ast.Ident:
+                      Name: addSafe
+                  Args:
+                    ast.BasicLit:
+                      Kind: STRING
+                      Value: "10"
+                    ast.BasicLit:
+                      Kind: STRING
+                      Value: "abc"

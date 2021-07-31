@@ -42,7 +42,7 @@ ast.FuncDecl:
         ast.AssignStmt:
           Lhs:
             ast.Ident:
-              Name: hasEven
+              Name: y
           Tok: :=
           Rhs:
             ast.ComprehensionExpr:
