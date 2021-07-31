@@ -22,30 +22,47 @@ ast.FuncDecl:
               X:
                 ast.BinaryExpr:
                   X:
-                    ast.CallExpr:
-                      Fun:
-                        ast.Ident:
-                          Name: goto
-                      Args:
-                        ast.BasicLit:
-                          Kind: INT
-                          Value: 1
-                        ast.BasicLit:
-                          Kind: INT
-                          Value: 2
+                    ast.BinaryExpr:
+                      X:
+                        ast.CallExpr:
+                          Fun:
+                            ast.Ident:
+                              Name: goto
+                          Args:
+                            ast.BasicLit:
+                              Kind: INT
+                              Value: 1
+                            ast.BasicLit:
+                              Kind: INT
+                              Value: 2
+                      Op: +
+                      Y:
+                        ast.CallExpr:
+                          Fun:
+                            ast.Ident:
+                              Name: break
+                          Args:
+                            ast.BasicLit:
+                              Kind: INT
+                              Value: 3
+                            ast.BasicLit:
+                              Kind: INT
+                              Value: 4
                   Op: +
                   Y:
                     ast.CallExpr:
                       Fun:
-                        ast.Ident:
-                          Name: break
+                        ast.SelectorExpr:
+                          X:
+                            ast.Ident:
+                              Name: a
+                          Sel:
+                            ast.Ident:
+                              Name: goto
                       Args:
                         ast.BasicLit:
                           Kind: INT
-                          Value: 3
-                        ast.BasicLit:
-                          Kind: INT
-                          Value: 4
+                          Value: 6
         ast.BranchStmt:
           Tok: goto
           Label:

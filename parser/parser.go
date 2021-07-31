@@ -1636,6 +1636,10 @@ L:
 				x = p.parseSelector(p.checkExprOrType(x))
 			case token.LPAREN:
 				x = p.parseTypeAssertion(p.checkExpr(x))
+			case token.GOTO, token.BREAK, token.CONTINUE, token.FALLTHROUGH:
+				// Go+: allow goto() as a function
+				p.tok = token.IDENT
+				x = p.parseSelector(p.checkExprOrType(x))
 			default:
 				pos := p.pos
 				p.errorExpected(pos, "selector or type assertion")
