@@ -25,7 +25,7 @@ import (
 
 // -----------------------------------------------------------------------------
 
-var fsTestStd = parsertest.NewSingleFileFS("/foo", "bar.gop", `package bar; import "io"
+var testStdCode = `package bar; import "io"
 	// comment
 	x := 0
 	if t := false; t {
@@ -55,13 +55,13 @@ var fsTestStd = parsertest.NewSingleFileFS("/foo", "bar.gop", `package bar; impo
 	default:
 		panic("error")
 	}
-`)
+`
 
 func TestStd(t *testing.T) {
 	fset := token.NewFileSet()
-	pkgs, err := ParseFSDir(fset, fsTestStd, "/foo", nil, ParseComments)
+	pkgs, err := Parse(fset, "/foo/bar.gop", testStdCode, ParseComments)
 	if err != nil || len(pkgs) != 1 {
-		t.Fatal("ParseFSDir failed:", err, len(pkgs))
+		t.Fatal("Parse failed:", err, len(pkgs))
 	}
 	bar := pkgs["bar"]
 	parsertest.Expect(t, bar, `package bar
