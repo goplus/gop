@@ -1,6 +1,35 @@
 package main
 
 file functype.gop
+ast.GenDecl:
+  Tok: type
+  Specs:
+    ast.TypeSpec:
+      Name:
+        ast.Ident:
+          Name: T
+      Type:
+        ast.StructType:
+          Fields:
+            ast.FieldList:
+              List:
+                ast.Field:
+                  Type:
+                    ast.StarExpr:
+                      X:
+                        ast.Ident:
+                          Name: T
+                ast.Field:
+                  Names:
+                    ast.Ident:
+                      Name: A
+                  Type:
+                    ast.Ident:
+                      Name: int
+                  Tag:
+                    ast.BasicLit:
+                      Kind: STRING
+                      Value: `json:"a"`
 ast.FuncDecl:
   Name:
     ast.Ident:
@@ -9,6 +38,16 @@ ast.FuncDecl:
     ast.FuncType:
       Params:
         ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: v
+              Type:
+                ast.ChanType:
+                  Value:
+                    ast.Ident:
+                      Name: bool
       Results:
         ast.FieldList:
           List:
@@ -25,6 +64,20 @@ ast.FuncDecl:
   Body:
     ast.BlockStmt:
       List:
+        ast.SendStmt:
+          Chan:
+            ast.Ident:
+              Name: v
+          Value:
+            ast.Ident:
+              Name: true
+        ast.ExprStmt:
+          X:
+            ast.UnaryExpr:
+              Op: <-
+              X:
+                ast.Ident:
+                  Name: v
         ast.ReturnStmt:
           Results:
             ast.BasicLit:
@@ -73,17 +126,10 @@ ast.FuncDecl:
                                   Name: string
                         ast.Field:
                           Type:
-                            ast.StructType:
-                              Fields:
-                                ast.FieldList:
-                                  List:
-                                    ast.Field:
-                                      Names:
-                                        ast.Ident:
-                                          Name: a
-                                      Type:
-                                        ast.Ident:
-                                          Name: int
+                            ast.Ellipsis:
+                              Elt:
+                                ast.Ident:
+                                  Name: T
                   Results:
                     ast.FieldList:
                       List:

@@ -38,7 +38,7 @@ ast.FuncDecl:
                 ast.Ident:
                   Name: println
               Args:
-                ast.IndexExpr:
+                ast.SliceExpr:
                   X:
                     ast.SliceLit:
                       Elts:
@@ -48,7 +48,15 @@ ast.FuncDecl:
                         ast.BasicLit:
                           Kind: INT
                           Value: 2
-                  Index:
+                  Low:
                     ast.BasicLit:
                       Kind: INT
                       Value: 0
+                  High:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 1
+                  Max:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 5
