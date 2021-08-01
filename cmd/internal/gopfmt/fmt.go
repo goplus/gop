@@ -18,174 +18,17 @@
 package gopfmt
 
 import (
-	"github.com/goplus/gop/cmd/internal/base"
-)
-
-/*
-import (
+	"bytes"
 	"fmt"
-	"go/printer"
-	"go/scanner"
-	"io"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/format"
 )
-
-const (
-	tabWidth    = 8
-	printerMode = printer.UseSpaces | printer.TabIndent
-)
-
-var (
-	// 0-do nothing,1-formatted,2-error
-	exitCode = 0
-)
-
-func isGopFile(f os.FileInfo) bool {
-	// ignore non-Gop files
-	name := f.Name()
-	return !f.IsDir() && !strings.HasPrefix(name, ".") && strings.HasSuffix(name, ".gop")
-}
-
-func report(err error) {
-	scanner.PrintError(os.Stderr, err)
-	exitCode = 2
-}
-
-func visitFile(path string, f os.FileInfo, err error) error {
-	if err == nil && isGopFile(f) {
-		err = processFile(path, nil, os.Stdout, false)
-	}
-	// Don't complain if a file was deleted in the meantime (i.e.
-	// the directory changed concurrently while running gofmt).
-	if err != nil && !os.IsNotExist(err) {
-		report(err)
-	}
-	return nil
-}
-
-const chmodSupported = runtime.GOOS != "windows"
-
-// backupFile writes data to a new file named filename<number> with permissions perm,
-// with <number randomly chosen such that the file name is unique. backupFile returns
-// the chosen file name.
-func backupFile(filename string, data []byte, perm os.FileMode) (string, error) {
-	// create backup file
-	f, err := ioutil.TempFile(filepath.Dir(filename), filepath.Base(filename))
-	if err != nil {
-		return "", err
-	}
-	backupName := f.Name()
-	if chmodSupported {
-		err = f.Chmod(perm)
-		if err != nil {
-			f.Close()
-			os.Remove(backupName)
-			return backupName, err
-		}
-	}
-
-	// write data to backup file
-	_, err = f.Write(data)
-	if err1 := f.Close(); err == nil {
-		err = err1
-	}
-
-	return backupName, err
-}
-
-// If in == nil, the source is the contents of the file with the given filename.
-func processFile(filename string, in io.Reader, out io.Writer, stdin bool) error {
-	var perm os.FileMode = 0644
-	if in == nil {
-		f, err := os.Open(filename)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-		fi, err := f.Stat()
-		if err != nil {
-			return err
-		}
-		in = f
-		perm = fi.Mode().Perm()
-	}
-
-	src, err := ioutil.ReadAll(in)
-	if err != nil {
-		return err
-	}
-
-	res, err := format.Source(src)
-	if err != nil {
-		return err
-	}
-
-	if *write && string(src) != string(res) {
-		exitCode = 1
-		// make a temporary backup before overwriting original
-		backupName, err := backupFile(filename+".", src, perm)
-		if err != nil {
-			return err
-		}
-		err = ioutil.WriteFile(filename, res, perm)
-		if err != nil {
-			os.Rename(backupName, filename)
-			return err
-		}
-		err = os.Remove(backupName)
-		if err != nil {
-			return err
-		}
-	}
-
-	if !*write {
-		_, err = out.Write(res)
-	}
-
-	return err
-}
-
-func walkDir(path string) {
-	filepath.Walk(path, visitFile)
-}
-
-func qfmtMain(args []string) {
-	flag.Parse(args)
-	narg := flag.NArg()
-	if narg == 0 {
-		if *write {
-			fmt.Fprintln(os.Stderr, "error: cannot use -w with standard input")
-			exitCode = 2
-			return
-		}
-		if err := processFile("<standard input>", os.Stdin, os.Stdout, true); err != nil {
-			report(err)
-		}
-		return
-	}
-	for i := 0; i < narg; i++ {
-		path := flag.Arg(i)
-		switch dir, err := os.Stat(path); {
-		case err != nil:
-			report(err)
-		case dir.IsDir():
-			walkDir(path)
-		default:
-			if err := processFile(path, nil, os.Stdout, false); err != nil {
-				report(err)
-			}
-		}
-	}
-}
-*/
-// -----------------------------------------------------------------------------
 
 // Cmd - gop go
 var Cmd = &base.Command{
@@ -202,15 +45,90 @@ func init() {
 	Cmd.Run = runCmd
 }
 
+var (
+	procCnt    = 0
+	walkSubDir = false
+	extGops    = map[string]struct{}{
+		".go":  {},
+		".gop": {},
+		".spx": {},
+		".gmx": {},
+	}
+	rootDir = ""
+)
+
+func gopfmt(path string) (err error) {
+	src, err := ioutil.ReadFile(path)
+	if err != nil {
+		return
+	}
+	target, err := format.Source(src)
+	if err != nil {
+		return
+	}
+	if bytes.Equal(src, target) {
+		return
+	}
+	fmt.Println(path)
+	return writeFileWithBackup(path, target)
+}
+
+func writeFileWithBackup(path string, target []byte) (err error) {
+	dir, file := filepath.Split(path)
+	f, err := ioutil.TempFile(dir, file)
+	if err != nil {
+		return
+	}
+	tmpfile := f.Name()
+	_, err = f.Write(target)
+	f.Close()
+	if err != nil {
+		return
+	}
+	err = os.Remove(path)
+	if err != nil {
+		return
+	}
+	return os.Rename(tmpfile, path)
+}
+
+func walk(path string, d fs.DirEntry, err error) error {
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	} else if d.IsDir() {
+		if !walkSubDir && path != rootDir {
+			return filepath.SkipDir
+		}
+	} else {
+		ext := filepath.Ext(path)
+		if _, ok := extGops[ext]; ok {
+			procCnt++
+			if *flagNotExec {
+				fmt.Println("gop fmt", path)
+			} else {
+				err = gopfmt(path)
+			}
+		}
+	}
+	return err
+}
+
 func runCmd(cmd *base.Command, args []string) {
-	// call qfmtMain in a separate function
-	// so that it can use defer and have them
-	// run before the exit.
-	/*
-		qfmtMain(args)
-		os.Exit(exitCode)
-	*/
-	panic("TODO: gop fmt not impl")
+	flag.Parse(args)
+	narg := flag.NArg()
+	for i := 0; i < narg; i++ {
+		path := flag.Arg(i)
+		walkSubDir = strings.HasSuffix(path, "/...")
+		if walkSubDir {
+			path = path[:len(path)-4]
+		}
+		procCnt = 0
+		rootDir = path
+		filepath.WalkDir(path, walk)
+		if procCnt == 0 {
+			fmt.Println("no Go+ files in", path)
+		}
+	}
 }
 
 // -----------------------------------------------------------------------------
