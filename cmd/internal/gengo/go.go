@@ -18,12 +18,8 @@
 package gengo
 
 import (
-	"bytes"
-	"errors"
 	"fmt"
 	"os"
-	"os/exec"
-	"path"
 	"strings"
 
 	"github.com/goplus/gop/cl"
@@ -34,7 +30,7 @@ import (
 )
 
 // -----------------------------------------------------------------------------
-
+/*
 var (
 	errTestFailed = errors.New("test failed")
 )
@@ -67,7 +63,7 @@ func testPkg(p *gengo.Runner, dir string, flags int) error {
 	}
 	return nil
 }
-
+*/
 // -----------------------------------------------------------------------------
 
 // Cmd - gop go
