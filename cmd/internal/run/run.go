@@ -91,6 +91,7 @@ func runCmd(cmd *base.Command, args []string) {
 	if flag.NArg() < 1 {
 		cmd.Usage(os.Stderr)
 	}
+	args = flag.Args()[1:]
 
 	if *flagQuiet {
 		log.SetOutputLevel(0x7000)
@@ -113,9 +114,10 @@ func runCmd(cmd *base.Command, args []string) {
 	if err != nil {
 		log.Fatalln("input arg check failed:", err)
 	}
-	if !isDir && filepath.Ext(src) == ".go" {
-		panic("todo")
-	}
+	/*	if !isDir && filepath.Ext(src) == ".go" {
+			runGoFile(src, args)
+		}
+	*/
 	var targetDir, file, gofile string
 	var pkgs map[string]*ast.Package
 	if isDir {
@@ -143,7 +145,7 @@ func runCmd(cmd *base.Command, args []string) {
 	if err != nil {
 		log.Fatalln("saveGoFile failed:", err)
 	}
-	err = goRun(gofile, flag.Args()[1:])
+	err = goRun(gofile, args)
 	if err != nil {
 		switch e := err.(type) {
 		case *exec.ExitError:
@@ -179,4 +181,33 @@ func goRun(target string, args []string) error {
 	return cmd.Run()
 }
 
+/*
+func runGoFile(src string, args []string) {
+	targetDir, file := filepath.Split(src)
+	targetDir = filepath.Join(targetDir, ".gop")
+	gofile := filepath.Join(targetDir, file)
+	b, err := ioutil.ReadFile(src)
+	if err != nil {
+		log.Fatalln("ReadFile failed:", err)
+	}
+	err = ioutil.WriteFile(gofile, b, 0666)
+	if err != nil {
+		log.Fatalln("WriteFile failed:", err)
+	}
+	os.MkdirAll(targetDir, 0777)
+
+	const (
+		loadTypes = packages.NeedImports | packages.NeedDeps | packages.NeedTypes
+		loadModes = loadTypes | packages.NeedName | packages.NeedModule
+	)
+	baseConf := &cl.Config{
+		Fset:          token.NewFileSet(),
+		GenGoPkg:      new(gengo.Runner).GenGoPkg,
+		CacheLoadPkgs: true,
+		NoFileLine:    true,
+	}
+	loadConf := &packages.Config{Mode: loadModes, Fset: baseConf.Fset}
+	goRun(gofile, args)
+}
+*/
 // -----------------------------------------------------------------------------
