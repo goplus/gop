@@ -1,0 +1,3 @@
+import "os"
+
+println("args:", os.Args[1:])

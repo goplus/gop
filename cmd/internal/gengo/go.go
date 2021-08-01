@@ -24,6 +24,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/gengo"
@@ -90,6 +91,7 @@ func runCmd(cmd *base.Command, args []string) {
 		return
 	}
 	dir := flag.Arg(0)
+	dir = strings.TrimSuffix(dir, "/...")
 	runner := new(gengo.Runner)
 	runner.SetAfter(func(p *gengo.Runner, dir string, flags int) error {
 		errs := p.ResetErrors()

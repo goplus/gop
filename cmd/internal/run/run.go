@@ -113,6 +113,9 @@ func runCmd(cmd *base.Command, args []string) {
 	if err != nil {
 		log.Fatalln("input arg check failed:", err)
 	}
+	if !isDir && filepath.Ext(src) == ".go" {
+		panic("todo")
+	}
 	var targetDir, file, gofile string
 	var pkgs map[string]*ast.Package
 	if isDir {
@@ -140,7 +143,7 @@ func runCmd(cmd *base.Command, args []string) {
 	if err != nil {
 		log.Fatalln("saveGoFile failed:", err)
 	}
-	err = goRun(gofile)
+	err = goRun(gofile, flag.Args()[1:])
 	if err != nil {
 		switch e := err.(type) {
 		case *exec.ExitError:
@@ -163,8 +166,12 @@ func IsDir(target string) (bool, error) {
 	return fi.IsDir(), nil
 }
 
-func goRun(target string) error {
-	cmd := exec.Command("go", "run", target)
+func goRun(target string, args []string) error {
+	goArgs := make([]string, len(args)+2)
+	goArgs[0] = "run"
+	goArgs[1] = target
+	copy(goArgs[2:], args)
+	cmd := exec.Command("go", goArgs...)
 	cmd.Dir, _ = filepath.Split(target)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

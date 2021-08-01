@@ -189,13 +189,13 @@ func qfmtMain(args []string) {
 
 // Cmd - gop go
 var Cmd = &base.Command{
-	UsageLine: "gop fmt [-w] [path ...]",
+	UsageLine: "gop fmt [-n] path ...",
 	Short:     "Format Go+ packages",
 }
 
 var (
-	flag  = &Cmd.Flag
-	write = flag.Bool("w", false, "write result to (source) file instead of stdout")
+	flag        = &Cmd.Flag
+	flagNotExec = flag.Bool("n", false, "prints commands that would be executed.")
 )
 
 func init() {

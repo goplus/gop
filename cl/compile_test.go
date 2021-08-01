@@ -27,6 +27,7 @@ import (
 	"github.com/goplus/gop/parser/parsertest"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
+	"golang.org/x/tools/go/packages"
 )
 
 var (
@@ -65,6 +66,26 @@ func gopClTest(t *testing.T, gopcode, expected string) {
 	result := b.String()
 	if result != expected {
 		t.Fatalf("\nResult:\n%s\nExpected:\n%s\n", result, expected)
+	}
+}
+
+func TestGopkgDep(t *testing.T) {
+	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen.go")
+	const (
+		loadTypes = packages.NeedImports | packages.NeedDeps | packages.NeedTypes
+		loadModes = loadTypes | packages.NeedName | packages.NeedModule
+	)
+	loadConf := &packages.Config{Mode: loadModes, Fset: gblFset}
+	pkgs, err := baseConf.Ensure().PkgsLoader.Load(
+		loadConf, "github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/gomain")
+	if err != nil {
+		t.Fatal("PkgsLoader.Load failed:", err)
+	}
+	for _, err = range pkgs[0].Errors {
+		t.Fatal("PkgsLoader.Load failed:", err)
+	}
+	if pkgs[0].Name != "main" {
+		t.Fatal("pkg name:", pkgs[0].Name)
 	}
 }
 
