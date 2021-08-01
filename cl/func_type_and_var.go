@@ -118,9 +118,8 @@ func toType(ctx *blockCtx, typ ast.Expr) types.Type {
 		return toChanType(ctx, v)
 	case *ast.FuncType:
 		return toFuncType(ctx, v, nil)
-		/*	case *ast.SelectorExpr:
-			return toExternalType(ctx, v)
-		*/
+	case *ast.SelectorExpr:
+		return toExternalType(ctx, v)
 	}
 	log.Panicln("toType: unknown -", reflect.TypeOf(typ))
 	return nil
@@ -134,6 +133,25 @@ var (
 	}
 )
 
+func toChanType(ctx *blockCtx, v *ast.ChanType) *types.Chan {
+	return types.NewChan(typesChanDirs[v.Dir], toType(ctx, v.Value))
+}
+
+func toExternalType(ctx *blockCtx, v *ast.SelectorExpr) types.Type {
+	name, ok := v.X.(*ast.Ident)
+	if !ok {
+		log.Panicln("TODO: toExternalType - not valid package name")
+	}
+	if pkgRef, ok := ctx.imports[name.Name]; ok {
+		o := pkgRef.Ref(v.Sel.Name)
+		if t, ok := o.(*types.TypeName); ok {
+			return t.Type()
+		}
+		panic("TODO: not a type")
+	}
+	panic("TODO: unknown package name: " + name.Name)
+}
+
 func toIdentType(ctx *blockCtx, ident string) types.Type {
 	v, _ := lookupParent(ctx, ident)
 	if v == nil {
@@ -146,10 +164,6 @@ func toIdentType(ctx *blockCtx, ident string) types.Type {
 		return t.Type()
 	}
 	panic("TODO: not a type")
-}
-
-func toChanType(ctx *blockCtx, v *ast.ChanType) *types.Chan {
-	return types.NewChan(typesChanDirs[v.Dir], toType(ctx, v.Value))
 }
 
 func toStructType(ctx *blockCtx, v *ast.StructType) *types.Struct {

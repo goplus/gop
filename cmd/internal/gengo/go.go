@@ -29,6 +29,8 @@ import (
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gox"
+	"github.com/qiniu/x/log"
 )
 
 // -----------------------------------------------------------------------------
@@ -70,14 +72,15 @@ func testPkg(p *gengo.Runner, dir string, flags int) error {
 
 // Cmd - gop go
 var Cmd = &base.Command{
-	UsageLine: "gop go [-test -slow] <gopSrcDir>",
+	UsageLine: "gop go [-debug -test -slow] <gopSrcDir>",
 	Short:     "Convert Go+ packages into Go packages",
 }
 
 var (
-	flag     = &Cmd.Flag
-	flagTest = flag.Bool("test", false, "test Go+ package")
-	flagSlow = flag.Bool("slow", false, "don't cache imported packages")
+	flag      = &Cmd.Flag
+	flagDebug = flag.Bool("debug", false, "set log level to debug")
+	flagTest  = flag.Bool("test", false, "test Go+ package")
+	flagSlow  = flag.Bool("slow", false, "don't cache imported packages")
 )
 
 func init() {
@@ -89,6 +92,10 @@ func runCmd(cmd *base.Command, args []string) {
 	if flag.NArg() < 1 {
 		cmd.Usage(os.Stderr)
 		return
+	}
+	if *flagDebug {
+		log.SetOutputLevel(log.Ldebug)
+		gox.SetDebug(gox.DbgFlagAll)
 	}
 	dir := flag.Arg(0)
 	dir = strings.TrimSuffix(dir, "/...")

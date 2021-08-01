@@ -116,6 +116,9 @@ func walk(path string, d fs.DirEntry, err error) error {
 func runCmd(cmd *base.Command, args []string) {
 	flag.Parse(args)
 	narg := flag.NArg()
+	if narg < 1 {
+		cmd.Usage(os.Stderr)
+	}
 	for i := 0; i < narg; i++ {
 		path := flag.Arg(i)
 		walkSubDir = strings.HasSuffix(path, "/...")
