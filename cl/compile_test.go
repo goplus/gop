@@ -69,26 +69,6 @@ func gopClTest(t *testing.T, gopcode, expected string) {
 	}
 }
 
-func TestGopkgDep(t *testing.T) {
-	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen.go")
-	const (
-		loadTypes = packages.NeedImports | packages.NeedDeps | packages.NeedTypes
-		loadModes = loadTypes | packages.NeedName | packages.NeedModule
-	)
-	loadConf := &packages.Config{Mode: loadModes, Fset: gblFset}
-	pkgs, err := baseConf.Ensure().PkgsLoader.Load(
-		loadConf, "github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/gomain")
-	if err != nil {
-		t.Fatal("PkgsLoader.Load failed:", err)
-	}
-	for _, err = range pkgs[0].Errors {
-		t.Fatal("PkgsLoader.Load failed:", err)
-	}
-	if pkgs[0].Name != "main" {
-		t.Fatal("pkg name:", pkgs[0].Name)
-	}
-}
-
 func TestNilConf(t *testing.T) {
 	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", `println("Hi")`)
 	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", nil, 0)
@@ -374,6 +354,28 @@ func main() {
 	fmt.Println(rmap)
 }
 `)
+}
+
+// bugfix (only depends order of testing functions)
+// vet: open tutorial/14-Using-goplus-in-Go/foo/gop_autogen.go: no such file or directory
+func TestGopkgDep(t *testing.T) {
+	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen.go")
+	const (
+		loadTypes = packages.NeedImports | packages.NeedDeps | packages.NeedTypes
+		loadModes = loadTypes | packages.NeedName | packages.NeedModule
+	)
+	loadConf := &packages.Config{Mode: loadModes, Fset: gblFset}
+	pkgs, err := baseConf.Ensure().PkgsLoader.Load(
+		loadConf, "github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/gomain")
+	if err != nil {
+		t.Fatal("PkgsLoader.Load failed:", err)
+	}
+	for _, err = range pkgs[0].Errors {
+		t.Fatal("PkgsLoader.Load failed:", err)
+	}
+	if pkgs[0].Name != "main" {
+		t.Fatal("pkg name:", pkgs[0].Name)
+	}
 }
 
 func TestErrWrap(t *testing.T) {
