@@ -5,12 +5,9 @@ GoPlus - The Go+ language for data science
 [![Go Report Card](https://goreportcard.com/badge/github.com/goplus/gop)](https://goreportcard.com/report/github.com/goplus/gop)
 [![GitHub release](https://img.shields.io/github/v/tag/goplus/gop.svg?label=release)](https://github.com/goplus/gop/releases)
 [![Coverage Status](https://codecov.io/gh/goplus/gop/branch/main/graph/badge.svg)](https://codecov.io/gh/goplus/gop)
-[![REPL](https://img.shields.io/badge/repl-iGo+-blue.svg)](https://repl.goplus.org/)
 [![Playground](https://img.shields.io/badge/playground-Go+-blue.svg)](https://play.goplus.org/)
 [![VSCode](https://img.shields.io/badge/vscode-Go+-teal.svg)](https://github.com/gopcode/vscode-goplus)
 [![GoDoc](https://img.shields.io/badge/godoc-reference-teal.svg)](https://pkg.go.dev/mod/github.com/goplus/gop)
-
-NOTE: Go+ is still under heavy developement. Please don't use it in production environment. 
 
 ## Summary about Go+
 
@@ -63,8 +60,6 @@ It's for Go, and it's also for Go+.
 
 All Go features will be supported (including partially support `cgo`, see [below](#bytecode-vs-go-code)).
 
-* See [supported the Go language features](https://github.com/goplus/gop/wiki/Supported-Go-features).
-
 **All Go packages (even these packages use `cgo`) can be imported by Go+.**
 
 ```go
@@ -77,9 +72,7 @@ x := strings.NewReplacer("?", "!").Replace("hello, world???")
 fmt.Println("x:", x)
 ```
 
-Be interested in how it works? See [Import Go packages in Go+ programs](https://github.com/goplus/gop/wiki/Import-Go-packages-in-GoPlus-programs).
-
-**Also, all Go+ packages can be converted into Go packages and imported in Go programs.**
+**And all Go+ packages can also be imported in Go programs. What you need to do is just using `gop` command instead of `go`.**
 
 First, let's make a directory named `tutorial/14-Using-goplus-in-Go`.
 
@@ -110,32 +103,28 @@ func main() {
 }
 ```
 
-How to compile this example?
+How to build this example? You can use:
 
 ```bash
-gop go tutorial/ # Convert all Go+ packages in tutorial/ into Go packages
-go install ./...
+gop install -v ./...
 ```
 
-Or:
+or:
 
-```bash
-gop install ./... # Convert Go+ packages and go install ./...
+```
+gop run tutorial/14-Using-goplus-in-Go/gomain
 ```
 
 Go [tutorial/14-Using-goplus-in-Go](https://github.com/goplus/gop/tree/master/tutorial/14-Using-goplus-in-Go) to get the source code.
 
 
-## Playground/REPL
-
-Go+ REPL based on GopherJS/WASM:
-* https://repl.goplus.org/
+## Playground
 
 Go+ Playground based on Docker:
 * https://play.goplus.org/
 
-Go+ Playground based on GopherJS:
-* https://goplusjs.github.io/play/
+Go+ Playground based on GopherJS (currently only available in v0.7.x):
+* https://jsplay.goplus.org/
 
 Go+ Jupyter kernel:
 * https://github.com/wangfenjin/gopyter
@@ -149,8 +138,10 @@ See https://github.com/goplus/gop/tree/master/tutorial
 
 ```bash
 git clone git@github.com:goplus/gop.git
-cd gop
-go install -v ./...
+cd gop/cmd
+go install -v ./...  # build all Go+ tools
+cd ..
+gop install -v ./... # build all Go+ tutorials
 ```
 
 ## Go+ features
@@ -161,7 +152,7 @@ Go+ supports bytecode backend and Go code generation.
 
 When we use `gop go` or `gop install` command, it generates Go code to covert Go+ package into Go packages.
 
-When we use `gop run` command, it doesn't call `go run` command. It generates bytecode to execute.
+When we use `gop run` command, it doesn't call `go run` command. It generates bytecode to execute (in v0.9.x, `go run` also is using Go-code-generation mode).
 
 In bytecode mode, Go+ doesn't support `cgo`. However, in Go-code-generation mode, Go+ fully supports `cgo`.
 
@@ -169,18 +160,12 @@ In bytecode mode, Go+ doesn't support `cgo`. However, in Go-code-generation mode
 ### Commands
 
 ```bash
-gop run         # Run a Go+ program
-gop repl        # Run Go+ in REPL/Console mode
-gop go [-test]  # Convert Go+ packages into Go packages. If -test specified, it tests related packages.
-gop fmt         # Format Go+ packages
-gop export      # Export Go packages for Go+ programs
+gop run     # Run a Go+ program
+gop install # Build Go+ files and install target to GOBIN
+gop fmt     # Format Go+ packages
+gop clean   # Clean all Go+ auto generated files
+gop go      # Convert Go+ packages into Go packages
 ```
-
-See https://github.com/goplus/gop/wiki/Commands for details.
-
-Note:
-
-* `gop go -test <gopSrcDir>` converts Go+ packages into Go packages, and for every package, it call `go run <gopPkgDir>/gop_autogen.go` and `gop run -quiet <gopPkgDir>` to compare their outputs. If their outputs aren't equal, the test case fails.
 
 
 ### Rational number: bigint, bigrat, bigfloat
@@ -246,6 +231,20 @@ jasonScore := {x.score for x <- students, x.name == "Jason"}
 
 println(unknownScore, ok) // output: 0 false
 println(jasonScore) // output: 80
+```
+
+### Check if data exists in a collection
+
+```go
+type student struct {
+    name  string
+    score int
+}
+
+students := [student{"Ken", 90}, student{"Jason", 80}, student{"Lily", 85}]
+
+hasJason := {for x <- students, x.name == "Jason"} // is any student named Jason?
+hasFailed := {for x <- students, x.score < 60}     // is any student failed?
 ```
 
 ### For loop
@@ -365,9 +364,7 @@ Go [tutorial/20-Unix-Shebang/shebang](https://github.com/goplus/gop/blob/master/
 
 ### Go features
 
-All Go features (not including `cgo`) will be supported.
-
-* See [supported the Go language features](https://github.com/goplus/gop/wiki/Supported-Go-features).
+All Go features (including partially support `cgo`) will be supported. In bytecode mode, Go+ doesn't support `cgo`. However, in Go-code-generation mode, Go+ fully supports `cgo`.
 
 
 ## IDE Plugins

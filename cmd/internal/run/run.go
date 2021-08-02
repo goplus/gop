@@ -19,18 +19,22 @@ package run
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
+	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
 	"github.com/qiniu/x/log"
+	"golang.org/x/tools/go/packages"
 )
 
 // -----------------------------------------------------------------------------
@@ -115,10 +119,11 @@ func runCmd(cmd *base.Command, args []string) {
 	if err != nil {
 		log.Fatalln("input arg check failed:", err)
 	}
-	/*	if !isDir && filepath.Ext(src) == ".go" {
-			runGoFile(src, args)
-		}
-	*/
+	if !isDir && filepath.Ext(src) == ".go" { // not a Go+ file
+		runGoFile(src, args)
+		return
+	}
+
 	var targetDir, file, gofile string
 	var pkgs map[string]*ast.Package
 	if isDir {
@@ -136,9 +141,19 @@ func runCmd(cmd *base.Command, args []string) {
 		os.Exit(10)
 	}
 
+	mainPkg, ok := pkgs["main"]
+	if !ok {
+		if len(pkgs) == 0 { // not a Go+ package, try runGoPkg
+			runGoPkg(src, args)
+			return
+		}
+		fmt.Fprintln(os.Stderr, "TODO: not a main package")
+		os.Exit(12)
+	}
+
 	conf := &cl.Config{
 		Dir: findGoModDir(targetDir), TargetDir: targetDir, Fset: fset, CacheLoadPkgs: true}
-	out, err := cl.NewPackage("", pkgs["main"], conf)
+	out, err := cl.NewPackage("", mainPkg, conf)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(11)
@@ -171,33 +186,31 @@ func IsDir(target string) (bool, error) {
 }
 
 func goRun(target string, args []string) error {
+	dir, file := filepath.Split(target)
 	goArgs := make([]string, len(args)+2)
 	goArgs[0] = "run"
-	goArgs[1] = target
+	goArgs[1] = file
 	copy(goArgs[2:], args)
 	cmd := exec.Command("go", goArgs...)
-	cmd.Dir, _ = filepath.Split(target)
+	cmd.Dir = dir
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Env = os.Environ()
 	return cmd.Run()
 }
 
-/*
-func runGoFile(src string, args []string) {
-	targetDir, file := filepath.Split(src)
-	targetDir = filepath.Join(targetDir, ".gop")
-	gofile := filepath.Join(targetDir, file)
-	b, err := ioutil.ReadFile(src)
+func runGoPkg(src string, args []string) {
+	modfile, err := findGoModFile(src)
 	if err != nil {
-		log.Fatalln("ReadFile failed:", err)
+		log.Fatalln("findGoModFile:", err)
 	}
-	err = ioutil.WriteFile(gofile, b, 0666)
+	base := filepath.Dir(modfile)
+	rel, _ := filepath.Rel(base, src)
+	modPath, err := cl.GetModulePath(modfile)
 	if err != nil {
-		log.Fatalln("WriteFile failed:", err)
+		log.Fatalln("GetModulePath:", err)
 	}
-	os.MkdirAll(targetDir, 0777)
-
+	pkgPath := filepath.Join(modPath, rel)
 	const (
 		loadTypes = packages.NeedImports | packages.NeedDeps | packages.NeedTypes
 		loadModes = loadTypes | packages.NeedName | packages.NeedModule
@@ -209,7 +222,31 @@ func runGoFile(src string, args []string) {
 		NoFileLine:    true,
 	}
 	loadConf := &packages.Config{Mode: loadModes, Fset: baseConf.Fset}
-	goRun(gofile, args)
+	pkgs, err := baseConf.Ensure().PkgsLoader.Load(loadConf, pkgPath)
+	if err != nil || len(pkgs) == 0 {
+		log.Fatalln("PkgsLoader.Load failed:", err)
+	}
+	if pkgs[0].Name != "main" {
+		fmt.Fprintln(os.Stderr, "TODO: not a main package")
+		os.Exit(12)
+	}
+	goRun(src+"/.", args)
 }
-*/
+
+func runGoFile(src string, args []string) {
+	targetDir, file := filepath.Split(src)
+	targetDir = filepath.Join(targetDir, ".gop", strings.TrimSuffix(file, ".go"))
+	gofile := filepath.Join(targetDir, "gop_autogen.go")
+	b, err := ioutil.ReadFile(src)
+	if err != nil {
+		log.Fatalln("ReadFile failed:", err)
+	}
+	os.MkdirAll(targetDir, 0777)
+	err = ioutil.WriteFile(gofile, b, 0666)
+	if err != nil {
+		log.Fatalln("WriteFile failed:", err)
+	}
+	runGoPkg(targetDir, args)
+}
+
 // -----------------------------------------------------------------------------

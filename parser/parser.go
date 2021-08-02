@@ -2039,7 +2039,7 @@ func (p *parser) parseIfHeader() (init ast.Stmt, cond ast.Expr) {
 		// accept potential variable declaration but complain
 		if p.tok == token.VAR {
 			p.next()
-			p.error(p.pos, fmt.Sprintf("var declaration not allowed in 'IF' initializer"))
+			p.error(p.pos, "var declaration not allowed in 'IF' initializer")
 		}
 		init, _ = p.parseSimpleStmt(basic)
 	}
