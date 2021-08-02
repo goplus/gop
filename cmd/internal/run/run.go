@@ -27,6 +27,7 @@ import (
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/parser"
+	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
 	"github.com/qiniu/x/log"
@@ -131,7 +132,8 @@ func runCmd(cmd *base.Command, args []string) {
 		pkgs, err = parser.Parse(fset, src, nil, 0)
 	}
 	if err != nil {
-		log.Fatalln("parser.Parse failed:", err)
+		scanner.PrintError(os.Stderr, err)
+		os.Exit(10)
 	}
 
 	conf := &cl.Config{
@@ -139,7 +141,7 @@ func runCmd(cmd *base.Command, args []string) {
 	out, err := cl.NewPackage("", pkgs["main"], conf)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		return
+		os.Exit(11)
 	}
 	err = saveGoFile(gofile, out)
 	if err != nil {

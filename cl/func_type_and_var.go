@@ -138,18 +138,15 @@ func toChanType(ctx *blockCtx, v *ast.ChanType) *types.Chan {
 }
 
 func toExternalType(ctx *blockCtx, v *ast.SelectorExpr) types.Type {
-	name, ok := v.X.(*ast.Ident)
-	if !ok {
-		log.Panicln("TODO: toExternalType - not valid package name")
-	}
-	if pkgRef, ok := ctx.imports[name.Name]; ok {
+	name := v.X.(*ast.Ident).Name
+	if pkgRef, ok := ctx.imports[name]; ok {
 		o := pkgRef.Ref(v.Sel.Name)
 		if t, ok := o.(*types.TypeName); ok {
 			return t.Type()
 		}
-		panic("TODO: not a type")
+		panic(ctx.newCodeErrorf(v.Pos(), "%s.%s is not a type", name, v.Sel.Name))
 	}
-	panic("TODO: unknown package name: " + name.Name)
+	panic(ctx.newCodeErrorf(v.Pos(), "undefined: %s", name))
 }
 
 func toIdentType(ctx *blockCtx, ident string) types.Type {

@@ -17,18 +17,21 @@
 package cl_test
 
 import (
+	"os"
 	"testing"
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/parser/parsertest"
+	"github.com/goplus/gop/scanner"
 )
 
 func codeErrorTest(t *testing.T, msg, src string) {
 	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", src)
 	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", nil, 0)
 	if err != nil {
-		t.Fatal("ParseFSDir:", err)
+		scanner.PrintError(os.Stderr, err)
+		t.Fatal("parser.ParseFSDir failed")
 	}
 	conf := *baseConf.Ensure()
 	conf.NoFileLine = false
@@ -42,6 +45,19 @@ func codeErrorTest(t *testing.T, msg, src string) {
 	if ret := err.Error(); ret != msg {
 		t.Fatalf("\nError: \"%s\"\nExpected: \"%s\"\n", ret, msg)
 	}
+}
+
+func TestErrImport(t *testing.T) {
+	codeErrorTest(t,
+		"./bar.gop:2:13 undefined: testing", `
+func foo(t *testing.T) {
+}`)
+	codeErrorTest(t,
+		"./bar.gop:4:12 testing.Verbose is not a type", `
+import "testing"
+
+func foo(t testing.Verbose) {
+}`)
 }
 
 func TestErrConst(t *testing.T) {

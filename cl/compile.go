@@ -345,6 +345,11 @@ func newCodeErrorf(pos *token.Position, format string, args ...interface{}) *gox
 	return &gox.CodeError{Pos: pos, Msg: fmt.Sprintf(format, args...)}
 }
 
+func (p *pkgCtx) newCodeErrorf(start token.Pos, format string, args ...interface{}) error {
+	pos := p.Position(start)
+	return newCodeErrorf(&pos, format, args...)
+}
+
 func (p *pkgCtx) handleCodeErrorf(pos *token.Position, format string, args ...interface{}) {
 	p.handleErr(newCodeErrorf(pos, format, args...))
 }
@@ -369,6 +374,16 @@ func (p *pkgCtx) loadType(name string) {
 }
 
 func (p *pkgCtx) loadSymbol(name string) bool {
+	defer func() {
+		if e := recover(); e != nil {
+			if err, ok := e.(error); ok {
+				p.handleErr(err)
+			} else {
+				panic(e)
+			}
+		}
+	}()
+
 	if f, ok := p.syms[name]; ok {
 		if ld, ok := f.(*typeLoader); ok {
 			return doNewType(ld) // create this type, but don't init
