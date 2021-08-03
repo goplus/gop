@@ -509,6 +509,48 @@ var z builtin.Gop_bigint = x.Gop_Add(y)
 `)
 }
 
+func TestBigIntLit(t *testing.T) {
+	gopClTest(t, `
+var x = 1r
+`, `package main
+
+import (
+	builtin "github.com/goplus/gop/builtin"
+	big "math/big"
+)
+
+var x = builtin.Gop_bigint_Init__1(big.NewInt(1))
+`)
+}
+
+func TestBigRatLit(t *testing.T) {
+	gopClTest(t, `
+var x = 1/2r
+`, `package main
+
+import (
+	builtin "github.com/goplus/gop/builtin"
+	big "math/big"
+)
+
+var x = builtin.Gop_bigrat_Init__1(big.NewRat(1, 2))
+`)
+}
+
+func TestBigRatLitAdd(t *testing.T) {
+	gopClTest(t, `
+var x = 3 + 1/2r
+`, `package main
+
+import (
+	builtin "github.com/goplus/gop/builtin"
+	big "math/big"
+)
+
+var x = builtin.Gop_bigrat_Init__1(big.NewRat(7, 2))
+`)
+}
+
 func TestTypeConv(t *testing.T) {
 	gopClTest(t, `
 var a = (*struct{})(nil)

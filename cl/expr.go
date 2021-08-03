@@ -18,6 +18,7 @@ package cl
 
 import (
 	"log"
+	"math/big"
 	"reflect"
 
 	goast "go/ast"
@@ -290,12 +291,12 @@ func lookupParent(ctx *blockCtx, name string) (types.Object, *gox.PkgRef) {
 
 func compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {
 	if v.Kind == token.RAT {
-		panic("TODO: rational constant")
+		val := v.Value
+		bi, _ := new(big.Int).SetString(val[:len(val)-1], 10) // remove r suffix
+		ctx.cb.UntypedBigInt(bi, v)
+		return
 	}
-	ctx.cb.Val(&goast.BasicLit{
-		Kind:  gotoken.Token(v.Kind),
-		Value: v.Value,
-	}, v)
+	ctx.cb.Val(&goast.BasicLit{Kind: gotoken.Token(v.Kind), Value: v.Value}, v)
 }
 
 const (

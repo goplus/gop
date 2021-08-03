@@ -22,8 +22,8 @@ import (
 // -----------------------------------------------------------------------------
 // type bigint
 
-// A Bigint represents a signed multi-precision integer.
-// The zero value for a Bigint represents nil.
+// A bigint represents a signed multi-precision integer.
+// The zero value for a bigint represents nil.
 type bigint < *big.Int
 
 func (a bigint) + (b bigint) bigint
@@ -54,8 +54,8 @@ func bigint(x int64) bigint
 // -----------------------------------------------------------------------------
 // type bigrat
 
-// A Gope_bigrat represents a quotient a/b of arbitrary precision.
-// The zero value for a Gope_bigrat represents nil.
+// A bigrat represents a quotient a/b of arbitrary precision.
+// The zero value for a bigrat represents nil.
 type bigrat < *big.Rat
 
 func (a bigrat) + (b bigrat) bigrat
@@ -78,8 +78,8 @@ func bigrat(a, b int64) bigrat
 // -----------------------------------------------------------------------------
 // type bigfloat
 
-// A Gope_bigfloat represents a multi-precision floating point number.
-// The zero value for a Gope_bigfloat represents nil.
+// A bigfloat represents a multi-precision floating point number.
+// The zero value for a bigfloat represents nil.
 type bigfloat < *big.Float
 
 // -----------------------------------------------------------------------------
