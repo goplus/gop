@@ -103,22 +103,6 @@ func (conf *Config) Ensure() *Config {
 	return conf
 }
 
-func getUnderlying(ctx *blockCtx, typ types.Type) types.Type {
-	if t := typ.Underlying(); t != nil {
-		return t
-	}
-	if t, ok := typ.(*types.Named); ok {
-		return doLoadUnderlying(ctx.pkgCtx, t)
-	}
-	panic("TODO: getUnderlying: not named type - " + typ.String())
-}
-
-func doLoadUnderlying(ctx *pkgCtx, typ *types.Named) types.Type {
-	ld := ctx.syms[typ.Obj().Name()].(*typeLoader)
-	ld.load()
-	return typ.Underlying()
-}
-
 type nodeInterp struct {
 	fset       *token.FileSet
 	files      map[string]*ast.File
@@ -170,9 +154,6 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	}
 	interp := &nodeInterp{fset: conf.Fset, files: pkg.Files, workingDir: workingDir}
 	ctx := &pkgCtx{syms: make(map[string]loader), nodeInterp: interp}
-	loadUnderlying := func(at *gox.Package, typ *types.Named) types.Type {
-		return doLoadUnderlying(ctx, typ)
-	}
 	confGox := &gox.Config{
 		Context:         conf.Context,
 		Logf:            conf.Logf,
@@ -181,7 +162,6 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		BuildFlags:      conf.BuildFlags,
 		Fset:            conf.Fset,
 		LoadPkgs:        conf.PkgsLoader.LoadPkgs,
-		LoadUnderlying:  loadUnderlying,
 		HandleErr:       ctx.handleErr,
 		NodeInterpreter: interp,
 		Prefix:          gopPrefix,

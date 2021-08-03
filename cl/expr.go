@@ -353,7 +353,7 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) {
 	var typ, underlying types.Type
 	if v.Type != nil {
 		typ = toType(ctx, v.Type)
-		underlying = getUnderlying(ctx, typ)
+		underlying = typ.Underlying()
 	}
 	kind := checkCompositeLitElts(ctx, v.Elts)
 	if t, ok := underlying.(*types.Struct); ok && kind == compositeLitKeyVal {
