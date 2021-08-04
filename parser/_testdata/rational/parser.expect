@@ -1,0 +1,103 @@
+package main
+
+file rational.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: a
+          Tok: :=
+          Rhs:
+            ast.BinaryExpr:
+              X:
+                ast.BasicLit:
+                  Kind: RAT
+                  Value: 1r
+              Op: <<
+              Y:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 65
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: b
+          Tok: :=
+          Rhs:
+            ast.BinaryExpr:
+              X:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 4
+              Op: /
+              Y:
+                ast.BasicLit:
+                  Kind: RAT
+                  Value: 5r
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: c
+          Tok: :=
+          Rhs:
+            ast.BinaryExpr:
+              X:
+                ast.BinaryExpr:
+                  X:
+                    ast.Ident:
+                      Name: b
+                  Op: -
+                  Y:
+                    ast.BinaryExpr:
+                      X:
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 1
+                      Op: /
+                      Y:
+                        ast.BasicLit:
+                          Kind: RAT
+                          Value: 3r
+              Op: +
+              Y:
+                ast.BinaryExpr:
+                  X:
+                    ast.BinaryExpr:
+                      X:
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 3
+                      Op: *
+                      Y:
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 1
+                  Op: /
+                  Y:
+                    ast.BasicLit:
+                      Kind: RAT
+                      Value: 2r
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.Ident:
+                  Name: a
+                ast.Ident:
+                  Name: b
+                ast.Ident:
+                  Name: c
