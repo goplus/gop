@@ -533,7 +533,7 @@ import (
 	big "math/big"
 )
 
-var x = builtin.Gop_bigrat_Init__1(big.NewRat(1, 2))
+var x = builtin.Gop_bigrat_Init__2(big.NewRat(1, 2))
 `)
 }
 
@@ -547,7 +547,26 @@ import (
 	big "math/big"
 )
 
-var x = builtin.Gop_bigrat_Init__1(big.NewRat(7, 2))
+var x = builtin.Gop_bigrat_Init__2(big.NewRat(7, 2))
+`)
+}
+
+func TestBigRatAdd(t *testing.T) {
+	gox.SetDebug(gox.DbgFlagAll)
+	gopClTest(t, `
+var x = 3 + 1/2r
+var y = x + 100
+var z = 100 + y
+`, `package main
+
+import (
+	builtin "github.com/goplus/gop/builtin"
+	big "math/big"
+)
+
+var x = builtin.Gop_bigrat_Init__2(big.NewRat(7, 2))
+var y = x.Gop_Add(builtin.Gop_bigrat_Init__0(100))
+var z = builtin.Gop_bigrat_Init__0(100) + y
 `)
 }
 
