@@ -144,7 +144,7 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 				log.Panicln("TODO: non-name $v on left side of :=")
 			}
 		}
-		ctx.cb.DefineVarStart(names...)
+		ctx.cb.DefineVarStart(expr.Pos(), names...)
 		defer func() {
 			if e := recover(); e != nil {
 				ctx.cb.ResetInit()

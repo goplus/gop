@@ -76,9 +76,9 @@ var a string
 `)
 }
 
-func _TestErrDefineVar(t *testing.T) {
-	codeErrorTest(t,
-		``, `
+func TestErrDefineVar(t *testing.T) {
+	codeErrorTest(t, "./bar.gop:3:1 no new variables on left side of :=\n"+
+		"./bar.gop:3:6 cannot use \"Hi\" (type untyped string) as type int in assignment", `
 a := 1
 a := "Hi"
 `)
