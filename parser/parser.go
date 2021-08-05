@@ -564,6 +564,7 @@ func (p *parser) safePos(pos token.Pos) (res token.Pos) {
 // ----------------------------------------------------------------------------
 // Identifiers
 
+/* TODO:
 func (p *parser) parseIdentOrOp() *ast.Ident { // function Name
 	if p.tok == token.IDENT {
 		return p.parseIdent()
@@ -571,6 +572,7 @@ func (p *parser) parseIdentOrOp() *ast.Ident { // function Name
 		panic("todo")
 	}
 }
+*/
 
 func (p *parser) parseIdent() *ast.Ident {
 	pos := p.pos
@@ -2775,7 +2777,9 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 		recv = p.parseParameters(scope, false)
 	}
 
-	ident := p.parseIdentOrOp()
+	// TODO:
+	// ident := p.parseIdentOrOp()
+	ident := p.parseIdent()
 
 	params, results := p.parseSignature(scope)
 
