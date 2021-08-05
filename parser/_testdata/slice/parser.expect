@@ -45,6 +45,28 @@ ast.FuncDecl:
                         ast.BasicLit:
                           Kind: INT
                           Value: 1
+                  Low:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 0
+                  High:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 1
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.SliceExpr:
+                  X:
+                    ast.SliceLit:
+                      Elts:
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 1
                         ast.BasicLit:
                           Kind: INT
                           Value: 2
@@ -60,3 +82,29 @@ ast.FuncDecl:
                     ast.BasicLit:
                       Kind: INT
                       Value: 5
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: a
+          Tok: :=
+          Rhs:
+            ast.SliceLit:
+              Elts:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 1
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.IndexExpr:
+                  X:
+                    ast.Ident:
+                      Name: a
+                  Index:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 0
