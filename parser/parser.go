@@ -18,7 +18,6 @@ package parser
 
 import (
 	"fmt"
-	"reflect"
 	"strconv"
 	"strings"
 	"unicode"
@@ -165,7 +164,7 @@ func (p *parser) shortVarDecl(decl *ast.AssignStmt, list []ast.Expr) {
 				}
 			}
 		} else {
-			p.errorExpected(x.Pos(), "identifier on left side of :=")
+			p.errorExpected(x.Pos(), "identifier on left side of :=", 2)
 		}
 	}
 	if n == 0 && p.mode&DeclarationErrors != 0 {
@@ -389,7 +388,7 @@ func (p *parser) error(pos token.Pos, msg string) {
 	p.errors.Add(epos, msg)
 }
 
-func (p *parser) errorExpected(pos token.Pos, msg string) {
+func (p *parser) errorExpected(pos token.Pos, msg string, calldepth int) {
 	msg = "expected " + msg
 	if pos == p.pos {
 		// the error happened at the current position;
@@ -404,13 +403,16 @@ func (p *parser) errorExpected(pos token.Pos, msg string) {
 			msg += ", found '" + p.tok.String() + "'"
 		}
 	}
+	if debugParseError {
+		log.Std.Output("", log.Linfo, calldepth, msg)
+	}
 	p.error(pos, msg)
 }
 
 func (p *parser) expect(tok token.Token) token.Pos {
 	pos := p.pos
 	if p.tok != tok {
-		p.errorExpected(pos, "'"+tok.String()+"'")
+		p.errorExpected(pos, "'"+tok.String()+"'", 3)
 	}
 	p.next() // make progress
 	return pos
@@ -422,7 +424,7 @@ func (p *parser) expect2(tok token.Token) (pos token.Pos) {
 	if p.tok == tok {
 		pos = p.pos
 	} else {
-		p.errorExpected(p.pos, "'"+tok.String()+"'")
+		p.errorExpected(p.pos, "'"+tok.String()+"'", 3)
 	}
 	p.next() // make progress
 	return
@@ -445,12 +447,12 @@ func (p *parser) expectSemi() {
 		switch p.tok {
 		case token.COMMA:
 			// permit a ',' instead of a ';' but complain
-			p.errorExpected(p.pos, "';'")
+			p.errorExpected(p.pos, "';'", 3)
 			fallthrough
 		case token.SEMICOLON:
 			p.next()
 		default:
-			p.errorExpected(p.pos, "';'")
+			p.errorExpected(p.pos, "';'", 3)
 			p.advance(stmtStart)
 		}
 	}
@@ -562,6 +564,14 @@ func (p *parser) safePos(pos token.Pos) (res token.Pos) {
 // ----------------------------------------------------------------------------
 // Identifiers
 
+func (p *parser) parseIdentOrOp() *ast.Ident { // function Name
+	if p.tok == token.IDENT {
+		return p.parseIdent()
+	} else {
+		panic("todo")
+	}
+}
+
 func (p *parser) parseIdent() *ast.Ident {
 	pos := p.pos
 	name := "_"
@@ -570,6 +580,9 @@ func (p *parser) parseIdent() *ast.Ident {
 		p.next()
 	} else {
 		p.expect(token.IDENT) // use expect() error handling
+	}
+	if debugParseOutput {
+		log.Printf("ast.Ident{Name: %v}\n", name)
 	}
 	return &ast.Ident{NamePos: pos, Name: name}
 }
@@ -653,7 +666,7 @@ func (p *parser) parseType() ast.Expr {
 
 	if typ == nil {
 		pos := p.pos
-		p.errorExpected(pos, "type")
+		p.errorExpected(pos, "type", 2)
 		p.advance(exprEnd)
 		return &ast.BadExpr{From: pos, To: p.pos}
 	}
@@ -681,7 +694,27 @@ func (p *parser) parseTypeName() ast.Expr {
 	return ident
 }
 
-func (p *parser) parseArrayTypeOrSliceLit(allowSliceLit bool) (expr ast.Expr, isSliceLit bool) {
+const (
+	stateArrayTypeOrSliceLit = iota
+	stateTypeOrSliceOp
+	stateType
+)
+
+const (
+	resultNone      = 0
+	resultArrayType = 1 << iota
+	resultSliceLit
+	resultSliceOp
+	resultComprehensionExpr
+	resultParenType
+	resultType
+	resultIdent     // expr or type
+	resultExprFlags = resultSliceLit | resultSliceOp | resultComprehensionExpr
+	resultTypeFlags = resultArrayType | resultParenType | resultType
+)
+
+// state = stateArrayTypeOrSliceLit | stateTypeOrSliceOp | stateType | ...
+func (p *parser) parseArrayTypeOrSliceLit(state int, slice ast.Expr) (expr ast.Expr, result int) {
 	if p.trace {
 		defer un(trace(p, "ArrayType"))
 	}
@@ -695,20 +728,29 @@ func (p *parser) parseArrayTypeOrSliceLit(allowSliceLit bool) (expr ast.Expr, is
 		p.next()
 	} else if p.tok != token.RBRACK {
 		len = p.parseRHS()
-		if allowSliceLit {
+		switch state {
+		case stateArrayTypeOrSliceLit:
 			switch p.tok {
 			case token.COMMA: // [a, b, c, d ...]
-				elts := p.parseSliceLit(lbrack, len)
+				sliceLit := p.parseSliceLit(lbrack, len)
 				p.exprLev--
-				return elts, true
+				return sliceLit, resultSliceLit
 			case token.FOR: // [expr for k, v <- listOrMap, cond]
 				phrases := p.parseForPhrases()
 				p.exprLev--
 				rbrack := p.expect(token.RBRACK)
+				if debugParseOutput {
+					log.Printf("ast.ComprehensionExpr{Tok: [, Elt: %v, Fors: %v}\n", len, phrases)
+				}
 				return &ast.ComprehensionExpr{
 					Lpos: lbrack, Tok: token.LBRACK, Elt: len,
 					Fors: phrases, Rpos: rbrack,
-				}, true
+				}, resultComprehensionExpr
+			}
+		case stateTypeOrSliceOp:
+			switch p.tok {
+			case token.COLON: // slice[i:j:k]
+				return p.parseIndexOrSliceContinue(slice, lbrack, len), resultSliceOp
 			}
 		}
 	}
@@ -716,23 +758,41 @@ func (p *parser) parseArrayTypeOrSliceLit(allowSliceLit bool) (expr ast.Expr, is
 	rbrack := p.expect(token.RBRACK)
 
 	var elt ast.Expr
-	if allowSliceLit {
-		sliceLit := newSliceLit(lbrack, rbrack, len)
-		if p.tok == token.LBRACK { // idx of slice lit
-			return sliceLit, true
-		}
-		elt = p.tryType()
-		if elt == nil { // [a]
-			return sliceLit, true
-		}
-	} else {
+	switch state {
+	case stateType:
 		elt = p.parseType()
+	case stateArrayTypeOrSliceLit:
+		sliceLit := newSliceLit(lbrack, rbrack, len)
+		elt, result = p.tryIdentOrType(stateTypeOrSliceOp, sliceLit)
+		switch result {
+		case resultNone:
+			if debugParseOutput {
+				log.Printf("ast.SliceLit{Elts: %v}\n", sliceLit.Elts)
+			}
+			return sliceLit, resultSliceLit
+		case resultSliceOp:
+			return elt, resultSliceOp
+		}
+		p.resolve(elt)
+	case stateTypeOrSliceOp:
+		elt = p.tryType()
+		if elt == nil {
+			if len == nil {
+				log.Panicln("TODO: expect slice index")
+			}
+			if debugParseOutput {
+				log.Printf("ast.IndexExpr{X: %v, Index: %v}\n", slice, len)
+			}
+			return &ast.IndexExpr{X: slice, Index: len}, resultSliceOp
+		}
+	default:
+		panic("parseArrayTypeOrSliceLit: unexpected state")
 	}
 
-	if p.trace {
-		log.Debug("parseArrayType:", len, "elt:", elt)
+	if debugParseOutput {
+		log.Printf("ast.ArrayType{Len: %v, Elt: %v}\n", len, elt)
 	}
-	return &ast.ArrayType{Lbrack: lbrack, Len: len, Elt: elt}, false
+	return &ast.ArrayType{Lbrack: lbrack, Len: len, Elt: elt}, resultArrayType
 }
 
 func (p *parser) parseSliceLit(lbrack token.Pos, len ast.Expr) ast.Expr {
@@ -744,10 +804,14 @@ func (p *parser) parseSliceLit(lbrack token.Pos, len ast.Expr) ast.Expr {
 		elts = append(elts, elt)
 	}
 	rbrack := p.expect(token.RBRACK)
+
+	if debugParseOutput {
+		log.Printf("ast.SliceLit{Elts: %v}\n", elts)
+	}
 	return &ast.SliceLit{Lbrack: lbrack, Elts: elts, Rbrack: rbrack}
 }
 
-func newSliceLit(lbrack, rbrack token.Pos, len ast.Expr) ast.Expr {
+func newSliceLit(lbrack, rbrack token.Pos, len ast.Expr) *ast.SliceLit {
 	var elts []ast.Expr
 	if len != nil {
 		elts = []ast.Expr{len}
@@ -762,7 +826,7 @@ func (p *parser) makeIdentList(list []ast.Expr) []*ast.Ident {
 		if !isIdent {
 			if _, isBad := x.(*ast.BadExpr); !isBad {
 				// only report error if it's a new one
-				p.errorExpected(x.Pos(), "identifier")
+				p.errorExpected(x.Pos(), "identifier", 2)
 			}
 			ident = &ast.Ident{NamePos: x.Pos(), Name: "_"}
 		}
@@ -800,10 +864,10 @@ func (p *parser) parseFieldDecl(scope *ast.Scope) *ast.Field {
 		// ["*"] TypeName (AnonymousField)
 		typ = list[0] // we always have at least one element
 		if n := len(list); n > 1 {
-			p.errorExpected(p.pos, "type")
+			p.errorExpected(p.pos, "type", 2)
 			typ = &ast.BadExpr{From: p.pos, To: p.pos}
 		} else if !isTypeName(deref(typ)) {
-			p.errorExpected(typ.Pos(), "anonymous field")
+			p.errorExpected(typ.Pos(), "anonymous field", 2)
 			typ = &ast.BadExpr{From: typ.Pos(), To: p.safePos(typ.End())}
 		}
 	}
@@ -867,7 +931,7 @@ func (p *parser) tryVarType(isParam bool) ast.Expr {
 	if isParam && p.tok == token.ELLIPSIS {
 		pos := p.pos
 		p.next()
-		typ, _ := p.tryIdentOrType(false) // don't use parseType so we can provide better error message
+		typ, _ := p.tryIdentOrType(stateType, nil) // don't use parseType so we can provide better error message
 		if typ != nil {
 			p.resolve(typ)
 		} else {
@@ -876,7 +940,7 @@ func (p *parser) tryVarType(isParam bool) ast.Expr {
 		}
 		return &ast.Ellipsis{Ellipsis: pos, Elt: typ}
 	}
-	typ, _ := p.tryIdentOrType(false)
+	typ, _ := p.tryIdentOrType(stateType, nil)
 	return typ
 }
 
@@ -885,7 +949,7 @@ func (p *parser) parseVarType(isParam bool) ast.Expr {
 	typ := p.tryVarType(isParam)
 	if typ == nil {
 		pos := p.pos
-		p.errorExpected(pos, "type")
+		p.errorExpected(pos, "type", 2)
 		p.next() // make progress
 		typ = &ast.BadExpr{From: pos, To: p.pos}
 	}
@@ -1099,40 +1163,41 @@ func (p *parser) parseChanType() *ast.ChanType {
 	return &ast.ChanType{Begin: pos, Arrow: arrow, Dir: dir, Value: value}
 }
 
+// state = stateArrayTypeOrSliceLit | stateTypeOrSliceOp | stateType | ...
 // If the result is an identifier, it is not resolved.
-func (p *parser) tryIdentOrType(allowSliceLit bool) (ast.Expr, bool) {
+func (p *parser) tryIdentOrType(state int, len ast.Expr) (ast.Expr, int) {
 	switch p.tok {
 	case token.IDENT:
-		return p.parseTypeName(), false
+		return p.parseTypeName(), resultIdent
 	case token.LBRACK:
-		return p.parseArrayTypeOrSliceLit(allowSliceLit)
+		return p.parseArrayTypeOrSliceLit(state, len)
 	case token.STRUCT:
-		return p.parseStructType(), false
+		return p.parseStructType(), resultType
 	case token.MUL:
-		return p.parsePointerType(), false
+		return p.parsePointerType(), resultType
 	case token.FUNC:
 		typ, _ := p.parseFuncType()
-		return typ, false
+		return typ, resultType
 	case token.INTERFACE:
-		return p.parseInterfaceType(), false
+		return p.parseInterfaceType(), resultType
 	case token.MAP:
-		return p.parseMapType(), false
+		return p.parseMapType(), resultType
 	case token.CHAN, token.ARROW:
-		return p.parseChanType(), false
+		return p.parseChanType(), resultType
 	case token.LPAREN:
 		lparen := p.pos
 		p.next()
 		typ := p.parseType()
 		rparen := p.expect(token.RPAREN)
-		return &ast.ParenExpr{Lparen: lparen, X: typ, Rparen: rparen}, false
+		return &ast.ParenExpr{Lparen: lparen, X: typ, Rparen: rparen}, resultParenType
 	}
 
 	// no type found
-	return nil, false
+	return nil, resultNone
 }
 
 func (p *parser) tryType() ast.Expr {
-	typ, _ := p.tryIdentOrType(false)
+	typ, _ := p.tryIdentOrType(stateType, nil)
 	if typ != nil {
 		p.resolve(typ)
 	}
@@ -1224,6 +1289,9 @@ func (p *parser) parseOperand(lhs bool) ast.Expr {
 
 	case token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING, token.RAT:
 		x := &ast.BasicLit{ValuePos: p.pos, Kind: p.tok, Value: p.lit}
+		if debugParseOutput {
+			log.Printf("ast.BasicLit{Kind: %v, Value: %v}\n", p.tok, p.lit)
+		}
 		p.next()
 		return x
 
@@ -1234,6 +1302,9 @@ func (p *parser) parseOperand(lhs bool) ast.Expr {
 		x := p.parseRHSOrType() // types may be parenthesized: (some type)
 		p.exprLev--
 		rparen := p.expect(token.RPAREN)
+		if debugParseOutput {
+			log.Printf("ast.ParenExpr{X: %v}\n", x)
+		}
 		return &ast.ParenExpr{Lparen: lparen, X: x, Rparen: rparen}
 
 	case token.FUNC:
@@ -1254,8 +1325,8 @@ func (p *parser) parseOperand(lhs bool) ast.Expr {
 		return x
 	}
 
-	typ, isSliceLit := p.tryIdentOrType(true)
-	if isSliceLit { // slice lit
+	typ, result := p.tryIdentOrType(stateArrayTypeOrSliceLit, nil)
+	if (result & resultExprFlags) != 0 { // is an expr, not a type
 		return typ
 	}
 	if typ != nil {
@@ -1267,7 +1338,7 @@ func (p *parser) parseOperand(lhs bool) ast.Expr {
 
 	// we have an error
 	pos := p.pos
-	p.errorExpected(pos, "operand")
+	p.errorExpected(pos, "operand", 2)
 	p.advance(stmtStart)
 	return &ast.BadExpr{From: pos, To: p.pos}
 }
@@ -1304,14 +1375,22 @@ func (p *parser) parseIndexOrSlice(x ast.Expr) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "IndexOrSlice"))
 	}
-
-	const N = 3 // change the 3 to 2 to disable 3-index slices
 	lbrack := p.expect(token.LBRACK)
 	p.exprLev++
+
+	var idx ast.Expr
+	if p.tok != token.COLON {
+		idx = p.parseRHS()
+	}
+	return p.parseIndexOrSliceContinue(x, lbrack, idx)
+}
+
+func (p *parser) parseIndexOrSliceContinue(x ast.Expr, lbrack token.Pos, idx ast.Expr) ast.Expr {
+	const N = 3 // change the 3 to 2 to disable 3-index slices
 	var index [N]ast.Expr
 	var colons [N - 1]token.Pos
-	if p.tok != token.COLON {
-		index[0] = p.parseRHS()
+	if idx != nil {
+		index[0] = idx
 	}
 	ncolons := 0
 	for p.tok == token.COLON && ncolons < len(colons) {
@@ -1341,9 +1420,15 @@ func (p *parser) parseIndexOrSlice(x ast.Expr) ast.Expr {
 				index[2] = &ast.BadExpr{From: colons[1] + 1, To: rbrack}
 			}
 		}
+		if debugParseOutput {
+			log.Printf("ast.SliceExpr{X: %v, Low: %v, High: %v, Max: %v, Slice3: %v}\n", x, index[0], index[1], index[2], slice3)
+		}
 		return &ast.SliceExpr{X: x, Lbrack: lbrack, Low: index[0], High: index[1], Max: index[2], Slice3: slice3, Rbrack: rbrack}
 	}
 
+	if debugParseOutput {
+		log.Printf("ast.IndexExpr{X: %v, Index: %v}\n", x, index[0])
+	}
 	return &ast.IndexExpr{X: x, Lbrack: lbrack, Index: index[0], Rbrack: rbrack}
 }
 
@@ -1542,7 +1627,7 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	case *ast.ErrWrapExpr:
 	default:
 		// all other nodes are not proper expressions
-		p.errorExpected(x.Pos(), "expression")
+		p.errorExpected(x.Pos(), "expression", 3)
 		x = &ast.BadExpr{From: x.Pos(), To: p.safePos(x.End())}
 	}
 	return x
@@ -1620,9 +1705,6 @@ func (p *parser) parsePrimaryExpr(lhs bool) ast.Expr {
 	}
 
 	x := p.parseOperand(lhs)
-	if p.trace {
-		log.Debug("parsePrimaryExpr:", lhs, "parseOperand:", reflect.TypeOf(x), x)
-	}
 L:
 	for {
 		switch p.tok {
@@ -1642,7 +1724,7 @@ L:
 				x = p.parseSelector(p.checkExprOrType(x))
 			default:
 				pos := p.pos
-				p.errorExpected(pos, "selector or type assertion")
+				p.errorExpected(pos, "selector or type assertion", 2)
 				p.next() // make progress
 				sel := &ast.Ident{NamePos: pos, Name: "_"}
 				x = &ast.SelectorExpr{X: x, Sel: sel}
@@ -1670,10 +1752,6 @@ L:
 			break L
 		}
 		lhs = false // no need to try to resolve again
-	}
-
-	if p.trace {
-		log.Debug("parsePrimaryExpr:", lhs, "return:", reflect.TypeOf(x), x)
 	}
 	return x
 }
@@ -1721,14 +1799,14 @@ func (p *parser) parseUnaryExpr(lhs bool) ast.Expr {
 			for ok && dir == ast.SEND {
 				if typ.Dir == ast.RECV {
 					// error: (<-type) is (<-(<-chan T))
-					p.errorExpected(typ.Arrow, "'chan'")
+					p.errorExpected(typ.Arrow, "'chan'", 2)
 				}
 				arrow, typ.Begin, typ.Arrow = typ.Arrow, arrow, arrow
 				dir, typ.Dir = typ.Dir, ast.RECV
 				typ, ok = typ.Value.(*ast.ChanType)
 			}
 			if dir == ast.SEND {
-				p.errorExpected(arrow, "channel type")
+				p.errorExpected(arrow, "channel type", 2)
 			}
 
 			return x
@@ -1878,7 +1956,7 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 	}
 
 	if len(x) > 1 {
-		p.errorExpected(x[0].Pos(), "1 expression")
+		p.errorExpected(x[0].Pos(), "1 expression", 2)
 		// continue with first expression
 	}
 
@@ -2106,7 +2184,7 @@ func (p *parser) parseIfStmt() *ast.IfStmt {
 			elseStmt = p.parseBlockStmt()
 			p.expectSemi()
 		default:
-			p.errorExpected(p.pos, "if statement or block")
+			p.errorExpected(p.pos, "if statement or block", 2)
 			elseStmt = &ast.BadStmt{From: p.pos, To: p.pos}
 		}
 	} else {
@@ -2254,7 +2332,7 @@ func (p *parser) parseCommClause() *ast.CommClause {
 		if p.tok == token.ARROW {
 			// SendStmt
 			if len(lhs) > 1 {
-				p.errorExpected(lhs[0].Pos(), "1 expression")
+				p.errorExpected(lhs[0].Pos(), "1 expression", 2)
 				// continue with first expression
 			}
 			arrow := p.pos
@@ -2266,7 +2344,7 @@ func (p *parser) parseCommClause() *ast.CommClause {
 			if tok := p.tok; tok == token.ASSIGN || tok == token.DEFINE {
 				// RecvStmt with assignment
 				if len(lhs) > 2 {
-					p.errorExpected(lhs[0].Pos(), "1 or 2 expressions")
+					p.errorExpected(lhs[0].Pos(), "1 or 2 expressions", 2)
 					// continue with first two expressions
 					lhs = lhs[0:2]
 				}
@@ -2281,7 +2359,7 @@ func (p *parser) parseCommClause() *ast.CommClause {
 			} else {
 				// lhs must be single receive operation
 				if len(lhs) > 1 {
-					p.errorExpected(lhs[0].Pos(), "1 expression")
+					p.errorExpected(lhs[0].Pos(), "1 expression", 2)
 					// continue with first expression
 				}
 				comm = &ast.ExprStmt{X: lhs[0]}
@@ -2342,7 +2420,7 @@ func (p *parser) parseForPhraseStmtPart(lhs []ast.Expr) *ast.ForPhraseStmt {
 	case 2:
 		stmt.Key, stmt.Value = toIdent(lhs[0]), toIdent(lhs[1])
 	default:
-		log.Panicln("parseForPhraseStmt: too many variables, 1 or 2 is required")
+		log.Panicln("TODO: parseForPhraseStmt - too many variables, 1 or 2 is required")
 	}
 	return stmt
 }
@@ -2441,7 +2519,7 @@ func (p *parser) parseForStmt() ast.Stmt {
 		case 2:
 			key, value = as.Lhs[0], as.Lhs[1]
 		default:
-			p.errorExpected(as.Lhs[len(as.Lhs)-1].Pos(), "at most 2 expressions")
+			p.errorExpected(as.Lhs[len(as.Lhs)-1].Pos(), "at most 2 expressions", 2)
 			return &ast.BadStmt{From: pos, To: p.safePos(body.End())}
 		}
 		// parseSimpleStmt returned a right-hand side that
@@ -2519,7 +2597,7 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 	default:
 		// no statement found
 		pos := p.pos
-		p.errorExpected(pos, "statement")
+		p.errorExpected(pos, "statement", 2)
 		p.advance(stmtStart)
 		s = &ast.BadStmt{From: pos, To: p.pos}
 	}
@@ -2697,7 +2775,7 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 		recv = p.parseParameters(scope, false)
 	}
 
-	ident := p.parseIdent()
+	ident := p.parseIdentOrOp()
 
 	params, results := p.parseSignature(scope)
 
@@ -2759,12 +2837,12 @@ func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
 	case token.FUNC:
 		decl := p.parseFuncDecl()
 		if p.errors.Len() != 0 {
-			p.errorExpected(pos, "declaration")
+			p.errorExpected(pos, "declaration", 2)
 			p.advance(sync)
 		}
 		return decl
 	default:
-		p.errorExpected(pos, "declaration")
+		p.errorExpected(pos, "declaration", 2)
 		p.advance(sync)
 		return &ast.BadDecl{From: pos, To: p.pos}
 	}

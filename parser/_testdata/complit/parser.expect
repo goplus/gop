@@ -1,0 +1,38 @@
+package main
+
+file complit.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: a
+          Tok: :=
+          Rhs:
+            ast.CompositeLit:
+              Type:
+                ast.ArrayType:
+                  Elt:
+                    ast.ArrayType:
+                      Elt:
+                        ast.Ident:
+                          Name: int
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.Ident:
+                  Name: a

@@ -33,17 +33,17 @@ import (
 // -----------------------------------------------------------------------------
 
 func init() {
-	log.SetOutputLevel(log.Ldebug)
-	log.SetFlags(log.Llevel)
+	log.SetFlags(log.Llongfile)
+	SetDebug(DbgFlagAll)
 }
 
 func testFrom(t *testing.T, pkgDir, sel string) {
 	if sel != "" && !strings.Contains(pkgDir, sel) {
 		return
 	}
-	log.Debug("Parsing", pkgDir)
+	log.Println("Parsing", pkgDir)
 	fset := token.NewFileSet()
-	pkgs, err := ParseDir(fset, pkgDir, nil, 0)
+	pkgs, err := ParseDir(fset, pkgDir, nil, Trace)
 	if err != nil || len(pkgs) != 1 {
 		if errs, ok := err.(scanner.ErrorList); ok {
 			for _, e := range errs {
@@ -74,7 +74,11 @@ func TestFromTestdata(t *testing.T) {
 		t.Fatal("ReadDir failed:", err)
 	}
 	for _, fi := range fis {
-		testFrom(t, dir+"/"+fi.Name(), sel)
+		name := fi.Name()
+		if strings.HasPrefix(name, "_") {
+			continue
+		}
+		testFrom(t, dir+"/"+name, sel)
 	}
 }
 

@@ -31,6 +31,22 @@ import (
 	"github.com/goplus/gop/token"
 )
 
+const (
+	DbgFlagParseOutput = 1 << iota
+	DbgFlagParseError
+	DbgFlagAll = DbgFlagParseOutput | DbgFlagParseError
+)
+
+var (
+	debugParseOutput bool
+	debugParseError  bool
+)
+
+func SetDebug(dbgFlags int) {
+	debugParseOutput = (dbgFlags & DbgFlagParseOutput) != 0
+	debugParseError = (dbgFlags & DbgFlagParseError) != 0
+}
+
 // -----------------------------------------------------------------------------
 
 // FileSystem represents a file system.

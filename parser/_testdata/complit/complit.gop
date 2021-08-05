@@ -1,0 +1,2 @@
+a := [][]int{}
+println(a)
