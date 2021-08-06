@@ -1,0 +1,21 @@
+import "math/big"
+
+type BigInt struct {
+	*big.Int
+}
+
+func Int(v *big.Int) BigInt {
+	return BigInt{v}
+}
+
+func (a BigInt) + (b BigInt) BigInt {
+	return BigInt{new(big.Int).Add(a.Int, b.Int)}
+}
+
+func (a BigInt) += (b BigInt) {
+	a.Int.Add(a.Int, b.Int)
+}
+
+a := Int(1r)
+a += Int(2r)
+println(a + Int(3r))

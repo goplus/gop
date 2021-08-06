@@ -565,15 +565,17 @@ func (p *parser) safePos(pos token.Pos) (res token.Pos) {
 // Identifiers
 
 func (p *parser) parseIdentOrOp() (*ast.Ident, bool) { // function Name
-	flags := overloadOps[p.tok]
-	if flags != 0 {
-		pos := p.pos
-		tok := p.tok
-		p.next()
-		if debugParseOutput {
-			log.Printf("ast.Ident{Tok: %v}\n", tok)
+	if int(p.tok) < len(overloadOps) {
+		flags := overloadOps[p.tok]
+		if flags != 0 {
+			pos := p.pos
+			tok := p.tok
+			p.next()
+			if debugParseOutput {
+				log.Printf("ast.Ident{Tok: %v}\n", tok)
+			}
+			return &ast.Ident{NamePos: pos, Name: tok.String()}, true
 		}
-		return &ast.Ident{NamePos: pos, Name: tok.String()}, true
 	}
 	return p.parseIdent(), false
 }

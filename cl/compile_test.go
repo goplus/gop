@@ -301,6 +301,21 @@ func main() {
 `)
 }
 
+func TestEmbeddField(t *testing.T) {
+	gopClTest(t, `import "math/big"
+
+type BigInt struct {
+	*big.Int
+}`, `package main
+
+import big "math/big"
+
+type BigInt struct {
+	Int *big.Int
+}
+`)
+}
+
 func TestAutoProperty(t *testing.T) {
 	gopClTest(t, `import "github.com/goplus/gop/ast/goptest"
 
@@ -1245,6 +1260,7 @@ func ++(a foo) {
 
 var a, b foo
 var c = a - b
+var d = -a
 `, `package main
 
 import fmt "fmt"
@@ -1269,6 +1285,7 @@ func (a foo) Gop_Inc() {
 
 var a, b foo
 var c = a.Gop_Sub(b)
+var d = a.Gop_Neg()
 `)
 }
 

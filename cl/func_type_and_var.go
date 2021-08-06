@@ -197,6 +197,9 @@ func toFieldTag(v *ast.BasicLit) string {
 }
 
 func getTypeName(typ types.Type) string {
+	if t, ok := typ.(*types.Pointer); ok {
+		typ = t.Elem()
+	}
 	switch t := typ.(type) {
 	case *types.Named:
 		return t.Obj().Name()
