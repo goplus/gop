@@ -658,6 +658,42 @@ func main() {
 `)
 }
 
+func TestBigIntAssignOp2(t *testing.T) {
+	gopClTest(t, `
+x := 3r
+x *= 2
+`, `package main
+
+import (
+	builtin "github.com/goplus/gop/builtin"
+	big "math/big"
+)
+
+func main() {
+	x := builtin.Gop_bigint_Init__1(big.NewInt(3))
+	x.Gop_MulAssign(builtin.Gop_bigint_Init__0(2))
+}
+`)
+}
+
+func TestBigIntAssignOp3(t *testing.T) {
+	gopClTest(t, `
+x := 3r
+x *= 2r
+`, `package main
+
+import (
+	builtin "github.com/goplus/gop/builtin"
+	big "math/big"
+)
+
+func main() {
+	x := builtin.Gop_bigint_Init__1(big.NewInt(3))
+	x.Gop_MulAssign(builtin.Gop_bigint_Init__1(big.NewInt(2)))
+}
+`)
+}
+
 func TestCompositeLit(t *testing.T) {
 	gopClTest(t, `
 x := []float64{1, 3.4, 5}
