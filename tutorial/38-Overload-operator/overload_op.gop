@@ -16,6 +16,11 @@ func (a BigInt) += (b BigInt) {
 	a.Int.Add(a.Int, b.Int)
 }
 
+func -(a BigInt) BigInt {
+	return BigInt{new(big.Int).Neg(a.Int)}
+}
+
 a := Int(1r)
 a += Int(2r)
 println(a + Int(3r))
+println(-a)
