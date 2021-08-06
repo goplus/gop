@@ -6,14 +6,10 @@ package printer
 
 import (
 	"bytes"
-	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/parser"
@@ -24,8 +20,6 @@ const (
 	dataDir  = "testdata"
 	tabwidth = 8
 )
-
-var update = flag.Bool("update", false, "update golden files")
 
 var fset = token.NewFileSet()
 
@@ -74,150 +68,6 @@ func format(src []byte, mode checkMode) ([]byte, error) {
 	return res, nil
 }
 
-// lineAt returns the line in text starting at offset offs.
-func lineAt(text []byte, offs int) []byte {
-	i := offs
-	for i < len(text) && text[i] != '\n' {
-		i++
-	}
-	return text[offs:i]
-}
-
-// diff compares a and b.
-func diff(aname, bname string, a, b []byte) error {
-	var buf bytes.Buffer // holding long error message
-
-	// compare lengths
-	if len(a) != len(b) {
-		fmt.Fprintf(&buf, "\nlength changed: len(%s) = %d, len(%s) = %d", aname, len(a), bname, len(b))
-	}
-
-	// compare contents
-	line := 1
-	offs := 1
-	for i := 0; i < len(a) && i < len(b); i++ {
-		ch := a[i]
-		if ch != b[i] {
-			fmt.Fprintf(&buf, "\n%s:%d:%d: %s", aname, line, i-offs+1, lineAt(a, offs))
-			fmt.Fprintf(&buf, "\n%s:%d:%d: %s", bname, line, i-offs+1, lineAt(b, offs))
-			fmt.Fprintf(&buf, "\n\n")
-			break
-		}
-		if ch == '\n' {
-			line++
-			offs = i + 1
-		}
-	}
-
-	if buf.Len() > 0 {
-		return errors.New(buf.String())
-	}
-	return nil
-}
-
-func runcheck(t *testing.T, source, golden string, mode checkMode) {
-	src, err := ioutil.ReadFile(source)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	res, err := format(src, mode)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	// update golden files if necessary
-	if *update {
-		if err := ioutil.WriteFile(golden, res, 0644); err != nil {
-			t.Error(err)
-		}
-		return
-	}
-
-	// get golden
-	gld, err := ioutil.ReadFile(golden)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	// formatted source and golden must be the same
-	if err := diff(source, golden, res, gld); err != nil {
-		t.Error(err)
-		return
-	}
-
-	if mode&idempotent != 0 {
-		// formatting golden must be idempotent
-		// (This is very difficult to achieve in general and for now
-		// it is only checked for files explicitly marked as such.)
-		res, err = format(gld, mode)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		if err := diff(golden, fmt.Sprintf("format(%s)", golden), gld, res); err != nil {
-			t.Errorf("golden is not idempotent: %s", err)
-		}
-	}
-}
-
-func check(t *testing.T, source, golden string, mode checkMode) {
-	// run the test
-	cc := make(chan int)
-	go func() {
-		runcheck(t, source, golden, mode)
-		cc <- 0
-	}()
-
-	// wait with timeout
-	select {
-	case <-time.After(10 * time.Second): // plenty of a safety margin, even for very slow machines
-		// test running past time out
-		t.Errorf("%s: running too slowly", source)
-	case <-cc:
-		// test finished within allotted time margin
-	}
-}
-
-type entry struct {
-	source, golden string
-	mode           checkMode
-}
-
-// Use go test -update to create/update the respective golden files.
-var data = []entry{
-	{"empty.input", "empty.golden", idempotent},
-	{"comments.input", "comments.golden", 0},
-	{"comments.input", "comments.x", export},
-	{"comments2.input", "comments2.golden", idempotent},
-	{"alignment.input", "alignment.golden", idempotent},
-	{"linebreaks.input", "linebreaks.golden", idempotent},
-	{"expressions.input", "expressions.golden", idempotent},
-	{"expressions.input", "expressions.raw", rawFormat | idempotent},
-	{"declarations.input", "declarations.golden", 0},
-	{"statements.input", "statements.golden", 0},
-	{"slow.input", "slow.golden", idempotent},
-	{"complit.input", "complit.x", export},
-}
-
-func _TestFiles(t *testing.T) {
-	t.Parallel()
-	for _, e := range data {
-		source := filepath.Join(dataDir, e.source)
-		golden := filepath.Join(dataDir, e.golden)
-		mode := e.mode
-		t.Run(e.source, func(t *testing.T) {
-			t.Parallel()
-			check(t, source, golden, mode)
-			// TODO(gri) check that golden is idempotent
-			//check(t, golden, golden, e.mode)
-		})
-	}
-}
-
 // TestLineComments, using a simple test case, checks that consecutive line
 // comments are properly terminated with a newline even if the AST position
 // information is incorrect.
@@ -264,21 +114,6 @@ func init() {
 	// ignore it
 	if s := buf.String(); !debug && s != name {
 		panic("got " + s + ", want " + name)
-	}
-}
-
-// Verify that the printer doesn't crash if the AST contains BadXXX nodes.
-func _TestBadNodes(t *testing.T) {
-	const src = "package p\n("
-	const res = "package p\nBadDecl\n"
-	f, err := parser.ParseFile(fset, "", src, parser.ParseComments)
-	if err == nil {
-		t.Error("expected illegal program") // error in test
-	}
-	var buf bytes.Buffer
-	Fprint(&buf, fset, f)
-	if buf.String() != res {
-		t.Errorf("got %q, expected %q", buf.String(), res)
 	}
 }
 

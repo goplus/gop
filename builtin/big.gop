@@ -51,6 +51,10 @@ func (a bigint) != (b bigint) bool
 func -(a bigint) bigint
 func ^(a bigint) bigint
 
+func ++(a bigint)
+func --(a bigint)
+
+func (a bigint) = (b bigint)
 func (a bigint) += (b bigint)
 func (a bigint) -= (b bigint)
 func (a bigint) *= (b bigint)
@@ -92,6 +96,7 @@ func (a bigrat) != (b bigrat) bool
 func -(a bigrat) bigrat
 func /(a bigrat) bigrat
 
+func (a bigrat) = (b bigrat)
 func (a bigrat) += (b bigrat)
 func (a bigrat) -= (b bigrat)
 func (a bigrat) *= (b bigrat)

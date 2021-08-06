@@ -1,0 +1,224 @@
+package main
+
+file op_overload.gop
+ast.GenDecl:
+  Tok: type
+  Specs:
+    ast.TypeSpec:
+      Name:
+        ast.Ident:
+          Name: foo
+      Type:
+        ast.StructType:
+          Fields:
+            ast.FieldList:
+ast.FuncDecl:
+  Recv:
+    ast.FieldList:
+      List:
+        ast.Field:
+          Names:
+            ast.Ident:
+              Name: a
+          Type:
+            ast.StarExpr:
+              X:
+                ast.Ident:
+                  Name: foo
+  Name:
+    ast.Ident:
+      Name: *
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: b
+              Type:
+                ast.StarExpr:
+                  X:
+                    ast.Ident:
+                      Name: foo
+      Results:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Type:
+                ast.StarExpr:
+                  X:
+                    ast.Ident:
+                      Name: foo
+ast.FuncDecl:
+  Recv:
+    ast.FieldList:
+      List:
+        ast.Field:
+          Names:
+            ast.Ident:
+              Name: a
+          Type:
+            ast.StarExpr:
+              X:
+                ast.Ident:
+                  Name: foo
+  Name:
+    ast.Ident:
+      Name: +
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: b
+              Type:
+                ast.StarExpr:
+                  X:
+                    ast.Ident:
+                      Name: foo
+      Results:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Type:
+                ast.StarExpr:
+                  X:
+                    ast.Ident:
+                      Name: foo
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "a + b"
+        ast.ReturnStmt:
+          Results:
+            ast.UnaryExpr:
+              Op: &
+              X:
+                ast.CompositeLit:
+                  Type:
+                    ast.Ident:
+                      Name: foo
+ast.FuncDecl:
+  Recv:
+    ast.FieldList:
+      List:
+        ast.Field:
+          Names:
+            ast.Ident:
+              Name: a
+          Type:
+            ast.Ident:
+              Name: foo
+  Name:
+    ast.Ident:
+      Name: /
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: b
+              Type:
+                ast.Ident:
+                  Name: foo
+      Results:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Type:
+                ast.Ident:
+                  Name: foo
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "a / b"
+        ast.ReturnStmt:
+          Results:
+            ast.CompositeLit:
+              Type:
+                ast.Ident:
+                  Name: foo
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: -
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: a
+              Type:
+                ast.Ident:
+                  Name: foo
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "-a"
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: ++
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: a
+              Type:
+                ast.Ident:
+                  Name: foo
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "a++"

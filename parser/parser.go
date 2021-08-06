@@ -564,15 +564,72 @@ func (p *parser) safePos(pos token.Pos) (res token.Pos) {
 // ----------------------------------------------------------------------------
 // Identifiers
 
-/* TODO:
-func (p *parser) parseIdentOrOp() *ast.Ident { // function Name
-	if p.tok == token.IDENT {
-		return p.parseIdent()
-	} else {
-		panic("todo")
+func (p *parser) parseIdentOrOp() (*ast.Ident, bool) { // function Name
+	flags := overloadOps[p.tok]
+	if flags != 0 {
+		pos := p.pos
+		tok := p.tok
+		p.next()
+		if debugParseOutput {
+			log.Printf("ast.Ident{Tok: %v}\n", tok)
+		}
+		return &ast.Ident{NamePos: pos, Name: tok.String()}, true
 	}
+	return p.parseIdent(), false
 }
-*/
+
+const (
+	opUnary = 1 << iota
+	opBinary
+	opAssign
+	opAssignOp
+	opIncDec
+)
+
+var overloadOps = [...]byte{
+	token.ADD: opBinary,           // +
+	token.SUB: opBinary | opUnary, // -
+	token.MUL: opBinary | opUnary, // *
+	token.QUO: opBinary,           // /
+	token.REM: opBinary,           // %
+
+	token.AND:     opBinary, // &
+	token.OR:      opBinary, // |
+	token.XOR:     opBinary, // ^
+	token.SHL:     opBinary, // <<
+	token.SHR:     opBinary, // >>
+	token.AND_NOT: opBinary, // &^
+
+	token.ADD_ASSIGN: opAssignOp, // +=
+	token.SUB_ASSIGN: opAssignOp, // -=
+	token.MUL_ASSIGN: opAssignOp, // *=
+	token.QUO_ASSIGN: opAssignOp, // /=
+	token.REM_ASSIGN: opAssignOp, // %=
+
+	token.AND_ASSIGN:     opAssignOp, // &=
+	token.OR_ASSIGN:      opAssignOp, // |=
+	token.XOR_ASSIGN:     opAssignOp, // ^=
+	token.SHL_ASSIGN:     opAssignOp, // <<=
+	token.SHR_ASSIGN:     opAssignOp, // >>=
+	token.AND_NOT_ASSIGN: opAssignOp, // &^=
+
+	token.ASSIGN: opAssign, // =
+
+	token.INC: opIncDec, // ++
+	token.DEC: opIncDec, // --
+
+	token.EQL:  opBinary, // ==
+	token.LSS:  opBinary, // <
+	token.GTR:  opBinary, // >
+	token.NEQ:  opBinary, // !=
+	token.LEQ:  opBinary, // <=
+	token.GEQ:  opBinary, // >=
+	token.LAND: opBinary, // &&
+	token.LOR:  opBinary, // ||
+	token.NOT:  opUnary,  // !
+
+	token.ARROW: opBinary | opUnary, // <-
+}
 
 func (p *parser) parseIdent() *ast.Ident {
 	pos := p.pos
@@ -599,7 +656,6 @@ func (p *parser) parseIdentList() (list []*ast.Ident) {
 		p.next()
 		list = append(list, p.parseIdent())
 	}
-
 	return
 }
 
@@ -2777,11 +2833,13 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 		recv = p.parseParameters(scope, false)
 	}
 
-	// TODO:
-	// ident := p.parseIdentOrOp()
-	ident := p.parseIdent()
-
+	ident, isOp := p.parseIdentOrOp()
 	params, results := p.parseSignature(scope)
+	if isOp {
+		if params == nil || len(params.List) != 1 {
+			log.Panicln("TODO: overload operator can only have one parameter")
+		}
+	}
 
 	var body *ast.BlockStmt
 	if p.tok == token.LBRACE {
@@ -2808,7 +2866,8 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 			Params:  params,
 			Results: results,
 		},
-		Body: body,
+		Body:     body,
+		Operator: isOp,
 	}
 	if recv == nil {
 		// Go spec: The scope of an identifier denoting a constant, type,
@@ -2821,7 +2880,9 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 			p.declare(decl, nil, p.pkgScope, ast.Fun, ident)
 		}
 	}
-
+	if debugParseOutput {
+		log.Printf("ast.FuncDecl{Name: %v}\n", ident.Name)
+	}
 	return decl
 }
 

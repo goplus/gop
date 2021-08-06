@@ -77,3 +77,21 @@ func TestFromTutorial(t *testing.T) {
 		return nil
 	})
 }
+
+func TestFromParse(t *testing.T) {
+	dir, err := os.Getwd()
+	if err != nil {
+		t.Fatal("Getwd failed:", err)
+	}
+	dir = filepath.Join(dir, "../parser/_testdata")
+	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() && filepath.Ext(path) == ".gop" {
+			t.Log(path)
+			testFrom(t, path)
+		}
+		return nil
+	})
+}

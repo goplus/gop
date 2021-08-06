@@ -1102,11 +1102,12 @@ type (
 
 	// A FuncDecl node represents a function declaration.
 	FuncDecl struct {
-		Doc  *CommentGroup // associated documentation; or nil
-		Recv *FieldList    // receiver (methods); or nil (functions)
-		Name *Ident        // function/method name
-		Type *FuncType     // function signature: parameters, results, and position of "func" keyword
-		Body *BlockStmt    // function body; or nil for external (non-Go) function
+		Doc      *CommentGroup // associated documentation; or nil
+		Recv     *FieldList    // receiver (methods); or nil (functions)
+		Name     *Ident        // function/method name
+		Type     *FuncType     // function signature: parameters, results, and position of "func" keyword
+		Body     *BlockStmt    // function body; or nil for external (non-Go) function
+		Operator bool          // is operator or not
 	}
 )
 

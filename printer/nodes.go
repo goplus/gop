@@ -1820,9 +1820,10 @@ func (p *printer) funcBodyUnnamed(headerSize int, sep whiteSpace, b *ast.BlockSt
 		return
 	}
 
-	if sep != ignore {
-		//	p.print(blank) // always use blank
-	}
+	/*	if sep != ignore {
+			//	p.print(blank) // always use blank
+		}
+	*/
 	var line int
 	i := 0
 	for _, s := range b.List {
@@ -1881,6 +1882,9 @@ func (p *printer) funcDecl(d *ast.FuncDecl) {
 		p.print(blank)
 	}
 	p.expr(d.Name)
+	if d.Operator && d.Recv != nil {
+		p.print(blank)
+	}
 	p.signature(d.Type.Params, d.Type.Results)
 	p.funcBody(p.distanceFrom(d.Pos(), startCol), vtab, d.Body)
 }

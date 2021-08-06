@@ -1220,6 +1220,58 @@ func (m M) Foo() {
 `)
 }
 
+func TestOverloadOp(t *testing.T) {
+	gopClTest(t, `
+type foo struct {
+}
+
+func (a *foo) + (b *foo) *foo {
+	println("a + b")
+	return &foo{}
+}
+
+func (a foo) - (b foo) foo {
+	println("a - b")
+	return foo{}
+}
+
+func -(a foo) {
+	println("-a")
+}
+
+func ++(a foo) {
+	println("a++")
+}
+
+var a, b foo
+var c = a - b
+`, `package main
+
+import fmt "fmt"
+
+type foo struct {
+}
+
+func (a *foo) Gop_Add(b *foo) *foo {
+	fmt.Println("a + b")
+	return &foo{}
+}
+func (a foo) Gop_Sub(b foo) foo {
+	fmt.Println("a - b")
+	return foo{}
+}
+func (a foo) Gop_Neg() {
+	fmt.Println("-a")
+}
+func (a foo) Gop_Inc() {
+	fmt.Println("a++")
+}
+
+var a, b foo
+var c = a.Gop_Sub(b)
+`)
+}
+
 func TestImport(t *testing.T) {
 	gopClTest(t, `import "fmt"
 

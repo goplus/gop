@@ -469,8 +469,25 @@ func loadType(ctx *blockCtx, t *ast.TypeSpec) {
 }
 
 func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
+	name := d.Name.Name
+	if d.Operator {
+		if recv != nil { // binary op
+			if v, ok := binaryGopNames[name]; ok {
+				name = v
+			}
+		} else { // unary op
+			if v, ok := unaryGopNames[name]; ok {
+				name = v
+				at := ctx.pkg.Types
+				arg1 := d.Type.Params.List[0]
+				typ := toType(ctx, arg1.Type)
+				recv = types.NewParam(arg1.Pos(), at, arg1.Names[0].Name, typ)
+				d.Type.Params.List = nil
+			}
+		}
+	}
 	sig := toFuncType(ctx, d.Type, recv)
-	fn, err := ctx.pkg.NewFuncWith(d.Pos(), d.Name.Name, sig, func() token.Pos {
+	fn, err := ctx.pkg.NewFuncWith(d.Pos(), name, sig, func() token.Pos {
 		return d.Recv.List[0].Type.Pos()
 	})
 	if err != nil {
@@ -480,6 +497,56 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
 	if body := d.Body; body != nil {
 		loadFuncBody(ctx, fn, body)
 	}
+}
+
+var binaryGopNames = map[string]string{
+	"+": "Gop_Add",
+	"-": "Gop_Sub",
+	"*": "Gop_Mul",
+	"/": "Gop_Quo",
+	"%": "Gop_Rem",
+
+	"&":  "Gop_And",
+	"|":  "Gop_Or",
+	"^":  "Gop_Xor",
+	"<<": "Gop_Lsh",
+	">>": "Gop_Rsh",
+	"&^": "Gop_AndNot",
+
+	"+=": "Gop_AddAssign",
+	"-=": "Gop_SubAssign",
+	"*=": "Gop_MulAssign",
+	"/=": "Gop_QuoAssign",
+	"%=": "Gop_RemAssign",
+
+	"&=":  "Gop_AndAssign",
+	"|=":  "Gop_OrAssign",
+	"^=":  "Gop_XorAssign",
+	"<<=": "Gop_LshAssign",
+	">>=": "Gop_RshAssign",
+	"&^=": "Gop_AndNotAssign",
+	"=":   "Gop_Assign",
+
+	"==": "Gop_EQ",
+	"!=": "Gop_NE",
+	"<=": "Gop_LE",
+	"<":  "Gop_LT",
+	">=": "Gop_GE",
+	">":  "Gop_GT",
+
+	"&&": "Gop_LAnd",
+	"||": "Gop_LOr",
+
+	"<-": "Gop_Send",
+}
+
+var unaryGopNames = map[string]string{
+	"++": "Gop_Inc",
+	"--": "Gop_Dec",
+	"-":  "Gop_Neg",
+	"^":  "Gop_Not",
+	"!":  "Gop_LNot",
+	"<-": "Gop_Recv",
 }
 
 func loadFuncBody(ctx *blockCtx, fn *gox.Func, body *ast.BlockStmt) {
