@@ -90,6 +90,7 @@ func newBuiltinDefault(pkg gox.PkgImporter, prefix string, conf *gox.Config) *ty
 	initMathBig(pkg, conf, big)
 	initBuiltin(pkg, builtin, fmt, big)
 	gox.InitBuiltinOps(builtin, prefix, conf)
+	gox.InitBuiltinAssignOps(builtin, prefix)
 	gox.InitBuiltinFuncs(builtin)
 	return builtin
 }

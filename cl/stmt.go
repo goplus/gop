@@ -170,7 +170,7 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 	if len(expr.Lhs) != 1 || len(expr.Rhs) != 1 {
 		panic("TODO: invalid syntax of assign by operator")
 	}
-	ctx.cb.AssignOp(gotoken.Token(tok))
+	ctx.cb.AssignOp(gotoken.Token(tok), expr)
 }
 
 // forRange(names...) x rangeAssignThen

@@ -24,7 +24,9 @@ import (
 
 // A bigint represents a signed multi-precision integer.
 // The zero value for a bigint represents nil.
-type bigint < *big.Int
+type bigint struct {
+	*big.Int
+}
 
 func (a bigint) + (b bigint) bigint
 func (a bigint) - (b bigint) bigint
@@ -45,8 +47,23 @@ func (a bigint) > (b bigint) bool
 func (a bigint) >= (b bigint) bool
 func (a bigint) == (b bigint) bool
 func (a bigint) != (b bigint) bool
+
 func -(a bigint) bigint
 func ^(a bigint) bigint
+
+func (a bigint) += (b bigint)
+func (a bigint) -= (b bigint)
+func (a bigint) *= (b bigint)
+func (a bigint) /= (b bigint)
+func (a bigint) %= (b bigint)
+
+func (a bigint) |= (b bigint)
+func (a bigint) ^= (b bigint)
+func (a bigint) &= (b bigint)
+func (a bigint) &^= (b bigint)
+
+func (a bigint) <<= (n untyped_uint)
+func (a bigint) >>= (n untyped_uint)
 
 func bigint() bigint
 func bigint(x int64) bigint
@@ -56,20 +73,29 @@ func bigint(x int64) bigint
 
 // A bigrat represents a quotient a/b of arbitrary precision.
 // The zero value for a bigrat represents nil.
-type bigrat < *big.Rat
+type bigrat struct {
+	*big.Rat
+}
 
 func (a bigrat) + (b bigrat) bigrat
 func (a bigrat) - (b bigrat) bigrat
 func (a bigrat) * (b bigrat) bigrat
 func (a bigrat) / (b bigrat) bigrat
+
 func (a bigrat) < (b bigrat) bool
 func (a bigrat) <= (b bigrat) bool
 func (a bigrat) > (b bigrat) bool
 func (a bigrat) >= (b bigrat) bool
 func (a bigrat) == (b bigrat) bool
 func (a bigrat) != (b bigrat) bool
+
 func -(a bigrat) bigrat
 func /(a bigrat) bigrat
+
+func (a bigrat) += (b bigrat)
+func (a bigrat) -= (b bigrat)
+func (a bigrat) *= (b bigrat)
+func (a bigrat) /= (b bigrat)
 
 func bigrat() bigrat
 func bigrat(a bigint) bigrat
@@ -80,6 +106,8 @@ func bigrat(a, b int64) bigrat
 
 // A bigfloat represents a multi-precision floating point number.
 // The zero value for a bigfloat represents nil.
-type bigfloat < *big.Float
+type bigfloat struct {
+	*big.Float
+}
 
 // -----------------------------------------------------------------------------

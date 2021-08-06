@@ -186,6 +186,61 @@ func (a Gop_bigint) Gop_Not() Gop_bigint {
 	return Gop_bigint{tmpint1(a).Not(a.Int)}
 }
 
+// Gop_Add: func (a bigint) += (b bigint)
+func (a Gop_bigint) Gop_AddAssign(b Gop_bigint) {
+	a.Int.Add(a.Int, b.Int)
+}
+
+// Gop_Sub: func (a bigint) -= (b bigint)
+func (a Gop_bigint) Gop_SubAssign(b Gop_bigint) {
+	a.Int.Sub(a.Int, b.Int)
+}
+
+// Gop_Mul: func (a bigint) *= (b bigint)
+func (a Gop_bigint) Gop_MulAssign(b Gop_bigint) {
+	a.Int.Mul(a.Int, b.Int)
+}
+
+// Gop_Quo: func (a bigint) /= (b bigint) {
+func (a Gop_bigint) Gop_QuoAssign(b Gop_bigint) {
+	a.Int.Quo(a.Int, b.Int)
+}
+
+// Gop_Rem: func (a bigint) %= (b bigint)
+func (a Gop_bigint) Gop_RemAssign(b Gop_bigint) {
+	a.Int.Rem(a.Int, b.Int)
+}
+
+// Gop_Or: func (a bigint) |= (b bigint)
+func (a Gop_bigint) Gop_OrAssign(b Gop_bigint) {
+	a.Int.Or(a.Int, b.Int)
+}
+
+// Gop_Xor: func (a bigint) ^= (b bigint)
+func (a Gop_bigint) Gop_XorAssign(b Gop_bigint) {
+	a.Int.Xor(a.Int, b.Int)
+}
+
+// Gop_And: func (a bigint) &= (b bigint)
+func (a Gop_bigint) Gop_AndAssign(b Gop_bigint) {
+	a.Int.And(a.Int, b.Int)
+}
+
+// Gop_AndNot: func (a bigint) &^= (b bigint)
+func (a Gop_bigint) Gop_AndNotAssign(b Gop_bigint) {
+	a.Int.AndNot(a.Int, b.Int)
+}
+
+// Gop_Lsh: func (a bigint) <<= (n untyped_uint)
+func (a Gop_bigint) Gop_LshAssign(n Gop_ninteger) {
+	a.Int.Lsh(a.Int, uint(n))
+}
+
+// Gop_Rsh: func (a bigint) >>= (n untyped_uint)
+func (a Gop_bigint) Gop_RshAssign(n Gop_ninteger) {
+	a.Int.Rsh(a.Int, uint(n))
+}
+
 // Gop_bigint_Cast: func bigint() bigint
 func Gop_bigint_Cast__0() Gop_bigint {
 	return Gop_bigint{new(big.Int)}
@@ -351,6 +406,26 @@ func (a Gop_bigrat) Gop_Neg() Gop_bigrat {
 // Gop_Inv: func /(a bigrat) bigrat
 func (a Gop_bigrat) Gop_Inv() Gop_bigrat {
 	return Gop_bigrat{tmprat1(a).Inv(a.Rat)}
+}
+
+// Gop_Add: func (a bigrat) += (b bigrat)
+func (a Gop_bigrat) Gop_AddAssign(b Gop_bigrat) {
+	a.Rat.Add(a.Rat, b.Rat)
+}
+
+// Gop_Sub: func (a bigrat) -= (b bigrat)
+func (a Gop_bigrat) Gop_SubAssign(b Gop_bigrat) {
+	a.Rat.Sub(a.Rat, b.Rat)
+}
+
+// Gop_Mul: func (a bigrat) *= (b bigrat)
+func (a Gop_bigrat) Gop_MulAssign(b Gop_bigrat) {
+	a.Rat.Mul(a.Rat, b.Rat)
+}
+
+// Gop_Quo: func (a bigrat) /= (b bigrat)
+func (a Gop_bigrat) Gop_QuoAssign(b Gop_bigrat) {
+	a.Rat.Quo(a.Rat, b.Rat)
 }
 
 // Gop_bigrat_Cast: func bigrat() bigrat

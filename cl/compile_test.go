@@ -642,6 +642,22 @@ func main() {
 `)
 }
 
+func TestBigIntAssignOp(t *testing.T) {
+	gopClTest(t, `
+var x bigint
+x += 3
+`, `package main
+
+import builtin "github.com/goplus/gop/builtin"
+
+var x builtin.Gop_bigint
+
+func main() {
+	x.Gop_AddAssign(builtin.Gop_bigint_Init__0(3))
+}
+`)
+}
+
 func TestCompositeLit(t *testing.T) {
 	gopClTest(t, `
 x := []float64{1, 3.4, 5}
