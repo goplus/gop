@@ -30,13 +30,13 @@ import (
 
 // Cmd - gop install
 var Cmd = &base.Command{
-	UsageLine: "gop install [-v] <gopSrcDir|gopSrcFile>",
+	UsageLine: "gop install [-v] <GopPackages>",
 	Short:     "Build Go+ files and install target to GOBIN",
 }
 
 var (
-	flag        = &Cmd.Flag
-	flagVerbose = flag.Bool("v", false, "print the names of packages as they are compiled.")
+	flag = &Cmd.Flag
+	_    = flag.Bool("v", false, "print the names of packages as they are compiled.")
 )
 
 func init() {
@@ -68,7 +68,7 @@ func runCmd(cmd *base.Command, args []string) {
 		}
 		return nil
 	})
-	runner.GenGo(dir, recursive, &cl.Config{CacheLoadPkgs: *flagVerbose})
+	runner.GenGo(dir, recursive, &cl.Config{CacheLoadPkgs: true})
 	goCmd(dir, "install", args...)
 	os.Exit(exitCode)
 }
