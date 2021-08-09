@@ -262,7 +262,7 @@ for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
 ```
 
 
-### Overload Operators
+### Overload operators
 
 ```go
 import "math/big"
@@ -275,7 +275,7 @@ func Int(v *big.Int) MyBigInt {
 	return MyBigInt{v}
 }
 
-func (a MyBigInt) + (b MyBigInt) MyBigInt {
+func (a MyBigInt) + (b MyBigInt) MyBigInt { // binary operator
 	return MyBigInt{new(big.Int).Add(a.Int, b.Int)}
 }
 
@@ -283,7 +283,7 @@ func (a MyBigInt) += (b MyBigInt) {
 	a.Int.Add(a.Int, b.Int)
 }
 
-func -(a MyBigInt) MyBigInt {
+func -(a MyBigInt) MyBigInt { // unary operator
 	return MyBigInt{new(big.Int).Neg(a.Int)}
 }
 
