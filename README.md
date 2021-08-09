@@ -86,7 +86,7 @@ func ReverseMap(m map[string]int) map[int]string {
 }
 ```
 
-Then use it in a Go package:
+Then use it in a Go package (14-Using-goplus-in-Go/gomain):
 
 ```go
 package main
@@ -115,7 +115,7 @@ or:
 gop run tutorial/14-Using-goplus-in-Go/gomain
 ```
 
-Go [tutorial/14-Using-goplus-in-Go](https://github.com/goplus/gop/tree/master/tutorial/14-Using-goplus-in-Go) to get the source code.
+Go [tutorial/14-Using-goplus-in-Go](https://github.com/goplus/gop/tree/main/tutorial/14-Using-goplus-in-Go) to get the source code.
 
 
 ## Playground
@@ -131,7 +131,7 @@ Go+ Jupyter kernel:
 
 ## Tutorials
 
-See https://github.com/goplus/gop/tree/master/tutorial
+See https://github.com/goplus/gop/tree/main/tutorial
 
 
 ## How to build
@@ -162,6 +162,7 @@ In bytecode mode, Go+ doesn't support `cgo`. However, in Go-code-generation mode
 ```bash
 gop run     # Run a Go+ program
 gop install # Build Go+ files and install target to GOBIN
+gop test    # Test Go+ packages
 gop fmt     # Format Go+ packages
 gop clean   # Clean all Go+ auto generated files
 gop go      # Convert Go+ packages into Go packages
@@ -173,10 +174,14 @@ gop go      # Convert Go+ packages into Go packages
 We introduce the rational number as native Go+ types. We use suffix `r` to denote rational literals. For example, (1r << 200) means a big int whose value is equal to 2<sup>200</sup>. And 4/5r means the rational constant 4/5.
 
 ```go
-a := 1r << 65   // bigint, large than int64
-b := 4/5r       // bigrat
-c := b - 1/3r + 3 * 1/2r
+var a bigint = 1r << 65  // bigint, large than int64
+var b bigrat = 4/5r      // bigrat
+c := b - 1/3r + 3 * 1/2r // bigrat
 println(a, b, c)
+
+var x *big.Int = 1r << 65 // (1r << 65) is untyped bigint, and can be assigned to *big.Int
+var y *big.Rat = 4/5r
+println(x, y)
 ```
 
 ### Map literal
@@ -255,6 +260,39 @@ for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
     sum += x
 }
 ```
+
+
+### Overload Operators
+
+```go
+import "math/big"
+
+type MyBigInt struct {
+	*big.Int
+}
+
+func Int(v *big.Int) MyBigInt {
+	return MyBigInt{v}
+}
+
+func (a MyBigInt) + (b MyBigInt) MyBigInt {
+	return MyBigInt{new(big.Int).Add(a.Int, b.Int)}
+}
+
+func (a MyBigInt) += (b MyBigInt) {
+	a.Int.Add(a.Int, b.Int)
+}
+
+func -(a MyBigInt) MyBigInt {
+	return MyBigInt{new(big.Int).Neg(a.Int)}
+}
+
+a := Int(1r)
+a += Int(2r)
+println(a + Int(3r))
+println(-a)
+```
+
 
 ### Error handling
 
@@ -359,7 +397,7 @@ println([k for k, _ <- m])
 println([v for v <- m])
 ```
 
-Go [tutorial/20-Unix-Shebang/shebang](https://github.com/goplus/gop/blob/master/tutorial/20-Unix-Shebang/shebang) to get the source code.
+Go [tutorial/20-Unix-Shebang/shebang](https://github.com/goplus/gop/blob/main/tutorial/20-Unix-Shebang/shebang) to get the source code.
 
 
 ### Go features

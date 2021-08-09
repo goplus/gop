@@ -1,23 +1,23 @@
 import "math/big"
 
-type BigInt struct {
+type MyBigInt struct {
 	*big.Int
 }
 
-func Int(v *big.Int) BigInt {
-	return BigInt{v}
+func Int(v *big.Int) MyBigInt {
+	return MyBigInt{v}
 }
 
-func (a BigInt) + (b BigInt) BigInt {
-	return BigInt{new(big.Int).Add(a.Int, b.Int)}
+func (a MyBigInt) + (b MyBigInt) MyBigInt {
+	return MyBigInt{new(big.Int).Add(a.Int, b.Int)}
 }
 
-func (a BigInt) += (b BigInt) {
+func (a MyBigInt) += (b MyBigInt) {
 	a.Int.Add(a.Int, b.Int)
 }
 
-func -(a BigInt) BigInt {
-	return BigInt{new(big.Int).Neg(a.Int)}
+func -(a MyBigInt) MyBigInt {
+	return MyBigInt{new(big.Int).Neg(a.Int)}
 }
 
 a := Int(1r)
