@@ -27,7 +27,9 @@ import (
 )
 
 const (
-	autoGenFileName = "gop_autogen.go"
+	autoGenFile      = "gop_autogen.go"
+	autoGenTestFile  = "gop_autogen_test.go"
+	autoGen2TestFile = "gop_autogen2_test.go"
 )
 
 // -----------------------------------------------------------------------------
@@ -52,10 +54,13 @@ func cleanAGFiles(dir string) {
 			continue
 		}
 	}
-	file := filepath.Join(dir, autoGenFileName)
-	if _, err = os.Stat(file); err == nil {
-		fmt.Printf("Cleaning %s ...\n", file)
-		os.Remove(file)
+	autogens := []string{autoGenFile, autoGenTestFile, autoGen2TestFile}
+	for _, autogen := range autogens {
+		file := filepath.Join(dir, autogen)
+		if _, err = os.Stat(file); err == nil {
+			fmt.Printf("Cleaning %s ...\n", file)
+			os.Remove(file)
+		}
 	}
 }
 
@@ -84,8 +89,8 @@ var Cmd = &base.Command{
 }
 
 var (
-	flag        = &Cmd.Flag
-	flagVerbose = flag.Bool("v", false, "print verbose information.")
+	flag = &Cmd.Flag
+	_    = flag.Bool("v", false, "print verbose information.")
 )
 
 func init() {

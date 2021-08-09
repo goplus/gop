@@ -42,7 +42,9 @@ const (
 )
 
 const (
-	autoGenFileName = "gop_autogen.go"
+	autoGenFile      = "gop_autogen.go"
+	autoGenTestFile  = "gop_autogen_test.go"
+	autoGen2TestFile = "gop_autogen2_test.go"
 )
 
 type Error struct {
@@ -102,9 +104,12 @@ func (p *Runner) GenGo(dir string, recursive bool, base *cl.Config) {
 			modTime := fi.ModTime()
 			switch flag {
 			case PkgFlagGo:
-				if fname == autoGenFileName {
+				switch fname {
+				case autoGenFile, autoGenTestFile, autoGen2TestFile:
 					flag = PkgFlagGoGen
-					gogenTime = modTime
+					if (pkgFlags&PkgFlagGoGen) != 0 && gogenTime.After(modTime) {
+						gogenTime = modTime
+					}
 				}
 			default:
 				if modTime.After(gopTime) {
@@ -163,20 +168,34 @@ func (p *Runner) GenGoPkg(pkgDir string, base *cl.Config) (err error) {
 	if err != nil {
 		return p.addError(pkgDir, "parse", err)
 	}
-	if len(pkgs) != 1 {
-		err = fmt.Errorf("too many packages (%d) in the same directory", len(pkgs))
-		return p.addError(pkgDir, "parse", err)
-	}
 
-	pkg := getPkg(pkgs)
-	out, err := cl.NewPackage("", pkg, &conf)
-	if err != nil {
-		return p.addError(pkgDir, "compile", err)
+	var pkgTest *ast.Package
+	for name, pkg := range pkgs {
+		if strings.HasSuffix(name, "_test") {
+			if pkgTest != nil {
+				panic("TODO: has multi test package?")
+			}
+			pkgTest = pkg
+			continue
+		}
+		out, err := cl.NewPackage("", pkg, &conf)
+		if err != nil {
+			return p.addError(pkgDir, "compile", err)
+		}
+		err = saveGoFile(pkgDir, out)
+		if err != nil {
+			return p.addError(pkgDir, "save", err)
+		}
 	}
-
-	err = saveGoFile(pkgDir, out)
-	if err != nil {
-		return p.addError(pkgDir, "save", err)
+	if pkgTest != nil {
+		out, err := cl.NewPackage("", pkgTest, &conf)
+		if err != nil {
+			return p.addError(pkgDir, "compile", err)
+		}
+		err = gox.WriteFile(filepath.Join(pkgDir, autoGen2TestFile), out, true)
+		if err != nil {
+			return p.addError(pkgDir, "save", err)
+		}
 	}
 	return nil
 }
@@ -192,12 +211,12 @@ func saveGoFile(dir string, pkg *gox.Package) error {
 	if err != nil {
 		return err
 	}
-	return gox.WriteFile(filepath.Join(dir, autoGenFileName), pkg)
-}
-
-func getPkg(pkgs map[string]*ast.Package) *ast.Package {
-	for _, pkg := range pkgs {
-		return pkg
+	err = gox.WriteFile(filepath.Join(dir, autoGenFile), pkg, false)
+	if err != nil {
+		return err
+	}
+	if pkg.HasTestingFile() {
+		return gox.WriteFile(filepath.Join(dir, autoGenTestFile), pkg, true)
 	}
 	return nil
 }

@@ -64,7 +64,7 @@ func saveGoFile(gofile string, pkg *gox.Package) error {
 	if err != nil {
 		return err
 	}
-	return gox.WriteFile(gofile, pkg)
+	return gox.WriteFile(gofile, pkg, false)
 }
 
 func findGoModFile(dir string) (string, error) {

@@ -170,8 +170,9 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	}
 	fileLine := !conf.NoFileLine
 	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
-	for _, f := range pkg.Files {
-		loadFile(p, ctx, f, targetDir, fileLine)
+	for fpath, f := range pkg.Files {
+		testingFile := strings.HasSuffix(fpath, "_test.gop")
+		loadFile(p, ctx, f, targetDir, fileLine, testingFile)
 	}
 	for _, f := range pkg.Files {
 		for _, decl := range f.Decls {
@@ -375,7 +376,7 @@ func (p *pkgCtx) loadSymbol(name string) bool {
 	return false
 }
 
-func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, fileLine bool) {
+func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, fileLine, testingFile bool) {
 	syms := parent.syms
 	ctx := &blockCtx{
 		pkg: p, pkgCtx: parent, cb: p.CB(), fset: p.Fset, targetDir: targetDir, fileLine: fileLine,
@@ -387,6 +388,7 @@ func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, fil
 			if d.Recv == nil {
 				name := d.Name
 				fn := func() {
+					p.SetInTestingFile(testingFile)
 					loadFunc(ctx, nil, d)
 				}
 				if name.Name == "init" {
@@ -398,6 +400,7 @@ func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, fil
 				if name, ok := getRecvTypeName(parent, d.Recv, true); ok {
 					ld := getTypeLoader(syms, token.NoPos, name)
 					ld.methods = append(ld.methods, func() {
+						p.SetInTestingFile(testingFile)
 						doInitType(ld)
 						recv := toRecv(ctx, d.Recv)
 						loadFunc(ctx, recv, d)
@@ -407,6 +410,7 @@ func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, fil
 		case *ast.GenDecl:
 			switch d.Tok {
 			case token.IMPORT:
+				p.SetInTestingFile(testingFile)
 				for _, item := range d.Specs {
 					loadImport(ctx, item.(*ast.ImportSpec))
 				}
@@ -416,6 +420,7 @@ func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, fil
 					name := t.Name.Name
 					ld := getTypeLoader(syms, t.Name.Pos(), name)
 					ld.typ = func() {
+						p.SetInTestingFile(testingFile)
 						if t.Assign != token.NoPos { // alias type
 							ctx.pkg.AliasType(name, toType(ctx, t.Type))
 							return
@@ -431,6 +436,7 @@ func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, fil
 					vSpec := spec.(*ast.ValueSpec)
 					setNamesLoader(parent, syms, vSpec.Names, func() {
 						if v := vSpec; v != nil { // only init once
+							p.SetInTestingFile(testingFile)
 							vSpec = nil
 							names := makeNames(v.Names)
 							loadConsts(ctx, names, v)
@@ -443,6 +449,7 @@ func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, fil
 					vSpec := spec.(*ast.ValueSpec)
 					setNamesLoader(parent, syms, vSpec.Names, func() {
 						if v := vSpec; v != nil { // only init once
+							p.SetInTestingFile(testingFile)
 							vSpec = nil
 							names := makeNames(v.Names)
 							loadVars(ctx, names, v)

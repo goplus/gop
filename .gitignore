@@ -25,6 +25,7 @@ _testmain.go
 coverage.txt
 
 gop_autogen.go
+gop_autogen*_test.go
 .gop/
 
 *.exe
