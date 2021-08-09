@@ -354,6 +354,7 @@ func foo(script string) {
 func TestImportGopPkg(t *testing.T) {
 	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen.go")
 	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen_test.go")
+	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen2_test.go")
 	gopClTest(t, `import "github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/foo"
 
 rmap := foo.ReverseMap(map[string]int{"Hi": 1, "Hello": 2})
@@ -377,6 +378,7 @@ func main() {
 func TestGopkgDep(t *testing.T) {
 	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen.go")
 	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen_test.go")
+	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen2_test.go")
 	const (
 		loadTypes = packages.NeedImports | packages.NeedDeps | packages.NeedTypes
 		loadModes = loadTypes | packages.NeedName | packages.NeedModule
