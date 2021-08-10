@@ -351,52 +351,6 @@ func foo(script string) {
 `)
 }
 
-func TestImportGopPkg(t *testing.T) {
-	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen.go")
-	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen_test.go")
-	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen2_test.go")
-	gopClTest(t, `import "github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/foo"
-
-rmap := foo.ReverseMap(map[string]int{"Hi": 1, "Hello": 2})
-println(rmap)
-`, `package main
-
-import (
-	fmt "fmt"
-	foo "github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/foo"
-)
-
-func main() {
-	rmap := foo.ReverseMap(map[string]int{"Hi": 1, "Hello": 2})
-	fmt.Println(rmap)
-}
-`)
-}
-
-// bugfix (only depends order of testing functions)
-// vet: open tutorial/14-Using-goplus-in-Go/foo/gop_autogen.go: no such file or directory
-func TestGopkgDep(t *testing.T) {
-	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen.go")
-	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen_test.go")
-	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen2_test.go")
-	const (
-		loadTypes = packages.NeedImports | packages.NeedDeps | packages.NeedTypes
-		loadModes = loadTypes | packages.NeedName | packages.NeedModule
-	)
-	loadConf := &packages.Config{Mode: loadModes, Fset: gblFset}
-	pkgs, err := baseConf.Ensure().PkgsLoader.Load(
-		loadConf, "github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/gomain")
-	if err != nil {
-		t.Fatal("PkgsLoader.Load failed:", err)
-	}
-	for _, err = range pkgs[0].Errors {
-		t.Fatal("PkgsLoader.Load failed:", err)
-	}
-	if pkgs[0].Name != "main" {
-		t.Fatal("pkg name:", pkgs[0].Name)
-	}
-}
-
 func TestErrWrap(t *testing.T) {
 	gopClTest(t, `
 import "strconv"
@@ -1768,4 +1722,52 @@ func main() {
 	d := -c
 }
 `)
+}
+
+func removeAutogenFiles() {
+	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen.go")
+	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen_test.go")
+	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen2_test.go")
+}
+
+func TestImportGopPkg(t *testing.T) {
+	removeAutogenFiles()
+	gopClTest(t, `import "github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/foo"
+
+rmap := foo.ReverseMap(map[string]int{"Hi": 1, "Hello": 2})
+println(rmap)
+`, `package main
+
+import (
+	fmt "fmt"
+	foo "github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/foo"
+)
+
+func main() {
+	rmap := foo.ReverseMap(map[string]int{"Hi": 1, "Hello": 2})
+	fmt.Println(rmap)
+}
+`)
+}
+
+// bugfix (only depends order of testing functions)
+// vet: open tutorial/14-Using-goplus-in-Go/foo/gop_autogen.go: no such file or directory
+func TestGopkgDep(t *testing.T) {
+	removeAutogenFiles()
+	const (
+		loadTypes = packages.NeedImports | packages.NeedDeps | packages.NeedTypes
+		loadModes = loadTypes | packages.NeedName | packages.NeedModule
+	)
+	loadConf := &packages.Config{Mode: loadModes, Fset: gblFset}
+	pkgs, err := baseConf.Ensure().PkgsLoader.Load(
+		loadConf, "github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/gomain")
+	if err != nil {
+		t.Fatal("PkgsLoader.Load failed:", err)
+	}
+	for _, err = range pkgs[0].Errors {
+		t.Fatal("PkgsLoader.Load failed:", err)
+	}
+	if pkgs[0].Name != "main" {
+		t.Fatal("pkg name:", pkgs[0].Name)
+	}
 }
