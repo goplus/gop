@@ -45,8 +45,8 @@ b := [x*x for x <- a, x > 3]
 println(b) // output: [25 49 121]
 
 mapData := {"Hi": 1, "Hello": 2, "Go+": 3}
-reverseMap := {v: k for k, v <- mapData}
-println(reverseMap) // output: map[1:Hi 2:Hello 3:Go+]
+reversedMap := {v: k for k, v <- mapData}
+println(reversedMap) // output: map[1:Hi 2:Hello 3:Go+]
 ```
 
 We will keep Go+ simple. This is why we call it Go+, not Go++.
