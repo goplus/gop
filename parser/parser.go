@@ -1334,7 +1334,7 @@ func (p *parser) parseFuncTypeOrLit() ast.Expr {
 // types of the form [...]T. Callers must verify the result.
 // If lhs is set and the result is an identifier, it is not resolved.
 //
-func (p *parser) parseOperand(lhs bool) ast.Expr {
+func (p *parser) parseOperand(lhs, allowTuple bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "Operand"))
 	}
@@ -1358,8 +1358,24 @@ func (p *parser) parseOperand(lhs bool) ast.Expr {
 	case token.LPAREN:
 		lparen := p.pos
 		p.next()
+		if allowTuple && p.tok == token.RPAREN { // () => expr
+			p.next()
+			return &tupleExpr{}
+		}
 		p.exprLev++
 		x := p.parseRHSOrType() // types may be parenthesized: (some type)
+		if allowTuple && p.tok == token.COMMA {
+			// (x, y, ...) => expr
+			items := make([]*ast.Ident, 1, 2)
+			items[0] = x.(*ast.Ident)
+			for p.tok == token.COMMA {
+				p.next()
+				items = append(items, p.parseIdent())
+			}
+			p.exprLev--
+			p.expect(token.RPAREN)
+			return &tupleExpr{items: items}
+		}
 		p.exprLev--
 		rparen := p.expect(token.RPAREN)
 		if debugParseOutput {
@@ -1759,12 +1775,12 @@ func (p *parser) checkExprOrType(x ast.Expr) ast.Expr {
 }
 
 // If lhs is set and the result is an identifier, it is not resolved.
-func (p *parser) parsePrimaryExpr(lhs bool) ast.Expr {
+func (p *parser) parsePrimaryExpr(lhs, allowTuple bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "PrimaryExpr"))
 	}
 
-	x := p.parseOperand(lhs)
+	x := p.parseOperand(lhs, allowTuple)
 L:
 	for {
 		switch p.tok {
@@ -1817,7 +1833,7 @@ L:
 }
 
 // If lhs is set and the result is an identifier, it is not resolved.
-func (p *parser) parseUnaryExpr(lhs bool) ast.Expr {
+func (p *parser) parseUnaryExpr(lhs, allowTuple bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "UnaryExpr"))
 	}
@@ -1826,7 +1842,7 @@ func (p *parser) parseUnaryExpr(lhs bool) ast.Expr {
 	case token.ADD, token.SUB, token.NOT, token.XOR, token.AND:
 		pos, op := p.pos, p.tok
 		p.next()
-		x := p.parseUnaryExpr(false)
+		x := p.parseUnaryExpr(false, false)
 		return &ast.UnaryExpr{OpPos: pos, Op: op, X: p.checkExpr(x)}
 
 	case token.ARROW:
@@ -1848,7 +1864,7 @@ func (p *parser) parseUnaryExpr(lhs bool) ast.Expr {
 		//   <- (chan type)    =>  (<-chan type)
 		//   <- (chan<- type)  =>  (<-chan (<-type))
 
-		x := p.parseUnaryExpr(false)
+		x := p.parseUnaryExpr(false, false)
 
 		// determine which case we have
 		if typ, ok := x.(*ast.ChanType); ok {
@@ -1879,11 +1895,11 @@ func (p *parser) parseUnaryExpr(lhs bool) ast.Expr {
 		// pointer type or unary "*" expression
 		pos := p.pos
 		p.next()
-		x := p.parseUnaryExpr(false)
+		x := p.parseUnaryExpr(false, false)
 		return &ast.StarExpr{Star: pos, X: p.checkExprOrType(x)}
 	}
 
-	return p.parsePrimaryExpr(lhs)
+	return p.parsePrimaryExpr(lhs, allowTuple)
 }
 
 func (p *parser) tokPrec() (token.Token, int) {
@@ -1895,12 +1911,12 @@ func (p *parser) tokPrec() (token.Token, int) {
 }
 
 // If lhs is set and the result is an identifier, it is not resolved.
-func (p *parser) parseBinaryExpr(lhs bool, prec1 int) ast.Expr {
+func (p *parser) parseBinaryExpr(lhs bool, prec1 int, allowTuple bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "BinaryExpr"))
 	}
 
-	x := p.parseErrWrapExpr(lhs) // TODO: change priority level of ErrWrapExpr
+	x := p.parseErrWrapExpr(lhs, allowTuple) // TODO: change priority level of ErrWrapExpr
 	for {
 		op, oprec := p.tokPrec()
 		if oprec < prec1 {
@@ -1911,13 +1927,13 @@ func (p *parser) parseBinaryExpr(lhs bool, prec1 int) ast.Expr {
 			p.resolve(x)
 			lhs = false
 		}
-		y := p.parseBinaryExpr(false, oprec+1)
+		y := p.parseBinaryExpr(false, oprec+1, false)
 		x = &ast.BinaryExpr{X: p.checkExpr(x), OpPos: pos, Op: op, Y: p.checkExpr(y)}
 	}
 }
 
-func (p *parser) parseErrWrapExpr(lhs bool) ast.Expr { // expr! expr? expr?:defval
-	x := p.parseUnaryExpr(lhs)
+func (p *parser) parseErrWrapExpr(lhs, allowTuple bool) ast.Expr { // expr! expr? expr?:defval
+	x := p.parseUnaryExpr(lhs, allowTuple)
 	switch p.tok {
 	case token.NOT: // expr!
 		expr := &ast.ErrWrapExpr{X: x, Tok: token.NOT, TokPos: p.pos}
@@ -1928,12 +1944,74 @@ func (p *parser) parseErrWrapExpr(lhs bool) ast.Expr { // expr! expr? expr?:defv
 		p.next()
 		if p.tok == token.COLON {
 			p.next()
-			expr.Default = p.parseUnaryExpr(false)
+			expr.Default = p.parseUnaryExpr(false, true)
 		}
 		return expr
 	default:
 		return x
 	}
+}
+
+type tupleExpr struct {
+	ast.Expr
+	items []*ast.Ident
+}
+
+func (p *parser) parseLambdaExpr() ast.Expr {
+	var x ast.Expr
+	var first = p.pos
+	if p.tok != token.RARROW {
+		x = p.parseBinaryExpr(false, token.LowestPrec+1, true)
+	}
+	if p.tok == token.RARROW { // =>
+		var rarrow = p.pos
+		var rhs []ast.Expr
+		var lhsHasParen, rhsHasParen bool
+		p.next()
+		switch p.tok {
+		case token.LPAREN: // (
+			rhsHasParen = true
+			p.next()
+			for {
+				item := p.parseExpr(false)
+				rhs = append(rhs, item)
+				if p.tok != token.COMMA {
+					break
+				}
+				p.next()
+			}
+			p.expect(token.RPAREN)
+		default:
+			rhs = []ast.Expr{p.parseExpr(false)}
+		}
+		var lhs []*ast.Ident
+		if x != nil {
+			switch v := x.(type) {
+			case *tupleExpr:
+				lhs, lhsHasParen = v.items, true
+			case *ast.ParenExpr:
+				lhs, lhsHasParen = []*ast.Ident{v.X.(*ast.Ident)}, true
+			default:
+				lhs = []*ast.Ident{x.(*ast.Ident)}
+			}
+		}
+		if debugParseOutput {
+			log.Printf("ast.LambdaExpr{Lhs: %v}\n", lhs)
+		}
+		return &ast.LambdaExpr{
+			First:       first,
+			Last:        p.pos,
+			Lhs:         lhs,
+			Rarrow:      rarrow,
+			Rhs:         rhs,
+			LhsHasParen: lhsHasParen,
+			RhsHasParen: rhsHasParen,
+		}
+	}
+	if _, ok := x.(*tupleExpr); ok {
+		panic("TODO: tupleExpr")
+	}
+	return x
 }
 
 // If lhs is set and the result is an identifier, it is not resolved.
@@ -1944,8 +2022,10 @@ func (p *parser) parseExpr(lhs bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "Expression"))
 	}
-
-	return p.parseBinaryExpr(lhs, token.LowestPrec+1)
+	if lhs {
+		return p.parseBinaryExpr(lhs, token.LowestPrec+1, false)
+	}
+	return p.parseLambdaExpr()
 }
 
 func (p *parser) parseRHS() ast.Expr {
@@ -2883,7 +2963,7 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 		}
 	}
 	if debugParseOutput {
-		log.Printf("ast.FuncDecl{Name: %v}\n", ident.Name)
+		log.Printf("ast.FuncDecl{Name: %v, ...}\n", ident.Name)
 	}
 	return decl
 }

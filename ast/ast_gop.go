@@ -92,6 +92,34 @@ func (*ErrWrapExpr) exprNode() {}
 
 // -----------------------------------------------------------------------------
 
+// LambdaExpr represents
+//    `(x, y, ...) => exprOrExprTuple`
+//    `x => exprOrExprTuple`
+//    `=> exprOrExprTuple`
+// here exprOrExprTuple represents
+//    `expr`
+//    `(expr1, expr2, ...)`
+type LambdaExpr struct {
+	First, Last token.Pos
+	Lhs         []*Ident
+	Rarrow      token.Pos
+	Rhs         []Expr
+	LhsHasParen bool
+	RhsHasParen bool
+}
+
+func (p *LambdaExpr) Pos() token.Pos {
+	return p.First
+}
+
+func (p *LambdaExpr) End() token.Pos {
+	return p.Last
+}
+
+func (*LambdaExpr) exprNode() {}
+
+// -----------------------------------------------------------------------------
+
 // ForPhrase represents `for k, v <- listOrMap`
 type ForPhrase struct {
 	For        token.Pos // position of "for" keyword

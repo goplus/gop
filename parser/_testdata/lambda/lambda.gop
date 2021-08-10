@@ -1,0 +1,9 @@
+package main
+
+func main() {
+	foo(=> "Hi")
+	foo(x => x * x)
+	foo((x, y) => x + y)
+	foo((x) => (x, x * 2))
+	foo(() => "Hi")
+}

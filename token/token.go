@@ -126,6 +126,7 @@ const (
 	keyword_end
 
 	RAT      = literal_end  // 123.5r
+	RARROW   = operator_beg // =>
 	QUESTION = operator_end // ?
 )
 
@@ -199,6 +200,7 @@ var tokens = [...]string{
 	SEMICOLON: ";",
 	COLON:     ":",
 	QUESTION:  "?",
+	RARROW:    "=>",
 
 	BREAK:    "break",
 	CASE:     "case",
@@ -311,7 +313,7 @@ func (tok Token) IsLiteral() bool {
 // delimiters; it returns false otherwise.
 //
 func (tok Token) IsOperator() bool {
-	return operator_beg < tok && tok <= operator_end
+	return operator_beg <= tok && tok <= operator_end
 }
 
 // IsKeyword returns true for tokens corresponding to keywords;

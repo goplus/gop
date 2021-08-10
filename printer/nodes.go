@@ -1028,6 +1028,24 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 			p.print(token.COLON)
 			p.expr(x.Default)
 		}
+	case *ast.LambdaExpr:
+		if x.LhsHasParen {
+			p.print(token.LPAREN)
+			p.identList(x.Lhs, false)
+			p.print(token.RPAREN, blank)
+		} else if x.Lhs != nil {
+			p.expr(x.Lhs[0])
+			p.print(blank)
+		}
+		p.print(token.RARROW, blank)
+		if x.RhsHasParen {
+			p.print(token.LPAREN)
+			p.exprList(token.NoPos, x.Rhs, 1, noIndent, token.NoPos, false)
+			p.print(token.RPAREN)
+		} else {
+			p.expr(x.Rhs[0])
+		}
+
 	default:
 		log.Fatalf("unreachable %T\n", x)
 	}

@@ -1,0 +1,103 @@
+package main
+
+file lambda.gop
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: foo
+              Args:
+                ast.LambdaExpr:
+                  Rhs:
+                    ast.BasicLit:
+                      Kind: STRING
+                      Value: "Hi"
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: foo
+              Args:
+                ast.LambdaExpr:
+                  Lhs:
+                    ast.Ident:
+                      Name: x
+                  Rhs:
+                    ast.BinaryExpr:
+                      X:
+                        ast.Ident:
+                          Name: x
+                      Op: *
+                      Y:
+                        ast.Ident:
+                          Name: x
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: foo
+              Args:
+                ast.LambdaExpr:
+                  Lhs:
+                    ast.Ident:
+                      Name: x
+                    ast.Ident:
+                      Name: y
+                  Rhs:
+                    ast.BinaryExpr:
+                      X:
+                        ast.Ident:
+                          Name: x
+                      Op: +
+                      Y:
+                        ast.Ident:
+                          Name: y
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: foo
+              Args:
+                ast.LambdaExpr:
+                  Lhs:
+                    ast.Ident:
+                      Name: x
+                  Rhs:
+                    ast.Ident:
+                      Name: x
+                    ast.BinaryExpr:
+                      X:
+                        ast.Ident:
+                          Name: x
+                      Op: *
+                      Y:
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 2
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: foo
+              Args:
+                ast.LambdaExpr:
+                  Rhs:
+                    ast.BasicLit:
+                      Kind: STRING
+                      Value: "Hi"
