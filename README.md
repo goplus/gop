@@ -205,6 +205,24 @@ c := ["xsw", 3] // []interface{}
 empty := [] // []interface{}
 ```
 
+### Deduce struct type
+
+```go
+type Config struct {
+	Dir   string
+	Level int
+}
+
+func foo(conf *Config) {
+	// ...
+}
+
+foo({Dir: "/foo/bar", Level: 1})
+```
+
+Here `foo({Dir: "/foo/bar", Level: 1})` is equivalent to `foo(&Config{Dir: "/foo/bar", Level: 1})`. However, you can't replace `foo(&Config{"/foo/bar", 1})` with `foo({"/foo/bar", 1})`, because it is confusing to consider `{"/foo/bar", 1}` as a struct literal.
+
+
 ### List comprehension
 
 ```go
