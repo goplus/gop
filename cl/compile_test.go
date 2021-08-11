@@ -1613,6 +1613,26 @@ func main() {
 `)
 }
 
+func TestLambdaExpr(t *testing.T) {
+	gox.SetDebug(gox.DbgFlagAll)
+	gopClTest(t, `
+func Map(c []float64, t func(float64) float64) {
+	// ...
+}
+
+Map([1.2, 3.5, 6], x => x * x)
+`, `package main
+
+func Map(c []float64, t func(float64) float64) {
+}
+func main() {
+	Map([]float64{1.2, 3.5, 6}, func(x float64) float64 {
+		return x * x
+	})
+}
+`)
+}
+
 func TestUnnamedMainFunc(t *testing.T) {
 	gopClTest(t, `i := 1`, `package main
 

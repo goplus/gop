@@ -260,6 +260,11 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
 	}
 	ellipsis := (v.Ellipsis != gotoken.NoPos)
 	for i, arg := range v.Args {
+		if l, ok := arg.(*ast.LambdaExpr); ok {
+			in := fn.arg(i, true).(*types.Signature).Params()
+			compileLambdaExpr(ctx, l, in)
+			continue
+		}
 		if c, ok := arg.(*ast.CompositeLit); ok && c.Type == nil {
 			compileCompositeLit(ctx, c, fn.arg(i, ellipsis), true)
 		} else {
@@ -267,6 +272,28 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
 		}
 	}
 	ctx.cb.CallWith(len(v.Args), ellipsis, v)
+}
+
+func compileLambdaExpr(ctx *blockCtx, v *ast.LambdaExpr, in *types.Tuple) {
+	n := len(v.Lhs)
+	if n != in.Len() {
+		log.Panicln("TODO: compileLambdaExpr - unexpected argument count", n, in.Len())
+	}
+	pkg := ctx.pkg
+	params := make([]*types.Var, n)
+	for i, name := range v.Lhs {
+		params[i] = pkg.NewParam(token.NoPos, name.Name, in.At(i).Type())
+	}
+	nout := len(v.Rhs)
+	results := make([]*types.Var, nout)
+	for i := 0; i < nout; i++ {
+		results[i] = pkg.NewAutoParam("")
+	}
+	ctx.cb.NewClosure(types.NewTuple(params...), types.NewTuple(results...), false).BodyStart(pkg)
+	for _, v := range v.Rhs {
+		compileExpr(ctx, v)
+	}
+	ctx.cb.Return(nout).End()
 }
 
 func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {

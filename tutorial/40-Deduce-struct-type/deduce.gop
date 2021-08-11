@@ -1,0 +1,10 @@
+type Config struct {
+	Dir   string
+	Level int
+}
+
+func foo(conf *Config) {
+	println("conf:", *conf)
+}
+
+foo({Dir: "/foo/bar", Level: 1})
