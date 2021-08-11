@@ -280,6 +280,21 @@ for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
 ```
 
 
+### Lambda expression
+
+```go
+func plot(fn func(x float64) float64) {
+    // ...
+}
+
+func plot2(fn func(x float64) (float64, float64)) {
+    // ...
+}
+
+plot(x => x * x)          // plot(func(x float64) float64 { return x * x })
+plot(x => (x * x, x + x)) // plot2(func(x float64) (float64, float64) { return x * x, x + x })
+```
+
 ### Overload operators
 
 ```go
