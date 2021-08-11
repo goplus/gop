@@ -92,14 +92,14 @@ Then use it in a Go package (14-Using-goplus-in-Go/gomain):
 package main
 
 import (
-	"fmt"
+    "fmt"
 
-	"github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/foo"
+    "github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/foo"
 )
 
 func main() {
-	rmap := foo.ReverseMap(map[string]int{"Hi": 1, "Hello": 2})
-	fmt.Println(rmap)
+    rmap := foo.ReverseMap(map[string]int{"Hi": 1, "Hello": 2})
+    fmt.Println(rmap)
 }
 ```
 
@@ -209,12 +209,12 @@ empty := [] // []interface{}
 
 ```go
 type Config struct {
-	Dir   string
-	Level int
+    Dir   string
+    Level int
 }
 
 func foo(conf *Config) {
-	// ...
+    // ...
 }
 
 foo({Dir: "/foo/bar", Level: 1})
@@ -286,23 +286,23 @@ for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
 import "math/big"
 
 type MyBigInt struct {
-	*big.Int
+    *big.Int
 }
 
 func Int(v *big.Int) MyBigInt {
-	return MyBigInt{v}
+    return MyBigInt{v}
 }
 
 func (a MyBigInt) + (b MyBigInt) MyBigInt { // binary operator
-	return MyBigInt{new(big.Int).Add(a.Int, b.Int)}
+    return MyBigInt{new(big.Int).Add(a.Int, b.Int)}
 }
 
 func (a MyBigInt) += (b MyBigInt) {
-	a.Int.Add(a.Int, b.Int)
+    a.Int.Add(a.Int, b.Int)
 }
 
 func -(a MyBigInt) MyBigInt { // unary operator
-	return MyBigInt{new(big.Int).Neg(a.Int)}
+    return MyBigInt{new(big.Int).Neg(a.Int)}
 }
 
 a := Int(1r)
@@ -326,15 +326,15 @@ How to use them? Here is an example:
 
 ```go
 import (
-	"strconv"
+    "strconv"
 )
 
 func add(x, y string) (int, error) {
-	return strconv.Atoi(x)? + strconv.Atoi(y)?, nil
+    return strconv.Atoi(x)? + strconv.Atoi(y)?, nil
 }
 
 func addSafe(x, y string) int {
-	return strconv.Atoi(x)?:0 + strconv.Atoi(y)?:0
+    return strconv.Atoi(x)?:0 + strconv.Atoi(y)?:0
 }
 
 println(`add("100", "23"):`, add("100", "23")!)
@@ -353,7 +353,7 @@ add("10", "abc"): 0 strconv.Atoi: parsing "abc": invalid syntax
 
 ===> errors stack:
 main.add("10", "abc")
-	/Users/xsw/goplus/tutorial/15-ErrWrap/err_wrap.gop:6 strconv.Atoi(y)?
+    /Users/xsw/goplus/tutorial/15-ErrWrap/err_wrap.gop:6 strconv.Atoi(y)?
 
 addSafe("10", "abc"): 10
 ```
