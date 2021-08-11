@@ -21,14 +21,8 @@ jobs:
     - name: CompileGop
       run: cd cmd; go install -v ./...
 
-    - name: GenGoPkg
-      run: PATH=$PATH:$GOPATH/bin gop go .
-
-    - name: Build
-      run: go build -v ./...
-
-    - name: Test
-      run: go test -v -coverprofile=coverage.txt -covermode=atomic ./...
+    - name: GopTest
+      run: PATH=$PATH:$GOPATH/bin gop test -v -coverprofile=coverage.txt -covermode=atomic ./...
 
     - name: Upload coverage report
       uses: codecov/codecov-action@v1.0.2
