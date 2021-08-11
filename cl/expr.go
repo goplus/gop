@@ -64,7 +64,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 	case *ast.FuncLit:
 		compileFuncLit(ctx, v)
 	case *ast.CompositeLit:
-		compileCompositeLit(ctx, v)
+		compileCompositeLit(ctx, v, nil)
 	case *ast.SliceLit:
 		compileSliceLit(ctx, v)
 	case *ast.IndexExpr:
@@ -313,16 +313,28 @@ func checkCompositeLitElts(ctx *blockCtx, elts []ast.Expr) (kind int) {
 	return compositeLitVal
 }
 
-func compileCompositeLitElts(ctx *blockCtx, elts []ast.Expr, kind int) {
+func compileCompositeLitElts(ctx *blockCtx, elts []ast.Expr, kind int, expected *kvType) {
 	for _, elt := range elts {
 		if kv, ok := elt.(*ast.KeyValueExpr); ok {
-			compileExpr(ctx, kv.Key)
-			compileExpr(ctx, kv.Value)
+			if key, ok := kv.Key.(*ast.CompositeLit); ok && key.Type == nil {
+				compileCompositeLit(ctx, key, expected.Key())
+			} else {
+				compileExpr(ctx, kv.Key)
+			}
+			if val, ok := kv.Value.(*ast.CompositeLit); ok && val.Type == nil {
+				compileCompositeLit(ctx, val, expected.Elem())
+			} else {
+				compileExpr(ctx, kv.Value)
+			}
 		} else {
 			if kind == compositeLitKeyVal {
 				ctx.cb.None()
 			}
-			compileExpr(ctx, elt)
+			if val, ok := elt.(*ast.CompositeLit); ok && val.Type == nil {
+				compileCompositeLit(ctx, val, expected.Elem())
+			} else {
+				compileExpr(ctx, elt)
+			}
 		}
 	}
 }
@@ -350,10 +362,42 @@ func lookupField(t *types.Struct, name string) int {
 	return -1
 }
 
-func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) {
+type kvType struct {
+	underlying types.Type
+	key, val   types.Type
+	cached     bool
+}
+
+func (p *kvType) required() *kvType {
+	if !p.cached {
+		p.cached = true
+		switch t := p.underlying.(type) {
+		case *types.Slice:
+			p.key, p.val = types.Typ[types.Int], t.Elem()
+		case *types.Array:
+			p.key, p.val = types.Typ[types.Int], t.Elem()
+		case *types.Map:
+			p.key, p.val = t.Key(), t.Elem()
+		}
+	}
+	return p
+}
+
+func (p *kvType) Key() types.Type {
+	return p.required().key
+}
+
+func (p *kvType) Elem() types.Type {
+	return p.required().val
+}
+
+func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, expected types.Type) {
 	var typ, underlying types.Type
 	if v.Type != nil {
 		typ = toType(ctx, v.Type)
+		underlying = typ.Underlying()
+	} else if expected != nil {
+		typ = expected
 		underlying = typ.Underlying()
 	}
 	kind := checkCompositeLitElts(ctx, v.Elts)
@@ -361,9 +405,12 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit) {
 		compileStructLitInKeyVal(ctx, v.Elts, t, typ)
 		return
 	}
-	compileCompositeLitElts(ctx, v.Elts, kind)
+	compileCompositeLitElts(ctx, v.Elts, kind, &kvType{underlying: underlying})
 	n := len(v.Elts)
 	if typ == nil {
+		if kind == compositeLitVal && n > 0 {
+			panic("TODO: mapLit should be in {key: val, ...} form")
+		}
 		ctx.cb.MapLit(nil, n<<1)
 		return
 	}

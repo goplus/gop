@@ -19,6 +19,7 @@ package cl_test
 import (
 	"bytes"
 	"os"
+	"sync"
 	"testing"
 
 	"github.com/goplus/gop/cl"
@@ -47,6 +48,9 @@ func init() {
 }
 
 func gopClTest(t *testing.T, gopcode, expected string) {
+	cl.SetDisableRecover(true)
+	defer cl.SetDisableRecover(false)
+
 	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", gopcode)
 	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", nil, 0)
 	if err != nil {
@@ -680,6 +684,43 @@ func main() {
 	y := map[string]int{"Hello": 1, "Go+": 5}
 	z := [...]int{1, 3, 5}
 	a := map[string]float64{"Hello": 1, "Go+": 5.1}
+}
+`)
+}
+
+func TestCompositeLit2(t *testing.T) {
+	gopClTest(t, `
+type foo struct {
+	A int
+}
+	
+x := []struct{a int}{
+	{1}, {3}, {5},
+}
+y := map[foo]string{
+	{1}: "Hi",
+}
+z := [...]foo{
+	{1}, {3}, {5},
+}
+`, `package main
+
+type foo struct {
+	A int
+}
+
+func main() {
+	x := []struct {
+		a int
+	}{struct {
+		a int
+	}{1}, struct {
+		a int
+	}{3}, struct {
+		a int
+	}{5}}
+	y := map[foo]string{foo{1}: "Hi"}
+	z := [...]foo{foo{1}, foo{3}, foo{5}}
 }
 `)
 }
@@ -1724,6 +1765,10 @@ func main() {
 `)
 }
 
+var (
+	autogen sync.Mutex
+)
+
 func removeAutogenFiles() {
 	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen.go")
 	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen_test.go")
@@ -1731,6 +1776,9 @@ func removeAutogenFiles() {
 }
 
 func TestImportGopPkg(t *testing.T) {
+	autogen.Lock()
+	defer autogen.Unlock()
+
 	removeAutogenFiles()
 	gopClTest(t, `import "github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/foo"
 
@@ -1753,6 +1801,9 @@ func main() {
 // bugfix (only depends order of testing functions)
 // vet: open tutorial/14-Using-goplus-in-Go/foo/gop_autogen.go: no such file or directory
 func TestGopkgDep(t *testing.T) {
+	autogen.Lock()
+	defer autogen.Unlock()
+
 	removeAutogenFiles()
 	const (
 		loadTypes = packages.NeedImports | packages.NeedDeps | packages.NeedTypes

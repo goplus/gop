@@ -36,6 +36,14 @@ const (
 	gopPrefix = "Gop_"
 )
 
+var (
+	enableRecover = true
+)
+
+func SetDisableRecover(disableRecover bool) {
+	enableRecover = !disableRecover
+}
+
 // -----------------------------------------------------------------------------
 
 // Config of loading Go+ packages.
@@ -355,15 +363,17 @@ func (p *pkgCtx) loadType(name string) {
 }
 
 func (p *pkgCtx) loadSymbol(name string) bool {
-	defer func() {
-		if e := recover(); e != nil {
-			if err, ok := e.(error); ok {
-				p.handleErr(err)
-			} else {
-				panic(e)
+	if enableRecover {
+		defer func() {
+			if e := recover(); e != nil {
+				if err, ok := e.(error); ok {
+					p.handleErr(err)
+				} else {
+					panic(e)
+				}
 			}
-		}
-	}()
+		}()
+	}
 
 	if f, ok := p.syms[name]; ok {
 		if ld, ok := f.(*typeLoader); ok {

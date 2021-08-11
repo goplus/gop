@@ -58,16 +58,18 @@ func compileStmts(ctx *blockCtx, body []ast.Stmt) {
 }
 
 func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
-	defer func() {
-		if e := recover(); e != nil {
-			if err, ok := e.(error); ok {
-				ctx.handleErr(err)
-				ctx.cb.ResetStmt()
-			} else {
-				panic(e)
+	if enableRecover {
+		defer func() {
+			if e := recover(); e != nil {
+				if err, ok := e.(error); ok {
+					ctx.handleErr(err)
+					ctx.cb.ResetStmt()
+				} else {
+					panic(e)
+				}
 			}
-		}
-	}()
+		}()
+	}
 	commentStmt(ctx, stmt)
 	switch v := stmt.(type) {
 	case *ast.ExprStmt:
@@ -145,12 +147,14 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 			}
 		}
 		ctx.cb.DefineVarStart(expr.Pos(), names...)
-		defer func() {
-			if e := recover(); e != nil {
-				ctx.cb.ResetInit()
-				panic(e)
-			}
-		}()
+		if enableRecover {
+			defer func() {
+				if e := recover(); e != nil {
+					ctx.cb.ResetInit()
+					panic(e)
+				}
+			}()
+		}
 		for _, rhs := range expr.Rhs {
 			compileExpr(ctx, rhs, twoValue)
 		}
