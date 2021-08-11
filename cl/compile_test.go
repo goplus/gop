@@ -1619,14 +1619,24 @@ func Map(c []float64, t func(float64) float64) {
 	// ...
 }
 
+func Map2(c []float64, t func(float64) (float64, float64)) {
+	// ...
+}
+
 Map([1.2, 3.5, 6], x => x * x)
+Map2([1.2, 3.5, 6], x => (x * x, x + x))
 `, `package main
 
 func Map(c []float64, t func(float64) float64) {
 }
+func Map2(c []float64, t func(float64) (float64, float64)) {
+}
 func main() {
 	Map([]float64{1.2, 3.5, 6}, func(x float64) float64 {
 		return x * x
+	})
+	Map2([]float64{1.2, 3.5, 6}, func(x float64) (float64, float64) {
+		return x * x, x + x
 	})
 }
 `)
