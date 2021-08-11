@@ -107,7 +107,7 @@ func (p *Runner) GenGo(dir string, recursive bool, base *cl.Config) {
 				switch fname {
 				case autoGenFile, autoGenTestFile, autoGen2TestFile:
 					flag = PkgFlagGoGen
-					if (pkgFlags&PkgFlagGoGen) != 0 && gogenTime.After(modTime) {
+					if (pkgFlags&PkgFlagGoGen) == 0 || gogenTime.After(modTime) {
 						gogenTime = modTime
 					}
 				}

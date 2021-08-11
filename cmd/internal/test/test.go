@@ -43,15 +43,25 @@ func init() {
 	Cmd.Run = runCmd
 }
 
+func skipSwitches(args []string) []string {
+	out := make([]string, 0, len(args))
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "-") {
+			continue
+		}
+		out = append(out, arg)
+	}
+	return out
+}
+
 func runCmd(cmd *base.Command, args []string) {
-	flag.Parse(args)
-	if flag.NArg() < 1 {
-		cmd.Usage(os.Stderr)
-		return
+	ssargs := skipSwitches(args)
+	if len(ssargs) == 0 {
+		ssargs = []string{"."}
 	}
 	var exitCode int
 	var recursive bool
-	var dir = flag.Arg(0)
+	var dir = ssargs[0]
 	if strings.HasSuffix(dir, "/...") {
 		dir = dir[:len(dir)-4]
 		recursive = true
