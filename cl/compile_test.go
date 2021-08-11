@@ -1614,7 +1614,6 @@ func main() {
 }
 
 func TestLambdaExpr(t *testing.T) {
-	gox.SetDebug(gox.DbgFlagAll)
 	gopClTest(t, `
 func Map(c []float64, t func(float64) float64) {
 	// ...
