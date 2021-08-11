@@ -697,8 +697,8 @@ type foo struct {
 x := []struct{a int}{
 	{1}, {3}, {5},
 }
-y := map[foo]string{
-	{1}: "Hi",
+y := map[foo]struct{a string}{
+	{1}: {"Hi"},
 }
 z := [...]foo{
 	{1}, {3}, {5},
@@ -719,7 +719,11 @@ func main() {
 	}{3}, struct {
 		a int
 	}{5}}
-	y := map[foo]string{foo{1}: "Hi"}
+	y := map[foo]struct {
+		a string
+	}{foo{1}: struct {
+		a string
+	}{"Hi"}}
 	z := [...]foo{foo{1}, foo{3}, foo{5}}
 }
 `)
