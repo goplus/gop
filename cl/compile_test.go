@@ -693,8 +693,8 @@ func TestCompositeLit2(t *testing.T) {
 type foo struct {
 	A int
 }
-	
-x := []struct{a int}{
+
+x := []*struct{a int}{
 	{1}, {3}, {5},
 }
 y := map[foo]struct{a string}{
@@ -710,13 +710,13 @@ type foo struct {
 }
 
 func main() {
-	x := []struct {
+	x := []*struct {
 		a int
-	}{struct {
+	}{&struct {
 		a int
-	}{1}, struct {
+	}{1}, &struct {
 		a int
-	}{3}, struct {
+	}{3}, &struct {
 		a int
 	}{5}}
 	y := map[foo]struct {
@@ -725,6 +725,37 @@ func main() {
 		a string
 	}{"Hi"}}
 	z := [...]foo{foo{1}, foo{3}, foo{5}}
+}
+`)
+}
+
+func TestCompositeLit3(t *testing.T) {
+	gopClTest(t, `
+type Config struct {
+	A int
+}
+
+func foo(conf *Config) {
+}
+
+func bar(conf ...Config) {
+}
+
+foo({A: 1})
+bar({A: 2})
+`, `package main
+
+type Config struct {
+	A int
+}
+
+func foo(conf *Config) {
+}
+func bar(conf ...Config) {
+}
+func main() {
+	foo(&Config{A: 1})
+	bar(Config{A: 2})
 }
 `)
 }

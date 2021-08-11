@@ -64,7 +64,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 	case *ast.FuncLit:
 		compileFuncLit(ctx, v)
 	case *ast.CompositeLit:
-		compileCompositeLit(ctx, v, nil)
+		compileCompositeLit(ctx, v, nil, false)
 	case *ast.SliceLit:
 		compileSliceLit(ctx, v)
 	case *ast.IndexExpr:
@@ -216,6 +216,34 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, autoCall bool) {
 	panic(err)
 }
 
+type fnType struct {
+	params   *types.Tuple
+	n1       int
+	variadic bool
+}
+
+func (p *fnType) init(t *types.Signature) {
+	p.params, p.variadic = t.Params(), t.Variadic()
+	p.n1 = p.params.Len()
+	if p.variadic {
+		p.n1--
+	}
+}
+
+func (p *fnType) arg(i int, ellipsis bool) types.Type {
+	if i < p.n1 {
+		return p.params.At(i).Type()
+	}
+	if p.variadic {
+		t := p.params.At(p.n1).Type()
+		if ellipsis {
+			return t
+		}
+		return t.(*types.Slice).Elem()
+	}
+	return nil
+}
+
 func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
 	switch fn := v.Fun.(type) {
 	case *ast.Ident:
@@ -225,10 +253,20 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
 	default:
 		compileExpr(ctx, fn)
 	}
-	for _, arg := range v.Args {
-		compileExpr(ctx, arg)
+	var fn fnType
+	switch t := ctx.cb.Get(-1).Type.(type) {
+	case *types.Signature:
+		fn.init(t)
 	}
-	ctx.cb.CallWith(len(v.Args), v.Ellipsis != gotoken.NoPos, v)
+	ellipsis := (v.Ellipsis != gotoken.NoPos)
+	for i, arg := range v.Args {
+		if c, ok := arg.(*ast.CompositeLit); ok && c.Type == nil {
+			compileCompositeLit(ctx, c, fn.arg(i, ellipsis), true)
+		} else {
+			compileExpr(ctx, arg)
+		}
+	}
+	ctx.cb.CallWith(len(v.Args), ellipsis, v)
 }
 
 func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
@@ -317,12 +355,12 @@ func compileCompositeLitElts(ctx *blockCtx, elts []ast.Expr, kind int, expected 
 	for _, elt := range elts {
 		if kv, ok := elt.(*ast.KeyValueExpr); ok {
 			if key, ok := kv.Key.(*ast.CompositeLit); ok && key.Type == nil {
-				compileCompositeLit(ctx, key, expected.Key())
+				compileCompositeLit(ctx, key, expected.Key(), false)
 			} else {
 				compileExpr(ctx, kv.Key)
 			}
 			if val, ok := kv.Value.(*ast.CompositeLit); ok && val.Type == nil {
-				compileCompositeLit(ctx, val, expected.Elem())
+				compileCompositeLit(ctx, val, expected.Elem(), false)
 			} else {
 				compileExpr(ctx, kv.Value)
 			}
@@ -331,7 +369,7 @@ func compileCompositeLitElts(ctx *blockCtx, elts []ast.Expr, kind int, expected 
 				ctx.cb.None()
 			}
 			if val, ok := elt.(*ast.CompositeLit); ok && val.Type == nil {
-				compileCompositeLit(ctx, val, expected.Elem())
+				compileCompositeLit(ctx, val, expected.Elem(), false)
 			} else {
 				compileExpr(ctx, elt)
 			}
@@ -391,18 +429,33 @@ func (p *kvType) Elem() types.Type {
 	return p.required().val
 }
 
-func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, expected types.Type) {
+func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, expected types.Type, onlyStruct bool) {
+	var hasPtr bool
 	var typ, underlying types.Type
+	var kind = checkCompositeLitElts(ctx, v.Elts)
 	if v.Type != nil {
 		typ = toType(ctx, v.Type)
 		underlying = typ.Underlying()
 	} else if expected != nil {
-		typ = expected
-		underlying = typ.Underlying()
+		if t, ok := expected.(*types.Pointer); ok {
+			expected, hasPtr = t.Elem(), true
+		}
+		if onlyStruct {
+			if kind == compositeLitKeyVal {
+				t := expected.Underlying()
+				if _, ok := t.(*types.Struct); ok { // can't omit non-struct type
+					typ, underlying = expected, t
+				}
+			}
+		} else {
+			typ, underlying = expected, expected.Underlying()
+		}
 	}
-	kind := checkCompositeLitElts(ctx, v.Elts)
 	if t, ok := underlying.(*types.Struct); ok && kind == compositeLitKeyVal {
 		compileStructLitInKeyVal(ctx, v.Elts, t, typ)
+		if hasPtr {
+			ctx.cb.UnaryOp(gotoken.AND)
+		}
 		return
 	}
 	compileCompositeLitElts(ctx, v.Elts, kind, &kvType{underlying: underlying})
@@ -425,6 +478,9 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, expected types.Type
 		ctx.cb.StructLit(typ, n, false)
 	default:
 		log.Panicln("compileCompositeLit: unknown type -", reflect.TypeOf(underlying))
+	}
+	if hasPtr {
+		ctx.cb.UnaryOp(gotoken.AND)
 	}
 }
 
