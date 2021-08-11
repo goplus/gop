@@ -291,8 +291,8 @@ func plot2(fn func(x float64) (float64, float64)) {
     // ...
 }
 
-plot(x => x * x)          // plot(func(x float64) float64 { return x * x })
-plot(x => (x * x, x + x)) // plot2(func(x float64) (float64, float64) { return x * x, x + x })
+plot(x => x * x)           // plot(func(x float64) float64 { return x * x })
+plot2(x => (x * x, x + x)) // plot2(func(x float64) (float64, float64) { return x * x, x + x })
 ```
 
 ### Overload operators
