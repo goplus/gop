@@ -67,7 +67,7 @@ type Config struct {
 
 	// WorkingDir is the directory in which to run gop compiler.
 	// TargetDir is the directory in which to generate Go files.
-	// If SrcDir or TargetDir is empty, it is same as Dir.
+	// If WorkingDir or TargetDir is empty, it is same as Dir.
 	WorkingDir, TargetDir string
 
 	// Env is the environment to use when invoking the build system's query tool.
@@ -94,10 +94,10 @@ type Config struct {
 	// PkgsLoader is the Go+ packages loader (will be set if it is nil).
 	PkgsLoader *PkgsLoader
 
-	// CacheLoadPkgs set to cache all loaded packages or not.
+	// CacheLoadPkgs means to cache all loaded packages (or not).
 	CacheLoadPkgs bool
 
-	// NoFileLine = true means not generate file line comments.
+	// NoFileLine = true means not to generate file line comments.
 	NoFileLine bool
 }
 

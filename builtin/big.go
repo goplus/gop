@@ -14,7 +14,6 @@
 package builtin
 
 import (
-	"go/constant"
 	"math/big"
 )
 
@@ -298,17 +297,6 @@ func Gop_bigint_Init__2(x *big.Rat) Gop_bigint {
 	panic("TODO: can't init bigint from bigrat")
 }
 
-// Gop_bigint_Init: func bigint.init(x constant.Value) bigint
-func Gop_bigint_Init__3(x constant.Value) Gop_bigint {
-	switch v := constant.Val(x).(type) {
-	case int64:
-		return Gop_bigint{big.NewInt(v)}
-	case *big.Int:
-		return Gop_bigint{v}
-	}
-	panic("TODO: can't init bigint from a non integer")
-}
-
 // -----------------------------------------------------------------------------
 // type bigrat
 
@@ -466,22 +454,6 @@ func Gop_bigrat_Init__1(x Gop_untyped_bigint) Gop_bigrat {
 // Gop_bigrat_Init: func bigrat.init(x *big.Rat) bigrat
 func Gop_bigrat_Init__2(x *big.Rat) Gop_bigrat {
 	return Gop_bigrat{x}
-}
-
-// Gop_bigrat_Init: func bigrat.init(x constant.Value) bigrat
-func Gop_bigrat_Init__3(x constant.Value) Gop_bigrat {
-	switch v := constant.Val(x).(type) {
-	case int64:
-		return Gop_bigrat{big.NewRat(v, 1)}
-	case *big.Int:
-		return Gop_bigrat{new(big.Rat).SetInt(v)}
-	case *big.Rat:
-		return Gop_bigrat{v}
-	case *big.Float:
-		ret, _ := v.Rat(nil)
-		return Gop_bigrat{ret}
-	}
-	panic("TODO: init bigrat: not a number")
 }
 
 // -----------------------------------------------------------------------------
