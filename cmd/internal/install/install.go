@@ -25,6 +25,7 @@ import (
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gox"
 )
 
 // Cmd - gop install
@@ -34,8 +35,8 @@ var Cmd = &base.Command{
 }
 
 var (
-	flag = &Cmd.Flag
-	_    = flag.Bool("v", false, "print the names of packages as they are compiled.")
+	flag        = &Cmd.Flag
+	flagVerbose = flag.Bool("v", false, "print verbose information")
 )
 
 func init() {
@@ -54,6 +55,9 @@ func runCmd(cmd *base.Command, args []string) {
 		recursive = true
 	}
 
+	if *flagVerbose {
+		gox.SetDebug(gox.DbgFlagAll &^ gox.DbgFlagComments)
+	}
 	runner := new(gengo.Runner)
 	runner.SetAfter(func(p *gengo.Runner, dir string, flags int) error {
 		errs := p.ResetErrors()

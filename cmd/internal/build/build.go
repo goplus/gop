@@ -26,7 +26,7 @@ import (
 // Cmd - gop build
 var Cmd = &base.Command{
 	UsageLine: "gop build [-v] [-o output] <gopSrcDir|gopSrcFile>",
-	Short:     "Build Go+ files and execute go build command",
+	Short:     "Build Go+ files",
 }
 
 var (
