@@ -20,7 +20,6 @@ package test
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/goplus/gop/cl"
@@ -43,23 +42,11 @@ func init() {
 	Cmd.Run = runCmd
 }
 
-func skipSwitches(args []string) []string {
-	out := make([]string, 0, len(args))
-	for _, arg := range args {
-		if strings.HasPrefix(arg, "-") {
-			continue
-		}
-		out = append(out, arg)
-	}
-	return out
-}
-
 func runCmd(cmd *base.Command, args []string) {
-	ssargs := skipSwitches(args)
+	ssargs := base.SkipSwitches(args)
 	if len(ssargs) == 0 {
 		ssargs = []string{"."}
 	}
-	var exitCode int
 	var recursive bool
 	var dir = ssargs[0]
 	if strings.HasSuffix(dir, "/...") {
@@ -79,20 +66,7 @@ func runCmd(cmd *base.Command, args []string) {
 		return nil
 	})
 	runner.GenGo(dir, recursive, &cl.Config{CacheLoadPkgs: true})
-	goCmd(dir, "test", args...)
-	os.Exit(exitCode)
-}
-
-func goCmd(dir string, op string, args ...string) error {
-	opwargs := make([]string, len(args)+1)
-	opwargs[0] = op
-	copy(opwargs[1:], args)
-	cmd := exec.Command("go", opwargs...)
-	cmd.Dir = dir
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Env = os.Environ()
-	return cmd.Run()
+	base.RunGoCmd(dir, "test", args...)
 }
 
 // -----------------------------------------------------------------------------

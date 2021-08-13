@@ -162,15 +162,7 @@ func runCmd(cmd *base.Command, args []string) {
 	if err != nil {
 		log.Fatalln("saveGoFile failed:", err)
 	}
-	err = goRun(gofile, args)
-	if err != nil {
-		switch e := err.(type) {
-		case *exec.ExitError:
-			os.Stderr.Write(e.Stderr)
-		default:
-			log.Fatalln("go run failed:", err)
-		}
-	}
+	goRun(gofile, args)
 	if *flagProf {
 		panic("TODO: profile not impl")
 	}
@@ -185,7 +177,7 @@ func IsDir(target string) (bool, error) {
 	return fi.IsDir(), nil
 }
 
-func goRun(target string, args []string) error {
+func goRun(target string, args []string) {
 	dir, file := filepath.Split(target)
 	goArgs := make([]string, len(args)+2)
 	goArgs[0] = "run"
@@ -196,7 +188,16 @@ func goRun(target string, args []string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Env = os.Environ()
-	return cmd.Run()
+	err := cmd.Run()
+	if err != nil {
+		switch e := err.(type) {
+		case *exec.ExitError:
+			os.Stderr.Write(e.Stderr)
+			os.Exit(e.ExitCode())
+		default:
+			log.Fatalln("go run failed:", err)
+		}
+	}
 }
 
 func runGoPkg(src string, args []string) {
