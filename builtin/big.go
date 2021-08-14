@@ -17,6 +17,10 @@ import (
 	"math/big"
 )
 
+const (
+	GopPackage = true // to indicate this is a Go+ package
+)
+
 //
 // Gop_: Go+ object prefix
 // Gop_xxx_Cast: type Gop_xxx typecast
