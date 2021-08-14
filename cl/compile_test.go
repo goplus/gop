@@ -26,6 +26,7 @@ import (
 	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/parser/parsertest"
+	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
 	"golang.org/x/tools/go/packages"
@@ -54,6 +55,7 @@ func gopClTest(t *testing.T, gopcode, expected string) {
 	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", gopcode)
 	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", nil, 0)
 	if err != nil {
+		scanner.PrintError(os.Stderr, err)
 		t.Fatal("ParseFSDir:", err)
 	}
 	conf := *baseConf.Ensure()
@@ -956,6 +958,138 @@ func main() {
 	for range a {
 		fmt.Println("Hi")
 	}
+}
+`)
+}
+
+func TestRangeStmtUDT(t *testing.T) {
+	gopClTest(t, `
+type foo struct {
+}
+
+func (p *foo) Gop_Enum(c func(key int, val string)) {
+}
+
+for k, v := range new(foo) {
+	println(k, v)
+}
+`, `package main
+
+import fmt "fmt"
+
+type foo struct {
+}
+
+func (p *foo) Gop_Enum(c func(key int, val string)) {
+}
+func main() {
+	new(foo).Gop_Enum(func(k int, v string) {
+		fmt.Println(k, v)
+	})
+}
+`)
+}
+
+func TestForPhraseUDT(t *testing.T) {
+	gopClTest(t, `
+type foo struct {
+}
+
+func (p *foo) Gop_Enum(c func(val string)) {
+}
+
+for v <- new(foo) {
+	println(v)
+}
+`, `package main
+
+import fmt "fmt"
+
+type foo struct {
+}
+
+func (p *foo) Gop_Enum(c func(val string)) {
+}
+func main() {
+	new(foo).Gop_Enum(func(v string) {
+		fmt.Println(v)
+	})
+}
+`)
+}
+
+func TestForPhraseUDT2(t *testing.T) {
+	gopClTest(t, `
+type fooIter struct {
+}
+
+func (p fooIter) Next() (key string, val int, ok bool) {
+	return
+}
+
+type foo struct {
+}
+
+func (p *foo) Gop_Enum() fooIter {
+}
+
+for k, v <- new(foo) {
+	println(k, v)
+}
+`, `package main
+
+import fmt "fmt"
+
+type fooIter struct {
+}
+
+func (p fooIter) Next() (key string, val int, ok bool) {
+	return
+}
+
+type foo struct {
+}
+
+func (p *foo) Gop_Enum() fooIter {
+}
+func main() {
+	for _gop_it := new(foo).Gop_Enum(); ; {
+		var _gop_ok bool
+		k, v, _gop_ok := _gop_it.Next()
+		if !_gop_ok {
+			break
+		}
+		fmt.Println(k, v)
+	}
+}
+`)
+}
+
+func TestForPhraseUDT3(t *testing.T) {
+	gopClTest(t, `
+type foo struct {
+}
+
+func (p *foo) Gop_Enum(c func(val string)) {
+}
+
+println([v for v <- new(foo)])
+`, `package main
+
+import fmt "fmt"
+
+type foo struct {
+}
+
+func (p *foo) Gop_Enum(c func(val string)) {
+}
+func main() {
+	fmt.Println(func() (_gop_ret []string) {
+		new(foo).Gop_Enum(func(v string) {
+			_gop_ret = append(_gop_ret, v)
+		})
+		return
+	}())
 }
 `)
 }

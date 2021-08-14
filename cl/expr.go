@@ -539,9 +539,10 @@ func comprehensionKind(v *ast.ComprehensionExpr) int {
 	panic("TODO: invalid comprehensionExpr")
 }
 
-// {for k, v <- listOrMap, cond}
-// {expr for k, v <- listOrMap, cond}
-// {kexpr: vexpr for k, v <- listOrMap, cond}
+// [expr for k, v <- container, cond]
+// {for k, v <- container, cond}
+// {expr for k, v <- container, cond}
+// {kexpr: vexpr for k, v <- container, cond}
 func compileComprehensionExpr(ctx *blockCtx, v *ast.ComprehensionExpr, twoValue bool) {
 	kind := comprehensionKind(v)
 	pkg, cb := ctx.pkg, ctx.cb
@@ -575,7 +576,7 @@ func compileComprehensionExpr(ctx *blockCtx, v *ast.ComprehensionExpr, twoValue 
 		names = append(names, forStmt.Value.Name)
 		cb.ForRange(names...)
 		compileExpr(ctx, forStmt.X)
-		cb.RangeAssignThen()
+		cb.RangeAssignThen(forStmt.TokPos)
 		if forStmt.Cond != nil {
 			cb.If()
 			compileExpr(ctx, forStmt.Cond)

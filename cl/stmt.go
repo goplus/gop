@@ -216,7 +216,11 @@ func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 		}
 		compileExpr(ctx, v.X)
 	}
-	cb.RangeAssignThen()
+	pos := v.TokPos
+	if pos == 0 {
+		pos = v.For
+	}
+	cb.RangeAssignThen(pos)
 	compileStmts(ctx, v.Body.List)
 	cb.SetComments(comments, true)
 	cb.End()
@@ -236,7 +240,7 @@ func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
 	}
 	cb.ForRange(names...)
 	compileExpr(ctx, v.X)
-	cb.RangeAssignThen()
+	cb.RangeAssignThen(v.TokPos)
 	if v.Cond != nil {
 		cb.If()
 		compileExpr(ctx, v.Cond)
