@@ -38,7 +38,7 @@ var (
 )
 
 func init() {
-	// gox.SetDebug(gox.DbgFlagAll)
+	gox.SetDebug(gox.DbgFlagAll | gox.DbgFlagPanicTesting)
 	gblFset = token.NewFileSet()
 	baseConf = &cl.Config{
 		Fset:          gblFset,

@@ -398,7 +398,8 @@ func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, fil
 			if d.Recv == nil {
 				name := d.Name
 				fn := func() {
-					p.SetInTestingFile(testingFile)
+					old := p.SetInTestingFile(testingFile)
+					defer p.SetInTestingFile(old)
 					loadFunc(ctx, nil, d)
 				}
 				if name.Name == "init" {
@@ -410,7 +411,8 @@ func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, fil
 				if name, ok := getRecvTypeName(parent, d.Recv, true); ok {
 					ld := getTypeLoader(syms, token.NoPos, name)
 					ld.methods = append(ld.methods, func() {
-						p.SetInTestingFile(testingFile)
+						old := p.SetInTestingFile(testingFile)
+						defer p.SetInTestingFile(old)
 						doInitType(ld)
 						recv := toRecv(ctx, d.Recv)
 						loadFunc(ctx, recv, d)
@@ -430,7 +432,8 @@ func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, fil
 					name := t.Name.Name
 					ld := getTypeLoader(syms, t.Name.Pos(), name)
 					ld.typ = func() {
-						p.SetInTestingFile(testingFile)
+						old := p.SetInTestingFile(testingFile)
+						defer p.SetInTestingFile(old)
 						if t.Assign != token.NoPos { // alias type
 							ctx.pkg.AliasType(name, toType(ctx, t.Type))
 							return
@@ -446,7 +449,8 @@ func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, fil
 					vSpec := spec.(*ast.ValueSpec)
 					setNamesLoader(parent, syms, vSpec.Names, func() {
 						if v := vSpec; v != nil { // only init once
-							p.SetInTestingFile(testingFile)
+							old := p.SetInTestingFile(testingFile)
+							defer p.SetInTestingFile(old)
 							vSpec = nil
 							names := makeNames(v.Names)
 							loadConsts(ctx, names, v)
@@ -459,7 +463,8 @@ func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, fil
 					vSpec := spec.(*ast.ValueSpec)
 					setNamesLoader(parent, syms, vSpec.Names, func() {
 						if v := vSpec; v != nil { // only init once
-							p.SetInTestingFile(testingFile)
+							old := p.SetInTestingFile(testingFile)
+							defer p.SetInTestingFile(old)
 							vSpec = nil
 							names := makeNames(v.Names)
 							loadVars(ctx, names, v)
