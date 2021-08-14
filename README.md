@@ -280,6 +280,65 @@ for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
 ```
 
 
+### For range of UDT
+
+```go
+type Foo struct {
+}
+
+// Gop_Enum(proc func(val ValType)) or:
+// Gop_Enum(proc func(key KeyType, val ValType))
+func (p *Foo) Gop_Enum(proc func(key int, val string)) {
+    // ...
+}
+
+foo := &Foo{}
+for k, v := range foo {
+    println(k, v)
+}
+
+for k, v <- foo {
+    println(k, v)
+}
+
+println({v: k for k, v <- foo})
+```
+
+**Note: you can't use break/continue or return statements in for range of udt.Gop_Enum(callback).**
+
+
+### For range of UDT2
+
+```go
+type FooIter struct {
+}
+
+// (Iterator) Next() (val ValType, ok bool) or:
+// (Iterator) Next() (key KeyType, val ValType, ok bool)
+func (p *FooIter) Next() (key int, val string, ok bool) {
+    // ...
+}
+
+type Foo struct {
+}
+
+// Gop_Enum() Iterator
+func (p *Foo) Gop_Enum() *FooIter {
+    // ...
+}
+
+foo := &Foo{}
+for k, v := range foo {
+    println(k, v)
+}
+
+for k, v <- foo {
+    println(k, v)
+}
+
+println({v: k for k, v <- foo})
+```
+
 ### Lambda expression
 
 ```go
