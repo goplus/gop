@@ -170,6 +170,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		BuildFlags:      conf.BuildFlags,
 		Fset:            conf.Fset,
 		LoadPkgs:        conf.PkgsLoader.LoadPkgs,
+		LoadNamed:       ctx.loadNamed,
 		HandleErr:       ctx.handleErr,
 		NodeInterpreter: interp,
 		Prefix:          gopPrefix,
@@ -345,6 +346,13 @@ func (p *pkgCtx) handleCodeErrorf(pos *token.Position, format string, args ...in
 
 func (p *pkgCtx) handleErr(err error) {
 	p.errs = append(p.errs, err)
+}
+
+func (p *pkgCtx) loadNamed(at *gox.Package, t *types.Named) {
+	o := t.Obj()
+	if o.Pkg() == at.Types {
+		p.loadType(o.Name())
+	}
 }
 
 func (p *pkgCtx) complete() error {

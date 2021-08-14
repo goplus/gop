@@ -1,0 +1,32 @@
+type fooIter struct {
+	data *foo
+	idx  int
+}
+
+func (p *fooIter) Next() (key int, val string, ok bool) {
+	if p.idx < len(p.data.key) {
+		key, val, ok = p.data.key[p.idx], p.data.val[p.idx], true
+		p.idx++
+	}
+	return
+}
+
+type foo struct {
+	key []int
+	val []string
+}
+
+func newFoo() *foo {
+	return &foo{key: [3, 7], val: ["Hi", "Go+"]}
+}
+
+func (p *foo) Gop_Enum() *fooIter {
+	return &fooIter{data: p}
+}
+
+obj := newFoo()
+for k, v <- obj {
+	println(k, v)
+}
+
+println({v: k for k, v <- obj})

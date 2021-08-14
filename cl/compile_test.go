@@ -38,7 +38,7 @@ var (
 )
 
 func init() {
-	gox.SetDebug(gox.DbgFlagAll | gox.DbgFlagPanicTesting)
+	gox.SetDebug(gox.DbgFlagAll)
 	gblFset = token.NewFileSet()
 	baseConf = &cl.Config{
 		Fset:          gblFset,
@@ -1090,6 +1090,76 @@ func main() {
 		})
 		return
 	}())
+}
+`)
+}
+
+func TestForPhraseUDT4(t *testing.T) {
+	gopClTest(t, `
+type fooIter struct {
+	data *foo
+	idx  int
+}
+
+func (p *fooIter) Next() (key int, val string, ok bool) {
+	if p.idx < len(p.data.key) {
+		key, val, ok = p.data.key[p.idx], p.data.val[p.idx], true
+		p.idx++
+	}
+	return
+}
+
+type foo struct {
+	key []int
+	val []string
+}
+
+func newFoo() *foo {
+	return &foo{key: [3, 7], val: ["Hi", "Go+"]}
+}
+
+func (p *foo) Gop_Enum() *fooIter {
+	return &fooIter{data: p}
+}
+
+for k, v <- newFoo() {
+	println(k, v)
+}
+`, `package main
+
+import fmt "fmt"
+
+type fooIter struct {
+	data *foo
+	idx  int
+}
+type foo struct {
+	key []int
+	val []string
+}
+
+func (p *fooIter) Next() (key int, val string, ok bool) {
+	if p.idx < len(p.data.key) {
+		key, val, ok = p.data.key[p.idx], p.data.val[p.idx], true
+		p.idx++
+	}
+	return
+}
+func (p *foo) Gop_Enum() *fooIter {
+	return &fooIter{data: p}
+}
+func newFoo() *foo {
+	return &foo{key: []int{3, 7}, val: []string{"Hi", "Go+"}}
+}
+func main() {
+	for _gop_it := newFoo().Gop_Enum(); ; {
+		var _gop_ok bool
+		k, v, _gop_ok := _gop_it.Next()
+		if !_gop_ok {
+			break
+		}
+		fmt.Println(k, v)
+	}
 }
 `)
 }
