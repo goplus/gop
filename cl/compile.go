@@ -38,7 +38,8 @@ const (
 
 const (
 	DbgFlagLoad = 1 << iota
-	DbgFlagAll  = DbgFlagLoad
+	DbgFlagLookup
+	DbgFlagAll = DbgFlagLoad | DbgFlagLookup
 )
 
 var (
@@ -46,7 +47,8 @@ var (
 )
 
 var (
-	debugLoad bool
+	debugLoad   bool
+	debugLookup bool
 )
 
 func SetDisableRecover(disableRecover bool) {
@@ -55,6 +57,7 @@ func SetDisableRecover(disableRecover bool) {
 
 func SetDebug(flags int) {
 	debugLoad = (flags & DbgFlagLoad) != 0
+	debugLookup = (flags & DbgFlagLookup) != 0
 }
 
 // -----------------------------------------------------------------------------

@@ -80,6 +80,14 @@ func foo(v map[int]len) {
 }
 `)
 	codeErrorTest(t,
+		"./bar.gop:5:20 bar is not a type", `package main
+
+var bar = 1
+
+func foo(v map[int]bar) {
+}
+`)
+	codeErrorTest(t,
 		"./bar.gop:2:6 use of builtin len not in function call", `func main() {
 	new(len)
 }

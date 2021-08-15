@@ -352,15 +352,28 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, allowBuiltin bool) {
 func lookupParent(ctx *blockCtx, name string) (types.Object, *gox.PkgRef, types.Object) {
 	at, o := ctx.cb.Scope().LookupParent(name, token.NoPos)
 	if o != nil && at != types.Universe {
+		if debugLookup {
+			log.Println("==> LookupParent", name, "=>", o)
+		}
 		return o, nil, nil
 	}
 	if ctx.loadSymbol(name) {
-		return ctx.pkg.Types.Scope().Lookup(name), nil, nil
+		o = ctx.pkg.Types.Scope().Lookup(name)
+		if debugLookup {
+			log.Println("==> Lookup (LoadSymbol)", name, "=>", o)
+		}
+		return o, nil, nil
 	}
 	if pkgRef, ok := ctx.imports[name]; ok {
+		if debugLookup {
+			log.Println("==> Lookup (ImportPkgs)", name)
+		}
 		return nil, pkgRef, nil
 	}
 	if obj := ctx.pkg.Builtin().Ref(name); obj != nil {
+		if debugLookup {
+			log.Println("==> Lookup (Builtin)", name)
+		}
 		return obj, nil, o
 	}
 	return o, nil, o
