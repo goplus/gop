@@ -222,6 +222,18 @@ foo({Dir: "/foo/bar", Level: 1})
 
 Here `foo({Dir: "/foo/bar", Level: 1})` is equivalent to `foo(&Config{Dir: "/foo/bar", Level: 1})`. However, you can't replace `foo(&Config{"/foo/bar", 1})` with `foo({"/foo/bar", 1})`, because it is confusing to consider `{"/foo/bar", 1}` as a struct literal.
 
+You also can omit struct types in a return statement. For example:
+
+```go
+type Result struct {
+    Text string
+}
+
+func foo() *Result {
+    return {Text: "Hi, Go+"} // return &Result{Text: "Hi, Go+"}
+}
+```
+
 
 ### List comprehension
 

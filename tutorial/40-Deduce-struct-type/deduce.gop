@@ -3,8 +3,14 @@ type Config struct {
 	Level int
 }
 
-func foo(conf *Config) {
-	println("conf:", *conf)
+type Result struct {
+	Text string
 }
 
-foo({Dir: "/foo/bar", Level: 1})
+func foo(conf *Config) *Result {
+	println("conf:", *conf)
+	return {Text: "Hello, Go+"}
+}
+
+ret := foo({Dir: "/foo/bar", Level: 1})
+println(ret)
