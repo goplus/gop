@@ -229,7 +229,6 @@ func foo(shape Shape) {
 `)
 }
 
-// TODO: why Area is comming before Circle?
 func TestInterfaceExample(t *testing.T) {
 	gopClTest(t, `
 type Shape interface {
@@ -731,6 +730,7 @@ func main() {
 `)
 }
 
+// deduce struct type as parameters of a function call
 func TestCompositeLit3(t *testing.T) {
 	gopClTest(t, `
 type Config struct {
@@ -758,6 +758,28 @@ func bar(conf ...Config) {
 func main() {
 	foo(&Config{A: 1})
 	bar(Config{A: 2})
+}
+`)
+}
+
+// deduce struct type as results of a function call
+func TestCompositeLit4(t *testing.T) {
+	gopClTest(t, `
+type Result struct {
+	A int
+}
+
+func foo() *Result {
+	return {A: 1}
+}
+`, `package main
+
+type Result struct {
+	A int
+}
+
+func foo() *Result {
+	return &Result{A: 1}
 }
 `)
 }

@@ -24,6 +24,7 @@ import (
 
 	goast "go/ast"
 	gotoken "go/token"
+	"go/types"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
@@ -117,8 +118,22 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 }
 
 func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
-	for _, ret := range expr.Results {
-		compileExpr(ctx, ret)
+	var n = -1
+	var results *types.Tuple
+	for i, ret := range expr.Results {
+		if c, ok := ret.(*ast.CompositeLit); ok && c.Type == nil {
+			if n < 0 {
+				results = ctx.cb.Func().Type().(*types.Signature).Results()
+				n = results.Len()
+			}
+			var typ types.Type
+			if i < n {
+				typ = results.At(i).Type()
+			}
+			compileCompositeLit(ctx, c, typ, true)
+		} else {
+			compileExpr(ctx, ret)
+		}
 	}
 	ctx.cb.Return(len(expr.Results), expr)
 }
