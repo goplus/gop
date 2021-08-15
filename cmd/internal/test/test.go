@@ -44,6 +44,7 @@ func init() {
 }
 
 func runCmd(cmd *base.Command, args []string) {
+	flag.Parse(args)
 	ssargs := base.SkipSwitches(args)
 	if len(ssargs) == 0 {
 		ssargs = []string{"."}
