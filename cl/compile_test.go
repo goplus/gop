@@ -1575,6 +1575,19 @@ func main() {
 `)
 }
 
+func TestImportForceUsed(t *testing.T) {
+	gopClTest(t, `import _ "fmt"
+
+func main() {
+}`, `package main
+
+import _ "fmt"
+
+func main() {
+}
+`)
+}
+
 func TestAnonymousImport(t *testing.T) {
 	gopClTest(t, `println("Hello")
 printf("Hello Go+\n")

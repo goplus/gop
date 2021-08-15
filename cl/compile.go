@@ -596,8 +596,12 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 	var name string
 	if spec.Name != nil {
 		name = spec.Name.Name
+		if name == "_" {
+			pkg.MarkForceUsed()
+			return
+		}
 	} else {
-		name = path.Base(pkgPath) // TODO: pkg.Name()
+		name = path.Base(pkgPath)
 	}
 	ctx.imports[name] = pkg
 }
