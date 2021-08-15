@@ -44,7 +44,10 @@ func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
 	if ctx.fileLine {
 		start := stmt.Pos()
 		pos := ctx.fset.Position(start)
-		line := fmt.Sprintf("\n//line %s:%d", relFile(ctx.targetDir, pos.Filename), pos.Line)
+		if ctx.relativePath {
+			pos.Filename = relFile(ctx.targetDir, pos.Filename)
+		}
+		line := fmt.Sprintf("\n//line %s:%d", pos.Filename, pos.Line)
 		comments := &goast.CommentGroup{
 			List: []*goast.Comment{{Text: line}},
 		}

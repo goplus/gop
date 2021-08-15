@@ -58,6 +58,8 @@ func runCmd(cmd *base.Command, args []string) {
 
 	if *flagVerbose {
 		gox.SetDebug(gox.DbgFlagAll &^ gox.DbgFlagComments)
+		cl.SetDebug(cl.DbgFlagAll)
+		cl.SetDisableRecover(true)
 	}
 	runner := new(gengo.Runner)
 	runner.SetAfter(func(p *gengo.Runner, dir string, flags int) error {

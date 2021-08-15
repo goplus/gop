@@ -157,7 +157,8 @@ func toIdentType(ctx *blockCtx, ident *ast.Ident) types.Type {
 	if t, ok := v.(*types.TypeName); ok {
 		return t.Type()
 	}
-	panic("TODO: not a type")
+	log.Panicln("TODO: not a type -", v, ident.Name)
+	return nil
 }
 
 func toStructType(ctx *blockCtx, v *ast.StructType) *types.Struct {

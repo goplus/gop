@@ -103,17 +103,20 @@ func runCmd(cmd *base.Command, args []string) {
 	} else if *flagDebug {
 		log.SetOutputLevel(log.Ldebug)
 		gox.SetDebug(gox.DbgFlagAll)
+		cl.SetDebug(cl.DbgFlagAll)
 	}
 	if *flagVerbose {
 		gox.SetDebug(gox.DbgFlagAll &^ gox.DbgFlagComments)
+		cl.SetDebug(cl.DbgFlagAll)
+		cl.SetDisableRecover(true)
 	} else if *flagAsm {
 		gox.SetDebug(gox.DbgFlagInstruction)
 	}
 	if *flagProf {
 		panic("TODO: profile not impl")
 	}
-	fset := token.NewFileSet()
 
+	fset := token.NewFileSet()
 	src, _ := filepath.Abs(flag.Arg(0))
 	isDir, err := IsDir(src)
 	if err != nil {

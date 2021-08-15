@@ -36,12 +36,25 @@ const (
 	gopPrefix = "Gop_"
 )
 
+const (
+	DbgFlagLoad = 1 << iota
+	DbgFlagAll  = DbgFlagLoad
+)
+
 var (
 	enableRecover = true
 )
 
+var (
+	debugLoad bool
+)
+
 func SetDisableRecover(disableRecover bool) {
 	enableRecover = !disableRecover
+}
+
+func SetDebug(flags int) {
+	debugLoad = (flags & DbgFlagLoad) != 0
 }
 
 // -----------------------------------------------------------------------------
@@ -99,6 +112,9 @@ type Config struct {
 
 	// NoFileLine = true means not to generate file line comments.
 	NoFileLine bool
+
+	// RelativePath = true means to generate file line comments with relative file path.
+	RelativePath bool
 }
 
 func (conf *Config) Ensure() *Config {
@@ -177,11 +193,10 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		ParseFile:       nil, // TODO
 		NewBuiltin:      newBuiltinDefault,
 	}
-	fileLine := !conf.NoFileLine
 	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
 	for fpath, f := range pkg.Files {
 		testingFile := strings.HasSuffix(fpath, "_test.gop")
-		loadFile(p, ctx, f, targetDir, fileLine, testingFile)
+		loadFile(p, ctx, f, targetDir, testingFile, conf)
 	}
 	for _, f := range pkg.Files {
 		for _, decl := range f.Decls {
@@ -323,12 +338,13 @@ type pkgCtx struct {
 
 type blockCtx struct {
 	*pkgCtx
-	pkg       *gox.Package
-	cb        *gox.CodeBuilder
-	fset      *token.FileSet
-	targetDir string
-	fileLine  bool
-	imports   map[string]*gox.PkgRef
+	pkg          *gox.Package
+	cb           *gox.CodeBuilder
+	fset         *token.FileSet
+	imports      map[string]*gox.PkgRef
+	targetDir    string
+	fileLine     bool
+	relativePath bool
 }
 
 func newCodeErrorf(pos *token.Position, format string, args ...interface{}) *gox.CodeError {
@@ -399,11 +415,12 @@ func (p *pkgCtx) loadSymbol(name string) bool {
 	return false
 }
 
-func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, fileLine, testingFile bool) {
+func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, testingFile bool, conf *Config) {
 	syms := parent.syms
+	fileLine := !conf.NoFileLine
 	ctx := &blockCtx{
-		pkg: p, pkgCtx: parent, cb: p.CB(), fset: p.Fset, targetDir: targetDir, fileLine: fileLine,
-		imports: make(map[string]*gox.PkgRef),
+		pkg: p, pkgCtx: parent, cb: p.CB(), fset: p.Fset, targetDir: targetDir,
+		fileLine: fileLine, relativePath: conf.RelativePath, imports: make(map[string]*gox.PkgRef),
 	}
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
@@ -416,12 +433,21 @@ func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, fil
 					loadFunc(ctx, nil, d)
 				}
 				if name.Name == "init" {
+					if debugLoad {
+						log.Println("==> Preload func init")
+					}
 					parent.inits = append(parent.inits, fn)
 				} else {
+					if debugLoad {
+						log.Println("==> Preload func", name.Name)
+					}
 					initLoader(parent, syms, name.Pos(), name.Name, fn)
 				}
 			} else {
 				if name, ok := getRecvTypeName(parent, d.Recv, true); ok {
+					if debugLoad {
+						log.Printf("==> Preload method %s.%s\n", name, d.Name.Name)
+					}
 					ld := getTypeLoader(syms, token.NoPos, name)
 					ld.methods = append(ld.methods, func() {
 						old := p.SetInTestingFile(testingFile)
@@ -443,16 +469,28 @@ func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, fil
 				for _, spec := range d.Specs {
 					t := spec.(*ast.TypeSpec)
 					name := t.Name.Name
+					if debugLoad {
+						log.Println("==> Preload type", name)
+					}
 					ld := getTypeLoader(syms, t.Name.Pos(), name)
 					ld.typ = func() {
 						old := p.SetInTestingFile(testingFile)
 						defer p.SetInTestingFile(old)
 						if t.Assign != token.NoPos { // alias type
+							if debugLoad {
+								log.Println("==> Load > AliasType", name)
+							}
 							ctx.pkg.AliasType(name, toType(ctx, t.Type))
 							return
 						}
+						if debugLoad {
+							log.Println("==> Load > NewType", name)
+						}
 						decl := ctx.pkg.NewType(name)
 						ld.typInit = func() { // decycle
+							if debugLoad {
+								log.Println("==> Load > InitType", name)
+							}
 							decl.InitType(ctx.pkg, toType(ctx, t.Type))
 						}
 					}
@@ -460,6 +498,9 @@ func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, fil
 			case token.CONST:
 				for _, spec := range d.Specs {
 					vSpec := spec.(*ast.ValueSpec)
+					if debugLoad {
+						log.Println("==> Preload const", vSpec.Names)
+					}
 					setNamesLoader(parent, syms, vSpec.Names, func() {
 						if v := vSpec; v != nil { // only init once
 							old := p.SetInTestingFile(testingFile)
@@ -474,6 +515,9 @@ func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, fil
 			case token.VAR:
 				for _, spec := range d.Specs {
 					vSpec := spec.(*ast.ValueSpec)
+					if debugLoad {
+						log.Println("==> Preload var", vSpec.Names)
+					}
 					setNamesLoader(parent, syms, vSpec.Names, func() {
 						if v := vSpec; v != nil { // only init once
 							old := p.SetInTestingFile(testingFile)
@@ -496,15 +540,26 @@ func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, fil
 
 func loadType(ctx *blockCtx, t *ast.TypeSpec) {
 	pkg := ctx.pkg
+	name := t.Name.Name
+	if debugLoad {
+		log.Println("==> Load type", name)
+	}
 	if t.Assign != token.NoPos { // alias type
-		pkg.AliasType(t.Name.Name, toType(ctx, t.Type))
+		pkg.AliasType(name, toType(ctx, t.Type))
 	} else {
-		pkg.NewType(t.Name.Name).InitType(pkg, toType(ctx, t.Type))
+		pkg.NewType(name).InitType(pkg, toType(ctx, t.Type))
 	}
 }
 
 func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
 	name := d.Name.Name
+	if debugLoad {
+		if recv == nil {
+			log.Println("==> Load func", name)
+		} else {
+			log.Printf("==> Load method %v.%s\n", recv.Type(), name)
+		}
+	}
 	if d.Operator {
 		if recv != nil { // binary op
 			if v, ok := binaryGopNames[name]; ok {
@@ -611,6 +666,9 @@ func loadConsts(ctx *blockCtx, names []string, v *ast.ValueSpec) {
 	if v.Type != nil {
 		typ = toType(ctx, v.Type)
 	}
+	if debugLoad {
+		log.Println("==> Load const", typ, names)
+	}
 	cb := ctx.pkg.NewConstStart(v.Names[0].Pos(), typ, names...)
 	for _, val := range v.Values {
 		compileExpr(ctx, val)
@@ -622,6 +680,9 @@ func loadVars(ctx *blockCtx, names []string, v *ast.ValueSpec) {
 	var typ types.Type
 	if v.Type != nil {
 		typ = toType(ctx, v.Type)
+	}
+	if debugLoad {
+		log.Println("==> Load var", typ, names)
 	}
 	varDecl := ctx.pkg.NewVar(v.Names[0].Pos(), typ, names...)
 	if v.Values != nil {

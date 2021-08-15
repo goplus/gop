@@ -99,11 +99,12 @@ func init() {
 
 func runCmd(cmd *base.Command, args []string) {
 	flag.Parse(args)
-	if flag.NArg() < 1 {
-		cmd.Usage(os.Stderr)
-		return
+	var dir string
+	if flag.NArg() == 0 {
+		dir = "."
+	} else {
+		dir = flag.Arg(0)
 	}
-	dir := flag.Arg(0)
 	cleanAGFiles(dir)
 }
 
