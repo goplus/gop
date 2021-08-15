@@ -295,13 +295,11 @@ func (p *typeLoader) load() {
 	doInitMethods(p)
 }
 
-func doNewType(ld *typeLoader) bool {
+func doNewType(ld *typeLoader) {
 	if typ := ld.typ; typ != nil {
 		ld.typ = nil
 		typ()
-		return true
 	}
-	return false
 }
 
 func doInitType(ld *typeLoader) {
@@ -409,7 +407,8 @@ func (p *pkgCtx) loadSymbol(name string) bool {
 
 	if f, ok := p.syms[name]; ok {
 		if ld, ok := f.(*typeLoader); ok {
-			return doNewType(ld) // create this type, but don't init
+			doNewType(ld) // create this type, but don't init
+			return true
 		}
 		delete(p.syms, name)
 		f.load()

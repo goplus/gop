@@ -358,11 +358,12 @@ func lookupParent(ctx *blockCtx, name string) (types.Object, *gox.PkgRef, types.
 		return o, nil, nil
 	}
 	if ctx.loadSymbol(name) {
-		o = ctx.pkg.Types.Scope().Lookup(name)
-		if debugLookup {
-			log.Println("==> Lookup (LoadSymbol)", name, "=>", o)
+		if v := ctx.pkg.Types.Scope().Lookup(name); v != nil {
+			if debugLookup {
+				log.Println("==> Lookup (LoadSymbol)", name, "=>", v)
+			}
+			return v, nil, nil
 		}
-		return o, nil, nil
 	}
 	if pkgRef, ok := ctx.imports[name]; ok {
 		if debugLookup {
@@ -375,6 +376,9 @@ func lookupParent(ctx *blockCtx, name string) (types.Object, *gox.PkgRef, types.
 			log.Println("==> Lookup (Builtin)", name)
 		}
 		return obj, nil, o
+	}
+	if debugLookup && o != nil {
+		log.Println("==> Lookup (Universe)", name)
 	}
 	return o, nil, o
 }
