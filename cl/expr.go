@@ -485,6 +485,17 @@ func (p *kvType) Elem() types.Type {
 	return p.required().val
 }
 
+func getUnderlying(ctx *blockCtx, typ types.Type) types.Type {
+	u := typ.Underlying()
+	if u == nil {
+		if t, ok := typ.(*types.Named); ok {
+			ctx.loadNamed(ctx.pkg, t)
+			u = t.Underlying()
+		}
+	}
+	return u
+}
+
 func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, expected types.Type, onlyStruct bool) {
 	var hasPtr bool
 	var typ, underlying types.Type
@@ -498,13 +509,13 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, expected types.Type
 		}
 		if onlyStruct {
 			if kind == compositeLitKeyVal {
-				t := expected.Underlying()
+				t := getUnderlying(ctx, expected)
 				if _, ok := t.(*types.Struct); ok { // can't omit non-struct type
 					typ, underlying = expected, t
 				}
 			}
 		} else {
-			typ, underlying = expected, expected.Underlying()
+			typ, underlying = expected, getUnderlying(ctx, expected)
 		}
 	}
 	if t, ok := underlying.(*types.Struct); ok && kind == compositeLitKeyVal {

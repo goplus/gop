@@ -503,23 +503,32 @@ func compileDeclStmt(ctx *blockCtx, expr *ast.DeclStmt) {
 		switch d.Tok {
 		case token.TYPE:
 			for _, spec := range d.Specs {
-				loadType(ctx, spec.(*ast.TypeSpec))
+				compileType(ctx, spec.(*ast.TypeSpec))
 			}
 		case token.CONST:
 			for _, spec := range d.Specs {
 				v := spec.(*ast.ValueSpec)
 				names := makeNames(v.Names)
-				loadConsts(ctx, names, v)
+				loadConsts(ctx, names, v) // TODO: check bug
 			}
 		case token.VAR:
 			for _, spec := range d.Specs {
 				v := spec.(*ast.ValueSpec)
 				names := makeNames(v.Names)
-				loadVars(ctx, names, v)
+				loadVars(ctx, names, v) // TODO: check bug
 			}
 		default:
 			log.Panicln("TODO: compileDeclStmt - unknown")
 		}
+	}
+}
+
+func compileType(ctx *blockCtx, t *ast.TypeSpec) {
+	name := t.Name.Name
+	if t.Assign != token.NoPos { // alias type
+		ctx.cb.AliasType(name, toType(ctx, t.Type))
+	} else {
+		ctx.cb.NewType(name).InitType(ctx.pkg, toType(ctx, t.Type))
 	}
 }
 

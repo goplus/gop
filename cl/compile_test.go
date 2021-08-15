@@ -2126,3 +2126,68 @@ func TestGopkgDep(t *testing.T) {
 		t.Fatal("pkg name:", pkgs[0].Name)
 	}
 }
+
+func TestCallDep(t *testing.T) {
+	gopClTest(t, `
+import (
+	"reflect"
+	"testing"
+)
+
+func TestNew(t *testing.T) {
+	ret := New()
+	expected := Result{}
+	if reflect.DeepEqual(ret, expected) {
+		t.Fatal("Test failed:", ret, expected)
+	}
+}
+
+type Repo struct {
+	Title string
+}
+
+func newRepo() Repo {
+	return {Title: "Hi"}
+}
+
+type Result struct {
+	Repo Repo
+}
+
+func New() Result {
+	repo := newRepo()
+	return {Repo: repo}
+}
+`, `package main
+
+import (
+	reflect "reflect"
+	testing "testing"
+)
+
+func TestNew(t *testing.T) {
+	ret := New()
+	expected := Result{}
+	if reflect.DeepEqual(ret, expected) {
+		t.Fatal("Test failed:", ret, expected)
+	}
+}
+
+type Result struct {
+	Repo Repo
+}
+
+func New() Result {
+	repo := newRepo()
+	return Result{Repo: repo}
+}
+
+type Repo struct {
+	Title string
+}
+
+func newRepo() Repo {
+	return Repo{Title: "Hi"}
+}
+`)
+}

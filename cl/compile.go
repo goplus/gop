@@ -540,19 +540,6 @@ func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, tes
 	}
 }
 
-func loadType(ctx *blockCtx, t *ast.TypeSpec) {
-	pkg := ctx.pkg
-	name := t.Name.Name
-	if debugLoad {
-		log.Println("==> Load type", name)
-	}
-	if t.Assign != token.NoPos { // alias type
-		pkg.AliasType(name, toType(ctx, t.Type))
-	} else {
-		pkg.NewType(name).InitType(pkg, toType(ctx, t.Type))
-	}
-}
-
 func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
 	name := d.Name.Name
 	if debugLoad {
