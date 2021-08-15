@@ -47,6 +47,60 @@ func codeErrorTest(t *testing.T, msg, src string) {
 	}
 }
 
+func TestErrVar(t *testing.T) {
+	codeErrorTest(t,
+		"./bar.gop:2:2 undefined: foo", `func main() {
+	foo.x = 1
+}
+`)
+	codeErrorTest(t,
+		"./bar.gop:2:2 use of builtin len not in function call", `func main() {
+	len.x = 1
+}
+`)
+	codeErrorTest(t,
+		"./bar.gop:2:10 undefined: foo", `func main() {
+	println(foo.x)
+}
+`)
+	codeErrorTest(t,
+		"./bar.gop:2:9 use of builtin len not in function call", `func main() {
+println(len.x)
+}
+`)
+	codeErrorTest(t,
+		"./bar.gop:2:10 undefined: foo", `func main() {
+	println(foo)
+}
+`)
+	codeErrorTest(t,
+		"./bar.gop:3:20 use of builtin len not in function call", `package main
+
+func foo(v map[int]len) {
+}
+`)
+	codeErrorTest(t,
+		"./bar.gop:2:6 use of builtin len not in function call", `func main() {
+	new(len)
+}
+`)
+	codeErrorTest(t,
+		"./bar.gop:2:2 undefined: foo", `func main() {
+	foo = 1
+}
+`)
+	codeErrorTest(t,
+		"./bar.gop:2:9 cannot use _ as value", `func main() {
+	foo := _
+}
+`)
+	codeErrorTest(t,
+		"./bar.gop:2:9 use of builtin len not in function call", `func main() {
+	foo := len
+}
+`)
+}
+
 func TestErrImport(t *testing.T) {
 	codeErrorTest(t,
 		"./bar.gop:2:13 undefined: testing", `

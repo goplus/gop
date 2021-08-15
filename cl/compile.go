@@ -335,6 +335,11 @@ func newCodeErrorf(pos *token.Position, format string, args ...interface{}) *gox
 	return &gox.CodeError{Pos: pos, Msg: fmt.Sprintf(format, args...)}
 }
 
+func (p *pkgCtx) newCodeError(start token.Pos, msg string) error {
+	pos := p.Position(start)
+	return &gox.CodeError{Pos: &pos, Msg: msg}
+}
+
 func (p *pkgCtx) newCodeErrorf(start token.Pos, format string, args ...interface{}) error {
 	pos := p.Position(start)
 	return newCodeErrorf(&pos, format, args...)

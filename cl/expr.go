@@ -165,13 +165,16 @@ func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) { // x[i:j:k]
 func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr) {
 	switch x := v.X.(type) {
 	case *ast.Ident:
-		o, at := lookupParent(ctx, x.Name)
+		o, at, builtin := lookupParent(ctx, x.Name)
 		if at != nil {
 			ctx.cb.VarRef(at.Ref(v.Sel.Name))
 			return
 		}
+		if isBuiltin(builtin) {
+			panic(ctx.newCodeErrorf(x.Pos(), "use of builtin %s not in function call", x.Name))
+		}
 		if o == nil {
-			log.Panicln("TODO: ident not found -", x.Name)
+			panic(ctx.newCodeErrorf(x.Pos(), "undefined: %s", x.Name))
 		}
 		ctx.cb.Val(o)
 	default:
@@ -180,17 +183,27 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr) {
 	ctx.cb.MemberRef(v.Sel.Name, v)
 }
 
+func isBuiltin(o types.Object) bool {
+	if _, ok := o.(*types.Builtin); ok {
+		return ok
+	}
+	return false
+}
+
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, autoCall bool) {
 	cb := ctx.cb
 	switch x := v.X.(type) {
 	case *ast.Ident:
-		o, at := lookupParent(ctx, x.Name)
+		o, at, builtin := lookupParent(ctx, x.Name)
 		if at != nil {
 			cb.Val(at.Ref(v.Sel.Name))
 			return
 		}
+		if isBuiltin(builtin) {
+			panic(ctx.newCodeErrorf(x.Pos(), "use of builtin %s not in function call", x.Name))
+		}
 		if o == nil {
-			log.Panicln("TODO: ident not found -", x.Name)
+			panic(ctx.newCodeErrorf(x.Pos(), "undefined: %s", x.Name))
 		}
 		cb.Val(o)
 	default:
@@ -314,7 +327,7 @@ func compileIdentLHS(ctx *blockCtx, v *ast.Ident) {
 	} else {
 		_, o := ctx.cb.Scope().LookupParent(name, gotoken.NoPos)
 		if o == nil {
-			panic("TODO: var not found")
+			panic(ctx.newCodeErrorf(v.Pos(), "undefined: %s", name))
 		}
 		ctx.cb.VarRef(o, v)
 	}
@@ -323,35 +336,34 @@ func compileIdentLHS(ctx *blockCtx, v *ast.Ident) {
 func compileIdent(ctx *blockCtx, ident *ast.Ident, allowBuiltin bool) {
 	name := ident.Name
 	if name == "_" {
-		log.Panicln("TODO: cannot use _ as value")
+		panic(ctx.newCodeError(ident.Pos(), "cannot use _ as value"))
 	}
-	if o, _ := lookupParent(ctx, name); o != nil {
-		if !allowBuiltin {
-			if _, ok := o.(*types.Builtin); ok {
-				panic("unexpected builtin: " + name)
-			}
+	if o, _, builtin := lookupParent(ctx, name); o != nil {
+		if !allowBuiltin && isBuiltin(builtin) {
+			panic(ctx.newCodeErrorf(ident.Pos(), "use of builtin %s not in function call", name))
 		}
 		ctx.cb.Val(o, ident)
 	} else {
-		log.Panicln("TODO: var not found -", name)
+		panic(ctx.newCodeErrorf(ident.Pos(), "undefined: %s", name))
 	}
 }
 
-func lookupParent(ctx *blockCtx, name string) (types.Object, *gox.PkgRef) {
+// obj, pkgRef, objBuiltin
+func lookupParent(ctx *blockCtx, name string) (types.Object, *gox.PkgRef, types.Object) {
 	at, o := ctx.cb.Scope().LookupParent(name, token.NoPos)
 	if o != nil && at != types.Universe {
-		return o, nil
+		return o, nil, nil
 	}
 	if ctx.loadSymbol(name) {
-		return ctx.pkg.Types.Scope().Lookup(name), nil
+		return ctx.pkg.Types.Scope().Lookup(name), nil, nil
 	}
 	if pkgRef, ok := ctx.imports[name]; ok {
-		return nil, pkgRef
+		return nil, pkgRef, nil
 	}
 	if obj := ctx.pkg.Builtin().Ref(name); obj != nil {
-		return obj, nil
+		return obj, nil, o
 	}
-	return o, nil
+	return o, nil, o
 }
 
 func compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {

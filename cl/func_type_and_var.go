@@ -99,7 +99,7 @@ func toParam(ctx *blockCtx, fld *ast.Field, args []*gox.Param) []*gox.Param {
 func toType(ctx *blockCtx, typ ast.Expr) types.Type {
 	switch v := typ.(type) {
 	case *ast.Ident:
-		return toIdentType(ctx, v.Name)
+		return toIdentType(ctx, v)
 	case *ast.StarExpr:
 		elem := toType(ctx, v.X)
 		return types.NewPointer(elem)
@@ -149,13 +149,10 @@ func toExternalType(ctx *blockCtx, v *ast.SelectorExpr) types.Type {
 	panic(ctx.newCodeErrorf(v.Pos(), "undefined: %s", name))
 }
 
-func toIdentType(ctx *blockCtx, ident string) types.Type {
-	v, _ := lookupParent(ctx, ident)
-	if v == nil {
-		tyName := gopPrefix + ident
-		if v = ctx.pkg.Builtin().Types.Scope().Lookup(tyName); v == nil {
-			log.Panicln("TODO: symbol not found -", ident)
-		}
+func toIdentType(ctx *blockCtx, ident *ast.Ident) types.Type {
+	v, _, builtin := lookupParent(ctx, ident.Name)
+	if isBuiltin(builtin) {
+		panic(ctx.newCodeErrorf(ident.Pos(), "use of builtin %s not in function call", ident.Name))
 	}
 	if t, ok := v.(*types.TypeName); ok {
 		return t.Type()
