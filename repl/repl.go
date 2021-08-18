@@ -25,6 +25,7 @@ import (
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
+	"github.com/goplus/gop/scanner"
 
 	exec "github.com/goplus/gop/exec/bytecode"
 )
@@ -128,12 +129,19 @@ func (r *REPL) run(newLine string) (err error) {
 	pkgs, err := parser.Parse(fset, "", src, 0)
 	if err != nil {
 		// check if into continue mode
-		if strings.Contains(err.Error(), `expected ')', found 'EOF'`) ||
-			strings.Contains(err.Error(), "expected '}', found 'EOF'") {
-			r.term.SetPrompt(ContinuePrompt)
-			r.continueMode = true
-			err = nil
-			return
+		if errlist, ok := err.(scanner.ErrorList); ok && len(errlist) > 0 {
+			checkIndex := 0
+			if strings.Contains(errlist[0].Error(), "expected declaration") &&
+				len(errlist) > 1 {
+				checkIndex = 1
+			}
+			if strings.Contains(errlist[checkIndex].Error(), `expected ')', found 'EOF'`) ||
+				strings.Contains(errlist[checkIndex].Error(), "expected '}', found 'EOF'") {
+				r.term.SetPrompt(ContinuePrompt)
+				r.continueMode = true
+				err = nil
+				return
+			}
 		}
 		r.term.Printf("ParseGopFiles err: %v\n", err)
 		return
