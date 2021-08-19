@@ -1066,6 +1066,10 @@ func (p *printer) listForPhrase(prev0 token.Pos, list []*ast.ForPhrase, depth in
 		p.expr(x.X)
 		if x.Cond != nil {
 			p.print(x.Cond.Pos(), token.COMMA, blank)
+			if x.Init != nil {
+				p.stmt(x.Init, false)
+				p.print(token.SEMICOLON, blank)
+			}
 			p.expr(x.Cond)
 		}
 	}

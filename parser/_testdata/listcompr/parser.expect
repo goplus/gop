@@ -152,9 +152,13 @@ ast.FuncDecl:
                         ast.BasicLit:
                           Kind: INT
                           Value: 11
-                  Cond:
-                    ast.BinaryExpr:
-                      X:
+                  Init:
+                    ast.AssignStmt:
+                      Lhs:
+                        ast.Ident:
+                          Name: t
+                      Tok: :=
+                      Rhs:
                         ast.BinaryExpr:
                           X:
                             ast.Ident:
@@ -164,6 +168,11 @@ ast.FuncDecl:
                             ast.BasicLit:
                               Kind: INT
                               Value: 2
+                  Cond:
+                    ast.BinaryExpr:
+                      X:
+                        ast.Ident:
+                          Name: t
                       Op: ==
                       Y:
                         ast.BasicLit:

@@ -795,7 +795,7 @@ func (p *parser) parseArrayTypeOrSliceLit(state int, slice ast.Expr) (expr ast.E
 				sliceLit := p.parseSliceLit(lbrack, len)
 				p.exprLev--
 				return sliceLit, resultSliceLit
-			case token.FOR: // [expr for k, v <- listOrMap, cond]
+			case token.FOR: // [expr for k, v <- container, cond]
 				phrases := p.parseForPhrases()
 				p.exprLev--
 				rbrack := p.expect(token.RBRACK)
@@ -1627,7 +1627,7 @@ func (p *parser) parseElementListOrComprehension() (list []ast.Expr, mce *ast.Co
 	}
 	for p.tok != token.RBRACE && p.tok != token.EOF {
 		list = append(list, p.parseElement())
-		if p.tok == token.FOR { // for k, v <- listOrMap
+		if p.tok == token.FOR { // for k, v <- container
 			if len(list) != 1 {
 				log.Panicln("TODO: invalid comprehension: too may elements.")
 			}
@@ -2302,6 +2302,66 @@ func (p *parser) parseIfHeader() (init ast.Stmt, cond ast.Expr) {
 	return
 }
 
+func isForPhraseCondEnd(tok token.Token) bool {
+	return tok == token.RBRACK || tok == token.RBRACE || tok == token.FOR
+}
+
+// parseForPhraseCond is an adjusted version of parseIfHeader
+func (p *parser) parseForPhraseCond() (init ast.Stmt, cond ast.Expr) {
+	if isForPhraseCondEnd(p.tok) {
+		p.error(p.pos, "missing condition in for <- statement")
+		cond = &ast.BadExpr{From: p.pos, To: p.pos}
+		return
+	}
+
+	outer := p.exprLev
+	p.exprLev = -1
+
+	if p.tok != token.SEMICOLON {
+		// accept potential variable declaration but complain
+		if p.tok == token.VAR {
+			p.next()
+			p.error(p.pos, "var declaration not allowed in 'IF' initializer")
+		}
+		init, _ = p.parseSimpleStmt(basic)
+	}
+
+	var condStmt ast.Stmt
+	var semi struct {
+		pos token.Pos
+		lit string // ";" or "\n"; valid if pos.IsValid()
+	}
+	if !isForPhraseCondEnd(p.tok) {
+		if p.tok == token.SEMICOLON {
+			semi.pos = p.pos
+			semi.lit = p.lit
+			p.next()
+		} else {
+			p.expect(token.SEMICOLON)
+		}
+		if !isForPhraseCondEnd(p.tok) {
+			condStmt, _ = p.parseSimpleStmt(basic)
+		}
+	} else {
+		condStmt = init
+		init = nil
+	}
+
+	if condStmt != nil {
+		cond = p.makeExpr(condStmt, "boolean expression")
+	} else if semi.pos.IsValid() {
+		p.error(semi.pos, "missing condition in for <- statement")
+	}
+
+	// make sure we have a valid AST
+	if cond == nil {
+		cond = &ast.BadExpr{From: p.pos, To: p.pos}
+	}
+
+	p.exprLev = outer
+	return
+}
+
 func (p *parser) parseIfStmt() *ast.IfStmt {
 	if p.trace {
 		defer un(trace(p, "IfStmt"))
@@ -2572,7 +2632,7 @@ func toIdent(e ast.Expr) *ast.Ident {
 	panic("ident expr is required")
 }
 
-func (p *parser) parseForPhrase() *ast.ForPhrase { // for k, v <- listOrMap, cond
+func (p *parser) parseForPhrase() *ast.ForPhrase { // for k, v <- container, cond
 	if p.trace {
 		defer un(trace(p, "ForPhrase"))
 	}
@@ -2583,19 +2643,20 @@ func (p *parser) parseForPhrase() *ast.ForPhrase { // for k, v <- listOrMap, con
 
 	var k, v *ast.Ident
 	v = p.parseIdent()
-	if p.tok == token.COMMA {
+	if p.tok == token.COMMA { // k, v
 		p.next()
 		k, v = v, p.parseIdent()
 	}
 
-	tokPos := p.expect(token.ARROW) // <-
+	tokPos := p.expect(token.ARROW) // <- container
 	x := p.parseExpr(false)
+	var init ast.Stmt
 	var cond ast.Expr
-	if p.tok == token.COMMA {
+	if p.tok == token.COMMA { // `condition` or `init; condition`
 		p.next()
-		cond = p.parseExpr(false)
+		init, cond = p.parseForPhraseCond()
 	}
-	return &ast.ForPhrase{For: pos, Key: k, Value: v, TokPos: tokPos, X: x, Cond: cond}
+	return &ast.ForPhrase{For: pos, Key: k, Value: v, TokPos: tokPos, X: x, Init: init, Cond: cond}
 }
 
 func (p *parser) parseForStmt() ast.Stmt {

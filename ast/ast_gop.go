@@ -120,12 +120,13 @@ func (*LambdaExpr) exprNode() {}
 
 // -----------------------------------------------------------------------------
 
-// ForPhrase represents `for k, v <- listOrMap`
+// ForPhrase represents `for k, v <- container, cond`
 type ForPhrase struct {
 	For        token.Pos // position of "for" keyword
 	Key, Value *Ident    // Key may be nil
 	TokPos     token.Pos // position of "<-" operator
-	X          Expr      // value to range over, must be list or map
+	X          Expr      // value to range over
+	Init       Stmt      // initialization statement; or nil
 	Cond       Expr      // value filter, can be nil
 }
 
@@ -138,10 +139,10 @@ func (p *ForPhrase) End() token.Pos { return p.X.End() }
 func (p *ForPhrase) exprNode() {}
 
 // ComprehensionExpr represents
-//    `[vexpr for k1, v1 <- listOrMap1, cond1 ...]` or
-//    `{vexpr for k1, v1 <- listOrMap1, cond1 ...}` or
-//    `{kexpr: vexpr for k1, v1 <- listOrMap1, cond1 ...}` or
-//    `{for k1, v1 <- listOrMap1, cond1 ...}` or
+//    `[vexpr for k1, v1 <- container1, cond1 ...]` or
+//    `{vexpr for k1, v1 <- container1, cond1 ...}` or
+//    `{kexpr: vexpr for k1, v1 <- container1, cond1 ...}` or
+//    `{for k1, v1 <- container1, cond1 ...}` or
 type ComprehensionExpr struct {
 	Lpos token.Pos   // position of "[" or "{"
 	Tok  token.Token // token.LBRACK '[' or token.LBRACE '{'

@@ -642,3 +642,65 @@ func f() {
 		t.Fatalf("got %q, want %q", got, want)
 	}
 }
+
+func TestStripParens(t *testing.T) {
+	x := stripParens(&ast.ParenExpr{
+		X: &ast.CompositeLit{
+			Type: &ast.Ident{Name: "foo"},
+		},
+	})
+	if _, ok := x.(*ast.ParenExpr); !ok {
+		t.Fatal("TestStripParens failed:", x)
+	}
+
+	x = stripParens(&ast.ParenExpr{
+		X: &ast.CompositeLit{
+			Type: &ast.SelectorExpr{
+				X: &ast.Ident{Name: "foo"},
+			},
+		},
+	})
+	if _, ok := x.(*ast.ParenExpr); !ok {
+		t.Fatal("TestStripParens failed:", x)
+	}
+
+	x = stripParens(&ast.ParenExpr{
+		X: &ast.ParenExpr{
+			X: &ast.CompositeLit{
+				Type: &ast.Ident{Name: "foo"},
+			},
+		},
+	})
+	if y, ok := x.(*ast.ParenExpr); !ok {
+		t.Fatal("TestStripParens failed:", x)
+	} else if _, ok := y.X.(*ast.ParenExpr); ok {
+		t.Fatal("TestStripParens failed:", x)
+	}
+
+	x = stripParens(&ast.ParenExpr{
+		X: &ast.CompositeLit{
+			Type: &ast.BasicLit{},
+		},
+	})
+	if _, ok := x.(*ast.ParenExpr); ok {
+		t.Fatal("TestStripParens stripParens failed:", x)
+	}
+
+	x = stripParens(&ast.ParenExpr{
+		X: &ast.BasicLit{},
+	})
+	if _, ok := x.(*ast.ParenExpr); ok {
+		t.Fatal("TestStripParens stripParens failed:", x)
+	}
+
+	x = stripParensAlways(&ast.ParenExpr{
+		X: &ast.ParenExpr{
+			X: &ast.CompositeLit{
+				Type: &ast.Ident{Name: "foo"},
+			},
+		},
+	})
+	if _, ok := x.(*ast.ParenExpr); ok {
+		t.Fatal("TestStripParens stripParensAlways failed:", x)
+	}
+}
