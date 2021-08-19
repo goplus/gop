@@ -17,6 +17,7 @@
 package base
 
 import (
+	"flag"
 	"log"
 	"os"
 	"os/exec"
@@ -24,11 +25,13 @@ import (
 )
 
 // SkipSwitches skips all switches and returns non-switch arguments.
-func SkipSwitches(args []string) []string {
+func SkipSwitches(args []string, f *flag.FlagSet) []string {
 	out := make([]string, 0, len(args))
 	for _, arg := range args {
 		if strings.HasPrefix(arg, "-") {
-			continue
+			if f.Lookup(arg[1:]) == nil { // flag not found
+				continue
+			}
 		}
 		out = append(out, arg)
 	}
