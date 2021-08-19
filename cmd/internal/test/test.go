@@ -79,8 +79,8 @@ func runCmd(cmd *base.Command, args []string) {
 	if hasError {
 		os.Exit(1)
 	}
-	base.RunGoCmd(dir, "test", args...)
 	baseConf.PkgsLoader.Save()
+	base.RunGoCmd(dir, "test", args...)
 }
 
 // -----------------------------------------------------------------------------
