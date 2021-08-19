@@ -619,6 +619,9 @@ func compileComprehensionExpr(ctx *blockCtx, v *ast.ComprehensionExpr, twoValue 
 		cb.RangeAssignThen(forStmt.TokPos)
 		if forStmt.Cond != nil {
 			cb.If()
+			if forStmt.Init != nil {
+				compileStmt(ctx, forStmt.Init)
+			}
 			compileExpr(ctx, forStmt.Cond)
 			cb.Then()
 			end++

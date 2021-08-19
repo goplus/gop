@@ -1280,6 +1280,25 @@ func main() {
 `)
 }
 
+func TestMapComprehensionCond2(t *testing.T) {
+	gopClTest(t, `
+z := {t: k for k, v <- {"Hello": 1, "Hi": 3, "xsw": 5, "Go+": 7}, t := v; t > 3}
+`, `package main
+
+func main() {
+	z := func() (_gop_ret map[int]string) {
+		_gop_ret = map[int]string{}
+		for k, v := range map[string]int{"Hello": 1, "Hi": 3, "xsw": 5, "Go+": 7} {
+			if t := v; t > 3 {
+				_gop_ret[t] = k
+			}
+		}
+		return
+	}()
+}
+`)
+}
+
 func TestExistsComprehension(t *testing.T) {
 	gopClTest(t, `
 hasFive := {for x <- ["1", "3", "5", "7", "11"], x == "5"}
