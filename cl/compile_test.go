@@ -368,17 +368,14 @@ import (
 )
 
 func foo(script string) {
-	var _autoGop_1 gopq.NodeSet
-	{
+	doc := func() (_gop_ret gopq.NodeSet) {
 		var _gop_err error
-		_autoGop_1, _gop_err = goptest.New(script)
+		_gop_ret, _gop_err = goptest.New(script)
 		if _gop_err != nil {
 			panic(_gop_err)
 		}
-		goto _autoGop_2
-	_autoGop_2:
-	}
-	doc := _autoGop_1
+		return
+	}()
 	fmt.Println(doc.Any().FuncDecl().Name())
 	fmt.Println(doc.Any().ImportSpec().Name())
 }
@@ -434,29 +431,21 @@ func addSafe(x, y string) int {
 import strconv "strconv"
 
 func addSafe(x string, y string) int {
-	var _autoGop_1 int
-	{
+	return func() (_gop_ret int) {
 		var _gop_err error
-		_autoGop_1, _gop_err = strconv.Atoi(x)
+		_gop_ret, _gop_err = strconv.Atoi(x)
 		if _gop_err != nil {
-			_autoGop_1 = 0
-			goto _autoGop_2
+			return 0
 		}
-		goto _autoGop_2
-	_autoGop_2:
-	}
-	var _autoGop_3 int
-	{
+		return
+	}() + func() (_gop_ret int) {
 		var _gop_err error
-		_autoGop_3, _gop_err = strconv.Atoi(y)
+		_gop_ret, _gop_err = strconv.Atoi(y)
 		if _gop_err != nil {
-			_autoGop_3 = 0
-			goto _autoGop_4
+			return 0
 		}
-		goto _autoGop_4
-	_autoGop_4:
-	}
-	return _autoGop_1 + _autoGop_3
+		return
+	}()
 }
 `)
 }

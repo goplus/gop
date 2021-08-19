@@ -672,10 +672,13 @@ var (
 
 func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr) {
 	pkg, cb := ctx.pkg, ctx.cb
-	inGlobal := (cb.Scope().Parent() == types.Universe) // not in a function body
+	useClosure := (v.Tok == token.NOT || v.Default != nil)
+	if !useClosure && (cb.Scope().Parent() == types.Universe) {
+		panic("TODO: can't use expr? in global")
+	}
 	ret := pkg.NewAutoParam("_gop_ret")
 	sig := types.NewSignature(nil, nil, types.NewTuple(ret), false)
-	if inGlobal {
+	if useClosure {
 		cb.NewClosureWith(sig).BodyStart(pkg)
 	} else {
 		cb.CallInlineClosureStart(sig, 0, false)
@@ -689,16 +692,13 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr) {
 	if v.Tok == token.NOT { // expr!
 		cb.Val(pkg.Builtin().Ref("panic")).Val(err).Call(1).EndStmt() // TODO: wrap err
 	} else if v.Default == nil { // expr?
-		if inGlobal {
-			panic("TODO: can't use expr? in global")
-		}
 		cb.Val(err).ReturnErr(true) // TODO: wrap err & return err
 	} else { // expr?:val
 		compileExpr(ctx, v.Default)
 		cb.Return(1)
 	}
 	cb.End().Return(0).End()
-	if inGlobal {
+	if useClosure {
 		cb.Call(0)
 	}
 }
