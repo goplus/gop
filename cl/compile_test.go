@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"os"
 	"sync"
+	"syscall"
 	"testing"
 
 	"github.com/goplus/gop/cl"
@@ -92,6 +93,9 @@ func TestEmptyPkgsLoader(t *testing.T) {
 	l := &cl.PkgsLoader{}
 	if l.Save() != nil {
 		t.Fatal("PkgsLoader.Save failed")
+	}
+	if l.GenGoPkgs(nil, nil) != syscall.ENOENT {
+		t.Fatal("PkgsLoader.GenGoPkgs failed")
 	}
 }
 
@@ -2152,7 +2156,8 @@ func TestCallDep(t *testing.T) {
 	)
 	os.Remove(cachefile)
 	defer os.Remove(cachefile)
-	gopClTest(t, `
+	for i := 0; i < 2; i++ {
+		gopClTest(t, `
 import (
 	"reflect"
 	"testing"
@@ -2214,4 +2219,5 @@ func newRepo() Repo {
 	return Repo{Title: "Hi"}
 }
 `, cachefile)
+	}
 }
