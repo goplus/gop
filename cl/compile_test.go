@@ -45,6 +45,7 @@ func init() {
 	baseConf = &cl.Config{
 		Fset:          gblFset,
 		ModPath:       "github.com/goplus/gop",
+		ModRootDir:    ".",
 		GenGoPkg:      new(gengo.Runner).GenGoPkg,
 		CacheLoadPkgs: true,
 		NoFileLine:    true,
@@ -66,6 +67,7 @@ func gopClTest(t *testing.T, gopcode, expected string, cachefile ...string) {
 		copy := *baseConf
 		copy.PkgsLoader = nil
 		copy.CacheFile = cachefile[0]
+		copy.PersistLoadPkgs = true
 		conf = *copy.Ensure()
 	}
 	bar := pkgs["main"]
@@ -96,6 +98,9 @@ func TestEmptyPkgsLoader(t *testing.T) {
 	}
 	if l.GenGoPkgs(nil, nil) != syscall.ENOENT {
 		t.Fatal("PkgsLoader.GenGoPkgs failed")
+	}
+	if _, err := cl.GetModulePath("/dir-not-exists/go.mod"); err == nil {
+		t.Fatal("GetModulePath failed")
 	}
 }
 
@@ -2152,10 +2157,14 @@ func TestGopkgDep(t *testing.T) {
 
 func TestCallDep(t *testing.T) {
 	const (
-		cachefile = "_gop_pkgs.cache"
+		cachedir  = "../.gop"
+		cachefile = cachedir + "/gop.cache"
 	)
 	os.Remove(cachefile)
-	defer os.Remove(cachefile)
+	defer func() {
+		os.Remove(cachefile)
+		os.Remove(cachedir)
+	}()
 	for i := 0; i < 2; i++ {
 		gopClTest(t, `
 import (
@@ -2218,6 +2227,6 @@ type Repo struct {
 func newRepo() Repo {
 	return Repo{Title: "Hi"}
 }
-`, cachefile)
+`, "")
 	}
 }

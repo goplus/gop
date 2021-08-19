@@ -89,6 +89,11 @@ type Config struct {
 	// ModPath specifies module path.
 	ModPath string
 
+	// ModRootDir specifies root dir of this module.
+	// If ModRootDir is empty, will lookup go.mod in all ancestor directories of Dir.
+	// If you specify ModPath, you should specify ModRootDir at the same time.
+	ModRootDir string
+
 	// CacheFile specifies where cache data to write.
 	CacheFile string
 
@@ -116,8 +121,11 @@ type Config struct {
 	// PkgsLoader is the Go+ packages loader (will be set if it is nil).
 	PkgsLoader *PkgsLoader
 
-	// CacheLoadPkgs means to cache all loaded packages (or not).
+	// CacheLoadPkgs = true means to cache all loaded packages.
 	CacheLoadPkgs bool
+
+	// PersistLoadPkgs = true means to cache all loaded packages to disk.
+	PersistLoadPkgs bool
 
 	// NoFileLine = true means not to generate file line comments.
 	NoFileLine bool

@@ -61,10 +61,12 @@ func runCmd(cmd *base.Command, args []string) {
 		cl.SetDebug(cl.DbgFlagAll)
 		cl.SetDisableRecover(true)
 	}
+	hasError := false
 	runner := new(gengo.Runner)
 	runner.SetAfter(func(p *gengo.Runner, dir string, flags int) error {
 		errs := p.ResetErrors()
 		if errs != nil {
+			hasError = true
 			for _, err := range errs {
 				fmt.Fprintln(os.Stderr, err)
 			}
@@ -72,8 +74,13 @@ func runCmd(cmd *base.Command, args []string) {
 		}
 		return nil
 	})
-	runner.GenGo(dir, recursive, &cl.Config{CacheLoadPkgs: true})
+	baseConf := &cl.Config{PersistLoadPkgs: true}
+	runner.GenGo(dir, recursive, baseConf.Ensure())
+	if hasError {
+		os.Exit(1)
+	}
 	base.RunGoCmd(dir, "install", args...)
+	baseConf.PkgsLoader.Save()
 }
 
 // -----------------------------------------------------------------------------

@@ -62,15 +62,23 @@ func GetModulePath(file string) (pkgPath string, err error) {
 	return f.Module.Mod.Path, nil
 }
 
-func modPath(conf *Config) string {
-	mod := conf.ModPath
-	if mod == "" {
-		file, err := FindGoModFile(conf.Dir)
-		if err == nil {
-			mod, _ = GetModulePath(file)
-		}
+func findModPaths(dir string) (root string, modPath string, err error) {
+	file, err := FindGoModFile(dir)
+	if err == nil {
+		root, _ = filepath.Split(file)
+		modPath, err = GetModulePath(file)
 	}
-	return mod
+	return
+}
+
+func modPaths(conf *Config) (root string, modPath string) {
+	modPath = conf.ModPath
+	if modPath == "" {
+		root, modPath, _ = findModPaths(conf.Dir)
+	} else {
+		root = conf.ModRootDir
+	}
+	return
 }
 
 // -----------------------------------------------------------------------------
@@ -84,8 +92,15 @@ type PkgsLoader struct {
 }
 
 func initPkgsLoader(base *Config) {
-	mod := modPath(base)
-	p := &PkgsLoader{genGoPkg: base.GenGoPkg, BaseConfig: base, modPath: mod}
+	root, modPath := modPaths(base)
+	p := &PkgsLoader{genGoPkg: base.GenGoPkg, BaseConfig: base, modPath: modPath}
+	if base.PersistLoadPkgs {
+		if base.CacheFile == "" && root != "" {
+			dir := root + "/.gop"
+			os.MkdirAll(dir, 0777)
+			base.CacheFile = dir + "/gop.cache"
+		}
+	}
 	if base.CacheFile != "" {
 		p.cached = gox.OpenLoadPkgsCached(base.CacheFile, p.Load)
 		p.LoadPkgs = p.cached.Load
@@ -108,12 +123,7 @@ func (p *PkgsLoader) GenGoPkgs(cfg *packages.Config, notFounds []string) (err er
 	if p.genGoPkg == nil {
 		return syscall.ENOENT
 	}
-	file, err := FindGoModFile(cfg.Dir)
-	if err != nil {
-		return
-	}
-	root, _ := filepath.Split(file)
-	pkgPath, err := GetModulePath(file)
+	root, pkgPath, err := findModPaths(cfg.Dir)
 	if err != nil {
 		return
 	}
