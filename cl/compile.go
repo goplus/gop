@@ -86,6 +86,12 @@ type Config struct {
 	// If WorkingDir or TargetDir is empty, it is same as Dir.
 	WorkingDir, TargetDir string
 
+	// ModPath specifies module path.
+	ModPath string
+
+	// CacheFile specifies where cache data to write.
+	CacheFile string
+
 	// Env is the environment to use when invoking the build system's query tool.
 	// If Env is nil, the current environment is used.
 	// As in os/exec's Cmd, only the last value in the slice for
@@ -185,6 +191,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		Context:         conf.Context,
 		Logf:            conf.Logf,
 		Dir:             dir,
+		ModPath:         conf.ModPath,
 		Env:             conf.Env,
 		BuildFlags:      conf.BuildFlags,
 		Fset:            conf.Fset,

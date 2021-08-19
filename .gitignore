@@ -3,7 +3,9 @@
 *.a
 *.so
 *.txt
+*.cache
 .DS_Store
+go.json
 
 # Folders
 _obj

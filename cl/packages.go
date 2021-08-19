@@ -62,22 +62,46 @@ func GetModulePath(file string) (pkgPath string, err error) {
 	return f.Module.Mod.Path, nil
 }
 
+func modPath(conf *Config) string {
+	mod := conf.ModPath
+	if mod == "" {
+		file, err := FindGoModFile(conf.Dir)
+		if err == nil {
+			mod, _ = GetModulePath(file)
+		}
+	}
+	return mod
+}
+
 // -----------------------------------------------------------------------------
 
 type PkgsLoader struct {
+	cached     *gox.LoadPkgsCached
 	genGoPkg   func(pkgDir string, base *Config) error
 	LoadPkgs   gox.LoadPkgsFunc
 	BaseConfig *Config
+	modPath    string
 }
 
 func initPkgsLoader(base *Config) {
-	p := &PkgsLoader{genGoPkg: base.GenGoPkg, BaseConfig: base}
-	if base.CacheLoadPkgs {
+	mod := modPath(base)
+	p := &PkgsLoader{genGoPkg: base.GenGoPkg, BaseConfig: base, modPath: mod}
+	if base.CacheFile != "" {
+		p.cached = gox.OpenLoadPkgsCached(base.CacheFile, p.Load)
+		p.LoadPkgs = p.cached.Load
+	} else if base.CacheLoadPkgs {
 		p.LoadPkgs = gox.NewLoadPkgsCached(p.Load)
 	} else {
 		p.LoadPkgs = p.loadPkgsNoCache
 	}
 	base.PkgsLoader = p
+}
+
+func (p *PkgsLoader) Save() error {
+	if p.cached == nil {
+		return nil
+	}
+	return p.cached.Save()
 }
 
 func (p *PkgsLoader) GenGoPkgs(cfg *packages.Config, notFounds []string) (err error) {

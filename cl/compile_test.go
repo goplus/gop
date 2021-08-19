@@ -43,13 +43,14 @@ func init() {
 	gblFset = token.NewFileSet()
 	baseConf = &cl.Config{
 		Fset:          gblFset,
+		ModPath:       "github.com/goplus/gop",
 		GenGoPkg:      new(gengo.Runner).GenGoPkg,
 		CacheLoadPkgs: true,
 		NoFileLine:    true,
 	}
 }
 
-func gopClTest(t *testing.T, gopcode, expected string) {
+func gopClTest(t *testing.T, gopcode, expected string, cachefile ...string) {
 	cl.SetDisableRecover(true)
 	defer cl.SetDisableRecover(false)
 
@@ -60,6 +61,12 @@ func gopClTest(t *testing.T, gopcode, expected string) {
 		t.Fatal("ParseFSDir:", err)
 	}
 	conf := *baseConf.Ensure()
+	if cachefile != nil {
+		copy := *baseConf
+		copy.PkgsLoader = nil
+		copy.CacheFile = cachefile[0]
+		conf = *copy.Ensure()
+	}
 	bar := pkgs["main"]
 	pkg, err := cl.NewPackage("", bar, &conf)
 	if err != nil {
@@ -73,6 +80,18 @@ func gopClTest(t *testing.T, gopcode, expected string) {
 	result := b.String()
 	if result != expected {
 		t.Fatalf("\nResult:\n%s\nExpected:\n%s\n", result, expected)
+	}
+	if cachefile != nil {
+		if err = conf.PkgsLoader.Save(); err != nil {
+			t.Fatal("PkgsLoader.Save failed:", err)
+		}
+	}
+}
+
+func TestEmptyPkgsLoader(t *testing.T) {
+	l := &cl.PkgsLoader{}
+	if l.Save() != nil {
+		t.Fatal("PkgsLoader.Save failed")
 	}
 }
 
@@ -2128,6 +2147,11 @@ func TestGopkgDep(t *testing.T) {
 }
 
 func TestCallDep(t *testing.T) {
+	const (
+		cachefile = "_gop_pkgs.cache"
+	)
+	os.Remove(cachefile)
+	defer os.Remove(cachefile)
 	gopClTest(t, `
 import (
 	"reflect"
@@ -2189,5 +2213,5 @@ type Repo struct {
 func newRepo() Repo {
 	return Repo{Title: "Hi"}
 }
-`)
+`, cachefile)
 }
