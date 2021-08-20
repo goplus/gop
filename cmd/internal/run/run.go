@@ -127,16 +127,19 @@ func runCmd(cmd *base.Command, args []string) {
 		return
 	}
 
-	var targetDir, file, gofile string
+	var srcDir, file, gofile string
 	var pkgs map[string]*ast.Package
 	if isDir {
-		targetDir = src
+		srcDir = src
 		gofile = src + "/gop_autogen.go"
 		pkgs, err = parser.ParseDir(fset, src, nil, 0)
 	} else {
-		targetDir, file = filepath.Split(src)
-		targetDir = filepath.Join(targetDir, ".gop")
-		gofile = filepath.Join(targetDir, file+".go")
+		srcDir, file = filepath.Split(src)
+		if hasMultiFiles(srcDir, ".gop") {
+			gofile = filepath.Join(srcDir, "gop_autogen_"+file+".go")
+		} else {
+			gofile = srcDir + "/gop_autogen.go"
+		}
 		pkgs, err = parser.Parse(fset, src, nil, 0)
 	}
 	if err != nil {
@@ -147,16 +150,16 @@ func runCmd(cmd *base.Command, args []string) {
 	mainPkg, ok := pkgs["main"]
 	if !ok {
 		if len(pkgs) == 0 { // not a Go+ package, try runGoPkg
-			runGoPkg(src, args)
+			runGoPkg(src, args, true)
 			return
 		}
 		fmt.Fprintln(os.Stderr, "TODO: not a main package")
 		os.Exit(12)
 	}
 
-	modDir, noCacheFile := findGoModDir(targetDir)
+	modDir, noCacheFile := findGoModDir(srcDir)
 	conf := &cl.Config{
-		Dir: modDir, TargetDir: targetDir, Fset: fset, CacheLoadPkgs: true, PersistLoadPkgs: !noCacheFile}
+		Dir: modDir, TargetDir: srcDir, Fset: fset, CacheLoadPkgs: true, PersistLoadPkgs: !noCacheFile}
 	out, err := cl.NewPackage("", mainPkg, conf)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -166,11 +169,11 @@ func runCmd(cmd *base.Command, args []string) {
 	if err != nil {
 		log.Fatalln("saveGoFile failed:", err)
 	}
+	conf.PkgsLoader.Save()
 	goRun(gofile, args)
 	if *flagProf {
 		panic("TODO: profile not impl")
 	}
-	conf.PkgsLoader.Save()
 }
 
 // IsDir checks a target path is dir or not.
@@ -205,7 +208,7 @@ func goRun(target string, args []string) {
 	}
 }
 
-func runGoPkg(src string, args []string) {
+func runGoPkg(src string, args []string, doRun bool) {
 	modfile, noCacheFile, err := findGoModFile(src)
 	if err != nil {
 		log.Fatalln("findGoModFile:", err)
@@ -237,24 +240,48 @@ func runGoPkg(src string, args []string) {
 		fmt.Fprintln(os.Stderr, "TODO: not a main package")
 		os.Exit(12)
 	}
-	goRun(src+"/.", args)
 	baseConf.PkgsLoader.Save()
+	if doRun {
+		goRun(src+"/.", args)
+	}
 }
 
 func runGoFile(src string, args []string) {
 	targetDir, file := filepath.Split(src)
-	targetDir = filepath.Join(targetDir, ".gop", strings.TrimSuffix(file, ".go"))
-	gofile := filepath.Join(targetDir, "gop_autogen.go")
-	b, err := ioutil.ReadFile(src)
-	if err != nil {
-		log.Fatalln("ReadFile failed:", err)
+	if hasMultiFiles(targetDir, ".go") {
+		targetDir = filepath.Join(targetDir, ".gop", strings.TrimSuffix(file, ".go"))
+		gofile := filepath.Join(targetDir, "gop_autogen.go")
+		b, err := ioutil.ReadFile(src)
+		if err != nil {
+			log.Fatalln("ReadFile failed:", err)
+		}
+		os.MkdirAll(targetDir, 0777)
+		err = ioutil.WriteFile(gofile, b, 0666)
+		if err != nil {
+			log.Fatalln("WriteFile failed:", err)
+		}
+		runGoPkg(targetDir, args, false)
+		goRun(src, args)
+	} else {
+		runGoPkg(targetDir, args, true)
 	}
-	os.MkdirAll(targetDir, 0777)
-	err = ioutil.WriteFile(gofile, b, 0666)
-	if err != nil {
-		log.Fatalln("WriteFile failed:", err)
+}
+
+func hasMultiFiles(srcDir string, ext string) bool {
+	var has bool
+	if f, err := os.Open(srcDir); err == nil {
+		defer f.Close()
+		fis, _ := f.ReadDir(-1)
+		for _, fi := range fis {
+			if !fi.IsDir() && filepath.Ext(fi.Name()) == ext {
+				if has {
+					return true
+				}
+				has = true
+			}
+		}
 	}
-	runGoPkg(targetDir, args)
+	return false
 }
 
 // -----------------------------------------------------------------------------
