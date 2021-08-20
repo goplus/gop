@@ -111,6 +111,20 @@ func foo(v map[int]bar) {
 
 func TestErrImport(t *testing.T) {
 	codeErrorTest(t,
+		"./bar.gop:5:2 cannot refer to unexported name os.undefined", `
+import "os"
+
+func foo() {
+	os.undefined
+}`)
+	codeErrorTest(t,
+		"./bar.gop:5:2 undefined: os.UndefinedObject", `
+import "os"
+
+func foo() {
+	os.UndefinedObject
+}`)
+	codeErrorTest(t,
 		"./bar.gop:2:13 undefined: testing", `
 func foo(t *testing.T) {
 }`)

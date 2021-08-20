@@ -196,13 +196,18 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, autoCall bool) {
 	case *ast.Ident:
 		o, at, builtin := lookupParent(ctx, x.Name)
 		if at != nil {
-			cb.Val(at.Ref(v.Sel.Name))
-			return
-		}
-		if isBuiltin(builtin) {
+			if v := at.Ref(v.Sel.Name); v != nil {
+				cb.Val(v)
+				return
+			}
+			if token.IsExported(v.Sel.Name) {
+				panic(ctx.newCodeErrorf(x.Pos(), "undefined: %s.%s", x.Name, v.Sel.Name))
+			} else {
+				panic(ctx.newCodeErrorf(x.Pos(), "cannot refer to unexported name %s.%s", x.Name, v.Sel.Name))
+			}
+		} else if isBuiltin(builtin) {
 			panic(ctx.newCodeErrorf(x.Pos(), "use of builtin %s not in function call", x.Name))
-		}
-		if o == nil {
+		} else if o == nil {
 			panic(ctx.newCodeErrorf(x.Pos(), "undefined: %s", x.Name))
 		}
 		cb.Val(o)
