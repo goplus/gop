@@ -17,13 +17,61 @@
 package printer_test
 
 import (
+	"bytes"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/format"
+	"github.com/goplus/gop/token"
 )
+
+func TestNoPkgDecl(t *testing.T) {
+	var dst bytes.Buffer
+	fset := token.NewFileSet()
+	if err := format.Node(&dst, fset, &ast.File{
+		Name:      &ast.Ident{Name: "main"},
+		NoPkgDecl: true,
+	}); err != nil {
+		t.Fatal("format.Node failed:", err)
+	}
+	if dst.String() != "\n" {
+		t.Fatal("TestNoPkgDecl:", dst.String())
+	}
+}
+
+func TestFuncs(t *testing.T) {
+	var dst bytes.Buffer
+	fset := token.NewFileSet()
+	if err := format.Node(&dst, fset, &ast.File{
+		Name: &ast.Ident{Name: "main"},
+		Decls: []ast.Decl{
+			&ast.FuncDecl{
+				Type: &ast.FuncType{Params: &ast.FieldList{}},
+				Name: &ast.Ident{Name: "foo"},
+				Body: &ast.BlockStmt{},
+			},
+			&ast.FuncDecl{
+				Type: &ast.FuncType{Params: &ast.FieldList{}},
+				Name: &ast.Ident{Name: "bar"},
+				Body: &ast.BlockStmt{},
+			},
+		},
+		NoPkgDecl: true,
+	}); err != nil {
+		t.Fatal("format.Node failed:", err)
+	}
+	if dst.String() != `func foo() {
+}
+
+func bar() {
+}
+` {
+		t.Fatal("TestNoPkgDecl:", dst.String())
+	}
+}
 
 func diffBytes(t *testing.T, dst, src []byte) {
 	line := 1

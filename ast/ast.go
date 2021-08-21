@@ -1181,6 +1181,7 @@ type File struct {
 	Comments     []*CommentGroup // list of all comments in the source file
 	Code         []byte
 	NoEntrypoint bool // no `main` or `init` func to indicate the module entry point.
+	NoPkgDecl    bool // no `package xxx` declaration
 }
 
 // Pos returns position of first character belonging to the node.

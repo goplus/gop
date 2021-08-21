@@ -655,6 +655,9 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 	var name string
 	if spec.Name != nil {
 		name = spec.Name.Name
+		if name == "." {
+			panic("TODO: not impl")
+		}
 		if name == "_" {
 			pkg.MarkForceUsed()
 			return

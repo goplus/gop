@@ -176,12 +176,13 @@ func ParseFSFile(fset *token.FileSet, fs FileSystem, filename string, src interf
 // If do this, parsing will display error line number when error occur
 func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (f *ast.File, err error) {
 	var b bytes.Buffer
-	var isMod, noEntrypoint bool
+	var isMod, noEntrypoint, noPkgDecl bool
 	var fsetTmp = token.NewFileSet()
 	f, err = parseFile(fsetTmp, filename, code, PackageClauseOnly)
 	if err != nil {
 		fmt.Fprintf(&b, "package main;%s", code)
 		code = b.Bytes()
+		noPkgDecl = true
 	} else {
 		isMod = f.Name.Name != "main"
 	}
@@ -206,6 +207,7 @@ func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (
 		f, err = parseFile(fset, filename, code, mode)
 		if err == nil {
 			f.NoEntrypoint = noEntrypoint
+			f.NoPkgDecl = noPkgDecl
 		}
 	}
 	return

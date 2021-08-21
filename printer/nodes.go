@@ -1894,7 +1894,8 @@ func (p *printer) funcDecl(d *ast.FuncDecl) {
 		return
 	}
 
-	p.print(d.Pos(), token.FUNC, blank)
+	pos := d.Pos()
+	p.print(pos, token.FUNC, blank)
 	// We have to save startCol only after emitting FUNC; otherwise it can be on a
 	// different line (all whitespace preceding the FUNC is emitted only when the
 	// FUNC is emitted).
@@ -1954,7 +1955,7 @@ func (p *printer) declList(list []ast.Decl) {
 			// only print line break if we are not at the beginning of the output
 			// (i.e., we are not printing only a partial program)
 			min := 1
-			if prev != tok || getDoc(d) != nil {
+			if tok == token.FUNC || tok == token.TYPE || prev != tok || getDoc(d) != nil {
 				min = 2
 			}
 			// start a new section if the next declaration is a function
@@ -1974,8 +1975,10 @@ func (p *printer) file(src *ast.File) {
 		}
 	}
 	p.setComment(src.Doc)
-	p.print(src.Pos(), token.PACKAGE, blank)
-	p.expr(src.Name)
+	if !src.NoPkgDecl {
+		p.print(src.Pos(), token.PACKAGE, blank)
+		p.expr(src.Name)
+	}
 	p.declList(src.Decls)
 	p.print(newline)
 	p.unnamedFuncName = ""
