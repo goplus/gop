@@ -1,0 +1,11 @@
+type student struct {
+	name  string
+	score int
+}
+
+func findScore(a []student, name string) (score int, ok bool) {
+	return {x.score for x <- a, x.name == name}
+}
+
+a := [student{"ken", 95}, student{"john", 90}, student{"tom", 58}]
+println(findScore(a, "tom"))
