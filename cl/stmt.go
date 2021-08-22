@@ -136,9 +136,11 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 			compileCompositeLit(ctx, c, typ, true)
 		} else {
 			twoValue := false
-			if _, ok := ret.(*ast.ComprehensionExpr); ok && len(expr.Results) == 1 {
-				results = ctx.cb.Func().Type().(*types.Signature).Results()
-				twoValue = (results.Len() == 2)
+			if len(expr.Results) == 1 {
+				if _, ok := ret.(*ast.ComprehensionExpr); ok {
+					results = ctx.cb.Func().Type().(*types.Signature).Results()
+					twoValue = (results.Len() == 2)
+				}
 			}
 			compileExpr(ctx, ret, twoValue)
 		}
