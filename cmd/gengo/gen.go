@@ -39,6 +39,7 @@ const (
 	PkgFlagGoGen
 	PkgFlagGopModified
 	PkgFlagSpx
+	PkgFlagGmx
 )
 
 const (
@@ -123,7 +124,7 @@ func (p *Runner) GenGo(dir string, recursive bool, base *cl.Config) {
 		if (pkgFlags & PkgFlagGo) != 0 { // a Go package
 			// TODO: depency check
 		} else if gopTime.After(gogenTime) { // update a Go+ package
-			fmt.Printf("GenGoPkg %s ...\n", dir)
+			fmt.Printf("GenGoPkg %s\n", dir)
 			pkgFlags |= PkgFlagGopModified
 			p.GenGoPkg(dir, base)
 		}
@@ -139,6 +140,7 @@ var (
 	extPkgFlags = map[string]int{
 		".gop": PkgFlagGoPlus,
 		".spx": PkgFlagSpx,
+		".gmx": PkgFlagGmx,
 		".go":  PkgFlagGo,
 	}
 )

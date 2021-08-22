@@ -126,7 +126,9 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, filter func(os.
 			continue
 		}
 		fname := d.Name()
-		if strings.HasSuffix(fname, ".gop") && !strings.HasPrefix(fname, "_") && (filter == nil || filter(d)) {
+		ext := filepath.Ext(fname)
+		_, isGop := extGopFiles[ext]
+		if isGop && !strings.HasPrefix(fname, "_") && (filter == nil || filter(d)) {
 			filename := fs.Join(path, fname)
 			if filedata, err := fs.ReadFile(filename); err == nil {
 				if src, err := ParseFSFile(fset, fs, filename, filedata, mode); err == nil {
@@ -150,6 +152,14 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, filter func(os.
 	}
 	return
 }
+
+var (
+	extGopFiles = map[string]struct{}{
+		".gop": {},
+		".spx": {},
+		".gmx": {},
+	}
+)
 
 // -----------------------------------------------------------------------------
 
