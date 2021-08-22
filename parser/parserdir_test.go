@@ -17,6 +17,7 @@ limitations under the License.
 package parser
 
 import (
+	"bytes"
 	"io/ioutil"
 	"os"
 	"path"
@@ -35,6 +36,27 @@ import (
 func init() {
 	log.SetFlags(log.Llongfile)
 	SetDebug(DbgFlagAll)
+}
+
+func TestReadSource(t *testing.T) {
+	buf := bytes.NewBuffer(nil)
+	if _, err := readSource(buf); err != nil {
+		t.Fatal("readSource failed:", err)
+	}
+	sr := strings.NewReader("")
+	if _, err := readSource(sr); err != nil {
+		t.Fatal("readSource strings.Reader failed:", err)
+	}
+	if _, err := readSource(0); err == nil {
+		t.Fatal("readSource int failed: no error?")
+	}
+}
+
+func TestParseFile(t *testing.T) {
+	fset := token.NewFileSet()
+	if _, err := ParseFile(fset, "/foo/bar/not-exists", nil, PackageClauseOnly); err == nil {
+		t.Fatal("ParseFile failed: no error?")
+	}
 }
 
 func testFrom(t *testing.T, pkgDir, sel string) {

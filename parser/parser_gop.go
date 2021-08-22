@@ -154,10 +154,10 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, filter func(os.
 }
 
 var (
-	extGopFiles = map[string]struct{}{
-		".gop": {},
-		".spx": {},
-		".gmx": {},
+	extGopFiles = map[string]int16{
+		".gop": ast.FileTypeGop,
+		".spx": ast.FileTypeSpx,
+		".gmx": ast.FileTypeGmx,
 	}
 )
 
@@ -218,6 +218,7 @@ func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (
 		if err == nil {
 			f.NoEntrypoint = noEntrypoint
 			f.NoPkgDecl = noPkgDecl
+			f.FileType = extGopFiles[filepath.Ext(filename)]
 		}
 	}
 	return

@@ -1182,7 +1182,14 @@ type File struct {
 	Code         []byte
 	NoEntrypoint bool // no `main` or `init` func to indicate the module entry point.
 	NoPkgDecl    bool // no `package xxx` declaration
+	FileType     int16
 }
+
+const (
+	FileTypeGop = 0 // .gop
+	FileTypeSpx = 1 // .spx
+	FileTypeGmx = 2 // .gmx
+)
 
 // Pos returns position of first character belonging to the node.
 func (f *File) Pos() token.Pos { return f.Package }
