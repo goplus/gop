@@ -57,3 +57,20 @@ func TestLoadImport(t *testing.T) {
 		Path: &ast.BasicLit{Kind: token.STRING, Value: `"fmt"`},
 	})
 }
+
+func TestGetStrings(t *testing.T) {
+	pkg := gox.NewPackage("", "foo", nil)
+	fmt := pkg.Import("fmt")
+	if getStrings(fmt, "Gop_notfound") != nil {
+		t.Fatal("getStrings failed: not nil")
+	}
+}
+
+func TestGetVar(t *testing.T) {
+	defer func() {
+		if e := recover(); e == nil {
+			t.Fatal("getVar: no error?")
+		}
+	}()
+	getVar("panic")
+}

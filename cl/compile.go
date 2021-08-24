@@ -20,11 +20,13 @@ package cl
 import (
 	"context"
 	"fmt"
+	"go/constant"
 	"go/types"
 	"log"
 	"os"
 	"path"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/goplus/gop/ast"
@@ -178,81 +180,6 @@ func (p *nodeInterp) LoadExpr(node ast.Node) (src string, pos token.Position) {
 	return
 }
 
-// NewPackage creates a Go+ package instance.
-func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package, err error) {
-	conf = conf.Ensure()
-	dir := conf.Dir
-	if dir == "" {
-		dir, _ = os.Getwd()
-	}
-	workingDir := conf.WorkingDir
-	if workingDir == "" {
-		workingDir, _ = os.Getwd()
-	}
-	targetDir := conf.TargetDir
-	if targetDir == "" {
-		targetDir = dir
-	}
-	interp := &nodeInterp{fset: conf.Fset, files: pkg.Files, workingDir: workingDir}
-	ctx := &pkgCtx{syms: make(map[string]loader), nodeInterp: interp}
-	confGox := &gox.Config{
-		Context:         conf.Context,
-		Logf:            conf.Logf,
-		Dir:             dir,
-		ModPath:         conf.ModPath,
-		Env:             conf.Env,
-		BuildFlags:      conf.BuildFlags,
-		Fset:            conf.Fset,
-		LoadPkgs:        conf.PkgsLoader.LoadPkgs,
-		LoadNamed:       ctx.loadNamed,
-		HandleErr:       ctx.handleErr,
-		NodeInterpreter: interp,
-		Prefix:          gopPrefix,
-		ParseFile:       nil, // TODO
-		NewBuiltin:      newBuiltinDefault,
-	}
-	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
-	for fpath, f := range pkg.Files {
-		testingFile := strings.HasSuffix(fpath, "_test.gop")
-		loadFile(p, ctx, f, targetDir, testingFile, conf)
-	}
-	for _, f := range pkg.Files {
-		for _, decl := range f.Decls {
-			switch d := decl.(type) {
-			case *ast.FuncDecl:
-				if d.Recv == nil {
-					name := d.Name.Name
-					if name != "init" {
-						ctx.loadSymbol(name)
-					}
-				} else {
-					if name, ok := getRecvTypeName(ctx, d.Recv, false); ok {
-						getTypeLoader(ctx.syms, token.NoPos, name).load()
-					}
-				}
-			case *ast.GenDecl:
-				switch d.Tok {
-				case token.TYPE:
-					for _, spec := range d.Specs {
-						ctx.loadType(spec.(*ast.TypeSpec).Name.Name)
-					}
-				case token.CONST, token.VAR:
-					for _, spec := range d.Specs {
-						for _, name := range spec.(*ast.ValueSpec).Names {
-							ctx.loadSymbol(name.Name)
-						}
-					}
-				}
-			}
-		}
-	}
-	for _, load := range ctx.inits {
-		load()
-	}
-	err = ctx.complete()
-	return
-}
-
 type loader interface {
 	load()
 	pos() token.Pos
@@ -345,8 +272,145 @@ func (p *Errors) Error() string {
 	return strings.Join(msgs, "\n")
 }
 
+type gmxSettings struct {
+	Pkg    string
+	Class  string
+	This   string
+	spx    *gox.PkgRef
+	game   gox.Ref
+	sprite gox.Ref
+	titles []string
+	params map[string]*types.Tuple
+}
+
+func newGmx(pkg *gox.Package, gmx *ast.File) *gmxSettings {
+	p := &gmxSettings{Pkg: "github.com/goplus/spx", Class: "Game", This: "_gop_this"}
+	getGameSettings(gmx, p)
+	p.spx = pkg.Import(p.Pkg)
+	p.game = spxRef(p.spx, "Gop_game", "Game")
+	p.sprite = spxRef(p.spx, "Gop_sprite", "Sprite")
+	p.titles = getStrings(p.spx, "Gop_title")
+	p.params = getParams(p.spx, "Gop_params")
+	return p
+}
+
+func spxRef(spx *gox.PkgRef, name, typ string) gox.Ref {
+	if v := getStringConst(spx, name); v != "" {
+		typ = v
+	}
+	return spx.Ref(typ)
+}
+
+// onMsg(, _gop_data interface{}); onCloned(_gop_data interface{})
+func getParams(spx *gox.PkgRef, name string) map[string]*types.Tuple {
+	ret := map[string]*types.Tuple{}
+	if v := getStringConst(spx, name); v != "" {
+		for _, part := range strings.Split(v, ";") {
+			part = strings.TrimPrefix(part, " ")
+			pos := strings.Index(part, "(")
+			pos2 := strings.Index(part, ")")
+			if pos > 0 && pos2 == len(part)-1 {
+				key := part[:pos]
+				params := strings.Split(part[pos+1:pos2], ",")
+				tuple := make([]*types.Var, len(params))
+				for i, param := range params {
+					param = strings.TrimPrefix(param, " ")
+					tuple[i] = getVar(param)
+				}
+				ret[key] = types.NewTuple(tuple...)
+			}
+		}
+	}
+	return ret
+}
+
+// _gop_data interface{}
+func getVar(param string) *types.Var {
+	if param == "" {
+		return nil
+	}
+	idx := strings.Index(param, " ")
+	if idx > 0 {
+		name := param[:idx]
+		if typ, ok := strTypes[param[idx+1:]]; ok {
+			return types.NewParam(token.NoPos, nil, name, typ)
+		}
+	}
+	panic("getVar failed: " + param)
+}
+
+var (
+	strTypes = map[string]types.Type{
+		"interface{}": gox.TyEmptyInterface,
+		"string":      types.Typ[types.String],
+		"int":         types.Typ[types.Int],
+	}
+)
+
+// on,off
+func getStrings(spx *gox.PkgRef, name string) []string {
+	if v := getStringConst(spx, name); v != "" {
+		return strings.Split(v, ",")
+	}
+	return nil
+}
+
+func getStringConst(spx *gox.PkgRef, name string) string {
+	if o := spx.Ref(name); o != nil {
+		if c, ok := o.(*types.Const); ok {
+			return constant.StringVal(c.Val())
+		}
+	}
+	return ""
+}
+
+func getStringVal(v ast.Expr, ret *string) {
+	if lit, ok := v.(*ast.BasicLit); ok && lit.Kind == token.STRING {
+		if val, err := strconv.Unquote(lit.Value); err == nil {
+			*ret = val
+		}
+	}
+}
+
+func getGameSettings(gmx *ast.File, ret *gmxSettings) {
+	decls := gmx.Decls
+	i, n := 0, len(decls)
+	for i < n {
+		g, ok := decls[i].(*ast.GenDecl)
+		if !ok {
+			break
+		}
+		if g.Tok != token.IMPORT {
+			if g.Tok == token.CONST {
+				rm := true
+				for _, v := range g.Specs {
+					spec := v.(*ast.ValueSpec)
+					for i, name := range spec.Names {
+						switch name.Name {
+						case "GopGamePkg":
+							getStringVal(spec.Values[i], &ret.Pkg)
+						case "GopClass":
+							getStringVal(spec.Values[i], &ret.Class)
+						case "GopThis":
+							getStringVal(spec.Values[i], &ret.This)
+						default:
+							rm = false
+						}
+					}
+				}
+				if rm {
+					g.Specs = nil
+				}
+			}
+			break
+		}
+		i++ // skip import, if any
+	}
+}
+
 type pkgCtx struct {
 	*nodeInterp
+	*gmxSettings
 	syms  map[string]loader
 	inits []func()
 	errs  []error
@@ -361,6 +425,7 @@ type blockCtx struct {
 	targetDir    string
 	fileLine     bool
 	relativePath bool
+	fileType     int16
 }
 
 func newCodeErrorf(pos *token.Position, format string, args ...interface{}) *gox.CodeError {
@@ -432,16 +497,112 @@ func (p *pkgCtx) loadSymbol(name string) bool {
 	return false
 }
 
-func loadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, testingFile bool, conf *Config) {
+// NewPackage creates a Go+ package instance.
+func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package, err error) {
+	conf = conf.Ensure()
+	dir := conf.Dir
+	if dir == "" {
+		dir, _ = os.Getwd()
+	}
+	workingDir := conf.WorkingDir
+	if workingDir == "" {
+		workingDir, _ = os.Getwd()
+	}
+	targetDir := conf.TargetDir
+	if targetDir == "" {
+		targetDir = dir
+	}
+	interp := &nodeInterp{fset: conf.Fset, files: pkg.Files, workingDir: workingDir}
+	ctx := &pkgCtx{syms: make(map[string]loader), nodeInterp: interp}
+	confGox := &gox.Config{
+		Context:         conf.Context,
+		Logf:            conf.Logf,
+		Dir:             dir,
+		ModPath:         conf.ModPath,
+		Env:             conf.Env,
+		BuildFlags:      conf.BuildFlags,
+		Fset:            conf.Fset,
+		LoadPkgs:        conf.PkgsLoader.LoadPkgs,
+		LoadNamed:       ctx.loadNamed,
+		HandleErr:       ctx.handleErr,
+		NodeInterpreter: interp,
+		Prefix:          gopPrefix,
+		ParseFile:       nil, // TODO
+		NewBuiltin:      newBuiltinDefault,
+	}
+	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
+	for _, gmx := range pkg.Files {
+		if gmx.FileType == ast.FileTypeGmx {
+			ctx.gmxSettings = newGmx(p, gmx)
+			break
+		}
+	}
+	for fpath, f := range pkg.Files {
+		testingFile := strings.HasSuffix(fpath, "_test.gop")
+		preloadFile(p, ctx, f, targetDir, testingFile, conf)
+	}
+	for _, f := range pkg.Files {
+		if f.FileType == ast.FileTypeGmx {
+			loadFile(ctx, f)
+			break
+		}
+	}
+	for _, f := range pkg.Files {
+		if f.FileType != ast.FileTypeGmx { // only one .gmx file
+			loadFile(ctx, f)
+		}
+	}
+	for _, load := range ctx.inits {
+		load()
+	}
+	err = ctx.complete()
+	return
+}
+
+func loadFile(ctx *pkgCtx, f *ast.File) {
+	for _, decl := range f.Decls {
+		switch d := decl.(type) {
+		case *ast.FuncDecl:
+			if d.Recv == nil {
+				name := d.Name.Name
+				if name != "init" {
+					ctx.loadSymbol(name)
+				}
+			} else {
+				if name, ok := getRecvTypeName(ctx, d.Recv, false); ok {
+					getTypeLoader(ctx.syms, token.NoPos, name).load()
+				}
+			}
+		case *ast.GenDecl:
+			switch d.Tok {
+			case token.TYPE:
+				for _, spec := range d.Specs {
+					ctx.loadType(spec.(*ast.TypeSpec).Name.Name)
+				}
+			case token.CONST, token.VAR:
+				for _, spec := range d.Specs {
+					for _, name := range spec.(*ast.ValueSpec).Names {
+						ctx.loadSymbol(name.Name)
+					}
+				}
+			}
+		}
+	}
+}
+
+func preloadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, testingFile bool, conf *Config) {
 	syms := parent.syms
 	fileLine := !conf.NoFileLine
 	ctx := &blockCtx{
-		pkg: p, pkgCtx: parent, cb: p.CB(), fset: p.Fset, targetDir: targetDir,
+		pkg: p, pkgCtx: parent, cb: p.CB(), fset: p.Fset, targetDir: targetDir, fileType: f.FileType,
 		fileLine: fileLine, relativePath: conf.RelativePath, imports: make(map[string]*gox.PkgRef),
 	}
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
+			switch f.FileType {
+			// TODO:
+			}
 			if d.Recv == nil {
 				name := d.Name
 				fn := func() {
