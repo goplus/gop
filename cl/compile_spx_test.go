@@ -277,11 +277,16 @@ const (
 	GopClass = "Kai"
 )
 
+var (
+	a int
+)
+
 func onInit() {
-	setCostume("kai-a")
-	play("recordingWhere")
-	say("Where do you come from?", 2)
-	broadcast("msg2")
+	a = 1
+}
+
+func onCloned() {
+	say("Hi")
 }
 `, `
 `)

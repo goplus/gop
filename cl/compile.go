@@ -192,11 +192,15 @@ type baseLoader struct {
 }
 
 func initLoader(ctx *pkgCtx, syms map[string]loader, start token.Pos, name string, fn func()) {
-	if old, ok := syms[name]; ok && start != token.NoPos {
-		pos := ctx.Position(start)
+	if old, ok := syms[name]; ok {
+		var pos token.Position
+		if start != token.NoPos {
+			pos = ctx.Position(start)
+		}
 		oldpos := ctx.Position(old.pos())
 		ctx.handleCodeErrorf(
 			&pos, "%s redeclared in this block\n\tprevious declaration at %v", name, oldpos)
+		return
 	}
 	syms[name] = &baseLoader{start: start, fn: fn}
 }
@@ -678,6 +682,9 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 		baseType = parent.game
 	}
 	if classType != "" {
+		if debugLoad {
+			log.Println("==> Preload type", classType)
+		}
 		ld := getTypeLoader(syms, token.NoPos, classType)
 		ld.typ = func() {
 			flds := make([]*types.Var, 1, 2)
