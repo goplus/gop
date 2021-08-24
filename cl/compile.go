@@ -409,6 +409,25 @@ func getStringVal(v ast.Expr, ret *string) {
 	}
 }
 
+func getFields(ctx *blockCtx, f *ast.File) (specs []ast.Spec) {
+	decls := f.Decls
+	i, n := 0, len(decls)
+	for i < n {
+		g, ok := decls[i].(*ast.GenDecl)
+		if !ok {
+			break
+		}
+		if g.Tok != token.IMPORT && g.Tok != token.CONST {
+			if g.Tok == token.VAR {
+				specs, g.Specs = g.Specs, nil
+			}
+			break
+		}
+		i++ // skip import, if any
+	}
+	return
+}
+
 func getClass(file string, spx *ast.File) string {
 	decls := spx.Decls
 	i, n := 0, len(decls)
@@ -685,14 +704,24 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 		if debugLoad {
 			log.Println("==> Preload type", classType)
 		}
-		ld := getTypeLoader(syms, token.NoPos, classType)
+		pos := f.Pos()
+		specs := getFields(ctx, f)
+		ld := getTypeLoader(syms, pos, classType)
 		ld.typ = func() {
+			pkg := p.Types
 			flds := make([]*types.Var, 1, 2)
-			flds[0] = types.NewField(token.NoPos, p.Types, baseType.Name(), baseType.Type(), true)
+			flds[0] = types.NewField(pos, pkg, baseType.Name(), baseType.Type(), true)
 			if f.FileType == ast.FileTypeSpx {
 				game := parent.game
-				fld := types.NewField(token.NoPos, p.Types, game.Name(), types.NewPointer(game.Type()), true)
+				fld := types.NewField(pos, pkg, game.Name(), types.NewPointer(game.Type()), true)
 				flds = append(flds, fld)
+			}
+			for _, v := range specs {
+				spec := v.(*ast.ValueSpec)
+				typ := toType(ctx, spec.Type)
+				for _, name := range spec.Names {
+					flds = append(flds, types.NewField(name.Pos(), pkg, name.Name, typ, false))
+				}
 			}
 			typ := types.NewStruct(flds, nil)
 			p.NewType(classType).InitType(p, typ)

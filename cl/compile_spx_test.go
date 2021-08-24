@@ -257,7 +257,7 @@ func (_gop_this *bar) OnInit() {
 `)
 }
 
-func _TestSpxVar(t *testing.T) {
+func TestSpxVar(t *testing.T) {
 	gopSpxTest(t, `
 const (
 	GopGamePkg = "github.com/goplus/gop/cl/internal/spx"
@@ -288,6 +288,30 @@ func onInit() {
 func onCloned() {
 	say("Hi")
 }
-`, `
+`, `package main
+
+import spx "github.com/goplus/gop/cl/internal/spx"
+
+type Kai struct {
+	spx.Sprite
+	*spx.Game
+	a int
+}
+type Game struct {
+	spx.Game
+	Kai Kai
+}
+
+func (_gop_this *Game) OnInit() {
+	_gop_this.Kai.Clone()
+	_gop_this.Broadcast__0("msg1")
+}
+func (_gop_this *Kai) OnInit() {
+	_gop_this.a = 1
+}
+func (_gop_this *Kai) OnCloned(_gop_data interface {
+}) {
+	_gop_this.Say("Hi")
+}
 `)
 }
