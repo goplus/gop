@@ -680,8 +680,12 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 	if classType != "" {
 		ld := getTypeLoader(syms, token.NoPos, classType)
 		ld.typ = func() {
-			flds := []*types.Var{
-				types.NewField(token.NoPos, p.Types, baseType.Name(), baseType.Type(), true),
+			flds := make([]*types.Var, 1, 2)
+			flds[0] = types.NewField(token.NoPos, p.Types, baseType.Name(), baseType.Type(), true)
+			if f.FileType == ast.FileTypeSpx {
+				game := parent.game
+				fld := types.NewField(token.NoPos, p.Types, game.Name(), types.NewPointer(game.Type()), true)
+				flds = append(flds, fld)
 			}
 			typ := types.NewStruct(flds, nil)
 			p.NewType(classType).InitType(p, typ)
