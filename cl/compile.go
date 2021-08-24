@@ -664,20 +664,26 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 		pkg: p, pkgCtx: parent, cb: p.CB(), fset: p.Fset, targetDir: targetDir, fileType: f.FileType,
 		fileLine: fileLine, relativePath: conf.RelativePath, imports: make(map[string]*gox.PkgRef),
 	}
-	classType := ""
+	var classType string
+	var baseType types.Object
 	switch f.FileType {
 	case ast.FileTypeSpx:
 		if parent.gmxSettings != nil {
 			classType = getClass(file, f)
+			baseType = parent.sprite
 		}
 		// TODO: panic
 	case ast.FileTypeGmx:
 		classType = parent.Class
+		baseType = parent.game
 	}
 	if classType != "" {
 		ld := getTypeLoader(syms, token.NoPos, classType)
 		ld.typ = func() {
-			typ := types.NewStruct(nil, nil)
+			flds := []*types.Var{
+				types.NewField(token.NoPos, p.Types, baseType.Name(), baseType.Type(), true),
+			}
+			typ := types.NewStruct(flds, nil)
 			p.NewType(classType).InitType(p, typ)
 		}
 		ctx.classRecv = &ast.FieldList{List: []*ast.Field{{

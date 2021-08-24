@@ -84,13 +84,17 @@ func onMsg(msg string) {
 }
 `, `package main
 
+import spx "github.com/goplus/gop/cl/internal/spx"
+
 type Game struct {
+	spx.Game
 }
 
 func (this *Game) OnInit() {
 }
 
 type Kai struct {
+	spx.Sprite
 }
 
 func (this *Kai) OnMsg(msg string, _gop_data interface {
@@ -145,13 +149,17 @@ func onInit() {
 }
 `, `package main
 
+import spx "github.com/goplus/gop/cl/internal/spx"
+
 type index struct {
+	spx.Game
 }
 
 func (_gop_this *index) OnInit() {
 }
 
 type bar struct {
+	spx.Sprite
 }
 
 func (_gop_this *bar) OnInit() {
@@ -179,9 +187,13 @@ func onInit() {
 }
 `, `package main
 
-import fmt "fmt"
+import (
+	fmt "fmt"
+	spx "github.com/goplus/gop/cl/internal/spx"
+)
 
 type index struct {
+	spx.Game
 }
 
 func (_gop_this *index) OnInit() {
@@ -190,6 +202,7 @@ func (_gop_this *index) OnInit() {
 const Foo = 1
 
 type bar struct {
+	spx.Sprite
 }
 
 func (_gop_this *bar) OnInit() {
@@ -198,10 +211,31 @@ func (_gop_this *bar) OnInit() {
 `)
 }
 
+func _TestSpxMethod(t *testing.T) {
+	gopSpxTest(t, `
+const (
+	GopGamePkg = "github.com/goplus/gop/cl/internal/spx"
+	GopClass = "Game"
+)
+
+func onInit() {
+	broadcast("msg1")
+}
+`, `
+func onInit() {
+	setCostume("kai-a")
+	play("recordingWhere")
+	say("Where do you come from?", 2)
+	broadcast("msg2")
+}
+`, `
+`)
+}
+
 func _TestSpxVar(t *testing.T) {
 	gopSpxTest(t, `
 const (
-	GopGamePkg = "github.com/goplus/cl/internal/spx"
+	GopGamePkg = "github.com/goplus/gop/cl/internal/spx"
 	GopClass = "Game"
 )
 

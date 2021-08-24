@@ -345,7 +345,7 @@ type BigInt struct {
 import big "math/big"
 
 type BigInt struct {
-	Int *big.Int
+	*big.Int
 }
 `)
 }
