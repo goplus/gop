@@ -165,7 +165,7 @@ func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) { // x[i:j:k]
 func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr) {
 	switch x := v.X.(type) {
 	case *ast.Ident:
-		if compileClassMember(ctx, x.Name, false, true) {
+		if compileClassMember(ctx, x, x.Name, false, true) {
 			break
 		}
 		o, at, builtin := lookupParent(ctx, x.Name)
@@ -183,7 +183,7 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr) {
 	default:
 		compileExpr(ctx, v.X)
 	}
-	ctx.cb.Member(v.Sel.Name, true, v)
+	ctx.cb.MemberRef(v.Sel.Name, v)
 }
 
 func isBuiltin(o types.Object) bool {
@@ -196,7 +196,7 @@ func isBuiltin(o types.Object) bool {
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, autoCall bool) {
 	switch x := v.X.(type) {
 	case *ast.Ident:
-		if compileClassMember(ctx, x.Name, autoCall, false) {
+		if compileClassMember(ctx, x, x.Name, autoCall, false) {
 			break
 		}
 		o, at, builtin := lookupParent(ctx, x.Name)
@@ -219,20 +219,20 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, autoCall bool) {
 	default:
 		compileExpr(ctx, v.X)
 	}
-	if err := compileMember(ctx, v.Sel.Name, autoCall, false); err != nil {
+	if err := compileMember(ctx, v, v.Sel.Name, autoCall, false); err != nil {
 		panic(err)
 	}
 }
 
-func compileMember(ctx *blockCtx, name string, autoCall, lhs bool) error {
+func compileMember(ctx *blockCtx, v ast.Node, name string, autoCall, lhs bool) error {
 	cb := ctx.cb
-	kind, err := cb.Member(name, lhs)
+	kind, err := cb.Member(name, lhs, v)
 	if kind != 0 {
 		return nil
 	}
 	if c := name[0]; c >= 'a' && c <= 'z' {
 		name = string(rune(c)+('A'-'a')) + name[1:]
-		switch kind, _ = cb.Member(name, lhs); kind {
+		switch kind, _ = cb.Member(name, lhs, v); kind {
 		case gox.MemberMethod:
 			if autoCall {
 				cb.Call(0)
@@ -341,7 +341,7 @@ func compileIdentLHS(ctx *blockCtx, v *ast.Ident) {
 	if name == "_" {
 		ctx.cb.VarRef(nil)
 	} else {
-		if compileClassMember(ctx, name, false, true) {
+		if compileClassMember(ctx, v, name, false, true) {
 			return
 		}
 		_, o := ctx.cb.Scope().LookupParent(name, gotoken.NoPos)
@@ -357,7 +357,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, allowBuiltin, autoCall bool) 
 	if name == "_" {
 		panic(ctx.newCodeError(ident.Pos(), "cannot use _ as value"))
 	}
-	if compileClassMember(ctx, name, autoCall, false) {
+	if compileClassMember(ctx, ident, name, autoCall, false) {
 		return
 	}
 	if o, _, builtin := lookupParent(ctx, name); o != nil {
@@ -370,13 +370,13 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, allowBuiltin, autoCall bool) 
 	}
 }
 
-func compileClassMember(ctx *blockCtx, name string, autoCall, lhs bool) bool {
+func compileClassMember(ctx *blockCtx, v ast.Node, name string, autoCall, lhs bool) bool {
 	if ctx.fileType > 0 {
 		if fn := ctx.cb.Func(); fn != nil {
 			sig := fn.Type().(*types.Signature)
 			if recv := sig.Recv(); recv != nil {
 				ctx.cb.Val(recv)
-				if compileMember(ctx, name, autoCall, lhs) == nil {
+				if compileMember(ctx, v, name, autoCall, lhs) == nil {
 					return true
 				}
 				ctx.cb.InternalStack().PopN(1)
