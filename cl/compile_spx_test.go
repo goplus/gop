@@ -84,12 +84,17 @@ func onMsg(msg string) {
 }
 `, `package main
 
-func onInit() {
+type Game struct {
 }
 
-const GopClass = "Kai"
+func (this *Game) OnInit() {
+}
 
-func onMsg(msg string) {
+type Kai struct {
+}
+
+func (this *Kai) OnMsg(msg string, _gop_data interface {
+}) {
 }
 `)
 }
@@ -125,6 +130,72 @@ func TestSpxBasic3(t *testing.T) {
 func onInit() {
 }
 `, ``, ``)
+}
+
+func TestSpxBasic4(t *testing.T) {
+	gopSpxTest(t, `
+const (
+	GopGamePkg = "github.com/goplus/gop/cl/internal/spx"
+)
+
+func onInit() {
+}
+`, `
+func onInit() {
+}
+`, `package main
+
+type index struct {
+}
+
+func (_gop_this *index) OnInit() {
+}
+
+type bar struct {
+}
+
+func (_gop_this *bar) OnInit() {
+}
+`)
+}
+
+func TestSpxBasic5(t *testing.T) {
+	gopSpxTest(t, `
+const (
+	GopGamePkg = "github.com/goplus/gop/cl/internal/spx"
+)
+
+func onInit() {
+}
+`, `
+import "fmt"
+
+const (
+	Foo = 1
+)
+
+func onInit() {
+	fmt.Println("Hi")
+}
+`, `package main
+
+import fmt "fmt"
+
+type index struct {
+}
+
+func (_gop_this *index) OnInit() {
+}
+
+const Foo = 1
+
+type bar struct {
+}
+
+func (_gop_this *bar) OnInit() {
+	fmt.Println("Hi")
+}
+`)
 }
 
 func _TestSpxVar(t *testing.T) {

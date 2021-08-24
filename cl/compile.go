@@ -25,6 +25,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
@@ -280,11 +281,11 @@ type gmxSettings struct {
 	game   gox.Ref
 	sprite gox.Ref
 	titles []string
-	params map[string]*types.Tuple
+	params map[string][]*ast.Field
 }
 
-func newGmx(pkg *gox.Package, gmx *ast.File) *gmxSettings {
-	p := &gmxSettings{Pkg: "github.com/goplus/spx", Class: "Game", This: "_gop_this"}
+func newGmx(pkg *gox.Package, file string, gmx *ast.File) *gmxSettings {
+	p := &gmxSettings{Pkg: "github.com/goplus/spx", Class: getDefaultClass(file), This: "_gop_this"}
 	getGameSettings(gmx, p)
 	p.spx = pkg.Import(p.Pkg)
 	p.game = spxRef(p.spx, "Gop_game", "Game")
@@ -292,6 +293,35 @@ func newGmx(pkg *gox.Package, gmx *ast.File) *gmxSettings {
 	p.titles = getStrings(p.spx, "Gop_title")
 	p.params = getParams(p.spx, "Gop_params")
 	return p
+}
+
+func (p *gmxSettings) addParams(name string, typ *ast.FuncType) {
+	if params, ok := p.params[name]; ok {
+		list := typ.Params.List
+		if i := len(list); i < len(params) {
+			if params[i] == nil {
+				panic("addParams: no default param")
+			}
+			typ.Params.List = append(list, params[i:]...)
+		}
+	}
+}
+
+func (p *gmxSettings) toTitle(v *ast.Ident) {
+	name := v.Name
+	for _, t := range p.titles {
+		if strings.HasPrefix(name, t) {
+			v.Name = strings.Title(t) + name[len(t):]
+		}
+	}
+}
+
+func getDefaultClass(file string) string {
+	_, name := filepath.Split(file)
+	if idx := strings.Index(name, "."); idx > 0 {
+		name = name[:idx]
+	}
+	return name
 }
 
 func spxRef(spx *gox.PkgRef, name, typ string) gox.Ref {
@@ -302,8 +332,8 @@ func spxRef(spx *gox.PkgRef, name, typ string) gox.Ref {
 }
 
 // onMsg(, _gop_data interface{}); onCloned(_gop_data interface{})
-func getParams(spx *gox.PkgRef, name string) map[string]*types.Tuple {
-	ret := map[string]*types.Tuple{}
+func getParams(spx *gox.PkgRef, name string) map[string][]*ast.Field {
+	ret := map[string][]*ast.Field{}
 	if v := getStringConst(spx, name); v != "" {
 		for _, part := range strings.Split(v, ";") {
 			part = strings.TrimPrefix(part, " ")
@@ -312,12 +342,12 @@ func getParams(spx *gox.PkgRef, name string) map[string]*types.Tuple {
 			if pos > 0 && pos2 == len(part)-1 {
 				key := part[:pos]
 				params := strings.Split(part[pos+1:pos2], ",")
-				tuple := make([]*types.Var, len(params))
+				tuple := make([]*ast.Field, len(params))
 				for i, param := range params {
 					param = strings.TrimPrefix(param, " ")
-					tuple[i] = getVar(param)
+					tuple[i] = getField(param)
 				}
-				ret[key] = types.NewTuple(tuple...)
+				ret[key] = tuple
 			}
 		}
 	}
@@ -325,7 +355,7 @@ func getParams(spx *gox.PkgRef, name string) map[string]*types.Tuple {
 }
 
 // _gop_data interface{}
-func getVar(param string) *types.Var {
+func getField(param string) *ast.Field {
 	if param == "" {
 		return nil
 	}
@@ -333,17 +363,20 @@ func getVar(param string) *types.Var {
 	if idx > 0 {
 		name := param[:idx]
 		if typ, ok := strTypes[param[idx+1:]]; ok {
-			return types.NewParam(token.NoPos, nil, name, typ)
+			return &ast.Field{
+				Names: []*ast.Ident{{Name: name}},
+				Type:  typ,
+			}
 		}
 	}
 	panic("getVar failed: " + param)
 }
 
 var (
-	strTypes = map[string]types.Type{
-		"interface{}": gox.TyEmptyInterface,
-		"string":      types.Typ[types.String],
-		"int":         types.Typ[types.Int],
+	strTypes = map[string]ast.Expr{
+		"interface{}": &ast.InterfaceType{Methods: &ast.FieldList{}},
+		"string":      &ast.Ident{Name: "string"},
+		"int":         &ast.Ident{Name: "int"},
 	}
 )
 
@@ -370,6 +403,39 @@ func getStringVal(v ast.Expr, ret *string) {
 			*ret = val
 		}
 	}
+}
+
+func getClass(file string, spx *ast.File) string {
+	decls := spx.Decls
+	i, n := 0, len(decls)
+	val := getDefaultClass(file)
+	for i < n {
+		g, ok := decls[i].(*ast.GenDecl)
+		if !ok {
+			break
+		}
+		if g.Tok != token.IMPORT {
+			if g.Tok == token.CONST {
+				rm := true
+				for _, v := range g.Specs {
+					spec := v.(*ast.ValueSpec)
+					for i, name := range spec.Names {
+						if name.Name == "GopClass" {
+							getStringVal(spec.Values[i], &val)
+						} else {
+							rm = false
+						}
+					}
+				}
+				if rm {
+					g.Specs = nil
+				}
+			}
+			break
+		}
+		i++ // skip import, if any
+	}
+	return val
 }
 
 func getGameSettings(gmx *ast.File, ret *gmxSettings) {
@@ -423,6 +489,7 @@ type blockCtx struct {
 	fset         *token.FileSet
 	imports      map[string]*gox.PkgRef
 	targetDir    string
+	classRecv    *ast.FieldList // avaliable when gmxSettings != nil
 	fileLine     bool
 	relativePath bool
 	fileType     int16
@@ -531,15 +598,14 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		NewBuiltin:      newBuiltinDefault,
 	}
 	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
-	for _, gmx := range pkg.Files {
+	for file, gmx := range pkg.Files {
 		if gmx.FileType == ast.FileTypeGmx {
-			ctx.gmxSettings = newGmx(p, gmx)
+			ctx.gmxSettings = newGmx(p, file, gmx)
 			break
 		}
 	}
 	for fpath, f := range pkg.Files {
-		testingFile := strings.HasSuffix(fpath, "_test.gop")
-		preloadFile(p, ctx, f, targetDir, testingFile, conf)
+		preloadFile(p, ctx, fpath, f, targetDir, conf)
 	}
 	for _, f := range pkg.Files {
 		if f.FileType == ast.FileTypeGmx {
@@ -590,18 +656,48 @@ func loadFile(ctx *pkgCtx, f *ast.File) {
 	}
 }
 
-func preloadFile(p *gox.Package, parent *pkgCtx, f *ast.File, targetDir string, testingFile bool, conf *Config) {
+func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targetDir string, conf *Config) {
 	syms := parent.syms
 	fileLine := !conf.NoFileLine
+	testingFile := strings.HasSuffix(file, "_test.gop")
 	ctx := &blockCtx{
 		pkg: p, pkgCtx: parent, cb: p.CB(), fset: p.Fset, targetDir: targetDir, fileType: f.FileType,
 		fileLine: fileLine, relativePath: conf.RelativePath, imports: make(map[string]*gox.PkgRef),
 	}
+	classType := ""
+	switch f.FileType {
+	case ast.FileTypeSpx:
+		if parent.gmxSettings != nil {
+			classType = getClass(file, f)
+		}
+		// TODO: panic
+	case ast.FileTypeGmx:
+		classType = parent.Class
+	}
+	if classType != "" {
+		ld := getTypeLoader(syms, token.NoPos, classType)
+		ld.typ = func() {
+			typ := types.NewStruct(nil, nil)
+			p.NewType(classType).InitType(p, typ)
+		}
+		ctx.classRecv = &ast.FieldList{List: []*ast.Field{{
+			Names: []*ast.Ident{
+				{Name: parent.This},
+			},
+			Type: &ast.StarExpr{
+				X: &ast.Ident{Name: classType},
+			},
+		}}}
+	}
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
-			switch f.FileType {
-			// TODO:
+			if ctx.classRecv != nil { // in class file (.spx/.gmx)
+				if d.Recv == nil {
+					d.Recv = ctx.classRecv
+					ctx.addParams(d.Name.Name, d.Type)
+					ctx.toTitle(d.Name)
+				}
 			}
 			if d.Recv == nil {
 				name := d.Name

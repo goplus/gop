@@ -66,11 +66,11 @@ func TestGetStrings(t *testing.T) {
 	}
 }
 
-func TestGetVar(t *testing.T) {
+func TestGetField(t *testing.T) {
 	defer func() {
 		if e := recover(); e == nil {
 			t.Fatal("getVar: no error?")
 		}
 	}()
-	getVar("panic")
+	getField("panic")
 }
