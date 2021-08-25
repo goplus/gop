@@ -70,7 +70,7 @@ func TestSpxBasic(t *testing.T) {
 const (
 	GopGamePkg = "github.com/goplus/gop/cl/internal/spx"
 	GopClass = "Game"
-	GopThis = "this"
+	GopThis = "self"
 )
 
 func onInit() {
@@ -90,7 +90,7 @@ type Game struct {
 	spx.Game
 }
 
-func (this *Game) OnInit() {
+func (self *Game) OnInit() {
 }
 
 type Kai struct {
@@ -98,7 +98,7 @@ type Kai struct {
 	*spx.Game
 }
 
-func (this *Kai) OnMsg(msg string, _gop_data interface {
+func (self *Kai) OnMsg(msg string, _gop_data interface {
 }) {
 }
 `)
@@ -156,7 +156,7 @@ type index struct {
 	spx.Game
 }
 
-func (_gop_this *index) OnInit() {
+func (this *index) OnInit() {
 }
 
 type bar struct {
@@ -164,7 +164,7 @@ type bar struct {
 	*spx.Game
 }
 
-func (_gop_this *bar) OnInit() {
+func (this *bar) OnInit() {
 }
 `)
 }
@@ -198,7 +198,7 @@ type index struct {
 	spx.Game
 }
 
-func (_gop_this *index) OnInit() {
+func (this *index) OnInit() {
 }
 
 const Foo = 1
@@ -208,7 +208,7 @@ type bar struct {
 	*spx.Game
 }
 
-func (_gop_this *bar) OnInit() {
+func (this *bar) OnInit() {
 	fmt.Println("Hi")
 }
 `)
@@ -239,8 +239,8 @@ type Game struct {
 	spx.Game
 }
 
-func (_gop_this *Game) OnInit() {
-	_gop_this.Broadcast__0("msg1")
+func (this *Game) OnInit() {
+	this.Broadcast__0("msg1")
 }
 
 type bar struct {
@@ -248,11 +248,11 @@ type bar struct {
 	*spx.Game
 }
 
-func (_gop_this *bar) OnInit() {
-	_gop_this.SetCostume("kai-a")
-	_gop_this.Play("recordingWhere")
-	_gop_this.Say("Where do you come from?", 2)
-	_gop_this.Broadcast__0("msg2")
+func (this *bar) OnInit() {
+	this.SetCostume("kai-a")
+	this.Play("recordingWhere")
+	this.Say("Where do you come from?", 2)
+	this.Broadcast__0("msg2")
 }
 `)
 }
@@ -302,16 +302,63 @@ type Game struct {
 	Kai Kai
 }
 
-func (_gop_this *Game) OnInit() {
-	_gop_this.Kai.Clone()
-	_gop_this.Broadcast__0("msg1")
+func (this *Game) OnInit() {
+	this.Kai.Clone()
+	this.Broadcast__0("msg1")
 }
-func (_gop_this *Kai) OnInit() {
-	_gop_this.a = 1
+func (this *Kai) OnInit() {
+	this.a = 1
 }
-func (_gop_this *Kai) OnCloned(_gop_data interface {
+func (this *Kai) OnCloned(_gop_data interface {
 }) {
-	_gop_this.Say("Hi")
+	this.Say("Hi")
+}
+`)
+}
+
+func TestSpxRun(t *testing.T) {
+	gopSpxTest(t, `
+const (
+	GopGamePkg = "github.com/goplus/gop/cl/internal/spx"
+)
+
+var (
+	Kai Kai
+)
+
+run(this, "hzip://open.qiniu.us/weather/res.zip")
+`, `
+const (
+	GopClass = "Kai"
+)
+
+func onInit() {
+	println("Hi")
+}
+`, `package main
+
+import (
+	fmt "fmt"
+	spx "github.com/goplus/gop/cl/internal/spx"
+)
+
+type Kai struct {
+	spx.Sprite
+	*spx.Game
+}
+type index struct {
+	spx.Game
+	Kai Kai
+}
+
+func (this *index) main() {
+	spx.Run(this, "hzip://open.qiniu.us/weather/res.zip")
+}
+func main() {
+	new(index).main()
+}
+func (this *Kai) OnInit() {
+	fmt.Println("Hi")
 }
 `)
 }

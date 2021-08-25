@@ -289,7 +289,7 @@ type gmxSettings struct {
 }
 
 func newGmx(pkg *gox.Package, file string, gmx *ast.File) *gmxSettings {
-	p := &gmxSettings{Pkg: "github.com/goplus/spx", Class: getDefaultClass(file), This: "_gop_this"}
+	p := &gmxSettings{Pkg: "github.com/goplus/spx", Class: getDefaultClass(file), This: "this"}
 	getGameSettings(gmx, p)
 	p.spx = pkg.Import(p.Pkg)
 	p.game = spxRef(p.spx, "Gop_game", "Game")
@@ -633,6 +633,13 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	for _, f := range pkg.Files {
 		if f.FileType == ast.FileTypeGmx {
 			loadFile(ctx, f)
+			if o := p.Types.Scope().Lookup(ctx.Class); o != nil && hasMethod(o, "main") {
+				// new(Game).main()
+				p.NewFunc(nil, "main", nil, nil, false).BodyStart(p).
+					Val(p.Builtin().Ref("new")).Val(o).Call(1).
+					MemberVal("main").Call(0).EndStmt().
+					End()
+			}
 			break
 		}
 	}
@@ -646,6 +653,19 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	}
 	err = ctx.complete()
 	return
+}
+
+func hasMethod(o types.Object, name string) bool {
+	if obj, ok := o.(*types.TypeName); ok {
+		if t, ok := obj.Type().(*types.Named); ok {
+			for i, n := 0, t.NumMethods(); i < n; i++ {
+				if t.Method(i).Name() == name {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 func loadFile(ctx *pkgCtx, f *ast.File) {

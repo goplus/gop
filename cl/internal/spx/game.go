@@ -38,3 +38,7 @@ func (p *Game) Broadcast__2(msg string, data interface{}, wait bool) {
 
 func (p *Game) Play(media string, wait ...bool) {
 }
+
+func Run(game interface{}, resource string) error {
+	return nil
+}

@@ -201,8 +201,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, autoCall bool) {
 		}
 		o, at, builtin := lookupParent(ctx, x.Name)
 		if at != nil {
-			if v := at.Ref(v.Sel.Name); v != nil {
-				ctx.cb.Val(v)
+			if compilePkgRef(ctx, at, v.Sel.Name, false) {
 				return
 			}
 			if token.IsExported(v.Sel.Name) {
@@ -222,6 +221,32 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, autoCall bool) {
 	if err := compileMember(ctx, v, v.Sel.Name, autoCall, false); err != nil {
 		panic(err)
 	}
+}
+
+func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, name string, lhs bool) bool {
+	cb := ctx.cb
+	if pkgRef(cb, at, name, lhs) {
+		return true
+	}
+	if c := name[0]; c >= 'a' && c <= 'z' {
+		name = string(rune(c)+('A'-'a')) + name[1:]
+		if pkgRef(cb, at, name, lhs) {
+			return true
+		}
+	}
+	return false
+}
+
+func pkgRef(cb *gox.CodeBuilder, at *gox.PkgRef, name string, lhs bool) bool {
+	if v := at.Ref(name); v != nil {
+		if lhs {
+			cb.VarRef(v)
+		} else {
+			cb.Val(v)
+		}
+		return true
+	}
+	return false
 }
 
 func compileMember(ctx *blockCtx, v ast.Node, name string, autoCall, lhs bool) error {
@@ -380,6 +405,9 @@ func compileClassMember(ctx *blockCtx, v ast.Node, name string, autoCall, lhs bo
 					return true
 				}
 				ctx.cb.InternalStack().PopN(1)
+				if compilePkgRef(ctx, ctx.spx, name, lhs) {
+					return true
+				}
 			}
 		}
 	}
