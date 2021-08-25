@@ -95,7 +95,7 @@ func (self *Game) OnInit() {
 
 type Kai struct {
 	spx.Sprite
-	*spx.Game
+	*Game
 }
 
 func (self *Kai) OnMsg(msg string, _gop_data interface {
@@ -161,7 +161,7 @@ func (this *index) OnInit() {
 
 type bar struct {
 	spx.Sprite
-	*spx.Game
+	*index
 }
 
 func (this *bar) OnInit() {
@@ -205,7 +205,7 @@ const Foo = 1
 
 type bar struct {
 	spx.Sprite
-	*spx.Game
+	*index
 }
 
 func (this *bar) OnInit() {
@@ -245,7 +245,7 @@ func (this *Game) OnInit() {
 
 type bar struct {
 	spx.Sprite
-	*spx.Game
+	*Game
 }
 
 func (this *bar) OnInit() {
@@ -292,14 +292,14 @@ func onCloned() {
 
 import spx "github.com/goplus/gop/cl/internal/spx"
 
-type Kai struct {
-	spx.Sprite
-	*spx.Game
-	a int
-}
 type Game struct {
 	spx.Game
 	Kai Kai
+}
+type Kai struct {
+	spx.Sprite
+	*Game
+	a int
 }
 
 func (this *Game) OnInit() {
@@ -342,13 +342,13 @@ import (
 	spx "github.com/goplus/gop/cl/internal/spx"
 )
 
-type Kai struct {
-	spx.Sprite
-	*spx.Game
-}
 type index struct {
 	spx.Game
 	Kai Kai
+}
+type Kai struct {
+	spx.Sprite
+	*index
 }
 
 func (this *index) main() {

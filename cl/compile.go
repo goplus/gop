@@ -728,23 +728,31 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 		specs := getFields(ctx, f)
 		ld := getTypeLoader(syms, pos, classType)
 		ld.typ = func() {
-			pkg := p.Types
-			flds := make([]*types.Var, 1, 2)
-			flds[0] = types.NewField(pos, pkg, baseType.Name(), baseType.Type(), true)
-			if f.FileType == ast.FileTypeSpx {
-				game := parent.game
-				fld := types.NewField(pos, pkg, game.Name(), types.NewPointer(game.Type()), true)
-				flds = append(flds, fld)
+			if debugLoad {
+				log.Println("==> Load > NewType", classType)
 			}
-			for _, v := range specs {
-				spec := v.(*ast.ValueSpec)
-				typ := toType(ctx, spec.Type)
-				for _, name := range spec.Names {
-					flds = append(flds, types.NewField(name.Pos(), pkg, name.Name, typ, false))
+			decl := p.NewType(classType)
+			ld.typInit = func() { // decycle
+				if debugLoad {
+					log.Println("==> Load > InitType", classType)
 				}
+				pkg := p.Types
+				flds := make([]*types.Var, 1, 2)
+				flds[0] = types.NewField(pos, pkg, baseType.Name(), baseType.Type(), true)
+				if f.FileType == ast.FileTypeSpx {
+					typ := toType(ctx, &ast.StarExpr{X: &ast.Ident{Name: parent.Class}})
+					fld := types.NewField(pos, pkg, getTypeName(typ), typ, true)
+					flds = append(flds, fld)
+				}
+				for _, v := range specs {
+					spec := v.(*ast.ValueSpec)
+					typ := toType(ctx, spec.Type)
+					for _, name := range spec.Names {
+						flds = append(flds, types.NewField(name.Pos(), pkg, name.Name, typ, false))
+					}
+				}
+				decl.InitType(p, types.NewStruct(flds, nil))
 			}
-			typ := types.NewStruct(flds, nil)
-			p.NewType(classType).InitType(p, typ)
 		}
 		ctx.classRecv = &ast.FieldList{List: []*ast.Field{{
 			Names: []*ast.Ident{
