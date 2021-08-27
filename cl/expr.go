@@ -224,29 +224,27 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, autoCall bool) {
 }
 
 func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, name string, lhs bool) bool {
-	cb := ctx.cb
-	if pkgRef(cb, at, name, lhs) {
-		return true
+	v := pkgRef(at, name)
+	if v == nil {
+		return false
+	}
+	if lhs {
+		ctx.cb.VarRef(v)
+	} else {
+		ctx.cb.Val(v)
+	}
+	return true
+}
+
+func pkgRef(at *gox.PkgRef, name string) gox.Ref {
+	if o := at.Ref(name); o != nil {
+		return o
 	}
 	if c := name[0]; c >= 'a' && c <= 'z' {
 		name = string(rune(c)+('A'-'a')) + name[1:]
-		if pkgRef(cb, at, name, lhs) {
-			return true
-		}
+		return at.Ref(name)
 	}
-	return false
-}
-
-func pkgRef(cb *gox.CodeBuilder, at *gox.PkgRef, name string, lhs bool) bool {
-	if v := at.Ref(name); v != nil {
-		if lhs {
-			cb.VarRef(v)
-		} else {
-			cb.Val(v)
-		}
-		return true
-	}
-	return false
+	return nil
 }
 
 func compileMember(ctx *blockCtx, v ast.Node, name string, autoCall, lhs bool) error {
