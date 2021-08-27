@@ -150,19 +150,19 @@ func toExternalType(ctx *blockCtx, v *ast.SelectorExpr) types.Type {
 }
 
 func toIdentType(ctx *blockCtx, ident *ast.Ident) types.Type {
-	if ctx.fileType > 0 {
-		if v := pkgRef(ctx.spx, ident.Name); v != nil {
-			if t, ok := v.(*types.TypeName); ok {
-				return t.Type()
-			}
-		}
-	}
 	v, _, builtin := lookupParent(ctx, ident.Name)
 	if isBuiltin(builtin) {
 		panic(ctx.newCodeErrorf(ident.Pos(), "use of builtin %s not in function call", ident.Name))
 	}
 	if t, ok := v.(*types.TypeName); ok {
 		return t.Type()
+	}
+	if ctx.fileType > 0 {
+		if v := pkgRef(ctx.spx, ident.Name); v != nil {
+			if t, ok := v.(*types.TypeName); ok {
+				return t.Type()
+			}
+		}
 	}
 	panic(ctx.newCodeErrorf(ident.Pos(), "%s is not a type", ident.Name))
 }

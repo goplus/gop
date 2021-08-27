@@ -24,6 +24,8 @@ const (
 	Gop_params = "onMsg(, _gop_data interface{}); onCloned(_gop_data interface{})"
 )
 
+type Sound string
+
 type Game struct {
 }
 

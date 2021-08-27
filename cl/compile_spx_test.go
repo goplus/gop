@@ -324,6 +324,7 @@ const (
 
 var (
 	Kai Kai
+	t   Sound
 )
 
 run(this, "hzip://open.qiniu.us/weather/res.zip")
@@ -345,6 +346,7 @@ import (
 type index struct {
 	spx.Game
 	Kai Kai
+	t   spx.Sound
 }
 type Kai struct {
 	spx.Sprite
