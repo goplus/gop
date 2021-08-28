@@ -158,7 +158,7 @@ func toIdentType(ctx *blockCtx, ident *ast.Ident) types.Type {
 		return t.Type()
 	}
 	if ctx.fileType > 0 {
-		if v := pkgRef(ctx.spx, ident.Name); v != nil {
+		if v := ctx.spx.Ref(ident.Name); v != nil {
 			if t, ok := v.(*types.TypeName); ok {
 				return t.Type()
 			}
