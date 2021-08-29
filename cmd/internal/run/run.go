@@ -193,6 +193,7 @@ func goRun(target string, args []string) {
 	copy(goArgs[2:], args)
 	cmd := exec.Command("go", goArgs...)
 	cmd.Dir = dir
+	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Env = os.Environ()
