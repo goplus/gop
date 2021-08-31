@@ -33,6 +33,7 @@ import (
 	"github.com/goplus/gop/cmd/internal/install"
 	"github.com/goplus/gop/cmd/internal/run"
 	"github.com/goplus/gop/cmd/internal/test"
+	"github.com/goplus/gop/cmd/internal/version"
 )
 
 func mainUsage() {
@@ -50,6 +51,7 @@ func init() {
 		build.Cmd,
 		clean.Cmd,
 		test.Cmd,
+		version.Cmd,
 	}
 }
 
