@@ -19,6 +19,7 @@ package cl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"go/constant"
 	"go/types"
@@ -566,15 +567,10 @@ func (p *pkgCtx) loadSymbol(name string) bool {
 	if enableRecover {
 		defer func() {
 			if e := recover(); e != nil {
-				if err, ok := e.(error); ok {
-					p.handleErr(err)
-				} else {
-					panic(e)
-				}
+				p.handleRecover(e)
 			}
 		}()
 	}
-
 	if f, ok := p.syms[name]; ok {
 		if ld, ok := f.(*typeLoader); ok {
 			doNewType(ld) // create this type, but don't init
@@ -585,6 +581,18 @@ func (p *pkgCtx) loadSymbol(name string) bool {
 		return true
 	}
 	return false
+}
+
+func (p *pkgCtx) handleRecover(e interface{}) {
+	err, ok := e.(error)
+	if !ok {
+		if msg, ok := e.(string); ok {
+			err = errors.New(msg)
+		} else {
+			panic(e)
+		}
+	}
+	p.handleErr(err)
 }
 
 // NewPackage creates a Go+ package instance.

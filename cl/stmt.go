@@ -65,12 +65,8 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	if enableRecover {
 		defer func() {
 			if e := recover(); e != nil {
-				if err, ok := e.(error); ok {
-					ctx.handleErr(err)
-					ctx.cb.ResetStmt()
-				} else {
-					panic(e)
-				}
+				ctx.handleRecover(e)
+				ctx.cb.ResetStmt()
 			}
 		}()
 	}
