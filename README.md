@@ -152,7 +152,7 @@ Go+ supports bytecode backend and Go code generation.
 
 When we use `gop go` or `gop install` command, it generates Go code to covert Go+ package into Go packages.
 
-When we use `gop run` command, it doesn't call `go run` command. It generates bytecode to execute (in v0.9.x, `go run` also is using Go-code-generation mode).
+When we use `gop run` command, it doesn't call `go run` command. It generates bytecode to execute (in v1.0.x, `go run` also is using Go-code-generation mode).
 
 In bytecode mode, Go+ doesn't support `cgo`. However, in Go-code-generation mode, Go+ fully supports `cgo`.
 
