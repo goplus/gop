@@ -38,7 +38,11 @@ func toFuncType(ctx *blockCtx, typ *ast.FuncType, recv *types.Var) *types.Signat
 
 func toRecv(ctx *blockCtx, recv *ast.FieldList) *types.Var {
 	v := recv.List[0]
-	return ctx.pkg.NewParam(v.Pos(), v.Names[0].Name, toType(ctx, v.Type))
+	var name string
+	if len(v.Names) > 0 {
+		name = v.Names[0].Name
+	}
+	return ctx.pkg.NewParam(v.Pos(), name, toType(ctx, v.Type))
 }
 
 func getRecvTypeName(ctx *pkgCtx, recv *ast.FieldList, handleErr bool) (string, bool) {

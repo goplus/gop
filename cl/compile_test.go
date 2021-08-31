@@ -1520,6 +1520,10 @@ type M int
 func (m M) Foo() {
 	println("foo", m)
 }
+
+func (M) Bar() {
+	println("bar")
+}
 `, `package main
 
 import fmt "fmt"
@@ -1528,6 +1532,9 @@ type M int
 
 func (m M) Foo() {
 	fmt.Println("foo", m)
+}
+func ( M) Bar() {
+	fmt.Println("bar")
 }
 `)
 }
