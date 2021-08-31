@@ -994,7 +994,7 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 			return
 		}
 	} else {
-		name = path.Base(pkgPath)
+		name = path.Base(pkgPath) // TODO: open pkgPath to get pkgName
 	}
 	ctx.imports[name] = pkg
 }

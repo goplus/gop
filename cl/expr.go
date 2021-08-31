@@ -30,7 +30,16 @@ import (
 	"github.com/goplus/gox"
 )
 
-// -----------------------------------------------------------------------------
+/*-----------------------------------------------------------------------------
+
+Name lookup:
+- local context variables
+- $recv members (only in class files)
+- package globals (variables, constants, types, imported packages etc.)
+- $spx package exports (only in class files)
+- $universe package exports (including builtins)
+
+// ---------------------------------------------------------------------------*/
 
 func compileExprLHS(ctx *blockCtx, expr ast.Expr) {
 	switch v := expr.(type) {
