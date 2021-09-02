@@ -148,6 +148,26 @@ var i int
 `)
 }
 
+func TestVarInMain(t *testing.T) {
+	gopClTest(t, `
+package main
+
+func main() {
+	v := []uint64{2, 3, 5}
+	var n = len(v)
+	println(n)
+}`, `package main
+
+import fmt "fmt"
+
+func main() {
+	v := []uint64{2, 3, 5}
+	var n = len(v)
+	fmt.Println(n)
+}
+`)
+}
+
 func TestSelect(t *testing.T) {
 	gopClTest(t, `
 
