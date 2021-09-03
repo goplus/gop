@@ -105,7 +105,10 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	case *ast.LabeledStmt:
 		compileLabeledStmt(ctx, v)
 	case *ast.BlockStmt:
+		ctx.cb.Block()
 		compileStmts(ctx, v.List)
+		ctx.cb.End()
+		return
 	case *ast.SelectStmt:
 		compileSelectStmt(ctx, v)
 	case *ast.EmptyStmt:

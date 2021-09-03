@@ -127,6 +127,41 @@ func init() {
 `)
 }
 
+func TestBlockStmt(t *testing.T) {
+	gopClTest(t, `
+package main
+
+func main() {
+	{
+		type T int
+		t := T(100)
+		println(t)
+	}
+	{
+		type T string
+		t := "hello"
+		println(t)
+	}
+}
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	{
+		type T int
+		t := T(100)
+		fmt.Println(t)
+	}
+	{
+		type T string
+		t := "hello"
+		fmt.Println(t)
+	}
+}
+`)
+}
+
 func TestVarAfterMain(t *testing.T) {
 	gopClTest(t, `
 package main
