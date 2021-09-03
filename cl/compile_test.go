@@ -148,6 +148,27 @@ var i int
 `)
 }
 
+func TestVarAfterMain2(t *testing.T) {
+	gopClTest(t, `
+package main
+
+func main() {
+	println(i)
+}
+
+var i = 100
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Println(i)
+}
+
+var i = 100
+`)
+}
+
 func TestVarInMain(t *testing.T) {
 	gopClTest(t, `
 package main

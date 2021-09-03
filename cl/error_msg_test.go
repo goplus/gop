@@ -57,6 +57,20 @@ func TestErrErrWrap(t *testing.T) {
 
 func TestErrVar(t *testing.T) {
 	codeErrorTest(t,
+		"./bar.gop:6:5 assignment mismatch: 1 variables but fmt.Println returns 2 values", `import "fmt"
+
+func main() {
+}
+
+var a = fmt.Println(1)
+`)
+	codeErrorTest(t,
+		"./bar.gop:4:5 assignment mismatch: 1 variables but 2 values", `func main() {
+}
+
+var a = 1, 2
+`)
+	codeErrorTest(t,
 		"./bar.gop:2:2 undefined: foo", `func main() {
 	foo.x = 1
 }
