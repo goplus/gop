@@ -1,6 +1,6 @@
 package main
 
-file functype.gop
+file functype.go
 ast.GenDecl:
   Tok: type
   Specs:

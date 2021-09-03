@@ -127,8 +127,11 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, filter func(os.
 		}
 		fname := d.Name()
 		ext := filepath.Ext(fname)
-		_, isGop := extGopFiles[ext]
-		if isGop && !strings.HasPrefix(fname, "_") && (filter == nil || filter(d)) {
+		ft, isOk := extGopFiles[ext]
+		if ft == ast.FileTypeGo && (mode&ParseGoFiles) == 0 {
+			isOk = false
+		}
+		if isOk && !strings.HasPrefix(fname, "_") && (filter == nil || filter(d)) {
 			filename := fs.Join(path, fname)
 			if filedata, err := fs.ReadFile(filename); err == nil {
 				if src, err := ParseFSFile(fset, fs, filename, filedata, mode); err == nil {
@@ -155,6 +158,7 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, filter func(os.
 
 var (
 	extGopFiles = map[string]int16{
+		".go":  ast.FileTypeGo,
 		".gop": ast.FileTypeGop,
 		".spx": ast.FileTypeSpx,
 		".gmx": ast.FileTypeGmx,

@@ -59,13 +59,13 @@ func TestParseFile(t *testing.T) {
 	}
 }
 
-func testFrom(t *testing.T, pkgDir, sel string) {
+func testFrom(t *testing.T, pkgDir, sel string, exclude Mode) {
 	if sel != "" && !strings.Contains(pkgDir, sel) {
 		return
 	}
 	log.Println("Parsing", pkgDir)
 	fset := token.NewFileSet()
-	pkgs, err := ParseDir(fset, pkgDir, nil, Trace)
+	pkgs, err := ParseDir(fset, pkgDir, nil, (Trace|ParseGoFiles)&^exclude)
 	if err != nil || len(pkgs) != 1 {
 		if errs, ok := err.(scanner.ErrorList); ok {
 			for _, e := range errs {
@@ -81,6 +81,17 @@ func testFrom(t *testing.T, pkgDir, sel string) {
 		}
 		parsertest.Expect(t, pkg, string(b))
 		return
+	}
+}
+
+func TestParseGo(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := ParseDir(fset, "./_testdata/functype", nil, Trace)
+	if err != nil {
+		t.Fatal("TestParseGo: ParseDir failed -", err)
+	}
+	if len(pkgs) != 0 {
+		t.Fatal("TestParseGo failed: len(pkgs) =", len(pkgs))
 	}
 }
 
@@ -100,7 +111,7 @@ func TestFromTestdata(t *testing.T) {
 		if strings.HasPrefix(name, "_") {
 			continue
 		}
-		testFrom(t, dir+"/"+name, sel)
+		testFrom(t, dir+"/"+name, sel, 0)
 	}
 }
 
