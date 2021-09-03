@@ -146,6 +146,28 @@ func main() {
 
 var i int
 `)
+	gopClTest(t, `
+package main
+
+func f(v float64) float64 {
+	return v
+}
+func main() {
+	sink = f(100)
+}
+
+var sink float64
+`, `package main
+
+func f(v float64) float64 {
+	return v
+}
+func main() {
+	sink = f(100)
+}
+
+var sink float64
+`)
 }
 
 func TestVarInMain(t *testing.T) {
