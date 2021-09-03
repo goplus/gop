@@ -115,6 +115,11 @@ func foo(v map[int]bar) {
 	foo := len
 }
 `)
+	codeErrorTest(t,
+		"./bar.gop:2:2 use of builtin println not in function call", `func main() {
+	println = "hello"
+}
+`)
 }
 
 func TestErrImport(t *testing.T) {
