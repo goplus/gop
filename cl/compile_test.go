@@ -2326,3 +2326,33 @@ func newRepo() Repo {
 `, "")
 	}
 }
+
+func TestLoadType(t *testing.T) {
+	gopClTest(t, `
+package main
+
+func main() {
+	verifyType()
+}
+
+type T int
+
+func verifyType() {
+	t := T(100)
+	println(t)
+}
+`, `package main
+
+import fmt "fmt"
+
+type T int
+
+func main() {
+	verifyType()
+}
+func verifyType() {
+	t := T(100)
+	fmt.Println(t)
+}
+`)
+}
