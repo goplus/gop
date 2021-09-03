@@ -376,9 +376,12 @@ func compileIdentLHS(ctx *blockCtx, v *ast.Ident) {
 		if compileClassMember(ctx, v, name, false, true) {
 			return
 		}
-		_, o := ctx.cb.Scope().LookupParent(name, gotoken.NoPos)
+		o, _, builtin := lookupParent(ctx, name)
 		if o == nil {
 			panic(ctx.newCodeErrorf(v.Pos(), "undefined: %s", name))
+		}
+		if isBuiltin(builtin) {
+			panic(ctx.newCodeErrorf(v.Pos(), "use of builtin %s not in function call", name))
 		}
 		ctx.cb.VarRef(o, v)
 	}
