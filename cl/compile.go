@@ -640,7 +640,8 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	}
 	for _, f := range pkg.Files {
 		if f.FileType == ast.FileTypeGmx {
-			loadFile(ctx, f)
+			loadType(ctx, f)
+			loadSymbol(ctx, f)
 			if o := p.Types.Scope().Lookup(ctx.Class); o != nil && hasMethod(o, "main") {
 				// new(Game).main()
 				p.NewFunc(nil, "main", nil, nil, false).BodyStart(p).
@@ -653,7 +654,12 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	}
 	for _, f := range pkg.Files {
 		if f.FileType != ast.FileTypeGmx { // only one .gmx file
-			loadFile(ctx, f)
+			loadType(ctx, f)
+		}
+	}
+	for _, f := range pkg.Files {
+		if f.FileType != ast.FileTypeGmx { // only one .gmx file
+			loadSymbol(ctx, f)
 		}
 	}
 	for _, load := range ctx.inits {
@@ -676,7 +682,21 @@ func hasMethod(o types.Object, name string) bool {
 	return false
 }
 
-func loadFile(ctx *pkgCtx, f *ast.File) {
+func loadType(ctx *pkgCtx, f *ast.File) {
+	for _, decl := range f.Decls {
+		switch d := decl.(type) {
+		case *ast.GenDecl:
+			switch d.Tok {
+			case token.TYPE:
+				for _, spec := range d.Specs {
+					ctx.loadType(spec.(*ast.TypeSpec).Name.Name)
+				}
+			}
+		}
+	}
+}
+
+func loadSymbol(ctx *pkgCtx, f *ast.File) {
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
@@ -692,10 +712,6 @@ func loadFile(ctx *pkgCtx, f *ast.File) {
 			}
 		case *ast.GenDecl:
 			switch d.Tok {
-			case token.TYPE:
-				for _, spec := range d.Specs {
-					ctx.loadType(spec.(*ast.TypeSpec).Name.Name)
-				}
 			case token.CONST, token.VAR:
 				for _, spec := range d.Specs {
 					for _, name := range spec.(*ast.ValueSpec).Names {

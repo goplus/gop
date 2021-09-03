@@ -2302,6 +2302,13 @@ import (
 	testing "testing"
 )
 
+type Repo struct {
+	Title string
+}
+type Result struct {
+	Repo Repo
+}
+
 func TestNew(t *testing.T) {
 	ret := New()
 	expected := Result{}
@@ -2309,20 +2316,10 @@ func TestNew(t *testing.T) {
 		t.Fatal("Test failed:", ret, expected)
 	}
 }
-
-type Result struct {
-	Repo Repo
-}
-
 func New() Result {
 	repo := newRepo()
 	return Result{Repo: repo}
 }
-
-type Repo struct {
-	Title string
-}
-
 func newRepo() Repo {
 	return Repo{Title: "Hi"}
 }
