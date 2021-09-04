@@ -53,7 +53,6 @@ func RunGoCmd(dir string, op string, args ...string) {
 	if err != nil {
 		switch e := err.(type) {
 		case *exec.ExitError:
-			// os.Stderr.Write(e.Stderr)
 			os.Exit(e.ExitCode())
 		default:
 			log.Fatalln("RunGoCmd failed:", err)

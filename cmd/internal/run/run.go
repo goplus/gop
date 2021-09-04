@@ -146,7 +146,8 @@ func runCmd(cmd *base.Command, args []string) {
 		}
 	} else {
 		srcDir, file = filepath.Split(src)
-		if *flagGop && filepath.Ext(file) == ".go" {
+		isGo := *flagGop && filepath.Ext(file) == ".go"
+		if isGo {
 			hash := sha1.Sum([]byte(src))
 			dir := os.Getenv("HOME") + "/.gop/go/"
 			os.MkdirAll(dir, 0777)
@@ -158,6 +159,9 @@ func runCmd(cmd *base.Command, args []string) {
 		}
 		isDirty = fileIsDirty(fi, gofile)
 		if isDirty {
+			if isGo {
+				fmt.Println("==> GenGo to", gofile)
+			}
 			pkgs, err = parser.Parse(fset, src, nil, 0)
 		} else if *flagNorun {
 			return
@@ -224,7 +228,6 @@ func goRun(target string, args []string) {
 	if err != nil {
 		switch e := err.(type) {
 		case *exec.ExitError:
-			os.Stderr.Write(e.Stderr)
 			os.Exit(e.ExitCode())
 		default:
 			log.Fatalln("go run failed:", err)
