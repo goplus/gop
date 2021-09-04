@@ -43,7 +43,7 @@ import (
 
 // Cmd - gop run
 var Cmd = &base.Command{
-	UsageLine: "gop run [-asm -quiet -debug -gop -prof] <gopSrcDir|gopSrcFile>",
+	UsageLine: "gop run [-asm -quiet -debug -nr -gop -prof] <gopSrcDir|gopSrcFile>",
 	Short:     "Run a Go+ program",
 }
 
@@ -53,6 +53,7 @@ var (
 	flagVerbose = flag.Bool("v", false, "print verbose information")
 	flagQuiet   = flag.Bool("quiet", false, "don't generate any compiling stage log")
 	flagDebug   = flag.Bool("debug", false, "set log level to debug")
+	flagNorun   = flag.Bool("nr", false, "don't run if no change")
 	flagGop     = flag.Bool("gop", false, "parse a .go file as a .gop file")
 	flagProf    = flag.Bool("prof", false, "do profile and generate profile report")
 )
@@ -140,6 +141,8 @@ func runCmd(cmd *base.Command, args []string) {
 		isDirty = true // TODO: check if code changed
 		if isDirty {
 			pkgs, err = parser.ParseDir(fset, src, nil, 0)
+		} else if *flagNorun {
+			return
 		}
 	} else {
 		srcDir, file = filepath.Split(src)
@@ -156,6 +159,8 @@ func runCmd(cmd *base.Command, args []string) {
 		isDirty = fileIsDirty(fi, gofile)
 		if isDirty {
 			pkgs, err = parser.Parse(fset, src, nil, 0)
+		} else if *flagNorun {
+			return
 		}
 	}
 	if err != nil {
