@@ -41,7 +41,7 @@ import (
 
 // Cmd - gop run
 var Cmd = &base.Command{
-	UsageLine: "gop run [-asm -quiet -debug -prof] <gopSrcDir|gopSrcFile>",
+	UsageLine: "gop run [-asm -quiet -debug -gop -prof] <gopSrcDir|gopSrcFile>",
 	Short:     "Run a Go+ program",
 }
 
@@ -51,6 +51,7 @@ var (
 	flagVerbose = flag.Bool("v", false, "print verbose information")
 	flagQuiet   = flag.Bool("quiet", false, "don't generate any compiling stage log")
 	flagDebug   = flag.Bool("debug", false, "set log level to debug")
+	flagGop     = flag.Bool("gop", false, "parse a .go file as a .gop file")
 	flagProf    = flag.Bool("prof", false, "do profile and generate profile report")
 )
 
@@ -122,7 +123,7 @@ func runCmd(cmd *base.Command, args []string) {
 	if err != nil {
 		log.Fatalln("input arg check failed:", err)
 	}
-	if !isDir && filepath.Ext(src) == ".go" { // not a Go+ file
+	if !*flagGop && !isDir && filepath.Ext(src) == ".go" { // not a Go+ file
 		runGoFile(src, args)
 		return
 	}
