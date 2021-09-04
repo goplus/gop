@@ -21,11 +21,9 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
@@ -127,10 +125,6 @@ func runCmd(cmd *base.Command, args []string) {
 		log.Fatalln("input arg check failed:", err)
 	}
 	isDir := fi.IsDir()
-	if !*flagGop && !isDir && filepath.Ext(src) == ".go" { // not a Go+ file
-		runGoFile(src, args)
-		return
-	}
 
 	var isDirty bool
 	var srcDir, file, gofile string
@@ -146,7 +140,7 @@ func runCmd(cmd *base.Command, args []string) {
 		}
 	} else {
 		srcDir, file = filepath.Split(src)
-		isGo := *flagGop && filepath.Ext(file) == ".go"
+		isGo := filepath.Ext(file) == ".go"
 		if isGo {
 			hash := sha1.Sum([]byte(src))
 			dir := os.Getenv("HOME") + "/.gop/go/"
@@ -162,7 +156,11 @@ func runCmd(cmd *base.Command, args []string) {
 			if isGo {
 				fmt.Println("==> GenGo to", gofile)
 			}
-			pkgs, err = parser.Parse(fset, src, nil, 0)
+			if *flagGop {
+				pkgs, err = parser.Parse(fset, src, nil, 0)
+			} else {
+				pkgs, err = parser.Parse(fset, src, nil, 0) // TODO: only to check dependencies
+			}
 		} else if *flagNorun {
 			return
 		}
@@ -212,14 +210,12 @@ func fileIsDirty(fi os.FileInfo, gofile string) bool {
 	return fi.ModTime().After(fiDest.ModTime())
 }
 
-func goRun(target string, args []string) {
-	dir, file := filepath.Split(target)
+func goRun(file string, args []string) {
 	goArgs := make([]string, len(args)+2)
 	goArgs[0] = "run"
 	goArgs[1] = file
 	copy(goArgs[2:], args)
 	cmd := exec.Command("go", goArgs...)
-	cmd.Dir = dir
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -270,27 +266,6 @@ func runGoPkg(src string, args []string, doRun bool) {
 	baseConf.PkgsLoader.Save()
 	if doRun {
 		goRun(src+"/.", args)
-	}
-}
-
-func runGoFile(src string, args []string) {
-	targetDir, file := filepath.Split(src)
-	if hasMultiFiles(targetDir, ".go") {
-		targetDir = filepath.Join(targetDir, ".gop", strings.TrimSuffix(file, ".go"))
-		gofile := filepath.Join(targetDir, "gop_autogen.go")
-		b, err := ioutil.ReadFile(src)
-		if err != nil {
-			log.Fatalln("ReadFile failed:", err)
-		}
-		os.MkdirAll(targetDir, 0777)
-		err = ioutil.WriteFile(gofile, b, 0666)
-		if err != nil {
-			log.Fatalln("WriteFile failed:", err)
-		}
-		runGoPkg(targetDir, args, false)
-		goRun(src, args)
-	} else {
-		runGoPkg(targetDir, args, true)
 	}
 }
 
