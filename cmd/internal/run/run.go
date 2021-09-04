@@ -119,21 +119,26 @@ func runCmd(cmd *base.Command, args []string) {
 
 	fset := token.NewFileSet()
 	src, _ := filepath.Abs(flag.Arg(0))
-	isDir, err := IsDir(src)
+	fi, err := os.Stat(src)
 	if err != nil {
 		log.Fatalln("input arg check failed:", err)
 	}
+	isDir := fi.IsDir()
 	if !*flagGop && !isDir && filepath.Ext(src) == ".go" { // not a Go+ file
 		runGoFile(src, args)
 		return
 	}
 
+	var isDirty bool
 	var srcDir, file, gofile string
 	var pkgs map[string]*ast.Package
 	if isDir {
 		srcDir = src
 		gofile = src + "/gop_autogen.go"
-		pkgs, err = parser.ParseDir(fset, src, nil, 0)
+		isDirty = true // TODO: check if code changed
+		if isDirty {
+			pkgs, err = parser.ParseDir(fset, src, nil, 0)
+		}
 	} else {
 		srcDir, file = filepath.Split(src)
 		if *flagGop || hasMultiFiles(srcDir, ".gop") {
@@ -141,49 +146,54 @@ func runCmd(cmd *base.Command, args []string) {
 		} else {
 			gofile = srcDir + "/gop_autogen.go"
 		}
-		pkgs, err = parser.Parse(fset, src, nil, 0)
+		isDirty = fileIsDirty(fi, gofile)
+		if isDirty {
+			pkgs, err = parser.Parse(fset, src, nil, 0)
+		}
 	}
 	if err != nil {
 		scanner.PrintError(os.Stderr, err)
 		os.Exit(10)
 	}
 
-	mainPkg, ok := pkgs["main"]
-	if !ok {
-		if len(pkgs) == 0 && isDir { // not a Go+ package, try runGoPkg
-			runGoPkg(src, args, true)
-			return
+	if isDirty {
+		mainPkg, ok := pkgs["main"]
+		if !ok {
+			if len(pkgs) == 0 && isDir { // not a Go+ package, try runGoPkg
+				runGoPkg(src, args, true)
+				return
+			}
+			fmt.Fprintln(os.Stderr, "TODO: not a main package")
+			os.Exit(12)
 		}
-		fmt.Fprintln(os.Stderr, "TODO: not a main package")
-		os.Exit(12)
+
+		modDir, noCacheFile := findGoModDir(srcDir)
+		conf := &cl.Config{
+			Dir: modDir, TargetDir: srcDir, Fset: fset, CacheLoadPkgs: true, PersistLoadPkgs: !noCacheFile}
+		out, err := cl.NewPackage("", mainPkg, conf)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(11)
+		}
+		err = saveGoFile(gofile, out)
+		if err != nil {
+			log.Fatalln("saveGoFile failed:", err)
+		}
+		conf.PkgsLoader.Save()
 	}
 
-	modDir, noCacheFile := findGoModDir(srcDir)
-	conf := &cl.Config{
-		Dir: modDir, TargetDir: srcDir, Fset: fset, CacheLoadPkgs: true, PersistLoadPkgs: !noCacheFile}
-	out, err := cl.NewPackage("", mainPkg, conf)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(11)
-	}
-	err = saveGoFile(gofile, out)
-	if err != nil {
-		log.Fatalln("saveGoFile failed:", err)
-	}
-	conf.PkgsLoader.Save()
 	goRun(gofile, args)
 	if *flagProf {
 		panic("TODO: profile not impl")
 	}
 }
 
-// IsDir checks a target path is dir or not.
-func IsDir(target string) (bool, error) {
-	fi, err := os.Stat(target)
+func fileIsDirty(fi os.FileInfo, gofile string) bool {
+	fiDest, err := os.Stat(gofile)
 	if err != nil {
-		return false, err
+		return true
 	}
-	return fi.IsDir(), nil
+	return fi.ModTime().After(fiDest.ModTime())
 }
 
 func goRun(target string, args []string) {
