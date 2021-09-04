@@ -127,6 +127,102 @@ func init() {
 `)
 }
 
+func TestIssue774(t *testing.T) {
+	gopClTest(t, `
+package main
+
+import "fmt"
+
+func main() {
+	var a AA = &A{str: "hello"}
+	fmt.Println(a.(*A))
+}
+
+type AA interface {
+	String() string
+}
+
+type A struct {
+	str string
+}
+
+func (a *A) String() string {
+	return a.str
+}
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	var a AA = &A{str: "hello"}
+	fmt.Println(a.(*A))
+}
+
+type AA interface {
+	String() string
+}
+type A struct {
+	str string
+}
+
+func (a *A) String() string {
+	return a.str
+}
+`)
+	gopClTest(t, `
+package main
+
+import "fmt"
+
+func main() {
+	a := get()
+	fmt.Println(a.(*A))
+}
+
+func get()AA{
+	var a AA
+	return a
+}
+
+type AA interface {
+	String() string
+}
+
+type A struct {
+	str string
+}
+
+func (a *A) String() string {
+	return a.str
+}
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	a := get()
+	fmt.Println(a.(*A))
+}
+
+type AA interface {
+	String() string
+}
+
+func get() AA {
+	var a AA
+	return a
+}
+
+type A struct {
+	str string
+}
+
+func (a *A) String() string {
+	return a.str
+}
+`)
+}
+
 func TestBlockStmt(t *testing.T) {
 	gopClTest(t, `
 package main

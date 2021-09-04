@@ -152,7 +152,7 @@ func compileTypeAssertExpr(ctx *blockCtx, v *ast.TypeAssertExpr, twoValue bool) 
 		panic("TODO: x.(type) is only used in type switch")
 	}
 	typ := toType(ctx, v.Type)
-	ctx.cb.TypeAssert(typ, twoValue)
+	ctx.cb.TypeAssert(typ, twoValue, v)
 }
 
 func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr, twoValue bool) { // x[i]
@@ -578,7 +578,7 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, expected types.Type
 	var kind = checkCompositeLitElts(ctx, v.Elts)
 	if v.Type != nil {
 		typ = toType(ctx, v.Type)
-		underlying = typ.Underlying()
+		underlying = getUnderlying(ctx, typ)
 	} else if expected != nil {
 		if t, ok := expected.(*types.Pointer); ok {
 			expected, hasPtr = t.Elem(), true

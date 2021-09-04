@@ -320,7 +320,8 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 	compileStmts(ctx, v.Body.List)
 	if v.Else != nil {
 		cb.Else()
-		compileStmt(ctx, v.Else)
+		stmts := v.Else.(*ast.BlockStmt)
+		compileStmts(ctx, stmts.List)
 	}
 	cb.SetComments(comments, true)
 	cb.End()
