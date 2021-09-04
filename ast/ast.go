@@ -1186,10 +1186,10 @@ type File struct {
 }
 
 const (
-	FileTypeGop = 0 // .gop
-	FileTypeSpx = 1 // .spx
-	FileTypeGmx = 2 // .gmx
-	FileTypeGo  = 3 // .go
+	FileTypeGo  = -1 // .go (should be negative)
+	FileTypeGop = 0  // .gop
+	FileTypeSpx = 1  // .spx
+	FileTypeGmx = 2  // .gmx
 )
 
 // Pos returns position of first character belonging to the node.
