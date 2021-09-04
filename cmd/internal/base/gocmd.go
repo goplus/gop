@@ -45,6 +45,7 @@ func RunGoCmd(dir string, op string, args ...string) {
 	copy(opwargs[1:], args)
 	cmd := exec.Command("go", opwargs...)
 	cmd.Dir = dir
+	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Env = os.Environ()
@@ -52,7 +53,7 @@ func RunGoCmd(dir string, op string, args ...string) {
 	if err != nil {
 		switch e := err.(type) {
 		case *exec.ExitError:
-			os.Stderr.Write(e.Stderr)
+			// os.Stderr.Write(e.Stderr)
 			os.Exit(e.ExitCode())
 		default:
 			log.Fatalln("RunGoCmd failed:", err)
