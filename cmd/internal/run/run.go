@@ -136,7 +136,7 @@ func runCmd(cmd *base.Command, args []string) {
 		pkgs, err = parser.ParseDir(fset, src, nil, 0)
 	} else {
 		srcDir, file = filepath.Split(src)
-		if hasMultiFiles(srcDir, ".gop") {
+		if *flagGop || hasMultiFiles(srcDir, ".gop") {
 			gofile = filepath.Join(srcDir, "gop_autogen_"+file+".go")
 		} else {
 			gofile = srcDir + "/gop_autogen.go"
@@ -150,7 +150,7 @@ func runCmd(cmd *base.Command, args []string) {
 
 	mainPkg, ok := pkgs["main"]
 	if !ok {
-		if len(pkgs) == 0 { // not a Go+ package, try runGoPkg
+		if len(pkgs) == 0 && isDir { // not a Go+ package, try runGoPkg
 			runGoPkg(src, args, true)
 			return
 		}
