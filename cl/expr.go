@@ -775,8 +775,6 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr) {
 		}
 		retName = "_gop_ret" + strconv.Itoa(i+1)
 	}
-	cb.NewVar(tyError, "_gop_err")
-	err := cb.Scope().Lookup("_gop_err")
 
 	sig := types.NewSignature(nil, nil, types.NewTuple(ret...), false)
 	if useClosure {
@@ -784,6 +782,9 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr) {
 	} else {
 		cb.CallInlineClosureStart(sig, 0, false)
 	}
+
+	cb.NewVar(tyError, "_gop_err")
+	err := cb.Scope().Lookup("_gop_err")
 
 	for _, retVar := range ret {
 		cb.VarRef(retVar)

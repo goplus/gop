@@ -49,7 +49,7 @@ func codeErrorTest(t *testing.T, msg, src string) {
 
 func TestErrErrWrap(t *testing.T) {
 	codeErrorTest(t,
-		"./bar.gop:2:2 undefined: a\nTODO: unbound type\n", `func main() {
+		"./bar.gop:2:2 undefined: a", `func main() {
 	a!
 }
 `)
