@@ -318,10 +318,13 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 	compileExpr(ctx, v.Cond)
 	cb.Then()
 	compileStmts(ctx, v.Body.List)
-	if v.Else != nil {
+	if e := v.Else; e != nil {
 		cb.Else()
-		stmts := v.Else.(*ast.BlockStmt)
-		compileStmts(ctx, stmts.List)
+		if stmts, ok := e.(*ast.BlockStmt); ok {
+			compileStmts(ctx, stmts.List)
+		} else {
+			compileStmt(ctx, e)
+		}
 	}
 	cb.SetComments(comments, true)
 	cb.End()

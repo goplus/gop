@@ -1936,8 +1936,10 @@ func TestIf(t *testing.T) {
 	gopClTest(t, `x := 0
 if t := false; t {
 	x = 3
-} else {
+} else if !t {
 	x = 5
+} else {
+	x = 7
 }
 println("x:", x)
 `, `package main
@@ -1948,8 +1950,10 @@ func main() {
 	x := 0
 	if t := false; t {
 		x = 3
-	} else {
+	} else if !t {
 		x = 5
+	} else {
+		x = 7
 	}
 	fmt.Println("x:", x)
 }
