@@ -18,6 +18,8 @@
 package run
 
 import (
+	"crypto/sha1"
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -141,7 +143,12 @@ func runCmd(cmd *base.Command, args []string) {
 		}
 	} else {
 		srcDir, file = filepath.Split(src)
-		if *flagGop || hasMultiFiles(srcDir, ".gop") {
+		if *flagGop && filepath.Ext(file) == ".go" {
+			hash := sha1.Sum([]byte(src))
+			dir := os.Getenv("HOME") + "/.gop/go/"
+			os.MkdirAll(dir, 0777)
+			gofile = dir + file + base64.RawURLEncoding.EncodeToString(hash[:]) + ".go"
+		} else if hasMultiFiles(srcDir, ".gop") {
 			gofile = filepath.Join(srcDir, "gop_autogen_"+file+".go")
 		} else {
 			gofile = srcDir + "/gop_autogen.go"

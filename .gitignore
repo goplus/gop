@@ -6,6 +6,7 @@
 *.cache
 .DS_Store
 go.json
+x.mod
 
 # Folders
 _obj
