@@ -193,6 +193,10 @@ type baseLoader struct {
 }
 
 func initLoader(ctx *pkgCtx, syms map[string]loader, start token.Pos, name string, fn func()) {
+	if name == "_" {
+		ctx.inits = append(ctx.inits, fn)
+		return
+	}
 	if old, ok := syms[name]; ok {
 		var pos token.Position
 		if start != token.NoPos {

@@ -127,6 +127,37 @@ func init() {
 `)
 }
 
+func TestUnderscoreFuncAndMethod(t *testing.T) {
+	gopClTest(t, `
+func _() {
+}
+
+type T struct {
+	_, _, _ int
+}
+
+func (T) _() {
+}
+
+func (T) _() {
+}
+`, `package main
+
+type T struct {
+	_ int
+	_ int
+	_ int
+}
+
+func (T) _() {
+}
+func (T) _() {
+}
+func _() {
+}
+`)
+}
+
 func TestIssue772(t *testing.T) {
 	gopClTest(t, `
 package main
@@ -1780,7 +1811,7 @@ type M int
 func (m M) Foo() {
 	fmt.Println("foo", m)
 }
-func ( M) Bar() {
+func (M) Bar() {
 	fmt.Println("bar")
 }
 `)
