@@ -81,7 +81,9 @@ func runCmd(cmd *base.Command, args []string) {
 		os.Exit(1)
 	}
 	baseConf.PkgsLoader.Save()
-	args = removeRebuild(args)
+	if *flagRebuild {
+		args = removeRebuild(args)
+	}
 	base.RunGoCmd(dir, "test", args...)
 }
 
