@@ -37,6 +37,7 @@ var Cmd = &base.Command{
 var (
 	flag        = &Cmd.Flag
 	flagVerbose = flag.Bool("v", false, "print verbose information")
+	flagRebuild = flag.Bool("a", false, "force rebuilding of packages that are already up-to-date")
 )
 
 func init() {
@@ -75,12 +76,23 @@ func runCmd(cmd *base.Command, args []string) {
 		return nil
 	})
 	baseConf := &cl.Config{PersistLoadPkgs: true}
-	runner.GenGo(dir, recursive, baseConf.Ensure())
+	runner.GenGo(dir, recursive, *flagRebuild, baseConf.Ensure())
 	if hasError {
 		os.Exit(1)
 	}
 	baseConf.PkgsLoader.Save()
+	args = removeRebuild(args)
 	base.RunGoCmd(dir, "test", args...)
+}
+
+func removeRebuild(args []string) (r []string) {
+	for _, a := range args {
+		if a == "-a" {
+			continue
+		}
+		r = append(r, a)
+	}
+	return
 }
 
 // -----------------------------------------------------------------------------
