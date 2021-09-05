@@ -54,6 +54,7 @@ var (
 	flagNorun   = flag.Bool("nr", false, "don't run if no change")
 	flagGop     = flag.Bool("gop", false, "parse a .go file as a .gop file")
 	flagProf    = flag.Bool("prof", false, "do profile and generate profile report")
+	flagRebuild = flag.Bool("a", false, "force rebuilding of Go+ packages that are already up-to-date.")
 )
 
 func init() {
@@ -151,7 +152,11 @@ func runCmd(cmd *base.Command, args []string) {
 		} else {
 			gofile = srcDir + "/gop_autogen.go"
 		}
-		isDirty = fileIsDirty(fi, gofile)
+		if *flagRebuild {
+			isDirty = true
+		} else {
+			isDirty = fileIsDirty(fi, gofile)
+		}
 		if isDirty {
 			if isGo {
 				fmt.Println("==> GenGo to", gofile)
