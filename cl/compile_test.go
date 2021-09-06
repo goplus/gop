@@ -195,7 +195,7 @@ func _() {
 `)
 }
 
-func TestIssue772(t *testing.T) {
+func TestErrWrapIssue772(t *testing.T) {
 	gopClTest(t, `
 package main
 
@@ -223,6 +223,34 @@ func main() {
 		return
 	}()
 	fmt.Println(a, b)
+}
+`)
+}
+
+func TestErrWrapIssue778(t *testing.T) {
+	gopClTest(t, `
+package main
+
+func t() error {
+	return nil
+}
+
+func main() {
+	t()!
+}`, `package main
+
+func t() error {
+	return nil
+}
+func main() {
+	func() {
+		var _gop_err error
+		_gop_err = t()
+		if _gop_err != nil {
+			panic(_gop_err)
+		}
+		return
+	}()
 }
 `)
 }

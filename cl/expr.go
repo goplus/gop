@@ -756,26 +756,25 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr) {
 
 	compileExpr(ctx, v.X)
 	x := cb.InternalStack().Pop()
+	n := 0
 	results, ok := x.Type.(*types.Tuple)
-	if !ok {
-		panic("TODO: can't use ErrWrapExpr in non function call")
-	}
-	n := results.Len() - 1
-	if n < 1 {
-		panic("TODO: unexpected results")
+	if ok {
+		n = results.Len() - 1
 	}
 
-	i, retName := 0, "_gop_ret"
-	ret := make([]*gox.Param, n)
-	for {
-		ret[i] = pkg.NewAutoParam(retName)
-		i++
-		if i >= n {
-			break
+	var ret []*types.Var
+	if n > 0 {
+		i, retName := 0, "_gop_ret"
+		ret = make([]*gox.Param, n)
+		for {
+			ret[i] = pkg.NewAutoParam(retName)
+			i++
+			if i >= n {
+				break
+			}
+			retName = "_gop_ret" + strconv.Itoa(i+1)
 		}
-		retName = "_gop_ret" + strconv.Itoa(i+1)
 	}
-
 	sig := types.NewSignature(nil, nil, types.NewTuple(ret...), false)
 	if useClosure {
 		cb.NewClosureWith(sig).BodyStart(pkg)
