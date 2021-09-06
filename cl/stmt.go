@@ -516,16 +516,12 @@ func compileDeclStmt(ctx *blockCtx, expr *ast.DeclStmt) {
 				compileType(ctx, spec.(*ast.TypeSpec))
 			}
 		case token.CONST:
-			for _, spec := range d.Specs {
-				v := spec.(*ast.ValueSpec)
-				names := makeNames(v.Names)
-				loadConsts(ctx, names, v, false)
-			}
+			cdecl := ctx.pkg.NewConstDecl(ctx.cb.Scope())
+			loadConstSpecs(ctx, cdecl, d.Specs)
 		case token.VAR:
 			for _, spec := range d.Specs {
 				v := spec.(*ast.ValueSpec)
-				names := makeNames(v.Names)
-				loadVars(ctx, names, v, false)
+				loadVars(ctx, v, false)
 			}
 		default:
 			log.Panicln("TODO: compileDeclStmt - unknown")

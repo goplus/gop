@@ -193,6 +193,10 @@ type baseLoader struct {
 }
 
 func initLoader(ctx *pkgCtx, syms map[string]loader, start token.Pos, name string, fn func()) {
+	if name == "_" {
+		ctx.inits = append(ctx.inits, fn)
+		return
+	}
 	if old, ok := syms[name]; ok {
 		var pos token.Position
 		if start != token.NoPos {
@@ -852,19 +856,23 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 					}
 				}
 			case token.CONST:
+				pkg := ctx.pkg
+				cdecl := pkg.NewConstDecl(pkg.Types.Scope())
 				for _, spec := range d.Specs {
 					vSpec := spec.(*ast.ValueSpec)
 					if debugLoad {
 						log.Println("==> Preload const", vSpec.Names)
 					}
 					setNamesLoader(parent, syms, vSpec.Names, func() {
-						if v := vSpec; v != nil { // only init once
+						if c := cdecl; c != nil {
 							old := p.SetInTestingFile(testingFile)
 							defer p.SetInTestingFile(old)
-							vSpec = nil
-							names := makeNames(v.Names)
-							loadConsts(ctx, names, v, true)
-							removeNames(syms, names)
+							cdecl = nil
+							loadConstSpecs(ctx, c, d.Specs)
+							for _, s := range d.Specs {
+								v := s.(*ast.ValueSpec)
+								removeNames(syms, v.Names)
+							}
 						}
 					})
 				}
@@ -879,9 +887,8 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 							old := p.SetInTestingFile(testingFile)
 							defer p.SetInTestingFile(old)
 							vSpec = nil
-							names := makeNames(v.Names)
-							loadVars(ctx, names, v, true)
-							removeNames(syms, names)
+							loadVars(ctx, v, true)
+							removeNames(syms, v.Names)
 						}
 					})
 				}
@@ -1007,32 +1014,49 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 	ctx.imports[name] = pkg
 }
 
-func loadConsts(ctx *blockCtx, names []string, v *ast.ValueSpec, global bool) {
-	var typ types.Type
-	if v.Type != nil {
-		typ = toType(ctx, v.Type)
+func loadConstSpecs(ctx *blockCtx, cdecl *gox.ConstDecl, specs []ast.Spec) {
+	for iotav, spec := range specs {
+		vSpec := spec.(*ast.ValueSpec)
+		loadConsts(ctx, cdecl, vSpec, iotav)
 	}
-	if debugLoad {
-		log.Println("==> Load const", typ, names)
-	}
-	var scope *types.Scope
-	if global {
-		scope = ctx.pkg.Types.Scope()
-	} else {
-		scope = ctx.cb.Scope()
-	}
-	cb := ctx.pkg.NewConstStart(scope, v.Names[0].Pos(), typ, names...)
-	for _, val := range v.Values {
-		compileExpr(ctx, val)
-	}
-	cb.EndInit(len(v.Values))
 }
 
-func loadVars(ctx *blockCtx, names []string, v *ast.ValueSpec, global bool) {
+func loadConsts(ctx *blockCtx, cdecl *gox.ConstDecl, v *ast.ValueSpec, iotav int) {
+	if v.Values == nil {
+		if len(v.Names) != 1 {
+			ctx.handleErr(ctx.newCodeError(v.Pos(), "missing value in const declaration"))
+			return
+		}
+		name := v.Names[0]
+		if debugLoad {
+			log.Println("==> Load const", name)
+		}
+		cdecl.Next(iotav, name.Pos(), name.Name)
+		return
+	}
 	var typ types.Type
 	if v.Type != nil {
 		typ = toType(ctx, v.Type)
 	}
+	names := makeNames(v.Names)
+	if debugLoad {
+		log.Println("==> Load const", names, typ)
+	}
+	fn := func(cb *gox.CodeBuilder) int {
+		for _, val := range v.Values {
+			compileExpr(ctx, val)
+		}
+		return len(v.Values)
+	}
+	cdecl.New(fn, iotav, v.Names[0].Pos(), typ, names...)
+}
+
+func loadVars(ctx *blockCtx, v *ast.ValueSpec, global bool) {
+	var typ types.Type
+	if v.Type != nil {
+		typ = toType(ctx, v.Type)
+	}
+	names := makeNames(v.Names)
 	if debugLoad {
 		log.Println("==> Load var", typ, names)
 	}
@@ -1060,9 +1084,9 @@ func makeNames(vals []*ast.Ident) []string {
 	return names
 }
 
-func removeNames(syms map[string]loader, names []string) {
+func removeNames(syms map[string]loader, names []*ast.Ident) {
 	for _, name := range names {
-		delete(syms, name)
+		delete(syms, name.Name)
 	}
 }
 
