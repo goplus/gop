@@ -169,6 +169,13 @@ func TestErrConst(t *testing.T) {
 var a int
 const a = 1
 `)
+	codeErrorTest(t,
+		"./bar.gop:4:2 missing value in const declaration", `
+const (
+	a = iota
+	b, c
+)
+`)
 }
 
 func TestErrNewVar(t *testing.T) {
