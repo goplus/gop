@@ -127,6 +127,43 @@ func init() {
 `)
 }
 
+func TestUnderscoreConstAndVar(t *testing.T) {
+	gopClTest(t, `
+const (
+	c0 = 1 << iota
+	_
+	_
+	_
+	c4
+)
+
+func i() int {
+	return 23
+}
+
+var (
+	_ = i()
+	_ = i()
+)
+`, `package main
+
+const (
+	c0 = 1 << iota
+	_
+	_
+	_
+	c4
+)
+
+func i() int {
+	return 23
+}
+
+var _ = i()
+var _ = i()
+`)
+}
+
 func TestUnderscoreFuncAndMethod(t *testing.T) {
 	gopClTest(t, `
 func _() {
@@ -1933,8 +1970,10 @@ const (
 var j int = i
 `, `package main
 
-const i = 1
-const x float64 = 1
+const (
+	i         = 1
+	x float64 = 1
+)
 
 var j int = i
 `)
@@ -1955,8 +1994,10 @@ func main() {
 import fmt "fmt"
 
 func main() {
-	const i = 1
-	const x float64 = 1
+	const (
+		i         = 1
+		x float64 = 1
+	)
 	var j int = i
 	fmt.Println("Hi")
 }
