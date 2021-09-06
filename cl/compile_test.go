@@ -127,6 +127,21 @@ func init() {
 `)
 }
 
+func TestChanRecvIssue789(t *testing.T) {
+	gopClTest(t, `
+func foo(ch chan int) (int, bool) {
+	x, ok := (<-ch)
+	return x, ok
+}
+`, `package main
+
+func foo(ch chan int) (int, bool) {
+	x, ok := <-ch
+	return x, ok
+}
+`)
+}
+
 func TestUntypedFloatIssue788(t *testing.T) {
 	gopClTest(t, `
 func foo(v int) bool {
@@ -1811,7 +1826,13 @@ type intArr [2]int
 func foo(a *intArr) {
 	a[1] = 10
 }
-`, `
+`, `package main
+
+type intArr [2]int
+
+func foo(a *intArr) {
+	a[1] = 10
+}
 `)
 }
 
