@@ -127,6 +127,19 @@ func init() {
 `)
 }
 
+func TestUntypedFloatIssue788(t *testing.T) {
+	gopClTest(t, `
+func foo(v int) bool {
+    return v > 1.1e5
+}
+`, `package main
+
+func foo(v int) bool {
+	return v > 1.1e5
+}
+`)
+}
+
 func TestUnderscoreConstAndVar(t *testing.T) {
 	gopClTest(t, `
 const (
@@ -1791,6 +1804,17 @@ func main() {
 `)
 }
 
+func TestIndexArrayPtrIssue784(t *testing.T) {
+	gopClTest(t, `
+type intArr [2]int
+
+func foo(a *intArr) {
+	a[1] = 10
+}
+`, `
+`)
+}
+
 func TestMemberVal(t *testing.T) {
 	gopClTest(t, `import "strings"
 
@@ -1806,6 +1830,32 @@ import (
 func main() {
 	x := strings.NewReplacer("?", "!").Replace("hello, world???")
 	fmt.Println("x:", x)
+}
+`)
+}
+
+func TestNamedPtrMemberIssue786(t *testing.T) {
+	gopClTest(t, `
+type foo struct {
+	req int
+}
+
+type pfoo *foo
+
+func bar(p pfoo) {
+	println(p.req)
+}
+`, `package main
+
+import fmt "fmt"
+
+type foo struct {
+	req int
+}
+type pfoo *foo
+
+func bar(p pfoo) {
+	fmt.Println(p.req)
 }
 `)
 }
