@@ -1067,12 +1067,16 @@ func loadVars(ctx *blockCtx, v *ast.ValueSpec, global bool) {
 		scope = ctx.cb.Scope()
 	}
 	varDecl := ctx.pkg.NewVarEx(scope, v.Names[0].Pos(), typ, names...)
-	if v.Values != nil {
+	if nv := len(v.Values); nv > 0 {
 		cb := varDecl.InitStart(ctx.pkg)
-		for _, val := range v.Values {
-			compileExpr(ctx, val)
+		if nv == 1 && len(names) == 2 {
+			compileExpr(ctx, v.Values[0], true)
+		} else {
+			for _, val := range v.Values {
+				compileExpr(ctx, val)
+			}
 		}
-		cb.EndInit(len(v.Values))
+		cb.EndInit(nv)
 	}
 }
 

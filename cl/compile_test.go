@@ -431,6 +431,19 @@ func main() {
 `)
 }
 
+func TestVarInitTwoValueIssue791(t *testing.T) {
+	gopClTest(t, `
+var (
+	m      = map[string]string{"a": "A"}
+	a, ok  = m["a"]
+)
+`, `package main
+
+var m = map[string]string{"a": "A"}
+var a, ok = m["a"]
+`)
+}
+
 func TestVarAfterMain(t *testing.T) {
 	gopClTest(t, `
 package main

@@ -211,6 +211,8 @@ func getTypeName(typ types.Type) string {
 	switch t := typ.(type) {
 	case *types.Named:
 		return t.Obj().Name()
+	case *types.Basic:
+		return t.Name()
 	default:
 		panic("TODO: getTypeName")
 	}
