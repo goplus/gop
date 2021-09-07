@@ -98,7 +98,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 	case *ast.TypeAssertExpr:
 		compileTypeAssertExpr(ctx, v, twoValue != nil && twoValue[0])
 	case *ast.ParenExpr:
-		compileExpr(ctx, v.X)
+		compileExpr(ctx, v.X, twoValue...)
 	case *ast.ErrWrapExpr:
 		compileErrWrapExpr(ctx, v)
 	case *ast.FuncType:

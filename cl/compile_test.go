@@ -127,6 +127,51 @@ func init() {
 `)
 }
 
+func TestChanRecvIssue789(t *testing.T) {
+	gopClTest(t, `
+func foo(ch chan int) (int, bool) {
+	x, ok := (<-ch)
+	return x, ok
+}
+`, `package main
+
+func foo(ch chan int) (int, bool) {
+	x, ok := <-ch
+	return x, ok
+}
+`)
+}
+
+func TestNamedChanCloseIssue790(t *testing.T) {
+	gopClTest(t, `
+type XChan chan int
+
+func foo(ch XChan) {
+	close(ch)
+}
+`, `package main
+
+type XChan chan int
+
+func foo(ch XChan) {
+	close(ch)
+}
+`)
+}
+
+func TestUntypedFloatIssue788(t *testing.T) {
+	gopClTest(t, `
+func foo(v int) bool {
+    return v > 1.1e5
+}
+`, `package main
+
+func foo(v int) bool {
+	return v > 1.1e5
+}
+`)
+}
+
 func TestUnderscoreConstAndVar(t *testing.T) {
 	gopClTest(t, `
 const (
@@ -1791,6 +1836,23 @@ func main() {
 `)
 }
 
+func TestIndexArrayPtrIssue784(t *testing.T) {
+	gopClTest(t, `
+type intArr [2]int
+
+func foo(a *intArr) {
+	a[1] = 10
+}
+`, `package main
+
+type intArr [2]int
+
+func foo(a *intArr) {
+	a[1] = 10
+}
+`)
+}
+
 func TestMemberVal(t *testing.T) {
 	gopClTest(t, `import "strings"
 
@@ -1806,6 +1868,32 @@ import (
 func main() {
 	x := strings.NewReplacer("?", "!").Replace("hello, world???")
 	fmt.Println("x:", x)
+}
+`)
+}
+
+func TestNamedPtrMemberIssue786(t *testing.T) {
+	gopClTest(t, `
+type foo struct {
+	req int
+}
+
+type pfoo *foo
+
+func bar(p pfoo) {
+	println(p.req)
+}
+`, `package main
+
+import fmt "fmt"
+
+type foo struct {
+	req int
+}
+type pfoo *foo
+
+func bar(p pfoo) {
+	fmt.Println(p.req)
 }
 `)
 }
