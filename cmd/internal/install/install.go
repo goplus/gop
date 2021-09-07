@@ -37,7 +37,7 @@ var Cmd = &base.Command{
 var (
 	flag        = &Cmd.Flag
 	flagVerbose = flag.Bool("v", false, "print verbose information")
-	flagRebuild = flag.Bool("a", false, "force rebuilding of packages that are already up-to-date")
+	flagRebuild = flag.Bool("rebuild", false, "force rebuilding of packages that are already up-to-date")
 )
 
 func init() {
@@ -89,7 +89,7 @@ func runCmd(cmd *base.Command, args []string) {
 
 func removeRebuild(args []string) (r []string) {
 	for _, a := range args {
-		if a == "-a" {
+		if a == "-rebuild" {
 			continue
 		}
 		r = append(r, a)

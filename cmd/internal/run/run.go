@@ -54,7 +54,7 @@ var (
 	flagNorun   = flag.Bool("nr", false, "don't run if no change")
 	flagGop     = flag.Bool("gop", false, "parse a .go file as a .gop file")
 	flagProf    = flag.Bool("prof", false, "do profile and generate profile report")
-	flagRebuild = flag.Bool("a", false, "force rebuilding of packages that are already up-to-date")
+	flagRebuild = flag.Bool("rebuild", false, "force rebuilding of packages that are already up-to-date")
 )
 
 func init() {
