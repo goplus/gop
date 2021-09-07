@@ -142,6 +142,23 @@ func foo(ch chan int) (int, bool) {
 `)
 }
 
+func TestNamedChanCloseIssue790(t *testing.T) {
+	gopClTest(t, `
+type XChan chan int
+
+func foo(ch XChan) {
+	close(ch)
+}
+`, `package main
+
+type XChan chan int
+
+func foo(ch XChan) {
+	close(ch)
+}
+`)
+}
+
 func TestUntypedFloatIssue788(t *testing.T) {
 	gopClTest(t, `
 func foo(v int) bool {
