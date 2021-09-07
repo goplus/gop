@@ -159,6 +159,15 @@ func foo(ch XChan) {
 `)
 }
 
+func TestUntypedFloatIssue793(t *testing.T) {
+	gopClTest(t, `
+var a [1e1]int
+`, `package main
+
+var a [10]int
+`)
+}
+
 func TestUntypedFloatIssue788(t *testing.T) {
 	gopClTest(t, `
 func foo(v int) bool {
@@ -428,6 +437,17 @@ func main() {
 		fmt.Println(t)
 	}
 }
+`)
+}
+
+func TestConstTypeConvIssue792(t *testing.T) {
+	gopClTest(t, `
+const dots = ". . . " + ". . . . . "
+const n = uint(len(dots))
+`, `package main
+
+const dots = ". . . " + ". . . . . "
+const n = uint(len(dots))
 `)
 }
 

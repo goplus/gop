@@ -339,6 +339,14 @@ a := struct{x int; y string}{1, x}
 `)
 }
 
+func TestErrArray(t *testing.T) {
+	codeErrorTest(t,
+		`./bar.gop:3:8 non-constant array bound n`, `
+var n int
+var a [n]int
+`)
+}
+
 func TestErrArrayLit(t *testing.T) {
 	codeErrorTest(t,
 		`./bar.gop:3:14 cannot use a as index which must be non-negative integer constant`,
