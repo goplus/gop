@@ -679,6 +679,26 @@ func foo(shape Shape) {
 `)
 }
 
+func TestInterfaceEmbedded(t *testing.T) {
+	gopClTest(t, `
+type Shape interface {
+	Area() float64
+}
+
+type Bar interface {
+	Shape
+}
+`, `package main
+
+type Shape interface {
+	Area() float64
+}
+type Bar interface {
+	Shape
+}
+`)
+}
+
 func TestInterfaceExample(t *testing.T) {
 	gopClTest(t, `
 type Shape interface {

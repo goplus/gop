@@ -262,15 +262,12 @@ func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) types.Type {
 	var methods []*types.Func
 	var embeddeds []types.Type
 	for _, m := range methodsList {
-		if m.Type == nil { // embedded
-			panic("TODO: embedded")
+		if m.Names == nil { // embedded
+			embeddeds = append(embeddeds, toType(ctx, m.Type))
+			continue
 		}
 		name := m.Names[0].Name
-		typ, ok := m.Type.(*ast.FuncType)
-		if !ok {
-			panic("TODO: not function type")
-		}
-		sig := toFuncType(ctx, typ, nil)
+		sig := toFuncType(ctx, m.Type.(*ast.FuncType), nil)
 		methods = append(methods, types.NewFunc(token.NoPos, pkg, name, sig))
 	}
 	intf := types.NewInterfaceType(methods, embeddeds).Complete()

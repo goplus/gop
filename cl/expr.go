@@ -454,9 +454,6 @@ func lookupParent(ctx *blockCtx, name string) (types.Object, *gox.PkgRef, types.
 		}
 		return obj, nil, o
 	}
-	if debugLookup && o != nil {
-		log.Println("==> Lookup (Universe)", name)
-	}
 	return o, nil, o
 }
 
