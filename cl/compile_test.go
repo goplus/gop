@@ -127,6 +127,39 @@ func init() {
 `)
 }
 
+func TestInterfaceIssue795(t *testing.T) {
+	gopClTest(t, `
+type I interface {
+	a(s string) I
+	b(s string) string
+}
+
+type T1 int
+
+func (t T1) a(s string) I {
+	return t
+}
+
+func (T1) b(s string) string {
+	return s
+}
+`, `package main
+
+type I interface {
+	a(s string) I
+	b(s string) string
+}
+type T1 int
+
+func (t T1) a(s string) I {
+	return t
+}
+func (T1) b(s string) string {
+	return s
+}
+`)
+}
+
 func TestChanRecvIssue789(t *testing.T) {
 	gopClTest(t, `
 func foo(ch chan int) (int, bool) {
@@ -2048,7 +2081,7 @@ func ++(a foo) {
 
 var a, b foo
 var c = a - b
-var d = -a
+var d = -a       // TODO: -a have no return value!
 `, `package main
 
 import fmt "fmt"

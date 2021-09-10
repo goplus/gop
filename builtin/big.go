@@ -184,6 +184,11 @@ func (a Gop_bigint) Gop_Neg() Gop_bigint {
 	return Gop_bigint{tmpint1(a).Neg(a.Int)}
 }
 
+// Gop_Pos: func +(a bigint) bigint
+func (a Gop_bigint) Gop_Pos() Gop_bigint {
+	return a
+}
+
 // Gop_Not: func ^(a bigint) bigint
 func (a Gop_bigint) Gop_Not() Gop_bigint {
 	return Gop_bigint{tmpint1(a).Not(a.Int)}
@@ -393,6 +398,11 @@ func (a Gop_bigrat) Gop_NE(b Gop_bigrat) bool {
 // Gop_Neg: func -(a bigrat) bigrat
 func (a Gop_bigrat) Gop_Neg() Gop_bigrat {
 	return Gop_bigrat{tmprat1(a).Neg(a.Rat)}
+}
+
+// Gop_Pos: func +(a bigrat) bigrat
+func (a Gop_bigrat) Gop_Pos() Gop_bigrat {
+	return a
 }
 
 // Gop_Inv: func /(a bigrat) bigrat

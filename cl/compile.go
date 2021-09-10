@@ -935,7 +935,13 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
 		return
 	}
 	if body := d.Body; body != nil {
-		loadFuncBody(ctx, fn, body)
+		if recv != nil {
+			ctx.inits = append(ctx.inits, func() { // interface issue: #795
+				loadFuncBody(ctx, fn, body)
+			})
+		} else {
+			loadFuncBody(ctx, fn, body)
+		}
 	}
 }
 
@@ -984,6 +990,7 @@ var unaryGopNames = map[string]string{
 	"++": "Gop_Inc",
 	"--": "Gop_Dec",
 	"-":  "Gop_Neg",
+	"+":  "Gop_Pos",
 	"^":  "Gop_Not",
 	"!":  "Gop_LNot",
 	"<-": "Gop_Recv",
