@@ -1029,23 +1029,18 @@ func loadConstSpecs(ctx *blockCtx, cdecl *gox.ConstDecl, specs []ast.Spec) {
 }
 
 func loadConsts(ctx *blockCtx, cdecl *gox.ConstDecl, v *ast.ValueSpec, iotav int) {
+	names := makeNames(v.Names)
 	if v.Values == nil {
-		if len(v.Names) != 1 {
-			ctx.handleErr(ctx.newCodeError(v.Pos(), "missing value in const declaration"))
-			return
-		}
-		name := v.Names[0]
 		if debugLoad {
-			log.Println("==> Load const", name)
+			log.Println("==> Load const", names)
 		}
-		cdecl.Next(iotav, name.Pos(), name.Name)
+		cdecl.Next(iotav, v.Pos(), names...)
 		return
 	}
 	var typ types.Type
 	if v.Type != nil {
 		typ = toType(ctx, v.Type)
 	}
-	names := makeNames(v.Names)
 	if debugLoad {
 		log.Println("==> Load const", names, typ)
 	}
@@ -1055,7 +1050,7 @@ func loadConsts(ctx *blockCtx, cdecl *gox.ConstDecl, v *ast.ValueSpec, iotav int
 		}
 		return len(v.Values)
 	}
-	cdecl.New(fn, iotav, v.Names[0].Pos(), typ, names...)
+	cdecl.New(fn, iotav, v.Pos(), typ, names...)
 }
 
 func loadVars(ctx *blockCtx, v *ast.ValueSpec, global bool) {

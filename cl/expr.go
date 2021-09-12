@@ -84,15 +84,15 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 	case *ast.StarExpr:
 		compileStarExpr(ctx, v)
 	case *ast.ArrayType:
-		ctx.cb.Typ(toArrayType(ctx, v))
+		ctx.cb.Typ(toArrayType(ctx, v), v)
 	case *ast.MapType:
-		ctx.cb.Typ(toMapType(ctx, v))
+		ctx.cb.Typ(toMapType(ctx, v), v)
 	case *ast.StructType:
-		ctx.cb.Typ(toStructType(ctx, v))
+		ctx.cb.Typ(toStructType(ctx, v), v)
 	case *ast.ChanType:
-		ctx.cb.Typ(toChanType(ctx, v))
+		ctx.cb.Typ(toChanType(ctx, v), v)
 	case *ast.InterfaceType:
-		ctx.cb.Typ(toInterfaceType(ctx, v))
+		ctx.cb.Typ(toInterfaceType(ctx, v), v)
 	case *ast.ComprehensionExpr:
 		compileComprehensionExpr(ctx, v, twoValue != nil && twoValue[0])
 	case *ast.TypeAssertExpr:
@@ -102,7 +102,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 	case *ast.ErrWrapExpr:
 		compileErrWrapExpr(ctx, v)
 	case *ast.FuncType:
-		ctx.cb.Typ(toFuncType(ctx, v, nil))
+		ctx.cb.Typ(toFuncType(ctx, v, nil), v)
 	case *ast.Ellipsis:
 		panic("compileEllipsis: ast.Ellipsis unexpected")
 	case *ast.KeyValueExpr:

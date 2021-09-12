@@ -127,6 +127,22 @@ func init() {
 `)
 }
 
+/*
+func TestUntypedFloatIssue798(t *testing.T) {
+	gopClTest(t, `
+func isPow10(x uint64) bool {
+	switch x {
+	case 1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9,
+		1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19:
+		return true
+	}
+	return false
+}
+`, `
+`)
+}
+*/
+
 func TestInterfaceIssue795(t *testing.T) {
 	gopClTest(t, `
 type I interface {
@@ -210,6 +226,65 @@ func foo(v int) bool {
 
 func foo(v int) bool {
 	return v > 1.1e5
+}
+`)
+}
+
+func TestSwitchCompositeLitIssue801(t *testing.T) {
+	gopClTest(t, `
+type T struct {
+	X int
+}
+
+switch (T{}) {
+case T{1}:
+	panic("bad")
+}
+`, `package main
+
+type T struct {
+	X int
+}
+
+func main() {
+	switch (T{}) {
+	case T{1}:
+		panic("bad")
+	}
+}
+`)
+}
+
+func TestConstIssue800(t *testing.T) {
+	gopClTest(t, `
+const (
+	h0_0, h0_1 = 1.0 / (iota + 1), 1.0 / (iota + 2)
+	h1_0, h1_1
+)
+`, `package main
+
+const (
+	h0_0, h0_1 = 1.0 / (iota + 1), 1.0 / (iota + 2)
+	h1_0, h1_1
+)
+`)
+}
+
+func TestUntypedComplexIssue799(t *testing.T) {
+	gopClTest(t, `
+const ulp1 = imag(1i + 2i / 3 - 5i / 3)
+const ulp2 = imag(1i + complex(0, 2) / 3 - 5i / 3)
+
+func main() {
+	var a = (ulp1 == ulp2)
+}
+`, `package main
+
+const ulp1 = imag(1i + 2i/3 - 5i/3)
+const ulp2 = imag(1i + complex(0, 2)/3 - 5i/3)
+
+func main() {
+	var a = true
 }
 `)
 }
@@ -2026,6 +2101,23 @@ func foo(a *int, b int) {
 func foo(a *int, b int) {
 	b = *a
 	*a = b
+}
+`)
+}
+
+func TestNamedPtrIssue797(t *testing.T) {
+	gopClTest(t, `
+type Bar *int
+
+func foo(a Bar) {
+	var b int = *a
+}
+`, `package main
+
+type Bar *int
+
+func foo(a Bar) {
+	var b int = *a
 }
 `)
 }
