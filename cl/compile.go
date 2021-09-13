@@ -935,7 +935,13 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
 		return
 	}
 	if body := d.Body; body != nil {
-		loadFuncBody(ctx, fn, body)
+		if recv != nil {
+			ctx.inits = append(ctx.inits, func() { // interface issue: #795
+				loadFuncBody(ctx, fn, body)
+			})
+		} else {
+			loadFuncBody(ctx, fn, body)
+		}
 	}
 }
 
@@ -984,6 +990,7 @@ var unaryGopNames = map[string]string{
 	"++": "Gop_Inc",
 	"--": "Gop_Dec",
 	"-":  "Gop_Neg",
+	"+":  "Gop_Pos",
 	"^":  "Gop_Not",
 	"!":  "Gop_LNot",
 	"<-": "Gop_Recv",
@@ -1022,23 +1029,18 @@ func loadConstSpecs(ctx *blockCtx, cdecl *gox.ConstDecl, specs []ast.Spec) {
 }
 
 func loadConsts(ctx *blockCtx, cdecl *gox.ConstDecl, v *ast.ValueSpec, iotav int) {
+	names := makeNames(v.Names)
 	if v.Values == nil {
-		if len(v.Names) != 1 {
-			ctx.handleErr(ctx.newCodeError(v.Pos(), "missing value in const declaration"))
-			return
-		}
-		name := v.Names[0]
 		if debugLoad {
-			log.Println("==> Load const", name)
+			log.Println("==> Load const", names)
 		}
-		cdecl.Next(iotav, name.Pos(), name.Name)
+		cdecl.Next(iotav, v.Pos(), names...)
 		return
 	}
 	var typ types.Type
 	if v.Type != nil {
 		typ = toType(ctx, v.Type)
 	}
-	names := makeNames(v.Names)
 	if debugLoad {
 		log.Println("==> Load const", names, typ)
 	}
@@ -1048,7 +1050,7 @@ func loadConsts(ctx *blockCtx, cdecl *gox.ConstDecl, v *ast.ValueSpec, iotav int
 		}
 		return len(v.Values)
 	}
-	cdecl.New(fn, iotav, v.Names[0].Pos(), typ, names...)
+	cdecl.New(fn, iotav, v.Pos(), typ, names...)
 }
 
 func loadVars(ctx *blockCtx, v *ast.ValueSpec, global bool) {
@@ -1067,12 +1069,16 @@ func loadVars(ctx *blockCtx, v *ast.ValueSpec, global bool) {
 		scope = ctx.cb.Scope()
 	}
 	varDecl := ctx.pkg.NewVarEx(scope, v.Names[0].Pos(), typ, names...)
-	if v.Values != nil {
+	if nv := len(v.Values); nv > 0 {
 		cb := varDecl.InitStart(ctx.pkg)
-		for _, val := range v.Values {
-			compileExpr(ctx, val)
+		if nv == 1 && len(names) == 2 {
+			compileExpr(ctx, v.Values[0], true)
+		} else {
+			for _, val := range v.Values {
+				compileExpr(ctx, val)
+			}
 		}
-		cb.EndInit(len(v.Values))
+		cb.EndInit(nv)
 	}
 }
 

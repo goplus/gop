@@ -84,15 +84,15 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 	case *ast.StarExpr:
 		compileStarExpr(ctx, v)
 	case *ast.ArrayType:
-		ctx.cb.Typ(toArrayType(ctx, v))
+		ctx.cb.Typ(toArrayType(ctx, v), v)
 	case *ast.MapType:
-		ctx.cb.Typ(toMapType(ctx, v))
+		ctx.cb.Typ(toMapType(ctx, v), v)
 	case *ast.StructType:
-		ctx.cb.Typ(toStructType(ctx, v))
+		ctx.cb.Typ(toStructType(ctx, v), v)
 	case *ast.ChanType:
-		ctx.cb.Typ(toChanType(ctx, v))
+		ctx.cb.Typ(toChanType(ctx, v), v)
 	case *ast.InterfaceType:
-		ctx.cb.Typ(toInterfaceType(ctx, v))
+		ctx.cb.Typ(toInterfaceType(ctx, v), v)
 	case *ast.ComprehensionExpr:
 		compileComprehensionExpr(ctx, v, twoValue != nil && twoValue[0])
 	case *ast.TypeAssertExpr:
@@ -102,7 +102,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 	case *ast.ErrWrapExpr:
 		compileErrWrapExpr(ctx, v)
 	case *ast.FuncType:
-		ctx.cb.Typ(toFuncType(ctx, v, nil))
+		ctx.cb.Typ(toFuncType(ctx, v, nil), v)
 	case *ast.Ellipsis:
 		panic("compileEllipsis: ast.Ellipsis unexpected")
 	case *ast.KeyValueExpr:
@@ -175,7 +175,7 @@ func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) { // x[i:j:k]
 func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr) {
 	switch x := v.X.(type) {
 	case *ast.Ident:
-		if compileClassMember(ctx, x, x.Name, false, true) {
+		if compileClassMember(ctx, x, false, true) {
 			break
 		}
 		o, at, builtin := lookupParent(ctx, x.Name)
@@ -206,12 +206,12 @@ func isBuiltin(o types.Object) bool {
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, autoCall bool) {
 	switch x := v.X.(type) {
 	case *ast.Ident:
-		if compileClassMember(ctx, x, x.Name, autoCall, false) {
+		if compileClassMember(ctx, x, autoCall, false) {
 			break
 		}
 		o, at, builtin := lookupParent(ctx, x.Name)
 		if at != nil {
-			if compilePkgRef(ctx, at, v.Sel.Name, false) {
+			if compilePkgRef(ctx, at, v.Sel, false) {
 				return
 			}
 			if token.IsExported(v.Sel.Name) {
@@ -233,15 +233,15 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, autoCall bool) {
 	}
 }
 
-func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, name string, lhs bool) bool {
-	v := pkgRef(at, name)
+func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, name *ast.Ident, lhs bool) bool {
+	v := pkgRef(at, name.Name)
 	if v == nil {
 		return false
 	}
 	if lhs {
-		ctx.cb.VarRef(v)
+		ctx.cb.VarRef(v, name)
 	} else {
-		ctx.cb.Val(v)
+		ctx.cb.Val(v, name)
 	}
 	return true
 }
@@ -374,7 +374,7 @@ func compileIdentLHS(ctx *blockCtx, v *ast.Ident) {
 	if name == "_" {
 		ctx.cb.VarRef(nil)
 	} else {
-		if compileClassMember(ctx, v, name, false, true) {
+		if compileClassMember(ctx, v, false, true) {
 			return
 		}
 		o, _, builtin := lookupParent(ctx, name)
@@ -393,7 +393,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, allowBuiltin, autoCall bool) 
 	if name == "_" {
 		panic(ctx.newCodeError(ident.Pos(), "cannot use _ as value"))
 	}
-	if compileClassMember(ctx, ident, name, autoCall, false) {
+	if compileClassMember(ctx, ident, autoCall, false) {
 		return
 	}
 	if o, _, builtin := lookupParent(ctx, name); o != nil {
@@ -406,17 +406,17 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, allowBuiltin, autoCall bool) 
 	}
 }
 
-func compileClassMember(ctx *blockCtx, v ast.Node, name string, autoCall, lhs bool) bool {
+func compileClassMember(ctx *blockCtx, v *ast.Ident, autoCall, lhs bool) bool {
 	if ctx.fileType > 0 {
 		if fn := ctx.cb.Func(); fn != nil {
 			sig := fn.Type().(*types.Signature)
 			if recv := sig.Recv(); recv != nil {
 				ctx.cb.Val(recv)
-				if compileMember(ctx, v, name, autoCall, lhs) == nil {
+				if compileMember(ctx, v, v.Name, autoCall, lhs) == nil {
 					return true
 				}
 				ctx.cb.InternalStack().PopN(1)
-				if compilePkgRef(ctx, ctx.spx, name, lhs) {
+				if compilePkgRef(ctx, ctx.spx, v, lhs) {
 					return true
 				}
 			}
@@ -453,9 +453,6 @@ func lookupParent(ctx *blockCtx, name string) (types.Object, *gox.PkgRef, types.
 			log.Println("==> Lookup (Builtin)", name)
 		}
 		return obj, nil, o
-	}
-	if debugLookup && o != nil {
-		log.Println("==> Lookup (Universe)", name)
 	}
 	return o, nil, o
 }

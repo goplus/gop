@@ -127,6 +127,55 @@ func init() {
 `)
 }
 
+/*
+func TestUntypedFloatIssue798(t *testing.T) {
+	gopClTest(t, `
+func isPow10(x uint64) bool {
+	switch x {
+	case 1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9,
+		1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19:
+		return true
+	}
+	return false
+}
+`, `
+`)
+}
+*/
+
+func TestInterfaceIssue795(t *testing.T) {
+	gopClTest(t, `
+type I interface {
+	a(s string) I
+	b(s string) string
+}
+
+type T1 int
+
+func (t T1) a(s string) I {
+	return t
+}
+
+func (T1) b(s string) string {
+	return s
+}
+`, `package main
+
+type I interface {
+	a(s string) I
+	b(s string) string
+}
+type T1 int
+
+func (t T1) a(s string) I {
+	return t
+}
+func (T1) b(s string) string {
+	return s
+}
+`)
+}
+
 func TestChanRecvIssue789(t *testing.T) {
 	gopClTest(t, `
 func foo(ch chan int) (int, bool) {
@@ -159,6 +208,15 @@ func foo(ch XChan) {
 `)
 }
 
+func TestUntypedFloatIssue793(t *testing.T) {
+	gopClTest(t, `
+var a [1e1]int
+`, `package main
+
+var a [10]int
+`)
+}
+
 func TestUntypedFloatIssue788(t *testing.T) {
 	gopClTest(t, `
 func foo(v int) bool {
@@ -168,6 +226,65 @@ func foo(v int) bool {
 
 func foo(v int) bool {
 	return v > 1.1e5
+}
+`)
+}
+
+func TestSwitchCompositeLitIssue801(t *testing.T) {
+	gopClTest(t, `
+type T struct {
+	X int
+}
+
+switch (T{}) {
+case T{1}:
+	panic("bad")
+}
+`, `package main
+
+type T struct {
+	X int
+}
+
+func main() {
+	switch (T{}) {
+	case T{1}:
+		panic("bad")
+	}
+}
+`)
+}
+
+func TestConstIssue800(t *testing.T) {
+	gopClTest(t, `
+const (
+	h0_0, h0_1 = 1.0 / (iota + 1), 1.0 / (iota + 2)
+	h1_0, h1_1
+)
+`, `package main
+
+const (
+	h0_0, h0_1 = 1.0 / (iota + 1), 1.0 / (iota + 2)
+	h1_0, h1_1
+)
+`)
+}
+
+func TestUntypedComplexIssue799(t *testing.T) {
+	gopClTest(t, `
+const ulp1 = imag(1i + 2i / 3 - 5i / 3)
+const ulp2 = imag(1i + complex(0, 2) / 3 - 5i / 3)
+
+func main() {
+	var a = (ulp1 == ulp2)
+}
+`, `package main
+
+const ulp1 = imag(1i + 2i/3 - 5i/3)
+const ulp2 = imag(1i + complex(0, 2)/3 - 5i/3)
+
+func main() {
+	var a = true
 }
 `)
 }
@@ -431,6 +548,30 @@ func main() {
 `)
 }
 
+func TestConstTypeConvIssue792(t *testing.T) {
+	gopClTest(t, `
+const dots = ". . . " + ". . . . . "
+const n = uint(len(dots))
+`, `package main
+
+const dots = ". . . " + ". . . . . "
+const n = uint(len(dots))
+`)
+}
+
+func TestVarInitTwoValueIssue791(t *testing.T) {
+	gopClTest(t, `
+var (
+	m      = map[string]string{"a": "A"}
+	a, ok  = m["a"]
+)
+`, `package main
+
+var m = map[string]string{"a": "A"}
+var a, ok = m["a"]
+`)
+}
+
 func TestVarAfterMain(t *testing.T) {
 	gopClTest(t, `
 package main
@@ -642,6 +783,26 @@ type Shape interface {
 
 func foo(shape Shape) {
 	shape.Area()
+}
+`)
+}
+
+func TestInterfaceEmbedded(t *testing.T) {
+	gopClTest(t, `
+type Shape interface {
+	Area() float64
+}
+
+type Bar interface {
+	Shape
+}
+`, `package main
+
+type Shape interface {
+	Area() float64
+}
+type Bar interface {
+	Shape
 }
 `)
 }
@@ -1944,6 +2105,23 @@ func foo(a *int, b int) {
 `)
 }
 
+func TestNamedPtrIssue797(t *testing.T) {
+	gopClTest(t, `
+type Bar *int
+
+func foo(a Bar) {
+	var b int = *a
+}
+`, `package main
+
+type Bar *int
+
+func foo(a Bar) {
+	var b int = *a
+}
+`)
+}
+
 func TestMethod(t *testing.T) {
 	gopClTest(t, `
 type M int
@@ -1995,7 +2173,7 @@ func ++(a foo) {
 
 var a, b foo
 var c = a - b
-var d = -a
+var d = -a       // TODO: -a have no return value!
 `, `package main
 
 import fmt "fmt"

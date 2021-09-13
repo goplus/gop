@@ -20,6 +20,7 @@ import (
 	"go/constant"
 	"go/types"
 	"log"
+	"math/big"
 	"reflect"
 	"strconv"
 
@@ -211,6 +212,8 @@ func getTypeName(typ types.Type) string {
 	switch t := typ.(type) {
 	case *types.Named:
 		return t.Obj().Name()
+	case *types.Basic:
+		return t.Name()
 	default:
 		panic("TODO: getTypeName")
 	}
@@ -230,17 +233,24 @@ func toArrayType(ctx *blockCtx, v *ast.ArrayType) types.Type {
 	if _, ok := v.Len.(*ast.Ellipsis); ok {
 		return types.NewArray(elem, -1) // A negative length indicates an unknown length
 	}
-	return types.NewArray(elem, toInt64(ctx, v.Len))
+	return types.NewArray(elem, toInt64(ctx, v.Len, "non-constant array bound %s"))
 }
 
-func toInt64(ctx *blockCtx, e ast.Expr) int64 {
+func toInt64(ctx *blockCtx, e ast.Expr, emsg string) int64 {
 	cb := ctx.pkg.ConstStart()
 	compileExpr(ctx, e)
 	tv := cb.EndConst()
-	if v, ok := constant.Int64Val(tv.Value); ok {
-		return v
+	if val := tv.CVal; val != nil {
+		if val.Kind() == constant.Float {
+			if v, ok := constant.Val(val).(*big.Rat); ok && v.IsInt() {
+				return v.Num().Int64()
+			}
+		} else if v, ok := constant.Int64Val(val); ok {
+			return v
+		}
 	}
-	panic("TODO: require integer constant")
+	src, pos := ctx.LoadExpr(e)
+	panic(newCodeErrorf(&pos, emsg, src))
 }
 
 func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) types.Type {
@@ -252,15 +262,12 @@ func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) types.Type {
 	var methods []*types.Func
 	var embeddeds []types.Type
 	for _, m := range methodsList {
-		if m.Type == nil { // embedded
-			panic("TODO: embedded")
+		if m.Names == nil { // embedded
+			embeddeds = append(embeddeds, toType(ctx, m.Type))
+			continue
 		}
 		name := m.Names[0].Name
-		typ, ok := m.Type.(*ast.FuncType)
-		if !ok {
-			panic("TODO: not function type")
-		}
-		sig := toFuncType(ctx, typ, nil)
+		sig := toFuncType(ctx, m.Type.(*ast.FuncType), nil)
 		methods = append(methods, types.NewFunc(token.NoPos, pkg, name, sig))
 	}
 	intf := types.NewInterfaceType(methods, embeddeds).Complete()

@@ -17,6 +17,7 @@
 package cl
 
 import (
+	"go/types"
 	"testing"
 
 	"github.com/goplus/gop/ast"
@@ -73,4 +74,16 @@ func TestGetField(t *testing.T) {
 		}
 	}()
 	getField("panic")
+}
+
+func TestGetTypeName(t *testing.T) {
+	if getTypeName(types.Typ[types.Int]) != "int" {
+		t.Fatal("getTypeName int failed")
+	}
+	defer func() {
+		if e := recover(); e == nil {
+			t.Fatal("getTypeName: no error?")
+		}
+	}()
+	getTypeName(types.NewSlice(types.Typ[types.Int]))
 }
