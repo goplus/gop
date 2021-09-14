@@ -303,7 +303,7 @@ const ulp1 = imag(1i + 2i / 3 - 5i / 3)
 const ulp2 = imag(1i + complex(0, 2) / 3 - 5i / 3)
 
 func main() {
-	var a = (ulp1 == ulp2)
+	const a = (ulp1 == ulp2)
 }
 `, `package main
 
@@ -311,7 +311,7 @@ const ulp1 = imag(1i + 2i/3 - 5i/3)
 const ulp2 = imag(1i + complex(0, 2)/3 - 5i/3)
 
 func main() {
-	var a = true
+	const a = ulp1 == ulp2
 }
 `)
 }
