@@ -52,12 +52,22 @@ var (
 	goRunPrefix = []byte("// run\n")
 )
 
+var (
+	skipFileNames = map[string]struct{}{
+		"peano.go": {},
+	}
+)
+
 func gopTestRunGo(dir string) {
 	filepath.Walk(dir, func(file string, fi os.FileInfo, err error) error {
 		if err != nil || fi.IsDir() {
 			return nil
 		}
-		ext := filepath.Ext(fi.Name())
+		name := fi.Name()
+		if _, ok := skipFileNames[name]; ok {
+			return nil
+		}
+		ext := filepath.Ext(name)
 		if ext != ".go" {
 			return nil
 		}
