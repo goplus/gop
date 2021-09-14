@@ -54,16 +54,36 @@ var (
 
 var (
 	skipFileNames = map[string]struct{}{
-		"peano.go": {},
+		"convert4.go":       {},
+		"peano.go":          {},
+		"bug295.go":         {}, // import . "XXX"
+		"issue15071.dir":    {}, // dir
+		"issue29612.dir":    {},
+		"issue31959.dir":    {},
+		"issue24491a.go":    {}, // instruction
+		"issue24491b.go":    {},
+		"issue29504.go":     {},
+		"issue17381.go":     {},
+		"issue18149.go":     {},
+		"issue22662.go":     {},
+		"issue27201.go":     {},
+		"issue40954.go":     {},
+		"nilptr_aix.go":     {},
+		"inline_literal.go": {},
+		"returntype.go":     {}, // not a problem
+		"unsafebuiltins.go": {},
 	}
 )
 
 func gopTestRunGo(dir string) {
 	filepath.Walk(dir, func(file string, fi os.FileInfo, err error) error {
+		name := fi.Name()
 		if err != nil || fi.IsDir() {
+			if _, ok := skipFileNames[name]; ok {
+				return filepath.SkipDir
+			}
 			return nil
 		}
-		name := fi.Name()
 		if _, ok := skipFileNames[name]; ok {
 			return nil
 		}

@@ -297,6 +297,69 @@ const (
 `)
 }
 
+func TestConstIssue805(t *testing.T) {
+	gopClTest(t, `
+const (
+	n1 = +5
+	d1 = +3
+
+	q1 = +1
+	r1 = +2
+)
+
+const (
+	ret1 = n1/d1 != q1
+	ret2 = n1%d1 != r1
+	ret3 = n1/d1 != q1 || n1%d1 != r1
+)
+`, `package main
+
+const (
+	n1 = +5
+	d1 = +3
+	q1 = +1
+	r1 = +2
+)
+const (
+	ret1 = n1/d1 != q1
+	ret2 = n1%d1 != r1
+	ret3 = false
+)
+`)
+}
+
+func TestUntypedNilIssue806(t *testing.T) {
+	gopClTest(t, `
+switch f := func() {}; f {
+case nil:
+}
+`, `package main
+
+func main() {
+	switch f := func() {
+	}; f {
+	case nil:
+	}
+}
+`)
+}
+
+func TestSwitchIssue807(t *testing.T) {
+	gopClTest(t, `
+switch {
+case interface{}(true):
+}
+`, `package main
+
+func main() {
+	switch {
+	case interface {
+	}(true):
+	}
+}
+`)
+}
+
 func TestUntypedComplexIssue799(t *testing.T) {
 	gopClTest(t, `
 const ulp1 = imag(1i + 2i / 3 - 5i / 3)
