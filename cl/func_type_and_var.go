@@ -154,8 +154,17 @@ func toExternalType(ctx *blockCtx, v *ast.SelectorExpr) types.Type {
 	panic(ctx.newCodeErrorf(v.Pos(), "undefined: %s", name))
 }
 
+/*-----------------------------------------------------------------------------
+
+Name context:
+- type
+- pkgVal.type
+- spx.type
+
+// ---------------------------------------------------------------------------*/
+
 func toIdentType(ctx *blockCtx, ident *ast.Ident) types.Type {
-	v, _, builtin := lookupParent(ctx, ident.Name)
+	v, builtin := lookupType(ctx, ident.Name)
 	if isBuiltin(builtin) {
 		panic(ctx.newCodeErrorf(ident.Pos(), "use of builtin %s not in function call", ident.Name))
 	}
@@ -170,6 +179,32 @@ func toIdentType(ctx *blockCtx, ident *ast.Ident) types.Type {
 		}
 	}
 	panic(ctx.newCodeErrorf(ident.Pos(), "%s is not a type", ident.Name))
+}
+
+// TODO: optimization
+func lookupType(ctx *blockCtx, name string) (types.Object, types.Object) {
+	at, o := ctx.cb.Scope().LookupParent(name, token.NoPos)
+	if o != nil && at != types.Universe {
+		if debugLookup {
+			log.Println("==> LookupParent", name, "=>", o)
+		}
+		return o, nil
+	}
+	if ctx.loadSymbol(name) {
+		if v := ctx.pkg.Types.Scope().Lookup(name); v != nil {
+			if debugLookup {
+				log.Println("==> Lookup (LoadSymbol)", name, "=>", v)
+			}
+			return v, nil
+		}
+	}
+	if obj := ctx.pkg.Builtin().Ref(name); obj != nil {
+		if debugLookup {
+			log.Println("==> Lookup (Builtin)", name)
+		}
+		return obj, o
+	}
+	return o, o
 }
 
 func toStructType(ctx *blockCtx, v *ast.StructType) *types.Struct {
