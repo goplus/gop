@@ -91,6 +91,13 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
 	return nil
 }
 
+func isBuiltin(o types.Object) bool {
+	if _, ok := o.(*types.Builtin); ok {
+		return ok
+	}
+	return false
+}
+
 func compileClassMember(ctx *blockCtx, v *ast.Ident, flags int) bool {
 	if ctx.fileType > 0 {
 		if fn := ctx.cb.Func(); fn != nil {
@@ -305,13 +312,6 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr) {
 		compileExpr(ctx, v.X)
 	}
 	ctx.cb.MemberRef(v.Sel.Name, v)
-}
-
-func isBuiltin(o types.Object) bool {
-	if _, ok := o.(*types.Builtin); ok {
-		return ok
-	}
-	return false
 }
 
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, flags int) {
