@@ -1046,6 +1046,18 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 			p.expr(x.Rhs[0])
 		}
 
+	case *ast.LambdaExpr2:
+		if x.LhsHasParen {
+			p.print(token.LPAREN)
+			p.identList(x.Lhs, false)
+			p.print(token.RPAREN, blank)
+		} else if x.Lhs != nil {
+			p.expr(x.Lhs[0])
+			p.print(blank)
+		}
+		p.print(token.RARROW, blank)
+		p.block(x.Body, 1)
+
 	default:
 		log.Fatalf("unreachable %T\n", x)
 	}

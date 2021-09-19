@@ -503,6 +503,7 @@ type pkgCtx struct {
 	*gmxSettings
 	syms  map[string]loader
 	inits []func()
+	tylds []*typeLoader
 	errs  []error
 }
 
@@ -655,6 +656,9 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 			loadFile(ctx, f)
 		}
 	}
+	for _, ld := range ctx.tylds {
+		ld.load()
+	}
 	for _, load := range ctx.inits {
 		load()
 	}
@@ -760,6 +764,7 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 				}
 				decl.InitType(p, types.NewStruct(flds, nil))
 			}
+			parent.tylds = append(parent.tylds, ld)
 		}
 		ctx.classRecv = &ast.FieldList{List: []*ast.Field{{
 			Names: []*ast.Ident{

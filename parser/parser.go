@@ -1966,6 +1966,7 @@ func (p *parser) parseLambdaExpr() ast.Expr {
 	if p.tok == token.RARROW { // =>
 		var rarrow = p.pos
 		var rhs []ast.Expr
+		var body *ast.BlockStmt
 		var lhsHasParen, rhsHasParen bool
 		p.next()
 		switch p.tok {
@@ -1981,6 +1982,8 @@ func (p *parser) parseLambdaExpr() ast.Expr {
 				p.next()
 			}
 			p.expect(token.RPAREN)
+		case token.LBRACE: // {
+			body = p.parseBlockStmt()
 		default:
 			rhs = []ast.Expr{p.parseExpr(false)}
 		}
@@ -1997,6 +2000,15 @@ func (p *parser) parseLambdaExpr() ast.Expr {
 		}
 		if debugParseOutput {
 			log.Printf("ast.LambdaExpr{Lhs: %v}\n", lhs)
+		}
+		if body != nil {
+			return &ast.LambdaExpr2{
+				First:       first,
+				Lhs:         lhs,
+				Rarrow:      rarrow,
+				Body:        body,
+				LhsHasParen: lhsHasParen,
+			}
 		}
 		return &ast.LambdaExpr{
 			First:       first,
