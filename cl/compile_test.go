@@ -2632,6 +2632,29 @@ func main() {
 `)
 }
 
+func TestLambdaExpr2(t *testing.T) {
+	gopClTest(t, `
+func Do(func()) {
+	// ...
+}
+
+Do(=> {
+	println("Hi")
+})
+`, `package main
+
+import fmt "fmt"
+
+func Do(func()) {
+}
+func main() {
+	Do(func() {
+		fmt.Println("Hi")
+	})
+}
+`)
+}
+
 func TestUnnamedMainFunc(t *testing.T) {
 	gopClTest(t, `i := 1`, `package main
 

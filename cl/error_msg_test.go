@@ -47,6 +47,29 @@ func codeErrorTest(t *testing.T, msg, src string) {
 	}
 }
 
+func TestErrLambdaExpr(t *testing.T) {
+	codeErrorTest(t,
+		"./bar.gop:7:6: too few arguments in lambda expression\n\thave ()\n\twant (int, int)", `
+
+func foo(func(int, int)) {
+}
+
+func main() {
+	foo(=> {})
+}
+`)
+	codeErrorTest(t,
+		"./bar.gop:7:6: too many arguments in lambda expression\n\thave (x, y, z)\n\twant (int, int)", `
+
+func foo(func(int, int)) {
+}
+
+func main() {
+	foo((x, y, z) => {})
+}
+`)
+}
+
 func TestErrErrWrap(t *testing.T) {
 	codeErrorTest(t,
 		"./bar.gop:2:2: undefined: a", `func main() {

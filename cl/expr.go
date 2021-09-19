@@ -21,6 +21,7 @@ import (
 	"math/big"
 	"reflect"
 	"strconv"
+	"strings"
 
 	goast "go/ast"
 	gotoken "go/token"
@@ -400,6 +401,11 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
 			compileLambdaExpr(ctx, l, in)
 			continue
 		}
+		if l, ok := arg.(*ast.LambdaExpr2); ok {
+			in := fn.arg(i, true).(*types.Signature).Params()
+			compileLambdaExpr2(ctx, l, in)
+			continue
+		}
 		if c, ok := arg.(*ast.CompositeLit); ok && c.Type == nil {
 			compileCompositeLit(ctx, c, fn.arg(i, ellipsis), true)
 		} else {
@@ -409,16 +415,31 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
 	ctx.cb.CallWith(len(v.Args), ellipsis, v)
 }
 
-func compileLambdaExpr(ctx *blockCtx, v *ast.LambdaExpr, in *types.Tuple) {
-	n := len(v.Lhs)
-	if n != in.Len() {
-		log.Panicln("TODO: compileLambdaExpr - unexpected argument count", n, in.Len())
-	}
+func compileLambdaParams(ctx *blockCtx, pos token.Pos, lhs []*ast.Ident, in *types.Tuple) []*types.Var {
 	pkg := ctx.pkg
-	params := make([]*types.Var, n)
-	for i, name := range v.Lhs {
-		params[i] = pkg.NewParam(token.NoPos, name.Name, in.At(i).Type())
+	n := len(lhs)
+	if nin := in.Len(); n != nin {
+		fewOrMany := "few"
+		if n > nin {
+			fewOrMany = "many"
+		}
+		has := make([]string, n)
+		for i, v := range lhs {
+			has[i] = v.Name
+		}
+		panic(ctx.newCodeErrorf(
+			pos, "too %s arguments in lambda expression\n\thave (%s)\n\twant %v", fewOrMany, strings.Join(has, ", "), in))
 	}
+	params := make([]*types.Var, n)
+	for i, name := range lhs {
+		params[i] = pkg.NewParam(name.Pos(), name.Name, in.At(i).Type())
+	}
+	return params
+}
+
+func compileLambdaExpr(ctx *blockCtx, v *ast.LambdaExpr, in *types.Tuple) {
+	pkg := ctx.pkg
+	params := compileLambdaParams(ctx, v.Pos(), v.Lhs, in)
 	nout := len(v.Rhs)
 	results := make([]*types.Var, nout)
 	for i := 0; i < nout; i++ {
@@ -429,6 +450,15 @@ func compileLambdaExpr(ctx *blockCtx, v *ast.LambdaExpr, in *types.Tuple) {
 		compileExpr(ctx, v)
 	}
 	ctx.cb.Return(nout).End()
+}
+
+func compileLambdaExpr2(ctx *blockCtx, v *ast.LambdaExpr2, in *types.Tuple) {
+	params := compileLambdaParams(ctx, v.Pos(), v.Lhs, in)
+	cb := ctx.cb
+	comments := cb.Comments()
+	fn := cb.NewClosure(types.NewTuple(params...), nil, false)
+	loadFuncBody(ctx, fn, v.Body)
+	cb.SetComments(comments, false)
 }
 
 func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
