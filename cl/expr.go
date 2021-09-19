@@ -391,7 +391,6 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
 	}
 	var fn fnType
 	if t := gox.CheckSignature(ctx.cb.Get(-1).Type); t != nil {
-		log.Println("CheckSignature:", t)
 		fn.init(t)
 	}
 	ellipsis := (v.Ellipsis != gotoken.NoPos)
