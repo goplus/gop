@@ -36,9 +36,9 @@ import (
 Name context:
 - varVal               (ident)
 - varRef = expr        (identLHS)
-- pkgVal.member        (selectorExpr)
-- pkgVal.member = expr (selectorExprLHS)
-- pkgVal.fn(args)      (callExpr)
+- pkgRef.member        (selectorExpr)
+- pkgRef.member = expr (selectorExprLHS)
+- pkgRef.fn(args)      (callExpr)
 - fn(args)             (callExpr)
 - spx.fn(args)         (callExpr)
 - this.member          (classMember)
@@ -70,19 +70,35 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
 		ctx.cb.VarRef(nil)
 		return nil
 	}
+
 	if compileClassMember(ctx, ident, flags) {
 		return nil
 	}
-	o, at, builtin := lookupParent(ctx, name)
-	if at != nil && (flags&clIdentSelectorExpr) != 0 {
-		return at
+	at, o := ctx.cb.Scope().LookupParent(name, token.NoPos)
+	if o != nil && at != types.Universe {
+		goto find
 	}
-	if o == nil {
-		panic(ctx.newCodeErrorf(ident.Pos(), "undefined: %s", name))
+	if ctx.loadSymbol(name) {
+		if o = ctx.pkg.Types.Scope().Lookup(name); o != nil {
+			goto find
+		}
 	}
-	if (flags&clIdentAllowBuiltin) == 0 && isBuiltin(builtin) {
+	if (flags & clIdentSelectorExpr) != 0 {
+		if pkgRef, ok := ctx.imports[name]; ok {
+			return pkgRef
+		}
+	}
+
+	if (flags&clIdentAllowBuiltin) == 0 && isBuiltin(o) {
 		panic(ctx.newCodeErrorf(ident.Pos(), "use of builtin %s not in function call", name))
 	}
+	if obj := ctx.pkg.Builtin().Ref(name); obj != nil {
+		o = obj
+	} else if o == nil {
+		panic(ctx.newCodeErrorf(ident.Pos(), "undefined: %s", name))
+	}
+
+find:
 	if fvalue {
 		ctx.cb.Val(o, ident)
 	} else {
@@ -137,38 +153,6 @@ func compileMember(ctx *blockCtx, v ast.Node, name string, flags int) error {
 		}
 	}
 	return err
-}
-
-// obj, pkgRef, objBuiltin
-func lookupParent(ctx *blockCtx, name string) (types.Object, *gox.PkgRef, types.Object) {
-	at, o := ctx.cb.Scope().LookupParent(name, token.NoPos)
-	if o != nil && at != types.Universe {
-		if debugLookup {
-			log.Println("==> LookupParent", name, "=>", o)
-		}
-		return o, nil, nil
-	}
-	if ctx.loadSymbol(name) {
-		if v := ctx.pkg.Types.Scope().Lookup(name); v != nil {
-			if debugLookup {
-				log.Println("==> Lookup (LoadSymbol)", name, "=>", v)
-			}
-			return v, nil, nil
-		}
-	}
-	if pkgRef, ok := ctx.imports[name]; ok {
-		if debugLookup {
-			log.Println("==> Lookup (ImportPkgs)", name)
-		}
-		return nil, pkgRef, nil
-	}
-	if obj := ctx.pkg.Builtin().Ref(name); obj != nil {
-		if debugLookup {
-			log.Println("==> Lookup (Builtin)", name)
-		}
-		return obj, nil, o
-	}
-	return o, nil, o
 }
 
 func compileExprLHS(ctx *blockCtx, expr ast.Expr) {
