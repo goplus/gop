@@ -57,76 +57,37 @@ const (
 	clIdentAutoCall = 1 << iota
 	clIdentAllowBuiltin
 	clIdentLHS
+	clIdentSelectorExpr
 )
 
-func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) {
+func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
+	fvalue := (flags&clIdentSelectorExpr) != 0 || (flags&clIdentLHS) == 0
 	name := ident.Name
 	if name == "_" {
-		panic(ctx.newCodeError(ident.Pos(), "cannot use _ as value"))
+		if fvalue {
+			panic(ctx.newCodeError(ident.Pos(), "cannot use _ as value"))
+		}
+		ctx.cb.VarRef(nil)
+		return nil
 	}
 	if compileClassMember(ctx, ident, flags) {
-		return
-	}
-	if o, _, builtin := lookupParent(ctx, name); o != nil {
-		if (flags&clIdentAllowBuiltin) == 0 && isBuiltin(builtin) {
-			panic(ctx.newCodeErrorf(ident.Pos(), "use of builtin %s not in function call", name))
-		}
-		ctx.cb.Val(o, ident)
-	} else {
-		panic(ctx.newCodeErrorf(ident.Pos(), "undefined: %s", name))
-	}
-}
-
-func compileSelectorExpr_Ident(ctx *blockCtx, x *ast.Ident, flags int) *gox.PkgRef {
-	if compileClassMember(ctx, x, flags) {
 		return nil
 	}
-	o, at, builtin := lookupParent(ctx, x.Name)
-	if at != nil {
+	o, at, builtin := lookupParent(ctx, name)
+	if at != nil && (flags&clIdentSelectorExpr) != 0 {
 		return at
-	} else if isBuiltin(builtin) {
-		panic(ctx.newCodeErrorf(x.Pos(), "use of builtin %s not in function call", x.Name))
-	} else if o == nil {
-		panic(ctx.newCodeErrorf(x.Pos(), "undefined: %s", x.Name))
-	}
-	ctx.cb.Val(o)
-	return nil
-}
-
-func compileIdentLHS(ctx *blockCtx, v *ast.Ident) {
-	name := v.Name
-	if name == "_" {
-		ctx.cb.VarRef(nil)
-	} else {
-		if compileClassMember(ctx, v, clIdentLHS) {
-			return
-		}
-		o, _, builtin := lookupParent(ctx, name)
-		if o == nil {
-			panic(ctx.newCodeErrorf(v.Pos(), "undefined: %s", name))
-		}
-		if isBuiltin(builtin) {
-			panic(ctx.newCodeErrorf(v.Pos(), "use of builtin %s not in function call", name))
-		}
-		ctx.cb.VarRef(o, v)
-	}
-}
-
-func compileSelectorExprLHS_Ident(ctx *blockCtx, x *ast.Ident) *gox.PkgRef {
-	if compileClassMember(ctx, x, clIdentLHS) {
-		return nil
-	}
-	o, at, builtin := lookupParent(ctx, x.Name)
-	if at != nil {
-		return at
-	}
-	if isBuiltin(builtin) {
-		panic(ctx.newCodeErrorf(x.Pos(), "use of builtin %s not in function call", x.Name))
 	}
 	if o == nil {
-		panic(ctx.newCodeErrorf(x.Pos(), "undefined: %s", x.Name))
+		panic(ctx.newCodeErrorf(ident.Pos(), "undefined: %s", name))
 	}
-	ctx.cb.Val(o)
+	if (flags&clIdentAllowBuiltin) == 0 && isBuiltin(builtin) {
+		panic(ctx.newCodeErrorf(ident.Pos(), "use of builtin %s not in function call", name))
+	}
+	if fvalue {
+		ctx.cb.Val(o, ident)
+	} else {
+		ctx.cb.VarRef(o, ident)
+	}
 	return nil
 }
 
@@ -206,7 +167,7 @@ func lookupParent(ctx *blockCtx, name string) (types.Object, *gox.PkgRef, types.
 func compileExprLHS(ctx *blockCtx, expr ast.Expr) {
 	switch v := expr.(type) {
 	case *ast.Ident:
-		compileIdentLHS(ctx, v)
+		compileIdent(ctx, v, clIdentLHS)
 	case *ast.IndexExpr:
 		compileIndexExprLHS(ctx, v)
 	case *ast.SelectorExpr:
@@ -336,7 +297,7 @@ func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) { // x[i:j:k]
 func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr) {
 	switch x := v.X.(type) {
 	case *ast.Ident:
-		if at := compileSelectorExprLHS_Ident(ctx, x); at != nil {
+		if at := compileIdent(ctx, x, clIdentLHS|clIdentSelectorExpr); at != nil {
 			ctx.cb.VarRef(at.Ref(v.Sel.Name))
 			return
 		}
@@ -356,7 +317,7 @@ func isBuiltin(o types.Object) bool {
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, flags int) {
 	switch x := v.X.(type) {
 	case *ast.Ident:
-		if at := compileSelectorExpr_Ident(ctx, x, flags); at != nil {
+		if at := compileIdent(ctx, x, flags|clIdentSelectorExpr); at != nil {
 			if compilePkgRef(ctx, at, v.Sel, false) {
 				return
 			}
