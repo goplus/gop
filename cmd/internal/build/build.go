@@ -18,7 +18,12 @@
 package build
 
 import (
+	"fmt"
+	"os"
+
+	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gox"
 )
 
 // -----------------------------------------------------------------------------
@@ -31,18 +36,27 @@ var Cmd = &base.Command{
 
 var (
 	flagBuildOutput string
-	flagVerbose     bool
+	flagVerbose     = flag.Bool("v", false, "print verbose information")
 	flag            = &Cmd.Flag
 )
 
 func init() {
 	flag.StringVar(&flagBuildOutput, "o", "", "go build output file")
-	flag.BoolVar(&flagVerbose, "v", false, "print the names of packages as they are compiled.")
 	Cmd.Run = runCmd
 }
 
 func runCmd(cmd *base.Command, args []string) {
-	panic("TODO: gop build not impl")
+	flag.Parse(base.SkipSwitches(args, flag))
+	ssargs := flag.Args()
+	dir, recursive := base.GetBuildDir(ssargs)
+
+	if *flagVerbose {
+		gox.SetDebug(gox.DbgFlagAll &^ gox.DbgFlagComments)
+		cl.SetDebug(cl.DbgFlagAll)
+		cl.SetDisableRecover(true)
+	}
+	base.GenGoForBuild(dir, recursive, func() { fmt.Fprintln(os.Stderr, "GenGo failed, stop building") })
+	base.RunGoCmd(dir, "build", args...)
 }
 
 // -----------------------------------------------------------------------------
