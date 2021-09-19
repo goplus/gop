@@ -45,7 +45,7 @@ Name context:
 - this.method(args)    (classMember)
 
 Name lookup:
-- local context variables
+- local variables
 - $recv members (only in class files)
 - package globals (variables, constants, types, imported packages etc.)
 - $spx package exports (only in class files)
@@ -71,24 +71,53 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
 		return nil
 	}
 
-	if compileClassMember(ctx, ident, flags) {
-		return nil
-	}
+	scope := ctx.pkg.Types.Scope()
 	at, o := ctx.cb.Scope().LookupParent(name, token.NoPos)
-	if o != nil && at != types.Universe {
-		goto find
-	}
-	if ctx.loadSymbol(name) {
-		if o = ctx.pkg.Types.Scope().Lookup(name); o != nil {
+	if o != nil {
+		if at != scope && at != types.Universe { // local object
 			goto find
 		}
 	}
+
+	if ctx.fileType > 0 { // in a Go+ class file
+		if fn := ctx.cb.Func(); fn != nil {
+			sig := fn.Type().(*types.Signature)
+			if recv := sig.Recv(); recv != nil {
+				ctx.cb.Val(recv)
+				if compileMember(ctx, ident, name, flags) == nil { // class member object
+					return nil
+				}
+				ctx.cb.InternalStack().PopN(1)
+			}
+		}
+	}
+
+	// global object
+	if o == nil {
+		if ctx.loadSymbol(name) {
+			if o = scope.Lookup(name); o != nil {
+				goto find
+			}
+		}
+	} else if at != types.Universe {
+		goto find
+	}
+
+	// pkgRef object
 	if (flags & clIdentSelectorExpr) != 0 {
 		if pkgRef, ok := ctx.imports[name]; ok {
 			return pkgRef
 		}
 	}
 
+	// spx object
+	if ctx.fileType > 0 {
+		if compilePkgRef(ctx, ctx.spx, ident, (flags&clIdentLHS) != 0) {
+			return nil
+		}
+	}
+
+	// universe object
 	if (flags&clIdentAllowBuiltin) == 0 && isBuiltin(o) {
 		panic(ctx.newCodeErrorf(ident.Pos(), "use of builtin %s not in function call", name))
 	}
@@ -110,25 +139,6 @@ find:
 func isBuiltin(o types.Object) bool {
 	if _, ok := o.(*types.Builtin); ok {
 		return ok
-	}
-	return false
-}
-
-func compileClassMember(ctx *blockCtx, v *ast.Ident, flags int) bool {
-	if ctx.fileType > 0 {
-		if fn := ctx.cb.Func(); fn != nil {
-			sig := fn.Type().(*types.Signature)
-			if recv := sig.Recv(); recv != nil {
-				ctx.cb.Val(recv)
-				if compileMember(ctx, v, v.Name, flags) == nil {
-					return true
-				}
-				ctx.cb.InternalStack().PopN(1)
-				if compilePkgRef(ctx, ctx.spx, v, (flags&clIdentLHS) != 0) {
-					return true
-				}
-			}
-		}
 	}
 	return false
 }

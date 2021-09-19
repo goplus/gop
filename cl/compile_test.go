@@ -559,7 +559,7 @@ func main() {
 	fmt.Println(a.(*A))
 }
 
-func get()AA{
+func get() AA {
 	var a AA
 	return a
 }
