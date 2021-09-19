@@ -40,21 +40,19 @@ ast.FuncDecl:
                 ast.Ident:
                   Name: foo
               Args:
-                ast.CallExpr:
-                  Fun:
+                ast.LambdaExpr2:
+                  Lhs:
                     ast.Ident:
                       Name: x
-                  Args:
-                    ast.LambdaExpr2:
-                      Body:
-                        ast.BlockStmt:
-                          List:
-                            ast.ExprStmt:
-                              X:
-                                ast.CallExpr:
-                                  Fun:
-                                    ast.Ident:
-                                      Name: println
-                                  Args:
-                                    ast.Ident:
-                                      Name: x
+                  Body:
+                    ast.BlockStmt:
+                      List:
+                        ast.ExprStmt:
+                          X:
+                            ast.CallExpr:
+                              Fun:
+                                ast.Ident:
+                                  Name: println
+                              Args:
+                                ast.Ident:
+                                  Name: x

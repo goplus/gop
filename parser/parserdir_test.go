@@ -96,7 +96,7 @@ func TestParseGo(t *testing.T) {
 }
 
 func TestFromTestdata(t *testing.T) {
-	sel := "lambda3"
+	sel := ""
 	dir, err := os.Getwd()
 	if err != nil {
 		t.Fatal("Getwd failed:", err)
