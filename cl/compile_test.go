@@ -1033,27 +1033,27 @@ func add(x, y string) (int, error) {
 import strconv "strconv"
 
 func add(x string, y string) (int, error) {
-	var _autoGop_1 int
+	var _autoGo_1 int
 	{
 		var _gop_err error
-		_autoGop_1, _gop_err = strconv.Atoi(x)
+		_autoGo_1, _gop_err = strconv.Atoi(x)
 		if _gop_err != nil {
 			return 0, _gop_err
 		}
-		goto _autoGop_2
-	_autoGop_2:
+		goto _autoGo_2
+	_autoGo_2:
 	}
-	var _autoGop_3 int
+	var _autoGo_3 int
 	{
 		var _gop_err error
-		_autoGop_3, _gop_err = strconv.Atoi(y)
+		_autoGo_3, _gop_err = strconv.Atoi(y)
 		if _gop_err != nil {
 			return 0, _gop_err
 		}
-		goto _autoGop_4
-	_autoGop_4:
+		goto _autoGo_4
+	_autoGo_4:
 	}
-	return _autoGop_1 + _autoGop_3, nil
+	return _autoGo_1 + _autoGo_3, nil
 }
 `)
 }

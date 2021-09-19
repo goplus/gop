@@ -37,10 +37,6 @@ import (
 )
 
 const (
-	gopPrefix = "Gop_"
-)
-
-const (
 	DbgFlagLoad = 1 << iota
 	DbgFlagLookup
 	DbgFlagAll = DbgFlagLoad | DbgFlagLookup
@@ -628,7 +624,6 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		LoadNamed:       ctx.loadNamed,
 		HandleErr:       ctx.handleErr,
 		NodeInterpreter: interp,
-		Prefix:          gopPrefix,
 		ParseFile:       nil, // TODO
 		NewBuiltin:      newBuiltinDefault,
 	}

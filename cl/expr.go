@@ -390,8 +390,8 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
 		compileExpr(ctx, fn)
 	}
 	var fn fnType
-	switch t := ctx.cb.Get(-1).Type.(type) {
-	case *types.Signature:
+	if t := gox.CheckSignature(ctx.cb.Get(-1).Type); t != nil {
+		log.Println("CheckSignature:", t)
 		fn.init(t)
 	}
 	ellipsis := (v.Ellipsis != gotoken.NoPos)
