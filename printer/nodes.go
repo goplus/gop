@@ -906,7 +906,11 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		} else {
 			wasIndented = p.possibleSelectorExpr(x.Fun, token.HighestPrec, depth)
 		}
-		p.print(x.Lparen, token.LPAREN)
+		if x.NoParen {
+			p.print(blank)
+		} else {
+			p.print(x.Lparen, token.LPAREN)
+		}
 		if x.Ellipsis.IsValid() {
 			p.exprList(x.Lparen, x.Args, depth, 0, x.Ellipsis, false)
 			p.print(x.Ellipsis, token.ELLIPSIS)
@@ -916,7 +920,9 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		} else {
 			p.exprList(x.Lparen, x.Args, depth, commaTerm, x.Rparen, false)
 		}
-		p.print(x.Rparen, token.RPAREN)
+		if !x.NoParen {
+			p.print(x.Rparen, token.RPAREN)
+		}
 		if wasIndented {
 			p.print(unindent)
 		}

@@ -2638,9 +2638,9 @@ func Do(func()) {
 	// ...
 }
 
-Do(=> {
-	println("Hi")
-})
+Do => {
+	println "Hi"
+}
 `, `package main
 
 import fmt "fmt"
