@@ -110,7 +110,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
 
 	// spx object
 	if ctx.fileType > 0 {
-		if compilePkgRef(ctx, ctx.spx, ident, (flags&clIdentLHS) != 0) {
+		if compilePkgRef(ctx, ctx.spx, ident, flags) {
 			return nil
 		}
 	}
@@ -310,7 +310,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, flags int) {
 	switch x := v.X.(type) {
 	case *ast.Ident:
 		if at := compileIdent(ctx, x, flags|clIdentSelectorExpr); at != nil {
-			if compilePkgRef(ctx, at, v.Sel, false) {
+			if compilePkgRef(ctx, at, v.Sel, flags) {
 				return
 			}
 			if token.IsExported(v.Sel.Name) {
@@ -326,28 +326,40 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, flags int) {
 	}
 }
 
-func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, name *ast.Ident, lhs bool) bool {
-	v := pkgRef(at, name.Name)
-	if v == nil {
-		return false
+func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, x *ast.Ident, flags int) bool {
+	name, canAutoCall := x.Name, false
+	v := at.Ref(name)
+	if v != nil {
+		goto find
 	}
-	if lhs {
-		ctx.cb.VarRef(v, name)
+	if c := name[0]; c >= 'a' && c <= 'z' {
+		name = string(rune(c)+('A'-'a')) + name[1:]
+		if v = at.Ref(name); v != nil {
+			canAutoCall = true
+			goto find
+		}
+	}
+	return false
+
+find:
+	cb := ctx.cb
+	if (flags & clIdentLHS) != 0 {
+		cb.VarRef(v, x)
 	} else {
-		ctx.cb.Val(v, name)
+		cb.Val(v, x)
+		if canAutoCall && (flags&clIdentAutoCall) != 0 && isFunc(v.Type()) {
+			cb.Call(0)
+		}
 	}
 	return true
 }
 
-func pkgRef(at *gox.PkgRef, name string) gox.Ref {
-	if o := at.Ref(name); o != nil {
-		return o
+func isFunc(typ types.Type) bool {
+	switch typ.(type) {
+	case *types.Signature:
+		return true
 	}
-	if c := name[0]; c >= 'a' && c <= 'z' {
-		name = string(rune(c)+('A'-'a')) + name[1:]
-		return at.Ref(name)
-	}
-	return nil
+	return false
 }
 
 type fnType struct {

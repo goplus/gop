@@ -44,3 +44,6 @@ func (p *Game) Play(media string, wait ...bool) {
 func Run(game interface{}, resource string) error {
 	return nil
 }
+
+func Sched() {
+}

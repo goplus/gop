@@ -74,6 +74,7 @@ const (
 )
 
 func onInit() {
+	sched
 }
 `, `
 const (
@@ -91,6 +92,7 @@ type Game struct {
 }
 
 func (self *Game) OnInit() {
+	spx.Sched()
 }
 
 type Kai struct {
