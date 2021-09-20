@@ -641,11 +641,11 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	for _, f := range pkg.Files {
 		if f.FileType == ast.FileTypeGmx {
 			loadFile(ctx, f)
-			if o := p.Types.Scope().Lookup(ctx.Class); o != nil && hasMethod(o, "main") {
+			if o := p.Types.Scope().Lookup(ctx.Class); o != nil && hasMethod(o, "Main") {
 				// new(Game).main()
 				p.NewFunc(nil, "main", nil, nil, false).BodyStart(p).
 					Val(p.Builtin().Ref("new")).Val(o).Call(1).
-					MemberVal("main").Call(0).EndStmt().
+					MemberVal("Main").Call(0).EndStmt().
 					End()
 			}
 			break
@@ -780,9 +780,14 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 		case *ast.FuncDecl:
 			if ctx.classRecv != nil { // in class file (.spx/.gmx)
 				if d.Recv == nil {
+					name := d.Name.Name
 					d.Recv = ctx.classRecv
-					ctx.addParams(d.Name.Name, d.Type)
-					ctx.toTitle(d.Name)
+					ctx.addParams(name, d.Type)
+					if f.NoEntrypoint && (name == "main") {
+						d.Name.Name = "Main"
+					} else { // onMsg => OnMsg, etc
+						ctx.toTitle(d.Name)
+					}
 				}
 			}
 			if d.Recv == nil {

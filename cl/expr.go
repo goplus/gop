@@ -82,7 +82,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
 
 	if ctx.fileType > 0 { // in a Go+ class file
 		if fn := ctx.cb.Func(); fn != nil {
-			sig := fn.Type().(*types.Signature)
+			sig := fn.Ancestor().Type().(*types.Signature)
 			if recv := sig.Recv(); recv != nil {
 				ctx.cb.Val(recv)
 				if compileMember(ctx, ident, name, flags) == nil { // class member object
@@ -354,14 +354,7 @@ type fnType struct {
 	params   *types.Tuple
 	n1       int
 	variadic bool
-}
-
-func (p *fnType) init(t *types.Signature) {
-	p.params, p.variadic = t.Params(), t.Variadic()
-	p.n1 = p.params.Len()
-	if p.variadic {
-		p.n1--
-	}
+	inited   bool
 }
 
 func (p *fnType) arg(i int, ellipsis bool) types.Type {
@@ -378,6 +371,24 @@ func (p *fnType) arg(i int, ellipsis bool) types.Type {
 	return nil
 }
 
+func (p *fnType) init(t *types.Signature) {
+	p.params, p.variadic = t.Params(), t.Variadic()
+	p.n1 = p.params.Len()
+	if p.variadic {
+		p.n1--
+	}
+}
+
+func (p *fnType) initWith(fnt types.Type, idx, nin int) {
+	if p.inited {
+		return
+	}
+	p.inited = true
+	if t := gox.CheckSignature(fnt, idx, nin); t != nil {
+		p.init(t)
+	}
+}
+
 func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
 	switch fn := v.Fun.(type) {
 	case *ast.Ident:
@@ -388,22 +399,25 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
 		compileExpr(ctx, fn)
 	}
 	var fn fnType
-	if t := gox.CheckSignature(ctx.cb.Get(-1).Type); t != nil {
-		fn.init(t)
-	}
+	fnt := ctx.cb.Get(-1).Type
 	ellipsis := (v.Ellipsis != gotoken.NoPos)
 	for i, arg := range v.Args {
 		if l, ok := arg.(*ast.LambdaExpr); ok {
-			in := fn.arg(i, true).(*types.Signature).Params()
-			compileLambdaExpr(ctx, l, in)
-			continue
+			fn.initWith(fnt, i, len(l.Lhs))
+			if sig, ok := fn.arg(i, true).(*types.Signature); ok {
+				compileLambdaExpr(ctx, l, sig.Params())
+				continue
+			}
 		}
 		if l, ok := arg.(*ast.LambdaExpr2); ok {
-			in := fn.arg(i, true).(*types.Signature).Params()
-			compileLambdaExpr2(ctx, l, in)
-			continue
+			fn.initWith(fnt, i, len(l.Lhs))
+			if sig, ok := fn.arg(i, true).(*types.Signature); ok {
+				compileLambdaExpr2(ctx, l, sig.Params())
+				continue
+			}
 		}
 		if c, ok := arg.(*ast.CompositeLit); ok && c.Type == nil {
+			fn.initWith(fnt, i, -1)
 			compileCompositeLit(ctx, c, fn.arg(i, ellipsis), true)
 		} else {
 			compileExpr(ctx, arg)

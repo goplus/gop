@@ -100,10 +100,11 @@ func (*ErrWrapExpr) exprNode() {}
 //    `expr`
 //    `(expr1, expr2, ...)`
 type LambdaExpr struct {
-	First, Last token.Pos
+	First       token.Pos
 	Lhs         []*Ident
 	Rarrow      token.Pos
 	Rhs         []Expr
+	Last        token.Pos
 	LhsHasParen bool
 	RhsHasParen bool
 }
