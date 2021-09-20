@@ -1337,8 +1337,18 @@ func (p *parser) isCommand(x ast.Expr) bool {
 		return false
 	}
 	switch p.tok {
-	case token.IDENT, token.RARROW, token.STRING, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT:
+	case token.IDENT, token.RARROW,
+		token.STRING, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT:
 		return true
+	case token.SUB, token.NOT, token.AND, token.MUL, token.ARROW, token.XOR:
+		if x.End() == p.pos { // x-y
+			return false
+		}
+		oldtok, oldpos := p.tok, p.pos
+		p.next()
+		newpos := int(p.pos)
+		p.unget(oldpos, oldtok, "")
+		return int(oldpos)+len(oldtok.String()) == newpos // x -y
 	}
 	return false
 }

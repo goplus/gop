@@ -140,7 +140,11 @@ func TestFromParse(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		if !info.IsDir() && filepath.Ext(path) == ".gop" {
+		name := info.Name()
+		if name == "cmd.gop" { // skip this file
+			return nil
+		}
+		if !info.IsDir() && filepath.Ext(name) == ".gop" {
 			t.Log(path)
 			testFrom(t, path)
 		}
