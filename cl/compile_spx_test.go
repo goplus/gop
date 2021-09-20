@@ -353,11 +353,11 @@ type Kai struct {
 	*index
 }
 
-func (this *index) main() {
+func (this *index) Main() {
 	spx.Run(this, "hzip://open.qiniu.us/weather/res.zip")
 }
 func main() {
-	new(index).main()
+	new(index).Main()
 }
 func (this *Kai) OnInit() {
 	fmt.Println("Hi")
