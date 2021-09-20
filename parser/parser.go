@@ -1927,7 +1927,28 @@ func (p *parser) parseUnaryExpr(lhs, allowTuple, allowCmd bool) ast.Expr {
 		return &ast.StarExpr{Star: pos, X: p.checkExprOrType(x)}
 	}
 
-	return p.parsePrimaryExpr(lhs, allowTuple, allowCmd)
+	return p.parseErrWrapExpr(lhs, allowTuple, allowCmd)
+}
+
+// parseErrWrapExpr: expr! expr? expr?:defval
+func (p *parser) parseErrWrapExpr(lhs, allowTuple, allowCmd bool) ast.Expr {
+	x := p.parsePrimaryExpr(lhs, allowTuple, allowCmd)
+	switch p.tok {
+	case token.NOT: // expr!
+		expr := &ast.ErrWrapExpr{X: x, Tok: token.NOT, TokPos: p.pos}
+		p.next()
+		return expr
+	case token.QUESTION: // expr? expr?:defval
+		expr := &ast.ErrWrapExpr{X: x, Tok: token.QUESTION, TokPos: p.pos}
+		p.next()
+		if p.tok == token.COLON {
+			p.next()
+			expr.Default = p.parseUnaryExpr(false, true, false)
+		}
+		return expr
+	default:
+		return x
+	}
 }
 
 func (p *parser) tokPrec() (token.Token, int) {
@@ -1944,7 +1965,7 @@ func (p *parser) parseBinaryExpr(lhs bool, prec1 int, allowTuple, allowCmd bool)
 		defer un(trace(p, "BinaryExpr"))
 	}
 
-	x := p.parseErrWrapExpr(lhs, allowTuple, allowCmd) // TODO: change priority level of ErrWrapExpr
+	x := p.parseUnaryExpr(lhs, allowTuple, allowCmd)
 	for {
 		op, oprec := p.tokPrec()
 		if oprec < prec1 {
@@ -1957,26 +1978,6 @@ func (p *parser) parseBinaryExpr(lhs bool, prec1 int, allowTuple, allowCmd bool)
 		}
 		y := p.parseBinaryExpr(false, oprec+1, false, false)
 		x = &ast.BinaryExpr{X: p.checkExpr(x), OpPos: pos, Op: op, Y: p.checkExpr(y)}
-	}
-}
-
-func (p *parser) parseErrWrapExpr(lhs, allowTuple, allowCmd bool) ast.Expr { // expr! expr? expr?:defval
-	x := p.parseUnaryExpr(lhs, allowTuple, allowCmd)
-	switch p.tok {
-	case token.NOT: // expr!
-		expr := &ast.ErrWrapExpr{X: x, Tok: token.NOT, TokPos: p.pos}
-		p.next()
-		return expr
-	case token.QUESTION: // expr? expr?:defval
-		expr := &ast.ErrWrapExpr{X: x, Tok: token.QUESTION, TokPos: p.pos}
-		p.next()
-		if p.tok == token.COLON {
-			p.next()
-			expr.Default = p.parseUnaryExpr(false, true, false)
-		}
-		return expr
-	default:
-		return x
 	}
 }
 

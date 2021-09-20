@@ -1,0 +1,50 @@
+package main
+
+file errwrap2.gop
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: neg
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: x
+              Type:
+                ast.Ident:
+                  Name: string
+      Results:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Type:
+                ast.Ident:
+                  Name: int
+            ast.Field:
+              Type:
+                ast.Ident:
+                  Name: error
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ReturnStmt:
+          Results:
+            ast.UnaryExpr:
+              Op: -
+              X:
+                ast.ErrWrapExpr:
+                  X:
+                    ast.CallExpr:
+                      Fun:
+                        ast.Ident:
+                          Name: atoi
+                      Args:
+                        ast.Ident:
+                          Name: x
+                  Tok: ?
+            ast.Ident:
+              Name: nil
