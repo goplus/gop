@@ -127,6 +127,29 @@ func init() {
 `)
 }
 
+func TestRedefineBuiltin(t *testing.T) {
+	gopClTest(t, `
+func main() {
+	const a = append + len
+}
+
+const (
+	append = iota
+	len
+)
+`, `package main
+
+func main() {
+	const a = append + len
+}
+
+const (
+	append = iota
+	len
+)
+`)
+}
+
 func TestTypeConvIssue804(t *testing.T) {
 	gopClTest(t, `
 c := make(chan int)

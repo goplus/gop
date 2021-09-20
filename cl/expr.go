@@ -94,13 +94,10 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
 	}
 
 	// global object
-	if o == nil {
-		if ctx.loadSymbol(name) {
-			if o = scope.Lookup(name); o != nil {
-				goto find
-			}
-		}
-	} else if at != types.Universe {
+	if ctx.loadSymbol(name) {
+		o, at = scope.Lookup(name), scope
+	}
+	if o != nil && at != types.Universe {
 		goto find
 	}
 
