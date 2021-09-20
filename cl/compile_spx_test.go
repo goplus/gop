@@ -335,9 +335,7 @@ const (
 	GopClass = "Kai"
 )
 
-func onInit() {
-	println("Hi")
-}
+println("Hi")
 `, `package main
 
 import (
@@ -355,13 +353,13 @@ type Kai struct {
 	*index
 }
 
-func (this *index) Main() {
+func (this *index) main() {
 	spx.Run(this, "hzip://open.qiniu.us/weather/res.zip")
 }
 func main() {
-	new(index).Main()
+	new(index).main()
 }
-func (this *Kai) OnInit() {
+func (this *Kai) Main() {
 	fmt.Println("Hi")
 }
 `)
