@@ -25,6 +25,7 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/format"
+	"github.com/goplus/gop/printer"
 	"github.com/goplus/gop/token"
 )
 
@@ -51,7 +52,9 @@ func TestFuncs(t *testing.T) {
 			&ast.FuncDecl{
 				Type: &ast.FuncType{Params: &ast.FieldList{}},
 				Name: &ast.Ident{Name: "foo"},
-				Body: &ast.BlockStmt{},
+				Body: &ast.BlockStmt{
+					List: []ast.Stmt{&printer.NewlineStmt{}},
+				},
 			},
 			&ast.FuncDecl{
 				Type: &ast.FuncType{Params: &ast.FieldList{}},
@@ -64,6 +67,7 @@ func TestFuncs(t *testing.T) {
 		t.Fatal("format.Node failed:", err)
 	}
 	if dst.String() != `func foo() {
+
 }
 
 func bar() {

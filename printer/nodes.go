@@ -1483,9 +1483,16 @@ func (p *printer) stmt(stmt ast.Stmt, nextIsRBrace bool) {
 		}
 		p.print(blank)
 		p.block(s.Body, 1)
+	case *NewlineStmt:
+		p.print(ignore)
 	default:
 		log.Printf("unreachable %T\n", s)
 	}
+}
+
+// NewlineStmt represents a statement that formats as a newline
+type NewlineStmt struct {
+	ast.EmptyStmt
 }
 
 // ----------------------------------------------------------------------------
