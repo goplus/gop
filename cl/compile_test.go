@@ -2319,7 +2319,7 @@ func TestImport(t *testing.T) {
 	gopClTest(t, `import "fmt"
 
 func main() {
-	fmt.Println("Hi")
+	fmt.println "Hi"
 }`, `package main
 
 import fmt "fmt"
