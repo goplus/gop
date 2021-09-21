@@ -25,6 +25,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/parser/parsertest"
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
@@ -113,6 +114,26 @@ func TestFromTestdata(t *testing.T) {
 		}
 		testFrom(t, dir+"/"+name, sel, 0)
 	}
+}
+
+func TestRegisterFileType(t *testing.T) {
+	RegisterFileType(".gsh", ast.FileTypeSpx)
+	func() {
+		defer func() {
+			if e := recover(); e == nil {
+				t.Fatal("TestRegisterFileType failed: no error?")
+			}
+		}()
+		RegisterFileType(".gshx", ast.FileTypeGop)
+	}()
+	func() {
+		defer func() {
+			if e := recover(); e == nil {
+				t.Fatal("TestRegisterFileType failed: no error?")
+			}
+		}()
+		RegisterFileType(".gsh", ast.FileTypeGmx)
+	}()
 }
 
 // -----------------------------------------------------------------------------

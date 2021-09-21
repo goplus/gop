@@ -165,6 +165,17 @@ var (
 	}
 )
 
+// RegisterFileType registers a new Go+ class file type.
+func RegisterFileType(ext string, format int16) {
+	if format != ast.FileTypeSpx && format != ast.FileTypeGmx {
+		panic("RegisterFileType: format should be FileTypeSpx or FileTypeGmx")
+	}
+	if _, ok := extGopFiles[ext]; ok {
+		panic("RegisterFileType: file type exists")
+	}
+	extGopFiles[ext] = format
+}
+
 // -----------------------------------------------------------------------------
 
 // ParseFile parses the source code of a single Go+ source file and returns the corresponding ast.File node.
