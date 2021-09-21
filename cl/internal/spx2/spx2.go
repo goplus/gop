@@ -14,37 +14,17 @@
  limitations under the License.
 */
 
-package spx
+package spx2
 
 const (
-	GopPackage = true
-	Gop_game   = "MyGame"
-	Gop_sched  = "Sched,SchedNow"
+	Gop_sched = "Sched"
 )
 
-type Sound string
-
-type MyGame struct {
+type Game struct {
 }
 
-func (p *MyGame) Broadcast__0(msg string) {
-}
-
-func (p *MyGame) Broadcast__1(msg string, wait bool) {
-}
-
-func (p *MyGame) Broadcast__2(msg string, data interface{}, wait bool) {
-}
-
-func (p *MyGame) Play(media string, wait ...bool) {
-}
-
-func Gopt_MyGame_Run(game interface{}, resource string) error {
-	return nil
+type Sprite struct {
 }
 
 func Sched() {
-}
-
-func SchedNow() {
 }

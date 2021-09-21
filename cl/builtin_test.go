@@ -90,3 +90,19 @@ func TestHandleRecover(t *testing.T) {
 	}()
 	ctx.handleRecover(100)
 }
+
+// -----------------------------------------------------------------------------
+
+func TestGmxSettings(t *testing.T) {
+	pkg := gox.NewPackage("", "foo", nil)
+	gmx := newGmx(pkg, "index.t2gmx")
+	if len(gmx.scheds) != 2 || gmx.scheds[0] == nil || gmx.scheds[0] != gmx.scheds[1] {
+		t.Fatal("TestGmxSettings failed")
+	}
+}
+
+func init() {
+	RegisterClassFileType(".t2gmx", ".t2spx", "github.com/goplus/gop/cl/internal/spx2")
+}
+
+// -----------------------------------------------------------------------------

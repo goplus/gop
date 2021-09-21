@@ -22,6 +22,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	goast "go/ast"
+
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
@@ -30,9 +32,14 @@ import (
 
 // -----------------------------------------------------------------------------
 
+type gmxInfo struct {
+	pkgPath string
+	extSpx  string
+}
+
 var (
-	gmxPkgPaths = map[string]string{
-		".gmx": "github.com/goplus/spx",
+	gmxTypes = map[string]gmxInfo{
+		".gmx": {"github.com/goplus/spx", ".spx"},
 	}
 )
 
@@ -40,31 +47,45 @@ var (
 func RegisterClassFileType(extGmx, extSpx string, pkgPath string) {
 	parser.RegisterFileType(extGmx, ast.FileTypeGmx)
 	parser.RegisterFileType(extSpx, ast.FileTypeSpx)
-	if _, ok := gmxPkgPaths[extGmx]; !ok {
-		gmxPkgPaths[extGmx] = pkgPath
+	if _, ok := gmxTypes[extGmx]; !ok {
+		gmxTypes[extGmx] = gmxInfo{pkgPath, extSpx}
 	}
 }
 
 // -----------------------------------------------------------------------------
 
 type gmxSettings struct {
-	Pkg    string
-	Class  string
-	spx    *gox.PkgRef
-	game   gox.Ref
-	sprite gox.Ref
+	pkgPath   string
+	gameClass string
+	extSpx    string
+	spx       *gox.PkgRef
+	game      gox.Ref
+	sprite    gox.Ref
+	scheds    []goast.Stmt // nil or len(scheds) == 2
 }
 
-func newGmx(pkg *gox.Package, file string, gmx *ast.File, conf *Config) *gmxSettings {
+func newGmx(pkg *gox.Package, file string) *gmxSettings {
 	_, name := filepath.Split(file)
 	ext := filepath.Ext(name)
 	if idx := strings.Index(name, "."); idx > 0 {
 		name = name[:idx]
 	}
-	p := &gmxSettings{Pkg: gmxPkgPaths[ext], Class: name}
-	p.spx = pkg.Import(p.Pkg)
+	gt := gmxTypes[ext]
+	p := &gmxSettings{pkgPath: gt.pkgPath, extSpx: gt.extSpx, gameClass: name}
+	p.spx = pkg.Import(p.pkgPath)
 	p.game = spxRef(p.spx, "Gop_game", "Game")
 	p.sprite = spxRef(p.spx, "Gop_sprite", "Sprite")
+	if x := getStringConst(p.spx, "Gop_sched"); x != "" {
+		scheds := strings.SplitN(x, ",", 2)
+		p.scheds = make([]goast.Stmt, 2)
+		for i, v := range scheds {
+			fn := pkg.CB().Val(p.spx.Ref(v)).Call(0).InternalStack().Pop().Val
+			p.scheds[i] = &goast.ExprStmt{X: fn}
+		}
+		if len(scheds) < 2 {
+			p.scheds[1] = p.scheds[0]
+		}
+	}
 	return p
 }
 
@@ -109,6 +130,20 @@ func getFields(ctx *blockCtx, f *ast.File) (specs []ast.Spec) {
 		i++ // skip import, if any
 	}
 	return
+}
+
+func setBodyHandler(ctx *blockCtx) {
+	if ctx.fileType > 0 { // in a Go+ class file
+		if scheds := ctx.scheds; scheds != nil {
+			ctx.cb.SetBodyHandler(func(body *goast.BlockStmt, kind int) {
+				idx := 0
+				if len(body.List) == 0 {
+					idx = 1
+				}
+				gox.InsertStmtFront(body, scheds[idx])
+			})
+		}
+	}
 }
 
 // -----------------------------------------------------------------------------

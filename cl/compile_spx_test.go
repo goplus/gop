@@ -76,10 +76,14 @@ func gopSpxTestEx(t *testing.T, gmx, spxcode, expected, gmxfile, spxfile string)
 func TestSpxBasic(t *testing.T) {
 	gopSpxTestEx(t, `
 func onInit() {
-	sched
+	for {
+	}
 }
 `, `
 func onMsg(msg string) {
+	for {
+		say "Hi"
+	}
 }
 `, `package main
 
@@ -90,7 +94,9 @@ type Game struct {
 }
 
 func (this *Game) onInit() {
-	spx.Sched()
+	for {
+		spx.SchedNow()
+	}
 }
 
 type Kai struct {
@@ -99,6 +105,10 @@ type Kai struct {
 }
 
 func (this *Kai) onMsg(msg string) {
+	for {
+		spx.Sched()
+		this.Say("Hi")
+	}
 }
 `, "Game.tgmx", "Kai.tspx")
 }

@@ -247,6 +247,7 @@ func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 	cb.RangeAssignThen(pos)
 	compileStmts(ctx, v.Body.List)
 	cb.SetComments(comments, true)
+	setBodyHandler(ctx)
 	cb.End()
 }
 
@@ -276,6 +277,7 @@ func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
 		compileStmts(ctx, v.Body.List)
 	}
 	cb.SetComments(comments, true)
+	setBodyHandler(ctx)
 	cb.End()
 }
 
@@ -302,6 +304,7 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 		compileStmt(ctx, v.Post)
 	}
 	cb.SetComments(comments, true)
+	setBodyHandler(ctx)
 	cb.End()
 }
 

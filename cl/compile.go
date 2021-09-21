@@ -408,7 +408,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
 	for file, gmx := range pkg.Files {
 		if gmx.FileType == ast.FileTypeGmx {
-			ctx.gmxSettings = newGmx(p, file, gmx, conf)
+			ctx.gmxSettings = newGmx(p, file)
 			break
 		}
 	}
@@ -418,7 +418,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	for _, f := range pkg.Files {
 		if f.FileType == ast.FileTypeGmx {
 			loadFile(ctx, f)
-			if o := p.Types.Scope().Lookup(ctx.Class); o != nil && hasMethod(o, "main") {
+			if o := p.Types.Scope().Lookup(ctx.gameClass); o != nil && hasMethod(o, "main") {
 				// new(Game).main()
 				p.NewFunc(nil, "main", nil, nil, false).BodyStart(p).
 					Val(p.Builtin().Ref("new")).Val(o).Call(1).
@@ -505,7 +505,7 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 		}
 		// TODO: panic
 	case ast.FileTypeGmx:
-		classType = parent.Class
+		classType = parent.gameClass
 		baseType = parent.game
 	}
 	if classType != "" {
@@ -528,7 +528,7 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 				flds := make([]*types.Var, 1, 2)
 				flds[0] = types.NewField(pos, pkg, baseType.Name(), baseType.Type(), true)
 				if f.FileType == ast.FileTypeSpx {
-					typ := toType(ctx, &ast.StarExpr{X: &ast.Ident{Name: parent.Class}})
+					typ := toType(ctx, &ast.StarExpr{X: &ast.Ident{Name: parent.gameClass}})
 					fld := types.NewField(pos, pkg, getTypeName(typ), typ, true)
 					flds = append(flds, fld)
 				}
