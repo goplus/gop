@@ -150,6 +150,7 @@ func TestSpxMethod(t *testing.T) {
 func onInit() {
 	sched
 	broadcast "msg1"
+	testIntValue = 1
 }
 `, `
 func onInit() {
@@ -169,6 +170,7 @@ type Game struct {
 func (this *Game) onInit() {
 	spx.Sched()
 	this.Broadcast__0("msg1")
+	spx.TestIntValue = 1
 }
 
 type bar struct {

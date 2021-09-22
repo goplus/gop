@@ -48,3 +48,7 @@ func Sched() {
 
 func SchedNow() {
 }
+
+var (
+	TestIntValue int
+)
