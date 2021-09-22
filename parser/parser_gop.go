@@ -221,7 +221,7 @@ func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (
 					false: "func main()",
 				}
 				b.Reset()
-				fmt.Fprintf(&b, "%s %s{%s}", code[:idx], entrypoint[isMod], code[idx:])
+				fmt.Fprintf(&b, "%s %s{%s\n}", code[:idx], entrypoint[isMod], code[idx:])
 				code = b.Bytes()
 				noEntrypoint = true
 				err = nil

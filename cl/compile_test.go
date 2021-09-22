@@ -2315,6 +2315,17 @@ var d = a.Gop_Neg()
 `)
 }
 
+func TestCmdlineNoEOL(t *testing.T) {
+	gopClTest(t, `println "Hi"`, `package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Println("Hi")
+}
+`)
+}
+
 func TestImport(t *testing.T) {
 	gopClTest(t, `import "fmt"
 
