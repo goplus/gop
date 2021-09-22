@@ -148,6 +148,7 @@ func (this *index) onInit() {
 func TestSpxMethod(t *testing.T) {
 	gopSpxTestEx(t, `
 func onInit() {
+	sched
 	broadcast "msg1"
 }
 `, `
@@ -166,6 +167,7 @@ type Game struct {
 }
 
 func (this *Game) onInit() {
+	spx.Sched()
 	this.Broadcast__0("msg1")
 }
 

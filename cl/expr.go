@@ -326,32 +326,28 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, flags int) {
 	}
 }
 
-func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, x *ast.Ident, flags int) bool {
-	name, canAutoCall := x.Name, false
-	v := at.Ref(name)
-	if v != nil {
-		goto find
-	}
+func pkgRef(at *gox.PkgRef, name string) (o types.Object, canAutoCall bool) {
 	if c := name[0]; c >= 'a' && c <= 'z' {
 		name = string(rune(c)+('A'-'a')) + name[1:]
-		if v = at.Ref(name); v != nil {
-			canAutoCall = true
-			goto find
+		return at.Ref(name), true
+	}
+	return at.Ref(name), false
+}
+
+func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, x *ast.Ident, flags int) bool {
+	if v, canAutoCall := pkgRef(at, x.Name); v != nil {
+		cb := ctx.cb
+		if (flags & clIdentLHS) != 0 {
+			cb.VarRef(v, x)
+		} else {
+			cb.Val(v, x)
+			if canAutoCall && (flags&clIdentAutoCall) != 0 && isFunc(v.Type()) {
+				cb.Call(0)
+			}
 		}
+		return true
 	}
 	return false
-
-find:
-	cb := ctx.cb
-	if (flags & clIdentLHS) != 0 {
-		cb.VarRef(v, x)
-	} else {
-		cb.Val(v, x)
-		if canAutoCall && (flags&clIdentAutoCall) != 0 && isFunc(v.Type()) {
-			cb.Call(0)
-		}
-	}
-	return true
 }
 
 func isFunc(typ types.Type) bool {
