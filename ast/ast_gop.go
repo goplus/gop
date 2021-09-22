@@ -100,12 +100,25 @@ func (*ErrWrapExpr) exprNode() {}
 //    `expr`
 //    `(expr1, expr2, ...)`
 type LambdaExpr struct {
-	First, Last token.Pos
+	First       token.Pos
 	Lhs         []*Ident
 	Rarrow      token.Pos
 	Rhs         []Expr
+	Last        token.Pos
 	LhsHasParen bool
 	RhsHasParen bool
+}
+
+// LambdaExpr2 represents
+//    `(x, y, ...) => { ... }`
+//    `x => { ... }`
+//    `=> { ... }`
+type LambdaExpr2 struct {
+	First       token.Pos
+	Lhs         []*Ident
+	Rarrow      token.Pos
+	Body        *BlockStmt
+	LhsHasParen bool
 }
 
 func (p *LambdaExpr) Pos() token.Pos {
@@ -116,7 +129,16 @@ func (p *LambdaExpr) End() token.Pos {
 	return p.Last
 }
 
-func (*LambdaExpr) exprNode() {}
+func (p *LambdaExpr2) Pos() token.Pos {
+	return p.First
+}
+
+func (p *LambdaExpr2) End() token.Pos {
+	return p.Body.End()
+}
+
+func (*LambdaExpr) exprNode()  {}
+func (*LambdaExpr2) exprNode() {}
 
 // -----------------------------------------------------------------------------
 

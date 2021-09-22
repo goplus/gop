@@ -59,23 +59,6 @@ func TestLoadImport(t *testing.T) {
 	})
 }
 
-func TestGetStrings(t *testing.T) {
-	pkg := gox.NewPackage("", "foo", nil)
-	fmt := pkg.Import("fmt")
-	if getStrings(fmt, "Gop_notfound") != nil {
-		t.Fatal("getStrings failed: not nil")
-	}
-}
-
-func TestGetField(t *testing.T) {
-	defer func() {
-		if e := recover(); e == nil {
-			t.Fatal("getVar: no error?")
-		}
-	}()
-	getField("panic")
-}
-
 func TestGetTypeName(t *testing.T) {
 	if getTypeName(types.Typ[types.Int]) != "int" {
 		t.Fatal("getTypeName int failed")
@@ -87,3 +70,39 @@ func TestGetTypeName(t *testing.T) {
 	}()
 	getTypeName(types.NewSlice(types.Typ[types.Int]))
 }
+
+func TestIsFunc(t *testing.T) {
+	if isFunc(nil) {
+		t.Fatal("TestIsFunc failed")
+	}
+}
+
+func TestHandleRecover(t *testing.T) {
+	var ctx pkgCtx
+	ctx.handleRecover("hello")
+	if !(len(ctx.errs) == 1 && ctx.errs[0].Error() == "hello") {
+		t.Fatal("TestHandleRecover failed:", ctx.errs)
+	}
+	defer func() {
+		if e := recover(); e == nil {
+			t.Fatal("TestHandleRecover failed: no error?")
+		}
+	}()
+	ctx.handleRecover(100)
+}
+
+// -----------------------------------------------------------------------------
+
+func TestGmxSettings(t *testing.T) {
+	pkg := gox.NewPackage("", "foo", nil)
+	gmx := newGmx(pkg, "index.t2gmx")
+	if len(gmx.scheds) != 2 || gmx.scheds[0] == nil || gmx.scheds[0] != gmx.scheds[1] {
+		t.Fatal("TestGmxSettings failed")
+	}
+}
+
+func init() {
+	RegisterClassFileType(".t2gmx", ".t2spx", "github.com/goplus/gop/cl/internal/spx2")
+}
+
+// -----------------------------------------------------------------------------

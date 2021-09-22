@@ -1,0 +1,85 @@
+package main
+
+file lambda2.gop
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: foo
+              Args:
+                ast.LambdaExpr2:
+                  Body:
+                    ast.BlockStmt:
+                      List:
+                        ast.ExprStmt:
+                          X:
+                            ast.CallExpr:
+                              Fun:
+                                ast.Ident:
+                                  Name: println
+                              Args:
+                                ast.BasicLit:
+                                  Kind: STRING
+                                  Value: "Hi"
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: foo
+              Args:
+                ast.LambdaExpr2:
+                  Lhs:
+                    ast.Ident:
+                      Name: x
+                  Body:
+                    ast.BlockStmt:
+                      List:
+                        ast.ExprStmt:
+                          X:
+                            ast.CallExpr:
+                              Fun:
+                                ast.Ident:
+                                  Name: println
+                              Args:
+                                ast.Ident:
+                                  Name: x
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: foo
+              Args:
+                ast.LambdaExpr2:
+                  Lhs:
+                    ast.Ident:
+                      Name: x
+                    ast.Ident:
+                      Name: y
+                  Body:
+                    ast.BlockStmt:
+                      List:
+                        ast.ExprStmt:
+                          X:
+                            ast.CallExpr:
+                              Fun:
+                                ast.Ident:
+                                  Name: println
+                              Args:
+                                ast.Ident:
+                                  Name: x
+                                ast.Ident:
+                                  Name: y

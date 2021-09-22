@@ -18,7 +18,12 @@
 package build
 
 import (
+	"fmt"
+	"os"
+
+	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gox"
 )
 
 // -----------------------------------------------------------------------------
@@ -30,19 +35,42 @@ var Cmd = &base.Command{
 }
 
 var (
-	flagBuildOutput string
-	flagVerbose     bool
 	flag            = &Cmd.Flag
+	flagBuildOutput string
+	flagVerbose     = flag.Bool("v", false, "print verbose information")
+	flagRebuild     = flag.Bool("rebuild", false, "force rebuilding of packages that are already up-to-date")
 )
 
 func init() {
-	flag.StringVar(&flagBuildOutput, "o", "", "go build output file")
-	flag.BoolVar(&flagVerbose, "v", false, "print the names of packages as they are compiled.")
 	Cmd.Run = runCmd
+	flag.StringVar(&flagBuildOutput, "o", "", "go build output file")
 }
 
 func runCmd(cmd *base.Command, args []string) {
-	panic("TODO: gop build not impl")
+	flag.Parse(base.SkipSwitches(args, flag))
+	ssargs := flag.Args()
+	dir, recursive := base.GetBuildDir(ssargs)
+
+	if *flagVerbose {
+		gox.SetDebug(gox.DbgFlagAll &^ gox.DbgFlagComments)
+		cl.SetDebug(cl.DbgFlagAll)
+		cl.SetDisableRecover(true)
+	}
+	base.GenGoForBuild(dir, recursive, *flagRebuild, func() { fmt.Fprintln(os.Stderr, "GenGo failed, stop building") })
+	if *flagRebuild {
+		args = removeRebuild(args)
+	}
+	base.RunGoCmd(dir, "build", args...)
+}
+
+func removeRebuild(args []string) (r []string) {
+	for _, a := range args {
+		if a == "-rebuild" {
+			continue
+		}
+		r = append(r, a)
+	}
+	return
 }
 
 // -----------------------------------------------------------------------------

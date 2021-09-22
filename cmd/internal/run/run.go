@@ -144,9 +144,9 @@ func runCmd(cmd *base.Command, args []string) {
 		isGo := filepath.Ext(file) == ".go"
 		if isGo {
 			hash := sha1.Sum([]byte(src))
-			dir := os.Getenv("HOME") + "/.gop/go/"
+			dir := os.Getenv("HOME") + "/.gop/run"
 			os.MkdirAll(dir, 0777)
-			gofile = dir + file + base64.RawURLEncoding.EncodeToString(hash[:]) + ".go"
+			gofile = dir + "/g" + base64.RawURLEncoding.EncodeToString(hash[:]) + file
 		} else if hasMultiFiles(srcDir, ".gop") {
 			gofile = filepath.Join(srcDir, "gop_autogen_"+file+".go")
 		} else {

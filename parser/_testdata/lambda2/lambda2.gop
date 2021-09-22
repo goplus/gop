@@ -1,0 +1,13 @@
+package main
+
+func main() {
+	foo(=> {
+		println("Hi")
+	})
+	foo(x => {
+		println(x)
+	})
+	foo((x, y) => {
+		println(x, y)
+	})
+}

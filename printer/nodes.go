@@ -906,7 +906,11 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		} else {
 			wasIndented = p.possibleSelectorExpr(x.Fun, token.HighestPrec, depth)
 		}
-		p.print(x.Lparen, token.LPAREN)
+		if x.NoParen {
+			p.print(blank)
+		} else {
+			p.print(x.Lparen, token.LPAREN)
+		}
 		if x.Ellipsis.IsValid() {
 			p.exprList(x.Lparen, x.Args, depth, 0, x.Ellipsis, false)
 			p.print(x.Ellipsis, token.ELLIPSIS)
@@ -916,7 +920,9 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		} else {
 			p.exprList(x.Lparen, x.Args, depth, commaTerm, x.Rparen, false)
 		}
-		p.print(x.Rparen, token.RPAREN)
+		if !x.NoParen {
+			p.print(x.Rparen, token.RPAREN)
+		}
 		if wasIndented {
 			p.print(unindent)
 		}
@@ -1045,6 +1051,18 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		} else {
 			p.expr(x.Rhs[0])
 		}
+
+	case *ast.LambdaExpr2:
+		if x.LhsHasParen {
+			p.print(token.LPAREN)
+			p.identList(x.Lhs, false)
+			p.print(token.RPAREN, blank)
+		} else if x.Lhs != nil {
+			p.expr(x.Lhs[0])
+			p.print(blank)
+		}
+		p.print(token.RARROW, blank)
+		p.block(x.Body, 1)
 
 	default:
 		log.Fatalf("unreachable %T\n", x)
@@ -1465,9 +1483,16 @@ func (p *printer) stmt(stmt ast.Stmt, nextIsRBrace bool) {
 		}
 		p.print(blank)
 		p.block(s.Body, 1)
+	case *NewlineStmt:
+		p.print(ignore)
 	default:
 		log.Printf("unreachable %T\n", s)
 	}
+}
+
+// NewlineStmt represents a statement that formats as a newline
+type NewlineStmt struct {
+	ast.EmptyStmt
 }
 
 // ----------------------------------------------------------------------------

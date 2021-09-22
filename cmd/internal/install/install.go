@@ -20,10 +20,8 @@ package install
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gox"
 )
@@ -47,40 +45,14 @@ func init() {
 func runCmd(cmd *base.Command, args []string) {
 	flag.Parse(base.SkipSwitches(args, flag))
 	ssargs := flag.Args()
-	if len(ssargs) == 0 {
-		ssargs = []string{"."}
-	}
-	var recursive bool
-	var dir = ssargs[0]
-	if strings.HasSuffix(dir, "/...") {
-		dir = dir[:len(dir)-4]
-		recursive = true
-	}
+	dir, recursive := base.GetBuildDir(ssargs)
 
 	if *flagVerbose {
 		gox.SetDebug(gox.DbgFlagAll &^ gox.DbgFlagComments)
 		cl.SetDebug(cl.DbgFlagAll)
 		cl.SetDisableRecover(true)
 	}
-	hasError := false
-	runner := new(gengo.Runner)
-	runner.SetAfter(func(p *gengo.Runner, dir string, flags int) error {
-		errs := p.ResetErrors()
-		if errs != nil {
-			hasError = true
-			for _, err := range errs {
-				fmt.Fprintln(os.Stderr, err)
-			}
-			fmt.Fprintln(os.Stderr)
-		}
-		return nil
-	})
-	baseConf := &cl.Config{PersistLoadPkgs: true}
-	runner.GenGo(dir, recursive, *flagRebuild, baseConf.Ensure())
-	if hasError {
-		os.Exit(1)
-	}
-	baseConf.PkgsLoader.Save()
+	base.GenGoForBuild(dir, recursive, *flagRebuild, func() { fmt.Fprintln(os.Stderr, "GenGo failed, stop installing") })
 	if *flagRebuild {
 		args = removeRebuild(args)
 	}

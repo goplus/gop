@@ -127,6 +127,29 @@ func init() {
 `)
 }
 
+func TestRedefineBuiltin(t *testing.T) {
+	gopClTest(t, `
+func main() {
+	const a = append + len
+}
+
+const (
+	append = iota
+	len
+)
+`, `package main
+
+func main() {
+	const a = append + len
+}
+
+const (
+	append = iota
+	len
+)
+`)
+}
+
 func TestTypeConvIssue804(t *testing.T) {
 	gopClTest(t, `
 c := make(chan int)
@@ -294,6 +317,69 @@ const (
 	h0_0, h0_1 = 1.0 / (iota + 1), 1.0 / (iota + 2)
 	h1_0, h1_1
 )
+`)
+}
+
+func TestConstIssue805(t *testing.T) {
+	gopClTest(t, `
+const (
+	n1 = +5
+	d1 = +3
+
+	q1 = +1
+	r1 = +2
+)
+
+const (
+	ret1 = n1/d1 != q1
+	ret2 = n1%d1 != r1
+	ret3 = n1/d1 != q1 || n1%d1 != r1
+)
+`, `package main
+
+const (
+	n1 = +5
+	d1 = +3
+	q1 = +1
+	r1 = +2
+)
+const (
+	ret1 = n1/d1 != q1
+	ret2 = n1%d1 != r1
+	ret3 = false
+)
+`)
+}
+
+func TestUntypedNilIssue806(t *testing.T) {
+	gopClTest(t, `
+switch f := func() {}; f {
+case nil:
+}
+`, `package main
+
+func main() {
+	switch f := func() {
+	}; f {
+	case nil:
+	}
+}
+`)
+}
+
+func TestSwitchIssue807(t *testing.T) {
+	gopClTest(t, `
+switch {
+case interface{}(true):
+}
+`, `package main
+
+func main() {
+	switch {
+	case interface {
+	}(true):
+	}
+}
 `)
 }
 
@@ -496,7 +582,7 @@ func main() {
 	fmt.Println(a.(*A))
 }
 
-func get()AA{
+func get() AA {
 	var a AA
 	return a
 }
@@ -970,27 +1056,27 @@ func add(x, y string) (int, error) {
 import strconv "strconv"
 
 func add(x string, y string) (int, error) {
-	var _autoGop_1 int
+	var _autoGo_1 int
 	{
 		var _gop_err error
-		_autoGop_1, _gop_err = strconv.Atoi(x)
+		_autoGo_1, _gop_err = strconv.Atoi(x)
 		if _gop_err != nil {
 			return 0, _gop_err
 		}
-		goto _autoGop_2
-	_autoGop_2:
+		goto _autoGo_2
+	_autoGo_2:
 	}
-	var _autoGop_3 int
+	var _autoGo_3 int
 	{
 		var _gop_err error
-		_autoGop_3, _gop_err = strconv.Atoi(y)
+		_autoGo_3, _gop_err = strconv.Atoi(y)
 		if _gop_err != nil {
 			return 0, _gop_err
 		}
-		goto _autoGop_4
-	_autoGop_4:
+		goto _autoGo_4
+	_autoGo_4:
 	}
-	return _autoGop_1 + _autoGop_3, nil
+	return _autoGo_1 + _autoGo_3, nil
 }
 `)
 }
@@ -2229,11 +2315,22 @@ var d = a.Gop_Neg()
 `)
 }
 
+func TestCmdlineNoEOL(t *testing.T) {
+	gopClTest(t, `println "Hi"`, `package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Println("Hi")
+}
+`)
+}
+
 func TestImport(t *testing.T) {
 	gopClTest(t, `import "fmt"
 
 func main() {
-	fmt.Println("Hi")
+	fmt.println "Hi"
 }`, `package main
 
 import fmt "fmt"
@@ -2564,6 +2661,29 @@ func main() {
 	})
 	Map2([]float64{1.2, 3.5, 6}, func(x float64) (float64, float64) {
 		return x * x, x + x
+	})
+}
+`)
+}
+
+func TestLambdaExpr2(t *testing.T) {
+	gopClTest(t, `
+func Do(func()) {
+	// ...
+}
+
+Do => {
+	println "Hi"
+}
+`, `package main
+
+import fmt "fmt"
+
+func Do(func()) {
+}
+func main() {
+	Do(func() {
+		fmt.Println("Hi")
 	})
 }
 `)

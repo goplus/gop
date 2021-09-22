@@ -38,11 +38,19 @@ func newTwoFileFS(dir string, fname, data string, fname2 string, data2 string) *
 	})
 }
 
-func gopSpxTest(t *testing.T, gmx, gopcode, expected string) {
+func init() {
+	cl.RegisterClassFileType(".tgmx", ".tspx", "github.com/goplus/gop/cl/internal/spx")
+}
+
+func gopSpxTest(t *testing.T, gmx, spxcode, expected string) {
+	gopSpxTestEx(t, gmx, spxcode, expected, "index.tgmx", "bar.tspx")
+}
+
+func gopSpxTestEx(t *testing.T, gmx, spxcode, expected, gmxfile, spxfile string) {
 	cl.SetDisableRecover(true)
 	defer cl.SetDisableRecover(false)
 
-	fs := newTwoFileFS("/foo", "bar.spx", gopcode, "index.gmx", gmx)
+	fs := newTwoFileFS("/foo", spxfile, spxcode, gmxfile, gmx)
 	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", nil, 0)
 	if err != nil {
 		scanner.PrintError(os.Stderr, err)
@@ -66,31 +74,29 @@ func gopSpxTest(t *testing.T, gmx, gopcode, expected string) {
 }
 
 func TestSpxBasic(t *testing.T) {
-	gopSpxTest(t, `
-const (
-	GopGamePkg = "github.com/goplus/gop/cl/internal/spx"
-	GopClass = "Game"
-	GopThis = "self"
-)
-
+	gopSpxTestEx(t, `
 func onInit() {
+	for {
+	}
 }
 `, `
-const (
-	GopClass = "Kai"
-)
-
 func onMsg(msg string) {
+	for {
+		say "Hi"
+	}
 }
 `, `package main
 
 import spx "github.com/goplus/gop/cl/internal/spx"
 
 type Game struct {
-	spx.Game
+	spx.MyGame
 }
 
-func (self *Game) OnInit() {
+func (this *Game) onInit() {
+	for {
+		spx.SchedNow()
+	}
 }
 
 type Kai struct {
@@ -98,18 +104,16 @@ type Kai struct {
 	*Game
 }
 
-func (self *Kai) OnMsg(msg string, _gop_data interface {
-}) {
+func (this *Kai) onMsg(msg string) {
+	for {
+		spx.Sched()
+		this.Say("Hi")
+	}
 }
-`)
+`, "Game.tgmx", "Kai.tspx")
 }
 
 func TestSpxBasic2(t *testing.T) {
-	defer func() {
-		if e := recover(); e == nil {
-			t.Fatal("TestSpxBasic2: no error?")
-		}
-	}()
 	gopSpxTest(t, `
 import (
 	"fmt"
@@ -122,125 +126,51 @@ const (
 func onInit() {
 	fmt.Println("Hi")
 }
-`, ``, ``)
-}
-
-func TestSpxBasic3(t *testing.T) {
-	defer func() {
-		if e := recover(); e == nil {
-			t.Fatal("TestSpxBasic3: no error?")
-		}
-	}()
-	gopSpxTest(t, `
-func onInit() {
-}
-`, ``, ``)
-}
-
-func TestSpxBasic4(t *testing.T) {
-	gopSpxTest(t, `
-const (
-	GopGamePkg = "github.com/goplus/gop/cl/internal/spx"
-)
-
-func onInit() {
-}
-`, `
-func onInit() {
-}
-`, `package main
-
-import spx "github.com/goplus/gop/cl/internal/spx"
-
-type index struct {
-	spx.Game
-}
-
-func (this *index) OnInit() {
-}
-
-type bar struct {
-	spx.Sprite
-	*index
-}
-
-func (this *bar) OnInit() {
-}
-`)
-}
-
-func TestSpxBasic5(t *testing.T) {
-	gopSpxTest(t, `
-const (
-	GopGamePkg = "github.com/goplus/gop/cl/internal/spx"
-)
-
-func onInit() {
-}
-`, `
-import "fmt"
-
-const (
-	Foo = 1
-)
-
-func onInit() {
-	fmt.Println("Hi")
-}
-`, `package main
+`, ``, `package main
 
 import (
 	fmt "fmt"
 	spx "github.com/goplus/gop/cl/internal/spx"
 )
 
-type index struct {
-	spx.Game
-}
-
-func (this *index) OnInit() {
-}
-
 const Foo = 1
 
-type bar struct {
-	spx.Sprite
-	*index
+type index struct {
+	spx.MyGame
 }
 
-func (this *bar) OnInit() {
+func (this *index) onInit() {
 	fmt.Println("Hi")
 }
 `)
 }
 
 func TestSpxMethod(t *testing.T) {
-	gopSpxTest(t, `
-const (
-	GopGamePkg = "github.com/goplus/gop/cl/internal/spx"
-	GopClass = "Game"
-)
-
+	gopSpxTestEx(t, `
 func onInit() {
-	broadcast("msg1")
+	sched
+	broadcast "msg1"
+	testIntValue = 1
 }
 `, `
 func onInit() {
-	setCostume("kai-a")
-	play("recordingWhere")
-	say("Where do you come from?", 2)
-	broadcast("msg2")
+	setCostume "kai-a"
+	play "recordingWhere"
+	say "Where do you come from?", 2
+	broadcast "msg2"
 }
 `, `package main
 
 import spx "github.com/goplus/gop/cl/internal/spx"
 
 type Game struct {
-	spx.Game
+	spx.MyGame
 }
 
-func (this *Game) OnInit() {
+func (this *Game) onInit() {
+	spx.Sched()
 	this.Broadcast__0("msg1")
+	spx.TestIntValue = 1
 }
 
 type bar struct {
@@ -248,22 +178,17 @@ type bar struct {
 	*Game
 }
 
-func (this *bar) OnInit() {
+func (this *bar) onInit() {
 	this.SetCostume("kai-a")
 	this.Play("recordingWhere")
 	this.Say("Where do you come from?", 2)
 	this.Broadcast__0("msg2")
 }
-`)
+`, "Game.tgmx", "bar.tspx")
 }
 
 func TestSpxVar(t *testing.T) {
-	gopSpxTest(t, `
-const (
-	GopGamePkg = "github.com/goplus/gop/cl/internal/spx"
-	GopClass = "Game"
-)
-
+	gopSpxTestEx(t, `
 var (
 	Kai Kai
 )
@@ -273,10 +198,6 @@ func onInit() {
 	broadcast("msg1")
 }
 `, `
-const (
-	GopClass = "Kai"
-)
-
 var (
 	a int
 )
@@ -293,7 +214,7 @@ func onCloned() {
 import spx "github.com/goplus/gop/cl/internal/spx"
 
 type Game struct {
-	spx.Game
+	spx.MyGame
 	Kai Kai
 }
 type Kai struct {
@@ -302,40 +223,29 @@ type Kai struct {
 	a int
 }
 
-func (this *Game) OnInit() {
+func (this *Game) onInit() {
 	this.Kai.Clone()
 	this.Broadcast__0("msg1")
 }
-func (this *Kai) OnInit() {
+func (this *Kai) onInit() {
 	this.a = 1
 }
-func (this *Kai) OnCloned(_gop_data interface {
-}) {
+func (this *Kai) onCloned() {
 	this.Say("Hi")
 }
-`)
+`, "Game.tgmx", "Kai.tspx")
 }
 
 func TestSpxRun(t *testing.T) {
-	gopSpxTest(t, `
-const (
-	GopGamePkg = "github.com/goplus/gop/cl/internal/spx"
-)
-
+	gopSpxTestEx(t, `
 var (
 	Kai Kai
 	t   Sound
 )
 
-run(this, "hzip://open.qiniu.us/weather/res.zip")
+run "hzip://open.qiniu.us/weather/res.zip"
 `, `
-const (
-	GopClass = "Kai"
-)
-
-func onInit() {
-	println("Hi")
-}
+println "Hi"
 `, `package main
 
 import (
@@ -344,7 +254,7 @@ import (
 )
 
 type index struct {
-	spx.Game
+	spx.MyGame
 	Kai Kai
 	t   spx.Sound
 }
@@ -354,13 +264,13 @@ type Kai struct {
 }
 
 func (this *index) main() {
-	spx.Run(this, "hzip://open.qiniu.us/weather/res.zip")
+	spx.Gopt_MyGame_Run(this, "hzip://open.qiniu.us/weather/res.zip")
 }
 func main() {
 	new(index).main()
 }
-func (this *Kai) OnInit() {
+func (this *Kai) Main() {
 	fmt.Println("Hi")
 }
-`)
+`, "index.tgmx", "Kai.tspx")
 }

@@ -18,10 +18,14 @@ package base
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/goplus/gop/cl"
+	"github.com/goplus/gop/cmd/gengo"
 )
 
 // SkipSwitches skips all switches and returns non-switch arguments.
@@ -36,6 +40,43 @@ func SkipSwitches(args []string, f *flag.FlagSet) []string {
 		out = append(out, arg)
 	}
 	return out
+}
+
+// Get build directory from arguments
+func GetBuildDir(args []string) (dir string, recursive bool) {
+	if len(args) == 0 {
+		args = []string{"."}
+	}
+	dir = args[0]
+	if strings.HasSuffix(dir, "/...") {
+		dir = dir[:len(dir)-4]
+		recursive = true
+	}
+	return
+}
+
+// Generate go code before building or installing, and cache pkgs if success
+func GenGoForBuild(dir string, recursive bool, rebuild bool, errorHandle func()) {
+	hasError := false
+	runner := new(gengo.Runner)
+	runner.SetAfter(func(p *gengo.Runner, dir string, flags int) error {
+		errs := p.ResetErrors()
+		if errs != nil {
+			hasError = true
+			for _, err := range errs {
+				fmt.Fprintln(os.Stderr, err)
+			}
+			fmt.Fprintln(os.Stderr)
+		}
+		return nil
+	})
+	baseConf := &cl.Config{PersistLoadPkgs: true}
+	runner.GenGo(dir, recursive, rebuild, baseConf.Ensure())
+	if hasError {
+		errorHandle()
+		os.Exit(1)
+	}
+	baseConf.PkgsLoader.Save()
 }
 
 // RunGoCmd executes `go` command tools.

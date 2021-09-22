@@ -18,29 +18,37 @@ package spx
 
 const (
 	GopPackage = true
-
-	Gop_game   = "Game"
-	Gop_title  = "on"
-	Gop_params = "onMsg(, _gop_data interface{}); onCloned(_gop_data interface{})"
+	Gop_game   = "MyGame"
+	Gop_sched  = "Sched,SchedNow"
 )
 
 type Sound string
 
-type Game struct {
+type MyGame struct {
 }
 
-func (p *Game) Broadcast__0(msg string) {
+func (p *MyGame) Broadcast__0(msg string) {
 }
 
-func (p *Game) Broadcast__1(msg string, wait bool) {
+func (p *MyGame) Broadcast__1(msg string, wait bool) {
 }
 
-func (p *Game) Broadcast__2(msg string, data interface{}, wait bool) {
+func (p *MyGame) Broadcast__2(msg string, data interface{}, wait bool) {
 }
 
-func (p *Game) Play(media string, wait ...bool) {
+func (p *MyGame) Play(media string, wait ...bool) {
 }
 
-func Run(game interface{}, resource string) error {
+func Gopt_MyGame_Run(game interface{}, resource string) error {
 	return nil
 }
+
+func Sched() {
+}
+
+func SchedNow() {
+}
+
+var (
+	TestIntValue int
+)

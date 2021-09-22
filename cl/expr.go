@@ -21,6 +21,7 @@ import (
 	"math/big"
 	"reflect"
 	"strconv"
+	"strings"
 
 	goast "go/ast"
 	gotoken "go/token"
@@ -33,8 +34,19 @@ import (
 
 /*-----------------------------------------------------------------------------
 
+Name context:
+- varVal               (ident)
+- varRef = expr        (identLHS)
+- pkgRef.member        (selectorExpr)
+- pkgRef.member = expr (selectorExprLHS)
+- pkgRef.fn(args)      (callExpr)
+- fn(args)             (callExpr)
+- spx.fn(args)         (callExpr)
+- this.member          (classMember)
+- this.method(args)    (classMember)
+
 Name lookup:
-- local context variables
+- local variables
 - $recv members (only in class files)
 - package globals (variables, constants, types, imported packages etc.)
 - $spx package exports (only in class files)
@@ -42,10 +54,119 @@ Name lookup:
 
 // ---------------------------------------------------------------------------*/
 
+const (
+	clIdentAutoCall = 1 << iota
+	clIdentAllowBuiltin
+	clIdentLHS
+	clIdentSelectorExpr
+)
+
+func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
+	fvalue := (flags&clIdentSelectorExpr) != 0 || (flags&clIdentLHS) == 0
+	name := ident.Name
+	if name == "_" {
+		if fvalue {
+			panic(ctx.newCodeError(ident.Pos(), "cannot use _ as value"))
+		}
+		ctx.cb.VarRef(nil)
+		return nil
+	}
+
+	scope := ctx.pkg.Types.Scope()
+	at, o := ctx.cb.Scope().LookupParent(name, token.NoPos)
+	if o != nil {
+		if at != scope && at != types.Universe { // local object
+			goto find
+		}
+	}
+
+	if ctx.fileType > 0 { // in a Go+ class file
+		if fn := ctx.cb.Func(); fn != nil {
+			sig := fn.Ancestor().Type().(*types.Signature)
+			if recv := sig.Recv(); recv != nil {
+				ctx.cb.Val(recv)
+				if compileMember(ctx, ident, name, flags) == nil { // class member object
+					return nil
+				}
+				ctx.cb.InternalStack().PopN(1)
+			}
+		}
+	}
+
+	// global object
+	if ctx.loadSymbol(name) {
+		o, at = scope.Lookup(name), scope
+	}
+	if o != nil && at != types.Universe {
+		goto find
+	}
+
+	// pkgRef object
+	if (flags & clIdentSelectorExpr) != 0 {
+		if pkgRef, ok := ctx.imports[name]; ok {
+			return pkgRef
+		}
+	}
+
+	// spx object
+	if ctx.fileType > 0 {
+		if compilePkgRef(ctx, ctx.spx, ident, flags) {
+			return nil
+		}
+	}
+
+	// universe object
+	if (flags&clIdentAllowBuiltin) == 0 && isBuiltin(o) {
+		panic(ctx.newCodeErrorf(ident.Pos(), "use of builtin %s not in function call", name))
+	}
+	if obj := ctx.pkg.Builtin().Ref(name); obj != nil {
+		o = obj
+	} else if o == nil {
+		panic(ctx.newCodeErrorf(ident.Pos(), "undefined: %s", name))
+	}
+
+find:
+	if fvalue {
+		ctx.cb.Val(o, ident)
+	} else {
+		ctx.cb.VarRef(o, ident)
+	}
+	return nil
+}
+
+func isBuiltin(o types.Object) bool {
+	if _, ok := o.(*types.Builtin); ok {
+		return ok
+	}
+	return false
+}
+
+func compileMember(ctx *blockCtx, v ast.Node, name string, flags int) error {
+	cb := ctx.cb
+	lhs := (flags & clIdentLHS) != 0
+	kind, err := cb.Member(name, lhs, v)
+	if kind != 0 {
+		return nil
+	}
+	if c := name[0]; c >= 'a' && c <= 'z' {
+		name = string(rune(c)+('A'-'a')) + name[1:]
+		switch kind, _ = cb.Member(name, lhs, v); kind {
+		case gox.MemberMethod:
+			if (flags & clIdentAutoCall) != 0 {
+				cb.Call(0)
+			}
+			return nil
+		case gox.MemberField:
+			return nil
+		}
+	}
+	return err
+}
+
 func compileExprLHS(ctx *blockCtx, expr ast.Expr) {
 	switch v := expr.(type) {
 	case *ast.Ident:
-		compileIdentLHS(ctx, v)
+		compileIdent(ctx, v, clIdentLHS)
 	case *ast.IndexExpr:
 		compileIndexExprLHS(ctx, v)
 	case *ast.SelectorExpr:
@@ -60,13 +181,13 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr) {
 func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 	switch v := expr.(type) {
 	case *ast.Ident:
-		compileIdent(ctx, v, false, true)
+		compileIdent(ctx, v, clIdentAutoCall)
 	case *ast.BasicLit:
 		compileBasicLit(ctx, v)
 	case *ast.CallExpr:
 		compileCallExpr(ctx, v)
 	case *ast.SelectorExpr:
-		compileSelectorExpr(ctx, v, true)
+		compileSelectorExpr(ctx, v, clIdentAutoCall)
 	case *ast.BinaryExpr:
 		compileBinaryExpr(ctx, v)
 	case *ast.UnaryExpr:
@@ -175,121 +296,73 @@ func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) { // x[i:j:k]
 func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr) {
 	switch x := v.X.(type) {
 	case *ast.Ident:
-		if compileClassMember(ctx, x, false, true) {
-			break
-		}
-		o, at, builtin := lookupParent(ctx, x.Name)
-		if at != nil {
+		if at := compileIdent(ctx, x, clIdentLHS|clIdentSelectorExpr); at != nil {
 			ctx.cb.VarRef(at.Ref(v.Sel.Name))
 			return
 		}
-		if isBuiltin(builtin) {
-			panic(ctx.newCodeErrorf(x.Pos(), "use of builtin %s not in function call", x.Name))
-		}
-		if o == nil {
-			panic(ctx.newCodeErrorf(x.Pos(), "undefined: %s", x.Name))
-		}
-		ctx.cb.Val(o)
 	default:
 		compileExpr(ctx, v.X)
 	}
 	ctx.cb.MemberRef(v.Sel.Name, v)
 }
 
-func isBuiltin(o types.Object) bool {
-	if _, ok := o.(*types.Builtin); ok {
-		return ok
-	}
-	return false
-}
-
-func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, autoCall bool) {
+func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, flags int) {
 	switch x := v.X.(type) {
 	case *ast.Ident:
-		if compileClassMember(ctx, x, autoCall, false) {
-			break
-		}
-		o, at, builtin := lookupParent(ctx, x.Name)
-		if at != nil {
-			if compilePkgRef(ctx, at, v.Sel, false) {
+		if at := compileIdent(ctx, x, flags|clIdentSelectorExpr); at != nil {
+			if compilePkgRef(ctx, at, v.Sel, flags) {
 				return
 			}
 			if token.IsExported(v.Sel.Name) {
 				panic(ctx.newCodeErrorf(x.Pos(), "undefined: %s.%s", x.Name, v.Sel.Name))
-			} else {
-				panic(ctx.newCodeErrorf(x.Pos(), "cannot refer to unexported name %s.%s", x.Name, v.Sel.Name))
 			}
-		} else if isBuiltin(builtin) {
-			panic(ctx.newCodeErrorf(x.Pos(), "use of builtin %s not in function call", x.Name))
-		} else if o == nil {
-			panic(ctx.newCodeErrorf(x.Pos(), "undefined: %s", x.Name))
+			panic(ctx.newCodeErrorf(x.Pos(), "cannot refer to unexported name %s.%s", x.Name, v.Sel.Name))
 		}
-		ctx.cb.Val(o)
 	default:
 		compileExpr(ctx, v.X)
 	}
-	if err := compileMember(ctx, v, v.Sel.Name, autoCall, false); err != nil {
+	if err := compileMember(ctx, v, v.Sel.Name, flags); err != nil {
 		panic(err)
 	}
 }
 
-func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, name *ast.Ident, lhs bool) bool {
-	v := pkgRef(at, name.Name)
-	if v == nil {
-		return false
-	}
-	if lhs {
-		ctx.cb.VarRef(v, name)
-	} else {
-		ctx.cb.Val(v, name)
-	}
-	return true
-}
-
-func pkgRef(at *gox.PkgRef, name string) gox.Ref {
-	if o := at.Ref(name); o != nil {
-		return o
-	}
+func pkgRef(at *gox.PkgRef, name string) (o types.Object, canAutoCall bool) {
 	if c := name[0]; c >= 'a' && c <= 'z' {
 		name = string(rune(c)+('A'-'a')) + name[1:]
-		return at.Ref(name)
+		return at.Ref(name), true
 	}
-	return nil
+	return at.Ref(name), false
 }
 
-func compileMember(ctx *blockCtx, v ast.Node, name string, autoCall, lhs bool) error {
-	cb := ctx.cb
-	kind, err := cb.Member(name, lhs, v)
-	if kind != 0 {
-		return nil
-	}
-	if c := name[0]; c >= 'a' && c <= 'z' {
-		name = string(rune(c)+('A'-'a')) + name[1:]
-		switch kind, _ = cb.Member(name, lhs, v); kind {
-		case gox.MemberMethod:
-			if autoCall {
+func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, x *ast.Ident, flags int) bool {
+	if v, canAutoCall := pkgRef(at, x.Name); v != nil {
+		cb := ctx.cb
+		if (flags & clIdentLHS) != 0 {
+			cb.VarRef(v, x)
+		} else {
+			cb.Val(v, x)
+			if canAutoCall && (flags&clIdentAutoCall) != 0 && isFunc(v.Type()) {
 				cb.Call(0)
 			}
-			return nil
-		case gox.MemberField:
-			return nil
 		}
+		return true
 	}
-	return err
+	return false
+}
+
+func isFunc(typ types.Type) bool {
+	switch typ.(type) {
+	case *types.Signature:
+		return true
+	}
+	return false
 }
 
 type fnType struct {
 	params   *types.Tuple
 	n1       int
 	variadic bool
-}
-
-func (p *fnType) init(t *types.Signature) {
-	p.params, p.variadic = t.Params(), t.Variadic()
-	p.n1 = p.params.Len()
-	if p.variadic {
-		p.n1--
-	}
+	inited   bool
 }
 
 func (p *fnType) arg(i int, ellipsis bool) types.Type {
@@ -306,28 +379,53 @@ func (p *fnType) arg(i int, ellipsis bool) types.Type {
 	return nil
 }
 
+func (p *fnType) init(t *types.Signature) {
+	p.params, p.variadic = t.Params(), t.Variadic()
+	p.n1 = p.params.Len()
+	if p.variadic {
+		p.n1--
+	}
+}
+
+func (p *fnType) initWith(fnt types.Type, idx, nin int) {
+	if p.inited {
+		return
+	}
+	p.inited = true
+	if t := gox.CheckSignature(fnt, idx, nin); t != nil {
+		p.init(t)
+	}
+}
+
 func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
 	switch fn := v.Fun.(type) {
 	case *ast.Ident:
-		compileIdent(ctx, fn, true, false)
+		compileIdent(ctx, fn, clIdentAllowBuiltin)
 	case *ast.SelectorExpr:
-		compileSelectorExpr(ctx, fn, false)
+		compileSelectorExpr(ctx, fn, 0)
 	default:
 		compileExpr(ctx, fn)
 	}
 	var fn fnType
-	switch t := ctx.cb.Get(-1).Type.(type) {
-	case *types.Signature:
-		fn.init(t)
-	}
+	fnt := ctx.cb.Get(-1).Type
 	ellipsis := (v.Ellipsis != gotoken.NoPos)
 	for i, arg := range v.Args {
 		if l, ok := arg.(*ast.LambdaExpr); ok {
-			in := fn.arg(i, true).(*types.Signature).Params()
-			compileLambdaExpr(ctx, l, in)
-			continue
+			fn.initWith(fnt, i, len(l.Lhs))
+			if sig, ok := fn.arg(i, true).(*types.Signature); ok {
+				compileLambdaExpr(ctx, l, sig.Params())
+				continue
+			}
+		}
+		if l, ok := arg.(*ast.LambdaExpr2); ok {
+			fn.initWith(fnt, i, len(l.Lhs))
+			if sig, ok := fn.arg(i, true).(*types.Signature); ok {
+				compileLambdaExpr2(ctx, l, sig.Params())
+				continue
+			}
 		}
 		if c, ok := arg.(*ast.CompositeLit); ok && c.Type == nil {
+			fn.initWith(fnt, i, -1)
 			compileCompositeLit(ctx, c, fn.arg(i, ellipsis), true)
 		} else {
 			compileExpr(ctx, arg)
@@ -336,16 +434,31 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
 	ctx.cb.CallWith(len(v.Args), ellipsis, v)
 }
 
-func compileLambdaExpr(ctx *blockCtx, v *ast.LambdaExpr, in *types.Tuple) {
-	n := len(v.Lhs)
-	if n != in.Len() {
-		log.Panicln("TODO: compileLambdaExpr - unexpected argument count", n, in.Len())
-	}
+func compileLambdaParams(ctx *blockCtx, pos token.Pos, lhs []*ast.Ident, in *types.Tuple) []*types.Var {
 	pkg := ctx.pkg
-	params := make([]*types.Var, n)
-	for i, name := range v.Lhs {
-		params[i] = pkg.NewParam(token.NoPos, name.Name, in.At(i).Type())
+	n := len(lhs)
+	if nin := in.Len(); n != nin {
+		fewOrMany := "few"
+		if n > nin {
+			fewOrMany = "many"
+		}
+		has := make([]string, n)
+		for i, v := range lhs {
+			has[i] = v.Name
+		}
+		panic(ctx.newCodeErrorf(
+			pos, "too %s arguments in lambda expression\n\thave (%s)\n\twant %v", fewOrMany, strings.Join(has, ", "), in))
 	}
+	params := make([]*types.Var, n)
+	for i, name := range lhs {
+		params[i] = pkg.NewParam(name.Pos(), name.Name, in.At(i).Type())
+	}
+	return params
+}
+
+func compileLambdaExpr(ctx *blockCtx, v *ast.LambdaExpr, in *types.Tuple) {
+	pkg := ctx.pkg
+	params := compileLambdaParams(ctx, v.Pos(), v.Lhs, in)
 	nout := len(v.Rhs)
 	results := make([]*types.Var, nout)
 	for i := 0; i < nout; i++ {
@@ -358,6 +471,15 @@ func compileLambdaExpr(ctx *blockCtx, v *ast.LambdaExpr, in *types.Tuple) {
 	ctx.cb.Return(nout).End()
 }
 
+func compileLambdaExpr2(ctx *blockCtx, v *ast.LambdaExpr2, in *types.Tuple) {
+	params := compileLambdaParams(ctx, v.Pos(), v.Lhs, in)
+	cb := ctx.cb
+	comments := cb.Comments()
+	fn := cb.NewClosure(types.NewTuple(params...), nil, false)
+	loadFuncBody(ctx, fn, v.Body)
+	cb.SetComments(comments, false)
+}
+
 func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
 	cb := ctx.cb
 	comments := cb.Comments()
@@ -367,94 +489,6 @@ func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
 		loadFuncBody(ctx, fn, body)
 		cb.SetComments(comments, false)
 	}
-}
-
-func compileIdentLHS(ctx *blockCtx, v *ast.Ident) {
-	name := v.Name
-	if name == "_" {
-		ctx.cb.VarRef(nil)
-	} else {
-		if compileClassMember(ctx, v, false, true) {
-			return
-		}
-		o, _, builtin := lookupParent(ctx, name)
-		if o == nil {
-			panic(ctx.newCodeErrorf(v.Pos(), "undefined: %s", name))
-		}
-		if isBuiltin(builtin) {
-			panic(ctx.newCodeErrorf(v.Pos(), "use of builtin %s not in function call", name))
-		}
-		ctx.cb.VarRef(o, v)
-	}
-}
-
-func compileIdent(ctx *blockCtx, ident *ast.Ident, allowBuiltin, autoCall bool) {
-	name := ident.Name
-	if name == "_" {
-		panic(ctx.newCodeError(ident.Pos(), "cannot use _ as value"))
-	}
-	if compileClassMember(ctx, ident, autoCall, false) {
-		return
-	}
-	if o, _, builtin := lookupParent(ctx, name); o != nil {
-		if !allowBuiltin && isBuiltin(builtin) {
-			panic(ctx.newCodeErrorf(ident.Pos(), "use of builtin %s not in function call", name))
-		}
-		ctx.cb.Val(o, ident)
-	} else {
-		panic(ctx.newCodeErrorf(ident.Pos(), "undefined: %s", name))
-	}
-}
-
-func compileClassMember(ctx *blockCtx, v *ast.Ident, autoCall, lhs bool) bool {
-	if ctx.fileType > 0 {
-		if fn := ctx.cb.Func(); fn != nil {
-			sig := fn.Type().(*types.Signature)
-			if recv := sig.Recv(); recv != nil {
-				ctx.cb.Val(recv)
-				if compileMember(ctx, v, v.Name, autoCall, lhs) == nil {
-					return true
-				}
-				ctx.cb.InternalStack().PopN(1)
-				if compilePkgRef(ctx, ctx.spx, v, lhs) {
-					return true
-				}
-			}
-		}
-	}
-	return false
-}
-
-// obj, pkgRef, objBuiltin
-func lookupParent(ctx *blockCtx, name string) (types.Object, *gox.PkgRef, types.Object) {
-	at, o := ctx.cb.Scope().LookupParent(name, token.NoPos)
-	if o != nil && at != types.Universe {
-		if debugLookup {
-			log.Println("==> LookupParent", name, "=>", o)
-		}
-		return o, nil, nil
-	}
-	if ctx.loadSymbol(name) {
-		if v := ctx.pkg.Types.Scope().Lookup(name); v != nil {
-			if debugLookup {
-				log.Println("==> Lookup (LoadSymbol)", name, "=>", v)
-			}
-			return v, nil, nil
-		}
-	}
-	if pkgRef, ok := ctx.imports[name]; ok {
-		if debugLookup {
-			log.Println("==> Lookup (ImportPkgs)", name)
-		}
-		return nil, pkgRef, nil
-	}
-	if obj := ctx.pkg.Builtin().Ref(name); obj != nil {
-		if debugLookup {
-			log.Println("==> Lookup (Builtin)", name)
-		}
-		return obj, nil, o
-	}
-	return o, nil, o
 }
 
 func compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {
