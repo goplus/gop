@@ -29,9 +29,11 @@ How do we do this in the Go language?
 ```go
 package main
 
+import "fmt"
+
 func main() {
     a := []float64{1, 2, 3.4}
-    println(a)
+    fmt.Println(a)
 }
 ```
 

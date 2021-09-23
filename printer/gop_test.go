@@ -29,6 +29,10 @@ import (
 	"github.com/goplus/gop/token"
 )
 
+func init() {
+	printer.SetDebug(printer.DbgFlagAll)
+}
+
 func TestNoPkgDecl(t *testing.T) {
 	var dst bytes.Buffer
 	fset := token.NewFileSet()

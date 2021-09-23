@@ -2353,6 +2353,14 @@ var a = math.Round(1.2)
 `)
 }
 
+func _TestLocalImport(t *testing.T) {
+	gopClTest(t, `import "./internal/spx"
+
+var a = spx.TestIntValue
+`, `
+`)
+}
+
 func TestImportUnused(t *testing.T) {
 	gopClTest(t, `import "fmt"
 

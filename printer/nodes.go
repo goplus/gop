@@ -37,6 +37,20 @@ import (
 	"github.com/goplus/gop/token"
 )
 
+const (
+	DbgFlagAll = 1
+)
+
+var (
+	debugFormat bool
+)
+
+func SetDebug(flags int) {
+	if flags != 0 {
+		debugFormat = true
+	}
+}
+
 // Formatting issues:
 // - better comment formatting for /*-style comments at the end of a line (e.g. a declaration)
 //   when the comment spans multiple lines; if such a comment is just two lines, formatting is
@@ -1320,6 +1334,11 @@ func (p *printer) stmt(stmt ast.Stmt, nextIsRBrace bool) {
 		p.stmt(s.Stmt, nextIsRBrace)
 
 	case *ast.ExprStmt:
+		if debugFormat {
+			if e, ok := s.X.(*ast.CallExpr); ok {
+				log.Println("==> ExprStmt", e.Fun)
+			}
+		}
 		const depth = 1
 		p.expr0(s.X, depth)
 
@@ -1335,6 +1354,9 @@ func (p *printer) stmt(stmt ast.Stmt, nextIsRBrace bool) {
 		p.print(s.TokPos, s.Tok)
 
 	case *ast.AssignStmt:
+		if debugFormat {
+			log.Println("==> AssignStmt", s.Lhs)
+		}
 		var depth = 1
 		if len(s.Lhs) > 1 && len(s.Rhs) > 1 {
 			depth++
@@ -1912,6 +1934,9 @@ func (p *printer) distanceFrom(startPos token.Pos, startOutCol int) int {
 }
 
 func (p *printer) funcDecl(d *ast.FuncDecl) {
+	if debugFormat {
+		log.Println("==> Format Func", d.Name.Name)
+	}
 	p.setComment(d.Doc)
 
 	if p.unnamedFuncName == d.Name.Name {

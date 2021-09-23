@@ -39,7 +39,7 @@ type gmxInfo struct {
 
 var (
 	gmxTypes = map[string]gmxInfo{
-		".gmx": {".spx", []string{"github.com/goplus/spx", "math"}},
+		".gmx": {".spx", []string{"github.com/goplus/spx"}},
 	}
 )
 
