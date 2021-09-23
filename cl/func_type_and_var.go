@@ -171,11 +171,9 @@ func toIdentType(ctx *blockCtx, ident *ast.Ident) types.Type {
 	if t, ok := v.(*types.TypeName); ok {
 		return t.Type()
 	}
-	if ctx.fileType > 0 {
-		if v := ctx.spx.Ref(ident.Name); v != nil {
-			if t, ok := v.(*types.TypeName); ok {
-				return t.Type()
-			}
+	if v, _ := lookupPkgRef(ctx, nil, ident); v != nil {
+		if t, ok := v.(*types.TypeName); ok {
+			return t.Type()
 		}
 	}
 	panic(ctx.newCodeErrorf(ident.Pos(), "%s is not a type", ident.Name))

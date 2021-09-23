@@ -290,6 +290,7 @@ type blockCtx struct {
 	cb           *gox.CodeBuilder
 	fset         *token.FileSet
 	imports      map[string]*gox.PkgRef
+	lookups      []*gox.PkgRef
 	targetDir    string
 	classRecv    *ast.FieldList // avaliable when gmxSettings != nil
 	fileLine     bool
@@ -511,6 +512,10 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 	if classType != "" {
 		if debugLoad {
 			log.Println("==> Preload type", classType)
+		}
+		ctx.lookups = make([]*gox.PkgRef, len(parent.pkgPaths))
+		for i, pkgPath := range parent.pkgPaths {
+			ctx.lookups[i] = p.Import(pkgPath)
 		}
 		pos := f.Pos()
 		specs := getFields(ctx, f)
@@ -788,7 +793,8 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 	if spec.Name != nil {
 		name = spec.Name.Name
 		if name == "." {
-			panic("TODO: not impl")
+			ctx.lookups = append(ctx.lookups, pkg)
+			return
 		}
 		if name == "_" {
 			pkg.MarkForceUsed()
