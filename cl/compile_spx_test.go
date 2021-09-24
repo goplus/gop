@@ -127,6 +127,7 @@ func bar() {
 }
 
 func onInit() {
+	Foo
 	bar
 	fmt.Println("Hi")
 }
@@ -146,6 +147,7 @@ type index struct {
 func (this *index) bar() {
 }
 func (this *index) onInit() {
+	Foo
 	this.bar()
 	fmt.Println("Hi")
 }
