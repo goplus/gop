@@ -149,4 +149,18 @@ func setBodyHandler(ctx *blockCtx) {
 	}
 }
 
+func gmxMainFunc(p *gox.Package, ctx *pkgCtx) {
+	if o := p.Types.Scope().Lookup(ctx.gameClass); o != nil && hasMethod(o, "main") {
+		// app := new(Game)
+		// app.Initialize()
+		// app.main()
+		cb := p.NewFunc(nil, "main", nil, nil, false).BodyStart(p)
+		cb.DefineVarStart(token.NoPos, "app").Val(p.Builtin().Ref("new")).Val(o).Call(1).EndInit(1)
+		app := cb.Scope().Lookup("app")
+		cb.Val(app).MemberVal("Initialize").Call(0).EndStmt().
+			Val(app).MemberVal("main").Call(0).EndStmt().
+			End()
+	}
+}
+
 // -----------------------------------------------------------------------------

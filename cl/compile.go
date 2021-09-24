@@ -419,13 +419,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	for _, f := range pkg.Files {
 		if f.FileType == ast.FileTypeGmx {
 			loadFile(ctx, f)
-			if o := p.Types.Scope().Lookup(ctx.gameClass); o != nil && hasMethod(o, "main") {
-				// new(Game).main()
-				p.NewFunc(nil, "main", nil, nil, false).BodyStart(p).
-					Val(p.Builtin().Ref("new")).Val(o).Call(1).
-					MemberVal("main").Call(0).EndStmt().
-					End()
-			}
+			gmxMainFunc(p, ctx)
 			break
 		}
 	}

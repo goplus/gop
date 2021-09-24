@@ -281,7 +281,9 @@ func (this *index) main() {
 	spx.Gopt_MyGame_Run(this, "hzip://open.qiniu.us/weather/res.zip")
 }
 func main() {
-	new(index).main()
+	app := new(index)
+	app.Initialize()
+	app.main()
 }
 func (this *Kai) Main() {
 	fmt.Println("Hi")
