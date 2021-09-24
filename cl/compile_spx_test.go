@@ -123,7 +123,11 @@ const (
 	Foo = 1
 )
 
+func bar() {
+}
+
 func onInit() {
+	bar
 	fmt.Println("Hi")
 }
 `, ``, `package main
@@ -139,7 +143,10 @@ type index struct {
 	spx.MyGame
 }
 
+func (this *index) bar() {
+}
 func (this *index) onInit() {
+	this.bar()
 	fmt.Println("Hi")
 }
 `)
