@@ -27,6 +27,9 @@ type Sound string
 type MyGame struct {
 }
 
+func (p *MyGame) Initialize() {
+}
+
 func (p *MyGame) Broadcast__0(msg string) {
 }
 

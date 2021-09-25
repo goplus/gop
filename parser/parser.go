@@ -1340,7 +1340,7 @@ func (p *parser) isCommand(x ast.Expr) bool {
 	case token.IDENT, token.RARROW,
 		token.STRING, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT:
 		return true
-	case token.SUB, token.NOT, token.AND, token.MUL, token.ARROW, token.XOR:
+	case token.SUB, token.NOT, token.AND, token.MUL, token.ARROW, token.XOR, token.ADD:
 		if x.End() == p.pos { // x-y
 			return false
 		}

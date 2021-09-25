@@ -45,20 +45,6 @@ func TestToString(t *testing.T) {
 	toString(&ast.BasicLit{Kind: token.INT, Value: "1"})
 }
 
-func TestLoadImport(t *testing.T) {
-	pkg := gox.NewPackage("", "foo", nil)
-	ctx := &blockCtx{pkg: pkg, cb: pkg.CB()}
-	defer func() {
-		if e := recover(); e == nil {
-			t.Fatal("loadImport: no error?")
-		}
-	}()
-	loadImport(ctx, &ast.ImportSpec{
-		Name: &ast.Ident{Name: "."},
-		Path: &ast.BasicLit{Kind: token.STRING, Value: `"fmt"`},
-	})
-}
-
 func TestGetTypeName(t *testing.T) {
 	if getTypeName(types.Typ[types.Int]) != "int" {
 		t.Fatal("getTypeName int failed")

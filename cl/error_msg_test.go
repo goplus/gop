@@ -161,6 +161,16 @@ func foo(v map[int]bar) {
 
 func TestErrImport(t *testing.T) {
 	codeErrorTest(t,
+		`./bar.gop:8:2: confliction: NewEncoding declared both in "encoding/base64" and "encoding/base32"`, `
+import (
+	. "encoding/base32"
+	. "encoding/base64"
+)
+
+func foo() {
+	NewEncoding("Hi")
+}`)
+	codeErrorTest(t,
 		"./bar.gop:5:2: cannot refer to unexported name os.undefined", `
 import "os"
 

@@ -39,7 +39,7 @@ func newTwoFileFS(dir string, fname, data string, fname2 string, data2 string) *
 }
 
 func init() {
-	cl.RegisterClassFileType(".tgmx", ".tspx", "github.com/goplus/gop/cl/internal/spx")
+	cl.RegisterClassFileType(".tgmx", ".tspx", "github.com/goplus/gop/cl/internal/spx", "math")
 }
 
 func gopSpxTest(t *testing.T, gmx, spxcode, expected string) {
@@ -123,7 +123,12 @@ const (
 	Foo = 1
 )
 
+func bar() {
+}
+
 func onInit() {
+	Foo
+	bar
 	fmt.Println("Hi")
 }
 `, ``, `package main
@@ -139,7 +144,11 @@ type index struct {
 	spx.MyGame
 }
 
+func (this *index) bar() {
+}
 func (this *index) onInit() {
+	Foo
+	this.bar()
 	fmt.Println("Hi")
 }
 `)
@@ -151,6 +160,7 @@ func onInit() {
 	sched
 	broadcast "msg1"
 	testIntValue = 1
+	x := round(1.2)
 }
 `, `
 func onInit() {
@@ -161,7 +171,10 @@ func onInit() {
 }
 `, `package main
 
-import spx "github.com/goplus/gop/cl/internal/spx"
+import (
+	spx "github.com/goplus/gop/cl/internal/spx"
+	math "math"
+)
 
 type Game struct {
 	spx.MyGame
@@ -171,6 +184,7 @@ func (this *Game) onInit() {
 	spx.Sched()
 	this.Broadcast__0("msg1")
 	spx.TestIntValue = 1
+	x := math.Round(1.2)
 }
 
 type bar struct {
@@ -267,7 +281,9 @@ func (this *index) main() {
 	spx.Gopt_MyGame_Run(this, "hzip://open.qiniu.us/weather/res.zip")
 }
 func main() {
-	new(index).main()
+	app := new(index)
+	app.Initialize()
+	app.main()
 }
 func (this *Kai) Main() {
 	fmt.Println("Hi")

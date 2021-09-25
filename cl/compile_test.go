@@ -2341,6 +2341,26 @@ func main() {
 `)
 }
 
+func TestDotImport(t *testing.T) {
+	gopClTest(t, `import . "math"
+
+var a = round(1.2)
+`, `package main
+
+import math "math"
+
+var a = math.Round(1.2)
+`)
+}
+
+func _TestLocalImport(t *testing.T) {
+	gopClTest(t, `import "./internal/spx"
+
+var a = spx.TestIntValue
+`, `
+`)
+}
+
 func TestImportUnused(t *testing.T) {
 	gopClTest(t, `import "fmt"
 

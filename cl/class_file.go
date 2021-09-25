@@ -33,35 +33,37 @@ import (
 // -----------------------------------------------------------------------------
 
 type gmxInfo struct {
-	pkgPath string
-	extSpx  string
+	extSpx   string
+	pkgPaths []string
 }
 
 var (
 	gmxTypes = map[string]gmxInfo{
-		".gmx": {"github.com/goplus/spx", ".spx"},
+		".gmx": {".spx", []string{"github.com/goplus/spx"}},
 	}
 )
 
 // RegisterClassFileType registers Go+ class file types.
-func RegisterClassFileType(extGmx, extSpx string, pkgPath string) {
+func RegisterClassFileType(extGmx, extSpx string, pkgPaths ...string) {
+	if pkgPaths == nil {
+		panic("RegisterClassFileType: no pkgPath specified")
+	}
 	parser.RegisterFileType(extGmx, ast.FileTypeGmx)
 	parser.RegisterFileType(extSpx, ast.FileTypeSpx)
 	if _, ok := gmxTypes[extGmx]; !ok {
-		gmxTypes[extGmx] = gmxInfo{pkgPath, extSpx}
+		gmxTypes[extGmx] = gmxInfo{extSpx, pkgPaths}
 	}
 }
 
 // -----------------------------------------------------------------------------
 
 type gmxSettings struct {
-	pkgPath   string
 	gameClass string
 	extSpx    string
-	spx       *gox.PkgRef
 	game      gox.Ref
 	sprite    gox.Ref
 	scheds    []goast.Stmt // nil or len(scheds) == 2
+	pkgPaths  []string
 }
 
 func newGmx(pkg *gox.Package, file string) *gmxSettings {
@@ -71,15 +73,16 @@ func newGmx(pkg *gox.Package, file string) *gmxSettings {
 		name = name[:idx]
 	}
 	gt := gmxTypes[ext]
-	p := &gmxSettings{pkgPath: gt.pkgPath, extSpx: gt.extSpx, gameClass: name}
-	p.spx = pkg.Import(p.pkgPath)
-	p.game = spxRef(p.spx, "Gop_game", "Game")
-	p.sprite = spxRef(p.spx, "Gop_sprite", "Sprite")
-	if x := getStringConst(p.spx, "Gop_sched"); x != "" {
+	pkgPaths := gt.pkgPaths
+	spx := pkg.Import(pkgPaths[0])
+	p := &gmxSettings{extSpx: gt.extSpx, gameClass: name, pkgPaths: pkgPaths}
+	p.game = spxRef(spx, "Gop_game", "Game")
+	p.sprite = spxRef(spx, "Gop_sprite", "Sprite")
+	if x := getStringConst(spx, "Gop_sched"); x != "" {
 		scheds := strings.SplitN(x, ",", 2)
 		p.scheds = make([]goast.Stmt, 2)
 		for i, v := range scheds {
-			fn := pkg.CB().Val(p.spx.Ref(v)).Call(0).InternalStack().Pop().Val
+			fn := pkg.CB().Val(spx.Ref(v)).Call(0).InternalStack().Pop().Val
 			p.scheds[i] = &goast.ExprStmt{X: fn}
 		}
 		if len(scheds) < 2 {
@@ -143,6 +146,20 @@ func setBodyHandler(ctx *blockCtx) {
 				gox.InsertStmtFront(body, scheds[idx])
 			})
 		}
+	}
+}
+
+func gmxMainFunc(p *gox.Package, ctx *pkgCtx) {
+	if o := p.Types.Scope().Lookup(ctx.gameClass); o != nil && hasMethod(o, "main") {
+		// app := new(Game)
+		// app.Initialize()
+		// app.main()
+		cb := p.NewFunc(nil, "main", nil, nil, false).BodyStart(p)
+		cb.DefineVarStart(token.NoPos, "app").Val(p.Builtin().Ref("new")).Val(o).Call(1).EndInit(1)
+		app := cb.Scope().Lookup("app")
+		cb.Val(app).MemberVal("Initialize").Call(0).EndStmt().
+			Val(app).MemberVal("main").Call(0).EndStmt().
+			End()
 	}
 }
 

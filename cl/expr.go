@@ -108,11 +108,9 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
 		}
 	}
 
-	// spx object
-	if ctx.fileType > 0 {
-		if compilePkgRef(ctx, ctx.spx, ident, flags) {
-			return nil
-		}
+	// object from import . "xxx"
+	if compilePkgRef(ctx, nil, ident, flags) {
+		return nil
 	}
 
 	// universe object
@@ -334,8 +332,25 @@ func pkgRef(at *gox.PkgRef, name string) (o types.Object, canAutoCall bool) {
 	return at.Ref(name), false
 }
 
+func lookupPkgRef(ctx *blockCtx, pkg *gox.PkgRef, x *ast.Ident) (o types.Object, canAutoCall bool) {
+	if pkg != nil {
+		return pkgRef(pkg, x.Name)
+	}
+	for _, at := range ctx.lookups {
+		if o2, canAutoCall2 := pkgRef(at, x.Name); o2 != nil {
+			if o != nil {
+				panic(ctx.newCodeErrorf(
+					x.Pos(), "confliction: %s declared both in \"%s\" and \"%s\"",
+					x.Name, at.Types.Path(), pkg.Types.Path()))
+			}
+			pkg, o, canAutoCall = at, o2, canAutoCall2
+		}
+	}
+	return
+}
+
 func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, x *ast.Ident, flags int) bool {
-	if v, canAutoCall := pkgRef(at, x.Name); v != nil {
+	if v, canAutoCall := lookupPkgRef(ctx, at, x); v != nil {
 		cb := ctx.cb
 		if (flags & clIdentLHS) != 0 {
 			cb.VarRef(v, x)

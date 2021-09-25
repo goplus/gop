@@ -1,5 +1,4 @@
-GoPlus - The Go+ language for data science
-========
+## The Go+ language for engineering, STEM education, and data science
 
 [![Build Status](https://github.com/goplus/gop/actions/workflows/go.yml/badge.svg)](https://github.com/goplus/gop/actions/workflows/go.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/goplus/gop)](https://goreportcard.com/report/github.com/goplus/gop)
@@ -29,9 +28,11 @@ How do we do this in the Go language?
 ```go
 package main
 
+import "fmt"
+
 func main() {
     a := []float64{1, 2, 3.4}
-    println(a)
+    fmt.Println(a)
 }
 ```
 
