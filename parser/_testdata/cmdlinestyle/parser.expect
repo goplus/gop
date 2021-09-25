@@ -63,3 +63,21 @@ ast.FuncDecl:
                 ast.BasicLit:
                   Kind: FLOAT
                   Value: 0.7
+        ast.ExprStmt:
+          X:
+            ast.IndexExpr:
+              X:
+                ast.Ident:
+                  Name: x
+              Index:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 1
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: x
+              Args:
+                ast.SliceLit:

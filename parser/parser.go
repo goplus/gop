@@ -1338,7 +1338,8 @@ func (p *parser) isCommand(x ast.Expr) bool {
 	}
 	switch p.tok {
 	case token.IDENT, token.RARROW,
-		token.STRING, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT:
+		token.STRING, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT,
+		token.FUNC, token.GOTO, token.MAP, token.INTERFACE, token.CHAN, token.STRUCT:
 		return true
 	case token.SUB, token.NOT, token.AND, token.MUL, token.ARROW, token.XOR, token.ADD:
 		if x.End() == p.pos { // x-y
@@ -1415,6 +1416,7 @@ func (p *parser) parseOperand(lhs, allowTuple bool) ast.Expr {
 		}
 
 	case token.GOTO, token.BREAK, token.CONTINUE, token.FALLTHROUGH:
+		// token.RANGE, token.IMPORT, token.MAP, token.TYPE, token.SELECT, token.INTERFACE
 		// Go+: allow goto() as a function
 		p.tok = token.IDENT
 		x := p.parseIdent()
@@ -1836,17 +1838,21 @@ L:
 				sel := &ast.Ident{NamePos: pos, Name: "_"}
 				x = &ast.SelectorExpr{X: x, Sel: sel}
 			}
-		case token.LBRACK:
+		case token.LBRACK: // [
 			if lhs {
 				p.resolve(x)
 			}
-			x = p.parseIndexOrSlice(p.checkExpr(x))
+			if allowCmd && x.End() != p.pos { // println []
+				x = p.parseCallOrConversion(p.checkExprOrType(x), true)
+			} else {
+				x = p.parseIndexOrSlice(p.checkExpr(x))
+			}
 		case token.LPAREN:
 			if lhs {
 				p.resolve(x)
 			}
 			x = p.parseCallOrConversion(p.checkExprOrType(x), false)
-		case token.LBRACE:
+		case token.LBRACE: // {
 			if isLiteralType(x) && (p.exprLev >= 0 || !isTypeName(x)) {
 				if lhs {
 					p.resolve(x)
