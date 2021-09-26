@@ -49,11 +49,11 @@ func newBuiltinDefault(pkg gox.PkgImporter, conf *gox.Config) *types.Package {
 	builtin := types.NewPackage("", "")
 	fmt := pkg.Import("fmt")
 	big := pkg.Import("github.com/goplus/gop/builtin")
+	pkg.Import("strconv")
+	pkg.Import("strings")
 	initMathBig(pkg, conf, big)
 	initBuiltin(pkg, builtin, fmt, big)
-	gox.InitBuiltinOps(builtin, conf)
-	gox.InitBuiltinAssignOps(builtin)
-	gox.InitBuiltinFuncs(builtin)
+	gox.InitBuiltin(pkg, builtin, conf)
 	return builtin
 }
 

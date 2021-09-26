@@ -145,7 +145,7 @@ func toChanType(ctx *blockCtx, v *ast.ChanType) *types.Chan {
 func toExternalType(ctx *blockCtx, v *ast.SelectorExpr) types.Type {
 	name := v.X.(*ast.Ident).Name
 	if pkgRef, ok := ctx.imports[name]; ok {
-		o := pkgRef.Ref(v.Sel.Name)
+		o := pkgRef.TryRef(v.Sel.Name)
 		if t, ok := o.(*types.TypeName); ok {
 			return t.Type()
 		}
@@ -196,10 +196,7 @@ func lookupType(ctx *blockCtx, name string) (types.Object, types.Object) {
 			return v, nil
 		}
 	}
-	if obj := ctx.pkg.Builtin().Ref(name); obj != nil {
-		if debugLookup {
-			log.Println("==> Lookup (Builtin)", name)
-		}
+	if obj := ctx.pkg.Builtin().TryRef(name); obj != nil {
 		return obj, o
 	}
 	return o, o
