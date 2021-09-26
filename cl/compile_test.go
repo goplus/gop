@@ -129,7 +129,8 @@ func init() {
 
 func TestSlogan(t *testing.T) {
 	gopClTest(t, `
-println "The Go+ Language for", ["engineering", "STEM education", "data science"].join(",")
+fields := ["engineering", "STEM education", "data science"]
+println "The Go+ Language for", fields.join(", ")
 `, `package main
 
 import (
@@ -138,7 +139,8 @@ import (
 )
 
 func main() {
-	fmt.Println("The Go+ Language for", strings.Join([]string{"engineering", "STEM education", "data science"}, ","))
+	fields := []string{"engineering", "STEM education", "data science"}
+	fmt.Println("The Go+ Language for", strings.Join(fields, ", "))
 }
 `)
 }
