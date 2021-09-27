@@ -467,7 +467,12 @@ func (p *parser) atComma(context string, follow token.Token) bool {
 		if p.tok == token.SEMICOLON && p.lit == "\n" {
 			msg += " before newline"
 		}
-		p.error(p.pos, msg+" in "+context)
+		msgctx := msg + " in " + context
+		p.error(p.pos, msgctx)
+		if debugParseError {
+			log.Std.Output("", log.Linfo, 2, msgctx)
+			panic(msgctx)
+		}
 		return true // "insert" comma and continue
 	}
 	return false
@@ -1553,6 +1558,9 @@ func (p *parser) parseCallOrConversion(fun ast.Expr, isCmd bool) *ast.CallExpr {
 		if p.tok == token.ELLIPSIS {
 			ellipsis = p.pos
 			p.next()
+			if p.tok != token.RPAREN {
+				break
+			}
 		}
 		if !p.atComma("argument list", endTok) {
 			break
@@ -1560,11 +1568,17 @@ func (p *parser) parseCallOrConversion(fun ast.Expr, isCmd bool) *ast.CallExpr {
 		p.next()
 	}
 	p.exprLev--
-	if !isCmd {
+	var noParenEnd token.Pos
+	if isCmd {
+		noParenEnd = p.pos
+	} else {
 		rparen = p.expectClosing(token.RPAREN, "argument list")
 	}
+	if debugParseOutput {
+		log.Printf("ast.CallExpr{Fun: %v, Ellipsis: %v, isCmd: %v}\n", fun, ellipsis != 0, isCmd)
+	}
 	return &ast.CallExpr{
-		Fun: fun, Lparen: lparen, Args: list, Ellipsis: ellipsis, Rparen: rparen, NoParen: isCmd}
+		Fun: fun, Lparen: lparen, Args: list, Ellipsis: ellipsis, Rparen: rparen, NoParenEnd: noParenEnd}
 }
 
 func (p *parser) parseValue(keyOk bool) ast.Expr {

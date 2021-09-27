@@ -319,12 +319,12 @@ type (
 
 	// A CallExpr node represents an expression followed by an argument list.
 	CallExpr struct {
-		Fun      Expr      // function expression
-		Lparen   token.Pos // position of "("
-		Args     []Expr    // function arguments; or nil
-		Ellipsis token.Pos // position of "..." (token.NoPos if there is no "...")
-		Rparen   token.Pos // position of ")"
-		NoParen  bool
+		Fun        Expr      // function expression
+		Lparen     token.Pos // position of "("
+		Args       []Expr    // function arguments; or nil
+		Ellipsis   token.Pos // position of "..." (token.NoPos if there is no "...")
+		Rparen     token.Pos // position of ")"
+		NoParenEnd token.Pos
 	}
 
 	// A StarExpr node represents an expression of the form "*" Expression.
@@ -537,7 +537,12 @@ func (x *SliceExpr) End() token.Pos { return x.Rbrack + 1 }
 func (x *TypeAssertExpr) End() token.Pos { return x.Rparen + 1 }
 
 // End returns position of first character immediately after the node.
-func (x *CallExpr) End() token.Pos { return x.Rparen + 1 }
+func (x *CallExpr) End() token.Pos {
+	if x.NoParenEnd != token.NoPos {
+		return x.NoParenEnd
+	}
+	return x.Rparen + 1
+}
 
 // End returns position of first character immediately after the node.
 func (x *StarExpr) End() token.Pos { return x.X.End() }

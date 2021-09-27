@@ -6,5 +6,5 @@ func main() {
 	changeYpos - 0.7
 	changeYpos-0.7
 	x[1]
-	x []
+	x []...
 }
