@@ -183,6 +183,9 @@ func (p *nodeInterp) LoadExpr(node ast.Node) (src string, pos token.Position) {
 	f := p.files[pos.Filename]
 	n := int(node.End() - start)
 	pos.Filename = relFile(p.workingDir, pos.Filename)
+	if pos.Offset+n < 0 {
+		log.Println("LoadExpr:", node, pos.Filename, pos.Line, pos.Offset, node.Pos(), node.End(), n)
+	}
 	src = string(f.Code[pos.Offset : pos.Offset+n])
 	return
 }

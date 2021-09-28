@@ -39,7 +39,7 @@ type gmxInfo struct {
 
 var (
 	gmxTypes = map[string]gmxInfo{
-		".gmx": {".spx", []string{"github.com/goplus/spx"}},
+		".gmx": {".spx", []string{"github.com/goplus/spx", "math"}},
 	}
 )
 
@@ -108,7 +108,7 @@ func spxRef(spx *gox.PkgRef, name, typ string) gox.Ref {
 }
 
 func getStringConst(spx *gox.PkgRef, name string) string {
-	if o := spx.Ref(name); o != nil {
+	if o := spx.TryRef(name); o != nil {
 		if c, ok := o.(*types.Const); ok {
 			return constant.StringVal(c.Val())
 		}

@@ -127,6 +127,24 @@ func init() {
 `)
 }
 
+func TestSlogan(t *testing.T) {
+	gopClTest(t, `
+fields := ["engineering", "STEM education", "data science"]
+println "The Go+ Language for", fields.join(", ")
+`, `package main
+
+import (
+	fmt "fmt"
+	strings "strings"
+)
+
+func main() {
+	fields := []string{"engineering", "STEM education", "data science"}
+	fmt.Println("The Go+ Language for", strings.Join(fields, ", "))
+}
+`)
+}
+
 func TestRedefineBuiltin(t *testing.T) {
 	gopClTest(t, `
 func main() {

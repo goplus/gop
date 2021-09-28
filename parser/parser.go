@@ -467,7 +467,12 @@ func (p *parser) atComma(context string, follow token.Token) bool {
 		if p.tok == token.SEMICOLON && p.lit == "\n" {
 			msg += " before newline"
 		}
-		p.error(p.pos, msg+" in "+context)
+		msgctx := msg + " in " + context
+		p.error(p.pos, msgctx)
+		if debugParseError {
+			log.Std.Output("", log.Linfo, 2, msgctx)
+			panic(msgctx)
+		}
 		return true // "insert" comma and continue
 	}
 	return false
@@ -1338,7 +1343,8 @@ func (p *parser) isCommand(x ast.Expr) bool {
 	}
 	switch p.tok {
 	case token.IDENT, token.RARROW,
-		token.STRING, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT:
+		token.STRING, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT,
+		token.FUNC, token.GOTO, token.MAP, token.INTERFACE, token.CHAN, token.STRUCT:
 		return true
 	case token.SUB, token.NOT, token.AND, token.MUL, token.ARROW, token.XOR, token.ADD:
 		if x.End() == p.pos { // x-y
@@ -1415,6 +1421,7 @@ func (p *parser) parseOperand(lhs, allowTuple bool) ast.Expr {
 		}
 
 	case token.GOTO, token.BREAK, token.CONTINUE, token.FALLTHROUGH:
+		// token.RANGE, token.IMPORT, token.MAP, token.TYPE, token.SELECT, token.INTERFACE
 		// Go+: allow goto() as a function
 		p.tok = token.IDENT
 		x := p.parseIdent()
@@ -1551,6 +1558,9 @@ func (p *parser) parseCallOrConversion(fun ast.Expr, isCmd bool) *ast.CallExpr {
 		if p.tok == token.ELLIPSIS {
 			ellipsis = p.pos
 			p.next()
+			if p.tok != token.RPAREN {
+				break
+			}
 		}
 		if !p.atComma("argument list", endTok) {
 			break
@@ -1558,11 +1568,17 @@ func (p *parser) parseCallOrConversion(fun ast.Expr, isCmd bool) *ast.CallExpr {
 		p.next()
 	}
 	p.exprLev--
-	if !isCmd {
+	var noParenEnd token.Pos
+	if isCmd {
+		noParenEnd = p.pos
+	} else {
 		rparen = p.expectClosing(token.RPAREN, "argument list")
 	}
+	if debugParseOutput {
+		log.Printf("ast.CallExpr{Fun: %v, Ellipsis: %v, isCmd: %v}\n", fun, ellipsis != 0, isCmd)
+	}
 	return &ast.CallExpr{
-		Fun: fun, Lparen: lparen, Args: list, Ellipsis: ellipsis, Rparen: rparen, NoParen: isCmd}
+		Fun: fun, Lparen: lparen, Args: list, Ellipsis: ellipsis, Rparen: rparen, NoParenEnd: noParenEnd}
 }
 
 func (p *parser) parseValue(keyOk bool) ast.Expr {
@@ -1836,17 +1852,21 @@ L:
 				sel := &ast.Ident{NamePos: pos, Name: "_"}
 				x = &ast.SelectorExpr{X: x, Sel: sel}
 			}
-		case token.LBRACK:
+		case token.LBRACK: // [
 			if lhs {
 				p.resolve(x)
 			}
-			x = p.parseIndexOrSlice(p.checkExpr(x))
+			if allowCmd && x.End() != p.pos { // println []
+				x = p.parseCallOrConversion(p.checkExprOrType(x), true)
+			} else {
+				x = p.parseIndexOrSlice(p.checkExpr(x))
+			}
 		case token.LPAREN:
 			if lhs {
 				p.resolve(x)
 			}
 			x = p.parseCallOrConversion(p.checkExprOrType(x), false)
-		case token.LBRACE:
+		case token.LBRACE: // {
 			if isLiteralType(x) && (p.exprLev >= 0 || !isTypeName(x)) {
 				if lhs {
 					p.resolve(x)

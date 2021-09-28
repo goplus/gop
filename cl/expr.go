@@ -117,7 +117,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
 	if (flags&clIdentAllowBuiltin) == 0 && isBuiltin(o) {
 		panic(ctx.newCodeErrorf(ident.Pos(), "use of builtin %s not in function call", name))
 	}
-	if obj := ctx.pkg.Builtin().Ref(name); obj != nil {
+	if obj := ctx.pkg.Builtin().TryRef(name); obj != nil {
 		o = obj
 	} else if o == nil {
 		panic(ctx.newCodeErrorf(ident.Pos(), "undefined: %s", name))
@@ -327,9 +327,9 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, flags int) {
 func pkgRef(at *gox.PkgRef, name string) (o types.Object, canAutoCall bool) {
 	if c := name[0]; c >= 'a' && c <= 'z' {
 		name = string(rune(c)+('A'-'a')) + name[1:]
-		return at.Ref(name), true
+		return at.TryRef(name), true
 	}
-	return at.Ref(name), false
+	return at.TryRef(name), false
 }
 
 func lookupPkgRef(ctx *blockCtx, pkg *gox.PkgRef, x *ast.Ident) (o types.Object, canAutoCall bool) {
