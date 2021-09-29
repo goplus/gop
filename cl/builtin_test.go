@@ -77,6 +77,16 @@ func TestHandleRecover(t *testing.T) {
 	ctx.handleRecover(100)
 }
 
+func TestCanAutoCall(t *testing.T) {
+	if !canAutoCall(
+		&ast.SelectorExpr{
+			X:   &ast.SelectorExpr{X: ast.NewIdent("foo"), Sel: ast.NewIdent("bar")},
+			Sel: ast.NewIdent("val"),
+		}) {
+		t.Fatal("TestCanAutoCall failed")
+	}
+}
+
 // -----------------------------------------------------------------------------
 
 func TestGmxSettings(t *testing.T) {

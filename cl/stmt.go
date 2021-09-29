@@ -74,7 +74,7 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	switch v := stmt.(type) {
 	case *ast.ExprStmt:
 		compileExpr(ctx, v.X)
-		if _, ok := v.X.(*ast.Ident); ok && isFunc(ctx.cb.InternalStack().Get(-1).Type) {
+		if canAutoCall(v.X) && isFunc(ctx.cb.InternalStack().Get(-1).Type) {
 			ctx.cb.Call(0)
 		}
 	case *ast.AssignStmt:
@@ -120,6 +120,18 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		log.Panicln("TODO - compileStmt failed: unknown -", reflect.TypeOf(v))
 	}
 	ctx.cb.EndStmt()
+}
+
+func canAutoCall(x ast.Expr) bool {
+retry:
+	switch t := x.(type) {
+	case *ast.Ident:
+		return true
+	case *ast.SelectorExpr:
+		x = t.X
+		goto retry
+	}
+	return false
 }
 
 func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
