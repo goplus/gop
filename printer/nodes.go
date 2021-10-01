@@ -1018,7 +1018,12 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 	case *ast.SliceLit:
 		p.print(token.LBRACK)
 		p.exprList(x.Lbrack, x.Elts, depth+1, commaTerm, x.Rbrack, x.Incomplete)
-		p.print(token.RBRACK)
+		mode := noExtraLinebreak
+		if len(x.Elts) > 0 {
+			mode |= noExtraBlank
+		}
+		p.print(mode, x.Rbrack, token.RBRACK, mode)
+
 	case *ast.ComprehensionExpr:
 		switch x.Tok {
 		case token.LBRACK: // [...]

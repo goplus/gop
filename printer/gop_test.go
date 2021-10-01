@@ -88,8 +88,8 @@ func diffBytes(t *testing.T, dst, src []byte) {
 		d := dst[i]
 		s := src[i]
 		if d != s {
-			t.Errorf("dst:%d: %s\n", line, dst[offs:i+5])
-			t.Errorf("src:%d: %s\n", line, src[offs:i+5])
+			t.Errorf("dst:%d: %s\n", line, dst[offs:])
+			t.Errorf("src:%d: %s\n", line, src[offs:])
 			return
 		}
 		if s == '\n' {
