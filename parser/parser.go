@@ -865,8 +865,10 @@ func (p *parser) parseSliceLit(lbrack token.Pos, len ast.Expr) ast.Expr {
 	elts[0] = len
 	for p.tok == token.COMMA {
 		p.next()
-		elt := p.parseRHS()
-		elts = append(elts, elt)
+		if p.tok != token.RBRACK {
+			elt := p.parseRHS()
+			elts = append(elts, elt)
+		}
 	}
 	rbrack := p.expect(token.RBRACK)
 
