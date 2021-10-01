@@ -565,4 +565,16 @@ foo:
 		`./bar.gop:2:6: label foo is not defined`,
 		`x := 1
 goto foo`)
+	codeErrorTest(t,
+		`./bar.gop:2:7: label foo is not defined`,
+		`x := 1
+break foo`)
+}
+
+func TestErrBranchStmt(t *testing.T) {
+	codeErrorTest(t,
+		`./bar.gop:2:2: fallthrough statement out of place`,
+		`func foo() {
+	fallthrough
+}`)
 }

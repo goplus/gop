@@ -28,6 +28,7 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
+	"github.com/goplus/gox"
 )
 
 func relFile(dir string, file string) string {
@@ -56,6 +57,12 @@ func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
 }
 
 func compileStmts(ctx *blockCtx, body []ast.Stmt) {
+	for _, stmt := range body {
+		if v, ok := stmt.(*ast.LabeledStmt); ok {
+			l := v.Label
+			ctx.cb.NewLabel(l.Pos(), l.Name)
+		}
+	}
 	for _, stmt := range body {
 		compileStmt(ctx, stmt)
 	}
@@ -487,41 +494,51 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 	label := v.Label
 	switch v.Tok {
 	case token.GOTO:
-		if label == nil {
-			log.Panicln("TODO: label not defined")
+		cb := ctx.cb
+		if l, ok := cb.LookupLabel(label.Name); ok {
+			cb.Goto(l)
+			return
 		}
-		ctx.cb.Goto(label.Name, label)
+		compileCallExpr(ctx, &ast.CallExpr{
+			Fun:  &ast.Ident{NamePos: v.TokPos, Name: "goto", Obj: &ast.Object{Data: label}},
+			Args: []ast.Expr{label},
+		}, clIdentGoto)
 	case token.BREAK:
-		var name string
-		if label != nil {
-			name = label.Name
-		}
-		ctx.cb.Break(name, label)
+		ctx.cb.Break(getLabel(ctx, label))
 	case token.CONTINUE:
-		var name string
-		if label != nil {
-			name = label.Name
-		}
-		ctx.cb.Continue(name, label)
+		ctx.cb.Continue(getLabel(ctx, label))
 	case token.FALLTHROUGH:
-		panic("TODO: fallthrough statement out of place")
+		pos := ctx.Position(v.Pos())
+		ctx.handleCodeErrorf(&pos, "fallthrough statement out of place")
 	default:
-		panic("TODO: compileBranchStmt - unknown")
+		panic("unknown branch statement")
 	}
 }
 
+func getLabel(ctx *blockCtx, label *ast.Ident) *gox.Label {
+	if label != nil {
+		if l, ok := ctx.cb.LookupLabel(label.Name); ok {
+			return l
+		}
+		pos := ctx.Position(label.Pos())
+		ctx.handleCodeErrorf(&pos, "label %v is not defined", label.Name)
+	}
+	return nil
+}
+
 func compileLabeledStmt(ctx *blockCtx, v *ast.LabeledStmt) {
-	ctx.cb.Label(v.Label.Name, v.Label)
+	l, _ := ctx.cb.LookupLabel(v.Label.Name)
+	ctx.cb.Label(l)
 	compileStmt(ctx, v.Stmt)
 }
 
 func compileGoStmt(ctx *blockCtx, v *ast.GoStmt) {
-	compileCallExpr(ctx, v.Call)
+	compileCallExpr(ctx, v.Call, 0)
 	ctx.cb.Go()
 }
 
 func compileDeferStmt(ctx *blockCtx, v *ast.DeferStmt) {
-	compileCallExpr(ctx, v.Call)
+	compileCallExpr(ctx, v.Call, 0)
 	ctx.cb.Defer()
 }
 

@@ -59,6 +59,7 @@ const (
 	clIdentAllowBuiltin
 	clIdentLHS
 	clIdentSelectorExpr
+	clIdentGoto
 )
 
 func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
@@ -120,6 +121,10 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
 	if obj := ctx.pkg.Builtin().TryRef(name); obj != nil {
 		o = obj
 	} else if o == nil {
+		if (clIdentGoto & flags) != 0 {
+			l := ident.Obj.Data.(*ast.Ident)
+			panic(ctx.newCodeErrorf(l.Pos(), "label %v is not defined", l.Name))
+		}
 		panic(ctx.newCodeErrorf(ident.Pos(), "undefined: %s", name))
 	}
 
@@ -183,7 +188,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 	case *ast.BasicLit:
 		compileBasicLit(ctx, v)
 	case *ast.CallExpr:
-		compileCallExpr(ctx, v)
+		compileCallExpr(ctx, v, 0)
 	case *ast.SelectorExpr:
 		compileSelectorExpr(ctx, v, clIdentAutoCall)
 	case *ast.BinaryExpr:
@@ -412,10 +417,10 @@ func (p *fnType) initWith(fnt types.Type, idx, nin int) {
 	}
 }
 
-func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
+func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, flags int) {
 	switch fn := v.Fun.(type) {
 	case *ast.Ident:
-		compileIdent(ctx, fn, clIdentAllowBuiltin)
+		compileIdent(ctx, fn, clIdentAllowBuiltin|flags)
 	case *ast.SelectorExpr:
 		compileSelectorExpr(ctx, fn, 0)
 	default:
