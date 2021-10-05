@@ -38,7 +38,11 @@ func initBuiltin(pkg gox.PkgImporter, builtin *types.Package, fmt, big *gox.PkgR
 	for _, typ := range typs {
 		scope.Insert(types.NewTypeName(token.NoPos, builtin, typ, big.Ref("Gop_"+typ).Type()))
 	}
-	fns := []string{"print", "println", "printf", "errorf", "fprint", "fprintln", "fprintf"}
+	fns := []string{
+		"print", "println", "printf", "errorf",
+		"fprint", "fprintln", "fprintf",
+		"sprint", "sprintln", "sprintf",
+	}
 	for _, fn := range fns {
 		fnTitle := string(fn[0]-'a'+'A') + fn[1:]
 		scope.Insert(gox.NewOverloadFunc(token.NoPos, builtin, fn, fmt.Ref(fnTitle)))
