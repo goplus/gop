@@ -1157,6 +1157,8 @@ func (*FuncDecl) declNode() {}
 // ----------------------------------------------------------------------------
 // Files and packages
 
+type FileType = int16
+
 // A File node represents a Go source file.
 //
 // The Comments list contains all comments in the source file in order of
@@ -1188,7 +1190,7 @@ type File struct {
 	Code         []byte
 	NoEntrypoint bool // no `main` or `init` func to indicate the module entry point.
 	NoPkgDecl    bool // no `package xxx` declaration
-	FileType     int16
+	FileType     FileType
 }
 
 const (

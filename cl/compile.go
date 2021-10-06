@@ -559,11 +559,7 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 		case *ast.FuncDecl:
 			if ctx.classRecv != nil { // in class file (.spx/.gmx)
 				if d.Recv == nil {
-					name := d.Name.Name
 					d.Recv = ctx.classRecv
-					if f.NoEntrypoint && f.FileType == ast.FileTypeSpx && (name == "main") {
-						d.Name.Name = "Main"
-					}
 				}
 			}
 			if d.Recv == nil {

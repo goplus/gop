@@ -157,7 +157,7 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, filter func(os.
 }
 
 var (
-	extGopFiles = map[string]int16{
+	extGopFiles = map[string]ast.FileType{
 		".go":  ast.FileTypeGo,
 		".gop": ast.FileTypeGop,
 		".spx": ast.FileTypeSpx,
@@ -166,7 +166,7 @@ var (
 )
 
 // RegisterFileType registers a new Go+ class file type.
-func RegisterFileType(ext string, format int16) {
+func RegisterFileType(ext string, format ast.FileType) {
 	if format != ast.FileTypeSpx && format != ast.FileTypeGmx {
 		panic("RegisterFileType: format should be FileTypeSpx or FileTypeGmx")
 	}
@@ -185,6 +185,15 @@ func ParseFile(fset *token.FileSet, filename string, src interface{}, mode Mode)
 
 // ParseFSFile parses the source code of a single Go+ source file and returns the corresponding ast.File node.
 func ParseFSFile(fset *token.FileSet, fs FileSystem, filename string, src interface{}, mode Mode) (f *ast.File, err error) {
+	ext := filepath.Ext(filename)
+	ft, isOk := extGopFiles[ext]
+	if !isOk {
+		ft = ast.FileTypeGop
+	}
+	return parseFSFileEx(fset, fs, filename, src, mode, ft)
+}
+
+func parseFSFileEx(fset *token.FileSet, fs FileSystem, filename string, src interface{}, mode Mode, ft ast.FileType) (f *ast.File, err error) {
 	var code []byte
 	if src == nil {
 		code, err = fs.ReadFile(filename)
@@ -194,12 +203,12 @@ func ParseFSFile(fset *token.FileSet, fs FileSystem, filename string, src interf
 	if err != nil {
 		return
 	}
-	return parseFileEx(fset, filename, code, mode)
+	return parseFileEx(fset, filename, code, mode, ft)
 }
 
 // TODO: should not add package info and init|main function.
 // If do this, parsing will display error line number when error occur
-func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (f *ast.File, err error) {
+func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode, ft ast.FileType) (f *ast.File, err error) {
 	var b bytes.Buffer
 	var isMod, noEntrypoint, noPkgDecl bool
 	var fsetTmp = token.NewFileSet()
@@ -215,13 +224,17 @@ func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (
 	if err != nil {
 		if errlist, ok := err.(scanner.ErrorList); ok {
 			if e := errlist[0]; strings.HasPrefix(e.Msg, "expected declaration") {
-				idx := e.Pos.Offset
-				entrypoint := map[bool]string{
-					true:  "func init()",
-					false: "func main()",
+				var entrypoint string
+				if ft == ast.FileTypeSpx {
+					entrypoint = "func Main()"
+				} else if isMod {
+					entrypoint = "func init()"
+				} else {
+					entrypoint = "func main()"
 				}
 				b.Reset()
-				fmt.Fprintf(&b, "%s %s{%s\n}", code[:idx], entrypoint[isMod], code[idx:])
+				idx := e.Pos.Offset
+				fmt.Fprintf(&b, "%s %s{%s\n}", code[:idx], entrypoint, code[idx:])
 				code = b.Bytes()
 				noEntrypoint = true
 				err = nil

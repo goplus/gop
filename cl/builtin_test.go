@@ -97,6 +97,15 @@ func TestGmxSettings(t *testing.T) {
 	}
 }
 
+func TestRegisterClassFileType(t *testing.T) {
+	defer func() {
+		if e := recover(); e == nil {
+			t.Fatal("TestRegisterClassFileType: no error?")
+		}
+	}()
+	RegisterClassFileType(".t3gmx", ".t3spx")
+}
+
 func init() {
 	RegisterClassFileType(".t2gmx", ".t2spx", "github.com/goplus/gop/cl/internal/spx2")
 }
