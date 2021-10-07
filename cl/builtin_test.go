@@ -97,6 +97,15 @@ func TestGmxSettings(t *testing.T) {
 	}
 }
 
+func TestSpxLookup(t *testing.T) {
+	defer func() {
+		if e := recover(); e == nil {
+			t.Fatal("TestSpxLookup failed: no error?")
+		}
+	}()
+	spxLookup(nil, "foo")
+}
+
 func TestRegisterClassFileType(t *testing.T) {
 	defer func() {
 		if e := recover(); e == nil {

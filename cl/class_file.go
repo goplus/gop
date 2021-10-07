@@ -40,6 +40,8 @@ type gmxInfo struct {
 var (
 	gmxTypes = map[string]gmxInfo{
 		".gmx": {".spx", []string{"github.com/goplus/spx", "math"}},
+		".spc": {"", []string{"github.com/qbox/spc", "github.com/goplus/spx", "math"}},
+		// TODO: dynamic register
 	}
 )
 
@@ -49,7 +51,9 @@ func RegisterClassFileType(extGmx, extSpx string, pkgPaths ...string) {
 		panic("RegisterClassFileType: no pkgPath specified")
 	}
 	parser.RegisterFileType(extGmx, ast.FileTypeGmx)
-	parser.RegisterFileType(extSpx, ast.FileTypeSpx)
+	if extSpx != "" {
+		parser.RegisterFileType(extSpx, ast.FileTypeSpx)
+	}
 	if _, ok := gmxTypes[extGmx]; !ok {
 		gmxTypes[extGmx] = gmxInfo{extSpx, pkgPaths}
 	}
@@ -71,18 +75,27 @@ func newGmx(pkg *gox.Package, file string) *gmxSettings {
 	ext := filepath.Ext(name)
 	if idx := strings.Index(name, "."); idx > 0 {
 		name = name[:idx]
+		if name == "main" {
+			name = "_main"
+		}
 	}
 	gt := gmxTypes[ext]
 	pkgPaths := gt.pkgPaths
-	spx := pkg.Import(pkgPaths[0])
+	pkgImps := make([]*gox.PkgRef, len(pkgPaths))
+	for i, pkgPath := range pkgPaths {
+		pkgImps[i] = pkg.Import(pkgPath)
+	}
+	spx := pkgImps[0]
 	p := &gmxSettings{extSpx: gt.extSpx, gameClass: name, pkgPaths: pkgPaths}
 	p.game = spxRef(spx, "Gop_game", "Game")
-	p.sprite = spxRef(spx, "Gop_sprite", "Sprite")
+	if gt.extSpx != "" {
+		p.sprite = spxRef(spx, "Gop_sprite", "Sprite")
+	}
 	if x := getStringConst(spx, "Gop_sched"); x != "" {
 		scheds := strings.SplitN(x, ",", 2)
 		p.scheds = make([]goast.Stmt, 2)
 		for i, v := range scheds {
-			fn := pkg.CB().Val(spx.Ref(v)).Call(0).InternalStack().Pop().Val
+			fn := pkg.CB().Val(spxLookup(pkgImps, v)).Call(0).InternalStack().Pop().Val
 			p.scheds[i] = &goast.ExprStmt{X: fn}
 		}
 		if len(scheds) < 2 {
@@ -90,6 +103,15 @@ func newGmx(pkg *gox.Package, file string) *gmxSettings {
 		}
 	}
 	return p
+}
+
+func spxLookup(pkgImps []*gox.PkgRef, name string) gox.Ref {
+	for _, pkg := range pkgImps {
+		if o := pkg.TryRef(name); o != nil {
+			return o
+		}
+	}
+	panic("spxLookup: symbol not found - " + name)
 }
 
 func getDefaultClass(file string) string {

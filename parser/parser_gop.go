@@ -162,6 +162,7 @@ var (
 		".gop": ast.FileTypeGop,
 		".spx": ast.FileTypeSpx,
 		".gmx": ast.FileTypeGmx,
+		".spc": ast.FileTypeGmx, // TODO: dynamic register
 	}
 )
 
