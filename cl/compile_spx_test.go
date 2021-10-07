@@ -90,7 +90,7 @@ func onMsg(msg string) {
 import spx "github.com/goplus/gop/cl/internal/spx"
 
 type Game struct {
-	spx.MyGame
+	*spx.MyGame
 }
 
 func (this *Game) onInit() {
@@ -141,7 +141,7 @@ import (
 const Foo = 1
 
 type index struct {
-	spx.MyGame
+	*spx.MyGame
 }
 
 func (this *index) bar() {
@@ -177,7 +177,7 @@ import (
 )
 
 type Game struct {
-	spx.MyGame
+	*spx.MyGame
 }
 
 func (this *Game) onInit() {
@@ -228,7 +228,7 @@ func onCloned() {
 import spx "github.com/goplus/gop/cl/internal/spx"
 
 type Game struct {
-	spx.MyGame
+	*spx.MyGame
 	Kai Kai
 }
 type Kai struct {
@@ -268,7 +268,7 @@ import (
 )
 
 type index struct {
-	spx.MyGame
+	*spx.MyGame
 	Kai Kai
 	t   spx.Sound
 }

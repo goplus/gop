@@ -68,6 +68,7 @@ type gmxSettings struct {
 	sprite    gox.Ref
 	scheds    []goast.Stmt // nil or len(scheds) == 2
 	pkgPaths  []string
+	gameIsPtr bool
 }
 
 func newGmx(pkg *gox.Package, file string) *gmxSettings {
@@ -87,9 +88,9 @@ func newGmx(pkg *gox.Package, file string) *gmxSettings {
 	}
 	spx := pkgImps[0]
 	p := &gmxSettings{extSpx: gt.extSpx, gameClass: name, pkgPaths: pkgPaths}
-	p.game = spxRef(spx, "Gop_game", "Game")
+	p.game, p.gameIsPtr = spxRef(spx, "Gop_game", "Game")
 	if gt.extSpx != "" {
-		p.sprite = spxRef(spx, "Gop_sprite", "Sprite")
+		p.sprite, _ = spxRef(spx, "Gop_sprite", "Sprite")
 	}
 	if x := getStringConst(spx, "Gop_sched"); x != "" {
 		scheds := strings.SplitN(x, ",", 2)
@@ -122,11 +123,15 @@ func getDefaultClass(file string) string {
 	return name
 }
 
-func spxRef(spx *gox.PkgRef, name, typ string) gox.Ref {
+func spxRef(spx *gox.PkgRef, name, typ string) (obj gox.Ref, isPtr bool) {
 	if v := getStringConst(spx, name); v != "" {
 		typ = v
+		if strings.HasPrefix(typ, "*") {
+			typ, isPtr = typ[1:], true
+		}
 	}
-	return spx.Ref(typ)
+	obj = spx.Ref(typ)
+	return
 }
 
 func getStringConst(spx *gox.PkgRef, name string) string {
