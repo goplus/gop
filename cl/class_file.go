@@ -40,7 +40,7 @@ type gmxInfo struct {
 var (
 	gmxTypes = map[string]gmxInfo{
 		".gmx": {".spx", []string{"github.com/goplus/spx", "math"}},
-		".spc": {"", []string{"github.com/qbox/spc", "github.com/goplus/spx", "math"}},
+		".spc": {"", []string{"github.com/qbox/gopla/spc", "github.com/goplus/spx", "math"}},
 		// TODO: dynamic register
 	}
 )
