@@ -62,13 +62,33 @@ func RegisterClassFileType(extGmx, extSpx string, pkgPaths ...string) {
 // -----------------------------------------------------------------------------
 
 type gmxSettings struct {
-	gameClass string
-	extSpx    string
-	game      gox.Ref
-	sprite    gox.Ref
-	scheds    []goast.Stmt // nil or len(scheds) == 2
-	pkgPaths  []string
-	gameIsPtr bool
+	gameClass  string
+	extSpx     string
+	game       gox.Ref
+	sprite     gox.Ref
+	scheds     []string
+	schedStmts []goast.Stmt // nil or len(scheds) == 2 (delayload)
+	pkgImps    []*gox.PkgRef
+	pkgPaths   []string
+	hasScheds  bool
+	gameIsPtr  bool
+}
+
+func (p *gmxSettings) getScheds(cb *gox.CodeBuilder) []goast.Stmt {
+	if !p.hasScheds {
+		return nil
+	}
+	if p.schedStmts == nil {
+		p.schedStmts = make([]goast.Stmt, 2)
+		for i, v := range p.scheds {
+			fn := cb.Val(spxLookup(p.pkgImps, v)).Call(0).InternalStack().Pop().Val
+			p.schedStmts[i] = &goast.ExprStmt{X: fn}
+		}
+		if len(p.scheds) < 2 {
+			p.schedStmts[1] = p.schedStmts[0]
+		}
+	}
+	return p.schedStmts
 }
 
 func newGmx(pkg *gox.Package, file string) *gmxSettings {
@@ -82,26 +102,18 @@ func newGmx(pkg *gox.Package, file string) *gmxSettings {
 	}
 	gt := gmxTypes[ext]
 	pkgPaths := gt.pkgPaths
-	pkgImps := make([]*gox.PkgRef, len(pkgPaths))
-	for i, pkgPath := range pkgPaths {
-		pkgImps[i] = pkg.Import(pkgPath)
-	}
-	spx := pkgImps[0]
 	p := &gmxSettings{extSpx: gt.extSpx, gameClass: name, pkgPaths: pkgPaths}
+	p.pkgImps = make([]*gox.PkgRef, len(pkgPaths))
+	for i, pkgPath := range pkgPaths {
+		p.pkgImps[i] = pkg.Import(pkgPath)
+	}
+	spx := p.pkgImps[0]
 	p.game, p.gameIsPtr = spxRef(spx, "Gop_game", "Game")
 	if gt.extSpx != "" {
 		p.sprite, _ = spxRef(spx, "Gop_sprite", "Sprite")
 	}
 	if x := getStringConst(spx, "Gop_sched"); x != "" {
-		scheds := strings.SplitN(x, ",", 2)
-		p.scheds = make([]goast.Stmt, 2)
-		for i, v := range scheds {
-			fn := pkg.CB().Val(spxLookup(pkgImps, v)).Call(0).InternalStack().Pop().Val
-			p.scheds[i] = &goast.ExprStmt{X: fn}
-		}
-		if len(scheds) < 2 {
-			p.scheds[1] = p.scheds[0]
-		}
+		p.scheds, p.hasScheds = strings.SplitN(x, ",", 2), true
 	}
 	return p
 }
@@ -164,7 +176,7 @@ func getFields(ctx *blockCtx, f *ast.File) (specs []ast.Spec) {
 
 func setBodyHandler(ctx *blockCtx) {
 	if ctx.fileType > 0 { // in a Go+ class file
-		if scheds := ctx.scheds; scheds != nil {
+		if scheds := ctx.getScheds(ctx.cb); scheds != nil {
 			ctx.cb.SetBodyHandler(func(body *goast.BlockStmt, kind int) {
 				idx := 0
 				if len(body.List) == 0 {

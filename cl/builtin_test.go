@@ -91,9 +91,14 @@ func TestCanAutoCall(t *testing.T) {
 
 func TestGmxSettings(t *testing.T) {
 	pkg := gox.NewPackage("", "foo", nil)
-	gmx := newGmx(pkg, "index.t2gmx")
-	if len(gmx.scheds) != 2 || gmx.scheds[0] == nil || gmx.scheds[0] != gmx.scheds[1] {
+	gmx := newGmx(pkg, "main.t2gmx")
+	scheds := gmx.getScheds(pkg.CB())
+	if len(scheds) != 2 || scheds[0] == nil || scheds[0] != scheds[1] {
 		t.Fatal("TestGmxSettings failed")
+	}
+	gmx.hasScheds = false
+	if gmx.getScheds(nil) != nil {
+		t.Fatal("TestGmxSettings failed: hasScheds?")
 	}
 }
 
