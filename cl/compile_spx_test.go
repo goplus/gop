@@ -277,13 +277,11 @@ type Kai struct {
 	*index
 }
 
-func (this *index) main() {
+func (this *index) MainEntry() {
 	spx.Gopt_MyGame_Run(this, "hzip://open.qiniu.us/weather/res.zip")
 }
 func main() {
-	app := new(index)
-	app.Initialize()
-	app.main()
+	spx.Gopt_MyGame_Main(new(index))
 }
 func (this *Kai) Main() {
 	fmt.Println("Hi")
@@ -308,13 +306,11 @@ type Game struct {
 	spx2.Game
 }
 
-func (this *Game) main() {
+func (this *Game) MainEntry() {
 	fmt.Println("Hi")
 }
 func main() {
-	app := new(Game)
-	app.main()
-	app.Terminate()
+	new(Game).Main()
 }
 
 type Kai struct {

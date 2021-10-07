@@ -226,12 +226,17 @@ func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode, f
 		if errlist, ok := err.(scanner.ErrorList); ok {
 			if e := errlist[0]; strings.HasPrefix(e.Msg, "expected declaration") {
 				var entrypoint string
-				if ft == ast.FileTypeSpx {
+				switch ft {
+				case ast.FileTypeSpx:
 					entrypoint = "func Main()"
-				} else if isMod {
-					entrypoint = "func init()"
-				} else {
-					entrypoint = "func main()"
+				case ast.FileTypeGmx:
+					entrypoint = "func MainEntry()"
+				default:
+					if isMod {
+						entrypoint = "func init()"
+					} else {
+						entrypoint = "func main()"
+					}
 				}
 				b.Reset()
 				idx := e.Pos.Offset
