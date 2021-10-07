@@ -290,3 +290,39 @@ func (this *Kai) Main() {
 }
 `, "index.tgmx", "Kai.tspx")
 }
+
+func TestSpx2(t *testing.T) {
+	gopSpxTestEx(t, `
+println("Hi")
+`, `
+func onMsg(msg string) {
+}
+`, `package main
+
+import (
+	fmt "fmt"
+	spx2 "github.com/goplus/gop/cl/internal/spx2"
+)
+
+type Game struct {
+	spx2.Game
+}
+
+func (this *Game) main() {
+	fmt.Println("Hi")
+}
+func main() {
+	app := new(Game)
+	app.main()
+	app.Terminate()
+}
+
+type Kai struct {
+	spx2.Sprite
+	*Game
+}
+
+func (this *Kai) onMsg(msg string) {
+}
+`, "Game.t2gmx", "Kai.t2spx")
+}

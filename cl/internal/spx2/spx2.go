@@ -23,6 +23,9 @@ const (
 type Game struct {
 }
 
+func (p *Game) Terminate() {
+}
+
 type Sprite struct {
 }
 

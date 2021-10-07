@@ -176,12 +176,21 @@ func gmxMainFunc(p *gox.Package, ctx *pkgCtx) {
 		// app := new(Game)
 		// app.Initialize()
 		// app.main()
+		// app.Terminate()
 		cb := p.NewFunc(nil, "main", nil, nil, false).BodyStart(p)
 		cb.DefineVarStart(token.NoPos, "app").Val(p.Builtin().Ref("new")).Val(o).Call(1).EndInit(1)
 		app := cb.Scope().Lookup("app")
-		cb.Val(app).MemberVal("Initialize").Call(0).EndStmt().
-			Val(app).MemberVal("main").Call(0).EndStmt().
-			End()
+		cb.Val(app)
+		if _, err := cb.Member("Initialize", false); err == nil {
+			cb.Call(0).EndStmt().Val(app)
+		}
+		cb.MemberVal("main").Call(0).EndStmt()
+		if _, err := cb.Val(app).Member("Terminate", false); err == nil {
+			cb.Call(0).EndStmt()
+		} else {
+			cb.InternalStack().Pop()
+		}
+		cb.End()
 	}
 }
 
