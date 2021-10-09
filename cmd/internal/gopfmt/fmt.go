@@ -20,7 +20,6 @@ package gopfmt
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"io/fs"
 	"io/ioutil"
 	"os"
@@ -93,22 +92,6 @@ func writeFileWithBackup(path string, target []byte) (err error) {
 	return os.Rename(tmpfile, path)
 }
 
-func processFile(filename string, in io.Reader, out io.Writer) error {
-	src, err := ioutil.ReadAll(in)
-	if err != nil {
-		return err
-	}
-
-	res, err := format.Source(src)
-	if err != nil {
-		return err
-	}
-
-	_, err = out.Write(res)
-
-	return err
-}
-
 func walk(path string, d fs.DirEntry, err error) error {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -134,10 +117,7 @@ func runCmd(cmd *base.Command, args []string) {
 	flag.Parse(args)
 	narg := flag.NArg()
 	if narg < 1 {
-		if err := processFile("<standard input>", os.Stdin, os.Stdout); err != nil {
-			fmt.Println(err)
-			os.Exit(2)
-		}
+		cmd.Usage(os.Stderr)
 	}
 	for i := 0; i < narg; i++ {
 		path := flag.Arg(i)
