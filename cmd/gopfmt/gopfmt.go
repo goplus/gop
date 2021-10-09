@@ -25,6 +25,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 var (
@@ -105,6 +106,7 @@ func walk(path string, d fs.DirEntry, err error) error {
 			return filepath.SkipDir
 		}
 	} else {
+		// Directories are walked, ignoring non-Gop files.
 		ext := filepath.Ext(path)
 		if _, ok := extGops[ext]; ok {
 			procCnt++
@@ -130,22 +132,16 @@ func main() {
 		return
 	}
 
-	for _, arg := range args {
-		switch info, err := os.Stat(arg); {
-		case err != nil:
-			report(err)
-		case !info.IsDir():
-			// Non-directory arguments are always formatted.
-			arg := arg
-			if err := processFile(arg, nil, nil); err != nil {
-				report(err)
-			}
-		default:
-			// Directories are walked, ignoring non-Gop files.
-			err := filepath.WalkDir(arg, walk)
-			if err != nil {
-				report(err)
-			}
+	for _, path := range args {
+		walkSubDir = strings.HasSuffix(path, "/...")
+		if walkSubDir {
+			path = path[:len(path)-4]
+		}
+		procCnt = 0
+		rootDir = path
+		filepath.WalkDir(path, walk)
+		if procCnt == 0 {
+			fmt.Println("no Go+ files in", path)
 		}
 	}
 }
