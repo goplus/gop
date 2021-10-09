@@ -139,11 +139,10 @@ See https://github.com/goplus/gop/tree/main/tutorial
 
 ```bash
 git clone git@github.com:goplus/gop.git
-cd gop/cmd
-go install -v ./...  # build all Go+ tools
-cd ..
-gop install -v ./... # build all Go+ tutorials
+cd gop
+./all.bash
 ```
+
 
 ## Go+ features
 
