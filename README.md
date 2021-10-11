@@ -8,7 +8,7 @@
 [![VSCode](https://img.shields.io/badge/vscode-Go+-teal.svg)](https://github.com/gopcode/vscode-goplus)
 [![GoDoc](https://pkg.go.dev/badge/github.com/goplus/gop.svg)](https://pkg.go.dev/mod/github.com/goplus/gop)
 
-## Summary about Go+
+## Summary about Go+ ([简体中文](https://github.com/goplus/gop/blob/main/README_zh.md))
 
 What are mainly impressions about Go+?
 
@@ -526,7 +526,7 @@ git config --global user.email XXX@goplus.org
 
 If you did this, remember to add your `XXX@goplus.org` email to https://github.com/settings/emails.
 
-What does `a contributor to Go+` mean? He must meet one of the following conditions:
+What does `a contributor to Go+` mean? You must meet one of the following conditions:
 
 * At least one pull request of a full-featured implemention.
 * At least three pull requests of feature enhancements.
