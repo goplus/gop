@@ -8,7 +8,7 @@
 [![VSCode](https://img.shields.io/badge/vscode-Go+-teal.svg)](https://github.com/gopcode/vscode-goplus)
 [![GoDoc](https://pkg.go.dev/badge/github.com/goplus/gop.svg)](https://pkg.go.dev/mod/github.com/goplus/gop)
 
-## Go+ 概要
+## Go+ 概要 ([English](https://github.com/goplus/gop/blob/main/README.md))
 
 关于 Go+ 的主要印象是什么？
 
@@ -523,11 +523,11 @@ Go+项目欢迎所有贡献者。我们感谢您的帮助！
 git config --global user.email XXX@goplus.org
 ```
 
-如果您这样做了，请记住将您的`XXX@goplus.org`电子邮件添加到 https://github.com/settings/emails。
+如果您这样做了，请记住将您的`XXX@goplus.org`电子邮件添加到 https://github.com/settings/emails 。
 
-Go+的贡献是什么意思？他必须满足以下条件之一：
+成为`Go+ 贡献者`意味着什么？您必须满足以下条件之一：
 
-至少一个功能齐全的实现的拉取请求。
+至少一个功能完整的实现的拉取请求。
 
 至少三个功能增强的拉取请求。
 
