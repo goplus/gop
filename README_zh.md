@@ -6,9 +6,10 @@
 [![GitHub release](https://img.shields.io/github/v/tag/goplus/gop.svg?label=release)](https://github.com/goplus/gop/releases)
 [![Playground](https://img.shields.io/badge/playground-Go+-blue.svg)](https://play.goplus.org/)
 [![VSCode](https://img.shields.io/badge/vscode-Go+-teal.svg)](https://github.com/gopcode/vscode-goplus)
+[![Readme](https://img.shields.io/badge/README-EN-teal.svg)](https://github.com/goplus/gop/blob/main/README.md)
 [![GoDoc](https://pkg.go.dev/badge/github.com/goplus/gop.svg)](https://pkg.go.dev/mod/github.com/goplus/gop)
 
-## Go+ 概要 ([English](https://github.com/goplus/gop/blob/main/README.md))
+## Go+ 概要
 
 关于 Go+ 的主要印象是什么？
 
