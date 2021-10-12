@@ -1,3 +1,5 @@
+set -e
+
 cd cmd
 go install -v ./... # build all Go+ tools
 cd ..
