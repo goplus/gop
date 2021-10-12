@@ -1,0 +1,25 @@
+on: 
+  release:
+    types: [published]
+
+name: Release Gop
+
+jobs:
+  releases-matrix:
+    name: Release Gop
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # build and publish in parallel: linux/amd64, windows/amd64, darwin/amd64 
+        goos: [linux, windows, darwin]
+        goarch: [amd64]
+    steps:
+    - uses: actions/checkout@v2
+    - uses: wangyoucao577/go-release-action@v1.20
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        goos: ${{ matrix.goos }}
+        goarch: ${{ matrix.goarch }}
+        goversion: "1.16"
+        build_command: "make release"
+        extra_files: gopfmt LICENSE README.md README_zh.md
