@@ -144,31 +144,32 @@ cd gop
 ./all.bash
 ```
 
-
-## Go+ features
-
-### Bytecode vs. Go code
+## Bytecode vs. Go code
 
 Go+ supports bytecode backend and Go code generation.
 
-When we use `gop go` or `gop install` command, it generates Go code to covert Go+ package into Go packages.
-
-When we use `gop run` command, it doesn't call `go run` command. It generates bytecode to execute (in v1.0.x, `go run` also is using Go-code-generation mode).
-
-In bytecode mode, Go+ doesn't support `cgo`. However, in Go-code-generation mode, Go+ fully supports `cgo`.
-
-
-### Commands
+When we use `gop` command, it generates Go code to covert Go+ package into Go packages.
 
 ```bash
 gop run     # Run a Go+ program
 gop install # Build Go+ files and install target to GOBIN
+gop build   # Build Go+ files
 gop test    # Test Go+ packages
 gop fmt     # Format Go+ packages
 gop clean   # Clean all Go+ auto generated files
 gop go      # Convert Go+ packages into Go packages
 ```
 
+When we use [`igop`](https://github.com/goplus/igop) command, it generates bytecode to execute.
+
+```bash
+igop  # Run a Go+ program
+```
+
+In bytecode mode, Go+ doesn't support `cgo`. However, in Go-code-generation mode, Go+ fully supports `cgo`.
+
+
+## Go+ features
 
 ### Rational number: bigint, bigrat, bigfloat
 
