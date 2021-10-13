@@ -11,7 +11,7 @@ import (
 	"go/ast"
 	"strings"
 
-	"github.com/goplus/gop/token"
+	"gop/token"
 )
 
 // ----------------------------------------------------------------------------

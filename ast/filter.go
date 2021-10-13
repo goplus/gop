@@ -7,7 +7,7 @@ package ast
 import (
 	"sort"
 
-	"github.com/goplus/gop/token"
+	"gop/token"
 )
 
 // ----------------------------------------------------------------------------

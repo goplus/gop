@@ -26,8 +26,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/format"
+	"gop/cmd/internal/base"
+	"gop/format"
 )
 
 // Cmd - gop go

@@ -19,10 +19,10 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/printer"
-	"github.com/goplus/gop/token"
+	"gop/ast"
+	"gop/parser"
+	"gop/printer"
+	"gop/token"
 )
 
 var config = printer.Config{Mode: printer.UseSpaces | printer.TabIndent, Tabwidth: 8}

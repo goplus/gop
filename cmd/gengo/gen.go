@@ -26,11 +26,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
+	"gop/ast"
+	"gop/cl"
+	"gop/parser"
+	"gop/token"
 )
 
 const (

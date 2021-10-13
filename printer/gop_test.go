@@ -23,10 +23,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/format"
-	"github.com/goplus/gop/printer"
-	"github.com/goplus/gop/token"
+	"gop/ast"
+	"gop/format"
+	"gop/printer"
+	"gop/token"
 )
 
 func init() {

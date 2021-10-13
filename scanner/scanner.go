@@ -17,7 +17,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/goplus/gop/token"
+	"gop/token"
 )
 
 // An ErrorHandler may be provided to Scanner.Init. If a syntax error is

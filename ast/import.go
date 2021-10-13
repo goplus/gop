@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/goplus/gop/token"
+	"gop/token"
 )
 
 // SortImports sorts runs of consecutive import lines in import blocks in f.

@@ -7,8 +7,8 @@
 package parser
 
 import (
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/token"
+	"gop/ast"
+	"gop/token"
 )
 
 // A Mode value is a set of flags (or 0).

@@ -24,16 +24,16 @@ import (
 
 	"github.com/qiniu/x/log"
 
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/cmd/internal/build"
-	"github.com/goplus/gop/cmd/internal/clean"
-	"github.com/goplus/gop/cmd/internal/gengo"
-	"github.com/goplus/gop/cmd/internal/gopfmt"
-	"github.com/goplus/gop/cmd/internal/help"
-	"github.com/goplus/gop/cmd/internal/install"
-	"github.com/goplus/gop/cmd/internal/run"
-	"github.com/goplus/gop/cmd/internal/test"
-	"github.com/goplus/gop/cmd/internal/version"
+	"gop/cmd/internal/base"
+	"gop/cmd/internal/build"
+	"gop/cmd/internal/clean"
+	"gop/cmd/internal/gengo"
+	"gop/cmd/internal/gopfmt"
+	"gop/cmd/internal/help"
+	"gop/cmd/internal/install"
+	"gop/cmd/internal/run"
+	"gop/cmd/internal/test"
+	"gop/cmd/internal/version"
 )
 
 func mainUsage() {

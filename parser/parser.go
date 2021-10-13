@@ -22,10 +22,10 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/scanner"
-	"github.com/goplus/gop/token"
 	"github.com/qiniu/x/log"
+	"gop/ast"
+	"gop/scanner"
+	"gop/token"
 )
 
 // The parser structure holds the parser's internal state.

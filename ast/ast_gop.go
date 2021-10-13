@@ -17,7 +17,7 @@
 package ast
 
 import (
-	"github.com/goplus/gop/token"
+	"gop/token"
 )
 
 // -----------------------------------------------------------------------------

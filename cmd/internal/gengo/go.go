@@ -22,11 +22,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cmd/gengo"
-	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gox"
 	"github.com/qiniu/x/log"
+	"gop/cl"
+	"gop/cmd/gengo"
+	"gop/cmd/internal/base"
 )
 
 // -----------------------------------------------------------------------------

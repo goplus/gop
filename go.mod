@@ -1,4 +1,4 @@
-module github.com/goplus/gop
+module gop
 
 go 1.16
 

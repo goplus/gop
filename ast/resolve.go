@@ -10,8 +10,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/goplus/gop/scanner"
-	"github.com/goplus/gop/token"
+	"gop/scanner"
+	"gop/token"
 )
 
 type pkgBuilder struct {

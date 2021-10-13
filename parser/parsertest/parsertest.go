@@ -27,8 +27,8 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/token"
+	"gop/ast"
+	"gop/token"
 )
 
 func sortedKeys(m interface{}) []string {

@@ -27,9 +27,9 @@ import (
 	gotoken "go/token"
 	"go/types"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
+	"gop/ast"
+	"gop/token"
 )
 
 /*-----------------------------------------------------------------------------

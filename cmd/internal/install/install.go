@@ -21,9 +21,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gox"
+	"gop/cl"
+	"gop/cmd/internal/base"
 )
 
 // Cmd - gop install

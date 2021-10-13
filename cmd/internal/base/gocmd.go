@@ -24,8 +24,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cmd/gengo"
+	"gop/cl"
+	"gop/cmd/gengo"
 )
 
 // SkipSwitches skips all switches and returns non-switch arguments.

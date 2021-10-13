@@ -26,9 +26,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/scanner"
-	"github.com/goplus/gop/token"
+	"gop/ast"
+	"gop/scanner"
+	"gop/token"
 )
 
 const (

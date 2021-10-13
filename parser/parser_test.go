@@ -19,8 +19,8 @@ package parser
 import (
 	"testing"
 
-	"github.com/goplus/gop/parser/parsertest"
-	"github.com/goplus/gop/token"
+	"gop/parser/parsertest"
+	"gop/token"
 )
 
 // -----------------------------------------------------------------------------

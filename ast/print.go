@@ -12,7 +12,7 @@ import (
 	"os"
 	"reflect"
 
-	"github.com/goplus/gop/token"
+	"gop/token"
 )
 
 // A FieldFilter may be provided to Fprint to control the output.

@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/goplus/gop"
-	"github.com/goplus/gop/cmd/internal/base"
+	"gop"
+	"gop/cmd/internal/base"
 )
 
 // -----------------------------------------------------------------------------

@@ -17,8 +17,8 @@
 package gopq
 
 import (
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/token"
+	"gop/ast"
+	"gop/token"
 )
 
 // -----------------------------------------------------------------------------

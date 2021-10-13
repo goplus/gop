@@ -11,9 +11,9 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/token"
+	"gop/ast"
+	"gop/parser"
+	"gop/token"
 )
 
 const (
