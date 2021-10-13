@@ -15,7 +15,12 @@ jobs:
         goarch: [amd64]
     steps:
     - uses: actions/checkout@v2
+    - name: Set output
+      id: vars
+      run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}    
     - uses: wangyoucao577/go-release-action@v1.20
+      env:
+        RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         goos: ${{ matrix.goos }}
