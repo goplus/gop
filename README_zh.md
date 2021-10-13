@@ -75,7 +75,7 @@ fmt.Println("x:", x)
 ```
 
 
-所有Go+软件包也可以在Go程序中导入。你需要做的就是使用`gop`命令，而不是`go`。
+所有Go+软件包也可以在Go程序中导入。您需要做的就是使用`gop`命令，而不是`go`。
 
 首先，让我们创建一个名为`tutorial/14-Using-goplus-in-Go`的目录。
 
@@ -534,7 +534,7 @@ git config --global user.email XXX@goplus.org
 
 至少十个任何类型的`issues`拉取请求。
 
-你可以从哪里开始？
+您可以从哪里开始？
 
 * [![Issues](https://img.shields.io/badge/ISSUEs-Go+-blue.svg)](https://github.com/goplus/gop/issues)
 * [![Issues](https://img.shields.io/badge/ISSUEs-NumGo+-blue.svg)](https://github.com/numgoplus/ng/issues)
