@@ -1,0 +1,30 @@
+on: 
+  release:
+    types: [published]
+
+name: Release Gop
+
+jobs:
+  releases-matrix:
+    name: Release Gop
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # build and publish in parallel: linux/amd64, windows/amd64, darwin/amd64 
+        goos: [linux, windows, darwin]
+        goarch: [amd64]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set output
+      id: vars
+      run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}    
+    - uses: wangyoucao577/go-release-action@v1.20
+      env:
+        RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        goos: ${{ matrix.goos }}
+        goarch: ${{ matrix.goarch }}
+        goversion: "1.16"
+        build_command: "make release"
+        extra_files: gopfmt LICENSE README.md README_zh.md
