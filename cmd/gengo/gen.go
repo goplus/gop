@@ -209,7 +209,7 @@ func (p *Runner) addError(pkgDir string, stage string, err error) error {
 }
 
 func saveGoFile(dir string, pkg *gox.Package) error {
-	err := os.MkdirAll(dir, 0777)
+	err := os.MkdirAll(dir, 0755)
 	if err != nil {
 		return err
 	}

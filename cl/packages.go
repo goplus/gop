@@ -97,7 +97,7 @@ func initPkgsLoader(base *Config) {
 	if base.PersistLoadPkgs {
 		if base.CacheFile == "" && root != "" {
 			dir := root + "/.gop"
-			os.MkdirAll(dir, 0777)
+			os.MkdirAll(dir, 0755)
 			base.CacheFile = dir + "/gop.cache"
 		}
 	}
