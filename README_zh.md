@@ -145,28 +145,31 @@ cd gop
 ```
 
 
-## Go+ 的特性
-
-### 字节码与 Go 代码
+## 字节码与 Go 代码
 
 Go+ 支持字节码后端和 Go 代码生成。
 
-当我们使用 `gop go` 或 `gop install` 命令时，它会生成 Go 代码，将 Go+ 软件包隐藏到 Go 软件包中。
-
-当我们使用 `gop run` 命令时，它不会调用 `go run` 命令。而是生成要执行的字节码（在 v1.0.x 中，go run 也使用Go 代码生成模式）。
-
-在字节码模式下，Go+ 不支持 `cgo`。不过，在 Go 代码生成模式下，Go+ 完全支持 cgo 。
-
-### 命令
+当我们使用 `gop` 命令时，它会生成 Go 代码来将 Go+ 软件包转换为 Go 软件包。
 
 ```bash
 gop run     # Run a Go+ program
 gop install # Build Go+ files and install target to GOBIN
+gop build   # Build Go+ files
 gop test    # Test Go+ packages
 gop fmt     # Format Go+ packages
 gop clean   # Clean all Go+ auto generated files
 gop go      # Convert Go+ packages into Go packages
 ```
+
+当我们使用 [`igop`](https://github.com/goplus/igop) 命令时，它会执行生成的字节码。
+
+```bash
+igop  # 运行一个 Go+ 程序
+```
+
+在字节码模式下，Go+ 不支持 `cgo`。然而，在 Go 代码生成模式下，Go+ 完全支持 `cgo`。
+
+## Go+ 的特性
 
 
 ### 有理数：bigint，bigrat，bigfloat
