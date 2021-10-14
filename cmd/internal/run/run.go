@@ -62,7 +62,7 @@ func init() {
 
 func saveGoFile(gofile string, pkg *gox.Package) error {
 	dir := filepath.Dir(gofile)
-	err := os.MkdirAll(dir, 0777)
+	err := os.MkdirAll(dir, 0755)
 	if err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func runCmd(cmd *base.Command, args []string) {
 		if isGo {
 			hash := sha1.Sum([]byte(src))
 			dir := os.Getenv("HOME") + "/.gop/run"
-			os.MkdirAll(dir, 0777)
+			os.MkdirAll(dir, 0755)
 			gofile = dir + "/g" + base64.RawURLEncoding.EncodeToString(hash[:]) + file
 		} else if hasMultiFiles(srcDir, ".gop") {
 			gofile = filepath.Join(srcDir, "gop_autogen_"+file+".go")
