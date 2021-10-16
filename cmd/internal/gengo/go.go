@@ -86,7 +86,7 @@ func init() {
 func runCmd(cmd *base.Command, args []string) {
 	err := flag.Parse(args)
 	if err != nil {
-		log.Fatalln("input arg parse failed:", err)
+		log.Fatalln("parse input arguments failed:", err)
 	}
 	if flag.NArg() < 1 {
 		cmd.Usage(os.Stderr)

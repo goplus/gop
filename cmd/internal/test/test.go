@@ -47,7 +47,7 @@ func init() {
 func runCmd(_ *base.Command, args []string) {
 	err := flag.Parse(base.SkipSwitches(args, flag))
 	if err != nil {
-		log.Fatalln("input arg parse failed:", err)
+		log.Fatalln("parse input arguments failed:", err)
 	}
 	ssargs := flag.Args()
 	if len(ssargs) == 0 {

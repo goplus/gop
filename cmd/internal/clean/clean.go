@@ -101,7 +101,7 @@ func init() {
 func runCmd(_ *base.Command, args []string) {
 	err := flag.Parse(args)
 	if err != nil {
-		log.Fatalln("input arg parse failed:", err)
+		log.Fatalln("parse input arguments failed:", err)
 	}
 	var dir string
 	if flag.NArg() == 0 {

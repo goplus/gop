@@ -117,7 +117,7 @@ func walk(path string, d fs.DirEntry, err error) error {
 func runCmd(cmd *base.Command, args []string) {
 	err := flag.Parse(args)
 	if err != nil {
-		log.Fatalln("input arg parse failed:", err)
+		log.Fatalln("parse input arguments failed:", err)
 	}
 	narg := flag.NArg()
 	if narg < 1 {
