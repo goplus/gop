@@ -22,6 +22,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/goplus/gop/cl"
@@ -42,7 +43,7 @@ func SkipSwitches(args []string, f *flag.FlagSet) []string {
 	return out
 }
 
-// Get build directory from arguments
+// GetBuildDir Get build directory from arguments
 func GetBuildDir(args []string) (dir string, recursive bool) {
 	if len(args) == 0 {
 		args = []string{"."}
@@ -52,10 +53,16 @@ func GetBuildDir(args []string) (dir string, recursive bool) {
 		dir = dir[:len(dir)-4]
 		recursive = true
 	}
+	if fi, err := os.Stat(dir); err == nil {
+		if fi.IsDir() {
+			return
+		}
+		return filepath.Dir(dir), recursive
+	}
 	return
 }
 
-// Generate go code before building or installing, and cache pkgs if success
+// GenGoForBuild Generate go code before building or installing, and cache pkgs if success
 func GenGoForBuild(dir string, recursive bool, errorHandle func()) {
 	hasError := false
 	runner := new(gengo.Runner)
@@ -81,10 +88,7 @@ func GenGoForBuild(dir string, recursive bool, errorHandle func()) {
 
 // RunGoCmd executes `go` command tools.
 func RunGoCmd(dir string, op string, args ...string) {
-	opwargs := make([]string, len(args)+1)
-	opwargs[0] = op
-	copy(opwargs[1:], args)
-	cmd := exec.Command("go", opwargs...)
+	cmd := exec.Command("go", append([]string{op}, args...)...)
 	cmd.Dir = dir
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
