@@ -62,7 +62,7 @@ Go 是如此，Go+ 亦是如此。
 
 将支持所有 Go 的特性（包括部分支持 `cgo`，[见下文](#bytecode-vs-go-code)）。
 
-Go+ 以导入所有 Go 软件包（即使是这些软件包使用 cgo）。
+Go+ 已导入所有 Go 软件包（即使是这些软件包使用 cgo）。
 
 ```go
 import (
