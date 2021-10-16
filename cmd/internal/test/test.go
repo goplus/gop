@@ -19,6 +19,7 @@ package test
 
 import (
 	"fmt"
+	"github.com/qiniu/x/log"
 	"os"
 	"strings"
 
@@ -43,8 +44,11 @@ func init() {
 	Cmd.Run = runCmd
 }
 
-func runCmd(cmd *base.Command, args []string) {
-	flag.Parse(base.SkipSwitches(args, flag))
+func runCmd(_ *base.Command, args []string) {
+	err := flag.Parse(base.SkipSwitches(args, flag))
+	if err != nil {
+		log.Fatalln("parse input arguments failed:", err)
+	}
 	ssargs := flag.Args()
 	if len(ssargs) == 0 {
 		ssargs = []string{"."}

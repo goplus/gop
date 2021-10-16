@@ -18,6 +18,7 @@ package clean
 
 import (
 	"fmt"
+	"github.com/qiniu/x/log"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -97,8 +98,11 @@ func init() {
 	Cmd.Run = runCmd
 }
 
-func runCmd(cmd *base.Command, args []string) {
-	flag.Parse(args)
+func runCmd(_ *base.Command, args []string) {
+	err := flag.Parse(args)
+	if err != nil {
+		log.Fatalln("parse input arguments failed:", err)
+	}
 	var dir string
 	if flag.NArg() == 0 {
 		dir = "."

@@ -20,6 +20,7 @@ package gopfmt
 import (
 	"bytes"
 	"fmt"
+	"github.com/qiniu/x/log"
 	"io/fs"
 	"io/ioutil"
 	"os"
@@ -114,7 +115,10 @@ func walk(path string, d fs.DirEntry, err error) error {
 }
 
 func runCmd(cmd *base.Command, args []string) {
-	flag.Parse(args)
+	err := flag.Parse(args)
+	if err != nil {
+		log.Fatalln("parse input arguments failed:", err)
+	}
 	narg := flag.NArg()
 	if narg < 1 {
 		cmd.Usage(os.Stderr)

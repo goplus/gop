@@ -19,6 +19,7 @@ package install
 
 import (
 	"fmt"
+	"github.com/qiniu/x/log"
 	"os"
 
 	"github.com/goplus/gop/cl"
@@ -41,8 +42,11 @@ func init() {
 	Cmd.Run = runCmd
 }
 
-func runCmd(cmd *base.Command, args []string) {
-	flag.Parse(base.SkipSwitches(args, flag))
+func runCmd(_ *base.Command, args []string) {
+	err := flag.Parse(base.SkipSwitches(args, flag))
+	if err != nil {
+		log.Fatalln("parse input arguments failed:", err)
+	}
 	ssargs := flag.Args()
 	dir, recursive := base.GetBuildDir(ssargs)
 
