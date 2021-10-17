@@ -139,7 +139,7 @@ See https://github.com/goplus/gop/tree/main/tutorial
 ## How to build
 
 ```bash
-git clone git@github.com:goplus/gop.git
+git clone https://github.com/goplus/gop.git
 cd gop
 ./all.bash
 ```

@@ -139,7 +139,7 @@ Go+ Jupyter 内核：
 ## 如何构建
 
 ```bash
-git clone git@github.com:goplus/gop.git
+git clone https://github.com/goplus/gop.git
 cd gop
 ./all.bash
 ```
