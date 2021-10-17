@@ -20,12 +20,13 @@ package gopfmt
 import (
 	"bytes"
 	"fmt"
-	"github.com/qiniu/x/log"
 	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/qiniu/x/log"
 
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/format"
