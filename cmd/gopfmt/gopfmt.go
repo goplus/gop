@@ -19,13 +19,14 @@ package main
 import (
 	"flag"
 	"fmt"
-	"go/format"
 	"io"
 	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/goplus/gop/format"
 )
 
 var (
