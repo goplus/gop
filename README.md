@@ -13,6 +13,16 @@
 * **For STEM education**: studying an engineering language that can be used to work in the future.
 * **For data science**: communicating with engineers in the same language.
 
+## How to install
+
+For now, we suggest you install Go+ from source code.
+
+```bash
+git clone https://github.com/goplus/gop.git
+cd gop
+./all.bash
+```
+
 ## Summary about Go+
 
 What are mainly impressions about Go+?
@@ -139,14 +149,6 @@ Go+ Jupyter kernel:
 
 See https://github.com/goplus/gop/tree/main/tutorial
 
-
-## How to build
-
-```bash
-git clone https://github.com/goplus/gop.git
-cd gop
-./all.bash
-```
 
 ## Bytecode vs. Go code
 
