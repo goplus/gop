@@ -1,19 +1,56 @@
 name: Bug Report
-description: Report a bug in goplus/gop
-labels: bug
+description: Create a report to help us improve
+
 body:
-  - type: textarea
-    id: problem
+  - type: markdown
     attributes:
-      label: What happened?
-      description: |
-        Please provide as much info as possible. Not doing so may result in your bug not being addressed in a timely manner.
+      value: |
+        ⚠️ Make sure to browse the opened and closed issues before submit your issue.
+
+  - type: textarea
+    id: sample
+    attributes:
+      label: "The following program `sample.gop` triggers an unexpected result"
+      value: |
+        // add a sample
+      render: coffee
     validations:
-      required: true        
+      required: true
 
   - type: textarea
     id: expected
     attributes:
-      label: What did you expect to happen?
+      label: Expected result
+      render: console
     validations:
       required: true
+
+  - type: textarea
+    id: got
+    attributes:
+      label: Got
+      description: |-
+        ```console
+        $ gop run ./sample.gop
+        // output
+        ```
+      placeholder: $ gop run ./sample.gop
+      render: console
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Gop Version
+      description: Can be a tag or a hash.
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Notes
+      description: Use [Markdown syntax](https://help.github.com/articles/github-flavored-markdown) if needed.
+    validations:
+      required: false
