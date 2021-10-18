@@ -9,6 +9,10 @@
 [![Readme](https://img.shields.io/badge/README-中文-teal.svg)](https://github.com/goplus/gop/blob/main/README_zh.md)
 [![GoDoc](https://pkg.go.dev/badge/github.com/goplus/gop.svg)](https://pkg.go.dev/mod/github.com/goplus/gop)
 
+* **For engineering**: working in the simplest language that can be mastered by children
+* **For STEM education**: studying an engineering language that can be used to work in the future
+* **For data science**: communicating with engineers in the same language
+
 ## Summary about Go+
 
 What are mainly impressions about Go+?
