@@ -13,6 +13,16 @@
 * **对于 STEM 教育而言**: 学习一门将来会在工作中用到的工程语言，将大有裨益。
 * **对于数据科学而言**: 意味着从业者将会使用跟工程师同样的语言，没有沟通障碍。
 
+## 如何安装 Go+？
+
+当前，我们推荐下载源代码来安装 Go+。
+
+```bash
+git clone https://github.com/goplus/gop.git
+cd gop
+./all.bash
+```
+
 ## Go+ 概要
 
 关于 Go+ 的主要印象是什么？
@@ -138,15 +148,6 @@ Go+ Jupyter 内核：
 ## 教程
 
 参见 https://github.com/goplus/gop/tree/main/tutorial
-
-
-## 如何构建
-
-```bash
-git clone https://github.com/goplus/gop.git
-cd gop
-./all.bash
-```
 
 
 ## 字节码与 Go 代码
