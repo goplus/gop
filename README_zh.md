@@ -9,9 +9,9 @@
 [![Readme](https://img.shields.io/badge/README-EN-teal.svg)](https://github.com/goplus/gop/blob/main/README.md)
 [![GoDoc](https://pkg.go.dev/badge/github.com/goplus/gop.svg)](https://pkg.go.dev/mod/github.com/goplus/gop)
 
-* **对于工程领域而言**: 意味着大家将会使用一门简单到小孩子都能掌握的语言。
-* **对于 STEM 教育而言**: 学习一门将来会在工作中用到的工程语言，将大有裨益。
-* **对于数据科学而言**: 意味着从业者将会使用跟工程师同样的语言，没有沟通障碍。
+* **对于工程领域而言**: 意味着大家将会使用一门简单、易学、好用的编程语言。
+* **对于 STEM 教育而言**: 掌握一门可能会在将来工作中用到的工程语言将大有裨益。
+* **对于数据科学家而言**: 意味着你们将和工程师使用同一种语言进行合作和交流。
 
 ## 如何安装 Go+？
 
