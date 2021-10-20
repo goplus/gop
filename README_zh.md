@@ -9,6 +9,20 @@
 [![Readme](https://img.shields.io/badge/README-EN-teal.svg)](https://github.com/goplus/gop/blob/main/README.md)
 [![GoDoc](https://pkg.go.dev/badge/github.com/goplus/gop.svg)](https://pkg.go.dev/mod/github.com/goplus/gop)
 
+* **对于工程领域而言**: 意味着大家将会使用一门简单、易学、好用的编程语言。
+* **对于 STEM 教育而言**: 掌握一门可能会在将来工作中用到的工程语言将大有裨益。
+* **对于数据科学家而言**: 意味着你们将和工程师使用同一种语言进行合作和交流。
+
+## 如何安装 Go+？
+
+当前，我们推荐下载源代码来安装 Go+。
+
+```bash
+git clone https://github.com/goplus/gop.git
+cd gop
+./all.bash
+```
+
 ## Go+ 概要
 
 关于 Go+ 的主要印象是什么？
@@ -134,15 +148,6 @@ Go+ Jupyter 内核：
 ## 教程
 
 参见 https://github.com/goplus/gop/tree/main/tutorial
-
-
-## 如何构建
-
-```bash
-git clone https://github.com/goplus/gop.git
-cd gop
-./all.bash
-```
 
 
 ## 字节码与 Go 代码
