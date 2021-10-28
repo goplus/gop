@@ -12,7 +12,9 @@ MANUAL_EXPORT_COMMAND=""
 GIT_COMMIT_HASH=$(git rev-parse --verify HEAD)
 BUILD_DATE=$(date '+%Y-%m-%d_%H-%M-%S')
 GIT_BRANCH=$(git symbolic-ref --short -q HEAD)
-GO_FLAGS="-X github.com/goplus/gop/build.Date=${BUILD_DATE} -X github.com/goplus/gop/build.Commit=${GIT_COMMIT_HASH} -X github.com/goplus/gop/build.Branch=${GIT_BRANCH}"
+GO_FLAGS="-X github.com/goplus/gop/build.Date=${BUILD_DATE} \
+  -X github.com/goplus/gop/build.Commit=${GIT_COMMIT_HASH} \
+  -X github.com/goplus/gop/build.Branch=${GIT_BRANCH}"
 
 command_exists() {
 	command -v "$@" >/dev/null 2>&1
