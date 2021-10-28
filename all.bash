@@ -9,6 +9,11 @@ ADD_GOPATH_COMMAND="export PATH=\$PATH:\$GOPATH/bin"
 ADD_GO_BIN_COMMAND="export PATH=\$PATH:\$HOME/go/bin"
 MANUAL_EXPORT_COMMAND=""
 
+GIT_COMMIT_HASH=$(git rev-parse --verify HEAD)
+BUILD_DATE=$(date '+%Y-%m-%d_%H-%M-%S')
+GIT_BRANCH=$(git symbolic-ref --short -q HEAD)
+GO_FLAGS="-X github.com/goplus/gop/build.Date=${BUILD_DATE} -X github.com/goplus/gop/build.Commit=${GIT_COMMIT_HASH} -X github.com/goplus/gop/build.Branch=${GIT_BRANCH}"
+
 command_exists() {
 	command -v "$@" >/dev/null 2>&1
 }
@@ -27,7 +32,10 @@ build_go_plus_tools() {
 
   echo "Installing Go+ tools..."
   cd $COMMANDS_DIR
-  go install -v ./...
+
+  # will be overwritten by gop build
+  go install -v -ldflags "${GO_FLAGS}" ./...
+
   echo "Go+ tools installed successfully!"
 }
 
@@ -58,7 +66,7 @@ build_go_plus_tutorials() {
   }
 
   echo "Building all Go+ tutorials."
-  gop install ./...
+  gop install -ldflags "${GO_FLAGS}" ./...
   echo "Go+ tutorials builded successfully!"
 }
 
