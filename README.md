@@ -464,7 +464,7 @@ How these `ErrWrap expressions` work? See [Error Handling](https://github.com/go
 Let's see an example written in Go+:
 
 ```go
-import "github.com/goplus/gop/ast/goptest"
+import "gop/ast/goptest"
 
 doc := goptest.New(`... Go+ code ...`)!
 
@@ -476,7 +476,7 @@ In many languages, there is a concept named `property` who has `get` and `set` m
 Suppose we have `get property`, the above example will be:
 
 ```go
-import "github.com/goplus/gop/ast/goptest"
+import "gop/ast/goptest"
 
 doc := goptest.New(`... Go+ code ...`)!
 

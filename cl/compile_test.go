@@ -1062,6 +1062,38 @@ func foo(script string) {
 `)
 }
 
+func TestSimplifyAutoProperty(t *testing.T) {
+	gopClTest(t, `import "gop/ast/goptest"
+
+func foo(script string) {
+	doc := goptest.New(script)!
+
+	println(doc.any.funcDecl.name)
+	println(doc.any.importSpec.name)
+}
+`, `package main
+
+import (
+	fmt "fmt"
+	goptest "github.com/goplus/gop/ast/goptest"
+	gopq "github.com/goplus/gop/ast/gopq"
+)
+
+func foo(script string) {
+	doc := func() (_gop_ret gopq.NodeSet) {
+		var _gop_err error
+		_gop_ret, _gop_err = goptest.New(script)
+		if _gop_err != nil {
+			panic(_gop_err)
+		}
+		return
+	}()
+	fmt.Println(doc.Any().FuncDecl().Name())
+	fmt.Println(doc.Any().ImportSpec().Name())
+}
+`)
+}
+
 func TestErrWrap(t *testing.T) {
 	gopClTest(t, `
 import "strconv"

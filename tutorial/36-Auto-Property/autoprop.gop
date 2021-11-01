@@ -1,5 +1,5 @@
 import (
-	"github.com/goplus/gop/ast/goptest"
+	"gop/ast/goptest"
 )
 
 script := `
