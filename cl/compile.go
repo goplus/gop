@@ -26,7 +26,6 @@ import (
 	"os"
 	"path"
 	"reflect"
-	"regexp"
 	"strings"
 
 	"github.com/goplus/gop/ast"
@@ -787,11 +786,9 @@ func loadFuncBody(ctx *blockCtx, fn *gox.Func, body *ast.BlockStmt) {
 }
 
 func simplifyGopPackage(pkgPath string) string {
-	match, _ := regexp.MatchString("^gop/(\\w+(/)*)+$", pkgPath)
-	if match {
+	if strings.HasPrefix(pkgPath, "gop/") {
 		return "github.com/goplus/" + pkgPath
 	}
-
 	return pkgPath
 }
 
