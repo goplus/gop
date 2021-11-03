@@ -26,6 +26,7 @@ import (
 	"os"
 	"path"
 	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/goplus/gop/ast"
@@ -785,9 +786,18 @@ func loadFuncBody(ctx *blockCtx, fn *gox.Func, body *ast.BlockStmt) {
 	cb.End()
 }
 
+func simplifyGopPackage(pkgPath string) string {
+	match, _ := regexp.MatchString("^gop/(\\w+(/)*)+$", pkgPath)
+	if match {
+		return "github.com/goplus/" + pkgPath
+	}
+
+	return pkgPath
+}
+
 func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 	pkgPath := toString(spec.Path)
-	pkg := ctx.pkg.Import(pkgPath)
+	pkg := ctx.pkg.Import(simplifyGopPackage(pkgPath))
 	var name string
 	if spec.Name != nil {
 		name = spec.Name.Name
