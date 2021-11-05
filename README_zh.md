@@ -464,7 +464,7 @@ addSafe("10", "abc"): 10
 让我们看看用 Go+ 编写的示例：
 
 ```go
-import "github.com/goplus/gop/ast/goptest"
+import "gop/ast/goptest"
 
 doc := goptest.New(`... Go+ code ...`)!
 
@@ -476,7 +476,7 @@ println(doc.Any().FuncDecl().Name())
 假设我们有 `get property`，上述示例是：
 
 ```go
-import "github.com/goplus/gop/ast/goptest"
+import "gop/ast/goptest"
 
 doc := goptest.New(`... Go+ code ...`)!
 
