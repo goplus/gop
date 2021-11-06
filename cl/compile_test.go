@@ -2334,9 +2334,15 @@ func ++(a foo) {
 	println("a++")
 }
 
+func (a foo) != (b foo) bool{
+	println("a!=b")	
+	return true
+}
+
 var a, b foo
 var c = a - b
 var d = -a       // TODO: -a have no return value!
+var e = a!=b
 `, `package main
 
 import fmt "fmt"
@@ -2352,6 +2358,10 @@ func (a foo) Gop_Sub(b foo) foo {
 	fmt.Println("a - b")
 	return foo{}
 }
+func (a foo) Gop_NE(b foo) bool {
+	fmt.Println("a!=b")
+	return true
+}
 func (a foo) Gop_Neg() {
 	fmt.Println("-a")
 }
@@ -2362,6 +2372,7 @@ func (a foo) Gop_Inc() {
 var a, b foo
 var c = a.Gop_Sub(b)
 var d = a.Gop_Neg()
+var e = a.Gop_NE(b)
 `)
 }
 
