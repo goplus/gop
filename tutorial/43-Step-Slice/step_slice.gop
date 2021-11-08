@@ -1,0 +1,3 @@
+for x, y := range 1:100:1 {
+	println(x,y)
+}

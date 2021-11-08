@@ -17,15 +17,14 @@
 package cl
 
 import (
+	goast "go/ast"
+	gotoken "go/token"
+	"go/types"
 	"log"
 	"math/big"
 	"reflect"
 	"strconv"
 	"strings"
-
-	goast "go/ast"
-	gotoken "go/token"
-	"go/types"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
@@ -201,6 +200,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 		compileCompositeLit(ctx, v, nil, false)
 	case *ast.SliceLit:
 		compileSliceLit(ctx, v)
+	case *ast.SliceStep:
+		compileSliceStep(ctx, v)
 	case *ast.IndexExpr:
 		compileIndexExpr(ctx, v, twoValue != nil && twoValue[0])
 	case *ast.SliceExpr:
@@ -685,6 +686,14 @@ func compileSliceLit(ctx *blockCtx, v *ast.SliceLit) {
 		compileExpr(ctx, elt)
 	}
 	ctx.cb.SliceLit(nil, n)
+}
+
+func compileSliceStep(ctx *blockCtx, v *ast.SliceStep) {
+	compileExpr(ctx, v.StartExpr)
+	compileExpr(ctx, v.EndExpr)
+	compileExpr(ctx, v.StepExpr)
+
+	ctx.cb.SliceStep(nil)
 }
 
 const (

@@ -206,3 +206,26 @@ func (p *ForPhraseStmt) End() token.Pos {
 func (*ForPhraseStmt) stmtNode() {}
 
 // -----------------------------------------------------------------------------
+
+// A SliceStep node represents a slice use step increase.
+type SliceStep struct {
+	Lcolon    token.Pos // position of ":"
+	StartExpr Expr      // start of composite elements; or nil
+	EndExpr   Expr      // end of composite elements; or nil
+	StepExpr  Expr      // step of composite elements; or nil
+	Rcolon    token.Pos // position of ":"
+}
+
+// Pos - position of first character belonging to the node
+func (p *SliceStep) Pos() token.Pos {
+	return p.StartExpr.Pos()
+}
+
+// End - position of first character immediately after the node
+func (p *SliceStep) End() token.Pos {
+	return p.EndExpr.Pos()
+}
+
+func (*SliceStep) exprNode() {}
+
+// -----------------------------------------------------------------------------

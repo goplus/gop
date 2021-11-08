@@ -22,10 +22,11 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/qiniu/x/log"
+
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
-	"github.com/qiniu/x/log"
 )
 
 // The parser structure holds the parser's internal state.
@@ -770,11 +771,12 @@ const (
 	resultArrayType = 1 << iota
 	resultSliceLit
 	resultSliceOp
+	resultSliceStep
 	resultComprehensionExpr
 	resultParenType
 	resultType
 	resultIdent     // expr or type
-	resultExprFlags = resultSliceLit | resultSliceOp | resultComprehensionExpr
+	resultExprFlags = resultSliceLit | resultSliceOp | resultComprehensionExpr | resultSliceStep
 	resultTypeFlags = resultArrayType | resultParenType | resultType
 )
 
@@ -876,6 +878,32 @@ func (p *parser) parseSliceLit(lbrack token.Pos, len ast.Expr) ast.Expr {
 		log.Printf("ast.SliceLit{Elts: %v}\n", elts)
 	}
 	return &ast.SliceLit{Lbrack: lbrack, Elts: elts, Rbrack: rbrack}
+}
+
+func (p *parser) parseSliceStepType(i ast.Expr, lhs, allowTuple bool) ast.Expr {
+	var start, end, step ast.Expr
+	var lcolon, rcolon token.Pos
+	start = i
+	for p.tok == token.COLON {
+		if end == nil {
+			lcolon = p.pos
+		} else {
+			rcolon = p.pos
+		}
+		p.next()
+		if end == nil {
+			end = p.parseOperand(lhs, allowTuple)
+		} else {
+			step = p.parseOperand(lhs, allowTuple)
+		}
+	}
+	if step == nil {
+		step = &ast.BasicLit{ValuePos: p.pos, Kind: token.INT, Value: "1"}
+	}
+	if debugParseOutput {
+		log.Printf("ast.StepType{Start: %v,End: %v, Step: %v}\n", start, end, step)
+	}
+	return &ast.SliceStep{Lcolon: lcolon, StartExpr: start, EndExpr: end, StepExpr: step, Rcolon: rcolon}
 }
 
 func newSliceLit(lbrack, rbrack token.Pos, len ast.Expr) *ast.SliceLit {
@@ -1431,6 +1459,8 @@ func (p *parser) parseOperand(lhs, allowTuple bool) ast.Expr {
 			p.resolve(x)
 		}
 		return x
+	case token.COLON:
+		return &ast.BasicLit{ValuePos: p.pos, Kind: token.INT, Value: "0"}
 	}
 
 	typ, result := p.tryIdentOrType(stateArrayTypeOrSliceLit, nil)
@@ -1750,6 +1780,7 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	case *ast.BinaryExpr:
 	//case *ast.TernaryExpr:
 	case *ast.ErrWrapExpr:
+	case *ast.SliceStep:
 	default:
 		// all other nodes are not proper expressions
 		p.errorExpected(x.Pos(), "expression", 3)
@@ -1833,6 +1864,9 @@ func (p *parser) parsePrimaryExpr(lhs, allowTuple, allowCmd bool) ast.Expr {
 L:
 	for {
 		switch p.tok {
+		case token.COLON:
+			x = p.parseSliceStepType(x, lhs, allowTuple)
+			break L
 		case token.PERIOD:
 			p.next()
 			if lhs {
