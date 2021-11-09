@@ -771,12 +771,11 @@ const (
 	resultArrayType = 1 << iota
 	resultSliceLit
 	resultSliceOp
-	resultSliceStep
 	resultComprehensionExpr
 	resultParenType
 	resultType
 	resultIdent     // expr or type
-	resultExprFlags = resultSliceLit | resultSliceOp | resultComprehensionExpr | resultSliceStep
+	resultExprFlags = resultSliceLit | resultSliceOp | resultComprehensionExpr
 	resultTypeFlags = resultArrayType | resultParenType | resultType
 )
 
@@ -880,7 +879,7 @@ func (p *parser) parseSliceLit(lbrack token.Pos, len ast.Expr) ast.Expr {
 	return &ast.SliceLit{Lbrack: lbrack, Elts: elts, Rbrack: rbrack}
 }
 
-func (p *parser) parseSliceStepType(i ast.Expr, lhs, allowTuple bool) ast.Expr {
+func (p *parser) parseRangeExpr(i ast.Expr, lhs, allowTuple bool) ast.Expr {
 	var start, end, step ast.Expr
 	var lcolon, rcolon token.Pos
 	start = i
@@ -903,7 +902,7 @@ func (p *parser) parseSliceStepType(i ast.Expr, lhs, allowTuple bool) ast.Expr {
 	if debugParseOutput {
 		log.Printf("ast.StepType{Start: %v,End: %v, Step: %v}\n", start, end, step)
 	}
-	return &ast.SliceStep{Lcolon: lcolon, StartExpr: start, EndExpr: end, StepExpr: step, Rcolon: rcolon}
+	return &ast.RangeExpr{Lcolon: lcolon, Low: start, High: end, Step: step, Rcolon: rcolon}
 }
 
 func newSliceLit(lbrack, rbrack token.Pos, len ast.Expr) *ast.SliceLit {
@@ -1780,7 +1779,7 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	case *ast.BinaryExpr:
 	//case *ast.TernaryExpr:
 	case *ast.ErrWrapExpr:
-	case *ast.SliceStep:
+	case *ast.RangeExpr:
 	default:
 		// all other nodes are not proper expressions
 		p.errorExpected(x.Pos(), "expression", 3)
@@ -1865,7 +1864,7 @@ L:
 	for {
 		switch p.tok {
 		case token.COLON:
-			x = p.parseSliceStepType(x, lhs, allowTuple)
+			x = p.parseRangeExpr(x, lhs, allowTuple)
 			break L
 		case token.PERIOD:
 			p.next()
