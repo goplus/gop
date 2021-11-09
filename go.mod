@@ -2,10 +2,6 @@ module github.com/goplus/gop
 
 go 1.16
 
-replace (
-	github.com/goplus/gop/builtin => ./builtin
-)
-
 require (
 	github.com/goplus/gox v1.7.10
 	github.com/qiniu/x v1.11.5

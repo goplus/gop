@@ -879,7 +879,7 @@ func (p *parser) parseSliceLit(lbrack token.Pos, len ast.Expr) ast.Expr {
 	return &ast.SliceLit{Lbrack: lbrack, Elts: elts, Rbrack: rbrack}
 }
 
-func (p *parser) parseRangeExpr(i ast.Expr, lhs, allowTuple bool) ast.Expr {
+func (p *parser) parseRangeExpr(i ast.Expr) ast.Expr {
 	var start, end, step ast.Expr
 	var lcolon, rcolon token.Pos
 	start = i
@@ -891,9 +891,9 @@ func (p *parser) parseRangeExpr(i ast.Expr, lhs, allowTuple bool) ast.Expr {
 		}
 		p.next()
 		if end == nil {
-			end = p.parseOperand(lhs, allowTuple)
+			end = p.parseValue(false)
 		} else {
-			step = p.parseOperand(lhs, allowTuple)
+			step = p.parseValue(false)
 		}
 	}
 	if step == nil {
@@ -1458,8 +1458,6 @@ func (p *parser) parseOperand(lhs, allowTuple bool) ast.Expr {
 			p.resolve(x)
 		}
 		return x
-	case token.COLON:
-		return &ast.BasicLit{ValuePos: p.pos, Kind: token.INT, Value: "0"}
 	}
 
 	typ, result := p.tryIdentOrType(stateArrayTypeOrSliceLit, nil)
@@ -1819,6 +1817,16 @@ func isLiteralType(x ast.Expr) bool {
 	return true
 }
 
+// isRangeElem determine whether it is the type required by the element
+func isRangeElem(x ast.Expr) bool {
+	switch t := x.(type) {
+	case *ast.BasicLit:
+		return t.Kind == token.INT || t.Kind == token.FLOAT
+	default:
+		return false // all other nodes are not legal composite literal types
+	}
+}
+
 // If x is of the form *T, deref returns T, otherwise it returns x.
 func deref(x ast.Expr) ast.Expr {
 	if p, isPtr := x.(*ast.StarExpr); isPtr {
@@ -1863,9 +1871,6 @@ func (p *parser) parsePrimaryExpr(lhs, allowTuple, allowCmd bool) ast.Expr {
 L:
 	for {
 		switch p.tok {
-		case token.COLON:
-			x = p.parseRangeExpr(x, lhs, allowTuple)
-			break L
 		case token.PERIOD:
 			p.next()
 			if lhs {
@@ -1907,6 +1912,12 @@ L:
 					p.resolve(x)
 				}
 				x = p.parseLiteralValue(x)
+			} else {
+				break L
+			}
+		case token.COLON:
+			if isRangeElem(x) {
+				x = p.parseRangeExpr(x)
 			} else {
 				break L
 			}
