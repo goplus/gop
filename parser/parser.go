@@ -671,23 +671,23 @@ func (p *parser) parseIdentList() (list []*ast.Ident) {
 // Common productions
 
 // If lhs is set, result list elements which are identifiers are not resolved.
-func (p *parser) parseExprList(lhs, allowCmd, listVal bool) (list []ast.Expr) {
+func (p *parser) parseExprList(lhs, allowCmd, disableRangeExpr bool) (list []ast.Expr) {
 	if p.trace {
 		defer un(trace(p, "ExpressionList"))
 	}
 
-	list = append(list, p.checkExpr(p.parseExpr(lhs, allowCmd, listVal)))
+	list = append(list, p.checkExpr(p.parseExpr(lhs, allowCmd, disableRangeExpr)))
 	for p.tok == token.COMMA {
 		p.next()
-		list = append(list, p.checkExpr(p.parseExpr(lhs, false, listVal)))
+		list = append(list, p.checkExpr(p.parseExpr(lhs, false, disableRangeExpr)))
 	}
 	return
 }
 
-func (p *parser) parseLHSList(allowCmd, listVal bool) []ast.Expr {
+func (p *parser) parseLHSList(allowCmd, disableRangeExpr bool) []ast.Expr {
 	old := p.inRHS
 	p.inRHS = false
-	list := p.parseExprList(true, allowCmd, listVal)
+	list := p.parseExprList(true, allowCmd, disableRangeExpr)
 	switch p.tok {
 	case token.DEFINE:
 		// lhs of a short variable declaration
@@ -712,10 +712,10 @@ func (p *parser) parseLHSList(allowCmd, listVal bool) []ast.Expr {
 	return list
 }
 
-func (p *parser) parseRHSList(listVal bool) []ast.Expr {
+func (p *parser) parseRHSList(disableRangeExpr bool) []ast.Expr {
 	old := p.inRHS
 	p.inRHS = true
-	list := p.parseExprList(false, false, listVal)
+	list := p.parseExprList(false, false, disableRangeExpr)
 	p.inRHS = old
 	return list
 }
@@ -1395,7 +1395,7 @@ func (p *parser) isCommand(x ast.Expr) bool {
 // types of the form [...]T. Callers must verify the result.
 // If lhs is set and the result is an identifier, it is not resolved.
 //
-func (p *parser) parseOperand(lhs, allowTuple, listVal bool) ast.Expr {
+func (p *parser) parseOperand(lhs, allowTuple, disableRangeExpr bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "Operand"))
 	}
@@ -1462,7 +1462,7 @@ func (p *parser) parseOperand(lhs, allowTuple, listVal bool) ast.Expr {
 		}
 		return x
 	case token.COLON:
-		if !listVal {
+		if !disableRangeExpr {
 			return p.parseRangeExpr(nil)
 		}
 	}
@@ -1617,13 +1617,13 @@ func (p *parser) parseCallOrConversion(fun ast.Expr, isCmd bool) *ast.CallExpr {
 		Fun: fun, Lparen: lparen, Args: list, Ellipsis: ellipsis, Rparen: rparen, NoParenEnd: noParenEnd}
 }
 
-func (p *parser) parseValue(keyOk, listVal bool) ast.Expr {
+func (p *parser) parseValue(keyOk, disableRangeExpr bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "Element"))
 	}
 
 	if p.tok == token.LBRACE {
-		return p.parseLiteralValueOrMapComprehension(listVal)
+		return p.parseLiteralValueOrMapComprehension(disableRangeExpr)
 	}
 
 	// Because the parser doesn't know the composite literal type, it cannot
@@ -1642,7 +1642,7 @@ func (p *parser) parseValue(keyOk, listVal bool) ast.Expr {
 	// undeclared; or b) it is a struct field. In the former case, the type
 	// checker can do a top-level lookup, and in the latter case it will do
 	// a separate field lookup.
-	x := p.checkExpr(p.parseExpr(keyOk, false, listVal))
+	x := p.checkExpr(p.parseExpr(keyOk, false, disableRangeExpr))
 	if keyOk {
 		if p.tok == token.COLON {
 			// Try to resolve the key but don't collect it
@@ -1659,16 +1659,16 @@ func (p *parser) parseValue(keyOk, listVal bool) ast.Expr {
 	return x
 }
 
-func (p *parser) parseElement(listVal bool) ast.Expr {
+func (p *parser) parseElement(disableRangeExpr bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "Element"))
 	}
 
-	x := p.parseValue(true, listVal)
+	x := p.parseValue(true, disableRangeExpr)
 	if p.tok == token.COLON {
 		colon := p.pos
 		p.next()
-		x = &ast.KeyValueExpr{Key: x, Colon: colon, Value: p.parseValue(false, listVal)}
+		x = &ast.KeyValueExpr{Key: x, Colon: colon, Value: p.parseValue(false, disableRangeExpr)}
 	}
 
 	return x
@@ -1678,7 +1678,7 @@ func (p *parser) parseElement(listVal bool) ast.Expr {
 // {for k, v <- listOrMap, cond}
 // {expr for k, v <- listOrMap, cond}
 // {kexpr: vexpr for k, v <- listOrMap, cond}
-func (p *parser) parseLiteralValueOrMapComprehension(listVal bool) ast.Expr {
+func (p *parser) parseLiteralValueOrMapComprehension(disableRangeExpr bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "LiteralValue"))
 	}
@@ -1688,7 +1688,7 @@ func (p *parser) parseLiteralValueOrMapComprehension(listVal bool) ast.Expr {
 	var mce *ast.ComprehensionExpr
 	p.exprLev++
 	if p.tok != token.RBRACE {
-		elts, mce = p.parseElementListOrComprehension(listVal)
+		elts, mce = p.parseElementListOrComprehension(disableRangeExpr)
 	}
 	p.exprLev--
 	rbrace := p.expectClosing(token.RBRACE, "composite literal")
@@ -1699,7 +1699,7 @@ func (p *parser) parseLiteralValueOrMapComprehension(listVal bool) ast.Expr {
 	return &ast.CompositeLit{Lbrace: lbrace, Elts: elts, Rbrace: rbrace}
 }
 
-func (p *parser) parseElementListOrComprehension(listVal bool) (list []ast.Expr, mce *ast.ComprehensionExpr) {
+func (p *parser) parseElementListOrComprehension(disableRangeExpr bool) (list []ast.Expr, mce *ast.ComprehensionExpr) {
 	if p.trace {
 		defer un(trace(p, "ElementList"))
 	}
@@ -1709,7 +1709,7 @@ func (p *parser) parseElementListOrComprehension(listVal bool) (list []ast.Expr,
 		return nil, &ast.ComprehensionExpr{Fors: phrases}
 	}
 	for p.tok != token.RBRACE && p.tok != token.EOF {
-		list = append(list, p.parseElement(listVal))
+		list = append(list, p.parseElement(disableRangeExpr))
 		if p.tok == token.FOR { // for k, v <- container
 			if len(list) != 1 {
 				log.Panicln("TODO: invalid comprehension: too may elements.")
@@ -1725,13 +1725,13 @@ func (p *parser) parseElementListOrComprehension(listVal bool) (list []ast.Expr,
 	return
 }
 
-func (p *parser) parseElementList(listVal bool) (list []ast.Expr) {
+func (p *parser) parseElementList(disableRangeExpr bool) (list []ast.Expr) {
 	if p.trace {
 		defer un(trace(p, "ElementList"))
 	}
 
 	for p.tok != token.RBRACE && p.tok != token.EOF {
-		list = append(list, p.parseElement(listVal))
+		list = append(list, p.parseElement(disableRangeExpr))
 		if !p.atComma("composite literal", token.RBRACE) {
 			break
 		}
@@ -1869,12 +1869,12 @@ func (p *parser) checkExprOrType(x ast.Expr) ast.Expr {
 }
 
 // If lhs is set and the result is an identifier, it is not resolved.
-func (p *parser) parsePrimaryExpr(lhs, allowTuple, allowCmd, listVal bool) ast.Expr {
+func (p *parser) parsePrimaryExpr(lhs, allowTuple, allowCmd, disableRangeExpr bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "PrimaryExpr"))
 	}
 
-	x := p.parseOperand(lhs, allowTuple, listVal)
+	x := p.parseOperand(lhs, allowTuple, disableRangeExpr)
 L:
 	for {
 		switch p.tok {
@@ -1923,7 +1923,7 @@ L:
 				break L
 			}
 		case token.COLON:
-			if isRangeElem(x) && !listVal {
+			if isRangeElem(x) && !disableRangeExpr {
 				x = p.parseRangeExpr(x)
 			}
 			break L
@@ -1943,7 +1943,7 @@ L:
 }
 
 // If lhs is set and the result is an identifier, it is not resolved.
-func (p *parser) parseUnaryExpr(lhs, allowTuple, allowCmd, listVal bool) ast.Expr {
+func (p *parser) parseUnaryExpr(lhs, allowTuple, allowCmd, disableRangeExpr bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "UnaryExpr"))
 	}
@@ -2009,12 +2009,12 @@ func (p *parser) parseUnaryExpr(lhs, allowTuple, allowCmd, listVal bool) ast.Exp
 		return &ast.StarExpr{Star: pos, X: p.checkExprOrType(x)}
 	}
 
-	return p.parseErrWrapExpr(lhs, allowTuple, allowCmd, listVal)
+	return p.parseErrWrapExpr(lhs, allowTuple, allowCmd, disableRangeExpr)
 }
 
 // parseErrWrapExpr: expr! expr? expr?:defval
-func (p *parser) parseErrWrapExpr(lhs, allowTuple, allowCmd, listVal bool) ast.Expr {
-	x := p.parsePrimaryExpr(lhs, allowTuple, allowCmd, listVal)
+func (p *parser) parseErrWrapExpr(lhs, allowTuple, allowCmd, disableRangeExpr bool) ast.Expr {
+	x := p.parsePrimaryExpr(lhs, allowTuple, allowCmd, disableRangeExpr)
 	switch p.tok {
 	case token.NOT: // expr!
 		expr := &ast.ErrWrapExpr{X: x, Tok: token.NOT, TokPos: p.pos}
@@ -2042,12 +2042,12 @@ func (p *parser) tokPrec() (token.Token, int) {
 }
 
 // If lhs is set and the result is an identifier, it is not resolved.
-func (p *parser) parseBinaryExpr(lhs bool, prec1 int, allowTuple, allowCmd, listVal bool) ast.Expr {
+func (p *parser) parseBinaryExpr(lhs bool, prec1 int, allowTuple, allowCmd, disableRangeExpr bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "BinaryExpr"))
 	}
 
-	x := p.parseUnaryExpr(lhs, allowTuple, allowCmd, listVal)
+	x := p.parseUnaryExpr(lhs, allowTuple, allowCmd, disableRangeExpr)
 	for {
 		op, oprec := p.tokPrec()
 		if oprec < prec1 {
@@ -2058,7 +2058,7 @@ func (p *parser) parseBinaryExpr(lhs bool, prec1 int, allowTuple, allowCmd, list
 			p.resolve(x)
 			lhs = false
 		}
-		y := p.parseBinaryExpr(false, oprec+1, false, false, listVal)
+		y := p.parseBinaryExpr(false, oprec+1, false, false, disableRangeExpr)
 		x = &ast.BinaryExpr{X: p.checkExpr(x), OpPos: pos, Op: op, Y: p.checkExpr(y)}
 	}
 }
@@ -2068,11 +2068,11 @@ type tupleExpr struct {
 	items []*ast.Ident
 }
 
-func (p *parser) parseLambdaExpr(allowCmd, listVal bool) ast.Expr {
+func (p *parser) parseLambdaExpr(allowCmd, disableRangeExpr bool) ast.Expr {
 	var x ast.Expr
 	var first = p.pos
 	if p.tok != token.RARROW {
-		x = p.parseBinaryExpr(false, token.LowestPrec+1, true, allowCmd, listVal)
+		x = p.parseBinaryExpr(false, token.LowestPrec+1, true, allowCmd, disableRangeExpr)
 	}
 	if p.tok == token.RARROW { // =>
 		var rarrow = p.pos
@@ -2141,28 +2141,28 @@ func (p *parser) parseLambdaExpr(allowCmd, listVal bool) ast.Expr {
 // The result may be a type or even a raw type ([...]int). Callers must
 // check the result (using checkExpr or checkExprOrType), depending on
 // context.
-func (p *parser) parseExpr(lhs, allowCmd, listVal bool) ast.Expr {
+func (p *parser) parseExpr(lhs, allowCmd, disableRangeExpr bool) ast.Expr {
 	if p.trace {
-		defer un(trace(p, fmt.Sprintf("Expression-%v", listVal)))
+		defer un(trace(p, fmt.Sprintf("Expression-%v", disableRangeExpr)))
 	}
 	if lhs {
-		return p.parseBinaryExpr(lhs, token.LowestPrec+1, false, allowCmd, listVal)
+		return p.parseBinaryExpr(lhs, token.LowestPrec+1, false, allowCmd, disableRangeExpr)
 	}
-	return p.parseLambdaExpr(allowCmd, listVal)
+	return p.parseLambdaExpr(allowCmd, disableRangeExpr)
 }
 
-func (p *parser) parseRHS(listVal bool) ast.Expr {
+func (p *parser) parseRHS(disableRangeExpr bool) ast.Expr {
 	old := p.inRHS
 	p.inRHS = true
-	x := p.checkExpr(p.parseExpr(false, false, listVal))
+	x := p.checkExpr(p.parseExpr(false, false, disableRangeExpr))
 	p.inRHS = old
 	return x
 }
 
-func (p *parser) parseRHSOrType(listVal bool) ast.Expr {
+func (p *parser) parseRHSOrType(disableRangeExpr bool) ast.Expr {
 	old := p.inRHS
 	p.inRHS = true
-	x := p.checkExprOrType(p.parseExpr(false, false, listVal))
+	x := p.checkExprOrType(p.parseExpr(false, false, disableRangeExpr))
 	p.inRHS = old
 	return x
 }
