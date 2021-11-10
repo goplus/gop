@@ -17,15 +17,14 @@
 package cl
 
 import (
+	goast "go/ast"
+	gotoken "go/token"
+	"go/types"
 	"log"
 	"math/big"
 	"reflect"
 	"strconv"
 	"strings"
-
-	goast "go/ast"
-	gotoken "go/token"
-	"go/types"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
@@ -201,6 +200,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 		compileCompositeLit(ctx, v, nil, false)
 	case *ast.SliceLit:
 		compileSliceLit(ctx, v)
+	case *ast.RangeExpr:
+		compileRangeExpr(ctx, v)
 	case *ast.IndexExpr:
 		compileIndexExpr(ctx, v, twoValue != nil && twoValue[0])
 	case *ast.SliceExpr:
@@ -685,6 +686,23 @@ func compileSliceLit(ctx *blockCtx, v *ast.SliceLit) {
 		compileExpr(ctx, elt)
 	}
 	ctx.cb.SliceLit(nil, n)
+}
+
+func compileRangeExpr(ctx *blockCtx, v *ast.RangeExpr) {
+	pkg, cb := ctx.pkg, ctx.cb
+	cb.Val(pkg.Builtin().Ref("newRange"))
+	if v.Low == nil {
+		ctx.cb.Val(&goast.BasicLit{Kind: gotoken.Token(token.INT), Value: "0"}, v)
+	} else {
+		compileExpr(ctx, v.Low)
+	}
+	compileExpr(ctx, v.High)
+	if v.Step == nil {
+		ctx.cb.Val(&goast.BasicLit{Kind: gotoken.Token(token.INT), Value: "1"}, v)
+	} else {
+		compileExpr(ctx, v.Step)
+	}
+	cb.Call(3)
 }
 
 const (

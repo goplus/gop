@@ -1084,6 +1084,17 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		p.print(token.RARROW, blank)
 		p.block(x.Body, 1)
 
+	case *ast.RangeExpr:
+		if x.Low != nil {
+			p.expr(x.Low)
+		}
+		p.print(token.COLON)
+		p.expr(x.High)
+		if x.Step != nil {
+			p.print(token.COLON)
+			p.expr(x.Step)
+		}
+
 	default:
 		log.Fatalf("unreachable %T\n", x)
 	}

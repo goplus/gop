@@ -206,3 +206,35 @@ func (p *ForPhraseStmt) End() token.Pos {
 func (*ForPhraseStmt) stmtNode() {}
 
 // -----------------------------------------------------------------------------
+
+// A RangeExpr node represents a slice use step increase.
+type RangeExpr struct {
+	Low  Expr      // start of composite elements; or nil
+	To   token.Pos // position of ":"
+	High Expr      // end of composite elements; or nil
+	By   token.Pos // position of ":" or token.NoPos
+	Step Expr      // step of composite elements; or nil
+}
+
+// Pos - position of first character belonging to the node
+func (p *RangeExpr) Pos() token.Pos {
+	if p.Low != nil {
+		return p.Low.Pos()
+	}
+	return p.To
+}
+
+// End - position of first character immediately after the node
+func (p *RangeExpr) End() token.Pos {
+	if p.Step != nil {
+		return p.Step.End()
+	}
+	if p.By != token.NoPos {
+		return p.By
+	}
+	return p.High.End()
+}
+
+func (*RangeExpr) exprNode() {}
+
+// -----------------------------------------------------------------------------

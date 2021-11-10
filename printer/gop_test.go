@@ -98,7 +98,7 @@ func diffBytes(t *testing.T, dst, src []byte) {
 		}
 	}
 	if len(dst) != len(src) {
-		t.Errorf("len(dst) = %d, len(src) = %d\nsrc = %q", len(dst), len(src), src)
+		t.Errorf("len(dst) = %d, len(src) = %d\ndst = %q\nsrc = %q", len(dst), len(src), dst, src)
 	}
 }
 

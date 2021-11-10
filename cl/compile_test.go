@@ -23,6 +23,8 @@ import (
 	"syscall"
 	"testing"
 
+	"golang.org/x/tools/go/packages"
+
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/parser"
@@ -30,7 +32,6 @@ import (
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
-	"golang.org/x/tools/go/packages"
 )
 
 var (
@@ -3078,4 +3079,100 @@ func newRepo() Repo {
 }
 `, "")
 	}
+}
+
+func TestRangeExpr(t *testing.T) {
+	gopClTest(t, `
+for i := range :10 {
+	println(i)
+}`, `package main
+
+import (
+	fmt "fmt"
+	builtin "github.com/goplus/gop/builtin"
+)
+
+func main() {
+	for _gop_it := builtin.NewRange__0(0, 10, 1).Gop_Enum(); ; {
+		var _gop_ok bool
+		i, _gop_ok := _gop_it.Next()
+		if !_gop_ok {
+			break
+		}
+		fmt.Println(i)
+	}
+}
+`)
+}
+
+func TestRangeExpr2(t *testing.T) {
+	gopClTest(t, `
+for i := range 1:10:2 {
+	println(i)
+}`, `package main
+
+import (
+	fmt "fmt"
+	builtin "github.com/goplus/gop/builtin"
+)
+
+func main() {
+	for _gop_it := builtin.NewRange__0(1, 10, 2).Gop_Enum(); ; {
+		var _gop_ok bool
+		i, _gop_ok := _gop_it.Next()
+		if !_gop_ok {
+			break
+		}
+		fmt.Println(i)
+	}
+}
+`)
+}
+
+func TestRangeExpr3(t *testing.T) {
+	gopClTest(t, `
+for i := range 1:10 {
+	println(i)
+}`, `package main
+
+import (
+	fmt "fmt"
+	builtin "github.com/goplus/gop/builtin"
+)
+
+func main() {
+	for _gop_it := builtin.NewRange__0(1, 10, 1).Gop_Enum(); ; {
+		var _gop_ok bool
+		i, _gop_ok := _gop_it.Next()
+		if !_gop_ok {
+			break
+		}
+		fmt.Println(i)
+	}
+}
+`)
+}
+
+func TestRangeExpr4(t *testing.T) {
+	gopClTest(t, `
+for i := range :10:2 {
+	println(i)
+}`, `package main
+
+import (
+	fmt "fmt"
+	builtin "github.com/goplus/gop/builtin"
+)
+
+func main() {
+	for _gop_it := builtin.NewRange__0(0, 10, 2).Gop_Enum(); ; {
+		var _gop_ok bool
+		i, _gop_ok := _gop_it.Next()
+		if !_gop_ok {
+			break
+		}
+		fmt.Println(i)
+	}
+}
+`)
 }

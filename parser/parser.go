@@ -22,10 +22,11 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/qiniu/x/log"
+
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
-	"github.com/qiniu/x/log"
 )
 
 // The parser structure holds the parser's internal state.
@@ -670,23 +671,23 @@ func (p *parser) parseIdentList() (list []*ast.Ident) {
 // Common productions
 
 // If lhs is set, result list elements which are identifiers are not resolved.
-func (p *parser) parseExprList(lhs, allowCmd bool) (list []ast.Expr) {
+func (p *parser) parseExprList(lhs, allowCmd, disableRangeExpr bool) (list []ast.Expr) {
 	if p.trace {
 		defer un(trace(p, "ExpressionList"))
 	}
 
-	list = append(list, p.checkExpr(p.parseExpr(lhs, allowCmd)))
+	list = append(list, p.checkExpr(p.parseExpr(lhs, allowCmd, disableRangeExpr)))
 	for p.tok == token.COMMA {
 		p.next()
-		list = append(list, p.checkExpr(p.parseExpr(lhs, false)))
+		list = append(list, p.checkExpr(p.parseExpr(lhs, false, disableRangeExpr)))
 	}
 	return
 }
 
-func (p *parser) parseLHSList(allowCmd bool) []ast.Expr {
+func (p *parser) parseLHSList(allowCmd, disableRangeExpr bool) []ast.Expr {
 	old := p.inRHS
 	p.inRHS = false
-	list := p.parseExprList(true, allowCmd)
+	list := p.parseExprList(true, allowCmd, disableRangeExpr)
 	switch p.tok {
 	case token.DEFINE:
 		// lhs of a short variable declaration
@@ -711,10 +712,10 @@ func (p *parser) parseLHSList(allowCmd bool) []ast.Expr {
 	return list
 }
 
-func (p *parser) parseRHSList() []ast.Expr {
+func (p *parser) parseRHSList(disableRangeExpr bool) []ast.Expr {
 	old := p.inRHS
 	p.inRHS = true
-	list := p.parseExprList(false, false)
+	list := p.parseExprList(false, false, disableRangeExpr)
 	p.inRHS = old
 	return list
 }
@@ -792,7 +793,7 @@ func (p *parser) parseArrayTypeOrSliceLit(state int, slice ast.Expr) (expr ast.E
 		len = &ast.Ellipsis{Ellipsis: p.pos}
 		p.next()
 	} else if p.tok != token.RBRACK {
-		len = p.parseRHS()
+		len = p.parseRHS(true)
 		switch state {
 		case stateArrayTypeOrSliceLit:
 			switch p.tok {
@@ -866,7 +867,7 @@ func (p *parser) parseSliceLit(lbrack token.Pos, len ast.Expr) ast.Expr {
 	for p.tok == token.COMMA {
 		p.next()
 		if p.tok != token.RBRACK {
-			elt := p.parseRHS()
+			elt := p.parseRHS(true)
 			elts = append(elts, elt)
 		}
 	}
@@ -876,6 +877,35 @@ func (p *parser) parseSliceLit(lbrack token.Pos, len ast.Expr) ast.Expr {
 		log.Printf("ast.SliceLit{Elts: %v}\n", elts)
 	}
 	return &ast.SliceLit{Lbrack: lbrack, Elts: elts, Rbrack: rbrack}
+}
+
+func (p *parser) parseRangeExpr(i ast.Expr) ast.Expr {
+	var start, end, step ast.Expr
+	var to, by token.Pos
+	start = i
+	for p.tok == token.COLON {
+		if end == nil {
+			to = p.pos
+		} else {
+			by = p.pos
+		}
+		p.next()
+		if end == nil {
+			end = p.parseValue(false, true)
+		} else {
+			step = p.parseValue(false, true)
+		}
+	}
+	// if start == nil {
+	// 	start = &ast.BasicLit{ValuePos: p.pos, Kind: token.INT, Value: "0"}
+	// }
+	// if step == nil {
+	// 	step = &ast.BasicLit{ValuePos: p.pos, Kind: token.INT, Value: "1"}
+	// }
+	if debugParseOutput {
+		log.Printf("ast.RangeExpr{Low: %v,High: %v, Step: %v}\n", start, end, step)
+	}
+	return &ast.RangeExpr{To: to, Low: start, High: end, Step: step, By: by}
 }
 
 func newSliceLit(lbrack, rbrack token.Pos, len ast.Expr) *ast.SliceLit {
@@ -1365,7 +1395,7 @@ func (p *parser) isCommand(x ast.Expr) bool {
 // types of the form [...]T. Callers must verify the result.
 // If lhs is set and the result is an identifier, it is not resolved.
 //
-func (p *parser) parseOperand(lhs, allowTuple bool) ast.Expr {
+func (p *parser) parseOperand(lhs, allowTuple, disableRangeExpr bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "Operand"))
 	}
@@ -1394,7 +1424,7 @@ func (p *parser) parseOperand(lhs, allowTuple bool) ast.Expr {
 			return &tupleExpr{}
 		}
 		p.exprLev++
-		x := p.parseRHSOrType() // types may be parenthesized: (some type)
+		x := p.parseRHSOrType(true) // types may be parenthesized: (some type)
 		if allowTuple && p.tok == token.COMMA {
 			// (x, y, ...) => expr
 			items := make([]*ast.Ident, 1, 2)
@@ -1419,7 +1449,7 @@ func (p *parser) parseOperand(lhs, allowTuple bool) ast.Expr {
 
 	case token.LBRACE:
 		if !lhs { // rhs: mapLit - {k1: v1, k2: v2, ...}
-			return p.parseLiteralValueOrMapComprehension()
+			return p.parseLiteralValueOrMapComprehension(true)
 		}
 
 	case token.GOTO, token.BREAK, token.CONTINUE, token.FALLTHROUGH:
@@ -1431,6 +1461,10 @@ func (p *parser) parseOperand(lhs, allowTuple bool) ast.Expr {
 			p.resolve(x)
 		}
 		return x
+	case token.COLON:
+		if !disableRangeExpr {
+			return p.parseRangeExpr(nil)
+		}
 	}
 
 	typ, result := p.tryIdentOrType(stateArrayTypeOrSliceLit, nil)
@@ -1488,7 +1522,7 @@ func (p *parser) parseIndexOrSlice(x ast.Expr) ast.Expr {
 
 	var idx ast.Expr
 	if p.tok != token.COLON {
-		idx = p.parseRHS()
+		idx = p.parseRHS(true)
 	}
 	return p.parseIndexOrSliceContinue(x, lbrack, idx)
 }
@@ -1506,7 +1540,7 @@ func (p *parser) parseIndexOrSliceContinue(x ast.Expr, lbrack token.Pos, idx ast
 		ncolons++
 		p.next()
 		if p.tok != token.COLON && p.tok != token.RBRACK && p.tok != token.EOF {
-			index[ncolons] = p.parseRHS()
+			index[ncolons] = p.parseRHS(true)
 		}
 	}
 	p.exprLev--
@@ -1556,7 +1590,7 @@ func (p *parser) parseCallOrConversion(fun ast.Expr, isCmd bool) *ast.CallExpr {
 	var list []ast.Expr
 	var ellipsis token.Pos
 	for p.tok != endTok && p.tok != token.EOF && !ellipsis.IsValid() {
-		list = append(list, p.parseRHSOrType()) // builtins may expect a type: make(some type, ...)
+		list = append(list, p.parseRHSOrType(true)) // builtins may expect a type: make(some type, ...)
 		if p.tok == token.ELLIPSIS {
 			ellipsis = p.pos
 			p.next()
@@ -1583,13 +1617,13 @@ func (p *parser) parseCallOrConversion(fun ast.Expr, isCmd bool) *ast.CallExpr {
 		Fun: fun, Lparen: lparen, Args: list, Ellipsis: ellipsis, Rparen: rparen, NoParenEnd: noParenEnd}
 }
 
-func (p *parser) parseValue(keyOk bool) ast.Expr {
+func (p *parser) parseValue(keyOk, disableRangeExpr bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "Element"))
 	}
 
 	if p.tok == token.LBRACE {
-		return p.parseLiteralValueOrMapComprehension()
+		return p.parseLiteralValueOrMapComprehension(disableRangeExpr)
 	}
 
 	// Because the parser doesn't know the composite literal type, it cannot
@@ -1608,7 +1642,7 @@ func (p *parser) parseValue(keyOk bool) ast.Expr {
 	// undeclared; or b) it is a struct field. In the former case, the type
 	// checker can do a top-level lookup, and in the latter case it will do
 	// a separate field lookup.
-	x := p.checkExpr(p.parseExpr(keyOk, false))
+	x := p.checkExpr(p.parseExpr(keyOk, false, disableRangeExpr))
 	if keyOk {
 		if p.tok == token.COLON {
 			// Try to resolve the key but don't collect it
@@ -1625,16 +1659,16 @@ func (p *parser) parseValue(keyOk bool) ast.Expr {
 	return x
 }
 
-func (p *parser) parseElement() ast.Expr {
+func (p *parser) parseElement(disableRangeExpr bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "Element"))
 	}
 
-	x := p.parseValue(true)
+	x := p.parseValue(true, disableRangeExpr)
 	if p.tok == token.COLON {
 		colon := p.pos
 		p.next()
-		x = &ast.KeyValueExpr{Key: x, Colon: colon, Value: p.parseValue(false)}
+		x = &ast.KeyValueExpr{Key: x, Colon: colon, Value: p.parseValue(false, disableRangeExpr)}
 	}
 
 	return x
@@ -1644,7 +1678,7 @@ func (p *parser) parseElement() ast.Expr {
 // {for k, v <- listOrMap, cond}
 // {expr for k, v <- listOrMap, cond}
 // {kexpr: vexpr for k, v <- listOrMap, cond}
-func (p *parser) parseLiteralValueOrMapComprehension() ast.Expr {
+func (p *parser) parseLiteralValueOrMapComprehension(disableRangeExpr bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "LiteralValue"))
 	}
@@ -1654,7 +1688,7 @@ func (p *parser) parseLiteralValueOrMapComprehension() ast.Expr {
 	var mce *ast.ComprehensionExpr
 	p.exprLev++
 	if p.tok != token.RBRACE {
-		elts, mce = p.parseElementListOrComprehension()
+		elts, mce = p.parseElementListOrComprehension(disableRangeExpr)
 	}
 	p.exprLev--
 	rbrace := p.expectClosing(token.RBRACE, "composite literal")
@@ -1665,7 +1699,7 @@ func (p *parser) parseLiteralValueOrMapComprehension() ast.Expr {
 	return &ast.CompositeLit{Lbrace: lbrace, Elts: elts, Rbrace: rbrace}
 }
 
-func (p *parser) parseElementListOrComprehension() (list []ast.Expr, mce *ast.ComprehensionExpr) {
+func (p *parser) parseElementListOrComprehension(disableRangeExpr bool) (list []ast.Expr, mce *ast.ComprehensionExpr) {
 	if p.trace {
 		defer un(trace(p, "ElementList"))
 	}
@@ -1675,7 +1709,7 @@ func (p *parser) parseElementListOrComprehension() (list []ast.Expr, mce *ast.Co
 		return nil, &ast.ComprehensionExpr{Fors: phrases}
 	}
 	for p.tok != token.RBRACE && p.tok != token.EOF {
-		list = append(list, p.parseElement())
+		list = append(list, p.parseElement(disableRangeExpr))
 		if p.tok == token.FOR { // for k, v <- container
 			if len(list) != 1 {
 				log.Panicln("TODO: invalid comprehension: too may elements.")
@@ -1691,13 +1725,13 @@ func (p *parser) parseElementListOrComprehension() (list []ast.Expr, mce *ast.Co
 	return
 }
 
-func (p *parser) parseElementList() (list []ast.Expr) {
+func (p *parser) parseElementList(disableRangeExpr bool) (list []ast.Expr) {
 	if p.trace {
 		defer un(trace(p, "ElementList"))
 	}
 
 	for p.tok != token.RBRACE && p.tok != token.EOF {
-		list = append(list, p.parseElement())
+		list = append(list, p.parseElement(disableRangeExpr))
 		if !p.atComma("composite literal", token.RBRACE) {
 			break
 		}
@@ -1716,7 +1750,7 @@ func (p *parser) parseLiteralValue(typ ast.Expr) ast.Expr {
 	var elts []ast.Expr
 	p.exprLev++
 	if p.tok != token.RBRACE {
-		elts = p.parseElementList()
+		elts = p.parseElementList(true)
 	}
 	p.exprLev--
 	rbrace := p.expectClosing(token.RBRACE, "composite literal")
@@ -1750,6 +1784,7 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	case *ast.BinaryExpr:
 	//case *ast.TernaryExpr:
 	case *ast.ErrWrapExpr:
+	case *ast.RangeExpr:
 	default:
 		// all other nodes are not proper expressions
 		p.errorExpected(x.Pos(), "expression", 3)
@@ -1789,6 +1824,16 @@ func isLiteralType(x ast.Expr) bool {
 	return true
 }
 
+// isRangeElem determine whether it is the type required by the element
+func isRangeElem(x ast.Expr) bool {
+	switch t := x.(type) {
+	case *ast.BasicLit:
+		return t.Kind == token.INT || t.Kind == token.FLOAT
+	default:
+		return false // all other nodes are not legal composite literal types
+	}
+}
+
 // If x is of the form *T, deref returns T, otherwise it returns x.
 func deref(x ast.Expr) ast.Expr {
 	if p, isPtr := x.(*ast.StarExpr); isPtr {
@@ -1824,12 +1869,12 @@ func (p *parser) checkExprOrType(x ast.Expr) ast.Expr {
 }
 
 // If lhs is set and the result is an identifier, it is not resolved.
-func (p *parser) parsePrimaryExpr(lhs, allowTuple, allowCmd bool) ast.Expr {
+func (p *parser) parsePrimaryExpr(lhs, allowTuple, allowCmd, disableRangeExpr bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "PrimaryExpr"))
 	}
 
-	x := p.parseOperand(lhs, allowTuple)
+	x := p.parseOperand(lhs, allowTuple, disableRangeExpr)
 L:
 	for {
 		switch p.tok {
@@ -1877,6 +1922,11 @@ L:
 			} else {
 				break L
 			}
+		case token.COLON:
+			if isRangeElem(x) && !disableRangeExpr {
+				x = p.parseRangeExpr(x)
+			}
+			break L
 		default:
 			if allowCmd && p.isCommand(x) {
 				if lhs {
@@ -1893,7 +1943,7 @@ L:
 }
 
 // If lhs is set and the result is an identifier, it is not resolved.
-func (p *parser) parseUnaryExpr(lhs, allowTuple, allowCmd bool) ast.Expr {
+func (p *parser) parseUnaryExpr(lhs, allowTuple, allowCmd, disableRangeExpr bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "UnaryExpr"))
 	}
@@ -1902,7 +1952,7 @@ func (p *parser) parseUnaryExpr(lhs, allowTuple, allowCmd bool) ast.Expr {
 	case token.ADD, token.SUB, token.NOT, token.XOR, token.AND:
 		pos, op := p.pos, p.tok
 		p.next()
-		x := p.parseUnaryExpr(false, false, false)
+		x := p.parseUnaryExpr(false, false, false, false)
 		return &ast.UnaryExpr{OpPos: pos, Op: op, X: p.checkExpr(x)}
 
 	case token.ARROW:
@@ -1924,7 +1974,7 @@ func (p *parser) parseUnaryExpr(lhs, allowTuple, allowCmd bool) ast.Expr {
 		//   <- (chan type)    =>  (<-chan type)
 		//   <- (chan<- type)  =>  (<-chan (<-type))
 
-		x := p.parseUnaryExpr(false, false, false)
+		x := p.parseUnaryExpr(false, false, false, false)
 
 		// determine which case we have
 		if typ, ok := x.(*ast.ChanType); ok {
@@ -1955,16 +2005,16 @@ func (p *parser) parseUnaryExpr(lhs, allowTuple, allowCmd bool) ast.Expr {
 		// pointer type or unary "*" expression
 		pos := p.pos
 		p.next()
-		x := p.parseUnaryExpr(false, false, false)
+		x := p.parseUnaryExpr(false, false, false, false)
 		return &ast.StarExpr{Star: pos, X: p.checkExprOrType(x)}
 	}
 
-	return p.parseErrWrapExpr(lhs, allowTuple, allowCmd)
+	return p.parseErrWrapExpr(lhs, allowTuple, allowCmd, disableRangeExpr)
 }
 
 // parseErrWrapExpr: expr! expr? expr?:defval
-func (p *parser) parseErrWrapExpr(lhs, allowTuple, allowCmd bool) ast.Expr {
-	x := p.parsePrimaryExpr(lhs, allowTuple, allowCmd)
+func (p *parser) parseErrWrapExpr(lhs, allowTuple, allowCmd, disableRangeExpr bool) ast.Expr {
+	x := p.parsePrimaryExpr(lhs, allowTuple, allowCmd, disableRangeExpr)
 	switch p.tok {
 	case token.NOT: // expr!
 		expr := &ast.ErrWrapExpr{X: x, Tok: token.NOT, TokPos: p.pos}
@@ -1975,7 +2025,7 @@ func (p *parser) parseErrWrapExpr(lhs, allowTuple, allowCmd bool) ast.Expr {
 		p.next()
 		if p.tok == token.COLON {
 			p.next()
-			expr.Default = p.parseUnaryExpr(false, true, false)
+			expr.Default = p.parseUnaryExpr(false, true, false, false)
 		}
 		return expr
 	default:
@@ -1992,12 +2042,12 @@ func (p *parser) tokPrec() (token.Token, int) {
 }
 
 // If lhs is set and the result is an identifier, it is not resolved.
-func (p *parser) parseBinaryExpr(lhs bool, prec1 int, allowTuple, allowCmd bool) ast.Expr {
+func (p *parser) parseBinaryExpr(lhs bool, prec1 int, allowTuple, allowCmd, disableRangeExpr bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "BinaryExpr"))
 	}
 
-	x := p.parseUnaryExpr(lhs, allowTuple, allowCmd)
+	x := p.parseUnaryExpr(lhs, allowTuple, allowCmd, disableRangeExpr)
 	for {
 		op, oprec := p.tokPrec()
 		if oprec < prec1 {
@@ -2008,7 +2058,7 @@ func (p *parser) parseBinaryExpr(lhs bool, prec1 int, allowTuple, allowCmd bool)
 			p.resolve(x)
 			lhs = false
 		}
-		y := p.parseBinaryExpr(false, oprec+1, false, false)
+		y := p.parseBinaryExpr(false, oprec+1, false, false, disableRangeExpr)
 		x = &ast.BinaryExpr{X: p.checkExpr(x), OpPos: pos, Op: op, Y: p.checkExpr(y)}
 	}
 }
@@ -2018,11 +2068,11 @@ type tupleExpr struct {
 	items []*ast.Ident
 }
 
-func (p *parser) parseLambdaExpr(allowCmd bool) ast.Expr {
+func (p *parser) parseLambdaExpr(allowCmd, disableRangeExpr bool) ast.Expr {
 	var x ast.Expr
 	var first = p.pos
 	if p.tok != token.RARROW {
-		x = p.parseBinaryExpr(false, token.LowestPrec+1, true, allowCmd)
+		x = p.parseBinaryExpr(false, token.LowestPrec+1, true, allowCmd, disableRangeExpr)
 	}
 	if p.tok == token.RARROW { // =>
 		var rarrow = p.pos
@@ -2035,7 +2085,7 @@ func (p *parser) parseLambdaExpr(allowCmd bool) ast.Expr {
 			rhsHasParen = true
 			p.next()
 			for {
-				item := p.parseExpr(false, false)
+				item := p.parseExpr(false, false, false)
 				rhs = append(rhs, item)
 				if p.tok != token.COMMA {
 					break
@@ -2046,7 +2096,7 @@ func (p *parser) parseLambdaExpr(allowCmd bool) ast.Expr {
 		case token.LBRACE: // {
 			body = p.parseBlockStmt()
 		default:
-			rhs = []ast.Expr{p.parseExpr(false, false)}
+			rhs = []ast.Expr{p.parseExpr(false, false, false)}
 		}
 		var lhs []*ast.Ident
 		if x != nil {
@@ -2091,28 +2141,28 @@ func (p *parser) parseLambdaExpr(allowCmd bool) ast.Expr {
 // The result may be a type or even a raw type ([...]int). Callers must
 // check the result (using checkExpr or checkExprOrType), depending on
 // context.
-func (p *parser) parseExpr(lhs, allowCmd bool) ast.Expr {
+func (p *parser) parseExpr(lhs, allowCmd, disableRangeExpr bool) ast.Expr {
 	if p.trace {
-		defer un(trace(p, "Expression"))
+		defer un(trace(p, fmt.Sprintf("Expression-%v", disableRangeExpr)))
 	}
 	if lhs {
-		return p.parseBinaryExpr(lhs, token.LowestPrec+1, false, allowCmd)
+		return p.parseBinaryExpr(lhs, token.LowestPrec+1, false, allowCmd, disableRangeExpr)
 	}
-	return p.parseLambdaExpr(allowCmd)
+	return p.parseLambdaExpr(allowCmd, disableRangeExpr)
 }
 
-func (p *parser) parseRHS() ast.Expr {
+func (p *parser) parseRHS(disableRangeExpr bool) ast.Expr {
 	old := p.inRHS
 	p.inRHS = true
-	x := p.checkExpr(p.parseExpr(false, false))
+	x := p.checkExpr(p.parseExpr(false, false, disableRangeExpr))
 	p.inRHS = old
 	return x
 }
 
-func (p *parser) parseRHSOrType() ast.Expr {
+func (p *parser) parseRHSOrType(disableRangeExpr bool) ast.Expr {
 	old := p.inRHS
 	p.inRHS = true
-	x := p.checkExprOrType(p.parseExpr(false, false))
+	x := p.checkExprOrType(p.parseExpr(false, false, disableRangeExpr))
 	p.inRHS = old
 	return x
 }
@@ -2136,7 +2186,7 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 		defer un(trace(p, "SimpleStmt"))
 	}
 
-	x := p.parseLHSList(true)
+	x := p.parseLHSList(true, false)
 
 	switch p.tok {
 	case
@@ -2152,10 +2202,10 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 		if mode == rangeOk && p.tok == token.RANGE && (tok == token.DEFINE || tok == token.ASSIGN) {
 			pos := p.pos
 			p.next()
-			y = []ast.Expr{&ast.UnaryExpr{OpPos: pos, Op: token.RANGE, X: p.parseRHS()}}
+			y = []ast.Expr{&ast.UnaryExpr{OpPos: pos, Op: token.RANGE, X: p.parseRHS(false)}}
 			isRange = true
 		} else {
-			y = p.parseRHSList()
+			y = p.parseRHSList(false)
 		}
 		as := &ast.AssignStmt{Lhs: x, TokPos: pos, Tok: tok, Rhs: y}
 		if tok == token.DEFINE {
@@ -2199,7 +2249,7 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 		// send statement
 		arrow := p.pos
 		p.next()
-		y := p.parseRHS()
+		y := p.parseRHS(false)
 		return &ast.SendStmt{Chan: x[0], Arrow: arrow, Value: y}, false
 
 	case token.INC, token.DEC:
@@ -2214,7 +2264,7 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 }
 
 func (p *parser) parseCallExpr(callType string) *ast.CallExpr {
-	x := p.parseRHSOrType() // could be a conversion: (some type)(x)
+	x := p.parseRHSOrType(true) // could be a conversion: (some type)(x)
 	if call, isCall := x.(*ast.CallExpr); isCall {
 		return call
 	}
@@ -2264,7 +2314,7 @@ func (p *parser) parseReturnStmt() *ast.ReturnStmt {
 	p.expect(token.RETURN)
 	var x []ast.Expr
 	if p.tok != token.SEMICOLON && p.tok != token.RBRACE {
-		x = p.parseRHSList()
+		x = p.parseRHSList(true)
 	}
 	p.expectSemi()
 
@@ -2493,7 +2543,7 @@ func (p *parser) parseCaseClause(typeSwitch bool) *ast.CaseClause {
 		if typeSwitch {
 			list = p.parseTypeList()
 		} else {
-			list = p.parseRHSList()
+			list = p.parseRHSList(true)
 		}
 	} else {
 		p.expect(token.DEFAULT)
@@ -2601,7 +2651,7 @@ func (p *parser) parseCommClause() *ast.CommClause {
 	var comm ast.Stmt
 	if p.tok == token.CASE {
 		p.next()
-		lhs := p.parseLHSList(false)
+		lhs := p.parseLHSList(false, true)
 		if p.tok == token.ARROW {
 			// SendStmt
 			if len(lhs) > 1 {
@@ -2610,7 +2660,7 @@ func (p *parser) parseCommClause() *ast.CommClause {
 			}
 			arrow := p.pos
 			p.next()
-			rhs := p.parseRHS()
+			rhs := p.parseRHS(true)
 			comm = &ast.SendStmt{Chan: lhs[0], Arrow: arrow, Value: rhs}
 		} else {
 			// RecvStmt
@@ -2623,7 +2673,7 @@ func (p *parser) parseCommClause() *ast.CommClause {
 				}
 				pos := p.pos
 				p.next()
-				rhs := p.parseRHS()
+				rhs := p.parseRHS(false)
 				as := &ast.AssignStmt{Lhs: lhs, TokPos: pos, Tok: tok, Rhs: []ast.Expr{rhs}}
 				if tok == token.DEFINE {
 					p.shortVarDecl(as, lhs)
@@ -2679,11 +2729,11 @@ func (p *parser) parseForPhrases() (phrases []*ast.ForPhrase) {
 
 func (p *parser) parseForPhraseStmtPart(lhs []ast.Expr) *ast.ForPhraseStmt {
 	tokPos := p.expect(token.ARROW) // <-
-	x := p.parseExpr(false, false)
+	x := p.parseExpr(false, false, false)
 	var cond ast.Expr
 	if p.tok == token.COMMA {
 		p.next()
-		cond = p.parseExpr(false, false)
+		cond = p.parseExpr(false, false, false)
 	}
 
 	stmt := &ast.ForPhraseStmt{ForPhrase: &ast.ForPhrase{TokPos: tokPos, X: x, Cond: cond}}
@@ -2722,7 +2772,7 @@ func (p *parser) parseForPhrase() *ast.ForPhrase { // for k, v <- container, con
 	}
 
 	tokPos := p.expect(token.ARROW) // <- container
-	x := p.parseExpr(false, false)
+	x := p.parseExpr(false, false, false)
 	var init ast.Stmt
 	var cond ast.Expr
 	if p.tok == token.COMMA { // `condition` or `init; condition`
@@ -2751,7 +2801,7 @@ func (p *parser) parseForStmt() ast.Stmt {
 				// "for range x" (nil lhs in assignment)
 				pos := p.pos
 				p.next()
-				y := []ast.Expr{&ast.UnaryExpr{OpPos: pos, Op: token.RANGE, X: p.parseRHS()}}
+				y := []ast.Expr{&ast.UnaryExpr{OpPos: pos, Op: token.RANGE, X: p.parseRHS(false)}}
 				s2 = &ast.AssignStmt{Rhs: y}
 				isRange = true
 			} else {
@@ -2946,7 +2996,7 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 	// always permit optional initialization for more tolerant parsing
 	if p.tok == token.ASSIGN {
 		p.next()
-		values = p.parseRHSList()
+		values = p.parseRHSList(false)
 	}
 	p.expectSemi() // call before accessing p.linecomment
 
