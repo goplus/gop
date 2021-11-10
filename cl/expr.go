@@ -697,10 +697,10 @@ func compileRangeExpr(ctx *blockCtx, v *ast.RangeExpr) {
 		compileExpr(ctx, v.Low)
 	}
 	compileExpr(ctx, v.High)
-	if v.Step == nil {
+	if v.Last == nil {
 		ctx.cb.Val(&goast.BasicLit{Kind: gotoken.Token(token.INT), Value: "1"}, v)
 	} else {
-		compileExpr(ctx, v.Step)
+		compileExpr(ctx, v.Last)
 	}
 	cb.Call(3)
 }
