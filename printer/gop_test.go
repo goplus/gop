@@ -21,7 +21,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/goplus/gop/ast"
@@ -127,7 +126,7 @@ func TestFromTutorial(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		if !info.IsDir() && filepath.Ext(path) == ".gop" && strings.Contains(path, "43") {
+		if !info.IsDir() && filepath.Ext(path) == ".gop" {
 			t.Log(path)
 			testFrom(t, path)
 		}
