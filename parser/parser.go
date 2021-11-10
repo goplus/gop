@@ -903,7 +903,7 @@ func (p *parser) parseRangeExpr(i ast.Expr) ast.Expr {
 	// 	step = &ast.BasicLit{ValuePos: p.pos, Kind: token.INT, Value: "1"}
 	// }
 	if debugParseOutput {
-		log.Printf("ast.StepType{Start: %v,End: %v, Step: %v}\n", start, end, step)
+		log.Printf("ast.RangeExpr{Low: %v,High: %v, Step: %v}\n", start, end, step)
 	}
 	return &ast.RangeExpr{To: to, Low: start, High: end, Step: step, By: by}
 }

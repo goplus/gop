@@ -1090,10 +1090,8 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		}
 		p.print(token.COLON)
 		p.expr(x.High)
-		if x.By != token.NoPos {
-			p.print(token.NoPos)
-		}
 		if x.Step != nil {
+			p.print(token.COLON)
 			p.expr(x.Step)
 		}
 

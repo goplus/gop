@@ -1,3 +1,11 @@
 for i := range :10 {
 	println(i)
 }
+
+for i := range 1:10 {
+	println(i)
+}
+
+for i := range :10:2 {
+	println(i)
+}
