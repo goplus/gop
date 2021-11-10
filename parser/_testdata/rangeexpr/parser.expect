@@ -90,3 +90,24 @@ ast.FuncDecl:
                       Args:
                         ast.Ident:
                           Name: i
+        ast.RangeStmt:
+          Tok: ILLEGAL
+          X:
+            ast.RangeExpr:
+              High:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 10
+          Body:
+            ast.BlockStmt:
+              List:
+                ast.ExprStmt:
+                  X:
+                    ast.CallExpr:
+                      Fun:
+                        ast.Ident:
+                          Name: println
+                      Args:
+                        ast.BasicLit:
+                          Kind: STRING
+                          Value: "Range expression"

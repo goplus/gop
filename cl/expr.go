@@ -692,13 +692,13 @@ func compileRangeExpr(ctx *blockCtx, v *ast.RangeExpr) {
 	pkg, cb := ctx.pkg, ctx.cb
 	cb.Val(pkg.Builtin().Ref("newRange"))
 	if v.Low == nil {
-		ctx.cb.Val(&goast.BasicLit{Kind: gotoken.Token(token.INT), Value: "0"}, v)
+		ctx.cb.Val(0, v)
 	} else {
 		compileExpr(ctx, v.Low)
 	}
 	compileExpr(ctx, v.High)
 	if v.Last == nil {
-		ctx.cb.Val(&goast.BasicLit{Kind: gotoken.Token(token.INT), Value: "1"}, v)
+		ctx.cb.Val(1, v)
 	} else {
 		compileExpr(ctx, v.Last)
 	}

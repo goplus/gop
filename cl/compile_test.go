@@ -3176,3 +3176,27 @@ func main() {
 }
 `)
 }
+
+func TestRangeExpr5(t *testing.T) {
+	gopClTest(t, `
+for range :10 {
+	println("Hi")
+}`, `package main
+
+import (
+	fmt "fmt"
+	builtin "github.com/goplus/gop/builtin"
+)
+
+func main() {
+	for _gop_it := builtin.NewRange__0(0, 10, 1).Gop_Enum(); ; {
+		var _gop_ok bool
+		_, _gop_ok = _gop_it.Next()
+		if !_gop_ok {
+			break
+		}
+		fmt.Println("Hi")
+	}
+}
+`)
+}

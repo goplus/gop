@@ -12,4 +12,8 @@ func main() {
 	for i := range :10:2 {
 		println(i)
 	}
+
+	for range :10 {
+		println("Range expression")
+	}
 }
