@@ -227,7 +227,7 @@ func (p *RangeExpr) Pos() token.Pos {
 // End - position of first character immediately after the node
 func (p *RangeExpr) End() token.Pos {
 	if p.Step != nil {
-		return p.Step.Pos()
+		return p.Step.End()
 	}
 	if p.By != token.NoPos {
 		return p.By
