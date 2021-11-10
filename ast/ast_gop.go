@@ -184,7 +184,7 @@ func (*ForPhraseStmt) stmtNode() {}
 
 // -----------------------------------------------------------------------------
 
-// A RangeExpr node represents a slice use step increase.
+// A RangeExpr node represents a range expression.
 type RangeExpr struct {
 	Low    Expr      // start of composite elements; or nil
 	To     token.Pos // position of ":"
