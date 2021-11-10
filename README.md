@@ -359,7 +359,7 @@ for k, v <- foo {
 println({v: k for k, v <- foo})
 ```
 
-### Range expression
+### Range expression (`start:end:step`)
 
 ```go
 for i := range :10 {
