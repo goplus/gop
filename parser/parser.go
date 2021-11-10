@@ -671,23 +671,23 @@ func (p *parser) parseIdentList() (list []*ast.Ident) {
 // Common productions
 
 // If lhs is set, result list elements which are identifiers are not resolved.
-func (p *parser) parseExprList(lhs, allowCmd bool) (list []ast.Expr) {
+func (p *parser) parseExprList(lhs, allowCmd, listVal bool) (list []ast.Expr) {
 	if p.trace {
 		defer un(trace(p, "ExpressionList"))
 	}
 
-	list = append(list, p.checkExpr(p.parseExpr(lhs, allowCmd, false)))
+	list = append(list, p.checkExpr(p.parseExpr(lhs, allowCmd, listVal)))
 	for p.tok == token.COMMA {
 		p.next()
-		list = append(list, p.checkExpr(p.parseExpr(lhs, false, false)))
+		list = append(list, p.checkExpr(p.parseExpr(lhs, false, listVal)))
 	}
 	return
 }
 
-func (p *parser) parseLHSList(allowCmd bool) []ast.Expr {
+func (p *parser) parseLHSList(allowCmd, listVal bool) []ast.Expr {
 	old := p.inRHS
 	p.inRHS = false
-	list := p.parseExprList(true, allowCmd)
+	list := p.parseExprList(true, allowCmd, listVal)
 	switch p.tok {
 	case token.DEFINE:
 		// lhs of a short variable declaration
@@ -712,10 +712,10 @@ func (p *parser) parseLHSList(allowCmd bool) []ast.Expr {
 	return list
 }
 
-func (p *parser) parseRHSList() []ast.Expr {
+func (p *parser) parseRHSList(listVal bool) []ast.Expr {
 	old := p.inRHS
 	p.inRHS = true
-	list := p.parseExprList(false, false)
+	list := p.parseExprList(false, false, listVal)
 	p.inRHS = old
 	return list
 }
@@ -896,12 +896,12 @@ func (p *parser) parseRangeExpr(i ast.Expr) ast.Expr {
 			step = p.parseValue(false, true)
 		}
 	}
-	if start == nil {
-		start = &ast.BasicLit{ValuePos: p.pos, Kind: token.INT, Value: "0"}
-	}
-	if step == nil {
-		step = &ast.BasicLit{ValuePos: p.pos, Kind: token.INT, Value: "1"}
-	}
+	// if start == nil {
+	// 	start = &ast.BasicLit{ValuePos: p.pos, Kind: token.INT, Value: "0"}
+	// }
+	// if step == nil {
+	// 	step = &ast.BasicLit{ValuePos: p.pos, Kind: token.INT, Value: "1"}
+	// }
 	if debugParseOutput {
 		log.Printf("ast.StepType{Start: %v,End: %v, Step: %v}\n", start, end, step)
 	}
@@ -1449,7 +1449,7 @@ func (p *parser) parseOperand(lhs, allowTuple, listVal bool) ast.Expr {
 
 	case token.LBRACE:
 		if !lhs { // rhs: mapLit - {k1: v1, k2: v2, ...}
-			return p.parseLiteralValueOrMapComprehension()
+			return p.parseLiteralValueOrMapComprehension(true)
 		}
 
 	case token.GOTO, token.BREAK, token.CONTINUE, token.FALLTHROUGH:
@@ -1623,7 +1623,7 @@ func (p *parser) parseValue(keyOk, listVal bool) ast.Expr {
 	}
 
 	if p.tok == token.LBRACE {
-		return p.parseLiteralValueOrMapComprehension()
+		return p.parseLiteralValueOrMapComprehension(listVal)
 	}
 
 	// Because the parser doesn't know the composite literal type, it cannot
@@ -1678,7 +1678,7 @@ func (p *parser) parseElement(listVal bool) ast.Expr {
 // {for k, v <- listOrMap, cond}
 // {expr for k, v <- listOrMap, cond}
 // {kexpr: vexpr for k, v <- listOrMap, cond}
-func (p *parser) parseLiteralValueOrMapComprehension() ast.Expr {
+func (p *parser) parseLiteralValueOrMapComprehension(listVal bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "LiteralValue"))
 	}
@@ -1688,7 +1688,7 @@ func (p *parser) parseLiteralValueOrMapComprehension() ast.Expr {
 	var mce *ast.ComprehensionExpr
 	p.exprLev++
 	if p.tok != token.RBRACE {
-		elts, mce = p.parseElementListOrComprehension()
+		elts, mce = p.parseElementListOrComprehension(listVal)
 	}
 	p.exprLev--
 	rbrace := p.expectClosing(token.RBRACE, "composite literal")
@@ -1699,7 +1699,7 @@ func (p *parser) parseLiteralValueOrMapComprehension() ast.Expr {
 	return &ast.CompositeLit{Lbrace: lbrace, Elts: elts, Rbrace: rbrace}
 }
 
-func (p *parser) parseElementListOrComprehension() (list []ast.Expr, mce *ast.ComprehensionExpr) {
+func (p *parser) parseElementListOrComprehension(listVal bool) (list []ast.Expr, mce *ast.ComprehensionExpr) {
 	if p.trace {
 		defer un(trace(p, "ElementList"))
 	}
@@ -1709,7 +1709,7 @@ func (p *parser) parseElementListOrComprehension() (list []ast.Expr, mce *ast.Co
 		return nil, &ast.ComprehensionExpr{Fors: phrases}
 	}
 	for p.tok != token.RBRACE && p.tok != token.EOF {
-		list = append(list, p.parseElement(false))
+		list = append(list, p.parseElement(listVal))
 		if p.tok == token.FOR { // for k, v <- container
 			if len(list) != 1 {
 				log.Panicln("TODO: invalid comprehension: too may elements.")
@@ -2186,7 +2186,7 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 		defer un(trace(p, "SimpleStmt"))
 	}
 
-	x := p.parseLHSList(true)
+	x := p.parseLHSList(true, false)
 
 	switch p.tok {
 	case
@@ -2205,7 +2205,7 @@ func (p *parser) parseSimpleStmt(mode int) (ast.Stmt, bool) {
 			y = []ast.Expr{&ast.UnaryExpr{OpPos: pos, Op: token.RANGE, X: p.parseRHS(false)}}
 			isRange = true
 		} else {
-			y = p.parseRHSList()
+			y = p.parseRHSList(false)
 		}
 		as := &ast.AssignStmt{Lhs: x, TokPos: pos, Tok: tok, Rhs: y}
 		if tok == token.DEFINE {
@@ -2314,7 +2314,7 @@ func (p *parser) parseReturnStmt() *ast.ReturnStmt {
 	p.expect(token.RETURN)
 	var x []ast.Expr
 	if p.tok != token.SEMICOLON && p.tok != token.RBRACE {
-		x = p.parseRHSList()
+		x = p.parseRHSList(true)
 	}
 	p.expectSemi()
 
@@ -2543,7 +2543,7 @@ func (p *parser) parseCaseClause(typeSwitch bool) *ast.CaseClause {
 		if typeSwitch {
 			list = p.parseTypeList()
 		} else {
-			list = p.parseRHSList()
+			list = p.parseRHSList(true)
 		}
 	} else {
 		p.expect(token.DEFAULT)
@@ -2651,7 +2651,7 @@ func (p *parser) parseCommClause() *ast.CommClause {
 	var comm ast.Stmt
 	if p.tok == token.CASE {
 		p.next()
-		lhs := p.parseLHSList(false)
+		lhs := p.parseLHSList(false, true)
 		if p.tok == token.ARROW {
 			// SendStmt
 			if len(lhs) > 1 {
@@ -2660,7 +2660,7 @@ func (p *parser) parseCommClause() *ast.CommClause {
 			}
 			arrow := p.pos
 			p.next()
-			rhs := p.parseRHS(false)
+			rhs := p.parseRHS(true)
 			comm = &ast.SendStmt{Chan: lhs[0], Arrow: arrow, Value: rhs}
 		} else {
 			// RecvStmt
@@ -2996,7 +2996,7 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 	// always permit optional initialization for more tolerant parsing
 	if p.tok == token.ASSIGN {
 		p.next()
-		values = p.parseRHSList()
+		values = p.parseRHSList(false)
 	}
 	p.expectSemi() // call before accessing p.linecomment
 

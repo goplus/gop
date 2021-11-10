@@ -232,7 +232,7 @@ func (p *RangeExpr) End() token.Pos {
 	if p.By != token.NoPos {
 		return p.By
 	}
-	return p.Step.End()
+	return p.High.End()
 }
 
 func (*RangeExpr) exprNode() {}

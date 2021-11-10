@@ -691,9 +691,17 @@ func compileSliceLit(ctx *blockCtx, v *ast.SliceLit) {
 func compileRangeExpr(ctx *blockCtx, v *ast.RangeExpr) {
 	pkg, cb := ctx.pkg, ctx.cb
 	cb.Val(pkg.Builtin().Ref("newRange"))
-	compileExpr(ctx, v.Low)
+	if v.Low == nil {
+		ctx.cb.Val(&goast.BasicLit{Kind: gotoken.Token(token.INT), Value: "0"}, v)
+	} else {
+		compileExpr(ctx, v.Low)
+	}
 	compileExpr(ctx, v.High)
-	compileExpr(ctx, v.Step)
+	if v.Step == nil {
+		ctx.cb.Val(&goast.BasicLit{Kind: gotoken.Token(token.INT), Value: "1"}, v)
+	} else {
+		compileExpr(ctx, v.Step)
+	}
 	cb.Call(3)
 }
 
