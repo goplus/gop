@@ -13,29 +13,50 @@
 
 package builtin
 
-type RangeIter struct {
-	data Range
-	idx  int
+func NewRange__0(low, high, step int) *IntRange {
+	return &IntRange{Low: low, High: high, Step: step}
 }
 
-func (p *RangeIter) Next() (val float64, ok bool) {
-	if p.idx < len(p.data) {
-		val, ok = p.data[p.idx], true
-		p.idx = p.idx + 1
+func NewRange__1(low, high, step float64) *FloatRange {
+	return &FloatRange{Low: low, High: high, Step: step}
+}
+
+type IntRange struct {
+	Low, High, Step int
+}
+
+func (p *IntRange) Gop_Enum() *intRangeIter {
+	return &intRangeIter{i: p.Low, high: p.High, step: p.Step}
+}
+
+type FloatRange struct {
+	Low, High, Step float64
+}
+
+func (p *FloatRange) Gop_Enum() *floatRangeIter {
+	return &floatRangeIter{i: p.Low, high: p.High, step: p.Step}
+}
+
+type intRangeIter struct {
+	i, high, step int
+}
+
+func (p *intRangeIter) Next() (val int, ok bool) {
+	if p.i < p.high {
+		val, ok = p.i, true
+		p.i += p.step
 	}
 	return
 }
 
-type Range []float64
-
-func NewRange(start, end, step float64) Range {
-	var data Range
-	for i := start; i < end; i = i + step {
-		data = append(data, i)
-	}
-	return data
+type floatRangeIter struct {
+	i, high, step float64
 }
 
-func (p Range) Gop_Enum() *RangeIter {
-	return &RangeIter{data: p}
+func (p *floatRangeIter) Next() (val float64, ok bool) {
+	if p.i < p.high {
+		val, ok = p.i, true
+		p.i += p.step
+	}
+	return
 }

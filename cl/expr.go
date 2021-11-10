@@ -690,7 +690,7 @@ func compileSliceLit(ctx *blockCtx, v *ast.SliceLit) {
 
 func compileRangeExpr(ctx *blockCtx, v *ast.RangeExpr) {
 	pkg, cb := ctx.pkg, ctx.cb
-	cb.Val(pkg.Builtin().Ref("NewRange"))
+	cb.Val(pkg.Builtin().Ref("newRange"))
 	compileExpr(ctx, v.Low)
 	compileExpr(ctx, v.High)
 	compileExpr(ctx, v.Step)

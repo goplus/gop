@@ -166,7 +166,7 @@ func (p *Runner) GenGoPkg(pkgDir string, base *cl.Config) (err error) {
 	if conf.Fset == nil {
 		conf.Fset = token.NewFileSet()
 	}
-	pkgs, err := parser.ParseDir(conf.Fset, pkgDir, nil, 0)
+	pkgs, err := parser.ParseDir(conf.Fset, pkgDir, nil, parser.Trace)
 	if err != nil {
 		return p.addError(pkgDir, "parse", err)
 	}
