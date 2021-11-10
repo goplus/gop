@@ -896,16 +896,10 @@ func (p *parser) parseRangeExpr(i ast.Expr) ast.Expr {
 			step = p.parseValue(false, true)
 		}
 	}
-	// if start == nil {
-	// 	start = &ast.BasicLit{ValuePos: p.pos, Kind: token.INT, Value: "0"}
-	// }
-	// if step == nil {
-	// 	step = &ast.BasicLit{ValuePos: p.pos, Kind: token.INT, Value: "1"}
-	// }
 	if debugParseOutput {
-		log.Printf("ast.RangeExpr{Low: %v,High: %v, Step: %v}\n", start, end, step)
+		log.Printf("ast.RangeExpr{Low: %v,High: %v, Last: %v}\n", start, end, step)
 	}
-	return &ast.RangeExpr{To: to, Low: start, High: end, Step: step, By: by}
+	return &ast.RangeExpr{To: to, Low: start, High: end, Last: step, Colon2: by}
 }
 
 func newSliceLit(lbrack, rbrack token.Pos, len ast.Expr) *ast.SliceLit {
