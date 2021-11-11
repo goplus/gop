@@ -1085,17 +1085,17 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		p.block(x.Body, 1)
 
 	case *ast.RangeExpr:
-		if x.Low != nil {
-			p.expr(x.Low)
+		if x.First != nil {
+			p.expr(x.First)
 		}
 		p.print(token.COLON)
-		if x.High != nil {
-			p.expr(x.High)
+		if x.Last != nil {
+			p.expr(x.Last)
 		}
 		if x.Colon2 != token.NoPos {
 			p.print(token.COLON)
-			if x.Last != nil {
-				p.expr(x.Last)
+			if x.Expr3 != nil {
+				p.expr(x.Expr3)
 			}
 		}
 

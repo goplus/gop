@@ -19,7 +19,7 @@ ast.FuncDecl:
           Tok: :=
           X:
             ast.RangeExpr:
-              High:
+              Last:
                 ast.BasicLit:
                   Kind: INT
                   Value: 10
@@ -43,11 +43,11 @@ ast.FuncDecl:
                   Name: i
               X:
                 ast.RangeExpr:
-                  Low:
+                  First:
                     ast.BasicLit:
                       Kind: INT
                       Value: 1
-                  High:
+                  Last:
                     ast.BasicLit:
                       Kind: INT
                       Value: 10
@@ -70,11 +70,11 @@ ast.FuncDecl:
           Tok: :=
           X:
             ast.RangeExpr:
-              High:
+              Last:
                 ast.BasicLit:
                   Kind: INT
                   Value: 10
-              Last:
+              Expr3:
                 ast.BasicLit:
                   Kind: INT
                   Value: 2
@@ -94,7 +94,7 @@ ast.FuncDecl:
           Tok: ILLEGAL
           X:
             ast.RangeExpr:
-              High:
+              Last:
                 ast.BasicLit:
                   Kind: INT
                   Value: 10

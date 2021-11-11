@@ -186,31 +186,31 @@ func (*ForPhraseStmt) stmtNode() {}
 
 // A RangeExpr node represents a range expression.
 type RangeExpr struct {
-	Low    Expr      // start of composite elements; or nil
+	First  Expr      // start of composite elements; or nil
 	To     token.Pos // position of ":"
-	High   Expr      // end of composite elements; or nil
+	Last   Expr      // end of composite elements
 	Colon2 token.Pos // position of ":" or token.NoPos
-	Last   Expr      // step (or max) of composite elements; or nil
+	Expr3  Expr      // step (or max) of composite elements; or nil
 }
 
 // Pos - position of first character belonging to the node
 func (p *RangeExpr) Pos() token.Pos {
-	if p.Low != nil {
-		return p.Low.Pos()
+	if p.First != nil {
+		return p.First.Pos()
 	}
 	return p.To
 }
 
 // End - position of first character immediately after the node
 func (p *RangeExpr) End() token.Pos {
-	if p.Last != nil {
-		return p.Last.End()
+	if p.Expr3 != nil {
+		return p.Expr3.End()
 	}
 	if p.Colon2 != token.NoPos {
 		return p.Colon2 + 1
 	}
-	if p.High != nil {
-		return p.High.End()
+	if p.Last != nil {
+		return p.Last.End()
 	}
 	return p.To + 1
 }

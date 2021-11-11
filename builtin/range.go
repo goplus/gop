@@ -13,50 +13,40 @@
 
 package builtin
 
-func NewRange__0(low, high, step int) *IntRange {
-	return &IntRange{Low: low, High: high, Step: step}
-}
-
-func NewRange__1(low, high, step float64) *FloatRange {
-	return &FloatRange{Low: low, High: high, Step: step}
-}
+// -----------------------------------------------------------------------------
 
 type IntRange struct {
-	Low, High, Step int
+	Start, End, Step int
+}
+
+func NewRange__0(start, end, step int) *IntRange {
+	return &IntRange{Start: start, End: end, Step: step}
 }
 
 func (p *IntRange) Gop_Enum() *intRangeIter {
-	return &intRangeIter{i: p.Low, high: p.High, step: p.Step}
+	step := p.Step
+	n := p.End - p.Start + step
+	if step > 0 {
+		n = (n - 1) / step
+	} else {
+		n = (n + 1) / step
+	}
+	return &intRangeIter{n: n, val: p.Start, step: p.Step}
 }
 
-type FloatRange struct {
-	Low, High, Step float64
-}
-
-func (p *FloatRange) Gop_Enum() *floatRangeIter {
-	return &floatRangeIter{i: p.Low, high: p.High, step: p.Step}
-}
+// -----------------------------------------------------------------------------
 
 type intRangeIter struct {
-	i, high, step int
+	n, val, step int
 }
 
 func (p *intRangeIter) Next() (val int, ok bool) {
-	if p.i < p.high {
-		val, ok = p.i, true
-		p.i += p.step
+	if p.n > 0 {
+		val, ok = p.val, true
+		p.val += p.step
+		p.n--
 	}
 	return
 }
 
-type floatRangeIter struct {
-	i, high, step float64
-}
-
-func (p *floatRangeIter) Next() (val float64, ok bool) {
-	if p.i < p.high {
-		val, ok = p.i, true
-		p.i += p.step
-	}
-	return
-}
+// -----------------------------------------------------------------------------
