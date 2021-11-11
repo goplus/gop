@@ -10,8 +10,15 @@ ADD_GO_BIN_COMMAND="export PATH=\$PATH:\$HOME/go/bin"
 MANUAL_EXPORT_COMMAND=""
 
 GIT_COMMIT_HASH=$(git rev-parse --verify HEAD)
-BUILD_DATE=$(date '+%Y-%m-%d_%H-%M-%S')
 GIT_BRANCH=$(gi symbolic-ref --short -q HEAD)
+
+echo $GIT_COMMIT_HASH
+echo $GIT_BRANCH
+
+
+exit 0
+
+BUILD_DATE=$(date '+%Y-%m-%d_%H-%M-%S')
 GO_FLAGS="-X github.com/goplus/gop/build.Date=${BUILD_DATE} \
   -X github.com/goplus/gop/build.Commit=${GIT_COMMIT_HASH} \
   -X github.com/goplus/gop/build.Branch=${GIT_BRANCH}"
