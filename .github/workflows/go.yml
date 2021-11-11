@@ -24,5 +24,11 @@ jobs:
     - name: GopTest
       run: PATH=$PATH:$GOPATH/bin gop test -v -coverprofile=coverage.txt -covermode=atomic ./...
 
-    - name: Codecov
-      uses: codecov/codecov-action@v2
+    - name: Upload coverage report
+      uses: codecov/codecov-action@v1.0.2
+      with:
+        token: 1ae46934-4616-482f-96b5-8d4b9df86db1
+        file: ./coverage.txt
+        flags: unittests
+        name: codecov-gop
+
