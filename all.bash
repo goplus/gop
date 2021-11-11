@@ -10,7 +10,7 @@ ADD_GO_BIN_COMMAND="export PATH=\$PATH:\$HOME/go/bin"
 MANUAL_EXPORT_COMMAND=""
 
 GIT_COMMIT_HASH=$(git rev-parse --verify HEAD)
-GIT_BRANCH=$(gi symbolic-ref --short -q HEAD)
+GIT_BRANCH=$(git symbolic-ref --short -q HEAD)
 
 echo $GIT_COMMIT_HASH
 echo $GIT_BRANCH
