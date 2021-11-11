@@ -11,18 +11,18 @@ MANUAL_EXPORT_COMMAND=""
 
 GIT_COMMIT_HASH=$(git rev-parse --verify HEAD)
 BUILD_DATE=$(date '+%Y-%m-%d_%H-%M-%S')
-GIT_BRANCH=$(git symbolic-ref --short -q HEAD)
+GIT_BRANCH=$(gi symbolic-ref --short -q HEAD)
 GO_FLAGS="-X github.com/goplus/gop/build.Date=${BUILD_DATE} \
   -X github.com/goplus/gop/build.Commit=${GIT_COMMIT_HASH} \
   -X github.com/goplus/gop/build.Branch=${GIT_BRANCH}"
 GOP_CACHE_DIR="$GOP_ROOT/.gop"
 
 command_exists() {
-	command -vxxxxx fawe "$@" >/dev/null 2>&1
+	command -v "$@"
 }
 
 build_go_plus_tools() {
-	command_exists go || {
+	command_exists goxx || {
     echo "Error: go is not installed but required, please visit https://golang.org/doc/install for help."
 		exit 1
 	}
