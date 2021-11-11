@@ -2025,16 +2025,16 @@ func (p *parser) parseRangeExpr(allowCmd bool) ast.Expr {
 	p.next()
 	high := p.parseBinaryExpr(false, token.LowestPrec+1, false, false)
 	var colon2 token.Pos
-	var last ast.Expr
+	var expr3 ast.Expr
 	if p.tok == token.COLON {
 		colon2 = p.pos
 		p.next()
-		last = p.parseBinaryExpr(false, token.LowestPrec+1, false, false)
+		expr3 = p.parseBinaryExpr(false, token.LowestPrec+1, false, false)
 	}
 	if debugParseOutput {
-		log.Printf("ast.RangeExpr{Low: %v, High: %v, Last: %v}\n", low, high, last)
+		log.Printf("ast.RangeExpr{First: %v, Last: %v, Expr3: %v}\n", low, high, expr3)
 	}
-	return &ast.RangeExpr{Low: low, To: to, High: high, Colon2: colon2, Last: last}
+	return &ast.RangeExpr{First: low, To: to, Last: high, Colon2: colon2, Expr3: expr3}
 }
 
 type tupleExpr struct {
