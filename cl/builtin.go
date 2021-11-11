@@ -47,7 +47,7 @@ func initBuiltin(pkg gox.PkgImporter, builtin *types.Package, fmt, big *gox.PkgR
 		fnTitle := string(fn[0]-'a'+'A') + fn[1:]
 		scope.Insert(gox.NewOverloadFunc(token.NoPos, builtin, fn, fmt.Ref(fnTitle)))
 	}
-	scope.Insert(gox.NewOverloadFunc(token.NoPos, builtin, "newRange", big.Ref("NewRange__0"), big.Ref("NewRange__1")))
+	scope.Insert(gox.NewOverloadFunc(token.NoPos, builtin, "newRange", big.Ref("NewRange__0")))
 }
 
 func newBuiltinDefault(pkg gox.PkgImporter, conf *gox.Config) *types.Package {
