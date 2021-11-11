@@ -1,0 +1,113 @@
+package main
+
+file rangeexpr.gop
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.RangeStmt:
+          Key:
+            ast.Ident:
+              Name: i
+          Tok: :=
+          X:
+            ast.RangeExpr:
+              Last:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 10
+          Body:
+            ast.BlockStmt:
+              List:
+                ast.ExprStmt:
+                  X:
+                    ast.CallExpr:
+                      Fun:
+                        ast.Ident:
+                          Name: println
+                      Args:
+                        ast.Ident:
+                          Name: i
+        ast.ForPhraseStmt:
+          ForPhrase:
+            ast.ForPhrase:
+              Value:
+                ast.Ident:
+                  Name: i
+              X:
+                ast.RangeExpr:
+                  First:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 1
+                  Last:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 10
+          Body:
+            ast.BlockStmt:
+              List:
+                ast.ExprStmt:
+                  X:
+                    ast.CallExpr:
+                      Fun:
+                        ast.Ident:
+                          Name: println
+                      Args:
+                        ast.Ident:
+                          Name: i
+        ast.RangeStmt:
+          Key:
+            ast.Ident:
+              Name: i
+          Tok: :=
+          X:
+            ast.RangeExpr:
+              Last:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 10
+              Expr3:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 2
+          Body:
+            ast.BlockStmt:
+              List:
+                ast.ExprStmt:
+                  X:
+                    ast.CallExpr:
+                      Fun:
+                        ast.Ident:
+                          Name: println
+                      Args:
+                        ast.Ident:
+                          Name: i
+        ast.RangeStmt:
+          Tok: ILLEGAL
+          X:
+            ast.RangeExpr:
+              Last:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 10
+          Body:
+            ast.BlockStmt:
+              List:
+                ast.ExprStmt:
+                  X:
+                    ast.CallExpr:
+                      Fun:
+                        ast.Ident:
+                          Name: println
+                      Args:
+                        ast.BasicLit:
+                          Kind: STRING
+                          Value: "Range expression"

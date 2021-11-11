@@ -359,6 +359,26 @@ for k, v <- foo {
 println({v: k for k, v <- foo})
 ```
 
+### Range expression (`start:end:step`)
+
+```go
+for i <- :10 {
+    println(i)
+}
+
+for i := range :10:2 {
+    println(i)
+}
+
+for i := range 1:10:3 {
+    println(i)
+}
+
+for range :10 {
+    println("Range expression")
+}
+```
+
 ### Lambda expression
 
 ```go
