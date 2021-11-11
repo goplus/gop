@@ -161,6 +161,9 @@ type nodeInterp struct {
 
 func (p *nodeInterp) Position(start token.Pos) token.Position {
 	pos := p.fset.Position(start)
+	if f, ok := p.files[pos.Filename]; ok {
+		pos, _ = f.AdjustPos(pos)
+	}
 	pos.Filename = relFile(p.workingDir, pos.Filename)
 	return pos
 }

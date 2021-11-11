@@ -1190,7 +1190,27 @@ type File struct {
 	Code         []byte
 	NoEntrypoint bool // no `main` or `init` func to indicate the module entry point.
 	NoPkgDecl    bool // no `package xxx` declaration
+	NoEntry      *NoEntry
 	FileType     FileType
+}
+
+type NoEntry struct {
+	Entry string
+	Line  int
+	Size  int
+}
+
+func (f *File) AdjustPos(pos token.Position) (token.Position, bool) {
+	var changed bool
+	if f.NoPkgDecl && pos.Line == 1 {
+		pos.Column -= 13 //package main;
+		changed = true
+	}
+	if f.NoEntrypoint && pos.Line == f.NoEntry.Line {
+		pos.Column -= f.NoEntry.Size
+		changed = true
+	}
+	return pos, changed
 }
 
 const (
