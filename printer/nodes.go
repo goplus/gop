@@ -1092,11 +1092,9 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		if x.Last != nil {
 			p.expr(x.Last)
 		}
-		if x.Colon2 != token.NoPos {
+		if x.Expr3 != nil {
 			p.print(token.COLON)
-			if x.Expr3 != nil {
-				p.expr(x.Expr3)
-			}
+			p.expr(x.Expr3)
 		}
 
 	default:
