@@ -15,6 +15,7 @@ GIT_BRANCH=$(git symbolic-ref --short -q HEAD)
 GO_FLAGS="-X github.com/goplus/gop/build.Date=${BUILD_DATE} \
   -X github.com/goplus/gop/build.Commit=${GIT_COMMIT_HASH} \
   -X github.com/goplus/gop/build.Branch=${GIT_BRANCH}"
+GOP_CACHE_DIR="$GOP_ROOT/.gop"
 
 command_exists() {
 	command -v "$@" >/dev/null 2>&1
@@ -41,8 +42,20 @@ build_go_plus_tools() {
   echo "Go+ tools installed successfully!"
 }
 
+clear_gop_cache() {
+  echo "Clearing gop cache"
+  cd $GOP_ROOT
+  if [ -d "$GOP_CACHE_DIR" ]; then
+    rm -r $GOP_CACHE_DIR
+    echo "Gop cache files cleared"
+  else
+    echo "No gop cache files found"
+  fi
+}
+
 link_gop_root_dir() {
   echo "Linking $GOP_ROOT to $GOP_HOME_DIR"
+  cd $GOP_ROOT
   if [ ! -e "$GOP_HOME_DIR" ] && [ "$GOP_ROOT" != "$GOP_HOME_DIR" ]; then
     ln -s $GOP_ROOT $GOP_HOME_DIR
   fi
@@ -66,6 +79,8 @@ build_go_plus_tutorials() {
     echo "Error: something wrong, you could create a new issue on https://github.com/goplus/gop/issues, we will help you."
     exit 1
   }
+
+  cd $GOP_ROOT
 
   echo "Building all Go+ tutorials."
   gop install -ldflags "${GO_FLAGS}" ./...
@@ -114,6 +129,9 @@ EOF
 
 # Build all Go+ tools
 build_go_plus_tools
+
+# Clear gop cache files
+clear_gop_cache
 
 # Link Gop root directory to home/ dir
 link_gop_root_dir
