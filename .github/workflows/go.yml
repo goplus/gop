@@ -15,7 +15,7 @@ jobs:
         go-version: 1.16
 
     - name: Compile gop and related tools
-      run: ./all.bash -c
+      run: bash all.bash -c
 
     - name: Running testcases
       run: ./all.bash -t
