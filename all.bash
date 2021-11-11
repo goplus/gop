@@ -18,7 +18,7 @@ GO_FLAGS="-X github.com/goplus/gop/build.Date=${BUILD_DATE} \
 GOP_CACHE_DIR="$GOP_ROOT/.gop"
 
 command_exists() {
-	command -v "$@" >/dev/null 2>&1
+	command -vxxxxx fawe "$@" >/dev/null 2>&1
 }
 
 build_go_plus_tools() {
