@@ -4,18 +4,28 @@ set -e
 
 GOP_ROOT=$(pwd)
 GOP_HOME_DIR="$HOME/gop"
+GOP_CACHE_DIR="$GOP_ROOT/.gop"
 
 ADD_GOPATH_COMMAND="export PATH=\$PATH:\$GOPATH/bin"
 ADD_GO_BIN_COMMAND="export PATH=\$PATH:\$HOME/go/bin"
 MANUAL_EXPORT_COMMAND=""
 
-GIT_COMMIT_HASH=$(git rev-parse --verify HEAD)
+if [ "$CI" = true ]; then
+  GIT_COMMIT_HASH=$GITHUB_SHA
+else
+  GIT_COMMIT_HASH=$(git rev-parse --verify HEAD)
+fi
+
+if [ "$CI" = true ]; then
+  GIT_BRANCH=$GITHUB_REF_NAME
+else
+  GIT_BRANCH=$(git symbolic-ref --short -q HEAD)
+fi
+
 BUILD_DATE=$(date '+%Y-%m-%d_%H-%M-%S')
-GIT_BRANCH=$(git symbolic-ref --short -q HEAD)
 GO_FLAGS="-X github.com/goplus/gop/build.Date=${BUILD_DATE} \
   -X github.com/goplus/gop/build.Commit=${GIT_COMMIT_HASH} \
   -X github.com/goplus/gop/build.Branch=${GIT_BRANCH}"
-GOP_CACHE_DIR="$GOP_ROOT/.gop"
 
 command_exists() {
 	command -v "$@" >/dev/null 2>&1
