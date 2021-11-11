@@ -691,16 +691,16 @@ func compileSliceLit(ctx *blockCtx, v *ast.SliceLit) {
 func compileRangeExpr(ctx *blockCtx, v *ast.RangeExpr) {
 	pkg, cb := ctx.pkg, ctx.cb
 	cb.Val(pkg.Builtin().Ref("newRange"))
-	if v.Low == nil {
+	if v.First == nil {
 		ctx.cb.Val(0, v)
 	} else {
-		compileExpr(ctx, v.Low)
+		compileExpr(ctx, v.First)
 	}
-	compileExpr(ctx, v.High)
-	if v.Last == nil {
+	compileExpr(ctx, v.Last)
+	if v.Expr3 == nil {
 		ctx.cb.Val(1, v)
 	} else {
-		compileExpr(ctx, v.Last)
+		compileExpr(ctx, v.Expr3)
 	}
 	cb.Call(3)
 }
