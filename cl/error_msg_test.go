@@ -159,6 +159,27 @@ func foo(v map[int]bar) {
 `)
 }
 
+func TestErrPosAdjust(t *testing.T) {
+	codeErrorTest(t,
+		"./bar.gop:2:2: undefined: println1", `func main() {
+	println1 "hello"
+}
+`)
+	codeErrorTest(t,
+		"./bar.gop:1:1: undefined: println1", `println1 "hello"`)
+
+	codeErrorTest(t,
+		"./bar.gop:2:2: undefined: println1", `
+	println1 "hello"
+`)
+
+	codeErrorTest(t,
+		"./bar.gop:2:2: undefined: println1", `package main
+	println1 "hello"
+`)
+
+}
+
 func TestErrImport(t *testing.T) {
 	codeErrorTest(t,
 		`./bar.gop:8:2: confliction: NewEncoding declared both in "encoding/base64" and "encoding/base32"`, `
@@ -441,8 +462,7 @@ b := []int{2: a}
 }
 
 func TestErrMapLit(t *testing.T) {
-	codeErrorTest(t, // TODO: first column need correct
-		`./bar.gop:2:34: cannot use 1+2 (type untyped int) as type string in map key
+	codeErrorTest(t, `./bar.gop:2:21: cannot use 1+2 (type untyped int) as type string in map key
 ./bar.gop:3:27: cannot use "Go" + "+" (type untyped string) as type int in map value`,
 		`
 a := map[string]int{1+2: 2}

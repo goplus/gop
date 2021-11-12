@@ -212,6 +212,8 @@ func parseFSFileEx(fset *token.FileSet, fs FileSystem, filename string, src inte
 func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode, ft ast.FileType) (f *ast.File, err error) {
 	var b bytes.Buffer
 	var isMod, noEntrypoint, noPkgDecl bool
+	var noEntry *ast.NoEntry
+	var noEntryPos int
 	var fsetTmp = token.NewFileSet()
 	f, err = parseFile(fsetTmp, filename, code, PackageClauseOnly)
 	if err != nil {
@@ -242,6 +244,12 @@ func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode, f
 				idx := e.Pos.Offset
 				fmt.Fprintf(&b, "%s %s{%s\n}", code[:idx], entrypoint, code[idx:])
 				code = b.Bytes()
+				size := len(entrypoint) + 2
+				noEntryPos = idx + size
+				noEntry = &ast.NoEntry{
+					Entry: entrypoint,
+					Size:  size,
+				}
 				noEntrypoint = true
 				err = nil
 			}
@@ -250,7 +258,12 @@ func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode, f
 	if err == nil {
 		f, err = parseFile(fset, filename, code, mode)
 		if err == nil {
+			if noEntry != nil {
+				pos := fset.Position(f.Pos() + token.Pos(noEntryPos))
+				noEntry.Line = pos.Line
+			}
 			f.NoEntrypoint = noEntrypoint
+			f.NoEntry = noEntry
 			f.NoPkgDecl = noPkgDecl
 			f.FileType = extGopFiles[filepath.Ext(filename)]
 		}
