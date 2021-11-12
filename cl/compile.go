@@ -190,6 +190,9 @@ func (p *nodeInterp) LoadExpr(node ast.Node) (src string, pos token.Position) {
 		log.Println("LoadExpr:", node, pos.Filename, pos.Line, pos.Offset, node.Pos(), node.End(), n)
 	}
 	src = string(f.Code[pos.Offset : pos.Offset+n])
+	if adj, ok := f.AdjustPos(pos); ok {
+		pos.Column = adj.Column
+	}
 	return
 }
 
