@@ -4,18 +4,28 @@ set -e
 
 GOP_ROOT=$(pwd)
 GOP_HOME_DIR="$HOME/gop"
+GOP_CACHE_DIR="$GOP_ROOT/.gop"
 
 ADD_GOPATH_COMMAND="export PATH=\$PATH:\$GOPATH/bin"
 ADD_GO_BIN_COMMAND="export PATH=\$PATH:\$HOME/go/bin"
 MANUAL_EXPORT_COMMAND=""
 
-GIT_COMMIT_HASH=$(git rev-parse --verify HEAD)
+if [ "$CI" = true ]; then
+  GIT_COMMIT_HASH=$GITHUB_SHA
+else
+  GIT_COMMIT_HASH=$(git rev-parse --verify HEAD)
+fi
+
+if [ "$CI" = true ]; then
+  GIT_BRANCH=$GITHUB_REF_NAME
+else
+  GIT_BRANCH=$(git symbolic-ref --short -q HEAD)
+fi
+
 BUILD_DATE=$(date '+%Y-%m-%d_%H-%M-%S')
-GIT_BRANCH=$(git symbolic-ref --short -q HEAD)
 GO_FLAGS="-X github.com/goplus/gop/build.Date=${BUILD_DATE} \
   -X github.com/goplus/gop/build.Commit=${GIT_COMMIT_HASH} \
   -X github.com/goplus/gop/build.Branch=${GIT_BRANCH}"
-GOP_CACHE_DIR="$GOP_ROOT/.gop"
 
 command_exists() {
 	command -v "$@" >/dev/null 2>&1
@@ -127,20 +137,54 @@ Have fun!
 EOF
 }
 
-# Build all Go+ tools
-build_go_plus_tools
+gop_test() {
+  echo "Running gop test"
+  cd $GOP_ROOT
+  PATH=$PATH:$GOPATH/bin gop test -v -coverprofile=coverage.txt -covermode=atomic ./...
+  echo "Finished running gop test"
+}
 
-# Clear gop cache files
-clear_gop_cache
+default() {
+  # Build all Go+ tools
+  build_go_plus_tools
 
-# Link Gop root directory to home/ dir
-link_gop_root_dir
+  # Clear gop cache files
+  clear_gop_cache
 
-# Build all Go+ tutorials
-build_go_plus_tutorials
+  # Link Gop root directory to home/ dir
+  link_gop_root_dir
 
-# Summary
-summary
+  # Build all Go+ tutorials
+  build_go_plus_tutorials
 
-# hello world
-hello_world
+  # Summary
+  summary
+
+  # hello world
+  hello_world
+}
+
+if [ "$#" -eq 0 ]; then
+  default
+  exit 0
+fi
+
+# To add more options below, juse add another case.
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    -c|--compile)
+      build_go_plus_tools
+      ;;
+    -t|--test)
+      gop_test
+      ;;
+    -*)
+      echo "Unknown option: $1"
+      echo "Valid options:"
+      echo "  -t, --test     Running testcases with gop test"
+      echo "  -c, --compile  Compile gop and related tools"
+      exit 1
+      ;;
+  esac
+  shift
+done
