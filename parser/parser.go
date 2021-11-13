@@ -35,9 +35,10 @@ type parser struct {
 	scanner scanner.Scanner
 
 	// Tracing/debugging
-	mode   Mode // parsing mode
-	trace  bool // == (mode & Trace != 0)
-	indent int  // indentation used for tracing output
+	mode     Mode         // parsing mode
+	fileType ast.FileType // file type
+	trace    bool         // == (mode & Trace != 0)
+	indent   int          // indentation used for tracing output
 
 	// Comments
 	comments    []*ast.CommentGroup
@@ -77,7 +78,7 @@ type parser struct {
 	targetStack [][]*ast.Ident // stack of unresolved labels
 }
 
-func (p *parser) init(fset *token.FileSet, filename string, src []byte, mode Mode) {
+func (p *parser) init(fset *token.FileSet, filename string, src []byte, mode Mode, ft ast.FileType) {
 	p.file = fset.AddFile(filename, -1, len(src))
 	var m scanner.Mode
 	if mode&ParseComments != 0 {
@@ -87,6 +88,7 @@ func (p *parser) init(fset *token.FileSet, filename string, src []byte, mode Mod
 	p.scanner.Init(p.file, src, eh, m)
 
 	p.mode = mode
+	p.fileType = ft
 	p.trace = mode&Trace != 0 // for convenience (p.trace is used frequently)
 
 	p.next()
@@ -3166,6 +3168,145 @@ func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
 // ----------------------------------------------------------------------------
 // Source files
 
+func (p *parser) entryPoint(pkgname string) string {
+	switch p.fileType {
+	case ast.FileTypeSpx:
+		return "Main"
+	case ast.FileTypeGmx:
+		return "MainEntry"
+	default:
+		if pkgname == "main" {
+			return "main"
+		}
+		return "init"
+	}
+}
+
+func (p *parser) insertEntry(pkgname string) *ast.FuncDecl {
+	entry := p.entryPoint(pkgname)
+	return &ast.FuncDecl{
+		Name: ast.NewIdent(entry),
+		Doc:  p.leadComment,
+		Type: &ast.FuncType{
+			Func:    token.NoPos,
+			Params:  &ast.FieldList{},
+			Results: &ast.FieldList{},
+		},
+	}
+}
+
+func (p *parser) checkNext(unget bool) (tok token.Token) {
+	oldpos, oldtok, oldlit := p.pos, p.tok, p.lit
+	p.next0()
+	tok = p.tok
+	if unget {
+		p.unget(oldpos, oldtok, oldlit)
+	}
+	return
+}
+
+func (p *parser) parseFuncDeclOrCall() (*ast.FuncDecl, *ast.CallExpr) {
+	if p.trace {
+		defer un(trace(p, "FunctionDecl"))
+	}
+
+	doc := p.leadComment
+	pos := p.expect(token.FUNC)
+	scope := ast.NewScope(p.topScope) // function scope
+	var recv, params, results *ast.FieldList
+	var ident *ast.Ident
+	var isOp bool
+	if p.tok != token.LPAREN {
+		// check func decl
+		ident, isOp = p.parseIdentOrOp()
+		params, results = p.parseSignature(scope)
+	} else {
+		params = p.parseParameters(scope, true)
+		// check funlit call
+		if p.tok == token.LPAREN || p.tok == token.CHAN {
+			results = p.parseResult(scope)
+			body := p.parseBody(scope)
+			funLit := &ast.FuncLit{
+				Type: &ast.FuncType{
+					Func:    pos,
+					Params:  params,
+					Results: results,
+				},
+				Body: body,
+			}
+			call := p.parseCallOrConversion(funLit, false)
+			return nil, call
+		}
+		ident, isOp = p.parseIdentOrOp()
+		// check funlit call
+		if p.tok == token.LBRACE {
+			results = &ast.FieldList{List: []*ast.Field{&ast.Field{Type: ident}}}
+			body := p.parseBody(scope)
+			funLit := &ast.FuncLit{
+				Type: &ast.FuncType{
+					Func:    pos,
+					Params:  params,
+					Results: results,
+				},
+				Body: body,
+			}
+			call := p.parseCallOrConversion(funLit, false)
+			return nil, call
+		}
+		// check has recv func
+		recv = params
+		params, results = p.parseSignature(scope)
+		if isOp {
+			if params == nil || len(params.List) != 1 {
+				log.Panicln("TODO: overload operator can only have one parameter")
+			}
+		}
+	}
+	var body *ast.BlockStmt
+	if p.tok == token.LBRACE {
+		body = p.parseBody(scope)
+		p.expectSemi()
+	} else if p.tok == token.SEMICOLON {
+		p.next()
+		if p.tok == token.LBRACE {
+			// opening { of function declaration on next line
+			p.error(p.pos, "unexpected semicolon or newline before {")
+			body = p.parseBody(scope)
+			p.expectSemi()
+		}
+	} else {
+		p.expectSemi()
+	}
+
+	decl := &ast.FuncDecl{
+		Doc:  doc,
+		Recv: recv,
+		Name: ident,
+		Type: &ast.FuncType{
+			Func:    pos,
+			Params:  params,
+			Results: results,
+		},
+		Body:     body,
+		Operator: isOp,
+	}
+	if recv == nil {
+		// Go spec: The scope of an identifier denoting a constant, type,
+		// variable, or function (but not method) declared at top level
+		// (outside any function) is the package block.
+		//
+		// init() functions cannot be referred to and there may
+		// be more than one - don't put them in the pkgScope
+		if ident.Name != "init" {
+			p.declare(decl, nil, p.pkgScope, ast.Fun, ident)
+		}
+	}
+	if debugParseOutput {
+		log.Printf("ast.FuncDecl{Name: %v, ...}\n", ident.Name)
+	}
+	return decl, nil
+}
+
 func (p *parser) parseFile() *ast.File {
 	if p.trace {
 		defer un(trace(p, "File"))
@@ -3179,19 +3320,26 @@ func (p *parser) parseFile() *ast.File {
 
 	// package clause
 	doc := p.leadComment
-	pos := p.expect(token.PACKAGE)
-	// Go spec: The package clause is not a declaration;
-	// the package name does not appear in any scope.
-	ident := p.parseIdent()
-	if ident.Name == "_" && p.mode&DeclarationErrors != 0 {
-		p.error(p.pos, "invalid package name _")
-	}
-	p.expectSemi()
+	var pos token.Pos
+	var ident *ast.Ident
+	if p.tok == token.PACKAGE {
+		pos = p.expect(token.PACKAGE)
+		// Go spec: The package clause is not a declaration;
+		// the package name does not appear in any scope.
+		ident = p.parseIdent()
+		if ident.Name == "_" && p.mode&DeclarationErrors != 0 {
+			p.error(p.pos, "invalid package name _")
+		}
+		p.expectSemi()
 
-	// Don't bother parsing the rest if we had errors parsing the package clause.
-	// Likely not a Go source file at all.
-	if p.errors.Len() != 0 {
-		return nil
+		// Don't bother parsing the rest if we had errors parsing the package clause.
+		// Likely not a Go source file at all.
+		if p.errors.Len() != 0 {
+			return nil
+		}
+	} else {
+		pos = token.NoPos
+		ident = ast.NewIdent("main")
 	}
 
 	p.openScope()
@@ -3206,7 +3354,39 @@ func (p *parser) parseFile() *ast.File {
 		if p.mode&ImportsOnly == 0 {
 			// rest of package body
 			for p.tok != token.EOF {
-				decls = append(decls, p.parseDecl(declStart))
+				switch p.tok {
+				case token.VAR, token.CONST, token.TYPE:
+					decls = append(decls, p.parseDecl(declStart))
+				case token.FUNC:
+					decl, call := p.parseFuncDeclOrCall()
+					if decl != nil {
+						if p.errors.Len() != 0 {
+							p.errorExpected(pos, "declaration", 2)
+							p.advance(declStart)
+						}
+						decls = append(decls, decl)
+					} else {
+						p.topScope = ast.NewScope(p.topScope)
+						entry := p.insertEntry(ident.Name)
+						p.openLabelScope()
+						list := p.parseStmtList()
+						p.closeLabelScope()
+						p.closeScope()
+						entry.Body = &ast.BlockStmt{
+							List: append([]ast.Stmt{&ast.ExprStmt{X: call}}, list...),
+						}
+						decls = append(decls, entry)
+					}
+				default:
+					p.topScope = ast.NewScope(p.topScope)
+					entry := p.insertEntry(ident.Name)
+					p.openLabelScope()
+					list := p.parseStmtList()
+					p.closeLabelScope()
+					p.closeScope()
+					entry.Body = &ast.BlockStmt{List: list}
+					decls = append(decls, entry)
+				}
 			}
 		}
 	}
@@ -3235,5 +3415,6 @@ func (p *parser) parseFile() *ast.File {
 		Imports:    p.imports,
 		Unresolved: p.unresolved[0:i],
 		Comments:   p.comments,
+		FileType:   p.fileType,
 	}
 }
