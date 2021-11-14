@@ -10,18 +10,8 @@ ADD_GOPATH_COMMAND="export PATH=\$PATH:\$GOPATH/bin"
 ADD_GO_BIN_COMMAND="export PATH=\$PATH:\$HOME/go/bin"
 MANUAL_EXPORT_COMMAND=""
 
-if [ "$CI" = true ]; then
-  GIT_COMMIT_HASH=$GITHUB_SHA
-else
-  GIT_COMMIT_HASH=$(git rev-parse --verify HEAD)
-fi
-
-if [ "$CI" = true ]; then
-  GIT_BRANCH=$GITHUB_REF_NAME
-else
-  GIT_BRANCH=$(git symbolic-ref --short -q HEAD)
-fi
-
+GIT_BRANCH=$(git branch --show-current)
+GIT_COMMIT_HASH=$(git rev-parse --verify HEAD)
 BUILD_DATE=$(date '+%Y-%m-%d_%H-%M-%S')
 GO_FLAGS="-X github.com/goplus/gop/build.Date=${BUILD_DATE} \
   -X github.com/goplus/gop/build.Commit=${GIT_COMMIT_HASH} \
