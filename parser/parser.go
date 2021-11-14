@@ -3182,7 +3182,7 @@ func (p *parser) entryPoint(pkgname string) string {
 	}
 }
 
-func (p *parser) insertEntry(pkgname string) *ast.FuncDecl {
+func (p *parser) newEntry(pkgname string) *ast.FuncDecl {
 	entry := p.entryPoint(pkgname)
 	return &ast.FuncDecl{
 		Name: ast.NewIdent(entry),
@@ -3329,6 +3329,20 @@ func (p *parser) parseFuncDeclOrCall() (*ast.FuncDecl, *ast.CallExpr) {
 	return decl, nil
 }
 
+func (p *parser) insertEntry(pkgName string, stmts ...ast.Stmt) *ast.FuncDecl {
+	p.topScope = ast.NewScope(p.topScope)
+	entry := p.newEntry(pkgName)
+	p.openLabelScope()
+	list := p.parseStmtList()
+	p.closeLabelScope()
+	p.closeScope()
+	if stmts != nil {
+		list = append(stmts, list...)
+	}
+	entry.Body = &ast.BlockStmt{List: list}
+	return entry
+}
+
 func (p *parser) parseFile() *ast.File {
 	if p.trace {
 		defer un(trace(p, "File"))
@@ -3340,6 +3354,8 @@ func (p *parser) parseFile() *ast.File {
 		return nil
 	}
 
+	var noPkgDecl bool
+	var noEntrypoint bool
 	// package clause
 	doc := p.leadComment
 	var pos token.Pos
@@ -3360,6 +3376,7 @@ func (p *parser) parseFile() *ast.File {
 			return nil
 		}
 	} else {
+		noPkgDecl = true
 		pos = token.NoPos
 		ident = ast.NewIdent("main")
 	}
@@ -3388,26 +3405,12 @@ func (p *parser) parseFile() *ast.File {
 						}
 						decls = append(decls, decl)
 					} else {
-						p.topScope = ast.NewScope(p.topScope)
-						entry := p.insertEntry(ident.Name)
-						p.openLabelScope()
-						list := p.parseStmtList()
-						p.closeLabelScope()
-						p.closeScope()
-						entry.Body = &ast.BlockStmt{
-							List: append([]ast.Stmt{&ast.ExprStmt{X: call}}, list...),
-						}
-						decls = append(decls, entry)
+						noEntrypoint = true
+						decls = append(decls, p.insertEntry(ident.Name, &ast.ExprStmt{X: call}))
 					}
 				default:
-					p.topScope = ast.NewScope(p.topScope)
-					entry := p.insertEntry(ident.Name)
-					p.openLabelScope()
-					list := p.parseStmtList()
-					p.closeLabelScope()
-					p.closeScope()
-					entry.Body = &ast.BlockStmt{List: list}
-					decls = append(decls, entry)
+					noEntrypoint = true
+					decls = append(decls, p.insertEntry(ident.Name))
 				}
 			}
 		}
@@ -3429,14 +3432,16 @@ func (p *parser) parseFile() *ast.File {
 	}
 
 	return &ast.File{
-		Doc:        doc,
-		Package:    pos,
-		Name:       ident,
-		Decls:      decls,
-		Scope:      p.pkgScope,
-		Imports:    p.imports,
-		Unresolved: p.unresolved[0:i],
-		Comments:   p.comments,
-		FileType:   p.fileType,
+		Doc:          doc,
+		Package:      pos,
+		Name:         ident,
+		Decls:        decls,
+		Scope:        p.pkgScope,
+		Imports:      p.imports,
+		Unresolved:   p.unresolved[0:i],
+		Comments:     p.comments,
+		NoEntrypoint: noEntrypoint,
+		NoPkgDecl:    noPkgDecl,
+		FileType:     p.fileType,
 	}
 }

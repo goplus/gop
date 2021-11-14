@@ -161,9 +161,6 @@ type nodeInterp struct {
 
 func (p *nodeInterp) Position(start token.Pos) token.Position {
 	pos := p.fset.Position(start)
-	if f, ok := p.files[pos.Filename]; ok {
-		pos, _ = f.AdjustPos(pos)
-	}
 	pos.Filename = relFile(p.workingDir, pos.Filename)
 	return pos
 }
@@ -190,9 +187,6 @@ func (p *nodeInterp) LoadExpr(node ast.Node) (src string, pos token.Position) {
 		log.Println("LoadExpr:", node, pos.Filename, pos.Line, pos.Offset, node.Pos(), node.End(), n)
 	}
 	src = string(f.Code[pos.Offset : pos.Offset+n])
-	if adj, ok := f.AdjustPos(pos); ok {
-		pos.Column = adj.Column
-	}
 	return
 }
 

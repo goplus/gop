@@ -159,7 +159,7 @@ func foo(v map[int]bar) {
 `)
 }
 
-func TestErrPosAdjust(t *testing.T) {
+func TestErrNoEntrypoint(t *testing.T) {
 	codeErrorTest(t,
 		"./bar.gop:2:2: undefined: println1", `func main() {
 	println1 "hello"
