@@ -3205,6 +3205,10 @@ func (p *parser) checkNext(unget bool) (tok token.Token) {
 	return
 }
 
+func isOverloadOps(tok token.Token) bool {
+	return int(tok) < len(overloadOps) && overloadOps[tok] != 0
+}
+
 func (p *parser) parseFuncDeclOrCall() (*ast.FuncDecl, *ast.CallExpr) {
 	if p.trace {
 		defer un(trace(p, "FunctionDecl"))
@@ -3222,38 +3226,56 @@ func (p *parser) parseFuncDeclOrCall() (*ast.FuncDecl, *ast.CallExpr) {
 		params, results = p.parseSignature(scope)
 	} else {
 		params = p.parseParameters(scope, true)
-		// check funlit call
-		if p.tok == token.LPAREN || p.tok == token.CHAN {
-			results = p.parseResult(scope)
-			body := p.parseBody(scope)
-			funLit := &ast.FuncLit{
-				Type: &ast.FuncType{
-					Func:    pos,
-					Params:  params,
-					Results: results,
-				},
-				Body: body,
+		var isFunLit bool
+		// method: func (type) op (type) {}
+		// funlit: func (params) *type {}
+		if isOp = isOverloadOps(p.tok); isOp {
+			pos, tok := p.pos, p.tok
+			p.next()
+			if tok == token.MUL {
+				if p.tok != token.LPAREN {
+					isOp = false
+					isFunLit = true
+					x := p.parseType()
+					typ := &ast.StarExpr{Star: pos, X: x}
+					results = &ast.FieldList{List: []*ast.Field{&ast.Field{Type: typ}}}
+				}
 			}
-			call := p.parseCallOrConversion(funLit, false)
-			return nil, call
-		}
-		ident, isOp = p.parseIdentOrOp()
-		// check funlit call
-		if p.tok == token.LBRACE {
-			results = &ast.FieldList{List: []*ast.Field{&ast.Field{Type: ident}}}
-			body := p.parseBody(scope)
-			funLit := &ast.FuncLit{
-				Type: &ast.FuncType{
-					Func:    pos,
-					Params:  params,
-					Results: results,
-				},
-				Body: body,
+			if isOp {
+				ident = &ast.Ident{NamePos: pos, Name: tok.String()}
 			}
-			call := p.parseCallOrConversion(funLit, false)
-			return nil, call
 		}
-		// check has recv func
+		if !isOp {
+			if !isFunLit {
+				// method: func (recv) method(param) result {}
+				// funlit: func (param) result {}
+				if p.tok == token.IDENT {
+					ident = p.parseIdent()
+					if p.tok != token.LBRACE {
+						isFunLit = false
+					} else {
+						isFunLit = true
+						results = &ast.FieldList{List: []*ast.Field{&ast.Field{Type: ident}}}
+					}
+				} else {
+					isFunLit = true
+					results = p.parseResult(scope)
+				}
+			}
+			if isFunLit {
+				body := p.parseBody(scope)
+				funLit := &ast.FuncLit{
+					Type: &ast.FuncType{
+						Func:    pos,
+						Params:  params,
+						Results: results,
+					},
+					Body: body,
+				}
+				call := p.parseCallOrConversion(funLit, false)
+				return nil, call
+			}
+		}
 		recv = params
 		params, results = p.parseSignature(scope)
 		if isOp {
