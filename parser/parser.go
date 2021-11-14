@@ -3188,9 +3188,8 @@ func (p *parser) newEntry(pkgname string) *ast.FuncDecl {
 		Name: ast.NewIdent(entry),
 		Doc:  p.leadComment,
 		Type: &ast.FuncType{
-			Func:    token.NoPos,
-			Params:  &ast.FieldList{},
-			Results: &ast.FieldList{},
+			Func:   token.NoPos,
+			Params: &ast.FieldList{},
 		},
 	}
 }
