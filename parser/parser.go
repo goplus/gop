@@ -35,11 +35,10 @@ type parser struct {
 	scanner scanner.Scanner
 
 	// Tracing/debugging
-	mode      Mode         // parsing mode
-	fileType  ast.FileType // file type
-	trace     bool         // == (mode & Trace != 0)
-	indent    int          // indentation used for tracing output
-	mockEntry string       // insert mock entrypoint
+	mode         Mode // parsing mode
+	trace        bool // == (mode & Trace != 0)
+	noEntrypoint bool // no entrypoint func
+	indent       int  // indentation used for tracing output
 
 	// Comments
 	comments    []*ast.CommentGroup
@@ -79,7 +78,7 @@ type parser struct {
 	targetStack [][]*ast.Ident // stack of unresolved labels
 }
 
-func (p *parser) init(fset *token.FileSet, filename string, src []byte, mode Mode, ft ast.FileType) {
+func (p *parser) init(fset *token.FileSet, filename string, src []byte, mode Mode) {
 	p.file = fset.AddFile(filename, -1, len(src))
 	var m scanner.Mode
 	if mode&ParseComments != 0 {
@@ -89,7 +88,6 @@ func (p *parser) init(fset *token.FileSet, filename string, src []byte, mode Mod
 	p.scanner.Init(p.file, src, eh, m)
 
 	p.mode = mode
-	p.fileType = ft
 	p.trace = mode&Trace != 0 // for convenience (p.trace is used frequently)
 
 	p.next()
@@ -3070,73 +3068,6 @@ func (p *parser) parseGenDecl(keyword token.Token, f parseSpecFunction) *ast.Gen
 	}
 }
 
-func (p *parser) parseFuncDecl() *ast.FuncDecl {
-	if p.trace {
-		defer un(trace(p, "FunctionDecl"))
-	}
-
-	doc := p.leadComment
-	pos := p.expect(token.FUNC)
-	scope := ast.NewScope(p.topScope) // function scope
-
-	var recv *ast.FieldList
-	if p.tok == token.LPAREN {
-		recv = p.parseParameters(scope, false)
-	}
-
-	ident, isOp := p.parseIdentOrOp()
-	params, results := p.parseSignature(scope)
-	if isOp {
-		if params == nil || len(params.List) != 1 {
-			log.Panicln("TODO: overload operator can only have one parameter")
-		}
-	}
-
-	var body *ast.BlockStmt
-	if p.tok == token.LBRACE {
-		body = p.parseBody(scope)
-		p.expectSemi()
-	} else if p.tok == token.SEMICOLON {
-		p.next()
-		if p.tok == token.LBRACE {
-			// opening { of function declaration on next line
-			p.error(p.pos, "unexpected semicolon or newline before {")
-			body = p.parseBody(scope)
-			p.expectSemi()
-		}
-	} else {
-		p.expectSemi()
-	}
-
-	decl := &ast.FuncDecl{
-		Doc:  doc,
-		Recv: recv,
-		Name: ident,
-		Type: &ast.FuncType{
-			Func:    pos,
-			Params:  params,
-			Results: results,
-		},
-		Body:     body,
-		Operator: isOp,
-	}
-	if recv == nil {
-		// Go spec: The scope of an identifier denoting a constant, type,
-		// variable, or function (but not method) declared at top level
-		// (outside any function) is the package block.
-		//
-		// init() functions cannot be referred to and there may
-		// be more than one - don't put them in the pkgScope
-		if ident.Name != "init" {
-			p.declare(decl, nil, p.pkgScope, ast.Fun, ident)
-		}
-	}
-	if debugParseOutput {
-		log.Printf("ast.FuncDecl{Name: %v, ...}\n", ident.Name)
-	}
-	return decl
-}
-
 func (p *parser) parseDecl(pkgName string, sync map[token.Token]bool) ast.Decl {
 	if p.trace {
 		defer un(trace(p, "Declaration"))
@@ -3151,7 +3082,7 @@ func (p *parser) parseDecl(pkgName string, sync map[token.Token]bool) ast.Decl {
 		f = p.parseTypeSpec
 
 	case token.FUNC:
-		decl, call := p.parseFuncDeclOrCall()
+		decl, call := p.parseFuncDeclOrCall(true)
 		if decl != nil {
 			if p.errors.Len() != 0 {
 				p.errorExpected(pos, "declaration", 2)
@@ -3159,14 +3090,14 @@ func (p *parser) parseDecl(pkgName string, sync map[token.Token]bool) ast.Decl {
 			}
 			return decl
 		} else {
-			decl = p.insertEntry(pos, pkgName, &ast.ExprStmt{X: call})
+			decl = p.insertEntry(pos, &ast.ExprStmt{X: call})
 			if p.errors.Len() != 0 {
 				p.advance(sync)
 			}
 			return decl
 		}
 	default:
-		decl := p.insertEntry(pos, pkgName)
+		decl := p.insertEntry(pos)
 		if p.errors.Len() != 0 {
 			p.advance(sync)
 		}
@@ -3179,25 +3110,16 @@ func (p *parser) parseDecl(pkgName string, sync map[token.Token]bool) ast.Decl {
 // ----------------------------------------------------------------------------
 // Source files
 
-func (p *parser) entryPoint(pkgname string) string {
-	switch p.fileType {
-	case ast.FileTypeSpx:
-		return "Main"
-	case ast.FileTypeGmx:
-		return "MainEntry"
-	default:
-		if pkgname == "main" {
-			return "main"
-		}
-		return "init"
-	}
-}
-
 func isOverloadOps(tok token.Token) bool {
 	return int(tok) < len(overloadOps) && overloadOps[tok] != 0
 }
 
-func (p *parser) parseFuncDeclOrCall() (*ast.FuncDecl, *ast.CallExpr) {
+func (p *parser) parseFuncDecl() *ast.FuncDecl {
+	decl, _ := p.parseFuncDeclOrCall(false)
+	return decl
+}
+
+func (p *parser) parseFuncDeclOrCall(allowCallExpr bool) (*ast.FuncDecl, *ast.CallExpr) {
 	if p.trace {
 		defer un(trace(p, "FunctionDecl"))
 	}
@@ -3205,71 +3127,81 @@ func (p *parser) parseFuncDeclOrCall() (*ast.FuncDecl, *ast.CallExpr) {
 	doc := p.leadComment
 	pos := p.expect(token.FUNC)
 	scope := ast.NewScope(p.topScope) // function scope
+
 	var recv, params, results *ast.FieldList
 	var ident *ast.Ident
 	var isOp bool
-	if p.tok != token.LPAREN {
-		// check func decl
-		ident, isOp = p.parseIdentOrOp()
-		params, results = p.parseSignature(scope)
-	} else {
-		params = p.parseParameters(scope, true)
-		var isFunLit bool
-		// method: func (type) op (type) {}
-		// funlit: func (params) *type {}
-		if isOp = isOverloadOps(p.tok); isOp {
-			pos, tok := p.pos, p.tok
-			p.next()
-			if tok == token.MUL {
-				if p.tok != token.LPAREN {
-					isOp = false
-					isFunLit = true
-					x := p.parseType()
-					typ := &ast.StarExpr{Star: pos, X: x}
-					results = &ast.FieldList{List: []*ast.Field{&ast.Field{Type: typ}}}
+
+	if allowCallExpr {
+		if p.tok != token.LPAREN {
+			// check func decl
+			ident, isOp = p.parseIdentOrOp()
+			params, results = p.parseSignature(scope)
+		} else {
+			params = p.parseParameters(scope, true)
+			var isFunLit bool
+			// method: func (type) op (type) {}
+			// funlit: func (params) *type {}
+			if isOp = isOverloadOps(p.tok); isOp {
+				pos, tok := p.pos, p.tok
+				p.next()
+				if tok == token.MUL {
+					if p.tok != token.LPAREN {
+						isOp = false
+						isFunLit = true
+						x := p.parseType()
+						typ := &ast.StarExpr{Star: pos, X: x}
+						results = &ast.FieldList{List: []*ast.Field{&ast.Field{Type: typ}}}
+					}
+				}
+				if isOp {
+					ident = &ast.Ident{NamePos: pos, Name: tok.String()}
 				}
 			}
-			if isOp {
-				ident = &ast.Ident{NamePos: pos, Name: tok.String()}
-			}
-		}
-		if !isOp {
-			if !isFunLit {
-				// method: func (recv) method(param) result {}
-				// funlit: func (param) result {}
-				if p.tok == token.IDENT {
-					ident = p.parseIdent()
-					if p.tok != token.LBRACE {
-						isFunLit = false
+			if !isOp {
+				if !isFunLit {
+					// method: func (recv) method(param) result {}
+					// funlit: func (param) result {}
+					if p.tok == token.IDENT {
+						ident = p.parseIdent()
+						if p.tok != token.LBRACE {
+							isFunLit = false
+						} else {
+							isFunLit = true
+							results = &ast.FieldList{List: []*ast.Field{&ast.Field{Type: ident}}}
+						}
 					} else {
 						isFunLit = true
-						results = &ast.FieldList{List: []*ast.Field{&ast.Field{Type: ident}}}
+						results = p.parseResult(scope)
 					}
-				} else {
-					isFunLit = true
-					results = p.parseResult(scope)
+				}
+				if isFunLit {
+					body := p.parseBody(scope)
+					funLit := &ast.FuncLit{
+						Type: &ast.FuncType{
+							Func:    pos,
+							Params:  params,
+							Results: results,
+						},
+						Body: body,
+					}
+					call := p.parseCallOrConversion(funLit, false)
+					return nil, call
 				}
 			}
-			if isFunLit {
-				body := p.parseBody(scope)
-				funLit := &ast.FuncLit{
-					Type: &ast.FuncType{
-						Func:    pos,
-						Params:  params,
-						Results: results,
-					},
-					Body: body,
-				}
-				call := p.parseCallOrConversion(funLit, false)
-				return nil, call
-			}
+			recv = params
+			params, results = p.parseSignature(scope)
 		}
-		recv = params
+	} else {
+		if p.tok == token.LPAREN {
+			recv = p.parseParameters(scope, false)
+		}
+		ident, isOp = p.parseIdentOrOp()
 		params, results = p.parseSignature(scope)
-		if isOp {
-			if params == nil || len(params.List) != 1 {
-				log.Panicln("TODO: overload operator can only have one parameter")
-			}
+	}
+	if isOp {
+		if params == nil || len(params.List) != 1 {
+			log.Panicln("TODO: overload operator can only have one parameter")
 		}
 	}
 	var body *ast.BlockStmt
@@ -3317,7 +3249,7 @@ func (p *parser) parseFuncDeclOrCall() (*ast.FuncDecl, *ast.CallExpr) {
 	return decl, nil
 }
 
-func (p *parser) insertEntry(pos token.Pos, pkgName string, stmts ...ast.Stmt) *ast.FuncDecl {
+func (p *parser) insertEntry(pos token.Pos, stmts ...ast.Stmt) *ast.FuncDecl {
 	p.topScope = ast.NewScope(p.topScope)
 	doc := p.leadComment
 	p.openLabelScope()
@@ -3330,9 +3262,9 @@ func (p *parser) insertEntry(pos token.Pos, pkgName string, stmts ...ast.Stmt) *
 	if p.errors.Len() != 0 {
 		p.advance(nil)
 	}
-	p.mockEntry = p.entryPoint(pkgName)
+	p.noEntrypoint = true
 	return &ast.FuncDecl{
-		Name: &ast.Ident{NamePos: pos, Name: p.mockEntry},
+		Name: &ast.Ident{NamePos: pos, Name: "main"},
 		Doc:  doc,
 		Type: &ast.FuncType{
 			Params: &ast.FieldList{},
@@ -3419,8 +3351,7 @@ func (p *parser) parseFile() *ast.File {
 		Imports:      p.imports,
 		Unresolved:   p.unresolved[0:i],
 		Comments:     p.comments,
-		NoEntrypoint: p.mockEntry != "",
+		NoEntrypoint: p.noEntrypoint,
 		NoPkgDecl:    noPkgDecl,
-		FileType:     p.fileType,
 	}
 }

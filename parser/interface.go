@@ -84,13 +84,14 @@ func parseFile(fset *token.FileSet, filename string, src interface{}, mode Mode,
 			}
 		}
 		f.Code = text
+		f.FileType = ft
 
 		p.errors.Sort()
 		err = p.errors.Err()
 	}()
 
 	// parse source
-	p.init(fset, filename, text, mode, ft)
+	p.init(fset, filename, text, mode)
 	f = p.parseFile()
 
 	return
