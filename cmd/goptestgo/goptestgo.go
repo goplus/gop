@@ -60,13 +60,11 @@ var (
 		"issue15071.dir":    {}, // dir
 		"issue29612.dir":    {},
 		"issue31959.dir":    {},
-		"issue24491b.go":    {}, // instruction
-		"issue29504.go":     {},
-		"issue17381.go":     {},
+		"issue29504.go":     {}, // line
 		"issue18149.go":     {},
 		"issue22662.go":     {},
 		"issue27201.go":     {},
-		"issue40954.go":     {},
+		"issue40954.go":     {}, // type instruction
 		"nilptr_aix.go":     {},
 		"inline_literal.go": {},
 		"returntype.go":     {}, // not a problem

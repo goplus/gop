@@ -57,6 +57,10 @@ var (
 	flagProf    = flag.Bool("prof", false, "do profile and generate profile report")
 )
 
+const (
+	parserMode = parser.ParseComments
+)
+
 func init() {
 	Cmd.Run = runCmd
 }
@@ -139,7 +143,7 @@ func runCmd(cmd *base.Command, args []string) {
 		gofile = src + "/gop_autogen.go"
 		isDirty = true // TODO: check if code changed
 		if isDirty {
-			pkgs, err = parser.ParseDir(fset, src, nil, 0)
+			pkgs, err = parser.ParseDir(fset, src, nil, parserMode)
 		} else if *flagNorun {
 			return
 		}
@@ -167,7 +171,7 @@ func runCmd(cmd *base.Command, args []string) {
 				fmt.Println("==> GenGo to", gofile)
 			}
 			if *flagGop {
-				pkgs, err = parser.Parse(fset, src, nil, 0)
+				pkgs, err = parser.Parse(fset, src, nil, parserMode)
 			} else {
 				pkgs, err = parser.Parse(fset, src, nil, 0) // TODO: only to check dependencies
 			}
