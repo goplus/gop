@@ -3159,14 +3159,14 @@ func (p *parser) parseDecl(pkgName string, sync map[token.Token]bool) ast.Decl {
 			}
 			return decl
 		} else {
-			decl = p.insertEntry(pkgName, &ast.ExprStmt{X: call})
+			decl = p.insertEntry(pos, pkgName, &ast.ExprStmt{X: call})
 			if p.errors.Len() != 0 {
 				p.advance(sync)
 			}
 			return decl
 		}
 	default:
-		decl := p.insertEntry(pkgName)
+		decl := p.insertEntry(pos, pkgName)
 		if p.errors.Len() != 0 {
 			p.advance(sync)
 		}
@@ -3190,18 +3190,6 @@ func (p *parser) entryPoint(pkgname string) string {
 			return "main"
 		}
 		return "init"
-	}
-}
-
-func (p *parser) newEntry(pkgname string) *ast.FuncDecl {
-	entry := p.entryPoint(pkgname)
-	return &ast.FuncDecl{
-		Name: ast.NewIdent(entry),
-		Doc:  p.leadComment,
-		Type: &ast.FuncType{
-			Func:   token.NoPos,
-			Params: &ast.FieldList{},
-		},
 	}
 }
 
@@ -3329,10 +3317,9 @@ func (p *parser) parseFuncDeclOrCall() (*ast.FuncDecl, *ast.CallExpr) {
 	return decl, nil
 }
 
-func (p *parser) insertEntry(pkgName string, stmts ...ast.Stmt) *ast.FuncDecl {
+func (p *parser) insertEntry(pos token.Pos, pkgName string, stmts ...ast.Stmt) *ast.FuncDecl {
 	p.topScope = ast.NewScope(p.topScope)
-	entry := p.newEntry(pkgName)
-	p.mockEntry = entry.Name.Name
+	doc := p.leadComment
 	p.openLabelScope()
 	list := p.parseStmtList()
 	p.closeLabelScope()
@@ -3340,11 +3327,18 @@ func (p *parser) insertEntry(pkgName string, stmts ...ast.Stmt) *ast.FuncDecl {
 	if stmts != nil {
 		list = append(stmts, list...)
 	}
-	entry.Body = &ast.BlockStmt{List: list}
 	if p.errors.Len() != 0 {
 		p.advance(nil)
 	}
-	return entry
+	p.mockEntry = p.entryPoint(pkgName)
+	return &ast.FuncDecl{
+		Name: &ast.Ident{NamePos: pos, Name: p.mockEntry},
+		Doc:  doc,
+		Type: &ast.FuncType{
+			Params: &ast.FieldList{},
+		},
+		Body: &ast.BlockStmt{List: list},
+	}
 }
 
 func (p *parser) parseFile() *ast.File {
