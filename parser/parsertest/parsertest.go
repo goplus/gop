@@ -43,11 +43,10 @@ func sortedKeys(m interface{}) []string {
 }
 
 var (
-	tyNode            = reflect.TypeOf((*ast.Node)(nil)).Elem()
-	tyString          = reflect.TypeOf("")
-	tyToken           = reflect.TypeOf(token.Token(0))
-	tyCommentGroupPtr = reflect.TypeOf((*ast.CommentGroup)(nil))
-	tyObjectPtr       = reflect.TypeOf((*ast.Object)(nil))
+	tyNode      = reflect.TypeOf((*ast.Node)(nil)).Elem()
+	tyString    = reflect.TypeOf("")
+	tyToken     = reflect.TypeOf(token.Token(0))
+	tyObjectPtr = reflect.TypeOf((*ast.Object)(nil))
 )
 
 // FprintNode prints a Go+ AST node.
@@ -64,7 +63,7 @@ func FprintNode(w io.Writer, lead string, v interface{}, prefix, indent string) 
 		}
 	case reflect.Ptr:
 		t := val.Type()
-		if val.IsNil() || t == tyCommentGroupPtr || t == tyObjectPtr {
+		if val.IsNil() || t == tyObjectPtr {
 			return
 		}
 		if t.Implements(tyNode) {

@@ -58,7 +58,7 @@ func gopClTest(t *testing.T, gopcode, expected string, cachefile ...string) {
 	defer cl.SetDisableRecover(false)
 
 	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", gopcode)
-	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", nil, 0)
+	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", nil, parser.ParseComments)
 	if err != nil {
 		scanner.PrintError(os.Stderr, err)
 		t.Fatal("ParseFSDir:", err)
@@ -3208,6 +3208,20 @@ func main() {
 		}
 		fmt.Println("Hi")
 	}
+}
+`)
+}
+
+func TestGoInstr(t *testing.T) {
+	gopClTest(t, `package main
+
+//go:noinline
+//go:uintptrescapes
+func test(s string, p, q uintptr, rest ...uintptr) int {
+}`, `package main
+//go:noinline
+//go:uintptrescapes
+func test(s string, p uintptr, q uintptr, rest ...uintptr) int {
 }
 `)
 }

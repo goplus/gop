@@ -723,6 +723,9 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
 		ctx.handleErr(err)
 		return
 	}
+	if d.Doc != nil {
+		fn.SetComments(d.Doc)
+	}
 	if body := d.Body; body != nil {
 		if recv != nil {
 			ctx.inits = append(ctx.inits, func() { // interface issue: #795
