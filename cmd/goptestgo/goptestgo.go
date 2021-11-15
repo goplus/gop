@@ -98,7 +98,7 @@ func gopTestRunGo(dir string) {
 			return nil
 		}
 		log.Println("==> gop run -gop -v", file)
-		RunGopCmd("", "run", "-nr", "-gop", file)
+		RunGopCmd("", "run", "-nr", "-rtoe", "-gop", file)
 		return nil
 	})
 }

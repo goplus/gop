@@ -52,6 +52,7 @@ var (
 	flagQuiet   = flag.Bool("quiet", false, "don't generate any compiling stage log")
 	flagDebug   = flag.Bool("debug", false, "set log level to debug")
 	flagNorun   = flag.Bool("nr", false, "don't run if no change")
+	flagRTOE    = flag.Bool("rtoe", false, "remove tempfile on error")
 	flagGop     = flag.Bool("gop", false, "parse a .go file as a .gop file")
 	flagProf    = flag.Bool("prof", false, "do profile and generate profile report")
 )
@@ -132,6 +133,7 @@ func runCmd(cmd *base.Command, args []string) {
 	var isDirty bool
 	var srcDir, file, gofile string
 	var pkgs map[string]*ast.Package
+	onExit = nil
 	if isDir {
 		srcDir = src
 		gofile = src + "/gop_autogen.go"
@@ -149,6 +151,11 @@ func runCmd(cmd *base.Command, args []string) {
 			dir := os.Getenv("HOME") + "/.gop/run"
 			os.MkdirAll(dir, 0755)
 			gofile = dir + "/g" + base64.RawURLEncoding.EncodeToString(hash[:]) + file
+			if *flagRTOE { // remove tempfile on error
+				onExit = func() {
+					os.Remove(gofile)
+				}
+			}
 		} else if hasMultiFiles(srcDir, ".gop") {
 			gofile = filepath.Join(srcDir, "gop_autogen_"+file+".go")
 		} else {
@@ -213,6 +220,10 @@ func fileIsDirty(fi os.FileInfo, gofile string) bool {
 	return fi.ModTime().After(fiDest.ModTime())
 }
 
+var (
+	onExit func()
+)
+
 func goRun(file string, args []string) {
 	goArgs := make([]string, len(args)+2)
 	goArgs[0] = "run"
@@ -225,6 +236,9 @@ func goRun(file string, args []string) {
 	cmd.Env = os.Environ()
 	err := cmd.Run()
 	if err != nil {
+		if onExit != nil {
+			onExit()
+		}
 		switch e := err.(type) {
 		case *exec.ExitError:
 			os.Exit(e.ExitCode())
