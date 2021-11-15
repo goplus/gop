@@ -3194,16 +3194,6 @@ func (p *parser) newEntry(pkgname string) *ast.FuncDecl {
 	}
 }
 
-func (p *parser) checkNext(unget bool) (tok token.Token) {
-	oldpos, oldtok, oldlit := p.pos, p.tok, p.lit
-	p.next0()
-	tok = p.tok
-	if unget {
-		p.unget(oldpos, oldtok, oldlit)
-	}
-	return
-}
-
 func isOverloadOps(tok token.Token) bool {
 	return int(tok) < len(overloadOps) && overloadOps[tok] != 0
 }
