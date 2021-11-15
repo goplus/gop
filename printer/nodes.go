@@ -1893,20 +1893,20 @@ func (p *printer) funcBodyUnnamed(headerSize int, sep whiteSpace, b *ast.BlockSt
 	}(p.level)
 	p.level = 0
 
-	const maxSize = 100
-	if headerSize+p.bodySize(b, maxSize) <= maxSize {
-		if len(b.List) > 0 {
-			p.print(blank)
-			for i, s := range b.List {
-				if i > 0 {
-					p.print(token.SEMICOLON, blank)
-				}
-				p.stmt(s, i == len(b.List)-1)
-			}
-			p.print(blank)
-		}
-		return
-	}
+	// const maxSize = 100
+	// if headerSize+p.bodySize(b, maxSize) <= maxSize {
+	// 	if len(b.List) > 0 {
+	// 		p.print(blank)
+	// 		for i, s := range b.List {
+	// 			if i > 0 {
+	// 				p.print(token.SEMICOLON, blank)
+	// 			}
+	// 			p.stmt(s, i == len(b.List)-1)
+	// 		}
+	// 		p.print(blank)
+	// 	}
+	// 	return
+	// }
 
 	/*	if sep != ignore {
 			//	p.print(blank) // always use blank
