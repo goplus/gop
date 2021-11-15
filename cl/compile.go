@@ -636,6 +636,11 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 							log.Println("==> Load > NewType", name)
 						}
 						decl := ctx.pkg.NewType(name)
+						if t.Doc != nil {
+							decl.SetComments(t.Doc)
+						} else if d.Doc != nil {
+							decl.SetComments(d.Doc)
+						}
 						ld.typInit = func() { // decycle
 							if debugLoad {
 								log.Println("==> Load > InitType", name)
