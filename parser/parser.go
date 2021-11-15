@@ -35,10 +35,11 @@ type parser struct {
 	scanner scanner.Scanner
 
 	// Tracing/debugging
-	mode     Mode         // parsing mode
-	fileType ast.FileType // file type
-	trace    bool         // == (mode & Trace != 0)
-	indent   int          // indentation used for tracing output
+	mode      Mode         // parsing mode
+	fileType  ast.FileType // file type
+	trace     bool         // == (mode & Trace != 0)
+	indent    int          // indentation used for tracing output
+	mockEntry string       // insert mock entrypoint
 
 	// Comments
 	comments    []*ast.CommentGroup
@@ -2861,7 +2862,7 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 
 	switch p.tok {
 	case token.CONST, token.TYPE, token.VAR:
-		s = &ast.DeclStmt{Decl: p.parseDecl(stmtStart)}
+		s = &ast.DeclStmt{Decl: p.parseDecl("", stmtStart)}
 	case
 		// tokens that may start an expression
 		token.IDENT, token.INT, token.FLOAT, token.IMAG, token.RAT, token.CHAR, token.STRING, token.FUNC, token.LPAREN, // operands
@@ -3136,7 +3137,7 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 	return decl
 }
 
-func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
+func (p *parser) parseDecl(pkgName string, sync map[token.Token]bool) ast.Decl {
 	if p.trace {
 		defer un(trace(p, "Declaration"))
 	}
@@ -3150,16 +3151,26 @@ func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
 		f = p.parseTypeSpec
 
 	case token.FUNC:
-		decl := p.parseFuncDecl()
+		decl, call := p.parseFuncDeclOrCall()
+		if decl != nil {
+			if p.errors.Len() != 0 {
+				p.errorExpected(pos, "declaration", 2)
+				p.advance(sync)
+			}
+			return decl
+		} else {
+			decl = p.insertEntry(pkgName, &ast.ExprStmt{X: call})
+			if p.errors.Len() != 0 {
+				p.advance(sync)
+			}
+			return decl
+		}
+	default:
+		decl := p.insertEntry(pkgName)
 		if p.errors.Len() != 0 {
-			p.errorExpected(pos, "declaration", 2)
 			p.advance(sync)
 		}
 		return decl
-	default:
-		p.errorExpected(pos, "declaration", 2)
-		p.advance(sync)
-		return &ast.BadDecl{From: pos, To: p.pos}
 	}
 
 	return p.parseGenDecl(p.tok, f)
@@ -3321,6 +3332,7 @@ func (p *parser) parseFuncDeclOrCall() (*ast.FuncDecl, *ast.CallExpr) {
 func (p *parser) insertEntry(pkgName string, stmts ...ast.Stmt) *ast.FuncDecl {
 	p.topScope = ast.NewScope(p.topScope)
 	entry := p.newEntry(pkgName)
+	p.mockEntry = entry.Name.Name
 	p.openLabelScope()
 	list := p.parseStmtList()
 	p.closeLabelScope()
@@ -3329,6 +3341,9 @@ func (p *parser) insertEntry(pkgName string, stmts ...ast.Stmt) *ast.FuncDecl {
 		list = append(stmts, list...)
 	}
 	entry.Body = &ast.BlockStmt{List: list}
+	if p.errors.Len() != 0 {
+		p.advance(nil)
+	}
 	return entry
 }
 
@@ -3344,7 +3359,6 @@ func (p *parser) parseFile() *ast.File {
 	}
 
 	var noPkgDecl bool
-	var noEntrypoint bool
 	// package clause
 	doc := p.leadComment
 	var pos token.Pos
@@ -3382,25 +3396,7 @@ func (p *parser) parseFile() *ast.File {
 		if p.mode&ImportsOnly == 0 {
 			// rest of package body
 			for p.tok != token.EOF {
-				switch p.tok {
-				case token.VAR, token.CONST, token.TYPE:
-					decls = append(decls, p.parseDecl(declStart))
-				case token.FUNC:
-					decl, call := p.parseFuncDeclOrCall()
-					if decl != nil {
-						if p.errors.Len() != 0 {
-							p.errorExpected(pos, "declaration", 2)
-							p.advance(declStart)
-						}
-						decls = append(decls, decl)
-					} else {
-						noEntrypoint = true
-						decls = append(decls, p.insertEntry(ident.Name, &ast.ExprStmt{X: call}))
-					}
-				default:
-					noEntrypoint = true
-					decls = append(decls, p.insertEntry(ident.Name))
-				}
+				decls = append(decls, p.parseDecl(ident.Name, declStart))
 			}
 		}
 	}
@@ -3429,7 +3425,7 @@ func (p *parser) parseFile() *ast.File {
 		Imports:      p.imports,
 		Unresolved:   p.unresolved[0:i],
 		Comments:     p.comments,
-		NoEntrypoint: noEntrypoint,
+		NoEntrypoint: p.mockEntry != "",
 		NoPkgDecl:    noPkgDecl,
 		FileType:     p.fileType,
 	}
