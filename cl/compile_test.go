@@ -3212,7 +3212,7 @@ func main() {
 `)
 }
 
-func TestGoInstr(t *testing.T) {
+func TestGoFuncInstr(t *testing.T) {
 	gopClTest(t, `package main
 
 //go:noinline
@@ -3222,6 +3222,19 @@ func test(s string, p, q uintptr, rest ...uintptr) int {
 //go:noinline
 //go:uintptrescapes
 func test(s string, p uintptr, q uintptr, rest ...uintptr) int {
+}
+`)
+}
+
+func TestGoTypeInstr(t *testing.T) {
+	gopClTest(t, `package main
+
+//go:notinheap
+type S struct{ x int }
+`, `package main
+//go:notinheap
+type S struct {
+	x int
 }
 `)
 }
