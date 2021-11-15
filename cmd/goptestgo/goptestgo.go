@@ -60,8 +60,7 @@ var (
 		"issue15071.dir":    {}, // dir
 		"issue29612.dir":    {},
 		"issue31959.dir":    {},
-		"issue24491a.go":    {}, // instruction
-		"issue24491b.go":    {},
+		"issue24491b.go":    {}, // instruction
 		"issue29504.go":     {},
 		"issue17381.go":     {},
 		"issue18149.go":     {},

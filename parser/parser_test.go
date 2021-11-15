@@ -77,6 +77,11 @@ ast.GenDecl:
           Kind: STRING
           Value: "io"
 ast.FuncDecl:
+  Doc:
+    ast.CommentGroup:
+      List:
+        ast.Comment:
+          Text: // comment
   Name:
     ast.Ident:
       Name: init
