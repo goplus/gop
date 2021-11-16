@@ -3082,6 +3082,35 @@ func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
 		f = p.parseTypeSpec
 
 	case token.FUNC:
+		decl := p.parseFuncDecl()
+		if p.errors.Len() != 0 {
+			p.errorExpected(pos, "declaration", 2)
+			p.advance(sync)
+		}
+		return decl
+	default:
+		p.errorExpected(pos, "declaration", 2)
+		p.advance(sync)
+		return &ast.BadDecl{From: pos, To: p.pos}
+	}
+
+	return p.parseGenDecl(p.tok, f)
+}
+
+func (p *parser) parseDeclEx(sync map[token.Token]bool) ast.Decl {
+	if p.trace {
+		defer un(trace(p, "Declaration"))
+	}
+	var f parseSpecFunction
+	pos := p.pos
+	switch p.tok {
+	case token.CONST, token.VAR:
+		f = p.parseValueSpec
+
+	case token.TYPE:
+		f = p.parseTypeSpec
+
+	case token.FUNC:
 		decl, call := p.parseFuncDeclOrCall(true)
 		if decl != nil {
 			if p.errors.Len() != 0 {
@@ -3322,7 +3351,7 @@ func (p *parser) parseFile() *ast.File {
 		if p.mode&ImportsOnly == 0 {
 			// rest of package body
 			for p.tok != token.EOF {
-				decls = append(decls, p.parseDecl(declStart))
+				decls = append(decls, p.parseDeclEx(declStart))
 			}
 		}
 	}
