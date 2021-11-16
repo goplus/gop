@@ -1,0 +1,53 @@
+package foo
+
+file funcdoc.gop
+ast.FuncDecl:
+  Doc:
+    ast.CommentGroup:
+      List:
+        ast.Comment:
+          Text: //go:noinline
+        ast.Comment:
+          Text: //go:uintptrescapes
+  Name:
+    ast.Ident:
+      Name: test
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: s
+              Type:
+                ast.Ident:
+                  Name: string
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: p
+                ast.Ident:
+                  Name: q
+              Type:
+                ast.Ident:
+                  Name: uintptr
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: rest
+              Type:
+                ast.Ellipsis:
+                  Elt:
+                    ast.Ident:
+                      Name: uintptr
+      Results:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Type:
+                ast.Ident:
+                  Name: int
+  Body:
+    ast.BlockStmt:

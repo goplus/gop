@@ -219,6 +219,11 @@ ast.GenDecl:
   Tok: const
   Specs:
     ast.ValueSpec:
+      Doc:
+        ast.CommentGroup:
+          List:
+            ast.Comment:
+              Text: // PackageClauseOnly - stop parsing after package clause
       Names:
         ast.Ident:
           Name: PackageClauseOnly
@@ -236,26 +241,56 @@ ast.GenDecl:
             ast.Ident:
               Name: iota
     ast.ValueSpec:
+      Doc:
+        ast.CommentGroup:
+          List:
+            ast.Comment:
+              Text: // ImportsOnly - stop parsing after import declarations
       Names:
         ast.Ident:
           Name: ImportsOnly
     ast.ValueSpec:
+      Doc:
+        ast.CommentGroup:
+          List:
+            ast.Comment:
+              Text: // ParseComments - parse comments and add them to AST
       Names:
         ast.Ident:
           Name: ParseComments
     ast.ValueSpec:
+      Doc:
+        ast.CommentGroup:
+          List:
+            ast.Comment:
+              Text: // Trace - print a trace of parsed productions
       Names:
         ast.Ident:
           Name: Trace
     ast.ValueSpec:
+      Doc:
+        ast.CommentGroup:
+          List:
+            ast.Comment:
+              Text: // DeclarationErrors - report declaration errors
       Names:
         ast.Ident:
           Name: DeclarationErrors
     ast.ValueSpec:
+      Doc:
+        ast.CommentGroup:
+          List:
+            ast.Comment:
+              Text: // AllErrors - report all errors (not just the first 10 on different lines)
       Names:
         ast.Ident:
           Name: AllErrors
 ast.GenDecl:
+  Doc:
+    ast.CommentGroup:
+      List:
+        ast.Comment:
+          Text: // FileSystem represents a file system.
   Tok: type
   Specs:
     ast.TypeSpec:

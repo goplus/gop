@@ -66,7 +66,7 @@ func testFrom(t *testing.T, pkgDir, sel string, exclude Mode) {
 	}
 	log.Println("Parsing", pkgDir)
 	fset := token.NewFileSet()
-	pkgs, err := ParseDir(fset, pkgDir, nil, (Trace|ParseGoFiles)&^exclude)
+	pkgs, err := ParseDir(fset, pkgDir, nil, (Trace|ParseGoFiles|ParseComments)&^exclude)
 	if err != nil || len(pkgs) != 1 {
 		if errs, ok := err.(scanner.ErrorList); ok {
 			for _, e := range errs {

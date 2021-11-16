@@ -60,14 +60,10 @@ var (
 		"issue15071.dir":    {}, // dir
 		"issue29612.dir":    {},
 		"issue31959.dir":    {},
-		"issue24491a.go":    {}, // instruction
-		"issue24491b.go":    {},
-		"issue29504.go":     {},
-		"issue17381.go":     {},
+		"issue29504.go":     {}, // line
 		"issue18149.go":     {},
 		"issue22662.go":     {},
 		"issue27201.go":     {},
-		"issue40954.go":     {},
 		"nilptr_aix.go":     {},
 		"inline_literal.go": {},
 		"returntype.go":     {}, // not a problem
@@ -99,7 +95,7 @@ func gopTestRunGo(dir string) {
 			return nil
 		}
 		log.Println("==> gop run -gop -v", file)
-		RunGopCmd("", "run", "-nr", "-gop", file)
+		RunGopCmd("", "run", "-nr", "-rtoe", "-gop", file)
 		return nil
 	})
 }
