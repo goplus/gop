@@ -2860,7 +2860,7 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 
 	switch p.tok {
 	case token.CONST, token.TYPE, token.VAR:
-		s = &ast.DeclStmt{Decl: p.parseDecl("", stmtStart)}
+		s = &ast.DeclStmt{Decl: p.parseDecl(stmtStart)}
 	case
 		// tokens that may start an expression
 		token.IDENT, token.INT, token.FLOAT, token.IMAG, token.RAT, token.CHAR, token.STRING, token.FUNC, token.LPAREN, // operands
@@ -3068,7 +3068,7 @@ func (p *parser) parseGenDecl(keyword token.Token, f parseSpecFunction) *ast.Gen
 	}
 }
 
-func (p *parser) parseDecl(pkgName string, sync map[token.Token]bool) ast.Decl {
+func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
 	if p.trace {
 		defer un(trace(p, "Declaration"))
 	}
@@ -3322,7 +3322,7 @@ func (p *parser) parseFile() *ast.File {
 		if p.mode&ImportsOnly == 0 {
 			// rest of package body
 			for p.tok != token.EOF {
-				decls = append(decls, p.parseDecl(ident.Name, declStart))
+				decls = append(decls, p.parseDecl(declStart))
 			}
 		}
 	}
