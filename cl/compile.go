@@ -454,10 +454,27 @@ func hasMethod(o types.Object, name string) bool {
 	return false
 }
 
+func getEntrypoint(ft ast.FileType, isMod bool) string {
+	switch ft {
+	case ast.FileTypeSpx:
+		return "Main"
+	case ast.FileTypeGmx:
+		return "MainEntry"
+	default:
+		if isMod {
+			return "init"
+		}
+		return "main"
+	}
+}
+
 func loadFile(ctx *pkgCtx, f *ast.File) {
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
+			if f.NoEntrypoint && d.Name.Name == "main" {
+				d.Name.Name = getEntrypoint(f.FileType, f.Name.Name != "main")
+			}
 			if d.Recv == nil {
 				name := d.Name.Name
 				if name != "init" {
