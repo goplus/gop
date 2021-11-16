@@ -79,7 +79,7 @@ ast.GenDecl:
 ast.FuncDecl:
   Name:
     ast.Ident:
-      Name: init
+      Name: main
   Type:
     ast.FuncType:
       Params:
