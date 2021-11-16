@@ -72,7 +72,7 @@ func gopClTest(t *testing.T, gopcode, expected string, cachefile ...string) {
 		conf = *copy.Ensure()
 	}
 	bar := pkgs["main"]
-	pkg, err := cl.NewPackage("", bar, &conf)
+	pkg, err := cl.NewPackage("github.com/goplus/gop/cl", bar, &conf)
 	if err != nil {
 		t.Fatal("NewPackage:", err)
 	}
@@ -2415,11 +2415,15 @@ var a = math.Round(1.2)
 `)
 }
 
-func _TestLocalImport(t *testing.T) {
+func TestLocalImport(t *testing.T) {
 	gopClTest(t, `import "./internal/spx"
 
 var a = spx.TestIntValue
-`, `
+`, `package main
+
+import spx "github.com/goplus/gop/cl/internal/spx"
+
+var a = spx.TestIntValue
 `)
 }
 
