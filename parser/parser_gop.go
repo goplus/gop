@@ -202,7 +202,11 @@ func parseFSFileEx(fset *token.FileSet, fs FileSystem, filename string, src inte
 	if err != nil {
 		return
 	}
-	return parseFile(fset, filename, code, mode, ft)
+	f, err = parseFile(fset, filename, code, mode)
+	if f != nil {
+		f.FileType = ft
+	}
+	return
 }
 
 var (
