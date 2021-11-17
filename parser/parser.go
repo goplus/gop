@@ -3068,84 +3068,13 @@ func (p *parser) parseGenDecl(keyword token.Token, f parseSpecFunction) *ast.Gen
 	}
 }
 
-func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
-	if p.trace {
-		defer un(trace(p, "Declaration"))
-	}
-	var f parseSpecFunction
-	pos := p.pos
-	switch p.tok {
-	case token.CONST, token.VAR:
-		f = p.parseValueSpec
-
-	case token.TYPE:
-		f = p.parseTypeSpec
-
-	case token.FUNC:
-		decl := p.parseFuncDecl()
-		if p.errors.Len() != 0 {
-			p.errorExpected(pos, "declaration", 2)
-			p.advance(sync)
-		}
-		return decl
-	default:
-		p.errorExpected(pos, "declaration", 2)
-		p.advance(sync)
-		return &ast.BadDecl{From: pos, To: p.pos}
-	}
-
-	return p.parseGenDecl(p.tok, f)
-}
-
-func (p *parser) parseDeclEx(sync map[token.Token]bool) ast.Decl {
-	if p.trace {
-		defer un(trace(p, "Declaration"))
-	}
-	var f parseSpecFunction
-	pos := p.pos
-	switch p.tok {
-	case token.CONST, token.VAR:
-		f = p.parseValueSpec
-
-	case token.TYPE:
-		f = p.parseTypeSpec
-
-	case token.FUNC:
-		decl, call := p.parseFuncDeclOrCall(true)
-		if decl != nil {
-			if p.errors.Len() != 0 {
-				p.errorExpected(pos, "declaration", 2)
-				p.advance(sync)
-			}
-			return decl
-		} else {
-			decl = p.insertEntry(pos, &ast.ExprStmt{X: call})
-			if p.errors.Len() != 0 {
-				p.advance(sync)
-			}
-			return decl
-		}
-	default:
-		decl := p.insertEntry(pos)
-		if p.errors.Len() != 0 {
-			p.advance(sync)
-		}
-		return decl
-	}
-
-	return p.parseGenDecl(p.tok, f)
-}
-
-// ----------------------------------------------------------------------------
-// Source files
-
-func isOverloadOps(tok token.Token) bool {
-	return int(tok) < len(overloadOps) && overloadOps[tok] != 0
-}
-
 func (p *parser) parseFuncDecl() *ast.FuncDecl {
 	decl, _ := p.parseFuncDeclOrCall(false)
 	return decl
+}
+
+func isOverloadOps(tok token.Token) bool {
+	return int(tok) < len(overloadOps) && overloadOps[tok] != 0
 }
 
 func (p *parser) parseFuncDeclOrCall(allowCallExpr bool) (*ast.FuncDecl, *ast.CallExpr) {
@@ -3278,6 +3207,74 @@ func (p *parser) parseFuncDeclOrCall(allowCallExpr bool) (*ast.FuncDecl, *ast.Ca
 	return decl, nil
 }
 
+func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
+	if p.trace {
+		defer un(trace(p, "Declaration"))
+	}
+	var f parseSpecFunction
+	pos := p.pos
+	switch p.tok {
+	case token.CONST, token.VAR:
+		f = p.parseValueSpec
+
+	case token.TYPE:
+		f = p.parseTypeSpec
+
+	case token.FUNC:
+		decl := p.parseFuncDecl()
+		if p.errors.Len() != 0 {
+			p.errorExpected(pos, "declaration", 2)
+			p.advance(sync)
+		}
+		return decl
+	default:
+		p.errorExpected(pos, "declaration", 2)
+		p.advance(sync)
+		return &ast.BadDecl{From: pos, To: p.pos}
+	}
+
+	return p.parseGenDecl(p.tok, f)
+}
+
+func (p *parser) parseDeclEx(sync map[token.Token]bool) ast.Decl {
+	if p.trace {
+		defer un(trace(p, "Declaration"))
+	}
+	var f parseSpecFunction
+	pos := p.pos
+	switch p.tok {
+	case token.CONST, token.VAR:
+		f = p.parseValueSpec
+
+	case token.TYPE:
+		f = p.parseTypeSpec
+
+	case token.FUNC:
+		decl, call := p.parseFuncDeclOrCall(true)
+		if decl != nil {
+			if p.errors.Len() != 0 {
+				p.errorExpected(pos, "declaration", 2)
+				p.advance(sync)
+			}
+			return decl
+		} else {
+			decl = p.insertEntry(pos, &ast.ExprStmt{X: call})
+			if p.errors.Len() != 0 {
+				p.advance(sync)
+			}
+			return decl
+		}
+	default:
+		decl := p.insertEntry(pos)
+		if p.errors.Len() != 0 {
+			p.advance(sync)
+		}
+		return decl
+	}
+
+	return p.parseGenDecl(p.tok, f)
+}
+
 func (p *parser) insertEntry(pos token.Pos, stmts ...ast.Stmt) *ast.FuncDecl {
 	p.topScope = ast.NewScope(p.topScope)
 	doc := p.leadComment
@@ -3287,9 +3284,6 @@ func (p *parser) insertEntry(pos token.Pos, stmts ...ast.Stmt) *ast.FuncDecl {
 	p.closeScope()
 	if stmts != nil {
 		list = append(stmts, list...)
-	}
-	if p.errors.Len() != 0 {
-		p.advance(nil)
 	}
 	p.noEntrypoint = true
 	return &ast.FuncDecl{
@@ -3301,6 +3295,9 @@ func (p *parser) insertEntry(pos token.Pos, stmts ...ast.Stmt) *ast.FuncDecl {
 		Body: &ast.BlockStmt{List: list},
 	}
 }
+
+// ----------------------------------------------------------------------------
+// Source files
 
 func (p *parser) parseFile() *ast.File {
 	if p.trace {
