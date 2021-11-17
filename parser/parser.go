@@ -3072,7 +3072,7 @@ func isOverloadOps(tok token.Token) bool {
 	return int(tok) < len(overloadOps) && overloadOps[tok] != 0
 }
 
-func (p *parser) parseFuncDeclOrCall(allowCallExpr bool) (*ast.FuncDecl, *ast.CallExpr) {
+func (p *parser) parseFuncDeclOrCall(allowGlobalStmts bool) (*ast.FuncDecl, *ast.CallExpr) {
 	if p.trace {
 		defer un(trace(p, "FunctionDecl"))
 	}
@@ -3085,7 +3085,7 @@ func (p *parser) parseFuncDeclOrCall(allowCallExpr bool) (*ast.FuncDecl, *ast.Ca
 	var ident *ast.Ident
 	var isOp bool
 
-	if allowCallExpr {
+	if allowGlobalStmts {
 		if p.tok != token.LPAREN {
 			// check func decl
 			ident, isOp = p.parseIdentOrOp()
@@ -3207,7 +3207,7 @@ func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
 	return p.parseDeclEx(sync, false)
 }
 
-func (p *parser) parseDeclEx(sync map[token.Token]bool, allowCallExpr bool) ast.Decl {
+func (p *parser) parseDeclEx(sync map[token.Token]bool, allowGlobalStmts bool) ast.Decl {
 	if p.trace {
 		defer un(trace(p, "Declaration"))
 	}
@@ -3219,7 +3219,7 @@ func (p *parser) parseDeclEx(sync map[token.Token]bool, allowCallExpr bool) ast.
 	case token.TYPE:
 		f = p.parseTypeSpec
 	case token.FUNC:
-		decl, call := p.parseFuncDeclOrCall(allowCallExpr)
+		decl, call := p.parseFuncDeclOrCall(allowGlobalStmts)
 		if decl != nil {
 			if p.errors.Len() != 0 {
 				p.errorExpected(pos, "declaration", 2)
@@ -3227,10 +3227,10 @@ func (p *parser) parseDeclEx(sync map[token.Token]bool, allowCallExpr bool) ast.
 			}
 			return decl
 		}
-		return p.insertEntry(sync, pos, &ast.ExprStmt{X: call})
+		return p.parseGlobalStmts(sync, pos, &ast.ExprStmt{X: call})
 	default:
-		if allowCallExpr {
-			return p.insertEntry(sync, pos)
+		if allowGlobalStmts {
+			return p.parseGlobalStmts(sync, pos)
 		}
 		p.errorExpected(pos, "declaration", 2)
 		p.advance(sync)
@@ -3239,7 +3239,7 @@ func (p *parser) parseDeclEx(sync map[token.Token]bool, allowCallExpr bool) ast.
 	return p.parseGenDecl(p.tok, f)
 }
 
-func (p *parser) insertEntry(sync map[token.Token]bool, pos token.Pos, stmts ...ast.Stmt) *ast.FuncDecl {
+func (p *parser) parseGlobalStmts(sync map[token.Token]bool, pos token.Pos, stmts ...ast.Stmt) *ast.FuncDecl {
 	p.topScope = ast.NewScope(p.topScope)
 	doc := p.leadComment
 	p.openLabelScope()
