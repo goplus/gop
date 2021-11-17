@@ -3085,68 +3085,61 @@ func (p *parser) parseFuncDeclOrCall() (*ast.FuncDecl, *ast.CallExpr) {
 
 	var recv, params, results *ast.FieldList
 	var ident *ast.Ident
-	var isOp bool
+	var isOp, isFunLit, ok bool
 
-	if p.tok != token.LPAREN {
-		// check func decl
+	if p.tok != token.LPAREN { // func identOrOp(...)
 		ident, isOp = p.parseIdentOrOp()
 		params, results = p.parseSignature(scope)
 	} else {
+		// method: func (recv) XXX(params) results { ... }
+		// funlit: func (params) results { ... }()
 		params = p.parseParameters(scope, true)
-		var isFunLit bool
-		// method: func (type) op (type) {}
-		// funlit: func (params) *type {}
-		if isOp = isOverloadOps(p.tok); isOp {
-			pos, tok := p.pos, p.tok
+		if p.tok == token.LPAREN {
+			// func (params) (results) { ... }()
+			isFunLit, results = true, p.parseParameters(scope, false)
+		} else if isOp = isOverloadOps(p.tok); isOp {
+			oldtok, oldpos := p.tok, p.pos
 			p.next()
-			if tok == token.MUL {
-				if p.tok != token.LPAREN {
-					isOp = false
-					isFunLit = true
-					x := p.parseType()
-					typ := &ast.StarExpr{Star: pos, X: x}
-					results = &ast.FieldList{List: []*ast.Field{{Type: typ}}}
+			if p.tok == token.LPAREN {
+				// func (recv) op(params) results { ... }
+				recv, ident, isOp = params, &ast.Ident{NamePos: oldpos, Name: oldtok.String()}, true
+				params, results = p.parseSignature(scope)
+			} else {
+				// func (params) typ { ... }()
+				p.unget(oldpos, oldtok, "")
+				typ := p.tryType()
+				if typ == nil {
+					panic("TODO: invalid result type")
 				}
+				isFunLit, results = true, &ast.FieldList{List: []*ast.Field{{Type: typ}}}
 			}
-			if isOp {
-				ident = &ast.Ident{NamePos: pos, Name: tok.String()}
-			}
+		} else if typ := p.tryType(); typ == nil {
+			// func (params) { ... }()
+			isFunLit = true
+		} else if ident, ok = typ.(*ast.Ident); ok && p.tok == token.LPAREN {
+			// func (recv) ident(params) results { ... }
+			recv = params
+			params, results = p.parseSignature(scope)
+		} else {
+			// func (params) typ { ... }()
+			isFunLit, results = true, &ast.FieldList{List: []*ast.Field{{Type: typ}}}
 		}
-		if !isOp {
-			if !isFunLit {
-				// method: func (recv) method(param) result {}
-				// funlit: func (param) result {}
-				if p.tok == token.IDENT {
-					ident = p.parseIdent()
-					if p.tok != token.LBRACE {
-						isFunLit = false
-					} else {
-						isFunLit = true
-						results = &ast.FieldList{List: []*ast.Field{{Type: ident}}}
-					}
-				} else {
-					isFunLit = true
-					results = p.parseResult(scope)
-				}
+		if isFunLit {
+			body := p.parseBody(scope)
+			funLit := &ast.FuncLit{
+				Type: &ast.FuncType{
+					Func:    pos,
+					Params:  params,
+					Results: results,
+				},
+				Body: body,
 			}
-			if isFunLit {
-				body := p.parseBody(scope)
-				funLit := &ast.FuncLit{
-					Type: &ast.FuncType{
-						Func:    pos,
-						Params:  params,
-						Results: results,
-					},
-					Body: body,
-				}
-				call := p.parseCallOrConversion(funLit, false)
-				p.expectSemi()
-				return nil, call
-			}
+			call := p.parseCallOrConversion(funLit, false)
+			p.expectSemi()
+			return nil, call
 		}
-		recv = params
-		params, results = p.parseSignature(scope)
 	}
+
 	if isOp {
 		if params == nil || len(params.List) != 1 {
 			log.Panicln("TODO: overload operator can only have one parameter")

@@ -1,0 +1,26 @@
+package main
+
+file fndecl.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.FuncLit:
+                  Type:
+                    ast.FuncType:
+                      Params:
+                        ast.FieldList:
+                  Body:
+                    ast.BlockStmt:
