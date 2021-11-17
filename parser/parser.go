@@ -2859,8 +2859,10 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 	}
 
 	switch p.tok {
-	case token.CONST, token.TYPE, token.VAR:
-		s = &ast.DeclStmt{Decl: p.parseDecl(stmtStart)}
+	case token.TYPE:
+		s = &ast.DeclStmt{Decl: p.parseGenDecl(p.tok, p.parseTypeSpec)}
+	case token.CONST, token.VAR:
+		s = &ast.DeclStmt{Decl: p.parseGenDecl(p.tok, p.parseValueSpec)}
 	case
 		// tokens that may start an expression
 		token.IDENT, token.INT, token.FLOAT, token.IMAG, token.RAT, token.CHAR, token.STRING, token.FUNC, token.LPAREN, // operands
@@ -3072,7 +3074,7 @@ func isOverloadOps(tok token.Token) bool {
 	return int(tok) < len(overloadOps) && overloadOps[tok] != 0
 }
 
-func (p *parser) parseFuncDeclOrCall(allowGlobalStmts bool) (*ast.FuncDecl, *ast.CallExpr) {
+func (p *parser) parseFuncDeclOrCall() (*ast.FuncDecl, *ast.CallExpr) {
 	if p.trace {
 		defer un(trace(p, "FunctionDecl"))
 	}
@@ -3085,72 +3087,64 @@ func (p *parser) parseFuncDeclOrCall(allowGlobalStmts bool) (*ast.FuncDecl, *ast
 	var ident *ast.Ident
 	var isOp bool
 
-	if allowGlobalStmts {
-		if p.tok != token.LPAREN {
-			// check func decl
-			ident, isOp = p.parseIdentOrOp()
-			params, results = p.parseSignature(scope)
-		} else {
-			params = p.parseParameters(scope, true)
-			var isFunLit bool
-			// method: func (type) op (type) {}
-			// funlit: func (params) *type {}
-			if isOp = isOverloadOps(p.tok); isOp {
-				pos, tok := p.pos, p.tok
-				p.next()
-				if tok == token.MUL {
-					if p.tok != token.LPAREN {
-						isOp = false
-						isFunLit = true
-						x := p.parseType()
-						typ := &ast.StarExpr{Star: pos, X: x}
-						results = &ast.FieldList{List: []*ast.Field{{Type: typ}}}
-					}
-				}
-				if isOp {
-					ident = &ast.Ident{NamePos: pos, Name: tok.String()}
+	if p.tok != token.LPAREN {
+		// check func decl
+		ident, isOp = p.parseIdentOrOp()
+		params, results = p.parseSignature(scope)
+	} else {
+		params = p.parseParameters(scope, true)
+		var isFunLit bool
+		// method: func (type) op (type) {}
+		// funlit: func (params) *type {}
+		if isOp = isOverloadOps(p.tok); isOp {
+			pos, tok := p.pos, p.tok
+			p.next()
+			if tok == token.MUL {
+				if p.tok != token.LPAREN {
+					isOp = false
+					isFunLit = true
+					x := p.parseType()
+					typ := &ast.StarExpr{Star: pos, X: x}
+					results = &ast.FieldList{List: []*ast.Field{{Type: typ}}}
 				}
 			}
-			if !isOp {
-				if !isFunLit {
-					// method: func (recv) method(param) result {}
-					// funlit: func (param) result {}
-					if p.tok == token.IDENT {
-						ident = p.parseIdent()
-						if p.tok != token.LBRACE {
-							isFunLit = false
-						} else {
-							isFunLit = true
-							results = &ast.FieldList{List: []*ast.Field{{Type: ident}}}
-						}
+			if isOp {
+				ident = &ast.Ident{NamePos: pos, Name: tok.String()}
+			}
+		}
+		if !isOp {
+			if !isFunLit {
+				// method: func (recv) method(param) result {}
+				// funlit: func (param) result {}
+				if p.tok == token.IDENT {
+					ident = p.parseIdent()
+					if p.tok != token.LBRACE {
+						isFunLit = false
 					} else {
 						isFunLit = true
-						results = p.parseResult(scope)
+						results = &ast.FieldList{List: []*ast.Field{{Type: ident}}}
 					}
-				}
-				if isFunLit {
-					body := p.parseBody(scope)
-					funLit := &ast.FuncLit{
-						Type: &ast.FuncType{
-							Func:    pos,
-							Params:  params,
-							Results: results,
-						},
-						Body: body,
-					}
-					call := p.parseCallOrConversion(funLit, false)
-					p.expectSemi()
-					return nil, call
+				} else {
+					isFunLit = true
+					results = p.parseResult(scope)
 				}
 			}
-			recv = params
-			params, results = p.parseSignature(scope)
+			if isFunLit {
+				body := p.parseBody(scope)
+				funLit := &ast.FuncLit{
+					Type: &ast.FuncType{
+						Func:    pos,
+						Params:  params,
+						Results: results,
+					},
+					Body: body,
+				}
+				call := p.parseCallOrConversion(funLit, false)
+				p.expectSemi()
+				return nil, call
+			}
 		}
-	} else {
-		if p.tok == token.LPAREN {
-			recv = p.parseParameters(scope, false)
-		}
-		ident, isOp = p.parseIdentOrOp()
+		recv = params
 		params, results = p.parseSignature(scope)
 	}
 	if isOp {
@@ -3204,10 +3198,6 @@ func (p *parser) parseFuncDeclOrCall(allowGlobalStmts bool) (*ast.FuncDecl, *ast
 }
 
 func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
-	return p.parseDeclEx(sync, false)
-}
-
-func (p *parser) parseDeclEx(sync map[token.Token]bool, allowGlobalStmts bool) ast.Decl {
 	if p.trace {
 		defer un(trace(p, "Declaration"))
 	}
@@ -3219,7 +3209,7 @@ func (p *parser) parseDeclEx(sync map[token.Token]bool, allowGlobalStmts bool) a
 	case token.TYPE:
 		f = p.parseTypeSpec
 	case token.FUNC:
-		decl, call := p.parseFuncDeclOrCall(allowGlobalStmts)
+		decl, call := p.parseFuncDeclOrCall()
 		if decl != nil {
 			if p.errors.Len() != 0 {
 				p.errorExpected(pos, "declaration", 2)
@@ -3229,12 +3219,7 @@ func (p *parser) parseDeclEx(sync map[token.Token]bool, allowGlobalStmts bool) a
 		}
 		return p.parseGlobalStmts(sync, pos, &ast.ExprStmt{X: call})
 	default:
-		if allowGlobalStmts {
-			return p.parseGlobalStmts(sync, pos)
-		}
-		p.errorExpected(pos, "declaration", 2)
-		p.advance(sync)
-		return &ast.BadDecl{From: pos, To: p.pos}
+		return p.parseGlobalStmts(sync, pos)
 	}
 	return p.parseGenDecl(p.tok, f)
 }
@@ -3315,7 +3300,7 @@ func (p *parser) parseFile() *ast.File {
 		if p.mode&ImportsOnly == 0 {
 			// rest of package body
 			for p.tok != token.EOF {
-				decls = append(decls, p.parseDeclEx(declStart, true))
+				decls = append(decls, p.parseDecl(declStart))
 			}
 		}
 	}
