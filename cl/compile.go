@@ -472,9 +472,6 @@ func loadFile(ctx *pkgCtx, f *ast.File) {
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
-			if f.NoEntrypoint && d.Name.Name == "main" {
-				d.Name.Name = getEntrypoint(f.FileType, f.Name.Name != "main")
-			}
 			if d.Recv == nil {
 				name := d.Name.Name
 				if name != "init" {
@@ -580,6 +577,9 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
+			if f.NoEntrypoint && d.Name.Name == "main" {
+				d.Name.Name = getEntrypoint(f.FileType, f.Name.Name != "main")
+			}
 			if ctx.classRecv != nil { // in class file (.spx/.gmx)
 				if d.Recv == nil {
 					d.Recv = ctx.classRecv

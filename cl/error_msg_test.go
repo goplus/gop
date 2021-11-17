@@ -163,27 +163,6 @@ func foo(v map[int]bar) {
 `)
 }
 
-func TestErrNoEntrypoint(t *testing.T) {
-	codeErrorTest(t,
-		"./bar.gop:2:2: undefined: println1", `func main() {
-	println1 "hello"
-}
-`)
-	codeErrorTest(t,
-		"./bar.gop:1:1: undefined: println1", `println1 "hello"`)
-
-	codeErrorTest(t,
-		"./bar.gop:2:2: undefined: println1", `
-	println1 "hello"
-`)
-
-	codeErrorTest(t,
-		"./bar.gop:2:2: undefined: println1", `package main
-	println1 "hello"
-`)
-
-}
-
 func TestErrImport(t *testing.T) {
 	codeErrorTest(t,
 		`./bar.gop:8:2: confliction: NewEncoding declared both in "encoding/base64" and "encoding/base32"`, `
@@ -604,6 +583,22 @@ func TestErrBranchStmt(t *testing.T) {
 }
 
 func TestErrNoEntrypoint(t *testing.T) {
+	codeErrorTest(t,
+		"./bar.gop:2:2: undefined: println1", `func main() {
+	println1 "hello"
+}
+`)
+	codeErrorTest(t,
+		"./bar.gop:1:1: undefined: println1", `println1 "hello"`)
+
+	codeErrorTest(t,
+		"./bar.gop:2:2: undefined: println1", `
+	println1 "hello"
+`)
+	codeErrorTest(t,
+		"./bar.gop:2:2: undefined: println1", `package main
+	println1 "hello"
+`)
 	codeErrorTest(t,
 		`./bar.gop:1:9: undefined: abc`,
 		`println abc
