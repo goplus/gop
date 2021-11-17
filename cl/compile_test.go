@@ -3246,3 +3246,25 @@ type S struct {
 }
 `)
 }
+
+func TestNoEntrypoint(t *testing.T) {
+	gopClTest(t, `println("init")
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Println("init")
+}
+`)
+	gopClTestEx(t, "bar", `package bar
+println("init")
+`, `package bar
+
+import fmt "fmt"
+
+func init() {
+	fmt.Println("init")
+}
+`)
+}
