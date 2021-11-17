@@ -54,6 +54,10 @@ func init() {
 }
 
 func gopClTest(t *testing.T, gopcode, expected string, cachefile ...string) {
+	gopClTestEx(t, "main", gopcode, expected, cachefile...)
+}
+
+func gopClTestEx(t *testing.T, pkgname string, gopcode, expected string, cachefile ...string) {
 	cl.SetDisableRecover(true)
 	defer cl.SetDisableRecover(false)
 
@@ -71,7 +75,7 @@ func gopClTest(t *testing.T, gopcode, expected string, cachefile ...string) {
 		copy.PersistLoadPkgs = true
 		conf = *copy.Ensure()
 	}
-	bar := pkgs["main"]
+	bar := pkgs[pkgname]
 	pkg, err := cl.NewPackage("github.com/goplus/gop/cl", bar, &conf)
 	if err != nil {
 		t.Fatal("NewPackage:", err)
