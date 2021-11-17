@@ -189,10 +189,6 @@ func ParseFSFile(fset *token.FileSet, fs FileSystem, filename string, src interf
 	if !isOk {
 		ft = ast.FileTypeGop
 	}
-	return parseFSFileEx(fset, fs, filename, src, mode, ft)
-}
-
-func parseFSFileEx(fset *token.FileSet, fs FileSystem, filename string, src interface{}, mode Mode, ft ast.FileType) (f *ast.File, err error) {
 	var code []byte
 	if src == nil {
 		code, err = fs.ReadFile(filename)

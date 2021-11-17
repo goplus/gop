@@ -60,6 +60,29 @@ func TestParseFile(t *testing.T) {
 	}
 }
 
+func TestIparseFileInvalidSrc(t *testing.T) {
+	fset := token.NewFileSet()
+	if _, err := parseFile(fset, "/foo/bar/not-exists", 1, PackageClauseOnly); err != errInvalidSource {
+		t.Fatal("ParseFile failed: not errInvalidSource?")
+	}
+}
+
+func TestIparseFileNoFset(t *testing.T) {
+	defer func() {
+		if e := recover(); e == nil {
+			t.Fatal("ParseFile failed: no error?")
+		}
+	}()
+	parseFile(nil, "/foo/bar/not-exists", nil, PackageClauseOnly)
+}
+
+func TestParseDir(t *testing.T) {
+	fset := token.NewFileSet()
+	if _, err := ParseDir(fset, "/foo/bar/not-exists", nil, PackageClauseOnly); err == nil {
+		t.Fatal("ParseDir failed: no error?")
+	}
+}
+
 func testFrom(t *testing.T, pkgDir, sel string, exclude Mode) {
 	if sel != "" && !strings.Contains(pkgDir, sel) {
 		return

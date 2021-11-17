@@ -3102,7 +3102,7 @@ func (p *parser) parseFuncDeclOrCall() (*ast.FuncDecl, *ast.CallExpr) {
 			p.next()
 			if p.tok == token.LPAREN {
 				// func (recv) op(params) results { ... }
-				recv, ident, isOp = params, &ast.Ident{NamePos: oldpos, Name: oldtok.String()}, true
+				recv, ident = params, &ast.Ident{NamePos: oldpos, Name: oldtok.String()}
 				params, results = p.parseSignature(scope)
 			} else {
 				// func (params) typ { ... }()
