@@ -27,6 +27,10 @@ import (
 )
 
 func codeErrorTest(t *testing.T, msg, src string) {
+	codeErrorTestEx(t, "main", msg, src)
+}
+
+func codeErrorTestEx(t *testing.T, pkgname, msg, src string) {
 	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", src)
 	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", nil, 0)
 	if err != nil {
@@ -37,7 +41,7 @@ func codeErrorTest(t *testing.T, msg, src string) {
 	conf.NoFileLine = false
 	conf.WorkingDir = "/foo"
 	conf.TargetDir = "/foo"
-	bar := pkgs["main"]
+	bar := pkgs[pkgname]
 	_, err = cl.NewPackage("", bar, &conf)
 	if err == nil {
 		t.Fatal("no error?")
@@ -597,4 +601,16 @@ func TestErrBranchStmt(t *testing.T) {
 		`func foo() {
 	fallthrough
 }`)
+}
+
+func TestErrNoEntrypoint(t *testing.T) {
+	codeErrorTest(t,
+		`./bar.gop:1:9: undefined: abc`,
+		`println abc
+`)
+	codeErrorTestEx(t, "bar",
+		`./bar.gop:2:9: undefined: abc`,
+		`package bar
+println abc
+`)
 }
