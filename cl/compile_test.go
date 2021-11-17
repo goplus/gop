@@ -57,7 +57,7 @@ func gopClTest(t *testing.T, gopcode, expected string, cachefile ...string) {
 	gopClTestEx(t, "main", gopcode, expected, cachefile...)
 }
 
-func gopClTestEx(t *testing.T, pkgname string, gopcode, expected string, cachefile ...string) {
+func gopClTestEx(t *testing.T, pkgname, gopcode, expected string, cachefile ...string) {
 	cl.SetDisableRecover(true)
 	defer cl.SetDisableRecover(false)
 
