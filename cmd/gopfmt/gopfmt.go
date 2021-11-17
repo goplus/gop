@@ -111,7 +111,7 @@ func walk(path string, d fs.DirEntry, err error) error {
 		ext := filepath.Ext(path)
 		if _, ok := extGops[ext]; ok {
 			procCnt++
-			err = processFile(path, nil, nil)
+			err = processFile(path, nil, os.Stdout)
 		}
 	}
 	return err

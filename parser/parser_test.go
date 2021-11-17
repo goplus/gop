@@ -84,7 +84,7 @@ ast.FuncDecl:
           Text: // comment
   Name:
     ast.Ident:
-      Name: init
+      Name: main
   Type:
     ast.FuncType:
       Params:

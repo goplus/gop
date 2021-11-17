@@ -35,9 +35,10 @@ type parser struct {
 	scanner scanner.Scanner
 
 	// Tracing/debugging
-	mode   Mode // parsing mode
-	trace  bool // == (mode & Trace != 0)
-	indent int  // indentation used for tracing output
+	mode         Mode // parsing mode
+	trace        bool // == (mode & Trace != 0)
+	noEntrypoint bool // no entrypoint func
+	indent       int  // indentation used for tracing output
 
 	// Comments
 	comments    []*ast.CommentGroup
@@ -3068,6 +3069,15 @@ func (p *parser) parseGenDecl(keyword token.Token, f parseSpecFunction) *ast.Gen
 }
 
 func (p *parser) parseFuncDecl() *ast.FuncDecl {
+	decl, _ := p.parseFuncDeclOrCall(false)
+	return decl
+}
+
+func isOverloadOps(tok token.Token) bool {
+	return int(tok) < len(overloadOps) && overloadOps[tok] != 0
+}
+
+func (p *parser) parseFuncDeclOrCall(allowCallExpr bool) (*ast.FuncDecl, *ast.CallExpr) {
 	if p.trace {
 		defer un(trace(p, "FunctionDecl"))
 	}
@@ -3076,19 +3086,82 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 	pos := p.expect(token.FUNC)
 	scope := ast.NewScope(p.topScope) // function scope
 
-	var recv *ast.FieldList
-	if p.tok == token.LPAREN {
-		recv = p.parseParameters(scope, false)
-	}
+	var recv, params, results *ast.FieldList
+	var ident *ast.Ident
+	var isOp bool
 
-	ident, isOp := p.parseIdentOrOp()
-	params, results := p.parseSignature(scope)
+	if allowCallExpr {
+		if p.tok != token.LPAREN {
+			// check func decl
+			ident, isOp = p.parseIdentOrOp()
+			params, results = p.parseSignature(scope)
+		} else {
+			params = p.parseParameters(scope, true)
+			var isFunLit bool
+			// method: func (type) op (type) {}
+			// funlit: func (params) *type {}
+			if isOp = isOverloadOps(p.tok); isOp {
+				pos, tok := p.pos, p.tok
+				p.next()
+				if tok == token.MUL {
+					if p.tok != token.LPAREN {
+						isOp = false
+						isFunLit = true
+						x := p.parseType()
+						typ := &ast.StarExpr{Star: pos, X: x}
+						results = &ast.FieldList{List: []*ast.Field{&ast.Field{Type: typ}}}
+					}
+				}
+				if isOp {
+					ident = &ast.Ident{NamePos: pos, Name: tok.String()}
+				}
+			}
+			if !isOp {
+				if !isFunLit {
+					// method: func (recv) method(param) result {}
+					// funlit: func (param) result {}
+					if p.tok == token.IDENT {
+						ident = p.parseIdent()
+						if p.tok != token.LBRACE {
+							isFunLit = false
+						} else {
+							isFunLit = true
+							results = &ast.FieldList{List: []*ast.Field{&ast.Field{Type: ident}}}
+						}
+					} else {
+						isFunLit = true
+						results = p.parseResult(scope)
+					}
+				}
+				if isFunLit {
+					body := p.parseBody(scope)
+					funLit := &ast.FuncLit{
+						Type: &ast.FuncType{
+							Func:    pos,
+							Params:  params,
+							Results: results,
+						},
+						Body: body,
+					}
+					call := p.parseCallOrConversion(funLit, false)
+					return nil, call
+				}
+			}
+			recv = params
+			params, results = p.parseSignature(scope)
+		}
+	} else {
+		if p.tok == token.LPAREN {
+			recv = p.parseParameters(scope, false)
+		}
+		ident, isOp = p.parseIdentOrOp()
+		params, results = p.parseSignature(scope)
+	}
 	if isOp {
 		if params == nil || len(params.List) != 1 {
 			log.Panicln("TODO: overload operator can only have one parameter")
 		}
 	}
-
 	var body *ast.BlockStmt
 	if p.tok == token.LBRACE {
 		body = p.parseBody(scope)
@@ -3131,7 +3204,7 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 	if debugParseOutput {
 		log.Printf("ast.FuncDecl{Name: %v, ...}\n", ident.Name)
 	}
-	return decl
+	return decl, nil
 }
 
 func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
@@ -3163,6 +3236,66 @@ func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
 	return p.parseGenDecl(p.tok, f)
 }
 
+func (p *parser) parseDeclEx(sync map[token.Token]bool) ast.Decl {
+	if p.trace {
+		defer un(trace(p, "Declaration"))
+	}
+	var f parseSpecFunction
+	pos := p.pos
+	switch p.tok {
+	case token.CONST, token.VAR:
+		f = p.parseValueSpec
+
+	case token.TYPE:
+		f = p.parseTypeSpec
+
+	case token.FUNC:
+		decl, call := p.parseFuncDeclOrCall(true)
+		if decl != nil {
+			if p.errors.Len() != 0 {
+				p.errorExpected(pos, "declaration", 2)
+				p.advance(sync)
+			}
+			return decl
+		} else {
+			decl = p.insertEntry(pos, &ast.ExprStmt{X: call})
+			if p.errors.Len() != 0 {
+				p.advance(sync)
+			}
+			return decl
+		}
+	default:
+		decl := p.insertEntry(pos)
+		if p.errors.Len() != 0 {
+			p.advance(sync)
+		}
+		return decl
+	}
+
+	return p.parseGenDecl(p.tok, f)
+}
+
+func (p *parser) insertEntry(pos token.Pos, stmts ...ast.Stmt) *ast.FuncDecl {
+	p.topScope = ast.NewScope(p.topScope)
+	doc := p.leadComment
+	p.openLabelScope()
+	list := p.parseStmtList()
+	p.closeLabelScope()
+	p.closeScope()
+	if stmts != nil {
+		list = append(stmts, list...)
+	}
+	p.noEntrypoint = true
+	return &ast.FuncDecl{
+		Name: &ast.Ident{NamePos: pos, Name: "main"},
+		Doc:  doc,
+		Type: &ast.FuncType{
+			Params: &ast.FieldList{},
+		},
+		Body: &ast.BlockStmt{List: list},
+	}
+}
+
 // ----------------------------------------------------------------------------
 // Source files
 
@@ -3177,21 +3310,30 @@ func (p *parser) parseFile() *ast.File {
 		return nil
 	}
 
+	var noPkgDecl bool
 	// package clause
 	doc := p.leadComment
-	pos := p.expect(token.PACKAGE)
-	// Go spec: The package clause is not a declaration;
-	// the package name does not appear in any scope.
-	ident := p.parseIdent()
-	if ident.Name == "_" && p.mode&DeclarationErrors != 0 {
-		p.error(p.pos, "invalid package name _")
-	}
-	p.expectSemi()
+	var pos token.Pos
+	var ident *ast.Ident
+	if p.tok == token.PACKAGE {
+		pos = p.expect(token.PACKAGE)
+		// Go spec: The package clause is not a declaration;
+		// the package name does not appear in any scope.
+		ident = p.parseIdent()
+		if ident.Name == "_" && p.mode&DeclarationErrors != 0 {
+			p.error(p.pos, "invalid package name _")
+		}
+		p.expectSemi()
 
-	// Don't bother parsing the rest if we had errors parsing the package clause.
-	// Likely not a Go source file at all.
-	if p.errors.Len() != 0 {
-		return nil
+		// Don't bother parsing the rest if we had errors parsing the package clause.
+		// Likely not a Go source file at all.
+		if p.errors.Len() != 0 {
+			return nil
+		}
+	} else {
+		noPkgDecl = true
+		pos = token.NoPos
+		ident = ast.NewIdent("main")
 	}
 
 	p.openScope()
@@ -3206,7 +3348,7 @@ func (p *parser) parseFile() *ast.File {
 		if p.mode&ImportsOnly == 0 {
 			// rest of package body
 			for p.tok != token.EOF {
-				decls = append(decls, p.parseDecl(declStart))
+				decls = append(decls, p.parseDeclEx(declStart))
 			}
 		}
 	}
@@ -3227,13 +3369,15 @@ func (p *parser) parseFile() *ast.File {
 	}
 
 	return &ast.File{
-		Doc:        doc,
-		Package:    pos,
-		Name:       ident,
-		Decls:      decls,
-		Scope:      p.pkgScope,
-		Imports:    p.imports,
-		Unresolved: p.unresolved[0:i],
-		Comments:   p.comments,
+		Doc:          doc,
+		Package:      pos,
+		Name:         ident,
+		Decls:        decls,
+		Scope:        p.pkgScope,
+		Imports:      p.imports,
+		Unresolved:   p.unresolved[0:i],
+		Comments:     p.comments,
+		NoEntrypoint: p.noEntrypoint,
+		NoPkgDecl:    noPkgDecl,
 	}
 }

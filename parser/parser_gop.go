@@ -19,7 +19,6 @@ package parser
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -27,7 +26,6 @@ import (
 	"strings"
 
 	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
 )
 
@@ -204,69 +202,9 @@ func parseFSFileEx(fset *token.FileSet, fs FileSystem, filename string, src inte
 	if err != nil {
 		return
 	}
-	return parseFileEx(fset, filename, code, mode, ft)
-}
-
-// TODO: should not add package info and init|main function.
-// If do this, parsing will display error line number when error occur
-func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode, ft ast.FileType) (f *ast.File, err error) {
-	var b bytes.Buffer
-	var isMod, noEntrypoint, noPkgDecl bool
-	var noEntry *ast.NoEntry_
-	var noEntryPos int
-	var fsetTmp = token.NewFileSet()
-	f, err = parseFile(fsetTmp, filename, code, PackageClauseOnly)
-	if err != nil {
-		fmt.Fprintf(&b, "package main;%s", code)
-		code = b.Bytes()
-		noPkgDecl = true
-	} else {
-		isMod = f.Name.Name != "main"
-	}
-	_, err = parseFile(fsetTmp, filename, code, mode)
-	if err != nil {
-		if errlist, ok := err.(scanner.ErrorList); ok {
-			if e := errlist[0]; strings.HasPrefix(e.Msg, "expected declaration") {
-				var entrypoint string
-				switch ft {
-				case ast.FileTypeSpx:
-					entrypoint = "func Main()"
-				case ast.FileTypeGmx:
-					entrypoint = "func MainEntry()"
-				default:
-					if isMod {
-						entrypoint = "func init()"
-					} else {
-						entrypoint = "func main()"
-					}
-				}
-				b.Reset()
-				idx := e.Pos.Offset
-				fmt.Fprintf(&b, "%s %s{%s\n}", code[:idx], entrypoint, code[idx:])
-				code = b.Bytes()
-				size := len(entrypoint) + 2
-				noEntryPos = idx + size
-				noEntry = &ast.NoEntry_{
-					Entry: entrypoint,
-					Size:  size,
-				}
-				noEntrypoint = true
-				err = nil
-			}
-		}
-	}
-	if err == nil {
-		f, err = parseFile(fset, filename, code, mode)
-		if err == nil {
-			if noEntry != nil {
-				pos := fset.Position(f.Pos() + token.Pos(noEntryPos))
-				noEntry.Line = pos.Line
-			}
-			f.NoEntrypoint = noEntrypoint
-			f.NoEntry_ = noEntry
-			f.NoPkgDecl = noPkgDecl
-			f.FileType = extGopFiles[filepath.Ext(filename)]
-		}
+	f, err = parseFile(fset, filename, code, mode)
+	if f != nil {
+		f.FileType = ft
 	}
 	return
 }

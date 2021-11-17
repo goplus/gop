@@ -1100,29 +1100,9 @@ type File struct {
 	Unresolved   []*Ident        // unresolved identifiers in this file
 	Comments     []*CommentGroup // list of all comments in the source file
 	Code         []byte
-	NoEntrypoint bool      // no `main` or `init` func to indicate the module entry point.
-	NoPkgDecl    bool      // no `package xxx` declaration
-	NoEntry_     *NoEntry_ // to be removed
+	NoEntrypoint bool // no entrypoint func to indicate the module entry point.
+	NoPkgDecl    bool // no `package xxx` declaration
 	FileType     FileType
-}
-
-type NoEntry_ struct {
-	Entry string
-	Line  int
-	Size  int
-}
-
-func (f *File) AdjustPos_(pos token.Position) (token.Position, bool) {
-	var changed bool
-	if f.NoPkgDecl && pos.Line == 1 {
-		pos.Column -= 13 //package main;
-		changed = true
-	}
-	if f.NoEntrypoint && pos.Line == f.NoEntry_.Line {
-		pos.Column -= f.NoEntry_.Size
-		changed = true
-	}
-	return pos, changed
 }
 
 const (

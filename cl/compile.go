@@ -161,9 +161,6 @@ type nodeInterp struct {
 
 func (p *nodeInterp) Position(start token.Pos) token.Position {
 	pos := p.fset.Position(start)
-	if f, ok := p.files[pos.Filename]; ok {
-		pos, _ = f.AdjustPos_(pos)
-	}
 	pos.Filename = relFile(p.workingDir, pos.Filename)
 	return pos
 }
@@ -190,9 +187,6 @@ func (p *nodeInterp) LoadExpr(node ast.Node) (src string, pos token.Position) {
 		log.Println("LoadExpr:", node, pos.Filename, pos.Line, pos.Offset, node.Pos(), node.End(), n)
 	}
 	src = string(f.Code[pos.Offset : pos.Offset+n])
-	if adj, ok := f.AdjustPos_(pos); ok {
-		pos.Column = adj.Column
-	}
 	return
 }
 
@@ -460,6 +454,20 @@ func hasMethod(o types.Object, name string) bool {
 	return false
 }
 
+func getEntrypoint(ft ast.FileType, isMod bool) string {
+	switch ft {
+	case ast.FileTypeSpx:
+		return "Main"
+	case ast.FileTypeGmx:
+		return "MainEntry"
+	default:
+		if isMod {
+			return "init"
+		}
+		return "main"
+	}
+}
+
 func loadFile(ctx *pkgCtx, f *ast.File) {
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
@@ -569,6 +577,9 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
+			if f.NoEntrypoint && d.Name.Name == "main" {
+				d.Name.Name = getEntrypoint(f.FileType, f.Name.Name != "main")
+			}
 			if ctx.classRecv != nil { // in class file (.spx/.gmx)
 				if d.Recv == nil {
 					d.Recv = ctx.classRecv
