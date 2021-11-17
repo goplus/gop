@@ -1,0 +1,67 @@
+package main
+
+file funclit.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.FuncLit:
+                  Type:
+                    ast.FuncType:
+                      Params:
+                        ast.FieldList:
+                          List:
+                            ast.Field:
+                              Names:
+                                ast.Ident:
+                                  Name: x
+                                ast.Ident:
+                                  Name: y
+                              Type:
+                                ast.Ident:
+                                  Name: int
+                      Results:
+                        ast.FieldList:
+                          List:
+                            ast.Field:
+                              Type:
+                                ast.StarExpr:
+                                  X:
+                                    ast.Ident:
+                                      Name: int
+                  Body:
+                    ast.BlockStmt:
+                      List:
+                        ast.ReturnStmt:
+                          Results:
+                            ast.Ident:
+                              Name: nil
+              Args:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 100
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 200
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "hello"

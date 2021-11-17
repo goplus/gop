@@ -3144,6 +3144,7 @@ func (p *parser) parseFuncDeclOrCall(allowCallExpr bool) (*ast.FuncDecl, *ast.Ca
 						Body: body,
 					}
 					call := p.parseCallOrConversion(funLit, false)
+					p.expectSemi()
 					return nil, call
 				}
 			}
