@@ -3268,3 +3268,13 @@ func init() {
 }
 `)
 }
+
+func TestParentExpr(t *testing.T) {
+	gopClTest(t, `var t1 *(int)
+var t2 chan (int)
+`, `package main
+
+var t1 *int
+var t2 chan int
+`)
+}
