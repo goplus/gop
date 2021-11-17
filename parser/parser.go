@@ -3068,16 +3068,11 @@ func (p *parser) parseGenDecl(keyword token.Token, f parseSpecFunction) *ast.Gen
 	}
 }
 
-func (p *parser) parseFuncDecl() *ast.FuncDecl {
-	decl, _ := p.parseFuncDeclOrCall(false)
-	return decl
-}
-
 func isOverloadOps(tok token.Token) bool {
 	return int(tok) < len(overloadOps) && overloadOps[tok] != 0
 }
 
-func (p *parser) parseFuncDeclOrCall(allowCallExpr bool) (*ast.FuncDecl, *ast.CallExpr) {
+func (p *parser) parseFuncDeclOrCall(allowGlobalStmts bool) (*ast.FuncDecl, *ast.CallExpr) {
 	if p.trace {
 		defer un(trace(p, "FunctionDecl"))
 	}
@@ -3090,7 +3085,7 @@ func (p *parser) parseFuncDeclOrCall(allowCallExpr bool) (*ast.FuncDecl, *ast.Ca
 	var ident *ast.Ident
 	var isOp bool
 
-	if allowCallExpr {
+	if allowGlobalStmts {
 		if p.tok != token.LPAREN {
 			// check func decl
 			ident, isOp = p.parseIdentOrOp()
@@ -3109,7 +3104,7 @@ func (p *parser) parseFuncDeclOrCall(allowCallExpr bool) (*ast.FuncDecl, *ast.Ca
 						isFunLit = true
 						x := p.parseType()
 						typ := &ast.StarExpr{Star: pos, X: x}
-						results = &ast.FieldList{List: []*ast.Field{&ast.Field{Type: typ}}}
+						results = &ast.FieldList{List: []*ast.Field{{Type: typ}}}
 					}
 				}
 				if isOp {
@@ -3126,7 +3121,7 @@ func (p *parser) parseFuncDeclOrCall(allowCallExpr bool) (*ast.FuncDecl, *ast.Ca
 							isFunLit = false
 						} else {
 							isFunLit = true
-							results = &ast.FieldList{List: []*ast.Field{&ast.Field{Type: ident}}}
+							results = &ast.FieldList{List: []*ast.Field{{Type: ident}}}
 						}
 					} else {
 						isFunLit = true
@@ -3209,35 +3204,10 @@ func (p *parser) parseFuncDeclOrCall(allowCallExpr bool) (*ast.FuncDecl, *ast.Ca
 }
 
 func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
-	if p.trace {
-		defer un(trace(p, "Declaration"))
-	}
-	var f parseSpecFunction
-	pos := p.pos
-	switch p.tok {
-	case token.CONST, token.VAR:
-		f = p.parseValueSpec
-
-	case token.TYPE:
-		f = p.parseTypeSpec
-
-	case token.FUNC:
-		decl := p.parseFuncDecl()
-		if p.errors.Len() != 0 {
-			p.errorExpected(pos, "declaration", 2)
-			p.advance(sync)
-		}
-		return decl
-	default:
-		p.errorExpected(pos, "declaration", 2)
-		p.advance(sync)
-		return &ast.BadDecl{From: pos, To: p.pos}
-	}
-
-	return p.parseGenDecl(p.tok, f)
+	return p.parseDeclEx(sync, false)
 }
 
-func (p *parser) parseDeclEx(sync map[token.Token]bool) ast.Decl {
+func (p *parser) parseDeclEx(sync map[token.Token]bool, allowGlobalStmts bool) ast.Decl {
 	if p.trace {
 		defer un(trace(p, "Declaration"))
 	}
@@ -3246,37 +3216,30 @@ func (p *parser) parseDeclEx(sync map[token.Token]bool) ast.Decl {
 	switch p.tok {
 	case token.CONST, token.VAR:
 		f = p.parseValueSpec
-
 	case token.TYPE:
 		f = p.parseTypeSpec
-
 	case token.FUNC:
-		decl, call := p.parseFuncDeclOrCall(true)
+		decl, call := p.parseFuncDeclOrCall(allowGlobalStmts)
 		if decl != nil {
 			if p.errors.Len() != 0 {
 				p.errorExpected(pos, "declaration", 2)
 				p.advance(sync)
 			}
 			return decl
-		} else {
-			decl = p.insertEntry(pos, &ast.ExprStmt{X: call})
-			if p.errors.Len() != 0 {
-				p.advance(sync)
-			}
-			return decl
 		}
+		return p.parseGlobalStmts(sync, pos, &ast.ExprStmt{X: call})
 	default:
-		decl := p.insertEntry(pos)
-		if p.errors.Len() != 0 {
-			p.advance(sync)
+		if allowGlobalStmts {
+			return p.parseGlobalStmts(sync, pos)
 		}
-		return decl
+		p.errorExpected(pos, "declaration", 2)
+		p.advance(sync)
+		return &ast.BadDecl{From: pos, To: p.pos}
 	}
-
 	return p.parseGenDecl(p.tok, f)
 }
 
-func (p *parser) insertEntry(pos token.Pos, stmts ...ast.Stmt) *ast.FuncDecl {
+func (p *parser) parseGlobalStmts(sync map[token.Token]bool, pos token.Pos, stmts ...ast.Stmt) *ast.FuncDecl {
 	p.topScope = ast.NewScope(p.topScope)
 	doc := p.leadComment
 	p.openLabelScope()
@@ -3287,6 +3250,9 @@ func (p *parser) insertEntry(pos token.Pos, stmts ...ast.Stmt) *ast.FuncDecl {
 		list = append(stmts, list...)
 	}
 	p.noEntrypoint = true
+	if p.errors.Len() != 0 { // TODO: error
+		p.advance(sync)
+	}
 	return &ast.FuncDecl{
 		Name: &ast.Ident{NamePos: pos, Name: "main"},
 		Doc:  doc,
@@ -3349,7 +3315,7 @@ func (p *parser) parseFile() *ast.File {
 		if p.mode&ImportsOnly == 0 {
 			// rest of package body
 			for p.tok != token.EOF {
-				decls = append(decls, p.parseDeclEx(declStart))
+				decls = append(decls, p.parseDeclEx(declStart, true))
 			}
 		}
 	}
