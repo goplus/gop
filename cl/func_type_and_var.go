@@ -125,6 +125,8 @@ func toType(ctx *blockCtx, typ ast.Expr) types.Type {
 		return toFuncType(ctx, v, nil)
 	case *ast.SelectorExpr:
 		return toExternalType(ctx, v)
+	case *ast.ParenExpr:
+		return toType(ctx, v.X)
 	}
 	log.Panicln("toType: unknown -", reflect.TypeOf(typ))
 	return nil
