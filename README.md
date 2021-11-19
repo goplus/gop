@@ -90,9 +90,9 @@ fmt.Println("x:", x)
 
 **And all Go+ packages can also be imported in Go programs. What you need to do is just using `gop` command instead of `go`.**
 
-First, let's make a directory named `tutorial/14-Using-goplus-in-Go`.
+First, let's make a directory named `14-Using-goplus-in-Go`.
 
-Then write a Go+ package named `foo` in it:
+Then write a Go+ package named [foo](https://github.com/goplus/tutorial/tree/main/14-Using-goplus-in-Go/foo) in it:
 
 ```go
 package foo
@@ -102,7 +102,7 @@ func ReverseMap(m map[string]int) map[int]string {
 }
 ```
 
-Then use it in a Go package (14-Using-goplus-in-Go/gomain):
+Then use it in a Go package [14-Using-goplus-in-Go/gomain](https://github.com/goplus/tutorial/tree/main/14-Using-goplus-in-Go/gomain):
 
 ```go
 package main
@@ -110,7 +110,7 @@ package main
 import (
     "fmt"
 
-    "github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/foo"
+    "github.com/goplus/tutorial/14-Using-goplus-in-Go/foo"
 )
 
 func main() {
@@ -125,13 +125,7 @@ How to build this example? You can use:
 gop install -v ./...
 ```
 
-or:
-
-```
-gop run tutorial/14-Using-goplus-in-Go/gomain
-```
-
-Go [tutorial/14-Using-goplus-in-Go](https://github.com/goplus/gop/tree/main/tutorial/14-Using-goplus-in-Go) to get the source code.
+Go [github.com/goplus/tutorial/14-Using-goplus-in-Go](https://github.com/goplus/tutorial/tree/main/14-Using-goplus-in-Go) to get the source code.
 
 
 ## Playground
@@ -147,7 +141,7 @@ Go+ Jupyter kernel:
 
 ## Tutorials
 
-See https://github.com/goplus/gop/tree/main/tutorial
+See https://github.com/goplus/tutorial
 
 
 ## Bytecode vs. Go code
@@ -467,7 +461,7 @@ add("10", "abc"): 0 strconv.Atoi: parsing "abc": invalid syntax
 
 ===> errors stack:
 main.add("10", "abc")
-    /Users/xsw/goplus/tutorial/15-ErrWrap/err_wrap.gop:6 strconv.Atoi(y)?
+    /Users/xsw/tutorial/15-ErrWrap/err_wrap.gop:6 strconv.Atoi(y)?
 
 addSafe("10", "abc"): 10
 ```
@@ -529,7 +523,7 @@ println([k for k, _ <- m])
 println([v for v <- m])
 ```
 
-Go [tutorial/20-Unix-Shebang/shebang](https://github.com/goplus/gop/blob/main/tutorial/20-Unix-Shebang/shebang) to get the source code.
+Go [20-Unix-Shebang/shebang](https://github.com/goplus/tutorial/blob/main/20-Unix-Shebang/shebang) to get the source code.
 
 
 ### Go features

@@ -179,7 +179,7 @@ igop  # 运行一个 Go+ 程序
 
 ### 有理数：bigint，bigrat，bigfloat
 
-我们将有理数作为原生 Go+ 类型引入。我们使用后缀 `r` 来表示有理数字面量。例如，（1r << 200）表示值等于2<sup>200 </sup>的 big int 型整数。4/5r 表示有理常数 4/5。
+我们将有理数作为原生 Go+ 类型引入。我们使用后缀 `r` 来表示有理数字面量。例如，（1r << 200）表示值等于2<sup>200 </sup>的 big int 型整数。4/5r 表示有理常数 4/5。
 
 ```go
 var a bigint = 1r << 65  // bigint, large than int64
