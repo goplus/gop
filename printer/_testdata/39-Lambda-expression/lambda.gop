@@ -1,0 +1,5 @@
+func Map(c []float64, t func(float64) float64) []float64 {
+	return [t(x) for x <- c]
+}
+
+println(Map([1.2, 3.5, 6], x => x * x))

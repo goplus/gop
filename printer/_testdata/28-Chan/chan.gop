@@ -1,0 +1,9 @@
+c := make(chan int, 10)
+c <- 3
+close(c)
+
+d := <-c
+e, ok := <-c
+
+println(d)
+println(e, ok)

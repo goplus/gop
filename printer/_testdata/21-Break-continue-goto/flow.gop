@@ -1,0 +1,63 @@
+println("start")
+
+goto L
+println("before")
+L:
+	println("over")
+	i := 0
+L2:
+	if i < 3 {
+		println(i)
+		i++
+		goto L2
+	}
+	println("over")
+
+	sum := 0
+	arr := [1, 3, 5, 7, 11, 13, 17]
+	for i = 0; i < len(arr); i++ {
+		if arr[i] < 3 {
+			continue
+		}
+		if arr[i] > 11 {
+			break
+		}
+		sum += arr[i]
+	}
+	println("sum(3,5,7,11):", sum == 26, sum)
+	sum = 0
+L3:
+	for i = 0; i < len(arr); i++ {
+		if arr[i] < 3 {
+			continue L3
+		}
+		if arr[i] > 11 {
+			break L3
+		}
+		sum += arr[i]
+	}
+	println("sum(3,5,7,11):", sum == 26, sum)
+
+	z := 3
+	v := "Hello"
+	switch z {
+	case 3:
+		if v == "Hello" {
+			println("break")
+			break
+		}
+		println("break fail")
+	default:
+		println(z)
+	}
+L4:
+	switch z {
+	case 3:
+		if v == "Hello" {
+			println("break")
+			break L4
+		}
+		println("break fail")
+	default:
+		println(z)
+	}

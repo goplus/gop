@@ -1,0 +1,28 @@
+func foo(v interface{}) string {
+	if _, ok := v.(bool); ok {
+		return "bool"
+	}
+	switch v.(type) {
+	case int:
+		return "int"
+	case string:
+		return "string"
+	default:
+		return "unknown"
+	}
+}
+
+func add(v, delta interface{}) interface{} {
+	switch a := v.(type) {
+	case int:
+		return a + delta.(int)
+	case float64:
+		return a + delta.(float64)
+	case string:
+		return a + delta.(string)
+	}
+	return nil
+}
+
+println(foo(1), foo("Hi"))
+println(add(4, 3), add("n", "iu"))

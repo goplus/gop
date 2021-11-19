@@ -1,0 +1,12 @@
+package foo
+
+import (
+	"testing"
+)
+
+func TestReverseMap(t *testing.T) {
+	out := ReverseMap({"a": 1})
+	if len(out) != 1 || out[1] != "a" {
+		t.Fatal("ReverseMap failed:", out)
+	}
+}

@@ -1,0 +1,9 @@
+a := [2, 3, 5, 7, 9, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59]
+where := {i for i, v <- a, v == 19}
+println("19 is at index", where)
+
+if at, ok := {i for i, v <- a, v == 37}; ok {
+	println("37 is found! index =", at)
+}
+
+println("first element of a is:", {v for v <- a})

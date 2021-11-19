@@ -1,0 +1,22 @@
+import "fmt"
+
+var x = "Hello, world!"
+
+foo := func(prompt string) (n int, err error) {
+	n, err = fmt.Println(prompt + x)
+	return
+}
+
+fmt.Println(foo("x: "))
+
+printf := func(format string, args ...interface{}) (n int, err error) {
+	n, err = fmt.Printf(format, args...)
+	return
+}
+
+bar := func(foo func(string, ...interface{}) (int, error)) {
+	foo("Hello, %v!\n", "Go+")
+}
+
+bar(printf)
+fmt.Println(printf("Hello, %v\n", "Go+"))

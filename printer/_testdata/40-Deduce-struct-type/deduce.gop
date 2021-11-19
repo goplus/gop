@@ -1,0 +1,16 @@
+type Config struct {
+	Dir   string
+	Level int
+}
+
+type Result struct {
+	Text string
+}
+
+func foo(conf *Config) *Result {
+	println("conf:", *conf)
+	return {Text: "Hello, Go+"}
+}
+
+ret := foo({Dir: "/foo/bar", Level: 1})
+println(ret)

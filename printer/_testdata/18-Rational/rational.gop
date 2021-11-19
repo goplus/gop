@@ -1,0 +1,13 @@
+import "math/big"
+
+var a bigint = 1r << 65 // bigint, large than int64
+var b bigrat = 4/5r     // bigrat
+c := b - 1/3r + 3*1/2r // bigrat
+println(a, b, c)
+
+var x *big.Int = 1r << 65 // (1r << 65) is untyped bigint, and can be assigned to *big.Int
+var y *big.Rat = 4/5r
+println(x, y)
+
+a = new(big.Int).Abs(-265r)
+println("abs(-265r):", a)

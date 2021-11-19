@@ -1,0 +1,13 @@
+type foo struct {
+}
+
+func (p *foo) Gop_Enum(proc func(key int, val string)) {
+	proc(3, "Hi")
+	proc(7, "Go+")
+}
+
+for k, v <- new(foo) {
+	println(k, v)
+}
+
+println({v: k for k, v <- new(foo)})

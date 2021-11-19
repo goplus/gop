@@ -1,0 +1,27 @@
+a := struct {
+	A int
+	B string
+}{1, "Hello"}
+
+println(a)
+
+b := &struct {
+	A int
+	B string
+}{1, "Hello"}
+
+c := &struct {
+	a int
+	b string
+}{1, "Hello"}
+
+println(b)
+
+a.A, a.B = 1, "Hi"
+println(a)
+
+b.A, b.B = 2, "Hi2"
+println(b)
+
+c.a, c.b = 3, "Hi3"
+println(c)

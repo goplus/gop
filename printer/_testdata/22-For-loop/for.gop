@@ -1,0 +1,77 @@
+// -----------------------------------------------------------------------------
+// for with <-
+
+sum := 0
+for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
+	sum += x
+}
+println("sum(5,7,11,13,17):", sum)
+
+fns := make([]func() int, 3)
+for i, x <- [3, 15, 777] {
+	v := x
+	fns[i] = func() int {
+		return v
+	}
+}
+println("values:", fns[0](), fns[1](), fns[2]())
+
+// -----------------------------------------------------------------------------
+// for with range with define tok (k,v := range x)
+
+sum = 0
+for _, x := range [1, 3, 5, 7, 11, 13, 17] {
+	if x > 3 {
+		sum += x
+	}
+}
+println("sum(5,7,11,13,17):", sum)
+
+sum = 0
+for i, x := range [3, 15, 777] {
+	v := x
+	fns[i] = func() int {
+		return v
+	}
+}
+println("values:", fns[0](), fns[1](), fns[2]())
+
+// -----------------------------------------------------------------------------
+// for with range with assign tok (k,v = range x)
+
+sum = 0
+x := 0
+for _, x = range [1, 3, 5, 7, 11, 13, 17] {
+	if x > 3 {
+		sum += x
+	}
+}
+println("x:", x, x == 17)
+println("sum(5,7,11,13,17):", sum)
+
+// -----------------------------------------------------------------------------
+// normal for
+
+sum = 0
+arr := [1, 3, 5, 7, 11, 13, 17]
+i := 10
+for i = 0; i < len(arr); i++ {
+	if arr[i] > 3 {
+		sum += arr[i]
+	}
+}
+println("sum(5,7,11,13,17):", sum)
+
+/* TODO:
+arr = [3, 15, 777]
+sum = 0
+for i = 0; i < len(arr); i++ {
+	v := arr[i]
+	fns[i] = func() int {
+		return v
+	}
+}
+println("values:", fns[0](), fns[1](), fns[2]())
+*/
+
+// -----------------------------------------------------------------------------
