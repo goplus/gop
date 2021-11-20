@@ -3251,3 +3251,20 @@ var t1 *int
 var t2 chan int
 `)
 }
+
+func TestCommandStyle(t *testing.T) {
+	gopClTest(t, `
+println []
+println {}
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Println([]interface {
+	}{})
+	fmt.Println(map[string]interface {
+	}{})
+}
+`)
+}
