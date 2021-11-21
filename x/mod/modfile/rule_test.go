@@ -17,17 +17,8 @@
 package modfile
 
 import (
-	"context"
 	"testing"
-
-	"golang.org/x/mod/modfile"
 )
-
-func fixVersion(ctx context.Context, fixed *bool) modfile.VersionFixer {
-	return func(path, vers string) (resolved string, err error) {
-		return vers, nil
-	}
-}
 
 var gopmod = `
 module spx
