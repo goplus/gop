@@ -438,14 +438,20 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 			if val := goVal(v.CVal); val != nil {
 				// look for duplicate types for a given value
 				// (quadratic algorithm, but these lists tend to be very short)
+				typ := types.Default(v.Type)
 				for _, vt := range seen[val] {
-					if types.Identical(v.Type, vt.typ) {
+					if types.Identical(typ, vt.typ) {
 						src, pos := ctx.LoadExpr(v.Src)
-						ctx.handleCodeErrorf(&pos, "duplicate case %s in switch\n\tprevious case at %v",
-							src, ctx.Position(vt.pos))
+						if _, ok := v.Src.(*ast.BasicLit); ok {
+							ctx.handleCodeErrorf(&pos, "duplicate case %s in switch\n\tprevious case at %v",
+								src, ctx.Position(vt.pos))
+						} else {
+							ctx.handleCodeErrorf(&pos, "duplicate case %s (value %v) in switch\n\tprevious case at %v",
+								src, val, ctx.Position(vt.pos))
+						}
 					}
 				}
-				seen[val] = append(seen[val], valueType{v.Src.Pos(), v.Type})
+				seen[val] = append(seen[val], valueType{v.Src.Pos(), typ})
 			}
 		}
 		cb.Case(len(c.List)) // Case(0) means default case
