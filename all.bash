@@ -78,31 +78,6 @@ link_gop_root_dir() {
   echo "$GOP_ROOT linked to $GOP_HOME_DIR successfully!"
 }
 
-build_go_plus_tutorials() {
-  command_exists gop || {
-    if [ -n "$GOPATH" ]; then
-      MANUAL_EXPORT_COMMAND="$ADD_GOPATH_COMMAND"
-      echo "Execute command: $ADD_GOPATH_COMMAND"
-      export PATH=$PATH:$GOPATH/bin
-    else
-      MANUAL_EXPORT_COMMAND="$ADD_GO_BIN_COMMAND"
-      echo "Execute command: $ADD_GO_BIN_COMMAND"
-      export PATH=$PATH:$HOME/go/bin
-    fi
-  }
-
-  command_exists gop || {
-    echo "Error: something wrong, you could create a new issue on https://github.com/goplus/gop/issues, we will help you."
-    exit 1
-  }
-
-  cd $GOP_ROOT
-
-  echo "Building all Go+ tutorials."
-  gop install -ldflags "${GO_FLAGS}" ./...
-  echo "Go+ tutorials builded successfully!"
-}
-
 summary() {
   echo "Installation Summary:"
   echo "Go+ is now installed."
@@ -119,28 +94,6 @@ type 'go help install' for more details.
 
 EOF
   fi
-}
-
-hello_world() {
-  HELLO_WORLD_COMMAND="gop run tutorial/01-Hello-world/hello.gop"
-
-  cd $GOP_ROOT
-
-  EXPORT_CMD=""
-  if [ -n "$MANUAL_EXPORT_COMMAND" ]; then
-    EXPORT_CMD="${MANUAL_EXPORT_COMMAND} && "
-  fi
-
-  echo '-----------------------------'
-  cat <<-EOF
-Let's have a try now, Copy below command to get classic Hello, world!
-
-${EXPORT_CMD}${HELLO_WORLD_COMMAND}
-
-Besides, there are another more tutorials listed under ./tutorial/ directory.
-
-Have fun!
-EOF
 }
 
 gop_test() {
@@ -160,14 +113,8 @@ default() {
   # Link Gop root directory to home/ dir
   link_gop_root_dir
 
-  # Build all Go+ tutorials
-  build_go_plus_tutorials
-
   # Summary
   summary
-
-  # hello world
-  hello_world
 }
 
 if [ "$#" -eq 0 ]; then

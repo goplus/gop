@@ -1,12 +1,12 @@
 a := struct {
-	A int
-	B string
+	A int    `json:"a"` // comment a
+	B string `b`        // comment b
 }{1, "Hello"}
 
 println(a)
 
 b := &struct {
-	A int
+	A int // a
 	B string
 }{1, "Hello"}
 

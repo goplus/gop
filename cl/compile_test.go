@@ -23,8 +23,6 @@ import (
 	"syscall"
 	"testing"
 
-	"golang.org/x/tools/go/packages"
-
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/parser"
@@ -2971,9 +2969,9 @@ var (
 )
 
 func removeAutogenFiles() {
-	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen.go")
-	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen_test.go")
-	os.Remove("../tutorial/14-Using-goplus-in-Go/foo/gop_autogen2_test.go")
+	os.Remove("./internal/gop-in-go/foo/gop_autogen.go")
+	os.Remove("./internal/gop-in-go/foo/gop_autogen_test.go")
+	os.Remove("./internal/gop-in-go/foo/gop_autogen2_test.go")
 }
 
 func TestImportGopPkg(t *testing.T) {
@@ -2981,7 +2979,7 @@ func TestImportGopPkg(t *testing.T) {
 	defer autogen.Unlock()
 
 	removeAutogenFiles()
-	gopClTest(t, `import "github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/foo"
+	gopClTest(t, `import "github.com/goplus/gop/cl/internal/gop-in-go/foo"
 
 rmap := foo.ReverseMap(map[string]int{"Hi": 1, "Hello": 2})
 println(rmap)
@@ -2989,7 +2987,7 @@ println(rmap)
 
 import (
 	fmt "fmt"
-	foo "github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/foo"
+	foo "github.com/goplus/gop/cl/internal/gop-in-go/foo"
 )
 
 func main() {
@@ -2997,31 +2995,6 @@ func main() {
 	fmt.Println(rmap)
 }
 `)
-}
-
-// bugfix (only depends order of testing functions)
-// vet: open tutorial/14-Using-goplus-in-Go/foo/gop_autogen.go: no such file or directory
-func TestGopkgDep(t *testing.T) {
-	autogen.Lock()
-	defer autogen.Unlock()
-
-	removeAutogenFiles()
-	const (
-		loadTypes = packages.NeedImports | packages.NeedDeps | packages.NeedTypes
-		loadModes = loadTypes | packages.NeedName | packages.NeedModule
-	)
-	loadConf := &packages.Config{Mode: loadModes, Fset: gblFset}
-	pkgs, err := baseConf.Ensure().PkgsLoader.Load(
-		loadConf, "github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/gomain")
-	if err != nil {
-		t.Fatal("PkgsLoader.Load failed:", err)
-	}
-	for _, err = range pkgs[0].Errors {
-		t.Fatal("PkgsLoader.Load failed:", err)
-	}
-	if pkgs[0].Name != "main" {
-		t.Fatal("pkg name:", pkgs[0].Name)
-	}
 }
 
 func TestCallDep(t *testing.T) {
@@ -3276,6 +3249,23 @@ var t2 chan (int)
 
 var t1 *int
 var t2 chan int
+`)
+}
+
+func TestCommandStyle(t *testing.T) {
+	gopClTest(t, `
+println []
+println {}
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Println([]interface {
+	}{})
+	fmt.Println(map[string]interface {
+	}{})
+}
 `)
 }
 

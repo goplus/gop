@@ -25,6 +25,57 @@ import (
 
 // -----------------------------------------------------------------------------
 
+func panicMsg(e interface{}) string {
+	switch v := e.(type) {
+	case string:
+		return v
+	case error:
+		return v.Error()
+	}
+	return ""
+}
+
+func testErrCode(t *testing.T, code string, errExp, panicExp string) {
+	defer func() {
+		if e := recover(); e != nil {
+			if panicMsg(e) != panicExp {
+				t.Fatal("testErrCode panic:", e)
+			}
+		}
+	}()
+	fset := token.NewFileSet()
+	_, err := Parse(fset, "/foo/bar.gop", code, 0)
+	if err == nil || err.Error() != errExp {
+		t.Fatal("testErrCode error:", err)
+	}
+}
+
+func TestErrOperand(t *testing.T) {
+	testErrCode(t, `a :=`, `/foo/bar.gop:1:5: expected operand, found 'EOF'`, ``)
+}
+
+func TestErrMissingComma(t *testing.T) {
+	testErrCode(t, `func a(b int c)`, ``, `missing ',' in parameter list`)
+}
+
+func TestErrTooMany(t *testing.T) {
+	testErrCode(t, `
+func f() { var }
+func g() { var }
+func h() { var }
+func h() { var }
+func h() { var }
+func h() { var }
+func h() { var }
+func h() { var }
+func h() { var }
+func h() { var }
+func h() { var }
+`, `/foo/bar.gop:2:16: expected 'IDENT', found '}' (and 10 more errors)`, ``)
+}
+
+// -----------------------------------------------------------------------------
+
 var testStdCode = `package bar; import "io"
 	// comment
 	x := 0

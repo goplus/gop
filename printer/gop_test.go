@@ -116,12 +116,12 @@ func testFrom(t *testing.T, fpath string) {
 	diffBytes(t, res, src)
 }
 
-func TestFromTutorial(t *testing.T) {
+func TestFromTestdata(t *testing.T) {
 	dir, err := os.Getwd()
 	if err != nil {
 		t.Fatal("Getwd failed:", err)
 	}
-	dir = filepath.Join(dir, "../tutorial")
+	dir = filepath.Join(dir, "./_testdata")
 	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err

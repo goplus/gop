@@ -32,7 +32,7 @@ coverage.txt
 
 .gop/
 gop_autogen.go
-gop_autogen*_test.go
+gop_autogen*.go
 go.json
 *.cache
 
