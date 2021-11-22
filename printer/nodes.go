@@ -1,22 +1,18 @@
 /*
- Copyright 2021 The GoPlus Authors (goplus.org)
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-*/
-
-// Copyright 2009 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
+ * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 // This file implements printing of AST nodes; specifically
 // expressions, statements, declarations, and files. It uses
@@ -1018,7 +1014,12 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 	case *ast.SliceLit:
 		p.print(token.LBRACK)
 		p.exprList(x.Lbrack, x.Elts, depth+1, commaTerm, x.Rbrack, x.Incomplete)
-		p.print(token.RBRACK)
+		mode := noExtraLinebreak
+		if len(x.Elts) > 0 {
+			mode |= noExtraBlank
+		}
+		p.print(mode, x.Rbrack, token.RBRACK, mode)
+
 	case *ast.ComprehensionExpr:
 		switch x.Tok {
 		case token.LBRACK: // [...]
@@ -1078,6 +1079,19 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		}
 		p.print(token.RARROW, blank)
 		p.block(x.Body, 1)
+
+	case *ast.RangeExpr:
+		if x.First != nil {
+			p.expr(x.First)
+		}
+		p.print(token.COLON)
+		if x.Last != nil {
+			p.expr(x.Last)
+		}
+		if x.Expr3 != nil {
+			p.print(token.COLON)
+			p.expr(x.Expr3)
+		}
 
 	default:
 		log.Fatalf("unreachable %T\n", x)
@@ -1875,20 +1889,20 @@ func (p *printer) funcBodyUnnamed(headerSize int, sep whiteSpace, b *ast.BlockSt
 	}(p.level)
 	p.level = 0
 
-	const maxSize = 100
-	if headerSize+p.bodySize(b, maxSize) <= maxSize {
-		if len(b.List) > 0 {
-			p.print(blank)
-			for i, s := range b.List {
-				if i > 0 {
-					p.print(token.SEMICOLON, blank)
-				}
-				p.stmt(s, i == len(b.List)-1)
-			}
-			p.print(blank)
-		}
-		return
-	}
+	// const maxSize = 100
+	// if headerSize+p.bodySize(b, maxSize) <= maxSize {
+	// 	if len(b.List) > 0 {
+	// 		p.print(blank)
+	// 		for i, s := range b.List {
+	// 			if i > 0 {
+	// 				p.print(token.SEMICOLON, blank)
+	// 			}
+	// 			p.stmt(s, i == len(b.List)-1)
+	// 		}
+	// 		p.print(blank)
+	// 	}
+	// 	return
+	// }
 
 	/*	if sep != ignore {
 			//	p.print(blank) // always use blank
@@ -2019,11 +2033,7 @@ func (p *printer) declList(list []ast.Decl) {
 
 func (p *printer) file(src *ast.File) {
 	if src.NoEntrypoint {
-		if src.Name.Name == "main" {
-			p.unnamedFuncName = "main"
-		} else {
-			p.unnamedFuncName = "init"
-		}
+		p.unnamedFuncName = "main"
 	}
 	p.setComment(src.Doc)
 	if !src.NoPkgDecl {

@@ -1,0 +1,67 @@
+package main
+
+file fnbody.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: a
+          Tok: :=
+          Rhs:
+            ast.BasicLit:
+              Kind: INT
+              Value: 1
+        ast.BlockStmt:
+          List:
+            ast.DeclStmt:
+              Decl:
+                ast.GenDecl:
+                  Tok: type
+                  Specs:
+                    ast.TypeSpec:
+                      Name:
+                        ast.Ident:
+                          Name: T
+                      Type:
+                        ast.Ident:
+                          Name: int
+            ast.DeclStmt:
+              Decl:
+                ast.GenDecl:
+                  Tok: var
+                  Specs:
+                    ast.ValueSpec:
+                      Names:
+                        ast.Ident:
+                          Name: b
+                      Values:
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 2
+            ast.DeclStmt:
+              Decl:
+                ast.GenDecl:
+                  Tok: var
+                  Specs:
+                    ast.ValueSpec:
+                      Names:
+                        ast.Ident:
+                          Name: c
+                      Type:
+                        ast.Ident:
+                          Name: T
+                      Values:
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 3

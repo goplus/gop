@@ -1,0 +1,6 @@
+a := 1
+{
+	type T = int
+	var b = 2
+	var c T = 3
+}

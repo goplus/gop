@@ -1,6 +1,18 @@
-// Copyright 2015 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
+/*
+ * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 // TODO(gri): This file and the file src/cmd/gofmt/internal.go are
 // the same (but for this comment and the package name). Do not modify
@@ -12,7 +24,7 @@ package format
 import (
 	"bytes"
 
-	goparser "go/parser"
+	//goparser "go/parser"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/parser"
@@ -28,16 +40,16 @@ func parse(fset *token.FileSet, filename string, src []byte, fragmentOk bool) (
 	indentAdj int,
 	err error,
 ) {
-	_, err = goparser.ParseFile(fset, filename, src, goparser.PackageClauseOnly)
-	if err != nil {
-		src = append([]byte("package main;"), src...)
-		sourceAdj = func(src []byte, indent int) []byte {
-			// Remove the package clause.
-			// Gofmt has turned the ';' into a '\n'.
-			src = src[indent+len("package main\n"):]
-			return bytes.TrimSpace(src)
-		}
-	}
+	// _, err = goparser.ParseFile(fset, filename, src, goparser.PackageClauseOnly)
+	// if err != nil {
+	// 	src = append([]byte("package main;"), src...)
+	// 	sourceAdj = func(src []byte, indent int) []byte {
+	// 		// Remove the package clause.
+	// 		// Gofmt has turned the ';' into a '\n'.
+	// 		src = src[indent+len("package main\n"):]
+	// 		return bytes.TrimSpace(src)
+	// 	}
+	// }
 
 	file, err = parser.ParseFile(fset, filename, src, parserMode)
 	// If there's no error, return. If the error is that the source file didn't begin with a

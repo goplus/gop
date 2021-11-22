@@ -1,18 +1,18 @@
 /*
- Copyright 2021 The GoPlus Authors (goplus.org)
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-*/
+ * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package base
 
@@ -22,6 +22,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/goplus/gop/cl"
@@ -42,7 +43,7 @@ func SkipSwitches(args []string, f *flag.FlagSet) []string {
 	return out
 }
 
-// Get build directory from arguments
+// GetBuildDir Get build directory from arguments
 func GetBuildDir(args []string) (dir string, recursive bool) {
 	if len(args) == 0 {
 		args = []string{"."}
@@ -51,6 +52,12 @@ func GetBuildDir(args []string) (dir string, recursive bool) {
 	if strings.HasSuffix(dir, "/...") {
 		dir = dir[:len(dir)-4]
 		recursive = true
+	}
+	if fi, err := os.Stat(dir); err == nil {
+		if fi.IsDir() {
+			return
+		}
+		return filepath.Dir(dir), recursive
 	}
 	return
 }
@@ -81,10 +88,7 @@ func GenGoForBuild(dir string, recursive bool, rebuild bool, errorHandle func())
 
 // RunGoCmd executes `go` command tools.
 func RunGoCmd(dir string, op string, args ...string) {
-	opwargs := make([]string, len(args)+1)
-	opwargs[0] = op
-	copy(opwargs[1:], args)
-	cmd := exec.Command("go", opwargs...)
+	cmd := exec.Command("go", append([]string{op}, args...)...)
 	cmd.Dir = dir
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout

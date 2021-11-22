@@ -1,0 +1,6 @@
+package foo
+
+//go:noinline
+//go:uintptrescapes
+func test(s string, p, q uintptr, rest ...uintptr) int {
+}

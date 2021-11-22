@@ -1,0 +1,5 @@
+func(x, y int) *int {
+	return nil
+}(100, 200)
+
+println "hello"

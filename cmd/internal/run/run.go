@@ -1,18 +1,18 @@
 /*
- Copyright 2021 The GoPlus Authors (goplus.org)
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-*/
+ * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 // Package run implements the ``gop run'' command.
 package run
@@ -52,9 +52,14 @@ var (
 	flagQuiet   = flag.Bool("quiet", false, "don't generate any compiling stage log")
 	flagDebug   = flag.Bool("debug", false, "set log level to debug")
 	flagNorun   = flag.Bool("nr", false, "don't run if no change")
+	flagRTOE    = flag.Bool("rtoe", false, "remove tempfile on error")
 	flagGop     = flag.Bool("gop", false, "parse a .go file as a .gop file")
 	flagProf    = flag.Bool("prof", false, "do profile and generate profile report")
 	flagRebuild = flag.Bool("rebuild", false, "force rebuilding of packages that are already up-to-date")
+)
+
+const (
+	parserMode = parser.ParseComments
 )
 
 func init() {
@@ -63,7 +68,7 @@ func init() {
 
 func saveGoFile(gofile string, pkg *gox.Package) error {
 	dir := filepath.Dir(gofile)
-	err := os.MkdirAll(dir, 0777)
+	err := os.MkdirAll(dir, 0755)
 	if err != nil {
 		return err
 	}
@@ -95,7 +100,10 @@ func findGoModDir(dir string) (string, bool) {
 }
 
 func runCmd(cmd *base.Command, args []string) {
-	flag.Parse(args)
+	err := flag.Parse(args)
+	if err != nil {
+		log.Fatalln("parse input arguments failed:", err)
+	}
 	if flag.NArg() < 1 {
 		cmd.Usage(os.Stderr)
 	}
@@ -130,12 +138,13 @@ func runCmd(cmd *base.Command, args []string) {
 	var isDirty bool
 	var srcDir, file, gofile string
 	var pkgs map[string]*ast.Package
+	onExit = nil
 	if isDir {
 		srcDir = src
 		gofile = src + "/gop_autogen.go"
 		isDirty = true // TODO: check if code changed
 		if isDirty {
-			pkgs, err = parser.ParseDir(fset, src, nil, 0)
+			pkgs, err = parser.ParseDir(fset, src, nil, parserMode)
 		} else if *flagNorun {
 			return
 		}
@@ -145,8 +154,13 @@ func runCmd(cmd *base.Command, args []string) {
 		if isGo {
 			hash := sha1.Sum([]byte(src))
 			dir := os.Getenv("HOME") + "/.gop/run"
-			os.MkdirAll(dir, 0777)
+			os.MkdirAll(dir, 0755)
 			gofile = dir + "/g" + base64.RawURLEncoding.EncodeToString(hash[:]) + file
+			if *flagRTOE { // remove tempfile on error
+				onExit = func() {
+					os.Remove(gofile)
+				}
+			}
 		} else if hasMultiFiles(srcDir, ".gop") {
 			gofile = filepath.Join(srcDir, "gop_autogen_"+file+".go")
 		} else {
@@ -162,7 +176,7 @@ func runCmd(cmd *base.Command, args []string) {
 				fmt.Println("==> GenGo to", gofile)
 			}
 			if *flagGop {
-				pkgs, err = parser.Parse(fset, src, nil, 0)
+				pkgs, err = parser.Parse(fset, src, nil, parserMode)
 			} else {
 				pkgs, err = parser.Parse(fset, src, nil, 0) // TODO: only to check dependencies
 			}
@@ -215,6 +229,10 @@ func fileIsDirty(fi os.FileInfo, gofile string) bool {
 	return fi.ModTime().After(fiDest.ModTime())
 }
 
+var (
+	onExit func()
+)
+
 func goRun(file string, args []string) {
 	goArgs := make([]string, len(args)+2)
 	goArgs[0] = "run"
@@ -227,6 +245,9 @@ func goRun(file string, args []string) {
 	cmd.Env = os.Environ()
 	err := cmd.Run()
 	if err != nil {
+		if onExit != nil {
+			onExit()
+		}
 		switch e := err.(type) {
 		case *exec.ExitError:
 			os.Exit(e.ExitCode())

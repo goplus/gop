@@ -1,25 +1,24 @@
 /*
- Copyright 2021 The GoPlus Authors (goplus.org)
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-*/
+ * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package parser
 
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -27,7 +26,6 @@ import (
 	"strings"
 
 	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
 )
 
@@ -157,16 +155,17 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, filter func(os.
 }
 
 var (
-	extGopFiles = map[string]int16{
+	extGopFiles = map[string]ast.FileType{
 		".go":  ast.FileTypeGo,
 		".gop": ast.FileTypeGop,
 		".spx": ast.FileTypeSpx,
 		".gmx": ast.FileTypeGmx,
+		".spc": ast.FileTypeGmx, // TODO: dynamic register
 	}
 )
 
 // RegisterFileType registers a new Go+ class file type.
-func RegisterFileType(ext string, format int16) {
+func RegisterFileType(ext string, format ast.FileType) {
 	if format != ast.FileTypeSpx && format != ast.FileTypeGmx {
 		panic("RegisterFileType: format should be FileTypeSpx or FileTypeGmx")
 	}
@@ -185,6 +184,11 @@ func ParseFile(fset *token.FileSet, filename string, src interface{}, mode Mode)
 
 // ParseFSFile parses the source code of a single Go+ source file and returns the corresponding ast.File node.
 func ParseFSFile(fset *token.FileSet, fs FileSystem, filename string, src interface{}, mode Mode) (f *ast.File, err error) {
+	ext := filepath.Ext(filename)
+	ft, isOk := extGopFiles[ext]
+	if !isOk {
+		ft = ast.FileTypeGop
+	}
 	var code []byte
 	if src == nil {
 		code, err = fs.ReadFile(filename)
@@ -194,47 +198,9 @@ func ParseFSFile(fset *token.FileSet, fs FileSystem, filename string, src interf
 	if err != nil {
 		return
 	}
-	return parseFileEx(fset, filename, code, mode)
-}
-
-// TODO: should not add package info and init|main function.
-// If do this, parsing will display error line number when error occur
-func parseFileEx(fset *token.FileSet, filename string, code []byte, mode Mode) (f *ast.File, err error) {
-	var b bytes.Buffer
-	var isMod, noEntrypoint, noPkgDecl bool
-	var fsetTmp = token.NewFileSet()
-	f, err = parseFile(fsetTmp, filename, code, PackageClauseOnly)
-	if err != nil {
-		fmt.Fprintf(&b, "package main;%s", code)
-		code = b.Bytes()
-		noPkgDecl = true
-	} else {
-		isMod = f.Name.Name != "main"
-	}
-	_, err = parseFile(fsetTmp, filename, code, mode)
-	if err != nil {
-		if errlist, ok := err.(scanner.ErrorList); ok {
-			if e := errlist[0]; strings.HasPrefix(e.Msg, "expected declaration") {
-				idx := e.Pos.Offset
-				entrypoint := map[bool]string{
-					true:  "func init()",
-					false: "func main()",
-				}
-				b.Reset()
-				fmt.Fprintf(&b, "%s %s{%s\n}", code[:idx], entrypoint[isMod], code[idx:])
-				code = b.Bytes()
-				noEntrypoint = true
-				err = nil
-			}
-		}
-	}
-	if err == nil {
-		f, err = parseFile(fset, filename, code, mode)
-		if err == nil {
-			f.NoEntrypoint = noEntrypoint
-			f.NoPkgDecl = noPkgDecl
-			f.FileType = extGopFiles[filepath.Ext(filename)]
-		}
+	f, err = parseFile(fset, filename, code, mode)
+	if f != nil {
+		f.FileType = ft
 	}
 	return
 }

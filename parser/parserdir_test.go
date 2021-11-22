@@ -1,18 +1,18 @@
 /*
-Copyright 2020 The GoPlus Authors (goplus.org)
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-	http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+ * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package parser
 
@@ -60,13 +60,36 @@ func TestParseFile(t *testing.T) {
 	}
 }
 
+func TestIparseFileInvalidSrc(t *testing.T) {
+	fset := token.NewFileSet()
+	if _, err := parseFile(fset, "/foo/bar/not-exists", 1, PackageClauseOnly); err != errInvalidSource {
+		t.Fatal("ParseFile failed: not errInvalidSource?")
+	}
+}
+
+func TestIparseFileNoFset(t *testing.T) {
+	defer func() {
+		if e := recover(); e == nil {
+			t.Fatal("ParseFile failed: no error?")
+		}
+	}()
+	parseFile(nil, "/foo/bar/not-exists", nil, PackageClauseOnly)
+}
+
+func TestParseDir(t *testing.T) {
+	fset := token.NewFileSet()
+	if _, err := ParseDir(fset, "/foo/bar/not-exists", nil, PackageClauseOnly); err == nil {
+		t.Fatal("ParseDir failed: no error?")
+	}
+}
+
 func testFrom(t *testing.T, pkgDir, sel string, exclude Mode) {
 	if sel != "" && !strings.Contains(pkgDir, sel) {
 		return
 	}
 	log.Println("Parsing", pkgDir)
 	fset := token.NewFileSet()
-	pkgs, err := ParseDir(fset, pkgDir, nil, (Trace|ParseGoFiles)&^exclude)
+	pkgs, err := ParseDir(fset, pkgDir, nil, (Trace|ParseGoFiles|ParseComments)&^exclude)
 	if err != nil || len(pkgs) != 1 {
 		if errs, ok := err.(scanner.ErrorList); ok {
 			for _, e := range errs {

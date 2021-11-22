@@ -1,18 +1,18 @@
 /*
- Copyright 2020 The GoPlus Authors (goplus.org)
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-*/
+ * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package parser
 
@@ -22,6 +22,57 @@ import (
 	"github.com/goplus/gop/parser/parsertest"
 	"github.com/goplus/gop/token"
 )
+
+// -----------------------------------------------------------------------------
+
+func panicMsg(e interface{}) string {
+	switch v := e.(type) {
+	case string:
+		return v
+	case error:
+		return v.Error()
+	}
+	return ""
+}
+
+func testErrCode(t *testing.T, code string, errExp, panicExp string) {
+	defer func() {
+		if e := recover(); e != nil {
+			if panicMsg(e) != panicExp {
+				t.Fatal("testErrCode panic:", e)
+			}
+		}
+	}()
+	fset := token.NewFileSet()
+	_, err := Parse(fset, "/foo/bar.gop", code, 0)
+	if err == nil || err.Error() != errExp {
+		t.Fatal("testErrCode error:", err)
+	}
+}
+
+func TestErrOperand(t *testing.T) {
+	testErrCode(t, `a :=`, `/foo/bar.gop:1:5: expected operand, found 'EOF'`, ``)
+}
+
+func TestErrMissingComma(t *testing.T) {
+	testErrCode(t, `func a(b int c)`, ``, `missing ',' in parameter list`)
+}
+
+func TestErrTooMany(t *testing.T) {
+	testErrCode(t, `
+func f() { var }
+func g() { var }
+func h() { var }
+func h() { var }
+func h() { var }
+func h() { var }
+func h() { var }
+func h() { var }
+func h() { var }
+func h() { var }
+func h() { var }
+`, `/foo/bar.gop:2:16: expected 'IDENT', found '}' (and 10 more errors)`, ``)
+}
 
 // -----------------------------------------------------------------------------
 
@@ -77,9 +128,14 @@ ast.GenDecl:
           Kind: STRING
           Value: "io"
 ast.FuncDecl:
+  Doc:
+    ast.CommentGroup:
+      List:
+        ast.Comment:
+          Text: // comment
   Name:
     ast.Ident:
-      Name: init
+      Name: main
   Type:
     ast.FuncType:
       Params:

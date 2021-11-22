@@ -1,4 +1,4 @@
-name: Go
+name: Go+ CI
 
 on:
   push:
@@ -18,16 +18,11 @@ jobs:
       with:
         go-version: 1.16
 
-    - name: CompileGop
-      run: cd cmd; go install -v ./...
+    - name: Compile gop and related tools
+      run: ./all.bash -c
 
-    - name: GopTest
-      run: PATH=$PATH:$GOPATH/bin gop test -v -coverprofile=coverage.txt -covermode=atomic ./...
+    - name: Run testcases
+      run: ./all.bash -t
 
-    - name: Upload coverage report
-      uses: codecov/codecov-action@v1.0.2
-      with:
-        token: 1ae46934-4616-482f-96b5-8d4b9df86db1
-        file: ./coverage.txt
-        flags: unittests
-        name: codecov-gop
+    - name: Codecov
+      uses: codecov/codecov-action@v2

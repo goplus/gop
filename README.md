@@ -6,7 +6,22 @@
 [![GitHub release](https://img.shields.io/github/v/tag/goplus/gop.svg?label=release)](https://github.com/goplus/gop/releases)
 [![Playground](https://img.shields.io/badge/playground-Go+-blue.svg)](https://play.goplus.org/)
 [![VSCode](https://img.shields.io/badge/vscode-Go+-teal.svg)](https://github.com/gopcode/vscode-goplus)
+[![Readme](https://img.shields.io/badge/README-中文-teal.svg)](https://github.com/goplus/gop/blob/main/README_zh.md)
 [![GoDoc](https://pkg.go.dev/badge/github.com/goplus/gop.svg)](https://pkg.go.dev/mod/github.com/goplus/gop)
+
+* **For engineering**: working in the simplest language that can be mastered by children.
+* **For STEM education**: studying an engineering language that can be used to work in the future.
+* **For data science**: communicating with engineers in the same language.
+
+## How to install
+
+For now, we suggest you install Go+ from source code.
+
+```bash
+git clone https://github.com/goplus/gop.git
+cd gop
+./all.bash
+```
 
 ## Summary about Go+
 
@@ -75,9 +90,9 @@ fmt.Println("x:", x)
 
 **And all Go+ packages can also be imported in Go programs. What you need to do is just using `gop` command instead of `go`.**
 
-First, let's make a directory named `tutorial/14-Using-goplus-in-Go`.
+First, let's make a directory named `14-Using-goplus-in-Go`.
 
-Then write a Go+ package named `foo` in it:
+Then write a Go+ package named [foo](https://github.com/goplus/tutorial/tree/main/14-Using-goplus-in-Go/foo) in it:
 
 ```go
 package foo
@@ -87,7 +102,7 @@ func ReverseMap(m map[string]int) map[int]string {
 }
 ```
 
-Then use it in a Go package (14-Using-goplus-in-Go/gomain):
+Then use it in a Go package [14-Using-goplus-in-Go/gomain](https://github.com/goplus/tutorial/tree/main/14-Using-goplus-in-Go/gomain):
 
 ```go
 package main
@@ -95,7 +110,7 @@ package main
 import (
     "fmt"
 
-    "github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/foo"
+    "github.com/goplus/tutorial/14-Using-goplus-in-Go/foo"
 )
 
 func main() {
@@ -110,13 +125,7 @@ How to build this example? You can use:
 gop install -v ./...
 ```
 
-or:
-
-```
-gop run tutorial/14-Using-goplus-in-Go/gomain
-```
-
-Go [tutorial/14-Using-goplus-in-Go](https://github.com/goplus/gop/tree/main/tutorial/14-Using-goplus-in-Go) to get the source code.
+Go [github.com/goplus/tutorial/14-Using-goplus-in-Go](https://github.com/goplus/tutorial/tree/main/14-Using-goplus-in-Go) to get the source code.
 
 
 ## Playground
@@ -132,43 +141,35 @@ Go+ Jupyter kernel:
 
 ## Tutorials
 
-See https://github.com/goplus/gop/tree/main/tutorial
+See https://github.com/goplus/tutorial
 
 
-## How to build
-
-```bash
-git clone git@github.com:goplus/gop.git
-cd gop/cmd
-go install -v ./...  # build all Go+ tools
-cd ..
-gop install -v ./... # build all Go+ tutorials
-```
-
-## Go+ features
-
-### Bytecode vs. Go code
+## Bytecode vs. Go code
 
 Go+ supports bytecode backend and Go code generation.
 
-When we use `gop go` or `gop install` command, it generates Go code to covert Go+ package into Go packages.
-
-When we use `gop run` command, it doesn't call `go run` command. It generates bytecode to execute (in v1.0.x, `go run` also is using Go-code-generation mode).
-
-In bytecode mode, Go+ doesn't support `cgo`. However, in Go-code-generation mode, Go+ fully supports `cgo`.
-
-
-### Commands
+When we use `gop` command, it generates Go code to covert Go+ package into Go packages.
 
 ```bash
 gop run     # Run a Go+ program
 gop install # Build Go+ files and install target to GOBIN
+gop build   # Build Go+ files
 gop test    # Test Go+ packages
 gop fmt     # Format Go+ packages
 gop clean   # Clean all Go+ auto generated files
 gop go      # Convert Go+ packages into Go packages
 ```
 
+When we use [`igop`](https://github.com/goplus/igop) command, it generates bytecode to execute.
+
+```bash
+igop  # Run a Go+ program
+```
+
+In bytecode mode, Go+ doesn't support `cgo`. However, in Go-code-generation mode, Go+ fully supports `cgo`.
+
+
+## Go+ features
 
 ### Rational number: bigint, bigrat, bigfloat
 
@@ -352,6 +353,26 @@ for k, v <- foo {
 println({v: k for k, v <- foo})
 ```
 
+### Range expression (`start:end:step`)
+
+```go
+for i <- :10 {
+    println(i)
+}
+
+for i := range :10:2 {
+    println(i)
+}
+
+for i := range 1:10:3 {
+    println(i)
+}
+
+for range :10 {
+    println("Range expression")
+}
+```
+
 ### Lambda expression
 
 ```go
@@ -440,7 +461,7 @@ add("10", "abc"): 0 strconv.Atoi: parsing "abc": invalid syntax
 
 ===> errors stack:
 main.add("10", "abc")
-    /Users/xsw/goplus/tutorial/15-ErrWrap/err_wrap.gop:6 strconv.Atoi(y)?
+    /Users/xsw/tutorial/15-ErrWrap/err_wrap.gop:6 strconv.Atoi(y)?
 
 addSafe("10", "abc"): 10
 ```
@@ -457,7 +478,7 @@ How these `ErrWrap expressions` work? See [Error Handling](https://github.com/go
 Let's see an example written in Go+:
 
 ```go
-import "github.com/goplus/gop/ast/goptest"
+import "gop/ast/goptest"
 
 doc := goptest.New(`... Go+ code ...`)!
 
@@ -469,7 +490,7 @@ In many languages, there is a concept named `property` who has `get` and `set` m
 Suppose we have `get property`, the above example will be:
 
 ```go
-import "github.com/goplus/gop/ast/goptest"
+import "gop/ast/goptest"
 
 doc := goptest.New(`... Go+ code ...`)!
 
@@ -502,7 +523,7 @@ println([k for k, _ <- m])
 println([v for v <- m])
 ```
 
-Go [tutorial/20-Unix-Shebang/shebang](https://github.com/goplus/gop/blob/main/tutorial/20-Unix-Shebang/shebang) to get the source code.
+Go [20-Unix-Shebang/shebang](https://github.com/goplus/tutorial/blob/main/20-Unix-Shebang/shebang) to get the source code.
 
 
 ### Go features
@@ -527,7 +548,7 @@ git config --global user.email XXX@goplus.org
 
 If you did this, remember to add your `XXX@goplus.org` email to https://github.com/settings/emails.
 
-What does `a contributor to Go+` mean? He must meet one of the following conditions:
+What does `a contributor to Go+` mean? You must meet one of the following conditions:
 
 * At least one pull request of a full-featured implemention.
 * At least three pull requests of feature enhancements.

@@ -1,18 +1,18 @@
 /*
- Copyright 2021 The GoPlus Authors (goplus.org)
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-*/
+ * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package cl
 
@@ -77,14 +77,47 @@ func TestHandleRecover(t *testing.T) {
 	ctx.handleRecover(100)
 }
 
+func TestCanAutoCall(t *testing.T) {
+	if !canAutoCall(
+		&ast.SelectorExpr{
+			X:   &ast.SelectorExpr{X: ast.NewIdent("foo"), Sel: ast.NewIdent("bar")},
+			Sel: ast.NewIdent("val"),
+		}) {
+		t.Fatal("TestCanAutoCall failed")
+	}
+}
+
 // -----------------------------------------------------------------------------
 
 func TestGmxSettings(t *testing.T) {
 	pkg := gox.NewPackage("", "foo", nil)
-	gmx := newGmx(pkg, "index.t2gmx")
-	if len(gmx.scheds) != 2 || gmx.scheds[0] == nil || gmx.scheds[0] != gmx.scheds[1] {
+	gmx := newGmx(pkg, "main.t2gmx")
+	scheds := gmx.getScheds(pkg.CB())
+	if len(scheds) != 2 || scheds[0] == nil || scheds[0] != scheds[1] {
 		t.Fatal("TestGmxSettings failed")
 	}
+	gmx.hasScheds = false
+	if gmx.getScheds(nil) != nil {
+		t.Fatal("TestGmxSettings failed: hasScheds?")
+	}
+}
+
+func TestSpxLookup(t *testing.T) {
+	defer func() {
+		if e := recover(); e == nil {
+			t.Fatal("TestSpxLookup failed: no error?")
+		}
+	}()
+	spxLookup(nil, "foo")
+}
+
+func TestRegisterClassFileType(t *testing.T) {
+	defer func() {
+		if e := recover(); e == nil {
+			t.Fatal("TestRegisterClassFileType: no error?")
+		}
+	}()
+	RegisterClassFileType(".t3gmx", ".t3spx")
 }
 
 func init() {

@@ -1,0 +1,29 @@
+package main
+
+file cmd2.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: x
+              Args:
+                ast.CompositeLit:
+        ast.ExprStmt:
+          X:
+            ast.CompositeLit:
+              Type:
+                ast.Ident:
+                  Name: x

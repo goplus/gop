@@ -1,18 +1,18 @@
 /*
- Copyright 2021 The GoPlus Authors (goplus.org)
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-*/
+ * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package cl
 
@@ -28,6 +28,7 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
+	"github.com/goplus/gox"
 )
 
 func relFile(dir string, file string) string {
@@ -57,6 +58,12 @@ func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
 
 func compileStmts(ctx *blockCtx, body []ast.Stmt) {
 	for _, stmt := range body {
+		if v, ok := stmt.(*ast.LabeledStmt); ok {
+			l := v.Label
+			ctx.cb.NewLabel(l.Pos(), l.Name)
+		}
+	}
+	for _, stmt := range body {
 		compileStmt(ctx, stmt)
 	}
 }
@@ -74,7 +81,7 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	switch v := stmt.(type) {
 	case *ast.ExprStmt:
 		compileExpr(ctx, v.X)
-		if _, ok := v.X.(*ast.Ident); ok && isFunc(ctx.cb.InternalStack().Get(-1).Type) {
+		if canAutoCall(v.X) && isFunc(ctx.cb.InternalStack().Get(-1).Type) {
 			ctx.cb.Call(0)
 		}
 	case *ast.AssignStmt:
@@ -120,6 +127,18 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		log.Panicln("TODO - compileStmt failed: unknown -", reflect.TypeOf(v))
 	}
 	ctx.cb.EndStmt()
+}
+
+func canAutoCall(x ast.Expr) bool {
+retry:
+	switch t := x.(type) {
+	case *ast.Ident:
+		return true
+	case *ast.SelectorExpr:
+		x = t.X
+		goto retry
+	}
+	return false
 }
 
 func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
@@ -475,41 +494,51 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 	label := v.Label
 	switch v.Tok {
 	case token.GOTO:
-		if label == nil {
-			log.Panicln("TODO: label not defined")
+		cb := ctx.cb
+		if l, ok := cb.LookupLabel(label.Name); ok {
+			cb.Goto(l)
+			return
 		}
-		ctx.cb.Goto(label.Name, label)
+		compileCallExpr(ctx, &ast.CallExpr{
+			Fun:  &ast.Ident{NamePos: v.TokPos, Name: "goto", Obj: &ast.Object{Data: label}},
+			Args: []ast.Expr{label},
+		}, clIdentGoto)
 	case token.BREAK:
-		var name string
-		if label != nil {
-			name = label.Name
-		}
-		ctx.cb.Break(name, label)
+		ctx.cb.Break(getLabel(ctx, label))
 	case token.CONTINUE:
-		var name string
-		if label != nil {
-			name = label.Name
-		}
-		ctx.cb.Continue(name, label)
+		ctx.cb.Continue(getLabel(ctx, label))
 	case token.FALLTHROUGH:
-		panic("TODO: fallthrough statement out of place")
+		pos := ctx.Position(v.Pos())
+		ctx.handleCodeErrorf(&pos, "fallthrough statement out of place")
 	default:
-		panic("TODO: compileBranchStmt - unknown")
+		panic("unknown branch statement")
 	}
 }
 
+func getLabel(ctx *blockCtx, label *ast.Ident) *gox.Label {
+	if label != nil {
+		if l, ok := ctx.cb.LookupLabel(label.Name); ok {
+			return l
+		}
+		pos := ctx.Position(label.Pos())
+		ctx.handleCodeErrorf(&pos, "label %v is not defined", label.Name)
+	}
+	return nil
+}
+
 func compileLabeledStmt(ctx *blockCtx, v *ast.LabeledStmt) {
-	ctx.cb.Label(v.Label.Name, v.Label)
+	l, _ := ctx.cb.LookupLabel(v.Label.Name)
+	ctx.cb.Label(l)
 	compileStmt(ctx, v.Stmt)
 }
 
 func compileGoStmt(ctx *blockCtx, v *ast.GoStmt) {
-	compileCallExpr(ctx, v.Call)
+	compileCallExpr(ctx, v.Call, 0)
 	ctx.cb.Go()
 }
 
 func compileDeferStmt(ctx *blockCtx, v *ast.DeferStmt) {
-	compileCallExpr(ctx, v.Call)
+	compileCallExpr(ctx, v.Call, 0)
 	ctx.cb.Defer()
 }
 

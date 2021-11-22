@@ -1,18 +1,18 @@
 /*
- Copyright 2021 The GoPlus Authors (goplus.org)
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-*/
+ * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package main
 
@@ -60,14 +60,10 @@ var (
 		"issue15071.dir":    {}, // dir
 		"issue29612.dir":    {},
 		"issue31959.dir":    {},
-		"issue24491a.go":    {}, // instruction
-		"issue24491b.go":    {},
-		"issue29504.go":     {},
-		"issue17381.go":     {},
+		"issue29504.go":     {}, // line
 		"issue18149.go":     {},
 		"issue22662.go":     {},
 		"issue27201.go":     {},
-		"issue40954.go":     {},
 		"nilptr_aix.go":     {},
 		"inline_literal.go": {},
 		"returntype.go":     {}, // not a problem
@@ -99,7 +95,7 @@ func gopTestRunGo(dir string) {
 			return nil
 		}
 		log.Println("==> gop run -gop -v", file)
-		RunGopCmd("", "run", "-nr", "-gop", file)
+		RunGopCmd("", "run", "-nr", "-rtoe", "-gop", file)
 		return nil
 	})
 }

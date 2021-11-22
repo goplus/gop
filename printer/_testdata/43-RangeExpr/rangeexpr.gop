@@ -1,0 +1,31 @@
+println "---------------------------"
+
+for i <- :10 {
+	println(i)
+}
+
+println "---------------------------"
+
+for i <- 9:-1:-1 {
+	println(i)
+}
+
+println "---------------------------"
+
+for i := range :10:2 {
+	println(i)
+}
+
+println "---------------------------"
+
+for i := range 1:10:3 {
+	println(i)
+}
+
+println "---------------------------"
+
+for range :10 {
+	println("Range expression")
+}
+
+println "---------------------------"

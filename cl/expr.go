@@ -1,31 +1,30 @@
 /*
- Copyright 2021 The GoPlus Authors (goplus.org)
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-*/
+ * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package cl
 
 import (
+	goast "go/ast"
+	gotoken "go/token"
+	"go/types"
 	"log"
 	"math/big"
 	"reflect"
 	"strconv"
 	"strings"
-
-	goast "go/ast"
-	gotoken "go/token"
-	"go/types"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
@@ -59,6 +58,7 @@ const (
 	clIdentAllowBuiltin
 	clIdentLHS
 	clIdentSelectorExpr
+	clIdentGoto
 )
 
 func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
@@ -120,6 +120,10 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
 	if obj := ctx.pkg.Builtin().TryRef(name); obj != nil {
 		o = obj
 	} else if o == nil {
+		if (clIdentGoto & flags) != 0 {
+			l := ident.Obj.Data.(*ast.Ident)
+			panic(ctx.newCodeErrorf(l.Pos(), "label %v is not defined", l.Name))
+		}
 		panic(ctx.newCodeErrorf(ident.Pos(), "undefined: %s", name))
 	}
 
@@ -183,7 +187,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 	case *ast.BasicLit:
 		compileBasicLit(ctx, v)
 	case *ast.CallExpr:
-		compileCallExpr(ctx, v)
+		compileCallExpr(ctx, v, 0)
 	case *ast.SelectorExpr:
 		compileSelectorExpr(ctx, v, clIdentAutoCall)
 	case *ast.BinaryExpr:
@@ -196,6 +200,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 		compileCompositeLit(ctx, v, nil, false)
 	case *ast.SliceLit:
 		compileSliceLit(ctx, v)
+	case *ast.RangeExpr:
+		compileRangeExpr(ctx, v)
 	case *ast.IndexExpr:
 		compileIndexExpr(ctx, v, twoValue != nil && twoValue[0])
 	case *ast.SliceExpr:
@@ -412,10 +418,10 @@ func (p *fnType) initWith(fnt types.Type, idx, nin int) {
 	}
 }
 
-func compileCallExpr(ctx *blockCtx, v *ast.CallExpr) {
+func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, flags int) {
 	switch fn := v.Fun.(type) {
 	case *ast.Ident:
-		compileIdent(ctx, fn, clIdentAllowBuiltin)
+		compileIdent(ctx, fn, clIdentAllowBuiltin|flags)
 	case *ast.SelectorExpr:
 		compileSelectorExpr(ctx, fn, 0)
 	default:
@@ -680,6 +686,23 @@ func compileSliceLit(ctx *blockCtx, v *ast.SliceLit) {
 		compileExpr(ctx, elt)
 	}
 	ctx.cb.SliceLit(nil, n)
+}
+
+func compileRangeExpr(ctx *blockCtx, v *ast.RangeExpr) {
+	pkg, cb := ctx.pkg, ctx.cb
+	cb.Val(pkg.Builtin().Ref("newRange"))
+	if v.First == nil {
+		ctx.cb.Val(0, v)
+	} else {
+		compileExpr(ctx, v.First)
+	}
+	compileExpr(ctx, v.Last)
+	if v.Expr3 == nil {
+		ctx.cb.Val(1, v)
+	} else {
+		compileExpr(ctx, v.Expr3)
+	}
+	cb.Call(3)
 }
 
 const (

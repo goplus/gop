@@ -1,0 +1,56 @@
+name: Bug Report
+description: Create a report to help us improve
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ⚠️ Make sure to browse the opened and closed issues before submit your issue.
+
+  - type: textarea
+    id: sample
+    attributes:
+      label: "The following program `sample.gop` triggers an unexpected result"
+      value: |
+        // add a sample
+      render: coffee
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+      render: console
+    validations:
+      required: true
+
+  - type: textarea
+    id: got
+    attributes:
+      label: Got
+      description: |-
+        ```console
+        $ gop run ./sample.gop
+        // output
+        ```
+      placeholder: $ gop run ./sample.gop
+      render: console
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Gop Version
+      description: Can be a tag or a hash.
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Notes
+      description: Use [Markdown syntax](https://help.github.com/articles/github-flavored-markdown) if needed.
+    validations:
+      required: false

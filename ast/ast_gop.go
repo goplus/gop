@@ -1,18 +1,18 @@
 /*
- Copyright 2020 The GoPlus Authors (goplus.org)
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-*/
+ * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package ast
 
@@ -42,29 +42,6 @@ func (p *SliceLit) End() token.Pos {
 
 func (*SliceLit) exprNode() {}
 
-// -----------------------------------------------------------------------------
-/*
-// TernaryExpr represents `cond ? expr1 : expr2`
-type TernaryExpr struct {
-	Cond     Expr
-	Question token.Pos
-	X        Expr
-	Colon    token.Pos
-	Y        Expr
-}
-
-// Pos - position of first character belonging to the node
-func (p *TernaryExpr) Pos() token.Pos {
-	return p.Cond.Pos()
-}
-
-// End - position of first character immediately after the node
-func (p *TernaryExpr) End() token.Pos {
-	return p.Y.End()
-}
-
-func (*TernaryExpr) exprNode() {}
-*/
 // -----------------------------------------------------------------------------
 
 // ErrWrapExpr represents `expr!`, `expr?` or `expr?: defaultValue`
@@ -204,5 +181,40 @@ func (p *ForPhraseStmt) End() token.Pos {
 }
 
 func (*ForPhraseStmt) stmtNode() {}
+
+// -----------------------------------------------------------------------------
+
+// A RangeExpr node represents a range expression.
+type RangeExpr struct {
+	First  Expr      // start of composite elements; or nil
+	To     token.Pos // position of ":"
+	Last   Expr      // end of composite elements
+	Colon2 token.Pos // position of ":" or token.NoPos
+	Expr3  Expr      // step (or max) of composite elements; or nil
+}
+
+// Pos - position of first character belonging to the node
+func (p *RangeExpr) Pos() token.Pos {
+	if p.First != nil {
+		return p.First.Pos()
+	}
+	return p.To
+}
+
+// End - position of first character immediately after the node
+func (p *RangeExpr) End() token.Pos {
+	if p.Expr3 != nil {
+		return p.Expr3.End()
+	}
+	if p.Colon2 != token.NoPos {
+		return p.Colon2 + 1
+	}
+	if p.Last != nil {
+		return p.Last.End()
+	}
+	return p.To + 1
+}
+
+func (*RangeExpr) exprNode() {}
 
 // -----------------------------------------------------------------------------
