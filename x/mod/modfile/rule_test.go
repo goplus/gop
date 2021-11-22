@@ -26,7 +26,7 @@ module spx
 go 1.17
 gop 1.1
 
-classfile .gmx .spx github.com/goplus/spx
+classfile .gmx .spx github.com/goplus/spx math
 
 require (
     github.com/ajstarks/svgo v0.0.0-20210927141636-6d70534b1098
@@ -39,7 +39,7 @@ module moduleUserProj
 go 1.17
 gop 1.1
 
-register spx
+register github.com/goplus/spx
 
 require (
     github.com/goplus/spx v1.0
@@ -52,24 +52,28 @@ func TestParse(t *testing.T) {
 	})
 	if err != nil {
 		t.Error(err)
+		return
 	}
 	if f.Gop.Version != "1.1" {
 		t.Errorf("gop version expected be 1.1, but %s got", f.Gop.Version)
 	}
 
-	if len(f.Classfile.Exts) != 2 {
-		t.Errorf("classfile exts length expected be 2, but %d got", len(f.Classfile.Exts))
+	if f.Classfile.ProjExt != ".gmx" {
+		t.Errorf("classfile exts expected be .gmx, but %s got", f.Classfile.ProjExt)
+	}
+	if f.Classfile.WorkExt != ".spx" {
+		t.Errorf("classfile exts expected be .spx, but %s got", f.Classfile.WorkExt)
 	}
 
-	if f.Classfile.Exts[0] != ".gmx" {
-		t.Errorf("classfile exts expected be .gmx, but %s got", f.Classfile.Exts[0])
-	}
-	if f.Classfile.Exts[1] != ".spx" {
-		t.Errorf("classfile exts expected be .spx, but %s got", f.Classfile.Exts[0])
+	if len(f.Classfile.PkgPaths) != 2 {
+		t.Errorf("classfile pkgpaths length expected be 2, but %d got", len(f.Classfile.PkgPaths))
 	}
 
-	if f.Classfile.Path != "github.com/goplus/spx" {
-		t.Errorf("classfile path expected be github.com/goplus/spx, but %s got", f.Classfile.Path)
+	if f.Classfile.PkgPaths[0] != "github.com/goplus/spx" {
+		t.Errorf("classfile path expected be github.com/goplus/spx, but %s got", f.Classfile.PkgPaths[0])
+	}
+	if f.Classfile.PkgPaths[1] != "math" {
+		t.Errorf("classfile path expected be math, but %s got", f.Classfile.PkgPaths[1])
 	}
 
 	f2, err := Parse("github.com/goplus/gop/gop.mod", []byte(gopmod2), func(path, vers string) (resolved string, err error) {
@@ -78,9 +82,10 @@ func TestParse(t *testing.T) {
 
 	if err != nil {
 		t.Error(err)
+		return
 	}
 
-	if f2.Register.ClassfileMod != "spx" {
-		t.Errorf("register classfile mod expected be spx, but %s got", f2.Register.ClassfileMod)
+	if f2.Register.ClassfileMod != "github.com/goplus/spx" {
+		t.Errorf("register classfile mod expected be github.com/goplus/spx, but %s got", f2.Register.ClassfileMod)
 	}
 }

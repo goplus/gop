@@ -66,9 +66,10 @@ type Gop struct {
 
 // A Classfile is the classfile statement.
 type Classfile struct {
-	Exts   []string // [".spx", ".spc"]
-	Path   string   // path of classfile
-	Syntax *Line
+	ProjExt  string   // ".gmx"
+	WorkExt  string   // ".spx"
+	PkgPaths []string // paths of classfile
+	Syntax   *Line
 }
 
 // A Register is the register statement.
@@ -310,26 +311,38 @@ func (f *File) add(errs *ErrorList, block *LineBlock, line *Line, verb string, a
 		}
 		f.Classfile = &Classfile{Syntax: line}
 
-		for i := 0; i < len(args)-1; i++ {
-			ext, err := parseExt(&args[i])
+		projExt, err := parseExt(&args[0])
+		if err != nil {
+			errorf("invalid extension: %v", err)
+			return
+		}
+
+		workExt, err := parseExt(&args[1])
+		if err != nil {
+			errorf("invalid extension: %v", err)
+			return
+		}
+		f.Classfile.ProjExt = projExt
+		f.Classfile.WorkExt = workExt
+
+		for i := 2; i < len(args); i++ {
+			s, err := parseString(&args[i])
 			if err != nil {
 				errorf("invalid quoted string: %v", err)
 				return
 			}
-			f.Classfile.Exts = append(f.Classfile.Exts, ext)
+			f.Classfile.PkgPaths = append(f.Classfile.PkgPaths, s)
 		}
-		s, err := parseString(&args[len(args)-1])
-		if err != nil {
-			errorf("invalid quoted string: %v", err)
-			return
-		}
-
-		f.Classfile.Path = s
 
 	case "register":
 		s, err := parseString(&args[len(args)-1])
 		if err != nil {
 			errorf("invalid quoted string: %v", err)
+			return
+		}
+		err = module.CheckPath(s)
+		if err != nil {
+			wrapError(err)
 			return
 		}
 		f.Register = &Register{
