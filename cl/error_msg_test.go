@@ -609,3 +609,21 @@ func TestErrNoEntrypoint(t *testing.T) {
 println abc
 `)
 }
+
+func TestErrTypeRedefine(t *testing.T) {
+	codeErrorTest(t,
+		"./bar.gop:9:6: Point redeclared in this block\n\tprevious declaration at ./bar.gop:5:6",
+		`import "fmt"
+func (p *Point) String() string {
+	return fmt.Sprintf("%v-%v",p.X,p.Y)
+}
+type Point struct {
+	X int
+	Y int
+}
+type Point struct {
+	X int
+	Y int
+}
+`)
+}
