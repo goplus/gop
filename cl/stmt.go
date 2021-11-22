@@ -18,6 +18,7 @@ package cl
 
 import (
 	"fmt"
+	"go/constant"
 	"log"
 	"path/filepath"
 	"reflect"
@@ -425,6 +426,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 		cb.None() // switch {...}
 	}
 	cb.Then()
+	seen := make(valueMap)
 	for _, stmt := range v.Body.List {
 		c, ok := stmt.(*ast.CaseClause)
 		if !ok {
@@ -432,6 +434,19 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 		}
 		for _, citem := range c.List {
 			compileExpr(ctx, citem)
+			v := cb.Get(-1)
+			if val := goVal(v.CVal); val != nil {
+				// look for duplicate types for a given value
+				// (quadratic algorithm, but these lists tend to be very short)
+				for _, vt := range seen[val] {
+					if types.Identical(v.Type, vt.typ) {
+						src, pos := ctx.LoadExpr(v.Src)
+						ctx.handleCodeErrorf(&pos, "duplicate case %s in switch\n\tprevious case at %v",
+							src, ctx.Position(vt.pos))
+					}
+				}
+				seen[val] = append(seen[val], valueType{v.Src.Pos(), v.Type})
+			}
 		}
 		cb.Case(len(c.List)) // Case(0) means default case
 		body, has := hasFallthrough(c.Body)
@@ -571,6 +586,42 @@ func compileType(ctx *blockCtx, t *ast.TypeSpec) {
 	} else {
 		ctx.cb.NewType(name).InitType(ctx.pkg, toType(ctx, t.Type))
 	}
+}
+
+type (
+	valueMap  map[interface{}][]valueType // underlying Go value -> valueType
+	valueType struct {
+		pos token.Pos
+		typ types.Type
+	}
+)
+
+// goVal returns the Go value for val, or nil.
+func goVal(val constant.Value) interface{} {
+	// val should exist, but be conservative and check
+	if val == nil {
+		return nil
+	}
+	// Match implementation restriction of other compilers.
+	// gc only checks duplicates for integer, floating-point
+	// and string values, so only create Go values for these
+	// types.
+	switch val.Kind() {
+	case constant.Int:
+		if x, ok := constant.Int64Val(val); ok {
+			return x
+		}
+		if x, ok := constant.Uint64Val(val); ok {
+			return x
+		}
+	case constant.Float:
+		if x, ok := constant.Float64Val(val); ok {
+			return x
+		}
+	case constant.String:
+		return constant.StringVal(val)
+	}
+	return nil
 }
 
 // -----------------------------------------------------------------------------
