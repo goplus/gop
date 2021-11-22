@@ -3268,3 +3268,29 @@ func main() {
 }
 `)
 }
+
+func TestTypeLoader(t *testing.T) {
+	gopClTest(t, `import "fmt"
+
+func (p *Point) String() string {
+	return fmt.Sprintf("%v-%v",p.X,p.Y)
+}
+
+type Point struct {
+	X int
+	Y int
+}
+`, `package main
+
+import fmt "fmt"
+
+type Point struct {
+	X int
+	Y int
+}
+
+func (p *Point) String() string {
+	return fmt.Sprintf("%v-%v", p.X, p.Y)
+}
+`)
+}
