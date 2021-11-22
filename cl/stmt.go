@@ -446,7 +446,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 							ctx.handleCodeErrorf(&pos, "duplicate case %s in switch\n\tprevious case at %v",
 								src, ctx.Position(vt.pos))
 						} else {
-							ctx.handleCodeErrorf(&pos, "duplicate case %s (value %v) in switch\n\tprevious case at %v",
+							ctx.handleCodeErrorf(&pos, "duplicate case %s (value %#v) in switch\n\tprevious case at %v",
 								src, val, ctx.Position(vt.pos))
 						}
 					}

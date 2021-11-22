@@ -627,3 +627,73 @@ type Point struct {
 }
 `)
 }
+
+func TestErrSwitchDuplicate(t *testing.T) {
+	codeErrorTest(t,
+		"./bar.gop:5:7: duplicate case 100 in switch\n\tprevious case at ./bar.gop:3:7",
+		`var n int
+switch n {
+	case 100:
+		println(100)
+	case 100:
+		println(100)
+}`)
+	codeErrorTest(t,
+		"./bar.gop:5:7: duplicate case int(100) (value 100) in switch\n\tprevious case at ./bar.gop:3:7",
+		`var n int
+switch n {
+	case 100:
+		println(100)
+	case int(100):
+		println(100)
+}`)
+	codeErrorTest(t,
+		"./bar.gop:5:7: duplicate case 50 + 50 (value 100) in switch\n\tprevious case at ./bar.gop:3:7",
+		`var n int
+switch n {
+	case 100:
+		println(100)
+	case 50 + 50:
+		println(100)
+}`)
+	codeErrorTest(t,
+		"./bar.gop:7:7: duplicate case int(100) (value 100) in switch\n\tprevious case at ./bar.gop:3:7",
+		`var n interface{}
+switch n {
+	case 100:
+		println(100)
+	case uint(100):
+		println(100)
+	case int(100):
+		println(100)
+}`)
+	codeErrorTest(t,
+		"./bar.gop:5:7: duplicate case 100.0 in switch\n\tprevious case at ./bar.gop:3:7",
+		`var n interface{}
+switch n {
+	case 100.0:
+		println(100)
+	case 100.0:
+		println(100)
+}`)
+	codeErrorTest(t,
+		"./bar.gop:6:7: duplicate case v (value 100) in switch\n\tprevious case at ./bar.gop:4:7",
+		`var n interface{}
+const v = 100.0
+switch n {
+	case 100.0:
+		println(100)
+	case v:
+		println(100)
+}`)
+	codeErrorTest(t,
+		"./bar.gop:6:7: duplicate case v (value \"hello\") in switch\n\tprevious case at ./bar.gop:4:7",
+		`var n interface{}
+const v = "hello"
+switch n {
+	case "hello":
+		println(100)
+	case v:
+		println(100)
+}`)
+}
