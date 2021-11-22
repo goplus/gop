@@ -427,6 +427,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	}
 	cb.Then()
 	seen := make(valueMap)
+	var firstDefault ast.Stmt
 	for _, stmt := range v.Body.List {
 		c, ok := stmt.(*ast.CaseClause)
 		if !ok {
@@ -453,6 +454,13 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 				}
 				seen[val] = append(seen[val], valueType{v.Src.Pos(), typ})
 			}
+		}
+		if c.List == nil {
+			if firstDefault != nil {
+				pos := ctx.Position(c.Pos())
+				ctx.handleCodeErrorf(&pos, "multiple defaults in switch (first at %v)", ctx.Position(firstDefault.Pos()))
+			}
+			firstDefault = c
 		}
 		cb.Case(len(c.List)) // Case(0) means default case
 		body, has := hasFallthrough(c.Body)

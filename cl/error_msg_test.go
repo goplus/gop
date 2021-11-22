@@ -696,4 +696,11 @@ switch n {
 	case v:
 		println(100)
 }`)
+	codeErrorTest(t,
+		"./bar.gop:4:2: multiple defaults in switch (first at ./bar.gop:3:2)",
+		`var n interface{}
+switch n {
+	default:
+	default:
+}`)
 }
