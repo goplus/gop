@@ -682,9 +682,28 @@ switch n {
 	case v:
 }`)
 	codeErrorTest(t,
+		`./bar.gop:4:7: duplicate case 100 in switch
+	previous case at ./bar.gop:3:7
+./bar.gop:5:7: duplicate case 50 + 50 (value 100) in switch
+	previous case at ./bar.gop:3:7`,
+		`var n int
+switch n {
+	case 100:
+	case 100:
+	case 50 + 50:
+}`)
+	codeErrorTest(t,
 		"./bar.gop:4:2: multiple defaults in switch (first at ./bar.gop:3:2)",
 		`var n interface{}
 switch n {
+	default:
+	default:
+}`)
+	codeErrorTest(t, `./bar.gop:4:2: multiple defaults in switch (first at ./bar.gop:3:2)
+./bar.gop:5:2: multiple defaults in switch (first at ./bar.gop:3:2)`,
+		`var n interface{}
+switch n {
+	default:
 	default:
 	default:
 }`)

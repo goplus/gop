@@ -440,8 +440,10 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 				// look for duplicate types for a given value
 				// (quadratic algorithm, but these lists tend to be very short)
 				typ := types.Default(v.Type)
+				var haserr bool
 				for _, vt := range seen[val] {
 					if types.Identical(typ, vt.typ) {
+						haserr = true
 						src, pos := ctx.LoadExpr(v.Src)
 						if _, ok := v.Src.(*ast.BasicLit); ok {
 							ctx.handleCodeErrorf(&pos, "duplicate case %s in switch\n\tprevious case at %v",
@@ -452,15 +454,18 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 						}
 					}
 				}
-				seen[val] = append(seen[val], valueType{v.Src.Pos(), typ})
+				if !haserr {
+					seen[val] = append(seen[val], valueType{v.Src.Pos(), typ})
+				}
 			}
 		}
 		if c.List == nil {
 			if firstDefault != nil {
 				pos := ctx.Position(c.Pos())
 				ctx.handleCodeErrorf(&pos, "multiple defaults in switch (first at %v)", ctx.Position(firstDefault.Pos()))
+			} else {
+				firstDefault = c
 			}
-			firstDefault = c
 		}
 		cb.Case(len(c.List)) // Case(0) means default case
 		body, has := hasFallthrough(c.Body)
