@@ -21,13 +21,22 @@ set -e
 GOP_ROOT=$(pwd)
 GOP_HOME_DIR="$HOME/gop"
 GOP_CACHE_DIR="$GOP_ROOT/.gop"
+GIT_DIR="$GOP_ROOT/.git"
 
 ADD_GOPATH_COMMAND="export PATH=\$PATH:\$GOPATH/bin"
 ADD_GO_BIN_COMMAND="export PATH=\$PATH:\$HOME/go/bin"
 MANUAL_EXPORT_COMMAND=""
 
-GIT_BRANCH=$(git branch --show-current)
-GIT_COMMIT_HASH=$(git rev-parse --verify HEAD)
+if [ -d "$GIT_DIR" ]; then
+  GIT_BRANCH=$(git branch --show-current)
+else
+  GIT_BRANCH="nobranch"
+fi
+if [ -d "$GIT_DIR" ]; then
+  GIT_COMMIT_HASH=$(git rev-parse --verify HEAD)
+else
+  GIT_COMMIT_HASH="nohash"
+fi
 BUILD_DATE=$(date '+%Y-%m-%d_%H-%M-%S')
 GO_FLAGS="-X github.com/goplus/gop/build.Date=${BUILD_DATE} \
   -X github.com/goplus/gop/build.Commit=${GIT_COMMIT_HASH} \
