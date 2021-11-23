@@ -232,11 +232,19 @@ type typeLoader struct {
 	start        token.Pos
 }
 
-func getTypeLoader(syms map[string]loader, start token.Pos, name string) *typeLoader {
+func getTypeLoader(ctx *pkgCtx, syms map[string]loader, start token.Pos, name string) *typeLoader {
 	t, ok := syms[name]
 	if ok {
 		if start != token.NoPos {
-			panic("TODO: redefine")
+			ld := t.(*typeLoader)
+			if ld.start == token.NoPos {
+				ld.start = start
+			} else {
+				pos := ctx.Position(start)
+				ctx.handleCodeErrorf(&pos, "%s redeclared in this block\n\tprevious declaration at %v",
+					name, ctx.Position(ld.start))
+			}
+			return ld
 		}
 	} else {
 		t = &typeLoader{start: start}
@@ -398,7 +406,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		Context:         conf.Context,
 		Logf:            conf.Logf,
 		Dir:             dir,
-		ModPath:         conf.ModPath,
+		ModRootDir:      conf.ModRootDir,
 		Env:             conf.Env,
 		BuildFlags:      conf.BuildFlags,
 		Fset:            conf.Fset,
@@ -479,7 +487,7 @@ func loadFile(ctx *pkgCtx, f *ast.File) {
 				}
 			} else {
 				if name, ok := getRecvTypeName(ctx, d.Recv, false); ok {
-					getTypeLoader(ctx.syms, token.NoPos, name).load()
+					getTypeLoader(ctx, ctx.syms, token.NoPos, name).load()
 				}
 			}
 		case *ast.GenDecl:
@@ -536,7 +544,7 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 		}
 		pos := f.Pos()
 		specs := getFields(ctx, f)
-		ld := getTypeLoader(syms, pos, classType)
+		ld := getTypeLoader(parent, syms, pos, classType)
 		ld.typ = func() {
 			if debugLoad {
 				log.Println("==> Load > NewType", classType)
@@ -608,7 +616,7 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 					if debugLoad {
 						log.Printf("==> Preload method %s.%s\n", name, d.Name.Name)
 					}
-					ld := getTypeLoader(syms, token.NoPos, name)
+					ld := getTypeLoader(parent, syms, token.NoPos, name)
 					ld.methods = append(ld.methods, func() {
 						old := p.SetInTestingFile(testingFile)
 						defer p.SetInTestingFile(old)
@@ -632,7 +640,7 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 					if debugLoad {
 						log.Println("==> Preload type", name)
 					}
-					ld := getTypeLoader(syms, t.Name.Pos(), name)
+					ld := getTypeLoader(parent, syms, t.Name.Pos(), name)
 					ld.typ = func() {
 						old := p.SetInTestingFile(testingFile)
 						defer p.SetInTestingFile(old)

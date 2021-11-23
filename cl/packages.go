@@ -94,11 +94,11 @@ type PkgsLoader struct {
 }
 
 func initPkgsLoader(base *Config) {
-	root, modPath := modPaths(base, "gop.mod")
-	p := &PkgsLoader{genGoPkg: base.GenGoPkg, BaseConfig: base, modPath: modPath}
+	base.ModRootDir, base.ModPath = modPaths(base, "gop.mod")
+	p := &PkgsLoader{genGoPkg: base.GenGoPkg, BaseConfig: base, modPath: base.ModPath}
 	if base.PersistLoadPkgs {
-		if base.CacheFile == "" && root != "" {
-			dir := root + "/.gop"
+		if base.CacheFile == "" && base.ModRootDir != "" {
+			dir := base.ModRootDir + "/.gop"
 			os.MkdirAll(dir, 0755)
 			base.CacheFile = dir + "/gop.cache"
 		}
