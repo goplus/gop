@@ -19,6 +19,7 @@ package cl
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,7 +32,7 @@ import (
 
 // -----------------------------------------------------------------------------
 
-func FindGoModFile(dir string) (file string, err error) {
+func FindModFile(dir string, fname string) (file string, err error) {
 	if dir == "" {
 		dir = "."
 	}
@@ -39,7 +40,7 @@ func FindGoModFile(dir string) (file string, err error) {
 		return
 	}
 	for dir != "" {
-		file = filepath.Join(dir, "go.mod")
+		file = filepath.Join(dir, fname)
 		if fi, e := os.Lstat(file); e == nil && !fi.IsDir() {
 			return
 		}
@@ -62,8 +63,9 @@ func GetModulePath(file string) (pkgPath string, err error) {
 	return f.Module.Mod.Path, nil
 }
 
-func findModPaths(dir string) (root string, modPath string, err error) {
-	file, err := FindGoModFile(dir)
+func findModPaths(dir string, fname string) (root string, modPath string, err error) {
+	file, err := FindModFile(dir, fname)
+	log.Println("FindModFile:", dir, fname, "=>", file, err)
 	if err == nil {
 		root, _ = filepath.Split(file)
 		modPath, err = GetModulePath(file)
@@ -71,10 +73,10 @@ func findModPaths(dir string) (root string, modPath string, err error) {
 	return
 }
 
-func modPaths(conf *Config) (root string, modPath string) {
+func modPaths(conf *Config, fname string) (root string, modPath string) {
 	modPath = conf.ModPath
 	if modPath == "" {
-		root, modPath, _ = findModPaths(conf.Dir)
+		root, modPath, _ = findModPaths(conf.Dir, fname)
 	} else {
 		root = conf.ModRootDir
 	}
@@ -92,7 +94,7 @@ type PkgsLoader struct {
 }
 
 func initPkgsLoader(base *Config) {
-	root, modPath := modPaths(base)
+	root, modPath := modPaths(base, "gop.mod")
 	p := &PkgsLoader{genGoPkg: base.GenGoPkg, BaseConfig: base, modPath: modPath}
 	if base.PersistLoadPkgs {
 		if base.CacheFile == "" && root != "" {
@@ -123,7 +125,7 @@ func (p *PkgsLoader) GenGoPkgs(cfg *packages.Config, notFounds []string) (err er
 	if p.genGoPkg == nil {
 		return syscall.ENOENT
 	}
-	root, pkgPath, err := findModPaths(cfg.Dir)
+	root, pkgPath, err := findModPaths(cfg.Dir, "gop.mod")
 	if err != nil {
 		return
 	}

@@ -99,7 +99,7 @@ type Config struct {
 	ModPath string
 
 	// ModRootDir specifies root dir of this module.
-	// If ModRootDir is empty, will lookup go.mod in all ancestor directories of Dir.
+	// If ModRootDir is empty, will lookup gop.mod in all ancestor directories of Dir.
 	// If you specify ModPath, you should specify ModRootDir at the same time.
 	ModRootDir string
 

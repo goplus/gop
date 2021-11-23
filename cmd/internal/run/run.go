@@ -74,8 +74,8 @@ func saveGoFile(gofile string, pkg *gox.Package) error {
 	return gox.WriteFile(gofile, pkg, false)
 }
 
-func findGoModFile(dir string) (modfile string, noCacheFile bool, err error) {
-	modfile, err = cl.FindGoModFile(dir)
+func findModFile(dir string, fname string) (modfile string, noCacheFile bool, err error) {
+	modfile, err = cl.FindModFile(dir, fname)
 	if err != nil {
 		home := os.Getenv("HOME")
 		modfile = home + "/gop/go.mod"
@@ -90,10 +90,10 @@ func findGoModFile(dir string) (modfile string, noCacheFile bool, err error) {
 	return
 }
 
-func findGoModDir(dir string) (string, bool) {
-	modfile, nocachefile, err := findGoModFile(dir)
+func findModDir(dir string, fname string) (string, bool) {
+	modfile, nocachefile, err := findModFile(dir, fname)
 	if err != nil {
-		log.Fatalln("findGoModFile:", err)
+		log.Fatalln("findModFile:", err)
 	}
 	return filepath.Dir(modfile), nocachefile
 }
@@ -195,7 +195,7 @@ func runCmd(cmd *base.Command, args []string) {
 			os.Exit(12)
 		}
 
-		modDir, noCacheFile := findGoModDir(srcDir)
+		modDir, noCacheFile := findModDir(srcDir, "gop.mod")
 		conf := &cl.Config{
 			Dir: modDir, TargetDir: srcDir, Fset: fset, CacheLoadPkgs: true, PersistLoadPkgs: !noCacheFile}
 		out, err := cl.NewPackage("", mainPkg, conf)
@@ -253,9 +253,9 @@ func goRun(file string, args []string) {
 }
 
 func runGoPkg(src string, args []string, doRun bool) {
-	modfile, noCacheFile, err := findGoModFile(src)
+	modfile, noCacheFile, err := findModFile(src, "gop.mod")
 	if err != nil {
-		log.Fatalln("findGoModFile:", err)
+		log.Fatalln("findModFile:", err)
 	}
 	base := filepath.Dir(modfile)
 	rel, _ := filepath.Rel(base, src)
