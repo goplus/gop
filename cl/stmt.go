@@ -388,6 +388,8 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 	}
 	compileExpr(ctx, ta.X)
 	cb.TypeAssertThen()
+	seen := make(map[types.Type]ast.Expr)
+	var firstDefault ast.Stmt
 	for _, stmt := range v.Body.List {
 		c, ok := stmt.(*ast.CaseClause)
 		if !ok {
@@ -395,6 +397,33 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 		}
 		for _, citem := range c.List {
 			compileExpr(ctx, citem)
+			T := cb.Get(-1).Type
+			if tt, ok := T.(*gox.TypeType); ok {
+				T = tt.Type()
+			}
+			var haserr bool
+			for t, other := range seen {
+				if T == nil && t == nil || T != nil && t != nil && types.Identical(T, t) {
+					haserr = true
+					pos := ctx.Position(citem.Pos())
+					if T == types.Typ[types.UntypedNil] {
+						ctx.handleCodeErrorf(&pos, "multiple nil cases in type switch (first at %v)", ctx.Position(other.Pos()))
+					} else {
+						ctx.handleCodeErrorf(&pos, "duplicate case %s in type switch\n\tprevious case at %v", T, ctx.Position(other.Pos()))
+					}
+				}
+			}
+			if !haserr {
+				seen[T] = citem
+			}
+		}
+		if c.List == nil {
+			if firstDefault != nil {
+				pos := ctx.Position(c.Pos())
+				ctx.handleCodeErrorf(&pos, "multiple defaults in type switch (first at %v)", ctx.Position(firstDefault.Pos()))
+			} else {
+				firstDefault = c
+			}
 		}
 		cb.TypeCase(len(c.List)) // TypeCase(0) means default case
 		compileStmts(ctx, c.Body)

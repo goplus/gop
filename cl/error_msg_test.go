@@ -708,3 +708,35 @@ switch n {
 	default:
 }`)
 }
+
+func TestErrTypeSwitchDuplicate(t *testing.T) {
+	codeErrorTest(t, `./bar.gop:4:7: duplicate case int in type switch
+	previous case at ./bar.gop:3:7
+./bar.gop:5:7: duplicate case int in type switch
+	previous case at ./bar.gop:3:7`,
+		`var n interface{} = 100
+switch n.(type) {
+	case int:
+	case int:
+	case int:
+}
+`)
+	codeErrorTest(t, `./bar.gop:4:7: multiple nil cases in type switch (first at ./bar.gop:3:7)
+./bar.gop:5:7: multiple nil cases in type switch (first at ./bar.gop:3:7)`,
+		`var n interface{} = 100
+switch n.(type) {
+	case nil:
+	case nil:
+	case nil:
+}
+`)
+	codeErrorTest(t, `./bar.gop:4:2: multiple defaults in type switch (first at ./bar.gop:3:2)
+./bar.gop:5:2: multiple defaults in type switch (first at ./bar.gop:3:2)`,
+		`var n interface{} = 100
+switch n.(type) {
+	default:
+	default:
+	default:
+}
+`)
+}
