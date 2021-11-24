@@ -1763,6 +1763,8 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	case *ast.BinaryExpr:
 	case *ast.RangeExpr:
 	case *ast.ErrWrapExpr:
+	case *ast.LambdaExpr:
+	case *ast.LambdaExpr2:
 	default:
 		// all other nodes are not proper expressions
 		p.errorExpected(x.Pos(), "expression", 3)

@@ -572,12 +572,34 @@ func compileStructLitInKeyVal(ctx *blockCtx, elts []ast.Expr, t *types.Struct, t
 	for _, elt := range elts {
 		kv := elt.(*ast.KeyValueExpr)
 		name := kv.Key.(*ast.Ident).Name
-		if idx := lookupField(t, name); idx >= 0 {
+		idx := lookupField(t, name)
+		if idx >= 0 {
 			ctx.cb.Val(idx)
 		} else {
 			log.Panicln("TODO: struct member not found -", name)
 		}
-		compileExpr(ctx, kv.Value)
+		switch l := kv.Value.(type) {
+		case *ast.LambdaExpr:
+			ftyp := t.Field(idx).Type()
+			sig, ok := ftyp.(*types.Signature)
+			if !ok {
+				pos := ctx.Position(l.Pos())
+				err := newCodeErrorf(&pos, "cannot use lambda literal as type %v in field value", ftyp)
+				panic(err)
+			}
+			compileLambdaExpr(ctx, l, sig.Params())
+		case *ast.LambdaExpr2:
+			ftyp := t.Field(idx).Type()
+			sig, ok := ftyp.(*types.Signature)
+			if !ok {
+				pos := ctx.Position(l.Pos())
+				err := newCodeErrorf(&pos, "cannot use lambda literal as type %v in field value", ftyp)
+				panic(err)
+			}
+			compileLambdaExpr2(ctx, l, sig.Params(), sig.Results())
+		default:
+			compileExpr(ctx, kv.Value)
+		}
 	}
 	ctx.cb.StructLit(typ, len(elts)<<1, true)
 }
