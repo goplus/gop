@@ -21,13 +21,15 @@ set -e
 GOP_ROOT=$(pwd)
 GOP_HOME_DIR="$HOME/gop"
 GOP_CACHE_DIR="$GOP_ROOT/.gop"
+GIT_DIR="$GOP_ROOT/.git"
 
-ADD_GOPATH_COMMAND="export PATH=\$PATH:\$GOPATH/bin"
-ADD_GO_BIN_COMMAND="export PATH=\$PATH:\$HOME/go/bin"
-MANUAL_EXPORT_COMMAND=""
-
-GIT_BRANCH=$(git branch --show-current)
-GIT_COMMIT_HASH=$(git rev-parse --verify HEAD)
+if [ -d "$GIT_DIR" ]; then
+  GIT_BRANCH=$(git branch --show-current)
+  GIT_COMMIT_HASH=$(git rev-parse --verify HEAD)
+else
+  GIT_BRANCH="nobranch"
+  GIT_COMMIT_HASH="nohash"
+fi
 BUILD_DATE=$(date '+%Y-%m-%d_%H-%M-%S')
 GO_FLAGS="-X github.com/goplus/gop/build.Date=${BUILD_DATE} \
   -X github.com/goplus/gop/build.Commit=${GIT_COMMIT_HASH} \
@@ -81,19 +83,6 @@ link_gop_root_dir() {
 summary() {
   echo "Installation Summary:"
   echo "Go+ is now installed."
-  echo ""
-  if [ -n "$MANUAL_EXPORT_COMMAND" ]; then
-    cat <<-EOF
-Notice, we just temporarily add gop command and other tools into your PATH.
-To make it permanent effect, you should manually add below command:
-
-${MANUAL_EXPORT_COMMAND}
-
-to your shell startup file, such as: ~/.bashrc, ~/.zshrc...
-type 'go help install' for more details.
-
-EOF
-  fi
 }
 
 gop_test() {
@@ -122,7 +111,7 @@ if [ "$#" -eq 0 ]; then
   exit 0
 fi
 
-# To add more options below, juse add another case.
+# If you want to add more options below, just add another case.
 while [ "$#" -gt 0 ]; do
   case "$1" in
     -c|--compile)

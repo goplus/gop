@@ -627,3 +627,116 @@ type Point struct {
 }
 `)
 }
+
+func TestErrSwitchDuplicate(t *testing.T) {
+	codeErrorTest(t,
+		"./bar.gop:4:7: duplicate case 100 in switch\n\tprevious case at ./bar.gop:3:7",
+		`var n int
+switch n {
+	case 100:
+	case 100:
+}`)
+	codeErrorTest(t,
+		"./bar.gop:4:7: duplicate case int(100) (value 100) in switch\n\tprevious case at ./bar.gop:3:7",
+		`var n int
+switch n {
+	case 100:
+	case int(100):
+}`)
+	codeErrorTest(t,
+		"./bar.gop:4:7: duplicate case 50 + 50 (value 100) in switch\n\tprevious case at ./bar.gop:3:7",
+		`var n int
+switch n {
+	case 100:
+	case 50 + 50:
+}`)
+	codeErrorTest(t,
+		"./bar.gop:5:7: duplicate case int(100) (value 100) in switch\n\tprevious case at ./bar.gop:3:7",
+		`var n interface{}
+switch n {
+	case 100:
+	case uint(100):
+	case int(100):
+}`)
+	codeErrorTest(t,
+		"./bar.gop:4:7: duplicate case 100.0 in switch\n\tprevious case at ./bar.gop:3:7",
+		`var n interface{}
+switch n {
+	case 100.0:
+	case 100.0:
+}`)
+	codeErrorTest(t,
+		"./bar.gop:5:7: duplicate case v (value 100) in switch\n\tprevious case at ./bar.gop:4:7",
+		`var n interface{}
+const v = 100.0
+switch n {
+	case 100.0:
+	case v:
+}`)
+	codeErrorTest(t,
+		"./bar.gop:5:7: duplicate case v (value \"hello\") in switch\n\tprevious case at ./bar.gop:4:7",
+		`var n interface{}
+const v = "hello"
+switch n {
+	case "hello":
+	case v:
+}`)
+	codeErrorTest(t,
+		`./bar.gop:4:7: duplicate case 100 in switch
+	previous case at ./bar.gop:3:7
+./bar.gop:5:7: duplicate case 50 + 50 (value 100) in switch
+	previous case at ./bar.gop:3:7`,
+		`var n int
+switch n {
+	case 100:
+	case 100:
+	case 50 + 50:
+}`)
+	codeErrorTest(t,
+		"./bar.gop:4:2: multiple defaults in switch (first at ./bar.gop:3:2)",
+		`var n interface{}
+switch n {
+	default:
+	default:
+}`)
+	codeErrorTest(t, `./bar.gop:4:2: multiple defaults in switch (first at ./bar.gop:3:2)
+./bar.gop:5:2: multiple defaults in switch (first at ./bar.gop:3:2)`,
+		`var n interface{}
+switch n {
+	default:
+	default:
+	default:
+}`)
+}
+
+func TestErrTypeSwitchDuplicate(t *testing.T) {
+	codeErrorTest(t, `./bar.gop:4:7: duplicate case int in type switch
+	previous case at ./bar.gop:3:7
+./bar.gop:5:7: duplicate case int in type switch
+	previous case at ./bar.gop:3:7`,
+		`var n interface{} = 100
+switch n.(type) {
+	case int:
+	case int:
+	case int:
+}
+`)
+	codeErrorTest(t, `./bar.gop:4:7: multiple nil cases in type switch (first at ./bar.gop:3:7)
+./bar.gop:5:7: multiple nil cases in type switch (first at ./bar.gop:3:7)`,
+		`var n interface{} = 100
+switch n.(type) {
+	case nil:
+	case nil:
+	case nil:
+}
+`)
+	codeErrorTest(t, `./bar.gop:4:2: multiple defaults in type switch (first at ./bar.gop:3:2)
+./bar.gop:5:2: multiple defaults in type switch (first at ./bar.gop:3:2)`,
+		`var n interface{} = 100
+switch n.(type) {
+	default:
+	default:
+	default:
+}
+`)
+}

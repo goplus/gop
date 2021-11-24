@@ -18,6 +18,7 @@ package cl
 
 import (
 	"fmt"
+	"go/constant"
 	"log"
 	"path/filepath"
 	"reflect"
@@ -387,6 +388,8 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 	}
 	compileExpr(ctx, ta.X)
 	cb.TypeAssertThen()
+	seen := make(map[types.Type]ast.Expr)
+	var firstDefault ast.Stmt
 	for _, stmt := range v.Body.List {
 		c, ok := stmt.(*ast.CaseClause)
 		if !ok {
@@ -394,6 +397,33 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 		}
 		for _, citem := range c.List {
 			compileExpr(ctx, citem)
+			T := cb.Get(-1).Type
+			if tt, ok := T.(*gox.TypeType); ok {
+				T = tt.Type()
+			}
+			var haserr bool
+			for t, other := range seen {
+				if T == nil && t == nil || T != nil && t != nil && types.Identical(T, t) {
+					haserr = true
+					pos := ctx.Position(citem.Pos())
+					if T == types.Typ[types.UntypedNil] {
+						ctx.handleCodeErrorf(&pos, "multiple nil cases in type switch (first at %v)", ctx.Position(other.Pos()))
+					} else {
+						ctx.handleCodeErrorf(&pos, "duplicate case %s in type switch\n\tprevious case at %v", T, ctx.Position(other.Pos()))
+					}
+				}
+			}
+			if !haserr {
+				seen[T] = citem
+			}
+		}
+		if c.List == nil {
+			if firstDefault != nil {
+				pos := ctx.Position(c.Pos())
+				ctx.handleCodeErrorf(&pos, "multiple defaults in type switch (first at %v)", ctx.Position(firstDefault.Pos()))
+			} else {
+				firstDefault = c
+			}
 		}
 		cb.TypeCase(len(c.List)) // TypeCase(0) means default case
 		compileStmts(ctx, c.Body)
@@ -425,6 +455,8 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 		cb.None() // switch {...}
 	}
 	cb.Then()
+	seen := make(valueMap)
+	var firstDefault ast.Stmt
 	for _, stmt := range v.Body.List {
 		c, ok := stmt.(*ast.CaseClause)
 		if !ok {
@@ -432,6 +464,37 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 		}
 		for _, citem := range c.List {
 			compileExpr(ctx, citem)
+			v := cb.Get(-1)
+			if val := goVal(v.CVal); val != nil {
+				// look for duplicate types for a given value
+				// (quadratic algorithm, but these lists tend to be very short)
+				typ := types.Default(v.Type)
+				var haserr bool
+				for _, vt := range seen[val] {
+					if types.Identical(typ, vt.typ) {
+						haserr = true
+						src, pos := ctx.LoadExpr(v.Src)
+						if _, ok := v.Src.(*ast.BasicLit); ok {
+							ctx.handleCodeErrorf(&pos, "duplicate case %s in switch\n\tprevious case at %v",
+								src, ctx.Position(vt.pos))
+						} else {
+							ctx.handleCodeErrorf(&pos, "duplicate case %s (value %#v) in switch\n\tprevious case at %v",
+								src, val, ctx.Position(vt.pos))
+						}
+					}
+				}
+				if !haserr {
+					seen[val] = append(seen[val], valueType{v.Src.Pos(), typ})
+				}
+			}
+		}
+		if c.List == nil {
+			if firstDefault != nil {
+				pos := ctx.Position(c.Pos())
+				ctx.handleCodeErrorf(&pos, "multiple defaults in switch (first at %v)", ctx.Position(firstDefault.Pos()))
+			} else {
+				firstDefault = c
+			}
 		}
 		cb.Case(len(c.List)) // Case(0) means default case
 		body, has := hasFallthrough(c.Body)
@@ -571,6 +634,42 @@ func compileType(ctx *blockCtx, t *ast.TypeSpec) {
 	} else {
 		ctx.cb.NewType(name).InitType(ctx.pkg, toType(ctx, t.Type))
 	}
+}
+
+type (
+	valueMap  map[interface{}][]valueType // underlying Go value -> valueType
+	valueType struct {
+		pos token.Pos
+		typ types.Type
+	}
+)
+
+// goVal returns the Go value for val, or nil.
+func goVal(val constant.Value) interface{} {
+	// val should exist, but be conservative and check
+	if val == nil {
+		return nil
+	}
+	// Match implementation restriction of other compilers.
+	// gc only checks duplicates for integer, floating-point
+	// and string values, so only create Go values for these
+	// types.
+	switch val.Kind() {
+	case constant.Int:
+		if x, ok := constant.Int64Val(val); ok {
+			return x
+		}
+		if x, ok := constant.Uint64Val(val); ok {
+			return x
+		}
+	case constant.Float:
+		if x, ok := constant.Float64Val(val); ok {
+			return x
+		}
+	case constant.String:
+		return constant.StringVal(val)
+	}
+	return nil
 }
 
 // -----------------------------------------------------------------------------
