@@ -58,7 +58,7 @@ Of course, we don't only do less-typing things.
 
 For example, we support [list comprehension](https://en.wikipedia.org/wiki/List_comprehension), which makes data processing easier.
 
-```coffee
+```go
 println [x*x for x <- 1:6:2] // output: [1 9 25]
 
 mapData := {"Hi": 1, "Hello": 2, "Go+": 3}
