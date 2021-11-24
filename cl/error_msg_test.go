@@ -72,6 +72,24 @@ func main() {
 	foo((x, y, z) => {})
 }
 `)
+	codeErrorTest(t, "./bar.gop:6:8: cannot use lambda literal as type int in field value", `
+type Foo struct {
+	Plot int
+}
+foo := &Foo{
+	Plot: x => (x * 2, x * x),
+}
+`)
+	codeErrorTest(t, "./bar.gop:6:8: cannot use lambda literal as type int in field value", `
+type Foo struct {
+	Plot int
+}
+foo := &Foo{
+	Plot: x => {
+		return x * 2, x * x
+	},
+}
+`)
 }
 
 func TestErrErrWrap(t *testing.T) {

@@ -568,6 +568,22 @@ func compileCompositeLitElts(ctx *blockCtx, elts []ast.Expr, kind int, expected 
 	}
 }
 
+// lambda field type to types.Signature or panic
+func checkLambdaFieldType(ctx *blockCtx, lambda ast.Expr, fieldType types.Type) *types.Signature {
+	typ := fieldType
+retry:
+	switch t := typ.(type) {
+	case *types.Signature:
+		return t
+	case *types.Named:
+		typ = t.Underlying()
+		goto retry
+	}
+	pos := ctx.Position(lambda.Pos())
+	err := newCodeErrorf(&pos, "cannot use lambda literal as type %v in field value", fieldType)
+	panic(err)
+}
+
 func compileStructLitInKeyVal(ctx *blockCtx, elts []ast.Expr, t *types.Struct, typ types.Type) {
 	for _, elt := range elts {
 		kv := elt.(*ast.KeyValueExpr)
@@ -580,22 +596,10 @@ func compileStructLitInKeyVal(ctx *blockCtx, elts []ast.Expr, t *types.Struct, t
 		}
 		switch l := kv.Value.(type) {
 		case *ast.LambdaExpr:
-			ftyp := t.Field(idx).Type()
-			sig, ok := ftyp.(*types.Signature)
-			if !ok {
-				pos := ctx.Position(l.Pos())
-				err := newCodeErrorf(&pos, "cannot use lambda literal as type %v in field value", ftyp)
-				panic(err)
-			}
+			sig := checkLambdaFieldType(ctx, l, t.Field(idx).Type())
 			compileLambdaExpr(ctx, l, sig.Params())
 		case *ast.LambdaExpr2:
-			ftyp := t.Field(idx).Type()
-			sig, ok := ftyp.(*types.Signature)
-			if !ok {
-				pos := ctx.Position(l.Pos())
-				err := newCodeErrorf(&pos, "cannot use lambda literal as type %v in field value", ftyp)
-				panic(err)
-			}
+			sig := checkLambdaFieldType(ctx, l, t.Field(idx).Type())
 			compileLambdaExpr2(ctx, l, sig.Params(), sig.Results())
 		default:
 			compileExpr(ctx, kv.Value)
