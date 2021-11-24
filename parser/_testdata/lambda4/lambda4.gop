@@ -1,0 +1,13 @@
+type Foo struct {
+	Plot func(x float64) (float64, float64)
+}
+
+&Foo{
+	Plot: x => (x * 2, x * x),
+}
+
+&Foo{
+	Plot: x => {
+		return x * 2, x * x
+	},
+}
