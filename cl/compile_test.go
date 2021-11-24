@@ -2775,6 +2775,29 @@ func main() {
 	})
 }
 `)
+	gopClTest(t, `
+func Do(fn func() (int, error)) {
+	v, err := fn()
+	println(v, err)
+}
+
+Do => {
+	return 100, nil
+}
+`, `package main
+
+import fmt "fmt"
+
+func Do(fn func() (int, error)) {
+	v, err := fn()
+	fmt.Println(v, err)
+}
+func main() {
+	Do(func() (int, error) {
+		return 100, nil
+	})
+}
+`)
 }
 
 func TestUnnamedMainFunc(t *testing.T) {
