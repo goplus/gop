@@ -441,7 +441,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, flags int) {
 		if l, ok := arg.(*ast.LambdaExpr2); ok {
 			fn.initWith(fnt, i, len(l.Lhs))
 			if sig, ok := fn.arg(i, true).(*types.Signature); ok {
-				compileLambdaExpr2(ctx, l, sig.Params())
+				compileLambdaExpr2(ctx, l, sig.Params(), sig.Results())
 				continue
 			}
 		}
@@ -492,11 +492,17 @@ func compileLambdaExpr(ctx *blockCtx, v *ast.LambdaExpr, in *types.Tuple) {
 	ctx.cb.Return(nout).End()
 }
 
-func compileLambdaExpr2(ctx *blockCtx, v *ast.LambdaExpr2, in *types.Tuple) {
+func compileLambdaExpr2(ctx *blockCtx, v *ast.LambdaExpr2, in *types.Tuple, out *types.Tuple) {
+	pkg := ctx.pkg
 	params := compileLambdaParams(ctx, v.Pos(), v.Lhs, in)
 	cb := ctx.cb
 	comments := cb.Comments()
-	fn := cb.NewClosure(types.NewTuple(params...), nil, false)
+	nout := out.Len()
+	results := make([]*types.Var, nout)
+	for i := 0; i < nout; i++ {
+		results[i] = pkg.NewParam(token.NoPos, "", out.At(i).Type())
+	}
+	fn := cb.NewClosure(types.NewTuple(params...), types.NewTuple(results...), false)
 	loadFuncBody(ctx, fn, v.Body)
 	cb.SetComments(comments, false)
 }
