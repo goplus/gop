@@ -2752,6 +2752,23 @@ func main() {
 	})
 }
 `)
+	gopClTest(t, `type Foo struct {
+	Plot func(x float64) (float64, float64)
+}
+foo := &Foo{
+	Plot: x => (x * 2, x * x),
+}`, `package main
+
+type Foo struct {
+	Plot func(x float64) (float64, float64)
+}
+
+func main() {
+	foo := &Foo{Plot: func(x float64) (float64, float64) {
+		return x * 2, x * x
+	}}
+}
+`)
 }
 
 func TestLambdaExpr2(t *testing.T) {
@@ -2796,6 +2813,25 @@ func main() {
 	Do(func() (int, error) {
 		return 100, nil
 	})
+}
+`)
+	gopClTest(t, `type Foo struct {
+	Plot func(x float64) (float64, float64)
+}
+foo := &Foo{
+	Plot: x => {
+		return x * 2, x * x 
+	},
+}`, `package main
+
+type Foo struct {
+	Plot func(x float64) (float64, float64)
+}
+
+func main() {
+	foo := &Foo{Plot: func(x float64) (float64, float64) {
+		return x * 2, x * x
+	}}
 }
 `)
 }
