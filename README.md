@@ -174,7 +174,7 @@ In bytecode mode, Go+ doesn't support `cgo`. However, in Go-code-generation mode
 
 We introduce the rational number as native Go+ types. We use suffix `r` to denote rational literals. For example, (1r << 200) means a big int whose value is equal to 2<sup>200</sup>. And 4/5r means the rational constant 4/5.
 
-```coffee
+```go
 var a bigint = 1r << 65  // bigint, large than int64
 var b bigrat = 4/5r      // bigrat
 c := b - 1/3r + 3 * 1/2r // bigrat
