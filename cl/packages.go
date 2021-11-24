@@ -66,19 +66,10 @@ func GetModulePath(file string) (pkgPath string, err error) {
 func findModPaths(dir string, fname string) (root string, modPath string, err error) {
 	file, err := FindModFile(dir, fname)
 	log.Println("FindModFile:", dir, fname, "=>", file, err)
+	panic("findModPaths")
 	if err == nil {
 		root, _ = filepath.Split(file)
 		modPath, err = GetModulePath(file)
-	}
-	return
-}
-
-func modPaths(conf *Config, fname string) (root string, modPath string) {
-	modPath = conf.ModPath
-	if modPath == "" {
-		root, modPath, _ = findModPaths(conf.Dir, fname)
-	} else {
-		root = conf.ModRootDir
 	}
 	return
 }
@@ -90,12 +81,10 @@ type PkgsLoader struct {
 	genGoPkg   func(pkgDir string, base *Config) error
 	LoadPkgs   gox.LoadPkgsFunc
 	BaseConfig *Config
-	modPath    string
 }
 
 func initPkgsLoader(base *Config) {
-	base.ModRootDir, base.ModPath = modPaths(base, "gop.mod")
-	p := &PkgsLoader{genGoPkg: base.GenGoPkg, BaseConfig: base, modPath: base.ModPath}
+	p := &PkgsLoader{genGoPkg: base.GenGoPkg, BaseConfig: base}
 	if base.PersistLoadPkgs {
 		if base.CacheFile == "" && base.ModRootDir != "" {
 			dir := base.ModRootDir + "/.gop"
