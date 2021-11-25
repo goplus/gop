@@ -418,7 +418,7 @@ func (p *fnType) initWith(fnt types.Type, idx, nin int) {
 	}
 }
 
-func checkArgumentSignature(ctx *blockCtx, lambda ast.Expr, fun ast.Expr, argTyp types.Type) *types.Signature {
+func checkLambdaArgument(ctx *blockCtx, lambda ast.Expr, fun ast.Expr, argTyp types.Type) *types.Signature {
 	typ := argTyp
 retry:
 	switch t := typ.(type) {
@@ -450,11 +450,11 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, flags int) {
 		switch expr := arg.(type) {
 		case *ast.LambdaExpr:
 			fn.initWith(fnt, i, len(expr.Lhs))
-			sig := checkArgumentSignature(ctx, expr, v.Fun, fn.arg(i, true))
+			sig := checkLambdaArgument(ctx, expr, v.Fun, fn.arg(i, true))
 			compileLambdaExpr(ctx, expr, sig.Params(), sig.Results())
 		case *ast.LambdaExpr2:
 			fn.initWith(fnt, i, len(expr.Lhs))
-			sig := checkArgumentSignature(ctx, expr, v.Fun, fn.arg(i, true))
+			sig := checkLambdaArgument(ctx, expr, v.Fun, fn.arg(i, true))
 			compileLambdaExpr2(ctx, expr, sig.Params(), sig.Results())
 		case *ast.CompositeLit:
 			fn.initWith(fnt, i, -1)
