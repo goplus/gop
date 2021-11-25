@@ -19,10 +19,10 @@ jobs:
         go-version: 1.16
 
     - name: Compile gop and related tools
-      run: go run scripts/install.go --build
+      run: go run cmd/install.go --build
 
     - name: Run testcases
-      run: go run scripts/install.go --test
+      run: go run cmd/install.go --test
 
     - name: Codecov
       uses: codecov/codecov-action@v2
