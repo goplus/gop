@@ -2752,6 +2752,30 @@ func main() {
 	})
 }
 `)
+	gopClTest(t, `
+type Fn func() (int, error)
+func Do(fn Fn) {
+	v, err := fn()
+	println(v, err)
+}
+
+Do => (100, nil)
+`, `package main
+
+import fmt "fmt"
+
+type Fn func() (int, error)
+
+func Do(fn Fn) {
+	v, err := fn()
+	fmt.Println(v, err)
+}
+func main() {
+	Do(func() (int, error) {
+		return 100, nil
+	})
+}
+`)
 }
 
 func TestLambdaExpr2(t *testing.T) {
@@ -2789,6 +2813,32 @@ Do => {
 import fmt "fmt"
 
 func Do(fn func() (int, error)) {
+	v, err := fn()
+	fmt.Println(v, err)
+}
+func main() {
+	Do(func() (int, error) {
+		return 100, nil
+	})
+}
+`)
+	gopClTest(t, `
+type Fn func() (int, error)
+func Do(fn Fn) {
+	v, err := fn()
+	println(v, err)
+}
+
+Do => {
+	return 100, nil
+}
+`, `package main
+
+import fmt "fmt"
+
+type Fn func() (int, error)
+
+func Do(fn Fn) {
 	v, err := fn()
 	fmt.Println(v, err)
 }
