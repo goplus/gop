@@ -20,7 +20,7 @@
 ```bash
 git clone https://github.com/goplus/gop.git
 cd gop
-go run scripts/install.go
+go run cmd/install.go
 ```
 
 ## Go+ 概要
