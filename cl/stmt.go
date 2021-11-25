@@ -211,8 +211,22 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 	for _, lhs := range expr.Lhs {
 		compileExprLHS(ctx, lhs)
 	}
-	for _, rhs := range expr.Rhs {
-		compileExpr(ctx, rhs, twoValue)
+	for n, rhs := range expr.Rhs {
+		switch expr := rhs.(type) {
+		case *ast.LambdaExpr:
+			typ := ctx.cb.Get(-n - 1).Type
+			log.Panicln("TODO", typ, expr)
+			//sig := checkLambdaAssignmentType(ctx, expr, typ, len(expr.Rhs))
+			//compileLambdaExpr(ctx, expr, sig)
+		case *ast.LambdaExpr2:
+			typ := ctx.cb.Get(-n - 1).Type
+			log.Panicln("TODO", typ, expr)
+			//typ := ctx.cb.Get(-n - 1).Type
+			//sig := checkLambdaAssignmentType(ctx, expr, typ, -1)
+			//compileLambdaExpr2(ctx, expr, sig)
+		default:
+			compileExpr(ctx, rhs, twoValue)
+		}
 	}
 	if tok == token.ASSIGN {
 		ctx.cb.AssignWith(len(expr.Lhs), len(expr.Rhs), expr)
