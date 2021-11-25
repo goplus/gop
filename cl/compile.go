@@ -899,7 +899,16 @@ func loadVars(ctx *blockCtx, v *ast.ValueSpec, global bool) {
 			compileExpr(ctx, v.Values[0], true)
 		} else {
 			for _, val := range v.Values {
-				compileExpr(ctx, val)
+				switch expr := val.(type) {
+				case *ast.LambdaExpr:
+					sig := checkLambdaAssignmentType(ctx, expr, typ, len(expr.Rhs))
+					compileLambdaExpr(ctx, expr, sig)
+				case *ast.LambdaExpr2:
+					sig := checkLambdaAssignmentType(ctx, expr, typ, -1)
+					compileLambdaExpr2(ctx, expr, sig)
+				default:
+					compileExpr(ctx, val)
+				}
 			}
 		}
 		cb.EndInit(nv)

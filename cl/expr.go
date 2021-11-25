@@ -450,6 +450,24 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, flags int) {
 	ctx.cb.CallWith(len(v.Args), ellipsis, v)
 }
 
+// check lambda func assignment type, check results len if chkResults >= 0.
+func checkLambdaAssignmentType(ctx *blockCtx, lambda ast.Expr, ftyp types.Type, chkResults int) *types.Signature {
+	typ := ftyp
+retry:
+	switch t := typ.(type) {
+	case *types.Signature:
+		if chkResults < 0 || chkResults == t.Results().Len() {
+			return t
+		}
+	case *types.Named:
+		typ = t.Underlying()
+		goto retry
+	}
+	pos := ctx.Position(lambda.Pos())
+	err := newCodeErrorf(&pos, "cannot use lambda literal as type %v in assignment", ftyp)
+	panic(err)
+}
+
 // check lambda func argument type, check results len if chkResults >= 0.
 func checkLambdaArgumentType(ctx *blockCtx, lambda ast.Expr, fun ast.Expr, argTyp types.Type, chkResults int) *types.Signature {
 	typ := argTyp
