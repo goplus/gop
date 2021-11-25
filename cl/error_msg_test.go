@@ -79,6 +79,12 @@ func foo(int) {
 }
 foo(=> {})
 `)
+	codeErrorTest(t,
+		"./bar.gop:4:5: cannot use lambda literal as type func() in argument to foo", `
+func foo(func()) {
+}
+foo => (100)
+`)
 }
 
 func TestErrErrWrap(t *testing.T) {

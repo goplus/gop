@@ -496,7 +496,8 @@ func compileLambdaExpr(ctx *blockCtx, v *ast.LambdaExpr, fun ast.Expr, sig *type
 	if nout != len(v.Rhs) {
 		pos := ctx.Position(v.Pos())
 		src, _ := ctx.LoadExpr(fun)
-		ctx.handleCodeErrorf(&pos, "cannot use lambda literal as type %v in argument to %v", sig, src)
+		err := newCodeErrorf(&pos, "cannot use lambda literal as type %v in argument to %v", sig, src)
+		panic(err)
 	}
 	results := make([]*types.Var, nout)
 	for i := 0; i < nout; i++ {
