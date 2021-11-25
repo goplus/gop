@@ -107,11 +107,12 @@ func buildGoplusTools() {
 
 	println("Installing Go+ tools...")
 	os.Chdir(commandsDir)
-	buildOutput, buildErr, _ := execCommand("go", "install", "-v", "-ldflags", buildFlags, "./...")
-	if len(buildErr) > 0 {
-		println(buildErr)
+	buildOutput, buildErr, err := execCommand("go", "install", "-v", "-ldflags", buildFlags, "./...")
+	if err != nil {
+		println(err)
 		os.Exit(1)
 	}
+	println(buildErr)
 	println(buildOutput)
 	println("Go+ tools installed successfully!")
 }
