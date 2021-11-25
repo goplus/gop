@@ -455,7 +455,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, flags int) {
 		case *ast.LambdaExpr2:
 			fn.initWith(fnt, i, len(expr.Lhs))
 			sig := checkLambdaArgumentType(ctx, expr, v.Fun, fn.arg(i, true))
-			compileLambdaExpr2(ctx, expr, sig.Params(), sig.Results())
+			compileLambdaExpr2(ctx, expr, sig)
 		case *ast.CompositeLit:
 			fn.initWith(fnt, i, -1)
 			compileCompositeLit(ctx, expr, fn.arg(i, ellipsis), true)
@@ -510,11 +510,12 @@ func compileLambdaExpr(ctx *blockCtx, v *ast.LambdaExpr, fun ast.Expr, sig *type
 	ctx.cb.Return(nout).End()
 }
 
-func compileLambdaExpr2(ctx *blockCtx, v *ast.LambdaExpr2, in *types.Tuple, out *types.Tuple) {
+func compileLambdaExpr2(ctx *blockCtx, v *ast.LambdaExpr2, sig *types.Signature) {
 	pkg := ctx.pkg
-	params := compileLambdaParams(ctx, v.Pos(), v.Lhs, in)
+	params := compileLambdaParams(ctx, v.Pos(), v.Lhs, sig.Params())
 	cb := ctx.cb
 	comments := cb.Comments()
+	out := sig.Results()
 	nout := out.Len()
 	results := make([]*types.Var, nout)
 	for i := 0; i < nout; i++ {
