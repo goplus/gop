@@ -60,8 +60,8 @@ func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
 func compileStmts(ctx *blockCtx, body []ast.Stmt) {
 	for _, stmt := range body {
 		if v, ok := stmt.(*ast.LabeledStmt); ok {
-			l := v.Label
-			ctx.cb.NewLabel(l.Pos(), l.Name)
+			expr := v.Label
+			ctx.cb.NewLabel(expr.Pos(), expr.Name)
 		}
 	}
 	for _, stmt := range body {
