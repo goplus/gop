@@ -2752,6 +2752,43 @@ func main() {
 	})
 }
 `)
+	gopClTest(t, `type Foo struct {
+	Plot func(x float64) (float64, float64)
+}
+foo := &Foo{
+	Plot: x => (x * 2, x * x),
+}`, `package main
+
+type Foo struct {
+	Plot func(x float64) (float64, float64)
+}
+
+func main() {
+	foo := &Foo{Plot: func(x float64) (float64, float64) {
+		return x * 2, x * x
+	}}
+}
+`)
+	gopClTest(t, `
+type Fn func(x float64) (float64, float64)
+type Foo struct {
+	Plot Fn
+}
+foo := &Foo{
+	Plot: x => (x * 2, x * x),
+}`, `package main
+
+type Fn func(x float64) (float64, float64)
+type Foo struct {
+	Plot Fn
+}
+
+func main() {
+	foo := &Foo{Plot: func(x float64) (float64, float64) {
+		return x * 2, x * x
+	}}
+}
+`)
 	gopClTest(t, `
 type Fn func() (int, error)
 func Do(fn Fn) {
@@ -2822,6 +2859,48 @@ func main() {
 	})
 }
 `)
+	gopClTest(t, `type Foo struct {
+	Plot func(x float64) (float64, float64)
+}
+foo := &Foo{
+	Plot: x => {
+		return x * 2, x * x
+	},
+}`, `package main
+
+type Foo struct {
+	Plot func(x float64) (float64, float64)
+}
+
+func main() {
+	foo := &Foo{Plot: func(x float64) (float64, float64) {
+		return x * 2, x * x
+	}}
+}
+`)
+	gopClTest(t, `
+type Fn func(x float64) (float64, float64)
+type Foo struct {
+	Plot Fn
+}
+foo := &Foo{
+	Plot: x => {
+		return x * 2, x * x
+	},
+}`, `package main
+
+type Fn func(x float64) (float64, float64)
+type Foo struct {
+	Plot Fn
+}
+
+func main() {
+	foo := &Foo{Plot: func(x float64) (float64, float64) {
+		return x * 2, x * x
+	}}
+}
+`)
+
 	gopClTest(t, `
 type Fn func() (int, error)
 func Do(fn Fn) {
