@@ -451,7 +451,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, flags int) {
 		case *ast.LambdaExpr:
 			fn.initWith(fnt, i, len(expr.Lhs))
 			sig := checkLambdaArgumentType(ctx, expr, v.Fun, fn.arg(i, true))
-			compileLambdaExpr(ctx, expr, sig.Params(), sig.Results())
+			compileLambdaExpr(ctx, expr, v.Fun, sig)
 		case *ast.LambdaExpr2:
 			fn.initWith(fnt, i, len(expr.Lhs))
 			sig := checkLambdaArgumentType(ctx, expr, v.Fun, fn.arg(i, true))
@@ -488,10 +488,16 @@ func compileLambdaParams(ctx *blockCtx, pos token.Pos, lhs []*ast.Ident, in *typ
 	return params
 }
 
-func compileLambdaExpr(ctx *blockCtx, v *ast.LambdaExpr, in *types.Tuple, out *types.Tuple) {
+func compileLambdaExpr(ctx *blockCtx, v *ast.LambdaExpr, fun ast.Expr, sig *types.Signature) {
 	pkg := ctx.pkg
-	params := compileLambdaParams(ctx, v.Pos(), v.Lhs, in)
-	nout := len(v.Rhs)
+	params := compileLambdaParams(ctx, v.Pos(), v.Lhs, sig.Params())
+	out := sig.Results()
+	nout := out.Len()
+	if nout != len(v.Rhs) {
+		pos := ctx.Position(v.Pos())
+		src, _ := ctx.LoadExpr(fun)
+		ctx.handleCodeErrorf(&pos, "cannot use lambda literal as type %v in argument to %v", sig, src)
+	}
 	results := make([]*types.Var, nout)
 	for i := 0; i < nout; i++ {
 		results[i] = pkg.NewParam(token.NoPos, "", out.At(i).Type())
