@@ -418,6 +418,19 @@ func (p *fnType) initWith(fnt types.Type, idx, nin int) {
 	}
 }
 
+func checkTypeSignature(ftyp types.Type) (*types.Signature, bool) {
+	typ := ftyp
+retry:
+	switch t := typ.(type) {
+	case *types.Signature:
+		return t, true
+	case *types.Named:
+		typ = t.Underlying()
+		goto retry
+	}
+	return nil, false
+}
+
 func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, flags int) {
 	switch fn := v.Fun.(type) {
 	case *ast.Ident:
@@ -433,14 +446,14 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, flags int) {
 	for i, arg := range v.Args {
 		if l, ok := arg.(*ast.LambdaExpr); ok {
 			fn.initWith(fnt, i, len(l.Lhs))
-			if sig, ok := fn.arg(i, true).(*types.Signature); ok {
-				compileLambdaExpr(ctx, l, sig.Params())
+			if sig, ok := checkTypeSignature(fn.arg(i, true)); ok {
+				compileLambdaExpr(ctx, l, sig.Params(), sig.Results())
 				continue
 			}
 		}
 		if l, ok := arg.(*ast.LambdaExpr2); ok {
 			fn.initWith(fnt, i, len(l.Lhs))
-			if sig, ok := fn.arg(i, true).(*types.Signature); ok {
+			if sig, ok := checkTypeSignature(fn.arg(i, true)); ok {
 				compileLambdaExpr2(ctx, l, sig.Params(), sig.Results())
 				continue
 			}
@@ -477,13 +490,13 @@ func compileLambdaParams(ctx *blockCtx, pos token.Pos, lhs []*ast.Ident, in *typ
 	return params
 }
 
-func compileLambdaExpr(ctx *blockCtx, v *ast.LambdaExpr, in *types.Tuple) {
+func compileLambdaExpr(ctx *blockCtx, v *ast.LambdaExpr, in *types.Tuple, out *types.Tuple) {
 	pkg := ctx.pkg
 	params := compileLambdaParams(ctx, v.Pos(), v.Lhs, in)
 	nout := len(v.Rhs)
 	results := make([]*types.Var, nout)
 	for i := 0; i < nout; i++ {
-		results[i] = pkg.NewAutoParam("")
+		results[i] = pkg.NewParam(token.NoPos, "", out.At(i).Type())
 	}
 	ctx.cb.NewClosure(types.NewTuple(params...), types.NewTuple(results...), false).BodyStart(pkg)
 	for _, v := range v.Rhs {
