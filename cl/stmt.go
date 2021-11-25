@@ -211,19 +211,28 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 	for _, lhs := range expr.Lhs {
 		compileExprLHS(ctx, lhs)
 	}
-	for n, rhs := range expr.Rhs {
-		switch expr := rhs.(type) {
+	for _, rhs := range expr.Rhs {
+		switch e := rhs.(type) {
 		case *ast.LambdaExpr:
-			typ := ctx.cb.Get(-n - 1).Type
-			log.Panicln("TODO", typ, expr)
-			//sig := checkLambdaAssignmentType(ctx, expr, typ, len(expr.Rhs))
-			//compileLambdaExpr(ctx, expr, sig)
+			if len(expr.Rhs) == 1 {
+				typ := ctx.cb.Get(-1).Type.(interface{ Elem() types.Type }).Elem()
+				sig := checkLambdaAssignmentType(ctx, e, typ, len(e.Rhs))
+				compileLambdaExpr(ctx, e, sig)
+			} else {
+				pos := ctx.Position(e.Pos())
+				err := newCodeErrorf(&pos, fmt.Sprintf("lambda unsupport multiple assignment"))
+				panic(err)
+			}
 		case *ast.LambdaExpr2:
-			typ := ctx.cb.Get(-n - 1).Type
-			log.Panicln("TODO", typ, expr)
-			//typ := ctx.cb.Get(-n - 1).Type
-			//sig := checkLambdaAssignmentType(ctx, expr, typ, -1)
-			//compileLambdaExpr2(ctx, expr, sig)
+			if len(expr.Rhs) == 1 {
+				typ := ctx.cb.Get(-1).Type.(interface{ Elem() types.Type }).Elem()
+				sig := checkLambdaAssignmentType(ctx, e, typ, -1)
+				compileLambdaExpr2(ctx, e, sig)
+			} else {
+				pos := ctx.Position(e.Pos())
+				err := newCodeErrorf(&pos, fmt.Sprintf("lambda unsupport multiple assignment"))
+				panic(err)
+			}
 		default:
 			compileExpr(ctx, rhs, twoValue)
 		}
