@@ -2792,25 +2792,40 @@ func main() {
 	gopClTest(t, `
 type Fn func() (int, error)
 func Do(fn Fn) {
-	v, err := fn()
-	println(v, err)
 }
 
 Do => (100, nil)
 `, `package main
 
-import fmt "fmt"
-
 type Fn func() (int, error)
 
 func Do(fn Fn) {
-	v, err := fn()
-	fmt.Println(v, err)
 }
 func main() {
 	Do(func() (int, error) {
 		return 100, nil
 	})
+}
+`)
+	gopClTest(t, `
+var fn func(int) (int,error) = x => (x*x, nil)
+`, `package main
+
+var fn func(int) (int, error) = func(x int) (int, error) {
+	return x * x, nil
+}
+`)
+	gopClTest(t, `
+var fn func(int) (int,error)
+fn = x => (x*x, nil)
+`, `package main
+
+var fn func(int) (int, error)
+
+func main() {
+	fn = func(x int) (int, error) {
+		return x * x, nil
+	}
 }
 `)
 }
@@ -2838,8 +2853,7 @@ func main() {
 `)
 	gopClTest(t, `
 func Do(fn func() (int, error)) {
-	v, err := fn()
-	println(v, err)
+	// ...
 }
 
 Do => {
@@ -2847,11 +2861,7 @@ Do => {
 }
 `, `package main
 
-import fmt "fmt"
-
 func Do(fn func() (int, error)) {
-	v, err := fn()
-	fmt.Println(v, err)
 }
 func main() {
 	Do(func() (int, error) {
@@ -2904,8 +2914,6 @@ func main() {
 	gopClTest(t, `
 type Fn func() (int, error)
 func Do(fn Fn) {
-	v, err := fn()
-	println(v, err)
 }
 
 Do => {
@@ -2913,18 +2921,39 @@ Do => {
 }
 `, `package main
 
-import fmt "fmt"
-
 type Fn func() (int, error)
 
 func Do(fn Fn) {
-	v, err := fn()
-	fmt.Println(v, err)
 }
 func main() {
 	Do(func() (int, error) {
 		return 100, nil
 	})
+}
+`)
+	gopClTest(t, `
+var fn func(int) (int,error) = x => {
+	return x * x, nil
+}
+`, `package main
+
+var fn func(int) (int, error) = func(x int) (int, error) {
+	return x * x, nil
+}
+`)
+	gopClTest(t, `
+var fn func(int) (int,error)
+fn = x => {
+	return x * x, nil
+}
+`, `package main
+
+var fn func(int) (int, error)
+
+func main() {
+	fn = func(x int) (int, error) {
+		return x * x, nil
+	}
 }
 `)
 }
