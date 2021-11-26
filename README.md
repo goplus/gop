@@ -20,7 +20,7 @@ For now, we suggest you install Go+ from source code.
 ```bash
 git clone https://github.com/goplus/gop.git
 cd gop
-./all.bash
+go run cmd/install.go
 ```
 
 ## Code style (important)
