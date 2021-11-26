@@ -213,25 +213,13 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 	}
 	for _, rhs := range expr.Rhs {
 		switch e := rhs.(type) {
-		case *ast.LambdaExpr:
+		case *ast.LambdaExpr, *ast.LambdaExpr2:
 			if len(expr.Rhs) == 1 {
 				typ := ctx.cb.Get(-1).Type.(interface{ Elem() types.Type }).Elem()
-				sig := checkLambdaAssignmentType(ctx, e, typ, len(e.Rhs))
-				compileLambdaExpr(ctx, e, sig)
+				sig := checkLambdaFuncType(ctx, e, typ, clLambaAssign, expr.Lhs[0])
+				compileLambda(ctx, e, sig)
 			} else {
-				pos := ctx.Position(e.Pos())
-				err := newCodeErrorf(&pos, fmt.Sprintf("lambda unsupport multiple assignment"))
-				panic(err)
-			}
-		case *ast.LambdaExpr2:
-			if len(expr.Rhs) == 1 {
-				typ := ctx.cb.Get(-1).Type.(interface{ Elem() types.Type }).Elem()
-				sig := checkLambdaAssignmentType(ctx, e, typ, -1)
-				compileLambdaExpr2(ctx, e, sig)
-			} else {
-				pos := ctx.Position(e.Pos())
-				err := newCodeErrorf(&pos, fmt.Sprintf("lambda unsupport multiple assignment"))
-				panic(err)
+				panic(ctx.newCodeErrorf(e.Pos(), "lambda unsupport multiple assignment"))
 			}
 		default:
 			compileExpr(ctx, rhs, twoValue)
