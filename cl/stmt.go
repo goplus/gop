@@ -81,9 +81,14 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	commentStmt(ctx, stmt)
 	switch v := stmt.(type) {
 	case *ast.ExprStmt:
-		compileExpr(ctx, v.X)
-		if (canAutoCall(v.X) && isFunc(ctx.cb.InternalStack().Get(-1).Type)) || isBuiltinCall(ctx, v.X) {
+		if isBuiltinCall(ctx, v.X, "print", "println") {
+			compileIdent(ctx, v.X.(*ast.Ident), clIdentAllowBuiltin)
 			ctx.cb.Call(0)
+		} else {
+			compileExpr(ctx, v.X)
+			if canAutoCall(v.X) && isFunc(ctx.cb.InternalStack().Get(-1).Type) {
+				ctx.cb.Call(0)
+			}
 		}
 	case *ast.AssignStmt:
 		compileAssignStmt(ctx, v)
