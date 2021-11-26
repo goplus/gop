@@ -3446,3 +3446,18 @@ func (p *Point) String() string {
 }
 `)
 }
+
+func TestCallPrint(t *testing.T) {
+	gopClTest(t, `
+print
+println
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Print()
+	fmt.Println()
+}
+`)
+}
