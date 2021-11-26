@@ -115,7 +115,9 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
 
 	// universe object
 	if (flags&clIdentAllowBuiltin) == 0 && isBuiltin(o) {
-		panic(ctx.newCodeErrorf(ident.Pos(), "use of builtin %s not in function call", name))
+		if !(fvalue && (name == "print" || name == "println")) {
+			panic(ctx.newCodeErrorf(ident.Pos(), "use of builtin %s not in function call", name))
+		}
 	}
 	if obj := ctx.pkg.Builtin().TryRef(name); obj != nil {
 		o = obj
@@ -367,6 +369,14 @@ func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, x *ast.Ident, flags int) bool 
 			}
 		}
 		return true
+	}
+	return false
+}
+
+func isBuiltinCall(ctx *blockCtx, expr ast.Expr) bool {
+	if ident, ok := expr.(*ast.Ident); ok {
+		_, builtin := lookupType(ctx, ident.Name)
+		return isBuiltin(builtin)
 	}
 	return false
 }
