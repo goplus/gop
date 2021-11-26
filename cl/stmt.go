@@ -212,7 +212,18 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		compileExprLHS(ctx, lhs)
 	}
 	for _, rhs := range expr.Rhs {
-		compileExpr(ctx, rhs, twoValue)
+		switch e := rhs.(type) {
+		case *ast.LambdaExpr, *ast.LambdaExpr2:
+			if len(expr.Lhs) == 1 && len(expr.Rhs) == 1 {
+				typ := ctx.cb.Get(-1).Type.(interface{ Elem() types.Type }).Elem()
+				sig := checkLambdaFuncType(ctx, e, typ, clLambaAssign, expr.Lhs[0])
+				compileLambda(ctx, e, sig)
+			} else {
+				panic(ctx.newCodeErrorf(e.Pos(), "lambda unsupport multiple assignment"))
+			}
+		default:
+			compileExpr(ctx, rhs, twoValue)
+		}
 	}
 	if tok == token.ASSIGN {
 		ctx.cb.AssignWith(len(expr.Lhs), len(expr.Rhs), expr)

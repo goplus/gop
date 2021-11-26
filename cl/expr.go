@@ -434,11 +434,11 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, flags int) {
 		switch expr := arg.(type) {
 		case *ast.LambdaExpr:
 			fn.initWith(fnt, i, len(expr.Lhs))
-			sig := checkLambdaArgumentType(ctx, expr, v.Fun, fn.arg(i, true), len(expr.Rhs))
+			sig := checkLambdaFuncType(ctx, expr, fn.arg(i, true), clLambaArgument, v.Fun)
 			compileLambdaExpr(ctx, expr, sig)
 		case *ast.LambdaExpr2:
 			fn.initWith(fnt, i, len(expr.Lhs))
-			sig := checkLambdaArgumentType(ctx, expr, v.Fun, fn.arg(i, true), -1)
+			sig := checkLambdaFuncType(ctx, expr, fn.arg(i, true), clLambaArgument, v.Fun)
 			compileLambdaExpr2(ctx, expr, sig)
 		case *ast.CompositeLit:
 			fn.initWith(fnt, i, -1)
@@ -450,41 +450,42 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, flags int) {
 	ctx.cb.CallWith(len(v.Args), ellipsis, v)
 }
 
-// check lambda func argument type, check results len if chkResults >= 0.
-func checkLambdaArgumentType(ctx *blockCtx, lambda ast.Expr, fun ast.Expr, argTyp types.Type, chkResults int) *types.Signature {
-	typ := argTyp
+type clLambaFlag string
+
+const (
+	clLambaAssign   clLambaFlag = "assignment"
+	clLambaField    clLambaFlag = "field value"
+	clLambaArgument clLambaFlag = "argument"
+)
+
+// check lambda func type
+func checkLambdaFuncType(ctx *blockCtx, lambda ast.Expr, ftyp types.Type, flag clLambaFlag, toNode ast.Node) *types.Signature {
+	typ := ftyp
 retry:
 	switch t := typ.(type) {
 	case *types.Signature:
-		if chkResults < 0 || chkResults == t.Results().Len() {
-			return t
+		if l, ok := lambda.(*ast.LambdaExpr); ok {
+			if len(l.Rhs) != t.Results().Len() {
+				break
+			}
 		}
+		return t
 	case *types.Named:
 		typ = t.Underlying()
 		goto retry
 	}
-	pos := ctx.Position(lambda.Pos())
-	src, _ := ctx.LoadExpr(fun)
-	err := newCodeErrorf(&pos, "cannot use lambda literal as type %v in argument to %v", argTyp, src)
+	src, _ := ctx.LoadExpr(toNode)
+	err := ctx.newCodeErrorf(lambda.Pos(), "cannot use lambda literal as type %v in %v to %v", ftyp, flag, src)
 	panic(err)
 }
 
-// check lambda field type, check results len if chkResults >= 0.
-func checkLambdaFieldType(ctx *blockCtx, lambda ast.Expr, fieldType types.Type, chkResults int) *types.Signature {
-	typ := fieldType
-retry:
-	switch t := typ.(type) {
-	case *types.Signature:
-		if chkResults < 0 || chkResults == t.Results().Len() {
-			return t
-		}
-	case *types.Named:
-		typ = t.Underlying()
-		goto retry
+func compileLambda(ctx *blockCtx, lambda ast.Expr, sig *types.Signature) {
+	switch expr := lambda.(type) {
+	case *ast.LambdaExpr:
+		compileLambdaExpr(ctx, expr, sig)
+	case *ast.LambdaExpr2:
+		compileLambdaExpr2(ctx, expr, sig)
 	}
-	pos := ctx.Position(lambda.Pos())
-	err := newCodeErrorf(&pos, "cannot use lambda literal as type %v in field value", fieldType)
-	panic(err)
 }
 
 func compileLambdaParams(ctx *blockCtx, pos token.Pos, lhs []*ast.Ident, in *types.Tuple) []*types.Var {
@@ -613,12 +614,9 @@ func compileStructLitInKeyVal(ctx *blockCtx, elts []ast.Expr, t *types.Struct, t
 			log.Panicln("TODO: struct member not found -", name)
 		}
 		switch expr := kv.Value.(type) {
-		case *ast.LambdaExpr:
-			sig := checkLambdaFieldType(ctx, expr, t.Field(idx).Type(), len(expr.Rhs))
-			compileLambdaExpr(ctx, expr, sig)
-		case *ast.LambdaExpr2:
-			sig := checkLambdaFieldType(ctx, expr, t.Field(idx).Type(), -1)
-			compileLambdaExpr2(ctx, expr, sig)
+		case *ast.LambdaExpr, *ast.LambdaExpr2:
+			sig := checkLambdaFuncType(ctx, expr, t.Field(idx).Type(), clLambaField, kv.Key)
+			compileLambda(ctx, expr, sig)
 		default:
 			compileExpr(ctx, kv.Value)
 		}

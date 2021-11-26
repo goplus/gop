@@ -899,7 +899,17 @@ func loadVars(ctx *blockCtx, v *ast.ValueSpec, global bool) {
 			compileExpr(ctx, v.Values[0], true)
 		} else {
 			for _, val := range v.Values {
-				compileExpr(ctx, val)
+				switch e := val.(type) {
+				case *ast.LambdaExpr, *ast.LambdaExpr2:
+					if len(v.Values) == 1 {
+						sig := checkLambdaFuncType(ctx, e, typ, clLambaAssign, v.Names[0])
+						compileLambda(ctx, e, sig)
+					} else {
+						panic(ctx.newCodeErrorf(e.Pos(), "lambda unsupport multiple assignment"))
+					}
+				default:
+					compileExpr(ctx, val)
+				}
 			}
 		}
 		cb.EndInit(nv)

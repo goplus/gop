@@ -72,7 +72,7 @@ func main() {
 	foo((x, y, z) => {})
 }
 `)
-	codeErrorTest(t, "./bar.gop:6:8: cannot use lambda literal as type int in field value", `
+	codeErrorTest(t, "./bar.gop:6:8: cannot use lambda literal as type int in field value to Plot", `
 type Foo struct {
 	Plot int
 }
@@ -80,7 +80,7 @@ foo := &Foo{
 	Plot: x => (x * 2, x * x),
 }
 `)
-	codeErrorTest(t, "./bar.gop:6:8: cannot use lambda literal as type int in field value", `
+	codeErrorTest(t, "./bar.gop:6:8: cannot use lambda literal as type int in field value to Plot", `
 type Foo struct {
 	Plot int
 }
@@ -103,13 +103,32 @@ func foo(func()) {
 foo => (100)
 `)
 	codeErrorTest(t,
-		"./bar.gop:6:8: cannot use lambda literal as type func() int in field value", `
+		"./bar.gop:6:8: cannot use lambda literal as type func() int in field value to Plot", `
 type Foo struct {
 	Plot func() int
 }
 foo := &Foo{
 	Plot: x => (x * 2, x * x),
 }
+`)
+
+	codeErrorTest(t,
+		"./bar.gop:2:18: cannot use lambda literal as type func() in assignment to foo", `
+var foo func() = => (100)
+`)
+	codeErrorTest(t,
+		"./bar.gop:3:7: cannot use lambda literal as type func() in assignment to foo", `
+var foo func()
+foo = => (100)
+`)
+	codeErrorTest(t,
+		"./bar.gop:2:29: lambda unsupport multiple assignment", `
+var foo, foo1 func() = nil, => {}
+`)
+	codeErrorTest(t,
+		"./bar.gop:3:15: lambda unsupport multiple assignment", `
+var foo func()
+_, foo = nil, => {}
 `)
 }
 
