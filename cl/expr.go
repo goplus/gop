@@ -474,13 +474,8 @@ retry:
 		typ = t.Underlying()
 		goto retry
 	}
-	var err error
-	if toNode != nil {
-		src, _ := ctx.LoadExpr(toNode)
-		err = ctx.newCodeErrorf(lambda.Pos(), "cannot use lambda literal as type %v in %v to %v", ftyp, flag, src)
-	} else {
-		err = ctx.newCodeErrorf(lambda.Pos(), "cannot use lambda literal as type %v in %v", ftyp, flag)
-	}
+	src, _ := ctx.LoadExpr(toNode)
+	err := ctx.newCodeErrorf(lambda.Pos(), "cannot use lambda literal as type %v in %v to %v", ftyp, flag, src)
 	panic(err)
 }
 

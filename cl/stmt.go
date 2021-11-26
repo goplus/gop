@@ -214,7 +214,7 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 	for _, rhs := range expr.Rhs {
 		switch e := rhs.(type) {
 		case *ast.LambdaExpr, *ast.LambdaExpr2:
-			if len(expr.Rhs) == 1 {
+			if len(expr.Lhs) == 1 && len(expr.Rhs) == 1 {
 				typ := ctx.cb.Get(-1).Type.(interface{ Elem() types.Type }).Elem()
 				sig := checkLambdaFuncType(ctx, e, typ, clLambaAssign, expr.Lhs[0])
 				compileLambda(ctx, e, sig)
