@@ -3475,3 +3475,26 @@ func (p *Point) String() string {
 }
 `)
 }
+
+func TestCallPrintln(t *testing.T) {
+	gopClTest(t, `
+print
+print "hello"
+print("hello")
+println
+println "hello"
+println("hello")
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Print()
+	fmt.Print("hello")
+	fmt.Print("hello")
+	fmt.Println()
+	fmt.Println("hello")
+	fmt.Println("hello")
+}
+`)
+}
