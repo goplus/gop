@@ -19,7 +19,7 @@ package gop
 // buildVersion is the GoPlus tree's version string at build time.
 // This is set by the linker.
 var (
-	buildVersion string = "1.0.22"
+	buildVersion string = "1.0.25"
 )
 
 // Version returns the GoPlus tree's version string.
