@@ -2,7 +2,6 @@ package modload
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"path/filepath"
 
@@ -41,14 +40,12 @@ func LoadClassFile() {
 		dir = claassMod.Path
 	}
 
-	fmt.Println("========>", dir)
-
 	if dir == "" {
 		log.Fatalf("gop: can't find classfile path in require statment")
 	}
 
 	gopmod := filepath.Join(dir, "gop.mod")
-	data, err := Read(gopmod)
+	data, err := modfetch.Read(gopmod)
 	if err != nil {
 		log.Fatalf("gop: %v", err)
 	}

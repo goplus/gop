@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -14,7 +13,7 @@ import (
 	"golang.org/x/mod/module"
 
 	"github.com/goplus/gop"
-	"github.com/goplus/gop/cmd/internal/lockedfile"
+	"github.com/goplus/gop/cmd/internal/modfetch"
 	"github.com/goplus/gop/cmd/internal/search"
 	"github.com/goplus/gop/x/mod/modfile"
 )
@@ -61,17 +60,6 @@ func SetModRoot(dir string) {
 func getcwd() string {
 	path, _ := os.Getwd()
 	return path
-}
-
-// Read opens the named file and returns its contents.
-func Read(name string) ([]byte, error) {
-	f, err := lockedfile.Open(name)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	return io.ReadAll(f)
 }
 
 var gopRoot = getcwd()
@@ -225,6 +213,13 @@ func fixVersion(ctx context.Context, fixed *bool) modfile.VersionFixer {
 	}
 }
 
+func fixGoVersion(fixed *bool) gomodfile.VersionFixer {
+	return func(path, vers string) (resolved string, err error) {
+		// do nothing
+		return vers, nil
+	}
+}
+
 // LoadModFile sets Target and, if there is a main module, parses the initial
 // build list from its go.mod file.
 //
@@ -244,7 +239,7 @@ func LoadModFile(ctx context.Context, dir string) {
 	// }
 
 	gopmod := GopModFilePath()
-	data, err := Read(gopmod)
+	data, err := modfetch.Read(gopmod)
 	if err != nil {
 		log.Fatalf("gop: %v", err)
 	}
@@ -297,7 +292,7 @@ func WriteGopMod() {
 
 	errNoChange := errors.New("no update needed")
 
-	err = lockedfile.Transform(GopModFilePath(), func(old []byte) ([]byte, error) {
+	err = modfetch.Transform(GopModFilePath(), func(old []byte) ([]byte, error) {
 		if bytes.Equal(old, new) {
 			// The go.mod file is already equal to new, possibly as the result of some
 			// other process.
@@ -316,7 +311,18 @@ func getGoPath() string {
 }
 
 func SyncGoMod(dir string) {
-	gomod := gomodfile.File{}
+	gomodPath := filepath.Join(dir, "go.mod")
+	gomod := &gomodfile.File{}
+	if _, err := os.Stat(gomodPath); err == nil {
+		data, err := modfetch.Read(gomodPath)
+		var fixed bool
+		gomod, err = gomodfile.Parse(gomodPath, data, fixGoVersion(&fixed))
+		if err != nil {
+			// Errors returned by modfile.Parse begin with file:line.
+			log.Fatalf("gop: errors parsing gop.mod:\n%s\n", err)
+		}
+	}
+
 	gomod.AddModuleStmt(ModFile.Module.Mod.Path)
 	if ModFile.Go != nil {
 		gomod.AddGoStmt(ModFile.Go.Version)
@@ -326,15 +332,7 @@ func SyncGoMod(dir string) {
 		gomod.AddRequire(require.Mod.Path, require.Mod.Version)
 	}
 
-	for _, require := range ClassModFile.Require {
-		gomod.AddRequire(require.Mod.Path, require.Mod.Version)
-	}
-
 	for _, replace := range ModFile.Replace {
-		gomod.AddReplace(replace.Old.Path, replace.Old.Version, replace.New.Path, replace.New.Version)
-	}
-
-	for _, replace := range ClassModFile.Replace {
 		gomod.AddReplace(replace.Old.Path, replace.Old.Version, replace.New.Path, replace.New.Version)
 	}
 
@@ -342,16 +340,26 @@ func SyncGoMod(dir string) {
 		gomod.AddExclude(exclude.Mod.Path, exclude.Mod.Version)
 	}
 
-	for _, exclude := range ClassModFile.Exclude {
-		gomod.AddExclude(exclude.Mod.Path, exclude.Mod.Version)
-	}
-
 	for _, retract := range ModFile.Retract {
 		gomod.AddRetract(gomodfile.VersionInterval(retract.VersionInterval), retract.Rationale)
 	}
 
-	for _, retract := range ClassModFile.Retract {
-		gomod.AddRetract(gomodfile.VersionInterval(retract.VersionInterval), retract.Rationale)
+	if ClassModFile != nil {
+		for _, require := range ClassModFile.Require {
+			gomod.AddRequire(require.Mod.Path, require.Mod.Version)
+		}
+
+		for _, replace := range ClassModFile.Replace {
+			gomod.AddReplace(replace.Old.Path, replace.Old.Version, replace.New.Path, replace.New.Version)
+		}
+
+		for _, exclude := range ClassModFile.Exclude {
+			gomod.AddExclude(exclude.Mod.Path, exclude.Mod.Version)
+		}
+
+		for _, retract := range ClassModFile.Retract {
+			gomod.AddRetract(gomodfile.VersionInterval(retract.VersionInterval), retract.Rationale)
+		}
 	}
 
 	gomod.Cleanup()
@@ -362,7 +370,7 @@ func SyncGoMod(dir string) {
 	}
 
 	errNoChange := errors.New("no update needed")
-	err = lockedfile.Transform(filepath.Join(dir, "go.mod"), func(old []byte) ([]byte, error) {
+	err = modfetch.Transform(filepath.Join(dir, "go.mod"), func(old []byte) ([]byte, error) {
 		if bytes.Equal(old, new) {
 			// The go.mod file is already equal to new, possibly as the result of some
 			// other process.
