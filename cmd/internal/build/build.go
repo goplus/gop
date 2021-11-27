@@ -18,7 +18,6 @@
 package build
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -62,8 +61,8 @@ func runCmd(_ *base.Command, args []string) {
 		cl.SetDebug(cl.DbgFlagAll)
 		cl.SetDisableRecover(true)
 	}
-	modload.LoadModFile(context.Background(), dir)
-	modload.SyncGoMod(dir)
+	modload.LoadModFile()
+	modload.SyncGoMod()
 	if modload.ClassModFile != nil && modload.ClassModFile.Classfile != nil {
 		cl.RegisterClassFileType(modload.ClassModFile.Classfile.ProjExt,
 			modload.ClassModFile.Classfile.WorkExt, modload.ClassModFile.Classfile.PkgPaths...)

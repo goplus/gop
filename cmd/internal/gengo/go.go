@@ -18,7 +18,6 @@
 package gengo
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -114,8 +113,8 @@ func runCmd(cmd *base.Command, args []string) {
 		}
 		return nil
 	})
-	modload.LoadModFile(context.Background(), dir)
-	modload.SyncGoMod(dir)
+	modload.LoadModFile()
+	modload.SyncGoMod()
 	if modload.ClassModFile != nil && modload.ClassModFile.Classfile != nil {
 		cl.RegisterClassFileType(modload.ClassModFile.Classfile.ProjExt,
 			modload.ClassModFile.Classfile.WorkExt, modload.ClassModFile.Classfile.PkgPaths...)

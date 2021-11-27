@@ -82,8 +82,20 @@ func Download(m module.Version) (dir string, err error) {
 		return "", err
 	}
 
-	RunGoCmd(dir, "dowload", m.String())
+	DownloadArgs(dir, m.String())
 	return dir, nil
+}
+
+func DownloadArgs(dir string, args ...string) {
+	RunGoCmd(dir, "mod", append([]string{"download"}, args...)...)
+}
+
+func TidyArgs(dir string, args ...string) {
+	RunGoCmd(dir, "mod", append([]string{"tidy"}, args...)...)
+}
+
+func InitArgs(dir string, args ...string) {
+	RunGoCmd(dir, "mod", append([]string{"init"}, args...)...)
 }
 
 // RunGoCmd executes `go` command tools.

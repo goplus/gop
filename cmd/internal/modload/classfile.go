@@ -1,7 +1,6 @@
 package modload
 
 import (
-	"context"
 	"log"
 	"path/filepath"
 
@@ -51,7 +50,7 @@ func LoadClassFile() {
 	}
 
 	var fixed bool
-	f, err := modfile.Parse(gopmod, data, fixVersion(context.Background(), &fixed))
+	f, err := modfile.Parse(gopmod, data, fixVersion(&fixed))
 	if err != nil {
 		// Errors returned by modfile.Parse begin with file:line.
 		log.Fatalf("go: errors parsing go.mod:\n%s\n", err)

@@ -18,7 +18,6 @@
 package run
 
 import (
-	"context"
 	"crypto/sha1"
 	"encoding/base64"
 	"fmt"
@@ -144,8 +143,8 @@ func runCmd(cmd *base.Command, args []string) {
 	if isDir {
 		srcDir = src
 		gofile = src + "/gop_autogen.go"
-		modload.LoadModFile(context.Background(), srcDir)
-		modload.SyncGoMod(srcDir)
+		modload.LoadModFile()
+		modload.SyncGoMod()
 		if modload.ClassModFile != nil && modload.ClassModFile.Classfile != nil {
 			cl.RegisterClassFileType(modload.ClassModFile.Classfile.ProjExt,
 				modload.ClassModFile.Classfile.WorkExt, modload.ClassModFile.Classfile.PkgPaths...)
@@ -158,8 +157,8 @@ func runCmd(cmd *base.Command, args []string) {
 		}
 	} else {
 		srcDir, file = filepath.Split(src)
-		modload.LoadModFile(context.Background(), srcDir)
-		modload.SyncGoMod(srcDir)
+		modload.LoadModFile()
+		modload.SyncGoMod()
 		if modload.ClassModFile != nil && modload.ClassModFile.Classfile != nil {
 			cl.RegisterClassFileType(modload.ClassModFile.Classfile.ProjExt,
 				modload.ClassModFile.Classfile.WorkExt, modload.ClassModFile.Classfile.PkgPaths...)

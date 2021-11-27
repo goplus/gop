@@ -10,5 +10,7 @@ var Cmd = &base.Command{
 
 	Commands: []*base.Command{
 		cmdInit,
+		cmdDownload,
+		cmdTidy,
 	},
 }

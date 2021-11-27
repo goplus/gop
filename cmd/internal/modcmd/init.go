@@ -43,5 +43,9 @@ func runInit(cmd *base.Command, args []string) {
 		modPath = args[0]
 	}
 
+	// modfetch.InitArgs(".", args...)
 	modload.CreateModFile(modPath) // does all the hard work
+	modload.LoadModFile()
+	modload.SyncGoMod()
+	modload.SyncGopMod()
 }
