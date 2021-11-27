@@ -28,6 +28,7 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
+	"github.com/goplus/gop/cmd/internal/modload"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
@@ -88,6 +89,10 @@ func (p *Runner) GenGo(dir string, recursive bool, base *cl.Config) {
 	var gopTime time.Time
 	var gogenTime time.Time
 	var pkgFlags int
+	if modload.ClassModFile != nil && modload.ClassModFile.Classfile != nil {
+		extPkgFlags[modload.ClassModFile.Classfile.ProjExt] = PkgFlagGmx
+		extPkgFlags[modload.ClassModFile.Classfile.WorkExt] = PkgFlagSpx
+	}
 	for _, fi := range fis {
 		fname := fi.Name()
 		if strings.HasPrefix(fname, "_") {
@@ -139,8 +144,6 @@ func (p *Runner) GenGo(dir string, recursive bool, base *cl.Config) {
 var (
 	extPkgFlags = map[string]int{
 		".gop": PkgFlagGoPlus,
-		".spx": PkgFlagSpx,
-		".gmx": PkgFlagGmx,
 		".go":  PkgFlagGo,
 	}
 )
