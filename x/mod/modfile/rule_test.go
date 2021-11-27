@@ -707,6 +707,54 @@ var addGoTests = []struct {
 	},
 }
 
+var addGopTests = []struct {
+	desc    string
+	in      string
+	version string
+	out     string
+}{
+	{
+		`module_only`,
+		`module m
+		`,
+		`1.0.14`,
+		`module m
+		gop 1.0.14
+		`,
+	},
+	{
+		`module_before_require`,
+		`module m
+		require x.y/a v1.2.3
+		`,
+		`1.0.14`,
+		`module m
+		gop 1.0.14
+		require x.y/a v1.2.3
+		`,
+	},
+	{
+		`require_before_module`,
+		`require x.y/a v1.2.3
+		module example.com/inverted
+		`,
+		`1.0.14`,
+		`require x.y/a v1.2.3
+		module example.com/inverted
+		gop 1.0.14
+		`,
+	},
+	{
+		`require_only`,
+		`require x.y/a v1.2.3
+		`,
+		`1.0.14`,
+		`require x.y/a v1.2.3
+		gop 1.0.14
+		`,
+	},
+}
+
 var addExcludeTests = []struct {
 	desc    string
 	in      string
@@ -1449,6 +1497,16 @@ func TestAddGo(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			testEdit(t, tt.in, tt.out, true, func(f *File) error {
 				return f.AddGoStmt(tt.version)
+			})
+		})
+	}
+}
+
+func TestAddGop(t *testing.T) {
+	for _, tt := range addGopTests {
+		t.Run(tt.desc, func(t *testing.T) {
+			testEdit(t, tt.in, tt.out, true, func(f *File) error {
+				return f.AddGopStmt(tt.version)
 			})
 		})
 	}
