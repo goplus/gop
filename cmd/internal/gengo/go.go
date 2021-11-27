@@ -18,15 +18,18 @@
 package gengo
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
 
+	"github.com/qiniu/x/log"
+
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/cmd/internal/modload"
 	"github.com/goplus/gox"
-	"github.com/qiniu/x/log"
 )
 
 // -----------------------------------------------------------------------------
@@ -111,6 +114,8 @@ func runCmd(cmd *base.Command, args []string) {
 		}
 		return nil
 	})
+	modload.LoadModFile(context.Background(), dir)
+	modload.SyncGoMod(dir)
 	runner.GenGo(dir, true, &cl.Config{CacheLoadPkgs: !*flagSlow})
 	errs := runner.Errors()
 	if errs != nil {

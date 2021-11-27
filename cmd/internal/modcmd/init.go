@@ -14,17 +14,34 @@
  * limitations under the License.
  */
 
-package gop
+// gop mod init
 
-// buildVersion is the GoPlus tree's version string at build time.
-// This is set by the linker.
-var (
-	buildVersion string = "1.0.22"
+package modcmd
+
+import (
+	"log"
+
+	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/cmd/internal/modload"
 )
 
-// Version returns the GoPlus tree's version string.
-// It is either the commit hash and date at the time of the build or,
-// when possible, a release tag like "v1.0.0-rc1".
-func Version() string {
-	return buildVersion
+var cmdInit = &base.Command{
+	UsageLine: "go mod init [module]",
+	Short:     "initialize new module in current directory",
+}
+
+func init() {
+	cmdInit.Run = runInit
+}
+
+func runInit(cmd *base.Command, args []string) {
+	if len(args) > 1 {
+		log.Fatalf("gop mod init: too many arguments")
+	}
+	var modPath string
+	if len(args) == 1 {
+		modPath = args[0]
+	}
+
+	modload.CreateModFile(modPath) // does all the hard work
 }
