@@ -1695,6 +1695,48 @@ func TestFixVersion(t *testing.T) {
 	}
 }
 
+var addParseExtTests = []struct {
+	desc    string
+	ext     string
+	want    string
+	wantErr string
+}{
+	{
+		"spx ok",
+		".spx",
+		".spx",
+		"",
+	},
+	{
+		"no ext",
+		"",
+		"",
+		"",
+	},
+	{
+		"not a ext",
+		"gmx",
+		"",
+		"ext \"gmx\" invalid: invalid ext format",
+	},
+}
+
+func TestParseExt(t *testing.T) {
+	for _, tt := range addParseExtTests {
+		t.Run(tt.desc, func(t *testing.T) {
+			ext, err := parseExt(&tt.ext)
+			if err != nil {
+				if err.Error() != tt.wantErr {
+					t.Fatalf("wanterr %s,but got %s", tt.wantErr, err)
+				}
+			}
+			if ext != tt.want {
+				t.Fatalf("want %s,but got %s", tt.want, ext)
+			}
+		})
+	}
+}
+
 var gopmod = `
 module spx
 
