@@ -126,7 +126,7 @@ func linkGoplusToHome() {
 	if gopHomeDir != gopRoot && !checkPathExist(gopHomeDir) {
 		err := os.Symlink(gopRoot, gopHomeDir)
 		if err != nil {
-			println(err)
+			println(err.Error())
 		}
 	}
 
