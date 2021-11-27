@@ -131,9 +131,13 @@ func Init() {
 		os.Setenv("GIT_SSH_COMMAND", "ssh -o ControlMaster=no")
 	}
 
-	modRoot := findModuleRoot(gopRoot)
 	if modRoot != "" {
-		SetModRoot(modRoot)
+		// nothing to do
+	} else {
+		modRoot := findModuleRoot(gopRoot)
+		if modRoot != "" {
+			SetModRoot(modRoot)
+		}
 	}
 }
 
@@ -178,7 +182,9 @@ Run 'go help mod init' for more information.
 // packages at multiple versions from the same module).
 func CreateModFile(modPath string) {
 	modRoot = gopRoot
+	fmt.Println(modRoot)
 	Init()
+	fmt.Println(modRoot)
 	modFilePath := GopModFilePath()
 	if _, err := os.Stat(modFilePath); err == nil {
 		log.Fatalf("gop: %s already exists", modFilePath)
