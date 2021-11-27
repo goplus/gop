@@ -56,6 +56,7 @@ func init() {
 }
 
 func main() {
+	flag.Usage = base.Usage
 	flag.Parse()
 	args := flag.Args()
 	if len(args) < 1 {
