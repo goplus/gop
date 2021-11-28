@@ -223,8 +223,8 @@ func Load() {
 	LoadModFile()
 	SyncGoMod()
 	if classModFile != nil && classModFile.Classfile != nil {
-		gengo.ExtPkgFlags[classModFile.Classfile.ProjExt] = gengo.PkgFlagGmx
-		gengo.ExtPkgFlags[classModFile.Classfile.WorkExt] = gengo.PkgFlagSpx
+		gengo.RegisterPkgFlags(classModFile.Classfile.ProjExt, gengo.PkgFlagGmx)
+		gengo.RegisterPkgFlags(classModFile.Classfile.WorkExt, gengo.PkgFlagSpx)
 		cl.RegisterClassFileType(classModFile.Classfile.ProjExt,
 			classModFile.Classfile.WorkExt, classModFile.Classfile.PkgPaths...)
 	}

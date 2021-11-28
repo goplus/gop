@@ -101,7 +101,7 @@ func (p *Runner) GenGo(dir string, recursive bool, base *cl.Config) {
 			continue
 		}
 		ext := filepath.Ext(fname)
-		if flag, ok := ExtPkgFlags[ext]; ok {
+		if flag, ok := extPkgFlags[ext]; ok {
 			modTime := fi.ModTime()
 			switch flag {
 			case PkgFlagGo:
@@ -137,11 +137,18 @@ func (p *Runner) GenGo(dir string, recursive bool, base *cl.Config) {
 }
 
 var (
-	ExtPkgFlags = map[string]int{
+	extPkgFlags = map[string]int{
 		".gop": PkgFlagGoPlus,
 		".go":  PkgFlagGo,
 	}
 )
+
+func RegisterPkgFlags(ext string, flag int) {
+	if flag != PkgFlagGmx && flag != PkgFlagSpx {
+		panic("RegisterPkgFlags: flag should be PkgFlagGmx or PkgFlagSpx")
+	}
+	extPkgFlags[ext] = flag
+}
 
 func (p *Runner) GenGoPkg(pkgDir string, base *cl.Config) (err error) {
 	defer func() {
