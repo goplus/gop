@@ -28,6 +28,7 @@ import (
 
 	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
+	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/cmd/internal/modfetch"
 	"github.com/goplus/gop/cmd/internal/search"
 	"github.com/goplus/gop/x/mod/modfile"
@@ -222,6 +223,8 @@ func Load() {
 	LoadModFile()
 	SyncGoMod()
 	if ClassModFile != nil && ClassModFile.Classfile != nil {
+		gengo.ExtPkgFlags[ClassModFile.Classfile.ProjExt] = gengo.PkgFlagGmx
+		gengo.ExtPkgFlags[ClassModFile.Classfile.WorkExt] = gengo.PkgFlagSpx
 		cl.RegisterClassFileType(ClassModFile.Classfile.ProjExt,
 			ClassModFile.Classfile.WorkExt, ClassModFile.Classfile.PkgPaths...)
 	}
@@ -294,7 +297,7 @@ func addGopStmt() {
 	if ModFile.Gop != nil && ModFile.Gop.Version != "" {
 		return
 	}
-	version := gop.Version()
+	version := "1." + gop.Version()
 	if !modfile.GopVersionRE.MatchString(version) {
 		log.Fatalf("gop: unrecognized default version %q", version)
 	}
@@ -355,7 +358,7 @@ func SyncGoMod() {
 	if ModFile.Go != nil {
 		gomod.AddGoStmt(ModFile.Go.Version)
 	}
-	gomod.AddRequire("github.com/goplus/gop", "v"+gop.Version())
+
 	for _, require := range ModFile.Require {
 		gomod.AddRequire(require.Mod.Path, require.Mod.Version)
 	}

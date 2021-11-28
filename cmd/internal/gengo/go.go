@@ -100,6 +100,7 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 	dir := flag.Arg(0)
 	dir = strings.TrimSuffix(dir, "/...")
+	modload.Load()
 	runner := new(gengo.Runner)
 	runner.SetAfter(func(p *gengo.Runner, dir string, flags int) error {
 		errs := p.ResetErrors()
@@ -113,7 +114,6 @@ func runCmd(cmd *base.Command, args []string) {
 		}
 		return nil
 	})
-	modload.Load()
 	runner.GenGo(dir, true, &cl.Config{CacheLoadPkgs: !*flagSlow})
 	errs := runner.Errors()
 	if errs != nil {
