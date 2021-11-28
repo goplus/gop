@@ -19,11 +19,13 @@ package build
 
 import (
 	"fmt"
-	"github.com/qiniu/x/log"
 	"os"
+
+	"github.com/qiniu/x/log"
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/cmd/internal/modload"
 	"github.com/goplus/gox"
 )
 
@@ -59,6 +61,7 @@ func runCmd(_ *base.Command, args []string) {
 		cl.SetDebug(cl.DbgFlagAll)
 		cl.SetDisableRecover(true)
 	}
+	modload.Load()
 	base.GenGoForBuild(dir, recursive, func() { fmt.Fprintln(os.Stderr, "GenGo failed, stop building") })
 	base.RunGoCmd(dir, "build", args...)
 }

@@ -13,37 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package version
+// gop mod tidy
+package mod
 
 import (
-	"fmt"
-	"runtime"
-
-	"github.com/goplus/gop"
-	"github.com/goplus/gop/build"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/cmd/internal/modfetch"
+	"github.com/goplus/gop/cmd/internal/modload"
 )
 
-// -----------------------------------------------------------------------------
-
-// Cmd - gop build
-var Cmd = &base.Command{
-	UsageLine: "gop version [-v]",
-	Short:     "Version prints the build information for Gop executables",
+var cmdTidy = &base.Command{
+	UsageLine: "gop mod tidy [-e] [-v]",
+	Short:     "add missing and remove unused modules",
 }
-
-var (
-	flag = &Cmd.Flag
-	_    = flag.Bool("v", false, "print verbose information.")
-)
 
 func init() {
-	Cmd.Run = runCmd
+	cmdTidy.Run = runTidy
 }
 
-func runCmd(cmd *base.Command, args []string) {
-	fmt.Println("gop", gop.Version(), build.Build(), runtime.GOOS+"/"+runtime.GOARCH)
+func runTidy(cmd *base.Command, args []string) {
+	modload.LoadModFile()
+	modload.SyncGoMod()
+	modfetch.TidyArgs(".", args...)
+	modload.SyncGopMod()
 }
-
-// -----------------------------------------------------------------------------

@@ -957,6 +957,9 @@ func parseExt(s *string) (string, error) {
 			Err: err,
 		}
 	}
+	if t == "" {
+		return "", nil
+	}
 	if len(t) < 2 {
 		return "", &InvalidExtError{
 			Ext: *s,
@@ -1045,6 +1048,26 @@ func (f *File) AddGoStmt(version string) error {
 	} else {
 		f.Go.Version = version
 		f.Syntax.updateLine(f.Go.Syntax, "go", version)
+	}
+	return nil
+}
+
+func (f *File) AddGopStmt(version string) error {
+	if !GopVersionRE.MatchString(version) {
+		return fmt.Errorf("invalid language version string %q", version)
+	}
+	if f.Gop == nil {
+		var hint Expr
+		if f.Module != nil && f.Module.Syntax != nil {
+			hint = f.Module.Syntax
+		}
+		f.Gop = &Gop{
+			Version: version,
+			Syntax:  f.Syntax.addLine(hint, "gop", version),
+		}
+	} else {
+		f.Gop.Version = version
+		f.Syntax.updateLine(f.Gop.Syntax, "gop", version)
 	}
 	return nil
 }
