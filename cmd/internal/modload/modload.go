@@ -298,7 +298,7 @@ func addGopStmt() {
 	if modFile.Gop != nil && modFile.Gop.Version != "" {
 		return
 	}
-	version := "1." + +strconv.Itoa(minorver.Version)
+	version := "1." + strconv.Itoa(minorver.Version)
 	if !modfile.GopVersionRE.MatchString(version) {
 		log.Fatalf("gop: unrecognized default version %q", version)
 	}
