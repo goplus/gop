@@ -27,6 +27,7 @@ import (
 	"golang.org/x/mod/module"
 
 	"github.com/goplus/gop"
+	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/modfetch"
 	"github.com/goplus/gop/cmd/internal/search"
 	"github.com/goplus/gop/x/mod/modfile"
@@ -215,6 +216,15 @@ func CreateModFile(modPath string) {
 	ModFile.AddModuleStmt(modPath)
 	addGopStmt() // Add the gop directive before converted module requirements.
 	WriteGopMod()
+}
+
+func Load() {
+	LoadModFile()
+	SyncGoMod()
+	if ClassModFile != nil && ClassModFile.Classfile != nil {
+		cl.RegisterClassFileType(ClassModFile.Classfile.ProjExt,
+			ClassModFile.Classfile.WorkExt, ClassModFile.Classfile.PkgPaths...)
+	}
 }
 
 // fixVersion returns a modfile.VersionFixer implemented using the Query function.

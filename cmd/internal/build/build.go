@@ -61,12 +61,7 @@ func runCmd(_ *base.Command, args []string) {
 		cl.SetDebug(cl.DbgFlagAll)
 		cl.SetDisableRecover(true)
 	}
-	modload.LoadModFile()
-	modload.SyncGoMod()
-	if modload.ClassModFile != nil && modload.ClassModFile.Classfile != nil {
-		cl.RegisterClassFileType(modload.ClassModFile.Classfile.ProjExt,
-			modload.ClassModFile.Classfile.WorkExt, modload.ClassModFile.Classfile.PkgPaths...)
-	}
+	modload.Load()
 	base.GenGoForBuild(dir, recursive, func() { fmt.Fprintln(os.Stderr, "GenGo failed, stop building") })
 	base.RunGoCmd(dir, "build", args...)
 }

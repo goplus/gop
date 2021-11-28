@@ -142,6 +142,7 @@ func TestFromTestdata(t *testing.T) {
 
 func TestRegisterFileType(t *testing.T) {
 	RegisterFileType(".gsh", ast.FileTypeSpx)
+	RegisterFileType(".gsh", ast.FileTypeGmx)
 	func() {
 		defer func() {
 			if e := recover(); e == nil {
@@ -150,19 +151,6 @@ func TestRegisterFileType(t *testing.T) {
 		}()
 		RegisterFileType(".gshx", ast.FileTypeGop)
 	}()
-	func() {
-		defer func() {
-			if e := recover(); e == nil {
-				t.Fatal("TestRegisterFileType failed: no error?")
-			}
-		}()
-		RegisterFileType(".gsh", ast.FileTypeGmx)
-	}()
-}
-
-func init() {
-	RegisterFileType(".gmx", ast.FileTypeGmx)
-	RegisterFileType(".spx", ast.FileTypeSpx)
 }
 
 // -----------------------------------------------------------------------------

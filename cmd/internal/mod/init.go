@@ -13,19 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package modcmd
+
+// gop mod init
+
+package mod
 
 import (
+	"log"
+
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/cmd/internal/modload"
 )
 
-var Cmd = &base.Command{
-	UsageLine: "gop mod",
-	Short:     "module maintenance",
+var cmdInit = &base.Command{
+	UsageLine: "go mod init [module]",
+	Short:     "initialize new module in current directory",
+}
 
-	Commands: []*base.Command{
-		cmdInit,
-		cmdDownload,
-		cmdTidy,
-	},
+func init() {
+	cmdInit.Run = runInit
+}
+
+func runInit(cmd *base.Command, args []string) {
+	if len(args) > 1 {
+		log.Fatalf("gop mod init: too many arguments")
+	}
+	var modPath string
+	if len(args) == 1 {
+		modPath = args[0]
+	}
+
+	// modfetch.InitArgs(".", args...)
+	modload.CreateModFile(modPath) // does all the hard work
+	modload.LoadModFile()
+	modload.SyncGoMod()
+	modload.SyncGopMod()
 }

@@ -37,7 +37,9 @@ type gmxInfo struct {
 }
 
 var (
-	gmxTypes = map[string]gmxInfo{}
+	gmxTypes = map[string]gmxInfo{
+		".gmx": {".spx", []string{"github.com/goplus/spx", "math"}},
+	}
 )
 
 // RegisterClassFileType registers Go+ class file types.

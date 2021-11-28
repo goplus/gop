@@ -31,7 +31,7 @@ import (
 	"github.com/goplus/gop/cmd/internal/gopfmt"
 	"github.com/goplus/gop/cmd/internal/help"
 	"github.com/goplus/gop/cmd/internal/install"
-	"github.com/goplus/gop/cmd/internal/modcmd"
+	"github.com/goplus/gop/cmd/internal/mod"
 	"github.com/goplus/gop/cmd/internal/run"
 	"github.com/goplus/gop/cmd/internal/test"
 	"github.com/goplus/gop/cmd/internal/version"
@@ -48,7 +48,7 @@ func init() {
 		run.Cmd,
 		gengo.Cmd,
 		gopfmt.Cmd,
-		modcmd.Cmd,
+		mod.Cmd,
 		install.Cmd,
 		build.Cmd,
 		clean.Cmd,
