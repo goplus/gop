@@ -78,11 +78,11 @@ func findGoModFile(dir string) (modfile string, noCacheFile bool, err error) {
 	modfile, err = cl.FindGoModFile(dir)
 	if err != nil {
 		home := os.Getenv("HOME")
-		modfile = home + "/gop/go.mod"
+		modfile = filepath.Join(home, "gop", "go.mod")
 		if fi, e := os.Lstat(modfile); e == nil && !fi.IsDir() {
 			return modfile, true, nil
 		}
-		modfile = home + "/goplus/go.mod"
+		modfile = filepath.Join(home, "goplus", "go.mod")
 		if fi, e := os.Lstat(modfile); e == nil && !fi.IsDir() {
 			return modfile, true, nil
 		}
@@ -140,7 +140,7 @@ func runCmd(cmd *base.Command, args []string) {
 	onExit = nil
 	if isDir {
 		srcDir = src
-		gofile = src + "/gop_autogen.go"
+		gofile = filepath.Join(src, "gop_autogen.go")
 		isDirty = true // TODO: check if code changed
 		if isDirty {
 			pkgs, err = parser.ParseDir(fset, src, nil, parserMode)
@@ -152,9 +152,9 @@ func runCmd(cmd *base.Command, args []string) {
 		isGo := filepath.Ext(file) == ".go"
 		if isGo {
 			hash := sha1.Sum([]byte(src))
-			dir := os.Getenv("HOME") + "/.gop/run"
+			dir := filepath.Join(os.Getenv("HOME"), ".gop", "run")
 			os.MkdirAll(dir, 0755)
-			gofile = dir + "/g" + base64.RawURLEncoding.EncodeToString(hash[:]) + file
+			gofile = filepath.Join(dir, "g"+base64.RawURLEncoding.EncodeToString(hash[:]), file)
 			if *flagRTOE { // remove tempfile on error
 				onExit = func() {
 					os.Remove(gofile)
@@ -163,7 +163,7 @@ func runCmd(cmd *base.Command, args []string) {
 		} else if hasMultiFiles(srcDir, ".gop") {
 			gofile = filepath.Join(srcDir, "gop_autogen_"+file+".go")
 		} else {
-			gofile = srcDir + "/gop_autogen.go"
+			gofile = filepath.Join(srcDir, "gop_autogen.go")
 		}
 		isDirty = fileIsDirty(fi, gofile)
 		if isDirty {
@@ -286,7 +286,7 @@ func runGoPkg(src string, args []string, doRun bool) {
 	}
 	baseConf.PkgsLoader.Save()
 	if doRun {
-		goRun(src+"/.", args)
+		goRun(filepath.Join(src, "."), args)
 	}
 }
 

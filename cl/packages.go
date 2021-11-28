@@ -96,9 +96,9 @@ func initPkgsLoader(base *Config) {
 	p := &PkgsLoader{genGoPkg: base.GenGoPkg, BaseConfig: base, modPath: base.ModPath}
 	if base.PersistLoadPkgs {
 		if base.CacheFile == "" && base.ModRootDir != "" {
-			dir := base.ModRootDir + "/.gop"
+			dir := filepath.Join(base.ModRootDir, ".gop")
 			os.MkdirAll(dir, 0755)
-			base.CacheFile = dir + "/gop.cache"
+			base.CacheFile = filepath.Join(dir, "gop.cache")
 		}
 	}
 	if base.CacheFile != "" {
@@ -127,7 +127,7 @@ func (p *PkgsLoader) GenGoPkgs(cfg *packages.Config, notFounds []string) (err er
 	if err != nil {
 		return
 	}
-	pkgPathSlash := pkgPath + "/"
+	pkgPathSlash := pkgPath + string(filepath.Separator)
 	for _, notFound := range notFounds {
 		if strings.HasPrefix(notFound, pkgPathSlash) || notFound == pkgPath {
 			if err = p.genGoPkg(root+notFound[len(pkgPath):], p.BaseConfig); err != nil {
