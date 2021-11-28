@@ -28,6 +28,8 @@ var (
 	Branch string
 	// Commit git commit id
 	Commit string
+	// Default GOPROOT
+	GopRoot string
 )
 
 // Build information

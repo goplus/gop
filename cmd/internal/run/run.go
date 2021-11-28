@@ -74,22 +74,6 @@ func saveGoFile(gofile string, pkg *gox.Package) error {
 	return gox.WriteFile(gofile, pkg, false)
 }
 
-func findGoModFile(dir string) (modfile string, noCacheFile bool, err error) {
-	modfile, err = cl.FindGoModFile(dir)
-	if err != nil {
-		home := os.Getenv("HOME")
-		modfile = home + "/gop/go.mod"
-		if fi, e := os.Lstat(modfile); e == nil && !fi.IsDir() {
-			return modfile, true, nil
-		}
-		modfile = home + "/goplus/go.mod"
-		if fi, e := os.Lstat(modfile); e == nil && !fi.IsDir() {
-			return modfile, true, nil
-		}
-	}
-	return
-}
-
 func findGoModDir(dir string) (string, bool) {
 	modfile, nocachefile, err := findGoModFile(dir)
 	if err != nil {
