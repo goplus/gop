@@ -121,6 +121,14 @@ func buildGoplusTools() {
 	}
 
 	buildFlags := getGopBuildFlags()
+	goBinPath := detectGoBinPath()
+
+	// If same name file exists, backup it.
+	cmdBinPath := filepath.Join(goBinPath, "cmd")
+	cmdBackupBinPath := filepath.Join(goBinPath, "cmd-backup-gop")
+	if checkPathExist(cmdBinPath) {
+		os.Rename(cmdBinPath, cmdBackupBinPath)
+	}
 
 	println("Installing Go+ tools...")
 	os.Chdir(commandsDir)
@@ -131,6 +139,16 @@ func buildGoplusTools() {
 		os.Exit(1)
 	}
 	println(buildOutput)
+
+	// Remove unwanted cmd binary file.
+	if checkPathExist(cmdBinPath) {
+		os.Remove(cmdBinPath)
+	}
+	// Restore the backup file if exists.
+	if checkPathExist(cmdBackupBinPath) {
+		os.Rename(cmdBackupBinPath, cmdBinPath)
+	}
+
 	println("Go+ tools installed successfully!")
 }
 
