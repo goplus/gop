@@ -43,7 +43,7 @@ func init() {
 }
 
 func runCmd(cmd *base.Command, args []string) {
-	fmt.Println("gop", "1."+gop.Version(), build.Build(), runtime.GOOS+"/"+runtime.GOARCH)
+	fmt.Println("gop", gop.Version(), build.Build(), runtime.GOOS+"/"+runtime.GOARCH)
 }
 
 // -----------------------------------------------------------------------------

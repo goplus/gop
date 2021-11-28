@@ -168,9 +168,9 @@ func RegisterFileType(ext string, format ast.FileType) {
 	if format != ast.FileTypeSpx && format != ast.FileTypeGmx {
 		panic("RegisterFileType: format should be FileTypeSpx or FileTypeGmx")
 	}
-	// if _, ok := extGopFiles[ext]; ok {
-	// 	panic("RegisterFileType: file type exists")
-	// }
+	if _, ok := extGopFiles[ext]; ok {
+		panic("RegisterFileType: file type exists")
+	}
 	extGopFiles[ext] = format
 }
 

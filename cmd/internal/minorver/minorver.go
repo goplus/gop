@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-package gop
+package minorver
 
-// buildVersion is the GoPlus tree's version string at build time.
-// This is set by the linker.
-var (
-	buildVersion string = "devel"
-)
+// Version is the Go+ 1.x version which is currently
+// in development and will eventually get released.
+//
+// It should be updated at the start of each development cycle to be
+// the version of the next Go+ 1.x release. See golang.org/issue/40705.
 
-// Version returns the GoPlus tree's version string.
-// It is either the commit hash and date at the time of the build or,
-// when possible, a release tag like "v1.0.0-rc1".
-func Version() string {
-	return buildVersion
-}
+const Version = 0

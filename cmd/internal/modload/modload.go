@@ -22,13 +22,14 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	gomodfile "golang.org/x/mod/modfile"
 	"golang.org/x/mod/module"
 
-	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/gengo"
+	"github.com/goplus/gop/cmd/internal/minorver"
 	"github.com/goplus/gop/cmd/internal/modfetch"
 	"github.com/goplus/gop/cmd/internal/search"
 	"github.com/goplus/gop/x/mod/modfile"
@@ -297,7 +298,7 @@ func addGopStmt() {
 	if modFile.Gop != nil && modFile.Gop.Version != "" {
 		return
 	}
-	version := "1." + gop.Version()
+	version := "1." + +strconv.Itoa(minorver.Version)
 	if !modfile.GopVersionRE.MatchString(version) {
 		log.Fatalf("gop: unrecognized default version %q", version)
 	}
