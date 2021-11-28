@@ -27,7 +27,7 @@ import (
 	"golang.org/x/mod/module"
 	"golang.org/x/mod/semver"
 
-	"github.com/goplus/gop/cmd/internal/cfg"
+	"github.com/goplus/gop/cmd/internal/env"
 )
 
 // DownloadDir returns the directory to which m should have been downloaded.
@@ -52,7 +52,7 @@ func DownloadDir(m module.Version) (string, error) {
 	}
 
 	// Check whether the directory itself exists.
-	dir := filepath.Join(cfg.GOMODCACHE, enc+"@"+encVer)
+	dir := filepath.Join(env.GOMODCACHE, enc+"@"+encVer)
 	if fi, err := os.Stat(dir); os.IsNotExist(err) {
 		return dir, err
 	} else if err != nil {

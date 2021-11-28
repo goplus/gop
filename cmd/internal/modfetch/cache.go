@@ -22,7 +22,7 @@ import (
 	"golang.org/x/mod/module"
 	"golang.org/x/mod/semver"
 
-	"github.com/goplus/gop/cmd/internal/cfg"
+	"github.com/goplus/gop/cmd/internal/env"
 )
 
 func cacheDir(path string) (string, error) {
@@ -30,7 +30,7 @@ func cacheDir(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(cfg.GOMODCACHE, "cache/download", enc, "/@v"), nil
+	return filepath.Join(env.GOMODCACHE, "cache/download", enc, "/@v"), nil
 }
 
 func CachePath(m module.Version, suffix string) (string, error) {
