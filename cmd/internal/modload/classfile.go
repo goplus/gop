@@ -26,7 +26,7 @@ import (
 )
 
 func LoadClassFile() {
-	if ModFile.Register == nil {
+	if modFile.Register == nil {
 		return
 	}
 
@@ -34,13 +34,13 @@ func LoadClassFile() {
 	var err error
 	var claassMod module.Version
 
-	for _, require := range ModFile.Require {
-		if require.Mod.Path == ModFile.Register.ClassfileMod {
+	for _, require := range modFile.Require {
+		if require.Mod.Path == modFile.Register.ClassfileMod {
 			claassMod = require.Mod
 		}
 	}
-	for _, replace := range ModFile.Replace {
-		if replace.Old.Path == ModFile.Register.ClassfileMod {
+	for _, replace := range modFile.Replace {
+		if replace.Old.Path == modFile.Register.ClassfileMod {
 			claassMod = replace.New
 		}
 	}
@@ -70,5 +70,5 @@ func LoadClassFile() {
 		// Errors returned by modfile.Parse begin with file:line.
 		log.Fatalf("go: errors parsing go.mod:\n%s\n", err)
 	}
-	ClassModFile = f
+	classModFile = f
 }

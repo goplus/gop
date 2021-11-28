@@ -35,7 +35,7 @@ import (
 )
 
 var (
-	ModFile, ClassModFile *modfile.File
+	modFile, classModFile *modfile.File
 
 	initialized bool
 	modRoot     string
@@ -213,8 +213,8 @@ func CreateModFile(modPath string) {
 	}
 
 	fmt.Fprintf(os.Stderr, "gop: creating new gop.mod: module %s\n", modPath)
-	ModFile = new(modfile.File)
-	ModFile.AddModuleStmt(modPath)
+	modFile = new(modfile.File)
+	modFile.AddModuleStmt(modPath)
 	addGopStmt() // Add the gop directive before converted module requirements.
 	WriteGopMod()
 }
@@ -222,11 +222,11 @@ func CreateModFile(modPath string) {
 func Load() {
 	LoadModFile()
 	SyncGoMod()
-	if ClassModFile != nil && ClassModFile.Classfile != nil {
-		gengo.ExtPkgFlags[ClassModFile.Classfile.ProjExt] = gengo.PkgFlagGmx
-		gengo.ExtPkgFlags[ClassModFile.Classfile.WorkExt] = gengo.PkgFlagSpx
-		cl.RegisterClassFileType(ClassModFile.Classfile.ProjExt,
-			ClassModFile.Classfile.WorkExt, ClassModFile.Classfile.PkgPaths...)
+	if classModFile != nil && classModFile.Classfile != nil {
+		gengo.ExtPkgFlags[classModFile.Classfile.ProjExt] = gengo.PkgFlagGmx
+		gengo.ExtPkgFlags[classModFile.Classfile.WorkExt] = gengo.PkgFlagSpx
+		cl.RegisterClassFileType(classModFile.Classfile.ProjExt,
+			classModFile.Classfile.WorkExt, classModFile.Classfile.PkgPaths...)
 	}
 }
 
@@ -281,7 +281,7 @@ func LoadModFile() {
 		// Errors returned by modfile.Parse begin with file:line.
 		log.Fatalf("gop: errors parsing gop.mod:\n%s\n", err)
 	}
-	ModFile = f
+	modFile = f
 
 	if f.Module == nil {
 		// No module declaration. Must add module path.
@@ -294,14 +294,14 @@ func LoadModFile() {
 // addGoStmt adds a gop directive to the gop.mod file if it does not already include one.
 // The 'gop' version added, if any, is the latest version supported by this toolchain.
 func addGopStmt() {
-	if ModFile.Gop != nil && ModFile.Gop.Version != "" {
+	if modFile.Gop != nil && modFile.Gop.Version != "" {
 		return
 	}
 	version := "1." + gop.Version()
 	if !modfile.GopVersionRE.MatchString(version) {
 		log.Fatalf("gop: unrecognized default version %q", version)
 	}
-	if err := ModFile.AddGopStmt(version); err != nil {
+	if err := modFile.AddGopStmt(version); err != nil {
 		log.Fatalf("gop: internal error: %v", err)
 	}
 }
@@ -314,9 +314,9 @@ func WriteGopMod() {
 	}
 	addGopStmt()
 
-	ModFile.Cleanup()
+	modFile.Cleanup()
 
-	new, err := ModFile.Format()
+	new, err := modFile.Format()
 	if err != nil {
 		log.Fatalf("gop: %v", err)
 	}
@@ -354,41 +354,41 @@ func SyncGoMod() {
 		}
 	}
 
-	gomod.AddModuleStmt(ModFile.Module.Mod.Path)
-	if ModFile.Go != nil {
-		gomod.AddGoStmt(ModFile.Go.Version)
+	gomod.AddModuleStmt(modFile.Module.Mod.Path)
+	if modFile.Go != nil {
+		gomod.AddGoStmt(modFile.Go.Version)
 	}
 
-	for _, require := range ModFile.Require {
+	for _, require := range modFile.Require {
 		gomod.AddRequire(require.Mod.Path, require.Mod.Version)
 	}
 
-	for _, replace := range ModFile.Replace {
+	for _, replace := range modFile.Replace {
 		gomod.AddReplace(replace.Old.Path, replace.Old.Version, replace.New.Path, replace.New.Version)
 	}
 
-	for _, exclude := range ModFile.Exclude {
+	for _, exclude := range modFile.Exclude {
 		gomod.AddExclude(exclude.Mod.Path, exclude.Mod.Version)
 	}
 
-	for _, retract := range ModFile.Retract {
+	for _, retract := range modFile.Retract {
 		gomod.AddRetract(gomodfile.VersionInterval(retract.VersionInterval), retract.Rationale)
 	}
 
-	if ClassModFile != nil {
-		for _, require := range ClassModFile.Require {
+	if classModFile != nil {
+		for _, require := range classModFile.Require {
 			gomod.AddRequire(require.Mod.Path, require.Mod.Version)
 		}
 
-		for _, replace := range ClassModFile.Replace {
+		for _, replace := range classModFile.Replace {
 			gomod.AddReplace(replace.Old.Path, replace.Old.Version, replace.New.Path, replace.New.Version)
 		}
 
-		for _, exclude := range ClassModFile.Exclude {
+		for _, exclude := range classModFile.Exclude {
 			gomod.AddExclude(exclude.Mod.Path, exclude.Mod.Version)
 		}
 
-		for _, retract := range ClassModFile.Retract {
+		for _, retract := range classModFile.Retract {
 			gomod.AddRetract(gomodfile.VersionInterval(retract.VersionInterval), retract.Rationale)
 		}
 	}
@@ -429,28 +429,28 @@ func SyncGopMod() {
 	}
 
 	if gomod.Go != nil {
-		ModFile.AddGoStmt(gomod.Go.Version)
+		modFile.AddGoStmt(gomod.Go.Version)
 	}
 
 	for _, require := range gomod.Require {
-		ModFile.AddRequire(require.Mod.Path, require.Mod.Version)
+		modFile.AddRequire(require.Mod.Path, require.Mod.Version)
 	}
 
 	for _, replace := range gomod.Replace {
-		ModFile.AddReplace(replace.Old.Path, replace.Old.Version, replace.New.Path, replace.New.Version)
+		modFile.AddReplace(replace.Old.Path, replace.Old.Version, replace.New.Path, replace.New.Version)
 	}
 
 	for _, exclude := range gomod.Exclude {
-		ModFile.AddExclude(exclude.Mod.Path, exclude.Mod.Version)
+		modFile.AddExclude(exclude.Mod.Path, exclude.Mod.Version)
 	}
 
 	for _, retract := range gomod.Retract {
-		ModFile.AddRetract(modfile.VersionInterval(retract.VersionInterval), retract.Rationale)
+		modFile.AddRetract(modfile.VersionInterval(retract.VersionInterval), retract.Rationale)
 	}
 
-	ModFile.Cleanup()
+	modFile.Cleanup()
 
-	new, err := ModFile.Format()
+	new, err := modFile.Format()
 	if err != nil {
 		log.Fatalf("gop: %v", err)
 	}
