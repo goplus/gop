@@ -2755,9 +2755,9 @@ func (p *parser) toIdent(e ast.Expr) *ast.Ident {
 	case *ast.Ident:
 		return v
 	case *ast.BasicLit:
-		p.errorExpected(e.Pos(), fmt.Sprintf("IDENT, found %v", v.Value), 2)
+		p.errorExpected(e.Pos(), fmt.Sprintf("'IDENT', found %v", v.Value), 2)
 	default:
-		p.errorExpected(e.Pos(), "IDENT", 2)
+		p.errorExpected(e.Pos(), "'IDENT'", 2)
 	}
 	return nil
 }

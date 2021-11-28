@@ -58,6 +58,33 @@ func TestErrMissingComma(t *testing.T) {
 	testErrCode(t, `func a(b int c)`, ``, `missing ',' in parameter list`)
 }
 
+func TestErrLambda(t *testing.T) {
+	testErrCode(t, `func test(v string, f func( int)) {
+}
+test "hello" => {
+	println "lambda",x
+}
+`, `/foo/bar.gop:3:6: expected 'IDENT', found "hello"`, ``)
+	testErrCode(t, `func test(v string, f func( int)) {
+}
+test "hello", "x" => {
+	println "lambda",x
+}
+`, `/foo/bar.gop:3:15: expected 'IDENT', found "x"`, ``)
+	testErrCode(t, `func test(v string, f func( int)) {
+}
+test "hello", ("x") => {
+	println "lambda",x
+}
+`, `/foo/bar.gop:3:16: expected 'IDENT', found "x"`, ``)
+	testErrCode(t, `func test(v string, f func(int,int)) {
+}
+test "hello", (x, "y") => {
+	println "lambda",x,y
+}
+`, `/foo/bar.gop:3:19: expected 'IDENT', found "y"`, ``)
+}
+
 func TestErrTooMany(t *testing.T) {
 	testErrCode(t, `
 func f() { var }
