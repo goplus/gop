@@ -18,4 +18,4 @@
 
 set -ex
 
-go run cmd/install.go
+go run cmd/install.go --install

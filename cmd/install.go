@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -31,16 +32,17 @@ func getcwd() string {
 	return path
 }
 
+func getGopLocalLink() string {
+	path, _ := os.UserHomeDir()
+	return filepath.Join(path, "gop")
+}
+
 var gopRoot = getcwd()
+var gopLocalLink = getGopLocalLink()
 
 func checkPathExist(path string) bool {
 	_, err := os.Stat(path)
 	return !os.IsNotExist(err)
-}
-
-func getGopHomeDir() string {
-	path, _ := os.UserHomeDir()
-	return path + "/gop"
 }
 
 func execCommand(command string, arg ...string) (string, string, error) {
@@ -53,7 +55,7 @@ func execCommand(command string, arg ...string) (string, string, error) {
 }
 
 func getGitInfo() (string, string) {
-	gitDir := gopRoot + "/.git"
+	gitDir := filepath.Join(gopRoot, ".git")
 	noBranch := "nobranch"
 	noCommit := "nocommit"
 
@@ -96,8 +98,23 @@ func getGopBuildFlags() string {
 	return buildFlags
 }
 
+func detectGoBinPath() string {
+	goBin, ok := os.LookupEnv("GOBIN")
+	if ok {
+		return goBin
+	}
+
+	goPath, ok := os.LookupEnv("GOPATH")
+	if ok {
+		return filepath.Join(goPath, "bin")
+	}
+
+	homeDir, _ := os.UserHomeDir()
+	return filepath.Join(homeDir, "go", "bin")
+}
+
 func buildGoplusTools() {
-	commandsDir := gopRoot + "/cmd"
+	commandsDir := filepath.Join(gopRoot, "cmd")
 	if !checkPathExist(commandsDir) {
 		println("Error: This script should be run at the root directory of gop repository.")
 		os.Exit(1)
@@ -108,29 +125,27 @@ func buildGoplusTools() {
 	println("Installing Go+ tools...")
 	os.Chdir(commandsDir)
 	buildOutput, buildErr, err := execCommand("go", "install", "-v", "-ldflags", buildFlags, "./...")
+	println(buildErr)
 	if err != nil {
-		println(err)
+		println(err.Error())
 		os.Exit(1)
 	}
-	println(buildErr)
 	println(buildOutput)
 	println("Go+ tools installed successfully!")
 }
 
-func linkGoplusToHome() {
-	gopHomeDir := getGopHomeDir()
-
-	fmt.Printf("Linking %s to %s\n", gopRoot, gopHomeDir)
+func linkGoplusToLocal() {
+	fmt.Printf("Linking %s to %s\n", gopRoot, gopLocalLink)
 
 	os.Chdir(gopRoot)
-	if gopHomeDir != gopRoot && !checkPathExist(gopHomeDir) {
-		err := os.Symlink(gopRoot, gopHomeDir)
+	if gopLocalLink != gopRoot && !checkPathExist(gopLocalLink) {
+		err := os.Symlink(gopRoot, gopLocalLink)
 		if err != nil {
 			println(err.Error())
 		}
 	}
 
-	fmt.Printf("%s linked to %s successfully!\n", gopRoot, gopHomeDir)
+	fmt.Printf("%s linked to %s successfully!\n", gopRoot, gopLocalLink)
 }
 
 func runTestcases() {
@@ -138,14 +153,7 @@ func runTestcases() {
 	os.Chdir(gopRoot)
 
 	path, _ := os.LookupEnv("PATH")
-	homeDir, _ := os.UserHomeDir()
-
-	goPath, ok := os.LookupEnv("GOPATH")
-	if ok {
-		path += fmt.Sprintf(":%s/bin", goPath)
-	} else {
-		path += fmt.Sprintf(":%s/go/bin", homeDir)
-	}
+	path = fmt.Sprintf("%s:", detectGoBinPath()) + path
 
 	cmd := exec.Command("gop", "test", "-v", "-coverprofile=coverage.txt", "-covermode=atomic", "./...")
 	cmd.Stdout = os.Stdout
@@ -153,33 +161,62 @@ func runTestcases() {
 	cmd.Env = append(os.Environ(), "PATH="+path)
 	err := cmd.Run()
 	if err != nil {
-		println(err)
+		println(err.Error())
 	}
 	println("End running testcases.")
 }
 
 func localInstall() {
 	buildGoplusTools()
-	linkGoplusToHome()
+	linkGoplusToLocal()
 	println("Go+ is now installed.")
 }
 
+func localUninstall() {
+	println("Uninstalling Go+ and related tools.")
+
+	goBinPath := detectGoBinPath()
+	filesToRemove := []string{
+		gopLocalLink,
+		filepath.Join(goBinPath, "gop"),
+		filepath.Join(goBinPath, "gopfmt"),
+		filepath.Join(goBinPath, "goptestgo"),
+	}
+
+	for _, file := range filesToRemove {
+		if !checkPathExist(file) {
+			continue
+		}
+		if err := os.Remove(file); err != nil {
+			println(err.Error())
+		}
+	}
+
+	println("Go+ and related tools uninstalled successfully.")
+}
+
 func main() {
+	isInstall := flag.Bool("install", false, "Install Go+")
 	isBuild := flag.Bool("build", false, "Build the Go+")
 	isTest := flag.Bool("test", false, "Run testcases")
+	isUninstall := flag.Bool("uninstall", false, "Uninstall Go+")
 
 	flag.Parse()
 
-	if !*isBuild && !*isTest {
-		localInstall()
-		return
+	flagActionMap := map[*bool]func(){
+		isInstall:   localInstall,
+		isTest:      runTestcases,
+		isBuild:     buildGoplusTools,
+		isUninstall: localUninstall,
 	}
 
-	if *isBuild {
-		buildGoplusTools()
+	for flag, action := range flagActionMap {
+		if *flag {
+			action()
+			return
+		}
 	}
 
-	if *isTest {
-		runTestcases()
-	}
+	println("Usage:\n")
+	flag.PrintDefaults()
 }
