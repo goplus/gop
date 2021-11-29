@@ -14,46 +14,45 @@
  * limitations under the License.
  */
 
-package run
+package env
 
 import (
+	"log"
 	"os"
 	"path/filepath"
 	"syscall"
-
-	"github.com/goplus/gop/build"
-	"github.com/goplus/gop/cl"
-	"github.com/qiniu/x/log"
 )
 
-const ErrNotFound = syscall.ENOENT
-
-const (
-	ENV_GOPROOT = "GOPROOT"
-	ENV_HOME    = "HOME"
+var (
+	// This is set by the linker.
+	defaultGopRoot string
 )
 
-func findGoModFile(dir string) (modfile string, noCacheFile bool, err error) {
-	modfile, err = cl.FindGoModFile(dir)
-
+func GOPROOT() string {
+	gopRoot, err := findGopRoot()
 	if err != nil {
-		gopRoot, err := findGopRoot()
-		if err == nil {
-			modfile = filepath.Join(gopRoot, "go.mod")
-			return modfile, true, nil
-		}
+		log.Panicln("GOPROOT not found:", err)
 	}
-	return
+	return gopRoot
 }
 
+const (
+	errNotFound = syscall.ENOENT
+)
+
+const (
+	envGOPROOT = "GOPROOT"
+	envHOME    = "HOME"
+)
+
 func findGopRoot() (string, error) {
-	envGopRoot := os.Getenv(ENV_GOPROOT)
+	envGopRoot := os.Getenv(envGOPROOT)
 	if envGopRoot != "" {
 		// GOPROOT must valid
 		if isValidGopRoot(envGopRoot) {
 			return envGopRoot, nil
 		}
-		log.Panicf("\n%s (%s) is not valid\n", ENV_GOPROOT, envGopRoot)
+		log.Panicf("\n%s (%s) is not valid\n", envGOPROOT, envGopRoot)
 	}
 
 	// if parent directory is a valid gop root, use it
@@ -67,12 +66,12 @@ func findGopRoot() (string, error) {
 	}
 
 	// check build.GopRoot, if it is valid, use it
-	if build.GopRoot != "" && isValidGopRoot(build.GopRoot) {
-		return build.GopRoot, nil
+	if defaultGopRoot != "" && isValidGopRoot(defaultGopRoot) {
+		return defaultGopRoot, nil
 	}
 
 	// Compatible with old GOPROOT
-	if home := os.Getenv(ENV_HOME); home != "" {
+	if home := os.Getenv(envHOME); home != "" {
 		gopRoot := filepath.Join(home, "gop")
 		if isValidGopRoot(gopRoot) {
 			return gopRoot, nil
@@ -82,8 +81,7 @@ func findGopRoot() (string, error) {
 			return goplusRoot, nil
 		}
 	}
-
-	return "", ErrNotFound
+	return "", errNotFound
 }
 
 // Mockable for testing.
@@ -106,7 +104,6 @@ func executableRealPath() (path string, err error) {
 	if err != nil {
 		return
 	}
-
 	return
 }
 
@@ -127,6 +124,5 @@ func isValidGopRoot(path string) bool {
 		!isDirExists(filepath.Join(path, "builtin")) {
 		return false
 	}
-
 	return true
 }

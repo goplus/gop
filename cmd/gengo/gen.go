@@ -139,11 +139,16 @@ func (p *Runner) GenGo(dir string, recursive bool, base *cl.Config) {
 var (
 	extPkgFlags = map[string]int{
 		".gop": PkgFlagGoPlus,
-		".spx": PkgFlagSpx,
-		".gmx": PkgFlagGmx,
 		".go":  PkgFlagGo,
 	}
 )
+
+func RegisterPkgFlags(ext string, flag int) {
+	if flag != PkgFlagGmx && flag != PkgFlagSpx {
+		panic("RegisterPkgFlags: flag should be PkgFlagGmx or PkgFlagSpx")
+	}
+	extPkgFlags[ext] = flag
+}
 
 func (p *Runner) GenGoPkg(pkgDir string, base *cl.Config) (err error) {
 	defer func() {

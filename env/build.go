@@ -14,17 +14,26 @@
  * limitations under the License.
  */
 
-package gop
+package env
 
-// buildVersion is the GoPlus tree's version string at build time.
-// This is set by the linker.
-var (
-	buildVersion string = "devel"
+import (
+	"fmt"
 )
 
-// Version returns the GoPlus tree's version string.
-// It is either the commit hash and date at the time of the build or,
-// when possible, a release tag like "v1.0.0-rc1".
-func Version() string {
-	return buildVersion
+// The value of variables come form
+// `go build -ldflags '-X "buildDate=xxxxx" -X "buildBranch=xxxxx" -X "buildCommit=xxxx"'`
+var (
+	buildDate   string
+	buildBranch string
+	buildCommit string
+)
+
+// BuildInfo returns all build information.
+func BuildInfo() string {
+	return fmt.Sprintf("%s(%s) %s", buildBranch, buildCommit, buildDate)
+}
+
+// BuildCommit returns build commit id.
+func BuildCommit() string {
+	return buildCommit
 }

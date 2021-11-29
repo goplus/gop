@@ -17,12 +17,11 @@
 package cl
 
 import (
+	goast "go/ast"
 	"go/constant"
 	"go/types"
 	"path/filepath"
 	"strings"
-
-	goast "go/ast"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/parser"
@@ -40,8 +39,6 @@ type gmxInfo struct {
 var (
 	gmxTypes = map[string]gmxInfo{
 		".gmx": {".spx", []string{"github.com/goplus/spx", "math"}},
-		".spc": {"", []string{"github.com/qbox/gopla/spc", "github.com/goplus/spx", "math"}},
-		// TODO: dynamic register
 	}
 )
 

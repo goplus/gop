@@ -25,16 +25,18 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/qiniu/x/log"
+	"golang.org/x/tools/go/packages"
+
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/cmd/internal/modload"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
-	"github.com/qiniu/x/log"
-	"golang.org/x/tools/go/packages"
 )
 
 // -----------------------------------------------------------------------------
@@ -125,6 +127,7 @@ func runCmd(cmd *base.Command, args []string) {
 	if isDir {
 		srcDir = src
 		gofile = src + "/gop_autogen.go"
+		modload.Load()
 		isDirty = true // TODO: check if code changed
 		if isDirty {
 			pkgs, err = parser.ParseDir(fset, src, nil, parserMode)
@@ -133,6 +136,7 @@ func runCmd(cmd *base.Command, args []string) {
 		}
 	} else {
 		srcDir, file = filepath.Split(src)
+		modload.Load()
 		isGo := filepath.Ext(file) == ".go"
 		if isGo {
 			hash := sha1.Sum([]byte(src))

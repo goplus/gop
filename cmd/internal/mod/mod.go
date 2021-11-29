@@ -13,29 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package build
+package mod
 
 import (
-	"fmt"
+	"github.com/goplus/gop/cmd/internal/base"
 )
 
-// The value of variables come form `go build -ldflags '-X "build.Date=xxxxx" -X "build.CommitID=xxxx"' `
-var (
-	// Date build time
-	Date string
-	// Branch current git branch
-	Branch string
-	// Commit git commit id
-	Commit string
-	// Default GOPROOT
-	GopRoot string
-)
+var Cmd = &base.Command{
+	UsageLine: "gop mod",
+	Short:     "module maintenance",
 
-// Build information
-func Build() string {
-	//if Date == "" {
-	//	return ""
-	//}
-	return fmt.Sprintf("%s(%s) %s", Branch, Commit, Date)
+	Commands: []*base.Command{
+		cmdInit,
+		cmdDownload,
+		cmdTidy,
+	},
 }

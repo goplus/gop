@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package run
+package env
 
 import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/goplus/gop/build"
 )
 
 // Common testing directory structure:
