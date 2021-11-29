@@ -22,10 +22,10 @@ jobs:
         go-version: ${{ matrix.go-version }}
 
     - name: Compile gop and related tools
-      run: go run cmd/install.go --build
+      run: go install ./...
 
     - name: Run testcases
-      run: go run cmd/install.go --test
+      run: go test -v -covermode=atomic ./...
 
     - name: Codecov
       uses: codecov/codecov-action@v2
