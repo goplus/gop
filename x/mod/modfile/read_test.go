@@ -23,7 +23,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
-	"runtime"
 	"strings"
 	"testing"
 )
@@ -31,9 +30,6 @@ import (
 // Test that reading and then writing the golden files
 // does not change their output.
 func TestPrintGolden(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		return // TODO: how to pass this testcase in windows
-	}
 	outs, err := filepath.Glob("testdata/*.golden")
 	if err != nil {
 		t.Fatal(err)
@@ -154,9 +150,6 @@ func TestParseLax(t *testing.T) {
 // and printed and parsed again, we get the same parse tree
 // both times.
 func TestPrintParse(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		return // TODO: how to pass this testcase in windows
-	}
 	outs, err := filepath.Glob("testdata/*")
 	if err != nil {
 		t.Fatal(err)
