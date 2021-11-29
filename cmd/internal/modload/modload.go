@@ -256,13 +256,18 @@ func fixGoVersion(fixed *bool) gomodfile.VersionFixer {
 // As a side-effect, LoadModFile may change cfg.BuildMod to "vendor" if
 // -mod wasn't set explicitly and automatic vendoring should be enabled.
 func LoadModFile() {
-	Init()
-	// if modRoot == "" {
-	// 	Target = module.Version{Path: "command-line-arguments"}
-	// 	targetPrefix = "command-line-arguments"
-	// 	buildList = []module.Version{Target}
-	// 	return
-	// }
+	if !HasModRoot() {
+		// If gop.mod does not exist, then modroot does not exist,
+		// and if go.mod exists in the current directory,
+		// then a copy of go.mod will be synchronized to gop.mod
+		cwd := getcwd()
+		gomod := filepath.Join(cwd, "go.mod")
+		if _, err := os.Stat(gomod); err == nil {
+			modRoot = cwd
+			SyncGopMod()
+		}
+		return
+	}
 
 	gopmod := GopModFilePath()
 	data, err := modfetch.Read(gopmod)
@@ -429,6 +434,10 @@ func SyncGopMod() {
 		}
 	}
 
+	if modFile == nil {
+		modFile = &modfile.File{}
+		modFile.AddModuleStmt(gomod.Module.Mod.Path)
+	}
 	if gomod.Go != nil {
 		modFile.AddGoStmt(gomod.Go.Version)
 	}
