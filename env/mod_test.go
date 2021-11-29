@@ -64,8 +64,8 @@ func TestGOPATH(t *testing.T) {
 		t.Fatal("TestGOPATH failed:", gopath)
 	}
 
-	os.Setenv(envHOME, "")
 	os.Setenv("GOPATH", "")
+	os.Setenv(envHOME, "")
 	defer os.Setenv(envHOME, home)
 	if gopath := GOPATH(); gopath != "" {
 		t.Fatal("TestGOPATH failed:", gopath)
@@ -88,9 +88,9 @@ func TestGOMODCACHE(t *testing.T) {
 
 	os.Setenv("GOMODCACHE", "")
 	os.Setenv("GOPATH", "")
-	os.Setenv(envHOME, strings.TrimRight(runtime.GOROOT(), "go"))
 	home := os.Getenv(envHOME)
 	defer os.Setenv(envHOME, home)
+	os.Setenv(envHOME, strings.TrimRight(runtime.GOROOT(), "go"))
 	modcache = GOMODCACHE()
 	if modcache != "" {
 		t.Fatal("TestGOMODCACHE (GOROOT) failed:", modcache)
