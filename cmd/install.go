@@ -30,7 +30,6 @@ import (
 	"time"
 
 	"github.com/goplus/gop/env"
-	"golang.org/x/mod/semver"
 )
 
 func getcwd() string {
@@ -76,12 +75,12 @@ func getRevCommit(tag string) string {
 	return strings.TrimRight(commit, "\n")
 }
 
-func getGitInfo() (string, string, bool) {
+func getGitInfo() (string, bool) {
 	gitDir := filepath.Join(gopRoot, ".git")
 	if checkPathExist(gitDir) {
-		return getBuildBranch(), getRevCommit("HEAD"), true
+		return getRevCommit("HEAD"), true
 	}
-	return "", "", false
+	return "", false
 }
 
 func getBuildDateTime() string {
@@ -89,49 +88,30 @@ func getBuildDateTime() string {
 	return now.Format("2006-01-02_15-04-05")
 }
 
-func getLatestTag() string {
+func findTag(commit string) string {
 	tagRet, tagErr, err := execCommand("git", "tag")
 	if err != nil || tagErr != "" {
 		return ""
 	}
-	var tags []string
 	var prefix = "v" + env.MainVersion + "."
 	for _, tag := range strings.Split(tagRet, "\n") {
 		if strings.HasPrefix(tag, prefix) {
-			tags = append(tags, tag)
+			if getRevCommit(tag) == commit {
+				return tag
+			}
 		}
-	}
-	if len(tags) < 1 {
-		return ""
-	}
-	semver.Sort(tags)
-	return tags[len(tags)-1]
-}
-
-func getBuildVer(headCommit string) string {
-	if headCommit == "" {
-		return ""
-	}
-	lastTag := getLatestTag()
-	if lastTag == "" {
-		return ""
-	}
-	lastTagCommit := getRevCommit(lastTag)
-	if lastTagCommit == "" {
-		return ""
-	}
-	if headCommit == lastTagCommit {
-		return lastTag
 	}
 	return ""
 }
 
 func getGopBuildFlags() string {
 	buildFlags := fmt.Sprintf("-X github.com/goplus/gop/env.buildDate=%s", getBuildDateTime())
-	if branch, commit, ok := getGitInfo(); ok {
+	if commit, ok := getGitInfo(); ok {
 		buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildCommit=%s", commit)
-		buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildBranch=%s", branch)
-		if buildVer := getBuildVer(commit); buildVer != "" {
+		if branch := getBuildBranch(); branch != "" {
+			buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildBranch=%s", branch)
+		}
+		if buildVer := findTag(commit); buildVer != "" {
 			buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildVersion=%s", buildVer)
 		}
 	}
