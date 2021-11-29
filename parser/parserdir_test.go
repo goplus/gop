@@ -22,7 +22,6 @@ import (
 	"os"
 	"path"
 	"reflect"
-	"runtime"
 	"strings"
 	"testing"
 
@@ -122,9 +121,6 @@ func TestParseGo(t *testing.T) {
 }
 
 func TestFromTestdata(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		return // TODO: how to pass this testcase in windows
-	}
 	sel := ""
 	dir, err := os.Getwd()
 	if err != nil {
