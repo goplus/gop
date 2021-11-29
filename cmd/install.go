@@ -154,7 +154,7 @@ func getGopBuildFlags() string {
 	buildFlags += fmt.Sprintf("-X github.com/goplus/gop/env.buildCommit=%s ", commit)
 	buildFlags += fmt.Sprintf("-X github.com/goplus/gop/env.buildBranch=%s", branch)
 	if buildVer != "" {
-		buildFlags += fmt.Sprintf("-X github.com/goplus/gop/env.buildVersion=%s", buildVer)
+		buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildVersion=%s", buildVer)
 	}
 	return buildFlags
 }
