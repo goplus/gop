@@ -31,7 +31,7 @@ var (
 )
 
 func init() {
-	if buildVersion != "" && !strings.HasPrefix(buildVersion, MainVersion+".") {
+	if buildVersion != "" && !strings.HasPrefix(buildVersion, "v"+MainVersion+".") {
 		panic("Invalid buildVersion: " + buildVersion)
 	}
 }
@@ -41,7 +41,7 @@ func init() {
 // when possible, a release tag like "v1.0.0-rc1".
 func Version() string {
 	if buildVersion == "" {
-		return MainVersion + ".x"
+		return "v" + MainVersion + ".x"
 	}
 	return buildVersion
 }

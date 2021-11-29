@@ -1,3 +1,6 @@
+//go:build ignore
+// +build ignore
+
 /*
  * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
  *
@@ -25,6 +28,9 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/goplus/gop/env"
+	"golang.org/x/mod/semver"
 )
 
 func getcwd() string {
@@ -85,13 +91,71 @@ func getBuildDateTime() string {
 	return now.Format("2006-01-02_15-04-05")
 }
 
+func getLatestTag() string {
+	tagRet, tagErr, err := execCommand("git", "tag")
+	if err != nil || tagErr != "" {
+		return ""
+	}
+	var tags []string
+	var prefix = "v" + env.MainVersion + "."
+	for _, tag := range strings.Split(tagRet, "\n") {
+		if strings.HasPrefix(tag, prefix) {
+			tags = append(tags, tag)
+		}
+	}
+	if len(tags) < 1 {
+		return ""
+	}
+	semver.Sort(tags)
+	return tags[len(tags)-1]
+}
+
+func getCommit(text string) string {
+	const prefix = "commit "
+	if strings.HasPrefix(text, prefix) {
+		return text[len(prefix) : len(prefix)+40]
+	}
+	return ""
+}
+
+func getBuildVer() string {
+	lastTag := getLatestTag()
+	if lastTag == "" {
+		return ""
+	}
+	logHead, logErr, err := execCommand("git", "log", "-n", "1")
+	if err != nil || logErr != "" {
+		return ""
+	}
+	headCommit := getCommit(logHead)
+	if headCommit == "" {
+		return ""
+	}
+	showRet, showErr, err := execCommand("git", "show", lastTag)
+	if err != nil || showErr != "" {
+		return ""
+	}
+	lastTagCommit := getCommit(showRet)
+	if lastTagCommit == "" {
+		return ""
+	}
+	if headCommit == lastTagCommit {
+		return lastTag
+	}
+	return ""
+}
+
 func getGopBuildFlags() string {
 	branch, commit := getGitInfo()
 	buildDateTime := getBuildDateTime()
+	buildVer := getBuildVer()
 
 	buildFlags := fmt.Sprintf("-X github.com/goplus/gop/env.buildDate=%s ", buildDateTime)
 	buildFlags += fmt.Sprintf("-X github.com/goplus/gop/env.buildCommit=%s ", commit)
 	buildFlags += fmt.Sprintf("-X github.com/goplus/gop/env.buildBranch=%s", branch)
+	if buildVer != "" {
+		buildFlags += fmt.Sprintf("-X github.com/goplus/gop/env.buildVersion=%s", buildVer)
+	}
 	return buildFlags
 }
 
@@ -118,14 +182,6 @@ func buildGoplusTools() {
 	}
 
 	buildFlags := getGopBuildFlags()
-	goBinPath := detectGoBinPath()
-
-	// If same name file exists, backup it.
-	cmdBinPath := filepath.Join(goBinPath, "cmd")
-	cmdBackupBinPath := filepath.Join(goBinPath, "cmd-backup-gop")
-	if checkPathExist(cmdBinPath) {
-		os.Rename(cmdBinPath, cmdBackupBinPath)
-	}
 
 	println("Installing Go+ tools...")
 	os.Chdir(commandsDir)
@@ -136,15 +192,6 @@ func buildGoplusTools() {
 		os.Exit(1)
 	}
 	println(buildOutput)
-
-	// Remove unwanted cmd binary file.
-	if checkPathExist(cmdBinPath) {
-		os.Remove(cmdBinPath)
-	}
-	// Restore the backup file if exists.
-	if checkPathExist(cmdBackupBinPath) {
-		os.Rename(cmdBackupBinPath, cmdBinPath)
-	}
 
 	println("Go+ tools installed successfully!")
 }
