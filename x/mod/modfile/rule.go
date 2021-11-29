@@ -661,63 +661,6 @@ func (f *File) fixRetract(fix VersionFixer, errs *ErrorList) {
 	}
 }
 
-func (f *WorkFile) add(errs *ErrorList, line *Line, verb string, args []string, fix VersionFixer) {
-	wrapError := func(err error) {
-		*errs = append(*errs, Error{
-			Filename: f.Syntax.Name,
-			Pos:      line.Start,
-			Err:      err,
-		})
-	}
-	errorf := func(format string, args ...interface{}) {
-		wrapError(fmt.Errorf(format, args...))
-	}
-
-	switch verb {
-	default:
-		errorf("unknown directive: %s", verb)
-
-	case "go":
-		if f.Go != nil {
-			errorf("repeated go statement")
-			return
-		}
-		if len(args) != 1 {
-			errorf("go directive expects exactly one argument")
-			return
-		} else if !GoVersionRE.MatchString(args[0]) {
-			errorf("invalid go version '%s': must match format 1.23", args[0])
-			return
-		}
-
-		f.Go = &Go{Syntax: line}
-		f.Go.Version = args[0]
-
-	case "use":
-		if len(args) != 1 {
-			errorf("usage: %s local/dir", verb)
-			return
-		}
-		s, err := parseString(&args[0])
-		if err != nil {
-			errorf("invalid quoted string: %v", err)
-			return
-		}
-		f.Use = append(f.Use, &Use{
-			Path:   s,
-			Syntax: line,
-		})
-
-	case "replace":
-		replace, wrappederr := parseReplace(f.Syntax.Name, line, verb, args, fix)
-		if wrappederr != nil {
-			*errs = append(*errs, *wrappederr)
-			return
-		}
-		f.Replace = append(f.Replace, replace)
-	}
-}
-
 // IsDirectoryPath reports whether the given path should be interpreted
 // as a directory path. Just like on the go command line, relative paths
 // and rooted paths are directory paths; the rest are module paths.
