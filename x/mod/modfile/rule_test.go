@@ -717,9 +717,9 @@ var addGopTests = []struct {
 		`module_only`,
 		`module m
 		`,
-		`1.0.14`,
+		`1.0`,
 		`module m
-		gop 1.0.14
+		gop 1.0
 		`,
 	},
 	{
@@ -727,9 +727,9 @@ var addGopTests = []struct {
 		`module m
 		require x.y/a v1.2.3
 		`,
-		`1.0.14`,
+		`1.0`,
 		`module m
-		gop 1.0.14
+		gop 1.0
 		require x.y/a v1.2.3
 		`,
 	},
@@ -738,19 +738,19 @@ var addGopTests = []struct {
 		`require x.y/a v1.2.3
 		module example.com/inverted
 		`,
-		`1.0.14`,
+		`1.0`,
 		`require x.y/a v1.2.3
 		module example.com/inverted
-		gop 1.0.14
+		gop 1.0
 		`,
 	},
 	{
 		`require_only`,
 		`require x.y/a v1.2.3
 		`,
-		`1.0.14`,
+		`1.0`,
 		`require x.y/a v1.2.3
-		gop 1.0.14
+		gop 1.0
 		`,
 	},
 }
