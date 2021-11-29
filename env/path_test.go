@@ -20,7 +20,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 
 	"github.com/goplus/gop/cl"
@@ -122,16 +121,16 @@ func TestFindGoModFileInGoModDir(t *testing.T) {
 }
 
 func TestFindGoModFileInGopRoot(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		return // TODO: how to pass this testcase in windows
-	}
-
+	originDir, _ := os.Getwd()
 	origiExecutable := executable
+	home := filepath.Join(os.TempDir(), "test_home")
+	os.Mkdir(home, 0755)
 	t.Cleanup(func() {
+		os.Chdir(originDir)
+		os.RemoveAll(home)
 		executable = origiExecutable
 	})
 
-	home := t.TempDir()
 	bin := filepath.Join(home, "bin")
 
 	// Don't find go.mod in gop source dir when testing
