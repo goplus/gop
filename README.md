@@ -34,7 +34,7 @@ What are mainly impressions about Go+?
 
 - A static typed language.
 - Fully compatible with [the Go language](https://github.com/golang/go).
-- Script-like style, and more readable code for data science than Go.
+- Script-like style, and more readable code than Go.
 
 For example, the following is legal Go+ source code:
 
