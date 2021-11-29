@@ -50,9 +50,12 @@ func findModuleRoot(dir string) (root string) {
 	}
 	dir = filepath.Clean(dir)
 
-	// Look for enclosing gop.mod.
+	// Look for enclosing gop.mod or go.mod.
 	for {
 		if fi, err := os.Stat(filepath.Join(dir, "gop.mod")); err == nil && !fi.IsDir() {
+			return dir
+		}
+		if fi, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil && !fi.IsDir() {
 			return dir
 		}
 		d := filepath.Dir(dir)
@@ -256,20 +259,18 @@ func fixGoVersion(fixed *bool) gomodfile.VersionFixer {
 // As a side-effect, LoadModFile may change cfg.BuildMod to "vendor" if
 // -mod wasn't set explicitly and automatic vendoring should be enabled.
 func LoadModFile() {
-	if !HasModRoot() {
-		// If gop.mod does not exist, then modroot does not exist,
-		// and if go.mod exists in the current directory,
-		// then a copy of go.mod will be synchronized to gop.mod
-		cwd := getcwd()
-		gomod := filepath.Join(cwd, "go.mod")
+	Init()
+	// If gop.mod does not exist, then modroot does not exist,
+	// and if go.mod exists then a copy of go.mod will be synchronized to gop.mod
+	gopmod := GopModFilePath()
+	gomod := GoModFilePath()
+	if _, err := os.Stat(gopmod); os.IsNotExist(err) {
 		if _, err := os.Stat(gomod); err == nil {
-			modRoot = cwd
 			SyncGopMod()
 		}
 		return
 	}
 
-	gopmod := GopModFilePath()
 	data, err := modfetch.Read(gopmod)
 	if err != nil {
 		log.Fatalf("gop: %v", err)
