@@ -60,30 +60,28 @@ func execCommand(command string, arg ...string) (string, string, error) {
 	return stdout.String(), stderr.String(), err
 }
 
-func getGitInfo() (string, string) {
-	gitDir := filepath.Join(gopRoot, ".git")
-	noBranch := "nobranch"
-	noCommit := "nocommit"
-
-	if checkPathExist(gitDir) {
-		branch, stderr, _ := execCommand("git", "branch", "--show-current")
-		if len(stderr) > 0 {
-			println(stderr)
-			branch = noBranch
-		} else {
-			branch = strings.TrimRight(branch, "\n")
-		}
-
-		commit, stderr, _ := execCommand("git", "rev-parse", "--verify", "HEAD")
-		if len(stderr) > 0 {
-			println(stderr)
-			commit = noCommit
-		} else {
-			commit = strings.TrimRight(commit, "\n")
-		}
-		return branch, commit
+func getBuildBranch() string {
+	branch, stderr, err := execCommand("git", "branch", "--show-current")
+	if err != nil || stderr != "" {
+		return ""
 	}
-	return noBranch, noCommit
+	return strings.TrimRight(branch, "\n")
+}
+
+func getRevCommit(tag string) string {
+	commit, stderr, err := execCommand("git", "rev-parse", "--verify", tag)
+	if err != nil || stderr != "" {
+		return ""
+	}
+	return strings.TrimRight(commit, "\n")
+}
+
+func getGitInfo() (string, string, bool) {
+	gitDir := filepath.Join(gopRoot, ".git")
+	if checkPathExist(gitDir) {
+		return getBuildBranch(), getRevCommit("HEAD"), true
+	}
+	return "", "", false
 }
 
 func getBuildDateTime() string {
@@ -110,32 +108,15 @@ func getLatestTag() string {
 	return tags[len(tags)-1]
 }
 
-func getCommit(text string) string {
-	const prefix = "commit "
-	if strings.HasPrefix(text, prefix) {
-		return text[len(prefix) : len(prefix)+40]
+func getBuildVer(headCommit string) string {
+	if headCommit == "" {
+		return ""
 	}
-	return ""
-}
-
-func getBuildVer() string {
 	lastTag := getLatestTag()
 	if lastTag == "" {
 		return ""
 	}
-	logHead, logErr, err := execCommand("git", "log", "-n", "1")
-	if err != nil || logErr != "" {
-		return ""
-	}
-	headCommit := getCommit(logHead)
-	if headCommit == "" {
-		return ""
-	}
-	showRet, showErr, err := execCommand("git", "show", lastTag)
-	if err != nil || showErr != "" {
-		return ""
-	}
-	lastTagCommit := getCommit(showRet)
+	lastTagCommit := getRevCommit(lastTag)
 	if lastTagCommit == "" {
 		return ""
 	}
@@ -146,15 +127,13 @@ func getBuildVer() string {
 }
 
 func getGopBuildFlags() string {
-	branch, commit := getGitInfo()
-	buildDateTime := getBuildDateTime()
-	buildVer := getBuildVer()
-
-	buildFlags := fmt.Sprintf("-X github.com/goplus/gop/env.buildDate=%s ", buildDateTime)
-	buildFlags += fmt.Sprintf("-X github.com/goplus/gop/env.buildCommit=%s ", commit)
-	buildFlags += fmt.Sprintf("-X github.com/goplus/gop/env.buildBranch=%s", branch)
-	if buildVer != "" {
-		buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildVersion=%s", buildVer)
+	buildFlags := fmt.Sprintf("-X github.com/goplus/gop/env.buildDate=%s", getBuildDateTime())
+	if branch, commit, ok := getGitInfo(); ok {
+		buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildCommit=%s", commit)
+		buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildBranch=%s", branch)
+		if buildVer := getBuildVer(commit); buildVer != "" {
+			buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildVersion=%s", buildVer)
+		}
 	}
 	return buildFlags
 }
