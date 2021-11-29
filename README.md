@@ -23,15 +23,8 @@ cd gop
 ./all.bash
 ```
 
-Actually, `all.bash` script will use `cmd/install.go` underneath.
+Actually, `all.bash` script will use `go run cmd/install.go` underneath.
 
-If you live outside of China, you could just run `cmd/install.go` directly, such as:
-
-```bash
-go run cmd/install.go --install
-```
-
-Type `go run cmd/install.go` for more details.
 
 ## Code style (important)
 
