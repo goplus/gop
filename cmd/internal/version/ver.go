@@ -42,7 +42,11 @@ func init() {
 }
 
 func runCmd(cmd *base.Command, args []string) {
-	fmt.Println("gop", env.Version(), env.BuildInfo(), runtime.GOOS+"/"+runtime.GOARCH)
+	commit := env.BuildCommit()
+	if commit != "" {
+		commit = commit[:7]
+	}
+	fmt.Printf("gop %s(%s) %s/%s\n", env.Version(), commit, runtime.GOOS, runtime.GOARCH)
 }
 
 // -----------------------------------------------------------------------------
