@@ -25,12 +25,16 @@ import (
 	"github.com/goplus/gop/cmd/internal/env"
 )
 
+var (
+	GOMODCACHE = env.GOMODCACHE()
+)
+
 func cacheDir(path string) (string, error) {
 	enc, err := module.EscapePath(path)
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(env.GOMODCACHE, "cache/download", enc, "/@v"), nil
+	return filepath.Join(GOMODCACHE, "cache/download", enc, "/@v"), nil
 }
 
 func CachePath(m module.Version, suffix string) (string, error) {
