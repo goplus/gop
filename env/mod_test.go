@@ -17,8 +17,15 @@
 package env
 
 import (
+	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
+)
+
+const (
+	sep = string(os.PathSeparator)
 )
 
 func TestGopMod(t *testing.T) {
@@ -26,14 +33,66 @@ func TestGopMod(t *testing.T) {
 	if err != nil {
 		t.Fatal("GOPMOD failed:", err)
 	}
-	if !strings.HasSuffix(file, "gop/go.mod") {
+	if !strings.HasSuffix(file, "gop"+sep+"go.mod") {
 		t.Fatal("GOPMOD failed:", file)
 	}
 	file, err = GOPMOD("../cl/internal/spx")
 	if err != nil {
 		t.Fatal("GOPMOD spx failed:", err)
 	}
-	if !strings.HasSuffix(file, "cl/internal/gop.mod") {
+	if !strings.HasSuffix(file, "cl"+sep+"internal"+sep+"gop.mod") {
 		t.Fatal("GOPMOD spx failed:", file)
+	}
+}
+
+func TestGOPATH(t *testing.T) {
+	os.Setenv("GOPATH", "")
+	gopath := GOPATH()
+	home := os.Getenv(envHOME)
+	expect := filepath.Join(home, "go")
+	if expect == filepath.Clean(runtime.GOROOT()) {
+		if gopath != "" {
+			t.Fatal("TestGOPATH failed:", gopath)
+		}
+	} else if gopath != expect {
+		t.Fatal("TestGOPATH failed:", gopath)
+	}
+	const ugopath = "/abc/work"
+	os.Setenv("GOPATH", ugopath)
+	gopath = GOPATH()
+	if gopath != ugopath {
+		t.Fatal("TestGOPATH failed:", gopath)
+	}
+
+	os.Setenv(envHOME, "")
+	os.Setenv("GOPATH", "")
+	defer os.Setenv(envHOME, home)
+	if gopath := GOPATH(); gopath != "" {
+		t.Fatal("TestGOPATH failed:", gopath)
+	}
+}
+
+func TestGOMODCACHE(t *testing.T) {
+	gopath := GOPATH()
+	os.Setenv("GOMODCACHE", "")
+	modcache := GOMODCACHE()
+	if filepath.Join(gopath, "pkg/mod") != modcache {
+		t.Fatal("TestGOMODCACHE failed:", modcache)
+	}
+	const umodcache = "/abc/mod"
+	os.Setenv("GOMODCACHE", umodcache)
+	modcache = GOMODCACHE()
+	if modcache != umodcache {
+		t.Fatal("TestGOMODCACHE (umodcache) failed:", modcache)
+	}
+
+	os.Setenv("GOMODCACHE", "")
+	os.Setenv("GOPATH", "")
+	os.Setenv(envHOME, strings.TrimRight(runtime.GOROOT(), "go"))
+	home := os.Getenv(envHOME)
+	defer os.Setenv(envHOME, home)
+	modcache = GOMODCACHE()
+	if modcache != "" {
+		t.Fatal("TestGOMODCACHE (GOROOT) failed:", modcache)
 	}
 }

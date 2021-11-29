@@ -49,7 +49,7 @@ func defaultGOPATH() string {
 func GOMODCACHE() string {
 	val := os.Getenv("GOMODCACHE")
 	if val == "" {
-		val = gopathJoin("pkg/mod")
+		return gopathJoin("pkg/mod")
 	}
 	return val
 }

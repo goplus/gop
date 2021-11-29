@@ -16,18 +16,6 @@
 
 package env
 
-import "runtime"
-
-func _envHOME() string {
-	switch runtime.GOOS {
-	case "windows":
-		return "USERPROFILE"
-	case "plan9":
-		return "home"
-	}
-	return "HOME"
-}
-
-var (
-	envHOME = _envHOME()
+const (
+	envHOME = "home"
 )
