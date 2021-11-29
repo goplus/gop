@@ -75,10 +75,8 @@ func getGitInfo() (string, string) {
 		} else {
 			commit = strings.TrimRight(commit, "\n")
 		}
-
 		return branch, commit
 	}
-
 	return noBranch, noCommit
 }
 
@@ -91,10 +89,9 @@ func getGopBuildFlags() string {
 	branch, commit := getGitInfo()
 	buildDateTime := getBuildDateTime()
 
-	buildFlags := fmt.Sprintf("-X github.com/goplus/gop/build.Date=%s ", buildDateTime)
-	buildFlags += fmt.Sprintf("-X github.com/goplus/gop/build.Commit=%s ", commit)
-	buildFlags += fmt.Sprintf("-X github.com/goplus/gop/build.Branch=%s", branch)
-
+	buildFlags := fmt.Sprintf("-X github.com/goplus/gop/env.buildDate=%s ", buildDateTime)
+	buildFlags += fmt.Sprintf("-X github.com/goplus/gop/env.buildCommit=%s ", commit)
+	buildFlags += fmt.Sprintf("-X github.com/goplus/gop/env.buildBranch=%s", branch)
 	return buildFlags
 }
 

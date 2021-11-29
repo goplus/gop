@@ -22,16 +22,15 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strconv"
 
 	gomodfile "golang.org/x/mod/modfile"
 	"golang.org/x/mod/module"
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/gengo"
-	"github.com/goplus/gop/cmd/internal/minorver"
 	"github.com/goplus/gop/cmd/internal/modfetch"
 	"github.com/goplus/gop/cmd/internal/search"
+	"github.com/goplus/gop/env"
 	"github.com/goplus/gop/x/mod/modfile"
 )
 
@@ -41,11 +40,6 @@ var (
 	initialized bool
 	modRoot     string
 	Target      module.Version
-	// targetPrefix is the path prefix for packages in Target, without a trailing
-	// slash. For most modules, targetPrefix is just Target.Path, but the
-	// standard-library module "std" has an empty prefix.
-	targetPrefix string
-	buildList    []module.Version
 )
 
 var ErrNoModRoot = errors.New("gop.mod file not found in current directory or any parent directory; see 'gop help modules'")
@@ -298,7 +292,7 @@ func addGopStmt() {
 	if modFile.Gop != nil && modFile.Gop.Version != "" {
 		return
 	}
-	version := "1." + strconv.Itoa(minorver.Version)
+	version := env.MainVersion
 	if !modfile.GopVersionRE.MatchString(version) {
 		log.Fatalf("gop: unrecognized default version %q", version)
 	}
@@ -347,6 +341,9 @@ func SyncGoMod() {
 	gomod := &gomodfile.File{}
 	if _, err := os.Stat(gomodPath); err == nil {
 		data, err := modfetch.Read(gomodPath)
+		if err != nil {
+			log.Fatalln(err)
+		}
 		var fixed bool
 		gomod, err = gomodfile.Parse(gomodPath, data, fixGoVersion(&fixed))
 		if err != nil {
@@ -421,6 +418,9 @@ func SyncGopMod() {
 	gomod := &gomodfile.File{}
 	if _, err := os.Stat(gomodPath); err == nil {
 		data, err := modfetch.Read(gomodPath)
+		if err != nil {
+			log.Fatalln(err)
+		}
 		var fixed bool
 		gomod, err = gomodfile.Parse(gomodPath, data, fixGoVersion(&fixed))
 		if err != nil {

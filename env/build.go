@@ -14,26 +14,21 @@
  * limitations under the License.
  */
 
-package build
+package env
 
 import (
 	"fmt"
 )
 
-// The value of variables come form `go build -ldflags '-X "build.Date=xxxxx" -X "build.CommitID=xxxx"' `
+// The value of variables come form
+// `go build -ldflags '-X "buildDate=xxxxx" -X "buildBranch=xxxxx" -X "buildCommit=xxxx"'`
 var (
-	// Date build time
-	Date string
-	// Branch current git branch
-	Branch string
-	// Commit git commit id
-	Commit string
+	buildDate   string
+	buildBranch string
+	buildCommit string
 )
 
-// Build information
-func Build() string {
-	//if Date == "" {
-	//	return ""
-	//}
-	return fmt.Sprintf("%s(%s) %s", Branch, Commit, Date)
+// BuildInfo returns all build information.
+func BuildInfo() string {
+	return fmt.Sprintf("%s(%s) %s", buildBranch, buildCommit, buildDate)
 }

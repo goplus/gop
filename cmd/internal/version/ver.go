@@ -20,9 +20,8 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/goplus/gop"
-	"github.com/goplus/gop/build"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/env"
 )
 
 // -----------------------------------------------------------------------------
@@ -43,7 +42,7 @@ func init() {
 }
 
 func runCmd(cmd *base.Command, args []string) {
-	fmt.Println("gop", gop.Version(), build.Build(), runtime.GOOS+"/"+runtime.GOARCH)
+	fmt.Println("gop", env.Version(), env.BuildInfo(), runtime.GOOS+"/"+runtime.GOARCH)
 }
 
 // -----------------------------------------------------------------------------
