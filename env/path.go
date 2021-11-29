@@ -91,18 +91,11 @@ var executable = func() (string, error) {
 
 func executableRealPath() (path string, err error) {
 	path, err = executable()
-	if err != nil {
-		return
-	}
-
-	path, err = filepath.EvalSymlinks(path)
-	if err != nil {
-		return
-	}
-
-	path, err = filepath.Abs(path)
-	if err != nil {
-		return
+	if err == nil {
+		path, err = filepath.EvalSymlinks(path)
+		if err == nil {
+			path, err = filepath.Abs(path)
+		}
 	}
 	return
 }
