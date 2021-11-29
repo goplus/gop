@@ -183,7 +183,7 @@ func TestFindGoModFileInGopRoot(t *testing.T) {
 		findGoModFile(src)
 	})
 
-	t.Run("set build.GopRoot to a valid goproot path", func(tt *testing.T) {
+	t.Run("set defaultGopRoot to a valid goproot path", func(tt *testing.T) {
 		tt.Cleanup(cleanupAll)
 		_, src, gopRoot := makeTestDir(tt)
 
@@ -191,11 +191,11 @@ func TestFindGoModFileInGopRoot(t *testing.T) {
 		modfile, noCacheFile, err := findGoModFile(src)
 
 		if err != nil || modfile != filepath.Join(gopRoot, "go.mod") || !noCacheFile {
-			tt.Fatal("should found go.mod in the dir of build.GopRoot, got:", modfile, noCacheFile, err)
+			tt.Fatal("should found go.mod in the dir of defaultGopRoot, got:", modfile, noCacheFile, err)
 		}
 	})
 
-	t.Run("set build.GopRoot to an invalid path", func(tt *testing.T) {
+	t.Run("set defaultGopRoot to an invalid path", func(tt *testing.T) {
 		tt.Cleanup(cleanupAll)
 		root, src, _ := makeTestDir(tt)
 		invalidGopRoot := filepath.Join(root, "invalid_goproot")
@@ -205,7 +205,7 @@ func TestFindGoModFileInGopRoot(t *testing.T) {
 			modfile, noCacheFile, err := findGoModFile(src)
 
 			if err == nil || noCacheFile || modfile != "" {
-				tt.Fatal("should not found go.mod when build.GopRoot isn't exists, got:", modfile, noCacheFile, err)
+				tt.Fatal("should not found go.mod when defaultGopRoot isn't exists, got:", modfile, noCacheFile, err)
 			}
 		}
 
@@ -214,7 +214,7 @@ func TestFindGoModFileInGopRoot(t *testing.T) {
 			modfile, noCacheFile, err := findGoModFile(src)
 
 			if err == nil || noCacheFile || modfile != "" {
-				tt.Fatal("should not found go.mod when build.GopRoot isn't an valid gop root dir, got:", modfile, noCacheFile, err)
+				tt.Fatal("should not found go.mod when defaultGopRoot isn't an valid gop root dir, got:", modfile, noCacheFile, err)
 			}
 		}
 	})
@@ -313,7 +313,7 @@ func TestFindGoModFileInGopRoot(t *testing.T) {
 			}
 		})
 
-		tt.Run("set build.GopRoot to an invalid gop root dir", func(tt *testing.T) {
+		tt.Run("set defaultGopRoot to an invalid gop root dir", func(tt *testing.T) {
 			gopRoot := filepath.Join(root, "gop")
 
 			defaultGopRoot = filepath.Join(root, "invalid_goproot")
@@ -324,7 +324,7 @@ func TestFindGoModFileInGopRoot(t *testing.T) {
 			}
 		})
 
-		tt.Run("set build.GopRoot to a valid gop root dir", func(tt *testing.T) {
+		tt.Run("set defaultGopRoot to a valid gop root dir", func(tt *testing.T) {
 			newGopRoot := filepath.Join(root, "new_gop_root")
 			makeValidGopRoot(newGopRoot)
 

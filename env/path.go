@@ -65,7 +65,7 @@ func findGopRoot() (string, error) {
 		}
 	}
 
-	// check build.GopRoot, if it is valid, use it
+	// check defaultGopRoot, if it is valid, use it
 	if defaultGopRoot != "" && isValidGopRoot(defaultGopRoot) {
 		return defaultGopRoot, nil
 	}
