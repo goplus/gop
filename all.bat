@@ -1,0 +1,1 @@
+go run cmd/install.go --install --autoproxy

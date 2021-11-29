@@ -20,10 +20,14 @@ For now, we suggest you install Go+ from source code.
 ```bash
 git clone https://github.com/goplus/gop.git
 cd gop
+
+# On linux run:
 ./all.bash
+# On Windows run:
+all
 ```
 
-Actually, `all.bash` script will use `go run cmd/install.go` underneath.
+Actually, `all.bash` and `all.bat` will use `go run cmd/install.go` underneath.
 
 
 ## Code style (important)
