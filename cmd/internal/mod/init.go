@@ -26,7 +26,7 @@ import (
 )
 
 var cmdInit = &base.Command{
-	UsageLine: "go mod init [module]",
+	UsageLine: "gop mod init [module]",
 	Short:     "initialize new module in current directory",
 }
 
