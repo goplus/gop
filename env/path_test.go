@@ -21,7 +21,22 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/goplus/gop/cl"
 )
+
+func findGoModFile(dir string) (modfile string, noCacheFile bool, err error) {
+	modfile, err = cl.FindGoModFile(dir)
+
+	if err != nil {
+		gopRoot, err := findGopRoot()
+		if err == nil {
+			modfile = filepath.Join(gopRoot, "go.mod")
+			return modfile, true, nil
+		}
+	}
+	return
+}
 
 // Common testing directory structure:
 // testing_root/
@@ -54,7 +69,13 @@ func writeDummyFile(path string) {
 func cleanup() {
 	os.Setenv("GOPROOT", "")
 	os.Setenv("HOME", "")
-	build.GopRoot = ""
+	defaultGopRoot = ""
+}
+
+func TestBasic(t *testing.T) {
+	if GOPROOT() == "" {
+		t.Fatal("TestBasic failed")
+	}
 }
 
 func TestFindGoModFileInGoModDir(t *testing.T) {
@@ -160,7 +181,7 @@ func TestFindGoModFileInGopRoot(t *testing.T) {
 		tt.Cleanup(cleanupAll)
 		_, src, gopRoot := makeTestDir(tt)
 
-		build.GopRoot = gopRoot
+		defaultGopRoot = gopRoot
 		modfile, noCacheFile, err := findGoModFile(src)
 
 		if err != nil || modfile != filepath.Join(gopRoot, "go.mod") || !noCacheFile {
@@ -173,8 +194,7 @@ func TestFindGoModFileInGopRoot(t *testing.T) {
 		root, src, _ := makeTestDir(tt)
 		invalidGopRoot := filepath.Join(root, "invalid_goproot")
 
-		build.GopRoot = invalidGopRoot
-
+		defaultGopRoot = invalidGopRoot
 		{
 			modfile, noCacheFile, err := findGoModFile(src)
 
@@ -290,7 +310,7 @@ func TestFindGoModFileInGopRoot(t *testing.T) {
 		tt.Run("set build.GopRoot to an invalid gop root dir", func(tt *testing.T) {
 			gopRoot := filepath.Join(root, "gop")
 
-			build.GopRoot = filepath.Join(root, "invalid_goproot")
+			defaultGopRoot = filepath.Join(root, "invalid_goproot")
 			modfile, noCacheFile, err := findGoModFile(src)
 
 			if err != nil || !noCacheFile || modfile != filepath.Join(gopRoot, "go.mod") {
@@ -302,7 +322,7 @@ func TestFindGoModFileInGopRoot(t *testing.T) {
 			newGopRoot := filepath.Join(root, "new_gop_root")
 			makeValidGopRoot(newGopRoot)
 
-			build.GopRoot = newGopRoot
+			defaultGopRoot = newGopRoot
 			modfile, noCacheFile, err := findGoModFile(src)
 
 			if err != nil || !noCacheFile || modfile != filepath.Join(newGopRoot, "go.mod") {
