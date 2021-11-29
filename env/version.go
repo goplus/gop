@@ -41,7 +41,7 @@ func init() {
 // when possible, a release tag like "v1.0.0-rc1".
 func Version() string {
 	if buildVersion == "" {
-		return MainVersion
+		return MainVersion + ".x"
 	}
 	return buildVersion
 }

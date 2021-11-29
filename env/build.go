@@ -32,3 +32,8 @@ var (
 func BuildInfo() string {
 	return fmt.Sprintf("%s(%s) %s", buildBranch, buildCommit, buildDate)
 }
+
+// BuildCommit returns build commit id.
+func BuildCommit() string {
+	return buildCommit
+}
