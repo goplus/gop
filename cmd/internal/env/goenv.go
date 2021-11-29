@@ -16,30 +16,25 @@
 package env
 
 import (
+	"go/build"
 	"os"
 	"path/filepath"
 )
 
 var (
-	GOMODCACHE = envOr("GOMODCACHE", gopathDir("pkg/mod"))
+	GOPATH = build.Default.GOPATH
 )
 
-// envOr returns Getenv(key) if set, or else def.
-func envOr(key, def string) string {
-	val := os.Getenv(key)
+func GOMODCACHE() string {
+	val := os.Getenv("GOMODCACHE")
 	if val == "" {
-		val = def
+		val = gopathJoin("pkg/mod")
 	}
 	return val
 }
 
-// GetGoPath return the gopath
-func GetGoPath() string {
-	return os.Getenv("GOPATH")
-}
-
-func gopathDir(rel string) string {
-	list := filepath.SplitList(GetGoPath())
+func gopathJoin(rel string) string {
+	list := filepath.SplitList(GOPATH)
 	if len(list) == 0 || list[0] == "" {
 		return ""
 	}
