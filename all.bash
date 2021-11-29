@@ -18,4 +18,6 @@
 
 set -ex
 
-go run cmd/install.go --install
+export GO111MODULE=on
+export GOPROXY=https://goproxy.cn
+go run cmd/install.go --install --proxy
