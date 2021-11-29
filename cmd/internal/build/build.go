@@ -44,7 +44,7 @@ var (
 )
 
 func init() {
-	flag.StringVar(&flagBuildOutput, "o", "", "go build output file")
+	flag.StringVar(&flagBuildOutput, "o", "", "gop build output file")
 	Cmd.Run = runCmd
 }
 

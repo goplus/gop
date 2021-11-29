@@ -174,10 +174,10 @@ func findModulePath(dir string) (string, error) {
 	msg := `cannot determine module path for source directory %s (%s)
 
 Example usage:
-	'go mod init example.com/m' to initialize a v0 or v1 module
-	'go mod init example.com/m/v2' to initialize a v2 module
+	'gop mod init example.com/m' to initialize a v0 or v1 module
+	'gop mod init example.com/m/v2' to initialize a v2 module
 
-Run 'go help mod init' for more information.
+Run 'gop help mod init' for more information.
 `
 	return "", fmt.Errorf(msg, dir, reason)
 }

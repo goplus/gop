@@ -395,7 +395,7 @@ func (f *File) add(errs *ErrorList, block *LineBlock, line *Line, verb string, a
 			errorf("gop directive expects exactly one argument")
 			return
 		} else if !GopVersionRE.MatchString(args[0]) {
-			errorf("invalid go version '%s': must match format 1.23", args[0])
+			errorf("invalid gop version '%s': must match format 1.23", args[0])
 			return
 		}
 
