@@ -189,7 +189,7 @@ func runTestcases() {
 	commandExecuteEnv = append(commandExecuteEnv, "PATH="+path)
 
 	coverage := "-coverprofile=coverage.txt"
-	testOutput, testErr, err := execCommand("gop", "test", "-v", coverage, "-covermode=atomic", "./...")
+	testOutput, testErr, err := execCommand("gop", "test", coverage, "-covermode=atomic", "./...")
 	println(testOutput)
 	println(testErr)
 	if err != nil {
