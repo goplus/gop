@@ -24,7 +24,7 @@ cd gop
 # On linux run:
 ./all.bash
 # On Windows run:
-all
+all.bat
 ```
 
 Actually, `all.bash` and `all.bat` will use `go run cmd/install.go` underneath.
