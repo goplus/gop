@@ -148,8 +148,7 @@ func buildGoplusTools(useGoProxy bool) {
 	if useGoProxy {
 		println("Info: we will use goproxy.cn as a Go proxy to accelerate installing process.")
 		commandExecuteEnv = append(commandExecuteEnv,
-			"GO111MODULE=on",
-			"GOPROXY=https://goproxy.cn",
+			"GOPROXY=https://goproxy.cn,direct",
 		)
 	}
 
@@ -222,23 +221,41 @@ func localUninstall() {
 	println("Go+ and related tools uninstalled successfully.")
 }
 
+func isInChina() bool {
+	const prefix = "LANG=\""
+	out, errMsg, err := execCommand("locale")
+	if err != nil || errMsg != "" {
+		return false
+	}
+	if strings.HasPrefix(out, prefix) {
+		out = out[len(prefix):]
+		return strings.HasPrefix(out, "zh_CN") || strings.HasPrefix(out, "zh_HK")
+	}
+	return false
+}
+
 func main() {
 	isInstall := flag.Bool("install", false, "Install Go+")
 	isBuild := flag.Bool("build", false, "Build the Go+")
 	isTest := flag.Bool("test", false, "Run testcases")
 	isUninstall := flag.Bool("uninstall", false, "Uninstall Go+")
-	useGoProxy := flag.Bool("proxy", false, "Accelerate Go+ building process, set this flag is recommended if you live in China.")
+	isGoProxy := flag.Bool("proxy", false, "Set GOPROXY for people in China")
+	isAutoProxy := flag.Bool("autoproxy", false, "Check to set GOPROXY automatically")
 
 	flag.Parse()
 
+	useGoProxy := *isGoProxy
+	if !useGoProxy && *isAutoProxy {
+		useGoProxy = isInChina()
+	}
 	flagActionMap := map[*bool]func(){
 		isInstall: func() {
-			buildGoplusTools(*useGoProxy)
+			buildGoplusTools(useGoProxy)
 			linkGoplusToLocal()
 			println("Go+ is now installed.")
 		},
 		isTest:      runTestcases,
-		isBuild:     func() { buildGoplusTools(*useGoProxy) },
+		isBuild:     func() { buildGoplusTools(useGoProxy) },
 		isUninstall: localUninstall,
 	}
 
