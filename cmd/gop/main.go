@@ -27,6 +27,7 @@ import (
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/cmd/internal/build"
 	"github.com/goplus/gop/cmd/internal/clean"
+	"github.com/goplus/gop/cmd/internal/env"
 	"github.com/goplus/gop/cmd/internal/gengo"
 	"github.com/goplus/gop/cmd/internal/gopfmt"
 	"github.com/goplus/gop/cmd/internal/help"
@@ -52,6 +53,7 @@ func init() {
 		install.Cmd,
 		build.Cmd,
 		clean.Cmd,
+		env.Cmd,
 		test.Cmd,
 		version.Cmd,
 	}
