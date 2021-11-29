@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         go-version: [1.16.x, 1.17.x]
-        os: [ubuntu-latest, macos-11, macos-10.15, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-10.15, macos-11]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
