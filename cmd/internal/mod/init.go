@@ -14,39 +14,38 @@
  * limitations under the License.
  */
 
-package version
+// gop mod init
+
+package mod
 
 import (
-	"fmt"
-	"runtime"
+	"log"
 
 	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/env"
+	"github.com/goplus/gop/cmd/internal/modload"
 )
 
-// -----------------------------------------------------------------------------
-
-// Cmd - gop build
-var Cmd = &base.Command{
-	UsageLine: "gop version [-v]",
-	Short:     "Version prints the build information for Gop executables",
+var cmdInit = &base.Command{
+	UsageLine: "gop mod init [module]",
+	Short:     "initialize new module in current directory",
 }
-
-var (
-	flag = &Cmd.Flag
-	_    = flag.Bool("v", false, "print verbose information.")
-)
 
 func init() {
-	Cmd.Run = runCmd
+	cmdInit.Run = runInit
 }
 
-func runCmd(cmd *base.Command, args []string) {
-	commit := env.BuildCommit()
-	if commit != "" {
-		commit = commit[:7]
+func runInit(cmd *base.Command, args []string) {
+	if len(args) > 1 {
+		log.Fatalf("gop mod init: too many arguments")
 	}
-	fmt.Printf("gop %s(%s) %s/%s\n", env.Version(), commit, runtime.GOOS, runtime.GOARCH)
-}
+	var modPath string
+	if len(args) == 1 {
+		modPath = args[0]
+	}
 
-// -----------------------------------------------------------------------------
+	// modfetch.InitArgs(".", args...)
+	modload.CreateModFile(modPath) // does all the hard work
+	modload.LoadModFile()
+	modload.SyncGoMod()
+	modload.SyncGopMod()
+}

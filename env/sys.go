@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
-package gop
+package env
 
-// buildVersion is the GoPlus tree's version string at build time.
-// This is set by the linker.
-var (
-	buildVersion string = "devel"
-)
+import "runtime"
 
-// Version returns the GoPlus tree's version string.
-// It is either the commit hash and date at the time of the build or,
-// when possible, a release tag like "v1.0.0-rc1".
-func Version() string {
-	return buildVersion
+func _envHOME() string {
+	switch runtime.GOOS {
+	case "windows":
+		return "USERPROFILE"
+	case "plan9":
+		return "home"
+	}
+	return "HOME"
 }
+
+var (
+	envHOME = _envHOME()
+)

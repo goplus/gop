@@ -1411,7 +1411,7 @@ func (p *parser) parseOperand(lhs, allowTuple bool) ast.Expr {
 		if allowTuple && p.tok == token.COMMA {
 			// (x, y, ...) => expr
 			items := make([]*ast.Ident, 1, 2)
-			items[0] = x.(*ast.Ident)
+			items[0] = p.toIdent(x)
 			for p.tok == token.COMMA {
 				p.next()
 				items = append(items, p.parseIdent())
@@ -1763,6 +1763,8 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	case *ast.BinaryExpr:
 	case *ast.RangeExpr:
 	case *ast.ErrWrapExpr:
+	case *ast.LambdaExpr:
+	case *ast.LambdaExpr2:
 	default:
 		// all other nodes are not proper expressions
 		p.errorExpected(x.Pos(), "expression", 3)
@@ -2093,13 +2095,16 @@ func (p *parser) parseLambdaExpr(allowCmd, allowRangeExpr bool) ast.Expr {
 		}
 		var lhs []*ast.Ident
 		if x != nil {
-			switch v := x.(type) {
+			e := x
+		retry:
+			switch v := e.(type) {
 			case *tupleExpr:
 				lhs, lhsHasParen = v.items, true
 			case *ast.ParenExpr:
-				lhs, lhsHasParen = []*ast.Ident{v.X.(*ast.Ident)}, true
+				e, lhsHasParen = v.X, true
+				goto retry
 			default:
-				lhs = []*ast.Ident{x.(*ast.Ident)}
+				lhs = []*ast.Ident{p.toIdent(v)}
 			}
 		}
 		if debugParseOutput {
@@ -2736,20 +2741,25 @@ func (p *parser) parseForPhraseStmtPart(lhs []ast.Expr) *ast.ForPhraseStmt {
 	stmt := &ast.ForPhraseStmt{ForPhrase: &ast.ForPhrase{TokPos: tokPos, X: x, Cond: cond}}
 	switch len(lhs) {
 	case 1:
-		stmt.Value = toIdent(lhs[0])
+		stmt.Value = p.toIdent(lhs[0])
 	case 2:
-		stmt.Key, stmt.Value = toIdent(lhs[0]), toIdent(lhs[1])
+		stmt.Key, stmt.Value = p.toIdent(lhs[0]), p.toIdent(lhs[1])
 	default:
 		log.Panicln("TODO: parseForPhraseStmt - too many variables, 1 or 2 is required")
 	}
 	return stmt
 }
 
-func toIdent(e ast.Expr) *ast.Ident {
-	if i, ok := e.(*ast.Ident); ok {
-		return i
+func (p *parser) toIdent(e ast.Expr) *ast.Ident {
+	switch v := e.(type) {
+	case *ast.Ident:
+		return v
+	case *ast.BasicLit:
+		p.errorExpected(e.Pos(), fmt.Sprintf("'IDENT', found %v", v.Value), 2)
+	default:
+		p.errorExpected(e.Pos(), "'IDENT'", 2)
 	}
-	panic("ident expr is required")
+	return nil
 }
 
 func (p *parser) parseForPhrase() *ast.ForPhrase { // for k, v <- container, cond

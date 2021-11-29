@@ -14,26 +14,26 @@
  * limitations under the License.
  */
 
-package build
+package env
 
-import (
-	"fmt"
-)
+import "testing"
 
-// The value of variables come form `go build -ldflags '-X "build.Date=xxxxx" -X "build.CommitID=xxxx"' `
-var (
-	// Date build time
-	Date string
-	// Branch current git branch
-	Branch string
-	// Commit git commit id
-	Commit string
-)
+func TestVersion(t *testing.T) {
+	if Version() != "v"+MainVersion+".x" {
+		t.Fatal("TestVersion failed:", Version())
+	}
+	buildVersion = "v1.0.0-beta1"
+	if Version() != buildVersion {
+		t.Fatal("TestVersion failed:", Version())
+	}
+	buildVersion = ""
+}
 
-// Build information
-func Build() string {
-	//if Date == "" {
-	//	return ""
-	//}
-	return fmt.Sprintf("%s(%s) %s", Branch, Commit, Date)
+func TestBuild(t *testing.T) {
+	if BuildCommit() != "" {
+		t.Fatal("BuildCommit failed:", BuildCommit())
+	}
+	if BuildInfo() != "() " {
+		t.Fatal("BuildInfo failed:", BuildInfo())
+	}
 }

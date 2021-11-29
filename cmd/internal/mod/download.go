@@ -13,40 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package version
+// gop mod download
+package mod
 
 import (
-	"fmt"
-	"runtime"
-
 	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/env"
+	"github.com/goplus/gop/cmd/internal/modfetch"
+	"github.com/goplus/gop/cmd/internal/modload"
 )
 
-// -----------------------------------------------------------------------------
-
-// Cmd - gop build
-var Cmd = &base.Command{
-	UsageLine: "gop version [-v]",
-	Short:     "Version prints the build information for Gop executables",
+var cmdDownload = &base.Command{
+	UsageLine: "gop mod download [-x] [-json] [modules]",
+	Short:     "download modules to local cache",
 }
-
-var (
-	flag = &Cmd.Flag
-	_    = flag.Bool("v", false, "print verbose information.")
-)
 
 func init() {
-	Cmd.Run = runCmd
+	cmdDownload.Run = runDownload // break init cycle
 }
 
-func runCmd(cmd *base.Command, args []string) {
-	commit := env.BuildCommit()
-	if commit != "" {
-		commit = commit[:7]
-	}
-	fmt.Printf("gop %s(%s) %s/%s\n", env.Version(), commit, runtime.GOOS, runtime.GOARCH)
+func runDownload(cmd *base.Command, args []string) {
+	modfetch.DownloadArgs(".", args...)
+	modload.SyncGopMod()
 }
-
-// -----------------------------------------------------------------------------

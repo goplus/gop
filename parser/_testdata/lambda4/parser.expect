@@ -1,0 +1,132 @@
+package main
+
+file lambda4.gop
+noEntrypoint
+ast.GenDecl:
+  Tok: type
+  Specs:
+    ast.TypeSpec:
+      Name:
+        ast.Ident:
+          Name: Foo
+      Type:
+        ast.StructType:
+          Fields:
+            ast.FieldList:
+              List:
+                ast.Field:
+                  Names:
+                    ast.Ident:
+                      Name: Plot
+                  Type:
+                    ast.FuncType:
+                      Params:
+                        ast.FieldList:
+                          List:
+                            ast.Field:
+                              Names:
+                                ast.Ident:
+                                  Name: x
+                              Type:
+                                ast.Ident:
+                                  Name: float64
+                      Results:
+                        ast.FieldList:
+                          List:
+                            ast.Field:
+                              Type:
+                                ast.Ident:
+                                  Name: float64
+                            ast.Field:
+                              Type:
+                                ast.Ident:
+                                  Name: float64
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.UnaryExpr:
+              Op: &
+              X:
+                ast.CompositeLit:
+                  Type:
+                    ast.Ident:
+                      Name: Foo
+                  Elts:
+                    ast.KeyValueExpr:
+                      Key:
+                        ast.Ident:
+                          Name: Plot
+                      Value:
+                        ast.LambdaExpr:
+                          Lhs:
+                            ast.Ident:
+                              Name: x
+                          Rhs:
+                            ast.BinaryExpr:
+                              X:
+                                ast.Ident:
+                                  Name: x
+                              Op: *
+                              Y:
+                                ast.BasicLit:
+                                  Kind: INT
+                                  Value: 2
+                            ast.BinaryExpr:
+                              X:
+                                ast.Ident:
+                                  Name: x
+                              Op: *
+                              Y:
+                                ast.Ident:
+                                  Name: x
+        ast.ExprStmt:
+          X:
+            ast.UnaryExpr:
+              Op: &
+              X:
+                ast.CompositeLit:
+                  Type:
+                    ast.Ident:
+                      Name: Foo
+                  Elts:
+                    ast.KeyValueExpr:
+                      Key:
+                        ast.Ident:
+                          Name: Plot
+                      Value:
+                        ast.LambdaExpr2:
+                          Lhs:
+                            ast.Ident:
+                              Name: x
+                          Body:
+                            ast.BlockStmt:
+                              List:
+                                ast.ReturnStmt:
+                                  Results:
+                                    ast.BinaryExpr:
+                                      X:
+                                        ast.Ident:
+                                          Name: x
+                                      Op: *
+                                      Y:
+                                        ast.BasicLit:
+                                          Kind: INT
+                                          Value: 2
+                                    ast.BinaryExpr:
+                                      X:
+                                        ast.Ident:
+                                          Name: x
+                                      Op: *
+                                      Y:
+                                        ast.Ident:
+                                          Name: x

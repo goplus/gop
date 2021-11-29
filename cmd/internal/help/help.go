@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-// Package help implements the ``go help'' command.
+// Package help implements the ``gop help'' command.
 package help
 
 import (
@@ -27,8 +27,9 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/qiniu/x/log"
+
+	"github.com/goplus/gop/cmd/internal/base"
 )
 
 // Help implements the 'help' command.

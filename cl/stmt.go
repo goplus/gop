@@ -60,8 +60,8 @@ func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
 func compileStmts(ctx *blockCtx, body []ast.Stmt) {
 	for _, stmt := range body {
 		if v, ok := stmt.(*ast.LabeledStmt); ok {
-			l := v.Label
-			ctx.cb.NewLabel(l.Pos(), l.Name)
+			expr := v.Label
+			ctx.cb.NewLabel(expr.Pos(), expr.Name)
 		}
 	}
 	for _, stmt := range body {
@@ -81,9 +81,14 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	commentStmt(ctx, stmt)
 	switch v := stmt.(type) {
 	case *ast.ExprStmt:
-		compileExpr(ctx, v.X)
-		if canAutoCall(v.X) && isFunc(ctx.cb.InternalStack().Get(-1).Type) {
+		if obj, ok := isBuiltinAutoCall(ctx, v.X); ok {
+			ctx.cb.Val(obj)
 			ctx.cb.Call(0)
+		} else {
+			compileExpr(ctx, v.X)
+			if canAutoCall(v.X) && isFunc(ctx.cb.InternalStack().Get(-1).Type) {
+				ctx.cb.Call(0)
+			}
 		}
 	case *ast.AssignStmt:
 		compileAssignStmt(ctx, v)
@@ -140,6 +145,19 @@ retry:
 		goto retry
 	}
 	return false
+}
+
+func isBuiltinAutoCall(ctx *blockCtx, expr ast.Expr) (types.Object, bool) {
+	if ident, ok := expr.(*ast.Ident); ok {
+		switch ident.Name {
+		case "print", "println":
+			_, builtin := lookupType(ctx, ident.Name)
+			if isBuiltin(builtin) {
+				return builtin, true
+			}
+		}
+	}
+	return nil, false
 }
 
 func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
@@ -212,7 +230,18 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		compileExprLHS(ctx, lhs)
 	}
 	for _, rhs := range expr.Rhs {
-		compileExpr(ctx, rhs, twoValue)
+		switch e := rhs.(type) {
+		case *ast.LambdaExpr, *ast.LambdaExpr2:
+			if len(expr.Lhs) == 1 && len(expr.Rhs) == 1 {
+				typ := ctx.cb.Get(-1).Type.(interface{ Elem() types.Type }).Elem()
+				sig := checkLambdaFuncType(ctx, e, typ, clLambaAssign, expr.Lhs[0])
+				compileLambda(ctx, e, sig)
+			} else {
+				panic(ctx.newCodeErrorf(e.Pos(), "lambda unsupport multiple assignment"))
+			}
+		default:
+			compileExpr(ctx, rhs, twoValue)
+		}
 	}
 	if tok == token.ASSIGN {
 		ctx.cb.AssignWith(len(expr.Lhs), len(expr.Rhs), expr)

@@ -4,10 +4,10 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/goplus/gop)](https://goreportcard.com/report/github.com/goplus/gop)
 [![Coverage Status](https://codecov.io/gh/goplus/gop/branch/main/graph/badge.svg)](https://codecov.io/gh/goplus/gop)
 [![GitHub release](https://img.shields.io/github/v/tag/goplus/gop.svg?label=release)](https://github.com/goplus/gop/releases)
+[![Tutorials](https://img.shields.io/badge/tutorial-Go+-blue.svg)](https://tutorial.goplus.org/)
 [![Playground](https://img.shields.io/badge/playground-Go+-blue.svg)](https://play.goplus.org/)
 [![VSCode](https://img.shields.io/badge/vscode-Go+-teal.svg)](https://github.com/gopcode/vscode-goplus)
 [![Readme](https://img.shields.io/badge/README-中文-teal.svg)](https://github.com/goplus/gop/blob/main/README_zh.md)
-[![GoDoc](https://pkg.go.dev/badge/github.com/goplus/gop.svg)](https://pkg.go.dev/mod/github.com/goplus/gop)
 
 * **For engineering**: working in the simplest language that can be mastered by children.
 * **For STEM education**: studying an engineering language that can be used to work in the future.
@@ -20,8 +20,20 @@ For now, we suggest you install Go+ from source code.
 ```bash
 git clone https://github.com/goplus/gop.git
 cd gop
+
+# On linux run:
 ./all.bash
+# On Windows run:
+all.bat
 ```
+
+Actually, `all.bash` and `all.bat` will use `go run cmd/install.go` underneath.
+
+
+## Code style (important)
+
+* https://tutorial.goplus.org/hello-world
+
 
 ## Summary about Go+
 
@@ -29,13 +41,12 @@ What are mainly impressions about Go+?
 
 - A static typed language.
 - Fully compatible with [the Go language](https://github.com/golang/go).
-- Script-like style, and more readable code for data science than Go.
+- Script-like style, and more readable code than Go.
 
 For example, the following is legal Go+ source code:
 
-```go
-a := [1, 2, 3.4]
-println(a)
+```coffee
+println [1, 2, 3.4]
 ```
 
 How do we do this in the Go language?
@@ -46,8 +57,7 @@ package main
 import "fmt"
 
 func main() {
-    a := []float64{1, 2, 3.4}
-    fmt.Println(a)
+    fmt.Println([]float64{1, 2, 3.4})
 }
 ```
 
@@ -56,13 +66,11 @@ Of course, we don't only do less-typing things.
 For example, we support [list comprehension](https://en.wikipedia.org/wiki/List_comprehension), which makes data processing easier.
 
 ```go
-a := [1, 3, 5, 7, 11]
-b := [x*x for x <- a, x > 3]
-println(b) // output: [25 49 121]
+println [x*x for x <- 1:6:2] // output: [1 9 25]
 
 mapData := {"Hi": 1, "Hello": 2, "Go+": 3}
 reversedMap := {v: k for k, v <- mapData}
-println(reversedMap) // output: map[1:Hi 2:Hello 3:Go+]
+println reversedMap // output: map[1:Hi 2:Hello 3:Go+]
 ```
 
 We will keep Go+ simple. This is why we call it Go+, not Go++.
@@ -72,20 +80,34 @@ Less is exponentially more.
 It's for Go, and it's also for Go+.
 
 
+## Tutorials
+
+* https://tutorial.goplus.org/
+
+
+## Playground
+
+Go+ Playground based on Docker (recommended):
+* https://play.goplus.org/
+
+Go+ Playground based on GopherJS (currently only available in v0.7.x):
+* https://jsplay.goplus.org/
+
+
 ## Compatibility with Go
 
 All Go features will be supported (including partially support `cgo`, see [below](#bytecode-vs-go-code)).
 
 **All Go packages (even these packages use `cgo`) can be imported by Go+.**
 
-```go
+```coffee
 import (
     "fmt"
     "strings"
 )
 
 x := strings.NewReplacer("?", "!").Replace("hello, world???")
-fmt.Println("x:", x)
+fmt.Println "x:", x
 ```
 
 **And all Go+ packages can also be imported in Go programs. What you need to do is just using `gop` command instead of `go`.**
@@ -128,22 +150,6 @@ gop install -v ./...
 Go [github.com/goplus/tutorial/14-Using-goplus-in-Go](https://github.com/goplus/tutorial/tree/main/14-Using-goplus-in-Go) to get the source code.
 
 
-## Playground
-
-Go+ Playground based on Docker:
-* https://play.goplus.org/
-
-Go+ Playground based on GopherJS (currently only available in v0.7.x):
-* https://jsplay.goplus.org/
-
-Go+ Jupyter kernel:
-* https://github.com/wangfenjin/gopyter
-
-## Tutorials
-
-See https://github.com/goplus/tutorial
-
-
 ## Bytecode vs. Go code
 
 Go+ supports bytecode backend and Go code generation.
@@ -179,11 +185,11 @@ We introduce the rational number as native Go+ types. We use suffix `r` to denot
 var a bigint = 1r << 65  // bigint, large than int64
 var b bigrat = 4/5r      // bigrat
 c := b - 1/3r + 3 * 1/2r // bigrat
-println(a, b, c)
+println a, b, c
 
 var x *big.Int = 1r << 65 // (1r << 65) is untyped bigint, and can be assigned to *big.Int
 var y *big.Rat = 4/5r
-println(x, y)
+println x, y
 ```
 
 ### Map literal
@@ -207,6 +213,21 @@ c := ["xsw", 3] // []interface{}
 empty := [] // []interface{}
 ```
 
+### Lambda expression
+
+```go
+func plot(fn func(x float64) float64) {
+    // ...
+}
+
+func plot2(fn func(x float64) (float64, float64)) {
+    // ...
+}
+
+plot x => x * x           // plot(func(x float64) float64 { return x * x })
+plot2 x => (x * x, x + x) // plot2(func(x float64) (float64, float64) { return x * x, x + x })
+```
+
 ### Deduce struct type
 
 ```go
@@ -219,10 +240,10 @@ func foo(conf *Config) {
     // ...
 }
 
-foo({Dir: "/foo/bar", Level: 1})
+foo {Dir: "/foo/bar", Level: 1}
 ```
 
-Here `foo({Dir: "/foo/bar", Level: 1})` is equivalent to `foo(&Config{Dir: "/foo/bar", Level: 1})`. However, you can't replace `foo(&Config{"/foo/bar", 1})` with `foo({"/foo/bar", 1})`, because it is confusing to consider `{"/foo/bar", 1}` as a struct literal.
+Here `foo {Dir: "/foo/bar", Level: 1}` is equivalent to `foo(&Config{Dir: "/foo/bar", Level: 1})`. However, you can't replace `foo(&Config{"/foo/bar", 1})` with `foo {"/foo/bar", 1}`, because it is confusing to consider `{"/foo/bar", 1}` as a struct literal.
 
 You also can omit struct types in a return statement. For example:
 
@@ -266,8 +287,8 @@ students := [student{"Ken", 90}, student{"Jason", 80}, student{"Lily", 85}]
 unknownScore, ok := {x.score for x <- students, x.name == "Unknown"}
 jasonScore := {x.score for x <- students, x.name == "Jason"}
 
-println(unknownScore, ok) // output: 0 false
-println(jasonScore) // output: 80
+println unknownScore, ok // output: 0 false
+println jasonScore // output: 80
 ```
 
 ### Check if data exists in a collection
@@ -294,6 +315,27 @@ for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
 ```
 
 
+### Range expression (`start:end:step`)
+
+```go
+for i <- :10 {
+    println i
+}
+
+for i := range :10:2 {
+    println i
+}
+
+for i := range 1:10:3 {
+    println i
+}
+
+for range :10 {
+    println "Range expression"
+}
+```
+
+
 ### For range of UDT
 
 ```go
@@ -308,14 +350,14 @@ func (p *Foo) Gop_Enum(proc func(key int, val string)) {
 
 foo := &Foo{}
 for k, v := range foo {
-    println(k, v)
+    println k, v
 }
 
 for k, v <- foo {
-    println(k, v)
+    println k, v
 }
 
-println({v: k for k, v <- foo})
+println {v: k for k, v <- foo}
 ```
 
 **Note: you can't use break/continue or return statements in for range of udt.Gop_Enum(callback).**
@@ -343,49 +385,14 @@ func (p *Foo) Gop_Enum() *FooIter {
 
 foo := &Foo{}
 for k, v := range foo {
-    println(k, v)
+    println k, v
 }
 
 for k, v <- foo {
-    println(k, v)
+    println k, v
 }
 
-println({v: k for k, v <- foo})
-```
-
-### Range expression (`start:end:step`)
-
-```go
-for i <- :10 {
-    println(i)
-}
-
-for i := range :10:2 {
-    println(i)
-}
-
-for i := range 1:10:3 {
-    println(i)
-}
-
-for range :10 {
-    println("Range expression")
-}
-```
-
-### Lambda expression
-
-```go
-func plot(fn func(x float64) float64) {
-    // ...
-}
-
-func plot2(fn func(x float64) (float64, float64)) {
-    // ...
-}
-
-plot(x => x * x)           // plot(func(x float64) float64 { return x * x })
-plot2(x => (x * x, x + x)) // plot2(func(x float64) (float64, float64) { return x * x, x + x })
+println {v: k for k, v <- foo}
 ```
 
 ### Overload operators
@@ -415,8 +422,8 @@ func -(a MyBigInt) MyBigInt { // unary operator
 
 a := Int(1r)
 a += Int(2r)
-println(a + Int(3r))
-println(-a)
+println a + Int(3r)
+println -a
 ```
 
 
@@ -445,12 +452,12 @@ func addSafe(x, y string) int {
     return strconv.Atoi(x)?:0 + strconv.Atoi(y)?:0
 }
 
-println(`add("100", "23"):`, add("100", "23")!)
+println `add("100", "23"):`, add("100", "23")!
 
 sum, err := add("10", "abc")
-println(`add("10", "abc"):`, sum, err)
+println `add("10", "abc"):`, sum, err
 
-println(`addSafe("10", "abc"):`, addSafe("10", "abc"))
+println `addSafe("10", "abc"):`, addSafe("10", "abc")
 ```
 
 The output of this example is:
@@ -482,7 +489,7 @@ import "gop/ast/goptest"
 
 doc := goptest.New(`... Go+ code ...`)!
 
-println(doc.Any().FuncDecl().Name())
+println doc.Any().FuncDecl().Name()
 ```
 
 In many languages, there is a concept named `property` who has `get` and `set` methods.
@@ -494,7 +501,7 @@ import "gop/ast/goptest"
 
 doc := goptest.New(`... Go+ code ...`)!
 
-println(doc.any.funcDecl.name)
+println doc.any.funcDecl.name
 ```
 
 In Go+, we introduce a concept named `auto property`. It is a `get property`, but is implemented automatically. If we have a method named `Bar()`, then we will have a `get property` named `bar` at the same time.
@@ -507,20 +514,20 @@ You can use Go+ programs as shell scripts now. For example:
 ```go
 #!/usr/bin/env -S gop run
 
-println("Hello, Go+")
+println "Hello, Go+"
 
-println(1r << 129)
-println(1/3r + 2/7r*2)
+println 1r << 129
+println 1/3r + 2/7r*2
 
 arr := [1, 3, 5, 7, 11, 13, 17, 19]
-println(arr)
-println([x*x for x <- arr, x > 3])
+println arr
+println [x*x for x <- arr, x > 3]
 
 m := {"Hi": 1, "Go+": 2}
-println(m)
-println({v: k for k, v <- m})
-println([k for k, _ <- m])
-println([v for v <- m])
+println m
+println {v: k for k, v <- m}
+println [k for k, _ <- m]
+println [v for v <- m]
 ```
 
 Go [20-Unix-Shebang/shebang](https://github.com/goplus/tutorial/blob/main/20-Unix-Shebang/shebang) to get the source code.

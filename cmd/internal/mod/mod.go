@@ -13,40 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package version
+package mod
 
 import (
-	"fmt"
-	"runtime"
-
 	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/env"
 )
 
-// -----------------------------------------------------------------------------
-
-// Cmd - gop build
 var Cmd = &base.Command{
-	UsageLine: "gop version [-v]",
-	Short:     "Version prints the build information for Gop executables",
+	UsageLine: "gop mod",
+	Short:     "module maintenance",
+
+	Commands: []*base.Command{
+		cmdInit,
+		cmdDownload,
+		cmdTidy,
+	},
 }
-
-var (
-	flag = &Cmd.Flag
-	_    = flag.Bool("v", false, "print verbose information.")
-)
-
-func init() {
-	Cmd.Run = runCmd
-}
-
-func runCmd(cmd *base.Command, args []string) {
-	commit := env.BuildCommit()
-	if commit != "" {
-		commit = commit[:7]
-	}
-	fmt.Printf("gop %s(%s) %s/%s\n", env.Version(), commit, runtime.GOOS, runtime.GOARCH)
-}
-
-// -----------------------------------------------------------------------------

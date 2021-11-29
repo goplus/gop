@@ -14,39 +14,38 @@
  * limitations under the License.
  */
 
-package version
+package env
 
 import (
-	"fmt"
-	"runtime"
-
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/env"
+	"os"
+	"path/filepath"
+	"strings"
+	"syscall"
 )
 
 // -----------------------------------------------------------------------------
 
-// Cmd - gop build
-var Cmd = &base.Command{
-	UsageLine: "gop version [-v]",
-	Short:     "Version prints the build information for Gop executables",
-}
-
-var (
-	flag = &Cmd.Flag
-	_    = flag.Bool("v", false, "print verbose information.")
-)
-
-func init() {
-	Cmd.Run = runCmd
-}
-
-func runCmd(cmd *base.Command, args []string) {
-	commit := env.BuildCommit()
-	if commit != "" {
-		commit = commit[:7]
+func GOPMOD(dir string) (file string, err error) {
+	if dir == "" {
+		dir = "."
 	}
-	fmt.Printf("gop %s(%s) %s/%s\n", env.Version(), commit, runtime.GOOS, runtime.GOARCH)
+	if dir, err = filepath.Abs(dir); err != nil {
+		return
+	}
+	for dir != "" {
+		file = filepath.Join(dir, "gop.mod")
+		if fi, e := os.Lstat(file); e == nil && !fi.IsDir() {
+			return
+		}
+		file = filepath.Join(dir, "go.mod")
+		if fi, e := os.Lstat(file); e == nil && !fi.IsDir() {
+			return
+		}
+		if dir, file = filepath.Split(strings.TrimRight(dir, "/\\")); file == "" {
+			break
+		}
+	}
+	return "", syscall.ENOENT
 }
 
 // -----------------------------------------------------------------------------

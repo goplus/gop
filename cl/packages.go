@@ -19,37 +19,18 @@ package cl
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"syscall"
 
+	"github.com/goplus/gop/env"
+	"github.com/goplus/gop/x/mod/modfile"
 	"github.com/goplus/gox"
-	"golang.org/x/mod/modfile"
 	"golang.org/x/tools/go/packages"
 )
 
 // -----------------------------------------------------------------------------
-
-func FindModFile(dir string, fname string) (file string, err error) {
-	if dir == "" {
-		dir = "."
-	}
-	if dir, err = filepath.Abs(dir); err != nil {
-		return
-	}
-	for dir != "" {
-		file = filepath.Join(dir, fname)
-		if fi, e := os.Lstat(file); e == nil && !fi.IsDir() {
-			return
-		}
-		if dir, file = filepath.Split(strings.TrimRight(dir, "/\\")); file == "" {
-			break
-		}
-	}
-	return "", syscall.ENOENT
-}
 
 func GetModulePath(file string) (pkgPath string, err error) {
 	src, err := ioutil.ReadFile(file)
@@ -61,17 +42,6 @@ func GetModulePath(file string) (pkgPath string, err error) {
 		return
 	}
 	return f.Module.Mod.Path, nil
-}
-
-func findModPaths(dir string, fname string) (root string, modPath string, err error) {
-	file, err := FindModFile(dir, fname)
-	log.Println("FindModFile:", dir, fname, "=>", file, err)
-	panic("findModPaths")
-	if err == nil {
-		root, _ = filepath.Split(file)
-		modPath, err = GetModulePath(file)
-	}
-	return
 }
 
 // -----------------------------------------------------------------------------
@@ -114,10 +84,15 @@ func (p *PkgsLoader) GenGoPkgs(cfg *packages.Config, notFounds []string) (err er
 	if p.genGoPkg == nil {
 		return syscall.ENOENT
 	}
-	root, pkgPath, err := findModPaths(cfg.Dir, "gop.mod")
+	modfile, err := env.GOPMOD(cfg.Dir)
 	if err != nil {
 		return
 	}
+	pkgPath, err := GetModulePath(modfile)
+	if err != nil {
+		return
+	}
+	root, _ := filepath.Split(modfile)
 	pkgPathSlash := pkgPath + "/"
 	for _, notFound := range notFounds {
 		if strings.HasPrefix(notFound, pkgPathSlash) || notFound == pkgPath {

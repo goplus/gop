@@ -2751,6 +2751,82 @@ func main() {
 	})
 }
 `)
+	gopClTest(t, `type Foo struct {
+	Plot func(x float64) (float64, float64)
+}
+foo := &Foo{
+	Plot: x => (x * 2, x * x),
+}`, `package main
+
+type Foo struct {
+	Plot func(x float64) (float64, float64)
+}
+
+func main() {
+	foo := &Foo{Plot: func(x float64) (float64, float64) {
+		return x * 2, x * x
+	}}
+}
+`)
+	gopClTest(t, `
+type Fn func(x float64) (float64, float64)
+type Foo struct {
+	Plot Fn
+}
+foo := &Foo{
+	Plot: x => (x * 2, x * x),
+}`, `package main
+
+type Fn func(x float64) (float64, float64)
+type Foo struct {
+	Plot Fn
+}
+
+func main() {
+	foo := &Foo{Plot: func(x float64) (float64, float64) {
+		return x * 2, x * x
+	}}
+}
+`)
+	gopClTest(t, `
+type Fn func() (int, error)
+func Do(fn Fn) {
+}
+
+Do => (100, nil)
+`, `package main
+
+type Fn func() (int, error)
+
+func Do(fn Fn) {
+}
+func main() {
+	Do(func() (int, error) {
+		return 100, nil
+	})
+}
+`)
+	gopClTest(t, `
+var fn func(int) (int,error) = x => (x*x, nil)
+`, `package main
+
+var fn func(int) (int, error) = func(x int) (int, error) {
+	return x * x, nil
+}
+`)
+	gopClTest(t, `
+var fn func(int) (int,error)
+fn = x => (x*x, nil)
+`, `package main
+
+var fn func(int) (int, error)
+
+func main() {
+	fn = func(x int) (int, error) {
+		return x * x, nil
+	}
+}
+`)
 }
 
 func TestLambdaExpr2(t *testing.T) {
@@ -2772,6 +2848,111 @@ func main() {
 	Do(func() {
 		fmt.Println("Hi")
 	})
+}
+`)
+	gopClTest(t, `
+func Do(fn func() (int, error)) {
+	// ...
+}
+
+Do => {
+	return 100, nil
+}
+`, `package main
+
+func Do(fn func() (int, error)) {
+}
+func main() {
+	Do(func() (int, error) {
+		return 100, nil
+	})
+}
+`)
+	gopClTest(t, `type Foo struct {
+	Plot func(x float64) (float64, float64)
+}
+foo := &Foo{
+	Plot: x => {
+		return x * 2, x * x
+	},
+}`, `package main
+
+type Foo struct {
+	Plot func(x float64) (float64, float64)
+}
+
+func main() {
+	foo := &Foo{Plot: func(x float64) (float64, float64) {
+		return x * 2, x * x
+	}}
+}
+`)
+	gopClTest(t, `
+type Fn func(x float64) (float64, float64)
+type Foo struct {
+	Plot Fn
+}
+foo := &Foo{
+	Plot: x => {
+		return x * 2, x * x
+	},
+}`, `package main
+
+type Fn func(x float64) (float64, float64)
+type Foo struct {
+	Plot Fn
+}
+
+func main() {
+	foo := &Foo{Plot: func(x float64) (float64, float64) {
+		return x * 2, x * x
+	}}
+}
+`)
+
+	gopClTest(t, `
+type Fn func() (int, error)
+func Do(fn Fn) {
+}
+
+Do => {
+	return 100, nil
+}
+`, `package main
+
+type Fn func() (int, error)
+
+func Do(fn Fn) {
+}
+func main() {
+	Do(func() (int, error) {
+		return 100, nil
+	})
+}
+`)
+	gopClTest(t, `
+var fn func(int) (int,error) = x => {
+	return x * x, nil
+}
+`, `package main
+
+var fn func(int) (int, error) = func(x int) (int, error) {
+	return x * x, nil
+}
+`)
+	gopClTest(t, `
+var fn func(int) (int,error)
+fn = x => {
+	return x * x, nil
+}
+`, `package main
+
+var fn func(int) (int, error)
+
+func main() {
+	fn = func(x int) (int, error) {
+		return x * x, nil
+	}
 }
 `)
 }
@@ -3290,6 +3471,29 @@ type Point struct {
 
 func (p *Point) String() string {
 	return fmt.Sprintf("%v-%v", p.X, p.Y)
+}
+`)
+}
+
+func TestCallPrintln(t *testing.T) {
+	gopClTest(t, `
+print
+print "hello"
+print("hello")
+println
+println "hello"
+println("hello")
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Print()
+	fmt.Print("hello")
+	fmt.Print("hello")
+	fmt.Println()
+	fmt.Println("hello")
+	fmt.Println("hello")
 }
 `)
 }
