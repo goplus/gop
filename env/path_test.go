@@ -73,9 +73,11 @@ func cleanup() {
 }
 
 func TestBasic(t *testing.T) {
+	defaultGopRoot = ".."
 	if GOPROOT() == "" {
 		t.Fatal("TestBasic failed")
 	}
+	defaultGopRoot = ""
 }
 
 func TestFindGoModFileInGoModDir(t *testing.T) {
