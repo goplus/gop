@@ -19,6 +19,7 @@ package cl
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -54,6 +55,13 @@ type PkgsLoader struct {
 }
 
 func initPkgsLoader(base *Config) {
+	if base.ModRootDir == "" {
+		modfile, err := env.GOPMOD(base.Dir)
+		if err != nil {
+			log.Panicln("gop.mod not found:", err)
+		}
+		base.ModRootDir, _ = filepath.Split(modfile)
+	}
 	p := &PkgsLoader{genGoPkg: base.GenGoPkg, BaseConfig: base}
 	if base.PersistLoadPkgs {
 		if base.CacheFile == "" && base.ModRootDir != "" {
