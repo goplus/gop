@@ -30,10 +30,10 @@ func TestVersion(t *testing.T) {
 }
 
 func TestBuild(t *testing.T) {
-	if BuildCommit() != "" {
-		t.Fatal("BuildCommit failed:", BuildCommit())
+	if BuildRevision() != "" {
+		t.Fatal("BuildCommit failed:", BuildRevision())
 	}
-	if BuildInfo() != "() " {
-		t.Fatal("BuildInfo failed:", BuildInfo())
+	if BuildDate() != "" {
+		t.Fatal("BuildInfo failed:", BuildDate())
 	}
 }

@@ -64,11 +64,13 @@ func runCmd(_ *base.Command, args []string) {
 		log.Fatal("decode json of go env failed:", err)
 	}
 
+	gopEnv["BUILDDATE"] = env.BuildDate()
+	gopEnv["BUILDREV"] = env.BuildRevision()
 	gopEnv["GOPVERSION"] = env.Version()
 	gopEnv["GOPROOT"] = env.GOPROOT()
+	gopEnv["GOPATH"] = env.GOPATH()
+	gopEnv["GOMODCACHE"] = env.GOMODCACHE()
 	gopEnv["GOPMOD"], _ = env.GOPMOD("")
-	gopEnv["GOPATH()"] = env.GOPATH() // TODO: remove (only for debug)
-	gopEnv["GOMODCACHE()"] = env.GOMODCACHE()
 
 	onlyValues := false
 	vars := flag.Args()
