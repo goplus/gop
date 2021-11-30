@@ -95,12 +95,8 @@ type Config struct {
 	// If WorkingDir or TargetDir is empty, it is same as Dir.
 	WorkingDir, TargetDir string
 
-	// ModPath specifies module path.
-	ModPath string
-
 	// ModRootDir specifies root dir of this module.
-	// If ModRootDir is empty, will lookup go.mod in all ancestor directories of Dir.
-	// If you specify ModPath, you should specify ModRootDir at the same time.
+	// If ModRootDir is empty, will lookup gop.mod in all ancestor directories of Dir.
 	ModRootDir string
 
 	// CacheFile specifies where cache data to write.

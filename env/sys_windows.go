@@ -16,24 +16,6 @@
 
 package env
 
-import "testing"
-
-func TestVersion(t *testing.T) {
-	if Version() != "v"+MainVersion+".x" {
-		t.Fatal("TestVersion failed:", Version())
-	}
-	buildVersion = "v1.0.0-beta1"
-	if Version() != buildVersion {
-		t.Fatal("TestVersion failed:", Version())
-	}
-	buildVersion = ""
-}
-
-func TestBuild(t *testing.T) {
-	if BuildRevision() != "" {
-		t.Fatal("BuildCommit failed:", BuildRevision())
-	}
-	if BuildDate() != "" {
-		t.Fatal("BuildInfo failed:", BuildDate())
-	}
-}
+const (
+	envHOME = "USERPROFILE"
+)

@@ -13,36 +13,53 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package version
+package env
 
 import (
-	"fmt"
+	"os"
+	"path/filepath"
 	"runtime"
-
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/env"
 )
 
 // -----------------------------------------------------------------------------
 
-// Cmd - gop build
-var Cmd = &base.Command{
-	UsageLine: "gop version [-v]",
-	Short:     "Version prints the build information for Gop executables",
+func GOPATH() string {
+	s := os.Getenv("GOPATH")
+	if s == "" {
+		return defaultGOPATH()
+	}
+	return s
 }
 
-var (
-	flag = &Cmd.Flag
-	_    = flag.Bool("v", false, "print verbose information.")
-)
-
-func init() {
-	Cmd.Run = runCmd
+func defaultGOPATH() string {
+	if home := os.Getenv(envHOME); home != "" {
+		def := filepath.Join(home, "go")
+		if filepath.Clean(def) == filepath.Clean(runtime.GOROOT()) {
+			// Don't set the default GOPATH to GOROOT,
+			// as that will trigger warnings from the go tool.
+			return ""
+		}
+		return def
+	}
+	return ""
 }
 
-func runCmd(cmd *base.Command, args []string) {
-	fmt.Printf("gop %s %s/%s\n", env.Version(), runtime.GOOS, runtime.GOARCH)
+// -----------------------------------------------------------------------------
+
+func GOMODCACHE() string {
+	val := os.Getenv("GOMODCACHE")
+	if val == "" {
+		return gopathJoin("pkg/mod")
+	}
+	return val
+}
+
+func gopathJoin(rel string) string {
+	list := filepath.SplitList(GOPATH())
+	if len(list) == 0 || list[0] == "" {
+		return ""
+	}
+	return filepath.Join(list[0], rel)
 }
 
 // -----------------------------------------------------------------------------

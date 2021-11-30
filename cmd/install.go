@@ -28,8 +28,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/goplus/gop/env"
 )
 
 func getcwd() string {
@@ -62,14 +60,6 @@ func execCommand(command string, arg ...string) (string, string, error) {
 	return stdout.String(), stderr.String(), err
 }
 
-func getBuildBranch() string {
-	branch, stderr, err := execCommand("git", "branch", "--show-current")
-	if err != nil || stderr != "" {
-		return ""
-	}
-	return strings.TrimRight(branch, "\n")
-}
-
 func getRevCommit(tag string) string {
 	commit, stderr, err := execCommand("git", "rev-parse", "--verify", tag)
 	if err != nil || stderr != "" {
@@ -91,6 +81,15 @@ func getBuildDateTime() string {
 	return now.Format("2006-01-02_15-04-05")
 }
 
+func getBuildVer() string {
+	tagRet, tagErr, err := execCommand("git", "describe", "--tags")
+	if err != nil || tagErr != "" {
+		return ""
+	}
+	return strings.TrimRight(tagRet, "\n")
+}
+
+/*
 func findTag(commit string) string {
 	tagRet, tagErr, err := execCommand("git", "tag")
 	if err != nil || tagErr != "" {
@@ -106,16 +105,14 @@ func findTag(commit string) string {
 	}
 	return ""
 }
+*/
 
 func getGopBuildFlags() string {
 	buildFlags := fmt.Sprintf("-X github.com/goplus/gop/env.defaultGopRoot=%s", gopRoot)
 	buildFlags = fmt.Sprintf("-X github.com/goplus/gop/env.buildDate=%s", getBuildDateTime())
 	if commit, ok := getGitInfo(); ok {
 		buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildCommit=%s", commit)
-		if branch := getBuildBranch(); branch != "" {
-			buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildBranch=%s", branch)
-		}
-		if buildVer := findTag(commit); buildVer != "" {
+		if buildVer := getBuildVer(); buildVer != "" {
 			buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildVersion=%s", buildVer)
 		}
 	}

@@ -1,0 +1,3 @@
+.gop/
+go.mod
+gop_autogen*.go

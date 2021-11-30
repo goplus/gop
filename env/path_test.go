@@ -21,13 +21,10 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/goplus/gop/cl"
 )
 
 func findGoModFile(dir string) (modfile string, noCacheFile bool, err error) {
-	modfile, err = cl.FindGoModFile(dir)
-
+	modfile, err = GOPMOD(dir)
 	if err != nil {
 		gopRoot, err := findGopRoot()
 		if err == nil {
@@ -68,7 +65,7 @@ func writeDummyFile(path string) {
 
 func cleanup() {
 	os.Setenv("GOPROOT", "")
-	os.Setenv("HOME", "")
+	os.Setenv(envHOME, "")
 	defaultGopRoot = ""
 }
 
@@ -224,7 +221,7 @@ func TestFindGoModFileInGopRoot(t *testing.T) {
 		root, src, _ := makeTestDir(tt)
 		home := filepath.Join(root, "home")
 		os.Mkdir(home, 0755)
-		os.Setenv("HOME", home)
+		os.Setenv(envHOME, home)
 
 		{
 			gopRoot := filepath.Join(home, "goplus")
@@ -282,7 +279,7 @@ func TestFindGoModFileInGopRoot(t *testing.T) {
 		})
 
 		tt.Run("set HOME but hasn't $HOME/gop/ and $HOME/goplus/", func(tt *testing.T) {
-			os.Setenv("HOME", root)
+			os.Setenv(envHOME, root)
 
 			modfile, noCacheFile, err := findGoModFile(src)
 

@@ -13,30 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package env
 
-import (
-	"go/build"
-	"os"
-	"path/filepath"
+const (
+	envHOME = "home"
 )
-
-var (
-	GOPATH = build.Default.GOPATH
-)
-
-func GOMODCACHE() string {
-	val := os.Getenv("GOMODCACHE")
-	if val == "" {
-		val = gopathJoin("pkg/mod")
-	}
-	return val
-}
-
-func gopathJoin(rel string) string {
-	list := filepath.SplitList(GOPATH)
-	if len(list) == 0 || list[0] == "" {
-		return ""
-	}
-	return filepath.Join(list[0], rel)
-}

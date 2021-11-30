@@ -22,7 +22,7 @@ import (
 	"golang.org/x/mod/module"
 	"golang.org/x/mod/semver"
 
-	"github.com/goplus/gop/cmd/internal/env"
+	"github.com/goplus/gop/env"
 )
 
 var (
