@@ -33,7 +33,6 @@ import (
 	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/cmd/internal/modload"
-	"github.com/goplus/gop/env"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
@@ -75,23 +74,6 @@ func saveGoFile(gofile string, pkg *gox.Package) error {
 		return err
 	}
 	return gox.WriteFile(gofile, pkg, false)
-}
-
-func findGoModFile(dir string) (modfile string, noCacheFile bool, err error) {
-	modfile, err = env.GOPMOD(dir)
-	if err != nil {
-		modfile = filepath.Join(env.GOPROOT(), "go.mod")
-		return modfile, true, nil
-	}
-	return
-}
-
-func findGoModDir(dir string) (string, bool) {
-	modfile, nocachefile, err := findGoModFile(dir)
-	if err != nil {
-		log.Fatalln("findGoModFile:", err)
-	}
-	return filepath.Dir(modfile), nocachefile
 }
 
 func runCmd(cmd *base.Command, args []string) {

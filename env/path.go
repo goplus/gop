@@ -66,7 +66,7 @@ func findGopRoot() (string, error) {
 	}
 
 	// Compatible with old GOPROOT
-	if home := os.Getenv(envHOME); home != "" {
+	if home := HOME(); home != "" {
 		gopRoot := filepath.Join(home, "gop")
 		if isValidGopRoot(gopRoot) {
 			return gopRoot, nil

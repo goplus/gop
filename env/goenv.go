@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package env
 
 import (
@@ -20,6 +21,12 @@ import (
 	"path/filepath"
 	"runtime"
 )
+
+// -----------------------------------------------------------------------------
+
+func HOME() string {
+	return os.Getenv(envHOME)
+}
 
 // -----------------------------------------------------------------------------
 
@@ -32,7 +39,7 @@ func GOPATH() string {
 }
 
 func defaultGOPATH() string {
-	if home := os.Getenv(envHOME); home != "" {
+	if home := HOME(); home != "" {
 		def := filepath.Join(home, "go")
 		if filepath.Clean(def) == filepath.Clean(runtime.GOROOT()) {
 			// Don't set the default GOPATH to GOROOT,
