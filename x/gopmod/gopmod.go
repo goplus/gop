@@ -41,6 +41,8 @@ type Project struct {
 	Source
 	AutoGenFile   string // autogen file of output
 	FriendlyFname string // friendly fname of source
+	BuildArgs     []string
+	ExecArgs      []string
 }
 
 type Context struct {
@@ -62,7 +64,7 @@ func New(dir string) *Context {
 	return &Context{modfile: modfile, dir: dir, defctx: defctx}
 }
 
-func (p *Context) GoCommand(op string, src *Project, args ...string) GoCmd {
+func (p *Context) GoCommand(op string, src *Project) GoCmd {
 	out := p.out(src)
 	if src.IsDirty(out.goFile, p.defctx) {
 		if p.defctx {
@@ -73,12 +75,13 @@ func (p *Context) GoCommand(op string, src *Project, args ...string) GoCmd {
 			log.Panicln(err)
 		}
 	}
-	return goCommand(p.dir, op, &out, args...)
+	return goCommand(p.dir, op, &out)
 }
 
 type goTarget struct {
 	goFile  string
 	outFile string
+	proj    *Project
 	defctx  bool
 }
 
@@ -89,7 +92,8 @@ func (p *Context) out(src *Project) (ret goTarget) {
 		fname += ".go"
 	}
 	dir, _ := filepath.Split(p.modfile)
-	ret.outFile = dir + "/g" + base64.RawURLEncoding.EncodeToString(hash[:])
+	ret.outFile = dir + "g" + base64.RawURLEncoding.EncodeToString(hash[:])
+	ret.proj = src
 	ret.defctx = p.defctx
 	if ret.defctx {
 		ret.goFile = ret.outFile + fname
@@ -162,7 +166,7 @@ func runCommand(dir, command string, args ...string) error {
 
 func genDefaultGopMod(modfile string) {
 	dir, _ := filepath.Split(modfile)
-	dummy := dir + "/dummy"
+	dummy := dir + "dummy"
 	os.MkdirAll(dummy, 0755)
 	genGomodFile(modfile)
 	genDummyProject(dummy)
