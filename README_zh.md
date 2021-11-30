@@ -7,11 +7,11 @@
 [![Tutorials](https://img.shields.io/badge/tutorial-Go+-blue.svg)](https://tutorial.goplus.org/)
 [![Playground](https://img.shields.io/badge/playground-Go+-blue.svg)](https://play.goplus.org/)
 [![VSCode](https://img.shields.io/badge/vscode-Go+-teal.svg)](https://github.com/gopcode/vscode-goplus)
-[![Readme](https://img.shields.io/badge/README-%E4%B8%AD%E6%96%87-teal.svg)](https://github.com/goplus/gop/blob/main/README_zh.md)
+[![Readme](https://img.shields.io/badge/README-%E4%B8%AD%E6%96%87-teal.svg)](https://github.com/goplus/gop/blob/main/README.md)
 
-* **对于工程领域而言** ：意味着大家将会使用一门简单、易学、好用的编程语言。
-* **对于 STEM 教育而言** ：掌握一门可能会在将来工作中用到的工程语言将大有裨益。
-* **对于数据科学家而言** ：意味着你们将和工程师使用同一种语言进行合作和交流。
+-   **对于工程领域而言** ：意味着大家将会使用一门简单、易学、好用的编程语言。
+-   **对于 STEM 教育而言** ：掌握一门可能会在将来工作中用到的工程语言将大有裨益。
+-   **对于数据科学家而言** ：意味着你们将和工程师使用同一种语言进行合作和交流。
 
 ## 如何安装 Go+?
 
@@ -20,8 +20,14 @@
 ```bash
 git clone https://github.com/goplus/gop.git
 cd gop
+
+# On linux run:
 ./all.bash
+# On Windows run:
+all.bat
 ```
+
+实际上， `all.bash` 和 `all.bat` 内部都会执行 `go run cmd/install.go`
 
 ## 代码风格（很重要）
 
@@ -33,7 +39,7 @@ cd gop
 
 -   一种静态类型语言。
 -   完全兼容 [Go 语言](https://github.com/golang/go) 。
--   脚本化的风格，以及比 Go 更易读的数据科学代码。
+-   类似脚本语言的风格，代码比 Go 更易读。
 
 例如，以下是合法的 Go+ 源代码：
 
