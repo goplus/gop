@@ -16,7 +16,7 @@ type goFile struct {
 	code []byte
 }
 
-func newGoProj(file string) *gopmod.Project {
+func newGoProj(file string, args ...string) *gopmod.Project {
 	code, err := os.ReadFile(file)
 	if err != nil {
 		log.Fatalln(err)
@@ -26,6 +26,7 @@ func newGoProj(file string) *gopmod.Project {
 		Source:        src,
 		AutoGenFile:   file,
 		FriendlyFname: filepath.Base(file),
+		ExecArgs:      args,
 	}
 }
 
@@ -49,9 +50,9 @@ func main() {
 		fmt.Fprint(os.Stderr, "Usage: gorun <file.go> [switch ...]\n\n")
 		return
 	}
-	goProj := newGoProj(os.Args[1])
+	goProj := newGoProj(os.Args[1], os.Args[2:]...)
 	ctx := gopmod.New("")
-	cmd := ctx.GoCommand("run", goProj, os.Args[2:]...)
+	cmd := ctx.GoCommand("run", goProj)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
