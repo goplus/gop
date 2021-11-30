@@ -21,7 +21,7 @@ For now, we suggest you install Go+ from source code.
 git clone https://github.com/goplus/gop.git
 cd gop
 
-# On linux run:
+# On mac/linux run:
 ./all.bash
 # On Windows run:
 all.bat
