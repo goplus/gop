@@ -33,11 +33,14 @@ func LoadFlags() string {
 
 // -----------------------------------------------------------------------------
 
-func Command(op string, args ...string) *exec.Cmd {
-	exargs := make([]string, 1, len(args)+3)
+func Command(op string, source string, args ...string) *exec.Cmd {
+	exargs := make([]string, 1, len(args)+4)
 	exargs[0] = op
 	exargs = appendLdflags(exargs, op)
 	exargs = append(exargs, args...)
+	if source != "" {
+		exargs = append(exargs, source)
+	}
 	return exec.Command("go", exargs...)
 }
 

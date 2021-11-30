@@ -48,7 +48,7 @@ func TestGopMod(t *testing.T) {
 func TestGOPATH(t *testing.T) {
 	os.Setenv("GOPATH", "")
 	gopath := GOPATH()
-	home := os.Getenv(envHOME)
+	home := HOME()
 	expect := filepath.Join(home, "go")
 	if expect == filepath.Clean(runtime.GOROOT()) {
 		if gopath != "" {
@@ -88,7 +88,7 @@ func TestGOMODCACHE(t *testing.T) {
 	/* TODO:
 	os.Setenv("GOMODCACHE", "")
 	os.Setenv("GOPATH", "")
-	home := os.Getenv(envHOME)
+	home := HOME()
 	defer os.Setenv(envHOME, home)
 	os.Setenv(envHOME, strings.TrimRight(runtime.GOROOT(), "go"))
 	modcache = GOMODCACHE()
