@@ -66,7 +66,9 @@ func runCmd(_ *base.Command, args []string) {
 
 	gopEnv["GOPVERSION"] = env.Version()
 	gopEnv["GOPROOT"] = env.GOPROOT()
-	// TODO: gopEnv["GOPMOD"]
+	gopEnv["GOPMOD"], _ = env.GOPMOD("")
+	gopEnv["GOPATH()"] = env.GOPATH() // TODO: remove (only for debug)
+	gopEnv["GOMODCACHE()"] = env.GOMODCACHE()
 
 	onlyValues := false
 	vars := flag.Args()

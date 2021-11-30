@@ -33,7 +33,6 @@ import (
 	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/cmd/internal/modload"
-	"github.com/goplus/gop/env"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
@@ -77,8 +76,9 @@ func saveGoFile(gofile string, pkg *gox.Package) error {
 	return gox.WriteFile(gofile, pkg, false)
 }
 
+/*
 func findGoModFile(dir string) (modfile string, noCacheFile bool, err error) {
-	modfile, err = env.GOPMOD(dir)
+	modfile, err = cl.FindGoModFile(dir)
 	if err != nil {
 		modfile = filepath.Join(env.GOPROOT(), "go.mod")
 		return modfile, true, nil
@@ -86,13 +86,14 @@ func findGoModFile(dir string) (modfile string, noCacheFile bool, err error) {
 	return
 }
 
-func findGoModDir(dir string) (string, bool) {
-	modfile, nocachefile, err := findGoModFile(dir)
+func findModDir(dir string, fname string) (string, bool) {
+	modfile, nocachefile, err := findModFile(dir, fname)
 	if err != nil {
-		log.Fatalln("findGoModFile:", err)
+		log.Fatalln("findModFile:", err)
 	}
 	return filepath.Dir(modfile), nocachefile
 }
+*/
 
 func runCmd(cmd *base.Command, args []string) {
 	err := flag.Parse(args)
@@ -193,7 +194,7 @@ func runCmd(cmd *base.Command, args []string) {
 			os.Exit(12)
 		}
 
-		modDir, noCacheFile := findGoModDir(srcDir)
+		modDir, noCacheFile := findModDir(srcDir, "gop.mod")
 		conf := &cl.Config{
 			Dir: modDir, TargetDir: srcDir, Fset: fset, CacheLoadPkgs: true, PersistLoadPkgs: !noCacheFile}
 		out, err := cl.NewPackage("", mainPkg, conf)
@@ -251,9 +252,9 @@ func goRun(file string, args []string) {
 }
 
 func runGoPkg(src string, args []string, doRun bool) {
-	modfile, noCacheFile, err := findGoModFile(src)
+	modfile, noCacheFile, err := findModFile(src, "gop.mod")
 	if err != nil {
-		log.Fatalln("findGoModFile:", err)
+		log.Fatalln("findModFile:", err)
 	}
 	base := filepath.Dir(modfile)
 	rel, _ := filepath.Rel(base, src)

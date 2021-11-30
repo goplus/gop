@@ -43,8 +43,7 @@ func init() {
 	gblFset = token.NewFileSet()
 	baseConf = &cl.Config{
 		Fset:          gblFset,
-		ModPath:       "github.com/goplus/gop",
-		ModRootDir:    ".",
+		ModRootDir:    "./internal",
 		GenGoPkg:      new(gengo.Runner).GenGoPkg,
 		CacheLoadPkgs: true,
 		NoFileLine:    true,

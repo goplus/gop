@@ -37,12 +37,7 @@ func GOPROOT() string {
 }
 
 const (
-	errNotFound = syscall.ENOENT
-)
-
-const (
 	envGOPROOT = "GOPROOT"
-	envHOME    = "HOME"
 )
 
 func findGopRoot() (string, error) {
@@ -81,7 +76,7 @@ func findGopRoot() (string, error) {
 			return goplusRoot, nil
 		}
 	}
-	return "", errNotFound
+	return "", syscall.ENOENT
 }
 
 // Mockable for testing.
