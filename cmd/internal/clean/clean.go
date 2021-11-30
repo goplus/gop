@@ -18,11 +18,12 @@ package clean
 
 import (
 	"fmt"
-	"github.com/qiniu/x/log"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/qiniu/x/log"
 
 	"github.com/goplus/gop/cmd/internal/base"
 )
@@ -83,7 +84,7 @@ func removeGopDir(dir string) {
 
 // -----------------------------------------------------------------------------
 
-// Cmd - gop build
+// Cmd - gop clean
 var Cmd = &base.Command{
 	UsageLine: "gop clean [-v] <gopSrcDir>",
 	Short:     "Clean all Go+ auto generated files",
