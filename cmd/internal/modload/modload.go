@@ -219,6 +219,9 @@ func CreateModFile(modPath string) {
 
 func Load() {
 	LoadModFile()
+	if modRoot == "" {
+		return
+	}
 	SyncGoMod()
 	if classModFile != nil && classModFile.Classfile != nil {
 		gengo.RegisterPkgFlags(classModFile.Classfile.ProjExt, gengo.PkgFlagGmx)
@@ -260,6 +263,9 @@ func fixGoVersion(fixed *bool) gomodfile.VersionFixer {
 // -mod wasn't set explicitly and automatic vendoring should be enabled.
 func LoadModFile() {
 	Init()
+	if modRoot == "" {
+		return
+	}
 	// If gop.mod does not exist, then modroot does not exist,
 	// and if go.mod exists then a copy of go.mod will be synchronized to gop.mod
 	gopmod := GopModFilePath()
