@@ -560,6 +560,15 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 				}
 				for _, v := range specs {
 					spec := v.(*ast.ValueSpec)
+					if spec.Type == nil {
+						pos := ctx.Position(v.Pos())
+						ctx.handleCodeErrorf(&pos, "missing field type in class file")
+						continue
+					}
+					if len(spec.Values) > 0 {
+						pos := ctx.Position(v.Pos())
+						ctx.handleCodeErrorf(&pos, "cannot assign value to field in class file")
+					}
 					typ := toType(ctx, spec.Type)
 					for _, name := range spec.Names {
 						flds = append(flds, types.NewField(name.Pos(), pkg, name.Name, typ, false))

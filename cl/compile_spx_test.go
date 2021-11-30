@@ -73,6 +73,50 @@ func gopSpxTestEx(t *testing.T, gmx, spxcode, expected, gmxfile, spxfile string)
 	}
 }
 
+func gopSpxErrorTestEx(t *testing.T, msg, gmx, spxcode, gmxfile, spxfile string) {
+	fs := newTwoFileFS("/foo", spxfile, spxcode, gmxfile, gmx)
+	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", nil, 0)
+	if err != nil {
+		scanner.PrintError(os.Stderr, err)
+		t.Fatal("ParseFSDir:", err)
+	}
+	conf := *baseConf.Ensure()
+	conf.NoFileLine = false
+	conf.WorkingDir = "/foo"
+	conf.TargetDir = "/foo"
+	bar := pkgs["main"]
+	_, err = cl.NewPackage("", bar, &conf)
+	if err == nil {
+		t.Fatal("no error?")
+	}
+	if ret := err.Error(); ret != msg {
+		t.Fatalf("\nError: \"%s\"\nExpected: \"%s\"\n", ret, msg)
+	}
+}
+
+func TestSpxError(t *testing.T) {
+	gopSpxErrorTestEx(t, `./Game.tgmx:4:2: cannot assign value to field in class file`, `
+var (
+	Kai Kai
+	userScore int = 100
+)
+`, `
+println "hi"
+`, "Game.tgmx", "Kai.tspx")
+
+	gopSpxErrorTestEx(t, `./Kai.tspx:3:2: missing field type in class file`, `
+var (
+	Kai Kai
+	userScore int
+)
+`, `
+var (
+	id = 100
+)
+println "hi"
+`, "Game.tgmx", "Kai.tspx")
+}
+
 func TestSpxBasic(t *testing.T) {
 	gopSpxTestEx(t, `
 func onInit() {
