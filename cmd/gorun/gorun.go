@@ -45,13 +45,13 @@ func (p *goFile) GenGo(outFile string) error {
 }
 
 func main() {
-	if len(os.Args) != 2 {
+	if len(os.Args) < 2 {
 		fmt.Fprint(os.Stderr, "Usage: gorun <file.go>\n\n")
 		return
 	}
 	goProj := newGoProj(os.Args[1])
 	ctx := gopmod.New("")
-	cmd := ctx.GoCommand("run", goProj)
+	cmd := ctx.GoCommand("run", goProj, os.Args[2:]...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

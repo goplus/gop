@@ -1,8 +1,9 @@
-package execgo
+package gopmod
 
 import (
 	"fmt"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/goplus/gop/env"
 )
@@ -33,15 +34,37 @@ func LoadFlags() string {
 
 // -----------------------------------------------------------------------------
 
-func Command(op string, source string, args ...string) *exec.Cmd {
-	exargs := make([]string, 1, len(args)+4)
-	exargs[0] = op
-	exargs = appendLdflags(exargs, op)
-	exargs = append(exargs, args...)
-	if source != "" {
-		exargs = append(exargs, source)
+type GoCmd struct {
+	*exec.Cmd
+	after func() error
+}
+
+func (p GoCmd) Run() error {
+	if err := p.Cmd.Run(); err != nil {
+		return err
 	}
-	return exec.Command("go", exargs...)
+	return p.after()
+}
+
+func goCommand(dir, op string, t *goTarget, args ...string) (ret GoCmd) {
+	exargs := make([]string, 1, len(args)+6)
+	exargs[0] = op                     // 1
+	exargs = appendLdflags(exargs, op) // 2
+	if op == "run" && t.defctx {       // 2
+		afterDir := dir
+		dir, _ = filepath.Split(t.goFile)
+		exargs[0] = "build"
+		exargs = append(exargs, "-o", t.outFile)
+		ret.after = func() error {
+			return runCommand(afterDir, t.outFile, args...)
+		}
+	} else {
+		exargs = append(exargs, args...) // len(args)
+	}
+	exargs = append(exargs, t.goFile) // 1
+	ret.Cmd = exec.Command("go", exargs...)
+	ret.Cmd.Dir = dir
+	return
 }
 
 func appendLdflags(exargs []string, op string) []string {

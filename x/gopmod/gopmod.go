@@ -27,14 +27,13 @@ import (
 	"strings"
 
 	"github.com/goplus/gop/env"
-	"github.com/goplus/gop/env/execgo"
 )
 
 // -----------------------------------------------------------------------------
 
 type Source interface {
 	Fingerp() [20]byte // source code fingerprint
-	IsDirty(outFile string, temp bool) bool
+	IsDirty(outFile string, defctx bool) bool
 	GenGo(outFile string) error
 }
 
@@ -45,8 +44,9 @@ type Project struct {
 }
 
 type Context struct {
-	GOPMOD string
-	defctx bool
+	modfile string
+	dir     string
+	defctx  bool
 }
 
 func New(dir string) *Context {
@@ -59,44 +59,44 @@ func New(dir string) *Context {
 		}
 		defctx = true
 	}
-	return &Context{GOPMOD: modfile, defctx: defctx}
+	return &Context{modfile: modfile, dir: dir, defctx: defctx}
 }
 
-func (p *Context) GoCommand(op string, src *Project, args ...string) *exec.Cmd {
-	file := p.goFile(src)
-	cmd := execgo.Command(op, file, args...)
-	cmd.Dir, _ = filepath.Split(file)
-	return cmd
-}
-
-func (p *Context) outFile(src *Project) (outFile string, temp bool) {
-	if p.defctx {
-		hash := src.Fingerp()
-		fname := src.FriendlyFname
-		if !strings.HasSuffix(fname, ".go") {
-			fname += ".go"
-		}
-		dir, _ := filepath.Split(p.GOPMOD)
-		outFile = dir + "/g" + base64.RawURLEncoding.EncodeToString(hash[:]) + fname
-		temp = true
-	} else {
-		outFile = src.AutoGenFile
-	}
-	return
-}
-
-func (p *Context) goFile(src *Project) string {
-	outFile, temp := p.outFile(src)
-	if src.IsDirty(outFile, temp) {
-		if temp {
-			dir, _ := filepath.Split(outFile)
+func (p *Context) GoCommand(op string, src *Project, args ...string) GoCmd {
+	out := p.out(src)
+	if src.IsDirty(out.goFile, p.defctx) {
+		if p.defctx {
+			dir, _ := filepath.Split(out.goFile)
 			os.Mkdir(dir, 0755)
 		}
-		if err := src.GenGo(outFile); err != nil {
+		if err := src.GenGo(out.goFile); err != nil {
 			log.Panicln(err)
 		}
 	}
-	return outFile
+	return goCommand(p.dir, op, &out, args...)
+}
+
+type goTarget struct {
+	goFile  string
+	outFile string
+	defctx  bool
+}
+
+func (p *Context) out(src *Project) (ret goTarget) {
+	hash := src.Fingerp()
+	fname := src.FriendlyFname
+	if !strings.HasSuffix(fname, ".go") {
+		fname += ".go"
+	}
+	dir, _ := filepath.Split(p.modfile)
+	ret.outFile = dir + "/g" + base64.RawURLEncoding.EncodeToString(hash[:])
+	ret.defctx = p.defctx
+	if ret.defctx {
+		ret.goFile = ret.outFile + fname
+	} else {
+		ret.goFile = src.AutoGenFile
+	}
+	return
 }
 
 // -----------------------------------------------------------------------------
@@ -124,7 +124,7 @@ replace (
 
 func genGomodFile(modfile string) {
 	var buf bytes.Buffer
-	fmt.Fprintf(&buf, gomodFormat, execgo.GOPVERSION, execgo.GOPROOT)
+	fmt.Fprintf(&buf, gomodFormat, GOPVERSION, GOPROOT)
 	err := os.WriteFile(modfile, buf.Bytes(), 0666)
 	if err != nil {
 		log.Panicln(err)
@@ -139,13 +139,7 @@ func genDummyProject(dir string) {
 }
 
 func execCommand(dir, command string, args ...string) {
-	cmd := exec.Command(command, args...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Env = os.Environ()
-	cmd.Dir = dir
-	err := cmd.Run()
+	err := runCommand(dir, command, args...)
 	if err != nil {
 		switch e := err.(type) {
 		case *exec.ExitError:
@@ -154,6 +148,16 @@ func execCommand(dir, command string, args ...string) {
 			log.Fatalln(err)
 		}
 	}
+}
+
+func runCommand(dir, command string, args ...string) error {
+	cmd := exec.Command(command, args...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Env = os.Environ()
+	cmd.Dir = dir
+	return cmd.Run()
 }
 
 func genDefaultGopMod(modfile string) {
