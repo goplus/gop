@@ -73,10 +73,23 @@ func runCmd(_ *base.Command, args []string) {
 	gopEnv["GOMODCACHE"] = env.GOMODCACHE()
 	gopEnv["GOPMOD"], _ = env.GOPMOD("")
 
-	onlyValues := false
 	vars := flag.Args()
-	if len(vars) > 0 {
-		onlyValues = true
+
+	outputEnvVars(gopEnv, vars, *envJson)
+}
+
+func outputEnvVars(gopEnv map[string]interface{}, vars []string, outputJson bool) {
+	onlyValues := true
+
+	if len(vars) == 0 {
+		onlyValues = false
+
+		vars = make([]string, 0, len(gopEnv))
+		for k := range gopEnv {
+			vars = append(vars, k)
+		}
+		sort.Strings(vars)
+	} else {
 		newEnv := make(map[string]interface{})
 		for _, v := range vars {
 			if value, ok := gopEnv[v]; ok {
@@ -88,10 +101,6 @@ func runCmd(_ *base.Command, args []string) {
 		gopEnv = newEnv
 	}
 
-	outputEnvVars(gopEnv, onlyValues, *envJson)
-}
-
-func outputEnvVars(gopEnv map[string]interface{}, onlyValues bool, outputJson bool) {
 	if outputJson {
 		b, err := json.Marshal(gopEnv)
 		if err != nil {
@@ -99,15 +108,10 @@ func outputEnvVars(gopEnv map[string]interface{}, onlyValues bool, outputJson bo
 		}
 
 		var out bytes.Buffer
-		json.Indent(&out, b, "", "  ")
+		json.Indent(&out, b, "", "\t")
 		fmt.Println(out.String())
 	} else {
-		keys := make([]string, 0, len(gopEnv))
-		for k := range gopEnv {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-		for _, k := range keys {
+		for _, k := range vars {
 			v := gopEnv[k]
 			if onlyValues {
 				fmt.Printf("%v\n", v)
