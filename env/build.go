@@ -16,24 +16,18 @@
 
 package env
 
-import (
-	"fmt"
-)
-
 // The value of variables come form
-// `go build -ldflags '-X "buildDate=xxxxx" -X "buildBranch=xxxxx" -X "buildCommit=xxxx"'`
+// `go build -ldflags '-X "buildDate=xxxxx" -X "buildCommit=xxxx"'`
 var (
 	buildDate   string
-	buildBranch string
 	buildCommit string
 )
 
-// BuildInfo returns all build information.
-func BuildInfo() string {
-	return fmt.Sprintf("%s(%s) %s", buildBranch, buildCommit, buildDate)
+func BuildDate() string {
+	return buildDate
 }
 
-// BuildCommit returns build commit id.
-func BuildCommit() string {
+// BuildRevision returns build revision id.
+func BuildRevision() string {
 	return buildCommit
 }
