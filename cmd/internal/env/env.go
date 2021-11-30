@@ -22,6 +22,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"sort"
 
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/env"
@@ -101,11 +102,17 @@ func outputEnvVars(gopEnv map[string]interface{}, onlyValues bool, outputJson bo
 		json.Indent(&out, b, "", "  ")
 		fmt.Println(out.String())
 	} else {
-		for k, v := range gopEnv {
+		keys := make([]string, 0, len(gopEnv))
+		for k := range gopEnv {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			v := gopEnv[k]
 			if onlyValues {
 				fmt.Printf("%v\n", v)
 			} else {
-				fmt.Printf("%s=%v\n", k, v)
+				fmt.Printf("%s=\"%v\"\n", k, v)
 			}
 		}
 	}
