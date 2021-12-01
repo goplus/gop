@@ -55,10 +55,10 @@ func TestReadSource(t *testing.T) {
 	}
 }
 
-func TestParseFile(t *testing.T) {
+func TestParseFiles(t *testing.T) {
 	fset := token.NewFileSet()
-	if _, err := ParseFile(fset, "/foo/bar/not-exists", nil, PackageClauseOnly); err == nil {
-		t.Fatal("ParseFile failed: no error?")
+	if _, err := ParseFiles(fset, []string{"/foo/bar/not-exists"}, PackageClauseOnly); err == nil {
+		t.Fatal("ParseFiles failed: no error?")
 	}
 }
 
@@ -118,6 +118,17 @@ func TestParseGo(t *testing.T) {
 	}
 	if len(pkgs) != 0 {
 		t.Fatal("TestParseGo failed: len(pkgs) =", len(pkgs))
+	}
+}
+
+func TestParseGoFiles(t *testing.T) {
+	fset := token.NewFileSet()
+	pkgs, err := ParseFiles(fset, []string{"./_testdata/functype/functype.go"}, Trace)
+	if err != nil {
+		t.Fatal("TestParseGoFiles: ParseFiles failed -", err)
+	}
+	if len(pkgs) != 1 {
+		t.Fatal("TestParseGoFiles failed: len(pkgs) =", len(pkgs))
 	}
 }
 

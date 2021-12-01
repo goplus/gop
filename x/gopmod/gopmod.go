@@ -34,7 +34,7 @@ import (
 type Source interface {
 	Fingerp() [20]byte // source code fingerprint
 	IsDirty(outFile string, defctx bool) bool
-	GenGo(outFile string) error
+	GenGo(outFile, modFile string) error
 }
 
 type Project struct {
@@ -71,7 +71,7 @@ func (p *Context) GoCommand(op string, src *Project) GoCmd {
 			dir, _ := filepath.Split(out.goFile)
 			os.Mkdir(dir, 0755)
 		}
-		if err := src.GenGo(out.goFile); err != nil {
+		if err := src.GenGo(out.goFile, p.modfile); err != nil {
 			log.Panicln(err)
 		}
 	}
@@ -95,7 +95,7 @@ func (p *Context) out(src *Project) (ret goTarget) {
 	ret.outFile = dir + "g" + base64.RawURLEncoding.EncodeToString(hash[:])
 	ret.proj = src
 	ret.defctx = p.defctx
-	if ret.defctx {
+	if ret.defctx || src.AutoGenFile == "" {
 		ret.goFile = ret.outFile + fname
 	} else {
 		ret.goFile = src.AutoGenFile
