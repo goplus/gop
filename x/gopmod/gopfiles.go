@@ -41,6 +41,9 @@ func (p *Context) openFromGopFiles(files []string) (proj *Project, err error) {
 		Source:        &gopFiles{files: files},
 		UseDefaultCtx: true,
 	}
+	if len(files) == 1 {
+		proj.FriendlyFname = filepath.Base(files[0])
+	}
 	return
 }
 
