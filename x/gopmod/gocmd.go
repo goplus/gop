@@ -75,17 +75,17 @@ func goCommand(dir, op string, t *goTarget) (ret GoCmd) {
 	exargs = append(exargs, proj.BuildArgs...) // len(proj.BuildArgs)
 	exargs = appendLdflags(exargs, op)         // 2
 	if op == "run" && t.defctx {               // 2
-		afterDir := dir
-		dir, _ = filepath.Split(t.goFile)
+		afterDir, goFile, outFile := dir, t.goFile, t.outFile
+		dir, _ = filepath.Split(goFile)
 		exargs[0] = "build"
-		exargs = append(exargs, "-o", t.outFile, t.goFile)
+		exargs = append(exargs, "-o", outFile, goFile)
 		ret.after = func(e error) error {
 			if e == nil {
-				e = runCommand(afterDir, t.outFile, proj.ExecArgs...)
+				e = runCommand(afterDir, outFile, proj.ExecArgs...)
+				os.Remove(outFile)
 			}
 			if e != nil && t.proj.FlagRTOE { // remove tempfile on error
-				os.Remove(t.goFile)
-				os.Remove(t.outFile)
+				os.Remove(goFile)
 			}
 			return e
 		}

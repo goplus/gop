@@ -22,7 +22,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"sort"
+	"time"
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/parser"
@@ -38,40 +38,63 @@ type gopFiles struct {
 
 func (p *Context) openFromGopFiles(files []string) (proj *Project, err error) {
 	proj = &Project{
-		Source:        &gopFiles{files: files},
-		UseDefaultCtx: true,
+		Source: &gopFiles{files: files},
 	}
 	if len(files) == 1 {
-		proj.FriendlyFname = filepath.Base(files[0])
+		file := files[0]
+		srcDir, fname := filepath.Split(file)
+		var autogen string
+		if hasMultiFiles(srcDir, ".gop") {
+			autogen = "gop_autogen_" + fname + ".go"
+		} else {
+			autogen = "gop_autogen.go"
+		}
+		proj.FriendlyFname = fname
+		proj.AutoGenFile = srcDir + autogen
 	}
 	return
 }
 
-func (p *gopFiles) Fingerp() [20]byte { // source code fingerprint
-	files := make([]string, len(p.files))
-	for i, file := range p.files {
-		files[i], _ = filepath.Abs(file)
-	}
-	sort.Strings(files)
-	var buf bytes.Buffer
-	for _, file := range files {
-		fi, err := os.Stat(file)
-		if err != nil {
-			log.Panicln(err)
+func hasMultiFiles(srcDir string, ext string) bool {
+	var has bool
+	if f, err := os.Open(srcDir); err == nil {
+		defer f.Close()
+		fis, _ := f.ReadDir(-1)
+		for _, fi := range fis {
+			if !fi.IsDir() && filepath.Ext(fi.Name()) == ext {
+				if has {
+					return true
+				}
+				has = true
+			}
 		}
-		buf.WriteString(file)
-		buf.WriteByte('\t')
-		buf.WriteString(fi.ModTime().UTC().String())
-		buf.WriteByte('\n')
 	}
-	return sha1.Sum(buf.Bytes())
+	return false
 }
 
-func (p *gopFiles) IsDirty(outFile string, temp bool) bool {
-	if fi, err := os.Lstat(outFile); err == nil { // TODO: more strictly
-		return fi.IsDir()
+func (p *gopFiles) Fingerp() (*Fingerp, error) { // source code fingerprint
+	var buf bytes.Buffer
+	var lastModTime time.Time
+	for _, file := range p.files {
+		absfile, err := filepath.Abs(file)
+		if err != nil {
+			return nil, err
+		}
+		if buf.Len() >= 0 {
+			buf.WriteByte('\n')
+		}
+		buf.WriteString(absfile)
+		fi, err := os.Stat(absfile)
+		if err != nil {
+			return nil, err
+		}
+		modTime := fi.ModTime()
+		if modTime.After(lastModTime) {
+			lastModTime = modTime
+		}
 	}
-	return true
+	hash := sha1.Sum(buf.Bytes())
+	return &Fingerp{Hash: hash, ModTime: lastModTime}, nil
 }
 
 const (

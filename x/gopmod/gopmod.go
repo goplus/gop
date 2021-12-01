@@ -25,15 +25,20 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/goplus/gop/env"
 )
 
 // -----------------------------------------------------------------------------
 
+type Fingerp struct {
+	Hash    [20]byte
+	ModTime time.Time
+}
+
 type Source interface {
-	Fingerp() [20]byte // source code fingerprint
-	IsDirty(outFile string, defctx bool) bool
+	Fingerp() (*Fingerp, error) // source code fingerprint
 	GenGo(outFile, modFile string) error
 }
 
@@ -44,6 +49,7 @@ type Project struct {
 	BuildArgs     []string
 	ExecArgs      []string
 	UseDefaultCtx bool
+	ForceToGen    bool
 	FlagNRINC     bool // do not run if not changed
 	FlagRTOE      bool // remove tempfile on error
 }
@@ -74,8 +80,12 @@ func (p *Context) GoCommand(op string, src *Project) GoCmd {
 	if src.UseDefaultCtx {
 		p = NewDefault(p.dir)
 	}
-	out := p.out(src)
-	if src.IsDirty(out.goFile, p.defctx) {
+	fp, err := src.Fingerp()
+	if err != nil {
+		log.Panicln(err)
+	}
+	out := p.out(src, fp.Hash[:])
+	if src.ForceToGen || fileIsDirty(fp.ModTime, out.goFile) {
 		if p.defctx {
 			dir, _ := filepath.Split(out.goFile)
 			os.Mkdir(dir, 0755)
@@ -89,6 +99,14 @@ func (p *Context) GoCommand(op string, src *Project) GoCmd {
 	return goCommand(p.dir, op, &out)
 }
 
+func fileIsDirty(srcMod time.Time, destFile string) bool {
+	fiDest, err := os.Stat(destFile)
+	if err != nil {
+		return true
+	}
+	return srcMod.After(fiDest.ModTime())
+}
+
 type goTarget struct {
 	goFile  string
 	outFile string
@@ -96,14 +114,13 @@ type goTarget struct {
 	defctx  bool
 }
 
-func (p *Context) out(src *Project) (ret goTarget) {
-	hash := src.Fingerp()
+func (p *Context) out(src *Project, hash []byte) (ret goTarget) {
 	fname := src.FriendlyFname
 	if !strings.HasSuffix(fname, ".go") {
 		fname += ".go"
 	}
 	dir, _ := filepath.Split(p.modfile)
-	ret.outFile = dir + "g" + base64.RawURLEncoding.EncodeToString(hash[:])
+	ret.outFile = dir + "g" + base64.RawURLEncoding.EncodeToString(hash)
 	ret.proj = src
 	ret.defctx = p.defctx
 	if ret.defctx || src.AutoGenFile == "" {
