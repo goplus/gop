@@ -106,8 +106,8 @@ func getGopBuildFlags() string {
 	if gopRootFinal := os.Getenv("GOPROOT_FINAL"); gopRootFinal != "" {
 		defaultGopRoot = gopRootFinal
 	}
-	buildFlags := fmt.Sprintf("-X github.com/goplus/gop/env.defaultGopRoot=%s", defaultGopRoot)
-	buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildDate=%s", getBuildDateTime())
+	buildFlags := fmt.Sprintf("-X \"github.com/goplus/gop/env.defaultGopRoot=%s\"", defaultGopRoot)
+	buildFlags += fmt.Sprintf(" -X \"github.com/goplus/gop/env.buildDate=%s\"", getBuildDateTime())
 	if commit, ok := getGitInfo(); ok {
 		buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildCommit=%s", commit)
 		if buildVer := getBuildVer(); buildVer != "" {
