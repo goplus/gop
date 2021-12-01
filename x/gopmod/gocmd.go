@@ -18,6 +18,7 @@ package gopmod
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 
@@ -52,17 +53,18 @@ func LoadFlags() string {
 
 type GoCmd struct {
 	*exec.Cmd
-	after func() error
+	after func(error) error
 }
 
 func (p GoCmd) Run() error {
-	if err := p.Cmd.Run(); err != nil {
-		return err
+	if p.Cmd == nil {
+		return nil
 	}
+	err := p.Cmd.Run()
 	if p.after != nil {
-		return p.after()
+		return p.after(err)
 	}
-	return nil
+	return err
 }
 
 func goCommand(dir, op string, t *goTarget) (ret GoCmd) {
@@ -76,8 +78,15 @@ func goCommand(dir, op string, t *goTarget) (ret GoCmd) {
 		dir, _ = filepath.Split(t.goFile)
 		exargs[0] = "build"
 		exargs = append(exargs, "-o", t.outFile, t.goFile)
-		ret.after = func() error {
-			return runCommand(afterDir, t.outFile, proj.ExecArgs...)
+		ret.after = func(e error) error {
+			if e == nil {
+				e = runCommand(afterDir, t.outFile, proj.ExecArgs...)
+			}
+			if e != nil && t.proj.FlagRTOE { // remove tempfile on error
+				os.Remove(t.goFile)
+				os.Remove(t.outFile)
+			}
+			return e
 		}
 	} else {
 		exargs = append(exargs, t.goFile)         // 1

@@ -43,6 +43,8 @@ type Project struct {
 	FriendlyFname string // friendly fname of source
 	BuildArgs     []string
 	ExecArgs      []string
+	FlagNRINC     bool // do not run if not changed
+	FlagRTOE      bool // remove tempfile on error
 }
 
 type Context struct {
@@ -74,6 +76,8 @@ func (p *Context) GoCommand(op string, src *Project) GoCmd {
 		if err := src.GenGo(out.goFile, p.modfile); err != nil {
 			log.Panicln(err)
 		}
+	} else if src.FlagNRINC { // do not run if not changed
+		return GoCmd{}
 	}
 	return goCommand(p.dir, op, &out)
 }
