@@ -102,7 +102,11 @@ func findTag(commit string) string {
 */
 
 func getGopBuildFlags() string {
-	buildFlags := fmt.Sprintf("-X \"github.com/goplus/gop/env.defaultGopRoot=%s\"", gopRoot)
+	defaultGopRoot := gopRoot
+	if gopRootFinal := os.Getenv("GOPROOT_FINAL"); gopRootFinal != "" {
+		defaultGopRoot = gopRootFinal
+	}
+	buildFlags := fmt.Sprintf("-X github.com/goplus/gop/env.defaultGopRoot=%s", defaultGopRoot)
 	buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildDate=%s", getBuildDateTime())
 	if commit, ok := getGitInfo(); ok {
 		buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildCommit=%s", commit)
