@@ -102,8 +102,12 @@ func findTag(commit string) string {
 */
 
 func getGopBuildFlags() string {
-	buildFlags := fmt.Sprintf("-X \"github.com/goplus/gop/env.defaultGopRoot=%s\"", gopRoot)
-	buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildDate=%s", getBuildDateTime())
+	defaultGopRoot := gopRoot
+	if gopRootFinal := os.Getenv("GOPROOT_FINAL"); gopRootFinal != "" {
+		defaultGopRoot = gopRootFinal
+	}
+	buildFlags := fmt.Sprintf("-X \"github.com/goplus/gop/env.defaultGopRoot=%s\"", defaultGopRoot)
+	buildFlags += fmt.Sprintf(" -X \"github.com/goplus/gop/env.buildDate=%s\"", getBuildDateTime())
 	if commit, ok := getGitInfo(); ok {
 		buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildCommit=%s", commit)
 		if buildVer := getBuildVer(); buildVer != "" {
@@ -151,11 +155,9 @@ func buildGoplusTools(useGoProxy bool) {
 	}
 
 	// Install Go+ binary files under current ./bin directory.
-	commandExecuteEnv = append(commandExecuteEnv, "GOBIN="+detectGopBinPath())
-
 	println("Installing Go+ tools...")
 	os.Chdir(commandsDir)
-	buildOutput, buildErr, err := execCommand("go", "install", "-v", "-ldflags", buildFlags, "./...")
+	buildOutput, buildErr, err := execCommand("go", "build", "-o", detectGopBinPath(), "-v", "-ldflags", buildFlags, "./...")
 	println(buildErr)
 	if err != nil {
 		println(err.Error())
