@@ -305,32 +305,7 @@ func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 
 func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
 	if re, ok := v.X.(*ast.RangeExpr); ok {
-		compileForStmt(ctx, &ast.ForStmt{
-			For: v.For,
-			Init: &ast.AssignStmt{
-				Lhs:    []ast.Expr{v.Value},
-				TokPos: re.To,
-				Tok:    token.DEFINE,
-				Rhs:    []ast.Expr{re.First},
-			},
-			Cond: &ast.BinaryExpr{
-				X:     v.Value,
-				OpPos: re.To,
-				Op:    token.LSS,
-				Y:     re.Last,
-			},
-			Post: &ast.AssignStmt{
-				Lhs:    []ast.Expr{v.Value},
-				TokPos: re.Colon2,
-				Tok:    token.ASSIGN,
-				Rhs: []ast.Expr{&ast.BinaryExpr{
-					X:  v.Value,
-					Op: token.ADD,
-					Y:  re.Expr3,
-				}},
-			},
-			Body: v.Body,
-		})
+		compileForStmt(ctx, toForStmt(v, re))
 		return
 	}
 	cb := ctx.cb
@@ -360,6 +335,35 @@ func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
 	cb.SetComments(comments, true)
 	setBodyHandler(ctx)
 	cb.End()
+}
+
+func toForStmt(fs *ast.ForPhraseStmt, re *ast.RangeExpr) *ast.ForStmt {
+	return &ast.ForStmt{
+		For: fs.For,
+		Init: &ast.AssignStmt{
+			Lhs:    []ast.Expr{fs.Value},
+			TokPos: re.To,
+			Tok:    token.DEFINE,
+			Rhs:    []ast.Expr{re.First},
+		},
+		Cond: &ast.BinaryExpr{
+			X:     fs.Value,
+			OpPos: re.To,
+			Op:    token.LSS,
+			Y:     re.Last,
+		},
+		Post: &ast.AssignStmt{
+			Lhs:    []ast.Expr{fs.Value},
+			TokPos: re.Colon2,
+			Tok:    token.ASSIGN,
+			Rhs: []ast.Expr{&ast.BinaryExpr{
+				X:  fs.Value,
+				Op: token.ADD,
+				Y:  re.Expr3,
+			}},
+		},
+		Body: fs.Body,
+	}
 }
 
 // for init; cond then
