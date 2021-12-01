@@ -170,12 +170,9 @@ func runTestcases() {
 	println("Start running testcases.")
 	os.Chdir(gopRoot)
 
-	path, _ := os.LookupEnv("PATH")
-	path = fmt.Sprintf("%s:", detectGopBinPath()) + path
-	commandExecuteEnv = append(commandExecuteEnv, "PATH="+path)
-
 	coverage := "-coverprofile=coverage.txt"
-	testOutput, testErr, err := execCommand("gop", "test", coverage, "-covermode=atomic", "./...")
+	gopCommand := filepath.Join(detectGopBinPath(), "gop")
+	testOutput, testErr, err := execCommand(gopCommand, "test", coverage, "-covermode=atomic", "./...")
 	println(testOutput)
 	println(testErr)
 	if err != nil {
