@@ -342,7 +342,7 @@ func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
 }
 
 func toForStmt(forPos token.Pos, value ast.Expr, body *ast.BlockStmt, re *ast.RangeExpr) *ast.ForStmt {
-	if value == nil {
+	if value == nil || value.(*ast.Ident).Name == "_" {
 		value = &ast.Ident{NamePos: forPos, Name: "_gop_k"}
 	}
 	if re.First == nil {

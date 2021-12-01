@@ -3342,15 +3342,15 @@ func main() {
 
 func TestRangeExpr6(t *testing.T) {
 	gopClTest(t, `
-for i <- 1:10:2 {
-	println(i)
+for _ <- :10 {
+	println("Hi")
 }`, `package main
 
 import fmt "fmt"
 
 func main() {
-	for i := 1; i < 10; i = i + 2 {
-		fmt.Println(i)
+	for _gop_k := 0; _gop_k < 10; _gop_k = _gop_k + 1 {
+		fmt.Println("Hi")
 	}
 }
 `)
