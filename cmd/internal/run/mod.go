@@ -38,8 +38,11 @@ func gopRun(source string, args ...string) {
 		log.Fatalln("OpenProject failed:", err)
 	}
 	goProj.ExecArgs = args
-	goProj.FlagRTOE = *flagRTOE
 	goProj.FlagNRINC = *flagNorun
+	goProj.FlagRTOE = *flagRTOE
+	if goProj.FlagRTOE {
+		goProj.UseDefaultCtx = true
+	}
 	cmd := ctx.GoCommand("run", goProj)
 	if cmd.IsValid() {
 		cmd.Stdin = os.Stdin

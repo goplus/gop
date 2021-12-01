@@ -26,33 +26,37 @@ import (
 
 type goFile struct {
 	file string
-	code []byte
 }
 
 func openFromGoFile(file string) (proj *Project, err error) {
-	code, err := os.ReadFile(file)
-	if err != nil {
-		return
-	}
 	proj = &Project{
-		Source:        &goFile{file: file, code: code},
+		Source:        &goFile{file: file},
 		AutoGenFile:   file,
 		FriendlyFname: filepath.Base(file),
 	}
 	return
 }
 
-func (p *goFile) Fingerp() [20]byte { // source code fingerprint
-	return sha1.Sum(p.code)
-}
-
-func (p *goFile) IsDirty(outFile string, temp bool) bool {
-	return true
+func (p *goFile) Fingerp() (ret *Fingerp, err error) { // source code fingerprint
+	file, err := filepath.Abs(p.file)
+	if err != nil {
+		return
+	}
+	fi, err := os.Stat(file)
+	if err != nil {
+		return
+	}
+	hash := sha1.Sum([]byte(file))
+	return &Fingerp{Hash: hash, ModTime: fi.ModTime()}, nil
 }
 
 func (p *goFile) GenGo(outFile, modFile string) error {
 	if p.file != outFile {
-		return os.WriteFile(outFile, p.code, 0666)
+		code, err := os.ReadFile(p.file)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(outFile, code, 0666)
 	}
 	return nil
 }
