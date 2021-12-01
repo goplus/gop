@@ -155,11 +155,9 @@ func buildGoplusTools(useGoProxy bool) {
 	}
 
 	// Install Go+ binary files under current ./bin directory.
-	commandExecuteEnv = append(commandExecuteEnv, "GOBIN="+detectGopBinPath())
-
 	println("Installing Go+ tools...")
 	os.Chdir(commandsDir)
-	buildOutput, buildErr, err := execCommand("go", "install", "-v", "-ldflags", buildFlags, "./...")
+	buildOutput, buildErr, err := execCommand("go", "build", "-o", detectGopBinPath(), "-v", "-ldflags", buildFlags, "./...")
 	println(buildErr)
 	if err != nil {
 		println(err.Error())
