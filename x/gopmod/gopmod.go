@@ -129,11 +129,15 @@ func (p *Context) out(src *Project, hash []byte) (ret goTarget) {
 	} else {
 		ret.goFile = src.AutoGenFile
 	}
-	if runtime.GOOS == "windows" {
+	if inWindows {
 		ret.outFile += ".exe"
 	}
 	return
 }
+
+const (
+	inWindows = (runtime.GOOS == "windows")
+)
 
 // -----------------------------------------------------------------------------
 
@@ -160,8 +164,16 @@ replace (
 
 func genGomodFile(modfile string) {
 	var buf bytes.Buffer
-	fmt.Fprintf(&buf, gomodFormat, GOPVERSION, GOPROOT)
-	err := os.WriteFile(modfile, buf.Bytes(), 0666)
+	var err error
+	var gopRoot = GOPROOT
+	if inWindows {
+		if gopRoot, err = filepath.Rel(filepath.Dir(modfile), gopRoot); err != nil {
+			log.Panicln(err)
+		}
+		gopRoot = filepath.ToSlash(gopRoot)
+	}
+	fmt.Fprintf(&buf, gomodFormat, GOPVERSION, gopRoot)
+	err = os.WriteFile(modfile, buf.Bytes(), 0666)
 	if err != nil {
 		log.Panicln(err)
 	}
