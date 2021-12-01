@@ -1,7 +1,24 @@
+/*
+ * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package gopmod
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 
@@ -36,17 +53,19 @@ func LoadFlags() string {
 
 type GoCmd struct {
 	*exec.Cmd
-	after func() error
+	after func(error) error
+}
+
+func (p GoCmd) IsValid() bool {
+	return p.Cmd != nil
 }
 
 func (p GoCmd) Run() error {
-	if err := p.Cmd.Run(); err != nil {
-		return err
-	}
+	err := p.Cmd.Run()
 	if p.after != nil {
-		return p.after()
+		return p.after(err)
 	}
-	return nil
+	return err
 }
 
 func goCommand(dir, op string, t *goTarget) (ret GoCmd) {
@@ -56,12 +75,19 @@ func goCommand(dir, op string, t *goTarget) (ret GoCmd) {
 	exargs = append(exargs, proj.BuildArgs...) // len(proj.BuildArgs)
 	exargs = appendLdflags(exargs, op)         // 2
 	if op == "run" && t.defctx {               // 2
-		afterDir := dir
-		dir, _ = filepath.Split(t.goFile)
+		afterDir, goFile, outFile := dir, t.goFile, t.outFile
+		dir, _ = filepath.Split(goFile)
 		exargs[0] = "build"
-		exargs = append(exargs, "-o", t.outFile, t.goFile)
-		ret.after = func() error {
-			return runCommand(afterDir, t.outFile, proj.ExecArgs...)
+		exargs = append(exargs, "-o", outFile, goFile)
+		ret.after = func(e error) error {
+			if e == nil {
+				e = runCommand(afterDir, outFile, proj.ExecArgs...)
+				os.Remove(outFile)
+			}
+			if e != nil && t.proj.FlagRTOE { // remove tempfile on error
+				os.Remove(goFile)
+			}
+			return e
 		}
 	} else {
 		exargs = append(exargs, t.goFile)         // 1

@@ -25,16 +25,21 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/goplus/gop/env"
 )
 
 // -----------------------------------------------------------------------------
 
+type Fingerp struct {
+	Hash    [20]byte
+	ModTime time.Time
+}
+
 type Source interface {
-	Fingerp() [20]byte // source code fingerprint
-	IsDirty(outFile string, defctx bool) bool
-	GenGo(outFile string) error
+	Fingerp() (*Fingerp, error) // source code fingerprint
+	GenGo(outFile, modFile string) error
 }
 
 type Project struct {
@@ -43,6 +48,10 @@ type Project struct {
 	FriendlyFname string // friendly fname of source
 	BuildArgs     []string
 	ExecArgs      []string
+	UseDefaultCtx bool
+	ForceToGen    bool
+	FlagNRINC     bool // do not run if not changed
+	FlagRTOE      bool // remove tempfile on error
 }
 
 type Context struct {
@@ -52,30 +61,50 @@ type Context struct {
 }
 
 func New(dir string) *Context {
-	defctx := false
 	modfile, err := env.GOPMOD(dir)
 	if err != nil {
-		modfile = env.HOME() + "/.gop/cmd/go.mod"
-		if _, err := os.Stat(modfile); os.IsNotExist(err) {
-			genDefaultGopMod(modfile)
-		}
-		defctx = true
+		return NewDefault(dir)
 	}
-	return &Context{modfile: modfile, dir: dir, defctx: defctx}
+	return &Context{modfile: modfile, dir: dir}
+}
+
+func NewDefault(dir string) *Context {
+	modfile := env.HOME() + "/.gop/run/go.mod"
+	if _, err := os.Stat(modfile); os.IsNotExist(err) {
+		genDefaultGopMod(modfile)
+	}
+	return &Context{modfile: modfile, dir: dir, defctx: true}
 }
 
 func (p *Context) GoCommand(op string, src *Project) GoCmd {
-	out := p.out(src)
-	if src.IsDirty(out.goFile, p.defctx) {
+	if src.UseDefaultCtx {
+		p = NewDefault(p.dir)
+	}
+	fp, err := src.Fingerp()
+	if err != nil {
+		log.Panicln(err)
+	}
+	out := p.out(src, fp.Hash[:])
+	if src.ForceToGen || fileIsDirty(fp.ModTime, out.goFile) {
 		if p.defctx {
 			dir, _ := filepath.Split(out.goFile)
 			os.Mkdir(dir, 0755)
 		}
-		if err := src.GenGo(out.goFile); err != nil {
+		if err := src.GenGo(out.goFile, p.modfile); err != nil {
 			log.Panicln(err)
 		}
+	} else if src.FlagNRINC { // do not run if not changed
+		return GoCmd{}
 	}
 	return goCommand(p.dir, op, &out)
+}
+
+func fileIsDirty(srcMod time.Time, destFile string) bool {
+	fiDest, err := os.Stat(destFile)
+	if err != nil {
+		return true
+	}
+	return srcMod.After(fiDest.ModTime())
 }
 
 type goTarget struct {
@@ -85,17 +114,16 @@ type goTarget struct {
 	defctx  bool
 }
 
-func (p *Context) out(src *Project) (ret goTarget) {
-	hash := src.Fingerp()
+func (p *Context) out(src *Project, hash []byte) (ret goTarget) {
 	fname := src.FriendlyFname
 	if !strings.HasSuffix(fname, ".go") {
 		fname += ".go"
 	}
 	dir, _ := filepath.Split(p.modfile)
-	ret.outFile = dir + "g" + base64.RawURLEncoding.EncodeToString(hash[:])
+	ret.outFile = dir + "g" + base64.RawURLEncoding.EncodeToString(hash)
 	ret.proj = src
 	ret.defctx = p.defctx
-	if ret.defctx {
+	if ret.defctx || src.AutoGenFile == "" {
 		ret.goFile = ret.outFile + fname
 	} else {
 		ret.goFile = src.AutoGenFile

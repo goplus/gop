@@ -18,8 +18,6 @@
 package run
 
 import (
-	"crypto/sha1"
-	"encoding/base64"
 	"fmt"
 	"os"
 	"os/exec"
@@ -113,9 +111,8 @@ func runCmd(cmd *base.Command, args []string) {
 	isDir := fi.IsDir()
 
 	var isDirty bool
-	var srcDir, file, gofile string
+	var srcDir, gofile string
 	var pkgs map[string]*ast.Package
-	onExit = nil
 	if isDir {
 		srcDir = src
 		gofile = src + "/gop_autogen.go"
@@ -127,37 +124,8 @@ func runCmd(cmd *base.Command, args []string) {
 			return
 		}
 	} else {
-		srcDir, file = filepath.Split(src)
-		modload.Load()
-		isGo := filepath.Ext(file) == ".go"
-		if isGo {
-			hash := sha1.Sum([]byte(src))
-			dir := os.Getenv("HOME") + "/.gop/run"
-			os.MkdirAll(dir, 0755)
-			gofile = dir + "/g" + base64.RawURLEncoding.EncodeToString(hash[:]) + file
-			if *flagRTOE { // remove tempfile on error
-				onExit = func() {
-					os.Remove(gofile)
-				}
-			}
-		} else if hasMultiFiles(srcDir, ".gop") {
-			gofile = filepath.Join(srcDir, "gop_autogen_"+file+".go")
-		} else {
-			gofile = srcDir + "/gop_autogen.go"
-		}
-		isDirty = fileIsDirty(fi, gofile)
-		if isDirty {
-			if isGo {
-				fmt.Println("==> GenGo to", gofile)
-			}
-			if *flagGop {
-				pkgs, err = parser.Parse(fset, src, nil, parserMode)
-			} else {
-				pkgs, err = parser.Parse(fset, src, nil, 0) // TODO: only to check dependencies
-			}
-		} else if *flagNorun {
-			return
-		}
+		gopRun(src, args...)
+		return
 	}
 	if err != nil {
 		scanner.PrintError(os.Stderr, err)
@@ -196,18 +164,6 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 }
 
-func fileIsDirty(fi os.FileInfo, gofile string) bool {
-	fiDest, err := os.Stat(gofile)
-	if err != nil {
-		return true
-	}
-	return fi.ModTime().After(fiDest.ModTime())
-}
-
-var (
-	onExit func()
-)
-
 func goRun(file string, args []string) {
 	goArgs := make([]string, len(args)+2)
 	goArgs[0] = "run"
@@ -220,9 +176,6 @@ func goRun(file string, args []string) {
 	cmd.Env = os.Environ()
 	err := cmd.Run()
 	if err != nil {
-		if onExit != nil {
-			onExit()
-		}
 		switch e := err.(type) {
 		case *exec.ExitError:
 			os.Exit(e.ExitCode())
@@ -268,23 +221,6 @@ func runGoPkg(src string, args []string, doRun bool) {
 	if doRun {
 		goRun(src+"/.", args)
 	}
-}
-
-func hasMultiFiles(srcDir string, ext string) bool {
-	var has bool
-	if f, err := os.Open(srcDir); err == nil {
-		defer f.Close()
-		fis, _ := f.ReadDir(-1)
-		for _, fi := range fis {
-			if !fi.IsDir() && filepath.Ext(fi.Name()) == ext {
-				if has {
-					return true
-				}
-				has = true
-			}
-		}
-	}
-	return false
 }
 
 // -----------------------------------------------------------------------------

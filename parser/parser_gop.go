@@ -176,6 +176,30 @@ func RegisterFileType(ext string, format ast.FileType) {
 
 // -----------------------------------------------------------------------------
 
+func ParseFiles(fset *token.FileSet, files []string, mode Mode) (map[string]*ast.Package, error) {
+	return ParseFSFiles(fset, local, files, mode)
+}
+
+func ParseFSFiles(fset *token.FileSet, fs FileSystem, files []string, mode Mode) (map[string]*ast.Package, error) {
+	ret := map[string]*ast.Package{}
+	for _, file := range files {
+		f, err := ParseFSFile(fset, fs, file, nil, mode)
+		if err != nil {
+			return nil, err
+		}
+		pkgName := f.Name.Name
+		pkg, ok := ret[pkgName]
+		if !ok {
+			pkg = &ast.Package{Name: pkgName, Files: make(map[string]*ast.File)}
+			ret[pkgName] = pkg
+		}
+		pkg.Files[file] = f
+	}
+	return ret, nil
+}
+
+// -----------------------------------------------------------------------------
+
 // ParseFile parses the source code of a single Go+ source file and returns the corresponding ast.File node.
 func ParseFile(fset *token.FileSet, filename string, src interface{}, mode Mode) (f *ast.File, err error) {
 	return ParseFSFile(fset, local, filename, src, mode)
