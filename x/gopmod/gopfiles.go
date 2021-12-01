@@ -64,6 +64,9 @@ func (p *gopFiles) Fingerp() [20]byte { // source code fingerprint
 }
 
 func (p *gopFiles) IsDirty(outFile string, temp bool) bool {
+	if fi, err := os.Lstat(outFile); err == nil { // TODO: more strictly
+		return fi.IsDir()
+	}
 	return true
 }
 
