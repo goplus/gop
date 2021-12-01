@@ -24,6 +24,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -127,6 +128,9 @@ func (p *Context) out(src *Project, hash []byte) (ret goTarget) {
 		ret.goFile = ret.outFile + fname
 	} else {
 		ret.goFile = src.AutoGenFile
+	}
+	if runtime.GOOS == "windows" {
+		ret.outFile += ".exe"
 	}
 	return
 }
