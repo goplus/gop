@@ -3259,18 +3259,10 @@ for i := range :10 {
 	println(i)
 }`, `package main
 
-import (
-	fmt "fmt"
-	builtin "github.com/goplus/gop/builtin"
-)
+import fmt "fmt"
 
 func main() {
-	for _gop_it := builtin.NewRange__0(0, 10, 1).Gop_Enum(); ; {
-		var _gop_ok bool
-		i, _gop_ok := _gop_it.Next()
-		if !_gop_ok {
-			break
-		}
+	for i := 0; i < 10; i = i + 1 {
 		fmt.Println(i)
 	}
 }
@@ -3283,18 +3275,10 @@ for i := range 1:10:2 {
 	println(i)
 }`, `package main
 
-import (
-	fmt "fmt"
-	builtin "github.com/goplus/gop/builtin"
-)
+import fmt "fmt"
 
 func main() {
-	for _gop_it := builtin.NewRange__0(1, 10, 2).Gop_Enum(); ; {
-		var _gop_ok bool
-		i, _gop_ok := _gop_it.Next()
-		if !_gop_ok {
-			break
-		}
+	for i := 1; i < 10; i = i + 2 {
 		fmt.Println(i)
 	}
 }
@@ -3307,18 +3291,10 @@ for i := range 1:10 {
 	println(i)
 }`, `package main
 
-import (
-	fmt "fmt"
-	builtin "github.com/goplus/gop/builtin"
-)
+import fmt "fmt"
 
 func main() {
-	for _gop_it := builtin.NewRange__0(1, 10, 1).Gop_Enum(); ; {
-		var _gop_ok bool
-		i, _gop_ok := _gop_it.Next()
-		if !_gop_ok {
-			break
-		}
+	for i := 1; i < 10; i = i + 1 {
 		fmt.Println(i)
 	}
 }
@@ -3331,18 +3307,10 @@ for i := range :10:2 {
 	println(i)
 }`, `package main
 
-import (
-	fmt "fmt"
-	builtin "github.com/goplus/gop/builtin"
-)
+import fmt "fmt"
 
 func main() {
-	for _gop_it := builtin.NewRange__0(0, 10, 2).Gop_Enum(); ; {
-		var _gop_ok bool
-		i, _gop_ok := _gop_it.Next()
-		if !_gop_ok {
-			break
-		}
+	for i := 0; i < 10; i = i + 2 {
 		fmt.Println(i)
 	}
 }
@@ -3355,18 +3323,10 @@ for range :10 {
 	println("Hi")
 }`, `package main
 
-import (
-	fmt "fmt"
-	builtin "github.com/goplus/gop/builtin"
-)
+import fmt "fmt"
 
 func main() {
-	for _gop_it := builtin.NewRange__0(0, 10, 1).Gop_Enum(); ; {
-		var _gop_ok bool
-		_, _gop_ok = _gop_it.Next()
-		if !_gop_ok {
-			break
-		}
+	for _gop_k := 0; _gop_k < 10; _gop_k = _gop_k + 1 {
 		fmt.Println("Hi")
 	}
 }
