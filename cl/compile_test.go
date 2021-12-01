@@ -19,6 +19,7 @@ package cl_test
 import (
 	"bytes"
 	"os"
+	"strings"
 	"sync"
 	"syscall"
 	"testing"
@@ -3253,9 +3254,15 @@ func newRepo() Repo {
 	}
 }
 
+func testRangeExpr(t *testing.T, codeTpl, expect string) {
+	for _, s := range []string{" <- ", " := range "} {
+		gopClTest(t, strings.Replace(codeTpl, "$", s, -1), expect)
+	}
+}
+
 func TestRangeExpr(t *testing.T) {
-	gopClTest(t, `
-for i := range :10 {
+	testRangeExpr(t, `
+for i $ :10 {
 	println(i)
 }`, `package main
 
@@ -3270,8 +3277,8 @@ func main() {
 }
 
 func TestRangeExpr2(t *testing.T) {
-	gopClTest(t, `
-for i := range 1:10:2 {
+	testRangeExpr(t, `
+for i $ 1:10:2 {
 	println(i)
 }`, `package main
 
@@ -3286,8 +3293,8 @@ func main() {
 }
 
 func TestRangeExpr3(t *testing.T) {
-	gopClTest(t, `
-for i := range 1:10 {
+	testRangeExpr(t, `
+for i $ 1:10 {
 	println(i)
 }`, `package main
 
@@ -3302,8 +3309,8 @@ func main() {
 }
 
 func TestRangeExpr4(t *testing.T) {
-	gopClTest(t, `
-for i := range :10:2 {
+	testRangeExpr(t, `
+for i $ :10:2 {
 	println(i)
 }`, `package main
 
