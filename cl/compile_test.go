@@ -3333,6 +3333,22 @@ func main() {
 `)
 }
 
+func TestRangeExpr6(t *testing.T) {
+	gopClTest(t, `
+for i <- 1:10:2 {
+	println(i)
+}`, `package main
+
+import fmt "fmt"
+
+func main() {
+	for i := 1; i < 10; i = i + 2 {
+		fmt.Println(i)
+	}
+}
+`)
+}
+
 func TestGoFuncInstr(t *testing.T) {
 	gopClTest(t, `package main
 
