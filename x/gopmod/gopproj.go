@@ -23,7 +23,11 @@ import (
 
 // -----------------------------------------------------------------------------
 
-func (p *Context) OpenProject(args ...string) (proj *Project, err error) {
+const (
+	FlagGoAsGoPlus = 1 << iota
+)
+
+func (p *Context) OpenProject(flags int, args ...string) (proj *Project, err error) {
 	if len(args) != 1 {
 		return p.openFromGopFiles(args)
 	}
@@ -35,7 +39,7 @@ func (p *Context) OpenProject(args ...string) (proj *Project, err error) {
 	if fi.IsDir() {
 		return p.openFromDir(src)
 	}
-	if filepath.Ext(src) == ".go" {
+	if (flags&FlagGoAsGoPlus) == 0 && filepath.Ext(src) == ".go" {
 		return openFromGoFile(src)
 	}
 	return p.openFromGopFiles(args)

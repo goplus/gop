@@ -43,6 +43,9 @@ type Project struct {
 	FriendlyFname string // friendly fname of source
 	BuildArgs     []string
 	ExecArgs      []string
+	UseDefaultCtx bool
+	FlagNRINC     bool // do not run if not changed
+	FlagRTOE      bool // remove tempfile on error
 }
 
 type Context struct {
@@ -52,19 +55,25 @@ type Context struct {
 }
 
 func New(dir string) *Context {
-	defctx := false
 	modfile, err := env.GOPMOD(dir)
 	if err != nil {
-		modfile = env.HOME() + "/.gop/cmd/go.mod"
-		if _, err := os.Stat(modfile); os.IsNotExist(err) {
-			genDefaultGopMod(modfile)
-		}
-		defctx = true
+		return NewDefault(dir)
 	}
-	return &Context{modfile: modfile, dir: dir, defctx: defctx}
+	return &Context{modfile: modfile, dir: dir}
+}
+
+func NewDefault(dir string) *Context {
+	modfile := env.HOME() + "/.gop/run/go.mod"
+	if _, err := os.Stat(modfile); os.IsNotExist(err) {
+		genDefaultGopMod(modfile)
+	}
+	return &Context{modfile: modfile, dir: dir, defctx: true}
 }
 
 func (p *Context) GoCommand(op string, src *Project) GoCmd {
+	if src.UseDefaultCtx {
+		p = NewDefault(p.dir)
+	}
 	out := p.out(src)
 	if src.IsDirty(out.goFile, p.defctx) {
 		if p.defctx {
@@ -74,6 +83,8 @@ func (p *Context) GoCommand(op string, src *Project) GoCmd {
 		if err := src.GenGo(out.goFile, p.modfile); err != nil {
 			log.Panicln(err)
 		}
+	} else if src.FlagNRINC { // do not run if not changed
+		return GoCmd{}
 	}
 	return goCommand(p.dir, op, &out)
 }

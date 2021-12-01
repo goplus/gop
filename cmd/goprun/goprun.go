@@ -15,9 +15,10 @@ func main() {
 		return
 	}
 	ctx := gopmod.New("")
-	goProj, err := ctx.OpenProject(os.Args[1])
+	goProj, err := ctx.OpenProject(0, os.Args[1])
 	if err != nil {
-		log.Println(err)
+		fmt.Fprint(os.Stderr, "OpenProject failed:", err)
+		return
 	}
 	goProj.ExecArgs = os.Args[2:]
 	cmd := ctx.GoCommand("run", goProj)
