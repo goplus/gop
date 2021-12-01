@@ -43,3 +43,5 @@ go.json
 .idea
 
 cmd/qfmt/qfmt
+
+bin/

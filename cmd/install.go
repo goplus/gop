@@ -35,18 +35,12 @@ func getcwd() string {
 	return path
 }
 
-func getGopLocalLink() string {
-	path, _ := os.UserHomeDir()
-	return filepath.Join(path, "gop")
-}
-
 func checkPathExist(path string) bool {
 	_, err := os.Stat(path)
 	return !os.IsNotExist(err)
 }
 
 var gopRoot = getcwd()
-var gopLocalLink = getGopLocalLink()
 var initCommandExecuteEnv = os.Environ()
 var commandExecuteEnv = initCommandExecuteEnv
 
@@ -109,7 +103,7 @@ func findTag(commit string) string {
 
 func getGopBuildFlags() string {
 	buildFlags := fmt.Sprintf("-X github.com/goplus/gop/env.defaultGopRoot=%s", gopRoot)
-	buildFlags = fmt.Sprintf("-X github.com/goplus/gop/env.buildDate=%s", getBuildDateTime())
+	buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildDate=%s", getBuildDateTime())
 	if commit, ok := getGitInfo(); ok {
 		buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildCommit=%s", commit)
 		if buildVer := getBuildVer(); buildVer != "" {
@@ -119,19 +113,25 @@ func getGopBuildFlags() string {
 	return buildFlags
 }
 
-func detectGoBinPath() string {
-	goBin, ok := os.LookupEnv("GOBIN")
-	if ok {
-		return goBin
-	}
+/*
+	func detectGoBinPath() string {
+		goBin, ok := os.LookupEnv("GOBIN")
+		if ok {
+			return goBin
+		}
 
-	goPath, ok := os.LookupEnv("GOPATH")
-	if ok {
-		return filepath.Join(goPath, "bin")
-	}
+		goPath, ok := os.LookupEnv("GOPATH")
+		if ok {
+			return filepath.Join(goPath, "bin")
+		}
 
-	homeDir, _ := os.UserHomeDir()
-	return filepath.Join(homeDir, "go", "bin")
+		homeDir, _ := os.UserHomeDir()
+		return filepath.Join(homeDir, "go", "bin")
+	}
+*/
+
+func detectGopBinPath() string {
+	return filepath.Join(gopRoot, "bin")
 }
 
 func buildGoplusTools(useGoProxy bool) {
@@ -150,6 +150,9 @@ func buildGoplusTools(useGoProxy bool) {
 		)
 	}
 
+	// Install Go+ binary files under current ./bin directory.
+	commandExecuteEnv = append(commandExecuteEnv, "GOBIN="+detectGopBinPath())
+
 	println("Installing Go+ tools...")
 	os.Chdir(commandsDir)
 	buildOutput, buildErr, err := execCommand("go", "install", "-v", "-ldflags", buildFlags, "./...")
@@ -163,26 +166,12 @@ func buildGoplusTools(useGoProxy bool) {
 	println("Go+ tools installed successfully!")
 }
 
-func linkGoplusToLocal() {
-	fmt.Printf("Linking %s to %s\n", gopRoot, gopLocalLink)
-
-	os.Chdir(gopRoot)
-	if gopLocalLink != gopRoot && !checkPathExist(gopLocalLink) {
-		err := os.Symlink(gopRoot, gopLocalLink)
-		if err != nil {
-			println(err.Error())
-		}
-	}
-
-	fmt.Printf("%s linked to %s successfully!\n", gopRoot, gopLocalLink)
-}
-
 func runTestcases() {
 	println("Start running testcases.")
 	os.Chdir(gopRoot)
 
 	path, _ := os.LookupEnv("PATH")
-	path = fmt.Sprintf("%s:", detectGoBinPath()) + path
+	path = fmt.Sprintf("%s:", detectGopBinPath()) + path
 	commandExecuteEnv = append(commandExecuteEnv, "PATH="+path)
 
 	coverage := "-coverprofile=coverage.txt"
@@ -196,22 +185,12 @@ func runTestcases() {
 	println("End running testcases.")
 }
 
-func localUninstall() {
+func uninstall() {
 	println("Uninstalling Go+ and related tools.")
 
-	goBinPath := detectGoBinPath()
-	filesToRemove := []string{
-		gopLocalLink,
-		filepath.Join(goBinPath, "gop"),
-		filepath.Join(goBinPath, "gopfmt"),
-		filepath.Join(goBinPath, "goptestgo"),
-	}
-
-	for _, file := range filesToRemove {
-		if !checkPathExist(file) {
-			continue
-		}
-		if err := os.Remove(file); err != nil {
+	gopBinPath := detectGopBinPath()
+	if checkPathExist(gopBinPath) {
+		if err := os.RemoveAll(gopBinPath); err != nil {
 			println(err.Error())
 		}
 	}
@@ -234,7 +213,6 @@ func isInChina() bool {
 
 func main() {
 	isInstall := flag.Bool("install", false, "Install Go+")
-	isBuild := flag.Bool("build", false, "Build the Go+")
 	isTest := flag.Bool("test", false, "Run testcases")
 	isUninstall := flag.Bool("uninstall", false, "Uninstall Go+")
 	isGoProxy := flag.Bool("proxy", false, "Set GOPROXY for people in China")
@@ -247,14 +225,9 @@ func main() {
 		useGoProxy = isInChina()
 	}
 	flagActionMap := map[*bool]func(){
-		isInstall: func() {
-			buildGoplusTools(useGoProxy)
-			linkGoplusToLocal()
-			println("Go+ is now installed.")
-		},
+		isInstall:   func() { buildGoplusTools(useGoProxy) },
+		isUninstall: uninstall,
 		isTest:      runTestcases,
-		isBuild:     func() { buildGoplusTools(useGoProxy) },
-		isUninstall: localUninstall,
 	}
 
 	for flag, action := range flagActionMap {
