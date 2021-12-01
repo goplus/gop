@@ -41,17 +41,19 @@ func gopRun(source string, args ...string) {
 	goProj.FlagRTOE = *flagRTOE
 	goProj.FlagNRINC = *flagNorun
 	cmd := ctx.GoCommand("run", goProj)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Env = os.Environ()
-	err = cmd.Run()
-	if err != nil {
-		switch e := err.(type) {
-		case *exec.ExitError:
-			os.Exit(e.ExitCode())
-		default:
-			log.Fatalln(err)
+	if cmd.IsValid() {
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Env = os.Environ()
+		err = cmd.Run()
+		if err != nil {
+			switch e := err.(type) {
+			case *exec.ExitError:
+				os.Exit(e.ExitCode())
+			default:
+				log.Fatalln(err)
+			}
 		}
 	}
 }

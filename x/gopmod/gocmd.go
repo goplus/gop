@@ -56,10 +56,11 @@ type GoCmd struct {
 	after func(error) error
 }
 
+func (p GoCmd) IsValid() bool {
+	return p.Cmd != nil
+}
+
 func (p GoCmd) Run() error {
-	if p.Cmd == nil {
-		return nil
-	}
 	err := p.Cmd.Run()
 	if p.after != nil {
 		return p.after(err)

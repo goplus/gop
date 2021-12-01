@@ -38,7 +38,8 @@ type gopFiles struct {
 
 func (p *Context) openFromGopFiles(files []string) (proj *Project, err error) {
 	proj = &Project{
-		Source: &gopFiles{files: files},
+		Source:        &gopFiles{files: files},
+		UseDefaultCtx: true,
 	}
 	return
 }
