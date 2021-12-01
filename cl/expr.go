@@ -200,8 +200,6 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 		compileCompositeLit(ctx, v, nil, false)
 	case *ast.SliceLit:
 		compileSliceLit(ctx, v)
-	case *ast.RangeExpr:
-		compileRangeExpr(ctx, v)
 	case *ast.IndexExpr:
 		compileIndexExpr(ctx, v, twoValue != nil && twoValue[0])
 	case *ast.SliceExpr:
@@ -734,23 +732,6 @@ func compileSliceLit(ctx *blockCtx, v *ast.SliceLit) {
 		compileExpr(ctx, elt)
 	}
 	ctx.cb.SliceLit(nil, n)
-}
-
-func compileRangeExpr(ctx *blockCtx, v *ast.RangeExpr) {
-	pkg, cb := ctx.pkg, ctx.cb
-	cb.Val(pkg.Builtin().Ref("newRange"))
-	if v.First == nil {
-		ctx.cb.Val(0, v)
-	} else {
-		compileExpr(ctx, v.First)
-	}
-	compileExpr(ctx, v.Last)
-	if v.Expr3 == nil {
-		ctx.cb.Val(1, v)
-	} else {
-		compileExpr(ctx, v.Expr3)
-	}
-	cb.Call(3)
 }
 
 const (
