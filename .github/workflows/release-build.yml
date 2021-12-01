@@ -26,13 +26,13 @@ jobs:
 
     - name: Build
       run: |
-        make release-all -j$(nproc)
+        make dist
 
     - name: Release
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         tag: ${{ env.TAG_NAME }}
-        file: ./gop-*.zip
+        file: ./build-dir/gop-*.zip
         file_glob: true
         prerelease: true
