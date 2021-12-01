@@ -164,6 +164,17 @@ func buildGoplusTools(useGoProxy bool) {
 	println(buildOutput)
 
 	println("Go+ tools installed successfully!")
+	showHelpPostInstall()
+}
+
+func showHelpPostInstall() {
+	println("Next:")
+	println("We just installed Go+ into the directory: ", detectGopBinPath())
+	message := `
+To setup a better Go+ development environment,
+we recommend you add the above install directory into your PATH environment variable.
+	`
+	println(message)
 }
 
 func runTestcases() {
