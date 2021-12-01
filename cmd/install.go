@@ -155,9 +155,13 @@ func buildGoplusTools(useGoProxy bool) {
 	}
 
 	// Install Go+ binary files under current ./bin directory.
+	gopBinPath := detectGopBinPath()
+	clean()
+	os.Mkdir(gopBinPath, 0755)
+
 	println("Installing Go+ tools...")
 	os.Chdir(commandsDir)
-	buildOutput, buildErr, err := execCommand("go", "build", "-o", detectGopBinPath(), "-v", "-ldflags", buildFlags, "./...")
+	buildOutput, buildErr, err := execCommand("go", "build", "-o", gopBinPath, "-v", "-ldflags", buildFlags, "./...")
 	println(buildErr)
 	if err != nil {
 		println(err.Error())
@@ -195,16 +199,18 @@ func runTestcases() {
 	println("End running testcases.")
 }
 
-func uninstall() {
-	println("Uninstalling Go+ and related tools.")
-
+func clean() {
 	gopBinPath := detectGopBinPath()
 	if checkPathExist(gopBinPath) {
 		if err := os.RemoveAll(gopBinPath); err != nil {
 			println(err.Error())
 		}
 	}
+}
 
+func uninstall() {
+	println("Uninstalling Go+ and related tools.")
+	clean()
 	println("Go+ and related tools uninstalled successfully.")
 }
 
