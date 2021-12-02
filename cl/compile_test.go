@@ -3386,8 +3386,14 @@ func main() {
 `)
 }
 
+func testRangeExpr8(t *testing.T, codeTpl, expect string) {
+	for _, s := range []string{" <- ", " := range "} {
+		gopClTest(t, strings.Replace(codeTpl, "$", s, -1), expect)
+	}
+}
+
 func TestRangeExpr8(t *testing.T) {
-	gopClTest(t, `
+	testRangeExpr8(t, `
 	type T struct{}
 
 	func (t T)start()int{
@@ -3424,6 +3430,52 @@ func (t T) step() int {
 func main() {
 	t := T{}
 	for i, _gop_end, _gop_step := t.start(), t.end(), t.step(); i < _gop_end; i += _gop_step {
+		fmt.Println(i)
+	}
+}
+`)
+}
+
+func TestRangeExpr9(t *testing.T) {
+	testRangeExpr8(t, `
+	type T struct{}
+
+	func (t T)start()int{
+		return 0
+	}
+	func (t T)end()int{
+		return 3 
+	}
+	func (t T)step()int{
+		return 1 
+	}
+	
+	t:=T{}
+	i:=0
+	for i =range t.start():t.end():t.step(){
+		println i
+	}
+	`, `package main
+
+import fmt "fmt"
+
+type T struct {
+}
+
+func (t T) start() int {
+	return 0
+}
+func (t T) end() int {
+	return 3
+}
+func (t T) step() int {
+	return 1
+}
+func main() {
+	t := T{}
+	i := 0
+	for _gop_k, _gop_end, _gop_step := t.start(), t.end(), t.step(); _gop_k < _gop_end; _gop_k += _gop_step {
+		i = _gop_k
 		fmt.Println(i)
 	}
 }

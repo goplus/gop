@@ -358,21 +358,20 @@ func toForStmt(forPos token.Pos, value ast.Expr, body *ast.BlockStmt, re *ast.Ra
 	if re.First == nil {
 		re.First = &ast.BasicLit{ValuePos: forPos, Kind: token.INT, Value: "0"}
 	}
-
 	initLhs := []ast.Expr{value}
 	initRhs := []ast.Expr{re.First}
-
+	replaceValue := false
 	var cond ast.Expr
 	var post ast.Expr
 	switch re.Last.(type) {
 	case *ast.Ident, *ast.BasicLit:
 		cond = re.Last
 	default:
+		replaceValue = true
 		cond = &ast.Ident{NamePos: forPos, Name: "_gop_end"}
 		initLhs = append(initLhs, cond)
 		initRhs = append(initRhs, re.Last)
 	}
-
 	if re.Expr3 == nil {
 		post = &ast.BasicLit{ValuePos: forPos, Kind: token.INT, Value: "1"}
 	} else {
@@ -380,10 +379,23 @@ func toForStmt(forPos token.Pos, value ast.Expr, body *ast.BlockStmt, re *ast.Ra
 		case *ast.Ident, *ast.BasicLit:
 			post = re.Expr3
 		default:
+			replaceValue = true
 			post = &ast.Ident{NamePos: forPos, Name: "_gop_step"}
 			initLhs = append(initLhs, post)
 			initRhs = append(initRhs, re.Expr3)
 		}
+	}
+	if tok == token.ASSIGN && replaceValue {
+		oldValue := value
+		value = &ast.Ident{NamePos: forPos, Name: "_gop_k"}
+		initLhs[0] = value
+		body.List = append([]ast.Stmt{&ast.AssignStmt{
+			Lhs:    []ast.Expr{oldValue},
+			TokPos: forPos,
+			Tok:    token.ASSIGN,
+			Rhs:    []ast.Expr{value},
+		}}, body.List...)
+		tok = token.DEFINE
 	}
 	return &ast.ForStmt{
 		For: forPos,
