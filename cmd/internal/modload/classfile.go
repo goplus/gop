@@ -21,7 +21,7 @@ import (
 
 	"golang.org/x/mod/module"
 
-	"github.com/goplus/gop/cmd/internal/modfetch"
+	"github.com/goplus/gop/x/mod/modfetch"
 	"github.com/goplus/gop/x/mod/modfile"
 )
 
