@@ -10,12 +10,12 @@ clean:
 	rm -f bin/*
 
 build:
-	go run cmd/install.go -install
+	go run cmd/make.go -install
 
 dist:
 	$(MAKE) clean
 	mkdir -p bin/
-	go build -o $(BUILD_ROOT_DIR)/install cmd/install.go
+	go build -o $(BUILD_ROOT_DIR)/install cmd/make.go
 	$(MAKE) build-all
 
 build-all: darwin-amd64.zip darwin-arm64.zip linux-386.zip linux-amd64.zip \
