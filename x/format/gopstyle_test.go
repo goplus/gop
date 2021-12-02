@@ -1,30 +1,18 @@
 package format
 
 import (
-	"bytes"
 	"testing"
-
-	"github.com/goplus/gop/format"
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/token"
 )
 
 // -----------------------------------------------------------------------------
 
 func testFormat(t *testing.T, name string, src, expect string) {
 	t.Run(name, func(t *testing.T) {
-		fset := token.NewFileSet()
-		f, err := parser.ParseFile(fset, "foo.gop", src, parser.ParseComments)
+		result, err := Source([]byte(src))
 		if err != nil {
-			t.Fatal("parser.ParseFile failed:", err)
+			t.Fatal("format.Source failed:", err)
 		}
-		Gopstyle(f)
-		var buf bytes.Buffer
-		err = format.Node(&buf, fset, f)
-		if err != nil {
-			t.Fatal("format.Node failed:", err)
-		}
-		if ret := buf.String(); ret != expect {
+		if ret := string(result); ret != expect {
 			t.Fatalf("%s => Expect:\n%s\n=> Got:\n%s\n", name, expect, ret)
 		}
 	})

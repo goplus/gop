@@ -1,8 +1,27 @@
 package format
 
 import (
+	"bytes"
+
 	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/format"
+	"github.com/goplus/gop/parser"
+	"github.com/goplus/gop/token"
 )
+
+// -----------------------------------------------------------------------------
+
+func Source(src []byte) (ret []byte, err error) {
+	fset := token.NewFileSet()
+	if f, err := parser.ParseFile(fset, "", src, parser.ParseComments); err == nil {
+		Gopstyle(f)
+		var buf bytes.Buffer
+		if err = format.Node(&buf, fset, f); err == nil {
+			ret = buf.Bytes()
+		}
+	}
+	return
+}
 
 // -----------------------------------------------------------------------------
 
@@ -12,7 +31,7 @@ func Gopstyle(file *ast.File) {
 	}
 	if idx := findFuncDecl(file.Decls, "main"); idx >= 0 {
 		last := len(file.Decls) - 1
-		if idx != last {
+		if idx != last { // swap main func to last
 			fn := file.Decls[idx]
 			copy(file.Decls[idx:], file.Decls[idx+1:])
 			file.Decls[last] = fn
