@@ -30,17 +30,47 @@ import (
 	"time"
 )
 
-func getcwd() string {
-	path, _ := os.Getwd()
-	return path
+func checkPathExist(path string, isDir bool) bool {
+	stat, err := os.Stat(path)
+	isExists := !os.IsNotExist(err)
+	if isDir {
+		return isExists && stat.IsDir()
+	}
+	return isExists
 }
 
-func checkPathExist(path string) bool {
-	_, err := os.Stat(path)
-	return !os.IsNotExist(err)
+// Path returns single path to check
+type Path struct {
+	path  string
+	isDir bool
 }
 
-var gopRoot = getcwd()
+func (p *Path) checkExists(rootDir string) bool {
+	absPath := filepath.Join(rootDir, p.path)
+	return checkPathExist(absPath, p.isDir)
+}
+
+func getGopRoot() string {
+	pwd, _ := os.Getwd()
+
+	pathsToCheck := []Path{
+		Path{path: "cmd", isDir: true},
+		Path{path: "builtin", isDir: true},
+		Path{path: "go.mod", isDir: false},
+		Path{path: "go.sum", isDir: false},
+	}
+
+	for _, path := range pathsToCheck {
+		if !path.checkExists(pwd) {
+			println("Error: This script should be run at the root directory of gop repository.")
+			os.Exit(1)
+		}
+	}
+
+	return pwd
+}
+
+var gopRoot = getGopRoot()
 var initCommandExecuteEnv = os.Environ()
 var commandExecuteEnv = initCommandExecuteEnv
 
@@ -64,7 +94,7 @@ func getRevCommit(tag string) string {
 
 func getGitInfo() (string, bool) {
 	gitDir := filepath.Join(gopRoot, ".git")
-	if checkPathExist(gitDir) {
+	if checkPathExist(gitDir, true) {
 		return getRevCommit("HEAD"), true
 	}
 	return "", false
@@ -83,27 +113,13 @@ func getBuildVer() string {
 	return strings.TrimRight(tagRet, "\n")
 }
 
-/*
-func findTag(commit string) string {
-	tagRet, tagErr, err := execCommand("git", "tag")
-	if err != nil || tagErr != "" {
-		return ""
-	}
-	var prefix = "v" + env.MainVersion + "."
-	for _, tag := range strings.Split(tagRet, "\n") {
-		if strings.HasPrefix(tag, prefix) {
-			if getRevCommit(tag) == commit {
-				return tag
-			}
-		}
-	}
-	return ""
-}
-*/
-
 func getGopBuildFlags() string {
-	buildFlags := fmt.Sprintf("-X \"github.com/goplus/gop/env.defaultGopRoot=%s\"", gopRoot)
-	buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildDate=%s", getBuildDateTime())
+	defaultGopRoot := gopRoot
+	if gopRootFinal := os.Getenv("GOPROOT_FINAL"); gopRootFinal != "" {
+		defaultGopRoot = gopRootFinal
+	}
+	buildFlags := fmt.Sprintf("-X \"github.com/goplus/gop/env.defaultGopRoot=%s\"", defaultGopRoot)
+	buildFlags += fmt.Sprintf(" -X \"github.com/goplus/gop/env.buildDate=%s\"", getBuildDateTime())
 	if commit, ok := getGitInfo(); ok {
 		buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildCommit=%s", commit)
 		if buildVer := getBuildVer(); buildVer != "" {
@@ -113,34 +129,12 @@ func getGopBuildFlags() string {
 	return buildFlags
 }
 
-/*
-	func detectGoBinPath() string {
-		goBin, ok := os.LookupEnv("GOBIN")
-		if ok {
-			return goBin
-		}
-
-		goPath, ok := os.LookupEnv("GOPATH")
-		if ok {
-			return filepath.Join(goPath, "bin")
-		}
-
-		homeDir, _ := os.UserHomeDir()
-		return filepath.Join(homeDir, "go", "bin")
-	}
-*/
-
 func detectGopBinPath() string {
 	return filepath.Join(gopRoot, "bin")
 }
 
 func buildGoplusTools(useGoProxy bool) {
 	commandsDir := filepath.Join(gopRoot, "cmd")
-	if !checkPathExist(commandsDir) {
-		println("Error: This script should be run at the root directory of gop repository.")
-		os.Exit(1)
-	}
-
 	buildFlags := getGopBuildFlags()
 
 	if useGoProxy {
@@ -151,11 +145,17 @@ func buildGoplusTools(useGoProxy bool) {
 	}
 
 	// Install Go+ binary files under current ./bin directory.
-	commandExecuteEnv = append(commandExecuteEnv, "GOBIN="+detectGopBinPath())
+	gopBinPath := detectGopBinPath()
+	clean()
+	if err := os.Mkdir(gopBinPath, 0755); err != nil {
+		println(err.Error())
+		println("Error: Go+ can't create ./bin directory to put build assets.")
+		os.Exit(1)
+	}
 
 	println("Installing Go+ tools...")
 	os.Chdir(commandsDir)
-	buildOutput, buildErr, err := execCommand("go", "install", "-v", "-ldflags", buildFlags, "./...")
+	buildOutput, buildErr, err := execCommand("go", "build", "-o", gopBinPath, "-v", "-ldflags", buildFlags, "./...")
 	println(buildErr)
 	if err != nil {
 		println(err.Error())
@@ -193,16 +193,18 @@ func runTestcases() {
 	println("End running testcases.")
 }
 
-func uninstall() {
-	println("Uninstalling Go+ and related tools.")
-
+func clean() {
 	gopBinPath := detectGopBinPath()
-	if checkPathExist(gopBinPath) {
+	if checkPathExist(gopBinPath, true) {
 		if err := os.RemoveAll(gopBinPath); err != nil {
 			println(err.Error())
 		}
 	}
+}
 
+func uninstall() {
+	println("Uninstalling Go+ and related tools.")
+	clean()
 	println("Go+ and related tools uninstalled successfully.")
 }
 
