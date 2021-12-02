@@ -378,12 +378,8 @@ func toForStmt(forPos token.Pos, value ast.Expr, body *ast.BlockStmt, re *ast.Ra
 		Post: &ast.AssignStmt{
 			Lhs:    []ast.Expr{value},
 			TokPos: re.Colon2,
-			Tok:    token.ASSIGN,
-			Rhs: []ast.Expr{&ast.BinaryExpr{
-				X:  value,
-				Op: token.ADD,
-				Y:  re.Expr3,
-			}},
+			Tok:    token.ADD_ASSIGN,
+			Rhs:    []ast.Expr{re.Expr3},
 		},
 		Body: body,
 	}

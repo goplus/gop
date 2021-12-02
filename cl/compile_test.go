@@ -3273,7 +3273,7 @@ for i $ :10 {
 import fmt "fmt"
 
 func main() {
-	for i := 0; i < 10; i = i + 1 {
+	for i := 0; i < 10; i += 1 {
 		fmt.Println(i)
 	}
 }
@@ -3289,7 +3289,7 @@ for i $ 1:10:2 {
 import fmt "fmt"
 
 func main() {
-	for i := 1; i < 10; i = i + 2 {
+	for i := 1; i < 10; i += 2 {
 		fmt.Println(i)
 	}
 }
@@ -3305,7 +3305,7 @@ for i $ 1:10 {
 import fmt "fmt"
 
 func main() {
-	for i := 1; i < 10; i = i + 1 {
+	for i := 1; i < 10; i += 1 {
 		fmt.Println(i)
 	}
 }
@@ -3321,7 +3321,7 @@ for i $ :10:2 {
 import fmt "fmt"
 
 func main() {
-	for i := 0; i < 10; i = i + 2 {
+	for i := 0; i < 10; i += 2 {
 		fmt.Println(i)
 	}
 }
@@ -3337,7 +3337,7 @@ for range :10 {
 import fmt "fmt"
 
 func main() {
-	for _gop_k := 0; _gop_k < 10; _gop_k = _gop_k + 1 {
+	for _gop_k := 0; _gop_k < 10; _gop_k += 1 {
 		fmt.Println("Hi")
 	}
 }
@@ -3353,7 +3353,7 @@ for _ <- :10 {
 import fmt "fmt"
 
 func main() {
-	for _gop_k := 0; _gop_k < 10; _gop_k = _gop_k + 1 {
+	for _gop_k := 0; _gop_k < 10; _gop_k += 1 {
 		fmt.Println("Hi")
 	}
 }
