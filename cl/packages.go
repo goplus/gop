@@ -115,6 +115,7 @@ func (p *PkgsLoader) GenGoPkgs(cfg *packages.Config, notFounds []string) (err er
 }
 
 func (p *PkgsLoader) Load(cfg *packages.Config, patterns ...string) ([]*packages.Package, error) {
+	var nretry int
 retry:
 	loadPkgs, err := packages.Load(cfg, patterns...)
 	if err == nil && p.genGoPkg != nil {
@@ -128,7 +129,12 @@ retry:
 			}
 		})
 		if notFounds != nil {
+			if nretry > 1 {
+				log.Println("Load packages too many times:", notFounds)
+				return loadPkgs, err
+			}
 			if e := p.GenGoPkgs(cfg, notFounds); e == nil {
+				nretry++
 				goto retry
 			}
 		}
