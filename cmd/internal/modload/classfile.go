@@ -58,7 +58,7 @@ func LoadClassFile() {
 		log.Fatalf("gop: can't find classfile path in require statment")
 	}
 
-	gopmod := filepath.Join(dir, "gop.mod")
+	gopmod := filepath.Join(modRoot, dir, "gop.mod")
 	data, err := modfetch.Read(gopmod)
 	if err != nil {
 		log.Fatalf("gop: %v", err)
