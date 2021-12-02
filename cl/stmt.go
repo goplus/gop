@@ -358,28 +358,52 @@ func toForStmt(forPos token.Pos, value ast.Expr, body *ast.BlockStmt, re *ast.Ra
 	if re.First == nil {
 		re.First = &ast.BasicLit{ValuePos: forPos, Kind: token.INT, Value: "0"}
 	}
+
+	initLhs := []ast.Expr{value}
+	initRhs := []ast.Expr{re.First}
+
+	var cond ast.Expr
+	var post ast.Expr
+	switch re.Last.(type) {
+	case *ast.Ident, *ast.BasicLit:
+		cond = re.Last
+	default:
+		cond = &ast.Ident{NamePos: forPos, Name: "_gop_end"}
+		initLhs = append(initLhs, cond)
+		initRhs = append(initRhs, re.Last)
+	}
+
 	if re.Expr3 == nil {
-		re.Expr3 = &ast.BasicLit{ValuePos: forPos, Kind: token.INT, Value: "1"}
+		post = &ast.BasicLit{ValuePos: forPos, Kind: token.INT, Value: "1"}
+	} else {
+		switch re.Expr3.(type) {
+		case *ast.Ident, *ast.BasicLit:
+			post = re.Expr3
+		default:
+			post = &ast.Ident{NamePos: forPos, Name: "_gop_step"}
+			initLhs = append(initLhs, post)
+			initRhs = append(initRhs, re.Expr3)
+		}
 	}
 	return &ast.ForStmt{
 		For: forPos,
 		Init: &ast.AssignStmt{
-			Lhs:    []ast.Expr{value},
+			Lhs:    initLhs,
 			TokPos: re.To,
 			Tok:    tok,
-			Rhs:    []ast.Expr{re.First},
+			Rhs:    initRhs,
 		},
 		Cond: &ast.BinaryExpr{
 			X:     value,
 			OpPos: re.To,
 			Op:    token.LSS,
-			Y:     re.Last,
+			Y:     cond,
 		},
 		Post: &ast.AssignStmt{
 			Lhs:    []ast.Expr{value},
 			TokPos: re.Colon2,
 			Tok:    token.ADD_ASSIGN,
-			Rhs:    []ast.Expr{re.Expr3},
+			Rhs:    []ast.Expr{post},
 		},
 		Body: body,
 	}

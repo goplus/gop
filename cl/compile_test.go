@@ -3386,6 +3386,50 @@ func main() {
 `)
 }
 
+func TestRangeExpr8(t *testing.T) {
+	gopClTest(t, `
+	type T struct{}
+
+	func (t T)start()int{
+		return 0
+	}
+	func (t T)end()int{
+		return 3 
+	}
+	func (t T)step()int{
+		return 1 
+	}
+	
+	t:=T{}
+	
+	for i <- t.start():t.end():t.step(){
+		println i
+	}
+	`, `package main
+
+import fmt "fmt"
+
+type T struct {
+}
+
+func (t T) start() int {
+	return 0
+}
+func (t T) end() int {
+	return 3
+}
+func (t T) step() int {
+	return 1
+}
+func main() {
+	t := T{}
+	for i, _gop_end, _gop_step := t.start(), t.end(), t.step(); i < _gop_end; i += _gop_step {
+		fmt.Println(i)
+	}
+}
+`)
+}
+
 func TestGoFuncInstr(t *testing.T) {
 	gopClTest(t, `package main
 
