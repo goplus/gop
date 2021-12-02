@@ -261,7 +261,11 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 // end
 func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 	if re, ok := v.X.(*ast.RangeExpr); ok {
-		compileForStmt(ctx, toForStmt(v.For, v.Key, v.Body, re))
+		tok := token.DEFINE
+		if v.Tok == token.ASSIGN {
+			tok = v.Tok
+		}
+		compileForStmt(ctx, toForStmt(v.For, v.Key, v.Body, re, tok))
 		return
 	}
 	cb := ctx.cb
@@ -309,7 +313,7 @@ func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 
 func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
 	if re, ok := v.X.(*ast.RangeExpr); ok {
-		compileForStmt(ctx, toForStmt(v.For, v.Value, v.Body, re))
+		compileForStmt(ctx, toForStmt(v.For, v.Value, v.Body, re, token.DEFINE))
 		return
 	}
 	cb := ctx.cb
@@ -341,8 +345,14 @@ func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
 	cb.End()
 }
 
-func toForStmt(forPos token.Pos, value ast.Expr, body *ast.BlockStmt, re *ast.RangeExpr) *ast.ForStmt {
-	if value == nil || value.(*ast.Ident).Name == "_" {
+func toForStmt(forPos token.Pos, value ast.Expr, body *ast.BlockStmt, re *ast.RangeExpr, tok token.Token) *ast.ForStmt {
+	nilIdent := value == nil
+	if !nilIdent {
+		if v, ok := value.(*ast.Ident); ok && v.Name == "_" {
+			nilIdent = true
+		}
+	}
+	if nilIdent {
 		value = &ast.Ident{NamePos: forPos, Name: "_gop_k"}
 	}
 	if re.First == nil {
@@ -356,7 +366,7 @@ func toForStmt(forPos token.Pos, value ast.Expr, body *ast.BlockStmt, re *ast.Ra
 		Init: &ast.AssignStmt{
 			Lhs:    []ast.Expr{value},
 			TokPos: re.To,
-			Tok:    token.DEFINE,
+			Tok:    tok,
 			Rhs:    []ast.Expr{re.First},
 		},
 		Cond: &ast.BinaryExpr{

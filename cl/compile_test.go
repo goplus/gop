@@ -3255,7 +3255,11 @@ func newRepo() Repo {
 }
 
 func testRangeExpr(t *testing.T, codeTpl, expect string) {
-	for _, s := range []string{" <- ", " := range "} {
+	for k, s := range []string{" <- ", " := range ", " = range "} {
+		if k == 2 {
+			codeTpl = "i:=0\n" + codeTpl
+			expect = strings.Replace(expect, "for i := ", "i := 0\n\tfor i = ", -1)
+		}
 		gopClTest(t, strings.Replace(codeTpl, "$", s, -1), expect)
 	}
 }
