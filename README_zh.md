@@ -27,7 +27,7 @@ cd gop
 all.bat
 ```
 
-实际上， `all.bash` 和 `all.bat` 内部都会执行 `go run cmd/install.go`
+实际上， `all.bash` 和 `all.bat` 内部都会执行 `go run cmd/make.go`
 
 ## 代码风格（很重要）
 

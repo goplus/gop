@@ -27,7 +27,7 @@ cd gop
 all.bat
 ```
 
-Actually, `all.bash` and `all.bat` will use `go run cmd/install.go` underneath.
+Actually, `all.bash` and `all.bat` will use `go run cmd/make.go` underneath.
 
 
 ## Code style (important)
