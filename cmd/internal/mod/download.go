@@ -18,8 +18,8 @@ package mod
 
 import (
 	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/cmd/internal/modfetch"
 	"github.com/goplus/gop/cmd/internal/modload"
+	"github.com/goplus/gop/x/mod/modfetch"
 )
 
 var cmdDownload = &base.Command{

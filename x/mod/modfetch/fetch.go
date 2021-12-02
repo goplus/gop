@@ -28,12 +28,12 @@ import (
 	"golang.org/x/mod/semver"
 )
 
-// DownloadDir returns the directory to which m should have been downloaded.
+// downloadDir returns the directory to which m should have been downloaded.
 // An error will be returned if the module path or version cannot be escaped.
 // An error satisfying errors.Is(err, fs.ErrNotExist) will be returned
 // along with the directory if the directory does not exist or if the directory
 // is not completely populated.
-func DownloadDir(m module.Version) (string, error) {
+func downloadDir(m module.Version) (string, error) {
 	enc, err := module.EscapePath(m.Path)
 	if err != nil {
 		return "", err
@@ -87,7 +87,7 @@ func DownloadDir(m module.Version) (string, error) {
 }
 
 func Download(m module.Version) (dir string, err error) {
-	dir, err = DownloadDir(m)
+	dir, err = downloadDir(m)
 	if err == nil {
 		// The directory has already been completely extracted (no .partial file exists).
 		return dir, nil
@@ -100,20 +100,20 @@ func Download(m module.Version) (dir string, err error) {
 }
 
 func DownloadArgs(dir string, args ...string) {
-	RunGoCmd(dir, "mod", append([]string{"download"}, args...)...)
+	runCmd(dir, "go", append([]string{"mod", "download"}, args...)...)
 }
 
 func TidyArgs(dir string, args ...string) {
-	RunGoCmd(dir, "mod", append([]string{"tidy"}, args...)...)
+	runCmd(dir, "go", append([]string{"mod", "tidy"}, args...)...)
 }
 
 func InitArgs(dir string, args ...string) {
-	RunGoCmd(dir, "mod", append([]string{"init"}, args...)...)
+	runCmd(dir, "go", append([]string{"mod", "init"}, args...)...)
 }
 
-// RunGoCmd executes `go` command tools.
-func RunGoCmd(dir string, op string, args ...string) {
-	cmd := exec.Command("go", append([]string{op}, args...)...)
+// runCmd executes a command tool.
+func runCmd(dir string, name string, args ...string) {
+	cmd := exec.Command(name, args...)
 	cmd.Dir = dir
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
