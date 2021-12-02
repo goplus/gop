@@ -54,10 +54,10 @@ func getGopRoot() string {
 	pwd, _ := os.Getwd()
 
 	pathsToCheck := []Path{
-		Path{path: "cmd", isDir: true},
-		Path{path: "builtin", isDir: true},
-		Path{path: "go.mod", isDir: false},
-		Path{path: "go.sum", isDir: false},
+		{path: "cmd/gop", isDir: true},
+		{path: "builtin", isDir: true},
+		{path: "go.mod", isDir: false},
+		{path: "go.sum", isDir: false},
 	}
 
 	for _, path := range pathsToCheck {
@@ -66,7 +66,6 @@ func getGopRoot() string {
 			os.Exit(1)
 		}
 	}
-
 	return pwd
 }
 
@@ -168,8 +167,8 @@ func buildGoplusTools(useGoProxy bool) {
 }
 
 func showHelpPostInstall() {
-	println("Next:")
-	println("We just installed Go+ into the directory: ", detectGopBinPath())
+	println("\nNEXT STEP:")
+	println("\nWe just installed Go+ into the directory: ", detectGopBinPath())
 	message := `
 To setup a better Go+ development environment,
 we recommend you add the above install directory into your PATH environment variable.

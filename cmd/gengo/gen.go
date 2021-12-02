@@ -24,6 +24,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/goplus/gop/ast"
@@ -174,6 +175,9 @@ func (p *Runner) GenGoPkg(pkgDir string, base *cl.Config) (err error) {
 	pkgs, err := parser.ParseDir(conf.Fset, pkgDir, nil, parser.ParseComments)
 	if err != nil {
 		return p.addError(pkgDir, "parse", err)
+	}
+	if len(pkgs) == 0 {
+		return syscall.ENOENT
 	}
 
 	var pkgTest *ast.Package
