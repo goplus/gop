@@ -27,10 +27,12 @@ import (
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/cmd/internal/build"
 	"github.com/goplus/gop/cmd/internal/clean"
+	"github.com/goplus/gop/cmd/internal/env"
 	"github.com/goplus/gop/cmd/internal/gengo"
 	"github.com/goplus/gop/cmd/internal/gopfmt"
 	"github.com/goplus/gop/cmd/internal/help"
 	"github.com/goplus/gop/cmd/internal/install"
+	"github.com/goplus/gop/cmd/internal/mod"
 	"github.com/goplus/gop/cmd/internal/run"
 	"github.com/goplus/gop/cmd/internal/test"
 	"github.com/goplus/gop/cmd/internal/version"
@@ -47,15 +49,18 @@ func init() {
 		run.Cmd,
 		gengo.Cmd,
 		gopfmt.Cmd,
+		mod.Cmd,
 		install.Cmd,
 		build.Cmd,
 		clean.Cmd,
+		env.Cmd,
 		test.Cmd,
 		version.Cmd,
 	}
 }
 
 func main() {
+	flag.Usage = base.Usage
 	flag.Parse()
 	args := flag.Args()
 	if len(args) < 1 {

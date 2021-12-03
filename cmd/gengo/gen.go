@@ -24,6 +24,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/goplus/gop/ast"
@@ -139,11 +140,16 @@ func (p *Runner) GenGo(dir string, recursive bool, rebuild bool, base *cl.Config
 var (
 	extPkgFlags = map[string]int{
 		".gop": PkgFlagGoPlus,
-		".spx": PkgFlagSpx,
-		".gmx": PkgFlagGmx,
 		".go":  PkgFlagGo,
 	}
 )
+
+func RegisterPkgFlags(ext string, flag int) {
+	if flag != PkgFlagGmx && flag != PkgFlagSpx {
+		panic("RegisterPkgFlags: flag should be PkgFlagGmx or PkgFlagSpx")
+	}
+	extPkgFlags[ext] = flag
+}
 
 func (p *Runner) GenGoPkg(pkgDir string, base *cl.Config) (err error) {
 	defer func() {
@@ -169,6 +175,9 @@ func (p *Runner) GenGoPkg(pkgDir string, base *cl.Config) (err error) {
 	pkgs, err := parser.ParseDir(conf.Fset, pkgDir, nil, parser.ParseComments)
 	if err != nil {
 		return p.addError(pkgDir, "parse", err)
+	}
+	if len(pkgs) == 0 {
+		return syscall.ENOENT
 	}
 
 	var pkgTest *ast.Package

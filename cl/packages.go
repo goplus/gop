@@ -19,36 +19,19 @@ package cl
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"syscall"
 
+	"github.com/goplus/gop/env"
+	"github.com/goplus/gop/x/mod/modfile"
 	"github.com/goplus/gox"
-	"golang.org/x/mod/modfile"
 	"golang.org/x/tools/go/packages"
 )
 
 // -----------------------------------------------------------------------------
-
-func FindGoModFile(dir string) (file string, err error) {
-	if dir == "" {
-		dir = "."
-	}
-	if dir, err = filepath.Abs(dir); err != nil {
-		return
-	}
-	for dir != "" {
-		file = filepath.Join(dir, "go.mod")
-		if fi, e := os.Lstat(file); e == nil && !fi.IsDir() {
-			return
-		}
-		if dir, file = filepath.Split(strings.TrimRight(dir, "/\\")); file == "" {
-			break
-		}
-	}
-	return "", syscall.ENOENT
-}
 
 func GetModulePath(file string) (pkgPath string, err error) {
 	src, err := ioutil.ReadFile(file)
@@ -62,25 +45,6 @@ func GetModulePath(file string) (pkgPath string, err error) {
 	return f.Module.Mod.Path, nil
 }
 
-func findModPaths(dir string) (root string, modPath string, err error) {
-	file, err := FindGoModFile(dir)
-	if err == nil {
-		root, _ = filepath.Split(file)
-		modPath, err = GetModulePath(file)
-	}
-	return
-}
-
-func modPaths(conf *Config) (root string, modPath string) {
-	modPath = conf.ModPath
-	if modPath == "" {
-		root, modPath, _ = findModPaths(conf.Dir)
-	} else {
-		root = conf.ModRootDir
-	}
-	return
-}
-
 // -----------------------------------------------------------------------------
 
 type PkgsLoader struct {
@@ -88,12 +52,17 @@ type PkgsLoader struct {
 	genGoPkg   func(pkgDir string, base *Config) error
 	LoadPkgs   gox.LoadPkgsFunc
 	BaseConfig *Config
-	modPath    string
 }
 
 func initPkgsLoader(base *Config) {
-	base.ModRootDir, base.ModPath = modPaths(base)
-	p := &PkgsLoader{genGoPkg: base.GenGoPkg, BaseConfig: base, modPath: base.ModPath}
+	if base.ModRootDir == "" {
+		modfile, err := env.GOPMOD(base.Dir)
+		if err != nil {
+			log.Panicln("gop.mod not found:", err)
+		}
+		base.ModRootDir, _ = filepath.Split(modfile)
+	}
+	p := &PkgsLoader{genGoPkg: base.GenGoPkg, BaseConfig: base}
 	if base.PersistLoadPkgs {
 		if base.CacheFile == "" && base.ModRootDir != "" {
 			dir := base.ModRootDir + "/.gop"
@@ -123,10 +92,15 @@ func (p *PkgsLoader) GenGoPkgs(cfg *packages.Config, notFounds []string) (err er
 	if p.genGoPkg == nil {
 		return syscall.ENOENT
 	}
-	root, pkgPath, err := findModPaths(cfg.Dir)
+	modfile, err := env.GOPMOD(cfg.Dir)
 	if err != nil {
 		return
 	}
+	pkgPath, err := GetModulePath(modfile)
+	if err != nil {
+		return
+	}
+	root, _ := filepath.Split(modfile)
 	pkgPathSlash := pkgPath + "/"
 	for _, notFound := range notFounds {
 		if strings.HasPrefix(notFound, pkgPathSlash) || notFound == pkgPath {
@@ -141,6 +115,7 @@ func (p *PkgsLoader) GenGoPkgs(cfg *packages.Config, notFounds []string) (err er
 }
 
 func (p *PkgsLoader) Load(cfg *packages.Config, patterns ...string) ([]*packages.Package, error) {
+	var nretry int
 retry:
 	loadPkgs, err := packages.Load(cfg, patterns...)
 	if err == nil && p.genGoPkg != nil {
@@ -154,7 +129,12 @@ retry:
 			}
 		})
 		if notFounds != nil {
+			if nretry > 1 {
+				log.Println("Load packages too many times:", notFounds)
+				return loadPkgs, err
+			}
 			if e := p.GenGoPkgs(cfg, notFounds); e == nil {
+				nretry++
 				goto retry
 			}
 		}

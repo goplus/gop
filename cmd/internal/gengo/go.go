@@ -22,11 +22,13 @@ import (
 	"os"
 	"strings"
 
+	"github.com/qiniu/x/log"
+
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/cmd/internal/modload"
 	"github.com/goplus/gox"
-	"github.com/qiniu/x/log"
 )
 
 // -----------------------------------------------------------------------------
@@ -99,6 +101,7 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 	dir := flag.Arg(0)
 	dir = strings.TrimSuffix(dir, "/...")
+	modload.Load()
 	runner := new(gengo.Runner)
 	runner.SetAfter(func(p *gengo.Runner, dir string, flags int) error {
 		errs := p.ResetErrors()

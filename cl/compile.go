@@ -95,12 +95,8 @@ type Config struct {
 	// If WorkingDir or TargetDir is empty, it is same as Dir.
 	WorkingDir, TargetDir string
 
-	// ModPath specifies module path.
-	ModPath string
-
 	// ModRootDir specifies root dir of this module.
-	// If ModRootDir is empty, will lookup go.mod in all ancestor directories of Dir.
-	// If you specify ModPath, you should specify ModRootDir at the same time.
+	// If ModRootDir is empty, will lookup gop.mod in all ancestor directories of Dir.
 	ModRootDir string
 
 	// CacheFile specifies where cache data to write.
@@ -564,6 +560,15 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 				}
 				for _, v := range specs {
 					spec := v.(*ast.ValueSpec)
+					if spec.Type == nil {
+						pos := ctx.Position(v.Pos())
+						ctx.handleCodeErrorf(&pos, "missing field type in class file")
+						continue
+					}
+					if len(spec.Values) > 0 {
+						pos := ctx.Position(v.Pos())
+						ctx.handleCodeErrorf(&pos, "cannot assign value to field in class file")
+					}
 					typ := toType(ctx, spec.Type)
 					for _, name := range spec.Names {
 						flds = append(flds, types.NewField(name.Pos(), pkg, name.Name, typ, false))
@@ -899,7 +904,17 @@ func loadVars(ctx *blockCtx, v *ast.ValueSpec, global bool) {
 			compileExpr(ctx, v.Values[0], true)
 		} else {
 			for _, val := range v.Values {
-				compileExpr(ctx, val)
+				switch e := val.(type) {
+				case *ast.LambdaExpr, *ast.LambdaExpr2:
+					if len(v.Values) == 1 {
+						sig := checkLambdaFuncType(ctx, e, typ, clLambaAssign, v.Names[0])
+						compileLambda(ctx, e, sig)
+					} else {
+						panic(ctx.newCodeErrorf(e.Pos(), "lambda unsupport multiple assignment"))
+					}
+				default:
+					compileExpr(ctx, val)
+				}
 			}
 		}
 		cb.EndInit(nv)

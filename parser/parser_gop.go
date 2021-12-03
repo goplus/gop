@@ -160,7 +160,6 @@ var (
 		".gop": ast.FileTypeGop,
 		".spx": ast.FileTypeSpx,
 		".gmx": ast.FileTypeGmx,
-		".spc": ast.FileTypeGmx, // TODO: dynamic register
 	}
 )
 
@@ -173,6 +172,30 @@ func RegisterFileType(ext string, format ast.FileType) {
 		panic("RegisterFileType: file type exists")
 	}
 	extGopFiles[ext] = format
+}
+
+// -----------------------------------------------------------------------------
+
+func ParseFiles(fset *token.FileSet, files []string, mode Mode) (map[string]*ast.Package, error) {
+	return ParseFSFiles(fset, local, files, mode)
+}
+
+func ParseFSFiles(fset *token.FileSet, fs FileSystem, files []string, mode Mode) (map[string]*ast.Package, error) {
+	ret := map[string]*ast.Package{}
+	for _, file := range files {
+		f, err := ParseFSFile(fset, fs, file, nil, mode)
+		if err != nil {
+			return nil, err
+		}
+		pkgName := f.Name.Name
+		pkg, ok := ret[pkgName]
+		if !ok {
+			pkg = &ast.Package{Name: pkgName, Files: make(map[string]*ast.File)}
+			ret[pkgName] = pkg
+		}
+		pkg.Files[file] = f
+	}
+	return ret, nil
 }
 
 // -----------------------------------------------------------------------------

@@ -395,7 +395,7 @@ func (f *File) add(errs *ErrorList, block *LineBlock, line *Line, verb string, a
 			errorf("gop directive expects exactly one argument")
 			return
 		} else if !GopVersionRE.MatchString(args[0]) {
-			errorf("invalid go version '%s': must match format 1.23", args[0])
+			errorf("invalid gop version '%s': must match format 1.23", args[0])
 			return
 		}
 
@@ -661,63 +661,6 @@ func (f *File) fixRetract(fix VersionFixer, errs *ErrorList) {
 	}
 }
 
-func (f *WorkFile) add(errs *ErrorList, line *Line, verb string, args []string, fix VersionFixer) {
-	wrapError := func(err error) {
-		*errs = append(*errs, Error{
-			Filename: f.Syntax.Name,
-			Pos:      line.Start,
-			Err:      err,
-		})
-	}
-	errorf := func(format string, args ...interface{}) {
-		wrapError(fmt.Errorf(format, args...))
-	}
-
-	switch verb {
-	default:
-		errorf("unknown directive: %s", verb)
-
-	case "go":
-		if f.Go != nil {
-			errorf("repeated go statement")
-			return
-		}
-		if len(args) != 1 {
-			errorf("go directive expects exactly one argument")
-			return
-		} else if !GoVersionRE.MatchString(args[0]) {
-			errorf("invalid go version '%s': must match format 1.23", args[0])
-			return
-		}
-
-		f.Go = &Go{Syntax: line}
-		f.Go.Version = args[0]
-
-	case "use":
-		if len(args) != 1 {
-			errorf("usage: %s local/dir", verb)
-			return
-		}
-		s, err := parseString(&args[0])
-		if err != nil {
-			errorf("invalid quoted string: %v", err)
-			return
-		}
-		f.Use = append(f.Use, &Use{
-			Path:   s,
-			Syntax: line,
-		})
-
-	case "replace":
-		replace, wrappederr := parseReplace(f.Syntax.Name, line, verb, args, fix)
-		if wrappederr != nil {
-			*errs = append(*errs, *wrappederr)
-			return
-		}
-		f.Replace = append(f.Replace, replace)
-	}
-}
-
 // IsDirectoryPath reports whether the given path should be interpreted
 // as a directory path. Just like on the go command line, relative paths
 // and rooted paths are directory paths; the rest are module paths.
@@ -957,6 +900,9 @@ func parseExt(s *string) (string, error) {
 			Err: err,
 		}
 	}
+	if t == "" {
+		return "", nil
+	}
 	if len(t) < 2 {
 		return "", &InvalidExtError{
 			Ext: *s,
@@ -1045,6 +991,26 @@ func (f *File) AddGoStmt(version string) error {
 	} else {
 		f.Go.Version = version
 		f.Syntax.updateLine(f.Go.Syntax, "go", version)
+	}
+	return nil
+}
+
+func (f *File) AddGopStmt(version string) error {
+	if !GopVersionRE.MatchString(version) {
+		return fmt.Errorf("invalid language version string %q", version)
+	}
+	if f.Gop == nil {
+		var hint Expr
+		if f.Module != nil && f.Module.Syntax != nil {
+			hint = f.Module.Syntax
+		}
+		f.Gop = &Gop{
+			Version: version,
+			Syntax:  f.Syntax.addLine(hint, "gop", version),
+		}
+	} else {
+		f.Gop.Version = version
+		f.Syntax.updateLine(f.Gop.Syntax, "gop", version)
 	}
 	return nil
 }

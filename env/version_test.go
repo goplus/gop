@@ -14,17 +14,26 @@
  * limitations under the License.
  */
 
-package gop
+package env
 
-// buildVersion is the GoPlus tree's version string at build time.
-// This is set by the linker.
-var (
-	buildVersion string = "devel"
-)
+import "testing"
 
-// Version returns the GoPlus tree's version string.
-// It is either the commit hash and date at the time of the build or,
-// when possible, a release tag like "v1.0.0-rc1".
-func Version() string {
-	return buildVersion
+func TestVersion(t *testing.T) {
+	if Version() != "v"+MainVersion+".x" {
+		t.Fatal("TestVersion failed:", Version())
+	}
+	buildVersion = "v1.0.0-beta1"
+	if Version() != buildVersion {
+		t.Fatal("TestVersion failed:", Version())
+	}
+	buildVersion = ""
+}
+
+func TestBuild(t *testing.T) {
+	if BuildRevision() != "" {
+		t.Fatal("BuildCommit failed:", BuildRevision())
+	}
+	if BuildDate() != "" {
+		t.Fatal("BuildInfo failed:", BuildDate())
+	}
 }

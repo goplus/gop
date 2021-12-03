@@ -27,12 +27,6 @@ import (
 	"testing"
 )
 
-// exists reports whether the named file exists.
-func exists(name string) bool {
-	_, err := os.Stat(name)
-	return err == nil
-}
-
 // Test that reading and then writing the golden files
 // does not change their output.
 func TestPrintGolden(t *testing.T) {

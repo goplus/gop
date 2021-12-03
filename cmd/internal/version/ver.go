@@ -18,11 +18,10 @@ package version
 
 import (
 	"fmt"
-	"github.com/goplus/gop/build"
 	"runtime"
 
-	"github.com/goplus/gop"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/env"
 )
 
 // -----------------------------------------------------------------------------
@@ -43,7 +42,7 @@ func init() {
 }
 
 func runCmd(cmd *base.Command, args []string) {
-	fmt.Println("gop", gop.Version(), build.Build(), runtime.GOOS+"/"+runtime.GOARCH)
+	fmt.Printf("gop %s %s/%s\n", env.Version(), runtime.GOOS, runtime.GOARCH)
 }
 
 // -----------------------------------------------------------------------------

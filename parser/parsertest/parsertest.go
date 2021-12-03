@@ -22,7 +22,7 @@ import (
 	"io"
 	"log"
 	"os"
-	"path"
+	"path/filepath"
 	"reflect"
 	"sort"
 	"testing"
@@ -99,7 +99,7 @@ func Fprint(w io.Writer, pkg *ast.Package) {
 	fmt.Fprintf(w, "package %s\n", pkg.Name)
 	paths := sortedKeys(pkg.Files)
 	for _, fpath := range paths {
-		fmt.Fprintf(w, "\nfile %s\n", path.Base(fpath))
+		fmt.Fprintf(w, "\nfile %s\n", filepath.Base(fpath))
 		file := pkg.Files[fpath]
 		if file.NoEntrypoint {
 			fmt.Fprintf(w, "noEntrypoint\n")

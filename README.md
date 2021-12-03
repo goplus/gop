@@ -20,8 +20,15 @@ For now, we suggest you install Go+ from source code.
 ```bash
 git clone https://github.com/goplus/gop.git
 cd gop
+
+# On mac/linux run:
 ./all.bash
+# On Windows run:
+all.bat
 ```
+
+Actually, `all.bash` and `all.bat` will use `go run cmd/make.go` underneath.
+
 
 ## Code style (important)
 
@@ -34,7 +41,7 @@ What are mainly impressions about Go+?
 
 - A static typed language.
 - Fully compatible with [the Go language](https://github.com/golang/go).
-- Script-like style, and more readable code for data science than Go.
+- Script-like style, and more readable code than Go.
 
 For example, the following is legal Go+ source code:
 
@@ -58,7 +65,7 @@ Of course, we don't only do less-typing things.
 
 For example, we support [list comprehension](https://en.wikipedia.org/wiki/List_comprehension), which makes data processing easier.
 
-```coffee
+```go
 println [x*x for x <- 1:6:2] // output: [1 9 25]
 
 mapData := {"Hi": 1, "Hello": 2, "Go+": 3}

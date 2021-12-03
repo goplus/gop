@@ -60,8 +60,8 @@ func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
 func compileStmts(ctx *blockCtx, body []ast.Stmt) {
 	for _, stmt := range body {
 		if v, ok := stmt.(*ast.LabeledStmt); ok {
-			l := v.Label
-			ctx.cb.NewLabel(l.Pos(), l.Name)
+			expr := v.Label
+			ctx.cb.NewLabel(expr.Pos(), expr.Name)
 		}
 	}
 	for _, stmt := range body {
@@ -81,9 +81,14 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	commentStmt(ctx, stmt)
 	switch v := stmt.(type) {
 	case *ast.ExprStmt:
-		compileExpr(ctx, v.X)
-		if canAutoCall(v.X) && isFunc(ctx.cb.InternalStack().Get(-1).Type) {
+		if obj, ok := isBuiltinAutoCall(ctx, v.X); ok {
+			ctx.cb.Val(obj)
 			ctx.cb.Call(0)
+		} else {
+			compileExpr(ctx, v.X)
+			if canAutoCall(v.X) && isFunc(ctx.cb.InternalStack().Get(-1).Type) {
+				ctx.cb.Call(0)
+			}
 		}
 	case *ast.AssignStmt:
 		compileAssignStmt(ctx, v)
@@ -140,6 +145,19 @@ retry:
 		goto retry
 	}
 	return false
+}
+
+func isBuiltinAutoCall(ctx *blockCtx, expr ast.Expr) (types.Object, bool) {
+	if ident, ok := expr.(*ast.Ident); ok {
+		switch ident.Name {
+		case "print", "println":
+			_, builtin := lookupType(ctx, ident.Name)
+			if isBuiltin(builtin) {
+				return builtin, true
+			}
+		}
+	}
+	return nil, false
 }
 
 func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
@@ -212,7 +230,18 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		compileExprLHS(ctx, lhs)
 	}
 	for _, rhs := range expr.Rhs {
-		compileExpr(ctx, rhs, twoValue)
+		switch e := rhs.(type) {
+		case *ast.LambdaExpr, *ast.LambdaExpr2:
+			if len(expr.Lhs) == 1 && len(expr.Rhs) == 1 {
+				typ := ctx.cb.Get(-1).Type.(interface{ Elem() types.Type }).Elem()
+				sig := checkLambdaFuncType(ctx, e, typ, clLambaAssign, expr.Lhs[0])
+				compileLambda(ctx, e, sig)
+			} else {
+				panic(ctx.newCodeErrorf(e.Pos(), "lambda unsupport multiple assignment"))
+			}
+		default:
+			compileExpr(ctx, rhs, twoValue)
+		}
 	}
 	if tok == token.ASSIGN {
 		ctx.cb.AssignWith(len(expr.Lhs), len(expr.Rhs), expr)
@@ -231,6 +260,14 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 //    body
 // end
 func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
+	if re, ok := v.X.(*ast.RangeExpr); ok {
+		tok := token.DEFINE
+		if v.Tok == token.ASSIGN {
+			tok = v.Tok
+		}
+		compileForStmt(ctx, toForStmt(v.For, v.Key, v.Body, re, tok))
+		return
+	}
 	cb := ctx.cb
 	comments := cb.Comments()
 	if v.Tok == token.DEFINE {
@@ -275,6 +312,10 @@ func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 }
 
 func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
+	if re, ok := v.X.(*ast.RangeExpr); ok {
+		compileForStmt(ctx, toForStmt(v.For, v.Value, v.Body, re, token.DEFINE))
+		return
+	}
 	cb := ctx.cb
 	comments := cb.Comments()
 	names := make([]string, 1, 2)
@@ -302,6 +343,82 @@ func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
 	cb.SetComments(comments, true)
 	setBodyHandler(ctx)
 	cb.End()
+}
+
+func toForStmt(forPos token.Pos, value ast.Expr, body *ast.BlockStmt, re *ast.RangeExpr, tok token.Token) *ast.ForStmt {
+	nilIdent := value == nil
+	if !nilIdent {
+		if v, ok := value.(*ast.Ident); ok && v.Name == "_" {
+			nilIdent = true
+		}
+	}
+	if nilIdent {
+		value = &ast.Ident{NamePos: forPos, Name: "_gop_k"}
+	}
+	if re.First == nil {
+		re.First = &ast.BasicLit{ValuePos: forPos, Kind: token.INT, Value: "0"}
+	}
+	initLhs := []ast.Expr{value}
+	initRhs := []ast.Expr{re.First}
+	replaceValue := false
+	var cond ast.Expr
+	var post ast.Expr
+	switch re.Last.(type) {
+	case *ast.Ident, *ast.BasicLit:
+		cond = re.Last
+	default:
+		replaceValue = true
+		cond = &ast.Ident{NamePos: forPos, Name: "_gop_end"}
+		initLhs = append(initLhs, cond)
+		initRhs = append(initRhs, re.Last)
+	}
+	if re.Expr3 == nil {
+		post = &ast.BasicLit{ValuePos: forPos, Kind: token.INT, Value: "1"}
+	} else {
+		switch re.Expr3.(type) {
+		case *ast.Ident, *ast.BasicLit:
+			post = re.Expr3
+		default:
+			replaceValue = true
+			post = &ast.Ident{NamePos: forPos, Name: "_gop_step"}
+			initLhs = append(initLhs, post)
+			initRhs = append(initRhs, re.Expr3)
+		}
+	}
+	if tok == token.ASSIGN && replaceValue {
+		oldValue := value
+		value = &ast.Ident{NamePos: forPos, Name: "_gop_k"}
+		initLhs[0] = value
+		body.List = append([]ast.Stmt{&ast.AssignStmt{
+			Lhs:    []ast.Expr{oldValue},
+			TokPos: forPos,
+			Tok:    token.ASSIGN,
+			Rhs:    []ast.Expr{value},
+		}}, body.List...)
+		tok = token.DEFINE
+	}
+	return &ast.ForStmt{
+		For: forPos,
+		Init: &ast.AssignStmt{
+			Lhs:    initLhs,
+			TokPos: re.To,
+			Tok:    tok,
+			Rhs:    initRhs,
+		},
+		Cond: &ast.BinaryExpr{
+			X:     value,
+			OpPos: re.To,
+			Op:    token.LSS,
+			Y:     cond,
+		},
+		Post: &ast.AssignStmt{
+			Lhs:    []ast.Expr{value},
+			TokPos: re.Colon2,
+			Tok:    token.ADD_ASSIGN,
+			Rhs:    []ast.Expr{post},
+		},
+		Body: body,
+	}
 }
 
 // for init; cond then
