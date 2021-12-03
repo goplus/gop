@@ -8,7 +8,7 @@ import (
 
 func testFormat(t *testing.T, name string, src, expect string) {
 	t.Run(name, func(t *testing.T) {
-		result, err := GopstyleSource([]byte(src))
+		result, err := GopstyleSource(name, []byte(src))
 		if err != nil {
 			t.Fatal("format.Source failed:", err)
 		}
