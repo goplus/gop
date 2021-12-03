@@ -69,7 +69,7 @@ func processFile(filename string, in io.Reader, out io.Writer) error {
 		return err
 	}
 
-	res, err := format.Source(filename, src)
+	res, err := format.Source(src, filename)
 	if err != nil {
 		return err
 	}

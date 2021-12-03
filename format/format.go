@@ -101,9 +101,13 @@ func Node(dst io.Writer, fset *token.FileSet, node interface{}) error {
 // space as src), and the result is indented by the same amount as the first
 // line of src containing code. Imports are not sorted for partial source files.
 //
-func Source(filename string, src []byte) ([]byte, error) {
+func Source(src []byte, filename ...string) ([]byte, error) {
+	var fname string
+	if filename != nil {
+		fname = filename[0]
+	}
 	fset := token.NewFileSet()
-	file, sourceAdj, indentAdj, err := parse(fset, filename, src, true)
+	file, sourceAdj, indentAdj, err := parse(fset, fname, src, true)
 	if err != nil {
 		return nil, err
 	}
