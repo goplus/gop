@@ -70,9 +70,9 @@ func gopfmt(path string, smart, mvgo bool) (err error) {
 	}
 	var target []byte
 	if smart {
-		target, err = xformat.GopstyleSource(src)
+		target, err = xformat.GopstyleSource(path, src)
 	} else {
-		target, err = format.Source(src)
+		target, err = format.Source(path, src)
 	}
 	if err != nil {
 		return
@@ -127,10 +127,18 @@ func walk(path string, d fs.DirEntry, err error) error {
 				smart := *flagSmart
 				mvgo := smart && *flagMoveGo
 				err = gopfmt(path, smart && (mvgo || ext != ".go"), mvgo)
+				if err != nil {
+					report(err)
+				}
 			}
 		}
 	}
 	return err
+}
+
+func report(err error) {
+	fmt.Println(err)
+	os.Exit(2)
 }
 
 func runCmd(cmd *base.Command, args []string) {
