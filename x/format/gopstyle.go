@@ -11,10 +11,14 @@ import (
 
 // -----------------------------------------------------------------------------
 
-func GopstyleSource(filename string, src []byte) (ret []byte, err error) {
+func GopstyleSource(src []byte, filename ...string) (ret []byte, err error) {
+	var fname string
+	if filename != nil {
+		fname = filename[0]
+	}
 	fset := token.NewFileSet()
 	var f *ast.File
-	if f, err = parser.ParseFile(fset, filename, src, parser.ParseComments); err == nil {
+	if f, err = parser.ParseFile(fset, fname, src, parser.ParseComments); err == nil {
 		Gopstyle(f)
 		var buf bytes.Buffer
 		if err = format.Node(&buf, fset, f); err == nil {
