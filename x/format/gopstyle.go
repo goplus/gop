@@ -35,6 +35,7 @@ func Gopstyle(file *ast.File) {
 			fn := file.Decls[idx]
 			copy(file.Decls[idx:], file.Decls[idx+1:])
 			file.Decls[last] = fn
+			// TODO: should also swap file.Comments
 		}
 		file.NoEntrypoint = true
 	}
