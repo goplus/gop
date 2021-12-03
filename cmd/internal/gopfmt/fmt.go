@@ -70,7 +70,7 @@ func gopfmt(path string, smart, mvgo bool) (err error) {
 	}
 	var target []byte
 	if smart {
-		target, err = xformat.Source(src)
+		target, err = xformat.GopstyleSource(src)
 	} else {
 		target, err = format.Source(src)
 	}

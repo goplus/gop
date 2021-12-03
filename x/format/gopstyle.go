@@ -11,7 +11,7 @@ import (
 
 // -----------------------------------------------------------------------------
 
-func Source(src []byte) (ret []byte, err error) {
+func GopstyleSource(src []byte) (ret []byte, err error) {
 	fset := token.NewFileSet()
 	if f, err := parser.ParseFile(fset, "", src, parser.ParseComments); err == nil {
 		Gopstyle(f)
