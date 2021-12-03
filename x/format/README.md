@@ -45,13 +45,13 @@ a := 0
 ```go
 import "fmt"
 
-var n, err = fmt.Println("Hello world")
+n, err := fmt.Println("Hello world")
 ```
 
 will be converted into:
 
 ```go
-var n, err = println("Hello world")
+n, err := println("Hello world")
 ```
 
 Note:
@@ -66,25 +66,33 @@ Note:
 
 ```go
 import "fmt"
-import "os/exec"
 
-cmd := exec.Command("go", "run", "hello.go")
-cmd.Run()
-fmt.Println("Hello world")
+fmt.Println()
+fmt.Println(fmt.Println("Hello world"))
 ```
 
 will be converted into:
 
 ```go
-import "os/exec"
-
-cmd := exec.command("go", "run", "hello.go")
-cmd.run
-println "Hello world"
+println
+println println("Hello world")
 ```
 
 Note:
 
-* We prefer making a function call starting with lowercase, eg. `exec.Command` => `exec.command`, `cmd.Run` => `cmd.run`.
-* Only function call statements can be converted into command style.
+* Only the outermost function call statement is converted into command style. So `fmt.Println(fmt.Println("Hello world"))` is converted into `println println("Hello world")`, not `println println "Hello world"`.
 
+
+### Function call starting with lowercase (NotImpl)
+
+```go
+import "math"
+
+println math.Sin(math.Pi/3)
+```
+
+will be converted into:
+
+```go
+println math.sin(math.Pi/3)
+```
