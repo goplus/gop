@@ -3,7 +3,7 @@ Go+ Code Style
 
 TODO
 
-## Go+ Style Specification
+## Specification
 
 ### No package main
 
