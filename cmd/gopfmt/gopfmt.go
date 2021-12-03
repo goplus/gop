@@ -69,7 +69,7 @@ func processFile(filename string, in io.Reader, out io.Writer) error {
 		return err
 	}
 
-	res, err := format.Source(src)
+	res, err := format.Source(filename, src)
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,9 @@ func walk(path string, d fs.DirEntry, err error) error {
 		ext := filepath.Ext(path)
 		if _, ok := extGops[ext]; ok {
 			procCnt++
-			err = processFile(path, nil, os.Stdout)
+			if err = processFile(path, nil, os.Stdout); err != nil {
+				report(err)
+			}
 		}
 	}
 	return err
