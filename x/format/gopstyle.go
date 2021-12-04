@@ -36,13 +36,16 @@ func Gopstyle(file *ast.File) {
 	}
 	if idx := findFuncDecl(file.Decls, "main"); idx >= 0 {
 		last := len(file.Decls) - 1
-		if idx != last { // swap main func to last
-			fn := file.Decls[idx]
-			copy(file.Decls[idx:], file.Decls[idx+1:])
-			file.Decls[last] = fn
+		if idx == last {
+			file.NoEntrypoint = true
+			// TODO: idx != last: swap main func to last
 			// TODO: should also swap file.Comments
+			/*
+				fn := file.Decls[idx]
+				copy(file.Decls[idx:], file.Decls[idx+1:])
+				file.Decls[last] = fn
+			*/
 		}
-		file.NoEntrypoint = true
 	}
 }
 

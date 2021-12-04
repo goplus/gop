@@ -23,11 +23,16 @@ func TestBasic1(t *testing.T) {
 
 import "fmt"
 
+// this is main
 func main() {
+	// say hello
 	fmt.Println("Hello world")
 }
 `, `import "fmt"
 
+// this is main
+
+// say hello
 fmt.Println("Hello world")
 `)
 }
@@ -37,7 +42,9 @@ func TestBasic2(t *testing.T) {
 
 import "fmt"
 
+// this is main
 func main() {
+	// say hello
 	fmt.Println("Hello world")
 }
 
@@ -45,10 +52,14 @@ func f() {
 }
 `, `import "fmt"
 
-func f() {
+// this is main
+func main() {
+	// say hello
+	fmt.Println("Hello world")
 }
 
-fmt.Println("Hello world")
+func f() {
+}
 `)
 }
 
