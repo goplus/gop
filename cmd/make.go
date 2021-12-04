@@ -182,6 +182,11 @@ func runTestcases() {
 
 	coverage := "-coverprofile=coverage.txt"
 	gopCommand := filepath.Join(detectGopBinPath(), "gop")
+	if !checkPathExist(gopCommand, false) {
+		println("Error: Go+ must be installed before running testcases.")
+		os.Exit(1)
+	}
+
 	testOutput, testErr, err := execCommand(gopCommand, "test", coverage, "-covermode=atomic", "./...")
 	println(testOutput)
 	println(testErr)
@@ -239,13 +244,19 @@ func main() {
 		isTest:      runTestcases,
 	}
 
-	for flag, action := range flagActionMap {
+	// Sort flags, for example: install flag should be checked earlier than test flag.
+	flags := []*bool{isInstall, isTest, isUninstall}
+	hasActionDone := false
+
+	for _, flag := range flags {
 		if *flag {
-			action()
-			return
+			flagActionMap[flag]()
+			hasActionDone = true
 		}
 	}
 
-	println("Usage:\n")
-	flag.PrintDefaults()
+	if !hasActionDone {
+		println("Usage:\n")
+		flag.PrintDefaults()
+	}
 }
