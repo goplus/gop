@@ -23,6 +23,7 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -36,7 +37,7 @@ func checkPathExist(path string, isDir bool) bool {
 	if isDir {
 		return isExists && stat.IsDir()
 	}
-	return isExists
+	return isExists && !stat.IsDir()
 }
 
 // Path returns single path to check
@@ -132,6 +133,62 @@ func detectGopBinPath() string {
 	return filepath.Join(gopRoot, "bin")
 }
 
+func detectGoBinPath() string {
+	goBin, ok := os.LookupEnv("GOBIN")
+	if ok {
+		return goBin
+	}
+
+	goPath, ok := os.LookupEnv("GOPATH")
+	if ok {
+		return filepath.Join(goPath, "bin")
+	}
+
+	homeDir, _ := os.UserHomeDir()
+	return filepath.Join(homeDir, "go", "bin")
+}
+
+func linkGoplusToLocalBin() string {
+	println("Start Linking.")
+
+	gopBinPath := detectGopBinPath()
+	goBinPath := detectGoBinPath()
+	if !checkPathExist(gopBinPath, true) {
+		log.Fatalf("Error: %s is not existed, you should build Go+ before linking.\n", gopBinPath)
+	}
+	if !checkPathExist(goBinPath, true) {
+		if err := os.MkdirAll(goBinPath, 0755); err != nil {
+			fmt.Printf("Error: target directory %s is not existed and we can't create one.\n", goBinPath)
+			log.Fatalln(err)
+		}
+	}
+
+	os.Chdir(gopRoot)
+
+	gopBinFiles, err := os.ReadDir(gopBinPath)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	for _, file := range gopBinFiles {
+		if !file.IsDir() {
+			sourceFile := filepath.Join(gopBinPath, file.Name())
+			targetLink := filepath.Join(goBinPath, file.Name())
+			if checkPathExist(targetLink, false) {
+				fmt.Printf("The link file: %s already existed, skip.\n", targetLink)
+				continue
+			}
+			if err := os.Symlink(sourceFile, targetLink); err != nil {
+				log.Fatalln(err)
+			}
+			fmt.Printf("Link %s to %s successfully.\n", sourceFile, targetLink)
+		}
+	}
+
+	println("End linking.")
+	return goBinPath
+}
+
 func buildGoplusTools(useGoProxy bool) {
 	commandsDir := filepath.Join(gopRoot, "cmd")
 	buildFlags := getGopBuildFlags()
@@ -147,28 +204,31 @@ func buildGoplusTools(useGoProxy bool) {
 	gopBinPath := detectGopBinPath()
 	clean()
 	if err := os.Mkdir(gopBinPath, 0755); err != nil {
-		println(err.Error())
 		println("Error: Go+ can't create ./bin directory to put build assets.")
-		os.Exit(1)
+		log.Fatalln(err)
 	}
 
-	println("Installing Go+ tools...")
+	println("Installing Go+ tools...\n")
 	os.Chdir(commandsDir)
 	buildOutput, buildErr, err := execCommand("go", "build", "-o", gopBinPath, "-v", "-ldflags", buildFlags, "./...")
-	println(buildErr)
+	print(buildErr)
 	if err != nil {
-		println(err.Error())
-		os.Exit(1)
+		log.Fatalln(err)
 	}
-	println(buildOutput)
+	print(buildOutput)
 
-	println("Go+ tools installed successfully!")
-	showHelpPostInstall()
+	installPath := linkGoplusToLocalBin()
+
+	println("\nGo+ tools installed successfully!")
+
+	if _, _, err := execCommand("gop", "version"); err != nil {
+		showHelpPostInstall(installPath)
+	}
 }
 
-func showHelpPostInstall() {
+func showHelpPostInstall(installPath string) {
 	println("\nNEXT STEP:")
-	println("\nWe just installed Go+ into the directory: ", detectGopBinPath())
+	println("\nWe just installed Go+ into the directory: ", installPath)
 	message := `
 To setup a better Go+ development environment,
 we recommend you add the above install directory into your PATH environment variable.
@@ -199,10 +259,32 @@ func runTestcases() {
 
 func clean() {
 	gopBinPath := detectGopBinPath()
-	if checkPathExist(gopBinPath, true) {
-		if err := os.RemoveAll(gopBinPath); err != nil {
-			println(err.Error())
+	goBinPath := detectGoBinPath()
+
+	if !checkPathExist(gopBinPath, true) {
+		return
+	}
+
+	gopBinFiles, err := os.ReadDir(gopBinPath)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// Clean links
+	for _, file := range gopBinFiles {
+		if !file.IsDir() {
+			targetLink := filepath.Join(goBinPath, file.Name())
+			if checkPathExist(targetLink, false) {
+				if err := os.Remove(targetLink); err != nil {
+					log.Fatalln(err)
+				}
+			}
 		}
+	}
+
+	// Clean build binary files
+	if err := os.RemoveAll(gopBinPath); err != nil {
+		println(err.Error())
 	}
 }
 
