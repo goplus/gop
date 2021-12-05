@@ -108,7 +108,7 @@ func testFrom(t *testing.T, fpath string) {
 		t.Fatal(err)
 	}
 
-	res, err := format.Source(src)
+	res, err := format.Source(src, fpath)
 	if err != nil {
 		t.Fatal("Source failed:", err)
 	}

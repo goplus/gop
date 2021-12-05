@@ -147,7 +147,9 @@ func TestFromTestdata(t *testing.T) {
 		if strings.HasPrefix(name, "_") {
 			continue
 		}
-		testFrom(t, dir+"/"+name, sel, 0)
+		t.Run(name, func(t *testing.T) {
+			testFrom(t, dir+"/"+name, sel, 0)
+		})
 	}
 }
 
