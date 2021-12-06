@@ -28,12 +28,10 @@ func main() {
 	// say hello
 	fmt.Println("Hello world")
 }
-`, `import "fmt"
-
-// this is main
+`, `// this is main
 
 // say hello
-fmt.Println("Hello world")
+println("Hello world")
 `)
 }
 
@@ -50,12 +48,10 @@ func main() {
 
 func f() {
 }
-`, `import "fmt"
-
-// this is main
+`, `// this is main
 func main() {
 	// say hello
-	fmt.Println("Hello world")
+	println("Hello world")
 }
 
 func f() {
@@ -70,11 +66,191 @@ import "fmt"
 
 func f() {
 }
-`, `import "fmt"
-
-func f() {
+`, `func f() {
 }
 `)
 }
 
 // -----------------------------------------------------------------------------
+
+func TestPrint(t *testing.T) {
+	testFormat(t, "print", `package main
+
+import "fmt"
+
+func f() {
+	fmt.Print("hello")
+}
+`, `func f() {
+	print("hello")
+}
+`)
+}
+
+func TestPrintf(t *testing.T) {
+	testFormat(t, "print", `package main
+
+import "fmt"
+
+func f() {
+	fmt.Printf("hello")
+}
+`, `func f() {
+	printf("hello")
+}
+`)
+}
+
+func TestPrintln(t *testing.T) {
+	testFormat(t, "print", `package main
+
+import "fmt"
+
+func f() {
+	fmt.Println("hello")
+}
+`, `func f() {
+	println("hello")
+}
+`)
+}
+
+func TestPrintlnGroup(t *testing.T) {
+	testFormat(t, "print", `package main
+
+import (
+	"fmt"
+)
+
+func f() {
+	fmt.Println("hello")
+}
+`, `func f() {
+	println("hello")
+}
+`)
+}
+
+func TestPrintlnWithOtherFmtCalls(t *testing.T) {
+	testFormat(t, "print", `package main
+
+import "errors"
+import "fmt"
+
+func f() {
+	fmt.Errorf("%w", errors.New("hello"))
+	fmt.Println("hello")
+}
+`, `import "errors"
+import "fmt"
+
+func f() {
+	fmt.Errorf("%w", errors.New("hello"))
+	println("hello")
+}
+`)
+}
+
+func TestPrintlnWithOtherFmtCallsGroup(t *testing.T) {
+	testFormat(t, "print", `package main
+
+import (
+	"errors"
+	"fmt"
+)
+
+func f() {
+	fmt.Errorf("%w", errors.New("hello"))
+	fmt.Println("hello")
+}
+`, `import (
+	"errors"
+	"fmt"
+)
+
+func f() {
+	fmt.Errorf("%w", errors.New("hello"))
+	println("hello")
+}
+`)
+}
+
+func TestPrintlnWithOtherFmtCallsWithAssign(t *testing.T) {
+	testFormat(t, "print", `package main
+
+import "errors"
+import "fmt"
+
+func f() {
+	_ = fmt.Errorf("%w", errors.New("hello"))
+	fmt.Println("hello")
+}
+`, `import "errors"
+import "fmt"
+
+func f() {
+	_ = fmt.Errorf("%w", errors.New("hello"))
+	println("hello")
+}
+`)
+}
+
+func TestPrintlnWithOtherFmtCallsWithGroupWithAssign(t *testing.T) {
+	testFormat(t, "print", `package main
+
+import (
+	"errors"
+	"fmt"
+)
+
+func f() {
+	_ = fmt.Errorf("%w", errors.New("hello"))
+	fmt.Println("hello")
+}
+`, `import (
+	"errors"
+	"fmt"
+)
+
+func f() {
+	_ = fmt.Errorf("%w", errors.New("hello"))
+	println("hello")
+}
+`)
+}
+
+func TestPrintlnWithOtherFmtDecls(t *testing.T) {
+	testFormat(t, "print", `package main
+
+import "fmt"
+
+func f() {
+	_ = fmt.Stringer
+	fmt.Println("hello")
+}
+`, `import "fmt"
+
+func f() {
+	_ = fmt.Stringer
+	println("hello")
+}
+`)
+}
+
+func TestPrintlnWithOtherFmtVars(t *testing.T) {
+	testFormat(t, "print", `package main
+
+import "fmt"
+
+func f() {
+	var _ fmt.Stringer
+	fmt.Println("hello")
+}
+`, `import "fmt"
+
+func f() {
+	var _ fmt.Stringer
+	println("hello")
+}
+`)
+}
