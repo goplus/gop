@@ -73,6 +73,7 @@ func getGopRoot() string {
 var gopRoot = getGopRoot()
 var initCommandExecuteEnv = os.Environ()
 var commandExecuteEnv = initCommandExecuteEnv
+var gopBinFiles = []string{"gop", "gopfmt"}
 
 func execCommand(command string, arg ...string) (string, string, error) {
 	var stdout, stderr bytes.Buffer
@@ -141,7 +142,11 @@ func detectGoBinPath() string {
 
 	goPath, ok := os.LookupEnv("GOPATH")
 	if ok {
-		return filepath.Join(goPath, "bin")
+		list := filepath.SplitList(goPath)
+		if len(list) > 0 {
+			// Put in first directory of $GOPATH.
+			return filepath.Join(list[0], "bin")
+		}
 	}
 
 	homeDir, _ := os.UserHomeDir()
@@ -163,26 +168,22 @@ func linkGoplusToLocalBin() string {
 		}
 	}
 
-	os.Chdir(gopRoot)
-
-	gopBinFiles, err := os.ReadDir(gopBinPath)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
 	for _, file := range gopBinFiles {
-		if !file.IsDir() {
-			sourceFile := filepath.Join(gopBinPath, file.Name())
-			targetLink := filepath.Join(goBinPath, file.Name())
-			if checkPathExist(targetLink, false) {
-				fmt.Printf("The link file: %s already existed, skip.\n", targetLink)
-				continue
-			}
-			if err := os.Symlink(sourceFile, targetLink); err != nil {
+		sourceFile := filepath.Join(gopBinPath, file)
+		if !checkPathExist(sourceFile, false) {
+			log.Fatalf("Error: %s is not existed, you should build Go+ before linking.\n", sourceFile)
+		}
+		targetLink := filepath.Join(goBinPath, file)
+		if checkPathExist(targetLink, false) {
+			// Delete existed one
+			if err := os.Remove(targetLink); err != nil {
 				log.Fatalln(err)
 			}
-			fmt.Printf("Link %s to %s successfully.\n", sourceFile, targetLink)
 		}
+		if err := os.Symlink(sourceFile, targetLink); err != nil {
+			log.Fatalln(err)
+		}
+		fmt.Printf("Link %s to %s successfully.\n", sourceFile, targetLink)
 	}
 
 	println("End linking.")
@@ -202,7 +203,6 @@ func buildGoplusTools(useGoProxy bool) {
 
 	// Install Go+ binary files under current ./bin directory.
 	gopBinPath := detectGopBinPath()
-	clean()
 	if err := os.Mkdir(gopBinPath, 0755); err != nil {
 		println("Error: Go+ can't create ./bin directory to put build assets.")
 		log.Fatalln(err)
@@ -261,30 +261,21 @@ func clean() {
 	gopBinPath := detectGopBinPath()
 	goBinPath := detectGoBinPath()
 
-	if !checkPathExist(gopBinPath, true) {
-		return
-	}
-
-	gopBinFiles, err := os.ReadDir(gopBinPath)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
 	// Clean links
 	for _, file := range gopBinFiles {
-		if !file.IsDir() {
-			targetLink := filepath.Join(goBinPath, file.Name())
-			if checkPathExist(targetLink, false) {
-				if err := os.Remove(targetLink); err != nil {
-					log.Fatalln(err)
-				}
+		targetLink := filepath.Join(goBinPath, file)
+		if checkPathExist(targetLink, false) {
+			if err := os.Remove(targetLink); err != nil {
+				log.Fatalln(err)
 			}
 		}
 	}
 
 	// Clean build binary files
-	if err := os.RemoveAll(gopBinPath); err != nil {
-		println(err.Error())
+	if checkPathExist(gopBinPath, true) {
+		if err := os.RemoveAll(gopBinPath); err != nil {
+			log.Fatalln(err)
+		}
 	}
 }
 
