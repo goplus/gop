@@ -203,7 +203,7 @@ func buildGoplusTools(useGoProxy bool) {
 
 	// Install Go+ binary files under current ./bin directory.
 	gopBinPath := detectGopBinPath()
-	if err := os.Mkdir(gopBinPath, 0755); err != nil {
+	if err := os.Mkdir(gopBinPath, 0755); err != nil && !os.IsExist(err) {
 		println("Error: Go+ can't create ./bin directory to put build assets.")
 		log.Fatalln(err)
 	}
