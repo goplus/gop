@@ -1,10 +1,24 @@
+/*
+ * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package format
 
 import (
 	"testing"
 )
-
-// -----------------------------------------------------------------------------
 
 func testFormat(t *testing.T, name string, src, expect string) {
 	t.Run(name, func(t *testing.T) {
@@ -18,8 +32,10 @@ func testFormat(t *testing.T, name string, src, expect string) {
 	})
 }
 
-func TestBasic1(t *testing.T) {
-	testFormat(t, "hello world", `package main
+// -----------------------------------------------------------------------------
+
+func TestMain(t *testing.T) {
+	testFormat(t, "hello world 1", `package main
 
 import "fmt"
 
@@ -31,12 +47,9 @@ func main() {
 `, `// this is main
 
 // say hello
-println("Hello world")
+println "Hello world"
 `)
-}
-
-func TestBasic2(t *testing.T) {
-	testFormat(t, "hello world", `package main
+	testFormat(t, "hello world 2", `package main
 
 import "fmt"
 
@@ -51,16 +64,13 @@ func f() {
 `, `// this is main
 func main() {
 	// say hello
-	println("Hello world")
+	println "Hello world"
 }
 
 func f() {
 }
 `)
-}
-
-func TestBasic3(t *testing.T) {
-	testFormat(t, "hello world", `package main
+	testFormat(t, "hello world 3", `package main
 
 import "fmt"
 
@@ -82,7 +92,7 @@ func f() {
 	fmt.Print("hello")
 }
 `, `func f() {
-	print("hello")
+	print "hello"
 }
 `)
 }
@@ -96,7 +106,7 @@ func f() {
 	fmt.Printf("hello")
 }
 `, `func f() {
-	printf("hello")
+	printf "hello"
 }
 `)
 }
@@ -110,7 +120,7 @@ func f() {
 	fmt.Println("hello")
 }
 `, `func f() {
-	println("hello")
+	println "hello"
 }
 `)
 }
@@ -126,7 +136,7 @@ func f() {
 	fmt.Println("hello")
 }
 `, `func f() {
-	println("hello")
+	println "hello"
 }
 `)
 }
@@ -134,18 +144,18 @@ func f() {
 func TestPrintlnWithOtherFmtCalls(t *testing.T) {
 	testFormat(t, "print", `package main
 
-import "errors"
+import . "errors"
 import "fmt"
 
 func f() {
-	fmt.Errorf("%w", errors.New("hello"))
+	fmt.Errorf("%w", New("hello"))
 	fmt.Println("hello")
 }
-`, `import "errors"
+`, `import . "errors"
 
 func f() {
-	errorf("%w", errors.New("hello"))
-	println("hello")
+	errorf "%w", new("hello")
+	println "hello"
 }
 `)
 }
@@ -167,8 +177,8 @@ func f() {
 )
 
 func f() {
-	errorf("%w", errors.New("hello"))
-	println("hello")
+	errorf "%w", errors.new("hello")
+	println "hello"
 }
 `)
 }
@@ -186,8 +196,8 @@ func f() {
 `, `import "errors"
 
 func f() {
-	_ = errorf("%w", errors.New("hello"))
-	println("hello")
+	_ = errorf("%w", errors.new("hello"))
+	println "hello"
 }
 `)
 }
@@ -209,8 +219,8 @@ func f() {
 )
 
 func f() {
-	_ = errorf("%w", errors.New("hello"))
-	println("hello")
+	_ = errorf("%w", errors.new("hello"))
+	println "hello"
 }
 `)
 }
@@ -228,7 +238,7 @@ func f() {
 
 func f() {
 	_ = fmt.Stringer
-	println("hello")
+	println "hello"
 }
 `)
 }
@@ -246,7 +256,31 @@ func f() {
 
 func f() {
 	var _ fmt.Stringer
-	println("hello")
+	println "hello"
+}
+`)
+}
+
+func TestPrintlnWithOtherFmtType(t *testing.T) {
+	testFormat(t, "print", `package main
+
+import "fmt"
+
+func f() {
+	var _ struct {
+		fmt.Stringer
+		fn func()
+	}
+	fmt.Println("hello")
+}
+`, `import "fmt"
+
+func f() {
+	var _ struct {
+		fmt.Stringer
+		fn func()
+	}
+	println "hello"
 }
 `)
 }
@@ -260,7 +294,7 @@ func f() {
 	fmt1.Println("hello")
 }
 `, `func f() {
-	println("hello")
+	println "hello"
 }
 `)
 }
@@ -278,8 +312,8 @@ func f() {
 	fmt2.Println(2)
 }
 `, `func f() {
-	println(1)
-	println(2)
+	println 1
+	println 2
 }
 `)
 }
@@ -303,8 +337,8 @@ func f() {
 
 func f() {
 	var _ fmt.Stringer
-	println(1)
-	println(2)
+	println 1
+	println 2
 }
 `)
 }
