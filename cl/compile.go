@@ -571,7 +571,12 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 					}
 					typ := toType(ctx, spec.Type)
 					for _, name := range spec.Names {
-						flds = append(flds, types.NewField(name.Pos(), pkg, name.Name, typ, false))
+						// classfile _ type check embbed
+						if name.Name == "_" {
+							flds = append(flds, types.NewField(name.Pos(), pkg, "", typ, true))
+						} else {
+							flds = append(flds, types.NewField(name.Pos(), pkg, name.Name, typ, false))
+						}
 					}
 				}
 				decl.InitType(p, types.NewStruct(flds, nil))

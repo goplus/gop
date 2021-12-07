@@ -366,3 +366,49 @@ func (this *Kai) onMsg(msg string) {
 }
 `, "Game.t2gmx", "Kai.t2spx")
 }
+
+func TestSpxEmbbed(t *testing.T) {
+	gopSpxTestEx(t, `
+var (
+	Kai Kai
+)
+
+type Base struct {
+}
+
+println "Hi"
+`, `
+var (
+	_ Base
+)
+println "Hi"
+`, `package main
+
+import (
+	fmt "fmt"
+	spx "github.com/goplus/gop/cl/internal/spx"
+)
+
+type Base struct {
+}
+type index struct {
+	*spx.MyGame
+	Kai Kai
+}
+type Kai struct {
+	spx.Sprite
+	*index
+	Base
+}
+
+func (this *index) MainEntry() {
+	fmt.Println("Hi")
+}
+func main() {
+	spx.Gopt_MyGame_Main(new(index))
+}
+func (this *Kai) Main() {
+	fmt.Println("Hi")
+}
+`, "index.tgmx", "Kai.tspx")
+}
