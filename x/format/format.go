@@ -49,4 +49,13 @@ func commandStyleFirst(v *ast.CallExpr) {
 	v.NoParenEnd = v.Rparen
 }
 
+func fncallStartingLowerCase(v *ast.CallExpr) {
+	switch fn := v.Fun.(type) {
+	case *ast.SelectorExpr:
+		startWithLowerCase(fn.Sel)
+	case *ast.Ident:
+		startWithLowerCase(fn)
+	}
+}
+
 // -----------------------------------------------------------------------------

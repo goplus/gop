@@ -154,7 +154,7 @@ func f() {
 `, `import . "errors"
 
 func f() {
-	errorf "%w", New("hello")
+	errorf "%w", new("hello")
 	println "hello"
 }
 `)
@@ -177,7 +177,7 @@ func f() {
 )
 
 func f() {
-	errorf "%w", errors.New("hello")
+	errorf "%w", errors.new("hello")
 	println "hello"
 }
 `)
@@ -196,7 +196,7 @@ func f() {
 `, `import "errors"
 
 func f() {
-	_ = errorf("%w", errors.New("hello"))
+	_ = errorf("%w", errors.new("hello"))
 	println "hello"
 }
 `)
@@ -219,7 +219,7 @@ func f() {
 )
 
 func f() {
-	_ = errorf("%w", errors.New("hello"))
+	_ = errorf("%w", errors.new("hello"))
 	println "hello"
 }
 `)

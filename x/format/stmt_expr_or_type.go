@@ -73,6 +73,7 @@ func formatExpr(ctx *formatCtx, expr ast.Expr, ref *ast.Expr) {
 
 func formatCallExpr(ctx *formatCtx, v *ast.CallExpr) {
 	formatExpr(ctx, v.Fun, &v.Fun)
+	fncallStartingLowerCase(v)
 	formatExprs(ctx, v.Args)
 }
 

@@ -111,6 +111,12 @@ func deleteSpec(specs []ast.Spec, v ast.Spec) []ast.Spec {
 	return specs
 }
 
+func startWithLowerCase(v *ast.Ident) {
+	if c := v.Name[0]; c >= 'A' && c <= 'Z' {
+		v.Name = string(c+('a'-'A')) + v.Name[1:]
+	}
+}
+
 func identEqual(v *ast.Ident, name string) bool {
 	return v != nil && v.Name == name
 }
