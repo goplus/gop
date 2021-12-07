@@ -10,9 +10,16 @@ import (
 )
 
 var printFuncs = map[string]string{
-	"Print":   "print",
-	"Printf":  "printf",
-	"Println": "println",
+	"Errorf":   "errorf",
+	"Print":    "print",
+	"Printf":   "printf",
+	"Println":  "println",
+	"Fprint":   "fprint",
+	"Fprintf":  "fprintf",
+	"Fprintln": "fprintln",
+	"Sprint":   "sprint",
+	"Sprintf":  "sprintf",
+	"Sprintln": "sprintln",
 }
 
 // -----------------------------------------------------------------------------

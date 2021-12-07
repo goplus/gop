@@ -142,10 +142,9 @@ func f() {
 	fmt.Println("hello")
 }
 `, `import "errors"
-import "fmt"
 
 func f() {
-	fmt.Errorf("%w", errors.New("hello"))
+	errorf("%w", errors.New("hello"))
 	println("hello")
 }
 `)
@@ -165,11 +164,10 @@ func f() {
 }
 `, `import (
 	"errors"
-	"fmt"
 )
 
 func f() {
-	fmt.Errorf("%w", errors.New("hello"))
+	errorf("%w", errors.New("hello"))
 	println("hello")
 }
 `)
@@ -186,10 +184,9 @@ func f() {
 	fmt.Println("hello")
 }
 `, `import "errors"
-import "fmt"
 
 func f() {
-	_ = fmt.Errorf("%w", errors.New("hello"))
+	_ = errorf("%w", errors.New("hello"))
 	println("hello")
 }
 `)
@@ -209,11 +206,10 @@ func f() {
 }
 `, `import (
 	"errors"
-	"fmt"
 )
 
 func f() {
-	_ = fmt.Errorf("%w", errors.New("hello"))
+	_ = errorf("%w", errors.New("hello"))
 	println("hello")
 }
 `)
