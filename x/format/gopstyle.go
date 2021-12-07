@@ -1,26 +1,31 @@
+/*
+ * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package format
 
 import (
 	"bytes"
+	"path"
+	"strconv"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/format"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
 )
-
-var printFuncs = map[string]string{
-	"Errorf":   "errorf",
-	"Print":    "print",
-	"Printf":   "printf",
-	"Println":  "println",
-	"Fprint":   "fprint",
-	"Fprintf":  "fprintf",
-	"Fprintln": "fprintln",
-	"Sprint":   "sprint",
-	"Sprintf":  "sprintf",
-	"Sprintln": "sprintln",
-}
 
 // -----------------------------------------------------------------------------
 
@@ -60,38 +65,7 @@ func Gopstyle(file *ast.File) {
 			*/
 		}
 	}
-
-	replacePrintCalls(file)
-}
-
-func identEqual(v *ast.Ident, name string) bool {
-	return v != nil && v.Name == name
-}
-
-func findFmtImports(decls []ast.Decl) []string {
-	var aliases []string
-
-	for _, decl := range decls {
-		if genDecl, ok := decl.(*ast.GenDecl); ok {
-			if genDecl.Tok != token.IMPORT {
-				continue
-			}
-
-			for _, spec := range genDecl.Specs {
-				if imp, ok := spec.(*ast.ImportSpec); ok {
-					if imp.Path.Value == `"fmt"` {
-						if imp.Name != nil {
-							aliases = append(aliases, imp.Name.Name)
-						} else {
-							aliases = append(aliases, "fmt")
-						}
-					}
-				}
-			}
-		}
-	}
-
-	return aliases
+	formatFile(file)
 }
 
 func findFuncDecl(decls []ast.Decl, name string) int {
@@ -105,183 +79,125 @@ func findFuncDecl(decls []ast.Decl, name string) int {
 	return -1
 }
 
-func processAssignment(stmt *ast.AssignStmt, fmts []string) []string {
-	var keeps []string
-
-	for _, expr := range stmt.Rhs {
-		switch val := expr.(type) {
-		case *ast.CallExpr:
-			keeps = append(keeps, processCallExpr(val, fmts)...)
-		case *ast.SelectorExpr:
-			keeps = append(keeps, processSelectorExpr(val, fmts)...)
+func findDecl(decls []ast.Decl, v ast.Decl) int {
+	for i, decl := range decls {
+		if decl == v {
+			return i
 		}
 	}
-
-	return keeps
+	return -1
 }
 
-func processCallExpr(expr *ast.CallExpr, fmts []string) (keeps []string) {
-	if selExpr, ok := expr.Fun.(*ast.SelectorExpr); ok {
-		if ident, ok := selExpr.X.(*ast.Ident); ok {
-			if contains(fmts, ident.Name) {
-				p, ok := printFuncs[selExpr.Sel.Name]
-				if !ok {
-					return []string{ident.Name}
-				}
-
-				selExpr.Sel.Name = p
-				expr.Fun = selExpr.Sel
-			}
+func findSpec(specs []ast.Spec, v ast.Spec) int {
+	for i, spec := range specs {
+		if spec == v {
+			return i
 		}
 	}
-
-	return
+	return -1
 }
 
-func processDeclStmt(stmt *ast.DeclStmt, fmts []string) []string {
-	var keeps []string
-	if decl, ok := stmt.Decl.(*ast.GenDecl); ok {
-		for _, spec := range decl.Specs {
-			if valSpec, ok := spec.(*ast.ValueSpec); ok {
-				if selExpr, ok := valSpec.Type.(*ast.SelectorExpr); ok {
-					keeps = append(keeps, processSelectorExpr(selExpr, fmts)...)
-				}
-			}
-		}
+func deleteDecl(decls []ast.Decl, v ast.Decl) []ast.Decl {
+	if idx := findDecl(decls, v); idx >= 0 {
+		decls = append(decls[:idx], decls[idx+1:]...)
 	}
-
-	return keeps
+	return decls
 }
 
-func processExprStmt(stmt *ast.ExprStmt, fmts []string) (keeps []string) {
-	if callExpr, ok := stmt.X.(*ast.CallExpr); ok {
-		return processCallExpr(callExpr, fmts)
+func deleteSpec(specs []ast.Spec, v ast.Spec) []ast.Spec {
+	if idx := findSpec(specs, v); idx >= 0 {
+		specs = append(specs[:idx], specs[idx+1:]...)
 	}
-
-	return
+	return specs
 }
 
-func processSelectorExpr(expr *ast.SelectorExpr, fmts []string) (keeps []string) {
-	if ident, ok := expr.X.(*ast.Ident); ok {
-		if contains(fmts, ident.Name) {
-			if _, ok := printFuncs[expr.Sel.Name]; !ok {
-				return []string{ident.Name}
-			}
-		}
-	}
-
-	return
+func identEqual(v *ast.Ident, name string) bool {
+	return v != nil && v.Name == name
 }
 
-// replacePrintCalls replaces fmt print funcs to builtin print funcs.
-// also removes fmt import if necessary.
-func replacePrintCalls(file *ast.File) {
-	var keeps []string
-	fmts := findFmtImports(file.Decls)
-	for _, decl := range file.Decls {
-		keeps = append(keeps, replacePrintCall(decl, fmts)...)
-	}
-
-	trimFmtImport(file, keeps)
-}
-
-func replacePrintCall(decl ast.Decl, fmts []string) []string {
-	var keeps []string
-
-	if fn, ok := decl.(*ast.FuncDecl); ok {
-		for _, stmt := range fn.Body.List {
-			switch val := stmt.(type) {
-			case *ast.AssignStmt:
-				keeps = append(keeps, processAssignment(val, fmts)...)
-			case *ast.DeclStmt:
-				keeps = append(keeps, processDeclStmt(val, fmts)...)
-			case *ast.ExprStmt:
-				keeps = append(keeps, processExprStmt(val, fmts)...)
-			}
+func toString(l *ast.BasicLit) string {
+	if l.Kind == token.STRING {
+		s, err := strconv.Unquote(l.Value)
+		if err == nil {
+			return s
 		}
 	}
-
-	return keeps
-}
-
-func trimFmtImport(file *ast.File, keeps []string) {
-	var declIndice []int
-
-	for i, decl := range file.Decls {
-		genDecl, ok := decl.(*ast.GenDecl)
-		if !ok {
-			continue
-		}
-		if genDecl.Tok != token.IMPORT {
-			continue
-		}
-
-		var indice []int
-		for j, spec := range genDecl.Specs {
-			if imp, ok := spec.(*ast.ImportSpec); ok {
-				if imp.Path.Value == `"fmt"` {
-					// has alias
-					if imp.Name != nil && !contains(keeps, imp.Name.Name) {
-						indice = append(indice, j)
-					} else if !contains(keeps, "fmt") {
-						indice = append(indice, j)
-					}
-				}
-			}
-		}
-
-		genDecl.Specs = removeSpecsIf(genDecl.Specs, func(i int) bool {
-			for _, val := range indice {
-				if i == val {
-					return true
-				}
-			}
-			return false
-		})
-		if len(genDecl.Specs) == 0 {
-			declIndice = append(declIndice, i)
-		}
-	}
-
-	file.Decls = removeDeclsIf(file.Decls, func(i int) bool {
-		for _, val := range declIndice {
-			if i == val {
-				return true
-			}
-		}
-		return false
-	})
+	panic("TODO: toString - convert ast.BasicLit to string failed")
 }
 
 // -----------------------------------------------------------------------------
 
-func contains(items []string, val string) bool {
-	for _, item := range items {
-		if val == item {
-			return true
-		}
-	}
-	return false
+type importCtx struct {
+	pkgPath string
+	decl    *ast.GenDecl
+	spec    *ast.ImportSpec
+	isUsed  bool
 }
 
-func removeDeclsIf(decls []ast.Decl, fn func(i int) bool) []ast.Decl {
-	ret := decls[:0]
-	for i := range decls {
-		if fn(i) {
-			continue
-		}
-		ret = append(ret, decls[i])
-	}
-	return ret
+type formatCtx struct {
+	imports map[string]*importCtx
 }
 
-func removeSpecsIf(specs []ast.Spec, fn func(i int) bool) []ast.Spec {
-	ret := specs[:0]
-	for i := range specs {
-		if fn(i) {
-			continue
-		}
-		ret = append(ret, specs[i])
+func formatFile(file *ast.File) {
+	ctx := &formatCtx{
+		imports: make(map[string]*importCtx),
 	}
-	return ret
+	for _, decl := range file.Decls {
+		switch v := decl.(type) {
+		case *ast.FuncDecl:
+			formatFuncDecl(ctx, v)
+		case *ast.GenDecl:
+			switch v.Tok {
+			case token.IMPORT:
+				for _, item := range v.Specs {
+					var spec = item.(*ast.ImportSpec)
+					var pkgPath = toString(spec.Path)
+					var name string
+					if spec.Name == nil {
+						name = path.Base(pkgPath) // TODO: open pkgPath to get pkgName
+					} else {
+						name = spec.Name.Name
+						if name == "." || name == "_" {
+							continue
+						}
+					}
+					ctx.imports[name] = &importCtx{pkgPath: pkgPath, decl: v, spec: spec}
+				}
+			default:
+				formatGenDecl(ctx, v)
+			}
+		}
+	}
+	for _, imp := range ctx.imports {
+		if imp.pkgPath == "fmt" && !imp.isUsed {
+			if len(imp.decl.Specs) == 1 {
+				file.Decls = deleteDecl(file.Decls, imp.decl)
+			} else {
+				imp.decl.Specs = deleteSpec(imp.decl.Specs, imp.spec)
+			}
+		}
+	}
 }
+
+func formatGenDecl(ctx *formatCtx, v *ast.GenDecl) {
+	switch v.Tok {
+	case token.VAR, token.CONST:
+		for _, item := range v.Specs {
+			spec := item.(*ast.ValueSpec)
+			formatType(ctx, spec.Type, &spec.Type)
+			formatExprs(ctx, spec.Values)
+		}
+	case token.TYPE:
+		for _, item := range v.Specs {
+			spec := item.(*ast.TypeSpec)
+			formatType(ctx, spec.Type, &spec.Type)
+		}
+	}
+}
+
+func formatFuncDecl(ctx *formatCtx, v *ast.FuncDecl) {
+	formatFuncType(ctx, v.Type)
+	formatBlockStmt(ctx, v.Body)
+}
+
+// -----------------------------------------------------------------------------
