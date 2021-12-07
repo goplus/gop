@@ -254,3 +254,61 @@ func f() {
 }
 `)
 }
+
+func TestPrintlnImportAlias(t *testing.T) {
+	testFormat(t, "print", `package main
+
+import fmt1 "fmt"
+
+func f() {
+	fmt1.Println("hello")
+}
+`, `func f() {
+	println("hello")
+}
+`)
+}
+
+func TestPrintlnImportMultiAliases(t *testing.T) {
+	testFormat(t, "print", `package main
+
+import (
+	fmt1 "fmt"
+	fmt2 "fmt"
+)
+
+func f() {
+	fmt1.Println(1)
+	fmt2.Println(2)
+}
+`, `func f() {
+	println(1)
+	println(2)
+}
+`)
+}
+
+func TestPrintlnImportMultiAliasesDifferentGroups(t *testing.T) {
+	testFormat(t, "print", `package main
+
+import "fmt"
+
+import (
+	fmt1 "fmt"
+	fmt2 "fmt"
+)
+
+func f() {
+	var _ fmt.Stringer
+	fmt1.Println(1)
+	fmt2.Println(2)
+}
+`, `import "fmt"
+
+func f() {
+	var _ fmt.Stringer
+	println(1)
+	println(2)
+}
+`)
+}
