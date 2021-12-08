@@ -27,6 +27,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -74,6 +75,19 @@ var gopRoot = getGopRoot()
 var initCommandExecuteEnv = os.Environ()
 var commandExecuteEnv = initCommandExecuteEnv
 var gopBinFiles = []string{"gop", "gopfmt"}
+
+const (
+	inWindows = (runtime.GOOS == "windows")
+)
+
+func init() {
+	for index, file := range gopBinFiles {
+		if inWindows {
+			file += ".exe"
+			gopBinFiles[index] = file
+		}
+	}
+}
 
 func execCommand(command string, arg ...string) (string, string, error) {
 	var stdout, stderr bytes.Buffer
