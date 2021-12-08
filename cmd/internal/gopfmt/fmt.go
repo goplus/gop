@@ -119,13 +119,13 @@ func walk(path string, d fs.DirEntry, err error) error {
 		}
 	} else {
 		ext := filepath.Ext(path)
-		if _, ok := extGops[ext]; ok {
+		smart := *flagSmart
+		mvgo := smart && *flagMoveGo
+		if _, ok := extGops[ext]; ok && (!mvgo || ext == ".go") {
 			procCnt++
 			if *flagNotExec {
 				fmt.Println("gop fmt", path)
 			} else {
-				smart := *flagSmart
-				mvgo := smart && *flagMoveGo
 				err = gopfmt(path, smart && (mvgo || ext != ".go"), mvgo)
 				if err != nil {
 					report(err)

@@ -40,7 +40,7 @@ a := 0
 ```
 
 
-### Replace fmt.Print to builtin (NotImpl)
+### Replace fmt.Print to builtin
 
 ```go
 import "fmt"
@@ -62,7 +62,7 @@ Note:
 * ...
 
 
-### Command style first (NotImpl)
+### Command style first
 
 ```go
 import "fmt"
@@ -83,7 +83,7 @@ Note:
 * Only the outermost function call statement is converted into command style. So `fmt.Println(fmt.Println("Hello world"))` is converted into `println println("Hello world")`, not `println println "Hello world"`.
 
 
-### Function call starting with lowercase (NotImpl)
+### pkg.Fncall starting with lowercase
 
 ```go
 import "math"

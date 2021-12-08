@@ -1,0 +1,31 @@
+import "fmt"
+
+func f(...T) {
+}
+
+a++
+arr := [...]int{1: 3}
+m := make(map[string]chan interface{})
+for range arr[1:] {
+foo:
+	*(p) = 1
+	fmt.Println(f(arr...))
+	m["a"] <- true
+}
+for i := 0; i < 10; i++ {
+	var t *T
+	if false {
+	} else {
+	}
+	select {
+	case <-m["a"]:
+	}
+	switch {
+	case i == 10:
+	}
+	switch t.(type) {
+	case int:
+		defer f()
+		go f().Println("Hi")
+	}
+}

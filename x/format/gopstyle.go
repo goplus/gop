@@ -1,7 +1,25 @@
+/*
+ * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package format
 
 import (
 	"bytes"
+	"path"
+	"strconv"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/format"
@@ -47,10 +65,7 @@ func Gopstyle(file *ast.File) {
 			*/
 		}
 	}
-}
-
-func identEqual(v *ast.Ident, name string) bool {
-	return v != nil && v.Name == name
+	formatFile(file)
 }
 
 func findFuncDecl(decls []ast.Decl, name string) int {
@@ -62,6 +77,133 @@ func findFuncDecl(decls []ast.Decl, name string) int {
 		}
 	}
 	return -1
+}
+
+func findDecl(decls []ast.Decl, v ast.Decl) int {
+	for i, decl := range decls {
+		if decl == v {
+			return i
+		}
+	}
+	return -1
+}
+
+func findSpec(specs []ast.Spec, v ast.Spec) int {
+	for i, spec := range specs {
+		if spec == v {
+			return i
+		}
+	}
+	return -1
+}
+
+func deleteDecl(decls []ast.Decl, v ast.Decl) []ast.Decl {
+	if idx := findDecl(decls, v); idx >= 0 {
+		decls = append(decls[:idx], decls[idx+1:]...)
+	}
+	return decls
+}
+
+func deleteSpec(specs []ast.Spec, v ast.Spec) []ast.Spec {
+	if idx := findSpec(specs, v); idx >= 0 {
+		specs = append(specs[:idx], specs[idx+1:]...)
+	}
+	return specs
+}
+
+func startWithLowerCase(v *ast.Ident) {
+	if c := v.Name[0]; c >= 'A' && c <= 'Z' {
+		v.Name = string(c+('a'-'A')) + v.Name[1:]
+	}
+}
+
+func identEqual(v *ast.Ident, name string) bool {
+	return v != nil && v.Name == name
+}
+
+func toString(l *ast.BasicLit) string {
+	if l.Kind == token.STRING {
+		s, err := strconv.Unquote(l.Value)
+		if err == nil {
+			return s
+		}
+	}
+	panic("TODO: toString - convert ast.BasicLit to string failed")
+}
+
+// -----------------------------------------------------------------------------
+
+type importCtx struct {
+	pkgPath string
+	decl    *ast.GenDecl
+	spec    *ast.ImportSpec
+	isUsed  bool
+}
+
+type formatCtx struct {
+	imports map[string]*importCtx
+}
+
+func formatFile(file *ast.File) {
+	ctx := &formatCtx{
+		imports: make(map[string]*importCtx),
+	}
+	for _, decl := range file.Decls {
+		switch v := decl.(type) {
+		case *ast.FuncDecl:
+			formatFuncDecl(ctx, v)
+		case *ast.GenDecl:
+			switch v.Tok {
+			case token.IMPORT:
+				for _, item := range v.Specs {
+					var spec = item.(*ast.ImportSpec)
+					var pkgPath = toString(spec.Path)
+					var name string
+					if spec.Name == nil {
+						name = path.Base(pkgPath) // TODO: open pkgPath to get pkgName
+					} else {
+						name = spec.Name.Name
+						if name == "." || name == "_" {
+							continue
+						}
+					}
+					ctx.imports[name] = &importCtx{pkgPath: pkgPath, decl: v, spec: spec}
+				}
+			default:
+				formatGenDecl(ctx, v)
+			}
+		}
+	}
+	for _, imp := range ctx.imports {
+		if imp.pkgPath == "fmt" && !imp.isUsed {
+			if len(imp.decl.Specs) == 1 {
+				file.Decls = deleteDecl(file.Decls, imp.decl)
+			} else {
+				imp.decl.Specs = deleteSpec(imp.decl.Specs, imp.spec)
+			}
+		}
+	}
+}
+
+func formatGenDecl(ctx *formatCtx, v *ast.GenDecl) {
+	switch v.Tok {
+	case token.VAR, token.CONST:
+		for _, item := range v.Specs {
+			spec := item.(*ast.ValueSpec)
+			formatType(ctx, spec.Type, &spec.Type)
+			formatExprs(ctx, spec.Values)
+		}
+	case token.TYPE:
+		for _, item := range v.Specs {
+			spec := item.(*ast.TypeSpec)
+			formatType(ctx, spec.Type, &spec.Type)
+		}
+	}
+}
+
+func formatFuncDecl(ctx *formatCtx, v *ast.FuncDecl) {
+	formatFuncType(ctx, v.Type)
+	formatBlockStmt(ctx, v.Body)
 }
 
 // -----------------------------------------------------------------------------

@@ -21,10 +21,12 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/format"
+	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/printer"
 	"github.com/goplus/gop/token"
 )
@@ -102,21 +104,49 @@ func diffBytes(t *testing.T, dst, src []byte) {
 	}
 }
 
-func testFrom(t *testing.T, fpath string) {
+const (
+	excludeFormatSource = 1
+	excludeFormatNode   = 2
+)
+
+func testFrom(t *testing.T, fpath, sel string, mode int) {
+	if sel != "" && !strings.Contains(fpath, sel) {
+		return
+	}
 	src, err := ioutil.ReadFile(fpath)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	res, err := format.Source(src, fpath)
-	if err != nil {
-		t.Fatal("Source failed:", err)
+	if (mode & excludeFormatSource) == 0 {
+		t.Run("format.Source "+fpath, func(t *testing.T) {
+			res, err := format.Source(src, fpath)
+			if err != nil {
+				t.Fatal("Source failed:", err)
+			}
+			diffBytes(t, res, src)
+		})
 	}
 
-	diffBytes(t, res, src)
+	if (mode & excludeFormatNode) == 0 {
+		t.Run("format.Node "+fpath, func(t *testing.T) {
+			fset := token.NewFileSet()
+			f, err := parser.ParseFile(fset, fpath, src, parser.ParseComments)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var buf bytes.Buffer
+			err = format.Node(&buf, fset, f)
+			if err != nil {
+				t.Fatal(err)
+			}
+			diffBytes(t, buf.Bytes(), src)
+		})
+	}
 }
 
 func TestFromTestdata(t *testing.T) {
+	sel := ""
 	dir, err := os.Getwd()
 	if err != nil {
 		t.Fatal("Getwd failed:", err)
@@ -127,14 +157,14 @@ func TestFromTestdata(t *testing.T) {
 			return err
 		}
 		if !info.IsDir() && filepath.Ext(path) == ".gop" {
-			t.Log(path)
-			testFrom(t, path)
+			testFrom(t, path, sel, 0)
 		}
 		return nil
 	})
 }
 
 func TestFromParse(t *testing.T) {
+	sel := ""
 	dir, err := os.Getwd()
 	if err != nil {
 		t.Fatal("Getwd failed:", err)
@@ -149,8 +179,7 @@ func TestFromParse(t *testing.T) {
 			return nil
 		}
 		if !info.IsDir() && filepath.Ext(name) == ".gop" {
-			t.Log(path)
-			testFrom(t, path)
+			testFrom(t, path, sel, 0)
 		}
 		return nil
 	})

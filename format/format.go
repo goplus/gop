@@ -28,7 +28,6 @@ package format
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 
 	"github.com/goplus/gop/ast"
@@ -77,8 +76,10 @@ func Node(dst io.Writer, fset *token.FileSet, node interface{}) error {
 		}
 		file, err = parser.ParseFile(fset, "", buf.Bytes(), parserMode)
 		if err != nil {
+			_, err = dst.Write(buf.Bytes())
+			return err
 			// We should never get here. If we do, provide good diagnostic.
-			return fmt.Errorf("format.Node internal error (%s)", err)
+			// return fmt.Errorf("format.Node internal error (%s)", err)
 		}
 		ast.SortImports(fset, file)
 
