@@ -17,6 +17,8 @@
 package format
 
 import (
+	"go/token"
+
 	"github.com/goplus/gop/ast"
 )
 
@@ -46,7 +48,9 @@ func fmtToBuiltin(ctx *importCtx, sel *ast.Ident, ref *ast.Expr) bool {
 }
 
 func commandStyleFirst(v *ast.CallExpr) {
-	v.NoParenEnd = v.Rparen
+	if v.NoParenEnd == token.NoPos {
+		v.NoParenEnd = v.Rparen
+	}
 }
 
 func fncallStartingLowerCase(v *ast.CallExpr) {

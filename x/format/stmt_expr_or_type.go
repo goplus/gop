@@ -91,6 +91,8 @@ func formatExpr(ctx *formatCtx, expr ast.Expr, ref *ast.Expr) {
 	case *ast.IndexExpr:
 		formatExpr(ctx, v.X, &v.X)
 		formatExpr(ctx, v.Index, &v.Index)
+	case *ast.SliceLit:
+		formatExprs(ctx, v.Elts)
 	case *ast.CompositeLit:
 		formatType(ctx, v.Type, &v.Type)
 		formatExprs(ctx, v.Elts)
@@ -105,6 +107,17 @@ func formatExpr(ctx *formatCtx, expr ast.Expr, ref *ast.Expr) {
 	case *ast.TypeAssertExpr:
 		formatExpr(ctx, v.X, &v.X)
 		formatType(ctx, v.Type, &v.Type)
+	case *ast.LambdaExpr:
+		formatExprs(ctx, v.Rhs)
+	case *ast.LambdaExpr2:
+		formatBlockStmt(ctx, v.Body)
+	case *ast.RangeExpr:
+		formatRangeExpr(ctx, v)
+	case *ast.ComprehensionExpr:
+		formatComprehensionExpr(ctx, v)
+	case *ast.ErrWrapExpr:
+		formatExpr(ctx, v.X, &v.X)
+		formatExpr(ctx, v.Default, &v.Default)
 	case *ast.ParenExpr:
 		formatExpr(ctx, v.X, &v.X)
 	case *ast.Ellipsis:
@@ -112,6 +125,29 @@ func formatExpr(ctx *formatCtx, expr ast.Expr, ref *ast.Expr) {
 	default:
 		formatType(ctx, expr, ref)
 	}
+}
+
+func formatRangeExpr(ctx *formatCtx, v *ast.RangeExpr) {
+	formatExpr(ctx, v.First, &v.First)
+	formatExpr(ctx, v.Last, &v.Last)
+	formatExpr(ctx, v.Expr3, &v.Expr3)
+}
+
+func formatComprehensionExpr(ctx *formatCtx, v *ast.ComprehensionExpr) {
+	formatForPhrases(ctx, v.Fors)
+	formatExpr(ctx, v.Elt, &v.Elt)
+}
+
+func formatForPhrases(ctx *formatCtx, fors []*ast.ForPhrase) {
+	for _, f := range fors {
+		formatForPhrase(ctx, f)
+	}
+}
+
+func formatForPhrase(ctx *formatCtx, v *ast.ForPhrase) {
+	formatExpr(ctx, v.X, &v.X)
+	formatStmt(ctx, v.Init)
+	formatExpr(ctx, v.Cond, &v.Cond)
 }
 
 func formatSliceExpr(ctx *formatCtx, v *ast.SliceExpr) {
@@ -167,6 +203,9 @@ func formatStmt(ctx *formatCtx, stmt ast.Stmt) {
 		formatForStmt(ctx, v)
 	case *ast.RangeStmt:
 		formatRangeStmt(ctx, v)
+	case *ast.ForPhraseStmt:
+		formatForPhrase(ctx, v.ForPhrase)
+		formatBlockStmt(ctx, v.Body)
 	case *ast.IfStmt:
 		formatIfStmt(ctx, v)
 	case *ast.CaseClause:
