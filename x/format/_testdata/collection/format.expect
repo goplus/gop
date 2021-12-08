@@ -34,7 +34,7 @@ func Index(vs []string, t string) int {
 // Include returns `true` if the target string t is in the
 // slice.
 func Include(vs []string, t string) bool {
-	return index(vs, t) >= 0
+	return Index(vs, t) >= 0
 }
 
 // Any returns `true` if one of the strings in the slice
@@ -84,23 +84,23 @@ func Map(vs []string, f func(string) string) []string {
 // Here we try out our various collection functions.
 var strs = []string{"peach", "apple", "pear", "plum"}
 
-println index(strs, "pear")
+println Index(strs, "pear")
 
-println include(strs, "grape")
+println Include(strs, "grape")
 
-println any(strs, func(v string) bool {
+println Any(strs, func(v string) bool {
 	return strings.hasPrefix(v, "p")
 })
 
-println all(strs, func(v string) bool {
+println All(strs, func(v string) bool {
 	return strings.hasPrefix(v, "p")
 })
 
-println filter(strs, func(v string) bool {
+println Filter(strs, func(v string) bool {
 	return strings.contains(v, "e")
 })
 
 // The above examples all used anonymous functions,
 // but you can also use named functions of the correct
 // type.
-println map(strs, strings.ToUpper)
+println Map(strs, strings.ToUpper)

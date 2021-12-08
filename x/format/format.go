@@ -48,8 +48,11 @@ func fmtToBuiltin(ctx *importCtx, sel *ast.Ident, ref *ast.Expr) bool {
 }
 
 func commandStyleFirst(v *ast.CallExpr) {
-	if v.NoParenEnd == token.NoPos {
-		v.NoParenEnd = v.Rparen
+	switch v.Fun.(type) {
+	case *ast.Ident, *ast.SelectorExpr:
+		if v.NoParenEnd == token.NoPos {
+			v.NoParenEnd = v.Rparen
+		}
 	}
 }
 
@@ -57,8 +60,6 @@ func fncallStartingLowerCase(v *ast.CallExpr) {
 	switch fn := v.Fun.(type) {
 	case *ast.SelectorExpr:
 		startWithLowerCase(fn.Sel)
-	case *ast.Ident:
-		startWithLowerCase(fn)
 	}
 }
 

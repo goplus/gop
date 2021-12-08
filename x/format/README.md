@@ -83,7 +83,7 @@ Note:
 * Only the outermost function call statement is converted into command style. So `fmt.Println(fmt.Println("Hello world"))` is converted into `println println("Hello world")`, not `println println "Hello world"`.
 
 
-### Function call starting with lowercase
+### pkg.Fncall starting with lowercase
 
 ```go
 import "math"

@@ -154,7 +154,7 @@ func f() {
 `, `import . "errors"
 
 func f() {
-	errorf "%w", new("hello")
+	errorf "%w", New("hello")
 	println "hello"
 }
 `)
