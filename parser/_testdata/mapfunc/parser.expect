@@ -1,0 +1,85 @@
+package main
+
+file map.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: map
+              Args:
+                ast.Ident:
+                  Name: strs
+                ast.Ident:
+                  Name: toUpper
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: map
+              Args:
+                ast.SliceLit:
+                  Elts:
+                    ast.BasicLit:
+                      Kind: STRING
+                      Value: "hello"
+                    ast.BasicLit:
+                      Kind: STRING
+                      Value: "world"
+                ast.Ident:
+                  Name: toUpper
+        ast.ExprStmt:
+          X:
+            ast.CompositeLit:
+              Type:
+                ast.MapType:
+                  Key:
+                    ast.Ident:
+                      Name: string
+                  Value:
+                    ast.Ident:
+                      Name: int
+              Elts:
+                ast.KeyValueExpr:
+                  Key:
+                    ast.BasicLit:
+                      Kind: STRING
+                      Value: "Hi"
+                  Value:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 1
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.CallExpr:
+                  Fun:
+                    ast.Ident:
+                      Name: map
+                  Args:
+                    ast.Ident:
+                      Name: strs
+                    ast.SelectorExpr:
+                      X:
+                        ast.Ident:
+                          Name: strings
+                      Sel:
+                        ast.Ident:
+                          Name: ToUpper

@@ -1214,7 +1214,9 @@ func (p *parser) parseMapType() *ast.MapType {
 	key := p.parseType()
 	p.expect(token.RBRACK)
 	value := p.parseType()
-
+	if debugParseOutput {
+		log.Printf("ast.MapType{Key: %v, Value: %v}\n", key, value)
+	}
 	return &ast.MapType{Map: pos, Key: key, Value: value}
 }
 
@@ -1378,7 +1380,7 @@ func (p *parser) isCommand(x ast.Expr) bool {
 // types of the form [...]T. Callers must verify the result.
 // If lhs is set and the result is an identifier, it is not resolved.
 //
-func (p *parser) parseOperand(lhs, allowTuple bool) ast.Expr {
+func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "Operand"))
 	}
@@ -1435,8 +1437,17 @@ func (p *parser) parseOperand(lhs, allowTuple bool) ast.Expr {
 			return p.parseLiteralValueOrMapComprehension()
 		}
 
+	case token.MAP:
+		oldpos, oldlit := p.pos, p.lit // Go+: save token to allow map() as a function
+		p.next()
+		pos, tok := p.pos, p.tok
+		p.unget(oldpos, token.MAP, oldlit)
+		if tok == token.LBRACK && (!allowCmd || oldpos+3 == pos) {
+			break
+		}
+		fallthrough
 	case token.GOTO, token.BREAK, token.CONTINUE, token.FALLTHROUGH:
-		// token.RANGE, token.IMPORT, token.MAP, token.TYPE, token.SELECT, token.INTERFACE
+		// token.RANGE, token.IMPORT, token.TYPE, token.SELECT, token.INTERFACE:
 		// Go+: allow goto() as a function
 		p.tok = token.IDENT
 		x := p.parseIdent()
@@ -1844,7 +1855,7 @@ func (p *parser) parsePrimaryExpr(lhs, allowTuple, allowCmd bool) ast.Expr {
 		defer un(trace(p, "PrimaryExpr"))
 	}
 
-	x := p.parseOperand(lhs, allowTuple)
+	x := p.parseOperand(lhs, allowTuple, allowCmd)
 L:
 	for {
 		switch p.tok {
@@ -2889,10 +2900,13 @@ func (p *parser) parseStmt(allowCmd bool) (s ast.Stmt) {
 		s = &ast.DeclStmt{Decl: p.parseGenDecl(p.tok, p.parseValueSpec)}
 	case
 		// tokens that may start an expression
-		token.IDENT, token.INT, token.FLOAT, token.IMAG, token.RAT, token.CHAR, token.STRING, token.FUNC, token.LPAREN, // operands
-		token.LBRACK, token.STRUCT, token.MAP, token.CHAN, token.INTERFACE, // composite types
-		token.ADD, token.SUB, token.MUL, token.AND, token.XOR, token.ARROW, token.NOT: // unary operators
-		s, _ = p.parseSimpleStmt(labelOk, allowCmd && p.tok == token.IDENT)
+		token.INT, token.FLOAT, token.IMAG, token.RAT, token.CHAR, token.STRING, token.FUNC, token.LPAREN, // operands
+		token.ADD, token.SUB, token.MUL, token.AND, token.XOR, token.ARROW, token.NOT, // unary operators
+		token.LBRACK, token.STRUCT, token.CHAN, token.INTERFACE: // composite types
+		allowCmd = false
+		fallthrough
+	case token.IDENT, token.MAP: // operands
+		s, _ = p.parseSimpleStmt(labelOk, allowCmd)
 		// because of the required look-ahead, labeled statements are
 		// parsed by parseSimpleStmt - don't expect a semicolon after
 		// them
