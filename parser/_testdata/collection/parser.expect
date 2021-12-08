@@ -1,0 +1,865 @@
+package main
+
+file collection.gop
+ast.GenDecl:
+  Tok: import
+  Specs:
+    ast.ImportSpec:
+      Path:
+        ast.BasicLit:
+          Kind: STRING
+          Value: "fmt"
+    ast.ImportSpec:
+      Path:
+        ast.BasicLit:
+          Kind: STRING
+          Value: "strings"
+ast.FuncDecl:
+  Doc:
+    ast.CommentGroup:
+      List:
+        ast.Comment:
+          Text: // Index returns the first index of the target string `t`, or
+        ast.Comment:
+          Text: // -1 if no match is found.
+  Name:
+    ast.Ident:
+      Name: Index
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: vs
+              Type:
+                ast.ArrayType:
+                  Elt:
+                    ast.Ident:
+                      Name: string
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: t
+              Type:
+                ast.Ident:
+                  Name: string
+      Results:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Type:
+                ast.Ident:
+                  Name: int
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.RangeStmt:
+          Key:
+            ast.Ident:
+              Name: i
+          Value:
+            ast.Ident:
+              Name: v
+          Tok: :=
+          X:
+            ast.Ident:
+              Name: vs
+          Body:
+            ast.BlockStmt:
+              List:
+                ast.IfStmt:
+                  Cond:
+                    ast.BinaryExpr:
+                      X:
+                        ast.Ident:
+                          Name: v
+                      Op: ==
+                      Y:
+                        ast.Ident:
+                          Name: t
+                  Body:
+                    ast.BlockStmt:
+                      List:
+                        ast.ReturnStmt:
+                          Results:
+                            ast.Ident:
+                              Name: i
+        ast.ReturnStmt:
+          Results:
+            ast.UnaryExpr:
+              Op: -
+              X:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 1
+ast.FuncDecl:
+  Doc:
+    ast.CommentGroup:
+      List:
+        ast.Comment:
+          Text: // Include returns `true` if the target string t is in the
+        ast.Comment:
+          Text: // slice.
+  Name:
+    ast.Ident:
+      Name: Include
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: vs
+              Type:
+                ast.ArrayType:
+                  Elt:
+                    ast.Ident:
+                      Name: string
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: t
+              Type:
+                ast.Ident:
+                  Name: string
+      Results:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Type:
+                ast.Ident:
+                  Name: bool
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ReturnStmt:
+          Results:
+            ast.BinaryExpr:
+              X:
+                ast.CallExpr:
+                  Fun:
+                    ast.Ident:
+                      Name: Index
+                  Args:
+                    ast.Ident:
+                      Name: vs
+                    ast.Ident:
+                      Name: t
+              Op: >=
+              Y:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 0
+ast.FuncDecl:
+  Doc:
+    ast.CommentGroup:
+      List:
+        ast.Comment:
+          Text: // Any returns `true` if one of the strings in the slice
+        ast.Comment:
+          Text: // satisfies the predicate `f`.
+  Name:
+    ast.Ident:
+      Name: Any
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: vs
+              Type:
+                ast.ArrayType:
+                  Elt:
+                    ast.Ident:
+                      Name: string
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: f
+              Type:
+                ast.FuncType:
+                  Params:
+                    ast.FieldList:
+                      List:
+                        ast.Field:
+                          Type:
+                            ast.Ident:
+                              Name: string
+                  Results:
+                    ast.FieldList:
+                      List:
+                        ast.Field:
+                          Type:
+                            ast.Ident:
+                              Name: bool
+      Results:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Type:
+                ast.Ident:
+                  Name: bool
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.RangeStmt:
+          Key:
+            ast.Ident:
+              Name: _
+          Value:
+            ast.Ident:
+              Name: v
+          Tok: :=
+          X:
+            ast.Ident:
+              Name: vs
+          Body:
+            ast.BlockStmt:
+              List:
+                ast.IfStmt:
+                  Cond:
+                    ast.CallExpr:
+                      Fun:
+                        ast.Ident:
+                          Name: f
+                      Args:
+                        ast.Ident:
+                          Name: v
+                  Body:
+                    ast.BlockStmt:
+                      List:
+                        ast.ReturnStmt:
+                          Results:
+                            ast.Ident:
+                              Name: true
+        ast.ReturnStmt:
+          Results:
+            ast.Ident:
+              Name: false
+ast.FuncDecl:
+  Doc:
+    ast.CommentGroup:
+      List:
+        ast.Comment:
+          Text: // All returns `true` if all of the strings in the slice
+        ast.Comment:
+          Text: // satisfy the predicate `f`.
+  Name:
+    ast.Ident:
+      Name: All
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: vs
+              Type:
+                ast.ArrayType:
+                  Elt:
+                    ast.Ident:
+                      Name: string
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: f
+              Type:
+                ast.FuncType:
+                  Params:
+                    ast.FieldList:
+                      List:
+                        ast.Field:
+                          Type:
+                            ast.Ident:
+                              Name: string
+                  Results:
+                    ast.FieldList:
+                      List:
+                        ast.Field:
+                          Type:
+                            ast.Ident:
+                              Name: bool
+      Results:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Type:
+                ast.Ident:
+                  Name: bool
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.RangeStmt:
+          Key:
+            ast.Ident:
+              Name: _
+          Value:
+            ast.Ident:
+              Name: v
+          Tok: :=
+          X:
+            ast.Ident:
+              Name: vs
+          Body:
+            ast.BlockStmt:
+              List:
+                ast.IfStmt:
+                  Cond:
+                    ast.UnaryExpr:
+                      Op: !
+                      X:
+                        ast.CallExpr:
+                          Fun:
+                            ast.Ident:
+                              Name: f
+                          Args:
+                            ast.Ident:
+                              Name: v
+                  Body:
+                    ast.BlockStmt:
+                      List:
+                        ast.ReturnStmt:
+                          Results:
+                            ast.Ident:
+                              Name: false
+        ast.ReturnStmt:
+          Results:
+            ast.Ident:
+              Name: true
+ast.FuncDecl:
+  Doc:
+    ast.CommentGroup:
+      List:
+        ast.Comment:
+          Text: // Filter returns a new slice containing all strings in the
+        ast.Comment:
+          Text: // slice that satisfy the predicate `f`.
+  Name:
+    ast.Ident:
+      Name: Filter
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: vs
+              Type:
+                ast.ArrayType:
+                  Elt:
+                    ast.Ident:
+                      Name: string
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: f
+              Type:
+                ast.FuncType:
+                  Params:
+                    ast.FieldList:
+                      List:
+                        ast.Field:
+                          Type:
+                            ast.Ident:
+                              Name: string
+                  Results:
+                    ast.FieldList:
+                      List:
+                        ast.Field:
+                          Type:
+                            ast.Ident:
+                              Name: bool
+      Results:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Type:
+                ast.ArrayType:
+                  Elt:
+                    ast.Ident:
+                      Name: string
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: vsf
+          Tok: :=
+          Rhs:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: make
+              Args:
+                ast.ArrayType:
+                  Elt:
+                    ast.Ident:
+                      Name: string
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 0
+        ast.RangeStmt:
+          Key:
+            ast.Ident:
+              Name: _
+          Value:
+            ast.Ident:
+              Name: v
+          Tok: :=
+          X:
+            ast.Ident:
+              Name: vs
+          Body:
+            ast.BlockStmt:
+              List:
+                ast.IfStmt:
+                  Cond:
+                    ast.CallExpr:
+                      Fun:
+                        ast.Ident:
+                          Name: f
+                      Args:
+                        ast.Ident:
+                          Name: v
+                  Body:
+                    ast.BlockStmt:
+                      List:
+                        ast.AssignStmt:
+                          Lhs:
+                            ast.Ident:
+                              Name: vsf
+                          Tok: =
+                          Rhs:
+                            ast.CallExpr:
+                              Fun:
+                                ast.Ident:
+                                  Name: append
+                              Args:
+                                ast.Ident:
+                                  Name: vsf
+                                ast.Ident:
+                                  Name: v
+        ast.ReturnStmt:
+          Results:
+            ast.Ident:
+              Name: vsf
+ast.FuncDecl:
+  Doc:
+    ast.CommentGroup:
+      List:
+        ast.Comment:
+          Text: // Map returns a new slice containing the results of applying
+        ast.Comment:
+          Text: // the function `f` to each string in the original slice.
+  Name:
+    ast.Ident:
+      Name: Map
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: vs
+              Type:
+                ast.ArrayType:
+                  Elt:
+                    ast.Ident:
+                      Name: string
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: f
+              Type:
+                ast.FuncType:
+                  Params:
+                    ast.FieldList:
+                      List:
+                        ast.Field:
+                          Type:
+                            ast.Ident:
+                              Name: string
+                  Results:
+                    ast.FieldList:
+                      List:
+                        ast.Field:
+                          Type:
+                            ast.Ident:
+                              Name: string
+      Results:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Type:
+                ast.ArrayType:
+                  Elt:
+                    ast.Ident:
+                      Name: string
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: vsm
+          Tok: :=
+          Rhs:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: make
+              Args:
+                ast.ArrayType:
+                  Elt:
+                    ast.Ident:
+                      Name: string
+                ast.CallExpr:
+                  Fun:
+                    ast.Ident:
+                      Name: len
+                  Args:
+                    ast.Ident:
+                      Name: vs
+        ast.RangeStmt:
+          Key:
+            ast.Ident:
+              Name: i
+          Value:
+            ast.Ident:
+              Name: v
+          Tok: :=
+          X:
+            ast.Ident:
+              Name: vs
+          Body:
+            ast.BlockStmt:
+              List:
+                ast.AssignStmt:
+                  Lhs:
+                    ast.IndexExpr:
+                      X:
+                        ast.Ident:
+                          Name: vsm
+                      Index:
+                        ast.Ident:
+                          Name: i
+                  Tok: =
+                  Rhs:
+                    ast.CallExpr:
+                      Fun:
+                        ast.Ident:
+                          Name: f
+                      Args:
+                        ast.Ident:
+                          Name: v
+        ast.ReturnStmt:
+          Results:
+            ast.Ident:
+              Name: vsm
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.DeclStmt:
+          Decl:
+            ast.GenDecl:
+              Doc:
+                ast.CommentGroup:
+                  List:
+                    ast.Comment:
+                      Text: // Here we try out our various collection functions.
+              Tok: var
+              Specs:
+                ast.ValueSpec:
+                  Names:
+                    ast.Ident:
+                      Name: strs
+                  Values:
+                    ast.CompositeLit:
+                      Type:
+                        ast.ArrayType:
+                          Elt:
+                            ast.Ident:
+                              Name: string
+                      Elts:
+                        ast.BasicLit:
+                          Kind: STRING
+                          Value: "peach"
+                        ast.BasicLit:
+                          Kind: STRING
+                          Value: "apple"
+                        ast.BasicLit:
+                          Kind: STRING
+                          Value: "pear"
+                        ast.BasicLit:
+                          Kind: STRING
+                          Value: "plum"
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.SelectorExpr:
+                  X:
+                    ast.Ident:
+                      Name: fmt
+                  Sel:
+                    ast.Ident:
+                      Name: Println
+              Args:
+                ast.CallExpr:
+                  Fun:
+                    ast.Ident:
+                      Name: Index
+                  Args:
+                    ast.Ident:
+                      Name: strs
+                    ast.BasicLit:
+                      Kind: STRING
+                      Value: "pear"
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.SelectorExpr:
+                  X:
+                    ast.Ident:
+                      Name: fmt
+                  Sel:
+                    ast.Ident:
+                      Name: Println
+              Args:
+                ast.CallExpr:
+                  Fun:
+                    ast.Ident:
+                      Name: Include
+                  Args:
+                    ast.Ident:
+                      Name: strs
+                    ast.BasicLit:
+                      Kind: STRING
+                      Value: "grape"
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.SelectorExpr:
+                  X:
+                    ast.Ident:
+                      Name: fmt
+                  Sel:
+                    ast.Ident:
+                      Name: Println
+              Args:
+                ast.CallExpr:
+                  Fun:
+                    ast.Ident:
+                      Name: Any
+                  Args:
+                    ast.Ident:
+                      Name: strs
+                    ast.FuncLit:
+                      Type:
+                        ast.FuncType:
+                          Params:
+                            ast.FieldList:
+                              List:
+                                ast.Field:
+                                  Names:
+                                    ast.Ident:
+                                      Name: v
+                                  Type:
+                                    ast.Ident:
+                                      Name: string
+                          Results:
+                            ast.FieldList:
+                              List:
+                                ast.Field:
+                                  Type:
+                                    ast.Ident:
+                                      Name: bool
+                      Body:
+                        ast.BlockStmt:
+                          List:
+                            ast.ReturnStmt:
+                              Results:
+                                ast.CallExpr:
+                                  Fun:
+                                    ast.SelectorExpr:
+                                      X:
+                                        ast.Ident:
+                                          Name: strings
+                                      Sel:
+                                        ast.Ident:
+                                          Name: HasPrefix
+                                  Args:
+                                    ast.Ident:
+                                      Name: v
+                                    ast.BasicLit:
+                                      Kind: STRING
+                                      Value: "p"
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.SelectorExpr:
+                  X:
+                    ast.Ident:
+                      Name: fmt
+                  Sel:
+                    ast.Ident:
+                      Name: Println
+              Args:
+                ast.CallExpr:
+                  Fun:
+                    ast.Ident:
+                      Name: All
+                  Args:
+                    ast.Ident:
+                      Name: strs
+                    ast.FuncLit:
+                      Type:
+                        ast.FuncType:
+                          Params:
+                            ast.FieldList:
+                              List:
+                                ast.Field:
+                                  Names:
+                                    ast.Ident:
+                                      Name: v
+                                  Type:
+                                    ast.Ident:
+                                      Name: string
+                          Results:
+                            ast.FieldList:
+                              List:
+                                ast.Field:
+                                  Type:
+                                    ast.Ident:
+                                      Name: bool
+                      Body:
+                        ast.BlockStmt:
+                          List:
+                            ast.ReturnStmt:
+                              Results:
+                                ast.CallExpr:
+                                  Fun:
+                                    ast.SelectorExpr:
+                                      X:
+                                        ast.Ident:
+                                          Name: strings
+                                      Sel:
+                                        ast.Ident:
+                                          Name: HasPrefix
+                                  Args:
+                                    ast.Ident:
+                                      Name: v
+                                    ast.BasicLit:
+                                      Kind: STRING
+                                      Value: "p"
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.SelectorExpr:
+                  X:
+                    ast.Ident:
+                      Name: fmt
+                  Sel:
+                    ast.Ident:
+                      Name: Println
+              Args:
+                ast.CallExpr:
+                  Fun:
+                    ast.Ident:
+                      Name: Filter
+                  Args:
+                    ast.Ident:
+                      Name: strs
+                    ast.FuncLit:
+                      Type:
+                        ast.FuncType:
+                          Params:
+                            ast.FieldList:
+                              List:
+                                ast.Field:
+                                  Names:
+                                    ast.Ident:
+                                      Name: v
+                                  Type:
+                                    ast.Ident:
+                                      Name: string
+                          Results:
+                            ast.FieldList:
+                              List:
+                                ast.Field:
+                                  Type:
+                                    ast.Ident:
+                                      Name: bool
+                      Body:
+                        ast.BlockStmt:
+                          List:
+                            ast.ReturnStmt:
+                              Results:
+                                ast.CallExpr:
+                                  Fun:
+                                    ast.SelectorExpr:
+                                      X:
+                                        ast.Ident:
+                                          Name: strings
+                                      Sel:
+                                        ast.Ident:
+                                          Name: Contains
+                                  Args:
+                                    ast.Ident:
+                                      Name: v
+                                    ast.BasicLit:
+                                      Kind: STRING
+                                      Value: "e"
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.SelectorExpr:
+                  X:
+                    ast.Ident:
+                      Name: fmt
+                  Sel:
+                    ast.Ident:
+                      Name: Println
+              Args:
+                ast.CallExpr:
+                  Fun:
+                    ast.Ident:
+                      Name: Map
+                  Args:
+                    ast.Ident:
+                      Name: strs
+                    ast.SelectorExpr:
+                      X:
+                        ast.Ident:
+                          Name: strings
+                      Sel:
+                        ast.Ident:
+                          Name: ToUpper

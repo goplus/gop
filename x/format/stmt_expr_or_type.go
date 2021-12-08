@@ -17,6 +17,9 @@
 package format
 
 import (
+	"log"
+	"reflect"
+
 	"github.com/goplus/gop/ast"
 )
 
@@ -24,22 +27,31 @@ import (
 
 func formatType(ctx *formatCtx, typ ast.Expr, ref *ast.Expr) {
 	switch t := typ.(type) {
+	case *ast.Ident, nil:
 	case *ast.SelectorExpr:
 		formatSelectorExpr(ctx, t, ref)
+	case *ast.MapType:
+		formatType(ctx, t.Key, &t.Key)
+		formatType(ctx, t.Value, &t.Value)
 	case *ast.StructType:
-		formatStructType(ctx, t)
+		formatFields(ctx, t.Fields)
+	case *ast.ArrayType:
+		formatExpr(ctx, t.Len, &t.Len)
+		formatType(ctx, t.Elt, &t.Elt)
+	case *ast.ChanType:
+		formatType(ctx, t.Value, &t.Value)
+	case *ast.InterfaceType:
+		formatFields(ctx, t.Methods)
 	case *ast.FuncType:
 		formatFuncType(ctx, t)
+	default:
+		log.Panicln("TODO: format -", reflect.TypeOf(typ))
 	}
 }
 
 func formatFuncType(ctx *formatCtx, t *ast.FuncType) {
 	formatFields(ctx, t.Params)
 	formatFields(ctx, t.Results)
-}
-
-func formatStructType(ctx *formatCtx, t *ast.StructType) {
-	formatFields(ctx, t.Fields)
 }
 
 func formatFields(ctx *formatCtx, flds *ast.FieldList) {
@@ -64,11 +76,49 @@ func formatExprs(ctx *formatCtx, exprs []ast.Expr) {
 
 func formatExpr(ctx *formatCtx, expr ast.Expr, ref *ast.Expr) {
 	switch v := expr.(type) {
+	case *ast.Ident, *ast.BasicLit, *ast.BadExpr, nil:
+	case *ast.BinaryExpr:
+		formatExpr(ctx, v.X, &v.X)
+		formatExpr(ctx, v.Y, &v.Y)
+	case *ast.UnaryExpr:
+		formatExpr(ctx, v.X, &v.X)
 	case *ast.CallExpr:
 		formatCallExpr(ctx, v)
 	case *ast.SelectorExpr:
 		formatSelectorExpr(ctx, v, ref)
+	case *ast.SliceExpr:
+		formatSliceExpr(ctx, v)
+	case *ast.IndexExpr:
+		formatExpr(ctx, v.X, &v.X)
+		formatExpr(ctx, v.Index, &v.Index)
+	case *ast.CompositeLit:
+		formatType(ctx, v.Type, &v.Type)
+		formatExprs(ctx, v.Elts)
+	case *ast.StarExpr:
+		formatExpr(ctx, v.X, &v.X)
+	case *ast.KeyValueExpr:
+		formatExpr(ctx, v.Key, &v.Key)
+		formatExpr(ctx, v.Value, &v.Value)
+	case *ast.FuncLit:
+		formatFuncType(ctx, v.Type)
+		formatBlockStmt(ctx, v.Body)
+	case *ast.TypeAssertExpr:
+		formatExpr(ctx, v.X, &v.X)
+		formatType(ctx, v.Type, &v.Type)
+	case *ast.ParenExpr:
+		formatExpr(ctx, v.X, &v.X)
+	case *ast.Ellipsis:
+		formatExpr(ctx, v.Elt, &v.Elt)
+	default:
+		formatType(ctx, expr, ref)
 	}
+}
+
+func formatSliceExpr(ctx *formatCtx, v *ast.SliceExpr) {
+	formatExpr(ctx, v.X, &v.X)
+	formatExpr(ctx, v.Low, &v.Low)
+	formatExpr(ctx, v.High, &v.High)
+	formatExpr(ctx, v.Max, &v.Max)
 }
 
 func formatCallExpr(ctx *formatCtx, v *ast.CallExpr) {
@@ -111,8 +161,44 @@ func formatStmt(ctx *formatCtx, stmt ast.Stmt) {
 		formatExprStmt(ctx, v)
 	case *ast.AssignStmt:
 		formatAssignStmt(ctx, v)
+	case *ast.IncDecStmt:
+		formatExpr(ctx, v.X, &v.X)
+	case *ast.ForStmt:
+		formatForStmt(ctx, v)
+	case *ast.RangeStmt:
+		formatRangeStmt(ctx, v)
+	case *ast.IfStmt:
+		formatIfStmt(ctx, v)
+	case *ast.CaseClause:
+		formatExprs(ctx, v.List)
+		formatStmts(ctx, v.Body)
+	case *ast.SwitchStmt:
+		formatSwitchStmt(ctx, v)
+	case *ast.TypeSwitchStmt:
+		formatTypeSwitchStmt(ctx, v)
+	case *ast.CommClause:
+		formatStmt(ctx, v.Comm)
+		formatStmts(ctx, v.Body)
+	case *ast.SelectStmt:
+		formatBlockStmt(ctx, v.Body)
 	case *ast.DeclStmt:
 		formatDeclStmt(ctx, v)
+	case *ast.ReturnStmt:
+		formatExprs(ctx, v.Results)
+	case *ast.BlockStmt:
+		formatBlockStmt(ctx, v)
+	case *ast.DeferStmt:
+		formatCallExpr(ctx, v.Call)
+	case *ast.GoStmt:
+		formatCallExpr(ctx, v.Call)
+	case *ast.SendStmt:
+		formatExpr(ctx, v.Chan, &v.Chan)
+		formatExpr(ctx, v.Value, &v.Value)
+	case *ast.LabeledStmt:
+		formatStmt(ctx, v.Stmt)
+	case *ast.BranchStmt, *ast.EmptyStmt, nil, *ast.BadStmt:
+	default:
+		log.Panicln("TODO: formatStmt -", reflect.TypeOf(stmt))
 	}
 }
 
@@ -127,6 +213,38 @@ func formatExprStmt(ctx *formatCtx, v *ast.ExprStmt) {
 func formatAssignStmt(ctx *formatCtx, v *ast.AssignStmt) {
 	formatExprs(ctx, v.Lhs)
 	formatExprs(ctx, v.Rhs)
+}
+
+func formatSwitchStmt(ctx *formatCtx, v *ast.SwitchStmt) {
+	formatStmt(ctx, v.Init)
+	formatExpr(ctx, v.Tag, &v.Tag)
+	formatBlockStmt(ctx, v.Body)
+}
+
+func formatTypeSwitchStmt(ctx *formatCtx, v *ast.TypeSwitchStmt) {
+	formatStmt(ctx, v.Init)
+	formatStmt(ctx, v.Assign)
+	formatBlockStmt(ctx, v.Body)
+}
+
+func formatIfStmt(ctx *formatCtx, v *ast.IfStmt) {
+	formatStmt(ctx, v.Init)
+	formatExpr(ctx, v.Cond, &v.Cond)
+	formatBlockStmt(ctx, v.Body)
+	formatStmt(ctx, v.Else)
+}
+
+func formatRangeStmt(ctx *formatCtx, v *ast.RangeStmt) {
+	formatExpr(ctx, v.Key, &v.Key)
+	formatExpr(ctx, v.Value, &v.Value)
+	formatExpr(ctx, v.X, &v.X)
+	formatBlockStmt(ctx, v.Body)
+}
+
+func formatForStmt(ctx *formatCtx, v *ast.ForStmt) {
+	formatStmt(ctx, v.Init)
+	formatExpr(ctx, v.Cond, &v.Cond)
+	formatBlockStmt(ctx, v.Body)
 }
 
 func formatDeclStmt(ctx *formatCtx, v *ast.DeclStmt) {
