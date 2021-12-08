@@ -30,6 +30,8 @@ func formatType(ctx *formatCtx, typ ast.Expr, ref *ast.Expr) {
 	case *ast.Ident, nil:
 	case *ast.SelectorExpr:
 		formatSelectorExpr(ctx, t, ref)
+	case *ast.StarExpr:
+		formatType(ctx, t.X, &t.X)
 	case *ast.MapType:
 		formatType(ctx, t.Key, &t.Key)
 		formatType(ctx, t.Value, &t.Value)
@@ -44,6 +46,8 @@ func formatType(ctx *formatCtx, typ ast.Expr, ref *ast.Expr) {
 		formatFields(ctx, t.Methods)
 	case *ast.FuncType:
 		formatFuncType(ctx, t)
+	case *ast.Ellipsis:
+		formatType(ctx, t.Elt, &t.Elt)
 	default:
 		log.Panicln("TODO: format -", reflect.TypeOf(typ))
 	}
