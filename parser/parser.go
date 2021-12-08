@@ -1354,7 +1354,6 @@ func (p *parser) parseFuncTypeOrLit() ast.Expr {
 }
 
 func (p *parser) isCommand(x ast.Expr) bool {
-	log.Println("isCommand:", x, p.tok)
 	switch x.(type) {
 	case *ast.Ident, *ast.SelectorExpr:
 	default:
@@ -1382,7 +1381,7 @@ func (p *parser) isCommand(x ast.Expr) bool {
 // types of the form [...]T. Callers must verify the result.
 // If lhs is set and the result is an identifier, it is not resolved.
 //
-func (p *parser) parseOperand(lhs, allowTuple bool) ast.Expr {
+func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "Operand"))
 	}
@@ -1442,9 +1441,9 @@ func (p *parser) parseOperand(lhs, allowTuple bool) ast.Expr {
 	case token.MAP:
 		oldpos, oldlit := p.pos, p.lit // Go+: save token to allow map() as a function
 		p.next()
-		tok := p.tok
+		pos, tok := p.pos, p.tok
 		p.unget(oldpos, token.MAP, oldlit)
-		if tok == token.LBRACK {
+		if tok == token.LBRACK && (!allowCmd || oldpos+3 == pos) {
 			break
 		}
 		fallthrough
@@ -1857,7 +1856,7 @@ func (p *parser) parsePrimaryExpr(lhs, allowTuple, allowCmd bool) ast.Expr {
 		defer un(trace(p, "PrimaryExpr"))
 	}
 
-	x := p.parseOperand(lhs, allowTuple)
+	x := p.parseOperand(lhs, allowTuple, allowCmd)
 L:
 	for {
 		switch p.tok {

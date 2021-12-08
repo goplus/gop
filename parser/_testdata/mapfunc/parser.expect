@@ -29,6 +29,44 @@ ast.FuncDecl:
             ast.CallExpr:
               Fun:
                 ast.Ident:
+                  Name: map
+              Args:
+                ast.SliceLit:
+                  Elts:
+                    ast.BasicLit:
+                      Kind: STRING
+                      Value: "hello"
+                    ast.BasicLit:
+                      Kind: STRING
+                      Value: "world"
+                ast.Ident:
+                  Name: toUpper
+        ast.ExprStmt:
+          X:
+            ast.CompositeLit:
+              Type:
+                ast.MapType:
+                  Key:
+                    ast.Ident:
+                      Name: string
+                  Value:
+                    ast.Ident:
+                      Name: int
+              Elts:
+                ast.KeyValueExpr:
+                  Key:
+                    ast.BasicLit:
+                      Kind: STRING
+                      Value: "Hi"
+                  Value:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 1
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
                   Name: println
               Args:
                 ast.CallExpr:
