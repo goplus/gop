@@ -142,16 +142,22 @@ type importCtx struct {
 
 type formatCtx struct {
 	imports map[string]*importCtx
+	uniVars map[string]ast.Expr
+	// todo: only indicates whether contains a var, not caring its type.
+	// vars []map[string]bool
 }
 
 func formatFile(file *ast.File) {
+	var funcs []*ast.FuncDecl
 	ctx := &formatCtx{
 		imports: make(map[string]*importCtx),
+		uniVars: make(map[string]ast.Expr),
 	}
 	for _, decl := range file.Decls {
 		switch v := decl.(type) {
 		case *ast.FuncDecl:
-			formatFuncDecl(ctx, v)
+			// delay the process, because package level vars need to be processed first.
+			funcs = append(funcs, v)
 		case *ast.GenDecl:
 			switch v.Tok {
 			case token.IMPORT:
@@ -174,6 +180,10 @@ func formatFile(file *ast.File) {
 			}
 		}
 	}
+
+	for _, fn := range funcs {
+		formatFuncDecl(ctx, fn)
+	}
 	for _, imp := range ctx.imports {
 		if imp.pkgPath == "fmt" && !imp.isUsed {
 			if len(imp.decl.Specs) == 1 {
@@ -192,6 +202,7 @@ func formatGenDecl(ctx *formatCtx, v *ast.GenDecl) {
 			spec := item.(*ast.ValueSpec)
 			formatType(ctx, spec.Type, &spec.Type)
 			formatExprs(ctx, spec.Values)
+			fillVarCtx(ctx, spec)
 		}
 	case token.TYPE:
 		for _, item := range v.Specs {
@@ -204,6 +215,12 @@ func formatGenDecl(ctx *formatCtx, v *ast.GenDecl) {
 func formatFuncDecl(ctx *formatCtx, v *ast.FuncDecl) {
 	formatFuncType(ctx, v.Type)
 	formatBlockStmt(ctx, v.Body)
+}
+
+func fillVarCtx(ctx *formatCtx, spec *ast.ValueSpec) {
+	for _, name := range spec.Names {
+		ctx.uniVars[name.Name] = spec.Type
+	}
 }
 
 // -----------------------------------------------------------------------------
