@@ -74,6 +74,8 @@ func getGopRoot() string {
 var gopRoot = getGopRoot()
 var initCommandExecuteEnv = os.Environ()
 var commandExecuteEnv = initCommandExecuteEnv
+
+// Always put `gop` command as the first item, as it will be referenced by below code.
 var gopBinFiles = []string{"gop", "gopfmt"}
 
 const (
@@ -255,7 +257,7 @@ func runTestcases() {
 	os.Chdir(gopRoot)
 
 	coverage := "-coverprofile=coverage.txt"
-	gopCommand := filepath.Join(detectGopBinPath(), "gop")
+	gopCommand := filepath.Join(detectGopBinPath(), gopBinFiles[0])
 	if !checkPathExist(gopCommand, false) {
 		println("Error: Go+ must be installed before running testcases.")
 		os.Exit(1)
