@@ -662,7 +662,6 @@ func (p *parser) parseIdent() *ast.Ident {
 	}
 	if debugParseOutput {
 		log.Printf("ast.Ident{Name: %v}\n", name)
-		// panic("todo")
 	}
 	return &ast.Ident{NamePos: pos, Name: name}
 }
