@@ -1,5 +1,8 @@
 import "fmt"
 
+func f(...T) {
+}
+
 a++
 arr := [...]int{1: 3}
 m := make(map[string]chan interface{})
@@ -10,6 +13,7 @@ foo:
 	m["a"] <- true
 }
 for i := 0; i < 10; i++ {
+	var t *T
 	if false {
 	} else {
 	}
