@@ -170,7 +170,7 @@ import (
 
 func f() {
 	fmt.Errorf("%w", errors.New("hello"))
-	fmt.Println("hello")
+	fmt.println "hello"
 }
 `, `import (
 	"errors"
@@ -191,7 +191,7 @@ import "fmt"
 
 func f() {
 	_ = fmt.Errorf("%w", errors.New("hello"))
-	fmt.Println("hello")
+	fmt.println("hello")
 }
 `, `import "errors"
 
