@@ -1,0 +1,47 @@
+package main
+
+file map.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: map
+              Args:
+                ast.Ident:
+                  Name: strs
+                ast.Ident:
+                  Name: toUpper
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.CallExpr:
+                  Fun:
+                    ast.Ident:
+                      Name: map
+                  Args:
+                    ast.Ident:
+                      Name: strs
+                    ast.SelectorExpr:
+                      X:
+                        ast.Ident:
+                          Name: strings
+                      Sel:
+                        ast.Ident:
+                          Name: ToUpper

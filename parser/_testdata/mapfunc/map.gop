@@ -1,0 +1,2 @@
+map strs, toUpper
+println map(strs, strings.ToUpper)
