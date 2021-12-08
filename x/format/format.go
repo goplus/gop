@@ -24,24 +24,26 @@ import (
 
 // -----------------------------------------------------------------------------
 
-var printFuncs = map[string]string{
-	"Errorf":   "errorf",
-	"Print":    "print",
-	"Printf":   "printf",
-	"Println":  "println",
-	"Fprint":   "fprint",
-	"Fprintf":  "fprintf",
-	"Fprintln": "fprintln",
-	"Sprint":   "sprint",
-	"Sprintf":  "sprintf",
-	"Sprintln": "sprintln",
+var printFuncs = [][2]string{
+	{"Errorf", "errorf"},
+	{"Print", "print"},
+	{"Printf", "printf"},
+	{"Println", "println"},
+	{"Fprint", "fprint"},
+	{"Fprintf", "fprintf"},
+	{"Fprintln", "fprintln"},
+	{"Sprint", "sprint"},
+	{"Sprintf", "sprintf"},
+	{"Sprintln", "sprintln"},
 }
 
 func fmtToBuiltin(ctx *importCtx, sel *ast.Ident, ref *ast.Expr) bool {
 	if ctx.pkgPath == "fmt" {
-		if v, ok := printFuncs[sel.Name]; ok {
-			*ref = &ast.Ident{NamePos: sel.NamePos, Name: v}
-			return true
+		for _, fns := range printFuncs {
+			if fns[0] == sel.Name || fns[1] == sel.Name {
+				*ref = &ast.Ident{NamePos: sel.NamePos, Name: fns[1]}
+				return true
+			}
 		}
 	}
 	return false
