@@ -49,7 +49,7 @@ func detectGoBinPath() string {
 
 func init() {
 	pwd, _ := os.Getwd()
-	gopRoot = filepath.Join(pwd, "../")
+	gopRoot = filepath.Join(pwd, "..")
 	if inWindows {
 		script = "all.bat"
 		for index, file := range gopBinFiles {
