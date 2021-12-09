@@ -233,6 +233,9 @@ func buildGoplusTools(useGoProxy bool) {
 	}
 	print(buildOutput)
 
+	// Clear gop run cache
+	cleanGopRunCache()
+
 	installPath := linkGoplusToLocalBin()
 
 	println("\nGo+ tools installed successfully!")
@@ -291,6 +294,22 @@ func clean() {
 	if checkPathExist(gopBinPath, true) {
 		if err := os.RemoveAll(gopBinPath); err != nil {
 			log.Fatalln(err)
+		}
+	}
+
+	cleanGopRunCache()
+}
+
+func cleanGopRunCache() {
+	homeDir, _ := os.UserHomeDir()
+	runCacheDir := filepath.Join(homeDir, ".gop", "run")
+	files := []string{"go.mod", "go.sum"}
+	for _, file := range files {
+		fullPath := filepath.Join(runCacheDir, file)
+		if checkPathExist(fullPath, false) {
+			if err := os.Remove(fullPath); err != nil {
+				log.Fatalln(err)
+			}
 		}
 	}
 }
