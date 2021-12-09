@@ -798,3 +798,11 @@ switch n.(type) {
 }
 `)
 }
+
+func TestErrAutoProperty(t *testing.T) {
+	codeErrorTest(t, `./bar.gop:4:11: cannot refer to unexported name fmt.println`, `
+import "fmt"
+
+n, err := fmt.println
+`)
+}

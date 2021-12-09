@@ -36,6 +36,12 @@ func TestCompileErrWrapExpr(t *testing.T) {
 	compileErrWrapExpr(ctx, &ast.ErrWrapExpr{Tok: token.QUESTION})
 }
 
+func TestCanAutoProperty(t *testing.T) {
+	if canAutoProperty(nil) {
+		t.Fatal("canAutoProperty?")
+	}
+}
+
 func TestToString(t *testing.T) {
 	defer func() {
 		if e := recover(); e == nil {
