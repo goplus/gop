@@ -203,7 +203,7 @@ func TestSpxMethod(t *testing.T) {
 func onInit() {
 	sched
 	broadcast "msg1"
-	testIntValue = 1
+	TestIntValue = 1
 	x := round(1.2)
 }
 `, `
