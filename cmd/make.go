@@ -83,8 +83,8 @@ const (
 )
 
 func init() {
-	for index, file := range gopBinFiles {
-		if inWindows {
+	if inWindows {
+		for index, file := range gopBinFiles {
 			file += ".exe"
 			gopBinFiles[index] = file
 		}
