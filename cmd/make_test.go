@@ -59,6 +59,18 @@ func init() {
 	}
 }
 
+func cleanGopRunCacheFiles(t *testing.T) {
+	homeDir, _ := os.UserHomeDir()
+	runCacheDir := filepath.Join(homeDir, ".gop", "run")
+	files := []string{"go.mod", "go.sum"}
+	for _, file := range files {
+		fullPath := filepath.Join(runCacheDir, file)
+		if checkPathExist(fullPath, false) {
+			t.Fatalf("Failed: %s found in %s directory\n", file, runCacheDir)
+		}
+	}
+}
+
 func TestAllScript(t *testing.T) {
 	os.Chdir(gopRoot)
 	cmd := exec.Command(filepath.Join(gopRoot, script))
@@ -76,6 +88,8 @@ func TestAllScript(t *testing.T) {
 			t.Fatalf("Failed: %s not found in %s/bin directory\n", file, goBinPath)
 		}
 	}
+
+	cleanGopRunCacheFiles(t)
 
 	cmd = exec.Command(filepath.Join(gopRoot, "bin", gopBinFiles[0]), "version")
 	if output, err := cmd.CombinedOutput(); err != nil {
