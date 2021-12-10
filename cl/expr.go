@@ -115,6 +115,9 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
 
 	// universe object
 	if obj := ctx.pkg.Builtin().TryRef(name); obj != nil {
+		if (flags&clIdentAllowBuiltin) == 0 && isBuiltin(o) && !strings.HasPrefix(o.Name(), "print") {
+			panic(ctx.newCodeErrorf(ident.Pos(), "use of builtin %s not in function call", name))
+		}
 		o = obj
 	} else if o == nil {
 		if (clIdentGoto & flags) != 0 {
@@ -122,8 +125,6 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
 			panic(ctx.newCodeErrorf(l.Pos(), "label %v is not defined", l.Name))
 		}
 		panic(ctx.newCodeErrorf(ident.Pos(), "undefined: %s", name))
-	} else if (flags&clIdentAllowBuiltin) == 0 && isBuiltin(o) {
-		panic(ctx.newCodeErrorf(ident.Pos(), "use of builtin %s not in function call", name))
 	}
 
 find:
