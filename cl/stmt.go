@@ -86,7 +86,7 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 			ctx.cb.Call(0)
 		} else {
 			compileExpr(ctx, v.X)
-			if canAutoCall(v.X) && isFunc(ctx.cb.InternalStack().Get(-1).Type) {
+			if canAutoCall(v.X) && gox.IsFunc(ctx.cb.InternalStack().Get(-1).Type) {
 				ctx.cb.Call(0)
 			}
 		}
