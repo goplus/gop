@@ -322,18 +322,10 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, flags int) {
 	}
 }
 
-func isFunc(typ types.Type) bool {
-	switch typ.(type) {
-	case *types.Signature:
-		return true
-	}
-	return false
-}
-
 func pkgRef(at *gox.PkgRef, name string) (o types.Object, alias bool) {
 	if c := name[0]; c >= 'a' && c <= 'z' {
 		name = string(rune(c)+('A'-'a')) + name[1:]
-		if v := at.TryRef(name); v != nil && isFunc(v.Type()) {
+		if v := at.TryRef(name); v != nil && gox.IsFunc(v.Type()) {
 			return v, true
 		}
 		return
@@ -365,7 +357,7 @@ func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, x *ast.Ident, flags int) bool 
 			cb.VarRef(v, x)
 		} else {
 			autoprop := alias && (flags&clIdentAutoCall) != 0
-			if autoprop && !canAutoProperty(v.Type()) {
+			if autoprop && !gox.HasAutoProperty(v.Type()) {
 				return false
 			}
 			cb.Val(v, x)
@@ -374,14 +366,6 @@ func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, x *ast.Ident, flags int) bool 
 			}
 		}
 		return true
-	}
-	return false
-}
-
-func canAutoProperty(typ types.Type) bool {
-	switch v := typ.(type) {
-	case *types.Signature:
-		return v.Params().Len() == 0
 	}
 	return false
 }
