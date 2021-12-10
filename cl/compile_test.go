@@ -148,6 +148,21 @@ func main() {
 `)
 }
 
+func TestAssignPrintln(t *testing.T) {
+	gopClTest(t, `
+p := println
+p "Hello world"
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	p := fmt.Println
+	p("Hello world")
+}
+`)
+}
+
 func TestRedefineBuiltin(t *testing.T) {
 	gopClTest(t, `
 func main() {
