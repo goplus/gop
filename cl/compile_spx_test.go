@@ -203,7 +203,7 @@ func TestSpxMethod(t *testing.T) {
 func onInit() {
 	sched
 	broadcast "msg1"
-	testIntValue = 1
+	TestIntValue = 1
 	x := round(1.2)
 }
 `, `
@@ -301,6 +301,8 @@ var (
 	t   Sound
 )
 
+var x float64 = rand(1.2)
+
 run "hzip://open.qiniu.us/weather/res.zip"
 `, `
 println "Hi"
@@ -310,6 +312,8 @@ import (
 	fmt "fmt"
 	spx "github.com/goplus/gop/cl/internal/spx"
 )
+
+var x float64 = spx.Rand__1(1.2)
 
 type index struct {
 	*spx.MyGame

@@ -27,6 +27,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -73,7 +74,22 @@ func getGopRoot() string {
 var gopRoot = getGopRoot()
 var initCommandExecuteEnv = os.Environ()
 var commandExecuteEnv = initCommandExecuteEnv
+
+// Always put `gop` command as the first item, as it will be referenced by below code.
 var gopBinFiles = []string{"gop", "gopfmt"}
+
+const (
+	inWindows = (runtime.GOOS == "windows")
+)
+
+func init() {
+	if inWindows {
+		for index, file := range gopBinFiles {
+			file += ".exe"
+			gopBinFiles[index] = file
+		}
+	}
+}
 
 func execCommand(command string, arg ...string) (string, string, error) {
 	var stdout, stderr bytes.Buffer
@@ -217,6 +233,9 @@ func buildGoplusTools(useGoProxy bool) {
 	}
 	print(buildOutput)
 
+	// Clear gop run cache
+	cleanGopRunCache()
+
 	installPath := linkGoplusToLocalBin()
 
 	println("\nGo+ tools installed successfully!")
@@ -241,7 +260,7 @@ func runTestcases() {
 	os.Chdir(gopRoot)
 
 	coverage := "-coverprofile=coverage.txt"
-	gopCommand := filepath.Join(detectGopBinPath(), "gop")
+	gopCommand := filepath.Join(detectGopBinPath(), gopBinFiles[0])
 	if !checkPathExist(gopCommand, false) {
 		println("Error: Go+ must be installed before running testcases.")
 		os.Exit(1)
@@ -275,6 +294,22 @@ func clean() {
 	if checkPathExist(gopBinPath, true) {
 		if err := os.RemoveAll(gopBinPath); err != nil {
 			log.Fatalln(err)
+		}
+	}
+
+	cleanGopRunCache()
+}
+
+func cleanGopRunCache() {
+	homeDir, _ := os.UserHomeDir()
+	runCacheDir := filepath.Join(homeDir, ".gop", "run")
+	files := []string{"go.mod", "go.sum"}
+	for _, file := range files {
+		fullPath := filepath.Join(runCacheDir, file)
+		if checkPathExist(fullPath, false) {
+			if err := os.Remove(fullPath); err != nil {
+				log.Fatalln(err)
+			}
 		}
 	}
 }

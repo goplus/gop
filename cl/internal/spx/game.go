@@ -52,6 +52,14 @@ func Sched() {
 func SchedNow() {
 }
 
+func Rand__0(int) int {
+	return 0
+}
+
+func Rand__1(float64) float64 {
+	return 0
+}
+
 var (
 	TestIntValue int
 )

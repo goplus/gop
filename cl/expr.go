@@ -114,10 +114,10 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
 	}
 
 	// universe object
-	if (flags&clIdentAllowBuiltin) == 0 && isBuiltin(o) {
-		panic(ctx.newCodeErrorf(ident.Pos(), "use of builtin %s not in function call", name))
-	}
 	if obj := ctx.pkg.Builtin().TryRef(name); obj != nil {
+		if (flags&clIdentAllowBuiltin) == 0 && isBuiltin(o) && !strings.HasPrefix(o.Name(), "print") {
+			panic(ctx.newCodeErrorf(ident.Pos(), "use of builtin %s not in function call", name))
+		}
 		o = obj
 	} else if o == nil {
 		if (clIdentGoto & flags) != 0 {
@@ -144,24 +144,16 @@ func isBuiltin(o types.Object) bool {
 }
 
 func compileMember(ctx *blockCtx, v ast.Node, name string, flags int) error {
-	cb := ctx.cb
-	lhs := (flags & clIdentLHS) != 0
-	kind, err := cb.Member(name, lhs, v)
-	if kind != 0 {
-		return nil
+	var mflag gox.MemberFlag
+	switch {
+	case (flags & clIdentLHS) != 0:
+		mflag = gox.MemberFlagRef
+	case (flags & clIdentAutoCall) != 0:
+		mflag = gox.MemberFlagAutoProperty
+	default:
+		mflag = gox.MemberFlagMethodAlias
 	}
-	if c := name[0]; c >= 'a' && c <= 'z' {
-		name = string(rune(c)+('A'-'a')) + name[1:]
-		switch kind, _ = cb.Member(name, lhs, v); kind {
-		case gox.MemberMethod:
-			if (flags & clIdentAutoCall) != 0 {
-				cb.Call(0)
-			}
-			return nil
-		case gox.MemberField:
-			return nil
-		}
-	}
+	_, err := ctx.cb.Member(name, mflag, v)
 	return err
 }
 
@@ -330,50 +322,49 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, flags int) {
 	}
 }
 
-func pkgRef(at *gox.PkgRef, name string) (o types.Object, canAutoCall bool) {
+func pkgRef(at *gox.PkgRef, name string) (o types.Object, alias bool) {
 	if c := name[0]; c >= 'a' && c <= 'z' {
 		name = string(rune(c)+('A'-'a')) + name[1:]
-		return at.TryRef(name), true
+		if v := at.TryRef(name); v != nil && gox.IsFunc(v.Type()) {
+			return v, true
+		}
+		return
 	}
 	return at.TryRef(name), false
 }
 
-func lookupPkgRef(ctx *blockCtx, pkg *gox.PkgRef, x *ast.Ident) (o types.Object, canAutoCall bool) {
+func lookupPkgRef(ctx *blockCtx, pkg *gox.PkgRef, x *ast.Ident) (o types.Object, alias bool) {
 	if pkg != nil {
 		return pkgRef(pkg, x.Name)
 	}
 	for _, at := range ctx.lookups {
-		if o2, canAutoCall2 := pkgRef(at, x.Name); o2 != nil {
+		if o2, alias2 := pkgRef(at, x.Name); o2 != nil {
 			if o != nil {
 				panic(ctx.newCodeErrorf(
 					x.Pos(), "confliction: %s declared both in \"%s\" and \"%s\"",
 					x.Name, at.Types.Path(), pkg.Types.Path()))
 			}
-			pkg, o, canAutoCall = at, o2, canAutoCall2
+			pkg, o, alias = at, o2, alias2
 		}
 	}
 	return
 }
 
 func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, x *ast.Ident, flags int) bool {
-	if v, canAutoCall := lookupPkgRef(ctx, at, x); v != nil {
+	if v, alias := lookupPkgRef(ctx, at, x); v != nil {
 		cb := ctx.cb
 		if (flags & clIdentLHS) != 0 {
 			cb.VarRef(v, x)
 		} else {
+			autoprop := alias && (flags&clIdentAutoCall) != 0
+			if autoprop && !gox.HasAutoProperty(v.Type()) {
+				return false
+			}
 			cb.Val(v, x)
-			if canAutoCall && (flags&clIdentAutoCall) != 0 && isFunc(v.Type()) {
+			if autoprop {
 				cb.Call(0)
 			}
 		}
-		return true
-	}
-	return false
-}
-
-func isFunc(typ types.Type) bool {
-	switch typ.(type) {
-	case *types.Signature:
 		return true
 	}
 	return false

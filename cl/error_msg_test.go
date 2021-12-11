@@ -171,8 +171,8 @@ var a = 1, 2
 }
 `)
 	codeErrorTest(t,
-		"./bar.gop:2:9: use of builtin len not in function call", `func main() {
-println(len.x)
+		"./bar.gop:2:10: use of builtin len not in function call", `func main() {
+	println(len.x)
 }
 `)
 	codeErrorTest(t,
@@ -215,7 +215,7 @@ func foo(v map[int]bar) {
 }
 `)
 	codeErrorTest(t,
-		"./bar.gop:2:2: use of builtin println not in function call", `func main() {
+		"./bar.gop:2:2: println is not a variable", `func main() {
 	println = "hello"
 }
 `)
@@ -796,5 +796,13 @@ switch n.(type) {
 	default:
 	default:
 }
+`)
+}
+
+func TestErrAutoProperty(t *testing.T) {
+	codeErrorTest(t, `./bar.gop:4:11: cannot refer to unexported name fmt.println`, `
+import "fmt"
+
+n, err := fmt.println
 `)
 }

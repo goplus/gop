@@ -87,10 +87,10 @@ It's for Go, and it's also for Go+.
 
 ## Playground
 
-Go+ Playground based on Docker (recommended):
+Go+ Playground based on Docker:
 * https://play.goplus.org/
 
-Go+ Playground based on GopherJS (currently only available in v0.7.x):
+Go+ Playground based on GopherJS:
 * https://jsplay.goplus.org/
 
 

@@ -57,12 +57,6 @@ func TestGetTypeName(t *testing.T) {
 	getTypeName(types.NewSlice(types.Typ[types.Int]))
 }
 
-func TestIsFunc(t *testing.T) {
-	if isFunc(nil) {
-		t.Fatal("TestIsFunc failed")
-	}
-}
-
 func TestHandleRecover(t *testing.T) {
 	var ctx pkgCtx
 	ctx.handleRecover("hello")
