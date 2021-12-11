@@ -12,12 +12,14 @@ import (
 )
 
 const (
-	inWindows = (runtime.GOOS == "windows")
+	inWindows     = (runtime.GOOS == "windows")
+	installerFile = "cmd/make.go"
 )
 
 var script = "all.bash"
 var gopRoot = ""
 var gopBinFiles = []string{"gop", "gopfmt"}
+var installer = ""
 
 func checkPathExist(path string, isDir bool) bool {
 	stat, err := os.Stat(path)
@@ -50,6 +52,7 @@ func detectGoBinPath() string {
 func init() {
 	pwd, _ := os.Getwd()
 	gopRoot = filepath.Join(pwd, "..")
+	installer = filepath.Join(gopRoot, installerFile)
 	if inWindows {
 		script = "all.bat"
 		for index, file := range gopBinFiles {
@@ -99,7 +102,8 @@ func TestAllScript(t *testing.T) {
 
 func TestHandleMultiFlags(t *testing.T) {
 	os.Chdir(gopRoot)
-	cmd := exec.Command("go", "run", filepath.Join(gopRoot, "cmd/make.go"), "--install", "--test", "--uninstall")
+	nextVersion := "v1.2.3"
+	cmd := exec.Command("go", "run", installer, "--install", "--test", "--uninstall", "--tag", nextVersion)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("Failed: %v:\nOut: %s\n", err, output)
 	}
@@ -115,4 +119,50 @@ func TestHandleMultiFlags(t *testing.T) {
 			t.Fatalf("Failed: %s found in %s/bin directory\n", file, goBinPath)
 		}
 	}
+
+	// Test if git tag list contains nextVersion
+	cmd = exec.Command("git", "tag")
+	if allTags, err := cmd.CombinedOutput(); err != nil {
+		if !strings.Contains(allTags, nextVersion) {
+			t.Fatalf("Failed: %s tag not found in this git repo.\n", nextVersion)
+		}
+	}
+}
+
+func TestTagFlagOnGitRepo(t *testing.T) {
+	os.Chdir(gopRoot)
+
+	// Specify next tag
+	cmd := exec.Command("go", "run", installer, "--tag", "v1.0.98")
+
+	// Specify tag: auto
+	cmd := exec.Command("go", "run", installer, "--tag", "auto")
+
+	// Specify bad tag
+	cmd := exec.Command("go", "run", installer, "--tag", "1.23.45")
+
+	// Specify empty tag
+	cmd := exec.Command("go", "run", installer, "--tag", "")
+
+	// Without specified tag
+	cmd := exec.Command("go", "run", installer, "--tag")
+}
+
+func TestTagFlagOnNonGitRepo(t *testing.T) {
+	os.Chdir(gopRoot)
+
+	// Specify next tag
+	cmd := exec.Command("go", "run", installer, "--tag", "v1.0.98")
+
+	// Specify tag: auto
+	cmd := exec.Command("go", "run", installer, "--tag", "auto")
+
+	// Specify bad tag
+	cmd := exec.Command("go", "run", installer, "--tag", "1.23.45")
+
+	// Specify empty tag
+	cmd := exec.Command("go", "run", installer, "--tag", "")
+
+	// Without specified tag
+	cmd := exec.Command("go", "run", installer, "--tag")
 }

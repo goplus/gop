@@ -28,8 +28,11 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/goplus/gop/env"
 )
 
 func checkPathExist(path string, isDir bool) bool {
@@ -39,6 +42,10 @@ func checkPathExist(path string, isDir bool) bool {
 		return isExists && stat.IsDir()
 	}
 	return isExists && !stat.IsDir()
+}
+
+func trimRight(s string) string {
+	return strings.TrimRight(s, " \t\r\n")
 }
 
 // Path returns single path to check
@@ -77,6 +84,7 @@ var commandExecuteEnv = initCommandExecuteEnv
 
 // Always put `gop` command as the first item, as it will be referenced by below code.
 var gopBinFiles = []string{"gop", "gopfmt"}
+var versionFile = filepath.Join(gopRoot, "VERSION")
 
 const (
 	inWindows = (runtime.GOOS == "windows")
@@ -101,23 +109,21 @@ func execCommand(command string, arg ...string) (string, string, error) {
 	return stdout.String(), stderr.String(), err
 }
 
-func getRevCommit(tag string) string {
-	commit, stderr, err := execCommand("git", "rev-parse", "--verify", tag)
-	if err != nil || stderr != "" {
+func getGitBranch() string {
+	branch, _, err := execCommand("git", "rev-parse", "--abbrev-ref", "HEAD")
+	if err != nil {
 		return ""
 	}
-	return strings.TrimRight(commit, "\n")
+	return trimRight(branch)
 }
 
-/*
-func getGitInfo() (string, bool) {
-	gitDir := filepath.Join(gopRoot, ".git")
-	if checkPathExist(gitDir, true) {
-		return getRevCommit("HEAD"), true
+func isGitRepo() bool {
+	gitDir, _, err := execCommand("git", "rev-parse", "--git-dir")
+	if err != nil {
+		return false
 	}
-	return "", false
+	return checkPathExist(filepath.Join(gopRoot, trimRight(gitDir)), true)
 }
-*/
 
 func getBuildDateTime() string {
 	now := time.Now()
@@ -129,7 +135,7 @@ func getBuildVer() string {
 	if err != nil || tagErr != "" {
 		return ""
 	}
-	return strings.TrimRight(tagRet, "\n")
+	return trimRight(tagRet)
 }
 
 func getGopBuildFlags() string {
@@ -139,9 +145,10 @@ func getGopBuildFlags() string {
 	}
 	buildFlags := fmt.Sprintf("-X \"github.com/goplus/gop/env.defaultGopRoot=%s\"", defaultGopRoot)
 	buildFlags += fmt.Sprintf(" -X \"github.com/goplus/gop/env.buildDate=%s\"", getBuildDateTime())
-	if buildVer := getBuildVer(); buildVer != "" {
-		buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildVersion=%s", buildVer)
-	}
+
+	version := findGopVersion()
+	buildFlags += fmt.Sprintf(" -X \"github.com/goplus/gop/env.buildVersion=%s\"", version)
+
 	return buildFlags
 }
 
@@ -332,12 +339,117 @@ func isInChina() bool {
 	return false
 }
 
+// generateNewVersion returns next version of gop
+// A valid version should be like: vMajor.Minor.Patch. currently, only update Patch part.
+func generateNewVersion() string {
+	version := findGopVersion()
+	// Such as: v1.2.3-beta
+	segments := strings.Split(version, "-")
+	version = segments[0]
+	versionSegments := strings.Split(version, ".")
+	patchIndex := len(versionSegments) - 1
+
+	patch, err := strconv.Atoi(versionSegments[patchIndex])
+	if err != nil {
+		log.Fatalf("Error: can't generate new version for: '%s'\n", version)
+	}
+
+	versionSegments[patchIndex] = strconv.Itoa(patch + 1)
+	newVersion := strings.Join(versionSegments, ".")
+
+	if len(segments) > 1 {
+		segments[0] = newVersion
+		return strings.Join(segments, "-")
+	}
+
+	return newVersion
+}
+
+// findGopVersion returns current version of gop
+func findGopVersion() string {
+	// Read version from VERSION file
+	if checkPathExist(versionFile, false) {
+		data, err := os.ReadFile(versionFile)
+		if err == nil {
+			version := trimRight(string(data))
+			if _, ok := validateVersion(version); ok {
+				return version
+			}
+		}
+	}
+
+	// Read version from git repo
+	if !isGitRepo() {
+		log.Fatal("Error: must be a git repo or a VERSION file existed.")
+	}
+
+	version := getBuildVer() // Closet tag on git log
+	branch := getGitBranch()
+	allTags, _, _ := execCommand("git", "tag")
+	allTags = trimRight(allTags)
+
+	// On release branch
+	// Note: github.com/goplus/gop/env.MainVersion must be sync with release branch name
+	if _, ok := validateVersion(branch); ok {
+		if strings.Contains(allTags, branch) { // New patch release
+			return version
+		}
+		return branch + ".0" // New minor release, the value should be auto incremented by generateNewVersion
+	}
+
+	// On non-release branch
+	return version
+}
+
+// validateVersion reports if passed version is matched with gop/env.MainVersion
+func validateVersion(version string) (string, bool) {
+	mainVersion := "v" + env.MainVersion
+	return mainVersion, strings.HasPrefix(version, mainVersion)
+}
+
+func releaseNewVersion(tag string) {
+	if !isGitRepo() {
+		log.Fatal("Error: Releasing a new version could only be operated under a git repo.")
+	}
+	println("Start releasing new version")
+
+	version := tag
+	if tag == "auto" {
+		version = generateNewVersion()
+	}
+
+	// Validate version
+	mainVersion, ok := validateVersion(version)
+	if !ok {
+		log.Fatalf("Error: '%s' is invalid, a valid tag should be like: %s.x", version, mainVersion)
+	}
+
+	if getGitBranch() != mainVersion {
+		log.Fatal("Error: Releasing a new version could only be operated on a release git branch.")
+	}
+
+	fmt.Printf("\nReleasing new version: %s\n\n", version)
+
+	// Store new version
+	if err := os.WriteFile(versionFile, []byte(version), 0666); err != nil {
+		log.Fatalf("Error: store new version with error: %v\n", err)
+	}
+
+	// Tag the source code
+	if _, stderr, err := execCommand("git", "tag", version); err != nil {
+		log.Fatalf("Error: tag the source code with error: %v\n", stderr)
+	}
+
+	println("End releasing new version:", tag)
+}
+
 func main() {
 	isInstall := flag.Bool("install", false, "Install Go+")
 	isTest := flag.Bool("test", false, "Run testcases")
 	isUninstall := flag.Bool("uninstall", false, "Uninstall Go+")
 	isGoProxy := flag.Bool("proxy", false, "Set GOPROXY for people in China")
 	isAutoProxy := flag.Bool("autoproxy", false, "Check to set GOPROXY automatically")
+	tag := flag.String("tag", "", "Set next release tag, pass 'auto' to get an auto-generated new version")
 
 	flag.Parse()
 
@@ -354,6 +466,11 @@ func main() {
 	// Sort flags, for example: install flag should be checked earlier than test flag.
 	flags := []*bool{isInstall, isTest, isUninstall}
 	hasActionDone := false
+
+	if *tag != "" {
+		releaseNewVersion(*tag)
+		hasActionDone = true
+	}
 
 	for _, flag := range flags {
 		if *flag {
