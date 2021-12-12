@@ -81,14 +81,9 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	commentStmt(ctx, stmt)
 	switch v := stmt.(type) {
 	case *ast.ExprStmt:
-		if obj, ok := isBuiltinAutoCall(ctx, v.X); ok {
-			ctx.cb.Val(obj)
+		compileExpr(ctx, v.X)
+		if canAutoCall(v.X) && gox.IsFunc(ctx.cb.InternalStack().Get(-1).Type) {
 			ctx.cb.Call(0)
-		} else {
-			compileExpr(ctx, v.X)
-			if canAutoCall(v.X) && gox.IsFunc(ctx.cb.InternalStack().Get(-1).Type) {
-				ctx.cb.Call(0)
-			}
 		}
 	case *ast.AssignStmt:
 		compileAssignStmt(ctx, v)
@@ -145,19 +140,6 @@ retry:
 		goto retry
 	}
 	return false
-}
-
-func isBuiltinAutoCall(ctx *blockCtx, expr ast.Expr) (types.Object, bool) {
-	if ident, ok := expr.(*ast.Ident); ok {
-		switch ident.Name {
-		case "print", "println":
-			_, builtin := lookupType(ctx, ident.Name)
-			if isBuiltin(builtin) {
-				return builtin, true
-			}
-		}
-	}
-	return nil, false
 }
 
 func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
