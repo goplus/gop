@@ -124,13 +124,16 @@ func TestTagFlagInGitRepo(t *testing.T) {
 	autoVersion := "v1.0.91"
 	releaseBranch := "v1.0"
 	currentBranch := getBranch()
+	releaseBranchExisted := false
 
 	// Teardown
 	defer func() {
 		gitCmd := exec.Command("git", "checkout", currentBranch)
 		gitCmd.CombinedOutput()
-		gitCmd = exec.Command("git", "branch", "-d", releaseBranch)
-		gitCmd.CombinedOutput()
+		if !releaseBranchExisted {
+			gitCmd = exec.Command("git", "branch", "-d", releaseBranch)
+			gitCmd.CombinedOutput()
+		}
 		gitCmd = exec.Command("git", "tag", "-d", tag)
 		gitCmd.CombinedOutput()
 		gitCmd = exec.Command("git", "tag", "-d", autoVersion)
@@ -150,7 +153,15 @@ func TestTagFlagInGitRepo(t *testing.T) {
 	t.Run("successfull tag operation with specified tag", func(t *testing.T) {
 		gitCmd := exec.Command("git", "checkout", "-b", releaseBranch)
 		if output, err := gitCmd.CombinedOutput(); err != nil {
-			t.Fatalf("Failed: %v, output: %s\n", err, output)
+			if strings.Contains(string(output), "already exists") {
+				gitCmd = exec.Command("git", "checkout", releaseBranch)
+				if output, err := gitCmd.CombinedOutput(); err != nil {
+					t.Fatalf("Failed: %v, output: %s\n", err, output)
+				}
+				releaseBranchExisted = true
+			} else {
+				t.Fatalf("Failed: %v, output: %s\n", err, output)
+			}
 		}
 
 		cmd := exec.Command("go", "run", installer, "--tag", tag)
@@ -295,6 +306,7 @@ func TestReleaseMinorVersion(t *testing.T) {
 	bigNextVersion := "v1.98.98"
 	mainVersion := "1.98"
 	releaseBranch := "v" + mainVersion
+	releaseBranchExisted := false
 	currentBranch := getBranch()
 	// Modify gop/env.MainVersion to be test value
 	mainVersionContent, _ := os.ReadFile(mainVersionFile)
@@ -308,8 +320,10 @@ func TestReleaseMinorVersion(t *testing.T) {
 	defer func() {
 		gitCmd := exec.Command("git", "checkout", currentBranch)
 		gitCmd.CombinedOutput()
-		gitCmd = exec.Command("git", "branch", "-d", releaseBranch)
-		gitCmd.CombinedOutput()
+		if !releaseBranchExisted {
+			gitCmd = exec.Command("git", "branch", "-d", releaseBranch)
+			gitCmd.CombinedOutput()
+		}
 		gitCmd = exec.Command("git", "tag", "-d", nextVersion)
 		gitCmd.CombinedOutput()
 		gitCmd = exec.Command("git", "tag", "-d", smallNextVersion)
@@ -327,7 +341,15 @@ func TestReleaseMinorVersion(t *testing.T) {
 	t.Run("auto generates new version", func(t *testing.T) {
 		gitCmd := exec.Command("git", "checkout", "-b", releaseBranch)
 		if output, err := gitCmd.CombinedOutput(); err != nil {
-			t.Fatalf("Failed: %v, output: %s\n", err, output)
+			if strings.Contains(string(output), "already exists") {
+				gitCmd = exec.Command("git", "checkout", releaseBranch)
+				if output, err := gitCmd.CombinedOutput(); err != nil {
+					t.Fatalf("Failed: %v, output: %s\n", err, output)
+				}
+				releaseBranchExisted = true
+			} else {
+				t.Fatalf("Failed: %v, output: %s\n", err, output)
+			}
 		}
 
 		cmd := exec.Command("go", "run", installer, "--tag", "auto")
@@ -399,14 +421,17 @@ func TestHandleMultiFlags(t *testing.T) {
 	// Setup
 	nextVersion := "v1.0.988"
 	releaseBranch := "v1.0"
+	releaseBranchExisted := false
 	currentBranch := getBranch()
 
 	// Teardown
 	defer func() {
 		gitCmd := exec.Command("git", "checkout", currentBranch)
 		gitCmd.CombinedOutput()
-		gitCmd = exec.Command("git", "branch", "-d", releaseBranch)
-		gitCmd.CombinedOutput()
+		if !releaseBranchExisted {
+			gitCmd = exec.Command("git", "branch", "-d", releaseBranch)
+			gitCmd.CombinedOutput()
+		}
 		gitCmd = exec.Command("git", "tag", "-d", nextVersion)
 		gitCmd.CombinedOutput()
 		if checkPathExist(versionFile, false) {
@@ -416,7 +441,15 @@ func TestHandleMultiFlags(t *testing.T) {
 
 	gitCmd := exec.Command("git", "checkout", "-b", releaseBranch)
 	if output, err := gitCmd.CombinedOutput(); err != nil {
-		t.Fatalf("Failed: %v, output: %s\n", err, output)
+		if strings.Contains(string(output), "already exists") {
+			gitCmd = exec.Command("git", "checkout", releaseBranch)
+			if output, err := gitCmd.CombinedOutput(); err != nil {
+				t.Fatalf("Failed: %v, output: %s\n", err, output)
+			}
+			releaseBranchExisted = true
+		} else {
+			t.Fatalf("Failed: %v, output: %s\n", err, output)
+		}
 	}
 
 	cmd := exec.Command("go", "run", installer, "--install", "--test", "--uninstall", "--tag", nextVersion)
