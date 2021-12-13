@@ -127,7 +127,7 @@ func TestTagFlagInGitRepo(t *testing.T) {
 	releaseBranchExisted := false
 
 	// Teardown
-	defer func() {
+	t.Cleanup(func() {
 		gitCmd := exec.Command("git", "checkout", currentBranch)
 		gitCmd.CombinedOutput()
 		if !releaseBranchExisted {
@@ -141,7 +141,7 @@ func TestTagFlagInGitRepo(t *testing.T) {
 		if checkPathExist(versionFile, false) {
 			os.Remove(versionFile)
 		}
-	}()
+	})
 
 	t.Run("failed tag operation", func(t *testing.T) {
 		cmd := exec.Command("go", "run", installer, "--tag", tag)
@@ -213,18 +213,17 @@ func TestTagFlagInNonGitRepo(t *testing.T) {
 	// Setup
 	gitDir := filepath.Join(gopRoot, ".git")
 	gitBackupDir := filepath.Join(gopRoot, ".gitBackup")
-
 	// Rename .git dir
 	if checkPathExist(gitDir, true) {
 		os.Rename(gitDir, gitBackupDir)
 	}
 
 	// Teardown
-	defer func() {
+	t.Cleanup(func() {
 		if checkPathExist(gitBackupDir, true) {
 			os.Rename(gitBackupDir, gitDir)
 		}
-	}()
+	})
 
 	t.Run("specify new tag", func(t *testing.T) {
 		cmd := exec.Command("go", "run", installer, "--tag", "v1.0.98")
@@ -249,21 +248,20 @@ func TestInstallInNonGitRepo(t *testing.T) {
 	// Setup
 	gitDir := filepath.Join(gopRoot, ".git")
 	gitBackupDir := filepath.Join(gopRoot, ".gitBackup")
-
 	// Rename .git dir
 	if checkPathExist(gitDir, true) {
 		os.Rename(gitDir, gitBackupDir)
 	}
 
 	// Teardown
-	defer func() {
+	t.Cleanup(func() {
 		if checkPathExist(gitBackupDir, true) {
 			os.Rename(gitBackupDir, gitDir)
 		}
 		if checkPathExist(versionFile, false) {
 			os.Remove(versionFile)
 		}
-	}()
+	})
 
 	installCmd := func() *exec.Cmd {
 		return exec.Command("go", "run", installer, "--install")
@@ -317,7 +315,7 @@ func TestReleaseMinorVersion(t *testing.T) {
 	}
 
 	// Teardown
-	defer func() {
+	t.Cleanup(func() {
 		gitCmd := exec.Command("git", "checkout", currentBranch)
 		gitCmd.CombinedOutput()
 		if !releaseBranchExisted {
@@ -336,7 +334,7 @@ func TestReleaseMinorVersion(t *testing.T) {
 		if err := os.WriteFile(mainVersionFile, mainVersionContent, 0666); err != nil {
 			t.Fatalf("Error: %v, Restore %s file failed.\n", err, mainVersionFile)
 		}
-	}()
+	})
 
 	t.Run("auto generates new version", func(t *testing.T) {
 		gitCmd := exec.Command("git", "checkout", "-b", releaseBranch)
@@ -425,7 +423,7 @@ func TestHandleMultiFlags(t *testing.T) {
 	currentBranch := getBranch()
 
 	// Teardown
-	defer func() {
+	t.Cleanup(func() {
 		gitCmd := exec.Command("git", "checkout", currentBranch)
 		gitCmd.CombinedOutput()
 		if !releaseBranchExisted {
@@ -437,7 +435,7 @@ func TestHandleMultiFlags(t *testing.T) {
 		if checkPathExist(versionFile, false) {
 			os.Remove(versionFile)
 		}
-	}()
+	})
 
 	gitCmd := exec.Command("git", "checkout", "-b", releaseBranch)
 	if output, err := gitCmd.CombinedOutput(); err != nil {
