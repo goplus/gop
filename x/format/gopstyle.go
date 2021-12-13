@@ -142,16 +142,14 @@ type importCtx struct {
 
 type formatCtx struct {
 	imports map[string]*importCtx
-	uniVars map[string]ast.Expr
-	// todo: only indicates whether contains a var, not caring its type.
-	// vars []map[string]bool
+	scp     *scope
 }
 
 func formatFile(file *ast.File) {
 	var funcs []*ast.FuncDecl
 	ctx := &formatCtx{
 		imports: make(map[string]*importCtx),
-		uniVars: make(map[string]ast.Expr),
+		scp:     newScope(),
 	}
 	for _, decl := range file.Decls {
 		switch v := decl.(type) {
@@ -219,8 +217,40 @@ func formatFuncDecl(ctx *formatCtx, v *ast.FuncDecl) {
 
 func fillVarCtx(ctx *formatCtx, spec *ast.ValueSpec) {
 	for _, name := range spec.Names {
-		ctx.uniVars[name.Name] = spec.Type
+		ctx.scp.addVar(name.Name)
 	}
 }
 
 // -----------------------------------------------------------------------------
+
+type scope struct {
+	vars []map[string]bool
+}
+
+func newScope() *scope {
+	return &scope{
+		vars: []map[string]bool{make(map[string]bool)},
+	}
+}
+
+func (s *scope) addVar(name string) {
+	s.vars[len(s.vars)-1][name] = true
+}
+
+func (s *scope) containsVar(name string) bool {
+	for _, m := range s.vars {
+		if m[name] {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (s *scope) enterScope() {
+	s.vars = append(s.vars, make(map[string]bool))
+}
+
+func (s *scope) exitScope() {
+	s.vars = s.vars[:len(s.vars)-1]
+}
