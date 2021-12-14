@@ -142,16 +142,20 @@ type importCtx struct {
 
 type formatCtx struct {
 	imports map[string]*importCtx
+	scp     *scope
 }
 
 func formatFile(file *ast.File) {
+	var funcs []*ast.FuncDecl
 	ctx := &formatCtx{
 		imports: make(map[string]*importCtx),
+		scp:     newScope(),
 	}
 	for _, decl := range file.Decls {
 		switch v := decl.(type) {
 		case *ast.FuncDecl:
-			formatFuncDecl(ctx, v)
+			// delay the process, because package level vars need to be processed first.
+			funcs = append(funcs, v)
 		case *ast.GenDecl:
 			switch v.Tok {
 			case token.IMPORT:
@@ -174,6 +178,10 @@ func formatFile(file *ast.File) {
 			}
 		}
 	}
+
+	for _, fn := range funcs {
+		formatFuncDecl(ctx, fn)
+	}
 	for _, imp := range ctx.imports {
 		if imp.pkgPath == "fmt" && !imp.isUsed {
 			if len(imp.decl.Specs) == 1 {
@@ -192,6 +200,7 @@ func formatGenDecl(ctx *formatCtx, v *ast.GenDecl) {
 			spec := item.(*ast.ValueSpec)
 			formatType(ctx, spec.Type, &spec.Type)
 			formatExprs(ctx, spec.Values)
+			fillVarCtx(ctx, spec)
 		}
 	case token.TYPE:
 		for _, item := range v.Specs {
@@ -206,4 +215,42 @@ func formatFuncDecl(ctx *formatCtx, v *ast.FuncDecl) {
 	formatBlockStmt(ctx, v.Body)
 }
 
+func fillVarCtx(ctx *formatCtx, spec *ast.ValueSpec) {
+	for _, name := range spec.Names {
+		ctx.scp.addVar(name.Name)
+	}
+}
+
 // -----------------------------------------------------------------------------
+
+type scope struct {
+	vars []map[string]bool
+}
+
+func newScope() *scope {
+	return &scope{
+		vars: []map[string]bool{make(map[string]bool)},
+	}
+}
+
+func (s *scope) addVar(name string) {
+	s.vars[len(s.vars)-1][name] = true
+}
+
+func (s *scope) containsVar(name string) bool {
+	for _, m := range s.vars {
+		if m[name] {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (s *scope) enterScope() {
+	s.vars = append(s.vars, make(map[string]bool))
+}
+
+func (s *scope) exitScope() {
+	s.vars = s.vars[:len(s.vars)-1]
+}

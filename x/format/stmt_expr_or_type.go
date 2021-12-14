@@ -170,7 +170,9 @@ func formatCallExpr(ctx *formatCtx, v *ast.CallExpr) {
 func formatSelectorExpr(ctx *formatCtx, v *ast.SelectorExpr, ref *ast.Expr) {
 	switch x := v.X.(type) {
 	case *ast.Ident:
-		// TODO: maybe have bugs: `x.Name` may be a variable, not a import.
+		if ctx.scp.containsVar(x.Name) {
+			break
+		}
 		if imp, ok := ctx.imports[x.Name]; ok {
 			if !fmtToBuiltin(imp, v.Sel, ref) {
 				imp.isUsed = true
@@ -185,7 +187,9 @@ func formatSelectorExpr(ctx *formatCtx, v *ast.SelectorExpr, ref *ast.Expr) {
 
 func formatBlockStmt(ctx *formatCtx, stmt *ast.BlockStmt) {
 	if stmt != nil {
+		ctx.scp.enterScope()
 		formatStmts(ctx, stmt.List)
+		ctx.scp.exitScope()
 	}
 }
 

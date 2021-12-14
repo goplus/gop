@@ -342,3 +342,139 @@ func f() {
 }
 `)
 }
+
+func TestErrorfWithPackageLevelVar(t *testing.T) {
+	testFormat(t, "print", `package main
+
+import "errors"
+import "fmt"
+
+var _ = fmt.Errorf("hello %w", errors.New("world"))
+`, `import "errors"
+
+var _ = errorf("hello %w", errors.new("world"))
+`)
+}
+
+func TestPrintlnWithFmtVarNoImport(t *testing.T) {
+	testFormat(t, "print", `package main
+
+func f() {
+	var fmt Foo
+	fmt.Println(1)
+}
+`, `func f() {
+	var fmt Foo
+	fmt.println 1
+}
+`)
+}
+
+func TestPrintlnWithFmtVar(t *testing.T) {
+	testFormat(t, "print", `package main
+
+import "fmt"
+
+var _ fmt.Stringer
+
+func f() {
+	var fmt Foo
+	fmt.Println(1)
+}
+`, `import "fmt"
+
+var _ fmt.Stringer
+
+func f() {
+	var fmt Foo
+	fmt.println 1
+}
+`)
+}
+
+// todo: fix inner scope vars
+// func TestPrintlnWithScopedFmtVar(t *testing.T) {
+// 	testFormat(t, "print", `package main
+//
+// import "fmt"
+//
+// func f() {
+// 	{
+// 		var fmt Foo
+// 		_ = fmt
+// 	}
+// 	fmt.Println(1)
+// }
+// `, `func f() {
+// 	{
+// 		var fmt Foo
+// 		_ = fmt
+// 	}
+// 	println 1
+// }
+// `)
+// }
+
+func TestPrintlnWithFmtVarAfter(t *testing.T) {
+	testFormat(t, "print", `package main
+
+import "fmt"
+
+func f() {
+	fmt.Println(1)
+	var fmt Foo
+	_ = fmt
+}
+`, `func f() {
+	println 1
+	var fmt Foo
+	_ = fmt
+}
+`)
+}
+
+func TestPrintlnWithPackageLevelFmtVar(t *testing.T) {
+	testFormat(t, "print", `package main
+
+var fmt Foo
+
+func f() {
+	fmt.Println(1)
+}
+`, `var fmt Foo
+
+func f() {
+	fmt.println 1
+}
+`)
+}
+
+func TestPrintlnWithPackageLevelFmtVarAfter(t *testing.T) {
+	testFormat(t, "print", `package main
+
+func f() {
+	fmt.Println(1)
+}
+
+var fmt Foo
+`, `func f() {
+	fmt.println 1
+}
+
+var fmt Foo
+`)
+}
+
+func TestPrintlnWithVarFromCall(t *testing.T) {
+	testFormat(t, "print", `package main
+
+func f() {
+	var fmt = Foo()
+	fmt.Println(1)
+}
+`, `func f() {
+	var fmt = Foo()
+	fmt.println 1
+}
+`)
+}
