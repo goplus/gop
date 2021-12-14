@@ -30,23 +30,21 @@ import (
 const (
 	ldFlagVersion   = "-X \"github.com/goplus/gop/env.buildVersion=%s\""
 	ldFlagBuildDate = "-X \"github.com/goplus/gop/env.buildDate=%s\""
-	ldFlagBuildRev  = "-X \"github.com/goplus/gop/env.buildCommit=%s\""
 	ldFlagGopRoot   = "-X \"github.com/goplus/gop/env.defaultGopRoot=%s\""
 )
 
 const (
-	ldFlagAll = ldFlagVersion + " " + ldFlagBuildDate + " " + ldFlagBuildRev + " " + ldFlagGopRoot
+	ldFlagAll = ldFlagVersion + " " + ldFlagBuildDate + " " + ldFlagGopRoot
 )
 
 var (
 	GOPVERSION   = env.Version()
 	GOPBUILDDATE = env.BuildDate()
-	GOPBUILDREV  = env.BuildRevision()
 	GOPROOT      = env.GOPROOT()
 )
 
 func LoadFlags() string {
-	return fmt.Sprintf(ldFlagAll, GOPVERSION, GOPBUILDDATE, GOPBUILDREV, GOPROOT)
+	return fmt.Sprintf(ldFlagAll, GOPVERSION, GOPBUILDDATE, GOPROOT)
 }
 
 // -----------------------------------------------------------------------------

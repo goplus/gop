@@ -66,7 +66,6 @@ func runCmd(_ *base.Command, args []string) {
 	}
 
 	gopEnv["BUILDDATE"] = env.BuildDate()
-	gopEnv["BUILDREV"] = env.BuildRevision()
 	gopEnv["GOPVERSION"] = env.Version()
 	gopEnv["GOPROOT"] = env.GOPROOT()
 	gopEnv["GOPATH"] = env.GOPATH()
