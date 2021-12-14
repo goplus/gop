@@ -56,11 +56,16 @@ n, err := println("Hello world")
 
 Note:
 
+* Convert `fmt.Errorf => errorf`
+* Convert `fmt.Fprint => fprint`
+* Convert `fmt.Fprintf => fprintf`
+* Convert `fmt.Fprintln => fprintln`
 * Convert `fmt.Print` => `print`
 * Convert `fmt.Printf` => `printf`
 * Convert `fmt.Println` => `println`
-* ...
-
+* Convert `fmt.Sprint => sprint`
+* Convert `fmt.Sprintf => sprintf`
+* Convert `fmt.Sprintln => sprintln`
 
 ### Command style first
 
