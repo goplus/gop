@@ -109,6 +109,7 @@ func getRevCommit(tag string) string {
 	return strings.TrimRight(commit, "\n")
 }
 
+/*
 func getGitInfo() (string, bool) {
 	gitDir := filepath.Join(gopRoot, ".git")
 	if checkPathExist(gitDir, true) {
@@ -116,6 +117,7 @@ func getGitInfo() (string, bool) {
 	}
 	return "", false
 }
+*/
 
 func getBuildDateTime() string {
 	now := time.Now()
@@ -137,11 +139,8 @@ func getGopBuildFlags() string {
 	}
 	buildFlags := fmt.Sprintf("-X \"github.com/goplus/gop/env.defaultGopRoot=%s\"", defaultGopRoot)
 	buildFlags += fmt.Sprintf(" -X \"github.com/goplus/gop/env.buildDate=%s\"", getBuildDateTime())
-	if commit, ok := getGitInfo(); ok {
-		buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildCommit=%s", commit)
-		if buildVer := getBuildVer(); buildVer != "" {
-			buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildVersion=%s", buildVer)
-		}
+	if buildVer := getBuildVer(); buildVer != "" {
+		buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildVersion=%s", buildVer)
 	}
 	return buildFlags
 }
