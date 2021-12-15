@@ -22,6 +22,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/goplus/gop/cmd/internal/bug"
 	"github.com/qiniu/x/log"
 
 	"github.com/goplus/gop/cmd/internal/base"
@@ -52,6 +53,7 @@ func init() {
 		mod.Cmd,
 		install.Cmd,
 		build.Cmd,
+		bug.Cmd,
 		clean.Cmd,
 		env.Cmd,
 		test.Cmd,
