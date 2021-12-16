@@ -103,8 +103,8 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
 
 	// pkgRef object
 	if (flags & clIdentSelectorExpr) != 0 {
-		if pkgRef, ok := ctx.findImport(name); ok {
-			return pkgRef
+		if pr, ok := ctx.findImport(name); ok {
+			return pr
 		}
 	}
 
@@ -420,7 +420,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, flags int) {
 	}
 	var fn fnType
 	fnt := ctx.cb.Get(-1).Type
-	ellipsis := (v.Ellipsis != gotoken.NoPos)
+	ellipsis := v.Ellipsis != gotoken.NoPos
 	for i, arg := range v.Args {
 		switch expr := arg.(type) {
 		case *ast.LambdaExpr:
@@ -857,7 +857,7 @@ var (
 
 func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr) {
 	pkg, cb := ctx.pkg, ctx.cb
-	useClosure := (v.Tok == token.NOT || v.Default != nil)
+	useClosure := v.Tok == token.NOT || v.Default != nil
 	if !useClosure && (cb.Scope().Parent() == types.Universe) {
 		panic("TODO: can't use expr? in global")
 	}
