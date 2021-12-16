@@ -103,7 +103,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
 
 	// pkgRef object
 	if (flags & clIdentSelectorExpr) != 0 {
-		if pkgRef, ok := ctx.imports[name]; ok {
+		if pkgRef, ok := ctx.findImport(name); ok {
 			return pkgRef
 		}
 	}
