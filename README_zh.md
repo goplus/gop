@@ -17,6 +17,8 @@
 
 当前，我们推荐下载源代码来安装 Go+。
 
+注意：需要 go1.16 或更高版本
+
 ```bash
 git clone https://github.com/goplus/gop.git
 cd gop
