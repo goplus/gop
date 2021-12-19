@@ -17,6 +17,8 @@
 
 For now, we suggest you install Go+ from source code.
 
+Note: Requires go1.16 or later
+
 ```bash
 git clone https://github.com/goplus/gop.git
 cd gop
