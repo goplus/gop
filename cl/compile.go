@@ -305,6 +305,23 @@ type blockCtx struct {
 	fileType     int16
 }
 
+func (bc *blockCtx) findImport(name string) (pr *gox.PkgRef, ok bool) {
+	if pr, ok = bc.imports[name]; ok {
+		return
+	}
+	for k, v := range bc.imports {
+		v.EnsureImported()
+		if v.Types != nil {
+			if v.Types.Name() != k {
+				delete(bc.imports, k)
+				bc.imports[v.Types.Name()] = v
+			}
+		}
+	}
+	pr, ok = bc.imports[name]
+	return
+}
+
 func newCodeErrorf(pos *token.Position, format string, args ...interface{}) *gox.CodeError {
 	return &gox.CodeError{Pos: pos, Msg: fmt.Sprintf(format, args...)}
 }

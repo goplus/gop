@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package env
 
 import (
@@ -66,7 +67,6 @@ func runCmd(_ *base.Command, args []string) {
 	}
 
 	gopEnv["BUILDDATE"] = env.BuildDate()
-	gopEnv["BUILDREV"] = env.BuildRevision()
 	gopEnv["GOPVERSION"] = env.Version()
 	gopEnv["GOPROOT"] = env.GOPROOT()
 	gopEnv["GOPATH"] = env.GOPATH()

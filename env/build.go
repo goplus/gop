@@ -17,17 +17,11 @@
 package env
 
 // The value of variables come form
-// `go build -ldflags '-X "buildDate=xxxxx" -X "buildCommit=xxxx"'`
+// `go build -ldflags '-X "buildDate=xxxxx"`
 var (
-	buildDate   string
-	buildCommit string
+	buildDate string
 )
 
 func BuildDate() string {
 	return buildDate
-}
-
-// BuildRevision returns build revision id.
-func BuildRevision() string {
-	return buildCommit
 }

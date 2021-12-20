@@ -146,8 +146,8 @@ func toChanType(ctx *blockCtx, v *ast.ChanType) *types.Chan {
 
 func toExternalType(ctx *blockCtx, v *ast.SelectorExpr) types.Type {
 	name := v.X.(*ast.Ident).Name
-	if pkgRef, ok := ctx.imports[name]; ok {
-		o := pkgRef.TryRef(v.Sel.Name)
+	if pr, ok := ctx.findImport(name); ok {
+		o := pr.TryRef(v.Sel.Name)
 		if t, ok := o.(*types.TypeName); ok {
 			return t.Type()
 		}
