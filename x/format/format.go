@@ -17,9 +17,8 @@
 package format
 
 import (
-	"go/token"
-
 	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/token"
 )
 
 // -----------------------------------------------------------------------------

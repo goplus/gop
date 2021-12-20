@@ -17,6 +17,7 @@
 package format
 
 import (
+	"go/token"
 	"log"
 	"reflect"
 
@@ -138,6 +139,9 @@ func formatRangeExpr(ctx *formatCtx, v *ast.RangeExpr) {
 }
 
 func formatComprehensionExpr(ctx *formatCtx, v *ast.ComprehensionExpr) {
+	old := ctx.enterBlock()
+	defer ctx.leaveBlock(old)
+
 	formatForPhrases(ctx, v.Fors)
 	formatExpr(ctx, v.Elt, &v.Elt)
 }
@@ -170,7 +174,7 @@ func formatCallExpr(ctx *formatCtx, v *ast.CallExpr) {
 func formatSelectorExpr(ctx *formatCtx, v *ast.SelectorExpr, ref *ast.Expr) {
 	switch x := v.X.(type) {
 	case *ast.Ident:
-		if ctx.scp.containsVar(x.Name) {
+		if _, o := ctx.scope.LookupParent(x.Name, token.NoPos); o != nil {
 			break
 		}
 		if imp, ok := ctx.imports[x.Name]; ok {
@@ -187,9 +191,9 @@ func formatSelectorExpr(ctx *formatCtx, v *ast.SelectorExpr, ref *ast.Expr) {
 
 func formatBlockStmt(ctx *formatCtx, stmt *ast.BlockStmt) {
 	if stmt != nil {
-		ctx.scp.enterScope()
+		old := ctx.enterBlock()
+		defer ctx.leaveBlock(old)
 		formatStmts(ctx, stmt.List)
-		ctx.scp.exitScope()
 	}
 }
 
@@ -212,8 +216,7 @@ func formatStmt(ctx *formatCtx, stmt ast.Stmt) {
 	case *ast.RangeStmt:
 		formatRangeStmt(ctx, v)
 	case *ast.ForPhraseStmt:
-		formatForPhrase(ctx, v.ForPhrase)
-		formatBlockStmt(ctx, v.Body)
+		formatForPhraseStmt(ctx, v)
 	case *ast.IfStmt:
 		formatIfStmt(ctx, v)
 	case *ast.CaseClause:
@@ -263,18 +266,27 @@ func formatAssignStmt(ctx *formatCtx, v *ast.AssignStmt) {
 }
 
 func formatSwitchStmt(ctx *formatCtx, v *ast.SwitchStmt) {
+	old := ctx.enterBlock()
+	defer ctx.leaveBlock(old)
+
 	formatStmt(ctx, v.Init)
 	formatExpr(ctx, v.Tag, &v.Tag)
 	formatBlockStmt(ctx, v.Body)
 }
 
 func formatTypeSwitchStmt(ctx *formatCtx, v *ast.TypeSwitchStmt) {
+	old := ctx.enterBlock()
+	defer ctx.leaveBlock(old)
+
 	formatStmt(ctx, v.Init)
 	formatStmt(ctx, v.Assign)
 	formatBlockStmt(ctx, v.Body)
 }
 
 func formatIfStmt(ctx *formatCtx, v *ast.IfStmt) {
+	old := ctx.enterBlock()
+	defer ctx.leaveBlock(old)
+
 	formatStmt(ctx, v.Init)
 	formatExpr(ctx, v.Cond, &v.Cond)
 	formatBlockStmt(ctx, v.Body)
@@ -282,13 +294,27 @@ func formatIfStmt(ctx *formatCtx, v *ast.IfStmt) {
 }
 
 func formatRangeStmt(ctx *formatCtx, v *ast.RangeStmt) {
+	old := ctx.enterBlock()
+	defer ctx.leaveBlock(old)
+
 	formatExpr(ctx, v.Key, &v.Key)
 	formatExpr(ctx, v.Value, &v.Value)
 	formatExpr(ctx, v.X, &v.X)
 	formatBlockStmt(ctx, v.Body)
 }
 
+func formatForPhraseStmt(ctx *formatCtx, v *ast.ForPhraseStmt) {
+	old := ctx.enterBlock()
+	defer ctx.leaveBlock(old)
+
+	formatForPhrase(ctx, v.ForPhrase)
+	formatBlockStmt(ctx, v.Body)
+}
+
 func formatForStmt(ctx *formatCtx, v *ast.ForStmt) {
+	old := ctx.enterBlock()
+	defer ctx.leaveBlock(old)
+
 	formatStmt(ctx, v.Init)
 	formatExpr(ctx, v.Cond, &v.Cond)
 	formatBlockStmt(ctx, v.Body)
