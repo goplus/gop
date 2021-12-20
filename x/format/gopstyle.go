@@ -18,6 +18,7 @@ package format
 
 import (
 	"bytes"
+	"go/types"
 	"path"
 	"strconv"
 
@@ -142,14 +143,24 @@ type importCtx struct {
 
 type formatCtx struct {
 	imports map[string]*importCtx
-	scp     *scope
+	scope   *types.Scope
+}
+
+func (ctx *formatCtx) enterBlock() *types.Scope {
+	old := ctx.scope
+	ctx.scope = types.NewScope(old, token.NoPos, token.NoPos, "")
+	return old
+}
+
+func (ctx *formatCtx) leaveBlock(old *types.Scope) {
+	ctx.scope = old
 }
 
 func formatFile(file *ast.File) {
 	var funcs []*ast.FuncDecl
 	ctx := &formatCtx{
 		imports: make(map[string]*importCtx),
-		scp:     newScope(),
+		scope:   types.NewScope(nil, token.NoPos, token.NoPos, ""),
 	}
 	for _, decl := range file.Decls {
 		switch v := decl.(type) {
@@ -200,7 +211,10 @@ func formatGenDecl(ctx *formatCtx, v *ast.GenDecl) {
 			spec := item.(*ast.ValueSpec)
 			formatType(ctx, spec.Type, &spec.Type)
 			formatExprs(ctx, spec.Values)
-			fillVarCtx(ctx, spec)
+			for _, name := range spec.Names {
+				o := types.NewParam(token.NoPos, nil, name.Name, types.Typ[types.UntypedNil])
+				ctx.scope.Insert(o)
+			}
 		}
 	case token.TYPE:
 		for _, item := range v.Specs {
@@ -215,13 +229,12 @@ func formatFuncDecl(ctx *formatCtx, v *ast.FuncDecl) {
 	formatBlockStmt(ctx, v.Body)
 }
 
+/*
 func fillVarCtx(ctx *formatCtx, spec *ast.ValueSpec) {
 	for _, name := range spec.Names {
 		ctx.scp.addVar(name.Name)
 	}
 }
-
-// -----------------------------------------------------------------------------
 
 type scope struct {
 	vars []map[string]bool
@@ -254,3 +267,5 @@ func (s *scope) enterScope() {
 func (s *scope) exitScope() {
 	s.vars = s.vars[:len(s.vars)-1]
 }
+*/
+// -----------------------------------------------------------------------------
