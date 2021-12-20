@@ -146,6 +146,11 @@ type formatCtx struct {
 	scope   *types.Scope
 }
 
+func (ctx *formatCtx) insert(name string) {
+	o := types.NewParam(token.NoPos, nil, name, types.Typ[types.UntypedNil])
+	ctx.scope.Insert(o)
+}
+
 func (ctx *formatCtx) enterBlock() *types.Scope {
 	old := ctx.scope
 	ctx.scope = types.NewScope(old, token.NoPos, token.NoPos, "")
@@ -212,8 +217,7 @@ func formatGenDecl(ctx *formatCtx, v *ast.GenDecl) {
 			formatType(ctx, spec.Type, &spec.Type)
 			formatExprs(ctx, spec.Values)
 			for _, name := range spec.Names {
-				o := types.NewParam(token.NoPos, nil, name.Name, types.Typ[types.UntypedNil])
-				ctx.scope.Insert(o)
+				ctx.insert(name.Name)
 			}
 		}
 	case token.TYPE:
