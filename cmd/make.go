@@ -27,12 +27,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
-	"strconv"
 	"strings"
 	"time"
-
-	"github.com/goplus/gop/env"
 )
 
 func checkPathExist(path string, isDir bool) bool {
@@ -115,6 +113,11 @@ func getGitBranch() string {
 		return ""
 	}
 	return trimRight(branch)
+}
+
+func checkoutBranch(branch string) (string, error) {
+	_, stderr, err := execCommand("git", "checkout", branch)
+	return stderr, err
 }
 
 func isGitRepo() bool {
@@ -339,32 +342,6 @@ func isInChina() bool {
 	return false
 }
 
-// generateNewVersion returns next version of gop
-// A valid version should be like: vMajor.Minor.Patch. currently, only update Patch part.
-func generateNewVersion() string {
-	version := findGopVersion()
-	// Such as: v1.2.3-beta
-	segments := strings.Split(version, "-")
-	version = segments[0]
-	versionSegments := strings.Split(version, ".")
-	patchIndex := len(versionSegments) - 1
-
-	patch, err := strconv.Atoi(versionSegments[patchIndex])
-	if err != nil {
-		log.Fatalf("Error: can't generate new version for: '%s'\n", version)
-	}
-
-	versionSegments[patchIndex] = strconv.Itoa(patch + 1)
-	newVersion := strings.Join(versionSegments, ".")
-
-	if len(segments) > 1 {
-		segments[0] = newVersion
-		return strings.Join(segments, "-")
-	}
-
-	return newVersion
-}
-
 // findGopVersion returns current version of gop
 func findGopVersion() string {
 	// Read version from VERSION file
@@ -372,9 +349,7 @@ func findGopVersion() string {
 		data, err := os.ReadFile(versionFile)
 		if err == nil {
 			version := trimRight(string(data))
-			if _, ok := validateVersion(version); ok {
-				return version
-			}
+			return version
 		}
 	}
 
@@ -382,31 +357,11 @@ func findGopVersion() string {
 	if !isGitRepo() {
 		log.Fatal("Error: must be a git repo or a VERSION file existed.")
 	}
-
 	version := getBuildVer() // Closet tag on git log
-	branch := getGitBranch()
-	allTags, _, _ := execCommand("git", "tag")
-	allTags = trimRight(allTags)
-
-	// On release branch
-	// Note: github.com/goplus/gop/env.MainVersion must be sync with release branch name
-	if _, ok := validateVersion(branch); ok {
-		if strings.Contains(allTags, branch) { // New patch release
-			return version
-		}
-		return branch + ".0" // New minor release, the value should be auto incremented by generateNewVersion
-	}
-
-	// On non-release branch
 	return version
 }
 
-// validateVersion reports if passed version is matched with gop/env.MainVersion
-func validateVersion(version string) (string, bool) {
-	mainVersion := "v" + env.MainVersion
-	return mainVersion, strings.HasPrefix(version, mainVersion)
-}
-
+// releaseNewVersion tags the repo with provided new tag, and writes new tag into VERSION file.
 func releaseNewVersion(tag string) {
 	if !isGitRepo() {
 		log.Fatal("Error: Releasing a new version could only be operated under a git repo.")
@@ -414,30 +369,35 @@ func releaseNewVersion(tag string) {
 	println("Start releasing new version")
 
 	version := tag
-	if tag == "auto" {
-		version = generateNewVersion()
+
+	re := regexp.MustCompile(`^v\d+?\.\d+?`)
+	releaseBranch := re.FindString(version)
+	sourceBranch := getGitBranch()
+
+	if releaseBranch == "" {
+		log.Fatal("Error: A valid version should be has form: vx.y.z")
 	}
 
-	// Validate version
-	mainVersion, ok := validateVersion(version)
-	if !ok {
-		log.Fatalf("Error: '%s' is invalid, a valid tag should be like: %s.x", version, mainVersion)
-	}
-
-	if getGitBranch() != mainVersion {
-		log.Fatal("Error: Releasing a new version could only be operated on a release git branch.")
+	// Checkout to release breanch
+	if stderr, err := checkoutBranch(releaseBranch); err != nil {
+		log.Fatalf("Error: checkout to release branch: %s failed with error: %v.", releaseBranch, stderr)
 	}
 
 	fmt.Printf("\nReleasing new version: %s\n\n", version)
 
-	// Store new version
+	// Cache new version
 	if err := os.WriteFile(versionFile, []byte(version), 0666); err != nil {
-		log.Fatalf("Error: store new version with error: %v\n", err)
+		log.Fatalf("Error: cache new version with error: %v\n", err)
 	}
 
 	// Tag the source code
 	if _, stderr, err := execCommand("git", "tag", version); err != nil {
 		log.Fatalf("Error: tag the source code with error: %v\n", stderr)
+	}
+
+	// Checkout back to source branch
+	if stderr, err := checkoutBranch(sourceBranch); err != nil {
+		log.Fatalf("Error: checkout to source branch: %s failed with error: %v.", sourceBranch, stderr)
 	}
 
 	println("End releasing new version:", tag)
@@ -449,7 +409,7 @@ func main() {
 	isUninstall := flag.Bool("uninstall", false, "Uninstall Go+")
 	isGoProxy := flag.Bool("proxy", false, "Set GOPROXY for people in China")
 	isAutoProxy := flag.Bool("autoproxy", false, "Check to set GOPROXY automatically")
-	tag := flag.String("tag", "", "Set next release tag, pass 'auto' to get an auto-generated new version")
+	tag := flag.String("tag", "", "Release an new version with specified tag")
 
 	flag.Parse()
 

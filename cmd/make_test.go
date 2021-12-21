@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 	"testing"
@@ -35,6 +34,12 @@ func checkPathExist(path string, isDir bool) bool {
 
 func trimRight(s string) string {
 	return strings.TrimRight(s, " \t\r\n")
+}
+
+func getBranch() string {
+	gitCmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+	b, _ := gitCmd.CombinedOutput()
+	return trimRight(string(b))
 }
 
 func detectGoBinPath() string {
@@ -110,47 +115,54 @@ func TestAllScript(t *testing.T) {
 	}
 }
 
-func getBranch() string {
-	gitCmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
-	b, _ := gitCmd.CombinedOutput()
-	return trimRight(string(b))
-}
-
 func TestTagFlagInGitRepo(t *testing.T) {
 	os.Chdir(gopRoot)
 
 	// Setup
 	tag := "v1.0.90"
-	autoVersion := "v1.0.91"
+	tag2 := "v1.0.91"
+	bigtag := "v1.999.12"
 	releaseBranch := "v1.0"
-	currentBranch := getBranch()
-	releaseBranchExisted := false
+	nonExistBranch := "non-exist-branch"
+	sourceBranch := getBranch()
 
 	// Teardown
 	t.Cleanup(func() {
-		gitCmd := exec.Command("git", "checkout", currentBranch)
+		gitCmd := exec.Command("git", "tag", "-d", tag)
 		gitCmd.CombinedOutput()
-		if !releaseBranchExisted {
-			gitCmd = exec.Command("git", "branch", "-d", releaseBranch)
-			gitCmd.CombinedOutput()
-		}
-		gitCmd = exec.Command("git", "tag", "-d", tag)
+		gitCmd = exec.Command("git", "tag", "-d", tag2)
 		gitCmd.CombinedOutput()
-		gitCmd = exec.Command("git", "tag", "-d", autoVersion)
+		gitCmd = exec.Command("git", "checkout", sourceBranch)
+		gitCmd.CombinedOutput()
+		gitCmd = exec.Command("git", "branch", "-d", nonExistBranch)
 		gitCmd.CombinedOutput()
 		if checkPathExist(versionFile, false) {
 			os.Remove(versionFile)
 		}
 	})
 
-	t.Run("failed tag operation", func(t *testing.T) {
-		cmd := exec.Command("go", "run", installer, "--tag", tag)
+	t.Run("release new version with bad tag", func(t *testing.T) {
+		cmd := exec.Command("go", "run", installer, "--tag", "xyz")
 		if _, err := cmd.CombinedOutput(); err == nil {
-			t.Fatal("Failed: Release on a non-release branch should be failed.")
+			t.Fatal("Failed: release a bad tag should be failed.")
 		}
 	})
 
-	t.Run("successfull tag operation with specified tag", func(t *testing.T) {
+	t.Run("empty tag should failed", func(t *testing.T) {
+		cmd := exec.Command("go", "run", installer, "--tag", "")
+		if out, err := cmd.CombinedOutput(); err != nil || !strings.Contains(string(out), "Usage") {
+			t.Fatalf("Failed: %v, out: %s\n", err, out)
+		}
+	})
+
+	t.Run("failed when release branch corresponding to tag does not exists", func(t *testing.T) {
+		cmd := exec.Command("go", "run", installer, "--tag", bigtag)
+		if _, err := cmd.CombinedOutput(); err == nil {
+			t.Fatal("Failed: a corresponding release branch does not exists should be failed.")
+		}
+	})
+
+	t.Run("release new version on release branch", func(t *testing.T) {
 		gitCmd := exec.Command("git", "checkout", "-b", releaseBranch)
 		if output, err := gitCmd.CombinedOutput(); err != nil {
 			if strings.Contains(string(output), "already exists") {
@@ -158,7 +170,6 @@ func TestTagFlagInGitRepo(t *testing.T) {
 				if output, err := gitCmd.CombinedOutput(); err != nil {
 					t.Fatalf("Failed: %v, output: %s\n", err, output)
 				}
-				releaseBranchExisted = true
 			} else {
 				t.Fatalf("Failed: %v, output: %s\n", err, output)
 			}
@@ -166,7 +177,7 @@ func TestTagFlagInGitRepo(t *testing.T) {
 
 		cmd := exec.Command("go", "run", installer, "--tag", tag)
 		if _, err := cmd.CombinedOutput(); err != nil {
-			t.Fatalf("Failed: Release tag: %s on branch: %s should not be failed", tag, releaseBranch)
+			t.Fatalf("Failed: release tag: %s on branch: %s should not be failed", tag, releaseBranch)
 		}
 
 		if !checkPathExist(versionFile, false) {
@@ -177,32 +188,43 @@ func TestTagFlagInGitRepo(t *testing.T) {
 			t.Fatalf("Failed: content of VERSION file: '%s' not match tag: %s", data, tag)
 		}
 
+		// Make sure tag exists.
 		gitCmd = exec.Command("git", "tag")
 		if allTags, _ := gitCmd.CombinedOutput(); !strings.Contains(string(allTags), tag) {
 			t.Fatalf("Failed: %s tag not found in tag list of this git repo.\n", tag)
 		}
 	})
 
-	t.Run("successfull tag operation with auto generated tag", func(t *testing.T) {
-		cmd := exec.Command("go", "run", installer, "--tag", "auto")
+	t.Run("release new version on non-release branch", func(t *testing.T) {
+		gitCmd := exec.Command("git", "checkout", "-b", nonExistBranch)
+		if output, err := gitCmd.CombinedOutput(); err != nil {
+			if strings.Contains(string(output), "already exists") {
+				gitCmd = exec.Command("git", "checkout", nonExistBranch)
+				if output, err := gitCmd.CombinedOutput(); err != nil {
+					t.Fatalf("Failed: %v, output: %s\n", err, output)
+				}
+			} else {
+				t.Fatalf("Failed: %v, output: %s\n", err, output)
+			}
+		}
+
+		cmd := exec.Command("go", "run", installer, "--tag", tag2)
 		if out, err := cmd.CombinedOutput(); err != nil {
-			t.Fatalf("Failed: %v, out: %s\n", err, out)
+			t.Log(string(out))
+			t.Fatalf("Failed: release tag: %s on branch: %s should not be failed", tag2, nonExistBranch)
 		}
 
-		if data, _ := os.ReadFile(versionFile); string(data) != autoVersion {
-			t.Fatalf("Failed: content of VERSION file: '%s' not match tag: %s", data, autoVersion)
+		if !checkPathExist(versionFile, false) {
+			t.Fatal("Failed: a VERSION file not found.")
 		}
 
-		gitCmd := exec.Command("git", "tag")
-		if allTags, _ := gitCmd.CombinedOutput(); !strings.Contains(string(allTags), autoVersion) {
-			t.Fatalf("Failed: %s tag not found in tag list of this git repo.\n", autoVersion)
+		if data, _ := os.ReadFile(versionFile); string(data) != tag2 {
+			t.Fatalf("Failed: content of VERSION file: '%s' not match tag: %s", data, tag2)
 		}
-	})
 
-	t.Run("empty tag", func(t *testing.T) {
-		cmd := exec.Command("go", "run", installer, "--tag", "")
-		if out, err := cmd.CombinedOutput(); err != nil || !strings.Contains(string(out), "Usage") {
-			t.Fatalf("Failed: %v, out: %s\n", err, out)
+		gitCmd = exec.Command("git", "tag")
+		if allTags, _ := gitCmd.CombinedOutput(); !strings.Contains(string(allTags), tag2) {
+			t.Fatalf("Failed: %s tag not found in tag list of this git repo.\n", tag)
 		}
 	})
 }
@@ -227,14 +249,6 @@ func TestTagFlagInNonGitRepo(t *testing.T) {
 
 	t.Run("specify new tag", func(t *testing.T) {
 		cmd := exec.Command("go", "run", installer, "--tag", "v1.0.98")
-		output, err := cmd.CombinedOutput()
-		if err == nil || !strings.Contains(string(output), "Error") {
-			t.Fatal("Failed: release on a non-git repo should be failed.")
-		}
-	})
-
-	t.Run("specify auto tag", func(t *testing.T) {
-		cmd := exec.Command("go", "run", installer, "--tag", "auto")
 		output, err := cmd.CombinedOutput()
 		if err == nil || !strings.Contains(string(output), "Error") {
 			t.Fatal("Failed: release on a non-git repo should be failed.")
@@ -295,160 +309,20 @@ func TestInstallInNonGitRepo(t *testing.T) {
 	})
 }
 
-func TestReleaseMinorVersion(t *testing.T) {
-	os.Chdir(gopRoot)
-
-	// Setup
-	nextVersion := "v1.98.1"
-	smallNextVersion := "v1.98.2"
-	bigNextVersion := "v1.98.98"
-	mainVersion := "1.98"
-	releaseBranch := "v" + mainVersion
-	releaseBranchExisted := false
-	currentBranch := getBranch()
-	// Modify gop/env.MainVersion to be test value
-	mainVersionContent, _ := os.ReadFile(mainVersionFile)
-	re := regexp.MustCompile(`(?sm)(^const \(.*?MainVersion = ")\d+.\d+(".*?\))`)
-	newContent := re.ReplaceAll(mainVersionContent, []byte("${1}"+mainVersion+"${2}"))
-	if err := os.WriteFile(mainVersionFile, newContent, 0666); err != nil {
-		t.Fatalf("Error: %v, Modify %s file failed.\n", err, mainVersionFile)
-	}
-
-	// Teardown
-	t.Cleanup(func() {
-		gitCmd := exec.Command("git", "checkout", currentBranch)
-		gitCmd.CombinedOutput()
-		if !releaseBranchExisted {
-			gitCmd = exec.Command("git", "branch", "-d", releaseBranch)
-			gitCmd.CombinedOutput()
-		}
-		gitCmd = exec.Command("git", "tag", "-d", nextVersion)
-		gitCmd.CombinedOutput()
-		gitCmd = exec.Command("git", "tag", "-d", smallNextVersion)
-		gitCmd.CombinedOutput()
-		gitCmd = exec.Command("git", "tag", "-d", bigNextVersion)
-		gitCmd.CombinedOutput()
-		if checkPathExist(versionFile, false) {
-			os.Remove(versionFile)
-		}
-		if err := os.WriteFile(mainVersionFile, mainVersionContent, 0666); err != nil {
-			t.Fatalf("Error: %v, Restore %s file failed.\n", err, mainVersionFile)
-		}
-	})
-
-	t.Run("auto generates new version", func(t *testing.T) {
-		gitCmd := exec.Command("git", "checkout", "-b", releaseBranch)
-		if output, err := gitCmd.CombinedOutput(); err != nil {
-			if strings.Contains(string(output), "already exists") {
-				gitCmd = exec.Command("git", "checkout", releaseBranch)
-				if output, err := gitCmd.CombinedOutput(); err != nil {
-					t.Fatalf("Failed: %v, output: %s\n", err, output)
-				}
-				releaseBranchExisted = true
-			} else {
-				t.Fatalf("Failed: %v, output: %s\n", err, output)
-			}
-		}
-
-		cmd := exec.Command("go", "run", installer, "--tag", "auto")
-		if out, err := cmd.CombinedOutput(); err != nil {
-			t.Log(string(out))
-			t.Fatalf("Failed: %v, auto release tag on branch: %s should not be failed", err, releaseBranch)
-		}
-
-		if !checkPathExist(versionFile, false) {
-			t.Fatal("Failed: a VERSION file not found.")
-		}
-
-		if data, _ := os.ReadFile(versionFile); string(data) != nextVersion {
-			t.Fatalf("Failed: content of VERSION file: '%s' not match tag: %s", data, nextVersion)
-		}
-
-		gitCmd = exec.Command("git", "tag")
-		if allTags, _ := gitCmd.CombinedOutput(); !strings.Contains(string(allTags), nextVersion) {
-			t.Fatalf("Failed: %s tag not found in tag list of this git repo.\n", nextVersion)
-		}
-	})
-
-	t.Run("another auto generate operation", func(t *testing.T) {
-		cmd := exec.Command("go", "run", installer, "--tag", "auto")
-		if out, err := cmd.CombinedOutput(); err != nil {
-			t.Log(string(out))
-			t.Fatalf("Failed: %v, auto release tag on branch: %s should not be failed", err, releaseBranch)
-		}
-
-		if !checkPathExist(versionFile, false) {
-			t.Fatal("Failed: a VERSION file not found.")
-		}
-
-		if data, _ := os.ReadFile(versionFile); string(data) != smallNextVersion {
-			t.Fatalf("Failed: content of VERSION file: '%s' not match tag: %s", data, smallNextVersion)
-		}
-
-		gitCmd := exec.Command("git", "tag")
-		if allTags, _ := gitCmd.CombinedOutput(); !strings.Contains(string(allTags), smallNextVersion) {
-			t.Fatalf("Failed: %s tag not found in tag list of this git repo.\n", smallNextVersion)
-		}
-	})
-
-	t.Run("manual specify new version", func(t *testing.T) {
-		cmd := exec.Command("go", "run", installer, "--tag", bigNextVersion)
-		if out, err := cmd.CombinedOutput(); err != nil {
-			t.Log(string(out))
-			t.Fatalf("Failed: Release tag: %s on branch: %s should not be failed", bigNextVersion, releaseBranch)
-		}
-
-		if !checkPathExist(versionFile, false) {
-			t.Fatal("Failed: a VERSION file not found.")
-		}
-
-		if data, _ := os.ReadFile(versionFile); string(data) != bigNextVersion {
-			t.Fatalf("Failed: content of VERSION file: '%s' not match tag: %s", data, bigNextVersion)
-		}
-
-		gitCmd := exec.Command("git", "tag")
-		if allTags, _ := gitCmd.CombinedOutput(); !strings.Contains(string(allTags), bigNextVersion) {
-			t.Fatalf("Failed: %s tag not found in tag list of this git repo.\n", bigNextVersion)
-		}
-	})
-}
-
 func TestHandleMultiFlags(t *testing.T) {
 	os.Chdir(gopRoot)
 
 	// Setup
 	nextVersion := "v1.0.988"
-	releaseBranch := "v1.0"
-	releaseBranchExisted := false
-	currentBranch := getBranch()
 
 	// Teardown
 	t.Cleanup(func() {
-		gitCmd := exec.Command("git", "checkout", currentBranch)
-		gitCmd.CombinedOutput()
-		if !releaseBranchExisted {
-			gitCmd = exec.Command("git", "branch", "-d", releaseBranch)
-			gitCmd.CombinedOutput()
-		}
-		gitCmd = exec.Command("git", "tag", "-d", nextVersion)
+		gitCmd := exec.Command("git", "tag", "-d", nextVersion)
 		gitCmd.CombinedOutput()
 		if checkPathExist(versionFile, false) {
 			os.Remove(versionFile)
 		}
 	})
-
-	gitCmd := exec.Command("git", "checkout", "-b", releaseBranch)
-	if output, err := gitCmd.CombinedOutput(); err != nil {
-		if strings.Contains(string(output), "already exists") {
-			gitCmd = exec.Command("git", "checkout", releaseBranch)
-			if output, err := gitCmd.CombinedOutput(); err != nil {
-				t.Fatalf("Failed: %v, output: %s\n", err, output)
-			}
-			releaseBranchExisted = true
-		} else {
-			t.Fatalf("Failed: %v, output: %s\n", err, output)
-		}
-	}
 
 	cmd := exec.Command("go", "run", installer, "--install", "--test", "--uninstall", "--tag", nextVersion)
 	if output, err := cmd.CombinedOutput(); err != nil {
