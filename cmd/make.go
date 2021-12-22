@@ -27,6 +27,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -39,6 +40,10 @@ func checkPathExist(path string, isDir bool) bool {
 		return isExists && stat.IsDir()
 	}
 	return isExists && !stat.IsDir()
+}
+
+func trimRight(s string) string {
+	return strings.TrimRight(s, " \t\r\n")
 }
 
 // Path returns single path to check
@@ -77,6 +82,7 @@ var commandExecuteEnv = initCommandExecuteEnv
 
 // Always put `gop` command as the first item, as it will be referenced by below code.
 var gopBinFiles = []string{"gop", "gopfmt"}
+var versionFile = filepath.Join(gopRoot, "VERSION")
 
 const (
 	inWindows = (runtime.GOOS == "windows")
@@ -101,23 +107,26 @@ func execCommand(command string, arg ...string) (string, string, error) {
 	return stdout.String(), stderr.String(), err
 }
 
-func getRevCommit(tag string) string {
-	commit, stderr, err := execCommand("git", "rev-parse", "--verify", tag)
-	if err != nil || stderr != "" {
+func getGitBranch() string {
+	branch, _, err := execCommand("git", "rev-parse", "--abbrev-ref", "HEAD")
+	if err != nil {
 		return ""
 	}
-	return strings.TrimRight(commit, "\n")
+	return trimRight(branch)
 }
 
-/*
-func getGitInfo() (string, bool) {
-	gitDir := filepath.Join(gopRoot, ".git")
-	if checkPathExist(gitDir, true) {
-		return getRevCommit("HEAD"), true
-	}
-	return "", false
+func checkoutBranch(branch string) (string, error) {
+	_, stderr, err := execCommand("git", "checkout", branch)
+	return stderr, err
 }
-*/
+
+func isGitRepo() bool {
+	gitDir, _, err := execCommand("git", "rev-parse", "--git-dir")
+	if err != nil {
+		return false
+	}
+	return checkPathExist(filepath.Join(gopRoot, trimRight(gitDir)), true)
+}
 
 func getBuildDateTime() string {
 	now := time.Now()
@@ -129,7 +138,7 @@ func getBuildVer() string {
 	if err != nil || tagErr != "" {
 		return ""
 	}
-	return strings.TrimRight(tagRet, "\n")
+	return trimRight(tagRet)
 }
 
 func getGopBuildFlags() string {
@@ -139,9 +148,10 @@ func getGopBuildFlags() string {
 	}
 	buildFlags := fmt.Sprintf("-X \"github.com/goplus/gop/env.defaultGopRoot=%s\"", defaultGopRoot)
 	buildFlags += fmt.Sprintf(" -X \"github.com/goplus/gop/env.buildDate=%s\"", getBuildDateTime())
-	if buildVer := getBuildVer(); buildVer != "" {
-		buildFlags += fmt.Sprintf(" -X github.com/goplus/gop/env.buildVersion=%s", buildVer)
-	}
+
+	version := findGopVersion()
+	buildFlags += fmt.Sprintf(" -X \"github.com/goplus/gop/env.buildVersion=%s\"", version)
+
 	return buildFlags
 }
 
@@ -332,12 +342,74 @@ func isInChina() bool {
 	return false
 }
 
+// findGopVersion returns current version of gop
+func findGopVersion() string {
+	// Read version from VERSION file
+	if checkPathExist(versionFile, false) {
+		data, err := os.ReadFile(versionFile)
+		if err == nil {
+			version := trimRight(string(data))
+			return version
+		}
+	}
+
+	// Read version from git repo
+	if !isGitRepo() {
+		log.Fatal("Error: must be a git repo or a VERSION file existed.")
+	}
+	version := getBuildVer() // Closet tag on git log
+	return version
+}
+
+// releaseNewVersion tags the repo with provided new tag, and writes new tag into VERSION file.
+func releaseNewVersion(tag string) {
+	if !isGitRepo() {
+		log.Fatal("Error: Releasing a new version could only be operated under a git repo.")
+	}
+	println("Start releasing new version")
+
+	version := tag
+
+	re := regexp.MustCompile(`^v\d+?\.\d+?`)
+	releaseBranch := re.FindString(version)
+	sourceBranch := getGitBranch()
+
+	if releaseBranch == "" {
+		log.Fatal("Error: A valid version should be has form: vx.y.z")
+	}
+
+	// Checkout to release breanch
+	if stderr, err := checkoutBranch(releaseBranch); err != nil {
+		log.Fatalf("Error: checkout to release branch: %s failed with error: %v.", releaseBranch, stderr)
+	}
+
+	fmt.Printf("\nReleasing new version: %s\n\n", version)
+
+	// Cache new version
+	if err := os.WriteFile(versionFile, []byte(version), 0666); err != nil {
+		log.Fatalf("Error: cache new version with error: %v\n", err)
+	}
+
+	// Tag the source code
+	if _, stderr, err := execCommand("git", "tag", version); err != nil {
+		log.Fatalf("Error: tag the source code with error: %v\n", stderr)
+	}
+
+	// Checkout back to source branch
+	if stderr, err := checkoutBranch(sourceBranch); err != nil {
+		log.Fatalf("Error: checkout to source branch: %s failed with error: %v.", sourceBranch, stderr)
+	}
+
+	println("End releasing new version:", tag)
+}
+
 func main() {
 	isInstall := flag.Bool("install", false, "Install Go+")
 	isTest := flag.Bool("test", false, "Run testcases")
 	isUninstall := flag.Bool("uninstall", false, "Uninstall Go+")
 	isGoProxy := flag.Bool("proxy", false, "Set GOPROXY for people in China")
 	isAutoProxy := flag.Bool("autoproxy", false, "Check to set GOPROXY automatically")
+	tag := flag.String("tag", "", "Release an new version with specified tag")
 
 	flag.Parse()
 
@@ -354,6 +426,11 @@ func main() {
 	// Sort flags, for example: install flag should be checked earlier than test flag.
 	flags := []*bool{isInstall, isTest, isUninstall}
 	hasActionDone := false
+
+	if *tag != "" {
+		releaseNewVersion(*tag)
+		hasActionDone = true
+	}
 
 	for _, flag := range flags {
 		if *flag {
