@@ -28,7 +28,7 @@ import (
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/gengo"
-	"github.com/goplus/gop/cmd/internal/search"
+	"github.com/goplus/gop/cmd/internal/modload/search"
 	"github.com/goplus/gop/env"
 	"github.com/goplus/gop/x/mod/modfetch"
 	"github.com/goplus/gop/x/mod/modfile"
