@@ -17,8 +17,9 @@
 package gopmod
 
 import (
-	"os"
 	"path/filepath"
+
+	"github.com/goplus/gop/x/gopproj"
 )
 
 // -----------------------------------------------------------------------------
@@ -27,27 +28,34 @@ const (
 	FlagGoAsGoPlus = 1 << iota
 )
 
-func (p *Context) OpenProject(flags int, args ...string) (proj *Project, err error) {
+func (p *Context) OpenProject(flags int, src gopproj.Proj) (proj *Project, err error) {
+	switch v := src.(type) {
+	case *gopproj.FilesProj:
+		return p.OpenFiles(flags, v.Files...)
+	case *gopproj.DirProj:
+		return p.OpenDir(flags, v.Dir)
+	case *gopproj.PkgPathProj:
+		return p.OpenPkgPath(flags, v.Path)
+	}
+	panic("OpenProject: unexpected source")
+}
+
+func (p *Context) OpenFiles(flags int, args ...string) (proj *Project, err error) {
 	if len(args) != 1 {
 		return p.openFromGopFiles(args)
 	}
 	src := args[0]
-	fi, err := os.Stat(src)
-	if err != nil {
-		return
-	}
-	if fi.IsDir() {
-		return p.openFromDir(src)
-	}
 	if (flags&FlagGoAsGoPlus) == 0 && filepath.Ext(src) == ".go" {
 		return openFromGoFile(src)
 	}
 	return p.openFromGopFiles(args)
 }
 
-// -----------------------------------------------------------------------------
+func (p *Context) OpenDir(flags int, dir string) (proj *Project, err error) {
+	panic("todo")
+}
 
-func (p *Context) openFromDir(dir string) (proj *Project, err error) {
+func (p *Context) OpenPkgPath(flags int, pkgPath string) (proj *Project, err error) {
 	panic("todo")
 }
 
