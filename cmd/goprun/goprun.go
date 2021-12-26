@@ -15,7 +15,7 @@ func main() {
 		return
 	}
 	ctx := gopmod.New("")
-	goProj, err := ctx.OpenProject(0, os.Args[1])
+	goProj, err := ctx.OpenFiles(0, os.Args[1])
 	if err != nil {
 		fmt.Fprint(os.Stderr, "OpenProject failed:", err)
 		return
