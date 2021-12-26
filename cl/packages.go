@@ -17,17 +17,13 @@
 package cl
 
 import (
-	"fmt"
 	"io/ioutil"
-	"log"
-	"os"
 	"path/filepath"
 	"strings"
 	"syscall"
 
 	"github.com/goplus/gop/env"
 	"github.com/goplus/gop/x/mod/modfile"
-	"github.com/goplus/gox"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -48,44 +44,13 @@ func GetModulePath(file string) (pkgPath string, err error) {
 // -----------------------------------------------------------------------------
 
 type PkgsLoader struct {
-	cached     *gox.LoadPkgsCached
 	genGoPkg   func(pkgDir string, base *Config) error
-	LoadPkgs   gox.LoadPkgsFunc
 	BaseConfig *Config
 }
 
 func initPkgsLoader(base *Config) {
-	if base.ModRootDir == "" {
-		modfile, err := env.GOPMOD(base.Dir)
-		if err != nil {
-			log.Panicln("gop.mod not found:", err)
-		}
-		base.ModRootDir, _ = filepath.Split(modfile)
-	}
 	p := &PkgsLoader{genGoPkg: base.GenGoPkg, BaseConfig: base}
-	if base.PersistLoadPkgs {
-		if base.CacheFile == "" && base.ModRootDir != "" {
-			dir := base.ModRootDir + "/.gop"
-			os.MkdirAll(dir, 0755)
-			base.CacheFile = dir + "/gop.cache"
-		}
-	}
-	if base.CacheFile != "" {
-		p.cached = gox.OpenLoadPkgsCached(base.CacheFile, p.Load)
-		p.LoadPkgs = p.cached.Load
-	} else if base.CacheLoadPkgs {
-		p.LoadPkgs = gox.NewLoadPkgsCached(p.Load)
-	} else {
-		p.LoadPkgs = p.loadPkgsNoCache
-	}
 	base.PkgsLoader = p
-}
-
-func (p *PkgsLoader) Save() error {
-	if p.cached == nil {
-		return nil
-	}
-	return p.cached.Save()
 }
 
 func (p *PkgsLoader) GenGoPkgs(cfg *packages.Config, notFounds []string) (err error) {
@@ -112,50 +77,6 @@ func (p *PkgsLoader) GenGoPkgs(cfg *packages.Config, notFounds []string) (err er
 		}
 	}
 	return nil
-}
-
-func (p *PkgsLoader) Load(cfg *packages.Config, patterns ...string) ([]*packages.Package, error) {
-	var nretry int
-retry:
-	loadPkgs, err := packages.Load(cfg, patterns...)
-	if err == nil && p.genGoPkg != nil {
-		var notFounds []string
-		packages.Visit(loadPkgs, nil, func(pkg *packages.Package) {
-			const goGetCmd = "go get "
-			for _, err := range pkg.Errors {
-				if pos := strings.LastIndex(err.Msg, goGetCmd); pos > 0 {
-					notFounds = append(notFounds, err.Msg[pos+len(goGetCmd):])
-				}
-			}
-		})
-		if notFounds != nil {
-			if nretry > 1 {
-				log.Println("Load packages too many times:", notFounds)
-				return loadPkgs, err
-			}
-			if e := p.GenGoPkgs(cfg, notFounds); e == nil {
-				nretry++
-				goto retry
-			}
-		}
-	}
-	return loadPkgs, err
-}
-
-func (p *PkgsLoader) loadPkgsNoCache(at *gox.Package, imports map[string]*gox.PkgRef, pkgPaths ...string) int {
-	conf := at.InternalGetLoadConfig()
-	loadPkgs, err := p.Load(conf, pkgPaths...)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
-	if n := packages.PrintErrors(loadPkgs); n > 0 {
-		return n
-	}
-	for _, loadPkg := range loadPkgs {
-		gox.LoadGoPkg(at, imports, loadPkg)
-	}
-	return 0
 }
 
 // -----------------------------------------------------------------------------

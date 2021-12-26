@@ -8,3 +8,7 @@ require (
 	golang.org/x/mod v0.5.1
 	golang.org/x/tools v0.1.8
 )
+
+replace (
+	github.com/goplus/gox => /Users/xushiwei/work/gox
+)

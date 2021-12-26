@@ -43,19 +43,17 @@ func init() {
 	cl.SetDebug(cl.DbgFlagAll)
 	gblFset = token.NewFileSet()
 	baseConf = &cl.Config{
-		Fset:          gblFset,
-		ModRootDir:    "./internal",
-		GenGoPkg:      new(gengo.Runner).GenGoPkg,
-		CacheLoadPkgs: true,
-		NoFileLine:    true,
+		Fset:       gblFset,
+		GenGoPkg:   new(gengo.Runner).GenGoPkg,
+		NoFileLine: true,
 	}
 }
 
-func gopClTest(t *testing.T, gopcode, expected string, cachefile ...string) {
-	gopClTestEx(t, "main", gopcode, expected, cachefile...)
+func gopClTest(t *testing.T, gopcode, expected string) {
+	gopClTestEx(t, "main", gopcode, expected)
 }
 
-func gopClTestEx(t *testing.T, pkgname, gopcode, expected string, cachefile ...string) {
+func gopClTestEx(t *testing.T, pkgname, gopcode, expected string) {
 	cl.SetDisableRecover(true)
 	defer cl.SetDisableRecover(false)
 
@@ -66,13 +64,6 @@ func gopClTestEx(t *testing.T, pkgname, gopcode, expected string, cachefile ...s
 		t.Fatal("ParseFSDir:", err)
 	}
 	conf := *baseConf.Ensure()
-	if cachefile != nil {
-		copy := *baseConf
-		copy.PkgsLoader = nil
-		copy.CacheFile = cachefile[0]
-		copy.PersistLoadPkgs = true
-		conf = *copy.Ensure()
-	}
 	bar := pkgs[pkgname]
 	pkg, err := cl.NewPackage("github.com/goplus/gop/cl", bar, &conf)
 	if err != nil {
@@ -87,18 +78,10 @@ func gopClTestEx(t *testing.T, pkgname, gopcode, expected string, cachefile ...s
 	if result != expected {
 		t.Fatalf("\nResult:\n%s\nExpected:\n%s\n", result, expected)
 	}
-	if cachefile != nil {
-		if err = conf.PkgsLoader.Save(); err != nil {
-			t.Fatal("PkgsLoader.Save failed:", err)
-		}
-	}
 }
 
 func TestEmptyPkgsLoader(t *testing.T) {
 	l := &cl.PkgsLoader{}
-	if l.Save() != nil {
-		t.Fatal("PkgsLoader.Save failed")
-	}
 	if l.GenGoPkgs(nil, nil) != syscall.ENOENT {
 		t.Fatal("PkgsLoader.GenGoPkgs failed")
 	}
@@ -3265,7 +3248,7 @@ type Repo struct {
 func newRepo() Repo {
 	return Repo{Title: "Hi"}
 }
-`, "")
+`)
 	}
 }
 
