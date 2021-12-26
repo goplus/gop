@@ -19,10 +19,10 @@
 package mod
 
 import (
-	"log"
+	// "log"
 
 	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/cmd/internal/modload"
+	// "github.com/goplus/gop/cmd/internal/modload"
 )
 
 var cmdInit = &base.Command{
@@ -35,17 +35,19 @@ func init() {
 }
 
 func runInit(cmd *base.Command, args []string) {
-	if len(args) > 1 {
-		log.Fatalf("gop mod init: too many arguments")
-	}
-	var modPath string
-	if len(args) == 1 {
-		modPath = args[0]
-	}
+	panic("TODO: gop mod init")
+	/*	if len(args) > 1 {
+			log.Fatalf("gop mod init: too many arguments")
+		}
+		var modPath string
+		if len(args) == 1 {
+			modPath = args[0]
+		}
 
-	// modfetch.InitArgs(".", args...)
-	modload.CreateModFile(modPath) // does all the hard work
-	modload.LoadModFile()
-	modload.SyncGoMod()
-	modload.SyncGopMod()
+		// modfetch.InitArgs(".", args...)
+		modload.CreateModFile(modPath) // does all the hard work
+		modload.LoadModFile()
+		modload.SyncGoMod()
+		modload.SyncGopMod()
+	*/
 }

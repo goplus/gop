@@ -27,7 +27,7 @@ import (
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/cmd/internal/modload"
+	"github.com/goplus/gop/x/mod/modload"
 	"github.com/goplus/gox"
 )
 
@@ -99,7 +99,7 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 	dir := flag.Arg(0)
 	dir = strings.TrimSuffix(dir, "/...")
-	modload.Load()
+	modload.UpdateGoMod(dir)
 	runner := new(gengo.Runner)
 	runner.SetAfter(func(p *gengo.Runner, dir string, flags int) error {
 		errs := p.ResetErrors()

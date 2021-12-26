@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package modload
 
+/*
 import (
 	"bytes"
 	"errors"
@@ -35,14 +37,17 @@ import (
 )
 
 var (
-	modFile, classModFile *modfile.File
-
-	initialized bool
-	modRoot     string
-	Target      module.Version
+	ErrNoModRoot = errors.New(
+		"gop.mod or go.mod file not found in current directory or any parent directory")
 )
 
-var ErrNoModRoot = errors.New("gop.mod file not found in current directory or any parent directory; see 'gop help modules'")
+type Module struct {
+	modFile      *modfile.File
+	classModFile *modfile.File
+	modRoot      string
+	Target       module.Version
+	initialized  bool
+}
 
 func findModuleRoot(dir string) (root string) {
 	if dir == "" {
@@ -486,3 +491,4 @@ func SyncGopMod() {
 		log.Fatalf("gop: updating gop.mod: %v", err)
 	}
 }
+*/

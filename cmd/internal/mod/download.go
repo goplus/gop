@@ -18,8 +18,8 @@ package mod
 
 import (
 	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/cmd/internal/modload"
-	"github.com/goplus/gop/x/mod/modfetch"
+	// "github.com/goplus/gop/cmd/internal/modload"
+	// "github.com/goplus/gop/x/mod/modfetch"
 )
 
 var cmdDownload = &base.Command{
@@ -32,6 +32,9 @@ func init() {
 }
 
 func runDownload(cmd *base.Command, args []string) {
-	modfetch.DownloadArgs(".", args...)
-	modload.SyncGopMod()
+	panic("TODO: gop mod download")
+	/*
+		modfetch.DownloadArgs(".", args...)
+		modload.SyncGopMod()
+	*/
 }

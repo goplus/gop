@@ -28,10 +28,10 @@ import (
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/cmd/internal/modload"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
+	"github.com/goplus/gop/x/mod/modload"
 	"github.com/goplus/gox"
 )
 
@@ -114,7 +114,7 @@ func runCmd(cmd *base.Command, args []string) {
 	if isDir {
 		srcDir = src
 		gofile = src + "/gop_autogen.go"
-		modload.Load()
+		modload.UpdateGoMod(srcDir)
 		isDirty = true // TODO: check if code changed
 		if isDirty {
 			pkgs, err = parser.ParseDir(fset, src, nil, parserMode)
