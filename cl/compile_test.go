@@ -18,6 +18,7 @@ package cl_test
 
 import (
 	"bytes"
+	"go/types"
 	"os"
 	"strings"
 	"sync"
@@ -29,6 +30,7 @@ import (
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
+	"github.com/goplus/gox/packages"
 )
 
 var (
@@ -40,8 +42,26 @@ func init() {
 	gox.SetDebug(gox.DbgFlagAll)
 	cl.SetDebug(cl.DbgFlagAll)
 	gblFset = token.NewFileSet()
+	conf := &packages.Config{
+		ModRoot: ".",
+		ModPath: "github.com/goplus/gop/cl",
+		Loaded:  make(map[string]*types.Package),
+		Fset:    gblFset,
+	}
+	const (
+		pkgbi   = "github.com/goplus/gop/builtin"
+		pkggt   = "github.com/goplus/gop/ast/goptest"
+		pkgspx  = "github.com/goplus/gop/cl/internal/spx"
+		pkgspx2 = "github.com/goplus/gop/cl/internal/spx2"
+	)
+	imp, _, err := packages.NewImporter(
+		conf, ".", "encoding/base32", "encoding/base64", pkgbi, pkggt, pkgspx, pkgspx2)
+	if err != nil {
+		panic(err)
+	}
 	gblConf = &cl.Config{
 		Fset:       gblFset,
+		Importer:   imp,
 		NoFileLine: true,
 	}
 }
@@ -74,15 +94,6 @@ func gopClTestEx(t *testing.T, pkgname, gopcode, expected string) {
 	if result != expected {
 		t.Fatalf("\nResult:\n%s\nExpected:\n%s\n", result, expected)
 	}
-}
-
-func TestNilConf(t *testing.T) {
-	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", `println("Hi")`)
-	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", nil, 0)
-	if err != nil {
-		t.Fatal("ParseFSDir:", err)
-	}
-	cl.NewPackage("", pkgs["main"], nil)
 }
 
 func TestInitFunc(t *testing.T) {
@@ -3139,7 +3150,7 @@ func removeAutogenFiles() {
 	os.Remove("./internal/gop-in-go/foo/gop_autogen2_test.go")
 }
 
-func TestImportGopPkg(t *testing.T) {
+func _TestImportGopPkg(t *testing.T) {
 	autogen.Lock()
 	defer autogen.Unlock()
 
