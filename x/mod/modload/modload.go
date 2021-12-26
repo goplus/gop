@@ -19,6 +19,18 @@ package modload
 // -----------------------------------------------------------------------------
 
 func UpdateGoMod(dir string) {
+	p, err := loadMod(dir)
+	if err != nil {
+		return
+	}
+	p.updateGoMod(true)
+	/*	if p.classModFile != nil && p.classModFile.Classfile != nil {
+			gengo.RegisterPkgFlags(p.classModFile.Classfile.ProjExt, gengo.PkgFlagGmx)
+			gengo.RegisterPkgFlags(p.classModFile.Classfile.WorkExt, gengo.PkgFlagSpx)
+			cl.RegisterClassFileType(p.classModFile.Classfile.ProjExt,
+				p.classModFile.Classfile.WorkExt, p.classModFile.Classfile.PkgPaths...)
+		}
+	*/
 }
 
 // -----------------------------------------------------------------------------

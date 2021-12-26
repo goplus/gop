@@ -16,66 +16,30 @@
 
 package modload
 
-/*
 import (
-	"bytes"
 	"errors"
-	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
-	gomodfile "golang.org/x/mod/modfile"
-	"golang.org/x/mod/module"
-
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cmd/gengo"
-	"github.com/goplus/gop/cmd/internal/modload/search"
 	"github.com/goplus/gop/env"
-	"github.com/goplus/gop/x/mod/modfetch"
 	"github.com/goplus/gop/x/mod/modfile"
 )
 
 var (
-	ErrNoModRoot = errors.New(
-		"gop.mod or go.mod file not found in current directory or any parent directory")
+	ErrNoModDecl = errors.New("no module declaration in gop.mod (or go.mod)")
+	ErrNoModRoot = errors.New("gop.mod or go.mod file not found in current directory or any parent directory")
 )
 
 type Module struct {
-	modFile      *modfile.File
-	classModFile *modfile.File
-	modRoot      string
-	Target       module.Version
-	initialized  bool
+	modFile *modfile.File
+	gopmod  string
+	//Target       module.Version
+	//classModFile *modfile.File
+	//modRoot      string
+	//initialized  bool
 }
 
-func findModuleRoot(dir string) (root string) {
-	if dir == "" {
-		panic("dir not set")
-	}
-	dir = filepath.Clean(dir)
-
-	// Look for enclosing gop.mod or go.mod.
-	for {
-		if fi, err := os.Stat(filepath.Join(dir, "gop.mod")); err == nil && !fi.IsDir() {
-			return dir
-		}
-		if fi, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil && !fi.IsDir() {
-			return dir
-		}
-		d := filepath.Dir(dir)
-		if d == dir {
-			break
-		}
-		dir = d
-	}
-	return ""
-}
-
-func SetModRoot(dir string) {
-	modRoot = dir
-}
-
+/*
 func getcwd() string {
 	path, _ := os.Getwd()
 	return path
@@ -89,28 +53,6 @@ var gopRoot = getcwd()
 func HasModRoot() bool {
 	Init()
 	return modRoot != ""
-}
-
-// GopModFilePath returns the effective path of the go.mod file. Normally, this
-// "go.mod" in the directory returned by ModRoot, but the -modfile flag may
-// change its location. ModFilePath calls base.Fatalf if there is no main
-// module, even if -modfile is set.
-func GopModFilePath() string {
-	if !HasModRoot() {
-		log.Fatalf("gop: %v", ErrNoModRoot)
-	}
-	return filepath.Join(modRoot, "gop.mod")
-}
-
-// GoModFilePath returns the effective path of the go.mod file. Normally, this
-// "go.mod" in the directory returned by ModRoot, but the -modfile flag may
-// change its location. ModFilePath calls base.Fatalf if there is no main
-// module, even if -modfile is set.
-func GoModFilePath() string {
-	if !HasModRoot() {
-		log.Fatalf("gop: %v", ErrNoModRoot)
-	}
-	return filepath.Join(modRoot, "go.mod")
 }
 
 // Init determines whether module mode is enabled, locates the root of the
@@ -190,6 +132,7 @@ Run 'gop help mod init' for more information.
 	return "", fmt.Errorf(msg, dir, reason)
 }
 
+/*
 // CreateModFile initializes a new module by creating a go.mod file.
 //
 // If modPath is empty, CreateModFile will attempt to infer the path from the
@@ -221,20 +164,7 @@ func CreateModFile(modPath string) {
 	addGopStmt() // Add the gop directive before converted module requirements.
 	WriteGopMod()
 }
-
-func Load() {
-	LoadModFile()
-	if modRoot == "" {
-		return
-	}
-	SyncGoMod()
-	if classModFile != nil && classModFile.Classfile != nil {
-		gengo.RegisterPkgFlags(classModFile.Classfile.ProjExt, gengo.PkgFlagGmx)
-		gengo.RegisterPkgFlags(classModFile.Classfile.WorkExt, gengo.PkgFlagSpx)
-		cl.RegisterClassFileType(classModFile.Classfile.ProjExt,
-			classModFile.Classfile.WorkExt, classModFile.Classfile.PkgPaths...)
-	}
-}
+*/
 
 // fixVersion returns a modfile.VersionFixer implemented using the Query function.
 //
@@ -250,59 +180,40 @@ func fixVersion(fixed *bool) modfile.VersionFixer {
 	}
 }
 
+/*
 func fixGoVersion(fixed *bool) gomodfile.VersionFixer {
 	return func(path, vers string) (resolved string, err error) {
 		// do nothing
 		return vers, nil
 	}
 }
+*/
 
-// LoadModFile sets Target and, if there is a main module, parses the initial
-// build list from its go.mod file.
-//
-// LoadModFile may make changes in memory, like adding a go directive and
-// ensuring requirements are consistent. WriteGoMod should be called later to
-// write changes out to disk or report errors in readonly mode.
-//
-// As a side-effect, LoadModFile may change cfg.BuildMod to "vendor" if
-// -mod wasn't set explicitly and automatic vendoring should be enabled.
-func LoadModFile() {
-	Init()
-	if modRoot == "" {
-		return
-	}
-	// If gop.mod does not exist, then modroot does not exist,
-	// and if go.mod exists then a copy of go.mod will be synchronized to gop.mod
-	gopmod := GopModFilePath()
-	gomod := GoModFilePath()
-	if _, err := os.Stat(gopmod); os.IsNotExist(err) {
-		if _, err := os.Stat(gomod); err == nil {
-			SyncGopMod()
-		}
-		return
-	}
-
-	data, err := modfetch.Read(gopmod)
+func loadMod(dir string) (p *Module, err error) {
+	gopmod, err := env.GOPMOD(dir)
 	if err != nil {
-		log.Fatalf("gop: %v", err)
+		return
+	}
+
+	data, err := os.ReadFile(gopmod)
+	if err != nil {
+		return
 	}
 
 	var fixed bool
 	f, err := modfile.Parse(gopmod, data, fixVersion(&fixed))
 	if err != nil {
 		// Errors returned by modfile.Parse begin with file:line.
-		log.Fatalf("gop: errors parsing gop.mod:\n%s\n", err)
+		return
 	}
-	modFile = f
-
 	if f.Module == nil {
 		// No module declaration. Must add module path.
-		log.Fatalf("gop: no module declaration in gop.mod. To specify the module path:\n")
+		return nil, ErrNoModDecl
 	}
-
-	LoadClassFile()
+	return &Module{gopmod: gopmod, modFile: f}, nil
 }
 
+/*
 // addGoStmt adds a gop directive to the gop.mod file if it does not already include one.
 // The 'gop' version added, if any, is the latest version supported by this toolchain.
 func addGopStmt() {
@@ -352,84 +263,108 @@ func WriteGopMod() {
 func getGoPath() string {
 	return os.Getenv("GOPATH")
 }
+*/
 
-func SyncGoMod() {
-	gomodPath := GoModFilePath()
-	gomod := &gomodfile.File{}
-	if _, err := os.Stat(gomodPath); err == nil {
-		data, err := modfetch.Read(gomodPath)
-		if err != nil {
-			log.Fatalln(err)
+func isUpdated(target, src string) bool {
+	fiTarget, err := os.Stat(target)
+	if err != nil {
+		return false
+	}
+	fiSrc, err := os.Stat(src)
+	if err != nil {
+		return false
+	}
+	return fiTarget.ModTime().After(fiSrc.ModTime())
+}
+
+func (p *Module) updateGoMod(checkDirty bool) {
+	dir, file := filepath.Split(p.gopmod)
+	if file == "go.mod" {
+		return
+	}
+	gomod := dir + "go.mod"
+	if checkDirty && isUpdated(gomod, p.gopmod) {
+		return
+	}
+	/*
+		gomodPath := GoModFilePath()
+		gomod := &gomodfile.File{}
+		if _, err := os.Stat(gomodPath); err == nil {
+			data, err := modfetch.Read(gomodPath)
+			if err != nil {
+				log.Fatalln(err)
+			}
+			var fixed bool
+			gomod, err = gomodfile.Parse(gomodPath, data, fixGoVersion(&fixed))
+			if err != nil {
+				// Errors returned by modfile.Parse begin with file:line.
+				log.Fatalf("gop: errors parsing gop.mod:\n%s\n", err)
+			}
 		}
-		var fixed bool
-		gomod, err = gomodfile.Parse(gomodPath, data, fixGoVersion(&fixed))
-		if err != nil {
-			// Errors returned by modfile.Parse begin with file:line.
-			log.Fatalf("gop: errors parsing gop.mod:\n%s\n", err)
+
+		gomod.AddModuleStmt(modFile.Module.Mod.Path)
+		if modFile.Go != nil {
+			gomod.AddGoStmt(modFile.Go.Version)
 		}
-	}
 
-	gomod.AddModuleStmt(modFile.Module.Mod.Path)
-	if modFile.Go != nil {
-		gomod.AddGoStmt(modFile.Go.Version)
-	}
-
-	for _, require := range modFile.Require {
-		gomod.AddRequire(require.Mod.Path, require.Mod.Version)
-	}
-
-	for _, replace := range modFile.Replace {
-		gomod.AddReplace(replace.Old.Path, replace.Old.Version, replace.New.Path, replace.New.Version)
-	}
-
-	for _, exclude := range modFile.Exclude {
-		gomod.AddExclude(exclude.Mod.Path, exclude.Mod.Version)
-	}
-
-	for _, retract := range modFile.Retract {
-		gomod.AddRetract(gomodfile.VersionInterval(retract.VersionInterval), retract.Rationale)
-	}
-
-	if classModFile != nil {
-		for _, require := range classModFile.Require {
+		for _, require := range modFile.Require {
 			gomod.AddRequire(require.Mod.Path, require.Mod.Version)
 		}
 
-		for _, replace := range classModFile.Replace {
+		for _, replace := range modFile.Replace {
 			gomod.AddReplace(replace.Old.Path, replace.Old.Version, replace.New.Path, replace.New.Version)
 		}
 
-		for _, exclude := range classModFile.Exclude {
+		for _, exclude := range modFile.Exclude {
 			gomod.AddExclude(exclude.Mod.Path, exclude.Mod.Version)
 		}
 
-		for _, retract := range classModFile.Retract {
+		for _, retract := range modFile.Retract {
 			gomod.AddRetract(gomodfile.VersionInterval(retract.VersionInterval), retract.Rationale)
 		}
-	}
 
-	gomod.Cleanup()
+		if classModFile != nil {
+			for _, require := range classModFile.Require {
+				gomod.AddRequire(require.Mod.Path, require.Mod.Version)
+			}
 
-	new, err := gomod.Format()
-	if err != nil {
-		log.Fatalf("gop: %v", err)
-	}
+			for _, replace := range classModFile.Replace {
+				gomod.AddReplace(replace.Old.Path, replace.Old.Version, replace.New.Path, replace.New.Version)
+			}
 
-	errNoChange := errors.New("no update needed")
-	err = modfetch.Transform(GoModFilePath(), func(old []byte) ([]byte, error) {
-		if bytes.Equal(old, new) {
-			// The go.mod file is already equal to new, possibly as the result of some
-			// other process.
-			return nil, errNoChange
+			for _, exclude := range classModFile.Exclude {
+				gomod.AddExclude(exclude.Mod.Path, exclude.Mod.Version)
+			}
+
+			for _, retract := range classModFile.Retract {
+				gomod.AddRetract(gomodfile.VersionInterval(retract.VersionInterval), retract.Rationale)
+			}
 		}
-		return new, nil
-	})
 
-	if err != nil && err != errNoChange {
-		log.Fatalf("gop: updating gop.mod: %v", err)
-	}
+		gomod.Cleanup()
+
+		new, err := gomod.Format()
+		if err != nil {
+			log.Fatalf("gop: %v", err)
+		}
+
+		errNoChange := errors.New("no update needed")
+		err = modfetch.Transform(GoModFilePath(), func(old []byte) ([]byte, error) {
+			if bytes.Equal(old, new) {
+				// The go.mod file is already equal to new, possibly as the result of some
+				// other process.
+				return nil, errNoChange
+			}
+			return new, nil
+		})
+
+		if err != nil && err != errNoChange {
+			log.Fatalf("gop: updating gop.mod: %v", err)
+		}
+	*/
 }
 
+/*
 func SyncGopMod() {
 	gomodPath := GoModFilePath()
 	gomod := &gomodfile.File{}

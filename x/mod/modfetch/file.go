@@ -93,14 +93,3 @@ func Transform(name string, t func([]byte) ([]byte, error)) (err error) {
 
 	return nil
 }
-
-// Read opens the named file and returns its contents.
-func Read(name string) ([]byte, error) {
-	f, err := os.Open(name)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	return io.ReadAll(f)
-}
