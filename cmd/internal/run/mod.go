@@ -33,7 +33,7 @@ func gopRun(source string, args ...string) {
 	if *flagGop {
 		flags = gopmod.FlagGoAsGoPlus
 	}
-	goProj, err := ctx.OpenProject(flags, source)
+	goProj, err := ctx.OpenFiles(flags, source)
 	if err != nil {
 		log.Fatalln("OpenProject failed:", err)
 	}

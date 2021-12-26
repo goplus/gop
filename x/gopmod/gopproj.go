@@ -17,7 +17,6 @@
 package gopmod
 
 import (
-	"os"
 	"path/filepath"
 )
 
@@ -27,27 +26,18 @@ const (
 	FlagGoAsGoPlus = 1 << iota
 )
 
-func (p *Context) OpenProject(flags int, args ...string) (proj *Project, err error) {
+func (p *Context) OpenFiles(flags int, args ...string) (proj *Project, err error) {
 	if len(args) != 1 {
 		return p.openFromGopFiles(args)
 	}
 	src := args[0]
-	fi, err := os.Stat(src)
-	if err != nil {
-		return
-	}
-	if fi.IsDir() {
-		return p.openFromDir(src)
-	}
 	if (flags&FlagGoAsGoPlus) == 0 && filepath.Ext(src) == ".go" {
 		return openFromGoFile(src)
 	}
 	return p.openFromGopFiles(args)
 }
 
-// -----------------------------------------------------------------------------
-
-func (p *Context) openFromDir(dir string) (proj *Project, err error) {
+func (p *Context) OpenDir(flags int, dir string) (proj *Project, err error) {
 	panic("todo")
 }
 
