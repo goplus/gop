@@ -56,7 +56,7 @@ func (p *goFile) GenGo(outFile, modFile string) error {
 		if err != nil {
 			return err
 		}
-		return os.WriteFile(outFile, code, 0666)
+		return os.WriteFile(outFile, code, 0644)
 	}
 	return nil
 }

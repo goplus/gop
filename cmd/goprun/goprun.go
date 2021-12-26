@@ -7,20 +7,25 @@ import (
 	"os/exec"
 
 	"github.com/goplus/gop/x/gopmod"
+	"github.com/goplus/gop/x/gopproj"
 )
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprint(os.Stderr, "Usage: gorun <file.go> [switch ...]\n\n")
+		fmt.Fprint(os.Stderr, "Usage: goprun package [arguments ...]\n\n")
 		return
 	}
-	ctx := gopmod.New("")
-	goProj, err := ctx.OpenProject(0, os.Args[1])
+	proj, args, err := gopproj.ParseOne(os.Args[1:]...)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	var ctx = gopmod.New("")
+	goProj, err := ctx.OpenProject(0, proj)
 	if err != nil {
 		fmt.Fprint(os.Stderr, "OpenProject failed:", err)
 		return
 	}
-	goProj.ExecArgs = os.Args[2:]
+	goProj.ExecArgs = args
 	cmd := ctx.GoCommand("run", goProj)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
