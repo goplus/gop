@@ -24,11 +24,9 @@ import (
 	"path/filepath"
 
 	"github.com/qiniu/x/log"
-	"golang.org/x/tools/go/packages"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/cmd/internal/modload"
 	"github.com/goplus/gop/parser"
@@ -184,35 +182,6 @@ func goRun(file string, args []string) {
 }
 
 func runGoPkg(src string, args []string, doRun bool) {
-	modfile, err := findGoModFile(src)
-	if err != nil {
-		log.Fatalln("findGoModFile:", err)
-	}
-	base := filepath.Dir(modfile)
-	rel, _ := filepath.Rel(base, src)
-	modPath, err := cl.GetModulePath(modfile)
-	if err != nil {
-		log.Fatalln("GetModulePath:", err)
-	}
-	pkgPath := filepath.Join(modPath, rel)
-	const (
-		loadTypes = packages.NeedImports | packages.NeedDeps | packages.NeedTypes
-		loadModes = loadTypes | packages.NeedName | packages.NeedModule
-	)
-	baseConf := &cl.Config{
-		Fset:       token.NewFileSet(),
-		GenGoPkg:   new(gengo.Runner).GenGoPkg,
-		NoFileLine: true,
-	}
-	loadConf := &packages.Config{Mode: loadModes, Fset: baseConf.Fset}
-	pkgs, err := baseConf.Ensure().PkgsLoader.Load(loadConf, pkgPath)
-	if err != nil || len(pkgs) == 0 {
-		log.Fatalln("PkgsLoader.Load failed:", err)
-	}
-	if pkgs[0].Name != "main" {
-		fmt.Fprintln(os.Stderr, "TODO: not a main package")
-		os.Exit(12)
-	}
 	if doRun {
 		goRun(src+"/.", args)
 	}
