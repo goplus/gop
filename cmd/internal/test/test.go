@@ -80,7 +80,7 @@ func runCmd(_ *base.Command, args []string) {
 		return nil
 	})
 	baseConf := &cl.Config{}
-	runner.GenGo(dir, recursive, baseConf.Ensure())
+	runner.GenGo(dir, recursive, baseConf)
 	if hasError {
 		os.Exit(1)
 	}

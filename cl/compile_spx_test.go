@@ -56,9 +56,8 @@ func gopSpxTestEx(t *testing.T, gmx, spxcode, expected, gmxfile, spxfile string)
 		scanner.PrintError(os.Stderr, err)
 		t.Fatal("ParseFSDir:", err)
 	}
-	conf := *baseConf.Ensure()
 	bar := pkgs["main"]
-	pkg, err := cl.NewPackage("", bar, &conf)
+	pkg, err := cl.NewPackage("", bar, gblConf)
 	if err != nil {
 		t.Fatal("NewPackage:", err)
 	}
@@ -80,7 +79,7 @@ func gopSpxErrorTestEx(t *testing.T, msg, gmx, spxcode, gmxfile, spxfile string)
 		scanner.PrintError(os.Stderr, err)
 		t.Fatal("ParseFSDir:", err)
 	}
-	conf := *baseConf.Ensure()
+	conf := *gblConf
 	conf.NoFileLine = false
 	conf.WorkingDir = "/foo"
 	conf.TargetDir = "/foo"

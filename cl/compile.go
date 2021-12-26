@@ -86,27 +86,14 @@ type Config struct {
 	// If Fset is nil, Load will use a new fileset, but preserve Fset's value.
 	Fset *token.FileSet
 
-	// GenGoPkg is called to convert a Go+ package into Go.
-	GenGoPkg func(pkgDir string, base *Config) error
-
-	// PkgsLoader is the Go+ packages loader (will be set if it is nil).
-	PkgsLoader *PkgsLoader
+	// An Importer resolves import paths to Packages.
+	Importer types.Importer
 
 	// NoFileLine = true means not to generate file line comments.
 	NoFileLine bool
 
 	// RelativePath = true means to generate file line comments with relative file path.
 	RelativePath bool
-}
-
-func (conf *Config) Ensure() *Config {
-	if conf == nil {
-		conf = &Config{Fset: token.NewFileSet()}
-	}
-	if conf.PkgsLoader == nil {
-		initPkgsLoader(conf)
-	}
-	return conf
 }
 
 type nodeInterp struct {
@@ -360,7 +347,6 @@ func (p *pkgCtx) handleRecover(e interface{}) {
 
 // NewPackage creates a Go+ package instance.
 func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package, err error) {
-	conf = conf.Ensure()
 	dir := conf.Dir
 	if dir == "" {
 		dir, _ = os.Getwd()
@@ -377,6 +363,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	ctx := &pkgCtx{syms: make(map[string]loader), nodeInterp: interp}
 	confGox := &gox.Config{
 		Fset:            conf.Fset,
+		Importer:        conf.Importer,
 		LoadNamed:       ctx.loadNamed,
 		HandleErr:       ctx.handleErr,
 		NodeInterpreter: interp,

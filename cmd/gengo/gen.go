@@ -167,7 +167,7 @@ func (p *Runner) GenGoPkg(pkgDir string, base *cl.Config) (err error) {
 
 	pkgDir, _ = filepath.Abs(pkgDir)
 
-	conf := *base.Ensure()
+	conf := *base
 	conf.Dir = pkgDir
 	if conf.Fset == nil {
 		conf.Fset = token.NewFileSet()

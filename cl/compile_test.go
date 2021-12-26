@@ -21,11 +21,9 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"syscall"
 	"testing"
 
 	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/parser/parsertest"
 	"github.com/goplus/gop/scanner"
@@ -34,17 +32,16 @@ import (
 )
 
 var (
-	gblFset  *token.FileSet
-	baseConf *cl.Config
+	gblFset *token.FileSet
+	gblConf *cl.Config
 )
 
 func init() {
 	gox.SetDebug(gox.DbgFlagAll)
 	cl.SetDebug(cl.DbgFlagAll)
 	gblFset = token.NewFileSet()
-	baseConf = &cl.Config{
+	gblConf = &cl.Config{
 		Fset:       gblFset,
-		GenGoPkg:   new(gengo.Runner).GenGoPkg,
 		NoFileLine: true,
 	}
 }
@@ -63,9 +60,8 @@ func gopClTestEx(t *testing.T, pkgname, gopcode, expected string) {
 		scanner.PrintError(os.Stderr, err)
 		t.Fatal("ParseFSDir:", err)
 	}
-	conf := *baseConf.Ensure()
 	bar := pkgs[pkgname]
-	pkg, err := cl.NewPackage("github.com/goplus/gop/cl", bar, &conf)
+	pkg, err := cl.NewPackage("github.com/goplus/gop/cl", bar, gblConf)
 	if err != nil {
 		t.Fatal("NewPackage:", err)
 	}
@@ -77,16 +73,6 @@ func gopClTestEx(t *testing.T, pkgname, gopcode, expected string) {
 	result := b.String()
 	if result != expected {
 		t.Fatalf("\nResult:\n%s\nExpected:\n%s\n", result, expected)
-	}
-}
-
-func TestEmptyPkgsLoader(t *testing.T) {
-	l := &cl.PkgsLoader{}
-	if l.GenGoPkgs(nil, nil) != syscall.ENOENT {
-		t.Fatal("PkgsLoader.GenGoPkgs failed")
-	}
-	if _, err := cl.GetModulePath("/dir-not-exists/go.mod"); err == nil {
-		t.Fatal("GetModulePath failed")
 	}
 }
 

@@ -78,7 +78,7 @@ func GenGoForBuild(dir string, recursive bool, errorHandle func()) {
 		return nil
 	})
 	baseConf := &cl.Config{}
-	runner.GenGo(dir, recursive, baseConf.Ensure())
+	runner.GenGo(dir, recursive, baseConf)
 	if hasError {
 		errorHandle()
 		os.Exit(1)
