@@ -16,9 +16,12 @@
 package modfile
 
 import (
+	"bytes"
 	"syscall"
 	"testing"
 )
+
+// -----------------------------------------------------------------------------
 
 var addParseExtTests = []struct {
 	desc    string
@@ -82,3 +85,114 @@ func TestMustQuote(t *testing.T) {
 		t.Fatal("MustQuote failed")
 	}
 }
+
+// -----------------------------------------------------------------------------
+
+var addGopTests = []struct {
+	desc    string
+	in      string
+	version string
+	out     string
+}{
+	{
+		`module_only`,
+		`module m
+		`,
+		`1.14`,
+		`module m
+		gop 1.14
+		`,
+	},
+	{
+		`module_before_require`,
+		`module m
+		require x.y/a v1.2.3
+		`,
+		`1.14`,
+		`module m
+		gop 1.14
+		require x.y/a v1.2.3
+		`,
+	},
+	{
+		`require_before_module`,
+		`require x.y/a v1.2.3
+		module example.com/inverted
+		`,
+		`1.14`,
+		`gop 1.14
+		require x.y/a v1.2.3
+		module example.com/inverted
+		`,
+	},
+	{
+		`require_only`,
+		`require x.y/a v1.2.3
+		`,
+		`1.14`,
+		`gop 1.14
+		require x.y/a v1.2.3
+		`,
+	},
+	{
+		`replace gop`,
+		`require x.y/a v1.2.3
+		gop 1.10
+		`,
+		`1.14`,
+		`require x.y/a v1.2.3
+		gop 1.14
+		`,
+	},
+}
+
+func TestAddGop(t *testing.T) {
+	for _, tt := range addGopTests {
+		t.Run(tt.desc, func(t *testing.T) {
+			testEdit(t, tt.in, tt.out, true, func(f *File) error {
+				return f.AddGopStmt(tt.version)
+			})
+		})
+	}
+}
+
+func TestAddGopErr(t *testing.T) {
+	if new(File).AddGopStmt("1.x") == nil {
+		t.Fatal("AddGoStmt failed")
+	}
+}
+
+func testEdit(t *testing.T, in, want string, strict bool, transform func(f *File) error) *File {
+	t.Helper()
+	parse := Parse
+	if !strict {
+		parse = ParseLax
+	}
+	f, err := parse("in", []byte(in), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g, err := parse("out", []byte(want), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	golden, err := g.Format()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := transform(f); err != nil {
+		t.Fatal(err)
+	}
+	out, err := f.Format()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(out, golden) {
+		t.Errorf("have:\n%s\nwant:\n%s", out, golden)
+	}
+
+	return f
+}
+
+// -----------------------------------------------------------------------------

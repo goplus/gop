@@ -282,3 +282,85 @@ func (e *InvalidExtError) Unwrap() error { return e.Err }
 
 type ErrorList = modfile.ErrorList
 type Error = modfile.Error
+
+// -----------------------------------------------------------------------------
+
+const (
+	directiveInvalid = iota
+	directiveModule
+	directiveGo
+	directiveGop
+	directiveClassfile
+)
+
+const (
+	directiveLineBlock = 0x80 + iota
+	directiveRegister
+	directiveRequire
+	directiveExclude
+	directiveReplace
+	directiveRetract
+)
+
+var directiveWeights = map[string]int{
+	"module":    directiveModule,
+	"go":        directiveGo,
+	"gop":       directiveGop,
+	"classfile": directiveClassfile,
+	"register":  directiveRegister,
+	"require":   directiveRequire,
+	"exclude":   directiveExclude,
+	"replace":   directiveReplace,
+	"retract":   directiveRetract,
+}
+
+func getWeight(e Expr) int {
+	if line, ok := e.(*Line); ok {
+		return directiveWeights[line.Token[0]]
+	}
+	if w, ok := directiveWeights[e.(*LineBlock).Token[0]]; ok {
+		return w
+	}
+	return directiveLineBlock
+}
+
+func updateLine(x *FileSyntax, line *Line, tokens ...string) {
+	if line.InBlock {
+		tokens = tokens[1:]
+	}
+	line.Token = tokens
+}
+
+func addLine(x *FileSyntax, tokens ...string) *Line {
+	new := &Line{Token: tokens}
+	w := directiveWeights[tokens[0]]
+	for i, e := range x.Stmt {
+		w2 := getWeight(e)
+		if w <= w2 {
+			x.Stmt = append(x.Stmt, nil)
+			copy(x.Stmt[i+1:], x.Stmt[i:])
+			x.Stmt[i] = new
+			return new
+		}
+	}
+	x.Stmt = append(x.Stmt, new)
+	return new
+}
+
+func (f *File) AddGopStmt(version string) error {
+	if !modfile.GoVersionRE.MatchString(version) {
+		return fmt.Errorf("invalid language version string %q", version)
+	}
+	if f.Gop == nil {
+		f.Gop = &Gop{
+			Version: version,
+			Syntax:  addLine(f.Syntax, "gop", version),
+		}
+	} else {
+		f.Gop.Version = version
+		updateLine(f.Syntax, f.Gop.Syntax, "gop", version)
+	}
+	return nil
+}
+
+// -----------------------------------------------------------------------------

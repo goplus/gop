@@ -305,9 +305,6 @@ func addGopStmt() {
 		return
 	}
 	version := env.MainVersion
-	if !modfile.GopVersionRE.MatchString(version) {
-		log.Fatalf("gop: unrecognized default version %q", version)
-	}
 	if err := modFile.AddGopStmt(version); err != nil {
 		log.Fatalf("gop: internal error: %v", err)
 	}
