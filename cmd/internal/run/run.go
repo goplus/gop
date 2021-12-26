@@ -143,9 +143,8 @@ func runCmd(cmd *base.Command, args []string) {
 			os.Exit(12)
 		}
 
-		modDir, noCacheFile := findGoModDir(srcDir)
-		conf := &cl.Config{
-			Dir: modDir, TargetDir: srcDir, Fset: fset, CacheLoadPkgs: true, PersistLoadPkgs: !noCacheFile}
+		modDir := findGoModDir(srcDir)
+		conf := &cl.Config{Dir: modDir, TargetDir: srcDir, Fset: fset}
 		out, err := cl.NewPackage("", mainPkg, conf)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
@@ -155,7 +154,6 @@ func runCmd(cmd *base.Command, args []string) {
 		if err != nil {
 			log.Fatalln("saveGoFile failed:", err)
 		}
-		conf.PkgsLoader.Save()
 	}
 
 	goRun(gofile, args)
@@ -186,7 +184,7 @@ func goRun(file string, args []string) {
 }
 
 func runGoPkg(src string, args []string, doRun bool) {
-	modfile, noCacheFile, err := findGoModFile(src)
+	modfile, err := findGoModFile(src)
 	if err != nil {
 		log.Fatalln("findGoModFile:", err)
 	}
@@ -202,11 +200,9 @@ func runGoPkg(src string, args []string, doRun bool) {
 		loadModes = loadTypes | packages.NeedName | packages.NeedModule
 	)
 	baseConf := &cl.Config{
-		Fset:            token.NewFileSet(),
-		GenGoPkg:        new(gengo.Runner).GenGoPkg,
-		CacheLoadPkgs:   true,
-		PersistLoadPkgs: !noCacheFile,
-		NoFileLine:      true,
+		Fset:       token.NewFileSet(),
+		GenGoPkg:   new(gengo.Runner).GenGoPkg,
+		NoFileLine: true,
 	}
 	loadConf := &packages.Config{Mode: loadModes, Fset: baseConf.Fset}
 	pkgs, err := baseConf.Ensure().PkgsLoader.Load(loadConf, pkgPath)
@@ -217,7 +213,6 @@ func runGoPkg(src string, args []string, doRun bool) {
 		fmt.Fprintln(os.Stderr, "TODO: not a main package")
 		os.Exit(12)
 	}
-	baseConf.PkgsLoader.Save()
 	if doRun {
 		goRun(src+"/.", args)
 	}

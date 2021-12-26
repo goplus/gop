@@ -77,13 +77,12 @@ func GenGoForBuild(dir string, recursive bool, errorHandle func()) {
 		}
 		return nil
 	})
-	baseConf := &cl.Config{PersistLoadPkgs: true}
+	baseConf := &cl.Config{}
 	runner.GenGo(dir, recursive, baseConf.Ensure())
 	if hasError {
 		errorHandle()
 		os.Exit(1)
 	}
-	baseConf.PkgsLoader.Save()
 }
 
 // RunGoCmd executes `go` command tools.
