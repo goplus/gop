@@ -105,12 +105,6 @@ func isDirExists(path string) bool {
 	return err == nil && st.IsDir()
 }
 
-// A valid gop root has go.mod, go.sum, builtin/
 func isValidGopRoot(path string) bool {
-	if !isFileExists(filepath.Join(path, "go.mod")) ||
-		!isFileExists(filepath.Join(path, "go.sum")) ||
-		!isDirExists(filepath.Join(path, "builtin")) {
-		return false
-	}
-	return true
+	return isDirExists(filepath.Join(path, "cmd/gop")) && isFileExists(filepath.Join(path, "go.mod"))
 }
