@@ -6,8 +6,8 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/goplus/gop/cmd/internal/gopproj"
 	"github.com/goplus/gop/x/gopmod"
+	"github.com/goplus/gop/x/gopproj"
 )
 
 func main() {
@@ -20,15 +20,7 @@ func main() {
 		log.Fatalln(err)
 	}
 	var ctx = gopmod.New("")
-	var goProj *gopmod.Project
-	switch v := proj.(type) {
-	case *gopproj.FilesProj:
-		goProj, err = ctx.OpenFiles(0, v.Files...)
-	case *gopproj.DirProj:
-		goProj, err = ctx.OpenDir(0, v.Dir)
-	case *gopproj.PkgPathProj:
-		panic("TODO: package path project")
-	}
+	goProj, err := ctx.OpenProject(0, proj)
 	if err != nil {
 		fmt.Fprint(os.Stderr, "OpenProject failed:", err)
 		return
