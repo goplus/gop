@@ -20,13 +20,13 @@ import (
 	"os"
 )
 
-// Edit creates the named file with mode 0666 (before umask),
+// Edit creates the named file with mode 0644 (before umask),
 // but does not truncate existing contents.
 //
 // If Edit succeeds, methods on the returned File can be used for I/O.
 // The associated file descriptor has mode O_RDWR and the file is write-locked.
 func Edit(name string) (*os.File, error) {
-	return os.OpenFile(name, os.O_RDWR|os.O_CREATE, 0666)
+	return os.OpenFile(name, os.O_RDWR|os.O_CREATE, 0644)
 }
 
 // Transform invokes t with the result of reading the named file, with its lock

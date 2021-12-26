@@ -77,7 +77,7 @@ func diffBytes(t *testing.T, outfile string, dst, src []byte) {
 		d := dst[i]
 		s := src[i]
 		if d != s {
-			os.WriteFile(outfile, dst, 0666)
+			os.WriteFile(outfile, dst, 0644)
 			t.Errorf("dst:%d: %s\n", line, dst[offs:])
 			t.Errorf("src:%d: %s\n", line, src[offs:])
 			return

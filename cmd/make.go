@@ -386,7 +386,7 @@ func releaseNewVersion(tag string) {
 	fmt.Printf("\nReleasing new version: %s\n\n", version)
 
 	// Cache new version
-	if err := os.WriteFile(versionFile, []byte(version), 0666); err != nil {
+	if err := os.WriteFile(versionFile, []byte(version), 0644); err != nil {
 		log.Fatalf("Error: cache new version with error: %v\n", err)
 	}
 

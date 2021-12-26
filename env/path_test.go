@@ -42,7 +42,7 @@ func findGoModFile(dir string) (modfile string, noCacheFile bool, err error) {
 //   valid_goproot/
 //	   go.mod
 //	   go.sum
-//     builtin/
+//     cmd/gop/
 func makeTestDir(t *testing.T) (root string, src string, gopRoot string) {
 	root, _ = filepath.EvalSymlinks(t.TempDir())
 	src = filepath.Join(root, "src")
@@ -54,7 +54,7 @@ func makeTestDir(t *testing.T) (root string, src string, gopRoot string) {
 
 func makeValidGopRoot(root string) {
 	os.Mkdir(root, 0755)
-	os.Mkdir(filepath.Join(root, "builtin"), 0755)
+	os.MkdirAll(filepath.Join(root, "cmd/gop"), 0755)
 	ioutil.WriteFile(filepath.Join(root, "go.mod"), []byte(""), 0644)
 	ioutil.WriteFile(filepath.Join(root, "go.sum"), []byte(""), 0644)
 }
