@@ -173,14 +173,14 @@ func genGomodFile(modfile string) {
 		gopRoot = filepath.ToSlash(gopRoot)
 	}
 	fmt.Fprintf(&buf, gomodFormat, GOPVERSION, gopRoot)
-	err = os.WriteFile(modfile, buf.Bytes(), 0666)
+	err = os.WriteFile(modfile, buf.Bytes(), 0644)
 	if err != nil {
 		log.Panicln(err)
 	}
 }
 
 func genDummyProject(dir string) {
-	err := os.WriteFile(dir+"/dummy.go", []byte(dummyGoFile), 0666)
+	err := os.WriteFile(dir+"/dummy.go", []byte(dummyGoFile), 0644)
 	if err != nil {
 		log.Panicln(err)
 	}
