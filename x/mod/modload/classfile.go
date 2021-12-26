@@ -37,12 +37,12 @@ func LoadClassFile() {
 	var claassMod module.Version
 
 	for _, require := range modFile.Require {
-		if require.Mod.Path == modFile.Register.ClassfileMod {
+		if require.Mod.Path == modFile.Register[0].ClassfileMod {
 			claassMod = require.Mod
 		}
 	}
 	for _, replace := range modFile.Replace {
-		if replace.Old.Path == modFile.Register.ClassfileMod {
+		if replace.Old.Path == modFile.Register[0].ClassfileMod {
 			claassMod = replace.New
 		}
 	}
