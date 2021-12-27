@@ -28,7 +28,8 @@ func UpdateGoMod(dir string) {
 		return
 	}
 	p.UpdateGoMod(true)
-	/*	if p.classModFile != nil && p.classModFile.Classfile != nil {
+	/*
+		if p.classModFile != nil && p.classModFile.Classfile != nil {
 			gengo.RegisterPkgFlags(p.classModFile.Classfile.ProjExt, gengo.PkgFlagGmx)
 			gengo.RegisterPkgFlags(p.classModFile.Classfile.WorkExt, gengo.PkgFlagSpx)
 			cl.RegisterClassFileType(p.classModFile.Classfile.ProjExt,
