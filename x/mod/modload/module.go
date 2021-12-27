@@ -80,20 +80,21 @@ func Load(dir string) (p Module, err error) {
 
 // -----------------------------------------------------------------------------
 
-func (p Module) UpdateGoMod(checkDirty bool) {
+func (p Module) UpdateGoMod(checkDirty bool) error {
 	gopmod := p.Modfile()
 	dir, file := filepath.Split(gopmod)
 	if file == "go.mod" {
-		return
+		return nil
 	}
 	gomod := dir + "go.mod"
 	if checkDirty && isUpdated(gomod, gopmod) {
-		return
+		return nil
 	}
 	gof := p.convToGoMod()
 	if b, err := gof.Format(); err == nil {
-		os.WriteFile(gomod, b, 0644)
+		return os.WriteFile(gomod, b, 0644)
 	}
+	return nil
 }
 
 func (p Module) convToGoMod() *gomodfile.File {
