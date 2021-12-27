@@ -18,6 +18,7 @@ package modload
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -33,11 +34,24 @@ var (
 )
 
 type Module struct {
-	mod *modfile.File
+	*modfile.File
 }
 
 func (p Module) Modfile() string {
-	return p.mod.Syntax.Name
+	return p.Syntax.Name
+}
+
+func Create(dir string, modPath, goVer, gopVer string) (p Module, err error) {
+	gopmod := filepath.Join(dir, "gop.mod")
+	if _, err := os.Stat(gopmod); err == nil {
+		return Module{}, fmt.Errorf("gop: %s already exists", gopmod)
+	}
+	mod := new(modfile.File)
+	mod.AddModuleStmt(modPath)
+	mod.AddGoStmt(goVer)
+	mod.AddGopStmt(gopVer)
+	mod.Syntax.Name = gopmod
+	return Module{File: mod}, nil
 }
 
 // fixVersion returns a modfile.VersionFixer implemented using the Query function.
@@ -75,30 +89,40 @@ func Load(dir string) (p Module, err error) {
 		// No module declaration. Must add module path.
 		return Module{}, ErrNoModDecl
 	}
-	return Module{mod: f}, nil
+	return Module{File: f}, nil
 }
 
 // -----------------------------------------------------------------------------
 
-func (p Module) UpdateGoMod(checkDirty bool) error {
+func (p Module) Save() error {
+	modfile := p.Modfile()
+	data, err := p.Format()
+	if err == nil {
+		err = os.WriteFile(modfile, data, 0644)
+	}
+	return err
+}
+
+func (p Module) UpdateGoMod(checkChanged bool) error {
 	gopmod := p.Modfile()
 	dir, file := filepath.Split(gopmod)
 	if file == "go.mod" {
 		return nil
 	}
 	gomod := dir + "go.mod"
-	if checkDirty && isUpdated(gomod, gopmod) {
+	if checkChanged && notChanged(gomod, gopmod) {
 		return nil
 	}
 	gof := p.convToGoMod()
-	if b, err := gof.Format(); err == nil {
-		return os.WriteFile(gomod, b, 0644)
+	data, err := gof.Format()
+	if err == nil {
+		err = os.WriteFile(gomod, data, 0644)
 	}
-	return nil
+	return err
 }
 
 func (p Module) convToGoMod() *gomodfile.File {
-	copy := p.mod.File
+	copy := p.File.File
 	copy.Syntax = cloneFileSyntax(copy.Syntax)
 	addRequireIfNotExist(&copy, "github.com/goplus/gop", env.Version())
 	addReplaceIfNotExist(&copy, "github.com/goplus/gop", "", env.GOPROOT(), "")
@@ -141,7 +165,7 @@ func addReplaceIfNotExist(f *gomodfile.File, oldPath, oldVers, newPath, newVers 
 	f.AddReplace(oldPath, oldVers, newPath, newVers)
 }
 
-func isUpdated(target, src string) bool {
+func notChanged(target, src string) bool {
 	fiTarget, err := os.Stat(target)
 	if err != nil {
 		return false
