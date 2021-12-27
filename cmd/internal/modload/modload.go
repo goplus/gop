@@ -16,14 +16,18 @@
 
 package modload
 
+import (
+	"github.com/goplus/gop/x/mod/modload"
+)
+
 // -----------------------------------------------------------------------------
 
 func UpdateGoMod(dir string) {
-	p, err := loadMod(dir)
+	p, err := modload.Load(dir)
 	if err != nil {
 		return
 	}
-	p.updateGoMod(true)
+	p.UpdateGoMod(true)
 	/*	if p.classModFile != nil && p.classModFile.Classfile != nil {
 			gengo.RegisterPkgFlags(p.classModFile.Classfile.ProjExt, gengo.PkgFlagGmx)
 			gengo.RegisterPkgFlags(p.classModFile.Classfile.WorkExt, gengo.PkgFlagSpx)

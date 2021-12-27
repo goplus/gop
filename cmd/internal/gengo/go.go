@@ -27,7 +27,7 @@ import (
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/x/mod/modload"
+	"github.com/goplus/gop/cmd/internal/modload"
 	"github.com/goplus/gox"
 )
 
