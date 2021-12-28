@@ -1,7 +1,9 @@
 package gopget
 
 import (
+	"fmt"
 	"log"
+	"os"
 
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/x/mod/modfetch"
@@ -51,6 +53,7 @@ func get(pkgPath string) {
 			genGo(modVer)
 			check(mod.AddRequire(modVer.Path, modVer.Version))
 			check(mod.Save())
+			fmt.Fprintf(os.Stderr, "gop get: added %s %s\n", modVer.Path, modVer.Version)
 			check(mod.UpdateGoMod(false))
 			inited = true
 		}

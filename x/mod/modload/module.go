@@ -163,7 +163,7 @@ func notChanged(target, src string) bool {
 
 func cloneGoFileSyntax(syn *modfile.FileSyntax) *modfile.FileSyntax {
 	stmt := make([]modfile.Expr, 0, len(syn.Stmt))
-	for _, e := range stmt {
+	for _, e := range syn.Stmt {
 		if isGopExpr(e) {
 			continue
 		}
