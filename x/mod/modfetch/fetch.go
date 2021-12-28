@@ -13,8 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package modfetch
 
+import (
+	"bytes"
+	"os/exec"
+	"strings"
+
+	"golang.org/x/mod/module"
+)
+
+/*
 import (
 	"errors"
 	"fmt"
@@ -141,3 +151,64 @@ type DownloadDirPartialError struct {
 
 func (e *DownloadDirPartialError) Error() string     { return fmt.Sprintf("%s: %v", e.Dir, e.Err) }
 func (e *DownloadDirPartialError) Is(err error) bool { return err == fs.ErrNotExist }
+*/
+
+// -----------------------------------------------------------------------------
+
+func Get(modPath string, action func(act string, mod module.Version)) (mod module.Version, err error) {
+	var stdout, stderr bytes.Buffer
+	cmd := exec.Command("go", "get", modPath)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err = cmd.Run()
+	mod = getResult(stderr.String(), action)
+	if err != nil {
+		err = &ExecCmdError{Err: err, Stderr: stderr.Bytes()}
+	}
+	return
+}
+
+func getResult(data string, action func(act string, mod module.Version)) (mod module.Version) {
+	// go: downloading github.com/xushiwei/foogop v0.1.0
+	const downloading = "go: downloading "
+	if strings.HasPrefix(data, downloading) {
+		mod = moduleAct("download", data[len(downloading):], action, &data)
+	}
+	// go get: added github.com/xushiwei/foogop v0.1.0
+	const added = "go get: added "
+	if strings.HasPrefix(data, added) {
+		mod = moduleAct("add", data[len(added):], action, &data)
+	}
+	return
+}
+
+func moduleAct(
+	act, data string, action func(act string, mod module.Version), next *string) (mod module.Version) {
+	if pos := strings.IndexByte(data, '\n'); pos > 0 {
+		line := data[:pos]
+		*next = data[pos+1:]
+		if pos = strings.IndexByte(line, ' '); pos > 0 {
+			mod.Path, mod.Version = line[:pos], line[pos+1:]
+			if action != nil {
+				action(act, mod)
+			}
+		}
+	}
+	return
+}
+
+// -----------------------------------------------------------------------------
+
+type ExecCmdError struct {
+	Err    error
+	Stderr []byte
+}
+
+func (p *ExecCmdError) Error() string {
+	if e := p.Stderr; e != nil {
+		return string(e)
+	}
+	return p.Err.Error()
+}
+
+// -----------------------------------------------------------------------------

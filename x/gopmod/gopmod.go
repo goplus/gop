@@ -172,7 +172,7 @@ func genGomodFile(modfile string) {
 		}
 		gopRoot = filepath.ToSlash(gopRoot)
 	}
-	fmt.Fprintf(&buf, gomodFormat, GOPVERSION, gopRoot)
+	fmt.Fprintf(&buf, gomodFormat, env.Version(), gopRoot)
 	err = os.WriteFile(modfile, buf.Bytes(), 0644)
 	if err != nil {
 		log.Panicln(err)

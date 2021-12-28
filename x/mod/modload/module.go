@@ -123,28 +123,10 @@ func (p Module) UpdateGoMod(checkChanged bool) error {
 
 func (p Module) convToGoMod() *gomodfile.File {
 	copy := p.File.File
-	copy.Syntax = cloneFileSyntax(copy.Syntax)
+	copy.Syntax = cloneGoFileSyntax(copy.Syntax)
 	addRequireIfNotExist(&copy, "github.com/goplus/gop", env.Version())
 	addReplaceIfNotExist(&copy, "github.com/goplus/gop", "", env.GOPROOT(), "")
 	return &copy
-}
-
-func cloneFileSyntax(syn *gomodfile.FileSyntax) *gomodfile.FileSyntax {
-	copySyn := *syn
-	stmt := make([]gomodfile.Expr, len(copySyn.Stmt))
-	for i, e := range copySyn.Stmt {
-		stmt[i] = cloneExpr(e)
-	}
-	copySyn.Stmt = stmt
-	return &copySyn
-}
-
-func cloneExpr(e gomodfile.Expr) gomodfile.Expr {
-	if v, ok := e.(*gomodfile.LineBlock); ok {
-		copy := *v
-		return &copy
-	}
-	return e
 }
 
 func addRequireIfNotExist(f *gomodfile.File, path, vers string) {
@@ -175,6 +157,46 @@ func notChanged(target, src string) bool {
 		return false
 	}
 	return fiTarget.ModTime().After(fiSrc.ModTime())
+}
+
+// -----------------------------------------------------------------------------
+
+func cloneGoFileSyntax(syn *modfile.FileSyntax) *modfile.FileSyntax {
+	stmt := make([]modfile.Expr, 0, len(syn.Stmt))
+	for _, e := range stmt {
+		if isGopExpr(e) {
+			continue
+		}
+		stmt = append(stmt, cloneExpr(e))
+	}
+	return &modfile.FileSyntax{
+		Name:     syn.Name,
+		Comments: syn.Comments,
+		Stmt:     stmt,
+	}
+}
+
+func cloneExpr(e modfile.Expr) modfile.Expr {
+	if v, ok := e.(*modfile.LineBlock); ok {
+		copy := *v
+		return &copy
+	}
+	return e
+}
+
+func isGopExpr(e modfile.Expr) bool {
+	switch verb := getVerb(e); verb {
+	case "gop", "register", "classfile":
+		return true
+	}
+	return false
+}
+
+func getVerb(e modfile.Expr) string {
+	if line, ok := e.(*modfile.Line); ok {
+		return line.Token[0]
+	}
+	return e.(*modfile.LineBlock).Token[0]
 }
 
 // -----------------------------------------------------------------------------

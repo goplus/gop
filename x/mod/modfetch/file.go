@@ -15,6 +15,7 @@
  */
 package modfetch
 
+/*
 import (
 	"io"
 	"os"
@@ -93,3 +94,4 @@ func Transform(name string, t func([]byte) ([]byte, error)) (err error) {
 
 	return nil
 }
+*/

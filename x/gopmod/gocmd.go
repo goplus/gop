@@ -38,13 +38,15 @@ const (
 )
 
 var (
-	GOPVERSION   = env.Version()
-	GOPBUILDDATE = env.BuildDate()
-	GOPROOT      = env.GOPROOT()
+	ldFlags = fmt.Sprintf(ldFlagAll, env.Version(), env.BuildDate(), GOPROOT)
+)
+
+var (
+	GOPROOT = env.GOPROOT()
 )
 
 func LoadFlags() string {
-	return fmt.Sprintf(ldFlagAll, GOPVERSION, GOPBUILDDATE, GOPROOT)
+	return ldFlags
 }
 
 // -----------------------------------------------------------------------------
