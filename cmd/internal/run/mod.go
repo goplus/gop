@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/goplus/gop/env"
-	"github.com/goplus/gop/x/gopmod"
+	"github.com/goplus/gop/x/gopproj"
 	"github.com/qiniu/x/log"
 )
 
@@ -28,10 +28,10 @@ func findGoModDir(dir string) string {
 }
 
 func gopRun(source string, args ...string) {
-	ctx := gopmod.New("")
+	ctx := gopproj.New("")
 	flags := 0
 	if *flagGop {
-		flags = gopmod.FlagGoAsGoPlus
+		flags = gopproj.FlagGoAsGoPlus
 	}
 	goProj, err := ctx.OpenFiles(flags, source)
 	if err != nil {
