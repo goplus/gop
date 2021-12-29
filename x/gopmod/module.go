@@ -21,19 +21,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"golang.org/x/mod/module"
-
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gop/x/mod/modfile"
 	"github.com/goplus/gop/x/mod/modload"
+	"golang.org/x/mod/module"
 )
-
-// -----------------------------------------------------------------------------
-
-func Versions(mod modload.Module) map[string]module.Version {
-	vers := make(map[string]module.Version)
-	return vers
-}
 
 // -----------------------------------------------------------------------------
 
@@ -47,7 +39,7 @@ type Module struct {
 
 func New(mod modload.Module) *Module {
 	classes := make(map[string]*modfile.Classfile)
-	vers := Versions(mod)
+	vers := mod.Deps()
 	fset := token.NewFileSet()
 	return &Module{classes: classes, vers: vers, Module: mod, fset: fset}
 }

@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 
 	gomodfile "golang.org/x/mod/modfile"
+	"golang.org/x/mod/module"
 
 	"github.com/goplus/gop/env"
 	"github.com/goplus/gop/x/mod/modfile"
@@ -37,6 +38,10 @@ type Module struct {
 	*modfile.File
 }
 
+func (p Module) Modfile() string {
+	return p.Syntax.Name
+}
+
 func (p Module) Path() string {
 	if mod := p.Module; mod != nil {
 		return mod.Mod.Path
@@ -44,8 +49,15 @@ func (p Module) Path() string {
 	return ""
 }
 
-func (p Module) Modfile() string {
-	return p.Syntax.Name
+func (p Module) Deps() map[string]module.Version {
+	vers := make(map[string]module.Version)
+	for _, r := range p.Require {
+		vers[r.Mod.Path] = r.Mod
+	}
+	for _, r := range p.Replace {
+		vers[r.Old.Path] = r.New
+	}
+	return vers
 }
 
 func Create(dir string, modPath, goVer, gopVer string) (p Module, err error) {

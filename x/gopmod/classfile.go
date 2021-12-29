@@ -16,34 +16,72 @@
 
 package gopmod
 
-/*
 import (
+	"errors"
+	"syscall"
+
 	"github.com/goplus/gop/x/mod/modfetch"
 	"github.com/goplus/gop/x/mod/modfile"
+	"github.com/goplus/gop/x/mod/modload"
+	"golang.org/x/mod/module"
+)
+
+var (
+	ErrNotClassFileMod = errors.New("not a classfile module")
 )
 
 // -----------------------------------------------------------------------------
 
-func (p *ImportsParser) RegisterClasses() {
-	mod := p.mod
-	if c := mod.Classfile; c != nil {
+func (p *Module) RegisterClasses() (err error) {
+	if c := p.Classfile; c != nil {
 		p.registerClass(c)
 	}
-	for _, r := range mod.Register {
-		p.registerMod(r.ClassfileMod)
+	for _, r := range p.Register {
+		if err = p.registerMod(r.ClassfileMod); err != nil {
+			return
+		}
 	}
+	return
 }
 
-func (p *ImportsParser) registerMod(modPath string) {
-	modfetch.ModCachePath()
+func (p *Module) registerMod(modPath string) (err error) {
+	mod, ok := p.vers[modPath]
+	if !ok {
+		return syscall.ENOENT
+	}
+	err = p.registerClassFrom(mod)
+	if err != syscall.ENOENT {
+		return
+	}
+	mod, err = modfetch.Get(mod.String(), p.gengo)
+	if err != nil {
+		return
+	}
+	return p.registerClassFrom(mod)
 }
 
-func (p *ImportsParser) registerClass(c *modfile.Classfile) {
+func (p *Module) registerClassFrom(modVer module.Version) (err error) {
+	dir, err := modfetch.ModCachePath(modVer)
+	if err != nil {
+		return
+	}
+	mod, err := modload.Load(dir)
+	if err != nil {
+		return
+	}
+	c := mod.Classfile
+	if c == nil {
+		return ErrNotClassFileMod
+	}
+	p.registerClass(c)
+	return
+}
+
+func (p *Module) registerClass(c *modfile.Classfile) {
 	p.classes[c.ProjExt] = c
 	if c.WorkExt != "" {
 		p.classes[c.WorkExt] = c
 	}
 }
-*/
 
 // -----------------------------------------------------------------------------

@@ -17,7 +17,9 @@
 package modfetch
 
 import (
+	"errors"
 	"path/filepath"
+	"strings"
 
 	"golang.org/x/mod/module"
 
@@ -30,7 +32,14 @@ var (
 	GOMODCACHE = env.GOMODCACHE()
 )
 
+var (
+	ErrNoNeedToDownload = errors.New("no need to download")
+)
+
 func DownloadCachePath(mod module.Version) (string, error) {
+	if isLocal(mod.Path) {
+		return mod.Path, ErrNoNeedToDownload
+	}
 	encPath, err := module.EscapePath(mod.Path)
 	if err != nil {
 		return "", err
@@ -39,11 +48,18 @@ func DownloadCachePath(mod module.Version) (string, error) {
 }
 
 func ModCachePath(mod module.Version) (string, error) {
+	if isLocal(mod.Path) {
+		return mod.Path, nil
+	}
 	encPath, err := module.EscapePath(mod.Path)
 	if err != nil {
 		return "", err
 	}
 	return filepath.Join(GOMODCACHE, encPath+"@"+mod.Version), nil
+}
+
+func isLocal(modPath string) bool {
+	return strings.HasPrefix(modPath, ".") || strings.HasPrefix(modPath, "/")
 }
 
 // -----------------------------------------------------------------------------
