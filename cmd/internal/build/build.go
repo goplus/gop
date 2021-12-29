@@ -39,12 +39,12 @@ var Cmd = &base.Command{
 
 var (
 	flagBuildOutput string
-	flagVerbose     = flag.Bool("v", false, "print verbose information")
+	flagVerbose     = flag.Bool("v", false, "print verbose information.")
 	flag            = &Cmd.Flag
 )
 
 func init() {
-	flag.StringVar(&flagBuildOutput, "o", "", "gop build output file")
+	flag.StringVar(&flagBuildOutput, "o", "", "gop build output file.")
 	Cmd.Run = runCmd
 }
 

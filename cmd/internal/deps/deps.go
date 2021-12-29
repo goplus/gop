@@ -17,9 +17,12 @@
 package deps
 
 import (
+	"fmt"
 	"log"
+	"sort"
 
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/x/gopmod"
 )
 
 // -----------------------------------------------------------------------------
@@ -32,7 +35,7 @@ var Cmd = &base.Command{
 
 var (
 	flag      = &Cmd.Flag
-	recursive = flag.Bool("r", false, "get dependencies recursively")
+	recursive = flag.Bool("r", false, "get dependencies recursively.")
 	_         = flag.Bool("v", false, "print verbose information.")
 )
 
@@ -56,6 +59,21 @@ func runCmd(cmd *base.Command, args []string) {
 }
 
 func getDeps(pkgPath string, recursive bool) {
+	mod, err := gopmod.Load(pkgPath)
+	check(err)
+	check(mod.RegisterClasses())
+	imports, err := mod.Imports(pkgPath, recursive)
+	check(err)
+	sort.Strings(imports)
+	for _, imp := range imports {
+		fmt.Println(imp)
+	}
+}
+
+func check(err error) {
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
 
 // -----------------------------------------------------------------------------
