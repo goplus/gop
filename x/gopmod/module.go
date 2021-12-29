@@ -17,6 +17,10 @@
 package gopmod
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
+
 	"golang.org/x/mod/module"
 
 	"github.com/goplus/gop/token"
@@ -26,18 +30,26 @@ import (
 
 // -----------------------------------------------------------------------------
 
+func Versions(mod modload.Module) map[string]module.Version {
+	vers := make(map[string]module.Version)
+	return vers
+}
+
+// -----------------------------------------------------------------------------
+
 type Module struct {
 	modload.Module
-	imports map[string]struct{}
 	classes map[string]*modfile.Classfile
+	vers    map[string]module.Version
 	gengo   func(act string, mod module.Version)
 	fset    *token.FileSet
 }
 
 func New(mod modload.Module) *Module {
-	imps := make(map[string]struct{})
 	classes := make(map[string]*modfile.Classfile)
-	return &Module{imports: imps, classes: classes, Module: mod, fset: token.NewFileSet()}
+	vers := Versions(mod)
+	fset := token.NewFileSet()
+	return &Module{classes: classes, vers: vers, Module: mod, fset: fset}
 }
 
 func Load(dir string) (*Module, error) {
@@ -52,8 +64,11 @@ func (p *Module) SetGenGo(gengo func(act string, mod module.Version)) {
 	p.gengo = gengo
 }
 
-func (p *Module) Imports() []string {
-	return getKeys(p.imports)
+func (p *Module) Imports(dir string) (imps []string, err error) {
+	imports := make(map[string]struct{})
+	err = p.parseImports(imports, dir)
+	imps = getKeys(imports)
+	return
 }
 
 func getKeys(v map[string]struct{}) []string {
@@ -62,6 +77,52 @@ func getKeys(v map[string]struct{}) []string {
 		keys = append(keys, key)
 	}
 	return keys
+}
+
+func (p *Module) parseImports(imports map[string]struct{}, dir string) (err error) {
+	list, err := os.ReadDir(dir)
+	if err != nil {
+		return
+	}
+	var errs ErrorList
+	for _, d := range list {
+		if d.IsDir() {
+			continue
+		}
+		fname := d.Name()
+		ext := filepath.Ext(fname)
+		switch ext {
+		case ".gop":
+			p.parseGopImport(&errs, imports, filepath.Join(dir, fname))
+		case ".go":
+			if !strings.HasPrefix(fname, "gop_autogen") {
+				p.parseGoImport(&errs, imports, filepath.Join(dir, fname))
+			}
+		default:
+			if c, ok := p.classes[ext]; ok {
+				for _, pkgPath := range c.PkgPaths {
+					imports[pkgPath] = struct{}{}
+				}
+				p.parseGopImport(&errs, imports, filepath.Join(dir, fname))
+			}
+		}
+	}
+	if len(errs) > 0 {
+		err = errs
+	}
+	return
+}
+
+// -----------------------------------------------------------------------------
+
+type ErrorList []error
+
+func (e ErrorList) Error() string {
+	errStrs := make([]string, len(e))
+	for i, err := range e {
+		errStrs[i] = err.Error()
+	}
+	return strings.Join(errStrs, "\n")
 }
 
 // -----------------------------------------------------------------------------
