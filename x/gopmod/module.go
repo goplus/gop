@@ -56,9 +56,9 @@ func (p *Module) SetGenGo(gengo func(act string, mod module.Version)) {
 	p.gengo = gengo
 }
 
-func (p *Module) Imports(dir string) (imps []string, err error) {
+func (p *Module) Imports(dir string, recursive bool) (imps []string, err error) {
 	imports := make(map[string]struct{})
-	err = p.parseImports(imports, dir)
+	err = p.parseImports(imports, dir, recursive)
 	imps = getKeys(imports)
 	return
 }
@@ -71,17 +71,20 @@ func getKeys(v map[string]struct{}) []string {
 	return keys
 }
 
-func (p *Module) parseImports(imports map[string]struct{}, dir string) (err error) {
+func (p *Module) parseImports(imports map[string]struct{}, dir string, recursive bool) (err error) {
 	list, err := os.ReadDir(dir)
 	if err != nil {
 		return
 	}
 	var errs ErrorList
 	for _, d := range list {
+		fname := d.Name()
 		if d.IsDir() {
+			if recursive {
+				p.parseImports(imports, filepath.Join(dir, fname), true)
+			}
 			continue
 		}
-		fname := d.Name()
 		ext := filepath.Ext(fname)
 		switch ext {
 		case ".gop":
