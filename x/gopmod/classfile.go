@@ -33,6 +33,11 @@ var (
 // -----------------------------------------------------------------------------
 
 func (p *Module) RegisterClasses() (err error) {
+	p.registerClass(&modfile.Classfile{
+		ProjExt:  ".gmx",
+		WorkExt:  ".spx",
+		PkgPaths: []string{"github.com/goplus/spx", "math"},
+	})
 	if c := p.Classfile; c != nil {
 		p.registerClass(c)
 	}
