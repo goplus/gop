@@ -20,9 +20,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
+	"syscall"
 
 	"github.com/goplus/gop/token"
+	"github.com/goplus/gop/x/mod/modfetch"
 	"github.com/goplus/gop/x/mod/modload"
 	"golang.org/x/mod/module"
 )
@@ -48,16 +51,48 @@ func Imports(dir string) (imps []string, err error) {
 type Module struct {
 	modload.Module
 	classes map[string]*Class
-	vers    map[string]module.Version
+	depmods []module.Version
 	gengo   func(act string, mod module.Version)
 	fset    *token.FileSet
 }
 
+func (p *Module) LookupPkgMod(pkgPath string) (m module.Version, relDir string, ok bool) {
+	for _, m = range p.depmods {
+		if pkgPath == m.Path || strings.HasPrefix(pkgPath, m.Path+"/") {
+			relDir, ok = "."+pkgPath[len(m.Path):], true
+			break
+		}
+	}
+	return
+}
+
+func (p *Module) LookupMod(modPath string) (m module.Version, ok bool) {
+	for _, m = range p.depmods {
+		if m.Path == modPath {
+			ok = true
+			break
+		}
+	}
+	return
+}
+
+func getDepMods(mod modload.Module) []module.Version {
+	depmods := mod.DepMods()
+	ret := make([]module.Version, 0, len(depmods))
+	for _, m := range depmods {
+		ret = append(ret, m)
+	}
+	sort.Slice(ret, func(i, j int) bool {
+		return ret[i].Path > ret[j].Path
+	})
+	return ret
+}
+
 func New(mod modload.Module) *Module {
 	classes := make(map[string]*Class)
-	vers := mod.DepMods()
+	depmods := getDepMods(mod)
 	fset := token.NewFileSet()
-	return &Module{classes: classes, vers: vers, Module: mod, fset: fset}
+	return &Module{classes: classes, depmods: depmods, Module: mod, fset: fset}
 }
 
 func Load(dir string) (*Module, error) {
@@ -66,6 +101,26 @@ func Load(dir string) (*Module, error) {
 		return nil, err
 	}
 	return New(mod), nil
+}
+
+func LoadMod(mod module.Version, gengo func(act string, mod module.Version)) (p *Module, err error) {
+	p, err = loadModFrom(mod)
+	if err != syscall.ENOENT {
+		return
+	}
+	mod, err = modfetch.Get(mod.String(), gengo)
+	if err != nil {
+		return
+	}
+	return loadModFrom(mod)
+}
+
+func loadModFrom(mod module.Version) (p *Module, err error) {
+	dir, err := modfetch.ModCachePath(mod)
+	if err != nil {
+		return
+	}
+	return Load(dir)
 }
 
 func (p *Module) SetGenGo(gengo func(act string, mod module.Version)) {
