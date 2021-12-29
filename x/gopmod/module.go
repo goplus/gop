@@ -56,9 +56,48 @@ type Module struct {
 	fset    *token.FileSet
 }
 
-func (p *Module) LookupPkgMod(pkgPath string) (m module.Version, relDir string, ok bool) {
+type PkgType int
+
+const (
+	PkgtStandard PkgType = iota
+	PkgtModule
+	PkgtLocal
+	PkgtExtern
+	PkgtInvalid = -1
+)
+
+func (p *Module) PkgType(pkgPath string) PkgType {
+	if pkgPath == "" {
+		return PkgtInvalid
+	}
+	if isPkgInMod(pkgPath, p.Path()) {
+		return PkgtModule
+	}
+	c := pkgPath[0]
+	if c == '/' || c == '.' {
+		return PkgtLocal
+	}
+	pos := strings.Index(pkgPath, "/")
+	if pos > 0 {
+		pkgPath = pkgPath[:pos]
+	}
+	if strings.Contains(pkgPath, ".") {
+		return PkgtExtern
+	}
+	return PkgtStandard
+}
+
+func isPkgInMod(pkgPath, modPath string) bool {
+	if strings.HasPrefix(pkgPath, modPath) {
+		suffix := pkgPath[len(modPath):]
+		return suffix == "" || suffix[0] == '/'
+	}
+	return false
+}
+
+func (p *Module) LookupExternPkg(pkgPath string) (m module.Version, relDir string, ok bool) {
 	for _, m = range p.depmods {
-		if pkgPath == m.Path || strings.HasPrefix(pkgPath, m.Path+"/") {
+		if isPkgInMod(pkgPath, m.Path) {
 			relDir, ok = "."+pkgPath[len(m.Path):], true
 			break
 		}
