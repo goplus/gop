@@ -26,18 +26,29 @@ import (
 	"golang.org/x/mod/module"
 )
 
+type Class = modfile.Classfile
+
+var (
+	ClassSpx = &Class{
+		ProjExt:  ".gmx",
+		WorkExt:  ".spx",
+		PkgPaths: []string{"github.com/goplus/spx", "math"},
+	}
+)
+
 var (
 	ErrNotClassFileMod = errors.New("not a classfile module")
 )
 
 // -----------------------------------------------------------------------------
 
+func (p *Module) LookupClass(ext string) (c *Class, ok bool) {
+	c, ok = p.classes[ext]
+	return
+}
+
 func (p *Module) RegisterClasses() (err error) {
-	p.registerClass(&modfile.Classfile{
-		ProjExt:  ".gmx",
-		WorkExt:  ".spx",
-		PkgPaths: []string{"github.com/goplus/spx", "math"},
-	})
+	p.registerClass(ClassSpx)
 	if c := p.Classfile; c != nil {
 		p.registerClass(c)
 	}

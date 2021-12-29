@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	"github.com/goplus/gop/token"
-	"github.com/goplus/gop/x/mod/modfile"
 	"github.com/goplus/gop/x/mod/modload"
 	"golang.org/x/mod/module"
 )
@@ -31,14 +30,14 @@ import (
 
 type Module struct {
 	modload.Module
-	classes map[string]*modfile.Classfile
+	classes map[string]*Class
 	vers    map[string]module.Version
 	gengo   func(act string, mod module.Version)
 	fset    *token.FileSet
 }
 
 func New(mod modload.Module) *Module {
-	classes := make(map[string]*modfile.Classfile)
+	classes := make(map[string]*Class)
 	vers := mod.Deps()
 	fset := token.NewFileSet()
 	return &Module{classes: classes, vers: vers, Module: mod, fset: fset}
