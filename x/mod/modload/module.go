@@ -49,7 +49,7 @@ func (p Module) Path() string {
 	return ""
 }
 
-func (p Module) Deps() map[string]module.Version {
+func (p Module) DepMods() map[string]module.Version {
 	vers := make(map[string]module.Version)
 	for _, r := range p.Require {
 		vers[r.Mod.Path] = r.Mod

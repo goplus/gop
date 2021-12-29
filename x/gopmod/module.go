@@ -27,7 +27,7 @@ import (
 	"golang.org/x/mod/module"
 )
 
-func Deps(dir string) (imps []string, err error) {
+func Imports(dir string) (imps []string, err error) {
 	var recursive bool
 	if strings.HasSuffix(dir, "/...") {
 		dir, recursive = dir[:len(dir)-4], true
@@ -55,7 +55,7 @@ type Module struct {
 
 func New(mod modload.Module) *Module {
 	classes := make(map[string]*Class)
-	vers := mod.Deps()
+	vers := mod.DepMods()
 	fset := token.NewFileSet()
 	return &Module{classes: classes, vers: vers, Module: mod, fset: fset}
 }

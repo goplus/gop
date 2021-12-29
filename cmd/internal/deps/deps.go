@@ -58,7 +58,7 @@ func runCmd(cmd *base.Command, args []string) {
 }
 
 func getDeps(dir string) {
-	imports, err := gopmod.Deps(dir)
+	imports, err := gopmod.Imports(dir)
 	check(err)
 	sort.Strings(imports)
 	for _, imp := range imports {
