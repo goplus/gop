@@ -29,10 +29,10 @@ import (
 
 // -----------------------------------------------------------------------------
 
-// Cmd - gop build
+// Cmd - gop get
 var Cmd = &base.Command{
 	UsageLine: "gop get [-v] [packages]",
-	Short:     "Version prints the build information for Gop executables",
+	Short:     `Add dependencies to current module and install them`,
 }
 
 var (

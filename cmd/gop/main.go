@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/goplus/gop/cmd/internal/bug"
+	"github.com/goplus/gop/cmd/internal/deps"
 	"github.com/goplus/gop/cmd/internal/gopget"
 	"github.com/qiniu/x/log"
 
@@ -59,6 +60,7 @@ func init() {
 		clean.Cmd,
 		env.Cmd,
 		test.Cmd,
+		deps.Cmd,
 		version.Cmd,
 	}
 }

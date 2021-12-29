@@ -14,27 +14,26 @@
  * limitations under the License.
  */
 
-package version
+package deps
 
 import (
-	"fmt"
-	"runtime"
+	"log"
 
 	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/env"
 )
 
 // -----------------------------------------------------------------------------
 
-// Cmd - gop version
+// Cmd - gop deps
 var Cmd = &base.Command{
-	UsageLine: "gop version [-v]",
-	Short:     "Version prints the build information for Gop executables",
+	UsageLine: "gop deps [-r -v] [package]",
+	Short:     "Show dependencies of a package or module",
 }
 
 var (
-	flag = &Cmd.Flag
-	_    = flag.Bool("v", false, "print verbose information.")
+	flag      = &Cmd.Flag
+	recursive = flag.Bool("r", false, "get dependencies recursively")
+	_         = flag.Bool("v", false, "print verbose information.")
 )
 
 func init() {
@@ -42,7 +41,21 @@ func init() {
 }
 
 func runCmd(cmd *base.Command, args []string) {
-	fmt.Printf("gop %s %s/%s\n", env.Version(), runtime.GOOS, runtime.GOARCH)
+	err := flag.Parse(args)
+	if err != nil {
+		log.Fatalln("parse input arguments failed:", err)
+	}
+	var pkgPath string
+	narg := flag.NArg()
+	if narg < 1 {
+		pkgPath = "."
+	} else {
+		pkgPath = flag.Arg(0)
+	}
+	getDeps(pkgPath, *recursive)
+}
+
+func getDeps(pkgPath string, recursive bool) {
 }
 
 // -----------------------------------------------------------------------------
