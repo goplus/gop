@@ -79,6 +79,9 @@ func (p *Module) parseImports(imports map[string]struct{}, dir string, recursive
 	var errs ErrorList
 	for _, d := range list {
 		fname := d.Name()
+		if strings.HasPrefix(fname, "_") { // skip this file/directory
+			continue
+		}
 		if d.IsDir() {
 			if recursive {
 				p.parseImports(imports, filepath.Join(dir, fname), true)
