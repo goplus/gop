@@ -37,6 +37,13 @@ type Module struct {
 	*modfile.File
 }
 
+func (p Module) Path() string {
+	if mod := p.Module; mod != nil {
+		return mod.Mod.Path
+	}
+	return ""
+}
+
 func (p Module) Modfile() string {
 	return p.Syntax.Name
 }
