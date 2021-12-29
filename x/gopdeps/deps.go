@@ -17,7 +17,10 @@
 package gopdeps
 
 import (
+	"golang.org/x/mod/module"
+
 	"github.com/goplus/gop/token"
+	"github.com/goplus/gop/x/mod/modfile"
 	"github.com/goplus/gop/x/mod/modload"
 )
 
@@ -25,12 +28,16 @@ import (
 
 type ImportsParser struct {
 	imports map[string]struct{}
+	classes map[string]*modfile.Classfile
 	mod     modload.Module
+	gengo   func(act string, mod module.Version)
 	fset    *token.FileSet
 }
 
 func New(mod modload.Module) *ImportsParser {
-	return &ImportsParser{imports: make(map[string]struct{}), mod: mod, fset: token.NewFileSet()}
+	imps := make(map[string]struct{})
+	classes := make(map[string]*modfile.Classfile)
+	return &ImportsParser{imports: imps, classes: classes, mod: mod, fset: token.NewFileSet()}
 }
 
 func Open(dir string) (*ImportsParser, error) {
@@ -39,6 +46,10 @@ func Open(dir string) (*ImportsParser, error) {
 		return nil, err
 	}
 	return New(mod), nil
+}
+
+func (p *ImportsParser) SetGenGo(gengo func(act string, mod module.Version)) {
+	p.gengo = gengo
 }
 
 func (p *ImportsParser) Imports() []string {

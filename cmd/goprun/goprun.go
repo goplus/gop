@@ -7,7 +7,7 @@ import (
 	"os/exec"
 
 	"github.com/goplus/gop/x/gopmod"
-	"github.com/goplus/gop/x/gopproj"
+	"github.com/goplus/gop/x/gopprojs"
 )
 
 func main() {
@@ -15,7 +15,7 @@ func main() {
 		fmt.Fprint(os.Stderr, "Usage: goprun package [arguments ...]\n\n")
 		return
 	}
-	proj, args, err := gopproj.ParseOne(os.Args[1:]...)
+	proj, args, err := gopprojs.ParseOne(os.Args[1:]...)
 	if err != nil {
 		log.Fatalln(err)
 	}
