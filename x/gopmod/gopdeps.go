@@ -14,44 +14,46 @@
  * limitations under the License.
  */
 
-package gopdeps
+package gopmod
 
 import (
 	"path"
 	"strconv"
 	"strings"
 
-	"go/ast"
-	"go/parser"
-	"go/token"
+	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/parser"
+	"github.com/goplus/gop/token"
 )
 
 // -----------------------------------------------------------------------------
 
-func (p *ImportsParser) ParseGoImport(gopfile string) (err error) {
+func (p *Module) ParseGopImport(gopfile string) (err error) {
 	f, err := parser.ParseFile(p.fset, gopfile, nil, parser.ImportsOnly)
 	if err != nil {
 		return
 	}
 	for _, imp := range f.Imports {
-		p.importGo(imp)
+		p.importGop(imp)
 	}
 	return
 }
 
-func (p *ImportsParser) importGo(spec *ast.ImportSpec) {
-	pkgPath := p.canonicalGo(goToString(spec.Path))
+func (p *Module) importGop(spec *ast.ImportSpec) {
+	pkgPath := p.canonicalGop(gopToString(spec.Path))
 	p.imports[pkgPath] = struct{}{}
 }
 
-func (p *ImportsParser) canonicalGo(pkgPath string) string {
-	if strings.HasPrefix(pkgPath, ".") {
-		return path.Join(p.mod.Path(), pkgPath)
+func (p *Module) canonicalGop(pkgPath string) string {
+	if strings.HasPrefix(pkgPath, "gop/") {
+		return "github.com/goplus/" + pkgPath
+	} else if strings.HasPrefix(pkgPath, ".") {
+		return path.Join(p.Path(), pkgPath)
 	}
 	return pkgPath
 }
 
-func goToString(l *ast.BasicLit) string {
+func gopToString(l *ast.BasicLit) string {
 	if l.Kind == token.STRING {
 		s, err := strconv.Unquote(l.Value)
 		if err == nil {

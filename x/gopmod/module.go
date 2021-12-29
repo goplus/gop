@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package gopdeps
+package gopmod
 
 import (
 	"golang.org/x/mod/module"
@@ -26,21 +26,21 @@ import (
 
 // -----------------------------------------------------------------------------
 
-type ImportsParser struct {
+type Module struct {
+	modload.Module
 	imports map[string]struct{}
 	classes map[string]*modfile.Classfile
-	mod     modload.Module
 	gengo   func(act string, mod module.Version)
 	fset    *token.FileSet
 }
 
-func New(mod modload.Module) *ImportsParser {
+func New(mod modload.Module) *Module {
 	imps := make(map[string]struct{})
 	classes := make(map[string]*modfile.Classfile)
-	return &ImportsParser{imports: imps, classes: classes, mod: mod, fset: token.NewFileSet()}
+	return &Module{imports: imps, classes: classes, Module: mod, fset: token.NewFileSet()}
 }
 
-func Open(dir string) (*ImportsParser, error) {
+func Load(dir string) (*Module, error) {
 	mod, err := modload.Load(dir)
 	if err != nil {
 		return nil, err
@@ -48,11 +48,11 @@ func Open(dir string) (*ImportsParser, error) {
 	return New(mod), nil
 }
 
-func (p *ImportsParser) SetGenGo(gengo func(act string, mod module.Version)) {
+func (p *Module) SetGenGo(gengo func(act string, mod module.Version)) {
 	p.gengo = gengo
 }
 
-func (p *ImportsParser) Imports() []string {
+func (p *Module) Imports() []string {
 	return getKeys(p.imports)
 }
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package gopdeps
+package gopmod
 
 /*
 import (
