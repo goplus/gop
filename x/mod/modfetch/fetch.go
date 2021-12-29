@@ -21,6 +21,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/goplus/gop/x/mod/modload"
 	"golang.org/x/mod/module"
 )
 
@@ -155,46 +156,52 @@ func (e *DownloadDirPartialError) Is(err error) bool { return err == fs.ErrNotEx
 
 // -----------------------------------------------------------------------------
 
-func Get(modPath string, action func(act string, mod module.Version)) (mod module.Version, err error) {
+func Get(modPath string) (mod module.Version, err error) {
 	var stdout, stderr bytes.Buffer
 	cmd := exec.Command("go", "get", modPath)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err = cmd.Run()
-	mod = getResult(stderr.String(), action)
+	mod = getResult(stderr.String())
 	if err != nil {
 		err = &ExecCmdError{Err: err, Stderr: stderr.Bytes()}
 	}
 	return
 }
 
-func getResult(data string, action func(act string, mod module.Version)) (mod module.Version) {
+func getResult(data string) (mod module.Version) {
 	// go: downloading github.com/xushiwei/foogop v0.1.0
 	const downloading = "go: downloading "
 	if strings.HasPrefix(data, downloading) {
-		mod = moduleAct("download", data[len(downloading):], action, &data)
+		mod = tryConvGoMod(data[len(downloading):], &data)
+		return
 	}
 	// go get: added github.com/xushiwei/foogop v0.1.0
 	const added = "go get: added "
 	if strings.HasPrefix(data, added) {
-		mod = moduleAct("add", data[len(added):], action, &data)
+		mod = tryConvGoMod(data[len(added):], &data)
 	}
 	return
 }
 
-func moduleAct(
-	act, data string, action func(act string, mod module.Version), next *string) (mod module.Version) {
+func tryConvGoMod(data string, next *string) (mod module.Version) {
 	if pos := strings.IndexByte(data, '\n'); pos > 0 {
 		line := data[:pos]
 		*next = data[pos+1:]
 		if pos = strings.IndexByte(line, ' '); pos > 0 {
 			mod.Path, mod.Version = line[:pos], line[pos+1:]
-			if action != nil {
-				action(act, mod)
+			if dir, err := ModCachePath(mod); err == nil {
+				convGoMod(dir)
 			}
 		}
 	}
 	return
+}
+
+func convGoMod(dir string) {
+	if mod, err := modload.Load(dir); err != nil {
+		mod.UpdateGoMod(true)
+	}
 }
 
 // -----------------------------------------------------------------------------

@@ -69,7 +69,7 @@ func (p *Module) registerMod(modPath string) (err error) {
 	if err != syscall.ENOENT {
 		return
 	}
-	mod, err = modfetch.Get(mod.String(), p.gengo)
+	mod, err = modfetch.Get(mod.String())
 	if err != nil {
 		return
 	}

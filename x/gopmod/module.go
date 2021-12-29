@@ -52,7 +52,6 @@ type Module struct {
 	modload.Module
 	classes map[string]*Class
 	depmods []module.Version
-	gengo   func(act string, mod module.Version)
 	fset    *token.FileSet
 }
 
@@ -142,12 +141,12 @@ func Load(dir string) (*Module, error) {
 	return New(mod), nil
 }
 
-func LoadMod(mod module.Version, gengo func(act string, mod module.Version)) (p *Module, err error) {
+func LoadMod(mod module.Version) (p *Module, err error) {
 	p, err = loadModFrom(mod)
 	if err != syscall.ENOENT {
 		return
 	}
-	mod, err = modfetch.Get(mod.String(), gengo)
+	mod, err = modfetch.Get(mod.String())
 	if err != nil {
 		return
 	}
@@ -160,10 +159,6 @@ func loadModFrom(mod module.Version) (p *Module, err error) {
 		return
 	}
 	return Load(dir)
-}
-
-func (p *Module) SetGenGo(gengo func(act string, mod module.Version)) {
-	p.gengo = gengo
 }
 
 func (p *Module) Imports(dir string, recursive bool) (imps []string, err error) {
