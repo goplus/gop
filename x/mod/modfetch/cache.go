@@ -21,9 +21,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"golang.org/x/mod/module"
-
 	"github.com/goplus/gop/env"
+	"golang.org/x/mod/module"
 )
 
 // -----------------------------------------------------------------------------

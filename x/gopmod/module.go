@@ -17,6 +17,7 @@
 package gopmod
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -25,6 +26,22 @@ import (
 	"github.com/goplus/gop/x/mod/modload"
 	"golang.org/x/mod/module"
 )
+
+func Deps(dir string) (imps []string, err error) {
+	var recursive bool
+	if strings.HasSuffix(dir, "/...") {
+		dir, recursive = dir[:len(dir)-4], true
+	}
+	mod, err := Load(dir)
+	if err != nil {
+		return
+	}
+	err = mod.RegisterClasses()
+	if err != nil {
+		return
+	}
+	return mod.Imports(dir, recursive)
+}
 
 // -----------------------------------------------------------------------------
 
@@ -56,10 +73,17 @@ func (p *Module) SetGenGo(gengo func(act string, mod module.Version)) {
 }
 
 func (p *Module) Imports(dir string, recursive bool) (imps []string, err error) {
+	if !isLocal(dir) {
+		return nil, fmt.Errorf("`%s` is not a local directory", dir)
+	}
 	imports := make(map[string]struct{})
 	err = p.parseImports(imports, dir, recursive)
 	imps = getKeys(imports)
 	return
+}
+
+func isLocal(modPath string) bool {
+	return strings.HasPrefix(modPath, ".") || strings.HasPrefix(modPath, "/")
 }
 
 func getKeys(v map[string]struct{}) []string {

@@ -29,14 +29,13 @@ import (
 
 // Cmd - gop deps
 var Cmd = &base.Command{
-	UsageLine: "gop deps [-r -v] [package]",
+	UsageLine: "gop deps [-v] [package]",
 	Short:     "Show dependencies of a package or module",
 }
 
 var (
-	flag      = &Cmd.Flag
-	recursive = flag.Bool("r", false, "get dependencies recursively.")
-	_         = flag.Bool("v", false, "print verbose information.")
+	flag = &Cmd.Flag
+	_    = flag.Bool("v", false, "print verbose information.")
 )
 
 func init() {
@@ -48,21 +47,18 @@ func runCmd(cmd *base.Command, args []string) {
 	if err != nil {
 		log.Fatalln("parse input arguments failed:", err)
 	}
-	var pkgPath string
+	var dir string
 	narg := flag.NArg()
 	if narg < 1 {
-		pkgPath = "."
+		dir = "."
 	} else {
-		pkgPath = flag.Arg(0)
+		dir = flag.Arg(0)
 	}
-	getDeps(pkgPath, *recursive)
+	getDeps(dir)
 }
 
-func getDeps(pkgPath string, recursive bool) {
-	mod, err := gopmod.Load(pkgPath)
-	check(err)
-	check(mod.RegisterClasses())
-	imports, err := mod.Imports(pkgPath, recursive)
+func getDeps(dir string) {
+	imports, err := gopmod.Deps(dir)
 	check(err)
 	sort.Strings(imports)
 	for _, imp := range imports {
