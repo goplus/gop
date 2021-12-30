@@ -363,4 +363,22 @@ func (f *File) AddGopStmt(version string) error {
 	return nil
 }
 
+func (f *File) AddRegister(modPath string) {
+	for _, r := range f.Register {
+		if r.ClassfileMod == modPath {
+			return
+		}
+	}
+	f.AddNewRegister(modPath)
+}
+
+func (f *File) AddNewRegister(modPath string) {
+	line := addLine(f.Syntax, "register", AutoQuote(modPath))
+	r := &Register{
+		ClassfileMod: modPath,
+		Syntax:       line,
+	}
+	f.Register = append(f.Register, r)
+}
+
 // -----------------------------------------------------------------------------

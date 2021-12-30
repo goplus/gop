@@ -158,7 +158,7 @@ func (e *DownloadDirPartialError) Is(err error) bool { return err == fs.ErrNotEx
 
 // -----------------------------------------------------------------------------
 
-func Get(modPath string) (mod module.Version, err error) {
+func Get(modPath string) (mod module.Version, isClass bool, err error) {
 	var stdout, stderr bytes.Buffer
 	cmd := exec.Command("go", "get", modPath)
 	cmd.Stdout = &stdout
@@ -171,7 +171,7 @@ func Get(modPath string) (mod module.Version, err error) {
 	return getResult(stderr.String())
 }
 
-func getResult(data string) (mod module.Version, err error) {
+func getResult(data string) (mod module.Version, isClass bool, err error) {
 	if data == "" {
 		err = syscall.EEXIST
 		return
@@ -189,7 +189,7 @@ func getResult(data string) (mod module.Version, err error) {
 	return
 }
 
-func tryConvGoMod(data string, next *string) (mod module.Version, err error) {
+func tryConvGoMod(data string, next *string) (mod module.Version, isClass bool, err error) {
 	err = syscall.ENOENT
 	if pos := strings.IndexByte(data, '\n'); pos > 0 {
 		line := data[:pos]
@@ -197,21 +197,21 @@ func tryConvGoMod(data string, next *string) (mod module.Version, err error) {
 		if pos = strings.IndexByte(line, ' '); pos > 0 {
 			mod.Path, mod.Version = line[:pos], line[pos+1:]
 			if dir, e := ModCachePath(mod); e == nil {
-				err = convGoMod(dir)
+				isClass, err = convGoMod(dir)
 			}
 		}
 	}
 	return
 }
 
-func convGoMod(dir string) (err error) {
+func convGoMod(dir string) (isClass bool, err error) {
 	mod, err := modload.Load(dir)
 	if err != nil {
 		return
 	}
 	os.Chmod(dir, 0755)
 	defer os.Chmod(dir, 0555)
-	return mod.UpdateGoMod(true)
+	return mod.Classfile != nil, mod.UpdateGoMod(true)
 }
 
 // -----------------------------------------------------------------------------

@@ -63,14 +63,18 @@ func get(pkgPath string) {
 	check(err)
 	check(mod.UpdateGoMod(true))
 	modPath, _ := splitPkgPath(pkgPath)
-	modVer, err := modfetch.Get(modPath)
+	modVer, isClass, err := modfetch.Get(modPath)
 	if err == syscall.EEXIST {
 		return
 	}
 	check(err)
+	if isClass {
+		mod.AddRegister(modVer.Path)
+		fmt.Fprintf(os.Stderr, "gop get: registered %s\n", modVer.Path)
+	}
 	check(mod.AddRequire(modVer.Path, modVer.Version))
-	check(mod.Save())
 	fmt.Fprintf(os.Stderr, "gop get: added %s %s\n", modVer.Path, modVer.Version)
+	check(mod.Save())
 	check(mod.UpdateGoMod(false))
 }
 

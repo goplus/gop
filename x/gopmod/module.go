@@ -146,8 +146,8 @@ func LoadMod(mod module.Version) (p *Module, err error) {
 	if err != syscall.ENOENT {
 		return
 	}
-	mod, err = modfetch.Get(mod.String())
-	if err != nil {
+	mod, _, err = modfetch.Get(mod.String())
+	if err != nil && err != syscall.EEXIST {
 		return
 	}
 	return loadModFrom(mod)
