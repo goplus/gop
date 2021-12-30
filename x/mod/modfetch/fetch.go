@@ -18,8 +18,10 @@ package modfetch
 
 import (
 	"bytes"
+	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 
 	"github.com/goplus/gop/x/mod/modload"
 	"golang.org/x/mod/module"
@@ -162,46 +164,54 @@ func Get(modPath string) (mod module.Version, err error) {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err = cmd.Run()
-	mod = getResult(stderr.String())
 	if err != nil {
 		err = &ExecCmdError{Err: err, Stderr: stderr.Bytes()}
+		return
 	}
-	return
+	return getResult(stderr.String())
 }
 
-func getResult(data string) (mod module.Version) {
+func getResult(data string) (mod module.Version, err error) {
+	if data == "" {
+		err = syscall.EEXIST
+		return
+	}
 	// go: downloading github.com/xushiwei/foogop v0.1.0
 	const downloading = "go: downloading "
 	if strings.HasPrefix(data, downloading) {
-		mod = tryConvGoMod(data[len(downloading):], &data)
-		return
+		return tryConvGoMod(data[len(downloading):], &data)
 	}
 	// go get: added github.com/xushiwei/foogop v0.1.0
 	const added = "go get: added "
 	if strings.HasPrefix(data, added) {
-		mod = tryConvGoMod(data[len(added):], &data)
+		return tryConvGoMod(data[len(added):], &data)
 	}
 	return
 }
 
-func tryConvGoMod(data string, next *string) (mod module.Version) {
+func tryConvGoMod(data string, next *string) (mod module.Version, err error) {
+	err = syscall.ENOENT
 	if pos := strings.IndexByte(data, '\n'); pos > 0 {
 		line := data[:pos]
 		*next = data[pos+1:]
 		if pos = strings.IndexByte(line, ' '); pos > 0 {
 			mod.Path, mod.Version = line[:pos], line[pos+1:]
-			if dir, err := ModCachePath(mod); err == nil {
-				convGoMod(dir)
+			if dir, e := ModCachePath(mod); e == nil {
+				err = convGoMod(dir)
 			}
 		}
 	}
 	return
 }
 
-func convGoMod(dir string) {
-	if mod, err := modload.Load(dir); err != nil {
-		mod.UpdateGoMod(true)
+func convGoMod(dir string) (err error) {
+	mod, err := modload.Load(dir)
+	if err != nil {
+		return
 	}
+	os.Chmod(dir, 0755)
+	defer os.Chmod(dir, 0555)
+	return mod.UpdateGoMod(true)
 }
 
 // -----------------------------------------------------------------------------

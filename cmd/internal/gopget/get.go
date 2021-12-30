@@ -20,11 +20,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"syscall"
 
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/x/mod/modfetch"
 	"github.com/goplus/gop/x/mod/modload"
-	"golang.org/x/mod/module"
 )
 
 // -----------------------------------------------------------------------------
@@ -63,22 +63,15 @@ func get(pkgPath string) {
 	check(err)
 	check(mod.UpdateGoMod(true))
 	modPath, _ := splitPkgPath(pkgPath)
-	inited := false
-	_, err = modfetch.Get(modPath, func(act string, modVer module.Version) {
-		if !inited {
-			genGo(modVer)
-			check(mod.AddRequire(modVer.Path, modVer.Version))
-			check(mod.Save())
-			fmt.Fprintf(os.Stderr, "gop get: added %s %s\n", modVer.Path, modVer.Version)
-			check(mod.UpdateGoMod(false))
-			inited = true
-		}
-	})
+	modVer, err := modfetch.Get(modPath)
+	if err == syscall.EEXIST {
+		return
+	}
 	check(err)
-}
-
-func genGo(mod module.Version) {
-	// TODO: not impl
+	check(mod.AddRequire(modVer.Path, modVer.Version))
+	check(mod.Save())
+	fmt.Fprintf(os.Stderr, "gop get: added %s %s\n", modVer.Path, modVer.Version)
+	check(mod.UpdateGoMod(false))
 }
 
 func splitPkgPath(pkgPath string) (modPathWithVer string, pkgPathNoVer string) {

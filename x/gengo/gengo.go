@@ -23,7 +23,11 @@ import "github.com/goplus/gop/x/gopmod"
 type Context struct {
 }
 
-func (p *Context) GenGo(mod *gopmod.Module, dir string) (err error) {
+func New(mod *gopmod.Module, pattern ...string) (p *Context, err error) {
+	return
+}
+
+func (p *Context) GenGo(dir string) (err error) {
 	return
 }
 
