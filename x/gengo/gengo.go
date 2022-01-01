@@ -17,9 +17,7 @@
 package gengo
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -63,8 +61,8 @@ func New(mod *gopmod.Module, pattern ...string) (p *Runner, err error) {
 		modRoot: modRoot,
 		modPath: modPath,
 		modTime: modTime(modFile, &errs),
-		gens:    make(map[string]none),
 		imports: make(map[string]none),
+		pkgs:    make(map[string]*pkgInfo),
 	}
 	p.runners = map[string]*Runner{modPath: p}
 	for _, pkgPath := range pkgPaths {
@@ -76,47 +74,64 @@ func New(mod *gopmod.Module, pattern ...string) (p *Runner, err error) {
 	return
 }
 
+const (
+	pkgFlagIll = 1 << iota
+	pkgFlagChanged
+)
+
+type pkgInfo struct {
+	path    string
+	runner  *Runner
+	imports []string
+	flags   int
+}
+
 type Runner struct {
 	runners map[string]*Runner
-	deps    map[string]*Runner
 	mod     *gopmod.Module
 	modRoot string
 	modPath string
 	modTime time.Time
 	imports map[string]none
-	gens    map[string]none
+	pkgs    map[string]*pkgInfo
 }
 
-func (p *Runner) gen(pkgPath, pkgPathBase string, errs *ErrorList) {
+func (p *Runner) gen(pkgPath, pkgPathBase string, errs *ErrorList) (pkg *pkgInfo) {
 	switch p.mod.PkgType(pkgPath) {
 	case gopmod.PkgtStandard:
-		return
+		return nil
 	case gopmod.PkgtLocal:
 		pkgPath = filepath.ToSlash(filepath.Join(pkgPathBase, pkgPath))
 	case gopmod.PkgtModule:
 	case gopmod.PkgtExtern:
-		p.genExtern(pkgPath, errs)
-		return
+		return p.genExtern(pkgPath, errs)
 	default:
 		panic("TODO: invalid pkgPath")
 	}
-	dir := filepath.Join(p.modRoot, pkgPath[len(p.modPath):])
-	if p.notChanged(dir) {
-		return
+	pkg = &pkgInfo{
+		path:   pkgPath,
+		runner: p,
 	}
+	dir := filepath.Join(p.modRoot, pkgPath[len(p.modPath):])
 	imps, err := p.mod.Imports(dir, false)
 	if err != nil {
-		*errs = append(*errs, err)
+		*errs, pkg.flags = append(*errs, err), pkgFlagIll
 		return
 	}
-	for _, imp := range imps {
-		p.gen(imp, pkgPath, errs)
-		p.imports[imp] = none{}
+	pkg.imports = imps
+	if p.sourceChanged(dir) {
+		pkg.flags = pkgFlagChanged
 	}
-	p.gens[pkgPath] = none{}
+	for _, imp := range imps {
+		p.imports[imp] = none{}
+		if t := p.gen(imp, pkgPath, errs); t != nil {
+			pkg.flags |= t.flags
+		}
+	}
+	return
 }
 
-func (p *Runner) genExtern(pkgPath string, errs *ErrorList) {
+func (p *Runner) genExtern(pkgPath string, errs *ErrorList) *pkgInfo {
 	modVer, _, ok := p.mod.LookupExternPkg(pkgPath)
 	if !ok {
 		panic("TODO: externPkg not found")
@@ -124,63 +139,48 @@ func (p *Runner) genExtern(pkgPath string, errs *ErrorList) {
 	modRoot, err := modfetch.ModCachePath(modVer)
 	if err != nil {
 		*errs = append(*errs, err)
-		return
+		return &pkgInfo{path: pkgPath, flags: pkgFlagIll}
 	}
 	exr, ok := p.runners[modVer.Path]
 	if !ok {
 		mod, err := gopmod.Load(modRoot)
 		if err != nil {
 			*errs = append(*errs, err)
-			return
+			return &pkgInfo{path: pkgPath, flags: pkgFlagIll}
 		}
 		exr = &Runner{
 			mod:     mod,
 			modRoot: modRoot,
 			modPath: modVer.Path,
 			modTime: modTime(mod.Modfile(), errs),
-			gens:    make(map[string]none),
+			pkgs:    make(map[string]*pkgInfo),
 			imports: make(map[string]none),
 			runners: p.runners,
 		}
 		p.runners[modVer.Path] = exr
 	}
-	exr.gen(pkgPath, pkgPath, errs)
-	if p.deps == nil {
-		p.deps = make(map[string]*Runner)
-	}
-	p.deps[modVer.Path] = exr
+	return exr.gen(pkgPath, pkgPath, errs)
 }
 
-func (p *Runner) notChanged(dir string) bool {
+func (p *Runner) sourceChanged(dir string) bool {
 	ci, err := p.mod.ChangeInfo(dir)
 	if err != nil {
-		return false
+		return true
 	}
 	f, err := os.Open(dir + "/gop_autogen.go")
 	if err != nil {
-		return false
+		return true
 	}
 	fi, err := f.Stat()
 	if err != nil || ci.ModTime.After(fi.ModTime()) {
-		return false
+		return true
 	}
-	//cinfo $SourceNum $ModuleModTime
-	const cinfo = "//cinfo "
-	const maxBufSize = 128
-	var buf [maxBufSize]byte
-	n, _ := io.ReadFull(f, buf[:])
-	if pos := bytes.IndexByte(buf[:n], '\n'); pos > 0 {
-		n = pos
+	//cinfo $SourceNum
+	var sourceNum int
+	if _, err = fmt.Fscanf(f, "//cinfo %d\n", &sourceNum); err != nil {
+		return true
 	}
-	s := string(buf[:n])
-	if strings.HasPrefix(s, cinfo) {
-		var sourceNum int
-		var modTime int64
-		if _, err = fmt.Sscan(s[len(cinfo):], &sourceNum, &modTime); err == nil {
-			return sourceNum == ci.SourceNum && modTime == ci.ModTime.UnixNano()
-		}
-	}
-	return false
+	return sourceNum != ci.SourceNum
 }
 
 // -----------------------------------------------------------------------------
