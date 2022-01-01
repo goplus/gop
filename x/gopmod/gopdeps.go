@@ -28,7 +28,7 @@ import (
 
 // -----------------------------------------------------------------------------
 
-func (p *Module) parseGopImport(errs *ErrorList, imports map[string]struct{}, gopfile string) {
+func (p *Module) parseGopImport(errs *ErrorList, imports map[string]none, gopfile string) {
 	f, err := parser.ParseFile(p.fset, gopfile, nil, parser.ImportsOnly)
 	if err != nil {
 		*errs = append(*errs, err)
@@ -39,9 +39,9 @@ func (p *Module) parseGopImport(errs *ErrorList, imports map[string]struct{}, go
 	}
 }
 
-func (p *Module) importGop(imports map[string]struct{}, spec *ast.ImportSpec) {
+func (p *Module) importGop(imports map[string]none, spec *ast.ImportSpec) {
 	pkgPath := p.canonicalGop(gopToString(spec.Path))
-	imports[pkgPath] = struct{}{}
+	imports[pkgPath] = none{}
 }
 
 func (p *Module) canonicalGop(pkgPath string) string {

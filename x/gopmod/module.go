@@ -23,6 +23,7 @@ import (
 	"sort"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gop/x/mod/modfetch"
@@ -55,6 +56,16 @@ type Module struct {
 	fset    *token.FileSet
 }
 
+func (p *Module) SupportedExts() map[string]struct{} {
+	exts := make(map[string]none, len(p.classes)+2)
+	exts[".go"] = none{}
+	exts[".gop"] = none{}
+	for ext := range p.classes {
+		exts[ext] = none{}
+	}
+	return exts
+}
+
 type PkgType int
 
 const (
@@ -72,8 +83,7 @@ func (p *Module) PkgType(pkgPath string) PkgType {
 	if isPkgInMod(pkgPath, p.Path()) {
 		return PkgtModule
 	}
-	c := pkgPath[0]
-	if c == '/' || c == '.' {
+	if pkgPath[0] == '.' {
 		return PkgtLocal
 	}
 	pos := strings.Index(pkgPath, "/")
@@ -165,7 +175,7 @@ func (p *Module) Imports(dir string, recursive bool) (imps []string, err error) 
 	if !isLocal(dir) {
 		return nil, fmt.Errorf("`%s` is not a local directory", dir)
 	}
-	imports := make(map[string]struct{})
+	imports := make(map[string]none)
 	err = p.parseImports(imports, dir, recursive)
 	imps = getKeys(imports)
 	return
@@ -175,7 +185,7 @@ func isLocal(modPath string) bool {
 	return strings.HasPrefix(modPath, ".") || strings.HasPrefix(modPath, "/")
 }
 
-func getKeys(v map[string]struct{}) []string {
+func getKeys(v map[string]none) []string {
 	keys := make([]string, 0, len(v))
 	for key := range v {
 		keys = append(keys, key)
@@ -183,7 +193,7 @@ func getKeys(v map[string]struct{}) []string {
 	return keys
 }
 
-func (p *Module) parseImports(imports map[string]struct{}, dir string, recursive bool) (err error) {
+func (p *Module) parseImports(imports map[string]none, dir string, recursive bool) (err error) {
 	list, err := os.ReadDir(dir)
 	if err != nil {
 		return
@@ -211,7 +221,7 @@ func (p *Module) parseImports(imports map[string]struct{}, dir string, recursive
 		default:
 			if c, ok := p.classes[ext]; ok {
 				for _, pkgPath := range c.PkgPaths {
-					imports[pkgPath] = struct{}{}
+					imports[pkgPath] = none{}
 				}
 				p.parseGopImport(&errs, imports, filepath.Join(dir, fname))
 			}
@@ -219,6 +229,48 @@ func (p *Module) parseImports(imports map[string]struct{}, dir string, recursive
 	}
 	if len(errs) > 0 {
 		err = errs
+	}
+	return
+}
+
+type ChangeInfo struct {
+	ModTime   time.Time
+	SourceNum int
+}
+
+func (p *Module) ChangeInfo(dir string) (ci ChangeInfo, err error) {
+	list, err := os.ReadDir(dir)
+	if err != nil {
+		return
+	}
+	dir += "/"
+	var fi os.FileInfo
+	for _, d := range list {
+		fname := d.Name()
+		if strings.HasPrefix(fname, "_") || d.IsDir() {
+			continue
+		}
+		ext := filepath.Ext(fname)
+		switch ext {
+		case ".gop":
+		case ".go":
+			if strings.HasPrefix(fname, "gop_autogen") {
+				continue
+			}
+		default:
+			if _, ok := p.classes[ext]; !ok {
+				continue
+			}
+		}
+		ci.SourceNum++
+		fi, err = os.Stat(dir + fname)
+		if err != nil {
+			return
+		}
+		t := fi.ModTime()
+		if t.After(ci.ModTime) {
+			ci.ModTime = t
+		}
 	}
 	return
 }
