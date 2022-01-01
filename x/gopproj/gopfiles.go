@@ -117,7 +117,7 @@ func (p *gopFiles) GenGo(outFile, modFile string) error {
 
 	srcDir, _ := filepath.Split(outFile)
 	modDir, _ := filepath.Split(modFile)
-	conf := &cl.Config{Dir: modDir, TargetDir: srcDir, Fset: fset}
+	conf := &cl.Config{WorkingDir: modDir, TargetDir: srcDir, Fset: fset}
 	out, err := cl.NewPackage("", mainPkg, conf)
 	if err != nil {
 		return err

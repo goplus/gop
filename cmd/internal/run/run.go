@@ -142,7 +142,7 @@ func runCmd(cmd *base.Command, args []string) {
 		}
 
 		modDir := findGoModDir(srcDir)
-		conf := &cl.Config{Dir: modDir, TargetDir: srcDir, Fset: fset}
+		conf := &cl.Config{WorkingDir: modDir, TargetDir: srcDir, Fset: fset}
 		out, err := cl.NewPackage("", mainPkg, conf)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
