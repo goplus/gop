@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	gomodfile "golang.org/x/mod/modfile"
 	"golang.org/x/mod/module"
@@ -38,10 +39,12 @@ type Module struct {
 	*modfile.File
 }
 
+// Modfile returns absolute path of the module file (gop.mod or go.mod).
 func (p Module) Modfile() string {
 	return p.Syntax.Name
 }
 
+// Path returns the module path.
 func (p Module) Path() string {
 	if mod := p.Module; mod != nil {
 		return mod.Mod.Path
@@ -49,19 +52,36 @@ func (p Module) Path() string {
 	return ""
 }
 
+// DepMods returns all depended modules.
+// If a depended module path is replace to be a local path, it will be canonical to an absolute path.
 func (p Module) DepMods() map[string]module.Version {
 	vers := make(map[string]module.Version)
 	for _, r := range p.Require {
 		vers[r.Mod.Path] = r.Mod
 	}
 	for _, r := range p.Replace {
-		vers[r.Old.Path] = r.New
+		real := r.New
+		if real.Version == "" {
+			if strings.HasPrefix(real.Path, ".") {
+				dir, _ := filepath.Split(p.Modfile())
+				real.Path = dir + real.Path
+			}
+			if a, err := filepath.Abs(real.Path); err == nil {
+				real.Path = a
+			}
+		}
+		vers[r.Old.Path] = real
 	}
 	return vers
 }
 
+// Create creates a new module in `dir`.
+// You should call `Save` manually to save this module.
 func Create(dir string, modPath, goVer, gopVer string) (p Module, err error) {
-	gopmod := filepath.Join(dir, "gop.mod")
+	gopmod, err := filepath.Abs(filepath.Join(dir, "gop.mod"))
+	if err != nil {
+		return
+	}
 	if _, err := os.Stat(gopmod); err == nil {
 		return Module{}, fmt.Errorf("gop: %s already exists", gopmod)
 	}
@@ -87,6 +107,7 @@ func fixVersion(fixed *bool) modfile.VersionFixer {
 	}
 }
 
+// Load loads a module from `dir`.
 func Load(dir string) (p Module, err error) {
 	gopmod, err := env.GOPMOD(dir)
 	if err != nil {
@@ -113,6 +134,7 @@ func Load(dir string) (p Module, err error) {
 
 // -----------------------------------------------------------------------------
 
+// Save saves all changes of this module.
 func (p Module) Save() error {
 	modfile := p.Modfile()
 	data, err := p.Format()
@@ -122,6 +144,7 @@ func (p Module) Save() error {
 	return err
 }
 
+// UpdateGoMod updates the go.mod file.
 func (p Module) UpdateGoMod(checkChanged bool) error {
 	gopmod := p.Modfile()
 	dir, file := filepath.Split(gopmod)

@@ -17,7 +17,6 @@
 package gopmod
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -49,10 +48,15 @@ func Imports(dir string) (imps []string, err error) {
 
 // -----------------------------------------------------------------------------
 
+type depmodInfo struct {
+	path string
+	real module.Version
+}
+
 type Module struct {
 	modload.Module
 	classes map[string]*Class
-	depmods []module.Version
+	depmods []depmodInfo
 	fset    *token.FileSet
 }
 
@@ -66,16 +70,18 @@ func (p *Module) SupportedExts() map[string]struct{} {
 	return exts
 }
 
+// PkgType specifies a package type.
 type PkgType int
 
 const (
-	PkgtStandard PkgType = iota
-	PkgtModule
-	PkgtLocal
-	PkgtExtern
-	PkgtInvalid = -1
+	PkgtStandard PkgType = iota // a standard Go/Go+ package
+	PkgtModule                  // a package in this module (in standard form)
+	PkgtLocal                   // a package in this module (in relative path form)
+	PkgtExtern                  // an extarnal package
+	PkgtInvalid  = -1           // an invalid package
 )
 
+// PkgType returns the package type of specified package.
 func (p *Module) PkgType(pkgPath string) PkgType {
 	if pkgPath == "" {
 		return PkgtInvalid
@@ -104,34 +110,38 @@ func isPkgInMod(pkgPath, modPath string) bool {
 	return false
 }
 
-func (p *Module) LookupExternPkg(pkgPath string) (m module.Version, relDir string, ok bool) {
-	for _, m = range p.depmods {
-		if isPkgInMod(pkgPath, m.Path) {
-			relDir, ok = "."+pkgPath[len(m.Path):], true
+// LookupExternPkg lookups a external package from depended modules.
+// If modVer.Path is replace to be a local path, it will be canonical to an absolute path.
+func (p *Module) LookupExternPkg(pkgPath string) (modPath string, modVer module.Version, ok bool) {
+	for _, m := range p.depmods {
+		if isPkgInMod(pkgPath, m.path) {
+			modPath, modVer, ok = m.path, m.real, true
 			break
 		}
 	}
 	return
 }
 
-func (p *Module) LookupMod(modPath string) (m module.Version, ok bool) {
-	for _, m = range p.depmods {
-		if m.Path == modPath {
-			ok = true
+// LookupMod lookups a depended module.
+// If modVer.Path is replace to be a local path, it will be canonical to an absolute path.
+func (p *Module) LookupMod(modPath string) (modVer module.Version, ok bool) {
+	for _, m := range p.depmods {
+		if m.path == modPath {
+			modVer, ok = m.real, true
 			break
 		}
 	}
 	return
 }
 
-func getDepMods(mod modload.Module) []module.Version {
+func getDepMods(mod modload.Module) []depmodInfo {
 	depmods := mod.DepMods()
-	ret := make([]module.Version, 0, len(depmods))
-	for _, m := range depmods {
-		ret = append(ret, m)
+	ret := make([]depmodInfo, 0, len(depmods))
+	for path, m := range depmods {
+		ret = append(ret, depmodInfo{path: path, real: m})
 	}
 	sort.Slice(ret, func(i, j int) bool {
-		return ret[i].Path > ret[j].Path
+		return ret[i].path > ret[j].path
 	})
 	return ret
 }
@@ -172,17 +182,10 @@ func loadModFrom(mod module.Version) (p *Module, err error) {
 }
 
 func (p *Module) Imports(dir string, recursive bool) (imps []string, err error) {
-	if !isLocal(dir) {
-		return nil, fmt.Errorf("`%s` is not a local directory", dir)
-	}
 	imports := make(map[string]none)
 	err = p.parseImports(imports, dir, recursive)
 	imps = getKeys(imports)
 	return
-}
-
-func isLocal(modPath string) bool {
-	return strings.HasPrefix(modPath, ".") || strings.HasPrefix(modPath, "/")
 }
 
 func getKeys(v map[string]none) []string {
@@ -234,8 +237,9 @@ func (p *Module) parseImports(imports map[string]none, dir string, recursive boo
 }
 
 type ChangeInfo struct {
-	ModTime   time.Time
-	SourceNum int
+	ModTime    time.Time
+	GopFileNum int
+	SourceNum  int
 }
 
 func (p *Module) ChangeInfo(dir string) (ci ChangeInfo, err error) {
@@ -253,6 +257,7 @@ func (p *Module) ChangeInfo(dir string) (ci ChangeInfo, err error) {
 		ext := filepath.Ext(fname)
 		switch ext {
 		case ".gop":
+			ci.GopFileNum++
 		case ".go":
 			if strings.HasPrefix(fname, "gop_autogen") {
 				continue
@@ -261,6 +266,7 @@ func (p *Module) ChangeInfo(dir string) (ci ChangeInfo, err error) {
 			if _, ok := p.classes[ext]; !ok {
 				continue
 			}
+			ci.GopFileNum++
 		}
 		ci.SourceNum++
 		fi, err = os.Stat(dir + fname)

@@ -17,9 +17,15 @@
 package gengo
 
 import (
+	"bytes"
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
+	"go/token"
+	"go/types"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -27,6 +33,91 @@ import (
 	"github.com/goplus/gop/x/mod/modfetch"
 	"github.com/goplus/gox/packages"
 )
+
+const (
+	pkgFlagIll = 1 << iota
+	pkgFlagChanged
+)
+
+type pkgInfo struct {
+	path    string
+	runner  *Runner
+	imports []string
+	deps    []*pkgInfo
+	hash    string
+	flags   int
+}
+
+type Runner struct {
+	runners map[string]*Runner
+	mod     *gopmod.Module
+	modRoot string
+	modPath string
+	modTime time.Time
+	pkgs    map[string]*pkgInfo
+}
+
+func (p *Runner) GenGo(fset *token.FileSet, loaded map[string]*types.Package) (err error) {
+	if loaded == nil {
+		loaded = make(map[string]*types.Package)
+	}
+	if fset == nil {
+		fset = token.NewFileSet()
+	}
+	var errs ErrorList
+	p.genGoPkgs(fset, loaded, &errs)
+	if len(errs) > 0 {
+		err = errs
+	}
+	return
+}
+
+func (p *Runner) genGoPkgs(fset *token.FileSet, loaded map[string]*types.Package, errs *ErrorList) {
+	imports := make(map[string]none)
+	for path, pkg := range p.pkgs {
+		if _, ok := loaded[path]; ok { // loaded
+			continue
+		}
+		if pkg.flags == pkgFlagChanged {
+			for _, imp := range pkg.imports {
+				imports[imp] = none{}
+			}
+		}
+	}
+	imps := getKeys(imports)
+	conf := &packages.Config{
+		ModRoot:       p.modRoot,
+		ModPath:       p.modPath,
+		SupportedExts: p.mod.SupportedExts(),
+		Loaded:        loaded,
+		Fset:          fset,
+	}
+	imp, _, err := packages.NewImporter(conf, imps...)
+	if err != nil {
+		return
+	}
+	_ = imp
+	for path, pkg := range p.pkgs {
+		if _, ok := loaded[path]; ok { // loaded
+			continue
+		}
+		if pkg.flags == pkgFlagChanged {
+			p.genGoPkg(path)
+		}
+	}
+}
+
+func getKeys(v map[string]none) []string {
+	keys := make([]string, 0, len(v))
+	for key := range v {
+		keys = append(keys, key)
+	}
+	return keys
+}
+
+func (p *Runner) genGoPkg(pkgPath string) {
+	// cl.NewPackage(pkgPath)
+}
 
 // -----------------------------------------------------------------------------
 
@@ -54,6 +145,7 @@ func New(mod *gopmod.Module, pattern ...string) (p *Runner, err error) {
 	if err != nil {
 		return
 	}
+	modRoot = strings.TrimSuffix(modRoot, string(os.PathSeparator))
 
 	var errs ErrorList
 	p = &Runner{
@@ -61,12 +153,11 @@ func New(mod *gopmod.Module, pattern ...string) (p *Runner, err error) {
 		modRoot: modRoot,
 		modPath: modPath,
 		modTime: modTime(modFile, &errs),
-		imports: make(map[string]none),
 		pkgs:    make(map[string]*pkgInfo),
 	}
-	p.runners = map[string]*Runner{modPath: p}
+	p.runners = map[string]*Runner{modRoot: p}
 	for _, pkgPath := range pkgPaths {
-		p.gen(pkgPath, pkgPath, &errs)
+		p.genDeps(pkgPath, pkgPath, &errs)
 	}
 	if len(errs) > 0 {
 		err = errs
@@ -74,29 +165,7 @@ func New(mod *gopmod.Module, pattern ...string) (p *Runner, err error) {
 	return
 }
 
-const (
-	pkgFlagIll = 1 << iota
-	pkgFlagChanged
-)
-
-type pkgInfo struct {
-	path    string
-	runner  *Runner
-	imports []string
-	flags   int
-}
-
-type Runner struct {
-	runners map[string]*Runner
-	mod     *gopmod.Module
-	modRoot string
-	modPath string
-	modTime time.Time
-	imports map[string]none
-	pkgs    map[string]*pkgInfo
-}
-
-func (p *Runner) gen(pkgPath, pkgPathBase string, errs *ErrorList) (pkg *pkgInfo) {
+func (p *Runner) genDeps(pkgPath, pkgPathBase string, errs *ErrorList) (pkg *pkgInfo) {
 	switch p.mod.PkgType(pkgPath) {
 	case gopmod.PkgtStandard:
 		return nil
@@ -104,7 +173,7 @@ func (p *Runner) gen(pkgPath, pkgPathBase string, errs *ErrorList) (pkg *pkgInfo
 		pkgPath = filepath.ToSlash(filepath.Join(pkgPathBase, pkgPath))
 	case gopmod.PkgtModule:
 	case gopmod.PkgtExtern:
-		return p.genExtern(pkgPath, errs)
+		return p.genExternDeps(pkgPath, errs)
 	default:
 		panic("TODO: invalid pkgPath")
 	}
@@ -112,27 +181,53 @@ func (p *Runner) gen(pkgPath, pkgPathBase string, errs *ErrorList) (pkg *pkgInfo
 		path:   pkgPath,
 		runner: p,
 	}
+	p.pkgs[pkgPath] = pkg
 	dir := filepath.Join(p.modRoot, pkgPath[len(p.modPath):])
+
+	ci, err := p.mod.ChangeInfo(dir)
+	if err != nil {
+		*errs, pkg.flags = append(*errs, err), pkgFlagIll
+		return
+	}
+	if ci.GopFileNum == 0 {
+		return
+	}
+
+	var buf bytes.Buffer
+	var depsHash string
 	imps, err := p.mod.Imports(dir, false)
 	if err != nil {
 		*errs, pkg.flags = append(*errs, err), pkgFlagIll
 		return
 	}
-	pkg.imports = imps
-	if p.sourceChanged(dir) {
-		pkg.flags = pkgFlagChanged
-	}
+	sort.Strings(imps)
 	for _, imp := range imps {
-		p.imports[imp] = none{}
-		if t := p.gen(imp, pkgPath, errs); t != nil {
+		if t := p.genDeps(imp, pkgPath, errs); t != nil {
+			buf.WriteString(t.runner.modRoot)
 			pkg.flags |= t.flags
+			if t.flags == pkgFlagChanged {
+				pkg.deps = append(pkg.deps, t)
+			}
+		} else {
+			buf.WriteString(imp)
 		}
+		buf.WriteByte('\n')
+	}
+	pkg.imports = imps
+	pkg.hash = hashOf(buf.Bytes())
+	if p.sourceChanged(dir, ci, &depsHash) || pkg.hash != depsHash {
+		pkg.flags |= pkgFlagChanged
 	}
 	return
 }
 
-func (p *Runner) genExtern(pkgPath string, errs *ErrorList) *pkgInfo {
-	modVer, _, ok := p.mod.LookupExternPkg(pkgPath)
+func hashOf(b []byte) string {
+	h := md5.Sum(b)
+	return hex.EncodeToString(h[:])
+}
+
+func (p *Runner) genExternDeps(pkgPath string, errs *ErrorList) *pkgInfo {
+	_, modVer, ok := p.mod.LookupExternPkg(pkgPath)
 	if !ok {
 		panic("TODO: externPkg not found")
 	}
@@ -141,7 +236,7 @@ func (p *Runner) genExtern(pkgPath string, errs *ErrorList) *pkgInfo {
 		*errs = append(*errs, err)
 		return &pkgInfo{path: pkgPath, flags: pkgFlagIll}
 	}
-	exr, ok := p.runners[modVer.Path]
+	exr, ok := p.runners[modRoot]
 	if !ok {
 		mod, err := gopmod.Load(modRoot)
 		if err != nil {
@@ -154,19 +249,14 @@ func (p *Runner) genExtern(pkgPath string, errs *ErrorList) *pkgInfo {
 			modPath: modVer.Path,
 			modTime: modTime(mod.Modfile(), errs),
 			pkgs:    make(map[string]*pkgInfo),
-			imports: make(map[string]none),
 			runners: p.runners,
 		}
-		p.runners[modVer.Path] = exr
+		p.runners[modRoot] = exr
 	}
-	return exr.gen(pkgPath, pkgPath, errs)
+	return exr.genDeps(pkgPath, pkgPath, errs)
 }
 
-func (p *Runner) sourceChanged(dir string) bool {
-	ci, err := p.mod.ChangeInfo(dir)
-	if err != nil {
-		return true
-	}
+func (p *Runner) sourceChanged(dir string, ci gopmod.ChangeInfo, depsHash *string) bool {
 	f, err := os.Open(dir + "/gop_autogen.go")
 	if err != nil {
 		return true
@@ -175,9 +265,9 @@ func (p *Runner) sourceChanged(dir string) bool {
 	if err != nil || ci.ModTime.After(fi.ModTime()) {
 		return true
 	}
-	//cinfo $SourceNum
+	//cinfo $SourceNum $DepsHash
 	var sourceNum int
-	if _, err = fmt.Fscanf(f, "//cinfo %d\n", &sourceNum); err != nil {
+	if _, err = fmt.Fscanf(f, "//cinfo %d %s\n", &sourceNum, depsHash); err != nil {
 		return true
 	}
 	return sourceNum != ci.SourceNum
