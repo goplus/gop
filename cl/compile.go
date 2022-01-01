@@ -72,15 +72,11 @@ func (p *Errors) Error() string {
 
 // Config of loading Go+ packages.
 type Config struct {
-	// Dir is the directory in which to run the build system's query tool
-	// that provides information about the packages.
-	// If Dir is empty, the tool is run in the current directory.
-	Dir string
-
 	// WorkingDir is the directory in which to run gop compiler.
+	WorkingDir string
+
 	// TargetDir is the directory in which to generate Go files.
-	// If WorkingDir or TargetDir is empty, it is same as Dir.
-	WorkingDir, TargetDir string
+	TargetDir string
 
 	// Fset provides source position information for syntax trees and types.
 	// If Fset is nil, Load will use a new fileset, but preserve Fset's value.
@@ -347,17 +343,13 @@ func (p *pkgCtx) handleRecover(e interface{}) {
 
 // NewPackage creates a Go+ package instance.
 func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package, err error) {
-	dir := conf.Dir
-	if dir == "" {
-		dir, _ = os.Getwd()
-	}
 	workingDir := conf.WorkingDir
 	if workingDir == "" {
 		workingDir, _ = os.Getwd()
 	}
 	targetDir := conf.TargetDir
 	if targetDir == "" {
-		targetDir = dir
+		targetDir = workingDir
 	}
 	interp := &nodeInterp{fset: conf.Fset, files: pkg.Files, workingDir: workingDir}
 	ctx := &pkgCtx{syms: make(map[string]loader), nodeInterp: interp}
