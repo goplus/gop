@@ -163,6 +163,8 @@ const (
 	gopMod = "github.com/goplus/gop"
 )
 
+// Tidy adds missing and removes unused modules.
+// Note: please call GenGo before Tidy.
 func (p Module) Tidy() (err error) {
 	gopmod := p.Modfile()
 	dir, file := filepath.Split(gopmod)
@@ -198,6 +200,9 @@ func (p Module) Tidy() (err error) {
 			p.AddReplace(r.Old.Path, r.Old.Version, r.New.Path, r.New.Version)
 		}
 		err = p.Save()
+		if err == nil {
+			err = p.UpdateGoMod(false)
+		}
 	}
 	return
 }
@@ -212,6 +217,8 @@ func tidy(modRoot string) (err error) {
 	if err != nil {
 		err = &ExecCmdError{Err: err, Stderr: stderr.Bytes()}
 	}
+	msg := strings.ReplaceAll(stderr.String(), "go: ", "gop: ")
+	os.Stdout.WriteString(msg)
 	return
 }
 
