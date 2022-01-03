@@ -37,7 +37,7 @@ func codeErrorTestEx(t *testing.T, pkgname, msg, src string) {
 		scanner.PrintError(os.Stderr, err)
 		t.Fatal("parser.ParseFSDir failed")
 	}
-	conf := *baseConf.Ensure()
+	conf := *gblConf
 	conf.NoFileLine = false
 	conf.WorkingDir = "/foo"
 	conf.TargetDir = "/foo"

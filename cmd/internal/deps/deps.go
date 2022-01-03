@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-package version
+package deps
 
 import (
 	"fmt"
-	"runtime"
+	"log"
+	"sort"
 
 	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/env"
+	"github.com/goplus/gop/x/gopmod"
 )
 
 // -----------------------------------------------------------------------------
 
-// Cmd - gop version
+// Cmd - gop deps
 var Cmd = &base.Command{
-	UsageLine: "gop version [-v]",
-	Short:     "Version prints the build information for Gop executables",
+	UsageLine: "gop deps [-v] [package]",
+	Short:     "Show dependencies of a package or module",
 }
 
 var (
@@ -42,7 +43,33 @@ func init() {
 }
 
 func runCmd(cmd *base.Command, args []string) {
-	fmt.Printf("gop %s %s/%s\n", env.Version(), runtime.GOOS, runtime.GOARCH)
+	err := flag.Parse(args)
+	if err != nil {
+		log.Fatalln("parse input arguments failed:", err)
+	}
+	var dir string
+	narg := flag.NArg()
+	if narg < 1 {
+		dir = "."
+	} else {
+		dir = flag.Arg(0)
+	}
+	getDeps(dir)
+}
+
+func getDeps(dir string) {
+	imports, err := gopmod.Imports(dir)
+	check(err)
+	sort.Strings(imports)
+	for _, imp := range imports {
+		fmt.Println(imp)
+	}
+}
+
+func check(err error) {
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
 
 // -----------------------------------------------------------------------------

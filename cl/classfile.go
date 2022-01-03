@@ -22,6 +22,7 @@ import (
 	"go/types"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/parser"
@@ -43,7 +44,7 @@ var (
 )
 
 // RegisterClassFileType registers Go+ class file types.
-func RegisterClassFileType(extGmx, extSpx string, pkgPaths ...string) {
+func RegisterClassFileType(extGmx, extSpx string, pkgPaths ...string) error {
 	if pkgPaths == nil {
 		panic("RegisterClassFileType: no pkgPath specified")
 	}
@@ -51,9 +52,11 @@ func RegisterClassFileType(extGmx, extSpx string, pkgPaths ...string) {
 	if extSpx != "" {
 		parser.RegisterFileType(extSpx, ast.FileTypeSpx)
 	}
-	if _, ok := gmxTypes[extGmx]; !ok {
-		gmxTypes[extGmx] = gmxInfo{extSpx, pkgPaths}
+	if _, ok := gmxTypes[extGmx]; ok {
+		return syscall.EEXIST
 	}
+	gmxTypes[extGmx] = gmxInfo{extSpx, pkgPaths}
+	return nil
 }
 
 // -----------------------------------------------------------------------------

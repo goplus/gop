@@ -214,6 +214,18 @@ func IsDirectoryPath(ns string) bool {
 	return modfile.IsDirectoryPath(ns)
 }
 
+func IsLocal(ns string) bool {
+	if len(ns) > 0 {
+		switch c := ns[0]; c {
+		case '/', '\\', '.':
+			return true
+		default:
+			return len(ns) >= 2 && ns[1] == ':' && ('A' <= c && c <= 'Z' || 'a' <= c && c <= 'z')
+		}
+	}
+	return false
+}
+
 // MustQuote reports whether s must be quoted in order to appear as
 // a single token in a gop.mod line.
 func MustQuote(s string) bool {
@@ -324,7 +336,7 @@ func getWeight(e Expr) int {
 	return directiveLineBlock
 }
 
-func updateLine(x *FileSyntax, line *Line, tokens ...string) {
+func updateLine(line *Line, tokens ...string) {
 	if line.InBlock {
 		tokens = tokens[1:]
 	}
@@ -358,9 +370,50 @@ func (f *File) AddGopStmt(version string) error {
 		}
 	} else {
 		f.Gop.Version = version
-		updateLine(f.Syntax, f.Gop.Syntax, "gop", version)
+		updateLine(f.Gop.Syntax, "gop", version)
 	}
 	return nil
+}
+
+func (f *File) AddRegister(modPath string) {
+	for _, r := range f.Register {
+		if r.ClassfileMod == modPath {
+			return
+		}
+	}
+	f.AddNewRegister(modPath)
+}
+
+func (f *File) AddNewRegister(modPath string) {
+	line := addLine(f.Syntax, "register", AutoQuote(modPath))
+	r := &Register{
+		ClassfileMod: modPath,
+		Syntax:       line,
+	}
+	f.Register = append(f.Register, r)
+}
+
+// -----------------------------------------------------------------------------
+
+// markRemoved modifies line so that it (and its end-of-line comment, if any)
+// will be dropped by (*FileSyntax).Cleanup.
+func markRemoved(line *Line) {
+	line.Token = nil
+	line.Comments.Suffix = nil
+}
+
+func (f *File) DropAllRequire() {
+	for _, r := range f.Require {
+		markRemoved(r.Syntax)
+	}
+	f.Require = nil
+}
+
+func (f *File) DropAllReplace() {
+	for _, r := range f.Replace {
+		markRemoved(r.Syntax)
+	}
+	f.Replace = nil
 }
 
 // -----------------------------------------------------------------------------

@@ -14,35 +14,51 @@
  * limitations under the License.
  */
 
-package version
+package gopproj
 
 import (
-	"fmt"
-	"runtime"
-
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/env"
+	"crypto/sha1"
+	"os"
+	"path/filepath"
 )
 
 // -----------------------------------------------------------------------------
 
-// Cmd - gop version
-var Cmd = &base.Command{
-	UsageLine: "gop version [-v]",
-	Short:     "Version prints the build information for Gop executables",
+type goFile struct {
+	file string
 }
 
-var (
-	flag = &Cmd.Flag
-	_    = flag.Bool("v", false, "print verbose information.")
-)
-
-func init() {
-	Cmd.Run = runCmd
+func openFromGoFile(file string) (proj *Project, err error) {
+	proj = &Project{
+		Source:        &goFile{file: file},
+		AutoGenFile:   file,
+		FriendlyFname: filepath.Base(file),
+	}
+	return
 }
 
-func runCmd(cmd *base.Command, args []string) {
-	fmt.Printf("gop %s %s/%s\n", env.Version(), runtime.GOOS, runtime.GOARCH)
+func (p *goFile) Fingerp() (ret *Fingerp, err error) { // source code fingerprint
+	file, err := filepath.Abs(p.file)
+	if err != nil {
+		return
+	}
+	fi, err := os.Stat(file)
+	if err != nil {
+		return
+	}
+	hash := sha1.Sum([]byte(file))
+	return &Fingerp{Hash: hash, ModTime: fi.ModTime()}, nil
+}
+
+func (p *goFile) GenGo(outFile, modFile string) error {
+	if p.file != outFile {
+		code, err := os.ReadFile(p.file)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(outFile, code, 0644)
+	}
+	return nil
 }
 
 // -----------------------------------------------------------------------------
