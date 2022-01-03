@@ -47,25 +47,29 @@ func (p *Module) LookupClass(ext string) (c *Class, ok bool) {
 	return
 }
 
-func (p *Module) RegisterClasses() (err error) {
-	p.registerClass(ClassSpx)
+func (p *Module) RegisterClasses(registerClass ...func(c *Class)) (err error) {
+	var regcls func(c *Class)
+	if registerClass != nil {
+		regcls = registerClass[0]
+	}
+	p.registerClass(ClassSpx, regcls)
 	if c := p.Classfile; c != nil {
-		p.registerClass(c)
+		p.registerClass(c, regcls)
 	}
 	for _, r := range p.Register {
-		if err = p.registerMod(r.ClassfileMod); err != nil {
+		if err = p.registerMod(r.ClassfileMod, regcls); err != nil {
 			return
 		}
 	}
 	return
 }
 
-func (p *Module) registerMod(modPath string) (err error) {
+func (p *Module) registerMod(modPath string, regcls func(c *Class)) (err error) {
 	mod, ok := p.LookupMod(modPath)
 	if !ok {
 		return syscall.ENOENT
 	}
-	err = p.registerClassFrom(mod)
+	err = p.registerClassFrom(mod, regcls)
 	if err != syscall.ENOENT {
 		return
 	}
@@ -73,10 +77,10 @@ func (p *Module) registerMod(modPath string) (err error) {
 	if err != nil && err != syscall.EEXIST {
 		return
 	}
-	return p.registerClassFrom(mod)
+	return p.registerClassFrom(mod, regcls)
 }
 
-func (p *Module) registerClassFrom(modVer module.Version) (err error) {
+func (p *Module) registerClassFrom(modVer module.Version, regcls func(c *Class)) (err error) {
 	dir, err := modfetch.ModCachePath(modVer)
 	if err != nil {
 		return
@@ -89,14 +93,17 @@ func (p *Module) registerClassFrom(modVer module.Version) (err error) {
 	if c == nil {
 		return ErrNotClassFileMod
 	}
-	p.registerClass(c)
+	p.registerClass(c, regcls)
 	return
 }
 
-func (p *Module) registerClass(c *modfile.Classfile) {
+func (p *Module) registerClass(c *Class, regcls func(c *Class)) {
 	p.classes[c.ProjExt] = c
 	if c.WorkExt != "" {
 		p.classes[c.WorkExt] = c
+	}
+	if regcls != nil {
+		regcls(c)
 	}
 }
 
