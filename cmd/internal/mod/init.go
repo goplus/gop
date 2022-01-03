@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// gop mod init
-
 package mod
 
 import (
@@ -29,6 +27,7 @@ import (
 	"github.com/goplus/gop/x/mod/modload"
 )
 
+// gop mod init
 var cmdInit = &base.Command{
 	UsageLine: "gop mod init [module]",
 	Short:     "initialize new module in current directory",

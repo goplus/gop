@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// gop mod tidy
+
 package mod
 
 import (
@@ -23,6 +23,7 @@ import (
 	"github.com/goplus/gop/x/mod/modload"
 )
 
+// gop mod tidy
 var cmdTidy = &base.Command{
 	UsageLine: "gop mod tidy [-e -v]",
 	Short:     "add missing and remove unused modules",
