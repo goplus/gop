@@ -80,7 +80,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
 		}
 	}
 
-	if ctx.fileType > 0 { // in a Go+ class file
+	if ctx.isClass { // in a Go+ class file
 		if fn := ctx.cb.Func(); fn != nil {
 			sig := fn.Ancestor().Type().(*types.Signature)
 			if recv := sig.Recv(); recv != nil {

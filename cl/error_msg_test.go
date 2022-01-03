@@ -32,7 +32,7 @@ func codeErrorTest(t *testing.T, msg, src string) {
 
 func codeErrorTestEx(t *testing.T, pkgname, msg, src string) {
 	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", src)
-	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", nil, 0)
+	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", parser.Config{})
 	if err != nil {
 		scanner.PrintError(os.Stderr, err)
 		t.Fatal("parser.ParseFSDir failed")

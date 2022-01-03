@@ -42,9 +42,12 @@ var (
 
 // -----------------------------------------------------------------------------
 
-func (p *Module) IsClass(ext string) bool {
-	_, ok := p.classes[ext]
-	return ok
+func (p *Module) IsClass(ext string) (isProj bool, ok bool) {
+	c, ok := p.classes[ext]
+	if ok {
+		isProj = (ext == c.ProjExt)
+	}
+	return
 }
 
 func (p *Module) LookupClass(ext string) (c *Class, ok bool) {

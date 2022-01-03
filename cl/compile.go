@@ -29,6 +29,7 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
+	"github.com/goplus/gop/x/mod/modfile"
 	"github.com/goplus/gox"
 )
 
@@ -70,6 +71,8 @@ func (p *Errors) Error() string {
 
 // -----------------------------------------------------------------------------
 
+type Class = modfile.Classfile
+
 // Config of loading Go+ packages.
 type Config struct {
 	// WorkingDir is the directory in which to run gop compiler.
@@ -81,6 +84,9 @@ type Config struct {
 	// Fset provides source position information for syntax trees and types.
 	// If Fset is nil, Load will use a new fileset, but preserve Fset's value.
 	Fset *token.FileSet
+
+	// LookupClass lookups a class by specified file extension.
+	LookupClass func(ext string) (c *Class, ok bool)
 
 	// An Importer resolves import paths to Packages.
 	Importer types.Importer
@@ -245,7 +251,7 @@ type blockCtx struct {
 	classRecv    *ast.FieldList // avaliable when gmxSettings != nil
 	fileLine     bool
 	relativePath bool
-	fileType     int16
+	isClass      bool
 }
 
 func (bc *blockCtx) findImport(name string) (pr *gox.PkgRef, ok bool) {
@@ -363,8 +369,8 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	}
 	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
 	for file, gmx := range pkg.Files {
-		if gmx.FileType == ast.FileTypeGmx {
-			ctx.gmxSettings = newGmx(p, file)
+		if gmx.IsProj {
+			ctx.gmxSettings = newGmx(p, file, conf)
 			break
 		}
 	}
@@ -372,14 +378,14 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		preloadFile(p, ctx, fpath, f, targetDir, conf)
 	}
 	for _, f := range pkg.Files {
-		if f.FileType == ast.FileTypeGmx {
+		if f.IsProj {
 			loadFile(ctx, f)
 			gmxMainFunc(p, ctx)
 			break
 		}
 	}
 	for _, f := range pkg.Files {
-		if f.FileType != ast.FileTypeGmx { // only one .gmx file
+		if !f.IsProj { // only one .gmx file
 			loadFile(ctx, f)
 		}
 	}
@@ -406,16 +412,15 @@ func hasMethod(o types.Object, name string) bool {
 	return false
 }
 
-func getEntrypoint(ft ast.FileType, isMod bool) string {
-	switch ft {
-	case ast.FileTypeSpx:
-		return "Main"
-	case ast.FileTypeGmx:
+func getEntrypoint(f *ast.File, isMod bool) string {
+	switch {
+	case f.IsProj:
 		return "MainEntry"
+	case f.IsClass:
+		return "Main"
+	case isMod:
+		return "init"
 	default:
-		if isMod {
-			return "init"
-		}
 		return "main"
 	}
 }
@@ -456,27 +461,29 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 	fileLine := !conf.NoFileLine
 	testingFile := strings.HasSuffix(file, "_test.gop")
 	ctx := &blockCtx{
-		pkg: p, pkgCtx: parent, cb: p.CB(), fset: p.Fset, targetDir: targetDir, fileType: f.FileType,
-		fileLine: fileLine, relativePath: conf.RelativePath, imports: make(map[string]*gox.PkgRef),
+		pkg: p, pkgCtx: parent, cb: p.CB(), fset: p.Fset, targetDir: targetDir,
+		fileLine: fileLine, relativePath: conf.RelativePath, isClass: f.IsClass,
+		imports: make(map[string]*gox.PkgRef),
 	}
 	var classType string
 	var baseTypeName string
 	var baseType types.Type
-	switch f.FileType {
-	case ast.FileTypeSpx:
-		if parent.gmxSettings != nil {
-			classType = getDefaultClass(file)
-			o := parent.sprite
-			baseTypeName, baseType = o.Name(), o.Type()
-		}
-		// TODO: panic
-	case ast.FileTypeGmx:
+	var spxClass bool
+	switch {
+	case f.IsProj:
 		classType = parent.gameClass
 		o := parent.game
 		baseTypeName, baseType = o.Name(), o.Type()
 		if parent.gameIsPtr {
 			baseType = types.NewPointer(baseType)
 		}
+	case f.IsClass:
+		if parent.gmxSettings != nil {
+			classType = getDefaultClass(file)
+			o := parent.sprite
+			baseTypeName, baseType, spxClass = o.Name(), o.Type(), true
+		}
+		// TODO: panic
 	}
 	if classType != "" {
 		if debugLoad {
@@ -501,7 +508,7 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 				pkg := p.Types
 				flds := make([]*types.Var, 1, 2)
 				flds[0] = types.NewField(pos, pkg, baseTypeName, baseType, true)
-				if f.FileType == ast.FileTypeSpx {
+				if spxClass {
 					typ := toType(ctx, &ast.StarExpr{X: &ast.Ident{Name: parent.gameClass}})
 					fld := types.NewField(pos, pkg, getTypeName(typ), typ, true)
 					flds = append(flds, fld)
@@ -539,7 +546,7 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
 			if f.NoEntrypoint && d.Name.Name == "main" {
-				d.Name.Name = getEntrypoint(f.FileType, f.Name.Name != "main")
+				d.Name.Name = getEntrypoint(f, f.Name.Name != "main")
 			}
 			if ctx.classRecv != nil { // in class file (.spx/.gmx)
 				if d.Recv == nil {

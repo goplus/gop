@@ -101,7 +101,7 @@ func ParseDir(fset *token.FileSet, path string, filter func(os.FileInfo) bool, m
 }
 
 type Config struct {
-	IsClass func(ext string) bool
+	IsClass func(ext string) (isProj bool, ok bool)
 	Filter  func(os.FileInfo) bool
 	Mode    Mode
 }
@@ -140,6 +140,7 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (p
 		}
 		fname := d.Name()
 		ext := filepath.Ext(fname)
+		var isProj, isClass bool
 		switch ext {
 		case ".gop":
 		case ".go":
@@ -147,7 +148,7 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (p
 				continue
 			}
 		default:
-			if !conf.IsClass(ext) {
+			if isProj, isClass = conf.IsClass(ext); !isClass {
 				continue
 			}
 		}
@@ -155,6 +156,7 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (p
 			filename := fs.Join(path, fname)
 			if filedata, err := fs.ReadFile(filename); err == nil {
 				if src, err := ParseFSFile(fset, fs, filename, filedata, conf.Mode); err == nil {
+					src.IsProj, src.IsClass = isProj, isClass
 					name := src.Name.Name
 					pkg, found := pkgs[name]
 					if !found {
@@ -176,8 +178,15 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (p
 	return
 }
 
-func defaultIsClass(ext string) bool {
-	return ext == ".spx" || ext == ".gmx"
+func defaultIsClass(ext string) (isProj bool, ok bool) {
+	switch ext {
+	case ".gmx":
+		isProj = true
+		fallthrough
+	case ".spx":
+		ok = true
+	}
+	return
 }
 
 // -----------------------------------------------------------------------------
