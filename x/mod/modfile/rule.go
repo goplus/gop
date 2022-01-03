@@ -336,7 +336,7 @@ func getWeight(e Expr) int {
 	return directiveLineBlock
 }
 
-func updateLine(x *FileSyntax, line *Line, tokens ...string) {
+func updateLine(line *Line, tokens ...string) {
 	if line.InBlock {
 		tokens = tokens[1:]
 	}
@@ -370,7 +370,7 @@ func (f *File) AddGopStmt(version string) error {
 		}
 	} else {
 		f.Gop.Version = version
-		updateLine(f.Syntax, f.Gop.Syntax, "gop", version)
+		updateLine(f.Gop.Syntax, "gop", version)
 	}
 	return nil
 }
