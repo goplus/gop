@@ -95,7 +95,7 @@ type Config struct {
 	Loaded map[string]*types.Package
 }
 
-func (p *Runner) GenGo(conf Config) {
+func (p *Runner) GenGo(conf Config) bool {
 	if conf.Loaded == nil {
 		conf.Loaded = make(map[string]*types.Package)
 	}
@@ -106,6 +106,7 @@ func (p *Runner) GenGo(conf Config) {
 		conf.Event = defaultEvent{}
 	}
 	p.genGoPkgs(&conf)
+	return p.state == stateDone
 }
 
 func (p *Runner) genGoPkgs(conf *Config) {
@@ -416,6 +417,25 @@ func (e ErrorList) Error() string {
 		errStrs[i] = err.Error()
 	}
 	return strings.Join(errStrs, "\n")
+}
+
+// -----------------------------------------------------------------------------
+
+func GenGo(conf Config, pattern ...string) bool {
+	if conf.Event == nil {
+		conf.Event = defaultEvent{}
+	}
+	mod, err := gopmod.Load(".")
+	if err != nil {
+		conf.OnErr("loadMod", err)
+		return false
+	}
+	p, err := New(mod, pattern...)
+	if err != nil {
+		conf.OnErr("genDeps", err)
+		return false
+	}
+	return p.GenGo(conf)
 }
 
 // -----------------------------------------------------------------------------

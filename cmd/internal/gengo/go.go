@@ -18,65 +18,25 @@
 package gengo
 
 import (
-	"fmt"
 	"os"
-	"strings"
 
 	"github.com/qiniu/x/log"
 
 	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/x/gengo"
 	"github.com/goplus/gox"
 )
 
-// -----------------------------------------------------------------------------
-/*
-var (
-	errTestFailed = errors.New("test failed")
-)
-
-func testPkg(p *gengo.Runner, dir string, flags int) error {
-	if flags == gengo.PkgFlagGo { // don't test Go packages
-		return nil
-	}
-	cmd1 := exec.Command("go", "run", path.Join(dir, "gop_autogen.go"))
-	gorun, err := cmd1.CombinedOutput()
-	if err != nil {
-		os.Stderr.Write(gorun)
-		fmt.Fprintf(os.Stderr, "[ERROR] `%v` failed: %v\n", cmd1, err)
-		return err
-	}
-	cmd2 := exec.Command("gop", "run", "-quiet", dir) // -quiet: don't generate any log
-	qrun, err := cmd2.CombinedOutput()
-	if err != nil {
-		os.Stderr.Write(qrun)
-		fmt.Fprintf(os.Stderr, "[ERROR] `%v` failed: %v\n", cmd2, err)
-		return err
-	}
-	if !bytes.Equal(gorun, qrun) {
-		fmt.Fprintf(os.Stderr, "[ERROR] Output has differences!\n")
-		fmt.Fprintf(os.Stderr, ">>> Output of `%v`:\n", cmd1)
-		os.Stderr.Write(gorun)
-		fmt.Fprintf(os.Stderr, "\n>>> Output of `%v`:\n", cmd2)
-		os.Stderr.Write(qrun)
-		return errTestFailed
-	}
-	return nil
-}
-*/
-// -----------------------------------------------------------------------------
-
-// Cmd - gop go
+// gop go
 var Cmd = &base.Command{
-	UsageLine: "gop go [-debug -test -slow] <gopSrcDir>",
+	UsageLine: "gop go [-v] [packages]",
 	Short:     "Convert Go+ packages into Go packages",
 }
 
 var (
-	flag      = &Cmd.Flag
-	flagDebug = flag.Bool("debug", false, "set log level to debug")
-	flagTest  = flag.Bool("test", false, "test Go+ package")
+	flagVerbose = flag.Bool("v", false, "print verbose information.")
+	flag        = &Cmd.Flag
 )
 
 func init() {
@@ -88,36 +48,19 @@ func runCmd(cmd *base.Command, args []string) {
 	if err != nil {
 		log.Fatalln("parse input arguments failed:", err)
 	}
-	if flag.NArg() < 1 {
-		cmd.Usage(os.Stderr)
-		return
+	pattern := flag.Args()
+	if len(pattern) == 0 {
+		pattern = []string{"."}
 	}
-	if *flagDebug {
-		log.SetOutputLevel(log.Ldebug)
-		gox.SetDebug(gox.DbgFlagAll)
+
+	if *flagVerbose {
+		gox.SetDebug(gox.DbgFlagAll &^ gox.DbgFlagComments)
+		cl.SetDebug(cl.DbgFlagAll)
+		cl.SetDisableRecover(true)
 	}
-	dir := flag.Arg(0)
-	dir = strings.TrimSuffix(dir, "/...")
-	runner := new(gengo.Runner)
-	runner.SetAfter(func(p *gengo.Runner, dir string, flags int) error {
-		errs := p.ResetErrors()
-		if errs != nil {
-			for _, err := range errs {
-				fmt.Fprintln(os.Stderr, err)
-			}
-			fmt.Fprintln(os.Stderr)
-		} else if *flagTest {
-			panic("gop go -test: not impl")
-		}
-		return nil
-	})
-	runner.GenGo(dir, true, &cl.Config{})
-	errs := runner.Errors()
-	if errs != nil {
-		for _, err := range errs {
-			fmt.Fprintln(os.Stderr, err)
-		}
-		os.Exit(-1)
+
+	if !gengo.GenGo(gengo.Config{}, pattern...) {
+		os.Exit(1)
 	}
 }
 

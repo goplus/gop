@@ -17,73 +17,10 @@
 package base
 
 import (
-	"flag"
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
-	"strings"
-
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cmd/gengo"
 )
-
-// SkipSwitches skips all switches and returns non-switch arguments.
-func SkipSwitches(args []string, f *flag.FlagSet) []string {
-	out := make([]string, 0, len(args))
-	for _, arg := range args {
-		if strings.HasPrefix(arg, "-") {
-			if f.Lookup(arg[1:]) == nil { // flag not found
-				continue
-			}
-		}
-		out = append(out, arg)
-	}
-	return out
-}
-
-// GetBuildDir Get build directory from arguments
-func GetBuildDir(args []string) (dir string, recursive bool) {
-	if len(args) == 0 {
-		args = []string{"."}
-	}
-	dir = args[0]
-	if strings.HasSuffix(dir, "/...") {
-		dir = dir[:len(dir)-4]
-		recursive = true
-	}
-	if fi, err := os.Stat(dir); err == nil {
-		if fi.IsDir() {
-			return
-		}
-		return filepath.Dir(dir), recursive
-	}
-	return
-}
-
-// GenGoForBuild Generate go code before building or installing, and cache pkgs if success
-func GenGoForBuild(dir string, recursive bool, errorHandle func()) {
-	hasError := false
-	runner := new(gengo.Runner)
-	runner.SetAfter(func(p *gengo.Runner, dir string, flags int) error {
-		errs := p.ResetErrors()
-		if errs != nil {
-			hasError = true
-			for _, err := range errs {
-				fmt.Fprintln(os.Stderr, err)
-			}
-			fmt.Fprintln(os.Stderr)
-		}
-		return nil
-	})
-	baseConf := &cl.Config{}
-	runner.GenGo(dir, recursive, baseConf)
-	if hasError {
-		errorHandle()
-		os.Exit(1)
-	}
-}
 
 // RunGoCmd executes `go` command tools.
 func RunGoCmd(dir string, op string, args ...string) {

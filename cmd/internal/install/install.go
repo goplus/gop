@@ -18,18 +18,19 @@
 package install
 
 import (
-	"fmt"
-	"github.com/qiniu/x/log"
 	"os"
+
+	"github.com/qiniu/x/log"
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/x/gengo"
 	"github.com/goplus/gox"
 )
 
-// Cmd - gop install
+// gop install
 var Cmd = &base.Command{
-	UsageLine: "gop install [-v] <GopPackages>",
+	UsageLine: "gop install [-v] [packages]",
 	Short:     "Build Go+ files and install target to GOBIN",
 }
 
@@ -43,20 +44,26 @@ func init() {
 }
 
 func runCmd(_ *base.Command, args []string) {
-	err := flag.Parse(base.SkipSwitches(args, flag))
+	err := flag.Parse(args)
 	if err != nil {
 		log.Fatalln("parse input arguments failed:", err)
 	}
-	ssargs := flag.Args()
-	dir, recursive := base.GetBuildDir(ssargs)
+
+	pattern := flag.Args()
+	if len(pattern) == 0 {
+		pattern = []string{"."}
+	}
 
 	if *flagVerbose {
 		gox.SetDebug(gox.DbgFlagAll &^ gox.DbgFlagComments)
 		cl.SetDebug(cl.DbgFlagAll)
 		cl.SetDisableRecover(true)
 	}
-	base.GenGoForBuild(dir, recursive, func() { fmt.Fprintln(os.Stderr, "GenGo failed, stop installing") })
-	base.RunGoCmd(dir, "install", args...)
+
+	if !gengo.GenGo(gengo.Config{}, pattern...) {
+		os.Exit(1)
+	}
+	base.RunGoCmd(".", "install", args...)
 }
 
 // -----------------------------------------------------------------------------

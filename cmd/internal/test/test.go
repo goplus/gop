@@ -18,21 +18,19 @@
 package test
 
 import (
-	"fmt"
 	"os"
-	"strings"
 
 	"github.com/qiniu/x/log"
 
 	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/x/gengo"
 	"github.com/goplus/gox"
 )
 
-// Cmd - gop install
+// gop test
 var Cmd = &base.Command{
-	UsageLine: "gop test [-v] <GopPackages>",
+	UsageLine: "gop test [-v] [packages]",
 	Short:     "Test Go+ packages",
 }
 
@@ -46,19 +44,14 @@ func init() {
 }
 
 func runCmd(_ *base.Command, args []string) {
-	err := flag.Parse(base.SkipSwitches(args, flag))
+	err := flag.Parse(args)
 	if err != nil {
 		log.Fatalln("parse input arguments failed:", err)
 	}
-	ssargs := flag.Args()
-	if len(ssargs) == 0 {
-		ssargs = []string{"."}
-	}
-	var recursive bool
-	var dir = ssargs[0]
-	if strings.HasSuffix(dir, "/...") {
-		dir = dir[:len(dir)-4]
-		recursive = true
+
+	pattern := flag.Args()
+	if len(pattern) == 0 {
+		pattern = []string{"."}
 	}
 
 	if *flagVerbose {
@@ -66,25 +59,11 @@ func runCmd(_ *base.Command, args []string) {
 		cl.SetDebug(cl.DbgFlagAll)
 		cl.SetDisableRecover(true)
 	}
-	hasError := false
-	runner := new(gengo.Runner)
-	runner.SetAfter(func(p *gengo.Runner, dir string, flags int) error {
-		errs := p.ResetErrors()
-		if errs != nil {
-			hasError = true
-			for _, err := range errs {
-				fmt.Fprintln(os.Stderr, err)
-			}
-			fmt.Fprintln(os.Stderr)
-		}
-		return nil
-	})
-	baseConf := &cl.Config{}
-	runner.GenGo(dir, recursive, baseConf)
-	if hasError {
+
+	if !gengo.GenGo(gengo.Config{}, pattern...) {
 		os.Exit(1)
 	}
-	base.RunGoCmd(dir, "test", args...)
+	base.RunGoCmd(".", "test", args...)
 }
 
 // -----------------------------------------------------------------------------
