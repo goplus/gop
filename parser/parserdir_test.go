@@ -23,7 +23,6 @@ import (
 	"path"
 	"reflect"
 	"strings"
-	"syscall"
 	"testing"
 
 	"github.com/qiniu/x/log"
@@ -156,12 +155,22 @@ func TestFromTestdata(t *testing.T) {
 
 func TestRegisterFileType(t *testing.T) {
 	RegisterFileType(".gsh", ast.FileTypeSpx)
-	if err := RegisterFileType(".gshx", ast.FileTypeGop); err != syscall.EINVAL {
-		t.Fatal("TestRegisterFileType failed:", err)
-	}
-	if err := RegisterFileType(".gsh", ast.FileTypeGmx); err != syscall.EEXIST {
-		t.Fatal("TestRegisterFileType failed:", err)
-	}
+	func() {
+		defer func() {
+			if e := recover(); e == nil {
+				t.Fatal("TestRegisterFileType failed: no error?")
+			}
+		}()
+		RegisterFileType(".gshx", ast.FileTypeGop)
+	}()
+	func() {
+		defer func() {
+			if e := recover(); e == nil {
+				t.Fatal("TestRegisterFileType failed: no error?")
+			}
+		}()
+		RegisterFileType(".gsh", ast.FileTypeGmx)
+	}()
 }
 
 // -----------------------------------------------------------------------------

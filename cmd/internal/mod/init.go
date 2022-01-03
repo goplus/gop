@@ -14,20 +14,17 @@
  * limitations under the License.
  */
 
+// gop mod init
+
 package mod
 
 import (
-	"fmt"
-	"os"
-	"runtime"
-	"strings"
+	"log"
 
 	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/env"
-	"github.com/goplus/gop/x/mod/modload"
+	"github.com/goplus/gop/cmd/internal/modload"
 )
 
-// gop mod init
 var cmdInit = &base.Command{
 	UsageLine: "gop mod init [module]",
 	Short:     "initialize new module in current directory",
@@ -38,40 +35,17 @@ func init() {
 }
 
 func runInit(cmd *base.Command, args []string) {
-	switch len(args) {
-	case 0:
-		fatal(`Example usage:
-	'gop mod init example.com/m' to initialize a v0 or v1 module
-	'gop mod init example.com/m/v2' to initialize a v2 module
+	if len(args) > 1 {
+		log.Fatalf("gop mod init: too many arguments")
+	}
+	var modPath string
+	if len(args) == 1 {
+		modPath = args[0]
+	}
 
-Run 'gop help mod init' for more information.`)
-	case 1:
-	default:
-		fatal("gop mod init: too many arguments")
-	}
-	modPath := args[0]
-	mod, err := modload.Create(".", modPath, goMainVer(), env.MainVersion)
-	if err != nil {
-		fatal(err)
-	}
-	err = mod.Save()
-	if err != nil {
-		fatal(err)
-	}
-}
-
-func goMainVer() string {
-	ver := strings.TrimPrefix(runtime.Version(), "go")
-	if pos := strings.Index(ver, "."); pos > 0 {
-		pos++
-		if pos2 := strings.Index(ver[pos:], "."); pos2 > 0 {
-			ver = ver[:pos+pos2]
-		}
-	}
-	return ver
-}
-
-func fatal(msg interface{}) {
-	fmt.Fprintln(os.Stderr, msg)
-	os.Exit(1)
+	// modfetch.InitArgs(".", args...)
+	modload.CreateModFile(modPath) // does all the hard work
+	modload.LoadModFile()
+	modload.SyncGoMod()
+	modload.SyncGopMod()
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package gopproj
+package gopmod
 
 import (
 	"bytes"
@@ -172,7 +172,7 @@ func genGomodFile(modfile string) {
 		}
 		gopRoot = filepath.ToSlash(gopRoot)
 	}
-	fmt.Fprintf(&buf, gomodFormat, env.Version(), gopRoot)
+	fmt.Fprintf(&buf, gomodFormat, GOPVERSION, gopRoot)
 	err = os.WriteFile(modfile, buf.Bytes(), 0644)
 	if err != nil {
 		log.Panicln(err)

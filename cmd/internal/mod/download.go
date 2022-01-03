@@ -13,20 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+// gop mod download
 package mod
 
 import (
 	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/cmd/internal/gopget"
+	"github.com/goplus/gop/cmd/internal/modload"
+	"github.com/goplus/gop/x/mod/modfetch"
 )
 
-// gop mod download
 var cmdDownload = &base.Command{
-	UsageLine: "gop mod download [-x -json] [modules]",
+	UsageLine: "gop mod download [-x] [-json] [modules]",
 	Short:     "download modules to local cache",
 }
 
 func init() {
-	cmdDownload.Run = gopget.Cmd.Run
+	cmdDownload.Run = runDownload // break init cycle
+}
+
+func runDownload(cmd *base.Command, args []string) {
+	modfetch.DownloadArgs(".", args...)
+	modload.SyncGopMod()
 }

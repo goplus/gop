@@ -23,29 +23,7 @@ import (
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
-	"github.com/goplus/gox/packages"
 )
-
-var (
-	goxConf = getGoxConf()
-)
-
-func getGoxConf() *gox.Config {
-	fset := token.NewFileSet()
-	conf := &packages.Config{
-		ModPath: "github.com/goplus/gop/cl",
-		Loaded:  make(map[string]*types.Package),
-		Fset:    fset,
-	}
-	const (
-		pkgspx2 = "github.com/goplus/gop/cl/internal/spx2"
-	)
-	imp, _, err := packages.NewImporter(conf, ".", pkgspx2)
-	if err != nil {
-		panic(err)
-	}
-	return &gox.Config{Fset: fset, Importer: imp}
-}
 
 func TestCompileErrWrapExpr(t *testing.T) {
 	defer func() {
@@ -53,7 +31,7 @@ func TestCompileErrWrapExpr(t *testing.T) {
 			t.Fatal("TestCompileErrWrapExpr failed")
 		}
 	}()
-	pkg := gox.NewPackage("", "foo", goxConf)
+	pkg := gox.NewPackage("", "foo", nil)
 	ctx := &blockCtx{pkg: pkg, cb: pkg.CB()}
 	compileErrWrapExpr(ctx, &ast.ErrWrapExpr{Tok: token.QUESTION})
 }
@@ -106,7 +84,7 @@ func TestCanAutoCall(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 func TestGmxSettings(t *testing.T) {
-	pkg := gox.NewPackage("", "foo", goxConf)
+	pkg := gox.NewPackage("", "foo", nil)
 	gmx := newGmx(pkg, "main.t2gmx")
 	scheds := gmx.getScheds(pkg.CB())
 	if len(scheds) != 2 || scheds[0] == nil || scheds[0] != scheds[1] {
