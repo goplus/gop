@@ -1114,7 +1114,6 @@ type File struct {
 	Code         []byte
 	NoEntrypoint bool // no entrypoint func to indicate the module entry point.
 	NoPkgDecl    bool // no `package xxx` declaration
-	FileType     FileType
 }
 
 const (

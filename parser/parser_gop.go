@@ -24,7 +24,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
@@ -98,7 +97,19 @@ func astFileToPkg(file *ast.File, fileName string) (pkg *ast.Package) {
 // ParseDir calls ParseFSDir by passing a local filesystem.
 //
 func ParseDir(fset *token.FileSet, path string, filter func(os.FileInfo) bool, mode Mode) (pkgs map[string]*ast.Package, first error) {
-	return ParseFSDir(fset, local, path, filter, mode)
+	return ParseFSDir(fset, local, path, Config{Filter: filter, Mode: mode})
+}
+
+type Config struct {
+	IsClass func(ext string) bool
+	Filter  func(os.FileInfo) bool
+	Mode    Mode
+}
+
+// ParseDirEx calls ParseFSDir by passing a local filesystem.
+//
+func ParseDirEx(fset *token.FileSet, path string, conf Config) (pkgs map[string]*ast.Package, first error) {
+	return ParseFSDir(fset, local, path, conf)
 }
 
 // ParseFSDir calls ParseFile for all files with names ending in ".gop" in the
@@ -114,10 +125,13 @@ func ParseDir(fset *token.FileSet, path string, filter func(os.FileInfo) bool, m
 // returned. If a parse error occurred, a non-nil but incomplete map and the
 // first error encountered are returned.
 //
-func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, filter func(os.FileInfo) bool, mode Mode) (pkgs map[string]*ast.Package, first error) {
+func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (pkgs map[string]*ast.Package, first error) {
 	list, err := fs.ReadDir(path)
 	if err != nil {
 		return nil, err
+	}
+	if conf.IsClass == nil {
+		conf.IsClass = defaultIsClass
 	}
 	pkgs = make(map[string]*ast.Package)
 	for _, d := range list {
@@ -126,14 +140,21 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, filter func(os.
 		}
 		fname := d.Name()
 		ext := filepath.Ext(fname)
-		ft, isOk := extGopFiles[ext]
-		if ft == ast.FileTypeGo && (mode&ParseGoFiles) == 0 {
-			isOk = false
+		switch ext {
+		case ".gop":
+		case ".go":
+			if strings.HasPrefix(fname, "gop_autogen") {
+				continue
+			}
+		default:
+			if !conf.IsClass(ext) {
+				continue
+			}
 		}
-		if isOk && !strings.HasPrefix(fname, "_") && (filter == nil || filter(d)) {
+		if !strings.HasPrefix(fname, "_") && (conf.Filter == nil || conf.Filter(d)) {
 			filename := fs.Join(path, fname)
 			if filedata, err := fs.ReadFile(filename); err == nil {
-				if src, err := ParseFSFile(fset, fs, filename, filedata, mode); err == nil {
+				if src, err := ParseFSFile(fset, fs, filename, filedata, conf.Mode); err == nil {
 					name := src.Name.Name
 					pkg, found := pkgs[name]
 					if !found {
@@ -155,25 +176,8 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, filter func(os.
 	return
 }
 
-var (
-	extGopFiles = map[string]ast.FileType{
-		".go":  ast.FileTypeGo,
-		".gop": ast.FileTypeGop,
-		".spx": ast.FileTypeSpx,
-		".gmx": ast.FileTypeGmx,
-	}
-)
-
-// RegisterFileType registers a new Go+ class file type.
-func RegisterFileType(ext string, format ast.FileType) error {
-	if format != ast.FileTypeSpx && format != ast.FileTypeGmx {
-		return syscall.EINVAL
-	}
-	if _, ok := extGopFiles[ext]; ok {
-		return syscall.EEXIST
-	}
-	extGopFiles[ext] = format
-	return nil
+func defaultIsClass(ext string) bool {
+	return ext == ".spx" || ext == ".gmx"
 }
 
 // -----------------------------------------------------------------------------
@@ -209,11 +213,6 @@ func ParseFile(fset *token.FileSet, filename string, src interface{}, mode Mode)
 
 // ParseFSFile parses the source code of a single Go+ source file and returns the corresponding ast.File node.
 func ParseFSFile(fset *token.FileSet, fs FileSystem, filename string, src interface{}, mode Mode) (f *ast.File, err error) {
-	ext := filepath.Ext(filename)
-	ft, isOk := extGopFiles[ext]
-	if !isOk {
-		ft = ast.FileTypeGop
-	}
 	var code []byte
 	if src == nil {
 		code, err = fs.ReadFile(filename)
@@ -223,11 +222,7 @@ func ParseFSFile(fset *token.FileSet, fs FileSystem, filename string, src interf
 	if err != nil {
 		return
 	}
-	f, err = parseFile(fset, filename, code, mode)
-	if f != nil {
-		f.FileType = ft
-	}
-	return
+	return parseFile(fset, filename, code, mode)
 }
 
 var (

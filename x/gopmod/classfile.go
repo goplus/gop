@@ -42,6 +42,11 @@ var (
 
 // -----------------------------------------------------------------------------
 
+func (p *Module) IsClass(ext string) bool {
+	_, ok := p.classes[ext]
+	return ok
+}
+
 func (p *Module) LookupClass(ext string) (c *Class, ok bool) {
 	c, ok = p.classes[ext]
 	return

@@ -23,12 +23,10 @@ import (
 	"path"
 	"reflect"
 	"strings"
-	"syscall"
 	"testing"
 
 	"github.com/qiniu/x/log"
 
-	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/parser/parsertest"
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
@@ -91,7 +89,7 @@ func testFrom(t *testing.T, pkgDir, sel string, exclude Mode) {
 	}
 	log.Println("Parsing", pkgDir)
 	fset := token.NewFileSet()
-	pkgs, err := ParseDir(fset, pkgDir, nil, (Trace|ParseGoFiles|ParseComments)&^exclude)
+	pkgs, err := ParseDir(fset, pkgDir, nil, (Trace|ParseComments)&^exclude)
 	if err != nil || len(pkgs) != 1 {
 		if errs, ok := err.(scanner.ErrorList); ok {
 			for _, e := range errs {
@@ -112,11 +110,11 @@ func testFrom(t *testing.T, pkgDir, sel string, exclude Mode) {
 
 func TestParseGo(t *testing.T) {
 	fset := token.NewFileSet()
-	pkgs, err := ParseDir(fset, "./_testdata/functype", nil, Trace)
+	pkgs, err := ParseDirEx(fset, "./_testdata/functype", Config{Mode: Trace})
 	if err != nil {
 		t.Fatal("TestParseGo: ParseDir failed -", err)
 	}
-	if len(pkgs) != 0 {
+	if len(pkgs) != 1 {
 		t.Fatal("TestParseGo failed: len(pkgs) =", len(pkgs))
 	}
 }
@@ -151,16 +149,6 @@ func TestFromTestdata(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testFrom(t, dir+"/"+name, sel, 0)
 		})
-	}
-}
-
-func TestRegisterFileType(t *testing.T) {
-	RegisterFileType(".gsh", ast.FileTypeSpx)
-	if err := RegisterFileType(".gshx", ast.FileTypeGop); err != syscall.EINVAL {
-		t.Fatal("TestRegisterFileType failed:", err)
-	}
-	if err := RegisterFileType(".gsh", ast.FileTypeGmx); err != syscall.EEXIST {
-		t.Fatal("TestRegisterFileType failed:", err)
 	}
 }
 

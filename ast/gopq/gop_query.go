@@ -94,7 +94,7 @@ func NewSourceFrom(
 	fset *token.FileSet, fs parser.FileSystem, path string,
 	filter func(os.FileInfo) bool, mode parser.Mode) (doc NodeSet, err error) {
 
-	pkgs, err := parser.ParseFSDir(fset, fs, path, filter, mode)
+	pkgs, err := parser.ParseFSDir(fset, fs, path, parser.Config{Filter: filter, Mode: mode})
 	if err != nil {
 		return
 	}

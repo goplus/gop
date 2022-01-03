@@ -20,17 +20,23 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"go/types"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+	"syscall"
 	"time"
 
+	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/cl"
+	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gop/x/gopmod"
 	"github.com/goplus/gop/x/mod/modfetch"
+	"github.com/goplus/gox"
 	"github.com/goplus/gox/packages"
 )
 
@@ -109,10 +115,9 @@ func (p *Runner) genGoPkgs(fset *token.FileSet, loaded map[string]*types.Package
 		*errs, p.state = append(*errs, err), stateOccurErrors
 		return
 	}
-	_ = imp
 	for path, pkg := range p.pkgs {
 		if pkg.flags == pkgFlagChanged {
-			p.genGoPkg(fset, path)
+			p.genGoPkg(fset, path, imp, errs)
 		}
 	}
 	p.state = stateDone
@@ -126,12 +131,65 @@ func getKeys(v map[string]none) []string {
 	return keys
 }
 
-func (p *Runner) genGoPkg(fset *token.FileSet, pkgPath string) {
-	/*
-		dir := p.modRoot + pkgPath[len(p.modPath):]
-		parser.ParseDir(fset, dir, nil)
-		cl.NewPackage(pkgPath)
-	*/
+func (p *Runner) genGoPkg(fset *token.FileSet, pkgPath string, imp types.Importer, errs *ErrorList) {
+	pkgDir := p.modRoot + pkgPath[len(p.modPath):]
+
+	defer func() {
+		if e := recover(); e != nil {
+			switch v := e.(type) {
+			case error:
+				*errs = append(*errs, v)
+			case string:
+				*errs = append(*errs, errors.New(v))
+			default:
+				panic(e)
+			}
+		}
+	}()
+
+	conf := &cl.Config{
+		WorkingDir: pkgDir,
+		Fset:       fset,
+		Importer:   imp,
+	}
+	pkgs, err := parser.ParseDir(conf.Fset, pkgDir, nil, parser.ParseComments)
+	if err != nil {
+		*errs = append(*errs, err)
+		return
+	}
+	if len(pkgs) == 0 {
+		return syscall.ENOENT
+	}
+
+	var pkgTest *ast.Package
+	for name, pkg := range pkgs {
+		if strings.HasSuffix(name, "_test") {
+			if pkgTest != nil {
+				panic("TODO: has multi test package?")
+			}
+			pkgTest = pkg
+			continue
+		}
+		out, err := cl.NewPackage("", pkg, &conf)
+		if err != nil {
+			return p.addError(pkgDir, "compile", err)
+		}
+		err = saveGoFile(pkgDir, out)
+		if err != nil {
+			return p.addError(pkgDir, "save", err)
+		}
+	}
+	if pkgTest != nil {
+		out, err := cl.NewPackage("", pkgTest, &conf)
+		if err != nil {
+			return p.addError(pkgDir, "compile", err)
+		}
+		err = gox.WriteFile(filepath.Join(pkgDir, autoGen2TestFile), out, true)
+		if err != nil {
+			return p.addError(pkgDir, "save", err)
+		}
+	}
+	return nil
 }
 
 // -----------------------------------------------------------------------------
