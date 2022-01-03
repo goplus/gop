@@ -25,7 +25,6 @@ import (
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/cmd/internal/modload"
 	"github.com/goplus/gox"
 )
 
@@ -61,7 +60,6 @@ func runCmd(_ *base.Command, args []string) {
 		cl.SetDebug(cl.DbgFlagAll)
 		cl.SetDisableRecover(true)
 	}
-	modload.UpdateGoMod(dir)
 	base.GenGoForBuild(dir, recursive, func() { fmt.Fprintln(os.Stderr, "GenGo failed, stop building") })
 	base.RunGoCmd(dir, "build", args...)
 }

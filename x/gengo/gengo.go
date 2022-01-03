@@ -27,7 +27,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/goplus/gop/ast"
@@ -71,25 +70,48 @@ type Runner struct {
 	state   int
 }
 
-func (p *Runner) GenGo(fset *token.FileSet, loaded map[string]*types.Package) (err error) {
-	if loaded == nil {
-		loaded = make(map[string]*types.Package)
-	}
-	if fset == nil {
-		fset = token.NewFileSet()
-	}
-	var errs ErrorList
-	p.genGoPkgs(fset, loaded, &errs)
-	if len(errs) > 0 {
-		err = errs
-	}
-	return
+type Event interface {
+	OnStart(pkgPath string)
+	OnErr(stage string, err error)
+	OnEnd()
 }
 
-func (p *Runner) genGoPkgs(fset *token.FileSet, loaded map[string]*types.Package, errs *ErrorList) {
+type defaultEvent struct{}
+
+func (p defaultEvent) OnStart(pkgPath string) {
+	fmt.Fprintln(os.Stderr, pkgPath)
+}
+
+func (p defaultEvent) OnErr(stage string, err error) {
+	fmt.Fprintf(os.Stderr, "%s: %v\n", stage, err)
+}
+
+func (p defaultEvent) OnEnd() {
+}
+
+type Config struct {
+	Event
+	Fset   *token.FileSet
+	Loaded map[string]*types.Package
+}
+
+func (p *Runner) GenGo(conf Config) {
+	if conf.Loaded == nil {
+		conf.Loaded = make(map[string]*types.Package)
+	}
+	if conf.Fset == nil {
+		conf.Fset = token.NewFileSet()
+	}
+	if conf.Event == nil {
+		conf.Event = defaultEvent{}
+	}
+	p.genGoPkgs(&conf)
+}
+
+func (p *Runner) genGoPkgs(conf *Config) {
 	if p.state != stateNormal {
 		if p.state != stateDone {
-			panic("TODO: cycle?")
+			panic("TODO: cycle or error?")
 		}
 		return
 	}
@@ -97,30 +119,37 @@ func (p *Runner) genGoPkgs(fset *token.FileSet, loaded map[string]*types.Package
 	imports := make(map[string]none)
 	for _, pkg := range p.pkgs {
 		if pkg.flags == pkgFlagChanged {
+			for _, dep := range pkg.deps {
+				dep.runner.genGoPkgs(conf)
+			}
 			for _, imp := range pkg.imports {
 				imports[imp] = none{}
 			}
 		}
 	}
 	imps := getKeys(imports)
-	conf := &packages.Config{
-		ModRoot:       p.modRoot,
-		ModPath:       p.modPath,
-		SupportedExts: p.mod.SupportedExts(),
-		Loaded:        loaded,
-		Fset:          fset,
+	impConf := &packages.Config{
+		ModRoot: p.modRoot,
+		ModPath: p.modPath,
+		Loaded:  conf.Loaded,
+		Fset:    conf.Fset,
 	}
-	imp, _, err := packages.NewImporter(conf, imps...)
+	imp, _, err := packages.NewImporter(impConf, imps...)
 	if err != nil {
-		*errs, p.state = append(*errs, err), stateOccurErrors
+		conf.OnErr("newImporter", err)
+		p.state = stateOccurErrors
 		return
 	}
 	for path, pkg := range p.pkgs {
 		if pkg.flags == pkgFlagChanged {
-			p.genGoPkg(fset, path, imp, errs)
+			if p.genGoPkg(path, imp, conf) != nil {
+				p.state = stateOccurErrors
+			}
 		}
 	}
-	p.state = stateDone
+	if p.state == stateProcessing {
+		p.state = stateDone
+	}
 }
 
 func getKeys(v map[string]none) []string {
@@ -131,37 +160,50 @@ func getKeys(v map[string]none) []string {
 	return keys
 }
 
-func (p *Runner) genGoPkg(fset *token.FileSet, pkgPath string, imp types.Importer, errs *ErrorList) {
+const (
+	autoGenFile      = "gop_autogen.go"
+	autoGenTestFile  = "gop_autogen_test.go"
+	autoGen2TestFile = "gop_autogen2_test.go"
+)
+
+func (p *Runner) genGoPkg(pkgPath string, imp types.Importer, conf *Config) (err error) {
+	conf.OnStart(pkgPath)
 	pkgDir := p.modRoot + pkgPath[len(p.modPath):]
 
 	defer func() {
 		if e := recover(); e != nil {
 			switch v := e.(type) {
 			case error:
-				*errs = append(*errs, v)
+				err = v
 			case string:
-				*errs = append(*errs, errors.New(v))
+				err = errors.New(v)
 			default:
 				panic(e)
 			}
+			conf.OnErr("genGoPkg", err)
 		}
+		conf.OnEnd()
 	}()
 
-	conf := &cl.Config{
-		WorkingDir: pkgDir,
-		Fset:       fset,
-		Importer:   imp,
-	}
-	pkgs, err := parser.ParseDir(conf.Fset, pkgDir, nil, parser.ParseComments)
+	pkgs, err := parser.ParseDirEx(conf.Fset, pkgDir, parser.Config{
+		IsClass: p.mod.IsClass,
+		Mode:    parser.ParseComments,
+	})
 	if err != nil {
-		*errs = append(*errs, err)
+		conf.OnErr("parse", err)
 		return
 	}
 	if len(pkgs) == 0 {
-		return syscall.ENOENT
+		panic("TODO: no source in directory")
 	}
 
 	var pkgTest *ast.Package
+	clConf := &cl.Config{
+		WorkingDir:  pkgDir,
+		Fset:        conf.Fset,
+		LookupClass: p.mod.LookupClass,
+		Importer:    imp,
+	}
 	for name, pkg := range pkgs {
 		if strings.HasSuffix(name, "_test") {
 			if pkgTest != nil {
@@ -170,24 +212,42 @@ func (p *Runner) genGoPkg(fset *token.FileSet, pkgPath string, imp types.Importe
 			pkgTest = pkg
 			continue
 		}
-		out, err := cl.NewPackage("", pkg, &conf)
-		if err != nil {
-			return p.addError(pkgDir, "compile", err)
+		out, e := cl.NewPackage("", pkg, clConf)
+		if e != nil {
+			conf.OnErr("compile", e)
+			return e
 		}
 		err = saveGoFile(pkgDir, out)
 		if err != nil {
-			return p.addError(pkgDir, "save", err)
+			conf.OnErr("compile", err)
+			return
 		}
 	}
 	if pkgTest != nil {
-		out, err := cl.NewPackage("", pkgTest, &conf)
-		if err != nil {
-			return p.addError(pkgDir, "compile", err)
+		out, e := cl.NewPackage("", pkgTest, clConf)
+		if e != nil {
+			conf.OnErr("compile", e)
+			return e
 		}
 		err = gox.WriteFile(filepath.Join(pkgDir, autoGen2TestFile), out, true)
 		if err != nil {
-			return p.addError(pkgDir, "save", err)
+			conf.OnErr("compile", err)
 		}
+	}
+	return
+}
+
+func saveGoFile(dir string, pkg *gox.Package) error {
+	err := os.MkdirAll(dir, 0755)
+	if err != nil {
+		return err
+	}
+	err = gox.WriteFile(filepath.Join(dir, autoGenFile), pkg, false)
+	if err != nil {
+		return err
+	}
+	if pkg.HasTestingFile() {
+		return gox.WriteFile(filepath.Join(dir, autoGenTestFile), pkg, true)
 	}
 	return nil
 }
