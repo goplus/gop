@@ -78,6 +78,7 @@ var (
 	flag      = &Cmd.Flag
 	flagDebug = flag.Bool("debug", false, "set log level to debug")
 	flagTest  = flag.Bool("test", false, "test Go+ package")
+	flagSlow  = flag.Bool("slow", false, "don't cache imported packages")
 )
 
 func init() {
@@ -99,7 +100,7 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 	dir := flag.Arg(0)
 	dir = strings.TrimSuffix(dir, "/...")
-	modload.UpdateGoMod(dir)
+	modload.Load()
 	runner := new(gengo.Runner)
 	runner.SetAfter(func(p *gengo.Runner, dir string, flags int) error {
 		errs := p.ResetErrors()
@@ -113,7 +114,7 @@ func runCmd(cmd *base.Command, args []string) {
 		}
 		return nil
 	})
-	runner.GenGo(dir, true, &cl.Config{})
+	runner.GenGo(dir, true, &cl.Config{CacheLoadPkgs: !*flagSlow})
 	errs := runner.Errors()
 	if errs != nil {
 		for _, err := range errs {

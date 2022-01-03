@@ -22,38 +22,6 @@ import (
 	"golang.org/x/mod/modfile"
 )
 
-func TestUpdateLine(t *testing.T) {
-	line := &Line{InBlock: true}
-	updateLine(line, "foo", "bar")
-	if len(line.Token) != 1 && line.Token[0] != "bar" {
-		t.Fatal("updateLine failed:", line.Token)
-	}
-}
-
-func TestGetWeight(t *testing.T) {
-	if getWeight(&modfile.LineBlock{Token: []string{"require"}}) != directiveRequire {
-		t.Fatal("getWeight require failed")
-	}
-	if getWeight(&modfile.LineBlock{Token: []string{"unknown"}}) != directiveLineBlock {
-		t.Fatal("getWeight unknown failed")
-	}
-}
-
-func TestIsLocal(t *testing.T) {
-	if !IsLocal(".") || !IsLocal("/") {
-		t.Fatal(`IsLocal(".") || IsLocal("/")`)
-	}
-	if !IsLocal("c:/foo") {
-		t.Fatal(`IsLocal("c:/foo")`)
-	}
-	if !IsLocal("C:/foo") {
-		t.Fatal(`IsLocal("C:/foo")`)
-	}
-	if IsLocal("") {
-		t.Fatal(`IsLocal("")`)
-	}
-}
-
 // -----------------------------------------------------------------------------
 
 const gopmodSpx = `
@@ -150,23 +118,6 @@ func TestParse2(t *testing.T) {
 	}
 	if f.Register[0].ClassfileMod != "github.com/goplus/spx" {
 		t.Fatal("Parse => Register:", f.Register)
-	}
-	f.DropAllRequire()
-	if f.Require != nil {
-		t.Fatal("DropAllRequire failed")
-	}
-	f.AddRegister("github.com/goplus/spx")
-	if len(f.Register) != 1 {
-		t.Fatal("AddRegister not exist?")
-	}
-	f.AddRegister("github.com/xushiwei/foogop")
-	if len(f.Register) != 2 {
-		t.Fatal("AddRegister failed")
-	}
-	f.AddReplace("github.com/goplus/spx", "v1.0", "/Users/xushiwei/work/spx", "")
-	f.DropAllReplace()
-	if f.Replace != nil {
-		t.Fatal("DropAllReplace failed")
 	}
 }
 

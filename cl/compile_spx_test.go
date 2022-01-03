@@ -40,7 +40,6 @@ func newTwoFileFS(dir string, fname, data string, fname2 string, data2 string) *
 
 func init() {
 	cl.RegisterClassFileType(".tgmx", ".tspx", "github.com/goplus/gop/cl/internal/spx", "math")
-	cl.RegisterClassFileType(".tgmx", ".tspx", "github.com/goplus/gop/cl/internal/spx", "math")
 }
 
 func gopSpxTest(t *testing.T, gmx, spxcode, expected string) {
@@ -57,8 +56,9 @@ func gopSpxTestEx(t *testing.T, gmx, spxcode, expected, gmxfile, spxfile string)
 		scanner.PrintError(os.Stderr, err)
 		t.Fatal("ParseFSDir:", err)
 	}
+	conf := *baseConf.Ensure()
 	bar := pkgs["main"]
-	pkg, err := cl.NewPackage("", bar, gblConf)
+	pkg, err := cl.NewPackage("", bar, &conf)
 	if err != nil {
 		t.Fatal("NewPackage:", err)
 	}
@@ -80,7 +80,7 @@ func gopSpxErrorTestEx(t *testing.T, msg, gmx, spxcode, gmxfile, spxfile string)
 		scanner.PrintError(os.Stderr, err)
 		t.Fatal("ParseFSDir:", err)
 	}
-	conf := *gblConf
+	conf := *baseConf.Ensure()
 	conf.NoFileLine = false
 	conf.WorkingDir = "/foo"
 	conf.TargetDir = "/foo"

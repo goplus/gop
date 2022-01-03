@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+// gop mod tidy
 package mod
 
 import (
-	"log"
-
 	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/x/mod/modload"
+	"github.com/goplus/gop/cmd/internal/modload"
+	"github.com/goplus/gop/x/mod/modfetch"
 )
 
-// gop mod tidy
 var cmdTidy = &base.Command{
-	UsageLine: "gop mod tidy [-e -v]",
+	UsageLine: "gop mod tidy [-e] [-v]",
 	Short:     "add missing and remove unused modules",
 }
 
@@ -34,13 +32,8 @@ func init() {
 }
 
 func runTidy(cmd *base.Command, args []string) {
-	mod, err := modload.Load(".")
-	check(err)
-	check(mod.Tidy())
-}
-
-func check(err error) {
-	if err != nil {
-		log.Fatalln(err)
-	}
+	modload.LoadModFile()
+	modload.SyncGoMod()
+	modfetch.TidyArgs(".", args...)
+	modload.SyncGopMod()
 }

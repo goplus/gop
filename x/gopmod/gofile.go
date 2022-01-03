@@ -14,62 +14,51 @@
  * limitations under the License.
  */
 
-package deps
+package gopmod
 
 import (
-	"fmt"
-	"log"
-	"sort"
-
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/x/gopmod"
+	"crypto/sha1"
+	"os"
+	"path/filepath"
 )
 
 // -----------------------------------------------------------------------------
 
-// Cmd - gop deps
-var Cmd = &base.Command{
-	UsageLine: "gop deps [-v] [package]",
-	Short:     "Show dependencies of a package or module",
+type goFile struct {
+	file string
 }
 
-var (
-	flag = &Cmd.Flag
-	_    = flag.Bool("v", false, "print verbose information.")
-)
-
-func init() {
-	Cmd.Run = runCmd
+func openFromGoFile(file string) (proj *Project, err error) {
+	proj = &Project{
+		Source:        &goFile{file: file},
+		AutoGenFile:   file,
+		FriendlyFname: filepath.Base(file),
+	}
+	return
 }
 
-func runCmd(cmd *base.Command, args []string) {
-	err := flag.Parse(args)
+func (p *goFile) Fingerp() (ret *Fingerp, err error) { // source code fingerprint
+	file, err := filepath.Abs(p.file)
 	if err != nil {
-		log.Fatalln("parse input arguments failed:", err)
+		return
 	}
-	var dir string
-	narg := flag.NArg()
-	if narg < 1 {
-		dir = "."
-	} else {
-		dir = flag.Arg(0)
-	}
-	getDeps(dir)
-}
-
-func getDeps(dir string) {
-	imports, err := gopmod.Imports(dir)
-	check(err)
-	sort.Strings(imports)
-	for _, imp := range imports {
-		fmt.Println(imp)
-	}
-}
-
-func check(err error) {
+	fi, err := os.Stat(file)
 	if err != nil {
-		log.Fatalln(err)
+		return
 	}
+	hash := sha1.Sum([]byte(file))
+	return &Fingerp{Hash: hash, ModTime: fi.ModTime()}, nil
+}
+
+func (p *goFile) GenGo(outFile, modFile string) error {
+	if p.file != outFile {
+		code, err := os.ReadFile(p.file)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(outFile, code, 0644)
+	}
+	return nil
 }
 
 // -----------------------------------------------------------------------------

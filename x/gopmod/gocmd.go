@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package gopproj
+package gopmod
 
 import (
 	"fmt"
@@ -38,15 +38,13 @@ const (
 )
 
 var (
-	ldFlags = fmt.Sprintf(ldFlagAll, env.Version(), env.BuildDate(), GOPROOT)
-)
-
-var (
-	GOPROOT = env.GOPROOT()
+	GOPVERSION   = env.Version()
+	GOPBUILDDATE = env.BuildDate()
+	GOPROOT      = env.GOPROOT()
 )
 
 func LoadFlags() string {
-	return ldFlags
+	return fmt.Sprintf(ldFlagAll, GOPVERSION, GOPBUILDDATE, GOPROOT)
 }
 
 // -----------------------------------------------------------------------------
