@@ -17,13 +17,14 @@
 package mod
 
 import (
+	"log"
+
 	"github.com/goplus/gop/cmd/internal/base"
-	// "github.com/goplus/gop/cmd/internal/modload"
-	// "github.com/goplus/gop/x/mod/modfetch"
+	"github.com/goplus/gop/x/mod/modload"
 )
 
 var cmdTidy = &base.Command{
-	UsageLine: "gop mod tidy [-e] [-v]",
+	UsageLine: "gop mod tidy [-e -v]",
 	Short:     "add missing and remove unused modules",
 }
 
@@ -32,10 +33,13 @@ func init() {
 }
 
 func runTidy(cmd *base.Command, args []string) {
-	panic("TODO: gop mod tidy")
-	/*	modload.LoadModFile()
-		modload.SyncGoMod()
-		modfetch.TidyArgs(".", args...)
-		modload.SyncGopMod()
-	*/
+	mod, err := modload.Load(".")
+	check(err)
+	check(mod.Tidy())
+}
+
+func check(err error) {
+	if err != nil {
+		log.Fatalln(err)
+	}
 }

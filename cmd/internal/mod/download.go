@@ -23,7 +23,7 @@ import (
 )
 
 var cmdDownload = &base.Command{
-	UsageLine: "gop mod download [-x] [-json] [modules]",
+	UsageLine: "gop mod download [-x -json] [modules]",
 	Short:     "download modules to local cache",
 }
 

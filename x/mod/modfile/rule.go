@@ -394,3 +394,26 @@ func (f *File) AddNewRegister(modPath string) {
 }
 
 // -----------------------------------------------------------------------------
+
+// markRemoved modifies line so that it (and its end-of-line comment, if any)
+// will be dropped by (*FileSyntax).Cleanup.
+func markRemoved(line *Line) {
+	line.Token = nil
+	line.Comments.Suffix = nil
+}
+
+func (f *File) DropAllRequire() {
+	for _, r := range f.Require {
+		markRemoved(r.Syntax)
+	}
+	f.Require = nil
+}
+
+func (f *File) DropAllReplace() {
+	for _, r := range f.Replace {
+		markRemoved(r.Syntax)
+	}
+	f.Replace = nil
+}
+
+// -----------------------------------------------------------------------------

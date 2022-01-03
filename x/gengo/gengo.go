@@ -21,7 +21,6 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	"go/token"
 	"go/types"
 	"os"
 	"path/filepath"
@@ -29,6 +28,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/goplus/gop/token"
 	"github.com/goplus/gop/x/gopmod"
 	"github.com/goplus/gop/x/mod/modfetch"
 	"github.com/goplus/gox/packages"
@@ -37,6 +37,13 @@ import (
 const (
 	pkgFlagIll = 1 << iota
 	pkgFlagChanged
+)
+
+const (
+	stateNormal = iota
+	stateProcessing
+	stateDone
+	stateOccurErrors = -1
 )
 
 type pkgInfo struct {
@@ -55,6 +62,7 @@ type Runner struct {
 	modPath string
 	modTime time.Time
 	pkgs    map[string]*pkgInfo
+	state   int
 }
 
 func (p *Runner) GenGo(fset *token.FileSet, loaded map[string]*types.Package) (err error) {
@@ -73,11 +81,15 @@ func (p *Runner) GenGo(fset *token.FileSet, loaded map[string]*types.Package) (e
 }
 
 func (p *Runner) genGoPkgs(fset *token.FileSet, loaded map[string]*types.Package, errs *ErrorList) {
-	imports := make(map[string]none)
-	for path, pkg := range p.pkgs {
-		if _, ok := loaded[path]; ok { // loaded
-			continue
+	if p.state != stateNormal {
+		if p.state != stateDone {
+			panic("TODO: cycle?")
 		}
+		return
+	}
+	p.state = stateProcessing
+	imports := make(map[string]none)
+	for _, pkg := range p.pkgs {
 		if pkg.flags == pkgFlagChanged {
 			for _, imp := range pkg.imports {
 				imports[imp] = none{}
@@ -94,17 +106,16 @@ func (p *Runner) genGoPkgs(fset *token.FileSet, loaded map[string]*types.Package
 	}
 	imp, _, err := packages.NewImporter(conf, imps...)
 	if err != nil {
+		*errs, p.state = append(*errs, err), stateOccurErrors
 		return
 	}
 	_ = imp
 	for path, pkg := range p.pkgs {
-		if _, ok := loaded[path]; ok { // loaded
-			continue
-		}
 		if pkg.flags == pkgFlagChanged {
-			p.genGoPkg(path)
+			p.genGoPkg(fset, path)
 		}
 	}
+	p.state = stateDone
 }
 
 func getKeys(v map[string]none) []string {
@@ -115,8 +126,12 @@ func getKeys(v map[string]none) []string {
 	return keys
 }
 
-func (p *Runner) genGoPkg(pkgPath string) {
-	// cl.NewPackage(pkgPath)
+func (p *Runner) genGoPkg(fset *token.FileSet, pkgPath string) {
+	/*
+		dir := p.modRoot + pkgPath[len(p.modPath):]
+		parser.ParseDir(fset, dir, nil)
+		cl.NewPackage(pkgPath)
+	*/
 }
 
 // -----------------------------------------------------------------------------
@@ -145,7 +160,7 @@ func New(mod *gopmod.Module, pattern ...string) (p *Runner, err error) {
 	if err != nil {
 		return
 	}
-	modRoot = strings.TrimSuffix(modRoot, string(os.PathSeparator))
+	modRoot = modRoot[:len(modRoot)-1] // remove the last pathSeparator
 
 	var errs ErrorList
 	p = &Runner{
@@ -238,7 +253,7 @@ func (p *Runner) genExternDeps(pkgPath string, errs *ErrorList) *pkgInfo {
 	}
 	exr, ok := p.runners[modRoot]
 	if !ok {
-		mod, err := gopmod.Load(modRoot)
+		mod, err := gopmod.LoadMod(modVer)
 		if err != nil {
 			*errs = append(*errs, err)
 			return &pkgInfo{path: pkgPath, flags: pkgFlagIll}

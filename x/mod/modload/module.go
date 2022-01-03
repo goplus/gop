@@ -17,9 +17,11 @@
 package modload
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -57,20 +59,24 @@ func (p Module) Path() string {
 func (p Module) DepMods() map[string]module.Version {
 	vers := make(map[string]module.Version)
 	for _, r := range p.Require {
-		vers[r.Mod.Path] = r.Mod
+		if r.Mod.Path != "" {
+			vers[r.Mod.Path] = r.Mod
+		}
 	}
 	for _, r := range p.Replace {
-		real := r.New
-		if real.Version == "" {
-			if strings.HasPrefix(real.Path, ".") {
-				dir, _ := filepath.Split(p.Modfile())
-				real.Path = dir + real.Path
+		if r.Old.Path != "" {
+			real := r.New
+			if real.Version == "" {
+				if strings.HasPrefix(real.Path, ".") {
+					dir, _ := filepath.Split(p.Modfile())
+					real.Path = dir + real.Path
+				}
+				if a, err := filepath.Abs(real.Path); err == nil {
+					real.Path = a
+				}
 			}
-			if a, err := filepath.Abs(real.Path); err == nil {
-				real.Path = a
-			}
+			vers[r.Old.Path] = real
 		}
-		vers[r.Old.Path] = real
 	}
 	return vers
 }
@@ -132,6 +138,15 @@ func Load(dir string) (p Module, err error) {
 	return Module{File: f}, nil
 }
 
+func loadGoMod(gomod string) (f *gomodfile.File, err error) {
+	data, err := os.ReadFile(gomod)
+	if err != nil {
+		return
+	}
+	var fixed bool
+	return gomodfile.Parse(gomod, data, fixVersion(&fixed))
+}
+
 // -----------------------------------------------------------------------------
 
 // Save saves all changes of this module.
@@ -142,6 +157,62 @@ func (p Module) Save() error {
 		err = os.WriteFile(modfile, data, 0644)
 	}
 	return err
+}
+
+const (
+	gopMod = "github.com/goplus/gop"
+)
+
+func (p Module) Tidy() (err error) {
+	gopmod := p.Modfile()
+	dir, file := filepath.Split(gopmod)
+	gomod := dir + "go.mod"
+	isGopMod := file != "go.mod"
+	if isGopMod {
+		if err = p.saveGoMod(gomod); err != nil {
+			return
+		}
+	}
+	if err = tidy(dir); err != nil {
+		return
+	}
+	if isGopMod {
+		gof, loadErr := loadGoMod(gomod)
+		if loadErr != nil {
+			return loadErr
+		}
+		p.DropAllRequire()
+		p.DropAllReplace()
+		for _, r := range gof.Require {
+			switch r.Mod.Path {
+			case gopMod, "":
+				continue
+			}
+			p.AddRequire(r.Mod.Path, r.Mod.Version)
+		}
+		for _, r := range gof.Replace {
+			switch r.Old.Path {
+			case gopMod, "":
+				continue
+			}
+			p.AddReplace(r.Old.Path, r.Old.Version, r.New.Path, r.New.Version)
+		}
+		err = p.Save()
+	}
+	return
+}
+
+func tidy(modRoot string) (err error) {
+	var stdout, stderr bytes.Buffer
+	cmd := exec.Command("go", "mod", "tidy")
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	cmd.Dir = modRoot
+	err = cmd.Run()
+	if err != nil {
+		err = &ExecCmdError{Err: err, Stderr: stderr.Bytes()}
+	}
+	return
 }
 
 // UpdateGoMod updates the go.mod file.
@@ -155,6 +226,10 @@ func (p Module) UpdateGoMod(checkChanged bool) error {
 	if checkChanged && notChanged(gomod, gopmod) {
 		return nil
 	}
+	return p.saveGoMod(gomod)
+}
+
+func (p Module) saveGoMod(gomod string) error {
 	gof := p.convToGoMod()
 	data, err := gof.Format()
 	if err == nil {
@@ -166,8 +241,8 @@ func (p Module) UpdateGoMod(checkChanged bool) error {
 func (p Module) convToGoMod() *gomodfile.File {
 	copy := p.File.File
 	copy.Syntax = cloneGoFileSyntax(copy.Syntax)
-	addRequireIfNotExist(&copy, "github.com/goplus/gop", env.Version())
-	addReplaceIfNotExist(&copy, "github.com/goplus/gop", "", env.GOPROOT(), "")
+	addRequireIfNotExist(&copy, gopMod, env.Version())
+	addReplaceIfNotExist(&copy, gopMod, "", env.GOPROOT(), "")
 	return &copy
 }
 
@@ -239,6 +314,20 @@ func getVerb(e modfile.Expr) string {
 		return line.Token[0]
 	}
 	return e.(*modfile.LineBlock).Token[0]
+}
+
+// -----------------------------------------------------------------------------
+
+type ExecCmdError struct {
+	Err    error
+	Stderr []byte
+}
+
+func (p *ExecCmdError) Error() string {
+	if e := p.Stderr; e != nil {
+		return string(e)
+	}
+	return p.Err.Error()
 }
 
 // -----------------------------------------------------------------------------
