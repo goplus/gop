@@ -42,8 +42,6 @@ const (
 	DeclarationErrors
 	// AllErrors - report all errors (not just the first 10 on different lines)
 	AllErrors
-	// ParseGoFiles - parse *.go files
-	ParseGoFiles
 )
 
 // ParseFile parses the source code of a single Go source file and returns

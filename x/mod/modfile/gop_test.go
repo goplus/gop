@@ -17,6 +17,7 @@
 package modfile
 
 import (
+	"path/filepath"
 	"testing"
 
 	"golang.org/x/mod/modfile"
@@ -36,21 +37,6 @@ func TestGetWeight(t *testing.T) {
 	}
 	if getWeight(&modfile.LineBlock{Token: []string{"unknown"}}) != directiveLineBlock {
 		t.Fatal("getWeight unknown failed")
-	}
-}
-
-func TestIsLocal(t *testing.T) {
-	if !IsLocal(".") || !IsLocal("/") {
-		t.Fatal(`IsLocal(".") || IsLocal("/")`)
-	}
-	if !IsLocal("c:/foo") {
-		t.Fatal(`IsLocal("c:/foo")`)
-	}
-	if !IsLocal("C:/foo") {
-		t.Fatal(`IsLocal("C:/foo")`)
-	}
-	if IsLocal("") {
-		t.Fatal(`IsLocal("")`)
 	}
 }
 
@@ -137,6 +123,11 @@ register github.com/goplus/spx
 require (
     github.com/goplus/spx v1.0
 )
+
+replace (
+	github.com/goplus/spx v1.0 => github.com/xushiwei/spx v1.2
+	github.com/goplus/gop => /Users/xushiwei/work/gop
+)
 `
 
 func TestParse2(t *testing.T) {
@@ -150,6 +141,9 @@ func TestParse2(t *testing.T) {
 	}
 	if f.Register[0].ClassfileMod != "github.com/goplus/spx" {
 		t.Fatal("Parse => Register:", f.Register)
+	}
+	if len(f.Replace) != 2 {
+		t.Fatal("Parse => Replace:", f.Replace)
 	}
 	f.DropAllRequire()
 	if f.Require != nil {
@@ -171,6 +165,42 @@ func TestParse2(t *testing.T) {
 }
 
 func TestParseErr(t *testing.T) {
+	doTestParseErr(t, `gop.mod:2: replace github.com/goplus/gop/v2: version "v1.2.0" invalid: should be v2, not v1`, `
+replace github.com/goplus/gop/v2 v1.2 => ../
+`)
+	if filepath.Separator == '/' {
+		doTestParseErr(t, `gop.mod:2:3: replacement directory appears to be Windows path (on a non-windows system)`, `
+		replace github.com/goplus/gop v1.2 => ..\
+		`)
+	}
+	doTestParseErr(t, `gop.mod:2: replacement module directory path "../" cannot have version`, `
+replace github.com/goplus/gop v1.2 => ../ v1.3
+`)
+	doTestParseErr(t, `gop.mod:2: replacement module without version must be directory path (rooted or starting with ./ or ../)`, `
+replace github.com/goplus/gop v1.2 => abc.com
+`)
+	doTestParseErr(t, `gop.mod:2: invalid quoted string: unquoted string cannot contain quote`, `
+replace github.com/goplus/gop v1.2 => /"
+`)
+	doTestParseErr(t, `gop.mod:2: replace github.com/goplus/gop: version "v1.2\"" invalid: unquoted string cannot contain quote`, `
+replace github.com/goplus/gop v1.2" => /
+`)
+	doTestParseErr(t, `gop.mod:2: invalid quoted string: unquoted string cannot contain quote`, `
+replace gopkg.in/" v1.2 => /
+`)
+	doTestParseErr(t, `gop.mod:2: replace gopkg.in/?: invalid module path`, `
+replace gopkg.in/? v1.2 => /
+`)
+	doTestParseErr(t, `gop.mod:2: replace /: version "?" invalid: must be of the form v1.2.3`, `
+replace github.com/goplus/gop => / ?
+`)
+	doTestParseErr(t, `gop.mod:2: replace github.com/goplus/gop: version "?" invalid: must be of the form v1.2.3`, `
+replace github.com/goplus/gop ? => /
+`)
+	doTestParseErr(t, `gop.mod:2: usage: replace module/path [v1.2.3] => other/module v1.4
+	 or replace module/path [v1.2.3] => ../local/directory`, `
+replace ?
+`)
 	doTestParseErr(t, `gop.mod:3: repeated go statement`, `
 gop 1.1
 gop 1.2

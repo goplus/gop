@@ -22,6 +22,7 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
+	"github.com/goplus/gop/x/gopmod"
 	"github.com/goplus/gox"
 	"github.com/goplus/gox/packages"
 )
@@ -107,7 +108,9 @@ func TestCanAutoCall(t *testing.T) {
 
 func TestGmxSettings(t *testing.T) {
 	pkg := gox.NewPackage("", "foo", goxConf)
-	gmx := newGmx(pkg, "main.t2gmx")
+	gmx := newGmx(pkg, "main.t2gmx", &Config{
+		LookupClass: lookupClass,
+	})
 	scheds := gmx.getScheds(pkg.CB())
 	if len(scheds) != 2 || scheds[0] == nil || scheds[0] != scheds[1] {
 		t.Fatal("TestGmxSettings failed")
@@ -127,17 +130,14 @@ func TestSpxLookup(t *testing.T) {
 	spxLookup(nil, "foo")
 }
 
-func TestRegisterClassFileType(t *testing.T) {
-	defer func() {
-		if e := recover(); e == nil {
-			t.Fatal("TestRegisterClassFileType: no error?")
-		}
-	}()
-	RegisterClassFileType(".t3gmx", ".t3spx")
-}
-
-func init() {
-	RegisterClassFileType(".t2gmx", ".t2spx", "github.com/goplus/gop/cl/internal/spx2")
+func lookupClass(ext string) (c *gopmod.Class, ok bool) {
+	switch ext {
+	case ".t2gmx", ".t2spx":
+		return &gopmod.Class{
+			ProjExt: ".t2gmx", WorkExt: ".t2spx",
+			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
+	}
+	return
 }
 
 // -----------------------------------------------------------------------------

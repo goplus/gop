@@ -17,7 +17,9 @@
 package gopmod
 
 import (
+	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -30,11 +32,8 @@ import (
 	"golang.org/x/mod/module"
 )
 
-func Imports(dir string) (imps []string, err error) {
-	var recursive bool
-	if strings.HasSuffix(dir, "/...") {
-		dir, recursive = dir[:len(dir)-4], true
-	}
+func Imports(dir string) (ret []string, err error) {
+	dir, recursive := parsePattern(dir)
 	mod, err := Load(dir)
 	if err != nil {
 		return
@@ -43,7 +42,38 @@ func Imports(dir string) (imps []string, err error) {
 	if err != nil {
 		return
 	}
-	return mod.Imports(dir, recursive)
+	imports := make(map[string]none)
+	err = mod.Imports(imports, dir, recursive)
+	if err != nil {
+		return
+	}
+	return getSortedKeys(imports), nil
+}
+
+func List(pattern ...string) (pkgPaths []string, err error) {
+	mod, err := Load(".")
+	if err != nil {
+		return
+	}
+	err = mod.RegisterClasses()
+	if err != nil {
+		return
+	}
+	ret := make(map[string]none)
+	err = mod.List(ret, pattern...)
+	if err != nil {
+		return
+	}
+	return getSortedKeys(ret), nil
+}
+
+func getSortedKeys(v map[string]none) []string {
+	keys := make([]string, 0, len(v))
+	for key := range v {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 // -----------------------------------------------------------------------------
@@ -58,16 +88,6 @@ type Module struct {
 	classes map[string]*Class
 	depmods []depmodInfo
 	fset    *token.FileSet
-}
-
-func (p *Module) SupportedExts() map[string]struct{} {
-	exts := make(map[string]none, len(p.classes)+2)
-	exts[".go"] = none{}
-	exts[".gop"] = none{}
-	for ext := range p.classes {
-		exts[ext] = none{}
-	}
-	return exts
 }
 
 // PkgType specifies a package type.
@@ -122,9 +142,9 @@ func (p *Module) LookupExternPkg(pkgPath string) (modPath string, modVer module.
 	return
 }
 
-// LookupMod lookups a depended module.
+// LookupDepMod lookups a depended module.
 // If modVer.Path is replace to be a local path, it will be canonical to an absolute path.
-func (p *Module) LookupMod(modPath string) (modVer module.Version, ok bool) {
+func (p *Module) LookupDepMod(modPath string) (modVer module.Version, ok bool) {
 	for _, m := range p.depmods {
 		if m.path == modPath {
 			modVer, ok = m.real, true
@@ -132,6 +152,18 @@ func (p *Module) LookupMod(modPath string) (modVer module.Version, ok bool) {
 		}
 	}
 	return
+}
+
+func (p *Module) IsGopMod() bool {
+	const gopPkgPath = "github.com/goplus/gop"
+	_, file := filepath.Split(p.Modfile())
+	if file == "gop.mod" {
+		return true
+	}
+	if _, ok := p.LookupDepMod(gopPkgPath); ok {
+		return true
+	}
+	return p.Path() == gopPkgPath
 }
 
 func getDepMods(mod modload.Module) []depmodInfo {
@@ -181,22 +213,149 @@ func loadModFrom(mod module.Version) (p *Module, err error) {
 	return Load(dir)
 }
 
-func (p *Module) Imports(dir string, recursive bool) (imps []string, err error) {
-	imports := make(map[string]none)
-	err = p.parseImports(imports, dir, recursive)
-	imps = getKeys(imports)
+func (p *Module) List(ret map[string]struct{}, pattern ...string) (err error) {
+	modRoot, modPath := p.Root(), p.Path()
+	for _, pat := range pattern {
+		if err = p.listPkgs(ret, pat, modRoot, modPath); err != nil {
+			return
+		}
+	}
 	return
 }
 
-func getKeys(v map[string]none) []string {
-	keys := make([]string, 0, len(v))
-	for key := range v {
-		keys = append(keys, key)
+func (p *Module) listPkgs(ret map[string]none, pat, modRoot, modPath string) error {
+	pat, recursive := parsePattern(pat)
+	if isLocal(pat) {
+		patAbs, err1 := filepath.Abs(pat)
+		patRel, err2 := filepath.Rel(modRoot, patAbs)
+		if err1 != nil || err2 != nil || strings.HasPrefix(patRel, "..") {
+			return fmt.Errorf("directory `%s` outside available modules", pat)
+		}
+		pkgPathBase := path.Join(modPath, filepath.ToSlash(patRel))
+		return p.doListLocalPkgs(ret, pkgPathBase, pat, recursive)
 	}
-	return keys
+	return p.doListPkgs(ret, pat, recursive)
 }
 
-func (p *Module) parseImports(imports map[string]none, dir string, recursive bool) (err error) {
+func parsePattern(pat string) (string, bool) {
+	const multi = "/..."
+	recursive := strings.HasSuffix(pat, multi)
+	if recursive {
+		pat = pat[:len(pat)-len(multi)]
+		if pat == "" {
+			pat = "/"
+		}
+	}
+	return pat, recursive
+}
+
+func isLocal(ns string) bool {
+	if len(ns) > 0 {
+		switch c := ns[0]; c {
+		case '/', '\\', '.':
+			return true
+		default:
+			return len(ns) >= 2 && ns[1] == ':' && ('A' <= c && c <= 'Z' || 'a' <= c && c <= 'z')
+		}
+	}
+	return false
+}
+
+func (p *Module) doListLocalPkgs(ret map[string]none, pkgPathBase, pat string, recursive bool) (err error) {
+	fis, err := os.ReadDir(pat)
+	if err != nil {
+		return
+	}
+	noSouceFile := true
+	for _, fi := range fis {
+		name := fi.Name()
+		if strings.HasPrefix(name, "_") { // skip this file/directory
+			continue
+		}
+		if fi.IsDir() {
+			if recursive {
+				err = p.doListLocalPkgs(ret, pkgPathBase+"/"+name, pat+"/"+name, true)
+				if err != nil {
+					return
+				}
+			}
+		} else if noSouceFile {
+			ext := path.Ext(name)
+			switch ext {
+			case ".gop", ".go":
+				noSouceFile = false
+			default:
+				if _, ok := p.classes[ext]; ok {
+					noSouceFile = false
+				}
+			}
+		}
+	}
+	if !noSouceFile {
+		ret[pkgPathBase] = none{}
+	}
+	return
+}
+
+func (p *Module) doListPkgs(ret map[string]none, pkgPath string, recursive bool) error {
+	switch p.PkgType(pkgPath) {
+	case PkgtStandard:
+		if !recursive {
+			ret[pkgPath] = none{}
+			return nil
+		}
+	case PkgtModule:
+		relDir := p.Root() + pkgPath[len(p.Path()):]
+		return p.doListLocalPkgs(ret, pkgPath, relDir, recursive)
+	}
+	modPath, modVer, ok := p.LookupExternPkg(pkgPath)
+	if !ok {
+		panic("TODO: external package not found")
+	}
+	mod, err := LoadMod(modVer)
+	if err != nil {
+		return err
+	}
+	relDir := mod.Root() + pkgPath[len(modPath):]
+	return mod.doListLocalPkgs(ret, pkgPath, relDir, recursive)
+}
+
+func (p *Module) Imports(imports map[string]struct{}, dir string, recursive bool) (err error) {
+	getImports := func(name string) PkgImports {
+		return imports
+	}
+	err = p.doImports(getImports, dir, false)
+	return
+}
+
+type PkgImports map[string]struct{}
+
+func (p *Module) DirImports(dir string) (pkgs map[string]PkgImports, err error) {
+	pkgs = make(map[string]PkgImports)
+	getImports := func(name string) PkgImports {
+		imps, ok := pkgs[name]
+		if !ok {
+			imps = make(PkgImports)
+			if p.IsGopMod() {
+				importGopBuiltins(imps)
+			}
+			pkgs[name] = imps
+		}
+		return imps
+	}
+	err = p.doImports(getImports, dir, false)
+	return
+}
+
+func importGopBuiltins(imports PkgImports) {
+	imports["strconv"] = none{}
+	imports["strings"] = none{}
+	imports["github.com/goplus/gop/builtin"] = none{}
+}
+
+type getImportsFunc func(name string) PkgImports
+
+func (p *Module) doImports(getImports getImportsFunc, dir string, recursive bool) (err error) {
 	list, err := os.ReadDir(dir)
 	if err != nil {
 		return
@@ -209,24 +368,28 @@ func (p *Module) parseImports(imports map[string]none, dir string, recursive boo
 		}
 		if d.IsDir() {
 			if recursive {
-				p.parseImports(imports, filepath.Join(dir, fname), true)
+				if err = p.doImports(getImports, filepath.Join(dir, fname), true); err != nil {
+					return
+				}
 			}
 			continue
 		}
 		ext := filepath.Ext(fname)
 		switch ext {
 		case ".gop":
-			p.parseGopImport(&errs, imports, filepath.Join(dir, fname))
+			p.parseGopImport(&errs, getImports, filepath.Join(dir, fname))
 		case ".go":
 			if !strings.HasPrefix(fname, "gop_autogen") {
-				p.parseGoImport(&errs, imports, filepath.Join(dir, fname))
+				p.parseGoImport(&errs, getImports, filepath.Join(dir, fname))
 			}
 		default:
 			if c, ok := p.classes[ext]; ok {
-				for _, pkgPath := range c.PkgPaths {
-					imports[pkgPath] = none{}
+				imports := p.parseGopImport(&errs, getImports, filepath.Join(dir, fname))
+				if imports != nil {
+					for _, pkgPath := range c.PkgPaths {
+						imports[pkgPath] = none{}
+					}
 				}
-				p.parseGopImport(&errs, imports, filepath.Join(dir, fname))
 			}
 		}
 	}

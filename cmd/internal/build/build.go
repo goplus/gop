@@ -18,52 +18,54 @@
 package build
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/qiniu/x/log"
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/cmd/internal/modload"
+	"github.com/goplus/gop/x/gengo"
 	"github.com/goplus/gox"
 )
 
-// -----------------------------------------------------------------------------
-
-// Cmd - gop build
+// gop build
 var Cmd = &base.Command{
-	UsageLine: "gop build [-v] [-o output] [packages]",
+	UsageLine: "gop build [-v -o output] [packages]",
 	Short:     "Build Go+ files",
 }
 
 var (
-	flagBuildOutput string
-	flagVerbose     = flag.Bool("v", false, "print verbose information.")
-	flag            = &Cmd.Flag
+	flagVerbose = flag.Bool("v", false, "print verbose information.")
+	flagOutput  = flag.String("o", "", "gop build output file.")
+	flag        = &Cmd.Flag
 )
 
 func init() {
-	flag.StringVar(&flagBuildOutput, "o", "", "gop build output file.")
 	Cmd.Run = runCmd
 }
 
 func runCmd(_ *base.Command, args []string) {
-	err := flag.Parse(base.SkipSwitches(args, flag))
+	err := flag.Parse(args)
 	if err != nil {
 		log.Fatalln("parse input arguments failed:", err)
 	}
-	ssargs := flag.Args()
-	dir, recursive := base.GetBuildDir(ssargs)
+
+	pattern := flag.Args()
+	if len(pattern) == 0 {
+		pattern = []string{"."}
+	}
 
 	if *flagVerbose {
 		gox.SetDebug(gox.DbgFlagAll &^ gox.DbgFlagComments)
 		cl.SetDebug(cl.DbgFlagAll)
 		cl.SetDisableRecover(true)
 	}
-	modload.UpdateGoMod(dir)
-	base.GenGoForBuild(dir, recursive, func() { fmt.Fprintln(os.Stderr, "GenGo failed, stop building") })
-	base.RunGoCmd(dir, "build", args...)
+	_ = flagOutput
+
+	if !gengo.GenGo(gengo.Config{}, false, pattern...) {
+		os.Exit(1)
+	}
+	base.RunGoCmd(".", "build", args...)
 }
 
 // -----------------------------------------------------------------------------

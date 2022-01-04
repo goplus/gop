@@ -36,12 +36,12 @@ func TestGopMod(t *testing.T) {
 	if !strings.HasSuffix(file, "gop"+sep+"go.mod") {
 		t.Fatal("GOPMOD failed:", file)
 	}
-	file, err = GOPMOD("../cl/internal/spx")
+	file, err = GOPMOD("./modtest")
 	if err != nil {
-		t.Fatal("GOPMOD spx failed:", err)
+		t.Fatal("GOPMOD modtest failed:", err)
 	}
-	if !strings.HasSuffix(file, "cl"+sep+"internal"+sep+"gop.mod") {
-		t.Fatal("GOPMOD spx failed:", file)
+	if !strings.HasSuffix(filepath.ToSlash(file), "env/modtest/gop.mod") {
+		t.Fatal("GOPMOD modtest failed:", file)
 	}
 }
 

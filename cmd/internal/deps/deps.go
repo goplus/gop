@@ -19,7 +19,6 @@ package deps
 import (
 	"fmt"
 	"log"
-	"sort"
 
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/x/gopmod"
@@ -27,7 +26,7 @@ import (
 
 // -----------------------------------------------------------------------------
 
-// Cmd - gop deps
+// gop deps
 var Cmd = &base.Command{
 	UsageLine: "gop deps [-v] [package]",
 	Short:     "Show dependencies of a package or module",
@@ -47,6 +46,7 @@ func runCmd(cmd *base.Command, args []string) {
 	if err != nil {
 		log.Fatalln("parse input arguments failed:", err)
 	}
+
 	var dir string
 	narg := flag.NArg()
 	if narg < 1 {
@@ -54,13 +54,9 @@ func runCmd(cmd *base.Command, args []string) {
 	} else {
 		dir = flag.Arg(0)
 	}
-	getDeps(dir)
-}
 
-func getDeps(dir string) {
 	imports, err := gopmod.Imports(dir)
 	check(err)
-	sort.Strings(imports)
 	for _, imp := range imports {
 		fmt.Println(imp)
 	}
