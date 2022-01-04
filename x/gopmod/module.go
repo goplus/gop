@@ -220,9 +220,9 @@ func (p *Module) listPkgs(ret map[string]none, pat, modRoot, modPath string) err
 			return fmt.Errorf("directory `%s` outside available modules", pat)
 		}
 		pkgPathBase := path.Join(modPath, filepath.ToSlash(patRel))
-		return p.doListPkgs(ret, pkgPathBase, pat, recursive)
+		return p.doListLocalPkgs(ret, pkgPathBase, pat, recursive)
 	}
-	return p.doListExternPkgs(ret, pat, recursive)
+	return p.doListPkgs(ret, pat, recursive)
 }
 
 func parsePattern(pat string) (string, bool) {
@@ -249,7 +249,7 @@ func isLocal(ns string) bool {
 	return false
 }
 
-func (p *Module) doListPkgs(ret map[string]none, pkgPathBase, pat string, recursive bool) (err error) {
+func (p *Module) doListLocalPkgs(ret map[string]none, pkgPathBase, pat string, recursive bool) (err error) {
 	fis, err := os.ReadDir(pat)
 	if err != nil {
 		return
@@ -262,7 +262,7 @@ func (p *Module) doListPkgs(ret map[string]none, pkgPathBase, pat string, recurs
 		}
 		if fi.IsDir() {
 			if recursive {
-				err = p.doListPkgs(ret, pkgPathBase+"/"+name, pat+"/"+name, true)
+				err = p.doListLocalPkgs(ret, pkgPathBase+"/"+name, pat+"/"+name, true)
 				if err != nil {
 					return
 				}
@@ -285,21 +285,27 @@ func (p *Module) doListPkgs(ret map[string]none, pkgPathBase, pat string, recurs
 	return
 }
 
-func (p *Module) doListExternPkgs(ret map[string]none, pkgPath string, recursive bool) error {
+func (p *Module) doListPkgs(ret map[string]none, pkgPath string, recursive bool) error {
+	switch p.PkgType(pkgPath) {
+	case PkgtStandard:
+		if !recursive {
+			ret[pkgPath] = none{}
+			return nil
+		}
+	case PkgtModule:
+		relDir := p.Root() + pkgPath[len(p.Path()):]
+		return p.doListLocalPkgs(ret, pkgPath, relDir, recursive)
+	}
 	modPath, modVer, ok := p.LookupExternPkg(pkgPath)
 	if !ok {
 		panic("TODO: external package not found")
 	}
-	if recursive {
-		mod, err := LoadMod(modVer)
-		if err != nil {
-			return err
-		}
-		relDir := mod.Root() + pkgPath[len(modPath):]
-		return mod.doListPkgs(ret, pkgPath, relDir, true)
+	mod, err := LoadMod(modVer)
+	if err != nil {
+		return err
 	}
-	ret[pkgPath] = none{}
-	return nil
+	relDir := mod.Root() + pkgPath[len(modPath):]
+	return mod.doListLocalPkgs(ret, pkgPath, relDir, recursive)
 }
 
 func (p *Module) Imports(imports map[string]struct{}, dir string, recursive bool) (err error) {
