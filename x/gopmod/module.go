@@ -32,7 +32,7 @@ import (
 	"golang.org/x/mod/module"
 )
 
-func Imports(dir string) (imps []string, err error) {
+func Imports(dir string) (ret []string, err error) {
 	dir, recursive := parsePattern(dir)
 	mod, err := Load(dir)
 	if err != nil {
@@ -318,20 +318,41 @@ func (p *Module) doListPkgs(ret map[string]none, pkgPath string, recursive bool)
 }
 
 func (p *Module) Imports(imports map[string]struct{}, dir string, recursive bool) (err error) {
-	err = p.doImports(imports, dir, recursive)
-	if err == nil && p.IsGopMod() {
-		importGopBuiltins(imports)
+	getImports := func(name string) PkgImports {
+		return imports
 	}
+	err = p.doImports(getImports, dir, false)
 	return
 }
 
-func importGopBuiltins(imports map[string]none) {
+type PkgImports map[string]struct{}
+
+func (p *Module) DirImports(dir string) (pkgs map[string]PkgImports, err error) {
+	pkgs = make(map[string]PkgImports)
+	getImports := func(name string) PkgImports {
+		imps, ok := pkgs[name]
+		if !ok {
+			imps = make(PkgImports)
+			if p.IsGopMod() {
+				importGopBuiltins(imps)
+			}
+			pkgs[name] = imps
+		}
+		return imps
+	}
+	err = p.doImports(getImports, dir, false)
+	return
+}
+
+func importGopBuiltins(imports PkgImports) {
 	imports["strconv"] = none{}
 	imports["strings"] = none{}
 	imports["github.com/goplus/gop/builtin"] = none{}
 }
 
-func (p *Module) doImports(imports map[string]struct{}, dir string, recursive bool) (err error) {
+type getImportsFunc func(name string) PkgImports
+
+func (p *Module) doImports(getImports getImportsFunc, dir string, recursive bool) (err error) {
 	list, err := os.ReadDir(dir)
 	if err != nil {
 		return
@@ -344,7 +365,7 @@ func (p *Module) doImports(imports map[string]struct{}, dir string, recursive bo
 		}
 		if d.IsDir() {
 			if recursive {
-				if err = p.Imports(imports, filepath.Join(dir, fname), true); err != nil {
+				if err = p.doImports(getImports, filepath.Join(dir, fname), true); err != nil {
 					return
 				}
 			}
@@ -353,17 +374,19 @@ func (p *Module) doImports(imports map[string]struct{}, dir string, recursive bo
 		ext := filepath.Ext(fname)
 		switch ext {
 		case ".gop":
-			p.parseGopImport(&errs, imports, filepath.Join(dir, fname))
+			p.parseGopImport(&errs, getImports, filepath.Join(dir, fname))
 		case ".go":
 			if !strings.HasPrefix(fname, "gop_autogen") {
-				p.parseGoImport(&errs, imports, filepath.Join(dir, fname))
+				p.parseGoImport(&errs, getImports, filepath.Join(dir, fname))
 			}
 		default:
 			if c, ok := p.classes[ext]; ok {
-				for _, pkgPath := range c.PkgPaths {
-					imports[pkgPath] = none{}
+				imports := p.parseGopImport(&errs, getImports, filepath.Join(dir, fname))
+				if imports != nil {
+					for _, pkgPath := range c.PkgPaths {
+						imports[pkgPath] = none{}
+					}
 				}
-				p.parseGopImport(&errs, imports, filepath.Join(dir, fname))
 			}
 		}
 	}

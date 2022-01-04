@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"go/types"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -389,6 +390,9 @@ func (p *Runner) genDeps(pkgPath, pkgPathBase string, errs *ErrorList) (pkg *pkg
 	default:
 		panic("TODO: invalid pkgPath")
 	}
+	if v, ok := p.pkgs[pkgPath]; ok {
+		return v
+	}
 	pkg = &pkgInfo{
 		path:   pkgPath,
 		runner: p,
@@ -406,8 +410,12 @@ func (p *Runner) genDeps(pkgPath, pkgPathBase string, errs *ErrorList) (pkg *pkg
 	}
 
 	var buf bytes.Buffer
-	var imports = make(map[string]struct{})
-	err = p.mod.Imports(imports, dir, false)
+	pkgs, err := p.mod.DirImports(dir)
+	if err != nil {
+		*errs, pkg.flags = append(*errs, err), pkgFlagIll
+		return
+	}
+	imports, err := getImports(pkgs)
 	if err != nil {
 		*errs, pkg.flags = append(*errs, err), pkgFlagIll
 		return
@@ -434,6 +442,22 @@ func (p *Runner) genDeps(pkgPath, pkgPathBase string, errs *ErrorList) (pkg *pkg
 	return
 }
 
+func getImports(pkgs map[string]gopmod.PkgImports) (ret gopmod.PkgImports, err error) {
+	exists := false
+	for name, imps := range pkgs {
+		if !strings.HasSuffix(name, "_test") {
+			if exists {
+				return nil, errors.New("multiple packages in a directory")
+			}
+			ret, exists = imps, true
+		}
+	}
+	if exists {
+		return
+	}
+	return nil, syscall.ENOENT
+}
+
 func getSortedKeys(v map[string]none) []string {
 	keys := make([]string, 0, len(v))
 	for key := range v {
@@ -451,7 +475,7 @@ func hashOf(b []byte) string {
 func (p *Runner) genExternDeps(pkgPath string, errs *ErrorList) *pkgInfo {
 	_, modVer, ok := p.mod.LookupExternPkg(pkgPath)
 	if !ok {
-		panic("TODO: externPkg not found")
+		log.Panicln("externPkg not found:", pkgPath)
 	}
 	modRoot, err := modfetch.ModCachePath(modVer)
 	if err != nil {

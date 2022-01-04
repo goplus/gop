@@ -28,15 +28,17 @@ import (
 
 // -----------------------------------------------------------------------------
 
-func (p *Module) parseGopImport(errs *ErrorList, imports map[string]none, gopfile string) {
+func (p *Module) parseGopImport(errs *ErrorList, getImports getImportsFunc, gopfile string) PkgImports {
 	f, err := parser.ParseFile(p.fset, gopfile, nil, parser.ImportsOnly)
 	if err != nil {
 		*errs = append(*errs, err)
-		return
+		return nil
 	}
+	imports := getImports(f.Name.Name)
 	for _, imp := range f.Imports {
 		p.importGop(imports, imp)
 	}
+	return imports
 }
 
 func (p *Module) importGop(imports map[string]none, spec *ast.ImportSpec) {

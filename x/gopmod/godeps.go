@@ -30,12 +30,13 @@ import (
 
 type none = struct{}
 
-func (p *Module) parseGoImport(errs *ErrorList, imports map[string]none, gopfile string) {
+func (p *Module) parseGoImport(errs *ErrorList, getImports getImportsFunc, gopfile string) {
 	f, err := parser.ParseFile(p.fset, gopfile, nil, parser.ImportsOnly)
 	if err != nil {
 		*errs = append(*errs, err)
 		return
 	}
+	imports := getImports(f.Name.Name)
 	for _, imp := range f.Imports {
 		p.importGo(imports, imp)
 	}
