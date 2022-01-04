@@ -19,7 +19,6 @@ package list
 import (
 	"fmt"
 	"log"
-	"sort"
 
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/x/gopmod"
@@ -53,15 +52,8 @@ func runCmd(cmd *base.Command, args []string) {
 		pattern = []string{"."}
 	}
 
-	list(pattern...)
-}
-
-func list(pattern ...string) {
-	mod, err := gopmod.Load(".")
+	pkgPaths, err := gopmod.List(pattern...)
 	check(err)
-	pkgPaths, err := mod.List(pattern...)
-	check(err)
-	sort.Strings(pkgPaths)
 	for _, pkgPath := range pkgPaths {
 		fmt.Println(pkgPath)
 	}

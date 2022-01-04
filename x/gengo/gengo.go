@@ -95,6 +95,48 @@ type Config struct {
 	Loaded map[string]*types.Package
 }
 
+func (p *Runner) GenGoFlow() (pkgPaths []string, err error) {
+	pkgPaths = make([]string, 0, len(p.pkgs))
+	return p.genFlowPkgs(pkgPaths)
+}
+
+func (p *Runner) genFlowPkgs(pkgPaths []string) ([]string, error) {
+	if p.state != stateNormal {
+		if p.state != stateDone {
+			panic("TODO: cycle or error?")
+		}
+		return pkgPaths, nil
+	}
+	p.state = stateProcessing
+	for _, pkg := range p.pkgs {
+		if pkg.flags == pkgFlagChanged {
+			for _, dep := range pkg.deps {
+				if r := dep.runner; r != p {
+					pkgPaths, _ = dep.runner.genFlowPkgs(pkgPaths)
+				}
+			}
+		}
+	}
+	for _, pkg := range p.pkgs {
+		if pkg.flags == pkgFlagChanged {
+			pkgPaths = p.genFlowPkg(pkgPaths, pkg)
+		}
+	}
+	p.state = stateDone
+	return pkgPaths, nil
+}
+
+func (p *Runner) genFlowPkg(pkgPaths []string, pkg *pkgInfo) []string {
+	for _, dep := range pkg.deps {
+		if r := dep.runner; r == p && dep.flags == pkgFlagChanged {
+			pkgPaths = r.genFlowPkg(pkgPaths, dep)
+		}
+	}
+	pkgPaths = append(pkgPaths, pkg.path)
+	pkg.flags = 0
+	return pkgPaths
+}
+
 func (p *Runner) GenGo(conf Config) bool {
 	if conf.Loaded == nil {
 		conf.Loaded = make(map[string]*types.Package)
@@ -121,7 +163,9 @@ func (p *Runner) genGoPkgs(conf *Config) {
 	for _, pkg := range p.pkgs {
 		if pkg.flags == pkgFlagChanged {
 			for _, dep := range pkg.deps {
-				dep.runner.genGoPkgs(conf)
+				if r := dep.runner; r != p {
+					r.genGoPkgs(conf)
+				}
 			}
 			for _, imp := range pkg.imports {
 				imports[imp] = none{}
@@ -141,11 +185,9 @@ func (p *Runner) genGoPkgs(conf *Config) {
 		p.state = stateOccurErrors
 		return
 	}
-	for path, pkg := range p.pkgs {
+	for _, pkg := range p.pkgs {
 		if pkg.flags == pkgFlagChanged {
-			if p.genGoPkg(path, imp, conf) != nil {
-				p.state = stateOccurErrors
-			}
+			p.genGoPkg(pkg, imp, conf)
 		}
 	}
 	if p.state == stateProcessing {
@@ -167,7 +209,21 @@ const (
 	autoGen2TestFile = "gop_autogen2_test.go"
 )
 
-func (p *Runner) genGoPkg(pkgPath string, imp types.Importer, conf *Config) (err error) {
+func (p *Runner) genGoPkg(pkg *pkgInfo, imp types.Importer, conf *Config) {
+	for _, dep := range pkg.deps {
+		if r := dep.runner; r == p && dep.flags == pkgFlagChanged {
+			r.genGoPkg(dep, imp, conf)
+		}
+	}
+	if err := p.doGenGoPkg(pkg.path, imp, conf); err != nil {
+		pkg.flags |= pkgFlagIll
+		p.state = stateOccurErrors
+		return
+	}
+	pkg.flags = 0
+}
+
+func (p *Runner) doGenGoPkg(pkgPath string, imp types.Importer, conf *Config) (err error) {
 	conf.OnStart(pkgPath)
 	pkgDir := p.modRoot + pkgPath[len(p.modPath):]
 
@@ -267,7 +323,8 @@ func modTime(file string, errs *ErrorList) (mt time.Time) {
 }
 
 func New(mod *gopmod.Module, pattern ...string) (p *Runner, err error) {
-	pkgPaths, err := mod.List(pattern...)
+	pkgPaths := make(map[string]struct{})
+	err = mod.List(pkgPaths, pattern...)
 	if err != nil {
 		return
 	}
@@ -283,7 +340,7 @@ func New(mod *gopmod.Module, pattern ...string) (p *Runner, err error) {
 		pkgs:    make(map[string]*pkgInfo),
 	}
 	p.runners = map[string]*Runner{modRoot: p}
-	for _, pkgPath := range pkgPaths {
+	for pkgPath := range pkgPaths {
 		p.genDeps(pkgPath, pkgPath, &errs)
 	}
 	if len(errs) > 0 {
@@ -322,12 +379,13 @@ func (p *Runner) genDeps(pkgPath, pkgPathBase string, errs *ErrorList) (pkg *pkg
 
 	var buf bytes.Buffer
 	var depsHash string
-	imps, err := p.mod.Imports(dir, false)
+	var imports = make(map[string]struct{})
+	err = p.mod.Imports(imports, dir, false)
 	if err != nil {
 		*errs, pkg.flags = append(*errs, err), pkgFlagIll
 		return
 	}
-	sort.Strings(imps)
+	imps := getSortedKeys(imports)
 	for _, imp := range imps {
 		if t := p.genDeps(imp, pkgPath, errs); t != nil {
 			buf.WriteString(t.runner.modRoot)
@@ -346,6 +404,15 @@ func (p *Runner) genDeps(pkgPath, pkgPathBase string, errs *ErrorList) (pkg *pkg
 		pkg.flags |= pkgFlagChanged
 	}
 	return
+}
+
+func getSortedKeys(v map[string]none) []string {
+	keys := make([]string, 0, len(v))
+	for key := range v {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 func hashOf(b []byte) string {
@@ -414,7 +481,7 @@ func (e ErrorList) Error() string {
 
 // -----------------------------------------------------------------------------
 
-func GenGo(conf Config, pattern ...string) bool {
+func GenGo(conf Config, dontRun bool, pattern ...string) bool {
 	if conf.Event == nil {
 		conf.Event = defaultEvent{}
 	}
@@ -423,10 +490,26 @@ func GenGo(conf Config, pattern ...string) bool {
 		conf.OnErr("loadMod", err)
 		return false
 	}
+	err = mod.RegisterClasses()
+	if err != nil {
+		conf.OnErr("registerClass", err)
+		return false
+	}
 	p, err := New(mod, pattern...)
 	if err != nil {
 		conf.OnErr("genDeps", err)
 		return false
+	}
+	if dontRun {
+		pkgPaths, err := p.GenGoFlow()
+		if err != nil {
+			conf.OnErr("genGo", err)
+			return false
+		}
+		for _, pkgPath := range pkgPaths {
+			fmt.Fprintln(os.Stderr, pkgPath)
+		}
+		return true
 	}
 	return p.GenGo(conf)
 }

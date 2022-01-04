@@ -30,11 +30,12 @@ import (
 
 // gop go
 var Cmd = &base.Command{
-	UsageLine: "gop go [-v] [packages]",
+	UsageLine: "gop go [-v -n] [packages]",
 	Short:     "Convert Go+ packages into Go packages",
 }
 
 var (
+	flagDontRun = flag.Bool("n", false, "print the processing flow but do not run them.")
 	flagVerbose = flag.Bool("v", false, "print verbose information.")
 	flag        = &Cmd.Flag
 )
@@ -58,8 +59,7 @@ func runCmd(cmd *base.Command, args []string) {
 		cl.SetDebug(cl.DbgFlagAll)
 		cl.SetDisableRecover(true)
 	}
-
-	if !gengo.GenGo(gengo.Config{}, pattern...) {
+	if !gengo.GenGo(gengo.Config{}, *flagDontRun, pattern...) {
 		os.Exit(1)
 	}
 }

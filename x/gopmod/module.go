@@ -33,10 +33,7 @@ import (
 )
 
 func Imports(dir string) (imps []string, err error) {
-	var recursive bool
-	if strings.HasSuffix(dir, "/...") {
-		dir, recursive = dir[:len(dir)-4], true
-	}
+	dir, recursive := parsePattern(dir)
 	mod, err := Load(dir)
 	if err != nil {
 		return
@@ -45,7 +42,38 @@ func Imports(dir string) (imps []string, err error) {
 	if err != nil {
 		return
 	}
-	return mod.Imports(dir, recursive)
+	imports := make(map[string]none)
+	err = mod.Imports(imports, dir, recursive)
+	if err != nil {
+		return
+	}
+	return getSortedKeys(imports), nil
+}
+
+func List(pattern ...string) (pkgPaths []string, err error) {
+	mod, err := Load(".")
+	if err != nil {
+		return
+	}
+	err = mod.RegisterClasses()
+	if err != nil {
+		return
+	}
+	ret := make(map[string]none)
+	err = mod.List(ret, pattern...)
+	if err != nil {
+		return
+	}
+	return getSortedKeys(ret), nil
+}
+
+func getSortedKeys(v map[string]none) []string {
+	keys := make([]string, 0, len(v))
+	for key := range v {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 // -----------------------------------------------------------------------------
@@ -173,17 +201,31 @@ func loadModFrom(mod module.Version) (p *Module, err error) {
 	return Load(dir)
 }
 
-func (p *Module) List(pattern ...string) (pkgPaths []string, err error) {
+func (p *Module) List(ret map[string]struct{}, pattern ...string) (err error) {
 	modRoot, modPath := p.Root(), p.Path()
 	for _, pat := range pattern {
-		if pkgPaths, err = p.listPkgs(pkgPaths, pat, modRoot, modPath); err != nil {
+		if err = p.listPkgs(ret, pat, modRoot, modPath); err != nil {
 			return
 		}
 	}
 	return
 }
 
-func (p *Module) listPkgs(pkgPaths []string, pat, modRoot, modPath string) ([]string, error) {
+func (p *Module) listPkgs(ret map[string]none, pat, modRoot, modPath string) error {
+	pat, recursive := parsePattern(pat)
+	if isLocal(pat) {
+		patAbs, err1 := filepath.Abs(pat)
+		patRel, err2 := filepath.Rel(modRoot, patAbs)
+		if err1 != nil || err2 != nil || strings.HasPrefix(patRel, "..") {
+			return fmt.Errorf("directory `%s` outside available modules", pat)
+		}
+		pkgPathBase := path.Join(modPath, filepath.ToSlash(patRel))
+		return p.doListPkgs(ret, pkgPathBase, pat, recursive)
+	}
+	return p.doListExternPkgs(ret, pat, recursive)
+}
+
+func parsePattern(pat string) (string, bool) {
 	const multi = "/..."
 	recursive := strings.HasSuffix(pat, multi)
 	if recursive {
@@ -192,16 +234,7 @@ func (p *Module) listPkgs(pkgPaths []string, pat, modRoot, modPath string) ([]st
 			pat = "/"
 		}
 	}
-	if isLocal(pat) {
-		patAbs, err1 := filepath.Abs(pat)
-		patRel, err2 := filepath.Rel(modRoot, patAbs)
-		if err1 != nil || err2 != nil || strings.HasPrefix(patRel, "..") {
-			return nil, fmt.Errorf("directory `%s` outside available modules", pat)
-		}
-		pkgPathBase := path.Join(modPath, filepath.ToSlash(patRel))
-		return p.doListPkgs(pkgPaths, pkgPathBase, pat, recursive)
-	}
-	return p.doListExternPkgs(pkgPaths, pat, recursive)
+	return pat, recursive
 }
 
 func isLocal(ns string) bool {
@@ -216,10 +249,10 @@ func isLocal(ns string) bool {
 	return false
 }
 
-func (p *Module) doListPkgs(pkgPaths []string, pkgPathBase, pat string, recursive bool) ([]string, error) {
+func (p *Module) doListPkgs(ret map[string]none, pkgPathBase, pat string, recursive bool) (err error) {
 	fis, err := os.ReadDir(pat)
 	if err != nil {
-		return pkgPaths, err
+		return
 	}
 	noSouceFile := true
 	for _, fi := range fis {
@@ -229,7 +262,10 @@ func (p *Module) doListPkgs(pkgPaths []string, pkgPathBase, pat string, recursiv
 		}
 		if fi.IsDir() {
 			if recursive {
-				pkgPaths, _ = p.doListPkgs(pkgPaths, pkgPathBase+"/"+name, pat+"/"+name, true)
+				err = p.doListPkgs(ret, pkgPathBase+"/"+name, pat+"/"+name, true)
+				if err != nil {
+					return
+				}
 			}
 		} else if noSouceFile {
 			ext := path.Ext(name)
@@ -244,12 +280,12 @@ func (p *Module) doListPkgs(pkgPaths []string, pkgPathBase, pat string, recursiv
 		}
 	}
 	if !noSouceFile {
-		pkgPaths = append(pkgPaths, pkgPathBase)
+		ret[pkgPathBase] = none{}
 	}
-	return pkgPaths, nil
+	return
 }
 
-func (p *Module) doListExternPkgs(pkgPaths []string, pkgPath string, recursive bool) ([]string, error) {
+func (p *Module) doListExternPkgs(ret map[string]none, pkgPath string, recursive bool) error {
 	modPath, modVer, ok := p.LookupExternPkg(pkgPath)
 	if !ok {
 		panic("TODO: external package not found")
@@ -257,30 +293,16 @@ func (p *Module) doListExternPkgs(pkgPaths []string, pkgPath string, recursive b
 	if recursive {
 		mod, err := LoadMod(modVer)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		relDir := mod.Root() + pkgPath[len(modPath):]
-		return mod.doListPkgs(pkgPaths, pkgPath, relDir, true)
+		return mod.doListPkgs(ret, pkgPath, relDir, true)
 	}
-	return append(pkgPaths, pkgPath), nil
+	ret[pkgPath] = none{}
+	return nil
 }
 
-func (p *Module) Imports(dir string, recursive bool) (imps []string, err error) {
-	imports := make(map[string]none)
-	err = p.parseImports(imports, dir, recursive)
-	imps = getKeys(imports)
-	return
-}
-
-func getKeys(v map[string]none) []string {
-	keys := make([]string, 0, len(v))
-	for key := range v {
-		keys = append(keys, key)
-	}
-	return keys
-}
-
-func (p *Module) parseImports(imports map[string]none, dir string, recursive bool) (err error) {
+func (p *Module) Imports(imports map[string]struct{}, dir string, recursive bool) (err error) {
 	list, err := os.ReadDir(dir)
 	if err != nil {
 		return
@@ -293,7 +315,9 @@ func (p *Module) parseImports(imports map[string]none, dir string, recursive boo
 		}
 		if d.IsDir() {
 			if recursive {
-				p.parseImports(imports, filepath.Join(dir, fname), true)
+				if err = p.Imports(imports, filepath.Join(dir, fname), true); err != nil {
+					return
+				}
 			}
 			continue
 		}
