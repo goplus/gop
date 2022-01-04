@@ -19,6 +19,7 @@ package modfile
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -128,6 +129,15 @@ func parseToFile(file string, data []byte, fix VersionFixer, strict bool) (parse
 }
 
 func (f *File) parseVerb(errs *ErrorList, verb string, line *Line, args []string, strict bool) {
+	wrapModPathError := func(modPath string, err error) {
+		*errs = append(*errs, Error{
+			Filename: f.Syntax.Name,
+			Pos:      line.Start,
+			ModPath:  modPath,
+			Verb:     verb,
+			Err:      err,
+		})
+	}
 	wrapError := func(err error) {
 		*errs = append(*errs, Error{
 			Filename: f.Syntax.Name,
@@ -139,7 +149,70 @@ func (f *File) parseVerb(errs *ErrorList, verb string, line *Line, args []string
 		wrapError(fmt.Errorf(format, args...))
 	}
 	switch verb {
-	case "require", "replace", "exclude", "module", "go", "retract":
+	case "require", "exclude", "module", "go", "retract":
+	case "replace":
+		arrow := 2
+		if len(args) >= 2 && args[1] == "=>" {
+			arrow = 1
+		}
+		if len(args) < arrow+2 || len(args) > arrow+3 || args[arrow] != "=>" {
+			errorf("usage: %s module/path [v1.2.3] => other/module v1.4\n\t or %s module/path [v1.2.3] => ../local/directory", verb, verb)
+			return
+		}
+		s, err := parseString(&args[0])
+		if err != nil {
+			errorf("invalid quoted string: %v", err)
+			return
+		}
+		pathMajor, err := modulePathMajor(s)
+		if err != nil {
+			wrapModPathError(s, err)
+			return
+		}
+		var v string
+		if arrow == 2 {
+			v, err = parseVersion(verb, s, &args[1])
+			if err != nil {
+				wrapError(err)
+				return
+			}
+			if err := module.CheckPathMajor(v, pathMajor); err != nil {
+				wrapModPathError(s, err)
+				return
+			}
+		}
+		ns, err := parseString(&args[arrow+1])
+		if err != nil {
+			errorf("invalid quoted string: %v", err)
+			return
+		}
+		nv := ""
+		if len(args) == arrow+2 {
+			if !IsDirectoryPath(ns) {
+				errorf("replacement module without version must be directory path (rooted or starting with ./ or ../)")
+				return
+			}
+			if filepath.Separator == '/' && strings.Contains(ns, `\`) {
+				errorf("replacement directory appears to be Windows path (on a non-windows system)")
+				return
+			}
+		}
+		if len(args) == arrow+3 {
+			nv, err = parseVersion(verb, ns, &args[arrow+2])
+			if err != nil {
+				wrapError(err)
+				return
+			}
+			if IsDirectoryPath(ns) {
+				errorf("replacement module directory path %q cannot have version", ns)
+				return
+			}
+		}
+		f.Replace = append(f.Replace, &Replace{
+			Old:    module.Version{Path: s, Version: v},
+			New:    module.Version{Path: ns, Version: nv},
+			Syntax: line,
+		})
 	case "gop":
 		if f.Gop != nil {
 			errorf("repeated go statement")
@@ -207,23 +280,47 @@ func (f *File) parseVerb(errs *ErrorList, verb string, line *Line, args []string
 	}
 }
 
+func parseVersion(verb string, path string, s *string) (string, error) {
+	t, err := parseString(s)
+	if err != nil {
+		return "", &Error{
+			Verb:    verb,
+			ModPath: path,
+			Err: &module.InvalidVersionError{
+				Version: *s,
+				Err:     err,
+			},
+		}
+	}
+	cv := module.CanonicalVersion(t)
+	if cv == "" {
+		return "", &Error{
+			Verb:    verb,
+			ModPath: path,
+			Err: &module.InvalidVersionError{
+				Version: t,
+				Err:     errors.New("must be of the form v1.2.3"),
+			},
+		}
+	}
+	t = cv
+	*s = t
+	return *s, nil
+}
+
+func modulePathMajor(path string) (string, error) {
+	_, major, ok := module.SplitPathVersion(path)
+	if !ok {
+		return "", fmt.Errorf("invalid module path")
+	}
+	return major, nil
+}
+
 // IsDirectoryPath reports whether the given path should be interpreted
 // as a directory path. Just like on the go command line, relative paths
 // and rooted paths are directory paths; the rest are module paths.
 func IsDirectoryPath(ns string) bool {
 	return modfile.IsDirectoryPath(ns)
-}
-
-func IsLocal(ns string) bool {
-	if len(ns) > 0 {
-		switch c := ns[0]; c {
-		case '/', '\\', '.':
-			return true
-		default:
-			return len(ns) >= 2 && ns[1] == ':' && ('A' <= c && c <= 'Z' || 'a' <= c && c <= 'z')
-		}
-	}
-	return false
 }
 
 // MustQuote reports whether s must be quoted in order to appear as

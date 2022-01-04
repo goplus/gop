@@ -26,6 +26,7 @@ import (
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/parser/parsertest"
 	"github.com/goplus/gop/scanner"
+	"github.com/goplus/gop/x/gopmod"
 	"github.com/goplus/gox"
 )
 
@@ -38,9 +39,30 @@ func newTwoFileFS(dir string, fname, data string, fname2 string, data2 string) *
 	})
 }
 
-func init() {
-	cl.RegisterClassFileType(".tgmx", ".tspx", "github.com/goplus/gop/cl/internal/spx", "math")
-	cl.RegisterClassFileType(".tgmx", ".tspx", "github.com/goplus/gop/cl/internal/spx", "math")
+func lookupClass(ext string) (c *gopmod.Class, ok bool) {
+	switch ext {
+	case ".tgmx", ".tspx":
+		return &gopmod.Class{
+			ProjExt: ".tgmx", WorkExt: ".tspx",
+			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx", "math"}}, true
+	case ".t2gmx", ".t2spx":
+		return &gopmod.Class{
+			ProjExt: ".t2gmx", WorkExt: ".t2spx",
+			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
+	}
+	return
+}
+
+func spxParserConf() parser.Config {
+	return parser.Config{
+		IsClass: func(ext string) (isProj bool, ok bool) {
+			c, ok := lookupClass(ext)
+			if ok {
+				isProj = (c.ProjExt == ext)
+			}
+			return
+		},
+	}
 }
 
 func gopSpxTest(t *testing.T, gmx, spxcode, expected string) {
@@ -52,7 +74,7 @@ func gopSpxTestEx(t *testing.T, gmx, spxcode, expected, gmxfile, spxfile string)
 	defer cl.SetDisableRecover(false)
 
 	fs := newTwoFileFS("/foo", spxfile, spxcode, gmxfile, gmx)
-	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", nil, 0)
+	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", spxParserConf())
 	if err != nil {
 		scanner.PrintError(os.Stderr, err)
 		t.Fatal("ParseFSDir:", err)
@@ -75,7 +97,7 @@ func gopSpxTestEx(t *testing.T, gmx, spxcode, expected, gmxfile, spxfile string)
 
 func gopSpxErrorTestEx(t *testing.T, msg, gmx, spxcode, gmxfile, spxfile string) {
 	fs := newTwoFileFS("/foo", spxfile, spxcode, gmxfile, gmx)
-	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", nil, 0)
+	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", spxParserConf())
 	if err != nil {
 		scanner.PrintError(os.Stderr, err)
 		t.Fatal("ParseFSDir:", err)

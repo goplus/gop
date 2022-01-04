@@ -22,42 +22,11 @@ import (
 	"go/types"
 	"path/filepath"
 	"strings"
-	"syscall"
 
 	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
 )
-
-// -----------------------------------------------------------------------------
-
-type gmxInfo struct {
-	extSpx   string
-	pkgPaths []string
-}
-
-var (
-	gmxTypes = map[string]gmxInfo{
-		".gmx": {".spx", []string{"github.com/goplus/spx", "math"}},
-	}
-)
-
-// RegisterClassFileType registers Go+ class file types.
-func RegisterClassFileType(extGmx, extSpx string, pkgPaths ...string) error {
-	if pkgPaths == nil {
-		panic("RegisterClassFileType: no pkgPath specified")
-	}
-	parser.RegisterFileType(extGmx, ast.FileTypeGmx)
-	if extSpx != "" {
-		parser.RegisterFileType(extSpx, ast.FileTypeSpx)
-	}
-	if _, ok := gmxTypes[extGmx]; ok {
-		return syscall.EEXIST
-	}
-	gmxTypes[extGmx] = gmxInfo{extSpx, pkgPaths}
-	return nil
-}
 
 // -----------------------------------------------------------------------------
 
@@ -91,7 +60,7 @@ func (p *gmxSettings) getScheds(cb *gox.CodeBuilder) []goast.Stmt {
 	return p.schedStmts
 }
 
-func newGmx(pkg *gox.Package, file string) *gmxSettings {
+func newGmx(pkg *gox.Package, file string, conf *Config) *gmxSettings {
 	_, name := filepath.Split(file)
 	ext := filepath.Ext(name)
 	if idx := strings.Index(name, "."); idx > 0 {
@@ -100,16 +69,19 @@ func newGmx(pkg *gox.Package, file string) *gmxSettings {
 			name = "_main"
 		}
 	}
-	gt := gmxTypes[ext]
-	pkgPaths := gt.pkgPaths
-	p := &gmxSettings{extSpx: gt.extSpx, gameClass: name, pkgPaths: pkgPaths}
+	gt, ok := conf.LookupClass(ext)
+	if !ok {
+		panic("TODO: class not found")
+	}
+	pkgPaths := gt.PkgPaths
+	p := &gmxSettings{extSpx: gt.WorkExt, gameClass: name, pkgPaths: pkgPaths}
 	p.pkgImps = make([]*gox.PkgRef, len(pkgPaths))
 	for i, pkgPath := range pkgPaths {
 		p.pkgImps[i] = pkg.Import(pkgPath)
 	}
 	spx := p.pkgImps[0]
 	p.game, p.gameIsPtr = spxRef(spx, "Gop_game", "Game")
-	if gt.extSpx != "" {
+	if gt.WorkExt != "" {
 		p.sprite, _ = spxRef(spx, "Gop_sprite", "Sprite")
 	}
 	if x := getStringConst(spx, "Gop_sched"); x != "" {
@@ -175,7 +147,7 @@ func getFields(ctx *blockCtx, f *ast.File) (specs []ast.Spec) {
 }
 
 func setBodyHandler(ctx *blockCtx) {
-	if ctx.fileType > 0 { // in a Go+ class file
+	if ctx.isClass { // in a Go+ class file
 		if scheds := ctx.getScheds(ctx.cb); scheds != nil {
 			ctx.cb.SetBodyHandler(func(body *goast.BlockStmt, kind int) {
 				idx := 0

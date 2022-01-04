@@ -14,29 +14,55 @@
  * limitations under the License.
  */
 
-package modload
+package list
 
 import (
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cmd/gengo"
+	"fmt"
+	"log"
+
+	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/x/gopmod"
 )
 
 // -----------------------------------------------------------------------------
 
-func UpdateGoMod(dir string) {
-	p, err := gopmod.Load(dir)
+// gop list
+var Cmd = &base.Command{
+	UsageLine: "gop list [-json] [packages]",
+	Short:     "List packages or modules",
+}
+
+var (
+	flag = &Cmd.Flag
+	_    = flag.Bool("json", false, "printing in JSON format.")
+)
+
+func init() {
+	Cmd.Run = runCmd
+}
+
+func runCmd(cmd *base.Command, args []string) {
+	err := flag.Parse(args)
 	if err != nil {
-		return
+		log.Fatalln("parse input arguments failed:", err)
 	}
-	p.UpdateGoMod(true)
-	p.RegisterClasses(func(c *gopmod.Class) {
-		gengo.RegisterPkgFlags(c.ProjExt, gengo.PkgFlagGmx)
-		gengo.RegisterPkgFlags(c.WorkExt, gengo.PkgFlagSpx)
-		if c != gopmod.ClassSpx {
-			cl.RegisterClassFileType(c.ProjExt, c.WorkExt, c.PkgPaths...)
-		}
-	})
+
+	pattern := flag.Args()
+	if len(pattern) == 0 {
+		pattern = []string{"."}
+	}
+
+	pkgPaths, err := gopmod.List(pattern...)
+	check(err)
+	for _, pkgPath := range pkgPaths {
+		fmt.Println(pkgPath)
+	}
+}
+
+func check(err error) {
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
 
 // -----------------------------------------------------------------------------

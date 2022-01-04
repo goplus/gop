@@ -60,9 +60,10 @@ func init() {
 		panic(err)
 	}
 	gblConf = &cl.Config{
-		Fset:       gblFset,
-		Importer:   imp,
-		NoFileLine: true,
+		Fset:        gblFset,
+		Importer:    imp,
+		LookupClass: lookupClass,
+		NoFileLine:  true,
 	}
 }
 
@@ -75,7 +76,7 @@ func gopClTestEx(t *testing.T, pkgname, gopcode, expected string) {
 	defer cl.SetDisableRecover(false)
 
 	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", gopcode)
-	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", nil, parser.ParseComments)
+	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", parser.Config{Mode: parser.ParseComments})
 	if err != nil {
 		scanner.PrintError(os.Stderr, err)
 		t.Fatal("ParseFSDir:", err)
