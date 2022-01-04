@@ -73,6 +73,7 @@ type Runner struct {
 type Event interface {
 	OnStart(pkgPath string)
 	OnErr(stage string, err error)
+	OnInfo(format string, args ...interface{})
 	OnEnd()
 }
 
@@ -80,6 +81,10 @@ type defaultEvent struct{}
 
 func (p defaultEvent) OnStart(pkgPath string) {
 	fmt.Fprintln(os.Stderr, pkgPath)
+}
+
+func (p defaultEvent) OnInfo(format string, args ...interface{}) {
+	fmt.Fprintf(os.Stderr, format, args...)
 }
 
 func (p defaultEvent) OnErr(stage string, err error) {
@@ -189,6 +194,7 @@ func (p *Runner) genGoPkgs(conf *Config) {
 		p.state = stateOccurErrors
 		return
 	}
+	conf.OnInfo("newImporter: %s\n", imps)
 	for _, pkg := range p.pkgs {
 		if pkg.flags == pkgFlagChanged {
 			p.genGoPkg(pkg, imp, conf)
@@ -444,7 +450,7 @@ func (p *Runner) genExternDeps(pkgPath string, errs *ErrorList) *pkgInfo {
 		exr = &Runner{
 			mod:     mod,
 			modRoot: modRoot,
-			modPath: modVer.Path,
+			modPath: mod.Path(),
 			modTime: modTime(mod.Modfile(), errs),
 			pkgs:    make(map[string]*pkgInfo),
 			runners: p.runners,

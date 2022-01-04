@@ -154,6 +154,15 @@ func (p *Module) LookupMod(modPath string) (modVer module.Version, ok bool) {
 	return
 }
 
+func (p *Module) IsGopMod() bool {
+	_, file := filepath.Split(p.Modfile())
+	if file == "gop.mod" {
+		return true
+	}
+	_, ok := p.LookupMod("github.com/goplus/gop")
+	return ok
+}
+
 func getDepMods(mod modload.Module) []depmodInfo {
 	depmods := mod.DepMods()
 	ret := make([]depmodInfo, 0, len(depmods))
@@ -257,7 +266,7 @@ func (p *Module) doListLocalPkgs(ret map[string]none, pkgPathBase, pat string, r
 	noSouceFile := true
 	for _, fi := range fis {
 		name := fi.Name()
-		if strings.HasPrefix(name, "_") {
+		if strings.HasPrefix(name, "_") { // skip this file/directory
 			continue
 		}
 		if fi.IsDir() {
@@ -309,6 +318,20 @@ func (p *Module) doListPkgs(ret map[string]none, pkgPath string, recursive bool)
 }
 
 func (p *Module) Imports(imports map[string]struct{}, dir string, recursive bool) (err error) {
+	err = p.doImports(imports, dir, recursive)
+	if err == nil && p.IsGopMod() {
+		importGopBuiltins(imports)
+	}
+	return
+}
+
+func importGopBuiltins(imports map[string]none) {
+	imports["strconv"] = none{}
+	imports["strings"] = none{}
+	imports["github.com/goplus/gop/builtin"] = none{}
+}
+
+func (p *Module) doImports(imports map[string]struct{}, dir string, recursive bool) (err error) {
 	list, err := os.ReadDir(dir)
 	if err != nil {
 		return
