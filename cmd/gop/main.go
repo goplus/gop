@@ -25,6 +25,7 @@ import (
 	"github.com/goplus/gop/cmd/internal/bug"
 	"github.com/goplus/gop/cmd/internal/deps"
 	"github.com/goplus/gop/cmd/internal/gopget"
+	"github.com/goplus/gop/cmd/internal/list"
 	"github.com/qiniu/x/log"
 
 	"github.com/goplus/gop/cmd/internal/base"
@@ -56,6 +57,7 @@ func init() {
 		mod.Cmd,
 		gopfmt.Cmd,
 		gopget.Cmd,
+		list.Cmd,
 		bug.Cmd,
 		clean.Cmd,
 		env.Cmd,

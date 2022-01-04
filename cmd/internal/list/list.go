@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package deps
+package list
 
 import (
 	"fmt"
@@ -27,15 +27,15 @@ import (
 
 // -----------------------------------------------------------------------------
 
-// gop deps
+// gop list
 var Cmd = &base.Command{
-	UsageLine: "gop deps [-v] [package]",
-	Short:     "Show dependencies of a package or module",
+	UsageLine: "gop list [-json] [packages]",
+	Short:     "List packages or modules",
 }
 
 var (
 	flag = &Cmd.Flag
-	_    = flag.Bool("v", false, "print verbose information.")
+	_    = flag.Bool("json", false, "printing in JSON format.")
 )
 
 func init() {
@@ -47,22 +47,23 @@ func runCmd(cmd *base.Command, args []string) {
 	if err != nil {
 		log.Fatalln("parse input arguments failed:", err)
 	}
-	var dir string
-	narg := flag.NArg()
-	if narg < 1 {
-		dir = "."
-	} else {
-		dir = flag.Arg(0)
+
+	pattern := flag.Args()
+	if len(pattern) == 0 {
+		pattern = []string{"."}
 	}
-	getDeps(dir)
+
+	list(pattern...)
 }
 
-func getDeps(dir string) {
-	imports, err := gopmod.Imports(dir)
+func list(pattern ...string) {
+	mod, err := gopmod.Load(".")
 	check(err)
-	sort.Strings(imports)
-	for _, imp := range imports {
-		fmt.Println(imp)
+	pkgPaths, err := mod.List(pattern...)
+	check(err)
+	sort.Strings(pkgPaths)
+	for _, pkgPath := range pkgPaths {
+		fmt.Println(pkgPath)
 	}
 }
 

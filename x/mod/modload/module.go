@@ -46,6 +46,11 @@ func (p Module) Modfile() string {
 	return p.Syntax.Name
 }
 
+// Root returns absolute root path of this module.
+func (p Module) Root() string {
+	return filepath.Dir(p.Syntax.Name)
+}
+
 // Path returns the module path.
 func (p Module) Path() string {
 	if mod := p.Module; mod != nil {

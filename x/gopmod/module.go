@@ -17,7 +17,9 @@
 package gopmod
 
 import (
+	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -58,16 +60,6 @@ type Module struct {
 	classes map[string]*Class
 	depmods []depmodInfo
 	fset    *token.FileSet
-}
-
-func (p *Module) SupportedExts() map[string]struct{} {
-	exts := make(map[string]none, len(p.classes)+2)
-	exts[".go"] = none{}
-	exts[".gop"] = none{}
-	for ext := range p.classes {
-		exts[ext] = none{}
-	}
-	return exts
 }
 
 // PkgType specifies a package type.
@@ -179,6 +171,98 @@ func loadModFrom(mod module.Version) (p *Module, err error) {
 		return
 	}
 	return Load(dir)
+}
+
+func (p *Module) List(pattern ...string) (pkgPaths []string, err error) {
+	modRoot, modPath := p.Root(), p.Path()
+	for _, pat := range pattern {
+		if pkgPaths, err = p.listPkgs(pkgPaths, pat, modRoot, modPath); err != nil {
+			return
+		}
+	}
+	return
+}
+
+func (p *Module) listPkgs(pkgPaths []string, pat, modRoot, modPath string) ([]string, error) {
+	const multi = "/..."
+	recursive := strings.HasSuffix(pat, multi)
+	if recursive {
+		pat = pat[:len(pat)-len(multi)]
+		if pat == "" {
+			pat = "/"
+		}
+	}
+	if isLocal(pat) {
+		patAbs, err1 := filepath.Abs(pat)
+		patRel, err2 := filepath.Rel(modRoot, patAbs)
+		if err1 != nil || err2 != nil || strings.HasPrefix(patRel, "..") {
+			return nil, fmt.Errorf("directory `%s` outside available modules", pat)
+		}
+		pkgPathBase := path.Join(modPath, filepath.ToSlash(patRel))
+		return p.doListPkgs(pkgPaths, pkgPathBase, pat, recursive)
+	}
+	return p.doListExternPkgs(pkgPaths, pat, recursive)
+}
+
+func isLocal(ns string) bool {
+	if len(ns) > 0 {
+		switch c := ns[0]; c {
+		case '/', '\\', '.':
+			return true
+		default:
+			return len(ns) >= 2 && ns[1] == ':' && ('A' <= c && c <= 'Z' || 'a' <= c && c <= 'z')
+		}
+	}
+	return false
+}
+
+func (p *Module) doListPkgs(pkgPaths []string, pkgPathBase, pat string, recursive bool) ([]string, error) {
+	fis, err := os.ReadDir(pat)
+	if err != nil {
+		return pkgPaths, err
+	}
+	noSouceFile := true
+	for _, fi := range fis {
+		name := fi.Name()
+		if strings.HasPrefix(name, "_") {
+			continue
+		}
+		if fi.IsDir() {
+			if recursive {
+				pkgPaths, _ = p.doListPkgs(pkgPaths, pkgPathBase+"/"+name, pat+"/"+name, true)
+			}
+		} else if noSouceFile {
+			ext := path.Ext(name)
+			switch ext {
+			case ".gop", ".go":
+				noSouceFile = false
+			default:
+				if _, ok := p.classes[ext]; ok {
+					noSouceFile = false
+				}
+			}
+		}
+	}
+	if !noSouceFile {
+		pkgPaths = append(pkgPaths, pkgPathBase)
+	}
+	return pkgPaths, nil
+}
+
+func (p *Module) doListExternPkgs(pkgPaths []string, pkgPath string, recursive bool) ([]string, error) {
+	modPath, modVer, ok := p.LookupExternPkg(pkgPath)
+	if !ok {
+		panic("TODO: external package not found")
+	}
+	if recursive {
+		mod, err := LoadMod(modVer)
+		if err != nil {
+			return nil, err
+		}
+		relDir := mod.Root() + pkgPath[len(modPath):]
+		return mod.doListPkgs(pkgPaths, pkgPath, relDir, true)
+	}
+	return append(pkgPaths, pkgPath), nil
 }
 
 func (p *Module) Imports(dir string, recursive bool) (imps []string, err error) {

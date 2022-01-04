@@ -267,25 +267,18 @@ func modTime(file string, errs *ErrorList) (mt time.Time) {
 }
 
 func New(mod *gopmod.Module, pattern ...string) (p *Runner, err error) {
-	modFile := mod.Modfile()
-	modRoot, _ := filepath.Split(modFile)
-	modPath := mod.Path()
-	conf := &packages.Config{
-		ModRoot:       modRoot,
-		ModPath:       modPath,
-		SupportedExts: mod.SupportedExts(),
-	}
-	pkgPaths, err := packages.List(conf, pattern...)
+	pkgPaths, err := mod.List(pattern...)
 	if err != nil {
 		return
 	}
-	modRoot = modRoot[:len(modRoot)-1] // remove the last pathSeparator
+	modFile := mod.Modfile()
+	modRoot := filepath.Dir(modFile)
 
 	var errs ErrorList
 	p = &Runner{
 		mod:     mod,
 		modRoot: modRoot,
-		modPath: modPath,
+		modPath: mod.Path(),
 		modTime: modTime(modFile, &errs),
 		pkgs:    make(map[string]*pkgInfo),
 	}

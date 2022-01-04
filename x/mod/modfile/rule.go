@@ -214,18 +214,6 @@ func IsDirectoryPath(ns string) bool {
 	return modfile.IsDirectoryPath(ns)
 }
 
-func IsLocal(ns string) bool {
-	if len(ns) > 0 {
-		switch c := ns[0]; c {
-		case '/', '\\', '.':
-			return true
-		default:
-			return len(ns) >= 2 && ns[1] == ':' && ('A' <= c && c <= 'Z' || 'a' <= c && c <= 'z')
-		}
-	}
-	return false
-}
-
 // MustQuote reports whether s must be quoted in order to appear as
 // a single token in a gop.mod line.
 func MustQuote(s string) bool {

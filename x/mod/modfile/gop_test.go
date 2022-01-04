@@ -39,21 +39,6 @@ func TestGetWeight(t *testing.T) {
 	}
 }
 
-func TestIsLocal(t *testing.T) {
-	if !IsLocal(".") || !IsLocal("/") {
-		t.Fatal(`IsLocal(".") || IsLocal("/")`)
-	}
-	if !IsLocal("c:/foo") {
-		t.Fatal(`IsLocal("c:/foo")`)
-	}
-	if !IsLocal("C:/foo") {
-		t.Fatal(`IsLocal("C:/foo")`)
-	}
-	if IsLocal("") {
-		t.Fatal(`IsLocal("")`)
-	}
-}
-
 // -----------------------------------------------------------------------------
 
 const gopmodSpx = `
