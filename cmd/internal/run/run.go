@@ -24,11 +24,9 @@ import (
 	"path/filepath"
 
 	"github.com/qiniu/x/log"
-	"golang.org/x/tools/go/packages"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/cmd/internal/modload"
 	"github.com/goplus/gop/parser"
@@ -116,7 +114,7 @@ func runCmd(cmd *base.Command, args []string) {
 	if isDir {
 		srcDir = src
 		gofile = src + "/gop_autogen.go"
-		modload.Load()
+		modload.UpdateGoMod(srcDir)
 		isDirty = true // TODO: check if code changed
 		if isDirty {
 			pkgs, err = parser.ParseDir(fset, src, nil, parserMode)
@@ -143,9 +141,8 @@ func runCmd(cmd *base.Command, args []string) {
 			os.Exit(12)
 		}
 
-		modDir, noCacheFile := findGoModDir(srcDir)
-		conf := &cl.Config{
-			Dir: modDir, TargetDir: srcDir, Fset: fset, CacheLoadPkgs: true, PersistLoadPkgs: !noCacheFile}
+		modDir := findGoModDir(srcDir)
+		conf := &cl.Config{WorkingDir: modDir, TargetDir: srcDir, Fset: fset}
 		out, err := cl.NewPackage("", mainPkg, conf)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
@@ -155,7 +152,6 @@ func runCmd(cmd *base.Command, args []string) {
 		if err != nil {
 			log.Fatalln("saveGoFile failed:", err)
 		}
-		conf.PkgsLoader.Save()
 	}
 
 	goRun(gofile, args)
@@ -186,38 +182,6 @@ func goRun(file string, args []string) {
 }
 
 func runGoPkg(src string, args []string, doRun bool) {
-	modfile, noCacheFile, err := findGoModFile(src)
-	if err != nil {
-		log.Fatalln("findGoModFile:", err)
-	}
-	base := filepath.Dir(modfile)
-	rel, _ := filepath.Rel(base, src)
-	modPath, err := cl.GetModulePath(modfile)
-	if err != nil {
-		log.Fatalln("GetModulePath:", err)
-	}
-	pkgPath := filepath.Join(modPath, rel)
-	const (
-		loadTypes = packages.NeedImports | packages.NeedDeps | packages.NeedTypes
-		loadModes = loadTypes | packages.NeedName | packages.NeedModule
-	)
-	baseConf := &cl.Config{
-		Fset:            token.NewFileSet(),
-		GenGoPkg:        new(gengo.Runner).GenGoPkg,
-		CacheLoadPkgs:   true,
-		PersistLoadPkgs: !noCacheFile,
-		NoFileLine:      true,
-	}
-	loadConf := &packages.Config{Mode: loadModes, Fset: baseConf.Fset}
-	pkgs, err := baseConf.Ensure().PkgsLoader.Load(loadConf, pkgPath)
-	if err != nil || len(pkgs) == 0 {
-		log.Fatalln("PkgsLoader.Load failed:", err)
-	}
-	if pkgs[0].Name != "main" {
-		fmt.Fprintln(os.Stderr, "TODO: not a main package")
-		os.Exit(12)
-	}
-	baseConf.PkgsLoader.Save()
 	if doRun {
 		goRun(src+"/.", args)
 	}

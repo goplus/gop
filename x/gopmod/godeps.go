@@ -17,48 +17,50 @@
 package gopmod
 
 import (
-	"crypto/sha1"
-	"os"
-	"path/filepath"
+	"path"
+	"strconv"
+	"strings"
+
+	"go/ast"
+	"go/parser"
+	"go/token"
 )
 
 // -----------------------------------------------------------------------------
 
-type goFile struct {
-	file string
-}
+type none = struct{}
 
-func openFromGoFile(file string) (proj *Project, err error) {
-	proj = &Project{
-		Source:        &goFile{file: file},
-		AutoGenFile:   file,
-		FriendlyFname: filepath.Base(file),
-	}
-	return
-}
-
-func (p *goFile) Fingerp() (ret *Fingerp, err error) { // source code fingerprint
-	file, err := filepath.Abs(p.file)
+func (p *Module) parseGoImport(errs *ErrorList, imports map[string]none, gopfile string) {
+	f, err := parser.ParseFile(p.fset, gopfile, nil, parser.ImportsOnly)
 	if err != nil {
+		*errs = append(*errs, err)
 		return
 	}
-	fi, err := os.Stat(file)
-	if err != nil {
-		return
+	for _, imp := range f.Imports {
+		p.importGo(imports, imp)
 	}
-	hash := sha1.Sum([]byte(file))
-	return &Fingerp{Hash: hash, ModTime: fi.ModTime()}, nil
 }
 
-func (p *goFile) GenGo(outFile, modFile string) error {
-	if p.file != outFile {
-		code, err := os.ReadFile(p.file)
-		if err != nil {
-			return err
+func (p *Module) importGo(imports map[string]none, spec *ast.ImportSpec) {
+	pkgPath := p.canonicalGo(goToString(spec.Path))
+	imports[pkgPath] = none{}
+}
+
+func (p *Module) canonicalGo(pkgPath string) string {
+	if strings.HasPrefix(pkgPath, ".") {
+		return path.Join(p.Path(), pkgPath)
+	}
+	return pkgPath
+}
+
+func goToString(l *ast.BasicLit) string {
+	if l.Kind == token.STRING {
+		s, err := strconv.Unquote(l.Value)
+		if err == nil {
+			return s
 		}
-		return os.WriteFile(outFile, code, 0644)
 	}
-	return nil
+	panic("TODO: toString - convert ast.BasicLit to string failed")
 }
 
 // -----------------------------------------------------------------------------

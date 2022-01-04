@@ -24,6 +24,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
@@ -164,14 +165,15 @@ var (
 )
 
 // RegisterFileType registers a new Go+ class file type.
-func RegisterFileType(ext string, format ast.FileType) {
+func RegisterFileType(ext string, format ast.FileType) error {
 	if format != ast.FileTypeSpx && format != ast.FileTypeGmx {
-		panic("RegisterFileType: format should be FileTypeSpx or FileTypeGmx")
+		return syscall.EINVAL
 	}
 	if _, ok := extGopFiles[ext]; ok {
-		panic("RegisterFileType: file type exists")
+		return syscall.EEXIST
 	}
 	extGopFiles[ext] = format
+	return nil
 }
 
 // -----------------------------------------------------------------------------
