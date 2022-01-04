@@ -411,14 +411,10 @@ func (p *Runner) genDeps(pkgPath, pkgPathBase string, errs *ErrorList) (pkg *pkg
 	}
 
 	var buf bytes.Buffer
-	pkgs, err := p.mod.DirImports(dir)
+	imports, err := p.getImports(dir)
 	if err != nil {
-		*errs, pkg.flags = append(*errs, err), pkgFlagIll
-		return
-	}
-	imports, err := getImports(pkgs)
-	if err != nil {
-		*errs, pkg.flags = append(*errs, err), pkgFlagIll
+		errs.addError("import "+pkgPath, err)
+		pkg.flags = pkgFlagIll
 		return
 	}
 	imps := getSortedKeys(imports)
@@ -443,7 +439,11 @@ func (p *Runner) genDeps(pkgPath, pkgPathBase string, errs *ErrorList) (pkg *pkg
 	return
 }
 
-func getImports(pkgs map[string]gopmod.PkgImports) (ret gopmod.PkgImports, err error) {
+func (p *Runner) getImports(dir string) (ret map[string]struct{}, err error) {
+	pkgs, err := p.mod.DirImports(dir)
+	if err != nil {
+		return
+	}
 	exists := false
 	for name, imps := range pkgs {
 		if !strings.HasSuffix(name, "_test") {
@@ -529,6 +529,10 @@ func (p pkgInfo) writeCinfo(w io.Writer) error {
 // -----------------------------------------------------------------------------
 
 type ErrorList []error
+
+func (p *ErrorList) addError(stage string, err error) {
+	*p = append(*p, fmt.Errorf("%s: %v", stage, err))
+}
 
 func (e ErrorList) Error() string {
 	errStrs := make([]string, len(e))
