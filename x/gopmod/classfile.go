@@ -73,7 +73,7 @@ func (p *Module) RegisterClasses(registerClass ...func(c *Class)) (err error) {
 }
 
 func (p *Module) registerMod(modPath string, regcls func(c *Class)) (err error) {
-	mod, ok := p.LookupMod(modPath)
+	mod, ok := p.LookupDepMod(modPath)
 	if !ok {
 		return syscall.ENOENT
 	}

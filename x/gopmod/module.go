@@ -142,9 +142,9 @@ func (p *Module) LookupExternPkg(pkgPath string) (modPath string, modVer module.
 	return
 }
 
-// LookupMod lookups a depended module.
+// LookupDepMod lookups a depended module.
 // If modVer.Path is replace to be a local path, it will be canonical to an absolute path.
-func (p *Module) LookupMod(modPath string) (modVer module.Version, ok bool) {
+func (p *Module) LookupDepMod(modPath string) (modVer module.Version, ok bool) {
 	for _, m := range p.depmods {
 		if m.path == modPath {
 			modVer, ok = m.real, true
@@ -155,12 +155,15 @@ func (p *Module) LookupMod(modPath string) (modVer module.Version, ok bool) {
 }
 
 func (p *Module) IsGopMod() bool {
+	const gopPkgPath = "github.com/goplus/gop"
 	_, file := filepath.Split(p.Modfile())
 	if file == "gop.mod" {
 		return true
 	}
-	_, ok := p.LookupMod("github.com/goplus/gop")
-	return ok
+	if _, ok := p.LookupDepMod(gopPkgPath); ok {
+		return true
+	}
+	return p.Path() == gopPkgPath
 }
 
 func getDepMods(mod modload.Module) []depmodInfo {
