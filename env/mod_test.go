@@ -40,7 +40,7 @@ func TestGopMod(t *testing.T) {
 	if err != nil {
 		t.Fatal("GOPMOD modtest failed:", err)
 	}
-	if !strings.HasSuffix(file, "env/modtest/gop.mod") {
+	if !strings.HasSuffix(filepath.ToSlash(file), "env/modtest/gop.mod") {
 		t.Fatal("GOPMOD modtest failed:", file)
 	}
 }
