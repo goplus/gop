@@ -159,9 +159,10 @@ func (p *Runner) genGoPkgs(conf *Config) {
 		return
 	}
 	p.state = stateProcessing
-	imports := make(map[string]none)
+	imports, changed := make(map[string]none), false
 	for _, pkg := range p.pkgs {
 		if pkg.flags == pkgFlagChanged {
+			changed = true
 			for _, dep := range pkg.deps {
 				if r := dep.runner; r != p {
 					r.genGoPkgs(conf)
@@ -171,6 +172,9 @@ func (p *Runner) genGoPkgs(conf *Config) {
 				imports[imp] = none{}
 			}
 		}
+	}
+	if !changed {
+		return
 	}
 	imps := getKeys(imports)
 	impConf := &packages.Config{
