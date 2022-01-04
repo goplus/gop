@@ -23,10 +23,12 @@ import (
 	"errors"
 	"fmt"
 	"go/types"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/goplus/gop/ast"
@@ -57,6 +59,7 @@ type pkgInfo struct {
 	imports []string
 	deps    []*pkgInfo
 	hash    string
+	nsource int
 	flags   int
 }
 
@@ -224,7 +227,7 @@ func (p *Runner) genGoPkg(pkg *pkgInfo, imp types.Importer, conf *Config) {
 			r.genGoPkg(dep, imp, conf)
 		}
 	}
-	if err := p.doGenGoPkg(pkg.path, imp, conf); err != nil {
+	if err := p.doGenGoPkg(pkg, imp, conf); err != nil {
 		pkg.flags |= pkgFlagIll
 		p.state = stateOccurErrors
 		return
@@ -232,7 +235,8 @@ func (p *Runner) genGoPkg(pkg *pkgInfo, imp types.Importer, conf *Config) {
 	pkg.flags = 0
 }
 
-func (p *Runner) doGenGoPkg(pkgPath string, imp types.Importer, conf *Config) (err error) {
+func (p *Runner) doGenGoPkg(pkgi *pkgInfo, imp types.Importer, conf *Config) (err error) {
+	pkgPath := pkgi.path
 	conf.OnStart(pkgPath)
 	pkgDir := p.modRoot + pkgPath[len(p.modPath):]
 
@@ -283,7 +287,7 @@ func (p *Runner) doGenGoPkg(pkgPath string, imp types.Importer, conf *Config) (e
 			conf.OnErr("compile", e)
 			return e
 		}
-		err = saveGoFile(pkgDir, out)
+		err = saveGoFile(pkgDir, out, pkgi)
 		if err != nil {
 			conf.OnErr("compile", err)
 			return
@@ -303,12 +307,27 @@ func (p *Runner) doGenGoPkg(pkgPath string, imp types.Importer, conf *Config) (e
 	return
 }
 
-func saveGoFile(dir string, pkg *gox.Package) error {
-	err := os.MkdirAll(dir, 0755)
-	if err != nil {
-		return err
-	}
-	err = gox.WriteFile(filepath.Join(dir, autoGenFile), pkg, false)
+func saveGoFile(dir string, pkg *gox.Package, pkgi *pkgInfo) error {
+	os.MkdirAll(dir, 0755)
+	err := func() (err error) {
+		file := filepath.Join(dir, autoGenFile)
+		f, err := os.Create(file)
+		if err != nil {
+			return
+		}
+		err = syscall.EFAULT
+		defer func() {
+			f.Close()
+			if err != nil {
+				os.Remove(file)
+			}
+		}()
+		err = pkgi.writeCinfo(f)
+		if err != nil {
+			return
+		}
+		return gox.WriteTo(f, pkg, false)
+	}()
 	if err != nil {
 		return err
 	}
@@ -387,7 +406,6 @@ func (p *Runner) genDeps(pkgPath, pkgPathBase string, errs *ErrorList) (pkg *pkg
 	}
 
 	var buf bytes.Buffer
-	var depsHash string
 	var imports = make(map[string]struct{})
 	err = p.mod.Imports(imports, dir, false)
 	if err != nil {
@@ -409,7 +427,8 @@ func (p *Runner) genDeps(pkgPath, pkgPathBase string, errs *ErrorList) (pkg *pkg
 	}
 	pkg.imports = imps
 	pkg.hash = hashOf(buf.Bytes())
-	if p.sourceChanged(dir, ci, &depsHash) || pkg.hash != depsHash {
+	pkg.nsource = ci.SourceNum
+	if p.sourceChanged(dir, ci.ModTime, pkg) {
 		pkg.flags |= pkgFlagChanged
 	}
 	return
@@ -459,21 +478,27 @@ func (p *Runner) genExternDeps(pkgPath string, errs *ErrorList) *pkgInfo {
 	return exr.genDeps(pkgPath, pkgPath, errs)
 }
 
-func (p *Runner) sourceChanged(dir string, ci gopmod.ChangeInfo, depsHash *string) bool {
+func (p *Runner) sourceChanged(dir string, modt time.Time, pkg *pkgInfo) bool {
 	f, err := os.Open(dir + "/gop_autogen.go")
 	if err != nil {
 		return true
 	}
 	fi, err := f.Stat()
-	if err != nil || ci.ModTime.After(fi.ModTime()) {
+	if err != nil || modt.After(fi.ModTime()) {
 		return true
 	}
 	//cinfo $SourceNum $DepsHash
 	var sourceNum int
-	if _, err = fmt.Fscanf(f, "//cinfo %d %s\n", &sourceNum, depsHash); err != nil {
+	var hash string
+	if _, err = fmt.Fscanf(f, "//cinfo %d %s\n", &sourceNum, &hash); err != nil {
 		return true
 	}
-	return sourceNum != ci.SourceNum
+	return pkg.nsource != sourceNum || pkg.hash != hash
+}
+
+func (p pkgInfo) writeCinfo(w io.Writer) error {
+	_, err := fmt.Fprintf(w, "//cinfo %d %s\n", p.nsource, p.hash)
+	return err
 }
 
 // -----------------------------------------------------------------------------
