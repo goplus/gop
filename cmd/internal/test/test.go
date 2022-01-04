@@ -19,9 +19,10 @@ package test
 
 import (
 	"fmt"
-	"github.com/qiniu/x/log"
 	"os"
 	"strings"
+
+	"github.com/qiniu/x/log"
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/gengo"
@@ -78,12 +79,11 @@ func runCmd(_ *base.Command, args []string) {
 		}
 		return nil
 	})
-	baseConf := &cl.Config{PersistLoadPkgs: true}
-	runner.GenGo(dir, recursive, baseConf.Ensure())
+	baseConf := &cl.Config{}
+	runner.GenGo(dir, recursive, baseConf)
 	if hasError {
 		os.Exit(1)
 	}
-	baseConf.PkgsLoader.Save()
 	base.RunGoCmd(dir, "test", args...)
 }
 

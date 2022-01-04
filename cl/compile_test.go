@@ -18,44 +18,59 @@ package cl_test
 
 import (
 	"bytes"
+	"go/types"
 	"os"
 	"strings"
 	"sync"
-	"syscall"
 	"testing"
 
 	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cmd/gengo"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/parser/parsertest"
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
+	"github.com/goplus/gox/packages"
 )
 
 var (
-	gblFset  *token.FileSet
-	baseConf *cl.Config
+	gblFset *token.FileSet
+	gblConf *cl.Config
 )
 
 func init() {
 	gox.SetDebug(gox.DbgFlagAll)
 	cl.SetDebug(cl.DbgFlagAll)
 	gblFset = token.NewFileSet()
-	baseConf = &cl.Config{
-		Fset:          gblFset,
-		ModRootDir:    "./internal",
-		GenGoPkg:      new(gengo.Runner).GenGoPkg,
-		CacheLoadPkgs: true,
-		NoFileLine:    true,
+	conf := &packages.Config{
+		ModRoot: ".",
+		ModPath: "github.com/goplus/gop/cl",
+		Loaded:  make(map[string]*types.Package),
+		Fset:    gblFset,
+	}
+	const (
+		pkgbi   = "github.com/goplus/gop/builtin"
+		pkggt   = "github.com/goplus/gop/ast/goptest"
+		pkgspx  = "github.com/goplus/gop/cl/internal/spx"
+		pkgspx2 = "github.com/goplus/gop/cl/internal/spx2"
+	)
+	imp, _, err := packages.NewImporter(
+		conf, ".", "encoding/base32", "encoding/base64", pkgbi, pkggt, pkgspx, pkgspx2)
+	if err != nil {
+		panic(err)
+	}
+	gblConf = &cl.Config{
+		Fset:       gblFset,
+		Importer:   imp,
+		NoFileLine: true,
 	}
 }
 
-func gopClTest(t *testing.T, gopcode, expected string, cachefile ...string) {
-	gopClTestEx(t, "main", gopcode, expected, cachefile...)
+func gopClTest(t *testing.T, gopcode, expected string) {
+	gopClTestEx(t, "main", gopcode, expected)
 }
 
-func gopClTestEx(t *testing.T, pkgname, gopcode, expected string, cachefile ...string) {
+func gopClTestEx(t *testing.T, pkgname, gopcode, expected string) {
 	cl.SetDisableRecover(true)
 	defer cl.SetDisableRecover(false)
 
@@ -65,16 +80,8 @@ func gopClTestEx(t *testing.T, pkgname, gopcode, expected string, cachefile ...s
 		scanner.PrintError(os.Stderr, err)
 		t.Fatal("ParseFSDir:", err)
 	}
-	conf := *baseConf.Ensure()
-	if cachefile != nil {
-		copy := *baseConf
-		copy.PkgsLoader = nil
-		copy.CacheFile = cachefile[0]
-		copy.PersistLoadPkgs = true
-		conf = *copy.Ensure()
-	}
 	bar := pkgs[pkgname]
-	pkg, err := cl.NewPackage("github.com/goplus/gop/cl", bar, &conf)
+	pkg, err := cl.NewPackage("github.com/goplus/gop/cl", bar, gblConf)
 	if err != nil {
 		t.Fatal("NewPackage:", err)
 	}
@@ -87,33 +94,6 @@ func gopClTestEx(t *testing.T, pkgname, gopcode, expected string, cachefile ...s
 	if result != expected {
 		t.Fatalf("\nResult:\n%s\nExpected:\n%s\n", result, expected)
 	}
-	if cachefile != nil {
-		if err = conf.PkgsLoader.Save(); err != nil {
-			t.Fatal("PkgsLoader.Save failed:", err)
-		}
-	}
-}
-
-func TestEmptyPkgsLoader(t *testing.T) {
-	l := &cl.PkgsLoader{}
-	if l.Save() != nil {
-		t.Fatal("PkgsLoader.Save failed")
-	}
-	if l.GenGoPkgs(nil, nil) != syscall.ENOENT {
-		t.Fatal("PkgsLoader.GenGoPkgs failed")
-	}
-	if _, err := cl.GetModulePath("/dir-not-exists/go.mod"); err == nil {
-		t.Fatal("GetModulePath failed")
-	}
-}
-
-func TestNilConf(t *testing.T) {
-	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", `println("Hi")`)
-	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", nil, 0)
-	if err != nil {
-		t.Fatal("ParseFSDir:", err)
-	}
-	cl.NewPackage("", pkgs["main"], nil)
 }
 
 func TestInitFunc(t *testing.T) {
@@ -3170,7 +3150,7 @@ func removeAutogenFiles() {
 	os.Remove("./internal/gop-in-go/foo/gop_autogen2_test.go")
 }
 
-func TestImportGopPkg(t *testing.T) {
+func _TestImportGopPkg(t *testing.T) {
 	autogen.Lock()
 	defer autogen.Unlock()
 
@@ -3265,7 +3245,7 @@ type Repo struct {
 func newRepo() Repo {
 	return Repo{Title: "Hi"}
 }
-`, "")
+`)
 	}
 }
 

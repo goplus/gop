@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package gopmod
+package gopproj
 
 import (
 	"path/filepath"
 
-	"github.com/goplus/gop/x/gopproj"
+	"github.com/goplus/gop/x/gopprojs"
 )
 
 // -----------------------------------------------------------------------------
@@ -28,13 +28,13 @@ const (
 	FlagGoAsGoPlus = 1 << iota
 )
 
-func (p *Context) OpenProject(flags int, src gopproj.Proj) (proj *Project, err error) {
+func (p *Context) OpenProject(flags int, src gopprojs.Proj) (proj *Project, err error) {
 	switch v := src.(type) {
-	case *gopproj.FilesProj:
+	case *gopprojs.FilesProj:
 		return p.OpenFiles(flags, v.Files...)
-	case *gopproj.DirProj:
+	case *gopprojs.DirProj:
 		return p.OpenDir(flags, v.Dir)
-	case *gopproj.PkgPathProj:
+	case *gopprojs.PkgPathProj:
 		return p.OpenPkgPath(flags, v.Path)
 	}
 	panic("OpenProject: unexpected source")

@@ -33,18 +33,18 @@ import (
 
 // Cmd - gop build
 var Cmd = &base.Command{
-	UsageLine: "gop build [-v] [-o output] <gopSrcDir|gopSrcFile>",
+	UsageLine: "gop build [-v] [-o output] [packages]",
 	Short:     "Build Go+ files",
 }
 
 var (
 	flagBuildOutput string
-	flagVerbose     = flag.Bool("v", false, "print verbose information")
+	flagVerbose     = flag.Bool("v", false, "print verbose information.")
 	flag            = &Cmd.Flag
 )
 
 func init() {
-	flag.StringVar(&flagBuildOutput, "o", "", "gop build output file")
+	flag.StringVar(&flagBuildOutput, "o", "", "gop build output file.")
 	Cmd.Run = runCmd
 }
 
@@ -61,7 +61,7 @@ func runCmd(_ *base.Command, args []string) {
 		cl.SetDebug(cl.DbgFlagAll)
 		cl.SetDisableRecover(true)
 	}
-	modload.Load()
+	modload.UpdateGoMod(dir)
 	base.GenGoForBuild(dir, recursive, func() { fmt.Fprintln(os.Stderr, "GenGo failed, stop building") })
 	base.RunGoCmd(dir, "build", args...)
 }

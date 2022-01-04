@@ -6,32 +6,32 @@ import (
 	"path/filepath"
 
 	"github.com/goplus/gop/env"
-	"github.com/goplus/gop/x/gopmod"
+	"github.com/goplus/gop/x/gopproj"
 	"github.com/qiniu/x/log"
 )
 
-func findGoModFile(dir string) (modfile string, noCacheFile bool, err error) {
+func findGoModFile(dir string) (modfile string, err error) {
 	modfile, err = env.GOPMOD(dir)
 	if err != nil {
 		modfile = filepath.Join(env.GOPROOT(), "go.mod")
-		return modfile, true, nil
+		return modfile, nil
 	}
 	return
 }
 
-func findGoModDir(dir string) (string, bool) {
-	modfile, nocachefile, err := findGoModFile(dir)
+func findGoModDir(dir string) string {
+	modfile, err := findGoModFile(dir)
 	if err != nil {
 		log.Fatalln("findGoModFile:", err)
 	}
-	return filepath.Dir(modfile), nocachefile
+	return filepath.Dir(modfile)
 }
 
 func gopRun(source string, args ...string) {
-	ctx := gopmod.New("")
+	ctx := gopproj.New("")
 	flags := 0
 	if *flagGop {
-		flags = gopmod.FlagGoAsGoPlus
+		flags = gopproj.FlagGoAsGoPlus
 	}
 	goProj, err := ctx.OpenFiles(flags, source)
 	if err != nil {

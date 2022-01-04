@@ -21,7 +21,7 @@ import (
 
 var Cmd = &base.Command{
 	UsageLine: "gop mod",
-	Short:     "module maintenance",
+	Short:     "Module maintenance",
 
 	Commands: []*base.Command{
 		cmdInit,

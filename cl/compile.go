@@ -18,7 +18,6 @@
 package cl
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"go/types"
@@ -73,80 +72,24 @@ func (p *Errors) Error() string {
 
 // Config of loading Go+ packages.
 type Config struct {
-	// Context specifies the context for the load operation.
-	// If the context is cancelled, the loader may stop early
-	// and return an ErrCancelled error.
-	// If Context is nil, the load cannot be cancelled.
-	Context context.Context
-
-	// Logf is the logger for the config.
-	// If the user provides a logger, debug logging is enabled.
-	// If the GOPACKAGESDEBUG environment variable is set to true,
-	// but the logger is nil, default to log.Printf.
-	Logf func(format string, args ...interface{})
-
-	// Dir is the directory in which to run the build system's query tool
-	// that provides information about the packages.
-	// If Dir is empty, the tool is run in the current directory.
-	Dir string
-
 	// WorkingDir is the directory in which to run gop compiler.
+	WorkingDir string
+
 	// TargetDir is the directory in which to generate Go files.
-	// If WorkingDir or TargetDir is empty, it is same as Dir.
-	WorkingDir, TargetDir string
-
-	// ModRootDir specifies root dir of this module.
-	// If ModRootDir is empty, will lookup gop.mod in all ancestor directories of Dir.
-	ModRootDir string
-
-	// CacheFile specifies where cache data to write.
-	CacheFile string
-
-	// Env is the environment to use when invoking the build system's query tool.
-	// If Env is nil, the current environment is used.
-	// As in os/exec's Cmd, only the last value in the slice for
-	// each environment key is used. To specify the setting of only
-	// a few variables, append to the current environment, as in:
-	//
-	//	opt.Env = append(os.Environ(), "GOOS=plan9", "GOARCH=386")
-	//
-	Env []string
-
-	// BuildFlags is a list of command-line flags to be passed through to
-	// the build system's query tool.
-	BuildFlags []string
+	TargetDir string
 
 	// Fset provides source position information for syntax trees and types.
 	// If Fset is nil, Load will use a new fileset, but preserve Fset's value.
 	Fset *token.FileSet
 
-	// GenGoPkg is called to convert a Go+ package into Go.
-	GenGoPkg func(pkgDir string, base *Config) error
-
-	// PkgsLoader is the Go+ packages loader (will be set if it is nil).
-	PkgsLoader *PkgsLoader
-
-	// CacheLoadPkgs = true means to cache all loaded packages.
-	CacheLoadPkgs bool
-
-	// PersistLoadPkgs = true means to cache all loaded packages to disk.
-	PersistLoadPkgs bool
+	// An Importer resolves import paths to Packages.
+	Importer types.Importer
 
 	// NoFileLine = true means not to generate file line comments.
 	NoFileLine bool
 
 	// RelativePath = true means to generate file line comments with relative file path.
 	RelativePath bool
-}
-
-func (conf *Config) Ensure() *Config {
-	if conf == nil {
-		conf = &Config{Fset: token.NewFileSet()}
-	}
-	if conf.PkgsLoader == nil {
-		initPkgsLoader(conf)
-	}
-	return conf
 }
 
 type nodeInterp struct {
@@ -400,34 +343,22 @@ func (p *pkgCtx) handleRecover(e interface{}) {
 
 // NewPackage creates a Go+ package instance.
 func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package, err error) {
-	conf = conf.Ensure()
-	dir := conf.Dir
-	if dir == "" {
-		dir, _ = os.Getwd()
-	}
 	workingDir := conf.WorkingDir
 	if workingDir == "" {
 		workingDir, _ = os.Getwd()
 	}
 	targetDir := conf.TargetDir
 	if targetDir == "" {
-		targetDir = dir
+		targetDir = workingDir
 	}
 	interp := &nodeInterp{fset: conf.Fset, files: pkg.Files, workingDir: workingDir}
 	ctx := &pkgCtx{syms: make(map[string]loader), nodeInterp: interp}
 	confGox := &gox.Config{
-		Context:         conf.Context,
-		Logf:            conf.Logf,
-		Dir:             dir,
-		ModRootDir:      conf.ModRootDir,
-		Env:             conf.Env,
-		BuildFlags:      conf.BuildFlags,
 		Fset:            conf.Fset,
-		LoadPkgs:        conf.PkgsLoader.LoadPkgs,
+		Importer:        conf.Importer,
 		LoadNamed:       ctx.loadNamed,
 		HandleErr:       ctx.handleErr,
 		NodeInterpreter: interp,
-		ParseFile:       nil, // TODO
 		NewBuiltin:      newBuiltinDefault,
 	}
 	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
