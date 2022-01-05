@@ -199,7 +199,7 @@ func LoadMod(mod module.Version) (p *Module, err error) {
 		return
 	}
 	mod, _, err = modfetch.Get(mod.String())
-	if err != nil && err != syscall.EEXIST {
+	if err != nil {
 		return
 	}
 	return loadModFrom(mod)
