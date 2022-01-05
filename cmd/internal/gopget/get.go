@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"syscall"
 
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/x/mod/modfetch"
@@ -64,9 +63,6 @@ func get(pkgPath string) {
 	check(mod.UpdateGoMod(true))
 	modPath, _ := splitPkgPath(pkgPath)
 	modVer, isClass, err := modfetch.Get(modPath)
-	if err == syscall.EEXIST {
-		return
-	}
 	check(err)
 	if isClass {
 		mod.AddRegister(modVer.Path)
