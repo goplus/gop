@@ -18,6 +18,7 @@ package modfetch
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -61,6 +62,9 @@ func getResult(data string) (mod module.Version, isClass bool, err error) {
 	// go: downloading github.com/xushiwei/foogop v0.1.0
 	const downloading = "go: downloading "
 	if strings.HasPrefix(data, downloading) {
+		if pos := strings.IndexByte(data, '\n'); pos > 0 {
+			fmt.Fprintln(os.Stderr, "gop:", data[4:pos])
+		}
 		return tryConvGoMod(data[len(downloading):], &data)
 	}
 	// go get: added github.com/xushiwei/foogop v0.1.0
@@ -99,41 +103,44 @@ func convGoMod(dir string) (isClass bool, err error) {
 // -----------------------------------------------------------------------------
 
 func getFromCache(modPath string) (modVer module.Version, isClass bool, err error) {
-	modRoot, ver, err := lookupFromCache(modPath)
+	modRoot, modVer, err := lookupFromCache(modPath)
 	if err != nil {
 		return
 	}
-	modVer = module.Version{Path: modPath, Version: ver}
 	isClass, err = convGoMod(modRoot)
 	return
 }
 
-func lookupFromCache(modPath string) (modRoot string, modVer string, err error) {
-	encPath, err := module.EscapePath(modPath)
+func lookupFromCache(modPath string) (modRoot string, mod module.Version, err error) {
+	mod.Path = modPath
+	pos := strings.IndexByte(modPath, '@')
+	if pos > 0 {
+		mod.Path, mod.Version = modPath[:pos], modPath[pos+1:]
+	}
+	encPath, err := module.EscapePath(mod.Path)
 	if err != nil {
 		return
 	}
-	prefix := filepath.Join(GOMODCACHE, encPath)
-	if pos := strings.IndexByte(modPath, '@'); pos >= 0 {
-		fi, err := os.Stat(prefix)
-		if err != nil || !fi.IsDir() {
-			return "", "", syscall.ENOENT
+	modRoot = filepath.Join(GOMODCACHE, encPath+"@"+mod.Version)
+	if pos > 0 { // has version
+		fi, e := os.Stat(modRoot)
+		if e != nil || !fi.IsDir() {
+			err = syscall.ENOENT
 		}
-		return prefix, modPath[pos+1:], nil
+		return
 	}
-	dir, fname := filepath.Split(prefix)
+	dir, fname := filepath.Split(modRoot)
 	fis, err := os.ReadDir(dir)
 	if err != nil {
 		return
 	}
-	fname += "@"
 	err = syscall.ENOENT
 	for _, fi := range fis {
 		if fi.IsDir() {
 			if name := fi.Name(); strings.HasPrefix(name, fname) {
 				ver := name[len(fname):]
-				if semver.Compare(modVer, ver) < 0 {
-					modRoot, modVer, err = dir+name, ver, nil
+				if semver.Compare(mod.Version, ver) < 0 {
+					modRoot, mod.Version, err = dir+name, ver, nil
 				}
 			}
 		}
