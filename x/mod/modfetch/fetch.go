@@ -134,7 +134,6 @@ func lookupFromCache(modPath string) (modRoot string, mod module.Version, err er
 	if err != nil {
 		return
 	}
-	fname += "@"
 	err = syscall.ENOENT
 	for _, fi := range fis {
 		if fi.IsDir() {
