@@ -51,14 +51,13 @@ func Get(modPath string, noCache ...bool) (mod module.Version, isClass bool, err
 		err = &ExecCmdError{Err: err, Stderr: stderr.Bytes()}
 		return
 	}
-	return getResult(stderr.String())
+	if stderr.Len() > 0 {
+		return getResult(stderr.String())
+	}
+	return getFromCache(modPath)
 }
 
 func getResult(data string) (mod module.Version, isClass bool, err error) {
-	if data == "" {
-		err = syscall.EEXIST
-		return
-	}
 	// go: downloading github.com/xushiwei/foogop v0.1.0
 	const downloading = "go: downloading "
 	if strings.HasPrefix(data, downloading) {
