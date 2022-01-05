@@ -60,7 +60,7 @@ func runCmd(_ *base.Command, args []string) {
 		cl.SetDisableRecover(true)
 	}
 
-	if !gengo.GenGo(gengo.Config{}, false, pattern...) {
+	if !gengo.GenGo(gengo.Config{}, false, ".", pattern...) {
 		os.Exit(1)
 	}
 	base.RunGoCmd(".", "install", args...)

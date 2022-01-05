@@ -20,11 +20,13 @@ import (
 	"bytes"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"syscall"
 
 	"github.com/goplus/gop/x/mod/modload"
 	"golang.org/x/mod/module"
+	"golang.org/x/mod/semver"
 )
 
 // -----------------------------------------------------------------------------
@@ -33,7 +35,13 @@ type (
 	ExecCmdError = modload.ExecCmdError
 )
 
-func Get(modPath string) (mod module.Version, isClass bool, err error) {
+func Get(modPath string, noCache ...bool) (mod module.Version, isClass bool, err error) {
+	if noCache == nil || !noCache[0] {
+		mod, isClass, err = getFromCache(modPath)
+		if err != syscall.ENOENT {
+			return
+		}
+	}
 	var stdout, stderr bytes.Buffer
 	cmd := exec.Command("go", "get", modPath)
 	cmd.Stdout = &stdout
@@ -87,6 +95,51 @@ func convGoMod(dir string) (isClass bool, err error) {
 	os.Chmod(dir, 0755)
 	defer os.Chmod(dir, 0555)
 	return mod.Classfile != nil, mod.UpdateGoMod(true)
+}
+
+// -----------------------------------------------------------------------------
+
+func getFromCache(modPath string) (modVer module.Version, isClass bool, err error) {
+	modRoot, ver, err := lookupFromCache(modPath)
+	if err != nil {
+		return
+	}
+	modVer = module.Version{Path: modPath, Version: ver}
+	isClass, err = convGoMod(modRoot)
+	return
+}
+
+func lookupFromCache(modPath string) (modRoot string, modVer string, err error) {
+	encPath, err := module.EscapePath(modPath)
+	if err != nil {
+		return
+	}
+	prefix := filepath.Join(GOMODCACHE, encPath)
+	if pos := strings.IndexByte(modPath, '@'); pos >= 0 {
+		fi, err := os.Stat(prefix)
+		if err != nil || !fi.IsDir() {
+			return "", "", syscall.ENOENT
+		}
+		return prefix, modPath[pos+1:], nil
+	}
+	dir, fname := filepath.Split(prefix)
+	fis, err := os.ReadDir(dir)
+	if err != nil {
+		return
+	}
+	fname += "@"
+	err = syscall.ENOENT
+	for _, fi := range fis {
+		if fi.IsDir() {
+			if name := fi.Name(); strings.HasPrefix(name, fname) {
+				ver := name[len(fname):]
+				if semver.Compare(modVer, ver) < 0 {
+					modRoot, modVer, err = dir+name, ver, nil
+				}
+			}
+		}
+	}
+	return
 }
 
 // -----------------------------------------------------------------------------

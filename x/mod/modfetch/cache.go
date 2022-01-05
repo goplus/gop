@@ -19,6 +19,7 @@ package modfetch
 import (
 	"errors"
 	"path/filepath"
+	"strings"
 
 	"github.com/goplus/gop/env"
 	"golang.org/x/mod/module"
@@ -54,6 +55,14 @@ func ModCachePath(mod module.Version) (string, error) {
 		return "", err
 	}
 	return filepath.Join(GOMODCACHE, encPath+"@"+mod.Version), nil
+}
+
+func InModCachePath(path string) bool {
+	if strings.HasPrefix(path, GOMODCACHE) {
+		name := path[len(GOMODCACHE):]
+		return name == "" || name[0] == '/' || name[0] == '\\'
+	}
+	return false
 }
 
 // -----------------------------------------------------------------------------
