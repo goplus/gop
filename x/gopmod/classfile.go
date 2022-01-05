@@ -82,7 +82,7 @@ func (p *Module) registerMod(modPath string, regcls func(c *Class)) (err error) 
 		return
 	}
 	mod, _, err = modfetch.Get(mod.String())
-	if err != nil && err != syscall.EEXIST {
+	if err != nil {
 		return
 	}
 	return p.registerClassFrom(mod, regcls)
