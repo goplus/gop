@@ -59,7 +59,7 @@ func runCmd(cmd *base.Command, args []string) {
 		cl.SetDebug(cl.DbgFlagAll)
 		cl.SetDisableRecover(true)
 	}
-	if !gengo.GenGo(gengo.Config{}, *flagDontRun, pattern...) {
+	if !gengo.GenGo(gengo.Config{}, *flagDontRun, ".", pattern...) {
 		os.Exit(1)
 	}
 }
