@@ -198,6 +198,7 @@ func (p *Runner) genGoPkgs(conf *Config) {
 		p.state = stateOccurErrors
 		return
 	}
+	defer imp.Close()
 	conf.OnInfo("newImporter: %v\n", imps)
 	for _, pkg := range p.pkgs {
 		if pkg.flags == pkgFlagChanged {
