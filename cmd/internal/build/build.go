@@ -62,7 +62,7 @@ func runCmd(_ *base.Command, args []string) {
 	}
 	_ = flagOutput
 
-	if !gengo.GenGo(gengo.Config{}, false, pattern...) {
+	if !gengo.GenGo(gengo.Config{}, false, ".", pattern...) {
 		os.Exit(1)
 	}
 	base.RunGoCmd(".", "build", args...)

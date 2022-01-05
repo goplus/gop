@@ -546,11 +546,11 @@ func (e ErrorList) Error() string {
 
 // -----------------------------------------------------------------------------
 
-func GenGo(conf Config, dontRun bool, pattern ...string) bool {
+func GenGo(conf Config, dontRun bool, dir string, pattern ...string) bool {
 	if conf.Event == nil {
 		conf.Event = defaultEvent{}
 	}
-	mod, err := gopmod.Load(".")
+	mod, err := gopmod.Load(dir)
 	if err != nil {
 		conf.OnErr("loadMod", err)
 		return false

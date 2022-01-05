@@ -23,6 +23,7 @@ import (
 
 	"github.com/goplus/gop/x/gengo"
 	"github.com/goplus/gop/x/gopprojs"
+	"github.com/goplus/gop/x/mod/modfetch"
 )
 
 // -----------------------------------------------------------------------------
@@ -78,14 +79,27 @@ func (p *Context) OpenFiles(flags int, args ...string) (proj *Project, err error
 
 func (p *Context) OpenDir(flags int, dir string) (proj *Project, err error) {
 	ev := new(handleEvent)
-	if !gengo.GenGo(gengo.Config{Event: ev}, false, dir) {
+	if !gengo.GenGo(gengo.Config{Event: ev}, false, dir, dir) {
 		return nil, ev.lastErr
 	}
 	return p.OpenFiles(0, filepath.Join(dir, "gop_autogen.go"))
 }
 
 func (p *Context) OpenPkgPath(flags int, pkgPath string) (proj *Project, err error) {
-	panic("todo")
+	modPath, leftPart := splitPkgPath(pkgPath)
+	modVer, _, err := modfetch.Get(modPath)
+	if err != nil {
+		return
+	}
+	dir, err := modfetch.ModCachePath(modVer)
+	if err != nil {
+		return
+	}
+	return p.OpenDir(flags, dir+leftPart)
+}
+
+func splitPkgPath(pkgPath string) (modPath, leftPart string) {
+	return pkgPath, ""
 }
 
 // -----------------------------------------------------------------------------
