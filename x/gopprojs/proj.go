@@ -19,7 +19,6 @@ package gopprojs
 import (
 	"errors"
 	"path/filepath"
-	"strings"
 	"syscall"
 )
 
@@ -59,7 +58,7 @@ func ParseOne(args ...string) (proj Proj, next []string, err error) {
 		}
 		return &FilesProj{Files: args[:n]}, args[n:], nil
 	}
-	if strings.HasPrefix(arg, ".") || strings.HasPrefix(arg, "/") {
+	if isLocal(arg) {
 		return &DirProj{Dir: arg}, args[1:], nil
 	}
 	return &PkgPathProj{Path: arg}, args[1:], nil
@@ -69,6 +68,18 @@ func isFile(fname string) bool {
 	switch filepath.Ext(fname) {
 	case ".gop", ".go":
 		return true
+	}
+	return false
+}
+
+func isLocal(ns string) bool {
+	if len(ns) > 0 {
+		switch c := ns[0]; c {
+		case '/', '\\', '.':
+			return true
+		default:
+			return len(ns) >= 2 && ns[1] == ':' && ('A' <= c && c <= 'Z' || 'a' <= c && c <= 'z')
+		}
 	}
 	return false
 }

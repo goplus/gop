@@ -20,6 +20,21 @@ import "testing"
 
 // -----------------------------------------------------------------------------
 
+func TestIsLocal(t *testing.T) {
+	if !isLocal(".") || !isLocal("/") {
+		t.Fatal(`isLocal(".") || isLocal("/")`)
+	}
+	if !isLocal("c:/foo") {
+		t.Fatal(`isLocal("c:/foo")`)
+	}
+	if !isLocal("C:/foo") {
+		t.Fatal(`isLocal("C:/foo")`)
+	}
+	if isLocal("") {
+		t.Fatal(`isLocal("")`)
+	}
+}
+
 func TestParseOne(t *testing.T) {
 	proj, next, err := ParseOne("a.go", "b.go", "abc")
 	if err != nil || len(next) != 1 || next[0] != "abc" {

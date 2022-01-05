@@ -17,10 +17,35 @@
 package gopproj
 
 import (
+	"fmt"
+	"os"
 	"path/filepath"
 
+	"github.com/goplus/gop/x/gengo"
 	"github.com/goplus/gop/x/gopprojs"
 )
+
+// -----------------------------------------------------------------------------
+
+type handleEvent struct {
+	lastErr error
+}
+
+func (p *handleEvent) OnStart(pkgPath string) {
+	fmt.Fprintln(os.Stderr, pkgPath)
+}
+
+func (p *handleEvent) OnInfo(format string, args ...interface{}) {
+	fmt.Fprintf(os.Stderr, format, args...)
+}
+
+func (p *handleEvent) OnErr(stage string, err error) {
+	p.lastErr = fmt.Errorf("%s: %v", stage, err)
+	fmt.Fprintln(os.Stderr, p.lastErr)
+}
+
+func (p *handleEvent) OnEnd() {
+}
 
 // -----------------------------------------------------------------------------
 
@@ -52,7 +77,11 @@ func (p *Context) OpenFiles(flags int, args ...string) (proj *Project, err error
 }
 
 func (p *Context) OpenDir(flags int, dir string) (proj *Project, err error) {
-	panic("todo")
+	ev := new(handleEvent)
+	if !gengo.GenGo(gengo.Config{Event: ev}, false, dir) {
+		return nil, ev.lastErr
+	}
+	return p.OpenFiles(0, filepath.Join(dir, "gop_autogen.go"))
 }
 
 func (p *Context) OpenPkgPath(flags int, pkgPath string) (proj *Project, err error) {
