@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"syscall"
 
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/x/mod/modfetch"
@@ -59,19 +60,24 @@ func runCmd(cmd *base.Command, args []string) {
 
 func get(pkgPath string) {
 	mod, err := modload.Load(".")
-	check(err)
-	check(mod.UpdateGoMod(true))
+	hasMod := (err != syscall.ENOENT)
+	if hasMod {
+		check(err)
+		check(mod.UpdateGoMod(true))
+	}
 	modPath, _ := splitPkgPath(pkgPath)
 	modVer, isClass, err := modfetch.Get(modPath)
 	check(err)
-	if isClass {
-		mod.AddRegister(modVer.Path)
-		fmt.Fprintf(os.Stderr, "gop get: registered %s\n", modVer.Path)
+	if hasMod {
+		if isClass {
+			mod.AddRegister(modVer.Path)
+			fmt.Fprintf(os.Stderr, "gop get: registered %s\n", modVer.Path)
+		}
+		check(mod.AddRequire(modVer.Path, modVer.Version))
+		fmt.Fprintf(os.Stderr, "gop get: added %s %s\n", modVer.Path, modVer.Version)
+		check(mod.Save())
+		check(mod.UpdateGoMod(false))
 	}
-	check(mod.AddRequire(modVer.Path, modVer.Version))
-	fmt.Fprintf(os.Stderr, "gop get: added %s %s\n", modVer.Path, modVer.Version)
-	check(mod.Save())
-	check(mod.UpdateGoMod(false))
 }
 
 func splitPkgPath(pkgPath string) (modPathWithVer string, pkgPathNoVer string) {
