@@ -183,6 +183,7 @@ func (p *Runner) genGoPkgs(conf *Config) {
 		}
 	}
 	if !changed {
+		p.state = stateDone
 		return
 	}
 	imps := getKeys(imports)
