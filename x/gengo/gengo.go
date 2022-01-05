@@ -187,11 +187,17 @@ func (p *Runner) genGoPkgs(conf *Config) {
 		return
 	}
 	imps := getKeys(imports)
+	modRoot := p.modRoot
 	impConf := &packages.Config{
-		ModRoot: p.modRoot,
+		ModRoot: modRoot,
 		ModPath: p.modPath,
 		Loaded:  conf.Loaded,
 		Fset:    conf.Fset,
+	}
+	inModCache := modfetch.InModCachePath(modRoot)
+	if inModCache {
+		os.Chmod(modRoot, 0755)
+		defer os.Chmod(modRoot, 0555)
 	}
 	imp, _, err := packages.NewImporter(impConf, imps...)
 	if err != nil {

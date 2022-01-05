@@ -54,18 +54,6 @@ const (
 	FlagGoAsGoPlus = 1 << iota
 )
 
-func (p *Context) OpenProject(flags int, src gopprojs.Proj) (proj *Project, err error) {
-	switch v := src.(type) {
-	case *gopprojs.FilesProj:
-		return p.OpenFiles(flags, v.Files...)
-	case *gopprojs.DirProj:
-		return p.OpenDir(flags, v.Dir)
-	case *gopprojs.PkgPathProj:
-		return p.OpenPkgPath(flags, v.Path)
-	}
-	panic("OpenProject: unexpected source")
-}
-
 func (p *Context) OpenFiles(flags int, args ...string) (proj *Project, err error) {
 	if len(args) != 1 {
 		return p.openFromGopFiles(args)
@@ -77,15 +65,31 @@ func (p *Context) OpenFiles(flags int, args ...string) (proj *Project, err error
 	return p.openFromGopFiles(args)
 }
 
-func (p *Context) OpenDir(flags int, dir string) (proj *Project, err error) {
-	ev := new(handleEvent)
-	if !gengo.GenGo(gengo.Config{Event: ev}, false, dir, dir) {
-		return nil, ev.lastErr
+func OpenProject(flags int, src gopprojs.Proj) (ctx *Context, proj *Project, err error) {
+	switch v := src.(type) {
+	case *gopprojs.FilesProj:
+		ctx = New(".")
+		proj, err = ctx.OpenFiles(flags, v.Files...)
+		return
+	case *gopprojs.DirProj:
+		return OpenDir(flags, v.Dir)
+	case *gopprojs.PkgPathProj:
+		return OpenPkgPath(flags, v.Path)
 	}
-	return p.OpenFiles(0, filepath.Join(dir, "gop_autogen.go"))
+	panic("OpenProject: unexpected source")
 }
 
-func (p *Context) OpenPkgPath(flags int, pkgPath string) (proj *Project, err error) {
+func OpenDir(flags int, dir string) (ctx *Context, proj *Project, err error) {
+	ev := new(handleEvent)
+	if !gengo.GenGo(gengo.Config{Event: ev}, false, dir, dir) {
+		return nil, nil, ev.lastErr
+	}
+	ctx = New(dir)
+	proj, err = ctx.OpenFiles(0, filepath.Join(dir, "gop_autogen.go"))
+	return
+}
+
+func OpenPkgPath(flags int, pkgPath string) (ctx *Context, proj *Project, err error) {
 	modPath, leftPart := splitPkgPath(pkgPath)
 	modVer, _, err := modfetch.Get(modPath)
 	if err != nil {
@@ -95,7 +99,7 @@ func (p *Context) OpenPkgPath(flags int, pkgPath string) (proj *Project, err err
 	if err != nil {
 		return
 	}
-	return p.OpenDir(flags, dir+leftPart)
+	return OpenDir(flags, dir+leftPart)
 }
 
 func splitPkgPath(pkgPath string) (modPath, leftPart string) {

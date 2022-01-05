@@ -91,8 +91,7 @@ func gopRun(args []string) {
 	if *flagGop {
 		flags = gopproj.FlagGoAsGoPlus
 	}
-	var ctx = gopproj.New("")
-	goProj, err := ctx.OpenProject(flags, proj)
+	ctx, goProj, err := gopproj.OpenProject(flags, proj)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "OpenProject failed:", err)
 		os.Exit(1)
