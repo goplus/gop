@@ -98,12 +98,12 @@ func init() {
 
 type ExecCmdError struct {
 	Err    error
-	Stderr []byte
+	Stderr string
 }
 
 func (p *ExecCmdError) Error() string {
-	if e := p.Stderr; e != nil {
-		return string(e)
+	if e := p.Stderr; e != "" {
+		return e
 	}
 	return p.Err.Error()
 }
@@ -116,7 +116,7 @@ func execCommand(command string, arg ...string) (string, error) {
 	cmd.Env = commandExecuteEnv
 	err := cmd.Run()
 	if err != nil {
-		err = &ExecCmdError{Err: err, Stderr: stderr.Bytes()}
+		err = &ExecCmdError{Err: err, Stderr: stderr.String()}
 	}
 	return stdout.String(), err
 }
@@ -178,7 +178,9 @@ func gitTagAndPushTo(tag string, remote, branch string) error {
 func gitCommit(msg string) error {
 	out, err := execCommand("git", "commit", "-a", "-m", msg)
 	if err != nil {
-		log.Println("stderr:", string(err.(*ExecCmdError).Stderr), "stdout:", out)
+		if e := err.(*ExecCmdError); e.Stderr == "" {
+			e.Stderr = out
+		}
 	}
 	return err
 }
