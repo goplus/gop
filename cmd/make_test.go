@@ -204,6 +204,11 @@ func TestTagFlagInGitRepo(t *testing.T) {
 	})
 
 	t.Run("release new version on non-release branch", func(t *testing.T) {
+		_, err := execCommand("git", "checkout", "-b", releaseBranch)
+		if err != nil {
+			t.Fatal(err)
+		}
+
 		gitCmd := exec.Command("git", "checkout", "-b", nonExistBranch)
 		if output, err := gitCmd.CombinedOutput(); err != nil {
 			if strings.Contains(string(output), "already exists") {
@@ -221,6 +226,11 @@ func TestTagFlagInGitRepo(t *testing.T) {
 			t.Log(string(out))
 			t.Fatalf("Failed: release tag: %s on branch: %s should not be failed", tag2, nonExistBranch)
 		}
+
+		if getBranch() != nonExistBranch {
+			t.Fatal("Failed: getBranch() != nonExistBranch")
+		}
+		execCommand("git", "checkout", releaseBranch)
 
 		if !checkPathExist(versionFile, false) {
 			t.Fatal("Failed: a VERSION file not found.")
