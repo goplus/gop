@@ -5,6 +5,7 @@ package make_test
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -44,7 +45,9 @@ func execCommand(command string, arg ...string) (string, error) {
 	cmd.Stderr = &stderr
 	err := cmd.Run()
 	if err != nil {
-		os.Stderr.Write(stderr.Bytes())
+		if stderr.Len() > 0 {
+			err = erros.New(string(stderr.String()))
+		}
 	}
 	return stdout.String(), err
 }
