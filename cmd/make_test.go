@@ -237,7 +237,7 @@ func TestTagFlagInGitRepo(t *testing.T) {
 			t.Fatalf("Failed: content of VERSION file: '%s' not match tag: %s", data, tag2)
 		}
 
-		gitCmd = exec.Command("git", "tag")
+		gitCmd := exec.Command("git", "tag")
 		if allTags, _ := gitCmd.CombinedOutput(); !strings.Contains(string(allTags), tag2) {
 			t.Fatalf("Failed: %s tag not found in tag list of this git repo.\n", tag)
 		}
