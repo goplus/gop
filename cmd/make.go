@@ -170,6 +170,11 @@ func gitCommit(msg string) error {
 
 func checkoutBranch(branch string) error {
 	_, err := execCommand("git", "checkout", branch)
+	if err != nil {
+		if e, ok := err.(*ExecCmdError); ok && e.Err == nil {
+			err = nil
+		}
+	}
 	return err
 }
 
