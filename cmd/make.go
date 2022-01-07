@@ -488,6 +488,7 @@ func releaseNewVersion(tag string) {
 	}
 
 	sourceBranch := getGitBranch()
+	log.Println("branch:", sourceBranch, releaseBranch)
 
 	// Checkout to release breanch
 	if sourceBranch != releaseBranch {
