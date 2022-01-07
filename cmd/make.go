@@ -150,6 +150,11 @@ func getGitBranch() string {
 	return branch
 }
 
+func gitDeleteBranch(branch string) error {
+	_, err := execCommand("git", "branch", "-D", branch)
+	return err
+}
+
 func gitTag(tag string) error {
 	_, err := execCommand("git", "tag", tag)
 	return err
@@ -171,7 +176,7 @@ func gitCommit(msg string) error {
 	return err
 }
 
-func checkoutBranch(branch string) error {
+func gitCheckoutBranch(branch string) error {
 	_, err := execCommand("git", "checkout", branch)
 	return err
 }
@@ -436,14 +441,15 @@ func releaseNewVersion(tag string) {
 	sourceBranch := getGitBranch()
 
 	// Checkout to release breanch
-	if err := checkoutBranch(releaseBranch); err != nil {
+	if err := gitCheckoutBranch(releaseBranch); err != nil {
 		log.Fatalf("Error: checkout to release branch: %s failed with error: %v.", releaseBranch, err)
 	}
 	defer func() {
 		// Checkout back to source branch
-		if err := checkoutBranch(sourceBranch); err != nil {
+		if err := gitCheckoutBranch(sourceBranch); err != nil {
 			log.Fatalf("Error: checkout to source branch: %s failed with error: %v.", sourceBranch, err)
 		}
+		gitDeleteBranch(releaseBranch)
 	}()
 
 	// Cache new version
