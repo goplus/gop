@@ -46,7 +46,7 @@ func execCommand(command string, arg ...string) (string, error) {
 	err := cmd.Run()
 	if err != nil {
 		if stderr.Len() > 0 {
-			err = erros.New(string(stderr.String()))
+			err = errors.New(string(stderr.String()))
 		}
 	}
 	return stdout.String(), err
