@@ -302,6 +302,7 @@ func TestInstallInNonGitRepo(t *testing.T) {
 	}
 
 	t.Run("failed build operation", func(t *testing.T) {
+		os.Remove(versionFile)
 		cmd := installCmd()
 		output, err := cmd.CombinedOutput()
 		if err == nil || !strings.Contains(string(output), "Error") {
