@@ -176,6 +176,7 @@ func TestTagFlagInGitRepo(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		defer execCommand("git", "branch", "-D", releaseBranch)
 
 		cmd := exec.Command("go", "run", installer, "--nopush", "--tag", tag)
 		if out, err := cmd.CombinedOutput(); err != nil {
