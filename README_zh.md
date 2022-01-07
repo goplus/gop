@@ -5,7 +5,7 @@
 [![Coverage Status](https://codecov.io/gh/goplus/gop/branch/main/graph/badge.svg)](https://codecov.io/gh/goplus/gop)
 [![GitHub release](https://img.shields.io/github/v/tag/goplus/gop.svg?label=release)](https://github.com/goplus/gop/releases)
 [![Tutorials](https://img.shields.io/badge/tutorial-Go+-blue.svg)](https://tutorial.goplus.org/)
-[![Playground](https://img.shields.io/badge/playground-Go+-blue.svg)](https://play.goplus.org/)
+[![Playground](https://img.shields.io/badge/play-Go+-blue.svg)](https://play.goplus.org/)
 [![VSCode](https://img.shields.io/badge/vscode-Go+-teal.svg)](https://github.com/gopcode/vscode-goplus)
 [![Readme](https://img.shields.io/badge/README-%E4%B8%AD%E6%96%87-teal.svg)](https://github.com/goplus/gop/blob/main/README.md)
 
