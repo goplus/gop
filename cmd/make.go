@@ -190,11 +190,11 @@ func getGitRemoteUrl(name string) string {
 }
 
 func getGitBranch() string {
-	branch, err := execCommand("git", "rev-parse", "--abbrev-ref", "HEAD")
+	stdout, err := execCommand("git", "rev-parse", "--abbrev-ref", "HEAD")
 	if err != nil {
 		return ""
 	}
-	return branch
+	return trimRight(stdout)
 }
 
 func gitTag(tag string) error {
@@ -250,7 +250,7 @@ func getBuildVer() string {
 	if err != nil {
 		return ""
 	}
-	return stdout
+	return trimRight(stdout)
 }
 
 func getGopBuildFlags() string {

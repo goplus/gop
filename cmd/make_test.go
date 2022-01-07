@@ -50,11 +50,11 @@ func execCommand(command string, arg ...string) (string, error) {
 }
 
 func getBranch() string {
-	branch, err := execCommand("git", "rev-parse", "--abbrev-ref", "HEAD")
+	stdout, err := execCommand("git", "rev-parse", "--abbrev-ref", "HEAD")
 	if err != nil {
 		return ""
 	}
-	return branch
+	return trimRight(stdout)
 }
 
 func detectGoBinPath() string {
