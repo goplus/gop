@@ -176,7 +176,8 @@ func TestTagFlagInGitRepo(t *testing.T) {
 		}
 
 		cmd := exec.Command("go", "run", installer, "--nopush", "--tag", tag)
-		if _, err := cmd.CombinedOutput(); err != nil {
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Log(string(out))
 			t.Fatalf("Failed: release tag: %s on branch: %s should not be failed", tag, releaseBranch)
 		}
 
