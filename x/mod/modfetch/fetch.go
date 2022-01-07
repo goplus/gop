@@ -18,6 +18,7 @@ package modfetch
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -132,6 +133,7 @@ func lookupFromCache(modPath string) (modRoot string, mod module.Version, err er
 	dir, fname := filepath.Split(modRoot)
 	fis, err := os.ReadDir(dir)
 	if err != nil {
+		err = errors.Unwrap(err)
 		return
 	}
 	err = syscall.ENOENT
