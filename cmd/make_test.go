@@ -145,13 +145,8 @@ func TestTagFlagInGitRepo(t *testing.T) {
 		gitCmd.CombinedOutput()
 		gitCmd = exec.Command("git", "tag", "-d", tag2)
 		gitCmd.CombinedOutput()
-		gitCmd = exec.Command("git", "checkout", sourceBranch)
-		gitCmd.CombinedOutput()
-		gitCmd = exec.Command("git", "branch", "-d", nonExistBranch)
-		gitCmd.CombinedOutput()
-		if checkPathExist(versionFile, false) {
-			os.Remove(versionFile)
-		}
+		execCommand("git", "checkout", sourceBranch)
+		execCommand("git", "branch", "-D", nonExistBranch)
 		execCommand("git", "branch", "-D", releaseBranch)
 	})
 
