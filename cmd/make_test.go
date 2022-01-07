@@ -208,6 +208,7 @@ func TestTagFlagInGitRepo(t *testing.T) {
 		execCommand("git", "branch", "-D", releaseBranch)
 		_, err := execCommand("git", "checkout", "-b", releaseBranch)
 		if err != nil {
+			t.Log("current branch:", getBranch())
 			t.Fatal(err)
 		}
 
