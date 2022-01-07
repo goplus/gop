@@ -305,6 +305,7 @@ func TestInstallInNonGitRepo(t *testing.T) {
 		cmd := installCmd()
 		output, err := cmd.CombinedOutput()
 		if err == nil || !strings.Contains(string(output), "Error") {
+			t.Log(string(output))
 			t.Fatal("Failed: build Go+ in a non-git repo and no VERSION file should be failed.")
 		}
 	})
