@@ -160,15 +160,19 @@ func gitTag(tag string) error {
 	return err
 }
 
+var gitPush = func(remote, branch string) error {
+	_, err := execCommand("git", "push", remote, branch)
+	return err
+}
+
 func gitTagAndPushTo(tag string, remote, branch string) error {
-	if _, err := execCommand("git", "push", remote, branch); err != nil {
+	if err := gitPush(remote, branch); err != nil {
 		return err
 	}
 	if err := gitTag(tag); err != nil {
 		return err
 	}
-	_, err := execCommand("git", "push", remote, tag)
-	return err
+	return gitPush(remote, tag)
 }
 
 func gitCommit(msg string) error {
@@ -420,11 +424,11 @@ func findGopVersion() string {
 }
 
 // releaseNewVersion tags the repo with provided new tag, and writes new tag into VERSION file.
-func releaseNewVersion(tag string) {
+func releaseNewVersion(tag string, noPush bool) {
 	if !isGitRepo() {
 		log.Fatalln("Error: Releasing a new version could only be operated under a git repo.")
 	}
-	if getGitRemoteUrl("gop") == "" {
+	if !noPush || getGitRemoteUrl("gop") == "" {
 		log.Fatalln("Error: git remote gop not found, please use `git remote add gop git@github.com:goplus/gop.git`.")
 	}
 	if getTagRev(tag) != "" {
@@ -477,6 +481,7 @@ func main() {
 	isUninstall := flag.Bool("uninstall", false, "Uninstall Go+")
 	isGoProxy := flag.Bool("proxy", false, "Set GOPROXY for people in China")
 	isAutoProxy := flag.Bool("autoproxy", false, "Check to set GOPROXY automatically")
+	noPush := flag.Bool("nopush", false, "Don't push to remote repo")
 	tag := flag.String("tag", "", "Release an new version with specified tag")
 
 	flag.Parse()
@@ -496,7 +501,12 @@ func main() {
 	hasActionDone := false
 
 	if *tag != "" {
-		releaseNewVersion(*tag)
+		if *noPush {
+			gitPush = func(remote, branch string) error {
+				return nil
+			}
+		}
+		releaseNewVersion(*tag, *noPush)
 		hasActionDone = true
 	}
 
