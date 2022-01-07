@@ -4,6 +4,7 @@
 package make_test
 
 import (
+	"bytes"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -196,7 +197,7 @@ func TestTagFlagInGitRepo(t *testing.T) {
 		}
 
 		// Make sure tag exists.
-		gitCmd = exec.Command("git", "tag")
+		gitCmd := exec.Command("git", "tag")
 		if allTags, _ := gitCmd.CombinedOutput(); !strings.Contains(string(allTags), tag) {
 			t.Fatalf("Failed: %s tag not found in tag list of this git repo.\n", tag)
 		}
