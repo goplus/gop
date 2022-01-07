@@ -176,7 +176,10 @@ func gitTagAndPushTo(tag string, remote, branch string) error {
 }
 
 func gitCommit(msg string) error {
-	_, err := execCommand("git", "commit", "-a", "-m", msg)
+	out, err := execCommand("git", "commit", "-a", "-m", msg)
+	if err != nil {
+		log.Println("stderr:", string(err.(*ExecCmdError).Stderr), "stdout:", out)
+	}
 	return err
 }
 
