@@ -36,10 +36,24 @@ func trimRight(s string) string {
 	return strings.TrimRight(s, " \t\r\n")
 }
 
+func execCommand(command string, arg ...string) (string, error) {
+	var stdout, stderr bytes.Buffer
+	cmd := exec.Command(command, arg...)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	if err != nil {
+		os.Stderr.Write(stderr.Bytes())
+	}
+	return stdout.String(), err
+}
+
 func getBranch() string {
-	gitCmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
-	b, _ := gitCmd.CombinedOutput()
-	return trimRight(string(b))
+	branch, err := execCommand("git", "rev-parse", "--abbrev-ref", "HEAD")
+	if err != nil {
+		return ""
+	}
+	return branch
 }
 
 func detectGoBinPath() string {
@@ -47,7 +61,6 @@ func detectGoBinPath() string {
 	if ok {
 		return goBin
 	}
-
 	goPath, ok := os.LookupEnv("GOPATH")
 	if ok {
 		list := filepath.SplitList(goPath)
@@ -56,7 +69,6 @@ func detectGoBinPath() string {
 			return filepath.Join(list[0], "bin")
 		}
 	}
-
 	homeDir, _ := os.UserHomeDir()
 	return filepath.Join(homeDir, "go", "bin")
 }
@@ -163,17 +175,11 @@ func TestTagFlagInGitRepo(t *testing.T) {
 	})
 
 	t.Run("release new version on release branch", func(t *testing.T) {
-		gitCmd := exec.Command("git", "checkout", "-b", releaseBranch)
-		if output, err := gitCmd.CombinedOutput(); err != nil {
-			if strings.Contains(string(output), "already exists") {
-				gitCmd = exec.Command("git", "checkout", releaseBranch)
-				if output, err := gitCmd.CombinedOutput(); err != nil {
-					t.Fatalf("Failed: %v, output: %s\n", err, output)
-				}
-			} else {
-				t.Fatalf("Failed: %v, output: %s\n", err, output)
-			}
+		_, err := execCommand("git", "checkout", "-b", releaseBranch)
+		if err != nil {
+			t.Fatal(err)
 		}
+		defer execCommand("git", "branch", "-D", releaseBranch)
 
 		cmd := exec.Command("go", "run", installer, "--nopush", "--tag", tag)
 		if out, err := cmd.CombinedOutput(); err != nil {
