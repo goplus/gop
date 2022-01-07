@@ -463,7 +463,9 @@ func releaseNewVersion(tag string, noPush bool) {
 		if err := gitCheckoutBranch(sourceBranch); err != nil {
 			log.Fatalf("Error: checkout to source branch: %s failed with error: %v.", sourceBranch, err)
 		}
-		gitDeleteBranch(releaseBranch)
+		if !noPush {
+			gitDeleteBranch(releaseBranch)
+		}
 	}()
 
 	// Cache new version
