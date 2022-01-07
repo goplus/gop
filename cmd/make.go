@@ -175,6 +175,11 @@ func gitTagAndPushTo(tag string, remote, branch string) error {
 	return gitPush(remote, tag)
 }
 
+func gitAdd(file string) error {
+	_, err := execCommand("git", "add", file)
+	return err
+}
+
 func gitCommit(msg string) error {
 	out, err := execCommand("git", "commit", "-a", "-m", msg)
 	if err != nil {
@@ -468,6 +473,7 @@ func releaseNewVersion(tag string, noPush bool) {
 	}
 
 	// Commit changes
+	gitAdd(versionFile)
 	if err := gitCommit("release version " + version); err != nil {
 		log.Fatalf("Error: git commit with error: %v\n", err)
 	}
