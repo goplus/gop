@@ -416,7 +416,7 @@ func releaseNewVersion(tag string) {
 	if !isGitRepo() {
 		log.Fatalln("Error: Releasing a new version could only be operated under a git repo.")
 	}
-	if getGitRemoteUrl("gop") != "" {
+	if getGitRemoteUrl("gop") == "" {
 		log.Fatalln("Error: git remote gop not found, please use `git remote add gop git@github.com:goplus/gop.git`.")
 	}
 	if getTagRev(tag) != "" {
