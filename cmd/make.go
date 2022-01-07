@@ -115,7 +115,7 @@ func execCommand(command string, arg ...string) (string, error) {
 	cmd.Stderr = &stderr
 	cmd.Env = commandExecuteEnv
 	err := cmd.Run()
-	if err != nil || stderr.Len() > 0 {
+	if err != nil {
 		err = &ExecCmdError{Err: err, Stderr: stderr.Bytes()}
 	}
 	return stdout.String(), err
@@ -155,7 +155,10 @@ func gitTag(tag string) error {
 	return err
 }
 
-func gitTagAndPushTo(tag string, remote string) error {
+func gitTagAndPushTo(tag string, remote, branch string) error {
+	if _, err := execCommand("git", "push", remote, branch); err != nil {
+		return err
+	}
 	if err := gitTag(tag); err != nil {
 		return err
 	}
@@ -170,11 +173,6 @@ func gitCommit(msg string) error {
 
 func checkoutBranch(branch string) error {
 	_, err := execCommand("git", "checkout", branch)
-	if err != nil {
-		if e, ok := err.(*ExecCmdError); ok && e.Err == nil {
-			err = nil
-		}
-	}
 	return err
 }
 
@@ -460,7 +458,7 @@ func releaseNewVersion(tag string) {
 	}
 
 	// Tag the source code
-	if err := gitTagAndPushTo(tag, "gop"); err != nil {
+	if err := gitTagAndPushTo(tag, "gop", releaseBranch); err != nil {
 		log.Fatalf("Error: gitTagAndPushTo with error: %v\n", err)
 	}
 
