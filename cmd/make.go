@@ -108,6 +108,53 @@ func (p *ExecCmdError) Error() string {
 	return p.Err.Error()
 }
 
+type iGitRemote interface {
+	CheckRemoteUrl()
+	CreateBranchFrom(branch, remote string) error
+	PushCommits(remote, branch string) error
+	DeleteBranch(branch string) error
+}
+
+type (
+	gitRemoteImpl struct{}
+	gitRemoteNone struct{}
+)
+
+func (p *gitRemoteImpl) CheckRemoteUrl() {
+	if getGitRemoteUrl("gop") == "" {
+		log.Fatalln("Error: git remote gop not found, please use `git remote add gop git@github.com:goplus/gop.git`.")
+	}
+}
+
+func (p *gitRemoteImpl) CreateBranchFrom(branch, remote string) (err error) {
+	_, err = execCommand("git", "fetch", remote)
+	if err != nil {
+		return
+	}
+	execCommand("git", "branch", "-D", branch)
+	_, err = execCommand("git", "checkout", "-b", branch, remote+"/"+branch)
+	return
+}
+
+func (p *gitRemoteImpl) PushCommits(remote, branch string) error {
+	_, err := execCommand("git", "push", remote, branch)
+	return err
+}
+
+func (p *gitRemoteImpl) DeleteBranch(branch string) error {
+	_, err := execCommand("git", "branch", "-D", branch)
+	return err
+}
+
+func (p *gitRemoteNone) CheckRemoteUrl()                                    {}
+func (p *gitRemoteNone) CreateBranchFrom(branch, remote string) (err error) { return nil }
+func (p *gitRemoteNone) PushCommits(remote, branch string) error            { return nil }
+func (p *gitRemoteNone) DeleteBranch(branch string) error                   { return nil }
+
+var (
+	gitRemote iGitRemote = &gitRemoteImpl{}
+)
+
 func execCommand(command string, arg ...string) (string, error) {
 	var stdout, stderr bytes.Buffer
 	cmd := exec.Command(command, arg...)
@@ -150,29 +197,19 @@ func getGitBranch() string {
 	return branch
 }
 
-func gitDeleteBranch(branch string) error {
-	_, err := execCommand("git", "branch", "-D", branch)
-	return err
-}
-
 func gitTag(tag string) error {
 	_, err := execCommand("git", "tag", tag)
 	return err
 }
 
-var gitPush = func(remote, branch string) error {
-	_, err := execCommand("git", "push", remote, branch)
-	return err
-}
-
 func gitTagAndPushTo(tag string, remote, branch string) error {
-	if err := gitPush(remote, branch); err != nil {
+	if err := gitRemote.PushCommits(remote, branch); err != nil {
 		return err
 	}
 	if err := gitTag(tag); err != nil {
 		return err
 	}
-	return gitPush(remote, tag)
+	return gitRemote.PushCommits(remote, tag)
 }
 
 func gitAdd(file string) error {
@@ -434,13 +471,11 @@ func findGopVersion() string {
 }
 
 // releaseNewVersion tags the repo with provided new tag, and writes new tag into VERSION file.
-func releaseNewVersion(tag string, noPush bool) {
+func releaseNewVersion(tag string) {
 	if !isGitRepo() {
 		log.Fatalln("Error: Releasing a new version could only be operated under a git repo.")
 	}
-	if !noPush || getGitRemoteUrl("gop") == "" {
-		log.Fatalln("Error: git remote gop not found, please use `git remote add gop git@github.com:goplus/gop.git`.")
-	}
+	gitRemote.CheckRemoteUrl()
 	if getTagRev(tag) != "" {
 		log.Fatalln("Error: tag already exists -", tag)
 	}
@@ -455,18 +490,18 @@ func releaseNewVersion(tag string, noPush bool) {
 	sourceBranch := getGitBranch()
 
 	// Checkout to release breanch
-	if err := gitCheckoutBranch(releaseBranch); err != nil {
-		log.Fatalf("Error: checkout to release branch: %s failed with error: %v.", releaseBranch, err)
+	if sourceBranch != releaseBranch {
+		if err := gitCheckoutBranch(releaseBranch); err != nil {
+			log.Fatalf("Error: checkout to release branch: %s failed with error: %v.", releaseBranch, err)
+		}
+		defer func() {
+			// Checkout back to source branch
+			if err := gitCheckoutBranch(sourceBranch); err != nil {
+				log.Fatalf("Error: checkout to source branch: %s failed with error: %v.", sourceBranch, err)
+			}
+			gitRemote.DeleteBranch(releaseBranch)
+		}()
 	}
-	defer func() {
-		// Checkout back to source branch
-		if err := gitCheckoutBranch(sourceBranch); err != nil {
-			log.Fatalf("Error: checkout to source branch: %s failed with error: %v.", sourceBranch, err)
-		}
-		if !noPush {
-			gitDeleteBranch(releaseBranch)
-		}
-	}()
 
 	// Cache new version
 	versionFile := filepath.Join(gopRoot, "VERSION")
@@ -515,11 +550,9 @@ func main() {
 
 	if *tag != "" {
 		if *noPush {
-			gitPush = func(remote, branch string) error {
-				return nil
-			}
+			gitRemote = &gitRemoteNone{}
 		}
-		releaseNewVersion(*tag, *noPush)
+		releaseNewVersion(*tag)
 		hasActionDone = true
 	}
 
