@@ -199,7 +199,7 @@ func TestTagFlagInGitRepo(t *testing.T) {
 	})
 
 	t.Run("release new version on non-release branch", func(t *testing.T) {
-		_, err := execCommand("git", "checkout", "-b", releaseBranch)
+		_, err := execCommand("git", "checkout", "-b", releaseBranch, sourceBranch)
 		if err != nil {
 			t.Fatal(err)
 		}
