@@ -152,6 +152,7 @@ func TestTagFlagInGitRepo(t *testing.T) {
 		if checkPathExist(versionFile, false) {
 			os.Remove(versionFile)
 		}
+		execCommand("git", "branch", "-D", releaseBranch)
 	})
 
 	t.Run("release new version with bad tag", func(t *testing.T) {
@@ -180,7 +181,6 @@ func TestTagFlagInGitRepo(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer execCommand("git", "branch", "-D", releaseBranch)
 
 		cmd := exec.Command("go", "run", installer, "--nopush", "--tag", tag)
 		if out, err := cmd.CombinedOutput(); err != nil {
