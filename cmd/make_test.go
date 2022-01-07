@@ -142,21 +142,21 @@ func TestTagFlagInGitRepo(t *testing.T) {
 	})
 
 	t.Run("release new version with bad tag", func(t *testing.T) {
-		cmd := exec.Command("go", "run", installer, "--tag", "xyz")
+		cmd := exec.Command("go", "run", installer, "--nopush", "--tag", "xyz")
 		if _, err := cmd.CombinedOutput(); err == nil {
 			t.Fatal("Failed: release a bad tag should be failed.")
 		}
 	})
 
 	t.Run("empty tag should failed", func(t *testing.T) {
-		cmd := exec.Command("go", "run", installer, "--tag", "")
+		cmd := exec.Command("go", "run", installer, "--nopush", "--tag", "")
 		if out, err := cmd.CombinedOutput(); err != nil || !strings.Contains(string(out), "Usage") {
 			t.Fatalf("Failed: %v, out: %s\n", err, out)
 		}
 	})
 
 	t.Run("failed when release branch corresponding to tag does not exists", func(t *testing.T) {
-		cmd := exec.Command("go", "run", installer, "--tag", bigtag)
+		cmd := exec.Command("go", "run", installer, "--nopush", "--tag", bigtag)
 		if _, err := cmd.CombinedOutput(); err == nil {
 			t.Fatal("Failed: a corresponding release branch does not exists should be failed.")
 		}
@@ -175,7 +175,7 @@ func TestTagFlagInGitRepo(t *testing.T) {
 			}
 		}
 
-		cmd := exec.Command("go", "run", installer, "--tag", tag)
+		cmd := exec.Command("go", "run", installer, "--nopush", "--tag", tag)
 		if _, err := cmd.CombinedOutput(); err != nil {
 			t.Fatalf("Failed: release tag: %s on branch: %s should not be failed", tag, releaseBranch)
 		}
@@ -208,7 +208,7 @@ func TestTagFlagInGitRepo(t *testing.T) {
 			}
 		}
 
-		cmd := exec.Command("go", "run", installer, "--tag", tag2)
+		cmd := exec.Command("go", "run", installer, "--nopush", "--tag", tag2)
 		if out, err := cmd.CombinedOutput(); err != nil {
 			t.Log(string(out))
 			t.Fatalf("Failed: release tag: %s on branch: %s should not be failed", tag2, nonExistBranch)
