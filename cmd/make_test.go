@@ -332,19 +332,7 @@ func TestInstallInNonGitRepo(t *testing.T) {
 func TestHandleMultiFlags(t *testing.T) {
 	os.Chdir(gopRoot)
 
-	// Setup
-	nextVersion := "v1.0.988"
-
-	// Teardown
-	t.Cleanup(func() {
-		gitCmd := exec.Command("git", "tag", "-d", nextVersion)
-		gitCmd.CombinedOutput()
-		if checkPathExist(versionFile, false) {
-			os.Remove(versionFile)
-		}
-	})
-
-	cmd := exec.Command("go", "run", installer, "--install", "--test", "--uninstall", "--tag", nextVersion)
+	cmd := exec.Command("go", "run", installer, "--install", "--test", "--uninstall")
 	if output, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("Failed: %v:\nOut: %s\n", err, output)
 	}
@@ -359,21 +347,5 @@ func TestHandleMultiFlags(t *testing.T) {
 		if checkPathExist(filepath.Join(goBinPath, file), false) {
 			t.Fatalf("Failed: %s found in %s/bin directory\n", file, goBinPath)
 		}
-	}
-
-	// Test if git tag list contains nextVersion
-	cmd = exec.Command("git", "tag")
-	if allTags, err := cmd.CombinedOutput(); err != nil {
-		if !strings.Contains(string(allTags), nextVersion) {
-			t.Fatalf("Failed: %s tag not found in this git repo.\n", nextVersion)
-		}
-	}
-
-	if !checkPathExist(versionFile, false) {
-		t.Fatal("Failed: a VERSION file not found.")
-	}
-
-	if data, _ := os.ReadFile(versionFile); string(data) != nextVersion {
-		t.Fatalf("Failed: content of VERSION file: '%s' not match tag: %s", data, nextVersion)
 	}
 }
