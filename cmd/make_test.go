@@ -204,25 +204,19 @@ func TestTagFlagInGitRepo(t *testing.T) {
 	})
 
 	t.Run("release new version on non-release branch", func(t *testing.T) {
-		execCommand("git", "checkout", "main")
-		execCommand("git", "branch", "-D", releaseBranch)
-		_, err := execCommand("git", "checkout", "-b", releaseBranch)
+		_, err := execCommand("git", "checkout", "-b", nonExistBranch)
 		if err != nil {
-			t.Log("current branch:", getBranch(), "source branch:", sourceBranch)
 			t.Fatal(err)
 		}
 
-		gitCmd := exec.Command("git", "checkout", "-b", nonExistBranch)
-		if output, err := gitCmd.CombinedOutput(); err != nil {
-			if strings.Contains(string(output), "already exists") {
-				gitCmd = exec.Command("git", "checkout", nonExistBranch)
-				if output, err := gitCmd.CombinedOutput(); err != nil {
-					t.Fatalf("Failed: %v, output: %s\n", err, output)
-				}
-			} else {
-				t.Fatalf("Failed: %v, output: %s\n", err, output)
-			}
+		execCommand("git", "branch", "-D", releaseBranch)
+		_, err := execCommand("git", "checkout", "-b", releaseBranch)
+		if err != nil {
+			t.Log("current branch:", getBranch())
+			t.Fatal(err)
 		}
+
+		execCommand("git", "checkout", nonExistBranch)
 
 		cmd := exec.Command("go", "run", installer, "--nopush", "--tag", tag2)
 		if out, err := cmd.CombinedOutput(); err != nil {
