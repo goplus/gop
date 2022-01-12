@@ -55,13 +55,14 @@ const (
 )
 
 type pkgInfo struct {
-	path    string
-	runner  *Runner
-	imports []string
-	deps    []*pkgInfo
-	hash    string
-	nsource int
-	flags   int
+	path       string
+	runner     *Runner
+	imports    []string
+	deps       []*pkgInfo
+	hash       string
+	nsource    int
+	flags      int
+	inModCache bool
 }
 
 type Runner struct {
@@ -195,10 +196,6 @@ func (p *Runner) genGoPkgs(conf *Config) {
 		Fset:    conf.Fset,
 	}
 	inModCache := modfetch.InModCachePath(modRoot)
-	if inModCache {
-		os.Chmod(modRoot, 0755)
-		defer os.Chmod(modRoot, 0555)
-	}
 	imp, _, err := packages.NewImporter(impConf, imps...)
 	if err != nil {
 		conf.OnErr("newImporter", err)
@@ -208,6 +205,7 @@ func (p *Runner) genGoPkgs(conf *Config) {
 	defer imp.Close()
 	conf.OnInfo("newImporter: %v\n", imps)
 	for _, pkg := range p.pkgs {
+		pkg.inModCache = inModCache
 		if pkg.flags == pkgFlagChanged {
 			p.genGoPkg(pkg, imp, conf)
 		}
@@ -318,7 +316,12 @@ func (p *Runner) doGenGoPkg(pkgi *pkgInfo, imp types.Importer, conf *Config) (er
 }
 
 func saveGoFile(dir string, pkg *gox.Package, pkgi *pkgInfo) error {
-	os.MkdirAll(dir, 0755)
+	if pkgi.inModCache {
+		os.Chmod(dir, 0755)
+		defer os.Chmod(dir, 0555)
+	} else {
+		os.MkdirAll(dir, 0755)
+	}
 	err := func() (err error) {
 		file := filepath.Join(dir, autoGenFile)
 		f, err := os.Create(file)
