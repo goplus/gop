@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/goplus/gop/x/gengo"
 	"github.com/goplus/gop/x/gopprojs"
@@ -99,7 +100,20 @@ func OpenPkgPath(flags int, pkgPath string) (ctx *Context, proj *Project, err er
 	if err != nil {
 		return
 	}
+	pkg, _ := splitVerson(modPath)
+	if strings.HasPrefix(pkg, modVer.Path+"/") {
+		subdir := filepath.Join(dir, pkg[len(modVer.Path)+1:])
+		return OpenDir(flags, subdir)
+	}
 	return OpenDir(flags, dir+leftPart)
+}
+
+func splitVerson(modPath string) (path, version string) {
+	pos := strings.IndexByte(modPath, '@')
+	if pos > 0 {
+		return modPath[:pos], modPath[pos+1:]
+	}
+	return modPath, ""
 }
 
 func splitPkgPath(pkgPath string) (modPath, leftPart string) {

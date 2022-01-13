@@ -50,6 +50,9 @@ func Get(modPath string, noCache ...bool) (mod module.Version, isClass bool, err
 	cmd.Stderr = &stderr
 	err = cmd.Run()
 	if err != nil {
+		if mod, isClass, err := tryFoundModule(modPath, stderr.String()); err == nil {
+			return mod, isClass, nil
+		}
 		err = &ExecCmdError{Err: err, Stderr: stderr.Bytes()}
 		return
 	}
@@ -57,6 +60,42 @@ func Get(modPath string, noCache ...bool) (mod module.Version, isClass bool, err
 		return getResult(stderr.String())
 	}
 	return getFromCache(modPath)
+}
+
+func tryFoundModule(modPath string, data string) (mod module.Version, isClass bool, err error) {
+	// go get: module github.com/goplus/spx@v1.0.0-rc5 found, but does not contain package github.com/goplus/spx/tutorial/04-Bullet
+	// go get: module github.com/goplus/spx@main found (v1.0.0-rc3.0.20220110030840-d39f5107c481), but does not contain package github.com/goplus/spx/tutorial/00-Hello
+	const getmodule = "go get: module "
+	if strings.HasPrefix(data, getmodule) {
+		if pos := strings.IndexByte(data, '\n'); pos > 0 {
+			data = data[:pos]
+		}
+		data = data[len(getmodule):]
+		const notpkg = ", but does not contain package"
+		if pos := strings.Index(data, notpkg); pos > 0 {
+			list := strings.Split(data[:pos], " ")
+			switch len(list) {
+			case 2:
+				dir := list[0]
+				return getFromCache(dir)
+			case 3:
+				ver := list[2]
+				if len(ver) > 3 && ver[0] == '(' && ver[len(ver)-1] == ')' {
+					mod, _ := splitVerson(list[0])
+					return getFromCache(mod + "@" + ver[1:len(ver)-1])
+				}
+			}
+		}
+	}
+	return
+}
+
+func splitVerson(modPath string) (path, version string) {
+	pos := strings.IndexByte(modPath, '@')
+	if pos > 0 {
+		return modPath[:pos], modPath[pos+1:]
+	}
+	return modPath, ""
 }
 
 func getResult(data string) (mod module.Version, isClass bool, err error) {

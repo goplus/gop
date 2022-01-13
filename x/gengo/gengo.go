@@ -196,6 +196,10 @@ func (p *Runner) genGoPkgs(conf *Config) {
 		Fset:    conf.Fset,
 	}
 	inModCache := modfetch.InModCachePath(modRoot)
+	if inModCache {
+		os.Chmod(modRoot, 0755)
+		defer os.Chmod(modRoot, 0555)
+	}
 	imp, _, err := packages.NewImporter(impConf, imps...)
 	if err != nil {
 		conf.OnErr("newImporter", err)
@@ -411,7 +415,6 @@ func (p *Runner) genDeps(pkgPath, pkgPathBase string, errs *ErrorList) (pkg *pkg
 	}
 	p.pkgs[pkgPath] = pkg
 	dir := filepath.Join(p.modRoot, pkgPath[len(p.modPath):])
-
 	ci, err := p.mod.ChangeInfo(dir)
 	if err != nil {
 		*errs, pkg.flags = append(*errs, err), pkgFlagIll
