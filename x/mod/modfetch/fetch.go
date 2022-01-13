@@ -151,6 +151,23 @@ func getFromCache(modPath string) (modVer module.Version, isClass bool, err erro
 	return
 }
 
+// github.com/goplus/spx/tutorial/04-Bullet v1.0.0-rc5
+func foundModRoot(modPath string, ver string) (modRoot string, mod string, err error) {
+	modRoot = filepath.Join(GOMODCACHE, modPath+"@"+ver)
+	if fi, e := os.Stat(modRoot); e == nil {
+		if fi.IsDir() {
+			return modRoot, modPath, nil
+		}
+		return "", "", syscall.ENOENT
+	}
+	dir, _ := filepath.Split(modPath)
+	dir = strings.TrimRight(dir, "/")
+	if dir == "" {
+		return "", "", syscall.ENOENT
+	}
+	return foundModRoot(dir, ver)
+}
+
 func lookupFromCache(modPath string) (modRoot string, mod module.Version, err error) {
 	mod.Path = modPath
 	pos := strings.IndexByte(modPath, '@')
@@ -163,10 +180,7 @@ func lookupFromCache(modPath string) (modRoot string, mod module.Version, err er
 	}
 	modRoot = filepath.Join(GOMODCACHE, encPath+"@"+mod.Version)
 	if pos > 0 { // has version
-		fi, e := os.Stat(modRoot)
-		if e != nil || !fi.IsDir() {
-			err = syscall.ENOENT
-		}
+		modRoot, mod.Path, err = foundModRoot(encPath, mod.Version)
 		return
 	}
 	dir, fname := filepath.Split(modRoot)
