@@ -28,6 +28,7 @@ import (
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
+	"github.com/goplus/gox/packages"
 )
 
 // -----------------------------------------------------------------------------
@@ -118,6 +119,7 @@ func (p *gopFiles) GenGo(outFile, modFile string) error {
 	srcDir, _ := filepath.Split(outFile)
 	modDir, _ := filepath.Split(modFile)
 	conf := &cl.Config{WorkingDir: modDir, TargetDir: srcDir, Fset: fset}
+	conf.Importer, _, _ = packages.NewImporter(nil, "github.com/goplus/gop/builtin")
 	out, err := cl.NewPackage("", mainPkg, conf)
 	if err != nil {
 		return err
