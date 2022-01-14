@@ -19,7 +19,6 @@ package gopproj
 import (
 	"bytes"
 	"crypto/sha1"
-	"github.com/goplus/gox/packages"
 	"log"
 	"os"
 	"path/filepath"
@@ -29,6 +28,7 @@ import (
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
+	"github.com/goplus/gox/packages"
 )
 
 // -----------------------------------------------------------------------------
