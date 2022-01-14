@@ -38,21 +38,6 @@ type (
 	ExecCmdError = modload.ExecCmdError
 )
 
-func parserGetResults(data string) (comment []string, result string) {
-	for _, line := range strings.Split(data, "\n") {
-		if strings.HasPrefix(line, "# get ") {
-			comment = append(comment, line)
-		} else if strings.HasPrefix(line, "go: downloading ") {
-			result = line + "\n"
-			return
-		} else if strings.HasPrefix(line, "go get: ") {
-			result = line + "\n"
-			return
-		}
-	}
-	return
-}
-
 func Get(modPath string, noCache ...bool) (mod module.Version, isClass bool, err error) {
 	if noCache == nil || !noCache[0] {
 		mod, isClass, err = getFromCache(modPath)
@@ -65,7 +50,7 @@ func Get(modPath string, noCache ...bool) (mod module.Version, isClass bool, err
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err = cmd.Run()
-	_, infos := parserGetResults(stderr.String())
+	comments, infos := parserGetResults(stderr.String())
 	if err != nil {
 		if mod, isClass, ok := tryFoundModule(modPath, infos); ok {
 			return mod, isClass, nil
@@ -76,47 +61,12 @@ func Get(modPath string, noCache ...bool) (mod module.Version, isClass bool, err
 	if len(infos) > 0 {
 		return getResult(infos)
 	}
+	if len(comments) > 0 {
+		if m, ok := foundModuleInComment(modPath, comments[0]); ok {
+			modPath = m
+		}
+	}
 	return getFromCache(modPath)
-}
-
-func tryFoundModule(modPath string, data string) (mod module.Version, isClass bool, ok bool) {
-	// go get: module github.com/goplus/spx@v1.0.0-rc5 found, but does not contain package github.com/goplus/spx/tutorial/04-Bullet
-	// go get: module github.com/goplus/spx@main found (v1.0.0-rc3.0.20220110030840-d39f5107c481), but does not contain package github.com/goplus/spx/tutorial/00-Hello
-	const getmodule = "go get: module "
-	if strings.HasPrefix(data, getmodule) {
-		if pos := strings.IndexByte(data, '\n'); pos > 0 {
-			data = data[:pos]
-		}
-		data = data[len(getmodule):]
-		const notpkg = ", but does not contain package"
-		if pos := strings.Index(data, notpkg); pos > 0 {
-			list := strings.Split(data[:pos], " ")
-			switch len(list) {
-			case 2:
-				dir := list[0]
-				var err error
-				mod, isClass, err = getFromCache(dir)
-				ok = (err == nil)
-			case 3:
-				ver := list[2]
-				if len(ver) > 3 && ver[0] == '(' && ver[len(ver)-1] == ')' {
-					mpath, _ := splitVerson(list[0])
-					var err error
-					mod, isClass, err = getFromCache(mpath + "@" + ver[1:len(ver)-1])
-					ok = (err == nil)
-				}
-			}
-		}
-	}
-	return
-}
-
-func splitVerson(modPath string) (path, version string) {
-	pos := strings.IndexByte(modPath, '@')
-	if pos > 0 {
-		return modPath[:pos], modPath[pos+1:]
-	}
-	return modPath, ""
 }
 
 func getResult(data string) (mod module.Version, isClass bool, err error) {
@@ -172,22 +122,6 @@ func getFromCache(modPath string) (modVer module.Version, isClass bool, err erro
 	return
 }
 
-// github.com/goplus/spx/tutorial/04-Bullet v1.0.0-rc5
-func foundModRoot(modPath string, ver string) (modRoot string, mod string, err error) {
-	modRoot = filepath.Join(GOMODCACHE, modPath+"@"+ver)
-	if fi, e := os.Stat(modRoot); e == nil {
-		if fi.IsDir() {
-			return modRoot, modPath, nil
-		}
-		return "", "", syscall.ENOENT
-	}
-	dir, _ := path.Split(modPath)
-	if dir == "" {
-		return "", "", syscall.ENOENT
-	}
-	return foundModRoot(dir[:len(dir)-1], ver)
-}
-
 func lookupFromCache(modPath string) (modRoot string, mod module.Version, err error) {
 	mod.Path = modPath
 	pos := strings.IndexByte(modPath, '@')
@@ -221,6 +155,93 @@ func lookupFromCache(modPath string) (modRoot string, mod module.Version, err er
 		}
 	}
 	return
+}
+
+func parserGetResults(data string) (comment []string, result string) {
+	for _, line := range strings.Split(data, "\n") {
+		if strings.HasPrefix(line, "# get ") {
+			if strings.Contains(line, "@v/list: 200 OK") {
+				comment = append(comment, line)
+			}
+		} else if strings.HasPrefix(line, "go: downloading ") {
+			result = line + "\n"
+		} else if strings.HasPrefix(line, "go: module ") {
+			result = line + "\n"
+		} else if strings.HasPrefix(line, "go get: module ") {
+			result = line + "\n"
+		}
+	}
+	return
+}
+
+func foundModuleInComment(modPath string, data string) (mod string, ok bool) {
+	// # get https://goproxy.cn/github.com/goplus/spx/@v/list: 200 OK (0.782s)
+	if strings.Contains(data, modPath+"/@v/list") {
+		return modPath, true
+	}
+	dir, _ := path.Split(modPath)
+	if dir == "" {
+		return "", false
+	}
+	return foundModuleInComment(dir[:len(dir)-1], data)
+}
+
+// github.com/goplus/spx/tutorial/04-Bullet v1.0.0-rc5
+func foundModRoot(modPath string, ver string) (modRoot string, mod string, err error) {
+	modRoot = filepath.Join(GOMODCACHE, modPath+"@"+ver)
+	if fi, e := os.Stat(modRoot); e == nil {
+		if fi.IsDir() {
+			return modRoot, modPath, nil
+		}
+		return "", "", syscall.ENOENT
+	}
+	dir, _ := path.Split(modPath)
+	if dir == "" {
+		return "", "", syscall.ENOENT
+	}
+	return foundModRoot(dir[:len(dir)-1], ver)
+}
+
+func tryFoundModule(modPath string, data string) (mod module.Version, isClass bool, ok bool) {
+	// go get: module github.com/goplus/spx@v1.0.0-rc5 found, but does not contain package github.com/goplus/spx/tutorial/04-Bullet
+	// go get: module github.com/goplus/spx@main found (v1.0.0-rc3.0.20220110030840-d39f5107c481), but does not contain package github.com/goplus/spx/tutorial/00-Hello
+	// go1.17 syntax go get: module
+	// go1.18 syntax go: module
+	const getmodule = ": module "
+	if pos := strings.Index(data, getmodule); pos > 0 {
+		if pos := strings.IndexByte(data, '\n'); pos > 0 {
+			data = data[:pos]
+		}
+		data = data[pos+len(getmodule):]
+		const notpkg = ", but does not contain package"
+		if pos := strings.Index(data, notpkg); pos > 0 {
+			list := strings.Split(data[:pos], " ")
+			switch len(list) {
+			case 2:
+				dir := list[0]
+				var err error
+				mod, isClass, err = getFromCache(dir)
+				ok = (err == nil)
+			case 3:
+				ver := list[2]
+				if len(ver) > 3 && ver[0] == '(' && ver[len(ver)-1] == ')' {
+					mpath, _ := splitVerson(list[0])
+					var err error
+					mod, isClass, err = getFromCache(mpath + "@" + ver[1:len(ver)-1])
+					ok = (err == nil)
+				}
+			}
+		}
+	}
+	return
+}
+
+func splitVerson(modPath string) (path, version string) {
+	pos := strings.IndexByte(modPath, '@')
+	if pos > 0 {
+		return modPath[:pos], modPath[pos+1:]
+	}
+	return modPath, ""
 }
 
 // -----------------------------------------------------------------------------
