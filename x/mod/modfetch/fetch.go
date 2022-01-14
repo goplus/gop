@@ -163,11 +163,9 @@ func parserGetResults(data string) (comment []string, result string) {
 			if strings.Contains(line, "@v/list: 200 OK") {
 				comment = append(comment, line)
 			}
-		} else if strings.HasPrefix(line, "go: downloading ") {
+		} else if strings.HasPrefix(line, "go: ") {
 			result = line + "\n"
-		} else if strings.HasPrefix(line, "go: module ") {
-			result = line + "\n"
-		} else if strings.HasPrefix(line, "go get: module ") {
+		} else if strings.HasPrefix(line, "go get: ") {
 			result = line + "\n"
 		}
 	}
