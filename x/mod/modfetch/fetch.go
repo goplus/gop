@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -37,6 +38,21 @@ type (
 	ExecCmdError = modload.ExecCmdError
 )
 
+func parserGetResults(data string) (comment []string, result string) {
+	for _, line := range strings.Split(data, "\n") {
+		if strings.HasPrefix(line, "# get ") {
+			comment = append(comment, line)
+		} else if strings.HasPrefix(line, "go: downloading ") {
+			result = line + "\n"
+			return
+		} else if strings.HasPrefix(line, "go get: ") {
+			result = line + "\n"
+			return
+		}
+	}
+	return
+}
+
 func Get(modPath string, noCache ...bool) (mod module.Version, isClass bool, err error) {
 	if noCache == nil || !noCache[0] {
 		mod, isClass, err = getFromCache(modPath)
@@ -45,24 +61,25 @@ func Get(modPath string, noCache ...bool) (mod module.Version, isClass bool, err
 		}
 	}
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("go", "get", modPath)
+	cmd := exec.Command("go", "get", "-x", modPath)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err = cmd.Run()
+	_, infos := parserGetResults(stderr.String())
 	if err != nil {
-		if mod, isClass, err := tryFoundModule(modPath, stderr.String()); err == nil {
+		if mod, isClass, ok := tryFoundModule(modPath, infos); ok {
 			return mod, isClass, nil
 		}
-		err = &ExecCmdError{Err: err, Stderr: stderr.Bytes()}
+		err = &ExecCmdError{Err: err, Stderr: []byte(infos)}
 		return
 	}
-	if stderr.Len() > 0 {
-		return getResult(stderr.String())
+	if len(infos) > 0 {
+		return getResult(infos)
 	}
 	return getFromCache(modPath)
 }
 
-func tryFoundModule(modPath string, data string) (mod module.Version, isClass bool, err error) {
+func tryFoundModule(modPath string, data string) (mod module.Version, isClass bool, ok bool) {
 	// go get: module github.com/goplus/spx@v1.0.0-rc5 found, but does not contain package github.com/goplus/spx/tutorial/04-Bullet
 	// go get: module github.com/goplus/spx@main found (v1.0.0-rc3.0.20220110030840-d39f5107c481), but does not contain package github.com/goplus/spx/tutorial/00-Hello
 	const getmodule = "go get: module "
@@ -77,12 +94,16 @@ func tryFoundModule(modPath string, data string) (mod module.Version, isClass bo
 			switch len(list) {
 			case 2:
 				dir := list[0]
-				return getFromCache(dir)
+				var err error
+				mod, isClass, err = getFromCache(dir)
+				ok = (err == nil)
 			case 3:
 				ver := list[2]
 				if len(ver) > 3 && ver[0] == '(' && ver[len(ver)-1] == ')' {
-					mod, _ := splitVerson(list[0])
-					return getFromCache(mod + "@" + ver[1:len(ver)-1])
+					mpath, _ := splitVerson(list[0])
+					var err error
+					mod, isClass, err = getFromCache(mpath + "@" + ver[1:len(ver)-1])
+					ok = (err == nil)
 				}
 			}
 		}
@@ -160,12 +181,11 @@ func foundModRoot(modPath string, ver string) (modRoot string, mod string, err e
 		}
 		return "", "", syscall.ENOENT
 	}
-	dir, _ := filepath.Split(modPath)
-	dir = strings.TrimRight(dir, "/")
+	dir, _ := path.Split(modPath)
 	if dir == "" {
 		return "", "", syscall.ENOENT
 	}
-	return foundModRoot(dir, ver)
+	return foundModRoot(dir[:len(dir)-1], ver)
 }
 
 func lookupFromCache(modPath string) (modRoot string, mod module.Version, err error) {
