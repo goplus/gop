@@ -34,12 +34,13 @@ import (
 // -----------------------------------------------------------------------------
 
 type gopFiles struct {
-	files []string
+	files  []string
+	defctx bool
 }
 
 func (p *Context) openFromGopFiles(files []string) (proj *Project, err error) {
 	proj = &Project{
-		Source: &gopFiles{files: files},
+		Source: &gopFiles{files: files, defctx: p.defctx},
 	}
 	if len(files) == 1 {
 		file := files[0]
@@ -119,7 +120,17 @@ func (p *gopFiles) GenGo(outFile, modFile string) error {
 	srcDir, _ := filepath.Split(outFile)
 	modDir, _ := filepath.Split(modFile)
 	conf := &cl.Config{WorkingDir: modDir, TargetDir: srcDir, Fset: fset}
-	conf.Importer, _, _ = packages.NewImporter(nil, "github.com/goplus/gop/builtin")
+	if p.defctx {
+		wd, _ := os.Getwd()
+		os.Chdir(modDir)
+		defer func() {
+			os.Chdir(wd)
+		}()
+	}
+	conf.Importer, _, err = packages.NewImporter(nil, "github.com/goplus/gop/builtin")
+	if err != nil {
+		return err
+	}
 	out, err := cl.NewPackage("", mainPkg, conf)
 	if err != nil {
 		return err
