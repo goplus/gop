@@ -157,6 +157,7 @@ func lookupFromCache(modPath string) (modRoot string, mod module.Version, err er
 	return
 }
 
+// parser from `go get -x pkgpath`
 func parserGetResults(data string) (comment []string, result string) {
 	for _, line := range strings.Split(data, "\n") {
 		if strings.HasPrefix(line, "# get ") {
@@ -172,8 +173,9 @@ func parserGetResults(data string) (comment []string, result string) {
 	return
 }
 
+// found module from go get pkgpath/@v/list comment
+// # get https://goproxy.cn/github.com/goplus/spx/@v/list: 200 OK (0.782s)
 func foundModuleInComment(modPath string, data string) (mod string, ok bool) {
-	// # get https://goproxy.cn/github.com/goplus/spx/@v/list: 200 OK (0.782s)
 	if strings.Contains(data, modPath+"/@v/list") {
 		return modPath, true
 	}
@@ -184,7 +186,8 @@ func foundModuleInComment(modPath string, data string) (mod string, ok bool) {
 	return foundModuleInComment(dir[:len(dir)-1], data)
 }
 
-// github.com/goplus/spx/tutorial/04-Bullet v1.0.0-rc5
+// found pkgpath@ver to modpath@ver
+// github.com/goplus/spx/tutorial/04-Bullet@v1.0.0-rc5 => github.com/goplus/spx@v1.0.0-rc5
 func foundModRoot(modPath string, ver string) (modRoot string, mod string, err error) {
 	modRoot = filepath.Join(GOMODCACHE, modPath+"@"+ver)
 	if fi, e := os.Stat(modRoot); e == nil {
@@ -200,6 +203,7 @@ func foundModRoot(modPath string, ver string) (modRoot string, mod string, err e
 	return foundModRoot(dir[:len(dir)-1], ver)
 }
 
+// found module msg: found, but does not contain package
 func tryFoundModule(modPath string, data string) (mod module.Version, isClass bool, ok bool) {
 	// go get: module github.com/goplus/spx@v1.0.0-rc5 found, but does not contain package github.com/goplus/spx/tutorial/04-Bullet
 	// go get: module github.com/goplus/spx@main found (v1.0.0-rc3.0.20220110030840-d39f5107c481), but does not contain package github.com/goplus/spx/tutorial/00-Hello
