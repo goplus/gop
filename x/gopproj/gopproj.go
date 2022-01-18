@@ -73,8 +73,10 @@ func OpenProject(flags int, src gopprojs.Proj) (ctx *Context, proj *Project, err
 		proj, err = ctx.OpenFiles(flags, v.Files...)
 		return
 	case *gopprojs.DirProj:
+		os.Chdir(v.Dir)
 		return OpenDir(flags, v.Dir)
 	case *gopprojs.PkgPathProj:
+		os.Chdir(modfetch.GOMODCACHE)
 		return OpenPkgPath(flags, v.Path)
 	}
 	panic("OpenProject: unexpected source")
