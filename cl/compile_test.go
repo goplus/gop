@@ -3602,3 +3602,20 @@ func main() {
 }
 `)
 }
+
+func TestAnyAlias(t *testing.T) {
+	gopClTest(t, `
+var a any = 100
+println(a)
+`, `package main
+
+import fmt "fmt"
+
+var a interface {
+} = 100
+
+func main() {
+	fmt.Println(a)
+}
+`)
+}
