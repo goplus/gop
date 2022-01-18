@@ -91,6 +91,11 @@ func gopRun(args []string) {
 	if *flagGop {
 		flags = gopproj.FlagGoAsGoPlus
 	}
+	wd, err := os.Getwd()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Get current directory failed:", err)
+		os.Exit(1)
+	}
 	ctx, goProj, err := gopproj.OpenProject(flags, proj)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "OpenProject failed:", err)
@@ -107,6 +112,7 @@ func gopRun(args []string) {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Env = os.Environ()
+	cmd.Dir = wd
 	err = cmd.Run()
 	if err != nil {
 		switch e := err.(type) {
