@@ -46,7 +46,7 @@ func Get(modPath string, noCache ...bool) (mod module.Version, isClass bool, err
 		}
 	}
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("go", "get", "-x", modPath)
+	cmd := exec.Command("go", "get", "-d", "-x", modPath)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err = cmd.Run()
