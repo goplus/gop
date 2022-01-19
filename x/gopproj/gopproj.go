@@ -42,7 +42,6 @@ func (p *handleEvent) OnInfo(format string, args ...interface{}) {
 
 func (p *handleEvent) OnErr(stage string, err error) {
 	p.lastErr = fmt.Errorf("%s: %w", stage, err)
-	fmt.Fprintln(os.Stderr, p.lastErr)
 }
 
 func (p *handleEvent) OnEnd() {
