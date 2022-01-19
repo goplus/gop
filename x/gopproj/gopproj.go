@@ -25,6 +25,7 @@ import (
 	"github.com/goplus/gop/x/gengo"
 	"github.com/goplus/gop/x/gopprojs"
 	"github.com/goplus/gop/x/mod/modfetch"
+	"golang.org/x/mod/module"
 )
 
 // -----------------------------------------------------------------------------
@@ -73,16 +74,18 @@ func OpenProject(flags int, src gopprojs.Proj) (ctx *Context, proj *Project, err
 		proj, err = ctx.OpenFiles(flags, v.Files...)
 		return
 	case *gopprojs.DirProj:
-		os.Chdir(v.Dir)
 		return OpenDir(flags, v.Dir)
 	case *gopprojs.PkgPathProj:
-		os.Chdir(modfetch.GOMODCACHE)
 		return OpenPkgPath(flags, v.Path)
 	}
 	panic("OpenProject: unexpected source")
 }
 
 func OpenDir(flags int, dir string) (ctx *Context, proj *Project, err error) {
+	err = os.Chdir(dir)
+	if err != nil {
+		return
+	}
 	ev := new(handleEvent)
 	if !gengo.GenGo(gengo.Config{Event: ev}, false, dir, dir) {
 		return nil, nil, ev.lastErr
@@ -93,12 +96,18 @@ func OpenDir(flags int, dir string) (ctx *Context, proj *Project, err error) {
 }
 
 func OpenPkgPath(flags int, pkgPath string) (ctx *Context, proj *Project, err error) {
-	modPath, leftPart := splitPkgPath(pkgPath)
-	modVer, _, err := modfetch.Get(modPath)
+	dir := gopGetDefaultPath()
+	err = os.Chdir(dir)
 	if err != nil {
 		return
 	}
-	dir, err := modfetch.ModCachePath(modVer)
+	modPath, leftPart := splitPkgPath(pkgPath)
+	var modVer module.Version
+	modVer, _, err = modfetch.Get(modPath)
+	if err != nil {
+		return
+	}
+	dir, err = modfetch.ModCachePath(modVer)
 	if err != nil {
 		return
 	}

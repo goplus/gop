@@ -78,11 +78,13 @@ func getResult(data string) (mod module.Version, isClass bool, err error) {
 		}
 		return tryConvGoMod(data[len(downloading):], &data)
 	}
-	// go get: added github.com/xushiwei/foogop v0.1.0
-	const added = "go get: added "
-	if strings.HasPrefix(data, added) {
-		return tryConvGoMod(data[len(added):], &data)
+	// go1.17  go get: added github.com/xushiwei/foogop v0.1.0
+	// go1.18  go: added github.com/xushiwei/foogop v0.1.0
+	const added = ": added "
+	if pos := strings.Index(data, added); pos > 1 {
+		return tryConvGoMod(data[pos+len(added):], &data)
 	}
+	err = fmt.Errorf("unknown go get result: %v", data)
 	return
 }
 

@@ -77,6 +77,17 @@ func NewDefault(dir string) *Context {
 	return &Context{modfile: modfile, dir: dir, defctx: true}
 }
 
+func gopGetDefaultPath() (path string) {
+	path = filepath.Join(env.HOME(), ".gop", "get")
+	os.MkdirAll(path, 0755)
+	modfile := filepath.Join(path, "go.mod")
+	err := os.WriteFile(modfile, []byte("module goplus.org/userapp\n\ngo 1.16\n"), 0644)
+	if err != nil {
+		log.Panicln(err)
+	}
+	return
+}
+
 func (p *Context) GoCommand(op string, src *Project) GoCmd {
 	if src.UseDefaultCtx {
 		p = NewDefault(p.dir)
