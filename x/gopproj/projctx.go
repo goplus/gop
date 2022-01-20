@@ -53,6 +53,7 @@ type Project struct {
 	ForceToGen    bool
 	FlagNRINC     bool // do not run if not changed
 	FlagRTOE      bool // remove tempfile on error
+	GoProjectOnly bool
 }
 
 type Context struct {
@@ -78,6 +79,12 @@ func NewDefault(dir string) *Context {
 }
 
 func (p *Context) GoCommand(op string, src *Project) GoCmd {
+	if src.GoProjectOnly {
+		args := []string{op, p.dir}
+		args = append(args, src.ExecArgs...)
+		cmd := exec.Command("go", args...)
+		return GoCmd{Cmd: cmd}
+	}
 	if src.UseDefaultCtx {
 		p = NewDefault(p.dir)
 	}

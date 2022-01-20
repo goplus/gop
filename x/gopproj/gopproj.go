@@ -87,12 +87,40 @@ func OpenDir(flags int, dir string) (ctx *Context, proj *Project, err error) {
 		return nil, nil, ev.lastErr
 	}
 	gofile := filepath.Join(dir, "gop_autogen.go")
-	if _, err = os.Stat(gofile); err != nil {
-		return nil, nil, fmt.Errorf("no Gop files in %v", dir)
+	if foundFile(gofile) {
+		ctx = New(dir)
+		proj, err = ctx.OpenFiles(0, gofile)
+	} else {
+		gofiles := readGoFiles(dir)
+		if len(gofiles) == 0 {
+			return nil, nil, fmt.Errorf("no Gop files in %v", dir)
+		}
+		ctx = New(dir)
+		proj = &Project{GoProjectOnly: true}
 	}
-	ctx = New(dir)
-	proj, err = ctx.OpenFiles(0, gofile)
 	return
+}
+
+func foundFile(file string) bool {
+	_, err := os.Stat(file)
+	return err == nil
+}
+
+func readGoFiles(dir string) []string {
+	entrys, err := os.ReadDir(dir)
+	if err != nil {
+		return nil
+	}
+	var gofiles []string
+	for _, f := range entrys {
+		if f.IsDir() {
+			continue
+		}
+		if filepath.Ext(f.Name()) == ".go" {
+			gofiles = append(gofiles, filepath.Join(dir, f.Name()))
+		}
+	}
+	return gofiles
 }
 
 func OpenPkgPath(flags int, pkgPath string) (ctx *Context, proj *Project, err error) {
