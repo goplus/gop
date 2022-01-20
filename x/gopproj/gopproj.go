@@ -86,8 +86,12 @@ func OpenDir(flags int, dir string) (ctx *Context, proj *Project, err error) {
 	if !gengo.GenGo(gengo.Config{Event: ev}, false, dir, dir) {
 		return nil, nil, ev.lastErr
 	}
+	gofile := filepath.Join(dir, "gop_autogen.go")
+	if _, err = os.Stat(gofile); err != nil {
+		return nil, nil, fmt.Errorf("no Gop files in %v", dir)
+	}
 	ctx = New(dir)
-	proj, err = ctx.OpenFiles(0, filepath.Join(dir, "gop_autogen.go"))
+	proj, err = ctx.OpenFiles(0, gofile)
 	return
 }
 
