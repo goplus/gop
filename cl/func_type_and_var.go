@@ -211,6 +211,9 @@ func toStructType(ctx *blockCtx, v *ast.StructType) *types.Struct {
 	tags := make([]string, 0, len(fieldList))
 	names := make(map[string]token.Pos)
 	chkRedecl := func(name string, pos token.Pos) bool {
+		if name == "_" {
+			return false
+		}
 		if opos, ok := names[name]; ok {
 			npos := ctx.Position(pos)
 			ctx.handleCodeErrorf(&npos, "%v redeclared\n\t%v other declaration of %v",
