@@ -531,20 +531,20 @@ func compileLambdaExpr2(ctx *blockCtx, v *ast.LambdaExpr2, sig *types.Signature)
 	pkg := ctx.pkg
 	params := makeLambdaParams(ctx, v.Pos(), v.Lhs, sig.Params())
 	results := makeLambdaResults(pkg, sig.Results())
-	comments := ctx.cb.Comments()
+	comments, once := ctx.cb.BackupComments()
 	fn := ctx.cb.NewClosure(params, results, false)
 	loadFuncBody(ctx, fn, v.Body)
-	ctx.cb.SetComments(comments, false)
+	ctx.cb.SetComments(comments, once)
 }
 
 func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
 	cb := ctx.cb
-	comments := cb.Comments()
+	comments, once := cb.BackupComments()
 	sig := toFuncType(ctx, v.Type, nil)
 	fn := cb.NewClosureWith(sig)
 	if body := v.Body; body != nil {
 		loadFuncBody(ctx, fn, body)
-		cb.SetComments(comments, false)
+		cb.SetComments(comments, once)
 	}
 }
 
