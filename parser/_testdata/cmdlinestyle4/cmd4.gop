@@ -1,0 +1,5 @@
+func call(fn func(x int)) { fn(100) }
+
+call(func(x int) { println })
+call(func(x int) { println x })
+call(func(x int) { println {"x": 100, "y": 200}, x })
