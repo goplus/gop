@@ -810,13 +810,16 @@ n, err := fmt.println
 func TestFiledsNameRedecl(t *testing.T) {
 	codeErrorTest(t, `./bar.gop:6:2: Id redeclared
 	./bar.gop:5:2 other declaration of Id
-./bar.gop:8:2: name redeclared
-	./bar.gop:7:2 other declaration of name`, `
+./bar.gop:7:2: Id redeclared
+	./bar.gop:5:2 other declaration of Id
+./bar.gop:9:2: name redeclared
+	./bar.gop:8:2 other declaration of name`, `
 type Id struct {
 }
 type A struct {
 	Id
 	Id   int
+	Id   string
 	name string
 	name string
 }
