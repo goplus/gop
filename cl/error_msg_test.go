@@ -817,9 +817,9 @@ func TestFiledsNameRedecl(t *testing.T) {
 type Id struct {
 }
 type A struct {
-	Id
 	Id   int
 	Id   string
+	Id
 	name string
 	name string
 }
