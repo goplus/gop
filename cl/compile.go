@@ -96,6 +96,9 @@ type Config struct {
 
 	// RelativePath = true means to generate file line comments with relative file path.
 	RelativePath bool
+
+	// NoAutoGenMain = true means not to auto generate main func is no entry.
+	NoAutoGenMain bool
 }
 
 type nodeInterp struct {
@@ -543,7 +546,7 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 		}}}
 	}
 	// check main package no entry and added emtpy
-	if f.Name.Name == "main" && !f.NoEntrypoint {
+	if !conf.NoAutoGenMain && f.Name.Name == "main" && !f.NoEntrypoint {
 		entry := getEntrypoint(f, false)
 		var hasEntry bool
 		for _, decl := range f.Decls {
