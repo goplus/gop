@@ -542,6 +542,26 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 			},
 		}}}
 	}
+	// check main package no entry and added emtpy
+	if f.Name.Name == "main" && !f.NoEntrypoint {
+		entry := getEntrypoint(f, false)
+		var hasEntry bool
+		for _, decl := range f.Decls {
+			switch d := decl.(type) {
+			case *ast.FuncDecl:
+				if d.Name.Name == entry {
+					hasEntry = true
+				}
+			}
+		}
+		if !hasEntry {
+			f.Decls = append(f.Decls, &ast.FuncDecl{
+				Name: ast.NewIdent(entry),
+				Type: &ast.FuncType{Params: &ast.FieldList{}},
+				Body: &ast.BlockStmt{},
+			})
+		}
+	}
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
