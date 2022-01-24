@@ -399,6 +399,15 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		load()
 	}
 	err = ctx.complete()
+
+	if !conf.NoAutoGenMain && pkg.Name == "main" {
+		if obj := p.Types.Scope().Lookup("main"); obj == nil {
+			old := p.SetInTestingFile(false)
+			p.NewFunc(nil, "main", nil, nil, false).BodyStart(p).End()
+			p.SetInTestingFile(old)
+		}
+	}
+
 	return
 }
 
@@ -546,7 +555,7 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 		}}}
 	}
 	// check main package no entry and added emtpy
-	if !conf.NoAutoGenMain && f.Name.Name == "main" && !f.NoEntrypoint {
+	if !conf.NoAutoGenMain && f.IsClass && !f.NoEntrypoint && f.Name.Name == "main" {
 		entry := getEntrypoint(f, false)
 		var hasEntry bool
 		for _, decl := range f.Decls {
