@@ -3619,3 +3619,26 @@ func main() {
 }
 `)
 }
+
+func TestMainNoEntry(t *testing.T) {
+	gopClTest(t, `
+`, `package main
+
+func main() {
+}
+`)
+	gopClTest(t, `
+func test() {
+	println "hello"
+}
+`, `package main
+
+import fmt "fmt"
+
+func test() {
+	fmt.Println("hello")
+}
+func main() {
+}
+`)
+}
