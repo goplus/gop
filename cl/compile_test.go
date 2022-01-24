@@ -3621,7 +3621,7 @@ func main() {
 `)
 }
 
-func TestMainNoEntry(t *testing.T) {
+func TestMainEntry(t *testing.T) {
 	conf := *gblConf
 	conf.NoAutoGenMain = false
 	gopClTestEx(t, &conf, "main", `
@@ -3642,6 +3642,19 @@ func test() {
 	fmt.Println("hello")
 }
 func main() {
+}
+`)
+
+	gopClTestEx(t, &conf, "main", `
+func main() {
+	println "hello"
+}
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Println("hello")
 }
 `)
 }
