@@ -96,6 +96,9 @@ type Config struct {
 
 	// RelativePath = true means to generate file line comments with relative file path.
 	RelativePath bool
+
+	// NoAutoGenMain = true means not to auto generate main func is no entry.
+	NoAutoGenMain bool
 }
 
 type nodeInterp struct {
@@ -396,6 +399,15 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		load()
 	}
 	err = ctx.complete()
+
+	if !conf.NoAutoGenMain && pkg.Name == "main" {
+		if obj := p.Types.Scope().Lookup("main"); obj == nil {
+			old := p.SetInTestingFile(false)
+			p.NewFunc(nil, "main", nil, nil, false).BodyStart(p).End()
+			p.SetInTestingFile(old)
+		}
+	}
+
 	return
 }
 
