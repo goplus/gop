@@ -70,6 +70,10 @@ func gopSpxTest(t *testing.T, gmx, spxcode, expected string) {
 }
 
 func gopSpxTestEx(t *testing.T, gmx, spxcode, expected, gmxfile, spxfile string) {
+	gopSpxTestExConf(t, gblConf, gmx, spxcode, expected, gmxfile, spxfile)
+}
+
+func gopSpxTestExConf(t *testing.T, conf *cl.Config, gmx, spxcode, expected, gmxfile, spxfile string) {
 	cl.SetDisableRecover(true)
 	defer cl.SetDisableRecover(false)
 
@@ -80,7 +84,7 @@ func gopSpxTestEx(t *testing.T, gmx, spxcode, expected, gmxfile, spxfile string)
 		t.Fatal("ParseFSDir:", err)
 	}
 	bar := pkgs["main"]
-	pkg, err := cl.NewPackage("", bar, gblConf)
+	pkg, err := cl.NewPackage("", bar, conf)
 	if err != nil {
 		t.Fatal("NewPackage:", err)
 	}
@@ -388,6 +392,105 @@ type Kai struct {
 	*Game
 }
 
+func (this *Kai) onMsg(msg string) {
+}
+`, "Game.t2gmx", "Kai.t2spx")
+}
+
+func TestSpxNoMain(t *testing.T) {
+	conf := *gblConf
+	conf.NoAutoGenMain = false
+
+	gopSpxTestExConf(t, &conf, `
+`, `
+`, `package main
+
+import spx2 "github.com/goplus/gop/cl/internal/spx2"
+
+type Game struct {
+	spx2.Game
+}
+
+func (this *Game) MainEntry() {
+}
+func main() {
+	new(Game).Main()
+}
+
+type Kai struct {
+	spx2.Sprite
+	*Game
+}
+
+func (this *Kai) Main() {
+}
+`, "Game.t2gmx", "Kai.t2spx")
+
+	gopSpxTestExConf(t, &conf, `
+var (
+	Kai Kai
+)
+`, `
+func onMsg(msg string) {
+}
+`, `package main
+
+import spx2 "github.com/goplus/gop/cl/internal/spx2"
+
+type Game struct {
+	spx2.Game
+	Kai Kai
+}
+type Kai struct {
+	spx2.Sprite
+	*Game
+}
+
+func (this *Game) MainEntry() {
+}
+func main() {
+	new(Game).Main()
+}
+func (this *Kai) onMsg(msg string) {
+}
+func (this *Kai) Main() {
+}
+`, "Game.t2gmx", "Kai.t2spx")
+
+	gopSpxTestExConf(t, &conf, `
+var (
+	Kai Kai
+)
+`, `
+func Main() {
+	println "hello"
+}
+func onMsg(msg string) {
+}
+`, `package main
+
+import (
+	fmt "fmt"
+	spx2 "github.com/goplus/gop/cl/internal/spx2"
+)
+
+type Game struct {
+	spx2.Game
+	Kai Kai
+}
+type Kai struct {
+	spx2.Sprite
+	*Game
+}
+
+func (this *Game) MainEntry() {
+}
+func main() {
+	new(Game).Main()
+}
+func (this *Kai) Main() {
+	fmt.Println("hello")
+}
 func (this *Kai) onMsg(msg string) {
 }
 `, "Game.t2gmx", "Kai.t2spx")

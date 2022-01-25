@@ -3624,6 +3624,7 @@ func main() {
 func TestMainEntry(t *testing.T) {
 	conf := *gblConf
 	conf.NoAutoGenMain = false
+
 	gopClTestEx(t, &conf, "main", `
 `, `package main
 
