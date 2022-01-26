@@ -60,18 +60,19 @@ func init() {
 		panic(err)
 	}
 	gblConf = &cl.Config{
-		Fset:        gblFset,
-		Importer:    imp,
-		LookupClass: lookupClass,
-		NoFileLine:  true,
+		Fset:          gblFset,
+		Importer:      imp,
+		LookupClass:   lookupClass,
+		NoFileLine:    true,
+		NoAutoGenMain: true,
 	}
 }
 
 func gopClTest(t *testing.T, gopcode, expected string) {
-	gopClTestEx(t, "main", gopcode, expected)
+	gopClTestEx(t, gblConf, "main", gopcode, expected)
 }
 
-func gopClTestEx(t *testing.T, pkgname, gopcode, expected string) {
+func gopClTestEx(t *testing.T, conf *cl.Config, pkgname, gopcode, expected string) {
 	cl.SetDisableRecover(true)
 	defer cl.SetDisableRecover(false)
 
@@ -82,7 +83,7 @@ func gopClTestEx(t *testing.T, pkgname, gopcode, expected string) {
 		t.Fatal("ParseFSDir:", err)
 	}
 	bar := pkgs[pkgname]
-	pkg, err := cl.NewPackage("github.com/goplus/gop/cl", bar, gblConf)
+	pkg, err := cl.NewPackage("github.com/goplus/gop/cl", bar, conf)
 	if err != nil {
 		t.Fatal("NewPackage:", err)
 	}
@@ -3515,7 +3516,7 @@ func main() {
 	fmt.Println("init")
 }
 `)
-	gopClTestEx(t, "bar", `package bar
+	gopClTestEx(t, gblConf, "bar", `package bar
 println("init")
 `, `package bar
 
@@ -3616,6 +3617,45 @@ var a interface {
 
 func main() {
 	fmt.Println(a)
+}
+`)
+}
+
+func TestMainEntry(t *testing.T) {
+	conf := *gblConf
+	conf.NoAutoGenMain = false
+
+	gopClTestEx(t, &conf, "main", `
+`, `package main
+
+func main() {
+}
+`)
+	gopClTestEx(t, &conf, "main", `
+func test() {
+	println "hello"
+}
+`, `package main
+
+import fmt "fmt"
+
+func test() {
+	fmt.Println("hello")
+}
+func main() {
+}
+`)
+
+	gopClTestEx(t, &conf, "main", `
+func main() {
+	println "hello"
+}
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Println("hello")
 }
 `)
 }
