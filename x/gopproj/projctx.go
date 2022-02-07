@@ -211,10 +211,17 @@ func runCommand(dir, command string, args ...string) error {
 func genDefaultGopMod(modfile string) {
 	dir, _ := filepath.Split(modfile)
 	dummy := dir + "dummy"
+	tmodfile := dummy + "/go.mod"
 	os.MkdirAll(dummy, 0755)
-	genGomodFile(modfile)
+	genGomodFile(tmodfile)
 	genDummyProject(dummy)
-	execCommand(dir, "go", "mod", "tidy")
+	execCommand(dummy, "go", "mod", "tidy")
+	os.Rename(tmodfile, modfile)
+	os.Rename(toGoSum(tmodfile), toGoSum(modfile))
+}
+
+func toGoSum(modfile string) string {
+	return modfile[:len(modfile)-3] + "sum"
 }
 
 // -----------------------------------------------------------------------------
