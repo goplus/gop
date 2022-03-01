@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"qlang.io/cl/qlang"
-	_ "qlang.io/lib/builtin"
+	"cl/qlang"
+	_ "lib/builtin"
 )
 
 // -----------------------------------------------------------------------------

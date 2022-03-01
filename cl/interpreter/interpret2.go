@@ -9,7 +9,7 @@ import (
 
 	"qiniupkg.com/text/tpl.v1"
 	"qiniupkg.com/text/tpl.v1/interpreter"
-	"qlang.io/exec"
+	"exec"
 )
 
 var (

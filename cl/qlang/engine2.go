@@ -7,9 +7,9 @@ import (
 
 	"qiniupkg.com/text/tpl.v1/interpreter"
 
-	qcl "qlang.io/cl"
-	"qlang.io/exec"
-	qlang "qlang.io/spec"
+	qcl "cl"
+	"exec"
+	qlang "spec"
 )
 
 // Options represent interpreter options.

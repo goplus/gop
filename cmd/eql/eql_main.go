@@ -5,11 +5,11 @@ import (
 	"os"
 	"strings"
 
-	"qlang.io/cl/interpreter"
-	"qlang.io/cl/qlang"
-	"qlang.io/exec"
-	"qlang.io/lib/eqlang"
-	"qlang.io/lib/qlang.all"
+	"cl/interpreter"
+	"cl/qlang"
+	"exec"
+	"lib/eqlang"
+	"lib/qlang.all"
 )
 
 // -----------------------------------------------------------------------------

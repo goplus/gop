@@ -5,7 +5,7 @@ import (
 
 	ipt "qiniupkg.com/text/tpl.v1/interpreter"
 	"qiniupkg.com/text/tpl.v1/interpreter.util"
-	"qlang.io/exec"
+	"exec"
 )
 
 // -----------------------------------------------------------------------------

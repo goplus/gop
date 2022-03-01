@@ -2,7 +2,7 @@ package exec
 
 import (
 	"testing"
-	"qlang.io/lib/builtin"
+	"lib/builtin"
 )
 
 // -----------------------------------------------------------------------------

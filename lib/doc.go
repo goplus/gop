@@ -1,6 +1,6 @@
 package qlang
 
 import (
-	_ "qlang.io/cl"
-	_ "qlang.io/lib/qlang.all"
+	_ "cl"
+	_ "lib/qlang.all"
 )

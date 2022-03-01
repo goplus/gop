@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
-	qlang "qlang.io/spec"
+	qlang "spec"
 )
 
 var (

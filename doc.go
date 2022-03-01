@@ -1,5 +1,5 @@
 package doc
 
 import (
-	_ "qlang.io/cl"
+	_ "cl"
 )

@@ -3,7 +3,7 @@ package builtin
 import (
 	"fmt"
 
-	qlang "qlang.io/spec"
+	qlang "spec"
 )
 
 // -----------------------------------------------------------------------------

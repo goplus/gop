@@ -3,8 +3,8 @@ package qlang
 import (
 	"strings"
 
-	"qlang.io/exec"
-	qlang "qlang.io/spec"
+	"exec"
+	qlang "spec"
 
 	ipt "qiniupkg.com/text/tpl.v1/interpreter"
 	"qiniupkg.com/text/tpl.v1/interpreter.util"

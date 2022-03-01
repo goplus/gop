@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"strings"
 
-	qlang "qlang.io/spec"
-	"qlang.io/spec/types"
+	qlang "spec"
+	"spec/types"
 )
 
 // -----------------------------------------------------------------------------

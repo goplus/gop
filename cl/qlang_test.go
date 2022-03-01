@@ -4,9 +4,9 @@ import (
 	"reflect"
 	"testing"
 
-	"qlang.io/cl/qlang"
-	"qlang.io/lib/math"
-	qspec "qlang.io/spec"
+	"cl/qlang"
+	"lib/math"
+	qspec "spec"
 )
 
 // -----------------------------------------------------------------------------

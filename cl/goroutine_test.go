@@ -3,10 +3,10 @@ package qlang_test
 import (
 	"testing"
 
-	"qlang.io/cl/qlang"
-	_ "qlang.io/lib/builtin"
-	_ "qlang.io/lib/chan"
-	"qlang.io/lib/sync"
+	"cl/qlang"
+	_ "lib/builtin"
+	_ "lib/chan"
+	"lib/sync"
 )
 
 func init() {
