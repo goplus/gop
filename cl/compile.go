@@ -251,7 +251,7 @@ type blockCtx struct {
 	imports      map[string]*gox.PkgRef
 	lookups      []*gox.PkgRef
 	targetDir    string
-	classRecv    *ast.FieldList // avaliable when gmxSettings != nil
+	classRecv    *ast.FieldList // available when gmxSettings != nil
 	fileLine     bool
 	relativePath bool
 	isClass      bool
