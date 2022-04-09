@@ -3237,22 +3237,19 @@ func TestNew(t *testing.T) {
 		t.Fatal("Test failed:", ret, expected)
 	}
 }
-
-type Result struct {
-	Repo Repo
-}
-
 func New() Result {
 	repo := newRepo()
 	return Result{Repo: repo}
+}
+func newRepo() Repo {
+	return Repo{Title: "Hi"}
 }
 
 type Repo struct {
 	Title string
 }
-
-func newRepo() Repo {
-	return Repo{Title: "Hi"}
+type Result struct {
+	Repo Repo
 }
 `)
 	}
