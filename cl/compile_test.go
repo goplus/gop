@@ -68,6 +68,12 @@ func init() {
 	}
 }
 
+func gopClNamedTest(t *testing.T, name string, gopcode, expected string) {
+	t.Run(name, func(t *testing.T) {
+		gopClTest(t, gopcode, expected)
+	})
+}
+
 func gopClTest(t *testing.T, gopcode, expected string) {
 	gopClTestEx(t, gblConf, "main", gopcode, expected)
 }
@@ -549,7 +555,7 @@ func main() {
 }
 
 func TestIssue774(t *testing.T) {
-	gopClTest(t, `
+	gopClNamedTest(t, "InterfaceTypeAssert", `
 package main
 
 import "fmt"
@@ -579,18 +585,19 @@ func main() {
 	fmt.Println(a.(*A))
 }
 
-type AA interface {
-	String() string
-}
 type A struct {
 	str string
 }
 
 func (a *A) String() string {
 	return a.str
+}
+
+type AA interface {
+	String() string
 }
 `)
-	gopClTest(t, `
+	gopClNamedTest(t, "getInterface", `
 package main
 
 import "fmt"
@@ -624,16 +631,14 @@ func main() {
 	a := get()
 	fmt.Println(a.(*A))
 }
-
-type AA interface {
-	String() string
-}
-
 func get() AA {
 	var a AA
 	return a
 }
 
+type AA interface {
+	String() string
+}
 type A struct {
 	str string
 }

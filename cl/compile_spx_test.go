@@ -70,33 +70,35 @@ func gopSpxTest(t *testing.T, gmx, spxcode, expected string) {
 }
 
 func gopSpxTestEx(t *testing.T, gmx, spxcode, expected, gmxfile, spxfile string) {
-	gopSpxTestExConf(t, gblConf, gmx, spxcode, expected, gmxfile, spxfile)
+	gopSpxTestExConf(t, "gopSpxTest", gblConf, gmx, spxcode, expected, gmxfile, spxfile)
 }
 
-func gopSpxTestExConf(t *testing.T, conf *cl.Config, gmx, spxcode, expected, gmxfile, spxfile string) {
-	cl.SetDisableRecover(true)
-	defer cl.SetDisableRecover(false)
+func gopSpxTestExConf(t *testing.T, name string, conf *cl.Config, gmx, spxcode, expected, gmxfile, spxfile string) {
+	t.Run(name, func(t *testing.T) {
+		cl.SetDisableRecover(true)
+		defer cl.SetDisableRecover(false)
 
-	fs := newTwoFileFS("/foo", spxfile, spxcode, gmxfile, gmx)
-	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", spxParserConf())
-	if err != nil {
-		scanner.PrintError(os.Stderr, err)
-		t.Fatal("ParseFSDir:", err)
-	}
-	bar := pkgs["main"]
-	pkg, err := cl.NewPackage("", bar, conf)
-	if err != nil {
-		t.Fatal("NewPackage:", err)
-	}
-	var b bytes.Buffer
-	err = gox.WriteTo(&b, pkg, false)
-	if err != nil {
-		t.Fatal("gox.WriteTo failed:", err)
-	}
-	result := b.String()
-	if result != expected {
-		t.Fatalf("\nResult:\n%s\nExpected:\n%s\n", result, expected)
-	}
+		fs := newTwoFileFS("/foo", spxfile, spxcode, gmxfile, gmx)
+		pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", spxParserConf())
+		if err != nil {
+			scanner.PrintError(os.Stderr, err)
+			t.Fatal("ParseFSDir:", err)
+		}
+		bar := pkgs["main"]
+		pkg, err := cl.NewPackage("", bar, conf)
+		if err != nil {
+			t.Fatal("NewPackage:", err)
+		}
+		var b bytes.Buffer
+		err = gox.WriteTo(&b, pkg, false)
+		if err != nil {
+			t.Fatal("gox.WriteTo failed:", err)
+		}
+		result := b.String()
+		if result != expected {
+			t.Fatalf("\nResult:\n%s\nExpected:\n%s\n", result, expected)
+		}
+	})
 }
 
 func gopSpxErrorTestEx(t *testing.T, msg, gmx, spxcode, gmxfile, spxfile string) {
@@ -404,7 +406,7 @@ func TestSpxMainEntry(t *testing.T) {
 	conf := *gblConf
 	conf.NoAutoGenMain = false
 
-	gopSpxTestExConf(t, &conf, `
+	gopSpxTestExConf(t, "Nocode", &conf, `
 `, `
 `, `package main
 
@@ -420,7 +422,7 @@ func main() {
 	new(Game).Main()
 }
 `, "Game.t2gmx", "Kai.t2spx")
-	gopSpxTestExConf(t, &conf, `
+	gopSpxTestExConf(t, "OnlyGmx", &conf, `
 var (
 	Kai Kai
 )
@@ -433,19 +435,20 @@ type Game struct {
 	spx2.Game
 	Kai Kai
 }
-type Kai struct {
-	spx2.Sprite
-	*Game
-}
 
 func (this *Game) MainEntry() {
 }
 func main() {
 	new(Game).Main()
 }
+
+type Kai struct {
+	spx2.Sprite
+	*Game
+}
 `, "Game.t2gmx", "Kai.t2spx")
 
-	gopSpxTestExConf(t, &conf, `
+	gopSpxTestExConf(t, "KaiAndGmx", &conf, `
 var (
 	Kai Kai
 )
@@ -469,10 +472,6 @@ type Game struct {
 	spx2.Game
 	Kai Kai
 }
-type Kai struct {
-	spx2.Sprite
-	*Game
-}
 
 func (this *Game) MainEntry() {
 	fmt.Println("Hi")
@@ -480,6 +479,12 @@ func (this *Game) MainEntry() {
 func main() {
 	new(Game).Main()
 }
+
+type Kai struct {
+	spx2.Sprite
+	*Game
+}
+
 func (this *Kai) Main() {
 	fmt.Println("Hello")
 }
