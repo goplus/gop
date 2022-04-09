@@ -1615,12 +1615,12 @@ func main() {
 }
 `, `package main
 
+type bar = foo
 type foo struct {
 	p *foo
 	A int
 	B string "tag1:123"
 }
-type bar = foo
 
 func main() {
 	type a struct {
@@ -1890,10 +1890,6 @@ type fooIter struct {
 	data *foo
 	idx  int
 }
-type foo struct {
-	key []int
-	val []string
-}
 
 func (p *fooIter) Next() (key int, val string, ok bool) {
 	if p.idx < len(p.data.key) {
@@ -1902,6 +1898,12 @@ func (p *fooIter) Next() (key int, val string, ok bool) {
 	}
 	return
 }
+
+type foo struct {
+	key []int
+	val []string
+}
+
 func (p *foo) Gop_Enum() *fooIter {
 	return &fooIter{data: p}
 }
