@@ -17,10 +17,11 @@ import (
 
 	"github.com/goplus/gop/ast/togo"
 	gopp "github.com/goplus/gop/parser"
+	"golang.org/x/tools/go/gcexportdata"
 )
 
 var (
-	compiler = flag.String("c", "source", `compiler to use: source, gc or gccgo`)
+	compiler = flag.String("c", "gc", `compiler to use: source, gc or gccgo`)
 	internal = flag.Bool("i", false, "print internal declarations")
 )
 
@@ -43,17 +44,31 @@ func isPublic(name string) bool {
 	return false
 }
 
+var (
+	goModCache string
+)
+
 func main() {
 	flag.Parse()
 	if flag.NArg() < 1 {
 		usage()
 		return
 	}
-	initGoEnv()
+	goModCache = initGoModCache()
 
+	var fset = token.NewFileSet()
 	var files []*ast.File
+	var imp types.Importer
+	switch *compiler {
+	case "gc":
+		packages := make(map[string]*types.Package)
+		imp = gcexportdata.NewImporter(fset, packages)
+	case "source":
+		imp = importer.ForCompiler(fset, "source", nil)
+	default:
+		log.Panicln("Unsupport compiler:", *compiler)
+	}
 
-	fset := token.NewFileSet()
 	if infile := flag.Arg(0); isDir(infile) {
 		pkgs, first := gopp.ParseDir(fset, infile, func(fi fs.FileInfo) bool {
 			name := fi.Name()
@@ -89,10 +104,12 @@ func main() {
 		}
 	}
 
-	imp := importer.ForCompiler(fset, *compiler, nil)
-	conf := types.Config{
-		Importer:                 imp,
-		IgnoreFuncBodies:         true,
+	conf := &types.Config{
+		Importer:         imp,
+		IgnoreFuncBodies: true,
+		Error: func(err error) {
+			log.Println(err)
+		},
 		DisableUnusedImportCheck: true,
 	}
 
