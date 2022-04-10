@@ -297,7 +297,16 @@ func goDecls(decls []gopast.Decl) []ast.Decl {
 	return ret
 }
 
-func ASTFile(f *gopast.File) *ast.File {
+// ----------------------------------------------------------------------------
+
+const (
+	KeepFuncBody = 1 << iota
+)
+
+func ASTFile(f *gopast.File, mode int) *ast.File {
+	if (mode & KeepFuncBody) != 0 {
+		log.Panicln("ASTFile: doesn't support keep func body now")
+	}
 	return &ast.File{
 		Package: f.Package,
 		Name:    goIdent(f.Name),
