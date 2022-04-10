@@ -57,6 +57,9 @@ func main() {
 	if infile := flag.Arg(0); isDir(infile) {
 		pkgs, first := gopp.ParseDir(fset, infile, func(fi fs.FileInfo) bool {
 			name := fi.Name()
+			if strings.HasPrefix(name, "_") {
+				return false
+			}
 			return !strings.HasSuffix(strings.TrimSuffix(name, filepath.Ext(name)), "_test")
 		}, 0)
 		check(first)
