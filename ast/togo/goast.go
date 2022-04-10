@@ -60,7 +60,7 @@ func goExpr(val gopast.Expr) ast.Expr {
 	case *gopast.ArrayType:
 		return &ast.ArrayType{
 			Lbrack: v.Lbrack,
-			Len:    goValue(v.Len),
+			Len:    goExpr(v.Len),
 			Elt:    goType(v.Elt),
 		}
 	case *gopast.ChanType:
@@ -93,6 +93,13 @@ func goExpr(val gopast.Expr) ast.Expr {
 			Ellipsis: v.Ellipsis,
 			Rparen:   v.Rparen,
 		}
+	case *gopast.IndexExpr:
+		return &ast.IndexExpr{
+			X:      goExpr(v.X),
+			Lbrack: v.Lbrack,
+			Index:  goExpr(v.Index),
+			Rbrack: v.Rbrack,
+		}
 	case *gopast.ParenExpr:
 		return &ast.ParenExpr{
 			Lparen: v.Lparen,
@@ -110,6 +117,13 @@ func goExpr(val gopast.Expr) ast.Expr {
 		return &ast.FuncLit{
 			Type: goFuncType(v.Type),
 			Body: nil,
+		}
+	case *gopast.TypeAssertExpr:
+		return &ast.TypeAssertExpr{
+			X:      goExpr(v.X),
+			Lparen: v.Lparen,
+			Type:   goType(v.Type),
+			Rparen: v.Rparen,
 		}
 	case *gopast.KeyValueExpr:
 		return &ast.KeyValueExpr{
@@ -150,10 +164,6 @@ func goFuncType(v *gopast.FuncType) *ast.FuncType {
 }
 
 func goType(v gopast.Expr) ast.Expr {
-	return goExpr(v)
-}
-
-func goValue(v gopast.Expr) ast.Expr {
 	return goExpr(v)
 }
 
