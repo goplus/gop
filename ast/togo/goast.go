@@ -19,6 +19,11 @@ func goExpr(val gopast.Expr) ast.Expr {
 	switch v := val.(type) {
 	case *gopast.Ident:
 		return goIdent(v)
+	case *gopast.SelectorExpr:
+		return &ast.SelectorExpr{
+			X:   goExpr(v.X),
+			Sel: goIdent(v.Sel),
+		}
 	case *gopast.SliceExpr:
 		return &ast.SliceExpr{
 			X:      goExpr(v.X),
@@ -67,12 +72,44 @@ func goExpr(val gopast.Expr) ast.Expr {
 		}
 	case *gopast.BasicLit:
 		return goBasicLit(v)
+	case *gopast.BinaryExpr:
+		return &ast.BinaryExpr{
+			X:     goExpr(v.X),
+			OpPos: v.OpPos,
+			Op:    token.Token(v.Op),
+			Y:     goExpr(v.Y),
+		}
+	case *gopast.UnaryExpr:
+		return &ast.UnaryExpr{
+			OpPos: v.OpPos,
+			Op:    token.Token(v.Op),
+			X:     goExpr(v.X),
+		}
+	case *gopast.CallExpr:
+		return &ast.CallExpr{
+			Fun:      goExpr(v.Fun),
+			Lparen:   v.Lparen,
+			Args:     goExprs(v.Args),
+			Ellipsis: v.Ellipsis,
+			Rparen:   v.Rparen,
+		}
 	case *gopast.CompositeLit:
 		return &ast.CompositeLit{
 			Type:   goType(v.Type),
 			Lbrace: v.Lbrace,
 			Elts:   goExprs(v.Elts),
 			Rbrace: v.Rbrace,
+		}
+	case *gopast.KeyValueExpr:
+		return &ast.KeyValueExpr{
+			Key:   goExpr(v.Key),
+			Colon: v.Colon,
+			Value: goExpr(v.Value),
+		}
+	case *gopast.Ellipsis:
+		return &ast.Ellipsis{
+			Ellipsis: v.Ellipsis,
+			Elt:      goExpr(v.Elt),
 		}
 	}
 	log.Panicln("goExpr: unknown expr -", reflect.TypeOf(val))
