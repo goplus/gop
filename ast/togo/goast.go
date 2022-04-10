@@ -106,6 +106,11 @@ func goExpr(val gopast.Expr) ast.Expr {
 			Elts:   goExprs(v.Elts),
 			Rbrace: v.Rbrace,
 		}
+	case *gopast.FuncLit:
+		return &ast.FuncLit{
+			Type: goFuncType(v.Type),
+			Body: nil,
+		}
 	case *gopast.KeyValueExpr:
 		return &ast.KeyValueExpr{
 			Key:   goExpr(v.Key),
@@ -203,11 +208,12 @@ func goFieldList(v *gopast.FieldList) *ast.FieldList {
 }
 
 func goFuncDecl(v *gopast.FuncDecl) *ast.FuncDecl {
+	body := &ast.BlockStmt{}
 	return &ast.FuncDecl{
 		Recv: goFieldList(v.Recv),
 		Name: goIdent(v.Name),
 		Type: goFuncType(v.Type),
-		Body: nil, // ignore function body
+		Body: body, // ignore function body
 	}
 }
 
