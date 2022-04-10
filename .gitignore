@@ -33,6 +33,8 @@ coverage.txt
 .gop/
 gop_autogen*.go
 go.json
+go.work
+go.work.sum
 format.result
 *.cache
 

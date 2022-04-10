@@ -68,6 +68,12 @@ func init() {
 	}
 }
 
+func gopClNamedTest(t *testing.T, name string, gopcode, expected string) {
+	t.Run(name, func(t *testing.T) {
+		gopClTest(t, gopcode, expected)
+	})
+}
+
 func gopClTest(t *testing.T, gopcode, expected string) {
 	gopClTestEx(t, gblConf, "main", gopcode, expected)
 }
@@ -549,7 +555,7 @@ func main() {
 }
 
 func TestIssue774(t *testing.T) {
-	gopClTest(t, `
+	gopClNamedTest(t, "InterfaceTypeAssert", `
 package main
 
 import "fmt"
@@ -579,18 +585,19 @@ func main() {
 	fmt.Println(a.(*A))
 }
 
-type AA interface {
-	String() string
-}
 type A struct {
 	str string
 }
 
 func (a *A) String() string {
 	return a.str
+}
+
+type AA interface {
+	String() string
 }
 `)
-	gopClTest(t, `
+	gopClNamedTest(t, "getInterface", `
 package main
 
 import "fmt"
@@ -624,16 +631,14 @@ func main() {
 	a := get()
 	fmt.Println(a.(*A))
 }
-
-type AA interface {
-	String() string
-}
-
 func get() AA {
 	var a AA
 	return a
 }
 
+type AA interface {
+	String() string
+}
 type A struct {
 	str string
 }
@@ -1610,12 +1615,12 @@ func main() {
 }
 `, `package main
 
+type bar = foo
 type foo struct {
 	p *foo
 	A int
 	B string "tag1:123"
 }
-type bar = foo
 
 func main() {
 	type a struct {
@@ -1885,10 +1890,6 @@ type fooIter struct {
 	data *foo
 	idx  int
 }
-type foo struct {
-	key []int
-	val []string
-}
 
 func (p *fooIter) Next() (key int, val string, ok bool) {
 	if p.idx < len(p.data.key) {
@@ -1897,6 +1898,12 @@ func (p *fooIter) Next() (key int, val string, ok bool) {
 	}
 	return
 }
+
+type foo struct {
+	key []int
+	val []string
+}
+
 func (p *foo) Gop_Enum() *fooIter {
 	return &fooIter{data: p}
 }
@@ -3230,22 +3237,19 @@ func TestNew(t *testing.T) {
 		t.Fatal("Test failed:", ret, expected)
 	}
 }
-
-type Result struct {
-	Repo Repo
-}
-
 func New() Result {
 	repo := newRepo()
 	return Result{Repo: repo}
+}
+func newRepo() Repo {
+	return Repo{Title: "Hi"}
 }
 
 type Repo struct {
 	Title string
 }
-
-func newRepo() Repo {
-	return Repo{Title: "Hi"}
+type Result struct {
+	Repo Repo
 }
 `)
 	}
