@@ -218,12 +218,11 @@ func goFieldList(v *gopast.FieldList) *ast.FieldList {
 }
 
 func goFuncDecl(v *gopast.FuncDecl) *ast.FuncDecl {
-	body := &ast.BlockStmt{}
 	return &ast.FuncDecl{
 		Recv: goFieldList(v.Recv),
 		Name: goIdent(v.Name),
 		Type: goFuncType(v.Type),
-		Body: body, // ignore function body
+		Body: &ast.BlockStmt{}, // ignore function body
 	}
 }
 

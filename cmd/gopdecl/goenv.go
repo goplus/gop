@@ -6,9 +6,11 @@ import (
 	"runtime"
 )
 
-func initGoEnv() {
+func initGoModCache() string {
 	val := os.Getenv("GOMODCACHE")
 	if val == "" {
-		os.Setenv("GOMODCACHE", filepath.Join(runtime.GOROOT(), "pkg/mod"))
+		val = filepath.Join(runtime.GOROOT(), "pkg/mod")
+		os.Setenv("GOMODCACHE", val)
 	}
+	return val
 }
