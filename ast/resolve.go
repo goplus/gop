@@ -183,5 +183,5 @@ func NewPackage(fset *token.FileSet, files map[string]*File, importer Importer, 
 	}
 
 	p.errors.Sort()
-	return &Package{pkgName, pkgScope, imports, files}, p.errors.Err()
+	return &Package{pkgName, pkgScope, imports, files, nil}, p.errors.Err()
 }

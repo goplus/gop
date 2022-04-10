@@ -17,6 +17,7 @@
 package parsertest
 
 import (
+	"io/fs"
 	"os"
 	"path"
 	"syscall"
@@ -66,9 +67,9 @@ func NewMemFS(dirs map[string][]string, files map[string]string) *MemFS {
 
 // ReadDir reads the directory named by dirname and returns
 // a list of directory entries sorted by filename.
-func (p *MemFS) ReadDir(dirname string) ([]os.FileInfo, error) {
+func (p *MemFS) ReadDir(dirname string) ([]fs.FileInfo, error) {
 	if items, ok := p.dirs[dirname]; ok {
-		fis := make([]os.FileInfo, len(items))
+		fis := make([]fs.FileInfo, len(items))
 		for i, item := range items {
 			fis[i] = &memFileInfo{name: item}
 		}

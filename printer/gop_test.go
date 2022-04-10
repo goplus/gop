@@ -18,6 +18,7 @@ package printer_test
 
 import (
 	"bytes"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -152,7 +153,7 @@ func TestFromTestdata(t *testing.T) {
 		t.Fatal("Getwd failed:", err)
 	}
 	dir = filepath.Join(dir, "./_testdata")
-	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -170,7 +171,7 @@ func TestFromParse(t *testing.T) {
 		t.Fatal("Getwd failed:", err)
 	}
 	dir = filepath.Join(dir, "../parser/_testdata")
-	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}

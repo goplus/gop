@@ -18,7 +18,7 @@ package gopq
 
 import (
 	"errors"
-	"os"
+	"io/fs"
 	"syscall"
 
 	"github.com/goplus/gop/ast"
@@ -59,7 +59,7 @@ type NodeSet struct {
 // directory specified by path and returns a map of package name -> package
 // AST with all the packages found.
 //
-// If filter != nil, only the files with os.FileInfo entries passing through
+// If filter != nil, only the files with fs.FileInfo entries passing through
 // the filter (and ending in ".gop") are considered. The mode bits are passed
 // to ParseFile unchanged. Position information is recorded in fset, which
 // must not be nil.
@@ -69,7 +69,7 @@ type NodeSet struct {
 // first error encountered are returned.
 func NewSource(
 	fset *token.FileSet, path string,
-	filter func(os.FileInfo) bool, mode parser.Mode) (doc NodeSet, err error) {
+	filter func(fs.FileInfo) bool, mode parser.Mode) (doc NodeSet, err error) {
 
 	pkgs, err := parser.ParseDir(fset, path, filter, mode)
 	if err != nil {
@@ -82,7 +82,7 @@ func NewSource(
 // directory specified by path and returns a map of package name -> package
 // AST with all the packages found.
 //
-// If filter != nil, only the files with os.FileInfo entries passing through
+// If filter != nil, only the files with fs.FileInfo entries passing through
 // the filter (and ending in ".gop") are considered. The mode bits are passed
 // to ParseFile unchanged. Position information is recorded in fset, which
 // must not be nil.
@@ -92,7 +92,7 @@ func NewSource(
 // first error encountered are returned.
 func NewSourceFrom(
 	fset *token.FileSet, fs parser.FileSystem, path string,
-	filter func(os.FileInfo) bool, mode parser.Mode) (doc NodeSet, err error) {
+	filter func(fs.FileInfo) bool, mode parser.Mode) (doc NodeSet, err error) {
 
 	pkgs, err := parser.ParseFSDir(fset, fs, path, parser.Config{Filter: filter, Mode: mode})
 	if err != nil {

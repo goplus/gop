@@ -9,12 +9,18 @@ import (
 	"go/token"
 	"go/types"
 	"io/fs"
+	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"unicode"
+
+	gopast "github.com/goplus/gop/ast"
+	gopp "github.com/goplus/gop/parser"
 )
 
 var (
+	compiler = flag.String("c", "source", `compiler to use: source, gc or gccgo`)
 	internal = flag.Bool("i", false, "print internal declarations")
 )
 
@@ -37,6 +43,11 @@ func isPublic(name string) bool {
 	return false
 }
 
+func goASTFile(f *gopast.File) *ast.File {
+	log.Panicln("goASTFile: TODO")
+	return nil
+}
+
 func main() {
 	flag.Parse()
 	if flag.NArg() < 1 {
@@ -49,27 +60,38 @@ func main() {
 
 	fset := token.NewFileSet()
 	if infile := flag.Arg(0); isDir(infile) {
-		pkgs, first := parser.ParseDir(fset, infile, func(fi fs.FileInfo) bool {
-			return !strings.HasSuffix(fi.Name(), "_test.go")
+		pkgs, first := gopp.ParseDir(fset, infile, func(fi fs.FileInfo) bool {
+			name := fi.Name()
+			return !strings.HasSuffix(strings.TrimSuffix(name, filepath.Ext(name)), "_test")
 		}, 0)
 		check(first)
 		for name, pkg := range pkgs {
 			if !strings.HasSuffix(name, "_test") {
 				for _, f := range pkg.Files {
-					files = append(files, f)
+					files = append(files, goASTFile(f))
 				}
 				break
 			}
 		}
 	} else {
 		for i, n := 0, flag.NArg(); i < n; i++ {
-			f, err := parser.ParseFile(fset, flag.Arg(i), nil, 0)
-			check(err)
-			files = append(files, f)
+			infile = flag.Arg(i)
+			switch filepath.Ext(infile) {
+			case ".gop":
+				f, err := gopp.ParseFile(fset, infile, nil, 0)
+				check(err)
+				files = append(files, goASTFile(f))
+			case ".go":
+				f, err := parser.ParseFile(fset, infile, nil, 0)
+				check(err)
+				files = append(files, f)
+			default:
+				log.Panicln("Unknown support file:", infile)
+			}
 		}
 	}
 
-	imp := importer.ForCompiler(fset, "source", nil)
+	imp := importer.ForCompiler(fset, *compiler, nil)
 	conf := types.Config{
 		Importer:                 imp,
 		IgnoreFuncBodies:         true,
