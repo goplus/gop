@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -49,19 +50,19 @@ func SetDebug(dbgFlags int) {
 
 // FileSystem represents a file system.
 type FileSystem interface {
-	ReadDir(dirname string) ([]os.FileInfo, error)
+	ReadDir(dirname string) ([]fs.FileInfo, error)
 	ReadFile(filename string) ([]byte, error)
 	Join(elem ...string) string
 }
 
 type localFS struct{}
 
-func (p localFS) ReadDir(dirname string) ([]os.FileInfo, error) {
+func (p localFS) ReadDir(dirname string) ([]fs.FileInfo, error) {
 	return ioutil.ReadDir(dirname)
 }
 
 func (p localFS) ReadFile(filename string) ([]byte, error) {
-	return ioutil.ReadFile(filename)
+	return os.ReadFile(filename)
 }
 
 func (p localFS) Join(elem ...string) string {
@@ -96,13 +97,13 @@ func astFileToPkg(file *ast.File, fileName string) (pkg *ast.Package) {
 
 // ParseDir calls ParseFSDir by passing a local filesystem.
 //
-func ParseDir(fset *token.FileSet, path string, filter func(os.FileInfo) bool, mode Mode) (pkgs map[string]*ast.Package, first error) {
+func ParseDir(fset *token.FileSet, path string, filter func(fs.FileInfo) bool, mode Mode) (pkgs map[string]*ast.Package, first error) {
 	return ParseFSDir(fset, local, path, Config{Filter: filter, Mode: mode})
 }
 
 type Config struct {
 	IsClass func(ext string) (isProj bool, ok bool)
-	Filter  func(os.FileInfo) bool
+	Filter  func(fs.FileInfo) bool
 	Mode    Mode
 }
 
@@ -116,7 +117,7 @@ func ParseDirEx(fset *token.FileSet, path string, conf Config) (pkgs map[string]
 // directory specified by path and returns a map of package name -> package
 // AST with all the packages found.
 //
-// If filter != nil, only the files with os.FileInfo entries passing through
+// If filter != nil, only the files with fs.FileInfo entries passing through
 // the filter (and ending in ".gop") are considered. The mode bits are passed
 // to ParseFile unchanged. Position information is recorded in fset, which
 // must not be nil.
