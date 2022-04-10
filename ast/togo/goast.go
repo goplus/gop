@@ -93,6 +93,12 @@ func goExpr(val gopast.Expr) ast.Expr {
 			Ellipsis: v.Ellipsis,
 			Rparen:   v.Rparen,
 		}
+	case *gopast.ParenExpr:
+		return &ast.ParenExpr{
+			Lparen: v.Lparen,
+			X:      goExpr(v.X),
+			Rparen: v.Rparen,
+		}
 	case *gopast.CompositeLit:
 		return &ast.CompositeLit{
 			Type:   goType(v.Type),
