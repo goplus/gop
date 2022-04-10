@@ -34,6 +34,37 @@ func goExpr(val gopast.Expr) ast.Expr {
 			Star: v.Star,
 			X:    goExpr(v.X),
 		}
+	case *gopast.MapType:
+		return &ast.MapType{
+			Map:   v.Map,
+			Key:   goType(v.Key),
+			Value: goType(v.Value),
+		}
+	case *gopast.StructType:
+		return &ast.StructType{
+			Struct: v.Struct,
+			Fields: goFieldList(v.Fields),
+		}
+	case *gopast.FuncType:
+		return goFuncType(v)
+	case *gopast.InterfaceType:
+		return &ast.InterfaceType{
+			Interface: v.Interface,
+			Methods:   goFieldList(v.Methods),
+		}
+	case *gopast.ArrayType:
+		return &ast.ArrayType{
+			Lbrack: v.Lbrack,
+			Len:    goValue(v.Len),
+			Elt:    goType(v.Elt),
+		}
+	case *gopast.ChanType:
+		return &ast.ChanType{
+			Begin: v.Begin,
+			Arrow: v.Arrow,
+			Dir:   ast.ChanDir(v.Dir),
+			Value: goType(v.Value),
+		}
 	case *gopast.BasicLit:
 		return goBasicLit(v)
 	case *gopast.CompositeLit:
