@@ -209,7 +209,9 @@ func goDecls(decls []gopast.Decl) []ast.Decl {
 
 func ASTFile(f *gopast.File) *ast.File {
 	return &ast.File{
-		Decls: goDecls(f.Decls),
+		Package: f.Package,
+		Name:    goIdent(f.Name),
+		Decls:   goDecls(f.Decls),
 	}
 }
 
