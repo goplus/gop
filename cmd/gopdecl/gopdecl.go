@@ -66,7 +66,7 @@ func main() {
 		for name, pkg := range pkgs {
 			if !strings.HasSuffix(name, "_test") {
 				for _, f := range pkg.Files {
-					files = append(files, togo.ASTFile(f))
+					files = append(files, togo.ASTFile(f, 0))
 				}
 				break
 			}
@@ -78,7 +78,7 @@ func main() {
 			case ".gop":
 				f, err := gopp.ParseFile(fset, infile, nil, 0)
 				check(err)
-				files = append(files, togo.ASTFile(f))
+				files = append(files, togo.ASTFile(f, 0))
 			case ".go":
 				f, err := parser.ParseFile(fset, infile, nil, 0)
 				check(err)
