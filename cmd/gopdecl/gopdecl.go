@@ -21,7 +21,7 @@ import (
 )
 
 var (
-	compiler = flag.String("c", "gc", `compiler to use: source, gc or gccgo`)
+	compiler = flag.String("c", "source", `compiler to use: source, gc or gccgo`)
 	internal = flag.Bool("i", false, "print internal declarations")
 )
 
