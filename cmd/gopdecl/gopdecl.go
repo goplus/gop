@@ -15,7 +15,7 @@ import (
 	"strings"
 	"unicode"
 
-	gopast "github.com/goplus/gop/ast"
+	"github.com/goplus/gop/ast/togo"
 	gopp "github.com/goplus/gop/parser"
 )
 
@@ -43,11 +43,6 @@ func isPublic(name string) bool {
 	return false
 }
 
-func goASTFile(f *gopast.File) *ast.File {
-	log.Panicln("goASTFile: TODO")
-	return nil
-}
-
 func main() {
 	flag.Parse()
 	if flag.NArg() < 1 {
@@ -68,7 +63,7 @@ func main() {
 		for name, pkg := range pkgs {
 			if !strings.HasSuffix(name, "_test") {
 				for _, f := range pkg.Files {
-					files = append(files, goASTFile(f))
+					files = append(files, togo.ASTFile(f))
 				}
 				break
 			}
@@ -80,7 +75,7 @@ func main() {
 			case ".gop":
 				f, err := gopp.ParseFile(fset, infile, nil, 0)
 				check(err)
-				files = append(files, goASTFile(f))
+				files = append(files, togo.ASTFile(f))
 			case ".go":
 				f, err := parser.ParseFile(fset, infile, nil, 0)
 				check(err)
