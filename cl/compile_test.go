@@ -18,7 +18,6 @@ package cl_test
 
 import (
 	"bytes"
-	"go/types"
 	"os"
 	"strings"
 	"sync"
@@ -42,23 +41,7 @@ func init() {
 	gox.SetDebug(gox.DbgFlagAll)
 	cl.SetDebug(cl.DbgFlagAll)
 	gblFset = token.NewFileSet()
-	conf := &packages.Config{
-		ModRoot: ".",
-		ModPath: "github.com/goplus/gop/cl",
-		Loaded:  make(map[string]*types.Package),
-		Fset:    gblFset,
-	}
-	const (
-		pkgbi   = "github.com/goplus/gop/builtin"
-		pkggt   = "github.com/goplus/gop/ast/goptest"
-		pkgspx  = "github.com/goplus/gop/cl/internal/spx"
-		pkgspx2 = "github.com/goplus/gop/cl/internal/spx2"
-	)
-	imp, _, err := packages.NewImporter(
-		conf, ".", "encoding/base32", "encoding/base64", pkgbi, pkggt, pkgspx, pkgspx2)
-	if err != nil {
-		panic(err)
-	}
+	imp := packages.NewImporter(gblFset)
 	gblConf = &cl.Config{
 		Fset:          gblFset,
 		Importer:      imp,
@@ -163,14 +146,14 @@ const (
 )
 `, `package main
 
-func main() {
-	const a = append + len
-}
-
 const (
 	append = iota
 	len
 )
+
+func main() {
+	const a = append + len
+}
 `)
 }
 
