@@ -33,18 +33,7 @@ var (
 
 func getGoxConf() *gox.Config {
 	fset := token.NewFileSet()
-	conf := &packages.Config{
-		ModPath: "github.com/goplus/gop/cl",
-		Loaded:  make(map[string]*types.Package),
-		Fset:    fset,
-	}
-	const (
-		pkgspx2 = "github.com/goplus/gop/cl/internal/spx2"
-	)
-	imp, _, err := packages.NewImporter(conf, ".", pkgspx2)
-	if err != nil {
-		panic(err)
-	}
+	imp := packages.NewImporter(fset)
 	return &gox.Config{Fset: fset, Importer: imp}
 }
 

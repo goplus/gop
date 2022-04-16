@@ -127,10 +127,7 @@ func (p *gopFiles) GenGo(outFile, modFile string) error {
 			os.Chdir(wd)
 		}()
 	}
-	conf.Importer, _, err = packages.NewImporter(nil, "github.com/goplus/gop/builtin")
-	if err != nil {
-		return err
-	}
+	conf.Importer = packages.NewImporter(fset)
 	out, err := cl.NewPackage("", mainPkg, conf)
 	if err != nil {
 		return err
