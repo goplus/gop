@@ -18,13 +18,16 @@
 package build
 
 import (
+	"fmt"
 	"os"
+	"os/exec"
 
 	"github.com/qiniu/x/log"
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/x/gengo"
+	"github.com/goplus/gop/x/gopproj"
+	"github.com/goplus/gop/x/gopprojs"
 	"github.com/goplus/gox"
 )
 
@@ -36,7 +39,7 @@ var Cmd = &base.Command{
 
 var (
 	flagVerbose = flag.Bool("v", false, "print verbose information.")
-	flagOutput  = flag.String("o", "", "gop build output file.")
+	flagOutput  = flag.String("o", "a.out", "gop build output file.")
 	flag        = &Cmd.Flag
 )
 
@@ -50,22 +53,46 @@ func runCmd(_ *base.Command, args []string) {
 		log.Fatalln("parse input arguments failed:", err)
 	}
 
-	pattern := flag.Args()
-	if len(pattern) == 0 {
-		pattern = []string{"."}
-	}
-
 	if *flagVerbose {
 		gox.SetDebug(gox.DbgFlagAll &^ gox.DbgFlagComments)
 		cl.SetDebug(cl.DbgFlagAll)
 		cl.SetDisableRecover(true)
 	}
-	_ = flagOutput
 
-	if !gengo.GenGo(gengo.Config{}, false, ".", pattern...) {
+	args = flag.Args()
+	if len(args) == 0 {
+		args = []string{"."}
+	}
+	gopBuild(args)
+}
+
+func gopBuild(args []string) {
+	proj, args, err := gopprojs.ParseOne(args...)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	flags := 0
+	ctx, goProj, err := gopproj.OpenProject(flags, proj)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	base.RunGoCmd(".", "build", args...)
+	goProj.BuildArgs = []string{"-o", *flagOutput}
+	cmd := ctx.GoCommand("build", goProj)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Env = os.Environ()
+	err = cmd.Run()
+	if err != nil {
+		switch e := err.(type) {
+		case *exec.ExitError:
+			os.Exit(e.ExitCode())
+		default:
+			log.Fatalln(err)
+		}
+	}
 }
 
 // -----------------------------------------------------------------------------
