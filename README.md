@@ -202,14 +202,6 @@ println float64(true)
 println complex64(true)
 ```
 
-Output:
-
-```
-1
-1
-(1+0i)
-```
-
 ### Map literal
 
 ```go
