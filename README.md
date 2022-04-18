@@ -194,6 +194,22 @@ var y *big.Rat = 4/5r
 println x, y
 ```
 
+### Convert bool to number types
+
+```go
+println int(true)
+println float64(true)
+println complex64(true)
+```
+
+Output:
+
+```
+1
+1
+(1+0i)
+```
+
 ### Map literal
 
 ```go
