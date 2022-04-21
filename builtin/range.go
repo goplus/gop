@@ -16,6 +16,10 @@
 
 package builtin
 
+const (
+	GopPackage = true // to indicate this is a Go+ package
+)
+
 // -----------------------------------------------------------------------------
 
 type IntRange struct {

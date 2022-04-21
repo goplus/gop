@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builtin
+package big
 
 import (
 	"math/big"
