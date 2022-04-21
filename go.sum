@@ -1,5 +1,5 @@
-github.com/goplus/gox v1.10.3 h1:21//48zPOBstWOhiG9tzufJ0CiHkroRPLj2EzfanIFM=
-github.com/goplus/gox v1.10.3/go.mod h1:gu7fuQF8RmWPZUjd+tEJGuV3m/vOEv0bHrct0x/KatM=
+github.com/goplus/gox v1.10.4 h1:u7YZnuJHcugzaoe7mkxqGG4xXciubGobDRjz//hdtyY=
+github.com/goplus/gox v1.10.4/go.mod h1:gu7fuQF8RmWPZUjd+tEJGuV3m/vOEv0bHrct0x/KatM=
 github.com/qiniu/x v1.11.5 h1:TYr5cl4g2yoHAZeDK4MTjKF6CMoG+IHlCDvvM5qym6U=
 github.com/qiniu/x v1.11.5/go.mod h1:03Ni9tj+N2h2aKnAz+6N0Xfl8FwMEDRC2PAlxekASDs=
 github.com/yuin/goldmark v1.4.1/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
