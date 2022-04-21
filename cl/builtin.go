@@ -27,16 +27,17 @@ import (
 
 func initMathBig(pkg gox.PkgImporter, conf *gox.Config, big *gox.PkgRef) {
 	big.EnsureImported()
-	conf.UntypedBigInt = big.Ref("Gop_untyped_bigint").Type().(*types.Named)
-	conf.UntypedBigRat = big.Ref("Gop_untyped_bigrat").Type().(*types.Named)
-	conf.UntypedBigFloat = big.Ref("Gop_untyped_bigfloat").Type().(*types.Named)
+	conf.UntypedBigInt = big.Ref("UntypedInt").Type().(*types.Named)
+	conf.UntypedBigRat = big.Ref("UntypedRat").Type().(*types.Named)
+	conf.UntypedBigFloat = big.Ref("UntypedFloat").Type().(*types.Named)
 }
 
 func initBuiltin(pkg gox.PkgImporter, builtin *types.Package, fmt, big, buil *gox.PkgRef) {
 	scope := builtin.Scope()
-	typs := []string{"bigint", "bigrat", "bigfloat"}
+	typs := []string{"int", "rat", "float"}
 	for _, typ := range typs {
-		scope.Insert(types.NewTypeName(token.NoPos, builtin, typ, big.Ref("Gop_"+typ).Type()))
+		name := string(typ[0]-('a'-'A')) + typ[1:]
+		scope.Insert(types.NewTypeName(token.NoPos, builtin, "big"+typ, big.Ref(name).Type()))
 	}
 	fns := []string{
 		"print", "println", "printf", "errorf",
