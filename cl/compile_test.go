@@ -1200,8 +1200,8 @@ var z bigint = x + y
 
 import big "github.com/goplus/gop/builtin/big"
 
-var x, y big.Gop_bigint
-var z big.Gop_bigint = x.Gop_Add(y)
+var x, y big.Int
+var z big.Int = x.Gop_Add(y)
 `)
 }
 
@@ -1215,7 +1215,7 @@ import (
 	big1 "math/big"
 )
 
-var x = big.Gop_bigint_Init__1(big1.NewInt(1))
+var x = big.Int_Init__1(big1.NewInt(1))
 `)
 }
 
@@ -1229,7 +1229,7 @@ import (
 	big1 "math/big"
 )
 
-var x = big.Gop_bigrat_Init__2(big1.NewRat(1, 2))
+var x = big.Rat_Init__2(big1.NewRat(1, 2))
 `)
 }
 
@@ -1243,7 +1243,7 @@ import (
 	big1 "math/big"
 )
 
-var x = big.Gop_bigrat_Init__2(big1.NewRat(7, 2))
+var x = big.Rat_Init__2(big1.NewRat(7, 2))
 `)
 }
 
@@ -1260,9 +1260,9 @@ import (
 	big1 "math/big"
 )
 
-var x = big.Gop_bigrat_Init__2(big1.NewRat(7, 2))
-var y = x.Gop_Add(big.Gop_bigrat_Init__0(100))
-var z = big.Gop_bigrat_Init__0(100) + y
+var x = big.Rat_Init__2(big1.NewRat(7, 2))
+var y = x.Gop_Add(big.Rat_Init__0(100))
+var z = big.Rat_Init__0(100) + y
 `)
 }
 
@@ -1346,10 +1346,10 @@ x += 3
 
 import big "github.com/goplus/gop/builtin/big"
 
-var x big.Gop_bigint
+var x big.Int
 
 func main() {
-	x.Gop_AddAssign(big.Gop_bigint_Init__0(3))
+	x.Gop_AddAssign(big.Int_Init__0(3))
 }
 `)
 }
@@ -1366,8 +1366,8 @@ import (
 )
 
 func main() {
-	x := big.Gop_bigint_Init__1(big1.NewInt(3))
-	x.Gop_MulAssign(big.Gop_bigint_Init__0(2))
+	x := big.Int_Init__1(big1.NewInt(3))
+	x.Gop_MulAssign(big.Int_Init__0(2))
 }
 `)
 }
@@ -1384,8 +1384,8 @@ import (
 )
 
 func main() {
-	x := big.Gop_bigint_Init__1(big1.NewInt(3))
-	x.Gop_MulAssign(big.Gop_bigint_Init__1(big1.NewInt(2)))
+	x := big.Int_Init__1(big1.NewInt(3))
+	x.Gop_MulAssign(big.Int_Init__1(big1.NewInt(2)))
 }
 `)
 }
