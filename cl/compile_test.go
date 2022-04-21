@@ -1198,10 +1198,10 @@ var x, y bigint
 var z bigint = x + y
 `, `package main
 
-import builtin "github.com/goplus/gop/builtin"
+import big "github.com/goplus/gop/builtin/big"
 
-var x, y builtin.Gop_bigint
-var z builtin.Gop_bigint = x.Gop_Add(y)
+var x, y big.Gop_bigint
+var z big.Gop_bigint = x.Gop_Add(y)
 `)
 }
 
@@ -1211,11 +1211,11 @@ var x = 1r
 `, `package main
 
 import (
-	builtin "github.com/goplus/gop/builtin"
-	big "math/big"
+	big "github.com/goplus/gop/builtin/big"
+	big1 "math/big"
 )
 
-var x = builtin.Gop_bigint_Init__1(big.NewInt(1))
+var x = big.Gop_bigint_Init__1(big1.NewInt(1))
 `)
 }
 
@@ -1225,11 +1225,11 @@ var x = 1/2r
 `, `package main
 
 import (
-	builtin "github.com/goplus/gop/builtin"
-	big "math/big"
+	big "github.com/goplus/gop/builtin/big"
+	big1 "math/big"
 )
 
-var x = builtin.Gop_bigrat_Init__2(big.NewRat(1, 2))
+var x = big.Gop_bigrat_Init__2(big1.NewRat(1, 2))
 `)
 }
 
@@ -1239,11 +1239,11 @@ var x = 3 + 1/2r
 `, `package main
 
 import (
-	builtin "github.com/goplus/gop/builtin"
-	big "math/big"
+	big "github.com/goplus/gop/builtin/big"
+	big1 "math/big"
 )
 
-var x = builtin.Gop_bigrat_Init__2(big.NewRat(7, 2))
+var x = big.Gop_bigrat_Init__2(big1.NewRat(7, 2))
 `)
 }
 
@@ -1256,13 +1256,13 @@ var z = 100 + y
 `, `package main
 
 import (
-	builtin "github.com/goplus/gop/builtin"
-	big "math/big"
+	big "github.com/goplus/gop/builtin/big"
+	big1 "math/big"
 )
 
-var x = builtin.Gop_bigrat_Init__2(big.NewRat(7, 2))
-var y = x.Gop_Add(builtin.Gop_bigrat_Init__0(100))
-var z = builtin.Gop_bigrat_Init__0(100) + y
+var x = big.Gop_bigrat_Init__2(big1.NewRat(7, 2))
+var y = x.Gop_Add(big.Gop_bigrat_Init__0(100))
+var z = big.Gop_bigrat_Init__0(100) + y
 `)
 }
 
@@ -1344,12 +1344,12 @@ var x bigint
 x += 3
 `, `package main
 
-import builtin "github.com/goplus/gop/builtin"
+import big "github.com/goplus/gop/builtin/big"
 
-var x builtin.Gop_bigint
+var x big.Gop_bigint
 
 func main() {
-	x.Gop_AddAssign(builtin.Gop_bigint_Init__0(3))
+	x.Gop_AddAssign(big.Gop_bigint_Init__0(3))
 }
 `)
 }
@@ -1361,13 +1361,13 @@ x *= 2
 `, `package main
 
 import (
-	builtin "github.com/goplus/gop/builtin"
-	big "math/big"
+	big "github.com/goplus/gop/builtin/big"
+	big1 "math/big"
 )
 
 func main() {
-	x := builtin.Gop_bigint_Init__1(big.NewInt(3))
-	x.Gop_MulAssign(builtin.Gop_bigint_Init__0(2))
+	x := big.Gop_bigint_Init__1(big1.NewInt(3))
+	x.Gop_MulAssign(big.Gop_bigint_Init__0(2))
 }
 `)
 }
@@ -1379,13 +1379,13 @@ x *= 2r
 `, `package main
 
 import (
-	builtin "github.com/goplus/gop/builtin"
-	big "math/big"
+	big "github.com/goplus/gop/builtin/big"
+	big1 "math/big"
 )
 
 func main() {
-	x := builtin.Gop_bigint_Init__1(big.NewInt(3))
-	x.Gop_MulAssign(builtin.Gop_bigint_Init__1(big.NewInt(2)))
+	x := big.Gop_bigint_Init__1(big1.NewInt(3))
+	x.Gop_MulAssign(big.Gop_bigint_Init__1(big1.NewInt(2)))
 }
 `)
 }
