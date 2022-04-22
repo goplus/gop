@@ -14,6 +14,19 @@ type Uint128 struct {
 	hi, lo uint64
 }
 
+// Uint128_Cast: func uint128.init(v int) uint128
+func Uint128_Init__0(v int) (out Uint128) {
+	if v < 0 {
+		panic("TODO: can't init uint128 from a negative integer")
+	}
+	return Uint128{lo: uint64(v)}
+}
+
+// Uint128_Cast: func uint128.init(v uint64) uint128
+func Uint128_Init__1(v uint64) Uint128 {
+	return Uint128{lo: v}
+}
+
 // Uint128_Cast: func uint128(hi, lo uint64) uint128
 func Uint128_Cast__0(hi, lo uint64) Uint128 {
 	return Uint128{hi: hi, lo: lo}
@@ -44,7 +57,7 @@ func Uint128_Cast__5(v uint8) Uint128 {
 	return Uint128{lo: uint64(v)}
 }
 
-// Uint128_Cast: func uint128(v int64) (uint128, bool)
+// Uint128_Cast: func uint128(v int64) uint128
 func Uint128_Cast__6(v int64) (out Uint128) {
 	if v < 0 {
 		return Uint128{hi: ^uint64(0), lo: uint64(v)}
