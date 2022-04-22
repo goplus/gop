@@ -47,16 +47,20 @@ type UntypedRat_Default = Rat
 type UntypedFloat_Default = Float
 
 func UntypedInt_Init__0(x int) UntypedInt {
-	panic("make compiler happy")
+	panic(makeCompilerHappy)
 }
 
 func UntypedRat_Init__0(x int) UntypedRat {
-	panic("make compiler happy")
+	panic(makeCompilerHappy)
 }
 
 func UntypedRat_Init__1(x UntypedInt) UntypedRat {
-	panic("make compiler happy")
+	panic(makeCompilerHappy)
 }
+
+const (
+	makeCompilerHappy = "make compiler happy"
+)
 
 // -----------------------------------------------------------------------------
 // type bigint
