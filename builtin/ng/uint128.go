@@ -2,6 +2,7 @@ package ng
 
 import (
 	"fmt"
+	"log"
 	"math/big"
 	"math/bits"
 	"strconv"
@@ -16,6 +17,12 @@ const (
 	intSize   = 32 << (^uint(0) >> 63)
 )
 
+//
+// Gop_: Go+ object prefix
+// Gop_xxx_Cast: type Gop_xxx typecast
+// xxxx__N: the Nth overload function
+//
+
 type Gop_ninteger = uint
 
 // -----------------------------------------------------------------------------
@@ -24,12 +31,21 @@ type Uint128 struct {
 	hi, lo uint64
 }
 
-// Uint128_Cast: func uint128.init(v int) uint128
+// Uint128_Init: func uint128.init(v int) uint128
 func Uint128_Init__0(v int) (out Uint128) {
 	if v < 0 {
 		panic("TODO: can't init uint128 from a negative integer")
 	}
 	return Uint128{lo: uint64(v)}
+}
+
+// Uint128_Init: func bigint.init(x *big.Int) bigint
+func Uint128_Init__1(v *big.Int) (out Uint128) {
+	out, inRange := Uint128_Cast__9(v)
+	if !inRange {
+		log.Panicf("value %v was not in valid uint128 range\n", v)
+	}
+	return
 }
 
 // Uint128_Cast: func uint128(hi, lo uint64) uint128
