@@ -1224,10 +1224,10 @@ var x, y bigint
 var z bigint = x + y
 `, `package main
 
-import big "github.com/goplus/gop/builtin/big"
+import ng "github.com/goplus/gop/builtin/ng"
 
-var x, y big.Int
-var z big.Int = x.Gop_Add(y)
+var x, y ng.Bigint
+var z ng.Bigint = x.Gop_Add(y)
 `)
 }
 
@@ -1237,11 +1237,11 @@ var x = 1r
 `, `package main
 
 import (
-	big "github.com/goplus/gop/builtin/big"
-	big1 "math/big"
+	ng "github.com/goplus/gop/builtin/ng"
+	big "math/big"
 )
 
-var x = big.Int_Init__1(big1.NewInt(1))
+var x = ng.Bigint_Init__1(big.NewInt(1))
 `)
 }
 
@@ -1273,11 +1273,11 @@ var x = 1/2r
 `, `package main
 
 import (
-	big "github.com/goplus/gop/builtin/big"
-	big1 "math/big"
+	ng "github.com/goplus/gop/builtin/ng"
+	big "math/big"
 )
 
-var x = big.Rat_Init__2(big1.NewRat(1, 2))
+var x = ng.Bigrat_Init__2(big.NewRat(1, 2))
 `)
 }
 
@@ -1287,11 +1287,11 @@ var x = 3 + 1/2r
 `, `package main
 
 import (
-	big "github.com/goplus/gop/builtin/big"
-	big1 "math/big"
+	ng "github.com/goplus/gop/builtin/ng"
+	big "math/big"
 )
 
-var x = big.Rat_Init__2(big1.NewRat(7, 2))
+var x = ng.Bigrat_Init__2(big.NewRat(7, 2))
 `)
 }
 
@@ -1304,13 +1304,13 @@ var z = 100 + y
 `, `package main
 
 import (
-	big "github.com/goplus/gop/builtin/big"
-	big1 "math/big"
+	ng "github.com/goplus/gop/builtin/ng"
+	big "math/big"
 )
 
-var x = big.Rat_Init__2(big1.NewRat(7, 2))
-var y = x.Gop_Add(big.Rat_Init__0(100))
-var z = big.Rat_Init__0(100) + y
+var x = ng.Bigrat_Init__2(big.NewRat(7, 2))
+var y = x.Gop_Add(ng.Bigrat_Init__0(100))
+var z = ng.Bigrat_Init__0(100) + y
 `)
 }
 
@@ -1392,12 +1392,12 @@ var x bigint
 x += 3
 `, `package main
 
-import big "github.com/goplus/gop/builtin/big"
+import ng "github.com/goplus/gop/builtin/ng"
 
-var x big.Int
+var x ng.Bigint
 
 func main() {
-	x.Gop_AddAssign(big.Int_Init__0(3))
+	x.Gop_AddAssign(ng.Bigint_Init__0(3))
 }
 `)
 }
@@ -1409,13 +1409,13 @@ x *= 2
 `, `package main
 
 import (
-	big "github.com/goplus/gop/builtin/big"
-	big1 "math/big"
+	ng "github.com/goplus/gop/builtin/ng"
+	big "math/big"
 )
 
 func main() {
-	x := big.Int_Init__1(big1.NewInt(3))
-	x.Gop_MulAssign(big.Int_Init__0(2))
+	x := ng.Bigint_Init__1(big.NewInt(3))
+	x.Gop_MulAssign(ng.Bigint_Init__0(2))
 }
 `)
 }
@@ -1427,13 +1427,13 @@ x *= 2r
 `, `package main
 
 import (
-	big "github.com/goplus/gop/builtin/big"
-	big1 "math/big"
+	ng "github.com/goplus/gop/builtin/ng"
+	big "math/big"
 )
 
 func main() {
-	x := big.Int_Init__1(big1.NewInt(3))
-	x.Gop_MulAssign(big.Int_Init__1(big1.NewInt(2)))
+	x := ng.Bigint_Init__1(big.NewInt(3))
+	x.Gop_MulAssign(ng.Bigint_Init__1(big.NewInt(2)))
 }
 `)
 }

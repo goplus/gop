@@ -27,17 +27,17 @@ import (
 
 func initMathBig(pkg gox.PkgImporter, conf *gox.Config, big *gox.PkgRef) {
 	big.EnsureImported()
-	conf.UntypedBigInt = big.Ref("UntypedInt").Type().(*types.Named)
-	conf.UntypedBigRat = big.Ref("UntypedRat").Type().(*types.Named)
-	conf.UntypedBigFloat = big.Ref("UntypedFloat").Type().(*types.Named)
+	conf.UntypedBigInt = big.Ref("UntypedBigint").Type().(*types.Named)
+	conf.UntypedBigRat = big.Ref("UntypedBigrat").Type().(*types.Named)
+	conf.UntypedBigFloat = big.Ref("UntypedBigfloat").Type().(*types.Named)
 }
 
-func initBuiltin(pkg gox.PkgImporter, builtin *types.Package, fmt, big, ng, buil *gox.PkgRef) {
+func initBuiltin(pkg gox.PkgImporter, builtin *types.Package, fmt, ng, buil *gox.PkgRef) {
 	scope := builtin.Scope()
-	typs := []string{"int", "rat", "float"}
+	typs := []string{"bigint", "bigrat", "bigfloat"}
 	for _, typ := range typs {
 		name := string(typ[0]-('a'-'A')) + typ[1:]
-		scope.Insert(types.NewTypeName(token.NoPos, builtin, "big"+typ, big.Ref(name).Type()))
+		scope.Insert(types.NewTypeName(token.NoPos, builtin, typ, ng.Ref(name).Type()))
 	}
 	fns := []string{
 		"print", "println", "printf", "errorf",
@@ -58,12 +58,11 @@ func newBuiltinDefault(pkg gox.PkgImporter, conf *gox.Config) *types.Package {
 	builtin := types.NewPackage("", "")
 	fmt := pkg.Import("fmt")
 	buil := pkg.Import("github.com/goplus/gop/builtin")
-	big := pkg.Import("github.com/goplus/gop/builtin/big")
 	ng := pkg.Import("github.com/goplus/gop/builtin/ng")
 	pkg.Import("strconv")
 	pkg.Import("strings")
-	initMathBig(pkg, conf, big)
-	initBuiltin(pkg, builtin, fmt, big, ng, buil)
+	initMathBig(pkg, conf, ng)
+	initBuiltin(pkg, builtin, fmt, ng, buil)
 	gox.InitBuiltin(pkg, builtin, conf)
 	return builtin
 }

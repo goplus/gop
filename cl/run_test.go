@@ -117,6 +117,14 @@ println x
 `)
 }
 
+func _TestInt128_init(t *testing.T) {
+	testRun(t, `
+var x uint128 = 1 << 65
+println x
+`, `1
+`)
+}
+
 func TestInt128_printf(t *testing.T) {
 	testRun(t, `
 var x uint128 = 1
