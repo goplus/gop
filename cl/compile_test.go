@@ -1201,7 +1201,20 @@ var z uint128 = x + y
 import ng "github.com/goplus/gop/builtin/ng"
 
 var x, y ng.Uint128
-var z ng.Uint128 = x.Gop_Add__0(y)
+var z ng.Uint128 = x.Gop_Add__1(y)
+`)
+}
+
+func TestInt128Add(t *testing.T) {
+	gopClTest(t, `
+var x, y int128
+var z int128 = x + y
+`, `package main
+
+import ng "github.com/goplus/gop/builtin/ng"
+
+var x, y ng.Int128
+var z ng.Int128 = x.Gop_Add__1(y)
 `)
 }
 
@@ -1240,6 +1253,17 @@ var x uint128 = 1
 import ng "github.com/goplus/gop/builtin/ng"
 
 var x ng.Uint128 = ng.Uint128_Init__0(1)
+`)
+}
+
+func TestInt128Lit(t *testing.T) {
+	gopClTest(t, `
+var x int128 = 1
+`, `package main
+
+import ng "github.com/goplus/gop/builtin/ng"
+
+var x ng.Int128 = ng.Int128_Init__0(1)
 `)
 }
 
