@@ -8,6 +8,10 @@ const (
 	GopPackage = true // to indicate this is a Go+ package
 )
 
+const (
+	maxUint64 = (1 << 64) - 1
+)
+
 type Gop_ninteger = uint
 
 type Uint128 struct {
@@ -20,11 +24,6 @@ func Uint128_Init__0(v int) (out Uint128) {
 		panic("TODO: can't init uint128 from a negative integer")
 	}
 	return Uint128{lo: uint64(v)}
-}
-
-// Uint128_Cast: func uint128.init(v uint64) uint128
-func Uint128_Init__1(v uint64) Uint128 {
-	return Uint128{lo: v}
 }
 
 // Uint128_Cast: func uint128(hi, lo uint64) uint128
@@ -60,7 +59,7 @@ func Uint128_Cast__5(v uint8) Uint128 {
 // Uint128_Cast: func uint128(v int64) uint128
 func Uint128_Cast__6(v int64) (out Uint128) {
 	if v < 0 {
-		return Uint128{hi: ^uint64(0), lo: uint64(v)}
+		return Uint128{hi: maxUint64, lo: uint64(v)}
 	}
 	return Uint128{lo: uint64(v)}
 }
@@ -178,7 +177,7 @@ func (u Uint128) ReverseBytes() Uint128 {
 // The specific value returned by Cmp is undefined, but it is guaranteed to
 // satisfy the above constraints.
 //
-func (u Uint128) Cmp(n Uint128) int {
+func (u Uint128) Cmp__1(n Uint128) int {
 	if u.hi == n.hi {
 		if u.lo > n.lo {
 			return 1
@@ -195,7 +194,7 @@ func (u Uint128) Cmp(n Uint128) int {
 	return 0
 }
 
-func (u Uint128) Cmp64(n uint64) int {
+func (u Uint128) Cmp__0(n uint64) int {
 	if u.hi > 0 || u.lo > n {
 		return 1
 	} else if u.lo < n {
@@ -218,81 +217,81 @@ func (u Uint128) Gop_Dec() (v Uint128) {
 	return v
 }
 
-func (u Uint128) Gop_Add__0(n Uint128) (v Uint128) {
+func (u Uint128) Gop_Add__1(n Uint128) (v Uint128) {
 	var carry uint64
 	v.lo, carry = bits.Add64(u.lo, n.lo, 0)
 	v.hi, _ = bits.Add64(u.hi, n.hi, carry)
 	return v
 }
 
-func (u Uint128) Gop_Add__1(n uint64) (v Uint128) {
+func (u Uint128) Gop_Add__0(n uint64) (v Uint128) {
 	var carry uint64
 	v.lo, carry = bits.Add64(u.lo, n, 0)
 	v.hi = u.hi + carry
 	return v
 }
 
-func (u Uint128) Gop_Sub__0(n Uint128) (v Uint128) {
+func (u Uint128) Gop_Sub__1(n Uint128) (v Uint128) {
 	var borrowed uint64
 	v.lo, borrowed = bits.Sub64(u.lo, n.lo, 0)
 	v.hi, _ = bits.Sub64(u.hi, n.hi, borrowed)
 	return v
 }
 
-func (u Uint128) Gop_Sub__1(n uint64) (v Uint128) {
+func (u Uint128) Gop_Sub__0(n uint64) (v Uint128) {
 	var borrowed uint64
 	v.lo, borrowed = bits.Sub64(u.lo, n, 0)
 	v.hi = u.hi - borrowed
 	return v
 }
 
-func (u Uint128) Gop_EQ__0(n Uint128) bool {
+func (u Uint128) Gop_EQ__1(n Uint128) bool {
 	return u.hi == n.hi && u.lo == n.lo
 }
 
-func (u Uint128) Gop_EQ__1(n uint64) bool {
+func (u Uint128) Gop_EQ__0(n uint64) bool {
 	return u.hi == 0 && u.lo == n
 }
 
-func (u Uint128) Gop_GT__0(n Uint128) bool {
+func (u Uint128) Gop_GT__1(n Uint128) bool {
 	return u.hi > n.hi || (u.hi == n.hi && u.lo > n.lo)
 }
 
-func (u Uint128) Gop_GT__1(n uint64) bool {
+func (u Uint128) Gop_GT__0(n uint64) bool {
 	return u.hi > 0 || u.lo > n
 }
 
-func (u Uint128) Gop_GE__0(n Uint128) bool {
+func (u Uint128) Gop_GE__1(n Uint128) bool {
 	return u.hi > n.hi || (u.hi == n.hi && u.lo >= n.lo)
 }
 
-func (u Uint128) Gop_GE__1(n uint64) bool {
+func (u Uint128) Gop_GE__0(n uint64) bool {
 	return u.hi > 0 || u.lo >= n
 }
 
-func (u Uint128) Gop_LT__0(n Uint128) bool {
+func (u Uint128) Gop_LT__1(n Uint128) bool {
 	return u.hi < n.hi || (u.hi == n.hi && u.lo < n.lo)
 }
 
-func (u Uint128) Gop_LT__1(n uint64) bool {
+func (u Uint128) Gop_LT__0(n uint64) bool {
 	return u.hi == 0 && u.lo < n
 }
 
-func (u Uint128) Gop_LE__0(n Uint128) bool {
+func (u Uint128) Gop_LE__1(n Uint128) bool {
 	return u.hi < n.hi || (u.hi == n.hi && u.lo <= n.lo)
 }
 
-func (u Uint128) Gop_LE__1(n uint64) bool {
+func (u Uint128) Gop_LE__0(n uint64) bool {
 	return u.hi == 0 && u.lo <= n
 }
 
-func (u Uint128) Gop_And__0(n Uint128) Uint128 {
+func (u Uint128) Gop_And__1(n Uint128) Uint128 {
 	u.hi = u.hi & n.hi
 	u.lo = u.lo & n.lo
 	return u
 }
 
-func (u Uint128) Gop_And__1(n uint64) Uint128 {
+func (u Uint128) Gop_And__0(n uint64) Uint128 {
 	return Uint128{lo: u.lo & n}
 }
 
@@ -308,24 +307,24 @@ func (u Uint128) Gop_Not() (out Uint128) {
 	return out
 }
 
-func (u Uint128) Gop_Or__0(n Uint128) (out Uint128) {
+func (u Uint128) Gop_Or__1(n Uint128) (out Uint128) {
 	out.hi = u.hi | n.hi
 	out.lo = u.lo | n.lo
 	return out
 }
 
-func (u Uint128) Gop_Or__1(n uint64) Uint128 {
+func (u Uint128) Gop_Or__0(n uint64) Uint128 {
 	u.lo = u.lo | n
 	return u
 }
 
-func (u Uint128) Gop_Xor__0(v Uint128) Uint128 {
+func (u Uint128) Gop_Xor__1(v Uint128) Uint128 {
 	u.hi = u.hi ^ v.hi
 	u.lo = u.lo ^ v.lo
 	return u
 }
 
-func (u Uint128) Gop_Xor__1(v uint64) Uint128 {
+func (u Uint128) Gop_Xor__0(v uint64) Uint128 {
 	u.hi = u.hi ^ 0
 	u.lo = u.lo ^ v
 	return u
@@ -364,13 +363,13 @@ func (u Uint128) Gop_Rsh(n Gop_ninteger) (v Uint128) {
 	return v
 }
 
-func (u Uint128) Gop_Mul__0(n Uint128) Uint128 {
+func (u Uint128) Gop_Mul__1(n Uint128) Uint128 {
 	hi, lo := bits.Mul64(u.lo, n.lo)
 	hi += u.hi*n.lo + u.lo*n.hi
 	return Uint128{hi, lo}
 }
 
-func (u Uint128) Gop_Mul__1(n uint64) (dest Uint128) {
+func (u Uint128) Gop_Mul__0(n uint64) (dest Uint128) {
 	dest.hi, dest.lo = bits.Mul64(u.lo, n)
 	dest.hi += u.hi * n
 	return dest
@@ -380,7 +379,7 @@ const (
 	divAlgoLeading0Spill = 16
 )
 
-func (u Uint128) Gop_Quo__0(by Uint128) (q Uint128) {
+func (u Uint128) Gop_Quo__1(by Uint128) (q Uint128) {
 	if by.lo == 0 && by.hi == 0 {
 		panic("division by zero")
 	}
@@ -408,7 +407,7 @@ func (u Uint128) Gop_Quo__0(by Uint128) (q Uint128) {
 		return u.Gop_Rsh(byTrailing0)
 	}
 
-	if cmp := u.Cmp(by); cmp < 0 {
+	if cmp := u.Cmp__1(by); cmp < 0 {
 		return q // it's 100% remainder
 	} else if cmp == 0 {
 		q.lo = 1 // dividend and divisor are the same
@@ -424,7 +423,7 @@ func (u Uint128) Gop_Quo__0(by Uint128) (q Uint128) {
 	}
 }
 
-func (u Uint128) Gop_Quo__1(by uint64) (q Uint128) {
+func (u Uint128) Gop_Quo__0(by uint64) (q Uint128) {
 	if u.hi < by {
 		q.lo, _ = bits.Div64(u.hi, u.lo, by)
 	} else {
@@ -434,7 +433,7 @@ func (u Uint128) Gop_Quo__1(by uint64) (q Uint128) {
 	return q
 }
 
-func (u Uint128) QuoRem(by Uint128) (q, r Uint128) {
+func (u Uint128) QuoRem__1(by Uint128) (q, r Uint128) {
 	if by.lo == 0 && by.hi == 0 {
 		panic("division by zero")
 	}
@@ -462,11 +461,11 @@ func (u Uint128) QuoRem(by Uint128) (q, r Uint128) {
 	if (byLeading0 + byTrailing0) == 127 {
 		q = u.Gop_Rsh(byTrailing0)
 		by = by.Gop_Dec()
-		r = by.Gop_And__0(u)
+		r = by.Gop_And__1(u)
 		return
 	}
 
-	if cmp := u.Cmp(by); cmp < 0 {
+	if cmp := u.Cmp__1(by); cmp < 0 {
 		return q, u // it's 100% remainder
 
 	} else if cmp == 0 {
@@ -482,7 +481,7 @@ func (u Uint128) QuoRem(by Uint128) (q, r Uint128) {
 	}
 }
 
-func (u Uint128) QuoRem64(by uint64) (q, r Uint128) {
+func (u Uint128) QuoRem__0(by uint64) (q, r Uint128) {
 	if u.hi < by {
 		q.lo, r.lo = bits.Div64(u.hi, u.lo, by)
 	} else {
@@ -493,13 +492,13 @@ func (u Uint128) QuoRem64(by uint64) (q, r Uint128) {
 }
 
 // Gop_Rem: func (a uint128) % (b uint128) uint128
-func (u Uint128) Gop_Rem__0(by Uint128) (r Uint128) {
+func (u Uint128) Gop_Rem__1(by Uint128) (r Uint128) {
 	// TODO: inline only the needed bits
-	_, r = u.QuoRem(by)
+	_, r = u.QuoRem__1(by)
 	return r
 }
 
-func (u Uint128) Gop_Rem__1(by uint64) (r Uint128) {
+func (u Uint128) Gop_Rem__0(by uint64) (r Uint128) {
 	// https://github.com/golang/go/issues/28970
 	// if u.hi < by {
 	//     _, r.lo = bits.Rem64(u.hi, u.lo, by)
@@ -662,12 +661,12 @@ func quorem128by128(m, v Uint128, vHiLeading0, vLoLeading0 uint) (q, r Uint128) 
 			q1 = q1.Gop_Dec()
 		}
 		q = q1
-		q1 = q1.Gop_Mul__0(v)
-		r = m.Gop_Sub__0(q1)
+		q1 = q1.Gop_Mul__1(v)
+		r = m.Gop_Sub__1(q1)
 
-		if r.Cmp(v) >= 0 {
+		if r.Cmp__1(v) >= 0 {
 			q = q.Gop_Inc()
-			r = r.Gop_Sub__0(v)
+			r = r.Gop_Sub__1(v)
 		}
 
 		return q, r
@@ -685,7 +684,7 @@ func quorem128bin(u, by Uint128, uLeading0, byLeading0 uint) (q, r Uint128) {
 
 		// performance tweak: simulate greater than or equal by hand-inlining "not less than".
 		if u.hi > by.hi || (u.hi == by.hi && u.lo >= by.lo) {
-			u = u.Gop_Sub__0(by)
+			u = u.Gop_Sub__1(by)
 			q.lo |= 1
 		}
 
@@ -714,7 +713,7 @@ func quo128bin(u, by Uint128, uLeading0, byLeading0 uint) (q Uint128) {
 
 		// u >= by
 		if u.hi > by.hi || (u.hi == by.hi && u.lo >= by.lo) {
-			u = u.Gop_Sub__0(by)
+			u = u.Gop_Sub__1(by)
 			q.lo |= 1
 		}
 
