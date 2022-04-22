@@ -39,8 +39,8 @@ func Uint128_Init__0(v int) (out Uint128) {
 	return Uint128{lo: uint64(v)}
 }
 
-// Uint128_Init: func bigint.init(x *big.Int) bigint
-func Uint128_Init__1(v *big.Int) (out Uint128) {
+// Uint128_Init: func bigint.init(v untyped_bigint) bigint
+func Uint128_Init__1(v UntypedBigint) (out Uint128) {
 	out, inRange := Uint128_Cast__9(v)
 	if !inRange {
 		log.Panicf("value %v was not in valid uint128 range\n", v)
