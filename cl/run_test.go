@@ -117,11 +117,14 @@ println x
 `)
 }
 
-func _TestInt128_init(t *testing.T) {
+func TestInt128_init(t *testing.T) {
 	testRun(t, `
 var x uint128 = 1 << 65
+var y = x + 1
 println x
-`, `1
+println y
+`, `36893488147419103232
+36893488147419103233
 `)
 }
 
