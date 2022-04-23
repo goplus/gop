@@ -48,7 +48,7 @@ func Uint128_Init__1(v UntypedBigint) (out Uint128) {
 	return
 }
 
-// Uint128_Cast: func uint128(v untyped_bigint) uint128
+// Uint128_Cast: func uint128(v untyped_int) uint128
 func Uint128_Cast__0(v int) Uint128 {
 	return Uint128_Cast__6(int64(v))
 }
