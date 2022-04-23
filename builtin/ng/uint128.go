@@ -48,19 +48,19 @@ func Uint128_Init__1(v UntypedBigint) (out Uint128) {
 	return
 }
 
-// Uint128_Cast: func uint128(hi, lo uint64) uint128
-func Uint128_Cast__0(hi, lo uint64) Uint128 {
-	return Uint128{hi: hi, lo: lo}
+// Uint128_Cast: func uint128(v untyped_bigint) uint128
+func Uint128_Cast__0(v int) Uint128 {
+	return Uint128_Cast__6(int64(v))
+}
+
+// Uint128_Cast: func uint128(v untyped_bigint) uint128
+func Uint128_Cast__1(v UntypedBigint) Uint128 {
+	return Uint128_Init__1(v)
 }
 
 // Uint128_Cast: func uint128(v uint64) uint128
-func Uint128_Cast__1(v uint64) Uint128 {
+func Uint128_Cast__2(v uint64) Uint128 {
 	return Uint128{lo: v}
-}
-
-// Uint128_Cast: func uint128(v uint) uint128
-func Uint128_Cast__2(v uint) Uint128 {
-	return Uint128{lo: uint64(v)}
 }
 
 // Uint128_Cast: func uint128(v uint32) uint128
@@ -144,6 +144,21 @@ func Uint128_Cast__9(v *big.Int) (out Uint128, inRange bool) {
 	default:
 		panic("unsupported bit size")
 	}
+}
+
+// Uint128_Cast: func uint128() uint128
+func Uint128_Cast__a() Uint128 {
+	return Uint128{}
+}
+
+// Uint128_Cast: func uint128(v uint) uint128
+func Uint128_Cast__b(v uint) Uint128 {
+	return Uint128{lo: uint64(v)}
+}
+
+// Uint128_Cast: func uint128(hi, lo uint64) uint128
+func Uint128_Cast__c(hi, lo uint64) Uint128 {
+	return Uint128{hi: hi, lo: lo}
 }
 
 // Gop_Rcast: func float64(v uint128) float64
