@@ -80,15 +80,6 @@ func (a Bigint) IsNil() bool {
 	return a.Int == nil
 }
 
-// Gop_Assign: func (a bigint) = (b bigint)
-func (a Bigint) Gop_Assign(b Bigint) {
-	if Gop_istmp(b) {
-		*a.Int = *b.Int
-	} else {
-		a.Int.Set(b.Int)
-	}
-}
-
 // Gop_Add: func (a bigint) + (b bigint) bigint
 func (a Bigint) Gop_Add(b Bigint) Bigint {
 	return Bigint{tmpint(a, b).Add(a.Int, b.Int)}
@@ -179,9 +170,9 @@ func (a Bigint) Gop_Neg() Bigint {
 	return Bigint{tmpint1(a).Neg(a.Int)}
 }
 
-// Gop_Pos: func +(a bigint) bigint
-func (a Bigint) Gop_Pos() Bigint {
-	return a
+// Gop_Dup: func +(a bigint) bigint
+func (a Bigint) Gop_Dup() Bigint {
+	return Bigint{new(big.Int).Set(a.Int)}
 }
 
 // Gop_Not: func ^(a bigint) bigint
@@ -397,9 +388,9 @@ func (a Bigrat) Gop_Neg() Bigrat {
 	return Bigrat{tmprat1(a).Neg(a.Rat)}
 }
 
-// Gop_Pos: func +(a bigrat) bigrat
-func (a Bigrat) Gop_Pos() Bigrat {
-	return a
+// Gop_Dup: func +(a bigrat) bigrat
+func (a Bigrat) Gop_Dup() Bigrat {
+	return Bigrat{new(big.Rat).Set(a.Rat)}
 }
 
 // Gop_Inv: func /(a bigrat) bigrat

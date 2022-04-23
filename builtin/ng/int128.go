@@ -321,6 +321,10 @@ func (i Int128) Gop_Neg() (v Int128) {
 	return v
 }
 
+func (i Int128) Gop_Dup() (v Int128) {
+	return i
+}
+
 // Abs returns the absolute value of i as a signed integer.
 func (i Int128) Abs__0() Int128 {
 	if i.hi&signBit != 0 {

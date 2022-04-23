@@ -121,9 +121,9 @@ const (
 	testType_println_code, testType_println_ret = `
 {
 	var x $(type) = 1
-	println x
+	println x, +x
 }
-`, `1
+`, `1 1
 `
 	testType_init_code, testType_init_ret = `
 {
@@ -168,7 +168,7 @@ const (
 )
 
 func TestUint128_run(t *testing.T) {
-	testRunType(t, "uint128", testType_all_code, testType_all_ret)
+	testRunType(t, "uint128", testType_println_code, testType_println_ret)
 }
 
 func TestInt128_run(t *testing.T) {

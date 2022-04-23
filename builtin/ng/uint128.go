@@ -366,6 +366,10 @@ func (u Uint128) Cmp__0(n uint64) int {
 	return 0
 }
 
+func (u Uint128) Gop_Dup() (v Uint128) {
+	return u
+}
+
 func (u Uint128) Gop_Inc() (v Uint128) {
 	var carry uint64
 	v.lo, carry = bits.Add64(u.lo, 1, 0)
