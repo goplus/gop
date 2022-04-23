@@ -384,6 +384,61 @@ func (u *Uint128) Gop_Dec() {
 	u.lo--
 }
 
+// Gop_AddAssign: func (a *uint128) += (b uint128)
+func (u *Uint128) Gop_AddAssign(b Uint128) {
+	*u = u.Gop_Add__1(b)
+}
+
+// Gop_SubAssign: func (a *uint128) -= (b uint128)
+func (u *Uint128) Gop_SubAssign(b Uint128) {
+	*u = u.Gop_Sub__1(b)
+}
+
+// Gop_MulAssign: func (a *uint128) *= (b uint128)
+func (u *Uint128) Gop_MulAssign(b Uint128) {
+	*u = u.Gop_Mul__1(b)
+}
+
+// Gop_QuoAssign: func (a *uint128) /= (b uint128) {
+func (u *Uint128) Gop_QuoAssign(b Uint128) {
+	*u = u.Gop_Quo__1(b)
+}
+
+// Gop_RemAssign: func (a *uint128) %= (b uint128)
+func (u *Uint128) Gop_RemAssign(b Uint128) {
+	*u = u.Gop_Rem__1(b)
+}
+
+// Gop_OrAssign: func (a *uint128) |= (b uint128)
+func (u *Uint128) Gop_OrAssign(b Uint128) {
+	*u = u.Gop_Or__1(b)
+}
+
+// Gop_XorAssign: func (a *uint128) ^= (b uint128)
+func (u *Uint128) Gop_XorAssign(b Uint128) {
+	*u = u.Gop_Xor__1(b)
+}
+
+// Gop_AndAssign: func (a *uint128) &= (b uint128)
+func (u *Uint128) Gop_AndAssign(b Uint128) {
+	*u = u.Gop_And__1(b)
+}
+
+// Gop_AndNotAssign: func (a *uint128) &^= (b uint128)
+func (u *Uint128) Gop_AndNotAssign(b Uint128) {
+	*u = u.Gop_AndNot(b)
+}
+
+// Gop_LshAssign: func (a *uint128) <<= (n untyped_uint)
+func (u *Uint128) Gop_LshAssign(n Gop_ninteger) {
+	*u = u.Gop_Lsh(n)
+}
+
+// Gop_RshAssign: func (a *uint128) >>= (n untyped_uint)
+func (u *Uint128) Gop_RshAssign(n Gop_ninteger) {
+	*u = u.Gop_Rsh(n)
+}
+
 func (u Uint128) Gop_Add__1(n Uint128) (v Uint128) {
 	var carry uint64
 	v.lo, carry = bits.Add64(u.lo, n.lo, 0)
@@ -453,8 +508,8 @@ func (u Uint128) Gop_LE__0(n uint64) bool {
 }
 
 func (u Uint128) Gop_And__1(n Uint128) Uint128 {
-	u.hi = u.hi & n.hi
-	u.lo = u.lo & n.lo
+	u.hi &= n.hi
+	u.lo &= n.lo
 	return u
 }
 
@@ -463,71 +518,57 @@ func (u Uint128) Gop_And__0(n uint64) Uint128 {
 }
 
 func (u Uint128) Gop_AndNot(n Uint128) Uint128 {
-	u.hi = u.hi &^ n.hi
-	u.lo = u.lo &^ n.lo
+	u.hi &^= n.hi
+	u.lo &^= n.lo
 	return u
 }
 
-func (u Uint128) Gop_Not() (out Uint128) {
-	out.hi = ^u.hi
-	out.lo = ^u.lo
-	return out
+func (u Uint128) Gop_Not() Uint128 {
+	return Uint128{hi: ^u.hi, lo: ^u.lo}
 }
 
-func (u Uint128) Gop_Or__1(n Uint128) (out Uint128) {
-	out.hi = u.hi | n.hi
-	out.lo = u.lo | n.lo
-	return out
+func (u Uint128) Gop_Or__1(n Uint128) Uint128 {
+	u.hi |= n.hi
+	u.lo |= n.lo
+	return u
 }
 
 func (u Uint128) Gop_Or__0(n uint64) Uint128 {
-	u.lo = u.lo | n
+	u.lo |= n
 	return u
 }
 
 func (u Uint128) Gop_Xor__1(v Uint128) Uint128 {
-	u.hi = u.hi ^ v.hi
-	u.lo = u.lo ^ v.lo
+	u.hi ^= v.hi
+	u.lo ^= v.lo
 	return u
 }
 
 func (u Uint128) Gop_Xor__0(v uint64) Uint128 {
-	u.hi = u.hi ^ 0
-	u.lo = u.lo ^ v
+	u.lo ^= v
 	return u
 }
 
-func (u Uint128) Gop_Lsh(n Gop_ninteger) (v Uint128) {
-	if n == 0 {
-		return u
-	} else if n > 64 {
-		v.hi = u.lo << (n - 64)
-		v.lo = 0
-	} else if n < 64 {
-		v.hi = (u.hi << n) | (u.lo >> (64 - n))
-		v.lo = u.lo << n
-	} else if n == 64 {
-		v.hi = u.lo
-		v.lo = 0
+func (u Uint128) Gop_Lsh(n Gop_ninteger) Uint128 {
+	if n < 64 {
+		u.hi = (u.hi << n) | (u.lo >> (64 - n))
+		u.lo <<= n
+	} else {
+		u.hi = u.lo << (n - 64)
+		u.lo = 0
 	}
-	return v
+	return u
 }
 
-func (u Uint128) Gop_Rsh(n Gop_ninteger) (v Uint128) {
-	if n == 0 {
-		return u
-	} else if n > 64 {
-		v.lo = u.hi >> (n - 64)
-		v.hi = 0
-	} else if n < 64 {
-		v.lo = (u.lo >> n) | (u.hi << (64 - n))
-		v.hi = u.hi >> n
-	} else if n == 64 {
-		v.lo = u.hi
-		v.hi = 0
+func (u Uint128) Gop_Rsh(n Gop_ninteger) Uint128 {
+	if n < 64 {
+		u.lo = (u.lo >> n) | (u.hi << (64 - n))
+		u.hi >>= n
+	} else {
+		u.lo = u.hi >> (n - 64)
+		u.hi = 0
 	}
-
-	return v
+	return u
 }
 
 func (u Uint128) Gop_Mul__1(n Uint128) Uint128 {

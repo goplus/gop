@@ -123,9 +123,10 @@ const (
 	var x $(type) = 1
 	var y = +x
 	x++
+	x+=10
 	println x, y
 }
-`, `2 1
+`, `12 1
 `
 	testType_dec_code, testType_dec_ret = `
 {
@@ -138,12 +139,13 @@ const (
 	testType_init_code, testType_init_ret = `
 {
 	var x $(type) = 1 << 65
-	var y = x + 1
+	var y = x >> 63
+	var z = x >> 65
 	println x
-	println y
+	println y, z
 }
 `, `36893488147419103232
-36893488147419103233
+4 1
 `
 	testType_cast_code, testType_cast_ret = `
 {

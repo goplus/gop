@@ -190,57 +190,57 @@ func (a Bigint) Gop_Dec() {
 	a.Int.Sub(a.Int, big1)
 }
 
-// Gop_Add: func (a bigint) += (b bigint)
+// Gop_AddAssign: func (a bigint) += (b bigint)
 func (a Bigint) Gop_AddAssign(b Bigint) {
 	a.Int.Add(a.Int, b.Int)
 }
 
-// Gop_Sub: func (a bigint) -= (b bigint)
+// Gop_SubAssign: func (a bigint) -= (b bigint)
 func (a Bigint) Gop_SubAssign(b Bigint) {
 	a.Int.Sub(a.Int, b.Int)
 }
 
-// Gop_Mul: func (a bigint) *= (b bigint)
+// Gop_MulAssign: func (a bigint) *= (b bigint)
 func (a Bigint) Gop_MulAssign(b Bigint) {
 	a.Int.Mul(a.Int, b.Int)
 }
 
-// Gop_Quo: func (a bigint) /= (b bigint) {
+// Gop_QuoAssign: func (a bigint) /= (b bigint) {
 func (a Bigint) Gop_QuoAssign(b Bigint) {
 	a.Int.Quo(a.Int, b.Int)
 }
 
-// Gop_Rem: func (a bigint) %= (b bigint)
+// Gop_RemAssign: func (a bigint) %= (b bigint)
 func (a Bigint) Gop_RemAssign(b Bigint) {
 	a.Int.Rem(a.Int, b.Int)
 }
 
-// Gop_Or: func (a bigint) |= (b bigint)
+// Gop_OrAssign: func (a bigint) |= (b bigint)
 func (a Bigint) Gop_OrAssign(b Bigint) {
 	a.Int.Or(a.Int, b.Int)
 }
 
-// Gop_Xor: func (a bigint) ^= (b bigint)
+// Gop_XorAssign: func (a bigint) ^= (b bigint)
 func (a Bigint) Gop_XorAssign(b Bigint) {
 	a.Int.Xor(a.Int, b.Int)
 }
 
-// Gop_And: func (a bigint) &= (b bigint)
+// Gop_AndAssign: func (a bigint) &= (b bigint)
 func (a Bigint) Gop_AndAssign(b Bigint) {
 	a.Int.And(a.Int, b.Int)
 }
 
-// Gop_AndNot: func (a bigint) &^= (b bigint)
+// Gop_AndNotAssign: func (a bigint) &^= (b bigint)
 func (a Bigint) Gop_AndNotAssign(b Bigint) {
 	a.Int.AndNot(a.Int, b.Int)
 }
 
-// Gop_Lsh: func (a bigint) <<= (n untyped_uint)
+// Gop_LshAssign: func (a bigint) <<= (n untyped_uint)
 func (a Bigint) Gop_LshAssign(n Gop_ninteger) {
 	a.Int.Lsh(a.Int, uint(n))
 }
 
-// Gop_Rsh: func (a bigint) >>= (n untyped_uint)
+// Gop_RshAssign: func (a bigint) >>= (n untyped_uint)
 func (a Bigint) Gop_RshAssign(n Gop_ninteger) {
 	a.Int.Rsh(a.Int, uint(n))
 }
