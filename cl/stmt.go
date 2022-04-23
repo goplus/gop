@@ -251,7 +251,7 @@ func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 		return
 	}
 	cb := ctx.cb
-	comments := cb.Comments()
+	comments, once := cb.BackupComments()
 	if v.Tok == token.DEFINE {
 		names := make([]string, 1, 2)
 		if v.Key == nil {
@@ -288,7 +288,7 @@ func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 	}
 	cb.RangeAssignThen(pos)
 	compileStmts(ctx, v.Body.List)
-	cb.SetComments(comments, true)
+	cb.SetComments(comments, once)
 	setBodyHandler(ctx)
 	cb.End()
 }
@@ -299,7 +299,7 @@ func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
 		return
 	}
 	cb := ctx.cb
-	comments := cb.Comments()
+	comments, once := cb.BackupComments()
 	names := make([]string, 1, 2)
 	if v.Key == nil {
 		names[0] = "_"
@@ -317,12 +317,12 @@ func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
 		compileExpr(ctx, v.Cond)
 		cb.Then()
 		compileStmts(ctx, v.Body.List)
-		cb.SetComments(comments, true)
+		cb.SetComments(comments, once)
 		cb.End()
 	} else {
 		compileStmts(ctx, v.Body.List)
+		cb.SetComments(comments, once)
 	}
-	cb.SetComments(comments, true)
 	setBodyHandler(ctx)
 	cb.End()
 }
@@ -409,7 +409,7 @@ func toForStmt(forPos token.Pos, value ast.Expr, body *ast.BlockStmt, re *ast.Ra
 // end
 func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	cb := ctx.cb
-	comments := cb.Comments()
+	comments, once := cb.BackupComments()
 	cb.For()
 	if v.Init != nil {
 		compileStmt(ctx, v.Init)
@@ -425,7 +425,7 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 		cb.Post()
 		compileStmt(ctx, v.Post)
 	}
-	cb.SetComments(comments, true)
+	cb.SetComments(comments, once)
 	setBodyHandler(ctx)
 	cb.End()
 }
@@ -435,7 +435,7 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 // end
 func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 	cb := ctx.cb
-	comments := cb.Comments()
+	comments, once := cb.BackupComments()
 	cb.If()
 	if v.Init != nil {
 		compileStmt(ctx, v.Init)
@@ -451,7 +451,7 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 			compileStmt(ctx, e)
 		}
 	}
-	cb.SetComments(comments, true)
+	cb.SetComments(comments, once)
 	cb.End()
 }
 
@@ -465,7 +465,7 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 // end
 func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 	var cb = ctx.cb
-	comments := cb.Comments()
+	comments, once := cb.BackupComments()
 	var name string
 	var ta *ast.TypeAssertExpr
 	switch stmt := v.Assign.(type) {
@@ -529,7 +529,7 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 		commentStmt(ctx, stmt)
 		cb.End()
 	}
-	cb.SetComments(comments, true)
+	cb.SetComments(comments, once)
 	cb.End()
 }
 
@@ -543,7 +543,7 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 // end
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	cb := ctx.cb
-	comments := cb.Comments()
+	comments, once := cb.BackupComments()
 	cb.Switch()
 	if v.Init != nil {
 		compileStmt(ctx, v.Init)
@@ -604,7 +604,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 		commentStmt(ctx, stmt)
 		cb.End()
 	}
-	cb.SetComments(comments, true)
+	cb.SetComments(comments, once)
 	cb.End()
 }
 
@@ -631,7 +631,7 @@ func hasFallthrough(body []ast.Stmt) ([]ast.Stmt, bool) {
 // end
 func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
 	cb := ctx.cb
-	comments := cb.Comments()
+	comments, once := cb.BackupComments()
 	cb.Select()
 	for _, stmt := range v.Body.List {
 		c, ok := stmt.(*ast.CommClause)
@@ -648,7 +648,7 @@ func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
 		commentStmt(ctx, stmt)
 		cb.End()
 	}
-	cb.SetComments(comments, true)
+	cb.SetComments(comments, once)
 	cb.End()
 }
 

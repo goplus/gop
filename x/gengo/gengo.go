@@ -186,27 +186,13 @@ func (p *Runner) genGoPkgs(conf *Config) {
 		p.state = stateDone
 		return
 	}
-	imps := getKeys(imports)
 	modRoot := p.modRoot
-	impConf := &packages.Config{
-		ModRoot: modRoot,
-		ModPath: p.modPath,
-		Loaded:  conf.Loaded,
-		Fset:    conf.Fset,
-	}
 	inModCache := modfetch.InModCachePath(modRoot)
 	if inModCache {
 		os.Chmod(modRoot, 0755)
 		defer os.Chmod(modRoot, 0555)
 	}
-	imp, _, err := packages.NewImporter(impConf, imps...)
-	if err != nil {
-		conf.OnErr("newImporter", err)
-		p.state = stateOccurErrors
-		return
-	}
-	defer imp.Close()
-	conf.OnInfo("newImporter: %v\n", imps)
+	imp := packages.NewImporter(conf.Fset)
 	for _, pkg := range p.pkgs {
 		if pkg.flags == pkgFlagChanged {
 			p.genGoPkg(pkg, imp, conf)

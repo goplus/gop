@@ -479,7 +479,7 @@ func compileLambda(ctx *blockCtx, lambda ast.Expr, sig *types.Signature) {
 	}
 }
 
-func compileLambdaParams(ctx *blockCtx, pos token.Pos, lhs []*ast.Ident, in *types.Tuple) []*types.Var {
+func makeLambdaParams(ctx *blockCtx, pos token.Pos, lhs []*ast.Ident, in *types.Tuple) *types.Tuple {
 	pkg := ctx.pkg
 	n := len(lhs)
 	if nin := in.Len(); n != nin {
@@ -494,53 +494,57 @@ func compileLambdaParams(ctx *blockCtx, pos token.Pos, lhs []*ast.Ident, in *typ
 		panic(ctx.newCodeErrorf(
 			pos, "too %s arguments in lambda expression\n\thave (%s)\n\twant %v", fewOrMany, strings.Join(has, ", "), in))
 	}
+	if n == 0 {
+		return nil
+	}
 	params := make([]*types.Var, n)
 	for i, name := range lhs {
 		params[i] = pkg.NewParam(name.Pos(), name.Name, in.At(i).Type())
 	}
-	return params
+	return types.NewTuple(params...)
+}
+
+func makeLambdaResults(pkg *gox.Package, out *types.Tuple) *types.Tuple {
+	nout := out.Len()
+	if nout == 0 {
+		return nil
+	}
+	results := make([]*types.Var, nout)
+	for i := 0; i < nout; i++ {
+		results[i] = pkg.NewParam(token.NoPos, "", out.At(i).Type())
+	}
+	return types.NewTuple(results...)
 }
 
 func compileLambdaExpr(ctx *blockCtx, v *ast.LambdaExpr, sig *types.Signature) {
 	pkg := ctx.pkg
-	params := compileLambdaParams(ctx, v.Pos(), v.Lhs, sig.Params())
-	out := sig.Results()
-	nout := out.Len()
-	results := make([]*types.Var, nout)
-	for i := 0; i < nout; i++ {
-		results[i] = pkg.NewParam(token.NoPos, "", out.At(i).Type())
-	}
-	ctx.cb.NewClosure(types.NewTuple(params...), types.NewTuple(results...), false).BodyStart(pkg)
+	params := makeLambdaParams(ctx, v.Pos(), v.Lhs, sig.Params())
+	results := makeLambdaResults(pkg, sig.Results())
+	ctx.cb.NewClosure(params, results, false).BodyStart(pkg)
 	for _, v := range v.Rhs {
 		compileExpr(ctx, v)
 	}
-	ctx.cb.Return(nout).End()
+	ctx.cb.Return(len(v.Rhs)).End()
 }
 
 func compileLambdaExpr2(ctx *blockCtx, v *ast.LambdaExpr2, sig *types.Signature) {
 	pkg := ctx.pkg
-	params := compileLambdaParams(ctx, v.Pos(), v.Lhs, sig.Params())
-	cb := ctx.cb
-	comments := cb.Comments()
-	out := sig.Results()
-	nout := out.Len()
-	results := make([]*types.Var, nout)
-	for i := 0; i < nout; i++ {
-		results[i] = pkg.NewParam(token.NoPos, "", out.At(i).Type())
-	}
-	fn := cb.NewClosure(types.NewTuple(params...), types.NewTuple(results...), false)
+	params := makeLambdaParams(ctx, v.Pos(), v.Lhs, sig.Params())
+	results := makeLambdaResults(pkg, sig.Results())
+	comments, once := ctx.cb.BackupComments()
+	fn := ctx.cb.NewClosure(params, results, false)
 	loadFuncBody(ctx, fn, v.Body)
-	cb.SetComments(comments, false)
+	ctx.cb.SetComments(comments, once)
 }
 
 func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
 	cb := ctx.cb
-	comments := cb.Comments()
+	comments, once := cb.BackupComments()
 	sig := toFuncType(ctx, v.Type, nil)
 	fn := cb.NewClosureWith(sig)
 	if body := v.Body; body != nil {
 		loadFuncBody(ctx, fn, body)
-		cb.SetComments(comments, false)
+		cb.SetComments(comments, once)
 	}
 }
 

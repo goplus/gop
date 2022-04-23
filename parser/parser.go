@@ -1588,6 +1588,9 @@ func (p *parser) parseCallOrConversion(fun ast.Expr, isCmd bool) *ast.CallExpr {
 				break
 			}
 		}
+		if isCmd && p.tok == token.RBRACE {
+			break
+		}
 		if !p.atComma("argument list", endTok) {
 			break
 		}

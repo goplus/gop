@@ -18,6 +18,7 @@ package gopmod
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -411,7 +412,7 @@ func (p *Module) ChangeInfo(dir string) (ci ChangeInfo, err error) {
 		return
 	}
 	dir += "/"
-	var fi os.FileInfo
+	var fi fs.FileInfo
 	for _, d := range list {
 		fname := d.Name()
 		if strings.HasPrefix(fname, "_") || d.IsDir() {

@@ -194,25 +194,42 @@ var y *big.Rat = 4/5r
 println x, y
 ```
 
+### Large number: uint128, int128
+
+```go
+var x uint128 = 1 << 65
+var y = x + 1
+println x // output: 36893488147419103232
+println y // output: 36893488147419103233
+```
+
+### Convert bool to number types
+
+```go
+println int(true)       // output: 1
+println float64(true)   // output: 1
+println complex64(true) // output: (1+0i)
+```
+
 ### Map literal
 
 ```go
-x := {"Hello": 1, "xsw": 3.4} // map[string]float64
+x := {"Hello": 1, "xsw": 3.4}   // map[string]float64
 y := {"Hello": 1, "xsw": "Go+"} // map[string]interface{}
-z := {"Hello": 1, "xsw": 3} // map[string]int
-empty := {} // map[string]interface{}
+z := {"Hello": 1, "xsw": 3}     // map[string]int
+empty := {}                     // map[string]interface{}
 ```
 
 ### Slice literal
 
 ```go
-x := [1, 3.4] // []float64
-y := [1] // []int
-z := [1+2i, "xsw"] // []interface{}
+x := [1, 3.4]       // []float64
+y := [1]            // []int
+z := [1+2i, "xsw"]  // []interface{}
 a := [1, 3.4, 3+4i] // []complex128
-b := [5+6i] // []complex128
-c := ["xsw", 3] // []interface{}
-empty := [] // []interface{}
+b := [5+6i]         // []complex128
+c := ["xsw", 3]     // []interface{}
+empty := []         // []interface{}
 ```
 
 ### Lambda expression

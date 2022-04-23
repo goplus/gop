@@ -1,0 +1,164 @@
+package main
+
+file cmd4.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: call
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: fn
+              Type:
+                ast.FuncType:
+                  Params:
+                    ast.FieldList:
+                      List:
+                        ast.Field:
+                          Names:
+                            ast.Ident:
+                              Name: x
+                          Type:
+                            ast.Ident:
+                              Name: int
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: fn
+              Args:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 100
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: call
+              Args:
+                ast.FuncLit:
+                  Type:
+                    ast.FuncType:
+                      Params:
+                        ast.FieldList:
+                          List:
+                            ast.Field:
+                              Names:
+                                ast.Ident:
+                                  Name: x
+                              Type:
+                                ast.Ident:
+                                  Name: int
+                  Body:
+                    ast.BlockStmt:
+                      List:
+                        ast.ExprStmt:
+                          X:
+                            ast.Ident:
+                              Name: println
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: call
+              Args:
+                ast.FuncLit:
+                  Type:
+                    ast.FuncType:
+                      Params:
+                        ast.FieldList:
+                          List:
+                            ast.Field:
+                              Names:
+                                ast.Ident:
+                                  Name: x
+                              Type:
+                                ast.Ident:
+                                  Name: int
+                  Body:
+                    ast.BlockStmt:
+                      List:
+                        ast.ExprStmt:
+                          X:
+                            ast.CallExpr:
+                              Fun:
+                                ast.Ident:
+                                  Name: println
+                              Args:
+                                ast.Ident:
+                                  Name: x
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: call
+              Args:
+                ast.FuncLit:
+                  Type:
+                    ast.FuncType:
+                      Params:
+                        ast.FieldList:
+                          List:
+                            ast.Field:
+                              Names:
+                                ast.Ident:
+                                  Name: x
+                              Type:
+                                ast.Ident:
+                                  Name: int
+                  Body:
+                    ast.BlockStmt:
+                      List:
+                        ast.ExprStmt:
+                          X:
+                            ast.CallExpr:
+                              Fun:
+                                ast.Ident:
+                                  Name: println
+                              Args:
+                                ast.CompositeLit:
+                                  Elts:
+                                    ast.KeyValueExpr:
+                                      Key:
+                                        ast.BasicLit:
+                                          Kind: STRING
+                                          Value: "x"
+                                      Value:
+                                        ast.BasicLit:
+                                          Kind: INT
+                                          Value: 100
+                                    ast.KeyValueExpr:
+                                      Key:
+                                        ast.BasicLit:
+                                          Kind: STRING
+                                          Value: "y"
+                                      Value:
+                                        ast.BasicLit:
+                                          Kind: INT
+                                          Value: 200
+                                ast.Ident:
+                                  Name: x

@@ -18,6 +18,7 @@ package printer_test
 
 import (
 	"bytes"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -145,6 +146,12 @@ func testFrom(t *testing.T, fpath, sel string, mode int) {
 	}
 }
 
+func TestFromGopPrinter(t *testing.T) {
+	testFrom(t, "nodes.go", "", 0)
+	testFrom(t, "printer.go", "", 0)
+	testFrom(t, "printer_test.go", "", 0)
+}
+
 func TestFromTestdata(t *testing.T) {
 	sel := ""
 	dir, err := os.Getwd()
@@ -152,7 +159,7 @@ func TestFromTestdata(t *testing.T) {
 		t.Fatal("Getwd failed:", err)
 	}
 	dir = filepath.Join(dir, "./_testdata")
-	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -170,7 +177,7 @@ func TestFromParse(t *testing.T) {
 		t.Fatal("Getwd failed:", err)
 	}
 	dir = filepath.Join(dir, "../parser/_testdata")
-	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}

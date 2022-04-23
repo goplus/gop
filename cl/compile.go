@@ -96,6 +96,9 @@ type Config struct {
 
 	// RelativePath = true means to generate file line comments with relative file path.
 	RelativePath bool
+
+	// NoAutoGenMain = true means not to auto generate main func is no entry.
+	NoAutoGenMain bool
 }
 
 type nodeInterp struct {
@@ -248,7 +251,7 @@ type blockCtx struct {
 	imports      map[string]*gox.PkgRef
 	lookups      []*gox.PkgRef
 	targetDir    string
-	classRecv    *ast.FieldList // avaliable when gmxSettings != nil
+	classRecv    *ast.FieldList // available when gmxSettings != nil
 	fileLine     bool
 	relativePath bool
 	isClass      bool
@@ -396,6 +399,15 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		load()
 	}
 	err = ctx.complete()
+
+	if !conf.NoAutoGenMain && pkg.Name == "main" {
+		if obj := p.Types.Scope().Lookup("main"); obj == nil {
+			old := p.SetInTestingFile(false)
+			p.NewFunc(nil, "main", nil, nil, false).BodyStart(p).End()
+			p.SetInTestingFile(old)
+		}
+	}
+
 	return
 }
 
@@ -541,6 +553,26 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 				X: &ast.Ident{Name: classType},
 			},
 		}}}
+	}
+	// check class project no MainEntry and auto added
+	if !conf.NoAutoGenMain && f.IsProj && !f.NoEntrypoint && f.Name.Name == "main" {
+		entry := getEntrypoint(f, false)
+		var hasEntry bool
+		for _, decl := range f.Decls {
+			switch d := decl.(type) {
+			case *ast.FuncDecl:
+				if d.Name.Name == entry {
+					hasEntry = true
+				}
+			}
+		}
+		if !hasEntry {
+			f.Decls = append(f.Decls, &ast.FuncDecl{
+				Name: ast.NewIdent(entry),
+				Type: &ast.FuncType{Params: &ast.FieldList{}},
+				Body: &ast.BlockStmt{},
+			})
+		}
 	}
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {

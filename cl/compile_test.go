@@ -18,7 +18,6 @@ package cl_test
 
 import (
 	"bytes"
-	"go/types"
 	"os"
 	"strings"
 	"sync"
@@ -42,36 +41,27 @@ func init() {
 	gox.SetDebug(gox.DbgFlagAll)
 	cl.SetDebug(cl.DbgFlagAll)
 	gblFset = token.NewFileSet()
-	conf := &packages.Config{
-		ModRoot: ".",
-		ModPath: "github.com/goplus/gop/cl",
-		Loaded:  make(map[string]*types.Package),
-		Fset:    gblFset,
-	}
-	const (
-		pkgbi   = "github.com/goplus/gop/builtin"
-		pkggt   = "github.com/goplus/gop/ast/goptest"
-		pkgspx  = "github.com/goplus/gop/cl/internal/spx"
-		pkgspx2 = "github.com/goplus/gop/cl/internal/spx2"
-	)
-	imp, _, err := packages.NewImporter(
-		conf, ".", "encoding/base32", "encoding/base64", pkgbi, pkggt, pkgspx, pkgspx2)
-	if err != nil {
-		panic(err)
-	}
+	imp := packages.NewImporter(gblFset)
 	gblConf = &cl.Config{
-		Fset:        gblFset,
-		Importer:    imp,
-		LookupClass: lookupClass,
-		NoFileLine:  true,
+		Fset:          gblFset,
+		Importer:      imp,
+		LookupClass:   lookupClass,
+		NoFileLine:    true,
+		NoAutoGenMain: true,
 	}
+}
+
+func gopClNamedTest(t *testing.T, name string, gopcode, expected string) {
+	t.Run(name, func(t *testing.T) {
+		gopClTest(t, gopcode, expected)
+	})
 }
 
 func gopClTest(t *testing.T, gopcode, expected string) {
-	gopClTestEx(t, "main", gopcode, expected)
+	gopClTestEx(t, gblConf, "main", gopcode, expected)
 }
 
-func gopClTestEx(t *testing.T, pkgname, gopcode, expected string) {
+func gopClTestEx(t *testing.T, conf *cl.Config, pkgname, gopcode, expected string) {
 	cl.SetDisableRecover(true)
 	defer cl.SetDisableRecover(false)
 
@@ -82,7 +72,7 @@ func gopClTestEx(t *testing.T, pkgname, gopcode, expected string) {
 		t.Fatal("ParseFSDir:", err)
 	}
 	bar := pkgs[pkgname]
-	pkg, err := cl.NewPackage("github.com/goplus/gop/cl", bar, gblConf)
+	pkg, err := cl.NewPackage("github.com/goplus/gop/cl", bar, conf)
 	if err != nil {
 		t.Fatal("NewPackage:", err)
 	}
@@ -156,14 +146,14 @@ const (
 )
 `, `package main
 
-func main() {
-	const a = append + len
-}
-
 const (
 	append = iota
 	len
 )
+
+func main() {
+	const a = append + len
+}
 `)
 }
 
@@ -548,7 +538,7 @@ func main() {
 }
 
 func TestIssue774(t *testing.T) {
-	gopClTest(t, `
+	gopClNamedTest(t, "InterfaceTypeAssert", `
 package main
 
 import "fmt"
@@ -578,18 +568,19 @@ func main() {
 	fmt.Println(a.(*A))
 }
 
-type AA interface {
-	String() string
-}
 type A struct {
 	str string
 }
 
 func (a *A) String() string {
 	return a.str
+}
+
+type AA interface {
+	String() string
 }
 `)
-	gopClTest(t, `
+	gopClNamedTest(t, "getInterface", `
 package main
 
 import "fmt"
@@ -623,16 +614,14 @@ func main() {
 	a := get()
 	fmt.Println(a.(*A))
 }
-
-type AA interface {
-	String() string
-}
-
 func get() AA {
 	var a AA
 	return a
 }
 
+type AA interface {
+	String() string
+}
 type A struct {
 	str string
 }
@@ -1203,16 +1192,42 @@ var x, y = 1, "Hi"
 `)
 }
 
+func TestUint128Add(t *testing.T) {
+	gopClTest(t, `
+var x, y uint128
+var z uint128 = x + y
+`, `package main
+
+import ng "github.com/goplus/gop/builtin/ng"
+
+var x, y ng.Uint128
+var z ng.Uint128 = x.Gop_Add__1(y)
+`)
+}
+
+func TestInt128Add(t *testing.T) {
+	gopClTest(t, `
+var x, y int128
+var z int128 = x + y
+`, `package main
+
+import ng "github.com/goplus/gop/builtin/ng"
+
+var x, y ng.Int128
+var z ng.Int128 = x.Gop_Add__1(y)
+`)
+}
+
 func TestBigIntAdd(t *testing.T) {
 	gopClTest(t, `
 var x, y bigint
 var z bigint = x + y
 `, `package main
 
-import builtin "github.com/goplus/gop/builtin"
+import ng "github.com/goplus/gop/builtin/ng"
 
-var x, y builtin.Gop_bigint
-var z builtin.Gop_bigint = x.Gop_Add(y)
+var x, y ng.Bigint
+var z ng.Bigint = x.Gop_Add(y)
 `)
 }
 
@@ -1222,11 +1237,33 @@ var x = 1r
 `, `package main
 
 import (
-	builtin "github.com/goplus/gop/builtin"
+	ng "github.com/goplus/gop/builtin/ng"
 	big "math/big"
 )
 
-var x = builtin.Gop_bigint_Init__1(big.NewInt(1))
+var x = ng.Bigint_Init__1(big.NewInt(1))
+`)
+}
+
+func TestUint128Lit(t *testing.T) {
+	gopClTest(t, `
+var x uint128 = 1
+`, `package main
+
+import ng "github.com/goplus/gop/builtin/ng"
+
+var x ng.Uint128 = ng.Uint128_Init__0(1)
+`)
+}
+
+func TestInt128Lit(t *testing.T) {
+	gopClTest(t, `
+var x int128 = 1
+`, `package main
+
+import ng "github.com/goplus/gop/builtin/ng"
+
+var x ng.Int128 = ng.Int128_Init__0(1)
 `)
 }
 
@@ -1236,11 +1273,11 @@ var x = 1/2r
 `, `package main
 
 import (
-	builtin "github.com/goplus/gop/builtin"
+	ng "github.com/goplus/gop/builtin/ng"
 	big "math/big"
 )
 
-var x = builtin.Gop_bigrat_Init__2(big.NewRat(1, 2))
+var x = ng.Bigrat_Init__2(big.NewRat(1, 2))
 `)
 }
 
@@ -1250,11 +1287,11 @@ var x = 3 + 1/2r
 `, `package main
 
 import (
-	builtin "github.com/goplus/gop/builtin"
+	ng "github.com/goplus/gop/builtin/ng"
 	big "math/big"
 )
 
-var x = builtin.Gop_bigrat_Init__2(big.NewRat(7, 2))
+var x = ng.Bigrat_Init__2(big.NewRat(7, 2))
 `)
 }
 
@@ -1267,13 +1304,13 @@ var z = 100 + y
 `, `package main
 
 import (
-	builtin "github.com/goplus/gop/builtin"
+	ng "github.com/goplus/gop/builtin/ng"
 	big "math/big"
 )
 
-var x = builtin.Gop_bigrat_Init__2(big.NewRat(7, 2))
-var y = x.Gop_Add(builtin.Gop_bigrat_Init__0(100))
-var z = builtin.Gop_bigrat_Init__0(100) + y
+var x = ng.Bigrat_Init__2(big.NewRat(7, 2))
+var y = x.Gop_Add(ng.Bigrat_Init__0(100))
+var z = ng.Bigrat_Init__0(100) + y
 `)
 }
 
@@ -1355,12 +1392,12 @@ var x bigint
 x += 3
 `, `package main
 
-import builtin "github.com/goplus/gop/builtin"
+import ng "github.com/goplus/gop/builtin/ng"
 
-var x builtin.Gop_bigint
+var x ng.Bigint
 
 func main() {
-	x.Gop_AddAssign(builtin.Gop_bigint_Init__0(3))
+	x.Gop_AddAssign(ng.Bigint_Init__0(3))
 }
 `)
 }
@@ -1372,13 +1409,13 @@ x *= 2
 `, `package main
 
 import (
-	builtin "github.com/goplus/gop/builtin"
+	ng "github.com/goplus/gop/builtin/ng"
 	big "math/big"
 )
 
 func main() {
-	x := builtin.Gop_bigint_Init__1(big.NewInt(3))
-	x.Gop_MulAssign(builtin.Gop_bigint_Init__0(2))
+	x := ng.Bigint_Init__1(big.NewInt(3))
+	x.Gop_MulAssign(ng.Bigint_Init__0(2))
 }
 `)
 }
@@ -1390,13 +1427,13 @@ x *= 2r
 `, `package main
 
 import (
-	builtin "github.com/goplus/gop/builtin"
+	ng "github.com/goplus/gop/builtin/ng"
 	big "math/big"
 )
 
 func main() {
-	x := builtin.Gop_bigint_Init__1(big.NewInt(3))
-	x.Gop_MulAssign(builtin.Gop_bigint_Init__1(big.NewInt(2)))
+	x := ng.Bigint_Init__1(big.NewInt(3))
+	x.Gop_MulAssign(ng.Bigint_Init__1(big.NewInt(2)))
 }
 `)
 }
@@ -1609,12 +1646,12 @@ func main() {
 }
 `, `package main
 
+type bar = foo
 type foo struct {
 	p *foo
 	A int
 	B string "tag1:123"
 }
-type bar = foo
 
 func main() {
 	type a struct {
@@ -1884,10 +1921,6 @@ type fooIter struct {
 	data *foo
 	idx  int
 }
-type foo struct {
-	key []int
-	val []string
-}
 
 func (p *fooIter) Next() (key int, val string, ok bool) {
 	if p.idx < len(p.data.key) {
@@ -1896,6 +1929,12 @@ func (p *fooIter) Next() (key int, val string, ok bool) {
 	}
 	return
 }
+
+type foo struct {
+	key []int
+	val []string
+}
+
 func (p *foo) Gop_Enum() *fooIter {
 	return &fooIter{data: p}
 }
@@ -3229,22 +3268,19 @@ func TestNew(t *testing.T) {
 		t.Fatal("Test failed:", ret, expected)
 	}
 }
-
-type Result struct {
-	Repo Repo
-}
-
 func New() Result {
 	repo := newRepo()
 	return Result{Repo: repo}
+}
+func newRepo() Repo {
+	return Repo{Title: "Hi"}
 }
 
 type Repo struct {
 	Title string
 }
-
-func newRepo() Repo {
-	return Repo{Title: "Hi"}
+type Result struct {
+	Repo Repo
 }
 `)
 	}
@@ -3515,7 +3551,7 @@ func main() {
 	fmt.Println("init")
 }
 `)
-	gopClTestEx(t, "bar", `package bar
+	gopClTestEx(t, gblConf, "bar", `package bar
 println("init")
 `, `package bar
 
@@ -3598,6 +3634,62 @@ func main() {
 	fmt.Print("hello")
 	fmt.Println()
 	fmt.Println("hello")
+	fmt.Println("hello")
+}
+`)
+}
+
+func TestAnyAlias(t *testing.T) {
+	gopClTest(t, `
+var a any = 100
+println(a)
+`, `package main
+
+import fmt "fmt"
+
+var a interface {
+} = 100
+
+func main() {
+	fmt.Println(a)
+}
+`)
+}
+
+func TestMainEntry(t *testing.T) {
+	conf := *gblConf
+	conf.NoAutoGenMain = false
+
+	gopClTestEx(t, &conf, "main", `
+`, `package main
+
+func main() {
+}
+`)
+	gopClTestEx(t, &conf, "main", `
+func test() {
+	println "hello"
+}
+`, `package main
+
+import fmt "fmt"
+
+func test() {
+	fmt.Println("hello")
+}
+func main() {
+}
+`)
+
+	gopClTestEx(t, &conf, "main", `
+func main() {
+	println "hello"
+}
+`, `package main
+
+import fmt "fmt"
+
+func main() {
 	fmt.Println("hello")
 }
 `)

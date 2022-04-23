@@ -41,8 +41,11 @@ func (p *handleEvent) OnInfo(format string, args ...interface{}) {
 }
 
 func (p *handleEvent) OnErr(stage string, err error) {
-	p.lastErr = fmt.Errorf("%s: %v", stage, err)
-	fmt.Fprintln(os.Stderr, p.lastErr)
+	lastErr := fmt.Errorf("%s: %w", stage, err)
+	if p.lastErr != nil {
+		fmt.Fprintln(os.Stderr, p.lastErr)
+	}
+	p.lastErr = lastErr
 }
 
 func (p *handleEvent) OnEnd() {
@@ -72,8 +75,10 @@ func OpenProject(flags int, src gopprojs.Proj) (ctx *Context, proj *Project, err
 		proj, err = ctx.OpenFiles(flags, v.Files...)
 		return
 	case *gopprojs.DirProj:
+		os.Chdir(v.Dir)
 		return OpenDir(flags, v.Dir)
 	case *gopprojs.PkgPathProj:
+		os.Chdir(modfetch.GOMODCACHE)
 		return OpenPkgPath(flags, v.Path)
 	}
 	panic("OpenProject: unexpected source")

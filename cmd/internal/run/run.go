@@ -93,7 +93,7 @@ func gopRun(args []string) {
 	}
 	ctx, goProj, err := gopproj.OpenProject(flags, proj)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "OpenProject failed:", err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 	goProj.ExecArgs = args

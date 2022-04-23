@@ -70,29 +70,35 @@ func gopSpxTest(t *testing.T, gmx, spxcode, expected string) {
 }
 
 func gopSpxTestEx(t *testing.T, gmx, spxcode, expected, gmxfile, spxfile string) {
-	cl.SetDisableRecover(true)
-	defer cl.SetDisableRecover(false)
+	gopSpxTestExConf(t, "gopSpxTest", gblConf, gmx, spxcode, expected, gmxfile, spxfile)
+}
 
-	fs := newTwoFileFS("/foo", spxfile, spxcode, gmxfile, gmx)
-	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", spxParserConf())
-	if err != nil {
-		scanner.PrintError(os.Stderr, err)
-		t.Fatal("ParseFSDir:", err)
-	}
-	bar := pkgs["main"]
-	pkg, err := cl.NewPackage("", bar, gblConf)
-	if err != nil {
-		t.Fatal("NewPackage:", err)
-	}
-	var b bytes.Buffer
-	err = gox.WriteTo(&b, pkg, false)
-	if err != nil {
-		t.Fatal("gox.WriteTo failed:", err)
-	}
-	result := b.String()
-	if result != expected {
-		t.Fatalf("\nResult:\n%s\nExpected:\n%s\n", result, expected)
-	}
+func gopSpxTestExConf(t *testing.T, name string, conf *cl.Config, gmx, spxcode, expected, gmxfile, spxfile string) {
+	t.Run(name, func(t *testing.T) {
+		cl.SetDisableRecover(true)
+		defer cl.SetDisableRecover(false)
+
+		fs := newTwoFileFS("/foo", spxfile, spxcode, gmxfile, gmx)
+		pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", spxParserConf())
+		if err != nil {
+			scanner.PrintError(os.Stderr, err)
+			t.Fatal("ParseFSDir:", err)
+		}
+		bar := pkgs["main"]
+		pkg, err := cl.NewPackage("", bar, conf)
+		if err != nil {
+			t.Fatal("NewPackage:", err)
+		}
+		var b bytes.Buffer
+		err = gox.WriteTo(&b, pkg, false)
+		if err != nil {
+			t.Fatal("gox.WriteTo failed:", err)
+		}
+		result := b.String()
+		if result != expected {
+			t.Fatalf("\nResult:\n%s\nExpected:\n%s\n", result, expected)
+		}
+	})
 }
 
 func gopSpxErrorTestEx(t *testing.T, msg, gmx, spxcode, gmxfile, spxfile string) {
@@ -213,7 +219,6 @@ type index struct {
 func (this *index) bar() {
 }
 func (this *index) onInit() {
-	Foo
 	this.bar()
 	fmt.Println("Hi")
 }
@@ -297,16 +302,18 @@ type Game struct {
 	*spx.MyGame
 	Kai Kai
 }
+
+func (this *Game) onInit() {
+	this.Kai.Clone()
+	this.Broadcast__0("msg1")
+}
+
 type Kai struct {
 	spx.Sprite
 	*Game
 	a int
 }
 
-func (this *Game) onInit() {
-	this.Kai.Clone()
-	this.Broadcast__0("msg1")
-}
 func (this *Kai) onInit() {
 	this.a = 1
 }
@@ -342,10 +349,6 @@ type index struct {
 	Kai Kai
 	t   spx.Sound
 }
-type Kai struct {
-	spx.Sprite
-	*index
-}
 
 func (this *index) MainEntry() {
 	spx.Gopt_MyGame_Run(this, "hzip://open.qiniu.us/weather/res.zip")
@@ -353,6 +356,12 @@ func (this *index) MainEntry() {
 func main() {
 	spx.Gopt_MyGame_Main(new(index))
 }
+
+type Kai struct {
+	spx.Sprite
+	*index
+}
+
 func (this *Kai) Main() {
 	fmt.Println("Hi")
 }
@@ -388,6 +397,97 @@ type Kai struct {
 	*Game
 }
 
+func (this *Kai) onMsg(msg string) {
+}
+`, "Game.t2gmx", "Kai.t2spx")
+}
+
+func TestSpxMainEntry(t *testing.T) {
+	conf := *gblConf
+	conf.NoAutoGenMain = false
+
+	gopSpxTestExConf(t, "Nocode", &conf, `
+`, `
+`, `package main
+
+import spx2 "github.com/goplus/gop/cl/internal/spx2"
+
+type Game struct {
+	spx2.Game
+}
+
+func (this *Game) MainEntry() {
+}
+func main() {
+	new(Game).Main()
+}
+`, "Game.t2gmx", "Kai.t2spx")
+	gopSpxTestExConf(t, "OnlyGmx", &conf, `
+var (
+	Kai Kai
+)
+`, `
+`, `package main
+
+import spx2 "github.com/goplus/gop/cl/internal/spx2"
+
+type Game struct {
+	spx2.Game
+	Kai Kai
+}
+
+func (this *Game) MainEntry() {
+}
+func main() {
+	new(Game).Main()
+}
+
+type Kai struct {
+	spx2.Sprite
+	*Game
+}
+`, "Game.t2gmx", "Kai.t2spx")
+
+	gopSpxTestExConf(t, "KaiAndGmx", &conf, `
+var (
+	Kai Kai
+)
+func MainEntry() {
+	println "Hi"
+}
+`, `
+func Main() {
+	println "Hello"
+}
+func onMsg(msg string) {
+}
+`, `package main
+
+import (
+	fmt "fmt"
+	spx2 "github.com/goplus/gop/cl/internal/spx2"
+)
+
+type Game struct {
+	spx2.Game
+	Kai Kai
+}
+
+func (this *Game) MainEntry() {
+	fmt.Println("Hi")
+}
+func main() {
+	new(Game).Main()
+}
+
+type Kai struct {
+	spx2.Sprite
+	*Game
+}
+
+func (this *Kai) Main() {
+	fmt.Println("Hello")
+}
 func (this *Kai) onMsg(msg string) {
 }
 `, "Game.t2gmx", "Kai.t2spx")
