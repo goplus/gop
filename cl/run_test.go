@@ -109,7 +109,9 @@ func testRun(t *testing.T, gopcode, expected string) {
 	}
 }
 
-func TestInt128_println(t *testing.T) {
+// -----------------------------------------------------------------------------
+
+func TestUint128_println(t *testing.T) {
 	testRun(t, `
 var x uint128 = 1
 println x
@@ -117,7 +119,7 @@ println x
 `)
 }
 
-func TestInt128_init(t *testing.T) {
+func TestUint128_init(t *testing.T) {
 	testRun(t, `
 var x uint128 = 1 << 65
 var y = x + 1
@@ -128,7 +130,14 @@ println y
 `)
 }
 
-func TestInt128_printf(t *testing.T) {
+func TestUint128_cast(t *testing.T) {
+	testRun(t, `
+println uint128(1 << 65), uint128()
+`, `36893488147419103232 0
+`)
+}
+
+func TestUint128_printf(t *testing.T) {
 	testRun(t, `
 var x uint128 = 1
 printf "%4d\n", x
@@ -136,7 +145,7 @@ printf "%4d\n", x
 `)
 }
 
-func TestInt128_scanf(t *testing.T) {
+func TestUint128_scanf(t *testing.T) {
 	testRun(t, `
 import "fmt"
 
@@ -147,3 +156,41 @@ println name, age
 `, `Kim 22
 `)
 }
+
+// -----------------------------------------------------------------------------
+
+func TestBigint_println(t *testing.T) {
+	testRun(t, `
+var x bigint = 1
+println x
+`, `1
+`)
+}
+
+func TestBigint_init(t *testing.T) {
+	testRun(t, `
+var x bigint = 1 << 65
+var y = x + 1
+println x
+println y
+`, `36893488147419103232
+36893488147419103233
+`)
+}
+
+func TestBigint_cast(t *testing.T) {
+	testRun(t, `
+println bigint(1 << 65), bigint()
+`, `36893488147419103232 0
+`)
+}
+
+func TestBigint_printf(t *testing.T) {
+	testRun(t, `
+var x bigint = 1
+printf "%4d\n", x
+`, `   1
+`)
+}
+
+// -----------------------------------------------------------------------------

@@ -244,19 +244,19 @@ func (a Bigint) Gop_RshAssign(n Gop_ninteger) {
 	a.Int.Rsh(a.Int, uint(n))
 }
 
-// Bigint_Cast: func bigint() bigint
-func Bigint_Cast__0() Bigint {
-	return Bigint{new(big.Int)}
+// Bigint_Cast: func bigint(x untyped_int) bigint
+func Bigint_Cast__0(x int) Bigint {
+	return Bigint{big.NewInt(int64(x))}
+}
+
+// Bigint_Cast: func bigint(x untyped_bigint) bigint
+func Bigint_Cast__1(x UntypedBigint) Bigint {
+	return Bigint{x}
 }
 
 // Bigint_Cast: func bigint(x int64) bigint
-func Bigint_Cast__1(x int64) Bigint {
+func Bigint_Cast__2(x int64) Bigint {
 	return Bigint{big.NewInt(x)}
-}
-
-// Bigint_Cast: func bigint(x int) bigint
-func Bigint_Cast__2(x int) Bigint {
-	return Bigint{big.NewInt(int64(x))}
 }
 
 // Bigint_Cast: func bigint(x uint64) bigint
@@ -283,22 +283,24 @@ func Bigint_Cast__6(x *big.Rat) Bigint {
 	return Bigint{ret}
 }
 
+// Bigint_Cast: func bigint() bigint
+func Bigint_Cast__7() Bigint {
+	return Bigint{new(big.Int)}
+}
+
 // Bigint_Init: func bigint.init(x int) bigint
 func Bigint_Init__0(x int) Bigint {
 	return Bigint{big.NewInt(int64(x))}
 }
 
-// Bigint_Init: func bigint.init(x *big.Int) bigint
-func Bigint_Init__1(x *big.Int) Bigint {
+// Bigint_Init: func bigint.init(x untyped_bigint) bigint
+func Bigint_Init__1(x UntypedBigint) Bigint {
 	return Bigint{x}
 }
 
-// Bigint_Init: func bigint.init(x *big.Rat) bigint
-func Bigint_Init__2(x *big.Rat) Bigint {
-	if x.IsInt() {
-		return Bigint{x.Num()}
-	}
-	panic("TODO: can't init bigint from bigrat")
+// Bigint_Init: func bigint.init(x *big.Int) bigint
+func Bigint_Init__2(x *big.Int) Bigint {
+	return Bigint{x}
 }
 
 // -----------------------------------------------------------------------------
@@ -425,14 +427,14 @@ func (a Bigrat) Gop_QuoAssign(b Bigrat) {
 	a.Rat.Quo(a.Rat, b.Rat)
 }
 
-// Bigrat_Cast: func bigrat() bigrat
-func Bigrat_Cast__0() Bigrat {
-	return Bigrat{new(big.Rat)}
+// Bigrat_Cast: func bigrat(x untyped_int) bigrat
+func Bigrat_Cast__0(x int) Bigrat {
+	return Bigrat{big.NewRat(int64(x), 1)}
 }
 
-// Bigrat_Cast: func bigrat(a bigint) bigrat
-func Bigrat_Cast__1(a Bigint) Bigrat {
-	return Bigrat{new(big.Rat).SetInt(a.Int)}
+// Bigrat_Cast: func bigrat(a untyped_bigint) bigrat
+func Bigrat_Cast__1(a UntypedBigint) Bigrat {
+	return Bigrat{new(big.Rat).SetInt(a)}
 }
 
 // Bigrat_Cast: func bigrat(a *big.Int) bigrat
@@ -440,14 +442,24 @@ func Bigrat_Cast__2(a *big.Int) Bigrat {
 	return Bigrat{new(big.Rat).SetInt(a)}
 }
 
-// Bigrat_Cast: func bigrat(a, b int64) bigrat
-func Bigrat_Cast__3(a, b int64) Bigrat {
-	return Bigrat{big.NewRat(a, b)}
+// Bigrat_Cast: func bigrat(a bigint) bigrat
+func Bigrat_Cast__3(a Bigint) Bigrat {
+	return Bigrat{new(big.Rat).SetInt(a.Int)}
 }
 
 // Bigrat_Cast: func bigrat(a *big.Rat) bigrat
 func Bigrat_Cast__4(a *big.Rat) Bigrat {
 	return Bigrat{a}
+}
+
+// Bigrat_Cast: func bigrat() bigrat
+func Bigrat_Cast__5() Bigrat {
+	return Bigrat{new(big.Rat)}
+}
+
+// Bigrat_Cast: func bigrat(a, b int64) bigrat
+func Bigrat_Cast__6(a, b int64) Bigrat {
+	return Bigrat{big.NewRat(a, b)}
 }
 
 // Bigrat_Init: func bigrat.init(x untyped_int) bigrat
