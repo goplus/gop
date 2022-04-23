@@ -118,12 +118,22 @@ func testRunType(t *testing.T, typ, gopcodeT, expected string) {
 // -----------------------------------------------------------------------------
 
 const (
-	testType_println_code, testType_println_ret = `
+	testType_inc_code, testType_inc_ret = `
 {
 	var x $(type) = 1
-	println x, +x
+	var y = +x
+	x++
+	println x, y
 }
-`, `1 1
+`, `2 1
+`
+	testType_dec_code, testType_dec_ret = `
+{
+	var x $(type) = 0
+	x--
+	println x
+}
+`, `-1
 `
 	testType_init_code, testType_init_ret = `
 {
@@ -161,22 +171,22 @@ import "fmt"
 )
 
 const (
-	testType_noscanf_code, testType_noscanf_ret = testType_println_code + testType_init_code + testType_cast_code + testType_printf_code,
-		testType_println_ret + testType_init_ret + testType_cast_ret + testType_printf_ret
-	testType_all_code, testType_all_ret = testTypescanf_code + testType_noscanf_code,
-		testType_scanf_ret + testType_noscanf_ret
+	testType_com_code, testType_com_ret = testType_inc_code + testType_init_code + testType_cast_code + testType_printf_code,
+		testType_inc_ret + testType_init_ret + testType_cast_ret + testType_printf_ret
+	testType_fixint_code, testType_fixint_ret = testTypescanf_code + testType_com_code,
+		testType_scanf_ret + testType_com_ret
 )
 
 func TestUint128_run(t *testing.T) {
-	testRunType(t, "uint128", testType_println_code, testType_println_ret)
+	testRunType(t, "uint128", testType_fixint_code, testType_fixint_ret)
 }
 
 func TestInt128_run(t *testing.T) {
-	testRunType(t, "int128", testType_all_code, testType_all_ret)
+	testRunType(t, "int128", testType_fixint_code+testType_dec_code, testType_fixint_ret+testType_dec_ret)
 }
 
 func TestBigint_run(t *testing.T) {
-	testRunType(t, "bigint", testType_noscanf_code, testType_noscanf_ret)
+	testRunType(t, "bigint", testType_com_code+testType_dec_code, testType_com_ret+testType_dec_ret)
 }
 
 // -----------------------------------------------------------------------------

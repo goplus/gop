@@ -370,18 +370,18 @@ func (u Uint128) Gop_Dup() (v Uint128) {
 	return u
 }
 
-func (u Uint128) Gop_Inc() (v Uint128) {
-	var carry uint64
-	v.lo, carry = bits.Add64(u.lo, 1, 0)
-	v.hi = u.hi + carry
-	return v
+func (u *Uint128) Gop_Inc() {
+	u.lo++
+	if u.lo == 0 {
+		u.hi++
+	}
 }
 
-func (u Uint128) Gop_Dec() (v Uint128) {
-	var borrowed uint64
-	v.lo, borrowed = bits.Sub64(u.lo, 1, 0)
-	v.hi = u.hi - borrowed
-	return v
+func (u *Uint128) Gop_Dec() {
+	if u.lo == 0 {
+		u.hi--
+	}
+	u.lo--
 }
 
 func (u Uint128) Gop_Add__1(n Uint128) (v Uint128) {
@@ -627,7 +627,7 @@ func (u Uint128) QuoRem__1(by Uint128) (q, r Uint128) {
 	byTrailing0 := uint(by.TrailingZeros())
 	if (byLeading0 + byTrailing0) == 127 {
 		q = u.Gop_Rsh(byTrailing0)
-		by = by.Gop_Dec()
+		by.Gop_Dec()
 		r = by.Gop_And__1(u)
 		return
 	}
@@ -825,14 +825,14 @@ func quorem128by128(m, v Uint128, vHiLeading0, vLoLeading0 uint) (q, r Uint128) 
 		q1 = q1.Gop_Rsh(63 - vHiLeading0)
 
 		if q1.hi|q1.lo != 0 {
-			q1 = q1.Gop_Dec()
+			q1.Gop_Dec()
 		}
 		q = q1
 		q1 = q1.Gop_Mul__1(v)
 		r = m.Gop_Sub__1(q1)
 
 		if r.Cmp__1(v) >= 0 {
-			q = q.Gop_Inc()
+			q.Gop_Inc()
 			r = r.Gop_Sub__1(v)
 		}
 

@@ -12,6 +12,16 @@ const (
 	maxInt64 = 1<<63 - 1
 )
 
+var (
+	big1       = new(big.Int).SetUint64(1)
+	bigMaxU128 *big.Int
+)
+
+func init() {
+	bigMaxU128 = new(big.Int).Lsh(big1, 128)
+	bigMaxU128.Sub(bigMaxU128, big1) // 340282366920938463463374607431768211455
+}
+
 // -----------------------------------------------------------------------------
 
 type Int128 struct {
@@ -235,11 +245,6 @@ func (i Int128) ToBigInt(b *big.Int) {
 	}
 }
 
-var (
-	big1          = new(big.Int).SetUint64(1)
-	bigMaxU128, _ = new(big.Int).SetString("340282366920938463463374607431768211455", 10)
-)
-
 func (i Int128) Sign() int {
 	if i.lo == 0 && i.hi == 0 {
 		return 0
@@ -249,22 +254,18 @@ func (i Int128) Sign() int {
 	return -1
 }
 
-func (i Int128) Gop_Inc() (v Int128) {
-	v.lo = i.lo + 1
-	v.hi = i.hi
-	if i.lo > v.lo {
-		v.hi++
+func (i *Int128) Gop_Inc() {
+	i.lo++
+	if i.lo == 0 {
+		i.hi++
 	}
-	return v
 }
 
-func (i Int128) Gop_Dec() (v Int128) {
-	v.lo = i.lo - 1
-	v.hi = i.hi
-	if i.lo < v.lo {
-		v.hi--
+func (i *Int128) Gop_Dec() {
+	if i.lo == 0 {
+		i.hi--
 	}
-	return v
+	i.lo--
 }
 
 func (i Int128) Gop_Add__1(n Int128) (v Int128) {

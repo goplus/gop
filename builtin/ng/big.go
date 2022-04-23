@@ -180,6 +180,16 @@ func (a Bigint) Gop_Not() Bigint {
 	return Bigint{tmpint1(a).Not(a.Int)}
 }
 
+// Gop_Inc: func ++(b bigint)
+func (a Bigint) Gop_Inc() {
+	a.Int.Add(a.Int, big1)
+}
+
+// Gop_Dec: func --(b bigint)
+func (a Bigint) Gop_Dec() {
+	a.Int.Sub(a.Int, big1)
+}
+
 // Gop_Add: func (a bigint) += (b bigint)
 func (a Bigint) Gop_AddAssign(b Bigint) {
 	a.Int.Add(a.Int, b.Int)
@@ -234,6 +244,8 @@ func (a Bigint) Gop_LshAssign(n Gop_ninteger) {
 func (a Bigint) Gop_RshAssign(n Gop_ninteger) {
 	a.Int.Rsh(a.Int, uint(n))
 }
+
+// -----------------------------------------------------------------------------
 
 // Bigint_Cast: func bigint(x untyped_int) bigint
 func Bigint_Cast__0(x int) Bigint {
@@ -417,6 +429,8 @@ func (a Bigrat) Gop_MulAssign(b Bigrat) {
 func (a Bigrat) Gop_QuoAssign(b Bigrat) {
 	a.Rat.Quo(a.Rat, b.Rat)
 }
+
+// -----------------------------------------------------------------------------
 
 // Bigrat_Cast: func bigrat(x untyped_int) bigrat
 func Bigrat_Cast__0(x int) Bigrat {
