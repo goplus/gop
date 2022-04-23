@@ -171,6 +171,10 @@ func TestUint128_run(t *testing.T) {
 	testRunType(t, "uint128", testType_all_code, testType_all_ret)
 }
 
+func TestInt128_run(t *testing.T) {
+	testRunType(t, "int128", testType_all_code, testType_all_ret)
+}
+
 func TestBigint_run(t *testing.T) {
 	testRunType(t, "bigint", testType_noscanf_code, testType_noscanf_ret)
 }
