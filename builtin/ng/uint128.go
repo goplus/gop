@@ -898,7 +898,7 @@ func quo128bin(u, by Uint128, uLeading0, byLeading0 uint) (q Uint128) {
 func ParseUint128(s string, base int) (out Uint128, err error) {
 	b, ok := new(big.Int).SetString(s, base)
 	if !ok {
-		err = fmt.Errorf("invalid string: %q", s)
+		err = fmt.Errorf("invalid uint128 string: %q", s)
 		return
 	}
 	out, inRange := Uint128_Cast__9(b)

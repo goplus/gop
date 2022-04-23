@@ -1,6 +1,9 @@
 package ng
 
 import (
+	"fmt"
+	"log"
+	"math/big"
 	"math/bits"
 )
 
@@ -9,6 +12,8 @@ const (
 	maxInt64 = 1<<63 - 1
 )
 
+// -----------------------------------------------------------------------------
+
 type Int128 struct {
 	hi uint64
 	lo uint64
@@ -16,26 +21,35 @@ type Int128 struct {
 
 // Int128_Init: func int128.init(v int) int128
 func Int128_Init__0(v int) (out Int128) {
-	return Int128_Cast__1(int64(v))
+	return Int128_Cast__2(int64(v))
+}
+
+// Int128_Init: func int128.init(v untyped_bigint) int128
+func Int128_Init__1(v UntypedBigint) (out Int128) {
+	return Int128_Cast__1(v)
 }
 
 // Int128_Cast: func int128(v int) int128
 func Int128_Cast__0(v int) Int128 {
-	return Int128_Cast__1(int64(v))
+	return Int128_Cast__2(int64(v))
+}
+
+// Int128_Cast: func int128(v untyped_bigint) int128
+func Int128_Cast__1(v UntypedBigint) (out Int128) {
+	out, inRange := Int128_Cast__9(v)
+	if !inRange {
+		log.Panicf("value %v was not in valid int128 range\n", v)
+	}
+	return
 }
 
 // Int128_Cast: func int128(v int64) int128
-func Int128_Cast__1(v int64) (out Int128) {
+func Int128_Cast__2(v int64) (out Int128) {
 	var hi uint64
 	if v < 0 {
 		hi = maxUint64
 	}
 	return Int128{hi: hi, lo: uint64(v)}
-}
-
-// Int128_Cast: func int128(v uint18) int128
-func Int128_Cast__2(v Uint128) (out Int128) {
-	return Int128{hi: v.hi, lo: v.lo}
 }
 
 // Int128_Cast: func int128(v uint64) int128
@@ -45,17 +59,91 @@ func Int128_Cast__3(v uint64) Int128 {
 
 // Int128_Cast: func int128(v int32) int128
 func Int128_Cast__4(v int32) Int128 {
-	return Int128_Cast__1(int64(v))
+	return Int128_Cast__2(int64(v))
 }
 
 // Int128_Cast: func int128(v int16) int128
 func Int128_Cast__5(v int16) Int128 {
-	return Int128_Cast__1(int64(v))
+	return Int128_Cast__2(int64(v))
 }
 
 // Int128_Cast: func int128(v int8) int128
 func Int128_Cast__6(v int8) Int128 {
-	return Int128_Cast__1(int64(v))
+	return Int128_Cast__2(int64(v))
+}
+
+// Int128_Cast: func int128(v uint18) int128
+func Int128_Cast__7(v Uint128) (out Int128) {
+	return Int128{hi: v.hi, lo: v.lo}
+}
+
+// Int128_Cast: func int128(v *big.Int) int128
+func Int128_Cast__8(v *big.Int) Int128 {
+	out, _ := Int128_Cast__9(v)
+	return out
+}
+
+func Int128_Cast__9(v *big.Int) (out Int128, inRange bool) {
+	neg := v.Sign() < 0
+	words := v.Bits()
+
+	var u Uint128
+	inRange = true
+	switch intSize {
+	case 64:
+		lw := len(words)
+		switch lw {
+		case 0:
+		case 1:
+			u.lo = uint64(words[0])
+		case 2:
+			u.hi = uint64(words[1])
+			u.lo = uint64(words[0])
+		default:
+			u, inRange = Uint128{hi: maxUint64, lo: maxUint64}, false
+		}
+
+	case 32:
+		lw := len(words)
+		switch lw {
+		case 0:
+		case 1:
+			u.lo = uint64(words[0])
+		case 2:
+			u.lo = (uint64(words[1]) << 32) | (uint64(words[0]))
+		case 3:
+			u.hi = uint64(words[2])
+			u.lo = (uint64(words[1]) << 32) | (uint64(words[0]))
+		case 4:
+			u.hi = (uint64(words[3]) << 32) | (uint64(words[2]))
+			u.lo = (uint64(words[1]) << 32) | (uint64(words[0]))
+		default:
+			u, inRange = Uint128{hi: maxUint64, lo: maxUint64}, false
+		}
+
+	default:
+		panic("unsupported bit size")
+	}
+
+	if neg {
+		if cmp := u.Cmp__1(Uint128{hi: 0x8000000000000000, lo: 0}); cmp > 0 {
+			out, inRange = Int128{hi: 0x8000000000000000, lo: 0}, false
+		} else {
+			out = Int128{hi: u.hi, lo: u.lo}.Gop_Neg()
+		}
+	} else {
+		if cmp := u.Cmp__1(Uint128{hi: maxInt64, lo: maxUint64}); cmp > 0 {
+			out, inRange = Int128{hi: maxInt64, lo: maxUint64}, false
+		} else {
+			out = Int128{hi: u.hi, lo: u.lo}
+		}
+	}
+	return
+}
+
+// Int128_Cast: func int128() int128
+func Int128_Cast__a() Int128 {
+	return Int128{}
 }
 
 // Gop_Rcast: func uint128(v int128) uint128
@@ -94,9 +182,63 @@ func (i Int128) Gop_Rcast__5() (out uint64, inRange bool) {
 	return i.lo, i.hi == 0
 }
 
+// -----------------------------------------------------------------------------
+
 func (i Int128) IsZero() bool {
 	return i.lo == 0 && i.hi == 0
 }
+
+func (i *Int128) Scan(state fmt.ScanState, verb rune) (err error) {
+	t, err := state.Token(true, nil)
+	if err != nil {
+		return
+	}
+	v, err := ParseInt128(string(t), 10)
+	if err == nil {
+		*i = v
+	}
+	return
+}
+
+func (i Int128) Format(s fmt.State, c rune) {
+	// TODO: not so good
+	i.BigInt().Format(s, c)
+}
+
+func (i Int128) String() string {
+	return i.Text(10)
+}
+
+func (i Int128) Text(base int) string {
+	// TODO: not so good
+	return i.BigInt().Text(base)
+}
+
+func (i Int128) BigInt() *big.Int {
+	var v big.Int
+	i.ToBigInt(&v)
+	return &v
+}
+
+func (i Int128) ToBigInt(b *big.Int) {
+	neg := i.hi&signBit != 0
+	if i.hi > 0 {
+		b.SetUint64(i.hi)
+		b.Lsh(b, 64)
+	}
+	var lo big.Int
+	lo.SetUint64(i.lo)
+	b.Add(b, &lo)
+
+	if neg {
+		b.Xor(b, bigMaxU128).Add(b, big1).Neg(b)
+	}
+}
+
+var (
+	big1          = new(big.Int).SetUint64(1)
+	bigMaxU128, _ = new(big.Int).SetString("340282366920938463463374607431768211455", 10)
+)
 
 func (i Int128) Sign() int {
 	if i.lo == 0 && i.hi == 0 {
@@ -429,7 +571,7 @@ func (i Int128) QuoRem__1(by Int128) (q, r Int128) {
 	}
 
 	qu, ru := i.Gop_Rcast__0().QuoRem__1(by.Gop_Rcast__0())
-	q, r = Int128_Cast__2(qu), Int128_Cast__2(ru)
+	q, r = Int128_Cast__7(qu), Int128_Cast__7(ru)
 	if qSign < 0 {
 		q = q.Gop_Neg()
 	}
@@ -480,7 +622,7 @@ func (i Int128) Gop_Quo__1(by Int128) (q Int128) {
 	}
 
 	qu := i.Gop_Rcast__0().Gop_Quo__1(by.Gop_Rcast__0())
-	q = Int128_Cast__2(qu)
+	q = Int128_Cast__7(qu)
 	if qSign < 0 {
 		q = q.Gop_Neg()
 	}
@@ -540,3 +682,24 @@ func (i Int128) Rem__0(by int64) (r Int128) {
 	}
 	return r
 }
+
+// -----------------------------------------------------------------------------
+
+func ParseInt128(s string, base int) (out Int128, err error) {
+	b, ok := new(big.Int).SetString(s, base)
+	if !ok {
+		err = fmt.Errorf("invalid int128 string: %q", s)
+		return
+	}
+	out, inRange := Int128_Cast__9(b)
+	if !inRange {
+		err = fmt.Errorf("string %q was not in valid int128 range", s)
+	}
+	return
+}
+
+func FormatInt128(i Int128, base int) string {
+	return i.Text(base)
+}
+
+// -----------------------------------------------------------------------------

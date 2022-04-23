@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 	"sync/atomic"
 	"testing"
 
@@ -109,88 +110,73 @@ func testRun(t *testing.T, gopcode, expected string) {
 	}
 }
 
+func testRunType(t *testing.T, typ, gopcodeT, expected string) {
+	gopcode := strings.ReplaceAll(gopcodeT, "$(type)", typ)
+	testRun(t, gopcode, expected)
+}
+
 // -----------------------------------------------------------------------------
 
-func TestUint128_println(t *testing.T) {
-	testRun(t, `
-var x uint128 = 1
-println x
-`, `1
-`)
+const (
+	testType_println_code, testType_println_ret = `
+{
+	var x $(type) = 1
+	println x
 }
-
-func TestUint128_init(t *testing.T) {
-	testRun(t, `
-var x uint128 = 1 << 65
-var y = x + 1
-println x
-println y
+`, `1
+`
+	testType_init_code, testType_init_ret = `
+{
+	var x $(type) = 1 << 65
+	var y = x + 1
+	println x
+	println y
+}
 `, `36893488147419103232
 36893488147419103233
-`)
+`
+	testType_cast_code, testType_cast_ret = `
+{
+	println $(type)(1 << 65), $(type)()
 }
-
-func TestUint128_cast(t *testing.T) {
-	testRun(t, `
-println uint128(1 << 65), uint128()
 `, `36893488147419103232 0
-`)
+`
+	testType_printf_code, testType_printf_ret = `
+{
+	var x $(type) = 1
+	printf "%4d\n", x
 }
-
-func TestUint128_printf(t *testing.T) {
-	testRun(t, `
-var x uint128 = 1
-printf "%4d\n", x
 `, `   1
-`)
-}
-
-func TestUint128_scanf(t *testing.T) {
-	testRun(t, `
+`
+	testTypescanf_code, testType_scanf_ret = `
 import "fmt"
-
-var name string
-var age uint128
-fmt.Sscanf("Kim is 22 years old", "%s is %d years old", &name, &age)
-println name, age
+{
+	var name string
+	var age $(type)
+	fmt.Sscanf("Kim is 22 years old", "%s is %d years old", &name, &age)
+	println name, age
+}
 `, `Kim 22
-`)
+`
+)
+
+const (
+	testType_noscanf_code, testType_noscanf_ret = testType_println_code + testType_init_code + testType_cast_code + testType_printf_code,
+		testType_println_ret + testType_init_ret + testType_cast_ret + testType_printf_ret
+	testType_all_code, testType_all_ret = testTypescanf_code + testType_noscanf_code,
+		testType_scanf_ret + testType_noscanf_ret
+)
+
+func TestUint128_run(t *testing.T) {
+	testRunType(t, "uint128", testType_all_code, testType_all_ret)
 }
 
-// -----------------------------------------------------------------------------
-
-func TestBigint_println(t *testing.T) {
-	testRun(t, `
-var x bigint = 1
-println x
-`, `1
-`)
+func TestInt128_run(t *testing.T) {
+	testRunType(t, "int128", testType_all_code, testType_all_ret)
 }
 
-func TestBigint_init(t *testing.T) {
-	testRun(t, `
-var x bigint = 1 << 65
-var y = x + 1
-println x
-println y
-`, `36893488147419103232
-36893488147419103233
-`)
-}
-
-func TestBigint_cast(t *testing.T) {
-	testRun(t, `
-println bigint(1 << 65), bigint()
-`, `36893488147419103232 0
-`)
-}
-
-func TestBigint_printf(t *testing.T) {
-	testRun(t, `
-var x bigint = 1
-printf "%4d\n", x
-`, `   1
-`)
+func TestBigint_run(t *testing.T) {
+	testRunType(t, "bigint", testType_noscanf_code, testType_noscanf_ret)
 }
 
 // -----------------------------------------------------------------------------
