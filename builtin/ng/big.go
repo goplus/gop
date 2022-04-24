@@ -247,6 +247,26 @@ func (a Bigint) Gop_RshAssign(n Gop_ninteger) {
 
 // -----------------------------------------------------------------------------
 
+// Gop_Rcast: func int64(x bigint) int64
+func (a Bigint) Gop_Rcast__0() int64 {
+	return a.Int64()
+}
+
+// Gop_Rcast: func int64(x bigint) (int64, bool)
+func (a Bigint) Gop_Rcast__1() (int64, bool) {
+	return a.Int64(), a.IsInt64()
+}
+
+// Gop_Rcast: func uint64(x bigint) uint64
+func (a Bigint) Gop_Rcast__2() uint64 {
+	return a.Uint64()
+}
+
+// Gop_Rcast: func uint64(x bigint) (uint64, bool)
+func (a Bigint) Gop_Rcast__3() (uint64, bool) {
+	return a.Uint64(), a.IsUint64()
+}
+
 // Bigint_Cast: func bigint(x untyped_int) bigint
 func Bigint_Cast__0(x int) Bigint {
 	return Bigint{big.NewInt(int64(x))}

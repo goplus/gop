@@ -147,6 +147,18 @@ const (
 `, `36893488147419103232
 4 1
 `
+	testType_twoval_code, testType_twoval_ret = `
+{
+	var x $(type) = 1 << 65
+	var y = (x >> 2) - 1
+	v1, ok1 := int64(x)
+	v2, ok2 := int64(y)
+	println v1, ok1
+	println v2, ok2
+}
+`, `0 false
+9223372036854775807 true
+`
 	testType_cast_code, testType_cast_ret = `
 {
 	println $(type)(1 << 65), $(type)()
@@ -173,8 +185,8 @@ import "fmt"
 )
 
 const (
-	testType_com_code, testType_com_ret = testType_inc_code + testType_init_code + testType_cast_code + testType_printf_code,
-		testType_inc_ret + testType_init_ret + testType_cast_ret + testType_printf_ret
+	testType_com_code, testType_com_ret = testType_inc_code + testType_init_code + testType_cast_code + testType_printf_code + testType_twoval_code,
+		testType_inc_ret + testType_init_ret + testType_cast_ret + testType_printf_ret + testType_twoval_ret
 	testType_fixint_code, testType_fixint_ret = testTypescanf_code + testType_com_code,
 		testType_scanf_ret + testType_com_ret
 )

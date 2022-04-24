@@ -179,6 +179,16 @@ func (u Uint128) Gop_Rcast__2() (out uint64, inRange bool) {
 	return u.lo, u.hi == 0
 }
 
+// Gop_Rcast: func int64(v uint128) int64
+func (u Uint128) Gop_Rcast__3() int64 {
+	return int64(u.lo)
+}
+
+// Gop_Rcast: func int64(v uint128) (int64, bool)
+func (u Uint128) Gop_Rcast__4() (out int64, inRange bool) {
+	return int64(u.lo), u.hi == 0 && u.lo <= maxInt64
+}
+
 // -----------------------------------------------------------------------------
 
 func (u Uint128) IsZero() bool {

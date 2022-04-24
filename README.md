@@ -194,7 +194,7 @@ var y *big.Rat = 4/5r
 println x, y
 ```
 
-### Large number: uint128, int128
+### Large integer: uint128, int128
 
 ```go
 var x uint128 = 1 << 65
