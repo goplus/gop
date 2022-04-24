@@ -779,7 +779,6 @@ var binaryGopNames = map[string]string{
 	"<<=": "Gop_LshAssign",
 	">>=": "Gop_RshAssign",
 	"&^=": "Gop_AndNotAssign",
-	"=":   "Gop_Assign",
 
 	"==": "Gop_EQ",
 	"!=": "Gop_NE",
@@ -798,7 +797,7 @@ var unaryGopNames = map[string]string{
 	"++": "Gop_Inc",
 	"--": "Gop_Dec",
 	"-":  "Gop_Neg",
-	"+":  "Gop_Pos",
+	"+":  "Gop_Dup",
 	"^":  "Gop_Not",
 	"!":  "Gop_LNot",
 	"<-": "Gop_Recv",

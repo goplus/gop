@@ -12,6 +12,16 @@ const (
 	maxInt64 = 1<<63 - 1
 )
 
+var (
+	big1       = new(big.Int).SetUint64(1)
+	bigMaxU128 *big.Int
+)
+
+func init() {
+	bigMaxU128 = new(big.Int).Lsh(big1, 128)
+	bigMaxU128.Sub(bigMaxU128, big1) // 340282366920938463463374607431768211455
+}
+
 // -----------------------------------------------------------------------------
 
 type Int128 struct {
@@ -235,11 +245,6 @@ func (i Int128) ToBigInt(b *big.Int) {
 	}
 }
 
-var (
-	big1          = new(big.Int).SetUint64(1)
-	bigMaxU128, _ = new(big.Int).SetString("340282366920938463463374607431768211455", 10)
-)
-
 func (i Int128) Sign() int {
 	if i.lo == 0 && i.hi == 0 {
 		return 0
@@ -249,22 +254,73 @@ func (i Int128) Sign() int {
 	return -1
 }
 
-func (i Int128) Gop_Inc() (v Int128) {
-	v.lo = i.lo + 1
-	v.hi = i.hi
-	if i.lo > v.lo {
-		v.hi++
+func (i *Int128) Gop_Inc() {
+	i.lo++
+	if i.lo == 0 {
+		i.hi++
 	}
-	return v
 }
 
-func (i Int128) Gop_Dec() (v Int128) {
-	v.lo = i.lo - 1
-	v.hi = i.hi
-	if i.lo < v.lo {
-		v.hi--
+func (i *Int128) Gop_Dec() {
+	if i.lo == 0 {
+		i.hi--
 	}
-	return v
+	i.lo--
+}
+
+// Gop_AddAssign: func (a *int128) += (b int128)
+func (i *Int128) Gop_AddAssign(b Int128) {
+	*i = i.Gop_Add__1(b)
+}
+
+// Gop_SubAssign: func (a *int128) -= (b int128)
+func (i *Int128) Gop_SubAssign(b Int128) {
+	*i = i.Gop_Sub__1(b)
+}
+
+// Gop_MulAssign: func (a *int128) *= (b int128)
+func (i *Int128) Gop_MulAssign(b Int128) {
+	*i = i.Gop_Mul__1(b)
+}
+
+// Gop_QuoAssign: func (a *int128) /= (b int128) {
+func (i *Int128) Gop_QuoAssign(b Int128) {
+	*i = i.Gop_Quo__1(b)
+}
+
+// Gop_RemAssign: func (a *int128) %= (b int128)
+func (i *Int128) Gop_RemAssign(b Int128) {
+	*i = i.Gop_Rem__1(b)
+}
+
+// Gop_OrAssign: func (a *int128) |= (b int128)
+func (i *Int128) Gop_OrAssign(b Int128) {
+	*i = i.Gop_Or(b)
+}
+
+// Gop_XorAssign: func (a *int128) ^= (b int128)
+func (i *Int128) Gop_XorAssign(b Int128) {
+	*i = i.Gop_Xor(b)
+}
+
+// Gop_AndAssign: func (a *int128) &= (b int128)
+func (i *Int128) Gop_AndAssign(b Int128) {
+	*i = i.Gop_And(b)
+}
+
+// Gop_AndNotAssign: func (a *int128) &^= (b int128)
+func (i *Int128) Gop_AndNotAssign(b Int128) {
+	*i = i.Gop_AndNot(b)
+}
+
+// Gop_LshAssign: func (a *int128) <<= (n untyped_uint)
+func (i *Int128) Gop_LshAssign(n Gop_ninteger) {
+	*i = i.Gop_Lsh(n)
+}
+
+// Gop_RshAssign: func (a *int128) >>= (n untyped_uint)
+func (i *Int128) Gop_RshAssign(n Gop_ninteger) {
+	*i = i.Gop_Rsh(n)
 }
 
 func (i Int128) Gop_Add__1(n Int128) (v Int128) {
@@ -319,6 +375,10 @@ func (i Int128) Gop_Neg() (v Int128) {
 		v.hi++
 	}
 	return v
+}
+
+func (i Int128) Gop_Dup() (v Int128) {
+	return i
 }
 
 // Abs returns the absolute value of i as a signed integer.
@@ -522,6 +582,55 @@ func (i Int128) Gop_LE__0(n int64) bool {
 	return false
 }
 
+func (i Int128) Gop_And(n Int128) Int128 {
+	i.hi &= n.hi
+	i.lo &= n.lo
+	return i
+}
+
+func (i Int128) Gop_AndNot(n Int128) Int128 {
+	i.hi &^= n.hi
+	i.lo &^= n.lo
+	return i
+}
+
+func (i Int128) Gop_Not() Int128 {
+	return Int128{hi: ^i.hi, lo: ^i.lo}
+}
+
+func (i Int128) Gop_Or(n Int128) Int128 {
+	i.hi |= n.hi
+	i.lo |= n.lo
+	return i
+}
+
+func (i Int128) Gop_Xor(v Int128) Int128 {
+	i.hi ^= v.hi
+	i.lo ^= v.lo
+	return i
+}
+
+func (i Int128) Gop_Lsh(n Gop_ninteger) Int128 {
+	if n < 64 {
+		i.hi = (i.hi << n) | (i.lo >> (64 - n))
+		i.lo <<= n
+	} else {
+		i.hi = i.lo << (n - 64)
+		i.lo = 0
+	}
+	return i
+}
+
+func (i Int128) Gop_Rsh(n Gop_ninteger) Int128 {
+	if n < 64 {
+		i.lo = (i.lo >> n) | (i.hi << (64 - n))
+	} else {
+		i.lo = i.hi >> (n - 64)
+	}
+	i.hi = uint64(int64(i.hi) >> n)
+	return i
+}
+
 // Mul returns the product of two I128s.
 //
 // Overflow should wrap around, as per the Go spec.
@@ -653,15 +762,15 @@ func (i Int128) Gop_Quo__0(by int64) (q Int128) {
 	return q
 }
 
-// Rem returns the remainder of x%y for y != 0. If y == 0, a division-by-zero
-// run-time panic occurs. Rem implements truncated modulus (like Go); see
+// Gop_Rem returns the remainder of x%y for y != 0. If y == 0, a division-by-zero
+// run-time panic occurs. Gop_Rem implements truncated modulus (like Go); see
 // QuoRem for more details.
-func (i Int128) Rem__1(by Int128) (r Int128) {
+func (i Int128) Gop_Rem__1(by Int128) (r Int128) {
 	_, r = i.QuoRem__1(by)
 	return r
 }
 
-func (i Int128) Rem__0(by int64) (r Int128) {
+func (i Int128) Gop_Rem__0(by int64) (r Int128) {
 	ineg := i.hi&signBit != 0
 	if ineg {
 		i = i.Gop_Neg()
