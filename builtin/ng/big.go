@@ -80,15 +80,6 @@ func (a Bigint) IsNil() bool {
 	return a.Int == nil
 }
 
-// Gop_Assign: func (a bigint) = (b bigint)
-func (a Bigint) Gop_Assign(b Bigint) {
-	if Gop_istmp(b) {
-		*a.Int = *b.Int
-	} else {
-		a.Int.Set(b.Int)
-	}
-}
-
 // Gop_Add: func (a bigint) + (b bigint) bigint
 func (a Bigint) Gop_Add(b Bigint) Bigint {
 	return Bigint{tmpint(a, b).Add(a.Int, b.Int)}
@@ -179,9 +170,9 @@ func (a Bigint) Gop_Neg() Bigint {
 	return Bigint{tmpint1(a).Neg(a.Int)}
 }
 
-// Gop_Pos: func +(a bigint) bigint
-func (a Bigint) Gop_Pos() Bigint {
-	return a
+// Gop_Dup: func +(a bigint) bigint
+func (a Bigint) Gop_Dup() Bigint {
+	return Bigint{new(big.Int).Set(a.Int)}
 }
 
 // Gop_Not: func ^(a bigint) bigint
@@ -189,59 +180,91 @@ func (a Bigint) Gop_Not() Bigint {
 	return Bigint{tmpint1(a).Not(a.Int)}
 }
 
-// Gop_Add: func (a bigint) += (b bigint)
+// Gop_Inc: func ++(b bigint)
+func (a Bigint) Gop_Inc() {
+	a.Int.Add(a.Int, big1)
+}
+
+// Gop_Dec: func --(b bigint)
+func (a Bigint) Gop_Dec() {
+	a.Int.Sub(a.Int, big1)
+}
+
+// Gop_AddAssign: func (a bigint) += (b bigint)
 func (a Bigint) Gop_AddAssign(b Bigint) {
 	a.Int.Add(a.Int, b.Int)
 }
 
-// Gop_Sub: func (a bigint) -= (b bigint)
+// Gop_SubAssign: func (a bigint) -= (b bigint)
 func (a Bigint) Gop_SubAssign(b Bigint) {
 	a.Int.Sub(a.Int, b.Int)
 }
 
-// Gop_Mul: func (a bigint) *= (b bigint)
+// Gop_MulAssign: func (a bigint) *= (b bigint)
 func (a Bigint) Gop_MulAssign(b Bigint) {
 	a.Int.Mul(a.Int, b.Int)
 }
 
-// Gop_Quo: func (a bigint) /= (b bigint) {
+// Gop_QuoAssign: func (a bigint) /= (b bigint) {
 func (a Bigint) Gop_QuoAssign(b Bigint) {
 	a.Int.Quo(a.Int, b.Int)
 }
 
-// Gop_Rem: func (a bigint) %= (b bigint)
+// Gop_RemAssign: func (a bigint) %= (b bigint)
 func (a Bigint) Gop_RemAssign(b Bigint) {
 	a.Int.Rem(a.Int, b.Int)
 }
 
-// Gop_Or: func (a bigint) |= (b bigint)
+// Gop_OrAssign: func (a bigint) |= (b bigint)
 func (a Bigint) Gop_OrAssign(b Bigint) {
 	a.Int.Or(a.Int, b.Int)
 }
 
-// Gop_Xor: func (a bigint) ^= (b bigint)
+// Gop_XorAssign: func (a bigint) ^= (b bigint)
 func (a Bigint) Gop_XorAssign(b Bigint) {
 	a.Int.Xor(a.Int, b.Int)
 }
 
-// Gop_And: func (a bigint) &= (b bigint)
+// Gop_AndAssign: func (a bigint) &= (b bigint)
 func (a Bigint) Gop_AndAssign(b Bigint) {
 	a.Int.And(a.Int, b.Int)
 }
 
-// Gop_AndNot: func (a bigint) &^= (b bigint)
+// Gop_AndNotAssign: func (a bigint) &^= (b bigint)
 func (a Bigint) Gop_AndNotAssign(b Bigint) {
 	a.Int.AndNot(a.Int, b.Int)
 }
 
-// Gop_Lsh: func (a bigint) <<= (n untyped_uint)
+// Gop_LshAssign: func (a bigint) <<= (n untyped_uint)
 func (a Bigint) Gop_LshAssign(n Gop_ninteger) {
 	a.Int.Lsh(a.Int, uint(n))
 }
 
-// Gop_Rsh: func (a bigint) >>= (n untyped_uint)
+// Gop_RshAssign: func (a bigint) >>= (n untyped_uint)
 func (a Bigint) Gop_RshAssign(n Gop_ninteger) {
 	a.Int.Rsh(a.Int, uint(n))
+}
+
+// -----------------------------------------------------------------------------
+
+// Gop_Rcast: func int64(x bigint) int64
+func (a Bigint) Gop_Rcast__0() int64 {
+	return a.Int64()
+}
+
+// Gop_Rcast: func int64(x bigint) (int64, bool)
+func (a Bigint) Gop_Rcast__1() (int64, bool) {
+	return a.Int64(), a.IsInt64()
+}
+
+// Gop_Rcast: func uint64(x bigint) uint64
+func (a Bigint) Gop_Rcast__2() uint64 {
+	return a.Uint64()
+}
+
+// Gop_Rcast: func uint64(x bigint) (uint64, bool)
+func (a Bigint) Gop_Rcast__3() (uint64, bool) {
+	return a.Uint64(), a.IsUint64()
 }
 
 // Bigint_Cast: func bigint(x untyped_int) bigint
@@ -397,9 +420,9 @@ func (a Bigrat) Gop_Neg() Bigrat {
 	return Bigrat{tmprat1(a).Neg(a.Rat)}
 }
 
-// Gop_Pos: func +(a bigrat) bigrat
-func (a Bigrat) Gop_Pos() Bigrat {
-	return a
+// Gop_Dup: func +(a bigrat) bigrat
+func (a Bigrat) Gop_Dup() Bigrat {
+	return Bigrat{new(big.Rat).Set(a.Rat)}
 }
 
 // Gop_Inv: func /(a bigrat) bigrat
@@ -426,6 +449,8 @@ func (a Bigrat) Gop_MulAssign(b Bigrat) {
 func (a Bigrat) Gop_QuoAssign(b Bigrat) {
 	a.Rat.Quo(a.Rat, b.Rat)
 }
+
+// -----------------------------------------------------------------------------
 
 // Bigrat_Cast: func bigrat(x untyped_int) bigrat
 func Bigrat_Cast__0(x int) Bigrat {

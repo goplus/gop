@@ -59,6 +59,7 @@ const (
 	clIdentLHS
 	clIdentSelectorExpr
 	clIdentGoto
+	clCallWithTwoValue
 )
 
 func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
@@ -179,7 +180,11 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 	case *ast.BasicLit:
 		compileBasicLit(ctx, v)
 	case *ast.CallExpr:
-		compileCallExpr(ctx, v, 0)
+		flags := 0
+		if twoValue != nil && twoValue[0] {
+			flags = clCallWithTwoValue
+		}
+		compileCallExpr(ctx, v, flags)
 	case *ast.SelectorExpr:
 		compileSelectorExpr(ctx, v, clIdentAutoCall)
 	case *ast.BinaryExpr:
@@ -409,18 +414,25 @@ func (p *fnType) initWith(fnt types.Type, idx, nin int) {
 	}
 }
 
-func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, flags int) {
+func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 	switch fn := v.Fun.(type) {
 	case *ast.Ident:
-		compileIdent(ctx, fn, clIdentAllowBuiltin|flags)
+		compileIdent(ctx, fn, clIdentAllowBuiltin|inFlags)
 	case *ast.SelectorExpr:
 		compileSelectorExpr(ctx, fn, 0)
 	default:
 		compileExpr(ctx, fn)
 	}
 	var fn fnType
-	fnt := ctx.cb.Get(-1).Type
-	ellipsis := v.Ellipsis != gotoken.NoPos
+	var fnt = ctx.cb.Get(-1).Type
+	var flags gox.InstrFlags
+	var ellipsis = v.Ellipsis != gotoken.NoPos
+	if ellipsis {
+		flags = gox.InstrFlagEllipsis
+	}
+	if (inFlags & clCallWithTwoValue) != 0 {
+		flags |= gox.InstrFlagTwoValue
+	}
 	for i, arg := range v.Args {
 		switch expr := arg.(type) {
 		case *ast.LambdaExpr:
@@ -438,7 +450,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, flags int) {
 			compileExpr(ctx, arg)
 		}
 	}
-	ctx.cb.CallWith(len(v.Args), ellipsis, v)
+	ctx.cb.CallWith(len(v.Args), flags, v)
 }
 
 type clLambaFlag string
