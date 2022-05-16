@@ -350,6 +350,11 @@ func (p *pkgCtx) handleRecover(e interface{}) {
 	p.handleErr(err)
 }
 
+const (
+	defaultGoFile = ""
+	testingGoFile = "_test"
+)
+
 // NewPackage creates a Go+ package instance.
 func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package, err error) {
 	workingDir := conf.WorkingDir
@@ -369,6 +374,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		HandleErr:       ctx.handleErr,
 		NodeInterpreter: interp,
 		NewBuiltin:      newBuiltinDefault,
+		DefaultGoFile:   defaultGoFile,
 	}
 	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
 	for file, gmx := range pkg.Files {
@@ -402,9 +408,9 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 
 	if !conf.NoAutoGenMain && pkg.Name == "main" {
 		if obj := p.Types.Scope().Lookup("main"); obj == nil {
-			old := p.SetInTestingFile(false)
+			old, _ := p.SetCurFile(defaultGoFile, false)
 			p.NewFunc(nil, "main", nil, nil, false).BodyStart(p).End()
-			p.SetInTestingFile(old)
+			p.RestoreCurFile(old)
 		}
 	}
 
@@ -468,10 +474,17 @@ func loadFile(ctx *pkgCtx, f *ast.File) {
 	}
 }
 
+func getGoFile(file string) string {
+	if strings.HasSuffix(file, "_test.gop") {
+		return testingGoFile
+	}
+	return defaultGoFile
+}
+
 func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targetDir string, conf *Config) {
 	syms := parent.syms
 	fileLine := !conf.NoFileLine
-	testingFile := strings.HasSuffix(file, "_test.gop")
+	goFile := getGoFile(file)
 	ctx := &blockCtx{
 		pkg: p, pkgCtx: parent, cb: p.CB(), fset: p.Fset, targetDir: targetDir,
 		fileLine: fileLine, relativePath: conf.RelativePath, isClass: f.IsClass,
@@ -588,8 +601,8 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 			if d.Recv == nil {
 				name := d.Name
 				fn := func() {
-					old := p.SetInTestingFile(testingFile)
-					defer p.SetInTestingFile(old)
+					old, _ := p.SetCurFile(goFile, true)
+					defer p.RestoreCurFile(old)
 					loadFunc(ctx, nil, d)
 				}
 				if name.Name == "init" {
@@ -610,8 +623,8 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 					}
 					ld := getTypeLoader(parent, syms, token.NoPos, name)
 					ld.methods = append(ld.methods, func() {
-						old := p.SetInTestingFile(testingFile)
-						defer p.SetInTestingFile(old)
+						old, _ := p.SetCurFile(goFile, true)
+						defer p.RestoreCurFile(old)
 						doInitType(ld)
 						recv := toRecv(ctx, d.Recv)
 						loadFunc(ctx, recv, d)
@@ -621,7 +634,7 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 		case *ast.GenDecl:
 			switch d.Tok {
 			case token.IMPORT:
-				p.SetInTestingFile(testingFile)
+				p.SetCurFile(goFile, true)
 				for _, item := range d.Specs {
 					loadImport(ctx, item.(*ast.ImportSpec))
 				}
@@ -634,8 +647,8 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 					}
 					ld := getTypeLoader(parent, syms, t.Name.Pos(), name)
 					ld.typ = func() {
-						old := p.SetInTestingFile(testingFile)
-						defer p.SetInTestingFile(old)
+						old, _ := p.SetCurFile(goFile, true)
+						defer p.RestoreCurFile(old)
 						if t.Assign != token.NoPos { // alias type
 							if debugLoad {
 								log.Println("==> Load > AliasType", name)
@@ -670,8 +683,8 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 					}
 					setNamesLoader(parent, syms, vSpec.Names, func() {
 						if c := cdecl; c != nil {
-							old := p.SetInTestingFile(testingFile)
-							defer p.SetInTestingFile(old)
+							old, _ := p.SetCurFile(goFile, true)
+							defer p.RestoreCurFile(old)
 							cdecl = nil
 							loadConstSpecs(ctx, c, d.Specs)
 							for _, s := range d.Specs {
@@ -689,8 +702,8 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 					}
 					setNamesLoader(parent, syms, vSpec.Names, func() {
 						if v := vSpec; v != nil { // only init once
-							old := p.SetInTestingFile(testingFile)
-							defer p.SetInTestingFile(old)
+							old, _ := p.SetCurFile(goFile, true)
+							defer p.RestoreCurFile(old)
 							vSpec = nil
 							loadVars(ctx, v, true)
 							removeNames(syms, v.Names)
