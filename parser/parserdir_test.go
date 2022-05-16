@@ -90,7 +90,7 @@ func testFrom(t *testing.T, pkgDir, sel string, exclude Mode) {
 	}
 	log.Println("Parsing", pkgDir)
 	fset := token.NewFileSet()
-	pkgs, err := ParseDir(fset, pkgDir, nil, (Trace|ParseComments)&^exclude)
+	pkgs, err := ParseDir(fset, pkgDir, nil, (Trace|ParseComments|ParseGoAsGoPlus)&^exclude)
 	if err != nil || len(pkgs) != 1 {
 		if errs, ok := err.(scanner.ErrorList); ok {
 			for _, e := range errs {
@@ -111,7 +111,7 @@ func testFrom(t *testing.T, pkgDir, sel string, exclude Mode) {
 
 func TestParseGo(t *testing.T) {
 	fset := token.NewFileSet()
-	pkgs, err := ParseDirEx(fset, "./_testdata/functype", Config{Mode: Trace})
+	pkgs, err := ParseDirEx(fset, "./_testdata/functype", Config{Mode: Trace | ParseGoAsGoPlus})
 	if err != nil {
 		t.Fatal("TestParseGo: ParseDir failed -", err)
 	}
@@ -122,7 +122,7 @@ func TestParseGo(t *testing.T) {
 
 func TestParseGoFiles(t *testing.T) {
 	fset := token.NewFileSet()
-	pkgs, err := ParseFiles(fset, []string{"./_testdata/functype/functype.go"}, Trace)
+	pkgs, err := ParseFiles(fset, []string{"./_testdata/functype/functype.go"}, Trace|ParseGoAsGoPlus)
 	if err != nil {
 		t.Fatal("TestParseGoFiles: ParseFiles failed -", err)
 	}
@@ -146,7 +146,7 @@ func TestGopAutoGen(t *testing.T) {
 func TestGoFile(t *testing.T) {
 	fset := token.NewFileSet()
 	fs := parsertest.NewSingleFileFS("/foo", "test.go", `package foo`)
-	pkgs, err := ParseFSDir(fset, fs, "/foo", Config{Mode: ParseGoFilesByGo})
+	pkgs, err := ParseFSDir(fset, fs, "/foo", Config{})
 	if err != nil {
 		t.Fatal("ParseFSDir:", err)
 	}
@@ -158,19 +158,19 @@ func TestGoFile(t *testing.T) {
 func TestErrParse(t *testing.T) {
 	fset := token.NewFileSet()
 	fs := parsertest.NewSingleFileFS("/foo", "test.go", `package foo bar`)
-	_, err := ParseFSDir(fset, fs, "/foo", Config{Mode: ParseGoFilesByGo})
+	_, err := ParseFSDir(fset, fs, "/foo", Config{})
 	if err == nil {
 		t.Fatal("ParseFSDir test.go: no error?")
 	}
 
 	fs = parsertest.NewSingleFileFS("/foo", "test.gop", `package foo bar`)
-	_, err = ParseFSDir(fset, fs, "/foo", Config{Mode: ParseGoFilesByGo})
+	_, err = ParseFSDir(fset, fs, "/foo", Config{})
 	if err == nil {
 		t.Fatal("ParseFSDir test.gop: no error?")
 	}
 
 	fs = parsertest.NewMemFS(map[string][]string{"/foo": {"test.go"}}, map[string]string{})
-	_, err = ParseFSDir(fset, fs, "/foo", Config{Mode: ParseGoFilesByGo})
+	_, err = ParseFSDir(fset, fs, "/foo", Config{})
 	if err != syscall.ENOENT {
 		t.Fatal("ParseFSDir:", err)
 	}
