@@ -37,9 +37,9 @@ import (
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gop/x/gopmod"
-	"github.com/goplus/gop/x/mod/modfetch"
 	"github.com/goplus/gox"
 	"github.com/goplus/gox/packages"
+	"github.com/goplus/mod/modcache"
 )
 
 const (
@@ -187,7 +187,7 @@ func (p *Runner) genGoPkgs(conf *Config) {
 		return
 	}
 	modRoot := p.modRoot
-	inModCache := modfetch.InModCachePath(modRoot)
+	inModCache := modcache.InPath(modRoot)
 	if inModCache {
 		os.Chmod(modRoot, 0755)
 		defer os.Chmod(modRoot, 0555)
@@ -473,7 +473,7 @@ func (p *Runner) genExternDeps(pkgPath string, errs *ErrorList) *pkgInfo {
 	if !ok {
 		log.Panicln("externPkg not found:", pkgPath)
 	}
-	modRoot, err := modfetch.ModCachePath(modVer)
+	modRoot, err := modcache.Path(modVer)
 	if err != nil {
 		*errs = append(*errs, err)
 		return &pkgInfo{path: pkgPath, flags: pkgFlagIll}

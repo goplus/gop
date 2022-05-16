@@ -22,8 +22,10 @@ import (
 	"path/filepath"
 
 	"github.com/goplus/gop/x/gengo"
+	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/gop/x/gopprojs"
-	"github.com/goplus/gop/x/mod/modfetch"
+	"github.com/goplus/mod/modcache"
+	"github.com/goplus/mod/modfetch"
 )
 
 // -----------------------------------------------------------------------------
@@ -78,7 +80,7 @@ func OpenProject(flags int, src gopprojs.Proj) (ctx *Context, proj *Project, err
 		os.Chdir(v.Dir)
 		return OpenDir(flags, v.Dir)
 	case *gopprojs.PkgPathProj:
-		os.Chdir(modfetch.GOMODCACHE)
+		os.Chdir(modcache.GOMODCACHE)
 		return OpenPkgPath(flags, v.Path)
 	}
 	panic("OpenProject: unexpected source")
@@ -96,11 +98,11 @@ func OpenDir(flags int, dir string) (ctx *Context, proj *Project, err error) {
 
 func OpenPkgPath(flags int, pkgPath string) (ctx *Context, proj *Project, err error) {
 	modPath, leftPart := splitPkgPath(pkgPath)
-	modVer, _, err := modfetch.Get(modPath)
+	modVer, _, err := modfetch.Get(gopenv.Get(), modPath)
 	if err != nil {
 		return
 	}
-	dir, err := modfetch.ModCachePath(modVer)
+	dir, err := modcache.Path(modVer)
 	if err != nil {
 		return
 	}

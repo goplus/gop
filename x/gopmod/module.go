@@ -28,8 +28,10 @@ import (
 	"time"
 
 	"github.com/goplus/gop/token"
-	"github.com/goplus/gop/x/mod/modfetch"
-	"github.com/goplus/gop/x/mod/modload"
+	"github.com/goplus/gop/x/gopenv"
+	"github.com/goplus/mod/modcache"
+	"github.com/goplus/mod/modfetch"
+	"github.com/goplus/mod/modload"
 	"golang.org/x/mod/module"
 )
 
@@ -187,7 +189,7 @@ func New(mod modload.Module) *Module {
 }
 
 func Load(dir string) (*Module, error) {
-	mod, err := modload.Load(dir)
+	mod, err := modload.Load(dir, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +201,7 @@ func LoadMod(mod module.Version) (p *Module, err error) {
 	if err != syscall.ENOENT {
 		return
 	}
-	mod, _, err = modfetch.Get(mod.String())
+	mod, _, err = modfetch.Get(gopenv.Get(), mod.String())
 	if err != nil {
 		return
 	}
@@ -207,7 +209,7 @@ func LoadMod(mod module.Version) (p *Module, err error) {
 }
 
 func loadModFrom(mod module.Version) (p *Module, err error) {
-	dir, err := modfetch.ModCachePath(mod)
+	dir, err := modcache.Path(mod)
 	if err != nil {
 		return
 	}
