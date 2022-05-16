@@ -151,7 +151,7 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (p
 			if strings.HasPrefix(fname, "gop_autogen") {
 				continue
 			}
-			useGoParser = (conf.Mode & ParseGoFilesByGo) != 0
+			useGoParser = (conf.Mode & ParseGoAsGoPlus) == 0
 		default:
 			if isProj, isClass = conf.IsClass(ext); !isClass {
 				continue
@@ -161,7 +161,7 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (p
 			filename := fs.Join(path, fname)
 			if useGoParser {
 				if filedata, err := fs.ReadFile(filename); err == nil {
-					if src, err := goparser.ParseFile(fset, filename, filedata, goparser.Mode(conf.Mode & ^ParseGoFilesByGo)); err == nil {
+					if src, err := goparser.ParseFile(fset, filename, filedata, goparser.Mode(conf.Mode)); err == nil {
 						pkg := reqPkg(pkgs, src.Name.Name)
 						if pkg.GoFiles == nil {
 							pkg.GoFiles = make(map[string]*goast.File)

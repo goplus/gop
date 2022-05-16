@@ -42,9 +42,8 @@ const (
 	DeclarationErrors
 	// AllErrors - report all errors (not just the first 10 on different lines)
 	AllErrors
-	// ParseGoFilesByGo - parse Go files by go/parser, not gop/parser
-	// Result will save to gop/ast.Package.GoFiles
-	ParseGoFilesByGo
+	// ParseGoAsGoPlus - parse Go files by gop/parser
+	ParseGoAsGoPlus
 )
 
 // ParseFile parses the source code of a single Go source file and returns
