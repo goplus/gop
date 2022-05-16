@@ -73,7 +73,7 @@ func main() {
 	var fset = token.NewFileSet()
 	var in *ast.Package
 	if infile := flag.Arg(0); isDir(infile) {
-		pkgs, first := parser.ParseDir(fset, infile, nil, parser.ParseGoFilesByGo)
+		pkgs, first := parser.ParseDir(fset, infile, nil, 0)
 		check(first)
 		for name, pkg := range pkgs {
 			if !strings.HasSuffix(name, "_test") {
