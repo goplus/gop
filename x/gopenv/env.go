@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2022 The GoPlus Authors (goplus.org). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,34 +14,13 @@
  * limitations under the License.
  */
 
-package mod
+package gopenv
 
 import (
-	"log"
-
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/x/gopenv"
+	"github.com/goplus/gop/env"
 	"github.com/goplus/mod/modload"
 )
 
-// gop mod tidy
-var cmdTidy = &base.Command{
-	UsageLine: "gop mod tidy [-e -v]",
-	Short:     "add missing and remove unused modules",
-}
-
-func init() {
-	cmdTidy.Run = runTidy
-}
-
-func runTidy(cmd *base.Command, args []string) {
-	mod, err := modload.Load(".", 0)
-	check(err)
-	check(mod.Tidy(gopenv.Get()))
-}
-
-func check(err error) {
-	if err != nil {
-		log.Fatalln(err)
-	}
+func Get() *modload.GopEnv {
+	return &modload.GopEnv{Version: env.Version(), Root: env.GOPROOT()}
 }

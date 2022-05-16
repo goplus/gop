@@ -23,6 +23,7 @@ import (
 	"syscall"
 
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/mod/modfetch"
 	"github.com/goplus/mod/modload"
 )
@@ -59,14 +60,14 @@ func runCmd(cmd *base.Command, args []string) {
 }
 
 func get(pkgPath string) {
-	mod, err := modload.Load(".")
+	mod, err := modload.Load(".", 0)
 	hasMod := (err != syscall.ENOENT)
 	if hasMod {
 		check(err)
-		check(mod.UpdateGoMod(true))
+		check(mod.UpdateGoMod(gopenv.Get(), true))
 	}
 	modPath, _ := splitPkgPath(pkgPath)
-	modVer, isClass, err := modfetch.Get(modPath)
+	modVer, isClass, err := modfetch.Get(gopenv.Get(), modPath)
 	check(err)
 	if hasMod {
 		if isClass {
@@ -76,7 +77,7 @@ func get(pkgPath string) {
 		check(mod.AddRequire(modVer.Path, modVer.Version))
 		fmt.Fprintf(os.Stderr, "gop get: added %s %s\n", modVer.Path, modVer.Version)
 		check(mod.Save())
-		check(mod.UpdateGoMod(false))
+		check(mod.UpdateGoMod(gopenv.Get(), false))
 	}
 }
 

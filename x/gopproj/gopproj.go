@@ -21,13 +21,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/goplus/gop/env"
 	"github.com/goplus/gop/x/gengo"
+	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/gop/x/gopprojs"
 	"github.com/goplus/mod/modcache"
 	"github.com/goplus/mod/modfetch"
-	"github.com/goplus/mod/modload"
-	"golang.org/x/mod/module"
 )
 
 // -----------------------------------------------------------------------------
@@ -100,7 +98,7 @@ func OpenDir(flags int, dir string) (ctx *Context, proj *Project, err error) {
 
 func OpenPkgPath(flags int, pkgPath string) (ctx *Context, proj *Project, err error) {
 	modPath, leftPart := splitPkgPath(pkgPath)
-	modVer, _, err := modGet(modPath)
+	modVer, _, err := modfetch.Get(gopenv.Get(), modPath)
 	if err != nil {
 		return
 	}
@@ -109,10 +107,6 @@ func OpenPkgPath(flags int, pkgPath string) (ctx *Context, proj *Project, err er
 		return
 	}
 	return OpenDir(flags, dir+leftPart)
-}
-
-func modGet(modPath string) (mod module.Version, isClass bool, err error) {
-	return modfetch.Get(&modload.GopEnv{Version: env.Version(), Root: env.GOPROOT()}, modPath)
 }
 
 func splitPkgPath(pkgPath string) (modPath, leftPart string) {

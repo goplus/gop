@@ -24,7 +24,7 @@ import (
 
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/env"
-	"github.com/goplus/gop/x/mod/modload"
+	"github.com/goplus/mod/modload"
 )
 
 // gop mod init

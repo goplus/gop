@@ -27,8 +27,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/goplus/gop/env"
 	"github.com/goplus/gop/token"
+	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/mod/modcache"
 	"github.com/goplus/mod/modfetch"
 	"github.com/goplus/mod/modload"
@@ -201,15 +201,11 @@ func LoadMod(mod module.Version) (p *Module, err error) {
 	if err != syscall.ENOENT {
 		return
 	}
-	mod, _, err = modGet(mod.String())
+	mod, _, err = modfetch.Get(gopenv.Get(), mod.String())
 	if err != nil {
 		return
 	}
 	return loadModFrom(mod)
-}
-
-func modGet(modPath string) (mod module.Version, isClass bool, err error) {
-	return modfetch.Get(&modload.GopEnv{Version: env.Version(), Root: env.GOPROOT()}, modPath)
 }
 
 func loadModFrom(mod module.Version) (p *Module, err error) {

@@ -20,7 +20,9 @@ import (
 	"errors"
 	"syscall"
 
+	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/mod/modcache"
+	"github.com/goplus/mod/modfetch"
 	"github.com/goplus/mod/modfile"
 	"github.com/goplus/mod/modload"
 	"golang.org/x/mod/module"
@@ -81,7 +83,7 @@ func (p *Module) registerMod(modPath string, regcls func(c *Class)) (err error) 
 	if err != syscall.ENOENT {
 		return
 	}
-	mod, _, err = modGet(mod.String())
+	mod, _, err = modfetch.Get(gopenv.Get(), mod.String())
 	if err != nil {
 		return
 	}
