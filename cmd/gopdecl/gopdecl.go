@@ -1,28 +1,43 @@
+/*
+ * Copyright (c) 2022 The GoPlus Authors (goplus.org). All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package main
 
 import (
 	"flag"
 	"fmt"
-	"go/ast"
-	"go/importer"
-	"go/parser"
 	"go/token"
-	"go/types"
-	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"unicode"
 
-	"github.com/goplus/gop/ast/togo"
-	gopp "github.com/goplus/gop/parser"
-	"golang.org/x/tools/go/gcexportdata"
+	goast "go/ast"
+	goparser "go/parser"
+
+	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/parser"
+	"github.com/goplus/gop/x/types"
+	"github.com/goplus/gox/packages"
 )
 
 var (
-	compiler = flag.String("c", "source", `compiler to use: source, gc or gccgo`)
-	internal = flag.Bool("i", false, "print internal declarations")
+	verboseFlag = flag.Bool("v", false, "print verbose information")
+	internal    = flag.Bool("i", false, "print internal declarations")
 )
 
 func usage() {
@@ -44,78 +59,67 @@ func isPublic(name string) bool {
 	return false
 }
 
-var (
-	goModCache string
-)
-
 func main() {
 	flag.Parse()
 	if flag.NArg() < 1 {
 		usage()
 		return
 	}
-	goModCache = initGoModCache()
-
-	var fset = token.NewFileSet()
-	var files []*ast.File
-	var imp types.Importer
-	switch *compiler {
-	case "gc":
-		packages := make(map[string]*types.Package)
-		imp = gcexportdata.NewImporter(fset, packages)
-	case "source":
-		imp = importer.ForCompiler(fset, "source", nil)
-	default:
-		log.Panicln("Unsupport compiler:", *compiler)
+	verbose := *verboseFlag
+	if verbose {
+		log.Println("==> Parsing ...")
 	}
 
+	var fset = token.NewFileSet()
+	var in *ast.Package
 	if infile := flag.Arg(0); isDir(infile) {
-		pkgs, first := gopp.ParseDir(fset, infile, func(fi fs.FileInfo) bool {
-			name := fi.Name()
-			if strings.HasPrefix(name, "_") {
-				return false
-			}
-			return !strings.HasSuffix(strings.TrimSuffix(name, filepath.Ext(name)), "_test")
-		}, 0)
+		pkgs, first := parser.ParseDir(fset, infile, nil, parser.ParseGoFilesByGo)
 		check(first)
 		for name, pkg := range pkgs {
 			if !strings.HasSuffix(name, "_test") {
-				for _, f := range pkg.Files {
-					files = append(files, togo.ASTFile(f, 0))
-				}
+				in = pkg
 				break
 			}
 		}
 	} else {
+		in = &ast.Package{
+			Files:   make(map[string]*ast.File),
+			GoFiles: make(map[string]*goast.File),
+		}
 		for i, n := 0, flag.NArg(); i < n; i++ {
 			infile = flag.Arg(i)
 			switch filepath.Ext(infile) {
 			case ".gop":
-				f, err := gopp.ParseFile(fset, infile, nil, 0)
-				check(err)
-				files = append(files, togo.ASTFile(f, 0))
-			case ".go":
 				f, err := parser.ParseFile(fset, infile, nil, 0)
 				check(err)
-				files = append(files, f)
+				in.Files[infile] = f
+			case ".go":
+				f, err := goparser.ParseFile(fset, infile, nil, 0)
+				check(err)
+				in.GoFiles[infile] = f
 			default:
 				log.Panicln("Unknown support file:", infile)
 			}
 		}
 	}
 
+	if verbose {
+		log.Println("==> Loading ...")
+	}
 	conf := &types.Config{
-		Importer:         imp,
+		Importer:         packages.NewImporter(fset),
 		IgnoreFuncBodies: true,
 		Error: func(err error) {
 			log.Println(err)
 		},
 		DisableUnusedImportCheck: true,
 	}
-
-	pkg, err := conf.Check("", fset, files, nil)
+	pkg, err := types.Load(fset, in, conf)
 	check(err)
 
+	if verbose {
+		log.Println("==> Printing ...")
+	}
 	scope := pkg.Scope()
 	names := scope.Names()
 	for _, name := range names {
