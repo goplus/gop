@@ -29,8 +29,8 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
-	"github.com/goplus/gop/x/mod/modfile"
 	"github.com/goplus/gox"
+	"github.com/goplus/mod/modfile"
 )
 
 const (

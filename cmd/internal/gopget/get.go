@@ -23,8 +23,8 @@ import (
 	"syscall"
 
 	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/x/mod/modfetch"
-	"github.com/goplus/gop/x/mod/modload"
+	"github.com/goplus/mod/modfetch"
+	"github.com/goplus/mod/modload"
 )
 
 // -----------------------------------------------------------------------------

@@ -20,9 +20,9 @@ import (
 	"errors"
 	"syscall"
 
-	"github.com/goplus/gop/x/mod/modfetch"
-	"github.com/goplus/gop/x/mod/modfile"
-	"github.com/goplus/gop/x/mod/modload"
+	"github.com/goplus/mod/modcache"
+	"github.com/goplus/mod/modfile"
+	"github.com/goplus/mod/modload"
 	"golang.org/x/mod/module"
 )
 
@@ -81,7 +81,7 @@ func (p *Module) registerMod(modPath string, regcls func(c *Class)) (err error) 
 	if err != syscall.ENOENT {
 		return
 	}
-	mod, _, err = modfetch.Get(mod.String())
+	mod, _, err = modGet(mod.String())
 	if err != nil {
 		return
 	}
@@ -89,11 +89,11 @@ func (p *Module) registerMod(modPath string, regcls func(c *Class)) (err error) 
 }
 
 func (p *Module) registerClassFrom(modVer module.Version, regcls func(c *Class)) (err error) {
-	dir, err := modfetch.ModCachePath(modVer)
+	dir, err := modcache.Path(modVer)
 	if err != nil {
 		return
 	}
-	mod, err := modload.Load(dir)
+	mod, err := modload.Load(dir, 0)
 	if err != nil {
 		return
 	}
