@@ -26,6 +26,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	goast "go/ast"
+	goparser "go/parser"
+
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
 )
@@ -141,13 +144,14 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (p
 		}
 		fname := d.Name()
 		ext := filepath.Ext(fname)
-		var isProj, isClass bool
+		var isProj, isClass, useGoParser bool
 		switch ext {
 		case ".gop":
 		case ".go":
 			if strings.HasPrefix(fname, "gop_autogen") {
 				continue
 			}
+			useGoParser = (conf.Mode & ParseGoFilesByGo) != 0
 		default:
 			if isProj, isClass = conf.IsClass(ext); !isClass {
 				continue
@@ -155,28 +159,42 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (p
 		}
 		if !strings.HasPrefix(fname, "_") && (conf.Filter == nil || conf.Filter(d)) {
 			filename := fs.Join(path, fname)
-			if filedata, err := fs.ReadFile(filename); err == nil {
-				if src, err := ParseFSFile(fset, fs, filename, filedata, conf.Mode); err == nil {
-					src.IsProj, src.IsClass = isProj, isClass
-					name := src.Name.Name
-					pkg, found := pkgs[name]
-					if !found {
-						pkg = &ast.Package{
-							Name:  name,
-							Files: make(map[string]*ast.File),
+			if useGoParser {
+				if filedata, err := fs.ReadFile(filename); err == nil {
+					if src, err := goparser.ParseFile(fset, filename, filedata, goparser.Mode(conf.Mode & ^ParseGoFilesByGo)); err == nil {
+						pkg := reqPkg(pkgs, src.Name.Name)
+						if pkg.GoFiles == nil {
+							pkg.GoFiles = make(map[string]*goast.File)
 						}
-						pkgs[name] = pkg
+						pkg.GoFiles[filename] = src
+					} else {
+						first = err
 					}
-					pkg.Files[filename] = src
-				} else if first == nil {
+				} else {
 					first = err
 				}
+			} else if src, err := ParseFSFile(fset, fs, filename, nil, conf.Mode); err == nil {
+				src.IsProj, src.IsClass = isProj, isClass
+				pkg := reqPkg(pkgs, src.Name.Name)
+				pkg.Files[filename] = src
 			} else if first == nil {
 				first = err
 			}
 		}
 	}
 	return
+}
+
+func reqPkg(pkgs map[string]*ast.Package, name string) *ast.Package {
+	pkg, found := pkgs[name]
+	if !found {
+		pkg = &ast.Package{
+			Name:  name,
+			Files: make(map[string]*ast.File),
+		}
+		pkgs[name] = pkg
+	}
+	return pkg
 }
 
 func defaultIsClass(ext string) (isProj bool, ok bool) {
