@@ -77,7 +77,7 @@ func gopClTestEx(t *testing.T, conf *cl.Config, pkgname, gopcode, expected strin
 		t.Fatal("NewPackage:", err)
 	}
 	var b bytes.Buffer
-	err = pkg.WriteTo(&b)
+	err = gox.WriteTo(&b, pkg, false)
 	if err != nil {
 		t.Fatal("gox.WriteTo failed:", err)
 	}

@@ -27,6 +27,7 @@ import (
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
+	"github.com/goplus/gox"
 	"github.com/goplus/gox/packages"
 )
 
@@ -131,7 +132,7 @@ func (p *gopFiles) GenGo(outFile, modFile string) error {
 	if err != nil {
 		return err
 	}
-	return out.WriteFile(outFile)
+	return gox.WriteFile(outFile, out, false)
 }
 
 // -----------------------------------------------------------------------------

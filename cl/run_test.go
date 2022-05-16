@@ -15,6 +15,7 @@ import (
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/parser/parsertest"
 	"github.com/goplus/gop/scanner"
+	"github.com/goplus/gox"
 )
 
 var (
@@ -94,7 +95,7 @@ func genGo(t *testing.T, conf *cl.Config, gopcode string) []byte {
 		t.Fatal("NewPackage:", err)
 	}
 	var b bytes.Buffer
-	err = pkg.WriteTo(&b)
+	err = gox.WriteTo(&b, pkg, false)
 	if err != nil {
 		t.Fatal("gox.WriteTo failed:", err)
 	}

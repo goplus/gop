@@ -212,7 +212,6 @@ func getKeys(v map[string]none) []string {
 }
 
 const (
-	testingGoFile    = "_test"
 	autoGenFile      = "gop_autogen.go"
 	autoGenTestFile  = "gop_autogen_test.go"
 	autoGen2TestFile = "gop_autogen2_test.go"
@@ -296,7 +295,7 @@ func (p *Runner) doGenGoPkg(pkgi *pkgInfo, imp types.Importer, conf *Config) (er
 			conf.OnErr("compile", e)
 			return e
 		}
-		err = out.WriteFile(filepath.Join(pkgDir, autoGen2TestFile), testingGoFile)
+		err = gox.WriteFile(filepath.Join(pkgDir, autoGen2TestFile), out, true)
 		if err != nil {
 			conf.OnErr("compile", err)
 		}
@@ -323,13 +322,13 @@ func saveGoFile(dir string, pkg *gox.Package, pkgi *pkgInfo) error {
 		if err != nil {
 			return
 		}
-		return pkg.WriteTo(f)
+		return gox.WriteTo(f, pkg, false)
 	}()
 	if err != nil {
 		return err
 	}
-	if _, ok := pkg.File(testingGoFile); ok {
-		return pkg.WriteFile(filepath.Join(dir, autoGenTestFile), testingGoFile)
+	if pkg.HasTestingFile() {
+		return gox.WriteFile(filepath.Join(dir, autoGenTestFile), pkg, true)
 	}
 	return nil
 }
