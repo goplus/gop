@@ -132,7 +132,7 @@ func goExpr(val gopast.Expr) ast.Expr {
 	case *gopast.FuncLit:
 		return &ast.FuncLit{
 			Type: goFuncType(v.Type),
-			Body: nil,
+			Body: &ast.BlockStmt{}, // skip closure body
 		}
 	case *gopast.TypeAssertExpr:
 		return &ast.TypeAssertExpr{
@@ -320,7 +320,7 @@ const (
 
 func ASTFile(f *gopast.File, mode int) *ast.File {
 	if (mode & KeepFuncBody) != 0 {
-		log.Panicln("ASTFile: doesn't support keep func body now")
+		log.Panicln("ASTFile: doesn't support keeping func body now")
 	}
 	return &ast.File{
 		Package: f.Package,
