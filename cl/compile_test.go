@@ -111,24 +111,31 @@ type foo struct {
 	v int
 }
 
+func (a foo) _() {
+}
+
 func (a foo) Str() string {
 	return f(a.v)
 }
 
-type foo2 = foo
+func (a *foo) Bar() int {
+	return 0
+}
 
-var x string = c.str
+type foo2 = foo
 `, `
 var a [n]int
 var b string = f(n)
 var c foo2
 var d int = c.v
+var x string = c.str
 `, `package main
 
 var a [10]int
 var b string = f(n)
 var c foo
 var d int = c.v
+var x string = c.Str()
 `)
 }
 

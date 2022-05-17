@@ -803,9 +803,35 @@ func aliasType(pkg *types.Package, pos token.Pos, name string, typ types.Type) {
 
 func declFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
 	name := d.Name.Name
+	if debugLoad {
+		if recv == nil {
+			log.Println("==> Load func", name)
+		} else {
+			log.Printf("==> Load method %v.%s\n", recv.Type(), name)
+		}
+	}
+	if name == "_" {
+		return
+	}
 	pkg := ctx.pkg.Types
 	sig := toFuncType(ctx, d.Type, recv)
-	pkg.Scope().Insert(types.NewFunc(d.Pos(), pkg, name, sig))
+	fn := types.NewFunc(d.Pos(), pkg, name, sig)
+	if recv != nil {
+		typ := recv.Type()
+		switch t := typ.(type) {
+		case *types.Named:
+			t.AddMethod(fn)
+			return
+		case *types.Pointer:
+			if tt, ok := t.Elem().(*types.Named); ok {
+				tt.AddMethod(fn)
+				return
+			}
+		}
+		log.Panicf("invalid receiver type %v (%v is not a defined type)\n", typ, typ)
+	} else {
+		pkg.Scope().Insert(fn)
+	}
 }
 
 func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
