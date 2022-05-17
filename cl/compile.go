@@ -365,7 +365,8 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	if targetDir == "" {
 		targetDir = workingDir
 	}
-	interp := &nodeInterp{fset: conf.Fset, files: pkg.Files, workingDir: workingDir}
+	files := pkg.Files
+	interp := &nodeInterp{fset: conf.Fset, files: files, workingDir: workingDir}
 	ctx := &pkgCtx{syms: make(map[string]loader), nodeInterp: interp}
 	confGox := &gox.Config{
 		Fset:            conf.Fset,
@@ -377,23 +378,23 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		DefaultGoFile:   defaultGoFile,
 	}
 	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
-	for file, gmx := range pkg.Files {
+	for file, gmx := range files {
 		if gmx.IsProj {
 			ctx.gmxSettings = newGmx(p, file, conf)
 			break
 		}
 	}
-	for fpath, f := range pkg.Files {
+	for fpath, f := range files {
 		preloadFile(p, ctx, fpath, f, targetDir, conf)
 	}
-	for _, f := range pkg.Files {
+	for _, f := range files {
 		if f.IsProj {
 			loadFile(ctx, f)
 			gmxMainFunc(p, ctx)
 			break
 		}
 	}
-	for _, f := range pkg.Files {
+	for _, f := range files {
 		if !f.IsProj { // only one .gmx file
 			loadFile(ctx, f)
 		}
@@ -413,7 +414,6 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 			p.RestoreCurFile(old)
 		}
 	}
-
 	return
 }
 
@@ -568,7 +568,7 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 		}}}
 	}
 	// check class project no MainEntry and auto added
-	if !conf.NoAutoGenMain && f.IsProj && !f.NoEntrypoint && f.Name.Name == "main" {
+	if f.IsProj && !conf.NoAutoGenMain && !f.NoEntrypoint && f.Name.Name == "main" {
 		entry := getEntrypoint(f, false)
 		var hasEntry bool
 		for _, decl := range f.Decls {
