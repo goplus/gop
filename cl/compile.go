@@ -784,7 +784,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, genCod
 func newType(pkg *types.Package, pos token.Pos, name string) *types.Named {
 	typName := types.NewTypeName(pos, pkg, name, nil)
 	if old := pkg.Scope().Insert(typName); old != nil {
-		log.Panicf("%s redeclared in this block\n\tprevious declaration at %v", name, "<TODO>")
+		log.Panicf("%s redeclared in this block\n\tprevious declaration at %v\n", name, "<TODO>")
 	}
 	return types.NewNamed(typName, nil, nil)
 }

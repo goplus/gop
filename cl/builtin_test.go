@@ -138,4 +138,38 @@ func TestGetGoFile(t *testing.T) {
 	}
 }
 
+func TestErrNewType(t *testing.T) {
+	testPanic(t, `bar redeclared in this block
+	previous declaration at <TODO>
+`, func() {
+		pkg := types.NewPackage("", "foo")
+		newType(pkg, token.NoPos, "bar")
+		newType(pkg, token.NoPos, "bar")
+	})
+}
+
+func TestErrDeclFunc(t *testing.T) {
+	testPanic(t, "invalid receiver type **byte (**byte is not a defined type)\n", func() {
+		pkg := gox.NewPackage("", "foo", goxConf)
+		recv := pkg.NewParam(token.NoPos, "p", types.NewPointer(types.NewPointer(gox.TyByte)))
+		declFunc(&blockCtx{pkg: pkg}, recv, &ast.FuncDecl{
+			Name: &ast.Ident{Name: "m"},
+			Type: &ast.FuncType{Params: &ast.FieldList{}},
+		})
+	})
+}
+
+func testPanic(t *testing.T, panicMsg string, doPanic func()) {
+	t.Run(panicMsg, func(t *testing.T) {
+		defer func() {
+			if e := recover(); e == nil {
+				t.Fatal("testPanic: no error?")
+			} else if msg := e.(string); msg != panicMsg {
+				t.Fatalf("\nResult:\n%s\nExpected Panic:\n%s\n", msg, panicMsg)
+			}
+		}()
+		doPanic()
+	})
+}
+
 // -----------------------------------------------------------------------------
