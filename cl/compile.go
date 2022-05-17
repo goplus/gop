@@ -28,6 +28,7 @@ import (
 	"strings"
 
 	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/ast/fromgo"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
 	"github.com/goplus/mod/modfile"
@@ -148,9 +149,11 @@ type baseLoader struct {
 	start token.Pos
 }
 
-func initLoader(ctx *pkgCtx, syms map[string]loader, start token.Pos, name string, fn func()) {
+func initLoader(ctx *pkgCtx, syms map[string]loader, start token.Pos, name string, fn func(), genCode bool) {
 	if name == "_" {
-		ctx.inits = append(ctx.inits, fn)
+		if genCode {
+			ctx.inits = append(ctx.inits, fn)
+		}
 		return
 	}
 	if old, ok := syms[name]; ok {
@@ -264,7 +267,7 @@ func (bc *blockCtx) findImport(name string) (pr *gox.PkgRef, ok bool) {
 	for k, v := range bc.imports {
 		v.EnsureImported()
 		if v.Types != nil {
-			if v.Types.Name() != k {
+			if v.Types.Name() != k { // if we guess pkgName failed
 				delete(bc.imports, k)
 				bc.imports[v.Types.Name()] = v
 			}
@@ -351,8 +354,9 @@ func (p *pkgCtx) handleRecover(e interface{}) {
 }
 
 const (
-	defaultGoFile = ""
-	testingGoFile = "_test"
+	defaultGoFile  = ""
+	skippingGoFile = "_skip"
+	testingGoFile  = "_test"
 )
 
 // NewPackage creates a Go+ package instance.
@@ -392,6 +396,14 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 			imports: make(map[string]*gox.PkgRef),
 		}
 		preloadGopFile(p, ctx, fpath, f, conf)
+	}
+	for fpath, gof := range pkg.GoFiles {
+		f := fromgo.ASTFile(gof, 0)
+		ctx := &blockCtx{
+			pkg: p, pkgCtx: ctx, cb: p.CB(), fset: p.Fset, targetDir: targetDir,
+			imports: make(map[string]*gox.PkgRef),
+		}
+		preloadFile(p, ctx, fpath, f, false)
 	}
 	for _, f := range files {
 		if f.IsProj {
@@ -480,11 +492,14 @@ func loadFile(ctx *pkgCtx, f *ast.File) {
 	}
 }
 
-func getGoFile(file string) string {
-	if strings.HasSuffix(file, "_test.gop") {
-		return testingGoFile
+func getGoFile(file string, genCode bool) string {
+	if genCode {
+		if strings.HasSuffix(file, "_test.gop") {
+			return testingGoFile
+		}
+		return defaultGoFile
 	}
-	return defaultGoFile
+	return skippingGoFile
 }
 
 func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, conf *Config) {
@@ -587,13 +602,14 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 			})
 		}
 	}
-	preloadFile(p, ctx, file, f)
+	preloadFile(p, ctx, file, f, true)
 }
 
-func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File) {
+func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, genCode bool) {
 	parent := ctx.pkgCtx
 	syms := parent.syms
-	goFile := getGoFile(file)
+	goFile := getGoFile(file, genCode)
+	p.SetCurFile(goFile, true)
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
@@ -606,42 +622,60 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File) {
 				}
 			}
 			if d.Recv == nil {
-				name := d.Name
-				fn := func() {
-					old, _ := p.SetCurFile(goFile, true)
-					defer p.RestoreCurFile(old)
-					loadFunc(ctx, nil, d)
+				var name = d.Name
+				var fn func()
+				if genCode {
+					fn = func() {
+						old, _ := p.SetCurFile(goFile, true)
+						defer p.RestoreCurFile(old)
+						loadFunc(ctx, nil, d)
+					}
+				} else {
+					fn = func() {
+						declFunc(ctx, nil, d)
+					}
 				}
 				if name.Name == "init" {
-					if debugLoad {
-						log.Println("==> Preload func init")
+					if genCode {
+						if debugLoad {
+							log.Println("==> Preload func init")
+						}
+						parent.inits = append(parent.inits, fn)
 					}
-					parent.inits = append(parent.inits, fn)
 				} else {
 					if debugLoad {
 						log.Println("==> Preload func", name.Name)
 					}
-					initLoader(parent, syms, name.Pos(), name.Name, fn)
+					initLoader(parent, syms, name.Pos(), name.Name, fn, genCode)
 				}
 			} else {
 				if name, ok := getRecvTypeName(parent, d.Recv, true); ok {
 					if debugLoad {
 						log.Printf("==> Preload method %s.%s\n", name, d.Name.Name)
 					}
-					ld := getTypeLoader(parent, syms, token.NoPos, name)
-					ld.methods = append(ld.methods, func() {
-						old, _ := p.SetCurFile(goFile, true)
-						defer p.RestoreCurFile(old)
-						doInitType(ld)
-						recv := toRecv(ctx, d.Recv)
-						loadFunc(ctx, recv, d)
-					})
+					var ld = getTypeLoader(parent, syms, token.NoPos, name)
+					var fn func()
+					if genCode {
+						fn = func() {
+							old, _ := p.SetCurFile(goFile, true)
+							defer p.RestoreCurFile(old)
+							doInitType(ld)
+							recv := toRecv(ctx, d.Recv)
+							loadFunc(ctx, recv, d)
+						}
+					} else {
+						fn = func() {
+							doInitType(ld)
+							recv := toRecv(ctx, d.Recv)
+							declFunc(ctx, recv, d)
+						}
+					}
+					ld.methods = append(ld.methods, fn)
 				}
 			}
 		case *ast.GenDecl:
 			switch d.Tok {
 			case token.IMPORT:
-				p.SetCurFile(goFile, true)
 				for _, item := range d.Specs {
 					loadImport(ctx, item.(*ast.ImportSpec))
 				}
@@ -653,30 +687,53 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File) {
 						log.Println("==> Preload type", name)
 					}
 					ld := getTypeLoader(parent, syms, t.Name.Pos(), name)
-					ld.typ = func() {
-						old, _ := p.SetCurFile(goFile, true)
-						defer p.RestoreCurFile(old)
-						if t.Assign != token.NoPos { // alias type
-							if debugLoad {
-								log.Println("==> Load > AliasType", name)
+					if genCode {
+						ld.typ = func() {
+							old, _ := p.SetCurFile(goFile, true)
+							defer p.RestoreCurFile(old)
+							if t.Assign != token.NoPos { // alias type
+								if debugLoad {
+									log.Println("==> Load > AliasType", name)
+								}
+								ctx.pkg.AliasType(name, toType(ctx, t.Type), t.Pos())
+								return
 							}
-							ctx.pkg.AliasType(name, toType(ctx, t.Type))
-							return
-						}
-						if debugLoad {
-							log.Println("==> Load > NewType", name)
-						}
-						decl := ctx.pkg.NewType(name)
-						if t.Doc != nil {
-							decl.SetComments(t.Doc)
-						} else if d.Doc != nil {
-							decl.SetComments(d.Doc)
-						}
-						ld.typInit = func() { // decycle
 							if debugLoad {
-								log.Println("==> Load > InitType", name)
+								log.Println("==> Load > NewType", name)
 							}
-							decl.InitType(ctx.pkg, toType(ctx, t.Type))
+							decl := ctx.pkg.NewType(name)
+							if t.Doc != nil {
+								decl.SetComments(t.Doc)
+							} else if d.Doc != nil {
+								decl.SetComments(d.Doc)
+							}
+							ld.typInit = func() { // decycle
+								if debugLoad {
+									log.Println("==> Load > InitType", name)
+								}
+								decl.InitType(ctx.pkg, toType(ctx, t.Type))
+							}
+						}
+					} else {
+						ld.typ = func() {
+							pkg := ctx.pkg.Types
+							if t.Assign != token.NoPos { // alias type
+								if debugLoad {
+									log.Println("==> Load > AliasType", name)
+								}
+								aliasType(pkg, t.Pos(), name, toType(ctx, t.Type))
+								return
+							}
+							if debugLoad {
+								log.Println("==> Load > NewType", name)
+							}
+							named := newType(pkg, t.Pos(), name)
+							ld.typInit = func() { // decycle
+								if debugLoad {
+									log.Println("==> Load > InitType", name)
+								}
+								initType(ctx, named, toType(ctx, t.Type))
+							}
 						}
 					}
 				}
@@ -690,8 +747,6 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File) {
 					}
 					setNamesLoader(parent, syms, vSpec.Names, func() {
 						if c := cdecl; c != nil {
-							old, _ := p.SetCurFile(goFile, true)
-							defer p.RestoreCurFile(old)
 							cdecl = nil
 							loadConstSpecs(ctx, c, d.Specs)
 							for _, s := range d.Specs {
@@ -709,9 +764,9 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File) {
 					}
 					setNamesLoader(parent, syms, vSpec.Names, func() {
 						if v := vSpec; v != nil { // only init once
+							vSpec = nil
 							old, _ := p.SetCurFile(goFile, true)
 							defer p.RestoreCurFile(old)
-							vSpec = nil
 							loadVars(ctx, v, true)
 							removeNames(syms, v.Names)
 						}
@@ -724,6 +779,33 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File) {
 			log.Panicln("TODO - gopkg.Package.load: unknown decl -", reflect.TypeOf(decl))
 		}
 	}
+}
+
+func newType(pkg *types.Package, pos token.Pos, name string) *types.Named {
+	typName := types.NewTypeName(pos, pkg, name, nil)
+	if old := pkg.Scope().Insert(typName); old != nil {
+		log.Panicf("%s redeclared in this block\n\tprevious declaration at %v", name, "<TODO>")
+	}
+	return types.NewNamed(typName, nil, nil)
+}
+
+func initType(ctx *blockCtx, named *types.Named, typ types.Type) {
+	if named, ok := typ.(*types.Named); ok {
+		typ = getUnderlying(ctx, named)
+	}
+	named.SetUnderlying(typ)
+}
+
+func aliasType(pkg *types.Package, pos token.Pos, name string, typ types.Type) {
+	o := types.NewTypeName(pos, pkg, name, typ)
+	pkg.Scope().Insert(o)
+}
+
+func declFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
+	name := d.Name.Name
+	pkg := ctx.pkg.Types
+	sig := toFuncType(ctx, d.Type, recv)
+	pkg.Scope().Insert(types.NewFunc(d.Pos(), pkg, name, sig))
 }
 
 func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
@@ -943,7 +1025,7 @@ func removeNames(syms map[string]loader, names []*ast.Ident) {
 
 func setNamesLoader(ctx *pkgCtx, syms map[string]loader, names []*ast.Ident, load func()) {
 	for _, name := range names {
-		initLoader(ctx, syms, name.Pos(), name.Name, load)
+		initLoader(ctx, syms, name.Pos(), name.Name, load, true)
 	}
 }
 
