@@ -62,10 +62,19 @@ func gopClTest(t *testing.T, gopcode, expected string) {
 }
 
 func gopClTestEx(t *testing.T, conf *cl.Config, pkgname, gopcode, expected string) {
+	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", gopcode)
+	gopClTestFS(t, conf, fs, pkgname, expected)
+}
+
+func gopMixedClTest(t *testing.T, pkgname, gocode, gopcode, expected string) {
+	fs := parsertest.NewTwoFilesFS("/foo", "a.go", gocode, "b.gop", gopcode)
+	gopClTestFS(t, gblConf, fs, pkgname, expected)
+}
+
+func gopClTestFS(t *testing.T, conf *cl.Config, fs parser.FileSystem, pkgname, expected string) {
 	cl.SetDisableRecover(true)
 	defer cl.SetDisableRecover(false)
 
-	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", gopcode)
 	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", parser.Config{Mode: parser.ParseComments})
 	if err != nil {
 		scanner.PrintError(os.Stderr, err)
@@ -85,6 +94,42 @@ func gopClTestEx(t *testing.T, conf *cl.Config, pkgname, gopcode, expected strin
 	if result != expected {
 		t.Fatalf("\nResult:\n%s\nExpected:\n%s\n", result, expected)
 	}
+}
+
+func TestMixedGo(t *testing.T) {
+	gopMixedClTest(t, "main", `package main
+
+import "strconv"
+
+const n = 10
+
+func f(v int) string {
+	return strconv.Itoa(v)
+}
+
+type foo struct {
+	v int
+}
+
+func (a foo) Str() string {
+	return f(a.v)
+}
+
+type foo2 = foo
+
+var x string = c.str
+`, `
+var a [n]int
+var b string = f(n)
+var c foo2
+var d int = c.v
+`, `package main
+
+var a [10]int
+var b string = f(n)
+var c foo
+var d int = c.v
+`)
 }
 
 func TestInitFunc(t *testing.T) {

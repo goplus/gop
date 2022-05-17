@@ -109,4 +109,14 @@ func NewSingleFileFS(dir string, fname string, data string) *MemFS {
 	})
 }
 
+// NewTwoFilesFS creates a file system that contains two files.
+func NewTwoFilesFS(dir string, fname1, data1, fname2, data2 string) *MemFS {
+	return NewMemFS(map[string][]string{
+		dir: {fname1, fname2},
+	}, map[string]string{
+		path.Join(dir, fname1): data1,
+		path.Join(dir, fname2): data2,
+	})
+}
+
 // -----------------------------------------------------------------------------

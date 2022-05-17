@@ -130,7 +130,10 @@ func lookupClass(ext string) (c *gopmod.Class, ok bool) {
 }
 
 func TestGetGoFile(t *testing.T) {
-	if f := getGoFile("a_test.gop"); f != testingGoFile {
+	if f := getGoFile("a_test.gop", true); f != testingGoFile {
+		t.Fatal("TestGetGoFile:", f)
+	}
+	if f := getGoFile("a_test.gop", false); f != skippingGoFile {
 		t.Fatal("TestGetGoFile:", f)
 	}
 }

@@ -116,3 +116,12 @@ var f = a.i.(func() (int))()
 func foo(v ...interface{}) {}
 `)
 }
+
+func TestMethod(t *testing.T) {
+	test(t, `package main
+
+type foo int
+
+func (a foo) Str() (string) {}
+`)
+}
