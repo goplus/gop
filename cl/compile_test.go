@@ -123,11 +123,13 @@ func (a *foo) Bar() int {
 }
 
 type foo2 = foo
+type foo3 foo2
 `, `
 var a [n]int
 var b string = f(n)
 var c foo2
 var d int = c.v
+var e = foo3{}
 var x string = c.str
 `, `package main
 
@@ -135,6 +137,7 @@ var a [10]int
 var b string = f(n)
 var c foo
 var d int = c.v
+var e = foo3{}
 var x string = c.Str()
 `)
 }
