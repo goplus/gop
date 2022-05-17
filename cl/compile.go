@@ -385,7 +385,13 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		}
 	}
 	for fpath, f := range files {
-		preloadFile(p, ctx, fpath, f, targetDir, conf)
+		fileLine := !conf.NoFileLine
+		ctx := &blockCtx{
+			pkg: p, pkgCtx: ctx, cb: p.CB(), fset: p.Fset, targetDir: targetDir,
+			fileLine: fileLine, relativePath: conf.RelativePath, isClass: f.IsClass,
+			imports: make(map[string]*gox.PkgRef),
+		}
+		preloadGopFile(p, ctx, fpath, f, conf)
 	}
 	for _, f := range files {
 		if f.IsProj {
@@ -481,15 +487,8 @@ func getGoFile(file string) string {
 	return defaultGoFile
 }
 
-func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targetDir string, conf *Config) {
-	syms := parent.syms
-	fileLine := !conf.NoFileLine
-	goFile := getGoFile(file)
-	ctx := &blockCtx{
-		pkg: p, pkgCtx: parent, cb: p.CB(), fset: p.Fset, targetDir: targetDir,
-		fileLine: fileLine, relativePath: conf.RelativePath, isClass: f.IsClass,
-		imports: make(map[string]*gox.PkgRef),
-	}
+func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, conf *Config) {
+	var parent = ctx.pkgCtx
 	var classType string
 	var baseTypeName string
 	var baseType types.Type
@@ -518,6 +517,7 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 		for i, pkgPath := range parent.pkgPaths {
 			ctx.lookups[i] = p.Import(pkgPath)
 		}
+		syms := parent.syms
 		pos := f.Pos()
 		specs := getFields(ctx, f)
 		ld := getTypeLoader(parent, syms, pos, classType)
@@ -587,6 +587,13 @@ func preloadFile(p *gox.Package, parent *pkgCtx, file string, f *ast.File, targe
 			})
 		}
 	}
+	preloadFile(p, ctx, file, f)
+}
+
+func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File) {
+	parent := ctx.pkgCtx
+	syms := parent.syms
+	goFile := getGoFile(file)
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
