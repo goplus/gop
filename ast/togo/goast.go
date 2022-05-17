@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2022 The GoPlus Authors (goplus.org). All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package togo
 
 import (
@@ -116,7 +132,7 @@ func goExpr(val gopast.Expr) ast.Expr {
 	case *gopast.FuncLit:
 		return &ast.FuncLit{
 			Type: goFuncType(v.Type),
-			Body: nil,
+			Body: &ast.BlockStmt{}, // skip closure body
 		}
 	case *gopast.TypeAssertExpr:
 		return &ast.TypeAssertExpr{
@@ -304,7 +320,7 @@ const (
 
 func ASTFile(f *gopast.File, mode int) *ast.File {
 	if (mode & KeepFuncBody) != 0 {
-		log.Panicln("ASTFile: doesn't support keep func body now")
+		log.Panicln("ASTFile: doesn't support keeping func body now")
 	}
 	return &ast.File{
 		Package: f.Package,
