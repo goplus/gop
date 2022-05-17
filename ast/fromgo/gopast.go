@@ -153,7 +153,7 @@ func gopExpr(val ast.Expr) gopast.Expr {
 			Elt:      gopExpr(v.Elt),
 		}
 	}
-	log.Panicln("goExpr: unknown expr -", reflect.TypeOf(val))
+	log.Panicln("gopExpr: unknown expr -", reflect.TypeOf(val))
 	return nil
 }
 
@@ -279,7 +279,7 @@ func gopGenDecl(v *ast.GenDecl) *gopast.GenDecl {
 		case token.VAR, token.CONST:
 			specs[i] = gopValueSpec(spec.(*ast.ValueSpec))
 		default:
-			log.Panicln("goGenDecl: unknown spec -", v.Tok)
+			log.Panicln("gopGenDecl: unknown spec -", v.Tok)
 		}
 	}
 	return &gopast.GenDecl{
@@ -300,7 +300,7 @@ func gopDecl(decl ast.Decl) gopast.Decl {
 	case *ast.FuncDecl:
 		return gopFuncDecl(v)
 	}
-	log.Panicln("goDecl: unkown decl -", reflect.TypeOf(decl))
+	log.Panicln("gopDecl: unkown decl -", reflect.TypeOf(decl))
 	return nil
 }
 

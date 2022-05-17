@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package fromgo
+package togo
 
 import (
 	"bytes"
-	"go/ast"
-	"go/parser"
+	"go/format"
 	"go/token"
 	"testing"
 
-	"github.com/goplus/gop/format"
+	gopast "github.com/goplus/gop/ast"
+	"github.com/goplus/gop/parser"
 )
 
 func testAST(t *testing.T, from, to string) {
@@ -62,28 +62,25 @@ func testPanic(t *testing.T, panicMsg string, doPanic func()) {
 }
 
 func TestErrASTFile(t *testing.T) {
-	testPanic(t, "ASTFile: doesn't support keeping cgo now\n", func() {
-		ASTFile(nil, KeepCgo)
-	})
 	testPanic(t, "ASTFile: doesn't support keeping func body now\n", func() {
 		ASTFile(nil, KeepFuncBody)
 	})
 }
 
 func TestErrDecl(t *testing.T) {
-	testPanic(t, "gopDecl: unkown decl - <nil>\n", func() {
-		gopDecl(nil)
+	testPanic(t, "goDecl: unkown decl - <nil>\n", func() {
+		goDecl(nil)
 	})
-	testPanic(t, "gopGenDecl: unknown spec - ILLEGAL\n", func() {
-		gopGenDecl(&ast.GenDecl{
-			Specs: []ast.Spec{nil},
+	testPanic(t, "goGenDecl: unknown spec - ILLEGAL\n", func() {
+		goGenDecl(&gopast.GenDecl{
+			Specs: []gopast.Spec{nil},
 		})
 	})
 }
 
 func TestErrExpr(t *testing.T) {
-	testPanic(t, "gopExpr: unknown expr - *ast.BadExpr\n", func() {
-		gopExpr(&ast.BadExpr{})
+	testPanic(t, "goExpr: unknown expr - *ast.BadExpr\n", func() {
+		goExpr(&gopast.BadExpr{})
 	})
 }
 
