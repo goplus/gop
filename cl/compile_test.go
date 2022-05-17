@@ -107,21 +107,28 @@ func f(v int) string {
 	return strconv.Itoa(v)
 }
 
-type foo int
-
-func (a foo) Str() string {
-	return f(int(a))
+type foo struct {
+	v int
 }
 
-var c foo
-var d string = c.str
+func (a foo) Str() string {
+	return f(a.v)
+}
+
+type foo2 = foo
+
+var x string = c.str
 `, `
 var a [n]int
 var b string = f(n)
+var c foo2
+var d int = c.v
 `, `package main
 
 var a [10]int
 var b string = f(n)
+var c foo
+var d int = c.v
 `)
 }
 
