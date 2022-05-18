@@ -22,6 +22,7 @@ import (
 	"go/types"
 	"io/fs"
 	"strings"
+	"syscall"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
@@ -57,12 +58,16 @@ func LoadDir(dir string, conf *Config) (out, test *gox.Package, err error) {
 	}
 
 	mod, err := gopmod.Load(dir, gop)
-	if err != nil {
+	if err != nil && err != syscall.ENOENT {
 		return
 	}
-	err = mod.RegisterClasses()
-	if err != nil {
-		return
+	if mod != nil {
+		err = mod.RegisterClasses()
+		if err != nil {
+			return
+		}
+	} else {
+		mod = new(gopmod.Module)
 	}
 
 	pkgs, err := parser.ParseDirEx(fset, dir, parser.Config{
@@ -98,7 +103,7 @@ func LoadDir(dir string, conf *Config) (out, test *gox.Package, err error) {
 		}
 	}
 	if out == nil {
-		return nil, nil, errNoSource
+		return nil, nil, syscall.ENOENT
 	}
 	if pkgTest != nil {
 		test, err = cl.NewPackage("", pkgTest, clConf)
@@ -135,5 +140,4 @@ func LoadFiles(files []string, conf *Config) (out *gox.Package, err error) {
 var (
 	errMultiPackges     = errors.New("multiple packages")
 	errMultiTestPackges = errors.New("multiple test packages")
-	errNoSource         = errors.New("no source in directory")
 )

@@ -7,7 +7,6 @@
 [![Tutorials](https://img.shields.io/badge/tutorial-Go+-blue.svg)](https://tutorial.goplus.org/)
 [![Playground](https://img.shields.io/badge/play-Go+-blue.svg)](https://play.goplus.org/)
 [![VSCode](https://img.shields.io/badge/vscode-Go+-teal.svg)](https://github.com/gopcode/vscode-goplus)
-[![Readme](https://img.shields.io/badge/README-中文-teal.svg)](https://github.com/goplus/gop/blob/main/README_zh.md)
 
 * **For engineering**: working in the simplest language that can be mastered by children.
 * **For STEM education**: studying an engineering language that can be used to work in the future.
