@@ -82,6 +82,7 @@ func LoadDir(dir string, conf *Config) (out, test *gox.Package, err error) {
 	var pkgTest *ast.Package
 	var clConf = &cl.Config{
 		WorkingDir:  dir,
+		GopRoot:     gop.Root,
 		Fset:        fset,
 		Importer:    imp,
 		LookupClass: mod.LookupClass,

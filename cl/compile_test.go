@@ -46,6 +46,7 @@ func init() {
 		Fset:          gblFset,
 		Importer:      imp,
 		LookupClass:   lookupClass,
+		GopRoot:       "..",
 		NoFileLine:    true,
 		NoAutoGenMain: true,
 	}

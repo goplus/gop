@@ -82,6 +82,9 @@ type Config struct {
 	// TargetDir is the directory in which to generate Go files.
 	TargetDir string
 
+	// GopRoot specifies the Go+ root directory.
+	GopRoot string
+
 	// Fset provides source position information for syntax trees and types.
 	// If Fset is nil, Load will use a new fileset, but preserve Fset's value.
 	Fset *token.FileSet
@@ -374,7 +377,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	ctx := &pkgCtx{syms: make(map[string]loader), nodeInterp: interp}
 	confGox := &gox.Config{
 		Fset:            conf.Fset,
-		Importer:        conf.Importer,
+		Importer:        newGopImporter(conf.GopRoot, conf.Importer),
 		LoadNamed:       ctx.loadNamed,
 		HandleErr:       ctx.handleErr,
 		NodeInterpreter: interp,
