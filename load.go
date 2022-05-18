@@ -157,7 +157,13 @@ func splitPkgPath(pkgPath string) (modPath, leftPart string) {
 	if strings.HasPrefix(pkgPath, "github.com/") {
 		parts := strings.SplitN(pkgPath, "/", 4)
 		if len(parts) > 3 {
-			return strings.Join(parts[:3], "/"), parts[3]
+			leftPart = parts[3]
+			if pos := strings.IndexByte(leftPart, '@'); pos > 0 {
+				parts[2] += leftPart[pos:]
+				leftPart = leftPart[:pos]
+			}
+			modPath = strings.Join(parts[:3], "/")
+			return
 		}
 	}
 	return pkgPath, "" // TODO:
