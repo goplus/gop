@@ -38,7 +38,7 @@ func GenGo(dir string, conf *Config) (err error) {
 		dir = dir[:len(dir)-4]
 		return filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 			if err == nil && d.IsDir() {
-				err = genGoDir(path, conf)
+				err = genGoDir(path, conf, true)
 				if err != nil {
 					if err == syscall.ENOENT {
 						err = nil
@@ -50,16 +50,18 @@ func GenGo(dir string, conf *Config) (err error) {
 			return err
 		})
 	}
-	return genGoDir(dir, conf)
+	return genGoDir(dir, conf, false)
 }
 
-func genGoDir(dir string, conf *Config) (err error) {
+func genGoDir(dir string, conf *Config, prompt bool) (err error) {
 	out, test, err := LoadDir(dir, conf)
 	if err != nil {
 		return
 	}
 
-	fmt.Printf("GenGo %v ...\n", dir)
+	if prompt {
+		fmt.Printf("GenGo %v ...\n", dir)
+	}
 
 	os.MkdirAll(dir, 0755)
 	file := filepath.Join(dir, autoGenFile)
