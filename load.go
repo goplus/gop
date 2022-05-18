@@ -21,6 +21,7 @@ import (
 	"go/token"
 	"go/types"
 	"io/fs"
+	"path/filepath"
 	"strings"
 	"syscall"
 
@@ -112,6 +113,9 @@ func LoadDir(dir string, conf *Config) (out, test *gox.Package, err error) {
 		if out != nil {
 			return nil, nil, errMultiPackges
 		}
+		if len(pkg.Files) == 0 { // no Go+ source files
+			break
+		}
 		out, err = cl.NewPackage("", pkg, clConf)
 		if err != nil {
 			return
@@ -145,12 +149,18 @@ func getPkgPathDo(pkgPath string, gop *env.Gop, doSth func(dir string), onErr fu
 	} else if dir, err := modcache.Path(modVer); err != nil {
 		onErr(err)
 	} else {
-		doSth(dir + leftPart)
+		doSth(filepath.Join(dir, leftPart))
 	}
 }
 
 func splitPkgPath(pkgPath string) (modPath, leftPart string) {
-	return pkgPath, ""
+	if strings.HasPrefix(pkgPath, "github.com/") {
+		parts := strings.SplitN(pkgPath, "/", 4)
+		if len(parts) > 3 {
+			return strings.Join(parts[:3], "/"), parts[3]
+		}
+	}
+	return pkgPath, "" // TODO:
 }
 
 func gopEnv(conf *Config) *env.Gop {

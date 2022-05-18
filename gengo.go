@@ -98,7 +98,10 @@ func GenGoPkgPath(pkgPath string, conf *Config) (err error) {
 	if recursively {
 		pkgPath = pkgPath[:len(pkgPath)-4]
 	}
+
 	getPkgPathDo(pkgPath, gopEnv(conf), func(dir string) {
+		os.Chmod(dir, 0755)
+		defer os.Chmod(dir, 0555)
 		err = genGoDir(dir, conf, recursively)
 	}, func(e error) {
 		err = e
