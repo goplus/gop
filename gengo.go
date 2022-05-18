@@ -15,3 +15,40 @@
  */
 
 package gop
+
+import (
+	"os"
+	"path/filepath"
+	"syscall"
+)
+
+const (
+	testingGoFile    = "_test"
+	autoGenFile      = "gop_autogen.go"
+	autoGenTestFile  = "gop_autogen_test.go"
+	autoGen2TestFile = "gop_autogen2_test.go"
+)
+
+func GenGo(dir string, conf *Config) (err error) {
+	out, test, err := LoadDir(dir, conf)
+	if err != nil {
+		return
+	}
+
+	os.MkdirAll(dir, 0755)
+	file := filepath.Join(dir, autoGenFile)
+	err = out.WriteFile(file)
+	if err != nil {
+		return
+	}
+
+	err = out.WriteFile(filepath.Join(dir, autoGenTestFile), testingGoFile)
+	if err != nil && err != syscall.ENOENT {
+		return
+	}
+
+	if test != nil {
+		err = test.WriteFile(filepath.Join(dir, autoGen2TestFile), testingGoFile)
+	}
+	return
+}

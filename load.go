@@ -60,6 +60,10 @@ func LoadDir(dir string, conf *Config) (out, test *gox.Package, err error) {
 	if err != nil {
 		return
 	}
+	err = mod.RegisterClasses()
+	if err != nil {
+		return
+	}
 
 	pkgs, err := parser.ParseDirEx(fset, dir, parser.Config{
 		IsClass: mod.IsClass,
