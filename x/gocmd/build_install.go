@@ -16,41 +16,28 @@
 
 package gocmd
 
-import (
-	"os"
-	"path/filepath"
-	"strings"
-)
-
 // -----------------------------------------------------------------------------
 
-type RunConfig = Config
+type InstallConfig = Config
 
-func RunDir(dir string, conf *RunConfig) (err error) {
-	fis, err := os.ReadDir(dir)
-	if err != nil {
-		return
-	}
-	var files []string
-	for _, fi := range fis {
-		if !fi.IsDir() {
-			if fname := fi.Name(); filterRunFname(fname) {
-				files = append(files, filepath.Join(dir, fname))
-			}
-		}
-	}
-	return RunFiles(files, conf)
+func InstallDir(dir string, conf *InstallConfig) (err error) {
+	return doWithArgs("install", conf, dir)
 }
 
-func filterRunFname(fname string) bool {
-	return strings.HasSuffix(fname, ".go") &&
-		!(strings.HasSuffix(fname, "_test.go") || strings.HasPrefix(fname, "_"))
+func InstallFiles(files []string, conf *InstallConfig) (err error) {
+	return doWithArgs("install", conf, files...)
 }
 
 // -----------------------------------------------------------------------------
 
-func RunFiles(files []string, conf *RunConfig) (err error) {
-	return doWithArgs("run", conf, files...)
+type BuildConfig = Config
+
+func BuildDir(dir string, conf *BuildConfig) (err error) {
+	return doWithArgs("build", conf, dir)
+}
+
+func BuildFiles(files []string, conf *BuildConfig) (err error) {
+	return doWithArgs("build", conf, files...)
 }
 
 // -----------------------------------------------------------------------------

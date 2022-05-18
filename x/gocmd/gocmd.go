@@ -18,12 +18,38 @@ package gocmd
 
 import (
 	"fmt"
+	"os/exec"
 
 	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/mod/env"
 )
 
 type GopEnv = env.Gop
+
+type Config struct {
+	Gop   *GopEnv
+	Flags []string
+	Run   func(cmd *exec.Cmd) error
+}
+
+// -----------------------------------------------------------------------------
+
+func doWithArgs(op string, conf *Config, args ...string) (err error) {
+	if conf == nil {
+		conf = new(Config)
+	}
+	exargs := make([]string, 1, 16)
+	exargs[0] = op
+	exargs = appendLdflags(exargs, conf.Gop)
+	exargs = append(exargs, conf.Flags...)
+	exargs = append(exargs, args...)
+	cmd := exec.Command("go", exargs...)
+	run := conf.Run
+	if run == nil {
+		run = (*exec.Cmd).Run
+	}
+	return run(cmd)
+}
 
 // -----------------------------------------------------------------------------
 
