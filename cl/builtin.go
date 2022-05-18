@@ -19,6 +19,7 @@ package cl
 import (
 	"go/token"
 	"go/types"
+	"strings"
 
 	"github.com/goplus/gox"
 )
@@ -65,6 +66,32 @@ func newBuiltinDefault(pkg gox.PkgImporter, conf *gox.Config) *types.Package {
 	initBuiltin(pkg, builtin, fmt, ng, buil)
 	gox.InitBuiltin(pkg, builtin, conf)
 	return builtin
+}
+
+// -----------------------------------------------------------------------------
+
+type gopImporter struct {
+	gopRoot string
+	impFrom types.ImporterFrom
+}
+
+func newGopImporter(gopRoot string, imp types.Importer) types.Importer {
+	if impFrom, ok := imp.(types.ImporterFrom); ok && gopRoot != "" {
+		return &gopImporter{gopRoot: gopRoot, impFrom: impFrom}
+	}
+	return imp
+}
+
+func (p *gopImporter) Import(pkgPath string) (pkg *types.Package, err error) {
+	const (
+		gop = "github.com/goplus/gop"
+	)
+	if strings.HasPrefix(pkgPath, gop) {
+		if suffix := pkgPath[len(gop):]; suffix == "" || suffix[0] == '/' {
+			return p.impFrom.ImportFrom(pkgPath, p.gopRoot, 0)
+		}
+	}
+	return p.impFrom.Import(pkgPath)
 }
 
 // -----------------------------------------------------------------------------
