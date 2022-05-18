@@ -38,6 +38,9 @@ type Config struct {
 	Fset     *token.FileSet
 	Filter   func(fs.FileInfo) bool
 	Importer types.Importer
+
+	UpdateGoMod     bool
+	CheckModChanged bool
 }
 
 func LoadDir(dir string, conf *Config) (out, test *gox.Package, err error) {
@@ -65,6 +68,12 @@ func LoadDir(dir string, conf *Config) (out, test *gox.Package, err error) {
 		err = mod.RegisterClasses()
 		if err != nil {
 			return
+		}
+		if conf.UpdateGoMod {
+			err = mod.UpdateGoMod(gop, conf.CheckModChanged)
+			if err != nil {
+				return
+			}
 		}
 	} else {
 		mod = new(gopmod.Module)

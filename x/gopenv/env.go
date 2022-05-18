@@ -18,9 +18,13 @@ package gopenv
 
 import (
 	"github.com/goplus/gop/env"
-	"github.com/goplus/mod/modload"
+	modenv "github.com/goplus/mod/env"
 )
 
-func Get() *modload.GopEnv {
-	return &modload.GopEnv{Version: env.Version(), Root: env.GOPROOT()}
+func Get() *modenv.Gop {
+	return &modenv.Gop{
+		Version:   env.Version(),
+		BuildDate: env.BuildDate(),
+		Root:      env.GOPROOT(),
+	}
 }
