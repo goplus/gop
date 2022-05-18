@@ -32,13 +32,21 @@ const (
 	autoGen2TestFile = "gop_autogen2_test.go"
 )
 
+// -----------------------------------------------------------------------------
+
 func GenGo(dir string, conf *Config) (err error) {
 	recursively := strings.HasSuffix(dir, "/...")
 	if recursively {
 		dir = dir[:len(dir)-4]
+	}
+	return genGoDir(dir, conf, recursively)
+}
+
+func genGoDir(dir string, conf *Config, recursively bool) (err error) {
+	if recursively {
 		return filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 			if err == nil && d.IsDir() {
-				err = genGoDir(path, conf, true)
+				err = genGoIn(path, conf, true)
 				if err != nil {
 					if err == syscall.ENOENT {
 						err = nil
@@ -50,10 +58,10 @@ func GenGo(dir string, conf *Config) (err error) {
 			return err
 		})
 	}
-	return genGoDir(dir, conf, false)
+	return genGoIn(dir, conf, false)
 }
 
-func genGoDir(dir string, conf *Config, prompt bool) (err error) {
+func genGoIn(dir string, conf *Config, prompt bool) (err error) {
 	out, test, err := LoadDir(dir, conf)
 	if err != nil {
 		return
@@ -82,3 +90,60 @@ func genGoDir(dir string, conf *Config, prompt bool) (err error) {
 	}
 	return
 }
+
+// -----------------------------------------------------------------------------
+
+func GenGoPkgPath(pkgPath string, conf *Config) (err error) {
+	recursively := strings.HasSuffix(pkgPath, "/...")
+	if recursively {
+		pkgPath = pkgPath[:len(pkgPath)-4]
+	}
+
+	getPkgPathDo(pkgPath, gopEnv(conf), func(dir string) {
+		os.Chmod(dir, 0755)
+		defer os.Chmod(dir, 0555)
+		err = genGoDir(dir, conf, recursively)
+	}, func(e error) {
+		err = e
+	})
+	return
+}
+
+// -----------------------------------------------------------------------------
+
+func GenGoFiles(autogen string, files []string, conf *Config) (err error) {
+	if autogen == "" {
+		autogen = "gop_autogen.go"
+		if len(files) == 1 {
+			file := files[0]
+			srcDir, fname := filepath.Split(file)
+			if hasMultiFiles(srcDir, ".gop") {
+				autogen = filepath.Join(srcDir, "gop_autogen_"+fname+".go")
+			}
+		}
+	}
+	out, err := LoadFiles(files, conf)
+	if err != nil {
+		return
+	}
+	return out.WriteFile(autogen)
+}
+
+func hasMultiFiles(srcDir string, ext string) bool {
+	var has bool
+	if f, err := os.Open(srcDir); err == nil {
+		defer f.Close()
+		fis, _ := f.ReadDir(-1)
+		for _, fi := range fis {
+			if !fi.IsDir() && filepath.Ext(fi.Name()) == ext {
+				if has {
+					return true
+				}
+				has = true
+			}
+		}
+	}
+	return false
+}
+
+// -----------------------------------------------------------------------------

@@ -72,7 +72,13 @@ func runCmd(cmd *base.Command, args []string) {
 		case *gopprojs.DirProj:
 			err = gop.GenGo(v.Dir, nil)
 			if err == syscall.ENOENT {
-				fmt.Fprintf(os.Stderr, "gop.GenGo %v: no source files\n", v.Dir)
+				fmt.Fprintf(os.Stderr, "gop go %v: no Go+ source files\n", v.Dir)
+				err = nil
+			}
+		case *gopprojs.PkgPathProj:
+			err = gop.GenGoPkgPath(v.Path, nil)
+			if err == syscall.ENOENT {
+				fmt.Fprintf(os.Stderr, "gop go %v: no Go+ source files\n", v.Path)
 				err = nil
 			}
 		default:
