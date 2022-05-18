@@ -17,8 +17,11 @@
 package gop
 
 import (
+	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 )
 
@@ -30,10 +33,33 @@ const (
 )
 
 func GenGo(dir string, conf *Config) (err error) {
+	recursively := strings.HasSuffix(dir, "/...")
+	if recursively {
+		dir = dir[:len(dir)-4]
+		return filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+			if err == nil && d.IsDir() {
+				err = genGoDir(path, conf)
+				if err != nil {
+					if err == syscall.ENOENT {
+						err = nil
+					} else {
+						fmt.Fprintln(os.Stderr, err)
+					}
+				}
+			}
+			return err
+		})
+	}
+	return genGoDir(dir, conf)
+}
+
+func genGoDir(dir string, conf *Config) (err error) {
 	out, test, err := LoadDir(dir, conf)
 	if err != nil {
 		return
 	}
+
+	fmt.Printf("GenGo %v ...\n", dir)
 
 	os.MkdirAll(dir, 0755)
 	file := filepath.Join(dir, autoGenFile)
@@ -49,6 +75,8 @@ func GenGo(dir string, conf *Config) (err error) {
 
 	if test != nil {
 		err = test.WriteFile(filepath.Join(dir, autoGen2TestFile), testingGoFile)
+	} else {
+		err = nil
 	}
 	return
 }
