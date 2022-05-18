@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+// This package is experimental. Don't use it in production.
 package types
 
 import (
