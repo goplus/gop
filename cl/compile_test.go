@@ -143,6 +143,19 @@ var x string = c.Str()
 `)
 }
 
+func TestUnderscoreRedeclared_Issue1197(t *testing.T) {
+	gopClTest(t, `
+func() (_ [2]int) { type _ int; return }()
+`, `package main
+
+func main() {
+	func() (_ [2]int) {
+		return
+	}()
+}
+`)
+}
+
 func TestInterfaceBugNilUnderlying_Issue1196(t *testing.T) {
 	gopClTest(t, `
 func main() {

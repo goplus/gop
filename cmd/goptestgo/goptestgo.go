@@ -82,6 +82,7 @@ var (
 		"issue18149.go":     {},
 		"issue22662.go":     {},
 		"issue27201.go":     {},
+		"issue46903.go":     {},
 		"nilptr_aix.go":     {},
 		"inline_literal.go": {},
 		"returntype.go":     {}, // not a problem
