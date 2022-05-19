@@ -230,6 +230,9 @@ func toStructType(ctx *blockCtx, v *ast.StructType) *types.Struct {
 			if chkRedecl(name, field.Type.Pos()) {
 				continue
 			}
+			if t, ok := typ.(*types.Named); ok { // NOTE: embedded type should ensure loaded
+				ctx.loadNamed(ctx.pkg, t)
+			}
 			fld := types.NewField(token.NoPos, pkg, name, typ, true)
 			fields = append(fields, fld)
 			tags = append(tags, toFieldTag(field.Tag))

@@ -143,6 +143,54 @@ var x string = c.Str()
 `)
 }
 
+func TestInterfaceBugNilUnderlying_Issue1196(t *testing.T) {
+	gopClTest(t, `
+func main() {
+	i := I(A{})
+
+	b := make(chan I, 1)
+	b <- B{}
+
+	var ok bool
+	i, ok = <-b
+}
+
+type I interface{ M() int }
+
+type T int
+
+func (T) M() int { return 0 }
+
+type A struct{ T }
+type B struct{ T }
+`, `package main
+
+func main() {
+	i := I(A{})
+	b := make(chan I, 1)
+	b <- B{}
+	var ok bool
+	i, ok = <-b
+}
+
+type T int
+
+func (T) M() int {
+	return 0
+}
+
+type A struct {
+	T
+}
+type I interface {
+	M() int
+}
+type B struct {
+	T
+}
+`)
+}
+
 func TestMyIntInc_Issue1195(t *testing.T) {
 	gopClTest(t, `
 type MyInt int
