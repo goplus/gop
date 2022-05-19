@@ -23,6 +23,12 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
+
+	"github.com/goplus/gop/x/gopenv"
+	"github.com/goplus/mod/env"
+	"github.com/goplus/mod/gopmod"
+	"github.com/goplus/mod/modcache"
+	"github.com/goplus/mod/modfetch"
 )
 
 const (
@@ -48,11 +54,7 @@ func genGoDir(dir string, conf *Config, recursively bool) (err error) {
 			if err == nil && d.IsDir() {
 				err = genGoIn(path, conf, true)
 				if err != nil {
-					if err == syscall.ENOENT {
-						err = nil
-					} else {
-						fmt.Fprintln(os.Stderr, err)
-					}
+					fmt.Fprintln(os.Stderr, err)
 				}
 			}
 			return err
@@ -64,6 +66,9 @@ func genGoDir(dir string, conf *Config, recursively bool) (err error) {
 func genGoIn(dir string, conf *Config, prompt bool) (err error) {
 	out, test, err := LoadDir(dir, conf)
 	if err != nil {
+		if err == syscall.ENOENT { // no Go+ source files
+			return nil
+		}
 		return
 	}
 
@@ -93,21 +98,76 @@ func genGoIn(dir string, conf *Config, prompt bool) (err error) {
 
 // -----------------------------------------------------------------------------
 
-func GenGoPkgPath(pkgPath string, conf *Config) (localDir string, err error) {
+func GenGoPkgPath(workDir, pkgPath string, conf *Config, allowExtern bool) (localDir string, err error) {
 	recursively := strings.HasSuffix(pkgPath, "/...")
 	if recursively {
 		pkgPath = pkgPath[:len(pkgPath)-4]
 	}
 
-	getPkgPathDo(pkgPath, gopEnv(conf), func(dir string) {
-		os.Chmod(dir, 0755)
-		defer os.Chmod(dir, 0555)
-		localDir = dir
-		err = genGoDir(dir, conf, recursively)
-	}, func(e error) {
-		err = e
-	})
+	gop := gopEnv(conf)
+	mod, err := gopmod.Load(workDir, gop)
+	if err == syscall.ENOENT && allowExtern {
+		remotePkgPathDo(pkgPath, gop, func(dir string) {
+			os.Chmod(dir, 0755)
+			defer os.Chmod(dir, 0555)
+			localDir = dir
+			err = genGoDir(dir, conf, recursively)
+		}, func(e error) {
+			err = e
+		})
+		return
+	} else if err != nil {
+		return
+	}
+
+	pkg, err := mod.Lookup(pkgPath)
+	if err != nil {
+		return
+	}
+	localDir = pkg.Dir
+	if pkg.Type == gopmod.PkgtExtern {
+		os.Chmod(localDir, 0755)
+		defer os.Chmod(localDir, 0555)
+	}
+	err = genGoDir(localDir, conf, recursively)
 	return
+}
+
+func remotePkgPathDo(pkgPath string, gop *env.Gop, doSth func(dir string), onErr func(e error)) {
+	modPath, leftPart := splitPkgPath(pkgPath)
+	modVer, _, err := modfetch.Get(gop, modPath)
+	if err != nil {
+		onErr(err)
+	} else if dir, err := modcache.Path(modVer); err != nil {
+		onErr(err)
+	} else {
+		doSth(filepath.Join(dir, leftPart))
+	}
+}
+
+func splitPkgPath(pkgPath string) (modPath, leftPart string) {
+	if strings.HasPrefix(pkgPath, "github.com/") {
+		parts := strings.SplitN(pkgPath, "/", 4)
+		if len(parts) > 3 {
+			leftPart = parts[3]
+			if pos := strings.IndexByte(leftPart, '@'); pos > 0 {
+				parts[2] += leftPart[pos:]
+				leftPart = leftPart[:pos]
+			}
+			modPath = strings.Join(parts[:3], "/")
+			return
+		}
+	}
+	return pkgPath, "" // TODO:
+}
+
+func gopEnv(conf *Config) *env.Gop {
+	if conf != nil {
+		if gop := conf.Gop; gop != nil {
+			return gop
+		}
+	}
+	return gopenv.Get()
 }
 
 // -----------------------------------------------------------------------------
