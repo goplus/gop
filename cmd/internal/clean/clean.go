@@ -19,11 +19,10 @@ package clean
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/qiniu/x/log"
 
 	"github.com/goplus/gop/cmd/internal/base"
 )

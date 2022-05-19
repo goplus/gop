@@ -19,14 +19,13 @@ package parser
 import (
 	"bytes"
 	"io/ioutil"
+	"log"
 	"os"
 	"path"
 	"reflect"
 	"strings"
 	"syscall"
 	"testing"
-
-	"github.com/qiniu/x/log"
 
 	"github.com/goplus/gop/parser/parsertest"
 	"github.com/goplus/gop/scanner"
