@@ -133,3 +133,31 @@ func RunFiles(autogen string, files []string, args []string, conf *Config, run *
 }
 
 // -----------------------------------------------------------------------------
+
+func TestDir(dir string, conf *Config, test *gocmd.TestConfig) (err error) {
+	err = GenGo(dir, conf)
+	if err != nil {
+		return
+	}
+	return gocmd.Test(dir, test)
+}
+
+func TestPkgPath(workDir, pkgPath string, conf *Config, test *gocmd.TestConfig) (err error) {
+	localDir, err := GenGoPkgPath(workDir, pkgPath, conf, false)
+	if err != nil {
+		return
+	}
+	old := chdir(localDir)
+	defer os.Chdir(old)
+	return gocmd.Test(localDir, test)
+}
+
+func TestFiles(files []string, conf *Config, test *gocmd.TestConfig) (err error) {
+	files, err = GenGoFiles("", files, conf)
+	if err != nil {
+		return
+	}
+	return gocmd.TestFiles(files, test)
+}
+
+// -----------------------------------------------------------------------------
