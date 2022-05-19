@@ -86,6 +86,10 @@ type Config struct {
 	// GopRoot specifies the Go+ root directory.
 	GopRoot string
 
+	// C2goStandardBase specifies base of standard c2go packages.
+	// Default is github.com/goplus/.
+	C2goStandardBase string
+
 	// Fset provides source position information for syntax trees and types.
 	// If Fset is nil, Load will use a new fileset, but preserve Fset's value.
 	Fset *token.FileSet
@@ -955,7 +959,15 @@ func simplifyGopPackage(pkgPath string) string {
 
 func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 	pkgPath := toString(spec.Path)
-	pkg := ctx.pkg.Import(simplifyGopPackage(pkgPath))
+	realPkgPath, kind := checkC2go(pkgPath)
+	if kind != c2goInvalid {
+		if kind == c2goStandard {
+		}
+		panic("TODO")
+	} else {
+		realPkgPath = simplifyGopPackage(pkgPath)
+	}
+	pkg := ctx.pkg.Import(realPkgPath)
 	var name string
 	if spec.Name != nil {
 		name = spec.Name.Name
@@ -971,6 +983,29 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 		name = path.Base(pkgPath) // TODO: open pkgPath to get pkgName
 	}
 	ctx.imports[name] = pkg
+}
+
+const (
+	c2goInvalid = iota
+	c2goStandard
+	c2goUserDef
+)
+
+func checkC2go(pkgPath string) (realPkgPath string, kind int) {
+	if strings.HasPrefix(pkgPath, "C") {
+		if len(pkgPath) == 1 {
+			return "libc", c2goStandard
+		}
+		if pkgPath[1] == '/' {
+			realPkgPath = pkgPath[2:]
+			if strings.IndexByte(realPkgPath, '/') < 0 {
+				kind = c2goStandard
+			} else {
+				kind = c2goUserDef
+			}
+		}
+	}
+	return
 }
 
 func loadConstSpecs(ctx *blockCtx, cdecl *gox.ConstDecl, specs []ast.Spec) {
