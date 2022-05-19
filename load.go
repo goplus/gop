@@ -29,7 +29,6 @@ import (
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/gox"
-	"github.com/goplus/gox/packages"
 	"github.com/goplus/mod/env"
 	"github.com/goplus/mod/gopmod"
 )
@@ -57,10 +56,6 @@ func LoadDir(dir string, conf *Config) (out, test *gox.Package, err error) {
 	gop := conf.Gop
 	if gop == nil {
 		gop = gopenv.Get()
-	}
-	imp := conf.Importer
-	if imp == nil {
-		imp = packages.NewImporter(fset, dir)
 	}
 
 	mod, err := gopmod.Load(dir, gop)
@@ -96,7 +91,7 @@ func LoadDir(dir string, conf *Config) (out, test *gox.Package, err error) {
 		WorkingDir:  dir,
 		GopRoot:     gop.Root,
 		Fset:        fset,
-		Importer:    imp,
+		Importer:    conf.Importer,
 		LookupClass: mod.LookupClass,
 	}
 	for name, pkg := range pkgs {
