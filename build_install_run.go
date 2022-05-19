@@ -40,7 +40,7 @@ func InstallPkgPath(workDir, pkgPath string, conf *Config, install *gocmd.Instal
 	}
 	old := chdir(localDir)
 	defer os.Chdir(old)
-	return gocmd.Install(localDir, install)
+	return gocmd.Install(".", install)
 }
 
 func InstallFiles(files []string, conf *Config, install *gocmd.InstallConfig) (err error) {
@@ -80,7 +80,7 @@ func BuildPkgPath(workDir, pkgPath string, conf *Config, build *gocmd.BuildConfi
 	}
 	old := chdirAndMod(localDir)
 	defer restoreDirAndMod(old)
-	return gocmd.Build(localDir, build)
+	return gocmd.Build(".", build)
 }
 
 func BuildFiles(files []string, conf *Config, build *gocmd.BuildConfig) (err error) {
@@ -147,9 +147,9 @@ func TestPkgPath(workDir, pkgPath string, conf *Config, test *gocmd.TestConfig) 
 	if err != nil {
 		return
 	}
-	old := chdir(localDir)
-	defer os.Chdir(old)
-	return gocmd.Test(localDir, test)
+	old := chdirAndMod(localDir)
+	defer restoreDirAndMod(old)
+	return gocmd.Test(".", test)
 }
 
 func TestFiles(files []string, conf *Config, test *gocmd.TestConfig) (err error) {
