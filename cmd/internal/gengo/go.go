@@ -76,7 +76,7 @@ func runCmd(cmd *base.Command, args []string) {
 				err = nil
 			}
 		case *gopprojs.PkgPathProj:
-			err = gop.GenGoPkgPath(v.Path, nil)
+			_, err = gop.GenGoPkgPath(v.Path, nil)
 			if err == syscall.ENOENT {
 				fmt.Fprintf(os.Stderr, "gop go %v: no Go+ source files\n", v.Path)
 				err = nil

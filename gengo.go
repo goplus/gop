@@ -93,7 +93,7 @@ func genGoIn(dir string, conf *Config, prompt bool) (err error) {
 
 // -----------------------------------------------------------------------------
 
-func GenGoPkgPath(pkgPath string, conf *Config) (err error) {
+func GenGoPkgPath(pkgPath string, conf *Config) (localDir string, err error) {
 	recursively := strings.HasSuffix(pkgPath, "/...")
 	if recursively {
 		pkgPath = pkgPath[:len(pkgPath)-4]
@@ -102,6 +102,7 @@ func GenGoPkgPath(pkgPath string, conf *Config) (err error) {
 	getPkgPathDo(pkgPath, gopEnv(conf), func(dir string) {
 		os.Chmod(dir, 0755)
 		defer os.Chmod(dir, 0555)
+		localDir = dir
 		err = genGoDir(dir, conf, recursively)
 	}, func(e error) {
 		err = e
@@ -111,7 +112,7 @@ func GenGoPkgPath(pkgPath string, conf *Config) (err error) {
 
 // -----------------------------------------------------------------------------
 
-func GenGoFiles(autogen string, files []string, conf *Config) (err error) {
+func GenGoFiles(autogen string, files []string, conf *Config) (result []string, err error) {
 	if autogen == "" {
 		autogen = "gop_autogen.go"
 		if len(files) == 1 {
@@ -126,7 +127,9 @@ func GenGoFiles(autogen string, files []string, conf *Config) (err error) {
 	if err != nil {
 		return
 	}
-	return out.WriteFile(autogen)
+	result = append(result, autogen)
+	err = out.WriteFile(autogen)
+	return
 }
 
 func hasMultiFiles(srcDir string, ext string) bool {

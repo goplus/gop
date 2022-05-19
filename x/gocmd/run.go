@@ -18,7 +18,6 @@ package gocmd
 
 import (
 	"os"
-	"path/filepath"
 	"strings"
 )
 
@@ -27,7 +26,18 @@ import (
 type RunConfig = Config
 
 func RunDir(dir string, conf *RunConfig) (err error) {
-	fis, err := os.ReadDir(dir)
+	old, err := os.Getwd()
+	if err != nil {
+		return
+	}
+
+	err = os.Chdir(dir)
+	if err != nil {
+		return
+	}
+	defer os.Chdir(old)
+
+	fis, err := os.ReadDir(".")
 	if err != nil {
 		return
 	}
@@ -35,7 +45,7 @@ func RunDir(dir string, conf *RunConfig) (err error) {
 	for _, fi := range fis {
 		if !fi.IsDir() {
 			if fname := fi.Name(); filterRunFname(fname) {
-				files = append(files, filepath.Join(dir, fname))
+				files = append(files, fname)
 			}
 		}
 	}
@@ -50,7 +60,7 @@ func filterRunFname(fname string) bool {
 // -----------------------------------------------------------------------------
 
 func RunFiles(files []string, conf *RunConfig) (err error) {
-	return doWithArgs("run", conf, files...)
+	return doWithArgs("", "run", conf, files...)
 }
 
 // -----------------------------------------------------------------------------
