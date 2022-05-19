@@ -156,6 +156,50 @@ func main() {
 `)
 }
 
+func TestInterfaceBugNilUnderlying_Issue1198(t *testing.T) {
+	gopClTest(t, `
+import "runtime"
+
+type Outer interface{ Inner }
+
+type impl struct{}
+
+func New() Outer { return &impl{} }
+
+type Inner interface {
+	DoStuff() error
+}
+
+func (a *impl) DoStuff() error {
+	return nil
+}
+
+func main() {
+	var outer Outer = New()
+}
+`, `package main
+
+type Inner interface {
+	DoStuff() error
+}
+type Outer interface {
+	Inner
+}
+type impl struct {
+}
+
+func (a *impl) DoStuff() error {
+	return nil
+}
+func New() Outer {
+	return &impl{}
+}
+func main() {
+	var outer Outer = New()
+}
+`)
+}
+
 func TestInterfaceBugNilUnderlying_Issue1196(t *testing.T) {
 	gopClTest(t, `
 func main() {
