@@ -51,7 +51,7 @@ func runGoFile(dir, file string) {
 	}
 	absFile, _ := filepath.Abs(file)
 	hash := sha1.Sum([]byte(absFile))
-	outFile := dir + "g" + base64.RawURLEncoding.EncodeToString(hash[:])
+	outFile := dir + "g" + base64.RawURLEncoding.EncodeToString(hash[:]) + ".go"
 	if fileIsDirty(fi.ModTime(), outFile) {
 		err = gop.RunFiles(outFile, []string{file}, nil, conf, confCmd)
 		if err != nil {
