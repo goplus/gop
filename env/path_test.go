@@ -21,10 +21,12 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/goplus/mod"
 )
 
 func findGoModFile(dir string) (modfile string, noCacheFile bool, err error) {
-	modfile, err = GOPMOD(dir)
+	modfile, err = mod.GOPMOD(dir, 0)
 	if err != nil {
 		gopRoot, err := findGopRoot()
 		if err == nil {

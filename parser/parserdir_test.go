@@ -26,11 +26,10 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/qiniu/x/log"
-
 	"github.com/goplus/gop/parser/parsertest"
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
+	"github.com/qiniu/x/log"
 )
 
 // -----------------------------------------------------------------------------

@@ -18,55 +18,12 @@ package env
 
 import (
 	"os"
-	"path/filepath"
-	"runtime"
 )
 
 // -----------------------------------------------------------------------------
 
 func HOME() string {
 	return os.Getenv(envHOME)
-}
-
-// -----------------------------------------------------------------------------
-
-func GOPATH() string {
-	s := os.Getenv("GOPATH")
-	if s == "" {
-		return defaultGOPATH()
-	}
-	return s
-}
-
-func defaultGOPATH() string {
-	if home := HOME(); home != "" {
-		def := filepath.Join(home, "go")
-		if filepath.Clean(def) == filepath.Clean(runtime.GOROOT()) {
-			// Don't set the default GOPATH to GOROOT,
-			// as that will trigger warnings from the go tool.
-			return ""
-		}
-		return def
-	}
-	return ""
-}
-
-// -----------------------------------------------------------------------------
-
-func GOMODCACHE() string {
-	val := os.Getenv("GOMODCACHE")
-	if val == "" {
-		return gopathJoin("pkg/mod")
-	}
-	return val
-}
-
-func gopathJoin(rel string) string {
-	list := filepath.SplitList(GOPATH())
-	if len(list) == 0 || list[0] == "" {
-		return ""
-	}
-	return filepath.Join(list[0], rel)
 }
 
 // -----------------------------------------------------------------------------

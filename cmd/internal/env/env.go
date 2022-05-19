@@ -27,6 +27,8 @@ import (
 
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/env"
+	"github.com/goplus/mod"
+	"github.com/goplus/mod/modcache"
 )
 
 // Cmd - gop env
@@ -69,9 +71,8 @@ func runCmd(_ *base.Command, args []string) {
 	gopEnv["BUILDDATE"] = env.BuildDate()
 	gopEnv["GOPVERSION"] = env.Version()
 	gopEnv["GOPROOT"] = env.GOPROOT()
-	gopEnv["GOPATH"] = env.GOPATH()
-	gopEnv["GOMODCACHE"] = env.GOMODCACHE()
-	gopEnv["GOPMOD"], _ = env.GOPMOD("")
+	gopEnv["GOMODCACHE"] = modcache.GOMODCACHE
+	gopEnv["GOPMOD"], _ = mod.GOPMOD("", 0)
 	gopEnv["HOME"] = env.HOME()
 
 	vars := flag.Args()
