@@ -1,0 +1,38 @@
+package main
+
+file hello.gop
+noEntrypoint
+ast.GenDecl:
+  Tok: import
+  Specs:
+    ast.ImportSpec:
+      Path:
+        ast.BasicLit:
+          Kind: STRING
+          Value: "C"
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.SelectorExpr:
+                  X:
+                    ast.Ident:
+                      Name: C
+                  Sel:
+                    ast.Ident:
+                      Name: printf
+              Args:
+                ast.BasicLit:
+                  Kind: CSTRING
+                  Value: "Hello, world!\n"

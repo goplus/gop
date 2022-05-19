@@ -176,7 +176,7 @@ func TestErrParse(t *testing.T) {
 }
 
 func TestFromTestdata(t *testing.T) {
-	sel := ""
+	sel := "c2gohello"
 	dir, err := os.Getwd()
 	if err != nil {
 		t.Fatal("Getwd failed:", err)
