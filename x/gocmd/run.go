@@ -26,7 +26,7 @@ import (
 
 type RunConfig = Config
 
-func RunDir(dir string, execFlags []string, conf *RunConfig) (err error) {
+func RunDir(dir string, args []string, conf *RunConfig) (err error) {
 	fis, err := os.ReadDir(dir)
 	if err != nil {
 		return
@@ -39,7 +39,7 @@ func RunDir(dir string, execFlags []string, conf *RunConfig) (err error) {
 			}
 		}
 	}
-	return RunFiles(files, execFlags, conf)
+	return RunFiles(files, args, conf)
 }
 
 func filterRunFname(fname string) bool {
@@ -49,8 +49,8 @@ func filterRunFname(fname string) bool {
 
 // -----------------------------------------------------------------------------
 
-func RunFiles(files []string, execFlags []string, conf *RunConfig) (err error) {
-	args := append(files, execFlags...)
+func RunFiles(files []string, args []string, conf *RunConfig) (err error) {
+	args = append(files, args...)
 	return doWithArgs("run", conf, args...)
 }
 

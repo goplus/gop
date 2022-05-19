@@ -102,3 +102,34 @@ func restoreDirAndMod(old string) {
 }
 
 // -----------------------------------------------------------------------------
+
+func RunDir(dir string, args []string, conf *Config, run *gocmd.RunConfig) (err error) {
+	err = GenGo(dir, conf)
+	if err != nil {
+		return
+	}
+	return gocmd.RunDir(dir, args, run)
+}
+
+func RunPkgPath(pkgPath string, args []string, chDir bool, conf *Config, run *gocmd.RunConfig) (err error) {
+	localDir, err := GenGoPkgPath("", pkgPath, conf, true)
+	if err != nil {
+		return
+	}
+	if chDir {
+		old := chdir(localDir)
+		defer os.Chdir(old)
+		localDir = "."
+	}
+	return gocmd.RunDir(localDir, args, run)
+}
+
+func RunFiles(files []string, args []string, conf *Config, run *gocmd.RunConfig) (err error) {
+	files, err = GenGoFiles("", files, conf)
+	if err != nil {
+		return
+	}
+	return gocmd.RunFiles(files, args, run)
+}
+
+// -----------------------------------------------------------------------------
