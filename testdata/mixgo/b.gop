@@ -1,1 +1,5 @@
+func sayMix() {
+	println "Mix Go and Go+"
+}
+
 p "world"
