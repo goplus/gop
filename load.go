@@ -137,6 +137,10 @@ func LoadFiles(files []string, conf *Config) (out *gox.Package, err error) {
 	if fset == nil {
 		fset = token.NewFileSet()
 	}
+	gop := conf.Gop
+	if gop == nil {
+		gop = gopenv.Get()
+	}
 
 	pkgs, err := parser.ParseFiles(fset, files, parser.ParseComments)
 	if err != nil {
@@ -147,6 +151,7 @@ func LoadFiles(files []string, conf *Config) (out *gox.Package, err error) {
 	}
 	for _, pkg := range pkgs {
 		out, err = cl.NewPackage("", pkg, &cl.Config{
+			GopRoot:  gop.Root,
 			Fset:     fset,
 			Importer: conf.Importer,
 		})

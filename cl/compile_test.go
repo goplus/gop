@@ -143,6 +143,18 @@ var x string = c.Str()
 `)
 }
 
+func TestShiftUntypedInt_Issue1193(t *testing.T) {
+	gopClTest(t, `
+func GetValue(shift uint) uint {
+	return 1 << shift
+}`, `package main
+
+func GetValue(shift uint) uint {
+	return 1 << shift
+}
+`)
+}
+
 func TestInitFunc(t *testing.T) {
 	gopClTest(t, `
 

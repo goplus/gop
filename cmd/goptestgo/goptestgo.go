@@ -41,7 +41,7 @@ func fileIsDirty(srcMod time.Time, destFile string) bool {
 	return srcMod.After(fiDest.ModTime())
 }
 
-func runGoFile(dir, file string) {
+func runGoFile(dir, file, fname string) {
 	gopEnv := gopenv.Get()
 	conf := &gop.Config{Gop: gopEnv}
 	confCmd := &gocmd.BuildConfig{Gop: gopEnv}
@@ -51,7 +51,7 @@ func runGoFile(dir, file string) {
 	}
 	absFile, _ := filepath.Abs(file)
 	hash := sha1.Sum([]byte(absFile))
-	outFile := dir + "g" + base64.RawURLEncoding.EncodeToString(hash[:]) + ".go"
+	outFile := dir + "g" + base64.RawURLEncoding.EncodeToString(hash[:]) + fname
 	if fileIsDirty(fi.ModTime(), outFile) {
 		err = gop.RunFiles(outFile, []string{file}, nil, conf, confCmd)
 		if err != nil {
@@ -92,6 +92,7 @@ var (
 func gopTestRunGo(dir string) {
 	home, _ := os.UserHomeDir()
 	targetDir := home + "/.gop/run/"
+	os.MkdirAll(targetDir, 0777)
 	filepath.Walk(dir, func(file string, fi os.FileInfo, err error) error {
 		name := fi.Name()
 		if err != nil || fi.IsDir() {
@@ -115,7 +116,7 @@ func gopTestRunGo(dir string) {
 			return nil
 		}
 		log.Println("==> gop run -v", file)
-		runGoFile(targetDir, file)
+		runGoFile(targetDir, file, name)
 		return nil
 	})
 }
