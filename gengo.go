@@ -40,18 +40,21 @@ const (
 
 // -----------------------------------------------------------------------------
 
-func GenGo(dir string, conf *Config) (err error) {
+func GenGo(dir string, conf *Config) (string, bool, error) {
 	recursively := strings.HasSuffix(dir, "/...")
 	if recursively {
 		dir = dir[:len(dir)-4]
 	}
-	return genGoDir(dir, conf, recursively)
+	return dir, recursively, genGoDir(dir, conf, recursively)
 }
 
 func genGoDir(dir string, conf *Config, recursively bool) (err error) {
 	if recursively {
 		return filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 			if err == nil && d.IsDir() {
+				if strings.HasPrefix(d.Name(), "_") { // skip _
+					return filepath.SkipDir
+				}
 				err = genGoIn(path, conf, true)
 				if err != nil {
 					fmt.Fprintln(os.Stderr, err)
@@ -98,8 +101,8 @@ func genGoIn(dir string, conf *Config, prompt bool) (err error) {
 
 // -----------------------------------------------------------------------------
 
-func GenGoPkgPath(workDir, pkgPath string, conf *Config, allowExtern bool) (localDir string, err error) {
-	recursively := strings.HasSuffix(pkgPath, "/...")
+func GenGoPkgPath(workDir, pkgPath string, conf *Config, allowExtern bool) (localDir string, recursively bool, err error) {
+	recursively = strings.HasSuffix(pkgPath, "/...")
 	if recursively {
 		pkgPath = pkgPath[:len(pkgPath)-4]
 	}
