@@ -30,8 +30,8 @@ func InstallDir(dir string, conf *Config, install *gocmd.InstallConfig) (err err
 	return gocmd.InstallDir(dir, install)
 }
 
-func InstallPkgPath(pkgPath string, conf *Config, install *gocmd.InstallConfig) (err error) {
-	localDir, err := GenGoPkgPath(pkgPath, conf)
+func InstallPkgPath(workDir, pkgPath string, conf *Config, install *gocmd.InstallConfig) (err error) {
+	localDir, err := GenGoPkgPath(workDir, pkgPath, conf, true)
 	if err != nil {
 		return
 	}
@@ -48,7 +48,7 @@ func InstallFiles(files []string, conf *Config, install *gocmd.InstallConfig) (e
 
 // -----------------------------------------------------------------------------
 
-func BuildDir(dir string, conf *Config, build *gocmd.InstallConfig) (err error) {
+func BuildDir(dir string, conf *Config, build *gocmd.BuildConfig) (err error) {
 	err = GenGo(dir, conf)
 	if err != nil {
 		return
@@ -56,15 +56,15 @@ func BuildDir(dir string, conf *Config, build *gocmd.InstallConfig) (err error) 
 	return gocmd.BuildDir(dir, build)
 }
 
-func BuildPkgPath(pkgPath string, conf *Config, build *gocmd.InstallConfig) (err error) {
-	localDir, err := GenGoPkgPath(pkgPath, conf)
+func BuildPkgPath(workDir, pkgPath string, conf *Config, build *gocmd.BuildConfig) (err error) {
+	localDir, err := GenGoPkgPath(workDir, pkgPath, conf, false)
 	if err != nil {
 		return
 	}
 	return gocmd.BuildDir(localDir, build)
 }
 
-func BuildFiles(files []string, conf *Config, build *gocmd.InstallConfig) (err error) {
+func BuildFiles(files []string, conf *Config, build *gocmd.BuildConfig) (err error) {
 	files, err = GenGoFiles("", files, conf)
 	if err != nil {
 		return

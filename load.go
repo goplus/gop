@@ -21,7 +21,6 @@ import (
 	"go/token"
 	"go/types"
 	"io/fs"
-	"path/filepath"
 	"strings"
 	"syscall"
 
@@ -33,8 +32,6 @@ import (
 	"github.com/goplus/gox/packages"
 	"github.com/goplus/mod/env"
 	"github.com/goplus/mod/gopmod"
-	"github.com/goplus/mod/modcache"
-	"github.com/goplus/mod/modfetch"
 )
 
 type Config struct {
@@ -128,54 +125,6 @@ func LoadDir(dir string, conf *Config) (out, test *gox.Package, err error) {
 		test, err = cl.NewPackage("", pkgTest, clConf)
 	}
 	return
-}
-
-// -----------------------------------------------------------------------------
-
-func LoadPkgPath(pkgPath string, conf *Config) (out, test *gox.Package, err error) {
-	getPkgPathDo(pkgPath, gopEnv(conf), func(dir string) {
-		out, test, err = LoadDir(dir, conf)
-	}, func(e error) {
-		err = e
-	})
-	return
-}
-
-func getPkgPathDo(pkgPath string, gop *env.Gop, doSth func(dir string), onErr func(e error)) {
-	modPath, leftPart := splitPkgPath(pkgPath)
-	modVer, _, err := modfetch.Get(gop, modPath)
-	if err != nil {
-		onErr(err)
-	} else if dir, err := modcache.Path(modVer); err != nil {
-		onErr(err)
-	} else {
-		doSth(filepath.Join(dir, leftPart))
-	}
-}
-
-func splitPkgPath(pkgPath string) (modPath, leftPart string) {
-	if strings.HasPrefix(pkgPath, "github.com/") {
-		parts := strings.SplitN(pkgPath, "/", 4)
-		if len(parts) > 3 {
-			leftPart = parts[3]
-			if pos := strings.IndexByte(leftPart, '@'); pos > 0 {
-				parts[2] += leftPart[pos:]
-				leftPart = leftPart[:pos]
-			}
-			modPath = strings.Join(parts[:3], "/")
-			return
-		}
-	}
-	return pkgPath, "" // TODO:
-}
-
-func gopEnv(conf *Config) *env.Gop {
-	if conf != nil {
-		if gop := conf.Gop; gop != nil {
-			return gop
-		}
-	}
-	return gopenv.Get()
 }
 
 // -----------------------------------------------------------------------------

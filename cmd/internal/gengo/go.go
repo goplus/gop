@@ -18,11 +18,8 @@
 package gengo
 
 import (
-	"fmt"
 	"log"
-	"os"
 	"reflect"
-	"syscall"
 
 	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
@@ -71,21 +68,13 @@ func runCmd(cmd *base.Command, args []string) {
 		switch v := proj.(type) {
 		case *gopprojs.DirProj:
 			err = gop.GenGo(v.Dir, nil)
-			if err == syscall.ENOENT {
-				fmt.Fprintf(os.Stderr, "gop go %v: no Go+ source files\n", v.Dir)
-				err = nil
-			}
 		case *gopprojs.PkgPathProj:
-			_, err = gop.GenGoPkgPath(v.Path, nil)
-			if err == syscall.ENOENT {
-				fmt.Fprintf(os.Stderr, "gop go %v: no Go+ source files\n", v.Path)
-				err = nil
-			}
+			_, err = gop.GenGoPkgPath("", v.Path, nil, true)
 		default:
 			log.Panicln("`gop go` doesn't support", reflect.TypeOf(v))
 		}
 		if err != nil {
-			log.Panicln("gop.GenGo failed:", err)
+			log.Panicln(err)
 		}
 	}
 }
