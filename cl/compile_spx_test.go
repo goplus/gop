@@ -19,7 +19,6 @@ package cl_test
 import (
 	"bytes"
 	"os"
-	"path"
 	"testing"
 
 	"github.com/goplus/gop/cl"
@@ -28,15 +27,6 @@ import (
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/mod/gopmod"
 )
-
-func newTwoFileFS(dir string, fname, data string, fname2 string, data2 string) *parsertest.MemFS {
-	return parsertest.NewMemFS(map[string][]string{
-		dir: {fname, fname2},
-	}, map[string]string{
-		path.Join(dir, fname):  data,
-		path.Join(dir, fname2): data2,
-	})
-}
 
 func lookupClass(ext string) (c *gopmod.Class, ok bool) {
 	switch ext {
@@ -77,7 +67,7 @@ func gopSpxTestExConf(t *testing.T, name string, conf *cl.Config, gmx, spxcode, 
 		cl.SetDisableRecover(true)
 		defer cl.SetDisableRecover(false)
 
-		fs := newTwoFileFS("/foo", spxfile, spxcode, gmxfile, gmx)
+		fs := parsertest.NewTwoFilesFS("/foo", spxfile, spxcode, gmxfile, gmx)
 		pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", spxParserConf())
 		if err != nil {
 			scanner.PrintError(os.Stderr, err)
@@ -101,7 +91,7 @@ func gopSpxTestExConf(t *testing.T, name string, conf *cl.Config, gmx, spxcode, 
 }
 
 func gopSpxErrorTestEx(t *testing.T, msg, gmx, spxcode, gmxfile, spxfile string) {
-	fs := newTwoFileFS("/foo", spxfile, spxcode, gmxfile, gmx)
+	fs := parsertest.NewTwoFilesFS("/foo", spxfile, spxcode, gmxfile, gmx)
 	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", spxParserConf())
 	if err != nil {
 		scanner.PrintError(os.Stderr, err)
