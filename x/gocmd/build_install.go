@@ -21,11 +21,11 @@ package gocmd
 type InstallConfig = Config
 
 func InstallDir(dir string, conf *InstallConfig) (err error) {
-	return doWithArgs("install", conf, dir)
+	return doWithArgs(dir, "install", conf, ".")
 }
 
 func InstallFiles(files []string, conf *InstallConfig) (err error) {
-	return doWithArgs("install", conf, files...)
+	return doWithArgs("", "install", conf, files...)
 }
 
 // -----------------------------------------------------------------------------
@@ -33,11 +33,11 @@ func InstallFiles(files []string, conf *InstallConfig) (err error) {
 type BuildConfig = Config
 
 func BuildDir(dir string, conf *BuildConfig) (err error) {
-	return doWithArgs("build", conf, dir)
+	return doWithArgs(dir, "build", conf, ".")
 }
 
 func BuildFiles(files []string, conf *BuildConfig) (err error) {
-	return doWithArgs("build", conf, files...)
+	return doWithArgs("", "build", conf, files...)
 }
 
 // -----------------------------------------------------------------------------
