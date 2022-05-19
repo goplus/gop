@@ -19,14 +19,17 @@ package build
 
 import (
 	"fmt"
+	"log"
 	"os"
-	"os/exec"
+	"path/filepath"
+	"reflect"
+	"syscall"
 
-	"github.com/qiniu/x/log"
-
+	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/x/gopproj"
+	"github.com/goplus/gop/x/gocmd"
+	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/gop/x/gopprojs"
 	"github.com/goplus/gox"
 )
@@ -38,8 +41,8 @@ var Cmd = &base.Command{
 }
 
 var (
-	flagVerbose = flag.Bool("v", false, "print verbose information.")
-	flagOutput  = flag.String("o", "a.out", "gop build output file.")
+	flagVerbose = flag.Bool("v", false, "print verbose information")
+	flagOutput  = flag.String("o", "", "gop build output file")
 	flag        = &Cmd.Flag
 )
 
@@ -50,7 +53,7 @@ func init() {
 func runCmd(_ *base.Command, args []string) {
 	err := flag.Parse(args)
 	if err != nil {
-		log.Fatalln("parse input arguments failed:", err)
+		log.Panicln("parse input arguments failed:", err)
 	}
 
 	if *flagVerbose {
@@ -63,35 +66,50 @@ func runCmd(_ *base.Command, args []string) {
 	if len(args) == 0 {
 		args = []string{"."}
 	}
-	gopBuild(args)
-}
 
-func gopBuild(args []string) {
 	proj, args, err := gopprojs.ParseOne(args...)
 	if err != nil {
-		log.Fatalln(err)
+		log.Panicln(err)
+	}
+	if len(args) != 0 {
+		log.Panicln("too many arguments:", args)
 	}
 
-	flags := 0
-	ctx, goProj, err := gopproj.OpenProject(flags, proj)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-	goProj.BuildArgs = []string{"-o", *flagOutput}
-	cmd := ctx.GoCommand("build", goProj)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Env = os.Environ()
-	err = cmd.Run()
-	if err != nil {
-		switch e := err.(type) {
-		case *exec.ExitError:
-			os.Exit(e.ExitCode())
-		default:
-			log.Fatalln(err)
+	gopEnv := gopenv.Get()
+	conf := &gop.Config{Gop: gopEnv}
+	confCmd := &gocmd.BuildConfig{Gop: gopEnv}
+	if *flagOutput != "" {
+		output, err := filepath.Abs(*flagOutput)
+		if err != nil {
+			log.Panicln(err)
 		}
+		confCmd.Flags = []string{"-o", output}
+	}
+	build(proj, conf, confCmd)
+}
+
+func build(proj gopprojs.Proj, conf *gop.Config, build *gocmd.BuildConfig) {
+	var obj string
+	var err error
+	switch v := proj.(type) {
+	case *gopprojs.DirProj:
+		obj = v.Dir
+		err = gop.BuildDir(obj, conf, build)
+	case *gopprojs.PkgPathProj:
+		obj = v.Path
+		err = gop.BuildPkgPath(v.Path, conf, build)
+	case *gopprojs.FilesProj:
+		err = gop.BuildFiles(v.Files, conf, build)
+		if err != nil {
+			log.Panicln(err)
+		}
+	default:
+		log.Panicln("`gop build` doesn't support", reflect.TypeOf(v))
+	}
+	if err == syscall.ENOENT {
+		fmt.Fprintf(os.Stderr, "gop build %v: no Go+ source files\n", obj)
+	} else if err != nil {
+		log.Panicln(err)
 	}
 }
 

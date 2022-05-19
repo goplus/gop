@@ -54,6 +54,7 @@ func doWithArgs(dir, op string, conf *Config, args ...string) (err error) {
 }
 
 func runCmd(cmd *exec.Cmd) (err error) {
+	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	return cmd.Run()
