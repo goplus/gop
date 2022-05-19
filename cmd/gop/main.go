@@ -24,6 +24,7 @@ import (
 
 	"github.com/goplus/gop/cmd/internal/bug"
 	"github.com/goplus/gop/cmd/internal/gopget"
+	"github.com/qiniu/x/log"
 
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/cmd/internal/build"
@@ -71,6 +72,7 @@ func main() {
 	if len(args) < 1 {
 		base.Usage()
 	}
+	log.SetFlags(log.Ldefault &^ log.LstdFlags)
 
 	base.CmdName = args[0] // for error messages
 	if args[0] == "help" {

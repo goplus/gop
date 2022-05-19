@@ -19,7 +19,6 @@ package parser
 import (
 	"bytes"
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"reflect"
@@ -30,6 +29,7 @@ import (
 	"github.com/goplus/gop/parser/parsertest"
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
+	"github.com/qiniu/x/log"
 )
 
 // -----------------------------------------------------------------------------

@@ -30,7 +30,6 @@ package parser
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"unicode"
@@ -38,6 +37,7 @@ import (
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
+	"github.com/qiniu/x/log"
 )
 
 // The parser structure holds the parser's internal state.
