@@ -35,7 +35,7 @@ type Config struct {
 
 // -----------------------------------------------------------------------------
 
-func doWithArgs(dir, op string, conf *Config, args ...string) (err error) {
+func doWithArgs(op string, conf *Config, args ...string) (err error) {
 	if conf == nil {
 		conf = new(Config)
 	}
@@ -45,7 +45,6 @@ func doWithArgs(dir, op string, conf *Config, args ...string) (err error) {
 	exargs = append(exargs, conf.Flags...)
 	exargs = append(exargs, args...)
 	cmd := exec.Command("go", exargs...)
-	cmd.Dir = dir
 	run := conf.Run
 	if run == nil {
 		run = runCmd

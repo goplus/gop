@@ -20,24 +20,24 @@ package gocmd
 
 type InstallConfig = Config
 
-func InstallDir(dir string, conf *InstallConfig) (err error) {
-	return doWithArgs(dir, "install", conf, ".")
+func Install(arg string, conf *InstallConfig) (err error) {
+	return doWithArgs("install", conf, arg)
 }
 
 func InstallFiles(files []string, conf *InstallConfig) (err error) {
-	return doWithArgs("", "install", conf, files...)
+	return doWithArgs("install", conf, files...)
 }
 
 // -----------------------------------------------------------------------------
 
 type BuildConfig = Config
 
-func BuildDir(dir string, conf *BuildConfig) (err error) {
-	return doWithArgs(dir, "build", conf, ".")
+func Build(arg string, conf *BuildConfig) (err error) {
+	return doWithArgs("build", conf, arg)
 }
 
 func BuildFiles(files []string, conf *BuildConfig) (err error) {
-	return doWithArgs("", "build", conf, files...)
+	return doWithArgs("build", conf, files...)
 }
 
 // -----------------------------------------------------------------------------

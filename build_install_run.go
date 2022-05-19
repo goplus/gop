@@ -17,6 +17,9 @@
 package gop
 
 import (
+	"log"
+	"os"
+
 	"github.com/goplus/gop/x/gocmd"
 )
 
@@ -27,7 +30,7 @@ func InstallDir(dir string, conf *Config, install *gocmd.InstallConfig) (err err
 	if err != nil {
 		return
 	}
-	return gocmd.InstallDir(dir, install)
+	return gocmd.Install(dir, install)
 }
 
 func InstallPkgPath(workDir, pkgPath string, conf *Config, install *gocmd.InstallConfig) (err error) {
@@ -35,7 +38,9 @@ func InstallPkgPath(workDir, pkgPath string, conf *Config, install *gocmd.Instal
 	if err != nil {
 		return
 	}
-	return gocmd.InstallDir(localDir, install)
+	old := chdir(localDir)
+	defer os.Chdir(old)
+	return gocmd.Install(localDir, install)
 }
 
 func InstallFiles(files []string, conf *Config, install *gocmd.InstallConfig) (err error) {
@@ -46,6 +51,18 @@ func InstallFiles(files []string, conf *Config, install *gocmd.InstallConfig) (e
 	return gocmd.InstallFiles(files, install)
 }
 
+func chdir(dir string) string {
+	old, err := os.Getwd()
+	if err != nil {
+		log.Panicln(err)
+	}
+	err = os.Chdir(dir)
+	if err != nil {
+		log.Panicln(err)
+	}
+	return old
+}
+
 // -----------------------------------------------------------------------------
 
 func BuildDir(dir string, conf *Config, build *gocmd.BuildConfig) (err error) {
@@ -53,7 +70,7 @@ func BuildDir(dir string, conf *Config, build *gocmd.BuildConfig) (err error) {
 	if err != nil {
 		return
 	}
-	return gocmd.BuildDir(dir, build)
+	return gocmd.Build(dir, build)
 }
 
 func BuildPkgPath(workDir, pkgPath string, conf *Config, build *gocmd.BuildConfig) (err error) {
@@ -61,7 +78,9 @@ func BuildPkgPath(workDir, pkgPath string, conf *Config, build *gocmd.BuildConfi
 	if err != nil {
 		return
 	}
-	return gocmd.BuildDir(localDir, build)
+	old := chdirAndMod(localDir)
+	defer restoreDirAndMod(old)
+	return gocmd.Build(localDir, build)
 }
 
 func BuildFiles(files []string, conf *Config, build *gocmd.BuildConfig) (err error) {
@@ -70,6 +89,47 @@ func BuildFiles(files []string, conf *Config, build *gocmd.BuildConfig) (err err
 		return
 	}
 	return gocmd.BuildFiles(files, build)
+}
+
+func chdirAndMod(dir string) string {
+	os.Chmod(dir, 0777)
+	return chdir(dir)
+}
+
+func restoreDirAndMod(old string) {
+	os.Chmod(".", 0555)
+	os.Chdir(old)
+}
+
+// -----------------------------------------------------------------------------
+
+func RunDir(dir string, args []string, conf *Config, run *gocmd.RunConfig) (err error) {
+	err = GenGo(dir, conf)
+	if err != nil {
+		return
+	}
+	return gocmd.RunDir(dir, args, run)
+}
+
+func RunPkgPath(pkgPath string, args []string, chDir bool, conf *Config, run *gocmd.RunConfig) (err error) {
+	localDir, err := GenGoPkgPath("", pkgPath, conf, true)
+	if err != nil {
+		return
+	}
+	if chDir {
+		old := chdir(localDir)
+		defer os.Chdir(old)
+		localDir = "."
+	}
+	return gocmd.RunDir(localDir, args, run)
+}
+
+func RunFiles(files []string, args []string, conf *Config, run *gocmd.RunConfig) (err error) {
+	files, err = GenGoFiles("", files, conf)
+	if err != nil {
+		return
+	}
+	return gocmd.RunFiles(files, args, run)
 }
 
 // -----------------------------------------------------------------------------
