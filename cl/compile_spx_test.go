@@ -26,7 +26,7 @@ import (
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/parser/parsertest"
 	"github.com/goplus/gop/scanner"
-	"github.com/goplus/gop/x/gopmod"
+	"github.com/goplus/mod/gopmod"
 )
 
 func newTwoFileFS(dir string, fname, data string, fname2 string, data2 string) *parsertest.MemFS {

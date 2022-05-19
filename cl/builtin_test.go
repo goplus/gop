@@ -22,9 +22,9 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
-	"github.com/goplus/gop/x/gopmod"
 	"github.com/goplus/gox"
 	"github.com/goplus/gox/packages"
+	"github.com/goplus/mod/gopmod"
 )
 
 var (

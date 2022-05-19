@@ -41,3 +41,15 @@ func BuildFiles(files []string, conf *BuildConfig) (err error) {
 }
 
 // -----------------------------------------------------------------------------
+
+type TestConfig = Config
+
+func Test(arg string, conf *TestConfig) (err error) {
+	return doWithArgs("test", conf, arg)
+}
+
+func TestFiles(files []string, conf *TestConfig) (err error) {
+	return doWithArgs("test", conf, files...)
+}
+
+// -----------------------------------------------------------------------------

@@ -19,6 +19,7 @@ package run
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"reflect"
 	"syscall"
@@ -30,7 +31,6 @@ import (
 	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/gop/x/gopprojs"
 	"github.com/goplus/gox"
-	"github.com/qiniu/x/log"
 )
 
 // gop run
@@ -68,19 +68,17 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 
 	if *flagQuiet {
-		log.SetOutputLevel(0x7000)
 	} else if *flagDebug {
-		log.SetOutputLevel(log.Ldebug)
 		gox.SetDebug(gox.DbgFlagAll)
 		cl.SetDebug(cl.DbgFlagAll)
-	}
-	if *flagVerbose {
+	} else if *flagVerbose {
 		gox.SetDebug(gox.DbgFlagAll &^ gox.DbgFlagComments)
 		cl.SetDebug(cl.DbgFlagAll)
 		cl.SetDisableRecover(true)
 	} else if *flagAsm {
 		gox.SetDebug(gox.DbgFlagInstruction)
 	}
+
 	if *flagProf {
 		panic("TODO: profile not impl")
 	}
@@ -103,7 +101,7 @@ func run(proj gopprojs.Proj, args []string, chDir bool, conf *gop.Config, run *g
 		obj = v.Path
 		err = gop.RunPkgPath(v.Path, args, chDir, conf, run)
 	case *gopprojs.FilesProj:
-		err = gop.RunFiles(v.Files, args, conf, run)
+		err = gop.RunFiles("", v.Files, args, conf, run)
 		if err != nil {
 			log.Panicln(err)
 		}

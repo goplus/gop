@@ -18,32 +18,50 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha1"
+	"encoding/base64"
 	"go/build"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
+
+	"github.com/goplus/gop"
+	"github.com/goplus/gop/x/gocmd"
+	"github.com/goplus/gop/x/gopenv"
 )
 
-// RunGopCmd executes `gop` command tools.
-func RunGopCmd(dir string, op string, args ...string) {
-	opwargs := make([]string, len(args)+1)
-	opwargs[0] = op
-	copy(opwargs[1:], args)
-	cmd := exec.Command("gop", opwargs...)
-	cmd.Dir = dir
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Env = os.Environ()
-	err := cmd.Run()
+func fileIsDirty(srcMod time.Time, destFile string) bool {
+	fiDest, err := os.Stat(destFile)
 	if err != nil {
-		switch e := err.(type) {
-		case *exec.ExitError:
-			os.Exit(e.ExitCode())
-		default:
-			log.Fatalln("RunGopCmd failed:", err)
+		return true
+	}
+	return srcMod.After(fiDest.ModTime())
+}
+
+func runGoFile(dir, file string) {
+	gopEnv := gopenv.Get()
+	conf := &gop.Config{Gop: gopEnv}
+	confCmd := &gocmd.BuildConfig{Gop: gopEnv}
+	fi, err := os.Stat(file)
+	if err != nil {
+		log.Panicln(err)
+	}
+	absFile, _ := filepath.Abs(file)
+	hash := sha1.Sum([]byte(absFile))
+	outFile := dir + "g" + base64.RawURLEncoding.EncodeToString(hash[:]) + ".go"
+	if fileIsDirty(fi.ModTime(), outFile) {
+		err = gop.RunFiles(outFile, []string{file}, nil, conf, confCmd)
+		if err != nil {
+			os.Remove(outFile)
+			switch e := err.(type) {
+			case *exec.ExitError:
+				os.Exit(e.ExitCode())
+			default:
+				log.Fatalln("runGoFile:", err)
+			}
 		}
 	}
 }
@@ -72,6 +90,8 @@ var (
 )
 
 func gopTestRunGo(dir string) {
+	home, _ := os.UserHomeDir()
+	targetDir := home + "/.gop/run/"
 	filepath.Walk(dir, func(file string, fi os.FileInfo, err error) error {
 		name := fi.Name()
 		if err != nil || fi.IsDir() {
@@ -94,8 +114,8 @@ func gopTestRunGo(dir string) {
 		if !bytes.HasPrefix(data, goRunPrefix) {
 			return nil
 		}
-		log.Println("==> gop run -gop -v", file)
-		RunGopCmd("", "run", "-nr", "-rtoe", "-gop", file)
+		log.Println("==> gop run -v", file)
+		runGoFile(targetDir, file)
 		return nil
 	})
 }
