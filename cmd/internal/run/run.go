@@ -103,7 +103,7 @@ func run(proj gopprojs.Proj, args []string, chDir bool, conf *gop.Config, run *g
 		obj = v.Path
 		err = gop.RunPkgPath(v.Path, args, chDir, conf, run)
 	case *gopprojs.FilesProj:
-		err = gop.RunFiles(v.Files, args, conf, run)
+		err = gop.RunFiles("", v.Files, args, conf, run)
 		if err != nil {
 			log.Panicln(err)
 		}

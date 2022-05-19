@@ -124,8 +124,8 @@ func RunPkgPath(pkgPath string, args []string, chDir bool, conf *Config, run *go
 	return gocmd.RunDir(localDir, args, run)
 }
 
-func RunFiles(files []string, args []string, conf *Config, run *gocmd.RunConfig) (err error) {
-	files, err = GenGoFiles("", files, conf)
+func RunFiles(autogen string, files []string, args []string, conf *Config, run *gocmd.RunConfig) (err error) {
+	files, err = GenGoFiles(autogen, files, conf)
 	if err != nil {
 		return
 	}
