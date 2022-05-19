@@ -114,7 +114,7 @@ func gopTestRunGo(dir string) {
 		if !bytes.HasPrefix(data, goRunPrefix) {
 			return nil
 		}
-		log.Println("==> gop run -gop -v", file)
+		log.Println("==> gop run -v", file)
 		runGoFile(targetDir, file)
 		return nil
 	})
