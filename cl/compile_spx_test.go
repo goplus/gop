@@ -403,6 +403,7 @@ func (this *Kai) onMsg(msg string) {
 
 func TestSpxMainEntry(t *testing.T) {
 	conf := *gblConf
+	conf.Importer = nil
 	conf.NoAutoGenMain = false
 
 	gopSpxTestExConf(t, "Nocode", &conf, `

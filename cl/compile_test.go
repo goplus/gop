@@ -143,6 +143,176 @@ var x string = c.Str()
 `)
 }
 
+func TestUnderscoreRedeclared_Issue1197(t *testing.T) {
+	gopClTest(t, `
+func() (_ [2]int) { type _ int; return }()
+`, `package main
+
+func main() {
+	func() (_ [2]int) {
+		return
+	}()
+}
+`)
+}
+
+func TestInterfaceBugNilUnderlying_Issue1198(t *testing.T) {
+	gopClTest(t, `
+import "runtime"
+
+type Outer interface{ Inner }
+
+type impl struct{}
+
+func New() Outer { return &impl{} }
+
+type Inner interface {
+	DoStuff() error
+}
+
+func (a *impl) DoStuff() error {
+	return nil
+}
+
+func main() {
+	var outer Outer = New()
+}
+`, `package main
+
+type Inner interface {
+	DoStuff() error
+}
+type Outer interface {
+	Inner
+}
+type impl struct {
+}
+
+func (a *impl) DoStuff() error {
+	return nil
+}
+func New() Outer {
+	return &impl{}
+}
+func main() {
+	var outer Outer = New()
+}
+`)
+}
+
+func TestInterfaceBugNilUnderlying_Issue1196(t *testing.T) {
+	gopClTest(t, `
+func main() {
+	i := I(A{})
+
+	b := make(chan I, 1)
+	b <- B{}
+
+	var ok bool
+	i, ok = <-b
+}
+
+type I interface{ M() int }
+
+type T int
+
+func (T) M() int { return 0 }
+
+type A struct{ T }
+type B struct{ T }
+`, `package main
+
+func main() {
+	i := I(A{})
+	b := make(chan I, 1)
+	b <- B{}
+	var ok bool
+	i, ok = <-b
+}
+
+type T int
+
+func (T) M() int {
+	return 0
+}
+
+type A struct {
+	T
+}
+type I interface {
+	M() int
+}
+type B struct {
+	T
+}
+`)
+}
+
+func TestMyIntInc_Issue1195(t *testing.T) {
+	gopClTest(t, `
+type MyInt int
+var c MyInt
+c++
+`, `package main
+
+type MyInt int
+
+var c MyInt
+
+func main() {
+	c++
+}
+`)
+}
+
+func TestAutoPropMixedName_Issue1194(t *testing.T) {
+	gopClTest(t, `
+type Point struct {
+	Min, Max int
+}
+
+type Obj struct {
+	bbox Point
+}
+
+func (o *Obj) Bbox() Point {
+	return o.bbox
+}
+
+func (o *Obj) Points() [2]int{
+	return [2]int{o.bbox.Min, o.bbox.Max}
+}
+`, `package main
+
+type Point struct {
+	Min int
+	Max int
+}
+type Obj struct {
+	bbox Point
+}
+
+func (o *Obj) Bbox() Point {
+	return o.bbox
+}
+func (o *Obj) Points() [2]int {
+	return [2]int{o.bbox.Min, o.bbox.Max}
+}
+`)
+}
+
+func TestShiftUntypedInt_Issue1193(t *testing.T) {
+	gopClTest(t, `
+func GetValue(shift uint) uint {
+	return 1 << shift
+}`, `package main
+
+func GetValue(shift uint) uint {
+	return 1 << shift
+}
+`)
+}
+
 func TestInitFunc(t *testing.T) {
 	gopClTest(t, `
 

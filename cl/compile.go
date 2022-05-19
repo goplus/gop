@@ -31,6 +31,7 @@ import (
 	"github.com/goplus/gop/ast/fromgo"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
+	"github.com/goplus/gox/packages"
 	"github.com/goplus/mod/modfile"
 )
 
@@ -372,12 +373,17 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	if targetDir == "" {
 		targetDir = workingDir
 	}
+	fset := conf.Fset
+	imp := conf.Importer
+	if imp == nil {
+		imp = packages.NewImporter(fset, workingDir)
+	}
 	files := pkg.Files
-	interp := &nodeInterp{fset: conf.Fset, files: files, workingDir: workingDir}
+	interp := &nodeInterp{fset: fset, files: files, workingDir: workingDir}
 	ctx := &pkgCtx{syms: make(map[string]loader), nodeInterp: interp}
 	confGox := &gox.Config{
-		Fset:            conf.Fset,
-		Importer:        newGopImporter(conf.GopRoot, conf.Importer),
+		Fset:            fset,
+		Importer:        newGopImporter(conf.GopRoot, imp),
 		LoadNamed:       ctx.loadNamed,
 		HandleErr:       ctx.handleErr,
 		NodeInterpreter: interp,
