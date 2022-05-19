@@ -143,6 +143,23 @@ var x string = c.Str()
 `)
 }
 
+func TestMyIntInc_Issue1195(t *testing.T) {
+	gopClTest(t, `
+type MyInt int
+var c MyInt
+c++
+`, `package main
+
+type MyInt int
+
+var c MyInt
+
+func main() {
+	c++
+}
+`)
+}
+
 func TestAutoPropMixedName_Issue1194(t *testing.T) {
 	gopClTest(t, `
 type Point struct {
