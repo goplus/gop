@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2022 The GoPlus Authors (goplus.org). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,17 @@
  * limitations under the License.
  */
 
-package modfile
+package gopenv
 
-import "golang.org/x/mod/modfile"
+import (
+	"github.com/goplus/gop/env"
+	modenv "github.com/goplus/mod/env"
+)
 
-// Format returns a gop.mod file as a byte slice, formatted in standard style.
-func Format(f *FileSyntax) []byte {
-	return modfile.Format(f)
+func Get() *modenv.Gop {
+	return &modenv.Gop{
+		Version:   env.Version(),
+		BuildDate: env.BuildDate(),
+		Root:      env.GOPROOT(),
+	}
 }

@@ -18,13 +18,18 @@
 package test
 
 import (
+	"fmt"
+	"log"
 	"os"
+	"reflect"
+	"syscall"
 
-	"github.com/qiniu/x/log"
-
+	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/x/gengo"
+	"github.com/goplus/gop/x/gocmd"
+	"github.com/goplus/gop/x/gopenv"
+	"github.com/goplus/gop/x/gopprojs"
 	"github.com/goplus/gox"
 )
 
@@ -54,16 +59,48 @@ func runCmd(_ *base.Command, args []string) {
 		pattern = []string{"."}
 	}
 
+	projs, err := gopprojs.ParseAll(pattern...)
+	if err != nil {
+		log.Panicln("gopprojs.ParseAll:", err)
+	}
+
 	if *flagVerbose {
 		gox.SetDebug(gox.DbgFlagAll &^ gox.DbgFlagComments)
 		cl.SetDebug(cl.DbgFlagAll)
 		cl.SetDisableRecover(true)
 	}
 
-	if !gengo.GenGo(gengo.Config{}, false, ".", pattern...) {
-		os.Exit(1)
+	gopEnv := gopenv.Get()
+	conf := &gop.Config{Gop: gopEnv}
+	confCmd := &gocmd.Config{Gop: gopEnv}
+	for _, proj := range projs {
+		test(proj, conf, confCmd)
 	}
-	base.RunGoCmd(".", "test", args...)
+}
+
+func test(proj gopprojs.Proj, conf *gop.Config, test *gocmd.TestConfig) {
+	var obj string
+	var err error
+	switch v := proj.(type) {
+	case *gopprojs.DirProj:
+		obj = v.Dir
+		err = gop.TestDir(obj, conf, test)
+	case *gopprojs.PkgPathProj:
+		obj = v.Path
+		err = gop.TestPkgPath("", v.Path, conf, test)
+	case *gopprojs.FilesProj:
+		err = gop.TestFiles(v.Files, conf, test)
+		if err != nil {
+			log.Panicln(err)
+		}
+	default:
+		log.Panicln("`gop test` doesn't support", reflect.TypeOf(v))
+	}
+	if err == syscall.ENOENT {
+		fmt.Fprintf(os.Stderr, "gop test %v: not found\n", obj)
+	} else if err != nil {
+		log.Panicln(err)
+	}
 }
 
 // -----------------------------------------------------------------------------

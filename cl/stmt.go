@@ -728,6 +728,9 @@ func compileDeclStmt(ctx *blockCtx, expr *ast.DeclStmt) {
 
 func compileType(ctx *blockCtx, t *ast.TypeSpec) {
 	name := t.Name.Name
+	if name == "_" {
+		return
+	}
 	if t.Assign != token.NoPos { // alias type
 		ctx.cb.AliasType(name, toType(ctx, t.Type))
 	} else {

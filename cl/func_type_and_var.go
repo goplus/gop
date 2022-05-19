@@ -230,6 +230,9 @@ func toStructType(ctx *blockCtx, v *ast.StructType) *types.Struct {
 			if chkRedecl(name, field.Type.Pos()) {
 				continue
 			}
+			if t, ok := typ.(*types.Named); ok { // #1196: embedded type should ensure loaded
+				ctx.loadNamed(ctx.pkg, t)
+			}
 			fld := types.NewField(token.NoPos, pkg, name, typ, true)
 			fields = append(fields, fld)
 			tags = append(tags, toFieldTag(field.Tag))
@@ -316,7 +319,11 @@ func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) types.Type {
 	var embeddeds []types.Type
 	for _, m := range methodsList {
 		if m.Names == nil { // embedded
-			embeddeds = append(embeddeds, toType(ctx, m.Type))
+			typ := toType(ctx, m.Type)
+			if t, ok := typ.(*types.Named); ok { // #1198: embedded type should ensure loaded
+				ctx.loadNamed(ctx.pkg, t)
+			}
+			embeddeds = append(embeddeds, typ)
 			continue
 		}
 		name := m.Names[0].Name

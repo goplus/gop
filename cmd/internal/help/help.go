@@ -21,13 +21,12 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strings"
 	"text/template"
 	"unicode"
 	"unicode/utf8"
-
-	"github.com/qiniu/x/log"
 
 	"github.com/goplus/gop/cmd/internal/base"
 )

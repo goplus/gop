@@ -18,24 +18,23 @@
 package gengo
 
 import (
-	"os"
+	"log"
+	"reflect"
 
-	"github.com/qiniu/x/log"
-
+	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/x/gengo"
+	"github.com/goplus/gop/x/gopprojs"
 	"github.com/goplus/gox"
 )
 
 // gop go
 var Cmd = &base.Command{
-	UsageLine: "gop go [-v -n] [packages]",
+	UsageLine: "gop go [-v] [packages]",
 	Short:     "Convert Go+ packages into Go packages",
 }
 
 var (
-	flagDontRun = flag.Bool("n", false, "print the processing flow but do not run them.")
 	flagVerbose = flag.Bool("v", false, "print verbose information.")
 	flag        = &Cmd.Flag
 )
@@ -47,11 +46,16 @@ func init() {
 func runCmd(cmd *base.Command, args []string) {
 	err := flag.Parse(args)
 	if err != nil {
-		log.Fatalln("parse input arguments failed:", err)
+		log.Panicln("parse input arguments failed:", err)
 	}
 	pattern := flag.Args()
 	if len(pattern) == 0 {
 		pattern = []string{"."}
+	}
+
+	projs, err := gopprojs.ParseAll(pattern...)
+	if err != nil {
+		log.Panicln("gopprojs.ParseAll:", err)
 	}
 
 	if *flagVerbose {
@@ -59,8 +63,19 @@ func runCmd(cmd *base.Command, args []string) {
 		cl.SetDebug(cl.DbgFlagAll)
 		cl.SetDisableRecover(true)
 	}
-	if !gengo.GenGo(gengo.Config{}, *flagDontRun, ".", pattern...) {
-		os.Exit(1)
+
+	for _, proj := range projs {
+		switch v := proj.(type) {
+		case *gopprojs.DirProj:
+			err = gop.GenGo(v.Dir, nil)
+		case *gopprojs.PkgPathProj:
+			_, err = gop.GenGoPkgPath("", v.Path, nil, true)
+		default:
+			log.Panicln("`gop go` doesn't support", reflect.TypeOf(v))
+		}
+		if err != nil {
+			log.Panicln(err)
+		}
 	}
 }
 

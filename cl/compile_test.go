@@ -46,6 +46,7 @@ func init() {
 		Fset:          gblFset,
 		Importer:      imp,
 		LookupClass:   lookupClass,
+		GopRoot:       "..",
 		NoFileLine:    true,
 		NoAutoGenMain: true,
 	}
@@ -62,10 +63,19 @@ func gopClTest(t *testing.T, gopcode, expected string) {
 }
 
 func gopClTestEx(t *testing.T, conf *cl.Config, pkgname, gopcode, expected string) {
+	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", gopcode)
+	gopClTestFS(t, conf, fs, pkgname, expected)
+}
+
+func gopMixedClTest(t *testing.T, pkgname, gocode, gopcode, expected string) {
+	fs := parsertest.NewTwoFilesFS("/foo", "a.go", gocode, "b.gop", gopcode)
+	gopClTestFS(t, gblConf, fs, pkgname, expected)
+}
+
+func gopClTestFS(t *testing.T, conf *cl.Config, fs parser.FileSystem, pkgname, expected string) {
 	cl.SetDisableRecover(true)
 	defer cl.SetDisableRecover(false)
 
-	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", gopcode)
 	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", parser.Config{Mode: parser.ParseComments})
 	if err != nil {
 		scanner.PrintError(os.Stderr, err)
@@ -77,7 +87,7 @@ func gopClTestEx(t *testing.T, conf *cl.Config, pkgname, gopcode, expected strin
 		t.Fatal("NewPackage:", err)
 	}
 	var b bytes.Buffer
-	err = gox.WriteTo(&b, pkg, false)
+	err = pkg.WriteTo(&b)
 	if err != nil {
 		t.Fatal("gox.WriteTo failed:", err)
 	}
@@ -85,6 +95,222 @@ func gopClTestEx(t *testing.T, conf *cl.Config, pkgname, gopcode, expected strin
 	if result != expected {
 		t.Fatalf("\nResult:\n%s\nExpected:\n%s\n", result, expected)
 	}
+}
+
+func TestMixedGo(t *testing.T) {
+	gopMixedClTest(t, "main", `package main
+
+import "strconv"
+
+const n = 10
+
+func f(v int) string {
+	return strconv.Itoa(v)
+}
+
+type foo struct {
+	v int
+}
+
+func (a foo) _() {
+}
+
+func (a foo) Str() string {
+	return f(a.v)
+}
+
+func (a *foo) Bar() int {
+	return 0
+}
+
+type foo2 = foo
+type foo3 foo2
+`, `
+var a [n]int
+var b string = f(n)
+var c foo2
+var d int = c.v
+var e = foo3{}
+var x string = c.str
+`, `package main
+
+var a [10]int
+var b string = f(n)
+var c foo
+var d int = c.v
+var e = foo3{}
+var x string = c.Str()
+`)
+}
+
+func TestUnderscoreRedeclared_Issue1197(t *testing.T) {
+	gopClTest(t, `
+func() (_ [2]int) { type _ int; return }()
+`, `package main
+
+func main() {
+	func() (_ [2]int) {
+		return
+	}()
+}
+`)
+}
+
+func TestInterfaceBugNilUnderlying_Issue1198(t *testing.T) {
+	gopClTest(t, `
+import "runtime"
+
+type Outer interface{ Inner }
+
+type impl struct{}
+
+func New() Outer { return &impl{} }
+
+type Inner interface {
+	DoStuff() error
+}
+
+func (a *impl) DoStuff() error {
+	return nil
+}
+
+func main() {
+	var outer Outer = New()
+}
+`, `package main
+
+type Inner interface {
+	DoStuff() error
+}
+type Outer interface {
+	Inner
+}
+type impl struct {
+}
+
+func (a *impl) DoStuff() error {
+	return nil
+}
+func New() Outer {
+	return &impl{}
+}
+func main() {
+	var outer Outer = New()
+}
+`)
+}
+
+func TestInterfaceBugNilUnderlying_Issue1196(t *testing.T) {
+	gopClTest(t, `
+func main() {
+	i := I(A{})
+
+	b := make(chan I, 1)
+	b <- B{}
+
+	var ok bool
+	i, ok = <-b
+}
+
+type I interface{ M() int }
+
+type T int
+
+func (T) M() int { return 0 }
+
+type A struct{ T }
+type B struct{ T }
+`, `package main
+
+func main() {
+	i := I(A{})
+	b := make(chan I, 1)
+	b <- B{}
+	var ok bool
+	i, ok = <-b
+}
+
+type T int
+
+func (T) M() int {
+	return 0
+}
+
+type A struct {
+	T
+}
+type I interface {
+	M() int
+}
+type B struct {
+	T
+}
+`)
+}
+
+func TestMyIntInc_Issue1195(t *testing.T) {
+	gopClTest(t, `
+type MyInt int
+var c MyInt
+c++
+`, `package main
+
+type MyInt int
+
+var c MyInt
+
+func main() {
+	c++
+}
+`)
+}
+
+func TestAutoPropMixedName_Issue1194(t *testing.T) {
+	gopClTest(t, `
+type Point struct {
+	Min, Max int
+}
+
+type Obj struct {
+	bbox Point
+}
+
+func (o *Obj) Bbox() Point {
+	return o.bbox
+}
+
+func (o *Obj) Points() [2]int{
+	return [2]int{o.bbox.Min, o.bbox.Max}
+}
+`, `package main
+
+type Point struct {
+	Min int
+	Max int
+}
+type Obj struct {
+	bbox Point
+}
+
+func (o *Obj) Bbox() Point {
+	return o.bbox
+}
+func (o *Obj) Points() [2]int {
+	return [2]int{o.bbox.Min, o.bbox.Max}
+}
+`)
+}
+
+func TestShiftUntypedInt_Issue1193(t *testing.T) {
+	gopClTest(t, `
+func GetValue(shift uint) uint {
+	return 1 << shift
+}`, `package main
+
+func GetValue(shift uint) uint {
+	return 1 << shift
+}
+`)
 }
 
 func TestInitFunc(t *testing.T) {

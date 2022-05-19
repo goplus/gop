@@ -26,8 +26,7 @@ import (
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/parser/parsertest"
 	"github.com/goplus/gop/scanner"
-	"github.com/goplus/gop/x/gopmod"
-	"github.com/goplus/gox"
+	"github.com/goplus/mod/gopmod"
 )
 
 func newTwoFileFS(dir string, fname, data string, fname2 string, data2 string) *parsertest.MemFS {
@@ -90,7 +89,7 @@ func gopSpxTestExConf(t *testing.T, name string, conf *cl.Config, gmx, spxcode, 
 			t.Fatal("NewPackage:", err)
 		}
 		var b bytes.Buffer
-		err = gox.WriteTo(&b, pkg, false)
+		err = pkg.WriteTo(&b)
 		if err != nil {
 			t.Fatal("gox.WriteTo failed:", err)
 		}
@@ -404,6 +403,7 @@ func (this *Kai) onMsg(msg string) {
 
 func TestSpxMainEntry(t *testing.T) {
 	conf := *gblConf
+	conf.Importer = nil
 	conf.NoAutoGenMain = false
 
 	gopSpxTestExConf(t, "Nocode", &conf, `

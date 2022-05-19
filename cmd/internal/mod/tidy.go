@@ -20,7 +20,8 @@ import (
 	"log"
 
 	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/x/mod/modload"
+	"github.com/goplus/gop/x/gopenv"
+	"github.com/goplus/mod/modload"
 )
 
 // gop mod tidy
@@ -34,9 +35,9 @@ func init() {
 }
 
 func runTidy(cmd *base.Command, args []string) {
-	mod, err := modload.Load(".")
+	mod, err := modload.Load(".", 0)
 	check(err)
-	check(mod.Tidy())
+	check(mod.Tidy(gopenv.Get()))
 }
 
 func check(err error) {

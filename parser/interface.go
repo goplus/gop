@@ -42,6 +42,8 @@ const (
 	DeclarationErrors
 	// AllErrors - report all errors (not just the first 10 on different lines)
 	AllErrors
+	// ParseGoAsGoPlus - parse Go files by gop/parser
+	ParseGoAsGoPlus
 )
 
 // ParseFile parses the source code of a single Go source file and returns
