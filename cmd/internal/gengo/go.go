@@ -67,9 +67,9 @@ func runCmd(cmd *base.Command, args []string) {
 	for _, proj := range projs {
 		switch v := proj.(type) {
 		case *gopprojs.DirProj:
-			err = gop.GenGo(v.Dir, nil)
+			_, _, err = gop.GenGo(v.Dir, nil)
 		case *gopprojs.PkgPathProj:
-			_, err = gop.GenGoPkgPath("", v.Path, nil, true)
+			_, _, err = gop.GenGoPkgPath("", v.Path, nil, true)
 		default:
 			log.Panicln("`gop go` doesn't support", reflect.TypeOf(v))
 		}
