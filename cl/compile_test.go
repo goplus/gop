@@ -143,6 +143,42 @@ var x string = c.Str()
 `)
 }
 
+func TestAutoPropMixedName_Issue1194(t *testing.T) {
+	gopClTest(t, `
+type Point struct {
+	Min, Max int
+}
+
+type Obj struct {
+	bbox Point
+}
+
+func (o *Obj) Bbox() Point {
+	return o.bbox
+}
+
+func (o *Obj) Points() [2]int{
+	return [2]int{o.bbox.Min, o.bbox.Max}
+}
+`, `package main
+
+type Point struct {
+	Min int
+	Max int
+}
+type Obj struct {
+	bbox Point
+}
+
+func (o *Obj) Bbox() Point {
+	return o.bbox
+}
+func (o *Obj) Points() [2]int {
+	return [2]int{o.bbox.Min, o.bbox.Max}
+}
+`)
+}
+
 func TestShiftUntypedInt_Issue1193(t *testing.T) {
 	gopClTest(t, `
 func GetValue(shift uint) uint {
