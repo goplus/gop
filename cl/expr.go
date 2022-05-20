@@ -561,13 +561,28 @@ func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
 }
 
 func compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {
-	if v.Kind == token.RAT {
+	cb := ctx.cb
+	switch v.Kind {
+	case token.RAT:
 		val := v.Value
 		bi, _ := new(big.Int).SetString(val[:len(val)-1], 10) // remove r suffix
-		ctx.cb.UntypedBigInt(bi, v)
-		return
+		cb.UntypedBigInt(bi, v)
+	case token.CSTRING:
+		s, err := strconv.Unquote(v.Value)
+		if err != nil {
+			log.Panicln("compileBasicLit:", err)
+		}
+		n := len(s)
+		tyInt8 := types.Typ[types.Int8]
+		typ := types.NewArray(tyInt8, int64(n+1))
+		cb.Typ(types.NewPointer(tyInt8)).Typ(types.Typ[types.UnsafePointer])
+		for i := 0; i < n; i++ {
+			cb.Val(rune(s[i]))
+		}
+		cb.Val(rune(0)).ArrayLit(typ, n+1).UnaryOp(gotoken.AND).Call(1).Call(1)
+	default:
+		cb.Val(&goast.BasicLit{Kind: gotoken.Token(v.Kind), Value: v.Value}, v)
 	}
-	ctx.cb.Val(&goast.BasicLit{Kind: gotoken.Token(v.Kind), Value: v.Value}, v)
 }
 
 const (

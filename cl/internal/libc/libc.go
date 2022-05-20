@@ -14,33 +14,28 @@
  * limitations under the License.
  */
 
-package cl_test
+package libc
 
 import (
-	"path/filepath"
-	"strings"
-	"testing"
+	"fmt"
+	"unsafe"
 )
 
-func lookupPub(pkgPath string) (pubfile string, err error) {
-	relPath := strings.TrimPrefix(pkgPath, "github.com/goplus/gop/")
-	return filepath.Join(gopRootDir, relPath, "c2go.a.pub"), nil
+func gostring(s *int8) string {
+	n, arr := 0, (*[1 << 20]byte)(unsafe.Pointer(s))
+	for arr[n] != 0 {
+		n++
+	}
+	return string(arr[:n])
 }
 
-func TestHelloC2go(t *testing.T) {
-	gopClTest(t, `
-import "C"
-
-C.printf C"Hello, world!\n"
-`, `package main
-
-import (
-	libc "github.com/goplus/gop/cl/internal/libc"
-	unsafe "unsafe"
-)
-
-func main() {
-	libc.Printf((*int8)(unsafe.Pointer(&[15]int8{'H', 'e', 'l', 'l', 'o', ',', ' ', 'w', 'o', 'r', 'l', 'd', '!', '\n', '\x00'})))
-}
-`)
+func Printf(format *int8, args ...interface{}) int32 {
+	goformat := gostring(format)
+	for i, arg := range args {
+		if v, ok := arg.(*int8); ok {
+			args[i] = gostring(v)
+		}
+	}
+	fmt.Printf(goformat, args...)
+	return 0
 }
