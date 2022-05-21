@@ -29,6 +29,7 @@ import (
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
+	"github.com/goplus/gox/cpackages"
 )
 
 /*-----------------------------------------------------------------------------
@@ -62,7 +63,13 @@ const (
 	clCallWithTwoValue
 )
 
-func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
+const (
+	objNormal = iota
+	objPkgRef
+	objCPkgRef
+)
+
+func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (obj *gox.PkgRef, kind int) {
 	fvalue := (flags&clIdentSelectorExpr) != 0 || (flags&clIdentLHS) == 0
 	name := ident.Name
 	if name == "_" {
@@ -70,7 +77,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
 			panic(ctx.newCodeError(ident.Pos(), "cannot use _ as value"))
 		}
 		ctx.cb.VarRef(nil)
-		return nil
+		return
 	}
 
 	scope := ctx.pkg.Types.Scope()
@@ -87,7 +94,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
 			if recv := sig.Recv(); recv != nil {
 				ctx.cb.Val(recv)
 				if compileMember(ctx, ident, name, flags) == nil { // class member object
-					return nil
+					return
 				}
 				ctx.cb.InternalStack().PopN(1)
 			}
@@ -104,14 +111,17 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) *gox.PkgRef {
 
 	// pkgRef object
 	if (flags & clIdentSelectorExpr) != 0 {
+		if name == "C" && len(ctx.clookups) > 0 {
+			return nil, objCPkgRef
+		}
 		if pr, ok := ctx.findImport(name); ok {
-			return pr
+			return pr, objPkgRef
 		}
 	}
 
 	// object from import . "xxx"
-	if compilePkgRef(ctx, nil, ident, flags) {
-		return nil
+	if compilePkgRef(ctx, nil, ident, flags, objPkgRef) {
+		return
 	}
 
 	// universe object
@@ -134,7 +144,7 @@ find:
 	} else {
 		ctx.cb.VarRef(o, ident)
 	}
-	return nil
+	return
 }
 
 func isBuiltin(o types.Object) bool {
@@ -297,7 +307,7 @@ func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) { // x[i:j:k]
 func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr) {
 	switch x := v.X.(type) {
 	case *ast.Ident:
-		if at := compileIdent(ctx, x, clIdentLHS|clIdentSelectorExpr); at != nil {
+		if at, kind := compileIdent(ctx, x, clIdentLHS|clIdentSelectorExpr); kind != objNormal {
 			ctx.cb.VarRef(at.Ref(v.Sel.Name))
 			return
 		}
@@ -310,8 +320,8 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr) {
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, flags int) {
 	switch x := v.X.(type) {
 	case *ast.Ident:
-		if at := compileIdent(ctx, x, flags|clIdentSelectorExpr); at != nil {
-			if compilePkgRef(ctx, at, v.Sel, flags) {
+		if at, kind := compileIdent(ctx, x, flags|clIdentSelectorExpr); kind != objNormal {
+			if compilePkgRef(ctx, at, v.Sel, flags, kind) {
 				return
 			}
 			if token.IsExported(v.Sel.Name) {
@@ -338,25 +348,39 @@ func pkgRef(at *gox.PkgRef, name string) (o types.Object, alias bool) {
 	return at.TryRef(name), false
 }
 
-func lookupPkgRef(ctx *blockCtx, pkg *gox.PkgRef, x *ast.Ident) (o types.Object, alias bool) {
+func lookupPkgRef(ctx *blockCtx, pkg *gox.PkgRef, x *ast.Ident, pkgKind int) (o types.Object, alias bool) {
 	if pkg != nil {
 		return pkgRef(pkg, x.Name)
 	}
-	for _, at := range ctx.lookups {
-		if o2, alias2 := pkgRef(at, x.Name); o2 != nil {
-			if o != nil {
-				panic(ctx.newCodeErrorf(
-					x.Pos(), "confliction: %s declared both in \"%s\" and \"%s\"",
-					x.Name, at.Types.Path(), pkg.Types.Path()))
+	if pkgKind == objPkgRef {
+		for _, at := range ctx.lookups {
+			if o2, alias2 := pkgRef(at, x.Name); o2 != nil {
+				if o != nil {
+					panic(ctx.newCodeErrorf(
+						x.Pos(), "confliction: %s declared both in \"%s\" and \"%s\"",
+						x.Name, at.Types.Path(), pkg.Types.Path()))
+				}
+				pkg, o, alias = at, o2, alias2
 			}
-			pkg, o, alias = at, o2, alias2
+		}
+	} else {
+		var cpkg *cpackages.PkgRef
+		for _, at := range ctx.clookups {
+			if o2 := at.Lookup(x.Name); o2 != nil {
+				if o != nil {
+					panic(ctx.newCodeErrorf(
+						x.Pos(), "confliction: %s declared both in \"%s\" and \"%s\"",
+						x.Name, at.Pkg().Types.Path(), cpkg.Pkg().Types.Path()))
+				}
+				cpkg, o = at, o2
+			}
 		}
 	}
 	return
 }
 
-func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, x *ast.Ident, flags int) bool {
-	if v, alias := lookupPkgRef(ctx, at, x); v != nil {
+func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, x *ast.Ident, flags, pkgKind int) bool {
+	if v, alias := lookupPkgRef(ctx, at, x, pkgKind); v != nil {
 		cb := ctx.cb
 		if (flags & clIdentLHS) != 0 {
 			cb.VarRef(v, x)

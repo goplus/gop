@@ -17,12 +17,14 @@
 package cl
 
 import (
+	"errors"
 	"go/types"
 	"testing"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
+	"github.com/goplus/gox/cpackages"
 	"github.com/goplus/gox/packages"
 	"github.com/goplus/mod/gopmod"
 )
@@ -144,6 +146,12 @@ func TestGetGoFile(t *testing.T) {
 	}
 }
 
+func TestC2goBase(t *testing.T) {
+	if c2goBase("") != "github.com/goplus/" {
+		t.Fatal("c2goBase failed")
+	}
+}
+
 func TestErrNewType(t *testing.T) {
 	testPanic(t, `bar redeclared in this block
 	previous declaration at <TODO>
@@ -162,6 +170,17 @@ func TestErrDeclFunc(t *testing.T) {
 			Name: &ast.Ident{Name: "m"},
 			Type: &ast.FuncType{Params: &ast.FieldList{}},
 		})
+	})
+}
+
+func TestErrLoadC2goPkg(t *testing.T) {
+	testPanic(t, "loadC2goPkg failed: not found\n", func() {
+		pkg := &pkgCtx{cpkgs: cpackages.NewImporter(
+			&cpackages.Config{LookupPub: func(pkgPath string) (pubfile string, err error) {
+				return "", errors.New("not found")
+			}})}
+		ctx := &blockCtx{pkgCtx: pkg}
+		loadC2goPkg(ctx, "notfound")
 	})
 }
 

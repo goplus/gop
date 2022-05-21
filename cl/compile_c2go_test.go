@@ -44,3 +44,50 @@ func main() {
 }
 `)
 }
+
+func TestHelloC2go2(t *testing.T) {
+	gopClTest(t, `
+import "C/github.com/goplus/gop/cl/internal/libc"
+
+C.printf C"Hello, world!\n"
+`, `package main
+
+import (
+	libc "github.com/goplus/gop/cl/internal/libc"
+	unsafe "unsafe"
+)
+
+func main() {
+	libc.Printf((*int8)(unsafe.Pointer(&[15]int8{'H', 'e', 'l', 'l', 'o', ',', ' ', 'w', 'o', 'r', 'l', 'd', '!', '\n', '\x00'})))
+}
+`)
+}
+
+func TestHelloC2go3(t *testing.T) {
+	gopClTest(t, `
+import "C/libc"
+
+C.printf C"Hello, world!\n"
+`, `package main
+
+import (
+	libc "github.com/goplus/gop/cl/internal/libc"
+	unsafe "unsafe"
+)
+
+func main() {
+	libc.Printf((*int8)(unsafe.Pointer(&[15]int8{'H', 'e', 'l', 'l', 'o', ',', ' ', 'w', 'o', 'r', 'l', 'd', '!', '\n', '\x00'})))
+}
+`)
+}
+
+func TestErrHelloC2go(t *testing.T) {
+	codeErrorTest(t, `./bar.gop:7:3: confliction: printf declared both in "github.com/goplus/gop/cl/internal/libc" and "github.com/goplus/gop/cl/internal/libc"`, `
+import (
+	"C"
+	"C/libc"
+)
+
+C.printf C"Hello, world!\n"
+`)
+}
