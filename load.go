@@ -21,6 +21,7 @@ import (
 	"go/token"
 	"go/types"
 	"io/fs"
+	"path/filepath"
 	"strings"
 	"syscall"
 
@@ -93,6 +94,16 @@ func LoadDir(dir string, conf *Config) (out, test *gox.Package, err error) {
 		Fset:        fset,
 		Importer:    conf.Importer,
 		LookupClass: mod.LookupClass,
+		LookupPub: func(pkgPath string) (pubfile string, err error) {
+			if mod.File == nil { // no go.mod/gop.mod file
+				return "", syscall.ENOENT
+			}
+			pkg, err := mod.Lookup(pkgPath)
+			if err == nil {
+				pubfile = filepath.Join(pkg.Dir, "c2go.a.pub")
+			}
+			return
+		},
 	}
 	for name, pkg := range pkgs {
 		if strings.HasSuffix(name, "_test") {

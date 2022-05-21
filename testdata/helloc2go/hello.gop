@@ -1,0 +1,3 @@
+import "C"
+
+C.printf C"Hello, c2go!\n"
