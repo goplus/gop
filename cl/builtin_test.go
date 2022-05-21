@@ -184,6 +184,13 @@ func TestErrLoadC2goPkg(t *testing.T) {
 	})
 }
 
+func TestErrCompileBasicLit(t *testing.T) {
+	testPanic(t, "compileBasicLit: invalid syntax\n", func() {
+		ctx := &blockCtx{cb: new(gox.CodeBuilder)}
+		compileBasicLit(ctx, &ast.BasicLit{Kind: token.CSTRING, Value: `\\x`})
+	})
+}
+
 func testPanic(t *testing.T, panicMsg string, doPanic func()) {
 	t.Run(panicMsg, func(t *testing.T) {
 		defer func() {
