@@ -46,7 +46,7 @@ func mainUsage() {
 }
 
 func init() {
-	base.Usage = mainUsage
+	flag.Usage = mainUsage
 	base.Gop.Commands = []*base.Command{
 		run.Cmd,
 		gengo.Cmd,
@@ -66,11 +66,10 @@ func init() {
 }
 
 func main() {
-	flag.Usage = base.Usage
 	flag.Parse()
 	args := flag.Args()
 	if len(args) < 1 {
-		base.Usage()
+		flag.Usage()
 	}
 	log.SetFlags(log.Ldefault &^ log.LstdFlags)
 
