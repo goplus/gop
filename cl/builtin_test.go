@@ -173,14 +173,22 @@ func TestErrDeclFunc(t *testing.T) {
 	})
 }
 
-func TestErrLoadC2goPkg(t *testing.T) {
-	testPanic(t, "loadC2goPkg failed: not found\n", func() {
-		pkg := &pkgCtx{cpkgs: cpackages.NewImporter(
-			&cpackages.Config{LookupPub: func(pkgPath string) (pubfile string, err error) {
-				return "", errors.New("not found")
-			}})}
+func TestErrLoadImport(t *testing.T) {
+	testPanic(t, ".: unknownpkg not found or not a valid C package (c2go.a.pub file not found).\n", func() {
+		pkg := &pkgCtx{
+			nodeInterp: &nodeInterp{
+				fset: token.NewFileSet(),
+			},
+			cpkgs: cpackages.NewImporter(
+				&cpackages.Config{LookupPub: func(pkgPath string) (pubfile string, err error) {
+					return "", errors.New("not found")
+				}})}
 		ctx := &blockCtx{pkgCtx: pkg}
-		loadC2goPkg(ctx, "notfound")
+		spec := &ast.ImportSpec{
+			Path: &ast.BasicLit{Kind: token.STRING, Value: `"C/unknownpkg"`},
+		}
+		loadImport(ctx, spec)
+		panic(ctx.errs[0].Error())
 	})
 }
 

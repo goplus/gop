@@ -17,9 +17,9 @@
 package cl
 
 import (
-	"log"
 	"strings"
 
+	"github.com/goplus/gop/ast"
 	"github.com/goplus/gox"
 )
 
@@ -57,10 +57,13 @@ func c2goBase(base string) string {
 
 // -----------------------------------------------------------------------------
 
-func loadC2goPkg(ctx *blockCtx, realPath string) *gox.PkgRef {
+func loadC2goPkg(ctx *blockCtx, realPath string, src *ast.BasicLit) *gox.PkgRef {
 	cpkg, err := ctx.cpkgs.Import(realPath)
 	if err != nil {
-		log.Panicln("loadC2goPkg failed:", err)
+		pos := ctx.Position(src.Pos())
+		ctx.handleCodeErrorf(&pos,
+			"%v not found or not a valid C package (c2go.a.pub file not found).\n", realPath)
+		return nil
 	}
 	ctx.clookups = append(ctx.clookups, cpkg)
 	return cpkg.Pkg()

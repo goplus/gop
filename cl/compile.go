@@ -978,7 +978,9 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 		if kind == c2goStandard {
 			realPath = ctx.c2goBase + realPath
 		}
-		pkg = loadC2goPkg(ctx, realPath)
+		if pkg = loadC2goPkg(ctx, realPath, spec.Path); pkg == nil {
+			return
+		}
 	} else {
 		pkg = ctx.pkg.Import(simplifyGopPackage(pkgPath))
 	}
