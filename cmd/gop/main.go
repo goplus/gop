@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/goplus/gop/cmd/internal/bug"
+	"github.com/goplus/gop/cmd/internal/c2go"
 	"github.com/goplus/gop/cmd/internal/gopget"
 	"github.com/qiniu/x/log"
 
@@ -46,31 +47,31 @@ func mainUsage() {
 }
 
 func init() {
-	base.Usage = mainUsage
+	flag.Usage = mainUsage
 	base.Gop.Commands = []*base.Command{
 		run.Cmd,
-		gengo.Cmd,
 		install.Cmd,
 		build.Cmd,
-		mod.Cmd,
+		test.Cmd,
 		gopfmt.Cmd,
 		gopget.Cmd,
-		bug.Cmd,
+		gengo.Cmd,
+		mod.Cmd,
 		clean.Cmd,
-		env.Cmd,
-		test.Cmd,
 		// list.Cmd,
 		// deps.Cmd,
+		env.Cmd,
+		c2go.Cmd,
+		bug.Cmd,
 		version.Cmd,
 	}
 }
 
 func main() {
-	flag.Usage = base.Usage
 	flag.Parse()
 	args := flag.Args()
 	if len(args) < 1 {
-		base.Usage()
+		flag.Usage()
 	}
 	log.SetFlags(log.Ldefault &^ log.LstdFlags)
 

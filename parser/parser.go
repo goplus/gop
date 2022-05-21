@@ -1360,7 +1360,7 @@ func (p *parser) isCommand(x ast.Expr) bool {
 	}
 	switch p.tok {
 	case token.IDENT, token.RARROW,
-		token.STRING, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT,
+		token.STRING, token.CSTRING, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT,
 		token.FUNC, token.GOTO, token.MAP, token.INTERFACE, token.CHAN, token.STRUCT:
 		return true
 	case token.SUB, token.NOT, token.AND, token.MUL, token.ARROW, token.XOR, token.ADD:
@@ -1393,7 +1393,7 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) ast.Expr {
 		}
 		return x
 
-	case token.STRING, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT:
+	case token.STRING, token.CSTRING, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT:
 		x := &ast.BasicLit{ValuePos: p.pos, Kind: p.tok, Value: p.lit}
 		if debugParseOutput {
 			log.Printf("ast.BasicLit{Kind: %v, Value: %v}\n", p.tok, p.lit)
@@ -2903,7 +2903,7 @@ func (p *parser) parseStmt(allowCmd bool) (s ast.Stmt) {
 		s = &ast.DeclStmt{Decl: p.parseGenDecl(p.tok, p.parseValueSpec)}
 	case
 		// tokens that may start an expression
-		token.INT, token.FLOAT, token.IMAG, token.RAT, token.CHAR, token.STRING, token.FUNC, token.LPAREN, // operands
+		token.INT, token.FLOAT, token.IMAG, token.RAT, token.CHAR, token.STRING, token.CSTRING, token.FUNC, token.LPAREN, // operands
 		token.ADD, token.SUB, token.MUL, token.AND, token.XOR, token.ARROW, token.NOT, // unary operators
 		token.LBRACK, token.STRUCT, token.CHAN, token.INTERFACE: // composite types
 		allowCmd = false

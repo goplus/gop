@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2022 The GoPlus Authors (goplus.org). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,29 +14,8 @@
  * limitations under the License.
  */
 
-package base
+package dummy
 
 import (
-	"log"
-	"os"
-	"os/exec"
+	_ "github.com/goplus/libc"
 )
-
-// RunGoCmd executes `go` command tools.
-func RunGoCmd(dir string, op string, args ...string) {
-	cmd := exec.Command("go", append([]string{op}, args...)...)
-	cmd.Dir = dir
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Env = os.Environ()
-	err := cmd.Run()
-	if err != nil {
-		switch e := err.(type) {
-		case *exec.ExitError:
-			os.Exit(e.ExitCode())
-		default:
-			log.Fatalln("RunGoCmd failed:", err)
-		}
-	}
-}

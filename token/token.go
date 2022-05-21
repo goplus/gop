@@ -137,6 +137,11 @@ const (
 	VAR
 	keyword_end
 
+	additional_beg
+	TILDE // additional tokens, handled in an ad-hoc manner
+	additional_end
+
+	CSTRING  = literal_beg  // C"Hello"
 	RAT      = literal_end  // 123.5r
 	RARROW   = operator_beg // =>
 	QUESTION = operator_end // ?
@@ -148,13 +153,14 @@ var tokens = [...]string{
 	EOF:     "EOF",
 	COMMENT: "COMMENT",
 
-	IDENT:  "IDENT",
-	INT:    "INT",
-	FLOAT:  "FLOAT",
-	IMAG:   "IMAG",
-	CHAR:   "CHAR",
-	STRING: "STRING",
-	RAT:    "RAT",
+	IDENT:   "IDENT",
+	INT:     "INT",
+	FLOAT:   "FLOAT",
+	IMAG:    "IMAG",
+	CHAR:    "CHAR",
+	STRING:  "STRING",
+	CSTRING: "CSTRING",
+	RAT:     "RAT",
 
 	ADD: "+",
 	SUB: "-",
@@ -213,6 +219,7 @@ var tokens = [...]string{
 	COLON:     ":",
 	QUESTION:  "?",
 	RARROW:    "=>",
+	TILDE:     "~",
 
 	BREAK:    "break",
 	CASE:     "case",
@@ -318,14 +325,14 @@ func Lookup(ident string) Token {
 // and basic type literals; it returns false otherwise.
 //
 func (tok Token) IsLiteral() bool {
-	return literal_beg < tok && tok <= literal_end
+	return literal_beg <= tok && tok <= literal_end
 }
 
 // IsOperator returns true for tokens corresponding to operators and
 // delimiters; it returns false otherwise.
 //
 func (tok Token) IsOperator() bool {
-	return operator_beg <= tok && tok <= operator_end
+	return operator_beg <= tok && tok <= operator_end || tok == TILDE
 }
 
 // IsKeyword returns true for tokens corresponding to keywords;

@@ -98,7 +98,8 @@ func (c *Command) Runnable() bool {
 
 // Usage is the usage-reporting function, filled in by package main
 // but here for reference by other packages.
-var Usage func()
+//
+// flag.Usage func()
 
 // CmdName - "build", "install", "list", "mod tidy", etc.
 var CmdName string

@@ -32,6 +32,10 @@ import (
 	"github.com/goplus/gox/packages"
 )
 
+const (
+	gopRootDir = ".."
+)
+
 var (
 	gblFset *token.FileSet
 	gblConf *cl.Config
@@ -46,7 +50,9 @@ func init() {
 		Fset:          gblFset,
 		Importer:      imp,
 		LookupClass:   lookupClass,
-		GopRoot:       "..",
+		LookupPub:     lookupPub,
+		C2goBase:      "github.com/goplus/gop/cl/internal",
+		GopRoot:       gopRootDir,
 		NoFileLine:    true,
 		NoAutoGenMain: true,
 	}

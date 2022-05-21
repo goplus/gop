@@ -17,12 +17,14 @@
 package cl
 
 import (
+	"errors"
 	"go/types"
 	"testing"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
+	"github.com/goplus/gox/cpackages"
 	"github.com/goplus/gox/packages"
 	"github.com/goplus/mod/gopmod"
 )
@@ -144,6 +146,12 @@ func TestGetGoFile(t *testing.T) {
 	}
 }
 
+func TestC2goBase(t *testing.T) {
+	if c2goBase("") != "github.com/goplus/" {
+		t.Fatal("c2goBase failed")
+	}
+}
+
 func TestErrNewType(t *testing.T) {
 	testPanic(t, `bar redeclared in this block
 	previous declaration at <TODO>
@@ -162,6 +170,32 @@ func TestErrDeclFunc(t *testing.T) {
 			Name: &ast.Ident{Name: "m"},
 			Type: &ast.FuncType{Params: &ast.FieldList{}},
 		})
+	})
+}
+
+func TestErrLoadImport(t *testing.T) {
+	testPanic(t, ".: unknownpkg not found or not a valid C package (c2go.a.pub file not found).\n", func() {
+		pkg := &pkgCtx{
+			nodeInterp: &nodeInterp{
+				fset: token.NewFileSet(),
+			},
+			cpkgs: cpackages.NewImporter(
+				&cpackages.Config{LookupPub: func(pkgPath string) (pubfile string, err error) {
+					return "", errors.New("not found")
+				}})}
+		ctx := &blockCtx{pkgCtx: pkg}
+		spec := &ast.ImportSpec{
+			Path: &ast.BasicLit{Kind: token.STRING, Value: `"C/unknownpkg"`},
+		}
+		loadImport(ctx, spec)
+		panic(ctx.errs[0].Error())
+	})
+}
+
+func TestErrCompileBasicLit(t *testing.T) {
+	testPanic(t, "compileBasicLit: invalid syntax\n", func() {
+		ctx := &blockCtx{cb: new(gox.CodeBuilder)}
+		compileBasicLit(ctx, &ast.BasicLit{Kind: token.CSTRING, Value: `\\x`})
 	})
 }
 
