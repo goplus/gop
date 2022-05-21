@@ -46,6 +46,39 @@ type Config struct {
 
 // -----------------------------------------------------------------------------
 
+func loadMod(dir string, gop *env.Gop, conf *Config) (mod *gopmod.Module, err error) {
+	mod, err = gopmod.Load(dir, gop)
+	if err != nil && err != syscall.ENOENT {
+		return
+	}
+	if mod != nil {
+		err = mod.RegisterClasses()
+		if err != nil {
+			return
+		}
+		if conf.UpdateGoMod {
+			err = mod.UpdateGoMod(gop, conf.CheckModChanged)
+		}
+		return
+	}
+	return new(gopmod.Module), nil
+}
+
+func lookupPub(mod *gopmod.Module) func(pkgPath string) (pubfile string, err error) {
+	return func(pkgPath string) (pubfile string, err error) {
+		if mod.File == nil { // no go.mod/gop.mod file
+			return "", syscall.ENOENT
+		}
+		pkg, err := mod.Lookup(pkgPath)
+		if err == nil {
+			pubfile = filepath.Join(pkg.Dir, "c2go.a.pub")
+		}
+		return
+	}
+}
+
+// -----------------------------------------------------------------------------
+
 func LoadDir(dir string, conf *Config) (out, test *gox.Package, err error) {
 	if conf == nil {
 		conf = new(Config)
@@ -58,24 +91,9 @@ func LoadDir(dir string, conf *Config) (out, test *gox.Package, err error) {
 	if gop == nil {
 		gop = gopenv.Get()
 	}
-
-	mod, err := gopmod.Load(dir, gop)
-	if err != nil && err != syscall.ENOENT {
+	mod, err := loadMod(dir, gop, conf)
+	if err != nil {
 		return
-	}
-	if mod != nil {
-		err = mod.RegisterClasses()
-		if err != nil {
-			return
-		}
-		if conf.UpdateGoMod {
-			err = mod.UpdateGoMod(gop, conf.CheckModChanged)
-			if err != nil {
-				return
-			}
-		}
-	} else {
-		mod = new(gopmod.Module)
 	}
 
 	pkgs, err := parser.ParseDirEx(fset, dir, parser.Config{
@@ -94,16 +112,7 @@ func LoadDir(dir string, conf *Config) (out, test *gox.Package, err error) {
 		Fset:        fset,
 		Importer:    conf.Importer,
 		LookupClass: mod.LookupClass,
-		LookupPub: func(pkgPath string) (pubfile string, err error) {
-			if mod.File == nil { // no go.mod/gop.mod file
-				return "", syscall.ENOENT
-			}
-			pkg, err := mod.Lookup(pkgPath)
-			if err == nil {
-				pubfile = filepath.Join(pkg.Dir, "c2go.a.pub")
-			}
-			return
-		},
+		LookupPub:   lookupPub(mod),
 	}
 	for name, pkg := range pkgs {
 		if strings.HasSuffix(name, "_test") {
@@ -147,6 +156,10 @@ func LoadFiles(files []string, conf *Config) (out *gox.Package, err error) {
 	if gop == nil {
 		gop = gopenv.Get()
 	}
+	mod, err := loadMod("", gop, conf)
+	if err != nil {
+		return
+	}
 
 	pkgs, err := parser.ParseFiles(fset, files, parser.ParseComments)
 	if err != nil {
@@ -157,9 +170,11 @@ func LoadFiles(files []string, conf *Config) (out *gox.Package, err error) {
 	}
 	for _, pkg := range pkgs {
 		out, err = cl.NewPackage("", pkg, &cl.Config{
-			GopRoot:  gop.Root,
-			Fset:     fset,
-			Importer: conf.Importer,
+			GopRoot:     gop.Root,
+			Fset:        fset,
+			Importer:    conf.Importer,
+			LookupClass: mod.LookupClass,
+			LookupPub:   lookupPub(mod),
 		})
 		break
 	}
