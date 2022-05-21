@@ -31,6 +31,7 @@ import (
 	"github.com/goplus/gop/ast/fromgo"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
+	"github.com/goplus/gox/cpackages"
 	"github.com/goplus/gox/packages"
 	"github.com/goplus/mod/modfile"
 )
@@ -77,6 +78,10 @@ type Class = modfile.Classfile
 
 // Config of loading Go+ packages.
 type Config struct {
+	// Fset provides source position information for syntax trees and types.
+	// If Fset is nil, Load will use a new fileset, but preserve Fset's value.
+	Fset *token.FileSet
+
 	// WorkingDir is the directory in which to run gop compiler.
 	WorkingDir string
 
@@ -86,9 +91,12 @@ type Config struct {
 	// GopRoot specifies the Go+ root directory.
 	GopRoot string
 
-	// Fset provides source position information for syntax trees and types.
-	// If Fset is nil, Load will use a new fileset, but preserve Fset's value.
-	Fset *token.FileSet
+	// C2goBase specifies base of standard c2go packages.
+	// Default is github.com/goplus/.
+	C2goBase string
+
+	// LookupPub lookups the c2go package pubfile (named c2go.a.pub).
+	LookupPub func(pkgPath string) (pubfile string, err error)
 
 	// LookupClass lookups a class by specified file extension.
 	LookupClass func(ext string) (c *Class, ok bool)
@@ -244,6 +252,7 @@ func doInitMethods(ld *typeLoader) {
 type pkgCtx struct {
 	*nodeInterp
 	*gmxSettings
+	cpkgs *cpackages.Importer
 	syms  map[string]loader
 	inits []func()
 	tylds []*typeLoader
@@ -257,6 +266,8 @@ type blockCtx struct {
 	fset         *token.FileSet
 	imports      map[string]*gox.PkgRef
 	lookups      []*gox.PkgRef
+	clookups     []*cpackages.PkgRef
+	c2goBase     string // default is `github.com/goplus/`
 	targetDir    string
 	classRecv    *ast.FieldList // available when gmxSettings != nil
 	fileLine     bool
@@ -379,8 +390,12 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		imp = packages.NewImporter(fset, workingDir)
 	}
 	files := pkg.Files
-	interp := &nodeInterp{fset: fset, files: files, workingDir: workingDir}
-	ctx := &pkgCtx{syms: make(map[string]loader), nodeInterp: interp}
+	interp := &nodeInterp{
+		fset: fset, files: files, workingDir: workingDir,
+	}
+	ctx := &pkgCtx{
+		syms: make(map[string]loader), nodeInterp: interp,
+	}
 	confGox := &gox.Config{
 		Fset:            fset,
 		Importer:        newGopImporter(conf.GopRoot, imp),
@@ -391,6 +406,9 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		DefaultGoFile:   defaultGoFile,
 	}
 	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
+	ctx.cpkgs = cpackages.NewImporter(&cpackages.Config{
+		Pkg: p, LookupPub: conf.LookupPub,
+	})
 	for file, gmx := range files {
 		if gmx.IsProj {
 			ctx.gmxSettings = newGmx(p, file, conf)
@@ -402,7 +420,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		ctx := &blockCtx{
 			pkg: p, pkgCtx: ctx, cb: p.CB(), fset: p.Fset, targetDir: targetDir,
 			fileLine: fileLine, relativePath: conf.RelativePath, isClass: f.IsClass,
-			imports: make(map[string]*gox.PkgRef),
+			c2goBase: c2goBase(conf.C2goBase), imports: make(map[string]*gox.PkgRef),
 		}
 		preloadGopFile(p, ctx, fpath, f, conf)
 	}
@@ -954,8 +972,16 @@ func simplifyGopPackage(pkgPath string) string {
 }
 
 func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
-	pkgPath := toString(spec.Path)
-	pkg := ctx.pkg.Import(simplifyGopPackage(pkgPath))
+	var pkg *gox.PkgRef
+	var pkgPath = toString(spec.Path)
+	if realPath, kind := checkC2go(pkgPath); kind != c2goInvalid {
+		if kind == c2goStandard {
+			realPath = ctx.c2goBase + realPath
+		}
+		pkg = loadC2goPkg(ctx, realPath)
+	} else {
+		pkg = ctx.pkg.Import(simplifyGopPackage(pkgPath))
+	}
 	var name string
 	if spec.Name != nil {
 		name = spec.Name.Name

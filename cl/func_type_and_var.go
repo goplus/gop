@@ -173,7 +173,7 @@ func toIdentType(ctx *blockCtx, ident *ast.Ident) types.Type {
 	if t, ok := v.(*types.TypeName); ok {
 		return t.Type()
 	}
-	if v, _ := lookupPkgRef(ctx, nil, ident); v != nil {
+	if v, _ := lookupPkgRef(ctx, nil, ident, objPkgRef); v != nil {
 		if t, ok := v.(*types.TypeName); ok {
 			return t.Type()
 		}

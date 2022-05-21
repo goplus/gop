@@ -317,6 +317,9 @@ func (p *printer) writeString(pos token.Position, s string, isLit bool) {
 		// tabwriter.Escape bytes since they do not appear in legal
 		// UTF-8 sequences.
 		p.output = append(p.output, tabwriter.Escape)
+		if p.lastTok == token.CSTRING {
+			p.output = append(p.output, 'C')
+		}
 	}
 
 	if debug {
