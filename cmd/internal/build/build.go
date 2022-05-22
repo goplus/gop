@@ -100,17 +100,17 @@ func build(proj gopprojs.Proj, conf *gop.Config, build *gocmd.BuildConfig) {
 		err = gop.BuildPkgPath("", v.Path, conf, build)
 	case *gopprojs.FilesProj:
 		err = gop.BuildFiles(v.Files, conf, build)
-		if err != nil {
-			log.Panicln(err)
-		}
 	default:
 		log.Panicln("`gop build` doesn't support", reflect.TypeOf(v))
 	}
 	if err == syscall.ENOENT {
 		fmt.Fprintf(os.Stderr, "gop build %v: not found\n", obj)
 	} else if err != nil {
-		log.Panicln(err)
+		fmt.Fprintln(os.Stderr, err)
+	} else {
+		return
 	}
+	os.Exit(1)
 }
 
 // -----------------------------------------------------------------------------

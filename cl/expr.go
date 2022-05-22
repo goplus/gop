@@ -652,12 +652,14 @@ func compileCompositeLitElts(ctx *blockCtx, elts []ast.Expr, kind int, expected 
 func compileStructLitInKeyVal(ctx *blockCtx, elts []ast.Expr, t *types.Struct, typ types.Type) {
 	for _, elt := range elts {
 		kv := elt.(*ast.KeyValueExpr)
-		name := kv.Key.(*ast.Ident).Name
-		idx := lookupField(t, name)
+		name := kv.Key.(*ast.Ident)
+		idx := lookupField(t, name.Name)
 		if idx >= 0 {
 			ctx.cb.Val(idx)
 		} else {
-			log.Panicln("TODO: struct member not found -", name)
+			src, pos := ctx.LoadExpr(name)
+			err := newCodeErrorf(&pos, "%s undefined (type %v has no field or method %s)", src, typ, name.Name)
+			panic(err)
 		}
 		switch expr := kv.Value.(type) {
 		case *ast.LambdaExpr, *ast.LambdaExpr2:

@@ -10,7 +10,7 @@ import (
 
 // gop c2go
 var Cmd = &base.Command{
-	UsageLine: "gop " + c2go.ShortUsage,
+	UsageLine: "gop c" + c2go.ShortUsage[4:],
 	Short:     "Run c2go (convert C to Go) tools",
 }
 

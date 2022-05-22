@@ -90,17 +90,17 @@ func test(proj gopprojs.Proj, conf *gop.Config, test *gocmd.TestConfig) {
 		err = gop.TestPkgPath("", v.Path, conf, test)
 	case *gopprojs.FilesProj:
 		err = gop.TestFiles(v.Files, conf, test)
-		if err != nil {
-			log.Panicln(err)
-		}
 	default:
 		log.Panicln("`gop test` doesn't support", reflect.TypeOf(v))
 	}
 	if err == syscall.ENOENT {
 		fmt.Fprintf(os.Stderr, "gop test %v: not found\n", obj)
 	} else if err != nil {
-		log.Panicln(err)
+		fmt.Fprintln(os.Stderr, err)
+	} else {
+		return
 	}
+	os.Exit(1)
 }
 
 // -----------------------------------------------------------------------------
