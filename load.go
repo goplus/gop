@@ -40,8 +40,8 @@ type Config struct {
 	Filter   func(fs.FileInfo) bool
 	Importer types.Importer
 
-	UpdateGoMod     bool
-	CheckModChanged bool
+	DontUpdateGoMod     bool
+	DontCheckModChanged bool
 }
 
 // -----------------------------------------------------------------------------
@@ -56,8 +56,8 @@ func loadMod(dir string, gop *env.Gop, conf *Config) (mod *gopmod.Module, err er
 		if err != nil {
 			return
 		}
-		if conf.UpdateGoMod {
-			err = mod.UpdateGoMod(gop, conf.CheckModChanged)
+		if !conf.DontUpdateGoMod {
+			err = mod.UpdateGoMod(gop, !conf.DontCheckModChanged)
 		}
 		return
 	}
