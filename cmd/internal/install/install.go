@@ -90,17 +90,17 @@ func install(proj gopprojs.Proj, conf *gop.Config, install *gocmd.InstallConfig)
 		err = gop.InstallPkgPath("", v.Path, conf, install)
 	case *gopprojs.FilesProj:
 		err = gop.InstallFiles(v.Files, conf, install)
-		if err != nil {
-			log.Panicln(err)
-		}
 	default:
 		log.Panicln("`gop install` doesn't support", reflect.TypeOf(v))
 	}
 	if err == syscall.ENOENT {
 		fmt.Fprintf(os.Stderr, "gop install %v: not found\n", obj)
 	} else if err != nil {
-		log.Panicln(err)
+		fmt.Fprintln(os.Stderr, err)
+	} else {
+		return
 	}
+	os.Exit(1)
 }
 
 // -----------------------------------------------------------------------------
