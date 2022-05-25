@@ -24,4 +24,3 @@ The output of this example is as follows:
 Hello, c2go!
 Hi,     3.1
 ```
-
