@@ -47,7 +47,7 @@ type Config struct {
 // -----------------------------------------------------------------------------
 
 func loadMod(dir string, gop *env.Gop, conf *Config) (mod *gopmod.Module, err error) {
-	mod, err = gopmod.Load(dir, gop)
+	mod, err = gopmod.Load(dir, 0)
 	if err != nil && err != syscall.ENOENT {
 		return
 	}

@@ -17,8 +17,6 @@
 package mod
 
 import (
-	"fmt"
-	"os"
 	"runtime"
 	"strings"
 
@@ -49,15 +47,13 @@ Run 'gop help mod init' for more information.`)
 	default:
 		fatal("gop mod init: too many arguments")
 	}
+
 	modPath := args[0]
 	mod, err := modload.Create(".", modPath, goMainVer(), env.MainVersion)
-	if err != nil {
-		fatal(err)
-	}
+	check(err)
+
 	err = mod.Save()
-	if err != nil {
-		fatal(err)
-	}
+	check(err)
 }
 
 func goMainVer() string {
@@ -69,9 +65,4 @@ func goMainVer() string {
 		}
 	}
 	return ver
-}
-
-func fatal(msg interface{}) {
-	fmt.Fprintln(os.Stderr, msg)
-	os.Exit(1)
 }
