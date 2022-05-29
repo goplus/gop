@@ -52,7 +52,6 @@ func init() {
 		LookupClass:   lookupClass,
 		LookupPub:     lookupPub,
 		C2goBase:      "github.com/goplus/gop/cl/internal",
-		GopRoot:       gopRootDir,
 		NoFileLine:    true,
 		NoAutoGenMain: true,
 	}

@@ -17,11 +17,18 @@
 package mod
 
 import (
+	"fmt"
 	"log"
+	"os"
+	"os/exec"
+	"syscall"
 
+	"github.com/goplus/gop"
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/x/gopenv"
-	"github.com/goplus/mod/modload"
+	"github.com/goplus/mod"
+	"github.com/goplus/mod/gopmod"
+	"github.com/goplus/mod/modfetch"
 )
 
 // gop mod tidy
@@ -35,13 +42,52 @@ func init() {
 }
 
 func runTidy(cmd *base.Command, args []string) {
-	mod, err := modload.Load(".", 0)
+	mod, err := gopmod.Load(".", mod.GopModOnly)
+	if err != nil {
+		if err == syscall.ENOENT {
+			fmt.Fprintln(os.Stderr, "gop.mod not found")
+			os.Exit(1)
+		}
+		log.Panicln(err)
+	}
+
+	depMods, err := gop.GenDepMods(mod, mod.Root(), true)
 	check(err)
-	check(mod.Tidy(gopenv.Get()))
+
+	tidy(mod, depMods)
 }
 
-func check(err error) {
-	if err != nil {
-		log.Fatalln(err)
+func tidy(mod *gopmod.Module, depMods map[string]struct{}) {
+	old := mod.DepMods()
+	for modPath := range old {
+		if _, ok := depMods[modPath]; !ok { // removed
+			mod.DropRequire(modPath)
+		}
 	}
+	for modPath := range depMods {
+		if _, ok := old[modPath]; !ok { // added
+			if newMod, err := modfetch.Get(modPath); err != nil {
+				log.Fatalln(err)
+			} else {
+				mod.AddRequire(newMod.Path, newMod.Version)
+			}
+		}
+	}
+
+	err := mod.Save()
+	check(err)
+
+	_, _, err = gop.GenGo(mod.Root()+"/...", &gop.Config{DontUpdateGoMod: true})
+	check(err)
+
+	err = mod.UpdateGoMod(gopenv.Get(), true)
+	check(err)
+
+	cmd := exec.Command("go", "mod", "tidy")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+	cmd.Dir = mod.Root()
+	err = cmd.Run()
+	check(err)
 }

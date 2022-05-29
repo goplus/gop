@@ -32,7 +32,6 @@ import (
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
 	"github.com/goplus/gox/cpackages"
-	"github.com/goplus/gox/packages"
 	"github.com/goplus/mod/modfile"
 )
 
@@ -87,9 +86,6 @@ type Config struct {
 
 	// TargetDir is the directory in which to generate Go files.
 	TargetDir string
-
-	// GopRoot specifies the Go+ root directory.
-	GopRoot string
 
 	// C2goBase specifies base of standard c2go packages.
 	// Default is github.com/goplus/.
@@ -385,10 +381,6 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		targetDir = workingDir
 	}
 	fset := conf.Fset
-	imp := conf.Importer
-	if imp == nil {
-		imp = packages.NewImporter(fset, workingDir)
-	}
 	files := pkg.Files
 	interp := &nodeInterp{
 		fset: fset, files: files, workingDir: workingDir,
@@ -398,7 +390,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	}
 	confGox := &gox.Config{
 		Fset:            fset,
-		Importer:        newGopImporter(conf.GopRoot, imp),
+		Importer:        conf.Importer,
 		LoadNamed:       ctx.loadNamed,
 		HandleErr:       ctx.handleErr,
 		NodeInterpreter: interp,

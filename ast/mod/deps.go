@@ -29,13 +29,11 @@ import (
 
 // ----------------------------------------------------------------------------
 
-type none struct{}
-
 type Deps struct {
-	Pkgs map[string]none
+	HandlePkg func(pkgPath string)
 }
 
-func (p *Deps) Load(pkg *ast.Package, withGopStd bool) {
+func (p Deps) Load(pkg *ast.Package, withGopStd bool) {
 	for _, f := range pkg.Files {
 		p.LoadFile(f, withGopStd)
 	}
@@ -44,10 +42,7 @@ func (p *Deps) Load(pkg *ast.Package, withGopStd bool) {
 	}
 }
 
-func (p *Deps) LoadGoFile(f *goast.File) {
-	if p.Pkgs == nil {
-		p.Pkgs = make(map[string]none)
-	}
+func (p Deps) LoadGoFile(f *goast.File) {
 	for _, imp := range f.Imports {
 		path := imp.Path
 		if path.Kind == gotoken.STRING {
@@ -55,16 +50,13 @@ func (p *Deps) LoadGoFile(f *goast.File) {
 				if s == "C" {
 					continue
 				}
-				p.Pkgs[s] = none{}
+				p.HandlePkg(s)
 			}
 		}
 	}
 }
 
-func (p *Deps) LoadFile(f *ast.File, withGopStd bool) {
-	if p.Pkgs == nil {
-		p.Pkgs = make(map[string]none)
-	}
+func (p Deps) LoadFile(f *ast.File, withGopStd bool) {
 	for _, imp := range f.Imports {
 		path := imp.Path
 		if path.Kind == token.STRING {
@@ -75,7 +67,7 @@ func (p *Deps) LoadFile(f *ast.File, withGopStd bool) {
 	}
 }
 
-func (p *Deps) gopPkgPath(s string, withGopStd bool) {
+func (p Deps) gopPkgPath(s string, withGopStd bool) {
 	if strings.HasPrefix(s, "gop/") {
 		if !withGopStd {
 			return
@@ -91,7 +83,7 @@ func (p *Deps) gopPkgPath(s string, withGopStd bool) {
 			}
 		}
 	}
-	p.Pkgs[s] = none{}
+	p.HandlePkg(s)
 }
 
 // ----------------------------------------------------------------------------

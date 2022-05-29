@@ -19,7 +19,6 @@ package gop
 import (
 	"errors"
 	"go/token"
-	"go/types"
 	"io/fs"
 	"path/filepath"
 	"strings"
@@ -35,10 +34,9 @@ import (
 )
 
 type Config struct {
-	Gop      *env.Gop
-	Fset     *token.FileSet
-	Filter   func(fs.FileInfo) bool
-	Importer types.Importer
+	Gop    *env.Gop
+	Fset   *token.FileSet
+	Filter func(fs.FileInfo) bool
 
 	DontUpdateGoMod     bool
 	DontCheckModChanged bool
@@ -47,7 +45,7 @@ type Config struct {
 // -----------------------------------------------------------------------------
 
 func loadMod(dir string, gop *env.Gop, conf *Config) (mod *gopmod.Module, err error) {
-	mod, err = gopmod.Load(dir, gop)
+	mod, err = gopmod.Load(dir, 0)
 	if err != nil && err != syscall.ENOENT {
 		return
 	}
@@ -108,9 +106,8 @@ func LoadDir(dir string, conf *Config) (out, test *gox.Package, err error) {
 	var pkgTest *ast.Package
 	var clConf = &cl.Config{
 		WorkingDir:  dir,
-		GopRoot:     gop.Root,
 		Fset:        fset,
-		Importer:    conf.Importer,
+		Importer:    NewImporter(mod, fset, gop.Root),
 		LookupClass: mod.LookupClass,
 		LookupPub:   lookupPub(mod),
 	}
@@ -170,9 +167,8 @@ func LoadFiles(files []string, conf *Config) (out *gox.Package, err error) {
 	}
 	for _, pkg := range pkgs {
 		out, err = cl.NewPackage("", pkg, &cl.Config{
-			GopRoot:     gop.Root,
 			Fset:        fset,
-			Importer:    conf.Importer,
+			Importer:    NewImporter(mod, fset, gop.Root),
 			LookupClass: mod.LookupClass,
 			LookupPub:   lookupPub(mod),
 		})
