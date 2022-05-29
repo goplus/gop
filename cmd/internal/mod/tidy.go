@@ -20,10 +20,12 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"syscall"
 
 	"github.com/goplus/gop"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/mod"
 	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modfetch"
@@ -71,6 +73,21 @@ func tidy(mod *gopmod.Module, depMods map[string]struct{}) {
 			}
 		}
 	}
+
 	err := mod.Save()
+	check(err)
+
+	_, _, err = gop.GenGo(mod.Root()+"/...", &gop.Config{DontUpdateGoMod: true})
+	check(err)
+
+	err = mod.UpdateGoMod(gopenv.Get(), true)
+	check(err)
+
+	cmd := exec.Command("go", "mod", "tidy")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+	cmd.Dir = mod.Root()
+	err = cmd.Run()
 	check(err)
 }
