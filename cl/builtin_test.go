@@ -131,12 +131,6 @@ func lookupClass(ext string) (c *gopmod.Class, ok bool) {
 	return
 }
 
-func TestImporter(t *testing.T) {
-	if newGopImporter("", nil) != nil {
-		t.Fatal("TestImporter failed")
-	}
-}
-
 func TestGetGoFile(t *testing.T) {
 	if f := getGoFile("a_test.gop", true); f != testingGoFile {
 		t.Fatal("TestGetGoFile:", f)

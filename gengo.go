@@ -24,8 +24,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/goplus/gop/x/gopenv"
-	"github.com/goplus/mod/env"
 	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modcache"
 	"github.com/goplus/mod/modfetch"
@@ -107,10 +105,9 @@ func GenGoPkgPath(workDir, pkgPath string, conf *Config, allowExtern bool) (loca
 		pkgPath = pkgPath[:len(pkgPath)-4]
 	}
 
-	gop := gopEnv(conf)
-	mod, err := gopmod.Load(workDir, gop)
+	mod, err := gopmod.Load(workDir, 0)
 	if err == syscall.ENOENT && allowExtern {
-		remotePkgPathDo(pkgPath, gop, func(dir string) {
+		remotePkgPathDo(pkgPath, func(dir string) {
 			os.Chmod(dir, 0755)
 			defer os.Chmod(dir, 0555)
 			localDir = dir
@@ -136,9 +133,8 @@ func GenGoPkgPath(workDir, pkgPath string, conf *Config, allowExtern bool) (loca
 	return
 }
 
-func remotePkgPathDo(pkgPath string, gop *env.Gop, doSth func(dir string), onErr func(e error)) {
-	modPath, leftPart := splitPkgPath(pkgPath)
-	modVer, _, err := modfetch.Get(gop, modPath)
+func remotePkgPathDo(pkgPath string, doSth func(dir string), onErr func(e error)) {
+	modVer, leftPart, err := modfetch.GetPkg(pkgPath, "")
 	if err != nil {
 		onErr(err)
 	} else if dir, err := modcache.Path(modVer); err != nil {
@@ -146,31 +142,6 @@ func remotePkgPathDo(pkgPath string, gop *env.Gop, doSth func(dir string), onErr
 	} else {
 		doSth(filepath.Join(dir, leftPart))
 	}
-}
-
-func splitPkgPath(pkgPath string) (modPath, leftPart string) {
-	if strings.HasPrefix(pkgPath, "github.com/") {
-		parts := strings.SplitN(pkgPath, "/", 4)
-		if len(parts) > 3 {
-			leftPart = parts[3]
-			if pos := strings.IndexByte(leftPart, '@'); pos > 0 {
-				parts[2] += leftPart[pos:]
-				leftPart = leftPart[:pos]
-			}
-			modPath = strings.Join(parts[:3], "/")
-			return
-		}
-	}
-	return pkgPath, "" // TODO:
-}
-
-func gopEnv(conf *Config) *env.Gop {
-	if conf != nil {
-		if gop := conf.Gop; gop != nil {
-			return gop
-		}
-	}
-	return gopenv.Get()
 }
 
 // -----------------------------------------------------------------------------

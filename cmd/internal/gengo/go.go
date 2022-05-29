@@ -18,7 +18,9 @@
 package gengo
 
 import (
+	"fmt"
 	"log"
+	"os"
 	"reflect"
 
 	"github.com/goplus/gop"
@@ -74,7 +76,8 @@ func runCmd(cmd *base.Command, args []string) {
 			log.Panicln("`gop go` doesn't support", reflect.TypeOf(v))
 		}
 		if err != nil {
-			log.Panicln(err)
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
 		}
 	}
 }

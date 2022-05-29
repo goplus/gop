@@ -9,7 +9,7 @@
 [![VSCode](https://img.shields.io/badge/vscode-Go+-teal.svg)](https://github.com/gopcode/vscode-goplus)
 
 * **For engineering**: working in the simplest language that can be mastered by children.
-* **For STEM education**: studying an engineering language that can be used to work in the future.
+* **For STEM education**: studying an engineering language that can be used for work in the future.
 * **For data science**: communicating with engineers in the same language.
 
 ## How to install

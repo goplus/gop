@@ -16,6 +16,10 @@
 package mod
 
 import (
+	"fmt"
+	"log"
+	"os"
+
 	"github.com/goplus/gop/cmd/internal/base"
 )
 
@@ -28,4 +32,15 @@ var Cmd = &base.Command{
 		cmdDownload,
 		cmdTidy,
 	},
+}
+
+func check(err error) {
+	if err != nil {
+		log.Panicln(err)
+	}
+}
+
+func fatal(msg interface{}) {
+	fmt.Fprintln(os.Stderr, msg)
+	os.Exit(1)
 }

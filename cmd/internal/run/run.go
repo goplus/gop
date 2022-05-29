@@ -104,17 +104,17 @@ func run(proj gopprojs.Proj, args []string, chDir bool, conf *gop.Config, run *g
 		err = gop.RunPkgPath(v.Path, args, chDir, conf, run)
 	case *gopprojs.FilesProj:
 		err = gop.RunFiles("", v.Files, args, conf, run)
-		if err != nil {
-			log.Panicln(err)
-		}
 	default:
 		log.Panicln("`gop run` doesn't support", reflect.TypeOf(v))
 	}
 	if err == syscall.ENOENT {
 		fmt.Fprintf(os.Stderr, "gop run %v: not found\n", obj)
 	} else if err != nil {
-		log.Panicln(err)
+		fmt.Fprintln(os.Stderr, err)
+	} else {
+		return
 	}
+	os.Exit(1)
 }
 
 // -----------------------------------------------------------------------------
