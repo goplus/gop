@@ -74,6 +74,7 @@ func tidy(mod *gopmod.Module, depMods map[string]struct{}) {
 		}
 	}
 
+	mod.Cleanup()
 	err := mod.Save()
 	check(err)
 
