@@ -35,7 +35,6 @@ type Importer struct {
 	impFrom *packages.Importer
 	mod     *gopmod.Module
 	gop     *env.Gop
-	gopRoot string
 }
 
 func NewImporter(mod *gopmod.Module, gop *env.Gop, fset *token.FileSet) *Importer {
@@ -44,7 +43,7 @@ func NewImporter(mod *gopmod.Module, gop *env.Gop, fset *token.FileSet) *Importe
 		dir = mod.Root()
 	}
 	impFrom := packages.NewImporter(fset, dir)
-	return &Importer{mod: mod, gopRoot: gop.Root, gop: gop, impFrom: impFrom}
+	return &Importer{mod: mod, gop: gop, impFrom: impFrom}
 }
 
 func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
@@ -53,12 +52,13 @@ func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 	)
 	if strings.HasPrefix(pkgPath, gop) {
 		if suffix := pkgPath[len(gop):]; suffix == "" || suffix[0] == '/' {
+			gopRoot := p.gop.Root
 			if suffix == "/cl/internal/gop-in-go/foo" {
-				if err = p.genGoExtern(p.gopRoot+suffix, false); err != nil {
+				if err = p.genGoExtern(gopRoot+suffix, false); err != nil {
 					return
 				}
 			}
-			return p.impFrom.ImportFrom(pkgPath, p.gopRoot, 0)
+			return p.impFrom.ImportFrom(pkgPath, gopRoot, 0)
 		}
 	}
 	if mod := p.mod; mod.IsValid() {
