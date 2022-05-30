@@ -69,7 +69,7 @@ func runCmd(cmd *base.Command, args []string) {
 	for _, proj := range projs {
 		switch v := proj.(type) {
 		case *gopprojs.DirProj:
-			_, _, err = gop.GenGo(v.Dir, nil)
+			_, _, err = gop.GenGo(v.Dir, nil, true)
 		case *gopprojs.PkgPathProj:
 			_, _, err = gop.GenGoPkgPath("", v.Path, nil, true)
 		default:

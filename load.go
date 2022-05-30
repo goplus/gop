@@ -19,6 +19,7 @@ package gop
 import (
 	"errors"
 	"go/token"
+	"go/types"
 	"io/fs"
 	"path/filepath"
 	"strings"
@@ -34,9 +35,10 @@ import (
 )
 
 type Config struct {
-	Gop    *env.Gop
-	Fset   *token.FileSet
-	Filter func(fs.FileInfo) bool
+	Gop      *env.Gop
+	Fset     *token.FileSet
+	Filter   func(fs.FileInfo) bool
+	Importer types.Importer
 
 	DontUpdateGoMod     bool
 	DontCheckModChanged bool
@@ -77,7 +79,7 @@ func lookupPub(mod *gopmod.Module) func(pkgPath string) (pubfile string, err err
 
 // -----------------------------------------------------------------------------
 
-func LoadDir(dir string, conf *Config) (out, test *gox.Package, err error) {
+func LoadDir(dir string, conf *Config, genTestPkg bool) (out, test *gox.Package, err error) {
 	if conf == nil {
 		conf = new(Config)
 	}
@@ -103,11 +105,16 @@ func LoadDir(dir string, conf *Config) (out, test *gox.Package, err error) {
 		return
 	}
 
+	imp := conf.Importer
+	if imp == nil {
+		imp = NewImporter(mod, gop, fset)
+	}
+
 	var pkgTest *ast.Package
 	var clConf = &cl.Config{
 		WorkingDir:  dir,
 		Fset:        fset,
-		Importer:    NewImporter(mod, fset, gop.Root),
+		Importer:    imp,
 		LookupClass: mod.LookupClass,
 		LookupPub:   lookupPub(mod),
 	}
@@ -133,7 +140,7 @@ func LoadDir(dir string, conf *Config) (out, test *gox.Package, err error) {
 	if out == nil {
 		return nil, nil, syscall.ENOENT
 	}
-	if pkgTest != nil {
+	if pkgTest != nil && genTestPkg {
 		test, err = cl.NewPackage("", pkgTest, clConf)
 	}
 	return
@@ -166,9 +173,13 @@ func LoadFiles(files []string, conf *Config) (out *gox.Package, err error) {
 		return nil, errMultiPackges
 	}
 	for _, pkg := range pkgs {
+		imp := conf.Importer
+		if imp == nil {
+			imp = NewImporter(mod, gop, fset)
+		}
 		out, err = cl.NewPackage("", pkg, &cl.Config{
 			Fset:        fset,
-			Importer:    NewImporter(mod, fset, gop.Root),
+			Importer:    imp,
 			LookupClass: mod.LookupClass,
 			LookupPub:   lookupPub(mod),
 		})

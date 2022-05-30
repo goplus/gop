@@ -38,22 +38,22 @@ const (
 
 // -----------------------------------------------------------------------------
 
-func GenGo(dir string, conf *Config) (string, bool, error) {
+func GenGo(dir string, conf *Config, genTestPkg bool) (string, bool, error) {
 	recursively := strings.HasSuffix(dir, "/...")
 	if recursively {
 		dir = dir[:len(dir)-4]
 	}
-	return dir, recursively, genGoDir(dir, conf, recursively)
+	return dir, recursively, genGoDir(dir, conf, genTestPkg, recursively)
 }
 
-func genGoDir(dir string, conf *Config, recursively bool) (err error) {
+func genGoDir(dir string, conf *Config, genTestPkg, recursively bool) (err error) {
 	if recursively {
 		return filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 			if err == nil && d.IsDir() {
 				if strings.HasPrefix(d.Name(), "_") { // skip _
 					return filepath.SkipDir
 				}
-				err = genGoIn(path, conf, true)
+				err = genGoIn(path, conf, genTestPkg, true)
 				if err != nil {
 					fmt.Fprintln(os.Stderr, err)
 				}
@@ -61,11 +61,11 @@ func genGoDir(dir string, conf *Config, recursively bool) (err error) {
 			return err
 		})
 	}
-	return genGoIn(dir, conf, false)
+	return genGoIn(dir, conf, genTestPkg, false)
 }
 
-func genGoIn(dir string, conf *Config, prompt bool) (err error) {
-	out, test, err := LoadDir(dir, conf)
+func genGoIn(dir string, conf *Config, genTestPkg, prompt bool) (err error) {
+	out, test, err := LoadDir(dir, conf, genTestPkg)
 	if err != nil {
 		if err == syscall.ENOENT { // no Go+ source files
 			return nil
@@ -99,6 +99,11 @@ func genGoIn(dir string, conf *Config, prompt bool) (err error) {
 
 // -----------------------------------------------------------------------------
 
+const (
+	modWritable = 0755
+	modReadonly = 0555
+)
+
 func GenGoPkgPath(workDir, pkgPath string, conf *Config, allowExtern bool) (localDir string, recursively bool, err error) {
 	recursively = strings.HasSuffix(pkgPath, "/...")
 	if recursively {
@@ -108,10 +113,10 @@ func GenGoPkgPath(workDir, pkgPath string, conf *Config, allowExtern bool) (loca
 	mod, err := gopmod.Load(workDir, 0)
 	if err == syscall.ENOENT && allowExtern {
 		remotePkgPathDo(pkgPath, func(dir string) {
-			os.Chmod(dir, 0755)
-			defer os.Chmod(dir, 0555)
+			os.Chmod(dir, modWritable)
+			defer os.Chmod(dir, modReadonly)
 			localDir = dir
-			err = genGoDir(dir, conf, recursively)
+			err = genGoDir(dir, conf, false, recursively)
 		}, func(e error) {
 			err = e
 		})
@@ -126,10 +131,10 @@ func GenGoPkgPath(workDir, pkgPath string, conf *Config, allowExtern bool) (loca
 	}
 	localDir = pkg.Dir
 	if pkg.Type == gopmod.PkgtExtern {
-		os.Chmod(localDir, 0755)
-		defer os.Chmod(localDir, 0555)
+		os.Chmod(localDir, modWritable)
+		defer os.Chmod(localDir, modReadonly)
 	}
-	err = genGoDir(localDir, conf, recursively)
+	err = genGoDir(localDir, conf, false, recursively)
 	return
 }
 

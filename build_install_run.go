@@ -27,7 +27,7 @@ import (
 // -----------------------------------------------------------------------------
 
 func InstallDir(dir string, conf *Config, install *gocmd.InstallConfig) (err error) {
-	_, _, err = GenGo(dir, conf)
+	_, _, err = GenGo(dir, conf, false)
 	if err != nil {
 		return
 	}
@@ -74,7 +74,7 @@ func chdir(dir string) string {
 // -----------------------------------------------------------------------------
 
 func BuildDir(dir string, conf *Config, build *gocmd.BuildConfig) (err error) {
-	_, _, err = GenGo(dir, conf)
+	_, _, err = GenGo(dir, conf, false)
 	if err != nil {
 		return
 	}
@@ -112,7 +112,7 @@ func restoreDirAndMod(old string) {
 // -----------------------------------------------------------------------------
 
 func RunDir(dir string, args []string, conf *Config, run *gocmd.RunConfig) (err error) {
-	_, _, err = GenGo(dir, conf)
+	_, _, err = GenGo(dir, conf, false)
 	if err != nil {
 		return
 	}
@@ -146,7 +146,7 @@ func RunFiles(autogen string, files []string, args []string, conf *Config, run *
 // -----------------------------------------------------------------------------
 
 func TestDir(dir string, conf *Config, test *gocmd.TestConfig) (err error) {
-	_, _, err = GenGo(dir, conf)
+	_, _, err = GenGo(dir, conf, true)
 	if err != nil {
 		return
 	}
