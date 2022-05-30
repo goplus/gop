@@ -77,7 +77,7 @@ func tidy(mod *gopmod.Module, depMods map[string]struct{}) {
 	err := mod.Save()
 	check(err)
 
-	_, _, err = gop.GenGo(mod.Root()+"/...", &gop.Config{DontUpdateGoMod: true})
+	_, _, err = gop.GenGo(mod.Root()+"/...", &gop.Config{DontUpdateGoMod: true}, true)
 	check(err)
 
 	err = mod.UpdateGoMod(gopenv.Get(), true)

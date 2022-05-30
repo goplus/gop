@@ -23,13 +23,14 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/parser/parsertest"
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
-	"github.com/goplus/gox/packages"
+	"github.com/goplus/mod/env"
 )
 
 const (
@@ -45,7 +46,7 @@ func init() {
 	gox.SetDebug(gox.DbgFlagAll)
 	cl.SetDebug(cl.DbgFlagAll)
 	gblFset = token.NewFileSet()
-	imp := packages.NewImporter(gblFset)
+	imp := gop.NewImporter(nil, &env.Gop{Root: gopRootDir, Version: "1.0"}, gblFset)
 	gblConf = &cl.Config{
 		Fset:          gblFset,
 		Importer:      imp,
@@ -3421,7 +3422,7 @@ func removeAutogenFiles() {
 	os.Remove("./internal/gop-in-go/foo/gop_autogen2_test.go")
 }
 
-func _TestImportGopPkg(t *testing.T) {
+func TestImportGopPkg(t *testing.T) {
 	autogen.Lock()
 	defer autogen.Unlock()
 
@@ -3445,15 +3446,6 @@ func main() {
 }
 
 func TestCallDep(t *testing.T) {
-	const (
-		cachedir  = "../.gop"
-		cachefile = cachedir + "/gop.cache"
-	)
-	os.Remove(cachefile)
-	defer func() {
-		os.Remove(cachefile)
-		os.Remove(cachedir)
-	}()
 	for i := 0; i < 2; i++ {
 		gopClTest(t, `
 import (
