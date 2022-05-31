@@ -32,7 +32,8 @@ func Tidy(dir string, gop *env.Gop) (err error) {
 		return
 	}
 
-	depMods, err := GenDepMods(mod, mod.Root(), true)
+	modRoot := mod.Root()
+	depMods, err := GenDepMods(mod, modRoot, true)
 	if err != nil {
 		return
 	}
@@ -59,7 +60,7 @@ func Tidy(dir string, gop *env.Gop) (err error) {
 		return
 	}
 
-	err = genGoDir(mod.Root(), &Config{DontUpdateGoMod: true, Gop: gop}, true, true)
+	err = genGoDir(modRoot, &Config{DontUpdateGoMod: true, Gop: gop}, true, true)
 	if err != nil {
 		return
 	}
@@ -73,6 +74,6 @@ func Tidy(dir string, gop *env.Gop) (err error) {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
-	cmd.Dir = mod.Root()
+	cmd.Dir = modRoot
 	return cmd.Run()
 }
