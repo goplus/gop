@@ -164,7 +164,18 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 					twoValue = (results.Len() == 2)
 				}
 			}
-			compileExpr(ctx, ret, twoValue)
+			switch v := ret.(type) {
+			case *ast.LambdaExpr, *ast.LambdaExpr2:
+				rtyp := ctx.cb.Func().Type().(*types.Signature).Results().At(i).Type()
+				sig, ok := rtyp.(*types.Signature)
+				if !ok {
+					panic(ctx.newCodeErrorf(
+						ret.Pos(), "cannot use lambda expression as type %v in return statement", rtyp))
+				}
+				compileLambda(ctx, v, sig)
+			default:
+				compileExpr(ctx, ret, twoValue)
+			}
 		}
 	}
 	ctx.cb.Return(len(expr.Results), expr)
