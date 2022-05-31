@@ -38,7 +38,7 @@ func GenDepMods(mod *gopmod.Module, dir string, recursively bool) (ret map[strin
 	ret = make(map[string]struct{})
 	err = HandleDeps(mod, dir, recursively, func(pkgPath string) {
 		modPath, _ := modfetch.Split(pkgPath, modBase)
-		if modPath != "" {
+		if modPath != "" && modPath != modBase {
 			ret[modPath] = struct{}{}
 		}
 	})

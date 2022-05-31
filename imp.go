@@ -63,14 +63,15 @@ func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 		}
 	}
 	if mod := p.mod; mod.IsValid() {
-		if mod.PkgType(pkgPath) == gopmod.PkgtExtern {
-			ret, modVer, e := mod.LookupExternPkg(pkgPath)
-			if e != nil {
-				return nil, e
-			}
-			isExtern := modVer.Version != ""
+		ret, e := mod.Lookup(pkgPath)
+		if e != nil {
+			return nil, e
+		}
+		switch ret.Type {
+		case gopmod.PkgtExtern:
+			isExtern := ret.Real.Version != ""
 			if isExtern {
-				if _, err = modfetch.Get(modVer.String()); err != nil {
+				if _, err = modfetch.Get(ret.Real.String()); err != nil {
 					return
 				}
 			}
@@ -81,6 +82,10 @@ func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 				}
 			}
 			return p.impFrom.ImportFrom(pkgPath, ret.ModDir, 0)
+		case gopmod.PkgtModule, gopmod.PkgtLocal:
+			if err = p.genGoExtern(ret.Dir, false); err != nil {
+				return
+			}
 		}
 	}
 	return p.impFrom.Import(pkgPath)
