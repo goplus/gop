@@ -3225,7 +3225,7 @@ func main() {
 `)
 }
 
-func _TestLambdaExpr3(t *testing.T) {
+func TestLambdaExpr3(t *testing.T) {
 	gopClTest(t, `
 func intSeq() func() int {
 	i := 0
@@ -3234,7 +3234,27 @@ func intSeq() func() int {
 		return i
 	}
 }
-`, `
+`, `package main
+
+func intSeq() func() int {
+	i := 0
+	return func() int {
+		i++
+		return i
+	}
+}
+`)
+	gopClTest(t, `
+func intDouble() func(int) int {
+	return i => i*2
+}
+`, `package main
+
+func intDouble() func(int) int {
+	return func(i int) int {
+		return i * 2
+	}
+}
 `)
 }
 
