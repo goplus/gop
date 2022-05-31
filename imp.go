@@ -19,9 +19,12 @@ package gop
 import (
 	"go/token"
 	"go/types"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/goplus/gox/packages"
+	"github.com/goplus/mod/env"
 	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modfetch"
 )
@@ -31,16 +34,17 @@ import (
 type Importer struct {
 	impFrom *packages.Importer
 	mod     *gopmod.Module
-	gopRoot string
+	gop     *env.Gop
+	fset    *token.FileSet
 }
 
-func NewImporter(mod *gopmod.Module, fset *token.FileSet, gopRoot string) *Importer {
+func NewImporter(mod *gopmod.Module, gop *env.Gop, fset *token.FileSet) *Importer {
 	dir := ""
 	if mod.IsValid() {
 		dir = mod.Root()
 	}
 	impFrom := packages.NewImporter(fset, dir)
-	return &Importer{mod: mod, gopRoot: gopRoot, impFrom: impFrom}
+	return &Importer{mod: mod, gop: gop, impFrom: impFrom, fset: fset}
 }
 
 func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
@@ -49,24 +53,54 @@ func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 	)
 	if strings.HasPrefix(pkgPath, gop) {
 		if suffix := pkgPath[len(gop):]; suffix == "" || suffix[0] == '/' {
-			return p.impFrom.ImportFrom(pkgPath, p.gopRoot, 0)
-		}
-	}
-	if mod := p.mod; mod.IsValid() {
-		if mod.PkgType(pkgPath) == gopmod.PkgtExtern {
-			ret, modVer, e := mod.LookupExternPkg(pkgPath)
-			if e != nil {
-				return nil, e
-			}
-			if modVer.Version != "" {
-				if _, err = modfetch.Get(modVer.String()); err != nil {
+			gopRoot := p.gop.Root
+			if suffix == "/cl/internal/gop-in-go/foo" {
+				if err = p.genGoExtern(gopRoot+suffix, false); err != nil {
 					return
 				}
 			}
-			return p.impFrom.ImportFrom(pkgPath, ret.Dir, 0)
+			return p.impFrom.ImportFrom(pkgPath, gopRoot, 0)
+		}
+	}
+	if mod := p.mod; mod.IsValid() {
+		ret, e := mod.Lookup(pkgPath)
+		if e != nil {
+			return nil, e
+		}
+		switch ret.Type {
+		case gopmod.PkgtExtern:
+			isExtern := ret.Real.Version != ""
+			if isExtern {
+				if _, err = modfetch.Get(ret.Real.String()); err != nil {
+					return
+				}
+			}
+			modfile := filepath.Join(ret.ModDir, "gop.mod")
+			if _, e := os.Lstat(modfile); e == nil { // has gop.mod
+				if err = p.genGoExtern(ret.Dir, isExtern); err != nil {
+					return
+				}
+			}
+			return p.impFrom.ImportFrom(pkgPath, ret.ModDir, 0)
+		case gopmod.PkgtModule, gopmod.PkgtLocal:
+			if err = p.genGoExtern(ret.Dir, false); err != nil {
+				return
+			}
 		}
 	}
 	return p.impFrom.Import(pkgPath)
+}
+
+func (p *Importer) genGoExtern(dir string, isExtern bool) (err error) {
+	genfile := filepath.Join(dir, autoGenFile)
+	if _, err = os.Lstat(genfile); err == nil { // has gop_autogen.go
+		return
+	}
+	if isExtern {
+		os.Chmod(dir, modWritable)
+		defer os.Chmod(dir, modReadonly)
+	}
+	return genGoIn(dir, &Config{Gop: p.gop, Importer: p, Fset: p.fset}, false, false)
 }
 
 // -----------------------------------------------------------------------------
