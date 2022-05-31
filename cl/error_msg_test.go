@@ -130,6 +130,26 @@ var foo, foo1 func() = nil, => {}
 var foo func()
 _, foo = nil, => {}
 `)
+	codeErrorTest(t,
+		"./bar.gop:4:9: cannot use lambda expression as type int in return statement", `
+func intSeq() int {
+	i := 0
+	return => {
+		i++
+		return i
+	}
+}
+`)
+	codeErrorTest(t,
+		"./bar.gop:6:10: cannot use i (type int) as type string in return argument", `
+func intSeq() func() string {
+	i := 0
+	return => {
+		i++
+		return i
+	}
+}
+`)
 }
 
 func TestErrErrWrap(t *testing.T) {
