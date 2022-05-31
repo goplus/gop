@@ -3225,6 +3225,19 @@ func main() {
 `)
 }
 
+func _TestLambdaExpr3(t *testing.T) {
+	gopClTest(t, `
+func intSeq() func() int {
+	i := 0
+	return => {
+		i++
+		return i
+	}
+}
+`, `
+`)
+}
+
 func TestUnnamedMainFunc(t *testing.T) {
 	gopClTest(t, `i := 1`, `package main
 
