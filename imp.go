@@ -35,6 +35,7 @@ type Importer struct {
 	impFrom *packages.Importer
 	mod     *gopmod.Module
 	gop     *env.Gop
+	fset    *token.FileSet
 }
 
 func NewImporter(mod *gopmod.Module, gop *env.Gop, fset *token.FileSet) *Importer {
@@ -43,7 +44,7 @@ func NewImporter(mod *gopmod.Module, gop *env.Gop, fset *token.FileSet) *Importe
 		dir = mod.Root()
 	}
 	impFrom := packages.NewImporter(fset, dir)
-	return &Importer{mod: mod, gop: gop, impFrom: impFrom}
+	return &Importer{mod: mod, gop: gop, impFrom: impFrom, fset: fset}
 }
 
 func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
@@ -94,7 +95,7 @@ func (p *Importer) genGoExtern(dir string, isExtern bool) (err error) {
 		os.Chmod(dir, modWritable)
 		defer os.Chmod(dir, modReadonly)
 	}
-	return genGoIn(dir, &Config{Gop: p.gop, Importer: p}, false, false)
+	return genGoIn(dir, &Config{Gop: p.gop, Importer: p, Fset: p.fset}, false, false)
 }
 
 // -----------------------------------------------------------------------------
