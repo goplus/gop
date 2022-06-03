@@ -1059,6 +1059,10 @@ func loadVars(ctx *blockCtx, v *ast.ValueSpec, global bool) {
 					} else {
 						panic(ctx.newCodeErrorf(e.Pos(), "lambda unsupport multiple assignment"))
 					}
+				case *ast.SliceLit:
+					compileSliceLit(ctx, e, typ)
+				case *ast.CompositeLit:
+					compileCompositeLit(ctx, e, typ, false)
 				default:
 					compileExpr(ctx, val)
 				}

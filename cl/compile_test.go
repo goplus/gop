@@ -1782,6 +1782,22 @@ func foo() *Result {
 `)
 }
 
+func TestCompositeLit5(t *testing.T) {
+	gopClTest(t, `
+type mymap map[float64]string
+var x = {1:"hello", 2:"world"}
+var y map[float64]string = {1:"hello", 2:"world"}
+var z mymap = {1:"hello", 2:"world"}
+`, `package main
+
+type mymap map[float64]string
+
+var x = map[int]string{1: "hello", 2: "world"}
+var y map[float64]string = map[float64]string{1: "hello", 2: "world"}
+var z mymap = mymap{1: "hello", 2: "world"}
+`)
+}
+
 func TestSliceLit(t *testing.T) {
 	gopClTest(t, `
 x := [1, 3.4, 5]
@@ -1795,6 +1811,19 @@ func main() {
 	z := []interface {
 	}{}
 }
+`)
+	gopClTest(t, `
+type vector []float64
+var x = [1, 2, 3]
+var y []float64 = [1, 2, 3]
+var z vector = [1, 2, 3]
+`, `package main
+
+type vector []float64
+
+var x = []int{1, 2, 3}
+var y []float64 = []float64{1, 2, 3}
+var z vector = vector{1, 2, 3}
 `)
 }
 
