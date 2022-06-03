@@ -1796,6 +1796,19 @@ func main() {
 	}{}
 }
 `)
+	gopClTest(t, `
+type vector []float64
+var x = [1, 2, 3]
+var y []float64 = [1, 2, 3]
+var z vector = [1, 2, 3]
+`, `package main
+
+type vector []float64
+
+var x = []int{1, 2, 3}
+var y []float64 = []float64{1, 2, 3}
+var z vector = vector{1, 2, 3}
+`)
 }
 
 func TestChan(t *testing.T) {
