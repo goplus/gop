@@ -1061,6 +1061,8 @@ func loadVars(ctx *blockCtx, v *ast.ValueSpec, global bool) {
 					}
 				case *ast.SliceLit:
 					compileSliceLit(ctx, e, typ)
+				case *ast.CompositeLit:
+					compileCompositeLit(ctx, e, typ, false)
 				default:
 					compileExpr(ctx, val)
 				}
