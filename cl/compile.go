@@ -108,6 +108,9 @@ type Config struct {
 
 	// NoAutoGenMain = true means not to auto generate main func is no entry.
 	NoAutoGenMain bool
+
+	// NoSkipConstant = true means disable optimization of skip constants
+	NoSkipConstant bool
 }
 
 type nodeInterp struct {
@@ -396,6 +399,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		NodeInterpreter: interp,
 		NewBuiltin:      newBuiltinDefault,
 		DefaultGoFile:   defaultGoFile,
+		NoSkipConstant:  conf.NoSkipConstant,
 	}
 	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
 	ctx.cpkgs = cpackages.NewImporter(&cpackages.Config{
