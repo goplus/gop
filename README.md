@@ -48,9 +48,304 @@ all.bat
 Actually, `all.bash` and `all.bat` will use `go run cmd/make.go` underneath.
 
 
-## Code style (important)
+## Hello World
 
-* https://tutorial.goplus.org/hello-world
+```go
+println "Hello world"
+```
+
+Save this snippet into a file named `hello.gop`. Now do: `gop run hello.gop`.
+
+Congratulations - you just wrote and executed your first Go+ program!
+
+You can compile a program without execution with `gop build hello.gop`.
+See `gop help` for all supported commands.
+
+[`println`](#println) is one of the few [built-in functions](#builtin-functions).
+It prints the value passed to it to standard output.
+
+See https://tutorial.goplus.org/hello-world for more details.
+
+
+## Running a project folder with several files
+
+Suppose you have a folder with several .gop files in it, and you want 
+to compile them all into one program. Just do: `gop run .`.
+
+Passing parameters also works, so you can do:
+`gop run . --yourparams some_other_stuff`.
+
+Your program can then use the CLI parameters like this:
+
+```go
+import "os"
+
+println os.Args
+```
+
+## Comments
+
+```go
+# This is a single line comment.
+
+// This is a single line comment.
+
+/*
+This is a multiline comment.
+*/
+```
+
+## Variables
+
+```go
+name := "Bob"
+age := 20
+largeNumber := int128(1 << 65)
+println name, age
+println largeNumber
+```
+
+Variables are declared and initialized with `:=`.
+
+The variable's type is inferred from the value on the right hand side.
+To choose a different type, use type conversion:
+the expression `T(v)` converts the value `v` to the
+type `T`.
+
+### Initialization vs assignment
+
+Note the (important) difference between `:=` and `=`.
+`:=` is used for declaring and initializing, `=` is used for assigning.
+
+```go failcompile
+age = 21
+```
+
+This code will not compile, because the variable `age` is not declared.
+All variables need to be declared in Go+.
+
+```go
+age := 21
+```
+
+The values of multiple variables can be changed in one line.
+In this way, their values can be swapped without an intermediary variable.
+
+```go
+a, b := 0, 1
+a, b = b, a
+println a, b // 1, 0
+```
+
+## Go+ Types
+
+### Primitive types
+
+```go ignore
+bool
+
+int8    int16   int32   int    int64    int128
+uint8   uint16  uint32  uint   uint64   uint128
+
+uintptr // similar to C's size_t
+
+byte // alias for uint8
+rune // alias for int32, represents a Unicode code point
+
+string
+
+float32 float64
+
+complex64 complex128
+
+bigint bigrat
+
+unsafe.Pointer // similar to C's void*
+
+any // alias for Go's interface{}
+```
+
+### Strings
+
+```go
+name := "Bob"
+println name.len  // 3
+println name[0]   // 66
+println name[1:3] // ob
+
+// or using octal escape `\###` notation where `#` is an octal digit
+println "\141a"   // aa
+
+// Unicode can be specified directly as `\u####` where # is a hex digit
+// and will be converted internally to its UTF-8 representation
+println "\u2605"  // ★
+```
+
+String values are immutable. You cannot mutate elements:
+
+```go failcompile
+s := "hello 🌎"
+s[0] = `H` // not allowed
+```
+
+Note that indexing a string will produce a `byte`, not a `rune` nor another `string`.
+
+Strings can be easily converted to integers:
+
+```go
+s := "12"
+a, err := s.int
+b := s.int! // will panic if s isn't a valid integer
+```
+
+### String operators
+
+```go
+name := "Bob"
+bobby := name + "by" // + is used to concatenate strings
+println bobby // Bobby
+
+s := "Hello "
+s += "world"
+println s // Hello world
+```
+
+All operators in Go+ must have values of the same type on both sides. You cannot concatenate an
+integer to a string:
+
+```go failcompile
+age := 10
+println "age = " + age // not allowed
+```
+
+We have to either convert `age` to a `string`:
+
+```go
+age := 10
+println "age = " + age.string
+```
+
+### Runes
+
+A `rune` represents a single Unicode character and is an alias for `int32`.
+
+```go
+rocket := '🚀'
+println rocket         // 128640
+println string(rocket) // 🚀
+```
+
+### Numbers
+
+```go
+a := 123
+```
+
+This will assign the value of 123 to `a`. By default `a` will have the
+type `int`.
+
+You can also use hexadecimal, binary or octal notation for integer literals:
+
+```go
+a := 0x7B
+b := 0b01111011
+c := 0o173
+```
+
+All of these will be assigned the same value, 123. They will all have type
+`int`, no matter what notation you used.
+
+Go+ also supports writing numbers with `_` as separator:
+
+```go
+num := 1_000_000 // same as 1000000
+three := 0b0_11 // same as 0b11
+floatNum := 3_122.55 // same as 3122.55
+hexa := 0xF_F // same as 255
+oct := 0o17_3 // same as 0o173
+```
+
+If you want a different type of integer, you can use casting:
+
+```go
+a := int64(123)
+b := uint8(12)
+c := int128(12345)
+```
+
+Assigning floating point numbers works the same way:
+
+```go
+f1 := 1.0
+f2 := float32(3.14)
+```
+
+If you do not specify the type explicitly, by default float literals will have the type of `float64`.
+
+Float literals can also be declared as a power of ten:
+
+```go
+f0 := 42e1   // 420
+f1 := 123e-2 // 1.23
+f2 := 456e+2 // 45600
+```
+
+We introduce rational numbers as native Go+ types. We use suffix `r` to denote rational literals. For example, `1r << 200` means a big int whose value is equal to 2<sup>200</sup>.
+
+```go
+a := 1r << 200
+b := bigint(1 << 200)
+```
+
+By default, `1r` will have the type of `bigint`.
+
+And `4/5r` means the rational constant `4/5`.
+It will have the type of `bigrat`.
+
+```go
+a := 4/5r
+b := a - 1/3r + 3 * 1/2r
+println a, b // 4/5 59/30
+```
+
+Casting rational numbers works the same way:
+
+```go
+a := 1r
+b := bigrat(1r)
+c := bigrat(1)
+println a/3 // 0
+println b/3 // 1/3
+println c/3 // 1/3
+```
+
+### Convert bool to number types
+
+```go
+println int(true)       // 1
+println float64(true)   // 1
+println complex64(true) // (1+0i)
+```
+
+### Slices
+
+A slice is a collection of data elements of the same type. An slice literal is a
+list of expressions surrounded by square brackets. An individual element can be
+accessed using an *index* expression. Indexes start from `0`:
+
+```go
+nums := [1, 2, 3]
+println nums     // [1 2 3]
+println nums[0]  // 1
+println nums.len // 3
+
+nums[1] = 5
+println nums // [1 5 3]
+```
+
+
+
+
 
 
 ## Summary about Go+
