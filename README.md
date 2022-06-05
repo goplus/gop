@@ -13,7 +13,7 @@
 * **For STEM education**: studying an engineering language that can be used for work in the future.
 * **For data science**: communicating with engineers in the same language.
 
-## Go+ vs. Go
+## Go vs. Go+
 
 What's the difference between Go and Go+?
 
