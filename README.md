@@ -164,7 +164,7 @@ To choose a different type, use type conversion:
 the expression `T(v)` converts the value `v` to the
 type `T`.
 
-### Initialization vs assignment
+### Initialization vs. assignment
 
 Note the (important) difference between `:=` and `=`.
 `:=` is used for declaring and initializing, `=` is used for assigning.
