@@ -96,6 +96,7 @@ Here is my `Hello world` program:
     * [Select data from a collection](#select-data-from-a-collection)
     * [Check if data exists in a collection](#check-if-data-exists-in-a-collection)
 * [Unix shebang](#unix-shebang)
+* [Compatibility with Go](#compatibility-with-go)
 
 </td></tr>
 </table>
@@ -899,6 +900,9 @@ println {v: k for k, v <- foo}
 
 **Note: you can't use break/continue or return statements in for range of udt.Gop_Enum(callback).**
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+
 #### For range of UDT2
 
 ```go
@@ -931,6 +935,9 @@ for k, v <- foo {
 println {v: k for k, v <- foo}
 ```
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+
 ### Deduce struct type
 
 ```go
@@ -959,6 +966,9 @@ func foo() *Result {
     return {Text: "Hi, Go+"} // return &Result{Text: "Hi, Go+"}
 }
 ```
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
 
 ### Overload operators
 
@@ -991,6 +1001,9 @@ println a + Int(3r)
 println -a
 ```
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+
 ### Auto property
 
 Let's see an example written in Go+:
@@ -1017,6 +1030,7 @@ println doc.any.funcDecl.name
 
 In Go+, we introduce a concept named `auto property`. It is a `get property`, but is implemented automatically. If we have a method named `Bar()`, then we will have a `get property` named `bar` at the same time.
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
 ## Data processing
 
@@ -1098,7 +1112,7 @@ println [k for k, _ <- m]
 println [v for v <- m]
 ```
 
-Go [20-Unix-Shebang/shebang](https://github.com/goplus/tutorial/blob/main/20-Unix-Shebang/shebang) to get the source code.
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
 
 ## Compatibility with Go
@@ -1155,6 +1169,8 @@ gop install -v ./...
 ```
 
 Go [github.com/goplus/tutorial/14-Using-goplus-in-Go](https://github.com/goplus/tutorial/tree/main/14-Using-goplus-in-Go) to get the source code.
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
 
 ## Bytecode vs. Go code
