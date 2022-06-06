@@ -50,7 +50,7 @@ Actually, `all.bash` and `all.bat` will use `go run cmd/make.go` underneath.
 
 ## Running in Go+ playground
 
-If you don't want install Go+, you can run this your Go+ program in Go+ playground.
+If you don't want install Go+, you can write your Go+ programs in Go+ playground. This is the fastest way to experience Go+.
 
 * Go+ playground based on Docker: https://play.goplus.org/
 * Go+ playground based on GopherJS: https://jsplay.goplus.org/
