@@ -258,7 +258,7 @@ func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 		if v.Tok == token.ASSIGN {
 			tok = v.Tok
 		}
-		compileForStmt(ctx, toForStmt(v.For, v.Key, v.Body, re, tok))
+		compileForStmt(ctx, toForStmt(v.For, v.Key, v.Body, re, tok, nil))
 		return
 	}
 	cb := ctx.cb
@@ -306,7 +306,7 @@ func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 
 func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
 	if re, ok := v.X.(*ast.RangeExpr); ok {
-		compileForStmt(ctx, toForStmt(v.For, v.Value, v.Body, re, token.DEFINE))
+		compileForStmt(ctx, toForStmt(v.For, v.Value, v.Body, re, token.DEFINE, v.ForPhrase))
 		return
 	}
 	cb := ctx.cb
@@ -338,7 +338,7 @@ func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
 	cb.End()
 }
 
-func toForStmt(forPos token.Pos, value ast.Expr, body *ast.BlockStmt, re *ast.RangeExpr, tok token.Token) *ast.ForStmt {
+func toForStmt(forPos token.Pos, value ast.Expr, body *ast.BlockStmt, re *ast.RangeExpr, tok token.Token, fp *ast.ForPhrase) *ast.ForStmt {
 	nilIdent := value == nil
 	if !nilIdent {
 		if v, ok := value.(*ast.Ident); ok && v.Name == "_" {
@@ -348,11 +348,12 @@ func toForStmt(forPos token.Pos, value ast.Expr, body *ast.BlockStmt, re *ast.Ra
 	if nilIdent {
 		value = &ast.Ident{NamePos: forPos, Name: "_gop_k"}
 	}
-	if re.First == nil {
-		re.First = &ast.BasicLit{ValuePos: forPos, Kind: token.INT, Value: "0"}
+	first := re.First
+	if first == nil {
+		first = &ast.BasicLit{ValuePos: forPos, Kind: token.INT, Value: "0"}
 	}
 	initLhs := []ast.Expr{value}
-	initRhs := []ast.Expr{re.First}
+	initRhs := []ast.Expr{first}
 	replaceValue := false
 	var cond ast.Expr
 	var post ast.Expr
@@ -389,6 +390,16 @@ func toForStmt(forPos token.Pos, value ast.Expr, body *ast.BlockStmt, re *ast.Ra
 			Rhs:    []ast.Expr{value},
 		}}, body.List...)
 		tok = token.DEFINE
+	}
+	if fp != nil && fp.Cond != nil {
+		condStmt := &ast.IfStmt{
+			Init: fp.Init,
+			Cond: fp.Cond,
+			Body: body,
+		}
+		body = &ast.BlockStmt{
+			List: []ast.Stmt{condStmt},
+		}
 	}
 	return &ast.ForStmt{
 		For: forPos,
