@@ -763,6 +763,8 @@ And the most interesting thing is, the return error contains the full error stac
 
 How these `ErrWrap expressions` work? See [Error Handling](https://github.com/goplus/gop/wiki/Error-Handling) for more information.
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
 
 ## Functions
 
