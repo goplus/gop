@@ -56,7 +56,8 @@ If you don't want install Go+, you can write your Go+ programs in Go+ playground
 * Go+ playground based on GopherJS: https://jsplay.goplus.org/
 
 And you can share your Go+ code with your friends.
-Here is my `Hello world` program: https://play.goplus.org/p/AAh_gQAKAZR.
+Here is my `Hello world` program:
+* https://play.goplus.org/p/AAh_gQAKAZR.
 
 
 ## Table of Contents
