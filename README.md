@@ -89,6 +89,8 @@ Here is my `Hello world` program: https://play.goplus.org/p/AAh_gQAKAZR.
 * [Functions](#functions)
     * [Returning multiple values](#returning-multiple-values)
     * [Variable number of arguments](#variable-number-of-arguments)
+    * [Higher order functions](#higher-order-functions)
+    * [Lambda expressions](#lambda-expressions)
 * [Structs](#structs)
 * [Error handling](#error-handling)
 * [Unix shebang](#unix-shebang)
@@ -752,7 +754,7 @@ y := transform([1, 2, 3], square)
 println y // [1 4 9]
 ```
 
-### Lambda expression
+### Lambda expressions
 
 You also can use `lambda expression` to define a anonymous function.
 
