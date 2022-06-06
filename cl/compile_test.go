@@ -149,7 +149,25 @@ var x string = c.Str()
 `)
 }
 
-func Test_Issue1240(t *testing.T) {
+func Test_RangeExpressionIf_Issue1243(t *testing.T) {
+	gopClTest(t, `
+for i <- :10, i%3 == 0 {
+	println i
+}`, `package main
+
+import fmt "fmt"
+
+func main() {
+	for i := 0; i < 10; i += 1 {
+		if i%3 == 0 {
+			fmt.Println(i)
+		}
+	}
+}
+`)
+}
+
+func Test_CastSlice_Issue1240(t *testing.T) {
 	gopClTest(t, `
 type fvec []float64
 type foo float64
