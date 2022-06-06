@@ -79,7 +79,7 @@ Here is my `Hello world` program:
 </td><td width=33% valign=top>
 
 * [Statements & expressions](#statements--expressions)
-    * [If](#if)
+    * [If..else](#ifelse)
     * [For loop](#for-loop)
     * [List comprehension](#list-comprehension)
     * [Select data from a collection](#select-data-from-a-collection)
@@ -517,7 +517,7 @@ println x // Hello, world!!!
 ## Statements & expressions
 
 
-### If
+### If..else
 
 In Go+, `if` statements are pretty straightforward and similar to most other languages.
 Unlike other C-like languages,
