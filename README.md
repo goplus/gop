@@ -81,19 +81,20 @@ Here is my `Hello world` program:
 * [Statements & expressions](#statements--expressions)
     * [If..else](#ifelse)
     * [For loop](#for-loop)
-    * [List comprehension](#list-comprehension)
-    * [Select data from a collection](#select-data-from-a-collection)
-    * [Check if data exists in a collection](#check-if-data-exists-in-a-collection)
-
-</td><td valign=top>
-
+    * [Error handling](#error-handling)
 * [Functions](#functions)
     * [Returning multiple values](#returning-multiple-values)
     * [Variadic parameters](#variadic-parameters)
     * [Higher order functions](#higher-order-functions)
     * [Lambda expressions](#lambda-expressions)
+
+</td><td valign=top>
+
 * [Structs](#structs)
-* [Error handling](#error-handling)
+* [Data processing](#data-processing)
+    * [List comprehension](#list-comprehension)
+    * [Select data from a collection](#select-data-from-a-collection)
+    * [Check if data exists in a collection](#check-if-data-exists-in-a-collection)
 * [Unix shebang](#unix-shebang)
 
 </td></tr>
@@ -710,57 +711,57 @@ The condition can be omitted, resulting in an infinite loop. You can use `break`
 <h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
 
-### List comprehension
+### Error handling
+
+We reinvent the error handling specification in Go+. We call them `ErrWrap expressions`:
 
 ```go
-a := [x*x for x <- [1, 3, 5, 7, 11]]
-b := [x*x for x <- [1, 3, 5, 7, 11] if x > 3]
-c := [i+v for i, v <- [1, 3, 5, 7, 11] if i%2 == 1]
-
-arr := [1, 2, 3, 4, 5, 6]
-d := [[a, b] for a <- arr if a < b for b <- arr if b > 2]
-
-x := {x: i for i, x <- [1, 3, 5, 7, 11]}
-y := {x: i for i, x <- [1, 3, 5, 7, 11] if i%2 == 1}
-z := {v: k for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "Go+"} if k > 3}
+expr! // panic if err
+expr? // return if err
+expr?:defval // use defval if err
 ```
 
-<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
-
-
-### Select data from a collection
+How to use them? Here is an example:
 
 ```go
-type student struct {
-    name  string
-    score int
+import (
+    "strconv"
+)
+
+func add(x, y string) (int, error) {
+    return strconv.Atoi(x)? + strconv.Atoi(y)?, nil
 }
 
-students := [student{"Ken", 90}, student{"Jason", 80}, student{"Lily", 85}]
-
-unknownScore, ok := {x.score for x <- students if x.name == "Unknown"}
-jasonScore := {x.score for x <- students if x.name == "Jason"}
-
-println unknownScore, ok // 0 false
-println jasonScore // 80
-```
-
-<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
-
-
-### Check if data exists in a collection
-
-```go
-type student struct {
-    name  string
-    score int
+func addSafe(x, y string) int {
+    return strconv.Atoi(x)?:0 + strconv.Atoi(y)?:0
 }
 
-students := [student{"Ken", 90}, student{"Jason", 80}, student{"Lily", 85}]
+println `add("100", "23"):`, add("100", "23")!
 
-hasJason := {for x <- students if x.name == "Jason"} // is any student named Jason?
-hasFailed := {for x <- students if x.score < 60}     // is any student failed?
+sum, err := add("10", "abc")
+println `add("10", "abc"):`, sum, err
+
+println `addSafe("10", "abc"):`, addSafe("10", "abc")
 ```
+
+The output of this example is:
+
+```
+add("100", "23"): 123
+add("10", "abc"): 0 strconv.Atoi: parsing "abc": invalid syntax
+
+===> errors stack:
+main.add("10", "abc")
+    /Users/xsw/tutorial/15-ErrWrap/err_wrap.gop:6 strconv.Atoi(y)?
+
+addSafe("10", "abc"): 10
+```
+
+Compared to corresponding Go code, It is clear and more readable.
+
+And the most interesting thing is, the return error contains the full error stack. When we got an error, it is very easy to position what the root cause is.
+
+How these `ErrWrap expressions` work? See [Error Handling](https://github.com/goplus/gop/wiki/Error-Handling) for more information.
 
 <h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
@@ -1017,57 +1018,61 @@ println doc.any.funcDecl.name
 In Go+, we introduce a concept named `auto property`. It is a `get property`, but is implemented automatically. If we have a method named `Bar()`, then we will have a `get property` named `bar` at the same time.
 
 
-## Error handling
+## Data processing
 
-We reinvent the error handling specification in Go+. We call them `ErrWrap expressions`:
-
-```go
-expr! // panic if err
-expr? // return if err
-expr?:defval // use defval if err
-```
-
-How to use them? Here is an example:
+### List comprehension
 
 ```go
-import (
-    "strconv"
-)
+a := [x*x for x <- [1, 3, 5, 7, 11]]
+b := [x*x for x <- [1, 3, 5, 7, 11] if x > 3]
+c := [i+v for i, v <- [1, 3, 5, 7, 11] if i%2 == 1]
 
-func add(x, y string) (int, error) {
-    return strconv.Atoi(x)? + strconv.Atoi(y)?, nil
+arr := [1, 2, 3, 4, 5, 6]
+d := [[a, b] for a <- arr if a < b for b <- arr if b > 2]
+
+x := {x: i for i, x <- [1, 3, 5, 7, 11]}
+y := {x: i for i, x <- [1, 3, 5, 7, 11] if i%2 == 1}
+z := {v: k for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "Go+"} if k > 3}
+```
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+
+### Select data from a collection
+
+```go
+type student struct {
+    name  string
+    score int
 }
 
-func addSafe(x, y string) int {
-    return strconv.Atoi(x)?:0 + strconv.Atoi(y)?:0
+students := [student{"Ken", 90}, student{"Jason", 80}, student{"Lily", 85}]
+
+unknownScore, ok := {x.score for x <- students if x.name == "Unknown"}
+jasonScore := {x.score for x <- students if x.name == "Jason"}
+
+println unknownScore, ok // 0 false
+println jasonScore // 80
+```
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+
+### Check if data exists in a collection
+
+```go
+type student struct {
+    name  string
+    score int
 }
 
-println `add("100", "23"):`, add("100", "23")!
+students := [student{"Ken", 90}, student{"Jason", 80}, student{"Lily", 85}]
 
-sum, err := add("10", "abc")
-println `add("10", "abc"):`, sum, err
-
-println `addSafe("10", "abc"):`, addSafe("10", "abc")
+hasJason := {for x <- students if x.name == "Jason"} // is any student named Jason?
+hasFailed := {for x <- students if x.score < 60}     // is any student failed?
 ```
 
-The output of this example is:
-
-```
-add("100", "23"): 123
-add("10", "abc"): 0 strconv.Atoi: parsing "abc": invalid syntax
-
-===> errors stack:
-main.add("10", "abc")
-    /Users/xsw/tutorial/15-ErrWrap/err_wrap.gop:6 strconv.Atoi(y)?
-
-addSafe("10", "abc"): 10
-```
-
-Compared to corresponding Go code, It is clear and more readable.
-
-And the most interesting thing is, the return error contains the full error stack. When we got an error, it is very easy to position what the root cause is.
-
-How these `ErrWrap expressions` work? See [Error Handling](https://github.com/goplus/gop/wiki/Error-Handling) for more information.
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
 
 ## Unix shebang
