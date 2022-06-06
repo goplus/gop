@@ -544,13 +544,13 @@ Go+ has only one looping keyword: `for`, with several forms.
 
 #### `for`/`<-`
 
-This is the most common form. You can use it with an slice, map, numeric range or custom iterators.
+This is the most common form. You can use it with a slice, map, numeric range or custom iterators.
 
 For information about creating a custom iterators, see [Custom iterators](#custom-iterators).
 
 ##### Slice `for`
 
-The `for value <- arr` form is used for going through elements of an slice.
+The `for value <- arr` form is used for going through elements of a slice.
 
 ```go
 numbers := [1, 3, 5, 7, 11, 13, 17]
@@ -870,7 +870,9 @@ println z // [3 1 5]
 
 ## Structs
 
-### For range of UDT
+### Custom iterators
+
+#### For range of UDT
 
 ```go
 type Foo struct {
@@ -896,8 +898,7 @@ println {v: k for k, v <- foo}
 
 **Note: you can't use break/continue or return statements in for range of udt.Gop_Enum(callback).**
 
-
-### For range of UDT2
+#### For range of UDT2
 
 ```go
 type FooIter struct {
