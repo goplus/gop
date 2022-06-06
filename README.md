@@ -77,6 +77,15 @@ Here is my `Hello world` program: https://play.goplus.org/p/AAh_gQAKAZR.
 * [Statements & expressions](#statements--expressions)
     * [If](#if)
     * [For loop](#for-loop)
+    * [List comprehension](#list-comprehension)
+    * [Select data from a collection](#select-data-from-a-collection)
+    * [Check if data exists in a collection](#check-if-data-exists-in-a-collection)
+* [Functions](#functions)
+    * [Returning multiple values](#returning-multiple-values)
+    * [Variable number of arguments](#variable-number-of-arguments)
+# [Structs](#structs)
+# [Error handling](#error-handling)
+# [Unix shebang](#unix-shebang)
 
 </td><td width=33% valign=top>
 
@@ -570,6 +579,14 @@ for num <- numbers if num%3 == 0 {
     // 6
     // 9
 }
+
+for num <- :10 if num%3 == 0 {
+    println num
+    // 0
+    // 3
+    // 6
+    // 9
+}
 ```
 
 #### Condition `for`
@@ -619,34 +636,144 @@ for {
 
 The condition can be omitted, resulting in an infinite loop. You can use `break` or `return` to end the loop.
 
-
-
-
-
-
-
-
-
-### Range expression (`start:end:step`)
+### List comprehension
 
 ```go
-for i <- :10 {
-    println i
-}
+a := [x*x for x <- [1, 3, 5, 7, 11]]
+b := [x*x for x <- [1, 3, 5, 7, 11] if x > 3]
+c := [i+v for i, v <- [1, 3, 5, 7, 11] if i%2 == 1]
 
-for i := range :10:2 {
-    println i
-}
+arr := [1, 2, 3, 4, 5, 6]
+d := [[a, b] for a <- arr if a < b for b <- arr if b > 2]
 
-for i := range 1:10:3 {
-    println i
-}
-
-for range :10 {
-    println "Range expression"
-}
+x := {x: i for i, x <- [1, 3, 5, 7, 11]}
+y := {x: i for i, x <- [1, 3, 5, 7, 11] if i%2 == 1}
+z := {v: k for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "Go+"} if k > 3}
 ```
 
+### Select data from a collection
+
+```go
+type student struct {
+    name  string
+    score int
+}
+
+students := [student{"Ken", 90}, student{"Jason", 80}, student{"Lily", 85}]
+
+unknownScore, ok := {x.score for x <- students if x.name == "Unknown"}
+jasonScore := {x.score for x <- students if x.name == "Jason"}
+
+println unknownScore, ok // 0 false
+println jasonScore // 80
+```
+
+### Check if data exists in a collection
+
+```go
+type student struct {
+    name  string
+    score int
+}
+
+students := [student{"Ken", 90}, student{"Jason", 80}, student{"Lily", 85}]
+
+hasJason := {for x <- students if x.name == "Jason"} // is any student named Jason?
+hasFailed := {for x <- students if x.score < 60}     // is any student failed?
+```
+
+
+## Functions
+
+```go
+func add(x int, y int) int {
+	return x + y
+}
+
+println add(2, 3) // 5
+```
+
+### Returning multiple values
+
+```go
+func foo() (int, int) {
+	return 2, 3
+}
+
+a, b := foo()
+println a // 2
+println b // 3
+c, _ := foo() // ignore values using `_`
+```
+
+### Variable number of arguments
+
+```go
+func sum(a ...int) int {
+    total := 0
+	for x <- a {
+		total += x
+	}
+	return total
+}
+
+println sum(2, 3, 5) // 10
+```
+
+Output parameters can have names.
+
+```go
+func sum(a ...int) (total int) {
+	for x <- a {
+		total += x
+	}
+	return // don't need return values if they are assigned
+}
+
+println sum(2, 3, 5) // 10
+```
+
+### Higher order functions
+
+Functions can also be parameters.
+
+```go
+func square(x float64) float64 {
+    return x*x
+}
+
+func transform(a []float64, f func(float64) float64) []float64 {
+    return [f(x) for x <- a]
+}
+
+y := transform([1, 2, 3], square)
+println y // [1 4 9]
+```
+
+### Lambda expression
+
+You also can use `lambda expression` to define a anonymous function.
+
+```go
+func transform(a []float64, f func(float64) float64) []float64 {
+    return [f(x) for x <- a]
+}
+
+y := transform([1, 2, 3], x => x*x)
+println y // [1 4 9]
+
+z := transform([-3, 1, -5], x => {
+    if x < 0 {
+        return -x
+    }
+    return x
+})
+println z // [3 1 5]
+```
+
+
+
+## Structs
 
 ### For range of UDT
 
@@ -705,67 +832,6 @@ for k, v <- foo {
 }
 
 println {v: k for k, v <- foo}
-```
-
-### List comprehension
-
-```go
-a := [x*x for x <- [1, 3, 5, 7, 11]]
-b := [x*x for x <- [1, 3, 5, 7, 11] if x > 3]
-c := [i+v for i, v <- [1, 3, 5, 7, 11] if i%2 == 1]
-
-arr := [1, 2, 3, 4, 5, 6]
-d := [[a, b] for a <- arr if a < b for b <- arr if b > 2]
-
-x := {x: i for i, x <- [1, 3, 5, 7, 11]}
-y := {x: i for i, x <- [1, 3, 5, 7, 11] if i%2 == 1}
-z := {v: k for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "Go+"} if k > 3}
-```
-
-### Select data from a collection
-
-```go
-type student struct {
-    name  string
-    score int
-}
-
-students := [student{"Ken", 90}, student{"Jason", 80}, student{"Lily", 85}]
-
-unknownScore, ok := {x.score for x <- students if x.name == "Unknown"}
-jasonScore := {x.score for x <- students if x.name == "Jason"}
-
-println unknownScore, ok // output: 0 false
-println jasonScore // output: 80
-```
-
-### Check if data exists in a collection
-
-```go
-type student struct {
-    name  string
-    score int
-}
-
-students := [student{"Ken", 90}, student{"Jason", 80}, student{"Lily", 85}]
-
-hasJason := {for x <- students if x.name == "Jason"} // is any student named Jason?
-hasFailed := {for x <- students if x.score < 60}     // is any student failed?
-```
-
-### Lambda expression
-
-```go
-func plot(fn func(x float64) float64) {
-    // ...
-}
-
-func plot2(fn func(x float64) (float64, float64)) {
-    // ...
-}
-
-plot x => x * x           // plot(func(x float64) float64 { return x * x })
-plot2 x => (x * x, x + x) // plot2(func(x float64) (float64, float64) { return x * x, x + x })
 ```
 
 ### Deduce struct type
@@ -828,8 +894,34 @@ println a + Int(3r)
 println -a
 ```
 
+### Auto property
 
-### Error handling
+Let's see an example written in Go+:
+
+```go
+import "gop/ast/goptest"
+
+doc := goptest.New(`... Go+ code ...`)!
+
+println doc.Any().FuncDecl().Name()
+```
+
+In many languages, there is a concept named `property` who has `get` and `set` methods.
+
+Suppose we have `get property`, the above example will be:
+
+```go
+import "gop/ast/goptest"
+
+doc := goptest.New(`... Go+ code ...`)!
+
+println doc.any.funcDecl.name
+```
+
+In Go+, we introduce a concept named `auto property`. It is a `get property`, but is implemented automatically. If we have a method named `Bar()`, then we will have a `get property` named `bar` at the same time.
+
+
+## Error handling
 
 We reinvent the error handling specification in Go+. We call them `ErrWrap expressions`:
 
@@ -882,34 +974,7 @@ And the most interesting thing is, the return error contains the full error stac
 How these `ErrWrap expressions` work? See [Error Handling](https://github.com/goplus/gop/wiki/Error-Handling) for more information.
 
 
-### Auto property
-
-Let's see an example written in Go+:
-
-```go
-import "gop/ast/goptest"
-
-doc := goptest.New(`... Go+ code ...`)!
-
-println doc.Any().FuncDecl().Name()
-```
-
-In many languages, there is a concept named `property` who has `get` and `set` methods.
-
-Suppose we have `get property`, the above example will be:
-
-```go
-import "gop/ast/goptest"
-
-doc := goptest.New(`... Go+ code ...`)!
-
-println doc.any.funcDecl.name
-```
-
-In Go+, we introduce a concept named `auto property`. It is a `get property`, but is implemented automatically. If we have a method named `Bar()`, then we will have a `get property` named `bar` at the same time.
-
-
-### Unix shebang
+## Unix shebang
 
 You can use Go+ programs as shell scripts now. For example:
 
@@ -933,11 +998,6 @@ println [v for v <- m]
 ```
 
 Go [20-Unix-Shebang/shebang](https://github.com/goplus/tutorial/blob/main/20-Unix-Shebang/shebang) to get the source code.
-
-
-## Tutorials
-
-* https://tutorial.goplus.org/
 
 
 ## Compatibility with Go
@@ -1024,6 +1084,11 @@ In bytecode mode, Go+ doesn't support `cgo`. However, in Go-code-generation mode
 ## IDE Plugins
 
 * vscode: https://github.com/gopcode/vscode-goplus
+
+
+## Tutorials
+
+* https://tutorial.goplus.org/
 
 
 ## Contributing
