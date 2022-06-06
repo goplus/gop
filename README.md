@@ -74,22 +74,24 @@ Here is my `Hello world` program: https://play.goplus.org/p/AAh_gQAKAZR.
     * [Slices](#slices)
     * [Maps](#maps)
 * [Module imports](#module-imports)
+
+</td><td width=33% valign=top>
+
 * [Statements & expressions](#statements--expressions)
     * [If](#if)
     * [For loop](#for-loop)
     * [List comprehension](#list-comprehension)
     * [Select data from a collection](#select-data-from-a-collection)
     * [Check if data exists in a collection](#check-if-data-exists-in-a-collection)
+
+</td><td valign=top>
+
 * [Functions](#functions)
     * [Returning multiple values](#returning-multiple-values)
     * [Variable number of arguments](#variable-number-of-arguments)
-# [Structs](#structs)
-# [Error handling](#error-handling)
-# [Unix shebang](#unix-shebang)
-
-</td><td width=33% valign=top>
-
-</td><td valign=top>
+* [Structs](#structs)
+* [Error handling](#error-handling)
+* [Unix shebang](#unix-shebang)
 
 </td></tr>
 </table>
