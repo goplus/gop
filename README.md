@@ -87,11 +87,12 @@ Here is my `Hello world` program:
     * [Variadic parameters](#variadic-parameters)
     * [Higher order functions](#higher-order-functions)
     * [Lambda expressions](#lambda-expressions)
+* [Structs](#structs)
 
 </td><td valign=top>
 
-* [Structs](#structs)
 * [Go/Go+ hybrid programming](#gogo-hybrid-programming)
+* [Calling C from Go+](#calling-c-from-go)
 * [Data processing](#data-processing)
     * [List comprehension](#list-comprehension)
     * [Select data from a collection](#select-data-from-a-collection)
@@ -1046,7 +1047,7 @@ In Go+, we introduce a concept named `auto property`. It is a `get property`, bu
 
 ## Go/Go+ hybrid programming
 
-This is an example to show how to mix Go/Go+ programming in the same package.
+This is an example to show how to mix Go/Go+ code in the same package.
 
 In this example, we have a Go source file named `a.go`:
 
@@ -1073,12 +1074,42 @@ p "world"
 
 You can see that Go calls a Go+ function named `sayMix`, and Go+ calls a Go function named `p`. As you are used to in Go programming, this kind of circular reference is allowed.
 
-The output of this example is as follows:
+Run `gop run .` to see the output of this example:
 
 ```
 Mix Go and Go+
 Hello, world
 ```
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+## Calling C from Go+
+
+- The `gop c` command (equivalent to the stand-alone `c2go` command) can be used to convert a C project to a Go project.
+- `import "C"` and `import "C/xxx"` are used to import a C project converted by c2go. where `import "C"` is short for `import "C/github.com/goplus/libc"`.
+- The `C"xxx"` syntax represents C-style string constants.
+
+Here is [an example to show how Go+ interacts with C](https://github.com/goplus/gop/tree/v1.1/testdata/helloc2go).
+
+```go
+import "C"
+
+C.printf C"Hello, c2go!\n"
+C.fprintf C.stderr, C"Hi, %7.1f\n", 3.14
+```
+
+In this example we call two C standard functions `printf` and `fprintf`, passing a C variable `stderr` and two C strings in the form of `C"xxx"` (a Go+ syntax to represent C-style strings).
+
+Run `gop run .` to see the output of this example:
+
+```
+Hello, c2go!
+Hi,     3.1
+```
+
+Of course, the current Go+ support for C is only a preview version, not to the extent that it is actually available in engineering. As far as libc is concerned, the current migration progress is only about 5%, and it is just the beginning.
+
+In the upcoming Go+ v1.2 version planning, complete support for C is listed as a top priority. Of course, support for cgo and Go templates is also under planning, which is a crucial capability enhancement for Go/Go+ hybrid projects.
 
 <h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
