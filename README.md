@@ -91,6 +91,7 @@ Here is my `Hello world` program:
 </td><td valign=top>
 
 * [Structs](#structs)
+* [Go/Go+ hybrid programming](#gogo-hybrid-programming)
 * [Data processing](#data-processing)
     * [List comprehension](#list-comprehension)
     * [Select data from a collection](#select-data-from-a-collection)
@@ -835,12 +836,22 @@ func square(x float64) float64 {
     return x*x
 }
 
+func abs(x float64) float64 {
+    if x < 0 {
+        return -x
+    }
+    return x
+}
+
 func transform(a []float64, f func(float64) float64) []float64 {
     return [f(x) for x <- a]
 }
 
 y := transform([1, 2, 3], square)
 println y // [1 4 9]
+
+z := transform([-3, 1, -5], abs)
+println z // [3 1 5]
 ```
 
 <h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
@@ -1031,6 +1042,46 @@ println doc.any.funcDecl.name
 In Go+, we introduce a concept named `auto property`. It is a `get property`, but is implemented automatically. If we have a method named `Bar()`, then we will have a `get property` named `bar` at the same time.
 
 <h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+
+## Go/Go+ hybrid programming
+
+This is an example to show how to mix Go/Go+ programming in the same package.
+
+In this example, we have a Go source file named `a.go`:
+
+```go
+package main
+
+import "fmt"
+
+func p(a interface{}) {
+	sayMix()
+	fmt.Println("Hello,", a)
+}
+```
+
+And we have a Go+ source file named `b.gop`:
+
+```go
+func sayMix() {
+	println "Mix Go and Go+"
+}
+
+p "world"
+```
+
+You can see that Go calls a Go+ function named `sayMix`, and Go+ calls a Go function named `p`. As you are used to in Go programming, this kind of circular reference is allowed.
+
+The output of this example is as follows:
+
+```
+Mix Go and Go+
+Hello, world
+```
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
 
 ## Data processing
 
