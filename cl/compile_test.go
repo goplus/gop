@@ -156,7 +156,8 @@ type foo float64
 a := []float64([1, 2])
 b := fvec([1, 2])
 c := foo([1, 2])
-println a, b, c
+d := fvec([])
+println a, b, c, d
 `, `package main
 
 import fmt "fmt"
@@ -168,7 +169,8 @@ func main() {
 	a := []float64{1, 2}
 	b := fvec{1, 2}
 	c := foo([]int{1, 2})
-	fmt.Println(a, b, c)
+	d := fvec{}
+	fmt.Println(a, b, c, d)
 }
 `)
 }

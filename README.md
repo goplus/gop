@@ -48,6 +48,44 @@ all.bat
 Actually, `all.bash` and `all.bat` will use `go run cmd/make.go` underneath.
 
 
+## Running in Go+ playground
+
+If you don't want install Go+, you can run this your Go+ program in Go+ playground.
+
+* Go+ playground based on Docker: https://play.goplus.org/
+* Go+ playground based on GopherJS: https://jsplay.goplus.org/
+
+And you can share your Go+ code with your friends.
+Here is my `Hello world` program: https://play.goplus.org/p/AAh_gQAKAZR.
+
+
+## Table of Contents
+
+<table>
+    <tr><td width=33% valign=top>
+
+* [Hello world](#hello-world)
+* [Running a project folder](#running-a-project-folder-with-several-files)
+* [Comments](#comments)
+* [Variables](#variables)
+* [Go+ types](#go-types)
+    * [Strings](#strings)
+    * [Numbers](#numbers)
+    * [Slices](#slices)
+    * [Maps](#maps)
+* [Module imports](#module-imports)
+* [Statements & expressions](#statements--expressions)
+    * [If](#if)
+    * [For loop](#for-loop)
+
+</td><td width=33% valign=top>
+
+</td><td valign=top>
+
+</td></tr>
+</table>
+
+
 ## Hello World
 
 ```go
@@ -172,6 +210,8 @@ name := "Bob"
 println name.len  // 3
 println name[0]   // 66
 println name[1:3] // ob
+println name[:2]  // Bo
+println name[2:]  // b
 
 // or using octal escape `\###` notation where `#` is an octal digit
 println "\141a"   // aa
@@ -198,7 +238,7 @@ a, err := s.int
 b := s.int! // will panic if s isn't a valid integer
 ```
 
-### String operators
+#### String operators
 
 ```go
 name := "Bob"
@@ -319,7 +359,7 @@ println b/3 // 1/3
 println c/3 // 1/3
 ```
 
-### Convert bool to number types
+#### Convert bool to number types
 
 ```go
 println int(true)       // 1
@@ -329,320 +369,262 @@ println complex64(true) // (1+0i)
 
 ### Slices
 
-A slice is a collection of data elements of the same type. An slice literal is a
+A slice is a collection of data elements of the same type. A slice literal is a
 list of expressions surrounded by square brackets. An individual element can be
 accessed using an *index* expression. Indexes start from `0`:
 
 ```go
 nums := [1, 2, 3]
-println nums     // [1 2 3]
-println nums[0]  // 1
-println nums.len // 3
+println nums      // [1 2 3]
+println nums.len  // 3
+println nums[0]   // 1
+println nums[1:3] // [2 3]
+println nums[:2]  // [1 2]
+println nums[2:]  // [3]
 
 nums[1] = 5
 println nums // [1 5 3]
 ```
 
-
-
-
-
-
-## Summary about Go+
-
-What are mainly impressions about Go+?
-
-- A static typed language.
-- Fully compatible with [the Go language](https://github.com/golang/go).
-- Script-like style, and more readable code than Go.
-
-For example, the following is legal Go+ source code:
-
-```coffee
-println [1, 2, 3.4]
-```
-
-How do we do this in the Go language?
+Type of a slice literal is infered automatically.
 
 ```go
-package main
+a := [1, 2, 3]   // []int
+b := [1, 2, 3.4] // []float64
+c := ["Hi"]      // []string
+d := ["Hi", 10]  // []any
+d := []          // []any
+```
 
-import "fmt"
+And casting slices also works.
 
-func main() {
-    fmt.Println([]float64{1, 2, 3.4})
+```go
+a := []float64([1, 2, 3]) // []float64
+```
+
+### Maps
+
+```go
+a := {"Hello": 1, "xsw": 3}     // map[string]int
+b := {"Hello": 1, "xsw": 3.4}   // map[string]float64
+c := {"Hello": 1, "xsw": "Go+"} // map[string]any
+d := {}                         // map[string]any
+```
+
+If a key is not found, a zero value is returned by default:
+
+```go
+a := {"Hello": 1, "xsw": 3}
+c := {"Hello": 1, "xsw": "Go+"}
+println a["bad_key"] // 0
+println c["bad_key"] // <nil>
+```
+
+You can also check, if a key is present, and get its value.
+
+```go
+a := {"Hello": 1, "xsw": 3}
+if v, ok := a["xsw"]; ok {
+    println "its value is", v
 }
 ```
 
-Of course, we don't only do less-typing things.
+## Module imports
 
-For example, we support [list comprehension](https://en.wikipedia.org/wiki/List_comprehension), which makes data processing easier.
+For information about creating a module, see [Modules](#modules).
 
-```go
-println [x*x for x <- 1:6:2] // output: [1 9 25]
-
-mapData := {"Hi": 1, "Hello": 2, "Go+": 3}
-reversedMap := {v: k for k, v <- mapData}
-println reversedMap // output: map[1:Hi 2:Hello 3:Go+]
-```
-
-We will keep Go+ simple. This is why we call it Go+, not Go++.
-
-Less is exponentially more.
-
-It's for Go, and it's also for Go+.
-
-
-## Tutorials
-
-* https://tutorial.goplus.org/
-
-
-## Playground
-
-Go+ Playground based on Docker:
-* https://play.goplus.org/
-
-Go+ Playground based on GopherJS:
-* https://jsplay.goplus.org/
-
-
-## Compatibility with Go
-
-All Go features will be supported (including partially support `cgo`, see [below](#bytecode-vs-go-code)).
-
-**All Go packages (even these packages use `cgo`) can be imported by Go+.**
-
-```coffee
-import (
-    "fmt"
-    "strings"
-)
-
-x := strings.NewReplacer("?", "!").Replace("hello, world???")
-fmt.Println "x:", x
-```
-
-**And all Go+ packages can also be imported in Go programs. What you need to do is just using `gop` command instead of `go`.**
-
-First, let's make a directory named `14-Using-goplus-in-Go`.
-
-Then write a Go+ package named [foo](https://github.com/goplus/tutorial/tree/main/14-Using-goplus-in-Go/foo) in it:
+Modules can be imported using the `import` keyword:
 
 ```go
-package foo
+import "strings"
 
-func ReverseMap(m map[string]int) map[int]string {
-    return {v: k for k, v <- m}
+x := strings.NewReplacer("?", "!").Replace("Hello, world???")
+println x // Hello, world!!!
+```
+
+### Module import aliasing
+
+Any imported module name can be aliased:
+
+```go
+import strop "strings"
+
+x := strop.NewReplacer("?", "!").Replace("Hello, world???")
+println x // Hello, world!!!
+```
+
+
+## Statements & expressions
+
+
+### If
+
+`if` statements are pretty straightforward and similar to most other languages.
+Unlike other C-like languages,
+there are no parentheses surrounding the condition and the braces are always required.
+
+```go
+a := 10
+b := 20
+if a < b {
+	println "a < b"
+} else if a > b {
+	println "a > b"
+} else {
+	println "a == b"
 }
-```
-
-Then use it in a Go package [14-Using-goplus-in-Go/gomain](https://github.com/goplus/tutorial/tree/main/14-Using-goplus-in-Go/gomain):
-
-```go
-package main
-
-import (
-    "fmt"
-
-    "github.com/goplus/tutorial/14-Using-goplus-in-Go/foo"
-)
-
-func main() {
-    rmap := foo.ReverseMap(map[string]int{"Hi": 1, "Hello": 2})
-    fmt.Println(rmap)
-}
-```
-
-How to build this example? You can use:
-
-```bash
-gop install -v ./...
-```
-
-Go [github.com/goplus/tutorial/14-Using-goplus-in-Go](https://github.com/goplus/tutorial/tree/main/14-Using-goplus-in-Go) to get the source code.
-
-
-## Bytecode vs. Go code
-
-Go+ supports bytecode backend and Go code generation.
-
-When we use `gop` command, it generates Go code to covert Go+ package into Go packages.
-
-```bash
-gop run     # Run a Go+ program
-gop install # Build Go+ files and install target to GOBIN
-gop build   # Build Go+ files
-gop test    # Test Go+ packages
-gop fmt     # Format Go+ packages
-gop clean   # Clean all Go+ auto generated files
-gop go      # Convert Go+ packages into Go packages
-```
-
-When we use [`igop`](https://github.com/goplus/igop) command, it generates bytecode to execute.
-
-```bash
-igop  # Run a Go+ program
-```
-
-In bytecode mode, Go+ doesn't support `cgo`. However, in Go-code-generation mode, Go+ fully supports `cgo`.
-
-
-## Go+ features
-
-### Rational number: bigint, bigrat, bigfloat
-
-We introduce the rational number as native Go+ types. We use suffix `r` to denote rational literals. For example, (1r << 200) means a big int whose value is equal to 2<sup>200</sup>. And 4/5r means the rational constant 4/5.
-
-```go
-var a bigint = 1r << 65  // bigint, large than int64
-var b bigrat = 4/5r      // bigrat
-c := b - 1/3r + 3 * 1/2r // bigrat
-println a, b, c
-
-var x *big.Int = 1r << 65 // (1r << 65) is untyped bigint, and can be assigned to *big.Int
-var y *big.Rat = 4/5r
-println x, y
-```
-
-### Large integer: uint128, int128
-
-```go
-var x uint128 = 1 << 65
-var y = x + 1
-println x // output: 36893488147419103232
-println y // output: 36893488147419103233
-```
-
-### Convert bool to number types
-
-```go
-println int(true)       // output: 1
-println float64(true)   // output: 1
-println complex64(true) // output: (1+0i)
-```
-
-### Map literal
-
-```go
-x := {"Hello": 1, "xsw": 3.4}   // map[string]float64
-y := {"Hello": 1, "xsw": "Go+"} // map[string]interface{}
-z := {"Hello": 1, "xsw": 3}     // map[string]int
-empty := {}                     // map[string]interface{}
-```
-
-### Slice literal
-
-```go
-x := [1, 3.4]       // []float64
-y := [1]            // []int
-z := [1+2i, "xsw"]  // []interface{}
-a := [1, 3.4, 3+4i] // []complex128
-b := [5+6i]         // []complex128
-c := ["xsw", 3]     // []interface{}
-empty := []         // []interface{}
-```
-
-### Lambda expression
-
-```go
-func plot(fn func(x float64) float64) {
-    // ...
-}
-
-func plot2(fn func(x float64) (float64, float64)) {
-    // ...
-}
-
-plot x => x * x           // plot(func(x float64) float64 { return x * x })
-plot2 x => (x * x, x + x) // plot2(func(x float64) (float64, float64) { return x * x, x + x })
-```
-
-### Deduce struct type
-
-```go
-type Config struct {
-    Dir   string
-    Level int
-}
-
-func foo(conf *Config) {
-    // ...
-}
-
-foo {Dir: "/foo/bar", Level: 1}
-```
-
-Here `foo {Dir: "/foo/bar", Level: 1}` is equivalent to `foo(&Config{Dir: "/foo/bar", Level: 1})`. However, you can't replace `foo(&Config{"/foo/bar", 1})` with `foo {"/foo/bar", 1}`, because it is confusing to consider `{"/foo/bar", 1}` as a struct literal.
-
-You also can omit struct types in a return statement. For example:
-
-```go
-type Result struct {
-    Text string
-}
-
-func foo() *Result {
-    return {Text: "Hi, Go+"} // return &Result{Text: "Hi, Go+"}
-}
-```
-
-
-### List comprehension
-
-```go
-a := [x*x for x <- [1, 3, 5, 7, 11]]
-b := [x*x for x <- [1, 3, 5, 7, 11], x > 3]
-c := [i+v for i, v <- [1, 3, 5, 7, 11], i%2 == 1]
-d := [k+","+s for k, s <- {"Hello": "xsw", "Hi": "Go+"}]
-
-arr := [1, 2, 3, 4, 5, 6]
-e := [[a, b] for a <- arr, a < b for b <- arr, b > 2]
-
-x := {x: i for i, x <- [1, 3, 5, 7, 11]}
-y := {x: i for i, x <- [1, 3, 5, 7, 11], i%2 == 1}
-z := {v: k for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "Go+"}, k > 3}
-```
-
-### Select data from a collection
-
-```go
-type student struct {
-    name  string
-    score int
-}
-
-students := [student{"Ken", 90}, student{"Jason", 80}, student{"Lily", 85}]
-
-unknownScore, ok := {x.score for x <- students, x.name == "Unknown"}
-jasonScore := {x.score for x <- students, x.name == "Jason"}
-
-println unknownScore, ok // output: 0 false
-println jasonScore // output: 80
-```
-
-### Check if data exists in a collection
-
-```go
-type student struct {
-    name  string
-    score int
-}
-
-students := [student{"Ken", 90}, student{"Jason", 80}, student{"Lily", 85}]
-
-hasJason := {for x <- students, x.name == "Jason"} // is any student named Jason?
-hasFailed := {for x <- students, x.score < 60}     // is any student failed?
 ```
 
 ### For loop
 
+Go+ has only one looping keyword: `for`, with several forms.
+
+#### `for`/`<-`
+
+This is the most common form. You can use it with an slice, map, numeric range or custom iterators.
+
+For information about creating a custom iterators, see [Custom iterators](#custom-iterators).
+
+##### Slice `for`
+
+The `for value <- arr` form is used for going through elements of an slice.
+
 ```go
+numbers := [1, 3, 5, 7, 11, 13, 17]
 sum := 0
-for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
+for x <- numbers {
     sum += x
 }
+println sum // 57
 ```
+
+If an index is required, an alternative form `for index, value <- arr` can be used.
+
+```go
+names := ["Sam", "Peter"]
+for i, name <- names {
+    println i, name
+    // 0 Sam
+    // 1 Peter
+}
+```
+
+##### Map `for`
+
+```go
+m := {"one": 1, "two": 2}
+for key, val <- m {
+	println key, val
+	// one 1
+	// two 2
+}
+for key, _ <- m {
+	println key
+	// one
+	// two
+}
+for val <- m {
+	println val
+	// 1
+	// 2
+}
+```
+
+##### Range `for`
+
+You can use `range expression` (`start:end:step`) in for loop.
+
+```go
+for i <- :5 {
+    println i
+    // 0
+    // 1
+    // 2
+    // 3
+    // 4
+}
+for i <- 1:5 {
+    println i
+    // 1
+    // 2
+    // 3
+    // 4
+}
+for i <- 1:5:2 {
+    println i
+    // 1
+    // 3
+}
+```
+
+##### `for`/`<-`/`if`
+
+All loops of `for`/`<-` form can have an optional `if` condition.
+
+```go
+numbers := [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+for num <- numbers if num%3 == 0 {
+    println num
+    // 0
+    // 3
+    // 6
+    // 9
+}
+```
+
+#### Condition `for`
+
+```go
+sum := 0
+i := 1
+for i <= 100 {
+	sum += i
+	i++
+}
+println sum // 5050
+```
+
+This form of the loop is similar to `while` loops in other languages.
+The loop will stop iterating once the boolean condition evaluates to false.
+Again, there are no parentheses surrounding the condition, and the braces are always required.
+
+#### C `for`
+
+```go
+for i := 0; i < 10; i += 2 {
+    // Don't print 6
+    if i == 6 {
+        continue
+    }
+    println i
+    // 0
+    // 2
+    // 4
+    // 8
+}
+```
+
+Finally, there's the traditional C style `for` loop. It's safer than the `while` form
+because with the latter it's easy to forget to update the counter and get
+stuck in an infinite loop.
+
+
+#### Bare `for`
+
+```go
+for {
+    // ...
+}
+```
+
+The condition can be omitted, resulting in an infinite loop. You can use `break` or `return` to end the loop.
+
+
+
+
+
+
+
 
 
 ### Range expression (`start:end:step`)
@@ -723,6 +705,96 @@ for k, v <- foo {
 }
 
 println {v: k for k, v <- foo}
+```
+
+### List comprehension
+
+```go
+a := [x*x for x <- [1, 3, 5, 7, 11]]
+b := [x*x for x <- [1, 3, 5, 7, 11] if x > 3]
+c := [i+v for i, v <- [1, 3, 5, 7, 11] if i%2 == 1]
+
+arr := [1, 2, 3, 4, 5, 6]
+d := [[a, b] for a <- arr if a < b for b <- arr if b > 2]
+
+x := {x: i for i, x <- [1, 3, 5, 7, 11]}
+y := {x: i for i, x <- [1, 3, 5, 7, 11] if i%2 == 1}
+z := {v: k for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "Go+"} if k > 3}
+```
+
+### Select data from a collection
+
+```go
+type student struct {
+    name  string
+    score int
+}
+
+students := [student{"Ken", 90}, student{"Jason", 80}, student{"Lily", 85}]
+
+unknownScore, ok := {x.score for x <- students if x.name == "Unknown"}
+jasonScore := {x.score for x <- students if x.name == "Jason"}
+
+println unknownScore, ok // output: 0 false
+println jasonScore // output: 80
+```
+
+### Check if data exists in a collection
+
+```go
+type student struct {
+    name  string
+    score int
+}
+
+students := [student{"Ken", 90}, student{"Jason", 80}, student{"Lily", 85}]
+
+hasJason := {for x <- students if x.name == "Jason"} // is any student named Jason?
+hasFailed := {for x <- students if x.score < 60}     // is any student failed?
+```
+
+### Lambda expression
+
+```go
+func plot(fn func(x float64) float64) {
+    // ...
+}
+
+func plot2(fn func(x float64) (float64, float64)) {
+    // ...
+}
+
+plot x => x * x           // plot(func(x float64) float64 { return x * x })
+plot2 x => (x * x, x + x) // plot2(func(x float64) (float64, float64) { return x * x, x + x })
+```
+
+### Deduce struct type
+
+```go
+type Config struct {
+    Dir   string
+    Level int
+}
+
+func foo(conf *Config) {
+    // ...
+}
+
+foo {Dir: "/foo/bar", Level: 1}
+```
+
+Here `foo {Dir: "/foo/bar", Level: 1}` is equivalent to `foo(&Config{Dir: "/foo/bar", Level: 1})`. However, you can't replace `foo(&Config{"/foo/bar", 1})` with `foo {"/foo/bar", 1}`, because it is confusing to consider `{"/foo/bar", 1}` as a struct literal.
+
+You also can omit struct types in a return statement. For example:
+
+```go
+type Result struct {
+    Text string
+}
+
+func foo() *Result {
+    return {Text: "Hi, Go+"} // return &Result{Text: "Hi, Go+"}
+}
 ```
 
 ### Overload operators
@@ -863,9 +935,90 @@ println [v for v <- m]
 Go [20-Unix-Shebang/shebang](https://github.com/goplus/tutorial/blob/main/20-Unix-Shebang/shebang) to get the source code.
 
 
-### Go features
+## Tutorials
 
-All Go features (including partially support `cgo`) will be supported. In bytecode mode, Go+ doesn't support `cgo`. However, in Go-code-generation mode, Go+ fully supports `cgo`.
+* https://tutorial.goplus.org/
+
+
+## Compatibility with Go
+
+All Go features will be supported (including partially support `cgo`, see [below](#bytecode-vs-go-code)).
+
+**All Go packages (even these packages use `cgo`) can be imported by Go+.**
+
+```coffee
+import (
+    "fmt"
+    "strings"
+)
+
+x := strings.NewReplacer("?", "!").Replace("hello, world???")
+fmt.Println "x:", x
+```
+
+**And all Go+ packages can also be imported in Go programs. What you need to do is just using `gop` command instead of `go`.**
+
+First, let's make a directory named `14-Using-goplus-in-Go`.
+
+Then write a Go+ package named [foo](https://github.com/goplus/tutorial/tree/main/14-Using-goplus-in-Go/foo) in it:
+
+```go
+package foo
+
+func ReverseMap(m map[string]int) map[int]string {
+    return {v: k for k, v <- m}
+}
+```
+
+Then use it in a Go package [14-Using-goplus-in-Go/gomain](https://github.com/goplus/tutorial/tree/main/14-Using-goplus-in-Go/gomain):
+
+```go
+package main
+
+import (
+    "fmt"
+
+    "github.com/goplus/tutorial/14-Using-goplus-in-Go/foo"
+)
+
+func main() {
+    rmap := foo.ReverseMap(map[string]int{"Hi": 1, "Hello": 2})
+    fmt.Println(rmap)
+}
+```
+
+How to build this example? You can use:
+
+```bash
+gop install -v ./...
+```
+
+Go [github.com/goplus/tutorial/14-Using-goplus-in-Go](https://github.com/goplus/tutorial/tree/main/14-Using-goplus-in-Go) to get the source code.
+
+
+## Bytecode vs. Go code
+
+Go+ supports bytecode backend and Go code generation.
+
+When we use `gop` command, it generates Go code to covert Go+ package into Go packages.
+
+```bash
+gop run     # Run a Go+ program
+gop install # Build Go+ files and install target to GOBIN
+gop build   # Build Go+ files
+gop test    # Test Go+ packages
+gop fmt     # Format Go+ packages
+gop clean   # Clean all Go+ auto generated files
+gop go      # Convert Go+ packages into Go packages
+```
+
+When we use [`igop`](https://github.com/goplus/igop) command, it generates bytecode to execute.
+
+```bash
+igop  # Run a Go+ program
+```
+
+In bytecode mode, Go+ doesn't support `cgo`. However, in Go-code-generation mode, Go+ fully supports `cgo`.
 
 
 ## IDE Plugins

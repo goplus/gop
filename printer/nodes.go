@@ -1112,7 +1112,7 @@ func (p *printer) listForPhrase(prev0 token.Pos, list []*ast.ForPhrase, depth in
 		p.print(x.TokPos, token.ARROW, blank)
 		p.expr(x.X)
 		if x.Cond != nil {
-			p.print(x.Cond.Pos(), token.COMMA, blank)
+			p.print(blank, x.Cond.Pos(), token.IF, blank)
 			if x.Init != nil {
 				p.stmt(x.Init, false)
 				p.print(token.SEMICOLON, blank)
@@ -1515,7 +1515,7 @@ func (p *printer) stmt(stmt ast.Stmt, nextIsRBrace bool) {
 		p.print(blank, s.TokPos, token.ARROW, blank)
 		p.expr(s.X)
 		if s.Cond != nil {
-			p.print(s.Cond.Pos(), token.COMMA, blank)
+			p.print(blank, s.Cond.Pos(), token.IF, blank)
 			p.expr(s.Cond)
 		}
 		p.print(blank)
