@@ -89,7 +89,7 @@ Here is my `Hello world` program:
 
 * [Functions](#functions)
     * [Returning multiple values](#returning-multiple-values)
-    * [Variable number of arguments](#variable-number-of-arguments)
+    * [Variadic parameters](#variadic-parameters)
     * [Higher order functions](#higher-order-functions)
     * [Lambda expressions](#lambda-expressions)
 * [Structs](#structs)
@@ -794,7 +794,7 @@ c, _ := foo() // ignore values using `_`
 <h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
 
-### Variable number of arguments
+### Variadic parameters
 
 ```go
 func sum(a ...int) int {
