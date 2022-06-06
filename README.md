@@ -118,6 +118,8 @@ It prints the value passed to it to standard output.
 
 See https://tutorial.goplus.org/hello-world for more details.
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
 
 ## Running a project folder with several files
 
@@ -135,6 +137,9 @@ import "os"
 println os.Args
 ```
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+
 ## Comments
 
 ```go
@@ -146,6 +151,9 @@ println os.Args
 This is a multiline comment.
 */
 ```
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
 
 ## Variables
 
@@ -163,6 +171,8 @@ The variable's type is inferred from the value on the right hand side.
 To choose a different type, use type conversion:
 the expression `T(v)` converts the value `v` to the
 type `T`.
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
 ### Initialization vs. assignment
 
@@ -188,6 +198,9 @@ a, b := 0, 1
 a, b = b, a
 println a, b // 1, 0
 ```
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
 
 ## Go+ Types
 
@@ -216,6 +229,8 @@ unsafe.Pointer // similar to C's void*
 
 any // alias for Go's interface{}
 ```
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
 ### Strings
 
@@ -252,6 +267,9 @@ a, err := s.int
 b := s.int! // will panic if s isn't a valid integer
 ```
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+
 #### String operators
 
 ```go
@@ -279,6 +297,9 @@ age := 10
 println "age = " + age.string
 ```
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+
 ### Runes
 
 A `rune` represents a single Unicode character and is an alias for `int32`.
@@ -288,6 +309,9 @@ rocket := '🚀'
 println rocket         // 128640
 println string(rocket) // 🚀
 ```
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
 
 ### Numbers
 
@@ -344,6 +368,9 @@ f1 := 123e-2 // 1.23
 f2 := 456e+2 // 45600
 ```
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+
 #### Rational numbers
 
 We introduce rational numbers as native Go+ types. We use suffix `r` to denote rational literals. For example, `1r << 200` means a big int whose value is equal to 2<sup>200</sup>.
@@ -375,6 +402,9 @@ println b/3 // 1/3
 println c/3 // 1/3
 ```
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+
 #### Convert bool to number types
 
 ```go
@@ -382,6 +412,9 @@ println int(true)       // 1
 println float64(true)   // 1
 println complex64(true) // (1+0i)
 ```
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
 
 ### Slices
 
@@ -418,6 +451,9 @@ And casting slices also works.
 a := []float64([1, 2, 3]) // []float64
 ```
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+
 ### Maps
 
 ```go
@@ -445,6 +481,9 @@ if v, ok := a["xsw"]; ok {
 }
 ```
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+
 ## Module imports
 
 For information about creating a module, see [Modules](#modules).
@@ -458,6 +497,9 @@ x := strings.NewReplacer("?", "!").Replace("Hello, world???")
 println x // Hello, world!!!
 ```
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+
 ### Module import aliasing
 
 Any imported module name can be aliased:
@@ -468,6 +510,8 @@ import strop "strings"
 x := strop.NewReplacer("?", "!").Replace("Hello, world???")
 println x // Hello, world!!!
 ```
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
 
 ## Statements & expressions
@@ -490,6 +534,9 @@ if a < b {
 	println "a == b"
 }
 ```
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
 
 ### For loop
 
@@ -525,6 +572,9 @@ for i, name <- names {
 }
 ```
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+
 ##### Map `for`
 
 ```go
@@ -545,6 +595,9 @@ for val <- m {
 	// 2
 }
 ```
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
 
 ##### Range `for`
 
@@ -573,6 +626,9 @@ for i <- 1:5:2 {
 }
 ```
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+
 ##### `for`/`<-`/`if`
 
 All loops of `for`/`<-` form can have an optional `if` condition.
@@ -596,6 +652,9 @@ for num <- :10 if num%3 == 0 {
 }
 ```
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+
 #### Condition `for`
 
 ```go
@@ -611,6 +670,9 @@ println sum // 5050
 This form of the loop is similar to `while` loops in other languages.
 The loop will stop iterating once the boolean condition evaluates to false.
 Again, there are no parentheses surrounding the condition, and the braces are always required.
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
 
 #### C `for`
 
@@ -632,6 +694,8 @@ Finally, there's the traditional C style `for` loop. It's safer than the `while`
 because with the latter it's easy to forget to update the counter and get
 stuck in an infinite loop.
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
 
 #### Bare `for`
 
@@ -642,6 +706,9 @@ for {
 ```
 
 The condition can be omitted, resulting in an infinite loop. You can use `break` or `return` to end the loop.
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
 
 ### List comprehension
 
@@ -657,6 +724,9 @@ x := {x: i for i, x <- [1, 3, 5, 7, 11]}
 y := {x: i for i, x <- [1, 3, 5, 7, 11] if i%2 == 1}
 z := {v: k for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "Go+"} if k > 3}
 ```
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
 
 ### Select data from a collection
 
@@ -675,6 +745,9 @@ println unknownScore, ok // 0 false
 println jasonScore // 80
 ```
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+
 ### Check if data exists in a collection
 
 ```go
@@ -689,6 +762,8 @@ hasJason := {for x <- students if x.name == "Jason"} // is any student named Jas
 hasFailed := {for x <- students if x.score < 60}     // is any student failed?
 ```
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
 
 ## Functions
 
@@ -699,6 +774,9 @@ func add(x int, y int) int {
 
 println add(2, 3) // 5
 ```
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
 
 ### Returning multiple values
 
@@ -712,6 +790,9 @@ println a // 2
 println b // 3
 c, _ := foo() // ignore values using `_`
 ```
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
 
 ### Variable number of arguments
 
@@ -740,6 +821,9 @@ func sum(a ...int) (total int) {
 println sum(2, 3, 5) // 10
 ```
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+
 ### Higher order functions
 
 Functions can also be parameters.
@@ -756,6 +840,9 @@ func transform(a []float64, f func(float64) float64) []float64 {
 y := transform([1, 2, 3], square)
 println y // [1 4 9]
 ```
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
 
 ### Lambda expressions
 
@@ -778,6 +865,7 @@ z := transform([-3, 1, -5], x => {
 println z // [3 1 5]
 ```
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
 
 ## Structs
