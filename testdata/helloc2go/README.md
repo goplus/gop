@@ -18,7 +18,7 @@ C.fprintf C.stderr, C"Hi, %7.1f\n", 3.14
 
 In this example we call two C standard functions `printf` and `fprintf`, pass a C variable `stderr` and two C strings in the form of `C"xxx"`.
 
-The output of this example is as follows:
+Run `gop run .` to see the output of this example:
 
 ```
 Hello, c2go!

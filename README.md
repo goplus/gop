@@ -27,7 +27,7 @@ The Python language appeared very early (1991), but its design idea is very far-
 
 Python is very popular today, but it's hard to call it an engineering language. Most people just take it as a tool for rapid prototyping.
 
-Is it possible to minimize the complexity of the project and present it in a low-code form? Go+ hopes to explore a new path at this point.
+Is it possible to minimize the complexity of engineering and present it in a low-code form? Go+ hopes to explore a new path at this point.
 
 ## How to install
 
@@ -81,20 +81,24 @@ Here is my `Hello world` program:
 * [Statements & expressions](#statements--expressions)
     * [If..else](#ifelse)
     * [For loop](#for-loop)
-    * [List comprehension](#list-comprehension)
-    * [Select data from a collection](#select-data-from-a-collection)
-    * [Check if data exists in a collection](#check-if-data-exists-in-a-collection)
-
-</td><td valign=top>
-
+    * [Error handling](#error-handling)
 * [Functions](#functions)
     * [Returning multiple values](#returning-multiple-values)
-    * [Variable number of arguments](#variable-number-of-arguments)
+    * [Variadic parameters](#variadic-parameters)
     * [Higher order functions](#higher-order-functions)
     * [Lambda expressions](#lambda-expressions)
 * [Structs](#structs)
-* [Error handling](#error-handling)
+
+</td><td valign=top>
+
+* [Go/Go+ hybrid programming](#gogo-hybrid-programming)
+* [Calling C from Go+](#calling-c-from-go)
+* [Data processing](#data-processing)
+    * [List comprehension](#list-comprehension)
+    * [Select data from a collection](#select-data-from-a-collection)
+    * [Check if data exists in a collection](#check-if-data-exists-in-a-collection)
 * [Unix shebang](#unix-shebang)
+* [Compatibility with Go](#compatibility-with-go)
 
 </td></tr>
 </table>
@@ -710,57 +714,57 @@ The condition can be omitted, resulting in an infinite loop. You can use `break`
 <h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
 
-### List comprehension
+### Error handling
+
+We reinvent the error handling specification in Go+. We call them `ErrWrap expressions`:
 
 ```go
-a := [x*x for x <- [1, 3, 5, 7, 11]]
-b := [x*x for x <- [1, 3, 5, 7, 11] if x > 3]
-c := [i+v for i, v <- [1, 3, 5, 7, 11] if i%2 == 1]
-
-arr := [1, 2, 3, 4, 5, 6]
-d := [[a, b] for a <- arr if a < b for b <- arr if b > 2]
-
-x := {x: i for i, x <- [1, 3, 5, 7, 11]}
-y := {x: i for i, x <- [1, 3, 5, 7, 11] if i%2 == 1}
-z := {v: k for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "Go+"} if k > 3}
+expr! // panic if err
+expr? // return if err
+expr?:defval // use defval if err
 ```
 
-<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
-
-
-### Select data from a collection
+How to use them? Here is an example:
 
 ```go
-type student struct {
-    name  string
-    score int
+import (
+    "strconv"
+)
+
+func add(x, y string) (int, error) {
+    return strconv.Atoi(x)? + strconv.Atoi(y)?, nil
 }
 
-students := [student{"Ken", 90}, student{"Jason", 80}, student{"Lily", 85}]
-
-unknownScore, ok := {x.score for x <- students if x.name == "Unknown"}
-jasonScore := {x.score for x <- students if x.name == "Jason"}
-
-println unknownScore, ok // 0 false
-println jasonScore // 80
-```
-
-<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
-
-
-### Check if data exists in a collection
-
-```go
-type student struct {
-    name  string
-    score int
+func addSafe(x, y string) int {
+    return strconv.Atoi(x)?:0 + strconv.Atoi(y)?:0
 }
 
-students := [student{"Ken", 90}, student{"Jason", 80}, student{"Lily", 85}]
+println `add("100", "23"):`, add("100", "23")!
 
-hasJason := {for x <- students if x.name == "Jason"} // is any student named Jason?
-hasFailed := {for x <- students if x.score < 60}     // is any student failed?
+sum, err := add("10", "abc")
+println `add("10", "abc"):`, sum, err
+
+println `addSafe("10", "abc"):`, addSafe("10", "abc")
 ```
+
+The output of this example is:
+
+```
+add("100", "23"): 123
+add("10", "abc"): 0 strconv.Atoi: parsing "abc": invalid syntax
+
+===> errors stack:
+main.add("10", "abc")
+    /Users/xsw/tutorial/15-ErrWrap/err_wrap.gop:6 strconv.Atoi(y)?
+
+addSafe("10", "abc"): 10
+```
+
+Compared to corresponding Go code, It is clear and more readable.
+
+And the most interesting thing is, the return error contains the full error stack. When we got an error, it is very easy to position what the root cause is.
+
+How these `ErrWrap expressions` work? See [Error Handling](https://github.com/goplus/gop/wiki/Error-Handling) for more information.
 
 <h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
@@ -794,7 +798,7 @@ c, _ := foo() // ignore values using `_`
 <h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
 
-### Variable number of arguments
+### Variadic parameters
 
 ```go
 func sum(a ...int) int {
@@ -833,12 +837,22 @@ func square(x float64) float64 {
     return x*x
 }
 
+func abs(x float64) float64 {
+    if x < 0 {
+        return -x
+    }
+    return x
+}
+
 func transform(a []float64, f func(float64) float64) []float64 {
     return [f(x) for x <- a]
 }
 
 y := transform([1, 2, 3], square)
 println y // [1 4 9]
+
+z := transform([-3, 1, -5], abs)
+println z // [3 1 5]
 ```
 
 <h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
@@ -898,6 +912,9 @@ println {v: k for k, v <- foo}
 
 **Note: you can't use break/continue or return statements in for range of udt.Gop_Enum(callback).**
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+
 #### For range of UDT2
 
 ```go
@@ -930,6 +947,9 @@ for k, v <- foo {
 println {v: k for k, v <- foo}
 ```
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+
 ### Deduce struct type
 
 ```go
@@ -958,6 +978,9 @@ func foo() *Result {
     return {Text: "Hi, Go+"} // return &Result{Text: "Hi, Go+"}
 }
 ```
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
 
 ### Overload operators
 
@@ -990,6 +1013,9 @@ println a + Int(3r)
 println -a
 ```
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+
 ### Auto property
 
 Let's see an example written in Go+:
@@ -1016,58 +1042,133 @@ println doc.any.funcDecl.name
 
 In Go+, we introduce a concept named `auto property`. It is a `get property`, but is implemented automatically. If we have a method named `Bar()`, then we will have a `get property` named `bar` at the same time.
 
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
-## Error handling
 
-We reinvent the error handling specification in Go+. We call them `ErrWrap expressions`:
+## Go/Go+ hybrid programming
 
-```go
-expr! // panic if err
-expr? // return if err
-expr?:defval // use defval if err
-```
+This is an example to show how to mix Go/Go+ code in the same package.
 
-How to use them? Here is an example:
+In this example, we have a Go source file named `a.go`:
 
 ```go
-import (
-    "strconv"
-)
+package main
 
-func add(x, y string) (int, error) {
-    return strconv.Atoi(x)? + strconv.Atoi(y)?, nil
+import "fmt"
+
+func p(a interface{}) {
+	sayMix()
+	fmt.Println("Hello,", a)
+}
+```
+
+And we have a Go+ source file named `b.gop`:
+
+```go
+func sayMix() {
+	println "Mix Go and Go+"
 }
 
-func addSafe(x, y string) int {
-    return strconv.Atoi(x)?:0 + strconv.Atoi(y)?:0
+p "world"
+```
+
+You can see that Go calls a Go+ function named `sayMix`, and Go+ calls a Go function named `p`. As you are used to in Go programming, this kind of circular reference is allowed.
+
+Run `gop run .` to see the output of this example:
+
+```
+Mix Go and Go+
+Hello, world
+```
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+## Calling C from Go+
+
+- The `gop c` command (equivalent to the stand-alone `c2go` command) can be used to convert a C project to a Go project.
+- `import "C"` and `import "C/xxx"` are used to import a C project converted by c2go. where `import "C"` is short for `import "C/github.com/goplus/libc"`.
+- The `C"xxx"` syntax represents C-style string constants.
+
+Here is [an example to show how Go+ interacts with C](https://github.com/goplus/gop/tree/v1.1/testdata/helloc2go).
+
+```go
+import "C"
+
+C.printf C"Hello, c2go!\n"
+C.fprintf C.stderr, C"Hi, %7.1f\n", 3.14
+```
+
+In this example we call two C standard functions `printf` and `fprintf`, passing a C variable `stderr` and two C strings in the form of `C"xxx"` (a Go+ syntax to represent C-style strings).
+
+Run `gop run .` to see the output of this example:
+
+```
+Hello, c2go!
+Hi,     3.1
+```
+
+Of course, the current Go+ support for C is only a preview version, not to the extent that it is actually available in engineering. As far as libc is concerned, the current migration progress is only about 5%, and it is just the beginning.
+
+In the upcoming Go+ v1.2 version planning, complete support for C is listed as a top priority. Of course, support for cgo and Go templates is also under planning, which is a crucial capability enhancement for Go/Go+ hybrid projects.
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+
+## Data processing
+
+### List comprehension
+
+```go
+a := [x*x for x <- [1, 3, 5, 7, 11]]
+b := [x*x for x <- [1, 3, 5, 7, 11] if x > 3]
+c := [i+v for i, v <- [1, 3, 5, 7, 11] if i%2 == 1]
+
+arr := [1, 2, 3, 4, 5, 6]
+d := [[a, b] for a <- arr if a < b for b <- arr if b > 2]
+
+x := {x: i for i, x <- [1, 3, 5, 7, 11]}
+y := {x: i for i, x <- [1, 3, 5, 7, 11] if i%2 == 1}
+z := {v: k for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "Go+"} if k > 3}
+```
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
+
+### Select data from a collection
+
+```go
+type student struct {
+    name  string
+    score int
 }
 
-println `add("100", "23"):`, add("100", "23")!
+students := [student{"Ken", 90}, student{"Jason", 80}, student{"Lily", 85}]
 
-sum, err := add("10", "abc")
-println `add("10", "abc"):`, sum, err
+unknownScore, ok := {x.score for x <- students if x.name == "Unknown"}
+jasonScore := {x.score for x <- students if x.name == "Jason"}
 
-println `addSafe("10", "abc"):`, addSafe("10", "abc")
+println unknownScore, ok // 0 false
+println jasonScore // 80
 ```
 
-The output of this example is:
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
+
+### Check if data exists in a collection
+
+```go
+type student struct {
+    name  string
+    score int
+}
+
+students := [student{"Ken", 90}, student{"Jason", 80}, student{"Lily", 85}]
+
+hasJason := {for x <- students if x.name == "Jason"} // is any student named Jason?
+hasFailed := {for x <- students if x.score < 60}     // is any student failed?
 ```
-add("100", "23"): 123
-add("10", "abc"): 0 strconv.Atoi: parsing "abc": invalid syntax
 
-===> errors stack:
-main.add("10", "abc")
-    /Users/xsw/tutorial/15-ErrWrap/err_wrap.gop:6 strconv.Atoi(y)?
-
-addSafe("10", "abc"): 10
-```
-
-Compared to corresponding Go code, It is clear and more readable.
-
-And the most interesting thing is, the return error contains the full error stack. When we got an error, it is very easy to position what the root cause is.
-
-How these `ErrWrap expressions` work? See [Error Handling](https://github.com/goplus/gop/wiki/Error-Handling) for more information.
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
 
 ## Unix shebang
@@ -1093,7 +1194,7 @@ println [k for k, _ <- m]
 println [v for v <- m]
 ```
 
-Go [20-Unix-Shebang/shebang](https://github.com/goplus/tutorial/blob/main/20-Unix-Shebang/shebang) to get the source code.
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
 
 ## Compatibility with Go
@@ -1150,6 +1251,8 @@ gop install -v ./...
 ```
 
 Go [github.com/goplus/tutorial/14-Using-goplus-in-Go](https://github.com/goplus/tutorial/tree/main/14-Using-goplus-in-Go) to get the source code.
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
 
 ## Bytecode vs. Go code
