@@ -149,6 +149,50 @@ var x string = c.Str()
 `)
 }
 
+func Test_RangeExpressionIf_Issue1243(t *testing.T) {
+	gopClTest(t, `
+for i <- :10, i%3 == 0 {
+	println i
+}`, `package main
+
+import fmt "fmt"
+
+func main() {
+	for i := 0; i < 10; i += 1 {
+		if i%3 == 0 {
+			fmt.Println(i)
+		}
+	}
+}
+`)
+}
+
+func Test_CastSlice_Issue1240(t *testing.T) {
+	gopClTest(t, `
+type fvec []float64
+type foo float64
+a := []float64([1, 2])
+b := fvec([1, 2])
+c := foo([1, 2])
+d := fvec([])
+println a, b, c, d
+`, `package main
+
+import fmt "fmt"
+
+type fvec []float64
+type foo float64
+
+func main() {
+	a := []float64{1, 2}
+	b := fvec{1, 2}
+	c := foo([]int{1, 2})
+	d := fvec{}
+	fmt.Println(a, b, c, d)
+}
+`)
+}
+
 func TestUnderscoreRedeclared_Issue1197(t *testing.T) {
 	gopClTest(t, `
 func() (_ [2]int) { type _ int; return }()

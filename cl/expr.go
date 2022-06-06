@@ -403,6 +403,7 @@ type fnType struct {
 	params   *types.Tuple
 	n1       int
 	variadic bool
+	typetype bool
 	inited   bool
 }
 
@@ -428,12 +429,20 @@ func (p *fnType) init(t *types.Signature) {
 	}
 }
 
+func (p *fnType) initTypeType(t *gox.TypeType) {
+	param := types.NewParam(0, nil, "", t.Type())
+	p.params, p.typetype = types.NewTuple(param), true
+	p.n1 = 1
+}
+
 func (p *fnType) initWith(fnt types.Type, idx, nin int) {
 	if p.inited {
 		return
 	}
 	p.inited = true
-	if t := gox.CheckSignature(fnt, idx, nin); t != nil {
+	if t, ok := fnt.(*gox.TypeType); ok {
+		p.initTypeType(t)
+	} else if t := gox.CheckSignature(fnt, idx, nin); t != nil {
 		p.init(t)
 	}
 }
@@ -470,6 +479,26 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 		case *ast.CompositeLit:
 			fn.initWith(fnt, i, -1)
 			compileCompositeLit(ctx, expr, fn.arg(i, ellipsis), true)
+		case *ast.SliceLit:
+			fn.initWith(fnt, i, -2)
+			t := fn.arg(i, ellipsis)
+			switch t.(type) {
+			case *types.Slice:
+			case *types.Named:
+				if _, ok := getUnderlying(ctx, t).(*types.Slice); !ok {
+					t = nil
+				}
+			default:
+				t = nil
+			}
+			typetype := fn.typetype && t != nil && len(v.Args) == 1
+			if typetype {
+				ctx.cb.InternalStack().Pop()
+			}
+			compileSliceLit(ctx, expr, t)
+			if typetype {
+				return
+			}
 		default:
 			compileExpr(ctx, arg)
 		}
