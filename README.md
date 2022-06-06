@@ -27,7 +27,7 @@ The Python language appeared very early (1991), but its design idea is very far-
 
 Python is very popular today, but it's hard to call it an engineering language. Most people just take it as a tool for rapid prototyping.
 
-Is it possible to minimize the complexity of the project and present it in a low-code form? Go+ hopes to explore a new path at this point.
+Is it possible to minimize the complexity of engineering and present it in a low-code form? Go+ hopes to explore a new path at this point.
 
 ## How to install
 
