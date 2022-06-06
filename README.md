@@ -344,6 +344,8 @@ f1 := 123e-2 // 1.23
 f2 := 456e+2 // 45600
 ```
 
+#### Rational numbers
+
 We introduce rational numbers as native Go+ types. We use suffix `r` to denote rational literals. For example, `1r << 200` means a big int whose value is equal to 2<sup>200</sup>.
 
 ```go
