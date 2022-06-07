@@ -72,6 +72,7 @@ Here is my `Hello world` program:
 * [Go/Go+ hybrid programming](#gogo-hybrid-programming)
 * [Calling C from Go+](#calling-c-from-go)
 * [Data processing](#data-processing)
+    * [Rational numbers](#rational-numbers)
     * [List comprehension](#list-comprehension)
     * [Select data from a collection](#select-data-from-a-collection)
     * [Check if data exists in a collection](#check-if-data-exists-in-a-collection)
