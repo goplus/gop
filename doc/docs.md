@@ -319,10 +319,6 @@ Go+ also supports writing numbers with `_` as separator:
 
 ```go
 num := 1_000_000 // same as 1000000
-three := 0b0_11 // same as 0b11
-floatNum := 3_122.55 // same as 3122.55
-hexa := 0xF_F // same as 255
-oct := 0o17_3 // same as 0o173
 ```
 
 If you want a different type of integer, you can use casting:
@@ -352,36 +348,11 @@ f2 := 456e+2 // 45600
 
 <h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
-
-#### Rational numbers
-
-We introduce rational numbers as native Go+ types. We use suffix `r` to denote rational literals. For example, `1r << 200` means a big int whose value is equal to 2<sup>200</sup>.
+Go+ has built-in support for [rational numbers](#rational-numbers).
 
 ```go
-a := 1r << 200
+a := 1r << 200  // suffix `r` means `rational`
 b := bigint(1 << 200)
-```
-
-By default, `1r` will have the type of `bigint`.
-
-And `4/5r` means the rational constant `4/5`.
-It will have the type of `bigrat`.
-
-```go
-a := 4/5r
-b := a - 1/3r + 3 * 1/2r
-println a, b // 4/5 59/30
-```
-
-Casting rational numbers works the same way:
-
-```go
-a := 1r
-b := bigrat(1r)
-c := bigrat(1)
-println a/3 // 0
-println b/3 // 1/3
-println c/3 // 1/3
 ```
 
 <h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
@@ -1093,6 +1064,40 @@ In the upcoming Go+ v1.2 version planning, complete support for C is listed as a
 
 
 ## Data processing
+
+### Rational numbers
+
+We introduce rational numbers as primitive Go+ types. We use suffix `r` to denote rational literals. For example, `1r << 200` means a big int whose value is equal to 2<sup>200</sup>.
+
+```go
+a := 1r << 200
+b := bigint(1 << 200)
+```
+
+By default, `1r` will have the type of `bigint`.
+
+And `4/5r` means the rational constant `4/5`.
+It will have the type of `bigrat`.
+
+```go
+a := 4/5r
+b := a - 1/3r + 3 * 1/2r
+println a, b // 4/5 59/30
+```
+
+Casting rational numbers works like other [primitive types](#primitive-types)):
+
+```go
+a := 1r
+b := bigrat(1r)
+c := bigrat(1)
+println a/3 // 0
+println b/3 // 1/3
+println c/3 // 1/3
+```
+
+<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
+
 
 ### List comprehension
 
