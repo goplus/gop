@@ -393,6 +393,7 @@ func toForStmt(forPos token.Pos, value ast.Expr, body *ast.BlockStmt, re *ast.Ra
 	}
 	if fp != nil && fp.Cond != nil {
 		condStmt := &ast.IfStmt{
+			If:   fp.Cond.Pos(),
 			Init: fp.Init,
 			Cond: fp.Cond,
 			Body: body,
