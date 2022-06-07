@@ -394,7 +394,7 @@ d := ["Hi", 10]  // []any
 d := []          // []any
 ```
 
-And casting slices also works.
+And casting slice literals also works.
 
 ```go
 a := []float64([1, 2, 3]) // []float64
