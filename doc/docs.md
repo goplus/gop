@@ -347,17 +347,14 @@ f1 := 123e-2 // 1.23
 f2 := 456e+2 // 45600
 ```
 
-And Go+ has built-in support for [rational numbers](#rational-numbers).
+Go+ has built-in support for [rational numbers](#rational-numbers):
 
 ```go
 a := 1r << 200  // suffix `r` means `rational`
 b := bigint(1 << 200)
 ```
 
-<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
-
-
-#### Convert bool to number types
+And you can cast bool to number types (this is NOT supported in Go):
 
 ```go
 println int(true)       // 1
