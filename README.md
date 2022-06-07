@@ -31,8 +31,7 @@ For more detials, see [Quick Start](doc/docs.md).
 * A static typed language.
 * The simplest engineering language that can be mastered by children (script-like style).
 * Performance: as fast as Go (Go+'s main backend compiles to human-readable Go).
-* Fully compatible with [the Go language](https://github.com/golang/go).
-* Can mix Go/Go+ code in the same package (see [Go/Go+ hybrid programming](doc/docs.md#gogo-hybrid-programming)).
+* Fully compatible with [Go](https://github.com/golang/go) and can mix Go/Go+ code in the same package (see [Go/Go+ hybrid programming](doc/docs.md#gogo-hybrid-programming)).
 * REPL: see [iGo+](https://github.com/goplus/igop).
 * [Simplest way to interaction with C](doc/docs.md#calling-c-from-go) (cgo is supported but not recommend).
 
