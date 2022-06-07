@@ -3,7 +3,7 @@
 <p>
     <img width="80" src="https://goplus.org/favicon.svg">
 </p>
-<h1>The Go+ Program Language</h1>
+<h1>The Go+ Programming Language</h1>
 
 [goplus.org](https://goplus.org) | [Docs](doc/docs.md) | [Go+ vs. Go](doc/goplus-vs-go.md) | [Playground](https://play.goplus.org) | [Tutorial](https://tutorial.goplus.org/) | [Contributing & compiler design](doc/contributing.md)
 </div>
