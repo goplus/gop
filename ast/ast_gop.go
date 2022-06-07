@@ -125,6 +125,7 @@ type ForPhrase struct {
 	Key, Value *Ident    // Key may be nil
 	TokPos     token.Pos // position of "<-" operator
 	X          Expr      // value to range over
+	IfPos      token.Pos // postion of if or comma; or NoPos
 	Init       Stmt      // initialization statement; or nil
 	Cond       Expr      // value filter, can be nil
 }

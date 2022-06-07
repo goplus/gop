@@ -2747,12 +2747,14 @@ func (p *parser) parseForPhraseStmtPart(lhs []ast.Expr) *ast.ForPhraseStmt {
 	tokPos := p.expect(token.ARROW) // <-
 	x := p.parseExpr(false, false, true)
 	var cond ast.Expr
+	var ifPos token.Pos
 	if p.tok == token.IF || p.tok == token.COMMA {
+		ifPos = p.pos
 		p.next()
 		cond = p.parseExpr(false, false, false)
 	}
 
-	stmt := &ast.ForPhraseStmt{ForPhrase: &ast.ForPhrase{TokPos: tokPos, X: x, Cond: cond}}
+	stmt := &ast.ForPhraseStmt{ForPhrase: &ast.ForPhrase{TokPos: tokPos, X: x, IfPos: ifPos, Cond: cond}}
 	switch len(lhs) {
 	case 1:
 		stmt.Value = p.toIdent(lhs[0])
@@ -2796,11 +2798,13 @@ func (p *parser) parseForPhrase() *ast.ForPhrase { // for k, v <- container if c
 	x := p.parseExpr(false, false, true)
 	var init ast.Stmt
 	var cond ast.Expr
+	var ifPos token.Pos
 	if p.tok == token.IF || p.tok == token.COMMA { // `condition` or `init; condition`
+		ifPos = p.pos
 		p.next()
 		init, cond = p.parseForPhraseCond()
 	}
-	return &ast.ForPhrase{For: pos, Key: k, Value: v, TokPos: tokPos, X: x, Init: init, Cond: cond}
+	return &ast.ForPhrase{For: pos, Key: k, Value: v, TokPos: tokPos, X: x, IfPos: ifPos, Init: init, Cond: cond}
 }
 
 func (p *parser) parseForStmt() ast.Stmt {
