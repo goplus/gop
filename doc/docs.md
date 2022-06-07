@@ -1,7 +1,7 @@
 Go+ Quick Start
 ======
 
-The Go+ program language is designed for engineering, STEM education, and data science.
+The Go+ programming language is designed for engineering, STEM education, and data science.
 
 * **For engineering**: working in the simplest language that can be mastered by children.
 * **For STEM education**: studying an engineering language that can be used for work in the future.
