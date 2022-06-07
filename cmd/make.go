@@ -345,7 +345,7 @@ func buildGoplusTools(useGoProxy bool) {
 		log.Fatalln(err)
 	}
 
-	println("Installing Go+ tools...\n")
+	println("Building Go+ tools...\n")
 	os.Chdir(commandsDir)
 	buildOutput, err := execCommand("go", "build", "-o", gopBinPath, "-v", "-ldflags", buildFlags, "./...")
 	if err != nil {
@@ -356,13 +356,7 @@ func buildGoplusTools(useGoProxy bool) {
 	// Clear gop run cache
 	cleanGopRunCache()
 
-	installPath := linkGoplusToLocalBin()
-
-	println("\nGo+ tools installed successfully!")
-
-	if _, err := execCommand("gop", "version"); err != nil {
-		showHelpPostInstall(installPath)
-	}
+	println("\nGo+ tools built successfully!")
 }
 
 func showHelpPostInstall(installPath string) {
@@ -373,6 +367,17 @@ To setup a better Go+ development environment,
 we recommend you add the above install directory into your PATH environment variable.
 	`
 	println(message)
+}
+
+// Install Go+ tools
+func install() {
+	installPath := linkGoplusToLocalBin()
+
+	println("\nGo+ tools installed successfully!")
+
+	if _, err := execCommand("gop", "version"); err != nil {
+		showHelpPostInstall(installPath)
+	}
 }
 
 func runTestcases() {
@@ -525,6 +530,7 @@ func releaseNewVersion(tag string) {
 
 func main() {
 	isInstall := flag.Bool("install", false, "Install Go+")
+	isBuild := flag.Bool("build", false, "Build Go+ tools")
 	isTest := flag.Bool("test", false, "Run testcases")
 	isUninstall := flag.Bool("uninstall", false, "Uninstall Go+")
 	isGoProxy := flag.Bool("proxy", false, "Set GOPROXY for people in China")
@@ -539,13 +545,17 @@ func main() {
 		useGoProxy = isInChina()
 	}
 	flagActionMap := map[*bool]func(){
-		isInstall:   func() { buildGoplusTools(useGoProxy) },
+		isBuild: func() { buildGoplusTools(useGoProxy) },
+		isInstall: func() {
+			buildGoplusTools(useGoProxy)
+			install()
+		},
 		isUninstall: uninstall,
 		isTest:      runTestcases,
 	}
 
 	// Sort flags, for example: install flag should be checked earlier than test flag.
-	flags := []*bool{isInstall, isTest, isUninstall}
+	flags := []*bool{isBuild, isInstall, isTest, isUninstall}
 	hasActionDone := false
 
 	if *tag != "" {
