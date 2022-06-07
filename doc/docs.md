@@ -347,9 +347,7 @@ f1 := 123e-2 // 1.23
 f2 := 456e+2 // 45600
 ```
 
-<h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
-
-Go+ has built-in support for [rational numbers](#rational-numbers).
+And Go+ has built-in support for [rational numbers](#rational-numbers).
 
 ```go
 a := 1r << 200  // suffix `r` means `rational`
