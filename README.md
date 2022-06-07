@@ -6,10 +6,13 @@
 <h1>The Go+ Programming Language</h1>
 
 [goplus.org](https://goplus.org) | [Docs](doc/docs.md) | [Go+ vs. Go](doc/goplus-vs-go.md) | [Playground](https://play.goplus.org) | [Tutorials](https://tutorial.goplus.org/) | [Contributing & compiler design](doc/contributing.md)
+
 </div>
 
 <div align="center">
-<!-- [![VSCode](https://img.shields.io/badge/vscode-Go+-teal.svg)](https://github.com/gopcode/vscode-goplus)
+<!--
+[![VSCode](https://img.shields.io/badge/vscode-Go+-teal.svg)](https://github.com/gopcode/vscode-goplus)
+[![Discord](https://img.shields.io/discord/983646982100897802?label=Discord&logo=discord&logoColor=white)](https://discord.gg/mYjWCJDcAr)
 -->
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/goplus/gop)](https://goreportcard.com/report/github.com/goplus/gop)
