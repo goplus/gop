@@ -34,6 +34,7 @@ For more detials, see [Quick Start](doc/docs.md).
 * Fully compatible with [Go](https://github.com/golang/go) and can mix Go/Go+ code in the same package (see [Go/Go+ hybrid programming](doc/docs.md#gogo-hybrid-programming)).
 * REPL: see [iGo+](https://github.com/goplus/igop).
 * [Simplest way to interaction with C](doc/docs.md#calling-c-from-go) (cgo is supported but not recommend).
+* [Powerful built-in data processing capabilities](doc/docs.md#data-processing).
 
 ## Installing Go+
 
