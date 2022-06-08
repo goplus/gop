@@ -23,7 +23,6 @@ import (
 	"go/types"
 	"log"
 	"os"
-	"path"
 	"reflect"
 	"strings"
 
@@ -275,18 +274,6 @@ type blockCtx struct {
 }
 
 func (bc *blockCtx) findImport(name string) (pr *gox.PkgRef, ok bool) {
-	if pr, ok = bc.imports[name]; ok {
-		return
-	}
-	for k, v := range bc.imports {
-		v.EnsureImported()
-		if v.Types != nil {
-			if v.Types.Name() != k { // if we guess pkgName failed
-				delete(bc.imports, k)
-				bc.imports[v.Types.Name()] = v
-			}
-		}
-	}
 	pr, ok = bc.imports[name]
 	return
 }
@@ -978,7 +965,7 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 			return
 		}
 	} else {
-		pkg = ctx.pkg.Import(simplifyGopPackage(pkgPath))
+		pkg = ctx.pkg.Import(simplifyGopPackage(pkgPath), spec)
 	}
 	var name string
 	if spec.Name != nil {
@@ -992,7 +979,7 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 			return
 		}
 	} else {
-		name = path.Base(pkgPath) // TODO: open pkgPath to get pkgName
+		name = pkg.Types.Name()
 	}
 	ctx.imports[name] = pkg
 }

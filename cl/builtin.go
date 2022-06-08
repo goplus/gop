@@ -25,14 +25,14 @@ import (
 
 // -----------------------------------------------------------------------------
 
-func initMathBig(pkg gox.PkgImporter, conf *gox.Config, big *gox.PkgRef) {
+func initMathBig(pkg *gox.Package, conf *gox.Config, big *gox.PkgRef) {
 	big.EnsureImported()
 	conf.UntypedBigInt = big.Ref("UntypedBigint").Type().(*types.Named)
 	conf.UntypedBigRat = big.Ref("UntypedBigrat").Type().(*types.Named)
 	conf.UntypedBigFloat = big.Ref("UntypedBigfloat").Type().(*types.Named)
 }
 
-func initBuiltin(pkg gox.PkgImporter, builtin *types.Package, fmt, ng, buil *gox.PkgRef) {
+func initBuiltin(pkg *gox.Package, builtin *types.Package, fmt, ng, buil *gox.PkgRef) {
 	scope := builtin.Scope()
 	typs := []string{"bigint", "bigrat", "bigfloat"}
 	for _, typ := range typs {
@@ -54,7 +54,7 @@ func initBuiltin(pkg gox.PkgImporter, builtin *types.Package, fmt, ng, buil *gox
 	scope.Insert(types.NewTypeName(token.NoPos, builtin, "any", gox.TyEmptyInterface))
 }
 
-func newBuiltinDefault(pkg gox.PkgImporter, conf *gox.Config) *types.Package {
+func newBuiltinDefault(pkg *gox.Package, conf *gox.Config) *types.Package {
 	builtin := types.NewPackage("", "")
 	fmt := pkg.Import("fmt")
 	buil := pkg.Import("github.com/goplus/gop/builtin")
