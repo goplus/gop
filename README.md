@@ -64,3 +64,9 @@ all.bat
 ```sh
 brew install goplus
 ```
+
+## Contributing
+
+The Go+ project welcomes all contributors. We appreciate your help!
+
+For more details, see [Contributing & compiler design](doc/contributing.md).
