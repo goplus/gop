@@ -65,6 +65,11 @@ all.bat
 brew install goplus
 ```
 
+## IDE Plugins
+
+* vscode: https://github.com/goplus/vscode-goplus
+
+
 ## Contributing
 
 The Go+ project welcomes all contributors. We appreciate your help!
