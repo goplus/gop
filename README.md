@@ -41,7 +41,7 @@ For more detials, see [Quick Start](doc/docs.md).
 * [Simplest way to interaction with C](doc/docs.md#calling-c-from-go) (cgo is supported but not recommended).
 * [Powerful built-in data processing capabilities](doc/docs.md#data-processing).
 
-## Installing Go+
+## How to install
 
 ### from source code
 
