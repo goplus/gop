@@ -65,6 +65,23 @@ all.bat
 brew install goplus
 ```
 
+## Go+ Applications
+
+### 2D Games powered by Go+
+
+* [A Go+ 2D Game Engine for STEM education](https://github.com/goplus/spx)
+* [Aircraft War](https://github.com/goplus/AircraftWar)
+* [Flappy Bird](https://github.com/goplus/FlappyCalf)
+* [Maze Play](https://github.com/goplus/MazePlay)
+* [BetaGo](https://github.com/xushiwei/BetaGo)
+* [Gobang](https://github.com/xushiwei/Gobang)
+* [Dinosaur](https://github.com/xushiwei/Dinosaur)
+
+### Data processing
+
+* [HTML DOM Query Language for Go+](https://github.com/goplus/hdq)
+
+
 ## IDE Plugins
 
 * vscode: https://github.com/goplus/vscode-goplus
