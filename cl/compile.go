@@ -955,6 +955,13 @@ func simplifyGopPackage(pkgPath string) string {
 }
 
 func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
+	if enableRecover {
+		defer func() {
+			if e := recover(); e != nil {
+				ctx.handleRecover(e)
+			}
+		}()
+	}
 	var pkg *gox.PkgRef
 	var pkgPath = toString(spec.Path)
 	if realPath, kind := checkC2go(pkgPath); kind != c2goInvalid {
