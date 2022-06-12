@@ -476,11 +476,11 @@ there are no parentheses surrounding the condition and the braces are always req
 a := 10
 b := 20
 if a < b {
-	println "a < b"
+    println "a < b"
 } else if a > b {
-	println "a > b"
+    println "a > b"
 } else {
-	println "a == b"
+    println "a == b"
 }
 ```
 
@@ -529,19 +529,19 @@ for i, name <- names {
 ```go
 m := {"one": 1, "two": 2}
 for key, val <- m {
-	println key, val
-	// one 1
-	// two 2
+    println key, val
+    // one 1
+    // two 2
 }
 for key, _ <- m {
-	println key
-	// one
-	// two
+    println key
+    // one
+    // two
 }
 for val <- m {
-	println val
-	// 1
-	// 2
+    println val
+    // 1
+    // 2
 }
 ```
 
@@ -610,8 +610,8 @@ for num <- :10 if num%3 == 0 {
 sum := 0
 i := 1
 for i <= 100 {
-	sum += i
-	i++
+    sum += i
+    i++
 }
 println sum // 5050
 ```
@@ -718,7 +718,7 @@ How these `ErrWrap expressions` work? See [Error Handling](https://github.com/go
 
 ```go
 func add(x int, y int) int {
-	return x + y
+    return x + y
 }
 
 println add(2, 3) // 5
@@ -731,7 +731,7 @@ println add(2, 3) // 5
 
 ```go
 func foo() (int, int) {
-	return 2, 3
+    return 2, 3
 }
 
 a, b := foo()
@@ -748,10 +748,10 @@ c, _ := foo() // ignore values using `_`
 ```go
 func sum(a ...int) int {
     total := 0
-	for x <- a {
-		total += x
-	}
-	return total
+    for x <- a {
+        total += x
+    }
+    return total
 }
 
 println sum(2, 3, 5) // 10
@@ -761,10 +761,10 @@ Output parameters can have names.
 
 ```go
 func sum(a ...int) (total int) {
-	for x <- a {
-		total += x
-	}
-	return // don't need return values if they are assigned
+    for x <- a {
+        total += x
+    }
+    return // don't need return values if they are assigned
 }
 
 println sum(2, 3, 5) // 10
@@ -1002,8 +1002,8 @@ package main
 import "fmt"
 
 func p(a interface{}) {
-	sayMix()
-	fmt.Println("Hello,", a)
+    sayMix()
+    fmt.Println("Hello,", a)
 }
 ```
 
@@ -1011,7 +1011,7 @@ And we have a Go+ source file named `b.gop`:
 
 ```go
 func sayMix() {
-	println "Mix Go and Go+"
+    println "Mix Go and Go+"
 }
 
 p "world"
