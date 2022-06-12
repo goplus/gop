@@ -147,6 +147,25 @@ var d int = c.v
 var e = foo3{}
 var x string = c.Str()
 `)
+	gopMixedClTest(t, "main", `package main
+type Point struct {
+	X int
+	Y int
+}
+`, `
+type T struct{}
+println(&T{},&Point{10,20})
+`, `package main
+
+import fmt "fmt"
+
+type T struct {
+}
+
+func main() {
+	fmt.Println(&T{}, &Point{10, 20})
+}
+`)
 }
 
 func Test_RangeExpressionIf_Issue1243(t *testing.T) {
