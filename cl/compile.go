@@ -619,7 +619,8 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, genCod
 	parent := ctx.pkgCtx
 	syms := parent.syms
 	goFile := getGoFile(file, genCode)
-	p.SetCurFile(goFile, true)
+	old, _ := p.SetCurFile(goFile, true)
+	defer p.RestoreCurFile(old)
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
