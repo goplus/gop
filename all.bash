@@ -16,6 +16,7 @@
 # limitations under the License.
 #
 
+source /etc/profile
 set -ex
 
 go run cmd/make.go --install --autoproxy
