@@ -29,7 +29,7 @@ The Go+ programming language is designed for engineering, STEM education, and da
 * **For STEM education**: studying an engineering language that can be used for work in the future.
 * **For data science**: communicating with engineers in the same language.
 
-For more detials, see [Quick Start](doc/docs.md).
+For more details, see [Quick Start](doc/docs.md).
 
 ## Key Features of Go+
 
