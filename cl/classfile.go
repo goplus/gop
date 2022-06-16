@@ -80,9 +80,15 @@ func newGmx(pkg *gox.Package, file string, conf *Config) *gmxSettings {
 		p.pkgImps[i] = pkg.Import(pkgPath)
 	}
 	spx := p.pkgImps[0]
-	p.game, p.gameIsPtr = spxRef(spx, "Gop_game", "Game")
+	p.game, p.gameIsPtr = spxTryRef(spx, "Gop_proj", "Proj")
+	if p.game == nil {
+		p.game, p.gameIsPtr = spxRef(spx, "Gop_game", "Game")
+	}
 	if gt.WorkExt != "" {
-		p.sprite, _ = spxRef(spx, "Gop_sprite", "Sprite")
+		p.sprite, _ = spxTryRef(spx, "Gop_work", "Work")
+		if p.sprite == nil {
+			p.sprite, _ = spxRef(spx, "Gop_sprite", "Sprite")
+		}
 	}
 	if x := getStringConst(spx, "Gop_sched"); x != "" {
 		p.scheds, p.hasScheds = strings.SplitN(x, ",", 2), true
@@ -108,13 +114,21 @@ func getDefaultClass(file string) string {
 }
 
 func spxRef(spx *gox.PkgRef, name, typ string) (obj gox.Ref, isPtr bool) {
+	obj, isPtr = spxTryRef(spx, name, typ)
+	if obj == nil {
+		panic(spx.Path() + "." + name + " not found")
+	}
+	return
+}
+
+func spxTryRef(spx *gox.PkgRef, name, typ string) (obj gox.Ref, isPtr bool) {
 	if v := getStringConst(spx, name); v != "" {
 		typ = v
 		if strings.HasPrefix(typ, "*") {
 			typ, isPtr = typ[1:], true
 		}
 	}
-	obj = spx.Ref(typ)
+	obj = spx.TryRef(typ)
 	return
 }
 

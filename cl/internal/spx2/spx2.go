@@ -17,8 +17,8 @@
 package spx2
 
 const (
-	Gop_sched  = "Sched"
-	Gop_sprite = "Sprite"
+	Gop_sched = "Sched"
+	Gop_work  = "Sprite"
 )
 
 type Game struct {
