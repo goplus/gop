@@ -10,8 +10,8 @@ github.com/goplus/gox v1.11.11-0.20220608064319-a874b7d2ce42/go.mod h1:gu7fuQF8R
 github.com/goplus/libc v0.3.9 h1:1mZngVccEfPlhVa3iVVY7Z0s6Dm4CbO2OiI5x2z46lg=
 github.com/goplus/libc v0.3.9/go.mod h1:ewlp1FCnlqDNJtkjNi7DikLMVfUcLaABJjL4z7QnkNU=
 github.com/goplus/mod v0.9.10/go.mod h1:NHU13OjeNV3ez1f+R9FLJIlIun0KNSuZb0jnmP3N3o8=
-github.com/goplus/mod v0.9.11 h1:4u/Icor2tH9AbnETTHG0gx4T1Aodi10mCu/+U3V+WCE=
-github.com/goplus/mod v0.9.11/go.mod h1:NHU13OjeNV3ez1f+R9FLJIlIun0KNSuZb0jnmP3N3o8=
+github.com/goplus/mod v0.9.12 h1:CjgBGQIYqUTPGl3MrAS5CICzJwxbIfSa4OlEb141Gs4=
+github.com/goplus/mod v0.9.12/go.mod h1:YoPIowz71rnLLROA4YG0AC8bzDtPRyMaQwgTRLr8ri4=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=
 github.com/json-iterator/go v1.1.12/go.mod h1:e30LSqwooZae/UwlEbR2852Gd8hjQvJoHmT4TnhNGBo=
 github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 h1:ZqeYNhU3OHLH3mGKHDcjJRFFRrJa6eAM5H+CtDdOsPc=
@@ -23,8 +23,8 @@ github.com/petermattis/goid v0.0.0-20220331194723-8ee3e6ded87a/go.mod h1:pxMtw7c
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/qiniu/x v1.11.5/go.mod h1:03Ni9tj+N2h2aKnAz+6N0Xfl8FwMEDRC2PAlxekASDs=
-github.com/qiniu/x v1.11.7 h1:5If8qYzHtKSzHpU2e39bxpBs9n+Ryxej9+10t/z81Cw=
-github.com/qiniu/x v1.11.7/go.mod h1:03Ni9tj+N2h2aKnAz+6N0Xfl8FwMEDRC2PAlxekASDs=
+github.com/qiniu/x v1.11.9 h1:IfQNdeNcK43Q1+b/LdrcqmWjlhxq051YVBnua8J2qN8=
+github.com/qiniu/x v1.11.9/go.mod h1:03Ni9tj+N2h2aKnAz+6N0Xfl8FwMEDRC2PAlxekASDs=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0Q=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
