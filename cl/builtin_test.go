@@ -86,7 +86,7 @@ func TestHandleRecover(t *testing.T) {
 }
 
 func TestCanAutoCall(t *testing.T) {
-	if !canAutoCall(
+	if !isCommandWithoutArgs(
 		&ast.SelectorExpr{
 			X:   &ast.SelectorExpr{X: ast.NewIdent("foo"), Sel: ast.NewIdent("bar")},
 			Sel: ast.NewIdent("val"),

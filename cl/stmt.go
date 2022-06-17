@@ -81,8 +81,12 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	commentStmt(ctx, stmt)
 	switch v := stmt.(type) {
 	case *ast.ExprStmt:
-		compileExpr(ctx, v.X)
-		if canAutoCall(v.X) && gox.IsFunc(ctx.cb.InternalStack().Get(-1).Type) {
+		inFlags := 0
+		if isCommandWithoutArgs(v.X) {
+			inFlags = clCommandWithoutArgs
+		}
+		compileExpr(ctx, v.X, inFlags)
+		if inFlags != 0 && gox.IsFunc(ctx.cb.InternalStack().Get(-1).Type) {
 			ctx.cb.Call(0)
 		}
 	case *ast.AssignStmt:
@@ -130,7 +134,7 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	ctx.cb.EndStmt()
 }
 
-func canAutoCall(x ast.Expr) bool {
+func isCommandWithoutArgs(x ast.Expr) bool {
 retry:
 	switch t := x.(type) {
 	case *ast.Ident:
@@ -157,11 +161,13 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 			}
 			compileCompositeLit(ctx, c, typ, true)
 		} else {
-			twoValue := false
+			inFlags := 0
 			if len(expr.Results) == 1 {
 				if _, ok := ret.(*ast.ComprehensionExpr); ok {
 					results = ctx.cb.Func().Type().(*types.Signature).Results()
-					twoValue = (results.Len() == 2)
+					if results.Len() == 2 {
+						inFlags = clCallWithTwoValue
+					}
 				}
 			}
 			switch v := ret.(type) {
@@ -174,7 +180,7 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 				}
 				compileLambda(ctx, v, sig)
 			default:
-				compileExpr(ctx, ret, twoValue)
+				compileExpr(ctx, ret, inFlags)
 			}
 		}
 	}
@@ -194,7 +200,10 @@ func compileSendStmt(ctx *blockCtx, expr *ast.SendStmt) {
 
 func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 	tok := expr.Tok
-	twoValue := (len(expr.Lhs) == 2 && len(expr.Rhs) == 1)
+	inFlags := 0
+	if len(expr.Lhs) == 2 && len(expr.Rhs) == 1 {
+		inFlags = clCallWithTwoValue
+	}
 	if tok == token.DEFINE {
 		names := make([]string, len(expr.Lhs))
 		for i, lhs := range expr.Lhs {
@@ -214,7 +223,7 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 			}()
 		}
 		for _, rhs := range expr.Rhs {
-			compileExpr(ctx, rhs, twoValue)
+			compileExpr(ctx, rhs, inFlags)
 		}
 		ctx.cb.EndInit(len(expr.Rhs))
 		return
@@ -233,7 +242,7 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 				panic(ctx.newCodeErrorf(e.Pos(), "lambda unsupport multiple assignment"))
 			}
 		default:
-			compileExpr(ctx, rhs, twoValue)
+			compileExpr(ctx, rhs, inFlags)
 		}
 	}
 	if tok == token.ASSIGN {

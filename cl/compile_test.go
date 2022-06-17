@@ -103,6 +103,40 @@ func gopClTestFS(t *testing.T, conf *cl.Config, fs parser.FileSystem, pkgname, e
 	}
 }
 
+func TestVargCommand(t *testing.T) {
+	gopClTest(t, `
+type foo int
+
+func (f foo) Ls(args ...string) {
+}
+
+var f foo
+f.ls
+`, `package main
+
+type foo int
+
+func (f foo) Ls(args ...string) {
+}
+
+var f foo
+
+func main() {
+	f.Ls()
+}
+`)
+}
+
+func _TestCommandInPkg(t *testing.T) {
+	gopClTest(t, `
+func Ls(args ...string) {
+}
+
+ls
+`, `
+`)
+}
+
 func TestMixedGo(t *testing.T) {
 	gopMixedClTest(t, "main", `package main
 
@@ -2405,6 +2439,26 @@ y, ok := {i for i, x <- ["1", "3", "5", "7", "11"], x == "5"}
 
 func main() {
 	y, ok := func() (_gop_ret int, _gop_ok bool) {
+		for i, x := range []string{"1", "3", "5", "7", "11"} {
+			if x == "5" {
+				return i, true
+			}
+		}
+		return
+	}()
+}
+`)
+}
+
+func TestSelectComprehensionRetTwoValue(t *testing.T) {
+	gopClTest(t, `
+func foo() (int, bool) {
+	return {i for i, x <- ["1", "3", "5", "7", "11"], x == "5"}
+}
+`, `package main
+
+func foo() (int, bool) {
+	return func() (_gop_ret int, _gop_ok bool) {
 		for i, x := range []string{"1", "3", "5", "7", "11"} {
 			if x == "5" {
 				return i, true
