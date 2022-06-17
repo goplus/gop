@@ -2450,6 +2450,26 @@ func main() {
 `)
 }
 
+func TestSelectComprehensionRetTwoValue(t *testing.T) {
+	gopClTest(t, `
+func foo() (int, bool) {
+	return {i for i, x <- ["1", "3", "5", "7", "11"], x == "5"}
+}
+`, `package main
+
+func foo() (int, bool) {
+	return func() (_gop_ret int, _gop_ok bool) {
+		for i, x := range []string{"1", "3", "5", "7", "11"} {
+			if x == "5" {
+				return i, true
+			}
+		}
+		return
+	}()
+}
+`)
+}
+
 func TestListComprehension(t *testing.T) {
 	gopClTest(t, `
 a := [1, 3.4, 5]
