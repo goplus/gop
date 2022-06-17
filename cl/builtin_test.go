@@ -110,6 +110,16 @@ func TestGmxSettings(t *testing.T) {
 	if gmx.getScheds(nil) != nil {
 		t.Fatal("TestGmxSettings failed: hasScheds?")
 	}
+	_, err := NewPackage("", &ast.Package{Files: map[string]*ast.File{
+		"main.t2gmx": {
+			IsProj: true,
+		},
+	}}, &Config{
+		LookupClass: lookupClassErr,
+	})
+	if e := err.Error(); e != `github.com/goplus/gop/cl/internal/libc.Gop_game not found` {
+		t.Fatal("newGmx:", e)
+	}
 }
 
 func TestSpxLookup(t *testing.T) {
@@ -127,6 +137,16 @@ func lookupClass(ext string) (c *gopmod.Class, ok bool) {
 		return &gopmod.Class{
 			ProjExt: ".t2gmx", WorkExt: ".t2spx",
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
+	}
+	return
+}
+
+func lookupClassErr(ext string) (c *gopmod.Class, ok bool) {
+	switch ext {
+	case ".t2gmx", ".t2spx":
+		return &gopmod.Class{
+			ProjExt: ".t2gmx", WorkExt: ".t2spx",
+			PkgPaths: []string{"github.com/goplus/gop/cl/internal/libc"}}, true
 	}
 	return
 }
