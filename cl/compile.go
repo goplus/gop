@@ -384,7 +384,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		}
 	}
 	if ctx.errs != nil {
-		return nil, ctx.errs
+		return nil, ctx.errs.ToError()
 	}
 	for fpath, f := range files {
 		fileLine := !conf.NoFileLine
