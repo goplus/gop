@@ -1031,7 +1031,7 @@ func loadVars(ctx *blockCtx, v *ast.ValueSpec, global bool) {
 	if nv := len(v.Values); nv > 0 {
 		cb := varDecl.InitStart(ctx.pkg)
 		if nv == 1 && len(names) == 2 {
-			compileExpr(ctx, v.Values[0], true)
+			compileExpr(ctx, v.Values[0], clCallWithTwoValue)
 		} else {
 			for _, val := range v.Values {
 				switch e := val.(type) {

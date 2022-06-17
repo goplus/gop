@@ -55,12 +55,13 @@ Name lookup:
 // ---------------------------------------------------------------------------*/
 
 const (
-	clIdentAutoCall = 1 << iota
+	clIdentCanAutoCall = 1 << iota
 	clIdentAllowBuiltin
 	clIdentLHS
-	clIdentSelectorExpr
+	clIdentSelectorExpr // this ident is X of ast.SelectorExpr
 	clIdentGoto
 	clCallWithTwoValue
+	clCommandWithoutArgs
 )
 
 const (
@@ -159,7 +160,9 @@ func compileMember(ctx *blockCtx, v ast.Node, name string, flags int) error {
 	switch {
 	case (flags & clIdentLHS) != 0:
 		mflag = gox.MemberFlagRef
-	case (flags & clIdentAutoCall) != 0:
+	case (flags & clCommandWithoutArgs) != 0:
+		mflag = gox.MemberFlagMethodAlias
+	case (flags & clIdentCanAutoCall) != 0:
 		mflag = gox.MemberFlagAutoProperty
 	default:
 		mflag = gox.MemberFlagMethodAlias
@@ -183,24 +186,36 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr) {
 	}
 }
 
-func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
+func twoValue(inFlags []int) bool {
+	return inFlags != nil && (inFlags[0]&clCallWithTwoValue) != 0
+}
+
+func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 	switch v := expr.(type) {
 	case *ast.Ident:
-		compileIdent(ctx, v, clIdentAutoCall)
+		flags := clIdentCanAutoCall
+		if inFlags != nil {
+			flags |= inFlags[0]
+		}
+		compileIdent(ctx, v, flags)
 	case *ast.BasicLit:
 		compileBasicLit(ctx, v)
 	case *ast.CallExpr:
 		flags := 0
-		if twoValue != nil && twoValue[0] {
-			flags = clCallWithTwoValue
+		if inFlags != nil {
+			flags = inFlags[0]
 		}
 		compileCallExpr(ctx, v, flags)
 	case *ast.SelectorExpr:
-		compileSelectorExpr(ctx, v, clIdentAutoCall)
+		flags := clIdentCanAutoCall
+		if inFlags != nil {
+			flags |= inFlags[0]
+		}
+		compileSelectorExpr(ctx, v, flags)
 	case *ast.BinaryExpr:
 		compileBinaryExpr(ctx, v)
 	case *ast.UnaryExpr:
-		compileUnaryExpr(ctx, v, twoValue != nil && twoValue[0])
+		compileUnaryExpr(ctx, v, twoValue(inFlags))
 	case *ast.FuncLit:
 		compileFuncLit(ctx, v)
 	case *ast.CompositeLit:
@@ -210,7 +225,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 	case *ast.RangeExpr:
 		compileRangeExpr(ctx, v)
 	case *ast.IndexExpr:
-		compileIndexExpr(ctx, v, twoValue != nil && twoValue[0])
+		compileIndexExpr(ctx, v, twoValue(inFlags))
 	case *ast.SliceExpr:
 		compileSliceExpr(ctx, v)
 	case *ast.StarExpr:
@@ -226,11 +241,11 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, twoValue ...bool) {
 	case *ast.InterfaceType:
 		ctx.cb.Typ(toInterfaceType(ctx, v), v)
 	case *ast.ComprehensionExpr:
-		compileComprehensionExpr(ctx, v, twoValue != nil && twoValue[0])
+		compileComprehensionExpr(ctx, v, twoValue(inFlags))
 	case *ast.TypeAssertExpr:
-		compileTypeAssertExpr(ctx, v, twoValue != nil && twoValue[0])
+		compileTypeAssertExpr(ctx, v, twoValue(inFlags))
 	case *ast.ParenExpr:
-		compileExpr(ctx, v.X, twoValue...)
+		compileExpr(ctx, v.X, inFlags...)
 	case *ast.ErrWrapExpr:
 		compileErrWrapExpr(ctx, v)
 	case *ast.FuncType:
@@ -385,7 +400,7 @@ func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, x *ast.Ident, flags, pkgKind i
 		if (flags & clIdentLHS) != 0 {
 			cb.VarRef(v, x)
 		} else {
-			autoprop := alias && (flags&clIdentAutoCall) != 0
+			autoprop := alias && (flags&clIdentCanAutoCall) != 0
 			if autoprop && !gox.HasAutoProperty(v.Type()) {
 				return false
 			}
