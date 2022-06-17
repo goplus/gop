@@ -95,6 +95,21 @@ func TestCanAutoCall(t *testing.T) {
 	}
 }
 
+func TestClRangeStmt(t *testing.T) {
+	ctx := &blockCtx{
+		cb: &gox.CodeBuilder{},
+	}
+	stmt := &ast.RangeStmt{
+		Tok:  token.DEFINE,
+		X:    &ast.SliceLit{},
+		Body: &ast.BlockStmt{},
+	}
+	compileRangeStmt(ctx, stmt)
+	stmt.Tok = token.ASSIGN
+	stmt.Value = &ast.Ident{Name: "_"}
+	compileRangeStmt(ctx, stmt)
+}
+
 // -----------------------------------------------------------------------------
 
 func TestGmxSettings(t *testing.T) {
