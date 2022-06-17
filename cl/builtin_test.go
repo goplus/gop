@@ -99,7 +99,7 @@ func TestCanAutoCall(t *testing.T) {
 
 func TestGmxSettings(t *testing.T) {
 	pkg := gox.NewPackage("", "foo", goxConf)
-	gmx := newGmx(pkg, "main.t2gmx", &Config{
+	gmx := newGmx(nil, pkg, "main.t2gmx", &Config{
 		LookupClass: lookupClass,
 	})
 	scheds := gmx.getScheds(pkg.CB())

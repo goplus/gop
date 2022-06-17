@@ -18,7 +18,6 @@
 package cl
 
 import (
-	"errors"
 	"fmt"
 	"go/types"
 	"log"
@@ -32,6 +31,7 @@ import (
 	"github.com/goplus/gox"
 	"github.com/goplus/gox/cpackages"
 	"github.com/goplus/mod/modfile"
+	"github.com/qiniu/x/errors"
 )
 
 const (
@@ -56,18 +56,6 @@ func SetDisableRecover(disableRecover bool) {
 func SetDebug(flags int) {
 	debugLoad = (flags & DbgFlagLoad) != 0
 	debugLookup = (flags & DbgFlagLookup) != 0
-}
-
-type Errors struct {
-	Errs []error
-}
-
-func (p *Errors) Error() string {
-	msgs := make([]string, len(p.Errs))
-	for i, err := range p.Errs {
-		msgs[i] = err.Error()
-	}
-	return strings.Join(msgs, "\n")
 }
 
 // -----------------------------------------------------------------------------
@@ -254,7 +242,7 @@ type pkgCtx struct {
 	syms  map[string]loader
 	inits []func()
 	tylds []*typeLoader
-	errs  []error
+	errs  errors.List
 }
 
 type blockCtx struct {
@@ -308,10 +296,7 @@ func (p *pkgCtx) loadNamed(at *gox.Package, t *types.Named) {
 }
 
 func (p *pkgCtx) complete() error {
-	if p.errs != nil {
-		return &Errors{Errs: p.errs}
-	}
-	return nil
+	return p.errs.ToError()
 }
 
 func (p *pkgCtx) loadType(name string) {
@@ -394,9 +379,12 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	})
 	for file, gmx := range files {
 		if gmx.IsProj {
-			ctx.gmxSettings = newGmx(p, file, conf)
+			ctx.gmxSettings = newGmx(ctx, p, file, conf)
 			break
 		}
+	}
+	if ctx.errs != nil {
+		return nil, ctx.errs
 	}
 	for fpath, f := range files {
 		fileLine := !conf.NoFileLine
