@@ -1354,7 +1354,7 @@ func (p *parser) parseFuncTypeOrLit() ast.Expr {
 
 func (p *parser) isCommand(x ast.Expr) bool {
 	switch x.(type) {
-	case *ast.Ident, *ast.SelectorExpr:
+	case *ast.Ident, *ast.SelectorExpr, *ast.ErrWrapExpr:
 	default:
 		return false
 	}
@@ -1908,6 +1908,9 @@ L:
 			} else {
 				break L
 			}
+		case token.NOT, token.QUESTION:
+			x = &ast.ErrWrapExpr{X: x, Tok: p.tok, TokPos: p.pos}
+			p.next()
 		default:
 			if allowCmd && p.isCommand(x) {
 				if lhs {
@@ -1919,6 +1922,18 @@ L:
 			}
 		}
 		lhs = false // no need to try to resolve again
+	}
+	return x
+}
+
+// parseErrWrapExpr: expr! expr? expr?:defval
+func (p *parser) parseErrWrapExpr(lhs, allowTuple, allowCmd bool) ast.Expr {
+	x := p.parsePrimaryExpr(lhs, allowTuple, allowCmd)
+	if expr, ok := x.(*ast.ErrWrapExpr); ok {
+		if p.tok == token.COLON {
+			p.next()
+			expr.Default = p.parseUnaryExpr(false, true, false)
+		}
 	}
 	return x
 }
@@ -1991,27 +2006,6 @@ func (p *parser) parseUnaryExpr(lhs, allowTuple, allowCmd bool) ast.Expr {
 	}
 
 	return p.parseErrWrapExpr(lhs, allowTuple, allowCmd)
-}
-
-// parseErrWrapExpr: expr! expr? expr?:defval
-func (p *parser) parseErrWrapExpr(lhs, allowTuple, allowCmd bool) ast.Expr {
-	x := p.parsePrimaryExpr(lhs, allowTuple, allowCmd)
-	switch p.tok {
-	case token.NOT: // expr!
-		expr := &ast.ErrWrapExpr{X: x, Tok: token.NOT, TokPos: p.pos}
-		p.next()
-		return expr
-	case token.QUESTION: // expr? expr?:defval
-		expr := &ast.ErrWrapExpr{X: x, Tok: token.QUESTION, TokPos: p.pos}
-		p.next()
-		if p.tok == token.COLON {
-			p.next()
-			expr.Default = p.parseUnaryExpr(false, true, false)
-		}
-		return expr
-	default:
-		return x
-	}
 }
 
 func (p *parser) tokPrec() (token.Token, int) {
