@@ -335,7 +335,7 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr) {
 func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, flags int) {
 	switch x := v.X.(type) {
 	case *ast.Ident:
-		if at, kind := compileIdent(ctx, x, flags|clIdentSelectorExpr); kind != objNormal {
+		if at, kind := compileIdent(ctx, x, flags|clIdentCanAutoCall|clIdentSelectorExpr); kind != objNormal {
 			if compilePkgRef(ctx, at, v.Sel, flags, kind) {
 				return
 			}
