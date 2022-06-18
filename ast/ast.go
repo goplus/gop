@@ -468,6 +468,11 @@ func (x *CallExpr) End() token.Pos {
 	return x.Rparen + 1
 }
 
+// IsCommand returns if a CallExpr is a command style CallExpr or not.
+func (x *CallExpr) IsCommand() bool {
+	return x.NoParenEnd != token.NoPos
+}
+
 // End returns position of first character immediately after the node.
 func (x *StarExpr) End() token.Pos { return x.X.End() }
 

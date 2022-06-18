@@ -247,7 +247,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 	case *ast.ParenExpr:
 		compileExpr(ctx, v.X, inFlags...)
 	case *ast.ErrWrapExpr:
-		compileErrWrapExpr(ctx, v)
+		compileErrWrapExpr(ctx, v, 0)
 	case *ast.FuncType:
 		ctx.cb.Typ(toFuncType(ctx, v, nil), v)
 	case *ast.Ellipsis:
@@ -468,6 +468,16 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 		compileIdent(ctx, fn, clIdentAllowBuiltin|inFlags)
 	case *ast.SelectorExpr:
 		compileSelectorExpr(ctx, fn, 0)
+	case *ast.ErrWrapExpr:
+		if v.IsCommand() {
+			callExpr := *v
+			callExpr.Fun = fn.X
+			ewExpr := *fn
+			ewExpr.X = &callExpr
+			compileErrWrapExpr(ctx, &ewExpr, inFlags)
+			return
+		}
+		compileErrWrapExpr(ctx, fn, 0)
 	default:
 		compileExpr(ctx, fn)
 	}
@@ -956,14 +966,14 @@ var (
 	tyError = types.Universe.Lookup("error").Type()
 )
 
-func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr) {
+func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr, inFlags int) {
 	pkg, cb := ctx.pkg, ctx.cb
 	useClosure := v.Tok == token.NOT || v.Default != nil
 	if !useClosure && (cb.Scope().Parent() == types.Universe) {
 		panic("TODO: can't use expr? in global")
 	}
 
-	compileExpr(ctx, v.X)
+	compileExpr(ctx, v.X, inFlags)
 	x := cb.InternalStack().Pop()
 	n := 0
 	results, ok := x.Type.(*types.Tuple)
