@@ -47,7 +47,7 @@ func TestCompileErrWrapExpr(t *testing.T) {
 	}()
 	pkg := gox.NewPackage("", "foo", goxConf)
 	ctx := &blockCtx{pkg: pkg, cb: pkg.CB()}
-	compileErrWrapExpr(ctx, &ast.ErrWrapExpr{Tok: token.QUESTION})
+	compileErrWrapExpr(ctx, &ast.ErrWrapExpr{Tok: token.QUESTION}, 0)
 }
 
 func TestToString(t *testing.T) {

@@ -1411,7 +1411,7 @@ func foo(script string) {
 `)
 }
 
-func TestErrWrap(t *testing.T) {
+func TestErrWrapBasic(t *testing.T) {
 	gopClTest(t, `
 import "strconv"
 
@@ -1494,6 +1494,31 @@ var ret int = func() (_gop_ret int) {
 	}
 	return
 }()
+`)
+}
+
+func TestErrWrapCommand(t *testing.T) {
+	gopClTest(t, `
+func mkdir(name string) error {
+	return nil
+}
+
+mkdir! "foo"
+`, `package main
+
+func mkdir(name string) error {
+	return nil
+}
+func main() {
+	func() {
+		var _gop_err error
+		_gop_err = mkdir("foo")
+		if _gop_err != nil {
+			panic(_gop_err)
+		}
+		return
+	}()
+}
 `)
 }
 
