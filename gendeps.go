@@ -36,6 +36,9 @@ import (
 func GenDepMods(mod *gopmod.Module, dir string, recursively bool) (ret map[string]struct{}, err error) {
 	modBase := mod.Path()
 	ret = make(map[string]struct{})
+	for _, r := range mod.Register {
+		ret[r.ClassfileMod] = struct{}{}
+	}
 	err = HandleDeps(mod, dir, recursively, func(pkgPath string) {
 		modPath, _ := modfetch.Split(pkgPath, modBase)
 		if modPath != "" && modPath != modBase {
