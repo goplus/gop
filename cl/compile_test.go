@@ -1522,6 +1522,31 @@ func main() {
 `)
 }
 
+func TestErrWrapCall(t *testing.T) {
+	gopClTest(t, `
+func foo() (func(), error) {
+	return nil, nil
+}
+
+foo()!()
+`, `package main
+
+func foo() (func(), error) {
+	return nil, nil
+}
+func main() {
+	func() (_gop_ret func()) {
+		var _gop_err error
+		_gop_ret, _gop_err = foo()
+		if _gop_err != nil {
+			panic(_gop_err)
+		}
+		return
+	}()()
+}
+`)
+}
+
 func TestMakeAndNew(t *testing.T) {
 	gopClTest(t, `
 var a *int = new(int)

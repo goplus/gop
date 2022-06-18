@@ -469,12 +469,15 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 	case *ast.SelectorExpr:
 		compileSelectorExpr(ctx, fn, 0)
 	case *ast.ErrWrapExpr:
-		callExpr := *v
-		callExpr.Fun = fn.X
-		ewExpr := *fn
-		ewExpr.X = &callExpr
-		compileErrWrapExpr(ctx, &ewExpr, inFlags)
-		return
+		if v.IsCommand() {
+			callExpr := *v
+			callExpr.Fun = fn.X
+			ewExpr := *fn
+			ewExpr.X = &callExpr
+			compileErrWrapExpr(ctx, &ewExpr, inFlags)
+			return
+		}
+		compileErrWrapExpr(ctx, fn, 0)
 	default:
 		compileExpr(ctx, fn)
 	}
