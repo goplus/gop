@@ -38,6 +38,7 @@ For more details, see [Quick Start](doc/docs.md).
 * The simplest engineering language that can be mastered by children (script-like style).
 * Performance: as fast as Go (Go+'s main backend compiles to human-readable Go).
 * Fully compatible with [Go](https://github.com/golang/go) and can mix Go/Go+ code in the same package (see [Go/Go+ hybrid programming](doc/docs.md#gogo-hybrid-programming)).
+* No DSL (Domain Specific Language) support, but Specific Domain Friendly (see [DSL vs. SDF](doc/dsl-vs-sdf.md)).
 * REPL: see [iGo+](https://github.com/goplus/igop).
 * [Simplest way to interaction with C](doc/docs.md#calling-c-from-go) (cgo is supported but not recommended).
 * [Powerful built-in data processing capabilities](doc/docs.md#data-processing).
