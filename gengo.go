@@ -17,7 +17,6 @@
 package gop
 
 import (
-	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -71,16 +70,12 @@ func genGoDir(dir string, conf *Config, genTestPkg, recursively bool) (err error
 }
 
 func genGoIn(dir string, conf *Config, genTestPkg, prompt bool) (err error) {
-	out, test, err := LoadDir(dir, conf, genTestPkg)
+	out, test, err := LoadDir(dir, conf, genTestPkg, prompt)
 	if err != nil {
 		if err == syscall.ENOENT { // no Go+ source files
 			return nil
 		}
 		return
-	}
-
-	if prompt {
-		fmt.Printf("GenGo %v ...\n", dir)
 	}
 
 	os.MkdirAll(dir, 0755)

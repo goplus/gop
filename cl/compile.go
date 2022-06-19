@@ -373,6 +373,14 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		DefaultGoFile:   defaultGoFile,
 		NoSkipConstant:  conf.NoSkipConstant,
 	}
+	if enableRecover {
+		defer func() {
+			if e := recover(); e != nil {
+				ctx.handleRecover(e)
+				err = ctx.errs.ToError()
+			}
+		}()
+	}
 	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
 	ctx.cpkgs = cpackages.NewImporter(&cpackages.Config{
 		Pkg: p, LookupPub: conf.LookupPub,
@@ -382,9 +390,6 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 			ctx.gmxSettings = newGmx(ctx, p, file, conf)
 			break
 		}
-	}
-	if ctx.errs != nil {
-		return nil, ctx.errs.ToError()
 	}
 	for fpath, f := range files {
 		fileLine := !conf.NoFileLine

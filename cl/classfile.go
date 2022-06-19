@@ -61,11 +61,6 @@ func (p *gmxSettings) getScheds(cb *gox.CodeBuilder) []goast.Stmt {
 }
 
 func newGmx(ctx *pkgCtx, pkg *gox.Package, file string, conf *Config) *gmxSettings {
-	defer func() {
-		if e := recover(); e != nil {
-			ctx.handleRecover(e)
-		}
-	}()
 	_, name := filepath.Split(file)
 	ext := filepath.Ext(name)
 	if idx := strings.Index(name, "."); idx > 0 {

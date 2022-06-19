@@ -75,7 +75,6 @@ func Tidy(dir string, gop *env.Gop) (err error) {
 	cmd := exec.Command("go", "mod", "tidy")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
 	cmd.Dir = modRoot
 	err = cmd.Run()
 	if err != nil {

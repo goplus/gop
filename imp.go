@@ -20,6 +20,7 @@ import (
 	"go/token"
 	"go/types"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -86,21 +87,38 @@ func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 			if err = p.genGoExtern(ret.Dir, false); err != nil {
 				return
 			}
+		case gopmod.PkgtStandard:
+			return p.impFrom.ImportFrom(pkgPath, p.gop.Root, 0)
 		}
 	}
 	return p.impFrom.Import(pkgPath)
 }
 
 func (p *Importer) genGoExtern(dir string, isExtern bool) (err error) {
-	genfile := filepath.Join(dir, autoGenFile)
-	if _, err = os.Lstat(genfile); err == nil { // has gop_autogen.go
+	gosum := filepath.Join(dir, "go.sum")
+	if _, err = os.Lstat(gosum); err == nil { // has go.sum
 		return
 	}
+
 	if isExtern {
 		os.Chmod(dir, modWritable)
 		defer os.Chmod(dir, modReadonly)
 	}
-	return genGoIn(dir, &Config{Gop: p.gop, Importer: p, Fset: p.fset}, false, false)
+
+	genfile := filepath.Join(dir, autoGenFile)
+	if _, err = os.Lstat(genfile); err != nil { // has gop_autogen.go
+		err = genGoIn(dir, &Config{Gop: p.gop, Importer: p, Fset: p.fset}, false, false)
+		if err != nil {
+			return
+		}
+	}
+
+	cmd := exec.Command("go", "mod", "tidy")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Dir = dir
+	err = cmd.Run()
+	return
 }
 
 // -----------------------------------------------------------------------------
