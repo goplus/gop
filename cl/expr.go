@@ -269,7 +269,7 @@ func compileExprOrNone(ctx *blockCtx, expr ast.Expr) {
 
 func compileUnaryExpr(ctx *blockCtx, v *ast.UnaryExpr, twoValue bool) {
 	compileExpr(ctx, v.X)
-	ctx.cb.UnaryOp(gotoken.Token(v.Op), twoValue)
+	ctx.cb.UnaryOp(gotoken.Token(v.Op), twoValue, v)
 }
 
 func compileBinaryExpr(ctx *blockCtx, v *ast.BinaryExpr) {
