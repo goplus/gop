@@ -1,0 +1,47 @@
+package main
+
+file errwrap3.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.ErrWrapExpr:
+                  X:
+                    ast.Ident:
+                      Name: mkdir
+                  Tok: !
+              Args:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "foo"
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.SelectorExpr:
+                  X:
+                    ast.ErrWrapExpr:
+                      X:
+                        ast.CallExpr:
+                          Fun:
+                            ast.Ident:
+                              Name: foo
+                      Tok: !
+                  Sel:
+                    ast.Ident:
+                      Name: fields

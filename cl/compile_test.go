@@ -103,6 +103,40 @@ func gopClTestFS(t *testing.T, conf *cl.Config, fs parser.FileSystem, pkgname, e
 	}
 }
 
+func TestVargCommand(t *testing.T) {
+	gopClTest(t, `
+type foo int
+
+func (f foo) Ls(args ...string) {
+}
+
+var f foo
+f.ls
+`, `package main
+
+type foo int
+
+func (f foo) Ls(args ...string) {
+}
+
+var f foo
+
+func main() {
+	f.Ls()
+}
+`)
+}
+
+func _TestCommandInPkg(t *testing.T) {
+	gopClTest(t, `
+func Ls(args ...string) {
+}
+
+ls
+`, `
+`)
+}
+
 func TestMixedGo(t *testing.T) {
 	gopMixedClTest(t, "main", `package main
 
@@ -146,6 +180,25 @@ var c foo
 var d int = c.v
 var e = foo3{}
 var x string = c.Str()
+`)
+	gopMixedClTest(t, "main", `package main
+type Point struct {
+	X int
+	Y int
+}
+`, `
+type T struct{}
+println(&T{},&Point{10,20})
+`, `package main
+
+import fmt "fmt"
+
+type T struct {
+}
+
+func main() {
+	fmt.Println(&T{}, &Point{10, 20})
+}
 `)
 }
 
@@ -1358,7 +1411,7 @@ func foo(script string) {
 `)
 }
 
-func TestErrWrap(t *testing.T) {
+func TestErrWrapBasic(t *testing.T) {
 	gopClTest(t, `
 import "strconv"
 
@@ -1441,6 +1494,56 @@ var ret int = func() (_gop_ret int) {
 	}
 	return
 }()
+`)
+}
+
+func TestErrWrapCommand(t *testing.T) {
+	gopClTest(t, `
+func mkdir(name string) error {
+	return nil
+}
+
+mkdir! "foo"
+`, `package main
+
+func mkdir(name string) error {
+	return nil
+}
+func main() {
+	func() {
+		var _gop_err error
+		_gop_err = mkdir("foo")
+		if _gop_err != nil {
+			panic(_gop_err)
+		}
+		return
+	}()
+}
+`)
+}
+
+func TestErrWrapCall(t *testing.T) {
+	gopClTest(t, `
+func foo() (func(), error) {
+	return nil, nil
+}
+
+foo()!()
+`, `package main
+
+func foo() (func(), error) {
+	return nil, nil
+}
+func main() {
+	func() (_gop_ret func()) {
+		var _gop_err error
+		_gop_ret, _gop_err = foo()
+		if _gop_err != nil {
+			panic(_gop_err)
+		}
+		return
+	}()()
+}
 `)
 }
 
@@ -2386,6 +2489,26 @@ y, ok := {i for i, x <- ["1", "3", "5", "7", "11"], x == "5"}
 
 func main() {
 	y, ok := func() (_gop_ret int, _gop_ok bool) {
+		for i, x := range []string{"1", "3", "5", "7", "11"} {
+			if x == "5" {
+				return i, true
+			}
+		}
+		return
+	}()
+}
+`)
+}
+
+func TestSelectComprehensionRetTwoValue(t *testing.T) {
+	gopClTest(t, `
+func foo() (int, bool) {
+	return {i for i, x <- ["1", "3", "5", "7", "11"], x == "5"}
+}
+`, `package main
+
+func foo() (int, bool) {
+	return func() (_gop_ret int, _gop_ok bool) {
 		for i, x := range []string{"1", "3", "5", "7", "11"} {
 			if x == "5" {
 				return i, true

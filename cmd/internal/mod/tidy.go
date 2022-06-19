@@ -18,7 +18,6 @@ package mod
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"syscall"
 
@@ -42,8 +41,9 @@ func runTidy(cmd *base.Command, args []string) {
 	if err != nil {
 		if err == syscall.ENOENT {
 			fmt.Fprintln(os.Stderr, "gop.mod not found")
-			os.Exit(1)
+		} else {
+			fmt.Fprintln(os.Stderr, err)
 		}
-		log.Panicln(err)
+		os.Exit(1)
 	}
 }

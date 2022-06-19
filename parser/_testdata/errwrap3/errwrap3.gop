@@ -1,0 +1,2 @@
+mkdir! "foo"
+println foo()!.fields

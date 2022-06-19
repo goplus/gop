@@ -18,12 +18,10 @@
 package cl
 
 import (
-	"errors"
 	"fmt"
 	"go/types"
 	"log"
 	"os"
-	"path"
 	"reflect"
 	"strings"
 
@@ -33,6 +31,7 @@ import (
 	"github.com/goplus/gox"
 	"github.com/goplus/gox/cpackages"
 	"github.com/goplus/mod/modfile"
+	"github.com/qiniu/x/errors"
 )
 
 const (
@@ -57,18 +56,6 @@ func SetDisableRecover(disableRecover bool) {
 func SetDebug(flags int) {
 	debugLoad = (flags & DbgFlagLoad) != 0
 	debugLookup = (flags & DbgFlagLookup) != 0
-}
-
-type Errors struct {
-	Errs []error
-}
-
-func (p *Errors) Error() string {
-	msgs := make([]string, len(p.Errs))
-	for i, err := range p.Errs {
-		msgs[i] = err.Error()
-	}
-	return strings.Join(msgs, "\n")
 }
 
 // -----------------------------------------------------------------------------
@@ -255,7 +242,7 @@ type pkgCtx struct {
 	syms  map[string]loader
 	inits []func()
 	tylds []*typeLoader
-	errs  []error
+	errs  errors.List
 }
 
 type blockCtx struct {
@@ -275,18 +262,6 @@ type blockCtx struct {
 }
 
 func (bc *blockCtx) findImport(name string) (pr *gox.PkgRef, ok bool) {
-	if pr, ok = bc.imports[name]; ok {
-		return
-	}
-	for k, v := range bc.imports {
-		v.EnsureImported()
-		if v.Types != nil {
-			if v.Types.Name() != k { // if we guess pkgName failed
-				delete(bc.imports, k)
-				bc.imports[v.Types.Name()] = v
-			}
-		}
-	}
 	pr, ok = bc.imports[name]
 	return
 }
@@ -321,10 +296,7 @@ func (p *pkgCtx) loadNamed(at *gox.Package, t *types.Named) {
 }
 
 func (p *pkgCtx) complete() error {
-	if p.errs != nil {
-		return &Errors{Errs: p.errs}
-	}
-	return nil
+	return p.errs.ToError()
 }
 
 func (p *pkgCtx) loadType(name string) {
@@ -401,13 +373,21 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		DefaultGoFile:   defaultGoFile,
 		NoSkipConstant:  conf.NoSkipConstant,
 	}
+	if enableRecover {
+		defer func() {
+			if e := recover(); e != nil {
+				ctx.handleRecover(e)
+				err = ctx.errs.ToError()
+			}
+		}()
+	}
 	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
 	ctx.cpkgs = cpackages.NewImporter(&cpackages.Config{
 		Pkg: p, LookupPub: conf.LookupPub,
 	})
 	for file, gmx := range files {
 		if gmx.IsProj {
-			ctx.gmxSettings = newGmx(p, file, conf)
+			ctx.gmxSettings = newGmx(ctx, p, file, conf)
 			break
 		}
 	}
@@ -632,7 +612,8 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, genCod
 	parent := ctx.pkgCtx
 	syms := parent.syms
 	goFile := getGoFile(file, genCode)
-	p.SetCurFile(goFile, true)
+	old, _ := p.SetCurFile(goFile, true)
+	defer p.RestoreCurFile(old)
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
@@ -968,6 +949,13 @@ func simplifyGopPackage(pkgPath string) string {
 }
 
 func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
+	if enableRecover {
+		defer func() {
+			if e := recover(); e != nil {
+				ctx.handleRecover(e)
+			}
+		}()
+	}
 	var pkg *gox.PkgRef
 	var pkgPath = toString(spec.Path)
 	if realPath, kind := checkC2go(pkgPath); kind != c2goInvalid {
@@ -978,7 +966,7 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 			return
 		}
 	} else {
-		pkg = ctx.pkg.Import(simplifyGopPackage(pkgPath))
+		pkg = ctx.pkg.Import(simplifyGopPackage(pkgPath), spec)
 	}
 	var name string
 	if spec.Name != nil {
@@ -992,7 +980,7 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 			return
 		}
 	} else {
-		name = path.Base(pkgPath) // TODO: open pkgPath to get pkgName
+		name = pkg.Types.Name()
 	}
 	ctx.imports[name] = pkg
 }
@@ -1048,7 +1036,7 @@ func loadVars(ctx *blockCtx, v *ast.ValueSpec, global bool) {
 	if nv := len(v.Values); nv > 0 {
 		cb := varDecl.InitStart(ctx.pkg)
 		if nv == 1 && len(names) == 2 {
-			compileExpr(ctx, v.Values[0], true)
+			compileExpr(ctx, v.Values[0], clCallWithTwoValue)
 		} else {
 			for _, val := range v.Values {
 				switch e := val.(type) {

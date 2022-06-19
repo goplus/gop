@@ -47,7 +47,7 @@ func TestCompileErrWrapExpr(t *testing.T) {
 	}()
 	pkg := gox.NewPackage("", "foo", goxConf)
 	ctx := &blockCtx{pkg: pkg, cb: pkg.CB()}
-	compileErrWrapExpr(ctx, &ast.ErrWrapExpr{Tok: token.QUESTION})
+	compileErrWrapExpr(ctx, &ast.ErrWrapExpr{Tok: token.QUESTION}, 0)
 }
 
 func TestToString(t *testing.T) {
@@ -86,7 +86,7 @@ func TestHandleRecover(t *testing.T) {
 }
 
 func TestCanAutoCall(t *testing.T) {
-	if !canAutoCall(
+	if !isCommandWithoutArgs(
 		&ast.SelectorExpr{
 			X:   &ast.SelectorExpr{X: ast.NewIdent("foo"), Sel: ast.NewIdent("bar")},
 			Sel: ast.NewIdent("val"),
@@ -95,11 +95,26 @@ func TestCanAutoCall(t *testing.T) {
 	}
 }
 
+func TestClRangeStmt(t *testing.T) {
+	ctx := &blockCtx{
+		cb: &gox.CodeBuilder{},
+	}
+	stmt := &ast.RangeStmt{
+		Tok:  token.DEFINE,
+		X:    &ast.SliceLit{},
+		Body: &ast.BlockStmt{},
+	}
+	compileRangeStmt(ctx, stmt)
+	stmt.Tok = token.ASSIGN
+	stmt.Value = &ast.Ident{Name: "_"}
+	compileRangeStmt(ctx, stmt)
+}
+
 // -----------------------------------------------------------------------------
 
 func TestGmxSettings(t *testing.T) {
 	pkg := gox.NewPackage("", "foo", goxConf)
-	gmx := newGmx(pkg, "main.t2gmx", &Config{
+	gmx := newGmx(nil, pkg, "main.t2gmx", &Config{
 		LookupClass: lookupClass,
 	})
 	scheds := gmx.getScheds(pkg.CB())
@@ -109,6 +124,16 @@ func TestGmxSettings(t *testing.T) {
 	gmx.hasScheds = false
 	if gmx.getScheds(nil) != nil {
 		t.Fatal("TestGmxSettings failed: hasScheds?")
+	}
+	_, err := NewPackage("", &ast.Package{Files: map[string]*ast.File{
+		"main.t2gmx": {
+			IsProj: true,
+		},
+	}}, &Config{
+		LookupClass: lookupClassErr,
+	})
+	if e := err.Error(); e != `github.com/goplus/gop/cl/internal/libc.Gop_game not found` {
+		t.Fatal("newGmx:", e)
 	}
 }
 
@@ -127,6 +152,16 @@ func lookupClass(ext string) (c *gopmod.Class, ok bool) {
 		return &gopmod.Class{
 			ProjExt: ".t2gmx", WorkExt: ".t2spx",
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
+	}
+	return
+}
+
+func lookupClassErr(ext string) (c *gopmod.Class, ok bool) {
+	switch ext {
+	case ".t2gmx", ".t2spx":
+		return &gopmod.Class{
+			ProjExt: ".t2gmx", WorkExt: ".t2spx",
+			PkgPaths: []string{"github.com/goplus/gop/cl/internal/libc"}}, true
 	}
 	return
 }

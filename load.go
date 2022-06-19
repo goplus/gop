@@ -18,6 +18,7 @@ package gop
 
 import (
 	"errors"
+	"fmt"
 	"go/token"
 	"go/types"
 	"io/fs"
@@ -79,7 +80,7 @@ func lookupPub(mod *gopmod.Module) func(pkgPath string) (pubfile string, err err
 
 // -----------------------------------------------------------------------------
 
-func LoadDir(dir string, conf *Config, genTestPkg bool) (out, test *gox.Package, err error) {
+func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (out, test *gox.Package, err error) {
 	if conf == nil {
 		conf = new(Config)
 	}
@@ -103,6 +104,13 @@ func LoadDir(dir string, conf *Config, genTestPkg bool) (out, test *gox.Package,
 	})
 	if err != nil {
 		return
+	}
+	if len(pkgs) == 0 {
+		return nil, nil, syscall.ENOENT
+	}
+
+	if promptGenGo != nil && promptGenGo[0] {
+		fmt.Printf("GenGo %v ...\n", dir)
 	}
 
 	imp := conf.Importer

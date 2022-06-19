@@ -17,7 +17,6 @@
 package gop
 
 import (
-	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -27,6 +26,7 @@ import (
 	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modcache"
 	"github.com/goplus/mod/modfetch"
+	"github.com/qiniu/x/errors"
 )
 
 const (
@@ -48,33 +48,34 @@ func GenGo(dir string, conf *Config, genTestPkg bool) (string, bool, error) {
 
 func genGoDir(dir string, conf *Config, genTestPkg, recursively bool) (err error) {
 	if recursively {
-		return filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		var list errors.List
+		fn := func(path string, d fs.DirEntry, err error) error {
 			if err == nil && d.IsDir() {
 				if strings.HasPrefix(d.Name(), "_") { // skip _
 					return filepath.SkipDir
 				}
-				err = genGoIn(path, conf, genTestPkg, true)
-				if err != nil {
-					fmt.Fprintln(os.Stderr, err)
+				if e := genGoIn(path, conf, genTestPkg, true); e != nil {
+					list.Add(e)
 				}
 			}
 			return err
-		})
+		}
+		err = filepath.WalkDir(dir, fn)
+		if err != nil {
+			return errors.NewWith(err, `filepath.WalkDir(dir, fn)`, -2, "filepath.WalkDir", dir, fn)
+		}
+		return list.ToError()
 	}
 	return genGoIn(dir, conf, genTestPkg, false)
 }
 
 func genGoIn(dir string, conf *Config, genTestPkg, prompt bool) (err error) {
-	out, test, err := LoadDir(dir, conf, genTestPkg)
+	out, test, err := LoadDir(dir, conf, genTestPkg, prompt)
 	if err != nil {
 		if err == syscall.ENOENT { // no Go+ source files
 			return nil
 		}
 		return
-	}
-
-	if prompt {
-		fmt.Printf("GenGo %v ...\n", dir)
 	}
 
 	os.MkdirAll(dir, 0755)

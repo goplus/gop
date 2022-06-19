@@ -17,7 +17,10 @@
 package cl_test
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/goplus/gop/cl"
@@ -843,5 +846,23 @@ type A struct {
 	name string
 	name string
 }
+`)
+}
+
+func TestErrImportPkg(t *testing.T) {
+	codeErrorTest(t,
+		fmt.Sprintf(`./bar.gop:3:2: package fmt2 is not in GOROOT (%v)
+`, filepath.Join(runtime.GOROOT(), "src", "fmt2")), `
+import (
+	"fmt2"
+)
+`)
+
+	codeErrorTest(t, `./bar.gop:3:2: no required module provides package github.com/goplus/gop/fmt2; to add it:
+	go get github.com/goplus/gop/fmt2
+`, `
+import (
+	"github.com/goplus/gop/fmt2"
+)
 `)
 }

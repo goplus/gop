@@ -10,26 +10,25 @@ clean:
 	rm -f bin/*
 
 build:
-	go run cmd/make.go -install
+	go run cmd/make.go -build
 
 dist:
 	$(MAKE) clean
 	mkdir -p bin/
-	go build -o $(BUILD_ROOT_DIR)/install cmd/make.go
+	go build -o $(BUILD_ROOT_DIR)/make cmd/make.go
 	$(MAKE) build-all
 
 build-all: darwin-amd64.zip darwin-arm64.zip linux-386.zip linux-amd64.zip \
 	linux-armv7.zip windows-386.zip windows-amd64.zip windows-armv7.zip windows-arm64.zip
 
 build-dist:
-	$(BUILD_ROOT_DIR)/install -install
+	@mkdir -p bin/
+	@rm -rf bin/*
+	$(BUILD_ROOT_DIR)/make -build
 
 %.zip: %
 	@echo "Building $(NAME)-$(RELEASE_VERSION)-$@"
 
-	@mkdir -p bin/
-	@rm -rf bin/*
-	$(BUILD_ROOT_DIR)/install -install
 	@rm -f $(BUILD_ROOT_DIR)/$(NAME)-$(RELEASE_VERSION)-$@
 	zip -r $(BUILD_ROOT_DIR)/$(NAME)-$(RELEASE_VERSION)-$@ . -x ".*" -x "*/.*" -x "$(BUILD_ROOT_DIR)/*"
 	@echo "$(NAME)-$(RELEASE_VERSION)-$@ Done"
