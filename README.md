@@ -82,6 +82,10 @@ brew install goplus
 * [Gobang](https://github.com/xushiwei/Gobang)
 * [Dinosaur](https://github.com/xushiwei/Dinosaur)
 
+### DevOps tools
+
+* [Go+ DevOps Tools](https://github.com/goplus/gop/blob/main/doc/dsl-vs-sdf.md#demo-go-devops-tools)
+
 ### Data processing
 
 * [HTML DOM Query Language for Go+](https://github.com/goplus/hdq)
