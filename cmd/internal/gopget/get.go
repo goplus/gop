@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"syscall"
 
+	"github.com/goplus/gop"
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/mod/modcache"
@@ -63,8 +63,8 @@ func runCmd(cmd *base.Command, args []string) {
 func get(pkgPath string) {
 	modBase := ""
 	mod, err := modload.Load(".", 0)
-	hasMod := (err != syscall.ENOENT)
-	if hasMod {
+	noMod := gop.NotFound(err)
+	if !noMod {
 		check(err)
 		check(mod.UpdateGoMod(gopenv.Get(), true))
 		modBase = mod.Path()
@@ -72,7 +72,7 @@ func get(pkgPath string) {
 
 	pkgModVer, _, err := modfetch.GetPkg(pkgPath, modBase)
 	check(err)
-	if !hasMod {
+	if noMod {
 		return
 	}
 
