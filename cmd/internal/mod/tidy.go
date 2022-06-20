@@ -19,7 +19,6 @@ package mod
 import (
 	"fmt"
 	"os"
-	"syscall"
 
 	"github.com/goplus/gop"
 	"github.com/goplus/gop/cmd/internal/base"
@@ -39,7 +38,7 @@ func init() {
 func runTidy(cmd *base.Command, args []string) {
 	err := gop.Tidy(".", gopenv.Get())
 	if err != nil {
-		if err == syscall.ENOENT {
+		if gop.NotFound(err) {
 			fmt.Fprintln(os.Stderr, "gop.mod not found")
 		} else {
 			fmt.Fprintln(os.Stderr, err)
