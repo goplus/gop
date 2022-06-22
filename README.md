@@ -40,7 +40,7 @@ For more details, see [Quick Start](doc/docs.md).
 * Performance: as fast as Go (Go+'s main backend compiles to human-readable Go).
 * Fully compatible with [Go](https://github.com/golang/go) and can mix Go/Go+ code in the same package (see [Go/Go+ hybrid programming](doc/docs.md#gogo-hybrid-programming)).
 * No DSL (Domain Specific Language) support, but it's Specific Domain Friendly (see [DSL vs. SDF](doc/dsl-vs-sdf.md)).
-* Support Go code generation (main backend) and bytecode backend (REPL: see [iGo+](https://github.com/goplus/igop)).
+* Support Go code generation (main backend) and [bytecode backend](https://github.com/goplus/igop) (REPL: see [iGo+](https://repl.goplus.org/)).
 * [Simplest way to interaction with C](doc/docs.md#calling-c-from-go) (cgo is supported but not recommended).
 * [Powerful built-in data processing capabilities](doc/docs.md#data-processing).
 
