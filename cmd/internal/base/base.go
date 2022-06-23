@@ -112,3 +112,17 @@ func Main(c *Command, app string, args []string) {
 	}
 	c.Run(c, args)
 }
+
+// SkipSwitches skips all switches and returns non-switch arguments.
+func SkipSwitches(args []string, f *flag.FlagSet) []string {
+	out := make([]string, 0, len(args))
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "-") {
+			if f.Lookup(arg[1:]) == nil { // flag not found
+				continue
+			}
+		}
+		out = append(out, arg)
+	}
+	return out
+}

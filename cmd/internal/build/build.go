@@ -51,7 +51,7 @@ func init() {
 }
 
 func runCmd(_ *base.Command, args []string) {
-	err := flag.Parse(args)
+	err := flag.Parse(base.SkipSwitches(args, flag))
 	if err != nil {
 		log.Panicln("parse input arguments failed:", err)
 	}
@@ -62,17 +62,17 @@ func runCmd(_ *base.Command, args []string) {
 		cl.SetDisableRecover(true)
 	}
 
-	args = flag.Args()
-	if len(args) == 0 {
-		args = []string{"."}
+	sargs := flag.Args()
+	if len(sargs) == 0 {
+		sargs = []string{"."}
 	}
+	proj, sargs, err := gopprojs.ParseOne(sargs...)
 
-	proj, args, err := gopprojs.ParseOne(args...)
 	if err != nil {
 		log.Panicln(err)
 	}
-	if len(args) != 0 {
-		log.Panicln("too many arguments:", args)
+	if len(sargs) != 0 {
+		log.Panicln("too many arguments:", sargs)
 	}
 
 	gopEnv := gopenv.Get()
@@ -85,6 +85,7 @@ func runCmd(_ *base.Command, args []string) {
 		}
 		confCmd.Flags = []string{"-o", output}
 	}
+	confCmd.Flags = append(confCmd.Flags, args...)
 	build(proj, conf, confCmd)
 }
 
