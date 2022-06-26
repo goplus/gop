@@ -35,13 +35,13 @@ import (
 
 // gop test
 var Cmd = &base.Command{
-	UsageLine: "gop test [-v] [packages]",
+	UsageLine: "gop test [-debug] [packages]",
 	Short:     "Test Go+ packages",
 }
 
 var (
-	flag        = &Cmd.Flag
-	flagVerbose = flag.Bool("v", false, "print verbose information")
+	flag      = &Cmd.Flag
+	flagDebug = flag.Bool("debug", false, "print debug information")
 )
 
 func init() {
@@ -65,7 +65,7 @@ func runCmd(cmd *base.Command, args []string) {
 		log.Panicln("gopprojs.ParseAll:", err)
 	}
 
-	if *flagVerbose {
+	if *flagDebug {
 		gox.SetDebug(gox.DbgFlagAll &^ gox.DbgFlagComments)
 		cl.SetDebug(cl.DbgFlagAll)
 		cl.SetDisableRecover(true)
