@@ -54,6 +54,7 @@ func init() {
 }
 
 func runCmd(cmd *base.Command, args []string) {
+	pass := base.PassBuildFlags(cmd)
 	err := flag.Parse(args)
 	if err != nil {
 		log.Fatalln("parse input arguments failed:", err)
@@ -89,6 +90,7 @@ func runCmd(cmd *base.Command, args []string) {
 	gopEnv := gopenv.Get()
 	conf := &gop.Config{Gop: gopEnv}
 	confCmd := &gocmd.Config{Gop: gopEnv}
+	confCmd.Flags = pass.Args
 	run(proj, args, !noChdir, conf, confCmd)
 }
 
