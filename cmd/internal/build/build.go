@@ -50,7 +50,8 @@ func init() {
 	Cmd.Run = runCmd
 }
 
-func runCmd(_ *base.Command, args []string) {
+func runCmd(cmd *base.Command, args []string) {
+	pass := base.PassBuildFlags(cmd)
 	err := flag.Parse(args)
 	if err != nil {
 		log.Panicln("parse input arguments failed:", err)
@@ -85,6 +86,7 @@ func runCmd(_ *base.Command, args []string) {
 		}
 		confCmd.Flags = []string{"-o", output}
 	}
+	confCmd.Flags = append(confCmd.Flags, pass.Args...)
 	build(proj, conf, confCmd)
 }
 
