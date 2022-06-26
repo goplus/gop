@@ -49,7 +49,7 @@ func init() {
 }
 
 func runCmd(cmd *base.Command, args []string) {
-	pass := base.PassBuildFlags(cmd)
+	pass := PassTestFlags(cmd)
 	err := flag.Parse(args)
 	if err != nil {
 		log.Fatalln("parse input arguments failed:", err)
