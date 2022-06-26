@@ -42,9 +42,8 @@ var Cmd = &base.Command{
 var (
 	flag        = &Cmd.Flag
 	flagAsm     = flag.Bool("asm", false, "generates `asm` code of Go+ bytecode backend")
-	flagVerbose = flag.Bool("v", false, "print verbose information")
+	flagDebug   = flag.Bool("debug", false, "print debug information")
 	flagQuiet   = flag.Bool("quiet", false, "don't generate any compiling stage log")
-	flagDebug   = flag.Bool("debug", false, "set log level to debug")
 	flagNoChdir = flag.Bool("nc", false, "don't change dir (only for `gop run pkgPath`)")
 	flagProf    = flag.Bool("prof", false, "do profile and generate profile report")
 )
@@ -70,14 +69,10 @@ func runCmd(cmd *base.Command, args []string) {
 
 	if *flagQuiet {
 		log.SetOutputLevel(0x7000)
-	} else if *flagVerbose {
+	} else if *flagDebug {
 		gox.SetDebug(gox.DbgFlagAll &^ gox.DbgFlagComments)
 		cl.SetDebug(cl.DbgFlagAll)
 		cl.SetDisableRecover(true)
-	} else if *flagDebug {
-		log.SetOutputLevel(log.Ldebug)
-		gox.SetDebug(gox.DbgFlagAll)
-		cl.SetDebug(cl.DbgFlagAll)
 	} else if *flagAsm {
 		gox.SetDebug(gox.DbgFlagInstruction)
 	}
