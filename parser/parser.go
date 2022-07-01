@@ -1896,7 +1896,8 @@ L:
 			if lhs {
 				p.resolve(x)
 			}
-			x = p.parseCallOrConversion(p.checkExprOrType(x), false)
+			isCmd := allowCmd && x.End() != p.pos // println ()
+			x = p.parseCallOrConversion(p.checkExprOrType(x), isCmd)
 		case token.LBRACE: // {
 			if allowCmd && x.End() != p.pos { // println {}
 				x = p.parseCallOrConversion(p.checkExprOrType(x), true)
