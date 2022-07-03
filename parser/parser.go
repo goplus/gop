@@ -1406,7 +1406,7 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) ast.Expr {
 		p.next()
 		if allowTuple && p.tok == token.RPAREN { // () => expr
 			p.next()
-			return &tupleExpr{}
+			return &tupleExpr{Opening: lparen, Closing: p.pos}
 		}
 		p.exprLev++
 		x := p.parseRHSOrType() // types may be parenthesized: (some type)
@@ -1420,7 +1420,7 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) ast.Expr {
 			}
 			p.exprLev--
 			p.expect(token.RPAREN)
-			return &tupleExpr{items: items}
+			return &tupleExpr{Opening: lparen, Items: items, Closing: p.pos}
 		}
 		p.exprLev--
 		rparen := p.expect(token.RPAREN)
@@ -1580,9 +1580,13 @@ func (p *parser) parseCallOrConversion(fun ast.Expr, isCmd bool) *ast.CallExpr {
 	var ellipsis token.Pos
 	for p.tok != endTok && p.tok != token.EOF && !ellipsis.IsValid() {
 		expr := p.parseRHSOrType()
-		if tuple, ok := expr.(*tupleExpr); ok && isCmd {
-			list = tuple.items
-			break
+		if tuple, ok := expr.(*tupleExpr); ok {
+			if isCmd {
+				list = tuple.Items
+				break
+			} else {
+				p.error(tuple.Pos(), "func param not support tuple")
+			}
 		}
 		list = append(list, expr) // builtins may expect a type: make(some type, ...)
 		if p.tok == token.ELLIPSIS {
@@ -2075,7 +2079,17 @@ func (p *parser) parseRangeExpr(allowCmd bool) ast.Expr {
 
 type tupleExpr struct {
 	ast.Expr
-	items []ast.Expr
+	Opening token.Pos
+	Items   []ast.Expr
+	Closing token.Pos
+}
+
+func (p *tupleExpr) Pos() token.Pos {
+	return p.Opening
+}
+
+func (p *tupleExpr) End() token.Pos {
+	return p.Closing
 }
 
 func (p *parser) parseLambdaExpr(allowCmd, allowRangeExpr bool) ast.Expr {
@@ -2118,8 +2132,8 @@ func (p *parser) parseLambdaExpr(allowCmd, allowRangeExpr bool) ast.Expr {
 		retry:
 			switch v := e.(type) {
 			case *tupleExpr:
-				items := make([]*ast.Ident, len(v.items), len(v.items))
-				for i, item := range v.items {
+				items := make([]*ast.Ident, len(v.Items), len(v.Items))
+				for i, item := range v.Items {
 					items[i] = p.toIdent(item)
 				}
 				lhs, lhsHasParen = items, true
