@@ -1578,10 +1578,13 @@ func (p *parser) parseCallOrConversion(fun ast.Expr, isCmd bool) *ast.CallExpr {
 	p.exprLev++
 	var list []ast.Expr
 	var ellipsis token.Pos
+	var extractTuple bool
 	for p.tok != endTok && p.tok != token.EOF && !ellipsis.IsValid() {
 		expr := p.parseRHSOrType(isCmd && len(list) == 0)
 		if tuple, ok := expr.(*tupleExpr); ok {
 			list = tuple.Items
+			extractTuple = true
+			rparen = tuple.End()
 			break
 		}
 		list = append(list, expr) // builtins may expect a type: make(some type, ...)
@@ -1603,7 +1606,9 @@ func (p *parser) parseCallOrConversion(fun ast.Expr, isCmd bool) *ast.CallExpr {
 	p.exprLev--
 	var noParenEnd token.Pos
 	if isCmd {
-		noParenEnd = p.pos
+		if !extractTuple {
+			noParenEnd = p.pos
+		}
 	} else {
 		rparen = p.expectClosing(token.RPAREN, "argument list")
 	}
@@ -1905,6 +1910,9 @@ L:
 			}
 			isCmd := allowCmd && x.End() != p.pos // println ()
 			x = p.parseCallOrConversion(p.checkExprOrType(x), isCmd)
+			if isCmd && !x.(*ast.CallExpr).IsCommand() {
+				allowCmd = false
+			}
 		case token.LBRACE: // {
 			if allowCmd && x.End() != p.pos { // println {}
 				x = p.parseCallOrConversion(p.checkExprOrType(x), true)
