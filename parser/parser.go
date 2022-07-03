@@ -688,10 +688,10 @@ func (p *parser) parseExprList(lhs, allowCmd bool) (list []ast.Expr) {
 		defer un(trace(p, "ExpressionList"))
 	}
 
-	list = append(list, p.checkExpr(p.parseExpr(lhs, allowCmd, false)))
+	list = append(list, p.checkExpr(p.parseExpr(lhs, false, allowCmd, false)))
 	for p.tok == token.COMMA {
 		p.next()
-		list = append(list, p.checkExpr(p.parseExpr(lhs, false, false)))
+		list = append(list, p.checkExpr(p.parseExpr(lhs, false, false, false)))
 	}
 	return
 }
@@ -1409,14 +1409,14 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) ast.Expr {
 			return &tupleExpr{Opening: lparen, Closing: p.pos}
 		}
 		p.exprLev++
-		x := p.parseRHSOrType() // types may be parenthesized: (some type)
+		x := p.parseRHSOrType(false) // types may be parenthesized: (some type)
 		if allowTuple && p.tok == token.COMMA {
 			// (x, y, ...) => expr
 			items := make([]ast.Expr, 1, 2)
 			items[0] = x
 			for p.tok == token.COMMA {
 				p.next()
-				items = append(items, p.parseRHSOrType())
+				items = append(items, p.parseRHSOrType(false))
 			}
 			p.exprLev--
 			p.expect(token.RPAREN)
@@ -1579,14 +1579,10 @@ func (p *parser) parseCallOrConversion(fun ast.Expr, isCmd bool) *ast.CallExpr {
 	var list []ast.Expr
 	var ellipsis token.Pos
 	for p.tok != endTok && p.tok != token.EOF && !ellipsis.IsValid() {
-		expr := p.parseRHSOrType()
+		expr := p.parseRHSOrType(isCmd && len(list) == 0)
 		if tuple, ok := expr.(*tupleExpr); ok {
-			if isCmd {
-				list = tuple.Items
-				break
-			} else {
-				p.error(tuple.Pos(), "func param not support tuple")
-			}
+			list = tuple.Items
+			break
 		}
 		list = append(list, expr) // builtins may expect a type: make(some type, ...)
 		if p.tok == token.ELLIPSIS {
@@ -1643,7 +1639,7 @@ func (p *parser) parseValue(keyOk bool) ast.Expr {
 	// undeclared; or b) it is a struct field. In the former case, the type
 	// checker can do a top-level lookup, and in the latter case it will do
 	// a separate field lookup.
-	x := p.checkExpr(p.parseExpr(keyOk, false, false))
+	x := p.checkExpr(p.parseExpr(keyOk, false, false, false))
 	if keyOk {
 		if p.tok == token.COLON {
 			// Try to resolve the key but don't collect it
@@ -2092,7 +2088,7 @@ func (p *tupleExpr) End() token.Pos {
 	return p.Closing
 }
 
-func (p *parser) parseLambdaExpr(allowCmd, allowRangeExpr bool) ast.Expr {
+func (p *parser) parseLambdaExpr(allowTuple bool, allowCmd, allowRangeExpr bool) ast.Expr {
 	var x ast.Expr
 	var first = p.pos
 	if p.tok != token.RARROW {
@@ -2113,7 +2109,7 @@ func (p *parser) parseLambdaExpr(allowCmd, allowRangeExpr bool) ast.Expr {
 			rhsHasParen = true
 			p.next()
 			for {
-				item := p.parseExpr(false, false, false)
+				item := p.parseExpr(false, false, false, false)
 				rhs = append(rhs, item)
 				if p.tok != token.COMMA {
 					break
@@ -2124,7 +2120,7 @@ func (p *parser) parseLambdaExpr(allowCmd, allowRangeExpr bool) ast.Expr {
 		case token.LBRACE: // {
 			body = p.parseBlockStmt()
 		default:
-			rhs = []ast.Expr{p.parseExpr(false, false, false)}
+			rhs = []ast.Expr{p.parseExpr(false, false, false, false)}
 		}
 		var lhs []*ast.Ident
 		if x != nil {
@@ -2166,9 +2162,11 @@ func (p *parser) parseLambdaExpr(allowCmd, allowRangeExpr bool) ast.Expr {
 			RhsHasParen: rhsHasParen,
 		}
 	}
-	// if _, ok := x.(*tupleExpr); ok {
-	// 	panic("TODO: tupleExpr")
-	// }
+	if !allowTuple {
+		if _, ok := x.(*tupleExpr); ok {
+			p.error(x.Pos(), "not support tuple")
+		}
+	}
 	return x
 }
 
@@ -2176,14 +2174,14 @@ func (p *parser) parseLambdaExpr(allowCmd, allowRangeExpr bool) ast.Expr {
 // The result may be a type or even a raw type ([...]int). Callers must
 // check the result (using checkExpr or checkExprOrType), depending on
 // context.
-func (p *parser) parseExpr(lhs, allowCmd, allowRangeExpr bool) ast.Expr {
+func (p *parser) parseExpr(lhs, allowTuple, allowCmd, allowRangeExpr bool) ast.Expr {
 	if p.trace {
 		defer un(trace(p, "Expression"))
 	}
 	if lhs {
 		return p.parseBinaryExpr(true, token.LowestPrec+1, false, allowCmd)
 	}
-	return p.parseLambdaExpr(allowCmd, allowRangeExpr)
+	return p.parseLambdaExpr(allowTuple, allowCmd, allowRangeExpr)
 }
 
 func (p *parser) parseRHS() ast.Expr {
@@ -2193,15 +2191,15 @@ func (p *parser) parseRHS() ast.Expr {
 func (p *parser) parseRHSEx(allowRangeExpr bool) ast.Expr {
 	old := p.inRHS
 	p.inRHS = true
-	x := p.checkExpr(p.parseExpr(false, false, allowRangeExpr))
+	x := p.checkExpr(p.parseExpr(false, false, false, allowRangeExpr))
 	p.inRHS = old
 	return x
 }
 
-func (p *parser) parseRHSOrType() ast.Expr {
+func (p *parser) parseRHSOrType(allowTuple bool) ast.Expr {
 	old := p.inRHS
 	p.inRHS = true
-	x := p.checkExprOrType(p.parseExpr(false, false, false))
+	x := p.checkExprOrType(p.parseExpr(false, allowTuple, false, false))
 	p.inRHS = old
 	return x
 }
@@ -2303,7 +2301,7 @@ func (p *parser) parseSimpleStmt(mode int, allowCmd bool) (ast.Stmt, bool) {
 }
 
 func (p *parser) parseCallExpr(callType string) *ast.CallExpr {
-	x := p.parseRHSOrType() // could be a conversion: (some type)(x)
+	x := p.parseRHSOrType(false) // could be a conversion: (some type)(x)
 	if call, isCall := x.(*ast.CallExpr); isCall {
 		return call
 	}
@@ -2768,13 +2766,13 @@ func (p *parser) parseForPhrases() (phrases []*ast.ForPhrase) {
 
 func (p *parser) parseForPhraseStmtPart(lhs []ast.Expr) *ast.ForPhraseStmt {
 	tokPos := p.expect(token.ARROW) // <-
-	x := p.parseExpr(false, false, true)
+	x := p.parseExpr(false, false, false, true)
 	var cond ast.Expr
 	var ifPos token.Pos
 	if p.tok == token.IF || p.tok == token.COMMA {
 		ifPos = p.pos
 		p.next()
-		cond = p.parseExpr(false, false, false)
+		cond = p.parseExpr(false, false, false, false)
 	}
 
 	stmt := &ast.ForPhraseStmt{ForPhrase: &ast.ForPhrase{TokPos: tokPos, X: x, IfPos: ifPos, Cond: cond}}
@@ -2818,7 +2816,7 @@ func (p *parser) parseForPhrase() *ast.ForPhrase { // for k, v <- container if c
 	}
 
 	tokPos := p.expect(token.ARROW) // <- container
-	x := p.parseExpr(false, false, true)
+	x := p.parseExpr(false, false, false, true)
 	var init ast.Stmt
 	var cond ast.Expr
 	var ifPos token.Pos
