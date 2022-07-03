@@ -1,0 +1,35 @@
+package main
+
+file cmd.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.BinaryExpr:
+                  X:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 1
+                  Op: +
+                  Y:
+                    ast.BasicLit:
+                      Kind: IMAG
+                      Value: 2i
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 2
