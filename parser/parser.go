@@ -1863,6 +1863,9 @@ func (p *parser) parsePrimaryExpr(lhs, allowTuple, allowCmd bool) ast.Expr {
 	}
 
 	x := p.parseOperand(lhs, allowTuple, allowCmd)
+	if _, ok := x.(*tupleExpr); ok {
+		return x
+	}
 L:
 	for {
 		switch p.tok {
@@ -2028,6 +2031,9 @@ func (p *parser) parseBinaryExpr(lhs bool, prec1 int, allowTuple, allowCmd bool)
 	}
 
 	x := p.parseUnaryExpr(lhs, allowTuple, allowCmd)
+	if _, ok := x.(*tupleExpr); ok {
+		return x
+	}
 	for {
 		op, oprec := p.tokPrec()
 		if oprec < prec1 {
