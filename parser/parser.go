@@ -1412,11 +1412,11 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) ast.Expr {
 		x := p.parseRHSOrType() // types may be parenthesized: (some type)
 		if allowTuple && p.tok == token.COMMA {
 			// (x, y, ...) => expr
-			items := make([]*ast.Ident, 1, 2)
-			items[0] = p.toIdent(x)
+			items := make([]ast.Expr, 1, 2)
+			items[0] = x
 			for p.tok == token.COMMA {
 				p.next()
-				items = append(items, p.parseIdent())
+				items = append(items, p.parseRHSOrType())
 			}
 			p.exprLev--
 			p.expect(token.RPAREN)
@@ -1568,7 +1568,6 @@ func (p *parser) parseCallOrConversion(fun ast.Expr, isCmd bool) *ast.CallExpr {
 	if p.trace {
 		defer un(trace(p, "CallOrConversion"))
 	}
-
 	var lparen, rparen token.Pos
 	var endTok token.Token
 	if isCmd {
@@ -1580,7 +1579,12 @@ func (p *parser) parseCallOrConversion(fun ast.Expr, isCmd bool) *ast.CallExpr {
 	var list []ast.Expr
 	var ellipsis token.Pos
 	for p.tok != endTok && p.tok != token.EOF && !ellipsis.IsValid() {
-		list = append(list, p.parseRHSOrType()) // builtins may expect a type: make(some type, ...)
+		expr := p.parseRHSOrType()
+		if tuple, ok := expr.(*tupleExpr); ok && isCmd {
+			list = tuple.items
+			break
+		}
+		list = append(list, expr) // builtins may expect a type: make(some type, ...)
 		if p.tok == token.ELLIPSIS {
 			ellipsis = p.pos
 			p.next()
@@ -2065,7 +2069,7 @@ func (p *parser) parseRangeExpr(allowCmd bool) ast.Expr {
 
 type tupleExpr struct {
 	ast.Expr
-	items []*ast.Ident
+	items []ast.Expr
 }
 
 func (p *parser) parseLambdaExpr(allowCmd, allowRangeExpr bool) ast.Expr {
@@ -2108,7 +2112,11 @@ func (p *parser) parseLambdaExpr(allowCmd, allowRangeExpr bool) ast.Expr {
 		retry:
 			switch v := e.(type) {
 			case *tupleExpr:
-				lhs, lhsHasParen = v.items, true
+				items := make([]*ast.Ident, len(v.items), len(v.items))
+				for i, item := range v.items {
+					items[i] = p.toIdent(item)
+				}
+				lhs, lhsHasParen = items, true
 			case *ast.ParenExpr:
 				e, lhsHasParen = v.X, true
 				goto retry
@@ -2138,9 +2146,9 @@ func (p *parser) parseLambdaExpr(allowCmd, allowRangeExpr bool) ast.Expr {
 			RhsHasParen: rhsHasParen,
 		}
 	}
-	if _, ok := x.(*tupleExpr); ok {
-		panic("TODO: tupleExpr")
-	}
+	// if _, ok := x.(*tupleExpr); ok {
+	// 	panic("TODO: tupleExpr")
+	// }
 	return x
 }
 
