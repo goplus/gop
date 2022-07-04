@@ -1733,7 +1733,7 @@ func (p *parser) parseLiteralValue(typ ast.Expr) ast.Expr {
 
 // checkExpr checks that x is an expression (and not a type).
 func (p *parser) checkExpr(x ast.Expr) ast.Expr {
-	switch unparen(x).(type) {
+	switch v := unparen(x).(type) {
 	case *ast.BadExpr:
 	case *ast.Ident:
 	case *ast.BasicLit:
@@ -1758,6 +1758,8 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	case *ast.ErrWrapExpr:
 	case *ast.LambdaExpr:
 	case *ast.LambdaExpr2:
+	case *tupleExpr:
+		p.error(v.opening, "tuple is not supported")
 	default:
 		// all other nodes are not proper expressions
 		p.errorExpected(x.Pos(), "expression", 3)
@@ -2026,12 +2028,14 @@ func (p *parser) parseBinaryExpr(lhs bool, prec1 int, allowTuple, allowCmd bool)
 		defer un(trace(p, "BinaryExpr"))
 	}
 
-	if x, isTuple = p.parseUnaryExpr(lhs, allowTuple, allowCmd); isTuple {
-		return
-	}
+	x, isTuple = p.parseUnaryExpr(lhs, allowTuple, allowCmd)
 	for {
 		op, oprec := p.tokPrec()
 		if oprec < prec1 {
+			return
+		}
+		if isTuple {
+			p.error(x.(*tupleExpr).opening, "tuple is not supported")
 			return
 		}
 		pos := p.expect(op)
@@ -2039,7 +2043,11 @@ func (p *parser) parseBinaryExpr(lhs bool, prec1 int, allowTuple, allowCmd bool)
 			p.resolve(x)
 			lhs = false
 		}
-		y, _ := p.parseBinaryExpr(false, oprec+1, false, false)
+		y, yIsTuple := p.parseBinaryExpr(false, oprec+1, true, false)
+		if yIsTuple {
+			p.error(y.(*tupleExpr).opening, "tuple is not supported")
+			return
+		}
 		x = &ast.BinaryExpr{X: p.checkExpr(x), OpPos: pos, Op: op, Y: p.checkExpr(y)}
 	}
 }
