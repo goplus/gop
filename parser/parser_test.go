@@ -369,4 +369,9 @@ ast.FuncDecl:
 `)
 }
 
+func TestErrTuple(t *testing.T) {
+	testErrCode(t, `println (1,2)*2`, `/foo/bar.gop:1:9: tuple is not supported`, ``)
+	testErrCode(t, `println 2*(1,2)`, `/foo/bar.gop:1:11: tuple is not supported`, ``)
+}
+
 // -----------------------------------------------------------------------------
