@@ -175,13 +175,12 @@ func TestErrParse(t *testing.T) {
 	}
 }
 
-func TestFromTestdata(t *testing.T) {
-	sel := ""
+func testFromDir(t *testing.T, sel, relDir string) {
 	dir, err := os.Getwd()
 	if err != nil {
 		t.Fatal("Getwd failed:", err)
 	}
-	dir = path.Join(dir, "./_testdata")
+	dir = path.Join(dir, relDir)
 	fis, err := ioutil.ReadDir(dir)
 	if err != nil {
 		t.Fatal("ReadDir failed:", err)
@@ -195,6 +194,14 @@ func TestFromTestdata(t *testing.T) {
 			testFrom(t, dir+"/"+name, sel, 0)
 		})
 	}
+}
+
+func TestFromTestdata(t *testing.T) {
+	testFromDir(t, "", "./_testdata")
+}
+
+func TestFromNofmt(t *testing.T) {
+	testFromDir(t, "", "./_nofmt")
 }
 
 // -----------------------------------------------------------------------------

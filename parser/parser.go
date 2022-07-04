@@ -1352,30 +1352,6 @@ func (p *parser) parseFuncTypeOrLit() ast.Expr {
 	return &ast.FuncLit{Type: typ, Body: body}
 }
 
-func (p *parser) isCommand(x ast.Expr) bool {
-	switch x.(type) {
-	case *ast.Ident, *ast.SelectorExpr, *ast.ErrWrapExpr:
-	default:
-		return false
-	}
-	switch p.tok {
-	case token.IDENT, token.RARROW,
-		token.STRING, token.CSTRING, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT,
-		token.FUNC, token.GOTO, token.MAP, token.INTERFACE, token.CHAN, token.STRUCT:
-		return true
-	case token.SUB, token.NOT, token.AND, token.MUL, token.ARROW, token.XOR, token.ADD:
-		if x.End() == p.pos { // x-y
-			return false
-		}
-		oldtok, oldpos := p.tok, p.pos
-		p.next()
-		newpos := int(p.pos)
-		p.unget(oldpos, oldtok, "")
-		return int(oldpos)+len(oldtok.String()) == newpos // x -y
-	}
-	return false
-}
-
 // parseOperand may return an expression or a raw type (incl. array
 // types of the form [...]T. Callers must verify the result.
 // If lhs is set and the result is an identifier, it is not resolved.
@@ -1888,22 +1864,19 @@ L:
 			if lhs {
 				p.resolve(x)
 			}
-			if allowCmd && x.End() != p.pos { // println []
+			if allowCmd && p.isCmd(x) { // println [...]
 				x = p.parseCallOrConversion(p.checkExprOrType(x), true)
 			} else {
 				x = p.parseIndexOrSlice(p.checkExpr(x))
 			}
-		case token.LPAREN:
+		case token.LPAREN: // (
 			if lhs {
 				p.resolve(x)
 			}
-			isCmd := allowCmd && x.End() != p.pos // println ()
+			isCmd := allowCmd && p.isCmd(x) // println (...)
 			x = p.parseCallOrConversion(p.checkExprOrType(x), isCmd)
-			if isCmd && !x.(*ast.CallExpr).IsCommand() {
-				allowCmd = false
-			}
 		case token.LBRACE: // {
-			if allowCmd && x.End() != p.pos { // println {}
+			if allowCmd && p.isCmd(x) { // println {...}
 				x = p.parseCallOrConversion(p.checkExprOrType(x), true)
 			} else if isLiteralType(x) && (p.exprLev >= 0 || !isTypeName(x)) {
 				if lhs {
@@ -1917,7 +1890,7 @@ L:
 			x = &ast.ErrWrapExpr{X: x, Tok: p.tok, TokPos: p.pos}
 			p.next()
 		default:
-			if allowCmd && p.isCommand(x) {
+			if allowCmd && p.isCmd(x) && p.checkCmd(x) {
 				if lhs {
 					p.resolve(x)
 				}
@@ -1929,6 +1902,30 @@ L:
 		lhs = false // no need to try to resolve again
 	}
 	return
+}
+
+func (p *parser) isCmd(x ast.Expr) bool {
+	switch x.(type) {
+	case *ast.Ident, *ast.SelectorExpr, *ast.ErrWrapExpr:
+		return x.End() != p.pos
+	}
+	return false
+}
+
+func (p *parser) checkCmd(x ast.Expr) bool {
+	switch p.tok {
+	case token.IDENT, token.RARROW,
+		token.STRING, token.CSTRING, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT,
+		token.FUNC, token.GOTO, token.MAP, token.INTERFACE, token.CHAN, token.STRUCT:
+		return true
+	case token.SUB, token.AND, token.MUL, token.ARROW, token.XOR, token.ADD:
+		oldtok, oldpos := p.tok, p.pos
+		p.next()
+		newpos := int(p.pos)
+		p.unget(oldpos, oldtok, "")
+		return int(oldpos)+len(oldtok.String()) == newpos // x -y
+	}
+	return false
 }
 
 // parseErrWrapExpr: expr! expr? expr?:defval
