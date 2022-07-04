@@ -1582,7 +1582,7 @@ func (p *parser) parseCallOrConversion(fun ast.Expr, isCmd bool) *ast.CallExpr {
 		expr := p.parseRHSOrType(isCmd && len(list) == 0)
 		if tuple, ok := expr.(*tupleExpr); ok {
 			list = tuple.Items
-			rparen = tuple.End()
+			rparen = tuple.Closing
 			isCmd = false
 			break
 		}
@@ -2085,14 +2085,6 @@ type tupleExpr struct {
 	Closing token.Pos
 }
 
-func (p *tupleExpr) Pos() token.Pos {
-	return p.Opening
-}
-
-func (p *tupleExpr) End() token.Pos {
-	return p.Closing
-}
-
 func (p *parser) parseLambdaExpr(allowTuple bool, allowCmd, allowRangeExpr bool) ast.Expr {
 	var x ast.Expr
 	var first = p.pos
@@ -2168,8 +2160,8 @@ func (p *parser) parseLambdaExpr(allowTuple bool, allowCmd, allowRangeExpr bool)
 		}
 	}
 	if !allowTuple {
-		if _, ok := x.(*tupleExpr); ok {
-			p.error(x.Pos(), "not support tuple")
+		if tuple, ok := x.(*tupleExpr); ok {
+			p.error(tuple.Opening, "tuple is not supported")
 		}
 	}
 	return x
