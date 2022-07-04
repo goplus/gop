@@ -1733,7 +1733,7 @@ func (p *parser) parseLiteralValue(typ ast.Expr) ast.Expr {
 
 // checkExpr checks that x is an expression (and not a type).
 func (p *parser) checkExpr(x ast.Expr) ast.Expr {
-	switch unparen(x).(type) {
+	switch v := unparen(x).(type) {
 	case *ast.BadExpr:
 	case *ast.Ident:
 	case *ast.BasicLit:
@@ -1758,6 +1758,8 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	case *ast.ErrWrapExpr:
 	case *ast.LambdaExpr:
 	case *ast.LambdaExpr2:
+	case *tupleExpr:
+		p.error(v.opening, "tuple is not supported")
 	default:
 		// all other nodes are not proper expressions
 		p.errorExpected(x.Pos(), "expression", 3)
