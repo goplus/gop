@@ -137,6 +137,34 @@ ls
 `)
 }
 
+func TestFileEnumLines(t *testing.T) {
+	gopClTest(t, `
+import "os"
+
+for line <- os.Stdin {
+	println line
+}
+`, `package main
+
+import (
+	fmt "fmt"
+	os "os"
+	iox "github.com/goplus/gop/builtin/iox"
+)
+
+func main() {
+	for _gop_it := iox.EnumLines(os.Stdin); ; {
+		var _gop_ok bool
+		line, _gop_ok := _gop_it.Next()
+		if !_gop_ok {
+			break
+		}
+		fmt.Println(line)
+	}
+}
+`)
+}
+
 func TestMixedGo(t *testing.T) {
 	gopMixedClTest(t, "main", `package main
 
