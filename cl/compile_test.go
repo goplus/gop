@@ -137,6 +137,39 @@ ls
 `)
 }
 
+func TestFileOpen(t *testing.T) {
+	gopClTest(t, `
+for line <- open("foo.txt")! {
+	println line
+}
+`, `package main
+
+import (
+	fmt "fmt"
+	os "os"
+	iox "github.com/goplus/gop/builtin/iox"
+)
+
+func main() {
+	for _gop_it := iox.EnumLines(func() (_gop_ret *os.File) {
+		var _gop_err error
+		_gop_ret, _gop_err = os.Open("foo.txt")
+		if _gop_err != nil {
+			panic(_gop_err)
+		}
+		return
+	}()); ; {
+		var _gop_ok bool
+		line, _gop_ok := _gop_it.Next()
+		if !_gop_ok {
+			break
+		}
+		fmt.Println(line)
+	}
+}
+`)
+}
+
 func TestFileEnumLines(t *testing.T) {
 	gopClTest(t, `
 import "os"
@@ -154,6 +187,38 @@ import (
 
 func main() {
 	for _gop_it := iox.EnumLines(os.Stdin); ; {
+		var _gop_ok bool
+		line, _gop_ok := _gop_it.Next()
+		if !_gop_ok {
+			break
+		}
+		fmt.Println(line)
+	}
+}
+`)
+}
+
+func TestIoxLines(t *testing.T) {
+	gopClTest(t, `
+import "io"
+
+var r io.Reader
+
+for line <- lines(r) {
+	println line
+}
+`, `package main
+
+import (
+	fmt "fmt"
+	iox "github.com/goplus/gop/builtin/iox"
+	io "io"
+)
+
+var r io.Reader
+
+func main() {
+	for _gop_it := iox.Lines(r).Gop_Enum(); ; {
 		var _gop_ok bool
 		line, _gop_ok := _gop_it.Next()
 		if !_gop_ok {
