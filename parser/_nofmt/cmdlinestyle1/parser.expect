@@ -1,7 +1,6 @@
 package main
 
-file cmd1.gop
-noEntrypoint
+file cmd.gop
 ast.FuncDecl:
   Name:
     ast.Ident:
@@ -17,25 +16,68 @@ ast.FuncDecl:
           X:
             ast.CallExpr:
               Fun:
-                ast.SelectorExpr:
+                ast.Ident:
+                  Name: changeYpos
+              Args:
+                ast.UnaryExpr:
+                  Op: -
                   X:
-                    ast.CallExpr:
-                      Fun:
-                        ast.CallExpr:
-                          Fun:
-                            ast.Ident:
-                              Name: add
-                          Args:
-                            ast.BasicLit:
-                              Kind: INT
-                              Value: 100
-                            ast.BasicLit:
-                              Kind: INT
-                              Value: 200
-                      Args:
-                        ast.BasicLit:
-                          Kind: INT
-                          Value: 0
-                  Sel:
-                    ast.Ident:
-                      Name: Test
+                    ast.BasicLit:
+                      Kind: FLOAT
+                      Value: 0.7
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 8
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: changeYpos
+              Args:
+                ast.UnaryExpr:
+                  Op: -
+                  X:
+                    ast.BasicLit:
+                      Kind: FLOAT
+                      Value: 0.7
+        ast.ExprStmt:
+          X:
+            ast.BinaryExpr:
+              X:
+                ast.Ident:
+                  Name: changeYpos
+              Op: -
+              Y:
+                ast.BasicLit:
+                  Kind: FLOAT
+                  Value: 0.7
+        ast.ExprStmt:
+          X:
+            ast.BinaryExpr:
+              X:
+                ast.Ident:
+                  Name: changeYpos
+              Op: -
+              Y:
+                ast.BasicLit:
+                  Kind: FLOAT
+                  Value: 0.7
+        ast.ExprStmt:
+          X:
+            ast.IndexExpr:
+              X:
+                ast.Ident:
+                  Name: x
+              Index:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 1
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: x
+              Args:
+                ast.SliceLit:

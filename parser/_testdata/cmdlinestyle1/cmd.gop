@@ -1,10 +1,1 @@
-package main
-
-func main() {
-	changeYpos -0.7, 8
-	changeYpos -0.7
-	changeYpos - 0.7
-	changeYpos-0.7
-	x[1]
-	x []...
-}
+println (1+2i)*2
