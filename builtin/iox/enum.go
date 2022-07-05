@@ -21,12 +21,12 @@ import (
 // ----------------------------------------------------------------------------
 
 type LineIter struct {
-	*bufio.Scanner
+	s *bufio.Scanner
 }
 
 func (it LineIter) Next() (line string, ok bool) {
-	if ok = it.Scan(); ok {
-		line = it.Text()
+	if ok = it.s.Scan(); ok {
+		line = it.s.Text()
 	}
 	return
 }
@@ -34,6 +34,20 @@ func (it LineIter) Next() (line string, ok bool) {
 func EnumLines(r io.Reader) LineIter {
 	scanner := bufio.NewScanner(r)
 	return LineIter{scanner}
+}
+
+// ----------------------------------------------------------------------------
+
+type LineReader struct {
+	r io.Reader
+}
+
+func (p LineReader) Gop_Enum() LineIter {
+	return EnumLines(p.r)
+}
+
+func Lines(r io.Reader) LineReader {
+	return LineReader{r}
 }
 
 // ----------------------------------------------------------------------------
