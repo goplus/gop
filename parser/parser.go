@@ -40,6 +40,10 @@ import (
 	"github.com/qiniu/x/log"
 )
 
+const (
+	msgTupleNotSupported = "tuple is not supported"
+)
+
 // The parser structure holds the parser's internal state.
 type parser struct {
 	file    *token.File
@@ -484,7 +488,6 @@ func (p *parser) atComma(context string, follow token.Token) bool {
 		p.error(p.pos, msgctx)
 		if debugParseError {
 			log.Std.Output("", log.Linfo, 2, msgctx)
-			panic(msgctx)
 		}
 		return true // "insert" comma and continue
 	}
@@ -1385,8 +1388,8 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) (x ast.Expr, isTup
 			return &tupleExpr{opening: lparen, closing: p.pos}, true
 		}
 		p.exprLev++
-		x := p.parseRHSOrType() // types may be parenthesized: (some type)
-		if allowTuple && p.tok == token.COMMA {
+		x = p.parseRHSOrType() // types may be parenthesized: (some type)
+		if allowTuple && (p.tok == token.COMMA || p.tok == token.ELLIPSIS) {
 			// (x, y, ...) => expr
 			items := make([]ast.Expr, 1, 2)
 			items[0] = x
@@ -1394,9 +1397,14 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) (x ast.Expr, isTup
 				p.next()
 				items = append(items, p.parseRHSOrType())
 			}
+			t := &tupleExpr{opening: lparen, items: items, closing: p.pos}
+			if p.tok == token.ELLIPSIS {
+				t.ellipsis = p.pos
+				p.next()
+			}
 			p.exprLev--
 			p.expect(token.RPAREN)
-			return &tupleExpr{opening: lparen, items: items, closing: p.pos}, true
+			return t, true
 		}
 		p.exprLev--
 		rparen := p.expect(token.RPAREN)
@@ -1557,8 +1565,13 @@ func (p *parser) parseCallOrConversion(fun ast.Expr, isCmd bool) *ast.CallExpr {
 	for p.tok != endTok && p.tok != token.EOF && !ellipsis.IsValid() {
 		expr, isTuple := p.parseRHSOrTypeEx(isCmd && len(list) == 0)
 		if isTuple {
-			tuple := expr.(*tupleExpr)
-			list, lparen, rparen, isCmd = tuple.items, tuple.opening, tuple.closing, false
+			t := expr.(*tupleExpr)
+			if p.tok != token.SEMICOLON && p.tok != token.RBRACE && p.tok != token.EOF {
+				p.error(t.opening, msgTupleNotSupported)
+				p.advance(stmtStart)
+			}
+			list, lparen, ellipsis, rparen = t.items, t.opening, t.ellipsis, t.closing
+			isCmd = true
 			break
 		}
 		list = append(list, expr) // builtins may expect a type: make(some type, ...)
@@ -1759,7 +1772,8 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	case *ast.LambdaExpr:
 	case *ast.LambdaExpr2:
 	case *tupleExpr:
-		p.error(v.opening, "tuple is not supported")
+		p.error(v.opening, msgTupleNotSupported)
+		x = &ast.BadExpr{From: v.opening, To: v.closing}
 	default:
 		// all other nodes are not proper expressions
 		p.errorExpected(x.Pos(), "expression", 3)
@@ -2028,14 +2042,12 @@ func (p *parser) parseBinaryExpr(lhs bool, prec1 int, allowTuple, allowCmd bool)
 		defer un(trace(p, "BinaryExpr"))
 	}
 
-	x, isTuple = p.parseUnaryExpr(lhs, allowTuple, allowCmd)
+	if x, isTuple = p.parseUnaryExpr(lhs, allowTuple, allowCmd); isTuple {
+		return
+	}
 	for {
 		op, oprec := p.tokPrec()
 		if oprec < prec1 {
-			return
-		}
-		if isTuple {
-			p.error(x.(*tupleExpr).opening, "tuple is not supported")
 			return
 		}
 		pos := p.expect(op)
@@ -2043,11 +2055,7 @@ func (p *parser) parseBinaryExpr(lhs bool, prec1 int, allowTuple, allowCmd bool)
 			p.resolve(x)
 			lhs = false
 		}
-		y, yIsTuple := p.parseBinaryExpr(false, oprec+1, true, false)
-		if yIsTuple {
-			p.error(y.(*tupleExpr).opening, "tuple is not supported")
-			return
-		}
+		y, _ := p.parseBinaryExpr(false, oprec+1, false, false)
 		x = &ast.BinaryExpr{X: p.checkExpr(x), OpPos: pos, Op: op, Y: p.checkExpr(y)}
 	}
 }
@@ -2077,9 +2085,10 @@ func (p *parser) parseRangeExpr(allowTuple, allowCmd bool) (x ast.Expr, isTuple 
 
 type tupleExpr struct {
 	ast.Expr
-	opening token.Pos
-	items   []ast.Expr
-	closing token.Pos
+	opening  token.Pos
+	items    []ast.Expr
+	ellipsis token.Pos
+	closing  token.Pos
 }
 
 func (p *parser) parseLambdaExpr(allowTuple, allowCmd, allowRangeExpr bool) (x ast.Expr, isTuple bool) {
@@ -2155,7 +2164,8 @@ func (p *parser) parseLambdaExpr(allowTuple, allowCmd, allowRangeExpr bool) (x a
 			RhsHasParen: rhsHasParen,
 		}, false
 	} else if isTuple && !allowTuple {
-		p.error(x.(*tupleExpr).opening, "tuple is not supported")
+		p.error(x.(*tupleExpr).opening, msgTupleNotSupported)
+		p.advance(stmtStart)
 	}
 	return
 }
