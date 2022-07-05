@@ -50,12 +50,18 @@ func testErrCode(t *testing.T, code string, errExp, panicExp string) {
 	}
 }
 
+func TestErrTuple(t *testing.T) {
+	testErrCode(t, `println (1,2)*2`, `/foo/bar.gop:1:9: tuple is not supported`, ``)
+	testErrCode(t, `println 2*(1,2)`, `/foo/bar.gop:1:13: expected ')', found ','`, ``)
+	testErrCode(t, `func test() (int,int) { return (100,100)`, `/foo/bar.gop:1:32: tuple is not supported`, ``)
+}
+
 func TestErrOperand(t *testing.T) {
 	testErrCode(t, `a :=`, `/foo/bar.gop:1:5: expected operand, found 'EOF'`, ``)
 }
 
 func TestErrMissingComma(t *testing.T) {
-	testErrCode(t, `func a(b int c)`, ``, `missing ',' in parameter list`)
+	testErrCode(t, `func a(b int c)`, `/foo/bar.gop:1:14: missing ',' in parameter list`, ``)
 }
 
 func TestErrLambda(t *testing.T) {

@@ -345,6 +345,10 @@ const (
 	testingGoFile  = "_test"
 )
 
+const (
+	ioxPkgPath = "github.com/goplus/gop/builtin/iox"
+)
+
 // NewPackage creates a Go+ package instance.
 func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package, err error) {
 	workingDir := conf.WorkingDir
@@ -372,6 +376,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		NewBuiltin:      newBuiltinDefault,
 		DefaultGoFile:   defaultGoFile,
 		NoSkipConstant:  conf.NoSkipConstant,
+		PkgPathIox:      ioxPkgPath,
 	}
 	if enableRecover {
 		defer func() {
