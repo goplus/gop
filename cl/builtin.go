@@ -57,6 +57,7 @@ func initBuiltin(pkg *gox.Package, builtin *types.Package, os, fmt, ng, iox, bui
 	initBuiltinFns(builtin, scope, iox, []string{
 		"lines",
 	})
+	scope.Insert(gox.NewOverloadFunc(token.NoPos, builtin, "blines", iox.Ref("BLines")))
 	scope.Insert(gox.NewOverloadFunc(token.NoPos, builtin, "newRange", buil.Ref("NewRange__0")))
 	scope.Insert(types.NewTypeName(token.NoPos, builtin, "uint128", ng.Ref("Uint128").Type()))
 	scope.Insert(types.NewTypeName(token.NoPos, builtin, "int128", ng.Ref("Int128").Type()))

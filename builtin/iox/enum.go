@@ -25,8 +25,11 @@ type LineIter struct {
 }
 
 func (it LineIter) Next() (line string, ok bool) {
-	if ok = it.s.Scan(); ok {
-		line = it.s.Text()
+	s := it.s
+	if ok = s.Scan(); ok {
+		line = s.Text()
+	} else if err := s.Err(); err != nil {
+		panic(err)
 	}
 	return
 }
@@ -34,6 +37,27 @@ func (it LineIter) Next() (line string, ok bool) {
 func EnumLines(r io.Reader) LineIter {
 	scanner := bufio.NewScanner(r)
 	return LineIter{scanner}
+}
+
+// ----------------------------------------------------------------------------
+
+type BLineIter struct {
+	s *bufio.Scanner
+}
+
+func (it BLineIter) Next() (line []byte, ok bool) {
+	s := it.s
+	if ok = s.Scan(); ok {
+		line = s.Bytes()
+	} else if err := s.Err(); err != nil {
+		panic(err)
+	}
+	return
+}
+
+func EnumBLines(r io.Reader) BLineIter {
+	scanner := bufio.NewScanner(r)
+	return BLineIter{scanner}
 }
 
 // ----------------------------------------------------------------------------
@@ -48,6 +72,20 @@ func (p LineReader) Gop_Enum() LineIter {
 
 func Lines(r io.Reader) LineReader {
 	return LineReader{r}
+}
+
+// ----------------------------------------------------------------------------
+
+type BLineReader struct {
+	r io.Reader
+}
+
+func (p BLineReader) Gop_Enum() BLineIter {
+	return EnumBLines(p.r)
+}
+
+func BLines(r io.Reader) BLineReader {
+	return BLineReader{r}
 }
 
 // ----------------------------------------------------------------------------
