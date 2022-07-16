@@ -160,10 +160,12 @@ func compileMember(ctx *blockCtx, v ast.Node, name string, flags int) error {
 	switch {
 	case (flags & clIdentLHS) != 0:
 		mflag = gox.MemberFlagRef
-	case (flags & clCommandWithoutArgs) != 0:
-		mflag = gox.MemberFlagMethodAlias
 	case (flags & clIdentCanAutoCall) != 0:
-		mflag = gox.MemberFlagAutoProperty
+		_, err := ctx.cb.Member(name, gox.MemberFlagAutoProperty, v)
+		if err != nil && flags&clCommandWithoutArgs != 0 {
+			_, err = ctx.cb.Member(name, gox.MemberFlagMethodAlias, v)
+		}
+		return err
 	default:
 		mflag = gox.MemberFlagMethodAlias
 	}
