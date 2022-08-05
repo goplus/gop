@@ -101,3 +101,8 @@ brew install goplus
 The Go+ project welcomes all contributors. We appreciate your help!
 
 For more details, see [Contributing & compiler design](doc/contributing.md).
+
+
+## Give a Star! ⭐
+
+If you like or are using Go+ to learn or start your projects, please give it a star. Thanks!
