@@ -1021,6 +1021,13 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr, inFlags int) {
 		currentFunc := ctx.cb.Func().Ancestor()
 		const newFrameArgs = 5
 
+		currentFuncName := currentFunc.Name()
+		if currentFuncName == "" {
+			currentFuncName = "main"
+		}
+
+		currentFuncName = strings.Join([]string{currentFunc.Pkg().Name(), currentFuncName}, ".")
+
 		cb.
 			VarRef(err).
 			Val(pkg.Import(errorPkgPath).Ref("NewFrame")).
@@ -1028,7 +1035,7 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr, inFlags int) {
 			Val(sprintAst(pkg.Fset, v.X)).
 			Val(pos.Filename).
 			Val(pos.Line).
-			Val(strings.Join([]string{currentFunc.Pkg().Name(), currentFunc.Name()}, ".")).
+			Val(currentFuncName).
 			Call(newFrameArgs).
 			Assign(1)
 	}
