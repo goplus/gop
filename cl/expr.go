@@ -17,6 +17,8 @@
 package cl
 
 import (
+	"bytes"
+	"github.com/goplus/gop/printer"
 	goast "go/ast"
 	gotoken "go/token"
 	"go/types"
@@ -69,6 +71,8 @@ const (
 	objPkgRef
 	objCPkgRef
 )
+
+const errorPkgPath = "github.com/qiniu/x/errors"
 
 func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (obj *gox.PkgRef, kind int) {
 	fvalue := (flags&clIdentSelectorExpr) != 0 || (flags&clIdentLHS) == 0
@@ -1012,10 +1016,34 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr, inFlags int) {
 	cb.Assign(n+1, 1)
 
 	cb.If().Val(err).CompareNil(gotoken.NEQ).Then()
+	if v.Default == nil {
+		pos := pkg.Fset.Position(v.Pos())
+		currentFunc := ctx.cb.Func().Ancestor()
+		const newFrameArgs = 5
+
+		currentFuncName := currentFunc.Name()
+		if currentFuncName == "" {
+			currentFuncName = "main"
+		}
+
+		currentFuncName = strings.Join([]string{currentFunc.Pkg().Name(), currentFuncName}, ".")
+
+		cb.
+			VarRef(err).
+			Val(pkg.Import(errorPkgPath).Ref("NewFrame")).
+			Val(err).
+			Val(sprintAst(pkg.Fset, v.X)).
+			Val(pos.Filename).
+			Val(pos.Line).
+			Val(currentFuncName).
+			Call(newFrameArgs).
+			Assign(1)
+	}
+
 	if v.Tok == token.NOT { // expr!
-		cb.Val(pkg.Builtin().Ref("panic")).Val(err).Call(1).EndStmt() // TODO: wrap err
+		cb.Val(pkg.Builtin().Ref("panic")).Val(err).Call(1).EndStmt()
 	} else if v.Default == nil { // expr?
-		cb.Val(err).ReturnErr(true) // TODO: wrap err & return err
+		cb.Val(err).ReturnErr(true)
 	} else { // expr?:val
 		compileExpr(ctx, v.Default)
 		cb.Return(1)
@@ -1025,5 +1053,16 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr, inFlags int) {
 		cb.Call(0)
 	}
 }
+
+func sprintAst(fset *token.FileSet, x ast.Node) string {
+	var buf bytes.Buffer
+	err := printer.Fprint(&buf, fset, x)
+	if err != nil {
+		panic("Unexpected error: " + err.Error())
+	}
+
+	return buf.String()
+}
+
 
 // -----------------------------------------------------------------------------
