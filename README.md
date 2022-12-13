@@ -63,10 +63,11 @@ cd gop
 all.bat
 ```
 
-### on macOS
+### on macOS/Linux
 
+Install via [brew](https://brew.sh/)
 ```sh
-brew install goplus
+$ brew install goplus
 ```
 
 
