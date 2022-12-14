@@ -8,6 +8,10 @@ import (
 	"go/token"
 )
 
+func unsupported() {
+	panic("type parameters are unsupported at this go version")
+}
+
 // IndexListExpr is a placeholder type, as type parameters are not supported at
 // this Go version. Its methods panic on use.
 type IndexListExpr struct {
