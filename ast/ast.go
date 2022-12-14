@@ -221,6 +221,15 @@ type (
 		Rbrack token.Pos // position of "]"
 	}
 
+	// An IndexListExpr node represents an expression followed by multiple
+	// indices.
+	IndexListExpr struct {
+		X       Expr      // expression
+		Lbrack  token.Pos // position of "["
+		Indices []Expr    // index expressions
+		Rbrack  token.Pos // position of "]"
+	}
+
 	// A SliceExpr node represents an expression followed by slice indices.
 	SliceExpr struct {
 		X      Expr      // expression
@@ -316,9 +325,10 @@ type (
 
 	// A FuncType node represents a function type.
 	FuncType struct {
-		Func    token.Pos  // position of "func" keyword (token.NoPos if there is no "func")
-		Params  *FieldList // (incoming) parameters; non-nil
-		Results *FieldList // (outgoing) results; or nil
+		Func       token.Pos  // position of "func" keyword (token.NoPos if there is no "func")
+		TypeParams *FieldList // type parameters; or nil
+		Params     *FieldList // (incoming) parameters; non-nil
+		Results    *FieldList // (outgoing) results; or nil
 	}
 
 	// An InterfaceType node represents an interface type.
@@ -377,6 +387,9 @@ func (x *SelectorExpr) Pos() token.Pos { return x.X.Pos() }
 
 // Pos returns position of first character belonging to the node.
 func (x *IndexExpr) Pos() token.Pos { return x.X.Pos() }
+
+// Pos returns position of first character belonging to the node.
+func (x *IndexListExpr) Pos() token.Pos { return x.X.Pos() }
 
 // Pos returns position of first character belonging to the node.
 func (x *SliceExpr) Pos() token.Pos { return x.X.Pos() }
@@ -455,6 +468,9 @@ func (x *SelectorExpr) End() token.Pos { return x.Sel.End() }
 func (x *IndexExpr) End() token.Pos { return x.Rbrack + 1 }
 
 // End returns position of first character immediately after the node.
+func (x *IndexListExpr) End() token.Pos { return x.Rbrack + 1 }
+
+// End returns position of first character immediately after the node.
 func (x *SliceExpr) End() token.Pos { return x.Rbrack + 1 }
 
 // End returns position of first character immediately after the node.
@@ -520,6 +536,7 @@ func (*CompositeLit) exprNode()   {}
 func (*ParenExpr) exprNode()      {}
 func (*SelectorExpr) exprNode()   {}
 func (*IndexExpr) exprNode()      {}
+func (*IndexListExpr) exprNode()  {}
 func (*SliceExpr) exprNode()      {}
 func (*TypeAssertExpr) exprNode() {}
 func (*CallExpr) exprNode()       {}
