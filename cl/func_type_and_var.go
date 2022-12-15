@@ -26,16 +26,9 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
-	"github.com/goplus/gox"
 )
 
 // -----------------------------------------------------------------------------
-
-func toFuncType(ctx *blockCtx, typ *ast.FuncType, recv *types.Var) *types.Signature {
-	params, variadic := toParams(ctx, typ.Params.List)
-	results := toResults(ctx, typ.Results)
-	return types.NewSignature(recv, params, results, variadic)
-}
 
 func toRecv(ctx *blockCtx, recv *ast.FieldList) *types.Var {
 	v := recv.List[0]
@@ -59,44 +52,6 @@ func getRecvTypeName(ctx *pkgCtx, recv *ast.FieldList, handleErr bool) (string, 
 		ctx.handleCodeErrorf(&pos, "invalid receiver type %v (%v is not a defined type)", src, src)
 	}
 	return "", false
-}
-
-func toResults(ctx *blockCtx, in *ast.FieldList) *types.Tuple {
-	if in == nil {
-		return nil
-	}
-	flds := in.List
-	n := len(flds)
-	args := make([]*types.Var, 0, n)
-	for _, fld := range flds {
-		args = toParam(ctx, fld, args)
-	}
-	return types.NewTuple(args...)
-}
-
-func toParams(ctx *blockCtx, flds []*ast.Field) (typ *types.Tuple, variadic bool) {
-	n := len(flds)
-	if n == 0 {
-		return nil, false
-	}
-	args := make([]*types.Var, 0, n)
-	for _, fld := range flds {
-		args = toParam(ctx, fld, args)
-	}
-	_, ok := flds[n-1].Type.(*ast.Ellipsis)
-	return types.NewTuple(args...), ok
-}
-
-func toParam(ctx *blockCtx, fld *ast.Field, args []*gox.Param) []*gox.Param {
-	typ := toType(ctx, fld.Type)
-	pkg := ctx.pkg
-	if len(fld.Names) == 0 {
-		return append(args, pkg.NewParam(fld.Pos(), "", typ))
-	}
-	for _, name := range fld.Names {
-		args = append(args, pkg.NewParam(name.Pos(), name.Name, typ))
-	}
-	return args
 }
 
 // -----------------------------------------------------------------------------
