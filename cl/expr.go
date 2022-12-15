@@ -18,7 +18,6 @@ package cl
 
 import (
 	"bytes"
-	"github.com/goplus/gop/printer"
 	goast "go/ast"
 	gotoken "go/token"
 	"go/types"
@@ -29,6 +28,7 @@ import (
 	"strings"
 
 	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/printer"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
 	"github.com/goplus/gox/cpackages"
@@ -230,6 +230,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 		compileRangeExpr(ctx, v)
 	case *ast.IndexExpr:
 		compileIndexExpr(ctx, v, twoValue(inFlags))
+	case *ast.IndexListExpr:
+		compileIndexListExpr(ctx, v, twoValue(inFlags))
 	case *ast.SliceExpr:
 		compileSliceExpr(ctx, v)
 	case *ast.StarExpr:
@@ -311,6 +313,15 @@ func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr, twoValue bool) { // x[i]
 	compileExpr(ctx, v.X)
 	compileExpr(ctx, v.Index)
 	ctx.cb.Index(1, twoValue, v)
+}
+
+func compileIndexListExpr(ctx *blockCtx, v *ast.IndexListExpr, twoValue bool) { // fn[t1,t2]
+	compileExpr(ctx, v.X)
+	n := len(v.Indices)
+	for i := 0; i < n; i++ {
+		compileExpr(ctx, v.Indices[i])
+	}
+	ctx.cb.Index(n, twoValue, v)
 }
 
 func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) { // x[i:j:k]
@@ -1063,6 +1074,5 @@ func sprintAst(fset *token.FileSet, x ast.Node) string {
 
 	return buf.String()
 }
-
 
 // -----------------------------------------------------------------------------
