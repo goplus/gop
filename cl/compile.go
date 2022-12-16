@@ -128,6 +128,9 @@ func (p *nodeInterp) LoadExpr(node ast.Node) (src string, pos token.Position) {
 	start := node.Pos()
 	pos = p.fset.Position(start)
 	f := p.files[pos.Filename]
+	if f == nil { // not found
+		return
+	}
 	n := int(node.End() - start)
 	pos.Filename = relFile(p.workingDir, pos.Filename)
 	if pos.Offset+n < 0 {

@@ -82,6 +82,10 @@ func toType(ctx *blockCtx, typ ast.Expr) types.Type {
 		return toExternalType(ctx, v)
 	case *ast.ParenExpr:
 		return toType(ctx, v.X)
+	case *ast.BinaryExpr:
+		return toBinaryExprType(ctx, v)
+	case *ast.UnaryExpr:
+		return toUnaryExprType(ctx, v)
 	}
 	log.Panicln("toType: unknown -", reflect.TypeOf(typ))
 	return nil

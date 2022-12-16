@@ -23,8 +23,37 @@ import (
 	"go/types"
 
 	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
 )
+
+func toTermList(ctx *blockCtx, expr ast.Expr) []*types.Term {
+retry:
+	switch v := expr.(type) {
+	case *ast.UnaryExpr:
+		if v.Op != token.TILDE {
+			panic(ctx.newCodeErrorf(v.Pos(), "invalid op %v must ~", v.Op))
+		}
+		return []*types.Term{types.NewTerm(true, toType(ctx, v.X))}
+	case *ast.BinaryExpr:
+		if v.Op != token.OR {
+			panic(ctx.newCodeErrorf(v.Pos(), "invalid op %v must |", v.Op))
+		}
+		return append(toTermList(ctx, v.X), toTermList(ctx, v.Y)...)
+	case *ast.ParenExpr:
+		expr = v.X
+		goto retry
+	}
+	return []*types.Term{types.NewTerm(false, toType(ctx, expr))}
+}
+
+func toBinaryExprType(ctx *blockCtx, v *ast.BinaryExpr) types.Type {
+	return types.NewInterfaceType(nil, []types.Type{types.NewUnion(toTermList(ctx, v))})
+}
+
+func toUnaryExprType(ctx *blockCtx, v *ast.UnaryExpr) types.Type {
+	return types.NewInterfaceType(nil, []types.Type{types.NewUnion(toTermList(ctx, v))})
+}
 
 func toTypeParam(ctx *blockCtx, fld *ast.Field) *types.TypeParam {
 	typ := toType(ctx, fld.Type)

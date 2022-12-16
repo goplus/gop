@@ -25,6 +25,14 @@ import (
 	"github.com/goplus/gox"
 )
 
+func toBinaryExprType(ctx *blockCtx, v *ast.BinaryExpr) types.Type {
+	panic("type parameters are unsupported at this go version")
+}
+
+func toUnaryExprType(ctx *blockCtx, v *ast.UnaryExpr) types.Type {
+	panic("type parameters are unsupported at this go version")
+}
+
 func toFuncType(ctx *blockCtx, typ *ast.FuncType, recv *types.Var) *types.Signature {
 	params, variadic := toParams(ctx, typ.Params.List)
 	results := toResults(ctx, typ.Results)
