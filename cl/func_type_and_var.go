@@ -277,7 +277,7 @@ func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) types.Type {
 	var methods []*types.Func
 	var embeddeds []types.Type
 	for _, m := range methodsList {
-		if m.Names == nil { // embedded
+		if len(m.Names) == 0 { // embedded
 			typ := toType(ctx, m.Type)
 			if t, ok := typ.(*types.Named); ok { // #1198: embedded type should ensure loaded
 				ctx.loadNamed(ctx.pkg, t)

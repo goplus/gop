@@ -30,3 +30,9 @@ func (*IndexListExpr) End() token.Pos { unsupported(); return token.NoPos }
 func ForFuncType(*ast.FuncType) *ast.FieldList {
 	return nil
 }
+
+// ForTypeSpec returns an empty field list, as type parameters are not
+// supported at this Go version.
+func ForTypeSpec(*ast.TypeSpec) *ast.FieldList {
+	return nil
+}

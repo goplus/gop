@@ -740,6 +740,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, genCod
 								log.Println("==> Load > NewType", name)
 							}
 							named := newType(pkg, t.Pos(), name)
+
 							ld.typInit = func() { // decycle
 								if debugLoad {
 									log.Println("==> Load > InitType", name)

@@ -15,3 +15,11 @@ func ForFuncType(n *ast.FuncType) *ast.FieldList {
 	}
 	return n.TypeParams
 }
+
+// ForTypeSpec returns n.TypeParams.
+func ForTypeSpec(n *ast.TypeSpec) *ast.FieldList {
+	if n == nil {
+		return nil
+	}
+	return n.TypeParams
+}

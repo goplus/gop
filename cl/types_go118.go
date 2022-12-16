@@ -57,6 +57,9 @@ func toUnaryExprType(ctx *blockCtx, v *ast.UnaryExpr) types.Type {
 
 func toTypeParam(ctx *blockCtx, fld *ast.Field) *types.TypeParam {
 	typ := toType(ctx, fld.Type)
+	if named, ok := typ.(*types.Named); ok {
+		ctx.loadNamed(ctx.pkg, named)
+	}
 	obj := types.NewTypeName(fld.Pos(), ctx.pkg.Types, fld.Names[0].Name, nil)
 	return types.NewTypeParam(obj, typ)
 }
