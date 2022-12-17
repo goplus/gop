@@ -256,6 +256,7 @@ type blockCtx struct {
 	imports      map[string]*gox.PkgRef
 	lookups      []*gox.PkgRef
 	clookups     []*cpackages.PkgRef
+	tlookup      *typeParamLookup
 	c2goBase     string // default is `github.com/goplus/`
 	targetDir    string
 	classRecv    *ast.FieldList // available when gmxSettings != nil

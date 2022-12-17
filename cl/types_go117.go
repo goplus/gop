@@ -22,7 +22,6 @@ import (
 	"go/types"
 
 	"github.com/goplus/gop/ast"
-	"github.com/goplus/gox"
 )
 
 func toBinaryExprType(ctx *blockCtx, v *ast.BinaryExpr) types.Type {
@@ -33,46 +32,15 @@ func toUnaryExprType(ctx *blockCtx, v *ast.UnaryExpr) types.Type {
 	panic("type parameters are unsupported at this go version")
 }
 
+type typeParamLookup struct {
+}
+
+func (p *typeParamLookup) Lookup(name string) types.Type {
+	return nil
+}
+
 func toFuncType(ctx *blockCtx, typ *ast.FuncType, recv *types.Var) *types.Signature {
 	params, variadic := toParams(ctx, typ.Params.List)
 	results := toResults(ctx, typ.Results)
 	return types.NewSignature(recv, params, results, variadic)
-}
-
-func toResults(ctx *blockCtx, in *ast.FieldList) *types.Tuple {
-	if in == nil {
-		return nil
-	}
-	flds := in.List
-	n := len(flds)
-	args := make([]*types.Var, 0, n)
-	for _, fld := range flds {
-		args = toParam(ctx, fld, args)
-	}
-	return types.NewTuple(args...)
-}
-
-func toParams(ctx *blockCtx, flds []*ast.Field) (typ *types.Tuple, variadic bool) {
-	n := len(flds)
-	if n == 0 {
-		return nil, false
-	}
-	args := make([]*types.Var, 0, n)
-	for _, fld := range flds {
-		args = toParam(ctx, fld, args)
-	}
-	_, ok := flds[n-1].Type.(*ast.Ellipsis)
-	return types.NewTuple(args...), ok
-}
-
-func toParam(ctx *blockCtx, fld *ast.Field, args []*gox.Param) []*gox.Param {
-	typ := toType(ctx, fld.Type)
-	pkg := ctx.pkg
-	if len(fld.Names) == 0 {
-		return append(args, pkg.NewParam(fld.Pos(), "", typ))
-	}
-	for _, name := range fld.Names {
-		args = append(args, pkg.NewParam(name.Pos(), name.Name, typ))
-	}
-	return args
 }

@@ -24,7 +24,6 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
-	"github.com/goplus/gox"
 )
 
 func toTermList(ctx *blockCtx, expr ast.Expr) []*types.Term {
@@ -78,57 +77,26 @@ func toTypeParams(ctx *blockCtx, params *ast.FieldList) []*types.TypeParam {
 
 func toFuncType(ctx *blockCtx, typ *ast.FuncType, recv *types.Var) *types.Signature {
 	typeParams := toTypeParams(ctx, typ.TypeParams)
-	params, variadic := toParams(ctx, typ.Params.List, typeParams)
-	results := toResults(ctx, typ.Results, typeParams)
+	if len(typeParams) > 0 {
+		ctx.tlookup = &typeParamLookup{typeParams}
+		defer func() {
+			ctx.tlookup = nil
+		}()
+	}
+	params, variadic := toParams(ctx, typ.Params.List)
+	results := toResults(ctx, typ.Results)
 	return types.NewSignatureType(recv, nil, typeParams, params, results, variadic)
 }
 
-func toResults(ctx *blockCtx, in *ast.FieldList, typeParams []*types.TypeParam) *types.Tuple {
-	if in == nil {
-		return nil
-	}
-	flds := in.List
-	n := len(flds)
-	args := make([]*types.Var, 0, n)
-	for _, fld := range flds {
-		args = toParam(ctx, fld, args, typeParams)
-	}
-	return types.NewTuple(args...)
+type typeParamLookup struct {
+	typeParams []*types.TypeParam
 }
 
-func toParams(ctx *blockCtx, flds []*ast.Field, typeParams []*types.TypeParam) (typ *types.Tuple, variadic bool) {
-	n := len(flds)
-	if n == 0 {
-		return nil, false
-	}
-	args := make([]*types.Var, 0, n)
-	for _, fld := range flds {
-		args = toParam(ctx, fld, args, typeParams)
-	}
-	_, ok := flds[n-1].Type.(*ast.Ellipsis)
-	return types.NewTuple(args...), ok
-}
-
-func toTypeCheckTypeParams(ctx *blockCtx, typ ast.Expr, typeParams []*types.TypeParam) types.Type {
-	if ident, ok := typ.(*ast.Ident); ok {
-		for _, t := range typeParams {
-			if ident.Name == t.Obj().Name() {
-				return t
-			}
+func (p *typeParamLookup) Lookup(name string) types.Type {
+	for _, t := range p.typeParams {
+		if name == t.Obj().Name() {
+			return t
 		}
-		return toIdentType(ctx, ident)
 	}
-	return toType(ctx, typ)
-}
-
-func toParam(ctx *blockCtx, fld *ast.Field, args []*gox.Param, typeParams []*types.TypeParam) []*gox.Param {
-	typ := toTypeCheckTypeParams(ctx, fld.Type, typeParams)
-	pkg := ctx.pkg
-	if len(fld.Names) == 0 {
-		return append(args, pkg.NewParam(fld.Pos(), "", typ))
-	}
-	for _, name := range fld.Names {
-		args = append(args, pkg.NewParam(name.Pos(), name.Name, typ))
-	}
-	return args
+	return nil
 }

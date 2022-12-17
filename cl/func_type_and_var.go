@@ -26,6 +26,7 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
+	"github.com/goplus/gox"
 )
 
 // -----------------------------------------------------------------------------
@@ -52,6 +53,44 @@ func getRecvTypeName(ctx *pkgCtx, recv *ast.FieldList, handleErr bool) (string, 
 		ctx.handleCodeErrorf(&pos, "invalid receiver type %v (%v is not a defined type)", src, src)
 	}
 	return "", false
+}
+
+func toResults(ctx *blockCtx, in *ast.FieldList) *types.Tuple {
+	if in == nil {
+		return nil
+	}
+	flds := in.List
+	n := len(flds)
+	args := make([]*types.Var, 0, n)
+	for _, fld := range flds {
+		args = toParam(ctx, fld, args)
+	}
+	return types.NewTuple(args...)
+}
+
+func toParams(ctx *blockCtx, flds []*ast.Field) (typ *types.Tuple, variadic bool) {
+	n := len(flds)
+	if n == 0 {
+		return nil, false
+	}
+	args := make([]*types.Var, 0, n)
+	for _, fld := range flds {
+		args = toParam(ctx, fld, args)
+	}
+	_, ok := flds[n-1].Type.(*ast.Ellipsis)
+	return types.NewTuple(args...), ok
+}
+
+func toParam(ctx *blockCtx, fld *ast.Field, args []*gox.Param) []*gox.Param {
+	typ := toType(ctx, fld.Type)
+	pkg := ctx.pkg
+	if len(fld.Names) == 0 {
+		return append(args, pkg.NewParam(fld.Pos(), "", typ))
+	}
+	for _, name := range fld.Names {
+		args = append(args, pkg.NewParam(name.Pos(), name.Name, typ))
+	}
+	return args
 }
 
 // -----------------------------------------------------------------------------
@@ -125,6 +164,11 @@ Name context:
 // ---------------------------------------------------------------------------*/
 
 func toIdentType(ctx *blockCtx, ident *ast.Ident) types.Type {
+	if ctx.tlookup != nil {
+		if typ := ctx.tlookup.Lookup(ident.Name); typ != nil {
+			return typ
+		}
+	}
 	v, builtin := lookupType(ctx, ident.Name)
 	if isBuiltin(builtin) {
 		panic(ctx.newCodeErrorf(ident.Pos(), "use of builtin %s not in function call", ident.Name))
