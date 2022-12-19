@@ -37,14 +37,12 @@ func toRecv(ctx *blockCtx, recv *ast.FieldList) *types.Var {
 	if len(v.Names) > 0 {
 		name = v.Names[0].Name
 	}
-	return ctx.pkg.NewParam(v.Pos(), name, toType(ctx, v.Type))
+	typ := getRecvType(v.Type)
+	return ctx.pkg.NewParam(v.Pos(), name, toType(ctx, typ))
 }
 
 func getRecvTypeName(ctx *pkgCtx, recv *ast.FieldList, handleErr bool) (string, bool) {
-	typ := recv.List[0].Type
-	if t, ok := typ.(*ast.StarExpr); ok {
-		typ = t.X
-	}
+	typ := getRecvType(recv.List[0].Type)
 	if t, ok := typ.(*ast.Ident); ok {
 		return t.Name, true
 	}

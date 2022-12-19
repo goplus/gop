@@ -76,7 +76,19 @@ func toTypeParams(ctx *blockCtx, params *ast.FieldList) []*types.TypeParam {
 }
 
 func toFuncType(ctx *blockCtx, typ *ast.FuncType, recv *types.Var) *types.Signature {
-	typeParams := toTypeParams(ctx, typ.TypeParams)
+	var typeParams []*types.TypeParam
+	if recv != nil {
+		if tparams := recv.Type().(*types.Named).TypeParams(); tparams != nil {
+			n := tparams.Len()
+			typeParams = make([]*types.TypeParam, n)
+			for i := 0; i < n; i++ {
+				tp := tparams.At(i)
+				typeParams[i] = types.NewTypeParam(tp.Obj(), tp.Constraint())
+			}
+		}
+	} else {
+		typeParams = toTypeParams(ctx, typ.TypeParams)
+	}
 	if len(typeParams) > 0 {
 		ctx.tlookup = &typeParamLookup{typeParams}
 		defer func() {
@@ -85,6 +97,9 @@ func toFuncType(ctx *blockCtx, typ *ast.FuncType, recv *types.Var) *types.Signat
 	}
 	params, variadic := toParams(ctx, typ.Params.List)
 	results := toResults(ctx, typ.Results)
+	if recv != nil {
+		return types.NewSignatureType(recv, typeParams, nil, params, results, variadic)
+	}
 	return types.NewSignatureType(recv, nil, typeParams, params, results, variadic)
 }
 
@@ -115,4 +130,17 @@ func initType(ctx *blockCtx, named *types.Named, spec *ast.TypeSpec) {
 		typ = getUnderlying(ctx, named)
 	}
 	named.SetUnderlying(typ)
+}
+
+func getRecvType(typ ast.Expr) ast.Expr {
+	if t, ok := typ.(*ast.StarExpr); ok {
+		typ = t.X
+	}
+	switch t := typ.(type) {
+	case *ast.IndexExpr:
+		return t.X
+	case *ast.IndexListExpr:
+		return t.X
+	}
+	return typ
 }
