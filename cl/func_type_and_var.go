@@ -125,6 +125,12 @@ func toType(ctx *blockCtx, typ ast.Expr) types.Type {
 		return toBinaryExprType(ctx, v)
 	case *ast.UnaryExpr:
 		return toUnaryExprType(ctx, v)
+	case *ast.IndexExpr:
+		compileIndexExpr(ctx, v, false)
+		return ctx.cb.InternalStack().Pop().Type
+	case *ast.IndexListExpr:
+		compileIndexListExpr(ctx, v, false)
+		return ctx.cb.InternalStack().Pop().Type
 	}
 	log.Panicln("toType: unknown -", reflect.TypeOf(typ))
 	return nil

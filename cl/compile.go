@@ -746,7 +746,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, genCod
 								if debugLoad {
 									log.Println("==> Load > InitType", name)
 								}
-								initType(ctx, named, toType(ctx, t.Type))
+								initType(ctx, named, t)
 							}
 						}
 					}
@@ -801,13 +801,6 @@ func newType(pkg *types.Package, pos token.Pos, name string) *types.Named {
 		log.Panicf("%s redeclared in this block\n\tprevious declaration at %v\n", name, "<TODO>")
 	}
 	return types.NewNamed(typName, nil, nil)
-}
-
-func initType(ctx *blockCtx, named *types.Named, typ types.Type) {
-	if named, ok := typ.(*types.Named); ok {
-		typ = getUnderlying(ctx, named)
-	}
-	named.SetUnderlying(typ)
 }
 
 func aliasType(pkg *types.Package, pos token.Pos, name string, typ types.Type) {

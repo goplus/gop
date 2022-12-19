@@ -100,3 +100,19 @@ func (p *typeParamLookup) Lookup(name string) types.Type {
 	}
 	return nil
 }
+
+func initType(ctx *blockCtx, named *types.Named, spec *ast.TypeSpec) {
+	typeParams := toTypeParams(ctx, spec.TypeParams)
+	if len(typeParams) > 0 {
+		named.SetTypeParams(typeParams)
+		ctx.tlookup = &typeParamLookup{typeParams}
+		defer func() {
+			ctx.tlookup = nil
+		}()
+	}
+	typ := toType(ctx, spec.Type)
+	if named, ok := typ.(*types.Named); ok {
+		typ = getUnderlying(ctx, named)
+	}
+	named.SetUnderlying(typ)
+}

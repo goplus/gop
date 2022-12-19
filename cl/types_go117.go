@@ -44,3 +44,11 @@ func toFuncType(ctx *blockCtx, typ *ast.FuncType, recv *types.Var) *types.Signat
 	results := toResults(ctx, typ.Results)
 	return types.NewSignature(recv, params, results, variadic)
 }
+
+func initType(ctx *blockCtx, named *types.Named, spec *ast.TypeSpec) {
+	typ := toType(ctx, spec.Type)
+	if named, ok := typ.(*types.Named); ok {
+		typ = getUnderlying(ctx, named)
+	}
+	named.SetUnderlying(typ)
+}
