@@ -78,7 +78,11 @@ func toTypeParams(ctx *blockCtx, params *ast.FieldList) []*types.TypeParam {
 func toFuncType(ctx *blockCtx, typ *ast.FuncType, recv *types.Var) *types.Signature {
 	var typeParams []*types.TypeParam
 	if recv != nil {
-		if tparams := recv.Type().(*types.Named).TypeParams(); tparams != nil {
+		typ := recv.Type()
+		if pt, ok := typ.(*types.Pointer); ok {
+			typ = pt.Elem()
+		}
+		if tparams := typ.(*types.Named).TypeParams(); tparams != nil {
 			n := tparams.Len()
 			typeParams = make([]*types.TypeParam, n)
 			for i := 0; i < n; i++ {
@@ -132,15 +136,17 @@ func initType(ctx *blockCtx, named *types.Named, spec *ast.TypeSpec) {
 	named.SetUnderlying(typ)
 }
 
-func getRecvType(typ ast.Expr) ast.Expr {
+func getRecvType(typ ast.Expr) (ast.Expr, bool) {
+	var star bool
 	if t, ok := typ.(*ast.StarExpr); ok {
 		typ = t.X
+		star = true
 	}
 	switch t := typ.(type) {
 	case *ast.IndexExpr:
-		return t.X
+		typ = t.X
 	case *ast.IndexListExpr:
-		return t.X
+		typ = t.X
 	}
-	return typ
+	return typ, star
 }

@@ -53,9 +53,9 @@ func initType(ctx *blockCtx, named *types.Named, spec *ast.TypeSpec) {
 	named.SetUnderlying(typ)
 }
 
-func getRecvType(typ ast.Expr) ast.Expr {
+func getRecvType(typ ast.Expr) (ast.Expr, bool) {
 	if t, ok := typ.(*ast.StarExpr); ok {
-		typ = t.X
+		return t.X, true
 	}
-	return typ
+	return typ, false
 }
