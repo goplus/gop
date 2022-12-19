@@ -118,7 +118,7 @@ func toType(ctx *blockCtx, typ ast.Expr) types.Type {
 	case *ast.ChanType:
 		return toChanType(ctx, v)
 	case *ast.FuncType:
-		return toFuncType(ctx, v, nil)
+		return toFuncType(ctx, v, nil, nil)
 	case *ast.SelectorExpr:
 		return toExternalType(ctx, v)
 	case *ast.ParenExpr:
@@ -338,7 +338,7 @@ func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) types.Type {
 			continue
 		}
 		name := m.Names[0].Name
-		sig := toFuncType(ctx, m.Type.(*ast.FuncType), nil)
+		sig := toFuncType(ctx, m.Type.(*ast.FuncType), nil, nil)
 		methods = append(methods, types.NewFunc(token.NoPos, pkg, name, sig))
 	}
 	intf := types.NewInterfaceType(methods, embeddeds).Complete()

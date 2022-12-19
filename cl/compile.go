@@ -821,7 +821,7 @@ func declFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
 		return
 	}
 	pkg := ctx.pkg.Types
-	sig := toFuncType(ctx, d.Type, recv)
+	sig := toFuncType(ctx, d.Type, recv, d)
 	fn := types.NewFunc(d.Pos(), pkg, name, sig)
 	if recv != nil {
 		typ := recv.Type()
@@ -866,7 +866,7 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
 			}
 		}
 	}
-	sig := toFuncType(ctx, d.Type, recv)
+	sig := toFuncType(ctx, d.Type, recv, d)
 	fn, err := ctx.pkg.NewFuncWith(d.Pos(), name, sig, func() token.Pos {
 		return d.Recv.List[0].Type.Pos()
 	})

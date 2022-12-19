@@ -39,7 +39,7 @@ func (p *typeParamLookup) Lookup(name string) types.Type {
 	return nil
 }
 
-func toFuncType(ctx *blockCtx, typ *ast.FuncType, recv *types.Var) *types.Signature {
+func toFuncType(ctx *blockCtx, typ *ast.FuncType, recv *types.Var, d *ast.FuncDecl) *types.Signature {
 	params, variadic := toParams(ctx, typ.Params.List)
 	results := toResults(ctx, typ.Results)
 	return types.NewSignature(recv, params, results, variadic)

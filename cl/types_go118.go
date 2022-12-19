@@ -75,21 +75,49 @@ func toTypeParams(ctx *blockCtx, params *ast.FieldList) []*types.TypeParam {
 	return list
 }
 
-func toFuncType(ctx *blockCtx, typ *ast.FuncType, recv *types.Var) *types.Signature {
+func recvTypeParams(ctx *blockCtx, typ ast.Expr, named *types.Named) (tparams []*types.TypeParam) {
+	orgTypeParams := named.TypeParams()
+	if orgTypeParams == nil {
+		return nil
+	}
+	if t, ok := typ.(*ast.StarExpr); ok {
+		typ = t.X
+	}
+	switch t := typ.(type) {
+	case *ast.IndexExpr:
+		if 1 != orgTypeParams.Len() {
+			panic(ctx.newCodeErrorf(typ.Pos(), "got 1 type parameter, but receiver base type declares %v", orgTypeParams.Len()))
+		}
+		v := t.Index.(*ast.Ident)
+		tp := orgTypeParams.At(0)
+		obj := types.NewTypeName(v.Pos(), tp.Obj().Pkg(), v.Name, nil)
+		tparams = []*types.TypeParam{types.NewTypeParam(obj, tp.Constraint())}
+	case *ast.IndexListExpr:
+		n := len(t.Indices)
+		if n != orgTypeParams.Len() {
+			panic(ctx.newCodeErrorf(typ.Pos(), "got %v type parameter, but receiver base type declares %v", n, orgTypeParams.Len()))
+		}
+		tparams = make([]*types.TypeParam, n)
+		for i := 0; i < n; i++ {
+			v := t.Indices[i].(*ast.Ident)
+			tp := orgTypeParams.At(i)
+			obj := types.NewTypeName(v.Pos(), tp.Obj().Pkg(), v.Name, nil)
+			tparams[i] = types.NewTypeParam(obj, tp.Constraint())
+		}
+	default:
+		panic(ctx.newCodeErrorf(typ.Pos(), "cannot use generic type %v without instantiation", named))
+	}
+	return
+}
+
+func toFuncType(ctx *blockCtx, typ *ast.FuncType, recv *types.Var, d *ast.FuncDecl) *types.Signature {
 	var typeParams []*types.TypeParam
 	if recv != nil {
 		typ := recv.Type()
 		if pt, ok := typ.(*types.Pointer); ok {
 			typ = pt.Elem()
 		}
-		if tparams := typ.(*types.Named).TypeParams(); tparams != nil {
-			n := tparams.Len()
-			typeParams = make([]*types.TypeParam, n)
-			for i := 0; i < n; i++ {
-				tp := tparams.At(i)
-				typeParams[i] = types.NewTypeParam(tp.Obj(), tp.Constraint())
-			}
-		}
+		typeParams = recvTypeParams(ctx, d.Recv.List[0].Type, typ.(*types.Named))
 	} else {
 		typeParams = toTypeParams(ctx, typ.TypeParams)
 	}

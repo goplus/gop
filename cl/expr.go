@@ -255,7 +255,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 	case *ast.ErrWrapExpr:
 		compileErrWrapExpr(ctx, v, 0)
 	case *ast.FuncType:
-		ctx.cb.Typ(toFuncType(ctx, v, nil), v)
+		ctx.cb.Typ(toFuncType(ctx, v, nil, nil), v)
 	case *ast.Ellipsis:
 		panic("compileEllipsis: ast.Ellipsis unexpected")
 	case *ast.KeyValueExpr:
@@ -645,7 +645,7 @@ func compileLambdaExpr2(ctx *blockCtx, v *ast.LambdaExpr2, sig *types.Signature)
 func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
 	cb := ctx.cb
 	comments, once := cb.BackupComments()
-	sig := toFuncType(ctx, v.Type, nil)
+	sig := toFuncType(ctx, v.Type, nil, nil)
 	fn := cb.NewClosureWith(sig)
 	if body := v.Body; body != nil {
 		loadFuncBody(ctx, fn, body)
