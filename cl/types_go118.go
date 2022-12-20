@@ -54,25 +54,11 @@ func toUnaryExprType(ctx *blockCtx, v *ast.UnaryExpr) types.Type {
 	return types.NewInterfaceType(nil, []types.Type{types.NewUnion(toTermList(ctx, v))})
 }
 
-func toTypeParam(ctx *blockCtx, fld *ast.Field) *types.TypeParam {
-	typ := toType(ctx, fld.Type)
-	if named, ok := typ.(*types.Named); ok {
-		ctx.loadNamed(ctx.pkg, named)
-	}
-	obj := types.NewTypeName(fld.Pos(), ctx.pkg.Types, fld.Names[0].Name, nil)
-	return types.NewTypeParam(obj, typ)
-}
-
 func toTypeParams(ctx *blockCtx, params *ast.FieldList) []*types.TypeParam {
 	if params == nil {
 		return nil
 	}
-	n := len(params.List)
-	list := make([]*types.TypeParam, n, n)
-	for i, fld := range params.List {
-		list[i] = toTypeParam(ctx, fld)
-	}
-	return list
+	return collectTypeParams(ctx, params)
 }
 
 func recvTypeParams(ctx *blockCtx, typ ast.Expr, named *types.Named) (tparams []*types.TypeParam) {
@@ -177,4 +163,89 @@ func getRecvType(typ ast.Expr) (ast.Expr, bool) {
 		typ = t.X
 	}
 	return typ, star
+}
+
+func collectTypeParams(ctx *blockCtx, list *ast.FieldList) []*types.TypeParam {
+	var tparams []*types.TypeParam
+	// Declare type parameters up-front, with empty interface as type bound.
+	// The scope of type parameters starts at the beginning of the type parameter
+	// list (so we can have mutually recursive parameterized interfaces).
+	for _, f := range list.List {
+		tparams = declareTypeParams(ctx, tparams, f.Names)
+	}
+
+	ctx.tlookup = &typeParamLookup{tparams}
+	defer func() {
+		ctx.tlookup = nil
+	}()
+
+	index := 0
+	for _, f := range list.List {
+		var bound types.Type
+		// NOTE: we may be able to assert that f.Type != nil here, but this is not
+		// an invariant of the AST, so we are cautious.
+		if f.Type != nil {
+			bound = boundTypeParam(ctx, f.Type)
+			if isTypeParam(bound) {
+				// We may be able to allow this since it is now well-defined what
+				// the underlying type and thus type set of a type parameter is.
+				// But we may need some additional form of cycle detection within
+				// type parameter lists.
+				//check.error(f.Type, MisplacedTypeParam, "cannot use a type parameter as constraint")
+				bound = types.Typ[types.Invalid]
+			}
+		} else {
+			bound = types.Typ[types.Invalid]
+		}
+		for i := range f.Names {
+			tparams[index+i].SetConstraint(bound)
+		}
+		index += len(f.Names)
+	}
+	return tparams
+}
+
+func declareTypeParams(ctx *blockCtx, tparams []*types.TypeParam, names []*ast.Ident) []*types.TypeParam {
+	// Use Typ[Invalid] for the type constraint to ensure that a type
+	// is present even if the actual constraint has not been assigned
+	// yet.
+	// TODO(gri) Need to systematically review all uses of type parameter
+	//           constraints to make sure we don't rely on them if they
+	//           are not properly set yet.
+	for _, name := range names {
+		tname := types.NewTypeName(name.Pos(), ctx.pkg.Types, name.Name, nil)
+		tpar := types.NewTypeParam(tname, types.Typ[types.Invalid]) // assigns type to tpar as a side-effect
+		// check.declare(check.scope, name, tname, check.scope.pos)    // TODO(gri) check scope position
+		tparams = append(tparams, tpar)
+	}
+
+	return tparams
+}
+
+func isTypeParam(t types.Type) bool {
+	_, ok := t.(*types.TypeParam)
+	return ok
+}
+
+func boundTypeParam(ctx *blockCtx, x ast.Expr) types.Type {
+	// A type set literal of the form ~T and A|B may only appear as constraint;
+	// embed it in an implicit interface so that only interface type-checking
+	// needs to take care of such type expressions.
+	wrap := false
+	switch op := x.(type) {
+	case *ast.UnaryExpr:
+		wrap = op.Op == token.TILDE
+	case *ast.BinaryExpr:
+		wrap = op.Op == token.OR
+	}
+	if wrap {
+		x = &ast.InterfaceType{Methods: &ast.FieldList{List: []*ast.Field{{Type: x}}}}
+		t := toType(ctx, x)
+		// mark t as implicit interface if all went well
+		if t, _ := t.(*types.Interface); t != nil {
+			t.MarkImplicit()
+		}
+		return t
+	}
+	return toType(ctx, x)
 }
