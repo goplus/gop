@@ -54,8 +54,18 @@ func initType(ctx *blockCtx, named *types.Named, spec *ast.TypeSpec) {
 }
 
 func getRecvType(typ ast.Expr) (ast.Expr, bool) {
-	if t, ok := typ.(*ast.StarExpr); ok {
-		return t.X, true
+	var ptr bool
+L:
+	for {
+		switch t := typ.(type) {
+		case *ast.ParenExpr:
+			typ = t.X
+		case *ast.StarExpr:
+			ptr = true
+			typ = t.X
+		default:
+			break L
+		}
 	}
-	return typ, false
+	return typ, ptr
 }

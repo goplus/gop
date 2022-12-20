@@ -66,8 +66,16 @@ func recvTypeParams(ctx *blockCtx, typ ast.Expr, named *types.Named) (tparams []
 	if orgTypeParams == nil {
 		return nil
 	}
-	if t, ok := typ.(*ast.StarExpr); ok {
-		typ = t.X
+L:
+	for {
+		switch t := typ.(type) {
+		case *ast.ParenExpr:
+			typ = t.X
+		case *ast.StarExpr:
+			typ = t.X
+		default:
+			break L
+		}
 	}
 	switch t := typ.(type) {
 	case *ast.IndexExpr:
@@ -127,7 +135,8 @@ type typeParamLookup struct {
 
 func (p *typeParamLookup) Lookup(name string) types.Type {
 	for _, t := range p.typeParams {
-		if name == t.Obj().Name() {
+		tname := t.Obj().Name()
+		if tname != "_" && name == tname {
 			return t
 		}
 	}
@@ -151,10 +160,18 @@ func initType(ctx *blockCtx, named *types.Named, spec *ast.TypeSpec) {
 }
 
 func getRecvType(typ ast.Expr) (ast.Expr, bool) {
-	var star bool
-	if t, ok := typ.(*ast.StarExpr); ok {
-		typ = t.X
-		star = true
+	var ptr bool
+L:
+	for {
+		switch t := typ.(type) {
+		case *ast.ParenExpr:
+			typ = t.X
+		case *ast.StarExpr:
+			ptr = true
+			typ = t.X
+		default:
+			break L
+		}
 	}
 	switch t := typ.(type) {
 	case *ast.IndexExpr:
@@ -162,7 +179,7 @@ func getRecvType(typ ast.Expr) (ast.Expr, bool) {
 	case *ast.IndexListExpr:
 		typ = t.X
 	}
-	return typ, star
+	return typ, ptr
 }
 
 func collectTypeParams(ctx *blockCtx, list *ast.FieldList) []*types.TypeParam {
