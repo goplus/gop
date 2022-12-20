@@ -193,6 +193,10 @@ func collectTypeParams(ctx *blockCtx, list *ast.FieldList) []*types.TypeParam {
 				// type parameter lists.
 				//check.error(f.Type, MisplacedTypeParam, "cannot use a type parameter as constraint")
 				bound = types.Typ[types.Invalid]
+			} else if t, ok := bound.(*types.Named); ok {
+				if t.Underlying() == nil { // fixed named underlying is nil
+					t.SetUnderlying(types.Typ[types.Invalid])
+				}
 			}
 		} else {
 			bound = types.Typ[types.Invalid]
