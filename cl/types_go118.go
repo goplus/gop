@@ -211,8 +211,8 @@ func collectTypeParams(ctx *blockCtx, list *ast.FieldList) []*types.TypeParam {
 				//check.error(f.Type, MisplacedTypeParam, "cannot use a type parameter as constraint")
 				bound = types.Typ[types.Invalid]
 			} else if t, ok := bound.(*types.Named); ok {
-				if t.Underlying() == nil { // fixed named underlying is nil
-					t.SetUnderlying(types.Typ[types.Invalid])
+				if t.Underlying() == nil { // check named underlying is nil
+					ctx.loadNamed(ctx.pkg, t)
 				}
 			}
 		} else {
