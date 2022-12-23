@@ -106,7 +106,7 @@ L:
 
 func toFuncType(ctx *blockCtx, typ *ast.FuncType, recv *types.Var, d *ast.FuncDecl) *types.Signature {
 	var typeParams []*types.TypeParam
-	if recv != nil {
+	if recv != nil && d.Recv != nil {
 		typ := recv.Type()
 		if pt, ok := typ.(*types.Pointer); ok {
 			typ = pt.Elem()
