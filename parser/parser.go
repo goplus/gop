@@ -1503,20 +1503,35 @@ func (p *parser) parseIndexOrSlice(x ast.Expr) ast.Expr {
 
 func (p *parser) parseIndexOrSliceContinue(x ast.Expr, lbrack token.Pos, idx ast.Expr) ast.Expr {
 	const N = 3 // change the 3 to 2 to disable 3-index slices
+	var args []ast.Expr
 	var index [N]ast.Expr
 	var colons [N - 1]token.Pos
 	if idx != nil {
 		index[0] = idx
 	}
 	ncolons := 0
-	for p.tok == token.COLON && ncolons < len(colons) {
-		colons[ncolons] = p.pos
-		ncolons++
-		p.next()
-		if p.tok != token.COLON && p.tok != token.RBRACK && p.tok != token.EOF {
-			index[ncolons] = p.parseRHS()
+	switch p.tok {
+	case token.COLON:
+		// slice expression
+		for p.tok == token.COLON && ncolons < len(colons) {
+			colons[ncolons] = p.pos
+			ncolons++
+			p.next()
+			if p.tok != token.COLON && p.tok != token.RBRACK && p.tok != token.EOF {
+				index[ncolons] = p.parseRHS()
+			}
+		}
+	case token.COMMA:
+		// instance expression
+		args = append(args, index[0])
+		for p.tok == token.COMMA {
+			p.next()
+			if p.tok != token.RBRACK && p.tok != token.EOF {
+				args = append(args, p.parseType())
+			}
 		}
 	}
+
 	p.exprLev--
 	rbrack := p.expect(token.RBRACK)
 
@@ -1525,27 +1540,57 @@ func (p *parser) parseIndexOrSliceContinue(x ast.Expr, lbrack token.Pos, idx ast
 		slice3 := false
 		if ncolons == 2 {
 			slice3 = true
-			// Check presence of 2nd and 3rd index here rather than during type-checking
+			// Check presence of middle and final index here rather than during type-checking
 			// to prevent erroneous programs from passing through gofmt (was issue 7305).
 			if index[1] == nil {
-				p.error(colons[0], "2nd index required in 3-index slice")
+				p.error(colons[0], "middle index required in 3-index slice")
 				index[1] = &ast.BadExpr{From: colons[0] + 1, To: colons[1]}
 			}
 			if index[2] == nil {
-				p.error(colons[1], "3rd index required in 3-index slice")
+				p.error(colons[1], "final index required in 3-index slice")
 				index[2] = &ast.BadExpr{From: colons[1] + 1, To: rbrack}
 			}
-		}
-		if debugParseOutput {
-			log.Printf("ast.SliceExpr{X: %v, Low: %v, High: %v, Max: %v, Slice3: %v}\n", x, index[0], index[1], index[2], slice3)
 		}
 		return &ast.SliceExpr{X: x, Lbrack: lbrack, Low: index[0], High: index[1], Max: index[2], Slice3: slice3, Rbrack: rbrack}
 	}
 
-	if debugParseOutput {
-		log.Printf("ast.IndexExpr{X: %v, Index: %v}\n", x, index[0])
+	if len(args) == 0 {
+		if debugParseOutput {
+			log.Printf("ast.IndexExpr{X: %v, Index: %v}\n", x, index[0])
+		}
+		// index expression
+		return &ast.IndexExpr{X: x, Lbrack: lbrack, Index: index[0], Rbrack: rbrack}
 	}
-	return &ast.IndexExpr{X: x, Lbrack: lbrack, Index: index[0], Rbrack: rbrack}
+
+	// instance expression
+	return packIndexExpr(x, lbrack, args, rbrack)
+}
+
+func packIndexExpr(x ast.Expr, lbrack token.Pos, exprs []ast.Expr, rbrack token.Pos) ast.Expr {
+	switch len(exprs) {
+	case 0:
+		panic("internal error: packIndexExpr with empty expr slice")
+	case 1:
+		if debugParseOutput {
+			log.Printf("ast.IndexExpr{X: %v, Index: %v}\n", x, exprs[0])
+		}
+		return &ast.IndexExpr{
+			X:      x,
+			Lbrack: lbrack,
+			Index:  exprs[0],
+			Rbrack: rbrack,
+		}
+	default:
+		if debugParseOutput {
+			log.Printf("ast.IndexListExpr{X: %v, Index: %v}\n", x, exprs)
+		}
+		return &ast.IndexListExpr{
+			X:       x,
+			Lbrack:  lbrack,
+			Indices: exprs,
+			Rbrack:  rbrack,
+		}
+	}
 }
 
 func (p *parser) parseCallOrConversion(fun ast.Expr, isCmd bool) *ast.CallExpr {
@@ -1756,6 +1801,7 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	case *ast.ComprehensionExpr:
 	case *ast.SelectorExpr:
 	case *ast.IndexExpr:
+	case *ast.IndexListExpr:
 	case *ast.SliceExpr:
 	case *ast.TypeAssertExpr:
 		// If t.Type == nil we have a type assertion of the form
