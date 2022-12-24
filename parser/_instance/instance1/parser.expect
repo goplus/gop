@@ -1,0 +1,207 @@
+package main
+
+file cmd.gop
+ast.GenDecl:
+  Tok: type
+  Specs:
+    ast.TypeSpec:
+      Name:
+        ast.Ident:
+          Name: T1
+      Type:
+        ast.IndexExpr:
+          X:
+            ast.Ident:
+              Name: P1
+          Index:
+            ast.Ident:
+              Name: int
+ast.GenDecl:
+  Tok: type
+  Specs:
+    ast.TypeSpec:
+      Name:
+        ast.Ident:
+          Name: T2
+      Type:
+        ast.IndexListExpr:
+          X:
+            ast.Ident:
+              Name: P2
+          Indices:
+            ast.Ident:
+              Name: int
+            ast.Ident:
+              Name: string
+ast.GenDecl:
+  Tok: type
+  Specs:
+    ast.TypeSpec:
+      Name:
+        ast.Ident:
+          Name: T3
+      Type:
+        ast.StarExpr:
+          X:
+            ast.IndexExpr:
+              X:
+                ast.Ident:
+                  Name: P1
+              Index:
+                ast.IndexListExpr:
+                  X:
+                    ast.Ident:
+                      Name: P2
+                  Indices:
+                    ast.Ident:
+                      Name: int
+                    ast.IndexExpr:
+                      X:
+                        ast.Ident:
+                          Name: P1
+                      Index:
+                        ast.Ident:
+                          Name: int
+ast.GenDecl:
+  Tok: type
+  Specs:
+    ast.TypeSpec:
+      Name:
+        ast.Ident:
+          Name: S1
+      Type:
+        ast.StructType:
+          Fields:
+            ast.FieldList:
+              List:
+                ast.Field:
+                  Names:
+                    ast.Ident:
+                      Name: v1
+                  Type:
+                    ast.IndexExpr:
+                      X:
+                        ast.Ident:
+                          Name: P1
+                      Index:
+                        ast.Ident:
+                          Name: int
+                ast.Field:
+                  Names:
+                    ast.Ident:
+                      Name: v2
+                  Type:
+                    ast.IndexListExpr:
+                      X:
+                        ast.Ident:
+                          Name: P2
+                      Indices:
+                        ast.Ident:
+                          Name: int
+                        ast.Ident:
+                          Name: string
+ast.GenDecl:
+  Tok: type
+  Specs:
+    ast.TypeSpec:
+      Name:
+        ast.Ident:
+          Name: S2
+      Type:
+        ast.StructType:
+          Fields:
+            ast.FieldList:
+              List:
+                ast.Field:
+                  Type:
+                    ast.IndexExpr:
+                      X:
+                        ast.Ident:
+                          Name: P1
+                      Index:
+                        ast.Ident:
+                          Name: int
+ast.GenDecl:
+  Tok: type
+  Specs:
+    ast.TypeSpec:
+      Name:
+        ast.Ident:
+          Name: A1
+      Type:
+        ast.ArrayType:
+          Elt:
+            ast.IndexExpr:
+              X:
+                ast.Ident:
+                  Name: P1
+              Index:
+                ast.Ident:
+                  Name: int
+ast.GenDecl:
+  Tok: type
+  Specs:
+    ast.TypeSpec:
+      Name:
+        ast.Ident:
+          Name: A2
+      Type:
+        ast.ArrayType:
+          Len:
+            ast.BasicLit:
+              Kind: INT
+              Value: 2
+          Elt:
+            ast.IndexListExpr:
+              X:
+                ast.Ident:
+                  Name: P2
+              Indices:
+                ast.Ident:
+                  Name: int
+                ast.Ident:
+                  Name: string
+ast.GenDecl:
+  Tok: type
+  Specs:
+    ast.TypeSpec:
+      Name:
+        ast.Ident:
+          Name: M1
+      Type:
+        ast.MapType:
+          Key:
+            ast.IndexExpr:
+              X:
+                ast.Ident:
+                  Name: P1
+              Index:
+                ast.Ident:
+                  Name: int
+          Value:
+            ast.IndexListExpr:
+              X:
+                ast.Ident:
+                  Name: P2
+              Indices:
+                ast.Ident:
+                  Name: int
+                ast.Ident:
+                  Name: string
+ast.GenDecl:
+  Tok: type
+  Specs:
+    ast.TypeSpec:
+      Name:
+        ast.Ident:
+          Name: C1
+      Type:
+        ast.ChanType:
+          Value:
+            ast.IndexExpr:
+              X:
+                ast.Ident:
+                  Name: P1
+              Index:
+                ast.Ident:
+                  Name: int
