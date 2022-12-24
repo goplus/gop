@@ -904,22 +904,6 @@ func newSliceLit(lbrack, rbrack token.Pos, len ast.Expr) *ast.SliceLit {
 	return &ast.SliceLit{Lbrack: lbrack, Elts: elts, Rbrack: rbrack}
 }
 
-func (p *parser) makeIdentList(list []ast.Expr) []*ast.Ident {
-	idents := make([]*ast.Ident, len(list))
-	for i, x := range list {
-		ident, isIdent := x.(*ast.Ident)
-		if !isIdent {
-			if _, isBad := x.(*ast.BadExpr); !isBad {
-				// only report error if it's a new one
-				p.errorExpected(x.Pos(), "identifier", 2)
-			}
-			ident = &ast.Ident{NamePos: x.Pos(), Name: "_"}
-		}
-		idents[i] = ident
-	}
-	return idents
-}
-
 func (p *parser) parseFieldDecl(scope *ast.Scope) *ast.Field {
 	if p.trace {
 		defer un(trace(p, "FieldDecl"))
@@ -1049,36 +1033,6 @@ func (p *parser) parsePointerType() *ast.StarExpr {
 	base := p.parseType()
 
 	return &ast.StarExpr{Star: star, X: base}
-}
-
-// If the result is an identifier, it is not resolved.
-func (p *parser) tryVarType(isParam bool) ast.Expr {
-	if isParam && p.tok == token.ELLIPSIS {
-		pos := p.pos
-		p.next()
-		typ, _ := p.tryIdentOrType(stateType, nil) // don't use parseType so we can provide better error message
-		if typ != nil {
-			p.resolve(typ)
-		} else {
-			p.error(pos, "'...' parameter is missing type")
-			typ = &ast.BadExpr{From: pos, To: p.pos}
-		}
-		return &ast.Ellipsis{Ellipsis: pos, Elt: typ}
-	}
-	typ, _ := p.tryIdentOrType(stateType, nil)
-	return typ
-}
-
-// If the result is an identifier, it is not resolved.
-func (p *parser) parseVarType(isParam bool) ast.Expr {
-	typ := p.tryVarType(isParam)
-	if typ == nil {
-		pos := p.pos
-		p.errorExpected(pos, "type", 2)
-		p.next() // make progress
-		typ = &ast.BadExpr{From: pos, To: p.pos}
-	}
-	return typ
 }
 
 type field struct {
