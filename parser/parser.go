@@ -2041,6 +2041,12 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	case *ast.SelectorExpr:
 	case *ast.IndexExpr:
 	case *ast.IndexListExpr:
+	case *ast.ArrayType:
+	case *ast.StructType:
+	case *ast.InterfaceType:
+	case *ast.FuncType:
+	case *ast.MapType:
+	case *ast.ChanType:
 	case *ast.SliceExpr:
 	case *ast.TypeAssertExpr:
 		// If t.Type == nil we have a type assertion of the form
