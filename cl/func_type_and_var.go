@@ -128,11 +128,9 @@ func toType(ctx *blockCtx, typ ast.Expr) types.Type {
 	case *ast.UnaryExpr:
 		return toUnaryExprType(ctx, v)
 	case *ast.IndexExpr:
-		compileIndexExpr(ctx, v, false)
-		return ctx.cb.InternalStack().Pop().Type.(*gox.TypeType).Type()
+		return toIndexType(ctx, v)
 	case *ast.IndexListExpr:
-		compileIndexListExpr(ctx, v, false)
-		return ctx.cb.InternalStack().Pop().Type.(*gox.TypeType).Type()
+		return toIndexListType(ctx, v)
 	}
 	log.Panicln("toType: unknown -", reflect.TypeOf(typ))
 	return nil
@@ -343,6 +341,22 @@ func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) types.Type {
 	}
 	intf := types.NewInterfaceType(methods, embeddeds).Complete()
 	return intf
+}
+
+func toIndexType(ctx *blockCtx, v *ast.IndexExpr) types.Type {
+	ctx.cb.Typ(toType(ctx, v.X), v.X)
+	ctx.cb.Typ(toType(ctx, v.Index), v.Index)
+	ctx.cb.Index(1, false, v)
+	return ctx.cb.InternalStack().Pop().Type.(*gox.TypeType).Type()
+}
+
+func toIndexListType(ctx *blockCtx, v *ast.IndexListExpr) types.Type {
+	ctx.cb.Typ(toType(ctx, v.X), v.X)
+	for _, index := range v.Indices {
+		ctx.cb.Typ(toType(ctx, index), index)
+	}
+	ctx.cb.Index(len(v.Indices), false, v)
+	return ctx.cb.InternalStack().Pop().Type.(*gox.TypeType).Type()
 }
 
 // -----------------------------------------------------------------------------
