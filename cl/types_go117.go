@@ -69,3 +69,7 @@ L:
 	}
 	return typ, ptr
 }
+
+func sliceHasTypeParam(ctx *blockCtx, typ types.Type) bool {
+	return false
+}

@@ -248,6 +248,21 @@ func isTypeParam(t types.Type) bool {
 	return ok
 }
 
+func sliceHasTypeParam(ctx *blockCtx, typ types.Type) bool {
+	if typ == nil {
+		return false
+	}
+	var t *types.Slice
+	switch tt := typ.(type) {
+	case *types.Named:
+		t = getUnderlying(ctx, tt).(*types.Slice)
+	case *types.Slice:
+		t = tt
+	}
+	_, ok := t.Elem().(*types.TypeParam)
+	return ok
+}
+
 func boundTypeParam(ctx *blockCtx, x ast.Expr) types.Type {
 	// A type set literal of the form ~T and A|B may only appear as constraint;
 	// embed it in an implicit interface so that only interface type-checking

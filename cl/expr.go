@@ -850,7 +850,11 @@ func compileSliceLit(ctx *blockCtx, v *ast.SliceLit, typ types.Type) {
 	for _, elt := range v.Elts {
 		compileExpr(ctx, elt)
 	}
-	ctx.cb.SliceLit(typ, n)
+	if sliceHasTypeParam(ctx, typ) {
+		ctx.cb.SliceLit(nil, n)
+	} else {
+		ctx.cb.SliceLit(typ, n)
+	}
 }
 
 func compileRangeExpr(ctx *blockCtx, v *ast.RangeExpr) {
