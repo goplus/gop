@@ -89,7 +89,7 @@ L:
 	case *ast.IndexListExpr:
 		n := len(t.Indices)
 		if n != orgTypeParams.Len() {
-			panic(ctx.newCodeErrorf(typ.Pos(), "got %v type parameter, but receiver base type declares %v", n, orgTypeParams.Len()))
+			panic(ctx.newCodeErrorf(typ.Pos(), "got %v arguments but %v type parameters", n, orgTypeParams.Len()))
 		}
 		tparams = make([]*types.TypeParam, n)
 		for i := 0; i < n; i++ {
