@@ -241,11 +241,14 @@ func doInitMethods(ld *typeLoader) {
 type pkgCtx struct {
 	*nodeInterp
 	*gmxSettings
-	cpkgs *cpackages.Importer
-	syms  map[string]loader
-	inits []func()
-	tylds []*typeLoader
-	errs  errors.List
+	cpkgs    *cpackages.Importer
+	syms     map[string]loader
+	generics map[string]bool // generic type record
+	inits    []func()
+	tylds    []*typeLoader
+	idents   []*ast.Ident // toType ident recored
+	errs     errors.List
+	inInst   int // toType in generic instance
 }
 
 type blockCtx struct {
@@ -369,7 +372,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		fset: fset, files: files, workingDir: workingDir,
 	}
 	ctx := &pkgCtx{
-		syms: make(map[string]loader), nodeInterp: interp,
+		syms: make(map[string]loader), nodeInterp: interp, generics: make(map[string]bool),
 	}
 	confGox := &gox.Config{
 		Fset:            fset,
@@ -728,6 +731,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, genCod
 							}
 						}
 					} else {
+						ctx.generics[name] = true
 						ld.typ = func() {
 							pkg := ctx.pkg.Types
 							if t.Assign != token.NoPos { // alias type

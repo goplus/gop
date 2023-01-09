@@ -26,6 +26,8 @@ import (
 	"github.com/goplus/gop/token"
 )
 
+const enableTypeParams = true
+
 func toTermList(ctx *blockCtx, expr ast.Expr) []*types.Term {
 retry:
 	switch v := expr.(type) {
@@ -143,6 +145,10 @@ func (p *typeParamLookup) Lookup(name string) types.Type {
 	return nil
 }
 
+func typeSpecHasTypeParams(spec *ast.TypeSpec) bool {
+	return spec.TypeParams != nil
+}
+
 func initType(ctx *blockCtx, named *types.Named, spec *ast.TypeSpec) {
 	typeParams := toTypeParams(ctx, spec.TypeParams)
 	if len(typeParams) > 0 {
@@ -152,6 +158,11 @@ func initType(ctx *blockCtx, named *types.Named, spec *ast.TypeSpec) {
 			ctx.tlookup = nil
 		}()
 	}
+	org := ctx.inInst
+	ctx.inInst = 0
+	defer func() {
+		ctx.inInst = org
+	}()
 	typ := toType(ctx, spec.Type)
 	if named, ok := typ.(*types.Named); ok {
 		typ = getUnderlying(ctx, named)
@@ -284,4 +295,15 @@ func boundTypeParam(ctx *blockCtx, x ast.Expr) types.Type {
 		return t
 	}
 	return toType(ctx, x)
+}
+
+func namedIsTypeParams(ctx *blockCtx, t *types.Named) bool {
+	o := t.Obj()
+	if o.Pkg() == ctx.pkg.Types {
+		if _, ok := ctx.generics[o.Name()]; !ok {
+			return false
+		}
+		ctx.loadType(o.Name())
+	}
+	return t.Obj() != nil && t.TypeArgs() == nil && t.TypeParams() != nil
 }

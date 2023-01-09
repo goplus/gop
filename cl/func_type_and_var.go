@@ -100,7 +100,28 @@ func toParam(ctx *blockCtx, fld *ast.Field, args []*gox.Param) []*gox.Param {
 func toType(ctx *blockCtx, typ ast.Expr) types.Type {
 	switch v := typ.(type) {
 	case *ast.Ident:
-		return toIdentType(ctx, v)
+		if enableTypeParams {
+			ctx.idents = append(ctx.idents, v)
+			defer func() {
+				ctx.idents = ctx.idents[:len(ctx.idents)-1]
+			}()
+		}
+		typ := toIdentType(ctx, v)
+		if enableTypeParams && ctx.inInst == 0 {
+			if t, ok := typ.(*types.Named); ok {
+				if namedIsTypeParams(ctx, t) {
+					pos := ctx.idents[0].Pos()
+					for _, i := range ctx.idents {
+						if i.Name == v.Name {
+							pos = i.Pos()
+							break
+						}
+					}
+					panic(ctx.newCodeErrorf(pos, "cannot use generic type %v without instantiation", t.Obj().Type()))
+				}
+			}
+		}
+		return typ
 	case *ast.StarExpr:
 		elem := toType(ctx, v.X)
 		return types.NewPointer(elem)
@@ -120,7 +141,15 @@ func toType(ctx *blockCtx, typ ast.Expr) types.Type {
 	case *ast.FuncType:
 		return toFuncType(ctx, v, nil, nil)
 	case *ast.SelectorExpr:
-		return toExternalType(ctx, v)
+		typ := toExternalType(ctx, v)
+		if enableTypeParams && ctx.inInst == 0 {
+			if t, ok := typ.(*types.Named); ok {
+				if namedIsTypeParams(ctx, t) {
+					panic(ctx.newCodeErrorf(v.Pos(), "cannot use generic type %v without instantiation", t.Obj().Type()))
+				}
+			}
+		}
+		return typ
 	case *ast.ParenExpr:
 		return toType(ctx, v.X)
 	case *ast.BinaryExpr:
@@ -234,7 +263,7 @@ func toStructType(ctx *blockCtx, v *ast.StructType) *types.Struct {
 	}
 	for _, field := range fieldList {
 		typ := toType(ctx, field.Type)
-		if field.Names == nil { // embedded
+		if len(field.Names) == 0 { // embedded
 			name := getTypeName(typ)
 			if chkRedecl(name, field.Type.Pos()) {
 				continue
@@ -344,6 +373,10 @@ func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) types.Type {
 }
 
 func toIndexType(ctx *blockCtx, v *ast.IndexExpr) types.Type {
+	ctx.inInst++
+	defer func() {
+		ctx.inInst--
+	}()
 	ctx.cb.Typ(toType(ctx, v.X), v.X)
 	ctx.cb.Typ(toType(ctx, v.Index), v.Index)
 	ctx.cb.Index(1, false, v)
@@ -351,6 +384,10 @@ func toIndexType(ctx *blockCtx, v *ast.IndexExpr) types.Type {
 }
 
 func toIndexListType(ctx *blockCtx, v *ast.IndexListExpr) types.Type {
+	ctx.inInst++
+	defer func() {
+		ctx.inInst--
+	}()
 	ctx.cb.Typ(toType(ctx, v.X), v.X)
 	for _, index := range v.Indices {
 		ctx.cb.Typ(toType(ctx, index), index)

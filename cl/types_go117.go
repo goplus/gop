@@ -24,6 +24,8 @@ import (
 	"github.com/goplus/gop/ast"
 )
 
+const enableTypeParams = false
+
 func toBinaryExprType(ctx *blockCtx, v *ast.BinaryExpr) types.Type {
 	panic("type parameters are unsupported at this go version")
 }
@@ -71,5 +73,9 @@ L:
 }
 
 func sliceHasTypeParam(ctx *blockCtx, typ types.Type) bool {
+	return false
+}
+
+func namedIsTypeParams(ctx *blockCtx, t *types.Named) bool {
 	return false
 }
