@@ -145,10 +145,6 @@ func (p *typeParamLookup) Lookup(name string) types.Type {
 	return nil
 }
 
-func typeSpecHasTypeParams(spec *ast.TypeSpec) bool {
-	return spec.TypeParams != nil
-}
-
 func initType(ctx *blockCtx, named *types.Named, spec *ast.TypeSpec) {
 	typeParams := toTypeParams(ctx, spec.TypeParams)
 	if len(typeParams) > 0 {
