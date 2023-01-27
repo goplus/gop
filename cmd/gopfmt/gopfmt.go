@@ -17,14 +17,19 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
+	"go/parser"
+	"go/token"
 	"io"
 	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	goformat "go/format"
 
 	"github.com/goplus/gop/format"
 )
@@ -68,8 +73,22 @@ func processFile(filename string, in io.Reader, out io.Writer) error {
 	if err != nil {
 		return err
 	}
-
-	res, err := format.Source(src, filename)
+	var res []byte
+	if filepath.Ext(filename) == ".go" {
+		fset := token.NewFileSet()
+		f, err := parser.ParseFile(fset, filename, src, parser.ParseComments)
+		if err != nil {
+			return err
+		}
+		var buf bytes.Buffer
+		err = goformat.Node(&buf, fset, f)
+		if err != nil {
+			return err
+		}
+		res = buf.Bytes()
+	} else {
+		res, err = format.Source(src, filename)
+	}
 	if err != nil {
 		return err
 	}
