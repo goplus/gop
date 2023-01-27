@@ -75,7 +75,7 @@ func gopfmt(path string, smart, mvgo bool) (err error) {
 	if smart {
 		target, err = xformat.GopstyleSource(src, path)
 	} else {
-		if filepath.Ext(path) == ".go" {
+		if !mvgo && filepath.Ext(path) == ".go" {
 			fset := token.NewFileSet()
 			f, err := parser.ParseFile(fset, path, src, parser.ParseComments)
 			if err != nil {
