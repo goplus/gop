@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-// Package gopfmt implements the ``gop fmt'' command.
+// Package gopfmt implements the “gop fmt” command.
 package gopfmt
 
 import (
@@ -29,6 +29,10 @@ import (
 
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/format"
+
+	goformat "go/format"
+	"go/parser"
+	"go/token"
 
 	xformat "github.com/goplus/gop/x/format"
 )
@@ -71,7 +75,21 @@ func gopfmt(path string, smart, mvgo bool) (err error) {
 	if smart {
 		target, err = xformat.GopstyleSource(src, path)
 	} else {
-		target, err = format.Source(src, path)
+		if !mvgo && filepath.Ext(path) == ".go" {
+			fset := token.NewFileSet()
+			f, err := parser.ParseFile(fset, path, src, parser.ParseComments)
+			if err != nil {
+				return err
+			}
+			var buf bytes.Buffer
+			err = goformat.Node(&buf, fset, f)
+			if err != nil {
+				return err
+			}
+			target = buf.Bytes()
+		} else {
+			target, err = format.Source(src, path)
+		}
 	}
 	if err != nil {
 		return

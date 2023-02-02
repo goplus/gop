@@ -128,6 +128,9 @@ func (p *nodeInterp) LoadExpr(node ast.Node) (src string, pos token.Position) {
 	start := node.Pos()
 	pos = p.fset.Position(start)
 	f := p.files[pos.Filename]
+	if f == nil { // not found
+		return
+	}
 	n := int(node.End() - start)
 	pos.Filename = relFile(p.workingDir, pos.Filename)
 	if pos.Offset+n < 0 {
@@ -238,11 +241,14 @@ func doInitMethods(ld *typeLoader) {
 type pkgCtx struct {
 	*nodeInterp
 	*gmxSettings
-	cpkgs *cpackages.Importer
-	syms  map[string]loader
-	inits []func()
-	tylds []*typeLoader
-	errs  errors.List
+	cpkgs    *cpackages.Importer
+	syms     map[string]loader
+	generics map[string]bool // generic type record
+	inits    []func()
+	tylds    []*typeLoader
+	idents   []*ast.Ident // toType ident recored
+	errs     errors.List
+	inInst   int // toType in generic instance
 }
 
 type blockCtx struct {
@@ -253,6 +259,7 @@ type blockCtx struct {
 	imports      map[string]*gox.PkgRef
 	lookups      []*gox.PkgRef
 	clookups     []*cpackages.PkgRef
+	tlookup      *typeParamLookup
 	c2goBase     string // default is `github.com/goplus/`
 	targetDir    string
 	classRecv    *ast.FieldList // available when gmxSettings != nil
@@ -365,7 +372,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		fset: fset, files: files, workingDir: workingDir,
 	}
 	ctx := &pkgCtx{
-		syms: make(map[string]loader), nodeInterp: interp,
+		syms: make(map[string]loader), nodeInterp: interp, generics: make(map[string]bool),
 	}
 	confGox := &gox.Config{
 		Fset:            fset,
@@ -724,6 +731,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, genCod
 							}
 						}
 					} else {
+						ctx.generics[name] = true
 						ld.typ = func() {
 							pkg := ctx.pkg.Types
 							if t.Assign != token.NoPos { // alias type
@@ -737,11 +745,12 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, genCod
 								log.Println("==> Load > NewType", name)
 							}
 							named := newType(pkg, t.Pos(), name)
+
 							ld.typInit = func() { // decycle
 								if debugLoad {
 									log.Println("==> Load > InitType", name)
 								}
-								initType(ctx, named, toType(ctx, t.Type))
+								initType(ctx, named, t)
 							}
 						}
 					}
@@ -798,13 +807,6 @@ func newType(pkg *types.Package, pos token.Pos, name string) *types.Named {
 	return types.NewNamed(typName, nil, nil)
 }
 
-func initType(ctx *blockCtx, named *types.Named, typ types.Type) {
-	if named, ok := typ.(*types.Named); ok {
-		typ = getUnderlying(ctx, named)
-	}
-	named.SetUnderlying(typ)
-}
-
 func aliasType(pkg *types.Package, pos token.Pos, name string, typ types.Type) {
 	o := types.NewTypeName(pos, pkg, name, typ)
 	pkg.Scope().Insert(o)
@@ -823,7 +825,7 @@ func declFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
 		return
 	}
 	pkg := ctx.pkg.Types
-	sig := toFuncType(ctx, d.Type, recv)
+	sig := toFuncType(ctx, d.Type, recv, d)
 	fn := types.NewFunc(d.Pos(), pkg, name, sig)
 	if recv != nil {
 		typ := recv.Type()
@@ -868,7 +870,7 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
 			}
 		}
 	}
-	sig := toFuncType(ctx, d.Type, recv)
+	sig := toFuncType(ctx, d.Type, recv, d)
 	fn, err := ctx.pkg.NewFuncWith(d.Pos(), name, sig, func() token.Pos {
 		return d.Recv.List[0].Type.Pos()
 	})
