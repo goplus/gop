@@ -230,7 +230,7 @@ func TestTypeParamsErrorInstantiate(t *testing.T) {
 		msg = `./b.gop:2:1: uint does not implement Number`
 	case "go1.19":
 		msg = `./b.gop:2:1: uint does not implement Number (uint missing in ~int | float64)`
-	case "go1.20":
+	default:
 		msg = `./b.gop:2:1: uint does not satisfy Number (uint missing in ~int | float64)`
 	}
 
@@ -260,7 +260,7 @@ func TestTypeParamsErrorMatch(t *testing.T) {
 	switch runtime.Version()[:6] {
 	case "go1.18", "go1.19":
 		msg = `./b.gop:2:5: T does not match ~[]E`
-	case "go1.20":
+	default:
 		msg = `./b.gop:2:5: int does not match ~[]E`
 	}
 	mixedErrorTest(t, msg, `
