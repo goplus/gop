@@ -225,10 +225,13 @@ func mixedErrorTestEx(t *testing.T, pkgname, msg, gocode, gopcode string) {
 
 func TestTypeParamsErrorInstantiate(t *testing.T) {
 	var msg string
-	if runtime.Version()[:6] == "go1.18" {
+	switch runtime.Version()[:6] {
+	case "go1.18":
 		msg = `./b.gop:2:1: uint does not implement Number`
-	} else {
+	case "go1.19":
 		msg = `./b.gop:2:1: uint does not implement Number (uint missing in ~int | float64)`
+	default:
+		msg = `./b.gop:2:1: uint does not satisfy Number (uint missing in ~int | float64)`
 	}
 
 	mixedErrorTest(t, msg, `
@@ -253,7 +256,14 @@ Sum[uint]
 }
 
 func TestTypeParamsErrorMatch(t *testing.T) {
-	mixedErrorTest(t, `./b.gop:2:5: T does not match ~[]E`, `
+	var msg string
+	switch runtime.Version()[:6] {
+	case "go1.18", "go1.19":
+		msg = `./b.gop:2:5: T does not match ~[]E`
+	default:
+		msg = `./b.gop:2:5: int does not match ~[]E`
+	}
+	mixedErrorTest(t, msg, `
 package main
 
 func At[T interface{ ~[]E }, E any](x T, i int) E {
