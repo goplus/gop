@@ -4267,3 +4267,40 @@ func main() {
 }
 `)
 }
+
+func TestCommandNotExpr(t *testing.T) {
+	gopClTest(t, `
+println !true
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Println(false)
+}
+`)
+	gopClTest(t, `
+a := true
+println !a
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	a := true
+	fmt.Println(!a)
+}
+`)
+	gopClTest(t, `
+println !func() bool { return true }()
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Println(!func() bool {
+		return true
+	}())
+}
+`)
+}
