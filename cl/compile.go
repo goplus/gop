@@ -534,10 +534,10 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 	case f.IsClass:
 		if parent.gmxSettings != nil {
 			classType = getDefaultClass(file)
-			o := parent.sprite
 			spxClass = true
+			o := parent.sprite
 			var index = 0
-			if len(o) == len(parent.extSpx) {
+			if n := len(o); n > 1 && n == len(parent.extSpx) {
 				for i, v := range parent.extSpx {
 					if strings.HasSuffix(file, v) {
 						index = i
