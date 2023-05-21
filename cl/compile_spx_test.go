@@ -34,9 +34,9 @@ func lookupClass(ext string) (c *gopmod.Class, ok bool) {
 		return &gopmod.Class{
 			ProjExt: ".tgmx", WorkExt: ".tspx",
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx", "math"}}, true
-	case ".t2gmx", ".t2spx":
+	case ".t2gmx", ".t2spx", ".t2spx2":
 		return &gopmod.Class{
-			ProjExt: ".t2gmx", WorkExt: ".t2spx",
+			ProjExt: ".t2gmx", WorkExt: ".t2spx;.t2spx2",
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
 	}
 	return
@@ -389,6 +389,40 @@ type Kai struct {
 func (this *Kai) onMsg(msg string) {
 }
 `, "Game.t2gmx", "Kai.t2spx")
+}
+
+func TestSpx2_2(t *testing.T) {
+	gopSpxTestEx(t, `
+println("Hi")
+`, `
+func onMsg(msg string) {
+}
+`, `package main
+
+import (
+	fmt "fmt"
+	spx2 "github.com/goplus/gop/cl/internal/spx2"
+)
+
+type Game struct {
+	spx2.Game
+}
+
+func (this *Game) MainEntry() {
+	fmt.Println("Hi")
+}
+func main() {
+	new(Game).Main()
+}
+
+type Kai struct {
+	spx2.Sprite2
+	*Game
+}
+
+func (this *Kai) onMsg(msg string) {
+}
+`, "Game.t2gmx", "Kai.t2spx2")
 }
 
 func TestSpxMainEntry(t *testing.T) {

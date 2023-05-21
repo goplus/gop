@@ -535,7 +535,18 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 		if parent.gmxSettings != nil {
 			classType = getDefaultClass(file)
 			o := parent.sprite
-			baseTypeName, baseType, spxClass = o.Name(), o.Type(), true
+			spxClass = true
+			var index = 0
+			if len(o) == len(parent.extSpx) {
+				for i, v := range parent.extSpx {
+					if strings.HasSuffix(file, v) {
+						index = i
+						break
+					}
+				}
+			}
+			baseTypeName = o[index].Name()
+			baseType = o[index].Type()
 		}
 		// TODO: panic
 	}

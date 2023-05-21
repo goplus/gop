@@ -18,7 +18,7 @@ package spx2
 
 const (
 	Gop_sched = "Sched"
-	Gop_work  = "Sprite"
+	Gop_work  = "Sprite;Sprite2"
 )
 
 type Game struct {
@@ -28,6 +28,9 @@ func (p *Game) Main() {
 }
 
 type Sprite struct {
+}
+
+type Sprite2 struct {
 }
 
 func Sched() {

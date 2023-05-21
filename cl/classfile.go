@@ -32,9 +32,9 @@ import (
 
 type gmxSettings struct {
 	gameClass  string
-	extSpx     string
+	extSpx     []string
 	game       gox.Ref
-	sprite     gox.Ref
+	sprite     []gox.Ref
 	scheds     []string
 	schedStmts []goast.Stmt // nil or len(scheds) == 2 (delayload)
 	pkgImps    []*gox.PkgRef
@@ -74,7 +74,7 @@ func newGmx(ctx *pkgCtx, pkg *gox.Package, file string, conf *Config) *gmxSettin
 		panic("TODO: class not found")
 	}
 	pkgPaths := gt.PkgPaths
-	p := &gmxSettings{extSpx: gt.WorkExt, gameClass: name, pkgPaths: pkgPaths}
+	p := &gmxSettings{extSpx: strings.Split(gt.WorkExt, ";"), gameClass: name, pkgPaths: pkgPaths}
 	p.pkgImps = make([]*gox.PkgRef, len(pkgPaths))
 	for i, pkgPath := range pkgPaths {
 		p.pkgImps[i] = pkg.Import(pkgPath)
@@ -85,9 +85,9 @@ func newGmx(ctx *pkgCtx, pkg *gox.Package, file string, conf *Config) *gmxSettin
 		p.game, p.gameIsPtr = spxRef(spx, "Gop_game", "Game")
 	}
 	if gt.WorkExt != "" {
-		p.sprite, _ = spxTryRef(spx, "Gop_work", "Work")
+		p.sprite = spxTryRefList(spx, "Gop_work", "Work")
 		if p.sprite == nil {
-			p.sprite, _ = spxRef(spx, "Gop_sprite", "Sprite")
+			p.sprite = spxRefList(spx, "Gop_sprite", "Sprite")
 		}
 	}
 	if x := getStringConst(spx, "Gop_sched"); x != "" {
@@ -129,6 +129,31 @@ func spxTryRef(spx *gox.PkgRef, name, typ string) (obj gox.Ref, isPtr bool) {
 		}
 	}
 	obj = spx.TryRef(typ)
+	return
+}
+
+func spxRefList(spx *gox.PkgRef, name, typ string) (objs []gox.Ref) {
+	objs = spxTryRefList(spx, name, typ)
+	if objs == nil {
+		panic(spx.Path() + "." + name + " not found")
+	}
+	return
+}
+
+func spxTryRefList(spx *gox.PkgRef, name, typ string) (objs []gox.Ref) {
+	for _, t := range strings.Split(getStringConst(spx, name), ";") {
+		if strings.HasPrefix(t, "*") {
+			t, _ = t[1:], true
+		}
+		if obj := spx.TryRef(t); obj != nil {
+			objs = append(objs, obj)
+		}
+	}
+	if len(objs) == 0 {
+		if obj := spx.TryRef(typ); obj != nil {
+			objs = append(objs, obj)
+		}
+	}
 	return
 }
 

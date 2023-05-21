@@ -148,9 +148,9 @@ func TestSpxLookup(t *testing.T) {
 
 func lookupClass(ext string) (c *gopmod.Class, ok bool) {
 	switch ext {
-	case ".t2gmx", ".t2spx":
+	case ".t2gmx", ".t2spx", ".t2spx2":
 		return &gopmod.Class{
-			ProjExt: ".t2gmx", WorkExt: ".t2spx",
+			ProjExt: ".t2gmx", WorkExt: ".t2spx;.t2spx2",
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
 	}
 	return
@@ -158,9 +158,9 @@ func lookupClass(ext string) (c *gopmod.Class, ok bool) {
 
 func lookupClassErr(ext string) (c *gopmod.Class, ok bool) {
 	switch ext {
-	case ".t2gmx", ".t2spx":
+	case ".t2gmx", ".t2spx", ".t2spx2":
 		return &gopmod.Class{
-			ProjExt: ".t2gmx", WorkExt: ".t2spx",
+			ProjExt: ".t2gmx", WorkExt: ".t2spx;.t2spx2",
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/libc"}}, true
 	}
 	return
