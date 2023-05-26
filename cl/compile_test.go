@@ -2011,6 +2011,8 @@ func bar(conf ...Config) {
 
 foo({A: 1})
 bar({A: 2})
+foo({})
+bar({})
 `, `package main
 
 type Config struct {
@@ -2024,6 +2026,8 @@ func bar(conf ...Config) {
 func main() {
 	foo(&Config{A: 1})
 	bar(Config{A: 2})
+	foo(&Config{})
+	bar(Config{})
 }
 `)
 }
