@@ -683,11 +683,14 @@ const (
 	compositeLitKeyVal = 1
 )
 
-func checkCompositeLitElts(ctx *blockCtx, elts []ast.Expr) (kind int) {
+func checkCompositeLitElts(ctx *blockCtx, elts []ast.Expr, onlyStruct bool) (kind int) {
 	for _, elt := range elts {
 		if _, ok := elt.(*ast.KeyValueExpr); ok {
 			return compositeLitKeyVal
 		}
+	}
+	if len(elts) == 0 && onlyStruct {
+		return compositeLitKeyVal
 	}
 	return compositeLitVal
 }
@@ -793,7 +796,7 @@ func getUnderlying(ctx *blockCtx, typ types.Type) types.Type {
 func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, expected types.Type, onlyStruct bool) {
 	var hasPtr bool
 	var typ, underlying types.Type
-	var kind = checkCompositeLitElts(ctx, v.Elts)
+	var kind = checkCompositeLitElts(ctx, v.Elts, onlyStruct)
 	if v.Type != nil {
 		typ = toType(ctx, v.Type)
 		underlying = getUnderlying(ctx, typ)
