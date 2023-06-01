@@ -99,7 +99,6 @@ func astFileToPkg(file *ast.File, fileName string) (pkg *ast.Package) {
 // -----------------------------------------------------------------------------
 
 // ParseDir calls ParseFSDir by passing a local filesystem.
-//
 func ParseDir(fset *token.FileSet, path string, filter func(fs.FileInfo) bool, mode Mode) (pkgs map[string]*ast.Package, first error) {
 	return ParseFSDir(fset, local, path, Config{Filter: filter, Mode: mode})
 }
@@ -111,7 +110,6 @@ type Config struct {
 }
 
 // ParseDirEx calls ParseFSDir by passing a local filesystem.
-//
 func ParseDirEx(fset *token.FileSet, path string, conf Config) (pkgs map[string]*ast.Package, first error) {
 	return ParseFSDir(fset, local, path, conf)
 }
@@ -128,7 +126,6 @@ func ParseDirEx(fset *token.FileSet, path string, conf Config) (pkgs map[string]
 // If the directory couldn't be read, a nil map and the respective error are
 // returned. If a parse error occurred, a non-nil but incomplete map and the
 // first error encountered are returned.
-//
 func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (pkgs map[string]*ast.Package, first error) {
 	list, err := fs.ReadDir(path)
 	if err != nil {
@@ -152,10 +149,15 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (p
 				continue
 			}
 			useGoParser = (conf.Mode & ParseGoAsGoPlus) == 0
+		case ".gopx":
+			isClass = true
 		default:
 			if isProj, isClass = conf.IsClass(ext); !isClass {
 				continue
 			}
+		}
+		if isProj || isClass {
+			conf.Mode |= ParseGoPlusClass
 		}
 		if !strings.HasPrefix(fname, "_") && (conf.Filter == nil || conf.Filter(d)) {
 			filename := fs.Join(path, fname)
