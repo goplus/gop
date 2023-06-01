@@ -876,7 +876,7 @@ func set(name string, v int) string {
 	return name
 }
 func test() {
-	var a = set("box") 
+	var a = set("box")
 	println(a)
 }
 `)
