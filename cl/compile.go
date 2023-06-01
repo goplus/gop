@@ -536,6 +536,8 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 			classType = getDefaultClass(file)
 			o := parent.sprite
 			baseTypeName, baseType, spxClass = o.Name(), o.Type(), true
+		} else {
+			classType = getDefaultClass(file)
 		}
 		// TODO: panic
 	}
@@ -543,9 +545,11 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 		if debugLoad {
 			log.Println("==> Preload type", classType)
 		}
-		ctx.lookups = make([]*gox.PkgRef, len(parent.pkgPaths))
-		for i, pkgPath := range parent.pkgPaths {
-			ctx.lookups[i] = p.Import(pkgPath)
+		if parent.gmxSettings != nil {
+			ctx.lookups = make([]*gox.PkgRef, len(parent.pkgPaths))
+			for i, pkgPath := range parent.pkgPaths {
+				ctx.lookups[i] = p.Import(pkgPath)
+			}
 		}
 		syms := parent.syms
 		pos := f.Pos()
@@ -561,8 +565,10 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 					log.Println("==> Load > InitType", classType)
 				}
 				pkg := p.Types
-				flds := make([]*types.Var, 1, 2)
-				flds[0] = types.NewField(pos, pkg, baseTypeName, baseType, true)
+				var flds []*types.Var
+				if len(baseTypeName) != 0 {
+					flds = append(flds, types.NewField(pos, pkg, baseTypeName, baseType, true))
+				}
 				if spxClass {
 					typ := toType(ctx, &ast.StarExpr{X: &ast.Ident{Name: parent.gameClass}})
 					fld := types.NewField(pos, pkg, getTypeName(typ), typ, true)
