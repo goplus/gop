@@ -68,6 +68,11 @@ func gopClTest(t *testing.T, gopcode, expected string) {
 	gopClTestEx(t, gblConf, "main", gopcode, expected)
 }
 
+func gopClTestFile(t *testing.T, gopcode, expected string, fname string) {
+	fs := parsertest.NewSingleFileFS("/foo", fname, gopcode)
+	gopClTestFS(t, gblConf, fs, "main", expected)
+}
+
 func gopClTestEx(t *testing.T, conf *cl.Config, pkgname, gopcode, expected string) {
 	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", gopcode)
 	gopClTestFS(t, conf, fs, pkgname, expected)
@@ -4307,4 +4312,42 @@ func main() {
 	}())
 }
 `)
+}
+
+func TestClassFileGopx(t *testing.T) {
+	gopClTestFile(t, `
+var (
+	BaseClass
+	Width, Height float64
+	AggClass
+)
+
+type BaseClass struct{
+	x int
+	y int
+}
+type AggClass struct{}
+
+func Area() float64 {
+	return Width * Height
+}
+`, `package main
+
+type BaseClass struct {
+	x int
+	y int
+}
+type AggClass struct {
+}
+type Rect struct {
+	BaseClass
+	Width  float64
+	Height float64
+	AggClass
+}
+
+func (this *Rect) Area() float64 {
+	return this.Width * this.Height
+}
+`, "Rect.gopx")
 }
