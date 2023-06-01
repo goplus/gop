@@ -43,7 +43,7 @@ const (
 	AllErrors
 	// ParseGoAsGoPlus - parse Go files by gop/parser
 	ParseGoAsGoPlus
-	// ParserGoPlusClass - parser Go+ class by gop/parser
+	// ParserGoPlusClass - parse Go+ classfile by gop/parser
 	ParseGoPlusClass
 )
 

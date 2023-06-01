@@ -539,7 +539,6 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 		} else {
 			classType = getDefaultClass(file)
 		}
-		// TODO: panic
 	}
 	if classType != "" {
 		if debugLoad {
@@ -1052,14 +1051,6 @@ func loadVars(ctx *blockCtx, v *ast.ValueSpec, global bool) {
 	varDecl := ctx.pkg.NewVarEx(scope, v.Names[0].Pos(), typ, names...)
 	if nv := len(v.Values); nv > 0 {
 		cb := varDecl.InitStart(ctx.pkg)
-		if enableRecover {
-			defer func() {
-				if e := recover(); e != nil {
-					cb.ResetInit()
-					panic(e)
-				}
-			}()
-		}
 		if nv == 1 && len(names) == 2 {
 			compileExpr(ctx, v.Values[0], clCallWithTwoValue)
 		} else {

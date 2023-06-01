@@ -866,18 +866,3 @@ import (
 )
 `)
 }
-
-func TestErrVarInFunc(t *testing.T) {
-	codeErrorTest(t, `./bar.gop:6:10: too few arguments in call to set("box")
-	have (untyped string)
-	want (name string, v int)
-./bar.gop:7:10: undefined: a`, `
-func set(name string, v int) string {
-	return name
-}
-func test() {
-	var a = set("box") 
-	println(a)
-}
-`)
-}
