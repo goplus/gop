@@ -26,7 +26,6 @@ import (
 // A Mode value is a set of flags (or 0).
 // They control the amount of source code parsed and other optional
 // parser functionality.
-//
 type Mode uint
 
 const (
@@ -44,6 +43,8 @@ const (
 	AllErrors
 	// ParseGoAsGoPlus - parse Go files by gop/parser
 	ParseGoAsGoPlus
+	// ParserGoPlusClass - parser Go+ class by gop/parser
+	ParseGoPlusClass
 )
 
 // ParseFile parses the source code of a single Go source file and returns
@@ -64,7 +65,6 @@ const (
 // errors were found, the result is a partial AST (with ast.Bad* nodes
 // representing the fragments of erroneous source code). Multiple errors
 // are returned via a scanner.ErrorList which is sorted by source position.
-//
 func parseFile(fset *token.FileSet, filename string, src interface{}, mode Mode) (f *ast.File, err error) {
 	if fset == nil {
 		panic("parser.ParseFile: no token.FileSet provided (fset == nil)")

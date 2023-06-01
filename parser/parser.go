@@ -3364,7 +3364,12 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 	switch keyword {
 	case token.VAR:
 		if typ == nil && values == nil {
-			p.error(pos, "missing variable type or initialization")
+			if p.mode&ParseGoPlusClass != 0 && len(idents) == 1 {
+				typ = idents[0]
+				idents = nil
+			} else {
+				p.error(pos, "missing variable type or initialization")
+			}
 		}
 	case token.CONST:
 		if values == nil && (iota == 0 || typ != nil) {

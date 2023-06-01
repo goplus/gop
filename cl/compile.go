@@ -586,8 +586,12 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 						ctx.handleCodeErrorf(&pos, "cannot assign value to field in class file")
 					}
 					typ := toType(ctx, spec.Type)
-					for _, name := range spec.Names {
-						flds = append(flds, types.NewField(name.Pos(), pkg, name.Name, typ, false))
+					if len(spec.Names) == 0 {
+						flds = append(flds, types.NewField(spec.Type.Pos(), pkg, getTypeName(typ), typ, true))
+					} else {
+						for _, name := range spec.Names {
+							flds = append(flds, types.NewField(name.Pos(), pkg, name.Name, typ, false))
+						}
 					}
 				}
 				decl.InitType(p, types.NewStruct(flds, nil))

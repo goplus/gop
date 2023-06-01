@@ -156,6 +156,9 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (p
 				continue
 			}
 		}
+		if isProj || isClass {
+			conf.Mode |= ParseGoPlusClass
+		}
 		if !strings.HasPrefix(fname, "_") && (conf.Filter == nil || conf.Filter(d)) {
 			filename := fs.Join(path, fname)
 			if useGoParser {
