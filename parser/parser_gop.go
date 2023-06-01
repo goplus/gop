@@ -156,8 +156,9 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (p
 				continue
 			}
 		}
+		mode := conf.Mode
 		if isProj || isClass {
-			conf.Mode |= ParseGoPlusClass
+			mode |= ParseGoPlusClass
 		}
 		if !strings.HasPrefix(fname, "_") && (conf.Filter == nil || conf.Filter(d)) {
 			filename := fs.Join(path, fname)
@@ -175,7 +176,7 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (p
 				} else {
 					first = err
 				}
-			} else if src, err := ParseFSFile(fset, fs, filename, nil, conf.Mode); err == nil {
+			} else if src, err := ParseFSFile(fset, fs, filename, nil, mode); err == nil {
 				src.IsProj, src.IsClass = isProj, isClass
 				pkg := reqPkg(pkgs, src.Name.Name)
 				pkg.Files[filename] = src
