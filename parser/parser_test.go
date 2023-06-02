@@ -50,6 +50,21 @@ func testErrCode(t *testing.T, code string, errExp, panicExp string) {
 	}
 }
 
+func testClassErrCode(t *testing.T, code string, errExp, panicExp string) {
+	defer func() {
+		if e := recover(); e != nil {
+			if panicMsg(e) != panicExp {
+				t.Fatal("testErrCode panic:", e)
+			}
+		}
+	}()
+	fset := token.NewFileSet()
+	_, err := Parse(fset, "/foo/bar.gopx", code, ParseGoPlusClass)
+	if err == nil || err.Error() != errExp {
+		t.Fatal("testErrCode error:", err)
+	}
+}
+
 func TestErrTuple(t *testing.T) {
 	testErrCode(t, `println (1,2)*2`, `/foo/bar.gop:1:9: tuple is not supported`, ``)
 	testErrCode(t, `println 2*(1,2)`, `/foo/bar.gop:1:13: expected ')', found ','`, ``)
@@ -373,6 +388,14 @@ ast.FuncDecl:
                               Kind: STRING
                               Value: "error"
 `)
+}
+
+func TestClassErrCode(t *testing.T) {
+	testClassErrCode(t, `var (
+	A,B
+	v int
+)
+`, `/foo/bar.gopx:2:2: syntax error: unexpected newline, expected type`, ``)
 }
 
 // -----------------------------------------------------------------------------
