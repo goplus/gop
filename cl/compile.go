@@ -565,13 +565,18 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 				}
 				pkg := p.Types
 				var flds []*types.Var
+				chk := newCheckRedecl()
 				if len(baseTypeName) != 0 {
 					flds = append(flds, types.NewField(pos, pkg, baseTypeName, baseType, true))
+					chk.chkRedecl(ctx, baseTypeName, pos)
 				}
 				if spxClass {
 					typ := toType(ctx, &ast.StarExpr{X: &ast.Ident{Name: parent.gameClass}})
-					fld := types.NewField(pos, pkg, getTypeName(typ), typ, true)
-					flds = append(flds, fld)
+					name := getTypeName(typ)
+					if !chk.chkRedecl(ctx, name, pos) {
+						fld := types.NewField(pos, pkg, name, typ, true)
+						flds = append(flds, fld)
+					}
 				}
 				for _, v := range specs {
 					spec := v.(*ast.ValueSpec)
@@ -589,6 +594,9 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 						typ = toType(ctx, spec.Type)
 					}
 					for _, name := range spec.Names {
+						if chk.chkRedecl(ctx, name.Name, name.Pos()) {
+							continue
+						}
 						flds = append(flds, types.NewField(name.Pos(), pkg, name.Name, typ, embed))
 					}
 				}
