@@ -32,17 +32,13 @@ import (
 
 // parse parses src, which was read from the named file,
 // as a Go source file, declaration, or statement list.
-func parse(fset *token.FileSet, filename string, src []byte, class bool, fragmentOk bool) (
+func parse(fset *token.FileSet, filename string, src []byte, fragmentOk bool) (
 	file *ast.File,
 	sourceAdj func(src []byte, indent int) []byte,
 	indentAdj int,
 	err error,
 ) {
-	mode := parser.ParseComments
-	if class {
-		mode |= parser.ParseGoPlusClass
-	}
-	file, err = parser.ParseFile(fset, filename, src, mode)
+	file, err = parser.ParseFile(fset, filename, src, parserMode)
 	return
 }
 

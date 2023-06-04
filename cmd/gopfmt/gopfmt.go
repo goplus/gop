@@ -31,14 +31,19 @@ import (
 
 	goformat "go/format"
 
-	"github.com/goplus/gop"
 	"github.com/goplus/gop/format"
 )
 
 var (
 	procCnt    = 0
 	walkSubDir = false
-	rootDir    = ""
+	extGops    = map[string]struct{}{
+		".go":  {},
+		".gop": {},
+		".spx": {},
+		".gmx": {},
+	}
+	rootDir = ""
 )
 
 var (
@@ -56,7 +61,7 @@ func report(err error) {
 	os.Exit(2)
 }
 
-func processFile(filename string, class bool, in io.Reader, out io.Writer) error {
+func processFile(filename string, in io.Reader, out io.Writer) error {
 	if in == nil {
 		var err error
 		in, err = os.Open(filename)
@@ -82,7 +87,7 @@ func processFile(filename string, class bool, in io.Reader, out io.Writer) error
 		}
 		res = buf.Bytes()
 	} else {
-		res, err = format.Source(src, class, filename)
+		res, err = format.Source(src, filename)
 	}
 	if err != nil {
 		return err
@@ -113,10 +118,6 @@ func processFile(filename string, class bool, in io.Reader, out io.Writer) error
 	return err
 }
 
-var (
-	dirMap = make(map[string]func(ext string) (ok bool, class bool))
-)
-
 func walk(path string, d fs.DirEntry, err error) error {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -126,41 +127,10 @@ func walk(path string, d fs.DirEntry, err error) error {
 		}
 	} else {
 		// Directories are walked, ignoring non-Gop files.
-		dir, _ := filepath.Split(path)
-		fn, ok := dirMap[dir]
-		if !ok {
-			if mod, err := gop.LoadMod(path, nil, &gop.Config{DontUpdateGoMod: true}); err == nil {
-				fn = func(ext string) (ok bool, class bool) {
-					switch ext {
-					case ".go", ".gop":
-						ok = true
-					case ".gopx", ".spx", "gmx":
-						ok, class = true, true
-					default:
-						_, class = mod.IsClass(ext)
-						if class {
-							ok = true
-						}
-					}
-					return
-				}
-			} else {
-				fn = func(ext string) (ok bool, class bool) {
-					switch ext {
-					case ".go", ".gop":
-						ok = true
-					case ".gopx", ".spx", "gmx":
-						ok, class = true, true
-					}
-					return
-				}
-			}
-			dirMap[dir] = fn
-		}
 		ext := filepath.Ext(path)
-		if ok, class := fn(ext); ok {
+		if _, ok := extGops[ext]; ok {
 			procCnt++
-			if err = processFile(path, class, nil, os.Stdout); err != nil {
+			if err = processFile(path, nil, os.Stdout); err != nil {
 				report(err)
 			}
 		}
@@ -178,7 +148,7 @@ func main() {
 			report(fmt.Errorf("error: cannot use -w with standard input"))
 			return
 		}
-		if err := processFile("<standard input>", false, os.Stdin, os.Stdout); err != nil {
+		if err := processFile("<standard input>", os.Stdin, os.Stdout); err != nil {
 			report(err)
 		}
 		return

@@ -27,8 +27,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/goplus/gop"
-
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/format"
 
@@ -59,10 +57,16 @@ func init() {
 var (
 	procCnt    = 0
 	walkSubDir = false
-	rootDir    = ""
+	extGops    = map[string]struct{}{
+		".go":  {},
+		".gop": {},
+		".spx": {},
+		".gmx": {},
+	}
+	rootDir = ""
 )
 
-func gopfmt(path string, class, smart, mvgo bool) (err error) {
+func gopfmt(path string, smart, mvgo bool) (err error) {
 	src, err := ioutil.ReadFile(path)
 	if err != nil {
 		return
@@ -84,7 +88,7 @@ func gopfmt(path string, class, smart, mvgo bool) (err error) {
 			}
 			target = buf.Bytes()
 		} else {
-			target, err = format.Source(src, class, path)
+			target, err = format.Source(src, path)
 		}
 	}
 	if err != nil {
@@ -123,10 +127,6 @@ func writeFileWithBackup(path string, target []byte) (err error) {
 	return os.Rename(tmpfile, path)
 }
 
-var (
-	dirMap = make(map[string]func(ext string) (ok bool, class bool))
-)
-
 func walk(path string, d fs.DirEntry, err error) error {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -135,46 +135,15 @@ func walk(path string, d fs.DirEntry, err error) error {
 			return filepath.SkipDir
 		}
 	} else {
-		dir, _ := filepath.Split(path)
-		fn, ok := dirMap[dir]
-		if !ok {
-			if mod, err := gop.LoadMod(path, nil, &gop.Config{DontUpdateGoMod: true}); err == nil {
-				fn = func(ext string) (ok bool, class bool) {
-					switch ext {
-					case ".go", ".gop":
-						ok = true
-					case ".gopx", ".spx", "gmx":
-						ok, class = true, true
-					default:
-						_, class = mod.IsClass(ext)
-						if class {
-							ok = true
-						}
-					}
-					return
-				}
-			} else {
-				fn = func(ext string) (ok bool, class bool) {
-					switch ext {
-					case ".go", ".gop":
-						ok = true
-					case ".gopx", ".spx", "gmx":
-						ok, class = true, true
-					}
-					return
-				}
-			}
-			dirMap[dir] = fn
-		}
 		ext := filepath.Ext(path)
 		smart := *flagSmart
 		mvgo := smart && *flagMoveGo
-		if ok, class := fn(ext); ok && (!mvgo || ext == ".go") {
+		if _, ok := extGops[ext]; ok && (!mvgo || ext == ".go") {
 			procCnt++
 			if *flagNotExec {
 				fmt.Println("gop fmt", path)
 			} else {
-				err = gopfmt(path, class, smart && (mvgo || ext != ".go"), mvgo)
+				err = gopfmt(path, smart && (mvgo || ext != ".go"), mvgo)
 				if err != nil {
 					report(err)
 				}
