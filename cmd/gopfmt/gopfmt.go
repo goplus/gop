@@ -38,11 +38,11 @@ var (
 	procCnt    = 0
 	walkSubDir = false
 	extGops    = map[string]struct{}{
-		".go":  {},
-		".gop": {},
-		".gopx", {},
-		".spx": {},
-		".gmx": {},
+		".go":   {},
+		".gop":  {},
+		".gopx": {},
+		".spx":  {},
+		".gmx":  {},
 	}
 	rootDir = ""
 )
