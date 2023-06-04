@@ -121,7 +121,7 @@ var (
 println "hi"
 `, "Game.tgmx", "Kai.tspx")
 
-	gopSpxErrorTestEx(t, `./Kai.tspx:3:2: missing field type in class file`, `
+	gopSpxErrorTestEx(t, `./Kai.tspx:3:2: cannot assign value to field in class file`, `
 var (
 	Kai Kai
 	userScore int

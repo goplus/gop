@@ -536,16 +536,19 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 			classType = getDefaultClass(file)
 			o := parent.sprite
 			baseTypeName, baseType, spxClass = o.Name(), o.Type(), true
+		} else {
+			classType = getDefaultClass(file)
 		}
-		// TODO: panic
 	}
 	if classType != "" {
 		if debugLoad {
 			log.Println("==> Preload type", classType)
 		}
-		ctx.lookups = make([]*gox.PkgRef, len(parent.pkgPaths))
-		for i, pkgPath := range parent.pkgPaths {
-			ctx.lookups[i] = p.Import(pkgPath)
+		if parent.gmxSettings != nil {
+			ctx.lookups = make([]*gox.PkgRef, len(parent.pkgPaths))
+			for i, pkgPath := range parent.pkgPaths {
+				ctx.lookups[i] = p.Import(pkgPath)
+			}
 		}
 		syms := parent.syms
 		pos := f.Pos()
@@ -561,27 +564,40 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 					log.Println("==> Load > InitType", classType)
 				}
 				pkg := p.Types
-				flds := make([]*types.Var, 1, 2)
-				flds[0] = types.NewField(pos, pkg, baseTypeName, baseType, true)
+				var flds []*types.Var
+				chk := newCheckRedecl()
+				if len(baseTypeName) != 0 {
+					flds = append(flds, types.NewField(pos, pkg, baseTypeName, baseType, true))
+					chk.chkRedecl(ctx, baseTypeName, pos)
+				}
 				if spxClass {
 					typ := toType(ctx, &ast.StarExpr{X: &ast.Ident{Name: parent.gameClass}})
-					fld := types.NewField(pos, pkg, getTypeName(typ), typ, true)
-					flds = append(flds, fld)
+					name := getTypeName(typ)
+					if !chk.chkRedecl(ctx, name, pos) {
+						fld := types.NewField(pos, pkg, name, typ, true)
+						flds = append(flds, fld)
+					}
 				}
 				for _, v := range specs {
 					spec := v.(*ast.ValueSpec)
-					if spec.Type == nil {
-						pos := ctx.Position(v.Pos())
-						ctx.handleCodeErrorf(&pos, "missing field type in class file")
-						continue
-					}
 					if len(spec.Values) > 0 {
 						pos := ctx.Position(v.Pos())
 						ctx.handleCodeErrorf(&pos, "cannot assign value to field in class file")
+						continue
 					}
-					typ := toType(ctx, spec.Type)
+					var embed bool
+					var typ types.Type
+					if spec.Type == nil {
+						typ = toType(ctx, spec.Names[0])
+						embed = true
+					} else {
+						typ = toType(ctx, spec.Type)
+					}
 					for _, name := range spec.Names {
-						flds = append(flds, types.NewField(name.Pos(), pkg, name.Name, typ, false))
+						if chk.chkRedecl(ctx, name.Name, name.Pos()) {
+							continue
+						}
+						flds = append(flds, types.NewField(name.Pos(), pkg, name.Name, typ, embed))
 					}
 				}
 				decl.InitType(p, types.NewStruct(flds, nil))
