@@ -40,6 +40,7 @@ var (
 	extGops    = map[string]struct{}{
 		".go":  {},
 		".gop": {},
+		".gopx", {},
 		".spx": {},
 		".gmx": {},
 	}
