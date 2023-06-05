@@ -242,30 +242,41 @@ func lookupType(ctx *blockCtx, name string) (types.Object, types.Object) {
 	return o, o
 }
 
+type checkRedecl struct {
+	ctx   *blockCtx
+	names map[string]token.Pos
+}
+
+func newCheckRedecl() *checkRedecl {
+	p := &checkRedecl{names: make(map[string]token.Pos)}
+	return p
+}
+
+func (p *checkRedecl) chkRedecl(ctx *blockCtx, name string, pos token.Pos) bool {
+	if name == "_" {
+		return false
+	}
+	if opos, ok := p.names[name]; ok {
+		npos := ctx.Position(pos)
+		ctx.handleCodeErrorf(&npos, "%v redeclared\n\t%v other declaration of %v",
+			name, ctx.Position(opos), name)
+		return true
+	}
+	p.names[name] = pos
+	return false
+}
+
 func toStructType(ctx *blockCtx, v *ast.StructType) *types.Struct {
 	pkg := ctx.pkg.Types
 	fieldList := v.Fields.List
 	fields := make([]*types.Var, 0, len(fieldList))
 	tags := make([]string, 0, len(fieldList))
-	names := make(map[string]token.Pos)
-	chkRedecl := func(name string, pos token.Pos) bool {
-		if name == "_" {
-			return false
-		}
-		if opos, ok := names[name]; ok {
-			npos := ctx.Position(pos)
-			ctx.handleCodeErrorf(&npos, "%v redeclared\n\t%v other declaration of %v",
-				name, ctx.Position(opos), name)
-			return true
-		}
-		names[name] = pos
-		return false
-	}
+	chk := newCheckRedecl()
 	for _, field := range fieldList {
 		typ := toType(ctx, field.Type)
 		if len(field.Names) == 0 { // embedded
 			name := getTypeName(typ)
-			if chkRedecl(name, field.Type.Pos()) {
+			if chk.chkRedecl(ctx, name, field.Type.Pos()) {
 				continue
 			}
 			if t, ok := typ.(*types.Named); ok { // #1196: embedded type should ensure loaded
@@ -277,7 +288,7 @@ func toStructType(ctx *blockCtx, v *ast.StructType) *types.Struct {
 			continue
 		}
 		for _, name := range field.Names {
-			if chkRedecl(name.Name, name.NamePos) {
+			if chk.chkRedecl(ctx, name.Name, name.NamePos) {
 				continue
 			}
 			fld := types.NewField(token.NoPos, pkg, name.Name, typ, false)
