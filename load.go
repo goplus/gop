@@ -54,7 +54,7 @@ func NotFound(err error) bool {
 func LoadMod(dir string, gop *env.Gop, conf *Config) (mod *gopmod.Module, err error) {
 	mod, err = gopmod.Load(dir, 0)
 	if err != nil && !NotFound(err) {
-		err = errors.NewWith(err, `gopmod.Load(dir, 0`, -2, "gopmod.Load", dir, 0)
+		err = errors.NewWith(err, `gopmod.Load(dir, 0)`, -2, "gopmod.Load", dir, 0)
 		return
 	}
 	if mod != nil {

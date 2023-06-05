@@ -84,7 +84,7 @@ func gopfmt(path string, class, smart, mvgo bool) (err error) {
 			}
 			target = buf.Bytes()
 		} else {
-			target, err = format.Source(src, path)
+			target, err = format.Source(src, class, path)
 		}
 	}
 	if err != nil {
@@ -123,11 +123,15 @@ func writeFileWithBackup(path string, target []byte) (err error) {
 	return os.Rename(tmpfile, path)
 }
 
-var (
-	dirMap = make(map[string]func(ext string) (ok bool, class bool))
-)
+type walker struct {
+	dirMap map[string]func(ext string) (ok, class bool)
+}
 
-func walk(path string, d fs.DirEntry, err error) error {
+func newWalker() *walker {
+	return &walker{dirMap: make(map[string]func(ext string) (ok, class bool))}
+}
+
+func (w *walker) walk(path string, d fs.DirEntry, err error) error {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	} else if d.IsDir() {
@@ -136,14 +140,14 @@ func walk(path string, d fs.DirEntry, err error) error {
 		}
 	} else {
 		dir, _ := filepath.Split(path)
-		fn, ok := dirMap[dir]
+		fn, ok := w.dirMap[dir]
 		if !ok {
 			if mod, err := gop.LoadMod(path, nil, &gop.Config{DontUpdateGoMod: true}); err == nil {
 				fn = func(ext string) (ok bool, class bool) {
 					switch ext {
 					case ".go", ".gop":
 						ok = true
-					case ".gopx", ".spx", "gmx":
+					case ".gopx", ".spx", ".gmx":
 						ok, class = true, true
 					default:
 						_, class = mod.IsClass(ext)
@@ -158,13 +162,13 @@ func walk(path string, d fs.DirEntry, err error) error {
 					switch ext {
 					case ".go", ".gop":
 						ok = true
-					case ".gopx", ".spx", "gmx":
+					case ".gopx", ".spx", ".gmx":
 						ok, class = true, true
 					}
 					return
 				}
 			}
-			dirMap[dir] = fn
+			w.dirMap[dir] = fn
 		}
 		ext := filepath.Ext(path)
 		smart := *flagSmart
@@ -198,6 +202,7 @@ func runCmd(cmd *base.Command, args []string) {
 	if narg < 1 {
 		cmd.Usage(os.Stderr)
 	}
+	walker := newWalker()
 	for i := 0; i < narg; i++ {
 		path := flag.Arg(i)
 		walkSubDir = strings.HasSuffix(path, "/...")
@@ -206,7 +211,7 @@ func runCmd(cmd *base.Command, args []string) {
 		}
 		procCnt = 0
 		rootDir = path
-		filepath.WalkDir(path, walk)
+		filepath.WalkDir(path, walker.walk)
 		if procCnt == 0 {
 			fmt.Println("no Go+ files in", path)
 		}
