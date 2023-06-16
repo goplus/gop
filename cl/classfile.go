@@ -32,9 +32,8 @@ import (
 
 type gmxSettings struct {
 	gameClass  string
-	extSpx     string
 	game       gox.Ref
-	sprite     gox.Ref
+	works      map[string]gox.Ref
 	scheds     []string
 	schedStmts []goast.Stmt // nil or len(scheds) == 2 (delayload)
 	pkgImps    []*gox.PkgRef
@@ -74,21 +73,19 @@ func newGmx(ctx *pkgCtx, pkg *gox.Package, file string, conf *Config) *gmxSettin
 		panic("TODO: class not found")
 	}
 	pkgPaths := gt.PkgPaths
-	p := &gmxSettings{extSpx: gt.WorkExt, gameClass: name, pkgPaths: pkgPaths}
+	p := &gmxSettings{gameClass: name, pkgPaths: pkgPaths}
 	p.pkgImps = make([]*gox.PkgRef, len(pkgPaths))
 	for i, pkgPath := range pkgPaths {
 		p.pkgImps[i] = pkg.Import(pkgPath)
 	}
 	spx := p.pkgImps[0]
-	p.game, p.gameIsPtr = spxTryRef(spx, "Gop_proj", "Proj")
-	if p.game == nil {
-		p.game, p.gameIsPtr = spxRef(spx, "Gop_game", "Game")
+	if gt.Class != "" {
+		p.game, p.gameIsPtr = spxRef(spx, gt.Class)
 	}
-	if gt.WorkExt != "" {
-		p.sprite, _ = spxTryRef(spx, "Gop_work", "Work")
-		if p.sprite == nil {
-			p.sprite, _ = spxRef(spx, "Gop_sprite", "Sprite")
-		}
+	p.works = make(map[string]types.Object)
+	for _, v := range gt.Works {
+		obj, _ := spxRef(spx, v.Class)
+		p.works[v.Ext] = obj
 	}
 	if x := getStringConst(spx, "Gop_sched"); x != "" {
 		p.scheds, p.hasScheds = strings.SplitN(x, ",", 2), true
@@ -113,22 +110,19 @@ func getDefaultClass(file string) string {
 	return name
 }
 
-func spxRef(spx *gox.PkgRef, name, typ string) (obj gox.Ref, isPtr bool) {
-	obj, isPtr = spxTryRef(spx, name, typ)
-	if obj == nil {
-		panic(spx.Path() + "." + name + " not found")
+func spxTryRef(spx *gox.PkgRef, typ string) (obj types.Object, isPtr bool) {
+	if strings.HasPrefix(typ, "*") {
+		typ, isPtr = typ[1:], true
 	}
+	obj = spx.Ref(typ)
 	return
 }
 
-func spxTryRef(spx *gox.PkgRef, name, typ string) (obj gox.Ref, isPtr bool) {
-	if v := getStringConst(spx, name); v != "" {
-		typ = v
-		if strings.HasPrefix(typ, "*") {
-			typ, isPtr = typ[1:], true
-		}
+func spxRef(spx *gox.PkgRef, typ string) (obj gox.Ref, isPtr bool) {
+	obj, isPtr = spxTryRef(spx, typ)
+	if obj == nil {
+		panic(spx.Path() + "." + typ + " not found")
 	}
-	obj = spx.TryRef(typ)
 	return
 }
 

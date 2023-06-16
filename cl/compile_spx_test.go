@@ -28,15 +28,17 @@ import (
 	"github.com/goplus/mod/gopmod"
 )
 
-func lookupClass(ext string) (c *gopmod.Class, ok bool) {
+func lookupClass(ext string) (c *gopmod.Project, ok bool) {
 	switch ext {
 	case ".tgmx", ".tspx":
-		return &gopmod.Class{
-			ProjExt: ".tgmx", WorkExt: ".tspx",
+		return &gopmod.Project{
+			Ext: ".tgmx", Class: "*MyGame",
+			Works:    []*gopmod.Class{{Ext: ".tspx", Class: "Sprite"}},
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx", "math"}}, true
 	case ".t2gmx", ".t2spx":
-		return &gopmod.Class{
-			ProjExt: ".t2gmx", WorkExt: ".t2spx",
+		return &gopmod.Project{
+			Ext: ".t2gmx", Class: "Game",
+			Works:    []*gopmod.Class{{Ext: ".t2spx", Class: "Sprite"}},
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
 	}
 	return
@@ -47,7 +49,7 @@ func spxParserConf() parser.Config {
 		IsClass: func(ext string) (isProj bool, ok bool) {
 			c, ok := lookupClass(ext)
 			if ok {
-				isProj = (c.ProjExt == ext)
+				isProj = (c.Ext == ext)
 			}
 			return
 		},

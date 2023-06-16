@@ -22,6 +22,7 @@ import (
 	"go/types"
 	"log"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 
@@ -30,7 +31,7 @@ import (
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
 	"github.com/goplus/gox/cpackages"
-	"github.com/goplus/mod/modfile"
+	"github.com/goplus/mod/gopmod"
 	"github.com/qiniu/x/errors"
 )
 
@@ -60,7 +61,7 @@ func SetDebug(flags int) {
 
 // -----------------------------------------------------------------------------
 
-type Class = modfile.Classfile
+type Project = gopmod.Project
 
 // Config of loading Go+ packages.
 type Config struct {
@@ -82,7 +83,7 @@ type Config struct {
 	LookupPub func(pkgPath string) (pubfile string, err error)
 
 	// LookupClass lookups a class by specified file extension.
-	LookupClass func(ext string) (c *Class, ok bool)
+	LookupClass func(ext string) (c *Project, ok bool)
 
 	// An Importer resolves import paths to Packages.
 	Importer types.Importer
@@ -532,12 +533,12 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 			baseType = types.NewPointer(baseType)
 		}
 	case f.IsClass:
+		classType = getDefaultClass(file)
 		if parent.gmxSettings != nil {
-			classType = getDefaultClass(file)
-			o := parent.sprite
-			baseTypeName, baseType, spxClass = o.Name(), o.Type(), true
-		} else {
-			classType = getDefaultClass(file)
+			o, ok := parent.works[filepath.Ext(file)]
+			if ok {
+				baseTypeName, baseType, spxClass = o.Name(), o.Type(), true
+			}
 		}
 	}
 	if classType != "" {
