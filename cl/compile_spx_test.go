@@ -431,7 +431,7 @@ func (this *Kai) onMsg(msg string) {
 `, "Game.t2gmx", "Kai.t2spx2")
 
 	gopSpxTestEx(t, `
-println("Hi, Sprite2")
+println("Hi, Sprite")
 `, `
 func onMsg(msg string) {
 }
@@ -444,13 +444,12 @@ import (
 
 type Kai struct {
 	spx2.Sprite2
-	*Kai
 }
 
 func (this *Kai) onMsg(msg string) {
 }
 func main() {
-	fmt.Println("Hi, Sprite2")
+	fmt.Println("Hi, Sprite")
 }
 `, "main.gop", "Kai.t3spx2")
 }

@@ -421,6 +421,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		}
 		preloadGopFile(p, ctx, fpath, f, conf)
 	}
+
 	for fpath, gof := range pkg.GoFiles {
 		f := fromgo.ASTFile(gof, 0)
 		ctx := &blockCtx{

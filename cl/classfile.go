@@ -60,17 +60,20 @@ func (p *gmxSettings) getScheds(cb *gox.CodeBuilder) []goast.Stmt {
 }
 
 func newGmx(ctx *pkgCtx, pkg *gox.Package, file string, conf *Config) *gmxSettings {
-	_, name := filepath.Split(file)
-	ext := filepath.Ext(name)
-	if idx := strings.Index(name, "."); idx > 0 {
-		name = name[:idx]
-		if name == "main" {
-			name = "_main"
-		}
-	}
+	ext := filepath.Ext(file)
 	gt, ok := conf.LookupClass(ext)
 	if !ok {
 		panic("TODO: class not found")
+	}
+	var name string
+	if gt.Ext == ext {
+		_, name = filepath.Split(file)
+		if idx := strings.Index(name, "."); idx > 0 {
+			name = name[:idx]
+			if name == "main" {
+				name = "_main"
+			}
+		}
 	}
 	pkgPaths := gt.PkgPaths
 	p := &gmxSettings{gameClass: name, pkgPaths: pkgPaths}
