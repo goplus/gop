@@ -1,0 +1,43 @@
+package main
+
+file bar.gopx
+ast.GenDecl:
+  Tok: var
+  Specs:
+    ast.ValueSpec:
+      Names:
+        ast.Ident:
+          Name: A
+    ast.ValueSpec:
+      Names:
+        ast.Ident:
+          Name: v
+      Type:
+        ast.Ident:
+          Name: int
+    ast.ValueSpec:
+      Names:
+        ast.Ident:
+          Name: B
+ast.GenDecl:
+  Tok: type
+  Specs:
+    ast.TypeSpec:
+      Name:
+        ast.Ident:
+          Name: A
+      Type:
+        ast.StructType:
+          Fields:
+            ast.FieldList:
+ast.GenDecl:
+  Tok: type
+  Specs:
+    ast.TypeSpec:
+      Name:
+        ast.Ident:
+          Name: B
+      Type:
+        ast.StructType:
+          Fields:
+            ast.FieldList:

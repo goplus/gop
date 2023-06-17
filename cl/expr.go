@@ -17,6 +17,7 @@
 package cl
 
 import (
+	"bytes"
 	goast "go/ast"
 	gotoken "go/token"
 	"go/types"
@@ -27,6 +28,7 @@ import (
 	"strings"
 
 	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/printer"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
 	"github.com/goplus/gox/cpackages"
@@ -69,6 +71,8 @@ const (
 	objPkgRef
 	objCPkgRef
 )
+
+const errorPkgPath = "github.com/qiniu/x/errors"
 
 func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (obj *gox.PkgRef, kind int) {
 	fvalue := (flags&clIdentSelectorExpr) != 0 || (flags&clIdentLHS) == 0
@@ -226,6 +230,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 		compileRangeExpr(ctx, v)
 	case *ast.IndexExpr:
 		compileIndexExpr(ctx, v, twoValue(inFlags))
+	case *ast.IndexListExpr:
+		compileIndexListExpr(ctx, v, twoValue(inFlags))
 	case *ast.SliceExpr:
 		compileSliceExpr(ctx, v)
 	case *ast.StarExpr:
@@ -249,7 +255,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 	case *ast.ErrWrapExpr:
 		compileErrWrapExpr(ctx, v, 0)
 	case *ast.FuncType:
-		ctx.cb.Typ(toFuncType(ctx, v, nil), v)
+		ctx.cb.Typ(toFuncType(ctx, v, nil, nil), v)
 	case *ast.Ellipsis:
 		panic("compileEllipsis: ast.Ellipsis unexpected")
 	case *ast.KeyValueExpr:
@@ -307,6 +313,15 @@ func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr, twoValue bool) { // x[i]
 	compileExpr(ctx, v.X)
 	compileExpr(ctx, v.Index)
 	ctx.cb.Index(1, twoValue, v)
+}
+
+func compileIndexListExpr(ctx *blockCtx, v *ast.IndexListExpr, twoValue bool) { // fn[t1,t2]
+	compileExpr(ctx, v.X)
+	n := len(v.Indices)
+	for i := 0; i < n; i++ {
+		compileExpr(ctx, v.Indices[i])
+	}
+	ctx.cb.Index(n, twoValue, v)
 }
 
 func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) { // x[i:j:k]
@@ -630,7 +645,7 @@ func compileLambdaExpr2(ctx *blockCtx, v *ast.LambdaExpr2, sig *types.Signature)
 func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
 	cb := ctx.cb
 	comments, once := cb.BackupComments()
-	sig := toFuncType(ctx, v.Type, nil)
+	sig := toFuncType(ctx, v.Type, nil, nil)
 	fn := cb.NewClosureWith(sig)
 	if body := v.Body; body != nil {
 		loadFuncBody(ctx, fn, body)
@@ -668,11 +683,14 @@ const (
 	compositeLitKeyVal = 1
 )
 
-func checkCompositeLitElts(ctx *blockCtx, elts []ast.Expr) (kind int) {
+func checkCompositeLitElts(ctx *blockCtx, elts []ast.Expr, onlyStruct bool) (kind int) {
 	for _, elt := range elts {
 		if _, ok := elt.(*ast.KeyValueExpr); ok {
 			return compositeLitKeyVal
 		}
+	}
+	if len(elts) == 0 && onlyStruct {
+		return compositeLitKeyVal
 	}
 	return compositeLitVal
 }
@@ -778,7 +796,7 @@ func getUnderlying(ctx *blockCtx, typ types.Type) types.Type {
 func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, expected types.Type, onlyStruct bool) {
 	var hasPtr bool
 	var typ, underlying types.Type
-	var kind = checkCompositeLitElts(ctx, v.Elts)
+	var kind = checkCompositeLitElts(ctx, v.Elts, onlyStruct)
 	if v.Type != nil {
 		typ = toType(ctx, v.Type)
 		underlying = getUnderlying(ctx, typ)
@@ -835,7 +853,11 @@ func compileSliceLit(ctx *blockCtx, v *ast.SliceLit, typ types.Type) {
 	for _, elt := range v.Elts {
 		compileExpr(ctx, elt)
 	}
-	ctx.cb.SliceLit(typ, n)
+	if sliceHasTypeParam(ctx, typ) {
+		ctx.cb.SliceLit(nil, n)
+	} else {
+		ctx.cb.SliceLit(typ, n)
+	}
 }
 
 func compileRangeExpr(ctx *blockCtx, v *ast.RangeExpr) {
@@ -1012,10 +1034,34 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr, inFlags int) {
 	cb.Assign(n+1, 1)
 
 	cb.If().Val(err).CompareNil(gotoken.NEQ).Then()
+	if v.Default == nil {
+		pos := pkg.Fset.Position(v.Pos())
+		currentFunc := ctx.cb.Func().Ancestor()
+		const newFrameArgs = 5
+
+		currentFuncName := currentFunc.Name()
+		if currentFuncName == "" {
+			currentFuncName = "main"
+		}
+
+		currentFuncName = strings.Join([]string{currentFunc.Pkg().Name(), currentFuncName}, ".")
+
+		cb.
+			VarRef(err).
+			Val(pkg.Import(errorPkgPath).Ref("NewFrame")).
+			Val(err).
+			Val(sprintAst(pkg.Fset, v.X)).
+			Val(pos.Filename).
+			Val(pos.Line).
+			Val(currentFuncName).
+			Call(newFrameArgs).
+			Assign(1)
+	}
+
 	if v.Tok == token.NOT { // expr!
-		cb.Val(pkg.Builtin().Ref("panic")).Val(err).Call(1).EndStmt() // TODO: wrap err
+		cb.Val(pkg.Builtin().Ref("panic")).Val(err).Call(1).EndStmt()
 	} else if v.Default == nil { // expr?
-		cb.Val(err).ReturnErr(true) // TODO: wrap err & return err
+		cb.Val(err).ReturnErr(true)
 	} else { // expr?:val
 		compileExpr(ctx, v.Default)
 		cb.Return(1)
@@ -1024,6 +1070,16 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr, inFlags int) {
 	if useClosure {
 		cb.Call(0)
 	}
+}
+
+func sprintAst(fset *token.FileSet, x ast.Node) string {
+	var buf bytes.Buffer
+	err := printer.Fprint(&buf, fset, x)
+	if err != nil {
+		panic("Unexpected error: " + err.Error())
+	}
+
+	return buf.String()
 }
 
 // -----------------------------------------------------------------------------

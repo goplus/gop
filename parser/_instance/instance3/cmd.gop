@@ -1,0 +1,22 @@
+println(P1[int]{}, P2[int, string]{})
+println((*P1[int])(nil), (*P2[int, string])(nil))
+
+println P1[int]{}, P2[int, string]{}
+println (*P1[int])(nil), (*P2[int, string])(nil)
+
+func(x P1[int], y *P2[int, string]) *int {
+	return nil
+}(P1[int]{1}, &P2[int, string]{})
+
+foo(=> P1[int]{1})
+foo(=> {
+	println(&P2[int, string]{})
+})
+
+fn1[int]([]P1[int]{P1[int]{0}, P1[int]{1}}, &P2[int, string]{})
+fn2[int, string](&P1[int]{}, &P2[int, string]{})
+
+foo1[int](=> P1[int]{1})
+foo2[int, string](=> {
+	println(&P2[int, string]{})
+})

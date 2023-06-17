@@ -68,6 +68,11 @@ func gopClTest(t *testing.T, gopcode, expected string) {
 	gopClTestEx(t, gblConf, "main", gopcode, expected)
 }
 
+func gopClTestFile(t *testing.T, gopcode, expected string, fname string) {
+	fs := parsertest.NewSingleFileFS("/foo", fname, gopcode)
+	gopClTestFS(t, gblConf, fs, "main", expected)
+}
+
 func gopClTestEx(t *testing.T, conf *cl.Config, pkgname, gopcode, expected string) {
 	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", gopcode)
 	gopClTestFS(t, conf, fs, pkgname, expected)
@@ -148,6 +153,7 @@ import (
 	fmt "fmt"
 	os "os"
 	iox "github.com/goplus/gop/builtin/iox"
+	errors "github.com/qiniu/x/errors"
 )
 
 func main() {
@@ -155,6 +161,7 @@ func main() {
 		var _gop_err error
 		_gop_ret, _gop_err = os.Open("foo.txt")
 		if _gop_err != nil {
+			_gop_err = errors.NewFrame(_gop_err, "open(\"foo.txt\")", "/foo/bar.gop", 2, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -912,7 +919,10 @@ func main() {
 	println(a, b)
 }`, `package main
 
-import fmt "fmt"
+import (
+	fmt "fmt"
+	errors "github.com/qiniu/x/errors"
+)
 
 func t() (int, int, error) {
 	return 0, 0, nil
@@ -922,6 +932,7 @@ func main() {
 		var _gop_err error
 		_gop_ret, _gop_ret2, _gop_err = t()
 		if _gop_err != nil {
+			_gop_err = errors.NewFrame(_gop_err, "t()", "/foo/bar.gop", 9, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -943,6 +954,8 @@ func main() {
 	t()!
 }`, `package main
 
+import errors "github.com/qiniu/x/errors"
+
 func t() error {
 	return nil
 }
@@ -951,6 +964,7 @@ func main() {
 		var _gop_err error
 		_gop_err = t()
 		if _gop_err != nil {
+			_gop_err = errors.NewFrame(_gop_err, "t()", "/foo/bar.gop", 9, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -1454,6 +1468,7 @@ func foo(script string) {
 import (
 	fmt "fmt"
 	goptest "github.com/goplus/gop/ast/goptest"
+	errors "github.com/qiniu/x/errors"
 	gopq "github.com/goplus/gop/ast/gopq"
 )
 
@@ -1462,6 +1477,7 @@ func foo(script string) {
 		var _gop_err error
 		_gop_ret, _gop_err = goptest.New(script)
 		if _gop_err != nil {
+			_gop_err = errors.NewFrame(_gop_err, "goptest.New(script)", "/foo/bar.gop", 4, "main.foo")
 			panic(_gop_err)
 		}
 		return
@@ -1486,6 +1502,7 @@ func foo(script string) {
 import (
 	fmt "fmt"
 	goptest "github.com/goplus/gop/ast/goptest"
+	errors "github.com/qiniu/x/errors"
 	gopq "github.com/goplus/gop/ast/gopq"
 )
 
@@ -1494,6 +1511,7 @@ func foo(script string) {
 		var _gop_err error
 		_gop_ret, _gop_err = goptest.New(script)
 		if _gop_err != nil {
+			_gop_err = errors.NewFrame(_gop_err, "goptest.New(script)", "/foo/bar.gop", 4, "main.foo")
 			panic(_gop_err)
 		}
 		return
@@ -1513,7 +1531,10 @@ func add(x, y string) (int, error) {
 }
 `, `package main
 
-import strconv "strconv"
+import (
+	strconv "strconv"
+	errors "github.com/qiniu/x/errors"
+)
 
 func add(x string, y string) (int, error) {
 	var _autoGo_1 int
@@ -1521,6 +1542,7 @@ func add(x string, y string) (int, error) {
 		var _gop_err error
 		_autoGo_1, _gop_err = strconv.Atoi(x)
 		if _gop_err != nil {
+			_gop_err = errors.NewFrame(_gop_err, "strconv.Atoi(x)", "/foo/bar.gop", 5, "main.add")
 			return 0, _gop_err
 		}
 		goto _autoGo_2
@@ -1531,6 +1553,7 @@ func add(x string, y string) (int, error) {
 		var _gop_err error
 		_autoGo_3, _gop_err = strconv.Atoi(y)
 		if _gop_err != nil {
+			_gop_err = errors.NewFrame(_gop_err, "strconv.Atoi(y)", "/foo/bar.gop", 5, "main.add")
 			return 0, _gop_err
 		}
 		goto _autoGo_4
@@ -1577,12 +1600,16 @@ func TestErrWrapPanic(t *testing.T) {
 var ret int = println("Hi")!
 `, `package main
 
-import fmt "fmt"
+import (
+	fmt "fmt"
+	errors "github.com/qiniu/x/errors"
+)
 
 var ret int = func() (_gop_ret int) {
 	var _gop_err error
 	_gop_ret, _gop_err = fmt.Println("Hi")
 	if _gop_err != nil {
+		_gop_err = errors.NewFrame(_gop_err, "println(\"Hi\")", "/foo/bar.gop", 2, "main.main")
 		panic(_gop_err)
 	}
 	return
@@ -1599,6 +1626,8 @@ func mkdir(name string) error {
 mkdir! "foo"
 `, `package main
 
+import errors "github.com/qiniu/x/errors"
+
 func mkdir(name string) error {
 	return nil
 }
@@ -1607,6 +1636,7 @@ func main() {
 		var _gop_err error
 		_gop_err = mkdir("foo")
 		if _gop_err != nil {
+			_gop_err = errors.NewFrame(_gop_err, "mkdir \"foo\"", "/foo/bar.gop", 6, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -1624,6 +1654,8 @@ func foo() (func(), error) {
 foo()!()
 `, `package main
 
+import errors "github.com/qiniu/x/errors"
+
 func foo() (func(), error) {
 	return nil, nil
 }
@@ -1632,6 +1664,7 @@ func main() {
 		var _gop_err error
 		_gop_ret, _gop_err = foo()
 		if _gop_err != nil {
+			_gop_err = errors.NewFrame(_gop_err, "foo()", "/foo/bar.gop", 6, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -1983,6 +2016,8 @@ func bar(conf ...Config) {
 
 foo({A: 1})
 bar({A: 2})
+foo({})
+bar({})
 `, `package main
 
 type Config struct {
@@ -1996,6 +2031,8 @@ func bar(conf ...Config) {
 func main() {
 	foo(&Config{A: 1})
 	bar(Config{A: 2})
+	foo(&Config{})
+	bar(Config{})
 }
 `)
 }
@@ -4238,4 +4275,79 @@ func main() {
 	fmt.Println("hello")
 }
 `)
+}
+
+func TestCommandNotExpr(t *testing.T) {
+	gopClTest(t, `
+println !true
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Println(false)
+}
+`)
+	gopClTest(t, `
+a := true
+println !a
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	a := true
+	fmt.Println(!a)
+}
+`)
+	gopClTest(t, `
+println !func() bool { return true }()
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Println(!func() bool {
+		return true
+	}())
+}
+`)
+}
+
+func TestClassFileGopx(t *testing.T) {
+	gopClTestFile(t, `
+var (
+	BaseClass
+	Width, Height float64
+	AggClass
+)
+
+type BaseClass struct{
+	x int
+	y int
+}
+type AggClass struct{}
+
+func Area() float64 {
+	return Width * Height
+}
+`, `package main
+
+type BaseClass struct {
+	x int
+	y int
+}
+type AggClass struct {
+}
+type Rect struct {
+	BaseClass
+	Width  float64
+	Height float64
+	AggClass
+}
+
+func (this *Rect) Area() float64 {
+	return this.Width * this.Height
+}
+`, "Rect.gopx")
 }

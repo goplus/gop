@@ -1,0 +1,457 @@
+package main
+
+file cmd.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.CompositeLit:
+                  Type:
+                    ast.IndexExpr:
+                      X:
+                        ast.Ident:
+                          Name: P1
+                      Index:
+                        ast.Ident:
+                          Name: int
+                ast.CompositeLit:
+                  Type:
+                    ast.IndexListExpr:
+                      X:
+                        ast.Ident:
+                          Name: P2
+                      Indices:
+                        ast.Ident:
+                          Name: int
+                        ast.Ident:
+                          Name: string
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.CallExpr:
+                  Fun:
+                    ast.ParenExpr:
+                      X:
+                        ast.StarExpr:
+                          X:
+                            ast.IndexExpr:
+                              X:
+                                ast.Ident:
+                                  Name: P1
+                              Index:
+                                ast.Ident:
+                                  Name: int
+                  Args:
+                    ast.Ident:
+                      Name: nil
+                ast.CallExpr:
+                  Fun:
+                    ast.ParenExpr:
+                      X:
+                        ast.StarExpr:
+                          X:
+                            ast.IndexListExpr:
+                              X:
+                                ast.Ident:
+                                  Name: P2
+                              Indices:
+                                ast.Ident:
+                                  Name: int
+                                ast.Ident:
+                                  Name: string
+                  Args:
+                    ast.Ident:
+                      Name: nil
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.CompositeLit:
+                  Type:
+                    ast.IndexExpr:
+                      X:
+                        ast.Ident:
+                          Name: P1
+                      Index:
+                        ast.Ident:
+                          Name: int
+                ast.CompositeLit:
+                  Type:
+                    ast.IndexListExpr:
+                      X:
+                        ast.Ident:
+                          Name: P2
+                      Indices:
+                        ast.Ident:
+                          Name: int
+                        ast.Ident:
+                          Name: string
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.CallExpr:
+                  Fun:
+                    ast.ParenExpr:
+                      X:
+                        ast.StarExpr:
+                          X:
+                            ast.IndexExpr:
+                              X:
+                                ast.Ident:
+                                  Name: P1
+                              Index:
+                                ast.Ident:
+                                  Name: int
+                  Args:
+                    ast.Ident:
+                      Name: nil
+                ast.CallExpr:
+                  Fun:
+                    ast.ParenExpr:
+                      X:
+                        ast.StarExpr:
+                          X:
+                            ast.IndexListExpr:
+                              X:
+                                ast.Ident:
+                                  Name: P2
+                              Indices:
+                                ast.Ident:
+                                  Name: int
+                                ast.Ident:
+                                  Name: string
+                  Args:
+                    ast.Ident:
+                      Name: nil
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.FuncLit:
+                  Type:
+                    ast.FuncType:
+                      Params:
+                        ast.FieldList:
+                          List:
+                            ast.Field:
+                              Names:
+                                ast.Ident:
+                                  Name: x
+                              Type:
+                                ast.IndexExpr:
+                                  X:
+                                    ast.Ident:
+                                      Name: P1
+                                  Index:
+                                    ast.Ident:
+                                      Name: int
+                            ast.Field:
+                              Names:
+                                ast.Ident:
+                                  Name: y
+                              Type:
+                                ast.StarExpr:
+                                  X:
+                                    ast.IndexListExpr:
+                                      X:
+                                        ast.Ident:
+                                          Name: P2
+                                      Indices:
+                                        ast.Ident:
+                                          Name: int
+                                        ast.Ident:
+                                          Name: string
+                      Results:
+                        ast.FieldList:
+                          List:
+                            ast.Field:
+                              Type:
+                                ast.StarExpr:
+                                  X:
+                                    ast.Ident:
+                                      Name: int
+                  Body:
+                    ast.BlockStmt:
+                      List:
+                        ast.ReturnStmt:
+                          Results:
+                            ast.Ident:
+                              Name: nil
+              Args:
+                ast.CompositeLit:
+                  Type:
+                    ast.IndexExpr:
+                      X:
+                        ast.Ident:
+                          Name: P1
+                      Index:
+                        ast.Ident:
+                          Name: int
+                  Elts:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 1
+                ast.UnaryExpr:
+                  Op: &
+                  X:
+                    ast.CompositeLit:
+                      Type:
+                        ast.IndexListExpr:
+                          X:
+                            ast.Ident:
+                              Name: P2
+                          Indices:
+                            ast.Ident:
+                              Name: int
+                            ast.Ident:
+                              Name: string
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: foo
+              Args:
+                ast.LambdaExpr:
+                  Rhs:
+                    ast.CompositeLit:
+                      Type:
+                        ast.IndexExpr:
+                          X:
+                            ast.Ident:
+                              Name: P1
+                          Index:
+                            ast.Ident:
+                              Name: int
+                      Elts:
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 1
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: foo
+              Args:
+                ast.LambdaExpr2:
+                  Body:
+                    ast.BlockStmt:
+                      List:
+                        ast.ExprStmt:
+                          X:
+                            ast.CallExpr:
+                              Fun:
+                                ast.Ident:
+                                  Name: println
+                              Args:
+                                ast.UnaryExpr:
+                                  Op: &
+                                  X:
+                                    ast.CompositeLit:
+                                      Type:
+                                        ast.IndexListExpr:
+                                          X:
+                                            ast.Ident:
+                                              Name: P2
+                                          Indices:
+                                            ast.Ident:
+                                              Name: int
+                                            ast.Ident:
+                                              Name: string
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.IndexExpr:
+                  X:
+                    ast.Ident:
+                      Name: fn1
+                  Index:
+                    ast.Ident:
+                      Name: int
+              Args:
+                ast.CompositeLit:
+                  Type:
+                    ast.ArrayType:
+                      Elt:
+                        ast.IndexExpr:
+                          X:
+                            ast.Ident:
+                              Name: P1
+                          Index:
+                            ast.Ident:
+                              Name: int
+                  Elts:
+                    ast.CompositeLit:
+                      Type:
+                        ast.IndexExpr:
+                          X:
+                            ast.Ident:
+                              Name: P1
+                          Index:
+                            ast.Ident:
+                              Name: int
+                      Elts:
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 0
+                    ast.CompositeLit:
+                      Type:
+                        ast.IndexExpr:
+                          X:
+                            ast.Ident:
+                              Name: P1
+                          Index:
+                            ast.Ident:
+                              Name: int
+                      Elts:
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 1
+                ast.UnaryExpr:
+                  Op: &
+                  X:
+                    ast.CompositeLit:
+                      Type:
+                        ast.IndexListExpr:
+                          X:
+                            ast.Ident:
+                              Name: P2
+                          Indices:
+                            ast.Ident:
+                              Name: int
+                            ast.Ident:
+                              Name: string
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.IndexListExpr:
+                  X:
+                    ast.Ident:
+                      Name: fn2
+                  Indices:
+                    ast.Ident:
+                      Name: int
+                    ast.Ident:
+                      Name: string
+              Args:
+                ast.UnaryExpr:
+                  Op: &
+                  X:
+                    ast.CompositeLit:
+                      Type:
+                        ast.IndexExpr:
+                          X:
+                            ast.Ident:
+                              Name: P1
+                          Index:
+                            ast.Ident:
+                              Name: int
+                ast.UnaryExpr:
+                  Op: &
+                  X:
+                    ast.CompositeLit:
+                      Type:
+                        ast.IndexListExpr:
+                          X:
+                            ast.Ident:
+                              Name: P2
+                          Indices:
+                            ast.Ident:
+                              Name: int
+                            ast.Ident:
+                              Name: string
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.IndexExpr:
+                  X:
+                    ast.Ident:
+                      Name: foo1
+                  Index:
+                    ast.Ident:
+                      Name: int
+              Args:
+                ast.LambdaExpr:
+                  Rhs:
+                    ast.CompositeLit:
+                      Type:
+                        ast.IndexExpr:
+                          X:
+                            ast.Ident:
+                              Name: P1
+                          Index:
+                            ast.Ident:
+                              Name: int
+                      Elts:
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 1
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.IndexListExpr:
+                  X:
+                    ast.Ident:
+                      Name: foo2
+                  Indices:
+                    ast.Ident:
+                      Name: int
+                    ast.Ident:
+                      Name: string
+              Args:
+                ast.LambdaExpr2:
+                  Body:
+                    ast.BlockStmt:
+                      List:
+                        ast.ExprStmt:
+                          X:
+                            ast.CallExpr:
+                              Fun:
+                                ast.Ident:
+                                  Name: println
+                              Args:
+                                ast.UnaryExpr:
+                                  Op: &
+                                  X:
+                                    ast.CompositeLit:
+                                      Type:
+                                        ast.IndexListExpr:
+                                          X:
+                                            ast.Ident:
+                                              Name: P2
+                                          Indices:
+                                            ast.Ident:
+                                              Name: int
+                                            ast.Ident:
+                                              Name: string

@@ -1,0 +1,178 @@
+package main
+
+file cmd.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.IndexExpr:
+                  X:
+                    ast.Ident:
+                      Name: fn
+                  Index:
+                    ast.Ident:
+                      Name: int
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.IndexExpr:
+                  X:
+                    ast.Ident:
+                      Name: fn
+                  Index:
+                    ast.ArrayType:
+                      Elt:
+                        ast.Ident:
+                          Name: int
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.IndexExpr:
+                  X:
+                    ast.Ident:
+                      Name: fn
+                  Index:
+                    ast.StructType:
+                      Fields:
+                        ast.FieldList:
+                          List:
+                            ast.Field:
+                              Names:
+                                ast.Ident:
+                                  Name: X
+                              Type:
+                                ast.Ident:
+                                  Name: int
+                            ast.Field:
+                              Names:
+                                ast.Ident:
+                                  Name: Y
+                              Type:
+                                ast.Ident:
+                                  Name: int
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.IndexExpr:
+                  X:
+                    ast.Ident:
+                      Name: fn
+                  Index:
+                    ast.MapType:
+                      Key:
+                        ast.Ident:
+                          Name: int
+                      Value:
+                        ast.Ident:
+                          Name: string
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.IndexExpr:
+                  X:
+                    ast.Ident:
+                      Name: fn
+                  Index:
+                    ast.ChanType:
+                      Value:
+                        ast.Ident:
+                          Name: int
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.IndexExpr:
+                  X:
+                    ast.Ident:
+                      Name: fn
+                  Index:
+                    ast.ChanType:
+                      Value:
+                        ast.StructType:
+                          Fields:
+                            ast.FieldList:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.IndexExpr:
+                  X:
+                    ast.Ident:
+                      Name: fn
+                  Index:
+                    ast.InterfaceType:
+                      Methods:
+                        ast.FieldList:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.IndexExpr:
+                  X:
+                    ast.Ident:
+                      Name: fn
+                  Index:
+                    ast.InterfaceType:
+                      Methods:
+                        ast.FieldList:
+                          List:
+                            ast.Field:
+                              Names:
+                                ast.Ident:
+                                  Name: Method
+                              Type:
+                                ast.FuncType:
+                                  Params:
+                                    ast.FieldList:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.IndexListExpr:
+                  X:
+                    ast.Ident:
+                      Name: fn
+                  Indices:
+                    ast.ArrayType:
+                      Elt:
+                        ast.StructType:
+                          Fields:
+                            ast.FieldList:
+                              List:
+                                ast.Field:
+                                  Names:
+                                    ast.Ident:
+                                      Name: X
+                                  Type:
+                                    ast.Ident:
+                                      Name: int
+                                ast.Field:
+                                  Names:
+                                    ast.Ident:
+                                      Name: Y
+                                  Type:
+                                    ast.Ident:
+                                      Name: int
+                    ast.MapType:
+                      Key:
+                        ast.Ident:
+                          Name: int
+                      Value:
+                        ast.Ident:
+                          Name: string

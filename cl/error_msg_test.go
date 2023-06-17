@@ -30,11 +30,11 @@ import (
 )
 
 func codeErrorTest(t *testing.T, msg, src string) {
-	codeErrorTestEx(t, "main", msg, src)
+	codeErrorTestEx(t, "main", "bar.gop", msg, src)
 }
 
-func codeErrorTestEx(t *testing.T, pkgname, msg, src string) {
-	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", src)
+func codeErrorTestEx(t *testing.T, pkgname, filename, msg, src string) {
+	fs := parsertest.NewSingleFileFS("/foo", filename, src)
 	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", parser.Config{})
 	if err != nil {
 		scanner.PrintError(os.Stderr, err)
@@ -684,7 +684,7 @@ func TestErrNoEntrypoint(t *testing.T) {
 		`./bar.gop:1:9: undefined: abc`,
 		`println abc
 `)
-	codeErrorTestEx(t, "bar",
+	codeErrorTestEx(t, "bar", "bar.gop",
 		`./bar.gop:2:9: undefined: abc`,
 		`package bar
 println abc
@@ -864,5 +864,41 @@ import (
 import (
 	"github.com/goplus/gop/fmt2"
 )
+`)
+}
+
+func TestErrClassFileGopx(t *testing.T) {
+	codeErrorTestEx(t, "main", "Rect.gopx",
+		`./Rect.gopx:3:2: cannot assign value to field in class file`, `
+var (
+	i int = 1
+)
+println "hello"
+`)
+	codeErrorTestEx(t, "main", "Rect.gopx",
+		`./Rect.gopx:5:2: A redeclared
+	./Rect.gopx:3:2 other declaration of A`, `
+var (
+	A
+	i int
+	A
+)
+type A struct{}
+println "hello"
+`)
+}
+
+func TestErrVarInFunc(t *testing.T) {
+	codeErrorTest(t, `./bar.gop:6:10: too few arguments in call to set("box")
+	have (untyped string)
+	want (name string, v int)
+./bar.gop:7:10: undefined: a`, `
+func set(name string, v int) string {
+	return name
+}
+func test() {
+	var a = set("box")
+	println(a)
+}
 `)
 }

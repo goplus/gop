@@ -31,3 +31,7 @@ Run `gop run .` to see the output of this example:
 Mix Go and Go+
 Hello, world
 ```
+
+### Give a Star! ⭐
+
+If you like or are using Go+ to learn or start your projects, please give it a star. Thanks!

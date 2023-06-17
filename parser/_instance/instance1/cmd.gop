@@ -1,0 +1,22 @@
+type T1 P1[int]
+
+type T2 P2[int, string]
+
+type T3 *P1[P2[int, P1[int]]]
+
+type S1 struct {
+	v1 P1[int]
+	v2 P2[int, string]
+}
+
+type S2 struct {
+	P1[int]
+}
+
+type A1 []P1[int]
+
+type A2 [2]P2[int, string]
+
+type M1 map[P1[int]]P2[int, string]
+
+type C1 chan P1[int]

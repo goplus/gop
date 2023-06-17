@@ -1,0 +1,303 @@
+package main
+
+file cmd.gop
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: fn1
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Type:
+                ast.IndexExpr:
+                  X:
+                    ast.Ident:
+                      Name: P1
+                  Index:
+                    ast.Ident:
+                      Name: int
+            ast.Field:
+              Type:
+                ast.IndexListExpr:
+                  X:
+                    ast.Ident:
+                      Name: P2
+                  Indices:
+                    ast.Ident:
+                      Name: int
+                    ast.Ident:
+                      Name: string
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: fn2
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: p1
+              Type:
+                ast.IndexExpr:
+                  X:
+                    ast.Ident:
+                      Name: P1
+                  Index:
+                    ast.Ident:
+                      Name: int
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: p2
+              Type:
+                ast.IndexListExpr:
+                  X:
+                    ast.Ident:
+                      Name: P2
+                  Indices:
+                    ast.Ident:
+                      Name: int
+                    ast.Ident:
+                      Name: string
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: fn3
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: p1
+              Type:
+                ast.IndexExpr:
+                  X:
+                    ast.Ident:
+                      Name: P1
+                  Index:
+                    ast.Ident:
+                      Name: int
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: p2
+              Type:
+                ast.Ellipsis:
+                  Elt:
+                    ast.IndexListExpr:
+                      X:
+                        ast.Ident:
+                          Name: P2
+                      Indices:
+                        ast.Ident:
+                          Name: int
+                        ast.Ident:
+                          Name: string
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: fn4
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: p1
+              Type:
+                ast.ArrayType:
+                  Elt:
+                    ast.IndexExpr:
+                      X:
+                        ast.Ident:
+                          Name: P1
+                      Index:
+                        ast.Ident:
+                          Name: int
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: p3
+              Type:
+                ast.ArrayType:
+                  Elt:
+                    ast.IndexListExpr:
+                      X:
+                        ast.Ident:
+                          Name: P2
+                      Indices:
+                        ast.Ident:
+                          Name: int
+                        ast.Ident:
+                          Name: string
+      Results:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Type:
+                ast.StarExpr:
+                  X:
+                    ast.IndexExpr:
+                      X:
+                        ast.Ident:
+                          Name: P1
+                      Index:
+                        ast.IndexListExpr:
+                          X:
+                            ast.Ident:
+                              Name: P2
+                          Indices:
+                            ast.Ident:
+                              Name: int
+                            ast.IndexExpr:
+                              X:
+                                ast.Ident:
+                                  Name: P1
+                              Index:
+                                ast.Ident:
+                                  Name: int
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: fn5
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: p1
+              Type:
+                ast.ArrayType:
+                  Elt:
+                    ast.IndexExpr:
+                      X:
+                        ast.Ident:
+                          Name: P1
+                      Index:
+                        ast.Ident:
+                          Name: int
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: p2
+              Type:
+                ast.ArrayType:
+                  Len:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 2
+                  Elt:
+                    ast.IndexListExpr:
+                      X:
+                        ast.Ident:
+                          Name: P2
+                      Indices:
+                        ast.Ident:
+                          Name: int
+                        ast.Ident:
+                          Name: string
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: fn6
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: p1
+              Type:
+                ast.ChanType:
+                  Value:
+                    ast.IndexExpr:
+                      X:
+                        ast.Ident:
+                          Name: P1
+                      Index:
+                        ast.Ident:
+                          Name: int
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: p2
+              Type:
+                ast.MapType:
+                  Key:
+                    ast.IndexExpr:
+                      X:
+                        ast.Ident:
+                          Name: P1
+                      Index:
+                        ast.Ident:
+                          Name: int
+                  Value:
+                    ast.IndexListExpr:
+                      X:
+                        ast.Ident:
+                          Name: P2
+                      Indices:
+                        ast.Ident:
+                          Name: int
+                        ast.Ident:
+                          Name: string
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: fn7
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: p1
+              Type:
+                ast.StructType:
+                  Fields:
+                    ast.FieldList:
+                      List:
+                        ast.Field:
+                          Names:
+                            ast.Ident:
+                              Name: v1
+                          Type:
+                            ast.IndexExpr:
+                              X:
+                                ast.Ident:
+                                  Name: P1
+                              Index:
+                                ast.Ident:
+                                  Name: int
+                        ast.Field:
+                          Names:
+                            ast.Ident:
+                              Name: v2
+                          Type:
+                            ast.IndexListExpr:
+                              X:
+                                ast.Ident:
+                                  Name: P2
+                              Indices:
+                                ast.Ident:
+                                  Name: int
+                                ast.Ident:
+                                  Name: string

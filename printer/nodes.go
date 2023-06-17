@@ -862,6 +862,13 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		p.expr0(x.Index, depth+1)
 		p.print(x.Rbrack, token.RBRACK)
 
+	case *ast.IndexListExpr:
+		// TODO(gri): should treat[] like parentheses and undo one level of depth
+		p.expr1(x.X, token.HighestPrec, 1)
+		p.print(x.Lbrack, token.LBRACK)
+		p.exprList(x.Lbrack, x.Indices, depth+1, commaTerm, x.Rbrack, false)
+		p.print(x.Rbrack, token.RBRACK)
+
 	case *ast.SliceExpr:
 		// TODO(gri): should treat[] like parentheses and undo one level of depth
 		p.expr1(x.X, token.HighestPrec, 1)

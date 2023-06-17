@@ -1,0 +1,15 @@
+fn[int]()
+fn[[]int]()
+fn[struct {
+	X int
+	Y int
+}]()
+fn[map[int]string]()
+fn[chan int]()
+fn[chan struct{}]()
+fn[interface{}]()
+fn[interface{ Method() }]()
+fn[[]struct {
+	X int
+	Y int
+}, map[int]string]()
