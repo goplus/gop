@@ -430,8 +430,6 @@ func (this *Kai) onMsg(msg string) {
 }
 `, "Game.t2gmx", "Kai.t2spx2")
 
-	return
-	// TODO gen code source
 	gopSpxTestEx(t, `
 println("Hi, Sprite")
 `, `
@@ -444,16 +442,21 @@ import (
 	spx2 "github.com/goplus/gop/cl/internal/spx2"
 )
 
+type Dog struct {
+	spx2.Sprite
+}
+
+func (this *Dog) Main() {
+	fmt.Println("Hi, Sprite")
+}
+
 type Kai struct {
 	spx2.Sprite2
 }
 
 func (this *Kai) onMsg(msg string) {
 }
-func main() {
-	fmt.Println("Hi, Sprite")
-}
-`, "main.gop", "Kai.t3spx2")
+`, "Dog.t3spx", "Kai.t3spx2")
 }
 
 func TestSpxMainEntry(t *testing.T) {

@@ -24,6 +24,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/goplus/gop/ast"
@@ -430,16 +431,30 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		}
 		preloadFile(p, ctx, fpath, f, false)
 	}
-	for _, f := range files {
+
+	// sort files
+	type File struct {
+		*ast.File
+		path string
+	}
+	var sfiles []*File
+	for fpath, f := range files {
+		sfiles = append(sfiles, &File{f, fpath})
+	}
+	sort.Slice(sfiles, func(i, j int) bool {
+		return sfiles[i].path < sfiles[j].path
+	})
+
+	for _, f := range sfiles {
 		if f.IsProj {
-			loadFile(ctx, f)
+			loadFile(ctx, f.File)
 			gmxMainFunc(p, ctx)
 			break
 		}
 	}
-	for _, f := range files {
+	for _, f := range sfiles {
 		if !f.IsProj { // only one .gmx file
-			loadFile(ctx, f)
+			loadFile(ctx, f.File)
 		}
 	}
 	for _, ld := range ctx.tylds {
