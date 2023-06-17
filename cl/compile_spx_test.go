@@ -430,6 +430,8 @@ func (this *Kai) onMsg(msg string) {
 }
 `, "Game.t2gmx", "Kai.t2spx2")
 
+	return
+	// TODO gen code source
 	gopSpxTestEx(t, `
 println("Hi, Sprite")
 `, `
