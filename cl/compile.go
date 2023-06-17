@@ -535,7 +535,7 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 	case f.IsClass:
 		classType = getDefaultClass(file)
 		if parent.gmxSettings != nil {
-			o, ok := parent.works[filepath.Ext(file)]
+			o, ok := parent.sprite[filepath.Ext(file)]
 			if ok {
 				baseTypeName, baseType, spxClass = o.Name(), o.Type(), true
 			}

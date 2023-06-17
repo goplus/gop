@@ -33,7 +33,7 @@ import (
 type gmxSettings struct {
 	gameClass  string
 	game       gox.Ref
-	works      map[string]gox.Ref
+	sprite     map[string]gox.Ref
 	scheds     []string
 	schedStmts []goast.Stmt // nil or len(scheds) == 2 (delayload)
 	pkgImps    []*gox.PkgRef
@@ -82,10 +82,10 @@ func newGmx(ctx *pkgCtx, pkg *gox.Package, file string, conf *Config) *gmxSettin
 	if gt.Class != "" {
 		p.game, p.gameIsPtr = spxRef(spx, gt.Class)
 	}
-	p.works = make(map[string]types.Object)
+	p.sprite = make(map[string]types.Object)
 	for _, v := range gt.Works {
 		obj, _ := spxRef(spx, v.Class)
-		p.works[v.Ext] = obj
+		p.sprite[v.Ext] = obj
 	}
 	if x := getStringConst(spx, "Gop_sched"); x != "" {
 		p.scheds, p.hasScheds = strings.SplitN(x, ",", 2), true
