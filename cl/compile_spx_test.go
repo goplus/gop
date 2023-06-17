@@ -41,6 +41,11 @@ func lookupClass(ext string) (c *gopmod.Project, ok bool) {
 			Works: []*gopmod.Class{{Ext: ".t2spx", Class: "Sprite"},
 				{Ext: ".t2spx2", Class: "Sprite2"}},
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
+	case ".t3spx", ".t3spx2":
+		return &gopmod.Project{
+			Works: []*gopmod.Class{{Ext: ".t3spx", Class: "Sprite"},
+				{Ext: ".t3spx2", Class: "Sprite2"}},
+			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
 	}
 	return
 }
@@ -424,6 +429,30 @@ type Kai struct {
 func (this *Kai) onMsg(msg string) {
 }
 `, "Game.t2gmx", "Kai.t2spx2")
+
+	gopSpxTestEx(t, `
+println("Hi, Sprite2")
+`, `
+func onMsg(msg string) {
+}
+`, `package main
+
+import (
+	fmt "fmt"
+	spx2 "github.com/goplus/gop/cl/internal/spx2"
+)
+
+type Kai struct {
+	spx2.Sprite2
+	*Kai
+}
+
+func (this *Kai) onMsg(msg string) {
+}
+func main() {
+	fmt.Println("Hi, Sprite2")
+}
+`, "main.gop", "Kai.t3spx2")
 }
 
 func TestSpxMainEntry(t *testing.T) {

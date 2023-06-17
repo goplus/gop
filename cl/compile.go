@@ -404,6 +404,14 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 			break
 		}
 	}
+	if ctx.gmxSettings == nil {
+		for file, gmx := range files {
+			if gmx.IsClass && filepath.Ext(file) != ".gopx" {
+				ctx.gmxSettings = newGmx(ctx, p, file, conf)
+				break
+			}
+		}
+	}
 	for fpath, f := range files {
 		fileLine := !conf.NoFileLine
 		ctx := &blockCtx{
@@ -571,7 +579,7 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 					flds = append(flds, types.NewField(pos, pkg, baseTypeName, baseType, true))
 					chk.chkRedecl(ctx, baseTypeName, pos)
 				}
-				if spxClass {
+				if spxClass && parent.gmxSettings != nil && parent.gameClass != "" {
 					typ := toType(ctx, &ast.StarExpr{X: &ast.Ident{Name: parent.gameClass}})
 					name := getTypeName(typ)
 					if !chk.chkRedecl(ctx, name, pos) {
