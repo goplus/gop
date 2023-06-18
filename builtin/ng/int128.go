@@ -8,6 +8,12 @@ import (
 )
 
 const (
+	Int128_Max       = 1<<127 - 1
+	Int128_Min       = -1 << 127
+	Int128_IsUntyped = true
+)
+
+const (
 	signBit  = 0x8000000000000000
 	maxInt64 = 1<<63 - 1
 )
@@ -634,7 +640,6 @@ func (i Int128) Gop_Rsh(n Gop_ninteger) Int128 {
 // Mul returns the product of two I128s.
 //
 // Overflow should wrap around, as per the Go spec.
-//
 func (i Int128) Gop_Mul__1(n Int128) (dest Int128) {
 	hi, lo := bits.Mul64(i.lo, n.lo)
 	hi += i.hi*n.lo + i.lo*n.hi
