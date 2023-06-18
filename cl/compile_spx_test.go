@@ -28,15 +28,23 @@ import (
 	"github.com/goplus/mod/gopmod"
 )
 
-func lookupClass(ext string) (c *gopmod.Class, ok bool) {
+func lookupClass(ext string) (c *gopmod.Project, ok bool) {
 	switch ext {
 	case ".tgmx", ".tspx":
-		return &gopmod.Class{
-			ProjExt: ".tgmx", WorkExt: ".tspx",
+		return &gopmod.Project{
+			Ext: ".tgmx", Class: "*MyGame",
+			Works:    []*gopmod.Class{{Ext: ".tspx", Class: "Sprite"}},
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx", "math"}}, true
-	case ".t2gmx", ".t2spx":
-		return &gopmod.Class{
-			ProjExt: ".t2gmx", WorkExt: ".t2spx",
+	case ".t2gmx", ".t2spx", ".t2spx2":
+		return &gopmod.Project{
+			Ext: ".t2gmx", Class: "Game",
+			Works: []*gopmod.Class{{Ext: ".t2spx", Class: "Sprite"},
+				{Ext: ".t2spx2", Class: "Sprite2"}},
+			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
+	case ".t3spx", ".t3spx2":
+		return &gopmod.Project{
+			Works: []*gopmod.Class{{Ext: ".t3spx", Class: "Sprite"},
+				{Ext: ".t3spx2", Class: "Sprite2"}},
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
 	}
 	return
@@ -47,7 +55,7 @@ func spxParserConf() parser.Config {
 		IsClass: func(ext string) (isProj bool, ok bool) {
 			c, ok := lookupClass(ext)
 			if ok {
-				isProj = (c.ProjExt == ext)
+				isProj = (c.Ext == ext)
 			}
 			return
 		},
@@ -389,6 +397,66 @@ type Kai struct {
 func (this *Kai) onMsg(msg string) {
 }
 `, "Game.t2gmx", "Kai.t2spx")
+
+	gopSpxTestEx(t, `
+println("Hi, Sprite2")
+`, `
+func onMsg(msg string) {
+}
+`, `package main
+
+import (
+	fmt "fmt"
+	spx2 "github.com/goplus/gop/cl/internal/spx2"
+)
+
+type Game struct {
+	spx2.Game
+}
+
+func (this *Game) MainEntry() {
+	fmt.Println("Hi, Sprite2")
+}
+func main() {
+	new(Game).Main()
+}
+
+type Kai struct {
+	spx2.Sprite2
+	*Game
+}
+
+func (this *Kai) onMsg(msg string) {
+}
+`, "Game.t2gmx", "Kai.t2spx2")
+
+	gopSpxTestEx(t, `
+println("Hi, Sprite")
+`, `
+func onMsg(msg string) {
+}
+`, `package main
+
+import (
+	fmt "fmt"
+	spx2 "github.com/goplus/gop/cl/internal/spx2"
+)
+
+type Dog struct {
+	spx2.Sprite
+}
+
+func (this *Dog) Main() {
+	fmt.Println("Hi, Sprite")
+}
+
+type Kai struct {
+	spx2.Sprite2
+}
+
+func (this *Kai) onMsg(msg string) {
+}
+`, "Dog.t3spx", "Kai.t3spx2")
 }
 
 func TestSpxMainEntry(t *testing.T) {
