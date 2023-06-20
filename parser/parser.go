@@ -3356,9 +3356,9 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 	var typ ast.Expr
 	var values []ast.Expr
 	if p.mode&ParseGoPlusClass != 0 && p.varDeclCnt == 1 {
-		var startPos token.Pos
+		var starPos token.Pos
 		if p.tok == token.MUL {
-			startPos = p.pos
+			starPos = p.pos
 			p.next()
 		}
 		ident := p.parseIdent()
@@ -3368,15 +3368,15 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 				X:   ident,
 				Sel: p.parseIdent(),
 			}
-			if startPos != token.NoPos {
+			if starPos != token.NoPos {
 				typ = &ast.StarExpr{
-					Star: startPos,
+					Star: starPos,
 					X:    typ,
 				}
 			}
-		} else if startPos != token.NoPos {
+		} else if starPos != token.NoPos {
 			typ = &ast.StarExpr{
-				Star: startPos,
+				Star: starPos,
 				X:    ident,
 			}
 		} else {
