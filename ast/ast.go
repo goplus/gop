@@ -16,7 +16,6 @@
 
 // Package ast declares the types used to represent syntax trees for Go+
 // packages.
-//
 package ast
 
 import (
@@ -71,7 +70,6 @@ type Comment = ast.Comment
 
 // A CommentGroup represents a sequence of comments
 // with no other tokens and no empty lines between.
-//
 type CommentGroup = ast.CommentGroup
 
 // ----------------------------------------------------------------------------
@@ -526,7 +524,6 @@ func (x *ChanType) End() token.Pos { return x.Value.End() }
 
 // exprNode() ensures that only expression/type nodes can be
 // assigned to an Expr.
-//
 func (*BadExpr) exprNode()        {}
 func (*Ident) exprNode()          {}
 func (*Ellipsis) exprNode()       {}
@@ -577,7 +574,6 @@ func (x *Ident) String() string {
 
 // A statement is represented by a tree consisting of one
 // or more of the following concrete statement nodes.
-//
 type (
 	// A BadStmt node is a placeholder for statements containing
 	// syntax errors for which no correct statement nodes can be
@@ -910,7 +906,6 @@ func (s *RangeStmt) End() token.Pos { return s.Body.End() }
 
 // stmtNode() ensures that only statement nodes can be
 // assigned to a Stmt.
-//
 func (*BadStmt) stmtNode()        {}
 func (*DeclStmt) stmtNode()       {}
 func (*EmptyStmt) stmtNode()      {}
@@ -938,7 +933,6 @@ func (*RangeStmt) stmtNode()      {}
 
 // A Spec node represents a single (non-parenthesized) import,
 // constant, type, or variable declaration.
-//
 type (
 	// The Spec type stands for any of *ImportSpec, *ValueSpec, and *TypeSpec.
 	Spec interface {
@@ -988,7 +982,12 @@ func (s *ImportSpec) Pos() token.Pos {
 }
 
 // Pos returns position of first character belonging to the node.
-func (s *ValueSpec) Pos() token.Pos { return s.Names[0].Pos() }
+func (s *ValueSpec) Pos() token.Pos {
+	if len(s.Names) == 0 {
+		return s.Type.Pos()
+	}
+	return s.Names[0].Pos()
+}
 
 // Pos returns position of first character belonging to the node.
 func (s *TypeSpec) Pos() token.Pos { return s.Name.Pos() }
@@ -1017,13 +1016,11 @@ func (s *TypeSpec) End() token.Pos { return s.Type.End() }
 
 // specNode() ensures that only spec nodes can be
 // assigned to a Spec.
-//
 func (*ImportSpec) specNode() {}
 func (*ValueSpec) specNode()  {}
 func (*TypeSpec) specNode()   {}
 
 // A declaration is represented by one of the following declaration nodes.
-//
 type (
 	// A BadDecl node is a placeholder for declarations containing
 	// syntax errors for which no correct declaration nodes can be
@@ -1096,7 +1093,6 @@ func (d *FuncDecl) End() token.Pos {
 
 // declNode() ensures that only declaration nodes can be
 // assigned to a Decl.
-//
 func (*BadDecl) declNode()  {}
 func (*GenDecl) declNode()  {}
 func (*FuncDecl) declNode() {}
@@ -1124,7 +1120,6 @@ type FileType = int16
 // interpretation of the syntax tree by the manipulating program: Except for Doc
 // and Comment comments directly associated with nodes, the remaining comments
 // are "free-floating" (see also issues #18593, #20744).
-//
 type File struct {
 	Doc          *CommentGroup   // associated documentation; or nil
 	Package      token.Pos       // position of "package" keyword
@@ -1154,7 +1149,6 @@ func (f *File) End() token.Pos {
 
 // A Package node represents a set of source files
 // collectively building a Go package.
-//
 type Package struct {
 	Name    string               // package name
 	Scope   *Scope               // package scope across all files
