@@ -4319,7 +4319,7 @@ func TestClassFileGopx(t *testing.T) {
 var (
 	BaseClass
 	Width, Height float64
-	AggClass
+	*AggClass
 )
 
 type BaseClass struct{
@@ -4343,11 +4343,45 @@ type Rect struct {
 	BaseClass
 	Width  float64
 	Height float64
-	AggClass
+	*AggClass
 }
 
 func (this *Rect) Area() float64 {
 	return this.Width * this.Height
+}
+`, "Rect.gopx")
+	gopClTestFile(t, `
+import "bytes"
+var (
+	bytes.Buffer
+)
+func test(){}
+`, `package main
+
+import bytes "bytes"
+
+type Rect struct {
+	bytes.Buffer
+}
+
+func (this *Rect) test() {
+}
+`, "Rect.gopx")
+	gopClTestFile(t, `
+import "bytes"
+var (
+	*bytes.Buffer
+)
+func test(){}
+`, `package main
+
+import bytes "bytes"
+
+type Rect struct {
+	*bytes.Buffer
+}
+
+func (this *Rect) test() {
 }
 `, "Rect.gopx")
 }

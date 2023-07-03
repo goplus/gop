@@ -120,23 +120,28 @@ func gopSpxErrorTestEx(t *testing.T, msg, gmx, spxcode, gmxfile, spxfile string)
 }
 
 func TestSpxError(t *testing.T) {
-	gopSpxErrorTestEx(t, `./Game.tgmx:4:2: cannot assign value to field in class file`, `
+	gopSpxErrorTestEx(t, `./Game.tgmx:6:2: userScore redeclared
+	./Game.tgmx:5:2 other declaration of userScore`, `
+import "bytes"
 var (
 	Kai Kai
-	userScore int = 100
+	userScore int
+	userScore string
 )
 `, `
 println "hi"
 `, "Game.tgmx", "Kai.tspx")
 
-	gopSpxErrorTestEx(t, `./Kai.tspx:3:2: cannot assign value to field in class file`, `
+	gopSpxErrorTestEx(t, `./Kai.tspx:4:2: id redeclared
+	./Kai.tspx:3:2 other declaration of id`, `
 var (
 	Kai Kai
 	userScore int
 )
 `, `
 var (
-	id = 100
+	id int
+	id string
 )
 println "hi"
 `, "Game.tgmx", "Kai.tspx")

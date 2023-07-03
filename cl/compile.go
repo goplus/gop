@@ -605,19 +605,13 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 				}
 				for _, v := range specs {
 					spec := v.(*ast.ValueSpec)
-					if len(spec.Values) > 0 {
-						pos := ctx.Position(v.Pos())
-						ctx.handleCodeErrorf(&pos, "cannot assign value to field in class file")
-						continue
-					}
 					var embed bool
-					var typ types.Type
-					if spec.Type == nil {
-						typ = toType(ctx, spec.Names[0])
+					if spec.Names == nil {
 						embed = true
-					} else {
-						typ = toType(ctx, spec.Type)
+						v := parseTypeEmbedName(spec.Type)
+						spec.Names = []*ast.Ident{v}
 					}
+					typ := toType(ctx, spec.Type)
 					for _, name := range spec.Names {
 						if chk.chkRedecl(ctx, name.Name, name.Pos()) {
 							continue
@@ -659,6 +653,20 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 		}
 	}
 	preloadFile(p, ctx, file, f, true)
+}
+
+func parseTypeEmbedName(typ ast.Expr) *ast.Ident {
+retry:
+	switch t := typ.(type) {
+	case *ast.Ident:
+		return t
+	case *ast.SelectorExpr:
+		return t.Sel
+	case *ast.StarExpr:
+		typ = t.X
+		goto retry
+	}
+	return nil
 }
 
 func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, genCode bool) {

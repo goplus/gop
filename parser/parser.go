@@ -77,6 +77,8 @@ type parser struct {
 	syncPos token.Pos // last synchronization position
 	syncCnt int       // number of parser.advance calls without progress
 
+	varDeclCnt int // number of var decl
+
 	// Non-syntactic parser control
 	exprLev int  // < 0: in control clause, >= 0: in expression
 	inRHS   bool // if set, the parser is parsing a rhs expression
@@ -104,7 +106,6 @@ func (p *parser) init(fset *token.FileSet, filename string, src []byte, mode Mod
 
 	p.mode = mode
 	p.trace = mode&Trace != 0 // for convenience (p.trace is used frequently)
-
 	p.next()
 }
 
@@ -3351,26 +3352,64 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 	}
 
 	pos := p.pos
-	idents := p.parseIdentList()
-	typ := p.tryType()
+	var idents []*ast.Ident
+	var typ ast.Expr
 	var values []ast.Expr
-	// always permit optional initialization for more tolerant parsing
-	if p.tok == token.ASSIGN {
-		p.next()
-		values = p.parseRHSList()
+	if p.mode&ParseGoPlusClass != 0 && p.varDeclCnt == 1 {
+		var starPos token.Pos
+		if p.tok == token.MUL {
+			starPos = p.pos
+			p.next()
+		}
+		ident := p.parseIdent()
+		if p.tok == token.PERIOD {
+			p.next()
+			typ = &ast.SelectorExpr{
+				X:   ident,
+				Sel: p.parseIdent(),
+			}
+			if starPos != token.NoPos {
+				typ = &ast.StarExpr{
+					Star: starPos,
+					X:    typ,
+				}
+			}
+		} else if starPos != token.NoPos {
+			typ = &ast.StarExpr{
+				Star: starPos,
+				X:    ident,
+			}
+		} else {
+			idents = append(idents, ident)
+			for p.tok == token.COMMA {
+				p.next()
+				idents = append(idents, p.parseIdent())
+			}
+			typ = p.tryType()
+			if len(idents) == 1 && typ == nil {
+				typ = ident
+				idents = nil
+			}
+			if p.tok == token.ASSIGN {
+				p.error(p.pos, "syntax error: cannot assign value to field in class file")
+			}
+		}
+		p.expect(token.SEMICOLON)
+	} else {
+		idents = p.parseIdentList()
+		typ = p.tryType()
+		// always permit optional initialization for more tolerant parsing
+		if p.tok == token.ASSIGN {
+			p.next()
+			values = p.parseRHSList()
+		}
+		p.expectSemi() // call before accessing p.linecomment
 	}
-	p.expectSemi() // call before accessing p.linecomment
 
 	switch keyword {
 	case token.VAR:
 		if typ == nil && values == nil {
-			if p.mode&ParseGoPlusClass != 0 {
-				if len(idents) != 1 {
-					p.error(pos, "syntax error: unexpected newline, expected type")
-				}
-			} else {
-				p.error(pos, "missing variable type or initialization")
-			}
+			p.error(pos, "missing variable type or initialization")
 		}
 	case token.CONST:
 		if values == nil && (iota == 0 || typ != nil) {
@@ -3425,7 +3464,9 @@ func (p *parser) parseGenDecl(keyword token.Token, f parseSpecFunction) *ast.Gen
 	if p.trace {
 		defer un(trace(p, "GenDecl("+keyword.String()+")"))
 	}
-
+	if keyword == token.VAR {
+		p.varDeclCnt++
+	}
 	doc := p.leadComment
 	pos := p.expect(keyword)
 	var lparen, rparen token.Pos

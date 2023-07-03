@@ -869,13 +869,6 @@ import (
 
 func TestErrClassFileGopx(t *testing.T) {
 	codeErrorTestEx(t, "main", "Rect.gopx",
-		`./Rect.gopx:3:2: cannot assign value to field in class file`, `
-var (
-	i int = 1
-)
-println "hello"
-`)
-	codeErrorTestEx(t, "main", "Rect.gopx",
 		`./Rect.gopx:5:2: A redeclared
 	./Rect.gopx:3:2 other declaration of A`, `
 var (

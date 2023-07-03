@@ -395,7 +395,30 @@ func TestClassErrCode(t *testing.T) {
 	A,B
 	v int
 )
-`, `/foo/bar.gopx:2:2: syntax error: unexpected newline, expected type`, ``)
+`, `/foo/bar.gopx:2:2: missing variable type or initialization`, ``)
+	testClassErrCode(t, `var (
+	A.*B
+	v int
+)
+`, `/foo/bar.gopx:2:4: expected 'IDENT', found '*' (and 2 more errors)`, ``)
+	testClassErrCode(t, `var (
+	[]A
+	v int
+)
+`, `/foo/bar.gopx:2:2: expected 'IDENT', found '['`, ``)
+	testClassErrCode(t, `var (
+	*[]A
+	v int
+)
+`, `/foo/bar.gopx:2:3: expected 'IDENT', found '['`, ``)
+	testClassErrCode(t, `var (
+	v int = 10
+)
+`, `/foo/bar.gopx:2:8: syntax error: cannot assign value to field in class file`, ``)
+	testClassErrCode(t, `var (
+	v = 10
+)
+`, `/foo/bar.gopx:2:4: syntax error: cannot assign value to field in class file`, ``)
 }
 
 // -----------------------------------------------------------------------------

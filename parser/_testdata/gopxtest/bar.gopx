@@ -1,7 +1,10 @@
 var (
 	A
+	*B
+	x, y string
+	C.A
+	*C.B
 	v int
-	B
 )
 
 type A struct{}
