@@ -26,7 +26,7 @@ import (
 	"github.com/goplus/gox"
 	"github.com/goplus/gox/cpackages"
 	"github.com/goplus/gox/packages"
-	"github.com/goplus/mod/gopmod"
+	"github.com/goplus/mod/modfile"
 )
 
 var (
@@ -146,23 +146,23 @@ func TestSpxLookup(t *testing.T) {
 	spxLookup(nil, "foo")
 }
 
-func lookupClass(ext string) (c *gopmod.Project, ok bool) {
+func lookupClass(ext string) (c *modfile.Project, ok bool) {
 	switch ext {
 	case ".t2gmx", ".t2spx":
-		return &gopmod.Project{
+		return &modfile.Project{
 			Ext: ".t2gmx", Class: "Game",
-			Works:    []*gopmod.Class{{Ext: ".t2spx", Class: "Sprite"}},
+			Works:    []*modfile.Class{{Ext: ".t2spx", Class: "Sprite"}},
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
 	}
 	return
 }
 
-func lookupClassErr(ext string) (c *gopmod.Project, ok bool) {
+func lookupClassErr(ext string) (c *modfile.Project, ok bool) {
 	switch ext {
 	case ".t2gmx", ".t2spx":
-		return &gopmod.Project{
+		return &modfile.Project{
 			Ext: ".t2gmx", Class: "Game",
-			Works:    []*gopmod.Class{{Ext: ".t2spx", Class: "Sprite"}},
+			Works:    []*modfile.Class{{Ext: ".t2spx", Class: "Sprite"}},
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/libc"}}, true
 	}
 	return

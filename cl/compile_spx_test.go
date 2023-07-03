@@ -25,25 +25,25 @@ import (
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/parser/parsertest"
 	"github.com/goplus/gop/scanner"
-	"github.com/goplus/mod/gopmod"
+	"github.com/goplus/mod/modfile"
 )
 
-func lookupClass(ext string) (c *gopmod.Project, ok bool) {
+func lookupClass(ext string) (c *modfile.Project, ok bool) {
 	switch ext {
 	case ".tgmx", ".tspx":
-		return &gopmod.Project{
+		return &modfile.Project{
 			Ext: ".tgmx", Class: "*MyGame",
-			Works:    []*gopmod.Class{{Ext: ".tspx", Class: "Sprite"}},
+			Works:    []*modfile.Class{{Ext: ".tspx", Class: "Sprite"}},
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx", "math"}}, true
 	case ".t2gmx", ".t2spx", ".t2spx2":
-		return &gopmod.Project{
+		return &modfile.Project{
 			Ext: ".t2gmx", Class: "Game",
-			Works: []*gopmod.Class{{Ext: ".t2spx", Class: "Sprite"},
+			Works: []*modfile.Class{{Ext: ".t2spx", Class: "Sprite"},
 				{Ext: ".t2spx2", Class: "Sprite2"}},
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
 	case ".t3spx", ".t3spx2":
-		return &gopmod.Project{
-			Works: []*gopmod.Class{{Ext: ".t3spx", Class: "Sprite"},
+		return &modfile.Project{
+			Works: []*modfile.Class{{Ext: ".t3spx", Class: "Sprite"},
 				{Ext: ".t3spx2", Class: "Sprite2"}},
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
 	}
