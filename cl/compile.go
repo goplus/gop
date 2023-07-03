@@ -32,7 +32,7 @@ import (
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
 	"github.com/goplus/gox/cpackages"
-	"github.com/goplus/mod/gopmod"
+	"github.com/goplus/mod/modfile"
 	"github.com/qiniu/x/errors"
 )
 
@@ -62,7 +62,8 @@ func SetDebug(flags int) {
 
 // -----------------------------------------------------------------------------
 
-type Project = gopmod.Project
+type Project = modfile.Project
+type Class = modfile.Class
 
 // Config of loading Go+ packages.
 type Config struct {
