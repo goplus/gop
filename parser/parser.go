@@ -3354,6 +3354,7 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 	pos := p.pos
 	var idents []*ast.Ident
 	var typ ast.Expr
+	var tag *ast.BasicLit
 	var values []ast.Expr
 	if p.mode&ParseGoPlusClass != 0 && p.topScope == p.pkgScope && p.varDeclCnt == 1 {
 		var starPos token.Pos
@@ -3394,6 +3395,10 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 				p.error(p.pos, "syntax error: cannot assign value to field in class file")
 			}
 		}
+		if p.tok == token.STRING {
+			tag = &ast.BasicLit{ValuePos: p.pos, Kind: p.tok, Value: p.lit}
+			p.next()
+		}
 		p.expect(token.SEMICOLON)
 	} else {
 		idents = p.parseIdentList()
@@ -3424,6 +3429,7 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 		Doc:     doc,
 		Names:   idents,
 		Type:    typ,
+		Tag:     tag,
 		Values:  values,
 		Comment: p.lineComment,
 	}

@@ -956,6 +956,7 @@ type (
 		Doc     *CommentGroup // associated documentation; or nil
 		Names   []*Ident      // value names (len(Names) > 0)
 		Type    Expr          // value type; or nil
+		Tag     *BasicLit     // classfile field tag; or nil
 		Values  []Expr        // initial values; or nil
 		Comment *CommentGroup // line comments; or nil
 	}
