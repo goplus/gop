@@ -4384,4 +4384,25 @@ type Rect struct {
 func (this *Rect) test() {
 }
 `, "Rect.gopx")
+	gopClTestFile(t, `
+import "bytes"
+var (
+	*bytes.Buffer "spec:\"buffer\""
+	a int "json:\"a\""
+	b int
+)
+func test(){}
+`, `package main
+
+import bytes "bytes"
+
+type Rect struct {
+	*bytes.Buffer "spec:\"buffer\""
+	a             int "json:\"a\""
+	b             int
+}
+
+func (this *Rect) test() {
+}
+`, "Rect.gopx")
 }
