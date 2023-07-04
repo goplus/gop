@@ -1619,6 +1619,14 @@ func (p *printer) valueSpec(s *ast.ValueSpec, keepType bool) {
 	if s.Type != nil {
 		p.expr(s.Type)
 	}
+	if s.Tag != nil {
+		if len(s.Names) > 0 {
+			p.print(vtab)
+		}
+		p.print(vtab)
+		p.expr(s.Tag)
+		extraTabs--
+	}
 	if s.Values != nil {
 		p.print(vtab, token.ASSIGN, blank)
 		p.exprList(token.NoPos, s.Values, 1, 0, token.NoPos, false)
