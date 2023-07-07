@@ -8,6 +8,10 @@ ast.GenDecl:
       Type:
         ast.Ident:
           Name: A
+      Tag:
+        ast.BasicLit:
+          Kind: STRING
+          Value: `json:"a"`
     ast.ValueSpec:
       Type:
         ast.StarExpr:
@@ -32,6 +36,10 @@ ast.GenDecl:
           Sel:
             ast.Ident:
               Name: A
+      Tag:
+        ast.BasicLit:
+          Kind: STRING
+          Value: `json:"ca"`
     ast.ValueSpec:
       Type:
         ast.StarExpr:
@@ -43,6 +51,10 @@ ast.GenDecl:
               Sel:
                 ast.Ident:
                   Name: B
+      Tag:
+        ast.BasicLit:
+          Kind: STRING
+          Value: `json:"b"`
     ast.ValueSpec:
       Names:
         ast.Ident:
@@ -50,6 +62,10 @@ ast.GenDecl:
       Type:
         ast.Ident:
           Name: int
+      Tag:
+        ast.BasicLit:
+          Kind: STRING
+          Value: `json:"v"`
 ast.GenDecl:
   Tok: type
   Specs:

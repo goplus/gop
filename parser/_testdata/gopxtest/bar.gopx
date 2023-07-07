@@ -1,10 +1,10 @@
 var (
-	A
+	A `json:"a"`
 	*B
 	x, y string
-	C.A
-	*C.B
-	v int
+	C.A  `json:"ca"`
+	*C.B `json:"b"`
+	v    int `json:"v"`
 )
 
 type A struct{}

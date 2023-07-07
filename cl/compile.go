@@ -591,9 +591,11 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 				}
 				pkg := p.Types
 				var flds []*types.Var
+				var tags []string
 				chk := newCheckRedecl()
 				if len(baseTypeName) != 0 {
 					flds = append(flds, types.NewField(pos, pkg, baseTypeName, baseType, true))
+					tags = append(tags, "")
 					chk.chkRedecl(ctx, baseTypeName, pos)
 				}
 				if spxClass && parent.gmxSettings != nil && parent.gameClass != "" {
@@ -602,6 +604,7 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 					if !chk.chkRedecl(ctx, name, pos) {
 						fld := types.NewField(pos, pkg, name, typ, true)
 						flds = append(flds, fld)
+						tags = append(tags, "")
 					}
 				}
 				for _, v := range specs {
@@ -618,9 +621,10 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 							continue
 						}
 						flds = append(flds, types.NewField(name.Pos(), pkg, name.Name, typ, embed))
+						tags = append(tags, toFieldTag(spec.Tag))
 					}
 				}
-				decl.InitType(p, types.NewStruct(flds, nil))
+				decl.InitType(p, types.NewStruct(flds, tags))
 			}
 			parent.tylds = append(parent.tylds, ld)
 		}
