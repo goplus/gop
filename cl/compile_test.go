@@ -2152,13 +2152,13 @@ c := foo{B: "Hi"}
 
 type foo struct {
 	A int
-	B string "tag1:123"
+	B string `+"`tag1:123`"+`
 }
 
 func main() {
 	a := struct {
 		A int
-		B string "tag1:123"
+		B string `+"`tag1:123`"+`
 	}{1, "Hello"}
 	b := foo{1, "Hello"}
 	c := foo{B: "Hi"}
@@ -2188,7 +2188,7 @@ type bar = foo
 type foo struct {
 	p *foo
 	A int
-	B string "tag1:123"
+	B string `+"`tag1:123`"+`
 }
 
 func main() {
@@ -4397,8 +4397,8 @@ func test(){}
 import bytes "bytes"
 
 type Rect struct {
-	*bytes.Buffer "spec:\"buffer\""
-	a             int "json:\"a\""
+	*bytes.Buffer `+"`spec:\"buffer\"`"+`
+	a             int `+"`json:\"a\"`"+`
 	b             int
 }
 
