@@ -419,6 +419,12 @@ func TestClassErrCode(t *testing.T) {
 	v = 10
 )
 `, `/foo/bar.gopx:2:4: syntax error: cannot assign value to field in class file`, ``)
+	testClassErrCode(t, `
+var (
+)
+const c = 100
+const d
+`, `/foo/bar.gopx:5:7: missing constant value`, ``)
 }
 
 // -----------------------------------------------------------------------------
