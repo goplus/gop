@@ -520,24 +520,28 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 			fn.initWith(fnt, i, -1)
 			compileCompositeLit(ctx, expr, fn.arg(i, ellipsis), true)
 		case *ast.SliceLit:
-			fn.initWith(fnt, i, -2)
-			t := fn.arg(i, ellipsis)
-			switch t.(type) {
-			case *types.Slice:
-			case *types.Named:
-				if _, ok := getUnderlying(ctx, t).(*types.Slice); !ok {
+			if len(v.Args) == 1 {
+				fn.initWith(fnt, i, -2)
+				t := fn.arg(i, ellipsis)
+				switch t.(type) {
+				case *types.Slice:
+				case *types.Named:
+					if _, ok := getUnderlying(ctx, t).(*types.Slice); !ok {
+						t = nil
+					}
+				default:
 					t = nil
 				}
-			default:
-				t = nil
-			}
-			typetype := fn.typetype && t != nil && len(v.Args) == 1
-			if typetype {
-				ctx.cb.InternalStack().Pop()
-			}
-			compileSliceLit(ctx, expr, t)
-			if typetype {
-				return
+				typetype := fn.typetype && t != nil
+				if typetype {
+					ctx.cb.InternalStack().Pop()
+				}
+				compileSliceLit(ctx, expr, t)
+				if typetype {
+					return
+				}
+			} else {
+				compileSliceLit(ctx, expr, nil)
 			}
 		default:
 			compileExpr(ctx, arg)
