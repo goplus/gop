@@ -3356,7 +3356,7 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 	var typ ast.Expr
 	var tag *ast.BasicLit
 	var values []ast.Expr
-	if p.mode&ParseGoPlusClass != 0 && p.topScope == p.pkgScope && p.varDeclCnt == 1 {
+	if p.mode&ParseGoPlusClass != 0 && p.topScope == p.pkgScope && keyword == token.VAR && p.varDeclCnt == 1 {
 		var starPos token.Pos
 		if p.tok == token.MUL {
 			starPos = p.pos
