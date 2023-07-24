@@ -452,7 +452,7 @@ func isInChinaWindows() bool {
 		return false
 	}
 	// Check if output contains `zh-cn;`
-	return strings.Contains(out, "zh-cn;") || strings.Contains(out, "zh-hk;")
+	return strings.Contains(out, "zh-cn;")
 }
 
 func isInChina() bool {
@@ -466,7 +466,7 @@ func isInChina() bool {
 	}
 	if strings.HasPrefix(out, prefix) {
 		out = out[len(prefix):]
-		return strings.HasPrefix(out, "zh_CN") || strings.HasPrefix(out, "zh_HK")
+		return strings.HasPrefix(out, "zh_CN")
 	}
 	return false
 }
