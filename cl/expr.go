@@ -430,6 +430,7 @@ func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, x *ast.Ident, flags, pkgKind i
 }
 
 type fnType struct {
+	next     *fnType
 	params   *types.Tuple
 	n1       int
 	variadic bool
@@ -473,8 +474,24 @@ func (p *fnType) initWith(fnt types.Type, idx, nin int) {
 	if t, ok := fnt.(*gox.TypeType); ok {
 		p.initTypeType(t)
 	} else if t := gox.CheckSignature(fnt, idx, nin); t != nil {
-		p.init(t)
+		if len(t) == 1 {
+			p.init(t[0])
+		} else {
+			next := p
+			next.init(t[0])
+			for i, v := range t {
+				if i == 0 {
+					continue
+				}
+				fn := &fnType{}
+				fn.inited = true
+				fn.init(v)
+				next.next = fn
+				next = fn
+			}
+		}
 	}
+	return
 }
 
 func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
@@ -496,7 +513,6 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 	default:
 		compileExpr(ctx, fn)
 	}
-	var fn fnType
 	var fnt = ctx.cb.Get(-1).Type
 	var flags gox.InstrFlags
 	var ellipsis = v.Ellipsis != gotoken.NoPos
@@ -506,48 +522,106 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 	if (inFlags & clCallWithTwoValue) != 0 {
 		flags |= gox.InstrFlagTwoValue
 	}
+	var fn *fnType = &fnType{}
 	for i, arg := range v.Args {
-		switch expr := arg.(type) {
-		case *ast.LambdaExpr:
-			fn.initWith(fnt, i, len(expr.Lhs))
-			sig := checkLambdaFuncType(ctx, expr, fn.arg(i, true), clLambaArgument, v.Fun)
-			compileLambdaExpr(ctx, expr, sig)
-		case *ast.LambdaExpr2:
-			fn.initWith(fnt, i, len(expr.Lhs))
-			sig := checkLambdaFuncType(ctx, expr, fn.arg(i, true), clLambaArgument, v.Fun)
-			compileLambdaExpr2(ctx, expr, sig)
-		case *ast.CompositeLit:
-			fn.initWith(fnt, i, -1)
-			compileCompositeLit(ctx, expr, fn.arg(i, ellipsis), true)
-		case *ast.SliceLit:
-			if len(v.Args) == 1 {
-				fn.initWith(fnt, i, -2)
-				t := fn.arg(i, ellipsis)
-				switch t.(type) {
-				case *types.Slice:
-				case *types.Named:
-					if _, ok := getUnderlying(ctx, t).(*types.Slice); !ok {
-						t = nil
-					}
-				default:
-					t = nil
-				}
-				typetype := fn.typetype && t != nil
-				if typetype {
-					ctx.cb.InternalStack().Pop()
-				}
-				compileSliceLit(ctx, expr, t)
-				if typetype {
-					return
-				}
-			} else {
-				compileSliceLit(ctx, expr, nil)
+		for fn != nil {
+			n := ctx.cb.InternalStack().Len()
+			err := compileArgCheck(fn, fnt, i, arg, ctx, v, ellipsis)
+			if err == nil {
+				break
 			}
-		default:
-			compileExpr(ctx, arg)
+			fn = fn.next
+			ctx.cb.InternalStack().SetLen(n)
 		}
 	}
+	// for i, arg := range v.Args {
+	// 	switch expr := arg.(type) {
+	// 	case *ast.LambdaExpr:
+	// 		fn.initWith(fnt, i, len(expr.Lhs))
+	// 		sig := checkLambdaFuncType(ctx, expr, fn.arg(i, true), clLambaArgument, v.Fun)
+	// 		compileLambdaExpr(ctx, expr, sig)
+	// 	case *ast.LambdaExpr2:
+	// 		fn.initWith(fnt, i, len(expr.Lhs))
+	// 		sig := checkLambdaFuncType(ctx, expr, fn.arg(i, true), clLambaArgument, v.Fun)
+	// 		compileLambdaExpr2(ctx, expr, sig)
+	// 	case *ast.CompositeLit:
+	// 		fn.initWith(fnt, i, -1)
+	// 		compileCompositeLit(ctx, expr, fn.arg(i, ellipsis), true)
+	// 	case *ast.SliceLit:
+	// 		fn.initWith(fnt, i, -2)
+	// 		t := fn.arg(i, ellipsis)
+	// 		switch t.(type) {
+	// 		case *types.Slice:
+	// 		case *types.Named:
+	// 			if _, ok := getUnderlying(ctx, t).(*types.Slice); !ok {
+	// 				t = nil
+	// 			}
+	// 		default:
+	// 			t = nil
+	// 		}
+	// 		typetype := fn.typetype && t != nil
+	// 		if typetype {
+	// 			ctx.cb.InternalStack().Pop()
+	// 		}
+	// 		err := compileSliceLit(ctx, expr, t)
+	// 		if err != nil {
+	// 			continue
+	// 		}
+	// 		if typetype {
+	// 			return
+	// 		}
+	// 		// } else {
+	// 		// 	compileSliceLit(ctx, expr, nil)
+	// 		// }
+	// 	default:
+	// 		compileExpr(ctx, arg)
+	// 	}
+	// }
 	ctx.cb.CallWith(len(v.Args), flags, v)
+}
+
+func compileArgCheck(fn *fnType, fnt types.Type, i int, arg ast.Expr, ctx *blockCtx, v *ast.CallExpr, ellipsis bool) (err error) {
+	defer func() {
+		if v := recover(); v != nil {
+			err = v.(error)
+		}
+	}()
+	switch expr := arg.(type) {
+	case *ast.LambdaExpr:
+		fn.initWith(fnt, i, len(expr.Lhs))
+		sig := checkLambdaFuncType(ctx, expr, fn.arg(i, true), clLambaArgument, v.Fun)
+		compileLambdaExpr(ctx, expr, sig)
+	case *ast.LambdaExpr2:
+		fn.initWith(fnt, i, len(expr.Lhs))
+		sig := checkLambdaFuncType(ctx, expr, fn.arg(i, true), clLambaArgument, v.Fun)
+		compileLambdaExpr2(ctx, expr, sig)
+	case *ast.CompositeLit:
+		fn.initWith(fnt, i, -1)
+		compileCompositeLit(ctx, expr, fn.arg(i, ellipsis), true)
+	case *ast.SliceLit:
+		fn.initWith(fnt, i, -2)
+		t := fn.arg(i, ellipsis)
+		switch t.(type) {
+		case *types.Slice:
+		case *types.Named:
+			if _, ok := getUnderlying(ctx, t).(*types.Slice); !ok {
+				t = nil
+			}
+		default:
+			t = nil
+		}
+		typetype := fn.typetype && t != nil
+		if typetype {
+			ctx.cb.InternalStack().Pop()
+		}
+		compileSliceLit(ctx, expr, t)
+		if typetype {
+			return
+		}
+	default:
+		compileExpr(ctx, arg)
+	}
+	return
 }
 
 type clLambaFlag string
@@ -862,6 +936,7 @@ func compileSliceLit(ctx *blockCtx, v *ast.SliceLit, typ types.Type) {
 	} else {
 		ctx.cb.SliceLit(typ, n)
 	}
+	return
 }
 
 func compileRangeExpr(ctx *blockCtx, v *ast.RangeExpr) {
