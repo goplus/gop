@@ -483,7 +483,6 @@ func (p *fnType) initWith(fnt types.Type, idx, nin int) {
 			p = p.next
 		}
 	}
-	return
 }
 
 func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
@@ -573,49 +572,6 @@ func compileCallArgs(fn *fnType, fnt types.Type, ctx *blockCtx, v *ast.CallExpr,
 		}
 	}
 	ctx.cb.CallWith(len(v.Args), flags, v)
-	return
-}
-
-func compileArgCheck(fn *fnType, fnt types.Type, i int, arg ast.Expr, ctx *blockCtx, v *ast.CallExpr, ellipsis bool) (typetype bool, err error) {
-	n := ctx.cb.InternalStack().Len()
-	defer func() {
-		if v := recover(); v != nil {
-			err = v.(error)
-			ctx.cb.InternalStack().SetLen(n)
-		}
-	}()
-	switch expr := arg.(type) {
-	case *ast.LambdaExpr:
-		fn.initWith(fnt, i, len(expr.Lhs))
-		sig := checkLambdaFuncType(ctx, expr, fn.arg(i, true), clLambaArgument, v.Fun)
-		compileLambdaExpr(ctx, expr, sig)
-	case *ast.LambdaExpr2:
-		fn.initWith(fnt, i, len(expr.Lhs))
-		sig := checkLambdaFuncType(ctx, expr, fn.arg(i, true), clLambaArgument, v.Fun)
-		compileLambdaExpr2(ctx, expr, sig)
-	case *ast.CompositeLit:
-		fn.initWith(fnt, i, -1)
-		compileCompositeLit(ctx, expr, fn.arg(i, ellipsis), true)
-	case *ast.SliceLit:
-		fn.initWith(fnt, i, -2)
-		t := fn.arg(i, ellipsis)
-		switch t.(type) {
-		case *types.Slice:
-		case *types.Named:
-			if _, ok := getUnderlying(ctx, t).(*types.Slice); !ok {
-				t = nil
-			}
-		default:
-			t = nil
-		}
-		typetype = fn.typetype && t != nil
-		if typetype {
-			ctx.cb.InternalStack().Pop()
-		}
-		compileSliceLit(ctx, expr, t)
-	default:
-		compileExpr(ctx, arg)
-	}
 	return
 }
 
