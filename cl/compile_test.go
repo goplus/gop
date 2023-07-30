@@ -4406,3 +4406,112 @@ func (this *Rect) test() {
 }
 `, "Rect.gopx")
 }
+
+func TestOverload(t *testing.T) {
+	gopClTest(t, `
+import "github.com/goplus/gop/cl/internal/overload/foo"
+
+type Mesh struct {
+}
+
+func (p *Mesh) Name() string {
+	return "hello"
+}
+
+var (
+	m1 = &Mesh{}
+	m2 = &Mesh{}
+)
+
+foo.onKey "hello", => {
+}
+foo.onKey "hello", key => {
+}
+foo.onKey ["1"], => {
+}
+foo.onKey ["2"], key => {
+}
+foo.onKey [m1,m2], => {
+}
+foo.onKey [m1,m2], key => {
+}
+foo.onKey ["a"], ["b"], key => {
+}
+foo.onKey ["a"], [m1,m2], key => {
+}
+foo.onKey ["a"],nil,key => {
+}
+n := &foo.N{}
+n.onKey "hello", => {
+}
+n.onKey "hello", key => {
+}
+n.onKey ["1"], => {
+}
+n.onKey ["2"], key => {
+}
+n.onKey [m1,m2], => {
+}
+n.onKey [m1,m2], key => {
+}
+n.onKey ["a"], ["b"], key => {
+}
+n.onKey ["a"], [m1,m2], key => {
+}
+n.onKey ["a"],nil,key => {
+}
+`, `package main
+
+import foo "github.com/goplus/gop/cl/internal/overload/foo"
+
+type Mesh struct {
+}
+
+func (p *Mesh) Name() string {
+	return "hello"
+}
+
+var m1 = &Mesh{}
+var m2 = &Mesh{}
+
+func main() {
+	foo.OnKey__0("hello", func() {
+	})
+	foo.OnKey__1("hello", func(key string) {
+	})
+	foo.OnKey__2([]string{"1"}, func() {
+	})
+	foo.OnKey__3([]string{"2"}, func(key string) {
+	})
+	foo.OnKey__4([]foo.Mesher{m1, m2}, func() {
+	})
+	foo.OnKey__5([]foo.Mesher{m1, m2}, func(key foo.Mesher) {
+	})
+	foo.OnKey__6([]string{"a"}, []string{"b"}, func(key string) {
+	})
+	foo.OnKey__7([]string{"a"}, []foo.Mesher{m1, m2}, func(key string) {
+	})
+	foo.OnKey__6([]string{"a"}, nil, func(key string) {
+	})
+	n := &foo.N{}
+	n.OnKey__0("hello", func() {
+	})
+	n.OnKey__1("hello", func(key string) {
+	})
+	n.OnKey__2([]string{"1"}, func() {
+	})
+	n.OnKey__3([]string{"2"}, func(key string) {
+	})
+	n.OnKey__4([]foo.Mesher{m1, m2}, func() {
+	})
+	n.OnKey__5([]foo.Mesher{m1, m2}, func(key foo.Mesher) {
+	})
+	n.OnKey__6([]string{"a"}, []string{"b"}, func(key string) {
+	})
+	n.OnKey__7([]string{"a"}, []foo.Mesher{m1, m2}, func(key string) {
+	})
+	n.OnKey__6([]string{"a"}, nil, func(key string) {
+	})
+}
+`)
+}
