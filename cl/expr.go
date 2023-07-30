@@ -473,7 +473,7 @@ func (p *fnType) initWith(fnt types.Type, idx, nin int) {
 	p.inited = true
 	if t, ok := fnt.(*gox.TypeType); ok {
 		p.initTypeType(t)
-	} else if t := gox.CheckSignature(fnt, idx, nin); t != nil {
+	} else if t := gox.CheckSignatures(fnt, idx, nin); t != nil {
 		p.init(t[0])
 		for i := 1; i < len(t); i++ {
 			fn := &fnType{}
