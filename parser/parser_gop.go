@@ -19,6 +19,7 @@ package parser
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"io/fs"
 	"io/ioutil"
@@ -115,14 +116,14 @@ func ParseDirEx(fset *token.FileSet, path string, conf Config) (pkgs map[string]
 }
 
 // ClassFileExt returns the classfile extension
-func ClassFileExt(path string) string {
-	ext := filepath.Ext(path)
+func ClassFileExt(path string) (ext string, compositeGox bool) {
+	ext = filepath.Ext(path)
 	if ext == ".gox" {
 		if c := filepath.Ext(path[:len(path)-4]); c != "" {
-			return c
+			return c, true
 		}
 	}
-	return ext
+	return
 }
 
 // ParseFSDir calls ParseFile for all files with names ending in ".gop" in the
@@ -151,7 +152,7 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (p
 			continue
 		}
 		fname := d.Name()
-		ext := ClassFileExt(fname)
+		ext, compositeGox := ClassFileExt(fname)
 		var isProj, isClass, useGoParser bool
 		switch ext {
 		case ".gop":
@@ -164,6 +165,9 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (p
 			isClass = true
 		default:
 			if isProj, isClass = conf.IsClass(ext); !isClass {
+				if compositeGox {
+					return nil, fmt.Errorf("not found Go+ class by ext %q for %q", ext, fname)
+				}
 				continue
 			}
 		}

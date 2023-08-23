@@ -61,7 +61,7 @@ func (p *gmxSettings) getScheds(cb *gox.CodeBuilder) []goast.Stmt {
 }
 
 func newGmx(ctx *pkgCtx, pkg *gox.Package, file string, conf *Config) *gmxSettings {
-	ext := parser.ClassFileExt(file)
+	ext, _ := parser.ClassFileExt(file)
 	gt, ok := conf.LookupClass(ext)
 	if !ok {
 		panic("TODO: class not found")
