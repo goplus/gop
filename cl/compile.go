@@ -408,7 +408,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	}
 	if ctx.gmxSettings == nil {
 		for file, gmx := range files {
-			if gmx.IsClass && filepath.Ext(file) != ".gopx" {
+			if gmx.IsClass && filepath.Ext(file) != ".gox" {
 				ctx.gmxSettings = newGmx(ctx, p, file, conf)
 				break
 			}

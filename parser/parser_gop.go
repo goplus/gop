@@ -149,7 +149,7 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (p
 				continue
 			}
 			useGoParser = (conf.Mode & ParseGoAsGoPlus) == 0
-		case ".gopx":
+		case ".gox":
 			isClass = true
 		default:
 			if isProj, isClass = conf.IsClass(ext); !isClass {

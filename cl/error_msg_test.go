@@ -868,9 +868,9 @@ import (
 }
 
 func TestErrClassFileGopx(t *testing.T) {
-	codeErrorTestEx(t, "main", "Rect.gopx",
-		`./Rect.gopx:5:2: A redeclared
-	./Rect.gopx:3:2 other declaration of A`, `
+	codeErrorTestEx(t, "main", "Rect.gox",
+		`./Rect.gox:5:2: A redeclared
+	./Rect.gox:3:2 other declaration of A`, `
 var (
 	A
 	i int
