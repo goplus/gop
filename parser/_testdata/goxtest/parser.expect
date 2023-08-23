@@ -1,0 +1,90 @@
+package main
+
+file bar.gox
+ast.GenDecl:
+  Tok: var
+  Specs:
+    ast.ValueSpec:
+      Type:
+        ast.Ident:
+          Name: A
+      Tag:
+        ast.BasicLit:
+          Kind: STRING
+          Value: `json:"a"`
+    ast.ValueSpec:
+      Type:
+        ast.StarExpr:
+          X:
+            ast.Ident:
+              Name: B
+    ast.ValueSpec:
+      Names:
+        ast.Ident:
+          Name: x
+        ast.Ident:
+          Name: y
+      Type:
+        ast.Ident:
+          Name: string
+    ast.ValueSpec:
+      Type:
+        ast.SelectorExpr:
+          X:
+            ast.Ident:
+              Name: C
+          Sel:
+            ast.Ident:
+              Name: A
+      Tag:
+        ast.BasicLit:
+          Kind: STRING
+          Value: `json:"ca"`
+    ast.ValueSpec:
+      Type:
+        ast.StarExpr:
+          X:
+            ast.SelectorExpr:
+              X:
+                ast.Ident:
+                  Name: C
+              Sel:
+                ast.Ident:
+                  Name: B
+      Tag:
+        ast.BasicLit:
+          Kind: STRING
+          Value: `json:"b"`
+    ast.ValueSpec:
+      Names:
+        ast.Ident:
+          Name: v
+      Type:
+        ast.Ident:
+          Name: int
+      Tag:
+        ast.BasicLit:
+          Kind: STRING
+          Value: `json:"v"`
+ast.GenDecl:
+  Tok: type
+  Specs:
+    ast.TypeSpec:
+      Name:
+        ast.Ident:
+          Name: A
+      Type:
+        ast.StructType:
+          Fields:
+            ast.FieldList:
+ast.GenDecl:
+  Tok: type
+  Specs:
+    ast.TypeSpec:
+      Name:
+        ast.Ident:
+          Name: B
+      Type:
+        ast.StructType:
+          Fields:
+            ast.FieldList:
