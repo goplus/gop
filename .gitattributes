@@ -3,4 +3,4 @@
 
 *.gop text eol=lf
 *.go text eol=lf
-*.gopx text eol=lf
+*.gox text eol=lf
