@@ -114,6 +114,17 @@ func ParseDirEx(fset *token.FileSet, path string, conf Config) (pkgs map[string]
 	return ParseFSDir(fset, local, path, conf)
 }
 
+// ClassFileExt returns the classfile extension
+func ClassFileExt(path string) string {
+	ext := filepath.Ext(path)
+	if ext == ".gox" {
+		if c := filepath.Ext(path[:len(path)-4]); c != "" {
+			return c
+		}
+	}
+	return ext
+}
+
 // ParseFSDir calls ParseFile for all files with names ending in ".gop" in the
 // directory specified by path and returns a map of package name -> package
 // AST with all the packages found.
@@ -140,7 +151,7 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (p
 			continue
 		}
 		fname := d.Name()
-		ext := filepath.Ext(fname)
+		ext := ClassFileExt(fname)
 		var isProj, isClass, useGoParser bool
 		switch ext {
 		case ".gop":
