@@ -555,3 +555,43 @@ func (this *Kai) onMsg(msg string) {
 }
 `, "Game.t2gmx", "Kai.t2spx")
 }
+
+func TestSpxGoxBasic(t *testing.T) {
+	gopSpxTestEx(t, `
+func onInit() {
+	for {
+	}
+}
+`, `
+func onMsg(msg string) {
+	for {
+		say "Hi"
+	}
+}
+`, `package main
+
+import spx "github.com/goplus/gop/cl/internal/spx"
+
+type Game struct {
+	*spx.MyGame
+}
+
+func (this *Game) onInit() {
+	for {
+		spx.SchedNow()
+	}
+}
+
+type Kai struct {
+	spx.Sprite
+	*Game
+}
+
+func (this *Kai) onMsg(msg string) {
+	for {
+		spx.Sched()
+		this.Say("Hi")
+	}
+}
+`, "Game.tgmx.gox", "Kai.tspx.gox")
+}
