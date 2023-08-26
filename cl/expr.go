@@ -887,7 +887,6 @@ func compileSliceLit(ctx *blockCtx, v *ast.SliceLit, typ types.Type) {
 	} else {
 		ctx.cb.SliceLit(typ, n)
 	}
-	return
 }
 
 func compileRangeExpr(ctx *blockCtx, v *ast.RangeExpr) {

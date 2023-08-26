@@ -2104,6 +2104,7 @@ func isLiteralType(x ast.Expr) bool {
 	return true
 }
 
+/*
 // If x is of the form *T, deref returns T, otherwise it returns x.
 func deref(x ast.Expr) ast.Expr {
 	if p, isPtr := x.(*ast.StarExpr); isPtr {
@@ -2111,6 +2112,7 @@ func deref(x ast.Expr) ast.Expr {
 	}
 	return x
 }
+*/
 
 // If x is of the form (T), unparen returns unparen(T), otherwise it returns x.
 func unparen(x ast.Expr) ast.Expr {

@@ -1135,6 +1135,7 @@ type File struct {
 	NoPkgDecl    bool // no `package xxx` declaration
 	IsClass      bool // is a classfile
 	IsProj       bool // is a project classfile
+	IsNormalGox  bool // is a normal .gox file
 }
 
 // Pos returns position of first character belonging to the node.

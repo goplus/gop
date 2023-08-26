@@ -114,7 +114,7 @@ func TestClRangeStmt(t *testing.T) {
 
 func TestGmxSettings(t *testing.T) {
 	pkg := gox.NewPackage("", "foo", goxConf)
-	gmx := newGmx(nil, pkg, "main.t2gmx", &Config{
+	gmx := newGmx(nil, pkg, "main.t2gmx", &ast.File{IsProj: true}, &Config{
 		LookupClass: lookupClass,
 	})
 	scheds := gmx.getScheds(pkg.CB())

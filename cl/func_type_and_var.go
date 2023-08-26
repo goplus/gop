@@ -243,7 +243,7 @@ func lookupType(ctx *blockCtx, name string) (types.Object, types.Object) {
 }
 
 type checkRedecl struct {
-	ctx   *blockCtx
+	// ctx *blockCtx
 	names map[string]token.Pos
 }
 

@@ -19,6 +19,7 @@ package cl_test
 import (
 	"bytes"
 	"os"
+	"path"
 	"testing"
 
 	"github.com/goplus/gop/cl"
@@ -52,7 +53,8 @@ func lookupClass(ext string) (c *modfile.Project, ok bool) {
 
 func spxParserConf() parser.Config {
 	return parser.Config{
-		IsClass: func(ext string) (isProj bool, ok bool) {
+		ClassKind: func(fname string) (isProj bool, ok bool) {
+			ext := path.Ext(fname)
 			c, ok := lookupClass(ext)
 			if ok {
 				isProj = (c.Ext == ext)
