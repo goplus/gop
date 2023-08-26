@@ -23,10 +23,12 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/fromgo"
+	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
 	"github.com/goplus/gox/cpackages"
@@ -60,7 +62,8 @@ func SetDebug(flags int) {
 
 // -----------------------------------------------------------------------------
 
-type Class = modfile.Classfile
+type Project = modfile.Project
+type Class = modfile.Class
 
 // Config of loading Go+ packages.
 type Config struct {
@@ -82,7 +85,7 @@ type Config struct {
 	LookupPub func(pkgPath string) (pubfile string, err error)
 
 	// LookupClass lookups a class by specified file extension.
-	LookupClass func(ext string) (c *Class, ok bool)
+	LookupClass func(ext string) (c *Project, ok bool)
 
 	// An Importer resolves import paths to Packages.
 	Importer types.Importer
@@ -399,8 +402,16 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	})
 	for file, gmx := range files {
 		if gmx.IsProj {
-			ctx.gmxSettings = newGmx(ctx, p, file, conf)
+			ctx.gmxSettings = newGmx(ctx, p, file, gmx, conf)
 			break
+		}
+	}
+	if ctx.gmxSettings == nil {
+		for file, gmx := range files {
+			if gmx.IsClass && !gmx.IsNormalGox {
+				ctx.gmxSettings = newGmx(ctx, p, file, gmx, conf)
+				break
+			}
 		}
 	}
 	for fpath, f := range files {
@@ -412,6 +423,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		}
 		preloadGopFile(p, ctx, fpath, f, conf)
 	}
+
 	for fpath, gof := range pkg.GoFiles {
 		f := fromgo.ASTFile(gof, 0)
 		ctx := &blockCtx{
@@ -420,16 +432,30 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		}
 		preloadFile(p, ctx, fpath, f, false)
 	}
-	for _, f := range files {
+
+	// sort files
+	type File struct {
+		*ast.File
+		path string
+	}
+	var sfiles []*File
+	for fpath, f := range files {
+		sfiles = append(sfiles, &File{f, fpath})
+	}
+	sort.Slice(sfiles, func(i, j int) bool {
+		return sfiles[i].path < sfiles[j].path
+	})
+
+	for _, f := range sfiles {
 		if f.IsProj {
-			loadFile(ctx, f)
+			loadFile(ctx, f.File)
 			gmxMainFunc(p, ctx)
 			break
 		}
 	}
-	for _, f := range files {
+	for _, f := range sfiles {
 		if !f.IsProj { // only one .gmx file
-			loadFile(ctx, f)
+			loadFile(ctx, f.File)
 		}
 	}
 	for _, ld := range ctx.tylds {
@@ -532,12 +558,13 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 			baseType = types.NewPointer(baseType)
 		}
 	case f.IsClass:
+		classType = getDefaultClass(file)
 		if parent.gmxSettings != nil {
-			classType = getDefaultClass(file)
-			o := parent.sprite
-			baseTypeName, baseType, spxClass = o.Name(), o.Type(), true
-		} else {
-			classType = getDefaultClass(file)
+			ext := parser.ClassFileExt(file)
+			o, ok := parent.sprite[ext]
+			if ok {
+				baseTypeName, baseType, spxClass = o.Name(), o.Type(), true
+			}
 		}
 	}
 	if classType != "" {
@@ -565,42 +592,40 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 				}
 				pkg := p.Types
 				var flds []*types.Var
+				var tags []string
 				chk := newCheckRedecl()
 				if len(baseTypeName) != 0 {
 					flds = append(flds, types.NewField(pos, pkg, baseTypeName, baseType, true))
+					tags = append(tags, "")
 					chk.chkRedecl(ctx, baseTypeName, pos)
 				}
-				if spxClass {
+				if spxClass && parent.gmxSettings != nil && parent.gameClass != "" {
 					typ := toType(ctx, &ast.StarExpr{X: &ast.Ident{Name: parent.gameClass}})
 					name := getTypeName(typ)
 					if !chk.chkRedecl(ctx, name, pos) {
 						fld := types.NewField(pos, pkg, name, typ, true)
 						flds = append(flds, fld)
+						tags = append(tags, "")
 					}
 				}
 				for _, v := range specs {
 					spec := v.(*ast.ValueSpec)
-					if len(spec.Values) > 0 {
-						pos := ctx.Position(v.Pos())
-						ctx.handleCodeErrorf(&pos, "cannot assign value to field in class file")
-						continue
-					}
 					var embed bool
-					var typ types.Type
-					if spec.Type == nil {
-						typ = toType(ctx, spec.Names[0])
+					if spec.Names == nil {
 						embed = true
-					} else {
-						typ = toType(ctx, spec.Type)
+						v := parseTypeEmbedName(spec.Type)
+						spec.Names = []*ast.Ident{v}
 					}
+					typ := toType(ctx, spec.Type)
 					for _, name := range spec.Names {
 						if chk.chkRedecl(ctx, name.Name, name.Pos()) {
 							continue
 						}
 						flds = append(flds, types.NewField(name.Pos(), pkg, name.Name, typ, embed))
+						tags = append(tags, toFieldTag(spec.Tag))
 					}
 				}
-				decl.InitType(p, types.NewStruct(flds, nil))
+				decl.InitType(p, types.NewStruct(flds, tags))
 			}
 			parent.tylds = append(parent.tylds, ld)
 		}
@@ -634,6 +659,20 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 		}
 	}
 	preloadFile(p, ctx, file, f, true)
+}
+
+func parseTypeEmbedName(typ ast.Expr) *ast.Ident {
+retry:
+	switch t := typ.(type) {
+	case *ast.Ident:
+		return t
+	case *ast.SelectorExpr:
+		return t.Sel
+	case *ast.StarExpr:
+		typ = t.X
+		goto retry
+	}
+	return nil
 }
 
 func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, genCode bool) {

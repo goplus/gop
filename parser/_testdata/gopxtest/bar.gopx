@@ -1,9 +1,0 @@
-var (
-	A
-	v int
-	B
-)
-
-type A struct{}
-
-type B struct{}

@@ -36,7 +36,7 @@ import (
 func GenDepMods(mod *gopmod.Module, dir string, recursively bool) (ret map[string]struct{}, err error) {
 	modBase := mod.Path()
 	ret = make(map[string]struct{})
-	for _, r := range mod.Register {
+	for _, r := range mod.Import {
 		ret[r.ClassfileMod] = struct{}{}
 	}
 	err = HandleDeps(mod, dir, recursively, func(pkgPath string) {
@@ -81,8 +81,8 @@ type depsGen struct {
 
 func (p depsGen) gen(dir string) (err error) {
 	pkgs, err := parser.ParseDirEx(p.fset, dir, parser.Config{
-		IsClass: p.mod.IsClass,
-		Mode:    parser.ImportsOnly,
+		ClassKind: p.mod.ClassKind,
+		Mode:      parser.ImportsOnly,
 	})
 	if err != nil {
 		return

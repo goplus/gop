@@ -430,6 +430,7 @@ func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, x *ast.Ident, flags, pkgKind i
 }
 
 type fnType struct {
+	next     *fnType
 	params   *types.Tuple
 	n1       int
 	variadic bool
@@ -472,8 +473,15 @@ func (p *fnType) initWith(fnt types.Type, idx, nin int) {
 	p.inited = true
 	if t, ok := fnt.(*gox.TypeType); ok {
 		p.initTypeType(t)
-	} else if t := gox.CheckSignature(fnt, idx, nin); t != nil {
-		p.init(t)
+	} else if t := gox.CheckSignatures(fnt, idx, nin); t != nil {
+		p.init(t[0])
+		for i := 1; i < len(t); i++ {
+			fn := &fnType{}
+			fn.inited = true
+			fn.init(t[i])
+			p.next = fn
+			p = p.next
+		}
 	}
 }
 
@@ -496,7 +504,6 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 	default:
 		compileExpr(ctx, fn)
 	}
-	var fn fnType
 	var fnt = ctx.cb.Get(-1).Type
 	var flags gox.InstrFlags
 	var ellipsis = v.Ellipsis != gotoken.NoPos
@@ -506,6 +513,27 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 	if (inFlags & clCallWithTwoValue) != 0 {
 		flags |= gox.InstrFlagTwoValue
 	}
+	var fn *fnType = &fnType{}
+	for fn != nil {
+		err := compileCallArgs(fn, fnt, ctx, v, ellipsis, flags)
+		if err == nil {
+			break
+		}
+		if fn.next == nil {
+			panic(err)
+		}
+		fn = fn.next
+	}
+}
+
+func compileCallArgs(fn *fnType, fnt types.Type, ctx *blockCtx, v *ast.CallExpr, ellipsis bool, flags gox.InstrFlags) (err error) {
+	n := ctx.cb.InternalStack().Len()
+	defer func() {
+		if v := recover(); v != nil {
+			err = v.(error)
+			ctx.cb.InternalStack().SetLen(n)
+		}
+	}()
 	for i, arg := range v.Args {
 		switch expr := arg.(type) {
 		case *ast.LambdaExpr:
@@ -531,7 +559,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 			default:
 				t = nil
 			}
-			typetype := fn.typetype && t != nil && len(v.Args) == 1
+			typetype := fn.typetype && t != nil
 			if typetype {
 				ctx.cb.InternalStack().Pop()
 			}
@@ -544,6 +572,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 		}
 	}
 	ctx.cb.CallWith(len(v.Args), flags, v)
+	return
 }
 
 type clLambaFlag string

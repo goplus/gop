@@ -25,6 +25,20 @@ import (
 
 // -----------------------------------------------------------------------------
 
+func TestExt(t *testing.T) {
+	cases := [][2]string{
+		{"t.spx.gox", ".spx"},
+		{"t.spx", ".spx"},
+		{"t.gox", ".gox"},
+		{"t.abc", ".abc"},
+	}
+	for _, c := range cases {
+		if ret := ClassFileExt(c[0]); ret != c[1] {
+			t.Fatal("ClassFileExt:", c[0], "expected:", c[1], "got:", ret)
+		}
+	}
+}
+
 func panicMsg(e interface{}) string {
 	switch v := e.(type) {
 	case string:
@@ -59,7 +73,7 @@ func testClassErrCode(t *testing.T, code string, errExp, panicExp string) {
 		}
 	}()
 	fset := token.NewFileSet()
-	_, err := Parse(fset, "/foo/bar.gopx", code, ParseGoPlusClass)
+	_, err := Parse(fset, "/foo/bar.gox", code, ParseGoPlusClass)
 	if err == nil || err.Error() != errExp {
 		t.Fatal("testErrCode error:", err)
 	}
@@ -395,7 +409,36 @@ func TestClassErrCode(t *testing.T) {
 	A,B
 	v int
 )
-`, `/foo/bar.gopx:2:2: syntax error: unexpected newline, expected type`, ``)
+`, `/foo/bar.gox:2:2: missing variable type or initialization`, ``)
+	testClassErrCode(t, `var (
+	A.*B
+	v int
+)
+`, `/foo/bar.gox:2:4: expected 'IDENT', found '*' (and 2 more errors)`, ``)
+	testClassErrCode(t, `var (
+	[]A
+	v int
+)
+`, `/foo/bar.gox:2:2: expected 'IDENT', found '['`, ``)
+	testClassErrCode(t, `var (
+	*[]A
+	v int
+)
+`, `/foo/bar.gox:2:3: expected 'IDENT', found '['`, ``)
+	testClassErrCode(t, `var (
+	v int = 10
+)
+`, `/foo/bar.gox:2:8: syntax error: cannot assign value to field in class file`, ``)
+	testClassErrCode(t, `var (
+	v = 10
+)
+`, `/foo/bar.gox:2:4: syntax error: cannot assign value to field in class file`, ``)
+	testClassErrCode(t, `
+var (
+)
+const c = 100
+const d
+`, `/foo/bar.gox:5:7: missing constant value`, ``)
 }
 
 // -----------------------------------------------------------------------------

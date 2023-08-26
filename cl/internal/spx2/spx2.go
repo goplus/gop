@@ -32,3 +32,6 @@ type Sprite struct {
 
 func Sched() {
 }
+
+type Sprite2 struct {
+}

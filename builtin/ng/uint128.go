@@ -13,6 +13,12 @@ const (
 )
 
 const (
+	Uint128_Max       = 1<<128 - 1
+	Uint128_Min       = 0
+	Uint128_IsUntyped = true
+)
+
+const (
 	maxUint64 = (1 << 64) - 1
 	intSize   = 32 << (^uint(0) >> 63)
 )
@@ -349,7 +355,6 @@ func (u Uint128) ReverseBytes() Uint128 {
 //
 // The specific value returned by Cmp is undefined, but it is guaranteed to
 // satisfy the above constraints.
-//
 func (u Uint128) Cmp__1(n Uint128) int {
 	if u.hi == n.hi {
 		if u.lo > n.lo {

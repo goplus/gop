@@ -121,7 +121,11 @@ func testFrom(t *testing.T, fpath, sel string, mode int) {
 
 	if (mode & excludeFormatSource) == 0 {
 		t.Run("format.Source "+fpath, func(t *testing.T) {
-			res, err := format.Source(src, false, fpath)
+			var class bool
+			if filepath.Ext(fpath) == ".gox" {
+				class = true
+			}
+			res, err := format.Source(src, class, fpath)
 			if err != nil {
 				t.Fatal("Source failed:", err)
 			}
@@ -132,7 +136,11 @@ func testFrom(t *testing.T, fpath, sel string, mode int) {
 	if (mode & excludeFormatNode) == 0 {
 		t.Run("format.Node "+fpath, func(t *testing.T) {
 			fset := token.NewFileSet()
-			f, err := parser.ParseFile(fset, fpath, src, parser.ParseComments)
+			m := parser.ParseComments
+			if filepath.Ext(fpath) == ".gox" {
+				m |= parser.ParseGoPlusClass
+			}
+			f, err := parser.ParseFile(fset, fpath, src, m)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -182,7 +190,8 @@ func TestFromParse(t *testing.T) {
 			return err
 		}
 		name := info.Name()
-		if !info.IsDir() && filepath.Ext(name) == ".gop" {
+		ext := filepath.Ext(name)
+		if !info.IsDir() && (ext == ".gop" || ext == ".gox") {
 			testFrom(t, path, sel, 0)
 		}
 		return nil

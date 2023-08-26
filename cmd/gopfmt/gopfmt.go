@@ -24,7 +24,6 @@ import (
 	"go/token"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -64,7 +63,7 @@ func processFile(filename string, class bool, in io.Reader, out io.Writer) error
 			return err
 		}
 	}
-	src, err := ioutil.ReadAll(in)
+	src, err := io.ReadAll(in)
 	if err != nil {
 		return err
 	}
@@ -90,7 +89,7 @@ func processFile(filename string, class bool, in io.Reader, out io.Writer) error
 
 	if *write {
 		dir, file := filepath.Split(filename)
-		f, err := ioutil.TempFile(dir, file)
+		f, err := os.CreateTemp(dir, file)
 		if err != nil {
 			return err
 		}
@@ -138,13 +137,11 @@ func (w *walker) walk(path string, d fs.DirEntry, err error) error {
 					switch ext {
 					case ".go", ".gop":
 						ok = true
-					case ".gopx", ".spx", ".gmx":
+					case ".gox", ".spx", ".gmx":
 						ok, class = true, true
 					default:
-						_, class = mod.IsClass(ext)
-						if class {
-							ok = true
-						}
+						class = mod.IsClass(ext)
+						ok = class
 					}
 					return
 				}
@@ -153,7 +150,7 @@ func (w *walker) walk(path string, d fs.DirEntry, err error) error {
 					switch ext {
 					case ".go", ".gop":
 						ok = true
-					case ".gopx", ".spx", ".gmx":
+					case ".gox", ".spx", ".gmx":
 						ok, class = true, true
 					}
 					return

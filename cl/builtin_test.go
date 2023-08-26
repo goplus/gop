@@ -26,7 +26,7 @@ import (
 	"github.com/goplus/gox"
 	"github.com/goplus/gox/cpackages"
 	"github.com/goplus/gox/packages"
-	"github.com/goplus/mod/gopmod"
+	"github.com/goplus/mod/modfile"
 )
 
 var (
@@ -114,7 +114,7 @@ func TestClRangeStmt(t *testing.T) {
 
 func TestGmxSettings(t *testing.T) {
 	pkg := gox.NewPackage("", "foo", goxConf)
-	gmx := newGmx(nil, pkg, "main.t2gmx", &Config{
+	gmx := newGmx(nil, pkg, "main.t2gmx", &ast.File{IsProj: true}, &Config{
 		LookupClass: lookupClass,
 	})
 	scheds := gmx.getScheds(pkg.CB())
@@ -132,7 +132,7 @@ func TestGmxSettings(t *testing.T) {
 	}}, &Config{
 		LookupClass: lookupClassErr,
 	})
-	if e := err.Error(); e != `github.com/goplus/gop/cl/internal/libc.Gop_game not found` {
+	if e := err.Error(); e != `github.com/goplus/gop/cl/internal/libc.Game not found` {
 		t.Fatal("newGmx:", e)
 	}
 }
@@ -146,21 +146,23 @@ func TestSpxLookup(t *testing.T) {
 	spxLookup(nil, "foo")
 }
 
-func lookupClass(ext string) (c *gopmod.Class, ok bool) {
+func lookupClass(ext string) (c *modfile.Project, ok bool) {
 	switch ext {
 	case ".t2gmx", ".t2spx":
-		return &gopmod.Class{
-			ProjExt: ".t2gmx", WorkExt: ".t2spx",
+		return &modfile.Project{
+			Ext: ".t2gmx", Class: "Game",
+			Works:    []*modfile.Class{{Ext: ".t2spx", Class: "Sprite"}},
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
 	}
 	return
 }
 
-func lookupClassErr(ext string) (c *gopmod.Class, ok bool) {
+func lookupClassErr(ext string) (c *modfile.Project, ok bool) {
 	switch ext {
 	case ".t2gmx", ".t2spx":
-		return &gopmod.Class{
-			ProjExt: ".t2gmx", WorkExt: ".t2spx",
+		return &modfile.Project{
+			Ext: ".t2gmx", Class: "Game",
+			Works:    []*modfile.Class{{Ext: ".t2spx", Class: "Sprite"}},
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/libc"}}, true
 	}
 	return
