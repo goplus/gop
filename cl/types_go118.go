@@ -81,7 +81,7 @@ L:
 	}
 	switch t := typ.(type) {
 	case *ast.IndexExpr:
-		if 1 != orgTypeParams.Len() {
+		if orgTypeParams.Len() != 1 {
 			panic(ctx.newCodeErrorf(typ.Pos(), "got 1 type parameter, but receiver base type declares %v", orgTypeParams.Len()))
 		}
 		v := t.Index.(*ast.Ident)

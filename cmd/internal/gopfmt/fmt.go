@@ -21,7 +21,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -63,7 +62,7 @@ var (
 )
 
 func gopfmt(path string, class, smart, mvgo bool) (err error) {
-	src, err := ioutil.ReadFile(path)
+	src, err := os.ReadFile(path)
 	if err != nil {
 		return
 	}
@@ -106,7 +105,7 @@ func gopfmt(path string, class, smart, mvgo bool) (err error) {
 
 func writeFileWithBackup(path string, target []byte) (err error) {
 	dir, file := filepath.Split(path)
-	f, err := ioutil.TempFile(dir, file)
+	f, err := os.CreateTemp(dir, file)
 	if err != nil {
 		return
 	}
@@ -150,10 +149,8 @@ func (w *walker) walk(path string, d fs.DirEntry, err error) error {
 					case ".gox", ".spx", ".gmx":
 						ok, class = true, true
 					default:
-						_, class = mod.IsClass(ext)
-						if class {
-							ok = true
-						}
+						class = mod.IsClass(ext)
+						ok = class
 					}
 					return
 				}

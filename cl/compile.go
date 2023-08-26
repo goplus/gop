@@ -402,17 +402,15 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	})
 	for file, gmx := range files {
 		if gmx.IsProj {
-			ctx.gmxSettings = newGmx(ctx, p, file, conf)
+			ctx.gmxSettings = newGmx(ctx, p, file, gmx, conf)
 			break
 		}
 	}
 	if ctx.gmxSettings == nil {
 		for file, gmx := range files {
-			if gmx.IsClass {
-				if ext, _ := parser.ClassFileExt(file); ext != ".gox" {
-					ctx.gmxSettings = newGmx(ctx, p, file, conf)
-					break
-				}
+			if gmx.IsClass && !gmx.IsNormalGox {
+				ctx.gmxSettings = newGmx(ctx, p, file, gmx, conf)
+				break
 			}
 		}
 	}
@@ -562,7 +560,7 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 	case f.IsClass:
 		classType = getDefaultClass(file)
 		if parent.gmxSettings != nil {
-			ext, _ := parser.ClassFileExt(file)
+			ext := parser.ClassFileExt(file)
 			o, ok := parent.sprite[ext]
 			if ok {
 				baseTypeName, baseType, spxClass = o.Name(), o.Type(), true

@@ -60,14 +60,14 @@ func (p *gmxSettings) getScheds(cb *gox.CodeBuilder) []goast.Stmt {
 	return p.schedStmts
 }
 
-func newGmx(ctx *pkgCtx, pkg *gox.Package, file string, conf *Config) *gmxSettings {
-	ext, _ := parser.ClassFileExt(file)
+func newGmx(ctx *pkgCtx, pkg *gox.Package, file string, f *ast.File, conf *Config) *gmxSettings {
+	ext := parser.ClassFileExt(file)
 	gt, ok := conf.LookupClass(ext)
 	if !ok {
 		panic("TODO: class not found")
 	}
 	var name string
-	if gt.Ext == ext {
+	if f.IsProj {
 		_, name = filepath.Split(file)
 		if idx := strings.Index(name, "."); idx > 0 {
 			name = name[:idx]

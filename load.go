@@ -58,7 +58,7 @@ func LoadMod(dir string, gop *env.Gop, conf *Config) (mod *gopmod.Module, err er
 		return
 	}
 	if mod != nil {
-		err = mod.RegisterClasses()
+		err = mod.ImportClasses()
 		if err != nil {
 			err = errors.NewWith(err, `mod.RegisterClasses()`, -2, "(*gopmod.Module).RegisterClasses", mod)
 			return
@@ -107,9 +107,9 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 	}
 
 	pkgs, err := parser.ParseDirEx(fset, dir, parser.Config{
-		IsClass: mod.IsClass,
-		Filter:  conf.Filter,
-		Mode:    parser.ParseComments,
+		ClassKind: mod.ClassKind,
+		Filter:    conf.Filter,
+		Mode:      parser.ParseComments,
 	})
 	if err != nil {
 		return
