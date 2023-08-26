@@ -1,6 +1,6 @@
 package main
 
-file bar.gopx
+file bar.gox
 ast.GenDecl:
   Tok: var
   Specs:

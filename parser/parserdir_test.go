@@ -173,6 +173,12 @@ func TestErrParse(t *testing.T) {
 	if err != syscall.ENOENT {
 		t.Fatal("ParseFSDir:", err)
 	}
+
+	fs = parsertest.NewSingleFileFS("/foo", "test.abc.gox", `package foo`)
+	_, err = ParseFSDir(fset, fs, "/foo", Config{})
+	if err == nil {
+		t.Fatal("ParseFSDir test.gop: no error?")
+	}
 }
 
 func testFromDir(t *testing.T, sel, relDir string) {

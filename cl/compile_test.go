@@ -4349,7 +4349,7 @@ type Rect struct {
 func (this *Rect) Area() float64 {
 	return this.Width * this.Height
 }
-`, "Rect.gopx")
+`, "Rect.gox")
 	gopClTestFile(t, `
 import "bytes"
 var (
@@ -4366,7 +4366,7 @@ type Rect struct {
 
 func (this *Rect) test() {
 }
-`, "Rect.gopx")
+`, "Rect.gox")
 	gopClTestFile(t, `
 import "bytes"
 var (
@@ -4383,7 +4383,7 @@ type Rect struct {
 
 func (this *Rect) test() {
 }
-`, "Rect.gopx")
+`, "Rect.gox")
 	gopClTestFile(t, `
 import "bytes"
 var (
@@ -4404,7 +4404,7 @@ type Rect struct {
 
 func (this *Rect) test() {
 }
-`, "Rect.gopx")
+`, "Rect.gox")
 }
 
 func TestOverload(t *testing.T) {

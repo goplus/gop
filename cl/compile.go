@@ -22,13 +22,13 @@ import (
 	"go/types"
 	"log"
 	"os"
-	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/fromgo"
+	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
 	"github.com/goplus/gox/cpackages"
@@ -408,9 +408,11 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	}
 	if ctx.gmxSettings == nil {
 		for file, gmx := range files {
-			if gmx.IsClass && filepath.Ext(file) != ".gopx" {
-				ctx.gmxSettings = newGmx(ctx, p, file, conf)
-				break
+			if gmx.IsClass {
+				if ext, _ := parser.ClassFileExt(file); ext != ".gox" {
+					ctx.gmxSettings = newGmx(ctx, p, file, conf)
+					break
+				}
 			}
 		}
 	}
@@ -560,7 +562,8 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 	case f.IsClass:
 		classType = getDefaultClass(file)
 		if parent.gmxSettings != nil {
-			o, ok := parent.sprite[filepath.Ext(file)]
+			ext, _ := parser.ClassFileExt(file)
+			o, ok := parent.sprite[ext]
 			if ok {
 				baseTypeName, baseType, spxClass = o.Name(), o.Type(), true
 			}
