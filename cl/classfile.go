@@ -72,7 +72,7 @@ func newGmx(ctx *pkgCtx, pkg *gox.Package, file string, f *ast.File, conf *Confi
 		if idx := strings.Index(name, "."); idx > 0 {
 			name = name[:idx]
 			if name == "main" {
-				name = "_main"
+				name = gt.Class
 			}
 		}
 	}
