@@ -365,3 +365,49 @@ func main() {
 }
 `)
 }
+
+func init() {
+	build.RegisterClassFileType(".tspx", "MyGame", []*build.Class{
+		{Ext: ".tspx", Class: "Sprite"},
+	}, "github.com/goplus/gop/cl/internal/spx")
+}
+
+func TestSpx(t *testing.T) {
+	gopClTestEx(t, "main.tspx", `println "hi"`, `package main
+
+import (
+	fmt "fmt"
+	spx "github.com/goplus/gop/cl/internal/spx"
+)
+
+type _main struct {
+	spx.MyGame
+}
+
+func (this *_main) MainEntry() {
+//line main.tspx:1
+	fmt.Println("hi")
+}
+func main() {
+	spx.Gopt_MyGame_Main(new(_main))
+}
+`)
+	gopClTestEx(t, "Cat.tspx", `println "hi"`, `package main
+
+import (
+	fmt "fmt"
+	spx "github.com/goplus/gop/cl/internal/spx"
+)
+
+type Cat struct {
+	spx.Sprite
+}
+
+func (this *Cat) Main() {
+//line Cat.tspx:1
+	fmt.Println("hi")
+}
+func main() {
+}
+`)
+}
