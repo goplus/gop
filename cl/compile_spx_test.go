@@ -19,24 +19,33 @@ package cl_test
 import (
 	"bytes"
 	"os"
+	"path"
 	"testing"
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/parser/parsertest"
 	"github.com/goplus/gop/scanner"
-	"github.com/goplus/mod/gopmod"
+	"github.com/goplus/mod/modfile"
 )
 
-func lookupClass(ext string) (c *gopmod.Class, ok bool) {
+func lookupClass(ext string) (c *modfile.Project, ok bool) {
 	switch ext {
 	case ".tgmx", ".tspx":
-		return &gopmod.Class{
-			ProjExt: ".tgmx", WorkExt: ".tspx",
+		return &modfile.Project{
+			Ext: ".tgmx", Class: "*MyGame",
+			Works:    []*modfile.Class{{Ext: ".tspx", Class: "Sprite"}},
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx", "math"}}, true
-	case ".t2gmx", ".t2spx":
-		return &gopmod.Class{
-			ProjExt: ".t2gmx", WorkExt: ".t2spx",
+	case ".t2gmx", ".t2spx", ".t2spx2":
+		return &modfile.Project{
+			Ext: ".t2gmx", Class: "Game",
+			Works: []*modfile.Class{{Ext: ".t2spx", Class: "Sprite"},
+				{Ext: ".t2spx2", Class: "Sprite2"}},
+			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
+	case ".t3spx", ".t3spx2":
+		return &modfile.Project{
+			Works: []*modfile.Class{{Ext: ".t3spx", Class: "Sprite"},
+				{Ext: ".t3spx2", Class: "Sprite2"}},
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
 	}
 	return
@@ -44,10 +53,11 @@ func lookupClass(ext string) (c *gopmod.Class, ok bool) {
 
 func spxParserConf() parser.Config {
 	return parser.Config{
-		IsClass: func(ext string) (isProj bool, ok bool) {
+		ClassKind: func(fname string) (isProj bool, ok bool) {
+			ext := path.Ext(fname)
 			c, ok := lookupClass(ext)
 			if ok {
-				isProj = (c.ProjExt == ext)
+				isProj = (c.Ext == ext)
 			}
 			return
 		},
@@ -112,23 +122,28 @@ func gopSpxErrorTestEx(t *testing.T, msg, gmx, spxcode, gmxfile, spxfile string)
 }
 
 func TestSpxError(t *testing.T) {
-	gopSpxErrorTestEx(t, `./Game.tgmx:4:2: cannot assign value to field in class file`, `
+	gopSpxErrorTestEx(t, `./Game.tgmx:6:2: userScore redeclared
+	./Game.tgmx:5:2 other declaration of userScore`, `
+import "bytes"
 var (
 	Kai Kai
-	userScore int = 100
+	userScore int
+	userScore string
 )
 `, `
 println "hi"
 `, "Game.tgmx", "Kai.tspx")
 
-	gopSpxErrorTestEx(t, `./Kai.tspx:3:2: missing field type in class file`, `
+	gopSpxErrorTestEx(t, `./Kai.tspx:4:2: id redeclared
+	./Kai.tspx:3:2 other declaration of id`, `
 var (
 	Kai Kai
 	userScore int
 )
 `, `
 var (
-	id = 100
+	id int
+	id string
 )
 println "hi"
 `, "Game.tgmx", "Kai.tspx")
@@ -389,6 +404,66 @@ type Kai struct {
 func (this *Kai) onMsg(msg string) {
 }
 `, "Game.t2gmx", "Kai.t2spx")
+
+	gopSpxTestEx(t, `
+println("Hi, Sprite2")
+`, `
+func onMsg(msg string) {
+}
+`, `package main
+
+import (
+	fmt "fmt"
+	spx2 "github.com/goplus/gop/cl/internal/spx2"
+)
+
+type Game struct {
+	spx2.Game
+}
+
+func (this *Game) MainEntry() {
+	fmt.Println("Hi, Sprite2")
+}
+func main() {
+	new(Game).Main()
+}
+
+type Kai struct {
+	spx2.Sprite2
+	*Game
+}
+
+func (this *Kai) onMsg(msg string) {
+}
+`, "Game.t2gmx", "Kai.t2spx2")
+
+	gopSpxTestEx(t, `
+println("Hi, Sprite")
+`, `
+func onMsg(msg string) {
+}
+`, `package main
+
+import (
+	fmt "fmt"
+	spx2 "github.com/goplus/gop/cl/internal/spx2"
+)
+
+type Dog struct {
+	spx2.Sprite
+}
+
+func (this *Dog) Main() {
+	fmt.Println("Hi, Sprite")
+}
+
+type Kai struct {
+	spx2.Sprite2
+}
+
+func (this *Kai) onMsg(msg string) {
+}
+`, "Dog.t3spx", "Kai.t3spx2")
 }
 
 func TestSpxMainEntry(t *testing.T) {
@@ -481,4 +556,44 @@ func (this *Kai) Main() {
 func (this *Kai) onMsg(msg string) {
 }
 `, "Game.t2gmx", "Kai.t2spx")
+}
+
+func TestSpxGoxBasic(t *testing.T) {
+	gopSpxTestEx(t, `
+func onInit() {
+	for {
+	}
+}
+`, `
+func onMsg(msg string) {
+	for {
+		say "Hi"
+	}
+}
+`, `package main
+
+import spx "github.com/goplus/gop/cl/internal/spx"
+
+type Game struct {
+	*spx.MyGame
+}
+
+func (this *Game) onInit() {
+	for {
+		spx.SchedNow()
+	}
+}
+
+type Kai struct {
+	spx.Sprite
+	*Game
+}
+
+func (this *Kai) onMsg(msg string) {
+	for {
+		spx.Sched()
+		this.Say("Hi")
+	}
+}
+`, "Game.tgmx.gox", "Kai.tspx.gox")
 }

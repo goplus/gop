@@ -1,0 +1,16 @@
+func fn1(P1[int], P2[int, string])
+
+func fn2(p1 P1[int], p2 P2[int, string])
+
+func fn3(p1 P1[int], p2 ...P2[int, string])
+
+func fn4(p1 []P1[int], p3 []P2[int, string]) *P1[P2[int, P1[int]]]
+
+func fn5(p1 []P1[int], p2 [2]P2[int, string])
+
+func fn6(p1 chan P1[int], p2 map[P1[int]]P2[int, string])
+
+func fn7(p1 struct {
+	v1 P1[int]
+	v2 P2[int, string]
+})

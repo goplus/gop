@@ -24,6 +24,8 @@ import (
 
 	gopast "github.com/goplus/gop/ast"
 	goptoken "github.com/goplus/gop/token"
+
+	"github.com/goplus/gop/ast/fromgo/typeparams"
 )
 
 // ----------------------------------------------------------------------------
@@ -116,6 +118,13 @@ func gopExpr(val ast.Expr) gopast.Expr {
 			Index:  gopExpr(v.Index),
 			Rbrack: v.Rbrack,
 		}
+	case *typeparams.IndexListExpr:
+		return &gopast.IndexListExpr{
+			X:       gopExpr(v.X),
+			Lbrack:  v.Lbrack,
+			Indices: gopExprs(v.Indices),
+			Rbrack:  v.Rbrack,
+		}
 	case *ast.ParenExpr:
 		return &gopast.ParenExpr{
 			Lparen: v.Lparen,
@@ -173,9 +182,10 @@ func gopExprs(vals []ast.Expr) []gopast.Expr {
 
 func gopFuncType(v *ast.FuncType) *gopast.FuncType {
 	return &gopast.FuncType{
-		Func:    v.Func,
-		Params:  gopFieldList(v.Params),
-		Results: gopFieldList(v.Results),
+		Func:       v.Func,
+		TypeParams: gopFieldList(typeparams.ForFuncType(v)),
+		Params:     gopFieldList(v.Params),
+		Results:    gopFieldList(v.Results),
 	}
 }
 
@@ -254,9 +264,10 @@ func gopImportSpec(spec *ast.ImportSpec) *gopast.ImportSpec {
 
 func gopTypeSpec(spec *ast.TypeSpec) *gopast.TypeSpec {
 	return &gopast.TypeSpec{
-		Name:   gopIdent(spec.Name),
-		Assign: spec.Assign,
-		Type:   gopType(spec.Type),
+		Name:       gopIdent(spec.Name),
+		TypeParams: gopFieldList(typeparams.ForTypeSpec(spec)),
+		Assign:     spec.Assign,
+		Type:       gopType(spec.Type),
 	}
 }
 

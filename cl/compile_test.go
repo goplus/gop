@@ -68,6 +68,11 @@ func gopClTest(t *testing.T, gopcode, expected string) {
 	gopClTestEx(t, gblConf, "main", gopcode, expected)
 }
 
+func gopClTestFile(t *testing.T, gopcode, expected string, fname string) {
+	fs := parsertest.NewSingleFileFS("/foo", fname, gopcode)
+	gopClTestFS(t, gblConf, fs, "main", expected)
+}
+
 func gopClTestEx(t *testing.T, conf *cl.Config, pkgname, gopcode, expected string) {
 	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", gopcode)
 	gopClTestFS(t, conf, fs, pkgname, expected)
@@ -134,6 +139,101 @@ func Ls(args ...string) {
 
 ls
 `, `
+`)
+}
+
+func TestFileOpen(t *testing.T) {
+	gopClTest(t, `
+for line <- open("foo.txt")! {
+	println line
+}
+`, `package main
+
+import (
+	fmt "fmt"
+	os "os"
+	iox "github.com/goplus/gop/builtin/iox"
+	errors "github.com/qiniu/x/errors"
+)
+
+func main() {
+	for _gop_it := iox.EnumLines(func() (_gop_ret *os.File) {
+		var _gop_err error
+		_gop_ret, _gop_err = os.Open("foo.txt")
+		if _gop_err != nil {
+			_gop_err = errors.NewFrame(_gop_err, "open(\"foo.txt\")", "/foo/bar.gop", 2, "main.main")
+			panic(_gop_err)
+		}
+		return
+	}()); ; {
+		var _gop_ok bool
+		line, _gop_ok := _gop_it.Next()
+		if !_gop_ok {
+			break
+		}
+		fmt.Println(line)
+	}
+}
+`)
+}
+
+func TestFileEnumLines(t *testing.T) {
+	gopClTest(t, `
+import "os"
+
+for line <- os.Stdin {
+	println line
+}
+`, `package main
+
+import (
+	fmt "fmt"
+	os "os"
+	iox "github.com/goplus/gop/builtin/iox"
+)
+
+func main() {
+	for _gop_it := iox.EnumLines(os.Stdin); ; {
+		var _gop_ok bool
+		line, _gop_ok := _gop_it.Next()
+		if !_gop_ok {
+			break
+		}
+		fmt.Println(line)
+	}
+}
+`)
+}
+
+func TestIoxLines(t *testing.T) {
+	gopClTest(t, `
+import "io"
+
+var r io.Reader
+
+for line <- lines(r) {
+	println line
+}
+`, `package main
+
+import (
+	fmt "fmt"
+	iox "github.com/goplus/gop/builtin/iox"
+	io "io"
+)
+
+var r io.Reader
+
+func main() {
+	for _gop_it := iox.Lines(r).Gop_Enum(); ; {
+		var _gop_ok bool
+		line, _gop_ok := _gop_it.Next()
+		if !_gop_ok {
+			break
+		}
+		fmt.Println(line)
+	}
+}
 `)
 }
 
@@ -819,7 +919,10 @@ func main() {
 	println(a, b)
 }`, `package main
 
-import fmt "fmt"
+import (
+	fmt "fmt"
+	errors "github.com/qiniu/x/errors"
+)
 
 func t() (int, int, error) {
 	return 0, 0, nil
@@ -829,6 +932,7 @@ func main() {
 		var _gop_err error
 		_gop_ret, _gop_ret2, _gop_err = t()
 		if _gop_err != nil {
+			_gop_err = errors.NewFrame(_gop_err, "t()", "/foo/bar.gop", 9, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -850,6 +954,8 @@ func main() {
 	t()!
 }`, `package main
 
+import errors "github.com/qiniu/x/errors"
+
 func t() error {
 	return nil
 }
@@ -858,6 +964,7 @@ func main() {
 		var _gop_err error
 		_gop_err = t()
 		if _gop_err != nil {
+			_gop_err = errors.NewFrame(_gop_err, "t()", "/foo/bar.gop", 9, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -1361,6 +1468,7 @@ func foo(script string) {
 import (
 	fmt "fmt"
 	goptest "github.com/goplus/gop/ast/goptest"
+	errors "github.com/qiniu/x/errors"
 	gopq "github.com/goplus/gop/ast/gopq"
 )
 
@@ -1369,6 +1477,7 @@ func foo(script string) {
 		var _gop_err error
 		_gop_ret, _gop_err = goptest.New(script)
 		if _gop_err != nil {
+			_gop_err = errors.NewFrame(_gop_err, "goptest.New(script)", "/foo/bar.gop", 4, "main.foo")
 			panic(_gop_err)
 		}
 		return
@@ -1393,6 +1502,7 @@ func foo(script string) {
 import (
 	fmt "fmt"
 	goptest "github.com/goplus/gop/ast/goptest"
+	errors "github.com/qiniu/x/errors"
 	gopq "github.com/goplus/gop/ast/gopq"
 )
 
@@ -1401,6 +1511,7 @@ func foo(script string) {
 		var _gop_err error
 		_gop_ret, _gop_err = goptest.New(script)
 		if _gop_err != nil {
+			_gop_err = errors.NewFrame(_gop_err, "goptest.New(script)", "/foo/bar.gop", 4, "main.foo")
 			panic(_gop_err)
 		}
 		return
@@ -1420,7 +1531,10 @@ func add(x, y string) (int, error) {
 }
 `, `package main
 
-import strconv "strconv"
+import (
+	strconv "strconv"
+	errors "github.com/qiniu/x/errors"
+)
 
 func add(x string, y string) (int, error) {
 	var _autoGo_1 int
@@ -1428,6 +1542,7 @@ func add(x string, y string) (int, error) {
 		var _gop_err error
 		_autoGo_1, _gop_err = strconv.Atoi(x)
 		if _gop_err != nil {
+			_gop_err = errors.NewFrame(_gop_err, "strconv.Atoi(x)", "/foo/bar.gop", 5, "main.add")
 			return 0, _gop_err
 		}
 		goto _autoGo_2
@@ -1438,6 +1553,7 @@ func add(x string, y string) (int, error) {
 		var _gop_err error
 		_autoGo_3, _gop_err = strconv.Atoi(y)
 		if _gop_err != nil {
+			_gop_err = errors.NewFrame(_gop_err, "strconv.Atoi(y)", "/foo/bar.gop", 5, "main.add")
 			return 0, _gop_err
 		}
 		goto _autoGo_4
@@ -1484,12 +1600,16 @@ func TestErrWrapPanic(t *testing.T) {
 var ret int = println("Hi")!
 `, `package main
 
-import fmt "fmt"
+import (
+	fmt "fmt"
+	errors "github.com/qiniu/x/errors"
+)
 
 var ret int = func() (_gop_ret int) {
 	var _gop_err error
 	_gop_ret, _gop_err = fmt.Println("Hi")
 	if _gop_err != nil {
+		_gop_err = errors.NewFrame(_gop_err, "println(\"Hi\")", "/foo/bar.gop", 2, "main.main")
 		panic(_gop_err)
 	}
 	return
@@ -1506,6 +1626,8 @@ func mkdir(name string) error {
 mkdir! "foo"
 `, `package main
 
+import errors "github.com/qiniu/x/errors"
+
 func mkdir(name string) error {
 	return nil
 }
@@ -1514,6 +1636,7 @@ func main() {
 		var _gop_err error
 		_gop_err = mkdir("foo")
 		if _gop_err != nil {
+			_gop_err = errors.NewFrame(_gop_err, "mkdir \"foo\"", "/foo/bar.gop", 6, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -1531,6 +1654,8 @@ func foo() (func(), error) {
 foo()!()
 `, `package main
 
+import errors "github.com/qiniu/x/errors"
+
 func foo() (func(), error) {
 	return nil, nil
 }
@@ -1539,6 +1664,7 @@ func main() {
 		var _gop_err error
 		_gop_ret, _gop_err = foo()
 		if _gop_err != nil {
+			_gop_err = errors.NewFrame(_gop_err, "foo()", "/foo/bar.gop", 6, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -1890,6 +2016,8 @@ func bar(conf ...Config) {
 
 foo({A: 1})
 bar({A: 2})
+foo({})
+bar({})
 `, `package main
 
 type Config struct {
@@ -1903,6 +2031,8 @@ func bar(conf ...Config) {
 func main() {
 	foo(&Config{A: 1})
 	bar(Config{A: 2})
+	foo(&Config{})
+	bar(Config{})
 }
 `)
 }
@@ -2022,13 +2152,13 @@ c := foo{B: "Hi"}
 
 type foo struct {
 	A int
-	B string "tag1:123"
+	B string `+"`tag1:123`"+`
 }
 
 func main() {
 	a := struct {
 		A int
-		B string "tag1:123"
+		B string `+"`tag1:123`"+`
 	}{1, "Hello"}
 	b := foo{1, "Hello"}
 	c := foo{B: "Hi"}
@@ -2058,7 +2188,7 @@ type bar = foo
 type foo struct {
 	p *foo
 	A int
-	B string "tag1:123"
+	B string `+"`tag1:123`"+`
 }
 
 func main() {
@@ -4143,6 +4273,245 @@ import fmt "fmt"
 
 func main() {
 	fmt.Println("hello")
+}
+`)
+}
+
+func TestCommandNotExpr(t *testing.T) {
+	gopClTest(t, `
+println !true
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Println(false)
+}
+`)
+	gopClTest(t, `
+a := true
+println !a
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	a := true
+	fmt.Println(!a)
+}
+`)
+	gopClTest(t, `
+println !func() bool { return true }()
+`, `package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Println(!func() bool {
+		return true
+	}())
+}
+`)
+}
+
+func TestClassFileGopx(t *testing.T) {
+	gopClTestFile(t, `
+var (
+	BaseClass
+	Width, Height float64
+	*AggClass
+)
+
+type BaseClass struct{
+	x int
+	y int
+}
+type AggClass struct{}
+
+func Area() float64 {
+	return Width * Height
+}
+`, `package main
+
+type BaseClass struct {
+	x int
+	y int
+}
+type AggClass struct {
+}
+type Rect struct {
+	BaseClass
+	Width  float64
+	Height float64
+	*AggClass
+}
+
+func (this *Rect) Area() float64 {
+	return this.Width * this.Height
+}
+`, "Rect.gox")
+	gopClTestFile(t, `
+import "bytes"
+var (
+	bytes.Buffer
+)
+func test(){}
+`, `package main
+
+import bytes "bytes"
+
+type Rect struct {
+	bytes.Buffer
+}
+
+func (this *Rect) test() {
+}
+`, "Rect.gox")
+	gopClTestFile(t, `
+import "bytes"
+var (
+	*bytes.Buffer
+)
+func test(){}
+`, `package main
+
+import bytes "bytes"
+
+type Rect struct {
+	*bytes.Buffer
+}
+
+func (this *Rect) test() {
+}
+`, "Rect.gox")
+	gopClTestFile(t, `
+import "bytes"
+var (
+	*bytes.Buffer "spec:\"buffer\""
+	a int "json:\"a\""
+	b int
+)
+func test(){}
+`, `package main
+
+import bytes "bytes"
+
+type Rect struct {
+	*bytes.Buffer `+"`spec:\"buffer\"`"+`
+	a             int `+"`json:\"a\"`"+`
+	b             int
+}
+
+func (this *Rect) test() {
+}
+`, "Rect.gox")
+}
+
+func TestOverload(t *testing.T) {
+	gopClTest(t, `
+import "github.com/goplus/gop/cl/internal/overload/foo"
+
+type Mesh struct {
+}
+
+func (p *Mesh) Name() string {
+	return "hello"
+}
+
+var (
+	m1 = &Mesh{}
+	m2 = &Mesh{}
+)
+
+foo.onKey "hello", => {
+}
+foo.onKey "hello", key => {
+}
+foo.onKey ["1"], => {
+}
+foo.onKey ["2"], key => {
+}
+foo.onKey [m1,m2], => {
+}
+foo.onKey [m1,m2], key => {
+}
+foo.onKey ["a"], ["b"], key => {
+}
+foo.onKey ["a"], [m1,m2], key => {
+}
+foo.onKey ["a"],nil,key => {
+}
+n := &foo.N{}
+n.onKey "hello", => {
+}
+n.onKey "hello", key => {
+}
+n.onKey ["1"], => {
+}
+n.onKey ["2"], key => {
+}
+n.onKey [m1,m2], => {
+}
+n.onKey [m1,m2], key => {
+}
+n.onKey ["a"], ["b"], key => {
+}
+n.onKey ["a"], [m1,m2], key => {
+}
+n.onKey ["a"],nil,key => {
+}
+`, `package main
+
+import foo "github.com/goplus/gop/cl/internal/overload/foo"
+
+type Mesh struct {
+}
+
+func (p *Mesh) Name() string {
+	return "hello"
+}
+
+var m1 = &Mesh{}
+var m2 = &Mesh{}
+
+func main() {
+	foo.OnKey__0("hello", func() {
+	})
+	foo.OnKey__1("hello", func(key string) {
+	})
+	foo.OnKey__2([]string{"1"}, func() {
+	})
+	foo.OnKey__3([]string{"2"}, func(key string) {
+	})
+	foo.OnKey__4([]foo.Mesher{m1, m2}, func() {
+	})
+	foo.OnKey__5([]foo.Mesher{m1, m2}, func(key foo.Mesher) {
+	})
+	foo.OnKey__6([]string{"a"}, []string{"b"}, func(key string) {
+	})
+	foo.OnKey__7([]string{"a"}, []foo.Mesher{m1, m2}, func(key string) {
+	})
+	foo.OnKey__6([]string{"a"}, nil, func(key string) {
+	})
+	n := &foo.N{}
+	n.OnKey__0("hello", func() {
+	})
+	n.OnKey__1("hello", func(key string) {
+	})
+	n.OnKey__2([]string{"1"}, func() {
+	})
+	n.OnKey__3([]string{"2"}, func(key string) {
+	})
+	n.OnKey__4([]foo.Mesher{m1, m2}, func() {
+	})
+	n.OnKey__5([]foo.Mesher{m1, m2}, func(key foo.Mesher) {
+	})
+	n.OnKey__6([]string{"a"}, []string{"b"}, func(key string) {
+	})
+	n.OnKey__7([]string{"a"}, []foo.Mesher{m1, m2}, func(key string) {
+	})
+	n.OnKey__6([]string{"a"}, nil, func(key string) {
+	})
 }
 `)
 }

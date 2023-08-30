@@ -25,6 +25,20 @@ import (
 
 // -----------------------------------------------------------------------------
 
+func TestExt(t *testing.T) {
+	cases := [][2]string{
+		{"t.spx.gox", ".spx"},
+		{"t.spx", ".spx"},
+		{"t.gox", ".gox"},
+		{"t.abc", ".abc"},
+	}
+	for _, c := range cases {
+		if ret := ClassFileExt(c[0]); ret != c[1] {
+			t.Fatal("ClassFileExt:", c[0], "expected:", c[1], "got:", ret)
+		}
+	}
+}
+
 func panicMsg(e interface{}) string {
 	switch v := e.(type) {
 	case string:
@@ -50,12 +64,33 @@ func testErrCode(t *testing.T, code string, errExp, panicExp string) {
 	}
 }
 
+func testClassErrCode(t *testing.T, code string, errExp, panicExp string) {
+	defer func() {
+		if e := recover(); e != nil {
+			if panicMsg(e) != panicExp {
+				t.Fatal("testErrCode panic:", e)
+			}
+		}
+	}()
+	fset := token.NewFileSet()
+	_, err := Parse(fset, "/foo/bar.gox", code, ParseGoPlusClass)
+	if err == nil || err.Error() != errExp {
+		t.Fatal("testErrCode error:", err)
+	}
+}
+
+func TestErrTuple(t *testing.T) {
+	testErrCode(t, `println (1,2)*2`, `/foo/bar.gop:1:9: tuple is not supported`, ``)
+	testErrCode(t, `println 2*(1,2)`, `/foo/bar.gop:1:13: expected ')', found ','`, ``)
+	testErrCode(t, `func test() (int,int) { return (100,100)`, `/foo/bar.gop:1:32: tuple is not supported`, ``)
+}
+
 func TestErrOperand(t *testing.T) {
 	testErrCode(t, `a :=`, `/foo/bar.gop:1:5: expected operand, found 'EOF'`, ``)
 }
 
 func TestErrMissingComma(t *testing.T) {
-	testErrCode(t, `func a(b int c)`, ``, `missing ',' in parameter list`)
+	testErrCode(t, `func a(b int c)`, `/foo/bar.gop:1:14: missing ',' in parameter list`, ``)
 }
 
 func TestErrLambda(t *testing.T) {
@@ -367,6 +402,43 @@ ast.FuncDecl:
                               Kind: STRING
                               Value: "error"
 `)
+}
+
+func TestClassErrCode(t *testing.T) {
+	testClassErrCode(t, `var (
+	A,B
+	v int
+)
+`, `/foo/bar.gox:2:2: missing variable type or initialization`, ``)
+	testClassErrCode(t, `var (
+	A.*B
+	v int
+)
+`, `/foo/bar.gox:2:4: expected 'IDENT', found '*' (and 2 more errors)`, ``)
+	testClassErrCode(t, `var (
+	[]A
+	v int
+)
+`, `/foo/bar.gox:2:2: expected 'IDENT', found '['`, ``)
+	testClassErrCode(t, `var (
+	*[]A
+	v int
+)
+`, `/foo/bar.gox:2:3: expected 'IDENT', found '['`, ``)
+	testClassErrCode(t, `var (
+	v int = 10
+)
+`, `/foo/bar.gox:2:8: syntax error: cannot assign value to field in class file`, ``)
+	testClassErrCode(t, `var (
+	v = 10
+)
+`, `/foo/bar.gox:2:4: syntax error: cannot assign value to field in class file`, ``)
+	testClassErrCode(t, `
+var (
+)
+const c = 100
+const d
+`, `/foo/bar.gox:5:7: missing constant value`, ``)
 }
 
 // -----------------------------------------------------------------------------

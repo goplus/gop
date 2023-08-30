@@ -25,3 +25,15 @@ ast.FuncDecl:
                   X:
                     ast.Ident:
                       Name: x
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.UnaryExpr:
+                  Op: !
+                  X:
+                    ast.Ident:
+                      Name: x

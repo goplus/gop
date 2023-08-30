@@ -36,27 +36,28 @@ import (
 
 // gop build
 var Cmd = &base.Command{
-	UsageLine: "gop build [-v -o output] [packages]",
+	UsageLine: "gop build [-debug -o output] [packages]",
 	Short:     "Build Go+ files",
 }
 
 var (
-	flagVerbose = flag.Bool("v", false, "print verbose information")
-	flagOutput  = flag.String("o", "", "gop build output file")
-	flag        = &Cmd.Flag
+	flagDebug  = flag.Bool("debug", false, "print debug information")
+	flagOutput = flag.String("o", "", "gop build output file")
+	flag       = &Cmd.Flag
 )
 
 func init() {
 	Cmd.Run = runCmd
 }
 
-func runCmd(_ *base.Command, args []string) {
+func runCmd(cmd *base.Command, args []string) {
+	pass := base.PassBuildFlags(cmd)
 	err := flag.Parse(args)
 	if err != nil {
 		log.Panicln("parse input arguments failed:", err)
 	}
 
-	if *flagVerbose {
+	if *flagDebug {
 		gox.SetDebug(gox.DbgFlagAll &^ gox.DbgFlagComments)
 		cl.SetDebug(cl.DbgFlagAll)
 		cl.SetDisableRecover(true)
@@ -85,6 +86,7 @@ func runCmd(_ *base.Command, args []string) {
 		}
 		confCmd.Flags = []string{"-o", output}
 	}
+	confCmd.Flags = append(confCmd.Flags, pass.Args...)
 	build(proj, conf, confCmd)
 }
 

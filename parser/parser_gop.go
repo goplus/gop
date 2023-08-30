@@ -19,10 +19,12 @@ package parser
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"io/fs"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -99,21 +101,30 @@ func astFileToPkg(file *ast.File, fileName string) (pkg *ast.Package) {
 // -----------------------------------------------------------------------------
 
 // ParseDir calls ParseFSDir by passing a local filesystem.
-//
 func ParseDir(fset *token.FileSet, path string, filter func(fs.FileInfo) bool, mode Mode) (pkgs map[string]*ast.Package, first error) {
 	return ParseFSDir(fset, local, path, Config{Filter: filter, Mode: mode})
 }
 
 type Config struct {
-	IsClass func(ext string) (isProj bool, ok bool)
-	Filter  func(fs.FileInfo) bool
-	Mode    Mode
+	ClassKind func(fname string) (isProj, ok bool)
+	Filter    func(fs.FileInfo) bool
+	Mode      Mode
 }
 
 // ParseDirEx calls ParseFSDir by passing a local filesystem.
-//
 func ParseDirEx(fset *token.FileSet, path string, conf Config) (pkgs map[string]*ast.Package, first error) {
 	return ParseFSDir(fset, local, path, conf)
+}
+
+// ClassFileExt returns the classfile extension
+func ClassFileExt(path string) (ext string) {
+	ext = filepath.Ext(path)
+	if ext == ".gox" {
+		if c := filepath.Ext(path[:len(path)-4]); c != "" {
+			return c
+		}
+	}
+	return
 }
 
 // ParseFSDir calls ParseFile for all files with names ending in ".gop" in the
@@ -128,14 +139,13 @@ func ParseDirEx(fset *token.FileSet, path string, conf Config) (pkgs map[string]
 // If the directory couldn't be read, a nil map and the respective error are
 // returned. If a parse error occurred, a non-nil but incomplete map and the
 // first error encountered are returned.
-//
 func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (pkgs map[string]*ast.Package, first error) {
 	list, err := fs.ReadDir(path)
 	if err != nil {
 		return nil, err
 	}
-	if conf.IsClass == nil {
-		conf.IsClass = defaultIsClass
+	if conf.ClassKind == nil {
+		conf.ClassKind = defaultClassKind
 	}
 	pkgs = make(map[string]*ast.Package)
 	for _, d := range list {
@@ -143,8 +153,9 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (p
 			continue
 		}
 		fname := d.Name()
+		fnameRmGox := fname
 		ext := filepath.Ext(fname)
-		var isProj, isClass, useGoParser bool
+		var isProj, isClass, isNormalGox, useGoParser, rmGox bool
 		switch ext {
 		case ".gop":
 		case ".go":
@@ -152,10 +163,28 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (p
 				continue
 			}
 			useGoParser = (conf.Mode & ParseGoAsGoPlus) == 0
-		default:
-			if isProj, isClass = conf.IsClass(ext); !isClass {
-				continue
+		case ".gox":
+			isClass = true
+			t := fname[:len(fname)-4]
+			if c := filepath.Ext(t); c != "" {
+				ext, fnameRmGox, rmGox = c, t, true
+			} else {
+				isNormalGox = true
 			}
+			fallthrough
+		default:
+			if !isNormalGox {
+				if isProj, isClass = conf.ClassKind(fnameRmGox); !isClass {
+					if rmGox {
+						return nil, fmt.Errorf("not found Go+ class by ext %q for %q", ext, fname)
+					}
+					continue
+				}
+			}
+		}
+		mode := conf.Mode
+		if isClass {
+			mode |= ParseGoPlusClass
 		}
 		if !strings.HasPrefix(fname, "_") && (conf.Filter == nil || conf.Filter(d)) {
 			filename := fs.Join(path, fname)
@@ -173,8 +202,9 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (p
 				} else {
 					first = err
 				}
-			} else if src, err := ParseFSFile(fset, fs, filename, nil, conf.Mode); err == nil {
+			} else if src, err := ParseFSFile(fset, fs, filename, nil, mode); err == nil {
 				src.IsProj, src.IsClass = isProj, isClass
+				src.IsNormalGox = isNormalGox
 				pkg := reqPkg(pkgs, src.Name.Name)
 				pkg.Files[filename] = src
 			} else if first == nil {
@@ -197,13 +227,13 @@ func reqPkg(pkgs map[string]*ast.Package, name string) *ast.Package {
 	return pkg
 }
 
-func defaultIsClass(ext string) (isProj bool, ok bool) {
+func defaultClassKind(fname string) (isProj bool, ok bool) {
+	ext := path.Ext(fname)
 	switch ext {
 	case ".gmx":
-		isProj = true
-		fallthrough
+		return true, true
 	case ".spx":
-		ok = true
+		return ext == "main.spx", true
 	}
 	return
 }

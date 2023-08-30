@@ -1,0 +1,41 @@
+package main
+
+file cmd2.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.SelectorExpr:
+                  X:
+                    ast.CallExpr:
+                      Fun:
+                        ast.CallExpr:
+                          Fun:
+                            ast.Ident:
+                              Name: add
+                          Args:
+                            ast.BasicLit:
+                              Kind: INT
+                              Value: 100
+                            ast.BasicLit:
+                              Kind: INT
+                              Value: 200
+                      Args:
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 0
+                  Sel:
+                    ast.Ident:
+                      Name: Test

@@ -18,7 +18,6 @@ package spx
 
 const (
 	GopPackage = true
-	Gop_game   = "*MyGame"
 	Gop_sched  = "Sched,SchedNow"
 )
 

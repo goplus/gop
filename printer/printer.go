@@ -808,7 +808,7 @@ func (p *printer) intersperseComments(next token.Position, tok token.Token) (wro
 	return
 }
 
-// whiteWhitespace writes the first n whitespace entries.
+// writeWhitespace writes the first n whitespace entries.
 func (p *printer) writeWhitespace(n int) {
 	// write entries
 	for i := 0; i < n; i++ {
@@ -854,7 +854,7 @@ func (p *printer) writeWhitespace(n int) {
 // ----------------------------------------------------------------------------
 // Printing interface
 
-// nlines limits n to maxNewlines.
+// nlimit limits n to maxNewlines.
 func nlimit(n int) int {
 	if n > maxNewlines {
 		n = maxNewlines
@@ -1045,7 +1045,7 @@ func (p *printer) flush(next token.Position, tok token.Token) (wroteNewline, dro
 	return
 }
 
-// getNode returns the ast.CommentGroup associated with n, if any.
+// getDoc returns the ast.CommentGroup associated with n, if any.
 func getDoc(n ast.Node) *ast.CommentGroup {
 	switch n := n.(type) {
 	case *ast.Field:

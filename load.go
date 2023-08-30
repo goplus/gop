@@ -51,14 +51,14 @@ func NotFound(err error) bool {
 	return errors.Err(err) == syscall.ENOENT
 }
 
-func loadMod(dir string, gop *env.Gop, conf *Config) (mod *gopmod.Module, err error) {
+func LoadMod(dir string, gop *env.Gop, conf *Config) (mod *gopmod.Module, err error) {
 	mod, err = gopmod.Load(dir, 0)
 	if err != nil && !NotFound(err) {
-		err = errors.NewWith(err, `gopmod.Load(dir, 0`, -2, "gopmod.Load", dir, 0)
+		err = errors.NewWith(err, `gopmod.Load(dir, 0)`, -2, "gopmod.Load", dir, 0)
 		return
 	}
 	if mod != nil {
-		err = mod.RegisterClasses()
+		err = mod.ImportClasses()
 		if err != nil {
 			err = errors.NewWith(err, `mod.RegisterClasses()`, -2, "(*gopmod.Module).RegisterClasses", mod)
 			return
@@ -101,15 +101,15 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 	if gop == nil {
 		gop = gopenv.Get()
 	}
-	mod, err := loadMod(dir, gop, conf)
+	mod, err := LoadMod(dir, gop, conf)
 	if err != nil {
 		return
 	}
 
 	pkgs, err := parser.ParseDirEx(fset, dir, parser.Config{
-		IsClass: mod.IsClass,
-		Filter:  conf.Filter,
-		Mode:    parser.ParseComments,
+		ClassKind: mod.ClassKind,
+		Filter:    conf.Filter,
+		Mode:      parser.ParseComments,
 	})
 	if err != nil {
 		return
@@ -177,7 +177,7 @@ func LoadFiles(files []string, conf *Config) (out *gox.Package, err error) {
 	if gop == nil {
 		gop = gopenv.Get()
 	}
-	mod, err := loadMod("", gop, conf)
+	mod, err := LoadMod("", gop, conf)
 	if err != nil {
 		err = errors.NewWith(err, `loadMod("", gop, conf)`, -2, "gop.loadMod", "", gop, conf)
 		return

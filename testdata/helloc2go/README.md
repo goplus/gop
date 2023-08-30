@@ -24,3 +24,7 @@ Run `gop run .` to see the output of this example:
 Hello, c2go!
 Hi,     3.1
 ```
+
+### Give a Star! ⭐
+
+If you like or are using Go+ to learn or start your projects, please give it a star. Thanks!

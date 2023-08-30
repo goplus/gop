@@ -1,0 +1,83 @@
+package main
+
+file cmd.gop
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: changeYpos
+              Args:
+                ast.UnaryExpr:
+                  Op: -
+                  X:
+                    ast.BasicLit:
+                      Kind: FLOAT
+                      Value: 0.7
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 8
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: changeYpos
+              Args:
+                ast.UnaryExpr:
+                  Op: -
+                  X:
+                    ast.BasicLit:
+                      Kind: FLOAT
+                      Value: 0.7
+        ast.ExprStmt:
+          X:
+            ast.BinaryExpr:
+              X:
+                ast.Ident:
+                  Name: changeYpos
+              Op: -
+              Y:
+                ast.BasicLit:
+                  Kind: FLOAT
+                  Value: 0.7
+        ast.ExprStmt:
+          X:
+            ast.BinaryExpr:
+              X:
+                ast.Ident:
+                  Name: changeYpos
+              Op: -
+              Y:
+                ast.BasicLit:
+                  Kind: FLOAT
+                  Value: 0.7
+        ast.ExprStmt:
+          X:
+            ast.IndexExpr:
+              X:
+                ast.Ident:
+                  Name: x
+              Index:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 1
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: x
+              Args:
+                ast.SliceLit:

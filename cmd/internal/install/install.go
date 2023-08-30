@@ -35,20 +35,21 @@ import (
 
 // gop install
 var Cmd = &base.Command{
-	UsageLine: "gop install [-v] [packages]",
+	UsageLine: "gop install [-debug] [packages]",
 	Short:     "Build Go+ files and install target to GOBIN",
 }
 
 var (
-	flag        = &Cmd.Flag
-	flagVerbose = flag.Bool("v", false, "print verbose information")
+	flag      = &Cmd.Flag
+	flagDebug = flag.Bool("debug", false, "print debug information")
 )
 
 func init() {
 	Cmd.Run = runCmd
 }
 
-func runCmd(_ *base.Command, args []string) {
+func runCmd(cmd *base.Command, args []string) {
+	pass := base.PassBuildFlags(cmd)
 	err := flag.Parse(args)
 	if err != nil {
 		log.Fatalln("parse input arguments failed:", err)
@@ -64,7 +65,7 @@ func runCmd(_ *base.Command, args []string) {
 		log.Panicln("gopprojs.ParseAll:", err)
 	}
 
-	if *flagVerbose {
+	if *flagDebug {
 		gox.SetDebug(gox.DbgFlagAll &^ gox.DbgFlagComments)
 		cl.SetDebug(cl.DbgFlagAll)
 		cl.SetDisableRecover(true)
@@ -73,6 +74,7 @@ func runCmd(_ *base.Command, args []string) {
 	gopEnv := gopenv.Get()
 	conf := &gop.Config{Gop: gopEnv}
 	confCmd := &gocmd.Config{Gop: gopEnv}
+	confCmd.Flags = pass.Args
 	for _, proj := range projs {
 		install(proj, conf, confCmd)
 	}

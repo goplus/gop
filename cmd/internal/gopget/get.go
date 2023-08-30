@@ -81,8 +81,8 @@ func get(pkgPath string) {
 
 	pkgMod, err := modload.Load(pkgModRoot, 0)
 	check(err)
-	if pkgMod.Classfile != nil {
-		mod.AddRegister(pkgModVer.Path)
+	if pkgMod.Project != nil {
+		mod.AddImport(pkgModVer.Path)
 		fmt.Fprintf(os.Stderr, "gop get: registered %s\n", pkgModVer.Path)
 	}
 

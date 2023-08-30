@@ -1,0 +1,12 @@
+var (
+	A `json:"a"`
+	*B
+	x, y string
+	C.A  `json:"ca"`
+	*C.B `json:"b"`
+	v    int `json:"v"`
+)
+
+type A struct{}
+
+type B struct{}

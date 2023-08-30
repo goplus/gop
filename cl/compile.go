@@ -23,10 +23,12 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/fromgo"
+	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
 	"github.com/goplus/gox/cpackages"
@@ -60,7 +62,8 @@ func SetDebug(flags int) {
 
 // -----------------------------------------------------------------------------
 
-type Class = modfile.Classfile
+type Project = modfile.Project
+type Class = modfile.Class
 
 // Config of loading Go+ packages.
 type Config struct {
@@ -82,7 +85,7 @@ type Config struct {
 	LookupPub func(pkgPath string) (pubfile string, err error)
 
 	// LookupClass lookups a class by specified file extension.
-	LookupClass func(ext string) (c *Class, ok bool)
+	LookupClass func(ext string) (c *Project, ok bool)
 
 	// An Importer resolves import paths to Packages.
 	Importer types.Importer
@@ -128,6 +131,9 @@ func (p *nodeInterp) LoadExpr(node ast.Node) (src string, pos token.Position) {
 	start := node.Pos()
 	pos = p.fset.Position(start)
 	f := p.files[pos.Filename]
+	if f == nil { // not found
+		return
+	}
 	n := int(node.End() - start)
 	pos.Filename = relFile(p.workingDir, pos.Filename)
 	if pos.Offset+n < 0 {
@@ -238,11 +244,14 @@ func doInitMethods(ld *typeLoader) {
 type pkgCtx struct {
 	*nodeInterp
 	*gmxSettings
-	cpkgs *cpackages.Importer
-	syms  map[string]loader
-	inits []func()
-	tylds []*typeLoader
-	errs  errors.List
+	cpkgs    *cpackages.Importer
+	syms     map[string]loader
+	generics map[string]bool // generic type record
+	inits    []func()
+	tylds    []*typeLoader
+	idents   []*ast.Ident // toType ident recored
+	errs     errors.List
+	inInst   int // toType in generic instance
 }
 
 type blockCtx struct {
@@ -253,6 +262,7 @@ type blockCtx struct {
 	imports      map[string]*gox.PkgRef
 	lookups      []*gox.PkgRef
 	clookups     []*cpackages.PkgRef
+	tlookup      *typeParamLookup
 	c2goBase     string // default is `github.com/goplus/`
 	targetDir    string
 	classRecv    *ast.FieldList // available when gmxSettings != nil
@@ -345,6 +355,10 @@ const (
 	testingGoFile  = "_test"
 )
 
+const (
+	ioxPkgPath = "github.com/goplus/gop/builtin/iox"
+)
+
 // NewPackage creates a Go+ package instance.
 func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package, err error) {
 	workingDir := conf.WorkingDir
@@ -361,7 +375,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		fset: fset, files: files, workingDir: workingDir,
 	}
 	ctx := &pkgCtx{
-		syms: make(map[string]loader), nodeInterp: interp,
+		syms: make(map[string]loader), nodeInterp: interp, generics: make(map[string]bool),
 	}
 	confGox := &gox.Config{
 		Fset:            fset,
@@ -372,6 +386,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		NewBuiltin:      newBuiltinDefault,
 		DefaultGoFile:   defaultGoFile,
 		NoSkipConstant:  conf.NoSkipConstant,
+		PkgPathIox:      ioxPkgPath,
 	}
 	if enableRecover {
 		defer func() {
@@ -387,8 +402,16 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	})
 	for file, gmx := range files {
 		if gmx.IsProj {
-			ctx.gmxSettings = newGmx(ctx, p, file, conf)
+			ctx.gmxSettings = newGmx(ctx, p, file, gmx, conf)
 			break
+		}
+	}
+	if ctx.gmxSettings == nil {
+		for file, gmx := range files {
+			if gmx.IsClass && !gmx.IsNormalGox {
+				ctx.gmxSettings = newGmx(ctx, p, file, gmx, conf)
+				break
+			}
 		}
 	}
 	for fpath, f := range files {
@@ -400,6 +423,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		}
 		preloadGopFile(p, ctx, fpath, f, conf)
 	}
+
 	for fpath, gof := range pkg.GoFiles {
 		f := fromgo.ASTFile(gof, 0)
 		ctx := &blockCtx{
@@ -408,16 +432,30 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		}
 		preloadFile(p, ctx, fpath, f, false)
 	}
-	for _, f := range files {
+
+	// sort files
+	type File struct {
+		*ast.File
+		path string
+	}
+	var sfiles []*File
+	for fpath, f := range files {
+		sfiles = append(sfiles, &File{f, fpath})
+	}
+	sort.Slice(sfiles, func(i, j int) bool {
+		return sfiles[i].path < sfiles[j].path
+	})
+
+	for _, f := range sfiles {
 		if f.IsProj {
-			loadFile(ctx, f)
+			loadFile(ctx, f.File)
 			gmxMainFunc(p, ctx)
 			break
 		}
 	}
-	for _, f := range files {
+	for _, f := range sfiles {
 		if !f.IsProj { // only one .gmx file
-			loadFile(ctx, f)
+			loadFile(ctx, f.File)
 		}
 	}
 	for _, ld := range ctx.tylds {
@@ -520,20 +558,24 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 			baseType = types.NewPointer(baseType)
 		}
 	case f.IsClass:
+		classType = getDefaultClass(file)
 		if parent.gmxSettings != nil {
-			classType = getDefaultClass(file)
-			o := parent.sprite
-			baseTypeName, baseType, spxClass = o.Name(), o.Type(), true
+			ext := parser.ClassFileExt(file)
+			o, ok := parent.sprite[ext]
+			if ok {
+				baseTypeName, baseType, spxClass = o.Name(), o.Type(), true
+			}
 		}
-		// TODO: panic
 	}
 	if classType != "" {
 		if debugLoad {
 			log.Println("==> Preload type", classType)
 		}
-		ctx.lookups = make([]*gox.PkgRef, len(parent.pkgPaths))
-		for i, pkgPath := range parent.pkgPaths {
-			ctx.lookups[i] = p.Import(pkgPath)
+		if parent.gmxSettings != nil {
+			ctx.lookups = make([]*gox.PkgRef, len(parent.pkgPaths))
+			for i, pkgPath := range parent.pkgPaths {
+				ctx.lookups[i] = p.Import(pkgPath)
+			}
 		}
 		syms := parent.syms
 		pos := f.Pos()
@@ -549,30 +591,41 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 					log.Println("==> Load > InitType", classType)
 				}
 				pkg := p.Types
-				flds := make([]*types.Var, 1, 2)
-				flds[0] = types.NewField(pos, pkg, baseTypeName, baseType, true)
-				if spxClass {
+				var flds []*types.Var
+				var tags []string
+				chk := newCheckRedecl()
+				if len(baseTypeName) != 0 {
+					flds = append(flds, types.NewField(pos, pkg, baseTypeName, baseType, true))
+					tags = append(tags, "")
+					chk.chkRedecl(ctx, baseTypeName, pos)
+				}
+				if spxClass && parent.gmxSettings != nil && parent.gameClass != "" {
 					typ := toType(ctx, &ast.StarExpr{X: &ast.Ident{Name: parent.gameClass}})
-					fld := types.NewField(pos, pkg, getTypeName(typ), typ, true)
-					flds = append(flds, fld)
+					name := getTypeName(typ)
+					if !chk.chkRedecl(ctx, name, pos) {
+						fld := types.NewField(pos, pkg, name, typ, true)
+						flds = append(flds, fld)
+						tags = append(tags, "")
+					}
 				}
 				for _, v := range specs {
 					spec := v.(*ast.ValueSpec)
-					if spec.Type == nil {
-						pos := ctx.Position(v.Pos())
-						ctx.handleCodeErrorf(&pos, "missing field type in class file")
-						continue
-					}
-					if len(spec.Values) > 0 {
-						pos := ctx.Position(v.Pos())
-						ctx.handleCodeErrorf(&pos, "cannot assign value to field in class file")
+					var embed bool
+					if spec.Names == nil {
+						embed = true
+						v := parseTypeEmbedName(spec.Type)
+						spec.Names = []*ast.Ident{v}
 					}
 					typ := toType(ctx, spec.Type)
 					for _, name := range spec.Names {
-						flds = append(flds, types.NewField(name.Pos(), pkg, name.Name, typ, false))
+						if chk.chkRedecl(ctx, name.Name, name.Pos()) {
+							continue
+						}
+						flds = append(flds, types.NewField(name.Pos(), pkg, name.Name, typ, embed))
+						tags = append(tags, toFieldTag(spec.Tag))
 					}
 				}
-				decl.InitType(p, types.NewStruct(flds, nil))
+				decl.InitType(p, types.NewStruct(flds, tags))
 			}
 			parent.tylds = append(parent.tylds, ld)
 		}
@@ -606,6 +659,20 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 		}
 	}
 	preloadFile(p, ctx, file, f, true)
+}
+
+func parseTypeEmbedName(typ ast.Expr) *ast.Ident {
+retry:
+	switch t := typ.(type) {
+	case *ast.Ident:
+		return t
+	case *ast.SelectorExpr:
+		return t.Sel
+	case *ast.StarExpr:
+		typ = t.X
+		goto retry
+	}
+	return nil
 }
 
 func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, genCode bool) {
@@ -719,6 +786,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, genCod
 							}
 						}
 					} else {
+						ctx.generics[name] = true
 						ld.typ = func() {
 							pkg := ctx.pkg.Types
 							if t.Assign != token.NoPos { // alias type
@@ -732,11 +800,12 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, genCod
 								log.Println("==> Load > NewType", name)
 							}
 							named := newType(pkg, t.Pos(), name)
+
 							ld.typInit = func() { // decycle
 								if debugLoad {
 									log.Println("==> Load > InitType", name)
 								}
-								initType(ctx, named, toType(ctx, t.Type))
+								initType(ctx, named, t)
 							}
 						}
 					}
@@ -793,13 +862,6 @@ func newType(pkg *types.Package, pos token.Pos, name string) *types.Named {
 	return types.NewNamed(typName, nil, nil)
 }
 
-func initType(ctx *blockCtx, named *types.Named, typ types.Type) {
-	if named, ok := typ.(*types.Named); ok {
-		typ = getUnderlying(ctx, named)
-	}
-	named.SetUnderlying(typ)
-}
-
 func aliasType(pkg *types.Package, pos token.Pos, name string, typ types.Type) {
 	o := types.NewTypeName(pos, pkg, name, typ)
 	pkg.Scope().Insert(o)
@@ -818,7 +880,7 @@ func declFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
 		return
 	}
 	pkg := ctx.pkg.Types
-	sig := toFuncType(ctx, d.Type, recv)
+	sig := toFuncType(ctx, d.Type, recv, d)
 	fn := types.NewFunc(d.Pos(), pkg, name, sig)
 	if recv != nil {
 		typ := recv.Type()
@@ -863,7 +925,7 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
 			}
 		}
 	}
-	sig := toFuncType(ctx, d.Type, recv)
+	sig := toFuncType(ctx, d.Type, recv, d)
 	fn, err := ctx.pkg.NewFuncWith(d.Pos(), name, sig, func() token.Pos {
 		return d.Recv.List[0].Type.Pos()
 	})
@@ -1035,6 +1097,14 @@ func loadVars(ctx *blockCtx, v *ast.ValueSpec, global bool) {
 	varDecl := ctx.pkg.NewVarEx(scope, v.Names[0].Pos(), typ, names...)
 	if nv := len(v.Values); nv > 0 {
 		cb := varDecl.InitStart(ctx.pkg)
+		if enableRecover {
+			defer func() {
+				if e := recover(); e != nil {
+					cb.ResetInit()
+					panic(e)
+				}
+			}()
+		}
 		if nv == 1 && len(names) == 2 {
 			compileExpr(ctx, v.Values[0], clCallWithTwoValue)
 		} else {

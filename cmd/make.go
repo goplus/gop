@@ -444,7 +444,21 @@ func uninstall() {
 	println("Go+ and related tools uninstalled successfully.")
 }
 
+func isInChinaWindows() bool {
+	// Run `systeminfo` command on windows to check locale.
+	out, err := execCommand("systeminfo")
+	if err != nil {
+		fmt.Println("Run [systeminfo] command failed with error: ", err)
+		return false
+	}
+	// Check if output contains `zh-cn;`
+	return strings.Contains(out, "zh-cn;")
+}
+
 func isInChina() bool {
+	if inWindows {
+		return isInChinaWindows()
+	}
 	const prefix = "LANG=\""
 	out, err := execCommand("locale")
 	if err != nil {
@@ -452,7 +466,7 @@ func isInChina() bool {
 	}
 	if strings.HasPrefix(out, prefix) {
 		out = out[len(prefix):]
-		return strings.HasPrefix(out, "zh_CN") || strings.HasPrefix(out, "zh_HK")
+		return strings.HasPrefix(out, "zh_CN")
 	}
 	return false
 }

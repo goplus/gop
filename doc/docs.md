@@ -1081,7 +1081,7 @@ b := a - 1/3r + 3 * 1/2r
 println a, b // 4/5 59/30
 ```
 
-Casting rational numbers works like other [primitive types](#primitive-types)):
+Casting rational numbers works like other [primitive types](#primitive-types):
 
 ```go
 a := 1r

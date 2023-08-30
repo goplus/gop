@@ -14,21 +14,26 @@
  * limitations under the License.
  */
 
-// Package gopfmt implements the ``gop fmt'' command.
+// Package gopfmt implements the “gop fmt” command.
 package gopfmt
 
 import (
 	"bytes"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/goplus/gop"
+
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/format"
+
+	goformat "go/format"
+	"go/parser"
+	"go/token"
 
 	xformat "github.com/goplus/gop/x/format"
 )
@@ -53,17 +58,11 @@ func init() {
 var (
 	procCnt    = 0
 	walkSubDir = false
-	extGops    = map[string]struct{}{
-		".go":  {},
-		".gop": {},
-		".spx": {},
-		".gmx": {},
-	}
-	rootDir = ""
+	rootDir    = ""
 )
 
-func gopfmt(path string, smart, mvgo bool) (err error) {
-	src, err := ioutil.ReadFile(path)
+func gopfmt(path string, class, smart, mvgo bool) (err error) {
+	src, err := os.ReadFile(path)
 	if err != nil {
 		return
 	}
@@ -71,7 +70,21 @@ func gopfmt(path string, smart, mvgo bool) (err error) {
 	if smart {
 		target, err = xformat.GopstyleSource(src, path)
 	} else {
-		target, err = format.Source(src, path)
+		if !mvgo && filepath.Ext(path) == ".go" {
+			fset := token.NewFileSet()
+			f, err := parser.ParseFile(fset, path, src, parser.ParseComments)
+			if err != nil {
+				return err
+			}
+			var buf bytes.Buffer
+			err = goformat.Node(&buf, fset, f)
+			if err != nil {
+				return err
+			}
+			target = buf.Bytes()
+		} else {
+			target, err = format.Source(src, class, path)
+		}
 	}
 	if err != nil {
 		return
@@ -92,7 +105,7 @@ func gopfmt(path string, smart, mvgo bool) (err error) {
 
 func writeFileWithBackup(path string, target []byte) (err error) {
 	dir, file := filepath.Split(path)
-	f, err := ioutil.TempFile(dir, file)
+	f, err := os.CreateTemp(dir, file)
 	if err != nil {
 		return
 	}
@@ -109,7 +122,15 @@ func writeFileWithBackup(path string, target []byte) (err error) {
 	return os.Rename(tmpfile, path)
 }
 
-func walk(path string, d fs.DirEntry, err error) error {
+type walker struct {
+	dirMap map[string]func(ext string) (ok, class bool)
+}
+
+func newWalker() *walker {
+	return &walker{dirMap: make(map[string]func(ext string) (ok, class bool))}
+}
+
+func (w *walker) walk(path string, d fs.DirEntry, err error) error {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	} else if d.IsDir() {
@@ -117,15 +138,44 @@ func walk(path string, d fs.DirEntry, err error) error {
 			return filepath.SkipDir
 		}
 	} else {
+		dir, _ := filepath.Split(path)
+		fn, ok := w.dirMap[dir]
+		if !ok {
+			if mod, err := gop.LoadMod(path, nil, &gop.Config{DontUpdateGoMod: true}); err == nil {
+				fn = func(ext string) (ok bool, class bool) {
+					switch ext {
+					case ".go", ".gop":
+						ok = true
+					case ".gox", ".spx", ".gmx":
+						ok, class = true, true
+					default:
+						class = mod.IsClass(ext)
+						ok = class
+					}
+					return
+				}
+			} else {
+				fn = func(ext string) (ok bool, class bool) {
+					switch ext {
+					case ".go", ".gop":
+						ok = true
+					case ".gox", ".spx", ".gmx":
+						ok, class = true, true
+					}
+					return
+				}
+			}
+			w.dirMap[dir] = fn
+		}
 		ext := filepath.Ext(path)
 		smart := *flagSmart
 		mvgo := smart && *flagMoveGo
-		if _, ok := extGops[ext]; ok && (!mvgo || ext == ".go") {
+		if ok, class := fn(ext); ok && (!mvgo || ext == ".go") {
 			procCnt++
 			if *flagNotExec {
 				fmt.Println("gop fmt", path)
 			} else {
-				err = gopfmt(path, smart && (mvgo || ext != ".go"), mvgo)
+				err = gopfmt(path, class, smart && (mvgo || ext != ".go"), mvgo)
 				if err != nil {
 					report(err)
 				}
@@ -149,6 +199,7 @@ func runCmd(cmd *base.Command, args []string) {
 	if narg < 1 {
 		cmd.Usage(os.Stderr)
 	}
+	walker := newWalker()
 	for i := 0; i < narg; i++ {
 		path := flag.Arg(i)
 		walkSubDir = strings.HasSuffix(path, "/...")
@@ -157,7 +208,7 @@ func runCmd(cmd *base.Command, args []string) {
 		}
 		procCnt = 0
 		rootDir = path
-		filepath.WalkDir(path, walk)
+		filepath.WalkDir(path, walker.walk)
 		if procCnt == 0 {
 			fmt.Println("no Go+ files in", path)
 		}
