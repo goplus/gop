@@ -22,7 +22,6 @@ import (
 	goast "go/ast"
 	"go/types"
 	"path"
-	"path/filepath"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
@@ -76,16 +75,23 @@ func (p *Package) ToAst() *goast.File {
 
 func ClassKind(fname string) (isProj, ok bool) {
 	ext := path.Ext(fname)
-	if c, ok := projects[ext]; ok {
-		for _, w := range c.Works {
-			if w.Ext == ext {
-				if ext != c.Ext || fname != "main"+ext {
-					return false, true
-				}
-				break
-			}
-		}
+	switch ext {
+	case ".gmx":
 		return true, true
+	case ".spx":
+		return ext == "main.spx", true
+	default:
+		if c, ok := projects[ext]; ok {
+			for _, w := range c.Works {
+				if w.Ext == ext {
+					if ext != c.Ext || fname != "main"+ext {
+						return false, true
+					}
+					break
+				}
+			}
+			return true, true
+		}
 	}
 	return
 }
@@ -134,54 +140,11 @@ func (c *Context) ParseFSDir(fs parser.FileSystem, dir string) (*Package, error)
 }
 
 func (c *Context) ParseFile(fname string, src interface{}) (*Package, error) {
-	srcDir, _ := filepath.Split(fname)
-	fnameRmGox := fname
-	ext := filepath.Ext(fname)
-	var err error
-	var isProj, isClass, isNormalGox, rmGox bool
-	switch ext {
-	case ".go", ".gop":
-	case ".gox":
-		isClass = true
-		t := fname[:len(fname)-4]
-		if c := filepath.Ext(t); c != "" {
-			ext, fnameRmGox, rmGox = c, t, true
-		} else {
-			isNormalGox = true
-		}
-		fallthrough
-	default:
-		if !isNormalGox {
-			if isProj, isClass = ClassKind(fnameRmGox); !isClass {
-				if rmGox {
-					return nil, fmt.Errorf("not found Go+ class by ext %q for %q", ext, fname)
-				}
-				return nil, nil
-			}
-		}
-	}
+	fs, err := newFileFS(fname, src)
 	if err != nil {
 		return nil, err
 	}
-	mode := parser.ParseComments
-	if isClass {
-		mode |= parser.ParseGoPlusClass
-	}
-	f, err := parser.ParseFile(c.fset, fname, src, mode)
-	if err != nil {
-		return nil, err
-	}
-	f.IsProj, f.IsClass, f.IsNormalGox = isProj, isClass, isNormalGox
-	name := f.Name.Name
-	pkgs := map[string]*ast.Package{
-		name: &ast.Package{
-			Name: name,
-			Files: map[string]*ast.File{
-				fname: f,
-			},
-		},
-	}
-	return c.loadPackage(srcDir, pkgs)
+	return c.ParseFSDir(fs, fs.dir)
 }
 
 func (c *Context) loadPackage(srcDir string, pkgs map[string]*ast.Package) (*Package, error) {
