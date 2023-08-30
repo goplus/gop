@@ -380,16 +380,16 @@ import (
 	spx "github.com/goplus/gop/cl/internal/spx"
 )
 
-type _main struct {
+type MyGame struct {
 	spx.MyGame
 }
 
-func (this *_main) MainEntry() {
+func (this *MyGame) MainEntry() {
 //line main.tspx:1
 	fmt.Println("hi")
 }
 func main() {
-	spx.Gopt_MyGame_Main(new(_main))
+	spx.Gopt_MyGame_Main(new(MyGame))
 }
 `)
 	gopClTestEx(t, "Cat.tspx", `println "hi"`, `package main
