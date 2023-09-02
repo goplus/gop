@@ -19,6 +19,8 @@ package build_test
 import (
 	"bytes"
 	"fmt"
+	"go/printer"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path"
@@ -38,6 +40,9 @@ func init() {
 	ctx.LoadConfig = func(cfg *cl.Config) {
 		cfg.NoFileLine = true
 	}
+	build.RegisterClassFileType(".tspx", "MyGame", []*build.Class{
+		{Ext: ".tspx", Class: "Sprite"},
+	}, "github.com/goplus/gop/cl/internal/spx")
 }
 
 func gopClTest(t *testing.T, gopcode interface{}, expected string) {
@@ -56,6 +61,22 @@ func gopClTestEx(t *testing.T, filename string, gopcode interface{}, expected st
 	}
 }
 
+func testKind(t *testing.T, name string, proj, class bool) {
+	isProj, ok := build.ClassKind(name)
+	if isProj != proj || ok != class {
+		t.Fatal("check classkind failed", name, isProj, ok)
+	}
+}
+
+func TestKind(t *testing.T) {
+	testKind(t, "Cat.gox", false, false)
+	testKind(t, "Cat.spx", false, true)
+	testKind(t, "main.spx", true, true)
+	testKind(t, "main.gmx", true, true)
+	testKind(t, "Cat.tspx", false, true)
+	testKind(t, "main.tspx", true, true)
+}
+
 func TestGop(t *testing.T) {
 	var src = `
 println "Go+"
@@ -72,6 +93,7 @@ func main() {
 	gopClTest(t, []byte(src), expect)
 	gopClTest(t, bytes.NewBufferString(src), expect)
 	gopClTestEx(t, `./_testdata/hello/main.gop`, nil, expect)
+
 	f, err := os.Open("./_testdata/hello/main.gop")
 	if err != nil {
 		t.Fatal("open failed", err)
@@ -340,12 +362,6 @@ func main() {
 `)
 }
 
-func init() {
-	build.RegisterClassFileType(".tspx", "MyGame", []*build.Class{
-		{Ext: ".tspx", Class: "Sprite"},
-	}, "github.com/goplus/gop/cl/internal/spx")
-}
-
 func TestSpx(t *testing.T) {
 	gopClTestEx(t, "main.tspx", `println "hi"`, `package main
 
@@ -419,4 +435,59 @@ func testFrom(t *testing.T, name, dir string) {
 
 func TestFromTestdata(t *testing.T) {
 	testFromDir(t, "./_testdata")
+}
+
+type localFS struct{}
+
+func (p localFS) ReadDir(dirname string) ([]fs.FileInfo, error) {
+	return ioutil.ReadDir(dirname)
+}
+
+func (p localFS) ReadFile(filename string) ([]byte, error) {
+	return os.ReadFile(filename)
+}
+
+func (p localFS) Join(elem ...string) string {
+	return filepath.Join(elem...)
+}
+
+func TestFS(t *testing.T) {
+	var expect = []byte(`package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Println("Go+")
+}
+`)
+	data, err := ctx.BuildFSDir(localFS{}, "./_testdata/hello")
+	if err != nil {
+		t.Fatal("build fs dir failed", err)
+	}
+	if bytes.Compare(data, expect) != 0 {
+		t.Fatal("build fs data failed", string(data))
+	}
+}
+
+func TestAst(t *testing.T) {
+	var expect = []byte(`package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Println("Go+")
+}
+`)
+	pkg, err := ctx.ParseFSDir(localFS{}, "./_testdata/hello")
+	if err != nil {
+		t.Fatal("parser fs dir failed", err)
+	}
+	var buf bytes.Buffer
+	err = printer.Fprint(&buf, pkg.Fset, pkg.ToAst())
+	if err != nil {
+		t.Fatal("fprint ast error", err)
+	}
+	if bytes.Compare(buf.Bytes(), expect) != 0 {
+		t.Fatal("build ast data failed", buf.String())
+	}
 }
