@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/goplus/gop/build"
+	"github.com/goplus/gop/x/build"
 )
 
 var (
