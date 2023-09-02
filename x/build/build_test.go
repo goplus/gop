@@ -19,6 +19,7 @@ package build_test
 import (
 	"bytes"
 	"fmt"
+	"go/printer"
 	"io/fs"
 	"io/ioutil"
 	"os"
@@ -465,5 +466,28 @@ func main() {
 	}
 	if bytes.Compare(data, expect) != 0 {
 		t.Fatal("build fs data failed", string(data))
+	}
+}
+
+func TestAst(t *testing.T) {
+	var expect = []byte(`package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Println("Go+")
+}
+`)
+	pkg, err := ctx.ParseFSDir(localFS{}, "./_testdata/hello")
+	if err != nil {
+		t.Fatal("parser fs dir failed", err)
+	}
+	var buf bytes.Buffer
+	err = printer.Fprint(&buf, pkg.Fset, pkg.ToAst())
+	if err != nil {
+		t.Fatal("fprint ast error", err)
+	}
+	if bytes.Compare(buf.Bytes(), expect) != 0 {
+		t.Fatal("build ast data failed", buf.String())
 	}
 }
