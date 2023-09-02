@@ -233,7 +233,7 @@ func defaultClassKind(fname string) (isProj bool, ok bool) {
 	case ".gmx":
 		return true, true
 	case ".spx":
-		return ext == "main.spx", true
+		return fname == "main.spx", true
 	}
 	return
 }
