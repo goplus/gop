@@ -40,7 +40,7 @@ func init() {
 	}
 }
 
-func gopClTest(t *testing.T, gopcode, expected string) {
+func gopClTest(t *testing.T, gopcode interface{}, expected string) {
 	gopClTestEx(t, "main.gop", gopcode, expected)
 }
 
@@ -57,24 +57,27 @@ func gopClTestEx(t *testing.T, filename string, gopcode interface{}, expected st
 }
 
 func TestGop(t *testing.T) {
-	gopClTest(t, `
+	var src = `
 println "Go+"
-`, `package main
+`
+	var expect = `package main
 
 import fmt "fmt"
 
 func main() {
 	fmt.Println("Go+")
 }
-`)
-	gopClTestEx(t, `./_testdata/hello/main.gop`, nil, `package main
-
-import fmt "fmt"
-
-func main() {
-	fmt.Println("hello")
-}
-`)
+`
+	gopClTest(t, src, expect)
+	gopClTest(t, []byte(src), expect)
+	gopClTest(t, bytes.NewBufferString(src), expect)
+	gopClTestEx(t, `./_testdata/hello/main.gop`, nil, expect)
+	f, err := os.Open("./_testdata/hello/main.gop")
+	if err != nil {
+		t.Fatal("open failed", err)
+	}
+	defer f.Close()
+	gopClTest(t, f, expect)
 }
 
 func TestGox(t *testing.T) {
