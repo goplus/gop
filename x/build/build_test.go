@@ -491,3 +491,18 @@ func main() {
 		t.Fatal("build ast data failed", buf.String())
 	}
 }
+
+func TestBuildError(t *testing.T) {
+	_, err := ctx.BuildFile("main.gop", "bad code")
+	if err == nil {
+		t.Fatal("BuildFile: no error?")
+	}
+	_, err = ctx.BuildDir("./testdata/nofound")
+	if err == nil {
+		t.Fatal("BuildDir: no error?")
+	}
+	_, err = ctx.BuildFSDir(localFS{}, "./testdata/nofound")
+	if err == nil {
+		t.Fatal("BuildDir: no error?")
+	}
+}
