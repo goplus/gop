@@ -79,7 +79,7 @@ func ClassKind(fname string) (isProj, ok bool) {
 	case ".gmx":
 		return true, true
 	case ".spx":
-		return ext == "main.spx", true
+		return fname == "main.spx", true
 	default:
 		if c, ok := projects[ext]; ok {
 			for _, w := range c.Works {
