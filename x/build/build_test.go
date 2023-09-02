@@ -19,6 +19,7 @@ package build_test
 import (
 	"bytes"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path"
@@ -91,6 +92,7 @@ func main() {
 	gopClTest(t, []byte(src), expect)
 	gopClTest(t, bytes.NewBufferString(src), expect)
 	gopClTestEx(t, `./_testdata/hello/main.gop`, nil, expect)
+
 	f, err := os.Open("./_testdata/hello/main.gop")
 	if err != nil {
 		t.Fatal("open failed", err)
@@ -432,4 +434,36 @@ func testFrom(t *testing.T, name, dir string) {
 
 func TestFromTestdata(t *testing.T) {
 	testFromDir(t, "./_testdata")
+}
+
+type localFS struct{}
+
+func (p localFS) ReadDir(dirname string) ([]fs.FileInfo, error) {
+	return ioutil.ReadDir(dirname)
+}
+
+func (p localFS) ReadFile(filename string) ([]byte, error) {
+	return os.ReadFile(filename)
+}
+
+func (p localFS) Join(elem ...string) string {
+	return filepath.Join(elem...)
+}
+
+func TestFS(t *testing.T) {
+	var expect = []byte(`package main
+
+import fmt "fmt"
+
+func main() {
+	fmt.Println("Go+")
+}
+`)
+	data, err := ctx.BuildFSDir(localFS{}, "./_testdata/hello")
+	if err != nil {
+		t.Fatal("build fs dir failed", err)
+	}
+	if bytes.Compare(data, expect) != 0 {
+		t.Fatal("build fs data failed", string(data))
+	}
 }
