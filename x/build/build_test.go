@@ -17,9 +17,16 @@
 package build_test
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
+	"path/filepath"
+	"strings"
 	"testing"
 
+	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/x/build"
 )
 
@@ -31,7 +38,7 @@ func gopClTest(t *testing.T, gopcode, expected string) {
 	gopClTestEx(t, "main.gop", gopcode, expected)
 }
 
-func gopClTestEx(t *testing.T, filename string, gopcode, expected string) {
+func gopClTestEx(t *testing.T, filename string, gopcode interface{}, expected string) {
 	data, err := ctx.BuildFile(filename, gopcode)
 	if err != nil {
 		t.Fatalf("build gop error: %v", err)
@@ -53,6 +60,15 @@ import fmt "fmt"
 func main() {
 //line main.gop:2
 	fmt.Println("Go+")
+}
+`)
+	gopClTestEx(t, `./_testdata/hello/main.gop`, nil, `package main
+
+import fmt "fmt"
+
+func main() {
+//line _testdata/hello/main.gop:1
+	fmt.Println("hello")
 }
 `)
 }
@@ -410,4 +426,44 @@ func (this *Cat) Main() {
 func main() {
 }
 `)
+}
+
+func testFromDir(t *testing.T, relDir string) {
+	dir, err := os.Getwd()
+	if err != nil {
+		t.Fatal("Getwd failed:", err)
+	}
+	dir = path.Join(dir, relDir)
+	fis, err := ioutil.ReadDir(dir)
+	if err != nil {
+		t.Fatal("ReadDir failed:", err)
+	}
+	for _, fi := range fis {
+		name := fi.Name()
+		if strings.HasPrefix(name, "_") {
+			continue
+		}
+		t.Run(name, func(t *testing.T) {
+			testFrom(t, name, dir+"/"+name)
+		})
+	}
+}
+
+func testFrom(t *testing.T, name, dir string) {
+	ctx.LoadConfig = func(cfg *cl.Config) {
+		cfg.NoFileLine = true
+	}
+	data, err := ctx.BuildDir(dir)
+	if err != nil {
+		t.Fatal("BuildDir failed:", err)
+	}
+	if chk, err := ioutil.ReadFile(filepath.Join(dir, name+".out")); err == nil {
+		if bytes.Compare(data, chk) != 0 {
+			t.Fatalf("-- %v output check error --\n%v\n--\n%v", name, string(data), string(chk))
+		}
+	}
+}
+
+func TestFromTestdata(t *testing.T) {
+	testFromDir(t, "./_testdata")
 }

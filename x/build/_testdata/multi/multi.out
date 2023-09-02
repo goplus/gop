@@ -1,0 +1,24 @@
+package main
+
+import fmt "fmt"
+
+type BaseClass struct {
+	x int
+	y int
+}
+type AggClass struct {
+}
+type Rect struct {
+	BaseClass
+	Width  float64
+	Height float64
+	*AggClass
+}
+
+func (this *Rect) Area() float64 {
+	return this.Width * this.Height
+}
+func main() {
+	rc := &Rect{Width: 100, Height: 200}
+	fmt.Println(rc)
+}
