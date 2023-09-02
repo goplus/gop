@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"fmt"
 	"go/printer"
+	"go/types"
 	"io/fs"
 	"io/ioutil"
 	"os"
@@ -492,7 +493,7 @@ func main() {
 	}
 }
 
-func TestBuildError(t *testing.T) {
+func TestError(t *testing.T) {
 	_, err := ctx.BuildFile("main.gop", "bad code")
 	if err == nil {
 		t.Fatal("BuildFile: no error?")
@@ -504,5 +505,32 @@ func TestBuildError(t *testing.T) {
 	_, err = ctx.BuildFSDir(localFS{}, "./testdata/nofound")
 	if err == nil {
 		t.Fatal("BuildDir: no error?")
+	}
+	_, err = ctx.BuildFile("main.gop", "func main()")
+	if err == nil {
+		t.Fatal("BuildFile: no error?")
+	}
+	_, err = ctx.ParseFile("main.gop", 123)
+	if err == nil {
+		t.Fatal("ParseFile: no error?")
+	}
+	_, err = ctx.ParseFile("./testdata/nofound/main.gop", nil)
+	if err == nil {
+		t.Fatal("ParseFile: no error?")
+	}
+}
+
+type emptyImporter struct {
+}
+
+func (i *emptyImporter) Import(path string) (*types.Package, error) {
+	return nil, fmt.Errorf("not found %v", path)
+}
+
+func TestContext(t *testing.T) {
+	ctx := build.NewContext(&emptyImporter{}, nil)
+	_, err := ctx.BuildFile("main.gop", `println "Go+"`)
+	if err == nil {
+		t.Fatal("BuildFile: no error?")
 	}
 }
