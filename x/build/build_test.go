@@ -38,6 +38,9 @@ func init() {
 	ctx.LoadConfig = func(cfg *cl.Config) {
 		cfg.NoFileLine = true
 	}
+	build.RegisterClassFileType(".tspx", "MyGame", []*build.Class{
+		{Ext: ".tspx", Class: "Sprite"},
+	}, "github.com/goplus/gop/cl/internal/spx")
 }
 
 func gopClTest(t *testing.T, gopcode interface{}, expected string) {
@@ -54,6 +57,22 @@ func gopClTestEx(t *testing.T, filename string, gopcode interface{}, expected st
 		fmt.Println(string(data))
 		t.Fail()
 	}
+}
+
+func testKind(t *testing.T, name string, proj, class bool) {
+	isProj, ok := build.ClassKind(name)
+	if isProj != proj || ok != class {
+		t.Fatal("check classkind failed", name, isProj, ok)
+	}
+}
+
+func TestKind(t *testing.T) {
+	testKind(t, "Cat.gox", false, false)
+	testKind(t, "Cat.spx", false, true)
+	testKind(t, "main.spx", true, true)
+	testKind(t, "main.gmx", true, true)
+	testKind(t, "Cat.tspx", false, true)
+	testKind(t, "main.tspx", true, true)
 }
 
 func TestGop(t *testing.T) {
@@ -338,12 +357,6 @@ func main() {
 	fmt.Println(addSafe("10", "abc"))
 }
 `)
-}
-
-func init() {
-	build.RegisterClassFileType(".tspx", "MyGame", []*build.Class{
-		{Ext: ".tspx", Class: "Sprite"},
-	}, "github.com/goplus/gop/cl/internal/spx")
 }
 
 func TestSpx(t *testing.T) {
