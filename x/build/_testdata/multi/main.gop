@@ -1,0 +1,2 @@
+rc := &Rect{Width: 100, Height: 200}
+println rc

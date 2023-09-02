@@ -17,21 +17,34 @@
 package build_test
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
+	"path/filepath"
+	"strings"
 	"testing"
 
-	"github.com/goplus/gop/build"
+	"github.com/goplus/gop/cl"
+	"github.com/goplus/gop/x/build"
 )
 
 var (
 	ctx = build.Default()
 )
 
-func gopClTest(t *testing.T, gopcode, expected string) {
+func init() {
+	ctx.LoadConfig = func(cfg *cl.Config) {
+		cfg.NoFileLine = true
+	}
+}
+
+func gopClTest(t *testing.T, gopcode interface{}, expected string) {
 	gopClTestEx(t, "main.gop", gopcode, expected)
 }
 
-func gopClTestEx(t *testing.T, filename string, gopcode, expected string) {
+func gopClTestEx(t *testing.T, filename string, gopcode interface{}, expected string) {
 	data, err := ctx.BuildFile(filename, gopcode)
 	if err != nil {
 		t.Fatalf("build gop error: %v", err)
@@ -44,17 +57,27 @@ func gopClTestEx(t *testing.T, filename string, gopcode, expected string) {
 }
 
 func TestGop(t *testing.T) {
-	gopClTest(t, `
+	var src = `
 println "Go+"
-`, `package main
+`
+	var expect = `package main
 
 import fmt "fmt"
 
 func main() {
-//line main.gop:2
 	fmt.Println("Go+")
 }
-`)
+`
+	gopClTest(t, src, expect)
+	gopClTest(t, []byte(src), expect)
+	gopClTest(t, bytes.NewBufferString(src), expect)
+	gopClTestEx(t, `./_testdata/hello/main.gop`, nil, expect)
+	f, err := os.Open("./_testdata/hello/main.gop")
+	if err != nil {
+		t.Fatal("open failed", err)
+	}
+	defer f.Close()
+	gopClTest(t, f, expect)
 }
 
 func TestGox(t *testing.T) {
@@ -68,7 +91,6 @@ type Rect struct {
 }
 
 func (this *Rect) Main() {
-//line Rect.gox:2
 	fmt.Println("Go+")
 }
 func main() {
@@ -96,7 +118,6 @@ type Rect struct {
 }
 
 func (this *Rect) Main() {
-//line Rect.gox:9
 	fmt.Println("Go+")
 }
 func main() {
@@ -124,7 +145,6 @@ type Rect struct {
 }
 
 func (this *Rect) Main() {
-//line Rect.gox:9
 	fmt.Println("Go+")
 }
 func main() {
@@ -150,7 +170,6 @@ type Rect struct {
 }
 
 func (this *Rect) Main() {
-//line Rect.gox:7
 	fmt.Println("Go+")
 }
 func main() {
@@ -176,7 +195,6 @@ type Rect struct {
 }
 
 func (this *Rect) Main() {
-//line Rect.gox:7
 	fmt.Println("Go+")
 }
 func main() {
@@ -197,9 +215,7 @@ import (
 )
 
 func main() {
-//line main.gop:2
 	a := ng.Bigrat_Init__2(big.NewRat(1, 2))
-//line main.gop:3
 	fmt.Println(a.Gop_Add(ng.Bigrat_Init__2(big.NewRat(1, 2))))
 }
 `)
@@ -225,14 +241,12 @@ import (
 var r io.Reader
 
 func main() {
-//line main.gop:6
 	for _gop_it := iox.Lines(r).Gop_Enum(); ; {
 		var _gop_ok bool
 		line, _gop_ok := _gop_it.Next()
 		if !_gop_ok {
 			break
 		}
-//line main.gop:7
 		fmt.Println(line)
 	}
 }
@@ -268,99 +282,59 @@ import (
 )
 
 func add(x string, y string) (int, error) {
-//line main.gop:7
 	var _autoGo_1 int
-//line main.gop:7
 	{
-//line main.gop:7
 		var _gop_err error
-//line main.gop:7
 		_autoGo_1, _gop_err = strconv.Atoi(x)
-//line main.gop:7
 		if _gop_err != nil {
-//line main.gop:7
 			_gop_err = errors.NewFrame(_gop_err, "strconv.Atoi(x)", "main.gop", 7, "main.add")
-//line main.gop:7
 			return 0, _gop_err
 		}
-//line main.gop:7
 		goto _autoGo_2
 	_autoGo_2:
-//line main.gop:7
 	}
-//line main.gop:7
 	var _autoGo_3 int
-//line main.gop:7
 	{
-//line main.gop:7
 		var _gop_err error
-//line main.gop:7
 		_autoGo_3, _gop_err = strconv.Atoi(y)
-//line main.gop:7
 		if _gop_err != nil {
-//line main.gop:7
 			_gop_err = errors.NewFrame(_gop_err, "strconv.Atoi(y)", "main.gop", 7, "main.add")
-//line main.gop:7
 			return 0, _gop_err
 		}
-//line main.gop:7
 		goto _autoGo_4
 	_autoGo_4:
-//line main.gop:7
 	}
-//line main.gop:7
 	return _autoGo_1 + _autoGo_3, nil
 }
 func addSafe(x string, y string) int {
-//line main.gop:11
 	return func() (_gop_ret int) {
-//line main.gop:11
 		var _gop_err error
-//line main.gop:11
 		_gop_ret, _gop_err = strconv.Atoi(x)
-//line main.gop:11
 		if _gop_err != nil {
-//line main.gop:11
 			return 0
 		}
-//line main.gop:11
 		return
 	}() + func() (_gop_ret int) {
-//line main.gop:11
 		var _gop_err error
-//line main.gop:11
 		_gop_ret, _gop_err = strconv.Atoi(y)
-//line main.gop:11
 		if _gop_err != nil {
-//line main.gop:11
 			return 0
 		}
-//line main.gop:11
 		return
 	}()
 }
 func main() {
-//line main.gop:14
 	fmt.Println(func() (_gop_ret int) {
-//line main.gop:14
 		var _gop_err error
-//line main.gop:14
 		_gop_ret, _gop_err = add("100", "23")
-//line main.gop:14
 		if _gop_err != nil {
-//line main.gop:14
 			_gop_err = errors.NewFrame(_gop_err, "add(\"100\", \"23\")", "main.gop", 14, "main.main")
-//line main.gop:14
 			panic(_gop_err)
 		}
-//line main.gop:14
 		return
 	}())
-//line main.gop:16
 	sum, err := add("10", "abc")
-//line main.gop:17
 	fmt.Println(sum, err)
-//line main.gop:19
 	fmt.Println(addSafe("10", "abc"))
 }
 `)
@@ -385,7 +359,6 @@ type MyGame struct {
 }
 
 func (this *MyGame) MainEntry() {
-//line main.tspx:1
 	fmt.Println("hi")
 }
 func main() {
@@ -404,10 +377,46 @@ type Cat struct {
 }
 
 func (this *Cat) Main() {
-//line Cat.tspx:1
 	fmt.Println("hi")
 }
 func main() {
 }
 `)
+}
+
+func testFromDir(t *testing.T, relDir string) {
+	dir, err := os.Getwd()
+	if err != nil {
+		t.Fatal("Getwd failed:", err)
+	}
+	dir = path.Join(dir, relDir)
+	fis, err := ioutil.ReadDir(dir)
+	if err != nil {
+		t.Fatal("ReadDir failed:", err)
+	}
+	for _, fi := range fis {
+		name := fi.Name()
+		if strings.HasPrefix(name, "_") {
+			continue
+		}
+		t.Run(name, func(t *testing.T) {
+			testFrom(t, name, dir+"/"+name)
+		})
+	}
+}
+
+func testFrom(t *testing.T, name, dir string) {
+	data, err := ctx.BuildDir(dir)
+	if err != nil {
+		t.Fatal("BuildDir failed:", err)
+	}
+	if chk, err := ioutil.ReadFile(filepath.Join(dir, name+".expect")); err == nil {
+		if bytes.Compare(data, chk) != 0 {
+			t.Fatalf("-- %v output check error --\n%v\n--\n%v", name, string(data), string(chk))
+		}
+	}
+}
+
+func TestFromTestdata(t *testing.T) {
+	testFromDir(t, "./_testdata")
 }
