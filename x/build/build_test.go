@@ -457,7 +457,7 @@ func testFrom(t *testing.T, name, dir string) {
 	if err != nil {
 		t.Fatal("BuildDir failed:", err)
 	}
-	if chk, err := ioutil.ReadFile(filepath.Join(dir, name+".out")); err == nil {
+	if chk, err := ioutil.ReadFile(filepath.Join(dir, name+".expect")); err == nil {
 		if bytes.Compare(data, chk) != 0 {
 			t.Fatalf("-- %v output check error --\n%v\n--\n%v", name, string(data), string(chk))
 		}
