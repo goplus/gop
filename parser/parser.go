@@ -3636,7 +3636,6 @@ func (p *parser) parseDecl(sync map[token.Token]bool) ast.Decl {
 		decl, call := p.parseFuncDeclOrCall()
 		if decl != nil {
 			if p.errors.Len() != 0 {
-				p.errorExpected(pos, "declaration", 2)
 				p.advance(sync)
 			}
 			return decl
