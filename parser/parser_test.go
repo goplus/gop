@@ -144,6 +144,10 @@ func TestErrInFunc(t *testing.T) {
 	a.test, => {
 	}
 }`, `/foo/bar.gop:2:10: expected operand, found '=>' (and 1 more errors)`, ``)
+	testErrCode(t, `func test() {
+		,
+	}
+}`, `/foo/bar.gop:2:3: expected statement, found ',' (and 1 more errors)`, ``)
 }
 
 // -----------------------------------------------------------------------------
