@@ -4515,3 +4515,45 @@ func main() {
 }
 `)
 }
+
+func TestClassFileMember(t *testing.T) {
+	gopClTestFile(t, `type Engine struct {
+}
+
+func (e *Engine) EnterPointerLock() {
+}
+
+func (e *Engine) SetEnable(b bool) {
+}
+
+
+func Engine() *Engine {
+	return &Engine{}
+}
+
+func Test() {
+	engine.setEnable true
+	engine.enterPointerLock
+}
+`, `package main
+
+type Engine struct {
+}
+
+func (e *Engine) EnterPointerLock() {
+}
+func (e *Engine) SetEnable(b bool) {
+}
+
+type Rect struct {
+}
+
+func (this *Rect) Engine() *Engine {
+	return &Engine{}
+}
+func (this *Rect) Test() {
+	this.Engine().SetEnable(true)
+	this.Engine().EnterPointerLock()
+}
+`, "Rect.gox")
+}
