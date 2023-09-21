@@ -24,7 +24,7 @@ import (
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/parser/parsertest"
+	"github.com/goplus/gop/parser/fsx/memfs"
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/mod/modfile"
 )
@@ -77,7 +77,7 @@ func gopSpxTestExConf(t *testing.T, name string, conf *cl.Config, gmx, spxcode, 
 		cl.SetDisableRecover(true)
 		defer cl.SetDisableRecover(false)
 
-		fs := parsertest.NewTwoFilesFS("/foo", spxfile, spxcode, gmxfile, gmx)
+		fs := memfs.TwoFiles("/foo", spxfile, spxcode, gmxfile, gmx)
 		pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", spxParserConf())
 		if err != nil {
 			scanner.PrintError(os.Stderr, err)
@@ -101,7 +101,7 @@ func gopSpxTestExConf(t *testing.T, name string, conf *cl.Config, gmx, spxcode, 
 }
 
 func gopSpxErrorTestEx(t *testing.T, msg, gmx, spxcode, gmxfile, spxfile string) {
-	fs := parsertest.NewTwoFilesFS("/foo", spxfile, spxcode, gmxfile, gmx)
+	fs := memfs.TwoFiles("/foo", spxfile, spxcode, gmxfile, gmx)
 	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", spxParserConf())
 	if err != nil {
 		scanner.PrintError(os.Stderr, err)

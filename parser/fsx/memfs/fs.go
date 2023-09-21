@@ -14,85 +14,66 @@
  * limitations under the License.
  */
 
-package build
+package memfs
 
 import (
 	"bytes"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
-	"time"
 )
 
-type memFileInfo struct {
-	name string
-}
-
-func (p *memFileInfo) Name() string {
-	return p.name
-}
-
-func (p *memFileInfo) Size() int64 {
-	return 0
-}
-
-func (p *memFileInfo) Mode() os.FileMode {
-	return 0
-}
-
-func (p *memFileInfo) ModTime() (t time.Time) {
-	return
-}
-
-func (p *memFileInfo) IsDir() bool {
-	return false
-}
-
-func (p *memFileInfo) Sys() interface{} {
-	return nil
-}
-
-type fileFS struct {
-	dir      string
+type FileFS struct {
 	filename string
 	data     []byte
-	info     fs.FileInfo
+	info     fs.DirEntry
 }
 
-func newFileFS(filename string, src interface{}) (f *fileFS, err error) {
-	dir, name := filepath.Split(filename)
+type dirEntry struct {
+	fs.FileInfo
+}
+
+func (p *dirEntry) Type() fs.FileMode {
+	return p.FileInfo.Mode().Type()
+}
+
+func (p *dirEntry) Info() (fs.FileInfo, error) {
+	return p.FileInfo, nil
+}
+
+func File(filename string, src interface{}) (f *FileFS, err error) {
 	var data []byte
-	var info fs.FileInfo
+	var info fs.DirEntry
 	if src != nil {
 		data, err = readSource(src)
 		if err != nil {
 			return
 		}
-		info = &memFileInfo{name: name}
+		info = &memFileInfo{name: filename, size: len(data)}
 	} else {
-		info, err = os.Stat(filename)
-		if err != nil {
-			return
+		fi, e := os.Stat(filename)
+		if e != nil {
+			return nil, e
 		}
 		data, err = os.ReadFile(filename)
 		if err != nil {
 			return
 		}
+		info = &dirEntry{fi}
 	}
-	return &fileFS{dir: dir, filename: filename, data: data, info: info}, nil
+	return &FileFS{filename: filename, data: data, info: info}, nil
 }
 
-func (p fileFS) ReadDir(dirname string) ([]fs.FileInfo, error) {
-	return []fs.FileInfo{p.info}, nil
+func (p FileFS) ReadDir(dirname string) ([]fs.DirEntry, error) {
+	return []fs.DirEntry{p.info}, nil
 }
 
-func (p fileFS) ReadFile(filename string) ([]byte, error) {
+func (p FileFS) ReadFile(filename string) ([]byte, error) {
 	return p.data, nil
 }
 
-func (p fileFS) Join(elem ...string) string {
+func (p FileFS) Join(elem ...string) string {
 	return filepath.Join(elem...)
 }
 
@@ -108,7 +89,7 @@ func readSource(src interface{}) ([]byte, error) {
 			return s.Bytes(), nil
 		}
 	case io.Reader:
-		return ioutil.ReadAll(s)
+		return io.ReadAll(s)
 	}
 	return nil, os.ErrInvalid
 }

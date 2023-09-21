@@ -26,6 +26,7 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/goplus/gop/parser/fsx/memfs"
 	"github.com/goplus/gop/parser/parsertest"
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
@@ -132,7 +133,7 @@ func TestParseGoFiles(t *testing.T) {
 
 func TestGopAutoGen(t *testing.T) {
 	fset := token.NewFileSet()
-	fs := parsertest.NewSingleFileFS("/foo", "gop_autogen.go", ``)
+	fs := memfs.SingleFile("/foo", "gop_autogen.go", ``)
 	pkgs, err := ParseFSDir(fset, fs, "/foo", Config{})
 	if err != nil {
 		t.Fatal("ParseFSDir:", err)
@@ -144,7 +145,7 @@ func TestGopAutoGen(t *testing.T) {
 
 func TestGoFile(t *testing.T) {
 	fset := token.NewFileSet()
-	fs := parsertest.NewSingleFileFS("/foo", "test.go", `package foo`)
+	fs := memfs.SingleFile("/foo", "test.go", `package foo`)
 	pkgs, err := ParseFSDir(fset, fs, "/foo", Config{})
 	if err != nil {
 		t.Fatal("ParseFSDir:", err)
@@ -156,25 +157,25 @@ func TestGoFile(t *testing.T) {
 
 func TestErrParse(t *testing.T) {
 	fset := token.NewFileSet()
-	fs := parsertest.NewSingleFileFS("/foo", "test.go", `package foo bar`)
+	fs := memfs.SingleFile("/foo", "test.go", `package foo bar`)
 	_, err := ParseFSDir(fset, fs, "/foo", Config{})
 	if err == nil {
 		t.Fatal("ParseFSDir test.go: no error?")
 	}
 
-	fs = parsertest.NewSingleFileFS("/foo", "test.gop", `package foo bar`)
+	fs = memfs.SingleFile("/foo", "test.gop", `package foo bar`)
 	_, err = ParseFSDir(fset, fs, "/foo", Config{})
 	if err == nil {
 		t.Fatal("ParseFSDir test.gop: no error?")
 	}
 
-	fs = parsertest.NewMemFS(map[string][]string{"/foo": {"test.go"}}, map[string]string{})
+	fs = memfs.New(map[string][]string{"/foo": {"test.go"}}, map[string]string{})
 	_, err = ParseFSDir(fset, fs, "/foo", Config{})
 	if err != syscall.ENOENT {
 		t.Fatal("ParseFSDir:", err)
 	}
 
-	fs = parsertest.NewSingleFileFS("/foo", "test.abc.gox", `package foo`)
+	fs = memfs.SingleFile("/foo", "test.abc.gox", `package foo`)
 	_, err = ParseFSDir(fset, fs, "/foo", Config{})
 	if err == nil {
 		t.Fatal("ParseFSDir test.gop: no error?")

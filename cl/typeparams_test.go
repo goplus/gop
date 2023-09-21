@@ -11,7 +11,7 @@ import (
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/parser/parsertest"
+	"github.com/goplus/gop/parser/fsx/memfs"
 )
 
 func TestTypeParamsFunc(t *testing.T) {
@@ -203,7 +203,7 @@ func mixedErrorTest(t *testing.T, msg, gocode, gopcode string) {
 }
 
 func mixedErrorTestEx(t *testing.T, pkgname, msg, gocode, gopcode string) {
-	fs := parsertest.NewTwoFilesFS("/foo", "a.go", gocode, "b.gop", gopcode)
+	fs := memfs.TwoFiles("/foo", "a.go", gocode, "b.gop", gopcode)
 	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", parser.Config{})
 	if err != nil {
 		scanner.PrintError(os.Stderr, err)
