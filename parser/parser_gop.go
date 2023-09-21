@@ -22,8 +22,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"io/ioutil"
-	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -32,6 +30,7 @@ import (
 	goparser "go/parser"
 
 	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/parser/fsx"
 	"github.com/goplus/gop/token"
 )
 
@@ -51,30 +50,9 @@ func SetDebug(dbgFlags int) {
 	debugParseError = (dbgFlags & DbgFlagParseError) != 0
 }
 
+type FileSystem = fsx.FileSystem
+
 // -----------------------------------------------------------------------------
-
-// FileSystem represents a file system.
-type FileSystem interface {
-	ReadDir(dirname string) ([]fs.FileInfo, error)
-	ReadFile(filename string) ([]byte, error)
-	Join(elem ...string) string
-}
-
-type localFS struct{}
-
-func (p localFS) ReadDir(dirname string) ([]fs.FileInfo, error) {
-	return ioutil.ReadDir(dirname)
-}
-
-func (p localFS) ReadFile(filename string) ([]byte, error) {
-	return os.ReadFile(filename)
-}
-
-func (p localFS) Join(elem ...string) string {
-	return filepath.Join(elem...)
-}
-
-var local FileSystem = localFS{}
 
 // Parse parses a single Go+ source file. The target specifies the Go+ source file.
 // If the file couldn't be read, a nil map and the respective error are returned.
@@ -102,7 +80,7 @@ func astFileToPkg(file *ast.File, fileName string) (pkg *ast.Package) {
 
 // ParseDir calls ParseFSDir by passing a local filesystem.
 func ParseDir(fset *token.FileSet, path string, filter func(fs.FileInfo) bool, mode Mode) (pkgs map[string]*ast.Package, first error) {
-	return ParseFSDir(fset, local, path, Config{Filter: filter, Mode: mode})
+	return ParseFSDir(fset, fsx.Local, path, Config{Filter: filter, Mode: mode})
 }
 
 type Config struct {
@@ -113,7 +91,7 @@ type Config struct {
 
 // ParseDirEx calls ParseFSDir by passing a local filesystem.
 func ParseDirEx(fset *token.FileSet, path string, conf Config) (pkgs map[string]*ast.Package, first error) {
-	return ParseFSDir(fset, local, path, conf)
+	return ParseFSDir(fset, fsx.Local, path, conf)
 }
 
 // ClassFileExt returns the classfile extension
@@ -186,7 +164,7 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (p
 		if isClass {
 			mode |= ParseGoPlusClass
 		}
-		if !strings.HasPrefix(fname, "_") && (conf.Filter == nil || conf.Filter(d)) {
+		if !strings.HasPrefix(fname, "_") && (conf.Filter == nil || filter(conf.Filter, d)) {
 			filename := fs.Join(path, fname)
 			if useGoParser {
 				if filedata, err := fs.ReadFile(filename); err == nil {
@@ -215,6 +193,11 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (p
 	return
 }
 
+func filter(fn func(fs.FileInfo) bool, d fs.DirEntry) bool {
+	fi, err := d.Info()
+	return err != nil || fn(fi)
+}
+
 func reqPkg(pkgs map[string]*ast.Package, name string) *ast.Package {
 	pkg, found := pkgs[name]
 	if !found {
@@ -241,7 +224,7 @@ func defaultClassKind(fname string) (isProj bool, ok bool) {
 // -----------------------------------------------------------------------------
 
 func ParseFiles(fset *token.FileSet, files []string, mode Mode) (map[string]*ast.Package, error) {
-	return ParseFSFiles(fset, local, files, mode)
+	return ParseFSFiles(fset, fsx.Local, files, mode)
 }
 
 func ParseFSFiles(fset *token.FileSet, fs FileSystem, files []string, mode Mode) (map[string]*ast.Package, error) {
@@ -266,7 +249,7 @@ func ParseFSFiles(fset *token.FileSet, fs FileSystem, files []string, mode Mode)
 
 // ParseFile parses the source code of a single Go+ source file and returns the corresponding ast.File node.
 func ParseFile(fset *token.FileSet, filename string, src interface{}, mode Mode) (f *ast.File, err error) {
-	return ParseFSFile(fset, local, filename, src, mode)
+	return ParseFSFile(fset, fsx.Local, filename, src, mode)
 }
 
 // ParseFSFile parses the source code of a single Go+ source file and returns the corresponding ast.File node.
@@ -299,7 +282,7 @@ func readSource(src interface{}) ([]byte, error) {
 			return s.Bytes(), nil
 		}
 	case io.Reader:
-		return ioutil.ReadAll(s)
+		return io.ReadAll(s)
 	}
 	return nil, errInvalidSource
 }

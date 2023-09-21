@@ -18,7 +18,6 @@ package parsertest
 
 import (
 	"io/fs"
-	"os"
 	"path"
 	"syscall"
 	"time"
@@ -38,7 +37,11 @@ func (p *memFileInfo) Size() int64 {
 	return 0
 }
 
-func (p *memFileInfo) Mode() os.FileMode {
+func (p *memFileInfo) Mode() fs.FileMode {
+	return 0
+}
+
+func (p *memFileInfo) Type() fs.FileMode {
 	return 0
 }
 
@@ -54,6 +57,10 @@ func (p *memFileInfo) Sys() interface{} {
 	return nil
 }
 
+func (p *memFileInfo) Info() (fs.FileInfo, error) {
+	return p, nil
+}
+
 // MemFS represents a file system in memory.
 type MemFS struct {
 	dirs  map[string][]string
@@ -67,9 +74,9 @@ func NewMemFS(dirs map[string][]string, files map[string]string) *MemFS {
 
 // ReadDir reads the directory named by dirname and returns
 // a list of directory entries sorted by filename.
-func (p *MemFS) ReadDir(dirname string) ([]fs.FileInfo, error) {
+func (p *MemFS) ReadDir(dirname string) ([]fs.DirEntry, error) {
 	if items, ok := p.dirs[dirname]; ok {
-		fis := make([]fs.FileInfo, len(items))
+		fis := make([]fs.DirEntry, len(items))
 		for i, item := range items {
 			fis[i] = &memFileInfo{name: item}
 		}
