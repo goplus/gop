@@ -25,9 +25,8 @@ import (
 )
 
 type FileFS struct {
-	filename string
-	data     []byte
-	info     fs.DirEntry
+	data []byte
+	info fs.DirEntry
 }
 
 type dirEntry struct {
@@ -62,18 +61,18 @@ func File(filename string, src interface{}) (f *FileFS, err error) {
 		}
 		info = &dirEntry{fi}
 	}
-	return &FileFS{filename: filename, data: data, info: info}, nil
+	return &FileFS{data: data, info: info}, nil
 }
 
-func (p FileFS) ReadDir(dirname string) ([]fs.DirEntry, error) {
+func (p *FileFS) ReadDir(dirname string) ([]fs.DirEntry, error) {
 	return []fs.DirEntry{p.info}, nil
 }
 
-func (p FileFS) ReadFile(filename string) ([]byte, error) {
+func (p *FileFS) ReadFile(filename string) ([]byte, error) {
 	return p.data, nil
 }
 
-func (p FileFS) Join(elem ...string) string {
+func (p *FileFS) Join(elem ...string) string {
 	return filepath.Join(elem...)
 }
 
