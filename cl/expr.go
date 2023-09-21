@@ -98,7 +98,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (obj *gox.PkgRef, 
 			sig := fn.Ancestor().Type().(*types.Signature)
 			if recv := sig.Recv(); recv != nil {
 				ctx.cb.Val(recv)
-				if compileMember(ctx, ident, name, flags) == nil { // class member object
+				if compileMember(ctx, ident, name, flags&^clCommandWithoutArgs) == nil { // class member object
 					return
 				}
 				ctx.cb.InternalStack().PopN(1)
