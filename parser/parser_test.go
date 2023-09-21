@@ -136,6 +136,20 @@ func h() { var }
 `, `/foo/bar.gop:2:16: expected 'IDENT', found '}' (and 10 more errors)`, ``)
 }
 
+func TestErrInFunc(t *testing.T) {
+	testErrCode(t, `func test() {
+	a,
+}`, `/foo/bar.gop:2:2: expected 1 expression (and 2 more errors)`, ``)
+	testErrCode(t, `func test() {
+	a.test, => {
+	}
+}`, `/foo/bar.gop:2:10: expected operand, found '=>' (and 1 more errors)`, ``)
+	testErrCode(t, `func test() {
+		,
+	}
+}`, `/foo/bar.gop:2:3: expected statement, found ',' (and 1 more errors)`, ``)
+}
+
 // -----------------------------------------------------------------------------
 
 var testStdCode = `package bar; import "io"
