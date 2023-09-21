@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package parsertest
+package memfs
 
 import (
 	"io/fs"
 	"path"
+	"path/filepath"
 	"syscall"
 	"time"
 )
@@ -27,14 +28,15 @@ import (
 
 type memFileInfo struct {
 	name string
+	size int
 }
 
 func (p *memFileInfo) Name() string {
-	return p.name
+	return filepath.Base(p.name)
 }
 
 func (p *memFileInfo) Size() int64 {
-	return 0
+	return int64(p.size)
 }
 
 func (p *memFileInfo) Mode() fs.FileMode {
@@ -46,7 +48,7 @@ func (p *memFileInfo) Type() fs.FileMode {
 }
 
 func (p *memFileInfo) ModTime() (t time.Time) {
-	return
+	return time.Now()
 }
 
 func (p *memFileInfo) IsDir() bool {
@@ -61,20 +63,22 @@ func (p *memFileInfo) Info() (fs.FileInfo, error) {
 	return p, nil
 }
 
-// MemFS represents a file system in memory.
-type MemFS struct {
+// -----------------------------------------------------------------------------
+
+// FS represents a file system in memory.
+type FS struct {
 	dirs  map[string][]string
 	files map[string]string
 }
 
-// NewMemFS creates a MemFS instance.
-func NewMemFS(dirs map[string][]string, files map[string]string) *MemFS {
-	return &MemFS{dirs: dirs, files: files}
+// New creates a file system instance.
+func New(dirs map[string][]string, files map[string]string) *FS {
+	return &FS{dirs: dirs, files: files}
 }
 
 // ReadDir reads the directory named by dirname and returns
 // a list of directory entries sorted by filename.
-func (p *MemFS) ReadDir(dirname string) ([]fs.DirEntry, error) {
+func (p *FS) ReadDir(dirname string) ([]fs.DirEntry, error) {
 	if items, ok := p.dirs[dirname]; ok {
 		fis := make([]fs.DirEntry, len(items))
 		for i, item := range items {
@@ -89,7 +93,7 @@ func (p *MemFS) ReadDir(dirname string) ([]fs.DirEntry, error) {
 // A successful call returns err == nil, not err == EOF. Because ReadFile
 // reads the whole file, it does not treat an EOF from Read as an error
 // to be reported.
-func (p *MemFS) ReadFile(filename string) ([]byte, error) {
+func (p *FS) ReadFile(filename string) ([]byte, error) {
 	if data, ok := p.files[filename]; ok {
 		return []byte(data), nil
 	}
@@ -101,24 +105,24 @@ func (p *MemFS) ReadFile(filename string) ([]byte, error) {
 // The result is Cleaned. However, if the argument list is
 // empty or all its elements are empty, Join returns
 // an empty string.
-func (p *MemFS) Join(elem ...string) string {
+func (p *FS) Join(elem ...string) string {
 	return path.Join(elem...)
 }
 
 // -----------------------------------------------------------------------------
 
-// NewSingleFileFS creates a file system that only contains a single file.
-func NewSingleFileFS(dir string, fname string, data string) *MemFS {
-	return NewMemFS(map[string][]string{
+// SingleFile creates a file system that only contains a single file.
+func SingleFile(dir string, fname string, data string) *FS {
+	return New(map[string][]string{
 		dir: {fname},
 	}, map[string]string{
 		path.Join(dir, fname): data,
 	})
 }
 
-// NewTwoFilesFS creates a file system that contains two files.
-func NewTwoFilesFS(dir string, fname1, data1, fname2, data2 string) *MemFS {
-	return NewMemFS(map[string][]string{
+// TwoFiles creates a file system that contains two files.
+func TwoFiles(dir string, fname1, data1, fname2, data2 string) *FS {
+	return New(map[string][]string{
 		dir: {fname1, fname2},
 	}, map[string]string{
 		path.Join(dir, fname1): data1,

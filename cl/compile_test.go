@@ -26,7 +26,7 @@ import (
 	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/parser/parsertest"
+	"github.com/goplus/gop/parser/fsx/memfs"
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
@@ -69,17 +69,17 @@ func gopClTest(t *testing.T, gopcode, expected string) {
 }
 
 func gopClTestFile(t *testing.T, gopcode, expected string, fname string) {
-	fs := parsertest.NewSingleFileFS("/foo", fname, gopcode)
+	fs := memfs.SingleFile("/foo", fname, gopcode)
 	gopClTestFS(t, gblConf, fs, "main", expected)
 }
 
 func gopClTestEx(t *testing.T, conf *cl.Config, pkgname, gopcode, expected string) {
-	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", gopcode)
+	fs := memfs.SingleFile("/foo", "bar.gop", gopcode)
 	gopClTestFS(t, conf, fs, pkgname, expected)
 }
 
 func gopMixedClTest(t *testing.T, pkgname, gocode, gopcode, expected string) {
-	fs := parsertest.NewTwoFilesFS("/foo", "a.go", gocode, "b.gop", gopcode)
+	fs := memfs.TwoFiles("/foo", "a.go", gocode, "b.gop", gopcode)
 	gopClTestFS(t, gblConf, fs, pkgname, expected)
 }
 

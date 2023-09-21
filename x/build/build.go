@@ -22,10 +22,12 @@ import (
 	goast "go/ast"
 	"go/types"
 	"path"
+	"path/filepath"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/parser"
+	"github.com/goplus/gop/parser/fsx/memfs"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
 	"github.com/goplus/gox/packages"
@@ -139,12 +141,12 @@ func (c *Context) ParseFSDir(fs parser.FileSystem, dir string) (*Package, error)
 	return c.loadPackage(dir, pkgs)
 }
 
-func (c *Context) ParseFile(fname string, src interface{}) (*Package, error) {
-	fs, err := newFileFS(fname, src)
+func (c *Context) ParseFile(file string, src interface{}) (*Package, error) {
+	fs, err := memfs.File(file, src)
 	if err != nil {
 		return nil, err
 	}
-	return c.ParseFSDir(fs, fs.dir)
+	return c.ParseFSDir(fs, filepath.Dir(file))
 }
 
 func (c *Context) loadPackage(srcDir string, pkgs map[string]*ast.Package) (*Package, error) {

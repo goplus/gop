@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"go/printer"
 	"go/types"
-	"io/fs"
 	"io/ioutil"
 	"os"
 	"path"
@@ -30,6 +29,7 @@ import (
 	"testing"
 
 	"github.com/goplus/gop/cl"
+	"github.com/goplus/gop/parser/fsx"
 	"github.com/goplus/gop/x/build"
 )
 
@@ -427,8 +427,8 @@ func testFrom(t *testing.T, name, dir string) {
 	if err != nil {
 		t.Fatal("BuildDir failed:", err)
 	}
-	if chk, err := ioutil.ReadFile(filepath.Join(dir, name+".expect")); err == nil {
-		if bytes.Compare(data, chk) != 0 {
+	if chk, err := os.ReadFile(filepath.Join(dir, name+".expect")); err == nil {
+		if !bytes.Equal(data, chk) {
 			t.Fatalf("-- %v output check error --\n%v\n--\n%v", name, string(data), string(chk))
 		}
 	}
@@ -436,20 +436,6 @@ func testFrom(t *testing.T, name, dir string) {
 
 func TestFromTestdata(t *testing.T) {
 	testFromDir(t, "./_testdata")
-}
-
-type localFS struct{}
-
-func (p localFS) ReadDir(dirname string) ([]fs.FileInfo, error) {
-	return ioutil.ReadDir(dirname)
-}
-
-func (p localFS) ReadFile(filename string) ([]byte, error) {
-	return os.ReadFile(filename)
-}
-
-func (p localFS) Join(elem ...string) string {
-	return filepath.Join(elem...)
 }
 
 func TestFS(t *testing.T) {
@@ -461,11 +447,11 @@ func main() {
 	fmt.Println("Go+")
 }
 `)
-	data, err := ctx.BuildFSDir(localFS{}, "./_testdata/hello")
+	data, err := ctx.BuildFSDir(fsx.Local, "./_testdata/hello")
 	if err != nil {
 		t.Fatal("build fs dir failed", err)
 	}
-	if bytes.Compare(data, expect) != 0 {
+	if !bytes.Equal(data, expect) {
 		t.Fatal("build fs data failed", string(data))
 	}
 }
@@ -479,7 +465,7 @@ func main() {
 	fmt.Println("Go+")
 }
 `)
-	pkg, err := ctx.ParseFSDir(localFS{}, "./_testdata/hello")
+	pkg, err := ctx.ParseFSDir(fsx.Local, "./_testdata/hello")
 	if err != nil {
 		t.Fatal("parser fs dir failed", err)
 	}
@@ -488,7 +474,7 @@ func main() {
 	if err != nil {
 		t.Fatal("fprint ast error", err)
 	}
-	if bytes.Compare(buf.Bytes(), expect) != 0 {
+	if !bytes.Equal(buf.Bytes(), expect) {
 		t.Fatal("build ast data failed", buf.String())
 	}
 }
@@ -502,7 +488,7 @@ func TestError(t *testing.T) {
 	if err == nil {
 		t.Fatal("BuildDir: no error?")
 	}
-	_, err = ctx.BuildFSDir(localFS{}, "./testdata/nofound")
+	_, err = ctx.BuildFSDir(fsx.Local, "./testdata/nofound")
 	if err == nil {
 		t.Fatal("BuildDir: no error?")
 	}
