@@ -139,7 +139,7 @@ func getStringConst(spx *gox.PkgRef, name string) string {
 	return ""
 }
 
-func getFields(ctx *blockCtx, f *ast.File) (specs []ast.Spec) {
+func getFields(f *ast.File) (specs []ast.Spec) {
 	decls := f.Decls
 	i, n := 0, len(decls)
 	for i < n {
@@ -153,7 +153,7 @@ func getFields(ctx *blockCtx, f *ast.File) (specs []ast.Spec) {
 			}
 			break
 		}
-		i++ // skip import, if any
+		i++ // skip import/const, if any
 	}
 	return
 }
