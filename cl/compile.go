@@ -579,7 +579,7 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 		}
 		syms := parent.syms
 		pos := f.Pos()
-		specs := getFields(ctx, f)
+		specs := getFields(f)
 		ld := getTypeLoader(parent, syms, pos, classType)
 		ld.typ = func() {
 			if debugLoad {
@@ -812,7 +812,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, genCod
 				}
 			case token.CONST:
 				pkg := ctx.pkg
-				cdecl := pkg.NewConstDecl(pkg.Types.Scope())
+				cdecl := pkg.NewConstDefs(pkg.Types.Scope())
 				for _, spec := range d.Specs {
 					vSpec := spec.(*ast.ValueSpec)
 					if debugLoad {
