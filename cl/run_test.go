@@ -13,7 +13,7 @@ import (
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/parser/parsertest"
+	"github.com/goplus/gop/parser/fsx/memfs"
 	"github.com/goplus/gop/scanner"
 )
 
@@ -83,7 +83,7 @@ func genGo(t *testing.T, conf *cl.Config, gopcode string) []byte {
 	cl.SetDisableRecover(true)
 	defer cl.SetDisableRecover(false)
 
-	fs := parsertest.NewSingleFileFS("/foo", "bar.gop", gopcode)
+	fs := memfs.SingleFile("/foo", "bar.gop", gopcode)
 	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", parser.Config{Mode: parser.ParseComments})
 	if err != nil {
 		scanner.PrintError(os.Stderr, err)

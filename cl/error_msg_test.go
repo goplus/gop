@@ -25,7 +25,7 @@ import (
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/parser/parsertest"
+	"github.com/goplus/gop/parser/fsx/memfs"
 	"github.com/goplus/gop/scanner"
 )
 
@@ -34,7 +34,7 @@ func codeErrorTest(t *testing.T, msg, src string) {
 }
 
 func codeErrorTestEx(t *testing.T, pkgname, filename, msg, src string) {
-	fs := parsertest.NewSingleFileFS("/foo", filename, src)
+	fs := memfs.SingleFile("/foo", filename, src)
 	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", parser.Config{})
 	if err != nil {
 		scanner.PrintError(os.Stderr, err)

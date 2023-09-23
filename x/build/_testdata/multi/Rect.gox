@@ -1,0 +1,16 @@
+var (
+	BaseClass
+	Width, Height float64
+	*AggClass
+)
+
+type BaseClass struct {
+	x int
+	y int
+}
+
+type AggClass struct{}
+
+func Area() float64 {
+	return Width * Height
+}
