@@ -1735,11 +1735,13 @@ func (p *printer) spec(spec ast.Spec, n int, doIndent bool) {
 
 func (p *printer) genDecl(d *ast.GenDecl) {
 	p.setComment(d.Doc)
-	p.print(d.Pos(), d.Tok, blank)
+	p.setPos(d.Pos())
+	p.print(d.Tok, blank)
 
 	if d.Lparen.IsValid() || len(d.Specs) > 1 {
 		// group of parenthesized declarations
-		p.print(d.Lparen, token.LPAREN)
+		p.setPos(d.Lparen)
+		p.print(token.LPAREN)
 		if n := len(d.Specs); n > 0 {
 			p.print(indent, formfeed)
 			if n > 1 && (d.Tok == token.CONST || d.Tok == token.VAR) {
@@ -1749,7 +1751,7 @@ func (p *printer) genDecl(d *ast.GenDecl) {
 				var line int
 				for i, s := range d.Specs {
 					if i > 0 {
-						p.linebreak(p.lineFor(s.Pos()), 0, ignore, p.linesFrom(line) > 0)
+						p.linebreak(p.lineFor(s.Pos()), 1, ignore, p.linesFrom(line) > 0)
 					}
 					p.recordLine(&line)
 					p.valueSpec(s.(*ast.ValueSpec), keepType[i])
@@ -1766,7 +1768,8 @@ func (p *printer) genDecl(d *ast.GenDecl) {
 			}
 			p.print(unindent, formfeed)
 		}
-		p.print(d.Rparen, token.RPAREN)
+		p.setPos(d.Rparen)
+		p.print(token.RPAREN)
 
 	} else if len(d.Specs) > 0 {
 		// single declaration
