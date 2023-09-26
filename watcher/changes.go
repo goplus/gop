@@ -57,7 +57,8 @@ type Changes struct {
 
 func NewChanges(root string) *Changes {
 	changed := make(map[string]none)
-	c := &Changes{changed: changed, root: root + "/"}
+	mods := make(map[string]*module)
+	c := &Changes{changed: changed, mods: mods, root: root + "/"}
 	c.cond.L = &c.mutex
 	return c
 }
@@ -123,7 +124,7 @@ func (p *Changes) Ignore(name string, isDir bool) bool {
 	if strings.HasPrefix(fname, "_") {
 		return true
 	}
-	return !isDir && (isAutogen(fname) || p.lookupMod(dir).ignore(fname))
+	return !isDir && (isHiddenTemp(fname) || isAutogen(fname) || p.lookupMod(dir).ignore(fname))
 }
 
 func (p *Changes) FileChanged(name string) {
@@ -163,6 +164,11 @@ func (p *Changes) DirAdded(name string) {
 // pattern: gop_autogen*.go
 func isAutogen(fname string) bool {
 	return strings.HasPrefix(fname, "gop_autogen") && strings.HasSuffix(fname, ".go")
+}
+
+// pattern: .* or *~
+func isHiddenTemp(fname string) bool {
+	return strings.HasPrefix(fname, ".") || strings.HasSuffix(fname, "~")
 }
 
 // -----------------------------------------------------------------------------------------
