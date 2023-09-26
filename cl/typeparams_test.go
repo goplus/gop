@@ -260,8 +260,10 @@ func TestTypeParamsErrorMatch(t *testing.T) {
 	switch runtime.Version()[:6] {
 	case "go1.18", "go1.19":
 		msg = `./b.gop:2:5: T does not match ~[]E`
-	default:
+	case "go1.20":
 		msg = `./b.gop:2:5: int does not match ~[]E`
+	default:
+		msg = `./b.gop:2:5: T (type int) does not satisfy interface{interface{~[]E}}`
 	}
 	mixedErrorTest(t, msg, `
 package main

@@ -112,6 +112,13 @@ func TestClRangeStmt(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
+func TestGetStringConst(t *testing.T) {
+	spx := &gox.PkgRef{Types: types.NewPackage("", "foo")}
+	if v := getStringConst(spx, "unknown"); v != "" {
+		t.Fatal("getStringConst:", v)
+	}
+}
+
 func TestGmxSettings(t *testing.T) {
 	pkg := gox.NewPackage("", "foo", goxConf)
 	gmx := newGmx(nil, pkg, "main.t2gmx", &ast.File{IsProj: true}, &Config{
