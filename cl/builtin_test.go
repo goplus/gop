@@ -113,7 +113,7 @@ func TestClRangeStmt(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 func TestGetStringConst(t *testing.T) {
-	spx := &gox.PkgRef{}
+	spx := &gox.PkgRef{Types: types.NewPackage("", "foo")}
 	if v := getStringConst(spx, "unknown"); v != "" {
 		t.Fatal("getStringConst:", v)
 	}
