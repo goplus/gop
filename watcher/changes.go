@@ -82,16 +82,9 @@ func (p *Changes) doLookupMod(name string) *module {
 			})
 		}
 		mod.exts = append(mod.exts, ".gop", ".go", ".gox", ".gmx")
-		nbase := len(m.Root()) - len(p.root)
-		for {
-			if debugMod {
-				log.Println("Mod:", name, "Exts:", mod.exts)
-			}
-			p.mods[name] = mod
-			if name == "." || len(name) <= nbase {
-				break
-			}
-			name = path.Dir(name)
+		p.mods[name] = mod
+		if debugMod {
+			log.Println("Mod:", name, "Exts:", mod.exts)
 		}
 	}
 	return mod
