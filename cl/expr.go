@@ -658,7 +658,7 @@ func compileLambdaExpr(ctx *blockCtx, v *ast.LambdaExpr, sig *types.Signature) {
 	for _, v := range v.Rhs {
 		compileExpr(ctx, v)
 	}
-	ctx.cb.Return(len(v.Rhs)).End()
+	ctx.cb.Return(len(v.Rhs)).End(v)
 }
 
 func compileLambdaExpr2(ctx *blockCtx, v *ast.LambdaExpr2, sig *types.Signature) {
@@ -667,7 +667,7 @@ func compileLambdaExpr2(ctx *blockCtx, v *ast.LambdaExpr2, sig *types.Signature)
 	results := makeLambdaResults(pkg, sig.Results())
 	comments, once := ctx.cb.BackupComments()
 	fn := ctx.cb.NewClosure(params, results, false)
-	loadFuncBody(ctx, fn, v.Body)
+	loadFuncBody(ctx, fn, v.Body, v)
 	ctx.cb.SetComments(comments, once)
 }
 
@@ -677,7 +677,7 @@ func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
 	sig := toFuncType(ctx, v.Type, nil, nil)
 	fn := cb.NewClosureWith(sig)
 	if body := v.Body; body != nil {
-		loadFuncBody(ctx, fn, body)
+		loadFuncBody(ctx, fn, body, v)
 		cb.SetComments(comments, once)
 	}
 }
@@ -750,7 +750,7 @@ func compileCompositeLitElts(ctx *blockCtx, elts []ast.Expr, kind int, expected 
 	}
 }
 
-func compileStructLitInKeyVal(ctx *blockCtx, elts []ast.Expr, t *types.Struct, typ types.Type) {
+func compileStructLitInKeyVal(ctx *blockCtx, elts []ast.Expr, t *types.Struct, typ types.Type, src *ast.CompositeLit) {
 	for _, elt := range elts {
 		kv := elt.(*ast.KeyValueExpr)
 		name := kv.Key.(*ast.Ident)
@@ -770,7 +770,7 @@ func compileStructLitInKeyVal(ctx *blockCtx, elts []ast.Expr, t *types.Struct, t
 			compileExpr(ctx, kv.Value)
 		}
 	}
-	ctx.cb.StructLit(typ, len(elts)<<1, true)
+	ctx.cb.StructLit(typ, len(elts)<<1, true, src)
 }
 
 func lookupField(t *types.Struct, name string) int {
@@ -845,7 +845,7 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, expected types.Type
 		}
 	}
 	if t, ok := underlying.(*types.Struct); ok && kind == compositeLitKeyVal {
-		compileStructLitInKeyVal(ctx, v.Elts, t, typ)
+		compileStructLitInKeyVal(ctx, v.Elts, t, typ, v)
 		if hasPtr {
 			ctx.cb.UnaryOp(gotoken.AND)
 		}
@@ -862,13 +862,13 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, expected types.Type
 	}
 	switch underlying.(type) {
 	case *types.Slice:
-		ctx.cb.SliceLit(typ, n<<kind, kind == compositeLitKeyVal)
+		ctx.cb.SliceLitEx(typ, n<<kind, kind == compositeLitKeyVal, v)
 	case *types.Array:
-		ctx.cb.ArrayLit(typ, n<<kind, kind == compositeLitKeyVal)
+		ctx.cb.ArrayLitEx(typ, n<<kind, kind == compositeLitKeyVal, v)
 	case *types.Map:
-		ctx.cb.MapLit(typ, n<<1)
+		ctx.cb.MapLit(typ, n<<1, v)
 	case *types.Struct:
-		ctx.cb.StructLit(typ, n, false)
+		ctx.cb.StructLit(typ, n, false, v)
 	default:
 		log.Panicln("compileCompositeLit: unknown type -", reflect.TypeOf(underlying))
 	}
@@ -883,9 +883,9 @@ func compileSliceLit(ctx *blockCtx, v *ast.SliceLit, typ types.Type) {
 		compileExpr(ctx, elt)
 	}
 	if sliceHasTypeParam(ctx, typ) {
-		ctx.cb.SliceLit(nil, n)
+		ctx.cb.SliceLitEx(nil, n, false, v)
 	} else {
-		ctx.cb.SliceLit(typ, n)
+		ctx.cb.SliceLitEx(typ, n, false, v)
 	}
 }
 

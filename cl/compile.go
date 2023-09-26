@@ -939,10 +939,10 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
 	if body := d.Body; body != nil {
 		if recv != nil {
 			ctx.inits = append(ctx.inits, func() { // interface issue: #795
-				loadFuncBody(ctx, fn, body)
+				loadFuncBody(ctx, fn, body, d)
 			})
 		} else {
-			loadFuncBody(ctx, fn, body)
+			loadFuncBody(ctx, fn, body, d)
 		}
 	}
 }
@@ -997,10 +997,10 @@ var unaryGopNames = map[string]string{
 	"<-": "Gop_Recv",
 }
 
-func loadFuncBody(ctx *blockCtx, fn *gox.Func, body *ast.BlockStmt) {
+func loadFuncBody(ctx *blockCtx, fn *gox.Func, body *ast.BlockStmt, src ast.Node) {
 	cb := fn.BodyStart(ctx.pkg)
 	compileStmts(ctx, body.List)
-	cb.End()
+	cb.End(src)
 }
 
 func simplifyGopPackage(pkgPath string) string {
