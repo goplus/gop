@@ -320,6 +320,30 @@ a := "Hi"
 `)
 }
 
+func TestErrAssignMismatchT(t *testing.T) {
+	codeErrorTest(t,
+		`./bar.gop:2:16: cannot use []string{} (type []string) as type string in assignment`, `
+var a string = []string{}
+`)
+	codeErrorTest(t,
+		`./bar.gop:2:16: cannot use [2]string{} (type [2]string) as type string in assignment`, `
+var a string = [2]string{}
+`)
+	codeErrorTest(t,
+		`./bar.gop:2:16: cannot use map[int]string{} (type map[int]string) as type string in assignment`, `
+var a string = map[int]string{}
+`)
+	codeErrorTest(t,
+		`./bar.gop:3:16: cannot use T{} (type T) as type string in assignment`, `
+type T struct{}
+var a string = T{}
+`)
+	codeErrorTest(t,
+		`./bar.gop:2:16: cannot use func(){} (type func()) as type string in assignment`, `
+var a string = func(){}
+`)
+}
+
 func TestErrAssign(t *testing.T) {
 	codeErrorTest(t,
 		`./bar.gop:8:1: assignment mismatch: 1 variables but bar returns 2 values`, `
