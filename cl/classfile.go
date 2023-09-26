@@ -140,20 +140,15 @@ func getStringConst(spx *gox.PkgRef, name string) string {
 }
 
 func getFields(f *ast.File) (specs []ast.Spec) {
-	decls := f.Decls
-	i, n := 0, len(decls)
-	for i < n {
-		g, ok := decls[i].(*ast.GenDecl)
+	for _, decl := range f.Decls {
+		g, ok := decl.(*ast.GenDecl)
 		if !ok {
 			break
 		}
-		if g.Tok != token.IMPORT && g.Tok != token.CONST {
-			if g.Tok == token.VAR {
-				specs, g.Specs = g.Specs, nil
-			}
+		if g.Tok == token.VAR {
+			specs, g.Specs = g.Specs, nil
 			break
 		}
-		i++ // skip import/const, if any
 	}
 	return
 }
