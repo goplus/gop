@@ -141,14 +141,14 @@ func getStringConst(spx *gox.PkgRef, name string) string {
 
 func getFields(f *ast.File) (specs []ast.Spec) {
 	for _, decl := range f.Decls {
-		g, ok := decl.(*ast.GenDecl)
-		if !ok {
-			break
+		if g, ok := decl.(*ast.GenDecl); ok {
+			if g.Tok == token.VAR {
+				specs, g.Specs = g.Specs, nil
+				return
+			}
+			continue
 		}
-		if g.Tok == token.VAR {
-			specs, g.Specs = g.Specs, nil
-			break
-		}
+		break
 	}
 	return
 }
