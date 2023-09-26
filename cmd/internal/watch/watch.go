@@ -37,6 +37,7 @@ var Cmd = &base.Command{
 var (
 	flag       = &Cmd.Flag
 	verbose    = flag.Bool("v", false, "print verbose information.")
+	debug      = flag.Bool("debug", false, "show all debug information.")
 	genTestPkg = flag.Bool("gentest", false, "generate test package.")
 )
 
@@ -48,8 +49,10 @@ func runCmd(cmd *base.Command, args []string) {
 	err := flag.Parse(args)
 	check(err)
 
-	if *verbose {
+	if *debug {
 		fsnotify.SetDebug(fsnotify.DbgFlagAll)
+	}
+	if *debug || *verbose {
 		watcher.SetDebug(watcher.DbgFlagAll)
 	}
 
