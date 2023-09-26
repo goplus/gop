@@ -50,6 +50,7 @@ func runCmd(cmd *base.Command, args []string) {
 
 	if *verbose {
 		fsnotify.SetDebug(fsnotify.DbgFlagAll)
+		watcher.SetDebug(watcher.DbgFlagAll)
 	}
 
 	args = flag.Args()

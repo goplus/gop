@@ -21,6 +21,19 @@ import (
 	"github.com/goplus/gop/x/fsnotify"
 )
 
+var (
+	debugMod bool
+)
+
+const (
+	DbgFlagMod = 1 << iota
+	DbgFlagAll = DbgFlagMod
+)
+
+func SetDebug(dbgFlags int) {
+	debugMod = (dbgFlags & DbgFlagMod) != 0
+}
+
 // -----------------------------------------------------------------------------------------
 
 type Runner struct {

@@ -18,6 +18,7 @@ package watcher
 
 import (
 	"io/fs"
+	"log"
 	"path"
 	"path/filepath"
 	"strings"
@@ -58,6 +59,7 @@ type Changes struct {
 func NewChanges(root string) *Changes {
 	changed := make(map[string]none)
 	mods := make(map[string]*module)
+	root, _ = filepath.Abs(root)
 	c := &Changes{changed: changed, mods: mods, root: root + "/"}
 	c.cond.L = &c.mutex
 	return c
@@ -66,31 +68,37 @@ func NewChanges(root string) *Changes {
 func (p *Changes) doLookupMod(name string) *module {
 	mod, ok := p.mods[name]
 	if !ok {
-		if name == "." {
-			mod = new(module)
-			mod.exts = make([]string, 0, 8)
-			m, e := gopmod.Load(p.root, 0)
-			if e == nil {
-				m.ImportClasses(func(c *gopmod.Project) {
-					mod.exts = append(mod.exts, c.Ext)
-					for _, w := range c.Works {
-						if w.Ext != c.Ext {
-							mod.exts = append(mod.exts, w.Ext)
-						}
+		mod = new(module)
+		mod.exts = make([]string, 0, 8)
+		m, e := gopmod.Load(p.root+name, 0)
+		if e == nil {
+			m.ImportClasses(func(c *gopmod.Project) {
+				mod.exts = append(mod.exts, c.Ext)
+				for _, w := range c.Works {
+					if w.Ext != c.Ext {
+						mod.exts = append(mod.exts, w.Ext)
 					}
-				})
-			}
-			mod.exts = append(mod.exts, ".gop", ".go", ".gox", ".gmx")
-		} else {
-			dir := path.Dir(name)
-			mod = p.doLookupMod(dir)
+				}
+			})
 		}
-		p.mods[name] = mod
+		mod.exts = append(mod.exts, ".gop", ".go", ".gox", ".gmx")
+		nbase := len(m.Root()) - len(p.root)
+		for {
+			if debugMod {
+				log.Println("Mod:", name, "Exts:", mod.exts)
+			}
+			p.mods[name] = mod
+			if name == "." || len(name) <= nbase {
+				break
+			}
+			name = path.Dir(name)
+		}
 	}
 	return mod
 }
 
 func (p *Changes) lookupMod(name string) *module {
+	name = strings.TrimSuffix(name, "/")
 	p.mutex.Lock()
 	mod := p.doLookupMod(name)
 	p.mutex.Unlock()
