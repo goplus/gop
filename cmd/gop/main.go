@@ -22,24 +22,24 @@ import (
 	"os"
 	"strings"
 
-	"github.com/goplus/gop/cmd/internal/bug"
-	"github.com/goplus/gop/cmd/internal/c2go"
-	"github.com/goplus/gop/cmd/internal/gopget"
-	"github.com/goplus/gop/cmd/internal/watch"
 	"github.com/qiniu/x/log"
 
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/cmd/internal/bug"
 	"github.com/goplus/gop/cmd/internal/build"
+	"github.com/goplus/gop/cmd/internal/c2go"
 	"github.com/goplus/gop/cmd/internal/clean"
 	"github.com/goplus/gop/cmd/internal/env"
 	"github.com/goplus/gop/cmd/internal/gengo"
 	"github.com/goplus/gop/cmd/internal/gopfmt"
+	"github.com/goplus/gop/cmd/internal/gopget"
 	"github.com/goplus/gop/cmd/internal/help"
 	"github.com/goplus/gop/cmd/internal/install"
 	"github.com/goplus/gop/cmd/internal/mod"
 	"github.com/goplus/gop/cmd/internal/run"
 	"github.com/goplus/gop/cmd/internal/test"
 	"github.com/goplus/gop/cmd/internal/version"
+	"github.com/goplus/gop/cmd/internal/watch"
 )
 
 func mainUsage() {
