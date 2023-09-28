@@ -1849,6 +1849,32 @@ var y uint32 = *x
 `)
 }
 
+func TestLHS(t *testing.T) {
+	gopClTest(t, `
+type T struct {
+	a int
+}
+
+func foo() *T {
+	return nil
+}
+
+foo().a = 123
+`, `package main
+
+type T struct {
+	a int
+}
+
+func foo() *T {
+	return nil
+}
+func main() {
+	foo().a = 123
+}
+`)
+}
+
 func TestSend(t *testing.T) {
 	gopClTest(t, `
 var x chan bool
