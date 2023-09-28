@@ -190,7 +190,6 @@ func TestC2goBase(t *testing.T) {
 	}
 }
 
-/*
 func TestErrNewType(t *testing.T) {
 	testPanic(t, `bar redeclared in this block
 	previous declaration at <TODO>
@@ -200,18 +199,6 @@ func TestErrNewType(t *testing.T) {
 		newType(pkg, token.NoPos, "bar")
 	})
 }
-
-func TestErrDeclFunc(t *testing.T) {
-	testPanic(t, "invalid receiver type **byte (**byte is not a defined type)\n", func() {
-		pkg := gox.NewPackage("", "foo", goxConf)
-		recv := pkg.NewParam(token.NoPos, "p", types.NewPointer(types.NewPointer(gox.TyByte)))
-		declFunc(&blockCtx{pkg: pkg}, recv, &ast.FuncDecl{
-			Name: &ast.Ident{Name: "m"},
-			Type: &ast.FuncType{Params: &ast.FieldList{}},
-		})
-	})
-}
-*/
 
 func TestErrLoadImport(t *testing.T) {
 	testPanic(t, ".: unknownpkg not found or not a valid C package (c2go.a.pub file not found).\n", func() {
