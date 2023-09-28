@@ -176,10 +176,10 @@ func lookupClassErr(ext string) (c *modfile.Project, ok bool) {
 }
 
 func TestGetGoFile(t *testing.T) {
-	if f := getGoFile("a_test.gop", true); f != testingGoFile {
+	if f := genGoFile("a_test.gop", true); f != testingGoFile {
 		t.Fatal("TestGetGoFile:", f)
 	}
-	if f := getGoFile("a_test.gop", false); f != skippingGoFile {
+	if f := genGoFile("a_test.gop", false); f != skippingGoFile {
 		t.Fatal("TestGetGoFile:", f)
 	}
 }
@@ -190,6 +190,7 @@ func TestC2goBase(t *testing.T) {
 	}
 }
 
+/*
 func TestErrNewType(t *testing.T) {
 	testPanic(t, `bar redeclared in this block
 	previous declaration at <TODO>
@@ -210,6 +211,7 @@ func TestErrDeclFunc(t *testing.T) {
 		})
 	})
 }
+*/
 
 func TestErrLoadImport(t *testing.T) {
 	testPanic(t, ".: unknownpkg not found or not a valid C package (c2go.a.pub file not found).\n", func() {

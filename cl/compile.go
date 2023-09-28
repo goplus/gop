@@ -99,8 +99,11 @@ type Config struct {
 	// NoAutoGenMain = true means not to auto generate main func is no entry.
 	NoAutoGenMain bool
 
-	// NoSkipConstant = true means disable optimization of skip constants
+	// NoSkipConstant = true means to disable optimization of skipping constants.
 	NoSkipConstant bool
+
+	// Outline = true means to skip compiling function bodies.
+	Outline bool
 }
 
 type nodeInterp struct {
@@ -153,9 +156,9 @@ type baseLoader struct {
 	start token.Pos
 }
 
-func initLoader(ctx *pkgCtx, syms map[string]loader, start token.Pos, name string, fn func(), genCode bool) {
+func initLoader(ctx *pkgCtx, syms map[string]loader, start token.Pos, name string, fn func(), genBody bool) {
 	if name == "_" {
-		if genCode {
+		if genBody {
 			ctx.inits = append(ctx.inits, fn)
 		}
 		return
@@ -430,7 +433,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 			pkg: p, pkgCtx: ctx, cb: p.CB(), fset: p.Fset, targetDir: targetDir,
 			imports: make(map[string]*gox.PkgRef),
 		}
-		preloadFile(p, ctx, fpath, f, false)
+		preloadFile(p, ctx, fpath, f, false, false)
 	}
 
 	// sort files
@@ -533,8 +536,8 @@ func loadFile(ctx *pkgCtx, f *ast.File) {
 	}
 }
 
-func getGoFile(file string, genCode bool) string {
-	if genCode {
+func genGoFile(file string, gopFile bool) string {
+	if gopFile {
 		if strings.HasSuffix(file, "_test.gop") {
 			return testingGoFile
 		}
@@ -658,7 +661,7 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 			})
 		}
 	}
-	preloadFile(p, ctx, file, f, true)
+	preloadFile(p, ctx, file, f, true, !conf.Outline)
 }
 
 func parseTypeEmbedName(typ ast.Expr) *ast.Ident {
@@ -675,10 +678,10 @@ retry:
 	return nil
 }
 
-func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, genCode bool) {
+func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFile, genFnBody bool) {
 	parent := ctx.pkgCtx
 	syms := parent.syms
-	goFile := getGoFile(file, genCode)
+	goFile := genGoFile(file, gopFile)
 	old, _ := p.SetCurFile(goFile, true)
 	defer p.RestoreCurFile(old)
 	for _, decl := range f.Decls {
@@ -693,21 +696,14 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, genCod
 				}
 			}
 			if d.Recv == nil {
-				var name = d.Name
-				var fn func()
-				if genCode {
-					fn = func() {
-						old, _ := p.SetCurFile(goFile, true)
-						defer p.RestoreCurFile(old)
-						loadFunc(ctx, nil, d)
-					}
-				} else {
-					fn = func() {
-						declFunc(ctx, nil, d)
-					}
+				name := d.Name
+				fn := func() {
+					old, _ := p.SetCurFile(goFile, true)
+					defer p.RestoreCurFile(old)
+					loadFunc(ctx, nil, d, genFnBody)
 				}
 				if name.Name == "init" {
-					if genCode {
+					if genFnBody {
 						if debugLoad {
 							log.Println("==> Preload func init")
 						}
@@ -717,29 +713,20 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, genCod
 					if debugLoad {
 						log.Println("==> Preload func", name.Name)
 					}
-					initLoader(parent, syms, name.Pos(), name.Name, fn, genCode)
+					initLoader(parent, syms, name.Pos(), name.Name, fn, genFnBody)
 				}
 			} else {
 				if name, ok := getRecvTypeName(parent, d.Recv, true); ok {
 					if debugLoad {
 						log.Printf("==> Preload method %s.%s\n", name, d.Name.Name)
 					}
-					var ld = getTypeLoader(parent, syms, token.NoPos, name)
-					var fn func()
-					if genCode {
-						fn = func() {
-							old, _ := p.SetCurFile(goFile, true)
-							defer p.RestoreCurFile(old)
-							doInitType(ld)
-							recv := toRecv(ctx, d.Recv)
-							loadFunc(ctx, recv, d)
-						}
-					} else {
-						fn = func() {
-							doInitType(ld)
-							recv := toRecv(ctx, d.Recv)
-							declFunc(ctx, recv, d)
-						}
+					ld := getTypeLoader(parent, syms, token.NoPos, name)
+					fn := func() {
+						old, _ := p.SetCurFile(goFile, true)
+						defer p.RestoreCurFile(old)
+						doInitType(ld)
+						recv := toRecv(ctx, d.Recv)
+						loadFunc(ctx, recv, d, genFnBody)
 					}
 					ld.methods = append(ld.methods, fn)
 				}
@@ -757,56 +744,32 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, genCod
 					if debugLoad {
 						log.Println("==> Preload type", name)
 					}
+					ctx.generics[name] = !gopFile
 					ld := getTypeLoader(parent, syms, t.Name.Pos(), name)
-					if genCode {
-						ld.typ = func() {
-							old, _ := p.SetCurFile(goFile, true)
-							defer p.RestoreCurFile(old)
-							if t.Assign != token.NoPos { // alias type
-								if debugLoad {
-									log.Println("==> Load > AliasType", name)
-								}
-								ctx.pkg.AliasType(name, toType(ctx, t.Type), t.Pos())
-								return
-							}
+					ld.typ = func() {
+						old, _ := p.SetCurFile(goFile, true)
+						defer p.RestoreCurFile(old)
+						if t.Assign != token.NoPos { // alias type
 							if debugLoad {
-								log.Println("==> Load > NewType", name)
+								log.Println("==> Load > AliasType", name)
 							}
-							decl := ctx.pkg.NewType(name)
-							if t.Doc != nil {
-								decl.SetComments(t.Doc)
-							} else if d.Doc != nil {
-								decl.SetComments(d.Doc)
-							}
-							ld.typInit = func() { // decycle
-								if debugLoad {
-									log.Println("==> Load > InitType", name)
-								}
-								decl.InitType(ctx.pkg, toType(ctx, t.Type))
-							}
+							ctx.pkg.AliasType(name, toType(ctx, t.Type), t.Pos())
+							return
 						}
-					} else {
-						ctx.generics[name] = true
-						ld.typ = func() {
-							pkg := ctx.pkg.Types
-							if t.Assign != token.NoPos { // alias type
-								if debugLoad {
-									log.Println("==> Load > AliasType", name)
-								}
-								aliasType(pkg, t.Pos(), name, toType(ctx, t.Type))
-								return
-							}
+						if debugLoad {
+							log.Println("==> Load > NewType", name)
+						}
+						decl := ctx.pkg.NewType(name)
+						if t.Doc != nil {
+							decl.SetComments(t.Doc)
+						} else if d.Doc != nil {
+							decl.SetComments(d.Doc)
+						}
+						ld.typInit = func() { // decycle
 							if debugLoad {
-								log.Println("==> Load > NewType", name)
+								log.Println("==> Load > InitType", name)
 							}
-							named := newType(pkg, t.Pos(), name)
-
-							ld.typInit = func() { // decycle
-								if debugLoad {
-									log.Println("==> Load > InitType", name)
-								}
-								initType(ctx, named, t)
-							}
+							decl.InitType(ctx.pkg, toType(ctx, t.Type))
 						}
 					}
 				}
@@ -854,6 +817,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, genCod
 	}
 }
 
+/*
 func newType(pkg *types.Package, pos token.Pos, name string) *types.Named {
 	typName := types.NewTypeName(pos, pkg, name, nil)
 	if old := pkg.Scope().Insert(typName); old != nil {
@@ -899,8 +863,9 @@ func declFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
 		pkg.Scope().Insert(fn)
 	}
 }
+*/
 
-func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
+func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) {
 	name := d.Name.Name
 	if debugLoad {
 		if recv == nil {
@@ -936,13 +901,15 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
 	if d.Doc != nil {
 		fn.SetComments(d.Doc)
 	}
-	if body := d.Body; body != nil {
-		if recv != nil {
-			ctx.inits = append(ctx.inits, func() { // interface issue: #795
+	if genBody {
+		if body := d.Body; body != nil {
+			if recv != nil {
+				ctx.inits = append(ctx.inits, func() { // interface issue: #795
+					loadFuncBody(ctx, fn, body, d)
+				})
+			} else {
 				loadFuncBody(ctx, fn, body, d)
-			})
-		} else {
-			loadFuncBody(ctx, fn, body, d)
+			}
 		}
 	}
 }
