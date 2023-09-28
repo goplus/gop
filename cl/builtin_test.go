@@ -119,6 +119,30 @@ func TestGetStringConst(t *testing.T) {
 	}
 }
 
+func TestSpxRef(t *testing.T) {
+	defer func() {
+		if e := recover(); !isError(e, "foo.bar not found") {
+			t.Fatal("TestSpxRef:", e)
+		}
+	}()
+	pkg := &gox.PkgRef{
+		Types: types.NewPackage("foo", "foo"),
+	}
+	spxRef(pkg, "bar")
+}
+
+func isError(e interface{}, msg string) bool {
+	if e != nil {
+		if err, ok := e.(error); ok {
+			return err.Error() == msg
+		}
+		if err, ok := e.(string); ok {
+			return err == msg
+		}
+	}
+	return false
+}
+
 func TestGmxSettings(t *testing.T) {
 	pkg := gox.NewPackage("", "foo", goxConf)
 	gmx := newGmx(nil, pkg, "main.t2gmx", &ast.File{IsProj: true}, &Config{
