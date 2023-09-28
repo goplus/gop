@@ -33,15 +33,7 @@ func codeErrorTest(t *testing.T, msg, src string) {
 	codeErrorTestEx(t, "main", "bar.gop", msg, src)
 }
 
-func codeErrorTest2(t *testing.T, msg1, msg2, src string) {
-	codeErrorTestEx2(t, "main", "bar.gop", msg1, msg2, src)
-}
-
 func codeErrorTestEx(t *testing.T, pkgname, filename, msg, src string) {
-	codeErrorTestEx2(t, pkgname, filename, msg, "", src)
-}
-
-func codeErrorTestEx2(t *testing.T, pkgname, filename, msg1, msg2, src string) {
 	fs := memfs.SingleFile("/foo", filename, src)
 	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", parser.Config{})
 	if err != nil {
@@ -57,8 +49,8 @@ func codeErrorTestEx2(t *testing.T, pkgname, filename, msg1, msg2, src string) {
 	if err == nil {
 		t.Fatal("no error?")
 	}
-	if ret := err.Error(); ret != msg1 && ret != msg2 {
-		t.Fatalf("\nError: \"%s\"\nExpected: \"%s\"\n", ret, msg1)
+	if ret := err.Error(); ret != msg {
+		t.Fatalf("\nError: \"%s\"\nExpected: \"%s\"\n", ret, msg)
 	}
 }
 
@@ -887,9 +879,13 @@ type A struct {
 
 func TestErrImportPkg(t *testing.T) {
 	root := filepath.Join(runtime.GOROOT(), "src", "fmt2")
-	codeErrorTest2(t,
-		fmt.Sprintf(`./bar.gop:3:2: package fmt2 is not in GOROOT (%v)
-`, root), fmt.Sprintf(`./bar.gop:3:2: package fmt2 is not in std (%v)
+	where := "GOROOT"
+	ver := runtime.Version()[:6]
+	if ver >= "go1.21" {
+		where = "std"
+	}
+	codeErrorTest(t,
+		fmt.Sprintf(`./bar.gop:3:2: package fmt2 is not in `+where+` (%v)
 `, root), `
 import (
 	"fmt2"
