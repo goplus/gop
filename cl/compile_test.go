@@ -3918,6 +3918,19 @@ func main() {
 	}
 }
 `)
+	testRangeExpr(t, `
+for i $ 1:10:3 {
+	println(i)
+}`, `package main
+
+import fmt "fmt"
+
+func main() {
+	for i := 1; i < 10; i += 3 {
+		fmt.Println(i)
+	}
+}
+`)
 }
 
 func TestRangeExpr2(t *testing.T) {
