@@ -119,6 +119,30 @@ func TestGetStringConst(t *testing.T) {
 	}
 }
 
+func TestSpxRef(t *testing.T) {
+	defer func() {
+		if e := recover(); !isError(e, "foo.bar not found") {
+			t.Fatal("TestSpxRef:", e)
+		}
+	}()
+	pkg := &gox.PkgRef{
+		Types: types.NewPackage("foo", "foo"),
+	}
+	spxRef(pkg, "bar")
+}
+
+func isError(e interface{}, msg string) bool {
+	if e != nil {
+		if err, ok := e.(error); ok {
+			return err.Error() == msg
+		}
+		if err, ok := e.(string); ok {
+			return err == msg
+		}
+	}
+	return false
+}
+
 func TestGmxSettings(t *testing.T) {
 	pkg := gox.NewPackage("", "foo", goxConf)
 	gmx := newGmx(nil, pkg, "main.t2gmx", &ast.File{IsProj: true}, &Config{
@@ -176,10 +200,10 @@ func lookupClassErr(ext string) (c *modfile.Project, ok bool) {
 }
 
 func TestGetGoFile(t *testing.T) {
-	if f := getGoFile("a_test.gop", true); f != testingGoFile {
+	if f := genGoFile("a_test.gop", true); f != testingGoFile {
 		t.Fatal("TestGetGoFile:", f)
 	}
-	if f := getGoFile("a_test.gop", false); f != skippingGoFile {
+	if f := genGoFile("a_test.gop", false); f != skippingGoFile {
 		t.Fatal("TestGetGoFile:", f)
 	}
 }
@@ -197,17 +221,6 @@ func TestErrNewType(t *testing.T) {
 		pkg := types.NewPackage("", "foo")
 		newType(pkg, token.NoPos, "bar")
 		newType(pkg, token.NoPos, "bar")
-	})
-}
-
-func TestErrDeclFunc(t *testing.T) {
-	testPanic(t, "invalid receiver type **byte (**byte is not a defined type)\n", func() {
-		pkg := gox.NewPackage("", "foo", goxConf)
-		recv := pkg.NewParam(token.NoPos, "p", types.NewPointer(types.NewPointer(gox.TyByte)))
-		declFunc(&blockCtx{pkg: pkg}, recv, &ast.FuncDecl{
-			Name: &ast.Ident{Name: "m"},
-			Type: &ast.FuncType{Params: &ast.FieldList{}},
-		})
 	})
 }
 

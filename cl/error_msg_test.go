@@ -487,6 +487,10 @@ a := struct{x int; y string}{1}
 x := 1
 a := struct{x int; y string}{1, x}
 `)
+	codeErrorTest(t,
+		`./bar.gop:2:30: z undefined (type struct{x int; y string} has no field or method z)`, `
+a := struct{x int; y string}{z: 1}
+`)
 }
 
 func TestErrArray(t *testing.T) {

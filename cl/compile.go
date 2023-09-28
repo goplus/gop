@@ -99,8 +99,11 @@ type Config struct {
 	// NoAutoGenMain = true means not to auto generate main func is no entry.
 	NoAutoGenMain bool
 
-	// NoSkipConstant = true means disable optimization of skip constants
+	// NoSkipConstant = true means to disable optimization of skipping constants.
 	NoSkipConstant bool
+
+	// Outline = true means to skip compiling function bodies.
+	Outline bool
 }
 
 type nodeInterp struct {
@@ -153,9 +156,9 @@ type baseLoader struct {
 	start token.Pos
 }
 
-func initLoader(ctx *pkgCtx, syms map[string]loader, start token.Pos, name string, fn func(), genCode bool) {
+func initLoader(ctx *pkgCtx, syms map[string]loader, start token.Pos, name string, fn func(), genBody bool) {
 	if name == "_" {
-		if genCode {
+		if genBody {
 			ctx.inits = append(ctx.inits, fn)
 		}
 		return
@@ -244,14 +247,15 @@ func doInitMethods(ld *typeLoader) {
 type pkgCtx struct {
 	*nodeInterp
 	*gmxSettings
-	cpkgs    *cpackages.Importer
-	syms     map[string]loader
+	cpkgs *cpackages.Importer
+	syms  map[string]loader
+	inits []func()
+	tylds []*typeLoader
+	errs  errors.List
+
 	generics map[string]bool // generic type record
-	inits    []func()
-	tylds    []*typeLoader
-	idents   []*ast.Ident // toType ident recored
-	errs     errors.List
-	inInst   int // toType in generic instance
+	idents   []*ast.Ident    // toType ident recored
+	inInst   int             // toType in generic instance
 }
 
 type blockCtx struct {
@@ -430,7 +434,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 			pkg: p, pkgCtx: ctx, cb: p.CB(), fset: p.Fset, targetDir: targetDir,
 			imports: make(map[string]*gox.PkgRef),
 		}
-		preloadFile(p, ctx, fpath, f, false)
+		preloadFile(p, ctx, fpath, f, false, false)
 	}
 
 	// sort files
@@ -533,8 +537,8 @@ func loadFile(ctx *pkgCtx, f *ast.File) {
 	}
 }
 
-func getGoFile(file string, genCode bool) string {
-	if genCode {
+func genGoFile(file string, gopFile bool) string {
+	if gopFile {
 		if strings.HasSuffix(file, "_test.gop") {
 			return testingGoFile
 		}
@@ -658,7 +662,7 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 			})
 		}
 	}
-	preloadFile(p, ctx, file, f, true)
+	preloadFile(p, ctx, file, f, true, !conf.Outline)
 }
 
 func parseTypeEmbedName(typ ast.Expr) *ast.Ident {
@@ -675,10 +679,10 @@ retry:
 	return nil
 }
 
-func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, genCode bool) {
+func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFile, genFnBody bool) {
 	parent := ctx.pkgCtx
 	syms := parent.syms
-	goFile := getGoFile(file, genCode)
+	goFile := genGoFile(file, gopFile)
 	old, _ := p.SetCurFile(goFile, true)
 	defer p.RestoreCurFile(old)
 	for _, decl := range f.Decls {
@@ -693,21 +697,14 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, genCod
 				}
 			}
 			if d.Recv == nil {
-				var name = d.Name
-				var fn func()
-				if genCode {
-					fn = func() {
-						old, _ := p.SetCurFile(goFile, true)
-						defer p.RestoreCurFile(old)
-						loadFunc(ctx, nil, d)
-					}
-				} else {
-					fn = func() {
-						declFunc(ctx, nil, d)
-					}
+				name := d.Name
+				fn := func() {
+					old, _ := p.SetCurFile(goFile, true)
+					defer p.RestoreCurFile(old)
+					loadFunc(ctx, nil, d, genFnBody)
 				}
 				if name.Name == "init" {
-					if genCode {
+					if genFnBody {
 						if debugLoad {
 							log.Println("==> Preload func init")
 						}
@@ -717,29 +714,20 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, genCod
 					if debugLoad {
 						log.Println("==> Preload func", name.Name)
 					}
-					initLoader(parent, syms, name.Pos(), name.Name, fn, genCode)
+					initLoader(parent, syms, name.Pos(), name.Name, fn, genFnBody)
 				}
 			} else {
 				if name, ok := getRecvTypeName(parent, d.Recv, true); ok {
 					if debugLoad {
 						log.Printf("==> Preload method %s.%s\n", name, d.Name.Name)
 					}
-					var ld = getTypeLoader(parent, syms, token.NoPos, name)
-					var fn func()
-					if genCode {
-						fn = func() {
-							old, _ := p.SetCurFile(goFile, true)
-							defer p.RestoreCurFile(old)
-							doInitType(ld)
-							recv := toRecv(ctx, d.Recv)
-							loadFunc(ctx, recv, d)
-						}
-					} else {
-						fn = func() {
-							doInitType(ld)
-							recv := toRecv(ctx, d.Recv)
-							declFunc(ctx, recv, d)
-						}
+					ld := getTypeLoader(parent, syms, token.NoPos, name)
+					fn := func() {
+						old, _ := p.SetCurFile(goFile, true)
+						defer p.RestoreCurFile(old)
+						doInitType(ld)
+						recv := toRecv(ctx, d.Recv)
+						loadFunc(ctx, recv, d, genFnBody)
 					}
 					ld.methods = append(ld.methods, fn)
 				}
@@ -758,7 +746,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, genCod
 						log.Println("==> Preload type", name)
 					}
 					ld := getTypeLoader(parent, syms, t.Name.Pos(), name)
-					if genCode {
+					if gopFile {
 						ld.typ = func() {
 							old, _ := p.SetCurFile(goFile, true)
 							defer p.RestoreCurFile(old)
@@ -867,40 +855,7 @@ func aliasType(pkg *types.Package, pos token.Pos, name string, typ types.Type) {
 	pkg.Scope().Insert(o)
 }
 
-func declFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
-	name := d.Name.Name
-	if debugLoad {
-		if recv == nil {
-			log.Println("==> Load func", name)
-		} else {
-			log.Printf("==> Load method %v.%s\n", recv.Type(), name)
-		}
-	}
-	if name == "_" {
-		return
-	}
-	pkg := ctx.pkg.Types
-	sig := toFuncType(ctx, d.Type, recv, d)
-	fn := types.NewFunc(d.Pos(), pkg, name, sig)
-	if recv != nil {
-		typ := recv.Type()
-		switch t := typ.(type) {
-		case *types.Named:
-			t.AddMethod(fn)
-			return
-		case *types.Pointer:
-			if tt, ok := t.Elem().(*types.Named); ok {
-				tt.AddMethod(fn)
-				return
-			}
-		}
-		log.Panicf("invalid receiver type %v (%v is not a defined type)\n", typ, typ)
-	} else {
-		pkg.Scope().Insert(fn)
-	}
-}
-
-func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
+func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) {
 	name := d.Name.Name
 	if debugLoad {
 		if recv == nil {
@@ -936,13 +891,15 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
 	if d.Doc != nil {
 		fn.SetComments(d.Doc)
 	}
-	if body := d.Body; body != nil {
-		if recv != nil {
-			ctx.inits = append(ctx.inits, func() { // interface issue: #795
+	if genBody {
+		if body := d.Body; body != nil {
+			if recv != nil {
+				ctx.inits = append(ctx.inits, func() { // interface issue: #795
+					loadFuncBody(ctx, fn, body, d)
+				})
+			} else {
 				loadFuncBody(ctx, fn, body, d)
-			})
-		} else {
-			loadFuncBody(ctx, fn, body, d)
+			}
 		}
 	}
 }

@@ -1849,6 +1849,32 @@ var y uint32 = *x
 `)
 }
 
+func TestLHS(t *testing.T) {
+	gopClTest(t, `
+type T struct {
+	a int
+}
+
+func foo() *T {
+	return nil
+}
+
+foo().a = 123
+`, `package main
+
+type T struct {
+	a int
+}
+
+func foo() *T {
+	return nil
+}
+func main() {
+	foo().a = 123
+}
+`)
+}
+
 func TestSend(t *testing.T) {
 	gopClTest(t, `
 var x chan bool
@@ -3888,6 +3914,19 @@ import fmt "fmt"
 
 func main() {
 	for i := 0; i < 10; i += 1 {
+		fmt.Println(i)
+	}
+}
+`)
+	testRangeExpr(t, `
+for i $ 1:10:3 {
+	println(i)
+}`, `package main
+
+import fmt "fmt"
+
+func main() {
+	for i := 1; i < 10; i += 3 {
 		fmt.Println(i)
 	}
 }
