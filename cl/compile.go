@@ -247,14 +247,15 @@ func doInitMethods(ld *typeLoader) {
 type pkgCtx struct {
 	*nodeInterp
 	*gmxSettings
-	cpkgs    *cpackages.Importer
-	syms     map[string]loader
+	cpkgs *cpackages.Importer
+	syms  map[string]loader
+	inits []func()
+	tylds []*typeLoader
+	errs  errors.List
+
 	generics map[string]bool // generic type record
-	inits    []func()
-	tylds    []*typeLoader
-	idents   []*ast.Ident // toType ident recored
-	errs     errors.List
-	inInst   int // toType in generic instance
+	idents   []*ast.Ident    // toType ident recored
+	inInst   int             // toType in generic instance
 }
 
 type blockCtx struct {
@@ -744,32 +745,56 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 					if debugLoad {
 						log.Println("==> Preload type", name)
 					}
-					ctx.generics[name] = !gopFile
 					ld := getTypeLoader(parent, syms, t.Name.Pos(), name)
-					ld.typ = func() {
-						old, _ := p.SetCurFile(goFile, true)
-						defer p.RestoreCurFile(old)
-						if t.Assign != token.NoPos { // alias type
-							if debugLoad {
-								log.Println("==> Load > AliasType", name)
+					if gopFile {
+						ld.typ = func() {
+							old, _ := p.SetCurFile(goFile, true)
+							defer p.RestoreCurFile(old)
+							if t.Assign != token.NoPos { // alias type
+								if debugLoad {
+									log.Println("==> Load > AliasType", name)
+								}
+								ctx.pkg.AliasType(name, toType(ctx, t.Type), t.Pos())
+								return
 							}
-							ctx.pkg.AliasType(name, toType(ctx, t.Type), t.Pos())
-							return
-						}
-						if debugLoad {
-							log.Println("==> Load > NewType", name)
-						}
-						decl := ctx.pkg.NewType(name)
-						if t.Doc != nil {
-							decl.SetComments(t.Doc)
-						} else if d.Doc != nil {
-							decl.SetComments(d.Doc)
-						}
-						ld.typInit = func() { // decycle
 							if debugLoad {
-								log.Println("==> Load > InitType", name)
+								log.Println("==> Load > NewType", name)
 							}
-							decl.InitType(ctx.pkg, toType(ctx, t.Type))
+							decl := ctx.pkg.NewType(name)
+							if t.Doc != nil {
+								decl.SetComments(t.Doc)
+							} else if d.Doc != nil {
+								decl.SetComments(d.Doc)
+							}
+							ld.typInit = func() { // decycle
+								if debugLoad {
+									log.Println("==> Load > InitType", name)
+								}
+								decl.InitType(ctx.pkg, toType(ctx, t.Type))
+							}
+						}
+					} else {
+						ctx.generics[name] = true
+						ld.typ = func() {
+							pkg := ctx.pkg.Types
+							if t.Assign != token.NoPos { // alias type
+								if debugLoad {
+									log.Println("==> Load > AliasType", name)
+								}
+								aliasType(pkg, t.Pos(), name, toType(ctx, t.Type))
+								return
+							}
+							if debugLoad {
+								log.Println("==> Load > NewType", name)
+							}
+							named := newType(pkg, t.Pos(), name)
+
+							ld.typInit = func() { // decycle
+								if debugLoad {
+									log.Println("==> Load > InitType", name)
+								}
+								initType(ctx, named, t)
+							}
 						}
 					}
 				}
@@ -817,7 +842,6 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 	}
 }
 
-/*
 func newType(pkg *types.Package, pos token.Pos, name string) *types.Named {
 	typName := types.NewTypeName(pos, pkg, name, nil)
 	if old := pkg.Scope().Insert(typName); old != nil {
@@ -830,40 +854,6 @@ func aliasType(pkg *types.Package, pos token.Pos, name string, typ types.Type) {
 	o := types.NewTypeName(pos, pkg, name, typ)
 	pkg.Scope().Insert(o)
 }
-
-func declFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
-	name := d.Name.Name
-	if debugLoad {
-		if recv == nil {
-			log.Println("==> Load func", name)
-		} else {
-			log.Printf("==> Load method %v.%s\n", recv.Type(), name)
-		}
-	}
-	if name == "_" {
-		return
-	}
-	pkg := ctx.pkg.Types
-	sig := toFuncType(ctx, d.Type, recv, d)
-	fn := types.NewFunc(d.Pos(), pkg, name, sig)
-	if recv != nil {
-		typ := recv.Type()
-		switch t := typ.(type) {
-		case *types.Named:
-			t.AddMethod(fn)
-			return
-		case *types.Pointer:
-			if tt, ok := t.Elem().(*types.Named); ok {
-				tt.AddMethod(fn)
-				return
-			}
-		}
-		log.Panicf("invalid receiver type %v (%v is not a defined type)\n", typ, typ)
-	} else {
-		pkg.Scope().Insert(fn)
-	}
-}
-*/
 
 func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) {
 	name := d.Name.Name
