@@ -18,6 +18,7 @@ package gop
 
 import (
 	"go/token"
+	"io/fs"
 	"strings"
 	"syscall"
 
@@ -46,9 +47,20 @@ func Outline(dir string, conf *Config) (out outline.Package, err error) {
 		return
 	}
 
+	filterConf := conf.Filter
+	filter := func(fi fs.FileInfo) bool {
+		if filterConf != nil && !filterConf(fi) {
+			return false
+		}
+		fname := fi.Name()
+		if pos := strings.Index(fname, "."); pos > 0 {
+			fname = fname[:pos]
+		}
+		return !strings.HasSuffix(fname, "_test")
+	}
 	pkgs, err := parser.ParseDirEx(fset, dir, parser.Config{
 		ClassKind: mod.ClassKind,
-		Filter:    conf.Filter,
+		Filter:    filter,
 		Mode:      parser.ParseComments,
 	})
 	if err != nil {
