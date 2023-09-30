@@ -47,7 +47,9 @@ func init() {
 
 func runCmd(cmd *base.Command, args []string) {
 	err := flag.Parse(args)
-	check(err)
+	if err != nil {
+		log.Fatalln("parse input arguments failed:", err)
+	}
 
 	if *debug {
 		fsnotify.SetDebug(fsnotify.DbgFlagAll)
@@ -72,12 +74,6 @@ func runCmd(cmd *base.Command, args []string) {
 		if err != nil {
 			log.Println(err)
 		}
-	}
-}
-
-func check(err error) {
-	if err != nil {
-		log.Fatalln(err)
 	}
 }
 
