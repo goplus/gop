@@ -136,7 +136,7 @@ func outlineDoc(pkg *types.Package, out *outline.All, withDoc bool) {
 	for _, t := range out.Types {
 		fmt.Println(typeString(pkg, t.TypeName, withDoc))
 		for _, o := range t.Consts {
-			fmt.Print(indent, objectString(pkg, o.Const), ln)
+			fmt.Print(indent, constShortString(o.Const), ln)
 		}
 		for _, fn := range t.Creators {
 			fmt.Print(indent, objectString(pkg, fn.Obj()), ln)
@@ -162,6 +162,10 @@ func typeShortString(pkg *types.Package, typ types.Type) string {
 	default:
 		return types.TypeString(t, qualifier(pkg))
 	}
+}
+
+func constShortString(obj *types.Const) string {
+	return "const " + obj.Name()
 }
 
 func qualifier(pkg *types.Package) types.Qualifier {
