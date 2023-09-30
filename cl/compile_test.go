@@ -78,9 +78,11 @@ func gopClTestEx(t *testing.T, conf *cl.Config, pkgname, gopcode, expected strin
 	gopClTestFS(t, conf, fs, pkgname, expected)
 }
 
-func gopMixedClTest(t *testing.T, pkgname, gocode, gopcode, expected string) {
+func gopMixedClTest(t *testing.T, pkgname, gocode, gopcode, expected string, outline ...bool) {
+	conf := *gblConf
+	conf.Outline = (outline != nil && outline[0])
 	fs := memfs.TwoFiles("/foo", "a.go", gocode, "b.gop", gopcode)
-	gopClTestFS(t, gblConf, fs, pkgname, expected)
+	gopClTestFS(t, &conf, fs, pkgname, expected)
 }
 
 func gopClTestFS(t *testing.T, conf *cl.Config, fs parser.FileSystem, pkgname, expected string) {
@@ -280,7 +282,7 @@ var c foo
 var d int = c.v
 var e = foo3{}
 var x string = c.Str()
-`)
+`, true)
 	gopMixedClTest(t, "main", `package main
 type Point struct {
 	X int
@@ -299,7 +301,7 @@ type T struct {
 func main() {
 	fmt.Println(&T{}, &Point{10, 20})
 }
-`)
+`, false)
 }
 
 func Test_RangeExpressionIf_Issue1243(t *testing.T) {
