@@ -428,8 +428,10 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		preloadGopFile(p, ctx, fpath, f, conf)
 	}
 
+	gofiles := make([]*ast.File, 0, len(pkg.GoFiles))
 	for fpath, gof := range pkg.GoFiles {
 		f := fromgo.ASTFile(gof, 0)
+		gofiles = append(gofiles, f)
 		ctx := &blockCtx{
 			pkg: p, pkgCtx: ctx, cb: p.CB(), fset: p.Fset, targetDir: targetDir,
 			imports: make(map[string]*gox.PkgRef),
@@ -442,7 +444,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		*ast.File
 		path string
 	}
-	var sfiles []*File
+	sfiles := make([]*File, 0, len(files))
 	for fpath, f := range files {
 		sfiles = append(sfiles, &File{f, fpath})
 	}
@@ -460,6 +462,11 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	for _, f := range sfiles {
 		if !f.IsProj { // only one .gmx file
 			loadFile(ctx, f.File)
+		}
+	}
+	if conf.Outline {
+		for _, f := range gofiles {
+			loadFile(ctx, f)
 		}
 	}
 	for _, ld := range ctx.tylds {

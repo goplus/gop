@@ -138,13 +138,13 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 	for name, pkg := range pkgs {
 		if strings.HasSuffix(name, "_test") {
 			if pkgTest != nil {
-				return nil, nil, errMultiTestPackges
+				return nil, nil, ErrMultiTestPackges
 			}
 			pkgTest = pkg
 			continue
 		}
 		if out != nil {
-			return nil, nil, errMultiPackges
+			return nil, nil, ErrMultiPackges
 		}
 		if len(pkg.Files) == 0 { // no Go+ source files
 			break
@@ -189,7 +189,7 @@ func LoadFiles(files []string, conf *Config) (out *gox.Package, err error) {
 		return
 	}
 	if len(pkgs) != 1 {
-		err = errors.NewWith(errMultiPackges, `len(pkgs) != 1`, -1, "!=", len(pkgs), 1)
+		err = errors.NewWith(ErrMultiPackges, `len(pkgs) != 1`, -1, "!=", len(pkgs), 1)
 		return
 	}
 	for _, pkg := range pkgs {
@@ -215,8 +215,8 @@ func LoadFiles(files []string, conf *Config) (out *gox.Package, err error) {
 // -----------------------------------------------------------------------------
 
 var (
-	errMultiPackges     = errors.New("multiple packages")
-	errMultiTestPackges = errors.New("multiple test packages")
+	ErrMultiPackges     = errors.New("multiple packages")
+	ErrMultiTestPackges = errors.New("multiple test packages")
 )
 
 // -----------------------------------------------------------------------------

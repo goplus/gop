@@ -1122,10 +1122,11 @@ type FileType = int16
 // and Comment comments directly associated with nodes, the remaining comments
 // are "free-floating" (see also issues #18593, #20744).
 type File struct {
-	Doc          *CommentGroup   // associated documentation; or nil
-	Package      token.Pos       // position of "package" keyword
-	Name         *Ident          // package name
-	Decls        []Decl          // top-level declarations; or nil
+	Doc     *CommentGroup // associated documentation; or nil
+	Package token.Pos     // position of "package" keyword
+	Name    *Ident        // package name
+	Decls   []Decl        // top-level declarations; or nil
+
 	Scope        *Scope          // package scope (this file only)
 	Imports      []*ImportSpec   // imports in this file
 	Unresolved   []*Ident        // unresolved identifiers in this file

@@ -34,7 +34,7 @@ import (
 // Cmd - gop env
 var Cmd = &base.Command{
 	UsageLine: "gop env [-json] [var ...]",
-	Short:     "Prints Go+ environment information.",
+	Short:     "Prints Go+ environment information",
 }
 
 var (

@@ -19,6 +19,8 @@
 package parser
 
 import (
+	goparser "go/parser"
+
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
 )
@@ -30,21 +32,21 @@ type Mode uint
 
 const (
 	// PackageClauseOnly - stop parsing after package clause
-	PackageClauseOnly Mode = 1 << iota
+	PackageClauseOnly = Mode(goparser.PackageClauseOnly)
 	// ImportsOnly - stop parsing after import declarations
-	ImportsOnly
+	ImportsOnly = Mode(goparser.ImportsOnly)
 	// ParseComments - parse comments and add them to AST
-	ParseComments
+	ParseComments = Mode(goparser.ParseComments)
 	// Trace - print a trace of parsed productions
-	Trace
+	Trace = Mode(goparser.Trace)
 	// DeclarationErrors - report declaration errors
-	DeclarationErrors
+	DeclarationErrors = Mode(goparser.DeclarationErrors)
 	// AllErrors - report all errors (not just the first 10 on different lines)
-	AllErrors
+	AllErrors = Mode(goparser.AllErrors)
 	// ParseGoAsGoPlus - parse Go files by gop/parser
-	ParseGoAsGoPlus
+	ParseGoAsGoPlus Mode = 1 << 16
 	// ParserGoPlusClass - parse Go+ classfile by gop/parser
-	ParseGoPlusClass
+	ParseGoPlusClass Mode = 1 << 17
 )
 
 // ParseFile parses the source code of a single Go source file and returns

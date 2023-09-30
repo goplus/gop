@@ -245,6 +245,7 @@ func gopFieldList(v *ast.FieldList) *gopast.FieldList {
 
 func gopFuncDecl(v *ast.FuncDecl) *gopast.FuncDecl {
 	return &gopast.FuncDecl{
+		Doc:  v.Doc,
 		Recv: gopFieldList(v.Recv),
 		Name: gopIdent(v.Name),
 		Type: gopFuncType(v.Type),
@@ -294,6 +295,7 @@ func gopGenDecl(v *ast.GenDecl) *gopast.GenDecl {
 		}
 	}
 	return &gopast.GenDecl{
+		Doc:    v.Doc,
 		TokPos: v.TokPos,
 		Tok:    goptoken.Token(v.Tok),
 		Lparen: v.Lparen,
@@ -338,6 +340,7 @@ func ASTFile(f *ast.File, mode int) *gopast.File {
 		log.Panicln("ASTFile: doesn't support keeping cgo now")
 	}
 	return &gopast.File{
+		Doc:     f.Doc,
 		Package: f.Package,
 		Name:    gopIdent(f.Name),
 		Decls:   gopDecls(f.Decls),

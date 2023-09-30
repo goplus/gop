@@ -1,0 +1,133 @@
+/*
+ * Copyright (c) 2023 The GoPlus Authors (goplus.org). All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package gop
+
+import (
+	"fmt"
+	"go/token"
+	"io/fs"
+	"path/filepath"
+	"strings"
+	"syscall"
+
+	"github.com/goplus/gop/cl/outline"
+	"github.com/goplus/gop/parser"
+	"github.com/goplus/gop/x/gopenv"
+	"github.com/goplus/mod/gopmod"
+)
+
+// -----------------------------------------------------------------------------
+
+func Outline(dir string, conf *Config) (out outline.Package, err error) {
+	if conf == nil {
+		conf = new(Config)
+	}
+	fset := conf.Fset
+	if fset == nil {
+		fset = token.NewFileSet()
+	}
+	gop := conf.Gop
+	if gop == nil {
+		gop = gopenv.Get()
+	}
+
+	if dir, err = filepath.Abs(dir); err != nil {
+		return
+	}
+	mod, err := LoadMod(dir, gop, conf)
+	if err != nil {
+		return
+	}
+
+	filterConf := conf.Filter
+	filter := func(fi fs.FileInfo) bool {
+		if filterConf != nil && !filterConf(fi) {
+			return false
+		}
+		fname := fi.Name()
+		if pos := strings.Index(fname, "."); pos > 0 {
+			fname = fname[:pos]
+		}
+		return !strings.HasSuffix(fname, "_test")
+	}
+	pkgs, err := parser.ParseDirEx(fset, dir, parser.Config{
+		ClassKind: mod.ClassKind,
+		Filter:    filter,
+		Mode:      parser.ParseComments,
+	})
+	if err != nil {
+		return
+	}
+	if len(pkgs) == 0 {
+		err = syscall.ENOENT
+		return
+	}
+
+	imp := conf.Importer
+	if imp == nil {
+		imp = NewImporter(mod, gop, fset)
+	}
+
+	for name, pkg := range pkgs {
+		if out.Valid() {
+			err = fmt.Errorf("%w: %s, %s", ErrMultiPackges, name, out.Pkg.Name())
+			return
+		}
+		if len(pkg.Files)+len(pkg.GoFiles) == 0 { // no Go/Go+ source files
+			break
+		}
+		pkgPath, _ := filepath.Rel(mod.Root(), dir)
+		out, err = outline.NewPackage(filepath.ToSlash(pkgPath), pkg, &outline.Config{
+			Fset:        fset,
+			WorkingDir:  dir,
+			Importer:    imp,
+			LookupClass: mod.LookupClass,
+			LookupPub:   lookupPub(mod),
+		})
+		if err != nil {
+			return
+		}
+	}
+	if !out.Valid() {
+		err = syscall.ENOENT
+	}
+	return
+}
+
+// -----------------------------------------------------------------------------
+
+func OutlinePkgPath(workDir, pkgPath string, conf *Config, allowExtern bool) (out outline.Package, err error) {
+	mod, err := gopmod.Load(workDir, 0)
+	if NotFound(err) && allowExtern {
+		remotePkgPathDo(pkgPath, func(dir string) {
+			out, err = Outline(dir, conf)
+		}, func(e error) {
+			err = e
+		})
+		return
+	} else if err != nil {
+		return
+	}
+
+	pkg, err := mod.Lookup(pkgPath)
+	if err != nil {
+		return
+	}
+	return Outline(pkg.Dir, conf)
+}
+
+// -----------------------------------------------------------------------------

@@ -29,6 +29,7 @@ import (
 	"github.com/goplus/gop/cmd/internal/build"
 	"github.com/goplus/gop/cmd/internal/c2go"
 	"github.com/goplus/gop/cmd/internal/clean"
+	"github.com/goplus/gop/cmd/internal/doc"
 	"github.com/goplus/gop/cmd/internal/env"
 	"github.com/goplus/gop/cmd/internal/gengo"
 	"github.com/goplus/gop/cmd/internal/gopfmt"
@@ -58,6 +59,7 @@ func init() {
 		gopget.Cmd,
 		gengo.Cmd,
 		mod.Cmd,
+		doc.Cmd,
 		clean.Cmd,
 		// list.Cmd,
 		// deps.Cmd,
