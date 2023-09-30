@@ -23,6 +23,7 @@ import (
 	"os"
 	"reflect"
 	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/goplus/gop"
@@ -103,35 +104,36 @@ func outlinePkg(proj gopprojs.Proj, conf *gop.Config) {
 	}
 }
 
+const (
+	indent = "    "
+	ln     = "\n"
+)
+
 func outlineDoc(pkg *types.Package, out *outline.All, withDoc bool) {
-	const (
-		indent = "    "
-		ln     = "\n"
-	)
-	fmt.Printf("package %s // import %s\n", pkg.Name(), strconv.Quote(pkg.Path()))
-	if !withDoc {
-		fmt.Println()
-	}
+	fmt.Printf("package %s // import %s\n\n", pkg.Name(), strconv.Quote(pkg.Path()))
 	if withDoc && len(out.Consts) > 0 {
-		fmt.Print("\nCONSTANTS\n\n")
+		fmt.Print("CONSTANTS\n\n")
 	}
 	for _, o := range out.Consts {
 		fmt.Print(objectString(pkg, o.Const), ln)
 	}
 	if withDoc && len(out.Vars) > 0 {
-		fmt.Print("\nVARIABLES\n\n")
+		fmt.Print("VARIABLES\n\n")
 	}
 	for _, o := range out.Vars {
 		fmt.Print(objectString(pkg, o.Var), ln)
 	}
 	if withDoc && len(out.Funcs) > 0 {
-		fmt.Print("\nFUNCTIONS\n\n")
+		fmt.Print("FUNCTIONS\n\n")
 	}
 	for _, fn := range out.Funcs {
 		fmt.Print(objectString(pkg, fn.Obj()), ln)
+		if withDoc {
+			printDoc(fn)
+		}
 	}
 	if withDoc && len(out.Types) > 0 {
-		fmt.Print("\nTYPES\n\n")
+		fmt.Print("TYPES\n\n")
 	}
 	for _, t := range out.Types {
 		fmt.Println(typeString(pkg, t.TypeName, withDoc))
@@ -142,6 +144,10 @@ func outlineDoc(pkg *types.Package, out *outline.All, withDoc bool) {
 			fmt.Print(indent, objectString(pkg, fn.Obj()), ln)
 		}
 	}
+}
+
+func printDoc(o interface{ Doc() string }) {
+	fmt.Print(indent, strings.ReplaceAll(o.Doc(), "\n", "\n"+indent), ln)
 }
 
 func typeString(pkg *types.Package, t *types.TypeName, withDoc bool) string {
