@@ -24,23 +24,27 @@ import (
 	"syscall"
 
 	"github.com/goplus/gop"
+	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cl/outline"
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/gop/x/gopprojs"
+	"github.com/goplus/gox"
 )
 
 // -----------------------------------------------------------------------------
 
 // gop doc
 var Cmd = &base.Command{
-	UsageLine: "gop doc [-all] [pkgPath]",
+	UsageLine: "gop doc [-u -all -debug] [pkgPath]",
 	Short:     "Show documentation for package or symbol",
 }
 
 var (
-	flag = &Cmd.Flag
-	all  = flag.Bool("all", false, "show all the documentation for the package.")
+	flag  = &Cmd.Flag
+	all   = flag.Bool("all", false, "Show all the documentation for the package.")
+	debug = flag.Bool("debug", false, "Print debug information.")
+	unexp = flag.Bool("u", false, "Show documentation for unexported as well as exported symbols, methods, and fields.")
 )
 
 func init() {
@@ -63,6 +67,12 @@ func runCmd(cmd *base.Command, args []string) {
 		log.Panicln("gopprojs.ParseOne:", err)
 	}
 
+	if *debug {
+		gox.SetDebug(gox.DbgFlagAll &^ gox.DbgFlagComments)
+		cl.SetDebug(cl.DbgFlagAll)
+		cl.SetDisableRecover(true)
+	}
+
 	gopEnv := gopenv.Get()
 	conf := &gop.Config{Gop: gopEnv}
 	outlinePkg(proj, conf)
@@ -78,17 +88,25 @@ func outlinePkg(proj gopprojs.Proj, conf *gop.Config) {
 		out, err = gop.Outline(obj, conf)
 	case *gopprojs.PkgPathProj:
 		obj = v.Path
-		out, err = gop.OutlinePkgPath("", v.Path, conf, true)
+		out, err = gop.OutlinePkgPath("", obj, conf, true)
 	default:
 		log.Panicln("`gop doc` doesn't support", reflect.TypeOf(v))
 	}
 	if err == syscall.ENOENT {
-		fmt.Fprintf(os.Stderr, "gop doc %v: not found\n", obj)
+		fmt.Fprintf(os.Stderr, "gop doc %v: not Go/Go+ files found\n", obj)
 	} else if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	} else {
-		_ = out.Outline(*all)
-		return
+		outlineDoc(out.Outline(*unexp), *all)
+	}
+}
+
+func outlineDoc(out *outline.All, withDoc bool) {
+	for _, fn := range out.Funcs {
+		fmt.Println(fn)
+	}
+	for _, t := range out.Types {
+		fmt.Println(t)
 	}
 }
 

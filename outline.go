@@ -72,7 +72,7 @@ func Outline(dir string, conf *Config) (out outline.Package, err error) {
 			err = errMultiPackges
 			return
 		}
-		if len(pkg.Files) == 0 { // no Go+ source files
+		if len(pkg.Files)+len(pkg.GoFiles) == 0 { // no Go/Go+ source files
 			break
 		}
 		out, err = outline.NewPackage("", pkg, &outline.Config{
