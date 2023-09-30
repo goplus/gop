@@ -22,6 +22,7 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"strconv"
 	"syscall"
 
 	"github.com/goplus/gop"
@@ -107,6 +108,22 @@ func outlineDoc(pkg *types.Package, out *outline.All, withDoc bool) {
 		indent = "    "
 		ln     = "\n"
 	)
+	fmt.Printf("package %s // import %s\n", pkg.Name(), strconv.Quote(pkg.Path()))
+	if !withDoc {
+		fmt.Println()
+	}
+	if withDoc && len(out.Consts) > 0 {
+		fmt.Print("\nCONSTANTS\n\n")
+	}
+	for _, o := range out.Consts {
+		fmt.Print(objectString(pkg, o.Const), ln)
+	}
+	if withDoc && len(out.Vars) > 0 {
+		fmt.Print("\nVARIABLES\n\n")
+	}
+	for _, o := range out.Vars {
+		fmt.Print(objectString(pkg, o.Var), ln)
+	}
 	if withDoc && len(out.Funcs) > 0 {
 		fmt.Print("\nFUNCTIONS\n\n")
 	}
@@ -118,6 +135,9 @@ func outlineDoc(pkg *types.Package, out *outline.All, withDoc bool) {
 	}
 	for _, t := range out.Types {
 		fmt.Println(typeString(pkg, t.TypeName, withDoc))
+		for _, o := range t.Consts {
+			fmt.Print(indent, objectString(pkg, o.Const), ln)
+		}
 		for _, fn := range t.Creators {
 			fmt.Print(indent, objectString(pkg, fn.Obj()), ln)
 		}
