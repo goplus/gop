@@ -18,6 +18,7 @@ package doc
 
 import (
 	"fmt"
+	"go/types"
 	"log"
 	"os"
 	"reflect"
@@ -97,16 +98,58 @@ func outlinePkg(proj gopprojs.Proj, conf *gop.Config) {
 	} else if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	} else {
-		outlineDoc(out.Outline(*unexp), *all)
+		outlineDoc(out.Pkg, out.Outline(*unexp), *all)
 	}
 }
 
-func outlineDoc(out *outline.All, withDoc bool) {
+func outlineDoc(pkg *types.Package, out *outline.All, withDoc bool) {
+	const (
+		indent = "    "
+		ln     = "\n"
+	)
+	if withDoc && len(out.Funcs) > 0 {
+		fmt.Print("\nFUNCTIONS\n\n")
+	}
 	for _, fn := range out.Funcs {
-		fmt.Println(fn)
+		fmt.Print(objectString(pkg, fn.Obj()), ln)
+	}
+	if withDoc && len(out.Types) > 0 {
+		fmt.Print("\nTYPES\n\n")
 	}
 	for _, t := range out.Types {
-		fmt.Println(t)
+		fmt.Println(typeString(pkg, t.TypeName, withDoc))
+		for _, fn := range t.Creators {
+			fmt.Print(indent, objectString(pkg, fn.Obj()), ln)
+		}
+	}
+}
+
+func typeString(pkg *types.Package, t *types.TypeName, withDoc bool) string {
+	alias := ""
+	if t.IsAlias() {
+		alias = " ="
+	}
+	underlying := typeShortString(pkg, t.Type().Underlying())
+	return fmt.Sprint("type ", t.Name(), alias, " ", underlying)
+}
+
+func objectString(pkg *types.Package, obj types.Object) string {
+	return types.ObjectString(obj, qualifier(pkg))
+}
+
+func typeShortString(pkg *types.Package, typ types.Type) string {
+	switch t := typ.(type) {
+	default:
+		return types.TypeString(t, qualifier(pkg))
+	}
+}
+
+func qualifier(pkg *types.Package) types.Qualifier {
+	return func(other *types.Package) string {
+		if pkg == other {
+			return "" // same package; unqualified
+		}
+		return other.Name()
 	}
 }
 

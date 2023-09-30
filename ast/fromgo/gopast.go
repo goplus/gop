@@ -338,6 +338,7 @@ func ASTFile(f *ast.File, mode int) *gopast.File {
 		log.Panicln("ASTFile: doesn't support keeping cgo now")
 	}
 	return &gopast.File{
+		Doc:     f.Doc,
 		Package: f.Package,
 		Name:    gopIdent(f.Name),
 		Decls:   gopDecls(f.Decls),

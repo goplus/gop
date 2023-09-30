@@ -54,7 +54,7 @@ type Config struct {
 
 type Package struct {
 	objs []types.Object
-	pkg  *types.Package
+	Pkg  *types.Package
 }
 
 // NewPackage creates a Go/Go+ outline package.
@@ -88,7 +88,7 @@ func From(pkg *gox.Package) Package {
 }
 
 func (p Package) Valid() bool {
-	return p.pkg != nil
+	return p.Pkg != nil
 }
 
 // -----------------------------------------------------------------------------
@@ -102,26 +102,32 @@ type All struct {
 	named map[*types.TypeName]*TypeName
 }
 
-func (p *All) initNamed(objs []types.Object) {
+func (p *All) initNamed(objs []types.Object, all bool) {
 	for _, o := range objs {
 		if t, ok := o.(*types.TypeName); ok {
 			named := &TypeName{TypeName: t}
-			p.Types = append(p.Types, named)
 			p.named[t] = named
+			if all || o.Exported() {
+				p.Types = append(p.Types, named)
+			}
 		}
 	}
 }
 
-func (p Package) Outline(all ...bool) (ret *All) {
+func (p Package) Outline(withUnexported ...bool) (ret *All) {
 	ret = &All{
 		named: make(map[*types.TypeName]*TypeName),
 	}
-	ret.initNamed(p.objs)
+	all := (withUnexported != nil && withUnexported[0])
+	ret.initNamed(p.objs, all)
 	for _, o := range p.objs {
+		if _, ok := o.(*types.TypeName); ok || !(all || o.Exported()) {
+			continue
+		}
 		switch v := o.(type) {
 		case *gox.Func:
 			sig := v.Type().(*types.Signature)
-			kind, t := sigKind(p.pkg, sig)
+			kind, t := sigKind(p.Pkg, sig)
 			switch kind {
 			case sigNormal:
 				ret.Funcs = append(ret.Funcs, Func{v})
@@ -129,13 +135,9 @@ func (p Package) Outline(all ...bool) (ret *All) {
 				if named, ok := ret.named[t.Obj()]; ok {
 					named.Creators = append(named.Creators, Func{v})
 				}
-			case sigExtension:
-				if named, ok := ret.named[t.Obj()]; ok {
-					named.Extensions = append(named.Extensions, Func{v})
-				}
 			}
 		case *types.Const:
-			if t := checkLocal(p.pkg, v.Type()); t != nil {
+			if t := checkLocal(p.Pkg, v.Type()); t != nil {
 				if named, ok := ret.named[t.Obj()]; ok {
 					named.Consts = append(named.Consts, Const{v})
 				}
@@ -156,7 +158,6 @@ type sigKindType int
 const (
 	sigNormal sigKindType = iota
 	sigCreator
-	sigExtension
 )
 
 func sigKind(pkg *types.Package, sig *types.Signature) (kind sigKindType, t *types.Named) {
@@ -164,12 +165,6 @@ func sigKind(pkg *types.Package, sig *types.Signature) (kind sigKindType, t *typ
 	if rets.Len() > 0 {
 		if t := checkLocal(pkg, rets.At(0).Type()); t != nil {
 			return sigCreator, t
-		}
-	}
-	params := sig.Params()
-	if params.Len() > 0 {
-		if t := checkLocal(pkg, params.At(0).Type()); t != nil {
-			return sigExtension, t
 		}
 	}
 	return sigNormal, nil
@@ -205,6 +200,10 @@ type Func struct {
 	*gox.Func
 }
 
+func (p Func) Obj() *types.Func {
+	return &p.Func.Func
+}
+
 func (p Func) Doc() string {
 	return p.Comments().Text()
 }
@@ -213,9 +212,8 @@ func (p Func) Doc() string {
 
 type TypeName struct {
 	*types.TypeName
-	Creators   []Func
-	Extensions []Func
-	Consts     []Const
+	Creators []Func
+	Consts   []Const
 }
 
 func (p *TypeName) Type() Type {
