@@ -17,6 +17,7 @@
 package gop
 
 import (
+	"fmt"
 	"go/token"
 	"io/fs"
 	"strings"
@@ -77,11 +78,8 @@ func Outline(dir string, conf *Config) (out outline.Package, err error) {
 	}
 
 	for name, pkg := range pkgs {
-		if strings.HasSuffix(name, "_test") {
-			continue
-		}
 		if out.Valid() {
-			err = errMultiPackges
+			err = fmt.Errorf("%w: %s, %s", ErrMultiPackges, name, out.Pkg.Name())
 			return
 		}
 		if len(pkg.Files)+len(pkg.GoFiles) == 0 { // no Go/Go+ source files
