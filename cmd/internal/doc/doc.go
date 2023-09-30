@@ -44,10 +44,10 @@ var Cmd = &base.Command{
 }
 
 var (
-	flag  = &Cmd.Flag
-	all   = flag.Bool("all", false, "Show all the documentation for the package.")
-	debug = flag.Bool("debug", false, "Print debug information.")
-	unexp = flag.Bool("u", false, "Show documentation for unexported as well as exported symbols, methods, and fields.")
+	flag    = &Cmd.Flag
+	withDoc = flag.Bool("all", false, "Show all the documentation for the package.")
+	debug   = flag.Bool("debug", false, "Print debug information.")
+	unexp   = flag.Bool("u", false, "Show documentation for unexported as well as exported symbols, methods, and fields.")
 )
 
 func init() {
@@ -100,7 +100,7 @@ func outlinePkg(proj gopprojs.Proj, conf *gop.Config) {
 	} else if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	} else {
-		outlineDoc(out.Pkg, out.Outline(*unexp), *all)
+		outlineDoc(out.Pkg, out.Outline(*unexp), *unexp, *withDoc)
 	}
 }
 
@@ -109,7 +109,7 @@ const (
 	ln     = "\n"
 )
 
-func outlineDoc(pkg *types.Package, out *outline.All, withDoc bool) {
+func outlineDoc(pkg *types.Package, out *outline.All, all, withDoc bool) {
 	fmt.Printf("package %s // import %s\n\n", pkg.Name(), strconv.Quote(pkg.Path()))
 	if withDoc && len(out.Consts) > 0 {
 		fmt.Print("CONSTANTS\n\n")
@@ -142,6 +142,14 @@ func outlineDoc(pkg *types.Package, out *outline.All, withDoc bool) {
 		}
 		for _, fn := range t.Creators {
 			fmt.Print(indent, objectString(pkg, fn.Obj()), ln)
+		}
+		typ := t.Type()
+		if named, ok := typ.CheckNamed(); ok {
+			for _, fn := range named.Methods() {
+				if o := fn.Obj(); all || o.Exported() {
+					fmt.Print(indent, objectString(pkg, o), ln)
+				}
+			}
 		}
 	}
 }
