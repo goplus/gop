@@ -192,15 +192,31 @@ type Const struct {
 	*types.Const
 }
 
+func (p Const) Obj() types.Object {
+	return p.Const
+}
+
+func (p Const) Doc() string {
+	return ""
+}
+
 type Var struct {
 	*types.Var
+}
+
+func (p Var) Obj() types.Object {
+	return p.Var
+}
+
+func (p Var) Doc() string {
+	return ""
 }
 
 type Func struct {
 	*gox.Func
 }
 
-func (p Func) Obj() *types.Func {
+func (p Func) Obj() types.Object {
 	return &p.Func.Func
 }
 

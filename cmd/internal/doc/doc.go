@@ -115,22 +115,19 @@ func outlineDoc(pkg *types.Package, out *outline.All, all, withDoc bool) {
 		fmt.Print("CONSTANTS\n\n")
 	}
 	for _, o := range out.Consts {
-		fmt.Print(objectString(pkg, o.Const), ln)
+		printObject(pkg, o, withDoc)
 	}
 	if withDoc && len(out.Vars) > 0 {
 		fmt.Print("VARIABLES\n\n")
 	}
 	for _, o := range out.Vars {
-		fmt.Print(objectString(pkg, o.Var), ln)
+		printObject(pkg, o, withDoc)
 	}
 	if withDoc && len(out.Funcs) > 0 {
 		fmt.Print("FUNCTIONS\n\n")
 	}
 	for _, fn := range out.Funcs {
-		fmt.Print(objectString(pkg, fn.Obj()), ln)
-		if withDoc {
-			printDoc(fn)
-		}
+		printObject(pkg, fn, withDoc)
 	}
 	if withDoc && len(out.Types) > 0 {
 		fmt.Print("TYPES\n\n")
@@ -140,22 +137,50 @@ func outlineDoc(pkg *types.Package, out *outline.All, all, withDoc bool) {
 		for _, o := range t.Consts {
 			fmt.Print(indent, constShortString(o.Const), ln)
 		}
+		if withDoc {
+			fmt.Println()
+		}
 		for _, fn := range t.Creators {
-			fmt.Print(indent, objectString(pkg, fn.Obj()), ln)
+			if withDoc {
+				printObject(pkg, fn, true)
+			} else {
+				fmt.Print(indent, objectString(pkg, fn.Obj()), ln)
+			}
 		}
 		typ := t.Type()
 		if named, ok := typ.CheckNamed(); ok {
 			for _, fn := range named.Methods() {
 				if o := fn.Obj(); all || o.Exported() {
-					fmt.Print(indent, objectString(pkg, o), ln)
+					if withDoc {
+						fmt.Print(objectString(pkg, o), ln)
+						printDoc(fn)
+					} else {
+						fmt.Print(indent, objectString(pkg, o), ln)
+					}
 				}
 			}
 		}
 	}
 }
 
-func printDoc(o interface{ Doc() string }) {
-	fmt.Print(indent, strings.ReplaceAll(o.Doc(), "\n", "\n"+indent), ln)
+type object interface {
+	Obj() types.Object
+	Doc() string
+}
+
+func printObject(pkg *types.Package, o object, withDoc bool) {
+	fmt.Print(objectString(pkg, o.Obj()), ln)
+	if withDoc {
+		printDoc(o)
+	}
+}
+
+func printDoc(o object) {
+	if doc := o.Doc(); doc != "" {
+		fmt.Print(indent, strings.ReplaceAll(doc, "\n", "\n"+indent), ln)
+	} else {
+		fmt.Println()
+	}
 }
 
 func typeString(pkg *types.Package, t *types.TypeName, withDoc bool) string {
