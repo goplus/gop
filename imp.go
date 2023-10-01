@@ -76,10 +76,18 @@ func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 					return
 				}
 			}
-			modfile := filepath.Join(ret.ModDir, "gop.mod")
-			if _, e := os.Lstat(modfile); e == nil { // has gop.mod
-				if err = p.genGoExtern(ret.Dir, isExtern); err != nil {
-					return
+			modDir := ret.ModDir
+			goModfile := filepath.Join(modDir, "go.mod")
+			if _, e := os.Lstat(goModfile); e != nil { // no go.mod
+				gopModfile := filepath.Join(modDir, "gop.mod")
+				if _, e := os.Lstat(gopModfile); e == nil { // has gop.mod
+					if err = p.genGoExtern(ret.Dir, isExtern); err != nil {
+						return
+					}
+				} else { // maybe a old Go package without go.mod
+					os.Chmod(modDir, modWritable)
+					defer os.Chmod(modDir, modReadonly)
+					os.WriteFile(goModfile, defaultGoMod(ret.ModPath), 0644)
 				}
 			}
 			return p.impFrom.ImportFrom(pkgPath, ret.ModDir, 0)
@@ -115,6 +123,13 @@ func (p *Importer) genGoExtern(dir string, isExtern bool) (err error) {
 		}
 	}
 	return
+}
+
+func defaultGoMod(modPath string) []byte {
+	return []byte(`module ` + modPath + `
+
+go 1.16
+`)
 }
 
 // -----------------------------------------------------------------------------
