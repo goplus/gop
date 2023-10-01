@@ -133,20 +133,19 @@ func outlineDoc(pkg *types.Package, out *outline.All, all, withDoc bool) {
 		fmt.Print("TYPES\n\n")
 	}
 	for _, t := range out.Types {
-		fmt.Println(typeString(pkg, t.TypeName, withDoc))
+		typName := t.TypeName
+		fmt.Print(objectString(pkg, typName), ln)
 		for _, o := range t.Consts {
 			fmt.Print(indent, constShortString(o.Const), ln)
 		}
 		if withDoc {
-			fmt.Println()
+			printDoc(t)
 		}
-		for _, fn := range t.Creators {
-			if withDoc {
-				printObject(pkg, fn, true)
-			} else {
-				fmt.Print(indent, objectString(pkg, fn.Obj()), ln)
-			}
+		if typName.IsAlias() {
+			continue
 		}
+		printFuncsForType(pkg, t.Creators, withDoc)
+		printFuncsForType(pkg, t.GoptFuncs, withDoc)
 		typ := t.Type()
 		if named, ok := typ.CheckNamed(); ok {
 			for _, fn := range named.Methods() {
@@ -183,24 +182,21 @@ func printDoc(o object) {
 	}
 }
 
-func typeString(pkg *types.Package, t *types.TypeName, withDoc bool) string {
-	alias := ""
-	if t.IsAlias() {
-		alias = " ="
+func printFuncsForType(pkg *types.Package, fns []outline.Func, withDoc bool) {
+	for _, fn := range fns {
+		if withDoc {
+			printObject(pkg, fn, true)
+		} else {
+			fmt.Print(indent, objectString(pkg, fn.Obj()), ln)
+		}
 	}
-	underlying := typeShortString(pkg, t.Type().Underlying())
-	return fmt.Sprint("type ", t.Name(), alias, " ", underlying)
 }
 
 func objectString(pkg *types.Package, obj types.Object) string {
-	return types.ObjectString(obj, qualifier(pkg))
-}
-
-func typeShortString(pkg *types.Package, typ types.Type) string {
-	switch t := typ.(type) {
-	default:
-		return types.TypeString(t, qualifier(pkg))
+	if name, fn, ok := outline.CheckOverload(obj); ok {
+		obj = types.NewFunc(fn.Pos(), fn.Pkg(), name, fn.Type().(*types.Signature))
 	}
+	return types.ObjectString(obj, qualifier(pkg))
 }
 
 func constShortString(obj *types.Const) string {

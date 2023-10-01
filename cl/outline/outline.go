@@ -18,6 +18,7 @@ package outline
 
 import (
 	"go/types"
+	"strings"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
@@ -114,6 +115,25 @@ func (p *All) initNamed(objs []types.Object, all bool) {
 	}
 }
 
+func (p *All) lookupNamed(pkg *types.Package, name string) (_ *TypeName, ok bool) {
+	o := pkg.Scope().Lookup(name)
+	if o == nil {
+		return
+	}
+	t, ok := o.(*types.TypeName)
+	if !ok {
+		return
+	}
+	return p.getNamed(t), true
+}
+
+func (p *All) getNamed(t *types.TypeName) *TypeName {
+	if named, ok := p.named[t]; ok {
+		return named
+	}
+	panic("getNamed: type not found - " + t.Name())
+}
+
 func (p Package) Outline(withUnexported ...bool) (ret *All) {
 	ret = &All{
 		named: make(map[*types.TypeName]*TypeName),
@@ -127,20 +147,26 @@ func (p Package) Outline(withUnexported ...bool) (ret *All) {
 		switch v := o.(type) {
 		case *gox.Func:
 			sig := v.Type().(*types.Signature)
+			if sig.Recv() == nil {
+				if name, ok := checkGoptFunc(o.Name()); ok {
+					if named, ok := ret.lookupNamed(p.Pkg, name); ok {
+						named.GoptFuncs = append(named.GoptFuncs, Func{v})
+						continue
+					}
+				}
+			}
 			kind, t := sigKind(p.Pkg, sig)
 			switch kind {
 			case sigNormal:
 				ret.Funcs = append(ret.Funcs, Func{v})
 			case sigCreator:
-				if named, ok := ret.named[t.Obj()]; ok {
-					named.Creators = append(named.Creators, Func{v})
-				}
+				named := ret.getNamed(t.Obj())
+				named.Creators = append(named.Creators, Func{v})
 			}
 		case *types.Const:
 			if t := checkLocal(p.Pkg, v.Type()); t != nil {
-				if named, ok := ret.named[t.Obj()]; ok {
-					named.Consts = append(named.Consts, Const{v})
-				}
+				named := ret.getNamed(t.Obj())
+				named.Consts = append(named.Consts, Const{v})
 			} else {
 				ret.Consts = append(ret.Consts, Const{v})
 			}
@@ -224,12 +250,58 @@ func (p Func) Doc() string {
 	return p.Comments().Text()
 }
 
+func CheckOverload(obj types.Object) (name string, fn *types.Func, ok bool) {
+	if fn, ok = obj.(*types.Func); ok {
+		name, ok = checkOverloadFunc(fn.Name())
+	}
+	return
+}
+
+const (
+	goptPrefix = "Gopt_"
+)
+
+func isGoptFunc(name string) bool {
+	return strings.HasPrefix(name, goptPrefix)
+}
+
+func isOverloadFunc(name string) bool {
+	n := len(name)
+	return n > 3 && name[n-3:n-1] == "__"
+}
+
+func checkGoptFunc(name string) (string, bool) {
+	if isGoptFunc(name) {
+		name = name[len(goptPrefix):]
+		if pos := strings.IndexByte(name, '_'); pos > 0 {
+			return name[:pos], true
+		}
+	}
+	return "", false
+}
+
+func checkOverloadFunc(name string) (string, bool) {
+	if isOverloadFunc(name) {
+		return name[:len(name)-3], true
+	}
+	return "", false
+}
+
 // -----------------------------------------------------------------------------
 
 type TypeName struct {
 	*types.TypeName
-	Creators []Func
-	Consts   []Const
+	Consts    []Const
+	Creators  []Func
+	GoptFuncs []Func
+}
+
+func (p *TypeName) Obj() types.Object {
+	return p.TypeName
+}
+
+func (p *TypeName) Doc() string {
+	return ""
 }
 
 func (p *TypeName) Type() Type {
