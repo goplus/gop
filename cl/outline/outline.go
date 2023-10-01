@@ -183,6 +183,8 @@ func (p Package) Outline(withUnexported ...bool) (ret *All) {
 				ret.Funcs = append(ret.Funcs, Func{v})
 			case sigCreator:
 				named.Creators = append(named.Creators, Func{v})
+			case sigHelper:
+				named.Helpers = append(named.Helpers, Func{v})
 			}
 		case *types.Const:
 			if named := ret.checkLocal(aliasr, v.Type()); named != nil {
@@ -204,6 +206,7 @@ type sigKindType int
 const (
 	sigNormal sigKindType = iota
 	sigCreator
+	sigHelper
 )
 
 func (p *All) sigKind(aliasr *typeutil.Map, sig *types.Signature) (sigKindType, *TypeName) {
@@ -211,6 +214,12 @@ func (p *All) sigKind(aliasr *typeutil.Map, sig *types.Signature) (sigKindType, 
 	if rets.Len() > 0 {
 		if t := p.checkLocal(aliasr, rets.At(0).Type()); t != nil {
 			return sigCreator, t
+		}
+	}
+	params := sig.Params()
+	if params.Len() > 0 {
+		if t := p.checkLocal(aliasr, params.At(0).Type()); t != nil {
+			return sigHelper, t
 		}
 	}
 	return sigNormal, nil
@@ -316,6 +325,7 @@ type TypeName struct {
 	Consts    []Const
 	Creators  []Func
 	GoptFuncs []Func
+	Helpers   []Func
 }
 
 func (p *TypeName) Obj() types.Object {
