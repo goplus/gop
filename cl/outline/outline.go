@@ -232,6 +232,14 @@ type TypeName struct {
 	Consts   []Const
 }
 
+func (p *TypeName) Obj() types.Object {
+	return p.TypeName
+}
+
+func (p *TypeName) Doc() string {
+	return ""
+}
+
 func (p *TypeName) Type() Type {
 	return Type{p.TypeName.Type()}
 }

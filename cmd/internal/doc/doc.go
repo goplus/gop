@@ -133,12 +133,16 @@ func outlineDoc(pkg *types.Package, out *outline.All, all, withDoc bool) {
 		fmt.Print("TYPES\n\n")
 	}
 	for _, t := range out.Types {
-		fmt.Println(typeString(pkg, t.TypeName, withDoc))
+		typName := t.TypeName
+		fmt.Print(objectString(pkg, typName), ln)
 		for _, o := range t.Consts {
 			fmt.Print(indent, constShortString(o.Const), ln)
 		}
 		if withDoc {
-			fmt.Println()
+			printDoc(t)
+		}
+		if typName.IsAlias() {
+			continue
 		}
 		for _, fn := range t.Creators {
 			if withDoc {
@@ -183,24 +187,8 @@ func printDoc(o object) {
 	}
 }
 
-func typeString(pkg *types.Package, t *types.TypeName, withDoc bool) string {
-	alias := ""
-	if t.IsAlias() {
-		alias = " ="
-	}
-	underlying := typeShortString(pkg, t.Type().Underlying())
-	return fmt.Sprint("type ", t.Name(), alias, " ", underlying)
-}
-
 func objectString(pkg *types.Package, obj types.Object) string {
 	return types.ObjectString(obj, qualifier(pkg))
-}
-
-func typeShortString(pkg *types.Package, typ types.Type) string {
-	switch t := typ.(type) {
-	default:
-		return types.TypeString(t, qualifier(pkg))
-	}
 }
 
 func constShortString(obj *types.Const) string {
