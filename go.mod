@@ -8,6 +8,7 @@ require (
 	github.com/goplus/gox v1.12.1
 	github.com/goplus/mod v0.11.5
 	github.com/qiniu/x v1.13.0
+	golang.org/x/tools v0.13.0
 )
 
 require (
@@ -16,5 +17,4 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/sys v0.12.0 // indirect
-	golang.org/x/tools v0.13.0 // indirect
 )

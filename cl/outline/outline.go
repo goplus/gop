@@ -25,6 +25,7 @@ import (
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
 	"github.com/goplus/mod/modfile"
+	"golang.org/x/tools/go/types/typeutil"
 )
 
 // -----------------------------------------------------------------------------
@@ -100,16 +101,35 @@ type All struct {
 	Funcs  []Func
 	Types  []*TypeName
 
+	pkg   *types.Package
 	named map[*types.TypeName]*TypeName
 }
 
-func (p *All) initNamed(objs []types.Object, all bool) {
+// aliasr typeutil.Map // types.Type => *TypeName
+func checkAlias(aliasr *typeutil.Map, t types.Type) *TypeName {
+	if v := aliasr.At(t); v != nil {
+		return v.(*TypeName)
+	}
+	return nil
+}
+
+func setAlias(aliasr *typeutil.Map, t types.Type, named *TypeName) {
+	real := indirect(t)
+	if aliasr.Set(real, named) != nil { // conflict: has old value
+		aliasr.Set(real, nil)
+	}
+}
+
+func (p *All) initNamed(aliasr *typeutil.Map, objs []types.Object, all bool) {
 	for _, o := range objs {
 		if t, ok := o.(*types.TypeName); ok {
 			named := &TypeName{TypeName: t}
 			p.named[t] = named
 			if all || o.Exported() {
 				p.Types = append(p.Types, named)
+			}
+			if t.IsAlias() {
+				setAlias(aliasr, t.Type(), named)
 			}
 		}
 	}
@@ -136,10 +156,12 @@ func (p *All) getNamed(t *types.TypeName) *TypeName {
 
 func (p Package) Outline(withUnexported ...bool) (ret *All) {
 	ret = &All{
+		pkg:   p.Pkg,
 		named: make(map[*types.TypeName]*TypeName),
 	}
 	all := (withUnexported != nil && withUnexported[0])
-	ret.initNamed(p.objs, all)
+	aliasr := &typeutil.Map{}
+	ret.initNamed(aliasr, p.objs, all)
 	for _, o := range p.objs {
 		if _, ok := o.(*types.TypeName); ok || !(all || o.Exported()) {
 			continue
@@ -155,17 +177,17 @@ func (p Package) Outline(withUnexported ...bool) (ret *All) {
 					}
 				}
 			}
-			kind, t := sigKind(p.Pkg, sig)
+			kind, named := ret.sigKind(aliasr, sig)
 			switch kind {
 			case sigNormal:
 				ret.Funcs = append(ret.Funcs, Func{v})
 			case sigCreator:
-				named := ret.getNamed(t.Obj())
 				named.Creators = append(named.Creators, Func{v})
+			case sigHelper:
+				named.Helpers = append(named.Helpers, Func{v})
 			}
 		case *types.Const:
-			if t := checkLocal(p.Pkg, v.Type()); t != nil {
-				named := ret.getNamed(t.Obj())
+			if named := ret.checkLocal(aliasr, v.Type()); named != nil {
 				named.Consts = append(named.Consts, Const{v})
 			} else {
 				ret.Consts = append(ret.Consts, Const{v})
@@ -184,25 +206,34 @@ type sigKindType int
 const (
 	sigNormal sigKindType = iota
 	sigCreator
+	sigHelper
 )
 
-func sigKind(pkg *types.Package, sig *types.Signature) (kind sigKindType, t *types.Named) {
+func (p *All) sigKind(aliasr *typeutil.Map, sig *types.Signature) (sigKindType, *TypeName) {
 	rets := sig.Results()
 	if rets.Len() > 0 {
-		if t := checkLocal(pkg, rets.At(0).Type()); t != nil {
+		if t := p.checkLocal(aliasr, rets.At(0).Type()); t != nil {
 			return sigCreator, t
+		}
+	}
+	params := sig.Params()
+	if params.Len() > 0 {
+		if t := p.checkLocal(aliasr, params.At(0).Type()); t != nil {
+			return sigHelper, t
 		}
 	}
 	return sigNormal, nil
 }
 
-func checkLocal(pkg *types.Package, first types.Type) *types.Named {
-	if t, ok := indirect(first).(*types.Named); ok {
-		if t.Obj().Pkg() == pkg {
-			return t
+func (p *All) checkLocal(aliasr *typeutil.Map, first types.Type) *TypeName {
+	first = indirect(first)
+	if t, ok := first.(*types.Named); ok {
+		o := t.Obj()
+		if o.Pkg() == p.pkg {
+			return p.getNamed(o)
 		}
 	}
-	return nil
+	return checkAlias(aliasr, first)
 }
 
 func indirect(typ types.Type) types.Type {
@@ -294,6 +325,7 @@ type TypeName struct {
 	Consts    []Const
 	Creators  []Func
 	GoptFuncs []Func
+	Helpers   []Func
 }
 
 func (p *TypeName) Obj() types.Object {

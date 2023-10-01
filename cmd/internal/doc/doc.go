@@ -146,6 +146,7 @@ func outlineDoc(pkg *types.Package, out *outline.All, all, withDoc bool) {
 		}
 		printFuncsForType(pkg, t.Creators, withDoc)
 		printFuncsForType(pkg, t.GoptFuncs, withDoc)
+		printFuncsForType(pkg, t.Helpers, withDoc)
 		typ := t.Type()
 		if named, ok := typ.CheckNamed(); ok {
 			for _, fn := range named.Methods() {
