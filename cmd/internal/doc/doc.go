@@ -144,13 +144,8 @@ func outlineDoc(pkg *types.Package, out *outline.All, all, withDoc bool) {
 		if typName.IsAlias() {
 			continue
 		}
-		for _, fn := range t.Creators {
-			if withDoc {
-				printObject(pkg, fn, true)
-			} else {
-				fmt.Print(indent, objectString(pkg, fn.Obj()), ln)
-			}
-		}
+		printFuncsForType(pkg, t.Creators, withDoc)
+		printFuncsForType(pkg, t.GoptFuncs, withDoc)
 		typ := t.Type()
 		if named, ok := typ.CheckNamed(); ok {
 			for _, fn := range named.Methods() {
@@ -184,6 +179,16 @@ func printDoc(o object) {
 		fmt.Print(indent, strings.ReplaceAll(doc, "\n", "\n"+indent), ln)
 	} else {
 		fmt.Println()
+	}
+}
+
+func printFuncsForType(pkg *types.Package, fns []outline.Func, withDoc bool) {
+	for _, fn := range fns {
+		if withDoc {
+			printObject(pkg, fn, true)
+		} else {
+			fmt.Print(indent, objectString(pkg, fn.Obj()), ln)
+		}
 	}
 }
 
