@@ -193,6 +193,9 @@ func printFuncsForType(pkg *types.Package, fns []outline.Func, withDoc bool) {
 }
 
 func objectString(pkg *types.Package, obj types.Object) string {
+	if name, fn, ok := outline.CheckOverload(obj); ok {
+		obj = types.NewFunc(fn.Pos(), fn.Pkg(), name, fn.Type().(*types.Signature))
+	}
 	return types.ObjectString(obj, qualifier(pkg))
 }
 

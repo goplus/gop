@@ -242,16 +242,19 @@ type Func struct {
 	*gox.Func
 }
 
-func (p Func) CheckOverload() (name string, ok bool) {
-	return checkOverloadFunc(p.Name())
-}
-
 func (p Func) Obj() types.Object {
 	return &p.Func.Func
 }
 
 func (p Func) Doc() string {
 	return p.Comments().Text()
+}
+
+func CheckOverload(obj types.Object) (name string, fn *types.Func, ok bool) {
+	if fn, ok = obj.(*types.Func); ok {
+		name, ok = checkOverloadFunc(fn.Name())
+	}
+	return
 }
 
 const (
