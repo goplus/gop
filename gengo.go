@@ -69,7 +69,7 @@ func genGoDir(dir string, conf *Config, genTestPkg, recursively bool) (err error
 	return genGoIn(dir, conf, genTestPkg, false)
 }
 
-func genGoIn(dir string, conf *Config, genTestPkg, prompt bool) (err error) {
+func genGoIn(dir string, conf *Config, genTestPkg, prompt bool, gen ...*bool) (err error) {
 	out, test, err := LoadDir(dir, conf, genTestPkg, prompt)
 	if err != nil {
 		if err == syscall.ENOENT { // no Go+ source files
@@ -83,6 +83,9 @@ func genGoIn(dir string, conf *Config, genTestPkg, prompt bool) (err error) {
 	err = out.WriteFile(file)
 	if err != nil {
 		return errors.NewWith(err, `out.WriteFile(file)`, -2, "(*gox.Package).WriteFile", out, file)
+	}
+	if gen != nil { // say `gop_autogen.go generated`
+		*gen[0] = true
 	}
 
 	testFile := filepath.Join(dir, autoGenTestFile)
@@ -118,7 +121,7 @@ func GenGoPkgPath(workDir, pkgPath string, conf *Config, allowExtern bool) (loca
 
 	mod, err := gopmod.Load(workDir, 0)
 	if NotFound(err) && allowExtern {
-		remotePkgPathDo(pkgPath, func(dir string) {
+		remotePkgPathDo(pkgPath, func(dir, _ string) {
 			os.Chmod(dir, modWritable)
 			defer os.Chmod(dir, modReadonly)
 			localDir = dir
@@ -144,14 +147,14 @@ func GenGoPkgPath(workDir, pkgPath string, conf *Config, allowExtern bool) (loca
 	return
 }
 
-func remotePkgPathDo(pkgPath string, doSth func(dir string), onErr func(e error)) {
+func remotePkgPathDo(pkgPath string, doSth func(pkgDir, modDir string), onErr func(e error)) {
 	modVer, leftPart, err := modfetch.GetPkg(pkgPath, "")
 	if err != nil {
 		onErr(err)
 	} else if dir, err := modcache.Path(modVer); err != nil {
 		onErr(err)
 	} else {
-		doSth(filepath.Join(dir, leftPart))
+		doSth(filepath.Join(dir, leftPart), dir)
 	}
 }
 

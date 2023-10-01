@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"go/token"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -113,8 +114,10 @@ func Outline(dir string, conf *Config) (out outline.Package, err error) {
 func OutlinePkgPath(workDir, pkgPath string, conf *Config, allowExtern bool) (out outline.Package, err error) {
 	mod, err := gopmod.Load(workDir, 0)
 	if NotFound(err) && allowExtern {
-		remotePkgPathDo(pkgPath, func(dir string) {
-			out, err = Outline(dir, conf)
+		remotePkgPathDo(pkgPath, func(pkgDir, modDir string) {
+			modFile := chmodModfile(modDir)
+			defer os.Chmod(modFile, modReadonly)
+			out, err = Outline(pkgDir, conf)
 		}, func(e error) {
 			err = e
 		})
@@ -127,7 +130,17 @@ func OutlinePkgPath(workDir, pkgPath string, conf *Config, allowExtern bool) (ou
 	if err != nil {
 		return
 	}
+	if pkg.Type == gopmod.PkgtExtern {
+		modFile := chmodModfile(pkg.ModDir)
+		defer os.Chmod(modFile, modReadonly)
+	}
 	return Outline(pkg.Dir, conf)
+}
+
+func chmodModfile(modDir string) string {
+	modFile := modDir + "/go.mod"
+	os.Chmod(modFile, modWritable)
+	return modFile
 }
 
 // -----------------------------------------------------------------------------

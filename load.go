@@ -118,10 +118,6 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 		return nil, nil, syscall.ENOENT
 	}
 
-	if promptGenGo != nil && promptGenGo[0] {
-		fmt.Printf("GenGo %v ...\n", dir)
-	}
-
 	imp := conf.Importer
 	if imp == nil {
 		imp = NewImporter(mod, gop, fset)
@@ -147,7 +143,10 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 			return nil, nil, ErrMultiPackges
 		}
 		if len(pkg.Files) == 0 { // no Go+ source files
-			break
+			continue
+		}
+		if promptGenGo != nil && promptGenGo[0] {
+			fmt.Printf("GenGo %v ...\n", dir)
 		}
 		out, err = cl.NewPackage("", pkg, clConf)
 		if err != nil {

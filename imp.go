@@ -95,29 +95,25 @@ func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 }
 
 func (p *Importer) genGoExtern(dir string, isExtern bool) (err error) {
-	gosum := filepath.Join(dir, "go.sum")
-	if _, err = os.Lstat(gosum); err == nil { // has go.sum
-		return
-	}
-
-	if isExtern {
-		os.Chmod(dir, modWritable)
-		defer os.Chmod(dir, modReadonly)
-	}
-
 	genfile := filepath.Join(dir, autoGenFile)
-	if _, err = os.Lstat(genfile); err != nil { // has gop_autogen.go
-		err = genGoIn(dir, &Config{Gop: p.gop, Importer: p, Fset: p.fset}, false, false)
+	if _, err = os.Lstat(genfile); err != nil { // no gop_autogen.go
+		if isExtern {
+			os.Chmod(dir, modWritable)
+			defer os.Chmod(dir, modReadonly)
+		}
+		gen := false
+		err = genGoIn(dir, &Config{Gop: p.gop, Importer: p, Fset: p.fset}, false, true, &gen)
 		if err != nil {
 			return
 		}
+		if gen {
+			cmd := exec.Command("go", "mod", "tidy")
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			cmd.Dir = dir
+			err = cmd.Run()
+		}
 	}
-
-	cmd := exec.Command("go", "mod", "tidy")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Dir = dir
-	err = cmd.Run()
 	return
 }
 
