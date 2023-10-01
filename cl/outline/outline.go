@@ -105,6 +105,13 @@ type All struct {
 	named map[*types.TypeName]*TypeName
 }
 
+func setAlias(aliasr *typeutil.Map, t types.Type, named *TypeName) {
+	real := indirect(t)
+	if aliasr.Set(real, named) != nil { // conflict: has old value
+		aliasr.Set(real, nil)
+	}
+}
+
 // aliasr typeutil.Map // types.Type => *TypeName
 func checkAlias(aliasr *typeutil.Map, t types.Type) *TypeName {
 	if v := aliasr.At(t); v != nil {
@@ -113,21 +120,92 @@ func checkAlias(aliasr *typeutil.Map, t types.Type) *TypeName {
 	return nil
 }
 
-func setAlias(aliasr *typeutil.Map, t types.Type, named *TypeName) {
-	real := indirect(t)
-	if aliasr.Set(real, named) != nil { // conflict: has old value
-		aliasr.Set(real, nil)
+func (p *All) markUsed(named *TypeName) {
+	if !named.isUsed {
+		named.isUsed = true
+		o := named.TypeName
+		typ := o.Type()
+		p.checkUsed(typ.Underlying())
+		if !o.IsAlias() {
+			if t, ok := typ.(*types.Named); ok {
+				for i, n := 0, t.NumMethods(); i < n; i++ {
+					p.checkUsedMethod(t.Method(i))
+				}
+			}
+		}
 	}
 }
 
-func (p *All) initNamed(aliasr *typeutil.Map, objs []types.Object, all bool) {
+func (p *All) checkUsed(typ types.Type) {
+	switch t := typ.(type) {
+	case *types.Basic:
+	case *types.Pointer:
+		p.checkUsed(t.Elem())
+	case *types.Signature:
+		p.checkUsedSig(t)
+	case *types.Slice:
+		p.checkUsed(t.Elem())
+	case *types.Map:
+		p.checkUsed(t.Key())
+		p.checkUsed(t.Elem())
+	case *types.Struct:
+		for i, n := 0, t.NumFields(); i < n; i++ {
+			fld := t.Field(i)
+			if fld.Exported() {
+				p.checkUsed(fld.Type())
+			}
+		}
+	case *types.Named:
+		o := t.Obj()
+		if p.pkg == o.Pkg() {
+			p.markUsed(p.getNamed(o))
+		}
+	case *types.Interface:
+		for i, n := 0, t.NumExplicitMethods(); i < n; i++ {
+			p.checkUsedMethod(t.ExplicitMethod(i))
+		}
+		for i, n := 0, t.NumEmbeddeds(); i < n; i++ {
+			p.checkUsed(t.EmbeddedType(i))
+		}
+	case *types.Chan:
+		p.checkUsed(t.Elem())
+	case *types.Array:
+		p.checkUsed(t.Elem())
+	default:
+		panic("checkUsed: unknown type - " + typ.String())
+	}
+}
+
+func (p *All) checkUsedMethod(fn *types.Func) {
+	if fn.Exported() {
+		p.checkUsedSig(fn.Type().(*types.Signature))
+	}
+}
+
+func (p *All) checkUsedSig(sig *types.Signature) {
+	p.checkUsedTuple(sig.Params())
+	p.checkUsedTuple(sig.Results())
+}
+
+func (p *All) checkUsedTuple(t *types.Tuple) {
+	for i, n := 0, t.Len(); i < n; i++ {
+		p.checkUsed(t.At(i).Type())
+	}
+}
+
+func (p *All) getNamed(t *types.TypeName) *TypeName {
+	if named, ok := p.named[t]; ok {
+		return named
+	}
+	panic("getNamed: type not found - " + t.Name())
+}
+
+func (p *All) initNamed(aliasr *typeutil.Map, objs []types.Object) {
 	for _, o := range objs {
 		if t, ok := o.(*types.TypeName); ok {
 			named := &TypeName{TypeName: t}
 			p.named[t] = named
-			if all || o.Exported() {
-				p.Types = append(p.Types, named)
-			}
+			p.Types = append(p.Types, named)
 			if t.IsAlias() {
 				setAlias(aliasr, t.Type(), named)
 			}
@@ -147,13 +225,6 @@ func (p *All) lookupNamed(pkg *types.Package, name string) (_ *TypeName, ok bool
 	return p.getNamed(t), true
 }
 
-func (p *All) getNamed(t *types.TypeName) *TypeName {
-	if named, ok := p.named[t]; ok {
-		return named
-	}
-	panic("getNamed: type not found - " + t.Name())
-}
-
 func (p Package) Outline(withUnexported ...bool) (ret *All) {
 	ret = &All{
 		pkg:   p.Pkg,
@@ -161,20 +232,27 @@ func (p Package) Outline(withUnexported ...bool) (ret *All) {
 	}
 	all := (withUnexported != nil && withUnexported[0])
 	aliasr := &typeutil.Map{}
-	ret.initNamed(aliasr, p.objs, all)
+	ret.initNamed(aliasr, p.objs)
 	for _, o := range p.objs {
-		if _, ok := o.(*types.TypeName); ok || !(all || o.Exported()) {
+		if !(all || o.Exported()) {
+			continue
+		}
+		if obj, ok := o.(*types.TypeName); ok {
+			if !all {
+				ret.markUsed(ret.getNamed(obj))
+			}
 			continue
 		}
 		switch v := o.(type) {
 		case *gox.Func:
 			sig := v.Type().(*types.Signature)
-			if sig.Recv() == nil {
-				if name, ok := checkGoptFunc(o.Name()); ok {
-					if named, ok := ret.lookupNamed(p.Pkg, name); ok {
-						named.GoptFuncs = append(named.GoptFuncs, Func{v})
-						continue
-					}
+			if !all {
+				ret.checkUsedSig(sig)
+			}
+			if name, ok := checkGoptFunc(o.Name()); ok {
+				if named, ok := ret.lookupNamed(p.Pkg, name); ok {
+					named.GoptFuncs = append(named.GoptFuncs, Func{v})
+					continue
 				}
 			}
 			kind, named := ret.sigKind(aliasr, sig)
@@ -187,12 +265,19 @@ func (p Package) Outline(withUnexported ...bool) (ret *All) {
 				named.Helpers = append(named.Helpers, Func{v})
 			}
 		case *types.Const:
-			if named := ret.checkLocal(aliasr, v.Type()); named != nil {
+			typ := v.Type()
+			if !all {
+				ret.checkUsed(typ)
+			}
+			if named := ret.checkLocal(aliasr, typ); named != nil {
 				named.Consts = append(named.Consts, Const{v})
 			} else {
 				ret.Consts = append(ret.Consts, Const{v})
 			}
 		case *types.Var:
+			if !all {
+				ret.checkUsed(v.Type())
+			}
 			ret.Vars = append(ret.Vars, Var{v})
 		}
 	}
@@ -326,6 +411,19 @@ type TypeName struct {
 	Creators  []Func
 	GoptFuncs []Func
 	Helpers   []Func
+	isUsed    bool
+}
+
+func (p *TypeName) IsUsed() bool {
+	return p.isUsed
+}
+
+func (p *TypeName) ObjWith(all bool) *types.TypeName {
+	o := p.TypeName
+	if all {
+		return o
+	}
+	return hideUnexported(o)
 }
 
 func (p *TypeName) Obj() types.Object {
@@ -339,6 +437,66 @@ func (p *TypeName) Doc() string {
 func (p *TypeName) Type() Type {
 	return Type{p.TypeName.Type()}
 }
+
+func hideUnexported(o *types.TypeName) *types.TypeName {
+	if o.IsAlias() {
+		if t, ok := typeHideUnexported(o.Type()); ok {
+			return types.NewTypeName(o.Pos(), o.Pkg(), o.Name(), t)
+		}
+	} else if named, ok := o.Type().(*types.Named); ok {
+		if t, ok := typeHideUnexported(named.Underlying()); ok {
+			name := types.NewTypeName(o.Pos(), o.Pkg(), o.Name(), nil)
+			n := named.NumMethods()
+			var fns []*types.Func
+			if n > 0 {
+				fns = make([]*types.Func, n)
+				for i := 0; i < n; i++ {
+					fns[i] = named.Method(i)
+				}
+			}
+			types.NewNamed(name, t, fns)
+			return name
+		}
+	}
+	return o
+}
+
+func typeHideUnexported(typ types.Type) (ret types.Type, ok bool) {
+	switch t := typ.(type) {
+	case *types.Struct:
+		n := t.NumFields()
+		for i := 0; i < n; i++ {
+			fld := t.Field(i)
+			if !fld.Exported() || t.Tag(i) != "" {
+				ok = true
+				break
+			}
+		}
+		if ok {
+			flds := make([]*types.Var, 0, n)
+			for i := 0; i < n; i++ {
+				fld := t.Field(i)
+				if fld.Exported() {
+					flds = append(flds, fld)
+				}
+			}
+			if len(flds) < n {
+				flds = append(flds, types.NewField(token.NoPos, nil, "", tyUnexp, true))
+			}
+			ret = types.NewStruct(flds, nil)
+		}
+	}
+	return
+}
+
+type tyUnexpImp struct{}
+
+func (p tyUnexpImp) String() string         { return "..." }
+func (p tyUnexpImp) Underlying() types.Type { return p }
+
+var (
+	tyUnexp types.Type = tyUnexpImp{}
+)
 
 // -----------------------------------------------------------------------------
 
