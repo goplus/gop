@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"go/token"
 	"io/fs"
+	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -90,8 +92,9 @@ func Outline(dir string, conf *Config) (out outline.Package, err error) {
 		if len(pkg.Files)+len(pkg.GoFiles) == 0 { // no Go/Go+ source files
 			break
 		}
-		pkgPath, _ := filepath.Rel(mod.Root(), dir)
-		out, err = outline.NewPackage(filepath.ToSlash(pkgPath), pkg, &outline.Config{
+		relPart, _ := filepath.Rel(mod.Root(), dir)
+		pkgPath := path.Join(mod.Path(), filepath.ToSlash(relPart))
+		out, err = outline.NewPackage(pkgPath, pkg, &outline.Config{
 			Fset:        fset,
 			WorkingDir:  dir,
 			Importer:    imp,
@@ -113,8 +116,10 @@ func Outline(dir string, conf *Config) (out outline.Package, err error) {
 func OutlinePkgPath(workDir, pkgPath string, conf *Config, allowExtern bool) (out outline.Package, err error) {
 	mod, err := gopmod.Load(workDir, 0)
 	if NotFound(err) && allowExtern {
-		remotePkgPathDo(pkgPath, func(dir string) {
-			out, err = Outline(dir, conf)
+		remotePkgPathDo(pkgPath, func(pkgDir, modDir string) {
+			modFile := chmodModfile(modDir)
+			defer os.Chmod(modFile, modReadonly)
+			out, err = Outline(pkgDir, conf)
 		}, func(e error) {
 			err = e
 		})
@@ -127,7 +132,17 @@ func OutlinePkgPath(workDir, pkgPath string, conf *Config, allowExtern bool) (ou
 	if err != nil {
 		return
 	}
+	if pkg.Type == gopmod.PkgtExtern {
+		modFile := chmodModfile(pkg.ModDir)
+		defer os.Chmod(modFile, modReadonly)
+	}
 	return Outline(pkg.Dir, conf)
+}
+
+func chmodModfile(modDir string) string {
+	modFile := modDir + "/go.mod"
+	os.Chmod(modFile, modWritable)
+	return modFile
 }
 
 // -----------------------------------------------------------------------------
