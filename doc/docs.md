@@ -70,7 +70,7 @@ Here is my `Hello world` program:
 </td><td valign=top>
 
 * [Go/Go+ hybrid programming](#gogo-hybrid-programming)
-    * [Running Go+ in watch mode](#running-go-in-watch-mode)
+    * [Run Go+ in watch mode](#run-go-in-watch-mode)
 * [Calling C from Go+](#calling-c-from-go)
 * [Data processing](#data-processing)
     * [Rational numbers](#rational-numbers)
@@ -1030,7 +1030,7 @@ Hello, world
 <h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
 
-### Running Go+ in watch mode
+### Run Go+ in watch mode
 
 The `gop` command can run in watch mode so that everytime a Go+ file is changed it is transpiled to a Go file:
 
