@@ -21,6 +21,7 @@ import (
 	"go/token"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -91,8 +92,9 @@ func Outline(dir string, conf *Config) (out outline.Package, err error) {
 		if len(pkg.Files)+len(pkg.GoFiles) == 0 { // no Go/Go+ source files
 			break
 		}
-		pkgPath, _ := filepath.Rel(mod.Root(), dir)
-		out, err = outline.NewPackage(filepath.ToSlash(pkgPath), pkg, &outline.Config{
+		relPart, _ := filepath.Rel(mod.Root(), dir)
+		pkgPath := path.Join(mod.Path(), filepath.ToSlash(relPart))
+		out, err = outline.NewPackage(pkgPath, pkg, &outline.Config{
 			Fset:        fset,
 			WorkingDir:  dir,
 			Importer:    imp,
