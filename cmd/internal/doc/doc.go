@@ -147,15 +147,17 @@ func outlineDoc(pkg *types.Package, out *outline.All, all, withDoc bool) {
 		printFuncsForType(pkg, t.Creators, withDoc)
 		printFuncsForType(pkg, t.GoptFuncs, withDoc)
 		printFuncsForType(pkg, t.Helpers, withDoc)
-		typ := t.Type()
-		if named, ok := typ.CheckNamed(); ok {
-			for _, fn := range named.Methods() {
-				if o := fn.Obj(); all || o.Exported() {
-					if withDoc {
-						fmt.Print(objectString(pkg, o), ln)
-						printDoc(fn)
-					} else {
-						fmt.Print(indent, objectString(pkg, o), ln)
+		if !typName.IsAlias() {
+			typ := t.Type()
+			if named, ok := typ.CheckNamed(pkg); ok {
+				for _, fn := range named.Methods() {
+					if o := fn.Obj(); all || o.Exported() {
+						if withDoc {
+							fmt.Print(objectString(pkg, o), ln)
+							printDoc(fn)
+						} else {
+							fmt.Print(indent, objectString(pkg, o), ln)
+						}
 					}
 				}
 			}
