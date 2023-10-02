@@ -133,7 +133,10 @@ func outlineDoc(pkg *types.Package, out *outline.All, all, withDoc bool) {
 		fmt.Print("TYPES\n\n")
 	}
 	for _, t := range out.Types {
-		typName := t.TypeName
+		if !(all || t.IsUsed()) {
+			continue
+		}
+		typName := t.ObjWith(all)
 		fmt.Print(objectString(pkg, typName), ln)
 		for _, o := range t.Consts {
 			fmt.Print(indent, constShortString(o.Const), ln)
