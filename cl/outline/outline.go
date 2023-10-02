@@ -265,6 +265,11 @@ func (p Package) Outline(withUnexported ...bool) (ret *All) {
 				named.Helpers = append(named.Helpers, Func{v})
 			}
 		case *types.Const:
+			if name := v.Name(); strings.HasPrefix(name, "Gop") {
+				if name == "GopPackage" || name == "Gop_sched" {
+					continue
+				}
+			}
 			typ := v.Type()
 			if !all {
 				ret.checkUsed(typ)
