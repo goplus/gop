@@ -144,9 +144,6 @@ func outlineDoc(pkg *types.Package, out *outline.All, all, withDoc bool) {
 		if withDoc {
 			printDoc(t)
 		}
-		if typName.IsAlias() {
-			continue
-		}
 		printFuncsForType(pkg, t.Creators, withDoc)
 		printFuncsForType(pkg, t.GoptFuncs, withDoc)
 		printFuncsForType(pkg, t.Helpers, withDoc)

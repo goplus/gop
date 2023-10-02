@@ -113,9 +113,13 @@ func setAlias(aliasr *typeutil.Map, t types.Type, named *TypeName) {
 }
 
 // aliasr typeutil.Map // types.Type => *TypeName
-func checkAlias(aliasr *typeutil.Map, t types.Type) *TypeName {
-	if v := aliasr.At(t); v != nil {
-		return v.(*TypeName)
+func (p *All) checkAlias(aliasr *typeutil.Map, t types.Type, withBasic bool) *TypeName {
+	if _, ok := t.(*types.Basic); !ok || withBasic {
+		if v := aliasr.At(t); v != nil {
+			named := v.(*TypeName)
+			p.markUsed(named)
+			return named
+		}
 	}
 	return nil
 }
@@ -265,11 +269,16 @@ func (p Package) Outline(withUnexported ...bool) (ret *All) {
 				named.Helpers = append(named.Helpers, Func{v})
 			}
 		case *types.Const:
+			if name := v.Name(); strings.HasPrefix(name, "Gop") {
+				if name == "GopPackage" || name == "Gop_sched" {
+					continue
+				}
+			}
 			typ := v.Type()
 			if !all {
 				ret.checkUsed(typ)
 			}
-			if named := ret.checkLocal(aliasr, typ); named != nil {
+			if named := ret.checkLocal(aliasr, typ, true); named != nil {
 				named.Consts = append(named.Consts, Const{v})
 			} else {
 				ret.Consts = append(ret.Consts, Const{v})
@@ -297,20 +306,20 @@ const (
 func (p *All) sigKind(aliasr *typeutil.Map, sig *types.Signature) (sigKindType, *TypeName) {
 	rets := sig.Results()
 	if rets.Len() > 0 {
-		if t := p.checkLocal(aliasr, rets.At(0).Type()); t != nil {
+		if t := p.checkLocal(aliasr, rets.At(0).Type(), false); t != nil {
 			return sigCreator, t
 		}
 	}
 	params := sig.Params()
 	if params.Len() > 0 {
-		if t := p.checkLocal(aliasr, params.At(0).Type()); t != nil {
+		if t := p.checkLocal(aliasr, params.At(0).Type(), false); t != nil {
 			return sigHelper, t
 		}
 	}
 	return sigNormal, nil
 }
 
-func (p *All) checkLocal(aliasr *typeutil.Map, first types.Type) *TypeName {
+func (p *All) checkLocal(aliasr *typeutil.Map, first types.Type, withBasic bool) *TypeName {
 	first = indirect(first)
 	if t, ok := first.(*types.Named); ok {
 		o := t.Obj()
@@ -318,7 +327,7 @@ func (p *All) checkLocal(aliasr *typeutil.Map, first types.Type) *TypeName {
 			return p.getNamed(o)
 		}
 	}
-	return checkAlias(aliasr, first)
+	return p.checkAlias(aliasr, first, withBasic)
 }
 
 func indirect(typ types.Type) types.Type {
