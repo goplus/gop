@@ -513,9 +513,9 @@ type Type struct {
 	types.Type
 }
 
-func (p Type) CheckNamed() (_ Named, ok bool) {
+func (p Type) CheckNamed(pkg *types.Package) (_ Named, ok bool) {
 	ret, ok := p.Type.(*types.Named)
-	if ok {
+	if ok && ret.Obj().Pkg() == pkg {
 		return Named{ret}, true
 	}
 	return
