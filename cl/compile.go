@@ -500,13 +500,13 @@ func hasMethod(o types.Object, name string) bool {
 	return false
 }
 
-func getEntrypoint(f *ast.File, isMod bool) string {
+func getEntrypoint(f *ast.File) string {
 	switch {
 	case f.IsProj:
 		return "MainEntry"
 	case f.IsClass:
 		return "Main"
-	case isMod:
+	case f.Name.Name != "main":
 		return "init"
 	default:
 		return "main"
@@ -650,8 +650,8 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 		}}}
 	}
 	// check class project no MainEntry and auto added
-	if f.IsProj && !conf.NoAutoGenMain && !f.NoEntrypoint && f.Name.Name == "main" {
-		entry := getEntrypoint(f, false)
+	if f.IsProj && !conf.NoAutoGenMain && !f.NoEntrypoint() && f.Name.Name == "main" {
+		entry := getEntrypoint(f)
 		var hasEntry bool
 		for _, decl := range f.Decls {
 			switch d := decl.(type) {
@@ -668,6 +668,9 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 				Body: &ast.BlockStmt{},
 			})
 		}
+	}
+	if d := f.ShadowEntry; d != nil {
+		d.Name.Name = getEntrypoint(f)
 	}
 	preloadFile(p, ctx, file, f, true, !conf.Outline)
 }
@@ -695,9 +698,6 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
-			if f.NoEntrypoint && d.Name.Name == "main" {
-				d.Name.Name = getEntrypoint(f, f.Name.Name != "main")
-			}
 			if ctx.classRecv != nil { // in class file (.spx/.gmx)
 				if d.Recv == nil {
 					d.Recv = ctx.classRecv

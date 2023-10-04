@@ -50,10 +50,10 @@ type parser struct {
 	scanner scanner.Scanner
 
 	// Tracing/debugging
-	mode         Mode // parsing mode
-	trace        bool // == (mode & Trace != 0)
-	noEntrypoint bool // no entrypoint func
-	indent       int  // indentation used for tracing output
+	mode        Mode          // parsing mode
+	trace       bool          // == (mode & Trace != 0)
+	shadowEntry *ast.FuncDecl // shadowEntry != nil: no entrypoint func
+	indent      int           // indentation used for tracing output
 
 	// Comments
 	comments    []*ast.CommentGroup
@@ -3657,11 +3657,10 @@ func (p *parser) parseGlobalStmts(sync map[token.Token]bool, pos token.Pos, stmt
 	if stmts != nil {
 		list = append(stmts, list...)
 	}
-	p.noEntrypoint = true
 	if p.errors.Len() != 0 { // TODO: error
 		p.advance(sync)
 	}
-	return &ast.FuncDecl{
+	f := &ast.FuncDecl{
 		Name: &ast.Ident{NamePos: pos, Name: "main"},
 		Doc:  doc,
 		Type: &ast.FuncType{
@@ -3669,6 +3668,8 @@ func (p *parser) parseGlobalStmts(sync map[token.Token]bool, pos token.Pos, stmt
 		},
 		Body: &ast.BlockStmt{List: list},
 	}
+	p.shadowEntry = f
+	return f
 }
 
 // ----------------------------------------------------------------------------
@@ -3744,15 +3745,15 @@ func (p *parser) parseFile() *ast.File {
 	}
 
 	return &ast.File{
-		Doc:          doc,
-		Package:      pos,
-		Name:         ident,
-		Decls:        decls,
-		Scope:        p.pkgScope,
-		Imports:      p.imports,
-		Unresolved:   p.unresolved[0:i],
-		Comments:     p.comments,
-		NoEntrypoint: p.noEntrypoint,
-		NoPkgDecl:    noPkgDecl,
+		Doc:         doc,
+		Package:     pos,
+		Name:        ident,
+		Decls:       decls,
+		Scope:       p.pkgScope,
+		Imports:     p.imports,
+		Unresolved:  p.unresolved[0:i],
+		Comments:    p.comments,
+		ShadowEntry: p.shadowEntry,
+		NoPkgDecl:   noPkgDecl,
 	}
 }
