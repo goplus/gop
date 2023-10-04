@@ -1969,7 +1969,7 @@ func (p *printer) funcDecl(d *ast.FuncDecl) {
 	}
 	p.setComment(d.Doc)
 
-	if p.unnamedFuncName == d.Name.Name {
+	if p.shadowEntry == d {
 		p.funcBodyUnnamed(0, vtab, d.Body)
 		return
 	}
@@ -2047,9 +2047,7 @@ func (p *printer) declList(list []ast.Decl) {
 }
 
 func (p *printer) file(src *ast.File) {
-	if src.NoEntrypoint {
-		p.unnamedFuncName = "main"
-	}
+	p.shadowEntry = src.ShadowEntry
 	p.setComment(src.Doc)
 	if !src.NoPkgDecl {
 		p.print(src.Pos(), token.PACKAGE, blank)
@@ -2057,5 +2055,4 @@ func (p *printer) file(src *ast.File) {
 	}
 	p.declList(src.Decls)
 	p.print(newline)
-	p.unnamedFuncName = ""
 }

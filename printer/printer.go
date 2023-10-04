@@ -103,7 +103,7 @@ type printer struct {
 	cachedPos  token.Pos
 	cachedLine int // line corresponding to cachedPos
 
-	unnamedFuncName string // ast.File NoEntrypoint
+	shadowEntry *ast.FuncDecl // ast.File NoEntrypoint
 }
 
 func (p *printer) init(cfg *Config, fset *token.FileSet, nodeSizes map[ast.Node]int) {
