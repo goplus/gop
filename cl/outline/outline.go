@@ -55,8 +55,7 @@ type Config struct {
 }
 
 type Package struct {
-	objs []types.Object
-	Pkg  *types.Package
+	Pkg *types.Package
 }
 
 // NewPackage creates a Go/Go+ outline package.
@@ -76,17 +75,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (_ Package, err 
 	if err != nil {
 		return
 	}
-	return From(ret), nil
-}
-
-func From(pkg *gox.Package) Package {
-	scope := pkg.Types.Scope()
-	names := scope.Names()
-	objs := make([]types.Object, len(names))
-	for i, name := range names {
-		objs[i] = scope.Lookup(name)
-	}
-	return Package{objs, pkg.Types}
+	return Package{ret.Types}, nil
 }
 
 func (p Package) Valid() bool {
@@ -236,8 +225,14 @@ func (p Package) Outline(withUnexported ...bool) (ret *All) {
 	}
 	all := (withUnexported != nil && withUnexported[0])
 	aliasr := &typeutil.Map{}
-	ret.initNamed(aliasr, p.objs)
-	for _, o := range p.objs {
+	scope := p.Pkg.Scope()
+	names := scope.Names()
+	objs := make([]types.Object, len(names))
+	for i, name := range names {
+		objs[i] = scope.Lookup(name)
+	}
+	ret.initNamed(aliasr, objs)
+	for _, o := range objs {
 		if !(all || o.Exported()) {
 			continue
 		}
