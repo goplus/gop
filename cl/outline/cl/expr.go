@@ -666,11 +666,10 @@ func compileLambdaExpr2(ctx *blockCtx, v *ast.LambdaExpr2, sig *types.Signature)
 	params := makeLambdaParams(ctx, v.Pos(), v.Lhs, sig.Params())
 	results := makeLambdaResults(pkg, sig.Results())
 	fn := ctx.cb.NewClosure(params, results, false)
-	ctx.bodys = append(ctx.bodys, func() {
-		comments, once := ctx.cb.BackupComments()
-		loadFuncBody(ctx, fn, v.Body, v)
-		ctx.cb.SetComments(comments, once)
-	})
+
+	comments, once := ctx.cb.BackupComments()
+	loadFuncBody(ctx, fn, v.Body, v)
+	ctx.cb.SetComments(comments, once)
 }
 
 func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
@@ -678,11 +677,12 @@ func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
 	sig := toFuncType(ctx, v.Type, nil, nil)
 	fn := cb.NewClosureWith(sig)
 	if body := v.Body; body != nil {
-		ctx.bodys = append(ctx.bodys, func() {
-			comments, once := cb.BackupComments()
-			loadFuncBody(ctx, fn, body, v)
-			cb.SetComments(comments, once)
-		})
+		// TODO: delay load closure body
+		// ctx.bodys = append(ctx.bodys, func() {
+		comments, once := cb.BackupComments()
+		loadFuncBody(ctx, fn, body, v)
+		cb.SetComments(comments, once)
+		// })
 	}
 }
 
