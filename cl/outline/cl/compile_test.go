@@ -24,7 +24,8 @@ import (
 	"testing"
 
 	"github.com/goplus/gop"
-	"github.com/goplus/gop/cl"
+	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/cl/outline/cl"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/parser/fsx/memfs"
 	"github.com/goplus/gop/scanner"
@@ -79,13 +80,11 @@ func gopClTestEx(t *testing.T, conf *cl.Config, pkgname, gopcode, expected strin
 }
 
 func gopMixedClTest(t *testing.T, pkgname, gocode, gopcode, expected string, outline ...bool) {
-	conf := *gblConf
-	conf.Outline = (outline != nil && outline[0])
 	fs := memfs.TwoFiles("/foo", "a.go", gocode, "b.gop", gopcode)
-	gopClTestFS(t, &conf, fs, pkgname, expected)
+	gopClTestFS(t, gblConf, fs, pkgname, expected, outline...)
 }
 
-func gopClTestFS(t *testing.T, conf *cl.Config, fs parser.FileSystem, pkgname, expected string) {
+func gopClTestFS(t *testing.T, conf *cl.Config, fs parser.FileSystem, pkgname, expected string, outline ...bool) {
 	cl.SetDisableRecover(true)
 	defer cl.SetDisableRecover(false)
 
@@ -95,7 +94,14 @@ func gopClTestFS(t *testing.T, conf *cl.Config, fs parser.FileSystem, pkgname, e
 		t.Fatal("ParseFSDir:", err)
 	}
 	bar := pkgs[pkgname]
-	pkg, err := cl.NewPackage("github.com/goplus/gop/cl", bar, conf)
+	newPackage := cl.NewPackage
+	if outline != nil && outline[0] {
+		newPackage = func(pkgPath string, pkg *ast.Package, conf *cl.Config) (p *gox.Package, err error) {
+			p, _, err = cl.NewOutline(pkgPath, pkg, conf)
+			return
+		}
+	}
+	pkg, err := newPackage("github.com/goplus/gop/cl", bar, conf)
 	if err != nil {
 		t.Fatal("NewPackage:", err)
 	}
@@ -125,12 +131,11 @@ type foo int
 
 func (f foo) Ls(args ...string) {
 }
-
-var f foo
-
 func main() {
 	f.Ls()
 }
+
+var f foo
 `)
 }
 
@@ -224,8 +229,6 @@ import (
 	io "io"
 )
 
-var r io.Reader
-
 func main() {
 	for _gop_it := iox.Lines(r).Gop_Enum(); ; {
 		var _gop_ok bool
@@ -236,6 +239,8 @@ func main() {
 		fmt.Println(line)
 	}
 }
+
+var r io.Reader
 `)
 }
 

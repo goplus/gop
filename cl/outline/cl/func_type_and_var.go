@@ -229,23 +229,21 @@ func toIdentType(ctx *blockCtx, ident *ast.Ident) types.Type {
 
 func lookupType(ctx *blockCtx, name string) (obj types.Object, builtin types.Object) {
 	at, o := ctx.cb.Scope().LookupParent(name, token.NoPos)
-	if o != nil && at != types.Universe {
-		if o.Type() == nil { // uninited type
-			if !ctx.loadType(name) {
-				log.Panicf("loadType %s unexpected: not found?\n", name)
+	if o != nil {
+		if at != types.Universe {
+			if o.Type().Underlying() == nil { // uninited type
+				ctx.loadType(name)
 			}
-		}
-		if debugLookup {
-			log.Println("==> LookupParent", name, "=>", o)
+			if debugLookup {
+				log.Println("==> LookupParent", name, "=>", o)
+			}
 		}
 		return o, nil
 	}
 
 	pkg := ctx.pkg
-	if ctx.loadType(name) { // alias type maybe not in cb.Scope
-		if o = pkg.Types.Scope().Lookup(name); o != nil {
-			return o, nil
-		}
+	if ctx.loadType(name) { // TODO: alias type not in cb.Scope
+		return pkg.Types.Scope().Lookup(name), nil
 	}
 
 	if obj := pkg.Builtin().TryRef(name); obj != nil {

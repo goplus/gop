@@ -306,8 +306,8 @@ func (p *Context) genOutline() error {
 	for _, f := range p.lazys {
 		f.resolve(lazyType)
 	}
-	for _, fn := range p.funcs {
-		fn()
+	for _, fnProto := range p.funcs {
+		fnProto()
 	}
 	for _, f := range p.lazys {
 		f.resolve(lazyVarOrConst)
@@ -614,6 +614,8 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 							if debugLoad {
 								log.Println("==> Load > AliasType", name)
 							}
+							old, _ := p.SetCurFile(goFile, true)
+							defer p.RestoreCurFile(old)
 							ctx.pkg.AliasType(name, toType(ctx, t.Type), pos)
 						})
 						continue
@@ -631,6 +633,8 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 						if debugLoad {
 							log.Println("==> Load > InitType", name)
 						}
+						old, _ := p.SetCurFile(goFile, true)
+						defer p.RestoreCurFile(old)
 						decl.InitType(ctx.pkg, toType(ctx, t.Type))
 					})
 				}

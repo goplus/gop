@@ -22,7 +22,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/goplus/gop/cl"
+	"github.com/goplus/gop/cl/outline/cl"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/parser/fsx/memfs"
 	"github.com/goplus/gop/scanner"
