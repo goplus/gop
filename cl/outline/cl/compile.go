@@ -651,15 +651,15 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 					})
 				}
 			case token.VAR:
+				pkg := ctx.pkg
+				vdecl := pkg.NewVarDefs(pkg.Types.Scope())
 				for _, spec := range d.Specs {
 					vSpec := spec.(*ast.ValueSpec)
 					if debugLoad {
 						log.Println("==> Preload var", vSpec.Names)
 					}
 					parent.insertNames(vSpec.Names, func() {
-						old, _ := p.SetCurFile(goFile, true)
-						defer p.RestoreCurFile(old)
-						loadVars(ctx, vSpec, true)
+						loadVars(ctx, vdecl, vSpec)
 					})
 				}
 			default:
@@ -821,20 +821,19 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 	ctx.imports[name] = pkg
 }
 
-func loadConstSpecs(ctx *blockCtx, cdecl *gox.ConstDecl, specs []ast.Spec) {
+func loadConstSpecs(ctx *blockCtx, decl *gox.ConstDefs, specs []ast.Spec) {
 	for iotav, spec := range specs {
-		vSpec := spec.(*ast.ValueSpec)
-		loadConsts(ctx, cdecl, vSpec, iotav)
+		loadConsts(ctx, decl, spec.(*ast.ValueSpec), iotav)
 	}
 }
 
-func loadConsts(ctx *blockCtx, cdecl *gox.ConstDecl, v *ast.ValueSpec, iotav int) {
+func loadConsts(ctx *blockCtx, decl *gox.ConstDefs, v *ast.ValueSpec, iotav int) {
 	names := makeNames(v.Names)
 	if v.Values == nil {
 		if debugLoad {
 			log.Println("==> Load const", names)
 		}
-		cdecl.Next(iotav, v.Pos(), names...)
+		decl.Next(iotav, v.Pos(), names...)
 		return
 	}
 	var typ types.Type
@@ -850,10 +849,16 @@ func loadConsts(ctx *blockCtx, cdecl *gox.ConstDecl, v *ast.ValueSpec, iotav int
 		}
 		return len(v.Values)
 	}
-	cdecl.New(fn, iotav, v.Pos(), typ, names...)
+	decl.New(fn, iotav, v.Pos(), typ, names...)
 }
 
-func loadVars(ctx *blockCtx, v *ast.ValueSpec, global bool) {
+func loadVarSpecs(ctx *blockCtx, decl *gox.VarDefs, specs []ast.Spec) {
+	for _, spec := range specs {
+		loadVars(ctx, decl, spec.(*ast.ValueSpec))
+	}
+}
+
+func loadVars(ctx *blockCtx, decl *gox.VarDefs, v *ast.ValueSpec) {
 	var typ types.Type
 	if v.Type != nil {
 		typ = toType(ctx, v.Type)
@@ -862,13 +867,7 @@ func loadVars(ctx *blockCtx, v *ast.ValueSpec, global bool) {
 	if debugLoad {
 		log.Println("==> Load var", typ, names)
 	}
-	var scope *types.Scope
-	if global {
-		scope = ctx.pkg.Types.Scope()
-	} else {
-		scope = ctx.cb.Scope()
-	}
-	varDecl := ctx.pkg.NewVarEx(scope, v.Names[0].Pos(), typ, names...)
+	varDecl := decl.New(v.Names[0].Pos(), typ, names...)
 	if nv := len(v.Values); nv > 0 {
 		cb := varDecl.InitStart(ctx.pkg)
 		if enableRecover {
