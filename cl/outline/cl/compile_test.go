@@ -389,20 +389,20 @@ func main() {
 }
 `, `package main
 
-type Inner interface {
-	DoStuff() error
-}
 type Outer interface {
 	Inner
 }
 type impl struct {
 }
-
-func (a *impl) DoStuff() error {
-	return nil
+type Inner interface {
+	DoStuff() error
 }
+
 func New() Outer {
 	return &impl{}
+}
+func (a *impl) DoStuff() error {
+	return nil
 }
 func main() {
 	var outer Outer = New()
@@ -432,6 +432,17 @@ type A struct{ T }
 type B struct{ T }
 `, `package main
 
+type I interface {
+	M() int
+}
+type T int
+type A struct {
+	T
+}
+type B struct {
+	T
+}
+
 func main() {
 	i := I(A{})
 	b := make(chan I, 1)
@@ -439,21 +450,8 @@ func main() {
 	var ok bool
 	i, ok = <-b
 }
-
-type T int
-
 func (T) M() int {
 	return 0
-}
-
-type A struct {
-	T
-}
-type I interface {
-	M() int
-}
-type B struct {
-	T
 }
 `)
 }

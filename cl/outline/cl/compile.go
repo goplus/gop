@@ -606,6 +606,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 					loadImport(ctx, item.(*ast.ImportSpec))
 				}
 			case token.TYPE:
+				tdecl := ctx.pkg.NewTypeDefs()
 				for _, spec := range d.Specs {
 					t := spec.(*ast.TypeSpec)
 					name, pos := t.Name.Name, t.Pos()
@@ -614,16 +615,14 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 							if debugLoad {
 								log.Println("==> Load > AliasType", name)
 							}
-							old, _ := p.SetCurFile(goFile, true)
-							defer p.RestoreCurFile(old)
-							ctx.pkg.AliasType(name, toType(ctx, t.Type), pos)
+							tdecl.AliasType(name, toType(ctx, t.Type), pos)
 						})
 						continue
 					}
 					if debugLoad {
 						log.Println("==> Load > NewType", name)
 					}
-					decl := ctx.pkg.NewType(name)
+					decl := tdecl.NewType(name, pos)
 					if t.Doc != nil {
 						decl.SetComments(t.Doc)
 					} else if d.Doc != nil {
@@ -633,8 +632,6 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 						if debugLoad {
 							log.Println("==> Load > InitType", name)
 						}
-						old, _ := p.SetCurFile(goFile, true)
-						defer p.RestoreCurFile(old)
 						decl.InitType(ctx.pkg, toType(ctx, t.Type))
 					})
 				}
