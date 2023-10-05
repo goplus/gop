@@ -55,7 +55,7 @@ type Config struct {
 }
 
 type Package struct {
-	Pkg *types.Package
+	pkg *gox.Package
 }
 
 // NewPackage creates a Go/Go+ outline package.
@@ -75,11 +75,15 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (_ Package, err 
 	if err != nil {
 		return
 	}
-	return Package{ret.Types}, nil
+	return Package{ret}, nil
+}
+
+func (p Package) Pkg() *types.Package {
+	return p.pkg.Types
 }
 
 func (p Package) Valid() bool {
-	return p.Pkg != nil
+	return p.pkg != nil
 }
 
 // -----------------------------------------------------------------------------
@@ -219,13 +223,14 @@ func (p *All) lookupNamed(pkg *types.Package, name string) (_ *TypeName, ok bool
 }
 
 func (p Package) Outline(withUnexported ...bool) (ret *All) {
+	pkg := p.Pkg()
 	ret = &All{
-		pkg:   p.Pkg,
+		pkg:   pkg,
 		named: make(map[*types.TypeName]*TypeName),
 	}
 	all := (withUnexported != nil && withUnexported[0])
 	aliasr := &typeutil.Map{}
-	scope := p.Pkg.Scope()
+	scope := pkg.Scope()
 	names := scope.Names()
 	objs := make([]types.Object, len(names))
 	for i, name := range names {
@@ -249,7 +254,7 @@ func (p Package) Outline(withUnexported ...bool) (ret *All) {
 				ret.checkUsedSig(sig)
 			}
 			if name, ok := checkGoptFunc(o.Name()); ok {
-				if named, ok := ret.lookupNamed(p.Pkg, name); ok {
+				if named, ok := ret.lookupNamed(pkg, name); ok {
 					named.GoptFuncs = append(named.GoptFuncs, Func{v})
 					continue
 				}
