@@ -384,11 +384,11 @@ func main() {
 }
 `, `package main
 
-type Inner interface {
-	DoStuff() error
-}
 type Outer interface {
 	Inner
+}
+type Inner interface {
+	DoStuff() error
 }
 type impl struct {
 }
@@ -435,18 +435,18 @@ func main() {
 	i, ok = <-b
 }
 
+type I interface {
+	M() int
+}
+type A struct {
+	T
+}
 type T int
 
 func (T) M() int {
 	return 0
 }
 
-type A struct {
-	T
-}
-type I interface {
-	M() int
-}
 type B struct {
 	T
 }
@@ -1006,16 +1006,15 @@ func main() {
 	fmt.Println(a.(*A))
 }
 
+type AA interface {
+	String() string
+}
 type A struct {
 	str string
 }
 
 func (a *A) String() string {
 	return a.str
-}
-
-type AA interface {
-	String() string
 }
 `)
 	gopClNamedTest(t, "getInterface", `
@@ -1028,13 +1027,13 @@ func main() {
 	fmt.Println(a.(*A))
 }
 
+type AA interface {
+	String() string
+}
+
 func get() AA {
 	var a AA
 	return a
-}
-
-type AA interface {
-	String() string
 }
 
 type A struct {
@@ -1052,14 +1051,16 @@ func main() {
 	a := get()
 	fmt.Println(a.(*A))
 }
+
+type AA interface {
+	String() string
+}
+
 func get() AA {
 	var a AA
 	return a
 }
 
-type AA interface {
-	String() string
-}
 type A struct {
 	str string
 }
