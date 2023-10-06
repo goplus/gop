@@ -151,7 +151,8 @@ type lazyKind int
 
 const (
 	lazyAll lazyKind = iota
-	lazyType
+	lazyAliasType
+	lazyInitType
 	lazyVarOrConst
 )
 
@@ -201,9 +202,9 @@ type pkgCtx struct {
 	*nodeInterp
 	*gmxSettings
 	cpkgs *cpackages.Importer
-	lazys lazyobjs // delay: (1) global types; (3) global constants/variables
-	funcs []func() // delay: (2) func prototypes
-	bodys []func() // delay: (4) generate function body
+	lazys lazyobjs // delay: (1) alias types; (2) init named type; (4) global constants/variables
+	funcs []func() // delay: (3) func prototypes
+	bodys []func() // delay: (5) generate function body
 	errs  errors.List
 }
 
@@ -241,12 +242,8 @@ func (p *pkgCtx) handleRecover(e interface{}) {
 	p.handleErr(err)
 }
 
-func (p *pkgCtx) insertType(name string, pos token.Pos, load func()) {
-	p.lazys.insert(p, name, &lazy{pos, load, lazyType})
-}
-
-func (p *pkgCtx) loadType(name string) bool {
-	return p.lazys.load(p, name, lazyType)
+func (p *pkgCtx) insertObject(name string, pos token.Pos, kind lazyKind, load func()) {
+	p.lazys.insert(p, name, &lazy{pos, load, kind})
 }
 
 func (p *pkgCtx) insertNames(pos token.Pos, names []*ast.Ident, load func()) {
@@ -305,7 +302,10 @@ func (p *Context) Complete(pkg *gox.Package, autoGenMain bool) error {
 
 func (p *Context) genOutline() error {
 	for _, f := range p.lazys {
-		f.resolve(lazyType)
+		f.resolve(lazyAliasType)
+	}
+	for _, f := range p.lazys {
+		f.resolve(lazyInitType)
 	}
 	for _, fnProto := range p.funcs {
 		fnProto()
@@ -496,8 +496,8 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 		}
 		pos := f.Pos()
 		specs := getFields(f)
-		decl := p.NewType(classType)
-		parent.insertType(classType, pos, func() {
+		decl := p.NewTypeDefs().NewType(classType, pos)
+		parent.insertObject(classType, pos, lazyInitType, func() {
 			if debugLoad {
 				log.Println("==> Load > InitType", classType)
 			}
@@ -612,7 +612,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 					t := spec.(*ast.TypeSpec)
 					name, pos := t.Name.Name, t.Pos()
 					if t.Assign != token.NoPos { // alias type
-						parent.insertType(name, pos, func() {
+						parent.insertObject(name, pos, lazyAliasType, func() {
 							if debugLoad {
 								log.Println("==> Load > AliasType", name)
 							}
@@ -629,7 +629,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 					} else if d.Doc != nil {
 						decl.SetComments(d.Doc)
 					}
-					parent.insertType(name, pos, func() { // decycle
+					parent.insertObject(name, pos, lazyInitType, func() { // decycle
 						if debugLoad {
 							log.Println("==> Load > InitType", name)
 						}

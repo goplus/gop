@@ -231,9 +231,6 @@ func lookupType(ctx *blockCtx, name string) (obj types.Object, builtin types.Obj
 	at, o := ctx.cb.Scope().LookupParent(name, token.NoPos)
 	if o != nil {
 		if at != types.Universe {
-			if o.Type().Underlying() == nil { // uninited type
-				ctx.loadType(name)
-			}
 			if debugLookup {
 				log.Println("==> LookupParent", name, "=>", o)
 			}
@@ -241,12 +238,7 @@ func lookupType(ctx *blockCtx, name string) (obj types.Object, builtin types.Obj
 		return o, nil
 	}
 
-	pkg := ctx.pkg
-	if ctx.loadType(name) { // TODO: alias type not in cb.Scope
-		return pkg.Types.Scope().Lookup(name), nil
-	}
-
-	if obj := pkg.Builtin().TryRef(name); obj != nil {
+	if obj := ctx.pkg.Builtin().TryRef(name); obj != nil {
 		return obj, o
 	}
 	return o, o

@@ -2399,14 +2399,12 @@ import fmt "fmt"
 
 type fooIter struct {
 }
+type foo struct {
+}
 
 func (p fooIter) Next() (key string, val int, ok bool) {
 	return
 }
-
-type foo struct {
-}
-
 func (p *foo) Gop_Enum() fooIter {
 }
 func main() {
@@ -2490,6 +2488,10 @@ type fooIter struct {
 	data *foo
 	idx  int
 }
+type foo struct {
+	key []int
+	val []string
+}
 
 func (p *fooIter) Next() (key int, val string, ok bool) {
 	if p.idx < len(p.data.key) {
@@ -2498,17 +2500,11 @@ func (p *fooIter) Next() (key int, val string, ok bool) {
 	}
 	return
 }
-
-type foo struct {
-	key []int
-	val []string
-}
-
-func (p *foo) Gop_Enum() *fooIter {
-	return &fooIter{data: p}
-}
 func newFoo() *foo {
 	return &foo{key: []int{3, 7}, val: []string{"Hi", "Go+"}}
+}
+func (p *foo) Gop_Enum() *fooIter {
+	return &fooIter{data: p}
 }
 func main() {
 	for _gop_it := newFoo().Gop_Enum(); ; {
