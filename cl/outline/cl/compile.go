@@ -178,6 +178,7 @@ func (p lazyobjs) insert(ctx *pkgCtx, name string, o *lazy) {
 		npos := ctx.Position(o.pos)
 		ctx.handleCodeErrorf(&npos,
 			"%v redeclared\n\t%v other declaration of %v", name, ctx.Position(old.pos), name)
+		return
 	}
 	p[name] = o
 }
@@ -243,13 +244,38 @@ func (p *pkgCtx) handleRecover(e interface{}) {
 }
 
 func (p *pkgCtx) insertObject(name string, pos token.Pos, kind lazyKind, load func()) {
-	p.lazys.insert(p, name, &lazy{pos, load, kind})
+	if name == "_" {
+		p.bodys = append(p.bodys, load)
+	} else {
+		p.lazys.insert(p, name, &lazy{pos, load, kind})
+	}
 }
 
-func (p *pkgCtx) insertNames(pos token.Pos, names []*ast.Ident, load func()) {
+func (p *pkgCtx) insertConsts(pos token.Pos, specs []ast.Spec, load func()) {
 	lazy := &lazy{pos, load, lazyVarOrConst}
-	for _, name := range names {
-		p.lazys.insert(p, name.Name, lazy)
+	for _, spec := range specs {
+		vSpec := spec.(*ast.ValueSpec)
+		if debugLoad {
+			log.Println("==> Preload const", vSpec.Names)
+		}
+		for _, ident := range vSpec.Names {
+			name := ident.Name
+			if name != "_" {
+				p.lazys.insert(p, name, lazy)
+			}
+		}
+	}
+}
+
+func (p *pkgCtx) insertVars(pos token.Pos, names []*ast.Ident, load func()) {
+	lazy := &lazy{pos, load, lazyVarOrConst}
+	for _, ident := range names {
+		name := ident.Name
+		if name == "_" {
+			p.bodys = append(p.bodys, lazy.load)
+		} else {
+			p.lazys.insert(p, name, lazy)
+		}
 	}
 }
 
@@ -629,16 +655,11 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 				}
 			case token.CONST:
 				pkg := ctx.pkg
+				specs := d.Specs
 				cdecl := pkg.NewConstDefs(pkg.Types.Scope())
-				for iotav, spec := range d.Specs {
-					vSpec := spec.(*ast.ValueSpec)
-					if debugLoad {
-						log.Println("==> Preload const", vSpec.Names)
-					}
-					parent.insertNames(vSpec.Pos(), vSpec.Names, func() {
-						loadConsts(ctx, cdecl, vSpec, iotav)
-					})
-				}
+				parent.insertConsts(d.Pos(), specs, func() {
+					loadConstSpecs(ctx, cdecl, specs)
+				})
 			case token.VAR:
 				pkg := ctx.pkg
 				vdecl := pkg.NewVarDefs(pkg.Types.Scope())
@@ -647,7 +668,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 					if debugLoad {
 						log.Println("==> Preload var", vSpec.Names)
 					}
-					parent.insertNames(vSpec.Pos(), vSpec.Names, func() {
+					parent.insertVars(vSpec.Pos(), vSpec.Names, func() {
 						loadVars(ctx, vdecl, vSpec)
 					})
 				}

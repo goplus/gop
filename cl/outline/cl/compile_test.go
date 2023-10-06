@@ -871,12 +871,14 @@ const (
 	c4
 )
 
+var (
+	_ = i()
+	_ = i()
+)
+
 func i() int {
 	return 23
 }
-
-var _ = i()
-var _ = i()
 `)
 }
 
@@ -902,11 +904,11 @@ type T struct {
 	_ int
 }
 
-func (T) _() {
-}
-func (T) _() {
-}
 func _() {
+}
+func (T) _() {
+}
+func (T) _() {
 }
 `)
 }
@@ -1004,21 +1006,19 @@ func (a *A) String() string {
 
 import fmt "fmt"
 
-func main() {
-	var a AA = &A{str: "hello"}
-	fmt.Println(a.(*A))
+type AA interface {
+	String() string
 }
-
 type A struct {
 	str string
 }
 
+func main() {
+	var a AA = &A{str: "hello"}
+	fmt.Println(a.(*A))
+}
 func (a *A) String() string {
 	return a.str
-}
-
-type AA interface {
-	String() string
 }
 `)
 	gopClNamedTest(t, "getInterface", `
@@ -1051,6 +1051,13 @@ func (a *A) String() string {
 
 import fmt "fmt"
 
+type AA interface {
+	String() string
+}
+type A struct {
+	str string
+}
+
 func main() {
 	a := get()
 	fmt.Println(a.(*A))
@@ -1059,14 +1066,6 @@ func get() AA {
 	var a AA
 	return a
 }
-
-type AA interface {
-	String() string
-}
-type A struct {
-	str string
-}
-
 func (a *A) String() string {
 	return a.str
 }
