@@ -601,8 +601,11 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 				old, _ := p.SetCurFile(goFile, true)
 				defer p.RestoreCurFile(old)
 				var recv *types.Var
+				var ok bool
 				if dRecv != nil {
-					recv = toRecv(ctx, dRecv)
+					if recv, ok = toRecv(ctx, dRecv); !ok {
+						return
+					}
 				}
 				preloadFunc(ctx, recv, d)
 			})

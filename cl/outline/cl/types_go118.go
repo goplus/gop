@@ -168,29 +168,6 @@ func initType(ctx *blockCtx, named *types.Named, spec *ast.TypeSpec) {
 }
 */
 
-func getRecvType(typ ast.Expr) (ast.Expr, bool) {
-	var ptr bool
-L:
-	for {
-		switch t := typ.(type) {
-		case *ast.ParenExpr:
-			typ = t.X
-		case *ast.StarExpr:
-			ptr = true
-			typ = t.X
-		default:
-			break L
-		}
-	}
-	switch t := typ.(type) {
-	case *ast.IndexExpr:
-		typ = t.X
-	case *ast.IndexListExpr:
-		typ = t.X
-	}
-	return typ, ptr
-}
-
 func collectTypeParams(ctx *blockCtx, list *ast.FieldList) []*types.TypeParam {
 	var tparams []*types.TypeParam
 	// Declare type parameters up-front, with empty interface as type bound.

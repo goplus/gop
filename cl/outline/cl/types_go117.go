@@ -55,23 +55,6 @@ func initType(ctx *blockCtx, named *types.Named, spec *ast.TypeSpec) {
 	named.SetUnderlying(typ)
 }
 
-func getRecvType(typ ast.Expr) (ast.Expr, bool) {
-	var ptr bool
-L:
-	for {
-		switch t := typ.(type) {
-		case *ast.ParenExpr:
-			typ = t.X
-		case *ast.StarExpr:
-			ptr = true
-			typ = t.X
-		default:
-			break L
-		}
-	}
-	return typ, ptr
-}
-
 func sliceHasTypeParam(ctx *blockCtx, typ types.Type) bool {
 	return false
 }

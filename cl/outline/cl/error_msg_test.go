@@ -452,12 +452,12 @@ func (p error) foo() {
 }
 `)
 	codeErrorTest(t,
-		`./bar.gop:2:9: invalid receiver type []byte ([]byte is not a defined type)`, `
+		`./bar.gop:2:9: invalid receiver type []byte`, `
 func (p []byte) foo() {
 }
 `)
 	codeErrorTest(t,
-		`./bar.gop:2:10: invalid receiver type []byte ([]byte is not a defined type)`, `
+		`./bar.gop:2:9: invalid receiver type *[]byte`, `
 func (p *[]byte) foo() {
 }
 `)

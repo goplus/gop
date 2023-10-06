@@ -31,33 +31,34 @@ import (
 
 // -----------------------------------------------------------------------------
 
-func toRecv(ctx *blockCtx, recv *ast.FieldList) *types.Var {
+func toRecv(ctx *blockCtx, recv *ast.FieldList) (ret *types.Var, ok bool) {
 	v := recv.List[0]
 	var name string
 	if len(v.Names) > 0 {
 		name = v.Names[0].Name
 	}
-	typ, star := getRecvType(v.Type)
-	t := toType(ctx, typ)
-	if star {
-		t = types.NewPointer(t)
+	t := toType(ctx, v.Type)
+	if ok = checkRecvType(ctx, t, v.Type); ok {
+		ret = ctx.pkg.NewParam(v.Pos(), name, t)
 	}
-	return ctx.pkg.NewParam(v.Pos(), name, t)
+	return
 }
 
-/*
-func getRecvTypeName(ctx *pkgCtx, recv *ast.FieldList, handleErr bool) (string, bool) {
-	typ, _ := getRecvType(recv.List[0].Type)
-	if t, ok := typ.(*ast.Ident); ok {
-		return t.Name, true
+func checkRecvType(ctx *blockCtx, typ types.Type, recv ast.Expr) (ok bool) {
+	t := indirect(typ)
+	if _, ok = t.(*types.Named); !ok {
+		pos := ctx.Position(recv.Pos())
+		ctx.handleCodeErrorf(&pos, "invalid receiver type %v", typ)
 	}
-	if handleErr {
-		src, pos := ctx.LoadExpr(typ)
-		ctx.handleCodeErrorf(&pos, "invalid receiver type %v (%v is not a defined type)", src, src)
-	}
-	return "", false
+	return
 }
-*/
+
+func indirect(typ types.Type) types.Type {
+	if t, ok := typ.(*types.Pointer); ok {
+		return t.Elem()
+	}
+	return typ
+}
 
 func toResults(ctx *blockCtx, in *ast.FieldList) *types.Tuple {
 	if in == nil {
