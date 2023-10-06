@@ -306,18 +306,16 @@ type Game struct {
 	*spx.MyGame
 	Kai Kai
 }
-
-func (this *Game) onInit() {
-	this.Kai.Clone()
-	this.Broadcast__0("msg1")
-}
-
 type Kai struct {
 	spx.Sprite
 	*Game
 	a int
 }
 
+func (this *Game) onInit() {
+	this.Kai.Clone()
+	this.Broadcast__0("msg1")
+}
 func (this *Kai) onInit() {
 	this.a = 1
 }
@@ -353,6 +351,10 @@ type index struct {
 	Kai Kai
 	t   spx.Sound
 }
+type Kai struct {
+	spx.Sprite
+	*index
+}
 
 func (this *index) MainEntry() {
 	spx.Gopt_MyGame_Run(this, "hzip://open.qiniu.us/weather/res.zip")
@@ -360,12 +362,6 @@ func (this *index) MainEntry() {
 func main() {
 	spx.Gopt_MyGame_Main(new(index))
 }
-
-type Kai struct {
-	spx.Sprite
-	*index
-}
-
 func (this *Kai) Main() {
 	fmt.Println("Hi")
 }
@@ -500,16 +496,15 @@ type Game struct {
 	spx2.Game
 	Kai Kai
 }
+type Kai struct {
+	spx2.Sprite
+	*Game
+}
 
 func (this *Game) MainEntry() {
 }
 func main() {
 	new(Game).Main()
-}
-
-type Kai struct {
-	spx2.Sprite
-	*Game
 }
 `, "Game.t2gmx", "Kai.t2spx")
 
@@ -537,6 +532,10 @@ type Game struct {
 	spx2.Game
 	Kai Kai
 }
+type Kai struct {
+	spx2.Sprite
+	*Game
+}
 
 func (this *Game) MainEntry() {
 	fmt.Println("Hi")
@@ -544,12 +543,6 @@ func (this *Game) MainEntry() {
 func main() {
 	new(Game).Main()
 }
-
-type Kai struct {
-	spx2.Sprite
-	*Game
-}
-
 func (this *Kai) Main() {
 	fmt.Println("Hello")
 }
