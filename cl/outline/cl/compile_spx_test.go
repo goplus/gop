@@ -168,18 +168,16 @@ import spx "github.com/goplus/gop/cl/internal/spx"
 type Game struct {
 	*spx.MyGame
 }
+type Kai struct {
+	spx.Sprite
+	*Game
+}
 
 func (this *Game) onInit() {
 	for {
 		spx.SchedNow()
 	}
 }
-
-type Kai struct {
-	spx.Sprite
-	*Game
-}
-
 func (this *Kai) onMsg(msg string) {
 	for {
 		spx.Sched()
@@ -214,11 +212,15 @@ import (
 	spx "github.com/goplus/gop/cl/internal/spx"
 )
 
-const Foo = 1
-
+type bar struct {
+	spx.Sprite
+	*index
+}
 type index struct {
 	*spx.MyGame
 }
+
+const Foo = 1
 
 func (this *index) bar() {
 }
@@ -254,6 +256,10 @@ import (
 type Game struct {
 	*spx.MyGame
 }
+type bar struct {
+	spx.Sprite
+	*Game
+}
 
 func (this *Game) onInit() {
 	spx.Sched()
@@ -261,12 +267,6 @@ func (this *Game) onInit() {
 	spx.TestIntValue = 1
 	x := math.Round(1.2)
 }
-
-type bar struct {
-	spx.Sprite
-	*Game
-}
-
 func (this *bar) onInit() {
 	this.SetCostume("kai-a")
 	this.Play("recordingWhere")
@@ -306,18 +306,16 @@ type Game struct {
 	*spx.MyGame
 	Kai Kai
 }
-
-func (this *Game) onInit() {
-	this.Kai.Clone()
-	this.Broadcast__0("msg1")
-}
-
 type Kai struct {
 	spx.Sprite
 	*Game
 	a int
 }
 
+func (this *Game) onInit() {
+	this.Kai.Clone()
+	this.Broadcast__0("msg1")
+}
 func (this *Kai) onInit() {
 	this.a = 1
 }
@@ -346,28 +344,26 @@ import (
 	spx "github.com/goplus/gop/cl/internal/spx"
 )
 
-var x float64 = spx.Rand__1(1.2)
-
+type Kai struct {
+	spx.Sprite
+	*index
+}
 type index struct {
 	*spx.MyGame
 	Kai Kai
 	t   spx.Sound
 }
 
+var x float64 = spx.Rand__1(1.2)
+
+func (this *Kai) Main() {
+	fmt.Println("Hi")
+}
 func (this *index) MainEntry() {
 	spx.Gopt_MyGame_Run(this, "hzip://open.qiniu.us/weather/res.zip")
 }
 func main() {
 	spx.Gopt_MyGame_Main(new(index))
-}
-
-type Kai struct {
-	spx.Sprite
-	*index
-}
-
-func (this *Kai) Main() {
-	fmt.Println("Hi")
 }
 `, "index.tgmx", "Kai.tspx")
 }
@@ -388,20 +384,18 @@ import (
 type Game struct {
 	spx2.Game
 }
-
-func (this *Game) MainEntry() {
-	fmt.Println("Hi")
-}
-func main() {
-	new(Game).Main()
-}
-
 type Kai struct {
 	spx2.Sprite
 	*Game
 }
 
+func (this *Game) MainEntry() {
+	fmt.Println("Hi")
+}
 func (this *Kai) onMsg(msg string) {
+}
+func main() {
+	new(Game).Main()
 }
 `, "Game.t2gmx", "Kai.t2spx")
 
@@ -420,20 +414,18 @@ import (
 type Game struct {
 	spx2.Game
 }
-
-func (this *Game) MainEntry() {
-	fmt.Println("Hi, Sprite2")
-}
-func main() {
-	new(Game).Main()
-}
-
 type Kai struct {
 	spx2.Sprite2
 	*Game
 }
 
+func (this *Game) MainEntry() {
+	fmt.Println("Hi, Sprite2")
+}
 func (this *Kai) onMsg(msg string) {
+}
+func main() {
+	new(Game).Main()
 }
 `, "Game.t2gmx", "Kai.t2spx2")
 
@@ -452,15 +444,13 @@ import (
 type Dog struct {
 	spx2.Sprite
 }
-
-func (this *Dog) Main() {
-	fmt.Println("Hi, Sprite")
-}
-
 type Kai struct {
 	spx2.Sprite2
 }
 
+func (this *Dog) Main() {
+	fmt.Println("Hi, Sprite")
+}
 func (this *Kai) onMsg(msg string) {
 }
 `, "Dog.t3spx", "Kai.t3spx2")
@@ -479,6 +469,10 @@ import spx2 "github.com/goplus/gop/cl/internal/spx2"
 
 type Game struct {
 	spx2.Game
+}
+type Kai struct {
+	spx2.Sprite
+	*Game
 }
 
 func (this *Game) MainEntry() {
@@ -500,16 +494,15 @@ type Game struct {
 	spx2.Game
 	Kai Kai
 }
+type Kai struct {
+	spx2.Sprite
+	*Game
+}
 
 func (this *Game) MainEntry() {
 }
 func main() {
 	new(Game).Main()
-}
-
-type Kai struct {
-	spx2.Sprite
-	*Game
 }
 `, "Game.t2gmx", "Kai.t2spx")
 
@@ -537,23 +530,21 @@ type Game struct {
 	spx2.Game
 	Kai Kai
 }
-
-func (this *Game) MainEntry() {
-	fmt.Println("Hi")
-}
-func main() {
-	new(Game).Main()
-}
-
 type Kai struct {
 	spx2.Sprite
 	*Game
 }
 
+func (this *Game) MainEntry() {
+	fmt.Println("Hi")
+}
 func (this *Kai) Main() {
 	fmt.Println("Hello")
 }
 func (this *Kai) onMsg(msg string) {
+}
+func main() {
+	new(Game).Main()
 }
 `, "Game.t2gmx", "Kai.t2spx")
 }
@@ -577,18 +568,16 @@ import spx "github.com/goplus/gop/cl/internal/spx"
 type Game struct {
 	*spx.MyGame
 }
+type Kai struct {
+	spx.Sprite
+	*Game
+}
 
 func (this *Game) onInit() {
 	for {
 		spx.SchedNow()
 	}
 }
-
-type Kai struct {
-	spx.Sprite
-	*Game
-}
-
 func (this *Kai) onMsg(msg string) {
 	for {
 		spx.Sched()
