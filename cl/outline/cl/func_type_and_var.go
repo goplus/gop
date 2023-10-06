@@ -242,10 +242,9 @@ func lookupType(ctx *blockCtx, name string) (obj types.Object, builtin types.Obj
 			if debugLookup {
 				log.Println("==> LookupParent", name, "=>", o)
 			}
+			return o, nil
 		}
-		return o, nil
 	}
-
 	if obj := ctx.pkg.Builtin().TryRef(name); obj != nil {
 		return obj, o
 	}

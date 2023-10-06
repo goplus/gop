@@ -1040,7 +1040,7 @@ func loadConsts(ctx *blockCtx, cdecl *gox.ConstDefs, v *ast.ValueSpec, iotav int
 		}
 		return len(v.Values)
 	}
-	cdecl.NewAndInit(fn, iotav, v.Pos(), typ, names...)
+	cdecl.New(fn, iotav, v.Pos(), typ, names...)
 }
 
 func loadVars(ctx *blockCtx, v *ast.ValueSpec, global bool) {

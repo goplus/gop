@@ -1127,7 +1127,7 @@ const (
 `, `package main
 
 const (
-	i = 1
+	i = a
 	a = 1
 )
 `)
@@ -1431,17 +1431,15 @@ type Rect struct {
 	w float64
 	h float64
 }
-
-func (p *Rect) Area() float64 {
-	return p.w * p.h
-}
-
 type Circle struct {
 	x float64
 	y float64
 	r float64
 }
 
+func (p *Rect) Area() float64 {
+	return p.w * p.h
+}
 func (p *Circle) Area() float64 {
 	return 3.14 * p.r * p.r
 }
@@ -3886,6 +3884,13 @@ import (
 	testing "testing"
 )
 
+type Repo struct {
+	Title string
+}
+type Result struct {
+	Repo Repo
+}
+
 func TestNew(t *testing.T) {
 	ret := New()
 	expected := Result{}
@@ -3893,19 +3898,12 @@ func TestNew(t *testing.T) {
 		t.Fatal("Test failed:", ret, expected)
 	}
 }
-func New() Result {
-	repo := newRepo()
-	return Result{Repo: repo}
-}
 func newRepo() Repo {
 	return Repo{Title: "Hi"}
 }
-
-type Repo struct {
-	Title string
-}
-type Result struct {
-	Repo Repo
+func New() Result {
+	repo := newRepo()
+	return Result{Repo: repo}
 }
 `)
 	}
@@ -4389,17 +4387,17 @@ func Area() float64 {
 }
 `, `package main
 
-type BaseClass struct {
-	x int
-	y int
-}
-type AggClass struct {
-}
 type Rect struct {
 	BaseClass
 	Width  float64
 	Height float64
 	*AggClass
+}
+type BaseClass struct {
+	x int
+	y int
+}
+type AggClass struct {
 }
 
 func (this *Rect) Area() float64 {

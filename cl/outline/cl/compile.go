@@ -251,9 +251,10 @@ func (p *pkgCtx) insertObject(name string, pos token.Pos, kind lazyKind, load fu
 	}
 }
 
-func (p *pkgCtx) insertNames(pos token.Pos, names []string, load func()) {
+func (p *pkgCtx) insertNames(pos token.Pos, names []*ast.Ident, load func()) {
 	lazy := &lazy{pos, load, lazyVarOrConst}
-	for _, name := range names {
+	for _, ident := range names {
+		name := ident.Name
 		if name == "_" {
 			p.bodys = append(p.bodys, lazy.load)
 		} else {
@@ -644,7 +645,10 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 					if debugLoad {
 						log.Println("==> Preload const", vSpec.Names)
 					}
-					loadConsts(ctx, cdecl, vSpec, iotav, true)
+					at := cdecl.NewPos()
+					ctx.insertNames(vSpec.Pos(), vSpec.Names, func() {
+						loadConsts(ctx, cdecl, at, vSpec, iotav)
+					})
 				}
 			case token.VAR:
 				pkg := ctx.pkg
@@ -654,7 +658,10 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 					if debugLoad {
 						log.Println("==> Preload var", vSpec.Names)
 					}
-					loadVars(ctx, vdecl, vSpec, true)
+					at := vdecl.NewPos()
+					ctx.insertNames(vSpec.Pos(), vSpec.Names, func() {
+						loadVars(ctx, vdecl, at, vSpec)
+					})
 				}
 			default:
 				log.Panicln("TODO - tok:", d.Tok, "spec:", reflect.TypeOf(d.Specs).Elem())
@@ -817,54 +824,42 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 
 func loadConstSpecs(ctx *blockCtx, decl *gox.ConstDefs, specs []ast.Spec) {
 	for iotav, spec := range specs {
-		loadConsts(ctx, decl, spec.(*ast.ValueSpec), iotav, false)
+		loadConsts(ctx, decl, decl.NewPos(), spec.(*ast.ValueSpec), iotav)
 	}
 }
 
-type constIniter interface {
-	Init(defs *gox.ConstDefs, iotav int)
-}
-
-func loadConsts(ctx *blockCtx, decl *gox.ConstDefs, v *ast.ValueSpec, iotav int, delayInit bool) {
+func loadConsts(ctx *blockCtx, decl *gox.ConstDefs, at gox.ValueAt, v *ast.ValueSpec, iotav int) {
 	names := makeNames(v.Names)
-	initer := constIniter(nil)
 	if v.Values == nil {
 		if debugLoad {
 			log.Println("==> Load const", names)
 		}
-		initer = decl.NewNext(v.Pos(), names...)
-	} else {
-		var typ types.Type
-		if v.Type != nil {
-			typ = toType(ctx, v.Type)
-		}
-		if debugLoad {
-			log.Println("==> Load const", names, typ)
-		}
-		fn := func(cb *gox.CodeBuilder) int {
-			for _, val := range v.Values {
-				compileExpr(ctx, val)
-			}
-			return len(v.Values)
-		}
-		initer = decl.New(fn, v.Pos(), typ, names...)
+		decl.NextAt(at, iotav, v.Pos(), names...)
+		return
 	}
-	if delayInit {
-		ctx.insertNames(v.Pos(), names, func() {
-			initer.Init(decl, iotav)
-		})
-	} else {
-		initer.Init(decl, iotav)
+	var typ types.Type
+	if v.Type != nil {
+		typ = toType(ctx, v.Type)
 	}
+	if debugLoad {
+		log.Println("==> Load const", names, typ)
+	}
+	fn := func(cb *gox.CodeBuilder) int {
+		for _, val := range v.Values {
+			compileExpr(ctx, val)
+		}
+		return len(v.Values)
+	}
+	decl.NewAt(at, fn, iotav, v.Pos(), typ, names...)
 }
 
 func loadVarSpecs(ctx *blockCtx, decl *gox.VarDefs, specs []ast.Spec) {
 	for _, spec := range specs {
-		loadVars(ctx, decl, spec.(*ast.ValueSpec), false)
+		loadVars(ctx, decl, decl.NewPos(), spec.(*ast.ValueSpec))
 	}
 }
 
-func loadVars(ctx *blockCtx, decl *gox.VarDefs, v *ast.ValueSpec, delayInit bool) {
+func loadVars(ctx *blockCtx, decl *gox.VarDefs, at gox.ValueAt, v *ast.ValueSpec) {
 	var typ types.Type
 	if v.Type != nil {
 		typ = toType(ctx, v.Type)
@@ -873,17 +868,7 @@ func loadVars(ctx *blockCtx, decl *gox.VarDefs, v *ast.ValueSpec, delayInit bool
 	if debugLoad {
 		log.Println("==> Load var", typ, names)
 	}
-	varDecl := decl.New(v.Names[0].Pos(), typ, names...)
-	if delayInit {
-		ctx.insertNames(v.Pos(), names, func() {
-			loadVarsInit(ctx, varDecl, typ, names, v)
-		})
-	} else {
-		loadVarsInit(ctx, varDecl, typ, names, v)
-	}
-}
-
-func loadVarsInit(ctx *blockCtx, varDecl *gox.VarDecl, typ types.Type, names []string, v *ast.ValueSpec) {
+	varDecl := decl.NewAt(at, v.Names[0].Pos(), typ, names...)
 	if nv := len(v.Values); nv > 0 {
 		cb := varDecl.InitStart(ctx.pkg)
 		if enableRecover {
