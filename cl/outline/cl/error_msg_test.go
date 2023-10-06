@@ -283,7 +283,7 @@ func foo(t testing.Verbose) {
 
 func TestErrConst(t *testing.T) {
 	codeErrorTest(t,
-		"./bar.gop:3:7: a redeclared in this block\n\tprevious declaration at ./bar.gop:2:5", `
+		"./bar.gop:3:7: a redeclared in this block\n\t./bar.gop:2:5 other declaration of a", `
 var a int
 const a = 1
 `)
@@ -298,7 +298,7 @@ const (
 
 func TestErrNewVar(t *testing.T) {
 	codeErrorTest(t,
-		"./bar.gop:3:5: a redeclared in this block\n\tprevious declaration at ./bar.gop:2:5", `
+		"./bar.gop:3:5: a redeclared in this block\n\t./bar.gop:2:5 other declaration of a", `
 var a int
 var a string
 `)

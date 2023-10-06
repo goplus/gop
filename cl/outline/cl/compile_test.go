@@ -4521,13 +4521,14 @@ import foo "github.com/goplus/gop/cl/internal/overload/foo"
 type Mesh struct {
 }
 
+var (
+	m1 = &Mesh{}
+	m2 = &Mesh{}
+)
+
 func (p *Mesh) Name() string {
 	return "hello"
 }
-
-var m1 = &Mesh{}
-var m2 = &Mesh{}
-
 func main() {
 	foo.OnKey__0("hello", func() {
 	})
@@ -4591,6 +4592,8 @@ func Test() {
 }
 `, `package main
 
+type Rect struct {
+}
 type Engine struct {
 }
 
@@ -4598,10 +4601,6 @@ func (e *Engine) EnterPointerLock() {
 }
 func (e *Engine) SetEnable(b bool) {
 }
-
-type Rect struct {
-}
-
 func (this *Rect) Engine() *Engine {
 	return &Engine{}
 }

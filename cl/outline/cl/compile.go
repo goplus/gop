@@ -177,7 +177,7 @@ func (p lazyobjs) insert(ctx *pkgCtx, name string, o *lazy) {
 	if old, ok := p[name]; ok {
 		npos := ctx.Position(o.pos)
 		ctx.handleCodeErrorf(&npos,
-			"%v redeclared\n\t%v other declaration of %v", name, ctx.Position(old.pos), name)
+			"%v redeclared in this block\n\t%v other declaration of %v", name, ctx.Position(old.pos), name)
 		return
 	}
 	p[name] = o
@@ -646,8 +646,9 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 						log.Println("==> Preload const", vSpec.Names)
 					}
 					at := cdecl.NewPos()
+					fn := makeF(ctx, cdecl, vSpec)
 					ctx.insertNames(vSpec.Pos(), vSpec.Names, func() {
-						loadConsts(ctx, cdecl, at, vSpec, iotav)
+						loadConsts(ctx, cdecl, at, fn, vSpec, iotav)
 					})
 				}
 			case token.VAR:
@@ -822,19 +823,32 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 	ctx.imports[name] = pkg
 }
 
+func makeF(ctx *blockCtx, decl *gox.ConstDefs, v *ast.ValueSpec) gox.F {
+	if v.Values != nil {
+		decl.F = func(cb *gox.CodeBuilder) int {
+			for _, val := range v.Values {
+				compileExpr(ctx, val)
+			}
+			return len(v.Values)
+		}
+	}
+	return decl.F
+}
+
 func loadConstSpecs(ctx *blockCtx, decl *gox.ConstDefs, specs []ast.Spec) {
 	for iotav, spec := range specs {
-		loadConsts(ctx, decl, decl.NewPos(), spec.(*ast.ValueSpec), iotav)
+		vSpec := spec.(*ast.ValueSpec)
+		loadConsts(ctx, decl, decl.NewPos(), makeF(ctx, decl, vSpec), vSpec, iotav)
 	}
 }
 
-func loadConsts(ctx *blockCtx, decl *gox.ConstDefs, at gox.ValueAt, v *ast.ValueSpec, iotav int) {
+func loadConsts(ctx *blockCtx, decl *gox.ConstDefs, at gox.ValueAt, fn gox.F, v *ast.ValueSpec, iotav int) {
 	names := makeNames(v.Names)
 	if v.Values == nil {
 		if debugLoad {
 			log.Println("==> Load const", names)
 		}
-		decl.NextAt(at, iotav, v.Pos(), names...)
+		decl.NextAt(at, fn, iotav, v.Pos(), names...)
 		return
 	}
 	var typ types.Type
@@ -843,12 +857,6 @@ func loadConsts(ctx *blockCtx, decl *gox.ConstDefs, at gox.ValueAt, v *ast.Value
 	}
 	if debugLoad {
 		log.Println("==> Load const", names, typ)
-	}
-	fn := func(cb *gox.CodeBuilder) int {
-		for _, val := range v.Values {
-			compileExpr(ctx, val)
-		}
-		return len(v.Values)
 	}
 	decl.NewAt(at, fn, iotav, v.Pos(), typ, names...)
 }
