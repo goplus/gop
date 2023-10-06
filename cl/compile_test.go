@@ -387,10 +387,10 @@ func main() {
 type Outer interface {
 	Inner
 }
+type impl struct {
+}
 type Inner interface {
 	DoStuff() error
-}
-type impl struct {
 }
 
 func (a *impl) DoStuff() error {
@@ -427,6 +427,17 @@ type A struct{ T }
 type B struct{ T }
 `, `package main
 
+type I interface {
+	M() int
+}
+type T int
+type A struct {
+	T
+}
+type B struct {
+	T
+}
+
 func main() {
 	i := I(A{})
 	b := make(chan I, 1)
@@ -434,21 +445,8 @@ func main() {
 	var ok bool
 	i, ok = <-b
 }
-
-type I interface {
-	M() int
-}
-type A struct {
-	T
-}
-type T int
-
 func (T) M() int {
 	return 0
-}
-
-type B struct {
-	T
 }
 `)
 }
@@ -2213,12 +2211,12 @@ func main() {
 }
 `, `package main
 
-type bar = foo
 type foo struct {
 	p *foo
 	A int
 	B string `+"`tag1:123`"+`
 }
+type bar = foo
 
 func main() {
 	type a struct {
@@ -2488,6 +2486,10 @@ type fooIter struct {
 	data *foo
 	idx  int
 }
+type foo struct {
+	key []int
+	val []string
+}
 
 func (p *fooIter) Next() (key int, val string, ok bool) {
 	if p.idx < len(p.data.key) {
@@ -2496,12 +2498,6 @@ func (p *fooIter) Next() (key int, val string, ok bool) {
 	}
 	return
 }
-
-type foo struct {
-	key []int
-	val []string
-}
-
 func (p *foo) Gop_Enum() *fooIter {
 	return &fooIter{data: p}
 }
@@ -3879,19 +3875,22 @@ func TestNew(t *testing.T) {
 		t.Fatal("Test failed:", ret, expected)
 	}
 }
+
+type Result struct {
+	Repo Repo
+}
+
 func New() Result {
 	repo := newRepo()
 	return Result{Repo: repo}
-}
-func newRepo() Repo {
-	return Repo{Title: "Hi"}
 }
 
 type Repo struct {
 	Title string
 }
-type Result struct {
-	Repo Repo
+
+func newRepo() Repo {
+	return Repo{Title: "Hi"}
 }
 `)
 	}
