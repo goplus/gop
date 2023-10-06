@@ -999,11 +999,6 @@ func (a *A) String() string {
 
 import fmt "fmt"
 
-func main() {
-	var a AA = &A{str: "hello"}
-	fmt.Println(a.(*A))
-}
-
 type AA interface {
 	String() string
 }
@@ -1011,6 +1006,10 @@ type A struct {
 	str string
 }
 
+func main() {
+	var a AA = &A{str: "hello"}
+	fmt.Println(a.(*A))
+}
 func (a *A) String() string {
 	return a.str
 }
@@ -1045,24 +1044,21 @@ func (a *A) String() string {
 
 import fmt "fmt"
 
-func main() {
-	a := get()
-	fmt.Println(a.(*A))
-}
-
 type AA interface {
 	String() string
 }
-
-func get() AA {
-	var a AA
-	return a
-}
-
 type A struct {
 	str string
 }
 
+func main() {
+	a := get()
+	fmt.Println(a.(*A))
+}
+func get() AA {
+	var a AA
+	return a
+}
 func (a *A) String() string {
 	return a.str
 }
@@ -1411,17 +1407,15 @@ type Rect struct {
 	w float64
 	h float64
 }
-
-func (p *Rect) Area() float64 {
-	return p.w * p.h
-}
-
 type Circle struct {
 	x float64
 	y float64
 	r float64
 }
 
+func (p *Rect) Area() float64 {
+	return p.w * p.h
+}
 func (p *Circle) Area() float64 {
 	return 3.14 * p.r * p.r
 }
@@ -2395,14 +2389,12 @@ import fmt "fmt"
 
 type fooIter struct {
 }
+type foo struct {
+}
 
 func (p fooIter) Next() (key string, val int, ok bool) {
 	return
 }
-
-type foo struct {
-}
-
 func (p *foo) Gop_Enum() fooIter {
 }
 func main() {
@@ -3868,6 +3860,13 @@ import (
 	testing "testing"
 )
 
+type Repo struct {
+	Title string
+}
+type Result struct {
+	Repo Repo
+}
+
 func TestNew(t *testing.T) {
 	ret := New()
 	expected := Result{}
@@ -3875,20 +3874,10 @@ func TestNew(t *testing.T) {
 		t.Fatal("Test failed:", ret, expected)
 	}
 }
-
-type Result struct {
-	Repo Repo
-}
-
 func New() Result {
 	repo := newRepo()
 	return Result{Repo: repo}
 }
-
-type Repo struct {
-	Title string
-}
-
 func newRepo() Repo {
 	return Repo{Title: "Hi"}
 }
