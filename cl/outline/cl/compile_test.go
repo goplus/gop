@@ -2973,6 +2973,11 @@ import fmt "fmt"
 type foo struct {
 }
 
+var a, b foo
+var c = a.Gop_Sub(b)
+var d = a.Gop_Neg()
+var e = a.Gop_NE(b)
+
 func (a *foo) Gop_Add(b *foo) *foo {
 	fmt.Println("a + b")
 	return &foo{}
@@ -2981,21 +2986,16 @@ func (a foo) Gop_Sub(b foo) foo {
 	fmt.Println("a - b")
 	return foo{}
 }
-func (a foo) Gop_NE(b foo) bool {
-	fmt.Println("a!=b")
-	return true
-}
 func (a foo) Gop_Neg() {
 	fmt.Println("-a")
 }
 func (a foo) Gop_Inc() {
 	fmt.Println("a++")
 }
-
-var a, b foo
-var c = a.Gop_Sub(b)
-var d = a.Gop_Neg()
-var e = a.Gop_NE(b)
+func (a foo) Gop_NE(b foo) bool {
+	fmt.Println("a!=b")
+	return true
+}
 `)
 }
 

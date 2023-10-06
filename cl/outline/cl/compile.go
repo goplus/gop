@@ -202,7 +202,7 @@ type pkgCtx struct {
 	*nodeInterp
 	*gmxSettings
 	cpkgs *cpackages.Importer
-	lazys lazyobjs // delay: (1) alias types; (2) init named type; (4) global constants/variables
+	lazys lazyobjs // delay: (1) alias types; (2) init named types; (4) global constants/variables
 	funcs []func() // delay: (3) func prototypes
 	bodys []func() // delay: (5) generate function body
 	errs  errors.List
@@ -256,8 +256,6 @@ func (p *pkgCtx) insertNames(pos token.Pos, names []*ast.Ident, load func()) {
 func (p *pkgCtx) loadObject(name string) bool {
 	return p.lazys.load(p, name, lazyAll)
 }
-
-// -----------------------------------------------------------------------------
 
 type blockCtx struct {
 	*pkgCtx
@@ -314,18 +312,6 @@ func (p *Context) genOutline() error {
 		f.resolve(lazyVarOrConst)
 	}
 	return p.errs.ToError()
-}
-
-// -----------------------------------------------------------------------------
-
-// NewPackage creates a Go+ package instance.
-func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package, err error) {
-	p, ctx, err := NewOutline(pkgPath, pkg, conf)
-	if err != nil {
-		return
-	}
-	err = ctx.Complete(p, !conf.NoAutoGenMain)
-	return
 }
 
 // -----------------------------------------------------------------------------
@@ -426,6 +412,16 @@ func NewOutline(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		preloadFile(p, ctx, fpath, f, false)
 	}
 	err = ctx.genOutline()
+	return
+}
+
+// NewPackage creates a Go+ package instance.
+func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package, err error) {
+	p, ctx, err := NewOutline(pkgPath, pkg, conf)
+	if err != nil {
+		return
+	}
+	err = ctx.Complete(p, !conf.NoAutoGenMain)
 	return
 }
 
@@ -607,7 +603,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 					loadImport(ctx, item.(*ast.ImportSpec))
 				}
 			case token.TYPE:
-				tdecl := ctx.pkg.NewTypeDefs()
+				tdecl := ctx.pkg.NewTypeDefs().SetComments(d.Doc)
 				for _, spec := range d.Specs {
 					t := spec.(*ast.TypeSpec)
 					name, pos := t.Name.Name, t.Pos()
@@ -623,12 +619,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 					if debugLoad {
 						log.Println("==> Load > NewType", name)
 					}
-					decl := tdecl.NewType(name, pos)
-					if t.Doc != nil {
-						decl.SetComments(t.Doc)
-					} else if d.Doc != nil {
-						decl.SetComments(d.Doc)
-					}
+					decl := tdecl.NewType(name, pos).SetComments(t.Doc)
 					parent.insertObject(name, pos, lazyInitType, func() { // decycle
 						if debugLoad {
 							log.Println("==> Load > InitType", name)
