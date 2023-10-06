@@ -129,13 +129,13 @@ f.ls
 
 type foo int
 
+var f foo
+
 func (f foo) Ls(args ...string) {
 }
 func main() {
 	f.Ls()
 }
-
-var f foo
 `)
 }
 
@@ -229,6 +229,8 @@ import (
 	io "io"
 )
 
+var r io.Reader
+
 func main() {
 	for _gop_it := iox.Lines(r).Gop_Enum(); ; {
 		var _gop_ok bool
@@ -239,8 +241,6 @@ func main() {
 		fmt.Println(line)
 	}
 }
-
-var r io.Reader
 `)
 }
 

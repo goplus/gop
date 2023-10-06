@@ -99,6 +99,14 @@ func toParam(ctx *blockCtx, fld *ast.Field, args []*gox.Param) []*gox.Param {
 
 // -----------------------------------------------------------------------------
 
+func toTypeInited(ctx *blockCtx, typ ast.Expr) types.Type {
+	t := toType(ctx, typ)
+	if named, ok := t.(*types.Named); ok && named.Underlying() == nil {
+		ctx.loadObject(named.Obj().Name())
+	}
+	return t
+}
+
 func toType(ctx *blockCtx, typ ast.Expr) types.Type {
 	switch v := typ.(type) {
 	case *ast.Ident:
@@ -367,7 +375,7 @@ func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) types.Type {
 	var embeddeds []types.Type
 	for _, m := range methodsList {
 		if len(m.Names) == 0 { // embedded
-			typ := toType(ctx, m.Type)
+			typ := toTypeInited(ctx, m.Type)
 			embeddeds = append(embeddeds, typ)
 			continue
 		}

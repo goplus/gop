@@ -624,7 +624,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 						if debugLoad {
 							log.Println("==> Load > InitType", name)
 						}
-						decl.InitType(ctx.pkg, toType(ctx, t.Type))
+						decl.InitType(ctx.pkg, toTypeInited(ctx, t.Type))
 					})
 				}
 			case token.CONST:
