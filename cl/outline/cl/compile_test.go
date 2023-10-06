@@ -3822,9 +3822,13 @@ func removeAutogenFiles() {
 	os.Remove("./internal/gop-in-go/foo/gop_autogen2_test.go")
 }
 
-func _TestImportGopPkg(t *testing.T) {
+func TestImportGopPkg(t *testing.T) {
 	autogen.Lock()
 	defer autogen.Unlock()
+
+	dir, _ := os.Getwd()
+	os.Chdir("../..")
+	defer os.Chdir(dir)
 
 	removeAutogenFiles()
 	gopClTest(t, `import "github.com/goplus/gop/cl/internal/gop-in-go/foo"
