@@ -251,26 +251,9 @@ func (p *pkgCtx) insertObject(name string, pos token.Pos, kind lazyKind, load fu
 	}
 }
 
-func (p *pkgCtx) insertConsts(pos token.Pos, specs []ast.Spec, load func()) {
+func (p *pkgCtx) insertNames(pos token.Pos, names []string, load func()) {
 	lazy := &lazy{pos, load, lazyVarOrConst}
-	for _, spec := range specs {
-		vSpec := spec.(*ast.ValueSpec)
-		if debugLoad {
-			log.Println("==> Preload const", vSpec.Names)
-		}
-		for _, ident := range vSpec.Names {
-			name := ident.Name
-			if name != "_" {
-				p.lazys.insert(p, name, lazy)
-			}
-		}
-	}
-}
-
-func (p *pkgCtx) insertVars(pos token.Pos, names []*ast.Ident, load func()) {
-	lazy := &lazy{pos, load, lazyVarOrConst}
-	for _, ident := range names {
-		name := ident.Name
+	for _, name := range names {
 		if name == "_" {
 			p.bodys = append(p.bodys, lazy.load)
 		} else {
@@ -655,11 +638,14 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 				}
 			case token.CONST:
 				pkg := ctx.pkg
-				specs := d.Specs
 				cdecl := pkg.NewConstDefs(pkg.Types.Scope())
-				parent.insertConsts(d.Pos(), specs, func() {
-					loadConstSpecs(ctx, cdecl, specs)
-				})
+				for iotav, spec := range d.Specs {
+					vSpec := spec.(*ast.ValueSpec)
+					if debugLoad {
+						log.Println("==> Preload const", vSpec.Names)
+					}
+					loadConsts(ctx, cdecl, vSpec, iotav, true)
+				}
 			case token.VAR:
 				pkg := ctx.pkg
 				vdecl := pkg.NewVarDefs(pkg.Types.Scope())
@@ -668,9 +654,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 					if debugLoad {
 						log.Println("==> Preload var", vSpec.Names)
 					}
-					parent.insertVars(vSpec.Pos(), vSpec.Names, func() {
-						loadVars(ctx, vdecl, vSpec)
-					})
+					loadVars(ctx, vdecl, vSpec, true)
 				}
 			default:
 				log.Panicln("TODO - tok:", d.Tok, "spec:", reflect.TypeOf(d.Specs).Elem())
@@ -833,42 +817,54 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 
 func loadConstSpecs(ctx *blockCtx, decl *gox.ConstDefs, specs []ast.Spec) {
 	for iotav, spec := range specs {
-		loadConsts(ctx, decl, spec.(*ast.ValueSpec), iotav)
+		loadConsts(ctx, decl, spec.(*ast.ValueSpec), iotav, false)
 	}
 }
 
-func loadConsts(ctx *blockCtx, decl *gox.ConstDefs, v *ast.ValueSpec, iotav int) {
+type constIniter interface {
+	Init(defs *gox.ConstDefs, iotav int)
+}
+
+func loadConsts(ctx *blockCtx, decl *gox.ConstDefs, v *ast.ValueSpec, iotav int, delayInit bool) {
 	names := makeNames(v.Names)
+	initer := constIniter(nil)
 	if v.Values == nil {
 		if debugLoad {
 			log.Println("==> Load const", names)
 		}
-		decl.Next(iotav, v.Pos(), names...)
-		return
-	}
-	var typ types.Type
-	if v.Type != nil {
-		typ = toType(ctx, v.Type)
-	}
-	if debugLoad {
-		log.Println("==> Load const", names, typ)
-	}
-	fn := func(cb *gox.CodeBuilder) int {
-		for _, val := range v.Values {
-			compileExpr(ctx, val)
+		initer = decl.NewNext(v.Pos(), names...)
+	} else {
+		var typ types.Type
+		if v.Type != nil {
+			typ = toType(ctx, v.Type)
 		}
-		return len(v.Values)
+		if debugLoad {
+			log.Println("==> Load const", names, typ)
+		}
+		fn := func(cb *gox.CodeBuilder) int {
+			for _, val := range v.Values {
+				compileExpr(ctx, val)
+			}
+			return len(v.Values)
+		}
+		initer = decl.New(fn, v.Pos(), typ, names...)
 	}
-	decl.New(fn, iotav, v.Pos(), typ, names...)
+	if delayInit {
+		ctx.insertNames(v.Pos(), names, func() {
+			initer.Init(decl, iotav)
+		})
+	} else {
+		initer.Init(decl, iotav)
+	}
 }
 
 func loadVarSpecs(ctx *blockCtx, decl *gox.VarDefs, specs []ast.Spec) {
 	for _, spec := range specs {
-		loadVars(ctx, decl, spec.(*ast.ValueSpec))
+		loadVars(ctx, decl, spec.(*ast.ValueSpec), false)
 	}
 }
 
-func loadVars(ctx *blockCtx, decl *gox.VarDefs, v *ast.ValueSpec) {
+func loadVars(ctx *blockCtx, decl *gox.VarDefs, v *ast.ValueSpec, delayInit bool) {
 	var typ types.Type
 	if v.Type != nil {
 		typ = toType(ctx, v.Type)
@@ -878,6 +874,16 @@ func loadVars(ctx *blockCtx, decl *gox.VarDefs, v *ast.ValueSpec) {
 		log.Println("==> Load var", typ, names)
 	}
 	varDecl := decl.New(v.Names[0].Pos(), typ, names...)
+	if delayInit {
+		ctx.insertNames(v.Pos(), names, func() {
+			loadVarsInit(ctx, varDecl, typ, names, v)
+		})
+	} else {
+		loadVarsInit(ctx, varDecl, typ, names, v)
+	}
+}
+
+func loadVarsInit(ctx *blockCtx, varDecl *gox.VarDecl, typ types.Type, names []string, v *ast.ValueSpec) {
 	if nv := len(v.Values); nv > 0 {
 		cb := varDecl.InitStart(ctx.pkg)
 		if enableRecover {

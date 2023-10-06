@@ -1118,6 +1118,21 @@ const n = uint(len(dots))
 `)
 }
 
+func TestConstDeps(t *testing.T) {
+	gopClTest(t, `
+const (
+	i = a
+	a = 1
+)
+`, `package main
+
+const (
+	i = 1
+	a = 1
+)
+`)
+}
+
 func TestVarInitTwoValueIssue791(t *testing.T) {
 	gopClTest(t, `
 var (
@@ -1126,8 +1141,10 @@ var (
 )
 `, `package main
 
-var m = map[string]string{"a": "A"}
-var a, ok = m["a"]
+var (
+	m     = map[string]string{"a": "A"}
+	a, ok = m["a"]
+)
 `)
 }
 
@@ -1144,11 +1161,11 @@ var i int
 
 import fmt "fmt"
 
+var i int
+
 func main() {
 	fmt.Println(i)
 }
-
-var i int
 `)
 	gopClTest(t, `
 package main
@@ -1163,14 +1180,14 @@ func main() {
 var sink float64
 `, `package main
 
+var sink float64
+
 func f(v float64) float64 {
 	return v
 }
 func main() {
 	sink = f(100)
 }
-
-var sink float64
 `)
 }
 
@@ -1187,11 +1204,11 @@ var i = 100
 
 import fmt "fmt"
 
+var i = 100
+
 func main() {
 	fmt.Println(i)
 }
-
-var i = 100
 `)
 }
 

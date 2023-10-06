@@ -1011,14 +1011,14 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 	ctx.imports[name] = pkg
 }
 
-func loadConstSpecs(ctx *blockCtx, cdecl *gox.ConstDecl, specs []ast.Spec) {
+func loadConstSpecs(ctx *blockCtx, cdecl *gox.ConstDefs, specs []ast.Spec) {
 	for iotav, spec := range specs {
 		vSpec := spec.(*ast.ValueSpec)
 		loadConsts(ctx, cdecl, vSpec, iotav)
 	}
 }
 
-func loadConsts(ctx *blockCtx, cdecl *gox.ConstDecl, v *ast.ValueSpec, iotav int) {
+func loadConsts(ctx *blockCtx, cdecl *gox.ConstDefs, v *ast.ValueSpec, iotav int) {
 	names := makeNames(v.Names)
 	if v.Values == nil {
 		if debugLoad {
@@ -1040,7 +1040,7 @@ func loadConsts(ctx *blockCtx, cdecl *gox.ConstDecl, v *ast.ValueSpec, iotav int
 		}
 		return len(v.Values)
 	}
-	cdecl.New(fn, iotav, v.Pos(), typ, names...)
+	cdecl.NewAndInit(fn, iotav, v.Pos(), typ, names...)
 }
 
 func loadVars(ctx *blockCtx, v *ast.ValueSpec, global bool) {
