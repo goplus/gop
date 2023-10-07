@@ -26,8 +26,6 @@ import (
 	"github.com/goplus/gop/token"
 )
 
-// const enableTypeParams = true
-
 func toTermList(ctx *blockCtx, expr ast.Expr) []*types.Term {
 retry:
 	switch v := expr.(type) {
@@ -145,7 +143,6 @@ func (p *typeParamLookup) Lookup(name string) types.Type {
 	return nil
 }
 
-/*
 func initType(ctx *blockCtx, named *types.Named, spec *ast.TypeSpec) {
 	typeParams := toTypeParams(ctx, spec.TypeParams)
 	if len(typeParams) > 0 {
@@ -166,7 +163,6 @@ func initType(ctx *blockCtx, named *types.Named, spec *ast.TypeSpec) {
 	}
 	named.SetUnderlying(typ)
 }
-*/
 
 func collectTypeParams(ctx *blockCtx, list *ast.FieldList) []*types.TypeParam {
 	var tparams []*types.TypeParam
@@ -218,10 +214,9 @@ func declareTypeParams(ctx *blockCtx, tparams []*types.TypeParam, names []*ast.I
 	for _, name := range names {
 		tname := types.NewTypeName(name.Pos(), ctx.pkg.Types, name.Name, nil)
 		tpar := types.NewTypeParam(tname, types.Typ[types.Invalid]) // assigns type to tpar as a side-effect
-		// check.declare(check.scope, name, tname, check.scope.pos)    // TODO(gri) check scope position
+		// check.declare(check.scope, name, tname, check.scope.pos) // TODO(gri) check scope position
 		tparams = append(tparams, tpar)
 	}
-
 	return tparams
 }
 
@@ -252,24 +247,20 @@ func boundTypeParam(ctx *blockCtx, x ast.Expr) types.Type {
 	wrap := false
 	switch op := x.(type) {
 	case *ast.UnaryExpr:
-		wrap = op.Op == token.TILDE
+		wrap = op.Op == token.TILDE // ~E
 	case *ast.BinaryExpr:
-		wrap = op.Op == token.OR
+		wrap = op.Op == token.OR // A|B
 	}
 	if wrap {
-		x = &ast.InterfaceType{Methods: &ast.FieldList{List: []*ast.Field{{Type: x}}}}
-		t := toType(ctx, x)
-		// mark t as implicit interface if all went well
-		if t, _ := t.(*types.Interface); t != nil {
-			t.MarkImplicit()
-		}
+		x := &ast.InterfaceType{Methods: &ast.FieldList{List: []*ast.Field{{Type: x}}}}
+		t := toInterfaceType(ctx, x)
+		t.MarkImplicit() // mark t as implicit interface if all went well
 		return t
 	}
 	return toType(ctx, x)
 }
 
-/*
-func namedIsTypeParams(ctx *blockCtx, t *types.Named) bool {
-	return t.TypeParams() != nil && t.Obj() != nil && t.TypeArgs() == nil
+func withTypeParams(ctx *blockCtx, t *types.Named) bool {
+	ctx.ensureLoaded(t)
+	return t.TypeParams() != nil && t.TypeArgs() == nil
 }
-*/

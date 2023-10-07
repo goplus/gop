@@ -207,6 +207,9 @@ type pkgCtx struct {
 	funcs []func() // delay: (3) func prototypes
 	bodys []func() // delay: (5) generate function body
 	errs  errors.List
+
+	idents []*ast.Ident // toType ident recored
+	inInst int          // toType in generic instance
 }
 
 func newCodeErrorf(pos *token.Position, format string, args ...interface{}) *gox.CodeError {
@@ -241,6 +244,13 @@ func (p *pkgCtx) handleRecover(e interface{}) {
 		}
 	}
 	p.handleErr(err)
+}
+
+func (p *pkgCtx) loadNamed(at *gox.Package, t *types.Named) {
+	o := t.Obj()
+	if o.Pkg() == at.Types {
+		p.loadObject(o.Name())
+	}
 }
 
 func (p *pkgCtx) insertObject(name string, pos token.Pos, kind lazyKind, load func()) {
@@ -281,6 +291,12 @@ type blockCtx struct {
 	isClass      bool
 	fileLine     bool
 	relativePath bool
+}
+
+func (p *blockCtx) ensureLoaded(t *types.Named) {
+	if t.Underlying() == nil {
+		p.loadNamed(p.pkg, t)
+	}
 }
 
 func (p *blockCtx) findImport(name string) (pr *gox.PkgRef, ok bool) {
@@ -358,6 +374,7 @@ func NewOutline(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	confGox := &gox.Config{
 		Fset:            fset,
 		Importer:        conf.Importer,
+		LoadNamed:       ctx.loadNamed,
 		HandleErr:       ctx.handleErr,
 		NodeInterpreter: interp,
 		NewBuiltin:      newBuiltinDefault,
@@ -607,7 +624,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 						return
 					}
 				}
-				preloadFunc(ctx, recv, d)
+				preloadFunc(ctx, recv, d, gopFile)
 			})
 		case *ast.GenDecl:
 			switch d.Tok {
@@ -633,12 +650,8 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 						log.Println("==> Load > NewType", name)
 					}
 					decl := tdecl.NewType(name, pos).SetComments(t.Doc)
-					parent.insertObject(name, pos, lazyInitType, func() { // decycle
-						if debugLoad {
-							log.Println("==> Load > InitType", name)
-						}
-						decl.InitType(ctx.pkg, toTypeInited(ctx, t.Type))
-					})
+					fnInitType := getInitType(ctx, decl, t, gopFile)
+					parent.insertObject(name, pos, lazyInitType, fnInitType)
 				}
 			case token.CONST:
 				pkg := ctx.pkg
@@ -683,7 +696,24 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 	}
 }
 
-func preloadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
+func getInitType(ctx *blockCtx, decl *gox.TypeDecl, t *ast.TypeSpec, gopFile bool) func() {
+	if gopFile {
+		return func() { // decycle
+			if debugLoad {
+				log.Println("==> Load > InitType", t.Name)
+			}
+			decl.InitType(ctx.pkg, toTypeInited(ctx, t.Type))
+		}
+	}
+	return func() {
+		if debugLoad {
+			log.Println("==> Load > InitType", t.Name)
+		}
+		initType(ctx, decl.Type(), t)
+	}
+}
+
+func preloadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) {
 	name := d.Name.Name
 	if debugLoad {
 		if recv == nil {
@@ -719,10 +749,12 @@ func preloadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl) {
 	if d.Doc != nil {
 		fn.SetComments(d.Doc)
 	}
-	if body := d.Body; body != nil {
-		ctx.bodys = append(ctx.bodys, func() { // interface issue: #795
-			loadFuncBody(ctx, fn, body, d)
-		})
+	if genBody {
+		if body := d.Body; body != nil {
+			ctx.bodys = append(ctx.bodys, func() { // interface issue: #795
+				loadFuncBody(ctx, fn, body, d)
+			})
+		}
 	}
 }
 

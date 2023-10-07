@@ -102,8 +102,8 @@ func toParam(ctx *blockCtx, fld *ast.Field, args []*gox.Param) []*gox.Param {
 
 func toTypeInited(ctx *blockCtx, typ ast.Expr) types.Type {
 	t := toType(ctx, typ)
-	if named, ok := t.(*types.Named); ok && named.Underlying() == nil {
-		ctx.loadObject(named.Obj().Name())
+	if named, ok := t.(*types.Named); ok {
+		ctx.ensureLoaded(named)
 	}
 	return t
 }
@@ -111,31 +111,25 @@ func toTypeInited(ctx *blockCtx, typ ast.Expr) types.Type {
 func toType(ctx *blockCtx, typ ast.Expr) types.Type {
 	switch v := typ.(type) {
 	case *ast.Ident:
-		/*
-			if enableTypeParams {
-				ctx.idents = append(ctx.idents, v)
-				defer func() {
-					ctx.idents = ctx.idents[:len(ctx.idents)-1]
-				}()
-			}
-		*/
+		ctx.idents = append(ctx.idents, v)
+		defer func() {
+			ctx.idents = ctx.idents[:len(ctx.idents)-1]
+		}()
 		typ := toIdentType(ctx, v)
-		/*
-			if enableTypeParams && ctx.inInst == 0 {
-				if t, ok := typ.(*types.Named); ok {
-					if namedIsTypeParams(ctx, t) {
-						pos := ctx.idents[0].Pos()
-						for _, i := range ctx.idents {
-							if i.Name == v.Name {
-								pos = i.Pos()
-								break
-							}
+		if ctx.inInst == 0 {
+			if t, ok := typ.(*types.Named); ok {
+				if withTypeParams(ctx, t) {
+					pos := ctx.idents[0].Pos()
+					for _, i := range ctx.idents {
+						if i.Name == v.Name {
+							pos = i.Pos()
+							break
 						}
-						panic(ctx.newCodeErrorf(pos, "cannot use generic type %v without instantiation", t.Obj().Type()))
 					}
+					panic(ctx.newCodeErrorf(pos, "cannot use generic type %v without instantiation", t.Obj().Type()))
 				}
 			}
-		*/
+		}
 		return typ
 	case *ast.StarExpr:
 		elem := toType(ctx, v.X)
@@ -157,15 +151,13 @@ func toType(ctx *blockCtx, typ ast.Expr) types.Type {
 		return toFuncType(ctx, v, nil, nil)
 	case *ast.SelectorExpr:
 		typ := toExternalType(ctx, v)
-		/*
-			if enableTypeParams && ctx.inInst == 0 {
-				if t, ok := typ.(*types.Named); ok {
-					if namedIsTypeParams(ctx, t) {
-						panic(ctx.newCodeErrorf(v.Pos(), "cannot use generic type %v without instantiation", t.Obj().Type()))
-					}
+		if ctx.inInst == 0 {
+			if t, ok := typ.(*types.Named); ok {
+				if withTypeParams(ctx, t) {
+					panic(ctx.newCodeErrorf(v.Pos(), "cannot use generic type %v without instantiation", t.Obj().Type()))
 				}
 			}
-		*/
+		}
 		return typ
 	case *ast.ParenExpr:
 		return toType(ctx, v.X)
@@ -365,10 +357,10 @@ func toInt64(ctx *blockCtx, e ast.Expr, emsg string) int64 {
 	panic(newCodeErrorf(&pos, emsg, src))
 }
 
-func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) types.Type {
+func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) *types.Interface {
 	methodsList := v.Methods.List
 	if methodsList == nil {
-		return types.NewInterfaceType(nil, nil)
+		return gox.TyEmptyInterface
 	}
 	var pkg = ctx.pkg.Types
 	var methods []*types.Func
@@ -388,28 +380,24 @@ func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) types.Type {
 }
 
 func toIndexType(ctx *blockCtx, v *ast.IndexExpr) types.Type {
-	/*
-		ctx.inInst++
-		defer func() {
-			ctx.inInst--
-		}()
-	*/
-	ctx.cb.Typ(toType(ctx, v.X), v.X)
-	ctx.cb.Typ(toType(ctx, v.Index), v.Index)
+	ctx.inInst++
+	defer func() {
+		ctx.inInst--
+	}()
+	ctx.cb.Typ(toTypeInited(ctx, v.X), v.X)
+	ctx.cb.Typ(toTypeInited(ctx, v.Index), v.Index)
 	ctx.cb.Index(1, false, v)
 	return ctx.cb.InternalStack().Pop().Type.(*gox.TypeType).Type()
 }
 
 func toIndexListType(ctx *blockCtx, v *ast.IndexListExpr) types.Type {
-	/*
-		ctx.inInst++
-		defer func() {
-			ctx.inInst--
-		}()
-	*/
-	ctx.cb.Typ(toType(ctx, v.X), v.X)
+	ctx.inInst++
+	defer func() {
+		ctx.inInst--
+	}()
+	ctx.cb.Typ(toTypeInited(ctx, v.X), v.X)
 	for _, index := range v.Indices {
-		ctx.cb.Typ(toType(ctx, index), index)
+		ctx.cb.Typ(toTypeInited(ctx, index), index)
 	}
 	ctx.cb.Index(len(v.Indices), false, v)
 	return ctx.cb.InternalStack().Pop().Type.(*gox.TypeType).Type()

@@ -4,14 +4,14 @@
 package cl_test
 
 import (
-	"go/scanner"
 	"os"
 	"runtime"
 	"testing"
 
-	"github.com/goplus/gop/cl"
+	"github.com/goplus/gop/cl/outline/cl"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/parser/fsx/memfs"
+	"github.com/goplus/gop/scanner"
 )
 
 func TestTypeParams(t *testing.T) {
@@ -27,12 +27,7 @@ func (p *Data[T, R]) foo() {
 `, `
 v := Data[int, float64]{1}
 v.foo()
-`, `package main
-
-func main() {
-	v := Data[int, float64]{1}
-	v.foo();
-}
+`, `
 `)
 }
 
