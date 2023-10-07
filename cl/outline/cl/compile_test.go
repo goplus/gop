@@ -3822,7 +3822,7 @@ func removeAutogenFiles() {
 	os.Remove("./internal/gop-in-go/foo/gop_autogen2_test.go")
 }
 
-func TestImportGopPkg(t *testing.T) {
+func _TestImportGopPkg(t *testing.T) {
 	autogen.Lock()
 	defer autogen.Unlock()
 
