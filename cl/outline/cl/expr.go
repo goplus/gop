@@ -815,10 +815,6 @@ func (p *kvType) Elem() types.Type {
 	return p.required().val
 }
 
-func getUnderlying(ctx *blockCtx, typ types.Type) types.Type {
-	return typ.Underlying()
-}
-
 func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, expected types.Type, onlyStruct bool) {
 	var hasPtr bool
 	var typ, underlying types.Type

@@ -31,7 +31,7 @@ v.foo()
 
 func main() {
 	v := Data[int, float64]{1}
-	v.foo();
+	v.foo()
 }
 `)
 }

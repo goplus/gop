@@ -111,25 +111,29 @@ func toTypeInited(ctx *blockCtx, typ ast.Expr) types.Type {
 func toType(ctx *blockCtx, typ ast.Expr) types.Type {
 	switch v := typ.(type) {
 	case *ast.Ident:
-		ctx.idents = append(ctx.idents, v)
-		defer func() {
-			ctx.idents = ctx.idents[:len(ctx.idents)-1]
-		}()
+		/*
+			ctx.idents = append(ctx.idents, v)
+			defer func() {
+				ctx.idents = ctx.idents[:len(ctx.idents)-1]
+			}()
+		*/
 		typ := toIdentType(ctx, v)
-		if ctx.inInst == 0 {
-			if t, ok := typ.(*types.Named); ok {
-				if withTypeParams(ctx, t) {
-					pos := ctx.idents[0].Pos()
-					for _, i := range ctx.idents {
-						if i.Name == v.Name {
-							pos = i.Pos()
-							break
+		/*
+			if ctx.inInst == 0 {
+				if t, ok := typ.(*types.Named); ok {
+					if withTypeParams(ctx, t) {
+						pos := ctx.idents[0].Pos()
+						for _, i := range ctx.idents {
+							if i.Name == v.Name {
+								pos = i.Pos()
+								break
+							}
 						}
+						panic(ctx.newCodeErrorf(pos, "cannot use generic type %v without instantiation", t.Obj().Type()))
 					}
-					panic(ctx.newCodeErrorf(pos, "cannot use generic type %v without instantiation", t.Obj().Type()))
 				}
 			}
-		}
+		*/
 		return typ
 	case *ast.StarExpr:
 		elem := toType(ctx, v.X)
@@ -275,7 +279,7 @@ func toStructType(ctx *blockCtx, v *ast.StructType) *types.Struct {
 	tags := make([]string, 0, len(fieldList))
 	chk := newCheckRedecl()
 	for _, field := range fieldList {
-		typ := toType(ctx, field.Type)
+		typ := toTypeInited(ctx, field.Type)
 		if len(field.Names) == 0 { // embedded
 			name := getTypeName(typ)
 			if chk.chkRedecl(ctx, name, field.Type.Pos()) {

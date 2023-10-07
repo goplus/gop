@@ -208,8 +208,8 @@ type pkgCtx struct {
 	bodys []func() // delay: (5) generate function body
 	errs  errors.List
 
-	idents []*ast.Ident // toType ident recored
-	inInst int          // toType in generic instance
+	// idents []*ast.Ident // toType ident recored
+	inInst int // toType in generic instance
 }
 
 func newCodeErrorf(pos *token.Position, format string, args ...interface{}) *gox.CodeError {
@@ -297,6 +297,17 @@ func (p *blockCtx) ensureLoaded(t *types.Named) {
 	if t.Underlying() == nil {
 		p.loadNamed(p.pkg, t)
 	}
+}
+
+func getUnderlying(ctx *blockCtx, typ types.Type) types.Type {
+	u := typ.Underlying()
+	if u == nil {
+		if t, ok := typ.(*types.Named); ok {
+			ctx.loadNamed(ctx.pkg, t)
+			u = t.Underlying()
+		}
+	}
+	return u
 }
 
 func (p *blockCtx) findImport(name string) (pr *gox.PkgRef, ok bool) {
