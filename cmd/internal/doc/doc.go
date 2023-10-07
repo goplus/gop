@@ -100,7 +100,7 @@ func outlinePkg(proj gopprojs.Proj, conf *gop.Config) {
 	} else if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	} else {
-		outlineDoc(out.Pkg, out.Outline(*unexp), *unexp, *withDoc)
+		outlineDoc(out.Pkg(), out.Outline(*unexp), *unexp, *withDoc)
 	}
 }
 

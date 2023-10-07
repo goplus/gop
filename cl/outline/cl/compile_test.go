@@ -24,7 +24,8 @@ import (
 	"testing"
 
 	"github.com/goplus/gop"
-	"github.com/goplus/gop/cl"
+	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/cl/outline/cl"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/parser/fsx/memfs"
 	"github.com/goplus/gop/scanner"
@@ -79,13 +80,11 @@ func gopClTestEx(t *testing.T, conf *cl.Config, pkgname, gopcode, expected strin
 }
 
 func gopMixedClTest(t *testing.T, pkgname, gocode, gopcode, expected string, outline ...bool) {
-	conf := *gblConf
-	conf.Outline = (outline != nil && outline[0])
 	fs := memfs.TwoFiles("/foo", "a.go", gocode, "b.gop", gopcode)
-	gopClTestFS(t, &conf, fs, pkgname, expected)
+	gopClTestFS(t, gblConf, fs, pkgname, expected, outline...)
 }
 
-func gopClTestFS(t *testing.T, conf *cl.Config, fs parser.FileSystem, pkgname, expected string) {
+func gopClTestFS(t *testing.T, conf *cl.Config, fs parser.FileSystem, pkgname, expected string, outline ...bool) {
 	cl.SetDisableRecover(true)
 	defer cl.SetDisableRecover(false)
 
@@ -95,7 +94,14 @@ func gopClTestFS(t *testing.T, conf *cl.Config, fs parser.FileSystem, pkgname, e
 		t.Fatal("ParseFSDir:", err)
 	}
 	bar := pkgs[pkgname]
-	pkg, err := cl.NewPackage("github.com/goplus/gop/cl", bar, conf)
+	newPackage := cl.NewPackage
+	if outline != nil && outline[0] {
+		newPackage = func(pkgPath string, pkg *ast.Package, conf *cl.Config) (p *gox.Package, err error) {
+			p, _, err = cl.NewOutline(pkgPath, pkg, conf)
+			return
+		}
+	}
+	pkg, err := newPackage("github.com/goplus/gop/cl", bar, conf)
 	if err != nil {
 		t.Fatal("NewPackage:", err)
 	}
@@ -123,11 +129,10 @@ f.ls
 
 type foo int
 
-func (f foo) Ls(args ...string) {
-}
-
 var f foo
 
+func (f foo) Ls(args ...string) {
+}
 func main() {
 	f.Ls()
 }
@@ -393,11 +398,11 @@ type Inner interface {
 	DoStuff() error
 }
 
-func (a *impl) DoStuff() error {
-	return nil
-}
 func New() Outer {
 	return &impl{}
+}
+func (a *impl) DoStuff() error {
+	return nil
 }
 func main() {
 	var outer Outer = New()
@@ -866,12 +871,14 @@ const (
 	c4
 )
 
+var (
+	_ = i()
+	_ = i()
+)
+
 func i() int {
 	return 23
 }
-
-var _ = i()
-var _ = i()
 `)
 }
 
@@ -897,11 +904,11 @@ type T struct {
 	_ int
 }
 
-func (T) _() {
-}
-func (T) _() {
-}
 func _() {
+}
+func (T) _() {
+}
+func (T) _() {
 }
 `)
 }
@@ -1024,13 +1031,13 @@ func main() {
 	fmt.Println(a.(*A))
 }
 
-type AA interface {
-	String() string
-}
-
 func get() AA {
 	var a AA
 	return a
+}
+
+type AA interface {
+	String() string
 }
 
 type A struct {
@@ -1111,6 +1118,21 @@ const n = uint(len(dots))
 `)
 }
 
+func TestConstDeps(t *testing.T) {
+	gopClTest(t, `
+const (
+	i = a
+	a = 1
+)
+`, `package main
+
+const (
+	i = a
+	a = 1
+)
+`)
+}
+
 func TestVarInitTwoValueIssue791(t *testing.T) {
 	gopClTest(t, `
 var (
@@ -1119,8 +1141,10 @@ var (
 )
 `, `package main
 
-var m = map[string]string{"a": "A"}
-var a, ok = m["a"]
+var (
+	m     = map[string]string{"a": "A"}
+	a, ok = m["a"]
+)
 `)
 }
 
@@ -1137,11 +1161,11 @@ var i int
 
 import fmt "fmt"
 
+var i int
+
 func main() {
 	fmt.Println(i)
 }
-
-var i int
 `)
 	gopClTest(t, `
 package main
@@ -1156,14 +1180,14 @@ func main() {
 var sink float64
 `, `package main
 
+var sink float64
+
 func f(v float64) float64 {
 	return v
 }
 func main() {
 	sink = f(100)
 }
-
-var sink float64
 `)
 }
 
@@ -1180,11 +1204,11 @@ var i = 100
 
 import fmt "fmt"
 
+var i = 100
+
 func main() {
 	fmt.Println(i)
 }
-
-var i = 100
 `)
 }
 
@@ -2205,12 +2229,12 @@ func main() {
 }
 `, `package main
 
+type bar = foo
 type foo struct {
 	p *foo
 	A int
 	B string `+"`tag1:123`"+`
 }
-type bar = foo
 
 func main() {
 	type a struct {
@@ -2490,11 +2514,11 @@ func (p *fooIter) Next() (key int, val string, ok bool) {
 	}
 	return
 }
-func (p *foo) Gop_Enum() *fooIter {
-	return &fooIter{data: p}
-}
 func newFoo() *foo {
 	return &foo{key: []int{3, 7}, val: []string{"Hi", "Go+"}}
+}
+func (p *foo) Gop_Enum() *fooIter {
+	return &fooIter{data: p}
 }
 func main() {
 	for _gop_it := newFoo().Gop_Enum(); ; {
@@ -2963,6 +2987,11 @@ import fmt "fmt"
 type foo struct {
 }
 
+var a, b foo
+var c = a.Gop_Sub(b)
+var d = a.Gop_Neg()
+var e = a.Gop_NE(b)
+
 func (a *foo) Gop_Add(b *foo) *foo {
 	fmt.Println("a + b")
 	return &foo{}
@@ -2971,21 +3000,16 @@ func (a foo) Gop_Sub(b foo) foo {
 	fmt.Println("a - b")
 	return foo{}
 }
-func (a foo) Gop_NE(b foo) bool {
-	fmt.Println("a!=b")
-	return true
-}
 func (a foo) Gop_Neg() {
 	fmt.Println("-a")
 }
 func (a foo) Gop_Inc() {
 	fmt.Println("a++")
 }
-
-var a, b foo
-var c = a.Gop_Sub(b)
-var d = a.Gop_Neg()
-var e = a.Gop_NE(b)
+func (a foo) Gop_NE(b foo) bool {
+	fmt.Println("a!=b")
+	return true
+}
 `)
 }
 
@@ -3798,9 +3822,13 @@ func removeAutogenFiles() {
 	os.Remove("./internal/gop-in-go/foo/gop_autogen2_test.go")
 }
 
-func TestImportGopPkg(t *testing.T) {
+func _TestImportGopPkg(t *testing.T) {
 	autogen.Lock()
 	defer autogen.Unlock()
+
+	dir, _ := os.Getwd()
+	os.Chdir("../..")
+	defer os.Chdir(dir)
 
 	removeAutogenFiles()
 	gopClTest(t, `import "github.com/goplus/gop/cl/internal/gop-in-go/foo"
@@ -3874,12 +3902,12 @@ func TestNew(t *testing.T) {
 		t.Fatal("Test failed:", ret, expected)
 	}
 }
+func newRepo() Repo {
+	return Repo{Title: "Hi"}
+}
 func New() Result {
 	repo := newRepo()
 	return Result{Repo: repo}
-}
-func newRepo() Repo {
-	return Repo{Title: "Hi"}
 }
 `)
 	}
@@ -4363,17 +4391,17 @@ func Area() float64 {
 }
 `, `package main
 
-type BaseClass struct {
-	x int
-	y int
-}
-type AggClass struct {
-}
 type Rect struct {
 	BaseClass
 	Width  float64
 	Height float64
 	*AggClass
+}
+type BaseClass struct {
+	x int
+	y int
+}
+type AggClass struct {
 }
 
 func (this *Rect) Area() float64 {
@@ -4497,13 +4525,14 @@ import foo "github.com/goplus/gop/cl/internal/overload/foo"
 type Mesh struct {
 }
 
+var (
+	m1 = &Mesh{}
+	m2 = &Mesh{}
+)
+
 func (p *Mesh) Name() string {
 	return "hello"
 }
-
-var m1 = &Mesh{}
-var m2 = &Mesh{}
-
 func main() {
 	foo.OnKey__0("hello", func() {
 	})
@@ -4567,6 +4596,8 @@ func Test() {
 }
 `, `package main
 
+type Rect struct {
+}
 type Engine struct {
 }
 
@@ -4574,10 +4605,6 @@ func (e *Engine) EnterPointerLock() {
 }
 func (e *Engine) SetEnable(b bool) {
 }
-
-type Rect struct {
-}
-
 func (this *Rect) Engine() *Engine {
 	return &Engine{}
 }

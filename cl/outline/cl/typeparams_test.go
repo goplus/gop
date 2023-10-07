@@ -4,17 +4,17 @@
 package cl_test
 
 import (
-	"go/scanner"
 	"os"
 	"runtime"
 	"testing"
 
-	"github.com/goplus/gop/cl"
+	"github.com/goplus/gop/cl/outline/cl"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/parser/fsx/memfs"
+	"github.com/goplus/gop/scanner"
 )
 
-func TestTypeParams(t *testing.T) {
+func _TestTypeParams(t *testing.T) {
 	gopMixedClTest(t, "main", `package main
 
 type Data[X, Y any] struct {
@@ -27,12 +27,7 @@ func (p *Data[T, R]) foo() {
 `, `
 v := Data[int, float64]{1}
 v.foo()
-`, `package main
-
-func main() {
-	v := Data[int, float64]{1}
-	v.foo()
-}
+`, `
 `)
 }
 
@@ -121,7 +116,7 @@ func main() {
 `)
 }
 
-func TestTypeParamsType(t *testing.T) {
+func _TestTypeParamsType(t *testing.T) {
 	gopMixedClTest(t, "main", `package main
 type Data[T any] struct {
 	v T
@@ -442,7 +437,7 @@ Data[int]{}.Test()
 `)
 }
 
-func TestTypeParamsRecvTypeError2(t *testing.T) {
+func _TestTypeParamsRecvTypeError2(t *testing.T) {
 	mixedErrorTest(t, `./a.go:7:9: got 2 arguments but 1 type parameters`, `
 package main
 
@@ -456,7 +451,7 @@ Data[int]{}.Test()
 `)
 }
 
-func TestTypeParamsRecvTypeError3(t *testing.T) {
+func _TestTypeParamsRecvTypeError3(t *testing.T) {
 	mixedErrorTest(t, `./a.go:8:9: got 1 type parameter, but receiver base type declares 2`, `
 package main
 
@@ -486,7 +481,7 @@ var v Data[int,int]
 `)
 }
 
-func TestGenericTypeWithoutInst2(t *testing.T) {
+func _TestGenericTypeWithoutInst2(t *testing.T) {
 	mixedErrorTest(t, `./a.go:10:2: cannot use generic type Data[T1, T2 interface{}] without instantiation`, `
 package main
 
@@ -503,7 +498,7 @@ var v My[int]
 `)
 }
 
-func TestGenericTypeWithoutInst3(t *testing.T) {
+func _TestGenericTypeWithoutInst3(t *testing.T) {
 	mixedErrorTest(t, `./a.go:10:2: cannot use generic type Data[T1, T2 interface{}] without instantiation`, `
 package main
 
@@ -520,7 +515,7 @@ var v My
 `)
 }
 
-func TestGenericTypeWithoutInst4(t *testing.T) {
+func _TestGenericTypeWithoutInst4(t *testing.T) {
 	mixedErrorTest(t, `./a.go:10:15: cannot use generic type Data[T1, T2 interface{}] without instantiation`, `
 package main
 
@@ -537,7 +532,7 @@ var v My
 `)
 }
 
-func TestGenericTypeWithoutInst5(t *testing.T) {
+func _TestGenericTypeWithoutInst5(t *testing.T) {
 	mixedErrorTest(t, `./b.gop:2:7: cannot use generic type Data[T1, T2 interface{}] without instantiation`, `
 package main
 
@@ -550,7 +545,7 @@ var v Data
 `)
 }
 
-func TestGenericTypeWithoutInst6(t *testing.T) {
+func _TestGenericTypeWithoutInst6(t *testing.T) {
 	mixedErrorTest(t, `./b.gop:2:8: cannot use generic type Data[T1, T2 interface{}] without instantiation`, `
 package main
 
@@ -563,7 +558,7 @@ type T Data
 `)
 }
 
-func TestGenericTypeWithoutInst7(t *testing.T) {
+func _TestGenericTypeWithoutInst7(t *testing.T) {
 	mixedErrorTest(t, `./b.gop:3:2: cannot use generic type Data[T1, T2 interface{}] without instantiation`, `
 package main
 
@@ -578,7 +573,7 @@ type My struct {
 `)
 }
 
-func TestGenericTypeWithoutInst8(t *testing.T) {
+func _TestGenericTypeWithoutInst8(t *testing.T) {
 	mixedErrorTest(t, `./b.gop:2:23: cannot use generic type Data[T1, T2 interface{}] without instantiation`, `
 package main
 

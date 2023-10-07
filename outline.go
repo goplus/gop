@@ -86,7 +86,7 @@ func Outline(dir string, conf *Config) (out outline.Package, err error) {
 
 	for name, pkg := range pkgs {
 		if out.Valid() {
-			err = fmt.Errorf("%w: %s, %s", ErrMultiPackges, name, out.Pkg.Name())
+			err = fmt.Errorf("%w: %s, %s", ErrMultiPackges, name, out.Pkg().Name())
 			return
 		}
 		if len(pkg.Files)+len(pkg.GoFiles) == 0 { // no Go/Go+ source files
