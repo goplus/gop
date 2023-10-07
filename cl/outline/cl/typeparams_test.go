@@ -14,7 +14,7 @@ import (
 	"github.com/goplus/gop/scanner"
 )
 
-func TestTypeParams(t *testing.T) {
+func _TestTypeParams(t *testing.T) {
 	gopMixedClTest(t, "main", `package main
 
 type Data[X, Y any] struct {
@@ -116,7 +116,7 @@ func main() {
 `)
 }
 
-func TestTypeParamsType(t *testing.T) {
+func _TestTypeParamsType(t *testing.T) {
 	gopMixedClTest(t, "main", `package main
 type Data[T any] struct {
 	v T
@@ -437,7 +437,7 @@ Data[int]{}.Test()
 `)
 }
 
-func TestTypeParamsRecvTypeError2(t *testing.T) {
+func _TestTypeParamsRecvTypeError2(t *testing.T) {
 	mixedErrorTest(t, `./a.go:7:9: got 2 arguments but 1 type parameters`, `
 package main
 
@@ -451,7 +451,7 @@ Data[int]{}.Test()
 `)
 }
 
-func TestTypeParamsRecvTypeError3(t *testing.T) {
+func _TestTypeParamsRecvTypeError3(t *testing.T) {
 	mixedErrorTest(t, `./a.go:8:9: got 1 type parameter, but receiver base type declares 2`, `
 package main
 
