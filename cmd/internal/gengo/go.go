@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-// Package gengo implements the ``gop go'' command.
+// Package gengo implements the “gop go” command.
 package gengo
 
 import (
@@ -37,8 +37,9 @@ var Cmd = &base.Command{
 }
 
 var (
-	flagVerbose = flag.Bool("v", false, "print verbose information.")
-	flag        = &Cmd.Flag
+	flag          = &Cmd.Flag
+	flagVerbose   = flag.Bool("v", false, "print verbose information.")
+	flagCheckMode = flag.Bool("t", false, "check mode, no generate gop_autogen.go")
 )
 
 func init() {
@@ -69,9 +70,9 @@ func runCmd(cmd *base.Command, args []string) {
 	for _, proj := range projs {
 		switch v := proj.(type) {
 		case *gopprojs.DirProj:
-			_, _, err = gop.GenGo(v.Dir, nil, true)
+			_, _, err = gop.GenGoEx(v.Dir, nil, true, *flagCheckMode)
 		case *gopprojs.PkgPathProj:
-			_, _, err = gop.GenGoPkgPath("", v.Path, nil, true)
+			_, _, err = gop.GenGoPkgPathEx("", v.Path, nil, true, *flagCheckMode)
 		default:
 			log.Panicln("`gop go` doesn't support", reflect.TypeOf(v))
 		}

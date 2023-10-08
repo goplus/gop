@@ -62,7 +62,7 @@ func Tidy(dir string, gop *env.Gop) (err error) {
 	}
 
 	conf := &Config{DontUpdateGoMod: true, Gop: gop}
-	err = genGoDir(modRoot, conf, true, true)
+	err = genGoDir(modRoot, conf, true, false, true)
 	if err != nil {
 		return errors.NewWith(err, `genGoDir(modRoot, conf, true, true)`, -2, "gop.genGoDir", modRoot, conf, true, true)
 	}
