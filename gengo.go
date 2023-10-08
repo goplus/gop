@@ -84,7 +84,14 @@ func genGoDir(dir string, conf *Config, genTestPkg, checkOnly, fileMode, recursi
 		}
 		return list.ToError()
 	}
-	return genGoIn(dir, conf, genTestPkg, false, false)
+	err = genGoIn(dir, conf, genTestPkg, false, false)
+	if err == nil {
+		return
+	}
+	if printErr {
+		fmt.Fprintln(os.Stderr, err)
+	}
+	return
 }
 
 func genGoInFileMode(dir string, conf *Config, genTestPkg, checkOnly, prompt bool) (err error) {
