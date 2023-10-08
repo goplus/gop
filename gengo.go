@@ -17,6 +17,7 @@
 package gop
 
 import (
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -48,14 +49,15 @@ func GenGo(dir string, conf *Config, genTestPkg bool) (string, bool, error) {
 
 func genGoDir(dir string, conf *Config, genTestPkg, recursively bool) (err error) {
 	if recursively {
-		var list errors.List
+		var errList []string
 		fn := func(path string, d fs.DirEntry, err error) error {
 			if err == nil && d.IsDir() {
 				if strings.HasPrefix(d.Name(), "_") { // skip _
 					return filepath.SkipDir
 				}
 				if e := genGoIn(path, conf, genTestPkg, true); e != nil {
-					list.Add(e)
+					fmt.Fprintln(os.Stderr, e)
+					errList = append(errList, path)
 				}
 			}
 			return err
@@ -64,7 +66,9 @@ func genGoDir(dir string, conf *Config, genTestPkg, recursively bool) (err error
 		if err != nil {
 			return errors.NewWith(err, `filepath.WalkDir(dir, fn)`, -2, "filepath.WalkDir", dir, fn)
 		}
-		return list.ToError()
+		if len(errList) > 0 {
+			return fmt.Errorf("GenGo errors: %v", errList)
+		}
 	}
 	return genGoIn(dir, conf, genTestPkg, false)
 }
