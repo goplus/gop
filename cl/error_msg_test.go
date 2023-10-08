@@ -964,3 +964,9 @@ const b = -1
 a := uint128(b)
 `)
 }
+
+func TestErrCompileFunc(t *testing.T) {
+	codeErrorTest(t, `./bar.gop:2:1: compile func printf("%+v\n", int32) error: unreachable`, `
+printf("%+v\n", int32)
+`)
+}
