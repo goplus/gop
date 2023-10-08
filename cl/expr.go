@@ -529,8 +529,13 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 func compileCallArgs(fn *fnType, fnt types.Type, ctx *blockCtx, v *ast.CallExpr, ellipsis bool, flags gox.InstrFlags) (err error) {
 	n := ctx.cb.InternalStack().Len()
 	defer func() {
-		if v := recover(); v != nil {
-			err = v.(error)
+		if r := recover(); r != nil {
+			if e, ok := r.(error); ok {
+				err = e
+			} else {
+				src, pos := ctx.LoadExpr(v)
+				err = newCodeErrorf(&pos, "compile func %v error: %v", src, r)
+			}
 			ctx.cb.InternalStack().SetLen(n)
 		}
 	}()
