@@ -17,6 +17,7 @@
 package gop
 
 import (
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -39,18 +40,18 @@ const (
 // -----------------------------------------------------------------------------
 
 func GenGo(dir string, conf *Config, genTestPkg bool) (string, bool, error) {
-	return GenGoEx(dir, conf, genTestPkg, false)
+	return GenGoEx(dir, conf, genTestPkg, false, false)
 }
 
-func GenGoEx(dir string, conf *Config, genTestPkg bool, checkOnly bool) (string, bool, error) {
+func GenGoEx(dir string, conf *Config, genTestPkg bool, checkOnly bool, printErr bool) (string, bool, error) {
 	recursively := strings.HasSuffix(dir, "/...")
 	if recursively {
 		dir = dir[:len(dir)-4]
 	}
-	return dir, recursively, genGoDir(dir, conf, genTestPkg, checkOnly, recursively)
+	return dir, recursively, genGoDir(dir, conf, genTestPkg, checkOnly, recursively, printErr)
 }
 
-func genGoDir(dir string, conf *Config, genTestPkg, checkOnly, recursively bool) (err error) {
+func genGoDir(dir string, conf *Config, genTestPkg, checkOnly, recursively bool, printErr bool) (err error) {
 	if recursively {
 		var list errors.List
 		fn := func(path string, d fs.DirEntry, err error) error {
@@ -59,7 +60,14 @@ func genGoDir(dir string, conf *Config, genTestPkg, checkOnly, recursively bool)
 					return filepath.SkipDir
 				}
 				if e := genGoIn(path, conf, genTestPkg, checkOnly, true); e != nil {
-					list.Add(e)
+					if printErr {
+						fmt.Fprintln(os.Stderr, e)
+					}
+					if l, ok := e.(errors.List); ok {
+						list = append(list, l...)
+					} else {
+						list.Add(e)
+					}
 				}
 			}
 			return err
@@ -120,10 +128,10 @@ const (
 )
 
 func GenGoPkgPath(workDir, pkgPath string, conf *Config, allowExtern bool) (localDir string, recursively bool, err error) {
-	return GenGoPkgPathEx(workDir, pkgPath, conf, allowExtern, false)
+	return GenGoPkgPathEx(workDir, pkgPath, conf, allowExtern, false, false)
 }
 
-func GenGoPkgPathEx(workDir, pkgPath string, conf *Config, allowExtern bool, checkOnly bool) (localDir string, recursively bool, err error) {
+func GenGoPkgPathEx(workDir, pkgPath string, conf *Config, allowExtern bool, checkOnly bool, printErr bool) (localDir string, recursively bool, err error) {
 	recursively = strings.HasSuffix(pkgPath, "/...")
 	if recursively {
 		pkgPath = pkgPath[:len(pkgPath)-4]
@@ -135,7 +143,7 @@ func GenGoPkgPathEx(workDir, pkgPath string, conf *Config, allowExtern bool, che
 			os.Chmod(dir, modWritable)
 			defer os.Chmod(dir, modReadonly)
 			localDir = dir
-			err = genGoDir(dir, conf, false, checkOnly, recursively)
+			err = genGoDir(dir, conf, false, checkOnly, recursively, printErr)
 		}, func(e error) {
 			err = e
 		})
@@ -153,7 +161,7 @@ func GenGoPkgPathEx(workDir, pkgPath string, conf *Config, allowExtern bool, che
 		os.Chmod(localDir, modWritable)
 		defer os.Chmod(localDir, modReadonly)
 	}
-	err = genGoDir(localDir, conf, false, checkOnly, recursively)
+	err = genGoDir(localDir, conf, false, checkOnly, recursively, printErr)
 	return
 }
 

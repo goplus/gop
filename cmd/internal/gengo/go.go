@@ -70,14 +70,14 @@ func runCmd(cmd *base.Command, args []string) {
 	for _, proj := range projs {
 		switch v := proj.(type) {
 		case *gopprojs.DirProj:
-			_, _, err = gop.GenGoEx(v.Dir, nil, true, *flagCheckMode)
+			_, _, err = gop.GenGoEx(v.Dir, nil, true, *flagCheckMode, true)
 		case *gopprojs.PkgPathProj:
-			_, _, err = gop.GenGoPkgPathEx("", v.Path, nil, true, *flagCheckMode)
+			_, _, err = gop.GenGoPkgPathEx("", v.Path, nil, true, *flagCheckMode, true)
 		default:
 			log.Panicln("`gop go` doesn't support", reflect.TypeOf(v))
 		}
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			fmt.Fprintln(os.Stderr, "GenGo failed.")
 			os.Exit(1)
 		}
 	}
