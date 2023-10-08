@@ -110,7 +110,7 @@ func (p *Importer) genGoExtern(dir string, isExtern bool) (err error) {
 			defer os.Chmod(dir, modReadonly)
 		}
 		gen := false
-		err = genGoIn(dir, &Config{Gop: p.gop, Importer: p, Fset: p.fset}, false, true, &gen)
+		err = genGoIn(dir, &Config{Gop: p.gop, Importer: p, Fset: p.fset}, false, false, true, &gen)
 		if err != nil {
 			return
 		}
