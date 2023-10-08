@@ -40,18 +40,18 @@ const (
 // -----------------------------------------------------------------------------
 
 func GenGo(dir string, conf *Config, genTestPkg bool) (string, bool, error) {
-	return GenGoEx(dir, conf, genTestPkg, false, false)
+	return GenGoEx(dir, conf, genTestPkg, false, false, false)
 }
 
-func GenGoEx(dir string, conf *Config, genTestPkg bool, checkOnly bool, printErr bool) (string, bool, error) {
+func GenGoEx(dir string, conf *Config, genTestPkg bool, checkOnly bool, fileMode bool, printErr bool) (string, bool, error) {
 	recursively := strings.HasSuffix(dir, "/...")
 	if recursively {
 		dir = dir[:len(dir)-4]
 	}
-	return dir, recursively, genGoDir(dir, conf, genTestPkg, checkOnly, recursively, printErr)
+	return dir, recursively, genGoDir(dir, conf, genTestPkg, checkOnly, fileMode, recursively, printErr)
 }
 
-func genGoDir(dir string, conf *Config, genTestPkg, checkOnly, recursively bool, printErr bool) (err error) {
+func genGoDir(dir string, conf *Config, genTestPkg, checkOnly, fileMode, recursively, printErr bool) (err error) {
 	if recursively {
 		var list errors.List
 		fn := func(path string, d fs.DirEntry, err error) error {
@@ -59,7 +59,13 @@ func genGoDir(dir string, conf *Config, genTestPkg, checkOnly, recursively bool,
 				if strings.HasPrefix(d.Name(), "_") { // skip _
 					return filepath.SkipDir
 				}
-				if e := genGoIn(path, conf, genTestPkg, checkOnly, true); e != nil {
+				var e error
+				if fileMode {
+					e = genGoInFileMode(filepath.Join(dir, path), conf, genTestPkg, checkOnly, true)
+				} else {
+					e = genGoIn(filepath.Join(dir, path), conf, genTestPkg, checkOnly, true)
+				}
+				if e != nil {
 					if printErr {
 						fmt.Fprintln(os.Stderr, e)
 					}
@@ -79,6 +85,57 @@ func genGoDir(dir string, conf *Config, genTestPkg, checkOnly, recursively bool,
 		return list.ToError()
 	}
 	return genGoIn(dir, conf, genTestPkg, false, false)
+}
+
+func genGoInFileMode(dir string, conf *Config, genTestPkg, checkOnly, prompt bool) (err error) {
+	entrys, err := os.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+	var files []string
+	for _, f := range entrys {
+		if f.IsDir() {
+			continue
+		}
+		fname := f.Name()
+		switch filepath.Ext(fname) {
+		case ".gop":
+			files = append(files, fname)
+		}
+	}
+	if len(files) == 0 {
+		return nil
+	}
+	fmt.Println("GenGo", dir, "...")
+	var errList errors.List
+	var autogen string
+	for _, fname := range files {
+		fpath := filepath.Join(dir, fname)
+		if len(files) > 1 {
+			autogen = filepath.Join(dir, fname[:len(fname)-4]+"_augogen.go")
+		} else {
+			autogen = filepath.Join(dir, autoGenFile)
+		}
+		err := genGoFile(autogen, fpath, checkOnly)
+		if err != nil {
+			errList = append(errList, err)
+		}
+	}
+	return errList.ToError()
+}
+
+func genGoFile(autogen string, file string, checkOnly bool) error {
+	out, err := LoadFiles([]string{file}, nil)
+	if err != nil {
+		return errors.NewWith(err, `LoadFiles(files, conf)`, -2, "gop.LoadFiles", file)
+	}
+	if checkOnly {
+		return nil
+	}
+	if err := out.WriteFile(autogen); err != nil {
+		return errors.NewWith(err, `out.WriteFile(autogen)`, -2, "(*gox.Package).WriteFile", out, autogen)
+	}
+	return nil
 }
 
 func genGoIn(dir string, conf *Config, genTestPkg, checkOnly, prompt bool, gen ...*bool) (err error) {
@@ -143,7 +200,7 @@ func GenGoPkgPathEx(workDir, pkgPath string, conf *Config, allowExtern bool, che
 			os.Chmod(dir, modWritable)
 			defer os.Chmod(dir, modReadonly)
 			localDir = dir
-			err = genGoDir(dir, conf, false, checkOnly, recursively, printErr)
+			err = genGoDir(dir, conf, false, checkOnly, false, recursively, printErr)
 		}, func(e error) {
 			err = e
 		})
@@ -161,7 +218,7 @@ func GenGoPkgPathEx(workDir, pkgPath string, conf *Config, allowExtern bool, che
 		os.Chmod(localDir, modWritable)
 		defer os.Chmod(localDir, modReadonly)
 	}
-	err = genGoDir(localDir, conf, false, checkOnly, recursively, printErr)
+	err = genGoDir(localDir, conf, false, checkOnly, false, recursively, printErr)
 	return
 }
 
