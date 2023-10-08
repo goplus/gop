@@ -77,11 +77,7 @@ func genGoDir(dir string, conf *Config, genTestPkg bool, recursively bool, flag 
 					if flag&GenFlagPrintError != 0 {
 						fmt.Fprintln(os.Stderr, e)
 					}
-					if l, ok := e.(errors.List); ok {
-						list = append(list, l...)
-					} else {
-						list.Add(e)
-					}
+					list.Add(e)
 				}
 			}
 			return err
