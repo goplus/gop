@@ -37,15 +37,19 @@ type Importer struct {
 	mod     *gopmod.Module
 	gop     *env.Gop
 	fset    *token.FileSet
+	flags   GenFlags
 }
 
 func NewImporter(mod *gopmod.Module, gop *env.Gop, fset *token.FileSet) *Importer {
+	const (
+		defaultFlags = GenFlagPrompt | GenFlagPrintError
+	)
 	dir := ""
 	if mod.IsValid() {
 		dir = mod.Root()
 	}
 	impFrom := packages.NewImporter(fset, dir)
-	return &Importer{mod: mod, gop: gop, impFrom: impFrom, fset: fset}
+	return &Importer{mod: mod, gop: gop, impFrom: impFrom, fset: fset, flags: defaultFlags}
 }
 
 func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
@@ -110,7 +114,7 @@ func (p *Importer) genGoExtern(dir string, isExtern bool) (err error) {
 			defer os.Chmod(dir, modReadonly)
 		}
 		gen := false
-		err = genGoIn(dir, &Config{Gop: p.gop, Importer: p, Fset: p.fset}, false, true, 0, &gen)
+		err = genGoIn(dir, &Config{Gop: p.gop, Importer: p, Fset: p.fset}, false, p.flags, &gen)
 		if err != nil {
 			return
 		}
