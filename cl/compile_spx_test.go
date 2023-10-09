@@ -283,7 +283,6 @@ var (
 )
 
 func onInit() {
-	Kai.clone()
 	broadcast("msg1")
 }
 `, `
@@ -313,7 +312,6 @@ type Kai struct {
 }
 
 func (this *Game) onInit() {
-	spx.Gopt_Sprite_Clone__0(this.Kai)
 	this.Broadcast__0("msg1")
 }
 func (this *Kai) onInit() {
