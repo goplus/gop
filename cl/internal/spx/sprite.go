@@ -19,12 +19,14 @@ package spx
 type Sprite struct {
 }
 
-func (p *Sprite) Clone(data ...interface{}) *Sprite {
-	panic("todo")
-}
-
 func (p *Sprite) SetCostume(costume interface{}) {
 }
 
 func (p *Sprite) Say(msg string, secs ...float64) {
+}
+
+func Gopt_Sprite_Clone__0(sprite interface{}) {
+}
+
+func Gopt_Sprite_Clone__1(sprite interface{}, data interface{}) {
 }

@@ -313,7 +313,7 @@ type Kai struct {
 }
 
 func (this *Game) onInit() {
-	this.Kai.Clone()
+	spx.Gopt_Sprite_Clone__0(this.Kai)
 	this.Broadcast__0("msg1")
 }
 func (this *Kai) onInit() {
@@ -589,4 +589,68 @@ func (this *Kai) onMsg(msg string) {
 	}
 }
 `, "Game.tgmx.gox", "Kai.tspx.gox")
+}
+
+func TestSpxClone(t *testing.T) {
+	gopSpxTestEx(t, `
+var (
+	Kai Kai
+)
+
+func onInit() {
+	Kai.clone()
+	broadcast("msg1")
+}
+`, `
+var (
+	a int
+)
+
+type info struct {
+	x int
+	y int
+}
+
+func onInit() {
+	a = 1
+	clone
+	clone info{1,2}
+	clone &info{1,2}
+}
+
+func onCloned() {
+	say("Hi")
+}
+`, `package main
+
+import spx "github.com/goplus/gop/cl/internal/spx"
+
+type info struct {
+	x int
+	y int
+}
+type Game struct {
+	*spx.MyGame
+	Kai Kai
+}
+type Kai struct {
+	spx.Sprite
+	*Game
+	a int
+}
+
+func (this *Game) onInit() {
+	spx.Gopt_Sprite_Clone__0(this.Kai)
+	this.Broadcast__0("msg1")
+}
+func (this *Kai) onInit() {
+	this.a = 1
+	spx.Gopt_Sprite_Clone__0(this)
+	spx.Gopt_Sprite_Clone__1(this, info{1, 2})
+	spx.Gopt_Sprite_Clone__1(this, &info{1, 2})
+}
+func (this *Kai) onCloned() {
+	this.Say("Hi")
+}
+`, "Game.tgmx", "Kai.tspx")
 }
