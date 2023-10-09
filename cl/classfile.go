@@ -44,7 +44,7 @@ type gmxSettings struct {
 }
 
 func (p *gmxSettings) getScheds(cb *gox.CodeBuilder) []goast.Stmt {
-	if !p.hasScheds {
+	if p == nil || !p.hasScheds {
 		return nil
 	}
 	if p.schedStmts == nil {
