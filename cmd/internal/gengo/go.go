@@ -28,6 +28,7 @@ import (
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/x/gopprojs"
 	"github.com/goplus/gox"
+	"github.com/qiniu/x/errors"
 )
 
 // gop go
@@ -39,8 +40,8 @@ var Cmd = &base.Command{
 var (
 	flag           = &Cmd.Flag
 	flagVerbose    = flag.Bool("v", false, "print verbose information.")
-	flagCheckMode  = flag.Bool("t", false, "check mode, no generate gop_autogen.go")
-	flagSingleMode = flag.Bool("s", false, "single file mode")
+	flagCheckMode  = flag.Bool("t", false, "do check syntax only, no generate gop_autogen.go")
+	flagSingleMode = flag.Bool("s", false, "run in single file mode")
 )
 
 func init() {
@@ -68,27 +69,34 @@ func runCmd(cmd *base.Command, args []string) {
 		cl.SetDisableRecover(true)
 	}
 
-	var flag gop.GenFlag = gop.GenFlagPrintError
+	flags := gop.GenFlagPrintError | gop.GenFlagPrompt
 	if *flagCheckMode {
-		flag |= gop.GenFlagCheckOnly
+		flags |= gop.GenFlagCheckOnly
 	}
 	if *flagSingleMode {
-		flag |= gop.GenFlagFileMode
+		flags |= gop.GenFlagSingleFile
 	}
 	for _, proj := range projs {
 		switch v := proj.(type) {
 		case *gopprojs.DirProj:
-			_, _, err = gop.GenGoEx(v.Dir, nil, true, flag)
+			_, _, err = gop.GenGoEx(v.Dir, nil, true, flags)
 		case *gopprojs.PkgPathProj:
-			_, _, err = gop.GenGoPkgPathEx("", v.Path, nil, true, flag)
+			_, _, err = gop.GenGoPkgPathEx("", v.Path, nil, true, flags)
 		default:
 			log.Panicln("`gop go` doesn't support", reflect.TypeOf(v))
 		}
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "GenGo failed.")
+			fmt.Fprintf(os.Stderr, "GenGo failed: %d errors.\n", errorNum(err))
 			os.Exit(1)
 		}
 	}
+}
+
+func errorNum(err error) int {
+	if e, ok := err.(errors.List); ok {
+		return len(e)
+	}
+	return 1
 }
 
 // -----------------------------------------------------------------------------
