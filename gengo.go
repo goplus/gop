@@ -80,6 +80,9 @@ func genGoDir(dir string, conf *Config, genTestPkg, recursively bool, flags GenF
 						return filepath.SkipDir
 					}
 					if e := genGoIn(path, conf, genTestPkg, flags); e != nil {
+						if flags&GenFlagPrintError != 0 {
+							fmt.Fprintln(os.Stderr, e)
+						}
 						list.Add(e)
 					}
 				}
