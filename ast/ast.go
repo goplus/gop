@@ -1122,20 +1122,26 @@ type FileType = int16
 // and Comment comments directly associated with nodes, the remaining comments
 // are "free-floating" (see also issues #18593, #20744).
 type File struct {
-	Doc          *CommentGroup   // associated documentation; or nil
-	Package      token.Pos       // position of "package" keyword
-	Name         *Ident          // package name
-	Decls        []Decl          // top-level declarations; or nil
-	Scope        *Scope          // package scope (this file only)
-	Imports      []*ImportSpec   // imports in this file
-	Unresolved   []*Ident        // unresolved identifiers in this file
-	Comments     []*CommentGroup // list of all comments in the source file
-	Code         []byte
-	NoEntrypoint bool // no entrypoint func to indicate the module entry point.
-	NoPkgDecl    bool // no `package xxx` declaration
-	IsClass      bool // is a classfile
-	IsProj       bool // is a project classfile
-	IsNormalGox  bool // is a normal .gox file
+	Doc     *CommentGroup // associated documentation; or nil
+	Package token.Pos     // position of "package" keyword
+	Name    *Ident        // package name
+	Decls   []Decl        // top-level declarations; or nil
+
+	Scope       *Scope          // package scope (this file only)
+	Imports     []*ImportSpec   // imports in this file
+	Unresolved  []*Ident        // unresolved identifiers in this file
+	Comments    []*CommentGroup // list of all comments in the source file
+	Code        []byte
+	ShadowEntry *FuncDecl // no entrypoint func to indicate the module entry point.
+	NoPkgDecl   bool      // no `package xxx` declaration
+	IsClass     bool      // is a classfile
+	IsProj      bool      // is a project classfile
+	IsNormalGox bool      // is a normal .gox file
+}
+
+// There is no entrypoint func to indicate the module entry point.
+func (f *File) NoEntrypoint() bool {
+	return f.ShadowEntry != nil
 }
 
 // Pos returns position of first character belonging to the node.

@@ -312,6 +312,30 @@ a := "Hi"
 `)
 }
 
+func TestErrAssignMismatchT(t *testing.T) {
+	codeErrorTest(t,
+		`./bar.gop:2:16: cannot use []string{} (type []string) as type string in assignment`, `
+var a string = []string{}
+`)
+	codeErrorTest(t,
+		`./bar.gop:2:16: cannot use [2]string{} (type [2]string) as type string in assignment`, `
+var a string = [2]string{}
+`)
+	codeErrorTest(t,
+		`./bar.gop:2:16: cannot use map[int]string{} (type map[int]string) as type string in assignment`, `
+var a string = map[int]string{}
+`)
+	codeErrorTest(t,
+		`./bar.gop:3:16: cannot use T{} (type T) as type string in assignment`, `
+type T struct{}
+var a string = T{}
+`)
+	codeErrorTest(t,
+		`./bar.gop:2:16: cannot use func(){} (type func()) as type string in assignment`, `
+var a string = func(){}
+`)
+}
+
 func TestErrAssign(t *testing.T) {
 	codeErrorTest(t,
 		`./bar.gop:8:1: assignment mismatch: 1 variables but bar returns 2 values`, `
@@ -454,6 +478,10 @@ a := struct{x int; y string}{1}
 		`./bar.gop:3:33: cannot use x (type int) as type string in value of field y`, `
 x := 1
 a := struct{x int; y string}{1, x}
+`)
+	codeErrorTest(t,
+		`./bar.gop:2:30: z undefined (type struct{x int; y string} has no field or method z)`, `
+a := struct{x int; y string}{z: 1}
 `)
 }
 
@@ -850,9 +878,15 @@ type A struct {
 }
 
 func TestErrImportPkg(t *testing.T) {
+	root := filepath.Join(runtime.GOROOT(), "src", "fmt2")
+	where := "GOROOT"
+	ver := runtime.Version()[:6]
+	if ver >= "go1.21" {
+		where = "std"
+	}
 	codeErrorTest(t,
-		fmt.Sprintf(`./bar.gop:3:2: package fmt2 is not in GOROOT (%v)
-`, filepath.Join(runtime.GOROOT(), "src", "fmt2")), `
+		fmt.Sprintf(`./bar.gop:3:2: package fmt2 is not in `+where+` (%v)
+`, root), `
 import (
 	"fmt2"
 )
@@ -928,5 +962,11 @@ a := uint128(-1)
 	codeErrorTest(t, `./bar.gop:3:14: cannot convert b (untyped int constant -1) to type Uint128`, `
 const b = -1
 a := uint128(b)
+`)
+}
+
+func TestErrCompileFunc(t *testing.T) {
+	codeErrorTest(t, `./bar.gop:2:1: compile func printf("%+v\n", int32) error: unreachable`, `
+printf("%+v\n", int32)
 `)
 }

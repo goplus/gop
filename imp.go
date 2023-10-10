@@ -37,15 +37,19 @@ type Importer struct {
 	mod     *gopmod.Module
 	gop     *env.Gop
 	fset    *token.FileSet
+	flags   GenFlags
 }
 
 func NewImporter(mod *gopmod.Module, gop *env.Gop, fset *token.FileSet) *Importer {
+	const (
+		defaultFlags = GenFlagPrompt | GenFlagPrintError
+	)
 	dir := ""
 	if mod.IsValid() {
 		dir = mod.Root()
 	}
 	impFrom := packages.NewImporter(fset, dir)
-	return &Importer{mod: mod, gop: gop, impFrom: impFrom, fset: fset}
+	return &Importer{mod: mod, gop: gop, impFrom: impFrom, fset: fset, flags: defaultFlags}
 }
 
 func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
@@ -76,10 +80,18 @@ func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 					return
 				}
 			}
-			modfile := filepath.Join(ret.ModDir, "gop.mod")
-			if _, e := os.Lstat(modfile); e == nil { // has gop.mod
-				if err = p.genGoExtern(ret.Dir, isExtern); err != nil {
-					return
+			modDir := ret.ModDir
+			goModfile := filepath.Join(modDir, "go.mod")
+			if _, e := os.Lstat(goModfile); e != nil { // no go.mod
+				gopModfile := filepath.Join(modDir, "gop.mod")
+				if _, e := os.Lstat(gopModfile); e == nil { // has gop.mod
+					if err = p.genGoExtern(ret.Dir, isExtern); err != nil {
+						return
+					}
+				} else { // maybe a old Go package without go.mod
+					os.Chmod(modDir, modWritable)
+					defer os.Chmod(modDir, modReadonly)
+					os.WriteFile(goModfile, defaultGoMod(ret.ModPath), 0644)
 				}
 			}
 			return p.impFrom.ImportFrom(pkgPath, ret.ModDir, 0)
@@ -95,30 +107,33 @@ func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 }
 
 func (p *Importer) genGoExtern(dir string, isExtern bool) (err error) {
-	gosum := filepath.Join(dir, "go.sum")
-	if _, err = os.Lstat(gosum); err == nil { // has go.sum
-		return
-	}
-
-	if isExtern {
-		os.Chmod(dir, modWritable)
-		defer os.Chmod(dir, modReadonly)
-	}
-
 	genfile := filepath.Join(dir, autoGenFile)
-	if _, err = os.Lstat(genfile); err != nil { // has gop_autogen.go
-		err = genGoIn(dir, &Config{Gop: p.gop, Importer: p, Fset: p.fset}, false, false)
+	if _, err = os.Lstat(genfile); err != nil { // no gop_autogen.go
+		if isExtern {
+			os.Chmod(dir, modWritable)
+			defer os.Chmod(dir, modReadonly)
+		}
+		gen := false
+		err = genGoIn(dir, &Config{Gop: p.gop, Importer: p, Fset: p.fset}, false, p.flags, &gen)
 		if err != nil {
 			return
 		}
+		if gen {
+			cmd := exec.Command("go", "mod", "tidy")
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			cmd.Dir = dir
+			err = cmd.Run()
+		}
 	}
-
-	cmd := exec.Command("go", "mod", "tidy")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Dir = dir
-	err = cmd.Run()
 	return
+}
+
+func defaultGoMod(modPath string) []byte {
+	return []byte(`module ` + modPath + `
+
+go 1.16
+`)
 }
 
 // -----------------------------------------------------------------------------

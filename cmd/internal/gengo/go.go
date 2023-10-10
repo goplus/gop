@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-// Package gengo implements the ``gop go'' command.
+// Package gengo implements the “gop go” command.
 package gengo
 
 import (
@@ -28,6 +28,7 @@ import (
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/x/gopprojs"
 	"github.com/goplus/gox"
+	"github.com/qiniu/x/errors"
 )
 
 // gop go
@@ -37,8 +38,10 @@ var Cmd = &base.Command{
 }
 
 var (
-	flagVerbose = flag.Bool("v", false, "print verbose information.")
-	flag        = &Cmd.Flag
+	flag           = &Cmd.Flag
+	flagVerbose    = flag.Bool("v", false, "print verbose information.")
+	flagCheckMode  = flag.Bool("t", false, "do check syntax only, no generate gop_autogen.go")
+	flagSingleMode = flag.Bool("s", false, "run in single file mode")
 )
 
 func init() {
@@ -66,20 +69,34 @@ func runCmd(cmd *base.Command, args []string) {
 		cl.SetDisableRecover(true)
 	}
 
+	flags := gop.GenFlagPrintError | gop.GenFlagPrompt
+	if *flagCheckMode {
+		flags |= gop.GenFlagCheckOnly
+	}
+	if *flagSingleMode {
+		flags |= gop.GenFlagSingleFile
+	}
 	for _, proj := range projs {
 		switch v := proj.(type) {
 		case *gopprojs.DirProj:
-			_, _, err = gop.GenGo(v.Dir, nil, true)
+			_, _, err = gop.GenGoEx(v.Dir, nil, true, flags)
 		case *gopprojs.PkgPathProj:
-			_, _, err = gop.GenGoPkgPath("", v.Path, nil, true)
+			_, _, err = gop.GenGoPkgPathEx("", v.Path, nil, true, flags)
 		default:
 			log.Panicln("`gop go` doesn't support", reflect.TypeOf(v))
 		}
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			fmt.Fprintf(os.Stderr, "GenGo failed: %d errors.\n", errorNum(err))
 			os.Exit(1)
 		}
 	}
+}
+
+func errorNum(err error) int {
+	if e, ok := err.(errors.List); ok {
+		return len(e)
+	}
+	return 1
 }
 
 // -----------------------------------------------------------------------------

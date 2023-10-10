@@ -14,6 +14,28 @@ import (
 	"github.com/goplus/gop/parser/fsx/memfs"
 )
 
+func TestTypeParams(t *testing.T) {
+	gopMixedClTest(t, "main", `package main
+
+type Data[X, Y any] struct {
+	v X
+}
+
+func (p *Data[T, R]) foo() {
+	fmt.Println(p.v)
+}
+`, `
+v := Data[int, float64]{1}
+v.foo()
+`, `package main
+
+func main() {
+	v := Data[int, float64]{1}
+	v.foo()
+}
+`)
+}
+
 func TestTypeParamsFunc(t *testing.T) {
 	gopMixedClTest(t, "main", `package main
 
@@ -260,8 +282,10 @@ func TestTypeParamsErrorMatch(t *testing.T) {
 	switch runtime.Version()[:6] {
 	case "go1.18", "go1.19":
 		msg = `./b.gop:2:5: T does not match ~[]E`
-	default:
+	case "go1.20":
 		msg = `./b.gop:2:5: int does not match ~[]E`
+	default:
+		msg = `./b.gop:2:5: T (type int) does not satisfy interface{interface{~[]E}}`
 	}
 	mixedErrorTest(t, msg, `
 package main

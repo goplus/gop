@@ -53,10 +53,10 @@ func Gopstyle(file *ast.File) {
 	if identEqual(file.Name, "main") {
 		file.NoPkgDecl = true
 	}
-	if idx := findFuncDecl(file.Decls, "main"); idx >= 0 {
+	if idx, fn := findFuncDecl(file.Decls, "main"); idx >= 0 {
 		last := len(file.Decls) - 1
 		if idx == last {
-			file.NoEntrypoint = true
+			file.ShadowEntry = fn
 			// TODO: idx != last: swap main func to last
 			// TODO: should also swap file.Comments
 			/*
@@ -69,15 +69,15 @@ func Gopstyle(file *ast.File) {
 	formatFile(file)
 }
 
-func findFuncDecl(decls []ast.Decl, name string) int {
+func findFuncDecl(decls []ast.Decl, name string) (int, *ast.FuncDecl) {
 	for i, decl := range decls {
 		if fn, ok := decl.(*ast.FuncDecl); ok {
 			if identEqual(fn.Name, name) {
-				return i
+				return i, fn
 			}
 		}
 	}
-	return -1
+	return -1, nil
 }
 
 func findDecl(decls []ast.Decl, v ast.Decl) int {

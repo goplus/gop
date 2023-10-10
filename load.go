@@ -58,6 +58,11 @@ func LoadMod(dir string, gop *env.Gop, conf *Config) (mod *gopmod.Module, err er
 		return
 	}
 	if mod != nil {
+		if mod.Path() == "std" { // a Go std package
+			// TODO: should do this at github.com/goplus/mod
+			mod.Module.Module.Mod.Path = ""
+			return
+		}
 		err = mod.ImportClasses()
 		if err != nil {
 			err = errors.NewWith(err, `mod.RegisterClasses()`, -2, "(*gopmod.Module).RegisterClasses", mod)
@@ -118,10 +123,6 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 		return nil, nil, syscall.ENOENT
 	}
 
-	if promptGenGo != nil && promptGenGo[0] {
-		fmt.Printf("GenGo %v ...\n", dir)
-	}
-
 	imp := conf.Importer
 	if imp == nil {
 		imp = NewImporter(mod, gop, fset)
@@ -138,16 +139,19 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 	for name, pkg := range pkgs {
 		if strings.HasSuffix(name, "_test") {
 			if pkgTest != nil {
-				return nil, nil, errMultiTestPackges
+				return nil, nil, ErrMultiTestPackges
 			}
 			pkgTest = pkg
 			continue
 		}
 		if out != nil {
-			return nil, nil, errMultiPackges
+			return nil, nil, ErrMultiPackges
 		}
 		if len(pkg.Files) == 0 { // no Go+ source files
-			break
+			continue
+		}
+		if promptGenGo != nil && promptGenGo[0] {
+			fmt.Printf("GenGo %v ...\n", dir)
 		}
 		out, err = cl.NewPackage("", pkg, clConf)
 		if err != nil {
@@ -189,7 +193,7 @@ func LoadFiles(files []string, conf *Config) (out *gox.Package, err error) {
 		return
 	}
 	if len(pkgs) != 1 {
-		err = errors.NewWith(errMultiPackges, `len(pkgs) != 1`, -1, "!=", len(pkgs), 1)
+		err = errors.NewWith(ErrMultiPackges, `len(pkgs) != 1`, -1, "!=", len(pkgs), 1)
 		return
 	}
 	for _, pkg := range pkgs {
@@ -215,8 +219,8 @@ func LoadFiles(files []string, conf *Config) (out *gox.Package, err error) {
 // -----------------------------------------------------------------------------
 
 var (
-	errMultiPackges     = errors.New("multiple packages")
-	errMultiTestPackges = errors.New("multiple test packages")
+	ErrMultiPackges     = errors.New("multiple packages")
+	ErrMultiTestPackges = errors.New("multiple test packages")
 )
 
 // -----------------------------------------------------------------------------

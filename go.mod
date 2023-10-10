@@ -1,11 +1,20 @@
 module github.com/goplus/gop
 
-go 1.16
+go 1.17
 
 require (
-	github.com/goplus/c2go v0.7.13
-	github.com/goplus/gox v1.11.37
-	github.com/goplus/libc v0.3.13
-	github.com/goplus/mod v0.11.2
-	github.com/qiniu/x v1.11.9
+	github.com/fsnotify/fsnotify v1.6.0
+	github.com/goplus/c2go v0.7.16
+	github.com/goplus/gox v1.12.5
+	github.com/goplus/mod v0.11.7
+	github.com/qiniu/x v1.13.1
+	golang.org/x/tools v0.14.0
+)
+
+require (
+	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
+	golang.org/x/mod v0.13.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
 )

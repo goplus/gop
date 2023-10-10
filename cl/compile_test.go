@@ -78,9 +78,11 @@ func gopClTestEx(t *testing.T, conf *cl.Config, pkgname, gopcode, expected strin
 	gopClTestFS(t, conf, fs, pkgname, expected)
 }
 
-func gopMixedClTest(t *testing.T, pkgname, gocode, gopcode, expected string) {
+func gopMixedClTest(t *testing.T, pkgname, gocode, gopcode, expected string, outline ...bool) {
+	conf := *gblConf
+	conf.Outline = (outline != nil && outline[0])
 	fs := memfs.TwoFiles("/foo", "a.go", gocode, "b.gop", gopcode)
-	gopClTestFS(t, gblConf, fs, pkgname, expected)
+	gopClTestFS(t, &conf, fs, pkgname, expected)
 }
 
 func gopClTestFS(t *testing.T, conf *cl.Config, fs parser.FileSystem, pkgname, expected string) {
@@ -280,7 +282,7 @@ var c foo
 var d int = c.v
 var e = foo3{}
 var x string = c.Str()
-`)
+`, true)
 	gopMixedClTest(t, "main", `package main
 type Point struct {
 	X int
@@ -299,7 +301,7 @@ type T struct {
 func main() {
 	fmt.Println(&T{}, &Point{10, 20})
 }
-`)
+`, false)
 }
 
 func Test_RangeExpressionIf_Issue1243(t *testing.T) {
@@ -382,13 +384,13 @@ func main() {
 }
 `, `package main
 
-type Inner interface {
-	DoStuff() error
-}
 type Outer interface {
 	Inner
 }
 type impl struct {
+}
+type Inner interface {
+	DoStuff() error
 }
 
 func (a *impl) DoStuff() error {
@@ -425,6 +427,17 @@ type A struct{ T }
 type B struct{ T }
 `, `package main
 
+type I interface {
+	M() int
+}
+type T int
+type A struct {
+	T
+}
+type B struct {
+	T
+}
+
 func main() {
 	i := I(A{})
 	b := make(chan I, 1)
@@ -432,21 +445,8 @@ func main() {
 	var ok bool
 	i, ok = <-b
 }
-
-type T int
-
 func (T) M() int {
 	return 0
-}
-
-type A struct {
-	T
-}
-type I interface {
-	M() int
-}
-type B struct {
-	T
 }
 `)
 }
@@ -999,21 +999,19 @@ func (a *A) String() string {
 
 import fmt "fmt"
 
-func main() {
-	var a AA = &A{str: "hello"}
-	fmt.Println(a.(*A))
+type AA interface {
+	String() string
 }
-
 type A struct {
 	str string
 }
 
+func main() {
+	var a AA = &A{str: "hello"}
+	fmt.Println(a.(*A))
+}
 func (a *A) String() string {
 	return a.str
-}
-
-type AA interface {
-	String() string
 }
 `)
 	gopClNamedTest(t, "getInterface", `
@@ -1026,13 +1024,13 @@ func main() {
 	fmt.Println(a.(*A))
 }
 
+type AA interface {
+	String() string
+}
+
 func get() AA {
 	var a AA
 	return a
-}
-
-type AA interface {
-	String() string
 }
 
 type A struct {
@@ -1046,6 +1044,13 @@ func (a *A) String() string {
 
 import fmt "fmt"
 
+type AA interface {
+	String() string
+}
+type A struct {
+	str string
+}
+
 func main() {
 	a := get()
 	fmt.Println(a.(*A))
@@ -1054,14 +1059,6 @@ func get() AA {
 	var a AA
 	return a
 }
-
-type AA interface {
-	String() string
-}
-type A struct {
-	str string
-}
-
 func (a *A) String() string {
 	return a.str
 }
@@ -1410,17 +1407,15 @@ type Rect struct {
 	w float64
 	h float64
 }
-
-func (p *Rect) Area() float64 {
-	return p.w * p.h
-}
-
 type Circle struct {
 	x float64
 	y float64
 	r float64
 }
 
+func (p *Rect) Area() float64 {
+	return p.w * p.h
+}
 func (p *Circle) Area() float64 {
 	return 3.14 * p.r * p.r
 }
@@ -1849,6 +1844,32 @@ var y uint32 = *x
 `)
 }
 
+func TestLHS(t *testing.T) {
+	gopClTest(t, `
+type T struct {
+	a int
+}
+
+func foo() *T {
+	return nil
+}
+
+foo().a = 123
+`, `package main
+
+type T struct {
+	a int
+}
+
+func foo() *T {
+	return nil
+}
+func main() {
+	foo().a = 123
+}
+`)
+}
+
 func TestSend(t *testing.T) {
 	gopClTest(t, `
 var x chan bool
@@ -2184,12 +2205,12 @@ func main() {
 }
 `, `package main
 
-type bar = foo
 type foo struct {
 	p *foo
 	A int
 	B string `+"`tag1:123`"+`
 }
+type bar = foo
 
 func main() {
 	type a struct {
@@ -2368,14 +2389,12 @@ import fmt "fmt"
 
 type fooIter struct {
 }
+type foo struct {
+}
 
 func (p fooIter) Next() (key string, val int, ok bool) {
 	return
 }
-
-type foo struct {
-}
-
 func (p *foo) Gop_Enum() fooIter {
 }
 func main() {
@@ -2459,6 +2478,10 @@ type fooIter struct {
 	data *foo
 	idx  int
 }
+type foo struct {
+	key []int
+	val []string
+}
 
 func (p *fooIter) Next() (key int, val string, ok bool) {
 	if p.idx < len(p.data.key) {
@@ -2467,12 +2490,6 @@ func (p *fooIter) Next() (key int, val string, ok bool) {
 	}
 	return
 }
-
-type foo struct {
-	key []int
-	val []string
-}
-
 func (p *foo) Gop_Enum() *fooIter {
 	return &fooIter{data: p}
 }
@@ -3843,6 +3860,13 @@ import (
 	testing "testing"
 )
 
+type Repo struct {
+	Title string
+}
+type Result struct {
+	Repo Repo
+}
+
 func TestNew(t *testing.T) {
 	ret := New()
 	expected := Result{}
@@ -3856,13 +3880,6 @@ func New() Result {
 }
 func newRepo() Repo {
 	return Repo{Title: "Hi"}
-}
-
-type Repo struct {
-	Title string
-}
-type Result struct {
-	Repo Repo
 }
 `)
 	}
@@ -3888,6 +3905,19 @@ import fmt "fmt"
 
 func main() {
 	for i := 0; i < 10; i += 1 {
+		fmt.Println(i)
+	}
+}
+`)
+	testRangeExpr(t, `
+for i $ 1:10:3 {
+	println(i)
+}`, `package main
+
+import fmt "fmt"
+
+func main() {
+	for i := 1; i < 10; i += 3 {
 		fmt.Println(i)
 	}
 }

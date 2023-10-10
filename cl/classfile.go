@@ -44,7 +44,7 @@ type gmxSettings struct {
 }
 
 func (p *gmxSettings) getScheds(cb *gox.CodeBuilder) []goast.Stmt {
-	if !p.hasScheds {
+	if p == nil || !p.hasScheds {
 		return nil
 	}
 	if p.schedStmts == nil {
@@ -140,20 +140,15 @@ func getStringConst(spx *gox.PkgRef, name string) string {
 }
 
 func getFields(f *ast.File) (specs []ast.Spec) {
-	decls := f.Decls
-	i, n := 0, len(decls)
-	for i < n {
-		g, ok := decls[i].(*ast.GenDecl)
-		if !ok {
-			break
-		}
-		if g.Tok != token.IMPORT && g.Tok != token.CONST {
+	for _, decl := range f.Decls {
+		if g, ok := decl.(*ast.GenDecl); ok {
 			if g.Tok == token.VAR {
 				specs, g.Specs = g.Specs, nil
+				return
 			}
-			break
+			continue
 		}
-		i++ // skip import/const, if any
+		break
 	}
 	return
 }

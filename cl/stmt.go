@@ -256,10 +256,14 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 }
 
 // forRange(names...) x rangeAssignThen
-//    body
+//
+//	body
+//
 // end
 // forRange k v x rangeAssignThen
-//    body
+//
+//	body
+//
 // end
 func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 	if re, ok := v.X.(*ast.RangeExpr); ok {
@@ -436,8 +440,10 @@ func toForStmt(forPos token.Pos, value ast.Expr, body *ast.BlockStmt, re *ast.Ra
 }
 
 // for init; cond then
-//    body
-//    post
+//
+//	body
+//	post
+//
 // end
 func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	cb := ctx.cb
@@ -463,7 +469,9 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 }
 
 // if init; cond then
-//    body
+//
+//	body
+//
 // end
 func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 	cb := ctx.cb
@@ -489,11 +497,15 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 
 // typeSwitch(name) init; expr typeAssertThen()
 // type1 type2 ... typeN typeCase(N)
-//    ...
-//    end
+//
+//	...
+//	end
+//
 // type1 type2 ... typeM typeCase(M)
-//    ...
-//    end
+//
+//	...
+//	end
+//
 // end
 func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 	var cb = ctx.cb
@@ -567,11 +579,15 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 
 // switch init; tag then
 // expr1 expr2 ... exprN case(N)
-//    ...
-//    end
+//
+//	...
+//	end
+//
 // expr1 expr2 ... exprM case(M)
-//    ...
-//    end
+//
+//	...
+//	end
+//
 // end
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	cb := ctx.cb
@@ -651,15 +667,21 @@ func hasFallthrough(body []ast.Stmt) ([]ast.Stmt, bool) {
 
 // select
 // stmt1 commCase(1)
-//    ...
-//    end
+//
+//	...
+//	end
+//
 // stmt2 commCase(1)
-//    ...
-//    end
+//
+//	...
+//	end
+//
 // ...
 // commCase(0)
-//    ...
-//    end
+//
+//	...
+//	end
+//
 // end
 func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
 	cb := ctx.cb
@@ -745,7 +767,7 @@ func compileDeclStmt(ctx *blockCtx, expr *ast.DeclStmt) {
 				compileType(ctx, spec.(*ast.TypeSpec))
 			}
 		case token.CONST:
-			cdecl := ctx.pkg.NewConstDecl(ctx.cb.Scope())
+			cdecl := ctx.pkg.NewConstDefs(ctx.cb.Scope())
 			loadConstSpecs(ctx, cdecl, d.Specs)
 		case token.VAR:
 			for _, spec := range d.Specs {

@@ -29,7 +29,7 @@ import (
 // Cmd - gop version
 var Cmd = &base.Command{
 	UsageLine: "gop version [-v]",
-	Short:     "Version prints the build information for Gop executables",
+	Short:     "Print Go+ version",
 }
 
 var (
