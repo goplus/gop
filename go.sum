@@ -7,8 +7,8 @@ github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/
 github.com/goplus/c2go v0.7.16 h1:B9jRNNytoq7yDBQOZSm2qENQhRQMfNhgOea5XHWNUnI=
 github.com/goplus/c2go v0.7.16/go.mod h1:XODEFX2PeEEJXNLLdykWeZgMSaKJ51fVm+C9IM3FxNQ=
 github.com/goplus/gox v1.12.1/go.mod h1:wymoQJ7ydd42cTlaXb4wNbvn4LlKjR+j8PZehI7v1zQ=
-github.com/goplus/gox v1.12.2-0.20231012035644-c3bf89ec9e2b h1:5jCLZcnLj2jOTOw5j979XMoqeWI1ghZVnfuwmKbe5Eo=
-github.com/goplus/gox v1.12.2-0.20231012035644-c3bf89ec9e2b/go.mod h1:ferIrvJSoXae8gABk5Z4olEzfAxZpUy4hD91Vm5E/qs=
+github.com/goplus/gox v1.12.5 h1:YkdsZDIOW3DZLJctWYKVzdsqMeuCYNn7J4BsFi6B058=
+github.com/goplus/gox v1.12.5/go.mod h1:ferIrvJSoXae8gABk5Z4olEzfAxZpUy4hD91Vm5E/qs=
 github.com/goplus/mod v0.11.5/go.mod h1:NDC5E+XOT8vcJCMjqKhLDJHTHX7lyVN4Vbfi2U7dBhs=
 github.com/goplus/mod v0.11.7 h1:OTGFi/Jk0qmTy3ih8u3BQ6CbtcaPlTrJBlTacnge0jE=
 github.com/goplus/mod v0.11.7/go.mod h1:yl2QncBKTdXk+8UaNsdo4u2zSpGEJYA5JKjgD3K2h00=
