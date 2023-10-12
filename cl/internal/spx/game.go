@@ -41,6 +41,13 @@ func (p *MyGame) Broadcast__2(msg string, data interface{}, wait bool) {
 func (p *MyGame) Play(media string, wait ...bool) {
 }
 
+func (p *MyGame) sendMessage(data interface{}) {
+}
+
+func (p *MyGame) SendMessage(data interface{}) {
+	p.sendMessage(data)
+}
+
 func Gopt_MyGame_Run(game interface{}, resource string) error {
 	return nil
 }

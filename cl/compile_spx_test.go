@@ -654,3 +654,78 @@ func (this *Kai) onCloned() {
 }
 `, "Game.tgmx", "Kai.tspx")
 }
+
+func TestSpxErrorSel(t *testing.T) {
+	gopSpxErrorTestEx(t, `./Kai.tspx:2:9: this.pos undefined (type *Kai has no field or method pos)`, `
+println "hi"
+`, `
+println this.pos
+`, "Game.tgmx", "Kai.tspx")
+}
+
+func TestSpxMethodSel(t *testing.T) {
+	gopSpxTestEx(t, `
+sendMessage "Hi"
+`, `
+func onMsg(msg string) {
+}
+`, `package main
+
+import spx "github.com/goplus/gop/cl/internal/spx"
+
+type Game struct {
+	*spx.MyGame
+}
+
+func (this *Game) MainEntry() {
+	this.SendMessage("Hi")
+}
+func main() {
+	spx.Gopt_MyGame_Main(new(Game))
+}
+
+type Kai struct {
+	spx.Sprite
+	*Game
+}
+
+func (this *Kai) onMsg(msg string) {
+}
+`, "Game.tgmx", "Kai.tspx")
+}
+
+func TestSpxPkgOverload(t *testing.T) {
+	gopSpxTestEx(t, `
+println "Hi"
+`, `
+func onMsg(msg string) {
+	this.position.add 100,200
+}
+`, `package main
+
+import (
+	fmt "fmt"
+	spx "github.com/goplus/gop/cl/internal/spx"
+)
+
+type Game struct {
+	*spx.MyGame
+}
+
+func (this *Game) MainEntry() {
+	fmt.Println("Hi")
+}
+func main() {
+	spx.Gopt_MyGame_Main(new(Game))
+}
+
+type Kai struct {
+	spx.Sprite
+	*Game
+}
+
+func (this *Kai) onMsg(msg string) {
+	this.Position().Add__0(100, 200)
+}
+`, "Game.tgmx", "Kai.tspx")
+}

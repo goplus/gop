@@ -16,13 +16,22 @@
 
 package spx
 
+import (
+	"github.com/goplus/gop/cl/internal/spx/pkg"
+)
+
 type Sprite struct {
+	pos pkg.Vector
 }
 
 func (p *Sprite) SetCostume(costume interface{}) {
 }
 
 func (p *Sprite) Say(msg string, secs ...float64) {
+}
+
+func (p *Sprite) Position() *pkg.Vector {
+	return &p.pos
 }
 
 func Gopt_Sprite_Clone__0(sprite interface{}) {
