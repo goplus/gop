@@ -3709,7 +3709,7 @@ func (p *parser) parseFile() *ast.File {
 	} else {
 		noPkgDecl = true
 		pos = token.NoPos
-		ident = ast.NewIdent("main")
+		ident = &ast.Ident{NamePos: p.file.Pos(0), Name: "main"}
 	}
 
 	p.openScope()

@@ -17,6 +17,8 @@
 package env
 
 import (
+	"bytes"
+	"os/exec"
 	"strings"
 )
 
@@ -31,9 +33,28 @@ var (
 )
 
 func init() {
-	if buildVersion != "" && !strings.HasPrefix(buildVersion, "v"+MainVersion+".") {
+	if buildVersion == "" {
+		var b bytes.Buffer
+		cmd := exec.Command("gop", "env", "GOPVERSION", "BUILDDATE", "GOPROOT")
+		cmd.Stdout = &b
+		err := cmd.Run()
+		if err == nil {
+			parts := strings.SplitN(strings.TrimRight(b.String(), "\n"), "\n", 3)
+			if len(parts) == 3 {
+				buildVersion, buildDate, defaultGopRoot = parts[0], parts[1], parts[2]
+			}
+		}
+		return
+	}
+	if !strings.HasPrefix(buildVersion, "v"+MainVersion+".") {
 		panic("Invalid buildVersion: " + buildVersion)
 	}
+}
+
+// Installed checks is `gop` installed or not.
+// If returns false, it means `gop` is not installed or not in PATH.
+func Installed() bool {
+	return buildVersion != ""
 }
 
 // Version returns the GoPlus tree's version string.
