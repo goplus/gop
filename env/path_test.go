@@ -17,7 +17,6 @@
 package env
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -39,12 +38,13 @@ func findGoModFile(dir string) (modfile string, noCacheFile bool, err error) {
 
 // Common testing directory structure:
 // testing_root/
-//   src/
-//	   subdir/
-//   valid_goproot/
-//	   go.mod
-//	   go.sum
-//     cmd/gop/
+//
+//	  src/
+//		   subdir/
+//	  valid_goproot/
+//		   go.mod
+//		   go.sum
+//	    cmd/gop/
 func makeTestDir(t *testing.T) (root string, src string, gopRoot string) {
 	root, _ = filepath.EvalSymlinks(t.TempDir())
 	src = filepath.Join(root, "src")
@@ -57,12 +57,12 @@ func makeTestDir(t *testing.T) (root string, src string, gopRoot string) {
 func makeValidGopRoot(root string) {
 	os.Mkdir(root, 0755)
 	os.MkdirAll(filepath.Join(root, "cmd/gop"), 0755)
-	ioutil.WriteFile(filepath.Join(root, "go.mod"), []byte(""), 0644)
-	ioutil.WriteFile(filepath.Join(root, "go.sum"), []byte(""), 0644)
+	os.WriteFile(filepath.Join(root, "go.mod"), []byte(""), 0644)
+	os.WriteFile(filepath.Join(root, "go.sum"), []byte(""), 0644)
 }
 
 func writeDummyFile(path string) {
-	ioutil.WriteFile(path, []byte(""), 0644)
+	os.WriteFile(path, []byte(""), 0644)
 }
 
 func cleanup() {

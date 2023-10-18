@@ -1,3 +1,6 @@
+//go:build !windows
+// +build !windows
+
 /*
  * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
  *
@@ -16,13 +19,6 @@
 
 package env
 
-// The value of variables come form
-// `go build -ldflags '-X "buildDate=xxxxx"`
-var (
-	buildDate string
-)
-
-// BuildDate returns build date of the `gop` command.
-func BuildDate() string {
-	return buildDate
+func isGopCmd(fname string) bool {
+	return fname == "gop"
 }

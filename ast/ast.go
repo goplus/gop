@@ -1123,7 +1123,7 @@ type FileType = int16
 // are "free-floating" (see also issues #18593, #20744).
 type File struct {
 	Doc     *CommentGroup // associated documentation; or nil
-	Package token.Pos     // position of "package" keyword
+	Package token.Pos     // position of "package" keyword; or NoPos
 	Name    *Ident        // package name
 	Decls   []Decl        // top-level declarations; or nil
 
@@ -1145,7 +1145,12 @@ func (f *File) NoEntrypoint() bool {
 }
 
 // Pos returns position of first character belonging to the node.
-func (f *File) Pos() token.Pos { return f.Package }
+func (f *File) Pos() token.Pos {
+	if f.Package != token.NoPos {
+		return f.Package
+	}
+	return f.Name.NamePos
+}
 
 // End returns position of first character immediately after the node.
 func (f *File) End() token.Pos {

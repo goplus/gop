@@ -19,3 +19,7 @@ package env
 const (
 	envHOME = "USERPROFILE"
 )
+
+func isGopCmd(fname string) bool {
+	return fname == "gop.exe" || fname == "gop"
+}
