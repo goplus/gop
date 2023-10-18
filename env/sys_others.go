@@ -21,5 +21,4 @@ package env
 
 const (
 	envHOME = "HOME"
-	appEXT  = ""
 )

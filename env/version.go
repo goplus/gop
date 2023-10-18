@@ -49,7 +49,7 @@ func initEnv() {
 }
 
 func initEnvByGop() {
-	if fname := filepath.Base(os.Args[0]); fname != "gop"+appEXT {
+	if fname := filepath.Base(os.Args[0]); !isGopCmd(fname) {
 		if ret, err := gopEnv(); err == nil {
 			parts := strings.SplitN(strings.TrimRight(ret, "\n"), "\n", 3)
 			if len(parts) == 3 {

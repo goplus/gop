@@ -1,3 +1,6 @@
+//go:build !windows
+// +build !windows
+
 /*
  * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
  *
@@ -16,6 +19,6 @@
 
 package env
 
-const (
-	envHOME = "home"
-)
+func isGopCmd(fname string) bool {
+	return fname == "gop"
+}
