@@ -18,7 +18,9 @@ package env
 
 import (
 	"bytes"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -33,22 +35,36 @@ var (
 )
 
 func init() {
+	initEnv()
+}
+
+func initEnv() {
 	if buildVersion == "" {
-		var b bytes.Buffer
-		cmd := exec.Command("gop", "env", "GOPVERSION", "BUILDDATE", "GOPROOT")
-		cmd.Stdout = &b
-		err := cmd.Run()
-		if err == nil {
-			parts := strings.SplitN(strings.TrimRight(b.String(), "\n"), "\n", 3)
+		initEnvByGop()
+		return
+	}
+	if !strings.HasPrefix(buildVersion, "v"+MainVersion+".") {
+		panic("gop/env: [FATAL] Invalid buildVersion: " + buildVersion)
+	}
+}
+
+func initEnvByGop() {
+	if fname := filepath.Base(os.Args[0]); fname != "gop"+appEXT {
+		if ret, err := gopEnv(); err == nil {
+			parts := strings.SplitN(strings.TrimRight(ret, "\n"), "\n", 3)
 			if len(parts) == 3 {
 				buildVersion, buildDate, defaultGopRoot = parts[0], parts[1], parts[2]
 			}
 		}
-		return
 	}
-	if !strings.HasPrefix(buildVersion, "v"+MainVersion+".") {
-		panic("Invalid buildVersion: " + buildVersion)
-	}
+}
+
+var gopEnv = func() (string, error) {
+	var b bytes.Buffer
+	cmd := exec.Command("gop", "env", "GOPVERSION", "BUILDDATE", "GOPROOT")
+	cmd.Stdout = &b
+	err := cmd.Run()
+	return b.String(), err
 }
 
 // Installed checks is `gop` installed or not.

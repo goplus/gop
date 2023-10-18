@@ -22,6 +22,7 @@ var (
 	buildDate string
 )
 
+// BuildDate returns build date of the `gop` command.
 func BuildDate() string {
 	return buildDate
 }
