@@ -28,24 +28,27 @@ import (
 type Project = cl.Project
 
 type Config struct {
-	// Types provides type information for the package.
+	// Types provides type information for the package (optional).
 	Types *types.Package
 
-	// Fset provides source position information for syntax trees and types.
+	// Fset provides source position information for syntax trees and types (required).
 	// If Fset is nil, Load will use a new fileset, but preserve Fset's value.
 	Fset *token.FileSet
 
-	// WorkingDir is the directory in which to run gop compiler.
+	// WorkingDir is the directory in which to run gop compiler (optional).
+	// If WorkingDir is not set, os.Getwd() is used.
 	WorkingDir string
 
-	// C2goBase specifies base of standard c2go packages.
+	// C2goBase specifies base of standard c2go packages (optional).
 	// Default is github.com/goplus/.
 	C2goBase string
 
-	// LookupPub lookups the c2go package pubfile (named c2go.a.pub).
+	// LookupPub lookups the c2go package pubfile named c2go.a.pub (required).
+	// See gop/x/c2go.LookupPub.
 	LookupPub func(pkgPath string) (pubfile string, err error)
 
-	// LookupClass lookups a class by specified file extension.
+	// LookupClass lookups a class by specified file extension (required).
+	// See (*github.com/goplus/mod/gopmod.Module).LookupClass.
 	LookupClass func(ext string) (c *Project, ok bool)
 }
 
