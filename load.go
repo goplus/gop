@@ -21,13 +21,13 @@ import (
 	"go/token"
 	"go/types"
 	"io/fs"
-	"path/filepath"
 	"strings"
 	"syscall"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/parser"
+	"github.com/goplus/gop/x/c2go"
 	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/gox"
 	"github.com/goplus/mod/env"
@@ -79,19 +79,6 @@ func LoadMod(dir string, gop *env.Gop, conf *Config) (mod *gopmod.Module, err er
 	return new(gopmod.Module), nil
 }
 
-func lookupPub(mod *gopmod.Module) func(pkgPath string) (pubfile string, err error) {
-	return func(pkgPath string) (pubfile string, err error) {
-		if mod.File == nil { // no go.mod/gop.mod file
-			return "", syscall.ENOENT
-		}
-		pkg, err := mod.Lookup(pkgPath)
-		if err == nil {
-			pubfile = filepath.Join(pkg.Dir, "c2go.a.pub")
-		}
-		return
-	}
-}
-
 // -----------------------------------------------------------------------------
 
 func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (out, test *gox.Package, err error) {
@@ -134,7 +121,7 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 		Fset:        fset,
 		Importer:    imp,
 		LookupClass: mod.LookupClass,
-		LookupPub:   lookupPub(mod),
+		LookupPub:   c2go.LookupPub(mod),
 	}
 	for name, pkg := range pkgs {
 		if strings.HasSuffix(name, "_test") {
@@ -205,7 +192,7 @@ func LoadFiles(files []string, conf *Config) (out *gox.Package, err error) {
 			Fset:        fset,
 			Importer:    imp,
 			LookupClass: mod.LookupClass,
-			LookupPub:   lookupPub(mod),
+			LookupPub:   c2go.LookupPub(mod),
 		}
 		out, err = cl.NewPackage("", pkg, clConf)
 		if err != nil {

@@ -11,7 +11,7 @@ The Go+ programming language is designed for engineering, STEM education, and da
 
 For now, we suggest you install Go+ from source code.
 
-Note: Requires go1.17 or later
+Note: Requires go1.18 or later
 
 ```bash
 git clone https://github.com/goplus/gop.git

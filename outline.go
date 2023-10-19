@@ -28,6 +28,7 @@ import (
 
 	"github.com/goplus/gop/cl/outline"
 	"github.com/goplus/gop/parser"
+	"github.com/goplus/gop/x/c2go"
 	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/mod/gopmod"
 )
@@ -99,7 +100,7 @@ func Outline(dir string, conf *Config) (out outline.Package, err error) {
 			WorkingDir:  dir,
 			Importer:    imp,
 			LookupClass: mod.LookupClass,
-			LookupPub:   lookupPub(mod),
+			LookupPub:   c2go.LookupPub(mod),
 		})
 		if err != nil {
 			return

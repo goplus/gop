@@ -50,6 +50,7 @@ func init() {
 	gblConf = &cl.Config{
 		Fset:          gblFset,
 		Importer:      imp,
+		Recorder:      gopRecorder{},
 		LookupClass:   lookupClass,
 		LookupPub:     lookupPub,
 		C2goBase:      "github.com/goplus/gop/cl/internal",
