@@ -108,6 +108,7 @@ func gopSpxErrorTestEx(t *testing.T, msg, gmx, spxcode, gmxfile, spxfile string)
 		t.Fatal("ParseFSDir:", err)
 	}
 	conf := *gblConf
+	conf.Recorder = nil
 	conf.NoFileLine = false
 	conf.WorkingDir = "/foo"
 	conf.TargetDir = "/foo"
