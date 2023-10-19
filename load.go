@@ -58,11 +58,6 @@ func LoadMod(dir string, gop *env.Gop, conf *Config) (mod *gopmod.Module, err er
 		return
 	}
 	if mod != nil {
-		if mod.Path() == "std" { // a Go std package
-			// TODO: should do this at github.com/goplus/mod
-			mod.Module.Module.Mod.Path = ""
-			return
-		}
 		err = mod.ImportClasses()
 		if err != nil {
 			err = errors.NewWith(err, `mod.RegisterClasses()`, -2, "(*gopmod.Module).RegisterClasses", mod)
