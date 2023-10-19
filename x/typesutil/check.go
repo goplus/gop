@@ -21,29 +21,86 @@ import (
 	"go/types"
 
 	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/token"
 )
+
+type Project = cl.Project
+
+type Config struct {
+	// Types provides type information for the package.
+	Types *types.Package
+
+	// Fset provides source position information for syntax trees and types.
+	// If Fset is nil, Load will use a new fileset, but preserve Fset's value.
+	Fset *token.FileSet
+
+	// WorkingDir is the directory in which to run gop compiler.
+	WorkingDir string
+
+	// C2goBase specifies base of standard c2go packages.
+	// Default is github.com/goplus/.
+	C2goBase string
+
+	// LookupPub lookups the c2go package pubfile (named c2go.a.pub).
+	LookupPub func(pkgPath string) (pubfile string, err error)
+
+	// LookupClass lookups a class by specified file extension.
+	LookupClass func(ext string) (c *Project, ok bool)
+}
 
 // A Checker maintains the state of the type checker.
 // It must be created with NewChecker.
 type Checker struct {
-	c *types.Checker
+	conf    *types.Config
+	opts    *Config
+	goInfo  *types.Info
+	gopInfo *Info
 }
 
 // NewChecker returns a new Checker instance for a given package.
 // Package files may be added incrementally via checker.Files.
-func NewChecker(
-	conf *types.Config, fset *token.FileSet, pkg *types.Package,
-	goInfo *types.Info, gopInfo *Info) *Checker {
-	check := types.NewChecker(conf, fset, pkg, goInfo)
-	return &Checker{check}
+func NewChecker(conf *types.Config, opts *Config, goInfo *types.Info, gopInfo *Info) *Checker {
+	return &Checker{conf, opts, goInfo, gopInfo}
 }
 
 // Files checks the provided files as part of the checker's package.
 func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) error {
+	opts := p.opts
+	pkgTypes := opts.Types
+	fset := opts.Fset
+	conf := p.conf
 	if len(gopFiles) == 0 {
-		return p.c.Files(goFiles)
+		checker := types.NewChecker(conf, fset, pkgTypes, p.goInfo)
+		return checker.Files(goFiles)
 	}
-	// goxls: todo
-	return nil
+	gofs := make(map[string]*goast.File)
+	gopfs := make(map[string]*ast.File)
+	for _, goFile := range goFiles {
+		f := fset.File(goFile.Pos())
+		gofs[f.Name()] = goFile
+	}
+	for _, gopFile := range gopFiles {
+		f := fset.File(gopFile.Pos())
+		gopfs[f.Name()] = gopFile
+	}
+	pkg := &ast.Package{
+		Name:    pkgTypes.Name(),
+		Files:   gopfs,
+		GoFiles: gofs,
+	}
+	_, err := cl.NewPackage(pkgTypes.Path(), pkg, &cl.Config{
+		Types:          pkgTypes,
+		Fset:           fset,
+		WorkingDir:     opts.WorkingDir,
+		C2goBase:       opts.C2goBase,
+		LookupPub:      opts.LookupPub,
+		LookupClass:    opts.LookupClass,
+		Importer:       conf.Importer,
+		Recorder:       gopRecorder{p.gopInfo},
+		NoFileLine:     true,
+		NoAutoGenMain:  true,
+		NoSkipConstant: true,
+	})
+	return err
 }

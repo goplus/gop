@@ -213,6 +213,17 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 				log.Panicln("TODO: non-name $v on left side of :=")
 			}
 		}
+		if rec := ctx.recorder(); rec != nil {
+			newNames := make([]*ast.Ident, 0, len(names))
+			scope := ctx.cb.Scope()
+			for _, lhs := range expr.Lhs {
+				v := lhs.(*ast.Ident)
+				if scope.Lookup(v.Name) == nil {
+					newNames = append(newNames, v)
+				}
+			}
+			defer defNames(ctx, newNames, scope)
+		}
 		ctx.cb.DefineVarStart(expr.Pos(), names...)
 		if enableRecover {
 			defer func() {

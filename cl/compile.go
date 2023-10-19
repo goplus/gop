@@ -62,33 +62,140 @@ func SetDebug(flags int) {
 
 // -----------------------------------------------------------------------------
 
+type Recorder interface {
+	// Type maps expressions to their types, and for constant
+	// expressions, also their values. Invalid expressions are
+	// omitted.
+	//
+	// For (possibly parenthesized) identifiers denoting built-in
+	// functions, the recorded signatures are call-site specific:
+	// if the call result is not a constant, the recorded type is
+	// an argument-specific signature. Otherwise, the recorded type
+	// is invalid.
+	//
+	// The Types map does not record the type of every identifier,
+	// only those that appear where an arbitrary expression is
+	// permitted. For instance, the identifier f in a selector
+	// expression x.f is found only in the Selections map, the
+	// identifier z in a variable declaration 'var z int' is found
+	// only in the Defs map, and identifiers denoting packages in
+	// qualified identifiers are collected in the Uses map.
+	Type(ast.Expr, types.TypeAndValue)
+
+	// Instantiate maps identifiers denoting generic types or functions to their
+	// type arguments and instantiated type.
+	//
+	// For example, Instantiate will map the identifier for 'T' in the type
+	// instantiation T[int, string] to the type arguments [int, string] and
+	// resulting instantiated *Named type. Given a generic function
+	// func F[A any](A), Instances will map the identifier for 'F' in the call
+	// expression F(int(1)) to the inferred type arguments [int], and resulting
+	// instantiated *Signature.
+	//
+	// Invariant: Instantiating Uses[id].Type() with Instances[id].TypeArgs
+	// results in an equivalent of Instances[id].Type.
+	Instantiate(*ast.Ident, types.Instance)
+
+	// Def maps identifiers to the objects they define (including
+	// package names, dots "." of dot-imports, and blank "_" identifiers).
+	// For identifiers that do not denote objects (e.g., the package name
+	// in package clauses, or symbolic variables t in t := x.(type) of
+	// type switch headers), the corresponding objects are nil.
+	//
+	// For an embedded field, Def maps the field *Var it defines.
+	//
+	// Invariant: Defs[id] == nil || Defs[id].Pos() == id.Pos()
+	Def(id *ast.Ident, obj types.Object)
+
+	// Use maps identifiers to the objects they denote.
+	//
+	// For an embedded field, Use maps the *TypeName it denotes.
+	//
+	// Invariant: Uses[id].Pos() != id.Pos()
+	Use(id *ast.Ident, obj types.Object)
+
+	// Implicit maps nodes to their implicitly declared objects, if any.
+	// The following node and object types may appear:
+	//
+	//     node               declared object
+	//
+	//     *ast.ImportSpec    *PkgName for imports without renames
+	//     *ast.CaseClause    type-specific *Var for each type switch case clause (incl. default)
+	//     *ast.Field         anonymous parameter *Var (incl. unnamed results)
+	//
+	Implicit(node ast.Node, obj types.Object)
+
+	// Select maps selector expressions (excluding qualified identifiers)
+	// to their corresponding selections.
+	Select(*ast.SelectorExpr, *types.Selection)
+
+	// Scope maps ast.Nodes to the scopes they define. Package scopes are not
+	// associated with a specific node but with all files belonging to a package.
+	// Thus, the package scope can be found in the type-checked Package object.
+	// Scopes nest, with the Universe scope being the outermost scope, enclosing
+	// the package scope, which contains (one or more) files scopes, which enclose
+	// function scopes which in turn enclose statement and function literal scopes.
+	// Note that even though package-level functions are declared in the package
+	// scope, the function scopes are embedded in the file scope of the file
+	// containing the function declaration.
+	//
+	// The following node types may appear in Scopes:
+	//
+	//     *ast.File
+	//     *ast.FuncType
+	//     *ast.TypeSpec
+	//     *ast.BlockStmt
+	//     *ast.IfStmt
+	//     *ast.SwitchStmt
+	//     *ast.TypeSwitchStmt
+	//     *ast.CaseClause
+	//     *ast.CommClause
+	//     *ast.ForStmt
+	//     *ast.RangeStmt
+	//
+	Scope(ast.Node, *types.Scope)
+}
+
+// -----------------------------------------------------------------------------
+
 type Project = modfile.Project
 type Class = modfile.Class
 
 // Config of loading Go+ packages.
 type Config struct {
-	// Fset provides source position information for syntax trees and types.
+	// Types provides type information for the package (optional).
+	Types *types.Package
+
+	// Fset provides source position information for syntax trees and types (required).
 	// If Fset is nil, Load will use a new fileset, but preserve Fset's value.
 	Fset *token.FileSet
 
-	// WorkingDir is the directory in which to run gop compiler.
+	// WorkingDir is the directory in which to run gop compiler (optional).
+	// If WorkingDir is not set, os.Getwd() is used.
 	WorkingDir string
 
-	// TargetDir is the directory in which to generate Go files.
+	// TargetDir is the directory in which to generate Go files (optional).
+	// If TargetDir is not set, it is same as WorkingDir.
 	TargetDir string
 
-	// C2goBase specifies base of standard c2go packages.
+	// C2goBase specifies base of standard c2go packages (optional).
 	// Default is github.com/goplus/.
 	C2goBase string
 
-	// LookupPub lookups the c2go package pubfile (named c2go.a.pub).
+	// LookupPub lookups the c2go package pubfile named c2go.a.pub (required).
+	// See gop/x/c2go.LookupPub.
 	LookupPub func(pkgPath string) (pubfile string, err error)
 
-	// LookupClass lookups a class by specified file extension.
+	// LookupClass lookups a class by specified file extension (required).
+	// See (*github.com/goplus/mod/gopmod.Module).LookupClass.
 	LookupClass func(ext string) (c *Project, ok bool)
 
-	// An Importer resolves import paths to Packages.
+	// An Importer resolves import paths to Packages (optional).
 	Importer types.Importer
+
+	// A Recorder records existing objects including constants, variables and
+	// types etc (optional).
+	Recorder Recorder
 
 	// NoFileLine = true means not to generate file line comments.
 	NoFileLine bool
@@ -270,9 +377,18 @@ type blockCtx struct {
 	c2goBase     string // default is `github.com/goplus/`
 	targetDir    string
 	classRecv    *ast.FieldList // available when gmxSettings != nil
+	rec          Recorder
 	fileLine     bool
 	relativePath bool
 	isClass      bool
+	isGopFile    bool // is Go+ file or not
+}
+
+func (bc *blockCtx) recorder() Recorder {
+	if bc.isGopFile {
+		return bc.rec
+	}
+	return nil
 }
 
 func (bc *blockCtx) findImport(name string) (pr *gox.PkgRef, ok bool) {
@@ -382,6 +498,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		syms: make(map[string]loader), nodeInterp: interp, generics: make(map[string]bool),
 	}
 	confGox := &gox.Config{
+		Types:           conf.Types,
 		Fset:            fset,
 		Importer:        conf.Importer,
 		LoadNamed:       ctx.loadNamed,
@@ -422,8 +539,8 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		fileLine := !conf.NoFileLine
 		ctx := &blockCtx{
 			pkg: p, pkgCtx: ctx, cb: p.CB(), fset: p.Fset, targetDir: targetDir,
-			fileLine: fileLine, relativePath: conf.RelativePath, isClass: f.IsClass,
-			c2goBase: c2goBase(conf.C2goBase), imports: make(map[string]*gox.PkgRef),
+			fileLine: fileLine, relativePath: conf.RelativePath, isClass: f.IsClass, rec: conf.Recorder,
+			c2goBase: c2goBase(conf.C2goBase), imports: make(map[string]*gox.PkgRef), isGopFile: true,
 		}
 		preloadGopFile(p, ctx, fpath, f, conf)
 	}
@@ -774,6 +891,9 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 							} else if d.Doc != nil {
 								defs.SetComments(d.Doc)
 							}
+							if rec := ctx.recorder(); rec != nil {
+								rec.Def(t.Name, decl.Type().Obj())
+							}
 							ld.typInit = func() { // decycle
 								if debugLoad {
 									log.Println("==> Load > InitType", name)
@@ -899,6 +1019,9 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) {
 	if d.Doc != nil {
 		fn.SetComments(d.Doc)
 	}
+	if rec := ctx.recorder(); rec != nil {
+		rec.Def(d.Name, fn.Obj())
+	}
 	if genBody {
 		if body := d.Body; body != nil {
 			if recv != nil {
@@ -996,6 +1119,16 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 		pkg = ctx.pkg.Import(simplifyGopPackage(pkgPath), spec)
 	}
 	var name string
+	if rec := ctx.recorder(); rec != nil {
+		defer func() {
+			pkgName := types.NewPkgName(token.NoPos, ctx.pkg.Types, name, pkg.Types)
+			if spec.Name != nil {
+				rec.Def(spec.Name, pkgName)
+			} else {
+				rec.Implicit(spec, pkgName)
+			}
+		}()
+	}
 	if spec.Name != nil {
 		name = spec.Name.Name
 		if name == "." {
@@ -1020,12 +1153,14 @@ func loadConstSpecs(ctx *blockCtx, cdecl *gox.ConstDefs, specs []ast.Spec) {
 }
 
 func loadConsts(ctx *blockCtx, cdecl *gox.ConstDefs, v *ast.ValueSpec, iotav int) {
-	names := makeNames(v.Names)
+	vNames := v.Names
+	names := makeNames(vNames)
 	if v.Values == nil {
 		if debugLoad {
 			log.Println("==> Load const", names)
 		}
 		cdecl.Next(iotav, v.Pos(), names...)
+		defNames(ctx, vNames, nil)
 		return
 	}
 	var typ types.Type
@@ -1042,6 +1177,7 @@ func loadConsts(ctx *blockCtx, cdecl *gox.ConstDefs, v *ast.ValueSpec, iotav int
 		return len(v.Values)
 	}
 	cdecl.New(fn, iotav, v.Pos(), typ, names...)
+	defNames(ctx, v.Names, nil)
 }
 
 func loadVars(ctx *blockCtx, v *ast.ValueSpec, global bool) {
@@ -1092,6 +1228,20 @@ func loadVars(ctx *blockCtx, v *ast.ValueSpec, global bool) {
 			}
 		}
 		cb.EndInit(nv)
+	}
+	defNames(ctx, v.Names, scope)
+}
+
+func defNames(ctx *blockCtx, names []*ast.Ident, scope *types.Scope) {
+	if rec := ctx.recorder(); rec != nil {
+		if scope == nil {
+			scope = ctx.cb.Scope()
+		}
+		for _, name := range names {
+			if o := scope.Lookup(name.Name); o != nil {
+				rec.Def(name, o)
+			}
+		}
 	}
 }
 
