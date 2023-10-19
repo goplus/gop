@@ -100,14 +100,12 @@ func toParam(ctx *blockCtx, fld *ast.Field, args []*gox.Param) []*gox.Param {
 func toType(ctx *blockCtx, typ ast.Expr) types.Type {
 	switch v := typ.(type) {
 	case *ast.Ident:
-		if enableTypeParams {
-			ctx.idents = append(ctx.idents, v)
-			defer func() {
-				ctx.idents = ctx.idents[:len(ctx.idents)-1]
-			}()
-		}
+		ctx.idents = append(ctx.idents, v)
+		defer func() {
+			ctx.idents = ctx.idents[:len(ctx.idents)-1]
+		}()
 		typ := toIdentType(ctx, v)
-		if enableTypeParams && ctx.inInst == 0 {
+		if ctx.inInst == 0 {
 			if t, ok := typ.(*types.Named); ok {
 				if namedIsTypeParams(ctx, t) {
 					pos := ctx.idents[0].Pos()
@@ -142,7 +140,7 @@ func toType(ctx *blockCtx, typ ast.Expr) types.Type {
 		return toFuncType(ctx, v, nil, nil)
 	case *ast.SelectorExpr:
 		typ := toExternalType(ctx, v)
-		if enableTypeParams && ctx.inInst == 0 {
+		if ctx.inInst == 0 {
 			if t, ok := typ.(*types.Named); ok {
 				if namedIsTypeParams(ctx, t) {
 					panic(ctx.newCodeErrorf(v.Pos(), "cannot use generic type %v without instantiation", t.Obj().Type()))
