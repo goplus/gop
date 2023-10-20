@@ -1020,7 +1020,7 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) {
 		fn.SetComments(d.Doc)
 	}
 	if rec := ctx.recorder(); rec != nil {
-		rec.Def(d.Name, fn.Obj())
+		rec.Def(d.Name, &fn.Func)
 	}
 	if genBody {
 		if body := d.Body; body != nil {
