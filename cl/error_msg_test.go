@@ -916,7 +916,7 @@ println "hello"
 }
 
 func TestErrVarInFunc(t *testing.T) {
-	codeErrorTest(t, `./bar.gop:6:10: too few arguments in call to set("box")
+	codeErrorTest(t, `./bar.gop:6:10: not enough arguments in call to set
 	have (untyped string)
 	want (name string, v int)
 ./bar.gop:7:10: undefined: a`, `
