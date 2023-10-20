@@ -65,14 +65,14 @@ type Package struct {
 
 func (p *Package) ToSource() ([]byte, error) {
 	var buf bytes.Buffer
-	if err := gox.WriteTo(&buf, p.Pkg); err != nil {
+	if err := p.Pkg.WriteTo(&buf); err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
 }
 
 func (p *Package) ToAst() *goast.File {
-	return gox.ASTFile(p.Pkg)
+	return p.Pkg.ASTFile()
 }
 
 func ClassKind(fname string) (isProj, ok bool) {

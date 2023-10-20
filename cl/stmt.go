@@ -559,11 +559,15 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 			for t, other := range seen {
 				if T == nil && t == nil || T != nil && t != nil && types.Identical(T, t) {
 					haserr = true
-					pos := ctx.Position(citem.Pos())
+					pos := citem.Pos()
 					if T == types.Typ[types.UntypedNil] {
-						ctx.handleCodeErrorf(&pos, "multiple nil cases in type switch (first at %v)", ctx.Position(other.Pos()))
+						ctx.handleErrorf(
+							pos, "multiple nil cases in type switch (first at %v)",
+							ctx.Position(other.Pos()))
 					} else {
-						ctx.handleCodeErrorf(&pos, "duplicate case %s in type switch\n\tprevious case at %v", T, ctx.Position(other.Pos()))
+						ctx.handleErrorf(
+							pos, "duplicate case %s in type switch\n\tprevious case at %v",
+							T, ctx.Position(other.Pos()))
 					}
 				}
 			}
@@ -573,8 +577,7 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 		}
 		if c.List == nil {
 			if firstDefault != nil {
-				pos := ctx.Position(c.Pos())
-				ctx.handleCodeErrorf(&pos, "multiple defaults in type switch (first at %v)", ctx.Position(firstDefault.Pos()))
+				ctx.handleErrorf(c.Pos(), "multiple defaults in type switch (first at %v)", ctx.Position(firstDefault.Pos()))
 			} else {
 				firstDefault = c
 			}
@@ -648,8 +651,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 		}
 		if c.List == nil {
 			if firstDefault != nil {
-				pos := ctx.Position(c.Pos())
-				ctx.handleCodeErrorf(&pos, "multiple defaults in switch (first at %v)", ctx.Position(firstDefault.Pos()))
+				ctx.handleErrorf(c.Pos(), "multiple defaults in switch (first at %v)", ctx.Position(firstDefault.Pos()))
 			} else {
 				firstDefault = c
 			}
@@ -735,8 +737,7 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 	case token.CONTINUE:
 		ctx.cb.Continue(getLabel(ctx, label))
 	case token.FALLTHROUGH:
-		pos := ctx.Position(v.Pos())
-		ctx.handleCodeErrorf(&pos, "fallthrough statement out of place")
+		ctx.handleErrorf(v.Pos(), "fallthrough statement out of place")
 	default:
 		panic("unknown branch statement")
 	}
@@ -747,8 +748,7 @@ func getLabel(ctx *blockCtx, label *ast.Ident) *gox.Label {
 		if l, ok := ctx.cb.LookupLabel(label.Name); ok {
 			return l
 		}
-		pos := ctx.Position(label.Pos())
-		ctx.handleCodeErrorf(&pos, "label %v is not defined", label.Name)
+		ctx.handleErrorf(label.Pos(), "label %v is not defined", label.Name)
 	}
 	return nil
 }

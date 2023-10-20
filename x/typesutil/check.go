@@ -19,11 +19,41 @@ package typesutil
 import (
 	goast "go/ast"
 	"go/types"
+	"path/filepath"
+	"strings"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/token"
+	"github.com/qiniu/x/log"
 )
+
+// -----------------------------------------------------------------------------
+
+type dbgFlags int
+
+const (
+	DbgFlagVerbose dbgFlags = 1 << iota
+	DbgFlagPrintError
+	DbgFlagDisableRecover
+	DbgFlagDefault = DbgFlagVerbose | DbgFlagPrintError
+	DbgFlagAll     = DbgFlagDefault | DbgFlagDisableRecover
+)
+
+var (
+	debugVerbose  bool
+	debugPrintErr bool
+)
+
+func SetDebug(flags dbgFlags) {
+	debugVerbose = (flags & DbgFlagVerbose) != 0
+	debugPrintErr = (flags & DbgFlagPrintError) != 0
+	if (flags & DbgFlagDisableRecover) != 0 {
+		cl.SetDisableRecover(true)
+	}
+}
+
+// -----------------------------------------------------------------------------
 
 type Project = cl.Project
 
@@ -81,11 +111,19 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) error {
 	gopfs := make(map[string]*ast.File)
 	for _, goFile := range goFiles {
 		f := fset.File(goFile.Pos())
-		gofs[f.Name()] = goFile
+		file := f.Name()
+		fname := filepath.Base(file)
+		if strings.HasPrefix(fname, "gop_autogen") {
+			continue
+		}
+		gofs[file] = goFile
 	}
 	for _, gopFile := range gopFiles {
 		f := fset.File(gopFile.Pos())
 		gopfs[f.Name()] = gopFile
+	}
+	if debugVerbose {
+		log.Println("typesutil.Check:", pkgTypes.Path(), "gopFiles =", len(gopfs), "goFiles =", len(gofs))
 	}
 	pkg := &ast.Package{
 		Name:    pkgTypes.Name(),
@@ -105,5 +143,11 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) error {
 		NoAutoGenMain:  true,
 		NoSkipConstant: true,
 	})
+	if debugPrintErr {
+		if err != nil {
+			log.Println("typesutil.Check err:", err)
+			log.SingleStack()
+		}
+	}
 	return err
 }
