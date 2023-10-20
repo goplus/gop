@@ -115,7 +115,8 @@ func toType(ctx *blockCtx, typ ast.Expr) types.Type {
 							break
 						}
 					}
-					panic(ctx.newCodeErrorf(pos, "cannot use generic type %v without instantiation", t.Obj().Type()))
+					ctx.handleErrorf(pos, "cannot use generic type %v without instantiation", t.Obj().Type())
+					return types.Typ[types.Invalid]
 				}
 			}
 		}
@@ -182,9 +183,11 @@ func toExternalType(ctx *blockCtx, v *ast.SelectorExpr) types.Type {
 		if t, ok := o.(*types.TypeName); ok {
 			return t.Type()
 		}
-		panic(ctx.newCodeErrorf(v.Pos(), "%s.%s is not a type", name, v.Sel.Name))
+		ctx.handleErrorf(v.Pos(), "%s.%s is not a type", name, v.Sel.Name)
+	} else {
+		ctx.handleErrorf(v.Pos(), "undefined: %s", name)
 	}
-	panic(ctx.newCodeErrorf(v.Pos(), "undefined: %s", name))
+	return types.Typ[types.Invalid]
 }
 
 /*-----------------------------------------------------------------------------
@@ -204,7 +207,8 @@ func toIdentType(ctx *blockCtx, ident *ast.Ident) types.Type {
 	}
 	v, builtin := lookupType(ctx, ident.Name)
 	if isBuiltin(builtin) {
-		panic(ctx.newCodeErrorf(ident.Pos(), "use of builtin %s not in function call", ident.Name))
+		ctx.handleErrorf(ident.Pos(), "use of builtin %s not in function call", ident.Name)
+		return types.Typ[types.Invalid]
 	}
 	if t, ok := v.(*types.TypeName); ok {
 		return t.Type()
@@ -214,7 +218,8 @@ func toIdentType(ctx *blockCtx, ident *ast.Ident) types.Type {
 			return t.Type()
 		}
 	}
-	panic(ctx.newCodeErrorf(ident.Pos(), "%s is not a type", ident.Name))
+	ctx.handleErrorf(ident.Pos(), "%s is not a type", ident.Name)
+	return types.Typ[types.Invalid]
 }
 
 // TODO: optimization
@@ -255,8 +260,8 @@ func (p *checkRedecl) chkRedecl(ctx *blockCtx, name string, pos token.Pos) bool 
 		return false
 	}
 	if opos, ok := p.names[name]; ok {
-		npos := ctx.Position(pos)
-		ctx.handleCodeErrorf(&npos, "%v redeclared\n\t%v other declaration of %v",
+		ctx.handleErrorf(
+			pos, "%v redeclared\n\t%v other declaration of %v",
 			name, ctx.Position(opos), name)
 		return true
 	}

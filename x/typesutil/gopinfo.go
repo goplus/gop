@@ -20,6 +20,7 @@ import (
 	"go/types"
 
 	"github.com/goplus/gop/ast"
+	"github.com/qiniu/x/log"
 )
 
 // -----------------------------------------------------------------------------
@@ -210,6 +211,9 @@ func (info gopRecorder) Instantiate(id *ast.Ident, inst types.Instance) {
 //
 // Invariant: Defs[id] == nil || Defs[id].Pos() == id.Pos()
 func (info gopRecorder) Def(id *ast.Ident, obj types.Object) {
+	if debugVerbose {
+		log.Println("==> Def:", id, obj.Type())
+	}
 	info.Defs[id] = obj
 }
 
@@ -219,6 +223,9 @@ func (info gopRecorder) Def(id *ast.Ident, obj types.Object) {
 //
 // Invariant: Uses[id].Pos() != id.Pos()
 func (info gopRecorder) Use(id *ast.Ident, obj types.Object) {
+	if debugVerbose {
+		log.Println("==> Use:", id, obj.Type())
+	}
 	info.Uses[id] = obj
 }
 
@@ -231,6 +238,9 @@ func (info gopRecorder) Use(id *ast.Ident, obj types.Object) {
 //	*ast.CaseClause    type-specific *Var for each type switch case clause (incl. default)
 //	*ast.Field         anonymous parameter *Var (incl. unnamed results)
 func (info gopRecorder) Implicit(node ast.Node, obj types.Object) {
+	if debugVerbose {
+		log.Println("==> Implicit:", obj)
+	}
 	info.Implicits[node] = obj
 }
 
@@ -264,6 +274,9 @@ func (info gopRecorder) Select(e *ast.SelectorExpr, sel *types.Selection) {
 //	*ast.ForStmt
 //	*ast.RangeStmt
 func (info gopRecorder) Scope(n ast.Node, scope *types.Scope) {
+	if debugVerbose {
+		log.Println("==> Scope:", scope)
+	}
 	info.Scopes[n] = scope
 }
 

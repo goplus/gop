@@ -36,8 +36,10 @@ import (
 	"github.com/qiniu/x/errors"
 )
 
+type dbgFlags int
+
 const (
-	DbgFlagLoad = 1 << iota
+	DbgFlagLoad dbgFlags = 1 << iota
 	DbgFlagLookup
 	DbgFlagAll = DbgFlagLoad | DbgFlagLookup
 )
@@ -55,7 +57,7 @@ func SetDisableRecover(disableRecover bool) {
 	enableRecover = !disableRecover
 }
 
-func SetDebug(flags int) {
+func SetDebug(flags dbgFlags) {
 	debugLoad = (flags & DbgFlagLoad) != 0
 	debugLookup = (flags & DbgFlagLookup) != 0
 }
@@ -271,13 +273,9 @@ func initLoader(ctx *pkgCtx, syms map[string]loader, start token.Pos, name strin
 		return
 	}
 	if old, ok := syms[name]; ok {
-		var pos token.Position
-		if start != token.NoPos {
-			pos = ctx.Position(start)
-		}
 		oldpos := ctx.Position(old.pos())
-		ctx.handleCodeErrorf(
-			&pos, "%s redeclared in this block\n\tprevious declaration at %v", name, oldpos)
+		ctx.handleErrorf(
+			start, "%s redeclared in this block\n\tprevious declaration at %v", name, oldpos)
 		return
 	}
 	syms[name] = &baseLoader{start: start, fn: fn}
@@ -305,8 +303,8 @@ func getTypeLoader(ctx *pkgCtx, syms map[string]loader, start token.Pos, name st
 			if ld.start == token.NoPos {
 				ld.start = start
 			} else {
-				pos := ctx.Position(start)
-				ctx.handleCodeErrorf(&pos, "%s redeclared in this block\n\tprevious declaration at %v",
+				ctx.handleErrorf(
+					start, "%s redeclared in this block\n\tprevious declaration at %v",
 					name, ctx.Position(ld.start))
 			}
 			return ld
@@ -412,6 +410,11 @@ func (p *pkgCtx) newCodeErrorf(start token.Pos, format string, args ...interface
 
 func (p *pkgCtx) handleCodeErrorf(pos *token.Position, format string, args ...interface{}) {
 	p.handleErr(newCodeErrorf(pos, format, args...))
+}
+
+func (p *pkgCtx) handleErrorf(start token.Pos, format string, args ...interface{}) {
+	pos := p.Position(start)
+	p.handleErr(newCodeErrorf(&pos, format, args...))
 }
 
 func (p *pkgCtx) handleErr(err error) {
