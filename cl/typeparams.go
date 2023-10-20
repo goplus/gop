@@ -169,6 +169,9 @@ L:
 		case *ast.ParenExpr:
 			typ = t.X
 		case *ast.StarExpr:
+			if ptr {
+				panic("TODO: getRecvType")
+			}
 			ptr = true
 			typ = t.X
 		default:
