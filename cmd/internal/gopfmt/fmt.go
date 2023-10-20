@@ -38,14 +38,15 @@ import (
 	xformat "github.com/goplus/gop/x/format"
 )
 
-// Cmd - gop go
+// Cmd - gop fmt
 var Cmd = &base.Command{
-	UsageLine: "gop fmt [-n --smart --mvgo] path ...",
+	UsageLine: "gop fmt [flags] path ...",
 	Short:     "Format Go+ packages",
 }
 
 var (
 	flag        = &Cmd.Flag
+	flagTest    = flag.Bool("t", false, "test if Go+ files are formatted or not.")
 	flagNotExec = flag.Bool("n", false, "prints commands that would be executed.")
 	flagMoveGo  = flag.Bool("mvgo", false, "move .go files to .gop files (only available in `--smart` mode).")
 	flagSmart   = flag.Bool("smart", false, "convert Go code style into Go+ style.")
@@ -56,6 +57,7 @@ func init() {
 }
 
 var (
+	testErrCnt = 0
 	procCnt    = 0
 	walkSubDir = false
 	rootDir    = ""
@@ -93,6 +95,10 @@ func gopfmt(path string, class, smart, mvgo bool) (err error) {
 		return
 	}
 	fmt.Println(path)
+	if *flagTest {
+		testErrCnt++
+		return nil
+	}
 	if mvgo {
 		newPath := strings.TrimSuffix(path, ".go") + ".gop"
 		if err = os.WriteFile(newPath, target, 0666); err != nil {
@@ -198,6 +204,14 @@ func runCmd(cmd *base.Command, args []string) {
 	narg := flag.NArg()
 	if narg < 1 {
 		cmd.Usage(os.Stderr)
+	}
+	if *flagTest {
+		defer func() {
+			if testErrCnt > 0 {
+				fmt.Printf("total %d files are not formatted.\n", testErrCnt)
+				os.Exit(1)
+			}
+		}()
 	}
 	walker := newWalker()
 	for i := 0; i < narg; i++ {
