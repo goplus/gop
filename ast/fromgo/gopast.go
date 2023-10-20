@@ -211,7 +211,17 @@ func gopIdent(v *ast.Ident) *gopast.Ident {
 	return &gopast.Ident{
 		NamePos: v.NamePos,
 		Name:    v.Name,
+		Obj:     &gopast.Object{Data: v},
 	}
+}
+
+// CheckIdent checks if a Go+ ast.Ident is converted from a Go ast.Ident or not.
+// If it is, CheckIdent returns the original Go ast.Ident object.
+func CheckIdent(v *gopast.Ident) (id *ast.Ident, ok bool) {
+	if o := v.Obj; o != nil && o.Kind == 0 && o.Data != nil {
+		id, ok = o.Data.(*ast.Ident)
+	}
+	return
 }
 
 func gopIdents(names []*ast.Ident) []*gopast.Ident {
@@ -332,6 +342,7 @@ const (
 	KeepCgo
 )
 
+// ASTFile converts a Go ast.File into a Go+ ast.File object.
 func ASTFile(f *ast.File, mode int) *gopast.File {
 	if (mode & KeepFuncBody) != 0 {
 		log.Panicln("ASTFile: doesn't support keeping func body now")

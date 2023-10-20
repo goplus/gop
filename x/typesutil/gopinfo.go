@@ -212,7 +212,7 @@ func (info gopRecorder) Instantiate(id *ast.Ident, inst types.Instance) {
 // Invariant: Defs[id] == nil || Defs[id].Pos() == id.Pos()
 func (info gopRecorder) Def(id *ast.Ident, obj types.Object) {
 	if debugVerbose {
-		log.Println("==> Def:", id, obj.Type())
+		log.Println("==> Def:", id, obj)
 	}
 	info.Defs[id] = obj
 }
@@ -224,7 +224,7 @@ func (info gopRecorder) Def(id *ast.Ident, obj types.Object) {
 // Invariant: Uses[id].Pos() != id.Pos()
 func (info gopRecorder) Use(id *ast.Ident, obj types.Object) {
 	if debugVerbose {
-		log.Println("==> Use:", id, obj.Type())
+		log.Println("==> Use:", id, obj)
 	}
 	info.Uses[id] = obj
 }

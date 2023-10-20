@@ -39,6 +39,40 @@ func getGoxConf() *gox.Config {
 	return &gox.Config{Fset: fset, Importer: imp}
 }
 
+func TestErrMultiStarRecv(t *testing.T) {
+	defer func() {
+		if e := recover(); e == nil {
+			t.Fatal("TestErrMultiStarRecv: no panic?")
+		}
+	}()
+	getRecvType(&ast.StarExpr{
+		X: &ast.StarExpr{},
+	})
+}
+
+func TestErrPanicToRecv(t *testing.T) {
+	ctx := &blockCtx{
+		tlookup: &typeParamLookup{
+			[]*types.TypeParam{
+				types.NewTypeParam(types.NewTypeName(0, nil, "t", nil), nil),
+			},
+		},
+	}
+	recv := &ast.FieldList{
+		List: []*ast.Field{
+			{Type: &ast.SelectorExpr{}},
+		},
+	}
+	func() {
+		defer func() {
+			if e := recover(); e == nil {
+				t.Fatal("TestErrPanicToRecv: no panic?")
+			}
+		}()
+		toRecv(ctx, recv)
+	}()
+}
+
 func TestCompileErrWrapExpr(t *testing.T) {
 	defer func() {
 		if e := recover(); e != "TODO: can't use expr? in global" {

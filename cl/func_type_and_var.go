@@ -38,11 +38,22 @@ func toRecv(ctx *blockCtx, recv *ast.FieldList) *types.Var {
 		name = v.Names[0].Name
 	}
 	typ, star := getRecvType(v.Type)
-	t := toType(ctx, typ)
+	id, ok := typ.(*ast.Ident)
+	if !ok {
+		panic("TODO: getRecvType")
+	}
+	t := toIdentType(ctx, id)
 	if star {
 		t = types.NewPointer(t)
 	}
-	return ctx.pkg.NewParam(v.Pos(), name, t)
+	ret := ctx.pkg.NewParam(v.Pos(), name, t)
+	if rec := ctx.recorder(); rec != nil {
+		dRecv := recv.List[0]
+		if names := dRecv.Names; len(names) == 1 {
+			rec.Def(names[0], ret)
+		}
+	}
+	return ret
 }
 
 func getRecvTypeName(ctx *pkgCtx, recv *ast.FieldList, handleErr bool) (string, bool) {
@@ -90,7 +101,11 @@ func toParam(ctx *blockCtx, fld *ast.Field, args []*gox.Param) []*gox.Param {
 		return append(args, pkg.NewParam(fld.Pos(), "", typ))
 	}
 	for _, name := range fld.Names {
-		args = append(args, pkg.NewParam(name.Pos(), name.Name, typ))
+		param := pkg.NewParam(name.Pos(), name.Name, typ)
+		args = append(args, param)
+		if rec := ctx.recorder(); rec != nil {
+			rec.Def(name, param)
+		}
 	}
 	return args
 }

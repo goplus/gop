@@ -64,6 +64,7 @@ func SetDebug(flags dbgFlags) {
 
 // -----------------------------------------------------------------------------
 
+// Recorder represents a compiling event recorder.
 type Recorder interface {
 	// Type maps expressions to their types, and for constant
 	// expressions, also their values. Invalid expressions are
@@ -213,6 +214,24 @@ type Config struct {
 
 	// Outline = true means to skip compiling function bodies.
 	Outline bool
+}
+
+type goxRecorder struct {
+	rec Recorder
+}
+
+// Member maps identifiers to the objects they denote.
+func (p *goxRecorder) Member(id ast.Node, obj types.Object) {
+	switch v := id.(type) {
+	case *ast.SelectorExpr:
+		sel := v.Sel
+		// TODO: record event for a Go ident
+		if _, ok := fromgo.CheckIdent(sel); !ok {
+			p.rec.Use(sel, obj)
+		}
+	case *ast.Ident: // it's impossible converted from Go
+		p.rec.Use(v, obj)
+	}
 }
 
 type nodeInterp struct {
@@ -511,6 +530,9 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		DefaultGoFile:   defaultGoFile,
 		NoSkipConstant:  conf.NoSkipConstant,
 		PkgPathIox:      ioxPkgPath,
+	}
+	if conf.Recorder != nil {
+		confGox.Recorder = &goxRecorder{rec: conf.Recorder}
 	}
 	if enableRecover {
 		defer func() {

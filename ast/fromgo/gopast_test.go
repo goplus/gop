@@ -23,6 +23,7 @@ import (
 	"go/token"
 	"testing"
 
+	gopast "github.com/goplus/gop/ast"
 	"github.com/goplus/gop/format"
 )
 
@@ -124,4 +125,15 @@ type foo int
 
 func (a foo) Str() (string) {}
 `)
+}
+
+func TestCheckIdent(t *testing.T) {
+	if _, ok := CheckIdent(&gopast.Ident{}); ok {
+		t.Fatal("CheckIdent: found?")
+	}
+	if _, ok := CheckIdent(&gopast.Ident{Obj: &gopast.Object{
+		Data: &ast.Ident{},
+	}}); !ok {
+		t.Fatal("CheckIdent: not found?")
+	}
 }
