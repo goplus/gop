@@ -515,7 +515,7 @@ func (i *emptyImporter) Import(path string) (*types.Package, error) {
 
 func TestContext(t *testing.T) {
 	ctx := build.NewContext(&emptyImporter{}, nil)
-	_, err := ctx.BuildFile("main.gop", `println "Go+"`)
+	_, err := ctx.BuildFile("main.gop", `import "fmt"; fmt.Println "Go+"`)
 	if err == nil {
 		t.Fatal("BuildFile: no error?")
 	}
