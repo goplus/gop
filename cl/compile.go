@@ -1145,18 +1145,20 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 		pkg = ctx.pkg.Import(simplifyGopPackage(pkgPath), spec)
 	}
 	var name string
+	var pos token.Pos
+	var specName = spec.Name
 	if rec := ctx.recorder(); rec != nil {
 		defer func() {
-			pkgName := types.NewPkgName(token.NoPos, ctx.pkg.Types, name, pkg.Types)
-			if spec.Name != nil {
-				rec.Def(spec.Name, pkgName)
+			pkgName := types.NewPkgName(pos, ctx.pkg.Types, name, pkg.Types)
+			if specName != nil {
+				rec.Def(specName, pkgName)
 			} else {
 				rec.Implicit(spec, pkgName)
 			}
 		}()
 	}
-	if spec.Name != nil {
-		name = spec.Name.Name
+	if specName != nil {
+		name, pos = specName.Name, specName.NamePos
 		if name == "." {
 			ctx.lookups = append(ctx.lookups, pkg)
 			return
@@ -1166,7 +1168,7 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 			return
 		}
 	} else {
-		name = pkg.Types.Name()
+		name, pos = pkg.Types.Name(), spec.Path.Pos()
 	}
 	ctx.imports[name] = pkg
 }
