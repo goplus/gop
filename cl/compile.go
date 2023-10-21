@@ -894,7 +894,8 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 					if debugLoad {
 						log.Println("==> Preload type", name)
 					}
-					ld := getTypeLoader(parent, syms, t.Name.Pos(), name)
+					pos := t.Name.Pos()
+					ld := getTypeLoader(parent, syms, pos, name)
 					defs := ctx.pkg.NewTypeDefs()
 					if gopFile {
 						ld.typ = func() {
@@ -910,7 +911,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 							if debugLoad {
 								log.Println("==> Load > NewType", name)
 							}
-							decl := defs.NewType(name)
+							decl := defs.NewType(name, pos)
 							if t.Doc != nil {
 								defs.SetComments(t.Doc)
 							} else if d.Doc != nil {
