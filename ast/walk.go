@@ -16,7 +16,9 @@
 
 package ast
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Visitor - A Visitor's Visit method is invoked for each node encountered by Walk.
 // If the result visitor w is not nil, Walk visits each of the children
@@ -375,12 +377,6 @@ func Walk(v Visitor, node Node) {
 	case *SliceLit:
 		walkExprList(v, n.Elts)
 
-	case *ErrWrapExpr:
-		Walk(v, n.X)
-		if n.Default != nil {
-			Walk(v, n.Default)
-		}
-
 	case *LambdaExpr:
 		walkIdentList(v, n.Lhs)
 		walkExprList(v, n.Rhs)
@@ -425,6 +421,12 @@ func Walk(v Visitor, node Node) {
 		}
 		if n.Expr3 != nil {
 			Walk(v, n.Expr3)
+		}
+
+	case *ErrWrapExpr:
+		Walk(v, n.X)
+		if n.Default != nil {
+			Walk(v, n.Default)
 		}
 
 	default:
