@@ -916,14 +916,14 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 							} else if d.Doc != nil {
 								defs.SetComments(d.Doc)
 							}
-							if rec := ctx.recorder(); rec != nil {
-								rec.Def(t.Name, decl.Type().Obj())
-							}
 							ld.typInit = func() { // decycle
 								if debugLoad {
 									log.Println("==> Load > InitType", name)
 								}
 								decl.InitType(ctx.pkg, toType(ctx, t.Type))
+								if rec := ctx.recorder(); rec != nil {
+									rec.Def(t.Name, decl.Type().Obj())
+								}
 							}
 						}
 					} else {
