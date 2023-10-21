@@ -324,7 +324,7 @@ func getTypeLoader(ctx *pkgCtx, syms map[string]loader, start token.Pos, name st
 			} else {
 				ctx.handleErrorf(
 					start, "%s redeclared in this block\n\tprevious declaration at %v",
-					name, ctx.Position(ld.start))
+					name, ctx.Position(ld.pos()))
 			}
 			return ld
 		}
@@ -905,7 +905,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 								if debugLoad {
 									log.Println("==> Load > AliasType", name)
 								}
-								ctx.pkg.AliasType(name, toType(ctx, t.Type), t.Pos())
+								defs.AliasType(name, toType(ctx, t.Type), t.Pos())
 								return
 							}
 							if debugLoad {

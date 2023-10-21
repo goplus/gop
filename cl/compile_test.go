@@ -2206,12 +2206,12 @@ func main() {
 }
 `, `package main
 
+type bar = foo
 type foo struct {
 	p *foo
 	A int
 	B string `+"`tag1:123`"+`
 }
-type bar = foo
 
 func main() {
 	type a struct {
