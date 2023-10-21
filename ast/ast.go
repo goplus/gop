@@ -1144,6 +1144,11 @@ func (f *File) NoEntrypoint() bool {
 	return f.ShadowEntry != nil
 }
 
+// HasPkgDecl checks if `package xxx` exists or not.
+func (f *File) HasPkgDecl() bool {
+	return f.Package != token.NoPos
+}
+
 // Pos returns position of first character belonging to the node.
 func (f *File) Pos() token.Pos {
 	if f.Package != token.NoPos {

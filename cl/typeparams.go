@@ -130,7 +130,7 @@ type typeParamLookup struct {
 	typeParams []*types.TypeParam
 }
 
-func (p *typeParamLookup) Lookup(name string) types.Type {
+func (p *typeParamLookup) Lookup(name string) *types.TypeParam {
 	for _, t := range p.typeParams {
 		tname := t.Obj().Name()
 		if tname != "_" && name == tname {

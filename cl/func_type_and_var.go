@@ -224,17 +224,17 @@ Name context:
 // ---------------------------------------------------------------------------*/
 
 func toIdentType(ctx *blockCtx, ident *ast.Ident) (ret types.Type) {
+	var obj types.Object
 	if rec := ctx.recorder(); rec != nil {
 		defer func() {
-			if n, ok := ret.(interface {
-				Obj() *types.TypeName
-			}); ok {
-				rec.Use(ident, n.Obj())
+			if obj != nil {
+				rec.Use(ident, obj)
 			}
 		}()
 	}
 	if ctx.tlookup != nil {
 		if typ := ctx.tlookup.Lookup(ident.Name); typ != nil {
+			obj = typ.Obj()
 			return typ
 		}
 	}
@@ -244,10 +244,12 @@ func toIdentType(ctx *blockCtx, ident *ast.Ident) (ret types.Type) {
 		return types.Typ[types.Invalid]
 	}
 	if t, ok := v.(*types.TypeName); ok {
+		obj = t
 		return t.Type()
 	}
 	if v, _ := lookupPkgRef(ctx, nil, ident, objPkgRef); v != nil {
 		if t, ok := v.(*types.TypeName); ok {
+			obj = t
 			return t.Type()
 		}
 	}
