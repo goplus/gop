@@ -214,7 +214,16 @@ Name context:
 
 // ---------------------------------------------------------------------------*/
 
-func toIdentType(ctx *blockCtx, ident *ast.Ident) types.Type {
+func toIdentType(ctx *blockCtx, ident *ast.Ident) (ret types.Type) {
+	if rec := ctx.recorder(); rec != nil {
+		defer func() {
+			if n, ok := ret.(interface {
+				Obj() *types.TypeName
+			}); ok {
+				rec.Use(ident, n.Obj())
+			}
+		}()
+	}
 	if ctx.tlookup != nil {
 		if typ := ctx.tlookup.Lookup(ident.Name); typ != nil {
 			return typ
