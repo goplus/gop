@@ -183,6 +183,9 @@ type gopRecorder struct {
 // only in the Defs map, and identifiers denoting packages in
 // qualified identifiers are collected in the Uses map.
 func (info gopRecorder) Type(e ast.Expr, tv types.TypeAndValue) {
+	if debugVerbose {
+		log.Println("==> Type:", e, tv.Type)
+	}
 	info.Types[e] = tv
 }
 

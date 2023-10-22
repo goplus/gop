@@ -155,6 +155,12 @@ find:
 	}
 	if rec := ctx.recorder(); rec != nil {
 		rec.Use(ident, o)
+		e := ctx.cb.Get(-1)
+		tv := types.TypeAndValue{Type: e.Type, Value: e.CVal}
+		if !fvalue {
+			tv.Type = o.Type()
+		}
+		rec.Type(ident, tv)
 	}
 	return
 }
@@ -368,6 +374,10 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, flags int) {
 		}
 	default:
 		compileExpr(ctx, v.X)
+		if rec := ctx.recorder(); rec != nil {
+			e := ctx.cb.Get(-1)
+			rec.Type(v.X, types.TypeAndValue{Type: e.Type, Value: e.CVal})
+		}
 	}
 	if err := compileMember(ctx, v, v.Sel.Name, flags); err != nil {
 		panic(err)

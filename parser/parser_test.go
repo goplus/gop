@@ -17,13 +17,33 @@
 package parser
 
 import (
+	"io/fs"
 	"testing"
 
 	"github.com/goplus/gop/parser/parsertest"
 	"github.com/goplus/gop/token"
+	fsx "github.com/qiniu/x/http/fs"
 )
 
 // -----------------------------------------------------------------------------
+
+func TestFilter(t *testing.T) {
+	d := fsx.NewFileInfo("foo.go", 10)
+	if filter(d, func(fi fs.FileInfo) bool {
+		return false
+	}) {
+		t.Fatal("TestFilter failed")
+	}
+}
+
+func TestAssert(t *testing.T) {
+	defer func() {
+		if e := recover(); e != "go/parser internal error: panic msg" {
+			t.Fatal("TestAssert:", e)
+		}
+	}()
+	assert(false, "panic msg")
+}
 
 func TestExt(t *testing.T) {
 	cases := [][2]string{
@@ -61,6 +81,20 @@ func testErrCode(t *testing.T, code string, errExp, panicExp string) {
 	_, err := Parse(fset, "/foo/bar.gop", code, 0)
 	if err == nil || err.Error() != errExp {
 		t.Fatal("testErrCode error:", err)
+	}
+}
+
+func testErrCodeParseExpr(t *testing.T, code string, errExp, panicExp string) {
+	defer func() {
+		if e := recover(); e != nil {
+			if panicMsg(e) != panicExp {
+				t.Fatal("testErrCodeParseExpr panic:", e)
+			}
+		}
+	}()
+	_, err := ParseExpr(code)
+	if err == nil || err.Error() != errExp {
+		t.Fatal("testErrCodeParseExpr error:", err)
 	}
 }
 
@@ -120,10 +154,29 @@ test "hello", (x, "y") => {
 `, `/foo/bar.gop:3:19: expected 'IDENT', found "y"`, ``)
 }
 
+func TestErrTooManyParseExpr(t *testing.T) {
+	testErrCodeParseExpr(t, `func() int {
+  var
+  var
+  var
+  var
+  var
+  var
+  var
+  var
+  var
+  var
+  var
+  var
+}()
+`, `3:3: expected 'IDENT', found 'var' (and 10 more errors)`, ``)
+}
+
 func TestErrTooMany(t *testing.T) {
 	testErrCode(t, `
 func f() { var }
 func g() { var }
+func h() { var }
 func h() { var }
 func h() { var }
 func h() { var }
