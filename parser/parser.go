@@ -3664,6 +3664,7 @@ func (p *parser) parseGlobalStmts(sync map[token.Token]bool, pos token.Pos, stmt
 		Name: &ast.Ident{NamePos: pos, Name: "main"},
 		Doc:  doc,
 		Type: &ast.FuncType{
+			Func:   pos,
 			Params: &ast.FieldList{},
 		},
 		Body: &ast.BlockStmt{List: list},
