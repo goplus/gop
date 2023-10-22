@@ -124,10 +124,6 @@ func parseFile(fset *token.FileSet, filename string, src interface{}, mode Mode)
 // representing the fragments of erroneous source code). Multiple errors
 // are returned via a scanner.ErrorList which is sorted by source position.
 func ParseExprFrom(fset *token.FileSet, filename string, src any, mode Mode) (expr ast.Expr, err error) {
-	if fset == nil {
-		panic("parser.ParseExprFrom: no token.FileSet provided (fset == nil)")
-	}
-
 	// get source
 	text, err := readSourceLocal(filename, src)
 	if err != nil {

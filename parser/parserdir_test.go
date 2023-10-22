@@ -40,6 +40,16 @@ func init() {
 	SetDebug(DbgFlagAll)
 }
 
+func TestParseExprFrom(t *testing.T) {
+	fset := token.NewFileSet()
+	if _, err := ParseExprFrom(fset, "/foo/bar/not-exists", nil, 0); err == nil {
+		t.Fatal("ParseExprFrom: no error?")
+	}
+	if _, err := ParseExpr("1+1\n;"); err == nil || err.Error() != "2:1: expected 'EOF', found ';'" {
+		t.Fatal("ParseExpr:", err)
+	}
+}
+
 func TestReadSource(t *testing.T) {
 	buf := bytes.NewBuffer(nil)
 	if _, err := readSource(buf); err != nil {

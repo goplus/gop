@@ -75,6 +75,20 @@ func testErrCode(t *testing.T, code string, errExp, panicExp string) {
 	}
 }
 
+func testErrCodeParseExpr(t *testing.T, code string, errExp, panicExp string) {
+	defer func() {
+		if e := recover(); e != nil {
+			if panicMsg(e) != panicExp {
+				t.Fatal("testErrCodeParseExpr panic:", e)
+			}
+		}
+	}()
+	_, err := ParseExpr(code)
+	if err == nil || err.Error() != errExp {
+		t.Fatal("testErrCodeParseExpr error:", err)
+	}
+}
+
 func testClassErrCode(t *testing.T, code string, errExp, panicExp string) {
 	defer func() {
 		if e := recover(); e != nil {
@@ -131,10 +145,29 @@ test "hello", (x, "y") => {
 `, `/foo/bar.gop:3:19: expected 'IDENT', found "y"`, ``)
 }
 
+func TestErrTooManyParseExpr(t *testing.T) {
+	testErrCodeParseExpr(t, `func() int {
+  var
+  var
+  var
+  var
+  var
+  var
+  var
+  var
+  var
+  var
+  var
+  var
+}()
+`, `3:3: expected 'IDENT', found 'var' (and 10 more errors)`, ``)
+}
+
 func TestErrTooMany(t *testing.T) {
 	testErrCode(t, `
 func f() { var }
 func g() { var }
+func h() { var }
 func h() { var }
 func h() { var }
 func h() { var }
