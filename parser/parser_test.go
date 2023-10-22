@@ -17,13 +17,24 @@
 package parser
 
 import (
+	"io/fs"
 	"testing"
 
 	"github.com/goplus/gop/parser/parsertest"
 	"github.com/goplus/gop/token"
+	fsx "github.com/qiniu/x/http/fs"
 )
 
 // -----------------------------------------------------------------------------
+
+func TestFilter(t *testing.T) {
+	d := fsx.NewFileInfo("foo.go", 10)
+	if filter(d, func(fi fs.FileInfo) bool {
+		return false
+	}) {
+		t.Fatal("TestFilter failed")
+	}
+}
 
 func TestExt(t *testing.T) {
 	cases := [][2]string{

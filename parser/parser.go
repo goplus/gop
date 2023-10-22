@@ -381,7 +381,8 @@ func (p *parser) next() {
 }
 
 // A bailout panic is raised to indicate early termination.
-type bailout struct{}
+type bailout struct {
+}
 
 func (p *parser) error(pos token.Pos, msg string) {
 	epos := p.file.Position(pos)
