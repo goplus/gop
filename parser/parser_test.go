@@ -36,6 +36,15 @@ func TestFilter(t *testing.T) {
 	}
 }
 
+func TestAssert(t *testing.T) {
+	defer func() {
+		if e := recover(); e != "go/parser internal error: panic msg" {
+			t.Fatal("TestAssert:", e)
+		}
+	}()
+	assert(false, "panic msg")
+}
+
 func TestExt(t *testing.T) {
 	cases := [][2]string{
 		{"t.spx.gox", ".spx"},
