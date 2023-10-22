@@ -75,7 +75,7 @@ func parseFile(fset *token.FileSet, filename string, src interface{}, mode Mode)
 	}
 
 	// get source
-	text, err := readSource(filename, src)
+	text, err := readSourceLocal(filename, src)
 	if err != nil {
 		return
 	}
@@ -129,7 +129,7 @@ func ParseExprFrom(fset *token.FileSet, filename string, src any, mode Mode) (ex
 	}
 
 	// get source
-	text, err := readSource(filename, src)
+	text, err := readSourceLocal(filename, src)
 	if err != nil {
 		return
 	}

@@ -255,7 +255,7 @@ func ParseFile(fset *token.FileSet, filename string, src interface{}, mode Mode)
 
 // ParseFSFile parses the source code of a single Go+ source file and returns the corresponding ast.File node.
 func ParseFSFile(fset *token.FileSet, fs FileSystem, filename string, src interface{}, mode Mode) (f *ast.File, err error) {
-	code, err := readSource(filename, src)
+	code, err := readSourceFS(fs, filename, src)
 	if err != nil {
 		return
 	}
@@ -266,27 +266,38 @@ var (
 	errInvalidSource = errors.New("invalid source")
 )
 
+func readSource(src interface{}) ([]byte, error) {
+	switch s := src.(type) {
+	case string:
+		return []byte(s), nil
+	case []byte:
+		return s, nil
+	case *bytes.Buffer:
+		// is io.Reader, but src is already available in []byte form
+		if s != nil {
+			return s.Bytes(), nil
+		}
+	case io.Reader:
+		return io.ReadAll(s)
+	}
+	return nil, errInvalidSource
+}
+
 // If src != nil, readSource converts src to a []byte if possible;
 // otherwise it returns an error. If src == nil, readSource returns
 // the result of reading the file specified by filename.
-func readSource(filename string, src any) ([]byte, error) {
+func readSourceLocal(filename string, src interface{}) ([]byte, error) {
 	if src != nil {
-		switch s := src.(type) {
-		case string:
-			return []byte(s), nil
-		case []byte:
-			return s, nil
-		case *bytes.Buffer:
-			// is io.Reader, but src is already available in []byte form
-			if s != nil {
-				return s.Bytes(), nil
-			}
-		case io.Reader:
-			return io.ReadAll(s)
-		}
-		return nil, errInvalidSource
+		return readSource(src)
 	}
 	return os.ReadFile(filename)
+}
+
+func readSourceFS(fs FileSystem, filename string, src interface{}) ([]byte, error) {
+	if src != nil {
+		return readSource(src)
+	}
+	return fs.ReadFile(filename)
 }
 
 // -----------------------------------------------------------------------------

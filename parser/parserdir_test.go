@@ -42,15 +42,18 @@ func init() {
 
 func TestReadSource(t *testing.T) {
 	buf := bytes.NewBuffer(nil)
-	if _, err := readSource("", buf); err != nil {
+	if _, err := readSource(buf); err != nil {
 		t.Fatal("readSource failed:", err)
 	}
 	sr := strings.NewReader("")
-	if _, err := readSource("", sr); err != nil {
+	if _, err := readSource(sr); err != nil {
 		t.Fatal("readSource strings.Reader failed:", err)
 	}
-	if _, err := readSource("", 0); err == nil {
+	if _, err := readSource(0); err == nil {
 		t.Fatal("readSource int failed: no error?")
+	}
+	if _, err := readSourceLocal("/foo/bar/not-exists", nil); err == nil {
+		t.Fatal("readSourceLocal int failed: no error?")
 	}
 }
 
