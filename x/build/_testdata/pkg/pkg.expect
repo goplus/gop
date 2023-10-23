@@ -1,6 +1,6 @@
 package pkg
 
-import fmt "fmt"
+import "fmt"
 
 func Hello() {
 	fmt.Println("Go+")

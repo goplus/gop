@@ -84,7 +84,7 @@ println "Go+"
 `
 	var expect = `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	fmt.Println("Go+")
@@ -108,7 +108,7 @@ func TestGox(t *testing.T) {
 println "Go+"
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 type Rect struct {
 }
@@ -130,7 +130,7 @@ type Buffer struct {
 println "Go+"
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 type Buffer struct {
 	buf []byte
@@ -157,7 +157,7 @@ type Buffer struct {
 println "Go+"
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 type Buffer struct {
 	buf []byte
@@ -183,8 +183,8 @@ println "Go+"
 `, `package main
 
 import (
-	fmt "fmt"
-	bytes "bytes"
+	"fmt"
+	"bytes"
 )
 
 type Rect struct {
@@ -208,8 +208,8 @@ println "Go+"
 `, `package main
 
 import (
-	fmt "fmt"
-	bytes "bytes"
+	"fmt"
+	"bytes"
 )
 
 type Rect struct {
@@ -232,9 +232,9 @@ println a+1/2r
 `, `package main
 
 import (
-	fmt "fmt"
-	ng "github.com/goplus/gop/builtin/ng"
-	big "math/big"
+	"fmt"
+	"github.com/goplus/gop/builtin/ng"
+	"math/big"
 )
 
 func main() {
@@ -256,9 +256,9 @@ for line <- lines(r) {
 `, `package main
 
 import (
-	fmt "fmt"
-	iox "github.com/goplus/gop/builtin/iox"
-	io "io"
+	"fmt"
+	"github.com/goplus/gop/builtin/iox"
+	"io"
 )
 
 var r io.Reader
@@ -299,9 +299,9 @@ println addSafe("10", "abc")
 `, `package main
 
 import (
-	fmt "fmt"
-	strconv "strconv"
-	errors "github.com/qiniu/x/errors"
+	"fmt"
+	"strconv"
+	"github.com/qiniu/x/errors"
 )
 
 func add(x string, y string) (int, error) {
@@ -367,8 +367,8 @@ func TestSpx(t *testing.T) {
 	gopClTestEx(t, "main.tspx", `println "hi"`, `package main
 
 import (
-	fmt "fmt"
-	spx "github.com/goplus/gop/cl/internal/spx"
+	"fmt"
+	"github.com/goplus/gop/cl/internal/spx"
 )
 
 type MyGame struct {
@@ -385,8 +385,8 @@ func main() {
 	gopClTestEx(t, "Cat.tspx", `println "hi"`, `package main
 
 import (
-	fmt "fmt"
-	spx "github.com/goplus/gop/cl/internal/spx"
+	"fmt"
+	"github.com/goplus/gop/cl/internal/spx"
 )
 
 type Cat struct {
@@ -441,7 +441,7 @@ func TestFromTestdata(t *testing.T) {
 func TestFS(t *testing.T) {
 	var expect = []byte(`package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	fmt.Println("Go+")
@@ -459,7 +459,7 @@ func main() {
 func TestAst(t *testing.T) {
 	var expect = []byte(`package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	fmt.Println("Go+")
