@@ -194,13 +194,12 @@ func toChanType(ctx *blockCtx, v *ast.ChanType) *types.Chan {
 func toExternalType(ctx *blockCtx, v *ast.SelectorExpr) types.Type {
 	id := v.X.(*ast.Ident)
 	name := id.Name
-	if pr, ok := ctx.findImport(name); ok {
+	if pi, ok := ctx.findImport(name); ok {
 		rec := ctx.recorder()
 		if rec != nil {
-			pkgName := types.NewPkgName(id.NamePos, ctx.pkg.Types, name, pr.Types)
-			rec.Use(id, pkgName)
+			rec.Use(id, pi.pkgName)
 		}
-		o := pr.TryRef(v.Sel.Name)
+		o := pi.TryRef(v.Sel.Name)
 		if t, ok := o.(*types.TypeName); ok {
 			if rec != nil {
 				rec.Use(v.Sel, t)
