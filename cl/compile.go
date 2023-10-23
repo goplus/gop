@@ -382,12 +382,17 @@ type pkgCtx struct {
 	inInst   int             // toType in generic instance
 }
 
+type pkgImp struct {
+	*gox.PkgRef
+	pkgName *types.PkgName
+}
+
 type blockCtx struct {
 	*pkgCtx
 	pkg          *gox.Package
 	cb           *gox.CodeBuilder
 	fset         *token.FileSet
-	imports      map[string]*gox.PkgRef
+	imports      map[string]pkgImp
 	lookups      []*gox.PkgRef
 	clookups     []*cpackages.PkgRef
 	tlookup      *typeParamLookup
@@ -408,8 +413,8 @@ func (bc *blockCtx) recorder() Recorder {
 	return nil
 }
 
-func (bc *blockCtx) findImport(name string) (pr *gox.PkgRef, ok bool) {
-	pr, ok = bc.imports[name]
+func (bc *blockCtx) findImport(name string) (pi pkgImp, ok bool) {
+	pi, ok = bc.imports[name]
 	return
 }
 
@@ -565,7 +570,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		ctx := &blockCtx{
 			pkg: p, pkgCtx: ctx, cb: p.CB(), fset: p.Fset, targetDir: targetDir,
 			fileLine: fileLine, relativePath: conf.RelativePath, isClass: f.IsClass, rec: conf.Recorder,
-			c2goBase: c2goBase(conf.C2goBase), imports: make(map[string]*gox.PkgRef), isGopFile: true,
+			c2goBase: c2goBase(conf.C2goBase), imports: make(map[string]pkgImp), isGopFile: true,
 		}
 		preloadGopFile(p, ctx, fpath, f, conf)
 	}
@@ -576,7 +581,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		gofiles = append(gofiles, f)
 		ctx := &blockCtx{
 			pkg: p, pkgCtx: ctx, cb: p.CB(), fset: p.Fset, targetDir: targetDir,
-			imports: make(map[string]*gox.PkgRef),
+			imports: make(map[string]pkgImp),
 		}
 		preloadFile(p, ctx, fpath, f, false, false)
 	}
@@ -1144,21 +1149,25 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 	} else {
 		pkg = ctx.pkg.Import(simplifyGopPackage(pkgPath), spec)
 	}
-	var name string
+
 	var pos token.Pos
+	var name string
 	var specName = spec.Name
-	if rec := ctx.recorder(); rec != nil {
-		defer func() {
-			pkgName := types.NewPkgName(pos, ctx.pkg.Types, name, pkg.Types)
-			if specName != nil {
-				rec.Def(specName, pkgName)
-			} else {
-				rec.Implicit(spec, pkgName)
-			}
-		}()
-	}
 	if specName != nil {
-		name, pos = specName.Name, specName.NamePos
+		name, pos = specName.Name, specName.Pos()
+	} else {
+		name, pos = pkg.Types.Name(), spec.Path.Pos()
+	}
+	pkgName := types.NewPkgName(pos, ctx.pkg.Types, name, pkg.Types)
+	if rec := ctx.recorder(); rec != nil {
+		if specName != nil {
+			rec.Def(specName, pkgName)
+		} else {
+			rec.Implicit(spec, pkgName)
+		}
+	}
+
+	if specName != nil {
 		if name == "." {
 			ctx.lookups = append(ctx.lookups, pkg)
 			return
@@ -1167,10 +1176,8 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 			pkg.MarkForceUsed()
 			return
 		}
-	} else {
-		name, pos = pkg.Types.Name(), spec.Path.Pos()
 	}
-	ctx.imports[name] = pkg
+	ctx.imports[name] = pkgImp{pkg, pkgName}
 }
 
 func loadConstSpecs(ctx *blockCtx, cdecl *gox.ConstDefs, specs []ast.Spec) {

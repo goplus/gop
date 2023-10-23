@@ -119,12 +119,11 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (obj *gox.PkgRef, 
 		if name == "C" && len(ctx.clookups) > 0 {
 			return nil, objCPkgRef
 		}
-		if pr, ok := ctx.findImport(name); ok {
+		if pi, ok := ctx.findImport(name); ok {
 			if rec := ctx.recorder(); rec != nil {
-				pkgName := types.NewPkgName(ident.NamePos, ctx.pkg.Types, name, pr.Types)
-				rec.Use(ident, pkgName)
+				rec.Use(ident, pi.pkgName)
 			}
-			return pr, objPkgRef
+			return pi.PkgRef, objPkgRef
 		}
 	}
 
