@@ -35,8 +35,8 @@ C.printf C"Hello, world!\n"
 `, `package main
 
 import (
-	libc "github.com/goplus/gop/cl/internal/libc"
-	unsafe "unsafe"
+	"github.com/goplus/gop/cl/internal/libc"
+	"unsafe"
 )
 
 func main() {
@@ -53,8 +53,8 @@ C.printf C"Hello, world!\n"
 `, `package main
 
 import (
-	libc "github.com/goplus/gop/cl/internal/libc"
-	unsafe "unsafe"
+	"github.com/goplus/gop/cl/internal/libc"
+	"unsafe"
 )
 
 func main() {
@@ -71,8 +71,8 @@ C.printf C"Hello, world!\n"
 `, `package main
 
 import (
-	libc "github.com/goplus/gop/cl/internal/libc"
-	unsafe "unsafe"
+	"github.com/goplus/gop/cl/internal/libc"
+	"unsafe"
 )
 
 func main() {

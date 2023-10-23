@@ -164,7 +164,7 @@ func onMsg(msg string) {
 }
 `, `package main
 
-import spx "github.com/goplus/gop/cl/internal/spx"
+import "github.com/goplus/gop/cl/internal/spx"
 
 type Game struct {
 	*spx.MyGame
@@ -211,8 +211,8 @@ func onInit() {
 `, ``, `package main
 
 import (
-	fmt "fmt"
-	spx "github.com/goplus/gop/cl/internal/spx"
+	"fmt"
+	"github.com/goplus/gop/cl/internal/spx"
 )
 
 const Foo = 1
@@ -248,8 +248,8 @@ func onInit() {
 `, `package main
 
 import (
-	spx "github.com/goplus/gop/cl/internal/spx"
-	math "math"
+	"github.com/goplus/gop/cl/internal/spx"
+	"math"
 )
 
 type Game struct {
@@ -301,7 +301,7 @@ func onCloned() {
 }
 `, `package main
 
-import spx "github.com/goplus/gop/cl/internal/spx"
+import "github.com/goplus/gop/cl/internal/spx"
 
 type Game struct {
 	*spx.MyGame
@@ -341,8 +341,8 @@ println "Hi"
 `, `package main
 
 import (
-	fmt "fmt"
-	spx "github.com/goplus/gop/cl/internal/spx"
+	"fmt"
+	"github.com/goplus/gop/cl/internal/spx"
 )
 
 var x float64 = spx.Rand__1(1.2)
@@ -378,8 +378,8 @@ func onMsg(msg string) {
 `, `package main
 
 import (
-	fmt "fmt"
-	spx2 "github.com/goplus/gop/cl/internal/spx2"
+	"fmt"
+	"github.com/goplus/gop/cl/internal/spx2"
 )
 
 type Game struct {
@@ -410,8 +410,8 @@ func onMsg(msg string) {
 `, `package main
 
 import (
-	fmt "fmt"
-	spx2 "github.com/goplus/gop/cl/internal/spx2"
+	"fmt"
+	"github.com/goplus/gop/cl/internal/spx2"
 )
 
 type Game struct {
@@ -442,8 +442,8 @@ func onMsg(msg string) {
 `, `package main
 
 import (
-	fmt "fmt"
-	spx2 "github.com/goplus/gop/cl/internal/spx2"
+	"fmt"
+	"github.com/goplus/gop/cl/internal/spx2"
 )
 
 type Dog struct {
@@ -472,7 +472,7 @@ func TestSpxMainEntry(t *testing.T) {
 `, `
 `, `package main
 
-import spx2 "github.com/goplus/gop/cl/internal/spx2"
+import "github.com/goplus/gop/cl/internal/spx2"
 
 type Game struct {
 	spx2.Game
@@ -491,7 +491,7 @@ var (
 `, `
 `, `package main
 
-import spx2 "github.com/goplus/gop/cl/internal/spx2"
+import "github.com/goplus/gop/cl/internal/spx2"
 
 type Game struct {
 	spx2.Game
@@ -525,8 +525,8 @@ func onMsg(msg string) {
 `, `package main
 
 import (
-	fmt "fmt"
-	spx2 "github.com/goplus/gop/cl/internal/spx2"
+	"fmt"
+	"github.com/goplus/gop/cl/internal/spx2"
 )
 
 type Game struct {
@@ -566,7 +566,7 @@ func onMsg(msg string) {
 }
 `, `package main
 
-import spx "github.com/goplus/gop/cl/internal/spx"
+import "github.com/goplus/gop/cl/internal/spx"
 
 type Game struct {
 	*spx.MyGame
@@ -624,7 +624,7 @@ func onCloned() {
 }
 `, `package main
 
-import spx "github.com/goplus/gop/cl/internal/spx"
+import "github.com/goplus/gop/cl/internal/spx"
 
 type info struct {
 	x int
@@ -672,7 +672,7 @@ func onMsg(msg string) {
 }
 `, `package main
 
-import spx "github.com/goplus/gop/cl/internal/spx"
+import "github.com/goplus/gop/cl/internal/spx"
 
 type Game struct {
 	*spx.MyGame
@@ -705,8 +705,8 @@ func onMsg(msg string) {
 `, `package main
 
 import (
-	fmt "fmt"
-	spx "github.com/goplus/gop/cl/internal/spx"
+	"fmt"
+	"github.com/goplus/gop/cl/internal/spx"
 )
 
 type Game struct {
