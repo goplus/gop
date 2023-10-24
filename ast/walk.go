@@ -345,14 +345,16 @@ func Walk(v Visitor, node Node) {
 		}
 
 	case *FuncDecl:
-		if n.Doc != nil {
-			Walk(v, n.Doc)
+		if !n.Shadow { // not a shadow entry
+			if n.Doc != nil {
+				Walk(v, n.Doc)
+			}
+			if n.Recv != nil {
+				Walk(v, n.Recv)
+			}
+			Walk(v, n.Name)
+			Walk(v, n.Type)
 		}
-		if n.Recv != nil {
-			Walk(v, n.Recv)
-		}
-		Walk(v, n.Name)
-		Walk(v, n.Type)
 		if n.Body != nil {
 			Walk(v, n.Body)
 		}
