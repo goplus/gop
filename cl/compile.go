@@ -1117,7 +1117,7 @@ var unaryGopNames = map[string]string{
 }
 
 func loadFuncBody(ctx *blockCtx, fn *gox.Func, body *ast.BlockStmt, src ast.Node) {
-	cb := fn.BodyStart(ctx.pkg)
+	cb := fn.BodyStart(ctx.pkg, body)
 	compileStmts(ctx, body.List)
 	cb.End(src)
 }
