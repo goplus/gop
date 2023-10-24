@@ -161,7 +161,7 @@ v3.Append([1,2,3,4]...)
 v3.Append2([1,2,3,4]...)
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 type DataString = Data[string]
 type SliceString = Slice[[]string, string]
