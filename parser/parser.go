@@ -3668,7 +3668,8 @@ func (p *parser) parseGlobalStmts(sync map[token.Token]bool, pos token.Pos, stmt
 			Func:   pos,
 			Params: &ast.FieldList{},
 		},
-		Body: &ast.BlockStmt{List: list},
+		Body:   &ast.BlockStmt{List: list},
+		Shadow: true,
 	}
 	p.shadowEntry = f
 	return f
