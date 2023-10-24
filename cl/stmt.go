@@ -297,10 +297,10 @@ func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 		if v.Value != nil {
 			names = append(names, v.Value.(*ast.Ident).Name)
 		}
-		cb.ForRange(names...)
+		cb.ForRangeEx(names, v)
 		compileExpr(ctx, v.X)
 	} else {
-		cb.ForRange()
+		cb.ForRangeEx(nil, v)
 		n := 0
 		if v.Key == nil {
 			if v.Value != nil {
@@ -321,11 +321,11 @@ func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 	if pos == 0 {
 		pos = v.For
 	}
-	cb.RangeAssignThen(pos)
+	cb.RangeAssignThen(pos) // TODO: need NewScope for body
 	compileStmts(ctx, v.Body.List)
 	cb.SetComments(comments, once)
 	setBodyHandler(ctx)
-	cb.End()
+	cb.End(v)
 }
 
 func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
@@ -459,7 +459,7 @@ func toForStmt(forPos token.Pos, value ast.Expr, body *ast.BlockStmt, re *ast.Ra
 func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	cb := ctx.cb
 	comments, once := cb.BackupComments()
-	cb.For()
+	cb.For(v)
 	if v.Init != nil {
 		compileStmt(ctx, v.Init)
 	}
@@ -468,7 +468,7 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	} else {
 		cb.None()
 	}
-	cb.Then()
+	cb.Then(v.Body)
 	compileStmts(ctx, v.Body.List)
 	if v.Post != nil {
 		cb.Post()
@@ -476,7 +476,7 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	}
 	cb.SetComments(comments, once)
 	setBodyHandler(ctx)
-	cb.End()
+	cb.End(v)
 }
 
 // if init; cond then
@@ -487,15 +487,15 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 	cb := ctx.cb
 	comments, once := cb.BackupComments()
-	cb.If()
+	cb.If(v)
 	if v.Init != nil {
 		compileStmt(ctx, v.Init)
 	}
 	compileExpr(ctx, v.Cond)
-	cb.Then()
+	cb.Then(v.Body)
 	compileStmts(ctx, v.Body.List)
 	if e := v.Else; e != nil {
-		cb.Else()
+		cb.Else(e)
 		if stmts, ok := e.(*ast.BlockStmt); ok {
 			compileStmts(ctx, stmts.List)
 		} else {
@@ -503,7 +503,7 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 		}
 	}
 	cb.SetComments(comments, once)
-	cb.End()
+	cb.End(v)
 }
 
 // typeSwitch(name) init; expr typeAssertThen()
@@ -536,7 +536,7 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 	if ta.Type != nil {
 		panic("TODO: type switch syntax error, please use x.(type)")
 	}
-	cb.TypeSwitch(name)
+	cb.TypeSwitch(name, v)
 	if v.Init != nil {
 		compileStmt(ctx, v.Init)
 	}
@@ -582,13 +582,13 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 				firstDefault = c
 			}
 		}
-		cb.TypeCase(len(c.List)) // TypeCase(0) means default case
+		cb.TypeCase(len(c.List), c) // TypeCase(0) means default case
 		compileStmts(ctx, c.Body)
 		commentStmt(ctx, stmt)
-		cb.End()
+		cb.End(c)
 	}
 	cb.SetComments(comments, once)
-	cb.End()
+	cb.End(v)
 }
 
 // switch init; tag then
@@ -606,7 +606,7 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	cb := ctx.cb
 	comments, once := cb.BackupComments()
-	cb.Switch()
+	cb.Switch(v)
 	if v.Init != nil {
 		compileStmt(ctx, v.Init)
 	}
@@ -615,7 +615,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	} else {
 		cb.None() // switch {...}
 	}
-	cb.Then()
+	cb.Then(v.Body)
 	seen := make(valueMap)
 	var firstDefault ast.Stmt
 	for _, stmt := range v.Body.List {
@@ -656,17 +656,17 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 				firstDefault = c
 			}
 		}
-		cb.Case(len(c.List)) // Case(0) means default case
+		cb.Case(len(c.List), c) // Case(0) means default case
 		body, has := hasFallthrough(c.Body)
 		compileStmts(ctx, body)
 		if has {
 			cb.Fallthrough()
 		}
 		commentStmt(ctx, stmt)
-		cb.End()
+		cb.End(c)
 	}
 	cb.SetComments(comments, once)
-	cb.End()
+	cb.End(v)
 }
 
 func hasFallthrough(body []ast.Stmt) ([]ast.Stmt, bool) {
@@ -699,7 +699,7 @@ func hasFallthrough(body []ast.Stmt) ([]ast.Stmt, bool) {
 func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
 	cb := ctx.cb
 	comments, once := cb.BackupComments()
-	cb.Select()
+	cb.Select(v)
 	for _, stmt := range v.Body.List {
 		c, ok := stmt.(*ast.CommClause)
 		if !ok {
@@ -710,13 +710,13 @@ func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
 			compileStmt(ctx, c.Comm)
 			n = 1
 		}
-		cb.CommCase(n) // CommCase(0) means default case
+		cb.CommCase(n, c) // CommCase(0) means default case
 		compileStmts(ctx, c.Body)
 		commentStmt(ctx, stmt)
-		cb.End()
+		cb.End(c)
 	}
 	cb.SetComments(comments, once)
-	cb.End()
+	cb.End(v)
 }
 
 func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
