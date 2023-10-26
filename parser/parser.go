@@ -2068,23 +2068,9 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	return x
 }
 
-// isTypeName reports whether x is a (qualified) TypeName.
-func isTypeName(x ast.Expr) bool {
-	switch t := x.(type) {
-	case *ast.BadExpr:
-	case *ast.Ident:
-	case *ast.SelectorExpr:
-		_, isIdent := t.X.(*ast.Ident)
-		return isIdent
-	default:
-		return false // all other nodes are not type names
-	}
-	return true
-}
-
 // isLiteralType reports whether x is a legal composite literal type.
 func isLiteralType(x ast.Expr) bool {
-	switch t := x.(type) {
+	switch t := unparen(x).(type) {
 	case *ast.BadExpr:
 	case *ast.Ident:
 	case *ast.IndexExpr:
@@ -2188,7 +2174,7 @@ L:
 		case token.LBRACE: // {
 			if allowCmd && p.isCmd(x) { // println {...}
 				x = p.parseCallOrConversion(p.checkExprOrType(x), true)
-			} else if isLiteralType(x) && (p.exprLev >= 0 || !isTypeName(x)) {
+			} else if isLiteralType(x) && p.exprLev >= 0 {
 				if lhs {
 					p.resolve(x)
 				}
