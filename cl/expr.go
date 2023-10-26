@@ -355,6 +355,10 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr) {
 		}
 	default:
 		compileExpr(ctx, v.X)
+		if rec := ctx.recorder(); rec != nil {
+			e := ctx.cb.Get(-1)
+			rec.Type(v.X, types.TypeAndValue{Type: e.Type, Value: e.CVal})
+		}
 	}
 	ctx.cb.MemberRef(v.Sel.Name, v)
 }
