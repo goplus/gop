@@ -210,6 +210,7 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 			if v, ok := lhs.(*ast.Ident); ok {
 				names[i] = v.Name
 			} else {
+				compileExprLHS(ctx, lhs) // only for typesutil.Check
 				log.Panicln("TODO: non-name $v on left side of :=")
 			}
 		}
