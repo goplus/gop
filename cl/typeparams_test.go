@@ -591,3 +591,38 @@ func test(v1 int, v2 *Data) {
 }
 `)
 }
+
+func TestGenericTypeCompositeLit(t *testing.T) {
+	gopMixedClTest(t, "main", `package main
+type A[T any] struct {
+	m T
+}
+
+type B[T any] struct {
+	n A[T]
+}
+
+`, `
+var a [2]int
+if 0 == a[1] {
+	println "world"
+}
+println B[int]{}.n
+if 0 < (B[int]{}).n.m {
+}
+`, `package main
+
+import "fmt"
+
+var a [2]int
+
+func main() {
+	if 0 == a[1] {
+		fmt.Println("world")
+	}
+	fmt.Println(B[int]{}.n)
+	if 0 < (B[int]{}).n.m {
+	}
+}
+`)
+}
