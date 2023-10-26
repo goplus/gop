@@ -1,0 +1,115 @@
+package main
+
+file cmd.gop
+noEntrypoint
+ast.GenDecl:
+  Tok: var
+  Specs:
+    ast.ValueSpec:
+      Names:
+        ast.Ident:
+          Name: a
+      Type:
+        ast.ArrayType:
+          Len:
+            ast.BasicLit:
+              Kind: INT
+              Value: 2
+          Elt:
+            ast.Ident:
+              Name: int
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.IfStmt:
+          Cond:
+            ast.BinaryExpr:
+              X:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 0
+              Op: <
+              Y:
+                ast.IndexExpr:
+                  X:
+                    ast.Ident:
+                      Name: a
+                  Index:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 0
+          Body:
+            ast.BlockStmt:
+              List:
+                ast.ExprStmt:
+                  X:
+                    ast.CallExpr:
+                      Fun:
+                        ast.Ident:
+                          Name: println
+                      Args:
+                        ast.Ident:
+                          Name: a
+                ast.ExprStmt:
+                  X:
+                    ast.CallExpr:
+                      Fun:
+                        ast.Ident:
+                          Name: println
+                      Args:
+                        ast.CompositeLit:
+                          Type:
+                            ast.IndexExpr:
+                              X:
+                                ast.Ident:
+                                  Name: T
+                              Index:
+                                ast.Ident:
+                                  Name: int
+                          Elts:
+                            ast.BasicLit:
+                              Kind: INT
+                              Value: 1
+                ast.ExprStmt:
+                  X:
+                    ast.CallExpr:
+                      Fun:
+                        ast.Ident:
+                          Name: println
+                      Args:
+                        ast.CompositeLit:
+                          Type:
+                            ast.ParenExpr:
+                              X:
+                                ast.IndexExpr:
+                                  X:
+                                    ast.Ident:
+                                      Name: T
+                                  Index:
+                                    ast.Ident:
+                                      Name: int
+                          Elts:
+                            ast.KeyValueExpr:
+                              Key:
+                                ast.Ident:
+                                  Name: a
+                              Value:
+                                ast.BasicLit:
+                                  Kind: INT
+                                  Value: 1
+                            ast.KeyValueExpr:
+                              Key:
+                                ast.Ident:
+                                  Name: b
+                              Value:
+                                ast.BasicLit:
+                                  Kind: INT
+                                  Value: 2
