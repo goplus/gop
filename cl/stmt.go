@@ -206,7 +206,6 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 	}
 	if tok == token.DEFINE {
 		names := make([]string, len(expr.Lhs))
-		rec := ctx.recorder()
 		for i, lhs := range expr.Lhs {
 			if v, ok := lhs.(*ast.Ident); ok {
 				names[i] = v.Name
@@ -215,7 +214,7 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 				log.Panicln("TODO: non-name $v on left side of :=")
 			}
 		}
-		if rec != nil {
+		if rec := ctx.recorder(); rec != nil {
 			newNames := make([]*ast.Ident, 0, len(names))
 			scope := ctx.cb.Scope()
 			for _, lhs := range expr.Lhs {
