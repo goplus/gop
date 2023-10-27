@@ -320,6 +320,11 @@ func toStructType(ctx *blockCtx, v *ast.StructType) *types.Struct {
 				ctx.loadNamed(ctx.pkg, t)
 			}
 			fld := types.NewField(field.Type.Pos(), pkg, name, typ, true)
+			if rec := ctx.recorder(); rec != nil {
+				if ident := parseTypeEmbedName(field.Type); ident != nil {
+					rec.Def(ident, fld)
+				}
+			}
 			fields = append(fields, fld)
 			tags = append(tags, toFieldTag(field.Tag))
 			continue
@@ -329,6 +334,9 @@ func toStructType(ctx *blockCtx, v *ast.StructType) *types.Struct {
 				continue
 			}
 			fld := types.NewField(name.Pos(), pkg, name.Name, typ, false)
+			if rec := ctx.recorder(); rec != nil {
+				rec.Def(name, fld)
+			}
 			fields = append(fields, fld)
 			tags = append(tags, toFieldTag(field.Tag))
 		}
