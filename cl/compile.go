@@ -222,15 +222,18 @@ type goxRecorder struct {
 
 // Member maps identifiers to the objects they denote.
 func (p *goxRecorder) Member(id ast.Node, obj types.Object) {
+	tv := types.TypeAndValue{Type: obj.Type()}
 	switch v := id.(type) {
 	case *ast.SelectorExpr:
 		sel := v.Sel
 		// TODO: record event for a Go ident
 		if _, ok := fromgo.CheckIdent(sel); !ok {
 			p.rec.Use(sel, obj)
+			p.rec.Type(v, tv)
 		}
-	case *ast.Ident: // it's impossible converted from Go
+	case *ast.Ident: // it's in a classfile and impossible converted from Go
 		p.rec.Use(v, obj)
+		p.rec.Type(v, tv)
 	}
 }
 
