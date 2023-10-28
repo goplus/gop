@@ -74,7 +74,7 @@ const (
 
 const errorPkgPath = "github.com/qiniu/x/errors"
 
-func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (obj *gox.PkgRef, kind int) {
+func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg *gox.PkgRef, kind int) {
 	fvalue := (flags&clIdentSelectorExpr) != 0 || (flags&clIdentLHS) == 0
 	name := ident.Name
 	if name == "_" {
@@ -85,6 +85,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (obj *gox.PkgRef, 
 		return
 	}
 
+	var oldo types.Object
 	scope := ctx.pkg.Types.Scope()
 	at, o := ctx.cb.Scope().LookupParent(name, token.NoPos)
 	if o != nil {
@@ -137,7 +138,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (obj *gox.PkgRef, 
 		if (flags&clIdentAllowBuiltin) == 0 && isBuiltin(o) && !strings.HasPrefix(o.Name(), "print") {
 			panic(ctx.newCodeErrorf(ident.Pos(), "use of builtin %s not in function call", name))
 		}
-		o = obj
+		oldo, o = o, obj
 	} else if o == nil {
 		if (clIdentGoto & flags) != 0 {
 			l := ident.Obj.Data.(*ast.Ident)
@@ -153,12 +154,14 @@ find:
 		ctx.cb.VarRef(o, ident)
 	}
 	if rec := ctx.recorder(); rec != nil {
-		rec.Use(ident, o)
 		e := ctx.cb.Get(-1)
-		tv := types.TypeAndValue{Type: e.Type, Value: e.CVal}
-		if !fvalue {
-			tv.Type = o.Type()
+		if oldo != nil && gox.IsTypeEx(e.Type) {
+			rec.Use(ident, oldo)
+			return
 		}
+		rec.Use(ident, o)
+		typ, _ := gox.DerefType(e.Type)
+		tv := types.TypeAndValue{Type: typ, Value: e.CVal}
 		rec.Type(ident, tv)
 	}
 	return
