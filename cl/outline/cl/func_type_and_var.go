@@ -285,7 +285,7 @@ func toStructType(ctx *blockCtx, v *ast.StructType) *types.Struct {
 			if chk.chkRedecl(ctx, name, field.Type.Pos()) {
 				continue
 			}
-			fld := types.NewField(token.NoPos, pkg, name, typ, true)
+			fld := types.NewField(field.Type.Pos(), pkg, name, typ, true)
 			fields = append(fields, fld)
 			tags = append(tags, toFieldTag(field.Tag))
 			continue
@@ -294,7 +294,7 @@ func toStructType(ctx *blockCtx, v *ast.StructType) *types.Struct {
 			if chk.chkRedecl(ctx, name.Name, name.NamePos) {
 				continue
 			}
-			fld := types.NewField(token.NoPos, pkg, name.Name, typ, false)
+			fld := types.NewField(name.Pos(), pkg, name.Name, typ, false)
 			fields = append(fields, fld)
 			tags = append(tags, toFieldTag(field.Tag))
 		}
