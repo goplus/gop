@@ -750,7 +750,7 @@ func preloadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) 
 		}
 	}
 	sig := toFuncType(ctx, d.Type, recv, d)
-	fn, err := ctx.pkg.NewFuncWith(d.Pos(), name, sig, func() token.Pos {
+	fn, err := ctx.pkg.NewFuncWith(d.Name.Pos(), name, sig, func() token.Pos {
 		return d.Recv.List[0].Type.Pos()
 	})
 	if err != nil {

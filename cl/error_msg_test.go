@@ -431,7 +431,7 @@ for _, a = range b {
 
 func TestErrInitFunc(t *testing.T) {
 	codeErrorTest(t,
-		`./bar.gop:2:1: func init must have no arguments and no return values`, `
+		`./bar.gop:2:6: func init must have no arguments and no return values`, `
 func init(v byte) {
 }
 `)
