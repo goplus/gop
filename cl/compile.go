@@ -836,7 +836,7 @@ retry:
 		typ = t.X
 		goto retry
 	}
-	return nil
+	panic("TODO: parseTypeEmbedName unexpected")
 }
 
 func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFile, genFnBody bool) {
