@@ -309,6 +309,7 @@ func toStructType(ctx *blockCtx, v *ast.StructType) *types.Struct {
 	fields := make([]*types.Var, 0, len(fieldList))
 	tags := make([]string, 0, len(fieldList))
 	chk := newCheckRedecl()
+	rec := ctx.recorder()
 	for _, field := range fieldList {
 		typ := toType(ctx, field.Type)
 		if len(field.Names) == 0 { // embedded
@@ -320,13 +321,13 @@ func toStructType(ctx *blockCtx, v *ast.StructType) *types.Struct {
 				ctx.loadNamed(ctx.pkg, t)
 			}
 			fld := types.NewField(field.Type.Pos(), pkg, name, typ, true)
-			if rec := ctx.recorder(); rec != nil {
+			fields = append(fields, fld)
+			tags = append(tags, toFieldTag(field.Tag))
+			if rec != nil {
 				if ident := parseTypeEmbedName(field.Type); ident != nil {
 					rec.Def(ident, fld)
 				}
 			}
-			fields = append(fields, fld)
-			tags = append(tags, toFieldTag(field.Tag))
 			continue
 		}
 		for _, name := range field.Names {
@@ -334,11 +335,11 @@ func toStructType(ctx *blockCtx, v *ast.StructType) *types.Struct {
 				continue
 			}
 			fld := types.NewField(name.Pos(), pkg, name.Name, typ, false)
-			if rec := ctx.recorder(); rec != nil {
-				rec.Def(name, fld)
-			}
 			fields = append(fields, fld)
 			tags = append(tags, toFieldTag(field.Tag))
+			if rec != nil {
+				rec.Def(name, fld)
+			}
 		}
 	}
 	return types.NewStruct(fields, tags)
@@ -408,6 +409,7 @@ func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) types.Type {
 	if methodsList == nil {
 		return types.NewInterfaceType(nil, nil)
 	}
+	var rec = ctx.recorder()
 	var pkg = ctx.pkg.Types
 	var methods []*types.Func
 	var embeddeds []types.Type
@@ -420,9 +422,13 @@ func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) types.Type {
 			embeddeds = append(embeddeds, typ)
 			continue
 		}
-		name := m.Names[0].Name
+		name := m.Names[0]
 		sig := toFuncType(ctx, m.Type.(*ast.FuncType), nil, nil)
-		methods = append(methods, types.NewFunc(token.NoPos, pkg, name, sig))
+		mthd := types.NewFunc(name.NamePos, pkg, name.Name, sig)
+		methods = append(methods, mthd)
+		if rec != nil {
+			rec.Def(name, mthd)
+		}
 	}
 	intf := types.NewInterfaceType(methods, embeddeds).Complete()
 	return intf
