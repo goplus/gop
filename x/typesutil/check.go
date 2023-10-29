@@ -25,6 +25,7 @@ import (
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/token"
+	"github.com/goplus/gop/x/typesutil/internal/typesutil"
 	"github.com/qiniu/x/log"
 )
 
@@ -98,7 +99,7 @@ func NewChecker(conf *types.Config, opts *Config, goInfo *types.Info, gopInfo *I
 }
 
 // Files checks the provided files as part of the checker's package.
-func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) error {
+func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error) {
 	opts := p.opts
 	pkgTypes := opts.Types
 	fset := opts.Fset
@@ -107,6 +108,7 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) error {
 		checker := types.NewChecker(conf, fset, pkgTypes, p.goInfo)
 		return checker.Files(goFiles)
 	}
+	files := make([]*goast.File, 0, len(goFiles))
 	gofs := make(map[string]*goast.File)
 	gopfs := make(map[string]*ast.File)
 	for _, goFile := range goFiles {
@@ -117,6 +119,7 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) error {
 			continue
 		}
 		gofs[file] = goFile
+		files = append(files, goFile)
 	}
 	for _, gopFile := range gopFiles {
 		f := fset.File(gopFile.Pos())
@@ -130,7 +133,7 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) error {
 		Files:   gopfs,
 		GoFiles: gofs,
 	}
-	_, err := cl.NewPackage(pkgTypes.Path(), pkg, &cl.Config{
+	_, err = cl.NewPackage(pkgTypes.Path(), pkg, &cl.Config{
 		Types:          pkgTypes,
 		Fset:           fset,
 		WorkingDir:     opts.WorkingDir,
@@ -143,11 +146,39 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) error {
 		NoAutoGenMain:  true,
 		NoSkipConstant: true,
 	})
-	if debugPrintErr {
-		if err != nil {
+	if err != nil {
+		if debugPrintErr {
 			log.Println("typesutil.Check err:", err)
 			log.SingleStack()
 		}
+		return
 	}
-	return err
+	if len(files) > 0 {
+		scope := pkgTypes.Scope()
+		// remove all objects defined by files
+		for _, f := range files {
+			for _, decl := range f.Decls {
+				switch v := decl.(type) {
+				case *goast.GenDecl:
+					for _, spec := range v.Specs {
+						switch v := spec.(type) {
+						case *goast.ValueSpec:
+							for _, name := range v.Names {
+								typesutil.ScopeDelete(scope, name.Name)
+							}
+						case *goast.TypeSpec:
+							typesutil.ScopeDelete(scope, v.Name.Name)
+						}
+					}
+				case *goast.FuncDecl:
+					if v.Recv == nil {
+						typesutil.ScopeDelete(scope, v.Name.Name)
+					}
+				}
+			}
+		}
+		checker := types.NewChecker(conf, fset, pkgTypes, p.goInfo)
+		err = checker.Files(files)
+	}
+	return
 }
