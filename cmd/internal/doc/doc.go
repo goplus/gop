@@ -100,7 +100,7 @@ func outlinePkg(proj gopprojs.Proj, conf *gop.Config) {
 	} else if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	} else {
-		outlineDoc(out.Pkg(), out.Outline(*unexp), *unexp, *withDoc)
+		outlineDoc(out.Outline(*unexp), *unexp, *withDoc)
 	}
 }
 
@@ -109,7 +109,8 @@ const (
 	ln     = "\n"
 )
 
-func outlineDoc(pkg *types.Package, out *outline.All, all, withDoc bool) {
+func outlineDoc(out *outline.All, all, withDoc bool) {
+	pkg := out.Pkg()
 	fmt.Printf("package %s // import %s\n\n", pkg.Name(), strconv.Quote(pkg.Path()))
 	if withDoc && len(out.Consts) > 0 {
 		fmt.Print("CONSTANTS\n\n")
@@ -149,7 +150,7 @@ func outlineDoc(pkg *types.Package, out *outline.All, all, withDoc bool) {
 		printFuncsForType(pkg, t.Helpers, withDoc)
 		if !typName.IsAlias() {
 			typ := t.Type()
-			if named, ok := typ.CheckNamed(pkg); ok {
+			if named, ok := typ.CheckNamed(out.Package); ok {
 				for _, fn := range named.Methods() {
 					if o := fn.Obj(); all || o.Exported() {
 						if withDoc {

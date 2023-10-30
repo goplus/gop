@@ -402,6 +402,7 @@ type blockCtx struct {
 	c2goBase     string // default is `github.com/goplus/`
 	targetDir    string
 	classRecv    *ast.FieldList // available when gmxSettings != nil
+	fileScope    *types.Scope   // only valid when isGopFile
 	rec          Recorder
 	fileLine     bool
 	relativePath bool
@@ -570,10 +571,14 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	}
 	for fpath, f := range files {
 		fileLine := !conf.NoFileLine
+		fileScope := types.NewScope(p.Types.Scope(), f.Pos(), f.End(), fpath)
 		ctx := &blockCtx{
-			pkg: p, pkgCtx: ctx, cb: p.CB(), fset: p.Fset, targetDir: targetDir,
+			pkg: p, pkgCtx: ctx, cb: p.CB(), fset: p.Fset, targetDir: targetDir, fileScope: fileScope,
 			fileLine: fileLine, relativePath: conf.RelativePath, isClass: f.IsClass, rec: conf.Recorder,
 			c2goBase: c2goBase(conf.C2goBase), imports: make(map[string]pkgImp), isGopFile: true,
+		}
+		if rec := ctx.rec; rec != nil {
+			rec.Scope(f, fileScope)
 		}
 		preloadGopFile(p, ctx, fpath, f, conf)
 	}
@@ -1026,6 +1031,7 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) {
 			log.Printf("==> Load method %v.%s\n", recv.Type(), name)
 		}
 	}
+	pkg := ctx.pkg
 	if d.Operator {
 		if recv != nil { // binary op
 			if v, ok := binaryGopNames[name]; ok {
@@ -1034,7 +1040,7 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) {
 		} else { // unary op
 			if v, ok := unaryGopNames[name]; ok {
 				name = v
-				at := ctx.pkg.Types
+				at := pkg.Types
 				arg1 := d.Type.Params.List[0]
 				typ := toType(ctx, arg1.Type)
 				recv = types.NewParam(arg1.Pos(), at, arg1.Names[0].Name, typ)
@@ -1043,7 +1049,7 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) {
 		}
 	}
 	sig := toFuncType(ctx, d.Type, recv, d)
-	fn, err := ctx.pkg.NewFuncWith(d.Name.Pos(), name, sig, func() token.Pos {
+	fn, err := pkg.NewFuncWith(d.Name.Pos(), name, sig, func() token.Pos {
 		return d.Recv.List[0].Type.Pos()
 	})
 	if err != nil {
@@ -1051,10 +1057,13 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) {
 		return
 	}
 	if d.Doc != nil {
-		fn.SetComments(d.Doc)
+		fn.SetComments(pkg, d.Doc)
 	}
 	if rec := ctx.recorder(); rec != nil {
-		rec.Def(d.Name, &fn.Func)
+		rec.Def(d.Name, fn.Func)
+		if recv == nil {
+			ctx.fileScope.Insert(fn.Func)
+		}
 	}
 	if genBody {
 		if body := d.Body; body != nil {
