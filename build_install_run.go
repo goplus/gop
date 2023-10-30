@@ -86,8 +86,8 @@ func BuildPkgPath(workDir, pkgPath string, conf *Config, build *gocmd.BuildConfi
 	if err != nil {
 		return errors.NewWith(err, `GenGoPkgPath(workDir, pkgPath, conf, false)`, -2, "gop.GenGoPkgPath", workDir, pkgPath, conf, false)
 	}
-	old := chdirAndMod(localDir)
-	defer restoreDirAndMod(old)
+	old, mod := chdirAndMod(localDir)
+	defer restoreDirAndMod(old, mod)
 	return gocmd.Build(cwdParam(recursively), build)
 }
 
@@ -99,13 +99,18 @@ func BuildFiles(files []string, conf *Config, build *gocmd.BuildConfig) (err err
 	return gocmd.BuildFiles(files, build)
 }
 
-func chdirAndMod(dir string) string {
+func chdirAndMod(dir string) (old string, mod os.FileMode) {
+	mod = 0755
+	if info, err := os.Stat(dir); err == nil {
+		mod = info.Mode().Perm()
+	}
 	os.Chmod(dir, 0777)
-	return chdir(dir)
+	old = chdir(dir)
+	return
 }
 
-func restoreDirAndMod(old string) {
-	os.Chmod(".", 0555)
+func restoreDirAndMod(old string, mod os.FileMode) {
+	os.Chmod(".", mod)
 	os.Chdir(old)
 }
 
@@ -158,8 +163,8 @@ func TestPkgPath(workDir, pkgPath string, conf *Config, test *gocmd.TestConfig) 
 	if err != nil {
 		return errors.NewWith(err, `GenGoPkgPath(workDir, pkgPath, conf, false)`, -2, "gop.GenGoPkgPath", workDir, pkgPath, conf, false)
 	}
-	old := chdirAndMod(localDir)
-	defer restoreDirAndMod(old)
+	old, mod := chdirAndMod(localDir)
+	defer restoreDirAndMod(old, mod)
 	return gocmd.Test(cwdParam(recursively), test)
 }
 
