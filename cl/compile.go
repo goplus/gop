@@ -402,6 +402,7 @@ type blockCtx struct {
 	c2goBase     string // default is `github.com/goplus/`
 	targetDir    string
 	classRecv    *ast.FieldList // available when gmxSettings != nil
+	fileScope    *types.Scope   // only valid when isGopFile
 	rec          Recorder
 	fileLine     bool
 	relativePath bool
@@ -570,10 +571,14 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	}
 	for fpath, f := range files {
 		fileLine := !conf.NoFileLine
+		fileScope := types.NewScope(p.Types.Scope(), f.Pos(), f.End(), fpath)
 		ctx := &blockCtx{
-			pkg: p, pkgCtx: ctx, cb: p.CB(), fset: p.Fset, targetDir: targetDir,
+			pkg: p, pkgCtx: ctx, cb: p.CB(), fset: p.Fset, targetDir: targetDir, fileScope: fileScope,
 			fileLine: fileLine, relativePath: conf.RelativePath, isClass: f.IsClass, rec: conf.Recorder,
 			c2goBase: c2goBase(conf.C2goBase), imports: make(map[string]pkgImp), isGopFile: true,
+		}
+		if rec := ctx.rec; rec != nil {
+			rec.Scope(f, fileScope)
 		}
 		preloadGopFile(p, ctx, fpath, f, conf)
 	}
@@ -1056,6 +1061,9 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) {
 	}
 	if rec := ctx.recorder(); rec != nil {
 		rec.Def(d.Name, fn.Func)
+		if recv == nil {
+			ctx.fileScope.Insert(fn.Func)
+		}
 	}
 	if genBody {
 		if body := d.Body; body != nil {
