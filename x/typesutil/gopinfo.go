@@ -20,7 +20,6 @@ import (
 	"go/types"
 
 	"github.com/goplus/gop/ast"
-	"github.com/goplus/gox"
 	"github.com/qiniu/x/log"
 )
 
@@ -227,9 +226,6 @@ func (info gopRecorder) Def(id *ast.Ident, obj types.Object) {
 //
 // Invariant: Uses[id].Pos() != id.Pos()
 func (info gopRecorder) Use(id *ast.Ident, obj types.Object) {
-	if f, ok := obj.(*gox.Func); ok {
-		obj = &f.Func
-	}
 	if debugVerbose {
 		log.Println("==> Use:", id, obj)
 	}

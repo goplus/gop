@@ -1026,6 +1026,7 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) {
 			log.Printf("==> Load method %v.%s\n", recv.Type(), name)
 		}
 	}
+	pkg := ctx.pkg
 	if d.Operator {
 		if recv != nil { // binary op
 			if v, ok := binaryGopNames[name]; ok {
@@ -1034,7 +1035,7 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) {
 		} else { // unary op
 			if v, ok := unaryGopNames[name]; ok {
 				name = v
-				at := ctx.pkg.Types
+				at := pkg.Types
 				arg1 := d.Type.Params.List[0]
 				typ := toType(ctx, arg1.Type)
 				recv = types.NewParam(arg1.Pos(), at, arg1.Names[0].Name, typ)
@@ -1043,7 +1044,7 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) {
 		}
 	}
 	sig := toFuncType(ctx, d.Type, recv, d)
-	fn, err := ctx.pkg.NewFuncWith(d.Name.Pos(), name, sig, func() token.Pos {
+	fn, err := pkg.NewFuncWith(d.Name.Pos(), name, sig, func() token.Pos {
 		return d.Recv.List[0].Type.Pos()
 	})
 	if err != nil {
@@ -1051,10 +1052,10 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) {
 		return
 	}
 	if d.Doc != nil {
-		fn.SetComments(d.Doc)
+		fn.SetComments(pkg, d.Doc)
 	}
 	if rec := ctx.recorder(); rec != nil {
-		rec.Def(d.Name, &fn.Func)
+		rec.Def(d.Name, fn.Func)
 	}
 	if genBody {
 		if body := d.Body; body != nil {

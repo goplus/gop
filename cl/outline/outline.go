@@ -55,7 +55,8 @@ type Config struct {
 }
 
 type Package struct {
-	pkg *gox.Package
+	pkg  *types.Package
+	docs gox.ObjectDocs
 }
 
 // NewPackage creates a Go/Go+ outline package.
@@ -75,11 +76,11 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (_ Package, err 
 	if err != nil {
 		return
 	}
-	return Package{ret}, nil
+	return Package{ret.Types, ret.Docs}, nil
 }
 
 func (p Package) Pkg() *types.Package {
-	return p.pkg.Types
+	return p.pkg
 }
 
 func (p Package) Valid() bool {
@@ -94,7 +95,7 @@ type All struct {
 	Funcs  []Func
 	Types  []*TypeName
 
-	pkg   *types.Package
+	Package
 	named map[*types.TypeName]*TypeName
 }
 
@@ -225,8 +226,8 @@ func (p *All) lookupNamed(pkg *types.Package, name string) (_ *TypeName, ok bool
 func (p Package) Outline(withUnexported ...bool) (ret *All) {
 	pkg := p.Pkg()
 	ret = &All{
-		pkg:   pkg,
-		named: make(map[*types.TypeName]*TypeName),
+		Package: p,
+		named:   make(map[*types.TypeName]*TypeName),
 	}
 	all := (withUnexported != nil && withUnexported[0])
 	aliasr := &typeutil.Map{}
@@ -248,25 +249,25 @@ func (p Package) Outline(withUnexported ...bool) (ret *All) {
 			continue
 		}
 		switch v := o.(type) {
-		case *gox.Func:
+		case *types.Func:
 			sig := v.Type().(*types.Signature)
 			if !all {
 				ret.checkUsedSig(sig)
 			}
 			if name, ok := checkGoptFunc(o.Name()); ok {
 				if named, ok := ret.lookupNamed(pkg, name); ok {
-					named.GoptFuncs = append(named.GoptFuncs, Func{v})
+					named.GoptFuncs = append(named.GoptFuncs, Func{v, p.docs})
 					continue
 				}
 			}
 			kind, named := ret.sigKind(aliasr, sig)
 			switch kind {
 			case sigNormal:
-				ret.Funcs = append(ret.Funcs, Func{v})
+				ret.Funcs = append(ret.Funcs, Func{v, p.docs})
 			case sigCreator:
-				named.Creators = append(named.Creators, Func{v})
+				named.Creators = append(named.Creators, Func{v, p.docs})
 			case sigHelper:
-				named.Helpers = append(named.Helpers, Func{v})
+				named.Helpers = append(named.Helpers, Func{v, p.docs})
 			}
 		case *types.Const:
 			if name := v.Name(); strings.HasPrefix(name, "Gop") {
@@ -364,15 +365,16 @@ func (p Var) Doc() string {
 }
 
 type Func struct {
-	*gox.Func
+	*types.Func
+	docs gox.ObjectDocs
 }
 
 func (p Func) Obj() types.Object {
-	return &p.Func.Func
+	return p.Func
 }
 
 func (p Func) Doc() string {
-	return p.Comments().Text()
+	return p.docs[p.Func].Text()
 }
 
 func CheckOverload(obj types.Object) (name string, fn *types.Func, ok bool) {
@@ -513,10 +515,10 @@ type Type struct {
 	types.Type
 }
 
-func (p Type) CheckNamed(pkg *types.Package) (_ Named, ok bool) {
+func (p Type) CheckNamed(pkg Package) (_ Named, ok bool) {
 	ret, ok := p.Type.(*types.Named)
-	if ok && ret.Obj().Pkg() == pkg {
-		return Named{ret}, true
+	if ok && ret.Obj().Pkg() == pkg.pkg {
+		return Named{ret, pkg.docs}, true
 	}
 	return
 }
@@ -525,6 +527,7 @@ func (p Type) CheckNamed(pkg *types.Package) (_ Named, ok bool) {
 
 type Named struct {
 	*types.Named
+	docs gox.ObjectDocs
 }
 
 func (p Named) Methods() []Func {
@@ -532,7 +535,7 @@ func (p Named) Methods() []Func {
 	ret := make([]Func, n)
 	for i := 0; i < n; i++ {
 		fn := p.Method(i)
-		ret[i] = Func{gox.MethodFrom(fn)}
+		ret[i] = Func{fn, p.docs}
 	}
 	return ret
 }
