@@ -155,7 +155,8 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 	}
 	if len(files) > 0 {
 		scope := pkgTypes.Scope()
-		// remove all objects defined by files
+		objMap := make(map[types.Object]types.Object)
+		// remove all objects defined in Go files
 		for _, f := range files {
 			for _, decl := range f.Decls {
 				switch v := decl.(type) {
@@ -164,21 +165,37 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 						switch v := spec.(type) {
 						case *goast.ValueSpec:
 							for _, name := range v.Names {
-								typesutil.ScopeDelete(scope, name.Name)
+								scopeDelete(objMap, scope, name.Name)
 							}
 						case *goast.TypeSpec:
-							typesutil.ScopeDelete(scope, v.Name.Name)
+							scopeDelete(objMap, scope, v.Name.Name)
 						}
 					}
 				case *goast.FuncDecl:
 					if v.Recv == nil {
-						typesutil.ScopeDelete(scope, v.Name.Name)
+						scopeDelete(objMap, scope, v.Name.Name)
 					}
 				}
 			}
 		}
 		checker := types.NewChecker(conf, fset, pkgTypes, p.goInfo)
 		err = checker.Files(files)
+		for o := range objMap {
+			objMap[o] = scope.Lookup(o.Name())
+		}
+		// correct Go+ types info to avoid there are two instances for same Go object:
+		uses := p.gopInfo.Uses
+		for id, old := range uses {
+			if new := objMap[old]; new != nil {
+				uses[id] = new
+			}
+		}
 	}
 	return
+}
+
+func scopeDelete(objMap map[types.Object]types.Object, scope *types.Scope, name string) {
+	if o := typesutil.ScopeDelete(scope, name); o != nil {
+		objMap[o] = nil
+	}
 }
