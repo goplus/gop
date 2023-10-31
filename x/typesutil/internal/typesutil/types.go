@@ -37,6 +37,11 @@ type Scope struct {
 }
 
 // ScopeDelete deletes an object from specified scope by its name.
-func ScopeDelete(s *types.Scope, name string) {
-	delete((*Scope)(unsafe.Pointer(s)).elems, name)
+func ScopeDelete(s *types.Scope, name string) types.Object {
+	elems := (*Scope)(unsafe.Pointer(s)).elems
+	if o, ok := elems[name]; ok {
+		delete(elems, name)
+		return o
+	}
+	return nil
 }
