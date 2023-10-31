@@ -186,7 +186,7 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 		// correct Go+ types info to avoid there are two instances for same Go object:
 		uses := p.gopInfo.Uses
 		for id, old := range uses {
-			if new, ok := objMap[old]; ok {
+			if new := objMap[old]; new != nil {
 				uses[id] = new
 			}
 		}
