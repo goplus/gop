@@ -67,6 +67,8 @@ func init() {
 		C2goBase:      "github.com/goplus/gop/cl/internal",
 		NoFileLine:    false,
 		NoAutoGenMain: true,
+		RelativePath:  true,
+		TargetDir:     ".",
 	}
 }
 
