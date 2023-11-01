@@ -45,7 +45,7 @@ func relFile(dir string, file string) string {
 func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
 	if ctx.fileLine {
 		start := stmt.Pos()
-		pos := ctx.fset.Position(start)
+		pos := ctx.Position(start)
 		if ctx.relativePath {
 			pos.Filename = relFile(ctx.targetDir, pos.Filename)
 		}
@@ -578,7 +578,8 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 		}
 		if c.List == nil {
 			if firstDefault != nil {
-				ctx.handleErrorf(c.Pos(), "multiple defaults in type switch (first at %v)", ctx.Position(firstDefault.Pos()))
+				ctx.handleErrorf(
+					c.Pos(), "multiple defaults in type switch (first at %v)", ctx.Position(firstDefault.Pos()))
 			} else {
 				firstDefault = c
 			}
@@ -635,12 +636,12 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 				for _, vt := range seen[val] {
 					if types.Identical(typ, vt.typ) {
 						haserr = true
-						src, pos := ctx.LoadExpr(v.Src)
-						if _, ok := v.Src.(*ast.BasicLit); ok {
-							ctx.handleCodeErrorf(&pos, "duplicate case %s in switch\n\tprevious case at %v",
+						src := ctx.LoadExpr(v.Src)
+						if lit, ok := v.Src.(*ast.BasicLit); ok {
+							ctx.handleErrorf(lit.Pos(), "duplicate case %s in switch\n\tprevious case at %v",
 								src, ctx.Position(vt.pos))
 						} else {
-							ctx.handleCodeErrorf(&pos, "duplicate case %s (value %#v) in switch\n\tprevious case at %v",
+							ctx.handleErrorf(v.Src.Pos(), "duplicate case %s (value %#v) in switch\n\tprevious case at %v",
 								src, val, ctx.Position(vt.pos))
 						}
 					}

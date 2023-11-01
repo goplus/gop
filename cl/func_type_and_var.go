@@ -62,8 +62,8 @@ func getRecvTypeName(ctx *pkgCtx, recv *ast.FieldList, handleErr bool) (string, 
 		return t.Name, true
 	}
 	if handleErr {
-		src, pos := ctx.LoadExpr(typ)
-		ctx.handleCodeErrorf(&pos, "invalid receiver type %v (%v is not a defined type)", src, src)
+		src := ctx.LoadExpr(typ)
+		ctx.handleErrorf(typ.Pos(), "invalid receiver type %v (%v is not a defined type)", src, src)
 	}
 	return "", false
 }
@@ -399,8 +399,8 @@ func toInt64(ctx *blockCtx, e ast.Expr, emsg string) int64 {
 			return v
 		}
 	}
-	src, pos := ctx.LoadExpr(e)
-	panic(newCodeErrorf(&pos, emsg, src))
+	src := ctx.LoadExpr(e)
+	panic(ctx.newCodeErrorf(e.Pos(), emsg, src))
 }
 
 func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) types.Type {

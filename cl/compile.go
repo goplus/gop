@@ -251,30 +251,17 @@ func (p *nodeInterp) Position(start token.Pos) token.Position {
 
 func (p *nodeInterp) Caller(node ast.Node) string {
 	if expr, ok := node.(*ast.CallExpr); ok {
-		node = expr.Fun
-		start := node.Pos()
-		pos := p.fset.Position(start)
-		f := p.files[pos.Filename]
-		n := int(node.End() - start)
-		return string(f.Code[pos.Offset : pos.Offset+n])
+		return p.LoadExpr(expr.Fun)
 	}
 	return "the function call"
 }
 
-func (p *nodeInterp) LoadExpr(node ast.Node) (src string, pos token.Position) {
+func (p *nodeInterp) LoadExpr(node ast.Node) string {
 	start := node.Pos()
-	pos = p.fset.Position(start)
+	pos := p.fset.Position(start)
 	f := p.files[pos.Filename]
-	if f == nil { // not found
-		return
-	}
 	n := int(node.End() - start)
-	pos.Filename = relFile(p.workingDir, pos.Filename)
-	if pos.Offset+n < 0 {
-		log.Println("LoadExpr:", node, pos.Filename, pos.Line, pos.Offset, node.Pos(), node.End(), n)
-	}
-	src = string(f.Code[pos.Offset : pos.Offset+n])
-	return
+	return string(f.Code[pos.Offset : pos.Offset+n])
 }
 
 type loader interface {
@@ -422,27 +409,22 @@ func (bc *blockCtx) findImport(name string) (pi pkgImp, ok bool) {
 	return
 }
 
-func newCodeErrorf(pos *token.Position, format string, args ...interface{}) *gox.CodeError {
-	return &gox.CodeError{Pos: pos, Msg: fmt.Sprintf(format, args...)}
+func (p *pkgCtx) newCodeError(pos token.Pos, msg string) error {
+	return &gox.CodeError{Fset: p.nodeInterp, Pos: pos, Msg: msg}
 }
 
-func (p *pkgCtx) newCodeError(start token.Pos, msg string) error {
-	pos := p.Position(start)
-	return &gox.CodeError{Pos: &pos, Msg: msg}
+func (p *pkgCtx) newCodeErrorf(pos token.Pos, format string, args ...interface{}) error {
+	return &gox.CodeError{Fset: p.nodeInterp, Pos: pos, Msg: fmt.Sprintf(format, args...)}
 }
 
-func (p *pkgCtx) newCodeErrorf(start token.Pos, format string, args ...interface{}) error {
-	pos := p.Position(start)
-	return newCodeErrorf(&pos, format, args...)
+/*
+func (p *pkgCtx) handleError(pos token.Pos, msg string) {
+	p.handleErr(p.newCodeError(pos, msg))
 }
+*/
 
-func (p *pkgCtx) handleCodeErrorf(pos *token.Position, format string, args ...interface{}) {
-	p.handleErr(newCodeErrorf(pos, format, args...))
-}
-
-func (p *pkgCtx) handleErrorf(start token.Pos, format string, args ...interface{}) {
-	pos := p.Position(start)
-	p.handleErr(newCodeErrorf(&pos, format, args...))
+func (p *pkgCtx) handleErrorf(pos token.Pos, format string, args ...interface{}) {
+	p.handleErr(p.newCodeErrorf(pos, format, args...))
 }
 
 func (p *pkgCtx) handleErr(err error) {
@@ -540,6 +522,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		DefaultGoFile:   defaultGoFile,
 		NoSkipConstant:  conf.NoSkipConstant,
 		PkgPathIox:      ioxPkgPath,
+		DbgPositioner:   interp,
 	}
 	if conf.Recorder != nil {
 		confGox.Recorder = &goxRecorder{rec: conf.Recorder}
