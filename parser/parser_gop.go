@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -164,7 +165,7 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (p
 		if isClass {
 			mode |= ParseGoPlusClass
 		}
-		if !strings.HasPrefix(fname, "_") && (conf.Filter == nil || filter(conf.Filter, d)) {
+		if !strings.HasPrefix(fname, "_") && (conf.Filter == nil || filter(d, conf.Filter)) {
 			filename := fs.Join(path, fname)
 			if useGoParser {
 				if filedata, err := fs.ReadFile(filename); err == nil {
@@ -193,7 +194,7 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, path string, conf Config) (p
 	return
 }
 
-func filter(fn func(fs.FileInfo) bool, d fs.DirEntry) bool {
+func filter(d fs.DirEntry, fn func(fs.FileInfo) bool) bool {
 	fi, err := d.Info()
 	return err != nil || fn(fi)
 }
@@ -254,12 +255,7 @@ func ParseFile(fset *token.FileSet, filename string, src interface{}, mode Mode)
 
 // ParseFSFile parses the source code of a single Go+ source file and returns the corresponding ast.File node.
 func ParseFSFile(fset *token.FileSet, fs FileSystem, filename string, src interface{}, mode Mode) (f *ast.File, err error) {
-	var code []byte
-	if src == nil {
-		code, err = fs.ReadFile(filename)
-	} else {
-		code, err = readSource(src)
-	}
+	code, err := readSourceFS(fs, filename, src)
 	if err != nil {
 		return
 	}
@@ -285,6 +281,23 @@ func readSource(src interface{}) ([]byte, error) {
 		return io.ReadAll(s)
 	}
 	return nil, errInvalidSource
+}
+
+// If src != nil, readSource converts src to a []byte if possible;
+// otherwise it returns an error. If src == nil, readSource returns
+// the result of reading the file specified by filename.
+func readSourceLocal(filename string, src interface{}) ([]byte, error) {
+	if src != nil {
+		return readSource(src)
+	}
+	return os.ReadFile(filename)
+}
+
+func readSourceFS(fs FileSystem, filename string, src interface{}) ([]byte, error) {
+	if src != nil {
+		return readSource(src)
+	}
+	return fs.ReadFile(filename)
 }
 
 // -----------------------------------------------------------------------------

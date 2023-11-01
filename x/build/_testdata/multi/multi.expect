@@ -1,6 +1,6 @@
 package main
 
-import fmt "fmt"
+import "fmt"
 
 type BaseClass struct {
 	x int

@@ -108,6 +108,7 @@ func gopSpxErrorTestEx(t *testing.T, msg, gmx, spxcode, gmxfile, spxfile string)
 		t.Fatal("ParseFSDir:", err)
 	}
 	conf := *gblConf
+	conf.Recorder = nil
 	conf.NoFileLine = false
 	conf.WorkingDir = "/foo"
 	conf.TargetDir = "/foo"
@@ -163,7 +164,7 @@ func onMsg(msg string) {
 }
 `, `package main
 
-import spx "github.com/goplus/gop/cl/internal/spx"
+import "github.com/goplus/gop/cl/internal/spx"
 
 type Game struct {
 	*spx.MyGame
@@ -210,8 +211,8 @@ func onInit() {
 `, ``, `package main
 
 import (
-	fmt "fmt"
-	spx "github.com/goplus/gop/cl/internal/spx"
+	"fmt"
+	"github.com/goplus/gop/cl/internal/spx"
 )
 
 const Foo = 1
@@ -247,8 +248,8 @@ func onInit() {
 `, `package main
 
 import (
-	spx "github.com/goplus/gop/cl/internal/spx"
-	math "math"
+	"github.com/goplus/gop/cl/internal/spx"
+	"math"
 )
 
 type Game struct {
@@ -300,7 +301,7 @@ func onCloned() {
 }
 `, `package main
 
-import spx "github.com/goplus/gop/cl/internal/spx"
+import "github.com/goplus/gop/cl/internal/spx"
 
 type Game struct {
 	*spx.MyGame
@@ -340,8 +341,8 @@ println "Hi"
 `, `package main
 
 import (
-	fmt "fmt"
-	spx "github.com/goplus/gop/cl/internal/spx"
+	"fmt"
+	"github.com/goplus/gop/cl/internal/spx"
 )
 
 var x float64 = spx.Rand__1(1.2)
@@ -377,8 +378,8 @@ func onMsg(msg string) {
 `, `package main
 
 import (
-	fmt "fmt"
-	spx2 "github.com/goplus/gop/cl/internal/spx2"
+	"fmt"
+	"github.com/goplus/gop/cl/internal/spx2"
 )
 
 type Game struct {
@@ -409,8 +410,8 @@ func onMsg(msg string) {
 `, `package main
 
 import (
-	fmt "fmt"
-	spx2 "github.com/goplus/gop/cl/internal/spx2"
+	"fmt"
+	"github.com/goplus/gop/cl/internal/spx2"
 )
 
 type Game struct {
@@ -441,8 +442,8 @@ func onMsg(msg string) {
 `, `package main
 
 import (
-	fmt "fmt"
-	spx2 "github.com/goplus/gop/cl/internal/spx2"
+	"fmt"
+	"github.com/goplus/gop/cl/internal/spx2"
 )
 
 type Dog struct {
@@ -471,7 +472,7 @@ func TestSpxMainEntry(t *testing.T) {
 `, `
 `, `package main
 
-import spx2 "github.com/goplus/gop/cl/internal/spx2"
+import "github.com/goplus/gop/cl/internal/spx2"
 
 type Game struct {
 	spx2.Game
@@ -490,7 +491,7 @@ var (
 `, `
 `, `package main
 
-import spx2 "github.com/goplus/gop/cl/internal/spx2"
+import "github.com/goplus/gop/cl/internal/spx2"
 
 type Game struct {
 	spx2.Game
@@ -524,8 +525,8 @@ func onMsg(msg string) {
 `, `package main
 
 import (
-	fmt "fmt"
-	spx2 "github.com/goplus/gop/cl/internal/spx2"
+	"fmt"
+	"github.com/goplus/gop/cl/internal/spx2"
 )
 
 type Game struct {
@@ -565,7 +566,7 @@ func onMsg(msg string) {
 }
 `, `package main
 
-import spx "github.com/goplus/gop/cl/internal/spx"
+import "github.com/goplus/gop/cl/internal/spx"
 
 type Game struct {
 	*spx.MyGame
@@ -623,7 +624,7 @@ func onCloned() {
 }
 `, `package main
 
-import spx "github.com/goplus/gop/cl/internal/spx"
+import "github.com/goplus/gop/cl/internal/spx"
 
 type info struct {
 	x int
@@ -651,6 +652,81 @@ func (this *Kai) onInit() {
 }
 func (this *Kai) onCloned() {
 	this.Say("Hi")
+}
+`, "Game.tgmx", "Kai.tspx")
+}
+
+func TestSpxErrorSel(t *testing.T) {
+	gopSpxErrorTestEx(t, `./Kai.tspx:2:9: this.pos undefined (type *Kai has no field or method pos)`, `
+println "hi"
+`, `
+println this.pos
+`, "Game.tgmx", "Kai.tspx")
+}
+
+func TestSpxMethodSel(t *testing.T) {
+	gopSpxTestEx(t, `
+sendMessage "Hi"
+`, `
+func onMsg(msg string) {
+}
+`, `package main
+
+import "github.com/goplus/gop/cl/internal/spx"
+
+type Game struct {
+	*spx.MyGame
+}
+
+func (this *Game) MainEntry() {
+	this.SendMessage("Hi")
+}
+func main() {
+	spx.Gopt_MyGame_Main(new(Game))
+}
+
+type Kai struct {
+	spx.Sprite
+	*Game
+}
+
+func (this *Kai) onMsg(msg string) {
+}
+`, "Game.tgmx", "Kai.tspx")
+}
+
+func TestSpxPkgOverload(t *testing.T) {
+	gopSpxTestEx(t, `
+println "Hi"
+`, `
+func onMsg(msg string) {
+	this.position.add 100,200
+}
+`, `package main
+
+import (
+	"fmt"
+	"github.com/goplus/gop/cl/internal/spx"
+)
+
+type Game struct {
+	*spx.MyGame
+}
+
+func (this *Game) MainEntry() {
+	fmt.Println("Hi")
+}
+func main() {
+	spx.Gopt_MyGame_Main(new(Game))
+}
+
+type Kai struct {
+	spx.Sprite
+	*Game
+}
+
+func (this *Kai) onMsg(msg string) {
+	this.Position().Add__0(100, 200)
 }
 `, "Game.tgmx", "Kai.tspx")
 }

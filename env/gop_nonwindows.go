@@ -1,3 +1,6 @@
+//go:build !windows
+// +build !windows
+
 /*
  * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
  *
@@ -14,28 +17,8 @@
  * limitations under the License.
  */
 
-package spx
+package env
 
-import (
-	"github.com/goplus/gop/cl/internal/spx/pkg"
-)
-
-type Sprite struct {
-	pos pkg.Vector
-}
-
-func (p *Sprite) SetCostume(costume interface{}) {
-}
-
-func (p *Sprite) Say(msg string, secs ...float64) {
-}
-
-func (p *Sprite) Position() *pkg.Vector {
-	return &p.pos
-}
-
-func Gopt_Sprite_Clone__0(sprite interface{}) {
-}
-
-func Gopt_Sprite_Clone__1(sprite interface{}, data interface{}) {
+func isGopCmd(fname string) bool {
+	return fname == "gop"
 }

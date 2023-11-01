@@ -381,7 +381,8 @@ func (p *parser) next() {
 }
 
 // A bailout panic is raised to indicate early termination.
-type bailout struct{}
+type bailout struct {
+}
 
 func (p *parser) error(pos token.Pos, msg string) {
 	epos := p.file.Position(pos)
@@ -2067,23 +2068,9 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	return x
 }
 
-// isTypeName reports whether x is a (qualified) TypeName.
-func isTypeName(x ast.Expr) bool {
-	switch t := x.(type) {
-	case *ast.BadExpr:
-	case *ast.Ident:
-	case *ast.SelectorExpr:
-		_, isIdent := t.X.(*ast.Ident)
-		return isIdent
-	default:
-		return false // all other nodes are not type names
-	}
-	return true
-}
-
 // isLiteralType reports whether x is a legal composite literal type.
 func isLiteralType(x ast.Expr) bool {
-	switch t := x.(type) {
+	switch t := unparen(x).(type) {
 	case *ast.BadExpr:
 	case *ast.Ident:
 	case *ast.IndexExpr:
@@ -2187,7 +2174,7 @@ L:
 		case token.LBRACE: // {
 			if allowCmd && p.isCmd(x) { // println {...}
 				x = p.parseCallOrConversion(p.checkExprOrType(x), true)
-			} else if isLiteralType(x) && (p.exprLev >= 0 || !isTypeName(x)) {
+			} else if isLiteralType(x) && p.exprLev >= 0 {
 				if lhs {
 					p.resolve(x)
 				}
@@ -3664,9 +3651,11 @@ func (p *parser) parseGlobalStmts(sync map[token.Token]bool, pos token.Pos, stmt
 		Name: &ast.Ident{NamePos: pos, Name: "main"},
 		Doc:  doc,
 		Type: &ast.FuncType{
+			Func:   pos,
 			Params: &ast.FieldList{},
 		},
-		Body: &ast.BlockStmt{List: list},
+		Body:   &ast.BlockStmt{List: list},
+		Shadow: true,
 	}
 	p.shadowEntry = f
 	return f
@@ -3709,7 +3698,7 @@ func (p *parser) parseFile() *ast.File {
 	} else {
 		noPkgDecl = true
 		pos = token.NoPos
-		ident = ast.NewIdent("main")
+		ident = &ast.Ident{NamePos: p.file.Pos(0), Name: "main"}
 	}
 
 	p.openScope()

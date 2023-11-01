@@ -1,0 +1,6 @@
+var a [2]int
+if 0 < a[0] {
+	println a
+	println T[int]{1}
+	println (T[int]){a:1,b:2}
+}

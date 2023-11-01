@@ -28,6 +28,8 @@ var (
 	defaultGopRoot string
 )
 
+// GOPROOT returns the root of the Go+ tree. It uses the GOPROOT environment variable,
+// if set at process start, or else the root used during the Go+ build.
 func GOPROOT() string {
 	gopRoot, err := findGopRoot()
 	if err != nil {

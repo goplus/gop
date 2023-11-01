@@ -1,6 +1,3 @@
-//go:build go1.18
-// +build go1.18
-
 /*
  * Copyright (c) 2022 The GoPlus Authors (goplus.org). All rights reserved.
  *
@@ -25,8 +22,6 @@ import (
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
 )
-
-const enableTypeParams = true
 
 func toTermList(ctx *blockCtx, expr ast.Expr) []*types.Term {
 retry:
@@ -135,7 +130,7 @@ type typeParamLookup struct {
 	typeParams []*types.TypeParam
 }
 
-func (p *typeParamLookup) Lookup(name string) types.Type {
+func (p *typeParamLookup) Lookup(name string) *types.TypeParam {
 	for _, t := range p.typeParams {
 		tname := t.Obj().Name()
 		if tname != "_" && name == tname {
@@ -174,6 +169,9 @@ L:
 		case *ast.ParenExpr:
 			typ = t.X
 		case *ast.StarExpr:
+			if ptr {
+				panic("TODO: getRecvType")
+			}
 			ptr = true
 			typ = t.X
 		default:

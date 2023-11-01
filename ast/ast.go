@@ -1059,6 +1059,7 @@ type (
 		Type     *FuncType     // function signature: parameters, results, and position of "func" keyword
 		Body     *BlockStmt    // function body; or nil for external (non-Go) function
 		Operator bool          // is operator or not
+		Shadow   bool          // is a shadow entry
 	}
 )
 
@@ -1123,7 +1124,7 @@ type FileType = int16
 // are "free-floating" (see also issues #18593, #20744).
 type File struct {
 	Doc     *CommentGroup // associated documentation; or nil
-	Package token.Pos     // position of "package" keyword
+	Package token.Pos     // position of "package" keyword; or NoPos
 	Name    *Ident        // package name
 	Decls   []Decl        // top-level declarations; or nil
 
@@ -1144,8 +1145,18 @@ func (f *File) NoEntrypoint() bool {
 	return f.ShadowEntry != nil
 }
 
+// HasPkgDecl checks if `package xxx` exists or not.
+func (f *File) HasPkgDecl() bool {
+	return f.Package != token.NoPos
+}
+
 // Pos returns position of first character belonging to the node.
-func (f *File) Pos() token.Pos { return f.Package }
+func (f *File) Pos() token.Pos {
+	if f.Package != token.NoPos {
+		return f.Package
+	}
+	return f.Name.NamePos
+}
 
 // End returns position of first character immediately after the node.
 func (f *File) End() token.Pos {

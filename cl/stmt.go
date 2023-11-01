@@ -210,8 +210,20 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 			if v, ok := lhs.(*ast.Ident); ok {
 				names[i] = v.Name
 			} else {
+				compileExprLHS(ctx, lhs) // only for typesutil.Check
 				log.Panicln("TODO: non-name $v on left side of :=")
 			}
+		}
+		if rec := ctx.recorder(); rec != nil {
+			newNames := make([]*ast.Ident, 0, len(names))
+			scope := ctx.cb.Scope()
+			for _, lhs := range expr.Lhs {
+				v := lhs.(*ast.Ident)
+				if scope.Lookup(v.Name) == nil {
+					newNames = append(newNames, v)
+				}
+			}
+			defer defNames(ctx, newNames, scope)
 		}
 		ctx.cb.DefineVarStart(expr.Pos(), names...)
 		if enableRecover {
@@ -286,10 +298,10 @@ func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 		if v.Value != nil {
 			names = append(names, v.Value.(*ast.Ident).Name)
 		}
-		cb.ForRange(names...)
+		cb.ForRangeEx(names, v)
 		compileExpr(ctx, v.X)
 	} else {
-		cb.ForRange()
+		cb.ForRangeEx(nil, v)
 		n := 0
 		if v.Key == nil {
 			if v.Value != nil {
@@ -310,11 +322,11 @@ func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 	if pos == 0 {
 		pos = v.For
 	}
-	cb.RangeAssignThen(pos)
+	cb.RangeAssignThen(pos) // TODO: need NewScope for body
 	compileStmts(ctx, v.Body.List)
 	cb.SetComments(comments, once)
 	setBodyHandler(ctx)
-	cb.End()
+	cb.End(v)
 }
 
 func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
@@ -448,7 +460,7 @@ func toForStmt(forPos token.Pos, value ast.Expr, body *ast.BlockStmt, re *ast.Ra
 func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	cb := ctx.cb
 	comments, once := cb.BackupComments()
-	cb.For()
+	cb.For(v)
 	if v.Init != nil {
 		compileStmt(ctx, v.Init)
 	}
@@ -457,7 +469,7 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	} else {
 		cb.None()
 	}
-	cb.Then()
+	cb.Then(v.Body)
 	compileStmts(ctx, v.Body.List)
 	if v.Post != nil {
 		cb.Post()
@@ -465,7 +477,7 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	}
 	cb.SetComments(comments, once)
 	setBodyHandler(ctx)
-	cb.End()
+	cb.End(v)
 }
 
 // if init; cond then
@@ -476,15 +488,15 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 	cb := ctx.cb
 	comments, once := cb.BackupComments()
-	cb.If()
+	cb.If(v)
 	if v.Init != nil {
 		compileStmt(ctx, v.Init)
 	}
 	compileExpr(ctx, v.Cond)
-	cb.Then()
+	cb.Then(v.Body)
 	compileStmts(ctx, v.Body.List)
 	if e := v.Else; e != nil {
-		cb.Else()
+		cb.Else(e)
 		if stmts, ok := e.(*ast.BlockStmt); ok {
 			compileStmts(ctx, stmts.List)
 		} else {
@@ -492,7 +504,7 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 		}
 	}
 	cb.SetComments(comments, once)
-	cb.End()
+	cb.End(v)
 }
 
 // typeSwitch(name) init; expr typeAssertThen()
@@ -525,7 +537,7 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 	if ta.Type != nil {
 		panic("TODO: type switch syntax error, please use x.(type)")
 	}
-	cb.TypeSwitch(name)
+	cb.TypeSwitch(name, v)
 	if v.Init != nil {
 		compileStmt(ctx, v.Init)
 	}
@@ -548,11 +560,15 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 			for t, other := range seen {
 				if T == nil && t == nil || T != nil && t != nil && types.Identical(T, t) {
 					haserr = true
-					pos := ctx.Position(citem.Pos())
+					pos := citem.Pos()
 					if T == types.Typ[types.UntypedNil] {
-						ctx.handleCodeErrorf(&pos, "multiple nil cases in type switch (first at %v)", ctx.Position(other.Pos()))
+						ctx.handleErrorf(
+							pos, "multiple nil cases in type switch (first at %v)",
+							ctx.Position(other.Pos()))
 					} else {
-						ctx.handleCodeErrorf(&pos, "duplicate case %s in type switch\n\tprevious case at %v", T, ctx.Position(other.Pos()))
+						ctx.handleErrorf(
+							pos, "duplicate case %s in type switch\n\tprevious case at %v",
+							T, ctx.Position(other.Pos()))
 					}
 				}
 			}
@@ -562,19 +578,18 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 		}
 		if c.List == nil {
 			if firstDefault != nil {
-				pos := ctx.Position(c.Pos())
-				ctx.handleCodeErrorf(&pos, "multiple defaults in type switch (first at %v)", ctx.Position(firstDefault.Pos()))
+				ctx.handleErrorf(c.Pos(), "multiple defaults in type switch (first at %v)", ctx.Position(firstDefault.Pos()))
 			} else {
 				firstDefault = c
 			}
 		}
-		cb.TypeCase(len(c.List)) // TypeCase(0) means default case
+		cb.TypeCase(len(c.List), c) // TypeCase(0) means default case
 		compileStmts(ctx, c.Body)
 		commentStmt(ctx, stmt)
-		cb.End()
+		cb.End(c)
 	}
 	cb.SetComments(comments, once)
-	cb.End()
+	cb.End(v)
 }
 
 // switch init; tag then
@@ -592,7 +607,7 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	cb := ctx.cb
 	comments, once := cb.BackupComments()
-	cb.Switch()
+	cb.Switch(v)
 	if v.Init != nil {
 		compileStmt(ctx, v.Init)
 	}
@@ -601,7 +616,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	} else {
 		cb.None() // switch {...}
 	}
-	cb.Then()
+	cb.Then(v.Body)
 	seen := make(valueMap)
 	var firstDefault ast.Stmt
 	for _, stmt := range v.Body.List {
@@ -637,23 +652,22 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 		}
 		if c.List == nil {
 			if firstDefault != nil {
-				pos := ctx.Position(c.Pos())
-				ctx.handleCodeErrorf(&pos, "multiple defaults in switch (first at %v)", ctx.Position(firstDefault.Pos()))
+				ctx.handleErrorf(c.Pos(), "multiple defaults in switch (first at %v)", ctx.Position(firstDefault.Pos()))
 			} else {
 				firstDefault = c
 			}
 		}
-		cb.Case(len(c.List)) // Case(0) means default case
+		cb.Case(len(c.List), c) // Case(0) means default case
 		body, has := hasFallthrough(c.Body)
 		compileStmts(ctx, body)
 		if has {
 			cb.Fallthrough()
 		}
 		commentStmt(ctx, stmt)
-		cb.End()
+		cb.End(c)
 	}
 	cb.SetComments(comments, once)
-	cb.End()
+	cb.End(v)
 }
 
 func hasFallthrough(body []ast.Stmt) ([]ast.Stmt, bool) {
@@ -686,7 +700,7 @@ func hasFallthrough(body []ast.Stmt) ([]ast.Stmt, bool) {
 func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
 	cb := ctx.cb
 	comments, once := cb.BackupComments()
-	cb.Select()
+	cb.Select(v)
 	for _, stmt := range v.Body.List {
 		c, ok := stmt.(*ast.CommClause)
 		if !ok {
@@ -697,13 +711,13 @@ func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
 			compileStmt(ctx, c.Comm)
 			n = 1
 		}
-		cb.CommCase(n) // CommCase(0) means default case
+		cb.CommCase(n, c) // CommCase(0) means default case
 		compileStmts(ctx, c.Body)
 		commentStmt(ctx, stmt)
-		cb.End()
+		cb.End(c)
 	}
 	cb.SetComments(comments, once)
-	cb.End()
+	cb.End(v)
 }
 
 func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
@@ -724,8 +738,7 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 	case token.CONTINUE:
 		ctx.cb.Continue(getLabel(ctx, label))
 	case token.FALLTHROUGH:
-		pos := ctx.Position(v.Pos())
-		ctx.handleCodeErrorf(&pos, "fallthrough statement out of place")
+		ctx.handleErrorf(v.Pos(), "fallthrough statement out of place")
 	default:
 		panic("unknown branch statement")
 	}
@@ -736,8 +749,7 @@ func getLabel(ctx *blockCtx, label *ast.Ident) *gox.Label {
 		if l, ok := ctx.cb.LookupLabel(label.Name); ok {
 			return l
 		}
-		pos := ctx.Position(label.Pos())
-		ctx.handleCodeErrorf(&pos, "label %v is not defined", label.Name)
+		ctx.handleErrorf(label.Pos(), "label %v is not defined", label.Name)
 	}
 	return nil
 }

@@ -660,7 +660,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 					if debugLoad {
 						log.Println("==> Load > NewType", name)
 					}
-					decl := tdecl.NewType(name, pos).SetComments(t.Doc)
+					decl := tdecl.NewType(name, pos).SetComments(p, t.Doc)
 					fnInitType := getInitType(ctx, decl, t, gopFile)
 					parent.insertObject(name, pos, lazyInitType, fnInitType)
 				}
@@ -750,7 +750,7 @@ func preloadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) 
 		}
 	}
 	sig := toFuncType(ctx, d.Type, recv, d)
-	fn, err := ctx.pkg.NewFuncWith(d.Pos(), name, sig, func() token.Pos {
+	fn, err := ctx.pkg.NewFuncWith(d.Name.Pos(), name, sig, func() token.Pos {
 		return d.Recv.List[0].Type.Pos()
 	})
 	if err != nil {
@@ -758,7 +758,7 @@ func preloadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) 
 		return
 	}
 	if d.Doc != nil {
-		fn.SetComments(d.Doc)
+		fn.SetComments(ctx.pkg, d.Doc)
 	}
 	if genBody {
 		if body := d.Body; body != nil {

@@ -16,7 +16,9 @@
 
 package ast
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Visitor - A Visitor's Visit method is invoked for each node encountered by Walk.
 // If the result visitor w is not nil, Walk visits each of the children
@@ -59,7 +61,6 @@ func walkDeclList(v Visitor, list []Decl) {
 // v.Visit(node) is not nil, Walk is invoked recursively with visitor
 // w for each of the non-nil children of node, followed by a call of
 // w.Visit(nil).
-//
 func Walk(v Visitor, node Node) {
 	if v = v.Visit(node); v == nil {
 		return
@@ -344,14 +345,16 @@ func Walk(v Visitor, node Node) {
 		}
 
 	case *FuncDecl:
-		if n.Doc != nil {
-			Walk(v, n.Doc)
+		if !n.Shadow { // not a shadow entry
+			if n.Doc != nil {
+				Walk(v, n.Doc)
+			}
+			if n.Recv != nil {
+				Walk(v, n.Recv)
+			}
+			Walk(v, n.Name)
+			Walk(v, n.Type)
 		}
-		if n.Recv != nil {
-			Walk(v, n.Recv)
-		}
-		Walk(v, n.Name)
-		Walk(v, n.Type)
 		if n.Body != nil {
 			Walk(v, n.Body)
 		}
@@ -370,6 +373,62 @@ func Walk(v Visitor, node Node) {
 	case *Package:
 		for _, f := range n.Files {
 			Walk(v, f)
+		}
+
+	// Go+ expr and stmt
+	case *SliceLit:
+		walkExprList(v, n.Elts)
+
+	case *LambdaExpr:
+		walkIdentList(v, n.Lhs)
+		walkExprList(v, n.Rhs)
+
+	case *LambdaExpr2:
+		walkIdentList(v, n.Lhs)
+		Walk(v, n.Body)
+
+	case *ForPhrase:
+		if n.Key != nil {
+			Walk(v, n.Key)
+		}
+		if n.Value != nil {
+			Walk(v, n.Value)
+		}
+		if n.Init != nil {
+			Walk(v, n.Init)
+		}
+		if n.Cond != nil {
+			Walk(v, n.Cond)
+		}
+		Walk(v, n.X)
+
+	case *ComprehensionExpr:
+		if n.Elt != nil {
+			Walk(v, n.Elt)
+		}
+		for _, x := range n.Fors {
+			Walk(v, x)
+		}
+
+	case *ForPhraseStmt:
+		Walk(v, n.ForPhrase)
+		Walk(v, n.Body)
+
+	case *RangeExpr:
+		if n.First != nil {
+			Walk(v, n.First)
+		}
+		if n.Last != nil {
+			Walk(v, n.Last)
+		}
+		if n.Expr3 != nil {
+			Walk(v, n.Expr3)
+		}
+
+	case *ErrWrapExpr:
+		Walk(v, n.X)
+		if n.Default != nil {
+			Walk(v, n.Default)
 		}
 
 	default:
@@ -392,7 +451,6 @@ func (f inspector) Visit(node Node) Visitor {
 // f(node); node must not be nil. If f returns true, Inspect invokes f
 // recursively for each of the non-nil children of node, followed by a
 // call of f(nil).
-//
 func Inspect(node Node, f func(Node) bool) {
 	Walk(inspector(f), node)
 }

@@ -157,10 +157,10 @@ for line <- open("foo.txt")! {
 `, `package main
 
 import (
-	fmt "fmt"
-	os "os"
-	iox "github.com/goplus/gop/builtin/iox"
-	errors "github.com/qiniu/x/errors"
+	"fmt"
+	"os"
+	"github.com/goplus/gop/builtin/iox"
+	"github.com/qiniu/x/errors"
 )
 
 func main() {
@@ -194,9 +194,9 @@ for line <- os.Stdin {
 `, `package main
 
 import (
-	fmt "fmt"
-	os "os"
-	iox "github.com/goplus/gop/builtin/iox"
+	"fmt"
+	"os"
+	"github.com/goplus/gop/builtin/iox"
 )
 
 func main() {
@@ -224,9 +224,9 @@ for line <- lines(r) {
 `, `package main
 
 import (
-	fmt "fmt"
-	iox "github.com/goplus/gop/builtin/iox"
-	io "io"
+	"fmt"
+	"github.com/goplus/gop/builtin/iox"
+	"io"
 )
 
 var r io.Reader
@@ -298,7 +298,7 @@ type T struct{}
 println(&T{},&Point{10,20})
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 type T struct {
 }
@@ -315,7 +315,7 @@ for i <- :10, i%3 == 0 {
 	println i
 }`, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	for i := 0; i < 10; i += 1 {
@@ -338,7 +338,7 @@ d := fvec([])
 println a, b, c, d
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 type fvec []float64
 type foo float64
@@ -542,8 +542,8 @@ println "The Go+ Language for", fields.join(", ")
 `, `package main
 
 import (
-	fmt "fmt"
-	strings "strings"
+	"fmt"
+	"strings"
 )
 
 func main() {
@@ -559,7 +559,7 @@ p := println
 p "Hello world"
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	p := fmt.Println
@@ -927,8 +927,8 @@ func main() {
 }`, `package main
 
 import (
-	fmt "fmt"
-	errors "github.com/qiniu/x/errors"
+	"fmt"
+	"github.com/qiniu/x/errors"
 )
 
 func t() (int, int, error) {
@@ -961,7 +961,7 @@ func main() {
 	t()!
 }`, `package main
 
-import errors "github.com/qiniu/x/errors"
+import "github.com/qiniu/x/errors"
 
 func t() error {
 	return nil
@@ -1004,7 +1004,7 @@ func (a *A) String() string {
 }
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 type AA interface {
 	String() string
@@ -1049,7 +1049,7 @@ func (a *A) String() string {
 }
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 type AA interface {
 	String() string
@@ -1090,7 +1090,7 @@ func main() {
 }
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	{
@@ -1159,7 +1159,7 @@ func main() {
 var i int
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 var i int
 
@@ -1202,7 +1202,7 @@ func main() {
 var i = 100
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 var i = 100
 
@@ -1222,7 +1222,7 @@ func main() {
 	println(n)
 }`, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	v := []uint64{2, 3, 5}
@@ -1247,7 +1247,7 @@ func consume(xchg chan int) {
 }
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func consume(xchg chan int) {
 	select {
@@ -1420,7 +1420,7 @@ func main() {
 }
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 type Shape interface {
 	Area() float64
@@ -1465,7 +1465,7 @@ type BigInt struct {
 	*big.Int
 }`, `package main
 
-import big "math/big"
+import "math/big"
 
 type BigInt struct {
 	*big.Int
@@ -1485,10 +1485,10 @@ func foo(script string) {
 `, `package main
 
 import (
-	fmt "fmt"
-	goptest "github.com/goplus/gop/ast/goptest"
-	errors "github.com/qiniu/x/errors"
-	gopq "github.com/goplus/gop/ast/gopq"
+	"fmt"
+	"github.com/goplus/gop/ast/goptest"
+	"github.com/qiniu/x/errors"
+	"github.com/goplus/gop/ast/gopq"
 )
 
 func foo(script string) {
@@ -1519,10 +1519,10 @@ func foo(script string) {
 `, `package main
 
 import (
-	fmt "fmt"
-	goptest "github.com/goplus/gop/ast/goptest"
-	errors "github.com/qiniu/x/errors"
-	gopq "github.com/goplus/gop/ast/gopq"
+	"fmt"
+	"github.com/goplus/gop/ast/goptest"
+	"github.com/qiniu/x/errors"
+	"github.com/goplus/gop/ast/gopq"
 )
 
 func foo(script string) {
@@ -1551,8 +1551,8 @@ func add(x, y string) (int, error) {
 `, `package main
 
 import (
-	strconv "strconv"
-	errors "github.com/qiniu/x/errors"
+	"strconv"
+	"github.com/qiniu/x/errors"
 )
 
 func add(x string, y string) (int, error) {
@@ -1592,7 +1592,7 @@ func addSafe(x, y string) int {
 }
 `, `package main
 
-import strconv "strconv"
+import "strconv"
 
 func addSafe(x string, y string) int {
 	return func() (_gop_ret int) {
@@ -1620,8 +1620,8 @@ var ret int = println("Hi")!
 `, `package main
 
 import (
-	fmt "fmt"
-	errors "github.com/qiniu/x/errors"
+	"fmt"
+	"github.com/qiniu/x/errors"
 )
 
 var ret int = func() (_gop_ret int) {
@@ -1645,7 +1645,7 @@ func mkdir(name string) error {
 mkdir! "foo"
 `, `package main
 
-import errors "github.com/qiniu/x/errors"
+import "github.com/qiniu/x/errors"
 
 func mkdir(name string) error {
 	return nil
@@ -1673,7 +1673,7 @@ func foo() (func(), error) {
 foo()!()
 `, `package main
 
-import errors "github.com/qiniu/x/errors"
+import "github.com/qiniu/x/errors"
 
 func foo() (func(), error) {
 	return nil, nil
@@ -1722,7 +1722,7 @@ var x, y uint128
 var z uint128 = x + y
 `, `package main
 
-import ng "github.com/goplus/gop/builtin/ng"
+import "github.com/goplus/gop/builtin/ng"
 
 var x, y ng.Uint128
 var z ng.Uint128 = x.Gop_Add__1(y)
@@ -1735,7 +1735,7 @@ var x, y int128
 var z int128 = x + y
 `, `package main
 
-import ng "github.com/goplus/gop/builtin/ng"
+import "github.com/goplus/gop/builtin/ng"
 
 var x, y ng.Int128
 var z ng.Int128 = x.Gop_Add__1(y)
@@ -1748,7 +1748,7 @@ var x, y bigint
 var z bigint = x + y
 `, `package main
 
-import ng "github.com/goplus/gop/builtin/ng"
+import "github.com/goplus/gop/builtin/ng"
 
 var x, y ng.Bigint
 var z ng.Bigint = x.Gop_Add(y)
@@ -1761,8 +1761,8 @@ var x = 1r
 `, `package main
 
 import (
-	ng "github.com/goplus/gop/builtin/ng"
-	big "math/big"
+	"github.com/goplus/gop/builtin/ng"
+	"math/big"
 )
 
 var x = ng.Bigint_Init__1(big.NewInt(1))
@@ -1774,7 +1774,7 @@ func TestUint128Lit(t *testing.T) {
 var x uint128 = 1
 `, `package main
 
-import ng "github.com/goplus/gop/builtin/ng"
+import "github.com/goplus/gop/builtin/ng"
 
 var x ng.Uint128 = ng.Uint128_Init__0(1)
 `)
@@ -1785,7 +1785,7 @@ func TestInt128Lit(t *testing.T) {
 var x int128 = 1
 `, `package main
 
-import ng "github.com/goplus/gop/builtin/ng"
+import "github.com/goplus/gop/builtin/ng"
 
 var x ng.Int128 = ng.Int128_Init__0(1)
 `)
@@ -1797,8 +1797,8 @@ var x = 1/2r
 `, `package main
 
 import (
-	ng "github.com/goplus/gop/builtin/ng"
-	big "math/big"
+	"github.com/goplus/gop/builtin/ng"
+	"math/big"
 )
 
 var x = ng.Bigrat_Init__2(big.NewRat(1, 2))
@@ -1811,8 +1811,8 @@ var x = 3 + 1/2r
 `, `package main
 
 import (
-	ng "github.com/goplus/gop/builtin/ng"
-	big "math/big"
+	"github.com/goplus/gop/builtin/ng"
+	"math/big"
 )
 
 var x = ng.Bigrat_Init__2(big.NewRat(7, 2))
@@ -1828,8 +1828,8 @@ var z = 100 + y
 `, `package main
 
 import (
-	ng "github.com/goplus/gop/builtin/ng"
-	big "math/big"
+	"github.com/goplus/gop/builtin/ng"
+	"math/big"
 )
 
 var x = ng.Bigrat_Init__2(big.NewRat(7, 2))
@@ -1942,7 +1942,7 @@ var x bigint
 x += 3
 `, `package main
 
-import ng "github.com/goplus/gop/builtin/ng"
+import "github.com/goplus/gop/builtin/ng"
 
 var x ng.Bigint
 
@@ -1959,8 +1959,8 @@ x *= 2
 `, `package main
 
 import (
-	ng "github.com/goplus/gop/builtin/ng"
-	big "math/big"
+	"github.com/goplus/gop/builtin/ng"
+	"math/big"
 )
 
 func main() {
@@ -1977,8 +1977,8 @@ x *= 2r
 `, `package main
 
 import (
-	ng "github.com/goplus/gop/builtin/ng"
-	big "math/big"
+	"github.com/goplus/gop/builtin/ng"
+	"math/big"
 )
 
 func main() {
@@ -2251,7 +2251,7 @@ go println("Hi")
 defer println("Go+")
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	go fmt.Println("Hi")
@@ -2271,7 +2271,7 @@ for {
 }
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	a := []float64{1, 3.4, 5}
@@ -2308,7 +2308,7 @@ for range a {
 }
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	a := []float64{1, 3.4, 5}
@@ -2346,7 +2346,7 @@ for k, v := range new(foo) {
 }
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 type foo struct {
 }
@@ -2374,7 +2374,7 @@ for v <- new(foo) {
 }
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 type foo struct {
 }
@@ -2409,7 +2409,7 @@ for k, v <- new(foo) {
 }
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 type fooIter struct {
 }
@@ -2445,7 +2445,7 @@ func (p *foo) Gop_Enum(c func(val string)) {
 println([v for v <- new(foo)])
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 type foo struct {
 }
@@ -2496,7 +2496,7 @@ for k, v <- newFoo() {
 }
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 type fooIter struct {
 	data *foo
@@ -2545,7 +2545,7 @@ for i, x <- [1, 3, 5, 7, 11, 13, 17] {
 println("sum(5,7,11,13,17):", sum)
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	sum := 0
@@ -2716,7 +2716,7 @@ x := [[a, b] for a <- arr, a < b for b <- arr, b > 2]
 println("x:", x)
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	arr := []float64{1, 2, 3, 4.1, 5, 6}
@@ -2822,8 +2822,8 @@ println("x:", x)
 `, `package main
 
 import (
-	fmt "fmt"
-	strings "strings"
+	"fmt"
+	"strings"
 )
 
 func main() {
@@ -2846,7 +2846,7 @@ func bar(p pfoo) {
 }
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 type foo struct {
 	req int
@@ -2875,7 +2875,7 @@ a.B = "Hi"
 flag.Usage = nil
 `, `package main
 
-import flag "flag"
+import "flag"
 
 func main() {
 	a := &struct {
@@ -2935,7 +2935,7 @@ func (M) Bar() {
 }
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 type M int
 
@@ -2982,7 +2982,7 @@ var d = -a       // TODO: -a have no return value!
 var e = a!=b
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 type foo struct {
 }
@@ -3016,7 +3016,7 @@ func (a foo) Gop_NE(b foo) bool {
 func TestCmdlineNoEOL(t *testing.T) {
 	gopClTest(t, `println "Hi"`, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	fmt.Println("Hi")
@@ -3031,7 +3031,7 @@ func main() {
 	fmt.println "Hi"
 }`, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	fmt.Println("Hi")
@@ -3045,7 +3045,7 @@ func TestDotImport(t *testing.T) {
 var a = round(1.2)
 `, `package main
 
-import math "math"
+import "math"
 
 var a = math.Round(1.2)
 `)
@@ -3057,7 +3057,7 @@ func TestLocalImport(t *testing.T) {
 var a = spx.TestIntValue
 `, `package main
 
-import spx "github.com/goplus/gop/cl/internal/spx"
+import "github.com/goplus/gop/cl/internal/spx"
 
 var a = spx.TestIntValue
 `)
@@ -3092,7 +3092,7 @@ func TestAnonymousImport(t *testing.T) {
 printf("Hello Go+\n")
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	fmt.Println("Hello")
@@ -3131,7 +3131,7 @@ func main() {
 	fmt.Println("Hi")
 }`, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	const (
@@ -3156,7 +3156,7 @@ if t := false; t {
 println("x:", x)
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	x := 0
@@ -3196,7 +3196,7 @@ default:
 println("x:", x)
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	x := 0
@@ -3237,7 +3237,7 @@ default:
 }
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	v := "Hello"
@@ -3269,7 +3269,7 @@ label:
 	}
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	a := []float64{1, 3.4, 5}
@@ -3296,7 +3296,7 @@ func main() {
 }
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func foo(format string, args ...interface {
 }) (int, error) {
@@ -3334,7 +3334,7 @@ func(v string) {
 }("Hello")
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	func(v string) {
@@ -3475,7 +3475,7 @@ Do => {
 }
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func Do(func()) {
 }
@@ -3644,7 +3644,7 @@ func bar(foo func(string, ...interface{}) (int, error)) {
 bar(fmt.Printf)
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func bar(foo func(string, ...interface {
 }) (int, error)) {
@@ -3681,8 +3681,8 @@ fmt.Println(printf("Hello, %v\n", "Go+"))
 `, `package main
 
 import (
-	fmt "fmt"
-	strings "strings"
+	"fmt"
+	"strings"
 )
 
 func foo(x string) string {
@@ -3710,7 +3710,7 @@ func TestFuncCall(t *testing.T) {
 
 fmt.Println("Hello")`, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	fmt.Println("Hello")
@@ -3728,7 +3728,7 @@ func foo(args ...interface{}) {
 func main() {
 }`, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func foo(args ...interface {
 }) {
@@ -3751,7 +3751,7 @@ func foo(args ...interface{}) {
 }
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	foo("Hello", 123)
@@ -3787,7 +3787,7 @@ func TestAssignUnderscore(t *testing.T) {
 _, err := log.Println("Hello")
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	_, err := fmt.Println("Hello")
@@ -3838,8 +3838,8 @@ println(rmap)
 `, `package main
 
 import (
-	fmt "fmt"
-	foo "github.com/goplus/gop/cl/internal/gop-in-go/foo"
+	"fmt"
+	"github.com/goplus/gop/cl/internal/gop-in-go/foo"
 )
 
 func main() {
@@ -3884,8 +3884,8 @@ func New() Result {
 `, `package main
 
 import (
-	reflect "reflect"
-	testing "testing"
+	"reflect"
+	"testing"
 )
 
 type Repo struct {
@@ -3929,7 +3929,7 @@ for i $ :10 {
 	println(i)
 }`, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	for i := 0; i < 10; i += 1 {
@@ -3942,7 +3942,7 @@ for i $ 1:10:3 {
 	println(i)
 }`, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	for i := 1; i < 10; i += 3 {
@@ -3958,7 +3958,7 @@ for i $ 1:10:2 {
 	println(i)
 }`, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	for i := 1; i < 10; i += 2 {
@@ -3974,7 +3974,7 @@ for i $ 1:10 {
 	println(i)
 }`, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	for i := 1; i < 10; i += 1 {
@@ -3990,7 +3990,7 @@ for i $ :10:2 {
 	println(i)
 }`, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	for i := 0; i < 10; i += 2 {
@@ -4006,7 +4006,7 @@ for range :10 {
 	println("Hi")
 }`, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	for _gop_k := 0; _gop_k < 10; _gop_k += 1 {
@@ -4022,7 +4022,7 @@ for _ <- :10 {
 	println("Hi")
 }`, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	for _gop_k := 0; _gop_k < 10; _gop_k += 1 {
@@ -4038,8 +4038,8 @@ println [x for x <- 0:3:1]
 `, `package main
 
 import (
-	fmt "fmt"
-	builtin "github.com/goplus/gop/builtin"
+	"fmt"
+	"github.com/goplus/gop/builtin"
 )
 
 func main() {
@@ -4085,7 +4085,7 @@ func TestRangeExpr8(t *testing.T) {
 	}
 	`, `package main
 
-import fmt "fmt"
+import "fmt"
 
 type T struct {
 }
@@ -4129,7 +4129,7 @@ func TestRangeExpr9(t *testing.T) {
 	}
 	`, `package main
 
-import fmt "fmt"
+import "fmt"
 
 type T struct {
 }
@@ -4185,7 +4185,7 @@ func TestNoEntrypoint(t *testing.T) {
 	gopClTest(t, `println("init")
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	fmt.Println("init")
@@ -4195,7 +4195,7 @@ func main() {
 println("init")
 `, `package bar
 
-import fmt "fmt"
+import "fmt"
 
 func init() {
 	fmt.Println("init")
@@ -4219,7 +4219,7 @@ println []
 println {}
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	fmt.Println([]interface {
@@ -4243,7 +4243,7 @@ type Point struct {
 }
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 type Point struct {
 	X int
@@ -4266,7 +4266,7 @@ println "hello"
 println("hello")
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	fmt.Print()
@@ -4285,7 +4285,7 @@ var a any = 100
 println(a)
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 var a interface {
 } = 100
@@ -4312,7 +4312,7 @@ func test() {
 }
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func test() {
 	fmt.Println("hello")
@@ -4327,7 +4327,7 @@ func main() {
 }
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	fmt.Println("hello")
@@ -4340,7 +4340,7 @@ func TestCommandNotExpr(t *testing.T) {
 println !true
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	fmt.Println(false)
@@ -4351,7 +4351,7 @@ a := true
 println !a
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	a := true
@@ -4362,7 +4362,7 @@ func main() {
 println !func() bool { return true }()
 `, `package main
 
-import fmt "fmt"
+import "fmt"
 
 func main() {
 	fmt.Println(!func() bool {
@@ -4416,7 +4416,7 @@ var (
 func test(){}
 `, `package main
 
-import bytes "bytes"
+import "bytes"
 
 type Rect struct {
 	bytes.Buffer
@@ -4433,7 +4433,7 @@ var (
 func test(){}
 `, `package main
 
-import bytes "bytes"
+import "bytes"
 
 type Rect struct {
 	*bytes.Buffer
@@ -4452,7 +4452,7 @@ var (
 func test(){}
 `, `package main
 
-import bytes "bytes"
+import "bytes"
 
 type Rect struct {
 	*bytes.Buffer `+"`spec:\"buffer\"`"+`
@@ -4520,7 +4520,7 @@ n.onKey ["a"],nil,key => {
 }
 `, `package main
 
-import foo "github.com/goplus/gop/cl/internal/overload/foo"
+import "github.com/goplus/gop/cl/internal/overload/foo"
 
 type Mesh struct {
 }

@@ -74,7 +74,7 @@ const (
 
 const errorPkgPath = "github.com/qiniu/x/errors"
 
-func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (obj *gox.PkgRef, kind int) {
+func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg *gox.PkgRef, kind int) {
 	fvalue := (flags&clIdentSelectorExpr) != 0 || (flags&clIdentLHS) == 0
 	name := ident.Name
 	if name == "_" {
@@ -85,6 +85,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (obj *gox.PkgRef, 
 		return
 	}
 
+	var oldo types.Object
 	scope := ctx.pkg.Types.Scope()
 	at, o := ctx.cb.Scope().LookupParent(name, token.NoPos)
 	if o != nil {
@@ -119,8 +120,11 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (obj *gox.PkgRef, 
 		if name == "C" && len(ctx.clookups) > 0 {
 			return nil, objCPkgRef
 		}
-		if pr, ok := ctx.findImport(name); ok {
-			return pr, objPkgRef
+		if pi, ok := ctx.findImport(name); ok {
+			if rec := ctx.recorder(); rec != nil {
+				rec.Use(ident, pi.pkgName)
+			}
+			return pi.PkgRef, objPkgRef
 		}
 	}
 
@@ -134,7 +138,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (obj *gox.PkgRef, 
 		if (flags&clIdentAllowBuiltin) == 0 && isBuiltin(o) && !strings.HasPrefix(o.Name(), "print") {
 			panic(ctx.newCodeErrorf(ident.Pos(), "use of builtin %s not in function call", name))
 		}
-		o = obj
+		oldo, o = o, obj
 	} else if o == nil {
 		if (clIdentGoto & flags) != 0 {
 			l := ident.Obj.Data.(*ast.Ident)
@@ -148,6 +152,17 @@ find:
 		ctx.cb.Val(o, ident)
 	} else {
 		ctx.cb.VarRef(o, ident)
+	}
+	if rec := ctx.recorder(); rec != nil {
+		e := ctx.cb.Get(-1)
+		if oldo != nil && gox.IsTypeEx(e.Type) {
+			rec.Use(ident, oldo)
+			return
+		}
+		rec.Use(ident, o)
+		typ, _ := gox.DerefType(e.Type)
+		tv := types.TypeAndValue{Type: typ, Value: e.CVal}
+		rec.Type(ident, tv)
 	}
 	return
 }
@@ -343,6 +358,10 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr) {
 		}
 	default:
 		compileExpr(ctx, v.X)
+		if rec := ctx.recorder(); rec != nil {
+			e := ctx.cb.Get(-1)
+			rec.Type(v.X, types.TypeAndValue{Type: e.Type, Value: e.CVal})
+		}
 	}
 	ctx.cb.MemberRef(v.Sel.Name, v)
 }
@@ -361,6 +380,10 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, flags int) {
 		}
 	default:
 		compileExpr(ctx, v.X)
+		if rec := ctx.recorder(); rec != nil {
+			e := ctx.cb.Get(-1)
+			rec.Type(v.X, types.TypeAndValue{Type: e.Type, Value: e.CVal})
+		}
 	}
 	if err := compileMember(ctx, v, v.Sel.Name, flags); err != nil {
 		panic(err)
@@ -423,6 +446,9 @@ func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, x *ast.Ident, flags, pkgKind i
 			if autoprop {
 				cb.Call(0)
 			}
+		}
+		if rec := ctx.recorder(); rec != nil {
+			rec.Use(x, v)
 		}
 		return true
 	}
