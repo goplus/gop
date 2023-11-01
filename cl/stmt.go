@@ -49,11 +49,34 @@ func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
 		if ctx.relativePath {
 			pos.Filename = relFile(ctx.targetDir, pos.Filename)
 		}
-		line := fmt.Sprintf("\n//line %s:%d", pos.Filename, pos.Line)
+		line := fmt.Sprintf("\n//line %s:%d:1", pos.Filename, pos.Line)
 		comments := &goast.CommentGroup{
 			List: []*goast.Comment{{Text: line}},
 		}
 		ctx.cb.SetComments(comments, false)
+	}
+}
+
+func commentFunc(ctx *blockCtx, fn *gox.Func, decl *ast.FuncDecl) {
+	if ctx.fileLine {
+		start := decl.Name.Pos()
+		pos := ctx.fset.Position(start)
+		if ctx.relativePath {
+			pos.Filename = relFile(ctx.targetDir, pos.Filename)
+		}
+		line := fmt.Sprintf("//line %s:%d", pos.Filename, pos.Line)
+		if !decl.Shadow {
+			line += ":1"
+		}
+		doc := &goast.CommentGroup{}
+		if decl.Doc != nil {
+			doc.List = append(doc.List, decl.Doc.List...)
+			doc.List = append(doc.List, &goast.Comment{Text: "//"})
+		}
+		doc.List = append(doc.List, &goast.Comment{Text: line})
+		fn.SetComments(ctx.pkg, doc)
+	} else if decl.Doc != nil {
+		fn.SetComments(ctx.pkg, decl.Doc)
 	}
 }
 
