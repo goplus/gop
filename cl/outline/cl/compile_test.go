@@ -4638,6 +4638,7 @@ func (pt *Point) Test() {
 	println(pt.x, pt.y)
 }
 
+// testPoint is test point
 func testPoint() {
 	var pt Point
 	pt.Test()
@@ -4658,18 +4659,20 @@ func (pt *Point) Test() {
 //line /foo/bar.gop:8:1
 	fmt.Println(pt.x, pt.y)
 }
-//line /foo/bar.gop:11:1
-func testPoint() {
+// testPoint is test point
+//
 //line /foo/bar.gop:12:1
-	var pt Point
+func testPoint() {
 //line /foo/bar.gop:13:1
+	var pt Point
+//line /foo/bar.gop:14:1
 	pt.Test()
 }
-//line /foo/bar.gop:16
+//line /foo/bar.gop:17
 func main() {
-//line /foo/bar.gop:16:1
-	fmt.Println("hello")
 //line /foo/bar.gop:17:1
+	fmt.Println("hello")
+//line /foo/bar.gop:18:1
 	testPoint()
 }
 `)
