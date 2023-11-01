@@ -526,7 +526,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		fset: fset, files: files, workingDir: workingDir,
 	}
 	ctx := &pkgCtx{
-		fset: p.Fset,
+		fset: fset,
 		syms: make(map[string]loader), nodeInterp: interp, generics: make(map[string]bool),
 	}
 	confGox := &gox.Config{
