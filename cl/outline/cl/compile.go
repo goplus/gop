@@ -757,9 +757,7 @@ func preloadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) 
 		ctx.handleErr(err)
 		return
 	}
-	if d.Doc != nil {
-		fn.SetComments(ctx.pkg, d.Doc)
-	}
+	commentFunc(ctx, fn, d)
 	if genBody {
 		if body := d.Body; body != nil {
 			ctx.bodys = append(ctx.bodys, func() { // interface issue: #795
