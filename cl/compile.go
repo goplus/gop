@@ -374,6 +374,7 @@ func doInitMethods(ld *typeLoader) {
 type pkgCtx struct {
 	*nodeInterp
 	*gmxSettings
+	fset  *token.FileSet
 	cpkgs *cpackages.Importer
 	syms  map[string]loader
 	inits []func()
@@ -394,7 +395,6 @@ type blockCtx struct {
 	*pkgCtx
 	pkg          *gox.Package
 	cb           *gox.CodeBuilder
-	fset         *token.FileSet
 	imports      map[string]pkgImp
 	lookups      []*gox.PkgRef
 	clookups     []*cpackages.PkgRef
@@ -526,6 +526,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		fset: fset, files: files, workingDir: workingDir,
 	}
 	ctx := &pkgCtx{
+		fset: p.Fset,
 		syms: make(map[string]loader), nodeInterp: interp, generics: make(map[string]bool),
 	}
 	confGox := &gox.Config{
@@ -573,7 +574,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		fileLine := !conf.NoFileLine
 		fileScope := types.NewScope(p.Types.Scope(), f.Pos(), f.End(), fpath)
 		ctx := &blockCtx{
-			pkg: p, pkgCtx: ctx, cb: p.CB(), fset: p.Fset, targetDir: targetDir, fileScope: fileScope,
+			pkg: p, pkgCtx: ctx, cb: p.CB(), targetDir: targetDir, fileScope: fileScope,
 			fileLine: fileLine, relativePath: conf.RelativePath, isClass: f.IsClass, rec: conf.Recorder,
 			c2goBase: c2goBase(conf.C2goBase), imports: make(map[string]pkgImp), isGopFile: true,
 		}
@@ -588,7 +589,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		f := fromgo.ASTFile(gof, 0)
 		gofiles = append(gofiles, f)
 		ctx := &blockCtx{
-			pkg: p, pkgCtx: ctx, cb: p.CB(), fset: p.Fset, targetDir: targetDir,
+			pkg: p, pkgCtx: ctx, cb: p.CB(), targetDir: targetDir,
 			imports: make(map[string]pkgImp),
 		}
 		preloadFile(p, ctx, fpath, f, false, false)
