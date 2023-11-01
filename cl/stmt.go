@@ -64,9 +64,11 @@ func commentFunc(ctx *blockCtx, fn *gox.Func, decl *ast.FuncDecl) {
 		if ctx.relativePath {
 			pos.Filename = relFile(ctx.targetDir, pos.Filename)
 		}
-		line := fmt.Sprintf("//line %s:%d", pos.Filename, pos.Line)
-		if !decl.Shadow {
-			line += ":1"
+		var line string
+		if decl.Shadow {
+			line = fmt.Sprintf("//line %s:%d", pos.Filename, pos.Line)
+		} else {
+			line = fmt.Sprintf("//line %s:%d:1", pos.Filename, pos.Line)
 		}
 		doc := &goast.CommentGroup{}
 		if decl.Doc != nil {
