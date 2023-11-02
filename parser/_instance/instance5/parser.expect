@@ -70,7 +70,7 @@ ast.FuncDecl:
                             ast.IndexExpr:
                               X:
                                 ast.Ident:
-                                  Name: T
+                                  Name: M
                               Index:
                                 ast.Ident:
                                   Name: int
@@ -87,15 +87,13 @@ ast.FuncDecl:
                       Args:
                         ast.CompositeLit:
                           Type:
-                            ast.ParenExpr:
+                            ast.IndexExpr:
                               X:
-                                ast.IndexExpr:
-                                  X:
-                                    ast.Ident:
-                                      Name: T
-                                  Index:
-                                    ast.Ident:
-                                      Name: int
+                                ast.Ident:
+                                  Name: T
+                              Index:
+                                ast.Ident:
+                                  Name: int
                           Elts:
                             ast.KeyValueExpr:
                               Key:
@@ -113,3 +111,37 @@ ast.FuncDecl:
                                 ast.BasicLit:
                                   Kind: INT
                                   Value: 2
+        ast.RangeStmt:
+          Key:
+            ast.Ident:
+              Name: _
+          Value:
+            ast.Ident:
+              Name: i
+          Tok: :=
+          X:
+            ast.CompositeLit:
+              Type:
+                ast.ArrayType:
+                  Elt:
+                    ast.Ident:
+                      Name: int
+              Elts:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 7
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 42
+          Body:
+            ast.BlockStmt:
+              List:
+                ast.ExprStmt:
+                  X:
+                    ast.CallExpr:
+                      Fun:
+                        ast.Ident:
+                          Name: println
+                      Args:
+                        ast.Ident:
+                          Name: i
