@@ -887,11 +887,12 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 			case token.TYPE:
 				for _, spec := range d.Specs {
 					t := spec.(*ast.TypeSpec)
-					name := t.Name.Name
+					tName := t.Name
+					name := tName.Name
 					if debugLoad {
 						log.Println("==> Preload type", name)
 					}
-					pos := t.Name.Pos()
+					pos := tName.Pos()
 					ld := getTypeLoader(parent, syms, pos, name)
 					defs := ctx.pkg.NewTypeDefs()
 					if gopFile {
@@ -902,13 +903,13 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 								if debugLoad {
 									log.Println("==> Load > AliasType", name)
 								}
-								defs.AliasType(name, toType(ctx, t.Type), t.Pos())
+								defs.AliasType(name, toType(ctx, t.Type), tName)
 								return
 							}
 							if debugLoad {
 								log.Println("==> Load > NewType", name)
 							}
-							decl := defs.NewType(name, pos)
+							decl := defs.NewType(name, tName)
 							if t.Doc != nil {
 								defs.SetComments(t.Doc)
 							} else if d.Doc != nil {
@@ -920,7 +921,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 								}
 								decl.InitType(ctx.pkg, toType(ctx, t.Type))
 								if rec := ctx.recorder(); rec != nil {
-									rec.Def(t.Name, decl.Type().Obj())
+									rec.Def(tName, decl.Type().Obj())
 								}
 							}
 						}
