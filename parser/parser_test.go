@@ -508,4 +508,9 @@ const d
 `, `/foo/bar.gox:5:7: missing constant value`, ``)
 }
 
+func TestErrGlobal(t *testing.T) {
+	testErrCode(t, `func test() {}
+}`, `/foo/bar.gop:2:1: expected statement, found '}'`, ``)
+}
+
 // -----------------------------------------------------------------------------
