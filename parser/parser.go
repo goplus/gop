@@ -2068,29 +2068,6 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	return x
 }
 
-// isLiteralType reports whether x is a legal composite literal type.
-func isLiteralType(x ast.Expr) bool {
-	switch t := unparen(x).(type) {
-	case *ast.BadExpr:
-	case *ast.Ident:
-	case *ast.IndexExpr:
-		_, isIdent := t.X.(*ast.Ident)
-		return isIdent
-	case *ast.IndexListExpr:
-		_, isIdent := t.X.(*ast.Ident)
-		return isIdent
-	case *ast.SelectorExpr:
-		_, isIdent := t.X.(*ast.Ident)
-		return isIdent
-	case *ast.ArrayType:
-	case *ast.StructType:
-	case *ast.MapType:
-	default:
-		return false // all other nodes are not legal composite literal types
-	}
-	return true
-}
-
 /*
 // If x is of the form *T, deref returns T, otherwise it returns x.
 func deref(x ast.Expr) ast.Expr {
@@ -2174,13 +2151,30 @@ L:
 		case token.LBRACE: // {
 			if allowCmd && p.isCmd(x) { // println {...}
 				x = p.parseCallOrConversion(p.checkExprOrType(x), true)
-			} else if isLiteralType(x) && p.exprLev >= 0 {
-				if lhs {
-					p.resolve(x)
+			} else {
+				t := unparen(x)
+				// determine if '{' belongs to a composite literal or a block statement
+				switch t.(type) {
+				case *ast.BadExpr, *ast.Ident, *ast.SelectorExpr:
+					if p.exprLev < 0 {
+						break L
+					}
+					// x is possibly a composite literal type
+				case *ast.IndexExpr, *ast.IndexListExpr:
+					if p.exprLev < 0 {
+						break L
+					}
+					// x is possibly a composite literal type
+				case *ast.ArrayType, *ast.StructType, *ast.MapType:
+					// x is a composite literal type
+				default:
+					break L
+				}
+				if t != x {
+					p.error(t.Pos(), "cannot parenthesize type in composite literal")
+					// already progressed, no need to advance
 				}
 				x = p.parseLiteralValue(x)
-			} else {
-				break L
 			}
 		case token.NOT:
 			if allowCmd && p.isCmd(x) {
