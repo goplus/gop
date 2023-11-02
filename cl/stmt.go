@@ -45,7 +45,7 @@ func relFile(dir string, file string) string {
 func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
 	if ctx.fileLine {
 		start := stmt.Pos()
-		pos := ctx.Position(start)
+		pos := ctx.fset.Position(start)
 		if ctx.relativePath {
 			pos.Filename = relFile(ctx.targetDir, pos.Filename)
 		}
