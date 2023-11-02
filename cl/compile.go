@@ -251,30 +251,17 @@ func (p *nodeInterp) Position(start token.Pos) token.Position {
 
 func (p *nodeInterp) Caller(node ast.Node) string {
 	if expr, ok := node.(*ast.CallExpr); ok {
-		node = expr.Fun
-		start := node.Pos()
-		pos := p.fset.Position(start)
-		f := p.files[pos.Filename]
-		n := int(node.End() - start)
-		return string(f.Code[pos.Offset : pos.Offset+n])
+		return p.LoadExpr(expr.Fun)
 	}
 	return "the function call"
 }
 
-func (p *nodeInterp) LoadExpr(node ast.Node) (src string, pos token.Position) {
+func (p *nodeInterp) LoadExpr(node ast.Node) string {
 	start := node.Pos()
-	pos = p.fset.Position(start)
+	pos := p.fset.Position(start)
 	f := p.files[pos.Filename]
-	if f == nil { // not found
-		return
-	}
 	n := int(node.End() - start)
-	pos.Filename = relFile(p.workingDir, pos.Filename)
-	if pos.Offset+n < 0 {
-		log.Println("LoadExpr:", node, pos.Filename, pos.Line, pos.Offset, node.Pos(), node.End(), n)
-	}
-	src = string(f.Code[pos.Offset : pos.Offset+n])
-	return
+	return string(f.Code[pos.Offset : pos.Offset+n])
 }
 
 type loader interface {
@@ -374,6 +361,7 @@ func doInitMethods(ld *typeLoader) {
 type pkgCtx struct {
 	*nodeInterp
 	*gmxSettings
+	fset  *token.FileSet
 	cpkgs *cpackages.Importer
 	syms  map[string]loader
 	inits []func()
@@ -394,7 +382,6 @@ type blockCtx struct {
 	*pkgCtx
 	pkg          *gox.Package
 	cb           *gox.CodeBuilder
-	fset         *token.FileSet
 	imports      map[string]pkgImp
 	lookups      []*gox.PkgRef
 	clookups     []*cpackages.PkgRef
@@ -422,27 +409,22 @@ func (bc *blockCtx) findImport(name string) (pi pkgImp, ok bool) {
 	return
 }
 
-func newCodeErrorf(pos *token.Position, format string, args ...interface{}) *gox.CodeError {
-	return &gox.CodeError{Pos: pos, Msg: fmt.Sprintf(format, args...)}
+func (p *pkgCtx) newCodeError(pos token.Pos, msg string) error {
+	return &gox.CodeError{Fset: p.nodeInterp, Pos: pos, Msg: msg}
 }
 
-func (p *pkgCtx) newCodeError(start token.Pos, msg string) error {
-	pos := p.Position(start)
-	return &gox.CodeError{Pos: &pos, Msg: msg}
+func (p *pkgCtx) newCodeErrorf(pos token.Pos, format string, args ...interface{}) error {
+	return &gox.CodeError{Fset: p.nodeInterp, Pos: pos, Msg: fmt.Sprintf(format, args...)}
 }
 
-func (p *pkgCtx) newCodeErrorf(start token.Pos, format string, args ...interface{}) error {
-	pos := p.Position(start)
-	return newCodeErrorf(&pos, format, args...)
+/*
+func (p *pkgCtx) handleError(pos token.Pos, msg string) {
+	p.handleErr(p.newCodeError(pos, msg))
 }
+*/
 
-func (p *pkgCtx) handleCodeErrorf(pos *token.Position, format string, args ...interface{}) {
-	p.handleErr(newCodeErrorf(pos, format, args...))
-}
-
-func (p *pkgCtx) handleErrorf(start token.Pos, format string, args ...interface{}) {
-	pos := p.Position(start)
-	p.handleErr(newCodeErrorf(&pos, format, args...))
+func (p *pkgCtx) handleErrorf(pos token.Pos, format string, args ...interface{}) {
+	p.handleErr(p.newCodeErrorf(pos, format, args...))
 }
 
 func (p *pkgCtx) handleErr(err error) {
@@ -526,6 +508,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		fset: fset, files: files, workingDir: workingDir,
 	}
 	ctx := &pkgCtx{
+		fset: fset,
 		syms: make(map[string]loader), nodeInterp: interp, generics: make(map[string]bool),
 	}
 	confGox := &gox.Config{
@@ -539,6 +522,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		DefaultGoFile:   defaultGoFile,
 		NoSkipConstant:  conf.NoSkipConstant,
 		PkgPathIox:      ioxPkgPath,
+		DbgPositioner:   interp,
 	}
 	if conf.Recorder != nil {
 		confGox.Recorder = &goxRecorder{rec: conf.Recorder}
@@ -573,7 +557,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		fileLine := !conf.NoFileLine
 		fileScope := types.NewScope(p.Types.Scope(), f.Pos(), f.End(), fpath)
 		ctx := &blockCtx{
-			pkg: p, pkgCtx: ctx, cb: p.CB(), fset: p.Fset, targetDir: targetDir, fileScope: fileScope,
+			pkg: p, pkgCtx: ctx, cb: p.CB(), targetDir: targetDir, fileScope: fileScope,
 			fileLine: fileLine, relativePath: conf.RelativePath, isClass: f.IsClass, rec: conf.Recorder,
 			c2goBase: c2goBase(conf.C2goBase), imports: make(map[string]pkgImp), isGopFile: true,
 		}
@@ -588,7 +572,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		f := fromgo.ASTFile(gof, 0)
 		gofiles = append(gofiles, f)
 		ctx := &blockCtx{
-			pkg: p, pkgCtx: ctx, cb: p.CB(), fset: p.Fset, targetDir: targetDir,
+			pkg: p, pkgCtx: ctx, cb: p.CB(), targetDir: targetDir,
 			imports: make(map[string]pkgImp),
 		}
 		preloadFile(p, ctx, fpath, f, false, false)
@@ -903,11 +887,12 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 			case token.TYPE:
 				for _, spec := range d.Specs {
 					t := spec.(*ast.TypeSpec)
-					name := t.Name.Name
+					tName := t.Name
+					name := tName.Name
 					if debugLoad {
 						log.Println("==> Preload type", name)
 					}
-					pos := t.Name.Pos()
+					pos := tName.Pos()
 					ld := getTypeLoader(parent, syms, pos, name)
 					defs := ctx.pkg.NewTypeDefs()
 					if gopFile {
@@ -918,13 +903,13 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 								if debugLoad {
 									log.Println("==> Load > AliasType", name)
 								}
-								defs.AliasType(name, toType(ctx, t.Type), t.Pos())
+								defs.AliasType(name, toType(ctx, t.Type), tName)
 								return
 							}
 							if debugLoad {
 								log.Println("==> Load > NewType", name)
 							}
-							decl := defs.NewType(name, pos)
+							decl := defs.NewType(name, tName)
 							if t.Doc != nil {
 								defs.SetComments(t.Doc)
 							} else if d.Doc != nil {
@@ -936,7 +921,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 								}
 								decl.InitType(ctx.pkg, toType(ctx, t.Type))
 								if rec := ctx.recorder(); rec != nil {
-									rec.Def(t.Name, decl.Type().Obj())
+									rec.Def(tName, decl.Type().Obj())
 								}
 							}
 						}

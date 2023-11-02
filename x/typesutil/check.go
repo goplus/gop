@@ -26,6 +26,8 @@ import (
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gop/x/typesutil/internal/typesutil"
+	"github.com/goplus/gox"
+	"github.com/qiniu/x/errors"
 	"github.com/qiniu/x/log"
 )
 
@@ -147,6 +149,17 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 		NoSkipConstant: true,
 	})
 	if err != nil {
+		if onErr := conf.Error; onErr != nil {
+			if list, ok := err.(errors.List); ok {
+				for _, e := range list {
+					if ce, ok := convErr(fset, e); ok {
+						onErr(ce)
+					}
+				}
+			} else if ce, ok := convErr(fset, err); ok {
+				onErr(ce)
+			}
+		}
 		if debugPrintErr {
 			log.Println("typesutil.Check err:", err)
 			log.SingleStack()
@@ -191,6 +204,28 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 			}
 		}
 	}
+	return
+}
+
+func convErr(fset *token.FileSet, e error) (ret *types.Error, ok bool) {
+	switch v := e.(type) {
+	case *gox.CodeError:
+		ret = &types.Error{Fset: fset, Pos: v.Pos, Msg: v.Msg}
+		typesutil.SetErrorGo116(ret, 0, v.Pos, v.Pos)
+	case *gox.MatchError:
+		pos, end := token.NoPos, token.NoPos
+		if v.Src != nil {
+			pos, end = v.Src.Pos(), v.Src.End()
+		}
+		ret = &types.Error{Fset: fset, Pos: pos, Msg: v.Message("")}
+		typesutil.SetErrorGo116(ret, 0, pos, end)
+	case *gox.ImportError:
+		ret = &types.Error{Fset: fset, Pos: v.Pos, Msg: v.Err.Error()}
+		typesutil.SetErrorGo116(ret, 0, v.Pos, v.Pos)
+	default:
+		return
+	}
+	ok = true
 	return
 }
 

@@ -559,8 +559,8 @@ func compileCallArgs(fn *fnType, fnt types.Type, ctx *blockCtx, v *ast.CallExpr,
 			if e, ok := r.(error); ok {
 				err = e
 			} else {
-				src, pos := ctx.LoadExpr(v)
-				err = newCodeErrorf(&pos, "compile func %v error: %v", src, r)
+				src := ctx.LoadExpr(v)
+				err = ctx.newCodeErrorf(v.Pos(), "compile func %v error: %v", src, r)
 			}
 			ctx.cb.InternalStack().SetLen(n)
 		}
@@ -630,7 +630,7 @@ retry:
 		typ = t.Underlying()
 		goto retry
 	}
-	src, _ := ctx.LoadExpr(toNode)
+	src := ctx.LoadExpr(toNode)
 	err := ctx.newCodeErrorf(lambda.Pos(), "cannot use lambda literal as type %v in %v to %v", ftyp, flag, src)
 	panic(err)
 }
@@ -789,8 +789,8 @@ func compileStructLitInKeyVal(ctx *blockCtx, elts []ast.Expr, t *types.Struct, t
 		if idx >= 0 {
 			ctx.cb.Val(idx)
 		} else {
-			src, pos := ctx.LoadExpr(name)
-			err := newCodeErrorf(&pos, "%s undefined (type %v has no field or method %s)", src, typ, name.Name)
+			src := ctx.LoadExpr(name)
+			err := ctx.newCodeErrorf(name.Pos(), "%s undefined (type %v has no field or method %s)", src, typ, name.Name)
 			panic(err)
 		}
 		switch expr := kv.Value.(type) {
