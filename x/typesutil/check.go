@@ -207,20 +207,26 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 	return
 }
 
-func convErr(fset *token.FileSet, e error) (*types.Error, bool) {
+func convErr(fset *token.FileSet, e error) (ret *types.Error, ok bool) {
 	switch v := e.(type) {
 	case *gox.CodeError:
-		return &types.Error{Fset: fset, Pos: v.Pos, Msg: v.Msg}, true
+		ret = &types.Error{Fset: fset, Pos: v.Pos, Msg: v.Msg}
+		typesutil.SetErrorGo116(ret, 0, v.Pos, v.Pos)
 	case *gox.MatchError:
-		pos := token.NoPos
+		pos, end := token.NoPos, token.NoPos
 		if v.Src != nil {
-			pos = v.Src.Pos()
+			pos, end = v.Src.Pos(), v.Src.End()
 		}
-		return &types.Error{Fset: fset, Pos: pos, Msg: v.Message("")}, true
+		ret = &types.Error{Fset: fset, Pos: pos, Msg: v.Message("")}
+		typesutil.SetErrorGo116(ret, 0, pos, end)
 	case *gox.ImportError:
-		return &types.Error{Fset: fset, Pos: v.Pos, Msg: v.Err.Error()}, true
+		ret = &types.Error{Fset: fset, Pos: v.Pos, Msg: v.Err.Error()}
+		typesutil.SetErrorGo116(ret, 0, v.Pos, v.Pos)
+	default:
+		return
 	}
-	return nil, false
+	ok = true
+	return
 }
 
 func scopeDelete(objMap map[types.Object]types.Object, scope *types.Scope, name string) {
