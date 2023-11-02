@@ -513,4 +513,9 @@ func TestErrGlobal(t *testing.T) {
 }`, `/foo/bar.gop:2:1: expected statement, found '}'`, ``)
 }
 
+func TestErrCompositeLiteral(t *testing.T) {
+	testErrCode(t, `println (T[int]){a: 1, b: 2}
+`, `/foo/bar.gop:1:10: cannot parenthesize type in composite literal`, ``)
+}
+
 // -----------------------------------------------------------------------------
