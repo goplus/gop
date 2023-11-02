@@ -26,6 +26,8 @@ import (
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gop/x/typesutil/internal/typesutil"
+	"github.com/goplus/gox"
+	"github.com/qiniu/x/errors"
 	"github.com/qiniu/x/log"
 )
 
@@ -147,6 +149,17 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 		NoSkipConstant: true,
 	})
 	if err != nil {
+		if onErr := conf.Error; onErr != nil {
+			if list, ok := err.(errors.List); ok {
+				for _, e := range list {
+					if ce, ok := convErr(fset, e); ok {
+						onErr(ce)
+					}
+				}
+			} else if ce, ok := convErr(fset, err); ok {
+				onErr(ce)
+			}
+		}
 		if debugPrintErr {
 			log.Println("typesutil.Check err:", err)
 			log.SingleStack()
@@ -192,6 +205,22 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 		}
 	}
 	return
+}
+
+func convErr(fset *token.FileSet, e error) (*types.Error, bool) {
+	switch v := e.(type) {
+	case *gox.CodeError:
+		return &types.Error{Fset: fset, Pos: v.Pos, Msg: v.Msg}, true
+	case *gox.MatchError:
+		pos := token.NoPos
+		if v.Src != nil {
+			pos = v.Src.Pos()
+		}
+		return &types.Error{Fset: fset, Pos: pos, Msg: v.Message("")}, true
+	case *gox.ImportError:
+		return &types.Error{Fset: fset, Pos: v.Pos, Msg: v.Err.Error()}, true
+	}
+	return nil, false
 }
 
 func scopeDelete(objMap map[types.Object]types.Object, scope *types.Scope, name string) {
