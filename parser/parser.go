@@ -3648,7 +3648,7 @@ func (p *parser) parseGlobalStmts(sync map[token.Token]bool, pos token.Pos, stmt
 		p.advance(sync)
 	}
 	if p.tok != token.EOF {
-		p.expect(token.SEMICOLON)
+		p.errorExpected(p.pos, "statement", 2)
 	}
 	f := &ast.FuncDecl{
 		Name: &ast.Ident{NamePos: pos, Name: "main"},

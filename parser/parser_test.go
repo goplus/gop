@@ -510,7 +510,7 @@ const d
 
 func TestErrGlobal(t *testing.T) {
 	testErrCode(t, `func test() {}
-}`, `/foo/bar.gop:2:1: expected ';', found '}'`, ``)
+}`, `/foo/bar.gop:2:1: expected statement, found '}'`, ``)
 }
 
 // -----------------------------------------------------------------------------
