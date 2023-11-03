@@ -1041,9 +1041,7 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) {
 		ctx.handleErr(err)
 		return
 	}
-	if d.Doc != nil {
-		fn.SetComments(pkg, d.Doc)
-	}
+	commentFunc(ctx, fn, d)
 	if rec := ctx.recorder(); rec != nil {
 		rec.Def(d.Name, fn.Func)
 		if recv == nil {
