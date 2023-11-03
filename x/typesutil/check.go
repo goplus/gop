@@ -207,25 +207,25 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 	return
 }
 
-func convErr(fset *token.FileSet, e error) (ret *types.Error, ok bool) {
+func convErr(fset *token.FileSet, e error) (ret types.Error, ok bool) {
 	switch v := e.(type) {
 	case *gox.CodeError:
-		ret = &types.Error{Fset: fset, Pos: v.Pos, Msg: v.Msg}
-		typesutil.SetErrorGo116(ret, 0, v.Pos, v.Pos)
+		ret.Pos, ret.Msg = v.Pos, v.Msg
+		typesutil.SetErrorGo116(&ret, 0, v.Pos, v.Pos)
 	case *gox.MatchError:
-		pos, end := token.NoPos, token.NoPos
+		end := token.NoPos
 		if v.Src != nil {
-			pos, end = v.Src.Pos(), v.Src.End()
+			ret.Pos, end = v.Src.Pos(), v.Src.End()
 		}
-		ret = &types.Error{Fset: fset, Pos: pos, Msg: v.Message("")}
-		typesutil.SetErrorGo116(ret, 0, pos, end)
+		ret.Msg = v.Message("")
+		typesutil.SetErrorGo116(&ret, 0, ret.Pos, end)
 	case *gox.ImportError:
-		ret = &types.Error{Fset: fset, Pos: v.Pos, Msg: v.Err.Error()}
-		typesutil.SetErrorGo116(ret, 0, v.Pos, v.Pos)
+		ret.Pos, ret.Msg = v.Pos, v.Err.Error()
+		typesutil.SetErrorGo116(&ret, 0, v.Pos, v.Pos)
 	default:
 		return
 	}
-	ok = true
+	ret.Fset, ok = fset, true
 	return
 }
 
