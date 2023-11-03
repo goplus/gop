@@ -51,6 +51,19 @@ func IgnoreNotated(err error) bool {
 	return errors.Err(err) == ErrIgnoreNotated
 }
 
+// ErrorPos returns where the error occurs.
+func ErrorPos(err error) token.Pos {
+	switch v := err.(type) {
+	case *gox.CodeError:
+		return v.Pos
+	case *gox.MatchError:
+		return v.Pos()
+	case *gox.ImportError:
+		return v.Pos
+	}
+	return token.NoPos
+}
+
 func ignNotatedErrs(err error, pkg *ast.Package, fset *token.FileSet) error {
 	switch v := err.(type) {
 	case errors.List:

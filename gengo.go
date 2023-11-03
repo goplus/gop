@@ -24,8 +24,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/goplus/gop/token"
-	"github.com/goplus/gox"
 	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modcache"
 	"github.com/goplus/mod/modfetch"
@@ -49,18 +47,6 @@ const (
 )
 
 // -----------------------------------------------------------------------------
-
-func ErrorPos(err error) token.Pos {
-	switch v := err.(type) {
-	case *gox.CodeError:
-		return v.Pos
-	case *gox.MatchError:
-		return v.Pos()
-	case *gox.ImportError:
-		return v.Pos
-	}
-	return token.NoPos
-}
 
 func GenGo(dir string, conf *Config, genTestPkg bool) (string, bool, error) {
 	return GenGoEx(dir, conf, genTestPkg, 0)
