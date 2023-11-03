@@ -24,6 +24,9 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/token"
+	"github.com/goplus/gox"
 	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modcache"
 	"github.com/goplus/mod/modfetch"
@@ -47,6 +50,27 @@ const (
 )
 
 // -----------------------------------------------------------------------------
+
+func ErrorPos(err error) token.Pos {
+	switch v := err.(type) {
+	case *gox.CodeError:
+		return v.Pos
+	case *gox.MatchError:
+		return v.Pos()
+	case *gox.ImportError:
+		return v.Pos
+	}
+	return token.NoPos
+}
+
+func ignoreNotatedErr(err error, pkg *ast.Package, fset *token.FileSet) error {
+	pos := ErrorPos(err)
+	f := fset.File(pos)
+	if f == nil {
+		return err
+	}
+	f.Line()
+}
 
 func GenGo(dir string, conf *Config, genTestPkg bool) (string, bool, error) {
 	return GenGoEx(dir, conf, genTestPkg, 0)
@@ -134,10 +158,13 @@ func genGoSingleFile(file string, conf *Config, flags GenFlags) (err error) {
 	dir, fname := filepath.Split(file)
 	autogen := dir + strings.TrimSuffix(fname, ".gop") + "_augogen.go"
 	if (flags & GenFlagPrompt) != 0 {
-		fmt.Println("GenGo", file, "...")
+		fmt.Fprintln(os.Stderr, "GenGo", file, "...")
 	}
-	out, err := LoadFiles([]string{file}, nil)
+	out, err := LoadFiles([]string{file}, conf)
 	if err != nil {
+		if ignoreNotatedErr() {
+			return nil
+		}
 		return errors.NewWith(err, `LoadFiles(files, conf)`, -2, "gop.LoadFiles", file)
 	}
 	if flags&GenFlagCheckOnly != 0 {
@@ -153,6 +180,9 @@ func genGoIn(dir string, conf *Config, genTestPkg bool, flags GenFlags, gen ...*
 	out, test, err := LoadDir(dir, conf, genTestPkg, (flags&GenFlagPrompt) != 0)
 	if err != nil {
 		if err == syscall.ENOENT { // no Go+ source files
+			return nil
+		}
+		if ignoreNotatedErr() {
 			return nil
 		}
 		return errors.NewWith(err, `LoadDir(dir, conf, genTestPkg)`, -5, "gop.LoadDir", dir, conf, genTestPkg)

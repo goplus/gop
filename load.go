@@ -21,6 +21,7 @@ import (
 	"go/token"
 	"go/types"
 	"io/fs"
+	"os"
 	"strings"
 	"syscall"
 
@@ -43,6 +44,7 @@ type Config struct {
 
 	DontUpdateGoMod     bool
 	DontCheckModChanged bool
+	IgnoreNotatedError  bool
 }
 
 // -----------------------------------------------------------------------------
@@ -133,10 +135,13 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 			continue
 		}
 		if promptGenGo != nil && promptGenGo[0] {
-			fmt.Printf("GenGo %v ...\n", dir)
+			fmt.Fprintln(os.Stderr, "GenGo", dir, "...")
 		}
 		out, err = cl.NewPackage("", pkg, clConf)
 		if err != nil {
+			if conf.IgnoreNotatedError {
+				err = ignoreNotatedErr()
+			}
 			return
 		}
 	}
