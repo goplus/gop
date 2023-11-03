@@ -24,7 +24,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
 	"github.com/goplus/mod/gopmod"
@@ -63,15 +62,6 @@ func ErrorPos(err error) token.Pos {
 	return token.NoPos
 }
 
-func ignoreNotatedErr(err error, pkg *ast.Package, fset *token.FileSet) error {
-	pos := ErrorPos(err)
-	f := fset.File(pos)
-	if f == nil {
-		return err
-	}
-	f.Line()
-}
-
 func GenGo(dir string, conf *Config, genTestPkg bool) (string, bool, error) {
 	return GenGoEx(dir, conf, genTestPkg, 0)
 }
@@ -103,7 +93,7 @@ func genGoDir(dir string, conf *Config, genTestPkg, recursively bool, flags GenF
 					if strings.HasPrefix(d.Name(), "_") { // skip _
 						return filepath.SkipDir
 					}
-					if e := genGoIn(path, conf, genTestPkg, flags); e != nil {
+					if e := genGoIn(path, conf, genTestPkg, flags); e != nil && notIgnNotated(e, conf) {
 						if flags&GenFlagPrintError != 0 {
 							fmt.Fprintln(os.Stderr, e)
 						}
@@ -130,11 +120,17 @@ func genGoDir(dir string, conf *Config, genTestPkg, recursively bool, flags GenF
 		}
 		return list.ToError()
 	}
-	err = genGoIn(dir, conf, genTestPkg, flags)
-	if err != nil && (flags&GenFlagPrintError) != 0 {
-		fmt.Fprintln(os.Stderr, err)
+	if e := genGoIn(dir, conf, genTestPkg, flags); e != nil && notIgnNotated(e, conf) {
+		if (flags & GenFlagPrintError) != 0 {
+			fmt.Fprintln(os.Stderr, e)
+		}
+		err = e
 	}
 	return
+}
+
+func notIgnNotated(e error, conf *Config) bool {
+	return !(conf != nil && conf.IgnoreNotatedError && IgnoreNotated(e))
 }
 
 func genGoEntry(list *errors.List, path string, d fs.DirEntry, conf *Config, flags GenFlags) error {
@@ -144,7 +140,7 @@ func genGoEntry(list *errors.List, path string, d fs.DirEntry, conf *Config, fla
 			return filepath.SkipDir
 		}
 	} else if !d.IsDir() && strings.HasSuffix(fname, ".gop") {
-		if e := genGoSingleFile(path, conf, flags); e != nil {
+		if e := genGoSingleFile(path, conf, flags); e != nil && notIgnNotated(e, conf) {
 			if flags&GenFlagPrintError != 0 {
 				fmt.Fprintln(os.Stderr, e)
 			}
@@ -162,9 +158,6 @@ func genGoSingleFile(file string, conf *Config, flags GenFlags) (err error) {
 	}
 	out, err := LoadFiles([]string{file}, conf)
 	if err != nil {
-		if ignoreNotatedErr() {
-			return nil
-		}
 		return errors.NewWith(err, `LoadFiles(files, conf)`, -2, "gop.LoadFiles", file)
 	}
 	if flags&GenFlagCheckOnly != 0 {
@@ -179,10 +172,7 @@ func genGoSingleFile(file string, conf *Config, flags GenFlags) (err error) {
 func genGoIn(dir string, conf *Config, genTestPkg bool, flags GenFlags, gen ...*bool) (err error) {
 	out, test, err := LoadDir(dir, conf, genTestPkg, (flags&GenFlagPrompt) != 0)
 	if err != nil {
-		if err == syscall.ENOENT { // no Go+ source files
-			return nil
-		}
-		if ignoreNotatedErr() {
+		if NotFound(err) { // no Go+ source files
 			return nil
 		}
 		return errors.NewWith(err, `LoadDir(dir, conf, genTestPkg)`, -5, "gop.LoadDir", dir, conf, genTestPkg)

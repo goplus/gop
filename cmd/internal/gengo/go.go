@@ -71,22 +71,23 @@ func runCmd(cmd *base.Command, args []string) {
 		cl.SetDisableRecover(true)
 	}
 
+	var conf *gop.Config
 	flags := gop.GenFlagPrintError | gop.GenFlagPrompt
 	if *flagCheckMode {
 		flags |= gop.GenFlagCheckOnly
+		if *flagIgnoreNotatedErr {
+			conf = &gop.Config{IgnoreNotatedError: true}
+		}
 	}
 	if *flagSingleMode {
 		flags |= gop.GenFlagSingleFile
 	}
-	if *flagIgnoreNotatedErr {
-		flags |= gop.GenFlagIgnoreNotatedError
-	}
 	for _, proj := range projs {
 		switch v := proj.(type) {
 		case *gopprojs.DirProj:
-			_, _, err = gop.GenGoEx(v.Dir, nil, true, flags)
+			_, _, err = gop.GenGoEx(v.Dir, conf, true, flags)
 		case *gopprojs.PkgPathProj:
-			_, _, err = gop.GenGoPkgPathEx("", v.Path, nil, true, flags)
+			_, _, err = gop.GenGoPkgPathEx("", v.Path, conf, true, flags)
 		default:
 			log.Panicln("`gop go` doesn't support", reflect.TypeOf(v))
 		}

@@ -24,7 +24,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"syscall"
 
 	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
@@ -95,7 +94,7 @@ func outlinePkg(proj gopprojs.Proj, conf *gop.Config) {
 	default:
 		log.Panicln("`gop doc` doesn't support", reflect.TypeOf(v))
 	}
-	if err == syscall.ENOENT {
+	if gop.NotFound(err) {
 		fmt.Fprintf(os.Stderr, "gop doc %v: not Go/Go+ files found\n", obj)
 	} else if err != nil {
 		fmt.Fprintln(os.Stderr, err)

@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-// Package run implements the ``gop run'' command.
+// Package run implements the “gop run” command.
 package run
 
 import (
 	"fmt"
 	"os"
 	"reflect"
-	"syscall"
 
 	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
@@ -104,7 +103,7 @@ func run(proj gopprojs.Proj, args []string, chDir bool, conf *gop.Config, run *g
 	default:
 		log.Panicln("`gop run` doesn't support", reflect.TypeOf(v))
 	}
-	if err == syscall.ENOENT {
+	if gop.NotFound(err) {
 		fmt.Fprintf(os.Stderr, "gop run %v: not found\n", obj)
 	} else if err != nil {
 		fmt.Fprintln(os.Stderr, err)
