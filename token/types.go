@@ -18,6 +18,8 @@ package token
 
 import (
 	"go/token"
+
+	"github.com/goplus/gop/token/internal/tokenutil"
 )
 
 // Pos is a compact encoding of a source position within a file set.
@@ -39,7 +41,6 @@ import (
 // equivalent to comparing the respective source file offsets. If p and q
 // are in different files, p < q is true if the file implied by p was added
 // to the respective file set before the file implied by q.
-//
 type Pos = token.Pos
 
 const (
@@ -58,6 +59,12 @@ type Position = token.Position
 // A File is a handle for a file belonging to a FileSet.
 // A File has a name, size, and line offset table.
 type File = token.File
+
+// Lines returns the effective line offset table of the form described by SetLines.
+// Callers must not mutate the result.
+func Lines(f *File) []int {
+	return tokenutil.Lines(f)
+}
 
 // A FileSet represents a set of source files. Methods of file sets are
 // synchronized; multiple goroutines may invoke them concurrently.

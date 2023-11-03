@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-// Package build implements the ``gop build'' command.
+// Package build implements the “gop build” command.
 package build
 
 import (
@@ -23,7 +23,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"syscall"
 
 	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
@@ -105,7 +104,7 @@ func build(proj gopprojs.Proj, conf *gop.Config, build *gocmd.BuildConfig) {
 	default:
 		log.Panicln("`gop build` doesn't support", reflect.TypeOf(v))
 	}
-	if err == syscall.ENOENT {
+	if gop.NotFound(err) {
 		fmt.Fprintf(os.Stderr, "gop build %v: not found\n", obj)
 	} else if err != nil {
 		fmt.Fprintln(os.Stderr, err)
