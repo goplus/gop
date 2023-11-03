@@ -18,7 +18,6 @@ package gop
 
 import (
 	"fmt"
-	"go/token"
 	"go/types"
 	"io/fs"
 	"os"
@@ -28,6 +27,7 @@ import (
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/parser"
+	"github.com/goplus/gop/token"
 	"github.com/goplus/gop/x/c2go"
 	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/gox"
@@ -96,7 +96,7 @@ func isNotatedErr(err error, pkg *ast.Package, fset *token.FileSet) (notatedErr 
 	if !ok {
 		return
 	}
-	lines := f.Lines()
+	lines := token.Lines(f)
 	i := f.Line(pos) - 1 // base 0
 	start := lines[i]
 	var end int
