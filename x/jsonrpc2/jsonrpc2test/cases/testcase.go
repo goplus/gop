@@ -126,13 +126,16 @@ type echo call
 
 type cancelParams struct{ ID int64 }
 
-func Test(t *testing.T, ctx context.Context, listener jsonrpc2.Listener, framer jsonrpc2.Framer) {
-	stacktest.NoLeak(t)
+func Test(t *testing.T, ctx context.Context, listener jsonrpc2.Listener, framer jsonrpc2.Framer, noLeak bool) {
+	if noLeak {
+		stacktest.NoLeak(t)
+	}
 	server := jsonrpc2.NewServer(ctx, listener, binder{framer, nil})
 	defer func() {
 		listener.Close()
-		_ = server
-		// server.Wait()
+		if noLeak {
+			server.Wait()
+		}
 	}()
 	for _, test := range callTests {
 		t.Run(test.Name(), func(t *testing.T) {

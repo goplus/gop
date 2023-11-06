@@ -20,5 +20,5 @@ func TestNetPipe(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cases.Test(t, ctx, listener, jsonrpc2.HeaderFramer())
+	cases.Test(t, ctx, listener, jsonrpc2.HeaderFramer(), true)
 }
