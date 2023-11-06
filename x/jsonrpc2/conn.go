@@ -286,6 +286,10 @@ func (c *Connection) Notify(ctx context.Context, method string, params interface
 		}
 	}()
 
+	if debugCall {
+		log.Println("==> Connection.Notify", method, "params:", params)
+	}
+
 	c.updateInFlight(func(s *inFlightState) {
 		// If the connection is shutting down, allow outgoing notifications only if
 		// there is at least one call still in flight. The number of calls in flight
@@ -309,7 +313,11 @@ func (c *Connection) Notify(ctx context.Context, method string, params interface
 		return fmt.Errorf("marshaling notify parameters: %v", err)
 	}
 
-	return c.write(ctx, notify)
+	err = c.write(ctx, notify)
+	if debugCall {
+		log.Println("==> Connection.write:", notify.Method, err)
+	}
+	return
 }
 
 // Call invokes the target method and returns an object that can be used to await the response.

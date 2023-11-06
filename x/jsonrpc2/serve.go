@@ -24,6 +24,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"runtime"
 	"sync"
 	"sync/atomic"
@@ -97,8 +98,15 @@ func NewServer(ctx context.Context, listener Listener, binder Binder) *Server {
 }
 
 // Wait returns only when the server has shut down.
-func (s *Server) Wait() error {
-	return s.async.wait()
+func (s *Server) Wait() (err error) {
+	if Verbose {
+		log.Println("==> Server.Wait start")
+	}
+	err = s.async.wait()
+	if Verbose {
+		log.Println("==> Server.Wait end:", err)
+	}
+	return
 }
 
 // Shutdown informs the server to stop accepting new connections.
