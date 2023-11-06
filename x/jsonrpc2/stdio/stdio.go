@@ -210,15 +210,4 @@ func Listener(allowLocalDail bool) jsonrpc2.Listener {
 	return l
 }
 
-// NewServer starts a new server listening for incoming connections and returns
-// it.
-// This returns a fully running and connected server, it does not block on
-// the listener.
-// You can call Wait to block on the server, or Shutdown to get the sever to
-// terminate gracefully.
-// To notice incoming connections, use an intercepting Binder.
-func NewServer(binder jsonrpc2.Binder, allowLocalDail bool) *jsonrpc2.Server {
-	return jsonrpc2.NewServer(context.Background(), Listener(allowLocalDail), binder)
-}
-
 // -----------------------------------------------------------------------------

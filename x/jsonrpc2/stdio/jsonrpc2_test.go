@@ -14,8 +14,14 @@ import (
 )
 
 func TestStdio(t *testing.T) {
-	jsonrpc2.SetDebug(jsonrpc2.DbgFlagCall)
+	jsonrpc2.SetDebug(jsonrpc2.DbgFlagAll)
 	ctx := context.Background()
 	listener := stdio.Listener(true)
 	cases.Test(t, ctx, listener, nil, false)
+}
+
+func TestDial(t *testing.T) {
+	stdio.Dial(jsonrpc2.BinderFunc(func(ctx context.Context, c *jsonrpc2.Connection) jsonrpc2.ConnectionOptions {
+		return jsonrpc2.ConnectionOptions{}
+	}))
 }
