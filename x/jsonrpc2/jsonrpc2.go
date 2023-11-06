@@ -32,16 +32,19 @@ type dbgFlags int
 
 const (
 	DbgFlagVerbose dbgFlags = 1 << iota
-	DbgFlagAll              = DbgFlagVerbose
+	DbgFlagCall
+	DbgFlagAll = DbgFlagVerbose | DbgFlagCall
 )
 
 var (
-	Verbose bool
+	Verbose   bool
+	debugCall bool
 )
 
 // SetDebug sets debug flags.
 func SetDebug(flags dbgFlags) {
 	Verbose = (flags & DbgFlagVerbose) != 0
+	debugCall = (flags & (DbgFlagCall | DbgFlagVerbose)) != 0
 }
 
 var (

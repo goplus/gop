@@ -14,6 +14,7 @@ import (
 )
 
 func TestStdio(t *testing.T) {
+	jsonrpc2.SetDebug(jsonrpc2.DbgFlagCall)
 	ctx := context.Background()
 	listener := stdio.Listener(true)
 	cases.Test(t, ctx, listener, jsonrpc2.HeaderFramer())

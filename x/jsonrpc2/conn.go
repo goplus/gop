@@ -318,7 +318,7 @@ func (c *Connection) Notify(ctx context.Context, method string, params interface
 // You do not have to wait for the response, it can just be ignored if not needed.
 // If sending the call failed, the response will be ready and have the error in it.
 func (c *Connection) Call(ctx context.Context, method string, params interface{}) *AsyncCall {
-	if Verbose {
+	if debugCall {
 		log.Println("==> Connection.Call", method, "params:", params)
 	}
 	// Generate a new request identifier.
@@ -353,7 +353,7 @@ func (c *Connection) Call(ctx context.Context, method string, params interface{}
 	}
 
 	err = c.write(ctx, call)
-	if Verbose {
+	if debugCall {
 		log.Println("==> Connection.write:", call.ID, call.Method, err)
 	}
 	if err != nil {
@@ -712,6 +712,9 @@ func (c *Connection) processResult(from interface{}, req *incomingRequest, resul
 		}
 
 		response, respErr := NewResponse(req.ID, result, err)
+		if debugCall {
+			log.Println("==> processResult", response.ID, string(response.Result), response.Error)
+		}
 
 		// The caller could theoretically reuse the request's ID as soon as we've
 		// sent the response, so ensure that it is removed from the incoming map
