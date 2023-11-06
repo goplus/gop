@@ -26,6 +26,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -148,9 +149,15 @@ func (c *Connection) updateInFlight(f func(*inFlightState)) {
 	}
 
 	if s.idle() && s.shuttingDown(ErrUnknown) != nil {
+		if Verbose {
+			log.Println("==> Connection.updateInFlight: shuttingDown")
+		}
 		if s.closer != nil {
 			s.closeErr = s.closer.Close()
 			s.closer = nil // prevent duplicate Close calls
+		}
+		if Verbose {
+			log.Println("==> Connection.updateInFlight: s.reading -", s.reading)
 		}
 		if s.reading {
 			// The readIncoming goroutine is still running. Our call to Close should
@@ -311,6 +318,9 @@ func (c *Connection) Notify(ctx context.Context, method string, params interface
 // You do not have to wait for the response, it can just be ignored if not needed.
 // If sending the call failed, the response will be ready and have the error in it.
 func (c *Connection) Call(ctx context.Context, method string, params interface{}) *AsyncCall {
+	if Verbose {
+		log.Println("==> Connection.Call", method, "params:", params)
+	}
 	// Generate a new request identifier.
 	id := Int64ID(atomic.AddInt64(&c.seq, 1))
 	ac := &AsyncCall{
@@ -342,7 +352,11 @@ func (c *Connection) Call(ctx context.Context, method string, params interface{}
 		return ac
 	}
 
-	if err := c.write(ctx, call); err != nil {
+	err = c.write(ctx, call)
+	if Verbose {
+		log.Println("==> Connection.write:", call.ID, call.Method, err)
+	}
+	if err != nil {
 		// Sending failed. We will never get a response, so deliver a fake one if it
 		// wasn't already retired by the connection breaking.
 		c.updateInFlight(func(s *inFlightState) {
@@ -396,18 +410,28 @@ func (ac *AsyncCall) retire(response *Response) {
 // Await waits for (and decodes) the results of a Call.
 // The response will be unmarshaled from JSON into the result.
 func (ac *AsyncCall) Await(ctx context.Context, result interface{}) error {
+	if Verbose {
+		log.Println("==> AsyncCall.Await", ac.id)
+	}
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	case <-ac.ready:
 	}
-	if ac.response.Error != nil {
-		return ac.response.Error
+	if e := ac.response.Error; e != nil {
+		if Verbose {
+			log.Println("==> AsyncCall.Await error:", ac.id, e)
+		}
+		return e
+	}
+	ret := ac.response.Result
+	if Verbose {
+		log.Println("==> AsyncCall.Await ret:", ac.id, string(ret))
 	}
 	if result == nil {
 		return nil
 	}
-	return json.Unmarshal(ac.response.Result, result)
+	return json.Unmarshal(ret, result)
 }
 
 // Respond delivers a response to an incoming Call.
@@ -450,11 +474,17 @@ func (c *Connection) Cancel(id ID) {
 
 // Wait blocks until the connection is fully closed, but does not close it.
 func (c *Connection) Wait() error {
+	if Verbose {
+		log.Println("==> Connection.Wait start")
+	}
 	var err error
 	<-c.done
 	c.updateInFlight(func(s *inFlightState) {
 		err = s.closeErr
 	})
+	if Verbose {
+		log.Println("==> Connection.Wait end:", err)
+	}
 	return err
 }
 
@@ -492,6 +522,9 @@ func (c *Connection) readIncoming(ctx context.Context, reader Reader, preempter 
 			c.acceptRequest(ctx, msg, n, preempter)
 
 		case *Response:
+			if Verbose {
+				log.Println("==> readIncoming Response:", msg.ID)
+			}
 			c.updateInFlight(func(s *inFlightState) {
 				if ac, ok := s.outgoingCalls[msg.ID]; ok {
 					delete(s.outgoingCalls, msg.ID)
@@ -501,6 +534,9 @@ func (c *Connection) readIncoming(ctx context.Context, reader Reader, preempter 
 					_ = 0
 				}
 			})
+			if Verbose {
+				log.Println("==> readIncoming: updateInFlight -", msg.ID)
+			}
 
 		default:
 			c.internalErrorf("Read returned an unexpected message of type %T", msg)
@@ -508,6 +544,9 @@ func (c *Connection) readIncoming(ctx context.Context, reader Reader, preempter 
 	}
 
 	c.updateInFlight(func(s *inFlightState) {
+		if Verbose {
+			log.Println("==> readIncoming: updateInFlight s.reading - false")
+		}
 		s.reading = false
 		s.readErr = err
 

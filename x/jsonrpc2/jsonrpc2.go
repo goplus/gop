@@ -28,6 +28,22 @@ import (
 	"errors"
 )
 
+type dbgFlags int
+
+const (
+	DbgFlagVerbose dbgFlags = 1 << iota
+	DbgFlagAll              = DbgFlagVerbose
+)
+
+var (
+	Verbose bool
+)
+
+// SetDebug sets debug flags.
+func SetDebug(flags dbgFlags) {
+	Verbose = (flags & DbgFlagVerbose) != 0
+}
+
 var (
 	// ErrIdleTimeout is returned when serving timed out waiting for new connections.
 	ErrIdleTimeout = errors.New("timed out waiting for new connections")

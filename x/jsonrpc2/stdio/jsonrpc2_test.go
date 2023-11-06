@@ -2,22 +2,19 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package jsonrpc2test_test
+package stdio_test
 
 import (
 	"context"
 	"testing"
 
 	"github.com/goplus/gop/x/jsonrpc2"
-	"github.com/goplus/gop/x/jsonrpc2/jsonrpc2test"
 	"github.com/goplus/gop/x/jsonrpc2/jsonrpc2test/cases"
+	"github.com/goplus/gop/x/jsonrpc2/stdio"
 )
 
-func TestNetPipe(t *testing.T) {
+func TestStdio(t *testing.T) {
 	ctx := context.Background()
-	listener, err := jsonrpc2test.NetPipeListener(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
+	listener := stdio.Listener(true)
 	cases.Test(t, ctx, listener, jsonrpc2.HeaderFramer())
 }
