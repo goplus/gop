@@ -164,7 +164,6 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 			log.Println("typesutil.Check err:", err)
 			log.SingleStack()
 		}
-		return
 	}
 	if len(files) > 0 {
 		scope := pkgTypes.Scope()
