@@ -139,18 +139,17 @@ func getStringConst(spx *gox.PkgRef, name string) string {
 	return ""
 }
 
-func getFields(f *ast.File) (specs []ast.Spec) {
+func getFields(f *ast.File) []ast.Spec {
 	for _, decl := range f.Decls {
 		if g, ok := decl.(*ast.GenDecl); ok {
 			if g.Tok == token.VAR {
-				specs, g.Specs = g.Specs, nil
-				return
+				return g.Specs
 			}
 			continue
 		}
 		break
 	}
-	return
+	return nil
 }
 
 func setBodyHandler(ctx *blockCtx) {
