@@ -303,14 +303,14 @@ func onCloned() {
 
 import "github.com/goplus/gop/cl/internal/spx"
 
+type Game struct {
+	*spx.MyGame
+	Kai Kai
+}
 type Kai struct {
 	spx.Sprite
 	*Game
 	a int
-}
-type Game struct {
-	*spx.MyGame
-	Kai Kai
 }
 
 func (this *Game) onInit() {
@@ -345,17 +345,16 @@ import (
 	"github.com/goplus/gop/cl/internal/spx"
 )
 
-type Kai struct {
-	spx.Sprite
-	*index
-}
-
 var x float64 = spx.Rand__1(1.2)
 
 type index struct {
 	*spx.MyGame
 	Kai Kai
 	t   spx.Sound
+}
+type Kai struct {
+	spx.Sprite
+	*index
 }
 
 func (this *index) MainEntry() {
@@ -494,13 +493,13 @@ var (
 
 import "github.com/goplus/gop/cl/internal/spx2"
 
-type Kai struct {
-	spx2.Sprite
-	*Game
-}
 type Game struct {
 	spx2.Game
 	Kai Kai
+}
+type Kai struct {
+	spx2.Sprite
+	*Game
 }
 
 func (this *Game) MainEntry() {
@@ -530,13 +529,13 @@ import (
 	"github.com/goplus/gop/cl/internal/spx2"
 )
 
-type Kai struct {
-	spx2.Sprite
-	*Game
-}
 type Game struct {
 	spx2.Game
 	Kai Kai
+}
+type Kai struct {
+	spx2.Sprite
+	*Game
 }
 
 func (this *Game) MainEntry() {
@@ -631,14 +630,14 @@ type info struct {
 	x int
 	y int
 }
+type Game struct {
+	*spx.MyGame
+	Kai Kai
+}
 type Kai struct {
 	spx.Sprite
 	*Game
 	a int
-}
-type Game struct {
-	*spx.MyGame
-	Kai Kai
 }
 
 func (this *Game) onInit() {
