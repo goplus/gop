@@ -25,9 +25,8 @@ import (
 // -----------------------------------------------------------------------------
 
 const (
-	methodGenGo    = "gengo"
-	methodChanged  = "changed"
-	methodShutdown = "shutdown"
+	methodGenGo   = "gengo"
+	methodChanged = "changed"
 )
 
 // -----------------------------------------------------------------------------
@@ -70,10 +69,6 @@ func (p Client) GenGo(ctx context.Context, pattern ...string) (err error) {
 
 func (p Client) Changed(ctx context.Context, files ...string) (err error) {
 	return p.conn.Notify(ctx, methodChanged, files)
-}
-
-func (p Client) Shutdown(ctx context.Context) (err error) {
-	return p.conn.Notify(ctx, methodShutdown, nil)
 }
 
 // -----------------------------------------------------------------------------
