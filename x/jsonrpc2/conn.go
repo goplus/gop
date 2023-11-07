@@ -691,6 +691,10 @@ func (c *Connection) handleAsync() {
 			continue
 		}
 
+		if debugCall {
+			req := req.Request
+			log.Println("==> handleAsync", req.ID, req.Method, string(req.Params))
+		}
 		result, err := c.handler.Handle(req.ctx, req.Request)
 		c.processResult(c.handler, req, result, err)
 	}
