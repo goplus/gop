@@ -758,21 +758,34 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 						tags = append(tags, "")
 					}
 				}
+				rec := ctx.recorder()
 				for _, v := range specs {
 					spec := v.(*ast.ValueSpec)
-					var embed bool
-					if spec.Names == nil {
-						embed = true
-						v := parseTypeEmbedName(spec.Type)
-						spec.Names = []*ast.Ident{v}
-					}
 					typ := toType(ctx, spec.Type)
-					for _, name := range spec.Names {
-						if chk.chkRedecl(ctx, name.Name, name.Pos()) {
+					tag := toFieldTag(spec.Tag)
+					if len(spec.Names) == 0 {
+						name := parseTypeEmbedName(spec.Type)
+						if chk.chkRedecl(ctx, name.Name, spec.Type.Pos()) {
 							continue
 						}
-						flds = append(flds, types.NewField(name.Pos(), pkg, name.Name, typ, embed))
-						tags = append(tags, toFieldTag(spec.Tag))
+						fld := types.NewField(spec.Type.Pos(), pkg, name.Name, typ, true)
+						if rec != nil {
+							rec.Def(name, fld)
+						}
+						flds = append(flds, fld)
+						tags = append(tags, tag)
+					} else {
+						for _, name := range spec.Names {
+							if chk.chkRedecl(ctx, name.Name, name.Pos()) {
+								continue
+							}
+							fld := types.NewField(name.Pos(), pkg, name.Name, typ, false)
+							if rec != nil {
+								rec.Def(name, fld)
+							}
+							flds = append(flds, fld)
+							tags = append(tags, tag)
+						}
 					}
 				}
 				decl.InitType(p, types.NewStruct(flds, tags))
@@ -834,6 +847,10 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 	goFile := genGoFile(file, gopFile)
 	old, _ := p.SetCurFile(goFile, true)
 	defer p.RestoreCurFile(old)
+	var skipClassFields bool
+	if f.IsClass {
+		skipClassFields = true
+	}
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
@@ -970,6 +987,10 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 					})
 				}
 			case token.VAR:
+				if skipClassFields {
+					skipClassFields = false
+					continue
+				}
 				for _, spec := range d.Specs {
 					vSpec := spec.(*ast.ValueSpec)
 					if debugLoad {
