@@ -42,9 +42,9 @@ type Client struct {
 	conn *jsonrpc2.Connection
 }
 
-// Dial uses the dialer to make a new connection and returns a client of the language server
+// Open uses the dialer to make a new connection and returns a client of the LangServer
 // based on the connection.
-func Dial(ctx context.Context, dialer Dialer) (ret Client, err error) {
+func Open(ctx context.Context, dialer Dialer) (ret Client, err error) {
 	c, err := jsonrpc2.Dial(ctx, dialer, jsonrpc2.BinderFunc(
 		func(ctx context.Context, c *jsonrpc2.Connection) (ret jsonrpc2.ConnectionOptions) {
 			return
@@ -54,6 +54,10 @@ func Dial(ctx context.Context, dialer Dialer) (ret Client, err error) {
 	}
 	ret = Client{c}
 	return
+}
+
+func (p Client) Close() error {
+	return p.conn.Close()
 }
 
 func (p Client) AsyncGenGo(ctx context.Context, pattern ...string) *AsyncCall {
