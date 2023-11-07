@@ -715,10 +715,6 @@ func (c *Connection) processResult(from interface{}, req *incomingRequest, resul
 	}
 
 	if req.IsCall() {
-		if result == nil && err == nil {
-			err = c.internalErrorf("%#v returned a nil result and nil error for a %q Request that requires a Response", from, req.Method)
-		}
-
 		response, respErr := NewResponse(req.ID, result, err)
 		if debugCall {
 			log.Println("==> processResult", response.ID, string(response.Result), response.Error)

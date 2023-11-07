@@ -25,7 +25,7 @@ func TestDial(t *testing.T) {
 	stdio.Dial(r, w, jsonrpc2.BinderFunc(
 		func(ctx context.Context, c *jsonrpc2.Connection) jsonrpc2.ConnectionOptions {
 			return jsonrpc2.ConnectionOptions{}
-		}))
+		}), nil)
 	if _, err := stdio.Dialer(r, w).Dial(context.Background()); err != stdio.ErrTooManyConnections {
 		t.Fatal("stdio.Dialer:", err)
 	}

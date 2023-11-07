@@ -45,7 +45,7 @@ type ServeAndDialConfig struct {
 
 // ServeAndDial executes a command as a LangServer, makes a new connection to it
 // and returns a client of the LangServer based on the connection.
-func ServeAndDial(cmd string, args []string, conf *ServeAndDialConfig) Client {
+func ServeAndDial(conf *ServeAndDialConfig, cmd string, args ...string) Client {
 	if conf == nil {
 		conf = new(ServeAndDialConfig)
 	}
@@ -70,6 +70,7 @@ func ServeAndDial(cmd string, args []string, conf *ServeAndDialConfig) Client {
 	in, w := io.Pipe()
 	r, out := io.Pipe()
 
+	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
 		defer r.Close()
 		defer w.Close()
@@ -80,15 +81,14 @@ func ServeAndDial(cmd string, args []string, conf *ServeAndDialConfig) Client {
 		}
 		defer f.Close()
 
-		cmd := exec.Command(cmd, args...)
+		cmd := exec.CommandContext(ctx, cmd, args...)
 		cmd.Stdin = r
 		cmd.Stdout = w
 		cmd.Stderr = f
 		cmd.Run()
 	}()
 
-	ctx := context.Background()
-	c, err := Open(ctx, stdio.Dialer(in, out))
+	c, err := Open(ctx, stdio.Dialer(in, out), cancel)
 	if err != nil {
 		onErr(err)
 	}

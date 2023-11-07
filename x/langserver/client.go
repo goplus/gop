@@ -44,11 +44,11 @@ type Client struct {
 
 // Open uses the dialer to make a new connection and returns a client of the LangServer
 // based on the connection.
-func Open(ctx context.Context, dialer Dialer) (ret Client, err error) {
+func Open(ctx context.Context, dialer Dialer, onDone func()) (ret Client, err error) {
 	c, err := jsonrpc2.Dial(ctx, dialer, jsonrpc2.BinderFunc(
 		func(ctx context.Context, c *jsonrpc2.Connection) (ret jsonrpc2.ConnectionOptions) {
 			return
-		}))
+		}), onDone)
 	if err != nil {
 		return
 	}
