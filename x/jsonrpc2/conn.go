@@ -287,7 +287,7 @@ func (c *Connection) Notify(ctx context.Context, method string, params interface
 	}()
 
 	if debugCall {
-		log.Println("==> Connection.Notify", method, "params:", params)
+		log.Println("Notify", method, "params:", params)
 	}
 
 	c.updateInFlight(func(s *inFlightState) {
@@ -315,7 +315,7 @@ func (c *Connection) Notify(ctx context.Context, method string, params interface
 
 	err = c.write(ctx, notify)
 	if debugCall {
-		log.Println("==> Connection.write:", notify.Method, err)
+		log.Println("Connection.write", notify.Method, err)
 	}
 	return
 }
@@ -327,7 +327,7 @@ func (c *Connection) Notify(ctx context.Context, method string, params interface
 // If sending the call failed, the response will be ready and have the error in it.
 func (c *Connection) Call(ctx context.Context, method string, params interface{}) *AsyncCall {
 	if debugCall {
-		log.Println("==> Connection.Call", method, "params:", params)
+		log.Println("Call", method, "params:", params)
 	}
 	// Generate a new request identifier.
 	id := Int64ID(atomic.AddInt64(&c.seq, 1))
@@ -362,7 +362,7 @@ func (c *Connection) Call(ctx context.Context, method string, params interface{}
 
 	err = c.write(ctx, call)
 	if debugCall {
-		log.Println("==> Connection.write:", call.ID, call.Method, err)
+		log.Println("Connection.write", call.ID, call.Method, err)
 	}
 	if err != nil {
 		// Sending failed. We will never get a response, so deliver a fake one if it
@@ -693,7 +693,11 @@ func (c *Connection) handleAsync() {
 
 		if debugCall {
 			req := req.Request
-			log.Println("==> handleAsync", req.ID, req.Method, string(req.Params))
+			id := req.ID
+			if !id.IsValid() {
+				id = StringID("")
+			}
+			log.Println("handleAsync", id, req.Method, string(req.Params))
 		}
 		result, err := c.handler.Handle(req.ctx, req.Request)
 		c.processResult(c.handler, req, result, err)
@@ -721,7 +725,7 @@ func (c *Connection) processResult(from interface{}, req *incomingRequest, resul
 	if req.IsCall() {
 		response, respErr := NewResponse(req.ID, result, err)
 		if debugCall {
-			log.Println("==> processResult", response.ID, string(response.Result), response.Error)
+			log.Println("processResult", response.ID, string(response.Result), response.Error)
 		}
 
 		// The caller could theoretically reuse the request's ID as soon as we've

@@ -19,7 +19,9 @@ package langserver
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"path/filepath"
+	"sync"
+	"time"
 
 	"github.com/goplus/gop"
 	"github.com/goplus/gop/x/gopprojs"
@@ -43,32 +45,72 @@ type Config struct {
 
 // NewServer creates a new LangServer and returns it.
 func NewServer(ctx context.Context, listener Listener, conf *Config) (ret *Server) {
-	h := new(handler)
+	h := newHandle()
 	ret = jsonrpc2.NewServer(ctx, listener, jsonrpc2.BinderFunc(
 		func(ctx context.Context, c *jsonrpc2.Connection) (ret jsonrpc2.ConnectionOptions) {
 			if conf != nil {
 				ret.Framer = conf.Framer
 			}
 			ret.Handler = h
-			ret.OnInternalError = h.OnInternalError
+			// ret.OnInternalError = h.OnInternalError
 			return
 		}))
 	h.server = ret
+	go h.runLoop()
 	return
 }
 
 // -----------------------------------------------------------------------------
 
+type none = struct{}
+
 type handler struct {
+	mutex sync.Mutex
+	dirty map[string]none
+
 	server *Server
 }
 
+func newHandle() *handler {
+	return &handler{
+		dirty: make(map[string]none),
+	}
+}
+
+/*
 func (p *handler) OnInternalError(err error) {
 	panic("jsonrpc2: " + err.Error())
 }
+*/
+
+func (p *handler) runLoop() {
+	const (
+		duration = time.Second / 100
+	)
+	for {
+		var dir string
+		p.mutex.Lock()
+		for dir = range p.dirty {
+			delete(p.dirty, dir)
+			break
+		}
+		p.mutex.Unlock()
+		if dir == "" {
+			time.Sleep(duration)
+			continue
+		}
+		gop.GenGoEx(dir, nil, true, gop.GenFlagPrompt)
+	}
+}
 
 func (p *handler) Changed(files []string) {
-	log.Println("Changed:", files)
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+
+	for _, file := range files {
+		dir := filepath.Dir(file)
+		p.dirty[dir] = none{}
+	}
 }
 
 func (p *handler) Handle(ctx context.Context, req *jsonrpc2.Request) (result interface{}, err error) {
