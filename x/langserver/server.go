@@ -41,6 +41,7 @@ type Config struct {
 	Framer jsonrpc2.Framer
 }
 
+// NewServer creates a new LangServer and returns it.
 func NewServer(ctx context.Context, listener Listener, conf *Config) (ret *Server) {
 	h := new(handler)
 	ret = jsonrpc2.NewServer(ctx, listener, jsonrpc2.BinderFunc(
