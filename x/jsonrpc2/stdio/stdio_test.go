@@ -18,15 +18,38 @@ package stdio
 
 import (
 	"context"
+	"io"
 	"net"
+	"sync/atomic"
 	"testing"
 
 	"github.com/goplus/gop/x/jsonrpc2"
 )
 
-func TestConn(t *testing.T) {
+func init() {
 	jsonrpc2.SetDebug(jsonrpc2.DbgFlagAll)
-	c := new(conn)
+}
+
+func TestServerConn(t *testing.T) {
+	c := &serverConn{}
+	atomic.AddInt32(&connCnt, 1)
+	if err := c.Close(); err != nil {
+		t.Fatal("Close failed:", err)
+	}
+	if err := c.Close(); err != net.ErrClosed {
+		t.Fatal("Close:", err)
+	}
+	if _, err := c.Read(nil); err != net.ErrClosed {
+		t.Fatal("Read:", err)
+	}
+	if _, err := c.Write(nil); err != net.ErrClosed {
+		t.Fatal("Write:", err)
+	}
+}
+
+func TestDialConn(t *testing.T) {
+	r, w := io.Pipe()
+	c := &dialConn{in: r, out: w}
 	c.Dial(context.Background())
 	if err := c.Close(); err != nil {
 		t.Fatal("Close failed:", err)
@@ -40,6 +63,8 @@ func TestConn(t *testing.T) {
 	if _, err := c.Write(nil); err != net.ErrClosed {
 		t.Fatal("Write:", err)
 	}
+	c.closed = false
+	c.Write(nil)
 }
 
 func TestListener(t *testing.T) {
