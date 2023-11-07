@@ -39,11 +39,11 @@ var (
 	connCnt int32
 )
 
-type conn struct {
+type serverConn struct {
 	closed bool
 }
 
-func (p *conn) Read(b []byte) (n int, err error) {
+func (p *serverConn) Read(b []byte) (n int, err error) {
 	if p.closed {
 		return 0, net.ErrClosed
 	}
@@ -55,14 +55,14 @@ func (p *conn) Read(b []byte) (n int, err error) {
 	return
 }
 
-func (p *conn) Write(b []byte) (n int, err error) {
+func (p *serverConn) Write(b []byte) (n int, err error) {
 	if p.closed {
 		return 0, net.ErrClosed
 	}
 	return os.Stdout.Write(b)
 }
 
-func (p *conn) Close() error {
+func (p *serverConn) Close() error {
 	if jsonrpc2.Verbose {
 		log.Println("==> stdio.conn.Close")
 	}
@@ -72,15 +72,6 @@ func (p *conn) Close() error {
 	p.closed = true
 	atomic.AddInt32(&connCnt, -1)
 	return nil
-}
-
-// Dial returns a new communication byte stream to a listening server.
-func (p *conn) Dial(ctx context.Context) (io.ReadWriteCloser, error) {
-	if atomic.AddInt32(&connCnt, 1) != 1 {
-		atomic.AddInt32(&connCnt, -1)
-		return nil, ErrTooManyConnections
-	}
-	return p, nil
 }
 
 // -----------------------------------------------------------------------------
@@ -148,12 +139,8 @@ func (p *listener) Accept(context.Context) (io.ReadWriteCloser, error) {
 		atomic.AddInt32(&connCnt, -1)
 		return nil, ErrTooManyConnections
 	}
-	return new(conn), nil
+	return new(serverConn), nil
 }
-
-var (
-	dailCnt int32
-)
 
 // Dial returns a new communication byte stream to a listening server.
 func (p *listener) Dial(ctx context.Context) (ret io.ReadWriteCloser, err error) {
@@ -182,27 +169,6 @@ func (p *listener) Dialer() jsonrpc2.Dialer {
 	}
 	return nil
 }
-
-// -----------------------------------------------------------------------------
-
-// Dialer returns a jsonrpc2.Dialer based on stdin and stdout.
-func Dialer() jsonrpc2.Dialer {
-	return new(conn)
-}
-
-// Dial makes a new connection based on stdin and stdout, wraps the returned
-// reader and writer using the framer to make a stream, and then builds a
-// connection on top of that stream using the binder.
-//
-// The returned Connection will operate independently using the Preempter and/or
-// Handler provided by the Binder, and will release its own resources when the
-// connection is broken, but the caller may Close it earlier to stop accepting
-// (or sending) new requests.
-func Dial(binder jsonrpc2.Binder) (*jsonrpc2.Connection, error) {
-	return jsonrpc2.Dial(context.Background(), Dialer(), binder)
-}
-
-// -----------------------------------------------------------------------------
 
 // Listener returns a jsonrpc2.Listener based on stdin and stdout.
 func Listener(allowLocalDail bool) jsonrpc2.Listener {

@@ -38,6 +38,7 @@ import (
 	"github.com/goplus/gop/cmd/internal/install"
 	"github.com/goplus/gop/cmd/internal/mod"
 	"github.com/goplus/gop/cmd/internal/run"
+	"github.com/goplus/gop/cmd/internal/serve"
 	"github.com/goplus/gop/cmd/internal/test"
 	"github.com/goplus/gop/cmd/internal/version"
 	"github.com/goplus/gop/cmd/internal/watch"
@@ -63,6 +64,7 @@ func init() {
 		clean.Cmd,
 		// list.Cmd,
 		// deps.Cmd,
+		serve.Cmd,
 		watch.Cmd,
 		env.Cmd,
 		c2go.Cmd,

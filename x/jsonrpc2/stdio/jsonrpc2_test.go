@@ -6,6 +6,7 @@ package stdio_test
 
 import (
 	"context"
+	"io"
 	"testing"
 
 	"github.com/goplus/gop/x/jsonrpc2"
@@ -14,14 +15,18 @@ import (
 )
 
 func TestStdio(t *testing.T) {
-	jsonrpc2.SetDebug(jsonrpc2.DbgFlagAll)
 	ctx := context.Background()
 	listener := stdio.Listener(true)
 	cases.Test(t, ctx, listener, nil, false)
 }
 
 func TestDial(t *testing.T) {
-	stdio.Dial(jsonrpc2.BinderFunc(func(ctx context.Context, c *jsonrpc2.Connection) jsonrpc2.ConnectionOptions {
-		return jsonrpc2.ConnectionOptions{}
-	}))
+	r, w := io.Pipe()
+	stdio.Dial(r, w, jsonrpc2.BinderFunc(
+		func(ctx context.Context, c *jsonrpc2.Connection) jsonrpc2.ConnectionOptions {
+			return jsonrpc2.ConnectionOptions{}
+		}))
+	if _, err := stdio.Dialer(r, w).Dial(context.Background()); err != stdio.ErrTooManyConnections {
+		t.Fatal("stdio.Dialer:", err)
+	}
 }
