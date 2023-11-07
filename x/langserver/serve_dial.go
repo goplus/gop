@@ -18,6 +18,7 @@ package langserver
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -35,7 +36,7 @@ func fatal(err error) {
 // ServeAndDialConfig represents the configuration of ServeAndDial.
 type ServeAndDialConfig struct {
 	// LogFile is where the LangServer application log saves to (optional).
-	// Default is ~/.gop/serve.log
+	// Default is ~/.gop/serve-{pid}.log
 	LogFile string
 
 	// OnError is to customize how to process errors (optional).
@@ -64,7 +65,7 @@ func ServeAndDial(conf *ServeAndDialConfig, cmd string, args ...string) Client {
 		if err != nil {
 			onErr(err)
 		}
-		logFile = gopDir + "/serve.log"
+		logFile = gopDir + fmt.Sprintf("/serve-%d.log", os.Getpid())
 	}
 
 	in, w := io.Pipe()
@@ -88,7 +89,10 @@ func ServeAndDial(conf *ServeAndDialConfig, cmd string, args ...string) Client {
 		cmd.Run()
 	}()
 
-	c, err := Open(ctx, stdio.Dialer(in, out), cancel)
+	c, err := Open(ctx, stdio.Dialer(in, out), func() {
+		log.Println("==> ServeAndDial: kill", cmd, args)
+		cancel()
+	})
 	if err != nil {
 		onErr(err)
 	}
