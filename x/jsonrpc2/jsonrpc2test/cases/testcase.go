@@ -148,7 +148,7 @@ func Test(t *testing.T, ctx context.Context, listener jsonrpc2.Listener, framer 
 						// also run all simple call tests in echo mode
 						(*echo)(call).Invoke(t, ctx, h)
 					}
-				}})
+				}}, nil)
 			if err != nil {
 				t.Fatal(err)
 			}

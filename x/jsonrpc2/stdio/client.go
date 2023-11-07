@@ -88,8 +88,8 @@ func Dialer(in io.ReadCloser, out io.WriteCloser) jsonrpc2.Dialer {
 // Handler provided by the Binder, and will release its own resources when the
 // connection is broken, but the caller may Close it earlier to stop accepting
 // (or sending) new requests.
-func Dial(in io.ReadCloser, out io.WriteCloser, binder jsonrpc2.Binder) (*jsonrpc2.Connection, error) {
-	return jsonrpc2.Dial(context.Background(), Dialer(in, out), binder)
+func Dial(in io.ReadCloser, out io.WriteCloser, binder jsonrpc2.Binder, onDone func()) (*jsonrpc2.Connection, error) {
+	return jsonrpc2.Dial(context.Background(), Dialer(in, out), binder, onDone)
 }
 
 // -----------------------------------------------------------------------------

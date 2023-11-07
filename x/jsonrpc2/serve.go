@@ -71,13 +71,13 @@ type Server struct {
 // Handler provided by the Binder, and will release its own resources when the
 // connection is broken, but the caller may Close it earlier to stop accepting
 // (or sending) new requests.
-func Dial(ctx context.Context, dialer Dialer, binder Binder) (*Connection, error) {
+func Dial(ctx context.Context, dialer Dialer, binder Binder, onDone func()) (*Connection, error) {
 	// dial a server
 	rwc, err := dialer.Dial(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return newConnection(ctx, rwc, binder, nil), nil
+	return newConnection(ctx, rwc, binder, onDone), nil
 }
 
 // NewServer starts a new server listening for incoming connections and returns

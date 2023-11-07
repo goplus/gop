@@ -87,8 +87,6 @@ func (p *handler) Handle(ctx context.Context, req *jsonrpc2.Request) (result int
 			return
 		}
 		err = GenGo(pattern...)
-	case methodShutdown:
-		p.server.Shutdown()
 	}
 	return
 }
