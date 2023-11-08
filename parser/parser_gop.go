@@ -195,7 +195,7 @@ func ParseFSEntry(fset *token.FileSet, fs FileSystem, filename string, src inter
 	ext := path.Ext(fname)
 	var isProj, isClass, isNormalGox, rmGox bool
 	switch ext {
-	case ".gop":
+	case ".gop", ".go":
 	case ".gox":
 		isClass = true
 		t := fname[:len(fname)-4]
@@ -207,6 +207,9 @@ func ParseFSEntry(fset *token.FileSet, fs FileSystem, filename string, src inter
 		fallthrough
 	default:
 		if !isNormalGox {
+			if conf.ClassKind == nil {
+				conf.ClassKind = defaultClassKind
+			}
 			if isProj, isClass = conf.ClassKind(fnameRmGox); !isClass {
 				if !rmGox { // unknown fileKind
 					return nil, errors.ErrUnsupported
