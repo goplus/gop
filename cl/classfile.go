@@ -24,7 +24,6 @@ import (
 	"strings"
 
 	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
 )
@@ -61,7 +60,7 @@ func (p *gmxSettings) getScheds(cb *gox.CodeBuilder) []goast.Stmt {
 }
 
 func newGmx(ctx *pkgCtx, pkg *gox.Package, file string, f *ast.File, conf *Config) *gmxSettings {
-	ext := parser.ClassFileExt(file)
+	ext := ClassFileExt(file)
 	gt, ok := conf.LookupClass(ext)
 	if !ok {
 		panic("TODO: class not found")
@@ -174,6 +173,19 @@ func gmxMainFunc(p *gox.Package, ctx *pkgCtx) {
 			MemberVal("Main").Call(0).EndStmt().
 			End()
 	}
+}
+
+// -----------------------------------------------------------------------------
+
+// ClassFileExt returns the classfile extension
+func ClassFileExt(path string) (ext string) {
+	ext = filepath.Ext(path)
+	if ext == ".gox" {
+		if c := filepath.Ext(path[:len(path)-4]); c != "" {
+			return c
+		}
+	}
+	return
 }
 
 // -----------------------------------------------------------------------------
