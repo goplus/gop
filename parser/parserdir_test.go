@@ -18,7 +18,6 @@ package parser
 
 import (
 	"bytes"
-	"errors"
 	"os"
 	"path"
 	"reflect"
@@ -180,7 +179,7 @@ func TestParseEntry(t *testing.T) {
 	})
 	t.Run(".foo file", func(t *testing.T) {
 		_, err := ParseEntry(fset, "./functype.foo", src, conf)
-		if err != errors.ErrUnsupported {
+		if err != ErrUnknownFileKind {
 			t.Fatal("ParseEntry failed:", err)
 		}
 	})

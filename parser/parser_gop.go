@@ -49,6 +49,10 @@ func SetDebug(dbgFlags int) {
 	debugParseError = (dbgFlags & DbgFlagParseError) != 0
 }
 
+var (
+	ErrUnknownFileKind = errors.New("unknown file kind")
+)
+
 type FileSystem = fsx.FileSystem
 
 // -----------------------------------------------------------------------------
@@ -211,8 +215,8 @@ func ParseFSEntry(fset *token.FileSet, fs FileSystem, filename string, src inter
 				conf.ClassKind = defaultClassKind
 			}
 			if isProj, isClass = conf.ClassKind(fnameRmGox); !isClass {
-				if !rmGox { // unknown fileKind
-					return nil, errors.ErrUnsupported
+				if !rmGox {
+					return nil, ErrUnknownFileKind
 				}
 				// not found Go+ class by ext, but is a .gox file
 				isClass, isNormalGox = true, true
