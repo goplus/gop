@@ -76,6 +76,10 @@ func (p *FileFS) Join(elem ...string) string {
 	return filepath.Join(elem...)
 }
 
+func (p *FileFS) Base(filename string) string {
+	return filepath.Base(filename)
+}
+
 func readSource(src interface{}) ([]byte, error) {
 	switch s := src.(type) {
 	case string:
