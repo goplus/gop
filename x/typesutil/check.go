@@ -63,11 +63,10 @@ func SetDebug(flags dbgFlags) {
 type Project = cl.Project
 
 type Config struct {
-	// Types provides type information for the package (optional).
+	// Types provides type information for the package (required).
 	Types *types.Package
 
 	// Fset provides source position information for syntax trees and types (required).
-	// If Fset is nil, Load will use a new fileset, but preserve Fset's value.
 	Fset *token.FileSet
 
 	// WorkingDir is the directory in which to run gop compiler (optional).

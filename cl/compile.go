@@ -169,7 +169,6 @@ type Config struct {
 	Types *types.Package
 
 	// Fset provides source position information for syntax trees and types (required).
-	// If Fset is nil, Load will use a new fileset, but preserve Fset's value.
 	Fset *token.FileSet
 
 	// WorkingDir is the directory in which to run gop compiler (optional).
