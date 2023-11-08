@@ -28,7 +28,6 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/fromgo"
-	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
 	"github.com/goplus/gox/cpackages"
@@ -710,7 +709,7 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 	case f.IsClass:
 		classType = getDefaultClass(file)
 		if parent.gmxSettings != nil {
-			ext := parser.ClassFileExt(file)
+			ext := ClassFileExt(file)
 			o, ok := parent.sprite[ext]
 			if ok {
 				baseTypeName, baseType, spxClass = o.Name(), o.Type(), true

@@ -45,20 +45,6 @@ func TestAssert(t *testing.T) {
 	assert(false, "panic msg")
 }
 
-func TestExt(t *testing.T) {
-	cases := [][2]string{
-		{"t.spx.gox", ".spx"},
-		{"t.spx", ".spx"},
-		{"t.gox", ".gox"},
-		{"t.abc", ".abc"},
-	}
-	for _, c := range cases {
-		if ret := ClassFileExt(c[0]); ret != c[1] {
-			t.Fatal("ClassFileExt:", c[0], "expected:", c[1], "got:", ret)
-		}
-	}
-}
-
 func panicMsg(e interface{}) string {
 	switch v := e.(type) {
 	case string:
