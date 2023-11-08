@@ -185,7 +185,9 @@ func (info gopRecorder) Type(e ast.Expr, tv types.TypeAndValue) {
 	if debugVerbose {
 		log.Println("==> Type:", e, tv.Type)
 	}
-	info.Types[e] = tv
+	if info.Types != nil {
+		info.Types[e] = tv
+	}
 }
 
 // Instantiate maps identifiers denoting generic types or functions to their
@@ -201,7 +203,9 @@ func (info gopRecorder) Type(e ast.Expr, tv types.TypeAndValue) {
 // Invariant: Instantiating Uses[id].Type() with Instances[id].TypeArgs
 // results in an equivalent of Instances[id].Type.
 func (info gopRecorder) Instantiate(id *ast.Ident, inst types.Instance) {
-	info.Instances[id] = inst
+	if info.Instances != nil {
+		info.Instances[id] = inst
+	}
 }
 
 // Def maps identifiers to the objects they define (including
@@ -217,7 +221,9 @@ func (info gopRecorder) Def(id *ast.Ident, obj types.Object) {
 	if debugVerbose {
 		log.Println("==> Def:", id, obj)
 	}
-	info.Defs[id] = obj
+	if info.Defs != nil {
+		info.Defs[id] = obj
+	}
 }
 
 // Use maps identifiers to the objects they denote.
@@ -229,7 +235,9 @@ func (info gopRecorder) Use(id *ast.Ident, obj types.Object) {
 	if debugVerbose {
 		log.Println("==> Use:", id, obj)
 	}
-	info.Uses[id] = obj
+	if info.Uses != nil {
+		info.Uses[id] = obj
+	}
 }
 
 // Implicit maps nodes to their implicitly declared objects, if any.
@@ -244,13 +252,17 @@ func (info gopRecorder) Implicit(node ast.Node, obj types.Object) {
 	if debugVerbose {
 		log.Println("==> Implicit:", obj)
 	}
-	info.Implicits[node] = obj
+	if info.Implicits != nil {
+		info.Implicits[node] = obj
+	}
 }
 
 // Select maps selector expressions (excluding qualified identifiers)
 // to their corresponding selections.
 func (info gopRecorder) Select(e *ast.SelectorExpr, sel *types.Selection) {
-	info.Selections[e] = sel
+	if info.Selections != nil {
+		info.Selections[e] = sel
+	}
 }
 
 // Scope maps ast.Nodes to the scopes they define. Package scopes are not
@@ -280,7 +292,9 @@ func (info gopRecorder) Scope(n ast.Node, scope *types.Scope) {
 	if debugVerbose {
 		log.Println("==> Scope:", scope)
 	}
-	info.Scopes[n] = scope
+	if info.Scopes != nil {
+		info.Scopes[n] = scope
+	}
 }
 
 // -----------------------------------------------------------------------------
