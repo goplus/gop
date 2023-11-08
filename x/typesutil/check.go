@@ -25,8 +25,10 @@ import (
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/token"
+	"github.com/goplus/gop/x/c2go"
 	"github.com/goplus/gop/x/typesutil/internal/typesutil"
 	"github.com/goplus/gox"
+	"github.com/goplus/mod/gopmod"
 	"github.com/qiniu/x/errors"
 	"github.com/qiniu/x/log"
 )
@@ -76,13 +78,8 @@ type Config struct {
 	// Default is github.com/goplus/.
 	C2goBase string
 
-	// LookupPub lookups the c2go package pubfile named c2go.a.pub (required).
-	// See gop/x/c2go.LookupPub.
-	LookupPub func(pkgPath string) (pubfile string, err error)
-
-	// LookupClass lookups a class by specified file extension (required).
-	// See (*github.com/goplus/mod/gopmod.Module).LookupClass.
-	LookupClass func(ext string) (c *Project, ok bool)
+	// Mod represents a gop.mod object.
+	Mod *gopmod.Module
 }
 
 // A Checker maintains the state of the type checker.
@@ -135,14 +132,18 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 		Files:   gopfs,
 		GoFiles: gofs,
 	}
+	mod := opts.Mod
+	if mod == nil {
+		mod = gopmod.Default
+	}
 	_, err = cl.NewPackage(pkgTypes.Path(), pkg, &cl.Config{
 		Types:          pkgTypes,
 		Fset:           fset,
 		WorkingDir:     opts.WorkingDir,
 		C2goBase:       opts.C2goBase,
-		LookupPub:      opts.LookupPub,
-		LookupClass:    opts.LookupClass,
-		Importer:       conf.Importer,
+		LookupPub:      c2go.LookupPub(mod),
+		LookupClass:    mod.LookupClass,
+		Importer:       newImporter(conf.Importer, mod, nil, fset),
 		Recorder:       gopRecorder{p.gopInfo},
 		NoFileLine:     true,
 		NoAutoGenMain:  true,
