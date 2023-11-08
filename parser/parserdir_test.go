@@ -242,7 +242,7 @@ func TestErrParse(t *testing.T) {
 	fs = memfs.SingleFile("/foo", "test.abc.gox", `package foo`)
 	_, err = ParseFSDir(fset, fs, "/foo", Config{})
 	if err != nil {
-		t.Fatal("ParseFSDir test.gop:", err)
+		t.Fatal("ParseFSDir failed:", err)
 	}
 }
 
