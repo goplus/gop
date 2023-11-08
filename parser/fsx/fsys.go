@@ -29,6 +29,12 @@ type FileSystem interface {
 	ReadDir(dirname string) ([]fs.DirEntry, error)
 	ReadFile(filename string) ([]byte, error)
 	Join(elem ...string) string
+
+	// Base returns the last element of path.
+	// Trailing path separators are removed before extracting the last element.
+	// If the path is empty, Base returns ".".
+	// If the path consists entirely of separators, Base returns a single separator.
+	Base(filename string) string
 }
 
 // -----------------------------------------------------------------------------
@@ -45,6 +51,14 @@ func (p localFS) ReadFile(filename string) ([]byte, error) {
 
 func (p localFS) Join(elem ...string) string {
 	return filepath.Join(elem...)
+}
+
+// Base returns the last element of path.
+// Trailing path separators are removed before extracting the last element.
+// If the path is empty, Base returns ".".
+// If the path consists entirely of separators, Base returns a single separator.
+func (p localFS) Base(filename string) string {
+	return filepath.Base(filename)
 }
 
 var Local FileSystem = localFS{}
