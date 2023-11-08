@@ -11,7 +11,7 @@ import (
 	"fmt"
 
 	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/x/typesutil/internal/typeparams"
+	"github.com/goplus/gop/x/typesutil/typeparams"
 )
 
 // ExprString returns the (possibly shortened) string representation for x.
