@@ -18,7 +18,6 @@ package parser
 
 import (
 	"bytes"
-	"io/ioutil"
 	"os"
 	"path"
 	"reflect"
@@ -113,7 +112,7 @@ func testFrom(t *testing.T, pkgDir, sel string, exclude Mode) {
 		t.Fatal("ParseDir failed:", err, reflect.TypeOf(err), len(pkgs))
 	}
 	for _, pkg := range pkgs {
-		b, err := ioutil.ReadFile(pkgDir + "/parser.expect")
+		b, err := os.ReadFile(pkgDir + "/parser.expect")
 		if err != nil {
 			t.Fatal("Parsing", pkgDir, "-", err)
 		}
@@ -190,8 +189,8 @@ func TestErrParse(t *testing.T) {
 
 	fs = memfs.SingleFile("/foo", "test.abc.gox", `package foo`)
 	_, err = ParseFSDir(fset, fs, "/foo", Config{})
-	if err == nil {
-		t.Fatal("ParseFSDir test.gop: no error?")
+	if err != nil {
+		t.Fatal("ParseFSDir test.gop:", err)
 	}
 }
 
@@ -201,7 +200,7 @@ func testFromDir(t *testing.T, sel, relDir string) {
 		t.Fatal("Getwd failed:", err)
 	}
 	dir = path.Join(dir, relDir)
-	fis, err := ioutil.ReadDir(dir)
+	fis, err := os.ReadDir(dir)
 	if err != nil {
 		t.Fatal("ReadDir failed:", err)
 	}
