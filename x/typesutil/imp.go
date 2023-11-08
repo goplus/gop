@@ -18,6 +18,7 @@ package typesutil
 
 import (
 	"go/types"
+	"syscall"
 
 	"github.com/goplus/gop"
 	"github.com/goplus/gop/token"
@@ -25,6 +26,16 @@ import (
 	"github.com/goplus/mod/env"
 	"github.com/goplus/mod/gopmod"
 )
+
+// -----------------------------------------------------------------------------
+
+type nilImporter struct{}
+
+func (p nilImporter) Import(path string) (ret *types.Package, err error) {
+	return nil, syscall.ENOENT
+}
+
+// -----------------------------------------------------------------------------
 
 type importer struct {
 	imp types.Importer
@@ -36,6 +47,9 @@ type importer struct {
 }
 
 func newImporter(imp types.Importer, mod *gopmod.Module, gop *env.Gop, fset *token.FileSet) types.Importer {
+	if imp == nil {
+		imp = nilImporter{}
+	}
 	if gop == nil {
 		gop = gopenv.Get()
 	}
@@ -52,3 +66,5 @@ func (p *importer) Import(path string) (ret *types.Package, err error) {
 	}
 	return p.alt.Import(path)
 }
+
+// -----------------------------------------------------------------------------
