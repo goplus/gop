@@ -30,6 +30,7 @@ import (
 	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/gop/x/gopprojs"
 	"github.com/goplus/gox"
+	"github.com/goplus/mod/modfetch"
 )
 
 // gop install
@@ -65,6 +66,7 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 
 	if *flagDebug {
+		modfetch.SetDebug(modfetch.DbgFlagAll)
 		gox.SetDebug(gox.DbgFlagAll &^ gox.DbgFlagComments)
 		cl.SetDebug(cl.DbgFlagAll)
 		cl.SetDisableRecover(true)
