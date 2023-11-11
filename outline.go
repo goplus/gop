@@ -24,7 +24,6 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"syscall"
 
 	"github.com/goplus/gop/cl/outline"
 	"github.com/goplus/gop/parser"
@@ -76,7 +75,7 @@ func Outline(dir string, conf *Config) (out outline.Package, err error) {
 		return
 	}
 	if len(pkgs) == 0 {
-		err = syscall.ENOENT
+		err = ErrNotFound
 		return
 	}
 
@@ -107,7 +106,7 @@ func Outline(dir string, conf *Config) (out outline.Package, err error) {
 		}
 	}
 	if !out.Valid() {
-		err = syscall.ENOENT
+		err = ErrNotFound
 	}
 	return
 }

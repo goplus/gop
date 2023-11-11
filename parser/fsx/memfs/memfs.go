@@ -109,6 +109,14 @@ func (p *FS) Join(elem ...string) string {
 	return path.Join(elem...)
 }
 
+// Base returns the last element of path.
+// Trailing slashes are removed before extracting the last element.
+// If the path is empty, Base returns ".".
+// If the path consists entirely of slashes, Base returns "/".
+func (p *FS) Base(filename string) string {
+	return path.Base(filename)
+}
+
 // -----------------------------------------------------------------------------
 
 // SingleFile creates a file system that only contains a single file.

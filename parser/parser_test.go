@@ -45,20 +45,6 @@ func TestAssert(t *testing.T) {
 	assert(false, "panic msg")
 }
 
-func TestExt(t *testing.T) {
-	cases := [][2]string{
-		{"t.spx.gox", ".spx"},
-		{"t.spx", ".spx"},
-		{"t.gox", ".gox"},
-		{"t.abc", ".abc"},
-	}
-	for _, c := range cases {
-		if ret := ClassFileExt(c[0]); ret != c[1] {
-			t.Fatal("ClassFileExt:", c[0], "expected:", c[1], "got:", ret)
-		}
-	}
-}
-
 func panicMsg(e interface{}) string {
 	switch v := e.(type) {
 	case string:
@@ -506,6 +492,16 @@ var (
 const c = 100
 const d
 `, `/foo/bar.gox:5:7: missing constant value`, ``)
+}
+
+func TestErrGlobal(t *testing.T) {
+	testErrCode(t, `func test() {}
+}`, `/foo/bar.gop:2:1: expected statement, found '}'`, ``)
+}
+
+func TestErrCompositeLiteral(t *testing.T) {
+	testErrCode(t, `println (T[int]){a: 1, b: 2}
+`, `/foo/bar.gop:1:10: cannot parenthesize type in composite literal`, ``)
 }
 
 // -----------------------------------------------------------------------------

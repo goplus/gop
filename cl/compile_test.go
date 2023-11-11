@@ -38,8 +38,9 @@ const (
 )
 
 var (
-	gblFset *token.FileSet
-	gblConf *cl.Config
+	gblFset     *token.FileSet
+	gblConf     *cl.Config
+	gblConfLine *cl.Config
 )
 
 func init() {
@@ -56,6 +57,18 @@ func init() {
 		C2goBase:      "github.com/goplus/gop/cl/internal",
 		NoFileLine:    true,
 		NoAutoGenMain: true,
+	}
+	gblConfLine = &cl.Config{
+		Fset:          gblFset,
+		Importer:      imp,
+		Recorder:      gopRecorder{},
+		LookupClass:   lookupClass,
+		LookupPub:     lookupPub,
+		C2goBase:      "github.com/goplus/gop/cl/internal",
+		NoFileLine:    false,
+		NoAutoGenMain: true,
+		RelativePath:  true,
+		TargetDir:     ".",
 	}
 }
 
@@ -4587,4 +4600,55 @@ func (this *Rect) Test() {
 	this.Engine().EnterPointerLock()
 }
 `, "Rect.gox")
+}
+
+func TestCommentLine(t *testing.T) {
+	gopClTestEx(t, gblConfLine, "main", `
+type Point struct {
+	x int
+	y int
+}
+
+func (pt *Point) Test() {
+	println(pt.x, pt.y)
+}
+
+// testPoint is test point
+func testPoint() {
+	var pt Point
+	pt.Test()
+}
+
+println "hello"
+testPoint()
+`, `package main
+
+import "fmt"
+
+type Point struct {
+	x int
+	y int
+}
+//line /foo/bar.gop:7:1
+func (pt *Point) Test() {
+//line /foo/bar.gop:8:1
+	fmt.Println(pt.x, pt.y)
+}
+// testPoint is test point
+//
+//line /foo/bar.gop:12:1
+func testPoint() {
+//line /foo/bar.gop:13:1
+	var pt Point
+//line /foo/bar.gop:14:1
+	pt.Test()
+}
+//line /foo/bar.gop:17
+func main() {
+//line /foo/bar.gop:17:1
+	fmt.Println("hello")
+//line /foo/bar.gop:18:1
+	testPoint()
+}
+`)
 }

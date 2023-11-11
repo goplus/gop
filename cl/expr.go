@@ -28,6 +28,7 @@ import (
 	"strings"
 
 	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/cl/internal/typesutil"
 	"github.com/goplus/gop/printer"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
@@ -161,7 +162,7 @@ find:
 		}
 		rec.Use(ident, o)
 		typ, _ := gox.DerefType(e.Type)
-		tv := types.TypeAndValue{Type: typ, Value: e.CVal}
+		tv := typesutil.NewTypeAndValue(typ, e.CVal)
 		rec.Type(ident, tv)
 	}
 	return
@@ -360,7 +361,7 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr) {
 		compileExpr(ctx, v.X)
 		if rec := ctx.recorder(); rec != nil {
 			e := ctx.cb.Get(-1)
-			rec.Type(v.X, types.TypeAndValue{Type: e.Type, Value: e.CVal})
+			rec.Type(v.X, typesutil.NewTypeAndValue(e.Type, e.CVal))
 		}
 	}
 	ctx.cb.MemberRef(v.Sel.Name, v)
@@ -382,7 +383,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, flags int) {
 		compileExpr(ctx, v.X)
 		if rec := ctx.recorder(); rec != nil {
 			e := ctx.cb.Get(-1)
-			rec.Type(v.X, types.TypeAndValue{Type: e.Type, Value: e.CVal})
+			rec.Type(v.X, typesutil.NewTypeAndValue(e.Type, e.CVal))
 		}
 	}
 	if err := compileMember(ctx, v, v.Sel.Name, flags); err != nil {
@@ -559,8 +560,8 @@ func compileCallArgs(fn *fnType, fnt types.Type, ctx *blockCtx, v *ast.CallExpr,
 			if e, ok := r.(error); ok {
 				err = e
 			} else {
-				src, pos := ctx.LoadExpr(v)
-				err = newCodeErrorf(&pos, "compile func %v error: %v", src, r)
+				src := ctx.LoadExpr(v)
+				err = ctx.newCodeErrorf(v.Pos(), "compile func %v error: %v", src, r)
 			}
 			ctx.cb.InternalStack().SetLen(n)
 		}
@@ -630,7 +631,7 @@ retry:
 		typ = t.Underlying()
 		goto retry
 	}
-	src, _ := ctx.LoadExpr(toNode)
+	src := ctx.LoadExpr(toNode)
 	err := ctx.newCodeErrorf(lambda.Pos(), "cannot use lambda literal as type %v in %v to %v", ftyp, flag, src)
 	panic(err)
 }
@@ -789,8 +790,8 @@ func compileStructLitInKeyVal(ctx *blockCtx, elts []ast.Expr, t *types.Struct, t
 		if idx >= 0 {
 			ctx.cb.Val(idx)
 		} else {
-			src, pos := ctx.LoadExpr(name)
-			err := newCodeErrorf(&pos, "%s undefined (type %v has no field or method %s)", src, typ, name.Name)
+			src := ctx.LoadExpr(name)
+			err := ctx.newCodeErrorf(name.Pos(), "%s undefined (type %v has no field or method %s)", src, typ, name.Name)
 			panic(err)
 		}
 		switch expr := kv.Value.(type) {

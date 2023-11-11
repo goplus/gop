@@ -25,7 +25,11 @@ import (
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/token"
+	"github.com/goplus/gop/x/c2go"
 	"github.com/goplus/gop/x/typesutil/internal/typesutil"
+	"github.com/goplus/gox"
+	"github.com/goplus/mod/gopmod"
+	"github.com/qiniu/x/errors"
 	"github.com/qiniu/x/log"
 )
 
@@ -59,11 +63,10 @@ func SetDebug(flags dbgFlags) {
 type Project = cl.Project
 
 type Config struct {
-	// Types provides type information for the package (optional).
+	// Types provides type information for the package (required).
 	Types *types.Package
 
 	// Fset provides source position information for syntax trees and types (required).
-	// If Fset is nil, Load will use a new fileset, but preserve Fset's value.
 	Fset *token.FileSet
 
 	// WorkingDir is the directory in which to run gop compiler (optional).
@@ -74,13 +77,8 @@ type Config struct {
 	// Default is github.com/goplus/.
 	C2goBase string
 
-	// LookupPub lookups the c2go package pubfile named c2go.a.pub (required).
-	// See gop/x/c2go.LookupPub.
-	LookupPub func(pkgPath string) (pubfile string, err error)
-
-	// LookupClass lookups a class by specified file extension (required).
-	// See (*github.com/goplus/mod/gopmod.Module).LookupClass.
-	LookupClass func(ext string) (c *Project, ok bool)
+	// Mod represents a gop.mod object (optional).
+	Mod *gopmod.Module
 }
 
 // A Checker maintains the state of the type checker.
@@ -133,64 +131,115 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 		Files:   gopfs,
 		GoFiles: gofs,
 	}
+	mod := opts.Mod
+	if mod == nil {
+		mod = gopmod.Default
+	}
 	_, err = cl.NewPackage(pkgTypes.Path(), pkg, &cl.Config{
 		Types:          pkgTypes,
 		Fset:           fset,
 		WorkingDir:     opts.WorkingDir,
 		C2goBase:       opts.C2goBase,
-		LookupPub:      opts.LookupPub,
-		LookupClass:    opts.LookupClass,
-		Importer:       conf.Importer,
+		LookupPub:      c2go.LookupPub(mod),
+		LookupClass:    mod.LookupClass,
+		Importer:       newImporter(conf.Importer, mod, nil, fset),
 		Recorder:       gopRecorder{p.gopInfo},
 		NoFileLine:     true,
 		NoAutoGenMain:  true,
 		NoSkipConstant: true,
 	})
 	if err != nil {
+		if onErr := conf.Error; onErr != nil {
+			if list, ok := err.(errors.List); ok {
+				for _, e := range list {
+					if ce, ok := convErr(fset, e); ok {
+						onErr(ce)
+					}
+				}
+			} else if ce, ok := convErr(fset, err); ok {
+				onErr(ce)
+			}
+		}
 		if debugPrintErr {
 			log.Println("typesutil.Check err:", err)
 			log.SingleStack()
 		}
-		return
 	}
 	if len(files) > 0 {
 		scope := pkgTypes.Scope()
-		objMap := make(map[types.Object]types.Object)
-		// remove all objects defined in Go files
-		for _, f := range files {
-			for _, decl := range f.Decls {
-				switch v := decl.(type) {
-				case *goast.GenDecl:
-					for _, spec := range v.Specs {
-						switch v := spec.(type) {
-						case *goast.ValueSpec:
-							for _, name := range v.Names {
-								scopeDelete(objMap, scope, name.Name)
-							}
-						case *goast.TypeSpec:
-							scopeDelete(objMap, scope, v.Name.Name)
+		objMap := DeleteObjects(scope, files)
+		checker := types.NewChecker(conf, fset, pkgTypes, p.goInfo)
+		err = checker.Files(files)
+		CorrectTypesInfo(scope, objMap, p.gopInfo.Uses)
+	}
+	return
+}
+
+type astIdent interface {
+	comparable
+	ast.Node
+}
+
+type objMapT = map[types.Object]types.Object
+
+// CorrectTypesInfo corrects types info to avoid there are two instances for the same Go object.
+func CorrectTypesInfo[Ident astIdent](scope *types.Scope, objMap objMapT, uses map[Ident]types.Object) {
+	for o := range objMap {
+		objMap[o] = scope.Lookup(o.Name())
+	}
+	for id, old := range uses {
+		if new := objMap[old]; new != nil {
+			uses[id] = new
+		}
+	}
+}
+
+// DeleteObjects deletes all objects defined in Go files and returns deleted objects.
+func DeleteObjects(scope *types.Scope, files []*goast.File) objMapT {
+	objMap := make(objMapT)
+	for _, f := range files {
+		for _, decl := range f.Decls {
+			switch v := decl.(type) {
+			case *goast.GenDecl:
+				for _, spec := range v.Specs {
+					switch v := spec.(type) {
+					case *goast.ValueSpec:
+						for _, name := range v.Names {
+							scopeDelete(objMap, scope, name.Name)
 						}
-					}
-				case *goast.FuncDecl:
-					if v.Recv == nil {
+					case *goast.TypeSpec:
 						scopeDelete(objMap, scope, v.Name.Name)
 					}
 				}
-			}
-		}
-		checker := types.NewChecker(conf, fset, pkgTypes, p.goInfo)
-		err = checker.Files(files)
-		for o := range objMap {
-			objMap[o] = scope.Lookup(o.Name())
-		}
-		// correct Go+ types info to avoid there are two instances for same Go object:
-		uses := p.gopInfo.Uses
-		for id, old := range uses {
-			if new := objMap[old]; new != nil {
-				uses[id] = new
+			case *goast.FuncDecl:
+				if v.Recv == nil {
+					scopeDelete(objMap, scope, v.Name.Name)
+				}
 			}
 		}
 	}
+	return objMap
+}
+
+func convErr(fset *token.FileSet, e error) (ret types.Error, ok bool) {
+	switch v := e.(type) {
+	case *gox.CodeError:
+		ret.Pos, ret.Msg = v.Pos, v.Msg
+		typesutil.SetErrorGo116(&ret, 0, v.Pos, v.Pos)
+	case *gox.MatchError:
+		end := token.NoPos
+		if v.Src != nil {
+			ret.Pos, end = v.Src.Pos(), v.Src.End()
+		}
+		ret.Msg = v.Message("")
+		typesutil.SetErrorGo116(&ret, 0, ret.Pos, end)
+	case *gox.ImportError:
+		ret.Pos, ret.Msg = v.Pos, v.Err.Error()
+		typesutil.SetErrorGo116(&ret, 0, v.Pos, v.Pos)
+	default:
+		return
+	}
+	ret.Fset, ok = fset, true
 	return
 }
 

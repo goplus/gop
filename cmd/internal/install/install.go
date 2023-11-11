@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-// Package install implements the ``gop install'' command.
+// Package install implements the “gop install” command.
 package install
 
 import (
@@ -22,7 +22,6 @@ import (
 	"log"
 	"os"
 	"reflect"
-	"syscall"
 
 	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
@@ -31,6 +30,7 @@ import (
 	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/gop/x/gopprojs"
 	"github.com/goplus/gox"
+	"github.com/goplus/mod/modfetch"
 )
 
 // gop install
@@ -66,6 +66,7 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 
 	if *flagDebug {
+		modfetch.SetDebug(modfetch.DbgFlagAll)
 		gox.SetDebug(gox.DbgFlagAll &^ gox.DbgFlagComments)
 		cl.SetDebug(cl.DbgFlagAll)
 		cl.SetDisableRecover(true)
@@ -95,7 +96,7 @@ func install(proj gopprojs.Proj, conf *gop.Config, install *gocmd.InstallConfig)
 	default:
 		log.Panicln("`gop install` doesn't support", reflect.TypeOf(v))
 	}
-	if err == syscall.ENOENT {
+	if gop.NotFound(err) {
 		fmt.Fprintf(os.Stderr, "gop install %v: not found\n", obj)
 	} else if err != nil {
 		fmt.Fprintln(os.Stderr, err)

@@ -18,15 +18,16 @@ package gop
 
 import (
 	"fmt"
-	"go/token"
 	"go/types"
 	"io/fs"
+	"os"
 	"strings"
 	"syscall"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/parser"
+	"github.com/goplus/gop/token"
 	"github.com/goplus/gop/x/c2go"
 	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/gox"
@@ -34,6 +35,85 @@ import (
 	"github.com/goplus/mod/gopmod"
 	"github.com/qiniu/x/errors"
 )
+
+var (
+	ErrNotFound      = syscall.ENOENT
+	ErrIgnoreNotated = errors.New("notated error ignored")
+)
+
+// NotFound returns if cause err is ErrNotFound or not
+func NotFound(err error) bool {
+	return errors.Err(err) == ErrNotFound
+}
+
+// IgnoreNotated returns if cause err is ErrIgnoreNotated or not.
+func IgnoreNotated(err error) bool {
+	return errors.Err(err) == ErrIgnoreNotated
+}
+
+// ErrorPos returns where the error occurs.
+func ErrorPos(err error) token.Pos {
+	switch v := err.(type) {
+	case *gox.CodeError:
+		return v.Pos
+	case *gox.MatchError:
+		return v.Pos()
+	case *gox.ImportError:
+		return v.Pos
+	}
+	return token.NoPos
+}
+
+func ignNotatedErrs(err error, pkg *ast.Package, fset *token.FileSet) error {
+	switch v := err.(type) {
+	case errors.List:
+		var ret errors.List
+		for _, e := range v {
+			if isNotatedErr(e, pkg, fset) {
+				continue
+			}
+			ret = append(ret, e)
+		}
+		if len(ret) == 0 {
+			return ErrIgnoreNotated
+		}
+		return ret
+	default:
+		if isNotatedErr(err, pkg, fset) {
+			return ErrIgnoreNotated
+		}
+		return err
+	}
+}
+
+func isNotatedErr(err error, pkg *ast.Package, fset *token.FileSet) (notatedErr bool) {
+	pos := ErrorPos(err)
+	f := fset.File(pos)
+	if f == nil {
+		return
+	}
+	gopf, ok := pkg.Files[f.Name()]
+	if !ok {
+		return
+	}
+	lines := token.Lines(f)
+	i := f.Line(pos) - 1 // base 0
+	start := lines[i]
+	var end int
+	if i+1 < len(lines) {
+		end = lines[i+1]
+	} else {
+		end = f.Size()
+	}
+	text := string(gopf.Code[start:end])
+	commentOff := strings.Index(text, "//")
+	if commentOff < 0 {
+		return
+	}
+	return strings.Contains(text[commentOff+2:], "compile error:")
+}
+
+// -----------------------------------------------------------------------------
 
 type Config struct {
 	Gop      *env.Gop
@@ -43,12 +123,7 @@ type Config struct {
 
 	DontUpdateGoMod     bool
 	DontCheckModChanged bool
-}
-
-// -----------------------------------------------------------------------------
-
-func NotFound(err error) bool {
-	return errors.Err(err) == syscall.ENOENT
+	IgnoreNotatedError  bool
 }
 
 func LoadMod(dir string, gop *env.Gop, conf *Config) (mod *gopmod.Module, err error) {
@@ -102,7 +177,7 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 		return
 	}
 	if len(pkgs) == 0 {
-		return nil, nil, syscall.ENOENT
+		return nil, nil, ErrNotFound
 	}
 
 	imp := conf.Importer
@@ -133,15 +208,18 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 			continue
 		}
 		if promptGenGo != nil && promptGenGo[0] {
-			fmt.Printf("GenGo %v ...\n", dir)
+			fmt.Fprintln(os.Stderr, "GenGo", dir, "...")
 		}
 		out, err = cl.NewPackage("", pkg, clConf)
 		if err != nil {
+			if conf.IgnoreNotatedError {
+				err = ignNotatedErrs(err, pkg, fset)
+			}
 			return
 		}
 	}
 	if out == nil {
-		return nil, nil, syscall.ENOENT
+		return nil, nil, ErrNotFound
 	}
 	if pkgTest != nil && genTestPkg {
 		test, err = cl.NewPackage("", pkgTest, clConf)
@@ -191,7 +269,9 @@ func LoadFiles(files []string, conf *Config) (out *gox.Package, err error) {
 		}
 		out, err = cl.NewPackage("", pkg, clConf)
 		if err != nil {
-			err = errors.NewWith(err, `cl.NewPackage("", pkg, clConf)`, -2, "cl.NewPackage", "", pkg, clConf)
+			if conf.IgnoreNotatedError {
+				err = ignNotatedErrs(err, pkg, fset)
+			}
 		}
 		break
 	}

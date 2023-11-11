@@ -38,10 +38,12 @@ var Cmd = &base.Command{
 }
 
 var (
-	flag           = &Cmd.Flag
-	flagVerbose    = flag.Bool("v", false, "print verbose information.")
-	flagCheckMode  = flag.Bool("t", false, "do check syntax only, no generate gop_autogen.go")
-	flagSingleMode = flag.Bool("s", false, "run in single file mode")
+	flag                 = &Cmd.Flag
+	flagVerbose          = flag.Bool("v", false, "print verbose information")
+	flagCheckMode        = flag.Bool("t", false, "do check syntax only, no generate gop_autogen.go")
+	flagSingleMode       = flag.Bool("s", false, "run in single file mode")
+	flagIgnoreNotatedErr = flag.Bool(
+		"ignore-notated-error", false, "ignore notated errors, only available together with -t (check mode)")
 )
 
 func init() {
@@ -69,9 +71,13 @@ func runCmd(cmd *base.Command, args []string) {
 		cl.SetDisableRecover(true)
 	}
 
+	var conf *gop.Config
 	flags := gop.GenFlagPrintError | gop.GenFlagPrompt
 	if *flagCheckMode {
 		flags |= gop.GenFlagCheckOnly
+		if *flagIgnoreNotatedErr {
+			conf = &gop.Config{IgnoreNotatedError: true}
+		}
 	}
 	if *flagSingleMode {
 		flags |= gop.GenFlagSingleFile
@@ -79,9 +85,9 @@ func runCmd(cmd *base.Command, args []string) {
 	for _, proj := range projs {
 		switch v := proj.(type) {
 		case *gopprojs.DirProj:
-			_, _, err = gop.GenGoEx(v.Dir, nil, true, flags)
+			_, _, err = gop.GenGoEx(v.Dir, conf, true, flags)
 		case *gopprojs.PkgPathProj:
-			_, _, err = gop.GenGoPkgPathEx("", v.Path, nil, true, flags)
+			_, _, err = gop.GenGoPkgPathEx("", v.Path, conf, true, flags)
 		default:
 			log.Panicln("`gop go` doesn't support", reflect.TypeOf(v))
 		}

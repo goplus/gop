@@ -49,11 +49,36 @@ func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
 		if ctx.relativePath {
 			pos.Filename = relFile(ctx.targetDir, pos.Filename)
 		}
-		line := fmt.Sprintf("\n//line %s:%d", pos.Filename, pos.Line)
+		line := fmt.Sprintf("\n//line %s:%d:1", pos.Filename, pos.Line)
 		comments := &goast.CommentGroup{
 			List: []*goast.Comment{{Text: line}},
 		}
 		ctx.cb.SetComments(comments, false)
+	}
+}
+
+func commentFunc(ctx *blockCtx, fn *gox.Func, decl *ast.FuncDecl) {
+	if ctx.fileLine {
+		start := decl.Name.Pos()
+		pos := ctx.fset.Position(start)
+		if ctx.relativePath {
+			pos.Filename = relFile(ctx.targetDir, pos.Filename)
+		}
+		var line string
+		if decl.Shadow {
+			line = fmt.Sprintf("//line %s:%d", pos.Filename, pos.Line)
+		} else {
+			line = fmt.Sprintf("//line %s:%d:1", pos.Filename, pos.Line)
+		}
+		doc := &goast.CommentGroup{}
+		if decl.Doc != nil {
+			doc.List = append(doc.List, decl.Doc.List...)
+			doc.List = append(doc.List, &goast.Comment{Text: "//"})
+		}
+		doc.List = append(doc.List, &goast.Comment{Text: line})
+		fn.SetComments(ctx.pkg, doc)
+	} else if decl.Doc != nil {
+		fn.SetComments(ctx.pkg, decl.Doc)
 	}
 }
 
@@ -578,7 +603,8 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 		}
 		if c.List == nil {
 			if firstDefault != nil {
-				ctx.handleErrorf(c.Pos(), "multiple defaults in type switch (first at %v)", ctx.Position(firstDefault.Pos()))
+				ctx.handleErrorf(
+					c.Pos(), "multiple defaults in type switch (first at %v)", ctx.Position(firstDefault.Pos()))
 			} else {
 				firstDefault = c
 			}
@@ -635,12 +661,12 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 				for _, vt := range seen[val] {
 					if types.Identical(typ, vt.typ) {
 						haserr = true
-						src, pos := ctx.LoadExpr(v.Src)
-						if _, ok := v.Src.(*ast.BasicLit); ok {
-							ctx.handleCodeErrorf(&pos, "duplicate case %s in switch\n\tprevious case at %v",
+						src := ctx.LoadExpr(v.Src)
+						if lit, ok := v.Src.(*ast.BasicLit); ok {
+							ctx.handleErrorf(lit.Pos(), "duplicate case %s in switch\n\tprevious case at %v",
 								src, ctx.Position(vt.pos))
 						} else {
-							ctx.handleCodeErrorf(&pos, "duplicate case %s (value %#v) in switch\n\tprevious case at %v",
+							ctx.handleErrorf(v.Src.Pos(), "duplicate case %s (value %#v) in switch\n\tprevious case at %v",
 								src, val, ctx.Position(vt.pos))
 						}
 					}

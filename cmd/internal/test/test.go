@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-// Package test implements the ``gop test'' command.
+// Package test implements the “gop test” command.
 package test
 
 import (
@@ -22,7 +22,6 @@ import (
 	"log"
 	"os"
 	"reflect"
-	"syscall"
 
 	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
@@ -95,7 +94,7 @@ func test(proj gopprojs.Proj, conf *gop.Config, test *gocmd.TestConfig) {
 	default:
 		log.Panicln("`gop test` doesn't support", reflect.TypeOf(v))
 	}
-	if err == syscall.ENOENT {
+	if gop.NotFound(err) {
 		fmt.Fprintf(os.Stderr, "gop test %v: not found\n", obj)
 	} else if err != nil {
 		fmt.Fprintln(os.Stderr, err)

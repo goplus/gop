@@ -18,7 +18,6 @@ package parser
 
 import (
 	"bytes"
-	"io/ioutil"
 	"os"
 	"path"
 	"reflect"
@@ -113,7 +112,7 @@ func testFrom(t *testing.T, pkgDir, sel string, exclude Mode) {
 		t.Fatal("ParseDir failed:", err, reflect.TypeOf(err), len(pkgs))
 	}
 	for _, pkg := range pkgs {
-		b, err := ioutil.ReadFile(pkgDir + "/parser.expect")
+		b, err := os.ReadFile(pkgDir + "/parser.expect")
 		if err != nil {
 			t.Fatal("Parsing", pkgDir, "-", err)
 		}
@@ -142,6 +141,57 @@ func TestParseGoFiles(t *testing.T) {
 	if len(pkgs) != 1 {
 		t.Fatal("TestParseGoFiles failed: len(pkgs) =", len(pkgs))
 	}
+}
+
+func TestParseEntry(t *testing.T) {
+	fset := token.NewFileSet()
+	src, err := os.ReadFile("./_testdata/functype/functype.go")
+	if err != nil {
+		t.Fatal("os.ReadFile:", err)
+	}
+	conf := Config{}
+	t.Run(".gop file", func(t *testing.T) {
+		f, err := ParseEntry(fset, "./functype.gop", src, conf)
+		if err != nil {
+			t.Fatal("ParseEntry failed:", err)
+		}
+		if f.IsClass || f.IsProj || f.IsNormalGox {
+			t.Fatal("ParseEntry functype.gop:", f.IsClass, f.IsProj, f.IsNormalGox)
+		}
+	})
+	t.Run(".gox file", func(t *testing.T) {
+		f, err := ParseEntry(fset, "./functype.gox", src, conf)
+		if err != nil {
+			t.Fatal("ParseEntry failed:", err)
+		}
+		if !f.IsClass || f.IsProj || !f.IsNormalGox {
+			t.Fatal("ParseEntry functype.gox:", f.IsClass, f.IsProj, f.IsNormalGox)
+		}
+	})
+	t.Run(".foo.gox file", func(t *testing.T) {
+		f, err := ParseEntry(fset, "./functype.foo.gox", src, conf)
+		if err != nil {
+			t.Fatal("ParseEntry failed:", err)
+		}
+		if !f.IsClass || f.IsProj || !f.IsNormalGox {
+			t.Fatal("ParseEntry functype.foo.gox:", f.IsClass, f.IsProj, f.IsNormalGox)
+		}
+	})
+	t.Run(".foo file", func(t *testing.T) {
+		_, err := ParseEntry(fset, "./functype.foo", src, conf)
+		if err != ErrUnknownFileKind {
+			t.Fatal("ParseEntry failed:", err)
+		}
+	})
+	t.Run(".spx file", func(t *testing.T) {
+		f, err := ParseEntry(fset, "./main.spx", src, conf)
+		if err != nil {
+			t.Fatal("ParseEntry failed:", err)
+		}
+		if !f.IsClass || !f.IsProj || f.IsNormalGox {
+			t.Fatal("ParseEntry main.spx:", f.IsClass, f.IsProj, f.IsNormalGox)
+		}
+	})
 }
 
 func TestGopAutoGen(t *testing.T) {
@@ -190,8 +240,8 @@ func TestErrParse(t *testing.T) {
 
 	fs = memfs.SingleFile("/foo", "test.abc.gox", `package foo`)
 	_, err = ParseFSDir(fset, fs, "/foo", Config{})
-	if err == nil {
-		t.Fatal("ParseFSDir test.gop: no error?")
+	if err != nil {
+		t.Fatal("ParseFSDir failed:", err)
 	}
 }
 
@@ -201,7 +251,7 @@ func testFromDir(t *testing.T, sel, relDir string) {
 		t.Fatal("Getwd failed:", err)
 	}
 	dir = path.Join(dir, relDir)
-	fis, err := ioutil.ReadDir(dir)
+	fis, err := os.ReadDir(dir)
 	if err != nil {
 		t.Fatal("ReadDir failed:", err)
 	}
