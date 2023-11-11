@@ -167,43 +167,58 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 	}
 	if len(files) > 0 {
 		scope := pkgTypes.Scope()
-		objMap := make(map[types.Object]types.Object)
-		// remove all objects defined in Go files
-		for _, f := range files {
-			for _, decl := range f.Decls {
-				switch v := decl.(type) {
-				case *goast.GenDecl:
-					for _, spec := range v.Specs {
-						switch v := spec.(type) {
-						case *goast.ValueSpec:
-							for _, name := range v.Names {
-								scopeDelete(objMap, scope, name.Name)
-							}
-						case *goast.TypeSpec:
-							scopeDelete(objMap, scope, v.Name.Name)
+		objMap := DeleteObjects(scope, files)
+		checker := types.NewChecker(conf, fset, pkgTypes, p.goInfo)
+		err = checker.Files(files)
+		CorrectTypesInfo(scope, objMap, p.gopInfo.Uses)
+	}
+	return
+}
+
+type astIdent interface {
+	comparable
+	ast.Node
+}
+
+type objMapT = map[types.Object]types.Object
+
+// CorrectTypesInfo corrects types info to avoid there are two instances for the same Go object.
+func CorrectTypesInfo[Ident astIdent](scope *types.Scope, objMap objMapT, uses map[Ident]types.Object) {
+	for o := range objMap {
+		objMap[o] = scope.Lookup(o.Name())
+	}
+	for id, old := range uses {
+		if new := objMap[old]; new != nil {
+			uses[id] = new
+		}
+	}
+}
+
+// DeleteObjects deletes all objects defined in Go files and returns deleted objects.
+func DeleteObjects(scope *types.Scope, files []*goast.File) objMapT {
+	objMap := make(objMapT)
+	for _, f := range files {
+		for _, decl := range f.Decls {
+			switch v := decl.(type) {
+			case *goast.GenDecl:
+				for _, spec := range v.Specs {
+					switch v := spec.(type) {
+					case *goast.ValueSpec:
+						for _, name := range v.Names {
+							scopeDelete(objMap, scope, name.Name)
 						}
-					}
-				case *goast.FuncDecl:
-					if v.Recv == nil {
+					case *goast.TypeSpec:
 						scopeDelete(objMap, scope, v.Name.Name)
 					}
 				}
-			}
-		}
-		checker := types.NewChecker(conf, fset, pkgTypes, p.goInfo)
-		err = checker.Files(files)
-		for o := range objMap {
-			objMap[o] = scope.Lookup(o.Name())
-		}
-		// correct Go+ types info to avoid there are two instances for same Go object:
-		uses := p.gopInfo.Uses
-		for id, old := range uses {
-			if new := objMap[old]; new != nil {
-				uses[id] = new
+			case *goast.FuncDecl:
+				if v.Recv == nil {
+					scopeDelete(objMap, scope, v.Name.Name)
+				}
 			}
 		}
 	}
-	return
+	return objMap
 }
 
 func convErr(fset *token.FileSet, e error) (ret types.Error, ok bool) {
