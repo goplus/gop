@@ -5,6 +5,7 @@ import (
 	"go/importer"
 	goparser "go/parser"
 	"go/types"
+	"log"
 	"os"
 	"path/filepath"
 	"testing"
@@ -56,8 +57,15 @@ func checkFiles(fset *token.FileSet, file string, src interface{}, goxfile strin
 	if err != nil {
 		return nil, nil, err
 	}
+	return checkInfo(fset, files, gofiles)
+}
+
+func checkInfo(fset *token.FileSet, files []*ast.File, gofiles []*goast.File) (*typesutil.Info, *types.Info, error) {
 	conf := &types.Config{}
 	conf.Importer = importer.Default()
+	conf.Error = func(err error) {
+		log.Println(err)
+	}
 	chkOpts := &typesutil.Config{
 		Types: types.NewPackage("main", "main"),
 		Fset:  fset,
@@ -80,13 +88,15 @@ func checkFiles(fset *token.FileSet, file string, src interface{}, goxfile strin
 		Scopes:     make(map[goast.Node]*types.Scope),
 	}
 	check := typesutil.NewChecker(conf, chkOpts, ginfo, info)
-	err = check.Files(gofiles, files)
+	err := check.Files(gofiles, files)
 	return info, ginfo, err
 }
 
 func TestCheckFiles(t *testing.T) {
 	fset := token.NewFileSet()
 	info, ginfo, err := checkFiles(fset, "main.gop", `
+import "fmt"
+
 type Point struct {
 	x int
 	y int
@@ -94,23 +104,50 @@ type Point struct {
 pt := &Point{}
 pt.x = 100
 pt.y = 200
-println(pt)
-println(GoPoint{100,200})
-println(&Rect{100,200})
+fmt.Println(pt)
+
+gopt := GoPoint{100,200}
+gopt.Test()
+gotest()
+fmt.Println(GoValue)
+fmt.Println(&Rect{100,200})
 `, "Rect.gox", `
 var (
 	x int
 	y int
 )
 `, "util.go", `package main
+var GoValue string
 type GoPoint struct {
 	x int
 	y int
+}
+func (p *GoPoint) Test() {
+}
+func gotest() {
 }
 `)
 	if err != nil || info == nil || ginfo == nil {
 		t.Fatalf("check failed: %v", err)
 	}
+
+	for def, obj := range info.Defs {
+		o := info.ObjectOf(def)
+		if o != obj {
+			t.Fatal("bad obj", o)
+		}
+	}
+	for use, obj := range info.Uses {
+		o := info.ObjectOf(use)
+		if o.String() != obj.String() {
+			t.Fatal("bad obj", o)
+		}
+		typ := info.TypeOf(use)
+		if typ.String() != obj.Type().String() {
+			t.Fatal("bad typ", typ)
+		}
+	}
+
 }
 
 func TestCheckGoFiles(t *testing.T) {
@@ -137,6 +174,12 @@ type Point struct {
 }
 pt := &Point1{}
 println(pt)
+`, "", "", "", "")
+	if err == nil {
+		t.Fatal("no error")
+	}
+	_, _, err = checkFiles(fset, "main.gop", `
+var i int = "hello"
 `, "", "", "", "")
 	if err == nil {
 		t.Fatal("no error")
