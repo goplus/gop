@@ -14,4 +14,7 @@ func TestNilImport(t *testing.T) {
 	if imp.(*importer).imp == nil {
 		t.Fatal("nilImporter")
 	}
+	if imp.(*importer).gop == nil {
+		t.Fatal("gopenv.Get")
+	}
 }
