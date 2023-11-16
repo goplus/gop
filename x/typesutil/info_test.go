@@ -83,8 +83,7 @@ func testInfo(t *testing.T, src interface{}) {
 	if err != nil {
 		t.Fatal("parserGoSource error", err)
 	}
-	// TODO check types
-	//testItems(t, "types", typesList(fset, info.Types), goTypesList(fset, goinfo.Types))
+	testItems(t, "types", typesList(fset, info.Types), goTypesList(fset, goinfo.Types))
 	testItems(t, "defs", defsList(fset, info.Defs, true), goDefsList(fset, goinfo.Defs, true))
 	testItems(t, "uses", usesList(fset, info.Uses), goUsesList(fset, goinfo.Uses))
 	// TODO check selections
