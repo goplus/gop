@@ -25,13 +25,55 @@ import (
 )
 
 func TestTypeAndValue(t *testing.T) {
-	ty := gox.NewTypeType(types.Typ[types.Int])
-	ret := NewTypeAndValue(ty, nil)
+	tyInt := types.Typ[types.Int]
+	ty := gox.NewTypeType(tyInt)
+	ret := NewTypeAndValueForType(ty)
 	if !ret.IsType() {
-		t.Fatal("NewTypeAndValue: not type?")
+		t.Fatal("NewTypeAndValueForType: not type?")
 	}
-	ret = NewTypeAndValue(types.Typ[types.Int], constant.MakeInt64(1))
+	ret = NewTypeAndValueForValue(tyInt, constant.MakeInt64(1))
 	if ret.Value == nil {
-		t.Fatal("NewTypeAndValue: not const?")
+		t.Fatal("NewTypeAndValueForValue: not const?")
+	}
+	ret = NewTypeAndValueForVariable(tyInt)
+	if !ret.Addressable() {
+		t.Fatal("NewTypeAndValueForVariable: not variable?")
+	}
+	ret = NewTypeAndValueForCallResult(tyInt)
+	if !ret.IsValue() {
+		t.Fatal("NewTypeAndValueForCall: not value?")
+	}
+	ret = NewTypeAndValueForCallResult(nil)
+	if !ret.IsVoid() {
+		t.Fatal("NewTypeAndValueForCall: not void?")
+	}
+	pkg := types.NewPackage("main", "main")
+	ret = NewTypeAndValueForObject(types.NewConst(0, pkg, "v", tyInt, constant.MakeInt64(100)))
+	if ret.Value == nil {
+		t.Fatal("NewTypeAndValueForObject: not const?")
+	}
+	ret = NewTypeAndValueForObject(types.NewTypeName(0, pkg, "MyInt", tyInt))
+	if !ret.IsType() {
+		t.Fatal("NewTypeAndValueForObject: not type?")
+	}
+	ret = NewTypeAndValueForObject(types.NewVar(0, pkg, "v", tyInt))
+	if !ret.Addressable() {
+		t.Fatal("NewTypeAndValueForObject: not variable?")
+	}
+	ret = NewTypeAndValueForObject(types.NewFunc(0, pkg, "fn", types.NewSignature(nil, nil, nil, false)))
+	if !ret.IsValue() {
+		t.Fatal("NewTypeAndValueForObject: not value?")
+	}
+	ret = NewTypeAndValueForValue(types.Typ[types.UntypedNil], nil)
+	if !ret.IsNil() {
+		t.Fatal("NewTypeAndValueForValue: not nil?")
+	}
+	ret = NewTypeAndValueForObject(types.Universe.Lookup("nil"))
+	if !ret.IsNil() {
+		t.Fatal("NewTypeAndValueForObject: not nil?")
+	}
+	ret = NewTypeAndValueForObject(types.Universe.Lookup("len"))
+	if !ret.IsBuiltin() {
+		t.Fatal("NewTypeAndValueForObject: not builtin?")
 	}
 }

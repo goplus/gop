@@ -335,7 +335,7 @@ var v4 *T = &T{100,200};
 `)
 }
 
-func _TestStruct(t *testing.T) {
+func TestStruct(t *testing.T) {
 	testInfo(t, `package main
 
 type Person struct {

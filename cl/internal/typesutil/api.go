@@ -49,13 +49,66 @@ type TypeAndValue struct {
 	Value constant.Value
 }
 
-func NewTypeAndValue(typ types.Type, val constant.Value) (ret types.TypeAndValue) {
-	if t, ok := typ.(*gox.TypeType); ok {
-		ret.Type = t.Type()
-		(*TypeAndValue)(unsafe.Pointer(&ret)).mode = typexpr
-	} else {
-		ret.Type = typ
-		ret.Value = val
+func NewTypeAndValueForType(typ types.Type) (ret types.TypeAndValue) {
+	switch t := typ.(type) {
+	case *gox.TypeType:
+		typ = t.Type()
 	}
+	ret.Type = types.Default(typ)
+	(*TypeAndValue)(unsafe.Pointer(&ret)).mode = typexpr
+	return
+}
+
+func NewTypeAndValueForValue(typ types.Type, val constant.Value) (ret types.TypeAndValue) {
+	var mode operandMode
+	if val != nil {
+		mode = constant_
+	} else {
+		mode = value
+	}
+	ret.Type = types.Default(typ)
+	ret.Value = val
+	(*TypeAndValue)(unsafe.Pointer(&ret)).mode = mode
+	return
+}
+
+func NewTypeAndValueForVariable(typ types.Type) (ret types.TypeAndValue) {
+	ret.Type = typ
+	(*TypeAndValue)(unsafe.Pointer(&ret)).mode = variable
+	return
+}
+
+func NewTypeAndValueForCallResult(typ types.Type) (ret types.TypeAndValue) {
+	if typ == nil {
+		ret.Type = &types.Tuple{}
+		(*TypeAndValue)(unsafe.Pointer(&ret)).mode = novalue
+		return
+	}
+	ret.Type = typ
+	(*TypeAndValue)(unsafe.Pointer(&ret)).mode = value
+	return
+}
+
+func NewTypeAndValueForObject(obj types.Object) (ret types.TypeAndValue) {
+	var mode operandMode
+	var val constant.Value
+	switch v := obj.(type) {
+	case *types.Const:
+		mode = constant_
+		val = v.Val()
+	case *types.TypeName:
+		mode = typexpr
+	case *types.Var:
+		mode = variable
+	case *types.Func:
+		mode = value
+	case *types.Builtin:
+		mode = builtin
+	case *types.Nil:
+		mode = value
+	}
+	ret.Type = obj.Type()
+	ret.Value = val
+	(*TypeAndValue)(unsafe.Pointer(&ret)).mode = mode
 	return
 }
