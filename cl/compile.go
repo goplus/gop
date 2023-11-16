@@ -28,6 +28,7 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/fromgo"
+	"github.com/goplus/gop/cl/internal/typesutil"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
 	"github.com/goplus/gox/cpackages"
@@ -220,7 +221,7 @@ type goxRecorder struct {
 
 // Member maps identifiers to the objects they denote.
 func (p *goxRecorder) Member(id ast.Node, obj types.Object) {
-	tv := types.TypeAndValue{Type: obj.Type()}
+	tv := typesutil.NewTypeAndValueForObject(obj)
 	switch v := id.(type) {
 	case *ast.SelectorExpr:
 		sel := v.Sel

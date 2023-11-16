@@ -25,6 +25,7 @@ import (
 	"strconv"
 
 	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/cl/internal/typesutil"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
 )
@@ -112,7 +113,12 @@ func toParam(ctx *blockCtx, fld *ast.Field, args []*gox.Param) []*gox.Param {
 
 // -----------------------------------------------------------------------------
 
-func toType(ctx *blockCtx, typ ast.Expr) types.Type {
+func toType(ctx *blockCtx, typ ast.Expr) (t types.Type) {
+	if rec := ctx.recorder(); rec != nil {
+		defer func() {
+			rec.Type(typ, typesutil.NewTypeAndValueForType(t))
+		}()
+	}
 	switch v := typ.(type) {
 	case *ast.Ident:
 		ctx.idents = append(ctx.idents, v)
@@ -228,6 +234,7 @@ func toIdentType(ctx *blockCtx, ident *ast.Ident) (ret types.Type) {
 		defer func() {
 			if obj != nil {
 				rec.Use(ident, obj)
+				rec.Type(ident, typesutil.NewTypeAndValueForObject(obj))
 			}
 		}()
 	}
@@ -341,7 +348,11 @@ func toStructType(ctx *blockCtx, v *ast.StructType) *types.Struct {
 			}
 		}
 	}
-	return types.NewStruct(fields, tags)
+	st := types.NewStruct(fields, tags)
+	if rec != nil {
+		rec.Type(v, typesutil.NewTypeAndValueForType(st))
+	}
+	return st
 }
 
 func toFieldTag(v *ast.BasicLit) string {
