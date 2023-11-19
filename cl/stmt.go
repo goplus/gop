@@ -58,8 +58,8 @@ func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
 }
 
 func commentFunc(ctx *blockCtx, fn *gox.Func, decl *ast.FuncDecl) {
-	if ctx.fileLine {
-		start := decl.Name.Pos()
+	start := decl.Name.Pos()
+	if ctx.fileLine && start != token.NoPos {
 		pos := ctx.fset.Position(start)
 		if ctx.relativePath {
 			pos.Filename = relFile(ctx.targetDir, pos.Filename)
