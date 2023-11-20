@@ -138,7 +138,7 @@ func genGoEntry(list *errors.List, path string, d fs.DirEntry, conf *Config, fla
 
 func genGoSingleFile(file string, conf *Config, flags GenFlags) (err error) {
 	dir, fname := filepath.Split(file)
-	autogen := dir + strings.TrimSuffix(fname, ".gop") + "_augogen.go"
+	autogen := dir + strings.TrimSuffix(fname, ".gop") + "_autogen.go"
 	if (flags & GenFlagPrompt) != 0 {
 		fmt.Fprintln(os.Stderr, "GenGo", file, "...")
 	}
