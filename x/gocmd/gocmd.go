@@ -29,6 +29,7 @@ type GopEnv = env.Gop
 
 type Config struct {
 	Gop   *GopEnv
+	GoCmd string
 	Flags []string
 	Run   func(cmd *exec.Cmd) error
 }
@@ -39,12 +40,16 @@ func doWithArgs(op string, conf *Config, args ...string) (err error) {
 	if conf == nil {
 		conf = new(Config)
 	}
+	goCmd := conf.GoCmd
+	if goCmd == "" {
+		goCmd = Name()
+	}
 	exargs := make([]string, 1, 16)
 	exargs[0] = op
 	exargs = appendLdflags(exargs, conf.Gop)
 	exargs = append(exargs, conf.Flags...)
 	exargs = append(exargs, args...)
-	cmd := exec.Command("go", exargs...)
+	cmd := exec.Command(goCmd, exargs...)
 	run := conf.Run
 	if run == nil {
 		run = runCmd
@@ -80,6 +85,19 @@ func appendLdflags(exargs []string, env *GopEnv) []string {
 		env = gopenv.Get()
 	}
 	return append(exargs, "-ldflags", loadFlags(env))
+}
+
+// -----------------------------------------------------------------------------
+
+// Name returns name of the go command.
+// It returns value of environment variable `GOP_GOCMD` if not empty.
+// If not found, it returns `go`.
+func Name() string {
+	goCmd := os.Getenv("GOP_GOCMD")
+	if goCmd == "" {
+		goCmd = "go"
+	}
+	return goCmd
 }
 
 // -----------------------------------------------------------------------------
