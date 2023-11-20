@@ -22,6 +22,15 @@ import (
 
 type Sprite struct {
 	pos pkg.Vector
+	Entry
+}
+
+type Entry struct {
+	vec pkg.Vector
+}
+
+func (p *Entry) Vector() *pkg.Vector {
+	return &p.vec
 }
 
 func (p *Sprite) SetCostume(costume interface{}) {
