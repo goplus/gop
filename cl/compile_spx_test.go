@@ -698,10 +698,22 @@ func (this *Kai) onMsg(msg string) {
 
 func TestSpxPkgOverload(t *testing.T) {
 	gopSpxTestEx(t, `
-println "Hi"
+import "fmt"
+fmt.println "Hi"
 `, `
 func onMsg(msg string) {
 	this.position.add 100,200
+	position.add 100,200
+	position.X += 100
+	println position.X
+	this.vector.add 100,200
+	vector.add 100,200
+	vector.X += 100
+	vector.self.X += 100
+	vector.self.Y += 200
+	vector.self.add position.X,position.Y
+	println vector.X
+	println vector.self.self
 }
 `, `package main
 
@@ -728,6 +740,17 @@ type Kai struct {
 
 func (this *Kai) onMsg(msg string) {
 	this.Position().Add__0(100, 200)
+	this.Position().Add__0(100, 200)
+	this.Position().X += 100
+	fmt.Println(this.Position().X)
+	this.Vector().Add__0(100, 200)
+	this.Vector().Add__0(100, 200)
+	this.Vector().X += 100
+	this.Vector().Self().X += 100
+	this.Vector().Self().Y += 200
+	this.Vector().Self().Add__0(this.Position().X, this.Position().Y)
+	fmt.Println(this.Vector().X)
+	fmt.Println(this.Vector().Self().Self())
 }
 `, "Game.tgmx", "Kai.tspx")
 }
