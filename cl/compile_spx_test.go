@@ -698,22 +698,10 @@ func (this *Kai) onMsg(msg string) {
 
 func TestSpxPkgOverload(t *testing.T) {
 	gopSpxTestEx(t, `
-import "fmt"
-fmt.println "Hi"
+println "Hi"
 `, `
 func onMsg(msg string) {
 	this.position.add 100,200
-	position.add 100,200
-	position.X += 100
-	println position.X
-	this.vector.add 100,200
-	vector.add 100,200
-	vector.X += 100
-	vector.self.X += 100
-	vector.self.Y += 200
-	vector.self.add position.X,position.Y
-	println vector.X
-	println vector.self.self
 }
 `, `package main
 
@@ -739,6 +727,56 @@ type Kai struct {
 }
 
 func (this *Kai) onMsg(msg string) {
+	this.Position().Add__0(100, 200)
+}
+`, "Game.tgmx", "Kai.tspx")
+}
+
+func TestSpxSelection(t *testing.T) {
+	gopSpxTestEx(t, `
+println "hi"
+`, `
+import "fmt"
+func onMsg(msg string) {
+	fmt.println msg
+	this.position.add 100,200
+	position.add 100,200
+	position.X += 100
+	println position.X
+	this.vector.add 100,200
+	vector.add 100,200
+	vector.X += 100
+	vector.self.X += 100
+	vector.self.Y += 200
+	vector.self.add position.X,position.Y
+	println vector.X
+	println vector.self.self
+}
+`, `package main
+
+import (
+	"fmt"
+	"github.com/goplus/gop/cl/internal/spx"
+)
+
+type Game struct {
+	*spx.MyGame
+}
+
+func (this *Game) MainEntry() {
+	fmt.Println("hi")
+}
+func main() {
+	spx.Gopt_MyGame_Main(new(Game))
+}
+
+type Kai struct {
+	spx.Sprite
+	*Game
+}
+
+func (this *Kai) onMsg(msg string) {
+	fmt.Println(msg)
 	this.Position().Add__0(100, 200)
 	this.Position().Add__0(100, 200)
 	this.Position().X += 100
