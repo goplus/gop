@@ -4647,3 +4647,17 @@ func main() {
 }
 `)
 }
+
+func TestSkipC2go(t *testing.T) {
+	gopClTest(t, `
+import "C"
+println "hello"
+`, `package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("hello")
+}
+`)
+}
