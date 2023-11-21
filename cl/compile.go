@@ -184,7 +184,7 @@ type Config struct {
 	// Default is github.com/goplus/.
 	C2goBase string
 
-	// LookupPub lookups the c2go package pubfile named c2go.a.pub (required).
+	// LookupPub lookups the c2go package pubfile named c2go.a.pub (optional).
 	// See gop/x/c2go.LookupPub.
 	LookupPub func(pkgPath string) (pubfile string, err error)
 
@@ -210,6 +210,9 @@ type Config struct {
 
 	// NoSkipConstant = true means to disable optimization of skipping constants.
 	NoSkipConstant bool
+
+	// EnableC2go = true means to enable c2go.
+	EnableC2go bool
 
 	// Outline = true means to skip compiling function bodies.
 	Outline bool
@@ -535,9 +538,11 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		}()
 	}
 	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
-	ctx.cpkgs = cpackages.NewImporter(&cpackages.Config{
-		Pkg: p, LookupPub: conf.LookupPub,
-	})
+	if conf.EnableC2go {
+		ctx.cpkgs = cpackages.NewImporter(&cpackages.Config{
+			Pkg: p, LookupPub: conf.LookupPub,
+		})
+	}
 	for file, gmx := range files {
 		if gmx.IsProj {
 			ctx.gmxSettings = newGmx(ctx, p, file, gmx, conf)
@@ -1155,6 +1160,9 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 	var pkg *gox.PkgRef
 	var pkgPath = toString(spec.Path)
 	if realPath, kind := checkC2go(pkgPath); kind != c2goInvalid {
+		if ctx.cpkgs == nil {
+			return
+		}
 		if kind == c2goStandard {
 			realPath = ctx.c2goBase + realPath
 		}

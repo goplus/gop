@@ -30,20 +30,31 @@ import (
 )
 
 func codeErrorTest(t *testing.T, msg, src string) {
-	codeErrorTestEx(t, "main", "bar.gop", msg, src)
+	codeErrorTestEx(t, gblConf, "main", "bar.gop", msg, src)
 }
 
-func codeErrorTestEx(t *testing.T, pkgname, filename, msg, src string) {
+func codeErrorTestName(t *testing.T, pkgname, filename, msg, src string) {
+	codeErrorTestEx(t, gblConf, pkgname, filename, msg, src)
+}
+
+func codeErrorTestC(t *testing.T, msg, src string) {
+	c := *gblConf
+	c.EnableC2go = true
+	codeErrorTestEx(t, &c, "main", "bar.gop", msg, src)
+}
+
+func codeErrorTestEx(t *testing.T, c *cl.Config, pkgname, filename, msg, src string) {
 	fs := memfs.SingleFile("/foo", filename, src)
 	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", parser.Config{})
 	if err != nil {
 		scanner.PrintError(os.Stderr, err)
 		t.Fatal("parser.ParseFSDir failed")
 	}
-	conf := *gblConf
+	conf := *c
 	conf.NoFileLine = false
 	conf.WorkingDir = "/foo"
 	conf.TargetDir = "/foo"
+	conf.EnableC2go = true
 	bar := pkgs[pkgname]
 	_, err = cl.NewPackage("", bar, &conf)
 	if err == nil {
@@ -712,7 +723,7 @@ func TestErrNoEntrypoint(t *testing.T) {
 		`./bar.gop:1:9: undefined: abc`,
 		`println abc
 `)
-	codeErrorTestEx(t, "bar", "bar.gop",
+	codeErrorTestName(t, "bar", "bar.gop",
 		`./bar.gop:2:9: undefined: abc`,
 		`package bar
 println abc
@@ -902,7 +913,7 @@ import (
 }
 
 func TestErrClassFileGopx(t *testing.T) {
-	codeErrorTestEx(t, "main", "Rect.gox",
+	codeErrorTestName(t, "main", "Rect.gox",
 		`./Rect.gox:5:2: A redeclared
 	./Rect.gox:3:2 other declaration of A`, `
 var (

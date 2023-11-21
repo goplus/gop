@@ -28,7 +28,7 @@ func lookupPub(pkgPath string) (pubfile string, err error) {
 }
 
 func TestHelloC2go(t *testing.T) {
-	gopClTest(t, `
+	gopClTestC(t, `
 import "C"
 
 C.printf C"Hello, world!\n"
@@ -46,7 +46,7 @@ func main() {
 }
 
 func TestHelloC2go2(t *testing.T) {
-	gopClTest(t, `
+	gopClTestC(t, `
 import "C/github.com/goplus/gop/cl/internal/libc"
 
 C.printf C"Hello, world!\n"
@@ -64,7 +64,7 @@ func main() {
 }
 
 func TestHelloC2go3(t *testing.T) {
-	gopClTest(t, `
+	gopClTestC(t, `
 import "C/libc"
 
 C.printf C"Hello, world!\n"
@@ -82,7 +82,7 @@ func main() {
 }
 
 func TestErrHelloC2go(t *testing.T) {
-	codeErrorTest(t, `./bar.gop:7:3: confliction: printf declared both in "github.com/goplus/gop/cl/internal/libc" and "github.com/goplus/gop/cl/internal/libc"`, `
+	codeErrorTestC(t, `./bar.gop:7:3: confliction: printf declared both in "github.com/goplus/gop/cl/internal/libc" and "github.com/goplus/gop/cl/internal/libc"`, `
 import (
 	"C"
 	"C/libc"

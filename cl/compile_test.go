@@ -38,9 +38,8 @@ const (
 )
 
 var (
-	gblFset     *token.FileSet
-	gblConf     *cl.Config
-	gblConfLine *cl.Config
+	gblFset *token.FileSet
+	gblConf *cl.Config
 )
 
 func init() {
@@ -58,18 +57,6 @@ func init() {
 		NoFileLine:    true,
 		NoAutoGenMain: true,
 	}
-	gblConfLine = &cl.Config{
-		Fset:          gblFset,
-		Importer:      imp,
-		Recorder:      gopRecorder{},
-		LookupClass:   lookupClass,
-		LookupPub:     lookupPub,
-		C2goBase:      "github.com/goplus/gop/cl/internal",
-		NoFileLine:    false,
-		NoAutoGenMain: true,
-		RelativePath:  true,
-		TargetDir:     ".",
-	}
 }
 
 func gopClNamedTest(t *testing.T, name string, gopcode, expected string) {
@@ -80,6 +67,12 @@ func gopClNamedTest(t *testing.T, name string, gopcode, expected string) {
 
 func gopClTest(t *testing.T, gopcode, expected string) {
 	gopClTestEx(t, gblConf, "main", gopcode, expected)
+}
+
+func gopClTestC(t *testing.T, gopcode, expected string) {
+	c := *gblConf
+	c.EnableC2go = true
+	gopClTestEx(t, &c, "main", gopcode, expected)
 }
 
 func gopClTestFile(t *testing.T, gopcode, expected string, fname string) {
@@ -4603,7 +4596,9 @@ func (this *Rect) Test() {
 }
 
 func TestCommentLine(t *testing.T) {
-	gopClTestEx(t, gblConfLine, "main", `
+	c := *gblConf
+	c.NoFileLine = false
+	gopClTestEx(t, &c, "main", `
 type Point struct {
 	x int
 	y int
