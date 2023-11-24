@@ -22,6 +22,7 @@ import (
 	"go/types"
 	"log"
 	"os"
+	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
@@ -205,6 +206,9 @@ type Config struct {
 	// RelativePath = true means to generate file line comments with relative file path.
 	RelativePath bool
 
+	// FileLineRoot set means generate file line comments start with root path.
+	FileLineRoot string
+
 	// NoAutoGenMain = true means not to auto generate main func is no entry.
 	NoAutoGenMain bool
 
@@ -373,6 +377,9 @@ type pkgCtx struct {
 	generics map[string]bool // generic type record
 	idents   []*ast.Ident    // toType ident recored
 	inInst   int             // toType in generic instance
+
+	fileLineRoot       string // comment file line start root
+	fileLineWorkingDir string // comment file line working dir
 }
 
 type pkgImp struct {
@@ -512,6 +519,10 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	ctx := &pkgCtx{
 		fset: fset,
 		syms: make(map[string]loader), nodeInterp: interp, generics: make(map[string]bool),
+	}
+	if conf.FileLineRoot != "" {
+		ctx.fileLineRoot, _ = filepath.Abs(conf.FileLineRoot)
+		ctx.fileLineWorkingDir, _ = filepath.Abs(workingDir)
 	}
 	confGox := &gox.Config{
 		Types:           conf.Types,
