@@ -18,7 +18,6 @@ package clean
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -28,15 +27,15 @@ import (
 )
 
 const (
-	autoGenFile      = "gop_autogen.go"
-	autoGenTestFile  = "gop_autogen_test.go"
-	autoGen2TestFile = "gop_autogen2_test.go"
+	autoGenFileSuffix = "_autogen.go"
+	autoGenTestFile   = "gop_autogen_test.go"
+	autoGen2TestFile  = "gop_autogen2_test.go"
 )
 
 // -----------------------------------------------------------------------------
 
-func cleanAGFiles(dir string) {
-	fis, err := ioutil.ReadDir(dir)
+func cleanAGFiles(dir string, execAct bool) {
+	fis, err := os.ReadDir(dir)
 	if err != nil {
 		return
 	}
@@ -48,25 +47,34 @@ func cleanAGFiles(dir string) {
 		if fi.IsDir() {
 			pkgDir := filepath.Join(dir, fname)
 			if fname == ".gop" {
-				removeGopDir(pkgDir)
+				removeGopDir(pkgDir, execAct)
 			} else {
-				cleanAGFiles(pkgDir)
+				cleanAGFiles(pkgDir, execAct)
 			}
 			continue
 		}
+		if strings.HasSuffix(fname, autoGenFileSuffix) {
+			file := filepath.Join(dir, fname)
+			fmt.Printf("Cleaning %s ...\n", file)
+			if execAct {
+				os.Remove(file)
+			}
+		}
 	}
-	autogens := []string{autoGenFile, autoGenTestFile, autoGen2TestFile}
+	autogens := []string{autoGenTestFile, autoGen2TestFile}
 	for _, autogen := range autogens {
 		file := filepath.Join(dir, autogen)
 		if _, err = os.Stat(file); err == nil {
 			fmt.Printf("Cleaning %s ...\n", file)
-			os.Remove(file)
+			if execAct {
+				os.Remove(file)
+			}
 		}
 	}
 }
 
-func removeGopDir(dir string) {
-	fis, err := ioutil.ReadDir(dir)
+func removeGopDir(dir string, execAct bool) {
+	fis, err := os.ReadDir(dir)
 	if err != nil {
 		return
 	}
@@ -75,23 +83,29 @@ func removeGopDir(dir string) {
 		if strings.HasSuffix(fname, ".gop.go") {
 			genfile := filepath.Join(dir, fname)
 			fmt.Printf("Cleaning %s ...\n", genfile)
-			os.Remove(genfile)
+			if execAct {
+				os.Remove(genfile)
+			}
 		}
 	}
-	os.Remove(dir)
+	if execAct {
+		os.Remove(dir)
+	}
 }
 
 // -----------------------------------------------------------------------------
 
 // Cmd - gop clean
 var Cmd = &base.Command{
-	UsageLine: "gop clean [-v] <gopSrcDir>",
+	UsageLine: "gop clean [flags] <gopSrcDir>",
 	Short:     "Clean all Go+ auto generated files",
 }
 
 var (
 	flag = &Cmd.Flag
-	_    = flag.Bool("v", false, "print verbose information.")
+
+	_        = flag.Bool("v", false, "print verbose information.")
+	testMode = flag.Bool("t", false, "test mode: display files to clean but don't clean them.")
 )
 
 func init() {
@@ -109,7 +123,7 @@ func runCmd(_ *base.Command, args []string) {
 	} else {
 		dir = flag.Arg(0)
 	}
-	cleanAGFiles(dir)
+	cleanAGFiles(dir, !*testMode)
 }
 
 // -----------------------------------------------------------------------------

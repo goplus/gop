@@ -42,11 +42,23 @@ func relFile(dir string, file string) string {
 	return file
 }
 
+func offsetFileLine(ctx *blockCtx, file string) string {
+	if !filepath.IsAbs(file) {
+		file = filepath.Join(ctx.fileLineWorkingDir, file)
+	}
+	if ret, err := filepath.Rel(ctx.fileLineRoot, file); err == nil {
+		return ret
+	}
+	return file
+}
+
 func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
 	if ctx.fileLine {
 		start := stmt.Pos()
 		pos := ctx.fset.Position(start)
-		if ctx.relativePath {
+		if ctx.fileLineRoot != "" {
+			pos.Filename = offsetFileLine(ctx, pos.Filename)
+		} else if ctx.relativePath {
 			pos.Filename = relFile(ctx.targetDir, pos.Filename)
 		}
 		line := fmt.Sprintf("\n//line %s:%d:1", pos.Filename, pos.Line)
@@ -58,10 +70,12 @@ func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
 }
 
 func commentFunc(ctx *blockCtx, fn *gox.Func, decl *ast.FuncDecl) {
-	if ctx.fileLine {
-		start := decl.Name.Pos()
+	start := decl.Name.Pos()
+	if ctx.fileLine && start != token.NoPos {
 		pos := ctx.fset.Position(start)
-		if ctx.relativePath {
+		if ctx.fileLineRoot != "" {
+			pos.Filename = offsetFileLine(ctx, pos.Filename)
+		} else if ctx.relativePath {
 			pos.Filename = relFile(ctx.targetDir, pos.Filename)
 		}
 		var line string

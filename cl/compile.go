@@ -22,12 +22,14 @@ import (
 	"go/types"
 	"log"
 	"os"
+	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/fromgo"
+	"github.com/goplus/gop/cl/internal/typesutil"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
 	"github.com/goplus/gox/cpackages"
@@ -204,6 +206,9 @@ type Config struct {
 	// RelativePath = true means to generate file line comments with relative file path.
 	RelativePath bool
 
+	// FileLineRoot set means generate file line comments start with root path.
+	FileLineRoot string
+
 	// NoAutoGenMain = true means not to auto generate main func is no entry.
 	NoAutoGenMain bool
 
@@ -220,7 +225,7 @@ type goxRecorder struct {
 
 // Member maps identifiers to the objects they denote.
 func (p *goxRecorder) Member(id ast.Node, obj types.Object) {
-	tv := types.TypeAndValue{Type: obj.Type()}
+	tv := typesutil.NewTypeAndValueForObject(obj)
 	switch v := id.(type) {
 	case *ast.SelectorExpr:
 		sel := v.Sel
@@ -369,6 +374,9 @@ type pkgCtx struct {
 	generics map[string]bool // generic type record
 	idents   []*ast.Ident    // toType ident recored
 	inInst   int             // toType in generic instance
+
+	fileLineRoot       string // comment file line start root
+	fileLineWorkingDir string // comment file line working dir
 }
 
 type pkgImp struct {
@@ -508,6 +516,10 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	ctx := &pkgCtx{
 		fset: fset,
 		syms: make(map[string]loader), nodeInterp: interp, generics: make(map[string]bool),
+	}
+	if conf.FileLineRoot != "" {
+		ctx.fileLineRoot, _ = filepath.Abs(conf.FileLineRoot)
+		ctx.fileLineWorkingDir, _ = filepath.Abs(workingDir)
 	}
 	confGox := &gox.Config{
 		Types:           conf.Types,

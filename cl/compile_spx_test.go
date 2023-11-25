@@ -731,3 +731,64 @@ func (this *Kai) onMsg(msg string) {
 }
 `, "Game.tgmx", "Kai.tspx")
 }
+
+func TestSpxSelection(t *testing.T) {
+	gopSpxTestEx(t, `
+println "hi"
+`, `
+import "fmt"
+func onMsg(msg string) {
+	fmt.println msg
+	this.position.add 100,200
+	position.add 100,200
+	position.X += 100
+	println position.X
+	this.vector.add 100,200
+	vector.add 100,200
+	vector.X += 100
+	vector.self.X += 100
+	vector.self.Y += 200
+	vector.self.add position.X,position.Y
+	println vector.X
+	println vector.self.self
+}
+`, `package main
+
+import (
+	"fmt"
+	"github.com/goplus/gop/cl/internal/spx"
+)
+
+type Game struct {
+	*spx.MyGame
+}
+
+func (this *Game) MainEntry() {
+	fmt.Println("hi")
+}
+func main() {
+	spx.Gopt_MyGame_Main(new(Game))
+}
+
+type Kai struct {
+	spx.Sprite
+	*Game
+}
+
+func (this *Kai) onMsg(msg string) {
+	fmt.Println(msg)
+	this.Position().Add__0(100, 200)
+	this.Position().Add__0(100, 200)
+	this.Position().X += 100
+	fmt.Println(this.Position().X)
+	this.Vector().Add__0(100, 200)
+	this.Vector().Add__0(100, 200)
+	this.Vector().X += 100
+	this.Vector().Self().X += 100
+	this.Vector().Self().Y += 200
+	this.Vector().Self().Add__0(this.Position().X, this.Position().Y)
+	fmt.Println(this.Vector().X)
+	fmt.Println(this.Vector().Self().Self())
+}
+`, "Game.tgmx", "Kai.tspx")
+}

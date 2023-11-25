@@ -100,7 +100,11 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg *gox.PkgRef, 
 			sig := fn.Ancestor().Type().(*types.Signature)
 			if recv := sig.Recv(); recv != nil {
 				ctx.cb.Val(recv)
-				if compileMember(ctx, ident, name, flags&^clCommandWithoutArgs) == nil { // class member object
+				chkFlag := flags &^ clCommandWithoutArgs
+				if chkFlag&clIdentSelectorExpr != 0 {
+					chkFlag = clIdentCanAutoCall
+				}
+				if compileMember(ctx, ident, name, chkFlag) == nil { // class member object
 					return
 				}
 				ctx.cb.InternalStack().PopN(1)
@@ -158,12 +162,11 @@ find:
 		e := ctx.cb.Get(-1)
 		if oldo != nil && gox.IsTypeEx(e.Type) {
 			rec.Use(ident, oldo)
+			rec.Type(ident, typesutil.NewTypeAndValueForObject(oldo))
 			return
 		}
 		rec.Use(ident, o)
-		typ, _ := gox.DerefType(e.Type)
-		tv := typesutil.NewTypeAndValue(typ, e.CVal)
-		rec.Type(ident, tv)
+		rec.Type(ident, typesutil.NewTypeAndValueForObject(o))
 	}
 	return
 }
@@ -199,6 +202,7 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr) {
 		compileIndexExprLHS(ctx, v)
 	case *ast.SelectorExpr:
 		compileSelectorExprLHS(ctx, v)
+		recordTypesVariable(ctx, v, -1)
 	case *ast.StarExpr:
 		compileStarExprLHS(ctx, v)
 	default:
@@ -208,6 +212,21 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr) {
 
 func twoValue(inFlags []int) bool {
 	return inFlags != nil && (inFlags[0]&clCallWithTwoValue) != 0
+}
+
+func recordTypesValue(ctx *blockCtx, expr ast.Expr, n int) {
+	if rec := ctx.recorder(); rec != nil {
+		e := ctx.cb.Get(n)
+		rec.Type(expr, typesutil.NewTypeAndValueForValue(e.Type, e.CVal))
+	}
+}
+
+func recordTypesVariable(ctx *blockCtx, expr ast.Expr, n int) {
+	if rec := ctx.recorder(); rec != nil {
+		e := ctx.cb.Get(n)
+		t, _ := gox.DerefType(e.Type)
+		rec.Type(expr, typesutil.NewTypeAndValueForVariable(t))
+	}
 }
 
 func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
@@ -220,6 +239,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 		compileIdent(ctx, v, flags)
 	case *ast.BasicLit:
 		compileBasicLit(ctx, v)
+		recordTypesValue(ctx, v, -1)
 	case *ast.CallExpr:
 		flags := 0
 		if inFlags != nil {
@@ -234,8 +254,10 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 		compileSelectorExpr(ctx, v, flags)
 	case *ast.BinaryExpr:
 		compileBinaryExpr(ctx, v)
+		recordTypesValue(ctx, v, -1)
 	case *ast.UnaryExpr:
 		compileUnaryExpr(ctx, v, twoValue(inFlags))
+		recordTypesValue(ctx, v, -1)
 	case *ast.FuncLit:
 		compileFuncLit(ctx, v)
 	case *ast.CompositeLit:
@@ -359,10 +381,6 @@ func compileSelectorExprLHS(ctx *blockCtx, v *ast.SelectorExpr) {
 		}
 	default:
 		compileExpr(ctx, v.X)
-		if rec := ctx.recorder(); rec != nil {
-			e := ctx.cb.Get(-1)
-			rec.Type(v.X, typesutil.NewTypeAndValue(e.Type, e.CVal))
-		}
 	}
 	ctx.cb.MemberRef(v.Sel.Name, v)
 }
@@ -383,7 +401,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, flags int) {
 		compileExpr(ctx, v.X)
 		if rec := ctx.recorder(); rec != nil {
 			e := ctx.cb.Get(-1)
-			rec.Type(v.X, typesutil.NewTypeAndValue(e.Type, e.CVal))
+			rec.Type(v.X, typesutil.NewTypeAndValueForType(e.Type))
 		}
 	}
 	if err := compileMember(ctx, v, v.Sel.Name, flags); err != nil {
@@ -544,6 +562,9 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 	for fn != nil {
 		err := compileCallArgs(fn, fnt, ctx, v, ellipsis, flags)
 		if err == nil {
+			if rec := ctx.recorder(); rec != nil {
+				rec.Type(v, typesutil.NewTypeAndValueForCallResult(ctx.cb.Get(-1).Type))
+			}
 			break
 		}
 		if fn.next == nil {
@@ -794,6 +815,9 @@ func compileStructLitInKeyVal(ctx *blockCtx, elts []ast.Expr, t *types.Struct, t
 			err := ctx.newCodeErrorf(name.Pos(), "%s undefined (type %v has no field or method %s)", src, typ, name.Name)
 			panic(err)
 		}
+		if rec := ctx.recorder(); rec != nil {
+			rec.Use(name, t.Field(idx))
+		}
 		switch expr := kv.Value.(type) {
 		case *ast.LambdaExpr, *ast.LambdaExpr2:
 			sig := checkLambdaFuncType(ctx, expr, t.Field(idx).Type(), clLambaField, kv.Key)
@@ -878,6 +902,9 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, expected types.Type
 	}
 	if t, ok := underlying.(*types.Struct); ok && kind == compositeLitKeyVal {
 		compileStructLitInKeyVal(ctx, v.Elts, t, typ, v)
+		if rec := ctx.recorder(); rec != nil {
+			rec.Type(v, typesutil.NewTypeAndValueForValue(typ, nil))
+		}
 		if hasPtr {
 			ctx.cb.UnaryOp(gotoken.AND)
 		}
@@ -891,6 +918,10 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, expected types.Type
 		}
 		ctx.cb.MapLit(nil, n<<1)
 		return
+	}
+	if rec := ctx.recorder(); rec != nil {
+		rec.Type(v.Type, typesutil.NewTypeAndValueForType(typ))
+		rec.Type(v, typesutil.NewTypeAndValueForValue(typ, nil))
 	}
 	switch underlying.(type) {
 	case *types.Slice:

@@ -19,6 +19,7 @@ package cl_test
 import (
 	"bytes"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -4651,4 +4652,65 @@ func main() {
 	testPoint()
 }
 `)
+}
+
+func TestCommentLineRoot(t *testing.T) {
+	conf := *gblConf
+	conf.NoFileLine = false
+	conf.FileLineRoot = "/foo/root"
+	conf.WorkingDir = "/foo"
+	conf.TargetDir = "/foo"
+	var src = `
+type Point struct {
+	x int
+	y int
+}
+
+func (pt *Point) Test() {
+	println(pt.x, pt.y)
+}
+
+// testPoint is test point
+func testPoint() {
+	var pt Point
+	pt.Test()
+}
+
+println "hello"
+testPoint()
+`
+	var expected = `package main
+
+import "fmt"
+
+type Point struct {
+	x int
+	y int
+}
+//line ../bar.gop:7:1
+func (pt *Point) Test() {
+//line ../bar.gop:8:1
+	fmt.Println(pt.x, pt.y)
+}
+// testPoint is test point
+//
+//line ../bar.gop:12:1
+func testPoint() {
+//line ../bar.gop:13:1
+	var pt Point
+//line ../bar.gop:14:1
+	pt.Test()
+}
+//line ../bar.gop:17
+func main() {
+//line ../bar.gop:17:1
+	fmt.Println("hello")
+//line ../bar.gop:18:1
+	testPoint()
+}
+`
+	if runtime.GOOS == "windows" {
+		expected = strings.Replace(expected, "../", `..\foo\`, -1)
+	}
+	gopClTestEx(t, &conf, "main", src, expected)
 }
