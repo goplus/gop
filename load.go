@@ -187,13 +187,16 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 
 	var pkgTest *ast.Package
 	var clConf = &cl.Config{
-		WorkingDir:   dir,
-		Fset:         fset,
-		Importer:     imp,
-		LookupClass:  mod.LookupClass,
-		LookupPub:    c2go.LookupPub(mod),
-		FileLineRoot: mod.Root(),
+		WorkingDir:  dir,
+		Fset:        fset,
+		Importer:    imp,
+		LookupClass: mod.LookupClass,
+		LookupPub:   c2go.LookupPub(mod),
 	}
+	if mod.IsValid() {
+		clConf.FileLineRoot = mod.Root()
+	}
+
 	for name, pkg := range pkgs {
 		if strings.HasSuffix(name, "_test") {
 			if pkgTest != nil {
