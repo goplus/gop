@@ -47,7 +47,7 @@ func offsetFileLine(ctx *blockCtx, file string) string {
 		file = filepath.Join(ctx.fileLineWorkingDir, file)
 	}
 	if ret, err := filepath.Rel(ctx.fileLineRoot, file); err == nil {
-		return ret
+		return filepath.ToSlash(ret)
 	}
 	return file
 }
