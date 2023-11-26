@@ -83,7 +83,7 @@ func testInfo(t *testing.T, src interface{}) {
 	if err != nil {
 		t.Fatal("parserGoSource error", err)
 	}
-	testItems(t, "types", typesList(fset, info.Types), goTypesList(fset, goinfo.Types))
+	testItems(t, "types", typesList(fset, info.Types, true), goTypesList(fset, goinfo.Types, true))
 	testItems(t, "defs", defsList(fset, info.Defs, true), goDefsList(fset, goinfo.Defs, true))
 	testItems(t, "uses", usesList(fset, info.Uses), goUsesList(fset, goinfo.Uses))
 	// TODO check selections
@@ -117,12 +117,17 @@ func sortItems(items []string) []string {
 	return items
 }
 
-func typesList(fset *token.FileSet, types map[ast.Expr]types.TypeAndValue, skipBasicType bool) []string {
+func typesList(fset *token.FileSet, types map[ast.Expr]types.TypeAndValue, skipBasicLit bool) []string {
 	var items []string
 	for expr, tv := range types {
 		var buf strings.Builder
 		posn := fset.Position(expr.Pos())
 		tvstr := tv.Type.String()
+		if skipBasicLit {
+			if t, ok := expr.(*ast.BasicLit); ok {
+				tvstr = t.Kind.String()
+			}
+		}
 		if tv.Value != nil {
 			tvstr += " = " + tv.Value.String()
 		}
@@ -135,12 +140,17 @@ func typesList(fset *token.FileSet, types map[ast.Expr]types.TypeAndValue, skipB
 	return sortItems(items)
 }
 
-func goTypesList(fset *token.FileSet, types map[goast.Expr]types.TypeAndValue) []string {
+func goTypesList(fset *token.FileSet, types map[goast.Expr]types.TypeAndValue, skipBasicLit bool) []string {
 	var items []string
 	for expr, tv := range types {
 		var buf strings.Builder
 		posn := fset.Position(expr.Pos())
 		tvstr := tv.Type.String()
+		if skipBasicLit {
+			if t, ok := expr.(*goast.BasicLit); ok {
+				tvstr = t.Kind.String()
+			}
+		}
 		if tv.Value != nil {
 			tvstr += " = " + tv.Value.String()
 		}
