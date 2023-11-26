@@ -4710,7 +4710,7 @@ func main() {
 }
 `
 	if runtime.GOOS == "windows" {
-		expected = strings.Replace(expected, "../", `..\foo\`, -1)
+		expected = strings.Replace(expected, "../", `../foo/`, -1)
 	}
 	gopClTestEx(t, &conf, "main", src, expected)
 }

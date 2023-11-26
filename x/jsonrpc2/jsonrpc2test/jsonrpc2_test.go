@@ -16,9 +16,6 @@ import (
 func TestNetPipe(t *testing.T) {
 	jsonrpc2.SetDebug(jsonrpc2.DbgFlagCall)
 	ctx := context.Background()
-	listener, err := jsonrpc2test.NetPipeListener(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
+	listener := jsonrpc2test.NetPipeListener()
 	cases.Test(t, ctx, listener, jsonrpc2.HeaderFramer(), true)
 }
