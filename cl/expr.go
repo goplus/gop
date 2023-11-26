@@ -563,7 +563,8 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 		err := compileCallArgs(fn, fnt, ctx, v, ellipsis, flags)
 		if err == nil {
 			if rec := ctx.recorder(); rec != nil {
-				rec.Type(v, typesutil.NewTypeAndValueForCallResult(ctx.cb.Get(-1).Type))
+				e := ctx.cb.Get(-1)
+				rec.Type(v, typesutil.NewTypeAndValueForCallResult(e.Type, e.CVal))
 			}
 			break
 		}

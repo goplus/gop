@@ -54,7 +54,7 @@ func NewTypeAndValueForType(typ types.Type) (ret types.TypeAndValue) {
 	case *gox.TypeType:
 		typ = t.Type()
 	}
-	ret.Type = types.Default(typ)
+	ret.Type = typ
 	(*TypeAndValue)(unsafe.Pointer(&ret)).mode = typexpr
 	return
 }
@@ -66,7 +66,7 @@ func NewTypeAndValueForValue(typ types.Type, val constant.Value) (ret types.Type
 	} else {
 		mode = value
 	}
-	ret.Type = types.Default(typ)
+	ret.Type = typ
 	ret.Value = val
 	(*TypeAndValue)(unsafe.Pointer(&ret)).mode = mode
 	return
@@ -78,14 +78,21 @@ func NewTypeAndValueForVariable(typ types.Type) (ret types.TypeAndValue) {
 	return
 }
 
-func NewTypeAndValueForCallResult(typ types.Type) (ret types.TypeAndValue) {
+func NewTypeAndValueForCallResult(typ types.Type, val constant.Value) (ret types.TypeAndValue) {
+	var mode operandMode
 	if typ == nil {
 		ret.Type = &types.Tuple{}
-		(*TypeAndValue)(unsafe.Pointer(&ret)).mode = novalue
-		return
+		mode = novalue
+	} else {
+		ret.Type = typ
+		if val != nil {
+			ret.Value = val
+			mode = constant_
+		} else {
+			mode = value
+		}
 	}
-	ret.Type = typ
-	(*TypeAndValue)(unsafe.Pointer(&ret)).mode = value
+	(*TypeAndValue)(unsafe.Pointer(&ret)).mode = mode
 	return
 }
 

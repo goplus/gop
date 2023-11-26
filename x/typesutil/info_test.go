@@ -117,7 +117,7 @@ func sortItems(items []string) []string {
 	return items
 }
 
-func typesList(fset *token.FileSet, types map[ast.Expr]types.TypeAndValue) []string {
+func typesList(fset *token.FileSet, types map[ast.Expr]types.TypeAndValue, skipBasicType bool) []string {
 	var items []string
 	for expr, tv := range types {
 		var buf strings.Builder

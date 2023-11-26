@@ -39,11 +39,11 @@ func TestTypeAndValue(t *testing.T) {
 	if !ret.Addressable() {
 		t.Fatal("NewTypeAndValueForVariable: not variable?")
 	}
-	ret = NewTypeAndValueForCallResult(tyInt)
+	ret = NewTypeAndValueForCallResult(tyInt, nil)
 	if !ret.IsValue() {
 		t.Fatal("NewTypeAndValueForCall: not value?")
 	}
-	ret = NewTypeAndValueForCallResult(nil)
+	ret = NewTypeAndValueForCallResult(nil, nil)
 	if !ret.IsVoid() {
 		t.Fatal("NewTypeAndValueForCall: not void?")
 	}
