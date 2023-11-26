@@ -32,11 +32,11 @@ import (
 // It is only possibly to connect to it using the Dialer returned by the
 // Dialer method, each call to that method will generate a new pipe the other
 // side of which will be returned from the Accept call.
-func NetPipeListener(ctx context.Context) (jsonrpc2.Listener, error) {
+func NetPipeListener() jsonrpc2.Listener {
 	return &netPiper{
 		done:   make(chan struct{}),
 		dialed: make(chan io.ReadWriteCloser),
-	}, nil
+	}
 }
 
 // netPiper is the implementation of Listener build on top of net.Pipes.
