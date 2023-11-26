@@ -18,69 +18,50 @@ package stdio
 
 import (
 	"context"
+	"errors"
 	"io"
-	"log"
-	"net"
 	"sync/atomic"
 
+	"github.com/goplus/gop/x/fakenet"
 	"github.com/goplus/gop/x/jsonrpc2"
+)
+
+var (
+	ErrTooManyConnections = errors.New("too many connections")
+)
+
+const (
+	client = iota
+	server
+)
+
+var (
+	connCnt [2]int32
 )
 
 // -----------------------------------------------------------------------------
 
-type dialConn struct {
-	in     io.ReadCloser
-	out    io.WriteCloser
-	closed bool
-}
-
-func (p *dialConn) Read(b []byte) (n int, err error) {
-	if p.closed {
-		return 0, net.ErrClosed
-	}
-	return p.in.Read(b)
-}
-
-func (p *dialConn) Write(b []byte) (n int, err error) {
-	if p.closed {
-		return 0, net.ErrClosed
-	}
-	return p.out.Write(b)
-}
-
-var (
-	dailCnt int32
-)
-
-func (p *dialConn) Close() error {
-	if jsonrpc2.Verbose {
-		log.Println("==> stdio.dialConn.Close")
-	}
-	if p.closed {
-		return net.ErrClosed
-	}
-	p.closed = true
-	atomic.AddInt32(&dailCnt, -1)
-	p.in.Close()
-	p.out.Close()
-	return nil
+type dialer struct {
+	in  io.ReadCloser
+	out io.WriteCloser
 }
 
 // Dial returns a new communication byte stream to a listening server.
-func (p *dialConn) Dial(ctx context.Context) (io.ReadWriteCloser, error) {
-	if atomic.AddInt32(&dailCnt, 1) != 1 {
-		atomic.AddInt32(&dailCnt, -1)
+func (p *dialer) Dial(ctx context.Context) (io.ReadWriteCloser, error) {
+	dailCnt := &connCnt[client]
+	if atomic.AddInt32(dailCnt, 1) != 1 {
+		atomic.AddInt32(dailCnt, -1)
 		return nil, ErrTooManyConnections
 	}
-	return p, nil
+	return fakenet.NewConn("stdio.dialer", p.in, p.out), nil
 }
 
-// Dialer returns a jsonrpc2.Dialer based on stdin and stdout.
+// Dialer returns a jsonrpc2.Dialer based on in and out.
 func Dialer(in io.ReadCloser, out io.WriteCloser) jsonrpc2.Dialer {
-	return &dialConn{in: in, out: out}
+	return &dialer{in: in, out: out}
 }
 
-// Dial makes a new connection based on stdin and stdout, wraps the returned
+// Dial makes a new connection based on in and out, wraps the returned
 // reader and writer using the framer to make a stream, and then builds a
 // connection on top of that stream using the binder.
 //
