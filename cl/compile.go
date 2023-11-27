@@ -19,6 +19,7 @@ package cl
 
 import (
 	"fmt"
+	"go/constant"
 	"go/types"
 	"log"
 	"os"
@@ -26,6 +27,7 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	_ "unsafe"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/fromgo"
@@ -498,6 +500,18 @@ const (
 	ioxPkgPath = "github.com/goplus/gop/builtin/iox"
 )
 
+const (
+	gopPackage = "GopPackage"
+)
+
+func isOverloadFunc(name string) bool {
+	n := len(name)
+	return n > 3 && name[n-3:n-1] == "__"
+}
+
+//go:linkname initThisGopPkg github.com/goplus/gox.initThisGopPkg
+func initThisGopPkg(pkg *types.Package)
+
 // NewPackage creates a Go+ package instance.
 func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package, err error) {
 	workingDir := conf.WorkingDir
@@ -576,7 +590,10 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		}
 		preloadGopFile(p, ctx, fpath, f, conf)
 	}
-
+	gopSyms := make(map[string]bool)
+	for name, _ := range ctx.syms {
+		gopSyms[name] = true
+	}
 	gofiles := make([]*ast.File, 0, len(pkg.GoFiles))
 	for fpath, gof := range pkg.GoFiles {
 		f := fromgo.ASTFile(gof, 0)
@@ -587,6 +604,20 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		}
 		preloadFile(p, ctx, fpath, f, false, false)
 	}
+	for name, f := range ctx.syms {
+		if gopSyms[name] {
+			continue
+		}
+		if _, ok := f.(*typeLoader); ok {
+			ctx.loadType(name)
+		} else if isOverloadFunc(name) {
+			ctx.loadSymbol(name)
+		}
+	}
+	if p.Types.Scope().Lookup(gopPackage) == nil {
+		p.Types.Scope().Insert(types.NewConst(token.NoPos, p.Types, gopPackage, nil, constant.MakeBool(true)))
+	}
+	initThisGopPkg(p.Types)
 
 	// sort files
 	type File struct {

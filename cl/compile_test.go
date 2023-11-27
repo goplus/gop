@@ -4714,3 +4714,206 @@ func main() {
 	}
 	gopClTestEx(t, &conf, "main", src, expected)
 }
+
+func TestMixedOverload(t *testing.T) {
+	gopMixedClTest(t, "main", `
+package main
+
+type Mesher interface {
+	Name() string
+}
+
+type N struct {
+}
+
+func (m *N) OnKey__0(a string, fn func()) {
+}
+
+func (m *N) OnKey__1(a string, fn func(key string)) {
+}
+
+func (m *N) OnKey__2(a []string, fn func()) {
+}
+
+func (m *N) OnKey__3(a []string, fn func(key string)) {
+}
+
+func (m *N) OnKey__4(a []Mesher, fn func()) {
+}
+
+func (m *N) OnKey__5(a []Mesher, fn func(key Mesher)) {
+}
+
+func (m *N) OnKey__6(a []string, b []string, fn func(key string)) {
+}
+
+func (m *N) OnKey__7(a []string, b []Mesher, fn func(key string)) {
+}
+
+func OnKey__0(a string, fn func()) {
+}
+
+func OnKey__1(a string, fn func(key string)) {
+}
+
+func OnKey__2(a []string, fn func()) {
+}
+
+func OnKey__3(a []string, fn func(key string)) {
+}
+
+func OnKey__4(a []Mesher, fn func()) {
+}
+
+func OnKey__5(a []Mesher, fn func(key Mesher)) {
+}
+
+func OnKey__6(a []string, b []string, fn func(key string)) {
+}
+
+func OnKey__7(a []string, b []Mesher, fn func(key string)) {
+}
+`, `
+type Mesh struct {
+}
+
+func (p *Mesh) Name() string {
+	return "hello"
+}
+
+var (
+	m1 = &Mesh{}
+	m2 = &Mesh{}
+)
+
+OnKey "hello", => {
+}
+OnKey "hello", key => {
+}
+OnKey ["1"], => {
+}
+OnKey ["2"], key => {
+}
+OnKey [m1,m2], => {
+}
+OnKey [m1,m2], key => {
+}
+OnKey ["a"], ["b"], key => {
+}
+OnKey ["a"], [m1,m2], key => {
+}
+OnKey ["a"],nil,key => {
+}
+n := &N{}
+n.onKey "hello", => {
+}
+n.onKey "hello", key => {
+}
+n.onKey ["1"], => {
+}
+n.onKey ["2"], key => {
+}
+n.onKey [m1,m2], => {
+}
+n.onKey [m1,m2], key => {
+}
+n.onKey ["a"], ["b"], key => {
+}
+n.onKey ["a"], [m1,m2], key => {
+}
+n.onKey ["a"],nil,key => {
+}
+`, `package main
+
+type Mesh struct {
+}
+
+func (p *Mesh) Name() string {
+	return "hello"
+}
+
+var m1 = &Mesh{}
+var m2 = &Mesh{}
+
+func main() {
+	OnKey__0("hello", func() {
+	})
+	OnKey__1("hello", func(key string) {
+	})
+	OnKey__2([]string{"1"}, func() {
+	})
+	OnKey__3([]string{"2"}, func(key string) {
+	})
+	OnKey__4([]Mesher{m1, m2}, func() {
+	})
+	OnKey__5([]Mesher{m1, m2}, func(key Mesher) {
+	})
+	OnKey__6([]string{"a"}, []string{"b"}, func(key string) {
+	})
+	OnKey__7([]string{"a"}, []Mesher{m1, m2}, func(key string) {
+	})
+	OnKey__6([]string{"a"}, nil, func(key string) {
+	})
+	n := &N{}
+	n.OnKey__0("hello", func() {
+	})
+	n.OnKey__1("hello", func(key string) {
+	})
+	n.OnKey__2([]string{"1"}, func() {
+	})
+	n.OnKey__3([]string{"2"}, func(key string) {
+	})
+	n.OnKey__4([]Mesher{m1, m2}, func() {
+	})
+	n.OnKey__5([]Mesher{m1, m2}, func(key Mesher) {
+	})
+	n.OnKey__6([]string{"a"}, []string{"b"}, func(key string) {
+	})
+	n.OnKey__7([]string{"a"}, []Mesher{m1, m2}, func(key string) {
+	})
+	n.OnKey__6([]string{"a"}, nil, func(key string) {
+	})
+}
+`)
+}
+
+func TestMixedOverloadOp(t *testing.T) {
+	gopMixedClTest(t, "main", `package main
+
+import "fmt"
+
+type foo struct {
+}
+
+func (a *foo) Gop_Add(b *foo) *foo {
+	fmt.Println("a + b")
+	return &foo{}
+}
+func (a foo) Gop_Sub(b foo) foo {
+	fmt.Println("a - b")
+	return foo{}
+}
+func (a foo) Gop_NE(b foo) bool {
+	fmt.Println("a!=b")
+	return true
+}
+func (a foo) Gop_Neg() *foo {
+	fmt.Println("-a")
+	return &foo{}
+}
+func (a foo) Gop_Inc() {
+	fmt.Println("a++")
+}
+`, `
+var a, b foo
+var c = a - b
+var d = -a
+var e = a!=b
+`, `package main
+
+var a, b foo
+var c = a.Gop_Sub(b)
+var d = a.Gop_Neg()
+var e = a.Gop_NE(b)
+`)
+}
