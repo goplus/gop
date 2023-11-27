@@ -500,18 +500,6 @@ const (
 	ioxPkgPath = "github.com/goplus/gop/builtin/iox"
 )
 
-const (
-	gopPackage = "GopPackage"
-)
-
-func isOverloadFunc(name string) bool {
-	n := len(name)
-	return n > 3 && name[n-3:n-1] == "__"
-}
-
-//go:linkname initThisGopPkg github.com/goplus/gox.initThisGopPkg
-func initThisGopPkg(pkg *types.Package)
-
 // NewPackage creates a Go+ package instance.
 func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package, err error) {
 	workingDir := conf.WorkingDir
@@ -577,6 +565,20 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 			}
 		}
 	}
+
+	gofiles := make([]*ast.File, 0, len(pkg.GoFiles))
+	for fpath, gof := range pkg.GoFiles {
+		f := fromgo.ASTFile(gof, 0)
+		gofiles = append(gofiles, f)
+		ctx := &blockCtx{
+			pkg: p, pkgCtx: ctx, cb: p.CB(), targetDir: targetDir,
+			imports: make(map[string]pkgImp),
+		}
+		preloadFile(p, ctx, fpath, f, false, false)
+	}
+
+	initGopPkg(ctx, p)
+
 	for fpath, f := range files {
 		fileLine := !conf.NoFileLine
 		fileScope := types.NewScope(p.Types.Scope(), f.Pos(), f.End(), fpath)
@@ -590,34 +592,6 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		}
 		preloadGopFile(p, ctx, fpath, f, conf)
 	}
-	gopSyms := make(map[string]bool)
-	for name, _ := range ctx.syms {
-		gopSyms[name] = true
-	}
-	gofiles := make([]*ast.File, 0, len(pkg.GoFiles))
-	for fpath, gof := range pkg.GoFiles {
-		f := fromgo.ASTFile(gof, 0)
-		gofiles = append(gofiles, f)
-		ctx := &blockCtx{
-			pkg: p, pkgCtx: ctx, cb: p.CB(), targetDir: targetDir,
-			imports: make(map[string]pkgImp),
-		}
-		preloadFile(p, ctx, fpath, f, false, false)
-	}
-	for name, f := range ctx.syms {
-		if gopSyms[name] {
-			continue
-		}
-		if _, ok := f.(*typeLoader); ok {
-			ctx.loadType(name)
-		} else if isOverloadFunc(name) {
-			ctx.loadSymbol(name)
-		}
-	}
-	if p.Types.Scope().Lookup(gopPackage) == nil {
-		p.Types.Scope().Insert(types.NewConst(token.NoPos, p.Types, gopPackage, nil, constant.MakeBool(true)))
-	}
-	initThisGopPkg(p.Types)
 
 	// sort files
 	type File struct {
@@ -665,6 +639,32 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		}
 	}
 	return
+}
+
+const (
+	gopPackage = "GopPackage"
+)
+
+func isOverloadFunc(name string) bool {
+	n := len(name)
+	return n > 3 && name[n-3:n-1] == "__"
+}
+
+//go:linkname initThisGopPkg github.com/goplus/gox.initThisGopPkg
+func initThisGopPkg(pkg *types.Package)
+
+func initGopPkg(ctx *pkgCtx, pkg *gox.Package) {
+	for name, f := range ctx.syms {
+		if _, ok := f.(*typeLoader); ok {
+			ctx.loadType(name)
+		} else if isOverloadFunc(name) {
+			ctx.loadSymbol(name)
+		}
+	}
+	if pkg.Types.Scope().Lookup(gopPackage) == nil {
+		pkg.Types.Scope().Insert(types.NewConst(token.NoPos, pkg.Types, gopPackage, nil, constant.MakeBool(true)))
+	}
+	initThisGopPkg(pkg.Types)
 }
 
 func hasMethod(o types.Object, name string) bool {
