@@ -337,10 +337,19 @@ type T struct {
 	y int
 }
 var v *int = nil
-var v1 []int;
-var v2 map[int8]string;
-var v3 struct{};
-var v4 *T = &T{100,200};
+var v1 []int
+var v2 map[int8]string
+var v3 struct{}
+var v4 *T = &T{100,200}
+var v5 = [6]int{}
+var v6 = v5[0]
+var v7 = [6]int{}[0]
+var m map[int]string
+func init() {
+	v5[0] = 100
+	_ = v5[:][0]
+	m[0] = "hello"
+}
 `)
 }
 

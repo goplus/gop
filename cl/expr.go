@@ -200,6 +200,7 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr) {
 		compileIdent(ctx, v, clIdentLHS)
 	case *ast.IndexExpr:
 		compileIndexExprLHS(ctx, v)
+		recordTypesVariable(ctx, v, -1)
 	case *ast.SelectorExpr:
 		compileSelectorExprLHS(ctx, v)
 		recordTypesVariable(ctx, v, -1)
@@ -226,6 +227,13 @@ func recordTypesVariable(ctx *blockCtx, expr ast.Expr, n int) {
 		e := ctx.cb.Get(n)
 		t, _ := gox.DerefType(e.Type)
 		rec.Type(expr, typesutil.NewTypeAndValueForVariable(t))
+	}
+}
+
+func recordTypesCheck(ctx *blockCtx, chk ast.Expr, expr ast.Expr, n int) {
+	if rec := ctx.recorder(); rec != nil {
+		e := ctx.cb.Get(n)
+		rec.Type(expr, typesutil.NewTypeAndValueForValue(e.Type, e.CVal))
 	}
 }
 
@@ -268,10 +276,17 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 		compileRangeExpr(ctx, v)
 	case *ast.IndexExpr:
 		compileIndexExpr(ctx, v, twoValue(inFlags))
+		switch v.X.(type) {
+		case *ast.CompositeLit:
+			recordTypesValue(ctx, v, -1)
+		default:
+			recordTypesVariable(ctx, v, -1)
+		}
 	case *ast.IndexListExpr:
 		compileIndexListExpr(ctx, v, twoValue(inFlags))
 	case *ast.SliceExpr:
 		compileSliceExpr(ctx, v)
+		recordTypesValue(ctx, v, -1)
 	case *ast.StarExpr:
 		compileStarExpr(ctx, v)
 	case *ast.ArrayType:

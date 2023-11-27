@@ -219,6 +219,19 @@ type Config struct {
 	Outline bool
 }
 
+type typesRecord struct {
+	Recorder
+	types map[ast.Expr]types.TypeAndValue
+}
+
+func newTypeRecord(rec Recorder) *typesRecord {
+	return &typesRecord{rec, make(map[ast.Expr]types.TypeAndValue)}
+}
+
+func (p *typesRecord) typeExpr(ctx *blockCtx, expr ast.Expr) {
+
+}
+
 type goxRecorder struct {
 	rec Recorder
 }
@@ -396,7 +409,7 @@ type blockCtx struct {
 	targetDir    string
 	classRecv    *ast.FieldList // available when gmxSettings != nil
 	fileScope    *types.Scope   // only valid when isGopFile
-	rec          Recorder
+	rec          *typesRecord
 	fileLine     bool
 	relativePath bool
 	isClass      bool
@@ -534,8 +547,10 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		PkgPathIox:      ioxPkgPath,
 		DbgPositioner:   interp,
 	}
+	var rec *typesRecord
 	if conf.Recorder != nil {
-		confGox.Recorder = &goxRecorder{rec: conf.Recorder}
+		rec = newTypeRecord(conf.Recorder)
+		confGox.Recorder = &goxRecorder{rec: rec}
 	}
 	if enableRecover {
 		defer func() {
@@ -568,7 +583,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		fileScope := types.NewScope(p.Types.Scope(), f.Pos(), f.End(), fpath)
 		ctx := &blockCtx{
 			pkg: p, pkgCtx: ctx, cb: p.CB(), targetDir: targetDir, fileScope: fileScope,
-			fileLine: fileLine, relativePath: conf.RelativePath, isClass: f.IsClass, rec: conf.Recorder,
+			fileLine: fileLine, relativePath: conf.RelativePath, isClass: f.IsClass, rec: rec,
 			c2goBase: c2goBase(conf.C2goBase), imports: make(map[string]pkgImp), isGopFile: true,
 		}
 		if rec := ctx.rec; rec != nil {
