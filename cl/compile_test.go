@@ -4917,3 +4917,70 @@ var d = a.Gop_Neg()
 var e = a.Gop_NE(b)
 `)
 }
+
+func TestMixedVector3(t *testing.T) {
+	gopMixedClTest(t, "main", `package main
+type Vector3 struct {
+	x, y, z float64
+}
+func (a Vector3) Gop_Add__0(n int) Vector3 {
+	return Vector3{}
+}
+func (a Vector3) Gop_Add__1(n float64) Vector3 {
+	return Vector3{}
+}
+func (a Vector3) Gop_Add__2(n Vector3) Vector3 {
+	return Vector3{}
+}
+func (a *Vector3) Gop_AddAssign(n Vector3) {
+}
+
+func (a Vector3) Gop_Rcast__0() int {
+	return 0
+}
+func (a Vector3) Gop_Rcast__1() float64 {
+	return 0
+}
+
+func Vector3_Cast__0(x int) Vector3 {
+	return Vector3{}
+}
+func Vector3_Cast__1(x float64) Vector3 {
+	return Vector3{}
+}
+func Vector3_Init__0(x int) Vector3 {
+	return Vector3{}
+}
+func Vector3_Init__1(x float64) Vector3 {
+	return Vector3{}
+}
+`, `
+var a Vector3
+var b int
+var c float64
+_ = a+b
+_ = a+100
+_ = a+c
+_ = 100+a
+_ = Vector3(b)+a
+_ = b+int(a)
+a += b
+a += c
+`, `package main
+
+var a Vector3
+var b int
+var c float64
+
+func main() {
+	_ = a.Gop_Add__0(b)
+	_ = a.Gop_Add__0(100)
+	_ = a.Gop_Add__1(c)
+	_ = Vector3_Init__0(100) + a
+	_ = Vector3_Cast__0(b).Gop_Add__2(a)
+	_ = b + a.Gop_Rcast__0()
+	a.Gop_AddAssign(Vector3_Init__0(b))
+	a.Gop_AddAssign(Vector3_Init__1(c))
+}
+`)
+}
