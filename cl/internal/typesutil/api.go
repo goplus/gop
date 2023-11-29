@@ -78,6 +78,12 @@ func NewTypeAndValueForVariable(typ types.Type) (ret types.TypeAndValue) {
 	return
 }
 
+func NewTypeAndValueForMapIndex(typ types.Type) (ret types.TypeAndValue) {
+	ret.Type = typ
+	(*TypeAndValue)(unsafe.Pointer(&ret)).mode = mapindex
+	return
+}
+
 func NewTypeAndValueForCallResult(typ types.Type, val constant.Value) (ret types.TypeAndValue) {
 	var mode operandMode
 	if typ == nil {

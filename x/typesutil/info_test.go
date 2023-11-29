@@ -349,47 +349,16 @@ func init() {
 	v5[0] = 100
 	_ = v5[:][0]
 	m[0] = "hello"
+	_ = m[0]
+	_ = map[int]string{}[0]
+	_ = &v3
+	_ = *(&v3)
 }
 `)
 }
 
 func TestStruct(t *testing.T) {
 	testInfo(t, `package main
-
-type Person struct {
-	name string
-	age  int8
-}
-
-func test() {
-	p := Person{
-		name: "jack",
-	}
-	_ = p.name
-}
-`)
-}
-
-func _TestStruct2(t *testing.T) {
-	testInfo(t, `package main
-
-type Person struct {
-	name string
-	age  int8
-}
-
-func test() {
-	p := Person{
-		name: "jack",
-	}
-	p.name = "name"
-}
-`)
-}
-
-func _TestStruct3(t *testing.T) {
-	testInfo(t, `package main
-
 import "fmt"
 
 type Person struct {
@@ -401,6 +370,8 @@ func test() {
 	p := Person{
 		name: "jack",
 	}
+	_ = p.name
+	p.name = "name"
 	fmt.Println(p)
 }
 `)

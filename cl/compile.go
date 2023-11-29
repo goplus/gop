@@ -31,7 +31,6 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/fromgo"
-	"github.com/goplus/gop/cl/internal/typesutil"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
 	"github.com/goplus/gox/cpackages"
@@ -221,40 +220,6 @@ type Config struct {
 	Outline bool
 }
 
-type typesRecord struct {
-	Recorder
-	types map[ast.Expr]types.TypeAndValue
-}
-
-func newTypeRecord(rec Recorder) *typesRecord {
-	return &typesRecord{rec, make(map[ast.Expr]types.TypeAndValue)}
-}
-
-func (p *typesRecord) typeExpr(ctx *blockCtx, expr ast.Expr) {
-
-}
-
-type goxRecorder struct {
-	rec Recorder
-}
-
-// Member maps identifiers to the objects they denote.
-func (p *goxRecorder) Member(id ast.Node, obj types.Object) {
-	tv := typesutil.NewTypeAndValueForObject(obj)
-	switch v := id.(type) {
-	case *ast.SelectorExpr:
-		sel := v.Sel
-		// TODO: record event for a Go ident
-		if _, ok := fromgo.CheckIdent(sel); !ok {
-			p.rec.Use(sel, obj)
-			p.rec.Type(v, tv)
-		}
-	case *ast.Ident: // it's in a classfile and impossible converted from Go
-		p.rec.Use(v, obj)
-		p.rec.Type(v, tv)
-	}
-}
-
 type nodeInterp struct {
 	fset       *token.FileSet
 	files      map[string]*ast.File
@@ -418,7 +383,7 @@ type blockCtx struct {
 	isGopFile    bool // is Go+ file or not
 }
 
-func (bc *blockCtx) recorder() Recorder {
+func (bc *blockCtx) recorder() *typesRecord {
 	if bc.isGopFile {
 		return bc.rec
 	}

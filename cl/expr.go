@@ -161,12 +161,10 @@ find:
 	if rec := ctx.recorder(); rec != nil {
 		e := ctx.cb.Get(-1)
 		if oldo != nil && gox.IsTypeEx(e.Type) {
-			rec.Use(ident, oldo)
-			rec.Type(ident, typesutil.NewTypeAndValueForObject(oldo))
+			rec.recordIdent(ctx, ident, oldo)
 			return
 		}
-		rec.Use(ident, o)
-		rec.Type(ident, typesutil.NewTypeAndValueForObject(o))
+		rec.recordIdent(ctx, ident, o)
 	}
 	return
 }
@@ -200,41 +198,20 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr) {
 		compileIdent(ctx, v, clIdentLHS)
 	case *ast.IndexExpr:
 		compileIndexExprLHS(ctx, v)
-		recordTypesVariable(ctx, v, -1)
 	case *ast.SelectorExpr:
 		compileSelectorExprLHS(ctx, v)
-		recordTypesVariable(ctx, v, -1)
 	case *ast.StarExpr:
 		compileStarExprLHS(ctx, v)
 	default:
 		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
 	}
+	if rec := ctx.recorder(); rec != nil {
+		rec.recordExpr(ctx, expr, true)
+	}
 }
 
 func twoValue(inFlags []int) bool {
 	return inFlags != nil && (inFlags[0]&clCallWithTwoValue) != 0
-}
-
-func recordTypesValue(ctx *blockCtx, expr ast.Expr, n int) {
-	if rec := ctx.recorder(); rec != nil {
-		e := ctx.cb.Get(n)
-		rec.Type(expr, typesutil.NewTypeAndValueForValue(e.Type, e.CVal))
-	}
-}
-
-func recordTypesVariable(ctx *blockCtx, expr ast.Expr, n int) {
-	if rec := ctx.recorder(); rec != nil {
-		e := ctx.cb.Get(n)
-		t, _ := gox.DerefType(e.Type)
-		rec.Type(expr, typesutil.NewTypeAndValueForVariable(t))
-	}
-}
-
-func recordTypesCheck(ctx *blockCtx, chk ast.Expr, expr ast.Expr, n int) {
-	if rec := ctx.recorder(); rec != nil {
-		e := ctx.cb.Get(n)
-		rec.Type(expr, typesutil.NewTypeAndValueForValue(e.Type, e.CVal))
-	}
 }
 
 func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
@@ -247,7 +224,6 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 		compileIdent(ctx, v, flags)
 	case *ast.BasicLit:
 		compileBasicLit(ctx, v)
-		recordTypesValue(ctx, v, -1)
 	case *ast.CallExpr:
 		flags := 0
 		if inFlags != nil {
@@ -262,10 +238,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 		compileSelectorExpr(ctx, v, flags)
 	case *ast.BinaryExpr:
 		compileBinaryExpr(ctx, v)
-		recordTypesValue(ctx, v, -1)
 	case *ast.UnaryExpr:
 		compileUnaryExpr(ctx, v, twoValue(inFlags))
-		recordTypesValue(ctx, v, -1)
 	case *ast.FuncLit:
 		compileFuncLit(ctx, v)
 	case *ast.CompositeLit:
@@ -276,17 +250,10 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 		compileRangeExpr(ctx, v)
 	case *ast.IndexExpr:
 		compileIndexExpr(ctx, v, twoValue(inFlags))
-		switch v.X.(type) {
-		case *ast.CompositeLit:
-			recordTypesValue(ctx, v, -1)
-		default:
-			recordTypesVariable(ctx, v, -1)
-		}
 	case *ast.IndexListExpr:
 		compileIndexListExpr(ctx, v, twoValue(inFlags))
 	case *ast.SliceExpr:
 		compileSliceExpr(ctx, v)
-		recordTypesValue(ctx, v, -1)
 	case *ast.StarExpr:
 		compileStarExpr(ctx, v)
 	case *ast.ArrayType:
@@ -315,6 +282,9 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 		panic("compileExpr: ast.KeyValueExpr unexpected")
 	default:
 		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
+	}
+	if rec := ctx.recorder(); rec != nil {
+		rec.recordExpr(ctx, expr, false)
 	}
 }
 
@@ -578,8 +548,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 		err := compileCallArgs(fn, fnt, ctx, v, ellipsis, flags)
 		if err == nil {
 			if rec := ctx.recorder(); rec != nil {
-				e := ctx.cb.Get(-1)
-				rec.Type(v, typesutil.NewTypeAndValueForCallResult(e.Type, e.CVal))
+				rec.recordCallExpr(ctx, v, fnt)
 			}
 			break
 		}
@@ -919,7 +888,7 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, expected types.Type
 	if t, ok := underlying.(*types.Struct); ok && kind == compositeLitKeyVal {
 		compileStructLitInKeyVal(ctx, v.Elts, t, typ, v)
 		if rec := ctx.recorder(); rec != nil {
-			rec.Type(v, typesutil.NewTypeAndValueForValue(typ, nil))
+			rec.recordCompositeLit(ctx, v, typ)
 		}
 		if hasPtr {
 			ctx.cb.UnaryOp(gotoken.AND)
@@ -936,8 +905,7 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, expected types.Type
 		return
 	}
 	if rec := ctx.recorder(); rec != nil {
-		rec.Type(v.Type, typesutil.NewTypeAndValueForType(typ))
-		rec.Type(v, typesutil.NewTypeAndValueForValue(typ, nil))
+		rec.recordCompositeLit(ctx, v, typ)
 	}
 	switch underlying.(type) {
 	case *types.Slice:
