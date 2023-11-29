@@ -65,13 +65,13 @@ func (rec *typesRecorder) recordTypeValue(ctx *blockCtx, expr ast.Expr) {
 	rec.Type(expr, typesutil.NewTypeAndValueForValue(e.Type, e.CVal))
 }
 
-func (rec *typesRecorder) recordTypesVariable(ctx *blockCtx, expr ast.Expr) {
+func (rec *typesRecorder) recordTypeVariable(ctx *blockCtx, expr ast.Expr) {
 	e := ctx.cb.Get(-1)
 	t, _ := gox.DerefType(e.Type)
 	rec.Type(expr, typesutil.NewTypeAndValueForVariable(t))
 }
 
-func (rec *typesRecorder) recordTypesMapIndex(ctx *blockCtx, expr ast.Expr) {
+func (rec *typesRecorder) recordTypeMapIndex(ctx *blockCtx, expr ast.Expr) {
 	e := ctx.cb.Get(-1)
 	t, _ := gox.DerefType(e.Type)
 	rec.Type(expr, typesutil.NewTypeAndValueForMapIndex(t))
@@ -81,7 +81,10 @@ func (rec *typesRecorder) indexExpr(ctx *blockCtx, expr *ast.IndexExpr) {
 	if tv, ok := rec.types[expr.X]; ok {
 		switch tv.Type.(type) {
 		case *types.Map:
-			rec.recordTypesMapIndex(ctx, expr)
+			rec.recordTypeMapIndex(ctx, expr)
+			return
+		case *types.Slice:
+			rec.recordTypeVariable(ctx, expr)
 			return
 		}
 	}
@@ -89,7 +92,7 @@ func (rec *typesRecorder) indexExpr(ctx *blockCtx, expr *ast.IndexExpr) {
 	case *ast.CompositeLit:
 		rec.recordTypeValue(ctx, expr)
 	default:
-		rec.recordTypesVariable(ctx, expr)
+		rec.recordTypeVariable(ctx, expr)
 	}
 }
 
@@ -120,7 +123,7 @@ func (rec *typesRecorder) recordExpr(ctx *blockCtx, expr ast.Expr, rhs bool) {
 		rec.recordTypeValue(ctx, v)
 	case *ast.CallExpr:
 	case *ast.SelectorExpr:
-		rec.recordTypesVariable(ctx, v)
+		rec.recordTypeVariable(ctx, v)
 	case *ast.BinaryExpr:
 		rec.recordTypeValue(ctx, v)
 	case *ast.UnaryExpr:
@@ -135,7 +138,7 @@ func (rec *typesRecorder) recordExpr(ctx *blockCtx, expr ast.Expr, rhs bool) {
 	case *ast.SliceExpr:
 		rec.recordTypeValue(ctx, v)
 	case *ast.StarExpr:
-		rec.recordTypesVariable(ctx, v)
+		rec.recordTypeVariable(ctx, v)
 	case *ast.ArrayType:
 	case *ast.MapType:
 	case *ast.StructType:
