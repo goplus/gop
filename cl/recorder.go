@@ -46,38 +46,38 @@ func (p *goxRecorder) Member(id ast.Node, obj types.Object) {
 	}
 }
 
-type typesRecord struct {
+type typesRecorder struct {
 	Recorder
 	types map[ast.Expr]types.TypeAndValue
 }
 
-func (rec *typesRecord) Type(expr ast.Expr, tv types.TypeAndValue) {
+func (rec *typesRecorder) Type(expr ast.Expr, tv types.TypeAndValue) {
 	rec.types[expr] = tv
 	rec.Recorder.Type(expr, tv)
 }
 
-func newTypeRecord(rec Recorder) *typesRecord {
-	return &typesRecord{rec, make(map[ast.Expr]types.TypeAndValue)}
+func newTypeRecord(rec Recorder) *typesRecorder {
+	return &typesRecorder{rec, make(map[ast.Expr]types.TypeAndValue)}
 }
 
-func (rec *typesRecord) recordTypeValue(ctx *blockCtx, expr ast.Expr) {
+func (rec *typesRecorder) recordTypeValue(ctx *blockCtx, expr ast.Expr) {
 	e := ctx.cb.Get(-1)
 	rec.Type(expr, typesutil.NewTypeAndValueForValue(e.Type, e.CVal))
 }
 
-func (rec *typesRecord) recordTypesVariable(ctx *blockCtx, expr ast.Expr) {
+func (rec *typesRecorder) recordTypesVariable(ctx *blockCtx, expr ast.Expr) {
 	e := ctx.cb.Get(-1)
 	t, _ := gox.DerefType(e.Type)
 	rec.Type(expr, typesutil.NewTypeAndValueForVariable(t))
 }
 
-func (rec *typesRecord) recordTypesMapIndex(ctx *blockCtx, expr ast.Expr) {
+func (rec *typesRecorder) recordTypesMapIndex(ctx *blockCtx, expr ast.Expr) {
 	e := ctx.cb.Get(-1)
 	t, _ := gox.DerefType(e.Type)
 	rec.Type(expr, typesutil.NewTypeAndValueForMapIndex(t))
 }
 
-func (rec *typesRecord) indexExpr(ctx *blockCtx, expr *ast.IndexExpr) {
+func (rec *typesRecorder) indexExpr(ctx *blockCtx, expr *ast.IndexExpr) {
 	if tv, ok := rec.types[expr.X]; ok {
 		switch tv.Type.(type) {
 		case *types.Map:
@@ -93,27 +93,27 @@ func (rec *typesRecord) indexExpr(ctx *blockCtx, expr *ast.IndexExpr) {
 	}
 }
 
-func (rec *typesRecord) recordCallExpr(ctx *blockCtx, v *ast.CallExpr, fnt types.Type) {
+func (rec *typesRecorder) recordCallExpr(ctx *blockCtx, v *ast.CallExpr, fnt types.Type) {
 	e := ctx.cb.Get(-1)
 	rec.Type(v.Fun, typesutil.NewTypeAndValueForValue(fnt, nil))
 	rec.Type(v, typesutil.NewTypeAndValueForCallResult(e.Type, e.CVal))
 }
 
-func (rec *typesRecord) recordCompositeLit(ctx *blockCtx, v *ast.CompositeLit, typ types.Type) {
+func (rec *typesRecorder) recordCompositeLit(ctx *blockCtx, v *ast.CompositeLit, typ types.Type) {
 	rec.Type(v.Type, typesutil.NewTypeAndValueForType(typ))
 	rec.Type(v, typesutil.NewTypeAndValueForValue(typ, nil))
 }
 
-func (rec *typesRecord) recordType(ctx *blockCtx, typ ast.Expr, t types.Type) {
+func (rec *typesRecorder) recordType(ctx *blockCtx, typ ast.Expr, t types.Type) {
 	rec.Type(typ, typesutil.NewTypeAndValueForType(t))
 }
 
-func (rec *typesRecord) recordIdent(ctx *blockCtx, ident *ast.Ident, obj types.Object) {
+func (rec *typesRecorder) recordIdent(ctx *blockCtx, ident *ast.Ident, obj types.Object) {
 	rec.Use(ident, obj)
 	rec.Type(ident, typesutil.NewTypeAndValueForObject(obj))
 }
 
-func (rec *typesRecord) recordExpr(ctx *blockCtx, expr ast.Expr, rhs bool) {
+func (rec *typesRecorder) recordExpr(ctx *blockCtx, expr ast.Expr, rhs bool) {
 	switch v := expr.(type) {
 	case *ast.Ident:
 	case *ast.BasicLit:

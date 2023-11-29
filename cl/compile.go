@@ -376,14 +376,14 @@ type blockCtx struct {
 	targetDir    string
 	classRecv    *ast.FieldList // available when gmxSettings != nil
 	fileScope    *types.Scope   // only valid when isGopFile
-	rec          *typesRecord
+	rec          *typesRecorder
 	fileLine     bool
 	relativePath bool
 	isClass      bool
 	isGopFile    bool // is Go+ file or not
 }
 
-func (bc *blockCtx) recorder() *typesRecord {
+func (bc *blockCtx) recorder() *typesRecorder {
 	if bc.isGopFile {
 		return bc.rec
 	}
@@ -514,7 +514,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		PkgPathIox:      ioxPkgPath,
 		DbgPositioner:   interp,
 	}
-	var rec *typesRecord
+	var rec *typesRecorder
 	if conf.Recorder != nil {
 		rec = newTypeRecord(conf.Recorder)
 		confGox.Recorder = &goxRecorder{rec: rec}
