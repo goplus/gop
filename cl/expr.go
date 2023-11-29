@@ -28,7 +28,6 @@ import (
 	"strings"
 
 	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/cl/internal/typesutil"
 	"github.com/goplus/gop/printer"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
@@ -384,10 +383,6 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, flags int) {
 		}
 	default:
 		compileExpr(ctx, v.X)
-		if rec := ctx.recorder(); rec != nil {
-			e := ctx.cb.Get(-1)
-			rec.Type(v.X, typesutil.NewTypeAndValueForType(e.Type))
-		}
 	}
 	if err := compileMember(ctx, v, v.Sel.Name, flags); err != nil {
 		panic(err)
