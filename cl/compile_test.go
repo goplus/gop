@@ -4984,3 +4984,20 @@ func main() {
 }
 `)
 }
+
+func TestCompositeLitIndex(t *testing.T) {
+	gopClTest(t, `
+x := []float64{1, 3.4, 5}[0]
+y := map[string]int{"Hello": 1, "Go+": 5}["abc"]
+z := [...]int{1, 3, 5}[0]
+a := {"Hello": 1, "Go+": 5.1}["hello"]
+`, `package main
+
+func main() {
+	x := []float64{1, 3.4, 5}[0]
+	y := map[string]int{"Hello": 1, "Go+": 5}["abc"]
+	z := [...]int{1, 3, 5}[0]
+	a := map[string]float64{"Hello": 1, "Go+": 5.1}["hello"]
+}
+`)
+}
