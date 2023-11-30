@@ -378,3 +378,21 @@ func test() {
 }
 `)
 }
+
+func TestRange(t *testing.T) {
+	testInfo(t, `package main
+
+func test() {
+	a := []int{100,200}
+	for k, v := range a {
+		_ = k
+		_ = v
+	}
+	var m map[int]string
+	for k, v := range m {
+		_ = k
+		_ = v
+	}
+}
+`)
+}
