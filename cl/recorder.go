@@ -22,6 +22,7 @@ import (
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/fromgo"
 	"github.com/goplus/gop/cl/internal/typesutil"
+	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
 )
 
@@ -60,51 +61,49 @@ func newTypeRecord(rec Recorder) *typesRecorder {
 	return &typesRecorder{rec, make(map[ast.Expr]types.TypeAndValue)}
 }
 
-func (rec *typesRecorder) recordTypeValue(ctx *blockCtx, expr ast.Expr) {
-	e := ctx.cb.Get(-1)
-	rec.Type(expr, typesutil.NewTypeAndValueForValue(e.Type, e.CVal))
-}
-
-func (rec *typesRecorder) recordTypeVariable(ctx *blockCtx, expr ast.Expr) {
+func (rec *typesRecorder) recordTypeValue(ctx *blockCtx, expr ast.Expr, mode typesutil.OperandMode) {
 	e := ctx.cb.Get(-1)
 	t, _ := gox.DerefType(e.Type)
-	rec.Type(expr, typesutil.NewTypeAndValueForVariable(t))
-}
-
-func (rec *typesRecorder) recordTypeMapIndex(ctx *blockCtx, expr ast.Expr) {
-	e := ctx.cb.Get(-1)
-	t, _ := gox.DerefType(e.Type)
-	rec.Type(expr, typesutil.NewTypeAndValueForMapIndex(t))
+	rec.Type(expr, typesutil.NewTypeAndValueForValue(t, e.CVal, mode))
 }
 
 func (rec *typesRecorder) indexExpr(ctx *blockCtx, expr *ast.IndexExpr) {
 	if tv, ok := rec.types[expr.X]; ok {
 		switch tv.Type.(type) {
 		case *types.Map:
-			rec.recordTypeMapIndex(ctx, expr)
+			rec.recordTypeValue(ctx, expr, typesutil.MapIndex)
 			return
 		case *types.Slice:
-			rec.recordTypeVariable(ctx, expr)
+			rec.recordTypeValue(ctx, expr, typesutil.Variable)
 			return
 		}
 	}
 	switch expr.X.(type) {
 	case *ast.CompositeLit:
-		rec.recordTypeValue(ctx, expr)
+		rec.recordTypeValue(ctx, expr, typesutil.Value)
 	default:
-		rec.recordTypeVariable(ctx, expr)
+		rec.recordTypeValue(ctx, expr, typesutil.Variable)
+	}
+}
+
+func (rec *typesRecorder) unaryExpr(ctx *blockCtx, expr *ast.UnaryExpr) {
+	switch expr.Op {
+	case token.ARROW:
+		rec.recordTypeValue(ctx, expr, typesutil.CommaOK)
+	default:
+		rec.recordTypeValue(ctx, expr, typesutil.Value)
 	}
 }
 
 func (rec *typesRecorder) recordCallExpr(ctx *blockCtx, v *ast.CallExpr, fnt types.Type) {
 	e := ctx.cb.Get(-1)
-	rec.Type(v.Fun, typesutil.NewTypeAndValueForValue(fnt, nil))
+	rec.Type(v.Fun, typesutil.NewTypeAndValueForValue(fnt, nil, typesutil.Value))
 	rec.Type(v, typesutil.NewTypeAndValueForCallResult(e.Type, e.CVal))
 }
 
 func (rec *typesRecorder) recordCompositeLit(ctx *blockCtx, v *ast.CompositeLit, typ types.Type) {
 	rec.Type(v.Type, typesutil.NewTypeAndValueForType(typ))
-	rec.Type(v, typesutil.NewTypeAndValueForValue(typ, nil))
+	rec.Type(v, typesutil.NewTypeAndValueForValue(typ, nil, typesutil.Value))
 }
 
 func (rec *typesRecorder) recordType(ctx *blockCtx, typ ast.Expr, t types.Type) {
@@ -120,14 +119,14 @@ func (rec *typesRecorder) recordExpr(ctx *blockCtx, expr ast.Expr, rhs bool) {
 	switch v := expr.(type) {
 	case *ast.Ident:
 	case *ast.BasicLit:
-		rec.recordTypeValue(ctx, v)
+		rec.recordTypeValue(ctx, v, typesutil.Value)
 	case *ast.CallExpr:
 	case *ast.SelectorExpr:
-		rec.recordTypeVariable(ctx, v)
+		rec.recordTypeValue(ctx, v, typesutil.Variable)
 	case *ast.BinaryExpr:
-		rec.recordTypeValue(ctx, v)
+		rec.recordTypeValue(ctx, v, typesutil.Value)
 	case *ast.UnaryExpr:
-		rec.recordTypeValue(ctx, v)
+		rec.unaryExpr(ctx, v)
 	case *ast.FuncLit:
 	case *ast.CompositeLit:
 	case *ast.SliceLit:
@@ -136,9 +135,9 @@ func (rec *typesRecorder) recordExpr(ctx *blockCtx, expr ast.Expr, rhs bool) {
 		rec.indexExpr(ctx, v)
 	case *ast.IndexListExpr:
 	case *ast.SliceExpr:
-		rec.recordTypeValue(ctx, v)
+		rec.recordTypeValue(ctx, v, typesutil.Value)
 	case *ast.StarExpr:
-		rec.recordTypeVariable(ctx, v)
+		rec.recordTypeValue(ctx, v, typesutil.Variable)
 	case *ast.ArrayType:
 	case *ast.MapType:
 	case *ast.StructType:
@@ -146,8 +145,9 @@ func (rec *typesRecorder) recordExpr(ctx *blockCtx, expr ast.Expr, rhs bool) {
 	case *ast.InterfaceType:
 	case *ast.ComprehensionExpr:
 	case *ast.TypeAssertExpr:
+		rec.recordTypeValue(ctx, v, typesutil.CommaOK)
 	case *ast.ParenExpr:
-		rec.recordTypeValue(ctx, v)
+		rec.recordTypeValue(ctx, v, typesutil.Value)
 	case *ast.ErrWrapExpr:
 	case *ast.FuncType:
 	case *ast.Ellipsis:

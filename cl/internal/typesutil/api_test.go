@@ -31,17 +31,9 @@ func TestTypeAndValue(t *testing.T) {
 	if !ret.IsType() {
 		t.Fatal("NewTypeAndValueForType: not type?")
 	}
-	ret = NewTypeAndValueForValue(tyInt, constant.MakeInt64(1))
+	ret = NewTypeAndValueForValue(tyInt, constant.MakeInt64(1), Constant)
 	if ret.Value == nil {
 		t.Fatal("NewTypeAndValueForValue: not const?")
-	}
-	ret = NewTypeAndValueForVariable(tyInt)
-	if !ret.Addressable() {
-		t.Fatal("NewTypeAndValueForVariable: not variable?")
-	}
-	ret = NewTypeAndValueForMapIndex(tyInt)
-	if !(!ret.Addressable() && ret.Assignable()) {
-		t.Fatal("NewTypeAndValueForVariable: not map?")
 	}
 	ret = NewTypeAndValueForCallResult(tyInt, nil)
 	if !ret.IsValue() {
@@ -72,7 +64,7 @@ func TestTypeAndValue(t *testing.T) {
 	if !ret.IsValue() {
 		t.Fatal("NewTypeAndValueForObject: not value?")
 	}
-	ret = NewTypeAndValueForValue(types.Typ[types.UntypedNil], nil)
+	ret = NewTypeAndValueForValue(types.Typ[types.UntypedNil], nil, Value)
 	if !ret.IsNil() {
 		t.Fatal("NewTypeAndValueForValue: not nil?")
 	}
