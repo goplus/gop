@@ -97,7 +97,9 @@ func (rec *typesRecorder) unaryExpr(ctx *blockCtx, expr *ast.UnaryExpr) {
 
 func (rec *typesRecorder) recordCallExpr(ctx *blockCtx, v *ast.CallExpr, fnt types.Type) {
 	e := ctx.cb.Get(-1)
-	rec.Type(v.Fun, typesutil.NewTypeAndValueForValue(fnt, nil, typesutil.Value))
+	if _, ok := rec.types[v.Fun]; !ok {
+		rec.Type(v.Fun, typesutil.NewTypeAndValueForValue(fnt, nil, typesutil.Value))
+	}
 	rec.Type(v, typesutil.NewTypeAndValueForCallResult(e.Type, e.CVal))
 }
 
@@ -113,6 +115,11 @@ func (rec *typesRecorder) recordType(ctx *blockCtx, typ ast.Expr, t types.Type) 
 func (rec *typesRecorder) recordIdent(ctx *blockCtx, ident *ast.Ident, obj types.Object) {
 	rec.Use(ident, obj)
 	rec.Type(ident, typesutil.NewTypeAndValueForObject(obj))
+}
+
+func (rec *typesRecorder) recordFuncLit(ctx *blockCtx, v *ast.FuncLit, typ types.Type) {
+	rec.Type(v.Type, typesutil.NewTypeAndValueForType(typ))
+	rec.Type(v, typesutil.NewTypeAndValueForValue(typ, nil, typesutil.Value))
 }
 
 func (rec *typesRecorder) recordExpr(ctx *blockCtx, expr ast.Expr, rhs bool) {
