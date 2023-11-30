@@ -83,7 +83,7 @@ func testInfo(t *testing.T, src interface{}) {
 	if err != nil {
 		t.Fatal("parserGoSource error", err)
 	}
-	testItems(t, "types", typesList(fset, info.Types), goTypesList(fset, goinfo.Types))
+	testItems(t, "types", typesList(fset, info.Types, true), goTypesList(fset, goinfo.Types, true))
 	testItems(t, "defs", defsList(fset, info.Defs, true), goDefsList(fset, goinfo.Defs, true))
 	testItems(t, "uses", usesList(fset, info.Uses), goUsesList(fset, goinfo.Uses))
 	// TODO check selections
@@ -117,12 +117,17 @@ func sortItems(items []string) []string {
 	return items
 }
 
-func typesList(fset *token.FileSet, types map[ast.Expr]types.TypeAndValue) []string {
+func typesList(fset *token.FileSet, types map[ast.Expr]types.TypeAndValue, skipBasicLit bool) []string {
 	var items []string
 	for expr, tv := range types {
 		var buf strings.Builder
 		posn := fset.Position(expr.Pos())
 		tvstr := tv.Type.String()
+		if skipBasicLit {
+			if t, ok := expr.(*ast.BasicLit); ok {
+				tvstr = t.Kind.String()
+			}
+		}
 		if tv.Value != nil {
 			tvstr += " = " + tv.Value.String()
 		}
@@ -135,12 +140,17 @@ func typesList(fset *token.FileSet, types map[ast.Expr]types.TypeAndValue) []str
 	return sortItems(items)
 }
 
-func goTypesList(fset *token.FileSet, types map[goast.Expr]types.TypeAndValue) []string {
+func goTypesList(fset *token.FileSet, types map[goast.Expr]types.TypeAndValue, skipBasicLit bool) []string {
 	var items []string
 	for expr, tv := range types {
 		var buf strings.Builder
 		posn := fset.Position(expr.Pos())
 		tvstr := tv.Type.String()
+		if skipBasicLit {
+			if t, ok := expr.(*goast.BasicLit); ok {
+				tvstr = t.Kind.String()
+			}
+		}
 		if tv.Value != nil {
 			tvstr += " = " + tv.Value.String()
 		}
@@ -327,50 +337,30 @@ type T struct {
 	y int
 }
 var v *int = nil
-var v1 []int;
-var v2 map[int8]string;
-var v3 struct{};
-var v4 *T = &T{100,200};
+var v1 []int
+var v2 map[int8]string
+var v3 struct{}
+var v4 *T = &T{100,200}
+var v5 = [6]int{}
+var v6 = v5[0]
+var v7 = [6]int{}[0]
+var m map[int]string
+func init() {
+	v5[0] = 100
+	_ = v5[:][0]
+	m[0] = "hello"
+	_ = m[0]
+	_ = map[int]string{}[0]
+	_ = &v3
+	_ = *(&v3)
+	a := []int{1,2,3,4,5}[0]
+	_ = a
+}
 `)
 }
 
 func TestStruct(t *testing.T) {
 	testInfo(t, `package main
-
-type Person struct {
-	name string
-	age  int8
-}
-
-func test() {
-	p := Person{
-		name: "jack",
-	}
-	_ = p.name
-}
-`)
-}
-
-func _TestStruct2(t *testing.T) {
-	testInfo(t, `package main
-
-type Person struct {
-	name string
-	age  int8
-}
-
-func test() {
-	p := Person{
-		name: "jack",
-	}
-	p.name = "name"
-}
-`)
-}
-
-func _TestStruct3(t *testing.T) {
-	testInfo(t, `package main
-
 import "fmt"
 
 type Person struct {
@@ -382,6 +372,8 @@ func test() {
 	p := Person{
 		name: "jack",
 	}
+	_ = p.name
+	p.name = "name"
 	fmt.Println(p)
 }
 `)
