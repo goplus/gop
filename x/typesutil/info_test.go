@@ -443,8 +443,12 @@ func main() {
 	var a = []int{100,200}
 	a = append(a,100,200)
 	_ = a
-	// _ = len(a)
-	// _ = cap(a)
+	var b []byte
+	b = append(b,"world"...)
+	_ = b
+	_ = cap(a)
+	_ = len(a)
+	_ = new(int)
 }
 `)
 }

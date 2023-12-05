@@ -95,21 +95,66 @@ func (rec *typesRecorder) unaryExpr(ctx *blockCtx, expr *ast.UnaryExpr) {
 	}
 }
 
-func makeSig(args []*gox.Element, ret types.Type) *types.Signature {
-	var params *types.Tuple
-	var results *types.Tuple
-	n := len(args)
-	if n > 0 {
-		vars := make([]*types.Var, n)
-		for i, arg := range args {
-			vars[i] = types.NewVar(token.NoPos, nil, "", types.Default(arg.Type))
+func makeSig(variadic bool, res types.Type, args ...types.Type) *types.Signature {
+	list := make([]*types.Var, len(args))
+	for i, param := range args {
+		list[i] = types.NewVar(token.NoPos, nil, "", types.Default(param))
+	}
+	params := types.NewTuple(list...)
+	var result *types.Tuple
+	if res != nil {
+		result = types.NewTuple(types.NewVar(token.NoPos, nil, "", res))
+	}
+	return types.NewSignature(nil, params, result, variadic)
+}
+
+func argsToTypes(args []*gox.Element) (typs []types.Type) {
+	typs = make([]types.Type, len(args))
+	for i, arg := range args {
+		t := arg.Type
+		switch x := t.(type) {
+		case *gox.TypeType:
+			t = x.Type()
 		}
-		params = types.NewTuple(vars...)
+		typs[i] = t
 	}
-	if ret != nil {
-		results = types.NewTuple(types.NewVar(token.NoPos, nil, "", ret))
+	return
+}
+
+func buildinId(fn ast.Expr) (id string) {
+	switch v := fn.(type) {
+	case *ast.Ident:
+		id = v.Name
 	}
-	return types.NewSignature(nil, params, results, false)
+	return
+}
+
+func typeIsString(t types.Type) bool {
+	switch t := t.Underlying().(type) {
+	case *types.Basic:
+		return t.Info()&types.IsString != 0
+	}
+	return false
+}
+
+func (rec *typesRecorder) recordBuiltin(ctx *blockCtx, v *ast.CallExpr, retType types.Type, args []*gox.Element) {
+	id := buildinId(v.Fun)
+	var sig *types.Signature
+	switch id {
+	case "append":
+		xtyp := args[0].Type
+		switch xtyp.Underlying().(type) {
+		case *types.Slice:
+			if len(args) == 2 && v.Ellipsis.IsValid() && typeIsString(args[1].Type) {
+				sig = makeSig(true, retType, xtyp, args[1].Type)
+			} else {
+				sig = makeSig(true, retType, xtyp, xtyp)
+			}
+		}
+	default:
+		sig = makeSig(false, retType, argsToTypes(args)...)
+	}
+	rec.Type(v.Fun, typesutil.NewTypeAndValueForValue(sig, nil, typesutil.Builtin))
 }
 
 func (rec *typesRecorder) recordCallExpr(ctx *blockCtx, v *ast.CallExpr, fnt types.Type, args []*gox.Element) {
@@ -118,8 +163,7 @@ func (rec *typesRecorder) recordCallExpr(ctx *blockCtx, v *ast.CallExpr, fnt typ
 	if !ok {
 		rec.Type(v.Fun, typesutil.NewTypeAndValueForValue(fnt, nil, typesutil.Value))
 	} else if f.IsBuiltin() {
-		sig := makeSig(args, e.Type)
-		rec.Type(v.Fun, typesutil.NewTypeAndValueForValue(sig, nil, typesutil.Builtin))
+		rec.recordBuiltin(ctx, v, e.Type, args)
 	}
 	rec.Type(v, typesutil.NewTypeAndValueForCallResult(e.Type, e.CVal))
 }
