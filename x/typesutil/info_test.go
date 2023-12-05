@@ -435,3 +435,16 @@ func test() {
 }
 `)
 }
+
+func TestBuiltin(t *testing.T) {
+	testInfo(t, `package main
+
+func main() {
+	var a = []int{100,200}
+	a = append(a,100,200)
+	_ = a
+	// _ = len(a)
+	// _ = cap(a)
+}
+`)
+}

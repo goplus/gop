@@ -540,10 +540,10 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 	}
 	var fn *fnType = &fnType{}
 	for fn != nil {
-		err := compileCallArgs(fn, fnt, ctx, v, ellipsis, flags)
+		args, err := compileCallArgs(fn, fnt, ctx, v, ellipsis, flags)
 		if err == nil {
 			if rec := ctx.recorder(); rec != nil {
-				rec.recordCallExpr(ctx, v, fnt)
+				rec.recordCallExpr(ctx, v, fnt, args)
 			}
 			break
 		}
@@ -554,7 +554,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 	}
 }
 
-func compileCallArgs(fn *fnType, fnt types.Type, ctx *blockCtx, v *ast.CallExpr, ellipsis bool, flags gox.InstrFlags) (err error) {
+func compileCallArgs(fn *fnType, fnt types.Type, ctx *blockCtx, v *ast.CallExpr, ellipsis bool, flags gox.InstrFlags) (args []*gox.Element, err error) {
 	n := ctx.cb.InternalStack().Len()
 	defer func() {
 		if r := recover(); r != nil {
@@ -604,6 +604,7 @@ func compileCallArgs(fn *fnType, fnt types.Type, ctx *blockCtx, v *ast.CallExpr,
 			compileExpr(ctx, arg)
 		}
 	}
+	args = ctx.cb.InternalStack().GetArgs(len(v.Args))
 	ctx.cb.CallWith(len(v.Args), flags, v)
 	return
 }

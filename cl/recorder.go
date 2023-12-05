@@ -95,10 +95,31 @@ func (rec *typesRecorder) unaryExpr(ctx *blockCtx, expr *ast.UnaryExpr) {
 	}
 }
 
-func (rec *typesRecorder) recordCallExpr(ctx *blockCtx, v *ast.CallExpr, fnt types.Type) {
+func makeSig(args []*gox.Element, ret types.Type) *types.Signature {
+	var params *types.Tuple
+	var results *types.Tuple
+	n := len(args)
+	if n > 0 {
+		vars := make([]*types.Var, n)
+		for i, arg := range args {
+			vars[i] = types.NewVar(token.NoPos, nil, "", types.Default(arg.Type))
+		}
+		params = types.NewTuple(vars...)
+	}
+	if ret != nil {
+		results = types.NewTuple(types.NewVar(token.NoPos, nil, "", ret))
+	}
+	return types.NewSignature(nil, params, results, false)
+}
+
+func (rec *typesRecorder) recordCallExpr(ctx *blockCtx, v *ast.CallExpr, fnt types.Type, args []*gox.Element) {
 	e := ctx.cb.Get(-1)
-	if _, ok := rec.types[v.Fun]; !ok {
+	f, ok := rec.types[v.Fun]
+	if !ok {
 		rec.Type(v.Fun, typesutil.NewTypeAndValueForValue(fnt, nil, typesutil.Value))
+	} else if f.IsBuiltin() {
+		sig := makeSig(args, e.Type)
+		rec.Type(v.Fun, typesutil.NewTypeAndValueForValue(sig, nil, typesutil.Builtin))
 	}
 	rec.Type(v, typesutil.NewTypeAndValueForCallResult(e.Type, e.CVal))
 }

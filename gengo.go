@@ -210,7 +210,6 @@ func GenGoPkgPathEx(workDir, pkgPath string, conf *Config, allowExtern bool, fla
 	if recursively {
 		pkgPath = pkgPath[:len(pkgPath)-4]
 	}
-
 	mod, err := gopmod.Load(workDir, 0)
 	if NotFound(err) && allowExtern {
 		remotePkgPathDo(pkgPath, func(dir, _ string) {
