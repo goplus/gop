@@ -5001,3 +5001,26 @@ func main() {
 }
 `)
 }
+
+func TestAppend(t *testing.T) {
+	gopClTest(t, `
+func main() {
+	var a = []int{100,200}
+	a = append(a,100,200)
+	_ = a
+	var b []byte
+	b = append(b,"world"...)
+	_ = b
+}
+`, `package main
+
+func main() {
+	var a = []int{100, 200}
+	a = append(a, 100, 200)
+	_ = a
+	var b []byte
+	b = append(b, "world"...)
+	_ = b
+}
+`)
+}
