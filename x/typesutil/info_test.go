@@ -452,3 +452,18 @@ func main() {
 }
 `)
 }
+
+func TestMake(t *testing.T) {
+	testInfo(t, `package main
+
+func main() {
+	_ = make([]int,2)
+	_ = make(map[int]string)
+	_ = make(chan int)
+	_ = new(struct{x int; y int})
+	_ = new(interface{})
+	_ = new(func())
+	_ = new(int)
+}
+`)
+}

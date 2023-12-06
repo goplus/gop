@@ -60,6 +60,10 @@ func NewTypeAndValueForType(typ types.Type) (ret types.TypeAndValue) {
 }
 
 func NewTypeAndValueForValue(typ types.Type, val constant.Value, mode OperandMode) (ret types.TypeAndValue) {
+	switch t := typ.(type) {
+	case *gox.TypeType:
+		typ = t.Type()
+	}
 	if val != nil {
 		mode = Constant
 	}

@@ -211,10 +211,15 @@ func (rec *typesRecorder) recordExpr(ctx *blockCtx, expr ast.Expr, rhs bool) {
 	case *ast.StarExpr:
 		rec.recordTypeValue(ctx, v, typesutil.Variable)
 	case *ast.ArrayType:
+		rec.recordTypeValue(ctx, v, typesutil.TypExpr)
 	case *ast.MapType:
+		rec.recordTypeValue(ctx, v, typesutil.TypExpr)
 	case *ast.StructType:
+		rec.recordTypeValue(ctx, v, typesutil.TypExpr)
 	case *ast.ChanType:
+		rec.recordTypeValue(ctx, v, typesutil.TypExpr)
 	case *ast.InterfaceType:
+		rec.recordTypeValue(ctx, v, typesutil.TypExpr)
 	case *ast.ComprehensionExpr:
 	case *ast.TypeAssertExpr:
 		rec.recordTypeValue(ctx, v, typesutil.CommaOK)
@@ -222,6 +227,7 @@ func (rec *typesRecorder) recordExpr(ctx *blockCtx, expr ast.Expr, rhs bool) {
 		rec.recordTypeValue(ctx, v, typesutil.Value)
 	case *ast.ErrWrapExpr:
 	case *ast.FuncType:
+		rec.recordTypeValue(ctx, v, typesutil.TypExpr)
 	case *ast.Ellipsis:
 	case *ast.KeyValueExpr:
 	default:
