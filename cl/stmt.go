@@ -327,7 +327,7 @@ func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 	}
 	cb := ctx.cb
 	comments, once := cb.BackupComments()
-	var defineNames []*ast.Ident
+	defineNames := make([]*ast.Ident, 0, 2)
 	if v.Tok == token.DEFINE {
 		names := make([]string, 1, 2)
 		if v.Key == nil {
