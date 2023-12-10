@@ -419,6 +419,9 @@ func test() {
 		_ = k
 		_ = v
 	}
+	for v := range m {
+		_ = v
+	}
 }
 `)
 }

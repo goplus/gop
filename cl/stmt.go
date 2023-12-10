@@ -330,13 +330,12 @@ func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 	var defineNames []*ast.Ident
 	if v.Tok == token.DEFINE {
 		names := make([]string, 1, 2)
-		defineNames = make([]*ast.Ident, 1, 2)
 		if v.Key == nil {
 			names[0] = "_"
 		} else {
 			key := v.Key.(*ast.Ident)
 			names[0] = key.Name
-			defineNames[0] = key
+			defineNames = append(defineNames, key)
 		}
 		if v.Value != nil {
 			value := v.Value.(*ast.Ident)
