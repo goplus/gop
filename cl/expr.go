@@ -708,6 +708,9 @@ func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
 	cb := ctx.cb
 	comments, once := cb.BackupComments()
 	sig := toFuncType(ctx, v.Type, nil, nil)
+	if rec := ctx.recorder(); rec != nil {
+		rec.recordFuncLit(ctx, v, sig)
+	}
 	fn := cb.NewClosureWith(sig)
 	if body := v.Body; body != nil {
 		loadFuncBody(ctx, fn, body, v)
