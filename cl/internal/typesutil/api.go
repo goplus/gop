@@ -24,27 +24,27 @@ import (
 	"github.com/goplus/gox"
 )
 
-// An operandMode specifies the (addressing) mode of an operand.
-type operandMode byte
+// An OperandMode specifies the (addressing) mode of an operand.
+type OperandMode byte
 
 const (
-	invalid   operandMode = iota // operand is invalid
-	novalue                      // operand represents no value (result of a function call w/o result)
-	builtin                      // operand is a built-in function
-	typexpr                      // operand is a type
-	constant_                    // operand is a constant; the operand's typ is a Basic type
-	variable                     // operand is an addressable variable
-	mapindex                     // operand is a map index expression (acts like a variable on lhs, commaok on rhs of an assignment)
-	value                        // operand is a computed value
-	commaok                      // like value, but operand may be used in a comma,ok expression
-	commaerr                     // like commaok, but second value is error, not boolean
-	cgofunc                      // operand is a cgo function
+	Invalid  OperandMode = iota // operand is invalid
+	NoValue                     // operand represents no value (result of a function call w/o result)
+	Builtin                     // operand is a built-in function
+	TypExpr                     // operand is a type
+	Constant                    // operand is a constant; the operand's typ is a Basic type
+	Variable                    // operand is an addressable variable
+	MapIndex                    // operand is a map index expression (acts like a variable on lhs, commaok on rhs of an assignment)
+	Value                       // operand is a computed value
+	CommaOK                     // like value, but operand may be used in a comma,ok expression
+	CommaErr                    // like commaok, but second value is error, not boolean
+	CgoFunc                     // operand is a cgo function
 )
 
 // TypeAndValue reports the type and value (for constants)
 // of the corresponding expression.
 type TypeAndValue struct {
-	mode  operandMode
+	mode  OperandMode
 	Type  types.Type
 	Value constant.Value
 }
@@ -55,16 +55,17 @@ func NewTypeAndValueForType(typ types.Type) (ret types.TypeAndValue) {
 		typ = t.Type()
 	}
 	ret.Type = typ
-	(*TypeAndValue)(unsafe.Pointer(&ret)).mode = typexpr
+	(*TypeAndValue)(unsafe.Pointer(&ret)).mode = TypExpr
 	return
 }
 
-func NewTypeAndValueForValue(typ types.Type, val constant.Value) (ret types.TypeAndValue) {
-	var mode operandMode
+func NewTypeAndValueForValue(typ types.Type, val constant.Value, mode OperandMode) (ret types.TypeAndValue) {
+	switch t := typ.(type) {
+	case *gox.TypeType:
+		typ = t.Type()
+	}
 	if val != nil {
-		mode = constant_
-	} else {
-		mode = value
+		mode = Constant
 	}
 	ret.Type = typ
 	ret.Value = val
@@ -72,30 +73,18 @@ func NewTypeAndValueForValue(typ types.Type, val constant.Value) (ret types.Type
 	return
 }
 
-func NewTypeAndValueForVariable(typ types.Type) (ret types.TypeAndValue) {
-	ret.Type = typ
-	(*TypeAndValue)(unsafe.Pointer(&ret)).mode = variable
-	return
-}
-
-func NewTypeAndValueForMapIndex(typ types.Type) (ret types.TypeAndValue) {
-	ret.Type = typ
-	(*TypeAndValue)(unsafe.Pointer(&ret)).mode = mapindex
-	return
-}
-
 func NewTypeAndValueForCallResult(typ types.Type, val constant.Value) (ret types.TypeAndValue) {
-	var mode operandMode
+	var mode OperandMode
 	if typ == nil {
 		ret.Type = &types.Tuple{}
-		mode = novalue
+		mode = NoValue
 	} else {
 		ret.Type = typ
 		if val != nil {
 			ret.Value = val
-			mode = constant_
+			mode = Constant
 		} else {
-			mode = value
+			mode = Value
 		}
 	}
 	(*TypeAndValue)(unsafe.Pointer(&ret)).mode = mode
@@ -103,22 +92,22 @@ func NewTypeAndValueForCallResult(typ types.Type, val constant.Value) (ret types
 }
 
 func NewTypeAndValueForObject(obj types.Object) (ret types.TypeAndValue) {
-	var mode operandMode
+	var mode OperandMode
 	var val constant.Value
 	switch v := obj.(type) {
 	case *types.Const:
-		mode = constant_
+		mode = Constant
 		val = v.Val()
 	case *types.TypeName:
-		mode = typexpr
+		mode = TypExpr
 	case *types.Var:
-		mode = variable
+		mode = Variable
 	case *types.Func:
-		mode = value
+		mode = Value
 	case *types.Builtin:
-		mode = builtin
+		mode = Builtin
 	case *types.Nil:
-		mode = value
+		mode = Value
 	}
 	ret.Type = obj.Type()
 	ret.Value = val
