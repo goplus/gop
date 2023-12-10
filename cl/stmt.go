@@ -327,15 +327,20 @@ func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 	}
 	cb := ctx.cb
 	comments, once := cb.BackupComments()
+	var defineNames []*ast.Ident
 	if v.Tok == token.DEFINE {
 		names := make([]string, 1, 2)
 		if v.Key == nil {
 			names[0] = "_"
 		} else {
-			names[0] = v.Key.(*ast.Ident).Name
+			key := v.Key.(*ast.Ident)
+			names[0] = key.Name
+			defineNames = append(defineNames, key)
 		}
 		if v.Value != nil {
-			names = append(names, v.Value.(*ast.Ident).Name)
+			value := v.Value.(*ast.Ident)
+			names = append(names, value.Name)
+			defineNames = append(defineNames, value)
 		}
 		cb.ForRangeEx(names, v)
 		compileExpr(ctx, v.X)
@@ -362,6 +367,9 @@ func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 		pos = v.For
 	}
 	cb.RangeAssignThen(pos) // TODO: need NewScope for body
+	if len(defineNames) > 0 {
+		defNames(ctx, defineNames, cb.Scope())
+	}
 	compileStmts(ctx, v.Body.List)
 	cb.SetComments(comments, once)
 	setBodyHandler(ctx)
