@@ -378,3 +378,30 @@ func test() {
 }
 `)
 }
+
+func TestTypeAssert(t *testing.T) {
+	testInfo(t, `package main
+
+func test() {
+	var a interface{} = 100
+	if n, ok := a.(int); ok {
+		_ = n
+	}
+}
+`)
+}
+
+func TestChan(t *testing.T) {
+	testInfo(t, `package main
+
+func test() {
+	var ch chan int
+	select {
+	case n, ok := <-ch:
+		_ = n
+		_ = ok
+		break
+	}
+}
+`)
+}
