@@ -108,6 +108,11 @@ func (rec *typesRecorder) recordCompositeLit(ctx *blockCtx, v *ast.CompositeLit,
 	rec.Type(v, typesutil.NewTypeAndValueForValue(typ, nil, typesutil.Value))
 }
 
+func (rec *typesRecorder) recordFuncLit(ctx *blockCtx, v *ast.FuncLit, typ types.Type) {
+	rec.Type(v.Type, typesutil.NewTypeAndValueForType(typ))
+	rec.Type(v, typesutil.NewTypeAndValueForValue(typ, nil, typesutil.Value))
+}
+
 func (rec *typesRecorder) recordType(ctx *blockCtx, typ ast.Expr, t types.Type) {
 	rec.Type(typ, typesutil.NewTypeAndValueForType(t))
 }

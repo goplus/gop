@@ -425,3 +425,18 @@ func test() {
 }
 `)
 }
+
+func TestFuncLit(t *testing.T) {
+	testInfo(t, `package main
+func test() {
+	add := func(n1 int, n2 int) int {
+		return n1+n2
+	}
+	_ = add(1,2)
+
+	go func(n int) {
+		_ = n+100
+	}(100)
+}
+`)
+}
