@@ -79,7 +79,7 @@ func detectGoBinPath() string {
 
 func init() {
 	pwd, _ := os.Getwd()
-	gopRoot = filepath.Join(pwd, "..")
+	gopRoot = filepath.Join(pwd, "../..")
 	installer = filepath.Join(gopRoot, installer)
 	versionFile = filepath.Join(gopRoot, versionFile)
 	mainVersionFile = filepath.Join(gopRoot, mainVersionFile)
