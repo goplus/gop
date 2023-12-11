@@ -21,7 +21,7 @@ const (
 var script = "all.bash"
 var gopRoot = ""
 var gopBinFiles = []string{"gop", "gopfmt"}
-var installer = "cmd/make.go"
+var installer = "cmd/make/make.go"
 var versionFile = "VERSION"
 var mainVersionFile = "env/version.go"
 
