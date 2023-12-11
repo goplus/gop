@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-// Package help implements the ``gop help'' command.
+// Package help implements the “gop help” command.
 package help
 
 import (
@@ -58,7 +58,6 @@ Args:
 		cmd.Usage(w)
 	}
 	// not exit 2: succeeded at 'gop help cmd'.
-	return
 }
 
 var usageTemplate = `{{.Short | trim}}
@@ -74,38 +73,6 @@ The commands are:
 Use "gop help{{with .LongName}} {{.}}{{end}} <command>" for more information about a command.
 
 `
-
-// commentWriter writes a Go comment to the underlying io.Writer,
-// using line comment form (//).
-type commentWriter struct {
-	W            io.Writer
-	wroteSlashes bool // Wrote "//" at the beginning of the current line.
-}
-
-func (c *commentWriter) Write(p []byte) (int, error) {
-	var n int
-	for i, b := range p {
-		if !c.wroteSlashes {
-			s := "//"
-			if b != '\n' {
-				s = "// "
-			}
-			if _, err := io.WriteString(c.W, s); err != nil {
-				return n, err
-			}
-			c.wroteSlashes = true
-		}
-		n0, err := c.W.Write(p[i : i+1])
-		n += n0
-		if err != nil {
-			return n, err
-		}
-		if b == '\n' {
-			c.wroteSlashes = false
-		}
-	}
-	return len(p), nil
-}
 
 // An errWriter wraps a writer, recording whether a write error occurred.
 type errWriter struct {

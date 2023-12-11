@@ -25,7 +25,7 @@ jobs:
       run: |
         git config --global user.email "build-robot@goplus.org"
         git config --global user.name "build robot"
-        go test -v cmd/make_test.go
+        go test -v cmd/make/make_test.go
 
     - name: Compile gop and related tools
       run: go install ./...
