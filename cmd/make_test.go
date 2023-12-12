@@ -21,7 +21,7 @@ const (
 var script = "all.bash"
 var gopRoot = ""
 var gopBinFiles = []string{"gop", "gopfmt"}
-var installer = "cmd/make/make.go"
+var installer = "cmd/make.go"
 var versionFile = "VERSION"
 var mainVersionFile = "env/version.go"
 
@@ -79,7 +79,7 @@ func detectGoBinPath() string {
 
 func init() {
 	pwd, _ := os.Getwd()
-	gopRoot = filepath.Join(pwd, "../..")
+	gopRoot = filepath.Join(pwd, "..")
 	installer = filepath.Join(gopRoot, installer)
 	versionFile = filepath.Join(gopRoot, versionFile)
 	mainVersionFile = filepath.Join(gopRoot, mainVersionFile)

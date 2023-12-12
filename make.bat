@@ -1,1 +1,1 @@
-go run cmd/make/make.go --install --autoproxy
+go run cmd/make.go --install --autoproxy
