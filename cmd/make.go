@@ -246,11 +246,17 @@ func getBuildDateTime() string {
 }
 
 func getBuildVer() string {
-	stdout, err := execCommand("git", "describe", "--tags")
+	latestTagCommit, err := execCommand("git", "rev-list", "--tags", "--max-count=1")
 	if err != nil {
 		return ""
 	}
-	return trimRight(stdout)
+
+	stdout, err := execCommand("git", "describe", "--tags", trimRight(latestTagCommit))
+	if err != nil {
+		return ""
+	}
+
+	return fmt.Sprintf("%s devel", trimRight(stdout))
 }
 
 func getGopBuildFlags() string {
