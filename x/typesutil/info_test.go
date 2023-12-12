@@ -505,7 +505,7 @@ func test() {
 `)
 }
 
-func TestGopList(t *testing.T) {
+func TestSliceLit(t *testing.T) {
 	testGopInfo(t, `
 a := [100,200]
 println a
@@ -521,4 +521,90 @@ println a
 == uses ==
 000:  3: 1 | println             | builtin println
 001:  3: 9 | a                   | var a []int`)
+}
+
+func TestForPhrase1(t *testing.T) {
+	testGopInfo(t, `
+sum := 0
+for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
+	sum = sum + x
+}
+println sum
+`, ``, `== types ==
+000:  2: 8 | 0                   *ast.BasicLit                  | value   : untyped int = 0 | constant
+001:  3:11 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
+002:  3:14 | 3                   *ast.BasicLit                  | value   : untyped int = 3 | constant
+003:  3:17 | 5                   *ast.BasicLit                  | value   : untyped int = 5 | constant
+004:  3:20 | 7                   *ast.BasicLit                  | value   : untyped int = 7 | constant
+005:  3:23 | 11                  *ast.BasicLit                  | value   : untyped int = 11 | constant
+006:  3:27 | 13                  *ast.BasicLit                  | value   : untyped int = 13 | constant
+007:  3:31 | 17                  *ast.BasicLit                  | value   : untyped int = 17 | constant
+008:  3:36 | x                   *ast.Ident                     | var     : int | variable
+009:  3:36 | x > 3               *ast.BinaryExpr                | value   : untyped bool | value
+010:  3:40 | 3                   *ast.BasicLit                  | value   : untyped int = 3 | constant
+011:  4: 2 | sum                 *ast.Ident                     | var     : int | variable
+012:  4: 8 | sum                 *ast.Ident                     | var     : int | variable
+013:  4: 8 | sum + x             *ast.BinaryExpr                | value   : int | value
+014:  4:14 | x                   *ast.Ident                     | var     : int | variable
+015:  6: 1 | println             *ast.Ident                     | builtin : invalid type | built-in
+016:  6: 1 | println sum         *ast.CallExpr                  | value   : (n int, err error) | value
+017:  6: 9 | sum                 *ast.Ident                     | var     : int | variable
+== defs ==
+000:  2: 1 | main                | func main.main()
+001:  2: 1 | sum                 | var sum int
+002:  3: 5 | x                   | var x int
+== uses ==
+000:  3:36 | x                   | var x int
+001:  4: 2 | sum                 | var sum int
+002:  4: 8 | sum                 | var sum int
+003:  4:14 | x                   | var x int
+004:  6: 1 | println             | builtin println
+005:  6: 9 | sum                 | var sum int`)
+}
+
+func TestForPhrase2(t *testing.T) {
+	testGopInfo(t, `
+sum := 0
+for i, x <- [1, 3, 5, 7, 11, 13, 17], i%2 == 1 && x > 3 {
+	sum = sum + x
+}
+println sum
+`, ``, `== types ==
+000:  2: 8 | 0                   *ast.BasicLit                  | value   : untyped int = 0 | constant
+001:  3:14 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
+002:  3:17 | 3                   *ast.BasicLit                  | value   : untyped int = 3 | constant
+003:  3:20 | 5                   *ast.BasicLit                  | value   : untyped int = 5 | constant
+004:  3:23 | 7                   *ast.BasicLit                  | value   : untyped int = 7 | constant
+005:  3:26 | 11                  *ast.BasicLit                  | value   : untyped int = 11 | constant
+006:  3:30 | 13                  *ast.BasicLit                  | value   : untyped int = 13 | constant
+007:  3:34 | 17                  *ast.BasicLit                  | value   : untyped int = 17 | constant
+008:  3:39 | i                   *ast.Ident                     | var     : int | variable
+009:  3:39 | i % 2               *ast.BinaryExpr                | value   : int | value
+010:  3:39 | i%2 == 1            *ast.BinaryExpr                | value   : untyped bool | value
+011:  3:39 | i%2 == 1 && x > 3   *ast.BinaryExpr                | value   : untyped bool | value
+012:  3:41 | 2                   *ast.BasicLit                  | value   : untyped int = 2 | constant
+013:  3:46 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
+014:  3:51 | x                   *ast.Ident                     | var     : int | variable
+015:  3:51 | x > 3               *ast.BinaryExpr                | value   : untyped bool | value
+016:  3:55 | 3                   *ast.BasicLit                  | value   : untyped int = 3 | constant
+017:  4: 2 | sum                 *ast.Ident                     | var     : int | variable
+018:  4: 8 | sum                 *ast.Ident                     | var     : int | variable
+019:  4: 8 | sum + x             *ast.BinaryExpr                | value   : int | value
+020:  4:14 | x                   *ast.Ident                     | var     : int | variable
+021:  6: 1 | println             *ast.Ident                     | builtin : invalid type | built-in
+022:  6: 1 | println sum         *ast.CallExpr                  | value   : (n int, err error) | value
+023:  6: 9 | sum                 *ast.Ident                     | var     : int | variable
+== defs ==
+000:  2: 1 | main                | func main.main()
+001:  2: 1 | sum                 | var sum int
+002:  3: 5 | i                   | var i int
+003:  3: 8 | x                   | var x int
+== uses ==
+000:  3:39 | i                   | var i int
+001:  3:51 | x                   | var x int
+002:  4: 2 | sum                 | var sum int
+003:  4: 8 | sum                 | var sum int
+004:  4:14 | x                   | var x int
+005:  6: 1 | println             | builtin println
+006:  6: 9 | sum                 | var sum int`)
 }
