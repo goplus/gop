@@ -23,6 +23,50 @@ import (
 	"github.com/goplus/mod/gopmod"
 )
 
+func parserMixedSource(fset *token.FileSet, src string, gosrc string) (*typesutil.Info, *types.Info, error) {
+	f, err := parser.ParseEntry(fset, "main.gop", src, parser.Config{
+		Mode: parser.ParseComments,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	var gofiles []*goast.File
+	if len(gosrc) > 0 {
+		f, err := goparser.ParseFile(fset, "main.go", gosrc, goparser.ParseComments)
+		if err != nil {
+			return nil, nil, err
+		}
+		gofiles = append(gofiles, f)
+	}
+
+	conf := &types.Config{}
+	conf.Importer = importer.Default()
+	chkOpts := &typesutil.Config{
+		Types: types.NewPackage("main", "main"),
+		Fset:  fset,
+		Mod:   gopmod.Default,
+	}
+	info := &typesutil.Info{
+		Types:      make(map[ast.Expr]types.TypeAndValue),
+		Defs:       make(map[*ast.Ident]types.Object),
+		Uses:       make(map[*ast.Ident]types.Object),
+		Implicits:  make(map[ast.Node]types.Object),
+		Selections: make(map[*ast.SelectorExpr]*types.Selection),
+		Scopes:     make(map[ast.Node]*types.Scope),
+	}
+	ginfo := &types.Info{
+		Types:      make(map[goast.Expr]types.TypeAndValue),
+		Defs:       make(map[*goast.Ident]types.Object),
+		Uses:       make(map[*goast.Ident]types.Object),
+		Implicits:  make(map[goast.Node]types.Object),
+		Selections: make(map[*goast.SelectorExpr]*types.Selection),
+		Scopes:     make(map[goast.Node]*types.Scope),
+	}
+	check := typesutil.NewChecker(conf, chkOpts, ginfo, info)
+	err = check.Files(gofiles, []*ast.File{f})
+	return info, ginfo, err
+}
+
 func parserSource(fset *token.FileSet, filename string, src interface{}, mode parser.Mode) (*typesutil.Info, error) {
 	f, err := parser.ParseEntry(fset, filename, src, parser.Config{
 		Mode: mode,
@@ -71,6 +115,26 @@ func parserGoSource(fset *token.FileSet, filename string, src interface{}, mode 
 	check := types.NewChecker(conf, fset, pkg, info)
 	err = check.Files([]*goast.File{f})
 	return info, err
+}
+
+func testGopInfo(t *testing.T, src string, gosrc string, expect string) {
+	fset := token.NewFileSet()
+	info, _, err := parserMixedSource(fset, src, gosrc)
+	if err != nil {
+		t.Fatal("parserMixedSource error", err)
+	}
+	var list []string
+	list = append(list, "== types ==")
+	list = append(list, typesList(fset, info.Types, false)...)
+	list = append(list, "== defs ==")
+	list = append(list, defsList(fset, info.Defs, true)...)
+	list = append(list, "== uses ==")
+	list = append(list, usesList(fset, info.Uses)...)
+	result := strings.Join(list, "\n")
+	t.Log(result)
+	if result != expect {
+		t.Fatal("bad expect\n", expect)
+	}
 }
 
 func testInfo(t *testing.T, src interface{}) {
@@ -439,4 +503,22 @@ func test() {
 	}(100)
 }
 `)
+}
+
+func TestGopList(t *testing.T) {
+	testGopInfo(t, `
+a := [100,200]
+println a
+`, ``, `== types ==
+000:  2: 7 | 100                 *ast.BasicLit                  | value   : untyped int = 100 | constant
+001:  2:11 | 200                 *ast.BasicLit                  | value   : untyped int = 200 | constant
+002:  3: 1 | println             *ast.Ident                     | builtin : invalid type | built-in
+003:  3: 1 | println a           *ast.CallExpr                  | value   : (n int, err error) | value
+004:  3: 9 | a                   *ast.Ident                     | var     : []int | variable
+== defs ==
+000:  2: 1 | a                   | var a []int
+001:  2: 1 | main                | func main.main()
+== uses ==
+000:  3: 1 | println             | builtin println
+001:  3: 9 | a                   | var a []int`)
 }
