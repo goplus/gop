@@ -15,11 +15,13 @@ import (
 	"testing"
 	"unsafe"
 
+	"github.com/goplus/gop"
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/format"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gop/x/typesutil"
+	"github.com/goplus/mod/env"
 	"github.com/goplus/mod/gopmod"
 )
 
@@ -40,7 +42,7 @@ func parserMixedSource(fset *token.FileSet, src string, gosrc string) (*typesuti
 	}
 
 	conf := &types.Config{}
-	conf.Importer = importer.Default()
+	conf.Importer = gop.NewImporter(nil, &env.Gop{Root: "../..", Version: "1.0"}, fset)
 	chkOpts := &typesutil.Config{
 		Types: types.NewPackage("main", "main"),
 		Fset:  fset,
@@ -704,4 +706,26 @@ println("x:", x)
 006:  3:48 | b                   | var b float64
 007:  4: 1 | println             | builtin println
 008:  4:15 | x                   | var x [][]float64`)
+}
+
+func TestFileEnumLines(t *testing.T) {
+	testGopInfo(t, `
+import "os"
+
+for line <- os.Stdin {
+	println line
+}
+`, ``, `== types ==
+000:  4:13 | os.Stdin            *ast.SelectorExpr              | var     : *os.File | variable
+001:  5: 2 | println             *ast.Ident                     | builtin : invalid type | built-in
+002:  5: 2 | println line        *ast.CallExpr                  | value   : (n int, err error) | value
+003:  5:10 | line                *ast.Ident                     | var     : string | variable
+== defs ==
+000:  4: 1 | main                | func main.main()
+001:  4: 5 | line                | var line string
+== uses ==
+000:  4:13 | os                  | package os
+001:  4:16 | Stdin               | var os.Stdin *os.File
+002:  5: 2 | println             | builtin println
+003:  5:10 | line                | var line string`)
 }
