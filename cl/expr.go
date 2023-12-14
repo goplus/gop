@@ -999,16 +999,20 @@ func compileComprehensionExpr(ctx *blockCtx, v *ast.ComprehensionExpr, twoValue 
 	end := 0
 	for i := len(v.Fors) - 1; i >= 0; i-- {
 		names := make([]string, 0, 2)
+		defineNames := make([]*ast.Ident, 0, 2)
 		forStmt := v.Fors[i]
 		if forStmt.Key != nil {
 			names = append(names, forStmt.Key.Name)
+			defineNames = append(defineNames, forStmt.Key)
 		} else {
 			names = append(names, "_")
 		}
 		names = append(names, forStmt.Value.Name)
+		defineNames = append(defineNames, forStmt.Value)
 		cb.ForRange(names...)
 		compileExpr(ctx, forStmt.X)
 		cb.RangeAssignThen(forStmt.TokPos)
+		defNames(ctx, defineNames, cb.Scope())
 		if forStmt.Cond != nil {
 			cb.If()
 			if forStmt.Init != nil {

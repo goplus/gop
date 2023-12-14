@@ -608,3 +608,100 @@ println sum
 005:  6: 1 | println             | builtin println
 006:  6: 9 | sum                 | var sum int`)
 }
+
+func TestMapComprehension(t *testing.T) {
+	testGopInfo(t, `
+y := {x: i for i, x <- ["1", "3", "5", "7", "11"]}
+println y
+`, ``, `== types ==
+000:  2: 7 | x                   *ast.Ident                     | var     : string | variable
+001:  2:10 | i                   *ast.Ident                     | var     : int | variable
+002:  2:25 | "1"                 *ast.BasicLit                  | value   : untyped string = "1" | constant
+003:  2:30 | "3"                 *ast.BasicLit                  | value   : untyped string = "3" | constant
+004:  2:35 | "5"                 *ast.BasicLit                  | value   : untyped string = "5" | constant
+005:  2:40 | "7"                 *ast.BasicLit                  | value   : untyped string = "7" | constant
+006:  2:45 | "11"                *ast.BasicLit                  | value   : untyped string = "11" | constant
+007:  3: 1 | println             *ast.Ident                     | builtin : invalid type | built-in
+008:  3: 1 | println y           *ast.CallExpr                  | value   : (n int, err error) | value
+009:  3: 9 | y                   *ast.Ident                     | var     : map[string]int | variable
+== defs ==
+000:  2: 1 | main                | func main.main()
+001:  2: 1 | y                   | var y map[string]int
+002:  2:16 | i                   | var i int
+003:  2:19 | x                   | var x string
+== uses ==
+000:  2: 7 | x                   | var x string
+001:  2:10 | i                   | var i int
+002:  3: 1 | println             | builtin println
+003:  3: 9 | y                   | var y map[string]int`)
+}
+
+func TestListComprehension(t *testing.T) {
+	testGopInfo(t, `
+a := [1, 3.4, 5]
+b := [x*x for x <- a]
+_ = b
+`, ``, `== types ==
+000:  2: 7 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
+001:  2:10 | 3.4                 *ast.BasicLit                  | value   : untyped float = 3.4 | constant
+002:  2:15 | 5                   *ast.BasicLit                  | value   : untyped int = 5 | constant
+003:  3: 7 | x                   *ast.Ident                     | var     : float64 | variable
+004:  3: 7 | x * x               *ast.BinaryExpr                | value   : float64 | value
+005:  3: 9 | x                   *ast.Ident                     | var     : float64 | variable
+006:  3:20 | a                   *ast.Ident                     | var     : []float64 | variable
+007:  4: 5 | b                   *ast.Ident                     | var     : []float64 | variable
+== defs ==
+000:  2: 1 | a                   | var a []float64
+001:  2: 1 | main                | func main.main()
+002:  3: 1 | b                   | var b []float64
+003:  3:15 | x                   | var x float64
+== uses ==
+000:  3: 7 | x                   | var x float64
+001:  3: 9 | x                   | var x float64
+002:  3:20 | a                   | var a []float64
+003:  4: 5 | b                   | var b []float64`)
+}
+
+func TestListComprehensionMultiLevel(t *testing.T) {
+	testGopInfo(t, `
+arr := [1, 2, 3, 4.1, 5, 6]
+x := [[a, b] for a <- arr, a < b for b <- arr, b > 2]
+println("x:", x)
+`, ``, `== types ==
+000:  2: 9 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
+001:  2:12 | 2                   *ast.BasicLit                  | value   : untyped int = 2 | constant
+002:  2:15 | 3                   *ast.BasicLit                  | value   : untyped int = 3 | constant
+003:  2:18 | 4.1                 *ast.BasicLit                  | value   : untyped float = 4.1 | constant
+004:  2:23 | 5                   *ast.BasicLit                  | value   : untyped int = 5 | constant
+005:  2:26 | 6                   *ast.BasicLit                  | value   : untyped int = 6 | constant
+006:  3: 8 | a                   *ast.Ident                     | var     : float64 | variable
+007:  3:11 | b                   *ast.Ident                     | var     : float64 | variable
+008:  3:23 | arr                 *ast.Ident                     | var     : []float64 | variable
+009:  3:28 | a                   *ast.Ident                     | var     : float64 | variable
+010:  3:28 | a < b               *ast.BinaryExpr                | value   : untyped bool | value
+011:  3:32 | b                   *ast.Ident                     | var     : float64 | variable
+012:  3:43 | arr                 *ast.Ident                     | var     : []float64 | variable
+013:  3:48 | b                   *ast.Ident                     | var     : float64 | variable
+014:  3:48 | b > 2               *ast.BinaryExpr                | value   : untyped bool | value
+015:  3:52 | 2                   *ast.BasicLit                  | value   : untyped int = 2 | constant
+016:  4: 1 | println             *ast.Ident                     | builtin : invalid type | built-in
+017:  4: 1 | println("x:", x)    *ast.CallExpr                  | value   : (n int, err error) | value
+018:  4: 9 | "x:"                *ast.BasicLit                  | value   : untyped string = "x:" | constant
+019:  4:15 | x                   *ast.Ident                     | var     : [][]float64 | variable
+== defs ==
+000:  2: 1 | arr                 | var arr []float64
+001:  2: 1 | main                | func main.main()
+002:  3: 1 | x                   | var x [][]float64
+003:  3:18 | a                   | var a float64
+004:  3:38 | b                   | var b float64
+== uses ==
+000:  3: 8 | a                   | var a float64
+001:  3:11 | b                   | var b float64
+002:  3:23 | arr                 | var arr []float64
+003:  3:28 | a                   | var a float64
+004:  3:32 | b                   | var b float64
+005:  3:43 | arr                 | var arr []float64
+006:  3:48 | b                   | var b float64
+007:  4: 1 | println             | builtin println
+008:  4:15 | x                   | var x [][]float64`)
+}
