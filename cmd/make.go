@@ -34,7 +34,7 @@ import (
 )
 
 func checkPathExist(path string, isDir bool) bool {
-	stat, err := os.Stat(path)
+	stat, err := os.Lstat(path) // Note: os.Lstat() will not follow the symbolic link.
 	isExists := !os.IsNotExist(err)
 	if isDir {
 		return isExists && stat.IsDir()
