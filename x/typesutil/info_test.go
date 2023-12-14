@@ -729,3 +729,153 @@ for line <- os.Stdin {
 002:  5: 2 | println             | builtin println
 003:  5:10 | line                | var line string`)
 }
+
+func TestLambdaExpr(t *testing.T) {
+	testGopInfo(t, `package main
+func Map(c []float64, t func(float64) float64) {
+	// ...
+}
+
+func Map2(c []float64, t func(float64) (float64, float64)) {
+	// ...
+}
+
+Map([1.2, 3.5, 6], x => x * x)
+Map2([1.2, 3.5, 6], x => (x * x, x + x))
+`, ``, `== types ==
+000:  2:12 | []float64           *ast.ArrayType                 | type    : []float64 | type
+001:  2:14 | float64             *ast.Ident                     | type    : float64 | type
+002:  2:25 | func(float64) float64 *ast.FuncType                  | type    : func(float64) float64 | type
+003:  2:30 | float64             *ast.Ident                     | type    : float64 | type
+004:  2:39 | float64             *ast.Ident                     | type    : float64 | type
+005:  6:13 | []float64           *ast.ArrayType                 | type    : []float64 | type
+006:  6:15 | float64             *ast.Ident                     | type    : float64 | type
+007:  6:26 | func(float64) (float64, float64) *ast.FuncType                  | type    : func(float64) (float64, float64) | type
+008:  6:31 | float64             *ast.Ident                     | type    : float64 | type
+009:  6:41 | float64             *ast.Ident                     | type    : float64 | type
+010:  6:50 | float64             *ast.Ident                     | type    : float64 | type
+011: 10: 1 | Map                 *ast.Ident                     | value   : func(c []float64, t func(float64) float64) | value
+012: 10: 1 | Map([1.2, 3.5, 6], x => x * x) *ast.CallExpr                  | void    : () | no value
+013: 10: 6 | 1.2                 *ast.BasicLit                  | value   : untyped float = 1.2 | constant
+014: 10:11 | 3.5                 *ast.BasicLit                  | value   : untyped float = 3.5 | constant
+015: 10:16 | 6                   *ast.BasicLit                  | value   : untyped int = 6 | constant
+016: 10:25 | x                   *ast.Ident                     | var     : float64 | variable
+017: 10:25 | x * x               *ast.BinaryExpr                | value   : float64 | value
+018: 10:29 | x                   *ast.Ident                     | var     : float64 | variable
+019: 11: 1 | Map2                *ast.Ident                     | value   : func(c []float64, t func(float64) (float64, float64)) | value
+020: 11: 1 | Map2([1.2, 3.5, 6], x => (x * x, x + x)) *ast.CallExpr                  | void    : () | no value
+021: 11: 7 | 1.2                 *ast.BasicLit                  | value   : untyped float = 1.2 | constant
+022: 11:12 | 3.5                 *ast.BasicLit                  | value   : untyped float = 3.5 | constant
+023: 11:17 | 6                   *ast.BasicLit                  | value   : untyped int = 6 | constant
+024: 11:27 | x                   *ast.Ident                     | var     : float64 | variable
+025: 11:27 | x * x               *ast.BinaryExpr                | value   : float64 | value
+026: 11:31 | x                   *ast.Ident                     | var     : float64 | variable
+027: 11:34 | x                   *ast.Ident                     | var     : float64 | variable
+028: 11:34 | x + x               *ast.BinaryExpr                | value   : float64 | value
+029: 11:38 | x                   *ast.Ident                     | var     : float64 | variable
+== defs ==
+000:  2: 6 | Map                 | func main.Map(c []float64, t func(float64) float64)
+001:  2:10 | c                   | var c []float64
+002:  2:23 | t                   | var t func(float64) float64
+003:  6: 6 | Map2                | func main.Map2(c []float64, t func(float64) (float64, float64))
+004:  6:11 | c                   | var c []float64
+005:  6:24 | t                   | var t func(float64) (float64, float64)
+006: 10: 1 | main                | func main.main()
+007: 10:20 | x                   | var x float64
+008: 11:21 | x                   | var x float64
+== uses ==
+000:  2:14 | float64             | type float64
+001:  2:30 | float64             | type float64
+002:  2:39 | float64             | type float64
+003:  6:15 | float64             | type float64
+004:  6:31 | float64             | type float64
+005:  6:41 | float64             | type float64
+006:  6:50 | float64             | type float64
+007: 10: 1 | Map                 | func main.Map(c []float64, t func(float64) float64)
+008: 10:25 | x                   | var x float64
+009: 10:29 | x                   | var x float64
+010: 11: 1 | Map2                | func main.Map2(c []float64, t func(float64) (float64, float64))
+011: 11:27 | x                   | var x float64
+012: 11:31 | x                   | var x float64
+013: 11:34 | x                   | var x float64
+014: 11:38 | x                   | var x float64`)
+}
+
+func TestLambdaExpr2(t *testing.T) {
+	testGopInfo(t, `package main
+func Map(c []float64, t func(float64) float64) {
+	// ...
+}
+
+func Map2(c []float64, t func(float64) (float64, float64)) {
+	// ...
+}
+
+Map([1.2, 3.5, 6], x => {
+	return x * x
+})
+Map2([1.2, 3.5, 6], x => {
+	return x * x, x + x
+})
+`, ``, `== types ==
+000:  2:12 | []float64           *ast.ArrayType                 | type    : []float64 | type
+001:  2:14 | float64             *ast.Ident                     | type    : float64 | type
+002:  2:25 | func(float64) float64 *ast.FuncType                  | type    : func(float64) float64 | type
+003:  2:30 | float64             *ast.Ident                     | type    : float64 | type
+004:  2:39 | float64             *ast.Ident                     | type    : float64 | type
+005:  6:13 | []float64           *ast.ArrayType                 | type    : []float64 | type
+006:  6:15 | float64             *ast.Ident                     | type    : float64 | type
+007:  6:26 | func(float64) (float64, float64) *ast.FuncType                  | type    : func(float64) (float64, float64) | type
+008:  6:31 | float64             *ast.Ident                     | type    : float64 | type
+009:  6:41 | float64             *ast.Ident                     | type    : float64 | type
+010:  6:50 | float64             *ast.Ident                     | type    : float64 | type
+011: 10: 1 | Map                 *ast.Ident                     | value   : func(c []float64, t func(float64) float64) | value
+012: 10: 1 | Map([1.2, 3.5, 6], x => {
+	return x * x
+}) *ast.CallExpr                  | void    : () | no value
+013: 10: 6 | 1.2                 *ast.BasicLit                  | value   : untyped float = 1.2 | constant
+014: 10:11 | 3.5                 *ast.BasicLit                  | value   : untyped float = 3.5 | constant
+015: 10:16 | 6                   *ast.BasicLit                  | value   : untyped int = 6 | constant
+016: 11: 9 | x                   *ast.Ident                     | var     : float64 | variable
+017: 11: 9 | x * x               *ast.BinaryExpr                | value   : float64 | value
+018: 11:13 | x                   *ast.Ident                     | var     : float64 | variable
+019: 13: 1 | Map2                *ast.Ident                     | value   : func(c []float64, t func(float64) (float64, float64)) | value
+020: 13: 1 | Map2([1.2, 3.5, 6], x => {
+	return x * x, x + x
+}) *ast.CallExpr                  | void    : () | no value
+021: 13: 7 | 1.2                 *ast.BasicLit                  | value   : untyped float = 1.2 | constant
+022: 13:12 | 3.5                 *ast.BasicLit                  | value   : untyped float = 3.5 | constant
+023: 13:17 | 6                   *ast.BasicLit                  | value   : untyped int = 6 | constant
+024: 14: 9 | x                   *ast.Ident                     | var     : float64 | variable
+025: 14: 9 | x * x               *ast.BinaryExpr                | value   : float64 | value
+026: 14:13 | x                   *ast.Ident                     | var     : float64 | variable
+027: 14:16 | x                   *ast.Ident                     | var     : float64 | variable
+028: 14:16 | x + x               *ast.BinaryExpr                | value   : float64 | value
+029: 14:20 | x                   *ast.Ident                     | var     : float64 | variable
+== defs ==
+000:  2: 6 | Map                 | func main.Map(c []float64, t func(float64) float64)
+001:  2:10 | c                   | var c []float64
+002:  2:23 | t                   | var t func(float64) float64
+003:  6: 6 | Map2                | func main.Map2(c []float64, t func(float64) (float64, float64))
+004:  6:11 | c                   | var c []float64
+005:  6:24 | t                   | var t func(float64) (float64, float64)
+006: 10: 1 | main                | func main.main()
+007: 10:20 | x                   | var x float64
+008: 13:21 | x                   | var x float64
+== uses ==
+000:  2:14 | float64             | type float64
+001:  2:30 | float64             | type float64
+002:  2:39 | float64             | type float64
+003:  6:15 | float64             | type float64
+004:  6:31 | float64             | type float64
+005:  6:41 | float64             | type float64
+006:  6:50 | float64             | type float64
+007: 10: 1 | Map                 | func main.Map(c []float64, t func(float64) float64)
+008: 11: 9 | x                   | var x float64
+009: 11:13 | x                   | var x float64
+010: 13: 1 | Map2                | func main.Map2(c []float64, t func(float64) (float64, float64))
+011: 14: 9 | x                   | var x float64
+012: 14:13 | x                   | var x float64
+013: 14:16 | x                   | var x float64
+014: 14:20 | x                   | var x float64`)
+}
