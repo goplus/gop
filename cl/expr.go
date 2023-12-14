@@ -688,6 +688,9 @@ func compileLambdaExpr(ctx *blockCtx, v *ast.LambdaExpr, sig *types.Signature) {
 	params := makeLambdaParams(ctx, v.Pos(), v.Lhs, sig.Params())
 	results := makeLambdaResults(pkg, sig.Results())
 	ctx.cb.NewClosure(params, results, false).BodyStart(pkg)
+	if len(v.Lhs) > 0 {
+		defNames(ctx, v.Lhs, ctx.cb.Scope())
+	}
 	for _, v := range v.Rhs {
 		compileExpr(ctx, v)
 	}
@@ -700,7 +703,12 @@ func compileLambdaExpr2(ctx *blockCtx, v *ast.LambdaExpr2, sig *types.Signature)
 	results := makeLambdaResults(pkg, sig.Results())
 	comments, once := ctx.cb.BackupComments()
 	fn := ctx.cb.NewClosure(params, results, false)
-	loadFuncBody(ctx, fn, v.Body, v)
+	cb := fn.BodyStart(ctx.pkg, v.Body)
+	if len(v.Lhs) > 0 {
+		defNames(ctx, v.Lhs, cb.Scope())
+	}
+	compileStmts(ctx, v.Body.List)
+	cb.End(v)
 	ctx.cb.SetComments(comments, once)
 }
 
