@@ -384,17 +384,23 @@ func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
 	cb := ctx.cb
 	comments, once := cb.BackupComments()
 	names := make([]string, 1, 2)
+	defineNames := make([]*ast.Ident, 0, 2)
 	if v.Key == nil {
 		names[0] = "_"
 	} else {
 		names[0] = v.Key.Name
+		defineNames = append(defineNames, v.Key)
 	}
 	if v.Value != nil {
 		names = append(names, v.Value.Name)
+		defineNames = append(defineNames, v.Value)
 	}
 	cb.ForRange(names...)
 	compileExpr(ctx, v.X)
 	cb.RangeAssignThen(v.TokPos)
+	if len(defineNames) > 0 {
+		defNames(ctx, defineNames, cb.Scope())
+	}
 	if v.Cond != nil {
 		cb.If()
 		compileExpr(ctx, v.Cond)
