@@ -457,6 +457,8 @@ func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, x *ast.Ident, flags, pkgKind i
 type fnType struct {
 	next     *fnType
 	params   *types.Tuple
+	sig      *types.Signature // func signature
+	org      *types.Signature // func original signature
 	n1       int
 	variadic bool
 	typetype bool
@@ -477,7 +479,9 @@ func (p *fnType) arg(i int, ellipsis bool) types.Type {
 	return nil
 }
 
-func (p *fnType) init(t *types.Signature) {
+func (p *fnType) init(t *types.Signature, org *types.Signature) {
+	p.sig = t
+	p.org = org
 	p.params, p.variadic = t.Params(), t.Variadic()
 	p.n1 = p.params.Len()
 	if p.variadic {
@@ -496,18 +500,64 @@ func (p *fnType) initWith(fnt types.Type, idx, nin int) {
 		return
 	}
 	p.inited = true
-	if t, ok := fnt.(*gox.TypeType); ok {
-		p.initTypeType(t)
-	} else if t := gox.CheckSignatures(fnt, idx, nin); t != nil {
-		p.init(t[0])
-		for i := 1; i < len(t); i++ {
-			fn := &fnType{}
-			fn.inited = true
-			fn.init(t[i])
-			p.next = fn
-			p = p.next
+	switch v := fnt.(type) {
+	case *gox.TypeType:
+		p.initTypeType(v)
+	case *types.Signature:
+		if t := gox.CheckSignatures(fnt, idx, nin); t != nil {
+			p.init(t[0], v)
+			for i := 1; i < len(t); i++ {
+				fn := &fnType{}
+				fn.inited = true
+				fn.init(t[i], v)
+				p.next = fn
+				p = p.next
+			}
 		}
 	}
+}
+
+func (p *fnType) isOverload() (types.Object, bool) {
+	if p.sig == nil || p.sig == p.org {
+		return nil, false
+	}
+	return findOverload(p.org, p.sig)
+}
+
+func findOverload(org, sig *types.Signature) (types.Object, bool) {
+	recv := org.Recv()
+	if recv == nil {
+		return nil, false
+	}
+	typ := recv.Type()
+	switch t := typ.(type) {
+	case *gox.TyOverloadFunc:
+		for _, obj := range t.Funcs {
+			if obj.Type() == sig {
+				return obj, true
+			}
+		}
+	case *gox.TyOverloadMethod:
+		for _, obj := range t.Methods {
+			if obj.Type() == sig {
+				return obj, true
+			}
+		}
+	case *gox.TyTemplateRecvMethod:
+		if tsig, ok := t.Func.Type().(*types.Signature); ok {
+			if trecv := tsig.Recv(); trecv != nil {
+				if t, ok := trecv.Type().(*gox.TyOverloadFunc); ok {
+					for _, obj := range t.Funcs {
+						if obj.Type() == sig {
+							return obj, true
+						}
+					}
+				}
+			}
+			return t.Func, true
+		}
+	}
+	return nil, false
 }
 
 func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
@@ -542,15 +592,19 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 	for fn != nil {
 		err := compileCallArgs(fn, fnt, ctx, v, ellipsis, flags)
 		if err == nil {
-			if rec := ctx.recorder(); rec != nil {
-				rec.recordCallExpr(ctx, v, fnt)
-			}
 			break
 		}
 		if fn.next == nil {
 			panic(err)
 		}
 		fn = fn.next
+	}
+	if rec := ctx.recorder(); rec != nil {
+		if obj, ok := fn.isOverload(); ok {
+			rec.recordCallExprOverload(ctx, v, obj)
+		} else {
+			rec.recordCallExpr(ctx, v, fnt)
+		}
 	}
 }
 

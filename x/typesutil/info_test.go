@@ -879,3 +879,335 @@ Map2([1.2, 3.5, 6], x => {
 013: 14:16 | x                   | var x float64
 014: 14:20 | x                   | var x float64`)
 }
+
+func TestMixedOverload1(t *testing.T) {
+	testGopInfo(t, `
+type Mesh struct {
+}
+
+func (p *Mesh) Name() string {
+	return "hello"
+}
+
+var (
+	m1 = &Mesh{}
+	m2 = &Mesh{}
+)
+
+OnKey "hello", => {
+}
+OnKey "hello", key => {
+}
+OnKey ["1"], => {
+}
+OnKey ["2"], key => {
+}
+OnKey [m1, m2], => {
+}
+OnKey [m1, m2], key => {
+}
+OnKey ["a"], ["b"], key => {
+}
+OnKey ["a"], [m1, m2], key => {
+}
+OnKey ["a"], nil, key => {
+}
+`, `
+package main
+
+type Mesher interface {
+	Name() string
+}
+
+func OnKey__0(a string, fn func()) {
+}
+
+func OnKey__1(a string, fn func(key string)) {
+}
+
+func OnKey__2(a []string, fn func()) {
+}
+
+func OnKey__3(a []string, fn func(key string)) {
+}
+
+func OnKey__4(a []Mesher, fn func()) {
+}
+
+func OnKey__5(a []Mesher, fn func(key Mesher)) {
+}
+
+func OnKey__6(a []string, b []string, fn func(key string)) {
+}
+
+func OnKey__7(a []string, b []Mesher, fn func(key string)) {
+}
+`, `== types ==
+000:  2:11 | struct {
+}          *ast.StructType                | type    : struct{} | type
+001:  5:10 | Mesh                *ast.Ident                     | type    : main.Mesh | type
+002:  5:23 | string              *ast.Ident                     | type    : string | type
+003:  6: 9 | "hello"             *ast.BasicLit                  | value   : untyped string = "hello" | constant
+004: 10: 7 | &Mesh{}             *ast.UnaryExpr                 | value   : *main.Mesh | value
+005: 10: 8 | Mesh                *ast.Ident                     | type    : main.Mesh | type
+006: 10: 8 | Mesh{}              *ast.CompositeLit              | value   : main.Mesh | value
+007: 11: 7 | &Mesh{}             *ast.UnaryExpr                 | value   : *main.Mesh | value
+008: 11: 8 | Mesh                *ast.Ident                     | type    : main.Mesh | type
+009: 11: 8 | Mesh{}              *ast.CompositeLit              | value   : main.Mesh | value
+010: 14: 1 | OnKey               *ast.Ident                     | value   : func(a string, fn func()) | value
+011: 14: 1 | OnKey "hello", => {
+} *ast.CallExpr                  | void    : () | no value
+012: 14: 7 | "hello"             *ast.BasicLit                  | value   : untyped string = "hello" | constant
+013: 16: 1 | OnKey               *ast.Ident                     | value   : func(a string, fn func(key string)) | value
+014: 16: 1 | OnKey "hello", key => {
+} *ast.CallExpr                  | void    : () | no value
+015: 16: 7 | "hello"             *ast.BasicLit                  | value   : untyped string = "hello" | constant
+016: 18: 1 | OnKey               *ast.Ident                     | value   : func(a []string, fn func()) | value
+017: 18: 1 | OnKey ["1"], => {
+} *ast.CallExpr                  | void    : () | no value
+018: 18: 8 | "1"                 *ast.BasicLit                  | value   : untyped string = "1" | constant
+019: 20: 1 | OnKey               *ast.Ident                     | value   : func(a []string, fn func(key string)) | value
+020: 20: 1 | OnKey ["2"], key => {
+} *ast.CallExpr                  | void    : () | no value
+021: 20: 8 | "2"                 *ast.BasicLit                  | value   : untyped string = "2" | constant
+022: 22: 1 | OnKey               *ast.Ident                     | value   : func(a []main.Mesher, fn func()) | value
+023: 22: 1 | OnKey [m1, m2], => {
+} *ast.CallExpr                  | void    : () | no value
+024: 22: 8 | m1                  *ast.Ident                     | var     : *main.Mesh | variable
+025: 22:12 | m2                  *ast.Ident                     | var     : *main.Mesh | variable
+026: 24: 1 | OnKey               *ast.Ident                     | value   : func(a []main.Mesher, fn func(key main.Mesher)) | value
+027: 24: 1 | OnKey [m1, m2], key => {
+} *ast.CallExpr                  | void    : () | no value
+028: 24: 8 | m1                  *ast.Ident                     | var     : *main.Mesh | variable
+029: 24:12 | m2                  *ast.Ident                     | var     : *main.Mesh | variable
+030: 26: 1 | OnKey               *ast.Ident                     | value   : func(a []string, b []string, fn func(key string)) | value
+031: 26: 1 | OnKey ["a"], ["b"], key => {
+} *ast.CallExpr                  | void    : () | no value
+032: 26: 8 | "a"                 *ast.BasicLit                  | value   : untyped string = "a" | constant
+033: 26:15 | "b"                 *ast.BasicLit                  | value   : untyped string = "b" | constant
+034: 28: 1 | OnKey               *ast.Ident                     | value   : func(a []string, b []main.Mesher, fn func(key string)) | value
+035: 28: 1 | OnKey ["a"], [m1, m2], key => {
+} *ast.CallExpr                  | void    : () | no value
+036: 28: 8 | "a"                 *ast.BasicLit                  | value   : untyped string = "a" | constant
+037: 28:15 | m1                  *ast.Ident                     | var     : *main.Mesh | variable
+038: 28:19 | m2                  *ast.Ident                     | var     : *main.Mesh | variable
+039: 30: 1 | OnKey               *ast.Ident                     | value   : func(a []string, b []string, fn func(key string)) | value
+040: 30: 1 | OnKey ["a"], nil, key => {
+} *ast.CallExpr                  | void    : () | no value
+041: 30: 8 | "a"                 *ast.BasicLit                  | value   : untyped string = "a" | constant
+042: 30:14 | nil                 *ast.Ident                     | nil     : untyped nil | value
+== defs ==
+000:  2: 6 | Mesh                | type main.Mesh struct{}
+001:  5: 7 | p                   | var p *main.Mesh
+002:  5:16 | Name                | func (*main.Mesh).Name() string
+003: 10: 2 | m1                  | var main.m1 *main.Mesh
+004: 11: 2 | m2                  | var main.m2 *main.Mesh
+005: 14: 1 | main                | func main.main()
+006: 16:16 | key                 | var key string
+007: 20:14 | key                 | var key string
+008: 24:17 | key                 | var key main.Mesher
+009: 26:21 | key                 | var key string
+010: 28:24 | key                 | var key string
+011: 30:19 | key                 | var key string
+== uses ==
+000:  5:10 | Mesh                | type main.Mesh struct{}
+001:  5:23 | string              | type string
+002: 10: 8 | Mesh                | type main.Mesh struct{}
+003: 11: 8 | Mesh                | type main.Mesh struct{}
+004: 14: 1 | OnKey               | func main.OnKey__0(a string, fn func())
+005: 16: 1 | OnKey               | func main.OnKey__1(a string, fn func(key string))
+006: 18: 1 | OnKey               | func main.OnKey__2(a []string, fn func())
+007: 20: 1 | OnKey               | func main.OnKey__3(a []string, fn func(key string))
+008: 22: 1 | OnKey               | func main.OnKey__4(a []main.Mesher, fn func())
+009: 22: 8 | m1                  | var main.m1 *main.Mesh
+010: 22:12 | m2                  | var main.m2 *main.Mesh
+011: 24: 1 | OnKey               | func main.OnKey__5(a []main.Mesher, fn func(key main.Mesher))
+012: 24: 8 | m1                  | var main.m1 *main.Mesh
+013: 24:12 | m2                  | var main.m2 *main.Mesh
+014: 26: 1 | OnKey               | func main.OnKey__6(a []string, b []string, fn func(key string))
+015: 28: 1 | OnKey               | func main.OnKey__7(a []string, b []main.Mesher, fn func(key string))
+016: 28:15 | m1                  | var main.m1 *main.Mesh
+017: 28:19 | m2                  | var main.m2 *main.Mesh
+018: 30: 1 | OnKey               | func main.OnKey__6(a []string, b []string, fn func(key string))
+019: 30:14 | nil                 | nil`)
+
+}
+
+func TestMixedOverload2(t *testing.T) {
+	testGopInfo(t, `
+type Mesh struct {
+}
+
+func (p *Mesh) Name() string {
+	return "hello"
+}
+
+var (
+	m1 = &Mesh{}
+	m2 = &Mesh{}
+)
+
+n := &N{}
+n.onKey "hello", => {
+}
+n.onKey "hello", key => {
+}
+n.onKey ["1"], => {
+}
+n.onKey ["2"], key => {
+}
+n.onKey [m1, m2], => {
+}
+n.onKey [m1, m2], key => {
+}
+n.onKey ["a"], ["b"], key => {
+}
+n.onKey ["a"], [m1, m2], key => {
+}
+n.onKey ["a"], nil, key => {
+}
+`, `
+package main
+
+type Mesher interface {
+	Name() string
+}
+
+type N struct {
+}
+
+func (m *N) OnKey__0(a string, fn func()) {
+}
+
+func (m *N) OnKey__1(a string, fn func(key string)) {
+}
+
+func (m *N) OnKey__2(a []string, fn func()) {
+}
+
+func (m *N) OnKey__3(a []string, fn func(key string)) {
+}
+
+func (m *N) OnKey__4(a []Mesher, fn func()) {
+}
+
+func (m *N) OnKey__5(a []Mesher, fn func(key Mesher)) {
+}
+
+func (m *N) OnKey__6(a []string, b []string, fn func(key string)) {
+}
+
+func (m *N) OnKey__7(a []string, b []Mesher, fn func(key string)) {
+}
+`, `== types ==
+000:  2:11 | struct {
+}          *ast.StructType                | type    : struct{} | type
+001:  5:10 | Mesh                *ast.Ident                     | type    : main.Mesh | type
+002:  5:23 | string              *ast.Ident                     | type    : string | type
+003:  6: 9 | "hello"             *ast.BasicLit                  | value   : untyped string = "hello" | constant
+004: 10: 7 | &Mesh{}             *ast.UnaryExpr                 | value   : *main.Mesh | value
+005: 10: 8 | Mesh                *ast.Ident                     | type    : main.Mesh | type
+006: 10: 8 | Mesh{}              *ast.CompositeLit              | value   : main.Mesh | value
+007: 11: 7 | &Mesh{}             *ast.UnaryExpr                 | value   : *main.Mesh | value
+008: 11: 8 | Mesh                *ast.Ident                     | type    : main.Mesh | type
+009: 11: 8 | Mesh{}              *ast.CompositeLit              | value   : main.Mesh | value
+010: 14: 6 | &N{}                *ast.UnaryExpr                 | value   : *main.N | value
+011: 14: 7 | N                   *ast.Ident                     | type    : main.N | type
+012: 14: 7 | N{}                 *ast.CompositeLit              | value   : main.N | value
+013: 15: 1 | n                   *ast.Ident                     | var     : *main.N | variable
+014: 15: 1 | n.onKey             *ast.SelectorExpr              | value   : func(a string, fn func()) | value
+015: 15: 1 | n.onKey "hello", => {
+} *ast.CallExpr                  | void    : () | no value
+016: 15: 9 | "hello"             *ast.BasicLit                  | value   : untyped string = "hello" | constant
+017: 17: 1 | n                   *ast.Ident                     | var     : *main.N | variable
+018: 17: 1 | n.onKey             *ast.SelectorExpr              | value   : func(a string, fn func(key string)) | value
+019: 17: 1 | n.onKey "hello", key => {
+} *ast.CallExpr                  | void    : () | no value
+020: 17: 9 | "hello"             *ast.BasicLit                  | value   : untyped string = "hello" | constant
+021: 19: 1 | n                   *ast.Ident                     | var     : *main.N | variable
+022: 19: 1 | n.onKey             *ast.SelectorExpr              | value   : func(a []string, fn func()) | value
+023: 19: 1 | n.onKey ["1"], => {
+} *ast.CallExpr                  | void    : () | no value
+024: 19:10 | "1"                 *ast.BasicLit                  | value   : untyped string = "1" | constant
+025: 21: 1 | n                   *ast.Ident                     | var     : *main.N | variable
+026: 21: 1 | n.onKey             *ast.SelectorExpr              | value   : func(a []string, fn func(key string)) | value
+027: 21: 1 | n.onKey ["2"], key => {
+} *ast.CallExpr                  | void    : () | no value
+028: 21:10 | "2"                 *ast.BasicLit                  | value   : untyped string = "2" | constant
+029: 23: 1 | n                   *ast.Ident                     | var     : *main.N | variable
+030: 23: 1 | n.onKey             *ast.SelectorExpr              | value   : func(a []main.Mesher, fn func()) | value
+031: 23: 1 | n.onKey [m1, m2], => {
+} *ast.CallExpr                  | void    : () | no value
+032: 23:10 | m1                  *ast.Ident                     | var     : *main.Mesh | variable
+033: 23:14 | m2                  *ast.Ident                     | var     : *main.Mesh | variable
+034: 25: 1 | n                   *ast.Ident                     | var     : *main.N | variable
+035: 25: 1 | n.onKey             *ast.SelectorExpr              | value   : func(a []main.Mesher, fn func(key main.Mesher)) | value
+036: 25: 1 | n.onKey [m1, m2], key => {
+} *ast.CallExpr                  | void    : () | no value
+037: 25:10 | m1                  *ast.Ident                     | var     : *main.Mesh | variable
+038: 25:14 | m2                  *ast.Ident                     | var     : *main.Mesh | variable
+039: 27: 1 | n                   *ast.Ident                     | var     : *main.N | variable
+040: 27: 1 | n.onKey             *ast.SelectorExpr              | value   : func(a []string, b []string, fn func(key string)) | value
+041: 27: 1 | n.onKey ["a"], ["b"], key => {
+} *ast.CallExpr                  | void    : () | no value
+042: 27:10 | "a"                 *ast.BasicLit                  | value   : untyped string = "a" | constant
+043: 27:17 | "b"                 *ast.BasicLit                  | value   : untyped string = "b" | constant
+044: 29: 1 | n                   *ast.Ident                     | var     : *main.N | variable
+045: 29: 1 | n.onKey             *ast.SelectorExpr              | value   : func(a []string, b []main.Mesher, fn func(key string)) | value
+046: 29: 1 | n.onKey ["a"], [m1, m2], key => {
+} *ast.CallExpr                  | void    : () | no value
+047: 29:10 | "a"                 *ast.BasicLit                  | value   : untyped string = "a" | constant
+048: 29:17 | m1                  *ast.Ident                     | var     : *main.Mesh | variable
+049: 29:21 | m2                  *ast.Ident                     | var     : *main.Mesh | variable
+050: 31: 1 | n                   *ast.Ident                     | var     : *main.N | variable
+051: 31: 1 | n.onKey             *ast.SelectorExpr              | value   : func(a []string, b []string, fn func(key string)) | value
+052: 31: 1 | n.onKey ["a"], nil, key => {
+} *ast.CallExpr                  | void    : () | no value
+053: 31:10 | "a"                 *ast.BasicLit                  | value   : untyped string = "a" | constant
+054: 31:16 | nil                 *ast.Ident                     | nil     : untyped nil | value
+== defs ==
+000:  2: 6 | Mesh                | type main.Mesh struct{}
+001:  5: 7 | p                   | var p *main.Mesh
+002:  5:16 | Name                | func (*main.Mesh).Name() string
+003: 10: 2 | m1                  | var main.m1 *main.Mesh
+004: 11: 2 | m2                  | var main.m2 *main.Mesh
+005: 14: 1 | main                | func main.main()
+006: 14: 1 | n                   | var n *main.N
+007: 17:18 | key                 | var key string
+008: 21:16 | key                 | var key string
+009: 25:19 | key                 | var key main.Mesher
+010: 27:23 | key                 | var key string
+011: 29:26 | key                 | var key string
+012: 31:21 | key                 | var key string
+== uses ==
+000:  5:10 | Mesh                | type main.Mesh struct{}
+001:  5:23 | string              | type string
+002: 10: 8 | Mesh                | type main.Mesh struct{}
+003: 11: 8 | Mesh                | type main.Mesh struct{}
+004: 14: 7 | N                   | type main.N struct{}
+005: 15: 1 | n                   | var n *main.N
+006: 15: 3 | onKey               | func (*main.N).OnKey__0(a string, fn func())
+007: 17: 1 | n                   | var n *main.N
+008: 17: 3 | onKey               | func (*main.N).OnKey__1(a string, fn func(key string))
+009: 19: 1 | n                   | var n *main.N
+010: 19: 3 | onKey               | func (*main.N).OnKey__2(a []string, fn func())
+011: 21: 1 | n                   | var n *main.N
+012: 21: 3 | onKey               | func (*main.N).OnKey__3(a []string, fn func(key string))
+013: 23: 1 | n                   | var n *main.N
+014: 23: 3 | onKey               | func (*main.N).OnKey__4(a []main.Mesher, fn func())
+015: 23:10 | m1                  | var main.m1 *main.Mesh
+016: 23:14 | m2                  | var main.m2 *main.Mesh
+017: 25: 1 | n                   | var n *main.N
+018: 25: 3 | onKey               | func (*main.N).OnKey__5(a []main.Mesher, fn func(key main.Mesher))
+019: 25:10 | m1                  | var main.m1 *main.Mesh
+020: 25:14 | m2                  | var main.m2 *main.Mesh
+021: 27: 1 | n                   | var n *main.N
+022: 27: 3 | onKey               | func (*main.N).OnKey__6(a []string, b []string, fn func(key string))
+023: 29: 1 | n                   | var n *main.N
+024: 29: 3 | onKey               | func (*main.N).OnKey__7(a []string, b []main.Mesher, fn func(key string))
+025: 29:17 | m1                  | var main.m1 *main.Mesh
+026: 29:21 | m2                  | var main.m2 *main.Mesh
+027: 31: 1 | n                   | var n *main.N
+028: 31: 3 | onKey               | func (*main.N).OnKey__6(a []string, b []string, fn func(key string))
+029: 31:16 | nil                 | nil`)
+}
