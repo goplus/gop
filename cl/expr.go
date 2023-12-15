@@ -457,7 +457,7 @@ func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, x *ast.Ident, flags, pkgKind i
 type fnType struct {
 	next     *fnType
 	params   *types.Tuple
-	sig      *types.Signature
+	obj      types.Object
 	base     int
 	size     int
 	variadic bool
@@ -478,9 +478,9 @@ func (p *fnType) arg(i int, ellipsis bool) types.Type {
 	return nil
 }
 
-func (p *fnType) init(base int, t *types.Signature) {
+func (p *fnType) init(base int, t *types.Signature, obj types.Object) {
 	p.base = base
-	p.sig = t
+	p.obj = obj
 	p.params, p.variadic = t.Params(), t.Variadic()
 	p.size = p.params.Len() + base
 	if p.variadic {
@@ -520,7 +520,7 @@ func (p *fnType) load(fnt types.Type) {
 				return
 			}
 		}
-		p.init(0, v)
+		p.init(0, v, nil)
 	}
 }
 
@@ -528,10 +528,10 @@ func (p *fnType) initFuncs(base int, funcs ...types.Object) {
 	for i, obj := range funcs {
 		if sig, ok := obj.Type().(*types.Signature); ok {
 			if i == 0 {
-				p.init(base, sig)
+				p.init(base, sig, obj)
 			} else {
 				fn := &fnType{}
-				fn.init(base, sig)
+				fn.init(base, sig, obj)
 				p.next = fn
 				p = p.next
 			}
