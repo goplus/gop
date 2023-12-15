@@ -457,15 +457,16 @@ func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, x *ast.Ident, flags, pkgKind i
 type fnType struct {
 	next     *fnType
 	params   *types.Tuple
+	sig      *types.Signature
+	base     int
 	n1       int
 	variadic bool
 	typetype bool
-	inited   bool
 }
 
 func (p *fnType) arg(i int, ellipsis bool) types.Type {
 	if i < p.n1 {
-		return p.params.At(i).Type()
+		return p.params.At(i + p.base).Type()
 	}
 	if p.variadic {
 		t := p.params.At(p.n1).Type()
@@ -477,9 +478,11 @@ func (p *fnType) arg(i int, ellipsis bool) types.Type {
 	return nil
 }
 
-func (p *fnType) init(t *types.Signature) {
+func (p *fnType) init(base int, t *types.Signature) {
+	p.base = base
+	p.sig = t
 	p.params, p.variadic = t.Params(), t.Variadic()
-	p.n1 = p.params.Len()
+	p.n1 = p.params.Len() + base
 	if p.variadic {
 		p.n1--
 	}
@@ -491,21 +494,47 @@ func (p *fnType) initTypeType(t *gox.TypeType) {
 	p.n1 = 1
 }
 
-func (p *fnType) initWith(fnt types.Type, idx, nin int) {
-	if p.inited {
-		return
+func (p *fnType) load(fnt types.Type) {
+	switch v := fnt.(type) {
+	case *gox.TypeType:
+		p.initTypeType(v)
+	case *types.Signature:
+		if recv := v.Recv(); recv != nil {
+			switch t := recv.Type().(type) {
+			case *gox.TyOverloadFunc:
+				p.initFuncs(0, t.Funcs...)
+				return
+			case *gox.TyOverloadMethod:
+				p.initFuncs(0, t.Methods...)
+				return
+			case *gox.TyTemplateRecvMethod:
+				if tsig, ok := t.Func.Type().(*types.Signature); ok {
+					if trecv := tsig.Recv(); trecv != nil {
+						if t, ok := trecv.Type().(*gox.TyOverloadFunc); ok {
+							p.initFuncs(1, t.Funcs...)
+							return
+						}
+					}
+				}
+				p.initFuncs(0, t.Func)
+				return
+			}
+		}
+		p.init(0, v)
 	}
-	p.inited = true
-	if t, ok := fnt.(*gox.TypeType); ok {
-		p.initTypeType(t)
-	} else if t := gox.CheckSignatures(fnt, idx, nin); t != nil {
-		p.init(t[0])
-		for i := 1; i < len(t); i++ {
-			fn := &fnType{}
-			fn.inited = true
-			fn.init(t[i])
-			p.next = fn
-			p = p.next
+}
+
+func (p *fnType) initFuncs(base int, funcs ...types.Object) {
+	for i, obj := range funcs {
+		if sig, ok := obj.Type().(*types.Signature); ok {
+			if i == 0 {
+				p.init(base, sig)
+			} else {
+				fn := &fnType{}
+				fn.init(base, sig)
+				p.next = fn
+				p = p.next
+			}
 		}
 	}
 }
@@ -538,7 +567,8 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 	if (inFlags & clCallWithTwoValue) != 0 {
 		flags |= gox.InstrFlagTwoValue
 	}
-	var fn *fnType = &fnType{}
+	fn := &fnType{}
+	fn.load(fnt)
 	for fn != nil {
 		err := compileCallArgs(fn, fnt, ctx, v, ellipsis, flags)
 		if err == nil {
@@ -570,18 +600,14 @@ func compileCallArgs(fn *fnType, fnt types.Type, ctx *blockCtx, v *ast.CallExpr,
 	for i, arg := range v.Args {
 		switch expr := arg.(type) {
 		case *ast.LambdaExpr:
-			fn.initWith(fnt, i, len(expr.Lhs))
 			sig := checkLambdaFuncType(ctx, expr, fn.arg(i, true), clLambaArgument, v.Fun)
 			compileLambdaExpr(ctx, expr, sig)
 		case *ast.LambdaExpr2:
-			fn.initWith(fnt, i, len(expr.Lhs))
 			sig := checkLambdaFuncType(ctx, expr, fn.arg(i, true), clLambaArgument, v.Fun)
 			compileLambdaExpr2(ctx, expr, sig)
 		case *ast.CompositeLit:
-			fn.initWith(fnt, i, -1)
 			compileCompositeLit(ctx, expr, fn.arg(i, ellipsis), true)
 		case *ast.SliceLit:
-			fn.initWith(fnt, i, -2)
 			t := fn.arg(i, ellipsis)
 			switch t.(type) {
 			case *types.Slice:
