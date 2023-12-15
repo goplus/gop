@@ -459,17 +459,17 @@ type fnType struct {
 	params   *types.Tuple
 	sig      *types.Signature
 	base     int
-	n1       int
+	size     int
 	variadic bool
 	typetype bool
 }
 
 func (p *fnType) arg(i int, ellipsis bool) types.Type {
-	if i < p.n1 {
+	if i < p.size {
 		return p.params.At(i + p.base).Type()
 	}
 	if p.variadic {
-		t := p.params.At(p.n1).Type()
+		t := p.params.At(p.size).Type()
 		if ellipsis {
 			return t
 		}
@@ -482,16 +482,16 @@ func (p *fnType) init(base int, t *types.Signature) {
 	p.base = base
 	p.sig = t
 	p.params, p.variadic = t.Params(), t.Variadic()
-	p.n1 = p.params.Len() + base
+	p.size = p.params.Len() + base
 	if p.variadic {
-		p.n1--
+		p.size--
 	}
 }
 
 func (p *fnType) initTypeType(t *gox.TypeType) {
 	param := types.NewParam(0, nil, "", t.Type())
 	p.params, p.typetype = types.NewTuple(param), true
-	p.n1 = 1
+	p.size = 1
 }
 
 func (p *fnType) load(fnt types.Type) {
@@ -516,7 +516,7 @@ func (p *fnType) load(fnt types.Type) {
 						}
 					}
 				}
-				p.initFuncs(0, t.Func)
+				p.initFuncs(1, t.Func)
 				return
 			}
 		}

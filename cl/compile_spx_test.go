@@ -792,3 +792,104 @@ func (this *Kai) onMsg(msg string) {
 }
 `, "Game.tgmx", "Kai.tspx")
 }
+
+func TestSpxOverload(t *testing.T) {
+	gopSpxTestEx(t, `
+var (
+	Kai Kai
+)
+
+func onInit() {
+	Kai.onKey "hello", key => {
+	}
+}
+`, `
+var (
+	a int
+)
+
+type Mesh struct {
+}
+
+func (p *Mesh) Name() string {
+	return "hello"
+}
+
+var (
+	m1 = &Mesh{}
+	m2 = &Mesh{}
+)
+
+onKey "hello", => {
+}
+onKey "hello", key => {
+}
+onKey ["1"], => {
+}
+onKey ["2"], key => {
+}
+onKey [m1, m2], => {
+}
+onKey [m1, m2], key => {
+}
+onKey ["a"], ["b"], key => {
+}
+onKey ["a"], [m1, m2], key => {
+}
+onKey ["a"], nil, key => {
+}
+onKey 100, 200
+onKey2 "hello", key => {
+}
+`, `package main
+
+import "github.com/goplus/gop/cl/internal/spx"
+
+type Mesh struct {
+}
+type Kai struct {
+	spx.Sprite
+	*Game
+	a int
+}
+type Game struct {
+	*spx.MyGame
+	Kai Kai
+}
+
+func (this *Game) onInit() {
+	spx.Gopt_Sprite_OnKey__1(this.Kai, "hello", func(key string) {
+	})
+}
+func (p *Mesh) Name() string {
+	return "hello"
+}
+
+var m1 = &Mesh{}
+var m2 = &Mesh{}
+
+func (this *Kai) Main() {
+	spx.Gopt_Sprite_OnKey__0(this, "hello", func() {
+	})
+	spx.Gopt_Sprite_OnKey__1(this, "hello", func(key string) {
+	})
+	spx.Gopt_Sprite_OnKey__2(this, []string{"1"}, func() {
+	})
+	spx.Gopt_Sprite_OnKey__3(this, []string{"2"}, func(key string) {
+	})
+	spx.Gopt_Sprite_OnKey__4(this, []spx.Mesher{m1, m2}, func() {
+	})
+	spx.Gopt_Sprite_OnKey__5(this, []spx.Mesher{m1, m2}, func(key spx.Mesher) {
+	})
+	spx.Gopt_Sprite_OnKey__6(this, []string{"a"}, []string{"b"}, func(key string) {
+	})
+	spx.Gopt_Sprite_OnKey__7(this, []string{"a"}, []spx.Mesher{m1, m2}, func(key string) {
+	})
+	spx.Gopt_Sprite_OnKey__6(this, []string{"a"}, nil, func(key string) {
+	})
+	spx.Gopt_Sprite_OnKey__8(this, 100, 200)
+	spx.Gopt_Sprite_OnKey2(this, "hello", func(key string) {
+	})
+}
+`, "Game.tgmx", "Kai.tspx")
+}

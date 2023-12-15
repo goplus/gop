@@ -33,6 +33,9 @@ func (m *N) OnKey__6(a []string, b []string, fn func(key string)) {
 func (m *N) OnKey__7(a []string, b []Mesher, fn func(key string)) {
 }
 
+func (m *N) OnKey__8(x int, y int) {
+}
+
 func OnKey__0(a string, fn func()) {
 }
 
@@ -55,4 +58,7 @@ func OnKey__6(a []string, b []string, fn func(key string)) {
 }
 
 func OnKey__7(a []string, b []Mesher, fn func(key string)) {
+}
+
+func OnKey__8(x int, y int) {
 }
