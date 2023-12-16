@@ -4788,6 +4788,9 @@ func OnKey__8(x int, y int) {
 
 func OnKey__9(a, b string, fn ...func(x int) int) {
 }
+
+func OnKey__a(a, b string, v ...int) {
+}
 `, `
 type Mesh struct {
 }
@@ -4820,7 +4823,11 @@ OnKey ["a"], [m1, m2], key => {
 OnKey ["a"], nil, key => {
 }
 OnKey 100, 200
-OnKey "a","b", x => x*x, x => { return x*2 }
+OnKey "a", "b", x => x * x, x => {
+	return x * 2
+}
+OnKey "a", "b", 1, 2, 3
+OnKey("a", "b", [1, 2, 3]...)
 
 n := &N{}
 n.onKey "hello", => {
@@ -4879,6 +4886,8 @@ func main() {
 	}, func(x int) int {
 		return x * 2
 	})
+	OnKey__a("a", "b", 1, 2, 3)
+	OnKey__a("a", "b", []int{1, 2, 3}...)
 	n := &N{}
 	n.OnKey__0("hello", func() {
 	})
