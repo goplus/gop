@@ -600,10 +600,10 @@ func compileCallArgs(fn *fnType, fnt types.Type, ctx *blockCtx, v *ast.CallExpr,
 	for i, arg := range v.Args {
 		switch expr := arg.(type) {
 		case *ast.LambdaExpr:
-			sig := checkLambdaFuncType(ctx, expr, fn.arg(i, true), clLambaArgument, v.Fun)
+			sig := checkLambdaFuncType(ctx, expr, fn.arg(i, ellipsis), clLambaArgument, v.Fun)
 			compileLambdaExpr(ctx, expr, sig)
 		case *ast.LambdaExpr2:
-			sig := checkLambdaFuncType(ctx, expr, fn.arg(i, true), clLambaArgument, v.Fun)
+			sig := checkLambdaFuncType(ctx, expr, fn.arg(i, ellipsis), clLambaArgument, v.Fun)
 			compileLambdaExpr2(ctx, expr, sig)
 		case *ast.CompositeLit:
 			compileCompositeLit(ctx, expr, fn.arg(i, ellipsis), true)
