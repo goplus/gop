@@ -465,7 +465,7 @@ type fnType struct {
 }
 
 func (p *fnType) arg(i int, ellipsis bool) types.Type {
-	if i < p.size {
+	if i+p.base < p.size {
 		return p.params.At(i + p.base).Type()
 	}
 	if p.variadic {
@@ -482,7 +482,7 @@ func (p *fnType) init(base int, t *types.Signature, obj types.Object) {
 	p.base = base
 	p.obj = obj
 	p.params, p.variadic = t.Params(), t.Variadic()
-	p.size = p.params.Len() + base
+	p.size = p.params.Len()
 	if p.variadic {
 		p.size--
 	}
