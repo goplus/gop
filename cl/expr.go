@@ -457,7 +457,6 @@ func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, x *ast.Ident, flags, pkgKind i
 type fnType struct {
 	next     *fnType
 	params   *types.Tuple
-	obj      types.Object
 	base     int
 	size     int
 	variadic bool
@@ -478,9 +477,8 @@ func (p *fnType) arg(i int, ellipsis bool) types.Type {
 	return nil
 }
 
-func (p *fnType) init(base int, t *types.Signature, obj types.Object) {
+func (p *fnType) init(base int, t *types.Signature) {
 	p.base = base
-	p.obj = obj
 	p.params, p.variadic = t.Params(), t.Variadic()
 	p.size = p.params.Len()
 	if p.variadic {
@@ -520,7 +518,7 @@ func (p *fnType) load(fnt types.Type) {
 				return
 			}
 		}
-		p.init(0, v, nil)
+		p.init(0, v)
 	}
 }
 
@@ -528,10 +526,10 @@ func (p *fnType) initFuncs(base int, funcs ...types.Object) {
 	for i, obj := range funcs {
 		if sig, ok := obj.Type().(*types.Signature); ok {
 			if i == 0 {
-				p.init(base, sig, obj)
+				p.init(base, sig)
 			} else {
 				fn := &fnType{}
-				fn.init(base, sig, obj)
+				fn.init(base, sig)
 				p.next = fn
 				p = p.next
 			}
@@ -570,11 +568,8 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 	fn := &fnType{}
 	fn.load(fnt)
 	for fn != nil {
-		err := compileCallArgs(fn, fnt, ctx, v, ellipsis, flags)
+		err := compileCallArgs(fn, ctx, v, ellipsis, flags)
 		if err == nil {
-			if rec := ctx.recorder(); rec != nil {
-				rec.recordCallExpr(ctx, v, fnt)
-			}
 			break
 		}
 		if fn.next == nil {
@@ -582,9 +577,12 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 		}
 		fn = fn.next
 	}
+	if rec := ctx.recorder(); rec != nil {
+		rec.recordCallExpr(ctx, v, fnt)
+	}
 }
 
-func compileCallArgs(fn *fnType, fnt types.Type, ctx *blockCtx, v *ast.CallExpr, ellipsis bool, flags gox.InstrFlags) (err error) {
+func compileCallArgs(fn *fnType, ctx *blockCtx, v *ast.CallExpr, ellipsis bool, flags gox.InstrFlags) (err error) {
 	n := ctx.cb.InternalStack().Len()
 	defer func() {
 		if r := recover(); r != nil {
