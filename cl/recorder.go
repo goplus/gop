@@ -159,18 +159,6 @@ func (rec *typesRecorder) recordCallExpr(ctx *blockCtx, v *ast.CallExpr, fnt typ
 	rec.Type(v, typesutil.NewTypeAndValueForCallResult(e.Type, e.CVal))
 }
 
-func (rec *typesRecorder) recordCallExprOverload(ctx *blockCtx, v *ast.CallExpr, obj types.Object) {
-	switch id := v.Fun.(type) {
-	case *ast.Ident:
-		rec.Use(id, obj)
-	case *ast.SelectorExpr:
-		rec.Use(id.Sel, obj)
-	}
-	rec.Type(v.Fun, typesutil.NewTypeAndValueForObject(obj))
-	e := ctx.cb.Get(-1)
-	rec.Type(v, typesutil.NewTypeAndValueForCallResult(e.Type, e.CVal))
-}
-
 func (rec *typesRecorder) recordCompositeLit(ctx *blockCtx, v *ast.CompositeLit, typ types.Type) {
 	rec.Type(v.Type, typesutil.NewTypeAndValueForType(typ))
 	rec.Type(v, typesutil.NewTypeAndValueForValue(typ, nil, typesutil.Value))
