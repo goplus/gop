@@ -17,6 +17,7 @@
 package cl
 
 import (
+	goast "go/ast"
 	"go/types"
 
 	"github.com/goplus/gop/ast"
@@ -95,11 +96,78 @@ func (rec *typesRecorder) unaryExpr(ctx *blockCtx, expr *ast.UnaryExpr) {
 	}
 }
 
+func findExprObject(expr goast.Expr, objs ...types.Object) (types.Object, bool) {
+	switch id := expr.(type) {
+	case *goast.Ident:
+		for _, obj := range objs {
+			if obj.Name() == id.Name {
+				return obj, true
+			}
+		}
+	case *goast.SelectorExpr:
+		for _, obj := range objs {
+			if obj.Name() == id.Sel.Name {
+				return obj, true
+			}
+		}
+	}
+	return nil, false
+}
+
+func findOverloadObject(fnt types.Type, expr goast.Expr) (types.Object, bool) {
+	if call, ok := expr.(*goast.CallExpr); ok {
+		switch v := fnt.(type) {
+		case *types.Signature:
+			if recv := v.Recv(); recv != nil {
+				switch t := recv.Type().(type) {
+				case *gox.TyOverloadFunc:
+					return findExprObject(call.Fun, t.Funcs...)
+				case *gox.TyOverloadMethod:
+					return findExprObject(call.Fun, t.Methods...)
+				case *gox.TyTemplateRecvMethod:
+					if tsig, ok := t.Func.Type().(*types.Signature); ok {
+						if trecv := tsig.Recv(); trecv != nil {
+							if t, ok := trecv.Type().(*gox.TyOverloadFunc); ok {
+								return findExprObject(call.Fun, t.Funcs...)
+							}
+						}
+					}
+					return t.Func, true
+				}
+			}
+		}
+	}
+	return nil, false
+}
+
 func (rec *typesRecorder) recordCallExpr(ctx *blockCtx, v *ast.CallExpr, fnt types.Type) {
 	e := ctx.cb.Get(-1)
-	if _, ok := rec.types[v.Fun]; !ok {
-		rec.Type(v.Fun, typesutil.NewTypeAndValueForValue(fnt, nil, typesutil.Value))
+	obj, found := findOverloadObject(fnt, e.Val)
+	if found {
+		switch id := v.Fun.(type) {
+		case *ast.Ident:
+			rec.Use(id, obj)
+		case *ast.SelectorExpr:
+			rec.Use(id.Sel, obj)
+		}
+		rec.Type(v.Fun, typesutil.NewTypeAndValueForObject(obj))
+	} else {
+		if _, ok := rec.types[v.Fun]; !ok {
+			rec.Type(v.Fun, typesutil.NewTypeAndValueForValue(fnt, nil, typesutil.Value))
+		}
 	}
+	rec.Type(v, typesutil.NewTypeAndValueForCallResult(e.Type, e.CVal))
+}
+
+func (rec *typesRecorder) recordCallExprOverload(ctx *blockCtx, v *ast.CallExpr, obj types.Object) {
+	switch id := v.Fun.(type) {
+	case *ast.Ident:
+		rec.Use(id, obj)
+	case *ast.SelectorExpr:
+		rec.Use(id.Sel, obj)
+	}
+	rec.Type(v.Fun, typesutil.NewTypeAndValueForObject(obj))
+	e := ctx.cb.Get(-1)
 	rec.Type(v, typesutil.NewTypeAndValueForCallResult(e.Type, e.CVal))
 }
 
