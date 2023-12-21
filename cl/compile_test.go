@@ -4476,16 +4476,18 @@ foo.onKey ["1"], => {
 }
 foo.onKey ["2"], key => {
 }
-foo.onKey [m1,m2], => {
+foo.onKey [m1, m2], => {
 }
-foo.onKey [m1,m2], key => {
+foo.onKey [m1, m2], key => {
 }
 foo.onKey ["a"], ["b"], key => {
 }
-foo.onKey ["a"], [m1,m2], key => {
+foo.onKey ["a"], [m1, m2], key => {
 }
-foo.onKey ["a"],nil,key => {
+foo.onKey ["a"], nil, key => {
 }
+foo.onKey 100, 200
+
 n := &foo.N{}
 n.onKey "hello", => {
 }
@@ -4495,16 +4497,17 @@ n.onKey ["1"], => {
 }
 n.onKey ["2"], key => {
 }
-n.onKey [m1,m2], => {
+n.onKey [m1, m2], => {
 }
-n.onKey [m1,m2], key => {
+n.onKey [m1, m2], key => {
 }
 n.onKey ["a"], ["b"], key => {
 }
-n.onKey ["a"], [m1,m2], key => {
+n.onKey ["a"], [m1, m2], key => {
 }
-n.onKey ["a"],nil,key => {
+n.onKey ["a"], nil, key => {
 }
+n.onKey 100, 200
 `, `package main
 
 import "github.com/goplus/gop/cl/internal/overload/foo"
@@ -4538,6 +4541,7 @@ func main() {
 	})
 	foo.OnKey__6([]string{"a"}, nil, func(key string) {
 	})
+	foo.OnKey__8(100, 200)
 	n := &foo.N{}
 	n.OnKey__0("hello", func() {
 	})
@@ -4557,6 +4561,7 @@ func main() {
 	})
 	n.OnKey__6([]string{"a"}, nil, func(key string) {
 	})
+	n.OnKey__8(100, 200)
 }
 `)
 }
@@ -4750,6 +4755,10 @@ func (m *N) OnKey__6(a []string, b []string, fn func(key string)) {
 func (m *N) OnKey__7(a []string, b []Mesher, fn func(key string)) {
 }
 
+func (m *N) OnKey__8(x int, y int) {
+}
+
+
 func OnKey__0(a string, fn func()) {
 }
 
@@ -4773,6 +4782,15 @@ func OnKey__6(a []string, b []string, fn func(key string)) {
 
 func OnKey__7(a []string, b []Mesher, fn func(key string)) {
 }
+
+func OnKey__8(x int, y int) {
+}
+
+func OnKey__9(a, b string, fn ...func(x int) int) {
+}
+
+func OnKey__a(a, b string, v ...int) {
+}
 `, `
 type Mesh struct {
 }
@@ -4794,16 +4812,23 @@ OnKey ["1"], => {
 }
 OnKey ["2"], key => {
 }
-OnKey [m1,m2], => {
+OnKey [m1, m2], => {
 }
-OnKey [m1,m2], key => {
+OnKey [m1, m2], key => {
 }
 OnKey ["a"], ["b"], key => {
 }
-OnKey ["a"], [m1,m2], key => {
+OnKey ["a"], [m1, m2], key => {
 }
-OnKey ["a"],nil,key => {
+OnKey ["a"], nil, key => {
 }
+OnKey 100, 200
+OnKey "a", "b", x => x * x, x => {
+	return x * 2
+}
+OnKey "a", "b", 1, 2, 3
+OnKey("a", "b", [1, 2, 3]...)
+
 n := &N{}
 n.onKey "hello", => {
 }
@@ -4813,16 +4838,17 @@ n.onKey ["1"], => {
 }
 n.onKey ["2"], key => {
 }
-n.onKey [m1,m2], => {
+n.onKey [m1, m2], => {
 }
-n.onKey [m1,m2], key => {
+n.onKey [m1, m2], key => {
 }
 n.onKey ["a"], ["b"], key => {
 }
-n.onKey ["a"], [m1,m2], key => {
+n.onKey ["a"], [m1, m2], key => {
 }
-n.onKey ["a"],nil,key => {
+n.onKey ["a"], nil, key => {
 }
+n.onKey 100, 200
 `, `package main
 
 type Mesh struct {
@@ -4854,6 +4880,14 @@ func main() {
 	})
 	OnKey__6([]string{"a"}, nil, func(key string) {
 	})
+	OnKey__8(100, 200)
+	OnKey__9("a", "b", func(x int) int {
+		return x * x
+	}, func(x int) int {
+		return x * 2
+	})
+	OnKey__a("a", "b", 1, 2, 3)
+	OnKey__a("a", "b", []int{1, 2, 3}...)
 	n := &N{}
 	n.OnKey__0("hello", func() {
 	})
@@ -4873,6 +4907,7 @@ func main() {
 	})
 	n.OnKey__6([]string{"a"}, nil, func(key string) {
 	})
+	n.OnKey__8(100, 200)
 }
 `)
 }
