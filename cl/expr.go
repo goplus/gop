@@ -497,8 +497,8 @@ func (p *fnType) load(fnt types.Type) {
 	case *gox.TypeType:
 		p.initTypeType(v)
 	case *types.Signature:
-		if recv := v.Recv(); recv != nil {
-			switch t := recv.Type().(type) {
+		if typ, ok := gox.CheckFuncEx(v); ok {
+			switch t := typ.(type) {
 			case *gox.TyOverloadFunc:
 				p.initFuncs(0, t.Funcs...)
 				return
@@ -507,8 +507,8 @@ func (p *fnType) load(fnt types.Type) {
 				return
 			case *gox.TyTemplateRecvMethod:
 				if tsig, ok := t.Func.Type().(*types.Signature); ok {
-					if trecv := tsig.Recv(); trecv != nil {
-						if t, ok := trecv.Type().(*gox.TyOverloadFunc); ok {
+					if ex, ok := gox.CheckFuncEx(tsig); ok {
+						if t, ok := ex.(*gox.TyOverloadFunc); ok {
 							p.initFuncs(1, t.Funcs...)
 							return
 						}
