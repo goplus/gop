@@ -47,6 +47,19 @@ func (p *goxRecorder) Member(id ast.Node, obj types.Object) {
 	}
 }
 
+func (p *goxRecorder) Call(id ast.Node, obj types.Object) {
+	switch v := id.(type) {
+	case *ast.CallExpr:
+		switch id := v.Fun.(type) {
+		case *ast.Ident:
+			p.rec.Use(id, obj)
+		case *ast.SelectorExpr:
+			p.rec.Use(id.Sel, obj)
+		}
+		p.rec.Type(v.Fun, typesutil.NewTypeAndValueForObject(obj))
+	}
+}
+
 type typesRecorder struct {
 	Recorder
 	types map[ast.Expr]types.TypeAndValue
