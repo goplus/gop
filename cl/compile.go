@@ -642,7 +642,7 @@ func initGopPkg(ctx *pkgCtx, pkg *gox.Package) {
 		}
 	}
 	if pkg.Types.Scope().Lookup(gopPackage) == nil {
-		pkg.Types.Scope().Insert(types.NewConst(token.NoPos, pkg.Types, gopPackage, nil, constant.MakeBool(true)))
+		pkg.Types.Scope().Insert(types.NewConst(token.NoPos, pkg.Types, gopPackage, types.Typ[types.UntypedBool], constant.MakeBool(true)))
 	}
 	initThisGopPkg(pkg.Types)
 }
