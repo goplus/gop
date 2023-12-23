@@ -94,7 +94,7 @@ $ brew install goplus
 
 ## IDE Plugins
 
-* vscode: https://github.com/goplus/vscode-goplus
+* vscode: https://github.com/goplus/vscode-gop
 
 
 ## Contributing
