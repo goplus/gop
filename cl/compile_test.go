@@ -5050,7 +5050,18 @@ type I interface {
 n := &N[int]{}
 n.onKey "1", => {
 }
+keys := ["1","2"]
+n.onKey keys, key => {
+	println key
+}
+n.onKey keys, => {
+	println keys
+}
+
 var i I = n
+i.onKey "1", key => {
+	println key
+}
 i.onKey ["1","2"], key => {
 	println key
 }
@@ -5062,7 +5073,17 @@ func main() {
 	n := &N[int]{}
 	n.OnKey__0("1", func() {
 	})
+	keys := []string{"1", "2"}
+	n.OnKey__3(keys, func(key string) {
+		fmt.Println(key)
+	})
+	n.OnKey__2(keys, func() {
+		fmt.Println(keys)
+	})
 	var i I = n
+	i.OnKey__1("1", func(key string) {
+		fmt.Println(key)
+	})
 	i.OnKey__3([]string{"1", "2"}, func(key string) {
 		fmt.Println(key)
 	})
