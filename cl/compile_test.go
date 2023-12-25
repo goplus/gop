@@ -5019,3 +5019,53 @@ func main() {
 }
 `)
 }
+
+func TestMixedInterfaceOverload(t *testing.T) {
+	gopMixedClTest(t, "main", `
+package main
+
+type N[T any] struct {
+	v T
+}
+
+func (m *N[T]) OnKey__0(a string, fn func()) {
+}
+
+func (m *N[T]) OnKey__1(a string, fn func(key string)) {
+}
+
+func (m *N[T]) OnKey__2(a []string, fn func()) {
+}
+
+func (m *N[T]) OnKey__3(a []string, fn func(key string)) {
+}
+
+type I interface {
+	OnKey__0(a string, fn func())
+	OnKey__1(a string, fn func(key string))
+	OnKey__2(a []string, fn func())
+	OnKey__3(a []string, fn func(key string))
+}
+`, `
+n := &N[int]{}
+n.onKey "1", => {
+}
+var i I = n
+i.onKey ["1","2"], key => {
+	println key
+}
+`, `package main
+
+import "fmt"
+
+func main() {
+	n := &N[int]{}
+	n.OnKey__0("1", func() {
+	})
+	var i I = n
+	i.OnKey__3([]string{"1", "2"}, func(key string) {
+		fmt.Println(key)
+	})
+}
+`)
+}
