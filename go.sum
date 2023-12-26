@@ -11,6 +11,8 @@ github.com/goplus/gox v1.13.1-0.20231222052208-e6decd192e88 h1:AIEOfpJP+ES2A/kbI
 github.com/goplus/gox v1.13.1-0.20231222052208-e6decd192e88/go.mod h1:iIchh0wp8Ye0DOPcFgHc5d0qlMOx8/OJ+DBQfe7hcTs=
 github.com/goplus/gox v1.13.1-0.20231224034658-01dc57167636 h1:q7GIZuo3wAxPVjdnnjkxMlaf4wjMn5UdleoXbEJCUXY=
 github.com/goplus/gox v1.13.1-0.20231224034658-01dc57167636/go.mod h1:iIchh0wp8Ye0DOPcFgHc5d0qlMOx8/OJ+DBQfe7hcTs=
+github.com/goplus/gox v1.13.1-0.20231225053549-a6c41ff21756 h1:KkSgwZXFW5YbgCv++a0Bvzc+zKBR8SsSKo/9C1BkOjI=
+github.com/goplus/gox v1.13.1-0.20231225053549-a6c41ff21756/go.mod h1:iIchh0wp8Ye0DOPcFgHc5d0qlMOx8/OJ+DBQfe7hcTs=
 github.com/goplus/mod v0.11.9/go.mod h1:YxrBMhvWGcvLU14j8e7qyKSVnj5Loba7GgH1rNXJtDg=
 github.com/goplus/mod v0.11.10-0.20231210062211-b9032d0f7810 h1:d+1SoTwaKrHwMp2EZPzZxV8VnqVr+QxXQCtz/zn+Tow=
 github.com/goplus/mod v0.11.10-0.20231210062211-b9032d0f7810/go.mod h1:YxrBMhvWGcvLU14j8e7qyKSVnj5Loba7GgH1rNXJtDg=
