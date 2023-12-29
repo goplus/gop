@@ -435,19 +435,22 @@ func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, x *ast.Ident, flags, pkgKind i
 	if v, alias := lookupPkgRef(ctx, at, x, pkgKind); v != nil {
 		cb := ctx.cb
 		if (flags & clIdentLHS) != 0 {
+			if rec := ctx.recorder(); rec != nil {
+				rec.Use(x, v)
+			}
 			cb.VarRef(v, x)
 		} else {
 			autoprop := alias && (flags&clIdentCanAutoCall) != 0
 			if autoprop && !gox.HasAutoProperty(v.Type()) {
 				return false
 			}
+			if rec := ctx.recorder(); rec != nil {
+				rec.Use(x, v)
+			}
 			cb.Val(v, x)
 			if autoprop {
-				cb.Call(0)
+				cb.CallWith(0, 0, x)
 			}
-		}
-		if rec := ctx.recorder(); rec != nil {
-			rec.Use(x, v)
 		}
 		return true
 	}

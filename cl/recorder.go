@@ -49,6 +49,12 @@ func (p *goxRecorder) Member(id ast.Node, obj types.Object) {
 
 func (p *goxRecorder) Call(id ast.Node, obj types.Object) {
 	switch v := id.(type) {
+	case *ast.Ident:
+		p.rec.Use(v, obj)
+		p.rec.Type(v, typesutil.NewTypeAndValueForObject(obj))
+	case *ast.SelectorExpr:
+		p.rec.Use(v.Sel, obj)
+		p.rec.Type(v, typesutil.NewTypeAndValueForObject(obj))
 	case *ast.CallExpr:
 		switch id := v.Fun.(type) {
 		case *ast.Ident:
