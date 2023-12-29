@@ -5090,3 +5090,33 @@ func main() {
 }
 `)
 }
+
+func TestMixedOverloadCommand(t *testing.T) {
+	gopMixedClTest(t, "main", `package main
+
+func Test__0() {
+}
+func Test__1(n int) {
+}
+type N struct {
+}
+func (p *N) Test__0() {
+}
+func (p *N) Test__1(n int) {
+}`, `
+Test
+Test 100
+var n N
+n.test
+n.test 100
+`, `package main
+
+func main() {
+	Test__0()
+	Test__1(100)
+	var n N
+	n.Test__0()
+	n.Test__1(100)
+}
+`)
+}
