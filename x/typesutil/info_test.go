@@ -1340,3 +1340,48 @@ func OnKey__a(a, b string, v ...int) {
 030: 33: 1 | n                   | var n *main.N
 031: 33: 3 | onKey               | func (*main.N).OnKey__8(x int, y int)`)
 }
+
+func TestMixedOverload3(t *testing.T) {
+	testGopInfo(t, `
+Test
+Test 100
+var n N
+n.test
+n.test 100
+`, `
+package main
+
+func Test__0() {
+}
+func Test__1(n int) {
+}
+type N struct {
+}
+func (p *N) Test__0() {
+}
+func (p *N) Test__1(n int) {
+}
+`, `== types ==
+000:  2: 1 | Test                *ast.Ident                     | value   : func() | value
+001:  3: 1 | Test                *ast.Ident                     | value   : func(n int) | value
+002:  3: 1 | Test 100            *ast.CallExpr                  | void    : () | no value
+003:  3: 6 | 100                 *ast.BasicLit                  | value   : untyped int = 100 | constant
+004:  4: 7 | N                   *ast.Ident                     | type    : main.N | type
+005:  5: 1 | n                   *ast.Ident                     | var     : main.N | variable
+006:  5: 1 | n.test              *ast.SelectorExpr              | value   : func() | value
+007:  6: 1 | n                   *ast.Ident                     | var     : main.N | variable
+008:  6: 1 | n.test              *ast.SelectorExpr              | value   : func(n int) | value
+009:  6: 1 | n.test 100          *ast.CallExpr                  | void    : () | no value
+010:  6: 8 | 100                 *ast.BasicLit                  | value   : untyped int = 100 | constant
+== defs ==
+000:  2: 1 | main                | func main.main()
+001:  4: 5 | n                   | var n main.N
+== uses ==
+000:  2: 1 | Test                | func main.Test__0()
+001:  3: 1 | Test                | func main.Test__1(n int)
+002:  4: 7 | N                   | type main.N struct{}
+003:  5: 1 | n                   | var n main.N
+004:  5: 3 | test                | func (*main.N).Test__0()
+005:  6: 1 | n                   | var n main.N
+006:  6: 3 | test                | func (*main.N).Test__1(n int)`)
+}

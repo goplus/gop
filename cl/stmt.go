@@ -126,7 +126,7 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		}
 		compileExpr(ctx, v.X, inFlags)
 		if inFlags != 0 && gox.IsFunc(ctx.cb.InternalStack().Get(-1).Type) {
-			ctx.cb.Call(0)
+			ctx.cb.CallWith(0, 0, v.X)
 		}
 	case *ast.AssignStmt:
 		compileAssignStmt(ctx, v)
