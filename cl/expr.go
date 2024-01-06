@@ -693,7 +693,11 @@ func makeLambdaParams(ctx *blockCtx, pos token.Pos, lhs []*ast.Ident, in *types.
 	}
 	params := make([]*types.Var, n)
 	for i, name := range lhs {
-		params[i] = pkg.NewParam(name.Pos(), name.Name, in.At(i).Type())
+		param := pkg.NewParam(name.Pos(), name.Name, in.At(i).Type())
+		params[i] = param
+		if rec := ctx.recorder(); rec != nil {
+			rec.Def(name, param)
+		}
 	}
 	return types.NewTuple(params...)
 }
