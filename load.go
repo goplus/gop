@@ -29,11 +29,11 @@ import (
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gop/x/c2go"
+	"github.com/goplus/gop/x/errors"
 	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/gox"
 	"github.com/goplus/mod/env"
 	"github.com/goplus/mod/gopmod"
-	"github.com/qiniu/x/errors"
 )
 
 var (

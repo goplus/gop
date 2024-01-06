@@ -26,10 +26,10 @@ import (
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gop/x/c2go"
+	"github.com/goplus/gop/x/errors"
 	"github.com/goplus/gop/x/typesutil/internal/typesutil"
 	"github.com/goplus/gox"
 	"github.com/goplus/mod/gopmod"
-	"github.com/qiniu/x/errors"
 	"github.com/qiniu/x/log"
 )
 

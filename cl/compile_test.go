@@ -167,7 +167,7 @@ import (
 	"fmt"
 	"os"
 	"github.com/goplus/gop/builtin/iox"
-	"github.com/qiniu/x/errors"
+	"github.com/goplus/gop/x/errors"
 )
 
 func main() {
@@ -933,7 +933,7 @@ func main() {
 
 import (
 	"fmt"
-	"github.com/qiniu/x/errors"
+	"github.com/goplus/gop/x/errors"
 )
 
 func t() (int, int, error) {
@@ -966,7 +966,7 @@ func main() {
 	t()!
 }`, `package main
 
-import "github.com/qiniu/x/errors"
+import "github.com/goplus/gop/x/errors"
 
 func t() error {
 	return nil
@@ -1475,8 +1475,8 @@ func foo(script string) {
 import (
 	"fmt"
 	"github.com/goplus/gop/ast/goptest"
-	"github.com/qiniu/x/errors"
 	"github.com/goplus/gop/ast/gopq"
+	"github.com/goplus/gop/x/errors"
 )
 
 func foo(script string) {
@@ -1509,8 +1509,8 @@ func foo(script string) {
 import (
 	"fmt"
 	"github.com/goplus/gop/ast/goptest"
-	"github.com/qiniu/x/errors"
 	"github.com/goplus/gop/ast/gopq"
+	"github.com/goplus/gop/x/errors"
 )
 
 func foo(script string) {
@@ -1540,7 +1540,7 @@ func add(x, y string) (int, error) {
 
 import (
 	"strconv"
-	"github.com/qiniu/x/errors"
+	"github.com/goplus/gop/x/errors"
 )
 
 func add(x string, y string) (int, error) {
@@ -1609,7 +1609,7 @@ var ret int = println("Hi")!
 
 import (
 	"fmt"
-	"github.com/qiniu/x/errors"
+	"github.com/goplus/gop/x/errors"
 )
 
 var ret int = func() (_gop_ret int) {
@@ -1633,7 +1633,7 @@ func mkdir(name string) error {
 mkdir! "foo"
 `, `package main
 
-import "github.com/qiniu/x/errors"
+import "github.com/goplus/gop/x/errors"
 
 func mkdir(name string) error {
 	return nil
@@ -1661,7 +1661,7 @@ func foo() (func(), error) {
 foo()!()
 `, `package main
 
-import "github.com/qiniu/x/errors"
+import "github.com/goplus/gop/x/errors"
 
 func foo() (func(), error) {
 	return nil, nil

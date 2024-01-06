@@ -301,7 +301,7 @@ println addSafe("10", "abc")
 import (
 	"fmt"
 	"strconv"
-	"github.com/qiniu/x/errors"
+	"github.com/goplus/gop/x/errors"
 )
 
 func add(x string, y string) (int, error) {

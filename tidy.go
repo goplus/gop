@@ -20,11 +20,11 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/goplus/gop/x/errors"
 	"github.com/goplus/mod"
 	"github.com/goplus/mod/env"
 	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modfetch"
-	"github.com/qiniu/x/errors"
 )
 
 func Tidy(dir string, gop *env.Gop) (err error) {

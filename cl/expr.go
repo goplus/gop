@@ -72,7 +72,7 @@ const (
 	objCPkgRef
 )
 
-const errorPkgPath = "github.com/qiniu/x/errors"
+const errorPkgPath = "github.com/goplus/gop/x/errors"
 
 func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg *gox.PkgRef, kind int) {
 	fvalue := (flags&clIdentSelectorExpr) != 0 || (flags&clIdentLHS) == 0

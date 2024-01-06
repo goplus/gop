@@ -26,9 +26,9 @@ import (
 	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/x/errors"
 	"github.com/goplus/gop/x/gopprojs"
 	"github.com/goplus/gox"
-	"github.com/qiniu/x/errors"
 )
 
 // gop go

@@ -30,10 +30,10 @@ import (
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/fromgo"
 	"github.com/goplus/gop/token"
+	"github.com/goplus/gop/x/errors"
 	"github.com/goplus/gox"
 	"github.com/goplus/gox/cpackages"
 	"github.com/goplus/mod/modfile"
-	"github.com/qiniu/x/errors"
 )
 
 type dbgFlags int

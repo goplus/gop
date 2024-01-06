@@ -24,10 +24,10 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/goplus/gop/x/errors"
 	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modcache"
 	"github.com/goplus/mod/modfetch"
-	"github.com/qiniu/x/errors"
 )
 
 const (

@@ -20,8 +20,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/goplus/gop/x/errors"
 	"github.com/goplus/gop/x/gocmd"
-	"github.com/qiniu/x/errors"
 )
 
 // -----------------------------------------------------------------------------
