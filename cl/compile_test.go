@@ -1475,8 +1475,8 @@ func foo(script string) {
 import (
 	"fmt"
 	"github.com/goplus/gop/ast/goptest"
-	"github.com/goplus/gop/ast/gopq"
 	"github.com/goplus/gop/x/errors"
+	"github.com/goplus/gop/ast/gopq"
 )
 
 func foo(script string) {
@@ -1509,8 +1509,8 @@ func foo(script string) {
 import (
 	"fmt"
 	"github.com/goplus/gop/ast/goptest"
-	"github.com/goplus/gop/ast/gopq"
 	"github.com/goplus/gop/x/errors"
+	"github.com/goplus/gop/ast/gopq"
 )
 
 func foo(script string) {
