@@ -828,7 +828,7 @@ func compileDeclStmt(ctx *blockCtx, expr *ast.DeclStmt) {
 		case token.VAR:
 			for _, spec := range d.Specs {
 				v := spec.(*ast.ValueSpec)
-				loadVars(ctx, v, false)
+				loadVars(ctx, v, d.Doc, false)
 			}
 		default:
 			log.Panicln("TODO: compileDeclStmt - unknown")

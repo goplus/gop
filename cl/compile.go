@@ -994,7 +994,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 							vSpec = nil
 							old, _ := p.SetCurFile(goFile, true)
 							defer p.RestoreCurFile(old)
-							loadVars(ctx, v, true)
+							loadVars(ctx, v, d.Doc, true)
 							removeNames(syms, v.Names)
 						}
 					})
@@ -1224,7 +1224,7 @@ func loadConsts(ctx *blockCtx, cdecl *gox.ConstDefs, v *ast.ValueSpec, iotav int
 	defNames(ctx, v.Names, nil)
 }
 
-func loadVars(ctx *blockCtx, v *ast.ValueSpec, global bool) {
+func loadVars(ctx *blockCtx, v *ast.ValueSpec, doc *ast.CommentGroup, global bool) {
 	var typ types.Type
 	if v.Type != nil {
 		typ = toType(ctx, v.Type)
@@ -1239,7 +1239,8 @@ func loadVars(ctx *blockCtx, v *ast.ValueSpec, global bool) {
 	} else {
 		scope = ctx.cb.Scope()
 	}
-	varDecl := ctx.pkg.NewVarEx(scope, v.Names[0].Pos(), typ, names...)
+	varDefs := ctx.pkg.NewVarDefs(scope).SetComments(doc)
+	varDecl := varDefs.New(v.Names[0].Pos(), typ, names...)
 	if nv := len(v.Values); nv > 0 {
 		cb := varDecl.InitStart(ctx.pkg)
 		if enableRecover {
