@@ -291,7 +291,7 @@ func TestErrNewType(t *testing.T) {
 }
 
 func TestErrLoadImport(t *testing.T) {
-	testPanic(t, ".: unknownpkg not found or not a valid C package (c2go.a.pub file not found).\n", func() {
+	testPanic(t, "-: unknownpkg not found or not a valid C package (c2go.a.pub file not found).\n", func() {
 		pkg := &pkgCtx{
 			nodeInterp: &nodeInterp{
 				fset: token.NewFileSet(),

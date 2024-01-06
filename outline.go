@@ -96,7 +96,6 @@ func Outline(dir string, conf *Config) (out outline.Package, err error) {
 		pkgPath := path.Join(mod.Path(), filepath.ToSlash(relPart))
 		out, err = outline.NewPackage(pkgPath, pkg, &outline.Config{
 			Fset:        fset,
-			WorkingDir:  dir,
 			Importer:    imp,
 			LookupClass: mod.LookupClass,
 			LookupPub:   c2go.LookupPub(mod),

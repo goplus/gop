@@ -233,8 +233,7 @@ func mixedErrorTestEx(t *testing.T, pkgname, msg, gocode, gopcode string) {
 	}
 	conf := *gblConf
 	conf.NoFileLine = false
-	conf.WorkingDir = "/foo"
-	conf.TargetDir = "/foo"
+	conf.RelativeBase = "/foo"
 	bar := pkgs[pkgname]
 	_, err = cl.NewPackage("", bar, &conf)
 	if err == nil {
@@ -249,11 +248,11 @@ func TestTypeParamsErrorInstantiate(t *testing.T) {
 	var msg string
 	switch runtime.Version()[:6] {
 	case "go1.18":
-		msg = `./b.gop:2:1: uint does not implement Number`
+		msg = `b.gop:2:1: uint does not implement Number`
 	case "go1.19":
-		msg = `./b.gop:2:1: uint does not implement Number (uint missing in ~int | float64)`
+		msg = `b.gop:2:1: uint does not implement Number (uint missing in ~int | float64)`
 	default:
-		msg = `./b.gop:2:1: uint does not satisfy Number (uint missing in ~int | float64)`
+		msg = `b.gop:2:1: uint does not satisfy Number (uint missing in ~int | float64)`
 	}
 
 	mixedErrorTest(t, msg, `
@@ -281,11 +280,11 @@ func TestTypeParamsErrorMatch(t *testing.T) {
 	var msg string
 	switch runtime.Version()[:6] {
 	case "go1.18", "go1.19":
-		msg = `./b.gop:2:5: T does not match ~[]E`
+		msg = `b.gop:2:5: T does not match ~[]E`
 	case "go1.20":
-		msg = `./b.gop:2:5: int does not match ~[]E`
+		msg = `b.gop:2:5: int does not match ~[]E`
 	default:
-		msg = `./b.gop:2:5: T (type int) does not satisfy interface{interface{~[]E}}`
+		msg = `b.gop:2:5: T (type int) does not satisfy interface{interface{~[]E}}`
 	}
 	mixedErrorTest(t, msg, `
 package main
@@ -301,7 +300,7 @@ _ = At[int]
 }
 
 func TestTypeParamsErrInferFunc(t *testing.T) {
-	mixedErrorTest(t, `./b.gop:2:5: cannot infer T2 (/foo/a.go:4:21)`, `
+	mixedErrorTest(t, `b.gop:2:5: cannot infer T2 (/foo/a.go:4:21)`, `
 package main
 
 func Loader[T1 any, T2 any](p1 T1, p2 T2) T1 {
@@ -313,7 +312,7 @@ _ = Loader[int]
 }
 
 func TestTypeParamsErrArgumentsParameters1(t *testing.T) {
-	mixedErrorTest(t, `./b.gop:2:7: got 1 type arguments but Data[T1, T2 interface{}] has 2 type parameters`, `
+	mixedErrorTest(t, `b.gop:2:7: got 1 type arguments but Data[T1, T2 interface{}] has 2 type parameters`, `
 package main
 
 type Data[T1 any, T2 any] struct {
@@ -326,7 +325,7 @@ var v Data[int]
 }
 
 func TestTypeParamsErrArgumentsParameters2(t *testing.T) {
-	mixedErrorTest(t, `./b.gop:2:7: got 3 type arguments but Data[T1, T2 interface{}] has 2 type parameters`, `
+	mixedErrorTest(t, `b.gop:2:7: got 3 type arguments but Data[T1, T2 interface{}] has 2 type parameters`, `
 package main
 
 type Data[T1 any, T2 any] struct {
@@ -339,7 +338,7 @@ var v Data[int,int,int]
 }
 
 func TestTypeParamsErrArgumentsParameters3(t *testing.T) {
-	mixedErrorTest(t, `./b.gop:2:1: got 3 type arguments but func[T1, T2 interface{}](t1 T1, t2 T2) has 2 type parameters`, `
+	mixedErrorTest(t, `b.gop:2:1: got 3 type arguments but func[T1, T2 interface{}](t1 T1, t2 T2) has 2 type parameters`, `
 package main
 
 func Test[T1 any, T2 any](t1 T1, t2 T2) {
@@ -351,7 +350,7 @@ Test[int,int,int](1,2)
 }
 
 func TestTypeParamsErrCallArguments1(t *testing.T) {
-	mixedErrorTest(t, `./b.gop:2:1: not enough arguments in call to Test
+	mixedErrorTest(t, `b.gop:2:1: not enough arguments in call to Test
 	have (untyped int)
 	want (T1, T2)`, `
 package main
@@ -365,7 +364,7 @@ Test(1)
 }
 
 func TestTypeParamsErrCallArguments2(t *testing.T) {
-	mixedErrorTest(t, `./b.gop:2:1: too many arguments in call to Test
+	mixedErrorTest(t, `b.gop:2:1: too many arguments in call to Test
 	have (untyped int, untyped int, untyped int)
 	want (T1, T2)`, `
 package main
@@ -379,7 +378,7 @@ Test(1,2,3)
 }
 
 func TestTypeParamsErrCallArguments3(t *testing.T) {
-	mixedErrorTest(t, `./b.gop:2:1: too many arguments in call to Test
+	mixedErrorTest(t, `b.gop:2:1: too many arguments in call to Test
 	have (untyped int, untyped int)
 	want ()`, `
 package main
@@ -395,7 +394,7 @@ Test(1,2)
 }
 
 func TestTypeParamsErrCallVariadicArguments1(t *testing.T) {
-	mixedErrorTest(t, `./b.gop:2:1: not enough arguments in call to Add
+	mixedErrorTest(t, `b.gop:2:1: not enough arguments in call to Add
 	have ()
 	want (T1, ...T2)`, `
 package main
@@ -413,7 +412,7 @@ Add()
 }
 
 func TestTypeParamsErrCallVariadicArguments2(t *testing.T) {
-	mixedErrorTest(t, `./b.gop:2:1: cannot infer T2 (./a.go:4:18)`, `
+	mixedErrorTest(t, `b.gop:2:1: cannot infer T2 (a.go:4:18)`, `
 package main
 
 func Add[T1 any, T2 ~int|~uint](v1 T1, v2 ...T2) (sum T2) {
@@ -429,7 +428,7 @@ Add(1)
 }
 
 func TestTypeParamsRecvTypeError1(t *testing.T) {
-	mixedErrorTest(t, `./a.go:7:9: cannot use generic type Data[T interface{}] without instantiation`, `
+	mixedErrorTest(t, `a.go:7:9: cannot use generic type Data[T interface{}] without instantiation`, `
 package main
 
 type Data[T any] struct {
@@ -443,7 +442,7 @@ Data[int]{}.Test()
 }
 
 func TestTypeParamsRecvTypeError2(t *testing.T) {
-	mixedErrorTest(t, `./a.go:7:9: got 2 arguments but 1 type parameters`, `
+	mixedErrorTest(t, `a.go:7:9: got 2 arguments but 1 type parameters`, `
 package main
 
 type Data[T any] struct {
@@ -457,7 +456,7 @@ Data[int]{}.Test()
 }
 
 func TestTypeParamsRecvTypeError3(t *testing.T) {
-	mixedErrorTest(t, `./a.go:8:9: got 1 type parameter, but receiver base type declares 2`, `
+	mixedErrorTest(t, `a.go:8:9: got 1 type parameter, but receiver base type declares 2`, `
 package main
 
 type Data[T1 any, T2 any] struct {
@@ -472,7 +471,7 @@ Data[int,int]{}.Test()
 }
 
 func TestGenericTypeWithoutInst1(t *testing.T) {
-	mixedErrorTest(t, `./a.go:8:9: cannot use generic type Data[T1, T2 interface{}] without instantiation`, `
+	mixedErrorTest(t, `a.go:8:9: cannot use generic type Data[T1, T2 interface{}] without instantiation`, `
 package main
 
 type Data[T1 any, T2 any] struct {
@@ -487,7 +486,7 @@ var v Data[int,int]
 }
 
 func TestGenericTypeWithoutInst2(t *testing.T) {
-	mixedErrorTest(t, `./a.go:10:2: cannot use generic type Data[T1, T2 interface{}] without instantiation`, `
+	mixedErrorTest(t, `a.go:10:2: cannot use generic type Data[T1, T2 interface{}] without instantiation`, `
 package main
 
 type Data[T1 any, T2 any] struct {
@@ -504,7 +503,7 @@ var v My[int]
 }
 
 func TestGenericTypeWithoutInst3(t *testing.T) {
-	mixedErrorTest(t, `./a.go:10:2: cannot use generic type Data[T1, T2 interface{}] without instantiation`, `
+	mixedErrorTest(t, `a.go:10:2: cannot use generic type Data[T1, T2 interface{}] without instantiation`, `
 package main
 
 type Data[T1 any, T2 any] struct {
@@ -521,7 +520,7 @@ var v My
 }
 
 func TestGenericTypeWithoutInst4(t *testing.T) {
-	mixedErrorTest(t, `./a.go:10:15: cannot use generic type Data[T1, T2 interface{}] without instantiation`, `
+	mixedErrorTest(t, `a.go:10:15: cannot use generic type Data[T1, T2 interface{}] without instantiation`, `
 package main
 
 type Data[T1 any, T2 any] struct {
@@ -538,7 +537,7 @@ var v My
 }
 
 func TestGenericTypeWithoutInst5(t *testing.T) {
-	mixedErrorTest(t, `./b.gop:2:7: cannot use generic type Data[T1, T2 interface{}] without instantiation`, `
+	mixedErrorTest(t, `b.gop:2:7: cannot use generic type Data[T1, T2 interface{}] without instantiation`, `
 package main
 
 type Data[T1 any, T2 any] struct {
@@ -551,7 +550,7 @@ var v Data
 }
 
 func TestGenericTypeWithoutInst6(t *testing.T) {
-	mixedErrorTest(t, `./b.gop:2:8: cannot use generic type Data[T1, T2 interface{}] without instantiation`, `
+	mixedErrorTest(t, `b.gop:2:8: cannot use generic type Data[T1, T2 interface{}] without instantiation`, `
 package main
 
 type Data[T1 any, T2 any] struct {
@@ -564,7 +563,7 @@ type T Data
 }
 
 func TestGenericTypeWithoutInst7(t *testing.T) {
-	mixedErrorTest(t, `./b.gop:3:2: cannot use generic type Data[T1, T2 interface{}] without instantiation`, `
+	mixedErrorTest(t, `b.gop:3:2: cannot use generic type Data[T1, T2 interface{}] without instantiation`, `
 package main
 
 type Data[T1 any, T2 any] struct {
@@ -579,7 +578,7 @@ type My struct {
 }
 
 func TestGenericTypeWithoutInst8(t *testing.T) {
-	mixedErrorTest(t, `./b.gop:2:23: cannot use generic type Data[T1, T2 interface{}] without instantiation`, `
+	mixedErrorTest(t, `b.gop:2:23: cannot use generic type Data[T1, T2 interface{}] without instantiation`, `
 package main
 
 type Data[T1 any, T2 any] struct {

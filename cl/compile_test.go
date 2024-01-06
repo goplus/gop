@@ -19,7 +19,6 @@ package cl_test
 import (
 	"bytes"
 	"os"
-	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -68,8 +67,6 @@ func init() {
 		C2goBase:      "github.com/goplus/gop/cl/internal",
 		NoFileLine:    false,
 		NoAutoGenMain: true,
-		RelativePath:  true,
-		TargetDir:     ".",
 	}
 }
 
@@ -4662,9 +4659,7 @@ func main() {
 func TestCommentLineRoot(t *testing.T) {
 	conf := *gblConf
 	conf.NoFileLine = false
-	conf.FileLineRoot = "/foo/root"
-	conf.WorkingDir = "/foo"
-	conf.TargetDir = "/foo"
+	conf.RelativeBase = "/foo/root"
 	var src = `
 type Point struct {
 	x int
@@ -4714,9 +4709,6 @@ func main() {
 	testPoint()
 }
 `
-	if runtime.GOOS == "windows" {
-		expected = strings.Replace(expected, "../", `../foo/`, -1)
-	}
 	gopClTestEx(t, &conf, "main", src, expected)
 }
 

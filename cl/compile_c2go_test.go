@@ -82,7 +82,7 @@ func main() {
 }
 
 func TestErrHelloC2go(t *testing.T) {
-	codeErrorTest(t, `./bar.gop:7:3: confliction: printf declared both in "github.com/goplus/gop/cl/internal/libc" and "github.com/goplus/gop/cl/internal/libc"`, `
+	codeErrorTest(t, `bar.gop:7:3: confliction: printf declared both in "github.com/goplus/gop/cl/internal/libc" and "github.com/goplus/gop/cl/internal/libc"`, `
 import (
 	"C"
 	"C/libc"
