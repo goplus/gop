@@ -19,7 +19,6 @@ package cl_test
 import (
 	"bytes"
 	"os"
-	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -4710,9 +4709,6 @@ func main() {
 	testPoint()
 }
 `
-	if runtime.GOOS == "windows" {
-		expected = strings.Replace(expected, "../", `../foo/`, -1)
-	}
 	gopClTestEx(t, &conf, "main", src, expected)
 }
 

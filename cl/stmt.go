@@ -32,18 +32,16 @@ import (
 	"github.com/goplus/gox"
 )
 
-func relFile(dir string, absFile string) string {
-	if dir != "" {
-		if rel, err := filepath.Rel(dir, absFile); err == nil {
-			return rel
-		}
+func fileLineFile(relBaseDir, absFile string) string {
+	if ret, err := filepath.Rel(relBaseDir, absFile); err == nil {
+		return filepath.ToSlash(ret)
 	}
 	return absFile
 }
 
-func fileLineFile(relBaseDir, absFile string) string {
-	if ret, err := filepath.Rel(relBaseDir, absFile); err == nil {
-		return filepath.ToSlash(ret)
+func relFile(dir string, absFile string) string {
+	if dir != "" {
+		return fileLineFile(dir, absFile)
 	}
 	return absFile
 }

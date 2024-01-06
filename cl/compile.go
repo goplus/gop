@@ -213,10 +213,10 @@ type nodeInterp struct {
 	relBaseDir string
 }
 
-func (p *nodeInterp) Position(start token.Pos) token.Position {
-	pos := p.fset.Position(start)
+func (p *nodeInterp) Position(start token.Pos) (pos token.Position) {
+	pos = p.fset.Position(start)
 	pos.Filename = relFile(p.relBaseDir, pos.Filename)
-	return pos
+	return
 }
 
 func (p *nodeInterp) Caller(node ast.Node) string {

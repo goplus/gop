@@ -1164,7 +1164,7 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr, inFlags int) {
 			Val(pkg.Import(errorPkgPath).Ref("NewFrame")).
 			Val(err).
 			Val(sprintAst(pkg.Fset, v.X)).
-			Val(pos.Filename).
+			Val(relFile(ctx.relBaseDir, pos.Filename)).
 			Val(pos.Line).
 			Val(currentFuncName).
 			Call(newFrameArgs).
