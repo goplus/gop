@@ -138,7 +138,6 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 	_, err = cl.NewPackage(pkgTypes.Path(), pkg, &cl.Config{
 		Types:          pkgTypes,
 		Fset:           fset,
-		WorkingDir:     opts.WorkingDir,
 		C2goBase:       opts.C2goBase,
 		LookupPub:      c2go.LookupPub(mod),
 		LookupClass:    mod.LookupClass,

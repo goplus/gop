@@ -108,10 +108,9 @@ func gopSpxErrorTestEx(t *testing.T, msg, gmx, spxcode, gmxfile, spxfile string)
 		t.Fatal("ParseFSDir:", err)
 	}
 	conf := *gblConf
+	conf.RelativeBase = "/foo"
 	conf.Recorder = nil
 	conf.NoFileLine = false
-	conf.WorkingDir = "/foo"
-	conf.TargetDir = "/foo"
 	bar := pkgs["main"]
 	_, err = cl.NewPackage("", bar, &conf)
 	if err == nil {
@@ -123,8 +122,8 @@ func gopSpxErrorTestEx(t *testing.T, msg, gmx, spxcode, gmxfile, spxfile string)
 }
 
 func TestSpxError(t *testing.T) {
-	gopSpxErrorTestEx(t, `./Game.tgmx:6:2: userScore redeclared
-	./Game.tgmx:5:2 other declaration of userScore`, `
+	gopSpxErrorTestEx(t, `Game.tgmx:6:2: userScore redeclared
+	Game.tgmx:5:2 other declaration of userScore`, `
 import "bytes"
 var (
 	Kai Kai
@@ -135,8 +134,8 @@ var (
 println "hi"
 `, "Game.tgmx", "Kai.tspx")
 
-	gopSpxErrorTestEx(t, `./Kai.tspx:4:2: id redeclared
-	./Kai.tspx:3:2 other declaration of id`, `
+	gopSpxErrorTestEx(t, `Kai.tspx:4:2: id redeclared
+	Kai.tspx:3:2 other declaration of id`, `
 var (
 	Kai Kai
 	userScore int
@@ -658,7 +657,7 @@ func (this *Kai) onCloned() {
 }
 
 func TestSpxErrorSel(t *testing.T) {
-	gopSpxErrorTestEx(t, `./Kai.tspx:2:9: this.pos undefined (type *Kai has no field or method pos)`, `
+	gopSpxErrorTestEx(t, `Kai.tspx:2:9: this.pos undefined (type *Kai has no field or method pos)`, `
 println "hi"
 `, `
 println this.pos

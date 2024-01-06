@@ -22,8 +22,6 @@ import (
 	"go/constant"
 	"go/types"
 	"log"
-	"os"
-	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
@@ -174,13 +172,8 @@ type Config struct {
 	// Fset provides source position information for syntax trees and types (required).
 	Fset *token.FileSet
 
-	// WorkingDir is the directory in which to run gop compiler (optional).
-	// If WorkingDir is not set, os.Getwd() is used.
-	WorkingDir string
-
-	// TargetDir is the directory in which to generate Go files (optional).
-	// If TargetDir is not set, it is same as WorkingDir.
-	TargetDir string
+	// RelativeBase is the root directory of relative path.
+	RelativeBase string
 
 	// C2goBase specifies base of standard c2go packages (optional).
 	// Default is github.com/goplus/.
@@ -204,12 +197,6 @@ type Config struct {
 	// NoFileLine = true means not to generate file line comments.
 	NoFileLine bool
 
-	// RelativePath = true means to generate file line comments with relative file path.
-	RelativePath bool
-
-	// FileLineRoot set means generate file line comments start with root path.
-	FileLineRoot string
-
 	// NoAutoGenMain = true means not to auto generate main func is no entry.
 	NoAutoGenMain bool
 
@@ -223,12 +210,12 @@ type Config struct {
 type nodeInterp struct {
 	fset       *token.FileSet
 	files      map[string]*ast.File
-	workingDir string
+	relBaseDir string
 }
 
 func (p *nodeInterp) Position(start token.Pos) token.Position {
 	pos := p.fset.Position(start)
-	pos.Filename = relFile(p.workingDir, pos.Filename)
+	pos.Filename = relFile(p.relBaseDir, pos.Filename)
 	return pos
 }
 
@@ -354,9 +341,6 @@ type pkgCtx struct {
 	generics map[string]bool // generic type record
 	idents   []*ast.Ident    // toType ident recored
 	inInst   int             // toType in generic instance
-
-	fileLineRoot       string // comment file line start root
-	fileLineWorkingDir string // comment file line working dir
 }
 
 type pkgImp struct {
@@ -366,21 +350,20 @@ type pkgImp struct {
 
 type blockCtx struct {
 	*pkgCtx
-	pkg          *gox.Package
-	cb           *gox.CodeBuilder
-	imports      map[string]pkgImp
-	lookups      []*gox.PkgRef
-	clookups     []*cpackages.PkgRef
-	tlookup      *typeParamLookup
-	c2goBase     string // default is `github.com/goplus/`
-	targetDir    string
-	classRecv    *ast.FieldList // available when gmxSettings != nil
-	fileScope    *types.Scope   // only valid when isGopFile
-	rec          *typesRecorder
-	fileLine     bool
-	relativePath bool
-	isClass      bool
-	isGopFile    bool // is Go+ file or not
+	pkg        *gox.Package
+	cb         *gox.CodeBuilder
+	imports    map[string]pkgImp
+	lookups    []*gox.PkgRef
+	clookups   []*cpackages.PkgRef
+	tlookup    *typeParamLookup
+	c2goBase   string // default is `github.com/goplus/`
+	relBaseDir string
+	classRecv  *ast.FieldList // available when gmxSettings != nil
+	fileScope  *types.Scope   // only valid when isGopFile
+	rec        *typesRecorder
+	fileLine   bool
+	isClass    bool
+	isGopFile  bool // is Go+ file or not
 }
 
 func (bc *blockCtx) recorder() *typesRecorder {
@@ -480,26 +463,15 @@ const (
 
 // NewPackage creates a Go+ package instance.
 func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package, err error) {
-	workingDir := conf.WorkingDir
-	if workingDir == "" {
-		workingDir, _ = os.Getwd()
-	}
-	targetDir := conf.TargetDir
-	if targetDir == "" {
-		targetDir = workingDir
-	}
+	relBaseDir := conf.RelativeBase
 	fset := conf.Fset
 	files := pkg.Files
 	interp := &nodeInterp{
-		fset: fset, files: files, workingDir: workingDir,
+		fset: fset, files: files, relBaseDir: relBaseDir,
 	}
 	ctx := &pkgCtx{
 		fset: fset,
 		syms: make(map[string]loader), nodeInterp: interp, generics: make(map[string]bool),
-	}
-	if conf.FileLineRoot != "" {
-		ctx.fileLineRoot, _ = filepath.Abs(conf.FileLineRoot)
-		ctx.fileLineWorkingDir, _ = filepath.Abs(workingDir)
 	}
 	confGox := &gox.Config{
 		Types:           conf.Types,
@@ -551,7 +523,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		f := fromgo.ASTFile(gof, 0)
 		gofiles = append(gofiles, f)
 		ctx := &blockCtx{
-			pkg: p, pkgCtx: ctx, cb: p.CB(), targetDir: targetDir,
+			pkg: p, pkgCtx: ctx, cb: p.CB(), relBaseDir: relBaseDir,
 			imports: make(map[string]pkgImp),
 		}
 		preloadFile(p, ctx, fpath, f, false, false)
@@ -563,8 +535,8 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		fileLine := !conf.NoFileLine
 		fileScope := types.NewScope(p.Types.Scope(), f.Pos(), f.End(), fpath)
 		ctx := &blockCtx{
-			pkg: p, pkgCtx: ctx, cb: p.CB(), targetDir: targetDir, fileScope: fileScope,
-			fileLine: fileLine, relativePath: conf.RelativePath, isClass: f.IsClass, rec: rec,
+			pkg: p, pkgCtx: ctx, cb: p.CB(), relBaseDir: relBaseDir, fileScope: fileScope,
+			fileLine: fileLine, isClass: f.IsClass, rec: rec,
 			c2goBase: c2goBase(conf.C2goBase), imports: make(map[string]pkgImp), isGopFile: true,
 		}
 		if rec := ctx.rec; rec != nil {

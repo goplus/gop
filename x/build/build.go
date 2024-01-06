@@ -157,8 +157,7 @@ func (c *Context) loadPackage(srcDir string, pkgs map[string]*ast.Package) (*Pac
 			break
 		}
 	}
-	conf := &cl.Config{
-		WorkingDir: srcDir, TargetDir: srcDir, Fset: c.fset}
+	conf := &cl.Config{Fset: c.fset}
 	conf.Importer = c
 	conf.LookupClass = func(ext string) (c *cl.Project, ok bool) {
 		c, ok = projects[ext]

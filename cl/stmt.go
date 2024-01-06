@@ -32,34 +32,28 @@ import (
 	"github.com/goplus/gox"
 )
 
-func relFile(dir string, file string) string {
-	if rel, err := filepath.Rel(dir, file); err == nil {
-		if rel[0] == '.' {
+func relFile(dir string, absFile string) string {
+	if dir != "" {
+		if rel, err := filepath.Rel(dir, absFile); err == nil {
 			return rel
 		}
-		return "./" + rel
 	}
-	return file
+	return absFile
 }
 
-func offsetFileLine(ctx *blockCtx, file string) string {
-	if !filepath.IsAbs(file) {
-		file = filepath.Join(ctx.fileLineWorkingDir, file)
-	}
-	if ret, err := filepath.Rel(ctx.fileLineRoot, file); err == nil {
+func fileLineFile(relBaseDir, absFile string) string {
+	if ret, err := filepath.Rel(relBaseDir, absFile); err == nil {
 		return filepath.ToSlash(ret)
 	}
-	return file
+	return absFile
 }
 
 func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
 	if ctx.fileLine {
 		start := stmt.Pos()
 		pos := ctx.fset.Position(start)
-		if ctx.fileLineRoot != "" {
-			pos.Filename = offsetFileLine(ctx, pos.Filename)
-		} else if ctx.relativePath {
-			pos.Filename = relFile(ctx.targetDir, pos.Filename)
+		if ctx.relBaseDir != "" {
+			pos.Filename = fileLineFile(ctx.relBaseDir, pos.Filename)
 		}
 		line := fmt.Sprintf("\n//line %s:%d:1", pos.Filename, pos.Line)
 		comments := &goast.CommentGroup{
@@ -73,10 +67,8 @@ func commentFunc(ctx *blockCtx, fn *gox.Func, decl *ast.FuncDecl) {
 	start := decl.Name.Pos()
 	if ctx.fileLine && start != token.NoPos {
 		pos := ctx.fset.Position(start)
-		if ctx.fileLineRoot != "" {
-			pos.Filename = offsetFileLine(ctx, pos.Filename)
-		} else if ctx.relativePath {
-			pos.Filename = relFile(ctx.targetDir, pos.Filename)
+		if ctx.relBaseDir != "" {
+			pos.Filename = fileLineFile(ctx.relBaseDir, pos.Filename)
 		}
 		var line string
 		if decl.Shadow {
