@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/goplus/c2go v0.7.19-0.20240107100840-a2e3707766cc
-	github.com/goplus/gox v1.13.1
+	github.com/goplus/gox v1.13.1-0.20231225053549-a6c41ff21756
 	github.com/goplus/mod v0.11.10-0.20240107100148-4ba66b1b3a7e
 	github.com/qiniu/x v1.13.2
 	golang.org/x/tools v0.16.1

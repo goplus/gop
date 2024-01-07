@@ -6,8 +6,8 @@ github.com/fsnotify/fsnotify v1.7.0/go.mod h1:40Bi/Hjc2AVfZrqy+aj+yEI+/bRxZnMJyT
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
 github.com/goplus/c2go v0.7.19-0.20240107100840-a2e3707766cc h1:TO2VETgF9bV2FlEOV9A/TiPwhI0odGaadWRCj0tZD7M=
 github.com/goplus/c2go v0.7.19-0.20240107100840-a2e3707766cc/go.mod h1:0dQnJcuqfSbPm+jBeHFgh0oD+6DcamWn1WD/jOJchPQ=
-github.com/goplus/gox v1.13.1 h1:/X6Ja9R2hQuLVbN+PzLHRtaBcan+YmhASvGO3nMJsZw=
-github.com/goplus/gox v1.13.1/go.mod h1:UNzOPlRyO/uQn+9iHelk6KelAFaaC7OBn5AxtSSsC9c=
+github.com/goplus/gox v1.13.1-0.20231225053549-a6c41ff21756 h1:KkSgwZXFW5YbgCv++a0Bvzc+zKBR8SsSKo/9C1BkOjI=
+github.com/goplus/gox v1.13.1-0.20231225053549-a6c41ff21756/go.mod h1:iIchh0wp8Ye0DOPcFgHc5d0qlMOx8/OJ+DBQfe7hcTs=
 github.com/goplus/mod v0.11.10-0.20240107100148-4ba66b1b3a7e h1:GxGQr56a1QjsWYC8bGayTNKTHz8cVFFJBEBVPccLaSo=
 github.com/goplus/mod v0.11.10-0.20240107100148-4ba66b1b3a7e/go.mod h1:ZtlS9wHOcAVxZ/zq7WLdKVes1HG/8Yn3KNuWZGcpeTs=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=
