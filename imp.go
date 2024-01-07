@@ -44,6 +44,9 @@ func NewImporter(mod *gopmod.Module, gop *env.Gop, fset *token.FileSet) *Importe
 	const (
 		defaultFlags = GenFlagPrompt | GenFlagPrintError
 	)
+	if mod == nil {
+		mod = gopmod.Default
+	}
 	dir := ""
 	if hasModule(mod) {
 		dir = mod.Root()
