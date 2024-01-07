@@ -39,17 +39,10 @@ func getGoxConf() *gox.Config {
 	return &gox.Config{Fset: fset, Importer: imp}
 }
 
-func TestExt(t *testing.T) {
-	cases := [][2]string{
-		{"t.spx.gox", ".spx"},
-		{"t.spx", ".spx"},
-		{"t.gox", ".gox"},
-		{"t.abc", ".abc"},
-	}
-	for _, c := range cases {
-		if ret := ClassFileExt(c[0]); ret != c[1] {
-			t.Fatal("ClassFileExt:", c[0], "expected:", c[1], "got:", ret)
-		}
+func TestClassNameAndExt(t *testing.T) {
+	name, ext := classNameAndExt("/foo/bar.abc_yap.gox")
+	if name != "bar" || ext != "_yap.gox" {
+		t.Fatal("classNameAndExt:", name, ext)
 	}
 }
 

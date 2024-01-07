@@ -132,9 +132,8 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, dir string, conf Config) (pk
 			continue
 		}
 		fname := d.Name()
-		fnameRmGox := fname
 		ext := path.Ext(fname)
-		var isProj, isClass, isNormalGox, useGoParser, rmGox bool
+		var isProj, isClass, isNormalGox, useGoParser bool
 		switch ext {
 		case ".gop":
 		case ".go":
@@ -143,23 +142,15 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, dir string, conf Config) (pk
 			}
 			useGoParser = (conf.Mode & ParseGoAsGoPlus) == 0
 		case ".gox":
-			isClass = true
-			t := fname[:len(fname)-4]
-			if c := path.Ext(t); c != "" {
-				fnameRmGox, rmGox = t, true
-			} else {
-				isNormalGox = true
-			}
+			isNormalGox = true
 			fallthrough
 		default:
-			if !isNormalGox {
-				if isProj, isClass = conf.ClassKind(fnameRmGox); !isClass {
-					if !rmGox { // unknown fileKind
-						continue
-					}
-					// not found Go+ class by ext, but is a .gox file
-					isClass, isNormalGox = true, true
-				}
+			if isProj, isClass = conf.ClassKind(fname); isClass {
+				isNormalGox = false
+			} else if isNormalGox { // not found Go+ class by ext, but is a .gox file
+				isClass = true
+			} else { // unknown fileKind
+				continue
 			}
 		}
 		mode := conf.Mode

@@ -386,12 +386,6 @@ func (p *pkgCtx) newCodeErrorf(pos token.Pos, format string, args ...interface{}
 	return &gox.CodeError{Fset: p.nodeInterp, Pos: pos, Msg: fmt.Sprintf(format, args...)}
 }
 
-/*
-func (p *pkgCtx) handleError(pos token.Pos, msg string) {
-	p.handleErr(p.newCodeError(pos, msg))
-}
-*/
-
 func (p *pkgCtx) handleErrorf(pos token.Pos, format string, args ...interface{}) {
 	p.handleErr(p.newCodeErrorf(pos, format, args...))
 }
@@ -701,10 +695,10 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 			baseType = types.NewPointer(baseType)
 		}
 	case f.IsClass:
-		classType = getDefaultClass(file)
+		var classExt string
+		classType, classExt = classNameAndExt(file)
 		if parent.gmxSettings != nil {
-			ext := ClassFileExt(file)
-			o, ok := parent.sprite[ext]
+			o, ok := parent.sprite[classExt]
 			if ok {
 				baseTypeName, baseType, spxClass = o.Name(), o.Type(), true
 			}

@@ -42,9 +42,9 @@ func lookupClass(ext string) (c *modfile.Project, ok bool) {
 			Works: []*modfile.Class{{Ext: ".t2spx", Class: "Sprite"},
 				{Ext: ".t2spx2", Class: "Sprite2"}},
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
-	case ".t3spx", ".t3spx2":
+	case "_t3spx.gox", ".t3spx2":
 		return &modfile.Project{
-			Works: []*modfile.Class{{Ext: ".t3spx", Class: "Sprite"},
+			Works: []*modfile.Class{{Ext: "_t3spx.gox", Class: "Sprite"},
 				{Ext: ".t3spx2", Class: "Sprite2"}},
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
 	}
@@ -460,7 +460,7 @@ type Kai struct {
 
 func (this *Kai) onMsg(msg string) {
 }
-`, "Dog.t3spx", "Kai.t3spx2")
+`, "Dog_t3spx.gox", "Kai.t3spx2")
 }
 
 func TestSpxMainEntry(t *testing.T) {
@@ -589,7 +589,7 @@ func (this *Kai) onMsg(msg string) {
 		this.Say("Hi")
 	}
 }
-`, "Game.tgmx.gox", "Kai.tspx.gox")
+`, "Game.tgmx", "Kai.tspx")
 }
 
 func TestSpxClone(t *testing.T) {

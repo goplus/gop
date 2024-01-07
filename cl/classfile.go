@@ -26,6 +26,7 @@ import (
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
+	"github.com/goplus/mod/modfile"
 )
 
 // -----------------------------------------------------------------------------
@@ -59,8 +60,18 @@ func (p *gmxSettings) getScheds(cb *gox.CodeBuilder) []goast.Stmt {
 	return p.schedStmts
 }
 
+func classNameAndExt(file string) (name, ext string) {
+	fname := filepath.Base(file)
+	name, ext = modfile.SplitFname(fname)
+	if idx := strings.Index(name, "."); idx > 0 {
+		name = name[:idx]
+	}
+	return
+}
+
 func newGmx(ctx *pkgCtx, pkg *gox.Package, file string, f *ast.File, conf *Config) *gmxSettings {
-	ext := ClassFileExt(file)
+	fname := filepath.Base(file)
+	ext := modfile.ClassExt(fname)
 	gt, ok := conf.LookupClass(ext)
 	if !ok {
 		panic("TODO: class not found")
@@ -105,19 +116,11 @@ func spxLookup(pkgImps []*gox.PkgRef, name string) gox.Ref {
 	panic("spxLookup: symbol not found - " + name)
 }
 
-func getDefaultClass(file string) string {
-	_, name := filepath.Split(file)
-	if idx := strings.Index(name, "."); idx > 0 {
-		name = name[:idx]
-	}
-	return name
-}
-
 func spxTryRef(spx *gox.PkgRef, typ string) (obj types.Object, isPtr bool) {
 	if strings.HasPrefix(typ, "*") {
 		typ, isPtr = typ[1:], true
 	}
-	obj = spx.Ref(typ)
+	obj = spx.TryRef(typ)
 	return
 }
 
@@ -173,19 +176,6 @@ func gmxMainFunc(p *gox.Package, ctx *pkgCtx) {
 			MemberVal("Main").Call(0).EndStmt().
 			End()
 	}
-}
-
-// -----------------------------------------------------------------------------
-
-// ClassFileExt returns the classfile extension
-func ClassFileExt(path string) (ext string) {
-	ext = filepath.Ext(path)
-	if ext == ".gox" {
-		if c := filepath.Ext(path[:len(path)-4]); c != "" {
-			return c
-		}
-	}
-	return
 }
 
 // -----------------------------------------------------------------------------
