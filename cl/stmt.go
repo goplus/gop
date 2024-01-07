@@ -33,6 +33,9 @@ import (
 )
 
 func offsetFileLine(ctx *blockCtx, file string) string {
+	if ctx.relBaseDir == "" {
+		return file
+	}
 	if !filepath.IsAbs(file) {
 		file = filepath.Join(ctx.absWorkDir, file)
 	}
@@ -60,9 +63,7 @@ func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
 	if ctx.fileLine {
 		start := stmt.Pos()
 		pos := ctx.fset.Position(start)
-		if ctx.relBaseDir != "" {
-			pos.Filename = offsetFileLine(ctx, pos.Filename)
-		}
+		pos.Filename = offsetFileLine(ctx, pos.Filename)
 		line := fmt.Sprintf("\n//line %s:%d:1", pos.Filename, pos.Line)
 		comments := &goast.CommentGroup{
 			List: []*goast.Comment{{Text: line}},
@@ -75,9 +76,7 @@ func commentFunc(ctx *blockCtx, fn *gox.Func, decl *ast.FuncDecl) {
 	start := decl.Name.Pos()
 	if ctx.fileLine && start != token.NoPos {
 		pos := ctx.fset.Position(start)
-		if ctx.relBaseDir != "" {
-			pos.Filename = offsetFileLine(ctx, pos.Filename)
-		}
+		pos.Filename = offsetFileLine(ctx, pos.Filename)
 		var line string
 		if decl.Shadow {
 			line = fmt.Sprintf("//line %s:%d", pos.Filename, pos.Line)
