@@ -33,14 +33,13 @@ import (
 )
 
 func offsetFileLine(ctx *blockCtx, file string) string {
-	if ctx.relBaseDir == "" {
-		return file
-	}
-	if !filepath.IsAbs(file) {
-		file = filepath.Join(ctx.absWorkDir, file)
-	}
-	if ret, err := filepath.Rel(ctx.relBaseDir, file); err == nil {
-		return filepath.ToSlash(ret)
+	if ctx.relBaseDir != "" {
+		if !filepath.IsAbs(file) {
+			file = filepath.Join(ctx.absWorkDir, file)
+		}
+		if ret, err := filepath.Rel(ctx.relBaseDir, file); err == nil {
+			return filepath.ToSlash(ret)
+		}
 	}
 	return file
 }
