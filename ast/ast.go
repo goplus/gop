@@ -1135,7 +1135,7 @@ type File struct {
 	Code        []byte
 	ShadowEntry *FuncDecl // no entrypoint func to indicate the module entry point.
 	NoPkgDecl   bool      // no `package xxx` declaration
-	IsClass     bool      // is a classfile
+	IsClass     bool      // is a classfile (including normal .gox file)
 	IsProj      bool      // is a project classfile
 	IsNormalGox bool      // is a normal .gox file
 }
