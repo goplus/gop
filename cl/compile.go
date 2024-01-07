@@ -476,6 +476,9 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	}
 
 	relBaseDir := conf.RelativeBase
+	if relBaseDir != "" {
+		relBaseDir, _ = filepath.Abs(relBaseDir)
+	}
 	fset := conf.Fset
 	files := pkg.Files
 	interp := &nodeInterp{
