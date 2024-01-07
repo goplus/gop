@@ -35,6 +35,9 @@ type FileSystem interface {
 	// If the path is empty, Base returns ".".
 	// If the path consists entirely of separators, Base returns a single separator.
 	Base(filename string) string
+
+	// Abs returns an absolute representation of path.
+	Abs(path string) (string, error)
 }
 
 // -----------------------------------------------------------------------------
@@ -59,6 +62,11 @@ func (p localFS) Join(elem ...string) string {
 // If the path consists entirely of separators, Base returns a single separator.
 func (p localFS) Base(filename string) string {
 	return filepath.Base(filename)
+}
+
+// Abs returns an absolute representation of path.
+func (p localFS) Abs(path string) (string, error) {
+	return filepath.Abs(path)
 }
 
 var Local FileSystem = localFS{}

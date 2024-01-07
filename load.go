@@ -140,6 +140,11 @@ func LoadMod(dir string) (mod *gopmod.Module, err error) {
 	return gopmod.Default, nil
 }
 
+func hasModule(mod *gopmod.Module) bool {
+	f := mod.File
+	return f != nil && f.Syntax != nil
+}
+
 // -----------------------------------------------------------------------------
 
 func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (out, test *gox.Package, err error) {
@@ -158,7 +163,7 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 	pkgs, err := parser.ParseDirEx(fset, dir, parser.Config{
 		ClassKind: mod.ClassKind,
 		Filter:    conf.Filter,
-		Mode:      parser.ParseComments,
+		Mode:      parser.ParseComments | parser.SaveAbsFile,
 	})
 	if err != nil {
 		return
@@ -178,13 +183,11 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 
 	var pkgTest *ast.Package
 	var clConf = &cl.Config{
-		Fset:        fset,
-		Importer:    imp,
-		LookupClass: mod.LookupClass,
-		LookupPub:   c2go.LookupPub(mod),
-	}
-	if mod.IsValid() {
-		clConf.RelativeBase = mod.Root()
+		Fset:         fset,
+		RelativeBase: relativeBaseOf(mod),
+		Importer:     imp,
+		LookupClass:  mod.LookupClass,
+		LookupPub:    c2go.LookupPub(mod),
 	}
 
 	for name, pkg := range pkgs {
@@ -221,6 +224,14 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 	return
 }
 
+func relativeBaseOf(mod *gopmod.Module) string {
+	if hasModule(mod) {
+		return mod.Root()
+	}
+	dir, _ := os.Getwd()
+	return dir
+}
+
 // -----------------------------------------------------------------------------
 
 func LoadFiles(dir string, files []string, conf *Config) (out *gox.Package, err error) {
@@ -237,7 +248,7 @@ func LoadFiles(dir string, files []string, conf *Config) (out *gox.Package, err 
 	if fset == nil {
 		fset = token.NewFileSet()
 	}
-	pkgs, err := parser.ParseFiles(fset, files, parser.ParseComments)
+	pkgs, err := parser.ParseFiles(fset, files, parser.ParseComments|parser.SaveAbsFile)
 	if err != nil {
 		err = errors.NewWith(err, `parser.ParseFiles(fset, files, parser.ParseComments)`, -2, "parser.ParseFiles", fset, files, parser.ParseComments)
 		return
@@ -256,10 +267,11 @@ func LoadFiles(dir string, files []string, conf *Config) (out *gox.Package, err 
 			imp = NewImporter(mod, gop, fset)
 		}
 		clConf := &cl.Config{
-			Fset:        fset,
-			Importer:    imp,
-			LookupClass: mod.LookupClass,
-			LookupPub:   c2go.LookupPub(mod),
+			Fset:         fset,
+			RelativeBase: relativeBaseOf(mod),
+			Importer:     imp,
+			LookupClass:  mod.LookupClass,
+			LookupPub:    c2go.LookupPub(mod),
 		}
 		out, err = cl.NewPackage("", pkg, clConf)
 		if err != nil {

@@ -80,6 +80,10 @@ func (p *FileFS) Base(filename string) string {
 	return filepath.Base(filename)
 }
 
+func (p *FileFS) Abs(path string) (string, error) {
+	return path, nil
+}
+
 func readSource(src interface{}) ([]byte, error) {
 	switch s := src.(type) {
 	case string:
