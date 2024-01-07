@@ -307,7 +307,7 @@ func TestInstallInNonGitRepo(t *testing.T) {
 	})
 
 	t.Run("install with VERSION file", func(t *testing.T) {
-		version := "v1.1.98"
+		version := "v1.2.98"
 		// Create VERSION file
 		if err := os.WriteFile(versionFile, []byte(version), 0644); err != nil {
 			t.Fatal(err)
