@@ -6,7 +6,7 @@ require (
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/goplus/c2go v0.7.19
 	github.com/goplus/gox v1.13.2
-	github.com/goplus/mod v0.12.1
+	github.com/goplus/mod v0.12.2-0.20240107203906-5044606d0c51
 	github.com/qiniu/x v1.13.2
 	golang.org/x/tools v0.16.1
 )
