@@ -142,7 +142,7 @@ func LoadMod(dir string) (mod *gopmod.Module, err error) {
 
 func hasModule(mod *gopmod.Module) bool {
 	f := mod.File
-	return f != nil || f.Syntax != nil
+	return f != nil && f.Syntax != nil
 }
 
 // -----------------------------------------------------------------------------
