@@ -120,7 +120,7 @@ func spxTryRef(spx *gox.PkgRef, typ string) (obj types.Object, isPtr bool) {
 	if strings.HasPrefix(typ, "*") {
 		typ, isPtr = typ[1:], true
 	}
-	obj = spx.Ref(typ)
+	obj = spx.TryRef(typ)
 	return
 }
 
