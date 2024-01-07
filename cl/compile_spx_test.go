@@ -109,6 +109,7 @@ func gopSpxErrorTestEx(t *testing.T, msg, gmx, spxcode, gmxfile, spxfile string)
 	}
 	conf := *gblConf
 	conf.RelativeBase = "/foo"
+	conf.WorkingDir = "/foo"
 	conf.Recorder = nil
 	conf.NoFileLine = false
 	bar := pkgs["main"]

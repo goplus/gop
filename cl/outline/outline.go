@@ -37,6 +37,9 @@ type Config struct {
 	// If Fset is nil, Load will use a new fileset, but preserve Fset's value.
 	Fset *token.FileSet
 
+	// WorkingDir is the directory in which to run gop compiler.
+	WorkingDir string
+
 	// C2goBase specifies base of standard c2go packages.
 	// Default is github.com/goplus/.
 	C2goBase string
@@ -60,6 +63,7 @@ type Package struct {
 func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (_ Package, err error) {
 	ret, err := cl.NewPackage(pkgPath, pkg, &cl.Config{
 		Fset:           conf.Fset,
+		WorkingDir:     conf.WorkingDir,
 		C2goBase:       conf.C2goBase,
 		LookupPub:      conf.LookupPub,
 		LookupClass:    conf.LookupClass,

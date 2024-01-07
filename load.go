@@ -187,6 +187,7 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 
 	var pkgTest *ast.Package
 	var clConf = &cl.Config{
+		WorkingDir:  dir,
 		Fset:        fset,
 		Importer:    imp,
 		LookupClass: mod.LookupClass,
@@ -269,6 +270,9 @@ func LoadFiles(files []string, conf *Config) (out *gox.Package, err error) {
 			Importer:    imp,
 			LookupClass: mod.LookupClass,
 			LookupPub:   c2go.LookupPub(mod),
+		}
+		if mod.IsValid() {
+			clConf.RelativeBase = mod.Root()
 		}
 		out, err = cl.NewPackage("", pkg, clConf)
 		if err != nil {

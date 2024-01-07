@@ -234,6 +234,7 @@ func mixedErrorTestEx(t *testing.T, pkgname, msg, gocode, gopcode string) {
 	conf := *gblConf
 	conf.NoFileLine = false
 	conf.RelativeBase = "/foo"
+	conf.WorkingDir = "/foo"
 	bar := pkgs[pkgname]
 	_, err = cl.NewPackage("", bar, &conf)
 	if err == nil {

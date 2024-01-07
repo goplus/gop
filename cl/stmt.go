@@ -32,6 +32,16 @@ import (
 	"github.com/goplus/gox"
 )
 
+func offsetFileLine(ctx *blockCtx, file string) string {
+	if !filepath.IsAbs(file) {
+		file = filepath.Join(ctx.absWorkDir, file)
+	}
+	if ret, err := filepath.Rel(ctx.relBaseDir, file); err == nil {
+		return filepath.ToSlash(ret)
+	}
+	return file
+}
+
 func fileLineFile(relBaseDir, absFile string) string {
 	if ret, err := filepath.Rel(relBaseDir, absFile); err == nil {
 		return filepath.ToSlash(ret)
@@ -51,7 +61,7 @@ func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
 		start := stmt.Pos()
 		pos := ctx.fset.Position(start)
 		if ctx.relBaseDir != "" {
-			pos.Filename = fileLineFile(ctx.relBaseDir, pos.Filename)
+			pos.Filename = offsetFileLine(ctx, pos.Filename)
 		}
 		line := fmt.Sprintf("\n//line %s:%d:1", pos.Filename, pos.Line)
 		comments := &goast.CommentGroup{
@@ -66,7 +76,7 @@ func commentFunc(ctx *blockCtx, fn *gox.Func, decl *ast.FuncDecl) {
 	if ctx.fileLine && start != token.NoPos {
 		pos := ctx.fset.Position(start)
 		if ctx.relBaseDir != "" {
-			pos.Filename = fileLineFile(ctx.relBaseDir, pos.Filename)
+			pos.Filename = offsetFileLine(ctx, pos.Filename)
 		}
 		var line string
 		if decl.Shadow {
