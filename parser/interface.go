@@ -49,6 +49,8 @@ const (
 	ParseGoAsGoPlus Mode = 1 << 16
 	// ParserGoPlusClass - parse Go+ classfile by gop/parser
 	ParseGoPlusClass Mode = 1 << 17
+	// ParseFileAbsolute - parse Go+ files to absolute path
+	ParseFileAbsolute Mode = 1 << 18
 )
 
 // -----------------------------------------------------------------------------

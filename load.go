@@ -168,10 +168,14 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 		return
 	}
 
+	mode := parser.ParseComments
+	if mod.IsValid() {
+		mode |= parser.ParseFileAbsolute
+	}
 	pkgs, err := parser.ParseDirEx(fset, dir, parser.Config{
 		ClassKind: mod.ClassKind,
 		Filter:    conf.Filter,
-		Mode:      parser.ParseComments,
+		Mode:      mode,
 	})
 	if err != nil {
 		return
@@ -250,7 +254,11 @@ func LoadFiles(files []string, conf *Config) (out *gox.Package, err error) {
 		return
 	}
 
-	pkgs, err := parser.ParseFiles(fset, files, parser.ParseComments)
+	mode := parser.ParseComments
+	if mod.IsValid() {
+		mode |= parser.ParseFileAbsolute
+	}
+	pkgs, err := parser.ParseFiles(fset, files, mode)
 	if err != nil {
 		err = errors.NewWith(err, `parser.ParseFiles(fset, files, parser.ParseComments)`, -2, "parser.ParseFiles", fset, files, parser.ParseComments)
 		return
@@ -269,6 +277,9 @@ func LoadFiles(files []string, conf *Config) (out *gox.Package, err error) {
 			Importer:    imp,
 			LookupClass: mod.LookupClass,
 			LookupPub:   c2go.LookupPub(mod),
+		}
+		if mod.IsValid() {
+			clConf.RelativeBase = mod.Root()
 		}
 		out, err = cl.NewPackage("", pkg, clConf)
 		if err != nil {
