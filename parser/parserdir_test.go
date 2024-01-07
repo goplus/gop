@@ -194,6 +194,40 @@ func TestParseEntry(t *testing.T) {
 	})
 }
 
+func TestParseFileAbsolute(t *testing.T) {
+	fset := token.NewFileSet()
+	src, err := os.ReadFile("./_testdata/functype/functype.go")
+	if err != nil {
+		t.Fatal("os.ReadFile:", err)
+	}
+	conf := Config{}
+	conf.Mode = ParseFileAbsolute
+	t.Run(".gop file", func(t *testing.T) {
+		f, err := ParseEntry(fset, "./functype.gop", src, conf)
+		if err != nil {
+			t.Fatal("ParseEntry failed:", err)
+		}
+		if f.IsClass || f.IsProj || f.IsNormalGox {
+			t.Fatal("ParseEntry functype.gop:", f.IsClass, f.IsProj, f.IsNormalGox)
+		}
+	})
+	t.Run(".gop file", func(t *testing.T) {
+		f, err := ParseFile(fset, "./functype.gop", src, conf.Mode)
+		if err != nil {
+			t.Fatal("ParseEntry failed:", err)
+		}
+		if f.IsClass || f.IsProj || f.IsNormalGox {
+			t.Fatal("ParseEntry functype.gop:", f.IsClass, f.IsProj, f.IsNormalGox)
+		}
+	})
+	t.Run("dir", func(t *testing.T) {
+		_, err := ParseDirEx(fset, "./_nofmt/cmdlinestyle1", conf)
+		if err != nil {
+			t.Fatal("ParseDirEx failed:", err)
+		}
+	})
+}
+
 func TestGopAutoGen(t *testing.T) {
 	fset := token.NewFileSet()
 	fs := memfs.SingleFile("/foo", "gop_autogen.go", ``)
