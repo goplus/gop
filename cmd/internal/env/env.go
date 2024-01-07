@@ -74,7 +74,7 @@ func runCmd(_ *base.Command, args []string) {
 	gopEnv["GOPROOT"] = env.GOPROOT()
 	gopEnv["GOP_GOCMD"] = gocmd.Name()
 	gopEnv["GOMODCACHE"] = modcache.GOMODCACHE
-	gopEnv["GOPMOD"], _ = mod.GOPMOD("", 0)
+	gopEnv["GOPMOD"], _ = mod.GOPMOD("")
 	gopEnv["HOME"] = env.HOME()
 
 	vars := flag.Args()

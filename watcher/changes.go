@@ -70,7 +70,7 @@ func (p *Changes) doLookupMod(name string) *module {
 	if !ok {
 		mod = new(module)
 		mod.exts = make([]string, 0, 8)
-		m, e := gopmod.Load(p.root+name, 0)
+		m, e := gopmod.Load(p.root + name)
 		if e == nil {
 			m.ImportClasses(func(c *gopmod.Project) {
 				mod.exts = append(mod.exts, c.Ext)

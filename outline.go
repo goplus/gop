@@ -35,26 +35,17 @@ import (
 // -----------------------------------------------------------------------------
 
 func Outline(dir string, conf *Config) (out outline.Package, err error) {
-	if conf == nil {
-		conf = new(Config)
-	}
-	fset := conf.Fset
-	if fset == nil {
-		fset = token.NewFileSet()
-	}
-	gop := conf.Gop
-	if gop == nil {
-		gop = gopenv.Get()
-	}
-
 	if dir, err = filepath.Abs(dir); err != nil {
 		return
 	}
-	mod, err := LoadMod(dir, gop, conf)
+	mod, err := LoadMod(dir)
 	if err != nil {
 		return
 	}
 
+	if conf == nil {
+		conf = new(Config)
+	}
 	filterConf := conf.Filter
 	filter := func(fi fs.FileInfo) bool {
 		if filterConf != nil && !filterConf(fi) {
@@ -65,6 +56,10 @@ func Outline(dir string, conf *Config) (out outline.Package, err error) {
 			fname = fname[:pos]
 		}
 		return !strings.HasSuffix(fname, "_test")
+	}
+	fset := conf.Fset
+	if fset == nil {
+		fset = token.NewFileSet()
 	}
 	pkgs, err := parser.ParseDirEx(fset, dir, parser.Config{
 		ClassKind: mod.ClassKind,
@@ -81,6 +76,10 @@ func Outline(dir string, conf *Config) (out outline.Package, err error) {
 
 	imp := conf.Importer
 	if imp == nil {
+		gop := conf.Gop
+		if gop == nil {
+			gop = gopenv.Get()
+		}
 		imp = NewImporter(mod, gop, fset)
 	}
 
@@ -113,7 +112,7 @@ func Outline(dir string, conf *Config) (out outline.Package, err error) {
 // -----------------------------------------------------------------------------
 
 func OutlinePkgPath(workDir, pkgPath string, conf *Config, allowExtern bool) (out outline.Package, err error) {
-	mod, err := gopmod.Load(workDir, 0)
+	mod, err := gopmod.Load(workDir)
 	if NotFound(err) && allowExtern {
 		remotePkgPathDo(pkgPath, func(pkgDir, modDir string) {
 			modFile := chmodModfile(modDir)

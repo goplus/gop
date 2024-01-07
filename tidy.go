@@ -20,56 +20,50 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/goplus/mod"
 	"github.com/goplus/mod/env"
 	"github.com/goplus/mod/gopmod"
-	"github.com/goplus/mod/modfetch"
 	"github.com/qiniu/x/errors"
 )
 
 func Tidy(dir string, gop *env.Gop) (err error) {
-	modObj, err := gopmod.Load(dir, mod.GopModOnly)
+	modObj, err := gopmod.Load(dir)
 	if err != nil {
-		return errors.NewWith(err, `gopmod.Load(dir, mod.GopModOnly)`, -2, "gopmod.Load", dir, mod.GopModOnly)
+		return errors.NewWith(err, `gopmod.Load(dir, mod.GopModOnly)`, -2, "gopmod.Load", dir)
 	}
 
 	modRoot := modObj.Root()
-	depMods, err := GenDepMods(modObj, modRoot, true)
-	if err != nil {
-		return errors.NewWith(err, `GenDepMods(modObj, modRoot, true)`, -2, "gop.GenDepMods", modObj, modRoot, true)
-	}
-
-	old := modObj.DepMods()
-	for modPath := range old {
-		if _, ok := depMods[modPath]; !ok { // removed
-			modObj.DropRequire(modPath)
+	/*
+		depMods, err := GenDepMods(modObj, modRoot, true)
+		if err != nil {
+			return errors.NewWith(err, `GenDepMods(modObj, modRoot, true)`, -2, "gop.GenDepMods", modObj, modRoot, true)
 		}
-	}
-	for modPath := range depMods {
-		if _, ok := old[modPath]; !ok { // added
-			if newMod, e := modfetch.Get(modPath); e != nil {
-				return errors.NewWith(e, `modfetch.Get(modPath)`, -1, "modfetch.Get", modPath)
-			} else {
-				modObj.AddRequire(newMod.Path, newMod.Version)
+
+		old := modObj.DepMods()
+		for modPath := range old {
+			if _, ok := depMods[modPath]; !ok { // removed
+				modObj.DropRequire(modPath)
 			}
 		}
-	}
+		for modPath := range depMods {
+			if _, ok := old[modPath]; !ok { // added
+				if newMod, e := modfetch.Get(modPath); e != nil {
+					return errors.NewWith(e, `modfetch.Get(modPath)`, -1, "modfetch.Get", modPath)
+				} else {
+					modObj.AddRequire(newMod.Path, newMod.Version)
+				}
+			}
+		}
 
-	modObj.Cleanup()
-	err = modObj.Save()
-	if err != nil {
-		return errors.NewWith(err, `modObj.Save()`, -2, "(*gopmod.Module).Save")
-	}
-
-	conf := &Config{DontUpdateGoMod: true, Gop: gop}
+		modObj.Cleanup()
+		err = modObj.Save()
+		if err != nil {
+			return errors.NewWith(err, `modObj.Save()`, -2, "(*gopmod.Module).Save")
+		}
+	*/
+	conf := &Config{Gop: gop}
 	err = genGoDir(modRoot, conf, true, true, 0)
 	if err != nil {
 		return errors.NewWith(err, `genGoDir(modRoot, conf, true, true)`, -2, "gop.genGoDir", modRoot, conf, true, true)
-	}
-
-	err = modObj.UpdateGoMod(gop, true)
-	if err != nil {
-		return errors.NewWith(err, `modObj.UpdateGoMod(gop, true)`, -2, "(*gopmod.Module).UpdateGoMod", gop, true)
 	}
 
 	cmd := exec.Command("go", "mod", "tidy")
