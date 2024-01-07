@@ -225,6 +225,15 @@ func TestGmxSettings(t *testing.T) {
 	if e := err.Error(); e != `github.com/goplus/gop/cl/internal/libc.Game not found` {
 		t.Fatal("newGmx:", e)
 	}
+
+	defer func() {
+		if e := recover(); e == nil {
+			t.Fatal("TestGmxSettings failed: no error?")
+		}
+	}()
+	newGmx(nil, pkg, "main.abcx", &ast.File{IsProj: true}, &Config{
+		LookupClass: lookupClass,
+	})
 }
 
 func TestSpxLookup(t *testing.T) {

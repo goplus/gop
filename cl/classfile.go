@@ -70,20 +70,16 @@ func classNameAndExt(file string) (name, ext string) {
 }
 
 func newGmx(ctx *pkgCtx, pkg *gox.Package, file string, f *ast.File, conf *Config) *gmxSettings {
-	fname := filepath.Base(file)
-	ext := modfile.ClassExt(fname)
+	tname, ext := classNameAndExt(file)
 	gt, ok := conf.LookupClass(ext)
 	if !ok {
 		panic("TODO: class not found")
 	}
 	var name string
 	if f.IsProj {
-		_, name = filepath.Split(file)
-		if idx := strings.Index(name, "."); idx > 0 {
-			name = name[:idx]
-			if name == "main" {
-				name = gt.Class
-			}
+		name = tname
+		if name == "main" {
+			name = gt.Class
 		}
 	}
 	pkgPaths := gt.PkgPaths
