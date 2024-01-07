@@ -216,9 +216,7 @@ type Config struct {
 type nodeInterp struct {
 	fset       *token.FileSet
 	files      map[string]*ast.File
-	relBaseDir string
 	workingDir string
-	absWorkDir string
 }
 
 func (p *nodeInterp) Position(start token.Pos) (pos token.Position) {
@@ -349,6 +347,9 @@ type pkgCtx struct {
 	generics map[string]bool // generic type record
 	idents   []*ast.Ident    // toType ident recored
 	inInst   int             // toType in generic instance
+
+	relBaseDir string
+	absWorkDir string
 }
 
 type pkgImp struct {
@@ -482,14 +483,16 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	fset := conf.Fset
 	files := pkg.Files
 	interp := &nodeInterp{
-		fset: fset, files: files, relBaseDir: relBaseDir, workingDir: workingDir,
+		fset: fset, files: files, workingDir: workingDir,
 	}
-	interp.absWorkDir, _ = filepath.Abs(workingDir)
 
 	ctx := &pkgCtx{
 		fset: fset,
 		syms: make(map[string]loader), nodeInterp: interp, generics: make(map[string]bool),
 	}
+	ctx.absWorkDir, _ = filepath.Abs(workingDir)
+	ctx.relBaseDir = relBaseDir
+
 	confGox := &gox.Config{
 		Types:           conf.Types,
 		Fset:            fset,
