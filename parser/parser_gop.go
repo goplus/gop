@@ -116,7 +116,7 @@ func ParseEntry(fset *token.FileSet, filename string, src interface{}, conf Conf
 // returned. If a parse error occurred, a non-nil but incomplete map and the
 // first error encountered are returned.
 func ParseFSDir(fset *token.FileSet, fs FileSystem, dir string, conf Config) (pkgs map[string]*ast.Package, first error) {
-	if conf.Mode&ParseFileAbsolute != 0 {
+	if conf.Mode&ParseFileAbsolute != 0 && fs == fsx.Local {
 		if absDir, err := filepath.Abs(dir); err == nil {
 			dir = absDir
 		}
