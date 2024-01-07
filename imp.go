@@ -48,7 +48,7 @@ func NewImporter(mod *gopmod.Module, gop *env.Gop, fset *token.FileSet) *Importe
 		mod = gopmod.Default
 	}
 	dir := ""
-	if hasModule(mod) {
+	if hasModfile(mod) {
 		dir = mod.Root()
 	}
 	impFrom := packages.NewImporter(fset, dir)
@@ -70,7 +70,7 @@ func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 			return p.impFrom.ImportFrom(pkgPath, gopRoot, 0)
 		}
 	}
-	if mod := p.mod; hasModule(mod) {
+	if mod := p.mod; hasModfile(mod) {
 		ret, e := mod.Lookup(pkgPath)
 		if e != nil {
 			return nil, e
