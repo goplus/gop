@@ -45,7 +45,7 @@ func NewImporter(mod *gopmod.Module, gop *env.Gop, fset *token.FileSet) *Importe
 		defaultFlags = GenFlagPrompt | GenFlagPrintError
 	)
 	dir := ""
-	if mod.IsValid() {
+	if hasModule(mod) {
 		dir = mod.Root()
 	}
 	impFrom := packages.NewImporter(fset, dir)
@@ -67,7 +67,7 @@ func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 			return p.impFrom.ImportFrom(pkgPath, gopRoot, 0)
 		}
 	}
-	if mod := p.mod; mod.IsValid() {
+	if mod := p.mod; hasModule(mod) {
 		ret, e := mod.Lookup(pkgPath)
 		if e != nil {
 			return nil, e
