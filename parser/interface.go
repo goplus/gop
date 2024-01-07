@@ -49,6 +49,8 @@ const (
 	ParseGoAsGoPlus Mode = 1 << 16
 	// ParserGoPlusClass - parse Go+ classfile by gop/parser
 	ParseGoPlusClass Mode = 1 << 17
+	// SaveAbsFile - parse and save absolute path to pkg.Files
+	SaveAbsFile Mode = 1 << 18
 )
 
 // -----------------------------------------------------------------------------

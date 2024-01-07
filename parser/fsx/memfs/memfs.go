@@ -117,6 +117,10 @@ func (p *FS) Base(filename string) string {
 	return path.Base(filename)
 }
 
+func (p *FS) Abs(path string) (string, error) {
+	return path, nil
+}
+
 // -----------------------------------------------------------------------------
 
 // SingleFile creates a file system that only contains a single file.

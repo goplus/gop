@@ -142,7 +142,7 @@ func genGoSingleFile(file string, conf *Config, flags GenFlags) (err error) {
 	if (flags & GenFlagPrompt) != 0 {
 		fmt.Fprintln(os.Stderr, "GenGo", file, "...")
 	}
-	out, err := LoadFiles([]string{file}, conf)
+	out, err := LoadFiles(".", []string{file}, conf)
 	if err != nil {
 		return errors.NewWith(err, `LoadFiles(files, conf)`, -2, "gop.LoadFiles", file)
 	}
@@ -226,7 +226,7 @@ func GenGoPkgPathEx(workDir, pkgPath string, conf *Config, allowExtern bool, fla
 		return remotePkgPath(pkgPath, conf, false, flags)
 	}
 
-	mod, err := gopmod.Load(workDir, 0)
+	mod, err := gopmod.Load(workDir)
 	if NotFound(err) && allowExtern {
 		return remotePkgPath(pkgPath, conf, recursively, flags)
 	} else if err != nil {
@@ -270,7 +270,7 @@ func GenGoFiles(autogen string, files []string, conf *Config) (result []string, 
 			}
 		}
 	}
-	out, err := LoadFiles(files, conf)
+	out, err := LoadFiles(".", files, conf)
 	if err != nil {
 		err = errors.NewWith(err, `LoadFiles(files, conf)`, -2, "gop.LoadFiles", files, conf)
 		return

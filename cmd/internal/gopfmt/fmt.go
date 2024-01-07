@@ -147,7 +147,7 @@ func (w *walker) walk(path string, d fs.DirEntry, err error) error {
 		dir, _ := filepath.Split(path)
 		fn, ok := w.dirMap[dir]
 		if !ok {
-			if mod, err := gop.LoadMod(path, nil, &gop.Config{DontUpdateGoMod: true}); err == nil {
+			if mod, err := gop.LoadMod(path); err == nil {
 				fn = func(ext string) (ok bool, class bool) {
 					switch ext {
 					case ".go", ".gop":
