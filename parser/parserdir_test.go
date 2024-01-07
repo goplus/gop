@@ -194,14 +194,14 @@ func TestParseEntry(t *testing.T) {
 	})
 }
 
-func TestParseFileAbsolute(t *testing.T) {
+func TestSaveAbsFile(t *testing.T) {
 	fset := token.NewFileSet()
 	src, err := os.ReadFile("./_testdata/functype/functype.go")
 	if err != nil {
 		t.Fatal("os.ReadFile:", err)
 	}
 	conf := Config{}
-	conf.Mode = ParseFileAbsolute
+	conf.Mode = SaveAbsFile
 	t.Run(".gop file", func(t *testing.T) {
 		f, err := ParseEntry(fset, "./functype.gop", src, conf)
 		if err != nil {

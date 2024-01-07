@@ -23,7 +23,6 @@ import (
 	"io/fs"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
 
 	goast "go/ast"
@@ -116,10 +115,9 @@ func ParseEntry(fset *token.FileSet, filename string, src interface{}, conf Conf
 // returned. If a parse error occurred, a non-nil but incomplete map and the
 // first error encountered are returned.
 func ParseFSDir(fset *token.FileSet, fs FileSystem, dir string, conf Config) (pkgs map[string]*ast.Package, first error) {
-	if conf.Mode&ParseFileAbsolute != 0 && fs == fsx.Local {
-		if absDir, err := filepath.Abs(dir); err == nil {
-			dir = absDir
-		}
+	if conf.Mode&SaveAbsFile != 0 {
+		dir, _ = fs.Abs(dir)
+		conf.Mode &^= SaveAbsFile
 	}
 	list, err := fs.ReadDir(dir)
 	if err != nil {
@@ -200,11 +198,6 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, dir string, conf Config) (pk
 // ParseFSEntry parses the source code of a single Go+ source file and returns the corresponding ast.File node.
 // Compared to ParseFSFile, ParseFSEntry detects fileKind by its filename.
 func ParseFSEntry(fset *token.FileSet, fs FileSystem, filename string, src interface{}, conf Config) (f *ast.File, err error) {
-	if conf.Mode&ParseFileAbsolute != 0 {
-		if abs, err := filepath.Abs(filename); err == nil {
-			filename = abs
-		}
-	}
 	fname := fs.Base(filename)
 	fnameRmGox := fname
 	ext := path.Ext(fname)
@@ -307,14 +300,12 @@ func ParseFile(fset *token.FileSet, filename string, src interface{}, mode Mode)
 
 // ParseFSFile parses the source code of a single Go+ source file and returns the corresponding ast.File node.
 func ParseFSFile(fset *token.FileSet, fs FileSystem, filename string, src interface{}, mode Mode) (f *ast.File, err error) {
-	if mode&ParseFileAbsolute != 0 {
-		if abs, err := filepath.Abs(filename); err == nil {
-			filename = abs
-		}
-	}
 	code, err := readSourceFS(fs, filename, src)
 	if err != nil {
 		return
+	}
+	if mode&SaveAbsFile != 0 {
+		filename, _ = fs.Abs(filename)
 	}
 	return parseFile(fset, filename, code, mode)
 }
