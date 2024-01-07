@@ -25,7 +25,7 @@ import (
 )
 
 func findGoModFile(dir string) (modfile string, noCacheFile bool, err error) {
-	modfile, err = mod.GOPMOD(dir, 0)
+	modfile, err = mod.GOMOD(dir)
 	if err != nil {
 		gopRoot, err := findGopRoot()
 		if err == nil {
