@@ -140,7 +140,7 @@ func LoadMod(dir string) (mod *gopmod.Module, err error) {
 	return gopmod.Default, nil
 }
 
-func hasModule(mod *gopmod.Module) bool {
+func hasModfile(mod *gopmod.Module) bool {
 	f := mod.File
 	return f != nil && f.Syntax != nil
 }
@@ -225,7 +225,7 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 }
 
 func relativeBaseOf(mod *gopmod.Module) string {
-	if hasModule(mod) {
+	if hasModfile(mod) {
 		return mod.Root()
 	}
 	dir, _ := os.Getwd()
