@@ -4660,6 +4660,7 @@ func TestCommentLineRoot(t *testing.T) {
 	conf := *gblConf
 	conf.NoFileLine = false
 	conf.RelativeBase = "/foo/root"
+	conf.WorkingDir = "/foo"
 	var src = `
 type Point struct {
 	x int
