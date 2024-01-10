@@ -68,12 +68,12 @@ changelog:
       - "^test:"
 
 winget:
-  - name: GoPlus
+  - name: gop
     homepage: "https://goplus.org/"
-    publisher: GoPlus
+    publisher: goplus
     publisher_url: https://github.com/goplus/gop
     publisher_support_url: "https://github.com/goplus/gop/issues/new"
-    package_identifier: GoPlus.GoPlus
+    package_identifier: goplus.gop
     short_description: The Go+ Programming Language
     description: |
       The Go+ programming language is designed for engineering, STEM education, and data science.
