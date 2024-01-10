@@ -3,7 +3,7 @@ name: Release Build
 on:
   push:
     tags:
-      - "v*.*.*"
+      - "v*"
 
 jobs:
   build:
@@ -18,21 +18,29 @@ jobs:
         echo Current tag: $tag_name
         git checkout $tag_name
         echo "TAG_NAME=${tag_name}" >> $GITHUB_ENV
+    
+    - name: Check VERSION consistency
+      run: |
+        tag=$(git describe --tags --dirty)
+        version=$(cat VERSION)
+        if [ "$tag" != "$version" ]; then
+          echo "VERSION file is not consistent with tag name"
+          echo "VERSION: $version"
+          echo "TAG: $tag"
+          exit 1
+        fi
 
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: 1.18
-
-    - name: Build
+        go-version: "1.21"
+    
+    - name: Install goreleaser
       run: |
-        make dist
+        go install github.com/goreleaser/goreleaser@latest
 
     - name: Release
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        tag: ${{ env.TAG_NAME }}
-        file: ./build-dir/gop-*.zip
-        file_glob: true
-        prerelease: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        WINGET_PKGS_PRIVATE_KEY: ${{ secrets.WINGET_PKGS_PRIVATE_KEY }}
+      run: goreleaser release -p 4
