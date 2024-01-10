@@ -60,7 +60,7 @@ func (p *gmxSettings) getScheds(cb *gox.CodeBuilder) []goast.Stmt {
 	return p.schedStmts
 }
 
-func classNameAndExt(file string) (name, ext string) {
+func ClassNameAndExt(file string) (name, ext string) {
 	fname := filepath.Base(file)
 	name, ext = modfile.SplitFname(fname)
 	if idx := strings.Index(name, "."); idx > 0 {
@@ -70,7 +70,7 @@ func classNameAndExt(file string) (name, ext string) {
 }
 
 func newGmx(ctx *pkgCtx, pkg *gox.Package, file string, f *ast.File, conf *Config) *gmxSettings {
-	tname, ext := classNameAndExt(file)
+	tname, ext := ClassNameAndExt(file)
 	gt, ok := conf.LookupClass(ext)
 	if !ok {
 		panic("TODO: class not found")

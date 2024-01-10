@@ -40,7 +40,7 @@ func getGoxConf() *gox.Config {
 }
 
 func TestClassNameAndExt(t *testing.T) {
-	name, ext := classNameAndExt("/foo/bar.abc_yap.gox")
+	name, ext := ClassNameAndExt("/foo/bar.abc_yap.gox")
 	if name != "bar" || ext != "_yap.gox" {
 		t.Fatal("classNameAndExt:", name, ext)
 	}
