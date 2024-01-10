@@ -1,0 +1,103 @@
+# The lines below are called `modelines`. See `:help modeline`
+# Feel free to remove those if you don't want/need to use them.
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 1
+
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
+    # you may remove this if you don't need go generate
+    # - go generate ./...
+
+builds:
+  - id: gop
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    main: ./cmd/gop
+    binary: bin/gop
+    ldflags:
+      - -X github.com/goplus/gop/env.buildVersion=v{{.Version}}
+      - -X github.com/goplus/gop/env.buildDate={{.Date}}
+  - id: gopfmt
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    main: ./cmd/gopfmt
+    binary: bin/gopfmt
+    ldflags:
+      - -X github.com/goplus/gop/env.buildVersion=v{{.Version}}
+      - -X github.com/goplus/gop/env.buildDate={{.Date}}
+
+archives:
+  - format: tar.gz
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      {{ .ProjectName }}_v{{.Version}}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE
+      - "*.mod"
+      - "*.sum"
+      - "*.md"
+      - "**/*.go"
+      - "**/*.md"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+winget:
+  - name: GoPlus
+    homepage: "https://goplus.org/"
+    publisher: GoPlus
+    publisher_url: https://github.com/goplus/gop
+    publisher_support_url: "https://github.com/goplus/gop/issues/new"
+    package_identifier: GoPlus.GoPlus
+    short_description: The Go+ Programming Language
+    description: |
+      The Go+ programming language is designed for engineering, STEM education, and data science.
+      - For engineering: working in the simplest language that can be mastered by children.
+      - For STEM education: studying an engineering language that can be used for work in the future.
+      - For data science: communicating with engineers in the same language.
+    license: Apache-2.0
+    skip_upload: false
+    release_notes: "{{.Changelog}}"
+    release_notes_url: "https://github.com/goplus/gop/releases/tag/v{{.Version}}"
+    dependencies:
+      - package_identifier: GoLang.Go
+        minimum_version: 1.18.0
+    repository:
+      owner: goplus
+      name: winget-pkgs
+      branch: "{{.ProjectName}}-v{{.Version}}"
+      git:
+        url: "git@github.com:goplus/winget-pkgs.git"
+        private_key: "{{ .Env.WINGET_PKGS_PRIVATE_KEY }}"
+      pull_request:
+        enabled: true
+        draft: false
+        base:
+          owner: goplus
+          name: winget-pkgs
+          branch: master
