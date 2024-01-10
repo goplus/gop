@@ -98,6 +98,6 @@ winget:
         enabled: true
         draft: false
         base:
-          owner: goplus
+          owner: microsoft
           name: winget-pkgs
           branch: master
