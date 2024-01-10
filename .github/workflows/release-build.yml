@@ -34,7 +34,7 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: "1.21"
-    
+
     - name: Install goreleaser
       run: |
         go install github.com/goreleaser/goreleaser@latest
