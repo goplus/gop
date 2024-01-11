@@ -150,12 +150,6 @@ func TestParseEntry(t *testing.T) {
 		t.Fatal("os.ReadFile:", err)
 	}
 	conf := Config{}
-	conf.ClassKind = func(fname string) (isProj bool, ok bool) {
-		if strings.HasSuffix(fname, "_yap.gox") {
-			return true, true
-		}
-		return defaultClassKind(fname)
-	}
 	t.Run(".gop file", func(t *testing.T) {
 		f, err := ParseEntry(fset, "./functype.gop", src, conf)
 		if err != nil {
@@ -198,6 +192,21 @@ func TestParseEntry(t *testing.T) {
 			t.Fatal("ParseEntry main.spx:", f.IsClass, f.IsProj, f.IsNormalGox)
 		}
 	})
+}
+
+func TestParseEntry2(t *testing.T) {
+	fset := token.NewFileSet()
+	src, err := os.ReadFile("./_testdata/functype/functype.go")
+	if err != nil {
+		t.Fatal("os.ReadFile:", err)
+	}
+	conf := Config{}
+	conf.ClassKind = func(fname string) (isProj bool, ok bool) {
+		if strings.HasSuffix(fname, "_yap.gox") {
+			return true, true
+		}
+		return defaultClassKind(fname)
+	}
 	t.Run("_yap.gox file", func(t *testing.T) {
 		f, err := ParseEntry(fset, "./functype_yap.gox", src, conf)
 		if err != nil {
