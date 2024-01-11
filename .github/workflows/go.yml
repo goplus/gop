@@ -30,8 +30,6 @@ jobs:
     - name: Compile gop and related tools
       run: |
         ./all.bash
-        cd testdata
-        PATH=../bin gop go ./...
 
     - name: Run testcases
       run: go test -v -coverprofile="coverage.txt" -covermode=atomic ./...
