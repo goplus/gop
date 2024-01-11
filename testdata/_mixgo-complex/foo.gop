@@ -1,0 +1,43 @@
+// Pkg doc
+
+import (
+	"io"
+	"log"
+)
+
+type ift2 interface {
+	io.Closer
+	f(int) string
+	g()
+}
+
+// T doc
+type T struct {
+	io.Closer
+}
+
+func (T) Close() (err error) {
+	log.Println("Hi!")
+	return
+}
+
+func (t T) g() {}
+
+func (t T) f(a int) (b string) {
+	_ = t.Closer
+	return
+}
+
+func Foo(i *impl) string {
+	i.a.f(0)
+	i.a.g()
+	return ""
+}
+
+// foo golang/go#61561: interface instances aren't concurrency-safe
+// as they are not completed by the type checker.
+func foo(a, b int) string {
+	return ""
+}
+
+println "Hello, world", T{}.f(0)

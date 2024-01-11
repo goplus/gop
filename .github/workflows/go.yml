@@ -28,7 +28,10 @@ jobs:
         go test -v cmd/make_test.go
 
     - name: Compile gop and related tools
-      run: go install ./...
+      run: |
+        ./all.bash
+        cd testdata
+        gop go ./...
 
     - name: Run testcases
       run: go test -v -coverprofile="coverage.txt" -covermode=atomic ./...
