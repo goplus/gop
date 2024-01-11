@@ -1060,6 +1060,7 @@ type (
 		Body     *BlockStmt    // function body; or nil for external (non-Go) function
 		Operator bool          // is operator or not
 		Shadow   bool          // is a shadow entry
+		IsClass  bool          // recv set by class
 	}
 )
 
