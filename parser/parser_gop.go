@@ -190,32 +190,23 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, dir string, conf Config) (pk
 // Compared to ParseFSFile, ParseFSEntry detects fileKind by its filename.
 func ParseFSEntry(fset *token.FileSet, fs FileSystem, filename string, src interface{}, conf Config) (f *ast.File, err error) {
 	fname := fs.Base(filename)
-	fnameRmGox := fname
 	ext := path.Ext(fname)
-	var isProj, isClass, isNormalGox, rmGox bool
+	var isProj, isClass, isNormalGox bool
 	switch ext {
 	case ".gop", ".go":
 	case ".gox":
-		isClass = true
-		t := fname[:len(fname)-4]
-		if c := path.Ext(t); c != "" {
-			fnameRmGox, rmGox = t, true
-		} else {
-			isNormalGox = true
-		}
+		isNormalGox = true
 		fallthrough
 	default:
-		if !isNormalGox {
-			if conf.ClassKind == nil {
-				conf.ClassKind = defaultClassKind
-			}
-			if isProj, isClass = conf.ClassKind(fnameRmGox); !isClass {
-				if !rmGox {
-					return nil, ErrUnknownFileKind
-				}
-				// not found Go+ class by ext, but is a .gox file
-				isClass, isNormalGox = true, true
-			}
+		if conf.ClassKind == nil {
+			conf.ClassKind = defaultClassKind
+		}
+		if isProj, isClass = conf.ClassKind(fname); isClass {
+			isNormalGox = false
+		} else if isNormalGox { // not found Go+ class by ext, but is a .gox file
+			isClass = true
+		} else {
+			return nil, ErrUnknownFileKind
 		}
 	}
 	mode := conf.Mode
