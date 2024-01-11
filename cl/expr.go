@@ -416,6 +416,7 @@ func lookupPkgRef(ctx *blockCtx, pkg *gox.PkgRef, x *ast.Ident, pkgKind int) (o 
 			}
 		}
 	} else {
+		log.Println("==> lookupCPkgRef:", x.Name, "n:", len(ctx.clookups))
 		var cpkg *cpackages.PkgRef
 		for _, at := range ctx.clookups {
 			if o2 := at.Lookup(x.Name); o2 != nil {

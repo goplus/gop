@@ -17,7 +17,6 @@
 package cl
 
 import (
-	"log"
 	"strings"
 
 	"github.com/goplus/gop/ast"
@@ -66,7 +65,6 @@ func loadC2goPkg(ctx *blockCtx, realPath string, src *ast.BasicLit) *gox.PkgRef 
 		return nil
 	}
 	ctx.clookups = append(ctx.clookups, cpkg)
-	log.Println("==> loadC2goPkg:", realPath)
 	return cpkg.Pkg()
 }
 
