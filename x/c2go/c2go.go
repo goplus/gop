@@ -18,7 +18,6 @@ package c2go
 
 import (
 	"path/filepath"
-	"syscall"
 
 	"github.com/goplus/mod/gopmod"
 )
@@ -28,9 +27,6 @@ import (
 // LookupPub returns a anonymous function required by cl.NewPackage.
 func LookupPub(mod *gopmod.Module) func(pkgPath string) (pubfile string, err error) {
 	return func(pkgPath string) (pubfile string, err error) {
-		if mod.File == nil { // no go.mod/gop.mod file
-			return "", syscall.ENOENT
-		}
 		pkg, err := mod.Lookup(pkgPath)
 		if err == nil {
 			pubfile = filepath.Join(pkg.Dir, "c2go.a.pub")

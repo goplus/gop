@@ -27,9 +27,6 @@ jobs:
         git config --global user.name "build robot"
         go test -v cmd/make_test.go
 
-    - name: Compile gop and related tools
-      run: go install ./...
-
     - name: Run testcases
       run: go test -v -coverprofile="coverage.txt" -covermode=atomic ./...
 

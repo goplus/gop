@@ -77,7 +77,7 @@ type Config struct {
 	// Default is github.com/goplus/.
 	C2goBase string
 
-	// Mod represents a gop.mod object (optional).
+	// Mod represents a Go+ module (optional).
 	Mod *gopmod.Module
 }
 

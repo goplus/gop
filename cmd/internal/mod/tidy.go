@@ -39,7 +39,7 @@ func runTidy(cmd *base.Command, args []string) {
 	err := gop.Tidy(".", gopenv.Get())
 	if err != nil {
 		if gop.NotFound(err) {
-			fmt.Fprintln(os.Stderr, "gop.mod not found")
+			fmt.Fprintln(os.Stderr, "go.mod not found")
 		} else {
 			fmt.Fprintln(os.Stderr, err)
 		}
