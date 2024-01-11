@@ -49,3 +49,5 @@ cmd/qfmt/qfmt
 bin/
 go-num/
 _todo*.go
+
+dist/
