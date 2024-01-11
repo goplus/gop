@@ -844,6 +844,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 			if ctx.classRecv != nil { // in class file (.spx/.gmx)
 				if d.Recv == nil {
 					d.Recv = ctx.classRecv
+					d.IsClass = true
 				}
 			}
 			if d.Recv == nil {

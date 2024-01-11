@@ -1980,7 +1980,7 @@ func (p *printer) funcDecl(d *ast.FuncDecl) {
 	// different line (all whitespace preceding the FUNC is emitted only when the
 	// FUNC is emitted).
 	startCol := p.out.Column - len("func ")
-	if d.Recv != nil {
+	if d.Recv != nil && !d.IsClass {
 		p.parameters(d.Recv) // method: print receiver
 		p.print(blank)
 	}
