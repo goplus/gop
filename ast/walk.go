@@ -364,7 +364,9 @@ func Walk(v Visitor, node Node) {
 		if n.Doc != nil {
 			Walk(v, n.Doc)
 		}
-		Walk(v, n.Name)
+		if !n.NoPkgDecl {
+			Walk(v, n.Name)
+		}
 		walkDeclList(v, n.Decls)
 		// don't walk n.Comments - they have been
 		// visited already through the individual
