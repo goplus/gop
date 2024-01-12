@@ -10,6 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Install Snapcraft
+      uses: samuelmeuli/action-snapcraft@v2
 
     - name: Checkout tag
       run: |
@@ -35,12 +40,13 @@ jobs:
       with:
         go-version: "1.21"
 
-    - name: Install goreleaser
-      run: |
-        go install github.com/goreleaser/goreleaser@latest
-
-    - name: Release
+    - name: Release with goreleaser
+      uses: goreleaser/goreleaser-action@v5
+      with:
+        # either 'goreleaser' (default) or 'goreleaser-pro'
+        distribution: goreleaser
+        version: latest
+        args: release --clean -p 4
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         WINGET_PKGS_PRIVATE_KEY: ${{ secrets.WINGET_PKGS_PRIVATE_KEY }}
-      run: goreleaser release -p 4
