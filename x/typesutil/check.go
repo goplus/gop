@@ -111,6 +111,9 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 	gopfs := make(map[string]*ast.File)
 	for _, goFile := range goFiles {
 		f := fset.File(goFile.Pos())
+		if f == nil {
+			continue
+		}
 		file := f.Name()
 		fname := filepath.Base(file)
 		if strings.HasPrefix(fname, "gop_autogen") {
@@ -121,6 +124,9 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 	}
 	for _, gopFile := range gopFiles {
 		f := fset.File(gopFile.Pos())
+		if f == nil {
+			continue
+		}
 		gopfs[f.Name()] = gopFile
 	}
 	if debugVerbose {

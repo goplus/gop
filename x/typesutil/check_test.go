@@ -185,3 +185,13 @@ var i int = "hello"
 		t.Fatal("no error")
 	}
 }
+
+func TestBadFile(t *testing.T) {
+	conf := &types.Config{}
+	opt := &typesutil.Config{}
+	opt.Fset = token.NewFileSet()
+	opt.Types = types.NewPackage("", "main")
+	checker := typesutil.NewChecker(conf, opt, nil, nil)
+	_ = checker.Files([]*goast.File{&goast.File{Name: goast.NewIdent("main")}},
+		[]*ast.File{&ast.File{Name: ast.NewIdent("main")}})
+}
