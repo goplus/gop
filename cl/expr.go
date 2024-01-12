@@ -202,7 +202,7 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr) {
 	case *ast.StarExpr:
 		compileStarExprLHS(ctx, v)
 	default:
-		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
+		ctx.handleErrorf(v.Pos(), "compileExprLHS unexpected: %T", v)
 	}
 	if rec := ctx.recorder(); rec != nil {
 		rec.recordExpr(ctx, expr, true)
@@ -275,12 +275,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 		compileErrWrapExpr(ctx, v, 0)
 	case *ast.FuncType:
 		ctx.cb.Typ(toFuncType(ctx, v, nil, nil), v)
-	case *ast.Ellipsis:
-		panic("compileEllipsis: ast.Ellipsis unexpected")
-	case *ast.KeyValueExpr:
-		panic("compileExpr: ast.KeyValueExpr unexpected")
 	default:
-		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
+		ctx.handleErrorf(v.Pos(), "compileExpr unexpected: %T", v)
 	}
 	if rec := ctx.recorder(); rec != nil {
 		rec.recordExpr(ctx, expr, false)
@@ -1167,7 +1163,7 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr, inFlags int) {
 			VarRef(err).
 			Val(pkg.Import(errorPkgPath).Ref("NewFrame")).
 			Val(err).
-			Val(sprintAst(pkg.Fset, v.X)).
+			Val(sprintAst(ctx, pkg.Fset, v.X)).
 			Val(relFile(ctx.relBaseDir, pos.Filename)).
 			Val(pos.Line).
 			Val(currentFuncName).
@@ -1189,13 +1185,12 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr, inFlags int) {
 	}
 }
 
-func sprintAst(fset *token.FileSet, x ast.Node) string {
+func sprintAst(ctx *blockCtx, fset *token.FileSet, x ast.Node) string {
 	var buf bytes.Buffer
 	err := printer.Fprint(&buf, fset, x)
 	if err != nil {
-		panic("Unexpected error: " + err.Error())
+		ctx.handleErrorf(x.Pos(), "unexpected error: %v", err)
 	}
-
 	return buf.String()
 }
 

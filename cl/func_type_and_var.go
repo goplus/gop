@@ -21,7 +21,6 @@ import (
 	"go/types"
 	"log"
 	"math/big"
-	"reflect"
 	"strconv"
 
 	"github.com/goplus/gop/ast"
@@ -179,9 +178,10 @@ func toType(ctx *blockCtx, typ ast.Expr) (t types.Type) {
 		return toIndexType(ctx, v)
 	case *ast.IndexListExpr:
 		return toIndexListType(ctx, v)
+	default:
+		ctx.handleErrorf(v.Pos(), "toType unexpected: %T", v)
+		return types.Typ[types.Invalid]
 	}
-	log.Panicln("toType: unknown -", reflect.TypeOf(typ))
-	return nil
 }
 
 var (
