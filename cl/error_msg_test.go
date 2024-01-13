@@ -23,6 +23,7 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/parser/fsx/memfs"
@@ -45,6 +46,24 @@ func codeErrorTestEx(t *testing.T, pkgname, filename, msg, src string) {
 	conf.RelativeBase = "/foo"
 	bar := pkgs[pkgname]
 	_, err = cl.NewPackage("", bar, &conf)
+	if err == nil {
+		t.Fatal("no error?")
+	}
+	if ret := err.Error(); ret != msg {
+		t.Fatalf("\nError: \"%s\"\nExpected: \"%s\"\n", ret, msg)
+	}
+}
+
+func codeErrorTestAst(t *testing.T, pkgname, filename, msg, src string) {
+	f, _ := parser.ParseFile(gblFset, filename, src, parser.AllErrors)
+	pkg := &ast.Package{
+		Name:  pkgname,
+		Files: map[string]*ast.File{filename: f},
+	}
+	conf := *gblConf
+	conf.NoFileLine = false
+	conf.RelativeBase = "/foo"
+	_, err := cl.NewPackage("", pkg, &conf)
 	if err == nil {
 		t.Fatal("no error?")
 	}
@@ -967,5 +986,12 @@ a := uint128(b)
 func TestErrCompileFunc(t *testing.T) {
 	codeErrorTest(t, `bar.gop:2:1: compile func printf("%+v\n", int32) error: unreachable`, `
 printf("%+v\n", int32)
+`)
+}
+
+func TestToTypeError(t *testing.T) {
+	codeErrorTestAst(t, "main", "bar.gop", `bar.gop:3:3: toType unexpected: *ast.BadExpr`, `
+type
+a := 1
 `)
 }
