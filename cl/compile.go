@@ -512,19 +512,6 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		}
 	}
 
-	gofiles := make([]*ast.File, 0, len(pkg.GoFiles))
-	for fpath, gof := range pkg.GoFiles {
-		f := fromgo.ASTFile(gof, 0)
-		gofiles = append(gofiles, f)
-		ctx := &blockCtx{
-			pkg: p, pkgCtx: ctx, cb: p.CB(), relBaseDir: relBaseDir,
-			imports: make(map[string]pkgImp),
-		}
-		preloadFile(p, ctx, fpath, f, false, false)
-	}
-
-	initGopPkg(ctx, p)
-
 	for fpath, f := range files {
 		fileLine := !conf.NoFileLine
 		fileScope := types.NewScope(p.Types.Scope(), f.Pos(), f.End(), fpath)
@@ -538,6 +525,24 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		}
 		preloadGopFile(p, ctx, fpath, f, conf)
 	}
+
+	gopSyms := make(map[string]bool)
+	for name, _ := range ctx.syms {
+		gopSyms[name] = true
+	}
+
+	gofiles := make([]*ast.File, 0, len(pkg.GoFiles))
+	for fpath, gof := range pkg.GoFiles {
+		f := fromgo.ASTFile(gof, 0)
+		gofiles = append(gofiles, f)
+		ctx := &blockCtx{
+			pkg: p, pkgCtx: ctx, cb: p.CB(), relBaseDir: relBaseDir,
+			imports: make(map[string]pkgImp),
+		}
+		preloadFile(p, ctx, fpath, f, false, false)
+	}
+
+	initGopPkg(ctx, p, gopSyms)
 
 	// sort files
 	type File struct {
@@ -599,8 +604,11 @@ func isOverloadFunc(name string) bool {
 //go:linkname initThisGopPkg github.com/goplus/gox.initThisGopPkg
 func initThisGopPkg(pkg *types.Package)
 
-func initGopPkg(ctx *pkgCtx, pkg *gox.Package) {
+func initGopPkg(ctx *pkgCtx, pkg *gox.Package, gopSyms map[string]bool) {
 	for name, f := range ctx.syms {
+		if gopSyms[name] {
+			continue
+		}
 		if _, ok := f.(*typeLoader); ok {
 			ctx.loadType(name)
 		} else if isOverloadFunc(name) {
