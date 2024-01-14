@@ -3486,7 +3486,51 @@ func isOverloadOps(tok token.Token) bool {
 	return int(tok) < len(overloadOps) && overloadOps[tok] != 0
 }
 
-func (p *parser) parseFuncDeclOrCall() (*ast.FuncDecl, *ast.CallExpr) {
+// `func(params) {...}`
+// `funcName`
+// `(*T).methodName`
+func (p *parser) parseOverloadFunc() (ast.Expr, bool) {
+	switch p.tok {
+	case token.IDENT:
+		return p.parseIdent(), true
+	case token.FUNC:
+		return p.parseFuncTypeOrLit(), true
+	case token.LPAREN:
+		x, _ := p.parsePrimaryExpr(false, false, false)
+		return x, true
+	}
+	return nil, false
+}
+
+// `= (overloadFuncs)`
+//
+// here overloadFunc represents
+//
+// `func(params) {...}`
+// `funcName`
+// `(*T).methodName`
+func (p *parser) parseOverloadDecl(decl *ast.OverloadFuncDecl) *ast.OverloadFuncDecl {
+	decl.Assign = p.pos
+	p.next()
+
+	decl.Lparen = p.expect(token.LPAREN)
+	funcs := make([]ast.Expr, 0, 4)
+	for {
+		f, ok := p.parseOverloadFunc()
+		if !ok {
+			break
+		}
+		funcs = append(funcs, f)
+		if p.tok == token.SEMICOLON {
+			p.next()
+		}
+	}
+	decl.Funcs = funcs
+	decl.Rparen = p.expect(token.RPAREN)
+	return decl
+}
+
+func (p *parser) parseFuncDeclOrCall() (ast.Decl, *ast.CallExpr) {
 	if p.trace {
 		defer un(trace(p, "FunctionDecl"))
 	}
@@ -3499,11 +3543,23 @@ func (p *parser) parseFuncDeclOrCall() (*ast.FuncDecl, *ast.CallExpr) {
 	var ident *ast.Ident
 	var isOp, isFunLit, ok bool
 
-	if p.tok != token.LPAREN { // func identOrOp(...)
+	if p.tok != token.LPAREN {
+		// func: func identOrOp(...)
+		// overload: func identOrOp = (overloadFuncs)
 		ident, isOp = p.parseIdentOrOp()
+		if p.tok == token.ASSIGN {
+			// func identOrOp = (overloadFuncs)
+			return p.parseOverloadDecl(&ast.OverloadFuncDecl{
+				Doc:      doc,
+				Func:     pos,
+				Name:     ident,
+				Operator: isOp,
+			}), nil
+		}
 		params, results = p.parseSignature(scope)
 	} else {
 		// method: func (recv) XXX(params) results { ... }
+		// overload: func (T).XXX = (overloadFuncs)
 		// funlit: func (params) results { ... }()
 		params = p.parseParameters(scope, true)
 		if p.tok == token.LPAREN {
