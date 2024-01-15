@@ -100,6 +100,7 @@ func testFrom(t *testing.T, pkgDir, sel string, exclude Mode) {
 	if sel != "" && !strings.Contains(pkgDir, sel) {
 		return
 	}
+	t.Helper()
 	log.Println("Parsing", pkgDir)
 	fset := token.NewFileSet()
 	pkgs, err := ParseDir(fset, pkgDir, nil, (Trace|ParseComments|ParseGoAsGoPlus)&^exclude)

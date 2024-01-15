@@ -1,0 +1,94 @@
+package main
+
+file overload.gop
+ast.OverloadFuncDecl:
+  Name:
+    ast.Ident:
+      Name: foo
+  Funcs:
+    ast.FuncLit:
+      Type:
+        ast.FuncType:
+          Params:
+            ast.FieldList:
+              List:
+                ast.Field:
+                  Names:
+                    ast.Ident:
+                      Name: a
+                    ast.Ident:
+                      Name: b
+                  Type:
+                    ast.Ident:
+                      Name: float64
+          Results:
+            ast.FieldList:
+              List:
+                ast.Field:
+                  Type:
+                    ast.Ident:
+                      Name: float64
+      Body:
+        ast.BlockStmt:
+          List:
+            ast.ReturnStmt:
+              Results:
+                ast.BinaryExpr:
+                  X:
+                    ast.Ident:
+                      Name: a
+                  Op: +
+                  Y:
+                    ast.Ident:
+                      Name: b
+    ast.FuncLit:
+      Type:
+        ast.FuncType:
+          Params:
+            ast.FieldList:
+              List:
+                ast.Field:
+                  Names:
+                    ast.Ident:
+                      Name: a
+                    ast.Ident:
+                      Name: b
+                  Type:
+                    ast.Ident:
+                      Name: string
+          Results:
+            ast.FieldList:
+              List:
+                ast.Field:
+                  Type:
+                    ast.Ident:
+                      Name: string
+      Body:
+        ast.BlockStmt:
+          List:
+            ast.ReturnStmt:
+              Results:
+                ast.BinaryExpr:
+                  X:
+                    ast.Ident:
+                      Name: a
+                  Op: +
+                  Y:
+                    ast.Ident:
+                      Name: b
+ast.OverloadFuncDecl:
+  Name:
+    ast.Ident:
+      Name: bar
+  Funcs:
+    ast.Ident:
+      Name: addComplex
+    ast.SelectorExpr:
+      X:
+        ast.ParenExpr:
+          X:
+            ast.Ident:
+              Name: T
+      Sel:
+        ast.Ident:
+          Name: add

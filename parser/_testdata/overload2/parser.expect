@@ -1,0 +1,68 @@
+package main
+
+file overload2.gop
+ast.OverloadFuncDecl:
+  Recv:
+    ast.FieldList:
+      List:
+        ast.Field:
+          Type:
+            ast.Ident:
+              Name: T
+  Name:
+    ast.Ident:
+      Name: *
+  Funcs:
+    ast.Ident:
+      Name: mul1
+    ast.Ident:
+      Name: mul2
+ast.OverloadFuncDecl:
+  Recv:
+    ast.FieldList:
+      List:
+        ast.Field:
+          Type:
+            ast.Ident:
+              Name: T
+  Name:
+    ast.Ident:
+      Name: add
+  Funcs:
+    ast.Ident:
+      Name: add1
+    ast.FuncLit:
+      Type:
+        ast.FuncType:
+          Params:
+            ast.FieldList:
+              List:
+                ast.Field:
+                  Names:
+                    ast.Ident:
+                      Name: a
+                    ast.Ident:
+                      Name: b
+                  Type:
+                    ast.Ident:
+                      Name: T
+          Results:
+            ast.FieldList:
+              List:
+                ast.Field:
+                  Type:
+                    ast.Ident:
+                      Name: T
+      Body:
+        ast.BlockStmt:
+          List:
+            ast.ReturnStmt:
+              Results:
+                ast.BinaryExpr:
+                  X:
+                    ast.Ident:
+                      Name: a
+                  Op: +
+                  Y:
+                    ast.Ident:
+                      Name: b

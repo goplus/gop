@@ -1,0 +1,13 @@
+func foo = (
+	func(a, b float64) float64 {
+		return a + b
+	}
+	func(a, b string) string {
+		return a + b
+	}
+)
+
+func bar = (
+	addComplex
+	(T).add
+)

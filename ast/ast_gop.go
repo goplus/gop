@@ -22,6 +22,43 @@ import (
 
 // -----------------------------------------------------------------------------
 
+// OverloadFuncDecl node represents an overload function declaration:
+//
+// `func name = (overloadFuncs)`
+// `func (T).nameOrOp = (overloadFuncs)`
+//
+// here overloadFunc represents
+//
+// `func(params) {...}`
+// `funcName`
+// `(*T).methodName`
+type OverloadFuncDecl struct {
+	Doc      *CommentGroup // associated documentation; or nil
+	Func     token.Pos     // position of "func" keyword
+	Recv     *FieldList    // receiver (methods); or nil (functions)
+	Name     *Ident        // function/method name
+	Assign   token.Pos     // position of token "="
+	Lparen   token.Pos     // position of "("
+	Funcs    []Expr        // overload functions. here `Expr` can be *FuncLit, *Ident or *SelectorExpr
+	Rparen   token.Pos     // position of ")"
+	Operator bool          // is operator or not
+	IsClass  bool          // recv set by class
+}
+
+// Pos - position of first character belonging to the node.
+func (p *OverloadFuncDecl) Pos() token.Pos {
+	return p.Func
+}
+
+// End - position of first character immediately after the node.
+func (p *OverloadFuncDecl) End() token.Pos {
+	return p.Rparen + 1
+}
+
+func (*OverloadFuncDecl) declNode() {}
+
+// -----------------------------------------------------------------------------
+
 // A SliceLit node represents a slice literal.
 type SliceLit struct {
 	Lbrack     token.Pos // position of "["
@@ -30,12 +67,12 @@ type SliceLit struct {
 	Incomplete bool      // true if (source) expressions are missing in the Elts list
 }
 
-// Pos - position of first character belonging to the node
+// Pos - position of first character belonging to the node.
 func (p *SliceLit) Pos() token.Pos {
 	return p.Lbrack
 }
 
-// End - position of first character immediately after the node
+// End - position of first character immediately after the node.
 func (p *SliceLit) End() token.Pos {
 	return p.Rbrack + 1
 }
@@ -44,7 +81,7 @@ func (*SliceLit) exprNode() {}
 
 // -----------------------------------------------------------------------------
 
-// ErrWrapExpr represents `expr!`, `expr?` or `expr?: defaultValue`
+// ErrWrapExpr represents `expr!`, `expr?` or `expr?: defaultValue`.
 type ErrWrapExpr struct {
 	X       Expr
 	Tok     token.Token // ! or ?
@@ -52,12 +89,12 @@ type ErrWrapExpr struct {
 	Default Expr // can be nil
 }
 
-// Pos - position of first character belonging to the node
+// Pos - position of first character belonging to the node.
 func (p *ErrWrapExpr) Pos() token.Pos {
 	return p.X.Pos()
 }
 
-// End - position of first character immediately after the node
+// End - position of first character immediately after the node.
 func (p *ErrWrapExpr) End() token.Pos {
 	if p.Default != nil {
 		return p.Default.End()
@@ -69,13 +106,16 @@ func (*ErrWrapExpr) exprNode() {}
 
 // -----------------------------------------------------------------------------
 
-// LambdaExpr represents
-//    `(x, y, ...) => exprOrExprTuple`
-//    `x => exprOrExprTuple`
-//    `=> exprOrExprTuple`
+// LambdaExpr represents one of the following expressions:
+//
+//	`(x, y, ...) => exprOrExprTuple`
+//	`x => exprOrExprTuple`
+//	`=> exprOrExprTuple`
+//
 // here exprOrExprTuple represents
-//    `expr`
-//    `(expr1, expr2, ...)`
+//
+//	`expr`
+//	`(expr1, expr2, ...)`
 type LambdaExpr struct {
 	First       token.Pos
 	Lhs         []*Ident
@@ -86,10 +126,11 @@ type LambdaExpr struct {
 	RhsHasParen bool
 }
 
-// LambdaExpr2 represents
-//    `(x, y, ...) => { ... }`
-//    `x => { ... }`
-//    `=> { ... }`
+// LambdaExpr2 represents one of the following expressions:
+//
+//	`(x, y, ...) => { ... }`
+//	`x => { ... }`
+//	`=> { ... }`
 type LambdaExpr2 struct {
 	First       token.Pos
 	Lhs         []*Ident
@@ -98,18 +139,22 @@ type LambdaExpr2 struct {
 	LhsHasParen bool
 }
 
+// Pos - position of first character belonging to the node.
 func (p *LambdaExpr) Pos() token.Pos {
 	return p.First
 }
 
+// End - position of first character immediately after the node.
 func (p *LambdaExpr) End() token.Pos {
 	return p.Last
 }
 
+// Pos - position of first character belonging to the node.
 func (p *LambdaExpr2) Pos() token.Pos {
 	return p.First
 }
 
+// End - position of first character immediately after the node.
 func (p *LambdaExpr2) End() token.Pos {
 	return p.Body.End()
 }
@@ -119,7 +164,7 @@ func (*LambdaExpr2) exprNode() {}
 
 // -----------------------------------------------------------------------------
 
-// ForPhrase represents `for k, v <- container, cond`
+// ForPhrase represents `for k, v <- container, cond` phrase.
 type ForPhrase struct {
 	For        token.Pos // position of "for" keyword
 	Key, Value *Ident    // Key may be nil
@@ -138,11 +183,12 @@ func (p *ForPhrase) End() token.Pos { return p.X.End() }
 
 func (p *ForPhrase) exprNode() {}
 
-// ComprehensionExpr represents
-//    `[vexpr for k1, v1 <- container1, cond1 ...]` or
-//    `{vexpr for k1, v1 <- container1, cond1 ...}` or
-//    `{kexpr: vexpr for k1, v1 <- container1, cond1 ...}` or
-//    `{for k1, v1 <- container1, cond1 ...}` or
+// ComprehensionExpr represents one of the following expressions:
+//
+//	`[vexpr for k1, v1 <- container1, cond1 ...]` or
+//	`{vexpr for k1, v1 <- container1, cond1 ...}` or
+//	`{kexpr: vexpr for k1, v1 <- container1, cond1 ...}` or
+//	`{for k1, v1 <- container1, cond1 ...}` or
 type ComprehensionExpr struct {
 	Lpos token.Pos   // position of "[" or "{"
 	Tok  token.Token // token.LBRACK '[' or token.LBRACE '{'
@@ -151,12 +197,12 @@ type ComprehensionExpr struct {
 	Rpos token.Pos // position of "]" or "}"
 }
 
-// Pos - position of first character belonging to the node
+// Pos - position of first character belonging to the node.
 func (p *ComprehensionExpr) Pos() token.Pos {
 	return p.Lpos
 }
 
-// End - position of first character immediately after the node
+// End - position of first character immediately after the node.
 func (p *ComprehensionExpr) End() token.Pos {
 	return p.Rpos + 1
 }
@@ -171,12 +217,12 @@ type ForPhraseStmt struct {
 	Body *BlockStmt
 }
 
-// Pos - position of first character belonging to the node
+// Pos - position of first character belonging to the node.
 func (p *ForPhraseStmt) Pos() token.Pos {
 	return p.For
 }
 
-// End - position of first character immediately after the node
+// End - position of first character immediately after the node.
 func (p *ForPhraseStmt) End() token.Pos {
 	return p.Body.End()
 }
@@ -194,7 +240,7 @@ type RangeExpr struct {
 	Expr3  Expr      // step (or max) of composite elements; or nil
 }
 
-// Pos - position of first character belonging to the node
+// Pos - position of first character belonging to the node.
 func (p *RangeExpr) Pos() token.Pos {
 	if p.First != nil {
 		return p.First.Pos()
@@ -202,7 +248,7 @@ func (p *RangeExpr) Pos() token.Pos {
 	return p.To
 }
 
-// End - position of first character immediately after the node
+// End - position of first character immediately after the node.
 func (p *RangeExpr) End() token.Pos {
 	if p.Expr3 != nil {
 		return p.Expr3.End()

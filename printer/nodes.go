@@ -1992,6 +1992,28 @@ func (p *printer) funcDecl(d *ast.FuncDecl) {
 	p.funcBody(p.distanceFrom(d.Pos(), startCol), vtab, d.Body)
 }
 
+func (p *printer) overloadFuncDecl(d *ast.OverloadFuncDecl) {
+	if debugFormat {
+		log.Println("==> Format OverloadFunc", d.Name.Name)
+	}
+	p.setComment(d.Doc)
+
+	pos := d.Pos()
+	p.print(pos, token.FUNC, blank)
+	if d.Recv != nil && !d.IsClass {
+		p.parameters(d.Recv) // method: print receiver
+		p.print(token.PERIOD)
+	}
+	p.expr(d.Name)
+	p.print(blank, token.ASSIGN, blank, token.LPAREN, newline)
+	for _, fn := range d.Funcs {
+		p.print(indent)
+		p.expr1(fn, token.LowestPrec, 1)
+		p.print(unindent, newline)
+	}
+	p.print(token.RPAREN)
+}
+
 func (p *printer) decl(decl ast.Decl) {
 	switch d := decl.(type) {
 	case *ast.BadDecl:
@@ -2000,6 +2022,8 @@ func (p *printer) decl(decl ast.Decl) {
 		p.genDecl(d)
 	case *ast.FuncDecl:
 		p.funcDecl(d)
+	case *ast.OverloadFuncDecl:
+		p.overloadFuncDecl(d)
 	default:
 		panic("unreachable")
 	}
