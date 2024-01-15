@@ -179,7 +179,7 @@ func TestFromTestdata(t *testing.T) {
 }
 
 func TestFromParse(t *testing.T) {
-	sel := ""
+	sel := "overload2"
 	dir, err := os.Getwd()
 	if err != nil {
 		t.Fatal("Getwd failed:", err)
