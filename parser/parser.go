@@ -3486,9 +3486,9 @@ func isOverloadOps(tok token.Token) bool {
 	return int(tok) < len(overloadOps) && overloadOps[tok] != 0
 }
 
-// `func(params) {...}`
 // `funcName`
 // `(*T).methodName`
+// `func(params) results {...}`
 func (p *parser) parseOverloadFunc() (ast.Expr, bool) {
 	switch p.tok {
 	case token.IDENT:
@@ -3506,13 +3506,11 @@ func (p *parser) parseOverloadFunc() (ast.Expr, bool) {
 //
 // here overloadFunc represents
 //
-// `func(params) {...}`
 // `funcName`
 // `(*T).methodName`
+// `func(params) results {...}`
 func (p *parser) parseOverloadDecl(decl *ast.OverloadFuncDecl) *ast.OverloadFuncDecl {
-	decl.Assign = p.pos
-	p.next()
-
+	decl.Assign = p.expect(token.ASSIGN)
 	decl.Lparen = p.expect(token.LPAREN)
 	funcs := make([]ast.Expr, 0, 4)
 	for {
@@ -3527,12 +3525,26 @@ func (p *parser) parseOverloadDecl(decl *ast.OverloadFuncDecl) *ast.OverloadFunc
 	}
 	decl.Funcs = funcs
 	decl.Rparen = p.expect(token.RPAREN)
+	p.expectSemi()
+	if debugParseOutput {
+		var recvt ast.Expr
+		if recv := decl.Recv; recv != nil {
+			recvt = recv.List[0].Type
+		}
+		log.Printf("ast.OverloadFuncDecl{Recv: %v, Name: %v, ...}\n", recvt, decl.Name)
+	}
 	return decl
 }
 
+// `func identOrOp(params) results {...}`
+// `func identOrOp = (overloadFuncs)`
+//
+// `func (recv) identOrOp(params) results { ... }`
+// `func (T).identOrOp = (overloadFuncs)`
+// `func (params) results { ... }()`
 func (p *parser) parseFuncDeclOrCall() (ast.Decl, *ast.CallExpr) {
 	if p.trace {
-		defer un(trace(p, "FunctionDecl"))
+		defer un(trace(p, "FunctionDeclOrCall"))
 	}
 
 	doc := p.leadComment
@@ -3544,8 +3556,8 @@ func (p *parser) parseFuncDeclOrCall() (ast.Decl, *ast.CallExpr) {
 	var isOp, isFunLit, ok bool
 
 	if p.tok != token.LPAREN {
-		// func: func identOrOp(...)
-		// overload: func identOrOp = (overloadFuncs)
+		// func: `func identOrOp(...) results`
+		// overload: `func identOrOp = (overloadFuncs)`
 		ident, isOp = p.parseIdentOrOp()
 		if p.tok == token.ASSIGN {
 			// func identOrOp = (overloadFuncs)
@@ -3558,13 +3570,24 @@ func (p *parser) parseFuncDeclOrCall() (ast.Decl, *ast.CallExpr) {
 		}
 		params, results = p.parseSignature(scope)
 	} else {
-		// method: func (recv) XXX(params) results { ... }
-		// overload: func (T).XXX = (overloadFuncs)
-		// funlit: func (params) results { ... }()
+		// method: `func (recv) identOrOp(params) results { ... }`
+		// overload: `func (T).identOrOp = (overloadFuncs)`
+		// funlit: `func (params) results { ... }()`
 		params = p.parseParameters(scope, true)
 		if p.tok == token.LPAREN {
 			// func (params) (results) { ... }()
 			isFunLit, results = true, p.parseParameters(scope, false)
+		} else if p.tok == token.PERIOD {
+			p.next()
+			// func (T).identOrOp = (overloadFuncs)
+			ident, isOp = p.parseIdentOrOp()
+			return p.parseOverloadDecl(&ast.OverloadFuncDecl{
+				Doc:      doc,
+				Func:     pos,
+				Recv:     params,
+				Name:     ident,
+				Operator: isOp,
+			}), nil
 		} else if isOp = isOverloadOps(p.tok); isOp {
 			oldtok, oldpos := p.tok, p.pos
 			p.next()

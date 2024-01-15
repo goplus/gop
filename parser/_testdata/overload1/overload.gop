@@ -5,6 +5,9 @@ func foo = (
 	func(a, b string) string {
 		return a + b
 	}
+)
+
+func bar = (
 	addComplex
 	(T).add
 )

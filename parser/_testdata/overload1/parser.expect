@@ -1,7 +1,6 @@
 package main
 
 file overload.gop
-noEntrypoint
 ast.OverloadFuncDecl:
   Name:
     ast.Ident:
@@ -77,6 +76,11 @@ ast.OverloadFuncDecl:
                   Y:
                     ast.Ident:
                       Name: b
+ast.OverloadFuncDecl:
+  Name:
+    ast.Ident:
+      Name: bar
+  Funcs:
     ast.Ident:
       Name: addComplex
     ast.SelectorExpr:
@@ -88,15 +92,3 @@ ast.OverloadFuncDecl:
       Sel:
         ast.Ident:
           Name: add
-ast.FuncDecl:
-  Name:
-    ast.Ident:
-      Name: main
-  Type:
-    ast.FuncType:
-      Params:
-        ast.FieldList:
-  Body:
-    ast.BlockStmt:
-      List:
-        ast.EmptyStmt:
