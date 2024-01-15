@@ -24,7 +24,8 @@ import (
 
 // OverloadFuncDecl node represents an overload function declaration:
 //
-// `func (recv) name = (overloadFuncs)`
+// `func name = (overloadFuncs)`
+// `func (T).nameOrOp = (overloadFuncs)`
 //
 // here overloadFunc represents
 //
