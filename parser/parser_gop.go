@@ -173,13 +173,19 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, dir string, conf Config) (pk
 				} else {
 					first = err
 				}
-			} else if f, err := ParseFSFile(fset, fs, filename, nil, mode); err == nil {
-				f.IsProj, f.IsClass = isProj, isClass
-				f.IsNormalGox = isNormalGox
-				pkg := reqPkg(pkgs, f.Name.Name)
-				pkg.Files[filename] = f
-			} else if first == nil {
-				first = err
+			} else {
+				f, err := ParseFSFile(fset, fs, filename, nil, mode)
+				if f != nil {
+					f.IsProj, f.IsClass = isProj, isClass
+					f.IsNormalGox = isNormalGox
+					if f.Name != nil {
+						pkg := reqPkg(pkgs, f.Name.Name)
+						pkg.Files[filename] = f
+					}
+				}
+				if err != nil && first == nil {
+					first = err
+				}
 			}
 		}
 	}
@@ -214,7 +220,7 @@ func ParseFSEntry(fset *token.FileSet, fs FileSystem, filename string, src inter
 		mode |= ParseGoPlusClass
 	}
 	f, err = ParseFSFile(fset, fs, filename, src, mode)
-	if err == nil {
+	if f != nil {
 		f.IsProj, f.IsClass = isProj, isClass
 		f.IsNormalGox = isNormalGox
 	}
