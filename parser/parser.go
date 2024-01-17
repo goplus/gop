@@ -1646,7 +1646,7 @@ loop:
 		pos += token.Pos(at + 2)
 		text = text[at+2:]
 	default:
-		if extra {
+		if extra || hasExtra(text[at+1:]) {
 			p.error(pos+token.Pos(at), "invalid $ expression: neither `${ ... }` nor `$$`")
 		}
 		return nil
@@ -1659,6 +1659,20 @@ loop:
 normal:
 	parts = append(parts, text)
 	return parts
+}
+
+func hasExtra(text string) bool {
+	for {
+		at := strings.IndexByte(text, '$')
+		if at < 0 || at+1 == len(text) { // no '$' or end with '$'
+			return false
+		}
+		ch := text[at+1]
+		if ch == '{' || ch == '$' {
+			return true
+		}
+		text = text[at+2:]
+	}
 }
 
 func (p *parser) stringLitExpr(parts []any, off, end token.Pos) []any {
