@@ -782,7 +782,7 @@ func compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {
 			basicLit(cb, v)
 			return
 		}
-		compileStringLitEx(cb, v)
+		panic(`compileStringLitEx(ctx, cb, v)`)
 	}
 }
 
@@ -790,9 +790,37 @@ func basicLit(cb *gox.CodeBuilder, v *ast.BasicLit) {
 	cb.Val(&goast.BasicLit{Kind: gotoken.Token(v.Kind), Value: v.Value}, v)
 }
 
-func compileStringLitEx(cb *gox.CodeBuilder, v *ast.BasicLit) {
-	basicLit(cb, v)
+/*
+func compileStringLitEx(ctx *blockCtx, cb *gox.CodeBuilder, lit *ast.BasicLit) {
+	pos := lit.ValuePos + 1
+	quote := lit.Value[:1]
+	notFirst := false
+	for _, part := range lit.Extra.Parts {
+		switch v := part.(type) {
+		case string: // normal string literal or end with "$$"
+			next := pos + token.Pos(len(v))
+			if strings.HasSuffix(v, "$$") {
+				v = v[:len(v)-1]
+			}
+			basicLit(cb, &ast.BasicLit{ValuePos: pos - 1, Value: quote + v + quote, Kind: token.STRING})
+			pos = next
+		case ast.Expr:
+			compileExpr(ctx, v)
+			t := cb.Get(-1).Type
+			if t.Underlying() != types.Typ[types.String] {
+				cb.MemberVal("string").Call(0)
+			}
+			if notFirst {
+				cb.BinaryOp(gotoken.ADD)
+			}
+			pos = v.End()
+		default:
+			panic("compileStringLitEx TODO: unexpected part")
+		}
+		notFirst = true
+	}
 }
+*/
 
 const (
 	compositeLitVal    = 0

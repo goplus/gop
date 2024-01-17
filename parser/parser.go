@@ -111,12 +111,8 @@ func (p *parser) init(fset *token.FileSet, filename string, src []byte, mode Mod
 
 func (p *parser) initSub(file *token.File, src []byte, offset int, mode Mode) {
 	p.file = file
-	var m scanner.Mode
-	if mode&ParseComments != 0 {
-		m = scanner.ScanComments
-	}
 	eh := func(pos token.Position, msg string) { p.errors.Add(pos, msg) }
-	p.scanner.InitEx(p.file, src, offset, eh, m)
+	p.scanner.InitEx(p.file, src, offset, eh, 0)
 
 	p.mode = mode
 	p.trace = mode&Trace != 0 // for convenience (p.trace is used frequently)
