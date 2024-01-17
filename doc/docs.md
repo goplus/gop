@@ -266,7 +266,7 @@ s += "world"
 println s // Hello world
 ```
 
-All operators in Go+ must have values of the same type on both sides. You cannot concatenate an
+Most Go+ operators must have values of the same type on both sides. You cannot concatenate an
 integer to a string:
 
 ```go failcompile
