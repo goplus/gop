@@ -1613,10 +1613,11 @@ func (p *parser) stringLit(pos token.Pos, val string) *ast.StringLitEx {
 }
 
 func (p *parser) stringLitEx(parts []any, pos token.Pos, text string) []any {
+	extra := false
 loop:
 	at := strings.IndexByte(text, '$')
 	if at < 0 || at+1 == len(text) { // no '$' or end with '$'
-		if parts != nil {
+		if extra {
 			goto normal
 		}
 		return nil
@@ -1645,12 +1646,13 @@ loop:
 		pos += token.Pos(at + 2)
 		text = text[at+2:]
 	default:
-		if parts != nil {
-			goto normal
+		if extra {
+			p.error(pos+token.Pos(at), "invalid $ expression: neither `${ ... }` nor `$$`")
 		}
 		return nil
 	}
 	if text != "" {
+		extra = true
 		goto loop
 	}
 	return parts

@@ -61,3 +61,13 @@ ast.FuncDecl:
                     Extra:
                       a$$
                       b$$
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "a$b$%"
