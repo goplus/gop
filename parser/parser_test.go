@@ -514,4 +514,16 @@ x.
 `, `/foo/bar.gop:3:1: expected selector or type assertion, found '*'`, ``)
 }
 
+func TestErrStringLitEx(t *testing.T) {
+	testErrCode(t, `
+println "${ ... }"
+`, "/foo/bar.gop:2:13: expected operand, found '...'", ``)
+	testErrCode(t, `
+println "${b"
+`, "/foo/bar.gop:2:11: invalid $ expression: ${ doesn't end with }", ``)
+	testErrCode(t, `
+println "$a${b}"
+`, "/foo/bar.gop:2:10: invalid $ expression: neither `${ ... }` nor `$$`", ``)
+}
+
 // -----------------------------------------------------------------------------

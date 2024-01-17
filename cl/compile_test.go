@@ -122,6 +122,34 @@ func gopClTestFS(t *testing.T, conf *cl.Config, fs parser.FileSystem, pkgname, e
 	}
 }
 
+func TestStringLitBasic(t *testing.T) {
+	gopClTest(t, `println "$$"`, `package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("$")
+}
+`)
+}
+
+func TestStringLitVar(t *testing.T) {
+	gopClTest(t, `
+x := 1
+println "Hi, " + "a${x}b"`, `package main
+
+import (
+	"fmt"
+	"strconv"
+)
+
+func main() {
+	x := 1
+	fmt.Println("Hi, " + ("a" + strconv.Itoa(x) + "b"))
+}
+`)
+}
+
 func TestVargCommand(t *testing.T) {
 	gopClTest(t, `
 type foo int

@@ -39,6 +39,20 @@ func getGoxConf() *gox.Config {
 	return &gox.Config{Fset: fset, Importer: imp}
 }
 
+func TestErrStringLit(t *testing.T) {
+	defer func() {
+		if e := recover(); e == nil {
+			t.Fatal("TestErrStringLit: no panic?")
+		}
+	}()
+	compileStringLitEx(nil, nil, &ast.BasicLit{
+		Value: "Hello",
+		Extra: &ast.StringLitEx{
+			Parts: []any{1},
+		},
+	})
+}
+
 func TestClassNameAndExt(t *testing.T) {
 	name, ext := ClassNameAndExt("/foo/bar.abc_yap.gox")
 	if name != "bar" || ext != "_yap.gox" {

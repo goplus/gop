@@ -778,7 +778,46 @@ func compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {
 		}
 		cb.Val(rune(0)).ArrayLit(typ, n+1).UnaryOp(gotoken.AND).Call(1).Call(1)
 	default:
-		cb.Val(&goast.BasicLit{Kind: gotoken.Token(v.Kind), Value: v.Value}, v)
+		if v.Extra == nil {
+			basicLit(cb, v)
+			return
+		}
+		compileStringLitEx(ctx, cb, v)
+	}
+}
+
+func basicLit(cb *gox.CodeBuilder, v *ast.BasicLit) {
+	cb.Val(&goast.BasicLit{Kind: gotoken.Token(v.Kind), Value: v.Value}, v)
+}
+
+func compileStringLitEx(ctx *blockCtx, cb *gox.CodeBuilder, lit *ast.BasicLit) {
+	pos := lit.ValuePos + 1
+	quote := lit.Value[:1]
+	notFirst := false
+	for _, part := range lit.Extra.Parts {
+		switch v := part.(type) {
+		case string: // normal string literal or end with "$$"
+			next := pos + token.Pos(len(v))
+			if strings.HasSuffix(v, "$$") {
+				v = v[:len(v)-1]
+			}
+			basicLit(cb, &ast.BasicLit{ValuePos: pos - 1, Value: quote + v + quote, Kind: token.STRING})
+			pos = next
+		case ast.Expr:
+			compileExpr(ctx, v)
+			t := cb.Get(-1).Type
+			if t.Underlying() != types.Typ[types.String] {
+				cb.Member("string", gox.MemberFlagAutoProperty)
+			}
+			pos = v.End()
+		default:
+			panic("compileStringLitEx TODO: unexpected part")
+		}
+		if notFirst {
+			cb.BinaryOp(gotoken.ADD)
+		} else {
+			notFirst = true
+		}
 	}
 }
 

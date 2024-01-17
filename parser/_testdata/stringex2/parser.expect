@@ -1,0 +1,67 @@
+package main
+
+file string_lit.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "${"
+                    Extra:
+                      ${
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "${ b }"
+                    Extra:
+                      ast.Ident:
+                        Name: b
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "a${"
+                    Extra:
+                      a${
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "a${b}c"
+                    Extra:
+                      a
+                      ast.Ident:
+                        Name: b
+                      c

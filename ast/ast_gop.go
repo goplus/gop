@@ -59,6 +59,32 @@ func (*OverloadFuncDecl) declNode() {}
 
 // -----------------------------------------------------------------------------
 
+// A BasicLit node represents a literal of basic type.
+type BasicLit struct {
+	ValuePos token.Pos    // literal position
+	Kind     token.Token  // token.INT, token.FLOAT, token.IMAG, token.RAT, token.CHAR, token.STRING, token.CSTRING
+	Value    string       // literal string; e.g. 42, 0x7f, 3.14, 1e-9, 2.4i, 3r, 'a', '\x7f', "foo" or `\m\n\o`
+	Extra    *StringLitEx // optional (only available when Kind == token.STRING)
+}
+
+type StringLitEx struct {
+	Parts []any // can be (val string) or (xval Expr)
+}
+
+// NextPartPos - position of first character of next part.
+// pos - position of this part (not including quote character).
+func NextPartPos(pos token.Pos, part any) (nextPos token.Pos) {
+	switch v := part.(type) {
+	case string: // normal string literal or end with "$$"
+		return pos + token.Pos(len(v))
+	case Expr:
+		return v.End()
+	}
+	panic("NextPartPos: unexpected parameters")
+}
+
+// -----------------------------------------------------------------------------
+
 // A SliceLit node represents a slice literal.
 type SliceLit struct {
 	Lbrack     token.Pos // position of "["
