@@ -1645,9 +1645,10 @@ loop:
 		pos += token.Pos(at + 2)
 		text = text[at+2:]
 	default:
-		p.error(pos+token.Pos(at), "invalid $ expression: neither `${ ... }` nor `$$`")
-		parts = append(parts, &ast.BadExpr{From: pos, To: pos + token.Pos(len(text))})
-		return parts
+		if parts != nil {
+			goto normal
+		}
+		return nil
 	}
 	if text != "" {
 		goto loop
