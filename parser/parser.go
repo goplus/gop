@@ -109,6 +109,20 @@ func (p *parser) init(fset *token.FileSet, filename string, src []byte, mode Mod
 	p.next()
 }
 
+func (p *parser) initSub(file *token.File, src []byte, offset int, mode Mode) {
+	p.file = file
+	var m scanner.Mode
+	if mode&ParseComments != 0 {
+		m = scanner.ScanComments
+	}
+	eh := func(pos token.Position, msg string) { p.errors.Add(pos, msg) }
+	p.scanner.InitEx(p.file, src, offset, eh, m)
+
+	p.mode = mode
+	p.trace = mode&Trace != 0 // for convenience (p.trace is used frequently)
+	p.next()
+}
+
 // ----------------------------------------------------------------------------
 // Scoping support
 
@@ -1590,6 +1604,72 @@ func (p *parser) parseFuncTypeOrLit() ast.Expr {
 	return &ast.FuncLit{Type: typ, Body: body}
 }
 
+func (p *parser) stringLit(pos token.Pos, val string) *ast.StringLitEx {
+	parts := p.stringLitEx(nil, pos+1, val[1:len(val)-1])
+	if parts != nil {
+		return &ast.StringLitEx{Parts: parts}
+	}
+	return nil
+}
+
+func (p *parser) stringLitEx(parts []any, pos token.Pos, text string) []any {
+loop:
+	at := strings.IndexByte(text, '$')
+	if at < 0 || at+1 == len(text) { // no '$' or end with '$'
+		if parts != nil {
+			goto normal
+		}
+		return nil
+	}
+	switch text[at+1] {
+	case '{': // ${
+		from := at + 2
+		left := text[from:]
+		if left == "" { // "...${" (string end with "${")
+			goto normal
+		}
+		end := strings.IndexByte(left, '}')
+		if end < 0 {
+			p.error(pos+token.Pos(at+1), "invalid $ expression: ${ doesn't end with }")
+			goto normal
+		}
+		if at != 0 {
+			parts = append(parts, text[:at])
+		}
+		to := pos + token.Pos(from+end)
+		parts = p.stringLitExpr(parts, pos+token.Pos(from), to)
+		pos = to
+		text = left[end+1:]
+	case '$': // $$
+		parts = append(parts, text[:at+2])
+		pos += token.Pos(at + 2)
+		text = text[at+2:]
+	default:
+		p.error(pos+token.Pos(at), "invalid $ expression: neither `${ ... }` nor `$$`")
+		parts = append(parts, &ast.BadExpr{From: pos, To: pos + token.Pos(len(text))})
+		return parts
+	}
+	if text != "" {
+		goto loop
+	}
+	return parts
+normal:
+	parts = append(parts, text)
+	return parts
+}
+
+func (p *parser) stringLitExpr(parts []any, off, end token.Pos) []any {
+	file := p.file
+	base := file.Base()
+	expr, err := parseExprEx(p.file, p.scanner.CodeTo(int(end)-base), int(off)-base, 0)
+	if err != nil {
+		p.errors = append(p.errors, err...)
+		expr = &ast.BadExpr{From: off, To: end}
+	}
+	parts = append(parts, expr)
+	return parts
+}
+
 // parseOperand may return an expression or a raw type (incl. array
 // types of the form [...]T. Callers must verify the result.
 // If lhs is set and the result is an identifier, it is not resolved.
@@ -1607,7 +1687,11 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) (x ast.Expr, isTup
 		return
 
 	case token.STRING, token.CSTRING, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT:
-		x = &ast.BasicLit{ValuePos: p.pos, Kind: p.tok, Value: p.lit}
+		bl := &ast.BasicLit{ValuePos: p.pos, Kind: p.tok, Value: p.lit}
+		if p.tok == token.STRING {
+			bl.Extra = p.stringLit(p.pos, p.lit)
+		}
+		x = bl
 		if debugParseOutput {
 			log.Printf("ast.BasicLit{Kind: %v, Value: %v}\n", p.tok, p.lit)
 		}

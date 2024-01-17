@@ -778,8 +778,20 @@ func compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {
 		}
 		cb.Val(rune(0)).ArrayLit(typ, n+1).UnaryOp(gotoken.AND).Call(1).Call(1)
 	default:
-		cb.Val(&goast.BasicLit{Kind: gotoken.Token(v.Kind), Value: v.Value}, v)
+		if v.Extra == nil {
+			basicLit(cb, v)
+			return
+		}
+		compileStringLitEx(cb, v)
 	}
+}
+
+func basicLit(cb *gox.CodeBuilder, v *ast.BasicLit) {
+	cb.Val(&goast.BasicLit{Kind: gotoken.Token(v.Kind), Value: v.Value}, v)
+}
+
+func compileStringLitEx(cb *gox.CodeBuilder, v *ast.BasicLit) {
+	basicLit(cb, v)
 }
 
 const (

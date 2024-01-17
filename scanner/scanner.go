@@ -17,13 +17,13 @@
 // Package scanner implements a scanner for Go+ source text.
 // It takes a []byte as source which can then be tokenized
 // through repeated calls to the Scan method.
-//
 package scanner
 
 import (
 	"bytes"
 	"fmt"
 	"go/scanner"
+	"log"
 	"path/filepath"
 	"strconv"
 	"unicode"
@@ -36,13 +36,11 @@ import (
 // encountered and a handler was installed, the handler is called with a
 // position and an error message. The position points to the beginning of
 // the offending token.
-//
 type ErrorHandler = scanner.ErrorHandler
 
 // A Scanner holds the scanner's internal state while processing
 // a given text. It can be allocated as part of another data
 // structure but must be initialized via Init before use.
-//
 type Scanner struct {
 	// immutable state
 	file *token.File  // source file handle
@@ -66,7 +64,6 @@ const bom = 0xFEFF // byte order mark, only permitted as very first character
 
 // Read the next Unicode char into s.ch.
 // s.ch < 0 means end-of-file.
-//
 func (s *Scanner) next() {
 	if s.rdOffset < len(s.src) {
 		s.offset = s.rdOffset
@@ -110,7 +107,6 @@ func (s *Scanner) peek() byte {
 
 // A Mode value is a set of flags (or 0).
 // They control scanner behavior.
-//
 type Mode uint
 
 const (
@@ -133,11 +129,18 @@ const (
 //
 // Note that Init may call err if there is an error in the first character
 // of the file.
-//
 func (s *Scanner) Init(file *token.File, src []byte, err ErrorHandler, mode Mode) {
 	// Explicitly initialize all fields since a scanner may be reused.
 	if file.Size() != len(src) {
 		panic(fmt.Sprintf("file size (%d) does not match src len (%d)", file.Size(), len(src)))
+	}
+	s.InitEx(file, src, 0, err, mode)
+}
+
+// InitEx init the scanner with an offset (this means src[offset:] is all the code to scan).
+func (s *Scanner) InitEx(file *token.File, src []byte, offset int, err ErrorHandler, mode Mode) {
+	if offset > 0 {
+		log.Println("Scanner.InitEx:", string(src[offset:]))
 	}
 	s.file = file
 	s.dir, _ = filepath.Split(file.Name())
@@ -147,7 +150,7 @@ func (s *Scanner) Init(file *token.File, src []byte, err ErrorHandler, mode Mode
 
 	s.ch = ' '
 	s.offset = 0
-	s.rdOffset = 0
+	s.rdOffset = offset
 	s.lineOffset = 0
 	s.insertSemi = false
 	s.ErrorCount = 0
@@ -156,6 +159,10 @@ func (s *Scanner) Init(file *token.File, src []byte, err ErrorHandler, mode Mode
 	if s.ch == bom {
 		s.next() // ignore BOM at file beginning
 	}
+}
+
+func (s *Scanner) CodeTo(end int) []byte {
+	return s.src[:end]
 }
 
 func (s *Scanner) error(offs int, msg string) {
@@ -810,7 +817,6 @@ func (s *Scanner) switch4(tok0, tok1 token.Token, ch2 rune, tok2, tok3 token.Tok
 // Scan adds line information to the file added to the file
 // set with Init. Token positions are relative to that file
 // and thus relative to the file set.
-//
 func (s *Scanner) Scan() (pos token.Pos, tok token.Token, lit string) {
 scanAgain:
 	s.skipWhitespace()

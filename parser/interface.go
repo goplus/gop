@@ -20,6 +20,7 @@ package parser
 
 import (
 	goparser "go/parser"
+	"go/scanner"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
@@ -119,7 +120,7 @@ func parseFile(fset *token.FileSet, filename string, src interface{}, mode Mode)
 
 // ParseExprFrom is a convenience function for parsing an expression.
 // The arguments have the same meaning as for ParseFile, but the source must
-// be a valid Go (type or value) expression. Specifically, fset must not
+// be a valid Go/Go+ (type or value) expression. Specifically, fset must not
 // be nil.
 //
 // If the source couldn't be read, the returned AST is nil and the error
@@ -148,6 +149,42 @@ func ParseExprFrom(fset *token.FileSet, filename string, src any, mode Mode) (ex
 
 	// parse expr
 	p.init(fset, filename, text, mode)
+	expr = p.parseRHS()
+
+	// If a semicolon was inserted, consume it;
+	// report an error if there's more tokens.
+	if p.tok == token.SEMICOLON && p.lit == "\n" {
+		p.next()
+	}
+	p.expect(token.EOF)
+
+	return
+}
+
+// parseExprEx is a convenience function for parsing an expression.
+// The arguments have the same meaning as for ParseFile, but the source must
+// be a valid Go/Go+ (type or value) expression. Specifically, fset must not
+// be nil.
+//
+// If the source couldn't be read, the returned AST is nil and the error
+// indicates the specific failure. If the source was read but syntax
+// errors were found, the result is a partial AST (with ast.Bad* nodes
+// representing the fragments of erroneous source code). Multiple errors
+// are returned via a scanner.ErrorList which is sorted by source position.
+func parseExprEx(file *token.File, src []byte, offset int, mode Mode) (expr ast.Expr, err scanner.ErrorList) {
+	var p parser
+	defer func() {
+		if e := recover(); e != nil {
+			// resume same panic if it's not a bailout
+			if _, ok := e.(bailout); !ok {
+				panic(e)
+			}
+		}
+		err = p.errors
+	}()
+
+	// parse expr
+	p.initSub(file, src, offset, mode)
 	expr = p.parseRHS()
 
 	// If a semicolon was inserted, consume it;
