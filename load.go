@@ -184,15 +184,10 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 		imp = NewImporter(mod, gop, fset)
 	}
 
-	ctx := conf.Context
-	if ctx == nil {
-		ctx = gox.NewContext()
-	}
-
 	var pkgTest *ast.Package
 	var clConf = &cl.Config{
 		Fset:         fset,
-		Context:      ctx,
+		Context:      conf.Context,
 		RelativeBase: relativeBaseOf(mod),
 		Importer:     imp,
 		LookupClass:  mod.LookupClass,
@@ -270,10 +265,6 @@ func LoadFiles(dir string, files []string, conf *Config) (out *gox.Package, err 
 	if gop == nil {
 		gop = gopenv.Get()
 	}
-	ctx := conf.Context
-	if ctx == nil {
-		ctx = gox.NewContext()
-	}
 	for _, pkg := range pkgs {
 		imp := conf.Importer
 		if imp == nil {
@@ -281,7 +272,7 @@ func LoadFiles(dir string, files []string, conf *Config) (out *gox.Package, err 
 		}
 		clConf := &cl.Config{
 			Fset:         fset,
-			Context:      ctx,
+			Context:      conf.Context,
 			RelativeBase: relativeBaseOf(mod),
 			Importer:     imp,
 			LookupClass:  mod.LookupClass,
