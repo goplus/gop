@@ -69,6 +69,9 @@ type Config struct {
 	// Fset provides source position information for syntax trees and types (required).
 	Fset *token.FileSet
 
+	// Context represents all things between packages (optional).
+	Context *gox.Context
+
 	// WorkingDir is the directory in which to run gop compiler (optional).
 	// If WorkingDir is not set, os.Getwd() is used.
 	WorkingDir string
@@ -144,6 +147,7 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 	_, err = cl.NewPackage(pkgTypes.Path(), pkg, &cl.Config{
 		Types:          pkgTypes,
 		Fset:           fset,
+		Context:        opts.Context,
 		C2goBase:       opts.C2goBase,
 		LookupPub:      c2go.LookupPub(mod),
 		LookupClass:    mod.LookupClass,
