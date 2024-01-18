@@ -23,7 +23,6 @@ import (
 	"bytes"
 	"fmt"
 	"go/scanner"
-	"log"
 	"path/filepath"
 	"strconv"
 	"unicode"
@@ -139,9 +138,6 @@ func (s *Scanner) Init(file *token.File, src []byte, err ErrorHandler, mode Mode
 
 // InitEx init the scanner with an offset (this means src[offset:] is all the code to scan).
 func (s *Scanner) InitEx(file *token.File, src []byte, offset int, err ErrorHandler, mode Mode) {
-	if offset > 0 {
-		log.Println("Scanner.InitEx:", string(src[offset:]))
-	}
 	s.file = file
 	s.dir, _ = filepath.Split(file.Name())
 	s.src = src
