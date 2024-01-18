@@ -172,6 +172,9 @@ type Config struct {
 	// Fset provides source position information for syntax trees and types (required).
 	Fset *token.FileSet
 
+	// Context represents all things between packages (optional).
+	Context *gox.Context
+
 	// RelativeBase is the root directory of relative path.
 	RelativeBase string
 
@@ -470,6 +473,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	confGox := &gox.Config{
 		Types:           conf.Types,
 		Fset:            fset,
+		Context:         conf.Context,
 		Importer:        conf.Importer,
 		LoadNamed:       ctx.loadNamed,
 		HandleErr:       ctx.handleErr,
