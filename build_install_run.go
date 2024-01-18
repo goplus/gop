@@ -26,6 +26,8 @@ import (
 
 // -----------------------------------------------------------------------------
 
+// InstallDir installs a Go+ package directory.
+// if conf != nil && conf.Context == nil, it will be set with `gox.NewContext()`.
 func InstallDir(dir string, conf *Config, install *gocmd.InstallConfig) (err error) {
 	_, _, err = GenGo(dir, conf, false)
 	if err != nil {
@@ -34,6 +36,8 @@ func InstallDir(dir string, conf *Config, install *gocmd.InstallConfig) (err err
 	return gocmd.Install(dir, install)
 }
 
+// InstallPkgPath installs a Go+ package.
+// if conf != nil && conf.Context == nil, it will be set with `gox.NewContext()`.
 func InstallPkgPath(workDir, pkgPath string, conf *Config, install *gocmd.InstallConfig) (err error) {
 	localDir, recursively, err := GenGoPkgPath(workDir, pkgPath, conf, true)
 	if err != nil {
@@ -51,6 +55,8 @@ func cwdParam(recursively bool) string {
 	return "."
 }
 
+// InstallFiles installs specified Go+ files.
+// if conf != nil && conf.Context == nil, it will be set with `gox.NewContext()`.
 func InstallFiles(files []string, conf *Config, install *gocmd.InstallConfig) (err error) {
 	files, err = GenGoFiles("", files, conf)
 	if err != nil {
@@ -73,6 +79,8 @@ func chdir(dir string) string {
 
 // -----------------------------------------------------------------------------
 
+// BuildDir builds a Go+ package directory.
+// if conf != nil && conf.Context == nil, it will be set with `gox.NewContext()`.
 func BuildDir(dir string, conf *Config, build *gocmd.BuildConfig) (err error) {
 	_, _, err = GenGo(dir, conf, false)
 	if err != nil {
@@ -81,6 +89,8 @@ func BuildDir(dir string, conf *Config, build *gocmd.BuildConfig) (err error) {
 	return gocmd.Build(dir, build)
 }
 
+// BuildPkgPath builds a Go+ package.
+// if conf != nil && conf.Context == nil, it will be set with `gox.NewContext()`.
 func BuildPkgPath(workDir, pkgPath string, conf *Config, build *gocmd.BuildConfig) (err error) {
 	localDir, recursively, err := GenGoPkgPath(workDir, pkgPath, conf, false)
 	if err != nil {
@@ -91,6 +101,8 @@ func BuildPkgPath(workDir, pkgPath string, conf *Config, build *gocmd.BuildConfi
 	return gocmd.Build(cwdParam(recursively), build)
 }
 
+// BuildFiles builds specified Go+ files.
+// if conf != nil && conf.Context == nil, it will be set with `gox.NewContext()`.
 func BuildFiles(files []string, conf *Config, build *gocmd.BuildConfig) (err error) {
 	files, err = GenGoFiles("", files, conf)
 	if err != nil {
@@ -116,6 +128,8 @@ func restoreDirAndMod(old string, mod os.FileMode) {
 
 // -----------------------------------------------------------------------------
 
+// RunDir runs an application from a Go+ package directory.
+// if conf != nil && conf.Context == nil, it will be set with `gox.NewContext()`.
 func RunDir(dir string, args []string, conf *Config, run *gocmd.RunConfig) (err error) {
 	_, _, err = GenGo(dir, conf, false)
 	if err != nil {
@@ -124,6 +138,8 @@ func RunDir(dir string, args []string, conf *Config, run *gocmd.RunConfig) (err 
 	return gocmd.RunDir(dir, args, run)
 }
 
+// RunPkgPath runs an application from a Go+ package.
+// if conf != nil && conf.Context == nil, it will be set with `gox.NewContext()`.
 func RunPkgPath(pkgPath string, args []string, chDir bool, conf *Config, run *gocmd.RunConfig) (err error) {
 	localDir, recursively, err := GenGoPkgPath("", pkgPath, conf, true)
 	if err != nil {
@@ -140,6 +156,8 @@ func RunPkgPath(pkgPath string, args []string, chDir bool, conf *Config, run *go
 	return gocmd.RunDir(localDir, args, run)
 }
 
+// RunFiles runs an application from specified Go+ files.
+// if conf != nil && conf.Context == nil, it will be set with `gox.NewContext()`.
 func RunFiles(autogen string, files []string, args []string, conf *Config, run *gocmd.RunConfig) (err error) {
 	files, err = GenGoFiles(autogen, files, conf)
 	if err != nil {
@@ -150,6 +168,8 @@ func RunFiles(autogen string, files []string, args []string, conf *Config, run *
 
 // -----------------------------------------------------------------------------
 
+// TestDir tests a Go+ package directory.
+// if conf != nil && conf.Context == nil, it will be set with `gox.NewContext()`.
 func TestDir(dir string, conf *Config, test *gocmd.TestConfig) (err error) {
 	_, _, err = GenGo(dir, conf, true)
 	if err != nil {
@@ -158,6 +178,8 @@ func TestDir(dir string, conf *Config, test *gocmd.TestConfig) (err error) {
 	return gocmd.Test(dir, test)
 }
 
+// TestPkgPath tests a Go+ package.
+// if conf != nil && conf.Context == nil, it will be set with `gox.NewContext()`.
 func TestPkgPath(workDir, pkgPath string, conf *Config, test *gocmd.TestConfig) (err error) {
 	localDir, recursively, err := GenGoPkgPath(workDir, pkgPath, conf, false)
 	if err != nil {
@@ -168,6 +190,8 @@ func TestPkgPath(workDir, pkgPath string, conf *Config, test *gocmd.TestConfig) 
 	return gocmd.Test(cwdParam(recursively), test)
 }
 
+// TestFiles tests specified Go+ files.
+// if conf != nil && conf.Context == nil, it will be set with `gox.NewContext()`.
 func TestFiles(files []string, conf *Config, test *gocmd.TestConfig) (err error) {
 	files, err = GenGoFiles("", files, conf)
 	if err != nil {
