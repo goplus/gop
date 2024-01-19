@@ -69,7 +69,7 @@ func genGoDir(dir string, conf *Config, genTestPkg, recursively bool, flags GenF
 	if conf == nil {
 		conf = new(Config)
 	}
-	if conf.Context == nil { // set Context
+	if false && conf.Context == nil { // set Context
 		conf.Context = gox.NewContext()
 	}
 	if recursively {
