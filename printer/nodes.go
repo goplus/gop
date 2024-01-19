@@ -1705,7 +1705,9 @@ func (p *printer) spec(spec ast.Spec, n int, doIndent bool) {
 		p.setComment(s.Doc)
 		p.identList(s.Names, doIndent) // always present
 		if s.Type != nil {
-			p.print(blank)
+			if len(s.Names) > 0 {
+				p.print(blank)
+			}
 			p.expr(s.Type)
 		}
 		if s.Values != nil {
