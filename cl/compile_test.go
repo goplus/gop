@@ -45,7 +45,7 @@ var (
 
 func init() {
 	gox.SetDebug(gox.DbgFlagAll)
-	cl.SetDebug(cl.DbgFlagAll)
+	cl.SetDebug(cl.DbgFlagAll | cl.FlagNoMarkAutogen)
 	gblFset = token.NewFileSet()
 	imp := gop.NewImporter(nil, &env.Gop{Root: gopRootDir, Version: "1.0"}, gblFset)
 	gblConf = &cl.Config{

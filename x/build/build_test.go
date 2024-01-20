@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"go/printer"
 	"go/types"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -38,6 +37,7 @@ var (
 )
 
 func init() {
+	cl.SetDebug(cl.FlagNoMarkAutogen)
 	ctx.LoadConfig = func(cfg *cl.Config) {
 		cfg.NoFileLine = true
 	}
@@ -407,7 +407,7 @@ func testFromDir(t *testing.T, relDir string) {
 		t.Fatal("Getwd failed:", err)
 	}
 	dir = path.Join(dir, relDir)
-	fis, err := ioutil.ReadDir(dir)
+	fis, err := os.ReadDir(dir)
 	if err != nil {
 		t.Fatal("ReadDir failed:", err)
 	}
