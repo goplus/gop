@@ -563,10 +563,9 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 
 	// genMain = true if it is main package and no main func
 	var genMain bool
-	if pkg.Name == "main" && !conf.NoAutoGenMain {
-		if obj := p.Types.Scope().Lookup("main"); obj == nil {
-			genMain = true
-		}
+	if pkg.Name == "main" {
+		_, hasMain := ctx.syms["main"]
+		genMain = !hasMain
 	}
 
 	for _, f := range sfiles {
@@ -596,7 +595,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	}
 	err = ctx.complete()
 
-	if genMain { // generate empty main func
+	if genMain && !conf.NoAutoGenMain { // generate empty main func
 		old, _ := p.SetCurFile(defaultGoFile, false)
 		p.NewFunc(nil, "main", nil, nil, false).BodyStart(p).End()
 		p.RestoreCurFile(old)
@@ -809,7 +808,7 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 		}}}
 	}
 	// check class project no MainEntry and auto added
-	if f.IsProj && !conf.NoAutoGenMain && !f.NoEntrypoint() && f.Name.Name == "main" {
+	if f.IsProj && !conf.NoAutoGenMain && !f.HasShadowEntry() && f.Name.Name == "main" {
 		entry := getEntrypoint(f)
 		var hasEntry bool
 		for _, decl := range f.Decls {
