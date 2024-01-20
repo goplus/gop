@@ -208,6 +208,9 @@ type Config struct {
 
 	// Outline = true means to skip compiling function bodies.
 	Outline bool
+
+	// AddMarkStmt = true means to add const __gop_autogen__ = true.
+	AddMarkStmt bool
 }
 
 type nodeInterp struct {
@@ -498,6 +501,11 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		}()
 	}
 	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
+
+	if conf.AddMarkStmt {
+		p.CB().NewConstStart(nil, "__gop_autogen__").Val(true).EndInit(1)
+	}
+
 	ctx.cpkgs = cpackages.NewImporter(&cpackages.Config{
 		Pkg: p, LookupPub: conf.LookupPub,
 	})
