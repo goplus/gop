@@ -1635,7 +1635,7 @@ loop:
 		}
 		to := pos + token.Pos(from+end)
 		parts = p.stringLitExpr(parts, pos+token.Pos(from), to)
-		pos = to
+		pos = to + 1
 		text = left[end+1:]
 	case '$': // $$
 		parts = append(parts, text[:at+2])
@@ -1674,7 +1674,8 @@ func hasExtra(text string) bool {
 func (p *parser) stringLitExpr(parts []any, off, end token.Pos) []any {
 	file := p.file
 	base := file.Base()
-	expr, err := parseExprEx(p.file, p.scanner.CodeTo(int(end)-base), int(off)-base, 0)
+	src := p.scanner.CodeTo(int(end) - base)
+	expr, err := parseExprEx(p.file, src, int(off)-base, 0)
 	if err != nil {
 		p.errors = append(p.errors, err...)
 		expr = &ast.BadExpr{From: off, To: end}

@@ -1,0 +1,38 @@
+package main
+
+file string_lit.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "file:${args[0]}?${query}"
+                    Extra:
+                      file:
+                      ast.IndexExpr:
+                        X:
+                          ast.Ident:
+                            Name: args
+                        Index:
+                          ast.BasicLit:
+                            Kind: INT
+                            Value: 0
+                      ?
+                      ast.Ident:
+                        Name: query
