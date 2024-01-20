@@ -192,6 +192,7 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 		Importer:     imp,
 		LookupClass:  mod.LookupClass,
 		LookupPub:    c2go.LookupPub(mod),
+		AddMarkStmt:  true,
 	}
 
 	for name, pkg := range pkgs {
@@ -277,6 +278,7 @@ func LoadFiles(dir string, files []string, conf *Config) (out *gox.Package, err 
 			Importer:     imp,
 			LookupClass:  mod.LookupClass,
 			LookupPub:    c2go.LookupPub(mod),
+			AddMarkStmt:  true,
 		}
 		out, err = cl.NewPackage("", pkg, clConf)
 		if err != nil {
