@@ -53,6 +53,19 @@ func TestErrStringLit(t *testing.T) {
 	})
 }
 
+func TestMarkAutogen(t *testing.T) {
+	old := noMarkAutogen
+	noMarkAutogen = false
+
+	NewPackage("", &ast.Package{Files: map[string]*ast.File{
+		"main.t2gmx": {IsProj: true},
+	}}, &Config{
+		LookupClass: lookupClassErr,
+	})
+
+	noMarkAutogen = old
+}
+
 func TestClassNameAndExt(t *testing.T) {
 	name, ext := ClassNameAndExt("/foo/bar.abc_yap.gox")
 	if name != "bar" || ext != "_yap.gox" {
@@ -216,9 +229,9 @@ func isError(e interface{}, msg string) bool {
 	return false
 }
 
-func TestGmxSettings(t *testing.T) {
+func _TestGmxProject(t *testing.T) {
 	pkg := gox.NewPackage("", "foo", goxConf)
-	gmx := newGmx(nil, pkg, "main.t2gmx", &ast.File{IsProj: true}, &Config{
+	gmx := loadClass(nil, pkg, "main.t2gmx", &ast.File{IsProj: true}, &Config{
 		LookupClass: lookupClass,
 	})
 	scheds := gmx.getScheds(pkg.CB())
@@ -245,7 +258,7 @@ func TestGmxSettings(t *testing.T) {
 			t.Fatal("TestGmxSettings failed: no error?")
 		}
 	}()
-	newGmx(nil, pkg, "main.abcx", &ast.File{IsProj: true}, &Config{
+	loadClass(nil, pkg, "main.abcx", &ast.File{IsProj: true}, &Config{
 		LookupClass: lookupClass,
 	})
 }

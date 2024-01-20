@@ -336,13 +336,14 @@ func doInitMethods(ld *typeLoader) {
 
 type pkgCtx struct {
 	*nodeInterp
-	*gmxSettings
-	fset  *token.FileSet
-	cpkgs *cpackages.Importer
-	syms  map[string]loader
-	inits []func()
-	tylds []*typeLoader
-	errs  errors.List
+	projs   map[string]*gmxProject // .gmx => project
+	classes map[*ast.File]gmxClass
+	fset    *token.FileSet
+	cpkgs   *cpackages.Importer
+	syms    map[string]loader
+	inits   []func()
+	tylds   []*typeLoader
+	errs    errors.List
 
 	generics map[string]bool // generic type record
 	idents   []*ast.Ident    // toType ident recored
@@ -356,6 +357,7 @@ type pkgImp struct {
 
 type blockCtx struct {
 	*pkgCtx
+	proj       *gmxProject
 	pkg        *gox.Package
 	cb         *gox.CodeBuilder
 	imports    map[string]pkgImp
@@ -470,8 +472,12 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		fset: fset, files: files, relBaseDir: relBaseDir,
 	}
 	ctx := &pkgCtx{
-		fset: fset,
-		syms: make(map[string]loader), nodeInterp: interp, generics: make(map[string]bool),
+		fset:       fset,
+		nodeInterp: interp,
+		projs:      make(map[string]*gmxProject),
+		classes:    make(map[*ast.File]gmxClass),
+		syms:       make(map[string]loader),
+		generics:   make(map[string]bool),
 	}
 	confGox := &gox.Config{
 		Types:           conf.Types,
@@ -509,18 +515,11 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	ctx.cpkgs = cpackages.NewImporter(&cpackages.Config{
 		Pkg: p, LookupPub: conf.LookupPub,
 	})
+
 	for file, gmx := range files {
-		if gmx.IsProj {
-			ctx.gmxSettings = newGmx(ctx, p, file, gmx, conf)
-			break
-		}
-	}
-	if ctx.gmxSettings == nil {
-		for file, gmx := range files {
-			if gmx.IsClass && !gmx.IsNormalGox {
-				ctx.gmxSettings = newGmx(ctx, p, file, gmx, conf)
-				break
-			}
+		log.Println("==> File", file, "isClass:", gmx.IsClass, "normalGox:", gmx.IsNormalGox)
+		if gmx.IsClass && !gmx.IsNormalGox {
+			loadClass(ctx, p, file, gmx, conf)
 		}
 	}
 
@@ -538,7 +537,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		preloadGopFile(p, ctx, fpath, f, conf)
 	}
 
-	gopSyms := make(map[string]bool)
+	gopSyms := make(map[string]bool) // TODO: remove this map
 	for name := range ctx.syms {
 		gopSyms[name] = true
 	}
@@ -579,14 +578,14 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	for _, f := range sfiles {
 		if f.IsProj {
 			loadFile(ctx, f.File)
-			if genMain { // generate main func if need
-				genMain = !gmxMainFunc(p, ctx)
-			}
-			break
 		}
 	}
+	if genMain { // generate main func if need
+		genMain = !gmxMainFunc(p, ctx)
+	}
+
 	for _, f := range sfiles {
-		if !f.IsProj { // only one .gmx file
+		if !f.IsProj {
 			loadFile(ctx, f.File)
 		}
 	}
@@ -708,25 +707,27 @@ func genGoFile(file string, gopFile bool) string {
 }
 
 func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, conf *Config) {
-	var parent = ctx.pkgCtx
+	var proj *gmxProject
 	var classType string
 	var baseTypeName string
 	var baseType types.Type
 	var spxClass bool
-	switch {
-	case f.IsProj:
-		classType = parent.gameClass
-		o := parent.game
-		baseTypeName, baseType = o.Name(), o.Type()
-		if parent.gameIsPtr {
-			baseType = types.NewPointer(baseType)
-		}
-	case f.IsClass:
-		var classExt string
-		classType, classExt = ClassNameAndExt(file)
-		if parent.gmxSettings != nil {
-			o, ok := parent.sprite[classExt]
-			if ok {
+	var parent = ctx.pkgCtx
+	if f.IsClass {
+		if f.IsNormalGox {
+			classType, _ = ClassNameAndExt(file)
+		} else {
+			c := parent.classes[f]
+			classType, proj = c.tname, c.proj
+			ctx.proj = proj
+			if f.IsProj {
+				o := proj.game
+				baseTypeName, baseType = o.Name(), o.Type()
+				if proj.gameIsPtr {
+					baseType = types.NewPointer(baseType)
+				}
+			} else {
+				o := proj.sprite[c.ext]
 				baseTypeName, baseType, spxClass = o.Name(), o.Type(), true
 			}
 		}
@@ -735,9 +736,9 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 		if debugLoad {
 			log.Println("==> Preload type", classType)
 		}
-		if parent.gmxSettings != nil {
-			ctx.lookups = make([]*gox.PkgRef, len(parent.pkgPaths))
-			for i, pkgPath := range parent.pkgPaths {
+		if proj != nil {
+			ctx.lookups = make([]*gox.PkgRef, len(proj.pkgPaths))
+			for i, pkgPath := range proj.pkgPaths {
 				ctx.lookups[i] = p.Import(pkgPath)
 			}
 		}
@@ -758,13 +759,13 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 				var flds []*types.Var
 				var tags []string
 				chk := newCheckRedecl()
-				if len(baseTypeName) != 0 {
+				if baseTypeName != "" {
 					flds = append(flds, types.NewField(pos, pkg, baseTypeName, baseType, true))
 					tags = append(tags, "")
 					chk.chkRedecl(ctx, baseTypeName, pos)
 				}
-				if spxClass && parent.gmxSettings != nil && parent.gameClass != "" {
-					typ := toType(ctx, &ast.StarExpr{X: &ast.Ident{Name: parent.gameClass}})
+				if spxClass && proj.gameClass != "" {
+					typ := toType(ctx, &ast.StarExpr{X: &ast.Ident{Name: proj.gameClass}})
 					name := getTypeName(typ)
 					if !chk.chkRedecl(ctx, name, pos) {
 						fld := types.NewField(pos, pkg, name, typ, true)
