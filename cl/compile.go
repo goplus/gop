@@ -561,10 +561,20 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		return sfiles[i].path < sfiles[j].path
 	})
 
+	// genMain = true if it is main package and no main func
+	var genMain bool
+	if pkg.Name == "main" && !conf.NoAutoGenMain {
+		if obj := p.Types.Scope().Lookup("main"); obj == nil {
+			genMain = true
+		}
+	}
+
 	for _, f := range sfiles {
 		if f.IsProj {
 			loadFile(ctx, f.File)
-			gmxMainFunc(p, ctx)
+			if genMain { // generate main func if need
+				genMain = !gmxMainFunc(p, ctx)
+			}
 			break
 		}
 	}
@@ -586,12 +596,10 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	}
 	err = ctx.complete()
 
-	if !conf.NoAutoGenMain && pkg.Name == "main" {
-		if obj := p.Types.Scope().Lookup("main"); obj == nil {
-			old, _ := p.SetCurFile(defaultGoFile, false)
-			p.NewFunc(nil, "main", nil, nil, false).BodyStart(p).End()
-			p.RestoreCurFile(old)
-		}
+	if genMain { // generate empty main func
+		old, _ := p.SetCurFile(defaultGoFile, false)
+		p.NewFunc(nil, "main", nil, nil, false).BodyStart(p).End()
+		p.RestoreCurFile(old)
 	}
 	return
 }
