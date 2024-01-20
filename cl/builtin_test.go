@@ -53,6 +53,13 @@ func TestErrStringLit(t *testing.T) {
 	})
 }
 
+func TestNodeInterp(t *testing.T) {
+	ni := &nodeInterp{}
+	if v := ni.Caller(&ast.Ident{}); v != "the function call" {
+		t.Fatal("TestNodeInterp:", v)
+	}
+}
+
 func TestMarkAutogen(t *testing.T) {
 	old := noMarkAutogen
 	noMarkAutogen = false
@@ -229,20 +236,25 @@ func isError(e interface{}, msg string) bool {
 	return false
 }
 
-func _TestGmxProject(t *testing.T) {
+func TestGmxProject(t *testing.T) {
 	pkg := gox.NewPackage("", "foo", goxConf)
-	gmx := loadClass(nil, pkg, "main.t2gmx", &ast.File{IsProj: true}, &Config{
+	ctx := &pkgCtx{
+		projs:   make(map[string]*gmxProject),
+		classes: make(map[*ast.File]gmxClass),
+	}
+	gmx := loadClass(ctx, pkg, "main.t2gmx", &ast.File{IsProj: true}, &Config{
 		LookupClass: lookupClass,
 	})
 	scheds := gmx.getScheds(pkg.CB())
 	if len(scheds) != 2 || scheds[0] == nil || scheds[0] != scheds[1] {
-		t.Fatal("TestGmxSettings failed")
+		t.Fatal("TestGmxProject failed")
 	}
 	gmx.hasScheds = false
 	if gmx.getScheds(nil) != nil {
-		t.Fatal("TestGmxSettings failed: hasScheds?")
+		t.Fatal("TestGmxProject failed: hasScheds?")
 	}
-	_, err := NewPackage("", &ast.Package{Files: map[string]*ast.File{
+
+	/* _, err := NewPackage("", &ast.Package{Files: map[string]*ast.File{
 		"main.t2gmx": {
 			IsProj: true,
 		},
@@ -251,16 +263,28 @@ func _TestGmxProject(t *testing.T) {
 	})
 	if e := err.Error(); e != `github.com/goplus/gop/cl/internal/libc.Game not found` {
 		t.Fatal("newGmx:", e)
-	}
+	} */
 
-	defer func() {
-		if e := recover(); e == nil {
-			t.Fatal("TestGmxSettings failed: no error?")
-		}
+	func() {
+		defer func() {
+			if e := recover(); e != "TODO: class not found" {
+				t.Fatal("TestGmxProject failed:", e)
+			}
+		}()
+		loadClass(nil, pkg, "main.abcx", &ast.File{IsProj: true}, &Config{
+			LookupClass: lookupClass,
+		})
 	}()
-	loadClass(nil, pkg, "main.abcx", &ast.File{IsProj: true}, &Config{
-		LookupClass: lookupClass,
-	})
+	func() {
+		defer func() {
+			if e := recover(); e != "TODO: multiple project files found" {
+				t.Fatal("TestGmxProject failed:", e)
+			}
+		}()
+		loadClass(ctx, pkg, "main.t2gmx", &ast.File{IsProj: true}, &Config{
+			LookupClass: lookupClass,
+		})
+	}()
 }
 
 func TestSpxLookup(t *testing.T) {
