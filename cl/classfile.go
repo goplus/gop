@@ -20,6 +20,7 @@ import (
 	goast "go/ast"
 	"go/constant"
 	"go/types"
+	"log"
 	"path/filepath"
 	"strings"
 
@@ -31,10 +32,17 @@ import (
 
 // -----------------------------------------------------------------------------
 
-type gmxSettings struct {
-	gameClass  string
-	game       gox.Ref
-	sprite     map[string]gox.Ref
+type gmxClass struct {
+	tname string // class type
+	ext   string
+	proj  *gmxProject
+}
+
+type gmxProject struct {
+	gameClass  string             // <gmtype>.gmx
+	game       gox.Ref            // Game
+	sprite     map[string]gox.Ref // .spx => Sprite
+	sptypes    []string           // <sptype>.spx
 	scheds     []string
 	schedStmts []goast.Stmt // nil or len(scheds) == 2 (delayload)
 	pkgImps    []*gox.PkgRef
@@ -43,7 +51,7 @@ type gmxSettings struct {
 	gameIsPtr  bool
 }
 
-func (p *gmxSettings) getScheds(cb *gox.CodeBuilder) []goast.Stmt {
+func (p *gmxProject) getScheds(cb *gox.CodeBuilder) []goast.Stmt {
 	if p == nil || !p.hasScheds {
 		return nil
 	}
@@ -69,36 +77,49 @@ func ClassNameAndExt(file string) (name, ext string) {
 	return
 }
 
-func newGmx(ctx *pkgCtx, pkg *gox.Package, file string, f *ast.File, conf *Config) *gmxSettings {
+func loadClass(ctx *pkgCtx, pkg *gox.Package, file string, f *ast.File, conf *Config) *gmxProject {
 	tname, ext := ClassNameAndExt(file)
 	gt, ok := conf.LookupClass(ext)
 	if !ok {
 		panic("TODO: class not found")
 	}
-	var name string
-	if f.IsProj {
-		name = tname
-		if name == "main" {
-			name = gt.Class
+	p, ok := ctx.projs[gt.Ext]
+	if !ok {
+		pkgPaths := gt.PkgPaths
+		p = &gmxProject{pkgPaths: pkgPaths}
+		ctx.projs[gt.Ext] = p
+
+		p.pkgImps = make([]*gox.PkgRef, len(pkgPaths))
+		for i, pkgPath := range pkgPaths {
+			p.pkgImps[i] = pkg.Import(pkgPath)
+		}
+		spx := p.pkgImps[0]
+		if gt.Class != "" {
+			p.game, p.gameIsPtr = spxRef(spx, gt.Class)
+		}
+		p.sprite = make(map[string]types.Object)
+		for _, v := range gt.Works {
+			obj, _ := spxRef(spx, v.Class)
+			p.sprite[v.Ext] = obj
+		}
+		if x := getStringConst(spx, "Gop_sched"); x != "" {
+			p.scheds, p.hasScheds = strings.SplitN(x, ",", 2), true
 		}
 	}
-	pkgPaths := gt.PkgPaths
-	p := &gmxSettings{gameClass: name, pkgPaths: pkgPaths}
-	p.pkgImps = make([]*gox.PkgRef, len(pkgPaths))
-	for i, pkgPath := range pkgPaths {
-		p.pkgImps[i] = pkg.Import(pkgPath)
+	if f.IsProj {
+		if p.gameClass != "" {
+			panic("TODO: multiple project files found")
+		}
+		if tname == "main" {
+			tname = gt.Class
+		}
+		p.gameClass = tname
+	} else {
+		p.sptypes = append(p.sptypes, tname)
 	}
-	spx := p.pkgImps[0]
-	if gt.Class != "" {
-		p.game, p.gameIsPtr = spxRef(spx, gt.Class)
-	}
-	p.sprite = make(map[string]types.Object)
-	for _, v := range gt.Works {
-		obj, _ := spxRef(spx, v.Class)
-		p.sprite[v.Ext] = obj
-	}
-	if x := getStringConst(spx, "Gop_sched"); x != "" {
-		p.scheds, p.hasScheds = strings.SplitN(x, ",", 2), true
+	ctx.classes[f] = gmxClass{tname, ext, p}
+	if debugLoad {
+		log.Println("==> InitClass", tname, "isProj:", f.IsProj)
 	}
 	return p
 }
@@ -151,8 +172,8 @@ func getFields(f *ast.File) []ast.Spec {
 }
 
 func setBodyHandler(ctx *blockCtx) {
-	if ctx.isClass { // in a Go+ class file
-		if scheds := ctx.getScheds(ctx.cb); scheds != nil {
+	if proj := ctx.proj; proj != nil { // in a Go+ class file
+		if scheds := proj.getScheds(ctx.cb); scheds != nil {
 			ctx.cb.SetBodyHandler(func(body *goast.BlockStmt, kind int) {
 				idx := 0
 				if len(body.List) == 0 {
@@ -165,13 +186,20 @@ func setBodyHandler(ctx *blockCtx) {
 }
 
 func gmxMainFunc(p *gox.Package, ctx *pkgCtx) bool {
-	if o := p.Types.Scope().Lookup(ctx.gameClass); o != nil && hasMethod(o, "MainEntry") {
-		// new(Game).Main()
-		p.NewFunc(nil, "main", nil, nil, false).BodyStart(p).
-			Val(p.Builtin().Ref("new")).Val(o).Call(1).
-			MemberVal("Main").Call(0).EndStmt().
-			End()
-		return true
+	if len(ctx.projs) == 1 { // only one project file
+		var proj *gmxProject
+		for _, v := range ctx.projs {
+			proj = v
+			break
+		}
+		if o := p.Types.Scope().Lookup(proj.gameClass); o != nil && hasMethod(o, "MainEntry") {
+			// new(Game).Main()
+			p.NewFunc(nil, "main", nil, nil, false).BodyStart(p).
+				Val(p.Builtin().Ref("new")).Val(o).Call(1).
+				MemberVal("Main").Call(0).EndStmt().
+				End()
+			return true
+		}
 	}
 	return false
 }

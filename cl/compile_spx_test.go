@@ -19,7 +19,6 @@ package cl_test
 import (
 	"bytes"
 	"os"
-	"path"
 	"testing"
 
 	"github.com/goplus/gop/cl"
@@ -54,7 +53,7 @@ func lookupClass(ext string) (c *modfile.Project, ok bool) {
 func spxParserConf() parser.Config {
 	return parser.Config{
 		ClassKind: func(fname string) (isProj bool, ok bool) {
-			ext := path.Ext(fname)
+			ext := modfile.ClassExt(fname)
 			c, ok := lookupClass(ext)
 			if ok {
 				isProj = (c.Ext == ext)
@@ -433,7 +432,9 @@ type Kai struct {
 func (this *Kai) onMsg(msg string) {
 }
 `, "Game.t2gmx", "Kai.t2spx2")
+}
 
+func TestSpx3(t *testing.T) {
 	gopSpxTestEx(t, `
 println("Hi, Sprite")
 `, `
