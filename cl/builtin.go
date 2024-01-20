@@ -51,6 +51,7 @@ func initBuiltin(pkg *gox.Package, builtin *types.Package, os, fmt, ng, iox, bui
 		scope.Insert(types.NewTypeName(token.NoPos, builtin, "int128", ng.Ref("Int128").Type()))
 	}
 	if fmt != nil {
+		scope.Insert(gox.NewOverloadFunc(token.NoPos, builtin, "echo", fmt.Ref("Println")))
 		initBuiltinFns(builtin, scope, fmt, []string{
 			"print", "println", "printf", "errorf",
 			"fprint", "fprintln", "fprintf",

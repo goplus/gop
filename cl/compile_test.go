@@ -123,7 +123,7 @@ func gopClTestFS(t *testing.T, conf *cl.Config, fs parser.FileSystem, pkgname, e
 }
 
 func TestStringLitBasic(t *testing.T) {
-	gopClTest(t, `println "$$"`, `package main
+	gopClTest(t, `echo "$$"`, `package main
 
 import "fmt"
 

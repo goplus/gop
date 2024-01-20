@@ -164,14 +164,16 @@ func setBodyHandler(ctx *blockCtx) {
 	}
 }
 
-func gmxMainFunc(p *gox.Package, ctx *pkgCtx) {
+func gmxMainFunc(p *gox.Package, ctx *pkgCtx) bool {
 	if o := p.Types.Scope().Lookup(ctx.gameClass); o != nil && hasMethod(o, "MainEntry") {
 		// new(Game).Main()
 		p.NewFunc(nil, "main", nil, nil, false).BodyStart(p).
 			Val(p.Builtin().Ref("new")).Val(o).Call(1).
 			MemberVal("Main").Call(0).EndStmt().
 			End()
+		return true
 	}
+	return false
 }
 
 // -----------------------------------------------------------------------------

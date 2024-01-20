@@ -1135,7 +1135,7 @@ type File struct {
 }
 
 // There is no entrypoint func to indicate the module entry point.
-func (f *File) NoEntrypoint() bool {
+func (f *File) HasShadowEntry() bool {
 	return f.ShadowEntry != nil
 }
 
