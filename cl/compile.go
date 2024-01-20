@@ -41,6 +41,7 @@ type dbgFlags int
 const (
 	DbgFlagLoad dbgFlags = 1 << iota
 	DbgFlagLookup
+	FlagNoMarkAutogen
 	DbgFlagAll = DbgFlagLoad | DbgFlagLookup
 )
 
@@ -49,8 +50,9 @@ var (
 )
 
 var (
-	debugLoad   bool
-	debugLookup bool
+	debugLoad     bool
+	debugLookup   bool
+	noMarkAutogen bool // add const _ = true
 )
 
 func SetDisableRecover(disableRecover bool) {
@@ -60,6 +62,7 @@ func SetDisableRecover(disableRecover bool) {
 func SetDebug(flags dbgFlags) {
 	debugLoad = (flags & DbgFlagLoad) != 0
 	debugLookup = (flags & DbgFlagLookup) != 0
+	noMarkAutogen = (flags & FlagNoMarkAutogen) != 0
 }
 
 // -----------------------------------------------------------------------------
@@ -208,9 +211,6 @@ type Config struct {
 
 	// Outline = true means to skip compiling function bodies.
 	Outline bool
-
-	// AddMarkStmt = true means to add const _ = true.
-	AddMarkStmt bool
 }
 
 type nodeInterp struct {
@@ -502,7 +502,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	}
 	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
 
-	if conf.AddMarkStmt {
+	if !noMarkAutogen {
 		p.CB().NewConstStart(nil, "_").Val(true).EndInit(1)
 	}
 
@@ -539,7 +539,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	}
 
 	gopSyms := make(map[string]bool)
-	for name, _ := range ctx.syms {
+	for name := range ctx.syms {
 		gopSyms[name] = true
 	}
 
