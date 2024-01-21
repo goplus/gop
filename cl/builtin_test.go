@@ -53,6 +53,10 @@ func TestErrStringLit(t *testing.T) {
 	})
 }
 
+func TestEnsureLoaded(t *testing.T) {
+	ensureLoaded(nil, types.NewPointer(gox.TyByte))
+}
+
 func TestNodeInterp(t *testing.T) {
 	ni := &nodeInterp{}
 	if v := ni.Caller(&ast.Ident{}); v != "the function call" {
