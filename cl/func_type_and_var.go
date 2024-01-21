@@ -438,15 +438,6 @@ func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) types.Type {
 	return intf
 }
 
-func ensureLoaded(ctx *blockCtx, typ types.Type) {
-	if t, ok := typ.(*types.Pointer); ok {
-		typ = t.Elem()
-	}
-	if t, ok := typ.(*types.Named); ok && (t.NumMethods() == 0 || t.Underlying() == nil) {
-		ctx.loadNamed(ctx.pkg, t)
-	}
-}
-
 func instantiate(ctx *blockCtx, exprX ast.Expr, indices ...ast.Expr) types.Type {
 	ctx.inInst++
 	defer func() {
@@ -454,19 +445,11 @@ func instantiate(ctx *blockCtx, exprX ast.Expr, indices ...ast.Expr) types.Type 
 	}()
 
 	x := toType(ctx, exprX)
-	ensureLoaded(ctx, x)
-
 	idx := make([]types.Type, len(indices))
 	for i, index := range indices {
-		tidx := toType(ctx, index)
-		ensureLoaded(ctx, tidx)
-		idx[i] = tidx
+		idx[i] = toType(ctx, index)
 	}
-	ret, err := types.Instantiate(ctx.ctxt(), x, idx, true)
-	if err != nil {
-		ctx.handleErr(ctx.newCodeError(exprX.Pos(), err.Error()))
-	}
-	return ret
+	return ctx.pkg.Instantiate(x, idx, exprX)
 }
 
 func toIndexType(ctx *blockCtx, v *ast.IndexExpr) types.Type {

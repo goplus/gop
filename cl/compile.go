@@ -339,7 +339,6 @@ type pkgCtx struct {
 	projs   map[string]*gmxProject // .gmx => project
 	classes map[*ast.File]gmxClass
 	fset    *token.FileSet
-	ctxt_   *types.Context // to instantiate generic type
 	cpkgs   *cpackages.Importer
 	syms    map[string]loader
 	inits   []func()
@@ -385,13 +384,6 @@ func (bc *blockCtx) recorder() *typesRecorder {
 func (bc *blockCtx) findImport(name string) (pi pkgImp, ok bool) {
 	pi, ok = bc.imports[name]
 	return
-}
-
-func (p *pkgCtx) ctxt() *types.Context {
-	if p.ctxt_ == nil {
-		p.ctxt_ = types.NewContext()
-	}
-	return p.ctxt_
 }
 
 func (p *pkgCtx) newCodeError(pos token.Pos, msg string) error {
