@@ -438,28 +438,26 @@ func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) types.Type {
 	return intf
 }
 
-func toIndexType(ctx *blockCtx, v *ast.IndexExpr) types.Type {
+func instantiate(ctx *blockCtx, exprX ast.Expr, indices ...ast.Expr) types.Type {
 	ctx.inInst++
 	defer func() {
 		ctx.inInst--
 	}()
-	ctx.cb.Typ(toType(ctx, v.X), v.X)
-	ctx.cb.Typ(toType(ctx, v.Index), v.Index)
-	ctx.cb.Index(1, false, v)
-	return ctx.cb.InternalStack().Pop().Type.(*gox.TypeType).Type()
+
+	x := toType(ctx, exprX)
+	idx := make([]types.Type, len(indices))
+	for i, index := range indices {
+		idx[i] = toType(ctx, index)
+	}
+	return ctx.pkg.Instantiate(x, idx, exprX)
+}
+
+func toIndexType(ctx *blockCtx, v *ast.IndexExpr) types.Type {
+	return instantiate(ctx, v.X, v.Index)
 }
 
 func toIndexListType(ctx *blockCtx, v *ast.IndexListExpr) types.Type {
-	ctx.inInst++
-	defer func() {
-		ctx.inInst--
-	}()
-	ctx.cb.Typ(toType(ctx, v.X), v.X)
-	for _, index := range v.Indices {
-		ctx.cb.Typ(toType(ctx, index), index)
-	}
-	ctx.cb.Index(len(v.Indices), false, v)
-	return ctx.cb.InternalStack().Pop().Type.(*gox.TypeType).Type()
+	return instantiate(ctx, v.X, v.Indices...)
 }
 
 // -----------------------------------------------------------------------------
