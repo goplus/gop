@@ -517,8 +517,10 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	})
 
 	for file, gmx := range files {
-		log.Println("==> File", file, "isClass:", gmx.IsClass, "normalGox:", gmx.IsNormalGox)
 		if gmx.IsClass && !gmx.IsNormalGox {
+			if debugLoad {
+				log.Println("==> File", file, "normalGox:", gmx.IsNormalGox)
+			}
 			loadClass(ctx, p, file, gmx, conf)
 		}
 	}
@@ -570,6 +572,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 
 	// genMain = true if it is main package and no main func
 	var genMain bool
+	var gen func()
 	if pkg.Name == "main" {
 		_, hasMain := ctx.syms["main"]
 		genMain = !hasMain
@@ -580,8 +583,8 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 			loadFile(ctx, f.File)
 		}
 	}
-	if genMain { // generate main func if need
-		genMain = !gmxMainFunc(p, ctx)
+	if genMain { // make classfile main func if need
+		gen = gmxMainFunc(p, ctx)
 	}
 
 	for _, f := range sfiles {
@@ -602,7 +605,9 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	}
 	err = ctx.complete()
 
-	if genMain && !conf.NoAutoGenMain { // generate empty main func
+	if gen != nil { // generate classfile main func
+		gen()
+	} else if genMain && !conf.NoAutoGenMain { // generate empty main func
 		old, _ := p.SetCurFile(defaultGoFile, false)
 		p.NewFunc(nil, "main", nil, nil, false).BodyStart(p).End()
 		p.RestoreCurFile(old)
