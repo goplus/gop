@@ -185,23 +185,47 @@ func setBodyHandler(ctx *blockCtx) {
 	}
 }
 
-func gmxMainFunc(p *gox.Package, ctx *pkgCtx) bool {
+func gmxMainFunc(p *gox.Package, ctx *pkgCtx) func() {
 	if len(ctx.projs) == 1 { // only one project file
 		var proj *gmxProject
 		for _, v := range ctx.projs {
 			proj = v
 			break
 		}
-		if o := p.Types.Scope().Lookup(proj.gameClass); o != nil && hasMethod(o, "MainEntry") {
+		scope := p.Types.Scope()
+		if o := scope.Lookup(proj.gameClass); o != nil && hasMethod(o, "MainEntry") {
 			// new(Game).Main()
-			p.NewFunc(nil, "main", nil, nil, false).BodyStart(p).
-				Val(p.Builtin().Ref("new")).Val(o).Call(1).
-				MemberVal("Main").Call(0).EndStmt().
-				End()
-			return true
+			// new(Game).Main(workers...)
+			fn := p.NewFunc(nil, "main", nil, nil, false)
+			return func() {
+				new := p.Builtin().Ref("new")
+				cb := fn.BodyStart(p).Val(new).Val(o).Call(1).MemberVal("Main")
+
+				sig := cb.Get(-1).Type.(*types.Signature)
+				narg := gmxMainNarg(sig)
+				if narg > 0 {
+					narg = len(proj.sptypes)
+					for _, spt := range proj.sptypes {
+						sp := scope.Lookup(spt)
+						cb.Val(new).Val(sp).Call(1)
+					}
+				}
+
+				cb.Call(narg).EndStmt().End()
+			}
 		}
 	}
-	return false
+	return nil
+}
+
+func gmxMainNarg(sig *types.Signature) int {
+	if fex, ok := gox.CheckFuncEx(sig); ok {
+		if trm, ok := fex.(*gox.TyTemplateRecvMethod); ok {
+			sig = trm.Func.Type().(*types.Signature)
+			return sig.Params().Len() - 1
+		}
+	}
+	return sig.Params().Len()
 }
 
 // -----------------------------------------------------------------------------

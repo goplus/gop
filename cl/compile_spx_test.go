@@ -46,6 +46,11 @@ func lookupClass(ext string) (c *modfile.Project, ok bool) {
 			Works: []*modfile.Class{{Ext: "_t3spx.gox", Class: "Sprite"},
 				{Ext: ".t3spx2", Class: "Sprite2"}},
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
+	case "_spx.gox":
+		return &modfile.Project{
+			Ext: "_spx.gox", Class: "Game",
+			Works:    []*modfile.Class{{Ext: "_spx.gox", Class: "Sprite"}},
+			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx3", "math"}}, true
 	}
 	return
 }
@@ -54,6 +59,9 @@ func spxParserConf() parser.Config {
 	return parser.Config{
 		ClassKind: func(fname string) (isProj bool, ok bool) {
 			ext := modfile.ClassExt(fname)
+			if ext == "_spx.gox" {
+				return fname == "main_spx.gox", true
+			}
 			c, ok := lookupClass(ext)
 			if ok {
 				isProj = (c.Ext == ext)
@@ -368,6 +376,43 @@ func (this *Kai) Main() {
 `, "index.tgmx", "Kai.tspx")
 }
 
+func TestSpxRunWithWorkers(t *testing.T) {
+	gopSpxTestEx(t, `
+var (
+	Kai Kai
+)
+
+run
+`, `
+echo "Hi"
+`, `package main
+
+import (
+	"fmt"
+	"github.com/goplus/gop/cl/internal/spx3"
+)
+
+type Kai struct {
+	spx3.Sprite
+	*Game
+}
+type Game struct {
+	spx3.Game
+	Kai Kai
+}
+
+func (this *Game) MainEntry() {
+	this.Run()
+}
+func main() {
+	spx3.Gopt_Game_Main(new(Game), new(Kai))
+}
+func (this *Kai) Main() {
+	fmt.Println("Hi")
+}
+`, "main_spx.gox", "Kai_spx.gox")
+}
+
 func TestSpx2(t *testing.T) {
 	gopSpxTestEx(t, `
 println("Hi")
@@ -400,7 +445,9 @@ type Kai struct {
 func (this *Kai) onMsg(msg string) {
 }
 `, "Game.t2gmx", "Kai.t2spx")
+}
 
+func TestSpx3(t *testing.T) {
 	gopSpxTestEx(t, `
 println("Hi, Sprite2")
 `, `
@@ -434,7 +481,7 @@ func (this *Kai) onMsg(msg string) {
 `, "Game.t2gmx", "Kai.t2spx2")
 }
 
-func TestSpx3(t *testing.T) {
+func TestSpx4(t *testing.T) {
 	gopSpxTestEx(t, `
 println("Hi, Sprite")
 `, `
