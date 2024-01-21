@@ -517,7 +517,9 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	})
 
 	for file, gmx := range files {
-		log.Println("==> File", file, "isClass:", gmx.IsClass, "normalGox:", gmx.IsNormalGox)
+		if debugLoad {
+			log.Println("==> File", file, "isClass:", gmx.IsClass, "normalGox:", gmx.IsNormalGox)
+		}
 		if gmx.IsClass && !gmx.IsNormalGox {
 			loadClass(ctx, p, file, gmx, conf)
 		}
