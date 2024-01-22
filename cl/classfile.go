@@ -193,9 +193,8 @@ func gmxMainFunc(p *gox.Package, ctx *pkgCtx, noAutoGenMain bool) func() {
 			break
 		}
 		scope := p.Types.Scope()
-		class := proj.gameClass
 		var o types.Object
-		if class != "" {
+		if proj.gameClass != "" {
 			o = scope.Lookup(proj.gameClass)
 			if noAutoGenMain && o != nil && hasMethod(o, "MainEntry") {
 				noAutoGenMain = false
