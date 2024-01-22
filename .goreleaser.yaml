@@ -68,12 +68,25 @@ changelog:
       - "^test:"
 
 winget:
-  - name: gop
+  - name: goplus
     homepage: "https://goplus.org/"
     publisher: goplus
     publisher_url: https://github.com/goplus/gop
     publisher_support_url: "https://github.com/goplus/gop/issues/new"
     package_identifier: goplus.gop
+    path: "manifests/g/goplus/gop/{{.Version}}"
+    tags:
+      - golang
+      - go
+      - gop
+      - goplus
+      - programming
+      - language
+      - compiler
+      - interpreter
+      - data science
+      - engineering
+      - education
     short_description: The Go+ Programming Language
     description: |
       The Go+ programming language is designed for engineering, STEM education, and data science.
@@ -96,8 +109,153 @@ winget:
         private_key: "{{ .Env.WINGET_PKGS_PRIVATE_KEY }}"
       pull_request:
         enabled: true
-        draft: false
+        draft: true
         base:
           owner: microsoft
           name: winget-pkgs
           branch: master
+
+nfpms:
+  - package_name: gop
+    vendor: goplus
+    homepage: https://goplus.org/
+    maintainer: Li Jie <cpunion@gmail.com>
+    license: Apache-2.0
+    description: |
+      The Go+ programming language is designed for engineering, STEM education, and data science.
+      - For engineering: working in the simplest language that can be mastered by children.
+      - For STEM education: studying an engineering language that can be used for work in the future.
+      - For data science: communicating with engineers in the same language.
+    formats:
+      - "deb"
+      - "rpm"
+    overrides:
+      deb:
+        dependencies:
+          - "golang-go (>= 1.18.0)"
+      rpm:
+        dependencies:
+          - "golang-bin >= 1.18.0"
+    file_name_template: >-
+      {{ .ProjectName }}_v{{.Version}}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    bindir: /usr/lib/{{ .ProjectName }}
+    contents:
+      # source folder
+      - src: LICENSE
+        dst: /usr/lib/{{ .ProjectName }}/LICENSE
+      - src: "README.md"
+        dst: /usr/lib/{{ .ProjectName }}/README.md
+      - src: "go.mod"
+        dst: /usr/lib/{{ .ProjectName }}/go.mod
+      - src: "go.sum"
+        dst: /usr/lib/{{ .ProjectName }}/go.sum
+      - src: "*.go"
+        dst: /usr/lib/{{ .ProjectName }}/
+      - src: ast
+        dst: /usr/lib/{{ .ProjectName }}/ast
+      - src: builtin
+        dst: /usr/lib/{{ .ProjectName }}/builtin
+      - src: cl
+        dst: /usr/lib/{{ .ProjectName }}/cl
+      - src: cmd
+        dst: /usr/lib/{{ .ProjectName }}/cmd
+      - src: doc
+        dst: /usr/lib/{{ .ProjectName }}/doc
+      - src: env
+        dst: /usr/lib/{{ .ProjectName }}/env
+      - src: format
+        dst: /usr/lib/{{ .ProjectName }}/format
+      - src: parser
+        dst: /usr/lib/{{ .ProjectName }}/parser
+      - src: printer
+        dst: /usr/lib/{{ .ProjectName }}/parser
+      - src: scanner
+        dst: /usr/lib/{{ .ProjectName }}/scanner
+      - src: token
+        dst: /usr/lib/{{ .ProjectName }}/token
+      - src: watcher
+        dst: /usr/lib/{{ .ProjectName }}/watcher
+      - src: "x"
+        dst: /usr/lib/{{ .ProjectName }}/x
+      # symlinks to binaries
+      - src: "/usr/lib/{{ .ProjectName }}/bin/gop"
+        dst: /usr/bin/gop
+        type: symlink
+      - src: "/usr/lib/{{ .ProjectName }}/bin/gopfmt"
+        dst: /usr/bin/gopfmt
+        type: symlink
+
+snapcrafts:
+  - id: gop
+    name: gop
+    title: The Go+ Programming Language
+    summary: The Go+ Programming Language
+    description: |
+      The Go+ programming language is designed for engineering, STEM education, and data science.
+      - For engineering: working in the simplest language that can be mastered by children.
+      - For STEM education: studying an engineering language that can be used for work in the future.
+      - For data science: communicating with engineers in the same language.
+    confinement: classic
+    license: Apache-2.0
+    name_template: >-
+      {{ .ProjectName }}_v{{.Version}}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    extra_files:
+      # source folder
+      - source: LICENSE
+        destination: LICENSE
+      - source: "README.md"
+        destination: README.md
+      - source: "go.mod"
+        destination: go.mod
+      - source: "go.sum"
+        destination: go.sum
+      - source: ast
+        destination: ast
+      - source: builtin
+        destination: builtin
+      - source: cl
+        destination: cl
+      - source: cmd
+        destination: cmd
+      - source: doc
+        destination: doc
+      - source: env
+        destination: env
+      - source: format
+        destination: format
+      - source: parser
+        destination: parser
+      - source: printer
+        destination: parser
+      - source: scanner
+        destination: scanner
+      - source: token
+        destination: token
+      - source: watcher
+        destination: watcher
+      - source: "x"
+        destination: x
+    apps:
+      gop:
+        command: "gop"
+        aliases: ["gop"]
+        environment:
+          GOPROOT: "$SNAP"
+      gopfmt:
+        command: "gopfmt"
+        aliases: ["gopfmt"]
+        environment:
+          GOPROOT: "$SNAP"
+
+checksum:
+  name_template: "{{ .ProjectName }}_v{{ .Version }}_checksums.txt"
