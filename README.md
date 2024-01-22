@@ -47,6 +47,41 @@ For more details, see [Quick Start](doc/docs.md).
 
 ## How to install
 
+### on Windows
+
+```sh
+winget install goplus
+```
+
+Or
+
+```sh
+winget install goplus.gop
+```
+
+### on Debian/Ubuntu
+
+```sh
+sudo bash -c ' echo "deb [trusted=yes] https://pkgs.goplus.org/apt/ /" > /etc/apt/sources.list.d/goplus.list'
+sudo apt update
+sudo apt install gop
+```
+
+### on RedHat/CentOS/Fedora
+
+```sh
+sudo bash -c 'echo -e "[goplus]\nname=Go+ Repo\nbaseurl=https://pkgs.goplus.org/yum/\nenabled=1\ngpgcheck=0" > /etc/yum.repos.d/goplus.repo'
+sudo yum install gop
+```
+
+### on macOS/Linux(Homebrew)
+
+Install via [brew](https://brew.sh/)
+
+```sh
+$ brew install goplus
+```
+
 ### from source code
 
 For now, we suggest you install Go+ from source code.
@@ -62,14 +97,6 @@ cd gop
 # On Windows run:
 all.bat
 ```
-
-### on macOS/Linux
-
-Install via [brew](https://brew.sh/)
-```sh
-$ brew install goplus
-```
-
 
 ## Go+ Applications
 

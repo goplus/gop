@@ -68,12 +68,25 @@ changelog:
       - "^test:"
 
 winget:
-  - name: gop
+  - name: goplus
     homepage: "https://goplus.org/"
     publisher: goplus
     publisher_url: https://github.com/goplus/gop
     publisher_support_url: "https://github.com/goplus/gop/issues/new"
     package_identifier: goplus.gop
+    path: "manifests/g/goplus/gop/{{.Version}}"
+    tags:
+      - golang
+      - go
+      - gop
+      - goplus
+      - programming
+      - language
+      - compiler
+      - interpreter
+      - data science
+      - engineering
+      - education
     short_description: The Go+ Programming Language
     description: |
       The Go+ programming language is designed for engineering, STEM education, and data science.
@@ -103,7 +116,7 @@ winget:
           branch: master
 
 nfpms:
-  - package_name: goplus-gop
+  - package_name: gop
     vendor: goplus
     homepage: https://goplus.org/
     maintainer: Li Jie <cpunion@gmail.com>
@@ -179,7 +192,7 @@ nfpms:
 
 snapcrafts:
   - id: gop
-    name: goplus
+    name: gop
     title: The Go+ Programming Language
     summary: The Go+ Programming Language
     description: |
