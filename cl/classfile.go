@@ -185,7 +185,7 @@ func setBodyHandler(ctx *blockCtx) {
 	}
 }
 
-func gmxMainFunc(p *gox.Package, ctx *pkgCtx) func() {
+func gmxMainFunc(p *gox.Package, ctx *pkgCtx, noAutoGenMain bool) func() {
 	if len(ctx.projs) == 1 { // only one project file
 		var proj *gmxProject
 		for _, v := range ctx.projs {
@@ -193,7 +193,16 @@ func gmxMainFunc(p *gox.Package, ctx *pkgCtx) func() {
 			break
 		}
 		scope := p.Types.Scope()
-		if o := scope.Lookup(proj.gameClass); o != nil && hasMethod(o, "MainEntry") {
+		var o types.Object
+		if proj.gameClass != "" {
+			o = scope.Lookup(proj.gameClass)
+			if noAutoGenMain && o != nil && hasMethod(o, "MainEntry") {
+				noAutoGenMain = false
+			}
+		} else {
+			o = proj.game
+		}
+		if !noAutoGenMain && o != nil {
 			// new(Game).Main()
 			// new(Game).Main(workers...)
 			fn := p.NewFunc(nil, "main", nil, nil, false)
@@ -226,6 +235,19 @@ func gmxMainNarg(sig *types.Signature) int {
 		}
 	}
 	return sig.Params().Len()
+}
+
+func hasMethod(o types.Object, name string) bool {
+	if obj, ok := o.(*types.TypeName); ok {
+		if t, ok := obj.Type().(*types.Named); ok {
+			for i, n := 0, t.NumMethods(); i < n; i++ {
+				if t.Method(i).Name() == name {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 // -----------------------------------------------------------------------------
