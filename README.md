@@ -62,7 +62,7 @@ winget install goplus.gop
 ### on Debian/Ubuntu
 
 ```sh
-sudo bash -c ' echo "deb [trusted=yes] https://apt.fury.io/goplus/ /" > /etc/apt/sources.list.d/goplus.list'
+sudo bash -c ' echo "deb [trusted=yes] https://pkgs.goplus.org/apt/ /" > /etc/apt/sources.list.d/goplus.list'
 sudo apt update
 sudo apt install gop
 ```
@@ -70,7 +70,7 @@ sudo apt install gop
 ### on RedHat/CentOS/Fedora
 
 ```sh
-sudo bash -c 'echo -e "[goplus]\nname=Go+ Repo\nbaseurl=https://yum.fury.io/goplus/\nenabled=1\ngpgcheck=0" > /etc/yum.repos.d/goplus.repo'
+sudo bash -c 'echo -e "[goplus]\nname=Go+ Repo\nbaseurl=https://pkgs.goplus.org/yum/\nenabled=1\ngpgcheck=0" > /etc/yum.repos.d/goplus.repo'
 sudo yum install gop
 ```
 
