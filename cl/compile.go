@@ -193,6 +193,9 @@ type Config struct {
 	// See (*github.com/goplus/mod/gopmod.Module).LookupClass.
 	LookupClass func(ext string) (c *Project, ok bool)
 
+	// IsPkgtStandard checks a pkgPath is a Go standard package or not.
+	IsPkgtStandard func(pkgPath string) bool
+
 	// An Importer resolves import paths to Packages (optional).
 	Importer types.Importer
 
@@ -483,6 +486,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		Types:           conf.Types,
 		Fset:            fset,
 		Context:         conf.Context,
+		IsPkgtStandard:  conf.IsPkgtStandard,
 		Importer:        conf.Importer,
 		LoadNamed:       ctx.loadNamed,
 		HandleErr:       ctx.handleErr,

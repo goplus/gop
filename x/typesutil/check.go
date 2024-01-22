@@ -151,6 +151,7 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 		C2goBase:       opts.C2goBase,
 		LookupPub:      c2go.LookupPub(mod),
 		LookupClass:    mod.LookupClass,
+		IsPkgtStandard: mod.IsPkgtStandard,
 		Importer:       newImporter(conf.Importer, mod, nil, fset),
 		Recorder:       gopRecorder{p.gopInfo},
 		NoFileLine:     true,
