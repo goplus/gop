@@ -812,9 +812,10 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 			},
 		}}}
 	}
-	// check class project no MainEntry and auto added
-	if f.IsProj && !conf.NoAutoGenMain && !f.HasShadowEntry() && f.Name.Name == "main" {
-		entry := getEntrypoint(f)
+	if d := f.ShadowEntry; d != nil {
+		d.Name.Name = getEntrypoint(f)
+	} else if f.IsProj && !conf.NoAutoGenMain && f.Name.Name == "main" {
+		var entry = getEntrypoint(f)
 		var hasEntry bool
 		for _, decl := range f.Decls {
 			switch d := decl.(type) {
@@ -826,14 +827,15 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 		}
 		if !hasEntry {
 			f.Decls = append(f.Decls, &ast.FuncDecl{
-				Name: ast.NewIdent(entry),
-				Type: &ast.FuncType{Params: &ast.FieldList{}},
+				Name: &ast.Ident{
+					Name: entry,
+				},
+				Type: &ast.FuncType{
+					Params: &ast.FieldList{},
+				},
 				Body: &ast.BlockStmt{},
 			})
 		}
-	}
-	if d := f.ShadowEntry; d != nil {
-		d.Name.Name = getEntrypoint(f)
 	}
 	preloadFile(p, ctx, file, f, true, !conf.Outline)
 }
