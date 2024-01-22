@@ -24,7 +24,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/goplus/gox"
 	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modcache"
 	"github.com/goplus/mod/modfetch"
@@ -68,9 +67,6 @@ func GenGoEx(dir string, conf *Config, genTestPkg bool, flags GenFlags) (string,
 func genGoDir(dir string, conf *Config, genTestPkg, recursively bool, flags GenFlags) (err error) {
 	if conf == nil {
 		conf = new(Config)
-	}
-	if false && conf.Context == nil { // set Context
-		conf.Context = gox.NewContext()
 	}
 	if recursively {
 		var (
@@ -279,9 +275,6 @@ func remotePkgPathDo(pkgPath string, doSth func(pkgDir, modDir string), onErr fu
 func GenGoFiles(autogen string, files []string, conf *Config) (result []string, err error) {
 	if conf == nil {
 		conf = new(Config)
-	}
-	if conf.Context == nil { // set Context
-		conf.Context = gox.NewContext()
 	}
 	if autogen == "" {
 		autogen = "gop_autogen.go"
