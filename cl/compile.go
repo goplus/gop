@@ -588,7 +588,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		}
 	}
 	if genMain { // make classfile main func if need
-		gen = gmxMainFunc(p, ctx)
+		gen = gmxMainFunc(p, ctx, conf.NoAutoGenMain)
 	}
 
 	for _, f := range sfiles {
@@ -646,19 +646,6 @@ func initGopPkg(ctx *pkgCtx, pkg *gox.Package, gopSyms map[string]bool) {
 		pkg.Types.Scope().Insert(types.NewConst(token.NoPos, pkg.Types, gopPackage, types.Typ[types.UntypedBool], constant.MakeBool(true)))
 	}
 	initThisGopPkg(pkg.Types)
-}
-
-func hasMethod(o types.Object, name string) bool {
-	if obj, ok := o.(*types.TypeName); ok {
-		if t, ok := obj.Type().(*types.Named); ok {
-			for i, n := 0, t.NumMethods(); i < n; i++ {
-				if t.Method(i).Name() == name {
-					return true
-				}
-			}
-		}
-	}
-	return false
 }
 
 func getEntrypoint(f *ast.File) string {
