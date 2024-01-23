@@ -53,6 +53,14 @@ func TestErrStringLit(t *testing.T) {
 	})
 }
 
+func TestGmxMainFunc(t *testing.T) {
+	gmxMainFunc(nil, &pkgCtx{
+		projs: map[string]*gmxProject{
+			".a": {}, ".b": {},
+		},
+	}, false)
+}
+
 func TestNodeInterp(t *testing.T) {
 	ni := &nodeInterp{}
 	if v := ni.Caller(&ast.Ident{}); v != "the function call" {
