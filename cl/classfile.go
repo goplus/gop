@@ -186,18 +186,23 @@ func setBodyHandler(ctx *blockCtx) {
 	}
 }
 
-func testFuncName(testType string) string {
+const (
+	casePrefix = "case"
+)
+
+func testNameSuffix(testType string) string {
 	if c := testType[0]; c >= 'A' && c <= 'Z' {
-		return "Test" + testType
+		return testType
 	}
-	return "Test_" + testType
+	return "_" + testType
 }
 
 func gmxTestFunc(pkg *gox.Package, testType string, isProj bool) {
 	if isProj {
 		genTestFunc(pkg, "TestMain", testType, "m", "M")
 	} else {
-		genTestFunc(pkg, testFuncName(testType), testType, "t", "T")
+		name := testNameSuffix(testType)
+		genTestFunc(pkg, "Test"+name, casePrefix+name, "t", "T")
 	}
 }
 

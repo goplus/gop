@@ -718,11 +718,14 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 			}
 		} else {
 			c := parent.classes[f]
-			classType, proj = c.tname, c.proj
-			ctx.proj = proj
+			proj, ctx.proj = c.proj, c.proj
+			classType = c.tname
 			if strings.HasSuffix(c.ext, "test.gox") { // test classfile
 				testType = c.tname
 				proj.isTest = true
+				if !f.IsProj {
+					classType = casePrefix + testNameSuffix(testType)
+				}
 			}
 			if f.IsProj {
 				o := proj.game
