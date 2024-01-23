@@ -277,7 +277,7 @@ func TestGmxProject(t *testing.T) {
 	}()
 	func() {
 		defer func() {
-			if e := recover(); e != "TODO: multiple project files found" {
+			if e := recover(); e != "multiple project files found: Game Game\n" {
 				t.Fatal("TestGmxProject failed:", e)
 			}
 		}()

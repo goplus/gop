@@ -51,6 +51,11 @@ func lookupClass(ext string) (c *modfile.Project, ok bool) {
 			Ext: "_spx.gox", Class: "Game",
 			Works:    []*modfile.Class{{Ext: "_spx.gox", Class: "Sprite"}},
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx3", "math"}}, true
+	case "_xtest.gox":
+		return &modfile.Project{
+			Ext: "_xtest.gox", Class: "App",
+			Works:    []*modfile.Class{{Ext: "_xtest.gox", Class: "Case"}},
+			PkgPaths: []string{"github.com/goplus/gop/test", "testing"}}, true
 	}
 	return
 }
@@ -59,12 +64,9 @@ func spxParserConf() parser.Config {
 	return parser.Config{
 		ClassKind: func(fname string) (isProj bool, ok bool) {
 			ext := modfile.ClassExt(fname)
-			if ext == "_spx.gox" {
-				return fname == "main_spx.gox", true
-			}
 			c, ok := lookupClass(ext)
 			if ok {
-				isProj = (c.Ext == ext)
+				isProj = c.IsProj(ext, fname)
 			}
 			return
 		},
@@ -939,4 +941,81 @@ func (this *Kai) Main() {
 	})
 }
 `, "Game.tgmx", "Kai.tspx")
+}
+
+func TestTestClassFile(t *testing.T) {
+	gopSpxTestEx(t, `
+println "Hi"
+`, `
+t.log "Hi"
+t.run "a test", t => {
+	t.fatal "failed"
+}
+`, `package main
+
+import (
+	"fmt"
+	"github.com/goplus/gop/test"
+	"testing"
+)
+
+type App struct {
+	test.App
+}
+
+func (this *App) MainEntry() {
+	fmt.Println("Hi")
+}
+
+type Foo struct {
+	test.Case
+	*App
+}
+
+func (this *Foo) Main() {
+	this.T().Log("Hi")
+	this.T().Run("a test", func(t *testing.T) {
+		t.Fatal("failed")
+	})
+}
+func TestFoo(t *testing.T) {
+	test.Gopt_Case_TestMain(new(Foo), t)
+}
+func TestMain(m *testing.M) {
+	test.Gopt_App_TestMain(new(App), m)
+}
+`, "main_xtest.gox", "Foo_xtest.gox")
+}
+
+func TestTestClassFile2(t *testing.T) {
+	gopSpxTestEx(t, `
+println "Hi"
+`, `
+t.log "Hi"
+`, `package main
+
+import (
+	"fmt"
+	"github.com/goplus/gop/test"
+	"testing"
+)
+
+type Foo struct {
+	test.Case
+}
+
+func (this *Foo) Main() {
+	this.T().Log("Hi")
+}
+
+type _main struct {
+}
+
+func (this *_main) Main() {
+	fmt.Println("Hi")
+}
+func TestFoo(t *testing.T) {
+	test.Gopt_Case_TestMain(new(Foo), t)
+}
+`, "main.gox", "Foo_xtest.gox")
 }

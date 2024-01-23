@@ -49,6 +49,7 @@ type gmxProject struct {
 	pkgPaths   []string
 	hasScheds  bool
 	gameIsPtr  bool
+	isTest     bool
 }
 
 func (p *gmxProject) getScheds(cb *gox.CodeBuilder) []goast.Stmt {
@@ -107,11 +108,11 @@ func loadClass(ctx *pkgCtx, pkg *gox.Package, file string, f *ast.File, conf *Co
 		}
 	}
 	if f.IsProj {
-		if p.gameClass != "" {
-			panic("TODO: multiple project files found")
-		}
 		if tname == "main" {
 			tname = gt.Class
+		}
+		if p.gameClass != "" {
+			log.Panicln("multiple project files found:", tname, p.gameClass)
 		}
 		p.gameClass = tname
 	} else {
@@ -185,14 +186,45 @@ func setBodyHandler(ctx *blockCtx) {
 	}
 }
 
-func gmxMainFunc(p *gox.Package, ctx *pkgCtx, noAutoGenMain bool) func() {
-	if len(ctx.projs) == 1 { // only one project file
-		var proj *gmxProject
-		for _, v := range ctx.projs {
-			proj = v
-			break
+func testFuncName(testType string) string {
+	if c := testType[0]; c >= 'A' && c <= 'Z' {
+		return "Test" + testType
+	}
+	return "Test_" + testType
+}
+
+func gmxTestFunc(pkg *gox.Package, testType string, isProj bool) {
+	if isProj {
+		genTestFunc(pkg, "TestMain", testType, "m", "M")
+	} else {
+		genTestFunc(pkg, testFuncName(testType), testType, "t", "T")
+	}
+}
+
+func genTestFunc(pkg *gox.Package, name, testType, param, paramType string) {
+	testing := pkg.Import("testing")
+	objT := testing.Ref(paramType)
+	paramT := types.NewParam(token.NoPos, pkg.Types, param, types.NewPointer(objT.Type()))
+	params := types.NewTuple(paramT)
+
+	pkg.NewFunc(nil, name, params, nil, false).BodyStart(pkg).
+		Val(pkg.Builtin().Ref("new")).Val(pkg.Ref(testType)).Call(1).
+		MemberVal("TestMain").Val(paramT).Call(1).EndStmt().
+		End()
+}
+
+func gmxMainFunc(pkg *gox.Package, ctx *pkgCtx, noAutoGenMain bool) func() {
+	var proj *gmxProject
+	for _, v := range ctx.projs {
+		if v.isTest {
+			continue
+		} else if proj != nil {
+			return nil
 		}
-		scope := p.Types.Scope()
+		proj = v
+	}
+	if proj != nil { // only one project file
+		scope := pkg.Types.Scope()
 		var o types.Object
 		if proj.gameClass != "" {
 			o = scope.Lookup(proj.gameClass)
@@ -205,10 +237,10 @@ func gmxMainFunc(p *gox.Package, ctx *pkgCtx, noAutoGenMain bool) func() {
 		if !noAutoGenMain && o != nil {
 			// new(Game).Main()
 			// new(Game).Main(workers...)
-			fn := p.NewFunc(nil, "main", nil, nil, false)
+			fn := pkg.NewFunc(nil, "main", nil, nil, false)
 			return func() {
-				new := p.Builtin().Ref("new")
-				cb := fn.BodyStart(p).Val(new).Val(o).Call(1).MemberVal("Main")
+				new := pkg.Builtin().Ref("new")
+				cb := fn.BodyStart(pkg).Val(new).Val(o).Call(1).MemberVal("Main")
 
 				sig := cb.Get(-1).Type.(*types.Signature)
 				narg := gmxMainNarg(sig)

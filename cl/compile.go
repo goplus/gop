@@ -705,6 +705,7 @@ func genGoFile(file string, gopFile bool) string {
 func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, conf *Config) {
 	var proj *gmxProject
 	var classType string
+	var testType string
 	var baseTypeName string
 	var baseType types.Type
 	var spxClass bool
@@ -712,10 +713,17 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 	if f.IsClass {
 		if f.IsNormalGox {
 			classType, _ = ClassNameAndExt(file)
+			if classType == "main" {
+				classType = "_main"
+			}
 		} else {
 			c := parent.classes[f]
 			classType, proj = c.tname, c.proj
 			ctx.proj = proj
+			if strings.HasSuffix(c.ext, "test.gox") { // test classfile
+				testType = c.tname
+				proj.isTest = true
+			}
 			if f.IsProj {
 				o := proj.game
 				baseTypeName, baseType = o.Name(), o.Type()
@@ -833,11 +841,20 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 				Type: &ast.FuncType{
 					Params: &ast.FieldList{},
 				},
-				Body: &ast.BlockStmt{},
+				Body:   &ast.BlockStmt{},
+				Shadow: true,
 			})
 		}
 	}
 	preloadFile(p, ctx, file, f, true, !conf.Outline)
+	if testType != "" {
+		curFile := p.CurFile()
+		parent.inits = append(parent.inits, func() {
+			old := p.RestoreCurFile(curFile)
+			gmxTestFunc(p, testType, f.IsProj)
+			p.RestoreCurFile(old)
+		})
+	}
 }
 
 func parseTypeEmbedName(typ ast.Expr) *ast.Ident {
