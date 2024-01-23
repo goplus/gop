@@ -967,19 +967,19 @@ func (this *App) MainEntry() {
 	fmt.Println("Hi")
 }
 
-type Foo struct {
+type caseFoo struct {
 	test.Case
 	*App
 }
 
-func (this *Foo) Main() {
+func (this *caseFoo) Main() {
 	this.T().Log("Hi")
 	this.T().Run("a test", func(t *testing.T) {
 		t.Fatal("failed")
 	})
 }
 func TestFoo(t *testing.T) {
-	test.Gopt_Case_TestMain(new(Foo), t)
+	test.Gopt_Case_TestMain(new(caseFoo), t)
 }
 func TestMain(m *testing.M) {
 	test.Gopt_App_TestMain(new(App), m)
@@ -1000,11 +1000,11 @@ import (
 	"testing"
 )
 
-type Foo struct {
+type case_foo struct {
 	test.Case
 }
 
-func (this *Foo) Main() {
+func (this *case_foo) Main() {
 	this.T().Log("Hi")
 }
 
@@ -1014,8 +1014,8 @@ type _main struct {
 func (this *_main) Main() {
 	fmt.Println("Hi")
 }
-func TestFoo(t *testing.T) {
-	test.Gopt_Case_TestMain(new(Foo), t)
+func Test_foo(t *testing.T) {
+	test.Gopt_Case_TestMain(new(case_foo), t)
 }
-`, "main.gox", "Foo_xtest.gox")
+`, "main.gox", "foo_xtest.gox")
 }
