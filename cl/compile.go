@@ -529,9 +529,22 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		}
 	}
 
+	// sort files
+	type File struct {
+		*ast.File
+		path string
+	}
+	sfiles := make([]*File, 0, len(files))
 	for fpath, f := range files {
+		sfiles = append(sfiles, &File{f, fpath})
+	}
+	sort.Slice(sfiles, func(i, j int) bool {
+		return sfiles[i].path < sfiles[j].path
+	})
+
+	for _, f := range sfiles {
 		fileLine := !conf.NoFileLine
-		fileScope := types.NewScope(p.Types.Scope(), f.Pos(), f.End(), fpath)
+		fileScope := types.NewScope(p.Types.Scope(), f.Pos(), f.End(), f.path)
 		ctx := &blockCtx{
 			pkg: p, pkgCtx: ctx, cb: p.CB(), relBaseDir: relBaseDir, fileScope: fileScope,
 			fileLine: fileLine, isClass: f.IsClass, rec: rec,
@@ -540,7 +553,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		if rec := ctx.rec; rec != nil {
 			rec.Scope(f, fileScope)
 		}
-		preloadGopFile(p, ctx, fpath, f, conf)
+		preloadGopFile(p, ctx, f.path, f.File, conf)
 	}
 
 	gopSyms := make(map[string]bool) // TODO: remove this map
@@ -560,19 +573,6 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	}
 
 	initGopPkg(ctx, p, gopSyms)
-
-	// sort files
-	type File struct {
-		*ast.File
-		path string
-	}
-	sfiles := make([]*File, 0, len(files))
-	for fpath, f := range files {
-		sfiles = append(sfiles, &File{f, fpath})
-	}
-	sort.Slice(sfiles, func(i, j int) bool {
-		return sfiles[i].path < sfiles[j].path
-	})
 
 	// genMain = true if it is main package and no main func
 	var genMain bool
