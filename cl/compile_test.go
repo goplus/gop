@@ -193,9 +193,9 @@ for line <- open("foo.txt")! {
 
 import (
 	"fmt"
-	"os"
 	"github.com/goplus/gop/builtin/iox"
 	"github.com/qiniu/x/errors"
+	"os"
 )
 
 func main() {
@@ -230,8 +230,8 @@ for line <- os.Stdin {
 
 import (
 	"fmt"
-	"os"
 	"github.com/goplus/gop/builtin/iox"
+	"os"
 )
 
 func main() {
@@ -1502,9 +1502,9 @@ func foo(script string) {
 
 import (
 	"fmt"
+	"github.com/goplus/gop/ast/gopq"
 	"github.com/goplus/gop/ast/goptest"
 	"github.com/qiniu/x/errors"
-	"github.com/goplus/gop/ast/gopq"
 )
 
 func foo(script string) {
@@ -1536,9 +1536,9 @@ func foo(script string) {
 
 import (
 	"fmt"
+	"github.com/goplus/gop/ast/gopq"
 	"github.com/goplus/gop/ast/goptest"
 	"github.com/qiniu/x/errors"
-	"github.com/goplus/gop/ast/gopq"
 )
 
 func foo(script string) {
@@ -1567,8 +1567,8 @@ func add(x, y string) (int, error) {
 `, `package main
 
 import (
-	"strconv"
 	"github.com/qiniu/x/errors"
+	"strconv"
 )
 
 func add(x string, y string) (int, error) {

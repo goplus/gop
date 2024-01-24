@@ -45,7 +45,7 @@ type gmxProject struct {
 	sptypes    []string           // <sptype>.spx
 	scheds     []string
 	schedStmts []goast.Stmt // nil or len(scheds) == 2 (delayload)
-	pkgImps    []*gox.PkgRef
+	pkgImps    []gox.PkgRef
 	pkgPaths   []string
 	hasScheds  bool
 	gameIsPtr  bool
@@ -78,6 +78,10 @@ func ClassNameAndExt(file string) (name, ext string) {
 	return
 }
 
+func isGoxTestFile(ext string) bool {
+	return strings.HasSuffix(ext, "test.gox")
+}
+
 func loadClass(ctx *pkgCtx, pkg *gox.Package, file string, f *ast.File, conf *Config) *gmxProject {
 	tname, ext := ClassNameAndExt(file)
 	gt, ok := conf.LookupClass(ext)
@@ -90,10 +94,11 @@ func loadClass(ctx *pkgCtx, pkg *gox.Package, file string, f *ast.File, conf *Co
 		p = &gmxProject{pkgPaths: pkgPaths}
 		ctx.projs[gt.Ext] = p
 
-		p.pkgImps = make([]*gox.PkgRef, len(pkgPaths))
+		p.pkgImps = make([]gox.PkgRef, len(pkgPaths))
 		for i, pkgPath := range pkgPaths {
 			p.pkgImps[i] = pkg.Import(pkgPath)
 		}
+
 		spx := p.pkgImps[0]
 		if gt.Class != "" {
 			p.game, p.gameIsPtr = spxRef(spx, gt.Class)
@@ -125,7 +130,7 @@ func loadClass(ctx *pkgCtx, pkg *gox.Package, file string, f *ast.File, conf *Co
 	return p
 }
 
-func spxLookup(pkgImps []*gox.PkgRef, name string) gox.Ref {
+func spxLookup(pkgImps []gox.PkgRef, name string) gox.Ref {
 	for _, pkg := range pkgImps {
 		if o := pkg.TryRef(name); o != nil {
 			return o
@@ -134,7 +139,7 @@ func spxLookup(pkgImps []*gox.PkgRef, name string) gox.Ref {
 	panic("spxLookup: symbol not found - " + name)
 }
 
-func spxTryRef(spx *gox.PkgRef, typ string) (obj types.Object, isPtr bool) {
+func spxTryRef(spx gox.PkgRef, typ string) (obj types.Object, isPtr bool) {
 	if strings.HasPrefix(typ, "*") {
 		typ, isPtr = typ[1:], true
 	}
@@ -142,7 +147,7 @@ func spxTryRef(spx *gox.PkgRef, typ string) (obj types.Object, isPtr bool) {
 	return
 }
 
-func spxRef(spx *gox.PkgRef, typ string) (obj gox.Ref, isPtr bool) {
+func spxRef(spx gox.PkgRef, typ string) (obj gox.Ref, isPtr bool) {
 	obj, isPtr = spxTryRef(spx, typ)
 	if obj == nil {
 		panic(spx.Path() + "." + typ + " not found")
@@ -150,7 +155,7 @@ func spxRef(spx *gox.PkgRef, typ string) (obj gox.Ref, isPtr bool) {
 	return
 }
 
-func getStringConst(spx *gox.PkgRef, name string) string {
+func getStringConst(spx gox.PkgRef, name string) string {
 	if o := spx.TryRef(name); o != nil {
 		if c, ok := o.(*types.Const); ok {
 			return constant.StringVal(c.Val())
