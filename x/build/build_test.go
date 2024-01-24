@@ -183,8 +183,8 @@ println "Go+"
 `, `package main
 
 import (
-	"fmt"
 	"bytes"
+	"fmt"
 )
 
 type Rect struct {
@@ -208,8 +208,8 @@ println "Go+"
 `, `package main
 
 import (
-	"fmt"
 	"bytes"
+	"fmt"
 )
 
 type Rect struct {
@@ -300,8 +300,8 @@ println addSafe("10", "abc")
 
 import (
 	"fmt"
-	"strconv"
 	"github.com/qiniu/x/errors"
+	"strconv"
 )
 
 func add(x string, y string) (int, error) {
