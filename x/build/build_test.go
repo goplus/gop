@@ -44,6 +44,7 @@ func init() {
 	build.RegisterClassFileType(".tspx", "MyGame", []*build.Class{
 		{Ext: ".tspx", Class: "Sprite"},
 	}, "github.com/goplus/gop/cl/internal/spx")
+	build.RegisterClassFileType("_yap.gox", "App", nil, "github.com/goplus/yap")
 }
 
 func gopClTest(t *testing.T, gopcode interface{}, expected string) {
@@ -76,6 +77,7 @@ func TestKind(t *testing.T) {
 	testKind(t, "main.gmx", true, true)
 	testKind(t, "Cat.tspx", false, true)
 	testKind(t, "main.tspx", true, true)
+	testKind(t, "blog_yap.gox", true, true)
 }
 
 func TestGop(t *testing.T) {
