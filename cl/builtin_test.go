@@ -53,6 +53,14 @@ func TestErrStringLit(t *testing.T) {
 	})
 }
 
+func TestGmxMainFunc(t *testing.T) {
+	gmxMainFunc(nil, &pkgCtx{
+		projs: map[string]*gmxProject{
+			".a": {}, ".b": {},
+		},
+	}, false)
+}
+
 func TestNodeInterp(t *testing.T) {
 	ni := &nodeInterp{}
 	if v := ni.Caller(&ast.Ident{}); v != "the function call" {
@@ -206,7 +214,7 @@ func TestClRangeStmt(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 func TestGetStringConst(t *testing.T) {
-	spx := &gox.PkgRef{Types: types.NewPackage("", "foo")}
+	spx := gox.PkgRef{Types: types.NewPackage("", "foo")}
 	if v := getStringConst(spx, "unknown"); v != "" {
 		t.Fatal("getStringConst:", v)
 	}
@@ -218,7 +226,7 @@ func TestSpxRef(t *testing.T) {
 			t.Fatal("TestSpxRef:", e)
 		}
 	}()
-	pkg := &gox.PkgRef{
+	pkg := gox.PkgRef{
 		Types: types.NewPackage("foo", "foo"),
 	}
 	spxRef(pkg, "bar")
@@ -277,7 +285,7 @@ func TestGmxProject(t *testing.T) {
 	}()
 	func() {
 		defer func() {
-			if e := recover(); e != "TODO: multiple project files found" {
+			if e := recover(); e != "multiple project files found: Game Game\n" {
 				t.Fatal("TestGmxProject failed:", e)
 			}
 		}()
@@ -319,10 +327,13 @@ func lookupClassErr(ext string) (c *modfile.Project, ok bool) {
 }
 
 func TestGetGoFile(t *testing.T) {
-	if f := genGoFile("a_test.gop", true); f != testingGoFile {
+	if f := genGoFile("a_test.gop", false); f != testingGoFile {
 		t.Fatal("TestGetGoFile:", f)
 	}
-	if f := genGoFile("a_test.gop", false); f != skippingGoFile {
+	if f := genGoFile("a_test.gox", true); f != testingGoFile {
+		t.Fatal("TestGetGoFile:", f)
+	}
+	if f := genGoFile("a.gop", false); f != defaultGoFile {
 		t.Fatal("TestGetGoFile:", f)
 	}
 }

@@ -57,12 +57,12 @@ func c2goBase(base string) string {
 
 // -----------------------------------------------------------------------------
 
-func loadC2goPkg(ctx *blockCtx, realPath string, src *ast.BasicLit) *gox.PkgRef {
+func loadC2goPkg(ctx *blockCtx, realPath string, src *ast.BasicLit) (ret gox.PkgRef) {
 	cpkg, err := ctx.cpkgs.Import(realPath)
 	if err != nil {
 		ctx.handleErrorf(src.Pos(),
 			"%v not found or not a valid C package (c2go.a.pub file not found).\n", realPath)
-		return nil
+		return
 	}
 	ctx.clookups = append(ctx.clookups, cpkg)
 	return cpkg.Pkg()

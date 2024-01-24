@@ -51,6 +51,11 @@ func lookupClass(ext string) (c *modfile.Project, ok bool) {
 			Ext: "_spx.gox", Class: "Game",
 			Works:    []*modfile.Class{{Ext: "_spx.gox", Class: "Sprite"}},
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx3", "math"}}, true
+	case "_xtest.gox":
+		return &modfile.Project{
+			Ext: "_xtest.gox", Class: "App",
+			Works:    []*modfile.Class{{Ext: "_xtest.gox", Class: "Case"}},
+			PkgPaths: []string{"github.com/goplus/gop/test", "testing"}}, true
 	}
 	return
 }
@@ -59,12 +64,9 @@ func spxParserConf() parser.Config {
 	return parser.Config{
 		ClassKind: func(fname string) (isProj bool, ok bool) {
 			ext := modfile.ClassExt(fname)
-			if ext == "_spx.gox" {
-				return fname == "main_spx.gox", true
-			}
 			c, ok := lookupClass(ext)
 			if ok {
-				isProj = (c.Ext == ext)
+				isProj = c.IsProj(ext, fname)
 			}
 			return
 		},
@@ -76,10 +78,14 @@ func gopSpxTest(t *testing.T, gmx, spxcode, expected string) {
 }
 
 func gopSpxTestEx(t *testing.T, gmx, spxcode, expected, gmxfile, spxfile string) {
-	gopSpxTestExConf(t, "gopSpxTest", gblConf, gmx, spxcode, expected, gmxfile, spxfile)
+	gopSpxTestExConf(t, "gopSpxTest", gblConf, gmx, spxcode, expected, gmxfile, spxfile, "")
 }
 
-func gopSpxTestExConf(t *testing.T, name string, conf *cl.Config, gmx, spxcode, expected, gmxfile, spxfile string) {
+func gopSpxTestEx2(t *testing.T, gmx, spxcode, expected, gmxfile, spxfile, resultFile string) {
+	gopSpxTestExConf(t, "gopSpxTest", gblConf, gmx, spxcode, expected, gmxfile, spxfile, resultFile)
+}
+
+func gopSpxTestExConf(t *testing.T, name string, conf *cl.Config, gmx, spxcode, expected, gmxfile, spxfile, resultFile string) {
 	t.Run(name, func(t *testing.T) {
 		cl.SetDisableRecover(true)
 		defer cl.SetDisableRecover(false)
@@ -96,7 +102,7 @@ func gopSpxTestExConf(t *testing.T, name string, conf *cl.Config, gmx, spxcode, 
 			t.Fatal("NewPackage:", err)
 		}
 		var b bytes.Buffer
-		err = pkg.WriteTo(&b)
+		err = pkg.WriteTo(&b, resultFile)
 		if err != nil {
 			t.Fatal("gox.WriteTo failed:", err)
 		}
@@ -531,7 +537,7 @@ func (this *Game) MainEntry() {
 func main() {
 	new(Game).Main()
 }
-`, "Game.t2gmx", "Kai.t2spx")
+`, "Game.t2gmx", "Kai.t2spx", "")
 	gopSpxTestExConf(t, "OnlyGmx", &conf, `
 var (
 	Kai Kai
@@ -555,7 +561,7 @@ func (this *Game) MainEntry() {
 func main() {
 	new(Game).Main()
 }
-`, "Game.t2gmx", "Kai.t2spx")
+`, "Game.t2gmx", "Kai.t2spx", "")
 
 	gopSpxTestExConf(t, "KaiAndGmx", &conf, `
 var (
@@ -597,7 +603,7 @@ func (this *Kai) Main() {
 }
 func (this *Kai) onMsg(msg string) {
 }
-`, "Game.t2gmx", "Kai.t2spx")
+`, "Game.t2gmx", "Kai.t2spx", "")
 }
 
 func TestSpxGoxBasic(t *testing.T) {
@@ -939,4 +945,73 @@ func (this *Kai) Main() {
 	})
 }
 `, "Game.tgmx", "Kai.tspx")
+}
+
+func TestTestClassFile(t *testing.T) {
+	gopSpxTestEx2(t, `
+println "Hi"
+`, `
+t.log "Hi"
+t.run "a test", t => {
+	t.fatal "failed"
+}
+`, `package main
+
+import (
+	"fmt"
+	"github.com/goplus/gop/test"
+	"testing"
+)
+
+type App struct {
+	test.App
+}
+
+func (this *App) MainEntry() {
+	fmt.Println("Hi")
+}
+
+type caseFoo struct {
+	test.Case
+	*App
+}
+
+func (this *caseFoo) Main() {
+	this.T().Log("Hi")
+	this.T().Run("a test", func(t *testing.T) {
+		t.Fatal("failed")
+	})
+}
+func TestFoo(t *testing.T) {
+	test.Gopt_Case_TestMain(new(caseFoo), t)
+}
+func TestMain(m *testing.M) {
+	test.Gopt_App_TestMain(new(App), m)
+}
+`, "main_xtest.gox", "Foo_xtest.gox", "_test")
+}
+
+func TestTestClassFile2(t *testing.T) {
+	gopSpxTestEx2(t, `
+println "Hi"
+`, `
+t.log "Hi"
+`, `package main
+
+import (
+	"github.com/goplus/gop/test"
+	"testing"
+)
+
+type case_foo struct {
+	test.Case
+}
+
+func (this *case_foo) Main() {
+	this.T().Log("Hi")
+}
+func Test_foo(t *testing.T) {
+	test.Gopt_Case_TestMain(new(case_foo), t)
+}
+`, "main.gox", "foo_xtest.gox", "_test")
 }

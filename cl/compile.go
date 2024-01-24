@@ -354,7 +354,7 @@ type pkgCtx struct {
 }
 
 type pkgImp struct {
-	*gox.PkgRef
+	gox.PkgRef
 	pkgName *types.PkgName
 }
 
@@ -364,8 +364,8 @@ type blockCtx struct {
 	pkg        *gox.Package
 	cb         *gox.CodeBuilder
 	imports    map[string]pkgImp
-	lookups    []*gox.PkgRef
-	clookups   []*cpackages.PkgRef
+	lookups    []gox.PkgRef
+	clookups   []cpackages.PkgRef
 	tlookup    *typeParamLookup
 	c2goBase   string // default is `github.com/goplus/`
 	relBaseDir string
@@ -529,9 +529,22 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		}
 	}
 
+	// sort files
+	type File struct {
+		*ast.File
+		path string
+	}
+	sfiles := make([]*File, 0, len(files))
 	for fpath, f := range files {
+		sfiles = append(sfiles, &File{f, fpath})
+	}
+	sort.Slice(sfiles, func(i, j int) bool {
+		return sfiles[i].path < sfiles[j].path
+	})
+
+	for _, f := range sfiles {
 		fileLine := !conf.NoFileLine
-		fileScope := types.NewScope(p.Types.Scope(), f.Pos(), f.End(), fpath)
+		fileScope := types.NewScope(p.Types.Scope(), f.Pos(), f.End(), f.path)
 		ctx := &blockCtx{
 			pkg: p, pkgCtx: ctx, cb: p.CB(), relBaseDir: relBaseDir, fileScope: fileScope,
 			fileLine: fileLine, isClass: f.IsClass, rec: rec,
@@ -540,7 +553,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		if rec := ctx.rec; rec != nil {
 			rec.Scope(f, fileScope)
 		}
-		preloadGopFile(p, ctx, fpath, f, conf)
+		preloadGopFile(p, ctx, f.path, f.File, conf)
 	}
 
 	gopSyms := make(map[string]bool) // TODO: remove this map
@@ -556,23 +569,10 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 			pkg: p, pkgCtx: ctx, cb: p.CB(), relBaseDir: relBaseDir,
 			imports: make(map[string]pkgImp),
 		}
-		preloadFile(p, ctx, fpath, f, false, false)
+		preloadFile(p, ctx, fpath, f, skippingGoFile, false)
 	}
 
 	initGopPkg(ctx, p, gopSyms)
-
-	// sort files
-	type File struct {
-		*ast.File
-		path string
-	}
-	sfiles := make([]*File, 0, len(files))
-	for fpath, f := range files {
-		sfiles = append(sfiles, &File{f, fpath})
-	}
-	sort.Slice(sfiles, func(i, j int) bool {
-		return sfiles[i].path < sfiles[j].path
-	})
 
 	// genMain = true if it is main package and no main func
 	var genMain bool
@@ -692,30 +692,43 @@ func loadFile(ctx *pkgCtx, f *ast.File) {
 	}
 }
 
-func genGoFile(file string, gopFile bool) string {
-	if gopFile {
-		if strings.HasSuffix(file, "_test.gop") {
-			return testingGoFile
-		}
-		return defaultGoFile
+// gen testingGoFile for:
+//
+//	*_test.gop
+//	*test.gox
+func genGoFile(file string, goxTestFile bool) string {
+	if goxTestFile || strings.HasSuffix(file, "_test.gop") {
+		return testingGoFile
 	}
-	return skippingGoFile
+	return defaultGoFile
 }
 
 func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, conf *Config) {
 	var proj *gmxProject
 	var classType string
+	var testType string
 	var baseTypeName string
 	var baseType types.Type
 	var spxClass bool
+	var goxTestFile bool
 	var parent = ctx.pkgCtx
 	if f.IsClass {
 		if f.IsNormalGox {
 			classType, _ = ClassNameAndExt(file)
+			if classType == "main" {
+				classType = "_main"
+			}
 		} else {
 			c := parent.classes[f]
-			classType, proj = c.tname, c.proj
-			ctx.proj = proj
+			proj, ctx.proj = c.proj, c.proj
+			classType = c.tname
+			if isGoxTestFile(c.ext) { // test classfile
+				testType = c.tname
+				goxTestFile, proj.isTest = true, true
+				if !f.IsProj {
+					classType = casePrefix + testNameSuffix(testType)
+				}
+			}
 			if f.IsProj {
 				o := proj.game
 				baseTypeName, baseType = o.Name(), o.Type()
@@ -728,12 +741,13 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 			}
 		}
 	}
+	goFile := genGoFile(file, goxTestFile)
 	if classType != "" {
 		if debugLoad {
 			log.Println("==> Preload type", classType)
 		}
 		if proj != nil {
-			ctx.lookups = make([]*gox.PkgRef, len(proj.pkgPaths))
+			ctx.lookups = make([]gox.PkgRef, len(proj.pkgPaths))
 			for i, pkgPath := range proj.pkgPaths {
 				ctx.lookups[i] = p.Import(pkgPath)
 			}
@@ -746,7 +760,9 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 			if debugLoad {
 				log.Println("==> Load > NewType", classType)
 			}
-			decl := p.NewType(classType)
+			old, _ := p.SetCurFile(goFile, true)
+			defer p.RestoreCurFile(old)
+			decl := p.NewTypeDefs().NewType(classType)
 			ld.typInit = func() { // decycle
 				if debugLoad {
 					log.Println("==> Load > InitType", classType)
@@ -833,11 +849,19 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 				Type: &ast.FuncType{
 					Params: &ast.FieldList{},
 				},
-				Body: &ast.BlockStmt{},
+				Body:   &ast.BlockStmt{},
+				Shadow: true,
 			})
 		}
 	}
-	preloadFile(p, ctx, file, f, true, !conf.Outline)
+	preloadFile(p, ctx, file, f, goFile, !conf.Outline)
+	if goxTestFile {
+		parent.inits = append(parent.inits, func() {
+			old, _ := p.SetCurFile(testingGoFile, true)
+			gmxTestFunc(p, testType, f.IsProj)
+			p.RestoreCurFile(old)
+		})
+	}
 }
 
 func parseTypeEmbedName(typ ast.Expr) *ast.Ident {
@@ -854,10 +878,9 @@ retry:
 	panic("TODO: parseTypeEmbedName unexpected")
 }
 
-func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFile, genFnBody bool) {
+func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, goFile string, genFnBody bool) {
 	parent := ctx.pkgCtx
 	syms := parent.syms
-	goFile := genGoFile(file, gopFile)
 	old, _ := p.SetCurFile(goFile, true)
 	defer p.RestoreCurFile(old)
 	var skipClassFields bool
@@ -926,7 +949,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, gopFil
 					pos := tName.Pos()
 					ld := getTypeLoader(parent, syms, pos, name)
 					defs := ctx.pkg.NewTypeDefs()
-					if gopFile {
+					if goFile != skippingGoFile { // is Go+ file
 						ld.typ = func() {
 							old, _ := p.SetCurFile(goFile, true)
 							defer p.RestoreCurFile(old)
@@ -1086,8 +1109,11 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) {
 	if genBody {
 		if body := d.Body; body != nil {
 			if recv != nil {
+				file := pkg.CurFile()
 				ctx.inits = append(ctx.inits, func() { // interface issue: #795
+					old := pkg.RestoreCurFile(file)
 					loadFuncBody(ctx, fn, body, d)
+					pkg.RestoreCurFile(old)
 				})
 			} else {
 				loadFuncBody(ctx, fn, body, d)
@@ -1167,13 +1193,13 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 			}
 		}()
 	}
-	var pkg *gox.PkgRef
+	var pkg gox.PkgRef
 	var pkgPath = toString(spec.Path)
 	if realPath, kind := checkC2go(pkgPath); kind != c2goInvalid {
 		if kind == c2goStandard {
 			realPath = ctx.c2goBase + realPath
 		}
-		if pkg = loadC2goPkg(ctx, realPath, spec.Path); pkg == nil {
+		if pkg = loadC2goPkg(ctx, realPath, spec.Path); pkg.Types == nil {
 			return
 		}
 	} else {
@@ -1203,7 +1229,7 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 			return
 		}
 		if name == "_" {
-			pkg.MarkForceUsed()
+			pkg.MarkForceUsed(ctx.pkg)
 			return
 		}
 	}
