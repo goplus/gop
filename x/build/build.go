@@ -21,7 +21,6 @@ import (
 	"fmt"
 	goast "go/ast"
 	"go/types"
-	"path"
 	"path/filepath"
 
 	"github.com/goplus/gop/ast"
@@ -31,6 +30,7 @@ import (
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gox"
 	"github.com/goplus/gox/packages"
+	"github.com/goplus/mod/modfile"
 )
 
 type Class = cl.Class
@@ -76,7 +76,7 @@ func (p *Package) ToAst() *goast.File {
 }
 
 func ClassKind(fname string) (isProj, ok bool) {
-	ext := path.Ext(fname)
+	ext := modfile.ClassExt(fname)
 	switch ext {
 	case ".gmx":
 		return true, true
