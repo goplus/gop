@@ -762,11 +762,15 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 			}
 			old, _ := p.SetCurFile(goFile, true)
 			defer p.RestoreCurFile(old)
+
 			decl := p.NewTypeDefs().NewType(classType)
 			ld.typInit = func() { // decycle
 				if debugLoad {
 					log.Println("==> Load > InitType", classType)
 				}
+				old, _ := p.SetCurFile(goFile, true)
+				defer p.RestoreCurFile(old)
+
 				pkg := p.Types
 				var flds []*types.Var
 				var tags []string
