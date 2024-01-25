@@ -1,5 +1,5 @@
 if v := foo(); v == 100 {
 	t.log "test bar ok"
 } else {
-	t.error "bar() ret: ${v}"
+	t.error "foo() ret: ${v}"
 }
