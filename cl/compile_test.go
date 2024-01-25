@@ -5140,3 +5140,70 @@ func main() {
 }
 `)
 }
+
+func TestOverloadNamed(t *testing.T) {
+	gopClTest(t, `
+import "github.com/goplus/gop/cl/internal/overload/bar"
+
+var a bar.Var[int]
+var b bar.Var[bar.M]
+c := bar.Var(string)
+d := bar.Var(bar.M)
+`, `package main
+
+import "github.com/goplus/gop/cl/internal/overload/bar"
+
+var a bar.Var__0[int]
+var b bar.Var__1[map[string]any]
+
+func main() {
+	c := bar.Gopx_Var_Cast__0[string]()
+	d := bar.Gopx_Var_Cast__1[map[string]any]()
+}
+`)
+}
+
+func TestMixedOverloadNamed(t *testing.T) {
+	gopMixedClTest(t, "main", `package main
+
+const GopPackage = true
+
+type M = map[string]any
+
+type basetype interface {
+	string | int | bool | float64
+}
+
+type Var__0[T basetype] struct {
+	val T
+}
+
+type Var__1[T map[string]any] struct {
+	val T
+}
+
+func Gopx_Var_Cast__0[T basetype]() *Var__0[T] {
+	return new(Var__0[T])
+}
+
+func Gopx_Var_Cast__1[T map[string]any]() *Var__1[T] {
+	return new(Var__1[T])
+}
+`, `
+var a Var[int]
+var b Var[M]
+c := Var(string)
+d := Var(M)
+`, `package main
+
+var a Var__0[int]
+var b Var__1[map[string]interface {
+}]
+
+func main() {
+	c := Gopx_Var_Cast__0[string]()
+	d := Gopx_Var_Cast__1[map[string]interface {
+	}]()
+}
+`)
+}
