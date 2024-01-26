@@ -1385,3 +1385,173 @@ func (p *N) Test__1(n int) {
 005:  6: 1 | n                   | var n main.N
 006:  6: 3 | test                | func (*main.N).Test__1(n int)`)
 }
+
+func TestOverloadNamed(t *testing.T) {
+	testGopInfo(t, `
+import "github.com/goplus/gop/cl/internal/overload/bar"
+
+var a bar.Var[int]
+var b bar.Var[bar.M]
+c := bar.Var(string)
+d := bar.Var(bar.M)
+`, ``, `== types ==
+000:  4: 7 | bar.Var             *ast.SelectorExpr              | type    : github.com/goplus/gop/cl/internal/overload/bar.Var__0[int] | type
+001:  4: 7 | bar.Var[int]        *ast.IndexExpr                 | type    : github.com/goplus/gop/cl/internal/overload/bar.Var__0[int] | type
+002:  4:15 | int                 *ast.Ident                     | type    : int | type
+003:  5: 7 | bar.Var             *ast.SelectorExpr              | type    : github.com/goplus/gop/cl/internal/overload/bar.Var__1[map[string]any] | type
+004:  5: 7 | bar.Var[bar.M]      *ast.IndexExpr                 | type    : github.com/goplus/gop/cl/internal/overload/bar.Var__1[map[string]any] | type
+005:  5:15 | bar.M               *ast.SelectorExpr              | type    : map[string]any | type
+006:  6: 6 | bar.Var             *ast.SelectorExpr              | value   : func[T github.com/goplus/gop/cl/internal/overload/bar.basetype]() *github.com/goplus/gop/cl/internal/overload/bar.Var__0[T] | value
+007:  6: 6 | bar.Var(string)     *ast.CallExpr                  | value   : *github.com/goplus/gop/cl/internal/overload/bar.Var__0[string] | value
+008:  6:14 | string              *ast.Ident                     | type    : string | type
+009:  7: 6 | bar.Var             *ast.SelectorExpr              | value   : func[T map[string]any]() *github.com/goplus/gop/cl/internal/overload/bar.Var__1[T] | value
+010:  7: 6 | bar.Var(bar.M)      *ast.CallExpr                  | value   : *github.com/goplus/gop/cl/internal/overload/bar.Var__1[map[string]any] | value
+011:  7:14 | bar.M               *ast.SelectorExpr              | var     : map[string]any | variable
+== defs ==
+000:  4: 5 | a                   | var main.a github.com/goplus/gop/cl/internal/overload/bar.Var__0[int]
+001:  5: 5 | b                   | var main.b github.com/goplus/gop/cl/internal/overload/bar.Var__1[map[string]any]
+002:  6: 1 | c                   | var c *github.com/goplus/gop/cl/internal/overload/bar.Var__0[string]
+003:  6: 1 | main                | func main.main()
+004:  7: 1 | d                   | var d *github.com/goplus/gop/cl/internal/overload/bar.Var__1[map[string]any]
+== uses ==
+000:  4: 7 | bar                 | package bar ("github.com/goplus/gop/cl/internal/overload/bar")
+001:  4:11 | Var                 | type github.com/goplus/gop/cl/internal/overload/bar.Var__0[T github.com/goplus/gop/cl/internal/overload/bar.basetype] struct{val T}
+002:  4:15 | int                 | type int
+003:  5: 7 | bar                 | package bar ("github.com/goplus/gop/cl/internal/overload/bar")
+004:  5:11 | Var                 | type github.com/goplus/gop/cl/internal/overload/bar.Var__1[T map[string]any] struct{val T}
+005:  5:15 | bar                 | package bar ("github.com/goplus/gop/cl/internal/overload/bar")
+006:  5:19 | M                   | type github.com/goplus/gop/cl/internal/overload/bar.M = map[string]any
+007:  6: 6 | bar                 | package bar ("github.com/goplus/gop/cl/internal/overload/bar")
+008:  6:10 | Var                 | func github.com/goplus/gop/cl/internal/overload/bar.Gopx_Var_Cast__0[T github.com/goplus/gop/cl/internal/overload/bar.basetype]() *github.com/goplus/gop/cl/internal/overload/bar.Var__0[T]
+009:  6:14 | string              | type string
+010:  7: 6 | bar                 | package bar ("github.com/goplus/gop/cl/internal/overload/bar")
+011:  7:10 | Var                 | func github.com/goplus/gop/cl/internal/overload/bar.Gopx_Var_Cast__1[T map[string]any]() *github.com/goplus/gop/cl/internal/overload/bar.Var__1[T]
+012:  7:14 | bar                 | package bar ("github.com/goplus/gop/cl/internal/overload/bar")
+013:  7:18 | M                   | type github.com/goplus/gop/cl/internal/overload/bar.M = map[string]any`)
+}
+
+func TestMixedOverloadNamed(t *testing.T) {
+	//gox.SetDebug(gox.DbgFlagAll)
+	testGopInfo(t, `
+var a Var[int]
+var b Var[M]
+c := Var(string)
+d := Var(M)
+`, `
+package main
+
+const GopPackage = true
+
+type M = map[string]any
+
+type basetype interface {
+	string | int | bool | float64
+}
+
+type Var__0[T basetype] struct {
+	val T
+}
+
+type Var__1[T map[string]any] struct {
+	val T
+}
+
+func Gopx_Var_Cast__0[T basetype]() *Var__0[T] {
+	return new(Var__0[T])
+}
+
+func Gopx_Var_Cast__1[T map[string]any]() *Var__1[T] {
+	return new(Var__1[T])
+}
+`, `== types ==
+000:  2: 7 | Var                 *ast.Ident                     | type    : main.Var__0[int] | type
+001:  2: 7 | Var[int]            *ast.IndexExpr                 | type    : main.Var__0[int] | type
+002:  2:11 | int                 *ast.Ident                     | type    : int | type
+003:  3: 7 | Var                 *ast.Ident                     | type    : main.Var__1[map[string]interface{}] | type
+004:  3: 7 | Var[M]              *ast.IndexExpr                 | type    : main.Var__1[map[string]interface{}] | type
+005:  3:11 | M                   *ast.Ident                     | type    : map[string]interface{} | type
+006:  4: 6 | Var                 *ast.Ident                     | value   : func[T main.basetype]() *main.Var__0[T] | value
+007:  4: 6 | Var(string)         *ast.CallExpr                  | value   : *main.Var__0[string] | value
+008:  4:10 | string              *ast.Ident                     | type    : string | type
+009:  5: 6 | Var                 *ast.Ident                     | value   : func[T map[string]interface{}]() *main.Var__1[T] | value
+010:  5: 6 | Var(M)              *ast.CallExpr                  | value   : *main.Var__1[map[string]interface{}] | value
+011:  5:10 | M                   *ast.Ident                     | type    : map[string]interface{} | type
+== defs ==
+000:  2: 5 | a                   | var main.a main.Var__0[int]
+001:  3: 5 | b                   | var main.b main.Var__1[map[string]interface{}]
+002:  4: 1 | c                   | var c *main.Var__0[string]
+003:  4: 1 | main                | func main.main()
+004:  5: 1 | d                   | var d *main.Var__1[map[string]interface{}]
+== uses ==
+000:  2: 7 | Var                 | type main.Var__0[T main.basetype] struct{val T}
+001:  2:11 | int                 | type int
+002:  3: 7 | Var                 | type main.Var__1[T map[string]any] struct{val T}
+003:  3:11 | M                   | type main.M = map[string]any
+004:  4: 6 | Var                 | func main.Gopx_Var_Cast__0[T main.basetype]() *main.Var__0[T]
+005:  4:10 | string              | type string
+006:  5: 6 | Var                 | func main.Gopx_Var_Cast__1[T map[string]any]() *main.Var__1[T]
+007:  5:10 | M                   | type main.M = map[string]any`)
+}
+
+func TestMixedRawNamed(t *testing.T) {
+	//gox.SetDebug(gox.DbgFlagAll)
+	testGopInfo(t, `
+var a Var__0[int]
+var b Var__1[M]
+c := Gopx_Var_Cast__0[string]
+d := Gopx_Var_Cast__1[M]
+`, `
+package main
+
+const GopPackage = true
+
+type M = map[string]any
+
+type basetype interface {
+	string | int | bool | float64
+}
+
+type Var__0[T basetype] struct {
+	val T
+}
+
+type Var__1[T map[string]any] struct {
+	val T
+}
+
+func Gopx_Var_Cast__0[T basetype]() *Var__0[T] {
+	return new(Var__0[T])
+}
+
+func Gopx_Var_Cast__1[T map[string]any]() *Var__1[T] {
+	return new(Var__1[T])
+}
+`, `== types ==
+000:  2: 7 | Var__0              *ast.Ident                     | type    : main.Var__0[int] | type
+001:  2: 7 | Var__0[int]         *ast.IndexExpr                 | type    : main.Var__0[int] | type
+002:  2:14 | int                 *ast.Ident                     | type    : int | type
+003:  3: 7 | Var__1              *ast.Ident                     | type    : main.Var__1[map[string]interface{}] | type
+004:  3: 7 | Var__1[M]           *ast.IndexExpr                 | type    : main.Var__1[map[string]interface{}] | type
+005:  3:14 | M                   *ast.Ident                     | type    : map[string]interface{} | type
+006:  4: 6 | Gopx_Var_Cast__0    *ast.Ident                     | value   : func[T main.basetype]() *main.Var__0[T] | value
+007:  4: 6 | Gopx_Var_Cast__0[string] *ast.IndexExpr                 | var     : func() *main.Var__0[string] | variable
+008:  4:23 | string              *ast.Ident                     | type    : string | type
+009:  5: 6 | Gopx_Var_Cast__1    *ast.Ident                     | value   : func[T map[string]interface{}]() *main.Var__1[T] | value
+010:  5: 6 | Gopx_Var_Cast__1[M] *ast.IndexExpr                 | var     : func() *main.Var__1[map[string]interface{}] | variable
+011:  5:23 | M                   *ast.Ident                     | type    : map[string]interface{} | type
+== defs ==
+000:  2: 5 | a                   | var main.a main.Var__0[int]
+001:  3: 5 | b                   | var main.b main.Var__1[map[string]interface{}]
+002:  4: 1 | c                   | var c func() *main.Var__0[string]
+003:  4: 1 | main                | func main.main()
+004:  5: 1 | d                   | var d func() *main.Var__1[map[string]interface{}]
+== uses ==
+000:  2: 7 | Var__0              | type main.Var__0[T main.basetype] struct{val T}
+001:  2:14 | int                 | type int
+002:  3: 7 | Var__1              | type main.Var__1[T map[string]any] struct{val T}
+003:  3:14 | M                   | type main.M = map[string]any
+004:  4: 6 | Gopx_Var_Cast__0    | func main.Gopx_Var_Cast__0[T main.basetype]() *main.Var__0[T]
+005:  4:23 | string              | type string
+006:  5: 6 | Gopx_Var_Cast__1    | func main.Gopx_Var_Cast__1[T map[string]any]() *main.Var__1[T]
+007:  5:23 | M                   | type main.M = map[string]any`)
+}
