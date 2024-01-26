@@ -449,7 +449,11 @@ func instantiate(ctx *blockCtx, exprX ast.Expr, indices ...ast.Expr) types.Type 
 	for i, index := range indices {
 		idx[i] = toType(ctx, index)
 	}
-	return ctx.pkg.Instantiate(x, idx, exprX)
+	typ := ctx.pkg.Instantiate(x, idx, exprX)
+	if rec := ctx.recorder(); rec != nil {
+		rec.instantiate(exprX, x, typ)
+	}
+	return typ
 }
 
 func toIndexType(ctx *blockCtx, v *ast.IndexExpr) types.Type {
