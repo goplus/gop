@@ -1175,7 +1175,7 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr, inFlags int) {
 			retName = "_gop_ret" + strconv.Itoa(i+1)
 		}
 	}
-	sig := types.NewSignature(nil, nil, types.NewTuple(ret...), false)
+	sig := types.NewSignatureType(nil, nil, nil, nil, types.NewTuple(ret...), false)
 	if useClosure {
 		cb.NewClosureWith(sig).BodyStart(pkg)
 	} else {

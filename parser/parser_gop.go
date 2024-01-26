@@ -161,7 +161,7 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, dir string, conf Config) (pk
 			filename := fs.Join(dir, fname)
 			if useGoParser {
 				if filedata, err := fs.ReadFile(filename); err == nil {
-					if src, err := goparser.ParseFile(fset, filename, filedata, goparser.Mode(conf.Mode)); err == nil {
+					if src, err := goparser.ParseFile(fset, filename, filedata, goparser.Mode(conf.Mode&goReservedFlags)); err == nil {
 						pkg := reqPkg(pkgs, src.Name.Name)
 						if pkg.GoFiles == nil {
 							pkg.GoFiles = make(map[string]*goast.File)
