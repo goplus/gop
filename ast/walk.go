@@ -98,8 +98,17 @@ func Walk(v Visitor, node Node) {
 		}
 
 	// Expressions
-	case *BadExpr, *Ident, *BasicLit:
+	case *BadExpr, *Ident:
 		// nothing to do
+
+	case *BasicLit:
+		if n.Extra != nil { // Go+ extended
+			for _, part := range n.Extra.Parts {
+				if e, ok := part.(Expr); ok {
+					Walk(v, e)
+				}
+			}
+		}
 
 	case *Ellipsis:
 		if n.Elt != nil {
@@ -377,7 +386,7 @@ func Walk(v Visitor, node Node) {
 			Walk(v, f)
 		}
 
-	// Go+ expr and stmt
+	// Go+ extended expr and stmt
 	case *SliceLit:
 		walkExprList(v, n.Elts)
 
@@ -432,6 +441,16 @@ func Walk(v Visitor, node Node) {
 		if n.Default != nil {
 			Walk(v, n.Default)
 		}
+
+	case *OverloadFuncDecl:
+		if n.Doc != nil {
+			Walk(v, n.Doc)
+		}
+		if n.Recv != nil {
+			Walk(v, n.Recv)
+		}
+		Walk(v, n.Name)
+		walkExprList(v, n.Funcs)
 
 	default:
 		panic(fmt.Sprintf("ast.Walk: unexpected node type %T", n))
