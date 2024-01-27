@@ -53,6 +53,65 @@ func TestErrStringLit(t *testing.T) {
 	})
 }
 
+func TestErrPreloadFile(t *testing.T) {
+	pkg := gox.NewPackage("", "foo", goxConf)
+	ctx := &blockCtx{pkgCtx: &pkgCtx{}}
+	func() {
+		defer func() {
+			if e := recover(); e == nil || e != "TODO - OverloadFuncDecl\n" {
+				t.Fatal("TestErrPreloadFile:", e)
+			}
+		}()
+		decls := []ast.Decl{
+			&ast.OverloadFuncDecl{
+				Name: &ast.Ident{Name: "add"},
+				Funcs: []ast.Expr{
+					&ast.FuncLit{},
+				},
+				Operator: true,
+			},
+		}
+		preloadFile(pkg, ctx, "foo.gop", &ast.File{Decls: decls}, "", true)
+	}()
+	func() {
+		defer func() {
+			if e := recover(); e == nil || e != "TODO - cl.preloadFile OverloadFuncDecl: unknown func - *ast.BasicLit\n" {
+				t.Fatal("TestErrPreloadFile:", e)
+			}
+		}()
+		decls := []ast.Decl{
+			&ast.OverloadFuncDecl{
+				Name: &ast.Ident{Name: "add"},
+				Funcs: []ast.Expr{
+					&ast.BasicLit{},
+				},
+				Operator: true,
+			},
+		}
+		preloadFile(pkg, ctx, "foo.gop", &ast.File{Decls: decls}, "", true)
+	}()
+	func() {
+		defer func() {
+			if e := recover(); e == nil || e != "TODO - cl.preloadFile: unknown decl - *ast.BadDecl\n" {
+				t.Fatal("TestErrPreloadFile:", e)
+			}
+		}()
+		decls := []ast.Decl{
+			&ast.BadDecl{},
+		}
+		preloadFile(pkg, ctx, "foo.gop", &ast.File{Decls: decls}, "", true)
+	}()
+}
+
+func TestErrParseTypeEmbedName(t *testing.T) {
+	defer func() {
+		if e := recover(); e == nil {
+			t.Fatal("TestErrParseTypeEmbedName: no panic?")
+		}
+	}()
+	parseTypeEmbedName(&ast.StructType{})
+}
+
 func TestGmxMainFunc(t *testing.T) {
 	gmxMainFunc(nil, &pkgCtx{
 		projs: map[string]*gmxProject{

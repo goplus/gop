@@ -24,6 +24,7 @@ import (
 	"log"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 	_ "unsafe"
 
@@ -344,6 +345,7 @@ type pkgCtx struct {
 	fset    *token.FileSet
 	cpkgs   *cpackages.Importer
 	syms    map[string]loader
+	ovnames []string // names should load before initGopPkg
 	inits   []func()
 	tylds   []*typeLoader
 	errs    errors.List
@@ -642,6 +644,9 @@ func initGopPkg(ctx *pkgCtx, pkg *gox.Package, gopSyms map[string]bool) {
 			ctx.loadSymbol(name)
 		}
 	}
+	for _, name := range ctx.ovnames {
+		ctx.loadSymbol(name)
+	}
 	if pkg.Types.Scope().Lookup(gopPackage) == nil {
 		pkg.Types.Scope().Insert(types.NewConst(token.NoPos, pkg.Types, gopPackage, types.Typ[types.UntypedBool], constant.MakeBool(true)))
 	}
@@ -664,17 +669,6 @@ func getEntrypoint(f *ast.File) string {
 func loadFile(ctx *pkgCtx, f *ast.File) {
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
-		case *ast.FuncDecl:
-			if d.Recv == nil {
-				name := d.Name.Name
-				if name != "init" {
-					ctx.loadSymbol(name)
-				}
-			} else {
-				if name, ok := getRecvTypeName(ctx, d.Recv, false); ok {
-					getTypeLoader(ctx, ctx.syms, token.NoPos, name).load()
-				}
-			}
 		case *ast.GenDecl:
 			switch d.Tok {
 			case token.TYPE:
@@ -688,6 +682,27 @@ func loadFile(ctx *pkgCtx, f *ast.File) {
 					}
 				}
 			}
+		case *ast.FuncDecl:
+			if d.Recv == nil {
+				name := d.Name.Name
+				if name != "init" {
+					ctx.loadSymbol(name)
+				}
+			} else {
+				if name, ok := getRecvTypeName(ctx, d.Recv, false); ok {
+					getTypeLoader(ctx, ctx.syms, token.NoPos, name).load()
+				}
+			}
+		case *ast.OverloadFuncDecl:
+			/* name := d.Name
+			for idx, fn := range d.Funcs {
+				switch expr := fn.(type) {
+				case *ast.FuncLit:
+					// ctx.loadSymbol(overloadFuncName(name.Name, idx))
+				default:
+					log.Panicf("TODO - cl.loadFile OverloadFuncDecl: unknown func - %T\n", expr)
+				}
+			} */
 		}
 	}
 }
@@ -891,51 +906,75 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, goFile
 	if f.IsClass {
 		skipClassFields = true
 	}
-	for _, decl := range f.Decls {
-		switch d := decl.(type) {
-		case *ast.FuncDecl:
-			if ctx.classRecv != nil { // in class file (.spx/.gmx)
-				if d.Recv == nil {
-					d.Recv = ctx.classRecv
-					d.IsClass = true
-				}
-			}
+
+	preloadFuncDecl := func(d *ast.FuncDecl) {
+		if ctx.classRecv != nil { // in class file (.spx/.gmx)
 			if d.Recv == nil {
-				name := d.Name
+				d.Recv = ctx.classRecv
+				d.IsClass = true
+			}
+		}
+		if d.Recv == nil {
+			name := d.Name
+			fn := func() {
+				old, _ := p.SetCurFile(goFile, true)
+				defer p.RestoreCurFile(old)
+				loadFunc(ctx, nil, d, genFnBody)
+			}
+			if name.Name == "init" {
+				if genFnBody {
+					if debugLoad {
+						log.Println("==> Preload func init")
+					}
+					parent.inits = append(parent.inits, fn)
+				}
+			} else {
+				if debugLoad {
+					log.Println("==> Preload func", name.Name)
+				}
+				initLoader(parent, syms, name.Pos(), name.Name, fn, genFnBody)
+			}
+		} else {
+			if name, ok := getRecvTypeName(parent, d.Recv, true); ok {
+				if debugLoad {
+					log.Printf("==> Preload method %s.%s\n", name, d.Name.Name)
+				}
+				ld := getTypeLoader(parent, syms, token.NoPos, name)
 				fn := func() {
 					old, _ := p.SetCurFile(goFile, true)
 					defer p.RestoreCurFile(old)
-					loadFunc(ctx, nil, d, genFnBody)
+					doInitType(ld)
+					recv := toRecv(ctx, d.Recv)
+					loadFunc(ctx, recv, d, genFnBody)
 				}
-				if name.Name == "init" {
-					if genFnBody {
-						if debugLoad {
-							log.Println("==> Preload func init")
-						}
-						parent.inits = append(parent.inits, fn)
-					}
-				} else {
-					if debugLoad {
-						log.Println("==> Preload func", name.Name)
-					}
-					initLoader(parent, syms, name.Pos(), name.Name, fn, genFnBody)
-				}
-			} else {
-				if name, ok := getRecvTypeName(parent, d.Recv, true); ok {
-					if debugLoad {
-						log.Printf("==> Preload method %s.%s\n", name, d.Name.Name)
-					}
-					ld := getTypeLoader(parent, syms, token.NoPos, name)
-					fn := func() {
-						old, _ := p.SetCurFile(goFile, true)
-						defer p.RestoreCurFile(old)
-						doInitType(ld)
-						recv := toRecv(ctx, d.Recv)
-						loadFunc(ctx, recv, d, genFnBody)
-					}
-					ld.methods = append(ld.methods, fn)
-				}
+				ld.methods = append(ld.methods, fn)
 			}
+		}
+	}
+
+	preloadConst := func(d *ast.GenDecl) {
+		pkg := ctx.pkg
+		cdecl := pkg.NewConstDefs(pkg.Types.Scope())
+		for _, spec := range d.Specs {
+			vSpec := spec.(*ast.ValueSpec)
+			if debugLoad {
+				log.Println("==> Preload const", vSpec.Names)
+			}
+			setNamesLoader(parent, syms, vSpec.Names, func() {
+				if c := cdecl; c != nil {
+					cdecl = nil
+					loadConstSpecs(ctx, c, d.Specs)
+					for _, s := range d.Specs {
+						v := s.(*ast.ValueSpec)
+						removeNames(syms, v.Names)
+					}
+				}
+			})
+		}
+	}
+
+	for _, decl := range f.Decls {
+		switch d := decl.(type) {
 		case *ast.GenDecl:
 			switch d.Tok {
 			case token.IMPORT:
@@ -1009,24 +1048,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, goFile
 					}
 				}
 			case token.CONST:
-				pkg := ctx.pkg
-				cdecl := pkg.NewConstDefs(pkg.Types.Scope())
-				for _, spec := range d.Specs {
-					vSpec := spec.(*ast.ValueSpec)
-					if debugLoad {
-						log.Println("==> Preload const", vSpec.Names)
-					}
-					setNamesLoader(parent, syms, vSpec.Names, func() {
-						if c := cdecl; c != nil {
-							cdecl = nil
-							loadConstSpecs(ctx, c, d.Specs)
-							for _, s := range d.Specs {
-								v := s.(*ast.ValueSpec)
-								removeNames(syms, v.Names)
-							}
-						}
-					})
-				}
+				preloadConst(d)
 			case token.VAR:
 				if skipClassFields {
 					skipClassFields = false
@@ -1050,10 +1072,82 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, goFile
 			default:
 				log.Panicln("TODO - tok:", d.Tok, "spec:", reflect.TypeOf(d.Specs).Elem())
 			}
+
+		case *ast.FuncDecl:
+			preloadFuncDecl(d)
+
+		case *ast.OverloadFuncDecl:
+			const (
+				markIdent = 1 << iota
+				markSelector
+				markFuncLit
+			)
+			onames := make([]string, 0, 4)
+			mark := 0
+			name := d.Name
+			for idx, fn := range d.Funcs {
+				switch expr := fn.(type) {
+				case *ast.Ident:
+					onames = append(onames, expr.Name)
+					ctx.ovnames = append(ctx.ovnames, expr.Name)
+					mark |= markIdent
+				case *ast.FuncLit:
+					if d.Recv != nil || d.Operator {
+						log.Panicln("TODO - OverloadFuncDecl")
+					}
+					name1 := overloadFuncName(name.Name, idx)
+					ctx.ovnames = append(ctx.ovnames, name1)
+					preloadFuncDecl(&ast.FuncDecl{
+						Doc:  d.Doc,
+						Name: &ast.Ident{NamePos: name.NamePos, Name: name1},
+						Type: expr.Type,
+						Body: expr.Body,
+					})
+					mark |= markFuncLit
+				default:
+					log.Panicf("TODO - cl.preloadFile OverloadFuncDecl: unknown func - %T\n", expr)
+				}
+			}
+			if (mark & (markIdent | markSelector)) != 0 {
+				oname := overloadName(name.Name)
+				oval := strings.Join(onames, ",")
+				preloadConst(&ast.GenDecl{
+					Doc: d.Doc,
+					Tok: token.CONST,
+					Specs: []ast.Spec{
+						&ast.ValueSpec{
+							Names:  []*ast.Ident{{Name: oname}},
+							Values: []ast.Expr{stringLit(oval)},
+						},
+					},
+				})
+				ctx.ovnames = append(ctx.ovnames, oname)
+			}
+
 		default:
-			log.Panicln("TODO - gopkg.Package.load: unknown decl -", reflect.TypeOf(decl))
+			log.Panicf("TODO - cl.preloadFile: unknown decl - %T\n", decl)
 		}
 	}
+}
+
+const (
+	indexTable = "0123456789abcdefghijklmnopqrstuvwxyz"
+)
+
+func overloadFuncName(name string, idx int) string {
+	return name + "__" + indexTable[idx:idx+1]
+}
+
+func overloadName(name string) string {
+	prefix := "Gopo_"
+	if strings.ContainsRune(name, '_') {
+		prefix = "Gopo__"
+	}
+	return prefix + name
+}
+
+func stringLit(val string) *ast.BasicLit {
+	return &ast.BasicLit{Kind: token.STRING, Value: strconv.Quote(val)}
 }
 
 func newType(pkg *types.Package, pos token.Pos, name string) *types.Named {

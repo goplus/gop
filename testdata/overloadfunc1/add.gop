@@ -1,0 +1,11 @@
+func add = (
+	func(a, b int) int {
+		return a + b
+	}
+	func(a, b string) string {
+		return a + b
+	}
+)
+
+println add(100, 7)
+println add("Hello", "World")
