@@ -1,0 +1,15 @@
+func mulInt(a, b int) int {
+	return a * b
+}
+
+func mulFloat(a, b float64) float64 {
+	return a * b
+}
+
+func mul = (
+	mulInt
+	mulFloat
+)
+
+println mul(100, 7)
+println mul(1.2, 3.14)

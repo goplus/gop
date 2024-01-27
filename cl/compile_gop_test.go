@@ -20,6 +20,36 @@ import (
 	"testing"
 )
 
+func TestOverloadFunc(t *testing.T) {
+	gopClTest(t, `
+func add = (
+	func(a, b int) int {
+		return a + b
+	}
+	func(a, b string) string {
+		return a + b
+	}
+)
+
+println add(100, 7)
+println add("Hello", "World")
+`, `package main
+
+import "fmt"
+
+func add__0(a int, b int) int {
+	return a + b
+}
+func add__1(a string, b string) string {
+	return a + b
+}
+func main() {
+	fmt.Println(add__0(100, 7))
+	fmt.Println(add__1("Hello", "World"))
+}
+`)
+}
+
 func TestStringLitBasic(t *testing.T) {
 	gopClTest(t, `echo "$$"`, `package main
 
