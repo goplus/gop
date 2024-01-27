@@ -20,6 +20,127 @@ import (
 	"testing"
 )
 
+func TestOverloadOp(t *testing.T) {
+	gopClTest(t, `
+type foo struct {
+}
+
+func (a *foo) + (b *foo) *foo {
+	println("a + b")
+	return &foo{}
+}
+
+func (a foo) - (b foo) foo {
+	println("a - b")
+	return foo{}
+}
+
+func -(a foo) {
+	println("-a")
+}
+
+func ++(a foo) {
+	println("a++")
+}
+
+func (a foo) != (b foo) bool{
+	println("a!=b")
+	return true
+}
+
+var a, b foo
+var c = a - b
+var d = -a       // TODO: -a have no return value!
+var e = a!=b
+`, `package main
+
+import "fmt"
+
+type foo struct {
+}
+
+func (a *foo) Gop_Add(b *foo) *foo {
+	fmt.Println("a + b")
+	return &foo{}
+}
+func (a foo) Gop_Sub(b foo) foo {
+	fmt.Println("a - b")
+	return foo{}
+}
+func (a foo) Gop_NE(b foo) bool {
+	fmt.Println("a!=b")
+	return true
+}
+func (a foo) Gop_Neg() {
+	fmt.Println("-a")
+}
+func (a foo) Gop_Inc() {
+	fmt.Println("a++")
+}
+
+var a, b foo
+var c = a.Gop_Sub(b)
+var d = a.Gop_Neg()
+var e = a.Gop_NE(b)
+`)
+}
+
+func TestOverloadOp2(t *testing.T) {
+	gopClTest(t, `
+type foo struct {
+}
+
+func (a foo) mulInt(b int) (ret foo) {
+	return
+}
+
+func (a foo) mulFoo(b foo) (ret foo) {
+	return
+}
+
+func intMulFoo(a int, b foo) (ret foo) {
+	return
+}
+
+func (foo).* = (
+	(foo).mulInt
+	(foo).mulFoo
+	intMulFoo
+)
+
+var a, b foo
+
+println a * 10
+println a * b
+// println 10 * a
+`, `package main
+
+import "fmt"
+
+type foo struct {
+}
+
+const Gopo__foo__Gop_Mul = ".mulInt,.mulFoo,intMulFoo"
+
+func (a foo) mulInt(b int) (ret foo) {
+	return
+}
+func (a foo) mulFoo(b foo) (ret foo) {
+	return
+}
+func intMulFoo(a int, b foo) (ret foo) {
+	return
+}
+
+var a, b foo
+
+func main() {
+	fmt.Println(a.mulInt(10))
+	fmt.Println(a.mulFoo(b))
+}
+`)
+}
+
 func TestOverloadFunc(t *testing.T) {
 	gopClTest(t, `
 func add = (
