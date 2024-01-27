@@ -90,6 +90,17 @@ func TestErrPreloadFile(t *testing.T) {
 		}
 		preloadFile(pkg, ctx, "foo.gop", &ast.File{Decls: decls}, "", true)
 	}()
+	func() {
+		defer func() {
+			if e := recover(); e == nil || e != "TODO - cl.preloadFile: unknown decl - *ast.BadDecl\n" {
+				t.Fatal("TestErrPreloadFile:", e)
+			}
+		}()
+		decls := []ast.Decl{
+			&ast.BadDecl{},
+		}
+		preloadFile(pkg, ctx, "foo.gop", &ast.File{Decls: decls}, "", true)
+	}()
 }
 
 func TestErrParseTypeEmbedName(t *testing.T) {

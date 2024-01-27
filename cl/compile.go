@@ -344,6 +344,7 @@ type pkgCtx struct {
 	fset    *token.FileSet
 	cpkgs   *cpackages.Importer
 	syms    map[string]loader
+	ovnames []string
 	inits   []func()
 	tylds   []*typeLoader
 	errs    errors.List
@@ -633,13 +634,17 @@ func initThisGopPkg(pkg *types.Package)
 
 func initGopPkg(ctx *pkgCtx, pkg *gox.Package, gopSyms map[string]bool) {
 	for name, f := range ctx.syms {
-		if isOverloadFunc(name) {
-			ctx.loadSymbol(name)
-		} else if gopSyms[name] {
+		if gopSyms[name] {
 			continue
-		} else if _, ok := f.(*typeLoader); ok {
-			ctx.loadType(name)
 		}
+		if _, ok := f.(*typeLoader); ok {
+			ctx.loadType(name)
+		} else if isOverloadFunc(name) {
+			ctx.loadSymbol(name)
+		}
+	}
+	for _, name := range ctx.ovnames {
+		ctx.loadSymbol(name)
 	}
 	if pkg.Types.Scope().Lookup(gopPackage) == nil {
 		pkg.Types.Scope().Insert(types.NewConst(token.NoPos, pkg.Types, gopPackage, types.Typ[types.UntypedBool], constant.MakeBool(true)))
@@ -688,15 +693,15 @@ func loadFile(ctx *pkgCtx, f *ast.File) {
 				}
 			}
 		case *ast.OverloadFuncDecl:
-			name := d.Name
+			/* name := d.Name
 			for idx, fn := range d.Funcs {
 				switch expr := fn.(type) {
 				case *ast.FuncLit:
-					ctx.loadSymbol(overloadFuncName(name.Name, idx))
+					// ctx.loadSymbol(overloadFuncName(name.Name, idx))
 				default:
 					log.Panicf("TODO - cl.loadFile OverloadFuncDecl: unknown func - %T\n", expr)
 				}
-			}
+			} */
 		}
 	}
 }
@@ -1074,9 +1079,11 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, goFile
 					if d.Recv != nil || d.Operator {
 						log.Panicln("TODO - OverloadFuncDecl")
 					}
+					name1 := overloadFuncName(name.Name, idx)
+					ctx.ovnames = append(ctx.ovnames, name1)
 					preloadFuncDecl(&ast.FuncDecl{
 						Doc:  d.Doc,
-						Name: &ast.Ident{NamePos: name.NamePos, Name: overloadFuncName(name.Name, idx)},
+						Name: &ast.Ident{NamePos: name.NamePos, Name: name1},
 						Type: expr.Type,
 						Body: expr.Body,
 					})
