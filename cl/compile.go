@@ -24,6 +24,7 @@ import (
 	"log"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 	_ "unsafe"
 
@@ -344,7 +345,7 @@ type pkgCtx struct {
 	fset    *token.FileSet
 	cpkgs   *cpackages.Importer
 	syms    map[string]loader
-	ovnames []string
+	ovnames []string // names should load before initGopPkg
 	inits   []func()
 	tylds   []*typeLoader
 	errs    errors.List
@@ -951,6 +952,27 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, goFile
 		}
 	}
 
+	preloadConst := func(d *ast.GenDecl) {
+		pkg := ctx.pkg
+		cdecl := pkg.NewConstDefs(pkg.Types.Scope())
+		for _, spec := range d.Specs {
+			vSpec := spec.(*ast.ValueSpec)
+			if debugLoad {
+				log.Println("==> Preload const", vSpec.Names)
+			}
+			setNamesLoader(parent, syms, vSpec.Names, func() {
+				if c := cdecl; c != nil {
+					cdecl = nil
+					loadConstSpecs(ctx, c, d.Specs)
+					for _, s := range d.Specs {
+						v := s.(*ast.ValueSpec)
+						removeNames(syms, v.Names)
+					}
+				}
+			})
+		}
+	}
+
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
 		case *ast.GenDecl:
@@ -1026,24 +1048,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, goFile
 					}
 				}
 			case token.CONST:
-				pkg := ctx.pkg
-				cdecl := pkg.NewConstDefs(pkg.Types.Scope())
-				for _, spec := range d.Specs {
-					vSpec := spec.(*ast.ValueSpec)
-					if debugLoad {
-						log.Println("==> Preload const", vSpec.Names)
-					}
-					setNamesLoader(parent, syms, vSpec.Names, func() {
-						if c := cdecl; c != nil {
-							cdecl = nil
-							loadConstSpecs(ctx, c, d.Specs)
-							for _, s := range d.Specs {
-								v := s.(*ast.ValueSpec)
-								removeNames(syms, v.Names)
-							}
-						}
-					})
-				}
+				preloadConst(d)
 			case token.VAR:
 				if skipClassFields {
 					skipClassFields = false
@@ -1072,9 +1077,20 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, goFile
 			preloadFuncDecl(d)
 
 		case *ast.OverloadFuncDecl:
+			const (
+				markIdent = 1 << iota
+				markSelector
+				markFuncLit
+			)
+			onames := make([]string, 0, 4)
+			mark := 0
 			name := d.Name
 			for idx, fn := range d.Funcs {
 				switch expr := fn.(type) {
+				case *ast.Ident:
+					onames = append(onames, expr.Name)
+					ctx.ovnames = append(ctx.ovnames, expr.Name)
+					mark |= markIdent
 				case *ast.FuncLit:
 					if d.Recv != nil || d.Operator {
 						log.Panicln("TODO - OverloadFuncDecl")
@@ -1087,9 +1103,25 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, goFile
 						Type: expr.Type,
 						Body: expr.Body,
 					})
+					mark |= markFuncLit
 				default:
 					log.Panicf("TODO - cl.preloadFile OverloadFuncDecl: unknown func - %T\n", expr)
 				}
+			}
+			if (mark & (markIdent | markSelector)) != 0 {
+				oname := overloadName(name.Name)
+				oval := strings.Join(onames, ",")
+				preloadConst(&ast.GenDecl{
+					Doc: d.Doc,
+					Tok: token.CONST,
+					Specs: []ast.Spec{
+						&ast.ValueSpec{
+							Names:  []*ast.Ident{{Name: oname}},
+							Values: []ast.Expr{stringLit(oval)},
+						},
+					},
+				})
+				ctx.ovnames = append(ctx.ovnames, oname)
 			}
 
 		default:
@@ -1104,6 +1136,18 @@ const (
 
 func overloadFuncName(name string, idx int) string {
 	return name + "__" + indexTable[idx:idx+1]
+}
+
+func overloadName(name string) string {
+	prefix := "Gopo_"
+	if strings.ContainsRune(name, '_') {
+		prefix = "Gopo__"
+	}
+	return prefix + name
+}
+
+func stringLit(val string) *ast.BasicLit {
+	return &ast.BasicLit{Kind: token.STRING, Value: strconv.Quote(val)}
 }
 
 func newType(pkg *types.Package, pos token.Pos, name string) *types.Named {
