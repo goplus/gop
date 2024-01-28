@@ -142,6 +142,53 @@ func main() {
 `)
 }
 
+func TestOverloadMethod(t *testing.T) {
+	gopClTest(t, `
+type foo struct {
+}
+
+func (a *foo) mulInt(b int) *foo {
+	println "mulInt"
+	return a
+}
+
+func (a *foo) mulFoo(b *foo) *foo {
+	println "mulFoo"
+	return a
+}
+
+func (foo).mul = (
+	(foo).mulInt
+	(foo).mulFoo
+)
+
+var a, b foo
+var c = a.mul(100)
+var d = a.mul(c)
+`, `package main
+
+import "fmt"
+
+type foo struct {
+}
+
+const Gopo_foo_mul = ".mulInt,.mulFoo"
+
+func (a *foo) mulInt(b int) *foo {
+	fmt.Println("mulInt")
+	return a
+}
+func (a *foo) mulFoo(b *foo) *foo {
+	fmt.Println("mulFoo")
+	return a
+}
+
+var a, b foo
+var c = a.mulInt(100)
+var d = a.mulFoo(c)
+`)
+}
+
 func TestOverloadFunc(t *testing.T) {
 	gopClTest(t, `
 func add = (

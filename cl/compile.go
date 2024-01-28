@@ -1071,11 +1071,6 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, goFile
 			preloadFuncDecl(d)
 
 		case *ast.OverloadFuncDecl:
-			const (
-				markIdent = 1 << iota
-				markSelector
-				markFuncLit
-			)
 			var recv *ast.Ident
 			if d.Recv != nil {
 				otyp, ok := d.Recv.List[0].Type.(*ast.Ident)
@@ -1085,7 +1080,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, goFile
 				recv = otyp
 			}
 			onames := make([]string, 0, 4)
-			mark := 0
+			exov := false
 			name := d.Name
 			for idx, fn := range d.Funcs {
 				switch expr := fn.(type) {
@@ -1093,12 +1088,13 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, goFile
 					checkOverloadFunc(d)
 					onames = append(onames, expr.Name)
 					ctx.lbinames = append(ctx.lbinames, expr.Name)
-					mark |= markIdent
+					exov = true
 				case *ast.SelectorExpr:
 					checkOverloadMethod(d)
 					checkOverloadMethodRecvType(recv, expr.X)
 					onames = append(onames, "."+expr.Sel.Name)
 					ctx.lbinames = append(ctx.lbinames, recv)
+					exov = true
 				case *ast.FuncLit:
 					checkOverloadFunc(d)
 					name1 := overloadFuncName(name.Name, idx)
@@ -1109,12 +1105,11 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, goFile
 						Type: expr.Type,
 						Body: expr.Body,
 					})
-					mark |= markFuncLit
 				default:
 					log.Panicf("TODO - cl.preloadFile OverloadFuncDecl: unknown func - %T\n", expr)
 				}
 			}
-			if (mark & (markIdent | markSelector)) != 0 {
+			if exov { // need Gopo_xxx
 				oname := overloadName(recv, name.Name, d.Operator)
 				oval := strings.Join(onames, ",")
 				preloadConst(&ast.GenDecl{
