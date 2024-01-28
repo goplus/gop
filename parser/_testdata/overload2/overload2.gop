@@ -1,0 +1,11 @@
+func (T).* = (
+	mul1
+	mul2
+)
+
+func (T).add = (
+	add1
+	func(a, b T) T {
+		return a + b
+	}
+)

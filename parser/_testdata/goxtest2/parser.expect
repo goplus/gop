@@ -1,0 +1,15 @@
+package main
+
+file bar.gox
+ast.GenDecl:
+  Tok: var
+  Specs:
+    ast.ValueSpec:
+      Type:
+        ast.SelectorExpr:
+          X:
+            ast.Ident:
+              Name: x
+          Sel:
+            ast.Ident:
+              Name: App

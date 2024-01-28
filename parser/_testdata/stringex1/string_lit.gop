@@ -1,0 +1,5 @@
+println "$"
+println "$$"
+println "a$$b$"
+println "a$$b$$"
+println "a$b$%"

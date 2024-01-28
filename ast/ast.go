@@ -176,13 +176,6 @@ type (
 		Elt      Expr      // ellipsis element type (parameter lists only); or nil
 	}
 
-	// A BasicLit node represents a literal of basic type.
-	BasicLit struct {
-		ValuePos token.Pos   // literal position
-		Kind     token.Token // token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING or token.CSTRING
-		Value    string      // literal string; e.g. 42, 0x7f, 3.14, 1e-9, 2.4i, 'a', '\x7f', "foo" or `\m\n\o`
-	}
-
 	// A FuncLit node represents a function literal.
 	FuncLit struct {
 		Type *FuncType  // function type
@@ -1060,6 +1053,7 @@ type (
 		Body     *BlockStmt    // function body; or nil for external (non-Go) function
 		Operator bool          // is operator or not
 		Shadow   bool          // is a shadow entry
+		IsClass  bool          // recv set by class
 	}
 )
 
@@ -1141,7 +1135,7 @@ type File struct {
 }
 
 // There is no entrypoint func to indicate the module entry point.
-func (f *File) NoEntrypoint() bool {
+func (f *File) HasShadowEntry() bool {
 	return f.ShadowEntry != nil
 }
 

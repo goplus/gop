@@ -109,6 +109,16 @@ func (p *parser) init(fset *token.FileSet, filename string, src []byte, mode Mod
 	p.next()
 }
 
+func (p *parser) initSub(file *token.File, src []byte, offset int, mode Mode) {
+	p.file = file
+	eh := func(pos token.Position, msg string) { p.errors.Add(pos, msg) }
+	p.scanner.InitEx(p.file, src, offset, eh, 0)
+
+	p.mode = mode
+	p.trace = mode&Trace != 0 // for convenience (p.trace is used frequently)
+	p.next()
+}
+
 // ----------------------------------------------------------------------------
 // Scoping support
 
@@ -456,8 +466,8 @@ func (p *parser) expectClosing(tok token.Token, context string) token.Pos {
 }
 
 func (p *parser) expectSemi() {
-	// semicolon is optional before a closing ')' or '}'
-	if p.tok != token.RPAREN && p.tok != token.RBRACE {
+	// semicolon is optional before a closing ')' or '}' or EOF
+	if p.tok != token.RPAREN && p.tok != token.RBRACE && p.tok != token.EOF {
 		switch p.tok {
 		case token.COMMA:
 			// permit a ',' instead of a ';' but complain
@@ -1590,6 +1600,90 @@ func (p *parser) parseFuncTypeOrLit() ast.Expr {
 	return &ast.FuncLit{Type: typ, Body: body}
 }
 
+func (p *parser) stringLit(pos token.Pos, val string) *ast.StringLitEx {
+	parts := p.stringLitEx(nil, pos+1, val[1:len(val)-1])
+	if parts != nil {
+		return &ast.StringLitEx{Parts: parts}
+	}
+	return nil
+}
+
+func (p *parser) stringLitEx(parts []any, pos token.Pos, text string) []any {
+	extra := false
+loop:
+	at := strings.IndexByte(text, '$')
+	if at < 0 || at+1 == len(text) { // no '$' or end with '$'
+		if extra {
+			goto normal
+		}
+		return nil
+	}
+	switch text[at+1] {
+	case '{': // ${
+		from := at + 2
+		left := text[from:]
+		if left == "" { // "...${" (string end with "${")
+			goto normal
+		}
+		end := strings.IndexByte(left, '}')
+		if end < 0 {
+			p.error(pos+token.Pos(at+1), "invalid $ expression: ${ doesn't end with }")
+			goto normal
+		}
+		if at != 0 {
+			parts = append(parts, text[:at])
+		}
+		to := pos + token.Pos(from+end)
+		parts = p.stringLitExpr(parts, pos+token.Pos(from), to)
+		pos = to + 1
+		text = left[end+1:]
+	case '$': // $$
+		parts = append(parts, text[:at+2])
+		pos += token.Pos(at + 2)
+		text = text[at+2:]
+	default:
+		if extra || hasExtra(text[at+1:]) {
+			p.error(pos+token.Pos(at), "invalid $ expression: neither `${ ... }` nor `$$`")
+		}
+		return nil
+	}
+	if text != "" {
+		extra = true
+		goto loop
+	}
+	return parts
+normal:
+	parts = append(parts, text)
+	return parts
+}
+
+func hasExtra(text string) bool {
+	for {
+		at := strings.IndexByte(text, '$')
+		if at < 0 || at+1 == len(text) { // no '$' or end with '$'
+			return false
+		}
+		ch := text[at+1]
+		if ch == '{' || ch == '$' {
+			return true
+		}
+		text = text[at+2:]
+	}
+}
+
+func (p *parser) stringLitExpr(parts []any, off, end token.Pos) []any {
+	file := p.file
+	base := file.Base()
+	src := p.scanner.CodeTo(int(end) - base)
+	expr, err := parseExprEx(p.file, src, int(off)-base, 0)
+	if err != nil {
+		p.errors = append(p.errors, err...)
+		expr = &ast.BadExpr{From: off, To: end}
+	}
+	parts = append(parts, expr)
+	return parts
+}
+
 // parseOperand may return an expression or a raw type (incl. array
 // types of the form [...]T. Callers must verify the result.
 // If lhs is set and the result is an identifier, it is not resolved.
@@ -1607,7 +1701,11 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) (x ast.Expr, isTup
 		return
 
 	case token.STRING, token.CSTRING, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT:
-		x = &ast.BasicLit{ValuePos: p.pos, Kind: p.tok, Value: p.lit}
+		bl := &ast.BasicLit{ValuePos: p.pos, Kind: p.tok, Value: p.lit}
+		if p.tok == token.STRING {
+			bl.Extra = p.stringLit(p.pos, p.lit)
+		}
+		x = bl
 		if debugParseOutput {
 			log.Printf("ast.BasicLit{Kind: %v, Value: %v}\n", p.tok, p.lit)
 		}
@@ -3486,9 +3584,65 @@ func isOverloadOps(tok token.Token) bool {
 	return int(tok) < len(overloadOps) && overloadOps[tok] != 0
 }
 
-func (p *parser) parseFuncDeclOrCall() (*ast.FuncDecl, *ast.CallExpr) {
+// `funcName`
+// `(*T).methodName`
+// `func(params) results {...}`
+func (p *parser) parseOverloadFunc() (ast.Expr, bool) {
+	switch p.tok {
+	case token.IDENT:
+		return p.parseIdent(), true
+	case token.FUNC:
+		return p.parseFuncTypeOrLit(), true
+	case token.LPAREN:
+		x, _ := p.parsePrimaryExpr(false, false, false)
+		return x, true
+	}
+	return nil, false
+}
+
+// `= (overloadFuncs)`
+//
+// here overloadFunc represents
+//
+// `funcName`
+// `(*T).methodName`
+// `func(params) results {...}`
+func (p *parser) parseOverloadDecl(decl *ast.OverloadFuncDecl) *ast.OverloadFuncDecl {
+	decl.Assign = p.expect(token.ASSIGN)
+	decl.Lparen = p.expect(token.LPAREN)
+	funcs := make([]ast.Expr, 0, 4)
+	for {
+		f, ok := p.parseOverloadFunc()
+		if !ok {
+			break
+		}
+		funcs = append(funcs, f)
+		if p.tok == token.SEMICOLON {
+			p.next()
+		}
+	}
+	decl.Funcs = funcs
+	decl.Rparen = p.expect(token.RPAREN)
+	p.expectSemi()
+	if debugParseOutput {
+		var recvt ast.Expr
+		if recv := decl.Recv; recv != nil {
+			recvt = recv.List[0].Type
+		}
+		log.Printf("ast.OverloadFuncDecl{Recv: %v, Name: %v, ...}\n", recvt, decl.Name)
+	}
+	return decl
+}
+
+// `func identOrOp(params) results {...}`
+// `func identOrOp = (overloadFuncs)`
+//
+// `func (recv) identOrOp(params) results { ... }`
+// `func (T).identOrOp = (overloadFuncs)`
+// `func (params) results { ... }()`
+func (p *parser) parseFuncDeclOrCall() (ast.Decl, *ast.CallExpr) {
 	if p.trace {
-		defer un(trace(p, "FunctionDecl"))
+		defer un(trace(p, "FunctionDeclOrCall"))
 	}
 
 	doc := p.leadComment
@@ -3499,16 +3653,39 @@ func (p *parser) parseFuncDeclOrCall() (*ast.FuncDecl, *ast.CallExpr) {
 	var ident *ast.Ident
 	var isOp, isFunLit, ok bool
 
-	if p.tok != token.LPAREN { // func identOrOp(...)
+	if p.tok != token.LPAREN {
+		// func: `func identOrOp(...) results`
+		// overload: `func identOrOp = (overloadFuncs)`
 		ident, isOp = p.parseIdentOrOp()
+		if p.tok == token.ASSIGN {
+			// func identOrOp = (overloadFuncs)
+			return p.parseOverloadDecl(&ast.OverloadFuncDecl{
+				Doc:      doc,
+				Func:     pos,
+				Name:     ident,
+				Operator: isOp,
+			}), nil
+		}
 		params, results = p.parseSignature(scope)
 	} else {
-		// method: func (recv) XXX(params) results { ... }
-		// funlit: func (params) results { ... }()
+		// method: `func (recv) identOrOp(params) results { ... }`
+		// overload: `func (T).identOrOp = (overloadFuncs)`
+		// funlit: `func (params) results { ... }()`
 		params = p.parseParameters(scope, true)
 		if p.tok == token.LPAREN {
 			// func (params) (results) { ... }()
 			isFunLit, results = true, p.parseParameters(scope, false)
+		} else if p.tok == token.PERIOD {
+			p.next()
+			// func (T).identOrOp = (overloadFuncs)
+			ident, isOp = p.parseIdentOrOp()
+			return p.parseOverloadDecl(&ast.OverloadFuncDecl{
+				Doc:      doc,
+				Func:     pos,
+				Recv:     params,
+				Name:     ident,
+				Operator: isOp,
+			}), nil
 		} else if isOp = isOverloadOps(p.tok); isOp {
 			oldtok, oldpos := p.tok, p.pos
 			p.next()

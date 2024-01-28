@@ -266,7 +266,7 @@ s += "world"
 println s // Hello world
 ```
 
-All operators in Go+ must have values of the same type on both sides. You cannot concatenate an
+Most Go+ operators must have values of the same type on both sides. You cannot concatenate an
 integer to a string:
 
 ```go failcompile
@@ -280,6 +280,24 @@ We have to either convert `age` to a `string`:
 age := 10
 println "age = " + age.string
 ```
+
+However, you can replace `age.string` to `"${age}"`:
+
+```go
+age := 10
+println "age = ${age}"
+```
+
+Here is a more complex example of `${expr}`:
+
+```go
+host := "example.com"
+page := 0
+limit := 20
+println "https://${host}/items?page=${page+1}&limit=${limit}" // https://example.com/items?page=1&limit=20
+println "$$" // $
+```
+
 
 <h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 

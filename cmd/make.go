@@ -548,10 +548,28 @@ func releaseNewVersion(tag string) {
 	println("Released new version:", version)
 }
 
+func runRegtests() {
+	println("\nStart running regtests.")
+
+	cmd := exec.Command(filepath.Join(gopRoot, "bin/"+gopBinFiles[0]), "go", "./...")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Dir = filepath.Join(gopRoot, "testdata")
+	err := cmd.Run()
+	if err != nil {
+		code := cmd.ProcessState.ExitCode()
+		if code == 0 {
+			code = 1
+		}
+		os.Exit(code)
+	}
+}
+
 func main() {
 	isInstall := flag.Bool("install", false, "Install Go+")
 	isBuild := flag.Bool("build", false, "Build Go+ tools")
 	isTest := flag.Bool("test", false, "Run testcases")
+	isRegtest := flag.Bool("regtest", false, "Run regtests")
 	isUninstall := flag.Bool("uninstall", false, "Uninstall Go+")
 	isGoProxy := flag.Bool("proxy", false, "Set GOPROXY for people in China")
 	isAutoProxy := flag.Bool("autoproxy", false, "Check to set GOPROXY automatically")
@@ -572,10 +590,11 @@ func main() {
 		},
 		isUninstall: uninstall,
 		isTest:      runTestcases,
+		isRegtest:   runRegtests,
 	}
 
 	// Sort flags, for example: install flag should be checked earlier than test flag.
-	flags := []*bool{isBuild, isInstall, isTest, isUninstall}
+	flags := []*bool{isBuild, isInstall, isTest, isRegtest, isUninstall}
 	hasActionDone := false
 
 	if *tag != "" {

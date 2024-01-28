@@ -76,6 +76,26 @@ func (rec *typesRecorder) Type(expr ast.Expr, tv types.TypeAndValue) {
 	rec.Recorder.Type(expr, tv)
 }
 
+func (rec *typesRecorder) instantiate(expr ast.Expr, org, typ types.Type) {
+	// check gox TyOverloadNamed
+	if tv, ok := rec.types[expr]; ok {
+		tv.Type = typ
+		rec.Recorder.Type(expr, tv)
+	}
+	var ident *ast.Ident
+	switch id := expr.(type) {
+	case *ast.Ident:
+		ident = id
+	case *ast.SelectorExpr:
+		ident = id.Sel
+	}
+	if ident != nil {
+		if named, ok := typ.(*types.Named); ok {
+			rec.Use(ident, named.Obj())
+		}
+	}
+}
+
 func newTypeRecord(rec Recorder) *typesRecorder {
 	return &typesRecorder{rec, make(map[ast.Expr]types.TypeAndValue)}
 }

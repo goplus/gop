@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"go/printer"
 	"go/types"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -38,12 +37,14 @@ var (
 )
 
 func init() {
+	cl.SetDebug(cl.FlagNoMarkAutogen)
 	ctx.LoadConfig = func(cfg *cl.Config) {
 		cfg.NoFileLine = true
 	}
 	build.RegisterClassFileType(".tspx", "MyGame", []*build.Class{
 		{Ext: ".tspx", Class: "Sprite"},
 	}, "github.com/goplus/gop/cl/internal/spx")
+	build.RegisterClassFileType("_yap.gox", "App", nil, "github.com/goplus/yap")
 }
 
 func gopClTest(t *testing.T, gopcode interface{}, expected string) {
@@ -76,6 +77,7 @@ func TestKind(t *testing.T) {
 	testKind(t, "main.gmx", true, true)
 	testKind(t, "Cat.tspx", false, true)
 	testKind(t, "main.tspx", true, true)
+	testKind(t, "blog_yap.gox", true, true)
 }
 
 func TestGop(t *testing.T) {
@@ -183,8 +185,8 @@ println "Go+"
 `, `package main
 
 import (
-	"fmt"
 	"bytes"
+	"fmt"
 )
 
 type Rect struct {
@@ -208,8 +210,8 @@ println "Go+"
 `, `package main
 
 import (
-	"fmt"
 	"bytes"
+	"fmt"
 )
 
 type Rect struct {
@@ -239,7 +241,7 @@ import (
 
 func main() {
 	a := ng.Bigrat_Init__2(big.NewRat(1, 2))
-	fmt.Println(a.Gop_Add(ng.Bigrat_Init__2(big.NewRat(1, 2))))
+	fmt.Println((ng.Bigrat).Gop_Add(a, ng.Bigrat_Init__2(big.NewRat(1, 2))))
 }
 `)
 }
@@ -300,8 +302,8 @@ println addSafe("10", "abc")
 
 import (
 	"fmt"
-	"strconv"
 	"github.com/qiniu/x/errors"
+	"strconv"
 )
 
 func add(x string, y string) (int, error) {
@@ -389,14 +391,16 @@ import (
 	"github.com/goplus/gop/cl/internal/spx"
 )
 
+func main() {
+	spx.Gopt_MyGame_Main(new(spx.MyGame))
+}
+
 type Cat struct {
 	spx.Sprite
 }
 
 func (this *Cat) Main() {
 	fmt.Println("hi")
-}
-func main() {
 }
 `)
 }
@@ -407,7 +411,7 @@ func testFromDir(t *testing.T, relDir string) {
 		t.Fatal("Getwd failed:", err)
 	}
 	dir = path.Join(dir, relDir)
-	fis, err := ioutil.ReadDir(dir)
+	fis, err := os.ReadDir(dir)
 	if err != nil {
 		t.Fatal("ReadDir failed:", err)
 	}

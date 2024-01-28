@@ -19,7 +19,6 @@ package printer_test
 import (
 	"bytes"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -114,7 +113,7 @@ func testFrom(t *testing.T, fpath, sel string, mode int) {
 	if sel != "" && !strings.Contains(fpath, sel) {
 		return
 	}
-	src, err := ioutil.ReadFile(fpath)
+	src, err := os.ReadFile(fpath)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1705,7 +1705,9 @@ func (p *printer) spec(spec ast.Spec, n int, doIndent bool) {
 		p.setComment(s.Doc)
 		p.identList(s.Names, doIndent) // always present
 		if s.Type != nil {
-			p.print(blank)
+			if len(s.Names) > 0 {
+				p.print(blank)
+			}
 			p.expr(s.Type)
 		}
 		if s.Values != nil {
@@ -1980,7 +1982,7 @@ func (p *printer) funcDecl(d *ast.FuncDecl) {
 	// different line (all whitespace preceding the FUNC is emitted only when the
 	// FUNC is emitted).
 	startCol := p.out.Column - len("func ")
-	if d.Recv != nil {
+	if d.Recv != nil && !d.IsClass {
 		p.parameters(d.Recv) // method: print receiver
 		p.print(blank)
 	}
@@ -1992,6 +1994,28 @@ func (p *printer) funcDecl(d *ast.FuncDecl) {
 	p.funcBody(p.distanceFrom(d.Pos(), startCol), vtab, d.Body)
 }
 
+func (p *printer) overloadFuncDecl(d *ast.OverloadFuncDecl) {
+	if debugFormat {
+		log.Println("==> Format OverloadFunc", d.Name.Name)
+	}
+	p.setComment(d.Doc)
+
+	pos := d.Pos()
+	p.print(pos, token.FUNC, blank)
+	if d.Recv != nil && !d.IsClass {
+		p.parameters(d.Recv) // method: print receiver
+		p.print(token.PERIOD)
+	}
+	p.expr(d.Name)
+	p.print(blank, token.ASSIGN, blank, token.LPAREN, newline)
+	for _, fn := range d.Funcs {
+		p.print(indent)
+		p.expr1(fn, token.LowestPrec, 1)
+		p.print(unindent, newline)
+	}
+	p.print(token.RPAREN)
+}
+
 func (p *printer) decl(decl ast.Decl) {
 	switch d := decl.(type) {
 	case *ast.BadDecl:
@@ -2000,6 +2024,8 @@ func (p *printer) decl(decl ast.Decl) {
 		p.genDecl(d)
 	case *ast.FuncDecl:
 		p.funcDecl(d)
+	case *ast.OverloadFuncDecl:
+		p.overloadFuncDecl(d)
 	default:
 		panic("unreachable")
 	}

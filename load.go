@@ -121,6 +121,9 @@ type Config struct {
 	Filter   func(fs.FileInfo) bool
 	Importer types.Importer
 
+	// Context represents all things between packages (optional).
+	Context *gox.Context
+
 	IgnoreNotatedError bool
 }
 
@@ -183,11 +186,13 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 
 	var pkgTest *ast.Package
 	var clConf = &cl.Config{
-		Fset:         fset,
-		RelativeBase: relativeBaseOf(mod),
-		Importer:     imp,
-		LookupClass:  mod.LookupClass,
-		LookupPub:    c2go.LookupPub(mod),
+		Fset:           fset,
+		Context:        conf.Context,
+		RelativeBase:   relativeBaseOf(mod),
+		Importer:       imp,
+		IsPkgtStandard: mod.IsPkgtStandard,
+		LookupClass:    mod.LookupClass,
+		LookupPub:      c2go.LookupPub(mod),
 	}
 
 	for name, pkg := range pkgs {
@@ -267,11 +272,13 @@ func LoadFiles(dir string, files []string, conf *Config) (out *gox.Package, err 
 			imp = NewImporter(mod, gop, fset)
 		}
 		clConf := &cl.Config{
-			Fset:         fset,
-			RelativeBase: relativeBaseOf(mod),
-			Importer:     imp,
-			LookupClass:  mod.LookupClass,
-			LookupPub:    c2go.LookupPub(mod),
+			Fset:           fset,
+			Context:        conf.Context,
+			RelativeBase:   relativeBaseOf(mod),
+			Importer:       imp,
+			LookupClass:    mod.LookupClass,
+			IsPkgtStandard: mod.IsPkgtStandard,
+			LookupPub:      c2go.LookupPub(mod),
 		}
 		out, err = cl.NewPackage("", pkg, clConf)
 		if err != nil {

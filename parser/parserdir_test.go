@@ -100,6 +100,7 @@ func testFrom(t *testing.T, pkgDir, sel string, exclude Mode) {
 	if sel != "" && !strings.Contains(pkgDir, sel) {
 		return
 	}
+	t.Helper()
 	log.Println("Parsing", pkgDir)
 	fset := token.NewFileSet()
 	pkgs, err := ParseDir(fset, pkgDir, nil, (Trace|ParseComments|ParseGoAsGoPlus)&^exclude)
@@ -190,6 +191,30 @@ func TestParseEntry(t *testing.T) {
 		}
 		if !f.IsClass || !f.IsProj || f.IsNormalGox {
 			t.Fatal("ParseEntry main.spx:", f.IsClass, f.IsProj, f.IsNormalGox)
+		}
+	})
+}
+
+func TestParseEntry2(t *testing.T) {
+	fset := token.NewFileSet()
+	src, err := os.ReadFile("./_testdata/functype/functype.go")
+	if err != nil {
+		t.Fatal("os.ReadFile:", err)
+	}
+	conf := Config{}
+	conf.ClassKind = func(fname string) (isProj bool, ok bool) {
+		if strings.HasSuffix(fname, "_yap.gox") {
+			return true, true
+		}
+		return defaultClassKind(fname)
+	}
+	t.Run("_yap.gox file", func(t *testing.T) {
+		f, err := ParseEntry(fset, "./functype_yap.gox", src, conf)
+		if err != nil {
+			t.Fatal("ParseEntry failed:", err)
+		}
+		if !f.IsClass || !f.IsProj || f.IsNormalGox {
+			t.Fatal("ParseEntry functype_yap.gox:", f.IsClass, f.IsProj, f.IsNormalGox)
 		}
 	})
 }

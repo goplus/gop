@@ -21,7 +21,6 @@ import (
 	"go/types"
 	"log"
 	"math/big"
-	"reflect"
 	"strconv"
 
 	"github.com/goplus/gop/ast"
@@ -179,9 +178,10 @@ func toType(ctx *blockCtx, typ ast.Expr) (t types.Type) {
 		return toIndexType(ctx, v)
 	case *ast.IndexListExpr:
 		return toIndexListType(ctx, v)
+	default:
+		ctx.handleErrorf(v.Pos(), "toType unexpected: %T", v)
+		return types.Typ[types.Invalid]
 	}
-	log.Panicln("toType: unknown -", reflect.TypeOf(typ))
-	return nil
 }
 
 var (
@@ -251,7 +251,7 @@ func toIdentType(ctx *blockCtx, ident *ast.Ident) (ret types.Type) {
 		obj = t
 		return t.Type()
 	}
-	if v, _ := lookupPkgRef(ctx, nil, ident, objPkgRef); v != nil {
+	if v, _ := lookupPkgRef(ctx, gox.PkgRef{}, ident, objPkgRef); v != nil {
 		if t, ok := v.(*types.TypeName); ok {
 			obj = t
 			return t.Type()
@@ -438,28 +438,30 @@ func toInterfaceType(ctx *blockCtx, v *ast.InterfaceType) types.Type {
 	return intf
 }
 
-func toIndexType(ctx *blockCtx, v *ast.IndexExpr) types.Type {
+func instantiate(ctx *blockCtx, exprX ast.Expr, indices ...ast.Expr) types.Type {
 	ctx.inInst++
 	defer func() {
 		ctx.inInst--
 	}()
-	ctx.cb.Typ(toType(ctx, v.X), v.X)
-	ctx.cb.Typ(toType(ctx, v.Index), v.Index)
-	ctx.cb.Index(1, false, v)
-	return ctx.cb.InternalStack().Pop().Type.(*gox.TypeType).Type()
+
+	x := toType(ctx, exprX)
+	idx := make([]types.Type, len(indices))
+	for i, index := range indices {
+		idx[i] = toType(ctx, index)
+	}
+	typ := ctx.pkg.Instantiate(x, idx, exprX)
+	if rec := ctx.recorder(); rec != nil {
+		rec.instantiate(exprX, x, typ)
+	}
+	return typ
+}
+
+func toIndexType(ctx *blockCtx, v *ast.IndexExpr) types.Type {
+	return instantiate(ctx, v.X, v.Index)
 }
 
 func toIndexListType(ctx *blockCtx, v *ast.IndexListExpr) types.Type {
-	ctx.inInst++
-	defer func() {
-		ctx.inInst--
-	}()
-	ctx.cb.Typ(toType(ctx, v.X), v.X)
-	for _, index := range v.Indices {
-		ctx.cb.Typ(toType(ctx, index), index)
-	}
-	ctx.cb.Index(len(v.Indices), false, v)
-	return ctx.cb.InternalStack().Pop().Type.(*gox.TypeType).Type()
+	return instantiate(ctx, v.X, v.Indices...)
 }
 
 // -----------------------------------------------------------------------------

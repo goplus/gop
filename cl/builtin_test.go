@@ -39,8 +39,154 @@ func getGoxConf() *gox.Config {
 	return &gox.Config{Fset: fset, Importer: imp}
 }
 
+func TestErrStringLit(t *testing.T) {
+	defer func() {
+		if e := recover(); e == nil {
+			t.Fatal("TestErrStringLit: no panic?")
+		}
+	}()
+	compileStringLitEx(nil, nil, &ast.BasicLit{
+		Value: "Hello",
+		Extra: &ast.StringLitEx{
+			Parts: []any{1},
+		},
+	})
+}
+
+func TestErrPreloadFile(t *testing.T) {
+	pkg := gox.NewPackage("", "foo", goxConf)
+	ctx := &blockCtx{pkgCtx: &pkgCtx{}}
+	t.Run("overloadName", func(t *testing.T) {
+		defer func() {
+			if e := recover(); e == nil || e != "TODO - can't overload operator ++\n" {
+				t.Fatal("TestErrPreloadFile:", e)
+			}
+		}()
+		overloadName(&ast.Ident{}, "++", true)
+	})
+	t.Run("checkOverloadFunc", func(t *testing.T) {
+		defer func() {
+			if e := recover(); e == nil || e != "TODO - cl.preloadFile OverloadFuncDecl: checkOverloadFunc\n" {
+				t.Fatal("TestErrPreloadFile:", e)
+			}
+		}()
+		checkOverloadFunc(&ast.OverloadFuncDecl{
+			Recv: &ast.FieldList{},
+		})
+	})
+	t.Run("checkOverloadMethod", func(t *testing.T) {
+		defer func() {
+			if e := recover(); e == nil || e != "TODO - cl.preloadFile OverloadFuncDecl: checkOverloadMethod\n" {
+				t.Fatal("TestErrPreloadFile:", e)
+			}
+		}()
+		checkOverloadMethod(&ast.OverloadFuncDecl{})
+	})
+	t.Run("checkOverloadMethodRecvType1", func(t *testing.T) {
+		defer func() {
+			if e := recover(); e == nil || e != "TODO - checkOverloadMethodRecvType: bar\n" {
+				t.Fatal("TestErrPreloadFile:", e)
+			}
+		}()
+		checkOverloadMethodRecvType(&ast.Ident{Name: "foo"}, &ast.Ident{Name: "bar"})
+	})
+	t.Run("checkOverloadMethodRecvType2", func(t *testing.T) {
+		defer func() {
+			if e := recover(); e == nil || e != "TODO - checkOverloadMethodRecvType: &{0 INT 123 <nil>}\n" {
+				t.Fatal("TestErrPreloadFile:", e)
+			}
+		}()
+		expr := &ast.BasicLit{Kind: token.INT, Value: "123"}
+		checkOverloadMethodRecvType(&ast.Ident{Name: "foo"}, expr)
+	})
+	t.Run("OverloadFuncDecl: invalid recv", func(t *testing.T) {
+		defer func() {
+			if e := recover(); e == nil || e != "TODO - cl.preloadFile OverloadFuncDecl: invalid recv\n" {
+				t.Fatal("TestErrPreloadFile:", e)
+			}
+		}()
+		decls := []ast.Decl{
+			&ast.OverloadFuncDecl{
+				Name: &ast.Ident{Name: "add"},
+				Funcs: []ast.Expr{
+					&ast.FuncLit{},
+				},
+				Recv: &ast.FieldList{List: []*ast.Field{
+					{Type: &ast.StarExpr{}},
+				}},
+			},
+		}
+		preloadFile(pkg, ctx, "foo.gop", &ast.File{Decls: decls}, "", true)
+	})
+	t.Run("OverloadFuncDecl: unknown func", func(t *testing.T) {
+		defer func() {
+			if e := recover(); e == nil || e != "TODO - cl.preloadFile OverloadFuncDecl: unknown func - *ast.BasicLit\n" {
+				t.Fatal("TestErrPreloadFile:", e)
+			}
+		}()
+		decls := []ast.Decl{
+			&ast.OverloadFuncDecl{
+				Name: &ast.Ident{Name: "add"},
+				Funcs: []ast.Expr{
+					&ast.BasicLit{},
+				},
+				Operator: true,
+			},
+		}
+		preloadFile(pkg, ctx, "foo.gop", &ast.File{Decls: decls}, "", true)
+	})
+	t.Run("unknown decl", func(t *testing.T) {
+		defer func() {
+			if e := recover(); e == nil || e != "TODO - cl.preloadFile: unknown decl - *ast.BadDecl\n" {
+				t.Fatal("TestErrPreloadFile:", e)
+			}
+		}()
+		decls := []ast.Decl{
+			&ast.BadDecl{},
+		}
+		preloadFile(pkg, ctx, "foo.gop", &ast.File{Decls: decls}, "", true)
+	})
+}
+
+func TestErrParseTypeEmbedName(t *testing.T) {
+	defer func() {
+		if e := recover(); e == nil {
+			t.Fatal("TestErrParseTypeEmbedName: no panic?")
+		}
+	}()
+	parseTypeEmbedName(&ast.StructType{})
+}
+
+func TestGmxMainFunc(t *testing.T) {
+	gmxMainFunc(nil, &pkgCtx{
+		projs: map[string]*gmxProject{
+			".a": {}, ".b": {},
+		},
+	}, false)
+}
+
+func TestNodeInterp(t *testing.T) {
+	ni := &nodeInterp{}
+	if v := ni.Caller(&ast.Ident{}); v != "the function call" {
+		t.Fatal("TestNodeInterp:", v)
+	}
+}
+
+func TestMarkAutogen(t *testing.T) {
+	old := noMarkAutogen
+	noMarkAutogen = false
+
+	NewPackage("", &ast.Package{Files: map[string]*ast.File{
+		"main.t2gmx": {IsProj: true},
+	}}, &Config{
+		LookupClass: lookupClassErr,
+	})
+
+	noMarkAutogen = old
+}
+
 func TestClassNameAndExt(t *testing.T) {
-	name, ext := classNameAndExt("/foo/bar.abc_yap.gox")
+	name, ext := ClassNameAndExt("/foo/bar.abc_yap.gox")
 	if name != "bar" || ext != "_yap.gox" {
 		t.Fatal("classNameAndExt:", name, ext)
 	}
@@ -172,7 +318,7 @@ func TestClRangeStmt(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 func TestGetStringConst(t *testing.T) {
-	spx := &gox.PkgRef{Types: types.NewPackage("", "foo")}
+	spx := gox.PkgRef{Types: types.NewPackage("", "foo")}
 	if v := getStringConst(spx, "unknown"); v != "" {
 		t.Fatal("getStringConst:", v)
 	}
@@ -184,7 +330,7 @@ func TestSpxRef(t *testing.T) {
 			t.Fatal("TestSpxRef:", e)
 		}
 	}()
-	pkg := &gox.PkgRef{
+	pkg := gox.PkgRef{
 		Types: types.NewPackage("foo", "foo"),
 	}
 	spxRef(pkg, "bar")
@@ -202,20 +348,25 @@ func isError(e interface{}, msg string) bool {
 	return false
 }
 
-func TestGmxSettings(t *testing.T) {
+func TestGmxProject(t *testing.T) {
 	pkg := gox.NewPackage("", "foo", goxConf)
-	gmx := newGmx(nil, pkg, "main.t2gmx", &ast.File{IsProj: true}, &Config{
+	ctx := &pkgCtx{
+		projs:   make(map[string]*gmxProject),
+		classes: make(map[*ast.File]gmxClass),
+	}
+	gmx := loadClass(ctx, pkg, "main.t2gmx", &ast.File{IsProj: true}, &Config{
 		LookupClass: lookupClass,
 	})
 	scheds := gmx.getScheds(pkg.CB())
 	if len(scheds) != 2 || scheds[0] == nil || scheds[0] != scheds[1] {
-		t.Fatal("TestGmxSettings failed")
+		t.Fatal("TestGmxProject failed")
 	}
 	gmx.hasScheds = false
 	if gmx.getScheds(nil) != nil {
-		t.Fatal("TestGmxSettings failed: hasScheds?")
+		t.Fatal("TestGmxProject failed: hasScheds?")
 	}
-	_, err := NewPackage("", &ast.Package{Files: map[string]*ast.File{
+
+	/* _, err := NewPackage("", &ast.Package{Files: map[string]*ast.File{
 		"main.t2gmx": {
 			IsProj: true,
 		},
@@ -224,7 +375,28 @@ func TestGmxSettings(t *testing.T) {
 	})
 	if e := err.Error(); e != `github.com/goplus/gop/cl/internal/libc.Game not found` {
 		t.Fatal("newGmx:", e)
-	}
+	} */
+
+	func() {
+		defer func() {
+			if e := recover(); e != "TODO: class not found" {
+				t.Fatal("TestGmxProject failed:", e)
+			}
+		}()
+		loadClass(nil, pkg, "main.abcx", &ast.File{IsProj: true}, &Config{
+			LookupClass: lookupClass,
+		})
+	}()
+	func() {
+		defer func() {
+			if e := recover(); e != "multiple project files found: Game Game\n" {
+				t.Fatal("TestGmxProject failed:", e)
+			}
+		}()
+		loadClass(ctx, pkg, "main.t2gmx", &ast.File{IsProj: true}, &Config{
+			LookupClass: lookupClass,
+		})
+	}()
 }
 
 func TestSpxLookup(t *testing.T) {
@@ -259,10 +431,13 @@ func lookupClassErr(ext string) (c *modfile.Project, ok bool) {
 }
 
 func TestGetGoFile(t *testing.T) {
-	if f := genGoFile("a_test.gop", true); f != testingGoFile {
+	if f := genGoFile("a_test.gop", false); f != testingGoFile {
 		t.Fatal("TestGetGoFile:", f)
 	}
-	if f := genGoFile("a_test.gop", false); f != skippingGoFile {
+	if f := genGoFile("a_test.gox", true); f != testingGoFile {
+		t.Fatal("TestGetGoFile:", f)
+	}
+	if f := genGoFile("a.gop", false); f != defaultGoFile {
 		t.Fatal("TestGetGoFile:", f)
 	}
 }

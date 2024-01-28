@@ -74,7 +74,7 @@ const (
 
 const errorPkgPath = "github.com/qiniu/x/errors"
 
-func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg *gox.PkgRef, kind int) {
+func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg gox.PkgRef, kind int) {
 	fvalue := (flags&clIdentSelectorExpr) != 0 || (flags&clIdentLHS) == 0
 	name := ident.Name
 	if name == "_" {
@@ -122,7 +122,8 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg *gox.PkgRef, 
 	// pkgRef object
 	if (flags & clIdentSelectorExpr) != 0 {
 		if name == "C" && len(ctx.clookups) > 0 {
-			return nil, objCPkgRef
+			kind = objCPkgRef
+			return
 		}
 		if pi, ok := ctx.findImport(name); ok {
 			if rec := ctx.recorder(); rec != nil {
@@ -133,7 +134,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg *gox.PkgRef, 
 	}
 
 	// object from import . "xxx"
-	if compilePkgRef(ctx, nil, ident, flags, objPkgRef) {
+	if compilePkgRef(ctx, gox.PkgRef{}, ident, flags, objPkgRef) {
 		return
 	}
 
@@ -389,7 +390,7 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, flags int) {
 	}
 }
 
-func pkgRef(at *gox.PkgRef, name string) (o types.Object, alias bool) {
+func pkgRef(at gox.PkgRef, name string) (o types.Object, alias bool) {
 	if c := name[0]; c >= 'a' && c <= 'z' {
 		name = string(rune(c)+('A'-'a')) + name[1:]
 		if v := at.TryRef(name); v != nil && gox.IsFunc(v.Type()) {
@@ -400,8 +401,9 @@ func pkgRef(at *gox.PkgRef, name string) (o types.Object, alias bool) {
 	return at.TryRef(name), false
 }
 
-func lookupPkgRef(ctx *blockCtx, pkg *gox.PkgRef, x *ast.Ident, pkgKind int) (o types.Object, alias bool) {
-	if pkg != nil {
+// allow pkg.Types to be nil
+func lookupPkgRef(ctx *blockCtx, pkg gox.PkgRef, x *ast.Ident, pkgKind int) (o types.Object, alias bool) {
+	if pkg.Types != nil {
 		return pkgRef(pkg, x.Name)
 	}
 	if pkgKind == objPkgRef {
@@ -416,7 +418,7 @@ func lookupPkgRef(ctx *blockCtx, pkg *gox.PkgRef, x *ast.Ident, pkgKind int) (o 
 			}
 		}
 	} else {
-		var cpkg *cpackages.PkgRef
+		var cpkg cpackages.PkgRef
 		for _, at := range ctx.clookups {
 			if o2 := at.Lookup(x.Name); o2 != nil {
 				if o != nil {
@@ -431,7 +433,8 @@ func lookupPkgRef(ctx *blockCtx, pkg *gox.PkgRef, x *ast.Ident, pkgKind int) (o 
 	return
 }
 
-func compilePkgRef(ctx *blockCtx, at *gox.PkgRef, x *ast.Ident, flags, pkgKind int) bool {
+// allow at.Types to be nil
+func compilePkgRef(ctx *blockCtx, at gox.PkgRef, x *ast.Ident, flags, pkgKind int) bool {
 	if v, alias := lookupPkgRef(ctx, at, x, pkgKind); v != nil {
 		cb := ctx.cb
 		if (flags & clIdentLHS) != 0 {
@@ -778,7 +781,46 @@ func compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {
 		}
 		cb.Val(rune(0)).ArrayLit(typ, n+1).UnaryOp(gotoken.AND).Call(1).Call(1)
 	default:
-		cb.Val(&goast.BasicLit{Kind: gotoken.Token(v.Kind), Value: v.Value}, v)
+		if v.Extra == nil {
+			basicLit(cb, v)
+			return
+		}
+		compileStringLitEx(ctx, cb, v)
+	}
+}
+
+func basicLit(cb *gox.CodeBuilder, v *ast.BasicLit) {
+	cb.Val(&goast.BasicLit{Kind: gotoken.Token(v.Kind), Value: v.Value}, v)
+}
+
+func compileStringLitEx(ctx *blockCtx, cb *gox.CodeBuilder, lit *ast.BasicLit) {
+	pos := lit.ValuePos + 1
+	quote := lit.Value[:1]
+	notFirst := false
+	for _, part := range lit.Extra.Parts {
+		switch v := part.(type) {
+		case string: // normal string literal or end with "$$"
+			next := pos + token.Pos(len(v))
+			if strings.HasSuffix(v, "$$") {
+				v = v[:len(v)-1]
+			}
+			basicLit(cb, &ast.BasicLit{ValuePos: pos - 1, Value: quote + v + quote, Kind: token.STRING})
+			pos = next
+		case ast.Expr:
+			compileExpr(ctx, v)
+			t := cb.Get(-1).Type
+			if t.Underlying() != types.Typ[types.String] {
+				cb.Member("string", gox.MemberFlagAutoProperty)
+			}
+			pos = v.End()
+		default:
+			panic("compileStringLitEx TODO: unexpected part")
+		}
+		if notFirst {
+			cb.BinaryOp(gotoken.ADD)
+		} else {
+			notFirst = true
+		}
 	}
 }
 
@@ -1133,7 +1175,7 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr, inFlags int) {
 			retName = "_gop_ret" + strconv.Itoa(i+1)
 		}
 	}
-	sig := types.NewSignature(nil, nil, types.NewTuple(ret...), false)
+	sig := types.NewSignatureType(nil, nil, nil, nil, types.NewTuple(ret...), false)
 	if useClosure {
 		cb.NewClosureWith(sig).BodyStart(pkg)
 	} else {

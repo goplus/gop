@@ -142,7 +142,6 @@ total 72
 -rw-r--r--  1 xushiwei  staff    365 Jun 19 00:25 example.gsh
 -rw-r--r--  1 xushiwei  staff    126 Jun 19 09:33 go.mod
 -rw-r--r--  1 xushiwei  staff    165 Jun 19 09:33 go.sum
--rw-r--r--  1 xushiwei  staff    110 Jun 19 09:33 gop.mod
 -rw-r--r--  1 xushiwei  staff   1938 Jun 19 10:00 gop_autogen.go
 ```
 

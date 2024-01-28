@@ -63,6 +63,7 @@ func testErrCode(t *testing.T, code string, errExp, panicExp string) {
 			}
 		}
 	}()
+	t.Helper()
 	fset := token.NewFileSet()
 	_, err := Parse(fset, "/foo/bar.gop", code, 0)
 	if err == nil || err.Error() != errExp {
@@ -78,6 +79,7 @@ func testErrCodeParseExpr(t *testing.T, code string, errExp, panicExp string) {
 			}
 		}
 	}()
+	t.Helper()
 	_, err := ParseExpr(code)
 	if err == nil || err.Error() != errExp {
 		t.Fatal("testErrCodeParseExpr error:", err)
@@ -92,6 +94,7 @@ func testClassErrCode(t *testing.T, code string, errExp, panicExp string) {
 			}
 		}
 	}()
+	t.Helper()
 	fset := token.NewFileSet()
 	_, err := Parse(fset, "/foo/bar.gox", code, ParseGoPlusClass)
 	if err == nil || err.Error() != errExp {
@@ -502,6 +505,25 @@ func TestErrGlobal(t *testing.T) {
 func TestErrCompositeLiteral(t *testing.T) {
 	testErrCode(t, `println (T[int]){a: 1, b: 2}
 `, `/foo/bar.gop:1:10: cannot parenthesize type in composite literal`, ``)
+}
+
+func TestErrSelectorExpr(t *testing.T) {
+	testErrCode(t, `
+x.
+*p
+`, `/foo/bar.gop:3:1: expected selector or type assertion, found '*'`, ``)
+}
+
+func TestErrStringLitEx(t *testing.T) {
+	testErrCode(t, `
+println "${ ... }"
+`, "/foo/bar.gop:2:13: expected operand, found '...'", ``)
+	testErrCode(t, `
+println "${b"
+`, "/foo/bar.gop:2:11: invalid $ expression: ${ doesn't end with }", ``)
+	testErrCode(t, `
+println "$a${b}"
+`, "/foo/bar.gop:2:10: invalid $ expression: neither `${ ... }` nor `$$`", ``)
 }
 
 // -----------------------------------------------------------------------------

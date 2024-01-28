@@ -69,6 +69,9 @@ type Config struct {
 	// Fset provides source position information for syntax trees and types (required).
 	Fset *token.FileSet
 
+	// Context represents all things between packages (optional).
+	Context *gox.Context
+
 	// WorkingDir is the directory in which to run gop compiler (optional).
 	// If WorkingDir is not set, os.Getwd() is used.
 	WorkingDir string
@@ -77,7 +80,7 @@ type Config struct {
 	// Default is github.com/goplus/.
 	C2goBase string
 
-	// Mod represents a gop.mod object (optional).
+	// Mod represents a Go+ module (optional).
 	Mod *gopmod.Module
 }
 
@@ -111,6 +114,9 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 	gopfs := make(map[string]*ast.File)
 	for _, goFile := range goFiles {
 		f := fset.File(goFile.Pos())
+		if f == nil {
+			continue
+		}
 		file := f.Name()
 		fname := filepath.Base(file)
 		if strings.HasPrefix(fname, "gop_autogen") {
@@ -121,6 +127,9 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 	}
 	for _, gopFile := range gopFiles {
 		f := fset.File(gopFile.Pos())
+		if f == nil {
+			continue
+		}
 		gopfs[f.Name()] = gopFile
 	}
 	if debugVerbose {
@@ -138,9 +147,11 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 	_, err = cl.NewPackage(pkgTypes.Path(), pkg, &cl.Config{
 		Types:          pkgTypes,
 		Fset:           fset,
+		Context:        opts.Context,
 		C2goBase:       opts.C2goBase,
 		LookupPub:      c2go.LookupPub(mod),
 		LookupClass:    mod.LookupClass,
+		IsPkgtStandard: mod.IsPkgtStandard,
 		Importer:       newImporter(conf.Importer, mod, nil, fset),
 		Recorder:       gopRecorder{p.gopInfo},
 		NoFileLine:     true,

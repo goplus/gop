@@ -45,7 +45,7 @@ var (
 
 func init() {
 	gox.SetDebug(gox.DbgFlagAll)
-	cl.SetDebug(cl.DbgFlagAll)
+	cl.SetDebug(cl.DbgFlagAll | cl.FlagNoMarkAutogen)
 	gblFset = token.NewFileSet()
 	imp := gop.NewImporter(nil, &env.Gop{Root: gopRootDir, Version: "1.0"}, gblFset)
 	gblConf = &cl.Config{
@@ -153,184 +153,6 @@ func Ls(args ...string) {
 
 ls
 `, `
-`)
-}
-
-func TestFileOpen(t *testing.T) {
-	gopClTest(t, `
-for line <- open("foo.txt")! {
-	println line
-}
-`, `package main
-
-import (
-	"fmt"
-	"os"
-	"github.com/goplus/gop/builtin/iox"
-	"github.com/qiniu/x/errors"
-)
-
-func main() {
-	for _gop_it := iox.EnumLines(func() (_gop_ret *os.File) {
-		var _gop_err error
-		_gop_ret, _gop_err = os.Open("foo.txt")
-		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "open(\"foo.txt\")", "/foo/bar.gop", 2, "main.main")
-			panic(_gop_err)
-		}
-		return
-	}()); ; {
-		var _gop_ok bool
-		line, _gop_ok := _gop_it.Next()
-		if !_gop_ok {
-			break
-		}
-		fmt.Println(line)
-	}
-}
-`)
-}
-
-func TestFileEnumLines(t *testing.T) {
-	gopClTest(t, `
-import "os"
-
-for line <- os.Stdin {
-	println line
-}
-`, `package main
-
-import (
-	"fmt"
-	"os"
-	"github.com/goplus/gop/builtin/iox"
-)
-
-func main() {
-	for _gop_it := iox.EnumLines(os.Stdin); ; {
-		var _gop_ok bool
-		line, _gop_ok := _gop_it.Next()
-		if !_gop_ok {
-			break
-		}
-		fmt.Println(line)
-	}
-}
-`)
-}
-
-func TestIoxLines(t *testing.T) {
-	gopClTest(t, `
-import "io"
-
-var r io.Reader
-
-for line <- lines(r) {
-	println line
-}
-`, `package main
-
-import (
-	"fmt"
-	"github.com/goplus/gop/builtin/iox"
-	"io"
-)
-
-var r io.Reader
-
-func main() {
-	for _gop_it := iox.Lines(r).Gop_Enum(); ; {
-		var _gop_ok bool
-		line, _gop_ok := _gop_it.Next()
-		if !_gop_ok {
-			break
-		}
-		fmt.Println(line)
-	}
-}
-`)
-}
-
-func TestMixedGo(t *testing.T) {
-	gopMixedClTest(t, "main", `package main
-
-import "strconv"
-
-const n = 10
-
-func f(v int) string {
-	return strconv.Itoa(v)
-}
-
-type foo struct {
-	v int
-}
-
-func (a foo) _() {
-}
-
-func (a foo) Str() string {
-	return f(a.v)
-}
-
-func (a *foo) Bar() int {
-	return 0
-}
-
-type foo2 = foo
-type foo3 foo2
-`, `
-var a [n]int
-var b string = f(n)
-var c foo2
-var d int = c.v
-var e = foo3{}
-var x string = c.str
-`, `package main
-
-var a [10]int
-var b string = f(n)
-var c foo
-var d int = c.v
-var e = foo3{}
-var x string = c.Str()
-`, true)
-	gopMixedClTest(t, "main", `package main
-type Point struct {
-	X int
-	Y int
-}
-`, `
-type T struct{}
-println(&T{},&Point{10,20})
-`, `package main
-
-import "fmt"
-
-type T struct {
-}
-
-func main() {
-	fmt.Println(&T{}, &Point{10, 20})
-}
-`, false)
-}
-
-func Test_RangeExpressionIf_Issue1243(t *testing.T) {
-	gopClTest(t, `
-for i <- :10, i%3 == 0 {
-	println i
-}`, `package main
-
-import "fmt"
-
-func main() {
-	for i := 0; i < 10; i += 1 {
-		if i%3 == 0 {
-			fmt.Println(i)
-		}
-	}
-}
 `)
 }
 
@@ -1474,9 +1296,9 @@ func foo(script string) {
 
 import (
 	"fmt"
+	"github.com/goplus/gop/ast/gopq"
 	"github.com/goplus/gop/ast/goptest"
 	"github.com/qiniu/x/errors"
-	"github.com/goplus/gop/ast/gopq"
 )
 
 func foo(script string) {
@@ -1508,9 +1330,9 @@ func foo(script string) {
 
 import (
 	"fmt"
+	"github.com/goplus/gop/ast/gopq"
 	"github.com/goplus/gop/ast/goptest"
 	"github.com/qiniu/x/errors"
-	"github.com/goplus/gop/ast/gopq"
 )
 
 func foo(script string) {
@@ -1539,8 +1361,8 @@ func add(x, y string) (int, error) {
 `, `package main
 
 import (
-	"strconv"
 	"github.com/qiniu/x/errors"
+	"strconv"
 )
 
 func add(x string, y string) (int, error) {
@@ -1713,7 +1535,7 @@ var z uint128 = x + y
 import "github.com/goplus/gop/builtin/ng"
 
 var x, y ng.Uint128
-var z ng.Uint128 = x.Gop_Add__1(y)
+var z ng.Uint128 = (ng.Uint128).Gop_Add__1(x, y)
 `)
 }
 
@@ -1726,7 +1548,7 @@ var z int128 = x + y
 import "github.com/goplus/gop/builtin/ng"
 
 var x, y ng.Int128
-var z ng.Int128 = x.Gop_Add__1(y)
+var z ng.Int128 = (ng.Int128).Gop_Add__1(x, y)
 `)
 }
 
@@ -1739,7 +1561,7 @@ var z bigint = x + y
 import "github.com/goplus/gop/builtin/ng"
 
 var x, y ng.Bigint
-var z ng.Bigint = x.Gop_Add(y)
+var z ng.Bigint = (ng.Bigint).Gop_Add(x, y)
 `)
 }
 
@@ -1821,8 +1643,8 @@ import (
 )
 
 var x = ng.Bigrat_Init__2(big.NewRat(7, 2))
-var y = x.Gop_Add(ng.Bigrat_Init__0(100))
-var z = ng.Bigrat_Init__0(100) + y
+var y = (ng.Bigrat).Gop_Add(x, ng.Bigrat_Init__0(100))
+var z = (ng.Bigrat).Gop_Add(ng.Bigrat_Init__0(100), y)
 `)
 }
 
@@ -2933,71 +2755,6 @@ func (m M) Foo() {
 func (M) Bar() {
 	fmt.Println("bar")
 }
-`)
-}
-
-func TestOverloadOp(t *testing.T) {
-	gopClTest(t, `
-type foo struct {
-}
-
-func (a *foo) + (b *foo) *foo {
-	println("a + b")
-	return &foo{}
-}
-
-func (a foo) - (b foo) foo {
-	println("a - b")
-	return foo{}
-}
-
-func -(a foo) {
-	println("-a")
-}
-
-func ++(a foo) {
-	println("a++")
-}
-
-func (a foo) != (b foo) bool{
-	println("a!=b")	
-	return true
-}
-
-var a, b foo
-var c = a - b
-var d = -a       // TODO: -a have no return value!
-var e = a!=b
-`, `package main
-
-import "fmt"
-
-type foo struct {
-}
-
-func (a *foo) Gop_Add(b *foo) *foo {
-	fmt.Println("a + b")
-	return &foo{}
-}
-func (a foo) Gop_Sub(b foo) foo {
-	fmt.Println("a - b")
-	return foo{}
-}
-func (a foo) Gop_NE(b foo) bool {
-	fmt.Println("a!=b")
-	return true
-}
-func (a foo) Gop_Neg() {
-	fmt.Println("-a")
-}
-func (a foo) Gop_Inc() {
-	fmt.Println("a++")
-}
-
-var a, b foo
-var c = a.Gop_Sub(b)
-var d = a.Gop_Neg()
-var e = a.Gop_NE(b)
 `)
 }
 
@@ -4939,9 +4696,9 @@ var e = a!=b
 `, `package main
 
 var a, b foo
-var c = a.Gop_Sub(b)
+var c = (foo).Gop_Sub(a, b)
 var d = a.Gop_Neg()
-var e = a.Gop_NE(b)
+var e = (foo).Gop_NE(a, b)
 `)
 }
 
@@ -5000,11 +4757,11 @@ var b int
 var c float64
 
 func main() {
-	_ = a.Gop_Add__0(b)
-	_ = a.Gop_Add__0(100)
-	_ = a.Gop_Add__1(c)
-	_ = Vector3_Init__0(100) + a
-	_ = Vector3_Cast__0(b).Gop_Add__2(a)
+	_ = (Vector3).Gop_Add__0(a, b)
+	_ = (Vector3).Gop_Add__0(a, 100)
+	_ = (Vector3).Gop_Add__1(a, c)
+	_ = (Vector3).Gop_Add__2(Vector3_Init__0(100), a)
+	_ = (Vector3).Gop_Add__2(Vector3_Cast__0(b), a)
 	_ = b + a.Gop_Rcast__0()
 	a.Gop_AddAssign(Vector3_Init__0(b))
 	a.Gop_AddAssign(Vector3_Init__1(c))
@@ -5109,6 +4866,73 @@ func main() {
 	var n N
 	n.Test__0()
 	n.Test__1(100)
+}
+`)
+}
+
+func TestOverloadNamed(t *testing.T) {
+	gopClTest(t, `
+import "github.com/goplus/gop/cl/internal/overload/bar"
+
+var a bar.Var[int]
+var b bar.Var[bar.M]
+c := bar.Var(string)
+d := bar.Var(bar.M)
+`, `package main
+
+import "github.com/goplus/gop/cl/internal/overload/bar"
+
+var a bar.Var__0[int]
+var b bar.Var__1[map[string]any]
+
+func main() {
+	c := bar.Gopx_Var_Cast__0[string]()
+	d := bar.Gopx_Var_Cast__1[map[string]any]()
+}
+`)
+}
+
+func TestMixedOverloadNamed(t *testing.T) {
+	gopMixedClTest(t, "main", `package main
+
+const GopPackage = true
+
+type M = map[string]any
+
+type basetype interface {
+	string | int | bool | float64
+}
+
+type Var__0[T basetype] struct {
+	val T
+}
+
+type Var__1[T map[string]any] struct {
+	val T
+}
+
+func Gopx_Var_Cast__0[T basetype]() *Var__0[T] {
+	return new(Var__0[T])
+}
+
+func Gopx_Var_Cast__1[T map[string]any]() *Var__1[T] {
+	return new(Var__1[T])
+}
+`, `
+var a Var[int]
+var b Var[M]
+c := Var(string)
+d := Var(M)
+`, `package main
+
+var a Var__0[int]
+var b Var__1[map[string]interface {
+}]
+
+func main() {
+	c := Gopx_Var_Cast__0[string]()
+	d := Gopx_Var_Cast__1[map[string]interface {
+	}]()
 }
 `)
 }

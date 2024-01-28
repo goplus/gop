@@ -48,10 +48,14 @@ const (
 
 // -----------------------------------------------------------------------------
 
+// GenGo generates gop_autogen.go for a Go+ package directory.
+// if conf != nil && conf.Context == nil, it will be set with `gox.NewContext()`.
 func GenGo(dir string, conf *Config, genTestPkg bool) (string, bool, error) {
 	return GenGoEx(dir, conf, genTestPkg, 0)
 }
 
+// GenGoEx generates gop_autogen.go for a Go+ package directory.
+// if conf != nil && conf.Context == nil, it will be set with `gox.NewContext()`.
 func GenGoEx(dir string, conf *Config, genTestPkg bool, flags GenFlags) (string, bool, error) {
 	recursively := strings.HasSuffix(dir, "/...")
 	if recursively {
@@ -61,6 +65,9 @@ func GenGoEx(dir string, conf *Config, genTestPkg bool, flags GenFlags) (string,
 }
 
 func genGoDir(dir string, conf *Config, genTestPkg, recursively bool, flags GenFlags) (err error) {
+	if conf == nil {
+		conf = new(Config)
+	}
 	if recursively {
 		var (
 			list errors.List
@@ -201,6 +208,8 @@ const (
 	modReadonly = 0555
 )
 
+// GenGoPkgPath generates gop_autogen.go for a Go+ package.
+// if conf != nil && conf.Context == nil, it will be set with `gox.NewContext()`.
 func GenGoPkgPath(workDir, pkgPath string, conf *Config, allowExtern bool) (localDir string, recursively bool, err error) {
 	return GenGoPkgPathEx(workDir, pkgPath, conf, allowExtern, 0)
 }
@@ -218,6 +227,8 @@ func remotePkgPath(pkgPath string, conf *Config, recursively bool, flags GenFlag
 	return
 }
 
+// GenGoPkgPathEx generates gop_autogen.go for a Go+ package.
+// if conf != nil && conf.Context == nil, it will be set with `gox.NewContext()`.
 func GenGoPkgPathEx(workDir, pkgPath string, conf *Config, allowExtern bool, flags GenFlags) (localDir string, recursively bool, err error) {
 	recursively = strings.HasSuffix(pkgPath, "/...")
 	if recursively {
@@ -259,7 +270,12 @@ func remotePkgPathDo(pkgPath string, doSth func(pkgDir, modDir string), onErr fu
 
 // -----------------------------------------------------------------------------
 
+// GenGoFiles generates gop_autogen.go for specified Go+ files.
+// if conf != nil && conf.Context == nil, it will be set with `gox.NewContext()`.
 func GenGoFiles(autogen string, files []string, conf *Config) (result []string, err error) {
+	if conf == nil {
+		conf = new(Config)
+	}
 	if autogen == "" {
 		autogen = "gop_autogen.go"
 		if len(files) == 1 {

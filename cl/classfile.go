@@ -20,6 +20,7 @@ import (
 	goast "go/ast"
 	"go/constant"
 	"go/types"
+	"log"
 	"path/filepath"
 	"strings"
 
@@ -31,19 +32,27 @@ import (
 
 // -----------------------------------------------------------------------------
 
-type gmxSettings struct {
-	gameClass  string
-	game       gox.Ref
-	sprite     map[string]gox.Ref
+type gmxClass struct {
+	tname string // class type
+	ext   string
+	proj  *gmxProject
+}
+
+type gmxProject struct {
+	gameClass  string             // <gmtype>.gmx
+	game       gox.Ref            // Game
+	sprite     map[string]gox.Ref // .spx => Sprite
+	sptypes    []string           // <sptype>.spx
 	scheds     []string
 	schedStmts []goast.Stmt // nil or len(scheds) == 2 (delayload)
-	pkgImps    []*gox.PkgRef
+	pkgImps    []gox.PkgRef
 	pkgPaths   []string
 	hasScheds  bool
 	gameIsPtr  bool
+	isTest     bool
 }
 
-func (p *gmxSettings) getScheds(cb *gox.CodeBuilder) []goast.Stmt {
+func (p *gmxProject) getScheds(cb *gox.CodeBuilder) []goast.Stmt {
 	if p == nil || !p.hasScheds {
 		return nil
 	}
@@ -60,7 +69,7 @@ func (p *gmxSettings) getScheds(cb *gox.CodeBuilder) []goast.Stmt {
 	return p.schedStmts
 }
 
-func classNameAndExt(file string) (name, ext string) {
+func ClassNameAndExt(file string) (name, ext string) {
 	fname := filepath.Base(file)
 	name, ext = modfile.SplitFname(fname)
 	if idx := strings.Index(name, "."); idx > 0 {
@@ -69,45 +78,59 @@ func classNameAndExt(file string) (name, ext string) {
 	return
 }
 
-func newGmx(ctx *pkgCtx, pkg *gox.Package, file string, f *ast.File, conf *Config) *gmxSettings {
-	fname := filepath.Base(file)
-	ext := modfile.ClassExt(fname)
+func isGoxTestFile(ext string) bool {
+	return strings.HasSuffix(ext, "test.gox")
+}
+
+func loadClass(ctx *pkgCtx, pkg *gox.Package, file string, f *ast.File, conf *Config) *gmxProject {
+	tname, ext := ClassNameAndExt(file)
 	gt, ok := conf.LookupClass(ext)
 	if !ok {
 		panic("TODO: class not found")
 	}
-	var name string
-	if f.IsProj {
-		_, name = filepath.Split(file)
-		if idx := strings.Index(name, "."); idx > 0 {
-			name = name[:idx]
-			if name == "main" {
-				name = gt.Class
-			}
+	p, ok := ctx.projs[gt.Ext]
+	if !ok {
+		pkgPaths := gt.PkgPaths
+		p = &gmxProject{pkgPaths: pkgPaths}
+		ctx.projs[gt.Ext] = p
+
+		p.pkgImps = make([]gox.PkgRef, len(pkgPaths))
+		for i, pkgPath := range pkgPaths {
+			p.pkgImps[i] = pkg.Import(pkgPath)
+		}
+
+		spx := p.pkgImps[0]
+		if gt.Class != "" {
+			p.game, p.gameIsPtr = spxRef(spx, gt.Class)
+		}
+		p.sprite = make(map[string]types.Object)
+		for _, v := range gt.Works {
+			obj, _ := spxRef(spx, v.Class)
+			p.sprite[v.Ext] = obj
+		}
+		if x := getStringConst(spx, "Gop_sched"); x != "" {
+			p.scheds, p.hasScheds = strings.SplitN(x, ",", 2), true
 		}
 	}
-	pkgPaths := gt.PkgPaths
-	p := &gmxSettings{gameClass: name, pkgPaths: pkgPaths}
-	p.pkgImps = make([]*gox.PkgRef, len(pkgPaths))
-	for i, pkgPath := range pkgPaths {
-		p.pkgImps[i] = pkg.Import(pkgPath)
+	if f.IsProj {
+		if tname == "main" {
+			tname = gt.Class
+		}
+		if p.gameClass != "" {
+			log.Panicln("multiple project files found:", tname, p.gameClass)
+		}
+		p.gameClass = tname
+	} else {
+		p.sptypes = append(p.sptypes, tname)
 	}
-	spx := p.pkgImps[0]
-	if gt.Class != "" {
-		p.game, p.gameIsPtr = spxRef(spx, gt.Class)
-	}
-	p.sprite = make(map[string]types.Object)
-	for _, v := range gt.Works {
-		obj, _ := spxRef(spx, v.Class)
-		p.sprite[v.Ext] = obj
-	}
-	if x := getStringConst(spx, "Gop_sched"); x != "" {
-		p.scheds, p.hasScheds = strings.SplitN(x, ",", 2), true
+	ctx.classes[f] = gmxClass{tname, ext, p}
+	if debugLoad {
+		log.Println("==> InitClass", tname, "isProj:", f.IsProj)
 	}
 	return p
 }
 
-func spxLookup(pkgImps []*gox.PkgRef, name string) gox.Ref {
+func spxLookup(pkgImps []gox.PkgRef, name string) gox.Ref {
 	for _, pkg := range pkgImps {
 		if o := pkg.TryRef(name); o != nil {
 			return o
@@ -116,7 +139,7 @@ func spxLookup(pkgImps []*gox.PkgRef, name string) gox.Ref {
 	panic("spxLookup: symbol not found - " + name)
 }
 
-func spxTryRef(spx *gox.PkgRef, typ string) (obj types.Object, isPtr bool) {
+func spxTryRef(spx gox.PkgRef, typ string) (obj types.Object, isPtr bool) {
 	if strings.HasPrefix(typ, "*") {
 		typ, isPtr = typ[1:], true
 	}
@@ -124,7 +147,7 @@ func spxTryRef(spx *gox.PkgRef, typ string) (obj types.Object, isPtr bool) {
 	return
 }
 
-func spxRef(spx *gox.PkgRef, typ string) (obj gox.Ref, isPtr bool) {
+func spxRef(spx gox.PkgRef, typ string) (obj gox.Ref, isPtr bool) {
 	obj, isPtr = spxTryRef(spx, typ)
 	if obj == nil {
 		panic(spx.Path() + "." + typ + " not found")
@@ -132,7 +155,7 @@ func spxRef(spx *gox.PkgRef, typ string) (obj gox.Ref, isPtr bool) {
 	return
 }
 
-func getStringConst(spx *gox.PkgRef, name string) string {
+func getStringConst(spx gox.PkgRef, name string) string {
 	if o := spx.TryRef(name); o != nil {
 		if c, ok := o.(*types.Const); ok {
 			return constant.StringVal(c.Val())
@@ -155,8 +178,8 @@ func getFields(f *ast.File) []ast.Spec {
 }
 
 func setBodyHandler(ctx *blockCtx) {
-	if ctx.isClass { // in a Go+ class file
-		if scheds := ctx.getScheds(ctx.cb); scheds != nil {
+	if proj := ctx.proj; proj != nil { // in a Go+ class file
+		if scheds := proj.getScheds(ctx.cb); scheds != nil {
 			ctx.cb.SetBodyHandler(func(body *goast.BlockStmt, kind int) {
 				idx := 0
 				if len(body.List) == 0 {
@@ -168,14 +191,105 @@ func setBodyHandler(ctx *blockCtx) {
 	}
 }
 
-func gmxMainFunc(p *gox.Package, ctx *pkgCtx) {
-	if o := p.Types.Scope().Lookup(ctx.gameClass); o != nil && hasMethod(o, "MainEntry") {
-		// new(Game).Main()
-		p.NewFunc(nil, "main", nil, nil, false).BodyStart(p).
-			Val(p.Builtin().Ref("new")).Val(o).Call(1).
-			MemberVal("Main").Call(0).EndStmt().
-			End()
+const (
+	casePrefix = "case"
+)
+
+func testNameSuffix(testType string) string {
+	if c := testType[0]; c >= 'A' && c <= 'Z' {
+		return testType
 	}
+	return "_" + testType
+}
+
+func gmxTestFunc(pkg *gox.Package, testType string, isProj bool) {
+	if isProj {
+		genTestFunc(pkg, "TestMain", testType, "m", "M")
+	} else {
+		name := testNameSuffix(testType)
+		genTestFunc(pkg, "Test"+name, casePrefix+name, "t", "T")
+	}
+}
+
+func genTestFunc(pkg *gox.Package, name, testType, param, paramType string) {
+	testing := pkg.Import("testing")
+	objT := testing.Ref(paramType)
+	paramT := types.NewParam(token.NoPos, pkg.Types, param, types.NewPointer(objT.Type()))
+	params := types.NewTuple(paramT)
+
+	pkg.NewFunc(nil, name, params, nil, false).BodyStart(pkg).
+		Val(pkg.Builtin().Ref("new")).Val(pkg.Ref(testType)).Call(1).
+		MemberVal("TestMain").Val(paramT).Call(1).EndStmt().
+		End()
+}
+
+func gmxMainFunc(pkg *gox.Package, ctx *pkgCtx, noAutoGenMain bool) func() {
+	var proj *gmxProject
+	for _, v := range ctx.projs {
+		if v.isTest {
+			continue
+		} else if proj != nil {
+			return nil
+		}
+		proj = v
+	}
+	if proj != nil { // only one project file
+		scope := pkg.Types.Scope()
+		var o types.Object
+		if proj.gameClass != "" {
+			o = scope.Lookup(proj.gameClass)
+			if noAutoGenMain && o != nil && hasMethod(o, "MainEntry") {
+				noAutoGenMain = false
+			}
+		} else {
+			o = proj.game
+		}
+		if !noAutoGenMain && o != nil {
+			// new(Game).Main()
+			// new(Game).Main(workers...)
+			fn := pkg.NewFunc(nil, "main", nil, nil, false)
+			return func() {
+				new := pkg.Builtin().Ref("new")
+				cb := fn.BodyStart(pkg).Val(new).Val(o).Call(1).MemberVal("Main")
+
+				sig := cb.Get(-1).Type.(*types.Signature)
+				narg := gmxMainNarg(sig)
+				if narg > 0 {
+					narg = len(proj.sptypes)
+					for _, spt := range proj.sptypes {
+						sp := scope.Lookup(spt)
+						cb.Val(new).Val(sp).Call(1)
+					}
+				}
+
+				cb.Call(narg).EndStmt().End()
+			}
+		}
+	}
+	return nil
+}
+
+func gmxMainNarg(sig *types.Signature) int {
+	if fex, ok := gox.CheckFuncEx(sig); ok {
+		if trm, ok := fex.(*gox.TyTemplateRecvMethod); ok {
+			sig = trm.Func.Type().(*types.Signature)
+			return sig.Params().Len() - 1
+		}
+	}
+	return sig.Params().Len()
+}
+
+func hasMethod(o types.Object, name string) bool {
+	if obj, ok := o.(*types.TypeName); ok {
+		if t, ok := obj.Type().(*types.Named); ok {
+			for i, n := 0, t.NumMethods(); i < n; i++ {
+				if t.Method(i).Name() == name {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 // -----------------------------------------------------------------------------
