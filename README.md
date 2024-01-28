@@ -46,7 +46,7 @@ For more details, see [Quick Start](doc/docs.md).
 
 ## Go+ Classfiles
 
-Rob Pike once said that if he could only introduce one feature to Go, he would choose to introduce `interface` instead of `goroutine`. `classfile` is as important to Go+ as `interface` is to Go.
+Rob Pike once said that if he could only introduce one feature to Go, he would choose `interface` instead of `goroutine`. `classfile` is as important to Go+ as `interface` is to Go.
 
 In the design philosophy of Go+, we do not recommend `DSL` (Domain Specific Language). But `SDF` (Specific Domain Friendliness) is very important. The Go+ philosophy about `SDF` is:
 
@@ -55,7 +55,7 @@ Don't define a language for specific domain.
 Abstract domain knowledge for it.
 ```
 
-Go+ introduces `classfile` to abstract domain knowledge. See [Go+ classfiles](doc/classfile.md).
+Go+ introduces `classfile` to abstract domain knowledge. See [Go+ Classfiles](doc/classfile.md).
 
 
 ## Key Features of Go+
@@ -134,6 +134,14 @@ all.bat
 * [BetaGo](https://github.com/xushiwei/BetaGo)
 * [Gobang](https://github.com/xushiwei/Gobang)
 * [Dinosaur](https://github.com/xushiwei/Dinosaur)
+
+### HTTP Web Framework
+
+* [yap: Yet Another Go/Go+ HTTP Web Framework](https://github.com/goplus/yap)
+
+### HTTP Test
+
+* [yaptest: HTTP Test Framework](https://github.com/goplus/yap/tree/main/ytest)
 
 ### DevOps tools
 

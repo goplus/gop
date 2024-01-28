@@ -1,7 +1,7 @@
 Go+ Classfiles
 =====
 
-Rob Pike once said that if he could only introduce one feature to Go, he would choose to introduce `interface` instead of `goroutine`. `classfile` is as important to Go+ as `interface` is to Go.
+Rob Pike once said that if he could only introduce one feature to Go, he would choose `interface` instead of `goroutine`. `classfile` is as important to Go+ as `interface` is to Go.
 
 In the design philosophy of Go+, we do not recommend `DSL` (Domain Specific Language). But `SDF` (Specific Domain Friendliness) is very important. The Go+ philosophy about `SDF` is:
 
@@ -110,7 +110,7 @@ get "/p/:id", ctx => {
 run ":8080"
 ```
 
-### yaptest: HTTP Unit Test Framework
+### yaptest: HTTP Test Framework
 
 This classfile has the file suffix `_ytest.gox`.
 
