@@ -30,4 +30,5 @@ var c = a + b
 var d = a - b
 var e = -a       // TODO: -a have no return value!
 var f = a != b
+println f
 a++

@@ -25,3 +25,4 @@ func (foo).* = (
 var a, b foo
 var c = a * 10
 var d = a * b
+var e = 10 * a

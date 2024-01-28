@@ -79,9 +79,9 @@ func (a foo) Gop_Inc() {
 }
 
 var a, b foo
-var c = a.Gop_Sub(b)
+var c = (foo).Gop_Sub(a, b)
 var d = a.Gop_Neg()
-var e = a.Gop_NE(b)
+var e = (foo).Gop_NE(a, b)
 `)
 }
 
@@ -112,7 +112,7 @@ var a, b foo
 
 println a * 10
 println a * b
-// println 10 * a
+println 10 * a
 `, `package main
 
 import "fmt"
@@ -135,8 +135,9 @@ func intMulFoo(a int, b foo) (ret foo) {
 var a, b foo
 
 func main() {
-	fmt.Println(a.mulInt(10))
-	fmt.Println(a.mulFoo(b))
+	fmt.Println((foo).mulInt(a, 10))
+	fmt.Println((foo).mulFoo(a, b))
+	fmt.Println(intMulFoo(10, a))
 }
 `)
 }
