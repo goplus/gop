@@ -7,10 +7,11 @@ github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/
 github.com/goplus/c2go v0.7.20 h1:90HiO7tuX8hHfEnl7HZRmLsAPH9q2wsYIvHiJMpwtU8=
 github.com/goplus/c2go v0.7.20/go.mod h1:hToieb5V4BMY3c431DQ7DEg13JQ+q9qGmls4+GgymrA=
 github.com/goplus/gox v1.14.0/go.mod h1:G7Hz+cAOUyJyN9pPHrpqhfQPDUtiJNmoRVTwoaQ9nw0=
-github.com/goplus/gox v1.14.1-0.20240128095250-49986c435532 h1:uiTaxyc0x5xifrD+LAFk6V9F/lh7u4sGfK45vC6qH8U=
-github.com/goplus/gox v1.14.1-0.20240128095250-49986c435532/go.mod h1:G7Hz+cAOUyJyN9pPHrpqhfQPDUtiJNmoRVTwoaQ9nw0=
-github.com/goplus/mod v0.12.2 h1:5RHUdmXT5jlzOFUAfrx/5uSk4RTphFPFcCbRUt/AIBo=
+github.com/goplus/gox v1.14.1 h1:ppqY4xzwc6UaeProYf4pn5fMa4xSDe80PsSsBfCYZ3U=
+github.com/goplus/gox v1.14.1/go.mod h1:G7Hz+cAOUyJyN9pPHrpqhfQPDUtiJNmoRVTwoaQ9nw0=
 github.com/goplus/mod v0.12.2/go.mod h1:ZtlS9wHOcAVxZ/zq7WLdKVes1HG/8Yn3KNuWZGcpeTs=
+github.com/goplus/mod v0.12.3 h1:qLU5/F27CzUTQhCQRN1WruiCepUn5GdLKQTB41OsYfk=
+github.com/goplus/mod v0.12.3/go.mod h1:ZtlS9wHOcAVxZ/zq7WLdKVes1HG/8Yn3KNuWZGcpeTs=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=
 github.com/json-iterator/go v1.1.12/go.mod h1:e30LSqwooZae/UwlEbR2852Gd8hjQvJoHmT4TnhNGBo=
 github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 h1:ZqeYNhU3OHLH3mGKHDcjJRFFRrJa6eAM5H+CtDdOsPc=
