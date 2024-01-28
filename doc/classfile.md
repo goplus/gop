@@ -52,5 +52,61 @@ You don't need to define a series of `TestXXX` functions like Go, just write you
 If you want to run a subtest case, use `t.run`.
 
 
-### classfile: HTTP Web Framework
+### yap: Yet Another Go/Go+ HTTP Web Framework
+
+This classfile has the file suffix `_yap.gox`.
+
+Before using `yap`, you need to add it to `go.mod` by using `go get`:
+
+```sh
+go get github.com/goplus/yap@latest
+```
+
+Find `require github.com/goplus/yap` statement in `go.mod` and add `//gop:class` at the end of the line:
+
+```go.mod
+require github.com/goplus/yap v0.7.1 //gop:class
+```
+
+#### Router and Parameters
+
+demo in Go+ classfile ([hello_yap.gox](https://github.com/goplus/yap/blob/v0.7.2/demo/classfile_hello/hello_yap.gox)):
+
+```go
+get "/p/:id", ctx => {
+	ctx.json {
+		"id": ctx.param("id"),
+	}
+}
+handle "/", ctx => {
+	ctx.html `<html><body>Hello, <a href="/p/123">Yap</a>!</body></html>`
+}
+
+run ":8080"
+```
+
+#### Static files
+
+Static files server demo in Go+ classfile ([staticfile_yap.gox](https://github.com/goplus/yap/blob/v0.7.2/demo/classfile_static/staticfile_yap.gox)):
+
+```go
+static "/foo", FS("public")
+static "/"
+
+run ":8080"
+```
+
+#### YAP Template
+
+demo in Go+ classfile ([blog_yap.gox](https://github.com/goplus/yap/blob/v0.7.2/demo/classfile_blog/blog_yap.gox), [article_yap.html](https://github.com/goplus/yap/blob/v0.7.2/demo/classfile_blog/yap/article_yap.html)):
+
+```go
+get "/p/:id", ctx => {
+	ctx.yap "article", {
+		"id": ctx.param("id"),
+	}
+}
+
+run ":8080"
+```
 
