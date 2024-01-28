@@ -1,7 +1,7 @@
 Goodbye printf
 =====
 
-For professional programmers, printf is a very familiar function, and it can be found in basically every language. However, printf is one of the most difficult functions for beginners to master.
+For professional programmers, `printf` is a very familiar function, and it can be found in basically every language. However, `printf` is one of the most difficult functions for beginners to master.
 
 Unfortunately, formatting a piece of information and displaying it to the user is a very common operation, so one has to remember their usage. While finding its documentation over the Internet can somewhat ease the burden of using it every time, it's far from a pleasant experience.
 
