@@ -241,7 +241,7 @@ import (
 
 func main() {
 	a := ng.Bigrat_Init__2(big.NewRat(1, 2))
-	fmt.Println(a.Gop_Add(ng.Bigrat_Init__2(big.NewRat(1, 2))))
+	fmt.Println((ng.Bigrat).Gop_Add(a, ng.Bigrat_Init__2(big.NewRat(1, 2))))
 }
 `)
 }
