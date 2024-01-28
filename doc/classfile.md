@@ -28,10 +28,10 @@ func foo(v int) int {
 Then you can create a `foo_test.gox` file to test it (see [unit-test/foo_test.gox](testdata/unit-test/foo_test.gox)):
 
 ```go
-if v := foo(50); v == 100 {
-	t.log "test foo(50) ok"
+if v := foo(50); v != 100 {
+	t.error "foo(50) ret: ${v}"
 } else {
-	t.error "foo() ret: ${v}"
+	t.log "test foo(50) ok"
 }
 
 t.run "foo -10", t => {
