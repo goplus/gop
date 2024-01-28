@@ -40,7 +40,7 @@ println "$$" // $
 
 This is a bit like how you feel at the `*nix` command line, right? To be more like it, we introduced a new builtin `echo` as an alias for `println`:
 
-```
+```go
 age := 10
 echo "age = ${age}"
 ```
