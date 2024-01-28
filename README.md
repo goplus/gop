@@ -24,7 +24,7 @@
 
 </div>
 
-Our vision is to enable everyone to create production-level applications.
+Our vision is to **enable everyone to create production-level applications**.
 
 #### Easy to learn
 
