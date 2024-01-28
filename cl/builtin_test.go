@@ -56,9 +56,52 @@ func TestErrStringLit(t *testing.T) {
 func TestErrPreloadFile(t *testing.T) {
 	pkg := gox.NewPackage("", "foo", goxConf)
 	ctx := &blockCtx{pkgCtx: &pkgCtx{}}
-	func() {
+	t.Run("overloadName", func(t *testing.T) {
 		defer func() {
-			if e := recover(); e == nil || e != "TODO - OverloadFuncDecl\n" {
+			if e := recover(); e == nil || e != "TODO - can't overload operator ++\n" {
+				t.Fatal("TestErrPreloadFile:", e)
+			}
+		}()
+		overloadName(&ast.Ident{}, "++", true)
+	})
+	t.Run("checkOverloadFunc", func(t *testing.T) {
+		defer func() {
+			if e := recover(); e == nil || e != "TODO - cl.preloadFile OverloadFuncDecl: checkOverloadFunc\n" {
+				t.Fatal("TestErrPreloadFile:", e)
+			}
+		}()
+		checkOverloadFunc(&ast.OverloadFuncDecl{
+			Recv: &ast.FieldList{},
+		})
+	})
+	t.Run("checkOverloadMethod", func(t *testing.T) {
+		defer func() {
+			if e := recover(); e == nil || e != "TODO - cl.preloadFile OverloadFuncDecl: checkOverloadMethod\n" {
+				t.Fatal("TestErrPreloadFile:", e)
+			}
+		}()
+		checkOverloadMethod(&ast.OverloadFuncDecl{})
+	})
+	t.Run("checkOverloadMethodRecvType1", func(t *testing.T) {
+		defer func() {
+			if e := recover(); e == nil || e != "TODO - checkOverloadMethodRecvType: bar\n" {
+				t.Fatal("TestErrPreloadFile:", e)
+			}
+		}()
+		checkOverloadMethodRecvType(&ast.Ident{Name: "foo"}, &ast.Ident{Name: "bar"})
+	})
+	t.Run("checkOverloadMethodRecvType2", func(t *testing.T) {
+		defer func() {
+			if e := recover(); e == nil || e != "TODO - checkOverloadMethodRecvType: &{0 INT 123 <nil>}\n" {
+				t.Fatal("TestErrPreloadFile:", e)
+			}
+		}()
+		expr := &ast.BasicLit{Kind: token.INT, Value: "123"}
+		checkOverloadMethodRecvType(&ast.Ident{Name: "foo"}, expr)
+	})
+	t.Run("OverloadFuncDecl: invalid recv", func(t *testing.T) {
+		defer func() {
+			if e := recover(); e == nil || e != "TODO - cl.preloadFile OverloadFuncDecl: invalid recv\n" {
 				t.Fatal("TestErrPreloadFile:", e)
 			}
 		}()
@@ -68,12 +111,14 @@ func TestErrPreloadFile(t *testing.T) {
 				Funcs: []ast.Expr{
 					&ast.FuncLit{},
 				},
-				Operator: true,
+				Recv: &ast.FieldList{List: []*ast.Field{
+					{Type: &ast.StarExpr{}},
+				}},
 			},
 		}
 		preloadFile(pkg, ctx, "foo.gop", &ast.File{Decls: decls}, "", true)
-	}()
-	func() {
+	})
+	t.Run("OverloadFuncDecl: unknown func", func(t *testing.T) {
 		defer func() {
 			if e := recover(); e == nil || e != "TODO - cl.preloadFile OverloadFuncDecl: unknown func - *ast.BasicLit\n" {
 				t.Fatal("TestErrPreloadFile:", e)
@@ -89,8 +134,8 @@ func TestErrPreloadFile(t *testing.T) {
 			},
 		}
 		preloadFile(pkg, ctx, "foo.gop", &ast.File{Decls: decls}, "", true)
-	}()
-	func() {
+	})
+	t.Run("unknown decl", func(t *testing.T) {
 		defer func() {
 			if e := recover(); e == nil || e != "TODO - cl.preloadFile: unknown decl - *ast.BadDecl\n" {
 				t.Fatal("TestErrPreloadFile:", e)
@@ -100,7 +145,7 @@ func TestErrPreloadFile(t *testing.T) {
 			&ast.BadDecl{},
 		}
 		preloadFile(pkg, ctx, "foo.gop", &ast.File{Decls: decls}, "", true)
-	}()
+	})
 }
 
 func TestErrParseTypeEmbedName(t *testing.T) {

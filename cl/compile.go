@@ -340,15 +340,15 @@ func doInitMethods(ld *typeLoader) {
 
 type pkgCtx struct {
 	*nodeInterp
-	projs   map[string]*gmxProject // .gmx => project
-	classes map[*ast.File]gmxClass
-	fset    *token.FileSet
-	cpkgs   *cpackages.Importer
-	syms    map[string]loader
-	ovnames []string // names should load before initGopPkg
-	inits   []func()
-	tylds   []*typeLoader
-	errs    errors.List
+	projs    map[string]*gmxProject // .gmx => project
+	classes  map[*ast.File]gmxClass
+	fset     *token.FileSet
+	cpkgs    *cpackages.Importer
+	syms     map[string]loader
+	lbinames []any // names that should load before initGopPkg (can be string/func or *ast.Ident/type)
+	inits    []func()
+	tylds    []*typeLoader
+	errs     errors.List
 
 	generics map[string]bool // generic type record
 	idents   []*ast.Ident    // toType ident recored
@@ -644,8 +644,12 @@ func initGopPkg(ctx *pkgCtx, pkg *gox.Package, gopSyms map[string]bool) {
 			ctx.loadSymbol(name)
 		}
 	}
-	for _, name := range ctx.ovnames {
-		ctx.loadSymbol(name)
+	for _, lbi := range ctx.lbinames {
+		if name, ok := lbi.(string); ok {
+			ctx.loadSymbol(name)
+		} else {
+			ctx.loadType(lbi.(*ast.Ident).Name)
+		}
 	}
 	if pkg.Types.Scope().Lookup(gopPackage) == nil {
 		pkg.Types.Scope().Insert(types.NewConst(token.NoPos, pkg.Types, gopPackage, types.Typ[types.UntypedBool], constant.MakeBool(true)))
@@ -693,16 +697,6 @@ func loadFile(ctx *pkgCtx, f *ast.File) {
 					getTypeLoader(ctx, ctx.syms, token.NoPos, name).load()
 				}
 			}
-		case *ast.OverloadFuncDecl:
-			/* name := d.Name
-			for idx, fn := range d.Funcs {
-				switch expr := fn.(type) {
-				case *ast.FuncLit:
-					// ctx.loadSymbol(overloadFuncName(name.Name, idx))
-				default:
-					log.Panicf("TODO - cl.loadFile OverloadFuncDecl: unknown func - %T\n", expr)
-				}
-			} */
 		}
 	}
 }
@@ -1082,21 +1076,33 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, goFile
 				markSelector
 				markFuncLit
 			)
+			var recv *ast.Ident
+			if d.Recv != nil {
+				otyp, ok := d.Recv.List[0].Type.(*ast.Ident)
+				if !ok {
+					log.Panicln("TODO - cl.preloadFile OverloadFuncDecl: invalid recv")
+				}
+				recv = otyp
+			}
 			onames := make([]string, 0, 4)
 			mark := 0
 			name := d.Name
 			for idx, fn := range d.Funcs {
 				switch expr := fn.(type) {
 				case *ast.Ident:
+					checkOverloadFunc(d)
 					onames = append(onames, expr.Name)
-					ctx.ovnames = append(ctx.ovnames, expr.Name)
+					ctx.lbinames = append(ctx.lbinames, expr.Name)
 					mark |= markIdent
+				case *ast.SelectorExpr:
+					checkOverloadMethod(d)
+					checkOverloadMethodRecvType(recv, expr.X)
+					onames = append(onames, "."+expr.Sel.Name)
+					ctx.lbinames = append(ctx.lbinames, recv)
 				case *ast.FuncLit:
-					if d.Recv != nil || d.Operator {
-						log.Panicln("TODO - OverloadFuncDecl")
-					}
+					checkOverloadFunc(d)
 					name1 := overloadFuncName(name.Name, idx)
-					ctx.ovnames = append(ctx.ovnames, name1)
+					ctx.lbinames = append(ctx.lbinames, name1)
 					preloadFuncDecl(&ast.FuncDecl{
 						Doc:  d.Doc,
 						Name: &ast.Ident{NamePos: name.NamePos, Name: name1},
@@ -1109,7 +1115,7 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, goFile
 				}
 			}
 			if (mark & (markIdent | markSelector)) != 0 {
-				oname := overloadName(name.Name)
+				oname := overloadName(recv, name.Name, d.Operator)
 				oval := strings.Join(onames, ",")
 				preloadConst(&ast.GenDecl{
 					Doc: d.Doc,
@@ -1121,12 +1127,32 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, goFile
 						},
 					},
 				})
-				ctx.ovnames = append(ctx.ovnames, oname)
+				ctx.lbinames = append(ctx.lbinames, oname)
 			}
 
 		default:
 			log.Panicf("TODO - cl.preloadFile: unknown decl - %T\n", decl)
 		}
+	}
+}
+
+func checkOverloadFunc(d *ast.OverloadFuncDecl) {
+	if d.Recv != nil && !d.Operator {
+		log.Panicln("TODO - cl.preloadFile OverloadFuncDecl: checkOverloadFunc")
+	}
+}
+
+func checkOverloadMethod(d *ast.OverloadFuncDecl) {
+	if d.Recv == nil {
+		log.Panicln("TODO - cl.preloadFile OverloadFuncDecl: checkOverloadMethod")
+	}
+}
+
+func checkOverloadMethodRecvType(ot *ast.Ident, recv ast.Expr) {
+	rtyp, _ := getRecvType(recv)
+	rt, ok := rtyp.(*ast.Ident)
+	if !ok || ot.Name != rt.Name {
+		log.Panicln("TODO - checkOverloadMethodRecvType:", recv)
 	}
 }
 
@@ -1138,12 +1164,23 @@ func overloadFuncName(name string, idx int) string {
 	return name + "__" + indexTable[idx:idx+1]
 }
 
-func overloadName(name string) string {
-	prefix := "Gopo_"
-	if strings.ContainsRune(name, '_') {
-		prefix = "Gopo__"
+func overloadName(recv *ast.Ident, name string, isOp bool) string {
+	if isOp {
+		if oname, ok := binaryGopNames[name]; ok {
+			name = oname
+		} else {
+			log.Panicln("TODO - can't overload operator", name)
+		}
 	}
-	return prefix + name
+	sep := "_"
+	if strings.ContainsRune(name, '_') || (recv != nil && strings.ContainsRune(recv.Name, '_')) {
+		sep = "__"
+	}
+	typ := ""
+	if recv != nil {
+		typ = recv.Name + sep
+	}
+	return "Gopo" + sep + typ + name
 }
 
 func stringLit(val string) *ast.BasicLit {

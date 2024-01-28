@@ -1535,7 +1535,7 @@ var z uint128 = x + y
 import "github.com/goplus/gop/builtin/ng"
 
 var x, y ng.Uint128
-var z ng.Uint128 = x.Gop_Add__1(y)
+var z ng.Uint128 = (ng.Uint128).Gop_Add__1(x, y)
 `)
 }
 
@@ -1548,7 +1548,7 @@ var z int128 = x + y
 import "github.com/goplus/gop/builtin/ng"
 
 var x, y ng.Int128
-var z ng.Int128 = x.Gop_Add__1(y)
+var z ng.Int128 = (ng.Int128).Gop_Add__1(x, y)
 `)
 }
 
@@ -1561,7 +1561,7 @@ var z bigint = x + y
 import "github.com/goplus/gop/builtin/ng"
 
 var x, y ng.Bigint
-var z ng.Bigint = x.Gop_Add(y)
+var z ng.Bigint = (ng.Bigint).Gop_Add(x, y)
 `)
 }
 
@@ -1643,8 +1643,8 @@ import (
 )
 
 var x = ng.Bigrat_Init__2(big.NewRat(7, 2))
-var y = x.Gop_Add(ng.Bigrat_Init__0(100))
-var z = ng.Bigrat_Init__0(100) + y
+var y = (ng.Bigrat).Gop_Add(x, ng.Bigrat_Init__0(100))
+var z = (ng.Bigrat).Gop_Add(ng.Bigrat_Init__0(100), y)
 `)
 }
 
@@ -2755,71 +2755,6 @@ func (m M) Foo() {
 func (M) Bar() {
 	fmt.Println("bar")
 }
-`)
-}
-
-func TestOverloadOp(t *testing.T) {
-	gopClTest(t, `
-type foo struct {
-}
-
-func (a *foo) + (b *foo) *foo {
-	println("a + b")
-	return &foo{}
-}
-
-func (a foo) - (b foo) foo {
-	println("a - b")
-	return foo{}
-}
-
-func -(a foo) {
-	println("-a")
-}
-
-func ++(a foo) {
-	println("a++")
-}
-
-func (a foo) != (b foo) bool{
-	println("a!=b")	
-	return true
-}
-
-var a, b foo
-var c = a - b
-var d = -a       // TODO: -a have no return value!
-var e = a!=b
-`, `package main
-
-import "fmt"
-
-type foo struct {
-}
-
-func (a *foo) Gop_Add(b *foo) *foo {
-	fmt.Println("a + b")
-	return &foo{}
-}
-func (a foo) Gop_Sub(b foo) foo {
-	fmt.Println("a - b")
-	return foo{}
-}
-func (a foo) Gop_NE(b foo) bool {
-	fmt.Println("a!=b")
-	return true
-}
-func (a foo) Gop_Neg() {
-	fmt.Println("-a")
-}
-func (a foo) Gop_Inc() {
-	fmt.Println("a++")
-}
-
-var a, b foo
-var c = a.Gop_Sub(b)
-var d = a.Gop_Neg()
-var e = a.Gop_NE(b)
 `)
 }
 
@@ -4761,9 +4696,9 @@ var e = a!=b
 `, `package main
 
 var a, b foo
-var c = a.Gop_Sub(b)
+var c = (foo).Gop_Sub(a, b)
 var d = a.Gop_Neg()
-var e = a.Gop_NE(b)
+var e = (foo).Gop_NE(a, b)
 `)
 }
 
@@ -4822,11 +4757,11 @@ var b int
 var c float64
 
 func main() {
-	_ = a.Gop_Add__0(b)
-	_ = a.Gop_Add__0(100)
-	_ = a.Gop_Add__1(c)
-	_ = Vector3_Init__0(100) + a
-	_ = Vector3_Cast__0(b).Gop_Add__2(a)
+	_ = (Vector3).Gop_Add__0(a, b)
+	_ = (Vector3).Gop_Add__0(a, 100)
+	_ = (Vector3).Gop_Add__1(a, c)
+	_ = (Vector3).Gop_Add__2(Vector3_Init__0(100), a)
+	_ = (Vector3).Gop_Add__2(Vector3_Cast__0(b), a)
 	_ = b + a.Gop_Rcast__0()
 	a.Gop_AddAssign(Vector3_Init__0(b))
 	a.Gop_AddAssign(Vector3_Init__1(c))
