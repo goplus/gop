@@ -110,3 +110,60 @@ get "/p/:id", ctx => {
 run ":8080"
 ```
 
+### yaptest: HTTP Unit Test Framework
+
+This classfile has the file suffix `_ytest.gox`.
+
+```go
+host "https://example.com", "http://localhost:8080"
+testauth := oauth2("...")
+
+run "urlWithVar", => {
+	id := "123"
+	get "https://example.com/p/${id}"
+	ret
+	echo "code:", resp.code
+	echo "body:", resp.body
+}
+
+run "matchWithVar", => {
+	code := Var(int)
+	id := "123"
+	get "https://example.com/p/${id}"
+	ret code
+	echo "code:", code
+	match code, 200
+}
+
+run "postWithAuth", => {
+	id := "123"
+	title := "title"
+	author := "author"
+	post "https://example.com/p/${id}"
+	auth testauth
+	json {
+		"title":  title,
+		"author": author,
+	}
+	ret 200 // match resp.code, 200
+	echo "body:", resp.body
+}
+
+run "mathJsonObject", => {
+	title := Var(string)
+	author := Var(string)
+	id := "123"
+	get "https://example.com/p/${id}"
+	ret 200
+	json {
+		"title":  title,
+		"author": author,
+	}
+	echo "title:", title
+	echo "author:", author
+}
+```
+
+### spx: A Go+ 2D Game Engine for STEM education
+
+This classfile has the file suffix `.spx`.
