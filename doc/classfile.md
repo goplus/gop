@@ -72,7 +72,7 @@ require github.com/goplus/yap v0.7.2 //gop:class
 
 demo in Go+ classfile ([hello_yap.gox](https://github.com/goplus/yap/blob/v0.7.2/demo/classfile_hello/hello_yap.gox)):
 
-```go
+```coffee
 get "/p/:id", ctx => {
 	ctx.json {
 		"id": ctx.param("id"),
@@ -89,7 +89,7 @@ run ":8080"
 
 Static files server demo in Go+ classfile ([staticfile_yap.gox](https://github.com/goplus/yap/blob/v0.7.2/demo/classfile_static/staticfile_yap.gox)):
 
-```go
+```coffee
 static "/foo", FS("public")
 static "/"
 
@@ -100,7 +100,7 @@ run ":8080"
 
 demo in Go+ classfile ([blog_yap.gox](https://github.com/goplus/yap/blob/v0.7.2/demo/classfile_blog/blog_yap.gox), [article_yap.html](https://github.com/goplus/yap/blob/v0.7.2/demo/classfile_blog/yap/article_yap.html)):
 
-```go
+```coffee
 get "/p/:id", ctx => {
 	ctx.yap "article", {
 		"id": ctx.param("id"),
@@ -122,7 +122,7 @@ require github.com/goplus/yap v0.7.2 //gop:class
 
 Then you can create a `example_ytest.gox` file to test your HTTP server:
 
-```go
+```coffee
 host "https://example.com", "http://localhost:8080"
 testauth := oauth2("...")
 
