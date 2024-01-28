@@ -24,6 +24,17 @@
 
 </div>
 
+Our vision is to enable everyone to create production-level applications.
+
+#### Easy to learn
+
+* Simple and easy to understand
+* Smaller syntax set than Python in best practices
+
+#### Ready for large projects
+
+* Derived from Go and easy to build large projects from its good engineering foundation
+
 The Go+ programming language is designed for engineering, STEM education, and data science.
 
 * **For engineering**: working in the simplest language that can be mastered by children.
@@ -33,13 +44,27 @@ The Go+ programming language is designed for engineering, STEM education, and da
 For more details, see [Quick Start](doc/docs.md).
 
 
+## Go+ Classfiles
+
+Rob Pike once said that if he could only introduce one feature to Go, he would choose to introduce `interface` instead of `goroutine`. `classfile` is as important to Go+ as `interface` is to Go.
+
+In the design philosophy of Go+, we do not recommend `DSL` (Domain Specific Language). But `SDF` (Specific Domain Friendliness) is very important. The Go+ philosophy about `SDF` is:
+
+```
+Don't define a language for specific domain.
+Abstract domain knowledge for it.
+```
+
+Go+ introduces `classfile` to abstract domain knowledge. See [Go+ classfiles](doc/classfile.md).
+
+
 ## Key Features of Go+
 
 * A static typed language.
 * The simplest engineering language that can be mastered by children (script-like style).
 * Performance: as fast as Go (Go+'s main backend compiles to human-readable Go).
 * Fully compatible with [Go](https://github.com/golang/go) and can mix Go/Go+ code in the same package (see [Go/Go+ hybrid programming](doc/docs.md#gogo-hybrid-programming)).
-* No DSL (Domain Specific Language) support, but it's Specific Domain Friendly (see [DSL vs. SDF](doc/dsl-vs-sdf.md)).
+* No DSL (Domain Specific Language) support, but SDF (Specific Domain Friendliness) (see [Go+ classfiles](doc/classfile.md)).
 * Support Go code generation (main backend) and [bytecode backend](https://github.com/goplus/igop) (REPL: see [iGo+](https://repl.goplus.org/)).
 * [Simplest way to interaction with C](doc/docs.md#calling-c-from-go) (cgo is supported but not recommended).
 * [Powerful built-in data processing capabilities](doc/docs.md#data-processing).
