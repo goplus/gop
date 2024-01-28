@@ -21,7 +21,7 @@ printf "age = %d\n", age
 
 Here `%d` means to format an integer value and `\n` means a newline.
 
-To simplify format information in most cases, Go+ introduces `${expr}` expressions in string literals. For above example, you can replace `age.string` to "${age}":
+To simplify format information in most cases, Go+ introduces `${expr}` expressions in string literals. For above example, you can replace `age.string` to `"${age}"`:
 
 ```go
 age := 10
