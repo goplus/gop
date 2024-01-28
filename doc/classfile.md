@@ -153,11 +153,11 @@ run "postWithAuth", => {
 		"title":  title,
 		"author": author,
 	}
-	ret 200 // match resp.code, 200
+	ret 200 # match resp.code, 200
 	echo "body:", resp.body
 }
 
-run "mathJsonObject", => {
+run "matchJsonObject", => {
 	title := Var(string)
 	author := Var(string)
 	id := "123"
