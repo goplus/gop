@@ -75,12 +75,6 @@ Go+ introduces `classfile` to abstract domain knowledge. See [Go+ Classfiles](do
 ### on Windows
 
 ```sh
-winget install goplus
-```
-
-Or
-
-```sh
 winget install goplus.gop
 ```
 
@@ -99,7 +93,7 @@ sudo bash -c 'echo -e "[goplus]\nname=Go+ Repo\nbaseurl=https://pkgs.goplus.org/
 sudo yum install gop
 ```
 
-### on macOS/Linux(Homebrew)
+### on macOS/Linux (Homebrew)
 
 Install via [brew](https://brew.sh/)
 
