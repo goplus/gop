@@ -49,6 +49,7 @@ jobs:
         args: release --clean -p 4
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
         WINGET_PKGS_PRIVATE_KEY: ${{ secrets.WINGET_PKGS_PRIVATE_KEY }}
 
     - name: Upload deb/rpm to Fury.io
@@ -56,7 +57,7 @@ jobs:
         for file in dist/*.{deb,rpm}
         do
           echo "Uploading $file to Fury.io"
-          CODE=`curl --write-out '%{http_code}' --output /dev/null -sS -F package=@$file https://$FURY_TOKEN@push.fury.io/goplus/`
+          CODE=`curl --write-out '%{http_code}' --output /dev/null -sS -F package=@$file https://$FURY_TOKEN@push.fury.io/$GITHUB_REPOSITORY_OWNER/`
           if [ "$CODE" != "200" ]; then
             echo "Upload failed with code $CODE"
             exit 1
@@ -64,3 +65,4 @@ jobs:
         done
       env:
         FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
+        GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
