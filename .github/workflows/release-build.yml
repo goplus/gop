@@ -56,7 +56,11 @@ jobs:
         for file in dist/*.{deb,rpm}
         do
           echo "Uploading $file to Fury.io"
-          curl -sS -F package=@$file https://$FURY_TOKEN@push.fury.io/goplus/
+          CODE=`curl --write-out '%{http_code}' --output /dev/null -sS -F package=@$file https://$FURY_TOKEN@push.fury.io/goplus/`
+          if [ "$CODE" != "200" ]; then
+            echo "Upload failed with code $CODE"
+            exit 1
+          fi
         done
       env:
         FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
