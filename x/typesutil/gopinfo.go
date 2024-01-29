@@ -19,7 +19,10 @@ package typesutil
 import (
 	"go/types"
 
+	_ "unsafe"
+
 	"github.com/goplus/gop/ast"
+	"github.com/goplus/gox"
 	"github.com/qiniu/x/log"
 )
 
@@ -128,6 +131,9 @@ type Info struct {
 	// in source order. Variables without an initialization expression do not
 	// appear in this list.
 	// InitOrder []*Initializer
+
+	// Overloads maps identifiers to the overload objects.
+	Overloads map[*ast.Ident][]types.Object
 }
 
 // ObjectOf returns the object denoted by the specified id,
@@ -226,6 +232,9 @@ func (info gopRecorder) Def(id *ast.Ident, obj types.Object) {
 	}
 }
 
+//go:linkname checkSigFuncEx github.com/goplus/gox.checkSigFuncEx
+func checkSigFuncEx(sig *types.Signature) (types.Type, bool)
+
 // Use maps identifiers to the objects they denote.
 //
 // For an embedded field, Use maps the *TypeName it denotes.
@@ -237,6 +246,35 @@ func (info gopRecorder) Use(id *ast.Ident, obj types.Object) {
 	}
 	if info.Uses != nil {
 		info.Uses[id] = obj
+	}
+	if info.Overloads != nil {
+		if sig, ok := obj.Type().(*types.Signature); ok {
+			if ext, ok := checkSigFuncEx(sig); ok {
+				if debugVerbose {
+					log.Println("==> Overloads:", id, ext)
+				}
+				switch t := ext.(type) {
+				case *gox.TyOverloadFunc:
+					info.Overloads[id] = t.Funcs
+				case *gox.TyOverloadMethod:
+					info.Overloads[id] = t.Methods
+				case *gox.TyTemplateRecvMethod:
+					if tsig, ok := t.Func.Type().(*types.Signature); ok {
+						if ex, ok := checkSigFuncEx(tsig); ok {
+							if t, ok := ex.(*gox.TyOverloadFunc); ok {
+								info.Overloads[id] = t.Funcs
+							}
+						}
+					}
+				case *gox.TyOverloadNamed:
+					objs := make([]types.Object, len(t.Types))
+					for i, typ := range t.Types {
+						objs[i] = typ.Obj()
+					}
+					info.Overloads[id] = objs
+				}
+			}
+		}
 	}
 }
 

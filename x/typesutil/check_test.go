@@ -78,6 +78,7 @@ func checkInfo(fset *token.FileSet, files []*ast.File, gofiles []*goast.File) (*
 		Implicits:  make(map[ast.Node]types.Object),
 		Selections: make(map[*ast.SelectorExpr]*types.Selection),
 		Scopes:     make(map[ast.Node]*types.Scope),
+		Overloads:  make(map[*ast.Ident][]types.Object),
 	}
 	ginfo := &types.Info{
 		Types:      make(map[goast.Expr]types.TypeAndValue),

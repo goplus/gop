@@ -55,6 +55,7 @@ func parserMixedSource(fset *token.FileSet, src string, gosrc string) (*typesuti
 		Implicits:  make(map[ast.Node]types.Object),
 		Selections: make(map[*ast.SelectorExpr]*types.Selection),
 		Scopes:     make(map[ast.Node]*types.Scope),
+		Overloads:  make(map[*ast.Ident][]types.Object),
 	}
 	ginfo := &types.Info{
 		Types:      make(map[goast.Expr]types.TypeAndValue),
@@ -91,6 +92,7 @@ func parserSource(fset *token.FileSet, filename string, src interface{}, mode pa
 		Implicits:  make(map[ast.Node]types.Object),
 		Selections: make(map[*ast.SelectorExpr]*types.Selection),
 		Scopes:     make(map[ast.Node]*types.Scope),
+		Overloads:  make(map[*ast.Ident][]types.Object),
 	}
 	check := typesutil.NewChecker(conf, chkOpts, nil, info)
 	err = check.Files(nil, []*ast.File{f})
@@ -1494,7 +1496,6 @@ func Gopx_Var_Cast__1[T map[string]any]() *Var__1[T] {
 }
 
 func TestMixedRawNamed(t *testing.T) {
-	//gox.SetDebug(gox.DbgFlagAll)
 	testGopInfo(t, `
 var a Var__0[int]
 var b Var__1[M]
