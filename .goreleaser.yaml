@@ -96,7 +96,7 @@ winget:
     license: Apache-2.0
     skip_upload: false
     release_notes: "{{.Changelog}}"
-    release_notes_url: "https://github.com/goplus/gop/releases/tag/v{{.Version}}"
+    release_notes_url: "https://github.com/{{ .Env.GITHUB_REPOSITORY_OWNER }}/gop/releases/tag/v{{.Version}}"
     dependencies:
       - package_identifier: GoLang.Go
         minimum_version: 1.18.0
@@ -105,7 +105,7 @@ winget:
       name: winget-pkgs
       branch: "{{.ProjectName}}-v{{.Version}}"
       git:
-        url: "git@github.com:goplus/winget-pkgs.git"
+        url: "git@github.com:{{ .Env.GITHUB_REPOSITORY_OWNER }}/winget-pkgs.git"
         private_key: "{{ .Env.WINGET_PKGS_PRIVATE_KEY }}"
       pull_request:
         enabled: true
