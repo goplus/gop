@@ -360,7 +360,10 @@ func (p *parser) next() {
 	p.lineComment = nil
 	prev := p.pos
 	p.next0()
-
+	// skip #
+	if p.tok == token.COMMENT && p.lit[0] == '#' {
+		p.next0()
+	}
 	if p.tok == token.COMMENT {
 		var comment *ast.CommentGroup
 		var endline int
