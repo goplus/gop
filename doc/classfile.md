@@ -15,7 +15,7 @@ Go+ introduces `classfile` to abstract domain knowledge.
 
 ### classfile: Unit Test
 
-Go+ has built-in support for a classfile to simplify unit testing. This classfile has the file suffix `_test.gox`.
+Go+ has a built-in classfile to simplify unit testing. This classfile has the file suffix `_test.gox`.
 
 Suppose you have a function named `foo`:
 
@@ -25,13 +25,11 @@ func foo(v int) int {
 }
 ```
 
-Then you can create a `foo_test.gox` file to test it (see [unit-test/foo_test.gox](testdata/unit-test/foo_test.gox)):
+Then you can create a `foo_test.gox` file to test it (see [unit-test/foo_test.gox](../testdata/unit-test/foo_test.gox)):
 
 ```go
 if v := foo(50); v != 100 {
 	t.error "foo(50) ret: ${v}"
-} else {
-	t.log "test foo(50) ok"
 }
 
 t.run "foo -10", t => {
