@@ -19,8 +19,6 @@ package typesutil
 import (
 	"go/types"
 
-	_ "unsafe"
-
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gox"
 	"github.com/qiniu/x/log"
@@ -232,9 +230,6 @@ func (info gopRecorder) Def(id *ast.Ident, obj types.Object) {
 	}
 }
 
-//go:linkname checkSigFuncEx github.com/goplus/gox.checkSigFuncEx
-func checkSigFuncEx(sig *types.Signature) (types.Type, bool)
-
 // Use maps identifiers to the objects they denote.
 //
 // For an embedded field, Use maps the *TypeName it denotes.
@@ -249,7 +244,7 @@ func (info gopRecorder) Use(id *ast.Ident, obj types.Object) {
 	}
 	if info.Overloads != nil {
 		if sig, ok := obj.Type().(*types.Signature); ok {
-			if ext, ok := checkSigFuncEx(sig); ok {
+			if ext, ok := gox.CheckSigFuncEx(sig); ok {
 				if debugVerbose {
 					log.Println("==> Overloads:", id, ext)
 				}
@@ -260,7 +255,7 @@ func (info gopRecorder) Use(id *ast.Ident, obj types.Object) {
 					info.Overloads[id] = t.Methods
 				case *gox.TyTemplateRecvMethod:
 					if tsig, ok := t.Func.Type().(*types.Signature); ok {
-						if ex, ok := checkSigFuncEx(tsig); ok {
+						if ex, ok := gox.CheckSigFuncEx(tsig); ok {
 							if t, ok := ex.(*gox.TyOverloadFunc); ok {
 								info.Overloads[id] = t.Funcs
 							}
