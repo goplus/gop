@@ -426,6 +426,39 @@ func (this *Kai) Main() {
 `, "main_spx.gox", "Kai_spx.gox")
 }
 
+func TestSpxNewObj(t *testing.T) {
+	gopSpxTestEx(t, `
+a := new
+a.run
+b := new(Sprite)
+echo b.name
+`, ``, `package main
+
+import (
+	"fmt"
+	"github.com/goplus/gop/cl/internal/spx3"
+)
+
+type Kai struct {
+	spx3.Sprite
+	*Game
+}
+type Game struct {
+	spx3.Game
+}
+
+func (this *Game) MainEntry() {
+	a := spx3.New()
+	a.Run()
+	b := new(spx3.Sprite)
+	fmt.Println(b.Name())
+}
+func main() {
+	spx3.Gopt_Game_Main(new(Game), new(Kai))
+}
+`, "main_spx.gox", "Kai_spx.gox")
+}
+
 func TestSpx2(t *testing.T) {
 	gopSpxTestEx(t, `
 println("Hi")

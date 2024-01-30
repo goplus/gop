@@ -23,11 +23,19 @@ const (
 type Game struct {
 }
 
+func New() *Game {
+	return nil
+}
+
 func (p *Game) initGame() {}
 
 func (p *Game) Run() {}
 
 type Sprite struct {
+}
+
+func (p *Sprite) Name() string {
+	return "sprite"
 }
 
 func (p *Sprite) initSprite() {}
