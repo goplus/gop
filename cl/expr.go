@@ -99,7 +99,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg gox.PkgRef, k
 			sig := fn.Ancestor().Type().(*types.Signature)
 			if recv := sig.Recv(); recv != nil {
 				ctx.cb.Val(recv)
-				chkFlag := flags &^ clCommandWithoutArgs
+				chkFlag := flags // &^ clCommandWithoutArgs (TODO: why?)
 				if chkFlag&clIdentSelectorExpr != 0 {
 					chkFlag = clIdentCanAutoCall
 				}

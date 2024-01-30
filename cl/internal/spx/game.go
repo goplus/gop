@@ -29,6 +29,9 @@ type MyGame struct {
 func Gopt_MyGame_Main(game interface{}) {
 }
 
+func (p *MyGame) InitGameApp(args ...string) {
+}
+
 func (p *MyGame) Broadcast__0(msg string) {
 }
 

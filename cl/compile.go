@@ -630,9 +630,6 @@ func isOverloadFunc(name string) bool {
 	return n > 3 && name[n-3:n-1] == "__"
 }
 
-//go:linkname initThisGopPkg github.com/goplus/gox.initThisGopPkg
-func initThisGopPkg(pkg *types.Package)
-
 func initGopPkg(ctx *pkgCtx, pkg *gox.Package, gopSyms map[string]bool) {
 	for name, f := range ctx.syms {
 		if gopSyms[name] {
@@ -654,7 +651,7 @@ func initGopPkg(ctx *pkgCtx, pkg *gox.Package, gopSyms map[string]bool) {
 	if pkg.Types.Scope().Lookup(gopPackage) == nil {
 		pkg.Types.Scope().Insert(types.NewConst(token.NoPos, pkg.Types, gopPackage, types.Typ[types.UntypedBool], constant.MakeBool(true)))
 	}
-	initThisGopPkg(pkg.Types)
+	gox.InitThisGopPkg(pkg.Types)
 }
 
 func getEntrypoint(f *ast.File) string {
@@ -832,6 +829,10 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 			}
 			parent.tylds = append(parent.tylds, ld)
 		}
+
+		// bugfix: see TestGopxNoFunc
+		parent.lbinames = append(parent.lbinames, classType)
+
 		ctx.classRecv = &ast.FieldList{List: []*ast.Field{{
 			Names: []*ast.Ident{
 				{Name: "this"},
