@@ -548,7 +548,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 	var flags gox.InstrFlags
 	switch fn := v.Fun.(type) {
 	case *ast.Ident:
-		if len(v.Args) == 1 && fn.Name == "new" { // new(T)
+		if len(v.Args) == 1 && fn.Name == "new" { // maybe new(T)
 			flags = clMayBuiltinNew
 		}
 		compileIdent(ctx, fn, clIdentAllowBuiltin|inFlags)
