@@ -832,6 +832,10 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 			}
 			parent.tylds = append(parent.tylds, ld)
 		}
+
+		// bugfix: see TestGopxNoFunc
+		parent.inits = append(parent.inits, ld.load)
+
 		ctx.classRecv = &ast.FieldList{List: []*ast.Field{{
 			Names: []*ast.Ident{
 				{Name: "this"},

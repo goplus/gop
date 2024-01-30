@@ -239,6 +239,11 @@ func (this *index) onInit() {
 	this.bar()
 	fmt.Println("Hi")
 }
+
+type bar struct {
+	spx.Sprite
+	*index
+}
 `)
 }
 
@@ -536,6 +541,11 @@ func (this *Game) MainEntry() {
 }
 func main() {
 	new(Game).Main()
+}
+
+type Kai struct {
+	spx2.Sprite
+	*Game
 }
 `, "Game.t2gmx", "Kai.t2spx", "")
 	gopSpxTestExConf(t, "OnlyGmx", &conf, `
@@ -1014,6 +1024,19 @@ func Test_foo(t *testing.T) {
 	test.Gopt_Case_TestMain(new(case_foo), t)
 }
 `, "main.gox", "foo_xtest.gox", "_test")
+}
+
+func TestGopxNoFunc(t *testing.T) {
+	gopClTestFile(t, `
+var (
+	a int
+)
+`, `package main
+
+type foo struct {
+	a int
+}
+`, "foo.gox")
 }
 
 func TestClassFileGopx(t *testing.T) {
