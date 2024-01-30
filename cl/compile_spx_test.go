@@ -1015,3 +1015,137 @@ func Test_foo(t *testing.T) {
 }
 `, "main.gox", "foo_xtest.gox", "_test")
 }
+
+func TestClassFileGopx(t *testing.T) {
+	gopClTestFile(t, `
+var (
+	BaseClass
+	Width, Height float64
+	*AggClass
+)
+
+type BaseClass struct{
+	x int
+	y int
+}
+type AggClass struct{}
+
+func Area() float64 {
+	return Width * Height
+}
+`, `package main
+
+type BaseClass struct {
+	x int
+	y int
+}
+type AggClass struct {
+}
+type Rect struct {
+	BaseClass
+	Width  float64
+	Height float64
+	*AggClass
+}
+
+func (this *Rect) Area() float64 {
+	return this.Width * this.Height
+}
+`, "Rect.gox")
+	gopClTestFile(t, `
+import "bytes"
+var (
+	bytes.Buffer
+)
+func test(){}
+`, `package main
+
+import "bytes"
+
+type Rect struct {
+	bytes.Buffer
+}
+
+func (this *Rect) test() {
+}
+`, "Rect.gox")
+	gopClTestFile(t, `
+import "bytes"
+var (
+	*bytes.Buffer
+)
+func test(){}
+`, `package main
+
+import "bytes"
+
+type Rect struct {
+	*bytes.Buffer
+}
+
+func (this *Rect) test() {
+}
+`, "Rect.gox")
+	gopClTestFile(t, `
+import "bytes"
+var (
+	*bytes.Buffer "spec:\"buffer\""
+	a int "json:\"a\""
+	b int
+)
+func test(){}
+`, `package main
+
+import "bytes"
+
+type Rect struct {
+	*bytes.Buffer `+"`spec:\"buffer\"`"+`
+	a             int `+"`json:\"a\"`"+`
+	b             int
+}
+
+func (this *Rect) test() {
+}
+`, "Rect.gox")
+}
+
+func TestClassFileMember(t *testing.T) {
+	gopClTestFile(t, `type Engine struct {
+}
+
+func (e *Engine) EnterPointerLock() {
+}
+
+func (e *Engine) SetEnable(b bool) {
+}
+
+func Engine() *Engine {
+	return &Engine{}
+}
+
+func Test() {
+	engine.setEnable true
+	engine.enterPointerLock
+}
+`, `package main
+
+type Engine struct {
+}
+
+func (e *Engine) EnterPointerLock() {
+}
+func (e *Engine) SetEnable(b bool) {
+}
+
+type Rect struct {
+}
+
+func (this *Rect) Engine() *Engine {
+	return &Engine{}
+}
+func (this *Rect) Test() {
+	this.Engine().SetEnable(true)
+	this.Engine().EnterPointerLock()
+}
+`, "Rect.gox")
+}
