@@ -50,7 +50,8 @@ func lookupClass(ext string) (c *modfile.Project, ok bool) {
 		return &modfile.Project{
 			Ext: "_spx.gox", Class: "Game",
 			Works:    []*modfile.Class{{Ext: "_spx.gox", Class: "Sprite"}},
-			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx3", "math"}}, true
+			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx3", "math"},
+			Import:   []*modfile.Import{{Path: "github.com/goplus/gop/cl/internal/spx3/jwt"}}}, true
 	case "_xtest.gox":
 		return &modfile.Project{
 			Ext: "_xtest.gox", Class: "App",
@@ -397,12 +398,13 @@ var (
 
 run
 `, `
-echo "Hi"
+echo jwt.token("Hi")
 `, `package main
 
 import (
 	"fmt"
 	"github.com/goplus/gop/cl/internal/spx3"
+	"github.com/goplus/gop/cl/internal/spx3/jwt"
 )
 
 type Kai struct {
@@ -421,7 +423,7 @@ func main() {
 	spx3.Gopt_Game_Main(new(Game), new(Kai))
 }
 func (this *Kai) Main() {
-	fmt.Println("Hi")
+	fmt.Println(jwt.Token("Hi"))
 }
 `, "main_spx.gox", "Kai_spx.gox")
 }

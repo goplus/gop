@@ -366,6 +366,7 @@ type blockCtx struct {
 	pkg        *gox.Package
 	cb         *gox.CodeBuilder
 	imports    map[string]pkgImp
+	autoimps   map[string]pkgImp
 	lookups    []gox.PkgRef
 	clookups   []cpackages.PkgRef
 	tlookup    *typeParamLookup
@@ -388,6 +389,9 @@ func (bc *blockCtx) recorder() *typesRecorder {
 
 func (bc *blockCtx) findImport(name string) (pi pkgImp, ok bool) {
 	pi, ok = bc.imports[name]
+	if !ok && bc.autoimps != nil {
+		pi, ok = bc.autoimps[name]
+	}
 	return
 }
 
@@ -727,6 +731,7 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 		} else {
 			c := parent.classes[f]
 			proj, ctx.proj = c.proj, c.proj
+			ctx.autoimps = proj.autoimps
 			classType = c.tname
 			if isGoxTestFile(c.ext) { // test classfile
 				testType = c.tname

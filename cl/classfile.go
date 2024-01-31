@@ -47,6 +47,7 @@ type gmxProject struct {
 	schedStmts []goast.Stmt // nil or len(scheds) == 2 (delayload)
 	pkgImps    []gox.PkgRef
 	pkgPaths   []string
+	autoimps   map[string]pkgImp // auto-import statement in gop.mod
 	hasScheds  bool
 	gameIsPtr  bool
 	isTest     bool
@@ -97,6 +98,20 @@ func loadClass(ctx *pkgCtx, pkg *gox.Package, file string, f *ast.File, conf *Co
 		p.pkgImps = make([]gox.PkgRef, len(pkgPaths))
 		for i, pkgPath := range pkgPaths {
 			p.pkgImps[i] = pkg.Import(pkgPath)
+		}
+
+		if len(gt.Import) > 0 {
+			autoimps := make(map[string]pkgImp)
+			for _, imp := range gt.Import {
+				pkgi := pkg.Import(imp.Path)
+				name := imp.Name
+				if name == "" {
+					name = pkgi.Types.Name()
+				}
+				pkgName := types.NewPkgName(token.NoPos, pkg.Types, name, pkgi.Types)
+				autoimps[name] = pkgImp{pkgi, pkgName}
+			}
+			p.autoimps = autoimps
 		}
 
 		spx := p.pkgImps[0]
