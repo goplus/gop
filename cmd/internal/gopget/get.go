@@ -79,12 +79,8 @@ func get(pkgPath string) {
 
 	pkgMod, err := modload.Load(pkgModRoot)
 	check(err)
-	if pkgMod.HasProject() {
-		mod.Opt.AddImport(pkgModVer.Path)
-		fmt.Fprintf(os.Stderr, "gop get: import %s\n", pkgModVer.Path)
-	}
 
-	check(mod.AddRequire(pkgModVer.Path, pkgModVer.Version))
+	check(mod.AddRequire(pkgModVer.Path, pkgModVer.Version, pkgMod.HasProject()))
 	fmt.Fprintf(os.Stderr, "gop get: added %s %s\n", pkgModVer.Path, pkgModVer.Version)
 
 	check(mod.Save())
