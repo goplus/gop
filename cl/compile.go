@@ -26,7 +26,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	_ "unsafe"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/fromgo"
