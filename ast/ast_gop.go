@@ -190,7 +190,7 @@ func (*LambdaExpr2) exprNode() {}
 
 // -----------------------------------------------------------------------------
 
-// ForPhrase represents `for k, v <- container, cond` phrase.
+// ForPhrase represents `for k, v <- container if init; cond` phrase.
 type ForPhrase struct {
 	For        token.Pos // position of "for" keyword
 	Key, Value *Ident    // Key may be nil

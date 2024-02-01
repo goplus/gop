@@ -709,7 +709,7 @@ type (
 		Body   *BlockStmt // CommClauses only
 	}
 
-	// A ForStmt represents a for statement.
+	// A ForStmt represents a `for init; cond; post { ... }` statement.
 	ForStmt struct {
 		For  token.Pos // position of "for" keyword
 		Init Stmt      // initialization statement; or nil
