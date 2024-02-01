@@ -244,30 +244,11 @@ func (info gopRecorder) Use(id *ast.Ident, obj types.Object) {
 	}
 	if info.Overloads != nil {
 		if sig, ok := obj.Type().(*types.Signature); ok {
-			if ext, ok := gox.CheckSigFuncEx(sig); ok {
+			if ext, objs := gox.CheckSigFuncExObjects(sig); len(objs) > 1 {
 				if debugVerbose {
 					log.Println("==> Overloads:", id, ext)
 				}
-				switch t := ext.(type) {
-				case *gox.TyOverloadFunc:
-					info.Overloads[id] = t.Funcs
-				case *gox.TyOverloadMethod:
-					info.Overloads[id] = t.Methods
-				case *gox.TyTemplateRecvMethod:
-					if tsig, ok := t.Func.Type().(*types.Signature); ok {
-						if ex, ok := gox.CheckSigFuncEx(tsig); ok {
-							if t, ok := ex.(*gox.TyOverloadFunc); ok {
-								info.Overloads[id] = t.Funcs
-							}
-						}
-					}
-				case *gox.TyOverloadNamed:
-					objs := make([]types.Object, len(t.Types))
-					for i, typ := range t.Types {
-						objs[i] = typ.Obj()
-					}
-					info.Overloads[id] = objs
-				}
+				info.Overloads[id] = objs
 			}
 		}
 	}
