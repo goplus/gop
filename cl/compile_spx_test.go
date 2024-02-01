@@ -50,7 +50,8 @@ func lookupClass(ext string) (c *modfile.Project, ok bool) {
 		return &modfile.Project{
 			Ext: "_spx.gox", Class: "Game",
 			Works:    []*modfile.Class{{Ext: "_spx.gox", Class: "Sprite"}},
-			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx3", "math"}}, true
+			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx3", "math"},
+			Import:   []*modfile.Import{{Path: "github.com/goplus/gop/cl/internal/spx3/jwt"}}}, true
 	case "_xtest.gox":
 		return &modfile.Project{
 			Ext: "_xtest.gox", Class: "App",
@@ -168,6 +169,8 @@ func onInit() {
 	for {
 	}
 }
+
+initGameApp
 `, `
 func onMsg(msg string) {
 	for {
@@ -181,18 +184,22 @@ import "github.com/goplus/gop/cl/internal/spx"
 type Game struct {
 	*spx.MyGame
 }
+type Kai struct {
+	spx.Sprite
+	*Game
+}
 
 func (this *Game) onInit() {
 	for {
 		spx.SchedNow()
 	}
 }
-
-type Kai struct {
-	spx.Sprite
-	*Game
+func (this *Game) MainEntry() {
+	this.InitGameApp()
 }
-
+func main() {
+	spx.Gopt_MyGame_Main(new(Game))
+}
 func (this *Kai) onMsg(msg string) {
 	for {
 		spx.Sched()
@@ -229,6 +236,10 @@ import (
 
 const Foo = 1
 
+type bar struct {
+	spx.Sprite
+	*index
+}
 type index struct {
 	*spx.MyGame
 }
@@ -267,6 +278,10 @@ import (
 type Game struct {
 	*spx.MyGame
 }
+type bar struct {
+	spx.Sprite
+	*Game
+}
 
 func (this *Game) onInit() {
 	spx.Sched()
@@ -274,12 +289,6 @@ func (this *Game) onInit() {
 	spx.TestIntValue = 1
 	x := math.Round(1.2)
 }
-
-type bar struct {
-	spx.Sprite
-	*Game
-}
-
 func (this *bar) onInit() {
 	this.SetCostume("kai-a")
 	this.Play("recordingWhere")
@@ -315,14 +324,14 @@ func onCloned() {
 
 import "github.com/goplus/gop/cl/internal/spx"
 
+type Game struct {
+	*spx.MyGame
+	Kai Kai
+}
 type Kai struct {
 	spx.Sprite
 	*Game
 	a int
-}
-type Game struct {
-	*spx.MyGame
-	Kai Kai
 }
 
 func (this *Game) onInit() {
@@ -361,14 +370,13 @@ type Kai struct {
 	spx.Sprite
 	*index
 }
-
-var x float64 = spx.Rand__1(1.2)
-
 type index struct {
 	*spx.MyGame
 	Kai Kai
 	t   spx.Sound
 }
+
+var x float64 = spx.Rand__1(1.2)
 
 func (this *index) MainEntry() {
 	spx.Gopt_MyGame_Run(this, "hzip://open.qiniu.us/weather/res.zip")
@@ -390,12 +398,13 @@ var (
 
 run
 `, `
-echo "Hi"
+echo jwt.token("Hi")
 `, `package main
 
 import (
 	"fmt"
 	"github.com/goplus/gop/cl/internal/spx3"
+	"github.com/goplus/gop/cl/internal/spx3/jwt"
 )
 
 type Kai struct {
@@ -414,7 +423,40 @@ func main() {
 	spx3.Gopt_Game_Main(new(Game), new(Kai))
 }
 func (this *Kai) Main() {
-	fmt.Println("Hi")
+	fmt.Println(jwt.Token("Hi"))
+}
+`, "main_spx.gox", "Kai_spx.gox")
+}
+
+func TestSpxNewObj(t *testing.T) {
+	gopSpxTestEx(t, `
+a := new
+a.run
+b := new(Sprite)
+echo b.name
+`, ``, `package main
+
+import (
+	"fmt"
+	"github.com/goplus/gop/cl/internal/spx3"
+)
+
+type Kai struct {
+	spx3.Sprite
+	*Game
+}
+type Game struct {
+	spx3.Game
+}
+
+func (this *Game) MainEntry() {
+	a := spx3.New()
+	a.Run()
+	b := new(spx3.Sprite)
+	fmt.Println(b.Name())
+}
+func main() {
+	spx3.Gopt_Game_Main(new(Game), new(Kai))
 }
 `, "main_spx.gox", "Kai_spx.gox")
 }
@@ -435,6 +477,10 @@ import (
 type Game struct {
 	spx2.Game
 }
+type Kai struct {
+	spx2.Sprite
+	*Game
+}
 
 func (this *Game) MainEntry() {
 	fmt.Println("Hi")
@@ -442,12 +488,6 @@ func (this *Game) MainEntry() {
 func main() {
 	new(Game).Main()
 }
-
-type Kai struct {
-	spx2.Sprite
-	*Game
-}
-
 func (this *Kai) onMsg(msg string) {
 }
 `, "Game.t2gmx", "Kai.t2spx")
@@ -469,6 +509,10 @@ import (
 type Game struct {
 	spx2.Game
 }
+type Kai struct {
+	spx2.Sprite2
+	*Game
+}
 
 func (this *Game) MainEntry() {
 	fmt.Println("Hi, Sprite2")
@@ -476,12 +520,6 @@ func (this *Game) MainEntry() {
 func main() {
 	new(Game).Main()
 }
-
-type Kai struct {
-	spx2.Sprite2
-	*Game
-}
-
 func (this *Kai) onMsg(msg string) {
 }
 `, "Game.t2gmx", "Kai.t2spx2")
@@ -503,15 +541,13 @@ import (
 type Dog struct {
 	spx2.Sprite
 }
-
-func (this *Dog) Main() {
-	fmt.Println("Hi, Sprite")
-}
-
 type Kai struct {
 	spx2.Sprite2
 }
 
+func (this *Dog) Main() {
+	fmt.Println("Hi, Sprite")
+}
 func (this *Kai) onMsg(msg string) {
 }
 `, "Dog_t3spx.gox", "Kai.t3spx2")
@@ -531,6 +567,10 @@ import "github.com/goplus/gop/cl/internal/spx2"
 type Game struct {
 	spx2.Game
 }
+type Kai struct {
+	spx2.Sprite
+	*Game
+}
 
 func (this *Game) MainEntry() {
 }
@@ -547,13 +587,13 @@ var (
 
 import "github.com/goplus/gop/cl/internal/spx2"
 
-type Kai struct {
-	spx2.Sprite
-	*Game
-}
 type Game struct {
 	spx2.Game
 	Kai Kai
+}
+type Kai struct {
+	spx2.Sprite
+	*Game
 }
 
 func (this *Game) MainEntry() {
@@ -583,13 +623,13 @@ import (
 	"github.com/goplus/gop/cl/internal/spx2"
 )
 
-type Kai struct {
-	spx2.Sprite
-	*Game
-}
 type Game struct {
 	spx2.Game
 	Kai Kai
+}
+type Kai struct {
+	spx2.Sprite
+	*Game
 }
 
 func (this *Game) MainEntry() {
@@ -625,18 +665,16 @@ import "github.com/goplus/gop/cl/internal/spx"
 type Game struct {
 	*spx.MyGame
 }
+type Kai struct {
+	spx.Sprite
+	*Game
+}
 
 func (this *Game) onInit() {
 	for {
 		spx.SchedNow()
 	}
 }
-
-type Kai struct {
-	spx.Sprite
-	*Game
-}
-
 func (this *Kai) onMsg(msg string) {
 	for {
 		spx.Sched()
@@ -684,14 +722,14 @@ type info struct {
 	x int
 	y int
 }
+type Game struct {
+	*spx.MyGame
+	Kai Kai
+}
 type Kai struct {
 	spx.Sprite
 	*Game
 	a int
-}
-type Game struct {
-	*spx.MyGame
-	Kai Kai
 }
 
 func (this *Game) onInit() {
@@ -731,6 +769,10 @@ import "github.com/goplus/gop/cl/internal/spx"
 type Game struct {
 	*spx.MyGame
 }
+type Kai struct {
+	spx.Sprite
+	*Game
+}
 
 func (this *Game) MainEntry() {
 	this.SendMessage("Hi")
@@ -738,12 +780,6 @@ func (this *Game) MainEntry() {
 func main() {
 	spx.Gopt_MyGame_Main(new(Game))
 }
-
-type Kai struct {
-	spx.Sprite
-	*Game
-}
-
 func (this *Kai) onMsg(msg string) {
 }
 `, "Game.tgmx", "Kai.tspx")
@@ -766,6 +802,10 @@ import (
 type Game struct {
 	*spx.MyGame
 }
+type Kai struct {
+	spx.Sprite
+	*Game
+}
 
 func (this *Game) MainEntry() {
 	fmt.Println("Hi")
@@ -773,12 +813,6 @@ func (this *Game) MainEntry() {
 func main() {
 	spx.Gopt_MyGame_Main(new(Game))
 }
-
-type Kai struct {
-	spx.Sprite
-	*Game
-}
-
 func (this *Kai) onMsg(msg string) {
 	this.Position().Add__0(100, 200)
 }
@@ -815,6 +849,10 @@ import (
 type Game struct {
 	*spx.MyGame
 }
+type Kai struct {
+	spx.Sprite
+	*Game
+}
 
 func (this *Game) MainEntry() {
 	fmt.Println("hi")
@@ -822,12 +860,6 @@ func (this *Game) MainEntry() {
 func main() {
 	spx.Gopt_MyGame_Main(new(Game))
 }
-
-type Kai struct {
-	spx.Sprite
-	*Game
-}
-
 func (this *Kai) onMsg(msg string) {
 	fmt.Println(msg)
 	this.Position().Add__0(100, 200)
@@ -900,14 +932,14 @@ import "github.com/goplus/gop/cl/internal/spx"
 
 type Mesh struct {
 }
+type Game struct {
+	*spx.MyGame
+	Kai Kai
+}
 type Kai struct {
 	spx.Sprite
 	*Game
 	a int
-}
-type Game struct {
-	*spx.MyGame
-	Kai Kai
 }
 
 func (this *Game) onInit() {
@@ -963,6 +995,10 @@ import (
 	"testing"
 )
 
+type caseFoo struct {
+	test.Case
+	*App
+}
 type App struct {
 	test.App
 }
@@ -970,12 +1006,6 @@ type App struct {
 func (this *App) MainEntry() {
 	fmt.Println("Hi")
 }
-
-type caseFoo struct {
-	test.Case
-	*App
-}
-
 func (this *caseFoo) Main() {
 	this.T().Log("Hi")
 	this.T().Run("a test", func(t *testing.T) {
@@ -1014,4 +1044,149 @@ func Test_foo(t *testing.T) {
 	test.Gopt_Case_TestMain(new(case_foo), t)
 }
 `, "main.gox", "foo_xtest.gox", "_test")
+}
+
+func TestGopxNoFunc(t *testing.T) {
+	gopClTestFile(t, `
+var (
+	a int
+)
+`, `package main
+
+type foo struct {
+	a int
+}
+`, "foo.gox")
+}
+
+func TestClassFileGopx(t *testing.T) {
+	gopClTestFile(t, `
+var (
+	BaseClass
+	Width, Height float64
+	*AggClass
+)
+
+type BaseClass struct{
+	x int
+	y int
+}
+type AggClass struct{}
+
+func Area() float64 {
+	return Width * Height
+}
+`, `package main
+
+type BaseClass struct {
+	x int
+	y int
+}
+type AggClass struct {
+}
+type Rect struct {
+	BaseClass
+	Width  float64
+	Height float64
+	*AggClass
+}
+
+func (this *Rect) Area() float64 {
+	return this.Width * this.Height
+}
+`, "Rect.gox")
+	gopClTestFile(t, `
+import "bytes"
+var (
+	bytes.Buffer
+)
+func test(){}
+`, `package main
+
+import "bytes"
+
+type Rect struct {
+	bytes.Buffer
+}
+
+func (this *Rect) test() {
+}
+`, "Rect.gox")
+	gopClTestFile(t, `
+import "bytes"
+var (
+	*bytes.Buffer
+)
+func test(){}
+`, `package main
+
+import "bytes"
+
+type Rect struct {
+	*bytes.Buffer
+}
+
+func (this *Rect) test() {
+}
+`, "Rect.gox")
+	gopClTestFile(t, `
+import "bytes"
+var (
+	*bytes.Buffer "spec:\"buffer\""
+	a int "json:\"a\""
+	b int
+)
+func test(){}
+`, `package main
+
+import "bytes"
+
+type Rect struct {
+	*bytes.Buffer `+"`spec:\"buffer\"`"+`
+	a             int `+"`json:\"a\"`"+`
+	b             int
+}
+
+func (this *Rect) test() {
+}
+`, "Rect.gox")
+}
+
+func TestClassFileMember(t *testing.T) {
+	gopClTestFile(t, `type Engine struct {
+}
+
+func (e *Engine) EnterPointerLock() {
+}
+
+func (e *Engine) SetEnable(b bool) {
+}
+
+func Engine() *Engine {
+	return &Engine{}
+}
+
+func Test() {
+	engine.setEnable true
+	engine.enterPointerLock
+}
+`, `package main
+
+type Engine struct {
+}
+type Rect struct {
+}
+
+func (e *Engine) EnterPointerLock() {
+}
+func (e *Engine) SetEnable(b bool) {
+}
+func (this *Rect) Engine() *Engine {
+	return &Engine{}
+}
+func (this *Rect) Test() {
+	this.Engine().SetEnable(true)
+	this.Engine().EnterPointerLock()
+}
+`, "Rect.gox")
 }

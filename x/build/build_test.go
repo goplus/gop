@@ -391,14 +391,13 @@ import (
 	"github.com/goplus/gop/cl/internal/spx"
 )
 
-func main() {
-	spx.Gopt_MyGame_Main(new(spx.MyGame))
-}
-
 type Cat struct {
 	spx.Sprite
 }
 
+func main() {
+	spx.Gopt_MyGame_Main(new(spx.MyGame))
+}
 func (this *Cat) Main() {
 	fmt.Println("hi")
 }

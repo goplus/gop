@@ -28,7 +28,7 @@ func (a foo) != (b foo) bool {
 var a, b foo
 var c = a + b
 var d = a - b
-var e = -a       // TODO: -a have no return value!
+var e = -a
 var f = a != b
 println f
 a++

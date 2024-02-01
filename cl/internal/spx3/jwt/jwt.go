@@ -14,31 +14,8 @@
  * limitations under the License.
  */
 
-package spx3
+package jwt
 
-const (
-	GopPackage = true
-)
-
-type Game struct {
-}
-
-func New() *Game {
-	return nil
-}
-
-func (p *Game) initGame() {}
-
-func (p *Game) Run() {}
-
-type Sprite struct {
-}
-
-func (p *Sprite) Name() string {
-	return "sprite"
-}
-
-func (p *Sprite) initSprite() {}
-
-func Gopt_Game_Main(game interface{ initGame() }, workers ...interface{ initSprite() }) {
+func Token(v string) string {
+	return "token: " + v
 }

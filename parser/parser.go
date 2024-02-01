@@ -365,7 +365,7 @@ func (p *parser) next() {
 		var comment *ast.CommentGroup
 		var endline int
 
-		if p.file.Line(p.pos) == p.file.Line(prev) {
+		if p.file.Line(p.pos) == p.file.Line(prev) || p.lit[0] == '#' {
 			// The comment is on same line as the previous token; it
 			// cannot be a lead comment but may be a line comment.
 			comment, endline = p.consumeCommentGroup(0)

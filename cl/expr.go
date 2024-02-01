@@ -64,6 +64,7 @@ const (
 	clIdentGoto
 	clCallWithTwoValue
 	clCommandWithoutArgs
+	clMayBuiltinNew // maybe is builtin directive `new`
 )
 
 const (
@@ -99,7 +100,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg gox.PkgRef, k
 			sig := fn.Ancestor().Type().(*types.Signature)
 			if recv := sig.Recv(); recv != nil {
 				ctx.cb.Val(recv)
-				chkFlag := flags &^ clCommandWithoutArgs
+				chkFlag := flags // &^ clCommandWithoutArgs (TODO: why?)
 				if chkFlag&clIdentSelectorExpr != 0 {
 					chkFlag = clIdentCanAutoCall
 				}
@@ -503,32 +504,20 @@ func (p *fnType) load(fnt types.Type) {
 	case *gox.TypeType:
 		p.initTypeType(v)
 	case *types.Signature:
-		if typ, ok := gox.CheckFuncEx(v); ok {
-			switch t := typ.(type) {
-			case *gox.TyOverloadFunc:
-				p.initFuncs(0, t.Funcs...)
-				return
-			case *gox.TyOverloadMethod:
-				p.initFuncs(0, t.Methods...)
-				return
-			case *gox.TyTemplateRecvMethod:
-				if tsig, ok := t.Func.Type().(*types.Signature); ok {
-					if ex, ok := gox.CheckFuncEx(tsig); ok {
-						if t, ok := ex.(*gox.TyOverloadFunc); ok {
-							p.initFuncs(1, t.Funcs...)
-							return
-						}
-					}
-				}
-				p.initFuncs(1, t.Func)
-				return
-			}
+		typ, objs := gox.CheckSigFuncExObjects(v)
+		switch typ.(type) {
+		case *gox.TyOverloadFunc, *gox.TyOverloadMethod:
+			p.initFuncs(0, objs)
+			return
+		case *gox.TyTemplateRecvMethod:
+			p.initFuncs(1, objs)
+			return
 		}
 		p.init(0, v)
 	}
 }
 
-func (p *fnType) initFuncs(base int, funcs ...types.Object) {
+func (p *fnType) initFuncs(base int, funcs []types.Object) {
 	for i, obj := range funcs {
 		if sig, ok := obj.Type().(*types.Signature); ok {
 			if i == 0 {
@@ -544,8 +533,12 @@ func (p *fnType) initFuncs(base int, funcs ...types.Object) {
 }
 
 func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
+	var flags gox.InstrFlags
 	switch fn := v.Fun.(type) {
 	case *ast.Ident:
+		if len(v.Args) == 1 && fn.Name == "new" { // maybe new(T)
+			flags = clMayBuiltinNew
+		}
 		compileIdent(ctx, fn, clIdentAllowBuiltin|inFlags)
 	case *ast.SelectorExpr:
 		compileSelectorExpr(ctx, fn, 0)
@@ -563,10 +556,9 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 		compileExpr(ctx, fn)
 	}
 	var fnt = ctx.cb.Get(-1).Type
-	var flags gox.InstrFlags
 	var ellipsis = v.Ellipsis != gotoken.NoPos
 	if ellipsis {
-		flags = gox.InstrFlagEllipsis
+		flags |= gox.InstrFlagEllipsis
 	}
 	if (inFlags & clCallWithTwoValue) != 0 {
 		flags |= gox.InstrFlagTwoValue
@@ -589,7 +581,9 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 }
 
 func compileCallArgs(fn *fnType, ctx *blockCtx, v *ast.CallExpr, ellipsis bool, flags gox.InstrFlags) (err error) {
-	n := ctx.cb.InternalStack().Len()
+	cb := ctx.cb
+	stk := cb.InternalStack()
+	n := stk.Len()
 	defer func() {
 		if r := recover(); r != nil {
 			if e, ok := r.(error); ok {
@@ -598,7 +592,7 @@ func compileCallArgs(fn *fnType, ctx *blockCtx, v *ast.CallExpr, ellipsis bool, 
 				src := ctx.LoadExpr(v)
 				err = ctx.newCodeErrorf(v.Pos(), "compile func %v error: %v", src, r)
 			}
-			ctx.cb.InternalStack().SetLen(n)
+			stk.SetLen(n)
 		}
 	}()
 	for i, arg := range v.Args {
@@ -624,7 +618,7 @@ func compileCallArgs(fn *fnType, ctx *blockCtx, v *ast.CallExpr, ellipsis bool, 
 			}
 			typetype := fn.typetype && t != nil
 			if typetype {
-				ctx.cb.InternalStack().Pop()
+				stk.Pop()
 			}
 			compileSliceLit(ctx, expr, t)
 			if typetype {
@@ -634,8 +628,21 @@ func compileCallArgs(fn *fnType, ctx *blockCtx, v *ast.CallExpr, ellipsis bool, 
 			compileExpr(ctx, arg)
 		}
 	}
-	ctx.cb.CallWith(len(v.Args), flags, v)
+	if (flags & clMayBuiltinNew) != 0 { // maybe new(T): see TestSpxNewObj
+		arg := stk.Get(-1)
+		if _, ok := arg.Type.(*gox.TypeType); ok && isNonInstr(stk.Get(-2).Type) {
+			stk.PopN(2)
+			cb.Val(ctx.pkg.Builtin().Ref("new"))
+			stk.Push(arg)
+		}
+	}
+	cb.CallWith(len(v.Args), flags, v)
 	return
+}
+
+func isNonInstr(t types.Type) bool {
+	_, ok := t.(*gox.TyInstruction)
+	return !ok
 }
 
 type clLambaFlag string

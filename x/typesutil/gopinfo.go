@@ -20,6 +20,7 @@ import (
 	"go/types"
 
 	"github.com/goplus/gop/ast"
+	"github.com/goplus/gox"
 	"github.com/qiniu/x/log"
 )
 
@@ -128,6 +129,9 @@ type Info struct {
 	// in source order. Variables without an initialization expression do not
 	// appear in this list.
 	// InitOrder []*Initializer
+
+	// Overloads maps identifiers to the overload objects.
+	Overloads map[*ast.Ident][]types.Object
 }
 
 // ObjectOf returns the object denoted by the specified id,
@@ -237,6 +241,16 @@ func (info gopRecorder) Use(id *ast.Ident, obj types.Object) {
 	}
 	if info.Uses != nil {
 		info.Uses[id] = obj
+	}
+	if info.Overloads != nil {
+		if sig, ok := obj.Type().(*types.Signature); ok {
+			if ext, objs := gox.CheckSigFuncExObjects(sig); len(objs) > 1 {
+				if debugVerbose {
+					log.Println("==> Overloads:", id, ext)
+				}
+				info.Overloads[id] = objs
+			}
+		}
 	}
 }
 

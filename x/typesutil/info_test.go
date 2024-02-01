@@ -4,10 +4,10 @@ import (
 	"fmt"
 
 	goast "go/ast"
-	"go/constant"
 	goformat "go/format"
 	goparser "go/parser"
 
+	"go/constant"
 	"go/importer"
 	"go/types"
 	"sort"
@@ -23,18 +23,52 @@ import (
 	"github.com/goplus/gop/x/typesutil"
 	"github.com/goplus/mod/env"
 	"github.com/goplus/mod/gopmod"
+	"github.com/goplus/mod/modfile"
+	"github.com/goplus/mod/modload"
 )
 
-func parserMixedSource(fset *token.FileSet, src string, gosrc string) (*typesutil.Info, *types.Info, error) {
-	f, err := parser.ParseEntry(fset, "main.gop", src, parser.Config{
-		Mode: parser.ParseComments,
-	})
+var spxProject = &modfile.Project{
+	Ext: ".tgmx", Class: "*MyGame",
+	Works:    []*modfile.Class{{Ext: ".tspx", Class: "Sprite"}},
+	PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx", "math"}}
+
+var spxMod *gopmod.Module
+
+func init() {
+	spxMod = gopmod.New(modload.Default)
+	spxMod.Opt.Projects = append(spxMod.Opt.Projects, spxProject)
+	spxMod.ImportClasses()
+}
+
+func lookupClass(ext string) (c *modfile.Project, ok bool) {
+	switch ext {
+	case ".tgmx", ".tspx":
+		return spxProject, true
+	}
+	return
+}
+
+func spxParserConf() parser.Config {
+	return parser.Config{
+		ClassKind: func(fname string) (isProj bool, ok bool) {
+			ext := modfile.ClassExt(fname)
+			c, ok := lookupClass(ext)
+			if ok {
+				isProj = c.IsProj(ext, fname)
+			}
+			return
+		},
+	}
+}
+
+func parserMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string, goname string, gosrc string, parserConf parser.Config) (*typesutil.Info, *types.Info, error) {
+	f, err := parser.ParseEntry(fset, name, src, parserConf)
 	if err != nil {
 		return nil, nil, err
 	}
 	var gofiles []*goast.File
 	if len(gosrc) > 0 {
-		f, err := goparser.ParseFile(fset, "main.go", gosrc, goparser.ParseComments)
+		f, err := goparser.ParseFile(fset, goname, gosrc, goparser.ParseComments)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -46,7 +80,7 @@ func parserMixedSource(fset *token.FileSet, src string, gosrc string) (*typesuti
 	chkOpts := &typesutil.Config{
 		Types: types.NewPackage("main", "main"),
 		Fset:  fset,
-		Mod:   gopmod.Default,
+		Mod:   mod,
 	}
 	info := &typesutil.Info{
 		Types:      make(map[ast.Expr]types.TypeAndValue),
@@ -55,6 +89,7 @@ func parserMixedSource(fset *token.FileSet, src string, gosrc string) (*typesuti
 		Implicits:  make(map[ast.Node]types.Object),
 		Selections: make(map[*ast.SelectorExpr]*types.Selection),
 		Scopes:     make(map[ast.Node]*types.Scope),
+		Overloads:  make(map[*ast.Ident][]types.Object),
 	}
 	ginfo := &types.Info{
 		Types:      make(map[goast.Expr]types.TypeAndValue),
@@ -91,6 +126,7 @@ func parserSource(fset *token.FileSet, filename string, src interface{}, mode pa
 		Implicits:  make(map[ast.Node]types.Object),
 		Selections: make(map[*ast.SelectorExpr]*types.Selection),
 		Scopes:     make(map[ast.Node]*types.Scope),
+		Overloads:  make(map[*ast.Ident][]types.Object),
 	}
 	check := typesutil.NewChecker(conf, chkOpts, nil, info)
 	err = check.Files(nil, []*ast.File{f})
@@ -120,8 +156,16 @@ func parserGoSource(fset *token.FileSet, filename string, src interface{}, mode 
 }
 
 func testGopInfo(t *testing.T, src string, gosrc string, expect string) {
+	testGopInfoEx(t, gopmod.Default, "main.gop", src, "main.go", gosrc, expect, parser.Config{})
+}
+
+func testSpxInfo(t *testing.T, name string, src string, expect string) {
+	testGopInfoEx(t, spxMod, name, src, "main.go", "", expect, spxParserConf())
+}
+
+func testGopInfoEx(t *testing.T, mod *gopmod.Module, name string, src string, goname string, gosrc string, expect string, parseConf parser.Config) {
 	fset := token.NewFileSet()
-	info, _, err := parserMixedSource(fset, src, gosrc)
+	info, _, err := parserMixedSource(mod, fset, name, src, goname, gosrc, parseConf)
 	if err != nil {
 		t.Fatal("parserMixedSource error", err)
 	}
@@ -1431,7 +1475,6 @@ d := bar.Var(bar.M)
 }
 
 func TestMixedOverloadNamed(t *testing.T) {
-	//gox.SetDebug(gox.DbgFlagAll)
 	testGopInfo(t, `
 var a Var[int]
 var b Var[M]
@@ -1494,7 +1537,6 @@ func Gopx_Var_Cast__1[T map[string]any]() *Var__1[T] {
 }
 
 func TestMixedRawNamed(t *testing.T) {
-	//gox.SetDebug(gox.DbgFlagAll)
 	testGopInfo(t, `
 var a Var__0[int]
 var b Var__1[M]
@@ -1554,4 +1596,75 @@ func Gopx_Var_Cast__1[T map[string]any]() *Var__1[T] {
 005:  4:23 | string              | type string
 006:  5: 6 | Gopx_Var_Cast__1    | func main.Gopx_Var_Cast__1[T map[string]any]() *main.Var__1[T]
 007:  5:23 | M                   | type main.M = map[string]any`)
+}
+
+func TestSpxInfo(t *testing.T) {
+	testSpxInfo(t, "Kai.tspx", `
+var (
+	a int
+)
+
+type info struct {
+	x int
+	y int
+}
+
+func onInit() {
+	a = 1
+	clone
+	clone info{1,2}
+	clone &info{1,2}
+}
+
+func onCloned() {
+	say("Hi")
+}
+`, `== types ==
+000:  0: 0 | Kai                 *ast.Ident                     | type    : main.Kai | type
+001:  3: 4 | int                 *ast.Ident                     | type    : int | type
+002:  6:11 | struct {
+	x int
+	y int
+} *ast.StructType                | type    : struct{x int; y int} | type
+003:  7: 4 | int                 *ast.Ident                     | type    : int | type
+004:  8: 4 | int                 *ast.Ident                     | type    : int | type
+005: 12: 2 | a                   *ast.Ident                     | var     : int | variable
+006: 12: 6 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
+007: 13: 2 | clone               *ast.Ident                     | value   : func(sprite interface{}) | value
+008: 14: 2 | clone               *ast.Ident                     | value   : func(sprite interface{}, data interface{}) | value
+009: 14: 2 | clone info{1, 2}    *ast.CallExpr                  | void    : () | no value
+010: 14: 8 | info                *ast.Ident                     | type    : main.info | type
+011: 14: 8 | info{1, 2}          *ast.CompositeLit              | value   : main.info | value
+012: 14:13 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
+013: 14:15 | 2                   *ast.BasicLit                  | value   : untyped int = 2 | constant
+014: 15: 2 | clone               *ast.Ident                     | value   : func(sprite interface{}, data interface{}) | value
+015: 15: 2 | clone &info{1, 2}   *ast.CallExpr                  | void    : () | no value
+016: 15: 8 | &info{1, 2}         *ast.UnaryExpr                 | value   : *main.info | value
+017: 15: 9 | info                *ast.Ident                     | type    : main.info | type
+018: 15: 9 | info{1, 2}          *ast.CompositeLit              | value   : main.info | value
+019: 15:14 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
+020: 15:16 | 2                   *ast.BasicLit                  | value   : untyped int = 2 | constant
+021: 19: 2 | say                 *ast.Ident                     | value   : func(msg string, secs ...float64) | value
+022: 19: 2 | say("Hi")           *ast.CallExpr                  | void    : () | no value
+023: 19: 6 | "Hi"                *ast.BasicLit                  | value   : untyped string = "Hi" | constant
+== defs ==
+000:  0: 0 | this                | var this *main.Kai
+001:  3: 2 | a                   | field a int
+002:  6: 6 | info                | type main.info struct{x int; y int}
+003:  7: 2 | x                   | field x int
+004:  8: 2 | y                   | field y int
+005: 11: 6 | onInit              | func (*main.Kai).onInit()
+006: 18: 6 | onCloned            | func (*main.Kai).onCloned()
+== uses ==
+000:  0: 0 | Kai                 | type main.Kai struct{github.com/goplus/gop/cl/internal/spx.Sprite; a int}
+001:  3: 4 | int                 | type int
+002:  7: 4 | int                 | type int
+003:  8: 4 | int                 | type int
+004: 12: 2 | a                   | field a int
+005: 13: 2 | clone               | func github.com/goplus/gop/cl/internal/spx.Gopt_Sprite_Clone__0(sprite interface{})
+006: 14: 2 | clone               | func github.com/goplus/gop/cl/internal/spx.Gopt_Sprite_Clone__1(sprite interface{}, data interface{})
+007: 14: 8 | info                | type main.info struct{x int; y int}
+008: 15: 2 | clone               | func github.com/goplus/gop/cl/internal/spx.Gopt_Sprite_Clone__1(sprite interface{}, data interface{})
+009: 15: 9 | info                | type main.info struct{x int; y int}
+010: 19: 2 | say                 | func (*github.com/goplus/gop/cl/internal/spx.Sprite).Say(msg string, secs ...float64)`)
 }
