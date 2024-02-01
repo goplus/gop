@@ -504,32 +504,20 @@ func (p *fnType) load(fnt types.Type) {
 	case *gox.TypeType:
 		p.initTypeType(v)
 	case *types.Signature:
-		if typ, ok := gox.CheckFuncEx(v); ok {
-			switch t := typ.(type) {
-			case *gox.TyOverloadFunc:
-				p.initFuncs(0, t.Funcs...)
-				return
-			case *gox.TyOverloadMethod:
-				p.initFuncs(0, t.Methods...)
-				return
-			case *gox.TyTemplateRecvMethod:
-				if tsig, ok := t.Func.Type().(*types.Signature); ok {
-					if ex, ok := gox.CheckFuncEx(tsig); ok {
-						if t, ok := ex.(*gox.TyOverloadFunc); ok {
-							p.initFuncs(1, t.Funcs...)
-							return
-						}
-					}
-				}
-				p.initFuncs(1, t.Func)
-				return
-			}
+		typ, objs := gox.CheckSigFuncExObjects(v)
+		switch typ.(type) {
+		case *gox.TyOverloadFunc, *gox.TyOverloadMethod:
+			p.initFuncs(0, objs)
+			return
+		case *gox.TyTemplateRecvMethod:
+			p.initFuncs(1, objs)
+			return
 		}
 		p.init(0, v)
 	}
 }
 
-func (p *fnType) initFuncs(base int, funcs ...types.Object) {
+func (p *fnType) initFuncs(base int, funcs []types.Object) {
 	for i, obj := range funcs {
 		if sig, ok := obj.Type().(*types.Signature); ok {
 			if i == 0 {
