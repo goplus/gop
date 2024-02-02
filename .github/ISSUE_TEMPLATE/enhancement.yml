@@ -8,14 +8,6 @@ body:
         ⚠️ Make sure to browse the opened and closed issues before submit your issue.
 
   - type: textarea
-    id: proposal
-    attributes:
-      label: Proposal
-      description: Write your feature request in the form of a proposal to be considered for implementation.
-    validations:
-      required: true
-
-  - type: textarea
     id: background
     attributes:
       label: Background
@@ -28,5 +20,13 @@ body:
     attributes:
       label: Workarounds
       description: Are there any current workarounds that you're using that others in similar positions should know about?
+    validations:
+      required: false
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Write your feature request in the form of a proposal to be considered for implementation.
     validations:
       required: true
