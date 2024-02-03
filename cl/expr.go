@@ -57,7 +57,7 @@ Name lookup:
 // ---------------------------------------------------------------------------*/
 
 const (
-	clIdentCanAutoCall = 1 << iota
+	clIdentCanAutoCall = 1 << iota // allow auto property
 	clIdentAllowBuiltin
 	clIdentLHS
 	clIdentSelectorExpr // this ident is X of ast.SelectorExpr
@@ -118,6 +118,11 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg gox.PkgRef, k
 	}
 	if o != nil && at != types.Universe {
 		goto find
+	}
+
+	// function alias
+	if compileFuncAlias(ctx, scope, ident, flags) {
+		return
 	}
 
 	// pkgRef object
@@ -391,6 +396,21 @@ func compileSelectorExpr(ctx *blockCtx, v *ast.SelectorExpr, flags int) {
 	}
 }
 
+func compileFuncAlias(ctx *blockCtx, scope *types.Scope, x *ast.Ident, flags int) bool {
+	name := x.Name
+	if c := name[0]; c >= 'a' && c <= 'z' {
+		name = string(rune(c)+('A'-'a')) + name[1:]
+		o := scope.Lookup(name)
+		if o == nil && ctx.loadSymbol(name) {
+			o = scope.Lookup(name)
+		}
+		if o != nil {
+			return identVal(ctx, x, flags, o, true)
+		}
+	}
+	return false
+}
+
 func pkgRef(at gox.PkgRef, name string) (o types.Object, alias bool) {
 	if c := name[0]; c >= 'a' && c <= 'z' {
 		name = string(rune(c)+('A'-'a')) + name[1:]
@@ -437,28 +457,37 @@ func lookupPkgRef(ctx *blockCtx, pkg gox.PkgRef, x *ast.Ident, pkgKind int) (o t
 // allow at.Types to be nil
 func compilePkgRef(ctx *blockCtx, at gox.PkgRef, x *ast.Ident, flags, pkgKind int) bool {
 	if v, alias := lookupPkgRef(ctx, at, x, pkgKind); v != nil {
-		cb := ctx.cb
 		if (flags & clIdentLHS) != 0 {
 			if rec := ctx.recorder(); rec != nil {
 				rec.Use(x, v)
 			}
-			cb.VarRef(v, x)
-		} else {
-			autoprop := alias && (flags&clIdentCanAutoCall) != 0
-			if autoprop && !gox.HasAutoProperty(v.Type()) {
-				return false
-			}
-			if rec := ctx.recorder(); rec != nil {
-				rec.Use(x, v)
-			}
-			cb.Val(v, x)
-			if autoprop {
-				cb.CallWith(0, 0, x)
-			}
+			ctx.cb.VarRef(v, x)
+			return true
 		}
-		return true
+		return identVal(ctx, x, flags, v, alias)
 	}
 	return false
+}
+
+func identVal(ctx *blockCtx, x *ast.Ident, flags int, v types.Object, alias bool) bool {
+	autocall := false
+	if alias {
+		if (flags & clCommandWithoutArgs) != 0 {
+			autocall = true
+		} else if autocall = (flags & clIdentCanAutoCall) != 0; autocall {
+			if !gox.HasAutoProperty(v.Type()) {
+				return false
+			}
+		}
+	}
+	if rec := ctx.recorder(); rec != nil {
+		rec.Use(x, v)
+	}
+	cb := ctx.cb.Val(v, x)
+	if autocall {
+		cb.CallWith(0, 0, x)
+	}
+	return true
 }
 
 type fnType struct {
