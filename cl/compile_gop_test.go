@@ -1042,6 +1042,30 @@ func main() {
 `, false)
 }
 
+func TestTypeAsParamsFunc(t *testing.T) {
+	gopMixedClTest(t, "main", `
+package main
+
+import (
+	"fmt"
+	"reflect"
+)
+
+func Gopx_Col[T any](name string) {
+	fmt.Printf("%v: %s\n", reflect.TypeOf((*T)(nil)).Elem(), name)
+}
+`, `
+col string, "name"
+col int, "age"
+`, `package main
+
+func main() {
+	Gopx_Col[string]("name")
+	Gopx_Col[int]("age")
+}
+`)
+}
+
 func Test_RangeExpressionIf_Issue1243(t *testing.T) {
 	gopClTest(t, `
 for i <- :10, i%3 == 0 {
