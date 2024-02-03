@@ -253,20 +253,21 @@ type baseLoader struct {
 	start token.Pos
 }
 
-func initLoader(ctx *pkgCtx, syms map[string]loader, start token.Pos, name string, fn func(), genBody bool) {
+func initLoader(ctx *pkgCtx, syms map[string]loader, start token.Pos, name string, fn func(), genBody bool) bool {
 	if name == "_" {
 		if genBody {
 			ctx.inits = append(ctx.inits, fn)
 		}
-		return
+		return false
 	}
 	if old, ok := syms[name]; ok {
 		oldpos := ctx.Position(old.pos())
 		ctx.handleErrorf(
 			start, "%s redeclared in this block\n\tprevious declaration at %v", name, oldpos)
-		return
+		return false
 	}
 	syms[name] = &baseLoader{start: start, fn: fn}
+	return true
 }
 
 func (p *baseLoader) load() {
@@ -920,7 +921,8 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, goFile
 				defer p.RestoreCurFile(old)
 				loadFunc(ctx, nil, d, genFnBody)
 			}
-			if name.Name == "init" {
+			fname := name.Name
+			if fname == "init" {
 				if genFnBody {
 					if debugLoad {
 						log.Println("==> Preload func init")
@@ -929,9 +931,13 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, goFile
 				}
 			} else {
 				if debugLoad {
-					log.Println("==> Preload func", name.Name)
+					log.Println("==> Preload func", fname)
 				}
-				initLoader(parent, syms, name.Pos(), name.Name, fn, genFnBody)
+				initLoader(parent, syms, name.Pos(), fname, fn, genFnBody) /* {
+					if strings.HasSuffix(fname, "Gopx_") { // Gopx_xxx func
+						ctx.lbinames = append(ctx.lbinames, fname)
+					}
+				} */
 			}
 		} else {
 			if name, ok := getRecvTypeName(parent, d.Recv, true); ok {

@@ -20,6 +20,23 @@ import (
 	"testing"
 )
 
+func TestFuncAlias(t *testing.T) {
+	gopClTest(t, `
+func Foo(a ...int) {}
+
+foo 100
+foo
+`, `package main
+
+func Foo(a ...int) {
+}
+func main() {
+	Foo(100)
+	Foo()
+}
+`)
+}
+
 func TestOverloadOp(t *testing.T) {
 	gopClTest(t, `
 type foo struct {
