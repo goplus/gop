@@ -405,7 +405,6 @@ func compileFuncAlias(ctx *blockCtx, scope *types.Scope, x *ast.Ident, flags int
 			o = scope.Lookup(name)
 		}
 		if o != nil {
-			log.Println("compileFuncAlias:", o, flags)
 			return identVal(ctx, x, flags, o, true)
 		}
 	}
