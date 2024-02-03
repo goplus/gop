@@ -122,40 +122,6 @@ func gopClTestFS(t *testing.T, conf *cl.Config, fs parser.FileSystem, pkgname, e
 	}
 }
 
-func TestVargCommand(t *testing.T) {
-	gopClTest(t, `
-type foo int
-
-func (f foo) Ls(args ...string) {
-}
-
-var f foo
-f.ls
-`, `package main
-
-type foo int
-
-func (f foo) Ls(args ...string) {
-}
-
-var f foo
-
-func main() {
-	f.Ls()
-}
-`)
-}
-
-func _TestCommandInPkg(t *testing.T) {
-	gopClTest(t, `
-func Ls(args ...string) {
-}
-
-ls
-`, `
-`)
-}
-
 func Test_CastSlice_Issue1240(t *testing.T) {
 	gopClTest(t, `
 type fvec []float64

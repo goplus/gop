@@ -20,6 +20,46 @@ import (
 	"testing"
 )
 
+func TestVargCommand(t *testing.T) {
+	gopClTest(t, `
+type foo int
+
+func (f foo) Ls(args ...string) {
+}
+
+var f foo
+f.ls
+`, `package main
+
+type foo int
+
+func (f foo) Ls(args ...string) {
+}
+
+var f foo
+
+func main() {
+	f.Ls()
+}
+`)
+}
+
+func TestCommandInPkg(t *testing.T) {
+	gopClTest(t, `
+func Ls(args ...string) {
+}
+
+ls
+`, `package main
+
+func Ls(args ...string) {
+}
+func main() {
+	Ls()
+}
+`)
+}
+
 func TestFuncAlias(t *testing.T) {
 	gopClTest(t, `
 func Foo(a ...int) {}
