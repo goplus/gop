@@ -652,8 +652,8 @@ func initGopPkg(ctx *pkgCtx, pkg *gox.Package, gopSyms map[string]bool) {
 			ctx.loadType(lbi.(*ast.Ident).Name)
 		}
 	}
-	if pkg.Types.Scope().Lookup(gopPackage) == nil {
-		pkg.Types.Scope().Insert(types.NewConst(token.NoPos, pkg.Types, gopPackage, types.Typ[types.UntypedBool], constant.MakeBool(true)))
+	if scope := pkg.Types.Scope(); scope.Lookup(gopPackage) == nil {
+		scope.Insert(types.NewConst(token.NoPos, pkg.Types, gopPackage, types.Typ[types.UntypedBool], constant.MakeBool(true)))
 	}
 	gox.InitThisGopPkg(pkg.Types)
 }
@@ -933,11 +933,11 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, goFile
 				if debugLoad {
 					log.Println("==> Preload func", fname)
 				}
-				initLoader(parent, syms, name.Pos(), fname, fn, genFnBody) /* {
-					if strings.HasSuffix(fname, "Gopx_") { // Gopx_xxx func
+				if initLoader(parent, syms, name.Pos(), fname, fn, genFnBody) {
+					if strings.HasPrefix(fname, "Gopx_") { // Gopx_xxx func
 						ctx.lbinames = append(ctx.lbinames, fname)
 					}
-				} */
+				}
 			}
 		} else {
 			if name, ok := getRecvTypeName(parent, d.Recv, true); ok {

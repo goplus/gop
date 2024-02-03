@@ -20,6 +20,46 @@ import (
 	"testing"
 )
 
+func TestVargCommand(t *testing.T) {
+	gopClTest(t, `
+type foo int
+
+func (f foo) Ls(args ...string) {
+}
+
+var f foo
+f.ls
+`, `package main
+
+type foo int
+
+func (f foo) Ls(args ...string) {
+}
+
+var f foo
+
+func main() {
+	f.Ls()
+}
+`)
+}
+
+func TestCommandInPkg(t *testing.T) {
+	gopClTest(t, `
+func Ls(args ...string) {
+}
+
+ls
+`, `package main
+
+func Ls(args ...string) {
+}
+func main() {
+	Ls()
+}
+`)
+}
+
 func TestFuncAlias(t *testing.T) {
 	gopClTest(t, `
 func Foo(a ...int) {}
@@ -1040,6 +1080,61 @@ func main() {
 	fmt.Println(&T{}, &Point{10, 20})
 }
 `, false)
+}
+
+func TestTypeAsParamsFunc(t *testing.T) {
+	gopMixedClTest(t, "main", `
+package main
+
+import (
+	"fmt"
+	"reflect"
+)
+
+type basetype interface {
+	int | string
+}
+
+func Gopx_Row__0[T basetype](name string) {
+}
+
+func Gopx_Row__1[Array any](v int) {
+}
+
+func Gopx_Col[T any](name string) {
+	fmt.Printf("%v: %s\n", reflect.TypeOf((*T)(nil)).Elem(), name)
+}
+
+type Table struct {
+}
+
+func Gopt_Table_Gopx_Col__0[T basetype](p *Table, name string) {
+}
+
+func Gopt_Table_Gopx_Col__1[Array any](p *Table, v int) {
+}
+`, `
+var tbl *Table
+
+col string, "name"
+col int, "age"
+
+row string, 100
+
+tbl.col string, "foo"
+tbl.col int, 100
+`, `package main
+
+var tbl *Table
+
+func main() {
+	Gopx_Col[string]("name")
+	Gopx_Col[int]("age")
+	Gopx_Row__1[string](100)
+	Gopt_Table_Gopx_Col__0[string](tbl, "foo")
+	Gopt_Table_Gopx_Col__1[int](tbl, 100)
+}
+`)
 }
 
 func Test_RangeExpressionIf_Issue1243(t *testing.T) {
