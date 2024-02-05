@@ -466,8 +466,8 @@ func (p *parser) expectClosing(tok token.Token, context string) token.Pos {
 }
 
 func (p *parser) expectSemi() {
-	// semicolon is optional before a closing ')' or '}' or EOF
-	if p.tok != token.RPAREN && p.tok != token.RBRACE && p.tok != token.EOF {
+	// semicolon is optional before a closing ')' or '}'
+	if p.tok != token.RPAREN && p.tok != token.RBRACE {
 		switch p.tok {
 		case token.COMMA:
 			// permit a ',' instead of a ';' but complain

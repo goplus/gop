@@ -879,6 +879,7 @@ scanAgain:
 			if s.ch == '.' && s.peek() == '.' {
 				s.next()
 				s.next() // consume last '.'
+				insertSemi = true
 				tok = token.ELLIPSIS
 			}
 		case ',':

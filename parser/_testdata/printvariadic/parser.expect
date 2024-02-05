@@ -22,3 +22,12 @@ ast.FuncDecl:
               Args:
                 ast.Ident:
                   Name: x
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.Ident:
+                  Name: y
