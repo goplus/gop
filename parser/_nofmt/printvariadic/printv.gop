@@ -1,0 +1,6 @@
+println(
+	x...
+)
+println(
+	y...,
+)

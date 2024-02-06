@@ -1955,9 +1955,6 @@ func (p *parser) parseCallOrConversion(fun ast.Expr, isCmd bool) *ast.CallExpr {
 		if p.tok == token.ELLIPSIS {
 			ellipsis = p.pos
 			p.next()
-			if p.tok != token.RPAREN {
-				break
-			}
 		}
 		if isCmd && p.tok == token.RBRACE {
 			break
