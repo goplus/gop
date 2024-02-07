@@ -94,7 +94,7 @@ winget:
       - For STEM education: studying an engineering language that can be used for work in the future.
       - For data science: communicating with engineers in the same language.
     license: Apache-2.0
-    skip_upload: false
+    skip_upload: auto
     release_notes: "{{.Changelog}}"
     release_notes_url: "https://github.com/{{ .Env.GITHUB_REPOSITORY_OWNER }}/gop/releases/tag/v{{.Version}}"
     dependencies:
@@ -109,7 +109,7 @@ winget:
         private_key: "{{ .Env.WINGET_PKGS_PRIVATE_KEY }}"
       pull_request:
         enabled: true
-        draft: false
+        draft: true
         base:
           owner: microsoft
           name: winget-pkgs
