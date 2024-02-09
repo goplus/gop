@@ -47,9 +47,6 @@ type Config struct {
 	// LookupClass lookups a class by specified file extension.
 	LookupClass func(ext string) (c *Project, ok bool)
 
-	// IsPkgtStandard checks a pkgPath is a Go standard package or not.
-	IsPkgtStandard func(pkgPath string) bool
-
 	// An Importer resolves import paths to Packages.
 	Importer types.Importer
 }
@@ -66,7 +63,6 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (_ Package, err 
 		C2goBase:       conf.C2goBase,
 		LookupPub:      conf.LookupPub,
 		LookupClass:    conf.LookupClass,
-		IsPkgtStandard: conf.IsPkgtStandard,
 		Importer:       conf.Importer,
 		NoFileLine:     true,
 		NoAutoGenMain:  true,
