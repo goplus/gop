@@ -19,7 +19,6 @@ package cl
 
 import (
 	"fmt"
-	"go/constant"
 	"go/types"
 	"log"
 	"reflect"
@@ -175,9 +174,6 @@ type Config struct {
 	// Fset provides source position information for syntax trees and types (required).
 	Fset *token.FileSet
 
-	// Context represents all things between packages (optional).
-	Context *gox.Context
-
 	// RelativeBase is the root directory of relative path.
 	RelativeBase string
 
@@ -192,9 +188,6 @@ type Config struct {
 	// LookupClass lookups a class by specified file extension (required).
 	// See (*github.com/goplus/mod/gopmod.Module).LookupClass.
 	LookupClass func(ext string) (c *Project, ok bool)
-
-	// IsPkgtStandard checks a pkgPath is a Go standard package or not.
-	IsPkgtStandard func(pkgPath string) bool
 
 	// An Importer resolves import paths to Packages (optional).
 	Importer types.Importer
@@ -491,8 +484,6 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	confGox := &gox.Config{
 		Types:           conf.Types,
 		Fset:            fset,
-		Context:         conf.Context,
-		IsPkgtStandard:  conf.IsPkgtStandard,
 		Importer:        conf.Importer,
 		LoadNamed:       ctx.loadNamed,
 		HandleErr:       ctx.handleErr,
@@ -625,10 +616,6 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	return
 }
 
-const (
-	gopPackage = "GopPackage"
-)
-
 func isOverloadFunc(name string) bool {
 	n := len(name)
 	return n > 3 && name[n-3:n-1] == "__"
@@ -651,9 +638,6 @@ func initGopPkg(ctx *pkgCtx, pkg *gox.Package, gopSyms map[string]bool) {
 		} else {
 			ctx.loadType(lbi.(*ast.Ident).Name)
 		}
-	}
-	if scope := pkg.Types.Scope(); scope.Lookup(gopPackage) == nil {
-		scope.Insert(types.NewConst(token.NoPos, pkg.Types, gopPackage, types.Typ[types.UntypedBool], constant.MakeBool(true)))
 	}
 	gox.InitThisGopPkg(pkg.Types)
 }

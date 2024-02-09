@@ -1,6 +1,6 @@
 package pkg
 
-var (
+const (
 	GopPackage = true
 )
 
