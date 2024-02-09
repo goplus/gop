@@ -79,7 +79,6 @@ func gopSpxTest(t *testing.T, gmx, spxcode, expected string) {
 }
 
 func gopSpxTestEx(t *testing.T, gmx, spxcode, expected, gmxfile, spxfile string) {
-	t.Helper()
 	gopSpxTestExConf(t, "gopSpxTest", gblConf, gmx, spxcode, expected, gmxfile, spxfile, "")
 }
 
@@ -88,7 +87,6 @@ func gopSpxTestEx2(t *testing.T, gmx, spxcode, expected, gmxfile, spxfile, resul
 }
 
 func gopSpxTestExConf(t *testing.T, name string, conf *cl.Config, gmx, spxcode, expected, gmxfile, spxfile, resultFile string) {
-	t.Helper()
 	t.Run(name, func(t *testing.T) {
 		cl.SetDisableRecover(true)
 		defer cl.SetDisableRecover(false)
