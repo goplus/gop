@@ -1178,7 +1178,7 @@ var c Class
 var a int
 
 func main() {
-	test.Gopt_Case_Match__1(c, a, "b")
+	test.Gopt_Case_MatchAny(c, a, "b")
 }
 `)
 }

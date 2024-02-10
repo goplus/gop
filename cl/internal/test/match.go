@@ -28,16 +28,12 @@ type Case struct {
 	CaseT
 }
 
-func Gopt_Case_Equal__0[T basetype](t CaseT, a, b T) bool {
-	return a == b
+const (
+	Gopo_Gopt_Case_Match = "Gopt_Case_MatchTBase,Gopt_Case_MatchAny"
+)
+
+func Gopt_Case_MatchTBase[T basetype](t CaseT, got, expected T, name ...string) {
 }
 
-func Gopt_Case_Equal__1(t CaseT, a, b any) bool {
-	return true
-}
-
-func Gopt_Case_Match__0[T basetype](t CaseT, got, expected T, name ...string) {
-}
-
-func Gopt_Case_Match__1(t CaseT, got, expected any, name ...string) {
+func Gopt_Case_MatchAny(t CaseT, got, expected any, name ...string) {
 }
