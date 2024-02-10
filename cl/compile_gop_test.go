@@ -1156,6 +1156,33 @@ func main() {
 `)
 }
 
+func TestYaptest(t *testing.T) {
+	gopMixedClTest(t, "main", `package main
+
+import (
+	"github.com/goplus/gop/cl/internal/test"
+)
+
+type Class struct {
+	test.Case
+}
+`, `var c Class
+var a int
+
+c.match a, "b"
+`, `package main
+
+import "github.com/goplus/gop/cl/internal/test"
+
+var c Class
+var a int
+
+func main() {
+	test.Gopt_Case_Match__1(c, a, "b")
+}
+`)
+}
+
 func Test_RangeExpressionIf_Issue1243(t *testing.T) {
 	gopClTest(t, `
 for i <- :10, i%3 == 0 {
