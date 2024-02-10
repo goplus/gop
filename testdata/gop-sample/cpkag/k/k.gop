@@ -1,0 +1,9 @@
+package k
+
+func Kk() {
+	println("kk")
+}
+
+func Ab() {
+	println("ab")
+}

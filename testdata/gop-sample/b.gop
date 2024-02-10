@@ -1,0 +1,45 @@
+package main
+
+import (
+	"fmt"
+	c "gop-sample/cpkag"
+	ab "gop-sample/cpkag/b"
+	ss "gop-sample/cpkag/b/ss"
+	k "gop-sample/cpkag/k"
+	kutils "gop-sample/cpkag/k/utils"
+	myutils "gop-sample/cpkag/utils"
+	mymyutils "gop-sample/cpkag/utils/utils"
+	g "gop-sample/gpkag"
+	rootutils "gop-sample/utils"
+
+	remote "github.com/liuscraft/testgomod/utils"
+)
+
+bb := 3
+Ab()
+ab.Ab()
+ab.Ac()
+ss.Ab()
+ss.Bs()
+fmt.Println(bb)
+k.K()
+k.Kk()
+k.Ab()
+remote.TestCsgo()
+myutils.TestCsgo()
+mymyutils.TestCsgo()
+rootutils.TestCsgo()
+kutils.TestCsgo()
+kutils.Kutils()
+
+a()
+c.P()
+c.Gg()
+g.G()
+fmt.Println("b")
+fmt.Println("b")
+fmt.Println("b")
+fmt.Println("b")
+fmt.Println("b")
+fmt.Println("b")
+fmt.Println("b")
