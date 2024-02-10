@@ -1175,7 +1175,7 @@ c.match a, "b"
 import "github.com/goplus/gop/cl/internal/test"
 
 var c Class
-var a1 int
+var a int
 
 func main() {
 	test.Gopt_Case_Match__1(c, a, "b")
