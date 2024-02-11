@@ -120,11 +120,6 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg gox.PkgRef, k
 		goto find
 	}
 
-	// function alias
-	if compileFuncAlias(ctx, scope, ident, flags) {
-		return
-	}
-
 	// pkgRef object
 	if (flags & clIdentSelectorExpr) != 0 {
 		if name == "C" && len(ctx.clookups) > 0 {
@@ -137,6 +132,11 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg gox.PkgRef, k
 			}
 			return pi.PkgRef, objPkgRef
 		}
+	}
+
+	// function alias
+	if compileFuncAlias(ctx, scope, ident, flags) {
+		return
 	}
 
 	// object from import . "xxx"
