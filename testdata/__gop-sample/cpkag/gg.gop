@@ -1,5 +1,0 @@
-package cpkag
-
-func Gg(){
-	println("gg")
-}
