@@ -22,7 +22,6 @@ import (
 	"io/fs"
 	"os"
 	"strings"
-	"syscall"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
@@ -37,13 +36,13 @@ import (
 )
 
 var (
-	ErrNotFound      = syscall.ENOENT
+	ErrNotFound      = gopmod.ErrNotFound
 	ErrIgnoreNotated = errors.New("notated error ignored")
 )
 
 // NotFound returns if cause err is ErrNotFound or not
 func NotFound(err error) bool {
-	return errors.Err(err) == ErrNotFound
+	return gopmod.IsNotFound(err)
 }
 
 // IgnoreNotated returns if cause err is ErrIgnoreNotated or not.
@@ -122,6 +121,7 @@ type Config struct {
 	Importer types.Importer
 
 	IgnoreNotatedError bool
+	DontUpdateGoMod    bool
 }
 
 func LoadMod(dir string) (mod *gopmod.Module, err error) {
@@ -172,12 +172,12 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 		return nil, nil, ErrNotFound
 	}
 
+	gop := conf.Gop
+	if gop == nil {
+		gop = gopenv.Get()
+	}
 	imp := conf.Importer
 	if imp == nil {
-		gop := conf.Gop
-		if gop == nil {
-			gop = gopenv.Get()
-		}
 		imp = NewImporter(mod, gop, fset)
 	}
 
@@ -218,9 +218,29 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 	if out == nil {
 		return nil, nil, ErrNotFound
 	}
-	if pkgTest != nil && genTestPkg {
+	if genTestPkg && pkgTest != nil {
 		test, err = cl.NewPackage("", pkgTest, clConf)
 	}
+	saveWithGopMod(mod, gop, out, test, conf)
+	return
+}
+
+func saveWithGopMod(mod *gopmod.Module, gop *env.Gop, out, test *gox.Package, conf *Config) {
+	if !conf.DontUpdateGoMod && mod.HasModfile() {
+		flags := checkGopDeps(out)
+		if test != nil {
+			flags |= checkGopDeps(test)
+		}
+		if flags != 0 {
+			mod.SaveWithGopMod(gop, flags)
+		}
+	}
+}
+
+func checkGopDeps(pkg *gox.Package) (flags int) {
+	pkg.ForEachFile(func(fname string, file *gox.File) {
+		flags |= file.CheckGopDeps(pkg)
+	})
 	return
 }
 
@@ -281,6 +301,7 @@ func LoadFiles(dir string, files []string, conf *Config) (out *gox.Package, err 
 		}
 		break
 	}
+	saveWithGopMod(mod, gop, out, nil, conf)
 	return
 }
 
