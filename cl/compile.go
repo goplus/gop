@@ -517,15 +517,6 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		Pkg: p, LookupPub: conf.LookupPub,
 	})
 
-	for file, gmx := range files {
-		if gmx.IsClass && !gmx.IsNormalGox {
-			if debugLoad {
-				log.Println("==> File", file, "normalGox:", gmx.IsNormalGox)
-			}
-			loadClass(ctx, p, file, gmx, conf)
-		}
-	}
-
 	// sort files
 	type File struct {
 		*ast.File
@@ -538,6 +529,16 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	sort.Slice(sfiles, func(i, j int) bool {
 		return sfiles[i].path < sfiles[j].path
 	})
+
+	for _, f := range sfiles {
+		gmx := f.File
+		if gmx.IsClass && !gmx.IsNormalGox {
+			if debugLoad {
+				log.Println("==> File", f.path, "normalGox:", gmx.IsNormalGox)
+			}
+			loadClass(ctx, p, f.path, gmx, conf)
+		}
+	}
 
 	for _, f := range sfiles {
 		fileLine := !conf.NoFileLine
