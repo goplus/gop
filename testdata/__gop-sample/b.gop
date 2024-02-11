@@ -7,4 +7,3 @@ import (
 a()
 Ab()
 ab.Ab()
-ab.Ac()
