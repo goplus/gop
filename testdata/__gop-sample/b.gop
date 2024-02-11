@@ -1,0 +1,9 @@
+package main
+
+import (
+	ab "gop-sample/cpkag/b"
+)
+
+a()
+Ab()
+ab.Ab()

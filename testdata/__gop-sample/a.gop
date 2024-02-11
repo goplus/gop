@@ -1,0 +1,9 @@
+package main
+
+func a() {
+	println("a")
+}
+
+func Ab() {
+	println("ab")
+}
