@@ -1,7 +1,0 @@
-package utils
-
-import "fmt"
-
-func TestCsgo() {
-	fmt.Println("my testcsgo")
-}
