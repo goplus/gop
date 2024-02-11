@@ -1,5 +1,3 @@
 module gop-sample
 
-go 1.21
-
-gop 1.1
+go 1.18
