@@ -12,6 +12,128 @@ Abstract domain knowledge for it.
 
 Go+ introduces `classfile` to abstract domain knowledge.
 
+Sound a bit abstract? Let's take web programming as an example. First let us initialize a hello project:
+
+```sh
+gop mod init hello
+```
+
+Then we have it reference a classfile called `yap` as the HTTP Web Framework:
+
+```sh
+gop get github.com/goplus/yap@latest
+```
+
+We can use it to implement a static file server:
+
+```coffee
+static "/foo", FS("public")
+static "/"    # Equivalent to static "/", FS("static")
+
+run ":8080"
+```
+
+We can also add the ability to handle dynamic GET/POST requests:
+
+```coffee
+static "/foo", FS("public")
+static "/"    # Equivalent to static "/", FS("static")
+
+get "/p/:id", ctx => {
+	ctx.json {
+		"id": ctx.param("id"),
+	}
+}
+
+run ":8080"
+```
+
+Save this code to `hello_yap.gox` file and execute:
+
+```sh
+mkdir -p yap/static yap/public    # Static resources can be placed in these directories
+gop mod tidy
+gop run .
+```
+
+A simplest web program is running now. At this time, if you visit http://localhost:8080/p/123, you will get:
+
+```
+{"id":"123"}
+```
+
+Why is `yap` so easy to use? How does it do it? Let us analyze the principles one by one.
+
+
+### What's classfile
+
+What's a classfile? And why it is called `classfile`?
+
+First let's create a file called `Rect.gox`:
+
+```go
+var (
+	Width, Height int
+)
+
+func Area() int {
+	return Width * Height
+}
+```
+
+Then we create `hello.gop` file in the same directory:
+
+```go
+rect := &Rect{10, 20}
+printlnrect.area
+```
+
+Then we execute `gop run .` to run it and get the result:
+
+```sh
+200
+```
+
+This shows that the `Rect.gox` file actually defines a class named `Rect`. If we express it in Go syntax, it looks like this:
+
+```go
+type Rect struct {
+	Width, Height int
+}
+
+func (this *Rect) Area() int {
+	return this.Width * this.Height
+}
+```
+
+So the name `classfile` comes from the fact that it actually defines a class.
+
+You may ask: What is the value of doing this?
+
+The value lies in its ease of use, especially for children and non-expert programmers. Let's look at this syntax:
+
+```go
+var (
+	Width, Height int
+)
+
+func Area() int {
+	return Width * Height
+}
+```
+
+Defining variables and defining functions are all familiar to them while learning sequential programming. They can define new types using syntax they already know by heart. This will be valuable in getting a wider community to learn Go+.
+
+Of course, this is not enough to make classfiles an exciting feature. What's more important is its ability to abstract domain knowledge. It is accomplished by defining `base class` for a class and defining `relationships between multiple classes`.
+
+What is a `classfile`? Usually it consists of a `project class` and multiple `worker classes`. The classfile not only specifies the `base class` of all `project class` and `worker classes`, but also organizes all these classes together by the base class of project class. There can be no worker classes, that is, the entire classfile consists of only one project class.
+
+This is a bit abstract. Let's take the [2D Game Engine spx](https://github.com/goplus/spx) as an example. The base class of project class of `spx classfile` is called `Game`. The base class of worker class is called `Sprite`. Obviously, there will only be one Game instance in a game, but there are many types of sprites, so many types of worker classes are needed, but they all have the same base class called `Sprite`. Go+'s classfile allows you to specify different base classes for different worker classes. Although this is rare, it can be done.
+
+How does Go+ identify various class files of a classfile? by its filename. By convention, if we define a classfile called `foo`, then its project class is usually called `main_foo.gox`, and the worker class is usually called `xxx_foo.gox`. If this classfile does not have a worker class, then the project class only needs to ensure that the suffix is `_foo.gox`, and the class name can be freely chosen. For example, our previous `yap` framework only has project class, so a file name like `hello_yap.gox` can be correctly recognized.
+
+The earliest version of Go+ allows classfiles to be identified through custom file extensions. For example, the project class of the `spx classfile` is called `main.spx`, and the worker class is called `xxx.spx`. Although this ability to customize extensions is still retained for now, we do not recommend its use and there is no guarantee that it will continue to be available in the future. `spx` will likely be the only classfile to use a custom extension.
+
 
 ### classfile: Unit Test
 
