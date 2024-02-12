@@ -1,0 +1,4 @@
+var tbl Table
+
+tbl.col int, "age"
+tbl.col bool, "male"

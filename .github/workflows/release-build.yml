@@ -34,6 +34,15 @@ jobs:
           echo "TAG: $tag"
           exit 1
         fi
+    
+    - name: Check pre-release
+      run: |
+        version=$(cat VERSION)
+        # check stable version format x.x.x
+        if ! [[ $version =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "This is a pre-release"
+          echo "IS_PRERELEASE=true" >> $GITHUB_ENV
+        fi
 
     - name: Set up Go
       uses: actions/setup-go@v5
@@ -53,6 +62,7 @@ jobs:
         WINGET_PKGS_PRIVATE_KEY: ${{ secrets.WINGET_PKGS_PRIVATE_KEY }}
 
     - name: Upload deb/rpm to Fury.io
+      if: env.IS_PRERELEASE != 'true'
       run: |
         for file in dist/*.{deb,rpm}
         do

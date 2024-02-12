@@ -213,9 +213,9 @@ func testItems(t *testing.T, name string, items []string, goitems []string) {
 			name, len(items), len(goitems),
 			text, gotext)
 	} else {
-		t.Log(fmt.Sprintf(`====== check %v pass (count: %v) ======
+		t.Logf(`====== check %v pass (count: %v) ======
 %v
-`, name, len(items), text))
+`, name, len(items), text)
 	}
 }
 
@@ -338,6 +338,7 @@ func goUsesList(fset *token.FileSet, uses map[*goast.Ident]types.Object) []strin
 	return sortItems(items)
 }
 
+/*
 func selectionList(fset *token.FileSet, sels map[*ast.SelectorExpr]*types.Selection) []string {
 	var items []string
 	for expr, sel := range sels {
@@ -365,6 +366,7 @@ func goSelectionList(fset *token.FileSet, sels map[*goast.SelectorExpr]*types.Se
 	}
 	return sortItems(items)
 }
+*/
 
 func mode(tv types.TypeAndValue) string {
 	switch {

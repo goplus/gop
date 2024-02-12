@@ -22,7 +22,6 @@ import (
 	"io/fs"
 	"os"
 	"strings"
-	"syscall"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
@@ -37,13 +36,13 @@ import (
 )
 
 var (
-	ErrNotFound      = syscall.ENOENT
+	ErrNotFound      = gopmod.ErrNotFound
 	ErrIgnoreNotated = errors.New("notated error ignored")
 )
 
 // NotFound returns if cause err is ErrNotFound or not
 func NotFound(err error) bool {
-	return errors.Err(err) == ErrNotFound
+	return gopmod.IsNotFound(err)
 }
 
 // IgnoreNotated returns if cause err is ErrIgnoreNotated or not.
@@ -118,13 +117,24 @@ func isNotatedErr(err error, pkg *ast.Package, fset *token.FileSet) (notatedErr 
 type Config struct {
 	Gop      *env.Gop
 	Fset     *token.FileSet
-	Filter   func(fs.FileInfo) bool
+	Mod      *gopmod.Module
 	Importer types.Importer
 
-	// Context represents all things between packages (optional).
-	Context *gox.Context
+	Filter func(fs.FileInfo) bool
 
 	IgnoreNotatedError bool
+	DontUpdateGoMod    bool
+}
+
+func NewDefaultConf(dir string) (conf *Config, err error) {
+	mod, err := LoadMod(dir)
+	if err != nil {
+		return
+	}
+	gop := gopenv.Get()
+	fset := token.NewFileSet()
+	imp := NewImporter(mod, gop, fset)
+	return &Config{Gop: gop, Fset: fset, Mod: mod, Importer: imp}, nil
 }
 
 func LoadMod(dir string) (mod *gopmod.Module, err error) {
@@ -151,14 +161,18 @@ func hasModfile(mod *gopmod.Module) bool {
 // -----------------------------------------------------------------------------
 
 func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (out, test *gox.Package, err error) {
-	mod, err := LoadMod(dir)
-	if err != nil {
-		return
-	}
-
 	if conf == nil {
 		conf = new(Config)
 	}
+
+	mod := conf.Mod
+	if mod == nil {
+		if mod, err = LoadMod(dir); err != nil {
+			err = errors.NewWith(err, `LoadMod(dir)`, -2, "gop.LoadMod", dir)
+			return
+		}
+	}
+
 	fset := conf.Fset
 	if fset == nil {
 		fset = token.NewFileSet()
@@ -175,24 +189,22 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 		return nil, nil, ErrNotFound
 	}
 
+	gop := conf.Gop
+	if gop == nil {
+		gop = gopenv.Get()
+	}
 	imp := conf.Importer
 	if imp == nil {
-		gop := conf.Gop
-		if gop == nil {
-			gop = gopenv.Get()
-		}
 		imp = NewImporter(mod, gop, fset)
 	}
 
 	var pkgTest *ast.Package
 	var clConf = &cl.Config{
-		Fset:           fset,
-		Context:        conf.Context,
-		RelativeBase:   relativeBaseOf(mod),
-		Importer:       imp,
-		IsPkgtStandard: mod.IsPkgtStandard,
-		LookupClass:    mod.LookupClass,
-		LookupPub:      c2go.LookupPub(mod),
+		Fset:         fset,
+		RelativeBase: relativeBaseOf(mod),
+		Importer:     imp,
+		LookupClass:  mod.LookupClass,
+		LookupPub:    c2go.LookupPub(mod),
 	}
 
 	for name, pkg := range pkgs {
@@ -223,9 +235,29 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 	if out == nil {
 		return nil, nil, ErrNotFound
 	}
-	if pkgTest != nil && genTestPkg {
+	if genTestPkg && pkgTest != nil {
 		test, err = cl.NewPackage("", pkgTest, clConf)
 	}
+	saveWithGopMod(mod, gop, out, test, conf)
+	return
+}
+
+func saveWithGopMod(mod *gopmod.Module, gop *env.Gop, out, test *gox.Package, conf *Config) {
+	if !conf.DontUpdateGoMod && mod.HasModfile() {
+		flags := checkGopDeps(out)
+		if test != nil {
+			flags |= checkGopDeps(test)
+		}
+		if flags != 0 {
+			mod.SaveWithGopMod(gop, flags)
+		}
+	}
+}
+
+func checkGopDeps(pkg *gox.Package) (flags int) {
+	pkg.ForEachFile(func(fname string, file *gox.File) {
+		flags |= file.CheckGopDeps(pkg)
+	})
 	return
 }
 
@@ -240,15 +272,18 @@ func relativeBaseOf(mod *gopmod.Module) string {
 // -----------------------------------------------------------------------------
 
 func LoadFiles(dir string, files []string, conf *Config) (out *gox.Package, err error) {
-	mod, err := LoadMod(dir)
-	if err != nil {
-		err = errors.NewWith(err, `LoadMod(dir)`, -2, "gop.LoadMod", dir)
-		return
-	}
-
 	if conf == nil {
 		conf = new(Config)
 	}
+
+	mod := conf.Mod
+	if mod == nil {
+		if mod, err = LoadMod(dir); err != nil {
+			err = errors.NewWith(err, `LoadMod(dir)`, -2, "gop.LoadMod", dir)
+			return
+		}
+	}
+
 	fset := conf.Fset
 	if fset == nil {
 		fset = token.NewFileSet()
@@ -272,13 +307,11 @@ func LoadFiles(dir string, files []string, conf *Config) (out *gox.Package, err 
 			imp = NewImporter(mod, gop, fset)
 		}
 		clConf := &cl.Config{
-			Fset:           fset,
-			Context:        conf.Context,
-			RelativeBase:   relativeBaseOf(mod),
-			Importer:       imp,
-			LookupClass:    mod.LookupClass,
-			IsPkgtStandard: mod.IsPkgtStandard,
-			LookupPub:      c2go.LookupPub(mod),
+			Fset:         fset,
+			RelativeBase: relativeBaseOf(mod),
+			Importer:     imp,
+			LookupClass:  mod.LookupClass,
+			LookupPub:    c2go.LookupPub(mod),
 		}
 		out, err = cl.NewPackage("", pkg, clConf)
 		if err != nil {
@@ -288,6 +321,7 @@ func LoadFiles(dir string, files []string, conf *Config) (out *gox.Package, err 
 		}
 		break
 	}
+	saveWithGopMod(mod, gop, out, nil, conf)
 	return
 }
 

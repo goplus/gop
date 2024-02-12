@@ -20,6 +20,63 @@ import (
 	"testing"
 )
 
+func TestVargCommand(t *testing.T) {
+	gopClTest(t, `
+type foo int
+
+func (f foo) Ls(args ...string) {
+}
+
+var f foo
+f.ls
+`, `package main
+
+type foo int
+
+func (f foo) Ls(args ...string) {
+}
+
+var f foo
+
+func main() {
+	f.Ls()
+}
+`)
+}
+
+func TestCommandInPkg(t *testing.T) {
+	gopClTest(t, `
+func Ls(args ...string) {
+}
+
+ls
+`, `package main
+
+func Ls(args ...string) {
+}
+func main() {
+	Ls()
+}
+`)
+}
+
+func TestFuncAlias(t *testing.T) {
+	gopClTest(t, `
+func Foo(a ...int) {}
+
+foo 100
+foo
+`, `package main
+
+func Foo(a ...int) {
+}
+func main() {
+	Foo(100)
+	Foo()
+}
+`)
+}
+
 func TestOverloadOp(t *testing.T) {
 	gopClTest(t, `
 type foo struct {
@@ -117,6 +174,8 @@ println 10 * a
 
 import "fmt"
 
+const GopPackage = true
+
 type foo struct {
 }
 
@@ -169,6 +228,8 @@ var d = a.mul(c)
 
 import "fmt"
 
+const GopPackage = true
+
 type foo struct {
 }
 
@@ -206,6 +267,8 @@ println add("Hello", "World")
 
 import "fmt"
 
+const GopPackage = true
+
 func add__0(a int, b int) int {
 	return a + b
 }
@@ -240,6 +303,7 @@ println mul(1.2, 3.14)
 
 import "fmt"
 
+const GopPackage = true
 const Gopo_mul = "mulInt,mulFloat"
 
 func mulInt(a int, b int) int {
@@ -500,6 +564,8 @@ n.onKey ["a"], nil, key => {
 n.onKey 100, 200
 `, `package main
 
+const GopPackage = true
+
 type Mesh struct {
 }
 
@@ -652,6 +718,8 @@ a += b
 a += c
 `, `package main
 
+const GopPackage = true
+
 var a Vector3
 var b int
 var c float64
@@ -718,6 +786,8 @@ i.onKey ["1","2"], key => {
 
 import "fmt"
 
+const GopPackage = true
+
 func main() {
 	n := &N[int]{}
 	n.OnKey__0("1", func() {
@@ -759,6 +829,8 @@ var n N
 n.test
 n.test 100
 `, `package main
+
+const GopPackage = true
 
 func main() {
 	Test__0()
@@ -824,6 +896,8 @@ var b Var[M]
 c := Var(string)
 d := Var(M)
 `, `package main
+
+const GopPackage = true
 
 var a Var__0[int]
 var b Var__1[map[string]interface {
@@ -1023,6 +1097,90 @@ func main() {
 	fmt.Println(&T{}, &Point{10, 20})
 }
 `, false)
+}
+
+func TestTypeAsParamsFunc(t *testing.T) {
+	gopMixedClTest(t, "main", `
+package main
+
+import (
+	"fmt"
+	"reflect"
+)
+
+type basetype interface {
+	int | string
+}
+
+func Gopx_Row__0[T basetype](name string) {
+}
+
+func Gopx_Row__1[Array any](v int) {
+}
+
+func Gopx_Col[T any](name string) {
+	fmt.Printf("%v: %s\n", reflect.TypeOf((*T)(nil)).Elem(), name)
+}
+
+type Table struct {
+}
+
+func Gopt_Table_Gopx_Col__0[T basetype](p *Table, name string) {
+}
+
+func Gopt_Table_Gopx_Col__1[Array any](p *Table, v int) {
+}
+`, `
+var tbl *Table
+
+col string, "name"
+col int, "age"
+
+row string, 100
+
+tbl.col string, "foo"
+tbl.col int, 100
+`, `package main
+
+const GopPackage = true
+
+var tbl *Table
+
+func main() {
+	Gopx_Col[string]("name")
+	Gopx_Col[int]("age")
+	Gopx_Row__1[string](100)
+	Gopt_Table_Gopx_Col__0[string](tbl, "foo")
+	Gopt_Table_Gopx_Col__1[int](tbl, 100)
+}
+`)
+}
+
+func TestYaptest(t *testing.T) {
+	gopMixedClTest(t, "main", `package main
+
+import (
+	"github.com/goplus/gop/cl/internal/test"
+)
+
+type Class struct {
+	test.Case
+}
+`, `var c Class
+var a int
+
+c.match a, "b"
+`, `package main
+
+import "github.com/goplus/gop/cl/internal/test"
+
+var c Class
+var a int
+
+func main() {
+	test.Gopt_Case_MatchAny(c, a, "b")
+}
+`)
 }
 
 func Test_RangeExpressionIf_Issue1243(t *testing.T) {

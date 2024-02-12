@@ -19,7 +19,6 @@ package cl
 
 import (
 	"fmt"
-	"go/constant"
 	"go/types"
 	"log"
 	"reflect"
@@ -175,9 +174,6 @@ type Config struct {
 	// Fset provides source position information for syntax trees and types (required).
 	Fset *token.FileSet
 
-	// Context represents all things between packages (optional).
-	Context *gox.Context
-
 	// RelativeBase is the root directory of relative path.
 	RelativeBase string
 
@@ -192,9 +188,6 @@ type Config struct {
 	// LookupClass lookups a class by specified file extension (required).
 	// See (*github.com/goplus/mod/gopmod.Module).LookupClass.
 	LookupClass func(ext string) (c *Project, ok bool)
-
-	// IsPkgtStandard checks a pkgPath is a Go standard package or not.
-	IsPkgtStandard func(pkgPath string) bool
 
 	// An Importer resolves import paths to Packages (optional).
 	Importer types.Importer
@@ -253,20 +246,21 @@ type baseLoader struct {
 	start token.Pos
 }
 
-func initLoader(ctx *pkgCtx, syms map[string]loader, start token.Pos, name string, fn func(), genBody bool) {
+func initLoader(ctx *pkgCtx, syms map[string]loader, start token.Pos, name string, fn func(), genBody bool) bool {
 	if name == "_" {
 		if genBody {
 			ctx.inits = append(ctx.inits, fn)
 		}
-		return
+		return false
 	}
 	if old, ok := syms[name]; ok {
 		oldpos := ctx.Position(old.pos())
 		ctx.handleErrorf(
 			start, "%s redeclared in this block\n\tprevious declaration at %v", name, oldpos)
-		return
+		return false
 	}
 	syms[name] = &baseLoader{start: start, fn: fn}
+	return true
 }
 
 func (p *baseLoader) load() {
@@ -490,8 +484,6 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	confGox := &gox.Config{
 		Types:           conf.Types,
 		Fset:            fset,
-		Context:         conf.Context,
-		IsPkgtStandard:  conf.IsPkgtStandard,
 		Importer:        conf.Importer,
 		LoadNamed:       ctx.loadNamed,
 		HandleErr:       ctx.handleErr,
@@ -525,15 +517,6 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		Pkg: p, LookupPub: conf.LookupPub,
 	})
 
-	for file, gmx := range files {
-		if gmx.IsClass && !gmx.IsNormalGox {
-			if debugLoad {
-				log.Println("==> File", file, "normalGox:", gmx.IsNormalGox)
-			}
-			loadClass(ctx, p, file, gmx, conf)
-		}
-	}
-
 	// sort files
 	type File struct {
 		*ast.File
@@ -546,6 +529,16 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	sort.Slice(sfiles, func(i, j int) bool {
 		return sfiles[i].path < sfiles[j].path
 	})
+
+	for _, f := range sfiles {
+		gmx := f.File
+		if gmx.IsClass && !gmx.IsNormalGox {
+			if debugLoad {
+				log.Println("==> File", f.path, "normalGox:", gmx.IsNormalGox)
+			}
+			loadClass(ctx, p, f.path, gmx, conf)
+		}
+	}
 
 	for _, f := range sfiles {
 		fileLine := !conf.NoFileLine
@@ -624,10 +617,6 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	return
 }
 
-const (
-	gopPackage = "GopPackage"
-)
-
 func isOverloadFunc(name string) bool {
 	n := len(name)
 	return n > 3 && name[n-3:n-1] == "__"
@@ -650,9 +639,6 @@ func initGopPkg(ctx *pkgCtx, pkg *gox.Package, gopSyms map[string]bool) {
 		} else {
 			ctx.loadType(lbi.(*ast.Ident).Name)
 		}
-	}
-	if pkg.Types.Scope().Lookup(gopPackage) == nil {
-		pkg.Types.Scope().Insert(types.NewConst(token.NoPos, pkg.Types, gopPackage, types.Typ[types.UntypedBool], constant.MakeBool(true)))
 	}
 	gox.InitThisGopPkg(pkg.Types)
 }
@@ -920,7 +906,8 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, goFile
 				defer p.RestoreCurFile(old)
 				loadFunc(ctx, nil, d, genFnBody)
 			}
-			if name.Name == "init" {
+			fname := name.Name
+			if fname == "init" {
 				if genFnBody {
 					if debugLoad {
 						log.Println("==> Preload func init")
@@ -929,9 +916,13 @@ func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, goFile
 				}
 			} else {
 				if debugLoad {
-					log.Println("==> Preload func", name.Name)
+					log.Println("==> Preload func", fname)
 				}
-				initLoader(parent, syms, name.Pos(), name.Name, fn, genFnBody)
+				if initLoader(parent, syms, name.Pos(), fname, fn, genFnBody) {
+					if strings.HasPrefix(fname, "Gopx_") { // Gopx_xxx func
+						ctx.lbinames = append(ctx.lbinames, fname)
+					}
+				}
 			}
 		} else {
 			if name, ok := getRecvTypeName(parent, d.Recv, true); ok {

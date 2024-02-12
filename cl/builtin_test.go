@@ -39,6 +39,21 @@ func getGoxConf() *gox.Config {
 	return &gox.Config{Fset: fset, Importer: imp}
 }
 
+func TestCompileFuncAlias(t *testing.T) {
+	ctx := &blockCtx{
+		pkgCtx: &pkgCtx{
+			syms: map[string]loader{"Foo": &baseLoader{
+				fn: func() {},
+			}},
+		},
+	}
+	scope := types.NewScope(nil, 0, 0, "")
+	x := ast.NewIdent("foo")
+	if compileFuncAlias(ctx, scope, x, 0) {
+		t.Fatal("compileFuncAlias: ok?")
+	}
+}
+
 func TestErrStringLit(t *testing.T) {
 	defer func() {
 		if e := recover(); e == nil {

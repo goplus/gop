@@ -73,6 +73,9 @@ func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 	if mod := p.mod; hasModfile(mod) {
 		ret, e := mod.Lookup(pkgPath)
 		if e != nil {
+			if isPkgInMod(pkgPath, "github.com/qiniu/x") {
+				return p.impFrom.ImportFrom(pkgPath, p.gop.Root, 0)
+			}
 			return nil, e
 		}
 		switch ret.Type {
@@ -123,6 +126,14 @@ func (p *Importer) genGoExtern(dir string, isExtern bool) (err error) {
 		}
 	}
 	return
+}
+
+func isPkgInMod(pkgPath, modPath string) bool {
+	if strings.HasPrefix(pkgPath, modPath) {
+		suffix := pkgPath[len(modPath):]
+		return suffix == "" || suffix[0] == '/'
+	}
+	return false
 }
 
 func defaultGoMod(modPath string) []byte {

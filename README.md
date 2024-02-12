@@ -55,7 +55,59 @@ Don't define a language for specific domain.
 Abstract domain knowledge for it.
 ```
 
-Go+ introduces `classfile` to abstract domain knowledge. See [Go+ Classfiles](doc/classfile.md).
+Go+ introduces `classfile` to abstract domain knowledge.
+
+Sound a bit abstract? Let's take web programming as an example. First let us initialize a hello project:
+
+```sh
+gop mod init hello
+```
+
+Then we have it reference a classfile called `yap` as the HTTP Web Framework:
+
+```sh
+gop get github.com/goplus/yap@latest
+```
+
+We can use it to implement a static file server:
+
+```coffee
+static "/foo", FS("public")
+static "/"    # Equivalent to static "/", FS("static")
+
+run ":8080"
+```
+
+We can also add the ability to handle dynamic GET/POST requests:
+
+```coffee
+static "/foo", FS("public")
+static "/"    # Equivalent to static "/", FS("static")
+
+get "/p/:id", ctx => {
+	ctx.json {
+		"id": ctx.param("id"),
+	}
+}
+
+run ":8080"
+```
+
+Save this code to `hello_yap.gox` file and execute:
+
+```sh
+mkdir -p yap/static yap/public    # Static resources can be placed in these directories
+gop mod tidy
+gop run .
+```
+
+A simplest web program is running now. At this time, if you visit http://localhost:8080/p/123, you will get:
+
+```
+{"id":"123"}
+```
+
+Why is `yap` so easy to use? How does it do it? Click here to learn more about the [Go+ Classfiles](doc/classfile.md) mechanism and [YAP HTTP Web Framework](https://github.com/goplus/yap).
 
 
 ## Key Features of Go+

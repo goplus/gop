@@ -83,7 +83,7 @@ func genGoDir(dir string, conf *Config, genTestPkg, recursively bool, flags GenF
 		} else {
 			fn = func(path string, d fs.DirEntry, err error) error {
 				if err == nil && d.IsDir() {
-					if strings.HasPrefix(d.Name(), "_") { // skip _
+					if strings.HasPrefix(d.Name(), "_") || (path != dir && hasMod(path)) { // skip _
 						return filepath.SkipDir
 					}
 					if e := genGoIn(path, conf, genTestPkg, flags); e != nil && notIgnNotated(e, conf) {
@@ -120,6 +120,11 @@ func genGoDir(dir string, conf *Config, genTestPkg, recursively bool, flags GenF
 		err = e
 	}
 	return
+}
+
+func hasMod(dir string) bool {
+	_, err := os.Lstat(dir + "/go.mod")
+	return err == nil
 }
 
 func notIgnNotated(e error, conf *Config) bool {

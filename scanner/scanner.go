@@ -53,6 +53,7 @@ type Scanner struct {
 	offset     int  // character offset
 	rdOffset   int  // reading offset (position after current character)
 	lineOffset int  // current line offset
+	nParen     int
 	insertSemi bool // insert a semicolon before next newline
 
 	// public state - ok to modify
@@ -783,6 +784,11 @@ func (s *Scanner) switch4(tok0, tok1 token.Token, ch2 rune, tok2, tok3 token.Tok
 	return tok0
 }
 
+func (s *Scanner) tokSEMICOLON() token.Token {
+	s.nParen = 0
+	return token.SEMICOLON
+}
+
 // Scan scans the next token and returns the token position, the token,
 // and its literal string if applicable. The source end is indicated by
 // token.EOF.
@@ -850,7 +856,7 @@ scanAgain:
 		case -1:
 			if s.insertSemi {
 				s.insertSemi = false // EOF consumed
-				return pos, token.SEMICOLON, "\n"
+				return pos, s.tokSEMICOLON(), "\n"
 			}
 			tok = token.EOF
 		case '\n':
@@ -858,7 +864,7 @@ scanAgain:
 			// set in the first place and exited early
 			// from s.skipWhitespace()
 			s.insertSemi = false // newline consumed
-			return pos, token.SEMICOLON, "\n"
+			return pos, s.tokSEMICOLON(), "\n"
 		case '"':
 			insertSemi = true
 			tok = token.STRING
@@ -879,16 +885,21 @@ scanAgain:
 			if s.ch == '.' && s.peek() == '.' {
 				s.next()
 				s.next() // consume last '.'
+				if s.nParen == 0 {
+					insertSemi = true
+				}
 				tok = token.ELLIPSIS
 			}
 		case ',':
 			tok = token.COMMA
 		case ';':
-			tok = token.SEMICOLON
+			tok = s.tokSEMICOLON()
 			lit = ";"
 		case '(':
+			s.nParen++
 			tok = token.LPAREN
 		case ')':
+			s.nParen--
 			insertSemi = true
 			tok = token.RPAREN
 		case '[':
@@ -919,7 +930,7 @@ scanAgain:
 				s.offset = s.file.Offset(pos)
 				s.rdOffset = s.offset + 1
 				s.insertSemi = false // newline consumed
-				return pos, token.SEMICOLON, "\n"
+				return pos, s.tokSEMICOLON(), "\n"
 			}
 			comment := s.scanComment()
 			if s.mode&ScanComments == 0 {
@@ -938,7 +949,7 @@ scanAgain:
 					s.offset = s.file.Offset(pos)
 					s.rdOffset = s.offset + 1
 					s.insertSemi = false // newline consumed
-					return pos, token.SEMICOLON, "\n"
+					return pos, s.tokSEMICOLON(), "\n"
 				}
 				comment := s.scanComment()
 				if s.mode&ScanComments == 0 {
