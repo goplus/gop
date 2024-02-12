@@ -263,7 +263,14 @@ func ParseFiles(fset *token.FileSet, files []string, mode Mode) (map[string]*ast
 
 func ParseFSFiles(fset *token.FileSet, fs FileSystem, files []string, mode Mode) (map[string]*ast.Package, error) {
 	ret := map[string]*ast.Package{}
+	fabs := (mode & SaveAbsFile) != 0
+	if fabs {
+		mode &^= SaveAbsFile
+	}
 	for _, file := range files {
+		if fabs {
+			file, _ = fs.Abs(file)
+		}
 		f, err := ParseFSFile(fset, fs, file, nil, mode)
 		if err != nil {
 			return nil, err
