@@ -78,7 +78,7 @@ static "/"    # Equivalent to static "/", FS("static")
 run ":8080"
 ```
 
-You can also add the ability to handle dynamic GET/POST requests:
+We can also add the ability to handle dynamic GET/POST requests:
 
 ```coffee
 static "/foo", FS("public")
