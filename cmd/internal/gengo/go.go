@@ -71,12 +71,16 @@ func runCmd(cmd *base.Command, args []string) {
 		cl.SetDisableRecover(true)
 	}
 
-	var conf *gop.Config
+	conf, err := gop.NewDefaultConf(".")
+	if err != nil {
+		log.Panicln("gop.NewDefaultConf:", err)
+	}
+
 	flags := gop.GenFlagPrintError | gop.GenFlagPrompt
 	if *flagCheckMode {
 		flags |= gop.GenFlagCheckOnly
 		if *flagIgnoreNotatedErr {
-			conf = &gop.Config{IgnoreNotatedError: true}
+			conf.IgnoreNotatedError = true
 		}
 	}
 	if *flagSingleMode {
