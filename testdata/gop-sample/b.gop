@@ -1,7 +1,7 @@
 package main
 
 import (
-	ab "gop-sample/cpkag/b"
+	ab "github.com/goplus/gop/testdata/gop-sample/cpkag/b"
 )
 
 a()
