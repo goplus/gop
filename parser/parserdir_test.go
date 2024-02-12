@@ -25,6 +25,7 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/goplus/gop/parser/fsx"
 	"github.com/goplus/gop/parser/fsx/memfs"
 	"github.com/goplus/gop/parser/parsertest"
 	"github.com/goplus/gop/scanner"
@@ -68,7 +69,7 @@ func TestReadSource(t *testing.T) {
 
 func TestParseFiles(t *testing.T) {
 	fset := token.NewFileSet()
-	if _, err := ParseFiles(fset, []string{"/foo/bar/not-exists"}, PackageClauseOnly); err == nil {
+	if _, err := ParseFSFiles(fset, fsx.Local, []string{"/foo/bar/not-exists"}, PackageClauseOnly|SaveAbsFile); err == nil {
 		t.Fatal("ParseFiles failed: no error?")
 	}
 }
