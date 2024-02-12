@@ -28,7 +28,6 @@ import (
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/x/gocmd"
-	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/gop/x/gopprojs"
 	"github.com/goplus/gox"
 )
@@ -75,9 +74,11 @@ func runCmd(cmd *base.Command, args []string) {
 		log.Panicln("too many arguments:", args)
 	}
 
-	gopEnv := gopenv.Get()
-	conf := &gop.Config{Gop: gopEnv}
-	confCmd := &gocmd.BuildConfig{Gop: gopEnv}
+	conf, err := gop.NewDefaultConf(".")
+	if err != nil {
+		log.Panicln("gop.NewDefaultConf:", err)
+	}
+	confCmd := &gocmd.BuildConfig{Gop: conf.Gop}
 	if *flagOutput != "" {
 		output, err := filepath.Abs(*flagOutput)
 		if err != nil {

@@ -27,7 +27,6 @@ import (
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/x/gocmd"
-	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/gop/x/gopprojs"
 	"github.com/goplus/gox"
 )
@@ -70,9 +69,11 @@ func runCmd(cmd *base.Command, args []string) {
 		cl.SetDisableRecover(true)
 	}
 
-	gopEnv := gopenv.Get()
-	conf := &gop.Config{Gop: gopEnv}
-	confCmd := &gocmd.Config{Gop: gopEnv}
+	conf, err := gop.NewDefaultConf(".")
+	if err != nil {
+		log.Panicln("gop.NewDefaultConf:", err)
+	}
+	confCmd := &gocmd.Config{Gop: conf.Gop}
 	confCmd.Flags = pass.Args
 	for _, proj := range projs {
 		test(proj, conf, confCmd)
