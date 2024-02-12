@@ -30,6 +30,7 @@ import (
 	"github.com/goplus/gop/x/c2go"
 	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/mod/gopmod"
+	"github.com/qiniu/x/errors"
 )
 
 // -----------------------------------------------------------------------------
@@ -38,14 +39,19 @@ func Outline(dir string, conf *Config) (out outline.Package, err error) {
 	if dir, err = filepath.Abs(dir); err != nil {
 		return
 	}
-	mod, err := LoadMod(dir)
-	if err != nil {
-		return
-	}
 
 	if conf == nil {
 		conf = new(Config)
 	}
+
+	mod := conf.Mod
+	if mod == nil {
+		if mod, err = LoadMod(dir); err != nil {
+			err = errors.NewWith(err, `LoadMod(dir)`, -2, "gop.LoadMod", dir)
+			return
+		}
+	}
+
 	filterConf := conf.Filter
 	filter := func(fi fs.FileInfo) bool {
 		if filterConf != nil && !filterConf(fi) {
@@ -112,7 +118,14 @@ func Outline(dir string, conf *Config) (out outline.Package, err error) {
 // -----------------------------------------------------------------------------
 
 func OutlinePkgPath(workDir, pkgPath string, conf *Config, allowExtern bool) (out outline.Package, err error) {
-	mod, err := gopmod.Load(workDir)
+	mod := conf.Mod
+	if mod == nil {
+		if mod, err = LoadMod(workDir); err != nil {
+			err = errors.NewWith(err, `LoadMod(dir)`, -2, "gop.LoadMod", workDir)
+			return
+		}
+	}
+
 	if NotFound(err) && allowExtern {
 		remotePkgPathDo(pkgPath, func(pkgDir, modDir string) {
 			modFile := chmodModfile(modDir)

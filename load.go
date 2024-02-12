@@ -117,11 +117,24 @@ func isNotatedErr(err error, pkg *ast.Package, fset *token.FileSet) (notatedErr 
 type Config struct {
 	Gop      *env.Gop
 	Fset     *token.FileSet
-	Filter   func(fs.FileInfo) bool
+	Mod      *gopmod.Module
 	Importer types.Importer
+
+	Filter func(fs.FileInfo) bool
 
 	IgnoreNotatedError bool
 	DontUpdateGoMod    bool
+}
+
+func NewDefaultConf(dir string) (conf *Config, err error) {
+	mod, err := LoadMod(dir)
+	if err != nil {
+		return
+	}
+	gop := gopenv.Get()
+	fset := token.NewFileSet()
+	imp := NewImporter(mod, gop, fset)
+	return &Config{Gop: gop, Fset: fset, Mod: mod, Importer: imp}, nil
 }
 
 func LoadMod(dir string) (mod *gopmod.Module, err error) {
@@ -148,14 +161,18 @@ func hasModfile(mod *gopmod.Module) bool {
 // -----------------------------------------------------------------------------
 
 func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (out, test *gox.Package, err error) {
-	mod, err := LoadMod(dir)
-	if err != nil {
-		return
-	}
-
 	if conf == nil {
 		conf = new(Config)
 	}
+
+	mod := conf.Mod
+	if mod == nil {
+		if mod, err = LoadMod(dir); err != nil {
+			err = errors.NewWith(err, `LoadMod(dir)`, -2, "gop.LoadMod", dir)
+			return
+		}
+	}
+
 	fset := conf.Fset
 	if fset == nil {
 		fset = token.NewFileSet()
@@ -255,15 +272,18 @@ func relativeBaseOf(mod *gopmod.Module) string {
 // -----------------------------------------------------------------------------
 
 func LoadFiles(dir string, files []string, conf *Config) (out *gox.Package, err error) {
-	mod, err := LoadMod(dir)
-	if err != nil {
-		err = errors.NewWith(err, `LoadMod(dir)`, -2, "gop.LoadMod", dir)
-		return
-	}
-
 	if conf == nil {
 		conf = new(Config)
 	}
+
+	mod := conf.Mod
+	if mod == nil {
+		if mod, err = LoadMod(dir); err != nil {
+			err = errors.NewWith(err, `LoadMod(dir)`, -2, "gop.LoadMod", dir)
+			return
+		}
+	}
+
 	fset := conf.Fset
 	if fset == nil {
 		fset = token.NewFileSet()
