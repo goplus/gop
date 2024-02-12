@@ -85,7 +85,7 @@ Then we create `hello.gop` file in the same directory:
 
 ```go
 rect := &Rect{10, 20}
-printlnrect.area
+println rect.area
 ```
 
 Then we execute `gop run .` to run it and get the result:
