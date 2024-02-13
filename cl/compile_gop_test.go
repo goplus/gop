@@ -20,6 +20,27 @@ import (
 	"testing"
 )
 
+func TestMayBuiltinDelete(t *testing.T) {
+	gopClTest(t, `
+func Delete(a int) {}
+func Foo(m map[string]int) {
+	delete(m, "a")
+}
+
+delete 10
+`, `package main
+
+func Delete(a int) {
+}
+func Foo(m map[string]int) {
+	delete(m, "a")
+}
+func main() {
+	Delete(10)
+}
+`)
+}
+
 func TestVargCommand(t *testing.T) {
 	gopClTest(t, `
 type foo int
