@@ -236,7 +236,9 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 		if inFlags != nil {
 			flags |= inFlags[0]
 		}
-		compileIdent(ctx, v, flags)
+		if _, kind := compileIdent(ctx, v, flags); kind == objGopExec {
+			ctx.cb.Val(v.Name, v).CallWith(1, 0, v) // for support Gop_Exec, see TestSpxGopExec
+		}
 	case *ast.BasicLit:
 		compileBasicLit(ctx, v)
 	case *ast.CallExpr:
