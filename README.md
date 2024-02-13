@@ -185,13 +185,13 @@ all.bat
 
 * [yap: Yet Another Go/Go+ HTTP Web Framework](https://github.com/goplus/yap)
 
-### HTTP Test
+### HTTP Test Framework
 
 * [yaptest: HTTP Test Framework](https://github.com/goplus/yap/tree/main/ytest)
 
 ### DevOps tools
 
-* [Go+ DevOps Tools](https://github.com/goplus/gop/blob/main/doc/dsl-vs-sdf.md#demo-go-devops-tools)
+* [Go+ DevOps Tools](https://github.com/xushiwei/gshexample?tab=readme-ov-file#gsh-example)
 
 ### Data processing
 
