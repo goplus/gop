@@ -29,6 +29,10 @@ type MyGame struct {
 func Gopt_MyGame_Main(game interface{}) {
 }
 
+func (p *MyGame) Capout(doSth func()) (string, error) {
+	return "", nil
+}
+
 func (p *MyGame) Gop_Exec(name string, args ...any) {
 }
 

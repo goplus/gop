@@ -305,12 +305,12 @@ func TestHandleRecover(t *testing.T) {
 	ctx.handleRecover(100)
 }
 
-func TestCanAutoCall(t *testing.T) {
-	if !isCommandWithoutArgs(
+func TestCheckCommandWithoutArgs(t *testing.T) {
+	if checkCommandWithoutArgs(
 		&ast.SelectorExpr{
 			X:   &ast.SelectorExpr{X: ast.NewIdent("foo"), Sel: ast.NewIdent("bar")},
 			Sel: ast.NewIdent("val"),
-		}) {
+		}) != clCommandWithoutArgs {
 		t.Fatal("TestCanAutoCall failed")
 	}
 }

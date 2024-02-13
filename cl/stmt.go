@@ -110,13 +110,11 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	commentStmt(ctx, stmt)
 	switch v := stmt.(type) {
 	case *ast.ExprStmt:
-		inFlags := 0
-		if isCommandWithoutArgs(v.X) {
-			inFlags = clCommandWithoutArgs
-		}
-		compileExpr(ctx, v.X, inFlags)
+		x := v.X
+		inFlags := checkCommandWithoutArgs(x)
+		compileExpr(ctx, x, inFlags)
 		if inFlags != 0 && gox.IsFunc(ctx.cb.InternalStack().Get(-1).Type) {
-			ctx.cb.CallWith(0, 0, v.X)
+			ctx.cb.CallWith(0, 0, x)
 		}
 	case *ast.AssignStmt:
 		compileAssignStmt(ctx, v)
@@ -163,16 +161,19 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	ctx.cb.EndStmt()
 }
 
-func isCommandWithoutArgs(x ast.Expr) bool {
+func checkCommandWithoutArgs(x ast.Expr) int {
+	if _, ok := x.(*ast.Ident); ok {
+		return clCommandWithoutArgs | clCommandIdent // for support Gop_Exec, see TestSpxGopExec
+	}
 retry:
-	switch t := x.(type) {
-	case *ast.Ident:
-		return true
-	case *ast.SelectorExpr:
-		x = t.X
+	if v, ok := x.(*ast.SelectorExpr); ok {
+		x = v.X
 		goto retry
 	}
-	return false
+	if _, ok := x.(*ast.Ident); ok {
+		return clCommandWithoutArgs
+	}
+	return 0
 }
 
 func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
