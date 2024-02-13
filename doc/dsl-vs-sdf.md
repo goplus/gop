@@ -1,6 +1,8 @@
 Go+ ClassFile: DSL vs. SDF
 =====
 
+Deprecated: please go to [Go+ Classfiles](classfile.md).
+
 Go+ doesn't support DSL (Domain Specific Language), but it's SDF (Specific Domain Friendly).
 
 The Go+ philosophy of Domain is:
