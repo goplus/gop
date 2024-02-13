@@ -64,30 +64,34 @@ const (
 	clIdentGoto
 	clCallWithTwoValue
 	clCommandWithoutArgs
+	clCommandIdent
 )
 
 const (
 	objNormal = iota
 	objPkgRef
 	objCPkgRef
+	objGopExec
 )
 
 const errorPkgPath = "github.com/qiniu/x/errors"
 
 func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg gox.PkgRef, kind int) {
 	fvalue := (flags&clIdentSelectorExpr) != 0 || (flags&clIdentLHS) == 0
+	cb := ctx.cb
 	name := ident.Name
 	if name == "_" {
 		if fvalue {
 			panic(ctx.newCodeError(ident.Pos(), "cannot use _ as value"))
 		}
-		ctx.cb.VarRef(nil)
+		cb.VarRef(nil)
 		return
 	}
 
+	var recv *types.Var
 	var oldo types.Object
 	scope := ctx.pkg.Types.Scope()
-	at, o := ctx.cb.Scope().LookupParent(name, token.NoPos)
+	at, o := cb.Scope().LookupParent(name, token.NoPos)
 	if o != nil {
 		if at != scope && at != types.Universe { // local object
 			goto find
@@ -95,10 +99,10 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg gox.PkgRef, k
 	}
 
 	if ctx.isClass { // in a Go+ class file
-		if fn := ctx.cb.Func(); fn != nil {
+		if fn := cb.Func(); fn != nil {
 			sig := fn.Ancestor().Type().(*types.Signature)
-			if recv := sig.Recv(); recv != nil {
-				ctx.cb.Val(recv)
+			if recv = sig.Recv(); recv != nil {
+				cb.Val(recv)
 				chkFlag := flags // &^ clCommandWithoutArgs (TODO: why?)
 				if chkFlag&clIdentSelectorExpr != 0 {
 					chkFlag = clIdentCanAutoCall
@@ -106,7 +110,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg gox.PkgRef, k
 				if compileMember(ctx, ident, name, chkFlag) == nil { // class member object
 					return
 				}
-				ctx.cb.InternalStack().PopN(1)
+				cb.InternalStack().PopN(1)
 			}
 		}
 	}
@@ -150,6 +154,12 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg gox.PkgRef, k
 		}
 		oldo, o = o, obj
 	} else if o == nil {
+		if (clCommandIdent&flags) != 0 && recv != nil { // for support Gop_Exec, see TestSpxGopExec
+			if _, e := cb.Val(recv).Member("Gop_Exec", gox.MemberFlagVal, ident); e == nil {
+				kind = objGopExec
+				return
+			}
+		}
 		if (clIdentGoto & flags) != 0 {
 			l := ident.Obj.Data.(*ast.Ident)
 			panic(ctx.newCodeErrorf(l.Pos(), "label %v is not defined", l.Name))
@@ -159,13 +169,13 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg gox.PkgRef, k
 
 find:
 	if fvalue {
-		ctx.cb.Val(o, ident)
+		cb.Val(o, ident)
 	} else {
-		ctx.cb.VarRef(o, ident)
+		cb.VarRef(o, ident)
 	}
 	if rec := ctx.recorder(); rec != nil {
-		e := ctx.cb.Get(-1)
-		if oldo != nil && gox.IsTypeEx(e.Type) {
+		e := cb.Get(-1)
+		if oldo != nil && gox.IsTypeEx(e.Type) { // for builtin object
 			rec.recordIdent(ctx, ident, oldo)
 			return
 		}
@@ -564,8 +574,17 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 	var ifn *ast.Ident
 	switch fn := v.Fun.(type) {
 	case *ast.Ident:
-		compileIdent(ctx, fn, clIdentAllowBuiltin|inFlags)
-		ifn = fn
+		if v.IsCommand() { // for support Gop_Exec, see TestSpxGopExec
+			inFlags |= clCommandIdent
+		}
+		if _, kind := compileIdent(ctx, fn, clIdentAllowBuiltin|inFlags); kind == objGopExec {
+			args := make([]ast.Expr, 1, len(v.Args)+1)
+			args[0] = &ast.BasicLit{ValuePos: fn.NamePos, Kind: token.STRING, Value: strconv.Quote(fn.Name)}
+			args = append(args, v.Args...)
+			v = &ast.CallExpr{Fun: fn, Args: args, Ellipsis: v.Ellipsis, NoParenEnd: v.NoParenEnd}
+		} else {
+			ifn = fn
+		}
 	case *ast.SelectorExpr:
 		compileSelectorExpr(ctx, fn, 0)
 	case *ast.ErrWrapExpr:
@@ -615,7 +634,7 @@ func mayBuiltin(ctx *blockCtx, ifn *ast.Ident, v *ast.CallExpr, flags gox.InstrF
 	switch name := ifn.Name; name {
 	case "new", "delete":
 		cb := ctx.cb
-		cb.InternalStack().Pop()
+		cb.InternalStack().PopN(1)
 		o := ctx.pkg.Builtin().Ref(name)
 		cb.Val(o, ifn)
 		for _, arg := range v.Args {
@@ -665,7 +684,7 @@ func compileCallArgs(fn *fnType, ctx *blockCtx, v *ast.CallExpr, ellipsis bool, 
 			}
 			typetype := fn.typetype && t != nil
 			if typetype {
-				stk.Pop()
+				stk.PopN(1)
 			}
 			compileSliceLit(ctx, expr, t)
 			if typetype {

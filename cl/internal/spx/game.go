@@ -29,6 +29,9 @@ type MyGame struct {
 func Gopt_MyGame_Main(game interface{}) {
 }
 
+func (p *MyGame) Gop_Exec(name string, args ...any) {
+}
+
 func (p *MyGame) InitGameApp(args ...string) {
 }
 
