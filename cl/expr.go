@@ -64,7 +64,6 @@ const (
 	clIdentGoto
 	clCallWithTwoValue
 	clCommandWithoutArgs
-	clMayBuiltinNew // maybe is builtin directive `new`
 )
 
 const (
@@ -562,13 +561,11 @@ func (p *fnType) initFuncs(base int, funcs []types.Object) {
 }
 
 func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
-	var flags gox.InstrFlags
+	var ifn *ast.Ident
 	switch fn := v.Fun.(type) {
 	case *ast.Ident:
-		if len(v.Args) == 1 && fn.Name == "new" { // maybe new(T)
-			flags = clMayBuiltinNew
-		}
 		compileIdent(ctx, fn, clIdentAllowBuiltin|inFlags)
+		ifn = fn
 	case *ast.SelectorExpr:
 		compileSelectorExpr(ctx, fn, 0)
 	case *ast.ErrWrapExpr:
@@ -585,9 +582,10 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 		compileExpr(ctx, fn)
 	}
 	var fnt = ctx.cb.Get(-1).Type
+	var flags gox.InstrFlags
 	var ellipsis = v.Ellipsis != gotoken.NoPos
 	if ellipsis {
-		flags |= gox.InstrFlagEllipsis
+		flags = gox.InstrFlagEllipsis
 	}
 	if (inFlags & clCallWithTwoValue) != 0 {
 		flags |= gox.InstrFlagTwoValue
@@ -600,6 +598,9 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 			break
 		}
 		if fn.next == nil {
+			if ifn != nil && mayBuiltin(ctx, ifn, v, flags) {
+				break
+			}
 			panic(err)
 		}
 		fn = fn.next
@@ -607,6 +608,23 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 	if rec := ctx.recorder(); rec != nil {
 		rec.recordCallExpr(ctx, v, fnt)
 	}
+}
+
+// maybe builtin new/delete: see TestSpxNewObj, TestMayBuiltinDelete
+func mayBuiltin(ctx *blockCtx, ifn *ast.Ident, v *ast.CallExpr, flags gox.InstrFlags) bool {
+	switch name := ifn.Name; name {
+	case "new", "delete":
+		cb := ctx.cb
+		cb.InternalStack().Pop()
+		o := ctx.pkg.Builtin().Ref(name)
+		cb.Val(o, ifn)
+		for _, arg := range v.Args {
+			compileExpr(ctx, arg)
+		}
+		cb.CallWith(len(v.Args), flags, v)
+		return true
+	}
+	return false
 }
 
 func compileCallArgs(fn *fnType, ctx *blockCtx, v *ast.CallExpr, ellipsis bool, flags gox.InstrFlags) (err error) {
@@ -657,21 +675,8 @@ func compileCallArgs(fn *fnType, ctx *blockCtx, v *ast.CallExpr, ellipsis bool, 
 			compileExpr(ctx, arg)
 		}
 	}
-	if (flags & clMayBuiltinNew) != 0 { // maybe new(T): see TestSpxNewObj
-		arg := stk.Get(-1)
-		if _, ok := arg.Type.(*gox.TypeType); ok && isNonInstr(stk.Get(-2).Type) {
-			stk.PopN(2)
-			cb.Val(ctx.pkg.Builtin().Ref("new"))
-			stk.Push(arg)
-		}
-	}
 	cb.CallWith(len(v.Args), flags, v)
 	return
-}
-
-func isNonInstr(t types.Type) bool {
-	_, ok := t.(*gox.TyInstruction)
-	return !ok
 }
 
 type clLambaFlag string
