@@ -72,6 +72,12 @@ func codeErrorTestAst(t *testing.T, pkgname, filename, msg, src string) {
 	}
 }
 
+func TestErrUnsafe(t *testing.T) {
+	codeErrorTest(t, `bar.gop:2:9: undefined: Sizeof`, `
+println Sizeof(0)
+`)
+}
+
 func TestErrLambdaExpr(t *testing.T) {
 	codeErrorTest(t,
 		"bar.gop:7:6: too few arguments in lambda expression\n\thave ()\n\twant (int, int)", `
