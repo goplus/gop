@@ -122,6 +122,24 @@ func gopClTestFS(t *testing.T, conf *cl.Config, fs parser.FileSystem, pkgname, e
 	}
 }
 
+func TestUnsafe(t *testing.T) {
+	gopClTest(t, `
+import "unsafe"
+
+println unsafe.Sizeof(0)
+`, `package main
+
+import (
+	"fmt"
+	"unsafe"
+)
+
+func main() {
+	fmt.Println(unsafe.Sizeof(0))
+}
+`)
+}
+
 func Test_CastSlice_Issue1240(t *testing.T) {
 	gopClTest(t, `
 type fvec []float64
