@@ -127,6 +127,7 @@ type Config struct {
 	DontUpdateGoMod    bool
 }
 
+// NewDefaultConf creates a dfault configuration for common cases.
 func NewDefaultConf(dir string, noTestFile bool) (conf *Config, err error) {
 	mod, err := LoadMod(dir)
 	if err != nil {
@@ -137,11 +138,12 @@ func NewDefaultConf(dir string, noTestFile bool) (conf *Config, err error) {
 	imp := NewImporter(mod, gop, fset)
 	conf = &Config{Gop: gop, Fset: fset, Mod: mod, Importer: imp}
 	if noTestFile {
-		conf.Filter = FilterNoTest
+		conf.Filter = FilterNoTestFiles
 	}
 	return
 }
 
+// LoadMod loads a Go+ module from a specified directory.
 func LoadMod(dir string) (mod *gopmod.Module, err error) {
 	mod, err = gopmod.Load(dir)
 	if err != nil && !gopmod.IsNotFound(err) {
@@ -158,7 +160,8 @@ func LoadMod(dir string) (mod *gopmod.Module, err error) {
 	return gopmod.Default, nil
 }
 
-func FilterNoTest(fi fs.FileInfo) bool {
+// FilterNoTestFiles filters to skip all testing files.
+func FilterNoTestFiles(fi fs.FileInfo) bool {
 	fname := fi.Name()
 	suffix := ""
 	switch path.Ext(fname) {
@@ -181,6 +184,7 @@ func hasModfile(mod *gopmod.Module) bool {
 
 // -----------------------------------------------------------------------------
 
+// LoadDir loads Go+ packages from a specified directory.
 func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (out, test *gox.Package, err error) {
 	if conf == nil {
 		conf = new(Config)
@@ -292,6 +296,7 @@ func relativeBaseOf(mod *gopmod.Module) string {
 
 // -----------------------------------------------------------------------------
 
+// LoadDir loads a Go+ package from specified files.
 func LoadFiles(dir string, files []string, conf *Config) (out *gox.Package, err error) {
 	if conf == nil {
 		conf = new(Config)
