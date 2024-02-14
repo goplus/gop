@@ -256,6 +256,7 @@ func (this *index) onInit() {
 func TestSpxGopExec(t *testing.T) {
 	gopSpxTest(t, `
 vim "a.txt"
+// ls 10
 capout => { ls }
 capout => { ls "-l" }
 `, ``, `package main

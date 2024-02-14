@@ -113,9 +113,6 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		x := v.X
 		inFlags := checkCommandWithoutArgs(x)
 		compileExpr(ctx, x, inFlags)
-		if inFlags != 0 && gox.IsFunc(ctx.cb.InternalStack().Get(-1).Type) {
-			ctx.cb.CallWith(0, 0, x)
-		}
 	case *ast.AssignStmt:
 		compileAssignStmt(ctx, v)
 	case *ast.ReturnStmt:
@@ -162,9 +159,6 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 }
 
 func checkCommandWithoutArgs(x ast.Expr) int {
-	if _, ok := x.(*ast.Ident); ok {
-		return clCommandWithoutArgs | clCommandIdent // for support Gop_Exec, see TestSpxGopExec
-	}
 retry:
 	if v, ok := x.(*ast.SelectorExpr); ok {
 		x = v.X

@@ -26,6 +26,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/printer"
@@ -60,7 +61,7 @@ const (
 	clIdentCanAutoCall = 1 << iota // allow auto property
 	clIdentAllowBuiltin
 	clIdentLHS
-	clIdentSelectorExpr // this ident is X of ast.SelectorExpr
+	clIdentSelectorExpr // this ident is X (not Sel) of ast.SelectorExpr
 	clIdentGoto
 	clCallWithTwoValue
 	clCommandWithoutArgs
@@ -101,8 +102,8 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg gox.PkgRef, k
 	if ctx.isClass { // in a Go+ class file
 		if recv = classRecv(cb); recv != nil {
 			cb.Val(recv)
-			chkFlag := flags // &^ clCommandWithoutArgs (TODO: why?)
-			if chkFlag&clIdentSelectorExpr != 0 {
+			chkFlag := flags
+			if chkFlag&clIdentSelectorExpr != 0 { // TODO: remove this condition
 				chkFlag = clIdentCanAutoCall
 			}
 			if compileMember(ctx, ident, name, chkFlag) == nil { // class member object
@@ -205,7 +206,7 @@ func compileMember(ctx *blockCtx, v ast.Node, name string, flags int) error {
 	switch {
 	case (flags & clIdentLHS) != 0:
 		mflag = gox.MemberFlagRef
-	case (flags & clCommandWithoutArgs) != 0:
+	case (flags & clCommandWithoutArgs) != 0: // TODO: shouldn't use clCommandWithoutArgs
 		mflag = gox.MemberFlagMethodAlias
 	case (flags & clIdentCanAutoCall) != 0:
 		mflag = gox.MemberFlagAutoProperty
@@ -238,15 +239,36 @@ func twoValue(inFlags []int) bool {
 	return inFlags != nil && (inFlags[0]&clCallWithTwoValue) != 0
 }
 
+func identOrSelectorFlags(inFlags []int) (flags int, cmdNoArgs bool) {
+	if inFlags == nil {
+		return clIdentCanAutoCall, false
+	}
+	flags = inFlags[0]
+	if cmdNoArgs = (flags & clCommandWithoutArgs) != 0; cmdNoArgs {
+		flags &^= clCommandWithoutArgs
+	} else {
+		flags |= clIdentCanAutoCall
+	}
+	return
+}
+
+func callCmdNoArgs(ctx *blockCtx, src ast.Node) {
+	if gox.IsFunc(ctx.cb.InternalStack().Get(-1).Type) {
+		ctx.cb.CallWith(0, 0, src)
+	}
+}
+
 func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 	switch v := expr.(type) {
 	case *ast.Ident:
-		flags := clIdentCanAutoCall
-		if inFlags != nil {
-			flags |= inFlags[0]
+		flags, cmdNoArgs := identOrSelectorFlags(inFlags)
+		if cmdNoArgs {
+			flags |= clCommandIdent // for support Gop_Exec, see TestSpxGopExec
 		}
 		if _, kind := compileIdent(ctx, v, flags); kind == objGopExec {
-			ctx.cb.Val(v.Name, v).CallWith(1, 0, v) // for support Gop_Exec, see TestSpxGopExec
+			ctx.cb.Val(v.Name, v).CallWith(1, 0, v)
+		} else if cmdNoArgs {
+			callCmdNoArgs(ctx, expr)
 		}
 	case *ast.BasicLit:
 		compileBasicLit(ctx, v)
@@ -257,11 +279,11 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 		}
 		compileCallExpr(ctx, v, flags)
 	case *ast.SelectorExpr:
-		flags := clIdentCanAutoCall
-		if inFlags != nil {
-			flags |= inFlags[0]
-		}
+		flags, cmdNoArgs := identOrSelectorFlags(inFlags)
 		compileSelectorExpr(ctx, v, flags)
+		if cmdNoArgs {
+			callCmdNoArgs(ctx, expr)
+		}
 	case *ast.BinaryExpr:
 		compileBinaryExpr(ctx, v)
 	case *ast.UnaryExpr:
@@ -492,7 +514,7 @@ func compilePkgRef(ctx *blockCtx, at gox.PkgRef, x *ast.Ident, flags, pkgKind in
 func identVal(ctx *blockCtx, x *ast.Ident, flags int, v types.Object, alias bool) bool {
 	autocall := false
 	if alias {
-		if (flags & clCommandWithoutArgs) != 0 {
+		if (flags & clCommandWithoutArgs) != 0 { // TODO: shouldn't use clCommandWithoutArgs
 			autocall = true
 		} else if autocall = (flags & clIdentCanAutoCall) != 0; autocall {
 			if !gox.HasAutoProperty(v.Type()) {
@@ -635,7 +657,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 		stk.SetLen(base)
 		fn = fn.next
 	}
-	if ifn != nil && builtinOrGopExec(ctx, ifn, v, flags) {
+	if ifn != nil && builtinOrGopExec(ctx, ifn, v, flags) == nil {
 		return
 	}
 	panic(err)
@@ -646,32 +668,30 @@ func toBasicLit(fn *ast.Ident) *ast.BasicLit {
 }
 
 // maybe builtin new/delete: see TestSpxNewObj, TestMayBuiltinDelete
-// TODO: maybe Gop_Exec: see TestSpxGopExec
-func builtinOrGopExec(ctx *blockCtx, ifn *ast.Ident, v *ast.CallExpr, flags gox.InstrFlags) bool {
+// maybe Gop_Exec: see TestSpxGopExec
+func builtinOrGopExec(ctx *blockCtx, ifn *ast.Ident, v *ast.CallExpr, flags gox.InstrFlags) error {
 	cb := ctx.cb
 	switch name := ifn.Name; name {
 	case "new", "delete":
 		cb.InternalStack().PopN(1)
 		cb.Val(ctx.pkg.Builtin().Ref(name), ifn)
-		fnCall(ctx, v, flags, 0)
-		return true
+		return fnCall(ctx, v, flags, 0)
 	default:
-		/* if v.IsCommand() && ctx.isClass { // for support Gop_Exec, see TestSpxGopExec
+		if v.IsCommand() && ctx.isClass { // for support Gop_Exec, see TestSpxGopExec
 			if recv := classRecv(cb); recv != nil && gopExecVal(cb, recv, ifn) == nil {
 				cb.Val(toBasicLit(ifn), ifn)
-				fnCall(ctx, v, flags, 1)
-				return true
+				return fnCall(ctx, v, flags, 1)
 			}
-		} */
+		}
 	}
-	return false
+	return syscall.ENOENT
 }
 
-func fnCall(ctx *blockCtx, v *ast.CallExpr, flags gox.InstrFlags, extra int) {
+func fnCall(ctx *blockCtx, v *ast.CallExpr, flags gox.InstrFlags, extra int) error {
 	for _, arg := range v.Args {
 		compileExpr(ctx, arg)
 	}
-	ctx.cb.CallWith(len(v.Args)+extra, flags, v)
+	return ctx.cb.CallWithEx(len(v.Args)+extra, flags, v)
 }
 
 func compileCallArgs(fn *fnType, ctx *blockCtx, v *ast.CallExpr, ellipsis bool, flags gox.InstrFlags) (err error) {
