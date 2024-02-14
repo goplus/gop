@@ -99,19 +99,16 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg gox.PkgRef, k
 	}
 
 	if ctx.isClass { // in a Go+ class file
-		if fn := cb.Func(); fn != nil {
-			sig := fn.Ancestor().Type().(*types.Signature)
-			if recv = sig.Recv(); recv != nil {
-				cb.Val(recv)
-				chkFlag := flags // &^ clCommandWithoutArgs (TODO: why?)
-				if chkFlag&clIdentSelectorExpr != 0 {
-					chkFlag = clIdentCanAutoCall
-				}
-				if compileMember(ctx, ident, name, chkFlag) == nil { // class member object
-					return
-				}
-				cb.InternalStack().PopN(1)
+		if recv = classRecv(cb); recv != nil {
+			cb.Val(recv)
+			chkFlag := flags // &^ clCommandWithoutArgs (TODO: why?)
+			if chkFlag&clIdentSelectorExpr != 0 {
+				chkFlag = clIdentCanAutoCall
 			}
+			if compileMember(ctx, ident, name, chkFlag) == nil { // class member object
+				return
+			}
+			cb.InternalStack().PopN(1)
 		}
 	}
 
@@ -154,11 +151,10 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg gox.PkgRef, k
 		}
 		oldo, o = o, obj
 	} else if o == nil {
-		if (clCommandIdent&flags) != 0 && recv != nil { // for support Gop_Exec, see TestSpxGopExec
-			if _, e := cb.Val(recv).Member("Gop_Exec", gox.MemberFlagVal, ident); e == nil {
-				kind = objGopExec
-				return
-			}
+		// for support Gop_Exec, see TestSpxGopExec
+		if (clCommandIdent&flags) != 0 && recv != nil && gopExecVal(cb, recv, ident) == nil {
+			kind = objGopExec
+			return
 		}
 		if (clIdentGoto & flags) != 0 {
 			l := ident.Obj.Data.(*ast.Ident)
@@ -182,6 +178,19 @@ find:
 		rec.recordIdent(ctx, ident, o)
 	}
 	return
+}
+
+func classRecv(cb *gox.CodeBuilder) *types.Var {
+	if fn := cb.Func(); fn != nil {
+		sig := fn.Ancestor().Type().(*types.Signature)
+		return sig.Recv()
+	}
+	return nil
+}
+
+func gopExecVal(cb *gox.CodeBuilder, recv *types.Var, ident *ast.Ident) error {
+	_, e := cb.Val(recv).Member("Gop_Exec", gox.MemberFlagVal, ident)
+	return e
 }
 
 func isBuiltin(o types.Object) bool {
@@ -581,7 +590,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 		}
 		if _, kind := compileIdent(ctx, fn, clIdentAllowBuiltin|inFlags); kind == objGopExec {
 			args := make([]ast.Expr, 1, len(v.Args)+1)
-			args[0] = &ast.BasicLit{ValuePos: fn.NamePos, Kind: token.STRING, Value: strconv.Quote(fn.Name)}
+			args[0] = toBasicLit(fn)
 			args = append(args, v.Args...)
 			v = &ast.CallExpr{Fun: fn, Args: args, Ellipsis: v.Ellipsis, NoParenEnd: v.NoParenEnd}
 		} else {
@@ -602,7 +611,10 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 	default:
 		compileExpr(ctx, fn)
 	}
-	var fnt = ctx.cb.Get(-1).Type
+	var err error
+	var stk = ctx.cb.InternalStack()
+	var base = stk.Len()
+	var fnt = stk.Get(-1).Type
 	var flags gox.InstrFlags
 	var ellipsis = v.Ellipsis != gotoken.NoPos
 	if ellipsis {
@@ -614,63 +626,73 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 	fn := &fnType{}
 	fn.load(fnt)
 	for fn != nil {
-		err := compileCallArgs(fn, ctx, v, ellipsis, flags)
-		if err == nil {
-			break
-		}
-		if fn.next == nil {
-			if ifn != nil && mayBuiltin(ctx, ifn, v, flags) {
-				break
+		if err = compileCallArgs(fn, ctx, v, ellipsis, flags); err == nil {
+			if rec := ctx.recorder(); rec != nil {
+				rec.recordCallExpr(ctx, v, fnt)
 			}
-			panic(err)
+			return
 		}
+		stk.SetLen(base)
 		fn = fn.next
 	}
-	if rec := ctx.recorder(); rec != nil {
-		rec.recordCallExpr(ctx, v, fnt)
+	if ifn != nil && builtinOrGopExec(ctx, ifn, v, flags) {
+		return
 	}
+	panic(err)
+}
+
+func toBasicLit(fn *ast.Ident) *ast.BasicLit {
+	return &ast.BasicLit{ValuePos: fn.NamePos, Kind: token.STRING, Value: strconv.Quote(fn.Name)}
 }
 
 // maybe builtin new/delete: see TestSpxNewObj, TestMayBuiltinDelete
-func mayBuiltin(ctx *blockCtx, ifn *ast.Ident, v *ast.CallExpr, flags gox.InstrFlags) bool {
+// TODO: maybe Gop_Exec: see TestSpxGopExec
+func builtinOrGopExec(ctx *blockCtx, ifn *ast.Ident, v *ast.CallExpr, flags gox.InstrFlags) bool {
+	cb := ctx.cb
 	switch name := ifn.Name; name {
 	case "new", "delete":
-		cb := ctx.cb
 		cb.InternalStack().PopN(1)
-		o := ctx.pkg.Builtin().Ref(name)
-		cb.Val(o, ifn)
-		for _, arg := range v.Args {
-			compileExpr(ctx, arg)
-		}
-		cb.CallWith(len(v.Args), flags, v)
+		cb.Val(ctx.pkg.Builtin().Ref(name), ifn)
+		fnCall(ctx, v, flags, 0)
 		return true
+	default:
+		/* if v.IsCommand() && ctx.isClass { // for support Gop_Exec, see TestSpxGopExec
+			if recv := classRecv(cb); recv != nil && gopExecVal(cb, recv, ifn) == nil {
+				cb.Val(toBasicLit(ifn), ifn)
+				fnCall(ctx, v, flags, 1)
+				return true
+			}
+		} */
 	}
 	return false
 }
 
+func fnCall(ctx *blockCtx, v *ast.CallExpr, flags gox.InstrFlags, extra int) {
+	for _, arg := range v.Args {
+		compileExpr(ctx, arg)
+	}
+	ctx.cb.CallWith(len(v.Args)+extra, flags, v)
+}
+
 func compileCallArgs(fn *fnType, ctx *blockCtx, v *ast.CallExpr, ellipsis bool, flags gox.InstrFlags) (err error) {
-	cb := ctx.cb
-	stk := cb.InternalStack()
-	n := stk.Len()
-	defer func() {
-		if r := recover(); r != nil {
-			if e, ok := r.(error); ok {
-				err = e
-			} else {
-				src := ctx.LoadExpr(v)
-				err = ctx.newCodeErrorf(v.Pos(), "compile func %v error: %v", src, r)
-			}
-			stk.SetLen(n)
-		}
-	}()
 	for i, arg := range v.Args {
 		switch expr := arg.(type) {
 		case *ast.LambdaExpr:
-			sig := checkLambdaFuncType(ctx, expr, fn.arg(i, ellipsis), clLambaArgument, v.Fun)
-			compileLambdaExpr(ctx, expr, sig)
+			sig, e := checkLambdaFuncType(ctx, expr, fn.arg(i, ellipsis), clLambaArgument, v.Fun)
+			if e != nil {
+				return e
+			}
+			if err = compileLambdaExpr(ctx, expr, sig); err != nil {
+				return
+			}
 		case *ast.LambdaExpr2:
-			sig := checkLambdaFuncType(ctx, expr, fn.arg(i, ellipsis), clLambaArgument, v.Fun)
-			compileLambdaExpr2(ctx, expr, sig)
+			sig, e := checkLambdaFuncType(ctx, expr, fn.arg(i, ellipsis), clLambaArgument, v.Fun)
+			if e != nil {
+				return e
+			}
+			if err = compileLambdaExpr2(ctx, expr, sig); err != nil {
+				return
+			}
 		case *ast.CompositeLit:
 			compileCompositeLit(ctx, expr, fn.arg(i, ellipsis), true)
 		case *ast.SliceLit:
@@ -686,9 +708,11 @@ func compileCallArgs(fn *fnType, ctx *blockCtx, v *ast.CallExpr, ellipsis bool, 
 			}
 			typetype := fn.typetype && t != nil
 			if typetype {
-				stk.PopN(1)
+				ctx.cb.InternalStack().PopN(1)
 			}
-			compileSliceLit(ctx, expr, t)
+			if err = compileSliceLit(ctx, expr, t, true); err != nil {
+				return
+			}
 			if typetype {
 				return
 			}
@@ -696,8 +720,7 @@ func compileCallArgs(fn *fnType, ctx *blockCtx, v *ast.CallExpr, ellipsis bool, 
 			compileExpr(ctx, arg)
 		}
 	}
-	cb.CallWith(len(v.Args), flags, v)
-	return
+	return ctx.cb.CallWithEx(len(v.Args), flags, v)
 }
 
 type clLambaFlag string
@@ -709,7 +732,7 @@ const (
 )
 
 // check lambda func type
-func checkLambdaFuncType(ctx *blockCtx, lambda ast.Expr, ftyp types.Type, flag clLambaFlag, toNode ast.Node) *types.Signature {
+func checkLambdaFuncType(ctx *blockCtx, lambda ast.Expr, ftyp types.Type, flag clLambaFlag, toNode ast.Node) (*types.Signature, error) {
 	typ := ftyp
 retry:
 	switch t := typ.(type) {
@@ -719,26 +742,29 @@ retry:
 				break
 			}
 		}
-		return t
+		return t, nil
 	case *types.Named:
 		typ = t.Underlying()
 		goto retry
 	}
 	src := ctx.LoadExpr(toNode)
-	err := ctx.newCodeErrorf(lambda.Pos(), "cannot use lambda literal as type %v in %v to %v", ftyp, flag, src)
-	panic(err)
+	return nil, ctx.newCodeErrorf(lambda.Pos(), "cannot use lambda literal as type %v in %v to %v", ftyp, flag, src)
 }
 
 func compileLambda(ctx *blockCtx, lambda ast.Expr, sig *types.Signature) {
 	switch expr := lambda.(type) {
 	case *ast.LambdaExpr:
-		compileLambdaExpr(ctx, expr, sig)
+		if err := compileLambdaExpr(ctx, expr, sig); err != nil {
+			panic(err)
+		}
 	case *ast.LambdaExpr2:
-		compileLambdaExpr2(ctx, expr, sig)
+		if err := compileLambdaExpr2(ctx, expr, sig); err != nil {
+			panic(err)
+		}
 	}
 }
 
-func makeLambdaParams(ctx *blockCtx, pos token.Pos, lhs []*ast.Ident, in *types.Tuple) *types.Tuple {
+func makeLambdaParams(ctx *blockCtx, pos token.Pos, lhs []*ast.Ident, in *types.Tuple) (*types.Tuple, error) {
 	pkg := ctx.pkg
 	n := len(lhs)
 	if nin := in.Len(); n != nin {
@@ -750,11 +776,11 @@ func makeLambdaParams(ctx *blockCtx, pos token.Pos, lhs []*ast.Ident, in *types.
 		for i, v := range lhs {
 			has[i] = v.Name
 		}
-		panic(ctx.newCodeErrorf(
-			pos, "too %s arguments in lambda expression\n\thave (%s)\n\twant %v", fewOrMany, strings.Join(has, ", "), in))
+		return nil, ctx.newCodeErrorf(
+			pos, "too %s arguments in lambda expression\n\thave (%s)\n\twant %v", fewOrMany, strings.Join(has, ", "), in)
 	}
 	if n == 0 {
-		return nil
+		return nil, nil
 	}
 	params := make([]*types.Var, n)
 	for i, name := range lhs {
@@ -764,7 +790,7 @@ func makeLambdaParams(ctx *blockCtx, pos token.Pos, lhs []*ast.Ident, in *types.
 			rec.Def(name, param)
 		}
 	}
-	return types.NewTuple(params...)
+	return types.NewTuple(params...), nil
 }
 
 func makeLambdaResults(pkg *gox.Package, out *types.Tuple) *types.Tuple {
@@ -779,9 +805,12 @@ func makeLambdaResults(pkg *gox.Package, out *types.Tuple) *types.Tuple {
 	return types.NewTuple(results...)
 }
 
-func compileLambdaExpr(ctx *blockCtx, v *ast.LambdaExpr, sig *types.Signature) {
+func compileLambdaExpr(ctx *blockCtx, v *ast.LambdaExpr, sig *types.Signature) error {
 	pkg := ctx.pkg
-	params := makeLambdaParams(ctx, v.Pos(), v.Lhs, sig.Params())
+	params, err := makeLambdaParams(ctx, v.Pos(), v.Lhs, sig.Params())
+	if err != nil {
+		return err
+	}
 	results := makeLambdaResults(pkg, sig.Results())
 	ctx.cb.NewClosure(params, results, false).BodyStart(pkg)
 	if len(v.Lhs) > 0 {
@@ -791,11 +820,15 @@ func compileLambdaExpr(ctx *blockCtx, v *ast.LambdaExpr, sig *types.Signature) {
 		compileExpr(ctx, v)
 	}
 	ctx.cb.Return(len(v.Rhs)).End(v)
+	return nil
 }
 
-func compileLambdaExpr2(ctx *blockCtx, v *ast.LambdaExpr2, sig *types.Signature) {
+func compileLambdaExpr2(ctx *blockCtx, v *ast.LambdaExpr2, sig *types.Signature) error {
 	pkg := ctx.pkg
-	params := makeLambdaParams(ctx, v.Pos(), v.Lhs, sig.Params())
+	params, err := makeLambdaParams(ctx, v.Pos(), v.Lhs, sig.Params())
+	if err != nil {
+		return err
+	}
 	results := makeLambdaResults(pkg, sig.Results())
 	comments, once := ctx.cb.BackupComments()
 	fn := ctx.cb.NewClosure(params, results, false)
@@ -806,6 +839,7 @@ func compileLambdaExpr2(ctx *blockCtx, v *ast.LambdaExpr2, sig *types.Signature)
 	compileStmts(ctx, v.Body.List)
 	cb.End(v)
 	ctx.cb.SetComments(comments, once)
+	return nil
 }
 
 func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
@@ -946,7 +980,10 @@ func compileStructLitInKeyVal(ctx *blockCtx, elts []ast.Expr, t *types.Struct, t
 		}
 		switch expr := kv.Value.(type) {
 		case *ast.LambdaExpr, *ast.LambdaExpr2:
-			sig := checkLambdaFuncType(ctx, expr, t.Field(idx).Type(), clLambaField, kv.Key)
+			sig, err := checkLambdaFuncType(ctx, expr, t.Field(idx).Type(), clLambaField, kv.Key)
+			if err != nil {
+				panic(err)
+			}
 			compileLambda(ctx, expr, sig)
 		default:
 			compileExpr(ctx, kv.Value)
@@ -1065,7 +1102,14 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, expected types.Type
 	}
 }
 
-func compileSliceLit(ctx *blockCtx, v *ast.SliceLit, typ types.Type) {
+func compileSliceLit(ctx *blockCtx, v *ast.SliceLit, typ types.Type, noPanic ...bool) (err error) {
+	if noPanic != nil {
+		defer func() {
+			if e := recover(); e != nil { // TODO: don't use defer to capture error
+				err = ctx.recoverErr(e, v)
+			}
+		}()
+	}
 	n := len(v.Elts)
 	for _, elt := range v.Elts {
 		compileExpr(ctx, elt)
@@ -1075,6 +1119,7 @@ func compileSliceLit(ctx *blockCtx, v *ast.SliceLit, typ types.Type) {
 	} else {
 		ctx.cb.SliceLitEx(typ, n, false, v)
 	}
+	return
 }
 
 func compileRangeExpr(ctx *blockCtx, v *ast.RangeExpr) {

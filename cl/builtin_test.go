@@ -293,16 +293,10 @@ func TestGetTypeName(t *testing.T) {
 
 func TestHandleRecover(t *testing.T) {
 	var ctx pkgCtx
-	ctx.handleRecover("hello")
+	ctx.handleRecover("hello", nil)
 	if !(len(ctx.errs) == 1 && ctx.errs[0].Error() == "hello") {
 		t.Fatal("TestHandleRecover failed:", ctx.errs)
 	}
-	defer func() {
-		if e := recover(); e == nil {
-			t.Fatal("TestHandleRecover failed: no error?")
-		}
-	}()
-	ctx.handleRecover(100)
 }
 
 func TestCheckCommandWithoutArgs(t *testing.T) {

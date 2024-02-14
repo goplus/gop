@@ -102,7 +102,7 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	if enableRecover {
 		defer func() {
 			if e := recover(); e != nil {
-				ctx.handleRecover(e)
+				ctx.handleRecover(e, stmt)
 				ctx.cb.ResetStmt()
 			}
 		}()
@@ -278,7 +278,10 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		case *ast.LambdaExpr, *ast.LambdaExpr2:
 			if len(expr.Lhs) == 1 && len(expr.Rhs) == 1 {
 				typ := ctx.cb.Get(-1).Type.(interface{ Elem() types.Type }).Elem()
-				sig := checkLambdaFuncType(ctx, e, typ, clLambaAssign, expr.Lhs[0])
+				sig, err := checkLambdaFuncType(ctx, e, typ, clLambaAssign, expr.Lhs[0])
+				if err != nil {
+					panic(err)
+				}
 				compileLambda(ctx, e, sig)
 			} else {
 				panic(ctx.newCodeErrorf(e.Pos(), "lambda unsupport multiple assignment"))

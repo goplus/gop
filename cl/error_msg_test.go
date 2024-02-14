@@ -990,7 +990,7 @@ a := uint128(b)
 }
 
 func TestErrCompileFunc(t *testing.T) {
-	codeErrorTest(t, `bar.gop:2:1: compile func printf("%+v\n", int32) error: unreachable`, `
+	codeErrorTest(t, "bar.gop:2:1: compile `printf(\"%+v\\n\", int32)`: unreachable", `
 printf("%+v\n", int32)
 `)
 }

@@ -427,7 +427,7 @@ func (p *pkgCtx) loadSymbol(name string) bool {
 	if enableRecover {
 		defer func() {
 			if e := recover(); e != nil {
-				p.handleRecover(e)
+				p.handleRecover(e, nil)
 			}
 		}()
 	}
@@ -443,16 +443,22 @@ func (p *pkgCtx) loadSymbol(name string) bool {
 	return false
 }
 
-func (p *pkgCtx) handleRecover(e interface{}) {
+func (p *pkgCtx) handleRecover(e interface{}, src ast.Node) {
+	err := p.recoverErr(e, src)
+	p.handleErr(err)
+}
+
+func (p *pkgCtx) recoverErr(e interface{}, src ast.Node) error {
 	err, ok := e.(error)
 	if !ok {
-		if msg, ok := e.(string); ok {
-			err = errors.New(msg)
+		if src != nil {
+			text := p.LoadExpr(src)
+			err = p.newCodeErrorf(src.Pos(), "compile `%v`: %v", text, e)
 		} else {
-			panic(e)
+			err = fmt.Errorf("%v", e)
 		}
 	}
-	p.handleErr(err)
+	return err
 }
 
 const (
@@ -502,7 +508,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	if enableRecover {
 		defer func() {
 			if e := recover(); e != nil {
-				ctx.handleRecover(e)
+				ctx.handleRecover(e, nil)
 				err = ctx.errs.ToError()
 			}
 		}()
@@ -1315,7 +1321,7 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 	if enableRecover {
 		defer func() {
 			if e := recover(); e != nil {
-				ctx.handleRecover(e)
+				ctx.handleRecover(e, spec)
 			}
 		}()
 	}
@@ -1431,7 +1437,10 @@ func loadVars(ctx *blockCtx, v *ast.ValueSpec, doc *ast.CommentGroup, global boo
 				switch e := val.(type) {
 				case *ast.LambdaExpr, *ast.LambdaExpr2:
 					if len(v.Values) == 1 {
-						sig := checkLambdaFuncType(ctx, e, typ, clLambaAssign, v.Names[0])
+						sig, err := checkLambdaFuncType(ctx, e, typ, clLambaAssign, v.Names[0])
+						if err != nil {
+							panic(err)
+						}
 						compileLambda(ctx, e, sig)
 					} else {
 						panic(ctx.newCodeErrorf(e.Pos(), "lambda unsupport multiple assignment"))
