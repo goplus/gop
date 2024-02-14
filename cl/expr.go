@@ -206,8 +206,6 @@ func compileMember(ctx *blockCtx, v ast.Node, name string, flags int) error {
 	switch {
 	case (flags & clIdentLHS) != 0:
 		mflag = gox.MemberFlagRef
-	case (flags & clCommandWithoutArgs) != 0: // TODO: shouldn't use clCommandWithoutArgs
-		mflag = gox.MemberFlagMethodAlias
 	case (flags & clIdentCanAutoCall) != 0:
 		mflag = gox.MemberFlagAutoProperty
 	default:
@@ -526,9 +524,7 @@ func compilePkgRef(ctx *blockCtx, at gox.PkgRef, x *ast.Ident, flags, pkgKind in
 func identVal(ctx *blockCtx, x *ast.Ident, flags int, v types.Object, alias bool) bool {
 	autocall := false
 	if alias {
-		if (flags & clCommandWithoutArgs) != 0 { // TODO: shouldn't use clCommandWithoutArgs
-			autocall = true
-		} else if autocall = (flags & clIdentCanAutoCall) != 0; autocall {
+		if autocall = (flags & clIdentCanAutoCall) != 0; autocall {
 			if !gox.HasAutoProperty(v.Type()) {
 				return false
 			}
