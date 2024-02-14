@@ -19,6 +19,7 @@ package cl
 import (
 	"errors"
 	"go/types"
+	"log"
 	"testing"
 
 	"github.com/goplus/gop/ast"
@@ -264,6 +265,12 @@ func TestNodeInterp(t *testing.T) {
 	if v := ni.Caller(&ast.Ident{}); v != "the function call" {
 		t.Fatal("TestNodeInterp:", v)
 	}
+	defer func() {
+		if e := recover(); e == nil {
+			log.Fatal("TestNodeInterp: no error")
+		}
+	}()
+	ni.Caller(&ast.CallExpr{})
 }
 
 func TestMarkAutogen(t *testing.T) {
