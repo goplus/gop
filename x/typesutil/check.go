@@ -148,7 +148,7 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 		LookupPub:      c2go.LookupPub(mod),
 		LookupClass:    mod.LookupClass,
 		Importer:       conf.Importer,
-		Recorder:       gopRecorder{p.gopInfo},
+		Recorder:       NewRecorder(p.gopInfo),
 		NoFileLine:     true,
 		NoAutoGenMain:  true,
 		NoSkipConstant: true,
