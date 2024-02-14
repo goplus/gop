@@ -39,6 +39,22 @@ func getGoxConf() *gox.Config {
 	return &gox.Config{Fset: fset, Importer: imp}
 }
 
+func TestCompileExpr(t *testing.T) {
+	defer func() {
+		if e := recover(); e != "compileExpr failed: unknown - *ast.Ellipsis\n" {
+			t.Fatal("compileExpr:", e)
+		}
+	}()
+	compileExpr(nil, &ast.Ellipsis{})
+}
+
+func TestTryGopExec(t *testing.T) {
+	pkg := gox.NewPackage("", "foo", goxConf)
+	if tryGopExec(pkg.CB(), nil) {
+		t.Fatal("tryGopExec")
+	}
+}
+
 func TestCompileFuncAlias(t *testing.T) {
 	ctx := &blockCtx{
 		pkgCtx: &pkgCtx{
