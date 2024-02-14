@@ -21,6 +21,7 @@ import (
 	"go/types"
 	"io/fs"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/goplus/gop/ast"
@@ -126,7 +127,7 @@ type Config struct {
 	DontUpdateGoMod    bool
 }
 
-func NewDefaultConf(dir string) (conf *Config, err error) {
+func NewDefaultConf(dir string, noTestFile bool) (conf *Config, err error) {
 	mod, err := LoadMod(dir)
 	if err != nil {
 		return
@@ -134,12 +135,16 @@ func NewDefaultConf(dir string) (conf *Config, err error) {
 	gop := gopenv.Get()
 	fset := token.NewFileSet()
 	imp := NewImporter(mod, gop, fset)
-	return &Config{Gop: gop, Fset: fset, Mod: mod, Importer: imp}, nil
+	conf = &Config{Gop: gop, Fset: fset, Mod: mod, Importer: imp}
+	if noTestFile {
+		conf.Filter = FilterNoTest
+	}
+	return
 }
 
 func LoadMod(dir string) (mod *gopmod.Module, err error) {
 	mod, err = gopmod.Load(dir)
-	if err != nil && !NotFound(err) {
+	if err != nil && !gopmod.IsNotFound(err) {
 		err = errors.NewWith(err, `gopmod.Load(dir, 0)`, -2, "gopmod.Load", dir, 0)
 		return
 	}
@@ -151,6 +156,22 @@ func LoadMod(dir string) (mod *gopmod.Module, err error) {
 		return
 	}
 	return gopmod.Default, nil
+}
+
+func FilterNoTest(fi fs.FileInfo) bool {
+	fname := fi.Name()
+	suffix := ""
+	switch path.Ext(fname) {
+	case ".gox":
+		suffix = "test.gox"
+	case ".gop":
+		suffix = "_test.gop"
+	case ".go":
+		suffix = "_test.go"
+	default:
+		return true
+	}
+	return !strings.HasSuffix(fname, suffix)
 }
 
 func hasModfile(mod *gopmod.Module) bool {
