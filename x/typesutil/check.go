@@ -169,13 +169,14 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 			log.Println("typesutil.Check err:", err)
 			log.SingleStack()
 		}
-		return
+		// don't return even if err != nil
 	}
 	if len(files) > 0 {
 		scope := pkgTypes.Scope()
 		objMap := DeleteObjects(scope, files)
 		checker := types.NewChecker(conf, fset, pkgTypes, p.goInfo)
 		err = checker.Files(files)
+		// TODO: how to process error?
 		CorrectTypesInfo(scope, objMap, p.gopInfo.Uses)
 	}
 	return
