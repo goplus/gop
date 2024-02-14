@@ -297,6 +297,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 		compileSelectorExpr(ctx, v, flags)
 		if cmdNoArgs {
 			callCmdNoArgs(ctx, expr, true)
+			return
 		}
 	case *ast.BinaryExpr:
 		compileBinaryExpr(ctx, v)
