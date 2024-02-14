@@ -21,7 +21,6 @@ import (
 	"go/constant"
 	"log"
 	"path/filepath"
-	"reflect"
 
 	goast "go/ast"
 	gotoken "go/token"
@@ -102,7 +101,7 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	if enableRecover {
 		defer func() {
 			if e := recover(); e != nil {
-				ctx.handleRecover(e)
+				ctx.handleRecover(e, stmt)
 				ctx.cb.ResetStmt()
 			}
 		}()
@@ -113,9 +112,6 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 		x := v.X
 		inFlags := checkCommandWithoutArgs(x)
 		compileExpr(ctx, x, inFlags)
-		if inFlags != 0 && gox.IsFunc(ctx.cb.InternalStack().Get(-1).Type) {
-			ctx.cb.CallWith(0, 0, x)
-		}
 	case *ast.AssignStmt:
 		compileAssignStmt(ctx, v)
 	case *ast.ReturnStmt:
@@ -156,15 +152,12 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	case *ast.EmptyStmt:
 		// do nothing
 	default:
-		log.Panicln("TODO - compileStmt failed: unknown -", reflect.TypeOf(v))
+		log.Panicf("compileStmt failed: unknown - %T\n", v)
 	}
 	ctx.cb.EndStmt()
 }
 
 func checkCommandWithoutArgs(x ast.Expr) int {
-	if _, ok := x.(*ast.Ident); ok {
-		return clCommandWithoutArgs | clCommandIdent // for support Gop_Exec, see TestSpxGopExec
-	}
 retry:
 	if v, ok := x.(*ast.SelectorExpr); ok {
 		x = v.X
@@ -278,7 +271,10 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		case *ast.LambdaExpr, *ast.LambdaExpr2:
 			if len(expr.Lhs) == 1 && len(expr.Rhs) == 1 {
 				typ := ctx.cb.Get(-1).Type.(interface{ Elem() types.Type }).Elem()
-				sig := checkLambdaFuncType(ctx, e, typ, clLambaAssign, expr.Lhs[0])
+				sig, err := checkLambdaFuncType(ctx, e, typ, clLambaAssign, expr.Lhs[0])
+				if err != nil {
+					panic(err)
+				}
 				compileLambda(ctx, e, sig)
 			} else {
 				panic(ctx.newCodeErrorf(e.Pos(), "lambda unsupport multiple assignment"))

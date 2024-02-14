@@ -72,6 +72,28 @@ func codeErrorTestAst(t *testing.T, pkgname, filename, msg, src string) {
 	}
 }
 
+func TestErrVargCommand(t *testing.T) {
+	codeErrorTest(t, `bar.gop:5:1: not enough arguments in call to Ls
+	have ()
+	want (int)`, `
+func Ls(int) {
+}
+
+ls
+`)
+	codeErrorTest(t, `bar.gop:8:1: not enough arguments in call to f.Ls
+	have ()
+	want (int)`, `
+type foo int
+
+func (f foo) Ls(int) {
+}
+
+var f foo
+f.ls
+`)
+}
+
 func TestErrUnsafe(t *testing.T) {
 	codeErrorTest(t, `bar.gop:2:9: undefined: Sizeof`, `
 println Sizeof(0)
@@ -990,7 +1012,7 @@ a := uint128(b)
 }
 
 func TestErrCompileFunc(t *testing.T) {
-	codeErrorTest(t, `bar.gop:2:1: compile func printf("%+v\n", int32) error: unreachable`, `
+	codeErrorTest(t, "bar.gop:2:1: compile `printf(\"%+v\\n\", int32)`: unreachable", `
 printf("%+v\n", int32)
 `)
 }

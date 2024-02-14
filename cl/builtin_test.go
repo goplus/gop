@@ -19,6 +19,7 @@ package cl
 import (
 	"errors"
 	"go/types"
+	"log"
 	"testing"
 
 	"github.com/goplus/gop/ast"
@@ -37,6 +38,85 @@ func getGoxConf() *gox.Config {
 	fset := token.NewFileSet()
 	imp := packages.NewImporter(fset)
 	return &gox.Config{Fset: fset, Importer: imp}
+}
+
+func TestCompileLambdaExpr(t *testing.T) {
+	ctx := &blockCtx{
+		pkgCtx: &pkgCtx{},
+	}
+	lhs := []*ast.Ident{ast.NewIdent("x")}
+	sig := types.NewSignatureType(nil, nil, nil, nil, nil, false)
+	e := compileLambdaExpr(ctx, &ast.LambdaExpr{Lhs: lhs}, sig)
+	if ce := e.(*gox.CodeError); ce.Msg != `too many arguments in lambda expression
+	have (x)
+	want ()` {
+		t.Fatal("compileLambdaExpr:", ce.Msg)
+	}
+}
+
+func TestCompileLambda1(t *testing.T) {
+	defer func() {
+		if e := recover(); e != nil {
+			if ce := e.(*gox.CodeError); ce.Msg != `too many arguments in lambda expression
+	have (x)
+	want ()` {
+				t.Fatal("compileLambda:", ce.Msg)
+			}
+		}
+	}()
+	ctx := &blockCtx{
+		pkgCtx: &pkgCtx{},
+	}
+	lhs := []*ast.Ident{ast.NewIdent("x")}
+	sig := types.NewSignatureType(nil, nil, nil, nil, nil, false)
+	compileLambda(ctx, &ast.LambdaExpr{Lhs: lhs}, sig)
+}
+
+func TestCompileLambda2(t *testing.T) {
+	defer func() {
+		if e := recover(); e != nil {
+			if ce := e.(*gox.CodeError); ce.Msg != `too many arguments in lambda expression
+	have (x)
+	want ()` {
+				t.Fatal("compileLambda:", ce.Msg)
+			}
+		}
+	}()
+	ctx := &blockCtx{
+		pkgCtx: &pkgCtx{},
+	}
+	lhs := []*ast.Ident{ast.NewIdent("x")}
+	sig := types.NewSignatureType(nil, nil, nil, nil, nil, false)
+	compileLambda(ctx, &ast.LambdaExpr2{Lhs: lhs}, sig)
+}
+
+func TestCompileExpr(t *testing.T) {
+	defer func() {
+		if e := recover(); e != "compileExpr failed: unknown - *ast.Ellipsis\n" {
+			t.Fatal("compileExpr:", e)
+		}
+	}()
+	compileExpr(nil, &ast.Ellipsis{})
+}
+
+func TestCompileStmt(t *testing.T) {
+	old := enableRecover
+	defer func() {
+		enableRecover = old
+		if e := recover(); e != "compileStmt failed: unknown - *ast.BadStmt\n" {
+			t.Fatal("compileStmt:", e)
+		}
+	}()
+	enableRecover = false
+	ctx := &blockCtx{}
+	compileStmt(ctx, &ast.BadStmt{})
+}
+
+func TestTryGopExec(t *testing.T) {
+	pkg := gox.NewPackage("", "foo", goxConf)
+	if tryGopExec(pkg.CB(), nil) {
+		t.Fatal("tryGopExec")
+	}
 }
 
 func TestCompileFuncAlias(t *testing.T) {
@@ -185,6 +265,12 @@ func TestNodeInterp(t *testing.T) {
 	if v := ni.Caller(&ast.Ident{}); v != "the function call" {
 		t.Fatal("TestNodeInterp:", v)
 	}
+	defer func() {
+		if e := recover(); e == nil {
+			log.Fatal("TestNodeInterp: no error")
+		}
+	}()
+	ni.Caller(&ast.CallExpr{})
 }
 
 func TestMarkAutogen(t *testing.T) {
@@ -293,16 +379,10 @@ func TestGetTypeName(t *testing.T) {
 
 func TestHandleRecover(t *testing.T) {
 	var ctx pkgCtx
-	ctx.handleRecover("hello")
+	ctx.handleRecover("hello", nil)
 	if !(len(ctx.errs) == 1 && ctx.errs[0].Error() == "hello") {
 		t.Fatal("TestHandleRecover failed:", ctx.errs)
 	}
-	defer func() {
-		if e := recover(); e == nil {
-			t.Fatal("TestHandleRecover failed: no error?")
-		}
-	}()
-	ctx.handleRecover(100)
 }
 
 func TestCheckCommandWithoutArgs(t *testing.T) {

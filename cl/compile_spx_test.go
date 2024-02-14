@@ -256,6 +256,8 @@ func (this *index) onInit() {
 func TestSpxGopExec(t *testing.T) {
 	gopSpxTest(t, `
 vim "a.txt"
+vim
+ls 10
 capout => { ls }
 capout => { ls "-l" }
 `, ``, `package main
@@ -272,6 +274,8 @@ type index struct {
 
 func (this *index) MainEntry() {
 	this.Gop_Exec("vim", "a.txt")
+	this.Gop_Exec("vim")
+	this.Ls(10)
 	this.Capout(func() {
 		this.Gop_Exec("ls")
 	})
