@@ -47,25 +47,17 @@ func relFile(dir string, absFile string) string {
 
 func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
 	if ctx.fileLine {
-		ctx.lastStmt = stmt // for gmxMainFunc
-		commentStmtEx(ctx.cb, ctx.pkgCtx, stmt, false)
+		commentStmtEx(ctx.cb, ctx.pkgCtx, stmt)
 	}
 }
 
-func commentStmtEx(cb *gox.CodeBuilder, ctx *pkgCtx, stmt ast.Stmt, next bool) {
-	var start token.Pos
-	var delta int
-	if next {
-		start = stmt.End() - 1
-		delta = 1
-	} else {
-		start = stmt.Pos()
-	}
+func commentStmtEx(cb *gox.CodeBuilder, ctx *pkgCtx, stmt ast.Stmt) {
+	start := stmt.Pos()
 	pos := ctx.fset.Position(start)
 	if ctx.relBaseDir != "" {
 		pos.Filename = fileLineFile(ctx.relBaseDir, pos.Filename)
 	}
-	line := fmt.Sprintf("\n//line %s:%d:1", pos.Filename, pos.Line+delta)
+	line := fmt.Sprintf("\n//line %s:%d:1", pos.Filename, pos.Line)
 	comments := &goast.CommentGroup{
 		List: []*goast.Comment{{Text: line}},
 	}

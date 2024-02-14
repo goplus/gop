@@ -346,8 +346,6 @@ type pkgCtx struct {
 	generics map[string]bool // generic type record
 	idents   []*ast.Ident    // toType ident recored
 	inInst   int             // toType in generic instance
-
-	lastStmt ast.Stmt // set by commentStmt for line:xxx
 }
 
 type pkgImp struct {
