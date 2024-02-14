@@ -252,10 +252,15 @@ func identOrSelectorFlags(inFlags []int) (flags int, cmdNoArgs bool) {
 	return
 }
 
-func callCmdNoArgs(ctx *blockCtx, src ast.Node) {
+func callCmdNoArgs(ctx *blockCtx, src ast.Node, panicErr bool) (err error) {
 	if gox.IsFunc(ctx.cb.InternalStack().Get(-1).Type) {
-		ctx.cb.CallWith(0, 0, src)
+		if err = ctx.cb.CallWithEx(0, 0, src); err != nil {
+			if panicErr {
+				panic(err)
+			}
+		}
 	}
+	return
 }
 
 func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
@@ -265,10 +270,21 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 		if cmdNoArgs {
 			flags |= clCommandIdent // for support Gop_Exec, see TestSpxGopExec
 		}
-		if _, kind := compileIdent(ctx, v, flags); kind == objGopExec {
-			ctx.cb.Val(v.Name, v).CallWith(1, 0, v)
-		} else if cmdNoArgs {
-			callCmdNoArgs(ctx, expr)
+		_, kind := compileIdent(ctx, v, flags)
+		if cmdNoArgs {
+			cb := ctx.cb
+			if kind == objGopExec {
+				cb.Val(v.Name, v)
+			} else {
+				err := callCmdNoArgs(ctx, expr, false)
+				if err == nil {
+					return
+				}
+				if !(ctx.isClass && tryGopExec(cb, v)) {
+					panic(err)
+				}
+			}
+			cb.CallWith(1, 0, v)
 		}
 	case *ast.BasicLit:
 		compileBasicLit(ctx, v)
@@ -282,7 +298,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 		flags, cmdNoArgs := identOrSelectorFlags(inFlags)
 		compileSelectorExpr(ctx, v, flags)
 		if cmdNoArgs {
-			callCmdNoArgs(ctx, expr)
+			callCmdNoArgs(ctx, expr, true)
 		}
 	case *ast.BinaryExpr:
 		compileBinaryExpr(ctx, v)
@@ -324,12 +340,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 		compileErrWrapExpr(ctx, v, 0)
 	case *ast.FuncType:
 		ctx.cb.Typ(toFuncType(ctx, v, nil, nil), v)
-	case *ast.Ellipsis:
-		panic("compileEllipsis: ast.Ellipsis unexpected")
-	case *ast.KeyValueExpr:
-		panic("compileExpr: ast.KeyValueExpr unexpected")
 	default:
-		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
+		log.Panicf("compileExpr failed: unknown - %T\n", v)
 	}
 	if rec := ctx.recorder(); rec != nil {
 		rec.recordExpr(ctx, expr, false)
@@ -677,14 +689,23 @@ func builtinOrGopExec(ctx *blockCtx, ifn *ast.Ident, v *ast.CallExpr, flags gox.
 		cb.Val(ctx.pkg.Builtin().Ref(name), ifn)
 		return fnCall(ctx, v, flags, 0)
 	default:
-		if v.IsCommand() && ctx.isClass { // for support Gop_Exec, see TestSpxGopExec
-			if recv := classRecv(cb); recv != nil && gopExecVal(cb, recv, ifn) == nil {
-				cb.Val(toBasicLit(ifn), ifn)
-				return fnCall(ctx, v, flags, 1)
-			}
+		// for support Gop_Exec, see TestSpxGopExec
+		if v.IsCommand() && ctx.isClass && tryGopExec(cb, ifn) {
+			return fnCall(ctx, v, flags, 1)
 		}
 	}
 	return syscall.ENOENT
+}
+
+func tryGopExec(cb *gox.CodeBuilder, ifn *ast.Ident) bool {
+	if recv := classRecv(cb); recv != nil {
+		cb.InternalStack().PopN(1)
+		if gopExecVal(cb, recv, ifn) == nil {
+			cb.Val(ifn.Name, ifn)
+			return true
+		}
+	}
+	return false
 }
 
 func fnCall(ctx *blockCtx, v *ast.CallExpr, flags gox.InstrFlags, extra int) error {

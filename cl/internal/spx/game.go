@@ -29,9 +29,7 @@ type MyGame struct {
 func Gopt_MyGame_Main(game interface{}) {
 }
 
-/*
 func (p *MyGame) Ls(n int) {}
-*/
 
 func (p *MyGame) Capout(doSth func()) (string, error) {
 	return "", nil
