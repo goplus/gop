@@ -98,6 +98,19 @@ func TestCompileExpr(t *testing.T) {
 	compileExpr(nil, &ast.Ellipsis{})
 }
 
+func TestCompileStmt(t *testing.T) {
+	old := enableRecover
+	defer func() {
+		enableRecover = old
+		if e := recover(); e != "compileStmt failed: unknown - *ast.BadStmt\n" {
+			t.Fatal("compileStmt:", e)
+		}
+	}()
+	enableRecover = false
+	ctx := &blockCtx{}
+	compileStmt(ctx, &ast.BadStmt{})
+}
+
 func TestTryGopExec(t *testing.T) {
 	pkg := gox.NewPackage("", "foo", goxConf)
 	if tryGopExec(pkg.CB(), nil) {

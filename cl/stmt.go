@@ -21,7 +21,6 @@ import (
 	"go/constant"
 	"log"
 	"path/filepath"
-	"reflect"
 
 	goast "go/ast"
 	gotoken "go/token"
@@ -153,7 +152,7 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	case *ast.EmptyStmt:
 		// do nothing
 	default:
-		log.Panicln("TODO - compileStmt failed: unknown -", reflect.TypeOf(v))
+		log.Panicf("compileStmt failed: unknown - %T\n", v)
 	}
 	ctx.cb.EndStmt()
 }
