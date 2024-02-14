@@ -229,7 +229,7 @@ func ParseFSEntry(fset *token.FileSet, fs FileSystem, filename string, src inter
 
 func filter(d fs.DirEntry, fn func(fs.FileInfo) bool) bool {
 	fi, err := d.Info()
-	return err != nil || fn(fi)
+	return err == nil && fn(fi)
 }
 
 func reqPkg(pkgs map[string]*ast.Package, name string) *ast.Package {

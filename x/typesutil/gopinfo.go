@@ -20,6 +20,7 @@ import (
 	"go/types"
 
 	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/cl"
 	"github.com/goplus/gox"
 	"github.com/qiniu/x/log"
 )
@@ -166,6 +167,11 @@ func (info *Info) TypeOf(e ast.Expr) types.Type {
 
 type gopRecorder struct {
 	*Info
+}
+
+// NewRecorder creates a new recorder for cl.NewPackage.
+func NewRecorder(info *Info) cl.Recorder {
+	return gopRecorder{info}
 }
 
 // Type maps expressions to their types, and for constant
