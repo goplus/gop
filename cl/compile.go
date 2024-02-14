@@ -346,6 +346,8 @@ type pkgCtx struct {
 	generics map[string]bool // generic type record
 	idents   []*ast.Ident    // toType ident recored
 	inInst   int             // toType in generic instance
+
+	lastStmt ast.Stmt // set by commentStmt for line:xxx
 }
 
 type pkgImp struct {
@@ -368,9 +370,10 @@ type blockCtx struct {
 	classRecv  *ast.FieldList // available when gmxSettings != nil
 	fileScope  *types.Scope   // only valid when isGopFile
 	rec        *typesRecorder
-	fileLine   bool
-	isClass    bool
-	isGopFile  bool // is Go+ file or not
+
+	fileLine  bool
+	isClass   bool
+	isGopFile bool // is Go+ file or not
 }
 
 func (bc *blockCtx) recorder() *typesRecorder {
