@@ -39,6 +39,56 @@ func getGoxConf() *gox.Config {
 	return &gox.Config{Fset: fset, Importer: imp}
 }
 
+func TestCompileLambdaExpr(t *testing.T) {
+	ctx := &blockCtx{
+		pkgCtx: &pkgCtx{},
+	}
+	lhs := []*ast.Ident{ast.NewIdent("x")}
+	sig := types.NewSignatureType(nil, nil, nil, nil, nil, false)
+	e := compileLambdaExpr(ctx, &ast.LambdaExpr{Lhs: lhs}, sig)
+	if ce := e.(*gox.CodeError); ce.Msg != `too many arguments in lambda expression
+	have (x)
+	want ()` {
+		t.Fatal("compileLambdaExpr:", ce.Msg)
+	}
+}
+
+func TestCompileLambda1(t *testing.T) {
+	defer func() {
+		if e := recover(); e != nil {
+			if ce := e.(*gox.CodeError); ce.Msg != `too many arguments in lambda expression
+	have (x)
+	want ()` {
+				t.Fatal("compileLambda:", ce.Msg)
+			}
+		}
+	}()
+	ctx := &blockCtx{
+		pkgCtx: &pkgCtx{},
+	}
+	lhs := []*ast.Ident{ast.NewIdent("x")}
+	sig := types.NewSignatureType(nil, nil, nil, nil, nil, false)
+	compileLambda(ctx, &ast.LambdaExpr{Lhs: lhs}, sig)
+}
+
+func TestCompileLambda2(t *testing.T) {
+	defer func() {
+		if e := recover(); e != nil {
+			if ce := e.(*gox.CodeError); ce.Msg != `too many arguments in lambda expression
+	have (x)
+	want ()` {
+				t.Fatal("compileLambda:", ce.Msg)
+			}
+		}
+	}()
+	ctx := &blockCtx{
+		pkgCtx: &pkgCtx{},
+	}
+	lhs := []*ast.Ident{ast.NewIdent("x")}
+	sig := types.NewSignatureType(nil, nil, nil, nil, nil, false)
+	compileLambda(ctx, &ast.LambdaExpr2{Lhs: lhs}, sig)
+}
+
 func TestCompileExpr(t *testing.T) {
 	defer func() {
 		if e := recover(); e != "compileExpr failed: unknown - *ast.Ellipsis\n" {
