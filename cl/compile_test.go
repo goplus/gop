@@ -122,6 +122,18 @@ func gopClTestFS(t *testing.T, conf *cl.Config, fs parser.FileSystem, pkgname, e
 	}
 }
 
+func TestTypeDoc(t *testing.T) {
+	gopClTest(t, `
+type (
+	// doc
+	A int
+)
+`, `package main
+// doc
+type A int
+`)
+}
+
 func TestUnsafe(t *testing.T) {
 	gopClTest(t, `
 import "unsafe"
