@@ -67,6 +67,9 @@ func commentStmtEx(cb *gox.CodeBuilder, ctx *pkgCtx, stmt ast.Stmt) {
 func commentFunc(ctx *blockCtx, fn *gox.Func, decl *ast.FuncDecl) {
 	start := decl.Name.Pos()
 	if ctx.fileLine && start != token.NoPos {
+		if decl.Doc != nil {
+			start = decl.Doc.Pos()
+		}
 		pos := ctx.fset.Position(start)
 		if ctx.relBaseDir != "" {
 			pos.Filename = fileLineFile(ctx.relBaseDir, pos.Filename)
@@ -78,11 +81,10 @@ func commentFunc(ctx *blockCtx, fn *gox.Func, decl *ast.FuncDecl) {
 			line = fmt.Sprintf("//line %s:%d:1", pos.Filename, pos.Line)
 		}
 		doc := &goast.CommentGroup{}
+		doc.List = append(doc.List, &goast.Comment{Text: line})
 		if decl.Doc != nil {
 			doc.List = append(doc.List, decl.Doc.List...)
-			doc.List = append(doc.List, &goast.Comment{Text: "//"})
 		}
-		doc.List = append(doc.List, &goast.Comment{Text: line})
 		fn.SetComments(ctx.pkg, doc)
 	} else if decl.Doc != nil {
 		fn.SetComments(ctx.pkg, decl.Doc)
