@@ -272,7 +272,7 @@ func remotePkgPathDo(pkgPath string, doSth func(pkgDir, modDir string), onErr fu
 // -----------------------------------------------------------------------------
 
 // GenGoFiles generates gop_autogen.go for specified Go+ files.
-func GenGoFiles(autogen string, files []string, conf *Config) (result []string, err error) {
+func GenGoFiles(autogen string, files []string, conf *Config) (outFiles []string, err error) {
 	if conf == nil {
 		conf = new(Config)
 	}
@@ -291,11 +291,11 @@ func GenGoFiles(autogen string, files []string, conf *Config) (result []string, 
 		err = errors.NewWith(err, `LoadFiles(files, conf)`, -2, "gop.LoadFiles", files, conf)
 		return
 	}
-	result = append(result, autogen)
 	err = out.WriteFile(autogen)
 	if err != nil {
 		err = errors.NewWith(err, `out.WriteFile(autogen)`, -2, "(*gox.Package).WriteFile", out, autogen)
 	}
+	outFiles = []string{autogen}
 	return
 }
 
