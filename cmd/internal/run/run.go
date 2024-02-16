@@ -84,6 +84,9 @@ func runCmd(cmd *base.Command, args []string) {
 	if err != nil {
 		log.Panicln("gop.NewDefaultConf:", err)
 	}
+	if !conf.Mod.HasModfile() { // if no go.mod, check GopDeps
+		conf.GopDeps = new(int)
+	}
 	confCmd := &gocmd.Config{Gop: conf.Gop}
 	confCmd.Flags = pass.Args
 	run(proj, args, !noChdir, conf, confCmd)

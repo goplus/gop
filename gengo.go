@@ -49,13 +49,11 @@ const (
 // -----------------------------------------------------------------------------
 
 // GenGo generates gop_autogen.go for a Go+ package directory.
-// if conf != nil && conf.Context == nil, it will be set with `gox.NewContext()`.
 func GenGo(dir string, conf *Config, genTestPkg bool) (string, bool, error) {
 	return GenGoEx(dir, conf, genTestPkg, 0)
 }
 
 // GenGoEx generates gop_autogen.go for a Go+ package directory.
-// if conf != nil && conf.Context == nil, it will be set with `gox.NewContext()`.
 func GenGoEx(dir string, conf *Config, genTestPkg bool, flags GenFlags) (string, bool, error) {
 	recursively := strings.HasSuffix(dir, "/...")
 	if recursively {
@@ -214,7 +212,6 @@ const (
 )
 
 // GenGoPkgPath generates gop_autogen.go for a Go+ package.
-// if conf != nil && conf.Context == nil, it will be set with `gox.NewContext()`.
 func GenGoPkgPath(workDir, pkgPath string, conf *Config, allowExtern bool) (localDir string, recursively bool, err error) {
 	return GenGoPkgPathEx(workDir, pkgPath, conf, allowExtern, 0)
 }
@@ -233,7 +230,6 @@ func remotePkgPath(pkgPath string, conf *Config, recursively bool, flags GenFlag
 }
 
 // GenGoPkgPathEx generates gop_autogen.go for a Go+ package.
-// if conf != nil && conf.Context == nil, it will be set with `gox.NewContext()`.
 func GenGoPkgPathEx(workDir, pkgPath string, conf *Config, allowExtern bool, flags GenFlags) (localDir string, recursively bool, err error) {
 	recursively = strings.HasSuffix(pkgPath, "/...")
 	if recursively {
@@ -276,8 +272,7 @@ func remotePkgPathDo(pkgPath string, doSth func(pkgDir, modDir string), onErr fu
 // -----------------------------------------------------------------------------
 
 // GenGoFiles generates gop_autogen.go for specified Go+ files.
-// if conf != nil && conf.Context == nil, it will be set with `gox.NewContext()`.
-func GenGoFiles(autogen string, files []string, conf *Config) (result []string, err error) {
+func GenGoFiles(autogen string, files []string, conf *Config) (outFiles []string, err error) {
 	if conf == nil {
 		conf = new(Config)
 	}
@@ -296,11 +291,11 @@ func GenGoFiles(autogen string, files []string, conf *Config) (result []string, 
 		err = errors.NewWith(err, `LoadFiles(files, conf)`, -2, "gop.LoadFiles", files, conf)
 		return
 	}
-	result = append(result, autogen)
 	err = out.WriteFile(autogen)
 	if err != nil {
 		err = errors.NewWith(err, `out.WriteFile(autogen)`, -2, "(*gox.Package).WriteFile", out, autogen)
 	}
+	outFiles = []string{autogen}
 	return
 }
 

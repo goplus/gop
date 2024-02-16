@@ -37,7 +37,8 @@ type Importer struct {
 	mod     *gopmod.Module
 	gop     *env.Gop
 	fset    *token.FileSet
-	flags   GenFlags
+
+	Flags GenFlags // can change this for loading Go+ modules
 }
 
 func NewImporter(mod *gopmod.Module, gop *env.Gop, fset *token.FileSet) *Importer {
@@ -48,19 +49,20 @@ func NewImporter(mod *gopmod.Module, gop *env.Gop, fset *token.FileSet) *Importe
 		mod = gopmod.Default
 	}
 	dir := ""
-	if hasModfile(mod) {
+	if mod.HasModfile() {
 		dir = mod.Root()
 	}
 	impFrom := packages.NewImporter(fset, dir)
-	return &Importer{mod: mod, gop: gop, impFrom: impFrom, fset: fset, flags: defaultFlags}
+	return &Importer{mod: mod, gop: gop, impFrom: impFrom, fset: fset, Flags: defaultFlags}
 }
 
+const (
+	gopMod = "github.com/goplus/gop"
+)
+
 func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
-	const (
-		gop = "github.com/goplus/gop"
-	)
-	if strings.HasPrefix(pkgPath, gop) {
-		if suffix := pkgPath[len(gop):]; suffix == "" || suffix[0] == '/' {
+	if strings.HasPrefix(pkgPath, gopMod) {
+		if suffix := pkgPath[len(gopMod):]; suffix == "" || suffix[0] == '/' {
 			gopRoot := p.gop.Root
 			if suffix == "/cl/internal/gop-in-go/foo" {
 				if err = p.genGoExtern(gopRoot+suffix, false); err != nil {
@@ -70,7 +72,7 @@ func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 			return p.impFrom.ImportFrom(pkgPath, gopRoot, 0)
 		}
 	}
-	if mod := p.mod; hasModfile(mod) {
+	if mod := p.mod; mod.HasModfile() {
 		ret, e := mod.Lookup(pkgPath)
 		if e != nil {
 			if isPkgInMod(pkgPath, "github.com/qiniu/x") {
@@ -113,7 +115,7 @@ func (p *Importer) genGoExtern(dir string, isExtern bool) (err error) {
 			defer os.Chmod(dir, modReadonly)
 		}
 		gen := false
-		err = genGoIn(dir, &Config{Gop: p.gop, Importer: p, Fset: p.fset}, false, p.flags, &gen)
+		err = genGoIn(dir, &Config{Gop: p.gop, Importer: p, Fset: p.fset}, false, p.Flags, &gen)
 		if err != nil {
 			return
 		}
