@@ -154,14 +154,14 @@ func LoadMod(dir string) (mod *gopmod.Module, err error) {
 		err = errors.NewWith(err, `gopmod.Load(dir, 0)`, -2, "gopmod.Load", dir, 0)
 		return
 	}
-	if mod != nil {
-		err = mod.ImportClasses()
-		if err != nil {
-			err = errors.NewWith(err, `mod.RegisterClasses()`, -2, "(*gopmod.Module).RegisterClasses", mod)
-		}
-		return
+	if mod == nil {
+		mod = gopmod.Default
 	}
-	return gopmod.Default, nil
+	err = mod.ImportClasses()
+	if err != nil {
+		err = errors.NewWith(err, `mod.ImportClasses()`, -2, "(*gopmod.Module).ImportClasses", mod)
+	}
+	return
 }
 
 // FilterNoTestFiles filters to skip all testing files.
@@ -322,7 +322,11 @@ func LoadFiles(dir string, files []string, conf *Config) (out *gox.Package, err 
 	if fset == nil {
 		fset = token.NewFileSet()
 	}
-	pkgs, err := parser.ParseFiles(fset, files, parser.ParseComments|parser.SaveAbsFile)
+	pkgs, err := parser.ParseEntries(fset, files, parser.Config{
+		ClassKind: mod.ClassKind,
+		Filter:    conf.Filter,
+		Mode:      parser.ParseComments | parser.SaveAbsFile,
+	})
 	if err != nil {
 		err = errors.NewWith(err, `parser.ParseFiles(fset, files, parser.ParseComments)`, -2, "parser.ParseFiles", fset, files, parser.ParseComments)
 		return

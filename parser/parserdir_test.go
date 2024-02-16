@@ -25,6 +25,7 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/parser/fsx"
 	"github.com/goplus/gop/parser/fsx/memfs"
 	"github.com/goplus/gop/parser/parsertest"
@@ -145,7 +146,41 @@ func TestParseGoFiles(t *testing.T) {
 	}
 }
 
+func TestParseEntries(t *testing.T) {
+	doTestParseEntries(t, Config{})
+	_, err := ParseEntries(nil, []string{"/not-found/gopfile.gox"}, Config{})
+	if err == nil {
+		t.Fatal("ParseEntries: no error?")
+	}
+}
+
+func TestParseEntries_SaveAbsFile(t *testing.T) {
+	doTestParseEntries(t, Config{Mode: SaveAbsFile})
+}
+
+func doTestParseEntries(t *testing.T, confReal Config) {
+	doTestParseEntry(t, func(fset *token.FileSet, filename string, src interface{}, conf Config) (f *ast.File, err error) {
+		fs, _ := memfs.File(filename, src)
+		pkgs, err := ParseFSEntries(fset, fs, []string{filename}, confReal)
+		if err != nil {
+			return
+		}
+		for _, pkg := range pkgs {
+			for _, file := range pkg.Files {
+				f = file
+				return
+			}
+		}
+		t.Fatal("TestParseEntries: no source?")
+		return nil, syscall.ENOENT
+	})
+}
+
 func TestParseEntry(t *testing.T) {
+	doTestParseEntry(t, ParseEntry)
+}
+
+func doTestParseEntry(t *testing.T, parseEntry func(fset *token.FileSet, filename string, src interface{}, conf Config) (f *ast.File, err error)) {
 	fset := token.NewFileSet()
 	src, err := os.ReadFile("./_testdata/functype/functype.go")
 	if err != nil {
@@ -153,7 +188,7 @@ func TestParseEntry(t *testing.T) {
 	}
 	conf := Config{}
 	t.Run(".gop file", func(t *testing.T) {
-		f, err := ParseEntry(fset, "./functype.gop", src, conf)
+		f, err := parseEntry(fset, "./functype.gop", src, conf)
 		if err != nil {
 			t.Fatal("ParseEntry failed:", err)
 		}
@@ -162,7 +197,7 @@ func TestParseEntry(t *testing.T) {
 		}
 	})
 	t.Run(".gox file", func(t *testing.T) {
-		f, err := ParseEntry(fset, "./functype.gox", src, conf)
+		f, err := parseEntry(fset, "./functype.gox", src, conf)
 		if err != nil {
 			t.Fatal("ParseEntry failed:", err)
 		}
@@ -171,7 +206,7 @@ func TestParseEntry(t *testing.T) {
 		}
 	})
 	t.Run(".foo.gox file", func(t *testing.T) {
-		f, err := ParseEntry(fset, "./functype.foo.gox", src, conf)
+		f, err := parseEntry(fset, "./functype.foo.gox", src, conf)
 		if err != nil {
 			t.Fatal("ParseEntry failed:", err)
 		}
@@ -180,13 +215,13 @@ func TestParseEntry(t *testing.T) {
 		}
 	})
 	t.Run(".foo file", func(t *testing.T) {
-		_, err := ParseEntry(fset, "./functype.foo", src, conf)
+		_, err := parseEntry(fset, "./functype.foo", src, conf)
 		if err != ErrUnknownFileKind {
 			t.Fatal("ParseEntry failed:", err)
 		}
 	})
 	t.Run(".spx file", func(t *testing.T) {
-		f, err := ParseEntry(fset, "./main.spx", src, conf)
+		f, err := parseEntry(fset, "./main.spx", src, conf)
 		if err != nil {
 			t.Fatal("ParseEntry failed:", err)
 		}
