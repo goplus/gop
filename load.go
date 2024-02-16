@@ -123,6 +123,10 @@ type Config struct {
 
 	Filter func(fs.FileInfo) bool
 
+	// If not nil, it is used for returning result of checks Go+ dependencies.
+	// see https://pkg.go.dev/github.com/goplus/gox#File.CheckGopDeps
+	GopDeps *int
+
 	IgnoreNotatedError bool
 	DontUpdateGoMod    bool
 }
@@ -175,11 +179,6 @@ func FilterNoTestFiles(fi fs.FileInfo) bool {
 		return true
 	}
 	return !strings.HasSuffix(fname, suffix)
-}
-
-func hasModfile(mod *gopmod.Module) bool {
-	f := mod.File
-	return f != nil && f.Syntax != nil
 }
 
 // -----------------------------------------------------------------------------
@@ -263,18 +262,27 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 	if genTestPkg && pkgTest != nil {
 		test, err = cl.NewPackage("", pkgTest, clConf)
 	}
-	saveWithGopMod(mod, gop, out, test, conf)
+	afterLoad(mod, gop, out, test, conf)
 	return
 }
 
-func saveWithGopMod(mod *gopmod.Module, gop *env.Gop, out, test *gox.Package, conf *Config) {
-	if !conf.DontUpdateGoMod && mod.HasModfile() {
+func afterLoad(mod *gopmod.Module, gop *env.Gop, out, test *gox.Package, conf *Config) {
+	if mod.Path() == gopMod { // nothing to do for Go+ itself
+		return
+	}
+	updateMod := !conf.DontUpdateGoMod && mod.HasModfile()
+	if updateMod || conf.GopDeps != nil {
 		flags := checkGopDeps(out)
-		if test != nil {
-			flags |= checkGopDeps(test)
+		if conf.GopDeps != nil { // for `gop run`
+			*conf.GopDeps = flags
 		}
-		if flags != 0 {
-			mod.SaveWithGopMod(gop, flags)
+		if updateMod {
+			if test != nil {
+				flags |= checkGopDeps(test)
+			}
+			if flags != 0 {
+				mod.SaveWithGopMod(gop, flags)
+			}
 		}
 	}
 }
@@ -287,7 +295,7 @@ func checkGopDeps(pkg *gox.Package) (flags int) {
 }
 
 func relativeBaseOf(mod *gopmod.Module) string {
-	if hasModfile(mod) {
+	if mod.HasModfile() {
 		return mod.Root()
 	}
 	dir, _ := os.Getwd()
@@ -347,7 +355,7 @@ func LoadFiles(dir string, files []string, conf *Config) (out *gox.Package, err 
 		}
 		break
 	}
-	saveWithGopMod(mod, gop, out, nil, conf)
+	afterLoad(mod, gop, out, nil, conf)
 	return
 }
 
