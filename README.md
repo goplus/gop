@@ -46,6 +46,11 @@ For more details, see [Quick Start](doc/docs.md).
 
 ## Go+ Classfiles
 
+```
+One language can change the world.
+Go+ is a "DSL" language for all domains.
+```
+
 Rob Pike once said that if he could only introduce one feature to Go, he would choose `interface` instead of `goroutine`. `classfile` is as important to Go+ as `interface` is to Go.
 
 In the design philosophy of Go+, we do not recommend `DSL` (Domain Specific Language). But `SDF` (Specific Domain Friendliness) is very important. The Go+ philosophy about `SDF` is:
@@ -57,28 +62,20 @@ Abstract domain knowledge for it.
 
 Go+ introduces `classfile` to abstract domain knowledge.
 
-Sound a bit abstract? Let's take web programming as an example. First let us initialize a hello project:
+Sound a bit abstract? Let's see some Go+ classfiles.
 
-```sh
-gop mod init hello
-```
+* STEM Education: [spx: A Go+ 2D Game Engine](https://github.com/goplus/spx)
+* Web Programming: [yap: Yet Another HTTP Web Framework](https://github.com/goplus/yap)
+* Web Programming: [yaptest: HTTP Test Framework](https://github.com/goplus/yap#yaptest-http-test-framework)
+* Web Programming: [ydb: Database Framework](https://github.com/goplus/yap#ydb-database-framework)
+* DevOps: [gsh: Go+ DevOps Tools](https://github.com/qiniu/x/tree/main/gsh)
+* Mechanism: [What's Classfile](doc/classfile.md#whats-classfile)
+* Mechanism: [Go+ Classfiles](doc/classfile.md)
 
-Then we have it reference a classfile called `yap` as the HTTP Web Framework:
 
-```sh
-gop get github.com/goplus/yap@latest
-```
+### yap: Yet Another HTTP Web Framework
 
-We can use it to implement a static file server:
-
-```coffee
-static "/foo", FS("public")
-static "/"    # Equivalent to static "/", FS("static")
-
-run ":8080"
-```
-
-We can also add the ability to handle dynamic GET/POST requests:
+Demo of serving static files and ability to handle dynamic GET/POST requests:
 
 ```coffee
 static "/foo", FS("public")
@@ -93,21 +90,27 @@ get "/p/:id", ctx => {
 run ":8080"
 ```
 
-Save this code to `hello_yap.gox` file and execute:
-
-```sh
-mkdir -p yap/static yap/public    # Static resources can be placed in these directories
-gop mod tidy
-gop run .
-```
-
-A simplest web program is running now. At this time, if you visit http://localhost:8080/p/123, you will get:
+If you run it and visit http://localhost:8080/p/123, you will get:
 
 ```
 {"id":"123"}
 ```
 
-Why is `yap` so easy to use? How does it do it? Click here to learn more about the [Go+ Classfiles](doc/classfile.md) mechanism and [YAP HTTP Web Framework](https://github.com/goplus/yap).
+See [yap: Yet Another HTTP Web Framework](https://github.com/goplus/yap) for more details.
+
+### gsh: Go+ DevOps Tools
+
+Yes, now you can write `shell script` in Go+. It supports all shell commands.
+
+Let's create a file named `./example.gsh` and write the following code:
+
+```coffee
+mkdir "testgsh"
+```
+
+Don't need a `go.mod` file, just enter `gop run ./example.gsh` directly to run.
+
+See [gsh: Go+ DevOps Tools](https://github.com/qiniu/x/tree/main/gsh) for more details.
 
 
 ## Key Features of Go+
@@ -181,26 +184,24 @@ all.bat
 * [Gobang](https://github.com/xushiwei/Gobang)
 * [Dinosaur](https://github.com/xushiwei/Dinosaur)
 
-### HTTP Web Framework
+### Web Programming
 
-* [yap: Yet Another Go/Go+ HTTP Web Framework](https://github.com/goplus/yap)
-
-### HTTP Test Framework
-
+* [yap: Yet Another HTTP Web Framework](https://github.com/goplus/yap)
 * [yaptest: HTTP Test Framework](https://github.com/goplus/yap/tree/main/ytest)
+* [ydb: Database Framework](https://github.com/goplus/yap#ydb-database-framework)
 
-### DevOps tools
+### DevOps Tools
 
-* [Go+ DevOps Tools](https://github.com/xushiwei/gshexample?tab=readme-ov-file#gsh-example)
+* [gsh: Go+ DevOps Tools](https://github.com/qiniu/x/tree/main/gsh)
 
-### Data processing
+### Data Processing
 
-* [HTML DOM Query Language for Go+](https://github.com/goplus/hdq)
+* [hdq: HTML DOM Query Language for Go+](https://github.com/goplus/hdq)
 
 
 ## IDE Plugins
 
-* vscode: https://github.com/goplus/vscode-gop
+* vscode: [Go/Go+ for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=goplus.gop)
 
 
 ## Contributing
