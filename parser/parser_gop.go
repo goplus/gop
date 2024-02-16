@@ -247,20 +247,22 @@ func reqPkg(pkgs map[string]*ast.Package, name string) *ast.Package {
 func defaultClassKind(fname string) (isProj bool, ok bool) {
 	ext := path.Ext(fname)
 	switch ext {
-	case ".gmx":
-		return true, true
 	case ".spx":
 		return fname == "main.spx", true
+	case ".gsh", ".gmx":
+		return true, true
 	}
 	return
 }
 
 // -----------------------------------------------------------------------------
 
+// ParseFiles parses Go+ source files and returns the corresponding packages.
 func ParseFiles(fset *token.FileSet, files []string, mode Mode) (map[string]*ast.Package, error) {
 	return ParseFSFiles(fset, fsx.Local, files, mode)
 }
 
+// ParseFSFiles parses Go+ source files and returns the corresponding packages.
 func ParseFSFiles(fset *token.FileSet, fs FileSystem, files []string, mode Mode) (map[string]*ast.Package, error) {
 	ret := map[string]*ast.Package{}
 	fabs := (mode & SaveAbsFile) != 0
@@ -272,6 +274,39 @@ func ParseFSFiles(fset *token.FileSet, fs FileSystem, files []string, mode Mode)
 			file, _ = fs.Abs(file)
 		}
 		f, err := ParseFSFile(fset, fs, file, nil, mode)
+		if err != nil {
+			return nil, err
+		}
+		pkgName := f.Name.Name
+		pkg, ok := ret[pkgName]
+		if !ok {
+			pkg = &ast.Package{Name: pkgName, Files: make(map[string]*ast.File)}
+			ret[pkgName] = pkg
+		}
+		pkg.Files[file] = f
+	}
+	return ret, nil
+}
+
+// ParseEntries parses Go+ source files and returns the corresponding packages.
+// Compared to ParseFiles, ParseEntries detects fileKind by its filename.
+func ParseEntries(fset *token.FileSet, files []string, conf Config) (map[string]*ast.Package, error) {
+	return ParseFSEntries(fset, fsx.Local, files, conf)
+}
+
+// ParseFSEntries parses Go+ source files and returns the corresponding packages.
+// Compared to ParseFSFiles, ParseFSEntries detects fileKind by its filename.
+func ParseFSEntries(fset *token.FileSet, fs FileSystem, files []string, conf Config) (map[string]*ast.Package, error) {
+	ret := map[string]*ast.Package{}
+	fabs := (conf.Mode & SaveAbsFile) != 0
+	if fabs {
+		conf.Mode &^= SaveAbsFile
+	}
+	for _, file := range files {
+		if fabs {
+			file, _ = fs.Abs(file)
+		}
+		f, err := ParseFSEntry(fset, fs, file, nil, conf)
 		if err != nil {
 			return nil, err
 		}

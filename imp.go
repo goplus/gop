@@ -60,11 +60,12 @@ const (
 	gopMod = "github.com/goplus/gop"
 )
 
+// Import imports a Go/Go+ package.
 func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 	if strings.HasPrefix(pkgPath, gopMod) {
 		if suffix := pkgPath[len(gopMod):]; suffix == "" || suffix[0] == '/' {
 			gopRoot := p.gop.Root
-			if suffix == "/cl/internal/gop-in-go/foo" {
+			if suffix == "/cl/internal/gop-in-go/foo" { // for test github.com/goplus/gop/cl
 				if err = p.genGoExtern(gopRoot+suffix, false); err != nil {
 					return
 				}
@@ -72,12 +73,12 @@ func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 			return p.impFrom.ImportFrom(pkgPath, gopRoot, 0)
 		}
 	}
+	if isPkgInMod(pkgPath, "github.com/qiniu/x") {
+		return p.impFrom.ImportFrom(pkgPath, p.gop.Root, 0)
+	}
 	if mod := p.mod; mod.HasModfile() {
 		ret, e := mod.Lookup(pkgPath)
 		if e != nil {
-			if isPkgInMod(pkgPath, "github.com/qiniu/x") {
-				return p.impFrom.ImportFrom(pkgPath, p.gop.Root, 0)
-			}
 			return nil, e
 		}
 		switch ret.Type {

@@ -65,11 +65,8 @@ func ParseOne(args ...string) (proj Proj, next []string, err error) {
 }
 
 func isFile(fname string) bool {
-	switch filepath.Ext(fname) {
-	case ".gop", ".go":
-		return true
-	}
-	return false
+	n := len(filepath.Ext(fname))
+	return n > 1
 }
 
 func isLocal(ns string) bool {
