@@ -1,6 +1,11 @@
 Go+ Classfiles
 =====
 
+```
+One language can change the world.
+Go+ is a "DSL" for all domains.
+```
+
 Rob Pike once said that if he could only introduce one feature to Go, he would choose `interface` instead of `goroutine`. `classfile` is as important to Go+ as `interface` is to Go.
 
 In the design philosophy of Go+, we do not recommend `DSL` (Domain Specific Language). But `SDF` (Specific Domain Friendliness) is very important. The Go+ philosophy about `SDF` is:
@@ -11,6 +16,14 @@ Abstract domain knowledge for it.
 ```
 
 Go+ introduces `classfile` to abstract domain knowledge.
+
+* STEM Education: [spx: A Go+ 2D Game Engine](https://github.com/goplus/spx)
+* Web Programming: [yap: Yet Another HTTP Web Framework](https://github.com/goplus/yap)
+* Web Programming: [yaptest: HTTP Test Framework](https://github.com/goplus/yap#yaptest-http-test-framework)
+* Web Programming: [ydb: Database Framework](https://github.com/goplus/yap#ydb-database-framework)
+* DevOps: [gsh: Go+ DevOps Tools](https://github.com/qiniu/x/tree/main/gsh)
+* Unit Test: [classfile: Unit Test](#classfile-unit-test)
+* Mechanism: [What's Classfile](#whats-classfile)
 
 Sound a bit abstract? Let's take web programming as an example. First let us initialize a hello project:
 
@@ -132,7 +145,7 @@ This is a bit abstract. Let's take the [2D Game Engine spx](https://github.com/g
 
 How does Go+ identify various class files of a classfile? by its filename. By convention, if we define a classfile called `foo`, then its project class is usually called `main_foo.gox`, and the worker class is usually called `xxx_foo.gox`. If this classfile does not have a worker class, then the project class only needs to ensure that the suffix is `_foo.gox`, and the class name can be freely chosen. For example, our previous `yap` framework only has project class, so a file name like `hello_yap.gox` can be correctly recognized.
 
-The earliest version of Go+ allows classfiles to be identified through custom file extensions. For example, the project class of the `spx classfile` is called `main.spx`, and the worker class is called `xxx.spx`. Although this ability to customize extensions is still retained for now, we do not recommend its use and there is no guarantee that it will continue to be available in the future. `spx` will likely be the only classfile to use a custom extension.
+The earliest version of Go+ allows classfiles to be identified through custom file extensions. For example, the project class of the `spx classfile` is called `main.spx`, and the worker class is called `xxx.spx`. Although this ability to customize extensions is still retained for now, we do not recommend its use and there is no guarantee that it will continue to be available in the future.
 
 
 ### classfile: Unit Test
@@ -174,23 +187,11 @@ If you want to run a subtest case, use `t.run`.
 
 ### yap: Yet Another Go/Go+ HTTP Web Framework
 
-This classfile has the file suffix `_yap.gox`.
-
-Before using `yap`, you need to add it to `go.mod` by using `go get`:
-
-```sh
-go get github.com/goplus/yap@latest
-```
-
-Find `require github.com/goplus/yap` statement in `go.mod` and add `//gop:class` at the end of the line:
-
-```go.mod
-require github.com/goplus/yap v0.7.2 //gop:class
-```
+This classfile has the file suffix `_yap.gox`. See [yap: Yet Another HTTP Web Framework](https://github.com/goplus/yap) for more details.
 
 #### Router and Parameters
 
-demo in Go+ classfile ([hello_yap.gox](https://github.com/goplus/yap/blob/v0.7.2/demo/classfile_hello/hello_yap.gox)):
+demo in Go+ classfile ([hello_yap.gox](https://github.com/goplus/yap/blob/main/demo/classfile_hello/hello_yap.gox)):
 
 ```coffee
 get "/p/:id", ctx => {
@@ -207,7 +208,7 @@ run ":8080"
 
 #### Static files
 
-Static files server demo in Go+ classfile ([staticfile_yap.gox](https://github.com/goplus/yap/blob/v0.7.2/demo/classfile_static/staticfile_yap.gox)):
+Static files server demo in Go+ classfile ([staticfile_yap.gox](https://github.com/goplus/yap/blob/main/demo/classfile_static/staticfile_yap.gox)):
 
 ```coffee
 static "/foo", FS("public")
@@ -218,7 +219,7 @@ run ":8080"
 
 #### YAP Template
 
-demo in Go+ classfile ([blog_yap.gox](https://github.com/goplus/yap/blob/v0.7.2/demo/classfile_blog/blog_yap.gox), [article_yap.html](https://github.com/goplus/yap/blob/v0.7.2/demo/classfile_blog/yap/article_yap.html)):
+demo in Go+ classfile ([blog_yap.gox](https://github.com/goplus/yap/blob/main/demo/classfile_blog/blog_yap.gox), [article_yap.html](https://github.com/goplus/yap/blob/main/demo/classfile_blog/yap/article_yap.html)):
 
 ```coffee
 get "/p/:id", ctx => {
@@ -230,17 +231,56 @@ get "/p/:id", ctx => {
 run ":8080"
 ```
 
+
 ### yaptest: HTTP Test Framework
 
-This classfile has the file suffix `_ytest.gox`.
+Suppose we have a web server named `foo` ([demo/foo/foo_yap.gox](https://github.com/goplus/yap/blob/main/ytest/demo/foo/foo_yap.gox)):
 
-Before using `yaptest`, you need to add `yap` to `go.mod`:
+```go
+get "/p/:id", ctx => {
+	ctx.json {
+		"id": ctx.param("id"),
+	}
+}
 
-```go.mod
-require github.com/goplus/yap v0.7.2 //gop:class
+run ":8080"
 ```
 
-Then you can create a `example_ytest.gox` file to test your HTTP server:
+Then we create a yaptest file ([demo/foo/foo_ytest.gox](https://github.com/goplus/yap/blob/main/ytest/demo/foo/foo_ytest.gox)):
+
+```go
+mock "foo.com", new(foo)
+
+run "test get /p/$id", => {
+	id := "123"
+	get "http://foo.com/p/${id}"
+	ret 200
+	json {
+		"id": id,
+	}
+}
+```
+
+The directive `mock` creates the `foo` server by [mockhttp](https://pkg.go.dev/github.com/qiniu/x/mockhttp). Then we call the directive `run` to run a subtest.
+
+You can change the directive `mock` to `testServer` (see [demo/foo/bar_ytest.gox](https://github.com/goplus/yap/blob/main/ytest/demo/foo/bar_ytest.gox)), and keep everything else unchanged:
+
+```go
+testServer "foo.com", new(foo)
+
+run "test get /p/$id", => {
+	id := "123"
+	get "http://foo.com/p/${id}"
+	ret 200
+	json {
+		"id": id,
+	}
+}
+```
+
+The directive `testServer` creates the `foo` server by [net/http/httptest](https://pkg.go.dev/net/http/httptest#NewServer) and obtained a random port as the service address. Then it calls the directive [host](https://pkg.go.dev/github.com/goplus/yap/ytest#App.Host) to map the random service address to `foo.com`. This makes all other code no need to changed.
+
+We can change this example more complicated:
 
 ```coffee
 host "https://example.com", "http://localhost:8080"
@@ -292,23 +332,18 @@ run "matchJsonObject", => {
 }
 ```
 
+For more details, see [yaptest - Go+ HTTP Test Framework](https://github.com/goplus/yap/blob/main/ytest).
+
+
 ### spx: A Go+ 2D Game Engine for STEM education
 
 This classfile has the file suffix `.spx`. It is the earliest classfile in the world.
-
-Before using `spx`, you need to add it to `go.mod` by using `go get`:
-
-```sh
-go get github.com/goplus/spx@latest
-```
-
-It's also a built-in classfile so you don't need append `//gop:class` after `require github.com/goplus/spx`.
 
 #### tutorial/01-Weather
 
 ![Screen Shot1](https://github.com/goplus/spx/blob/main/tutorial/01-Weather/1.jpg) ![Screen Shot2](https://github.com/goplus/spx/blob/main/tutorial/01-Weather/2.jpg)
 
-Through this example you can learn how to listen events and do somethings.
+Through this example you can learn how to implement dialogues between multiple actors.
 
 Here are some codes in [Kai.spx](https://github.com/goplus/spx/blob/main/tutorial/01-Weather/Kai.spx):
 
