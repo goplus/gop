@@ -44,6 +44,23 @@ The Go+ programming language is designed for engineering, STEM education, and da
 For more details, see [Quick Start](doc/docs.md).
 
 
+## Command Style Code
+
+Different from the function call style of most languages, Go+ recommends command style code:
+
+```coffee
+println "Hello world"
+```
+
+To emphasize our preference for command style, we introduce `echo` as an alias for `println`:
+
+```coffee
+echo "Hello world"
+```
+
+For more discussion on coding style, see https://tutorial.goplus.org/hello-world.
+
+
 ## Go+ Classfiles
 
 ```
