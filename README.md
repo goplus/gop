@@ -64,7 +64,7 @@ For more discussion on coding style, see https://tutorial.goplus.org/hello-world
 ## Go+ Classfiles
 
 ```
-One language can change the world.
+One language can change the whole world.
 Go+ is a "DSL" for all domains.
 ```
 
