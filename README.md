@@ -48,7 +48,7 @@ For more details, see [Quick Start](doc/docs.md).
 
 ```
 One language can change the world.
-Go+ is a "DSL" language for all domains.
+Go+ is a "DSL" for all domains.
 ```
 
 Rob Pike once said that if he could only introduce one feature to Go, he would choose `interface` instead of `goroutine`. `classfile` is as important to Go+ as `interface` is to Go.
