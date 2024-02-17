@@ -38,7 +38,7 @@ func (p *Case) initCase(t *testing.T) {
 	p.t = t
 }
 
-// T returns a *testing.T object.
+// T returns the *testing.T object .
 func (p Case) T() *testing.T { return p.t }
 
 // Run runs f as a subtest of t called name. It runs f in a separate goroutine
@@ -64,6 +64,9 @@ type App struct {
 func (p *App) initApp(m *testing.M) {
 	p.m = m
 }
+
+// M returns the *testing.M object.
+func (p App) M() *testing.M { return p.m }
 
 // Gopt_App_TestMain is required by Go+ compiler as the entry of a Go+ testing project.
 func Gopt_App_TestMain(app interface{ initApp(m *testing.M) }, m *testing.M) {

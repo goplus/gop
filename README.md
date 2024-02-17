@@ -215,8 +215,6 @@ $ brew install goplus
 
 ### from source code
 
-For now, we suggest you install Go+ from source code.
-
 Note: Requires go1.18 or later
 
 ```bash
