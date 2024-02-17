@@ -21,7 +21,6 @@ import (
 	"go/constant"
 	"log"
 	"path/filepath"
-	"reflect"
 
 	goast "go/ast"
 	gotoken "go/token"
@@ -48,22 +47,29 @@ func relFile(dir string, absFile string) string {
 
 func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
 	if ctx.fileLine {
-		start := stmt.Pos()
-		pos := ctx.fset.Position(start)
-		if ctx.relBaseDir != "" {
-			pos.Filename = fileLineFile(ctx.relBaseDir, pos.Filename)
-		}
-		line := fmt.Sprintf("\n//line %s:%d:1", pos.Filename, pos.Line)
-		comments := &goast.CommentGroup{
-			List: []*goast.Comment{{Text: line}},
-		}
-		ctx.cb.SetComments(comments, false)
+		commentStmtEx(ctx.cb, ctx.pkgCtx, stmt)
 	}
+}
+
+func commentStmtEx(cb *gox.CodeBuilder, ctx *pkgCtx, stmt ast.Stmt) {
+	start := stmt.Pos()
+	pos := ctx.fset.Position(start)
+	if ctx.relBaseDir != "" {
+		pos.Filename = fileLineFile(ctx.relBaseDir, pos.Filename)
+	}
+	line := fmt.Sprintf("\n//line %s:%d:1", pos.Filename, pos.Line)
+	comments := &goast.CommentGroup{
+		List: []*goast.Comment{{Text: line}},
+	}
+	cb.SetComments(comments, false)
 }
 
 func commentFunc(ctx *blockCtx, fn *gox.Func, decl *ast.FuncDecl) {
 	start := decl.Name.Pos()
 	if ctx.fileLine && start != token.NoPos {
+		if decl.Doc != nil {
+			start = decl.Doc.Pos()
+		}
 		pos := ctx.fset.Position(start)
 		if ctx.relBaseDir != "" {
 			pos.Filename = fileLineFile(ctx.relBaseDir, pos.Filename)
@@ -75,11 +81,10 @@ func commentFunc(ctx *blockCtx, fn *gox.Func, decl *ast.FuncDecl) {
 			line = fmt.Sprintf("//line %s:%d:1", pos.Filename, pos.Line)
 		}
 		doc := &goast.CommentGroup{}
+		doc.List = append(doc.List, &goast.Comment{Text: line})
 		if decl.Doc != nil {
 			doc.List = append(doc.List, decl.Doc.List...)
-			doc.List = append(doc.List, &goast.Comment{Text: "//"})
 		}
-		doc.List = append(doc.List, &goast.Comment{Text: line})
 		fn.SetComments(ctx.pkg, doc)
 	} else if decl.Doc != nil {
 		fn.SetComments(ctx.pkg, decl.Doc)
@@ -102,7 +107,7 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	if enableRecover {
 		defer func() {
 			if e := recover(); e != nil {
-				ctx.handleRecover(e)
+				ctx.handleRecover(e, stmt)
 				ctx.cb.ResetStmt()
 			}
 		}()
@@ -110,14 +115,9 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	commentStmt(ctx, stmt)
 	switch v := stmt.(type) {
 	case *ast.ExprStmt:
-		inFlags := 0
-		if isCommandWithoutArgs(v.X) {
-			inFlags = clCommandWithoutArgs
-		}
-		compileExpr(ctx, v.X, inFlags)
-		if inFlags != 0 && gox.IsFunc(ctx.cb.InternalStack().Get(-1).Type) {
-			ctx.cb.CallWith(0, 0, v.X)
-		}
+		x := v.X
+		inFlags := checkCommandWithoutArgs(x)
+		compileExpr(ctx, x, inFlags)
 	case *ast.AssignStmt:
 		compileAssignStmt(ctx, v)
 	case *ast.ReturnStmt:
@@ -158,21 +158,21 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	case *ast.EmptyStmt:
 		// do nothing
 	default:
-		log.Panicln("TODO - compileStmt failed: unknown -", reflect.TypeOf(v))
+		log.Panicf("compileStmt failed: unknown - %T\n", v)
 	}
 	ctx.cb.EndStmt()
 }
 
-func isCommandWithoutArgs(x ast.Expr) bool {
+func checkCommandWithoutArgs(x ast.Expr) int {
 retry:
-	switch t := x.(type) {
-	case *ast.Ident:
-		return true
-	case *ast.SelectorExpr:
-		x = t.X
+	if v, ok := x.(*ast.SelectorExpr); ok {
+		x = v.X
 		goto retry
 	}
-	return false
+	if _, ok := x.(*ast.Ident); ok {
+		return clCommandWithoutArgs
+	}
+	return 0
 }
 
 func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
@@ -277,7 +277,10 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		case *ast.LambdaExpr, *ast.LambdaExpr2:
 			if len(expr.Lhs) == 1 && len(expr.Rhs) == 1 {
 				typ := ctx.cb.Get(-1).Type.(interface{ Elem() types.Type }).Elem()
-				sig := checkLambdaFuncType(ctx, e, typ, clLambaAssign, expr.Lhs[0])
+				sig, err := checkLambdaFuncType(ctx, e, typ, clLambaAssign, expr.Lhs[0])
+				if err != nil {
+					panic(err)
+				}
 				compileLambda(ctx, e, sig)
 			} else {
 				panic(ctx.newCodeErrorf(e.Pos(), "lambda unsupport multiple assignment"))

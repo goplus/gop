@@ -122,6 +122,36 @@ func gopClTestFS(t *testing.T, conf *cl.Config, fs parser.FileSystem, pkgname, e
 	}
 }
 
+func TestTypeDoc(t *testing.T) {
+	gopClTest(t, `
+type (
+	// doc
+	A int
+)
+`, `package main
+// doc
+type A int
+`)
+}
+
+func TestUnsafe(t *testing.T) {
+	gopClTest(t, `
+import "unsafe"
+
+println unsafe.Sizeof(0)
+`, `package main
+
+import (
+	"fmt"
+	"unsafe"
+)
+
+func main() {
+	fmt.Println(unsafe.Sizeof(0))
+}
+`)
+}
+
 func Test_CastSlice_Issue1240(t *testing.T) {
 	gopClTest(t, `
 type fvec []float64
@@ -4111,9 +4141,8 @@ func (pt *Point) Test() {
 //line /foo/bar.gop:8:1
 	fmt.Println(pt.x, pt.y)
 }
+//line /foo/bar.gop:11:1
 // testPoint is test point
-//
-//line /foo/bar.gop:12:1
 func testPoint() {
 //line /foo/bar.gop:13:1
 	var pt Point
@@ -4166,9 +4195,8 @@ func (pt *Point) Test() {
 //line ../bar.gop:8:1
 	fmt.Println(pt.x, pt.y)
 }
+//line ../bar.gop:11:1
 // testPoint is test point
-//
-//line ../bar.gop:12:1
 func testPoint() {
 //line ../bar.gop:13:1
 	var pt Point

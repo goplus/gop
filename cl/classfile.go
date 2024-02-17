@@ -267,6 +267,9 @@ func gmxMainFunc(pkg *gox.Package, ctx *pkgCtx, noAutoGenMain bool) func() {
 				new := pkg.Builtin().Ref("new")
 				cb := fn.BodyStart(pkg).Val(new).Val(o).Call(1).MemberVal("Main")
 
+				// force remove //line comments for main func
+				cb.SetComments(nil, false)
+
 				sig := cb.Get(-1).Type.(*types.Signature)
 				narg := gmxMainNarg(sig)
 				if narg > 0 {

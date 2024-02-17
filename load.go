@@ -21,6 +21,7 @@ import (
 	"go/types"
 	"io/fs"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/goplus/gop/ast"
@@ -122,11 +123,16 @@ type Config struct {
 
 	Filter func(fs.FileInfo) bool
 
+	// If not nil, it is used for returning result of checks Go+ dependencies.
+	// see https://pkg.go.dev/github.com/goplus/gox#File.CheckGopDeps
+	GopDeps *int
+
 	IgnoreNotatedError bool
 	DontUpdateGoMod    bool
 }
 
-func NewDefaultConf(dir string) (conf *Config, err error) {
+// NewDefaultConf creates a dfault configuration for common cases.
+func NewDefaultConf(dir string, noTestFile bool) (conf *Config, err error) {
 	mod, err := LoadMod(dir)
 	if err != nil {
 		return
@@ -134,32 +140,50 @@ func NewDefaultConf(dir string) (conf *Config, err error) {
 	gop := gopenv.Get()
 	fset := token.NewFileSet()
 	imp := NewImporter(mod, gop, fset)
-	return &Config{Gop: gop, Fset: fset, Mod: mod, Importer: imp}, nil
+	conf = &Config{Gop: gop, Fset: fset, Mod: mod, Importer: imp}
+	if noTestFile {
+		conf.Filter = FilterNoTestFiles
+	}
+	return
 }
 
+// LoadMod loads a Go+ module from a specified directory.
 func LoadMod(dir string) (mod *gopmod.Module, err error) {
 	mod, err = gopmod.Load(dir)
-	if err != nil && !NotFound(err) {
+	if err != nil && !gopmod.IsNotFound(err) {
 		err = errors.NewWith(err, `gopmod.Load(dir, 0)`, -2, "gopmod.Load", dir, 0)
 		return
 	}
-	if mod != nil {
-		err = mod.ImportClasses()
-		if err != nil {
-			err = errors.NewWith(err, `mod.RegisterClasses()`, -2, "(*gopmod.Module).RegisterClasses", mod)
-		}
-		return
+	if mod == nil {
+		mod = gopmod.Default
 	}
-	return gopmod.Default, nil
+	err = mod.ImportClasses()
+	if err != nil {
+		err = errors.NewWith(err, `mod.ImportClasses()`, -2, "(*gopmod.Module).ImportClasses", mod)
+	}
+	return
 }
 
-func hasModfile(mod *gopmod.Module) bool {
-	f := mod.File
-	return f != nil && f.Syntax != nil
+// FilterNoTestFiles filters to skip all testing files.
+func FilterNoTestFiles(fi fs.FileInfo) bool {
+	fname := fi.Name()
+	suffix := ""
+	switch path.Ext(fname) {
+	case ".gox":
+		suffix = "test.gox"
+	case ".gop":
+		suffix = "_test.gop"
+	case ".go":
+		suffix = "_test.go"
+	default:
+		return true
+	}
+	return !strings.HasSuffix(fname, suffix)
 }
 
 // -----------------------------------------------------------------------------
 
+// LoadDir loads Go+ packages from a specified directory.
 func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (out, test *gox.Package, err error) {
 	if conf == nil {
 		conf = new(Config)
@@ -238,18 +262,27 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 	if genTestPkg && pkgTest != nil {
 		test, err = cl.NewPackage("", pkgTest, clConf)
 	}
-	saveWithGopMod(mod, gop, out, test, conf)
+	afterLoad(mod, gop, out, test, conf)
 	return
 }
 
-func saveWithGopMod(mod *gopmod.Module, gop *env.Gop, out, test *gox.Package, conf *Config) {
-	if !conf.DontUpdateGoMod && mod.HasModfile() {
+func afterLoad(mod *gopmod.Module, gop *env.Gop, out, test *gox.Package, conf *Config) {
+	if mod.Path() == gopMod { // nothing to do for Go+ itself
+		return
+	}
+	updateMod := !conf.DontUpdateGoMod && mod.HasModfile()
+	if updateMod || conf.GopDeps != nil {
 		flags := checkGopDeps(out)
-		if test != nil {
-			flags |= checkGopDeps(test)
+		if conf.GopDeps != nil { // for `gop run`
+			*conf.GopDeps = flags
 		}
-		if flags != 0 {
-			mod.SaveWithGopMod(gop, flags)
+		if updateMod {
+			if test != nil {
+				flags |= checkGopDeps(test)
+			}
+			if flags != 0 {
+				mod.SaveWithGopMod(gop, flags)
+			}
 		}
 	}
 }
@@ -262,7 +295,7 @@ func checkGopDeps(pkg *gox.Package) (flags int) {
 }
 
 func relativeBaseOf(mod *gopmod.Module) string {
-	if hasModfile(mod) {
+	if mod.HasModfile() {
 		return mod.Root()
 	}
 	dir, _ := os.Getwd()
@@ -271,6 +304,7 @@ func relativeBaseOf(mod *gopmod.Module) string {
 
 // -----------------------------------------------------------------------------
 
+// LoadDir loads a Go+ package from specified files.
 func LoadFiles(dir string, files []string, conf *Config) (out *gox.Package, err error) {
 	if conf == nil {
 		conf = new(Config)
@@ -288,7 +322,11 @@ func LoadFiles(dir string, files []string, conf *Config) (out *gox.Package, err 
 	if fset == nil {
 		fset = token.NewFileSet()
 	}
-	pkgs, err := parser.ParseFiles(fset, files, parser.ParseComments|parser.SaveAbsFile)
+	pkgs, err := parser.ParseEntries(fset, files, parser.Config{
+		ClassKind: mod.ClassKind,
+		Filter:    conf.Filter,
+		Mode:      parser.ParseComments | parser.SaveAbsFile,
+	})
 	if err != nil {
 		err = errors.NewWith(err, `parser.ParseFiles(fset, files, parser.ParseComments)`, -2, "parser.ParseFiles", fset, files, parser.ParseComments)
 		return
@@ -321,7 +359,7 @@ func LoadFiles(dir string, files []string, conf *Config) (out *gox.Package, err 
 		}
 		break
 	}
-	saveWithGopMod(mod, gop, out, nil, conf)
+	afterLoad(mod, gop, out, nil, conf)
 	return
 }
 

@@ -253,6 +253,42 @@ func (this *index) onInit() {
 `)
 }
 
+func TestSpxGopExec(t *testing.T) {
+	gopSpxTest(t, `
+vim "a.txt"
+vim
+ls 10
+capout => { ls }
+capout => { ls "-l" }
+`, ``, `package main
+
+import "github.com/goplus/gop/cl/internal/spx"
+
+type bar struct {
+	spx.Sprite
+	*index
+}
+type index struct {
+	*spx.MyGame
+}
+
+func (this *index) MainEntry() {
+	this.Gop_Exec("vim", "a.txt")
+	this.Gop_Exec("vim")
+	this.Ls(10)
+	this.Capout(func() {
+		this.Gop_Exec("ls")
+	})
+	this.Capout(func() {
+		this.Gop_Exec("ls", "-l")
+	})
+}
+func main() {
+	spx.Gopt_MyGame_Main(new(index))
+}
+`)
+}
+
 func TestSpxMethod(t *testing.T) {
 	gopSpxTestEx(t, `
 func onInit() {

@@ -74,7 +74,7 @@ func runCmd(cmd *base.Command, args []string) {
 		log.Panicln("too many arguments:", args)
 	}
 
-	conf, err := gop.NewDefaultConf(".")
+	conf, err := gop.NewDefaultConf(".", true)
 	if err != nil {
 		log.Panicln("gop.NewDefaultConf:", err)
 	}

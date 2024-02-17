@@ -44,7 +44,29 @@ The Go+ programming language is designed for engineering, STEM education, and da
 For more details, see [Quick Start](doc/docs.md).
 
 
+## Command Style Code
+
+Different from the function call style of most languages, Go+ recommends command style code:
+
+```coffee
+println "Hello world"
+```
+
+To emphasize our preference for command style, we introduce `echo` as an alias for `println`:
+
+```coffee
+echo "Hello world"
+```
+
+For more discussion on coding style, see https://tutorial.goplus.org/hello-world.
+
+
 ## Go+ Classfiles
+
+```
+One language can change the whole world.
+Go+ is a "DSL" for all domains.
+```
 
 Rob Pike once said that if he could only introduce one feature to Go, he would choose `interface` instead of `goroutine`. `classfile` is as important to Go+ as `interface` is to Go.
 
@@ -57,28 +79,59 @@ Abstract domain knowledge for it.
 
 Go+ introduces `classfile` to abstract domain knowledge.
 
-Sound a bit abstract? Let's take web programming as an example. First let us initialize a hello project:
+Sound a bit abstract? Let's see some Go+ classfiles.
 
-```sh
-gop mod init hello
-```
+* STEM Education: [spx: A Go+ 2D Game Engine](https://github.com/goplus/spx)
+* Web Programming: [yap: Yet Another HTTP Web Framework](https://github.com/goplus/yap)
+* Web Programming: [yaptest: HTTP Test Framework](https://github.com/goplus/yap#yaptest-http-test-framework)
+* Web Programming: [ydb: Database Framework](https://github.com/goplus/yap#ydb-database-framework)
+* DevOps: [gsh: Go+ DevOps Tools](https://github.com/qiniu/x/tree/main/gsh)
+* Unit Test: [classfile: Unit Test](https://github.com/goplus/gop/blob/main/doc/classfile.md#classfile-unit-test)
+* Mechanism: [What's Classfile](doc/classfile.md#whats-classfile)
+* Mechanism: [Go+ Classfiles](doc/classfile.md)
 
-Then we have it reference a classfile called `yap` as the HTTP Web Framework:
 
-```sh
-gop get github.com/goplus/yap@latest
-```
+### spx: A Go+ 2D Game Engine
 
-We can use it to implement a static file server:
+![Screen Shot1](https://github.com/goplus/spx/blob/main/tutorial/01-Weather/1.jpg) ![Screen Shot2](https://github.com/goplus/spx/blob/main/tutorial/01-Weather/2.jpg)
+
+Through this example you can learn how to implement dialogues between multiple actors.
+
+Here are some codes in [Kai.spx](https://github.com/goplus/spx/blob/main/tutorial/01-Weather/Kai.spx):
 
 ```coffee
-static "/foo", FS("public")
-static "/"    # Equivalent to static "/", FS("static")
+onStart => {
+	say "Where do you come from?", 2
+	broadcast "1"
+}
 
-run ":8080"
+onMsg "2", => {
+	say "What's the climate like in your country?", 3
+	broadcast "3"
+}
 ```
 
-We can also add the ability to handle dynamic GET/POST requests:
+We call `onStart` and `onMsg` to listen events. `onStart` is called when the program is started. And `onMsg` is called when someone calls `broadcast` to broadcast a message.
+
+When the program starts, Kai says `Where do you come from?`, and then broadcasts the message `1`. Who will recieve this message? Let's see codes in [Jaime.spx](https://github.com/goplus/spx/blob/main/tutorial/01-Weather/Jaime.spx):
+
+```coffee
+onMsg "1", => {
+	say "I come from England.", 2
+	broadcast "2"
+}
+```
+
+Yes, Jaime recieves the message `1` and says `I come from England.`. Then he broadcasts the message `2`. Kai recieves it and says `What's the climate like in your country?`.
+
+The following procedures are very similar. In this way you can implement dialogues between multiple actors.
+
+See [spx: A Go+ 2D Game Engine](https://github.com/goplus/spx) for more details.
+
+
+### yap: Yet Another HTTP Web Framework
+
+Demo of serving static files and ability to handle dynamic GET/POST requests:
 
 ```coffee
 static "/foo", FS("public")
@@ -93,21 +146,28 @@ get "/p/:id", ctx => {
 run ":8080"
 ```
 
-Save this code to `hello_yap.gox` file and execute:
-
-```sh
-mkdir -p yap/static yap/public    # Static resources can be placed in these directories
-gop mod tidy
-gop run .
-```
-
-A simplest web program is running now. At this time, if you visit http://localhost:8080/p/123, you will get:
+If you run it and visit http://localhost:8080/p/123, you will get:
 
 ```
 {"id":"123"}
 ```
 
-Why is `yap` so easy to use? How does it do it? Click here to learn more about the [Go+ Classfiles](doc/classfile.md) mechanism and [YAP HTTP Web Framework](https://github.com/goplus/yap).
+See [yap: Yet Another HTTP Web Framework](https://github.com/goplus/yap) for more details.
+
+
+### gsh: Go+ DevOps Tools
+
+Yes, now you can write `shell script` in Go+. It supports all shell commands.
+
+Let's create a file named `./example.gsh` and write the following code:
+
+```coffee
+mkdir "testgsh"
+```
+
+Don't need a `go.mod` file, just enter `gop run ./example.gsh` directly to run.
+
+See [gsh: Go+ DevOps Tools](https://github.com/qiniu/x/tree/main/gsh) for more details.
 
 
 ## Key Features of Go+
@@ -155,8 +215,6 @@ $ brew install goplus
 
 ### from source code
 
-For now, we suggest you install Go+ from source code.
-
 Note: Requires go1.18 or later
 
 ```bash
@@ -181,26 +239,24 @@ all.bat
 * [Gobang](https://github.com/xushiwei/Gobang)
 * [Dinosaur](https://github.com/xushiwei/Dinosaur)
 
-### HTTP Web Framework
+### Web Programming
 
-* [yap: Yet Another Go/Go+ HTTP Web Framework](https://github.com/goplus/yap)
-
-### HTTP Test
-
+* [yap: Yet Another HTTP Web Framework](https://github.com/goplus/yap)
 * [yaptest: HTTP Test Framework](https://github.com/goplus/yap/tree/main/ytest)
+* [ydb: Database Framework](https://github.com/goplus/yap#ydb-database-framework)
 
-### DevOps tools
+### DevOps Tools
 
-* [Go+ DevOps Tools](https://github.com/goplus/gop/blob/main/doc/dsl-vs-sdf.md#demo-go-devops-tools)
+* [gsh: Go+ DevOps Tools](https://github.com/qiniu/x/tree/main/gsh)
 
-### Data processing
+### Data Processing
 
-* [HTML DOM Query Language for Go+](https://github.com/goplus/hdq)
+* [hdq: HTML DOM Query Language for Go+](https://github.com/goplus/hdq)
 
 
 ## IDE Plugins
 
-* vscode: https://github.com/goplus/vscode-gop
+* vscode: [Go/Go+ for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=goplus.gop)
 
 
 ## Contributing

@@ -27,12 +27,31 @@ import (
 
 // -----------------------------------------------------------------------------
 
+type fileInfo struct {
+	*fsx.FileInfo
+}
+
+func (p fileInfo) Info() (fs.FileInfo, error) {
+	return nil, fs.ErrNotExist
+}
+
 func TestFilter(t *testing.T) {
 	d := fsx.NewFileInfo("foo.go", 10)
 	if filter(d, func(fi fs.FileInfo) bool {
 		return false
 	}) {
-		t.Fatal("TestFilter failed")
+		t.Fatal("TestFilter: true?")
+	}
+	if !filter(d, func(fi fs.FileInfo) bool {
+		return true
+	}) {
+		t.Fatal("TestFilter: false?")
+	}
+	d2 := fileInfo{d}
+	if filter(d2, func(fi fs.FileInfo) bool {
+		return true
+	}) {
+		t.Fatal("TestFilter: true?")
 	}
 }
 

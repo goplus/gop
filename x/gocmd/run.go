@@ -18,15 +18,20 @@ package gocmd
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 )
 
 // -----------------------------------------------------------------------------
 
 type RunConfig = Config
 
-func RunDir(dir string, args []string, conf *RunConfig) (err error) {
+// RunDir runs a Go project by specified directory.
+// If buildDir is not empty, it means split `go run` into `go build`
+// in buildDir and run the built app in current directory.
+func RunDir(buildDir, dir string, args []string, conf *RunConfig) (err error) {
 	fis, err := os.ReadDir(dir)
 	if err != nil {
 		return
@@ -39,7 +44,7 @@ func RunDir(dir string, args []string, conf *RunConfig) (err error) {
 			}
 		}
 	}
-	return RunFiles(files, args, conf)
+	return RunFiles(buildDir, files, args, conf)
 }
 
 func filterRunFname(fname string) bool {
@@ -49,9 +54,39 @@ func filterRunFname(fname string) bool {
 
 // -----------------------------------------------------------------------------
 
-func RunFiles(files []string, args []string, conf *RunConfig) (err error) {
-	args = append(files, args...)
-	return doWithArgs("run", conf, args...)
+// RunFiles runs a Go project by specified files.
+// If buildDir is not empty, it means split `go run` into `go build`
+// in buildDir and run the built app in current directory.
+func RunFiles(buildDir string, files []string, args []string, conf *RunConfig) (err error) {
+	if len(files) == 0 {
+		return syscall.ENOENT
+	}
+	if buildDir == "" {
+		args = append(files, args...)
+		return doWithArgs("", "run", conf, args...)
+	}
+
+	absFiles := make([]string, len(files))
+	for i, file := range files {
+		absFiles[i], _ = filepath.Abs(file)
+	}
+
+	f, err := os.CreateTemp("", "gobuild")
+	if err != nil {
+		return
+	}
+	tempf := f.Name()
+	f.Close()
+	os.Remove(tempf)
+	defer os.Remove(tempf)
+
+	buildArgs := append([]string{"-o", tempf}, absFiles...)
+	if err = doWithArgs(buildDir, "build", conf, buildArgs...); err != nil {
+		return
+	}
+
+	cmd := exec.Command(tempf, args...)
+	return runCmd(cmd)
 }
 
 // -----------------------------------------------------------------------------
