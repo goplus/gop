@@ -1114,17 +1114,20 @@ func compileCompositeLitEx(ctx *blockCtx, v *ast.CompositeLit, expected types.Ty
 			if kind == compositeLitVal && n > 0 {
 				return ctx.newCodeError(v.Pos(), "missing key in map literal")
 			}
-			return ctx.cb.MapLitEx(typ, n<<1, v)
-		}
-		switch underlying.(type) {
-		case *types.Slice:
-			ctx.cb.SliceLitEx(typ, n<<kind, kind == compositeLitKeyVal, v)
-		case *types.Array:
-			ctx.cb.ArrayLitEx(typ, n<<kind, kind == compositeLitKeyVal, v)
-		case *types.Struct:
-			ctx.cb.StructLit(typ, n, false, v) // key-val mode handled by compileStructLitInKeyVal
-		default:
-			return ctx.newCodeErrorf(v.Pos(), "invalid composite literal type %v", typ)
+			if err := ctx.cb.MapLitEx(typ, n<<1, v); err != nil {
+				return err
+			}
+		} else {
+			switch underlying.(type) {
+			case *types.Slice:
+				ctx.cb.SliceLitEx(typ, n<<kind, kind == compositeLitKeyVal, v)
+			case *types.Array:
+				ctx.cb.ArrayLitEx(typ, n<<kind, kind == compositeLitKeyVal, v)
+			case *types.Struct:
+				ctx.cb.StructLit(typ, n, false, v) // key-val mode handled by compileStructLitInKeyVal
+			default:
+				return ctx.newCodeErrorf(v.Pos(), "invalid composite literal type %v", typ)
+			}
 		}
 	}
 	if hasPtr {
