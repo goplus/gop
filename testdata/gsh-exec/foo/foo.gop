@@ -1,0 +1,8 @@
+import "os"
+
+foo := os.getenv("FOO")
+if foo != "" {
+	echo foo
+} else {
+	echo "FOO not found"
+}
