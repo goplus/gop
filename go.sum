@@ -6,10 +6,12 @@ github.com/fsnotify/fsnotify v1.7.0/go.mod h1:40Bi/Hjc2AVfZrqy+aj+yEI+/bRxZnMJyT
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
 github.com/goplus/c2go v0.7.23 h1:MccDB9xBwDg9Bb9w+S9Lzbhg47ZtRFZHzqkr2OvxarM=
 github.com/goplus/c2go v0.7.23/go.mod h1:xBHI3uJ7hzQEYhw8Ql//1DHfJeuEgO5119QyoAs6JfY=
-github.com/goplus/gox v1.14.12 h1:VIrkU4T/MQ48olkTGgNk5ybF4U7YqkzIAv7By10gf9Y=
 github.com/goplus/gox v1.14.12/go.mod h1:6b6XYHmyiCevhwuEHcV/jzm7Z2FXLDBhuxgvkjceA+o=
-github.com/goplus/mod v0.13.7 h1:2tIe3cT/fmV+rOoPf896OH+AYcRu94Q0IeJU1LHVU4o=
+github.com/goplus/gox v1.14.13-0.20240218225042-4ebf0a5dcde8 h1:40Hb+m3t0B0upH3Det4GfhoSMK2TKazsEcOW1ZwETfo=
+github.com/goplus/gox v1.14.13-0.20240218225042-4ebf0a5dcde8/go.mod h1:6b6XYHmyiCevhwuEHcV/jzm7Z2FXLDBhuxgvkjceA+o=
 github.com/goplus/mod v0.13.7/go.mod h1:edZE5Qs+9mRnIjvWhyMNUkm5ayJ+dMlJ3J3YeXODNwA=
+github.com/goplus/mod v0.13.8-0.20240218230953-c1aeebf6e4f7 h1:3r+SsB6gkVApZgxG6WaFk41nIKHWaSDx7T/C4aTo2S8=
+github.com/goplus/mod v0.13.8-0.20240218230953-c1aeebf6e4f7/go.mod h1:edZE5Qs+9mRnIjvWhyMNUkm5ayJ+dMlJ3J3YeXODNwA=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=
 github.com/json-iterator/go v1.1.12/go.mod h1:e30LSqwooZae/UwlEbR2852Gd8hjQvJoHmT4TnhNGBo=
 github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 h1:ZqeYNhU3OHLH3mGKHDcjJRFFRrJa6eAM5H+CtDdOsPc=
@@ -18,8 +20,9 @@ github.com/modern-go/reflect2 v1.0.2 h1:xBagoLtFs94CBntxluKeaWgTMpvLxC4ur3nMaC9G
 github.com/modern-go/reflect2 v1.0.2/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjYzDa0/r8luk=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
-github.com/qiniu/x v1.13.8 h1:xXXD1LuTw4VaqTWxFKonm0F6XlhQNE59+vgPYP3ij8Q=
 github.com/qiniu/x v1.13.8/go.mod h1:INZ2TSWSJVWO/RuELQROERcslBwVgFG7MkTfEdaQz9E=
+github.com/qiniu/x v1.13.9-0.20240218231431-55e88daed284 h1:0dcHGdsq5U0vLqJ7iX8xWkRIGAna9DidyptYJZWpTxo=
+github.com/qiniu/x v1.13.9-0.20240218231431-55e88daed284/go.mod h1:INZ2TSWSJVWO/RuELQROERcslBwVgFG7MkTfEdaQz9E=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0Q=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=

@@ -600,6 +600,12 @@ b := []int{2: a}
 }
 
 func TestErrMapLit(t *testing.T) {
+	codeErrorTest(t, `bar.gop:2:1: invalid composite literal type int`, `
+int{2}
+`)
+	codeErrorTest(t, `bar.gop:2:1: missing key in map literal`, `
+map[string]int{2}
+`)
 	codeErrorTest(t, `bar.gop:2:21: cannot use 1+2 (type untyped int) as type string in map key
 bar.gop:3:27: cannot use "Go" + "+" (type untyped string) as type int in map value`,
 		`

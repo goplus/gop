@@ -732,7 +732,9 @@ func compileCallArgs(fn *fnType, ctx *blockCtx, v *ast.CallExpr, ellipsis bool, 
 				return
 			}
 		case *ast.CompositeLit:
-			compileCompositeLit(ctx, expr, fn.arg(i, ellipsis), true)
+			if err = compileCompositeLitEx(ctx, expr, fn.arg(i, ellipsis), true); err != nil {
+				return
+			}
 		case *ast.SliceLit:
 			t := fn.arg(i, ellipsis)
 			switch t.(type) {
@@ -963,14 +965,11 @@ const (
 	compositeLitKeyVal = 1
 )
 
-func checkCompositeLitElts(ctx *blockCtx, elts []ast.Expr, onlyStruct bool) (kind int) {
+func checkCompositeLitElts(ctx *blockCtx, elts []ast.Expr) (kind int) {
 	for _, elt := range elts {
 		if _, ok := elt.(*ast.KeyValueExpr); ok {
 			return compositeLitKeyVal
 		}
-	}
-	if len(elts) == 0 && onlyStruct {
-		return compositeLitKeyVal
 	}
 	return compositeLitVal
 }
@@ -1001,7 +1000,7 @@ func compileCompositeLitElts(ctx *blockCtx, elts []ast.Expr, kind int, expected 
 	}
 }
 
-func compileStructLitInKeyVal(ctx *blockCtx, elts []ast.Expr, t *types.Struct, typ types.Type, src *ast.CompositeLit) {
+func compileStructLitInKeyVal(ctx *blockCtx, elts []ast.Expr, t *types.Struct, typ types.Type, src *ast.CompositeLit) error {
 	for _, elt := range elts {
 		kv := elt.(*ast.KeyValueExpr)
 		name := kv.Key.(*ast.Ident)
@@ -1010,8 +1009,7 @@ func compileStructLitInKeyVal(ctx *blockCtx, elts []ast.Expr, t *types.Struct, t
 			ctx.cb.Val(idx)
 		} else {
 			src := ctx.LoadExpr(name)
-			err := ctx.newCodeErrorf(name.Pos(), "%s undefined (type %v has no field or method %s)", src, typ, name.Name)
-			panic(err)
+			return ctx.newCodeErrorf(name.Pos(), "%s undefined (type %v has no field or method %s)", src, typ, name.Name)
 		}
 		if rec := ctx.recorder(); rec != nil {
 			rec.Use(name, t.Field(idx))
@@ -1020,7 +1018,7 @@ func compileStructLitInKeyVal(ctx *blockCtx, elts []ast.Expr, t *types.Struct, t
 		case *ast.LambdaExpr, *ast.LambdaExpr2:
 			sig, err := checkLambdaFuncType(ctx, expr, t.Field(idx).Type(), clLambaField, kv.Key)
 			if err != nil {
-				panic(err)
+				return err
 			}
 			compileLambda(ctx, expr, sig)
 		default:
@@ -1028,6 +1026,7 @@ func compileStructLitInKeyVal(ctx *blockCtx, elts []ast.Expr, t *types.Struct, t
 		}
 	}
 	ctx.cb.StructLit(typ, len(elts)<<1, true, src)
+	return nil
 }
 
 func lookupField(t *types.Struct, name string) int {
@@ -1079,65 +1078,81 @@ func getUnderlying(ctx *blockCtx, typ types.Type) types.Type {
 	return u
 }
 
-func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, expected types.Type, onlyStruct bool) {
+func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, expected types.Type, mapOrStructOnly bool) {
+	if err := compileCompositeLitEx(ctx, v, expected, mapOrStructOnly); err != nil {
+		panic(err)
+	}
+}
+
+// mapOrStructOnly means only map/struct can omit type
+func compileCompositeLitEx(ctx *blockCtx, v *ast.CompositeLit, expected types.Type, mapOrStructOnly bool) error {
 	var hasPtr bool
 	var typ, underlying types.Type
-	var kind = checkCompositeLitElts(ctx, v.Elts, onlyStruct)
+	var kind = checkCompositeLitElts(ctx, v.Elts)
 	if v.Type != nil {
 		typ = toType(ctx, v.Type)
 		underlying = getUnderlying(ctx, typ)
 	} else if expected != nil {
 		if t, ok := expected.(*types.Pointer); ok {
-			expected, hasPtr = t.Elem(), true
-		}
-		if onlyStruct {
-			if kind == compositeLitKeyVal {
-				t := getUnderlying(ctx, expected)
-				if _, ok := t.(*types.Struct); ok { // can't omit non-struct type
-					typ, underlying = expected, t
-				}
+			telem := t.Elem()
+			tu := getUnderlying(ctx, telem)
+			if _, ok := tu.(*types.Struct); ok { // struct pointer
+				typ, underlying, hasPtr = telem, tu, true
 			}
-		} else {
-			typ, underlying = expected, getUnderlying(ctx, expected)
+		} else if tu := getUnderlying(ctx, expected); !mapOrStructOnly || isMapOrStruct(tu) {
+			typ, underlying = expected, tu
 		}
 	}
 	if t, ok := underlying.(*types.Struct); ok && kind == compositeLitKeyVal {
-		compileStructLitInKeyVal(ctx, v.Elts, t, typ, v)
-		if rec := ctx.recorder(); rec != nil {
-			rec.recordCompositeLit(ctx, v, typ)
+		if err := compileStructLitInKeyVal(ctx, v.Elts, t, typ, v); err != nil {
+			return err
 		}
-		if hasPtr {
-			ctx.cb.UnaryOp(gotoken.AND)
+	} else {
+		compileCompositeLitElts(ctx, v.Elts, kind, &kvType{underlying: underlying})
+		n := len(v.Elts)
+		if isMap(underlying) {
+			if kind == compositeLitVal && n > 0 {
+				return ctx.newCodeError(v.Pos(), "missing key in map literal")
+			}
+			return ctx.cb.MapLitEx(typ, n<<1, v)
 		}
-		return
+		switch underlying.(type) {
+		case *types.Slice:
+			ctx.cb.SliceLitEx(typ, n<<kind, kind == compositeLitKeyVal, v)
+		case *types.Array:
+			ctx.cb.ArrayLitEx(typ, n<<kind, kind == compositeLitKeyVal, v)
+		case *types.Struct:
+			ctx.cb.StructLit(typ, n, false, v) // key-val mode handled by compileStructLitInKeyVal
+		default:
+			return ctx.newCodeErrorf(v.Pos(), "invalid composite literal type %v", typ)
+		}
 	}
-	compileCompositeLitElts(ctx, v.Elts, kind, &kvType{underlying: underlying})
-	n := len(v.Elts)
-	if typ == nil {
-		if kind == compositeLitVal && n > 0 {
-			panic("TODO: mapLit should be in {key: val, ...} form")
-		}
-		ctx.cb.MapLit(nil, n<<1)
-		return
+	if hasPtr {
+		ctx.cb.UnaryOp(gotoken.AND)
+		typ = expected
 	}
 	if rec := ctx.recorder(); rec != nil {
 		rec.recordCompositeLit(ctx, v, typ)
 	}
-	switch underlying.(type) {
-	case *types.Slice:
-		ctx.cb.SliceLitEx(typ, n<<kind, kind == compositeLitKeyVal, v)
-	case *types.Array:
-		ctx.cb.ArrayLitEx(typ, n<<kind, kind == compositeLitKeyVal, v)
-	case *types.Map:
-		ctx.cb.MapLit(typ, n<<1, v)
+	return nil
+}
+
+func isMap(tu types.Type) bool {
+	if tu == nil { // map can omit type
+		return true
+	}
+	_, ok := tu.(*types.Map)
+	return ok
+}
+
+func isMapOrStruct(tu types.Type) bool {
+	switch tu.(type) {
 	case *types.Struct:
-		ctx.cb.StructLit(typ, n, false, v)
-	default:
-		log.Panicln("compileCompositeLit: unknown type -", reflect.TypeOf(underlying))
+		return true
+	case *types.Map:
+		return true
 	}
-	if hasPtr {
-		ctx.cb.UnaryOp(gotoken.AND)
-	}
+	return false
 }
 
 func compileSliceLit(ctx *blockCtx, v *ast.SliceLit, typ types.Type, noPanic ...bool) (err error) {
