@@ -51,4 +51,3 @@ go-num/
 _todo*.go
 
 dist/
-gsh-exec/
