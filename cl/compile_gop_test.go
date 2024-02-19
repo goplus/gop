@@ -20,6 +20,21 @@ import (
 	"testing"
 )
 
+func TestMapLit(t *testing.T) {
+	gopClTest(t, `
+func foo(map[string]string) {}
+
+foo {}
+`, `package main
+
+func foo(map[string]string) {
+}
+func main() {
+	foo(map[string]string{})
+}
+`)
+}
+
 func TestMayBuiltinDelete(t *testing.T) {
 	gopClTest(t, `
 func Delete(a int) {}
