@@ -556,7 +556,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 			c2goBase: c2goBase(conf.C2goBase), imports: make(map[string]pkgImp), isGopFile: true,
 		}
 		if rec := ctx.rec; rec != nil {
-			rec.Scope(f, fileScope)
+			rec.Scope(f.File, fileScope)
 		}
 		preloadGopFile(p, ctx, f.path, f.File, conf)
 	}
@@ -1235,7 +1235,7 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) {
 	commentFunc(ctx, fn, d)
 	if rec := ctx.recorder(); rec != nil {
 		rec.Def(d.Name, fn.Func)
-		if recv == nil {
+		if recv == nil && d.Name.Name != "_" {
 			ctx.fileScope.Insert(fn.Func)
 		}
 	}
@@ -1308,6 +1308,14 @@ var unaryGopNames = map[string]string{
 func loadFuncBody(ctx *blockCtx, fn *gox.Func, body *ast.BlockStmt, src ast.Node) {
 	cb := fn.BodyStart(ctx.pkg, body)
 	compileStmts(ctx, body.List)
+	if rec := ctx.recorder(); rec != nil {
+		switch fn := src.(type) {
+		case *ast.FuncDecl:
+			rec.Scope(fn.Type, cb.Scope())
+		case *ast.FuncLit:
+			rec.Scope(fn.Type, cb.Scope())
+		}
+	}
 	cb.End(src)
 }
 
@@ -1353,6 +1361,9 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 			rec.Def(specName, pkgName)
 		} else {
 			rec.Implicit(spec, pkgName)
+		}
+		if name != "_" {
+			ctx.fileScope.Insert(pkgName)
 		}
 	}
 
