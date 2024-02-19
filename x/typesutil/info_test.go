@@ -61,7 +61,7 @@ func spxParserConf() parser.Config {
 	}
 }
 
-func parserMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string, goname string, gosrc string, parserConf parser.Config) (*typesutil.Info, *types.Info, error) {
+func parseMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string, goname string, gosrc string, parserConf parser.Config) (*typesutil.Info, *types.Info, error) {
 	f, err := parser.ParseEntry(fset, name, src, parserConf)
 	if err != nil {
 		return nil, nil, err
@@ -78,7 +78,7 @@ func parserMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string
 	conf := &types.Config{}
 	conf.Importer = gop.NewImporter(nil, &env.Gop{Root: "../..", Version: "1.0"}, fset)
 	chkOpts := &typesutil.Config{
-		Types: types.NewPackage("main", "main"),
+		Types: types.NewPackage("main", f.Name.Name),
 		Fset:  fset,
 		Mod:   mod,
 	}
@@ -104,18 +104,19 @@ func parserMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string
 	return info, ginfo, err
 }
 
-func parserSource(fset *token.FileSet, filename string, src interface{}, mode parser.Mode) (*typesutil.Info, error) {
+func parseSource(fset *token.FileSet, filename string, src interface{}, mode parser.Mode) (*types.Package, *typesutil.Info, error) {
 	f, err := parser.ParseEntry(fset, filename, src, parser.Config{
 		Mode: mode,
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
+	pkg := types.NewPackage("main", f.Name.Name)
 	conf := &types.Config{}
 	conf.Importer = importer.Default()
 	chkOpts := &typesutil.Config{
-		Types: types.NewPackage("main", "main"),
+		Types: pkg,
 		Fset:  fset,
 		Mod:   gopmod.Default,
 	}
@@ -130,13 +131,13 @@ func parserSource(fset *token.FileSet, filename string, src interface{}, mode pa
 	}
 	check := typesutil.NewChecker(conf, chkOpts, nil, info)
 	err = check.Files(nil, []*ast.File{f})
-	return info, err
+	return pkg, info, err
 }
 
-func parserGoSource(fset *token.FileSet, filename string, src interface{}, mode goparser.Mode) (*types.Info, error) {
+func parseGoSource(fset *token.FileSet, filename string, src interface{}, mode goparser.Mode) (*types.Package, *types.Info, error) {
 	f, err := goparser.ParseFile(fset, filename, src, mode)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	conf := &types.Config{}
@@ -149,10 +150,10 @@ func parserGoSource(fset *token.FileSet, filename string, src interface{}, mode 
 		Selections: make(map[*goast.SelectorExpr]*types.Selection),
 		Scopes:     make(map[goast.Node]*types.Scope),
 	}
-	pkg := types.NewPackage("main", "main")
+	pkg := types.NewPackage("main", f.Name.Name)
 	check := types.NewChecker(conf, fset, pkg, info)
 	err = check.Files([]*goast.File{f})
-	return info, err
+	return pkg, info, err
 }
 
 func testGopInfo(t *testing.T, src string, gosrc string, expect string) {
@@ -165,7 +166,7 @@ func testSpxInfo(t *testing.T, name string, src string, expect string) {
 
 func testGopInfoEx(t *testing.T, mod *gopmod.Module, name string, src string, goname string, gosrc string, expect string, parseConf parser.Config) {
 	fset := token.NewFileSet()
-	info, _, err := parserMixedSource(mod, fset, name, src, goname, gosrc, parseConf)
+	info, _, err := parseMixedSource(mod, fset, name, src, goname, gosrc, parseConf)
 	if err != nil {
 		t.Fatal("parserMixedSource error", err)
 	}
@@ -185,11 +186,11 @@ func testGopInfoEx(t *testing.T, mod *gopmod.Module, name string, src string, go
 
 func testInfo(t *testing.T, src interface{}) {
 	fset := token.NewFileSet()
-	info, err := parserSource(fset, "main.gop", src, parser.ParseComments)
+	_, info, err := parseSource(fset, "main.gop", src, parser.ParseComments)
 	if err != nil {
 		t.Fatal("parserSource error", err)
 	}
-	goinfo, err := parserGoSource(fset, "main.go", src, goparser.ParseComments)
+	_, goinfo, err := parseGoSource(fset, "main.go", src, goparser.ParseComments)
 	if err != nil {
 		t.Fatal("parserGoSource error", err)
 	}
