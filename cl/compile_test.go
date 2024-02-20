@@ -4213,3 +4213,26 @@ func main() {
 `
 	gopClTestEx(t, &conf, "main", src, expected)
 }
+
+func TestRangeScope(t *testing.T) {
+	gopClTest(t, `
+ar := []int{100, 200}
+for k, v := range ar {
+	println(k, v, ar)
+	var k, v, ar int
+	println(ar, k, v)
+}
+`, `package main
+
+import "fmt"
+
+func main() {
+	ar := []int{100, 200}
+	for k, v := range ar {
+		fmt.Println(k, v, ar)
+		var k, v, ar int
+		fmt.Println(ar, k, v)
+	}
+}
+`)
+}
