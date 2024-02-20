@@ -359,11 +359,13 @@ func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 	if pos == 0 {
 		pos = v.For
 	}
-	cb.RangeAssignThen(pos) // TODO: need NewScope for body
+	cb.RangeAssignThen(pos)
 	if len(defineNames) > 0 {
 		defNames(ctx, defineNames, cb.Scope())
 	}
+	cb.VBlock()
 	compileStmts(ctx, v.Body.List)
+	cb.End(v.Body)
 	cb.SetComments(comments, once)
 	setBodyHandler(ctx)
 	cb.End(v)
