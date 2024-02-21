@@ -61,7 +61,7 @@ func spxParserConf() parser.Config {
 	}
 }
 
-func parserMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string, goname string, gosrc string, parserConf parser.Config) (*typesutil.Info, *types.Info, error) {
+func parseMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string, goname string, gosrc string, parserConf parser.Config) (*typesutil.Info, *types.Info, error) {
 	f, err := parser.ParseEntry(fset, name, src, parserConf)
 	if err != nil {
 		return nil, nil, err
@@ -78,7 +78,7 @@ func parserMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string
 	conf := &types.Config{}
 	conf.Importer = gop.NewImporter(nil, &env.Gop{Root: "../..", Version: "1.0"}, fset)
 	chkOpts := &typesutil.Config{
-		Types: types.NewPackage("main", "main"),
+		Types: types.NewPackage("main", f.Name.Name),
 		Fset:  fset,
 		Mod:   mod,
 	}
@@ -104,18 +104,19 @@ func parserMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string
 	return info, ginfo, err
 }
 
-func parserSource(fset *token.FileSet, filename string, src interface{}, mode parser.Mode) (*typesutil.Info, error) {
+func parseSource(fset *token.FileSet, filename string, src interface{}, mode parser.Mode) (*types.Package, *typesutil.Info, error) {
 	f, err := parser.ParseEntry(fset, filename, src, parser.Config{
 		Mode: mode,
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
+	pkg := types.NewPackage("", f.Name.Name)
 	conf := &types.Config{}
 	conf.Importer = importer.Default()
 	chkOpts := &typesutil.Config{
-		Types: types.NewPackage("main", "main"),
+		Types: pkg,
 		Fset:  fset,
 		Mod:   gopmod.Default,
 	}
@@ -130,13 +131,13 @@ func parserSource(fset *token.FileSet, filename string, src interface{}, mode pa
 	}
 	check := typesutil.NewChecker(conf, chkOpts, nil, info)
 	err = check.Files(nil, []*ast.File{f})
-	return info, err
+	return pkg, info, err
 }
 
-func parserGoSource(fset *token.FileSet, filename string, src interface{}, mode goparser.Mode) (*types.Info, error) {
+func parseGoSource(fset *token.FileSet, filename string, src interface{}, mode goparser.Mode) (*types.Package, *types.Info, error) {
 	f, err := goparser.ParseFile(fset, filename, src, mode)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	conf := &types.Config{}
@@ -149,10 +150,10 @@ func parserGoSource(fset *token.FileSet, filename string, src interface{}, mode 
 		Selections: make(map[*goast.SelectorExpr]*types.Selection),
 		Scopes:     make(map[goast.Node]*types.Scope),
 	}
-	pkg := types.NewPackage("main", "main")
+	pkg := types.NewPackage("", f.Name.Name)
 	check := types.NewChecker(conf, fset, pkg, info)
 	err = check.Files([]*goast.File{f})
-	return info, err
+	return pkg, info, err
 }
 
 func testGopInfo(t *testing.T, src string, gosrc string, expect string) {
@@ -165,7 +166,7 @@ func testSpxInfo(t *testing.T, name string, src string, expect string) {
 
 func testGopInfoEx(t *testing.T, mod *gopmod.Module, name string, src string, goname string, gosrc string, expect string, parseConf parser.Config) {
 	fset := token.NewFileSet()
-	info, _, err := parserMixedSource(mod, fset, name, src, goname, gosrc, parseConf)
+	info, _, err := parseMixedSource(mod, fset, name, src, goname, gosrc, parseConf)
 	if err != nil {
 		t.Fatal("parserMixedSource error", err)
 	}
@@ -185,11 +186,11 @@ func testGopInfoEx(t *testing.T, mod *gopmod.Module, name string, src string, go
 
 func testInfo(t *testing.T, src interface{}) {
 	fset := token.NewFileSet()
-	info, err := parserSource(fset, "main.gop", src, parser.ParseComments)
+	_, info, err := parseSource(fset, "main.gop", src, parser.ParseComments)
 	if err != nil {
 		t.Fatal("parserSource error", err)
 	}
-	goinfo, err := parserGoSource(fset, "main.go", src, goparser.ParseComments)
+	_, goinfo, err := parseGoSource(fset, "main.go", src, goparser.ParseComments)
 	if err != nil {
 		t.Fatal("parserGoSource error", err)
 	}
@@ -1669,4 +1670,133 @@ func onCloned() {
 008: 15: 2 | clone               | func github.com/goplus/gop/cl/internal/spx.Gopt_Sprite_Clone__1(sprite interface{}, data interface{})
 009: 15: 9 | info                | type main.info struct{x int; y int}
 010: 19: 2 | say                 | func (*github.com/goplus/gop/cl/internal/spx.Sprite).Say(msg string, secs ...float64)`)
+}
+
+func TestScopesInfo(t *testing.T) {
+	var tests = []struct {
+		src    string
+		scopes []string // list of scope descriptors of the form kind:varlist
+	}{
+		{`package p0`, []string{
+			"file:",
+		}},
+		{`package p1; import ( "fmt"; m "math"; _ "os" ); var ( _ = fmt.Println; _ = m.Pi )`, []string{
+			"file:fmt m",
+		}},
+		{`package p2; func _() {}`, []string{
+			"file:", "func:",
+		}},
+		{`package p3; func _(x, y int) {}`, []string{
+			"file:", "func:x y",
+		}},
+		{`package p4; func _(x, y int) { x, z := 1, 2; _ = z }`, []string{
+			"file:", "func:x y z", // redeclaration of x
+		}},
+		{`package p5; func _(x, y int) (u, _ int) { return }`, []string{
+			"file:", "func:u x y",
+		}},
+		{`package p6; func _() { { var x int; _ = x } }`, []string{
+			"file:", "func:", "block:x",
+		}},
+		{`package p7; func _() { if true {} }`, []string{
+			"file:", "func:", "if:", "block:",
+		}},
+		{`package p8; func _() { if x := 0; x < 0 { y := x; _ = y } }`, []string{
+			"file:", "func:", "if:x", "block:y",
+		}},
+		{`package p9; func _() { switch x := 0; x {} }`, []string{
+			"file:", "func:", "switch:x",
+		}},
+		{`package p10; func _() { switch x := 0; x { case 1: y := x; _ = y; default: }}`, []string{
+			"file:", "func:", "switch:x", "case:y", "case:",
+		}},
+		{`package p11; func _(t interface{}) { switch t.(type) {} }`, []string{
+			"file:", "func:t", "type switch:",
+		}},
+		{`package p12; func _(t interface{}) { switch t := t; t.(type) {} }`, []string{
+			"file:", "func:t", "type switch:t",
+		}},
+		{`package p13; func _(t interface{}) { switch x := t.(type) { case int: _ = x } }`, []string{
+			"file:", "func:t", "type switch:", "case:x", // x implicitly declared
+		}},
+		{`package p14; func _() { select{} }`, []string{
+			"file:", "func:",
+		}},
+		{`package p15; func _(c chan int) { select{ case <-c: } }`, []string{
+			"file:", "func:c", "comm:",
+		}},
+		{`package p16; func _(c chan int) { select{ case i := <-c: x := i; _ = x} }`, []string{
+			"file:", "func:c", "comm:i x",
+		}},
+		{`package p17; func _() { for{} }`, []string{
+			"file:", "func:", "for:", "block:",
+		}},
+		{`package p18; func _(n int) { for i := 0; i < n; i++ { _ = i } }`, []string{
+			"file:", "func:n", "for:i", "block:",
+		}},
+		{`package p19; func _(a []int) { for i := range a { _ = i} }`, []string{
+			"file:", "func:a", "range:i", "block:",
+		}},
+		{`package p20; var s int; func _(a []int) { for i, x := range a { s += x; _ = i } }`, []string{
+			"file:", "func:a", "range:i x", "block:",
+		}},
+		{`package p21; var s int; func _(a []int) { for i, x := range a { c := i; println(c) } }`, []string{
+			"file:", "func:a", "range:i x", "block:c",
+		}},
+	}
+
+	for _, test := range tests {
+		pkg, info, err := parseSource(token.NewFileSet(), "src.gop", test.src, 0)
+		if err != nil {
+			t.Fatalf("parse source failed: %v", test.src)
+		}
+		name := pkg.Name()
+		// number of scopes must match
+		if len(info.Scopes) != len(test.scopes) {
+			t.Errorf("package %s: got %d scopes; want %d\n%v\n%v", name, len(info.Scopes), len(test.scopes),
+				test.scopes, info.Scopes)
+		}
+
+		// scope descriptions must match
+		for node, scope := range info.Scopes {
+			kind := "<unknown node kind>"
+			switch node.(type) {
+			case *ast.File:
+				kind = "file"
+			case *ast.FuncType:
+				kind = "func"
+			case *ast.BlockStmt:
+				kind = "block"
+			case *ast.IfStmt:
+				kind = "if"
+			case *ast.SwitchStmt:
+				kind = "switch"
+			case *ast.TypeSwitchStmt:
+				kind = "type switch"
+			case *ast.CaseClause:
+				kind = "case"
+			case *ast.CommClause:
+				kind = "comm"
+			case *ast.ForStmt:
+				kind = "for"
+			case *ast.RangeStmt:
+				kind = "range"
+			default:
+				kind = fmt.Sprintf("<unknown node kind> %T", node)
+			}
+
+			// look for matching scope description
+			desc := kind + ":" + strings.Join(scope.Names(), " ")
+			found := false
+			for _, d := range test.scopes {
+				if desc == d {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Errorf("package %s: no matching scope found for %s", name, desc)
+			}
+		}
+	}
 }

@@ -151,6 +151,9 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	case *ast.BlockStmt:
 		ctx.cb.Block()
 		compileStmts(ctx, v.List)
+		if rec := ctx.recorder(); rec != nil {
+			rec.Scope(v, ctx.cb.Scope())
+		}
 		ctx.cb.End()
 		return
 	case *ast.SelectStmt:
@@ -363,8 +366,14 @@ func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 	if len(defineNames) > 0 {
 		defNames(ctx, defineNames, cb.Scope())
 	}
+	if rec := ctx.recorder(); rec != nil {
+		rec.Scope(v, cb.Scope())
+	}
 	cb.VBlock()
 	compileStmts(ctx, v.Body.List)
+	if rec := ctx.recorder(); rec != nil {
+		rec.Scope(v.Body, cb.Scope())
+	}
 	cb.End(v.Body)
 	cb.SetComments(comments, once)
 	setBodyHandler(ctx)
@@ -509,6 +518,9 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	cb := ctx.cb
 	comments, once := cb.BackupComments()
 	cb.For(v)
+	if rec := ctx.recorder(); rec != nil {
+		rec.Scope(v, cb.Scope())
+	}
 	if v.Init != nil {
 		compileStmt(ctx, v.Init)
 	}
@@ -518,6 +530,9 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 		cb.None()
 	}
 	cb.Then(v.Body)
+	if rec := ctx.recorder(); rec != nil {
+		rec.Scope(v.Body, cb.Scope())
+	}
 	compileStmts(ctx, v.Body.List)
 	if v.Post != nil {
 		cb.Post()
@@ -541,6 +556,9 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 		compileStmt(ctx, v.Init)
 	}
 	compileExpr(ctx, v.Cond)
+	if rec := ctx.recorder(); rec != nil {
+		rec.Scope(v, cb.Scope())
+	}
 	cb.Then(v.Body)
 	compileStmts(ctx, v.Body.List)
 	if e := v.Else; e != nil {
@@ -552,6 +570,9 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 		}
 	}
 	cb.SetComments(comments, once)
+	if rec := ctx.recorder(); rec != nil {
+		rec.Scope(v.Body, cb.Scope())
+	}
 	cb.End(v)
 }
 
@@ -586,6 +607,9 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 		panic("TODO: type switch syntax error, please use x.(type)")
 	}
 	cb.TypeSwitch(name, v)
+	if rec := ctx.recorder(); rec != nil {
+		rec.Scope(v, cb.Scope())
+	}
 	if v.Init != nil {
 		compileStmt(ctx, v.Init)
 	}
@@ -636,6 +660,9 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 		cb.Then()
 		compileStmts(ctx, c.Body)
 		commentStmt(ctx, stmt)
+		if rec := ctx.recorder(); rec != nil {
+			rec.Scope(c, cb.Scope())
+		}
 		cb.End(c)
 	}
 	cb.SetComments(comments, once)
@@ -665,6 +692,9 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 		compileExpr(ctx, v.Tag)
 	} else {
 		cb.None() // switch {...}
+	}
+	if rec := ctx.recorder(); rec != nil {
+		rec.Scope(v, cb.Scope())
 	}
 	cb.Then(v.Body)
 	seen := make(valueMap)
@@ -715,6 +745,9 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 			cb.Fallthrough()
 		}
 		commentStmt(ctx, stmt)
+		if rec := ctx.recorder(); rec != nil {
+			rec.Scope(c, cb.Scope())
+		}
 		cb.End(c)
 	}
 	cb.SetComments(comments, once)
@@ -764,6 +797,9 @@ func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
 		cb.Then()
 		compileStmts(ctx, c.Body)
 		commentStmt(ctx, stmt)
+		if rec := ctx.recorder(); rec != nil {
+			rec.Scope(c, cb.Scope())
+		}
 		cb.End(c)
 	}
 	cb.SetComments(comments, once)
