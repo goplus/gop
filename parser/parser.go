@@ -2306,7 +2306,7 @@ func (p *parser) isCmd(x ast.Expr) bool {
 
 func (p *parser) checkCmd(x ast.Expr) bool {
 	switch p.tok {
-	case token.IDENT, token.RARROW,
+	case token.IDENT, token.DRARROW,
 		token.STRING, token.CSTRING, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT,
 		token.FUNC, token.GOTO, token.MAP, token.INTERFACE, token.CHAN, token.STRUCT:
 		return true
@@ -2469,14 +2469,14 @@ type tupleExpr struct {
 
 func (p *parser) parseLambdaExpr(allowTuple, allowCmd, allowRangeExpr bool) (x ast.Expr, isTuple bool) {
 	var first = p.pos
-	if p.tok != token.RARROW {
+	if p.tok != token.DRARROW {
 		if allowRangeExpr {
 			x, isTuple = p.parseRangeExpr(true, allowCmd)
 		} else {
 			x, isTuple = p.parseBinaryExpr(false, token.LowestPrec+1, true, allowCmd)
 		}
 	}
-	if p.tok == token.RARROW { // =>
+	if p.tok == token.DRARROW { // =>
 		var rarrow = p.pos
 		var rhs []ast.Expr
 		var body *ast.BlockStmt
