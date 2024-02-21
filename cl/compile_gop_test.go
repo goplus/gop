@@ -20,6 +20,34 @@ import (
 	"testing"
 )
 
+func TestArrowOp(t *testing.T) {
+	gopClTest(t, `
+type foo struct {
+}
+
+func (a foo) -> (b foo) {
+	println "a -> b"
+}
+
+func (a foo) <> (b foo) {
+	println "a <> b"
+}
+`, `package main
+
+import "fmt"
+
+type foo struct {
+}
+
+func (a foo) Gop_PointTo(b foo) {
+	fmt.Println("a -> b")
+}
+func (a foo) Gop_PointBi(b foo) {
+	fmt.Println("a <> b")
+}
+`)
+}
+
 func TestMapLit(t *testing.T) {
 	gopClTest(t, `
 func foo(map[string]string) {}

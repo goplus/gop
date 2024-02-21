@@ -1289,6 +1289,9 @@ var binaryGopNames = map[string]string{
 	">=": "Gop_GE",
 	">":  "Gop_GT",
 
+	"->": "Gop_PointTo",
+	"<>": "Gop_PointBi",
+
 	"&&": "Gop_LAnd",
 	"||": "Gop_LOr",
 
