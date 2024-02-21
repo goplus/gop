@@ -4236,3 +4236,36 @@ func main() {
 }
 `)
 }
+
+func TestSelectScope(t *testing.T) {
+	gopClTest(t, `
+c1 := make(chan int)
+c2 := make(chan int)
+go func() {
+	c1 <- 100
+}()
+select {
+case i := <-c1:
+	println i
+case i := <-c2:
+	println i
+}
+`, `package main
+
+import "fmt"
+
+func main() {
+	c1 := make(chan int)
+	c2 := make(chan int)
+	go func() {
+		c1 <- 100
+	}()
+	select {
+	case i := <-c1:
+		fmt.Println(i)
+	case i := <-c2:
+		fmt.Println(i)
+	}
+}
+`)
+}
