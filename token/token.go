@@ -21,6 +21,8 @@ package token
 import (
 	"go/token"
 	"strconv"
+
+	xtoken "github.com/goplus/gox/token"
 )
 
 // Token is the set of lexical tokens of the Go+ programming language.
@@ -140,12 +142,13 @@ const (
 	TILDE // additional tokens, handled in an ad-hoc manner
 	additional_end
 
-	CSTRING   = literal_beg    // C"Hello"
-	RAT       = literal_end    // 123.5r
-	DRARROW   = operator_beg   // => (double right arrow)
-	QUESTION  = operator_end   // ?
-	SRARROW   = additional_beg // -> (single right arrow)
-	BIDIARROW = additional_end // <> (bidirectional arrow)
+	CSTRING  = literal_beg  // C"Hello"
+	RAT      = literal_end  // 123.5r
+	DRARROW  = operator_beg // => (double right arrow)
+	QUESTION = operator_end // ?
+
+	SRARROW   = Token(xtoken.SRARROW)   // -> (single right arrow) = additional_beg
+	BIDIARROW = Token(xtoken.BIDIARROW) // <> (bidirectional arrow) = additional_end
 
 	// Deprecated: use DRARROW instead of RARROW
 	RARROW = DRARROW

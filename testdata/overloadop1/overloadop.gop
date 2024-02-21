@@ -11,6 +11,14 @@ func (a foo) - (b foo) (ret foo) {
 	return
 }
 
+func (a foo) -> (b foo) {
+	println "a -> b"
+}
+
+func (a foo) <> (b foo) {
+	println "a <> b"
+}
+
 func -(a foo) (ret foo) {
 	println "-a"
 	return
@@ -32,3 +40,5 @@ var e = -a
 var f = a != b
 println f
 a++
+a -> b
+a <> b
