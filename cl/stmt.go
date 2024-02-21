@@ -598,6 +598,7 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 		if !ok {
 			log.Panicln("TODO: compile TypeSwitchStmt failed - case clause expected.")
 		}
+		cb.TypeCase(c)
 		for _, citem := range c.List {
 			compileExpr(ctx, citem)
 			T := cb.Get(-1).Type
@@ -632,7 +633,7 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 				firstDefault = c
 			}
 		}
-		cb.TypeCase(len(c.List), c) // TypeCase(0) means default case
+		cb.Then()
 		compileStmts(ctx, c.Body)
 		commentStmt(ctx, stmt)
 		cb.End(c)
@@ -673,6 +674,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 		if !ok {
 			log.Panicln("TODO: compile SwitchStmt failed - case clause expected.")
 		}
+		cb.Case(c)
 		for _, citem := range c.List {
 			compileExpr(ctx, citem)
 			v := cb.Get(-1)
@@ -706,7 +708,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 				firstDefault = c
 			}
 		}
-		cb.Case(len(c.List), c) // Case(0) means default case
+		cb.Then()
 		body, has := hasFallthrough(c.Body)
 		compileStmts(ctx, body)
 		if has {
@@ -755,12 +757,11 @@ func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
 		if !ok {
 			log.Panicln("TODO: compile SelectStmt failed - comm clause expected.")
 		}
-		var n int
+		cb.CommCase(c)
 		if c.Comm != nil {
 			compileStmt(ctx, c.Comm)
-			n = 1
 		}
-		cb.CommCase(n, c) // CommCase(0) means default case
+		cb.Then()
 		compileStmts(ctx, c.Body)
 		commentStmt(ctx, stmt)
 		cb.End(c)
