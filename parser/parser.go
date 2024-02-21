@@ -629,6 +629,9 @@ var overloadOps = [...]byte{
 	token.SHR:     opBinary, // >>
 	token.AND_NOT: opBinary, // &^
 
+	token.SRARROW:   opBinary, // ->
+	token.BIDIARROW: opBinary, // <>
+
 	token.ADD_ASSIGN: opAssignOp, // +=
 	token.SUB_ASSIGN: opAssignOp, // -=
 	token.MUL_ASSIGN: opAssignOp, // *=
