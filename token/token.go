@@ -294,7 +294,7 @@ func (op Token) Precedence() int {
 		return 1
 	case LAND:
 		return 2
-	case EQL, NEQ, LSS, LEQ, GTR, GEQ:
+	case EQL, NEQ, LSS, LEQ, GTR, GEQ, SRARROW, BIDIARROW:
 		return 3
 	case ADD, SUB, OR, XOR:
 		return 4

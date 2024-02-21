@@ -1,0 +1,4 @@
+echo 1+a -> b
+echo a <> b+1
+echo a -> b
+echo a <> b, "Hi"
