@@ -121,6 +121,7 @@ type Info struct {
 	//     *ast.CommClause
 	//     *ast.ForStmt
 	//     *ast.RangeStmt
+	//     *ast.ForPhraseStmt
 	//
 	Scopes map[ast.Node]*types.Scope
 

@@ -417,15 +417,26 @@ func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
 	if len(defineNames) > 0 {
 		defNames(ctx, defineNames, cb.Scope())
 	}
+	if rec := ctx.recorder(); rec != nil {
+		rec.Scope(v, cb.Scope())
+	}
 	if v.Cond != nil {
 		cb.If()
 		compileExpr(ctx, v.Cond)
 		cb.Then()
 		compileStmts(ctx, v.Body.List)
 		cb.SetComments(comments, once)
+		if rec := ctx.recorder(); rec != nil {
+			rec.Scope(v.Body, cb.Scope())
+		}
 		cb.End()
 	} else {
+		cb.VBlock()
 		compileStmts(ctx, v.Body.List)
+		if rec := ctx.recorder(); rec != nil {
+			rec.Scope(v.Body, cb.Scope())
+		}
+		cb.End(v.Body)
 		cb.SetComments(comments, once)
 	}
 	setBodyHandler(ctx)

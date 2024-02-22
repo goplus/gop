@@ -1743,6 +1743,12 @@ func TestScopesInfo(t *testing.T) {
 		{`package p21; var s int; func _(a []int) { for i, x := range a { c := i; println(c) } }`, []string{
 			"file:", "func:a", "range:i x", "block:c",
 		}},
+		{`package p22; func _(){ sum := 0; for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 { sum = sum + x; c := sum; _ = c } }`, []string{
+			"file:", "func:sum", "for phrase:x", "block:c",
+		}},
+		{`package p23; func _(){ sum := 0; for x <- [1, 3, 5, 7, 11, 13, 17] { sum = sum + x; c := sum; _ = c } }`, []string{
+			"file:", "func:sum", "for phrase:x", "block:c",
+		}},
 	}
 
 	for _, test := range tests {
@@ -1781,6 +1787,8 @@ func TestScopesInfo(t *testing.T) {
 				kind = "for"
 			case *ast.RangeStmt:
 				kind = "range"
+			case *ast.ForPhraseStmt:
+				kind = "for phrase"
 			default:
 				kind = fmt.Sprintf("<unknown node kind> %T", node)
 			}
