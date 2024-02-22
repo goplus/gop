@@ -157,6 +157,7 @@ type Recorder interface {
 	//     *ast.CommClause
 	//     *ast.ForStmt
 	//     *ast.RangeStmt
+	//     *ast.ForPhraseStmt
 	//
 	Scope(ast.Node, *types.Scope)
 }

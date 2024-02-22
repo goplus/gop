@@ -4338,3 +4338,48 @@ func demo() {
 }
 `)
 }
+
+func TestForPhraseScope(t *testing.T) {
+	gopClTest(t, `sum := 0
+for x <- [1, 3, 5, 7, 11, 13, 17] {
+	sum = sum + x
+	println x
+	x := 200
+	println x
+}`, `package main
+
+import "fmt"
+
+func main() {
+	sum := 0
+	for _, x := range []int{1, 3, 5, 7, 11, 13, 17} {
+		sum = sum + x
+		fmt.Println(x)
+		x := 200
+		fmt.Println(x)
+	}
+}
+`)
+	gopClTest(t, `sum := 0
+for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
+	sum = sum + x
+	println x
+	x := 200
+	println x
+}`, `package main
+
+import "fmt"
+
+func main() {
+	sum := 0
+	for _, x := range []int{1, 3, 5, 7, 11, 13, 17} {
+		if x > 3 {
+			sum = sum + x
+			fmt.Println(x)
+			x := 200
+			fmt.Println(x)
+		}
+	}
+}
+`)
+}
