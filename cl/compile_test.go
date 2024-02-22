@@ -4269,3 +4269,72 @@ func main() {
 }
 `)
 }
+
+func TestCommentVar(t *testing.T) {
+	gopClTestEx(t, gblConfLine, "main", `
+// doc a line2
+var a int
+println a
+
+// doc b line6
+var b int
+println b
+
+var c int
+println c
+`, `package main
+
+import "fmt"
+// doc a line2
+var a int
+//line /foo/bar.gop:4
+func main() {
+//line /foo/bar.gop:4:1
+	fmt.Println(a)
+//line /foo/bar.gop:6:1
+	// doc b line6
+	var b int
+//line /foo/bar.gop:8:1
+	fmt.Println(b)
+//line /foo/bar.gop:10:1
+	var c int
+//line /foo/bar.gop:11:1
+	fmt.Println(c)
+}
+`)
+
+	gopClTestEx(t, gblConfLine, "main", `
+func demo() {
+	// doc a line3
+	var a int
+	println a
+	
+	// doc b line7
+	var b int
+	println b
+	
+	var c int
+	println c
+}
+`, `package main
+
+import "fmt"
+//line /foo/bar.gop:2:1
+func demo() {
+//line /foo/bar.gop:3:1
+	// doc a line3
+	var a int
+//line /foo/bar.gop:5:1
+	fmt.Println(a)
+//line /foo/bar.gop:7:1
+	// doc b line7
+	var b int
+//line /foo/bar.gop:9:1
+	fmt.Println(b)
+//line /foo/bar.gop:11:1
+	var c int
+//line /foo/bar.gop:12:1
+	fmt.Println(c)
+}
+`)
+}
