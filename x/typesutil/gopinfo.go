@@ -122,6 +122,9 @@ type Info struct {
 	//     *ast.ForStmt
 	//     *ast.RangeStmt
 	//     *ast.ForPhraseStmt
+	//     *ast.ForPhrase
+	//     *ast.LambdaExpr
+	//     *ast.LambdaExpr2
 	//
 	Scopes map[ast.Node]*types.Scope
 

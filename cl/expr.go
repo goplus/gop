@@ -1263,6 +1263,9 @@ func compileComprehensionExpr(ctx *blockCtx, v *ast.ComprehensionExpr, twoValue 
 		compileExpr(ctx, forStmt.X)
 		cb.RangeAssignThen(forStmt.TokPos)
 		defNames(ctx, defineNames, cb.Scope())
+		if rec := ctx.recorder(); rec != nil {
+			rec.Scope(forStmt, cb.Scope())
+		}
 		if forStmt.Cond != nil {
 			cb.If()
 			if forStmt.Init != nil {

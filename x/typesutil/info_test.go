@@ -1758,6 +1758,24 @@ func TestScopesInfo(t *testing.T) {
 		{`package p25; func test(fn func(int)int){};func _(){test( x => { y := x*x; return y } ) }`, []string{
 			"file:test", "func:fn", "func:", "lambda:x y",
 		}},
+		{`package p26; func _(){ b := {for x <- ["1", "3", "5", "7", "11"], x == "5"}; _ = b }`, []string{
+			"file:", "func:b", "for phrase:x",
+		}},
+		{`package p27; func _(){ b, ok := {i for i, x <- ["1", "3", "5", "7", "11"], x == "5"}; _ = b; _ = ok }`, []string{
+			"file:", "func:b ok", "for phrase:i x",
+		}},
+		{`package p28; func _(){ a := [x*x for x <- [1, 3.4, 5] if x > 2 ]; _ = a }`, []string{
+			"file:", "func:a", "for phrase:x",
+		}},
+		{`package p29; func _(){ arr := [1, 2, 3, 4.1, 5, 6];x := [[a, b] for a <- arr, a < b for b <- arr, b > 2]; _ = x }`, []string{
+			"file:", "func:arr x", "for phrase:b", "for phrase:a",
+		}},
+		{`package p30; func _(){ y := {x: i for i, x <- ["1", "3", "5", "7", "11"]}; _ = y }`, []string{
+			"file:", "func:y", "for phrase:i x",
+		}},
+		{`package p31; func _(){ z := {v: k for k, v <- {"Hello": 1, "Hi": 3, "xsw": 5, "Go+": 7}, v > 3}; _ = z }`, []string{
+			"file:", "func:z", "for phrase:k v",
+		}},
 	}
 
 	for _, test := range tests {
@@ -1802,6 +1820,8 @@ func TestScopesInfo(t *testing.T) {
 				kind = "lambda"
 			case *ast.LambdaExpr2:
 				kind = "lambda"
+			case *ast.ForPhrase:
+				kind = "for phrase"
 			default:
 				kind = fmt.Sprintf("<unknown node kind> %T", node)
 			}
