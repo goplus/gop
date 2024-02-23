@@ -205,7 +205,12 @@ type ForPhrase struct {
 func (p *ForPhrase) Pos() token.Pos { return p.For }
 
 // End returns position of first character immediately after the node.
-func (p *ForPhrase) End() token.Pos { return p.X.End() }
+func (p *ForPhrase) End() token.Pos {
+	if p.Cond != nil {
+		return p.Cond.End()
+	}
+	return p.X.End()
+}
 
 func (p *ForPhrase) exprNode() {}
 
