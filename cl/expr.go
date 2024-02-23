@@ -859,6 +859,9 @@ func compileLambdaExpr(ctx *blockCtx, v *ast.LambdaExpr, sig *types.Signature) e
 	for _, v := range v.Rhs {
 		compileExpr(ctx, v)
 	}
+	if rec := ctx.recorder(); rec != nil {
+		rec.Scope(v, ctx.cb.Scope())
+	}
 	ctx.cb.Return(len(v.Rhs)).End(v)
 	return nil
 }
@@ -877,6 +880,9 @@ func compileLambdaExpr2(ctx *blockCtx, v *ast.LambdaExpr2, sig *types.Signature)
 		defNames(ctx, v.Lhs, cb.Scope())
 	}
 	compileStmts(ctx, v.Body.List)
+	if rec := ctx.recorder(); rec != nil {
+		rec.Scope(v, ctx.cb.Scope())
+	}
 	cb.End(v)
 	ctx.cb.SetComments(comments, once)
 	return nil

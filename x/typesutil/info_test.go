@@ -1749,6 +1749,15 @@ func TestScopesInfo(t *testing.T) {
 		{`package p23; func _(){ sum := 0; for x <- [1, 3, 5, 7, 11, 13, 17] { sum = sum + x; c := sum; _ = c } }`, []string{
 			"file:", "func:sum", "for phrase:x", "block:c",
 		}},
+		{`package p23; func test(fn func(int)int){};func _(){test(func(x int) int { y := x*x; return y } ) }`, []string{
+			"file:test", "func:fn", "func:", "func:x y",
+		}},
+		{`package p24; func test(fn func(int)int){};func _(){test( x => x*x );}`, []string{
+			"file:test", "func:fn", "func:", "lambda:x",
+		}},
+		{`package p25; func test(fn func(int)int){};func _(){test( x => { y := x*x; return y } ) }`, []string{
+			"file:test", "func:fn", "func:", "lambda:x y",
+		}},
 	}
 
 	for _, test := range tests {
@@ -1789,6 +1798,10 @@ func TestScopesInfo(t *testing.T) {
 				kind = "range"
 			case *ast.ForPhraseStmt:
 				kind = "for phrase"
+			case *ast.LambdaExpr:
+				kind = "lambda"
+			case *ast.LambdaExpr2:
+				kind = "lambda"
 			default:
 				kind = fmt.Sprintf("<unknown node kind> %T", node)
 			}
