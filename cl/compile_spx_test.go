@@ -253,6 +253,34 @@ func (this *index) onInit() {
 `)
 }
 
+func TestSpxGopEnv(t *testing.T) {
+	gopSpxTest(t, `
+echo "${PATH}"
+`, ``, `package main
+
+import (
+	"fmt"
+	"github.com/goplus/gop/cl/internal/spx"
+	"strconv"
+)
+
+type bar struct {
+	spx.Sprite
+	*index
+}
+type index struct {
+	*spx.MyGame
+}
+
+func (this *index) MainEntry() {
+	fmt.Println(strconv.Itoa(this.Gop_Env("PATH")))
+}
+func main() {
+	spx.Gopt_MyGame_Main(new(index))
+}
+`)
+}
+
 func TestSpxGopExec(t *testing.T) {
 	gopSpxTest(t, `
 vim "a.txt"

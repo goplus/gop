@@ -64,15 +64,19 @@ const (
 	clIdentSelectorExpr // this ident is X (not Sel) of ast.SelectorExpr
 	clIdentGoto
 	clCallWithTwoValue
-	clCommandWithoutArgs
-	clCommandIdent
+	clCommandWithoutArgs // this expr is a command without args (eg. ls)
+	clCommandIdent       // this expr is a command and an ident (eg. mkdir "abc")
+	clIdentInStringLitEx // this expr is an ident in a string extended literal (eg. ${PATH})
 )
 
 const (
 	objNormal = iota
 	objPkgRef
 	objCPkgRef
-	objGopExec
+	objGopExecOrEnv
+
+	objGopEnv  = objGopExecOrEnv
+	objGopExec = objGopExecOrEnv
 )
 
 const errorPkgPath = "github.com/qiniu/x/errors"
@@ -153,8 +157,13 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg gox.PkgRef, k
 		oldo, o = o, obj
 	} else if o == nil {
 		// for support Gop_Exec, see TestSpxGopExec
-		if (clCommandIdent&flags) != 0 && recv != nil && gopExecVal(cb, recv, ident) == nil {
+		if (clCommandIdent&flags) != 0 && recv != nil && gopMember(cb, recv, "Gop_Exec", ident) == nil {
 			kind = objGopExec
+			return
+		}
+		// for support Gop_Env, see TestSpxGopEnv
+		if (clIdentInStringLitEx&flags) != 0 && recv != nil && gopMember(cb, recv, "Gop_Env", ident) == nil {
+			kind = objGopEnv
 			return
 		}
 		if (clIdentGoto & flags) != 0 {
@@ -189,8 +198,8 @@ func classRecv(cb *gox.CodeBuilder) *types.Var {
 	return nil
 }
 
-func gopExecVal(cb *gox.CodeBuilder, recv *types.Var, ident *ast.Ident) error {
-	_, e := cb.Val(recv).Member("Gop_Exec", gox.MemberFlagVal, ident)
+func gopMember(cb *gox.CodeBuilder, recv *types.Var, op string, src ...ast.Node) error {
+	_, e := cb.Val(recv).Member(op, gox.MemberFlagVal, src...)
 	return e
 }
 
@@ -269,9 +278,9 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 			flags |= clCommandIdent // for support Gop_Exec, see TestSpxGopExec
 		}
 		_, kind := compileIdent(ctx, v, flags)
-		if cmdNoArgs {
+		if cmdNoArgs || kind == objGopExecOrEnv {
 			cb := ctx.cb
-			if kind == objGopExec {
+			if kind == objGopExecOrEnv {
 				cb.Val(v.Name, v)
 			} else {
 				err := callCmdNoArgs(ctx, expr, false)
@@ -697,7 +706,7 @@ func builtinOrGopExec(ctx *blockCtx, ifn *ast.Ident, v *ast.CallExpr, flags gox.
 func tryGopExec(cb *gox.CodeBuilder, ifn *ast.Ident) bool {
 	if recv := classRecv(cb); recv != nil {
 		cb.InternalStack().PopN(1)
-		if gopExecVal(cb, recv, ifn) == nil {
+		if gopMember(cb, recv, "Gop_Exec", ifn) == nil {
 			cb.Val(ifn.Name, ifn)
 			return true
 		}
@@ -949,7 +958,11 @@ func compileStringLitEx(ctx *blockCtx, cb *gox.CodeBuilder, lit *ast.BasicLit) {
 			basicLit(cb, &ast.BasicLit{ValuePos: pos - 1, Value: quote + v + quote, Kind: token.STRING})
 			pos = next
 		case ast.Expr:
-			compileExpr(ctx, v)
+			flags := 0
+			if _, ok := v.(*ast.Ident); ok {
+				flags = clIdentInStringLitEx
+			}
+			compileExpr(ctx, v, flags)
 			t := cb.Get(-1).Type
 			if t.Underlying() != types.Typ[types.String] {
 				cb.Member("string", gox.MemberFlagAutoProperty)

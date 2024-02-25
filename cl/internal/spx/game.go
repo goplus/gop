@@ -35,6 +35,10 @@ func (p *MyGame) Capout(doSth func()) (string, error) {
 	return "", nil
 }
 
+func (p *MyGame) Gop_Env(name string) int {
+	return 0
+}
+
 func (p *MyGame) Gop_Exec(name string, args ...any) {
 }
 
