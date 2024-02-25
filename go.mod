@@ -1,6 +1,6 @@
 module github.com/goplus/gop
 
-go 1.20
+go 1.18
 
 require (
 	github.com/fsnotify/fsnotify v1.7.0
