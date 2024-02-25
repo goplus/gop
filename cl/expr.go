@@ -79,8 +79,6 @@ const (
 	objGopExec = objGopExecOrEnv
 )
 
-const errorPkgPath = "github.com/qiniu/x/errors"
-
 func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg gox.PkgRef, kind int) {
 	fvalue := (flags&clIdentSelectorExpr) != 0 || (flags&clIdentLHS) == 0
 	cb := ctx.cb
@@ -944,11 +942,19 @@ func basicLit(cb *gox.CodeBuilder, v *ast.BasicLit) {
 	cb.Val(&goast.BasicLit{Kind: gotoken.Token(v.Kind), Value: v.Value}, v)
 }
 
+const (
+	stringutilPkgPath = "github.com/qiniu/x/stringutil"
+)
+
 func compileStringLitEx(ctx *blockCtx, cb *gox.CodeBuilder, lit *ast.BasicLit) {
 	pos := lit.ValuePos + 1
 	quote := lit.Value[:1]
-	notFirst := false
-	for _, part := range lit.Extra.Parts {
+	parts := lit.Extra.Parts
+	n := len(parts)
+	if n != 1 {
+		cb.Val(ctx.pkg.Import(stringutilPkgPath).Ref("Concat"))
+	}
+	for _, part := range parts {
 		switch v := part.(type) {
 		case string: // normal string literal or end with "$$"
 			next := pos + token.Pos(len(v))
@@ -971,11 +977,9 @@ func compileStringLitEx(ctx *blockCtx, cb *gox.CodeBuilder, lit *ast.BasicLit) {
 		default:
 			panic("compileStringLitEx TODO: unexpected part")
 		}
-		if notFirst {
-			cb.BinaryOp(gotoken.ADD)
-		} else {
-			notFirst = true
-		}
+	}
+	if n != 1 {
+		cb.CallWith(n, 0, lit)
 	}
 }
 
@@ -1327,6 +1331,10 @@ func compileComprehensionExpr(ctx *blockCtx, v *ast.ComprehensionExpr, twoValue 
 	}
 	cb.Return(0).End().Call(0)
 }
+
+const (
+	errorPkgPath = "github.com/qiniu/x/errors"
+)
 
 var (
 	tyError = types.Universe.Lookup("error").Type()
