@@ -22,8 +22,8 @@ import (
 
 	"github.com/goplus/gop"
 	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/watcher"
 	"github.com/goplus/gop/x/fsnotify"
+	"github.com/goplus/gop/x/watcher"
 )
 
 // -----------------------------------------------------------------------------
