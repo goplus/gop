@@ -27,6 +27,9 @@ func TestConcat(t *testing.T) {
 }
 
 func TestBuild(t *testing.T) {
+	if ret := NewBuilder(0).Build(); ret != "" {
+		t.Fatal("NewBuilder(0):", ret)
+	}
 	if ret := NewBuilder(16).Add("1").AddByte('2', '3').AddByte('!').Build(); ret != "123!" {
 		t.Fatal("TestBuild:", ret)
 	}

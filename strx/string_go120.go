@@ -28,5 +28,5 @@ import (
 // Since Go strings are immutable, the bytes passed to String
 // must not be modified afterwards.
 func String(b []byte) string {
-	return unsafe.String(&b[0], len(b))
+	return unsafe.String(unsafe.SliceData(b), len(b))
 }
