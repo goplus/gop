@@ -28,5 +28,7 @@ import (
 // Since Go strings are immutable, the bytes passed to String
 // must not be modified afterwards.
 func String(b []byte) string {
+	// Although unsafe.SliceData/String was introduced in go1.20, but
+	// the go version in go.mod is 1.18 so we cannot use them.
 	return unsafe.String(unsafe.SliceData(b), len(b))
 }
