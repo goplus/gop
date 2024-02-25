@@ -993,12 +993,13 @@ println "Hi, " + "a${x}b"`, `package main
 
 import (
 	"fmt"
+	"github.com/qiniu/x/stringutil"
 	"strconv"
 )
 
 func main() {
 	x := 1
-	fmt.Println("Hi, " + ("a" + strconv.Itoa(x) + "b"))
+	fmt.Println("Hi, " + stringutil.Concat("a", strconv.Itoa(x), "b"))
 }
 `)
 }
