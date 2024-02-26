@@ -1705,7 +1705,7 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) (x ast.Expr, isTup
 
 	case token.STRING, token.CSTRING, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT:
 		bl := &ast.BasicLit{ValuePos: p.pos, Kind: p.tok, Value: p.lit}
-		if p.tok == token.STRING {
+		if p.tok == token.STRING && len(p.lit) > 1 {
 			bl.Extra = p.stringLit(p.pos, p.lit)
 		}
 		x = bl
