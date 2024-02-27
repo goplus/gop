@@ -79,6 +79,9 @@ type Config struct {
 
 	// Mod represents a Go+ module (optional).
 	Mod *gopmod.Module
+
+	// If IgnoreFuncBodies is set, skip compiling function bodies (optional).
+	IgnoreFuncBodies bool
 }
 
 // A Checker maintains the state of the type checker.
@@ -152,6 +155,7 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 		NoFileLine:     true,
 		NoAutoGenMain:  true,
 		NoSkipConstant: true,
+		Outline:        opts.IgnoreFuncBodies,
 	})
 	if err != nil {
 		if onErr := conf.Error; onErr != nil {
