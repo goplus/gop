@@ -27,23 +27,29 @@ import (
 )
 
 type goxRecorder struct {
-	rec Recorder
+	rec *typesRecorder
 }
 
 // Member maps identifiers to the objects they denote.
 func (p *goxRecorder) Member(id ast.Node, obj types.Object) {
-	tv := typesutil.NewTypeAndValueForObject(obj)
 	switch v := id.(type) {
 	case *ast.SelectorExpr:
 		sel := v.Sel
 		// TODO: record event for a Go ident
 		if _, ok := fromgo.CheckIdent(sel); !ok {
+			var tv types.TypeAndValue
+			// check v.X call result by value
+			if f, ok := obj.(*types.Var); ok && f.IsField() && p.rec.checkExprByValue(v.X) {
+				tv = typesutil.NewTypeAndValueForValue(obj.Type(), nil, typesutil.Value)
+			} else {
+				tv = typesutil.NewTypeAndValueForObject(obj)
+			}
 			p.rec.Use(sel, obj)
 			p.rec.Type(v, tv)
 		}
 	case *ast.Ident: // it's in a classfile and impossible converted from Go
 		p.rec.Use(v, obj)
-		p.rec.Type(v, tv)
+		p.rec.Type(v, typesutil.NewTypeAndValueForObject(obj))
 	}
 }
 
@@ -69,6 +75,22 @@ func (p *goxRecorder) Call(id ast.Node, obj types.Object) {
 type typesRecorder struct {
 	Recorder
 	types map[ast.Expr]types.TypeAndValue
+}
+
+func (rec *typesRecorder) checkExprByValue(v ast.Expr) bool {
+	if tv, ok := rec.types[v]; ok {
+		switch v.(type) {
+		case *ast.CallExpr:
+			if _, ok := tv.Type.(*types.Pointer); !ok {
+				return true
+			}
+		default:
+			if tv, ok := rec.types[v]; ok {
+				return !tv.Addressable()
+			}
+		}
+	}
+	return false
 }
 
 func (rec *typesRecorder) Type(expr ast.Expr, tv types.TypeAndValue) {
@@ -117,12 +139,16 @@ func (rec *typesRecorder) indexExpr(ctx *blockCtx, expr *ast.IndexExpr) {
 			return
 		}
 	}
-	switch expr.X.(type) {
+	op := typesutil.Variable
+	switch e := expr.X.(type) {
 	case *ast.CompositeLit:
-		rec.recordTypeValue(ctx, expr, typesutil.Value)
-	default:
-		rec.recordTypeValue(ctx, expr, typesutil.Variable)
+		op = typesutil.Value
+	case *ast.SelectorExpr:
+		if rec.checkExprByValue(e.X) {
+			op = typesutil.Value
+		}
 	}
+	rec.recordTypeValue(ctx, expr, op)
 }
 
 func (rec *typesRecorder) unaryExpr(ctx *blockCtx, expr *ast.UnaryExpr) {
@@ -168,7 +194,9 @@ func (rec *typesRecorder) recordExpr(ctx *blockCtx, expr ast.Expr, rhs bool) {
 		rec.recordTypeValue(ctx, v, typesutil.Value)
 	case *ast.CallExpr:
 	case *ast.SelectorExpr:
-		rec.recordTypeValue(ctx, v, typesutil.Variable)
+		if _, ok := rec.types[v]; !ok {
+			rec.recordTypeValue(ctx, v, typesutil.Variable)
+		}
 	case *ast.BinaryExpr:
 		rec.recordTypeValue(ctx, v, typesutil.Value)
 	case *ast.UnaryExpr:

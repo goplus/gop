@@ -4383,3 +4383,57 @@ func main() {
 }
 `)
 }
+
+func TestAddress(t *testing.T) {
+	gopClTest(t, `
+type foo struct{ c int }
+
+func (f foo) ptr() *foo { return &f }
+func (f foo) clone() foo { return f }
+
+type nested struct {
+	f foo
+	a [2]foo
+	s []foo
+}
+
+func _() {
+	getNested := func() nested { return nested{} }
+
+	_ = getNested().f.c
+	_ = getNested().a[0].c
+	_ = getNested().s[0].c
+	_ = getNested().f.ptr().c
+	_ = getNested().f.clone().c
+	_ = getNested().f.clone().ptr().c
+}
+`, `package main
+
+type foo struct {
+	c int
+}
+type nested struct {
+	f foo
+	a [2]foo
+	s []foo
+}
+
+func (f foo) ptr() *foo {
+	return &f
+}
+func (f foo) clone() foo {
+	return f
+}
+func _() {
+	getNested := func() nested {
+		return nested{}
+	}
+	_ = getNested().f.c
+	_ = getNested().a[0].c
+	_ = getNested().s[0].c
+	_ = getNested().f.ptr().c
+	_ = getNested().f.clone().c
+	_ = getNested().f.clone().ptr().c
+}
+`)
+}

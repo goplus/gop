@@ -1841,3 +1841,41 @@ func TestScopesInfo(t *testing.T) {
 		}
 	}
 }
+
+func TestAddress(t *testing.T) {
+	testInfo(t, `package address
+
+type foo struct{ c int; p *int }
+
+func (f foo) ptr() *foo { return &f }
+func (f foo) clone() foo { return f }
+
+type nested struct {
+	f foo
+	a [2]foo
+	s []foo
+	m map[int]foo
+}
+
+func _() {
+	getNested := func() nested { return nested{} }
+	getNestedPtr := func() *nested { return &nested{} }
+
+	_ = getNested().f.c
+	_ = getNested().a[0].c
+	_ = getNested().s[0].c
+	_ = getNested().m[0].c
+	_ = getNested().f.ptr().c
+	_ = getNested().f.clone().c
+	_ = getNested().f.clone().ptr().c
+
+	_ = getNestedPtr().f.c
+	_ = getNestedPtr().a[0].c
+	_ = getNestedPtr().s[0].c
+	_ = getNestedPtr().m[0].c
+	_ = getNestedPtr().f.ptr().c
+	_ = getNestedPtr().f.clone().c
+	_ = getNestedPtr().f.clone().ptr().c
+}
+`)
+}
