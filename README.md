@@ -167,6 +167,8 @@ mkdir "testgsh"
 
 Don't need a `go.mod` file, just enter `gop run ./example.gsh` directly to run.
 
+It's strange to you that the file extension of Go+ source is not `.gop` but `.gsh`. It is only because Go+ register `.gsh` as a builtin [classfile](doc/classfile.md).
+
 See [gsh: Go+ DevOps Tools](https://github.com/qiniu/x/tree/main/gsh) for more details.
 
 
