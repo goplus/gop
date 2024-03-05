@@ -1,6 +1,17 @@
 Go+ Quick Start
 ======
 
+Our vision is to **enable everyone to create production-level applications**.
+
+#### Easy to learn
+
+* Simple and easy to understand
+* Smaller syntax set than Python in best practices
+
+#### Ready for large projects
+
+* Derived from Go and easy to build large projects from its good engineering foundation
+
 The Go+ programming language is designed for engineering, STEM education, and data science.
 
 * **For engineering**: working in the simplest language that can be mastered by children.
@@ -9,7 +20,36 @@ The Go+ programming language is designed for engineering, STEM education, and da
 
 ## How to install
 
-For now, we suggest you install Go+ from source code.
+### on Windows
+
+```sh
+winget install goplus.gop
+```
+
+### on Debian/Ubuntu
+
+```sh
+sudo bash -c ' echo "deb [trusted=yes] https://pkgs.goplus.org/apt/ /" > /etc/apt/sources.list.d/goplus.list'
+sudo apt update
+sudo apt install gop
+```
+
+### on RedHat/CentOS/Fedora
+
+```sh
+sudo bash -c 'echo -e "[goplus]\nname=Go+ Repo\nbaseurl=https://pkgs.goplus.org/yum/\nenabled=1\ngpgcheck=0" > /etc/yum.repos.d/goplus.repo'
+sudo yum install gop
+```
+
+### on macOS/Linux (Homebrew)
+
+Install via [brew](https://brew.sh/)
+
+```sh
+$ brew install goplus
+```
+
+### from source code
 
 Note: Requires go1.18 or later
 
