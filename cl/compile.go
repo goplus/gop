@@ -371,24 +371,24 @@ type blockCtx struct {
 	relBaseDir string
 	classRecv  *ast.FieldList // available when gmxSettings != nil
 	fileScope  *types.Scope   // only valid when isGopFile
-	rec        *typesRecorder
+	rec        *goxRecorder
 
 	fileLine  bool
 	isClass   bool
 	isGopFile bool // is Go+ file or not
 }
 
-func (bc *blockCtx) recorder() *typesRecorder {
-	if bc.isGopFile {
-		return bc.rec
+func (p *blockCtx) recorder() *goxRecorder {
+	if p.isGopFile {
+		return p.rec
 	}
 	return nil
 }
 
-func (bc *blockCtx) findImport(name string) (pi pkgImp, ok bool) {
-	pi, ok = bc.imports[name]
-	if !ok && bc.autoimps != nil {
-		pi, ok = bc.autoimps[name]
+func (p *blockCtx) findImport(name string) (pi pkgImp, ok bool) {
+	pi, ok = p.imports[name]
+	if !ok && p.autoimps != nil {
+		pi, ok = p.autoimps[name]
 	}
 	return
 }
@@ -505,10 +505,10 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		PkgPathIox:      ioxPkgPath,
 		DbgPositioner:   interp,
 	}
-	var rec *typesRecorder
+	var rec *goxRecorder
 	if conf.Recorder != nil {
-		rec = newTypeRecord(conf.Recorder)
-		confGox.Recorder = &goxRecorder{rec: rec}
+		rec = newRecorder(conf.Recorder)
+		confGox.Recorder = rec
 	}
 	if enableRecover {
 		defer func() {
@@ -571,14 +571,14 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 	}
 
 	gofiles := make([]*ast.File, 0, len(pkg.GoFiles))
-	for fpath, gof := range pkg.GoFiles {
+	for _, gof := range pkg.GoFiles {
 		f := fromgo.ASTFile(gof, 0)
 		gofiles = append(gofiles, f)
 		ctx := &blockCtx{
 			pkg: p, pkgCtx: ctx, cb: p.CB(), relBaseDir: relBaseDir,
 			imports: make(map[string]pkgImp),
 		}
-		preloadFile(p, ctx, fpath, f, skippingGoFile, false)
+		preloadFile(p, ctx, f, skippingGoFile, false)
 	}
 
 	initGopPkg(ctx, p, gopSyms)
@@ -869,7 +869,7 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 			})
 		}
 	}
-	preloadFile(p, ctx, file, f, goFile, !conf.Outline)
+	preloadFile(p, ctx, f, goFile, !conf.Outline)
 	if goxTestFile {
 		parent.inits = append(parent.inits, func() {
 			old, _ := p.SetCurFile(testingGoFile, true)
@@ -893,7 +893,7 @@ retry:
 	panic("TODO: parseTypeEmbedName unexpected")
 }
 
-func preloadFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, goFile string, genFnBody bool) {
+func preloadFile(p *gox.Package, ctx *blockCtx, f *ast.File, goFile string, genFnBody bool) {
 	parent := ctx.pkgCtx
 	syms := parent.syms
 	old, _ := p.SetCurFile(goFile, true)

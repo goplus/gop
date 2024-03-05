@@ -180,10 +180,10 @@ find:
 	if rec := ctx.recorder(); rec != nil {
 		e := cb.Get(-1)
 		if oldo != nil && gox.IsTypeEx(e.Type) { // for builtin object
-			rec.recordIdent(ctx, ident, oldo)
+			rec.recordIdent(ident, oldo)
 			return
 		}
-		rec.recordIdent(ctx, ident, o)
+		rec.recordIdent(ident, o)
 	}
 	return
 }
@@ -900,7 +900,7 @@ func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
 	comments, once := cb.BackupComments()
 	sig := toFuncType(ctx, v.Type, nil, nil)
 	if rec := ctx.recorder(); rec != nil {
-		rec.recordFuncLit(ctx, v, sig)
+		rec.recordFuncLit(v, sig)
 	}
 	fn := cb.NewClosureWith(sig)
 	if body := v.Body; body != nil {
@@ -988,7 +988,7 @@ const (
 	compositeLitKeyVal = 1
 )
 
-func checkCompositeLitElts(ctx *blockCtx, elts []ast.Expr) (kind int) {
+func checkCompositeLitElts(elts []ast.Expr) (kind int) {
 	for _, elt := range elts {
 		if _, ok := elt.(*ast.KeyValueExpr); ok {
 			return compositeLitKeyVal
@@ -1111,7 +1111,7 @@ func compileCompositeLit(ctx *blockCtx, v *ast.CompositeLit, expected types.Type
 func compileCompositeLitEx(ctx *blockCtx, v *ast.CompositeLit, expected types.Type, mapOrStructOnly bool) error {
 	var hasPtr bool
 	var typ, underlying types.Type
-	var kind = checkCompositeLitElts(ctx, v.Elts)
+	var kind = checkCompositeLitElts(v.Elts)
 	if v.Type != nil {
 		typ = toType(ctx, v.Type)
 		underlying = getUnderlying(ctx, typ)
@@ -1158,7 +1158,7 @@ func compileCompositeLitEx(ctx *blockCtx, v *ast.CompositeLit, expected types.Ty
 		typ = expected
 	}
 	if rec := ctx.recorder(); rec != nil {
-		rec.recordCompositeLit(ctx, v, typ)
+		rec.recordCompositeLit(v, typ)
 	}
 	return nil
 }

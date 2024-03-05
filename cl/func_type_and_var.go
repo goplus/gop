@@ -114,7 +114,7 @@ func toParam(ctx *blockCtx, fld *ast.Field, args []*gox.Param) []*gox.Param {
 func toType(ctx *blockCtx, typ ast.Expr) (t types.Type) {
 	if rec := ctx.recorder(); rec != nil {
 		defer func() {
-			rec.recordType(ctx, typ, t)
+			rec.recordType(typ, t)
 		}()
 	}
 	switch v := typ.(type) {
@@ -232,7 +232,7 @@ func toIdentType(ctx *blockCtx, ident *ast.Ident) (ret types.Type) {
 	if rec := ctx.recorder(); rec != nil {
 		defer func() {
 			if obj != nil {
-				rec.recordIdent(ctx, ident, obj)
+				rec.recordIdent(ident, obj)
 			}
 		}()
 	}
