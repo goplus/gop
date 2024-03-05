@@ -81,14 +81,57 @@ Go+ introduces `classfile` to abstract domain knowledge.
 
 Sound a bit abstract? Let's see some Go+ classfiles.
 
-* STEM Education: [spx: A Go+ 2D Game Engine](https://github.com/goplus/spx)
+* Unit Test: [classfile: Unit Test](https://github.com/goplus/gop/blob/main/doc/classfile.md#classfile-unit-test)
+* DevOps: [gsh: Go+ DevOps Tools](https://github.com/qiniu/x/tree/main/gsh)
 * Web Programming: [yap: Yet Another HTTP Web Framework](https://github.com/goplus/yap)
 * Web Programming: [yaptest: HTTP Test Framework](https://github.com/goplus/yap#yaptest-http-test-framework)
 * Web Programming: [ydb: Database Framework](https://github.com/goplus/yap#ydb-database-framework)
-* DevOps: [gsh: Go+ DevOps Tools](https://github.com/qiniu/x/tree/main/gsh)
-* Unit Test: [classfile: Unit Test](https://github.com/goplus/gop/blob/main/doc/classfile.md#classfile-unit-test)
+* STEM Education: [spx: A Go+ 2D Game Engine](https://github.com/goplus/spx)
 * Mechanism: [What's Classfile](doc/classfile.md#whats-classfile)
 * Mechanism: [Go+ Classfiles](doc/classfile.md)
+
+
+### gsh: Go+ DevOps Tools
+
+Yes, now you can write `shell script` in Go+. It supports all shell commands.
+
+Let's create a file named `./example.gsh` and write the following code:
+
+```coffee
+mkdir "testgsh"
+```
+
+Don't need a `go.mod` file, just enter `gop run ./example.gsh` directly to run.
+
+It's strange to you that the file extension of Go+ source is not `.gop` but `.gsh`. It is only because Go+ register `.gsh` as a builtin [classfile](doc/classfile.md).
+
+See [gsh: Go+ DevOps Tools](https://github.com/qiniu/x/tree/main/gsh) for more details.
+
+
+### yap: Yet Another HTTP Web Framework
+
+Demo of serving static files and ability to handle dynamic GET/POST requests:
+
+```coffee
+static "/foo", FS("public")
+static "/"    # Equivalent to static "/", FS("static")
+
+get "/p/:id", ctx => {
+	ctx.json {
+		"id": ctx.param("id"),
+	}
+}
+
+run ":8080"
+```
+
+If you run it and visit http://localhost:8080/p/123, you will get:
+
+```
+{"id":"123"}
+```
+
+See [yap: Yet Another HTTP Web Framework](https://github.com/goplus/yap) for more details.
 
 
 ### spx: A Go+ 2D Game Engine
@@ -127,49 +170,6 @@ Yes, Jaime recieves the message `1` and says `I come from England.`. Then he bro
 The following procedures are very similar. In this way you can implement dialogues between multiple actors.
 
 See [spx: A Go+ 2D Game Engine](https://github.com/goplus/spx) for more details.
-
-
-### yap: Yet Another HTTP Web Framework
-
-Demo of serving static files and ability to handle dynamic GET/POST requests:
-
-```coffee
-static "/foo", FS("public")
-static "/"    # Equivalent to static "/", FS("static")
-
-get "/p/:id", ctx => {
-	ctx.json {
-		"id": ctx.param("id"),
-	}
-}
-
-run ":8080"
-```
-
-If you run it and visit http://localhost:8080/p/123, you will get:
-
-```
-{"id":"123"}
-```
-
-See [yap: Yet Another HTTP Web Framework](https://github.com/goplus/yap) for more details.
-
-
-### gsh: Go+ DevOps Tools
-
-Yes, now you can write `shell script` in Go+. It supports all shell commands.
-
-Let's create a file named `./example.gsh` and write the following code:
-
-```coffee
-mkdir "testgsh"
-```
-
-Don't need a `go.mod` file, just enter `gop run ./example.gsh` directly to run.
-
-It's strange to you that the file extension of Go+ source is not `.gop` but `.gsh`. It is only because Go+ register `.gsh` as a builtin [classfile](doc/classfile.md).
-
-See [gsh: Go+ DevOps Tools](https://github.com/qiniu/x/tree/main/gsh) for more details.
 
 
 ## Key Features of Go+
