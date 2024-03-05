@@ -25,7 +25,7 @@ import (
 
 // -----------------------------------------------------------------------------
 
-func initMathBig(pkg *gox.Package, conf *gox.Config, big gox.PkgRef) {
+func initMathBig(_ *gox.Package, conf *gox.Config, big gox.PkgRef) {
 	conf.UntypedBigInt = big.Ref("UntypedBigint").Type().(*types.Named)
 	conf.UntypedBigRat = big.Ref("UntypedBigrat").Type().(*types.Named)
 	conf.UntypedBigFloat = big.Ref("UntypedBigfloat").Type().(*types.Named)
@@ -38,7 +38,7 @@ func initBuiltinFns(builtin *types.Package, scope *types.Scope, pkg gox.PkgRef, 
 	}
 }
 
-func initBuiltin(pkg *gox.Package, builtin *types.Package, os, fmt, ng, iox, buil gox.PkgRef) {
+func initBuiltin(_ *gox.Package, builtin *types.Package, os, fmt, ng, iox, buil gox.PkgRef) {
 	scope := builtin.Scope()
 	if ng.Types != nil {
 		typs := []string{"bigint", "bigrat", "bigfloat"}

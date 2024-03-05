@@ -211,7 +211,7 @@ func TestErrPreloadFile(t *testing.T) {
 				}},
 			},
 		}
-		preloadFile(pkg, ctx, "foo.gop", &ast.File{Decls: decls}, "", true)
+		preloadFile(pkg, ctx, &ast.File{Decls: decls}, "", true)
 	})
 	t.Run("OverloadFuncDecl: unknown func", func(t *testing.T) {
 		defer func() {
@@ -228,7 +228,7 @@ func TestErrPreloadFile(t *testing.T) {
 				Operator: true,
 			},
 		}
-		preloadFile(pkg, ctx, "foo.gop", &ast.File{Decls: decls}, "", true)
+		preloadFile(pkg, ctx, &ast.File{Decls: decls}, "", true)
 	})
 	t.Run("unknown decl", func(t *testing.T) {
 		defer func() {
@@ -239,7 +239,7 @@ func TestErrPreloadFile(t *testing.T) {
 		decls := []ast.Decl{
 			&ast.BadDecl{},
 		}
-		preloadFile(pkg, ctx, "foo.gop", &ast.File{Decls: decls}, "", true)
+		preloadFile(pkg, ctx, &ast.File{Decls: decls}, "", true)
 	})
 }
 
