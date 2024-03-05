@@ -79,6 +79,9 @@ Abstract domain knowledge for it.
 
 Go+ introduces `classfile` to abstract domain knowledge.
 
+* [What's Classfile?](doc/classfile.md#whats-classfile)
+* [Dive into Go+ Classfiles](doc/classfile.md)
+
 Sound a bit abstract? Let's see some Go+ classfiles.
 
 * Unit Test: [classfile: Unit Test](https://github.com/goplus/gop/blob/main/doc/classfile.md#classfile-unit-test)
@@ -87,8 +90,6 @@ Sound a bit abstract? Let's see some Go+ classfiles.
 * Web Programming: [yaptest: HTTP Test Framework](https://github.com/goplus/yap#yaptest-http-test-framework)
 * Web Programming: [ydb: Database Framework](https://github.com/goplus/yap#ydb-database-framework)
 * STEM Education: [spx: A Go+ 2D Game Engine](https://github.com/goplus/spx)
-* Mechanism: [What's Classfile](doc/classfile.md#whats-classfile)
-* Mechanism: [Go+ Classfiles](doc/classfile.md)
 
 
 ### gsh: Go+ DevOps Tools
