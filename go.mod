@@ -8,15 +8,15 @@ require (
 	github.com/goplus/gox v1.14.13-0.20240221143457-e20cebf7f229
 	github.com/goplus/mod v0.13.8
 	github.com/qiniu/x v1.13.9
-	golang.org/x/tools v0.18.0
+	golang.org/x/tools v0.19.0
 )
 
 require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	golang.org/x/mod v0.15.0 // indirect
-	golang.org/x/sys v0.17.0 // indirect
+	golang.org/x/mod v0.16.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
 )
 
 retract v1.1.12
