@@ -62,7 +62,7 @@ func getBytes(stdout, stderr io.Writer) (o iBytes, ok bool) {
 	return
 }
 
-func goRun(t *testing.T, code []byte) string {
+func goRun(_ *testing.T, code []byte) string {
 	idx := atomic.AddInt64(&tmpFileIdx, 1)
 	infile := tmpDir + strconv.FormatInt(idx, 10) + ".go"
 	err := os.WriteFile(infile, []byte(code), 0666)

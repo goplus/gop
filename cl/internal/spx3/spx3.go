@@ -38,7 +38,7 @@ func (p *Sprite) Name() string {
 	return "sprite"
 }
 
-func (p *Sprite) initSprite() {}
+func (p *Sprite) initSprite(name string) {}
 
-func Gopt_Game_Main(game interface{ initGame() }, workers ...interface{ initSprite() }) {
+func Gopt_Game_Main(game interface{ initGame() }, workers ...interface{ initSprite(name string) }) {
 }
