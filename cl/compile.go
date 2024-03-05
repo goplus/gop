@@ -730,12 +730,12 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 			}
 		} else {
 			c := parent.classes[f]
+			classType = c.tname
 			proj, ctx.proj = c.proj, c.proj
 			ctx.autoimps = proj.autoimps
-			classType = c.tname
-			if isGoxTestFile(c.ext) { // test classfile
+			goxTestFile = proj.isTest
+			if goxTestFile { // test classfile
 				testType = c.tname
-				goxTestFile, proj.isTest = true, true
 				if !f.IsProj {
 					classType = casePrefix + testNameSuffix(testType)
 				}

@@ -92,7 +92,7 @@ func loadClass(ctx *pkgCtx, pkg *gox.Package, file string, f *ast.File, conf *Co
 	p, ok := ctx.projs[gt.Ext]
 	if !ok {
 		pkgPaths := gt.PkgPaths
-		p = &gmxProject{pkgPaths: pkgPaths}
+		p = &gmxProject{pkgPaths: pkgPaths, isTest: isGoxTestFile(ext)}
 		ctx.projs[gt.Ext] = p
 
 		p.pkgImps = make([]gox.PkgRef, len(pkgPaths))
