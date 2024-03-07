@@ -964,13 +964,11 @@ d := Var(M)
 const GopPackage = true
 
 var a Var__0[int]
-var b Var__1[map[string]interface {
-}]
+var b Var__1[map[string]interface{}]
 
 func main() {
 	c := Gopx_Var_Cast__0[string]()
-	d := Gopx_Var_Cast__1[map[string]interface {
-	}]()
+	d := Gopx_Var_Cast__1[map[string]interface{}]()
 }
 `)
 }

@@ -642,8 +642,7 @@ case interface{}(true):
 
 func main() {
 	switch {
-	case interface {
-	}(true):
+	case interface{}(true):
 	}
 }
 `)
@@ -1086,11 +1085,9 @@ func foo(v interface{}) {
 }
 `, `package main
 
-func bar(p *interface {
-}) {
+func bar(p *interface{}) {
 }
-func foo(v interface {
-}) {
+func foo(v interface{}) {
 	switch t := v.(type) {
 	case int, string:
 		bar(&v)
@@ -1117,11 +1114,9 @@ func foo(v interface{}) {
 }
 `, `package main
 
-func bar(p *interface {
-}) {
+func bar(p *interface{}) {
 }
-func foo(v interface {
-}) {
+func foo(v interface{}) {
 	switch bar(nil); v.(type) {
 	case int, string:
 		bar(&v)
@@ -1139,8 +1134,7 @@ func foo(v interface{}) {
 }
 `, `package main
 
-func foo(v interface {
-}) {
+func foo(v interface{}) {
 	x := v.(int)
 	y, ok := v.(string)
 }
@@ -1655,8 +1649,7 @@ var y *uint32 = (*uint32)(nil)
 
 var a = (*struct {
 })(nil)
-var b = interface {
-}(nil)
+var b = interface{}(nil)
 var c = (func())(nil)
 var x uint32 = uint32(0)
 var y *uint32 = (*uint32)(nil)
@@ -1936,8 +1929,7 @@ z := []
 func main() {
 	x := []float64{1, 3.4, 5}
 	y := []int{1}
-	z := []interface {
-	}{}
+	z := []interface{}{}
 }
 `)
 	gopClTest(t, `
@@ -3039,8 +3031,7 @@ func main() {
 
 import "fmt"
 
-func foo(format string, args ...interface {
-}) (int, error) {
+func foo(format string, args ...interface{}) (int, error) {
 	return fmt.Printf(format, args...)
 }
 func main() {
@@ -3058,8 +3049,7 @@ func main() {
 }
 `, `package main
 
-func foo(format string, args ...interface {
-}) (int, error) {
+func foo(format string, args ...interface{}) (int, error) {
 	return 0, nil
 }
 func main() {
@@ -3092,8 +3082,7 @@ func TestFunc(t *testing.T) {
 func main() {
 }`, `package main
 
-func foo(format string, a [10]int, args ...interface {
-}) {
+func foo(format string, a [10]int, args ...interface{}) {
 }
 func main() {
 }
@@ -3387,8 +3376,7 @@ bar(fmt.Printf)
 
 import "fmt"
 
-func bar(foo func(string, ...interface {
-}) (int, error)) {
+func bar(foo func(string, ...interface{}) (int, error)) {
 	foo("Hello, %v!\n", "Go+")
 }
 func main() {
@@ -3429,13 +3417,11 @@ import (
 func foo(x string) string {
 	return strings.NewReplacer("?", "!").Replace(x)
 }
-func printf(format string, args ...interface {
-}) (n int, err error) {
+func printf(format string, args ...interface{}) (n int, err error) {
 	n, err = fmt.Printf(format, args...)
 	return
 }
-func bar(foo func(string, ...interface {
-}) (int, error)) {
+func bar(foo func(string, ...interface{}) (int, error)) {
 	foo("Hello, %v!\n", "Go+")
 }
 func main() {
@@ -3471,8 +3457,7 @@ func main() {
 
 import "fmt"
 
-func foo(args ...interface {
-}) {
+func foo(args ...interface{}) {
 	fmt.Println(args...)
 }
 func main() {
@@ -3497,8 +3482,7 @@ import "fmt"
 func main() {
 	foo("Hello", 123)
 }
-func foo(args ...interface {
-}) {
+func foo(args ...interface{}) {
 	fmt.Println(args...)
 }
 `)
@@ -3959,10 +3943,8 @@ println {}
 import "fmt"
 
 func main() {
-	fmt.Println([]interface {
-	}{})
-	fmt.Println(map[string]interface {
-	}{})
+	fmt.Println([]interface{}{})
+	fmt.Println(map[string]interface{}{})
 }
 `)
 }
@@ -4024,8 +4006,7 @@ println(a)
 
 import "fmt"
 
-var a interface {
-} = 100
+var a interface{} = 100
 
 func main() {
 	fmt.Println(a)
