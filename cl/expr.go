@@ -28,11 +28,11 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/goplus/gogen"
+	"github.com/goplus/gogen/cpackages"
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/printer"
 	"github.com/goplus/gop/token"
-	"github.com/goplus/gox"
-	"github.com/goplus/gox/cpackages"
 )
 
 /*-----------------------------------------------------------------------------
@@ -79,7 +79,7 @@ const (
 	objGopExec = objGopExecOrEnv
 )
 
-func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg gox.PkgRef, kind int) {
+func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg gogen.PkgRef, kind int) {
 	fvalue := (flags&clIdentSelectorExpr) != 0 || (flags&clIdentLHS) == 0
 	cb := ctx.cb
 	name := ident.Name
@@ -143,7 +143,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg gox.PkgRef, k
 	}
 
 	// object from import . "xxx"
-	if compilePkgRef(ctx, gox.PkgRef{}, ident, flags, objPkgRef) {
+	if compilePkgRef(ctx, gogen.PkgRef{}, ident, flags, objPkgRef) {
 		return
 	}
 
@@ -179,7 +179,7 @@ find:
 	}
 	if rec := ctx.recorder(); rec != nil {
 		e := cb.Get(-1)
-		if oldo != nil && gox.IsTypeEx(e.Type) { // for builtin object
+		if oldo != nil && gogen.IsTypeEx(e.Type) { // for builtin object
 			rec.recordIdent(ident, oldo)
 			return
 		}
@@ -188,7 +188,7 @@ find:
 	return
 }
 
-func classRecv(cb *gox.CodeBuilder) *types.Var {
+func classRecv(cb *gogen.CodeBuilder) *types.Var {
 	if fn := cb.Func(); fn != nil {
 		sig := fn.Ancestor().Type().(*types.Signature)
 		return sig.Recv()
@@ -196,8 +196,8 @@ func classRecv(cb *gox.CodeBuilder) *types.Var {
 	return nil
 }
 
-func gopMember(cb *gox.CodeBuilder, recv *types.Var, op string, src ...ast.Node) error {
-	_, e := cb.Val(recv).Member(op, gox.MemberFlagVal, src...)
+func gopMember(cb *gogen.CodeBuilder, recv *types.Var, op string, src ...ast.Node) error {
+	_, e := cb.Val(recv).Member(op, gogen.MemberFlagVal, src...)
 	return e
 }
 
@@ -209,14 +209,14 @@ func isBuiltin(o types.Object) bool {
 }
 
 func compileMember(ctx *blockCtx, v ast.Node, name string, flags int) error {
-	var mflag gox.MemberFlag
+	var mflag gogen.MemberFlag
 	switch {
 	case (flags & clIdentLHS) != 0:
-		mflag = gox.MemberFlagRef
+		mflag = gogen.MemberFlagRef
 	case (flags & clIdentCanAutoCall) != 0:
-		mflag = gox.MemberFlagAutoProperty
+		mflag = gogen.MemberFlagAutoProperty
 	default:
-		mflag = gox.MemberFlagMethodAlias
+		mflag = gogen.MemberFlagMethodAlias
 	}
 	_, err := ctx.cb.Member(name, mflag, v)
 	return err
@@ -258,7 +258,7 @@ func identOrSelectorFlags(inFlags []int) (flags int, cmdNoArgs bool) {
 }
 
 func callCmdNoArgs(ctx *blockCtx, src ast.Node, panicErr bool) (err error) {
-	if gox.IsFunc(ctx.cb.InternalStack().Get(-1).Type) {
+	if gogen.IsFunc(ctx.cb.InternalStack().Get(-1).Type) {
 		if err = ctx.cb.CallWithEx(0, 0, src); err != nil {
 			if panicErr {
 				panic(err)
@@ -471,10 +471,10 @@ func compileFuncAlias(ctx *blockCtx, scope *types.Scope, x *ast.Ident, flags int
 	return false
 }
 
-func pkgRef(at gox.PkgRef, name string) (o types.Object, alias bool) {
+func pkgRef(at gogen.PkgRef, name string) (o types.Object, alias bool) {
 	if c := name[0]; c >= 'a' && c <= 'z' {
 		name = string(rune(c)+('A'-'a')) + name[1:]
-		if v := at.TryRef(name); v != nil && gox.IsFunc(v.Type()) {
+		if v := at.TryRef(name); v != nil && gogen.IsFunc(v.Type()) {
 			return v, true
 		}
 		return
@@ -483,7 +483,7 @@ func pkgRef(at gox.PkgRef, name string) (o types.Object, alias bool) {
 }
 
 // allow pkg.Types to be nil
-func lookupPkgRef(ctx *blockCtx, pkg gox.PkgRef, x *ast.Ident, pkgKind int) (o types.Object, alias bool) {
+func lookupPkgRef(ctx *blockCtx, pkg gogen.PkgRef, x *ast.Ident, pkgKind int) (o types.Object, alias bool) {
 	if pkg.Types != nil {
 		return pkgRef(pkg, x.Name)
 	}
@@ -515,7 +515,7 @@ func lookupPkgRef(ctx *blockCtx, pkg gox.PkgRef, x *ast.Ident, pkgKind int) (o t
 }
 
 // allow at.Types to be nil
-func compilePkgRef(ctx *blockCtx, at gox.PkgRef, x *ast.Ident, flags, pkgKind int) bool {
+func compilePkgRef(ctx *blockCtx, at gogen.PkgRef, x *ast.Ident, flags, pkgKind int) bool {
 	if v, alias := lookupPkgRef(ctx, at, x, pkgKind); v != nil {
 		if (flags & clIdentLHS) != 0 {
 			if rec := ctx.recorder(); rec != nil {
@@ -533,7 +533,7 @@ func identVal(ctx *blockCtx, x *ast.Ident, flags int, v types.Object, alias bool
 	autocall := false
 	if alias {
 		if autocall = (flags & clIdentCanAutoCall) != 0; autocall {
-			if !gox.HasAutoProperty(v.Type()) {
+			if !gogen.HasAutoProperty(v.Type()) {
 				return false
 			}
 		}
@@ -580,7 +580,7 @@ func (p *fnType) init(base int, t *types.Signature) {
 	}
 }
 
-func (p *fnType) initTypeType(t *gox.TypeType) {
+func (p *fnType) initTypeType(t *gogen.TypeType) {
 	param := types.NewParam(0, nil, "", t.Type())
 	p.params, p.typetype = types.NewTuple(param), true
 	p.size = 1
@@ -588,15 +588,15 @@ func (p *fnType) initTypeType(t *gox.TypeType) {
 
 func (p *fnType) load(fnt types.Type) {
 	switch v := fnt.(type) {
-	case *gox.TypeType:
+	case *gogen.TypeType:
 		p.initTypeType(v)
 	case *types.Signature:
-		typ, objs := gox.CheckSigFuncExObjects(v)
+		typ, objs := gogen.CheckSigFuncExObjects(v)
 		switch typ.(type) {
-		case *gox.TyOverloadFunc, *gox.TyOverloadMethod:
+		case *gogen.TyOverloadFunc, *gogen.TyOverloadMethod:
 			p.initFuncs(0, objs)
 			return
-		case *gox.TyTemplateRecvMethod:
+		case *gogen.TyTemplateRecvMethod:
 			p.initFuncs(1, objs)
 			return
 		}
@@ -653,13 +653,13 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 	var stk = ctx.cb.InternalStack()
 	var base = stk.Len()
 	var fnt = stk.Get(-1).Type
-	var flags gox.InstrFlags
+	var flags gogen.InstrFlags
 	var ellipsis = v.Ellipsis != gotoken.NoPos
 	if ellipsis {
-		flags = gox.InstrFlagEllipsis
+		flags = gogen.InstrFlagEllipsis
 	}
 	if (inFlags & clCallWithTwoValue) != 0 {
-		flags |= gox.InstrFlagTwoValue
+		flags |= gogen.InstrFlagTwoValue
 	}
 	fn := &fnType{}
 	fn.load(fnt)
@@ -685,7 +685,7 @@ func toBasicLit(fn *ast.Ident) *ast.BasicLit {
 
 // maybe builtin new/delete: see TestSpxNewObj, TestMayBuiltinDelete
 // maybe Gop_Exec: see TestSpxGopExec
-func builtinOrGopExec(ctx *blockCtx, ifn *ast.Ident, v *ast.CallExpr, flags gox.InstrFlags) error {
+func builtinOrGopExec(ctx *blockCtx, ifn *ast.Ident, v *ast.CallExpr, flags gogen.InstrFlags) error {
 	cb := ctx.cb
 	switch name := ifn.Name; name {
 	case "new", "delete":
@@ -701,7 +701,7 @@ func builtinOrGopExec(ctx *blockCtx, ifn *ast.Ident, v *ast.CallExpr, flags gox.
 	return syscall.ENOENT
 }
 
-func tryGopExec(cb *gox.CodeBuilder, ifn *ast.Ident) bool {
+func tryGopExec(cb *gogen.CodeBuilder, ifn *ast.Ident) bool {
 	if recv := classRecv(cb); recv != nil {
 		cb.InternalStack().PopN(1)
 		if gopMember(cb, recv, "Gop_Exec", ifn) == nil {
@@ -712,14 +712,14 @@ func tryGopExec(cb *gox.CodeBuilder, ifn *ast.Ident) bool {
 	return false
 }
 
-func fnCall(ctx *blockCtx, v *ast.CallExpr, flags gox.InstrFlags, extra int) error {
+func fnCall(ctx *blockCtx, v *ast.CallExpr, flags gogen.InstrFlags, extra int) error {
 	for _, arg := range v.Args {
 		compileExpr(ctx, arg)
 	}
 	return ctx.cb.CallWithEx(len(v.Args)+extra, flags, v)
 }
 
-func compileCallArgs(fn *fnType, ctx *blockCtx, v *ast.CallExpr, ellipsis bool, flags gox.InstrFlags) (err error) {
+func compileCallArgs(fn *fnType, ctx *blockCtx, v *ast.CallExpr, ellipsis bool, flags gogen.InstrFlags) (err error) {
 	for i, arg := range v.Args {
 		switch expr := arg.(type) {
 		case *ast.LambdaExpr:
@@ -840,7 +840,7 @@ func makeLambdaParams(ctx *blockCtx, pos token.Pos, lhs []*ast.Ident, in *types.
 	return types.NewTuple(params...), nil
 }
 
-func makeLambdaResults(pkg *gox.Package, out *types.Tuple) *types.Tuple {
+func makeLambdaResults(pkg *gogen.Package, out *types.Tuple) *types.Tuple {
 	nout := out.Len()
 	if nout == 0 {
 		return nil
@@ -938,7 +938,7 @@ func compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {
 	}
 }
 
-func basicLit(cb *gox.CodeBuilder, v *ast.BasicLit) {
+func basicLit(cb *gogen.CodeBuilder, v *ast.BasicLit) {
 	cb.Val(&goast.BasicLit{Kind: gotoken.Token(v.Kind), Value: v.Value}, v)
 }
 
@@ -946,7 +946,7 @@ const (
 	stringutilPkgPath = "github.com/qiniu/x/stringutil"
 )
 
-func compileStringLitEx(ctx *blockCtx, cb *gox.CodeBuilder, lit *ast.BasicLit) {
+func compileStringLitEx(ctx *blockCtx, cb *gogen.CodeBuilder, lit *ast.BasicLit) {
 	pos := lit.ValuePos + 1
 	quote := lit.Value[:1]
 	parts := lit.Extra.Parts
@@ -971,7 +971,7 @@ func compileStringLitEx(ctx *blockCtx, cb *gox.CodeBuilder, lit *ast.BasicLit) {
 			compileExpr(ctx, v, flags)
 			t := cb.Get(-1).Type
 			if t.Underlying() != types.Typ[types.String] {
-				cb.Member("string", gox.MemberFlagAutoProperty)
+				cb.Member("string", gogen.MemberFlagAutoProperty)
 			}
 			pos = v.End()
 		default:
@@ -1246,7 +1246,7 @@ func compileComprehensionExpr(ctx *blockCtx, v *ast.ComprehensionExpr, twoValue 
 	kind := comprehensionKind(v)
 	pkg, cb := ctx.pkg, ctx.cb
 	var results *types.Tuple
-	var ret *gox.Param
+	var ret *gogen.Param
 	if v.Elt == nil {
 		boolean := pkg.NewParam(token.NoPos, "_gop_ok", types.Typ[types.Bool])
 		results = types.NewTuple(boolean)
@@ -1358,7 +1358,7 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr, inFlags int) {
 	var ret []*types.Var
 	if n > 0 {
 		i, retName := 0, "_gop_ret"
-		ret = make([]*gox.Param, n)
+		ret = make([]*gogen.Param, n)
 		for {
 			ret[i] = pkg.NewAutoParam(retName)
 			i++

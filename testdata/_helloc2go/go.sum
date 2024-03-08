@@ -2,7 +2,7 @@ github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
 github.com/goplus/c2go v0.7.15/go.mod h1:SKSY0OvbO9JBkHRjyiJz3vz0rHpwPETjNj6AQ/rQZOg=
-github.com/goplus/gox v1.12.0/go.mod h1:Ek4bXv4xzfBiFuHC6yfkzHXrhUHXfrM9QyXtMusdkGo=
+github.com/goplus/gogen v1.12.0/go.mod h1:Ek4bXv4xzfBiFuHC6yfkzHXrhUHXfrM9QyXtMusdkGo=
 github.com/goplus/libc v0.3.15 h1:xfo4Lc66Sf7Dyel+gAT+5fCG0XOB7PxRE4892MH5zgg=
 github.com/goplus/libc v0.3.15/go.mod h1:ExS/KlOepeNJkY10ykY1Qgg6GPql+AItHNNsXuIZwgw=
 github.com/goplus/mod v0.11.5/go.mod h1:NDC5E+XOT8vcJCMjqKhLDJHTHX7lyVN4Vbfi2U7dBhs=

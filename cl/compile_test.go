@@ -23,13 +23,13 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/goplus/gogen"
 	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/parser/fsx/memfs"
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
-	"github.com/goplus/gox"
 	"github.com/goplus/mod/env"
 )
 
@@ -44,7 +44,7 @@ var (
 )
 
 func init() {
-	gox.SetDebug(gox.DbgFlagAll)
+	gogen.SetDebug(gogen.DbgFlagAll)
 	cl.SetDebug(cl.DbgFlagAll | cl.FlagNoMarkAutogen)
 	gblFset = token.NewFileSet()
 	imp := gop.NewImporter(nil, &env.Gop{Root: gopRootDir, Version: "1.0"}, gblFset)
@@ -114,7 +114,7 @@ func gopClTestFS(t *testing.T, conf *cl.Config, fs parser.FileSystem, pkgname, e
 	var b bytes.Buffer
 	err = pkg.WriteTo(&b)
 	if err != nil {
-		t.Fatal("gox.WriteTo failed:", err)
+		t.Fatal("gogen.WriteTo failed:", err)
 	}
 	result := b.String()
 	if result != expected {
@@ -1620,7 +1620,7 @@ var x = ng.Bigrat_Init__2(big.NewRat(7, 2))
 }
 
 func TestBigRatAdd(t *testing.T) {
-	gox.SetDebug(gox.DbgFlagAll)
+	gogen.SetDebug(gogen.DbgFlagAll)
 	gopClTest(t, `
 var x = 3 + 1/2r
 var y = x + 100

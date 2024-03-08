@@ -96,7 +96,7 @@ func genGo(t *testing.T, conf *cl.Config, gopcode string) []byte {
 	var b bytes.Buffer
 	err = pkg.WriteTo(&b)
 	if err != nil {
-		t.Fatal("gox.WriteTo failed:", err)
+		t.Fatal("gogen.WriteTo failed:", err)
 	}
 	return b.Bytes()
 }

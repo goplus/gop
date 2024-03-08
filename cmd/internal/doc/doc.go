@@ -25,13 +25,13 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/goplus/gogen"
 	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cl/outline"
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/gop/x/gopprojs"
-	"github.com/goplus/gox"
 )
 
 // -----------------------------------------------------------------------------
@@ -70,7 +70,7 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 
 	if *debug {
-		gox.SetDebug(gox.DbgFlagAll &^ gox.DbgFlagComments)
+		gogen.SetDebug(gogen.DbgFlagAll &^ gogen.DbgFlagComments)
 		cl.SetDebug(cl.DbgFlagAll)
 		cl.SetDisableRecover(true)
 	}

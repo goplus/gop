@@ -8,7 +8,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/google/gofuzz v1.0.0 // indirect
 	github.com/goplus/c2go v0.7.15 // indirect
-	github.com/goplus/gox v1.12.0 // indirect
+	github.com/goplus/gogen v1.12.0 // indirect
 	github.com/goplus/mod v0.11.5 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect

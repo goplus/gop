@@ -26,11 +26,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/goplus/gogen"
+	"github.com/goplus/gogen/cpackages"
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/fromgo"
 	"github.com/goplus/gop/token"
-	"github.com/goplus/gox"
-	"github.com/goplus/gox/cpackages"
 	"github.com/goplus/mod/modfile"
 	"github.com/qiniu/x/errors"
 )
@@ -353,18 +353,18 @@ type pkgCtx struct {
 }
 
 type pkgImp struct {
-	gox.PkgRef
+	gogen.PkgRef
 	pkgName *types.PkgName
 }
 
 type blockCtx struct {
 	*pkgCtx
 	proj       *gmxProject
-	pkg        *gox.Package
-	cb         *gox.CodeBuilder
+	pkg        *gogen.Package
+	cb         *gogen.CodeBuilder
 	imports    map[string]pkgImp
 	autoimps   map[string]pkgImp
-	lookups    []gox.PkgRef
+	lookups    []gogen.PkgRef
 	clookups   []cpackages.PkgRef
 	tlookup    *typeParamLookup
 	c2goBase   string // default is `github.com/goplus/`
@@ -397,11 +397,11 @@ func (p *blockCtx) findImport(name string) (pi pkgImp, ok bool) {
 }
 
 func (p *pkgCtx) newCodeError(pos token.Pos, msg string) error {
-	return &gox.CodeError{Fset: p.nodeInterp, Pos: pos, Msg: msg}
+	return &gogen.CodeError{Fset: p.nodeInterp, Pos: pos, Msg: msg}
 }
 
 func (p *pkgCtx) newCodeErrorf(pos token.Pos, format string, args ...interface{}) error {
-	return &gox.CodeError{Fset: p.nodeInterp, Pos: pos, Msg: fmt.Sprintf(format, args...)}
+	return &gogen.CodeError{Fset: p.nodeInterp, Pos: pos, Msg: fmt.Sprintf(format, args...)}
 }
 
 func (p *pkgCtx) handleErrorf(pos token.Pos, format string, args ...interface{}) {
@@ -412,7 +412,7 @@ func (p *pkgCtx) handleErr(err error) {
 	p.errs = append(p.errs, err)
 }
 
-func (p *pkgCtx) loadNamed(at *gox.Package, t *types.Named) {
+func (p *pkgCtx) loadNamed(at *gogen.Package, t *types.Named) {
 	o := t.Obj()
 	if o.Pkg() == at.Types {
 		p.loadType(o.Name())
@@ -480,7 +480,7 @@ const (
 )
 
 // NewPackage creates a Go+ package instance.
-func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package, err error) {
+func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Package, err error) {
 	relBaseDir := conf.RelativeBase
 	fset := conf.Fset
 	files := pkg.Files
@@ -495,7 +495,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		syms:       make(map[string]loader),
 		generics:   make(map[string]bool),
 	}
-	confGox := &gox.Config{
+	confGox := &gogen.Config{
 		Types:           conf.Types,
 		Fset:            fset,
 		Importer:        conf.Importer,
@@ -521,7 +521,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 			}
 		}()
 	}
-	p = gox.NewPackage(pkgPath, pkg.Name, confGox)
+	p = gogen.NewPackage(pkgPath, pkg.Name, confGox)
 
 	if !noMarkAutogen {
 		p.CB().NewConstStart(nil, "_").Val(true).EndInit(1)
@@ -636,7 +636,7 @@ func isOverloadFunc(name string) bool {
 	return n > 3 && name[n-3:n-1] == "__"
 }
 
-func initGopPkg(ctx *pkgCtx, pkg *gox.Package, gopSyms map[string]bool) {
+func initGopPkg(ctx *pkgCtx, pkg *gogen.Package, gopSyms map[string]bool) {
 	for name, f := range ctx.syms {
 		if gopSyms[name] {
 			continue
@@ -654,7 +654,7 @@ func initGopPkg(ctx *pkgCtx, pkg *gox.Package, gopSyms map[string]bool) {
 			ctx.loadType(lbi.(*ast.Ident).Name)
 		}
 	}
-	gox.InitThisGopPkg(pkg.Types)
+	gogen.InitThisGopPkg(pkg.Types)
 }
 
 func inMainPkg(f *ast.File) bool {
@@ -716,7 +716,7 @@ func genGoFile(file string, goxTestFile bool) string {
 	return defaultGoFile
 }
 
-func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, conf *Config) {
+func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, conf *Config) {
 	var proj *gmxProject
 	var c *gmxClass
 	var classType string
@@ -764,7 +764,7 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 			log.Println("==> Preload type", classType)
 		}
 		if proj != nil {
-			ctx.lookups = make([]gox.PkgRef, len(proj.pkgPaths))
+			ctx.lookups = make([]gogen.PkgRef, len(proj.pkgPaths))
 			for i, pkgPath := range proj.pkgPaths {
 				ctx.lookups[i] = p.Import(pkgPath)
 			}
@@ -928,7 +928,7 @@ retry:
 	panic("TODO: parseTypeEmbedName unexpected")
 }
 
-func preloadFile(p *gox.Package, ctx *blockCtx, f *ast.File, goFile string, genFnBody bool) {
+func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, genFnBody bool) {
 	parent := ctx.pkgCtx
 	syms := parent.syms
 	old, _ := p.SetCurFile(goFile, true)
@@ -1359,7 +1359,7 @@ var unaryGopNames = map[string]string{
 	"<-": "Gop_Recv",
 }
 
-func loadFuncBody(ctx *blockCtx, fn *gox.Func, body *ast.BlockStmt, sigBase *types.Signature, src ast.Node) {
+func loadFuncBody(ctx *blockCtx, fn *gogen.Func, body *ast.BlockStmt, sigBase *types.Signature, src ast.Node) {
 	cb := fn.BodyStart(ctx.pkg, body)
 	if sigBase != nil {
 		// this.Sprite.Main(...) or this.Game.MainEntry(...)
@@ -1398,7 +1398,7 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 			}
 		}()
 	}
-	var pkg gox.PkgRef
+	var pkg gogen.PkgRef
 	var pkgPath = toString(spec.Path)
 	if realPath, kind := checkC2go(pkgPath); kind != c2goInvalid {
 		if kind == c2goStandard {
@@ -1444,14 +1444,14 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 	ctx.imports[name] = pkgImp{pkg, pkgName}
 }
 
-func loadConstSpecs(ctx *blockCtx, cdecl *gox.ConstDefs, specs []ast.Spec) {
+func loadConstSpecs(ctx *blockCtx, cdecl *gogen.ConstDefs, specs []ast.Spec) {
 	for iotav, spec := range specs {
 		vSpec := spec.(*ast.ValueSpec)
 		loadConsts(ctx, cdecl, vSpec, iotav)
 	}
 }
 
-func loadConsts(ctx *blockCtx, cdecl *gox.ConstDefs, v *ast.ValueSpec, iotav int) {
+func loadConsts(ctx *blockCtx, cdecl *gogen.ConstDefs, v *ast.ValueSpec, iotav int) {
 	vNames := v.Names
 	names := makeNames(vNames)
 	if v.Values == nil {
@@ -1469,7 +1469,7 @@ func loadConsts(ctx *blockCtx, cdecl *gox.ConstDefs, v *ast.ValueSpec, iotav int
 	if debugLoad {
 		log.Println("==> Load const", names, typ)
 	}
-	fn := func(cb *gox.CodeBuilder) int {
+	fn := func(cb *gogen.CodeBuilder) int {
 		for _, val := range v.Values {
 			compileExpr(ctx, val)
 		}

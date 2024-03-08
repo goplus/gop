@@ -19,11 +19,11 @@ package cl
 import (
 	"go/types"
 
+	"github.com/goplus/gogen"
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/fromgo"
 	"github.com/goplus/gop/cl/internal/typesutil"
 	"github.com/goplus/gop/token"
-	"github.com/goplus/gox"
 )
 
 type goxRecorder struct {
@@ -121,7 +121,7 @@ func (rec *goxRecorder) instantiate(expr ast.Expr, _, typ types.Type) {
 
 func (rec *goxRecorder) recordTypeValue(ctx *blockCtx, expr ast.Expr, mode typesutil.OperandMode) {
 	e := ctx.cb.Get(-1)
-	t, _ := gox.DerefType(e.Type)
+	t, _ := gogen.DerefType(e.Type)
 	rec.Type(expr, typesutil.NewTypeAndValueForValue(t, e.CVal, mode))
 }
 

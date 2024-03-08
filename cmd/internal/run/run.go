@@ -22,12 +22,12 @@ import (
 	"os"
 	"reflect"
 
+	"github.com/goplus/gogen"
 	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/x/gocmd"
 	"github.com/goplus/gop/x/gopprojs"
-	"github.com/goplus/gox"
 	"github.com/qiniu/x/log"
 )
 
@@ -68,11 +68,11 @@ func runCmd(cmd *base.Command, args []string) {
 	if *flagQuiet {
 		log.SetOutputLevel(0x7000)
 	} else if *flagDebug {
-		gox.SetDebug(gox.DbgFlagAll &^ gox.DbgFlagComments)
+		gogen.SetDebug(gogen.DbgFlagAll &^ gogen.DbgFlagComments)
 		cl.SetDebug(cl.DbgFlagAll)
 		cl.SetDisableRecover(true)
 	} else if *flagAsm {
-		gox.SetDebug(gox.DbgFlagInstruction)
+		gogen.SetDebug(gogen.DbgFlagInstruction)
 	}
 
 	if *flagProf {
