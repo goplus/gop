@@ -22,7 +22,7 @@ import (
 	"go/token"
 	"strconv"
 
-	xtoken "github.com/goplus/gox/token"
+	xtoken "github.com/goplus/gogen/token"
 )
 
 // Token is the set of lexical tokens of the Go+ programming language.

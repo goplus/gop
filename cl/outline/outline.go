@@ -20,10 +20,10 @@ import (
 	"go/types"
 	"strings"
 
+	"github.com/goplus/gogen"
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/token"
-	"github.com/goplus/gox"
 	"github.com/goplus/mod/modfile"
 	"golang.org/x/tools/go/types/typeutil"
 )
@@ -53,7 +53,7 @@ type Config struct {
 
 type Package struct {
 	pkg  *types.Package
-	docs gox.ObjectDocs
+	docs gogen.ObjectDocs
 }
 
 // NewPackage creates a Go/Go+ outline package.
@@ -362,7 +362,7 @@ func (p Var) Doc() string {
 
 type Func struct {
 	*types.Func
-	docs gox.ObjectDocs
+	docs gogen.ObjectDocs
 }
 
 func (p Func) Obj() types.Object {
@@ -523,7 +523,7 @@ func (p Type) CheckNamed(pkg Package) (_ Named, ok bool) {
 
 type Named struct {
 	*types.Named
-	docs gox.ObjectDocs
+	docs gogen.ObjectDocs
 }
 
 func (p Named) Methods() []Func {

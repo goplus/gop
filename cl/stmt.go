@@ -26,9 +26,9 @@ import (
 	gotoken "go/token"
 	"go/types"
 
+	"github.com/goplus/gogen"
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
-	"github.com/goplus/gox"
 )
 
 func fileLineFile(relBaseDir, absFile string) string {
@@ -51,7 +51,7 @@ func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
 	}
 }
 
-func commentStmtEx(cb *gox.CodeBuilder, ctx *pkgCtx, stmt ast.Stmt) {
+func commentStmtEx(cb *gogen.CodeBuilder, ctx *pkgCtx, stmt ast.Stmt) {
 	start := stmt.Pos()
 	if start == token.NoPos {
 		cb.SetComments(nil, false)
@@ -80,7 +80,7 @@ func checkStmtDoc(stmt ast.Stmt) *ast.CommentGroup {
 	return nil
 }
 
-func commentFunc(ctx *blockCtx, fn *gox.Func, decl *ast.FuncDecl) {
+func commentFunc(ctx *blockCtx, fn *gogen.Func, decl *ast.FuncDecl) {
 	start := decl.Name.Pos()
 	if ctx.fileLine && start != token.NoPos {
 		if decl.Doc != nil {
@@ -653,7 +653,7 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 		for _, citem := range c.List {
 			compileExpr(ctx, citem)
 			T := cb.Get(-1).Type
-			if tt, ok := T.(*gox.TypeType); ok {
+			if tt, ok := T.(*gogen.TypeType); ok {
 				T = tt.Type()
 			}
 			var haserr bool
@@ -857,7 +857,7 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 	}
 }
 
-func getLabel(ctx *blockCtx, label *ast.Ident) *gox.Label {
+func getLabel(ctx *blockCtx, label *ast.Ident) *gogen.Label {
 	if label != nil {
 		if l, ok := ctx.cb.LookupLabel(label.Name); ok {
 			return l

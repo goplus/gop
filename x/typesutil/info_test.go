@@ -15,13 +15,13 @@ import (
 	"testing"
 	"unsafe"
 
+	"github.com/goplus/gogen"
 	"github.com/goplus/gop"
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/format"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gop/x/typesutil"
-	"github.com/goplus/gox"
 	"github.com/goplus/mod/env"
 	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modfile"
@@ -1972,11 +1972,11 @@ func (p *N) Test__1(n int) {
 	if named.NumMethods() == 2 {
 		t.Fatal("found overload method failed")
 	}
-	ext, ok := gox.CheckFuncEx(named.Method(2).Type().(*types.Signature))
+	ext, ok := gogen.CheckFuncEx(named.Method(2).Type().(*types.Signature))
 	if !ok {
 		t.Fatal("checkFuncEx failed")
 	}
-	m, ok := ext.(*gox.TyOverloadMethod)
+	m, ok := ext.(*gogen.TyOverloadMethod)
 	if !ok || len(m.Methods) != 2 {
 		t.Fatal("check TyOverloadMethod failed")
 	}

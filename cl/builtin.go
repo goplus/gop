@@ -20,25 +20,25 @@ import (
 	"go/token"
 	"go/types"
 
-	"github.com/goplus/gox"
+	"github.com/goplus/gogen"
 )
 
 // -----------------------------------------------------------------------------
 
-func initMathBig(_ *gox.Package, conf *gox.Config, big gox.PkgRef) {
+func initMathBig(_ *gogen.Package, conf *gogen.Config, big gogen.PkgRef) {
 	conf.UntypedBigInt = big.Ref("UntypedBigint").Type().(*types.Named)
 	conf.UntypedBigRat = big.Ref("UntypedBigrat").Type().(*types.Named)
 	conf.UntypedBigFloat = big.Ref("UntypedBigfloat").Type().(*types.Named)
 }
 
-func initBuiltinFns(builtin *types.Package, scope *types.Scope, pkg gox.PkgRef, fns []string) {
+func initBuiltinFns(builtin *types.Package, scope *types.Scope, pkg gogen.PkgRef, fns []string) {
 	for _, fn := range fns {
 		fnTitle := string(fn[0]-'a'+'A') + fn[1:]
-		scope.Insert(gox.NewOverloadFunc(token.NoPos, builtin, fn, pkg.Ref(fnTitle)))
+		scope.Insert(gogen.NewOverloadFunc(token.NoPos, builtin, fn, pkg.Ref(fnTitle)))
 	}
 }
 
-func initBuiltin(_ *gox.Package, builtin *types.Package, os, fmt, ng, iox, buil gox.PkgRef) {
+func initBuiltin(_ *gogen.Package, builtin *types.Package, os, fmt, ng, iox, buil gogen.PkgRef) {
 	scope := builtin.Scope()
 	if ng.Types != nil {
 		typs := []string{"bigint", "bigrat", "bigfloat"}
@@ -50,7 +50,7 @@ func initBuiltin(_ *gox.Package, builtin *types.Package, os, fmt, ng, iox, buil 
 		scope.Insert(types.NewTypeName(token.NoPos, builtin, "int128", ng.Ref("Int128").Type()))
 	}
 	if fmt.Types != nil {
-		scope.Insert(gox.NewOverloadFunc(token.NoPos, builtin, "echo", fmt.Ref("Println")))
+		scope.Insert(gogen.NewOverloadFunc(token.NoPos, builtin, "echo", fmt.Ref("Println")))
 		initBuiltinFns(builtin, scope, fmt, []string{
 			"print", "println", "printf", "errorf",
 			"fprint", "fprintln", "fprintf",
@@ -66,15 +66,15 @@ func initBuiltin(_ *gox.Package, builtin *types.Package, os, fmt, ng, iox, buil 
 		initBuiltinFns(builtin, scope, iox, []string{
 			"lines",
 		})
-		scope.Insert(gox.NewOverloadFunc(token.NoPos, builtin, "blines", iox.Ref("BLines")))
+		scope.Insert(gogen.NewOverloadFunc(token.NoPos, builtin, "blines", iox.Ref("BLines")))
 	}
 	if buil.Types != nil {
-		scope.Insert(gox.NewOverloadFunc(token.NoPos, builtin, "newRange", buil.Ref("NewRange__0")))
+		scope.Insert(gogen.NewOverloadFunc(token.NoPos, builtin, "newRange", buil.Ref("NewRange__0")))
 	}
-	scope.Insert(types.NewTypeName(token.NoPos, builtin, "any", gox.TyEmptyInterface))
+	scope.Insert(types.NewTypeName(token.NoPos, builtin, "any", gogen.TyEmptyInterface))
 }
 
-func newBuiltinDefault(pkg *gox.Package, conf *gox.Config) *types.Package {
+func newBuiltinDefault(pkg *gogen.Package, conf *gogen.Config) *types.Package {
 	builtin := types.NewPackage("", "")
 	fmt := pkg.TryImport("fmt")
 	os := pkg.TryImport("os")
@@ -87,7 +87,7 @@ func newBuiltinDefault(pkg *gox.Package, conf *gox.Config) *types.Package {
 		initMathBig(pkg, conf, ng)
 	}
 	initBuiltin(pkg, builtin, os, fmt, ng, iox, buil)
-	gox.InitBuiltin(pkg, builtin, conf)
+	gogen.InitBuiltin(pkg, builtin, conf)
 	return builtin
 }
 

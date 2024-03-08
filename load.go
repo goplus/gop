@@ -24,13 +24,13 @@ import (
 	"path"
 	"strings"
 
+	"github.com/goplus/gogen"
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gop/x/c2go"
 	"github.com/goplus/gop/x/gopenv"
-	"github.com/goplus/gox"
 	"github.com/goplus/mod/env"
 	"github.com/goplus/mod/gopmod"
 	"github.com/qiniu/x/errors"
@@ -54,11 +54,11 @@ func IgnoreNotated(err error) bool {
 // ErrorPos returns where the error occurs.
 func ErrorPos(err error) token.Pos {
 	switch v := err.(type) {
-	case *gox.CodeError:
+	case *gogen.CodeError:
 		return v.Pos
-	case *gox.MatchError:
+	case *gogen.MatchError:
 		return v.Pos()
-	case *gox.ImportError:
+	case *gogen.ImportError:
 		return v.Pos
 	}
 	return token.NoPos
@@ -124,7 +124,7 @@ type Config struct {
 	Filter func(fs.FileInfo) bool
 
 	// If not nil, it is used for returning result of checks Go+ dependencies.
-	// see https://pkg.go.dev/github.com/goplus/gox#File.CheckGopDeps
+	// see https://pkg.go.dev/github.com/goplus/gogen#File.CheckGopDeps
 	GopDeps *int
 
 	IgnoreNotatedError bool
@@ -184,7 +184,7 @@ func FilterNoTestFiles(fi fs.FileInfo) bool {
 // -----------------------------------------------------------------------------
 
 // LoadDir loads Go+ packages from a specified directory.
-func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (out, test *gox.Package, err error) {
+func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (out, test *gogen.Package, err error) {
 	if conf == nil {
 		conf = new(Config)
 	}
@@ -266,7 +266,7 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 	return
 }
 
-func afterLoad(mod *gopmod.Module, gop *env.Gop, out, test *gox.Package, conf *Config) {
+func afterLoad(mod *gopmod.Module, gop *env.Gop, out, test *gogen.Package, conf *Config) {
 	if mod.Path() == gopMod { // nothing to do for Go+ itself
 		return
 	}
@@ -287,8 +287,8 @@ func afterLoad(mod *gopmod.Module, gop *env.Gop, out, test *gox.Package, conf *C
 	}
 }
 
-func checkGopDeps(pkg *gox.Package) (flags int) {
-	pkg.ForEachFile(func(fname string, file *gox.File) {
+func checkGopDeps(pkg *gogen.Package) (flags int) {
+	pkg.ForEachFile(func(fname string, file *gogen.File) {
 		flags |= file.CheckGopDeps(pkg)
 	})
 	return
@@ -305,7 +305,7 @@ func relativeBaseOf(mod *gopmod.Module) string {
 // -----------------------------------------------------------------------------
 
 // LoadDir loads a Go+ package from specified files.
-func LoadFiles(dir string, files []string, conf *Config) (out *gox.Package, err error) {
+func LoadFiles(dir string, files []string, conf *Config) (out *gogen.Package, err error) {
 	if conf == nil {
 		conf = new(Config)
 	}

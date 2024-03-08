@@ -105,7 +105,7 @@ func gopSpxTestExConf(t *testing.T, name string, conf *cl.Config, gmx, spxcode, 
 		var b bytes.Buffer
 		err = pkg.WriteTo(&b, resultFile)
 		if err != nil {
-			t.Fatal("gox.WriteTo failed:", err)
+			t.Fatal("gogen.WriteTo failed:", err)
 		}
 		result := b.String()
 		if result != expected {

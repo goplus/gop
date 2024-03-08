@@ -19,8 +19,8 @@ package cl
 import (
 	"strings"
 
+	"github.com/goplus/gogen"
 	"github.com/goplus/gop/ast"
-	"github.com/goplus/gox"
 )
 
 const (
@@ -57,7 +57,7 @@ func c2goBase(base string) string {
 
 // -----------------------------------------------------------------------------
 
-func loadC2goPkg(ctx *blockCtx, realPath string, src *ast.BasicLit) (ret gox.PkgRef) {
+func loadC2goPkg(ctx *blockCtx, realPath string, src *ast.BasicLit) (ret gogen.PkgRef) {
 	cpkg, err := ctx.cpkgs.Import(realPath)
 	if err != nil {
 		ctx.handleErrorf(src.Pos(),
