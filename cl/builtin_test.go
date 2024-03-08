@@ -287,8 +287,12 @@ func TestMarkAutogen(t *testing.T) {
 }
 
 func TestClassNameAndExt(t *testing.T) {
-	name, ext := ClassNameAndExt("/foo/bar.abc_yap.gox")
-	if name != "bar" || ext != "_yap.gox" {
+	name, clsfile, ext := ClassNameAndExt("/foo/bar.abc_yap.gox")
+	if name != "bar_abc" || clsfile != "bar.abc" || ext != "_yap.gox" {
+		t.Fatal("classNameAndExt:", name, ext)
+	}
+	name, clsfile, ext = ClassNameAndExt("/foo/get-bar_:id.yap")
+	if name != "get_bar_id" || clsfile != "get-bar_:id" || ext != ".yap" {
 		t.Fatal("classNameAndExt:", name, ext)
 	}
 }
@@ -447,7 +451,7 @@ func TestGmxProject(t *testing.T) {
 	pkg := gox.NewPackage("", "foo", goxConf)
 	ctx := &pkgCtx{
 		projs:   make(map[string]*gmxProject),
-		classes: make(map[*ast.File]gmxClass),
+		classes: make(map[*ast.File]*gmxClass),
 	}
 	gmx := loadClass(ctx, pkg, "main.t2gmx", &ast.File{IsProj: true}, &Config{
 		LookupClass: lookupClass,

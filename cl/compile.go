@@ -338,7 +338,7 @@ func doInitMethods(ld *typeLoader) {
 type pkgCtx struct {
 	*nodeInterp
 	projs    map[string]*gmxProject // .gmx => project
-	classes  map[*ast.File]gmxClass
+	classes  map[*ast.File]*gmxClass
 	fset     *token.FileSet
 	cpkgs    *cpackages.Importer
 	syms     map[string]loader
@@ -369,9 +369,12 @@ type blockCtx struct {
 	tlookup    *typeParamLookup
 	c2goBase   string // default is `github.com/goplus/`
 	relBaseDir string
-	classRecv  *ast.FieldList // available when gmxSettings != nil
-	fileScope  *types.Scope   // only valid when isGopFile
-	rec        *goxRecorder
+
+	classRecv *ast.FieldList // available when isClass
+	baseClass types.Object   // available when isClass
+
+	fileScope *types.Scope // available when isGopFile
+	rec       *goxRecorder
 
 	fileLine  bool
 	isClass   bool
@@ -488,7 +491,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		fset:       fset,
 		nodeInterp: interp,
 		projs:      make(map[string]*gmxProject),
-		classes:    make(map[*ast.File]gmxClass),
+		classes:    make(map[*ast.File]*gmxClass),
 		syms:       make(map[string]loader),
 		generics:   make(map[string]bool),
 	}
@@ -715,6 +718,7 @@ func genGoFile(file string, goxTestFile bool) string {
 
 func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, conf *Config) {
 	var proj *gmxProject
+	var c *gmxClass
 	var classType string
 	var testType string
 	var baseTypeName string
@@ -724,12 +728,12 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 	var parent = ctx.pkgCtx
 	if f.IsClass {
 		if f.IsNormalGox {
-			classType, _ = ClassNameAndExt(file)
+			classType, _, _ = ClassNameAndExt(file)
 			if classType == "main" {
 				classType = "_main"
 			}
 		} else {
-			c := parent.classes[f]
+			c = parent.classes[f]
 			classType = c.tname
 			proj, ctx.proj = c.proj, c.proj
 			ctx.autoimps = proj.autoimps
@@ -742,12 +746,14 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 			}
 			if f.IsProj {
 				o := proj.game
+				ctx.baseClass = o
 				baseTypeName, baseType = o.Name(), o.Type()
 				if proj.gameIsPtr {
 					baseType = types.NewPointer(baseType)
 				}
 			} else {
 				o := proj.sprite[c.ext]
+				ctx.baseClass = o
 				baseTypeName, baseType, spxClass = o.Name(), o.Type(), true
 			}
 		}
@@ -846,6 +852,31 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 				X: &ast.Ident{Name: classType},
 			},
 		}}}
+		// func Classfname() string
+		if spxClass {
+			f.Decls = append(f.Decls, &ast.FuncDecl{
+				Name: &ast.Ident{
+					Name: "Classfname",
+				},
+				Type: &ast.FuncType{
+					Params: &ast.FieldList{},
+					Results: &ast.FieldList{
+						List: []*ast.Field{
+							{Type: &ast.Ident{Name: "string"}},
+						},
+					},
+				},
+				Body: &ast.BlockStmt{
+					List: []ast.Stmt{
+						&ast.ReturnStmt{
+							Results: []ast.Expr{
+								&ast.BasicLit{Kind: token.STRING, Value: strconv.Quote(c.clsfile)},
+							},
+						},
+					},
+				},
+			})
+		}
 	}
 	if d := f.ShadowEntry; d != nil {
 		d.Name.Name = getEntrypoint(f)
@@ -1215,8 +1246,17 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) {
 			log.Printf("==> Load method %v.%s\n", recv.Type(), name)
 		}
 	}
-	pkg := ctx.pkg
-	if d.Operator {
+	var pkg = ctx.pkg
+	var sigBase *types.Signature
+	if d.Shadow {
+		if recv != nil {
+			if base := ctx.baseClass; base != nil {
+				if f := findMethod(base, name); f != nil {
+					sigBase = makeMainSig(recv, f)
+				}
+			}
+		}
+	} else if d.Operator {
 		if recv != nil { // binary op
 			if v, ok := binaryGopNames[name]; ok {
 				name = v
@@ -1232,7 +1272,10 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) {
 			}
 		}
 	}
-	sig := toFuncType(ctx, d.Type, recv, d)
+	sig := sigBase
+	if sig == nil {
+		sig = toFuncType(ctx, d.Type, recv, d)
+	}
 	fn, err := pkg.NewFuncWith(d.Name.Pos(), name, sig, func() token.Pos {
 		return d.Recv.List[0].Type.Pos()
 	})
@@ -1253,11 +1296,11 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) {
 				file := pkg.CurFile()
 				ctx.inits = append(ctx.inits, func() { // interface issue: #795
 					old := pkg.RestoreCurFile(file)
-					loadFuncBody(ctx, fn, body, d)
+					loadFuncBody(ctx, fn, body, sigBase, d)
 					pkg.RestoreCurFile(old)
 				})
 			} else {
-				loadFuncBody(ctx, fn, body, d)
+				loadFuncBody(ctx, fn, body, nil, d)
 			}
 		}
 	}
@@ -1316,8 +1359,18 @@ var unaryGopNames = map[string]string{
 	"<-": "Gop_Recv",
 }
 
-func loadFuncBody(ctx *blockCtx, fn *gox.Func, body *ast.BlockStmt, src ast.Node) {
+func loadFuncBody(ctx *blockCtx, fn *gox.Func, body *ast.BlockStmt, sigBase *types.Signature, src ast.Node) {
 	cb := fn.BodyStart(ctx.pkg, body)
+	if sigBase != nil {
+		// this.Sprite.Main(...) or this.Game.MainEntry(...)
+		cb.VarVal("this").MemberVal(ctx.baseClass.Name()).MemberVal(fn.Name())
+		params := sigBase.Params()
+		n := params.Len()
+		for i := 0; i < n; i++ {
+			cb.Val(params.At(i))
+		}
+		cb.Call(n).EndStmt()
+	}
 	compileStmts(ctx, body.List)
 	if rec := ctx.recorder(); rec != nil {
 		switch fn := src.(type) {

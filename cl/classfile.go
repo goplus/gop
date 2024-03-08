@@ -33,9 +33,10 @@ import (
 // -----------------------------------------------------------------------------
 
 type gmxClass struct {
-	tname string // class type
-	ext   string
-	proj  *gmxProject
+	tname   string // class type
+	clsfile string
+	ext     string
+	proj    *gmxProject
 }
 
 type gmxProject struct {
@@ -70,11 +71,12 @@ func (p *gmxProject) getScheds(cb *gox.CodeBuilder) []goast.Stmt {
 	return p.schedStmts
 }
 
-func ClassNameAndExt(file string) (name, ext string) {
+func ClassNameAndExt(file string) (name, clsfile, ext string) {
 	fname := filepath.Base(file)
-	name, ext = modfile.SplitFname(fname)
-	if idx := strings.Index(name, "."); idx > 0 {
-		name = name[:idx]
+	clsfile, ext = modfile.SplitFname(fname)
+	name = clsfile
+	if strings.ContainsAny(name, ":-.") {
+		name = strings.NewReplacer(":", "", "-", "_", ".", "_").Replace(name)
 	}
 	return
 }
@@ -84,7 +86,7 @@ func isGoxTestFile(ext string) bool {
 }
 
 func loadClass(ctx *pkgCtx, pkg *gox.Package, file string, f *ast.File, conf *Config) *gmxProject {
-	tname, ext := ClassNameAndExt(file)
+	tname, clsfile, ext := ClassNameAndExt(file)
 	gt, ok := conf.LookupClass(ext)
 	if !ok {
 		panic("TODO: class not found")
@@ -138,7 +140,7 @@ func loadClass(ctx *pkgCtx, pkg *gox.Package, file string, f *ast.File, conf *Co
 	} else {
 		p.sptypes = append(p.sptypes, tname)
 	}
-	ctx.classes[f] = gmxClass{tname, ext, p}
+	ctx.classes[f] = &gmxClass{tname, clsfile, ext, p}
 	if debugLoad {
 		log.Println("==> InitClass", tname, "isProj:", f.IsProj)
 	}
@@ -298,16 +300,38 @@ func gmxMainNarg(sig *types.Signature) int {
 }
 
 func hasMethod(o types.Object, name string) bool {
+	return findMethod(o, name) != nil
+}
+
+func findMethod(o types.Object, name string) *types.Func {
 	if obj, ok := o.(*types.TypeName); ok {
 		if t, ok := obj.Type().(*types.Named); ok {
 			for i, n := 0, t.NumMethods(); i < n; i++ {
-				if t.Method(i).Name() == name {
-					return true
+				f := t.Method(i)
+				if f.Name() == name {
+					return f
 				}
 			}
 		}
 	}
-	return false
+	return nil
+}
+
+func makeMainSig(recv *types.Var, f *types.Func) *types.Signature {
+	const (
+		paramNameTempl = "_gop_arg0"
+	)
+	sig := f.Type().(*types.Signature)
+	in := sig.Params()
+	nin := in.Len()
+	pkg := recv.Pkg()
+	params := make([]*types.Var, nin)
+	paramName := []byte(paramNameTempl)
+	for i := 0; i < nin; i++ {
+		paramName[len(paramNameTempl)-1] = byte('0' + i)
+		params[i] = types.NewParam(token.NoPos, pkg, string(paramName), in.At(i).Type())
+	}
+	return types.NewSignatureType(recv, nil, nil, types.NewTuple(params...), nil, false)
 }
 
 // -----------------------------------------------------------------------------

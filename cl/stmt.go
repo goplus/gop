@@ -53,6 +53,10 @@ func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
 
 func commentStmtEx(cb *gox.CodeBuilder, ctx *pkgCtx, stmt ast.Stmt) {
 	start := stmt.Pos()
+	if start == token.NoPos {
+		cb.SetComments(nil, false)
+		return
+	}
 	if doc := checkStmtDoc(stmt); doc != nil {
 		start = doc.Pos()
 	}

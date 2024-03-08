@@ -904,7 +904,7 @@ func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
 	}
 	fn := cb.NewClosureWith(sig)
 	if body := v.Body; body != nil {
-		loadFuncBody(ctx, fn, body, v)
+		loadFuncBody(ctx, fn, body, nil, v)
 		cb.SetComments(comments, once)
 	}
 }

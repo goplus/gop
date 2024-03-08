@@ -401,6 +401,9 @@ func main() {
 func (this *Cat) Main() {
 	fmt.Println("hi")
 }
+func (this *Cat) Classfname() string {
+	return "Cat"
+}
 `)
 }
 
