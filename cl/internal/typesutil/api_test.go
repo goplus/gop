@@ -35,6 +35,10 @@ func TestTypeAndValue(t *testing.T) {
 	if ret.Value == nil {
 		t.Fatal("NewTypeAndValueForValue: not const?")
 	}
+	ret = NewTypeAndValueForValue(ty, constant.MakeInt64(1), Constant)
+	if ret.Value == nil {
+		t.Fatal("NewTypeAndValueForValue: not const?")
+	}
 	ret = NewTypeAndValueForCallResult(tyInt, nil)
 	if !ret.IsValue() {
 		t.Fatal("NewTypeAndValueForCall: not value?")
