@@ -338,7 +338,7 @@ func doInitMethods(ld *typeLoader) {
 type pkgCtx struct {
 	*nodeInterp
 	projs    map[string]*gmxProject // .gmx => project
-	classes  map[*ast.File]gmxClass
+	classes  map[*ast.File]*gmxClass
 	fset     *token.FileSet
 	cpkgs    *cpackages.Importer
 	syms     map[string]loader
@@ -491,7 +491,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gox.Package,
 		fset:       fset,
 		nodeInterp: interp,
 		projs:      make(map[string]*gmxProject),
-		classes:    make(map[*ast.File]gmxClass),
+		classes:    make(map[*ast.File]*gmxClass),
 		syms:       make(map[string]loader),
 		generics:   make(map[string]bool),
 	}
@@ -718,6 +718,7 @@ func genGoFile(file string, goxTestFile bool) string {
 
 func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, conf *Config) {
 	var proj *gmxProject
+	var c *gmxClass
 	var classType string
 	var testType string
 	var baseTypeName string
@@ -727,12 +728,12 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 	var parent = ctx.pkgCtx
 	if f.IsClass {
 		if f.IsNormalGox {
-			classType, _ = ClassNameAndExt(file)
+			classType, _, _ = ClassNameAndExt(file)
 			if classType == "main" {
 				classType = "_main"
 			}
 		} else {
-			c := parent.classes[f]
+			c = parent.classes[f]
 			classType = c.tname
 			proj, ctx.proj = c.proj, c.proj
 			ctx.autoimps = proj.autoimps
@@ -851,6 +852,31 @@ func preloadGopFile(p *gox.Package, ctx *blockCtx, file string, f *ast.File, con
 				X: &ast.Ident{Name: classType},
 			},
 		}}}
+		// func Classfname() string
+		if spxClass {
+			f.Decls = append(f.Decls, &ast.FuncDecl{
+				Name: &ast.Ident{
+					Name: "Classfname",
+				},
+				Type: &ast.FuncType{
+					Params: &ast.FieldList{},
+					Results: &ast.FieldList{
+						List: []*ast.Field{
+							{Type: &ast.Ident{Name: "string"}},
+						},
+					},
+				},
+				Body: &ast.BlockStmt{
+					List: []ast.Stmt{
+						&ast.ReturnStmt{
+							Results: []ast.Expr{
+								&ast.BasicLit{Kind: token.STRING, Value: strconv.Quote(c.clsfile)},
+							},
+						},
+					},
+				},
+			})
+		}
 	}
 	if d := f.ShadowEntry; d != nil {
 		d.Name.Name = getEntrypoint(f)

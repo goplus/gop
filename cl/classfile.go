@@ -33,9 +33,10 @@ import (
 // -----------------------------------------------------------------------------
 
 type gmxClass struct {
-	tname string // class type
-	ext   string
-	proj  *gmxProject
+	tname   string // class type
+	clsfile string
+	ext     string
+	proj    *gmxProject
 }
 
 type gmxProject struct {
@@ -70,9 +71,10 @@ func (p *gmxProject) getScheds(cb *gox.CodeBuilder) []goast.Stmt {
 	return p.schedStmts
 }
 
-func ClassNameAndExt(file string) (name, ext string) {
+func ClassNameAndExt(file string) (name, clsfile, ext string) {
 	fname := filepath.Base(file)
-	name, ext = modfile.SplitFname(fname)
+	clsfile, ext = modfile.SplitFname(fname)
+	name = clsfile
 	if strings.ContainsAny(name, ":.") {
 		name = strings.NewReplacer(":", "", ".", "_").Replace(name)
 	}
@@ -84,7 +86,7 @@ func isGoxTestFile(ext string) bool {
 }
 
 func loadClass(ctx *pkgCtx, pkg *gox.Package, file string, f *ast.File, conf *Config) *gmxProject {
-	tname, ext := ClassNameAndExt(file)
+	tname, clsfile, ext := ClassNameAndExt(file)
 	gt, ok := conf.LookupClass(ext)
 	if !ok {
 		panic("TODO: class not found")
@@ -138,7 +140,7 @@ func loadClass(ctx *pkgCtx, pkg *gox.Package, file string, f *ast.File, conf *Co
 	} else {
 		p.sptypes = append(p.sptypes, tname)
 	}
-	ctx.classes[f] = gmxClass{tname, ext, p}
+	ctx.classes[f] = &gmxClass{tname, clsfile, ext, p}
 	if debugLoad {
 		log.Println("==> InitClass", tname, "isProj:", f.IsProj)
 	}
