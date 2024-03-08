@@ -288,7 +288,11 @@ func TestMarkAutogen(t *testing.T) {
 
 func TestClassNameAndExt(t *testing.T) {
 	name, ext := ClassNameAndExt("/foo/bar.abc_yap.gox")
-	if name != "bar" || ext != "_yap.gox" {
+	if name != "bar_abc" || ext != "_yap.gox" {
+		t.Fatal("classNameAndExt:", name, ext)
+	}
+	name, ext = ClassNameAndExt("/foo/get_bar_:id.yap")
+	if name != "get_bar_id" || ext != ".yap" {
 		t.Fatal("classNameAndExt:", name, ext)
 	}
 }
