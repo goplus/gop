@@ -298,16 +298,38 @@ func gmxMainNarg(sig *types.Signature) int {
 }
 
 func hasMethod(o types.Object, name string) bool {
+	return findMethod(o, name) != nil
+}
+
+func findMethod(o types.Object, name string) *types.Func {
 	if obj, ok := o.(*types.TypeName); ok {
 		if t, ok := obj.Type().(*types.Named); ok {
 			for i, n := 0, t.NumMethods(); i < n; i++ {
-				if t.Method(i).Name() == name {
-					return true
+				f := t.Method(i)
+				if f.Name() == name {
+					return f
 				}
 			}
 		}
 	}
-	return false
+	return nil
+}
+
+func makeMainSig(recv *types.Var, f *types.Func) *types.Signature {
+	const (
+		paramNameTempl = "_gop_arg0"
+	)
+	sig := f.Type().(*types.Signature)
+	in := sig.Params()
+	nin := in.Len()
+	pkg := recv.Pkg()
+	params := make([]*types.Var, nin)
+	paramName := []byte(paramNameTempl)
+	for i := 0; i < nin; i++ {
+		paramName[len(paramNameTempl)-1] = byte('0' + i)
+		params[i] = types.NewParam(token.NoPos, pkg, string(paramName), in.At(i).Type())
+	}
+	return types.NewSignatureType(recv, nil, nil, types.NewTuple(params...), nil, false)
 }
 
 // -----------------------------------------------------------------------------

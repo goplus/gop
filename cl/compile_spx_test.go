@@ -486,7 +486,8 @@ func (this *Game) MainEntry() {
 func main() {
 	spx3.Gopt_Game_Main(new(Game), new(Kai))
 }
-func (this *Kai) Main() {
+func (this *Kai) Main(_gop_arg0 string) {
+	this.Sprite.Main(_gop_arg0)
 	fmt.Println(jwt.Token("Hi"))
 }
 `, "main_spx.gox", "Kai_spx.gox")
