@@ -6,10 +6,10 @@ github.com/fsnotify/fsnotify v1.7.0/go.mod h1:40Bi/Hjc2AVfZrqy+aj+yEI+/bRxZnMJyT
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
 github.com/goplus/c2go v0.7.24-0.20240221044754-e542e30f9dbc h1:HGH6KoedGQ+DikZ1n9cDkCpMjODHftxbPqEhb7zDz4I=
 github.com/goplus/c2go v0.7.24-0.20240221044754-e542e30f9dbc/go.mod h1:m+2bOIErSOA4sxyrg0deb7RS6cnC3czzo7AaL9IZ+YE=
-github.com/goplus/gox v1.14.13-0.20240305210108-429f12385afa h1:YPCZaGJVDDY5nKErDQZcSekvKFC0104/mJPkEHvjkFA=
-github.com/goplus/gox v1.14.13-0.20240305210108-429f12385afa/go.mod h1:Q1x9L9gugS3964fLAsgJWGBw+/5tZFrGgD7Klk8zdJc=
-github.com/goplus/mod v0.13.8 h1:5PbALN7GjvpQidAx2qiE3x/Bgf+ZHPrVZ3C63dfjGrA=
-github.com/goplus/mod v0.13.8/go.mod h1:7/8zsNzGWyB4Qojg+D7SxSgMzpcsDbZsbKo2SHy4Lwk=
+github.com/goplus/gox v1.14.13-0.20240308130321-6ff7f61cfae8 h1:8k8q34xFRhvbh7AETX4+pp+BSMmf1Nyt8xa3/as/qZo=
+github.com/goplus/gox v1.14.13-0.20240308130321-6ff7f61cfae8/go.mod h1:Q1x9L9gugS3964fLAsgJWGBw+/5tZFrGgD7Klk8zdJc=
+github.com/goplus/mod v0.13.9-0.20240305182112-59522d2cc81d h1:QwGi092U1kLvSJ38xFnv98vygtOYrpMJmX+S+leQKLc=
+github.com/goplus/mod v0.13.9-0.20240305182112-59522d2cc81d/go.mod h1:MibsLSftGmxaQq78YzUzNviyFwB9RtpMaoscufvEKH4=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=
 github.com/json-iterator/go v1.1.12/go.mod h1:e30LSqwooZae/UwlEbR2852Gd8hjQvJoHmT4TnhNGBo=
 github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 h1:ZqeYNhU3OHLH3mGKHDcjJRFFRrJa6eAM5H+CtDdOsPc=
@@ -30,7 +30,6 @@ golang.org/x/crypto v0.13.0/go.mod h1:y6Z2r+Rw4iayiXXAIxJIDAJ1zMW4yaTpebo8fPOliY
 golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4/go.mod h1:jJ57K6gSWd91VN4djpZkiMVwK6gcyfeH4XE8wZrZaV4=
 golang.org/x/mod v0.8.0/go.mod h1:iBbtSCu2XBx23ZKBPSOrRkjjQPZFPuis4dIYUhu/chs=
 golang.org/x/mod v0.12.0/go.mod h1:iBbtSCu2XBx23ZKBPSOrRkjjQPZFPuis4dIYUhu/chs=
-golang.org/x/mod v0.15.0/go.mod h1:hTbmBsO62+eylJbnUtE2MGJUyE7QWk4xUqPFrRgJ+7c=
 golang.org/x/mod v0.16.0 h1:QX4fJ0Rr5cPQCF7O9lh9Se4pmwfwskqZfq5moyldzic=
 golang.org/x/mod v0.16.0/go.mod h1:hTbmBsO62+eylJbnUtE2MGJUyE7QWk4xUqPFrRgJ+7c=
 golang.org/x/net v0.0.0-20190620200207-3b0461eec859/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
