@@ -1488,8 +1488,6 @@ d := Var(M)
 `, `
 package main
 
-const GopPackage = true
-
 type M = map[string]any
 
 type basetype interface {
@@ -1549,8 +1547,6 @@ c := Gopx_Var_Cast__0[string]
 d := Gopx_Var_Cast__1[M]
 `, `
 package main
-
-const GopPackage = true
 
 type M = map[string]any
 

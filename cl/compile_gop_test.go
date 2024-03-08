@@ -238,8 +238,6 @@ println 10 * a
 
 import "fmt"
 
-const GopPackage = true
-
 type foo struct {
 }
 
@@ -292,8 +290,6 @@ var d = a.mul(c)
 
 import "fmt"
 
-const GopPackage = true
-
 type foo struct {
 }
 
@@ -331,8 +327,6 @@ println add("Hello", "World")
 
 import "fmt"
 
-const GopPackage = true
-
 func add__0(a int, b int) int {
 	return a + b
 }
@@ -367,7 +361,6 @@ println mul(1.2, 3.14)
 
 import "fmt"
 
-const GopPackage = true
 const Gopo_mul = "mulInt,mulFloat"
 
 func mulInt(a int, b int) int {
@@ -628,8 +621,6 @@ n.onKey ["a"], nil, key => {
 n.onKey 100, 200
 `, `package main
 
-const GopPackage = true
-
 type Mesh struct {
 }
 
@@ -782,8 +773,6 @@ a += b
 a += c
 `, `package main
 
-const GopPackage = true
-
 var a Vector3
 var b int
 var c float64
@@ -850,8 +839,6 @@ i.onKey ["1","2"], key => {
 
 import "fmt"
 
-const GopPackage = true
-
 func main() {
 	n := &N[int]{}
 	n.OnKey__0("1", func() {
@@ -894,8 +881,6 @@ n.test
 n.test 100
 `, `package main
 
-const GopPackage = true
-
 func main() {
 	Test__0()
 	Test__1(100)
@@ -931,8 +916,6 @@ func main() {
 func TestMixedOverloadNamed(t *testing.T) {
 	gopMixedClTest(t, "main", `package main
 
-const GopPackage = true
-
 type M = map[string]any
 
 type basetype interface {
@@ -960,8 +943,6 @@ var b Var[M]
 c := Var(string)
 d := Var(M)
 `, `package main
-
-const GopPackage = true
 
 var a Var__0[int]
 var b Var__1[map[string]interface{}]
@@ -1204,8 +1185,6 @@ row string, 100
 tbl.col string, "foo"
 tbl.col int, 100
 `, `package main
-
-const GopPackage = true
 
 var tbl *Table
 
