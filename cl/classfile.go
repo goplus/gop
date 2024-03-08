@@ -72,14 +72,14 @@ func (p *gmxProject) getScheds(cb *gox.CodeBuilder) []goast.Stmt {
 }
 
 var (
-	repl = strings.NewReplacer(":", "", "-", "_", ".", "_")
+	repl = strings.NewReplacer(":", "", "#", "", "-", "_", ".", "_")
 )
 
 func ClassNameAndExt(file string) (name, clsfile, ext string) {
 	fname := filepath.Base(file)
 	clsfile, ext = modfile.SplitFname(fname)
 	name = clsfile
-	if strings.ContainsAny(name, ":-.") {
+	if strings.ContainsAny(name, ":#-.") {
 		name = repl.Replace(name)
 	}
 	return
