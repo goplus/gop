@@ -971,7 +971,12 @@ func compileStringLitEx(ctx *blockCtx, cb *gogen.CodeBuilder, lit *ast.BasicLit)
 			compileExpr(ctx, v, flags)
 			t := cb.Get(-1).Type
 			if t.Underlying() != types.Typ[types.String] {
-				cb.Member("string", gogen.MemberFlagAutoProperty)
+				if _, err := cb.Member("string", gogen.MemberFlagAutoProperty); err != nil {
+					if e, ok := err.(*gogen.CodeError); ok {
+						err = ctx.newCodeErrorf(v.Pos(), "%s.string%s", ctx.LoadExpr(v), e.Msg)
+					}
+					ctx.handleErr(err)
+				}
 			}
 			pos = v.End()
 		default:

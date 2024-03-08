@@ -509,6 +509,12 @@ func (p *[]byte) foo() {
 `)
 }
 
+func TestErrStringLit(t *testing.T) {
+	codeErrorTest(t, `bar.gop:2:9: [].string undefined (type []interface{} has no field or method string)`, `
+echo "${[]}"
+`)
+}
+
 func TestErrStructLit(t *testing.T) {
 	codeErrorTest(t,
 		`bar.gop:3:39: too many values in struct{x int; y string}{...}`, `
