@@ -509,6 +509,12 @@ func (p *[]byte) foo() {
 `)
 }
 
+func TestErrStringLit(t *testing.T) {
+	codeErrorTest(t, `bar.gop:2:9: [].string undefined (type []interface{} has no field or method string)`, `
+echo "${[]}"
+`)
+}
+
 func TestErrStructLit(t *testing.T) {
 	codeErrorTest(t,
 		`bar.gop:3:39: too many values in struct{x int; y string}{...}`, `
@@ -600,6 +606,17 @@ b := []int{2: a}
 }
 
 func TestErrMapLit(t *testing.T) {
+	codeErrorTest(t, `bar.gop:4:6: cannot use 1 (type untyped int) as type string in map key`, `
+func foo(map[string]string) {}
+
+foo {1: 2}
+`)
+	codeErrorTest(t, `bar.gop:2:1: invalid composite literal type int`, `
+int{2}
+`)
+	codeErrorTest(t, `bar.gop:2:1: missing key in map literal`, `
+map[string]int{2}
+`)
 	codeErrorTest(t, `bar.gop:2:21: cannot use 1+2 (type untyped int) as type string in map key
 bar.gop:3:27: cannot use "Go" + "+" (type untyped string) as type int in map value`,
 		`

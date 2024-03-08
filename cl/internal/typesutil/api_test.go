@@ -21,17 +21,21 @@ import (
 	"go/types"
 	"testing"
 
-	"github.com/goplus/gox"
+	"github.com/goplus/gogen"
 )
 
 func TestTypeAndValue(t *testing.T) {
 	tyInt := types.Typ[types.Int]
-	ty := gox.NewTypeType(tyInt)
+	ty := gogen.NewTypeType(tyInt)
 	ret := NewTypeAndValueForType(ty)
 	if !ret.IsType() {
 		t.Fatal("NewTypeAndValueForType: not type?")
 	}
 	ret = NewTypeAndValueForValue(tyInt, constant.MakeInt64(1), Constant)
+	if ret.Value == nil {
+		t.Fatal("NewTypeAndValueForValue: not const?")
+	}
+	ret = NewTypeAndValueForValue(ty, constant.MakeInt64(1), Constant)
 	if ret.Value == nil {
 		t.Fatal("NewTypeAndValueForValue: not const?")
 	}

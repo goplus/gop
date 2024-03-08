@@ -23,13 +23,13 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/goplus/gogen"
 	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/parser/fsx/memfs"
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
-	"github.com/goplus/gox"
 	"github.com/goplus/mod/env"
 )
 
@@ -44,7 +44,7 @@ var (
 )
 
 func init() {
-	gox.SetDebug(gox.DbgFlagAll)
+	gogen.SetDebug(gogen.DbgFlagAll)
 	cl.SetDebug(cl.DbgFlagAll | cl.FlagNoMarkAutogen)
 	gblFset = token.NewFileSet()
 	imp := gop.NewImporter(nil, &env.Gop{Root: gopRootDir, Version: "1.0"}, gblFset)
@@ -114,7 +114,7 @@ func gopClTestFS(t *testing.T, conf *cl.Config, fs parser.FileSystem, pkgname, e
 	var b bytes.Buffer
 	err = pkg.WriteTo(&b)
 	if err != nil {
-		t.Fatal("gox.WriteTo failed:", err)
+		t.Fatal("gogen.WriteTo failed:", err)
 	}
 	result := b.String()
 	if result != expected {
@@ -642,8 +642,7 @@ case interface{}(true):
 
 func main() {
 	switch {
-	case interface {
-	}(true):
+	case interface{}(true):
 	}
 }
 `)
@@ -1086,11 +1085,9 @@ func foo(v interface{}) {
 }
 `, `package main
 
-func bar(p *interface {
-}) {
+func bar(p *interface{}) {
 }
-func foo(v interface {
-}) {
+func foo(v interface{}) {
 	switch t := v.(type) {
 	case int, string:
 		bar(&v)
@@ -1117,11 +1114,9 @@ func foo(v interface{}) {
 }
 `, `package main
 
-func bar(p *interface {
-}) {
+func bar(p *interface{}) {
 }
-func foo(v interface {
-}) {
+func foo(v interface{}) {
 	switch bar(nil); v.(type) {
 	case int, string:
 		bar(&v)
@@ -1139,8 +1134,7 @@ func foo(v interface{}) {
 }
 `, `package main
 
-func foo(v interface {
-}) {
+func foo(v interface{}) {
 	x := v.(int)
 	y, ok := v.(string)
 }
@@ -1626,7 +1620,7 @@ var x = ng.Bigrat_Init__2(big.NewRat(7, 2))
 }
 
 func TestBigRatAdd(t *testing.T) {
-	gox.SetDebug(gox.DbgFlagAll)
+	gogen.SetDebug(gogen.DbgFlagAll)
 	gopClTest(t, `
 var x = 3 + 1/2r
 var y = x + 100
@@ -1655,8 +1649,7 @@ var y *uint32 = (*uint32)(nil)
 
 var a = (*struct {
 })(nil)
-var b = interface {
-}(nil)
+var b = interface{}(nil)
 var c = (func())(nil)
 var x uint32 = uint32(0)
 var y *uint32 = (*uint32)(nil)
@@ -1936,8 +1929,7 @@ z := []
 func main() {
 	x := []float64{1, 3.4, 5}
 	y := []int{1}
-	z := []interface {
-	}{}
+	z := []interface{}{}
 }
 `)
 	gopClTest(t, `
@@ -3039,8 +3031,7 @@ func main() {
 
 import "fmt"
 
-func foo(format string, args ...interface {
-}) (int, error) {
+func foo(format string, args ...interface{}) (int, error) {
 	return fmt.Printf(format, args...)
 }
 func main() {
@@ -3058,8 +3049,7 @@ func main() {
 }
 `, `package main
 
-func foo(format string, args ...interface {
-}) (int, error) {
+func foo(format string, args ...interface{}) (int, error) {
 	return 0, nil
 }
 func main() {
@@ -3092,8 +3082,7 @@ func TestFunc(t *testing.T) {
 func main() {
 }`, `package main
 
-func foo(format string, a [10]int, args ...interface {
-}) {
+func foo(format string, a [10]int, args ...interface{}) {
 }
 func main() {
 }
@@ -3387,8 +3376,7 @@ bar(fmt.Printf)
 
 import "fmt"
 
-func bar(foo func(string, ...interface {
-}) (int, error)) {
+func bar(foo func(string, ...interface{}) (int, error)) {
 	foo("Hello, %v!\n", "Go+")
 }
 func main() {
@@ -3429,13 +3417,11 @@ import (
 func foo(x string) string {
 	return strings.NewReplacer("?", "!").Replace(x)
 }
-func printf(format string, args ...interface {
-}) (n int, err error) {
+func printf(format string, args ...interface{}) (n int, err error) {
 	n, err = fmt.Printf(format, args...)
 	return
 }
-func bar(foo func(string, ...interface {
-}) (int, error)) {
+func bar(foo func(string, ...interface{}) (int, error)) {
 	foo("Hello, %v!\n", "Go+")
 }
 func main() {
@@ -3471,8 +3457,7 @@ func main() {
 
 import "fmt"
 
-func foo(args ...interface {
-}) {
+func foo(args ...interface{}) {
 	fmt.Println(args...)
 }
 func main() {
@@ -3497,8 +3482,7 @@ import "fmt"
 func main() {
 	foo("Hello", 123)
 }
-func foo(args ...interface {
-}) {
+func foo(args ...interface{}) {
 	fmt.Println(args...)
 }
 `)
@@ -3959,10 +3943,8 @@ println {}
 import "fmt"
 
 func main() {
-	fmt.Println([]interface {
-	}{})
-	fmt.Println(map[string]interface {
-	}{})
+	fmt.Println([]interface{}{})
+	fmt.Println(map[string]interface{}{})
 }
 `)
 }
@@ -4024,8 +4006,7 @@ println(a)
 
 import "fmt"
 
-var a interface {
-} = 100
+var a interface{} = 100
 
 func main() {
 	fmt.Println(a)
@@ -4212,4 +4193,228 @@ func main() {
 }
 `
 	gopClTestEx(t, &conf, "main", src, expected)
+}
+
+func TestRangeScope(t *testing.T) {
+	gopClTest(t, `
+ar := []int{100, 200}
+for k, v := range ar {
+	println(k, v, ar)
+	var k, v, ar int
+	println(ar, k, v)
+}
+`, `package main
+
+import "fmt"
+
+func main() {
+	ar := []int{100, 200}
+	for k, v := range ar {
+		fmt.Println(k, v, ar)
+		var k, v, ar int
+		fmt.Println(ar, k, v)
+	}
+}
+`)
+}
+
+func TestSelectScope(t *testing.T) {
+	gopClTest(t, `
+c1 := make(chan int)
+c2 := make(chan int)
+go func() {
+	c1 <- 100
+}()
+select {
+case i := <-c1:
+	println i
+case i := <-c2:
+	println i
+}
+`, `package main
+
+import "fmt"
+
+func main() {
+	c1 := make(chan int)
+	c2 := make(chan int)
+	go func() {
+		c1 <- 100
+	}()
+	select {
+	case i := <-c1:
+		fmt.Println(i)
+	case i := <-c2:
+		fmt.Println(i)
+	}
+}
+`)
+}
+
+func TestCommentVar(t *testing.T) {
+	gopClTestEx(t, gblConfLine, "main", `
+// doc a line2
+var a int
+println a
+
+// doc b line6
+var b int
+println b
+
+var c int
+println c
+`, `package main
+
+import "fmt"
+// doc a line2
+var a int
+//line /foo/bar.gop:4
+func main() {
+//line /foo/bar.gop:4:1
+	fmt.Println(a)
+//line /foo/bar.gop:6:1
+	// doc b line6
+	var b int
+//line /foo/bar.gop:8:1
+	fmt.Println(b)
+//line /foo/bar.gop:10:1
+	var c int
+//line /foo/bar.gop:11:1
+	fmt.Println(c)
+}
+`)
+
+	gopClTestEx(t, gblConfLine, "main", `
+func demo() {
+	// doc a line3
+	var a int
+	println a
+	
+	// doc b line7
+	var b int
+	println b
+	
+	var c int
+	println c
+}
+`, `package main
+
+import "fmt"
+//line /foo/bar.gop:2:1
+func demo() {
+//line /foo/bar.gop:3:1
+	// doc a line3
+	var a int
+//line /foo/bar.gop:5:1
+	fmt.Println(a)
+//line /foo/bar.gop:7:1
+	// doc b line7
+	var b int
+//line /foo/bar.gop:9:1
+	fmt.Println(b)
+//line /foo/bar.gop:11:1
+	var c int
+//line /foo/bar.gop:12:1
+	fmt.Println(c)
+}
+`)
+}
+
+func TestForPhraseScope(t *testing.T) {
+	gopClTest(t, `sum := 0
+for x <- [1, 3, 5, 7, 11, 13, 17] {
+	sum = sum + x
+	println x
+	x := 200
+	println x
+}`, `package main
+
+import "fmt"
+
+func main() {
+	sum := 0
+	for _, x := range []int{1, 3, 5, 7, 11, 13, 17} {
+		sum = sum + x
+		fmt.Println(x)
+		x := 200
+		fmt.Println(x)
+	}
+}
+`)
+	gopClTest(t, `sum := 0
+for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 {
+	sum = sum + x
+	println x
+	x := 200
+	println x
+}`, `package main
+
+import "fmt"
+
+func main() {
+	sum := 0
+	for _, x := range []int{1, 3, 5, 7, 11, 13, 17} {
+		if x > 3 {
+			sum = sum + x
+			fmt.Println(x)
+			x := 200
+			fmt.Println(x)
+		}
+	}
+}
+`)
+}
+
+func TestAddress(t *testing.T) {
+	gopClTest(t, `
+type foo struct{ c int }
+
+func (f foo) ptr() *foo { return &f }
+func (f foo) clone() foo { return f }
+
+type nested struct {
+	f foo
+	a [2]foo
+	s []foo
+}
+
+func _() {
+	getNested := func() nested { return nested{} }
+
+	_ = getNested().f.c
+	_ = getNested().a[0].c
+	_ = getNested().s[0].c
+	_ = getNested().f.ptr().c
+	_ = getNested().f.clone().c
+	_ = getNested().f.clone().ptr().c
+}
+`, `package main
+
+type foo struct {
+	c int
+}
+type nested struct {
+	f foo
+	a [2]foo
+	s []foo
+}
+
+func (f foo) ptr() *foo {
+	return &f
+}
+func (f foo) clone() foo {
+	return f
+}
+func _() {
+	getNested := func() nested {
+		return nested{}
+	}
+	_ = getNested().f.c
+	_ = getNested().a[0].c
+	_ = getNested().s[0].c
+	_ = getNested().f.ptr().c
+	_ = getNested().f.clone().c
+	_ = getNested().f.clone().ptr().c
+}
+`)
 }

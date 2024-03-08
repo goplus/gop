@@ -23,12 +23,12 @@ import (
 	"os"
 	"reflect"
 
+	"github.com/goplus/gogen"
 	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/x/gocmd"
 	"github.com/goplus/gop/x/gopprojs"
-	"github.com/goplus/gox"
 )
 
 // gop test
@@ -64,7 +64,7 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 
 	if *flagDebug {
-		gox.SetDebug(gox.DbgFlagAll &^ gox.DbgFlagComments)
+		gogen.SetDebug(gogen.DbgFlagAll &^ gogen.DbgFlagComments)
 		cl.SetDebug(cl.DbgFlagAll)
 		cl.SetDisableRecover(true)
 	}

@@ -31,7 +31,6 @@ func (a byPos) Less(i, j int) bool { return a[i].Pos() < a[j].Pos() }
 func (a byPos) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 
 // sortComments sorts the list of comment groups in source order.
-//
 func sortComments(list []*CommentGroup) {
 	// TODO(gri): Does it make sense to check for sorted-ness
 	//            first (because we know that sorted-ness is
@@ -44,7 +43,6 @@ func sortComments(list []*CommentGroup) {
 // A CommentMap maps an AST node to a list of comment groups
 // associated with it. See NewCommentMap for a description of
 // the association.
-//
 type CommentMap map[Node][]*CommentGroup
 
 func (cmap CommentMap) addComment(n Node, c *CommentGroup) {
@@ -58,7 +56,6 @@ func (cmap CommentMap) addComment(n Node, c *CommentGroup) {
 }
 
 // nodeList returns the list of nodes of the AST n in source order.
-//
 func nodeList(n Node) []Node {
 	var list []Node
 	Inspect(n, func(n Node) bool {
@@ -79,7 +76,6 @@ func nodeList(n Node) []Node {
 }
 
 // A commentListReader helps iterating through a list of comment groups.
-//
 type commentListReader struct {
 	fset     *token.FileSet
 	list     []*CommentGroup
@@ -103,12 +99,10 @@ func (r *commentListReader) next() {
 
 // A nodeStack keeps track of nested nodes.
 // A node lower on the stack lexically contains the nodes higher on the stack.
-//
 type nodeStack []Node
 
 // push pops all nodes that appear lexically before n
 // and then pushes n on the stack.
-//
 func (s *nodeStack) push(n Node) {
 	s.pop(n.Pos())
 	*s = append((*s), n)
@@ -117,7 +111,6 @@ func (s *nodeStack) push(n Node) {
 // pop pops all nodes that appear lexically before pos
 // (i.e., whose lexical extent has ended before or at pos).
 // It returns the last node popped.
-//
 func (s *nodeStack) pop(pos token.Pos) (top Node) {
 	i := len(*s)
 	for i > 0 && (*s)[i-1].End() <= pos {
@@ -143,7 +136,6 @@ func (s *nodeStack) pop(pos token.Pos) (top Node) {
 // node possible: For instance, if the comment is a line comment
 // trailing an assignment, the comment is associated with the entire
 // assignment rather than just the last operand in the assignment.
-//
 func NewCommentMap(fset *token.FileSet, node Node, comments []*CommentGroup) CommentMap {
 	if len(comments) == 0 {
 		return nil // no comments to map
@@ -246,7 +238,6 @@ func NewCommentMap(fset *token.FileSet, node Node, comments []*CommentGroup) Com
 // Update replaces an old node in the comment map with the new node
 // and returns the new node. Comments that were associated with the
 // old node are associated with the new node.
-//
 func (cmap CommentMap) Update(old, new Node) Node {
 	if list := cmap[old]; len(list) > 0 {
 		delete(cmap, old)
@@ -258,7 +249,6 @@ func (cmap CommentMap) Update(old, new Node) Node {
 // Filter returns a new comment map consisting of only those
 // entries of cmap for which a corresponding node exists in
 // the AST specified by node.
-//
 func (cmap CommentMap) Filter(node Node) CommentMap {
 	umap := make(CommentMap)
 	Inspect(node, func(n Node) bool {
@@ -272,7 +262,6 @@ func (cmap CommentMap) Filter(node Node) CommentMap {
 
 // Comments returns the list of comment groups in the comment map.
 // The result is sorted in source order.
-//
 func (cmap CommentMap) Comments() []*CommentGroup {
 	list := make([]*CommentGroup, 0, len(cmap))
 	for _, e := range cmap {

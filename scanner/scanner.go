@@ -918,9 +918,14 @@ scanAgain:
 				insertSemi = true
 			}
 		case '-':
-			tok = s.switch3(token.SUB, token.SUB_ASSIGN, '-', token.DEC)
-			if tok == token.DEC {
-				insertSemi = true
+			if s.ch == '>' { // ->
+				s.next()
+				tok = token.SRARROW
+			} else { // --, -=
+				tok = s.switch3(token.SUB, token.SUB_ASSIGN, '-', token.DEC)
+				if tok == token.DEC {
+					insertSemi = true
+				}
 			}
 		case '*':
 			tok = s.switch2(token.MUL, token.MUL_ASSIGN)
@@ -967,16 +972,19 @@ scanAgain:
 		case '^':
 			tok = s.switch2(token.XOR, token.XOR_ASSIGN)
 		case '<':
-			if s.ch == '-' {
+			if s.ch == '-' { // <-
 				s.next()
 				tok = token.ARROW
-			} else {
+			} else if s.ch == '>' { // <>
+				s.next()
+				tok = token.BIDIARROW
+			} else { // << <<=
 				tok = s.switch4(token.LSS, token.LEQ, '<', token.SHL, token.SHL_ASSIGN)
 			}
 		case '>':
 			tok = s.switch4(token.GTR, token.GEQ, '>', token.SHR, token.SHR_ASSIGN)
 		case '=':
-			tok = s.switch3(token.ASSIGN, token.EQL, '>', token.RARROW)
+			tok = s.switch3(token.ASSIGN, token.EQL, '>', token.DRARROW)
 		case '!':
 			tok = s.switch2(token.NOT, token.NEQ)
 			if tok == token.NOT {

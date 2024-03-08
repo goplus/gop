@@ -15,6 +15,7 @@ import (
 	"testing"
 	"unsafe"
 
+	"github.com/goplus/gogen"
 	"github.com/goplus/gop"
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/format"
@@ -61,16 +62,16 @@ func spxParserConf() parser.Config {
 	}
 }
 
-func parserMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string, goname string, gosrc string, parserConf parser.Config) (*typesutil.Info, *types.Info, error) {
+func parseMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string, goname string, gosrc string, parserConf parser.Config, updateGoTypesOverload bool) (*types.Package, *typesutil.Info, *types.Info, error) {
 	f, err := parser.ParseEntry(fset, name, src, parserConf)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	var gofiles []*goast.File
 	if len(gosrc) > 0 {
 		f, err := goparser.ParseFile(fset, goname, gosrc, goparser.ParseComments)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 		gofiles = append(gofiles, f)
 	}
@@ -78,9 +79,10 @@ func parserMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string
 	conf := &types.Config{}
 	conf.Importer = gop.NewImporter(nil, &env.Gop{Root: "../..", Version: "1.0"}, fset)
 	chkOpts := &typesutil.Config{
-		Types: types.NewPackage("main", "main"),
-		Fset:  fset,
-		Mod:   mod,
+		Types:                 types.NewPackage("main", f.Name.Name),
+		Fset:                  fset,
+		Mod:                   mod,
+		UpdateGoTypesOverload: updateGoTypesOverload,
 	}
 	info := &typesutil.Info{
 		Types:      make(map[ast.Expr]types.TypeAndValue),
@@ -101,21 +103,22 @@ func parserMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string
 	}
 	check := typesutil.NewChecker(conf, chkOpts, ginfo, info)
 	err = check.Files(gofiles, []*ast.File{f})
-	return info, ginfo, err
+	return chkOpts.Types, info, ginfo, err
 }
 
-func parserSource(fset *token.FileSet, filename string, src interface{}, mode parser.Mode) (*typesutil.Info, error) {
+func parseSource(fset *token.FileSet, filename string, src interface{}, mode parser.Mode) (*types.Package, *typesutil.Info, error) {
 	f, err := parser.ParseEntry(fset, filename, src, parser.Config{
 		Mode: mode,
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
+	pkg := types.NewPackage("", f.Name.Name)
 	conf := &types.Config{}
 	conf.Importer = importer.Default()
 	chkOpts := &typesutil.Config{
-		Types: types.NewPackage("main", "main"),
+		Types: pkg,
 		Fset:  fset,
 		Mod:   gopmod.Default,
 	}
@@ -130,13 +133,13 @@ func parserSource(fset *token.FileSet, filename string, src interface{}, mode pa
 	}
 	check := typesutil.NewChecker(conf, chkOpts, nil, info)
 	err = check.Files(nil, []*ast.File{f})
-	return info, err
+	return pkg, info, err
 }
 
-func parserGoSource(fset *token.FileSet, filename string, src interface{}, mode goparser.Mode) (*types.Info, error) {
+func parseGoSource(fset *token.FileSet, filename string, src interface{}, mode goparser.Mode) (*types.Package, *types.Info, error) {
 	f, err := goparser.ParseFile(fset, filename, src, mode)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	conf := &types.Config{}
@@ -149,10 +152,10 @@ func parserGoSource(fset *token.FileSet, filename string, src interface{}, mode 
 		Selections: make(map[*goast.SelectorExpr]*types.Selection),
 		Scopes:     make(map[goast.Node]*types.Scope),
 	}
-	pkg := types.NewPackage("main", "main")
+	pkg := types.NewPackage("", f.Name.Name)
 	check := types.NewChecker(conf, fset, pkg, info)
 	err = check.Files([]*goast.File{f})
-	return info, err
+	return pkg, info, err
 }
 
 func testGopInfo(t *testing.T, src string, gosrc string, expect string) {
@@ -165,7 +168,7 @@ func testSpxInfo(t *testing.T, name string, src string, expect string) {
 
 func testGopInfoEx(t *testing.T, mod *gopmod.Module, name string, src string, goname string, gosrc string, expect string, parseConf parser.Config) {
 	fset := token.NewFileSet()
-	info, _, err := parserMixedSource(mod, fset, name, src, goname, gosrc, parseConf)
+	_, info, _, err := parseMixedSource(mod, fset, name, src, goname, gosrc, parseConf, false)
 	if err != nil {
 		t.Fatal("parserMixedSource error", err)
 	}
@@ -185,11 +188,11 @@ func testGopInfoEx(t *testing.T, mod *gopmod.Module, name string, src string, go
 
 func testInfo(t *testing.T, src interface{}) {
 	fset := token.NewFileSet()
-	info, err := parserSource(fset, "main.gop", src, parser.ParseComments)
+	_, info, err := parseSource(fset, "main.gop", src, parser.ParseComments)
 	if err != nil {
 		t.Fatal("parserSource error", err)
 	}
-	goinfo, err := parserGoSource(fset, "main.go", src, goparser.ParseComments)
+	_, goinfo, err := parseGoSource(fset, "main.go", src, goparser.ParseComments)
 	if err != nil {
 		t.Fatal("parserGoSource error", err)
 	}
@@ -1485,8 +1488,6 @@ d := Var(M)
 `, `
 package main
 
-const GopPackage = true
-
 type M = map[string]any
 
 type basetype interface {
@@ -1546,8 +1547,6 @@ c := Gopx_Var_Cast__0[string]
 d := Gopx_Var_Cast__1[M]
 `, `
 package main
-
-const GopPackage = true
 
 type M = map[string]any
 
@@ -1622,51 +1621,363 @@ func onCloned() {
 	say("Hi")
 }
 `, `== types ==
-000:  0: 0 | Kai                 *ast.Ident                     | type    : main.Kai | type
-001:  3: 4 | int                 *ast.Ident                     | type    : int | type
-002:  6:11 | struct {
+000:  0: 0 | "Kai"               *ast.BasicLit                  | value   : untyped string = "Kai" | constant
+001:  0: 0 | Kai                 *ast.Ident                     | type    : main.Kai | type
+002:  0: 0 | string              *ast.Ident                     | type    : string | type
+003:  3: 4 | int                 *ast.Ident                     | type    : int | type
+004:  6:11 | struct {
 	x int
 	y int
 } *ast.StructType                | type    : struct{x int; y int} | type
-003:  7: 4 | int                 *ast.Ident                     | type    : int | type
-004:  8: 4 | int                 *ast.Ident                     | type    : int | type
-005: 12: 2 | a                   *ast.Ident                     | var     : int | variable
-006: 12: 6 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
-007: 13: 2 | clone               *ast.Ident                     | value   : func(sprite interface{}) | value
-008: 14: 2 | clone               *ast.Ident                     | value   : func(sprite interface{}, data interface{}) | value
-009: 14: 2 | clone info{1, 2}    *ast.CallExpr                  | void    : () | no value
-010: 14: 8 | info                *ast.Ident                     | type    : main.info | type
-011: 14: 8 | info{1, 2}          *ast.CompositeLit              | value   : main.info | value
-012: 14:13 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
-013: 14:15 | 2                   *ast.BasicLit                  | value   : untyped int = 2 | constant
-014: 15: 2 | clone               *ast.Ident                     | value   : func(sprite interface{}, data interface{}) | value
-015: 15: 2 | clone &info{1, 2}   *ast.CallExpr                  | void    : () | no value
-016: 15: 8 | &info{1, 2}         *ast.UnaryExpr                 | value   : *main.info | value
-017: 15: 9 | info                *ast.Ident                     | type    : main.info | type
-018: 15: 9 | info{1, 2}          *ast.CompositeLit              | value   : main.info | value
-019: 15:14 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
-020: 15:16 | 2                   *ast.BasicLit                  | value   : untyped int = 2 | constant
-021: 19: 2 | say                 *ast.Ident                     | value   : func(msg string, secs ...float64) | value
-022: 19: 2 | say("Hi")           *ast.CallExpr                  | void    : () | no value
-023: 19: 6 | "Hi"                *ast.BasicLit                  | value   : untyped string = "Hi" | constant
+005:  7: 4 | int                 *ast.Ident                     | type    : int | type
+006:  8: 4 | int                 *ast.Ident                     | type    : int | type
+007: 12: 2 | a                   *ast.Ident                     | var     : int | variable
+008: 12: 6 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
+009: 13: 2 | clone               *ast.Ident                     | value   : func(sprite interface{}) | value
+010: 14: 2 | clone               *ast.Ident                     | value   : func(sprite interface{}, data interface{}) | value
+011: 14: 2 | clone info{1, 2}    *ast.CallExpr                  | void    : () | no value
+012: 14: 8 | info                *ast.Ident                     | type    : main.info | type
+013: 14: 8 | info{1, 2}          *ast.CompositeLit              | value   : main.info | value
+014: 14:13 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
+015: 14:15 | 2                   *ast.BasicLit                  | value   : untyped int = 2 | constant
+016: 15: 2 | clone               *ast.Ident                     | value   : func(sprite interface{}, data interface{}) | value
+017: 15: 2 | clone &info{1, 2}   *ast.CallExpr                  | void    : () | no value
+018: 15: 8 | &info{1, 2}         *ast.UnaryExpr                 | value   : *main.info | value
+019: 15: 9 | info                *ast.Ident                     | type    : main.info | type
+020: 15: 9 | info{1, 2}          *ast.CompositeLit              | value   : main.info | value
+021: 15:14 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
+022: 15:16 | 2                   *ast.BasicLit                  | value   : untyped int = 2 | constant
+023: 19: 2 | say                 *ast.Ident                     | value   : func(msg string, secs ...float64) | value
+024: 19: 2 | say("Hi")           *ast.CallExpr                  | void    : () | no value
+025: 19: 6 | "Hi"                *ast.BasicLit                  | value   : untyped string = "Hi" | constant
 == defs ==
-000:  0: 0 | this                | var this *main.Kai
-001:  3: 2 | a                   | field a int
-002:  6: 6 | info                | type main.info struct{x int; y int}
-003:  7: 2 | x                   | field x int
-004:  8: 2 | y                   | field y int
-005: 11: 6 | onInit              | func (*main.Kai).onInit()
-006: 18: 6 | onCloned            | func (*main.Kai).onCloned()
+000:  0: 0 | Classfname          | func (*main.Kai).Classfname() string
+001:  0: 0 | this                | var this *main.Kai
+002:  3: 2 | a                   | field a int
+003:  6: 6 | info                | type main.info struct{x int; y int}
+004:  7: 2 | x                   | field x int
+005:  8: 2 | y                   | field y int
+006: 11: 6 | onInit              | func (*main.Kai).onInit()
+007: 18: 6 | onCloned            | func (*main.Kai).onCloned()
 == uses ==
 000:  0: 0 | Kai                 | type main.Kai struct{github.com/goplus/gop/cl/internal/spx.Sprite; a int}
-001:  3: 4 | int                 | type int
-002:  7: 4 | int                 | type int
-003:  8: 4 | int                 | type int
-004: 12: 2 | a                   | field a int
-005: 13: 2 | clone               | func github.com/goplus/gop/cl/internal/spx.Gopt_Sprite_Clone__0(sprite interface{})
-006: 14: 2 | clone               | func github.com/goplus/gop/cl/internal/spx.Gopt_Sprite_Clone__1(sprite interface{}, data interface{})
-007: 14: 8 | info                | type main.info struct{x int; y int}
-008: 15: 2 | clone               | func github.com/goplus/gop/cl/internal/spx.Gopt_Sprite_Clone__1(sprite interface{}, data interface{})
-009: 15: 9 | info                | type main.info struct{x int; y int}
-010: 19: 2 | say                 | func (*github.com/goplus/gop/cl/internal/spx.Sprite).Say(msg string, secs ...float64)`)
+001:  0: 0 | string              | type string
+002:  3: 4 | int                 | type int
+003:  7: 4 | int                 | type int
+004:  8: 4 | int                 | type int
+005: 12: 2 | a                   | field a int
+006: 13: 2 | clone               | func github.com/goplus/gop/cl/internal/spx.Gopt_Sprite_Clone__0(sprite interface{})
+007: 14: 2 | clone               | func github.com/goplus/gop/cl/internal/spx.Gopt_Sprite_Clone__1(sprite interface{}, data interface{})
+008: 14: 8 | info                | type main.info struct{x int; y int}
+009: 15: 2 | clone               | func github.com/goplus/gop/cl/internal/spx.Gopt_Sprite_Clone__1(sprite interface{}, data interface{})
+010: 15: 9 | info                | type main.info struct{x int; y int}
+011: 19: 2 | say                 | func (*github.com/goplus/gop/cl/internal/spx.Sprite).Say(msg string, secs ...float64)`)
+}
+
+func TestScopesInfo(t *testing.T) {
+	var tests = []struct {
+		src    string
+		scopes []string // list of scope descriptors of the form kind:varlist
+	}{
+		{`package p0`, []string{
+			"file:",
+		}},
+		{`package p1; import ( "fmt"; m "math"; _ "os" ); var ( _ = fmt.Println; _ = m.Pi )`, []string{
+			"file:fmt m",
+		}},
+		{`package p2; func _() {}`, []string{
+			"file:", "func:",
+		}},
+		{`package p3; func _(x, y int) {}`, []string{
+			"file:", "func:x y",
+		}},
+		{`package p4; func _(x, y int) { x, z := 1, 2; _ = z }`, []string{
+			"file:", "func:x y z", // redeclaration of x
+		}},
+		{`package p5; func _(x, y int) (u, _ int) { return }`, []string{
+			"file:", "func:u x y",
+		}},
+		{`package p6; func _() { { var x int; _ = x } }`, []string{
+			"file:", "func:", "block:x",
+		}},
+		{`package p7; func _() { if true {} }`, []string{
+			"file:", "func:", "if:", "block:",
+		}},
+		{`package p8; func _() { if x := 0; x < 0 { y := x; _ = y } }`, []string{
+			"file:", "func:", "if:x", "block:y",
+		}},
+		{`package p9; func _() { switch x := 0; x {} }`, []string{
+			"file:", "func:", "switch:x",
+		}},
+		{`package p10; func _() { switch x := 0; x { case 1: y := x; _ = y; default: }}`, []string{
+			"file:", "func:", "switch:x", "case:y", "case:",
+		}},
+		{`package p11; func _(t interface{}) { switch t.(type) {} }`, []string{
+			"file:", "func:t", "type switch:",
+		}},
+		{`package p12; func _(t interface{}) { switch t := t; t.(type) {} }`, []string{
+			"file:", "func:t", "type switch:t",
+		}},
+		{`package p13; func _(t interface{}) { switch x := t.(type) { case int: _ = x } }`, []string{
+			"file:", "func:t", "type switch:", "case:x", // x implicitly declared
+		}},
+		{`package p14; func _() { select{} }`, []string{
+			"file:", "func:",
+		}},
+		{`package p15; func _(c chan int) { select{ case <-c: } }`, []string{
+			"file:", "func:c", "comm:",
+		}},
+		{`package p16; func _(c chan int) { select{ case i := <-c: x := i; _ = x} }`, []string{
+			"file:", "func:c", "comm:i x",
+		}},
+		{`package p17; func _() { for{} }`, []string{
+			"file:", "func:", "for:", "block:",
+		}},
+		{`package p18; func _(n int) { for i := 0; i < n; i++ { _ = i } }`, []string{
+			"file:", "func:n", "for:i", "block:",
+		}},
+		{`package p19; func _(a []int) { for i := range a { _ = i} }`, []string{
+			"file:", "func:a", "range:i", "block:",
+		}},
+		{`package p20; var s int; func _(a []int) { for i, x := range a { s += x; _ = i } }`, []string{
+			"file:", "func:a", "range:i x", "block:",
+		}},
+		{`package p21; var s int; func _(a []int) { for i, x := range a { c := i; println(c) } }`, []string{
+			"file:", "func:a", "range:i x", "block:c",
+		}},
+		{`package p22; func _(){ sum := 0; for x <- [1, 3, 5, 7, 11, 13, 17], x > 3 { sum = sum + x; c := sum; _ = c } }`, []string{
+			"file:", "func:sum", "for phrase:x", "block:c",
+		}},
+		{`package p23; func _(){ sum := 0; for x <- [1, 3, 5, 7, 11, 13, 17] { sum = sum + x; c := sum; _ = c } }`, []string{
+			"file:", "func:sum", "for phrase:x", "block:c",
+		}},
+		{`package p23; func test(fn func(int)int){};func _(){test(func(x int) int { y := x*x; return y } ) }`, []string{
+			"file:test", "func:fn", "func:", "func:x y",
+		}},
+		{`package p24; func test(fn func(int)int){};func _(){test( x => x*x );}`, []string{
+			"file:test", "func:fn", "func:", "lambda:x",
+		}},
+		{`package p25; func test(fn func(int)int){};func _(){test( x => { y := x*x; return y } ) }`, []string{
+			"file:test", "func:fn", "func:", "lambda:x y",
+		}},
+		{`package p26; func _(){ b := {for x <- ["1", "3", "5", "7", "11"], x == "5"}; _ = b }`, []string{
+			"file:", "func:b", "for phrase:x",
+		}},
+		{`package p27; func _(){ b, ok := {i for i, x <- ["1", "3", "5", "7", "11"], x == "5"}; _ = b; _ = ok }`, []string{
+			"file:", "func:b ok", "for phrase:i x",
+		}},
+		{`package p28; func _(){ a := [x*x for x <- [1, 3.4, 5] if x > 2 ]; _ = a }`, []string{
+			"file:", "func:a", "for phrase:x",
+		}},
+		{`package p29; func _(){ arr := [1, 2, 3, 4.1, 5, 6];x := [[a, b] for a <- arr, a < b for b <- arr, b > 2]; _ = x }`, []string{
+			"file:", "func:arr x", "for phrase:b", "for phrase:a",
+		}},
+		{`package p30; func _(){ y := {x: i for i, x <- ["1", "3", "5", "7", "11"]}; _ = y }`, []string{
+			"file:", "func:y", "for phrase:i x",
+		}},
+		{`package p31; func _(){ z := {v: k for k, v <- {"Hello": 1, "Hi": 3, "xsw": 5, "Go+": 7}, v > 3}; _ = z }`, []string{
+			"file:", "func:z", "for phrase:k v",
+		}},
+	}
+
+	for _, test := range tests {
+		pkg, info, err := parseSource(token.NewFileSet(), "src.gop", test.src, 0)
+		if err != nil {
+			t.Fatalf("parse source failed: %v", test.src)
+		}
+		name := pkg.Name()
+		// number of scopes must match
+		if len(info.Scopes) != len(test.scopes) {
+			t.Errorf("package %s: got %d scopes; want %d\n%v\n%v", name, len(info.Scopes), len(test.scopes),
+				test.scopes, info.Scopes)
+		}
+
+		// scope descriptions must match
+		for node, scope := range info.Scopes {
+			kind := "<unknown node kind>"
+			switch node.(type) {
+			case *ast.File:
+				kind = "file"
+			case *ast.FuncType:
+				kind = "func"
+			case *ast.BlockStmt:
+				kind = "block"
+			case *ast.IfStmt:
+				kind = "if"
+			case *ast.SwitchStmt:
+				kind = "switch"
+			case *ast.TypeSwitchStmt:
+				kind = "type switch"
+			case *ast.CaseClause:
+				kind = "case"
+			case *ast.CommClause:
+				kind = "comm"
+			case *ast.ForStmt:
+				kind = "for"
+			case *ast.RangeStmt:
+				kind = "range"
+			case *ast.ForPhraseStmt:
+				kind = "for phrase"
+			case *ast.LambdaExpr:
+				kind = "lambda"
+			case *ast.LambdaExpr2:
+				kind = "lambda"
+			case *ast.ForPhrase:
+				kind = "for phrase"
+			default:
+				kind = fmt.Sprintf("<unknown node kind> %T", node)
+			}
+
+			// look for matching scope description
+			desc := kind + ":" + strings.Join(scope.Names(), " ")
+			found := false
+			for _, d := range test.scopes {
+				if desc == d {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Errorf("package %s: no matching scope found for %s", name, desc)
+			}
+		}
+	}
+}
+
+func TestAddress(t *testing.T) {
+	testInfo(t, `package address
+
+type foo struct{ c int; p *int }
+
+func (f foo) ptr() *foo { return &f }
+func (f foo) clone() foo { return f }
+
+type nested struct {
+	f foo
+	a [2]foo
+	s []foo
+	m map[int]foo
+}
+
+func _() {
+	getNested := func() nested { return nested{} }
+	getNestedPtr := func() *nested { return &nested{} }
+
+	_ = getNested().f.c
+	_ = getNested().a[0].c
+	_ = getNested().s[0].c
+	_ = getNested().m[0].c
+	_ = getNested().f.ptr().c
+	_ = getNested().f.clone().c
+	_ = getNested().f.clone().ptr().c
+
+	_ = getNestedPtr().f.c
+	_ = getNestedPtr().a[0].c
+	_ = getNestedPtr().s[0].c
+	_ = getNestedPtr().m[0].c
+	_ = getNestedPtr().f.ptr().c
+	_ = getNestedPtr().f.clone().c
+	_ = getNestedPtr().f.clone().ptr().c
+}
+`)
+}
+
+func TestAddress2(t *testing.T) {
+	testInfo(t, `package load
+import "os"
+
+func _() { _ = os.Stdout }
+func _() {
+	var a int
+	_ = a
+}
+func _() {
+	var p *int
+	_ = *p
+}
+func _() {
+	var s []int
+	_ = s[0]
+}
+func _() {
+	var s struct{f int}
+	_ = s.f
+}
+func _() {
+	var a [10]int
+	_ = a[0]
+}
+func _(x int) {
+	_ = x
+}
+func _()(x int) {
+	_ = x
+	return
+}
+type T int
+func (x T) _() {
+	_ = x
+}
+
+func _() {
+	var a, b int
+	_ = a + b
+}
+func _() {
+	_ = &[]int{1}
+}
+func _() {
+	_ = func(){}
+}
+func f() { _ = f }
+func _() {
+	var m map[int]int
+	_ = m[0]
+	_, _ = m[0]
+}
+func _() {
+	var ch chan int
+	_ = <-ch
+	_, _ = <-ch
+}
+`)
+}
+
+func TestMixedPackage(t *testing.T) {
+	fset := token.NewFileSet()
+	pkg, _, _, err := parseMixedSource(gopmod.Default, fset, "main.gop", `
+Test
+Test 100
+var n N
+n.test
+n.test 100
+`, "main.go", `
+package main
+
+func Test__0() {
+}
+func Test__1(n int) {
+}
+type N struct {
+}
+func (p *N) Test__0() {
+}
+func (p *N) Test__1(n int) {
+}`, parser.Config{}, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	obj := pkg.Scope().Lookup("N")
+	named := obj.Type().(*types.Named)
+	if named.NumMethods() == 2 {
+		t.Fatal("found overload method failed")
+	}
+	ext, ok := gogen.CheckFuncEx(named.Method(2).Type().(*types.Signature))
+	if !ok {
+		t.Fatal("checkFuncEx failed")
+	}
+	m, ok := ext.(*gogen.TyOverloadMethod)
+	if !ok || len(m.Methods) != 2 {
+		t.Fatal("check TyOverloadMethod failed")
+	}
 }

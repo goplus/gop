@@ -23,13 +23,13 @@ import (
 	"go/types"
 	"path/filepath"
 
+	"github.com/goplus/gogen"
+	"github.com/goplus/gogen/packages"
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/parser/fsx/memfs"
 	"github.com/goplus/gop/token"
-	"github.com/goplus/gox"
-	"github.com/goplus/gox/packages"
 	"github.com/goplus/mod/modfile"
 )
 
@@ -60,7 +60,7 @@ func init() {
 
 type Package struct {
 	Fset *token.FileSet
-	Pkg  *gox.Package
+	Pkg  *gogen.Package
 }
 
 func (p *Package) ToSource() ([]byte, error) {

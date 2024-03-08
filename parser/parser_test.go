@@ -545,4 +545,9 @@ println "$a${b}"
 `, "/foo/bar.gop:2:10: invalid $ expression: neither `${ ... }` nor `$$`", ``)
 }
 
+func TestErrStringLiteral(t *testing.T) {
+	testErrCode(t, `run "
+`, `/foo/bar.gop:1:5: string literal not terminated`, ``)
+}
+
 // -----------------------------------------------------------------------------

@@ -20,6 +20,49 @@ import (
 	"testing"
 )
 
+func TestArrowOp(t *testing.T) {
+	gopClTest(t, `
+type foo struct {
+}
+
+func (a foo) -> (b foo) {
+	println "a -> b"
+}
+
+func (a foo) <> (b foo) {
+	println "a <> b"
+}
+`, `package main
+
+import "fmt"
+
+type foo struct {
+}
+
+func (a foo) Gop_PointTo(b foo) {
+	fmt.Println("a -> b")
+}
+func (a foo) Gop_PointBi(b foo) {
+	fmt.Println("a <> b")
+}
+`)
+}
+
+func TestMapLit(t *testing.T) {
+	gopClTest(t, `
+func foo(map[string]string) {}
+
+foo {}
+`, `package main
+
+func foo(map[string]string) {
+}
+func main() {
+	foo(map[string]string{})
+}
+`)
+}
+
 func TestMayBuiltinDelete(t *testing.T) {
 	gopClTest(t, `
 func Delete(a int) {}
@@ -195,8 +238,6 @@ println 10 * a
 
 import "fmt"
 
-const GopPackage = true
-
 type foo struct {
 }
 
@@ -249,8 +290,6 @@ var d = a.mul(c)
 
 import "fmt"
 
-const GopPackage = true
-
 type foo struct {
 }
 
@@ -288,8 +327,6 @@ println add("Hello", "World")
 
 import "fmt"
 
-const GopPackage = true
-
 func add__0(a int, b int) int {
 	return a + b
 }
@@ -324,7 +361,6 @@ println mul(1.2, 3.14)
 
 import "fmt"
 
-const GopPackage = true
 const Gopo_mul = "mulInt,mulFloat"
 
 func mulInt(a int, b int) int {
@@ -585,8 +621,6 @@ n.onKey ["a"], nil, key => {
 n.onKey 100, 200
 `, `package main
 
-const GopPackage = true
-
 type Mesh struct {
 }
 
@@ -739,8 +773,6 @@ a += b
 a += c
 `, `package main
 
-const GopPackage = true
-
 var a Vector3
 var b int
 var c float64
@@ -807,8 +839,6 @@ i.onKey ["1","2"], key => {
 
 import "fmt"
 
-const GopPackage = true
-
 func main() {
 	n := &N[int]{}
 	n.OnKey__0("1", func() {
@@ -851,8 +881,6 @@ n.test
 n.test 100
 `, `package main
 
-const GopPackage = true
-
 func main() {
 	Test__0()
 	Test__1(100)
@@ -888,8 +916,6 @@ func main() {
 func TestMixedOverloadNamed(t *testing.T) {
 	gopMixedClTest(t, "main", `package main
 
-const GopPackage = true
-
 type M = map[string]any
 
 type basetype interface {
@@ -918,16 +944,12 @@ c := Var(string)
 d := Var(M)
 `, `package main
 
-const GopPackage = true
-
 var a Var__0[int]
-var b Var__1[map[string]interface {
-}]
+var b Var__1[map[string]interface{}]
 
 func main() {
 	c := Gopx_Var_Cast__0[string]()
-	d := Gopx_Var_Cast__1[map[string]interface {
-	}]()
+	d := Gopx_Var_Cast__1[map[string]interface{}]()
 }
 `)
 }
@@ -950,12 +972,13 @@ println "Hi, " + "a${x}b"`, `package main
 
 import (
 	"fmt"
+	"github.com/qiniu/x/stringutil"
 	"strconv"
 )
 
 func main() {
 	x := 1
-	fmt.Println("Hi, " + ("a" + strconv.Itoa(x) + "b"))
+	fmt.Println("Hi, " + stringutil.Concat("a", strconv.Itoa(x), "b"))
 }
 `)
 }
@@ -1162,8 +1185,6 @@ row string, 100
 tbl.col string, "foo"
 tbl.col int, 100
 `, `package main
-
-const GopPackage = true
 
 var tbl *Table
 

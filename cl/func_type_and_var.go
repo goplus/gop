@@ -23,9 +23,9 @@ import (
 	"math/big"
 	"strconv"
 
+	"github.com/goplus/gogen"
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
-	"github.com/goplus/gox"
 )
 
 // -----------------------------------------------------------------------------
@@ -93,7 +93,7 @@ func toParams(ctx *blockCtx, flds []*ast.Field) (typ *types.Tuple, variadic bool
 	return types.NewTuple(args...), ok
 }
 
-func toParam(ctx *blockCtx, fld *ast.Field, args []*gox.Param) []*gox.Param {
+func toParam(ctx *blockCtx, fld *ast.Field, args []*gogen.Param) []*gogen.Param {
 	typ := toType(ctx, fld.Type)
 	pkg := ctx.pkg
 	if len(fld.Names) == 0 {
@@ -114,7 +114,7 @@ func toParam(ctx *blockCtx, fld *ast.Field, args []*gox.Param) []*gox.Param {
 func toType(ctx *blockCtx, typ ast.Expr) (t types.Type) {
 	if rec := ctx.recorder(); rec != nil {
 		defer func() {
-			rec.recordType(ctx, typ, t)
+			rec.recordType(typ, t)
 		}()
 	}
 	switch v := typ.(type) {
@@ -232,7 +232,7 @@ func toIdentType(ctx *blockCtx, ident *ast.Ident) (ret types.Type) {
 	if rec := ctx.recorder(); rec != nil {
 		defer func() {
 			if obj != nil {
-				rec.recordIdent(ctx, ident, obj)
+				rec.recordIdent(ident, obj)
 			}
 		}()
 	}
@@ -251,7 +251,7 @@ func toIdentType(ctx *blockCtx, ident *ast.Ident) (ret types.Type) {
 		obj = t
 		return t.Type()
 	}
-	if v, _ := lookupPkgRef(ctx, gox.PkgRef{}, ident, objPkgRef); v != nil {
+	if v, _ := lookupPkgRef(ctx, gogen.PkgRef{}, ident, objPkgRef); v != nil {
 		if t, ok := v.(*types.TypeName); ok {
 			obj = t
 			return t.Type()

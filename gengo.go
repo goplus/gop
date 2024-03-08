@@ -160,7 +160,7 @@ func genGoSingleFile(file string, conf *Config, flags GenFlags) (err error) {
 		return nil
 	}
 	if err := out.WriteFile(autogen); err != nil {
-		return errors.NewWith(err, `out.WriteFile(autogen)`, -2, "(*gox.Package).WriteFile", out, autogen)
+		return errors.NewWith(err, `out.WriteFile(autogen)`, -2, "(*gogen.Package).WriteFile", out, autogen)
 	}
 	return nil
 }
@@ -180,7 +180,7 @@ func genGoIn(dir string, conf *Config, genTestPkg bool, flags GenFlags, gen ...*
 	file := filepath.Join(dir, autoGenFile)
 	err = out.WriteFile(file)
 	if err != nil {
-		return errors.NewWith(err, `out.WriteFile(file)`, -2, "(*gox.Package).WriteFile", out, file)
+		return errors.NewWith(err, `out.WriteFile(file)`, -2, "(*gogen.Package).WriteFile", out, file)
 	}
 	if gen != nil { // say `gop_autogen.go generated`
 		*gen[0] = true
@@ -189,14 +189,14 @@ func genGoIn(dir string, conf *Config, genTestPkg bool, flags GenFlags, gen ...*
 	testFile := filepath.Join(dir, autoGenTestFile)
 	err = out.WriteFile(testFile, testingGoFile)
 	if err != nil && err != syscall.ENOENT {
-		return errors.NewWith(err, `out.WriteFile(testFile, testingGoFile)`, -2, "(*gox.Package).WriteFile", out, testFile, testingGoFile)
+		return errors.NewWith(err, `out.WriteFile(testFile, testingGoFile)`, -2, "(*gogen.Package).WriteFile", out, testFile, testingGoFile)
 	}
 
 	if test != nil {
 		testFile = filepath.Join(dir, autoGen2TestFile)
 		err = test.WriteFile(testFile, testingGoFile)
 		if err != nil {
-			return errors.NewWith(err, `test.WriteFile(testFile, testingGoFile)`, -2, "(*gox.Package).WriteFile", test, testFile, testingGoFile)
+			return errors.NewWith(err, `test.WriteFile(testFile, testingGoFile)`, -2, "(*gogen.Package).WriteFile", test, testFile, testingGoFile)
 		}
 	} else {
 		err = nil
@@ -293,7 +293,7 @@ func GenGoFiles(autogen string, files []string, conf *Config) (outFiles []string
 	}
 	err = out.WriteFile(autogen)
 	if err != nil {
-		err = errors.NewWith(err, `out.WriteFile(autogen)`, -2, "(*gox.Package).WriteFile", out, autogen)
+		err = errors.NewWith(err, `out.WriteFile(autogen)`, -2, "(*gogen.Package).WriteFile", out, autogen)
 	}
 	outFiles = []string{autogen}
 	return

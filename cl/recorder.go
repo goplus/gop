@@ -19,64 +19,87 @@ package cl
 import (
 	"go/types"
 
+	"github.com/goplus/gogen"
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/fromgo"
 	"github.com/goplus/gop/cl/internal/typesutil"
 	"github.com/goplus/gop/token"
-	"github.com/goplus/gox"
 )
 
 type goxRecorder struct {
-	rec Recorder
+	Recorder
+	types map[ast.Expr]types.TypeAndValue
+}
+
+func newRecorder(rec Recorder) *goxRecorder {
+	types := make(map[ast.Expr]types.TypeAndValue)
+	return &goxRecorder{rec, types}
 }
 
 // Member maps identifiers to the objects they denote.
 func (p *goxRecorder) Member(id ast.Node, obj types.Object) {
-	tv := typesutil.NewTypeAndValueForObject(obj)
 	switch v := id.(type) {
 	case *ast.SelectorExpr:
 		sel := v.Sel
 		// TODO: record event for a Go ident
 		if _, ok := fromgo.CheckIdent(sel); !ok {
-			p.rec.Use(sel, obj)
-			p.rec.Type(v, tv)
+			var tv types.TypeAndValue
+			// check v.X call result by value
+			if f, ok := obj.(*types.Var); ok && f.IsField() && p.checkExprByValue(v.X) {
+				tv = typesutil.NewTypeAndValueForValue(obj.Type(), nil, typesutil.Value)
+			} else {
+				tv = typesutil.NewTypeAndValueForObject(obj)
+			}
+			p.Use(sel, obj)
+			p.Type(v, tv)
 		}
 	case *ast.Ident: // it's in a classfile and impossible converted from Go
-		p.rec.Use(v, obj)
-		p.rec.Type(v, tv)
+		p.Use(v, obj)
+		p.Type(v, typesutil.NewTypeAndValueForObject(obj))
 	}
 }
 
 func (p *goxRecorder) Call(id ast.Node, obj types.Object) {
 	switch v := id.(type) {
 	case *ast.Ident:
-		p.rec.Use(v, obj)
-		p.rec.Type(v, typesutil.NewTypeAndValueForObject(obj))
+		p.Use(v, obj)
+		p.Type(v, typesutil.NewTypeAndValueForObject(obj))
 	case *ast.SelectorExpr:
-		p.rec.Use(v.Sel, obj)
-		p.rec.Type(v, typesutil.NewTypeAndValueForObject(obj))
+		p.Use(v.Sel, obj)
+		p.Type(v, typesutil.NewTypeAndValueForObject(obj))
 	case *ast.CallExpr:
 		switch id := v.Fun.(type) {
 		case *ast.Ident:
-			p.rec.Use(id, obj)
+			p.Use(id, obj)
 		case *ast.SelectorExpr:
-			p.rec.Use(id.Sel, obj)
+			p.Use(id.Sel, obj)
 		}
-		p.rec.Type(v.Fun, typesutil.NewTypeAndValueForObject(obj))
+		p.Type(v.Fun, typesutil.NewTypeAndValueForObject(obj))
 	}
 }
 
-type typesRecorder struct {
-	Recorder
-	types map[ast.Expr]types.TypeAndValue
+func (rec *goxRecorder) checkExprByValue(v ast.Expr) bool {
+	if tv, ok := rec.types[v]; ok {
+		switch v.(type) {
+		case *ast.CallExpr:
+			if _, ok := tv.Type.(*types.Pointer); !ok {
+				return true
+			}
+		default:
+			if tv, ok := rec.types[v]; ok {
+				return !tv.Addressable()
+			}
+		}
+	}
+	return false
 }
 
-func (rec *typesRecorder) Type(expr ast.Expr, tv types.TypeAndValue) {
+func (rec *goxRecorder) Type(expr ast.Expr, tv types.TypeAndValue) {
 	rec.types[expr] = tv
 	rec.Recorder.Type(expr, tv)
 }
 
-func (rec *typesRecorder) instantiate(expr ast.Expr, org, typ types.Type) {
+func (rec *goxRecorder) instantiate(expr ast.Expr, _, typ types.Type) {
 	// check gox TyOverloadNamed
 	if tv, ok := rec.types[expr]; ok {
 		tv.Type = typ
@@ -96,17 +119,13 @@ func (rec *typesRecorder) instantiate(expr ast.Expr, org, typ types.Type) {
 	}
 }
 
-func newTypeRecord(rec Recorder) *typesRecorder {
-	return &typesRecorder{rec, make(map[ast.Expr]types.TypeAndValue)}
-}
-
-func (rec *typesRecorder) recordTypeValue(ctx *blockCtx, expr ast.Expr, mode typesutil.OperandMode) {
+func (rec *goxRecorder) recordTypeValue(ctx *blockCtx, expr ast.Expr, mode typesutil.OperandMode) {
 	e := ctx.cb.Get(-1)
-	t, _ := gox.DerefType(e.Type)
+	t, _ := gogen.DerefType(e.Type)
 	rec.Type(expr, typesutil.NewTypeAndValueForValue(t, e.CVal, mode))
 }
 
-func (rec *typesRecorder) indexExpr(ctx *blockCtx, expr *ast.IndexExpr) {
+func (rec *goxRecorder) indexExpr(ctx *blockCtx, expr *ast.IndexExpr) {
 	if tv, ok := rec.types[expr.X]; ok {
 		switch tv.Type.(type) {
 		case *types.Map:
@@ -117,15 +136,19 @@ func (rec *typesRecorder) indexExpr(ctx *blockCtx, expr *ast.IndexExpr) {
 			return
 		}
 	}
-	switch expr.X.(type) {
+	op := typesutil.Variable
+	switch e := expr.X.(type) {
 	case *ast.CompositeLit:
-		rec.recordTypeValue(ctx, expr, typesutil.Value)
-	default:
-		rec.recordTypeValue(ctx, expr, typesutil.Variable)
+		op = typesutil.Value
+	case *ast.SelectorExpr:
+		if rec.checkExprByValue(e.X) {
+			op = typesutil.Value
+		}
 	}
+	rec.recordTypeValue(ctx, expr, op)
 }
 
-func (rec *typesRecorder) unaryExpr(ctx *blockCtx, expr *ast.UnaryExpr) {
+func (rec *goxRecorder) unaryExpr(ctx *blockCtx, expr *ast.UnaryExpr) {
 	switch expr.Op {
 	case token.ARROW:
 		rec.recordTypeValue(ctx, expr, typesutil.CommaOK)
@@ -134,7 +157,7 @@ func (rec *typesRecorder) unaryExpr(ctx *blockCtx, expr *ast.UnaryExpr) {
 	}
 }
 
-func (rec *typesRecorder) recordCallExpr(ctx *blockCtx, v *ast.CallExpr, fnt types.Type) {
+func (rec *goxRecorder) recordCallExpr(ctx *blockCtx, v *ast.CallExpr, fnt types.Type) {
 	e := ctx.cb.Get(-1)
 	if _, ok := rec.types[v.Fun]; !ok {
 		rec.Type(v.Fun, typesutil.NewTypeAndValueForValue(fnt, nil, typesutil.Value))
@@ -142,33 +165,35 @@ func (rec *typesRecorder) recordCallExpr(ctx *blockCtx, v *ast.CallExpr, fnt typ
 	rec.Type(v, typesutil.NewTypeAndValueForCallResult(e.Type, e.CVal))
 }
 
-func (rec *typesRecorder) recordCompositeLit(ctx *blockCtx, v *ast.CompositeLit, typ types.Type) {
+func (rec *goxRecorder) recordCompositeLit(v *ast.CompositeLit, typ types.Type) {
 	rec.Type(v.Type, typesutil.NewTypeAndValueForType(typ))
 	rec.Type(v, typesutil.NewTypeAndValueForValue(typ, nil, typesutil.Value))
 }
 
-func (rec *typesRecorder) recordFuncLit(ctx *blockCtx, v *ast.FuncLit, typ types.Type) {
+func (rec *goxRecorder) recordFuncLit(v *ast.FuncLit, typ types.Type) {
 	rec.Type(v.Type, typesutil.NewTypeAndValueForType(typ))
 	rec.Type(v, typesutil.NewTypeAndValueForValue(typ, nil, typesutil.Value))
 }
 
-func (rec *typesRecorder) recordType(ctx *blockCtx, typ ast.Expr, t types.Type) {
+func (rec *goxRecorder) recordType(typ ast.Expr, t types.Type) {
 	rec.Type(typ, typesutil.NewTypeAndValueForType(t))
 }
 
-func (rec *typesRecorder) recordIdent(ctx *blockCtx, ident *ast.Ident, obj types.Object) {
+func (rec *goxRecorder) recordIdent(ident *ast.Ident, obj types.Object) {
 	rec.Use(ident, obj)
 	rec.Type(ident, typesutil.NewTypeAndValueForObject(obj))
 }
 
-func (rec *typesRecorder) recordExpr(ctx *blockCtx, expr ast.Expr, rhs bool) {
+func (rec *goxRecorder) recordExpr(ctx *blockCtx, expr ast.Expr, _ bool) {
 	switch v := expr.(type) {
 	case *ast.Ident:
 	case *ast.BasicLit:
 		rec.recordTypeValue(ctx, v, typesutil.Value)
 	case *ast.CallExpr:
 	case *ast.SelectorExpr:
-		rec.recordTypeValue(ctx, v, typesutil.Variable)
+		if _, ok := rec.types[v]; !ok {
+			rec.recordTypeValue(ctx, v, typesutil.Variable)
+		}
 	case *ast.BinaryExpr:
 		rec.recordTypeValue(ctx, v, typesutil.Value)
 	case *ast.UnaryExpr:

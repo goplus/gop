@@ -21,7 +21,7 @@ import (
 	"go/types"
 	"unsafe"
 
-	"github.com/goplus/gox"
+	"github.com/goplus/gogen"
 )
 
 // An OperandMode specifies the (addressing) mode of an operand.
@@ -51,7 +51,7 @@ type TypeAndValue struct {
 
 func NewTypeAndValueForType(typ types.Type) (ret types.TypeAndValue) {
 	switch t := typ.(type) {
-	case *gox.TypeType:
+	case *gogen.TypeType:
 		typ = t.Type()
 	}
 	ret.Type = typ
@@ -61,7 +61,7 @@ func NewTypeAndValueForType(typ types.Type) (ret types.TypeAndValue) {
 
 func NewTypeAndValueForValue(typ types.Type, val constant.Value, mode OperandMode) (ret types.TypeAndValue) {
 	switch t := typ.(type) {
-	case *gox.TypeType:
+	case *gogen.TypeType:
 		typ = t.Type()
 	}
 	if val != nil {

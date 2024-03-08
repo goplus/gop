@@ -62,7 +62,7 @@ func getBytes(stdout, stderr io.Writer) (o iBytes, ok bool) {
 	return
 }
 
-func goRun(t *testing.T, code []byte) string {
+func goRun(_ *testing.T, code []byte) string {
 	idx := atomic.AddInt64(&tmpFileIdx, 1)
 	infile := tmpDir + strconv.FormatInt(idx, 10) + ".go"
 	err := os.WriteFile(infile, []byte(code), 0666)
@@ -96,7 +96,7 @@ func genGo(t *testing.T, conf *cl.Config, gopcode string) []byte {
 	var b bytes.Buffer
 	err = pkg.WriteTo(&b)
 	if err != nil {
-		t.Fatal("gox.WriteTo failed:", err)
+		t.Fatal("gogen.WriteTo failed:", err)
 	}
 	return b.Bytes()
 }

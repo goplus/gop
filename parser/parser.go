@@ -629,6 +629,9 @@ var overloadOps = [...]byte{
 	token.SHR:     opBinary, // >>
 	token.AND_NOT: opBinary, // &^
 
+	token.SRARROW:   opBinary, // ->
+	token.BIDIARROW: opBinary, // <>
+
 	token.ADD_ASSIGN: opAssignOp, // +=
 	token.SUB_ASSIGN: opAssignOp, // -=
 	token.MUL_ASSIGN: opAssignOp, // *=
@@ -1702,7 +1705,7 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) (x ast.Expr, isTup
 
 	case token.STRING, token.CSTRING, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT:
 		bl := &ast.BasicLit{ValuePos: p.pos, Kind: p.tok, Value: p.lit}
-		if p.tok == token.STRING {
+		if p.tok == token.STRING && len(p.lit) > 1 {
 			bl.Extra = p.stringLit(p.pos, p.lit)
 		}
 		x = bl
@@ -2306,7 +2309,7 @@ func (p *parser) isCmd(x ast.Expr) bool {
 
 func (p *parser) checkCmd(x ast.Expr) bool {
 	switch p.tok {
-	case token.IDENT, token.RARROW,
+	case token.IDENT, token.DRARROW,
 		token.STRING, token.CSTRING, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT,
 		token.FUNC, token.GOTO, token.MAP, token.INTERFACE, token.CHAN, token.STRUCT:
 		return true
@@ -2469,14 +2472,14 @@ type tupleExpr struct {
 
 func (p *parser) parseLambdaExpr(allowTuple, allowCmd, allowRangeExpr bool) (x ast.Expr, isTuple bool) {
 	var first = p.pos
-	if p.tok != token.RARROW {
+	if p.tok != token.DRARROW {
 		if allowRangeExpr {
 			x, isTuple = p.parseRangeExpr(true, allowCmd)
 		} else {
 			x, isTuple = p.parseBinaryExpr(false, token.LowestPrec+1, true, allowCmd)
 		}
 	}
-	if p.tok == token.RARROW { // =>
+	if p.tok == token.DRARROW { // =>
 		var rarrow = p.pos
 		var rhs []ast.Expr
 		var body *ast.BlockStmt

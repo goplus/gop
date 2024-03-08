@@ -22,12 +22,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/goplus/gogen"
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gop/x/c2go"
 	"github.com/goplus/gop/x/typesutil/internal/typesutil"
-	"github.com/goplus/gox"
 	"github.com/goplus/mod/gopmod"
 	"github.com/qiniu/x/errors"
 	"github.com/qiniu/x/log"
@@ -79,6 +79,12 @@ type Config struct {
 
 	// Mod represents a Go+ module (optional).
 	Mod *gopmod.Module
+
+	// If IgnoreFuncBodies is set, skip compiling function bodies (optional).
+	IgnoreFuncBodies bool
+
+	// If UpdateGoTypesOverload is set, update go types overload data (optional).
+	UpdateGoTypesOverload bool
 }
 
 // A Checker maintains the state of the type checker.
@@ -152,6 +158,7 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 		NoFileLine:     true,
 		NoAutoGenMain:  true,
 		NoSkipConstant: true,
+		Outline:        opts.IgnoreFuncBodies,
 	})
 	if err != nil {
 		if onErr := conf.Error; onErr != nil {
@@ -178,6 +185,9 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 		err = checker.Files(files)
 		// TODO: how to process error?
 		CorrectTypesInfo(scope, objMap, p.gopInfo.Uses)
+		if opts.UpdateGoTypesOverload {
+			gogen.InitThisGopPkg(pkgTypes)
+		}
 	}
 	return
 }
@@ -230,17 +240,17 @@ func DeleteObjects(scope *types.Scope, files []*goast.File) objMapT {
 
 func convErr(fset *token.FileSet, e error) (ret types.Error, ok bool) {
 	switch v := e.(type) {
-	case *gox.CodeError:
+	case *gogen.CodeError:
 		ret.Pos, ret.Msg = v.Pos, v.Msg
 		typesutil.SetErrorGo116(&ret, 0, v.Pos, v.Pos)
-	case *gox.MatchError:
+	case *gogen.MatchError:
 		end := token.NoPos
 		if v.Src != nil {
 			ret.Pos, end = v.Src.Pos(), v.Src.End()
 		}
 		ret.Msg = v.Message("")
 		typesutil.SetErrorGo116(&ret, 0, ret.Pos, end)
-	case *gox.ImportError:
+	case *gogen.ImportError:
 		ret.Pos, ret.Msg = v.Pos, v.Err.Error()
 		typesutil.SetErrorGo116(&ret, 0, v.Pos, v.Pos)
 	default:

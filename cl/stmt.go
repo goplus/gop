@@ -26,9 +26,9 @@ import (
 	gotoken "go/token"
 	"go/types"
 
+	"github.com/goplus/gogen"
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
-	"github.com/goplus/gox"
 )
 
 func fileLineFile(relBaseDir, absFile string) string {
@@ -51,8 +51,15 @@ func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
 	}
 }
 
-func commentStmtEx(cb *gox.CodeBuilder, ctx *pkgCtx, stmt ast.Stmt) {
+func commentStmtEx(cb *gogen.CodeBuilder, ctx *pkgCtx, stmt ast.Stmt) {
 	start := stmt.Pos()
+	if start == token.NoPos {
+		cb.SetComments(nil, false)
+		return
+	}
+	if doc := checkStmtDoc(stmt); doc != nil {
+		start = doc.Pos()
+	}
 	pos := ctx.fset.Position(start)
 	if ctx.relBaseDir != "" {
 		pos.Filename = fileLineFile(ctx.relBaseDir, pos.Filename)
@@ -64,7 +71,16 @@ func commentStmtEx(cb *gox.CodeBuilder, ctx *pkgCtx, stmt ast.Stmt) {
 	cb.SetComments(comments, false)
 }
 
-func commentFunc(ctx *blockCtx, fn *gox.Func, decl *ast.FuncDecl) {
+func checkStmtDoc(stmt ast.Stmt) *ast.CommentGroup {
+	if decl, ok := stmt.(*ast.DeclStmt); ok {
+		if d, ok := decl.Decl.(*ast.GenDecl); ok {
+			return d.Doc
+		}
+	}
+	return nil
+}
+
+func commentFunc(ctx *blockCtx, fn *gogen.Func, decl *ast.FuncDecl) {
 	start := decl.Name.Pos()
 	if ctx.fileLine && start != token.NoPos {
 		if decl.Doc != nil {
@@ -151,6 +167,9 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 	case *ast.BlockStmt:
 		ctx.cb.Block()
 		compileStmts(ctx, v.List)
+		if rec := ctx.recorder(); rec != nil {
+			rec.Scope(v, ctx.cb.Scope())
+		}
 		ctx.cb.End()
 		return
 	case *ast.SelectStmt:
@@ -359,11 +378,19 @@ func compileRangeStmt(ctx *blockCtx, v *ast.RangeStmt) {
 	if pos == 0 {
 		pos = v.For
 	}
-	cb.RangeAssignThen(pos) // TODO: need NewScope for body
+	cb.RangeAssignThen(pos)
 	if len(defineNames) > 0 {
 		defNames(ctx, defineNames, cb.Scope())
 	}
+	if rec := ctx.recorder(); rec != nil {
+		rec.Scope(v, cb.Scope())
+	}
+	cb.VBlock()
 	compileStmts(ctx, v.Body.List)
+	if rec := ctx.recorder(); rec != nil {
+		rec.Scope(v.Body, cb.Scope())
+	}
+	cb.End(v.Body)
 	cb.SetComments(comments, once)
 	setBodyHandler(ctx)
 	cb.End(v)
@@ -394,15 +421,26 @@ func compileForPhraseStmt(ctx *blockCtx, v *ast.ForPhraseStmt) {
 	if len(defineNames) > 0 {
 		defNames(ctx, defineNames, cb.Scope())
 	}
+	if rec := ctx.recorder(); rec != nil {
+		rec.Scope(v, cb.Scope())
+	}
 	if v.Cond != nil {
 		cb.If()
 		compileExpr(ctx, v.Cond)
 		cb.Then()
 		compileStmts(ctx, v.Body.List)
 		cb.SetComments(comments, once)
+		if rec := ctx.recorder(); rec != nil {
+			rec.Scope(v.Body, cb.Scope())
+		}
 		cb.End()
 	} else {
+		cb.VBlock()
 		compileStmts(ctx, v.Body.List)
+		if rec := ctx.recorder(); rec != nil {
+			rec.Scope(v.Body, cb.Scope())
+		}
+		cb.End(v.Body)
 		cb.SetComments(comments, once)
 	}
 	setBodyHandler(ctx)
@@ -507,6 +545,9 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 	cb := ctx.cb
 	comments, once := cb.BackupComments()
 	cb.For(v)
+	if rec := ctx.recorder(); rec != nil {
+		rec.Scope(v, cb.Scope())
+	}
 	if v.Init != nil {
 		compileStmt(ctx, v.Init)
 	}
@@ -516,6 +557,9 @@ func compileForStmt(ctx *blockCtx, v *ast.ForStmt) {
 		cb.None()
 	}
 	cb.Then(v.Body)
+	if rec := ctx.recorder(); rec != nil {
+		rec.Scope(v.Body, cb.Scope())
+	}
 	compileStmts(ctx, v.Body.List)
 	if v.Post != nil {
 		cb.Post()
@@ -539,6 +583,9 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 		compileStmt(ctx, v.Init)
 	}
 	compileExpr(ctx, v.Cond)
+	if rec := ctx.recorder(); rec != nil {
+		rec.Scope(v, cb.Scope())
+	}
 	cb.Then(v.Body)
 	compileStmts(ctx, v.Body.List)
 	if e := v.Else; e != nil {
@@ -550,6 +597,9 @@ func compileIfStmt(ctx *blockCtx, v *ast.IfStmt) {
 		}
 	}
 	cb.SetComments(comments, once)
+	if rec := ctx.recorder(); rec != nil {
+		rec.Scope(v.Body, cb.Scope())
+	}
 	cb.End(v)
 }
 
@@ -584,6 +634,9 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 		panic("TODO: type switch syntax error, please use x.(type)")
 	}
 	cb.TypeSwitch(name, v)
+	if rec := ctx.recorder(); rec != nil {
+		rec.Scope(v, cb.Scope())
+	}
 	if v.Init != nil {
 		compileStmt(ctx, v.Init)
 	}
@@ -596,10 +649,11 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 		if !ok {
 			log.Panicln("TODO: compile TypeSwitchStmt failed - case clause expected.")
 		}
+		cb.TypeCase(c)
 		for _, citem := range c.List {
 			compileExpr(ctx, citem)
 			T := cb.Get(-1).Type
-			if tt, ok := T.(*gox.TypeType); ok {
+			if tt, ok := T.(*gogen.TypeType); ok {
 				T = tt.Type()
 			}
 			var haserr bool
@@ -630,9 +684,12 @@ func compileTypeSwitchStmt(ctx *blockCtx, v *ast.TypeSwitchStmt) {
 				firstDefault = c
 			}
 		}
-		cb.TypeCase(len(c.List), c) // TypeCase(0) means default case
+		cb.Then()
 		compileStmts(ctx, c.Body)
 		commentStmt(ctx, stmt)
+		if rec := ctx.recorder(); rec != nil {
+			rec.Scope(c, cb.Scope())
+		}
 		cb.End(c)
 	}
 	cb.SetComments(comments, once)
@@ -663,6 +720,9 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 	} else {
 		cb.None() // switch {...}
 	}
+	if rec := ctx.recorder(); rec != nil {
+		rec.Scope(v, cb.Scope())
+	}
 	cb.Then(v.Body)
 	seen := make(valueMap)
 	var firstDefault ast.Stmt
@@ -671,6 +731,7 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 		if !ok {
 			log.Panicln("TODO: compile SwitchStmt failed - case clause expected.")
 		}
+		cb.Case(c)
 		for _, citem := range c.List {
 			compileExpr(ctx, citem)
 			v := cb.Get(-1)
@@ -704,13 +765,16 @@ func compileSwitchStmt(ctx *blockCtx, v *ast.SwitchStmt) {
 				firstDefault = c
 			}
 		}
-		cb.Case(len(c.List), c) // Case(0) means default case
+		cb.Then()
 		body, has := hasFallthrough(c.Body)
 		compileStmts(ctx, body)
 		if has {
 			cb.Fallthrough()
 		}
 		commentStmt(ctx, stmt)
+		if rec := ctx.recorder(); rec != nil {
+			rec.Scope(c, cb.Scope())
+		}
 		cb.End(c)
 	}
 	cb.SetComments(comments, once)
@@ -753,14 +817,16 @@ func compileSelectStmt(ctx *blockCtx, v *ast.SelectStmt) {
 		if !ok {
 			log.Panicln("TODO: compile SelectStmt failed - comm clause expected.")
 		}
-		var n int
+		cb.CommCase(c)
 		if c.Comm != nil {
 			compileStmt(ctx, c.Comm)
-			n = 1
 		}
-		cb.CommCase(n, c) // CommCase(0) means default case
+		cb.Then()
 		compileStmts(ctx, c.Body)
 		commentStmt(ctx, stmt)
+		if rec := ctx.recorder(); rec != nil {
+			rec.Scope(c, cb.Scope())
+		}
 		cb.End(c)
 	}
 	cb.SetComments(comments, once)
@@ -791,7 +857,7 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 	}
 }
 
-func getLabel(ctx *blockCtx, label *ast.Ident) *gox.Label {
+func getLabel(ctx *blockCtx, label *ast.Ident) *gogen.Label {
 	if label != nil {
 		if l, ok := ctx.cb.LookupLabel(label.Name); ok {
 			return l

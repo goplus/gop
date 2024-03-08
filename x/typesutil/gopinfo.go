@@ -19,9 +19,9 @@ package typesutil
 import (
 	"go/types"
 
+	"github.com/goplus/gogen"
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
-	"github.com/goplus/gox"
 	"github.com/qiniu/x/log"
 )
 
@@ -121,6 +121,10 @@ type Info struct {
 	//     *ast.CommClause
 	//     *ast.ForStmt
 	//     *ast.RangeStmt
+	//     *ast.ForPhraseStmt
+	//     *ast.ForPhrase
+	//     *ast.LambdaExpr
+	//     *ast.LambdaExpr2
 	//
 	Scopes map[ast.Node]*types.Scope
 
@@ -250,7 +254,7 @@ func (info gopRecorder) Use(id *ast.Ident, obj types.Object) {
 	}
 	if info.Overloads != nil {
 		if sig, ok := obj.Type().(*types.Signature); ok {
-			if ext, objs := gox.CheckSigFuncExObjects(sig); len(objs) > 1 {
+			if ext, objs := gogen.CheckSigFuncExObjects(sig); len(objs) > 1 {
 				if debugVerbose {
 					log.Println("==> Overloads:", id, ext)
 				}

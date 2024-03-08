@@ -22,11 +22,11 @@ import (
 	"log"
 	"testing"
 
+	"github.com/goplus/gogen"
+	"github.com/goplus/gogen/cpackages"
+	"github.com/goplus/gogen/packages"
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
-	"github.com/goplus/gox"
-	"github.com/goplus/gox/cpackages"
-	"github.com/goplus/gox/packages"
 	"github.com/goplus/mod/modfile"
 )
 
@@ -34,10 +34,10 @@ var (
 	goxConf = getGoxConf()
 )
 
-func getGoxConf() *gox.Config {
+func getGoxConf() *gogen.Config {
 	fset := token.NewFileSet()
 	imp := packages.NewImporter(fset)
-	return &gox.Config{Fset: fset, Importer: imp}
+	return &gogen.Config{Fset: fset, Importer: imp}
 }
 
 func TestCompileLambdaExpr(t *testing.T) {
@@ -47,7 +47,7 @@ func TestCompileLambdaExpr(t *testing.T) {
 	lhs := []*ast.Ident{ast.NewIdent("x")}
 	sig := types.NewSignatureType(nil, nil, nil, nil, nil, false)
 	e := compileLambdaExpr(ctx, &ast.LambdaExpr{Lhs: lhs}, sig)
-	if ce := e.(*gox.CodeError); ce.Msg != `too many arguments in lambda expression
+	if ce := e.(*gogen.CodeError); ce.Msg != `too many arguments in lambda expression
 	have (x)
 	want ()` {
 		t.Fatal("compileLambdaExpr:", ce.Msg)
@@ -57,7 +57,7 @@ func TestCompileLambdaExpr(t *testing.T) {
 func TestCompileLambda1(t *testing.T) {
 	defer func() {
 		if e := recover(); e != nil {
-			if ce := e.(*gox.CodeError); ce.Msg != `too many arguments in lambda expression
+			if ce := e.(*gogen.CodeError); ce.Msg != `too many arguments in lambda expression
 	have (x)
 	want ()` {
 				t.Fatal("compileLambda:", ce.Msg)
@@ -75,7 +75,7 @@ func TestCompileLambda1(t *testing.T) {
 func TestCompileLambda2(t *testing.T) {
 	defer func() {
 		if e := recover(); e != nil {
-			if ce := e.(*gox.CodeError); ce.Msg != `too many arguments in lambda expression
+			if ce := e.(*gogen.CodeError); ce.Msg != `too many arguments in lambda expression
 	have (x)
 	want ()` {
 				t.Fatal("compileLambda:", ce.Msg)
@@ -113,7 +113,7 @@ func TestCompileStmt(t *testing.T) {
 }
 
 func TestTryGopExec(t *testing.T) {
-	pkg := gox.NewPackage("", "foo", goxConf)
+	pkg := gogen.NewPackage("", "foo", goxConf)
 	if tryGopExec(pkg.CB(), nil) {
 		t.Fatal("tryGopExec")
 	}
@@ -149,7 +149,7 @@ func TestErrStringLit(t *testing.T) {
 }
 
 func TestErrPreloadFile(t *testing.T) {
-	pkg := gox.NewPackage("", "foo", goxConf)
+	pkg := gogen.NewPackage("", "foo", goxConf)
 	ctx := &blockCtx{pkgCtx: &pkgCtx{}}
 	t.Run("overloadName", func(t *testing.T) {
 		defer func() {
@@ -211,7 +211,7 @@ func TestErrPreloadFile(t *testing.T) {
 				}},
 			},
 		}
-		preloadFile(pkg, ctx, "foo.gop", &ast.File{Decls: decls}, "", true)
+		preloadFile(pkg, ctx, &ast.File{Decls: decls}, "", true)
 	})
 	t.Run("OverloadFuncDecl: unknown func", func(t *testing.T) {
 		defer func() {
@@ -228,7 +228,7 @@ func TestErrPreloadFile(t *testing.T) {
 				Operator: true,
 			},
 		}
-		preloadFile(pkg, ctx, "foo.gop", &ast.File{Decls: decls}, "", true)
+		preloadFile(pkg, ctx, &ast.File{Decls: decls}, "", true)
 	})
 	t.Run("unknown decl", func(t *testing.T) {
 		defer func() {
@@ -239,7 +239,7 @@ func TestErrPreloadFile(t *testing.T) {
 		decls := []ast.Decl{
 			&ast.BadDecl{},
 		}
-		preloadFile(pkg, ctx, "foo.gop", &ast.File{Decls: decls}, "", true)
+		preloadFile(pkg, ctx, &ast.File{Decls: decls}, "", true)
 	})
 }
 
@@ -287,8 +287,12 @@ func TestMarkAutogen(t *testing.T) {
 }
 
 func TestClassNameAndExt(t *testing.T) {
-	name, ext := ClassNameAndExt("/foo/bar.abc_yap.gox")
-	if name != "bar" || ext != "_yap.gox" {
+	name, clsfile, ext := ClassNameAndExt("/foo/bar.abc_yap.gox")
+	if name != "bar_abc" || clsfile != "bar.abc" || ext != "_yap.gox" {
+		t.Fatal("classNameAndExt:", name, ext)
+	}
+	name, clsfile, ext = ClassNameAndExt("/foo/get-bar_:id.yap")
+	if name != "get_bar_id" || clsfile != "get-bar_:id" || ext != ".yap" {
 		t.Fatal("classNameAndExt:", name, ext)
 	}
 }
@@ -351,7 +355,7 @@ func TestCompileErrWrapExpr(t *testing.T) {
 			t.Fatal("TestCompileErrWrapExpr failed")
 		}
 	}()
-	pkg := gox.NewPackage("", "foo", goxConf)
+	pkg := gogen.NewPackage("", "foo", goxConf)
 	ctx := &blockCtx{pkg: pkg, cb: pkg.CB()}
 	compileErrWrapExpr(ctx, &ast.ErrWrapExpr{Tok: token.QUESTION}, 0)
 }
@@ -397,7 +401,7 @@ func TestCheckCommandWithoutArgs(t *testing.T) {
 
 func TestClRangeStmt(t *testing.T) {
 	ctx := &blockCtx{
-		cb: &gox.CodeBuilder{},
+		cb: &gogen.CodeBuilder{},
 	}
 	stmt := &ast.RangeStmt{
 		Tok:  token.DEFINE,
@@ -413,7 +417,7 @@ func TestClRangeStmt(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 func TestGetStringConst(t *testing.T) {
-	spx := gox.PkgRef{Types: types.NewPackage("", "foo")}
+	spx := gogen.PkgRef{Types: types.NewPackage("", "foo")}
 	if v := getStringConst(spx, "unknown"); v != "" {
 		t.Fatal("getStringConst:", v)
 	}
@@ -425,7 +429,7 @@ func TestSpxRef(t *testing.T) {
 			t.Fatal("TestSpxRef:", e)
 		}
 	}()
-	pkg := gox.PkgRef{
+	pkg := gogen.PkgRef{
 		Types: types.NewPackage("foo", "foo"),
 	}
 	spxRef(pkg, "bar")
@@ -444,10 +448,10 @@ func isError(e interface{}, msg string) bool {
 }
 
 func TestGmxProject(t *testing.T) {
-	pkg := gox.NewPackage("", "foo", goxConf)
+	pkg := gogen.NewPackage("", "foo", goxConf)
 	ctx := &pkgCtx{
 		projs:   make(map[string]*gmxProject),
-		classes: make(map[*ast.File]gmxClass),
+		classes: make(map[*ast.File]*gmxClass),
 	}
 	gmx := loadClass(ctx, pkg, "main.t2gmx", &ast.File{IsProj: true}, &Config{
 		LookupClass: lookupClass,
@@ -574,7 +578,7 @@ func TestErrLoadImport(t *testing.T) {
 
 func TestErrCompileBasicLit(t *testing.T) {
 	testPanic(t, "compileBasicLit: invalid syntax\n", func() {
-		ctx := &blockCtx{cb: new(gox.CodeBuilder)}
+		ctx := &blockCtx{cb: new(gogen.CodeBuilder)}
 		compileBasicLit(ctx, &ast.BasicLit{Kind: token.CSTRING, Value: `\\x`})
 	})
 }
