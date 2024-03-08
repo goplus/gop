@@ -291,8 +291,8 @@ func TestClassNameAndExt(t *testing.T) {
 	if name != "bar_abc" || clsfile != "bar.abc" || ext != "_yap.gox" {
 		t.Fatal("classNameAndExt:", name, ext)
 	}
-	name, clsfile, ext = ClassNameAndExt("/foo/get_bar_:id.yap")
-	if name != "get_bar_id" || clsfile != "get_bar_:id" || ext != ".yap" {
+	name, clsfile, ext = ClassNameAndExt("/foo/get-bar_:id.yap")
+	if name != "get_bar_id" || clsfile != "get-bar_:id" || ext != ".yap" {
 		t.Fatal("classNameAndExt:", name, ext)
 	}
 }
