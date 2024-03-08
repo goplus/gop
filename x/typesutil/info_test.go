@@ -21,6 +21,7 @@ import (
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gop/x/typesutil"
+	"github.com/goplus/gox"
 	"github.com/goplus/mod/env"
 	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modfile"
@@ -61,16 +62,16 @@ func spxParserConf() parser.Config {
 	}
 }
 
-func parseMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string, goname string, gosrc string, parserConf parser.Config) (*typesutil.Info, *types.Info, error) {
+func parseMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string, goname string, gosrc string, parserConf parser.Config, updateGoTypesOverload bool) (*types.Package, *typesutil.Info, *types.Info, error) {
 	f, err := parser.ParseEntry(fset, name, src, parserConf)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	var gofiles []*goast.File
 	if len(gosrc) > 0 {
 		f, err := goparser.ParseFile(fset, goname, gosrc, goparser.ParseComments)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 		gofiles = append(gofiles, f)
 	}
@@ -78,9 +79,10 @@ func parseMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string,
 	conf := &types.Config{}
 	conf.Importer = gop.NewImporter(nil, &env.Gop{Root: "../..", Version: "1.0"}, fset)
 	chkOpts := &typesutil.Config{
-		Types: types.NewPackage("main", f.Name.Name),
-		Fset:  fset,
-		Mod:   mod,
+		Types:                 types.NewPackage("main", f.Name.Name),
+		Fset:                  fset,
+		Mod:                   mod,
+		UpdateGoTypesOverload: updateGoTypesOverload,
 	}
 	info := &typesutil.Info{
 		Types:      make(map[ast.Expr]types.TypeAndValue),
@@ -101,7 +103,7 @@ func parseMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string,
 	}
 	check := typesutil.NewChecker(conf, chkOpts, ginfo, info)
 	err = check.Files(gofiles, []*ast.File{f})
-	return info, ginfo, err
+	return chkOpts.Types, info, ginfo, err
 }
 
 func parseSource(fset *token.FileSet, filename string, src interface{}, mode parser.Mode) (*types.Package, *typesutil.Info, error) {
@@ -166,7 +168,7 @@ func testSpxInfo(t *testing.T, name string, src string, expect string) {
 
 func testGopInfoEx(t *testing.T, mod *gopmod.Module, name string, src string, goname string, gosrc string, expect string, parseConf parser.Config) {
 	fset := token.NewFileSet()
-	info, _, err := parseMixedSource(mod, fset, name, src, goname, gosrc, parseConf)
+	_, info, _, err := parseMixedSource(mod, fset, name, src, goname, gosrc, parseConf, false)
 	if err != nil {
 		t.Fatal("parserMixedSource error", err)
 	}
@@ -1878,4 +1880,104 @@ func _() {
 	_ = getNestedPtr().f.clone().ptr().c
 }
 `)
+}
+
+func TestAddress2(t *testing.T) {
+	testInfo(t, `package load
+import "os"
+
+func _() { _ = os.Stdout }
+func _() {
+	var a int
+	_ = a
+}
+func _() {
+	var p *int
+	_ = *p
+}
+func _() {
+	var s []int
+	_ = s[0]
+}
+func _() {
+	var s struct{f int}
+	_ = s.f
+}
+func _() {
+	var a [10]int
+	_ = a[0]
+}
+func _(x int) {
+	_ = x
+}
+func _()(x int) {
+	_ = x
+	return
+}
+type T int
+func (x T) _() {
+	_ = x
+}
+
+func _() {
+	var a, b int
+	_ = a + b
+}
+func _() {
+	_ = &[]int{1}
+}
+func _() {
+	_ = func(){}
+}
+func f() { _ = f }
+func _() {
+	var m map[int]int
+	_ = m[0]
+	_, _ = m[0]
+}
+func _() {
+	var ch chan int
+	_ = <-ch
+	_, _ = <-ch
+}
+`)
+}
+
+func TestMixedPackage(t *testing.T) {
+	fset := token.NewFileSet()
+	pkg, _, _, err := parseMixedSource(gopmod.Default, fset, "main.gop", `
+Test
+Test 100
+var n N
+n.test
+n.test 100
+`, "main.go", `
+package main
+
+func Test__0() {
+}
+func Test__1(n int) {
+}
+type N struct {
+}
+func (p *N) Test__0() {
+}
+func (p *N) Test__1(n int) {
+}`, parser.Config{}, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	obj := pkg.Scope().Lookup("N")
+	named := obj.Type().(*types.Named)
+	if named.NumMethods() == 2 {
+		t.Fatal("found overload method failed")
+	}
+	ext, ok := gox.CheckFuncEx(named.Method(2).Type().(*types.Signature))
+	if !ok {
+		t.Fatal("checkFuncEx failed")
+	}
+	m, ok := ext.(*gox.TyOverloadMethod)
+	if !ok || len(m.Methods) != 2 {
+		t.Fatal("check TyOverloadMethod failed")
+	}
 }

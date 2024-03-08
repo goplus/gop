@@ -82,6 +82,9 @@ type Config struct {
 
 	// If IgnoreFuncBodies is set, skip compiling function bodies (optional).
 	IgnoreFuncBodies bool
+
+	// If UpdateGoTypesOverload is set, update go types overload data (optional).
+	UpdateGoTypesOverload bool
 }
 
 // A Checker maintains the state of the type checker.
@@ -175,13 +178,16 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 		}
 		// don't return even if err != nil
 	}
-	if len(files) > 0 && p.goInfo != nil {
+	if len(files) > 0 {
 		scope := pkgTypes.Scope()
 		objMap := DeleteObjects(scope, files)
 		checker := types.NewChecker(conf, fset, pkgTypes, p.goInfo)
 		err = checker.Files(files)
 		// TODO: how to process error?
 		CorrectTypesInfo(scope, objMap, p.gopInfo.Uses)
+		if opts.UpdateGoTypesOverload {
+			gox.InitThisGopPkg(pkgTypes)
+		}
 	}
 	return
 }
