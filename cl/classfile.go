@@ -377,4 +377,37 @@ func astEmptyFunc(entry string) *ast.FuncDecl {
 	}
 }
 
+func astEmptyEntrypoint(f *ast.File) {
+	var entry = getEntrypoint(f)
+	var hasEntry bool
+	for _, decl := range f.Decls {
+		switch d := decl.(type) {
+		case *ast.FuncDecl:
+			if d.Name.Name == entry {
+				hasEntry = true
+			}
+		}
+	}
+	if !hasEntry {
+		f.Decls = append(f.Decls, astEmptyFunc(entry))
+	}
+}
+
+func getEntrypoint(f *ast.File) string {
+	switch {
+	case f.IsProj:
+		return "MainEntry"
+	case f.IsClass:
+		return "Main"
+	case inMainPkg(f):
+		return "main"
+	default:
+		return "init"
+	}
+}
+
+func inMainPkg(f *ast.File) bool {
+	return f.Name.Name == "main"
+}
+
 // -----------------------------------------------------------------------------
