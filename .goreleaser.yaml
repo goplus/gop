@@ -4,6 +4,7 @@
 # vim: set ts=2 sw=2 tw=0 fo=cnqoj
 
 version: 1
+dist: ".dist"
 
 before:
   hooks:
@@ -146,42 +147,66 @@ nfpms:
     bindir: /usr/lib/{{ .ProjectName }}
     contents:
       # source folder
-      - src: LICENSE
-        dst: /usr/lib/{{ .ProjectName }}/LICENSE
+      - src: "LICENSE"
+        dst: "/usr/lib/{ .ProjectName }/LICENSE"
+      - src: "Makefile"
+        dst: "/usr/lib/{ .ProjectName }/Makefile"
       - src: "README.md"
-        dst: /usr/lib/{{ .ProjectName }}/README.md
+        dst: "/usr/lib/{ .ProjectName }/README.md"
+      - src: "_gendeps.go"
+        dst: "/usr/lib/{ .ProjectName }/_gendeps.go"
+      - src: "all.bash"
+        dst: "/usr/lib/{ .ProjectName }/all.bash"
+      - src: "all.bat"
+        dst: "/usr/lib/{ .ProjectName }/all.bat"
+      - src: "ast"
+        dst: "/usr/lib/{ .ProjectName }/ast"
+      - src: "build_install_run.go"
+        dst: "/usr/lib/{ .ProjectName }/build_install_run.go"
+      - src: "builtin"
+        dst: "/usr/lib/{ .ProjectName }/builtin"
+      - src: "cl"
+        dst: "/usr/lib/{ .ProjectName }/cl"
+      - src: "cmd"
+        dst: "/usr/lib/{ .ProjectName }/cmd"
+      - src: "doc"
+        dst: "/usr/lib/{ .ProjectName }/doc"
+      - src: "env"
+        dst: "/usr/lib/{ .ProjectName }/env"
+      - src: "format"
+        dst: "/usr/lib/{ .ProjectName }/format"
+      - src: "gengo.go"
+        dst: "/usr/lib/{ .ProjectName }/gengo.go"
       - src: "go.mod"
-        dst: /usr/lib/{{ .ProjectName }}/go.mod
+        dst: "/usr/lib/{ .ProjectName }/go.mod"
       - src: "go.sum"
-        dst: /usr/lib/{{ .ProjectName }}/go.sum
-      - src: "*.go"
-        dst: /usr/lib/{{ .ProjectName }}/
-      - src: ast
-        dst: /usr/lib/{{ .ProjectName }}/ast
-      - src: builtin
-        dst: /usr/lib/{{ .ProjectName }}/builtin
-      - src: cl
-        dst: /usr/lib/{{ .ProjectName }}/cl
-      - src: cmd
-        dst: /usr/lib/{{ .ProjectName }}/cmd
-      - src: doc
-        dst: /usr/lib/{{ .ProjectName }}/doc
-      - src: env
-        dst: /usr/lib/{{ .ProjectName }}/env
-      - src: format
-        dst: /usr/lib/{{ .ProjectName }}/format
-      - src: parser
-        dst: /usr/lib/{{ .ProjectName }}/parser
-      - src: printer
-        dst: /usr/lib/{{ .ProjectName }}/parser
-      - src: scanner
-        dst: /usr/lib/{{ .ProjectName }}/scanner
-      - src: token
-        dst: /usr/lib/{{ .ProjectName }}/token
-      - src: watcher
-        dst: /usr/lib/{{ .ProjectName }}/watcher
+        dst: "/usr/lib/{ .ProjectName }/go.sum"
+      - src: "imp.go"
+        dst: "/usr/lib/{ .ProjectName }/imp.go"
+      - src: "load.go"
+        dst: "/usr/lib/{ .ProjectName }/load.go"
+      - src: "make.bash"
+        dst: "/usr/lib/{ .ProjectName }/make.bash"
+      - src: "make.bat"
+        dst: "/usr/lib/{ .ProjectName }/make.bat"
+      - src: "outline.go"
+        dst: "/usr/lib/{ .ProjectName }/outline.go"
+      - src: "parser"
+        dst: "/usr/lib/{ .ProjectName }/parser"
+      - src: "printer"
+        dst: "/usr/lib/{ .ProjectName }/printer"
+      - src: "scanner"
+        dst: "/usr/lib/{ .ProjectName }/scanner"
+      - src: "test"
+        dst: "/usr/lib/{ .ProjectName }/test"
+      - src: "testdata"
+        dst: "/usr/lib/{ .ProjectName }/testdata"
+      - src: "tidy.go"
+        dst: "/usr/lib/{ .ProjectName }/tidy.go"
+      - src: "token"
+        dst: "/usr/lib/{ .ProjectName }/token"
       - src: "x"
-        dst: /usr/lib/{{ .ProjectName }}/x
+        dst: "/usr/lib/{ .ProjectName }/x"
       # symlinks to binaries
       - src: "/usr/lib/{{ .ProjectName }}/bin/gop"
         dst: /usr/bin/gop
@@ -211,40 +236,66 @@ snapcrafts:
       {{- if .Arm }}v{{ .Arm }}{{ end }}
     extra_files:
       # source folder
-      - source: LICENSE
-        destination: LICENSE
+      - source: "LICENSE"
+        destination: "LICENSE"
+      - source: "Makefile"
+        destination: "Makefile"
       - source: "README.md"
-        destination: README.md
+        destination: "README.md"
+      - source: "_gendeps.go"
+        destination: "_gendeps.go"
+      - source: "all.bash"
+        destination: "all.bash"
+      - source: "all.bat"
+        destination: "all.bat"
+      - source: "ast"
+        destination: "ast"
+      - source: "build_install_run.go"
+        destination: "build_install_run.go"
+      - source: "builtin"
+        destination: "builtin"
+      - source: "cl"
+        destination: "cl"
+      - source: "cmd"
+        destination: "cmd"
+      - source: "doc"
+        destination: "doc"
+      - source: "env"
+        destination: "env"
+      - source: "format"
+        destination: "format"
+      - source: "gengo.go"
+        destination: "gengo.go"
       - source: "go.mod"
-        destination: go.mod
+        destination: "go.mod"
       - source: "go.sum"
-        destination: go.sum
-      - source: ast
-        destination: ast
-      - source: builtin
-        destination: builtin
-      - source: cl
-        destination: cl
-      - source: cmd
-        destination: cmd
-      - source: doc
-        destination: doc
-      - source: env
-        destination: env
-      - source: format
-        destination: format
-      - source: parser
-        destination: parser
-      - source: printer
-        destination: parser
-      - source: scanner
-        destination: scanner
-      - source: token
-        destination: token
-      - source: watcher
-        destination: watcher
+        destination: "go.sum"
+      - source: "imp.go"
+        destination: "imp.go"
+      - source: "load.go"
+        destination: "load.go"
+      - source: "make.bash"
+        destination: "make.bash"
+      - source: "make.bat"
+        destination: "make.bat"
+      - source: "outline.go"
+        destination: "outline.go"
+      - source: "parser"
+        destination: "parser"
+      - source: "printer"
+        destination: "printer"
+      - source: "scanner"
+        destination: "scanner"
+      - source: "test"
+        destination: "test"
+      - source: "testdata"
+        destination: "testdata"
+      - source: "tidy.go"
+        destination: "tidy.go"
+      - source: "token"
+        destination: "token"
       - source: "x"
-        destination: x
+        destination: "x"
     apps:
       gop:
         command: "gop"

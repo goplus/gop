@@ -15,6 +15,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
+      
+    - name: Check goreleaser files
+      run: python .github/workflows/check_goreleaser_config.py
 
     - name: Set up Go
       uses: actions/setup-go@v5

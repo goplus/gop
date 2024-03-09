@@ -50,4 +50,4 @@ bin/
 go-num/
 _todo*.go
 
-dist/
+.dist/
