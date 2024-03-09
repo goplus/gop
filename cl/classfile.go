@@ -22,6 +22,7 @@ import (
 	"go/types"
 	"log"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/goplus/gogen"
@@ -336,6 +337,44 @@ func makeMainSig(recv *types.Var, f *types.Func) *types.Signature {
 		params[i] = types.NewParam(token.NoPos, pkg, string(paramName), in.At(i).Type())
 	}
 	return types.NewSignatureType(recv, nil, nil, types.NewTuple(params...), nil, false)
+}
+
+func astFnClassfname(c *gmxClass) *ast.FuncDecl {
+	return &ast.FuncDecl{
+		Name: &ast.Ident{
+			Name: "Classfname",
+		},
+		Type: &ast.FuncType{
+			Params: &ast.FieldList{},
+			Results: &ast.FieldList{
+				List: []*ast.Field{
+					{Type: &ast.Ident{Name: "string"}},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.ReturnStmt{
+					Results: []ast.Expr{
+						&ast.BasicLit{Kind: token.STRING, Value: strconv.Quote(c.clsfile)},
+					},
+				},
+			},
+		},
+	}
+}
+
+func astEmptyFunc(entry string) *ast.FuncDecl {
+	return &ast.FuncDecl{
+		Name: &ast.Ident{
+			Name: entry,
+		},
+		Type: &ast.FuncType{
+			Params: &ast.FieldList{},
+		},
+		Body:   &ast.BlockStmt{},
+		Shadow: true,
+	}
 }
 
 // -----------------------------------------------------------------------------
