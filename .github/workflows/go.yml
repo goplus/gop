@@ -7,6 +7,15 @@ on:
     branches: [ main ]
 
 jobs:
+  Check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Check goreleaser files
+      run: |
+        pip install --no-input pyyaml
+        python .github/workflows/check_goreleaser_config.py
+
   Test:
     strategy:
       matrix:
@@ -15,11 +24,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
-      
-    - name: Check goreleaser files
-      run: |
-        pip install --no-input pyyaml
-        python .github/workflows/check_goreleaser_config.py
 
     - name: Set up Go
       uses: actions/setup-go@v5
