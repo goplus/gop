@@ -85,6 +85,36 @@ func NextPartPos(pos token.Pos, part any) (nextPos token.Pos) {
 
 // -----------------------------------------------------------------------------
 
+// A EnvExpr node represents a ${name} expression.
+type EnvExpr struct {
+	TokPos token.Pos // position of "$"
+	Lbrace token.Pos // position of "{"
+	Name   *Ident    // name
+	Rbrace token.Pos // position of "}"
+}
+
+// Pos - position of first character belonging to the node.
+func (p *EnvExpr) Pos() token.Pos {
+	return p.TokPos
+}
+
+// End - position of first character immediately after the node.
+func (p *EnvExpr) End() token.Pos {
+	if p.Rbrace != token.NoPos {
+		return p.Rbrace
+	}
+	return p.Name.End()
+}
+
+// HasBrace checks is this EnvExpr ${name} or $name.
+func (p *EnvExpr) HasBrace() bool {
+	return p.Rbrace != token.NoPos
+}
+
+func (*EnvExpr) exprNode() {}
+
+// -----------------------------------------------------------------------------
+
 // A SliceLit node represents a slice literal.
 type SliceLit struct {
 	Lbrack     token.Pos // position of "["

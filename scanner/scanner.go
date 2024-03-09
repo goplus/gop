@@ -1002,6 +1002,8 @@ scanAgain:
 		case '?':
 			tok = token.QUESTION
 			insertSemi = true
+		case '$':
+			tok = token.ENV
 		default:
 			// next reports unexpected BOMs - don't repeat
 			if ch != bom {

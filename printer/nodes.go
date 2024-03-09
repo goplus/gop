@@ -1101,6 +1101,14 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 			p.expr(x.Expr3)
 		}
 
+	case *ast.EnvExpr:
+		p.print(token.ENV)
+		if x.HasBrace() {
+			p.print(token.LBRACE, x.Name, token.RBRACE)
+		} else {
+			p.print(x.Name)
+		}
+
 	default:
 		log.Fatalf("unreachable %T\n", x)
 	}
