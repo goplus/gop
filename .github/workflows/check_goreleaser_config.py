@@ -2,7 +2,8 @@ import os
 import subprocess
 import yaml
 
-files = [f for f in os.listdir('.') if not f.startswith(".")]
+files = [f for f in os.listdir('.') if not f.startswith(
+    ".") and f not in ["VERSION"]]
 files.sort()
 # filter out the files that are ignored by git
 files = [f for f in files if subprocess.call(
