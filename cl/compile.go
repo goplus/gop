@@ -854,28 +854,7 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 		}}}
 		// func Classfname() string
 		if spxClass {
-			f.Decls = append(f.Decls, &ast.FuncDecl{
-				Name: &ast.Ident{
-					Name: "Classfname",
-				},
-				Type: &ast.FuncType{
-					Params: &ast.FieldList{},
-					Results: &ast.FieldList{
-						List: []*ast.Field{
-							{Type: &ast.Ident{Name: "string"}},
-						},
-					},
-				},
-				Body: &ast.BlockStmt{
-					List: []ast.Stmt{
-						&ast.ReturnStmt{
-							Results: []ast.Expr{
-								&ast.BasicLit{Kind: token.STRING, Value: strconv.Quote(c.clsfile)},
-							},
-						},
-					},
-				},
-			})
+			f.Decls = append(f.Decls, astFnClassfname(c))
 		}
 	}
 	if d := f.ShadowEntry; d != nil {
@@ -892,16 +871,7 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 			}
 		}
 		if !hasEntry {
-			f.Decls = append(f.Decls, &ast.FuncDecl{
-				Name: &ast.Ident{
-					Name: entry,
-				},
-				Type: &ast.FuncType{
-					Params: &ast.FieldList{},
-				},
-				Body:   &ast.BlockStmt{},
-				Shadow: true,
-			})
+			f.Decls = append(f.Decls, astEmptyFunc(entry))
 		}
 	}
 	preloadFile(p, ctx, f, goFile, !conf.Outline)
