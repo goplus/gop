@@ -456,6 +456,9 @@ func Walk(v Visitor, node Node) {
 		Walk(v, n.Name)
 		walkExprList(v, n.Funcs)
 
+	case *EnvExpr:
+		Walk(v, n.Name)
+
 	default:
 		panic(fmt.Sprintf("ast.Walk: unexpected node type %T", n))
 	}

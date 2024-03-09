@@ -188,6 +188,21 @@ find:
 	return
 }
 
+func compileEnvExpr(ctx *blockCtx, v *ast.EnvExpr) {
+	cb := ctx.cb
+	if ctx.isClass { // in a Go+ class file
+		if recv := classRecv(cb); recv != nil {
+			if gopMember(cb, recv, "Gop_Env", v) == nil {
+				name := v.Name
+				cb.Val(name.Name, name).CallWith(1, 0, v)
+				return
+			}
+		}
+	}
+	invalidVal(cb)
+	ctx.handleErrorf(v.Pos(), "operator $%v undefined", v.Name)
+}
+
 func classRecv(cb *gogen.CodeBuilder) *types.Var {
 	if fn := cb.Func(); fn != nil {
 		sig := fn.Ancestor().Type().(*types.Signature)
@@ -346,6 +361,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 		compileErrWrapExpr(ctx, v, 0)
 	case *ast.FuncType:
 		ctx.cb.Typ(toFuncType(ctx, v, nil, nil), v)
+	case *ast.EnvExpr:
+		compileEnvExpr(ctx, v)
 	default:
 		log.Panicf("compileExpr failed: unknown - %T\n", v)
 	}
@@ -936,6 +953,10 @@ func compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {
 		}
 		compileStringLitEx(ctx, cb, v)
 	}
+}
+
+func invalidVal(cb *gogen.CodeBuilder) {
+	cb.Val(&gogen.Element{Type: types.Typ[types.Invalid]})
 }
 
 func basicLit(cb *gogen.CodeBuilder, v *ast.BasicLit) {
