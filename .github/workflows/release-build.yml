@@ -34,6 +34,11 @@ jobs:
         tag=$(git describe --tags --dirty)
         version=$(cat VERSION)
         if [ "$tag" != "$version" ]; then
+          # if tag is vX.Y.Z-pN and version is vX.Y.Z then it's ok
+          if [[ $tag == $version-p* ]] && [[ ${tag#"$version"} =~ ^-p[0-9]+$ ]] then
+            echo "This is a patch version"
+            exit 0
+          fi
           echo "VERSION file is not consistent with tag name"
           echo "VERSION: $version"
           echo "TAG: $tag"
