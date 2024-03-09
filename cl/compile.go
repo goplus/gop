@@ -657,23 +657,6 @@ func initGopPkg(ctx *pkgCtx, pkg *gogen.Package, gopSyms map[string]bool) {
 	gogen.InitThisGopPkg(pkg.Types)
 }
 
-func inMainPkg(f *ast.File) bool {
-	return f.Name.Name == "main"
-}
-
-func getEntrypoint(f *ast.File) string {
-	switch {
-	case f.IsProj:
-		return "MainEntry"
-	case f.IsClass:
-		return "Main"
-	case inMainPkg(f):
-		return "main"
-	default:
-		return "init"
-	}
-}
-
 func loadFile(ctx *pkgCtx, f *ast.File) {
 	for _, decl := range f.Decls {
 		switch d := decl.(type) {
@@ -860,19 +843,7 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 	if d := f.ShadowEntry; d != nil {
 		d.Name.Name = getEntrypoint(f)
 	} else if f.IsProj && !conf.NoAutoGenMain && inMainPkg(f) {
-		var entry = getEntrypoint(f)
-		var hasEntry bool
-		for _, decl := range f.Decls {
-			switch d := decl.(type) {
-			case *ast.FuncDecl:
-				if d.Name.Name == entry {
-					hasEntry = true
-				}
-			}
-		}
-		if !hasEntry {
-			f.Decls = append(f.Decls, astEmptyFunc(entry))
-		}
+		astEmptyEntrypoint(f)
 	}
 	preloadFile(p, ctx, f, goFile, !conf.Outline)
 	if goxTestFile {
