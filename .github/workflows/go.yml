@@ -17,7 +17,9 @@ jobs:
     - uses: actions/checkout@v4
       
     - name: Check goreleaser files
-      run: python .github/workflows/check_goreleaser_config.py
+      run: |
+        pip install --no-input pyyaml
+        python .github/workflows/check_goreleaser_config.py
 
     - name: Set up Go
       uses: actions/setup-go@v5

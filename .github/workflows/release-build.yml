@@ -13,8 +13,10 @@ jobs:
       with:
         fetch-depth: 0
     
-    - name: Check goreleaser configuration
-      run: python .github/workflows/check_goreleaser_config.py
+    - name: Check goreleaser files
+      run: |
+        pip install --no-input pyyaml
+        python .github/workflows/check_goreleaser_config.py
 
     - name: Install Snapcraft
       uses: samuelmeuli/action-snapcraft@v2
