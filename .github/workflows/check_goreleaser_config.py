@@ -35,7 +35,7 @@ if files != nfpms_files:
     print("Update .goreleaser.yaml in the nfpms section:")
     for f in files:
         print(f"      - src: \"{f}\"")
-        print(f"        dst: \"/usr/lib/{{ .ProjectName }}/{f}\"")
+        print(f"        dst: \"/usr/lib/{{{{ .ProjectName }}}}/{f}\"")
 
 if failed:
     exit(1)
