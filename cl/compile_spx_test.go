@@ -259,6 +259,36 @@ func (this *bar) Classfname() string {
 `)
 }
 
+func TestEnvOp(t *testing.T) {
+	gopSpxTest(t, `
+echo ${PATH}, $id
+`, ``, `package main
+
+import (
+	"fmt"
+	"github.com/goplus/gop/cl/internal/spx"
+)
+
+type bar struct {
+	spx.Sprite
+	*index
+}
+type index struct {
+	*spx.MyGame
+}
+
+func (this *index) MainEntry() {
+	fmt.Println(this.Gop_Env("PATH"), this.Gop_Env("id"))
+}
+func main() {
+	spx.Gopt_MyGame_Main(new(index))
+}
+func (this *bar) Classfname() string {
+	return "bar"
+}
+`)
+}
+
 func TestSpxGopEnv(t *testing.T) {
 	gopSpxTest(t, `
 echo "${PATH}"

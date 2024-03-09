@@ -509,6 +509,15 @@ func (p *[]byte) foo() {
 `)
 }
 
+func TestErrEnvOp(t *testing.T) {
+	codeErrorTest(t, `bar.gop:2:6: operator $name undefined`, `
+echo ${name}
+`)
+	codeErrorTest(t, `bar.gop:2:1: operator $id undefined`, `
+$id
+`)
+}
+
 func TestErrStringLit(t *testing.T) {
 	codeErrorTest(t, `bar.gop:2:9: [].string undefined (type []interface{} has no field or method string)`, `
 echo "${[]}"
