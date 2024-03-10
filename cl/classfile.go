@@ -364,19 +364,6 @@ func astFnClassfname(c *gmxClass) *ast.FuncDecl {
 	}
 }
 
-func astEmptyFunc(entry string) *ast.FuncDecl {
-	return &ast.FuncDecl{
-		Name: &ast.Ident{
-			Name: entry,
-		},
-		Type: &ast.FuncType{
-			Params: &ast.FieldList{},
-		},
-		Body:   &ast.BlockStmt{},
-		Shadow: true,
-	}
-}
-
 func astEmptyEntrypoint(f *ast.File) {
 	var entry = getEntrypoint(f)
 	var hasEntry bool
@@ -389,7 +376,16 @@ func astEmptyEntrypoint(f *ast.File) {
 		}
 	}
 	if !hasEntry {
-		f.Decls = append(f.Decls, astEmptyFunc(entry))
+		f.Decls = append(f.Decls, &ast.FuncDecl{
+			Name: &ast.Ident{
+				Name: entry,
+			},
+			Type: &ast.FuncType{
+				Params: &ast.FieldList{},
+			},
+			Body:   &ast.BlockStmt{},
+			Shadow: true,
+		})
 	}
 }
 
