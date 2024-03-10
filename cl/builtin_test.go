@@ -252,12 +252,15 @@ func TestErrParseTypeEmbedName(t *testing.T) {
 	parseTypeEmbedName(&ast.StructType{})
 }
 
-func TestGmxMainFunc(t *testing.T) {
-	gmxMainFunc(nil, &pkgCtx{
+func TestGmxCheckProjs(t *testing.T) {
+	_, multi := gmxCheckProjs(nil, &pkgCtx{
 		projs: map[string]*gmxProject{
 			".a": {}, ".b": {},
 		},
-	}, false)
+	})
+	if !multi {
+		t.Fatal("gmxCheckProjs: not multi?")
+	}
 }
 
 func TestNodeInterp(t *testing.T) {

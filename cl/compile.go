@@ -548,7 +548,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 		gmx := f.File
 		if gmx.IsClass && !gmx.IsNormalGox {
 			if debugLoad {
-				log.Println("==> File", f.path, "normalGox:", gmx.IsNormalGox)
+				log.Println("==> ClassFile", f.path)
 			}
 			loadClass(ctx, p, f.path, gmx, conf)
 		}
@@ -567,6 +567,8 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 		}
 		preloadGopFile(p, ctx, f.path, f.File, conf)
 	}
+
+	proj, multi := gmxCheckProjs(p, ctx)
 
 	gopSyms := make(map[string]bool) // TODO: remove this map
 	for name := range ctx.syms {
@@ -599,8 +601,11 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 			loadFile(ctx, f.File)
 		}
 	}
+
 	if genMain { // make classfile main func if need
-		gen = gmxMainFunc(p, ctx, conf.NoAutoGenMain)
+		if proj != nil && !multi { // only one project file
+			gen = gmxMainFunc(p, proj)
+		}
 	}
 
 	for _, f := range sfiles {
@@ -840,11 +845,13 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 			f.Decls = append(f.Decls, astFnClassfname(c))
 		}
 	}
+
 	if d := f.ShadowEntry; d != nil {
 		d.Name.Name = getEntrypoint(f)
-	} else if f.IsProj && !conf.NoAutoGenMain && inMainPkg(f) {
+	} else if baseTypeName != "" { // isClass && not isNormalGox
 		astEmptyEntrypoint(f)
 	}
+
 	preloadFile(p, ctx, f, goFile, !conf.Outline)
 	if goxTestFile {
 		parent.inits = append(parent.inits, func() {
