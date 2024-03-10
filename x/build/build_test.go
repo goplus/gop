@@ -380,8 +380,11 @@ type MyGame struct {
 func (this *MyGame) MainEntry() {
 	fmt.Println("hi")
 }
+func (this *MyGame) Main() {
+	spx.Gopt_MyGame_Main(this)
+}
 func main() {
-	spx.Gopt_MyGame_Main(new(MyGame))
+	new(MyGame).Main()
 }
 `)
 	gopClTestEx(t, "Cat.tspx", `println "hi"`, `package main
@@ -393,16 +396,23 @@ import (
 
 type Cat struct {
 	spx.Sprite
+	*MyGame
+}
+type MyGame struct {
+	spx.MyGame
 }
 
-func main() {
-	spx.Gopt_MyGame_Main(new(spx.MyGame))
-}
 func (this *Cat) Main() {
 	fmt.Println("hi")
 }
 func (this *Cat) Classfname() string {
 	return "Cat"
+}
+func (this *MyGame) Main() {
+	spx.Gopt_MyGame_Main(this)
+}
+func main() {
+	new(MyGame).Main()
 }
 `)
 }
