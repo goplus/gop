@@ -141,6 +141,9 @@ const (
 	additional_beg
 	TILDE // additional tokens, handled in an ad-hoc manner
 	additional_end
+	additional_end2
+
+	ENV = additional_end2 // ${name}
 
 	CSTRING  = literal_beg  // C"Hello"
 	RAT      = literal_end  // 123.5r
@@ -228,6 +231,7 @@ var tokens = [...]string{
 	DRARROW:   "=>",
 	SRARROW:   "->",
 	BIDIARROW: "<>",
+	ENV:       "$",
 	TILDE:     "~",
 
 	BREAK:    "break",
@@ -335,7 +339,7 @@ func (tok Token) IsLiteral() bool {
 // IsOperator returns true for tokens corresponding to operators and
 // delimiters; it returns false otherwise.
 func (tok Token) IsOperator() bool {
-	return operator_beg <= tok && tok <= operator_end || tok >= additional_beg && tok <= additional_end
+	return operator_beg <= tok && tok <= operator_end || tok >= additional_beg && tok <= additional_end2
 }
 
 // IsKeyword returns true for tokens corresponding to keywords;

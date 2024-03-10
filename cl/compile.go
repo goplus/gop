@@ -548,7 +548,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 		gmx := f.File
 		if gmx.IsClass && !gmx.IsNormalGox {
 			if debugLoad {
-				log.Println("==> File", f.path, "normalGox:", gmx.IsNormalGox)
+				log.Println("==> ClassFile", f.path)
 			}
 			loadClass(ctx, p, f.path, gmx, conf)
 		}
@@ -567,6 +567,8 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 		}
 		preloadGopFile(p, ctx, f.path, f.File, conf)
 	}
+
+	proj, multi := gmxCheckProjs(p, ctx)
 
 	gopSyms := make(map[string]bool) // TODO: remove this map
 	for name := range ctx.syms {
@@ -599,8 +601,11 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 			loadFile(ctx, f.File)
 		}
 	}
+
 	if genMain { // make classfile main func if need
-		gen = gmxMainFunc(p, ctx, conf.NoAutoGenMain)
+		if proj != nil && !multi { // only one project file
+			gen = gmxMainFunc(p, proj)
+		}
 	}
 
 	for _, f := range sfiles {
@@ -655,23 +660,6 @@ func initGopPkg(ctx *pkgCtx, pkg *gogen.Package, gopSyms map[string]bool) {
 		}
 	}
 	gogen.InitThisGopPkg(pkg.Types)
-}
-
-func inMainPkg(f *ast.File) bool {
-	return f.Name.Name == "main"
-}
-
-func getEntrypoint(f *ast.File) string {
-	switch {
-	case f.IsProj:
-		return "MainEntry"
-	case f.IsClass:
-		return "Main"
-	case inMainPkg(f):
-		return "main"
-	default:
-		return "init"
-	}
 }
 
 func loadFile(ctx *pkgCtx, f *ast.File) {
@@ -854,56 +842,16 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 		}}}
 		// func Classfname() string
 		if spxClass {
-			f.Decls = append(f.Decls, &ast.FuncDecl{
-				Name: &ast.Ident{
-					Name: "Classfname",
-				},
-				Type: &ast.FuncType{
-					Params: &ast.FieldList{},
-					Results: &ast.FieldList{
-						List: []*ast.Field{
-							{Type: &ast.Ident{Name: "string"}},
-						},
-					},
-				},
-				Body: &ast.BlockStmt{
-					List: []ast.Stmt{
-						&ast.ReturnStmt{
-							Results: []ast.Expr{
-								&ast.BasicLit{Kind: token.STRING, Value: strconv.Quote(c.clsfile)},
-							},
-						},
-					},
-				},
-			})
+			f.Decls = append(f.Decls, astFnClassfname(c))
 		}
 	}
+
 	if d := f.ShadowEntry; d != nil {
 		d.Name.Name = getEntrypoint(f)
-	} else if f.IsProj && !conf.NoAutoGenMain && inMainPkg(f) {
-		var entry = getEntrypoint(f)
-		var hasEntry bool
-		for _, decl := range f.Decls {
-			switch d := decl.(type) {
-			case *ast.FuncDecl:
-				if d.Name.Name == entry {
-					hasEntry = true
-				}
-			}
-		}
-		if !hasEntry {
-			f.Decls = append(f.Decls, &ast.FuncDecl{
-				Name: &ast.Ident{
-					Name: entry,
-				},
-				Type: &ast.FuncType{
-					Params: &ast.FieldList{},
-				},
-				Body:   &ast.BlockStmt{},
-				Shadow: true,
-			})
-		}
+	} else if baseTypeName != "" { // isClass && not isNormalGox
+		astEmptyEntrypoint(f)
 	}
+
 	preloadFile(p, ctx, f, goFile, !conf.Outline)
 	if goxTestFile {
 		parent.inits = append(parent.inits, func() {

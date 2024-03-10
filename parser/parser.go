@@ -1266,6 +1266,7 @@ func (p *parser) parseParameters(scope *ast.Scope, ellipsisOk bool) *ast.FieldLi
 	if p.trace {
 		defer un(trace(p, "Parameters"))
 	}
+	_ = ellipsisOk
 
 	var params []*ast.Field
 	lparen := p.expect(token.LPAREN)
@@ -1774,6 +1775,9 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) (x ast.Expr, isTup
 			p.resolve(x)
 		}
 		return
+
+	case token.ENV:
+		return p.parseEnvExpr(), false
 	}
 
 	typ, result := p.tryIdentOrType(stateArrayTypeOrSliceLit, nil)
@@ -1792,6 +1796,23 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) (x ast.Expr, isTup
 	p.errorExpected(pos, "operand", 2)
 	p.advance(stmtStart)
 	return &ast.BadExpr{From: pos, To: p.pos}, false
+}
+
+func (p *parser) parseEnvExpr() (ret *ast.EnvExpr) {
+	if p.trace {
+		defer un(trace(p, "EnvExpr"))
+	}
+	ret = &ast.EnvExpr{TokPos: p.pos}
+	p.next()
+	if p.tok == token.LBRACE { // ${name}
+		ret.Lbrace = p.pos
+		p.next()
+		ret.Name = p.parseIdent()
+		ret.Rbrace = p.expect(token.RBRACE)
+	} else { // $name
+		ret.Name = p.parseIdent()
+	}
+	return
 }
 
 func (p *parser) parseSelector(x ast.Expr) ast.Expr {
@@ -2158,6 +2179,7 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	case *tupleExpr:
 		p.error(v.opening, msgTupleNotSupported)
 		x = &ast.BadExpr{From: v.opening, To: v.closing}
+	case *ast.EnvExpr:
 	default:
 		// all other nodes are not proper expressions
 		p.errorExpected(x.Pos(), "expression", 3)
@@ -2285,7 +2307,7 @@ L:
 			x = &ast.ErrWrapExpr{X: x, Tok: p.tok, TokPos: p.pos}
 			p.next()
 		default:
-			if allowCmd && p.isCmd(x) && p.checkCmd(x) {
+			if allowCmd && p.isCmd(x) && p.checkCmd() {
 				if lhs {
 					p.resolve(x)
 				}
@@ -2307,11 +2329,11 @@ func (p *parser) isCmd(x ast.Expr) bool {
 	return false
 }
 
-func (p *parser) checkCmd(x ast.Expr) bool {
+func (p *parser) checkCmd() bool {
 	switch p.tok {
 	case token.IDENT, token.DRARROW,
 		token.STRING, token.CSTRING, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT,
-		token.FUNC, token.GOTO, token.MAP, token.INTERFACE, token.CHAN, token.STRUCT:
+		token.FUNC, token.GOTO, token.MAP, token.INTERFACE, token.CHAN, token.STRUCT, token.ENV:
 		return true
 	case token.SUB, token.AND, token.MUL, token.ARROW, token.XOR, token.ADD:
 		oldtok, oldpos := p.tok, p.pos
@@ -3321,7 +3343,7 @@ func (p *parser) parseStmt(allowCmd bool) (s ast.Stmt) {
 	case
 		// tokens that may start an expression
 		token.INT, token.FLOAT, token.IMAG, token.RAT, token.CHAR, token.STRING, token.CSTRING, token.FUNC, token.LPAREN, // operands
-		token.ADD, token.SUB, token.MUL, token.AND, token.XOR, token.ARROW, token.NOT, // unary operators
+		token.ADD, token.SUB, token.MUL, token.AND, token.XOR, token.ARROW, token.NOT, token.ENV, // unary operators
 		token.LBRACK, token.STRUCT, token.CHAN, token.INTERFACE: // composite types
 		allowCmd = false
 		fallthrough

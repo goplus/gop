@@ -92,44 +92,45 @@ Sound a bit abstract? Let's see some Go+ classfiles.
 * STEM Education: [spx: A Go+ 2D Game Engine](https://github.com/goplus/spx)
 
 
-### gsh: Go+ DevOps Tools
-
-Yes, now you can write `shell script` in Go+. It supports all shell commands.
-
-Let's create a file named `./example.gsh` and write the following code:
-
-```coffee
-mkdir "testgsh"
-```
-
-Don't need a `go.mod` file, just enter `gop run ./example.gsh` directly to run.
-
-It's strange to you that the file extension of Go+ source is not `.gop` but `.gsh`. It is only because Go+ register `.gsh` as a builtin [classfile](doc/classfile.md).
-
-See [gsh: Go+ DevOps Tools](https://github.com/qiniu/x/tree/main/gsh) for more details.
-
-
 ### yap: Yet Another HTTP Web Framework
 
-Demo of serving static files and ability to handle dynamic GET/POST requests:
+This classfile has the file suffix `.yap`.
+
+Create a file named [get.yap](https://github.com/goplus/yap/blob/main/demo/classfile2_hello/get.yap) with the following content:
+
+```go
+html `<html><body>Hello, YAP!</body></html>`
+```
+
+Execute the following commands:
+
+```sh
+gop mod init hello
+gop get github.com/goplus/yap@latest
+gop mod tidy
+gop run .
+```
+
+A simplest web program is running now. At this time, if you visit http://localhost:8080, you will get:
+
+```
+Hello, YAP!
+```
+
+YAP uses filenames to define routes. `get.yap`'s route is `get "/"` (GET homepage), and `get_p_#id.yap`'s route is `get "/p/:id"` (In fact, the filename can also be `get_p_:id.yap`, but it is not recommended because `:` is not allowed to exist in filenames under Windows).
+
+Let's create a file named [get_p_#id.yap](https://github.com/goplus/yap/blob/main/demo/classfile2_hello/get_p_%23id.yap) with the following content:
 
 ```coffee
-static "/foo", FS("public")
-static "/"    # Equivalent to static "/", FS("static")
-
-get "/p/:id", ctx => {
-	ctx.json {
-		"id": ctx.param("id"),
-	}
+json {
+	"id": ${id},
 }
-
-run ":8080"
 ```
 
-If you run it and visit http://localhost:8080/p/123, you will get:
+Execute `gop run .` and visit http://localhost:8080/p/123, you will get:
 
 ```
-{"id":"123"}
+{"id": "123"}
 ```
 
 See [yap: Yet Another HTTP Web Framework](https://github.com/goplus/yap) for more details.
@@ -171,6 +172,21 @@ Yes, Jaime recieves the message `1` and says `I come from England.`. Then he bro
 The following procedures are very similar. In this way you can implement dialogues between multiple actors.
 
 See [spx: A Go+ 2D Game Engine](https://github.com/goplus/spx) for more details.
+
+
+### gsh: Go+ DevOps Tools
+
+Yes, now you can write `shell script` in Go+. It supports all shell commands.
+
+Let's create a file named [example.gsh](https://github.com/qiniu/x/blob/main/gsh/demo/hello/example.gsh) and write the following code:
+
+```coffee
+mkdir "testgsh"
+```
+
+Don't need a `go.mod` file, just enter `gop run ./example.gsh` directly to run.
+
+See [gsh: Go+ DevOps Tools](https://github.com/qiniu/x/tree/main/gsh) for more details.
 
 
 ## Key Features of Go+
