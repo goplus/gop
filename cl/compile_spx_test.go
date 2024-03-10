@@ -197,8 +197,8 @@ func (this *Game) onInit() {
 func (this *Game) MainEntry() {
 	this.InitGameApp()
 }
-func main() {
-	spx.Gopt_MyGame_Main(new(Game))
+func (this *Game) Main() {
+	spx.Gopt_MyGame_Main(this)
 }
 func (this *Kai) onMsg(msg string) {
 	for {
@@ -208,6 +208,11 @@ func (this *Kai) onMsg(msg string) {
 }
 func (this *Kai) Classfname() string {
 	return "Kai"
+}
+func (this *Kai) Main() {
+}
+func main() {
+	new(Game).Main()
 }
 `, "Game.tgmx", "Kai.tspx")
 }
@@ -253,8 +258,18 @@ func (this *index) onInit() {
 	this.bar()
 	fmt.Println("Hi")
 }
+func (this *index) MainEntry() {
+}
+func (this *index) Main() {
+	spx.Gopt_MyGame_Main(this)
+}
 func (this *bar) Classfname() string {
 	return "bar"
+}
+func (this *bar) Main() {
+}
+func main() {
+	new(index).Main()
 }
 `)
 }
@@ -280,11 +295,16 @@ type index struct {
 func (this *index) MainEntry() {
 	fmt.Println(this.Gop_Env("PATH"), this.Gop_Env("id"))
 }
-func main() {
-	spx.Gopt_MyGame_Main(new(index))
+func (this *index) Main() {
+	spx.Gopt_MyGame_Main(this)
 }
 func (this *bar) Classfname() string {
 	return "bar"
+}
+func (this *bar) Main() {
+}
+func main() {
+	new(index).Main()
 }
 `)
 }
@@ -311,11 +331,16 @@ type index struct {
 func (this *index) MainEntry() {
 	fmt.Println(strconv.Itoa(this.Gop_Env("PATH")))
 }
-func main() {
-	spx.Gopt_MyGame_Main(new(index))
+func (this *index) Main() {
+	spx.Gopt_MyGame_Main(this)
 }
 func (this *bar) Classfname() string {
 	return "bar"
+}
+func (this *bar) Main() {
+}
+func main() {
+	new(index).Main()
 }
 `)
 }
@@ -350,11 +375,16 @@ func (this *index) MainEntry() {
 		this.Gop_Exec("ls", "-l")
 	})
 }
-func main() {
-	spx.Gopt_MyGame_Main(new(index))
+func (this *index) Main() {
+	spx.Gopt_MyGame_Main(this)
 }
 func (this *bar) Classfname() string {
 	return "bar"
+}
+func (this *bar) Main() {
+}
+func main() {
+	new(index).Main()
 }
 `)
 }
@@ -395,6 +425,11 @@ func (this *Game) onInit() {
 	spx.TestIntValue = 1
 	x := math.Round(1.2)
 }
+func (this *Game) MainEntry() {
+}
+func (this *Game) Main() {
+	spx.Gopt_MyGame_Main(this)
+}
 func (this *bar) onInit() {
 	this.SetCostume("kai-a")
 	this.Play("recordingWhere")
@@ -403,6 +438,11 @@ func (this *bar) onInit() {
 }
 func (this *bar) Classfname() string {
 	return "bar"
+}
+func (this *bar) Main() {
+}
+func main() {
+	new(Game).Main()
 }
 `, "Game.tgmx", "bar.tspx")
 }
@@ -447,6 +487,11 @@ func (this *Game) onInit() {
 	spx.Gopt_Sprite_Clone__0(this.Kai)
 	this.Broadcast__0("msg1")
 }
+func (this *Game) MainEntry() {
+}
+func (this *Game) Main() {
+	spx.Gopt_MyGame_Main(this)
+}
 func (this *Kai) onInit() {
 	this.a = 1
 }
@@ -455,6 +500,11 @@ func (this *Kai) onCloned() {
 }
 func (this *Kai) Classfname() string {
 	return "Kai"
+}
+func (this *Kai) Main() {
+}
+func main() {
+	new(Game).Main()
 }
 `, "Game.tgmx", "Kai.tspx")
 }
@@ -493,14 +543,17 @@ var x float64 = spx.Rand__1(1.2)
 func (this *index) MainEntry() {
 	spx.Gopt_MyGame_Run(this, "hzip://open.qiniu.us/weather/res.zip")
 }
-func main() {
-	spx.Gopt_MyGame_Main(new(index))
+func (this *index) Main() {
+	spx.Gopt_MyGame_Main(this)
 }
 func (this *Kai) Main() {
 	fmt.Println("Hi")
 }
 func (this *Kai) Classfname() string {
 	return "Kai"
+}
+func main() {
+	new(index).Main()
 }
 `, "index.tgmx", "Kai.tspx")
 }
@@ -534,8 +587,8 @@ type Game struct {
 func (this *Game) MainEntry() {
 	this.Run()
 }
-func main() {
-	spx3.Gopt_Game_Main(new(Game), new(Kai))
+func (this *Game) Main() {
+	spx3.Gopt_Game_Main(this, new(Kai))
 }
 func (this *Kai) Main(_gop_arg0 string) {
 	this.Sprite.Main(_gop_arg0)
@@ -543,6 +596,9 @@ func (this *Kai) Main(_gop_arg0 string) {
 }
 func (this *Kai) Classfname() string {
 	return "Kai"
+}
+func main() {
+	new(Game).Main()
 }
 `, "main_spx.gox", "Kai_spx.gox")
 }
@@ -574,11 +630,17 @@ func (this *Game) MainEntry() {
 	b := new(spx3.Sprite)
 	fmt.Println(b.Name())
 }
-func main() {
-	spx3.Gopt_Game_Main(new(Game), new(Kai))
+func (this *Game) Main() {
+	spx3.Gopt_Game_Main(this, new(Kai))
 }
 func (this *Kai) Classfname() string {
 	return "Kai"
+}
+func (this *Kai) Main(_gop_arg0 string) {
+	this.Sprite.Main(_gop_arg0)
+}
+func main() {
+	new(Game).Main()
 }
 `, "main_spx.gox", "Kai_spx.gox")
 }
@@ -607,13 +669,18 @@ type Kai struct {
 func (this *Game) MainEntry() {
 	fmt.Println("Hi")
 }
-func main() {
-	new(Game).Main()
+func (this *Game) Main() {
+	(*spx2.Game).Main(&this.Game)
 }
 func (this *Kai) onMsg(msg string) {
 }
 func (this *Kai) Classfname() string {
 	return "Kai"
+}
+func (this *Kai) Main() {
+}
+func main() {
+	new(Game).Main()
 }
 `, "Game.t2gmx", "Kai.t2spx")
 }
@@ -642,13 +709,18 @@ type Kai struct {
 func (this *Game) MainEntry() {
 	fmt.Println("Hi, Sprite2")
 }
-func main() {
-	new(Game).Main()
+func (this *Game) Main() {
+	(*spx2.Game).Main(&this.Game)
 }
 func (this *Kai) onMsg(msg string) {
 }
 func (this *Kai) Classfname() string {
 	return "Kai"
+}
+func (this *Kai) Main() {
+}
+func main() {
+	new(Game).Main()
 }
 `, "Game.t2gmx", "Kai.t2spx2")
 }
@@ -684,6 +756,8 @@ func (this *Kai) onMsg(msg string) {
 func (this *Kai) Classfname() string {
 	return "Kai"
 }
+func (this *Kai) Main() {
+}
 `, "Dog_t3spx.gox", "Kai.t3spx2")
 }
 
@@ -708,11 +782,16 @@ type Kai struct {
 
 func (this *Game) MainEntry() {
 }
-func main() {
-	new(Game).Main()
+func (this *Game) Main() {
+	(*spx2.Game).Main(&this.Game)
 }
 func (this *Kai) Classfname() string {
 	return "Kai"
+}
+func (this *Kai) Main() {
+}
+func main() {
+	new(Game).Main()
 }
 `, "Game.t2gmx", "Kai.t2spx", "")
 	gopSpxTestExConf(t, "OnlyGmx", &conf, `
@@ -735,11 +814,16 @@ type Kai struct {
 
 func (this *Game) MainEntry() {
 }
-func main() {
-	new(Game).Main()
+func (this *Game) Main() {
+	(*spx2.Game).Main(&this.Game)
 }
 func (this *Kai) Classfname() string {
 	return "Kai"
+}
+func (this *Kai) Main() {
+}
+func main() {
+	new(Game).Main()
 }
 `, "Game.t2gmx", "Kai.t2spx", "")
 
@@ -775,8 +859,8 @@ type Kai struct {
 func (this *Game) MainEntry() {
 	fmt.Println("Hi")
 }
-func main() {
-	new(Game).Main()
+func (this *Game) Main() {
+	(*spx2.Game).Main(&this.Game)
 }
 func (this *Kai) Main() {
 	fmt.Println("Hello")
@@ -785,6 +869,9 @@ func (this *Kai) onMsg(msg string) {
 }
 func (this *Kai) Classfname() string {
 	return "Kai"
+}
+func main() {
+	new(Game).Main()
 }
 `, "Game.t2gmx", "Kai.t2spx", "")
 }
@@ -818,6 +905,11 @@ func (this *Game) onInit() {
 		spx.SchedNow()
 	}
 }
+func (this *Game) MainEntry() {
+}
+func (this *Game) Main() {
+	spx.Gopt_MyGame_Main(this)
+}
 func (this *Kai) onMsg(msg string) {
 	for {
 		spx.Sched()
@@ -826,6 +918,11 @@ func (this *Kai) onMsg(msg string) {
 }
 func (this *Kai) Classfname() string {
 	return "Kai"
+}
+func (this *Kai) Main() {
+}
+func main() {
+	new(Game).Main()
 }
 `, "Game.tgmx", "Kai.tspx")
 }
@@ -882,6 +979,11 @@ func (this *Game) onInit() {
 	spx.Gopt_Sprite_Clone__0(this.Kai)
 	this.Broadcast__0("msg1")
 }
+func (this *Game) MainEntry() {
+}
+func (this *Game) Main() {
+	spx.Gopt_MyGame_Main(this)
+}
 func (this *Kai) onInit() {
 	this.a = 1
 	spx.Gopt_Sprite_Clone__0(this)
@@ -893,6 +995,11 @@ func (this *Kai) onCloned() {
 }
 func (this *Kai) Classfname() string {
 	return "Kai"
+}
+func (this *Kai) Main() {
+}
+func main() {
+	new(Game).Main()
 }
 `, "Game.tgmx", "Kai.tspx")
 }
@@ -926,13 +1033,18 @@ type Kai struct {
 func (this *Game) MainEntry() {
 	this.SendMessage("Hi")
 }
-func main() {
-	spx.Gopt_MyGame_Main(new(Game))
+func (this *Game) Main() {
+	spx.Gopt_MyGame_Main(this)
 }
 func (this *Kai) onMsg(msg string) {
 }
 func (this *Kai) Classfname() string {
 	return "Kai"
+}
+func (this *Kai) Main() {
+}
+func main() {
+	new(Game).Main()
 }
 `, "Game.tgmx", "Kai.tspx")
 }
@@ -962,14 +1074,19 @@ type Kai struct {
 func (this *Game) MainEntry() {
 	fmt.Println("Hi")
 }
-func main() {
-	spx.Gopt_MyGame_Main(new(Game))
+func (this *Game) Main() {
+	spx.Gopt_MyGame_Main(this)
 }
 func (this *Kai) onMsg(msg string) {
 	this.Position().Add__0(100, 200)
 }
 func (this *Kai) Classfname() string {
 	return "Kai"
+}
+func (this *Kai) Main() {
+}
+func main() {
+	new(Game).Main()
 }
 `, "Game.tgmx", "Kai.tspx")
 }
@@ -1012,8 +1129,8 @@ type Kai struct {
 func (this *Game) MainEntry() {
 	fmt.Println("hi")
 }
-func main() {
-	spx.Gopt_MyGame_Main(new(Game))
+func (this *Game) Main() {
+	spx.Gopt_MyGame_Main(this)
 }
 func (this *Kai) onMsg(msg string) {
 	fmt.Println(msg)
@@ -1032,6 +1149,11 @@ func (this *Kai) onMsg(msg string) {
 }
 func (this *Kai) Classfname() string {
 	return "Kai"
+}
+func (this *Kai) Main() {
+}
+func main() {
+	new(Game).Main()
 }
 `, "Game.tgmx", "Kai.tspx")
 }
@@ -1104,6 +1226,11 @@ func (this *Game) onInit() {
 	spx.Gopt_Sprite_OnKey__1(this.Kai, "hello", func(key string) {
 	})
 }
+func (this *Game) MainEntry() {
+}
+func (this *Game) Main() {
+	spx.Gopt_MyGame_Main(this)
+}
 func (p *Mesh) Name() string {
 	return "hello"
 }
@@ -1136,6 +1263,9 @@ func (this *Kai) Main() {
 }
 func (this *Kai) Classfname() string {
 	return "Kai"
+}
+func main() {
+	new(Game).Main()
 }
 `, "Game.tgmx", "Kai.tspx")
 }

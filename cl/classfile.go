@@ -19,6 +19,7 @@ package cl
 import (
 	goast "go/ast"
 	"go/constant"
+	gotoken "go/token"
 	"go/types"
 	"log"
 	"path/filepath"
@@ -42,7 +43,7 @@ type gmxClass struct {
 
 type gmxProject struct {
 	gameClass  string               // <gmtype>.gmx
-	game       gogen.Ref            // Game
+	game       gogen.Ref            // Game (project base class)
 	sprite     map[string]gogen.Ref // .spx => Sprite
 	sptypes    []string             // <sptype>.spx
 	scheds     []string
@@ -254,65 +255,99 @@ func gmxCheckProjs(pkg *gogen.Package, ctx *pkgCtx) (proj *gmxProject, multi boo
 		} else {
 			proj = v
 		}
-		gmxProjMain(pkg, ctx, v)
+		if v.game != nil { // just to make testcase happy
+			gmxProjMain(pkg, ctx, v)
+		}
 	}
 	return
 }
 
-func gmxProjMain(pkg *gogen.Package, ctx *pkgCtx, proj *gmxProject) {
-	_, _, _ = pkg, ctx, proj
-}
-
-func gmxMainFunc(pkg *gogen.Package, proj *gmxProject, noAutoGenMain bool) func() {
-	scope := pkg.Types.Scope()
-	var o types.Object
-	if proj.gameClass != "" {
-		o = scope.Lookup(proj.gameClass)
-		if noAutoGenMain && o != nil && hasMethod(o, "MainEntry") {
-			noAutoGenMain = false
-		}
-	} else {
-		o = proj.game
+func gmxProjMain(pkg *gogen.Package, parent *pkgCtx, proj *gmxProject) {
+	base := proj.game
+	classType := proj.gameClass
+	if classType == "" {
+		classType = base.Name()
+		proj.gameClass = classType
 	}
-	if !noAutoGenMain && o != nil {
-		// new(Game).Main()
-		// new(Game).Main(workers...)
-		fn := pkg.NewFunc(nil, "main", nil, nil, false)
-		return func() {
-			new := pkg.Builtin().Ref("new")
-			cb := fn.BodyStart(pkg).Val(new).Val(o).Call(1).MemberVal("Main")
+
+	ld := getTypeLoader(parent, parent.syms, token.NoPos, proj.gameClass)
+	if ld.typ == nil {
+		ld.typ = func() {
+			if debugLoad {
+				log.Println("==> Load > NewType", classType)
+			}
+			old, _ := pkg.SetCurFile(defaultGoFile, true)
+			defer pkg.RestoreCurFile(old)
+
+			baseType := base.Type()
+			if proj.gameIsPtr {
+				baseType = types.NewPointer(baseType)
+			}
+			name := base.Name()
+			flds := []*types.Var{
+				types.NewField(token.NoPos, pkg.Types, name, baseType, true),
+			}
+			decl := pkg.NewTypeDefs().NewType(classType)
+			ld.typInit = func() { // decycle
+				if debugLoad {
+					log.Println("==> Load > InitType", classType)
+				}
+				old, _ := pkg.SetCurFile(defaultGoFile, true)
+				defer pkg.RestoreCurFile(old)
+
+				decl.InitType(pkg, types.NewStruct(flds, nil))
+			}
+			parent.tylds = append(parent.tylds, ld)
+		}
+	}
+	ld.methods = append(ld.methods, func() {
+		old, _ := pkg.SetCurFile(defaultGoFile, true)
+		defer pkg.RestoreCurFile(old)
+		doInitType(ld)
+
+		t := pkg.Ref(classType).Type()
+		recv := types.NewParam(token.NoPos, pkg.Types, "this", types.NewPointer(t))
+		fn := pkg.NewFunc(recv, "Main", nil, nil, false)
+
+		parent.inits = append(parent.inits, func() {
+			old, _ := pkg.SetCurFile(defaultGoFile, true)
+			defer pkg.RestoreCurFile(old)
+
+			cb := fn.BodyStart(pkg).Typ(base.Type()).MemberVal("Main")
 
 			// force remove //line comments for main func
 			cb.SetComments(nil, false)
 
-			sig := cb.Get(-1).Type.(*types.Signature)
-			narg := gmxMainNarg(sig)
-			if narg > 0 {
-				narg = len(proj.sptypes)
+			sigParams := cb.Get(-1).Type.(*types.Signature).Params()
+			if _, ok := sigParams.At(0).Type().(*types.Pointer); !ok {
+				cb.Val(recv) // template recv method
+			} else {
+				cb.Val(recv).MemberRef(base.Name()).UnaryOp(gotoken.AND)
+			}
+			narg := sigParams.Len()
+			if narg > 1 {
+				narg = 1 + len(proj.sptypes)
+				new := pkg.Builtin().Ref("new")
 				for _, spt := range proj.sptypes {
-					sp := scope.Lookup(spt)
+					sp := pkg.Ref(spt)
 					cb.Val(new).Val(sp).Call(1)
 				}
 			}
 
 			cb.Call(narg).EndStmt().End()
-		}
-	}
-	return nil
+		})
+	})
 }
 
-func gmxMainNarg(sig *types.Signature) int {
-	if fex, ok := gogen.CheckFuncEx(sig); ok {
-		if trm, ok := fex.(*gogen.TyTemplateRecvMethod); ok {
-			sig = trm.Func.Type().(*types.Signature)
-			return sig.Params().Len() - 1
+func gmxMainFunc(pkg *gogen.Package, proj *gmxProject) func() {
+	return func() {
+		if o := pkg.TryRef(proj.gameClass); o != nil {
+			// new(gameClass).Main()
+			new := pkg.Builtin().Ref("new")
+			pkg.NewFunc(nil, "main", nil, nil, false).
+				BodyStart(pkg).Val(new).Val(o).Call(1).MemberVal("Main").Call(0).EndStmt().End()
 		}
 	}
-	return sig.Params().Len()
-}
-
-func hasMethod(o types.Object, name string) bool {
-	return findMethod(o, name) != nil
 }
 
 func findMethod(o types.Object, name string) *types.Func {
