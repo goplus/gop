@@ -245,50 +245,57 @@ func genTestFunc(pkg *gogen.Package, name, testType, param, paramType string) {
 		End()
 }
 
-func gmxMainFunc(pkg *gogen.Package, ctx *pkgCtx, noAutoGenMain bool) func() {
-	var proj *gmxProject
+func gmxCheckProjs(pkg *gogen.Package, ctx *pkgCtx) (proj *gmxProject, multi bool) {
 	for _, v := range ctx.projs {
 		if v.isTest {
 			continue
 		} else if proj != nil {
-			return nil
-		}
-		proj = v
-	}
-	if proj != nil { // only one project file
-		scope := pkg.Types.Scope()
-		var o types.Object
-		if proj.gameClass != "" {
-			o = scope.Lookup(proj.gameClass)
-			if noAutoGenMain && o != nil && hasMethod(o, "MainEntry") {
-				noAutoGenMain = false
-			}
+			multi = true
 		} else {
-			o = proj.game
+			proj = v
 		}
-		if !noAutoGenMain && o != nil {
-			// new(Game).Main()
-			// new(Game).Main(workers...)
-			fn := pkg.NewFunc(nil, "main", nil, nil, false)
-			return func() {
-				new := pkg.Builtin().Ref("new")
-				cb := fn.BodyStart(pkg).Val(new).Val(o).Call(1).MemberVal("Main")
+		gmxProjMain(pkg, ctx, v)
+	}
+	return
+}
 
-				// force remove //line comments for main func
-				cb.SetComments(nil, false)
+func gmxProjMain(pkg *gogen.Package, ctx *pkgCtx, proj *gmxProject) {
+	_, _, _ = pkg, ctx, proj
+}
 
-				sig := cb.Get(-1).Type.(*types.Signature)
-				narg := gmxMainNarg(sig)
-				if narg > 0 {
-					narg = len(proj.sptypes)
-					for _, spt := range proj.sptypes {
-						sp := scope.Lookup(spt)
-						cb.Val(new).Val(sp).Call(1)
-					}
+func gmxMainFunc(pkg *gogen.Package, proj *gmxProject, noAutoGenMain bool) func() {
+	scope := pkg.Types.Scope()
+	var o types.Object
+	if proj.gameClass != "" {
+		o = scope.Lookup(proj.gameClass)
+		if noAutoGenMain && o != nil && hasMethod(o, "MainEntry") {
+			noAutoGenMain = false
+		}
+	} else {
+		o = proj.game
+	}
+	if !noAutoGenMain && o != nil {
+		// new(Game).Main()
+		// new(Game).Main(workers...)
+		fn := pkg.NewFunc(nil, "main", nil, nil, false)
+		return func() {
+			new := pkg.Builtin().Ref("new")
+			cb := fn.BodyStart(pkg).Val(new).Val(o).Call(1).MemberVal("Main")
+
+			// force remove //line comments for main func
+			cb.SetComments(nil, false)
+
+			sig := cb.Get(-1).Type.(*types.Signature)
+			narg := gmxMainNarg(sig)
+			if narg > 0 {
+				narg = len(proj.sptypes)
+				for _, spt := range proj.sptypes {
+					sp := scope.Lookup(spt)
+					cb.Val(new).Val(sp).Call(1)
 				}
-
-				cb.Call(narg).EndStmt().End()
 			}
+
+			cb.Call(narg).EndStmt().End()
 		}
 	}
 	return nil

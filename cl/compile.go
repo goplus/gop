@@ -548,7 +548,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 		gmx := f.File
 		if gmx.IsClass && !gmx.IsNormalGox {
 			if debugLoad {
-				log.Println("==> File", f.path, "normalGox:", gmx.IsNormalGox)
+				log.Println("==> ClassFile", f.path)
 			}
 			loadClass(ctx, p, f.path, gmx, conf)
 		}
@@ -599,8 +599,12 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 			loadFile(ctx, f.File)
 		}
 	}
+
+	proj, multi := gmxCheckProjs(p, ctx)
 	if genMain { // make classfile main func if need
-		gen = gmxMainFunc(p, ctx, conf.NoAutoGenMain)
+		if !multi && proj != nil { // only one project file
+			gen = gmxMainFunc(p, proj, conf.NoAutoGenMain)
+		}
 	}
 
 	for _, f := range sfiles {
