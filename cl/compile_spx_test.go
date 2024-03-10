@@ -92,6 +92,9 @@ func gopSpxTestExConf(t *testing.T, name string, conf *cl.Config, gmx, spxcode, 
 		defer cl.SetDisableRecover(false)
 
 		fs := memfs.TwoFiles("/foo", spxfile, spxcode, gmxfile, gmx)
+		if gmxfile == "" {
+			fs = memfs.SingleFile("/foo", spxfile, spxcode)
+		}
 		pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", spxParserConf())
 		if err != nil {
 			scanner.PrintError(os.Stderr, err)
@@ -133,6 +136,34 @@ func gopSpxErrorTestEx(t *testing.T, msg, gmx, spxcode, gmxfile, spxfile string)
 	if ret := err.Error(); ret != msg {
 		t.Fatalf("\nError: \"%s\"\nExpected: \"%s\"\n", ret, msg)
 	}
+}
+
+func TestSpxNoGame(t *testing.T) {
+	gopSpxTestEx(t, ``, `
+`, `package main
+
+import "github.com/goplus/gop/cl/internal/spx"
+
+type Kai struct {
+	spx.Sprite
+	*MyGame
+}
+type MyGame struct {
+	*spx.MyGame
+}
+
+func (this *Kai) Classfname() string {
+	return "Kai"
+}
+func (this *Kai) Main() {
+}
+func (this *MyGame) Main() {
+	spx.Gopt_MyGame_Main(this)
+}
+func main() {
+	new(MyGame).Main()
+}
+`, "", "Kai.tspx")
 }
 
 func TestSpxError(t *testing.T) {
