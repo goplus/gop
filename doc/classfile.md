@@ -25,54 +25,41 @@ Go+ introduces `classfile` to abstract domain knowledge.
 * Unit Test: [classfile: Unit Test](#classfile-unit-test)
 * Mechanism: [What's Classfile](#whats-classfile)
 
-Sound a bit abstract? Let's take web programming as an example. First let us initialize a hello project:
+Sound a bit abstract? Let's take web programming as an example. First let us create a file named [get.yap](https://github.com/goplus/yap/blob/main/demo/classfile2_hello/get.yap) with the following content:
+
+```go
+html `<html><body>Hello, YAP!</body></html>`
+```
+
+Execute the following commands:
 
 ```sh
 gop mod init hello
-```
-
-Then we have it reference a classfile called `yap` as the HTTP Web Framework:
-
-```sh
 gop get github.com/goplus/yap@latest
-```
-
-We can use it to implement a static file server:
-
-```coffee
-static "/foo", FS("public")
-static "/"    # Equivalent to static "/", FS("static")
-
-run ":8080"
-```
-
-We can also add the ability to handle dynamic GET/POST requests:
-
-```coffee
-static "/foo", FS("public")
-static "/"    # Equivalent to static "/", FS("static")
-
-get "/p/:id", ctx => {
-	ctx.json {
-		"id": ctx.param("id"),
-	}
-}
-
-run ":8080"
-```
-
-Save this code to `hello_yap.gox` file and execute:
-
-```sh
-mkdir -p yap/static yap/public    # Static resources can be placed in these directories
 gop mod tidy
 gop run .
 ```
 
-A simplest web program is running now. At this time, if you visit http://localhost:8080/p/123, you will get:
+A simplest web program is running now. At this time, if you visit http://localhost:8080, you will get:
 
 ```
-{"id":"123"}
+Hello, YAP!
+```
+
+YAP uses filenames to define routes. `get.yap`'s route is `get "/"` (GET homepage), and `get_p_#id.yap`'s route is `get "/p/:id"` (In fact, the filename can also be `get_p_:id.yap`, but it is not recommended because `:` is not allowed to exist in filenames under Windows).
+
+Let's create a file named [get_p_#id.yap](https://github.com/goplus/yap/blob/main/demo/classfile2_hello/get_p_%23id.yap) with the following content:
+
+```coffee
+json {
+	"id": ${id},
+}
+```
+
+Execute `gop run .` and visit http://localhost:8080/p/123, you will get:
+
+```
+{"id": "123"}
 ```
 
 Why is `yap` so easy to use? How does it do it? Let us analyze the principles one by one.
@@ -187,28 +174,58 @@ If you want to run a subtest case, use `t.run`.
 
 ### yap: Yet Another Go/Go+ HTTP Web Framework
 
-This classfile has the file suffix `_yap.gox`. See [yap: Yet Another HTTP Web Framework](https://github.com/goplus/yap) for more details.
+This classfile has the file suffix `.yap`. See [yap: Yet Another HTTP Web Framework](https://github.com/goplus/yap) for more details.
 
 #### Router and Parameters
 
-demo in Go+ classfile ([hello_yap.gox](https://github.com/goplus/yap/blob/main/demo/classfile_hello/hello_yap.gox)):
+YAP uses filenames to define routes. `get.yap`'s route is `get "/"` (GET homepage), and `get_p_#id.yap`'s route is `get "/p/:id"` (In fact, the filename can also be `get_p_:id.yap`, but it is not recommended because `:` is not allowed to exist in filenames under Windows).
+
+Let's create a file named [get_p_#id.yap](https://github.com/goplus/yap/blob/main/demo/classfile2_hello/get_p_%23id.yap) with the following content:
 
 ```coffee
-get "/p/:id", ctx => {
-	ctx.json {
-		"id": ctx.param("id"),
-	}
+json {
+	"id": ${id},
 }
-handle "/", ctx => {
-	ctx.html `<html><body>Hello, <a href="/p/123">Yap</a>!</body></html>`
-}
-
-run ":8080"
 ```
+
+Execute `gop run .` and visit http://localhost:8080/p/123, you will get:
+
+```
+{"id": "123"}
+```
+
+
+#### YAP Template
+
+In most cases, we don't use the `html` directive to generate html pages, but use the `yap` template engine. See [get_p_#id.yap](https://github.com/goplus/yap/blob/main/demo/classfile2_blog/get_p_%23id.yap):
+
+```coffee
+yap "article", {
+	"id": ${id},
+}
+```
+
+It means finding a template called `article` to render. See [yap/article_yap.html](https://github.com/goplus/yap/blob/main/demo/classfile2_blog/yap/article_yap.html):
+
+```html
+<html>
+<head><meta charset="utf-8"/></head>
+<body>Article {{.id}}</body>
+</html>
+```
+
+#### Run at specified address
+
+By default the YAP server runs on `localhost:8080`, but you can change it in [main.yap](https://github.com/goplus/yap/blob/main/demo/classfile2_blog/main.yap) file:
+
+```coffee
+run ":8888"
+```
+
 
 #### Static files
 
-Static files server demo in Go+ classfile ([staticfile_yap.gox](https://github.com/goplus/yap/blob/main/demo/classfile_static/staticfile_yap.gox)):
+Static files server demo ([main.yap](https://github.com/goplus/yap/blob/main/demo/classfile2_static/main.yap)):
 
 ```coffee
 static "/foo", FS("public")
@@ -217,120 +234,48 @@ static "/"
 run ":8080"
 ```
 
-#### YAP Template
-
-demo in Go+ classfile ([blog_yap.gox](https://github.com/goplus/yap/blob/main/demo/classfile_blog/blog_yap.gox), [article_yap.html](https://github.com/goplus/yap/blob/main/demo/classfile_blog/yap/article_yap.html)):
-
-```coffee
-get "/p/:id", ctx => {
-	ctx.yap "article", {
-		"id": ctx.param("id"),
-	}
-}
-
-run ":8080"
-```
-
 
 ### yaptest: HTTP Test Framework
 
-Suppose we have a web server named `foo` ([demo/foo/foo_yap.gox](https://github.com/goplus/yap/blob/main/ytest/demo/foo/foo_yap.gox)):
+This classfile has the file suffix `_ytest.gox`.
+
+Suppose we have a web server ([foo/get_p_#id.yap](https://github.com/goplus/yap/blob/main/ytest/demo/foo/get_p_%23id.yap)):
 
 ```go
-get "/p/:id", ctx => {
-	ctx.json {
-		"id": ctx.param("id"),
-	}
+json {
+	"id": ${id},
 }
-
-run ":8080"
 ```
 
-Then we create a yaptest file ([demo/foo/foo_ytest.gox](https://github.com/goplus/yap/blob/main/ytest/demo/foo/foo_ytest.gox)):
+Then we create a yaptest file ([foo/foo_ytest.gox](https://github.com/goplus/yap/blob/main/ytest/demo/foo/bar_ytest.gox)):
 
 ```go
-mock "foo.com", new(foo)
+mock "foo.com", new(AppV2)  // name of any YAP v2 web server is `AppV2`
 
-run "test get /p/$id", => {
-	id := "123"
-	get "http://foo.com/p/${id}"
-	ret 200
-	json {
-		"id": id,
-	}
+id := "123"
+get "http://foo.com/p/${id}"
+ret 200
+json {
+	"id": id,
 }
 ```
 
-The directive `mock` creates the `foo` server by [mockhttp](https://pkg.go.dev/github.com/qiniu/x/mockhttp). Then we call the directive `run` to run a subtest.
+The directive `mock` creates the web server by [mockhttp](https://pkg.go.dev/github.com/qiniu/x/mockhttp). Then we write test code directly.
 
-You can change the directive `mock` to `testServer` (see [demo/foo/bar_ytest.gox](https://github.com/goplus/yap/blob/main/ytest/demo/foo/bar_ytest.gox)), and keep everything else unchanged:
+You can change the directive `mock` to `testServer` (see [foo/bar_ytest.gox](https://github.com/goplus/yap/blob/main/ytest/demo/foo/bar_ytest.gox)), and keep everything else unchanged:
 
 ```go
-testServer "foo.com", new(foo)
+testServer "foo.com", new(AppV2)
 
-run "test get /p/$id", => {
-	id := "123"
-	get "http://foo.com/p/${id}"
-	ret 200
-	json {
-		"id": id,
-	}
+id := "123"
+get "http://foo.com/p/${id}"
+ret 200
+json {
+	"id": id,
 }
 ```
 
-The directive `testServer` creates the `foo` server by [net/http/httptest](https://pkg.go.dev/net/http/httptest#NewServer) and obtained a random port as the service address. Then it calls the directive [host](https://pkg.go.dev/github.com/goplus/yap/ytest#App.Host) to map the random service address to `foo.com`. This makes all other code no need to changed.
-
-We can change this example more complicated:
-
-```coffee
-host "https://example.com", "http://localhost:8080"
-testauth := oauth2("...")
-
-run "urlWithVar", => {
-	id := "123"
-	get "https://example.com/p/${id}"
-	ret
-	echo "code:", resp.code
-	echo "body:", resp.body
-}
-
-run "matchWithVar", => {
-	code := Var(int)
-	id := "123"
-	get "https://example.com/p/${id}"
-	ret code
-	echo "code:", code
-	match code, 200
-}
-
-run "postWithAuth", => {
-	id := "123"
-	title := "title"
-	author := "author"
-	post "https://example.com/p/${id}"
-	auth testauth
-	json {
-		"title":  title,
-		"author": author,
-	}
-	ret 200 # match resp.code, 200
-	echo "body:", resp.body
-}
-
-run "matchJsonObject", => {
-	title := Var(string)
-	author := Var(string)
-	id := "123"
-	get "https://example.com/p/${id}"
-	ret 200
-	json {
-		"title":  title,
-		"author": author,
-	}
-	echo "title:", title
-	echo "author:", author
-}
-```
+The directive `testServer` creates the web server by [net/http/httptest](https://pkg.go.dev/net/http/httptest#NewServer) and obtained a random port as the service address. Then it calls the directive [host](https://pkg.go.dev/github.com/goplus/yap/ytest#App.Host) to map the random service address to `foo.com`. This makes all other code no need to changed.
 
 For more details, see [yaptest - Go+ HTTP Test Framework](https://github.com/goplus/yap/blob/main/ytest).
 
