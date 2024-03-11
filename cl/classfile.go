@@ -54,6 +54,7 @@ type gmxProject struct {
 	hasScheds  bool
 	gameIsPtr  bool
 	isTest     bool
+	hasMain    bool
 }
 
 func (p *gmxProject) getScheds(cb *gogen.CodeBuilder) []goast.Stmt {
@@ -143,6 +144,7 @@ func loadClass(ctx *pkgCtx, pkg *gogen.Package, file string, f *ast.File, conf *
 			log.Panicln("multiple project files found:", tname, p.gameClass)
 		}
 		p.gameClass = tname
+		p.hasMain = f.HasShadowEntry()
 	} else {
 		p.sptypes = append(p.sptypes, tname)
 	}
@@ -252,7 +254,7 @@ func gmxCheckProjs(pkg *gogen.Package, ctx *pkgCtx) (proj *gmxProject, multi boo
 			continue
 		} else if proj != nil {
 			multi = true
-		} else {
+		} else if v.hasMain {
 			proj = v
 		}
 		if v.game != nil { // just to make testcase happy
