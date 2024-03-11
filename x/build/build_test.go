@@ -412,7 +412,6 @@ func (this *MyGame) Main() {
 	spx.Gopt_MyGame_Main(this)
 }
 func main() {
-	new(MyGame).Main()
 }
 `)
 }
