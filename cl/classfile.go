@@ -54,6 +54,15 @@ type gmxProject struct {
 	hasScheds  bool
 	gameIsPtr  bool
 	isTest     bool
+	hasMain_   bool
+}
+
+func (p *gmxProject) hasMain() bool {
+	if !p.hasMain_ {
+		imps := p.pkgImps
+		p.hasMain_ = len(imps) > 0 && imps[0].TryRef("GopTestClass") != nil
+	}
+	return p.hasMain_
 }
 
 func (p *gmxProject) getScheds(cb *gogen.CodeBuilder) []goast.Stmt {
@@ -143,6 +152,7 @@ func loadClass(ctx *pkgCtx, pkg *gogen.Package, file string, f *ast.File, conf *
 			log.Panicln("multiple project files found:", tname, p.gameClass)
 		}
 		p.gameClass = tname
+		p.hasMain_ = f.HasShadowEntry()
 	} else {
 		p.sptypes = append(p.sptypes, tname)
 	}
@@ -173,7 +183,7 @@ func spxTryRef(spx gogen.PkgRef, typ string) (obj types.Object, isPtr bool) {
 func spxRef(spx gogen.PkgRef, typ string) (obj gogen.Ref, isPtr bool) {
 	obj, isPtr = spxTryRef(spx, typ)
 	if obj == nil {
-		panic(spx.Path() + "." + typ + " not found")
+		panic(spx.Types.Name() + "." + typ + " not found")
 	}
 	return
 }
@@ -246,20 +256,34 @@ func genTestFunc(pkg *gogen.Package, name, testType, param, paramType string) {
 		End()
 }
 
-func gmxCheckProjs(pkg *gogen.Package, ctx *pkgCtx) (proj *gmxProject, multi bool) {
+func gmxCheckProjs(pkg *gogen.Package, ctx *pkgCtx) (*gmxProject, bool) {
+	var projMain, projNoMain *gmxProject
+	var multiMain, multiNoMain bool
 	for _, v := range ctx.projs {
 		if v.isTest {
 			continue
-		} else if proj != nil {
-			multi = true
+		}
+		if v.hasMain() {
+			if projMain != nil {
+				multiMain = true
+			} else {
+				projMain = v
+			}
 		} else {
-			proj = v
+			if projNoMain != nil {
+				multiNoMain = true
+			} else {
+				projNoMain = v
+			}
 		}
 		if v.game != nil { // just to make testcase happy
 			gmxProjMain(pkg, ctx, v)
 		}
 	}
-	return
+	if projMain != nil {
+		return projMain, multiMain
+	}
+	return projNoMain, multiNoMain
 }
 
 func gmxProjMain(pkg *gogen.Package, parent *pkgCtx, proj *gmxProject) {

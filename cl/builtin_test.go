@@ -255,6 +255,17 @@ func TestErrParseTypeEmbedName(t *testing.T) {
 func TestGmxCheckProjs(t *testing.T) {
 	_, multi := gmxCheckProjs(nil, &pkgCtx{
 		projs: map[string]*gmxProject{
+			".a": {hasMain_: true}, ".b": {hasMain_: true},
+		},
+	})
+	if !multi {
+		t.Fatal("gmxCheckProjs: not multi?")
+	}
+}
+
+func TestGmxCheckProjs2(t *testing.T) {
+	_, multi := gmxCheckProjs(nil, &pkgCtx{
+		projs: map[string]*gmxProject{
 			".a": {}, ".b": {},
 		},
 	})
