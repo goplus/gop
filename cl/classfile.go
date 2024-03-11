@@ -248,20 +248,34 @@ func genTestFunc(pkg *gogen.Package, name, testType, param, paramType string) {
 		End()
 }
 
-func gmxCheckProjs(pkg *gogen.Package, ctx *pkgCtx) (proj *gmxProject, multi bool) {
+func gmxCheckProjs(pkg *gogen.Package, ctx *pkgCtx) (*gmxProject, bool) {
+	var projMain, projNoMain *gmxProject
+	var multiMain, multiNoMain bool
 	for _, v := range ctx.projs {
 		if v.isTest {
 			continue
-		} else if proj != nil {
-			multi = true
-		} else if v.hasMain {
-			proj = v
+		}
+		if v.hasMain {
+			if projMain != nil {
+				multiMain = true
+			} else {
+				projMain = v
+			}
+		} else {
+			if projNoMain != nil {
+				multiNoMain = true
+			} else {
+				projNoMain = v
+			}
 		}
 		if v.game != nil { // just to make testcase happy
 			gmxProjMain(pkg, ctx, v)
 		}
 	}
-	return
+	if projMain != nil {
+		return projMain, multiMain
+	}
+	return projNoMain, multiNoMain
 }
 
 func gmxProjMain(pkg *gogen.Package, parent *pkgCtx, proj *gmxProject) {

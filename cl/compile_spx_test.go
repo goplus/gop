@@ -160,6 +160,9 @@ func (this *Kai) Main() {
 func (this *MyGame) Main() {
 	spx.Gopt_MyGame_Main(this)
 }
+func main() {
+	new(MyGame).Main()
+}
 `, "", "Kai.tspx")
 }
 
@@ -295,6 +298,9 @@ func (this *bar) Classfname() string {
 	return "bar"
 }
 func (this *bar) Main() {
+}
+func main() {
+	new(index).Main()
 }
 `)
 }
@@ -466,6 +472,9 @@ func (this *bar) Classfname() string {
 }
 func (this *bar) Main() {
 }
+func main() {
+	new(Game).Main()
+}
 `, "Game.tgmx", "bar.tspx")
 }
 
@@ -524,6 +533,9 @@ func (this *Kai) Classfname() string {
 	return "Kai"
 }
 func (this *Kai) Main() {
+}
+func main() {
+	new(Game).Main()
 }
 `, "Game.tgmx", "Kai.tspx")
 }
@@ -810,6 +822,7 @@ func (this *Kai) Classfname() string {
 func (this *Kai) Main() {
 }
 func main() {
+	new(Game).Main()
 }
 `, "Game.t2gmx", "Kai.t2spx", "")
 	gopSpxTestExConf(t, "OnlyGmx", &conf, `
@@ -841,6 +854,7 @@ func (this *Kai) Classfname() string {
 func (this *Kai) Main() {
 }
 func main() {
+	new(Game).Main()
 }
 `, "Game.t2gmx", "Kai.t2spx", "")
 
@@ -888,6 +902,7 @@ func (this *Kai) Classfname() string {
 	return "Kai"
 }
 func main() {
+	new(Game).Main()
 }
 `, "Game.t2gmx", "Kai.t2spx", "")
 }
@@ -936,6 +951,9 @@ func (this *Kai) Classfname() string {
 	return "Kai"
 }
 func (this *Kai) Main() {
+}
+func main() {
+	new(Game).Main()
 }
 `, "Game.tgmx", "Kai.tspx")
 }
@@ -1010,6 +1028,9 @@ func (this *Kai) Classfname() string {
 	return "Kai"
 }
 func (this *Kai) Main() {
+}
+func main() {
+	new(Game).Main()
 }
 `, "Game.tgmx", "Kai.tspx")
 }
@@ -1273,6 +1294,9 @@ func (this *Kai) Main() {
 }
 func (this *Kai) Classfname() string {
 	return "Kai"
+}
+func main() {
+	new(Game).Main()
 }
 `, "Game.tgmx", "Kai.tspx")
 }

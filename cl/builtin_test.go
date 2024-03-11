@@ -263,6 +263,17 @@ func TestGmxCheckProjs(t *testing.T) {
 	}
 }
 
+func TestGmxCheckProjs2(t *testing.T) {
+	_, multi := gmxCheckProjs(nil, &pkgCtx{
+		projs: map[string]*gmxProject{
+			".a": {}, ".b": {},
+		},
+	})
+	if !multi {
+		t.Fatal("gmxCheckProjs: not multi?")
+	}
+}
+
 func TestNodeInterp(t *testing.T) {
 	ni := &nodeInterp{}
 	if v := ni.Caller(&ast.Ident{}); v != "the function call" {
