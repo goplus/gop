@@ -159,6 +159,16 @@ func buildFunc(ctx *transformCtx, overload omthd, in *doc.Func) {
 	}
 }
 
+func toIndex(c byte) int {
+	if c >= '0' && c <= '9' {
+		return int(c - '0')
+	}
+	if c >= 'a' && c <= 'z' {
+		return int(c - ('a' - 10))
+	}
+	panic("invalid character out of [0-9,a-z]")
+}
+
 func transformFunc(ctx *transformCtx, t *doc.Type, in *doc.Func, method bool) {
 	var m mthd
 	if method {
@@ -171,8 +181,10 @@ func transformFunc(ctx *transformCtx, t *doc.Type, in *doc.Func, method bool) {
 		}
 	}
 	if isOverload(in.Name) {
+		order := toIndex(in.Name[len(in.Name)-1])
 		in.Name = in.Name[:len(in.Name)-3]
 		in.Decl.Name.Name = in.Name
+		ctx.orders[in] = order
 	}
 }
 

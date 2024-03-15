@@ -28,6 +28,18 @@ import (
 	"testing"
 )
 
+func TestToIndex(t *testing.T) {
+	if ret := toIndex('a'); ret != 10 {
+		t.Fatal("toIndex:", ret)
+	}
+	defer func() {
+		if e := recover(); e != "invalid character out of [0-9,a-z]" {
+			t.Fatal("panic:", e)
+		}
+	}()
+	toIndex('A')
+}
+
 func TestCheckTypeMethod(t *testing.T) {
 	if ret := checkTypeMethod("_Foo_a"); ret.typ != "" || ret.name != "Foo_a" {
 		t.Fatal("checkTypeMethod:", ret)
@@ -95,6 +107,9 @@ const GopPackage = true
 
 const Gopo_Add = "AddInt,,AddString"
 
+// Add doc
+func Add__1(a, b float64) float64 {}
+
 // AddInt doc
 func AddInt(a, b int) int {}
 
@@ -104,6 +119,10 @@ func AddString(a, b string) string {}
 Doc: AddInt doc
 
 func Add(a, b int) int
+== Func Add ==
+Doc: Add doc
+
+func Add(a, b float64) float64
 == Func Add ==
 Doc: AddString doc
 
