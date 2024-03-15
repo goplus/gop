@@ -28,6 +28,142 @@ import (
 	"testing"
 )
 
+func TestCheckTypeMethod(t *testing.T) {
+	if ret := checkTypeMethod("_Foo_a"); ret.typ != "" || ret.name != "Foo_a" {
+		t.Fatal("checkTypeMethod:", ret)
+	}
+	if ret := checkTypeMethod("Foo_a"); ret.typ != "Foo" || ret.name != "a" {
+		t.Fatal("checkTypeMethod:", ret)
+	}
+}
+
+func TestIsGopPackage(t *testing.T) {
+	if isGopPackage(&doc.Package{}) {
+		t.Fatal("isGopPackage: true?")
+	}
+}
+
+func TestDocRecv(t *testing.T) {
+	if _, ok := docRecv(&ast.Field{}); ok {
+		t.Fatal("docRecv: ok?")
+	}
+}
+
+func TestGopoMethod(t *testing.T) {
+	testPkg(t, `
+package foo
+
+const GopPackage = true
+
+const Gopo__T__Gop_Add = ".AddInt,AddString"
+
+type T int
+
+// AddInt doc
+func (p T) AddInt(b int) *T {}
+
+// AddString doc
+func AddString(this *T, b string) *T {}
+`, `== Type T ==
+- Func AddString -
+Doc: AddString doc
+
+func AddString(this *T, b string) *T
+- Method AddInt -
+Recv: T
+Doc: AddInt doc
+
+func (p T) AddInt(b int) *T
+- Method Gop_Add -
+Recv: T
+Doc: AddInt doc
+
+func (p T) Gop_Add(b int) *T
+- Method Gop_Add -
+Recv: *T
+Doc: AddString doc
+
+func (this *T) Gop_Add(b string) *T
+`)
+}
+
+func TestGopoFn(t *testing.T) {
+	testPkg(t, `
+package foo
+
+const GopPackage = true
+
+const Gopo_Add = "AddInt,,AddString"
+
+// AddInt doc
+func AddInt(a, b int) int {}
+
+// AddString doc
+func AddString(a, b string) string {}
+`, `== Func Add ==
+Doc: AddInt doc
+
+func Add(a, b int) int
+== Func Add ==
+Doc: AddString doc
+
+func Add(a, b string) string
+== Func AddInt ==
+Doc: AddInt doc
+
+func AddInt(a, b int) int
+== Func AddString ==
+Doc: AddString doc
+
+func AddString(a, b string) string
+`)
+}
+
+func TestOverloadFn(t *testing.T) {
+	testPkg(t, `
+package foo
+
+const GopPackage = true
+
+// Bar doc
+func Bar__0() {
+}
+`, `== Func Bar ==
+Doc: Bar doc
+
+func Bar()
+`)
+}
+
+func TestOverloadMethod(t *testing.T) {
+	testPkg(t, `
+package foo
+
+const GopPackage = true
+
+type T int
+
+// Bar doc 1
+func (p *T) Bar__0() {
+}
+
+// Bar doc 2
+func (t T) Bar__1() {
+}
+`, `== Type T ==
+- Method Bar -
+Recv: *T
+Doc: Bar doc 1
+
+func (p *T) Bar()
+- Method Bar -
+Recv: T
+Doc: Bar doc 2
+
+func (t T) Bar()
+`)
+}
+
 func printVal(parts []string, format string, val any) []string {
 	return append(parts, fmt.Sprintf(format, val))
 }
@@ -97,20 +233,4 @@ func testPkg(t *testing.T, in, expected string) {
 	if ret := printPkg(fset, pkg); ret != expected {
 		t.Fatalf("got:\n%s\nexpected:\n%s\n", ret, expected)
 	}
-}
-
-func TestBasic(t *testing.T) {
-	testPkg(t, `
-package foo
-
-const GopPackage = true
-
-// Bar doc
-func Bar__0() {
-}
-`, `== Func Bar ==
-Doc: Bar doc
-
-func Bar()
-`)
 }

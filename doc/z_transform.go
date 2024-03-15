@@ -30,6 +30,11 @@ type mthd struct {
 	name string
 }
 
+type omthd struct {
+	mthd
+	idx int
+}
+
 type typExtra struct {
 	t       *doc.Type
 	funcs   []*doc.Func
@@ -37,19 +42,36 @@ type typExtra struct {
 }
 
 type transformCtx struct {
-	overloadFuncs map[mthd][]mthd // realName => []overloadName
+	overloadFuncs map[mthd][]omthd // realName => []overloadName
 	typs          map[string]*typExtra
+	orders        map[*doc.Func]int
 }
 
 func (p *transformCtx) finish(in *doc.Package) {
 	for _, ex := range p.typs {
 		if t := ex.t; t != nil {
-			t.Funcs = mergeFuncs(t.Funcs, ex.funcs)
-			t.Methods = mergeFuncs(t.Methods, ex.methods)
+			t.Funcs = p.mergeFuncs(t.Funcs, ex.funcs)
+			t.Methods = p.mergeFuncs(t.Methods, ex.methods)
 		} else {
-			in.Funcs = mergeFuncs(in.Funcs, ex.funcs)
+			in.Funcs = p.mergeFuncs(in.Funcs, ex.funcs)
 		}
 	}
+}
+
+func (p *transformCtx) mergeFuncs(a, b []*doc.Func) []*doc.Func {
+	if len(b) == 0 {
+		return a
+	}
+	a = append(a, b...)
+	sort.Slice(a, func(i, j int) bool {
+		fa, fb := a[i], a[j]
+		aName, bName := fa.Name, fb.Name
+		if aName == bName {
+			return p.orders[fa] < p.orders[fb]
+		}
+		return aName < bName
+	})
+	return a
 }
 
 func newCtx(in *doc.Package) *transformCtx {
@@ -59,20 +81,10 @@ func newCtx(in *doc.Package) *transformCtx {
 		typs[t.Name] = &typExtra{t: t}
 	}
 	return &transformCtx{
-		overloadFuncs: make(map[mthd][]mthd),
+		overloadFuncs: make(map[mthd][]omthd),
 		typs:          typs,
+		orders:        make(map[*doc.Func]int),
 	}
-}
-
-func mergeFuncs(a, b []*doc.Func) []*doc.Func {
-	if len(b) == 0 {
-		return a
-	}
-	a = append(a, b...)
-	sort.Slice(a, func(i, j int) bool {
-		return a[i].Name < a[j].Name
-	})
-	return a
 }
 
 func newIdent(name string, in *ast.Ident) *ast.Ident {
@@ -117,7 +129,7 @@ func newMethod(name string, in *doc.Func) *doc.Func {
 	ret := *in
 	ret.Name = name
 	ret.Decl = newMethodDecl(name, in.Decl)
-	if recv, ok := docRecv(in.Decl.Recv.List[0]); ok {
+	if recv, ok := docRecv(ret.Decl.Recv.List[0]); ok {
 		ret.Recv = recv
 	}
 	// TODO(xsw): alias doc - ret.Doc
@@ -132,12 +144,17 @@ func newFunc(name string, in *doc.Func) *doc.Func {
 	return &ret
 }
 
-func buildFunc(ctx *transformCtx, overload mthd, in *doc.Func) {
+func setOrder(ctx *transformCtx, in *doc.Func, order int) *doc.Func {
+	ctx.orders[in] = order
+	return in
+}
+
+func buildFunc(ctx *transformCtx, overload omthd, in *doc.Func) {
 	if ex, ok := ctx.typs[overload.typ]; ok {
 		if ex.t != nil { // method
-			ex.methods = append(ex.methods, newMethod(overload.name, in))
+			ex.methods = append(ex.methods, setOrder(ctx, newMethod(overload.name, in), overload.idx))
 		} else {
-			ex.funcs = append(ex.funcs, newFunc(overload.name, in))
+			ex.funcs = append(ex.funcs, setOrder(ctx, newFunc(overload.name, in), overload.idx))
 		}
 	}
 }
@@ -175,7 +192,7 @@ func transformTypes(ctx *transformCtx, in []*doc.Type) {
 func transformGopo(ctx *transformCtx, name, val string) {
 	overload := checkTypeMethod(name[len(gopoPrefix):])
 	parts := strings.Split(val, ",")
-	for _, part := range parts {
+	for idx, part := range parts {
 		if part == "" {
 			continue
 		}
@@ -185,7 +202,7 @@ func transformGopo(ctx *transformCtx, name, val string) {
 		} else {
 			real = mthd{"", part}
 		}
-		ctx.overloadFuncs[real] = append(ctx.overloadFuncs[real], overload)
+		ctx.overloadFuncs[real] = append(ctx.overloadFuncs[real], omthd{overload, idx})
 	}
 }
 
