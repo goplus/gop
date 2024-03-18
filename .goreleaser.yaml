@@ -68,6 +68,60 @@ changelog:
       - "^docs:"
       - "^test:"
 
+dockers:
+  - goarch: "386"
+    image_templates:
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-i386
+    use: buildx
+    build_flag_templates:
+      - --platform=linux/386
+      - --build-arg=USE_GORELEASER_ARTIFACTS=1
+    extra_files:
+      - ./
+  - goarch: amd64
+    image_templates:
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-x86_64
+    use: buildx
+    build_flag_templates:
+      - --platform=linux/amd64
+      - --build-arg=USE_GORELEASER_ARTIFACTS=1
+    extra_files:
+      - ./
+  - goarch: arm64
+    image_templates:
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-arm64
+    use: buildx
+    build_flag_templates:
+      - --platform=linux/arm64
+      - --build-arg=USE_GORELEASER_ARTIFACTS=1
+    extra_files:
+      - ./
+
+docker_manifests:
+  - name_template: ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}
+    image_templates:
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-i386
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-x86_64
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-arm64
+  - name_template: ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Major }}.{{ .Minor }}
+    image_templates:
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-i386
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-x86_64
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-arm64
+    skip_push: auto
+  - name_template: ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Major }}
+    image_templates:
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-i386
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-x86_64
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-arm64
+    skip_push: auto
+  - name_template: ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:latest
+    image_templates:
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-i386
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-x86_64
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-arm64
+    skip_push: auto
+
 winget:
   - name: goplus
     homepage: "https://goplus.org/"
@@ -147,6 +201,8 @@ nfpms:
     bindir: /usr/lib/{{ .ProjectName }}
     contents:
       # source folder
+      - src: "Dockerfile"
+        dst: "/usr/lib/{{ .ProjectName }}/Dockerfile"
       - src: "LICENSE"
         dst: "/usr/lib/{{ .ProjectName }}/LICENSE"
       - src: "Makefile"
@@ -236,6 +292,8 @@ snapcrafts:
       {{- if .Arm }}v{{ .Arm }}{{ end }}
     extra_files:
       # source folder
+      - source: "Dockerfile"
+        destination: "Dockerfile"
       - source: "LICENSE"
         destination: "LICENSE"
       - source: "Makefile"
@@ -310,3 +368,6 @@ snapcrafts:
 
 checksum:
   name_template: "{{ .ProjectName }}_v{{ .Version }}_checksums.txt"
+
+release:
+  prerelease: auto
