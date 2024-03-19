@@ -17,8 +17,11 @@
 package gop
 
 import (
+	"bytes"
+	"fmt"
 	"go/token"
 	"go/types"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -28,6 +31,7 @@ import (
 	"github.com/goplus/mod/env"
 	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modfetch"
+	"github.com/qiniu/x/errors"
 )
 
 // -----------------------------------------------------------------------------
@@ -53,6 +57,14 @@ func NewImporter(mod *gopmod.Module, gop *env.Gop, fset *token.FileSet) *Importe
 		dir = mod.Root()
 	}
 	impFrom := packages.NewImporter(fset, dir)
+	// is gop root? load gop pkg cache
+	if len(gop.Root) > 0 {
+		impFrom.GetPkgCache().GoListExportCacheSync(gop.Root,
+			"github.com/goplus/gop/builtin",
+			"github.com/goplus/gop/builtin/ng",
+			"github.com/goplus/gop/builtin/iox",
+		)
+	}
 	return &Importer{mod: mod, gop: gop, impFrom: impFrom, fset: fset, Flags: defaultFlags}
 }
 
@@ -96,6 +108,7 @@ func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 				defer os.Chmod(modDir, modReadonly)
 				os.WriteFile(goModfile, defaultGoMod(ret.ModPath), 0644)
 			}
+			p.checkGopPackage(pkgPath)
 			return p.impFrom.ImportFrom(pkgPath, ret.ModDir, 0)
 		case gopmod.PkgtModule, gopmod.PkgtLocal:
 			if err = p.genGoExtern(ret.Dir, false); err != nil {
@@ -105,6 +118,7 @@ func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 			return p.impFrom.ImportFrom(pkgPath, p.gop.Root, 0)
 		}
 	}
+	p.checkGopPackage(pkgPath)
 	return p.impFrom.Import(pkgPath)
 }
 
@@ -131,6 +145,20 @@ func (p *Importer) genGoExtern(dir string, isExtern bool) (err error) {
 	return
 }
 
+// check import pkg is a go+ package
+func (p *Importer) checkGopPackage(pkgPath string) {
+	cacheInfo, ok := p.impFrom.GetPkgCache().GetPkgCache(pkgPath)
+	if !ok {
+		return
+	}
+	// is go+ package with package code change?
+	if checkPkgGopSourcesStatus(cacheInfo.PkgDir, cacheInfo.PkgExport) {
+		return
+	}
+	// rebuild package
+	reBuildGopPackage(cacheInfo.PkgDir)
+}
+
 func isPkgInMod(pkgPath, modPath string) bool {
 	if strings.HasPrefix(pkgPath, modPath) {
 		suffix := pkgPath[len(modPath):]
@@ -144,6 +172,48 @@ func defaultGoMod(modPath string) []byte {
 
 go 1.16
 `)
+}
+
+// check whether source files of the go+ package has changed
+func checkPkgGopSourcesStatus(dir, pkgFile string) bool {
+	// no need to check dir because dir use go list to get
+	pkgInfo, err := os.Stat(pkgFile)
+	if err != nil {
+		return false
+	}
+	err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+		// filter not .gxx files,because gop file ext is .gxx
+		fileExt := filepath.Ext(info.Name())
+		if fileExt == "" || !(fileExt != ".go" && fileExt[1] == 'g') {
+			return nil
+		}
+		if info.ModTime().After(pkgInfo.ModTime()) {
+			return fmt.Errorf("package need compile, dir:%s, file:%s", dir, info.Name())
+		}
+		return nil
+	})
+	if err != nil {
+		log.Println(err.Error())
+	}
+	return err == nil
+}
+
+// https://github.com/goplus/gop/issues/1821
+// exec gop build to generate go+ package
+func reBuildGopPackage(dir string) {
+	var stdout, stderr bytes.Buffer
+	cmd := exec.Command("gop", "build", dir)
+	cmd.Dir = dir
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	if err != nil {
+		// exit compile
+		panic(errors.New(stderr.String()))
+	}
 }
 
 // -----------------------------------------------------------------------------
