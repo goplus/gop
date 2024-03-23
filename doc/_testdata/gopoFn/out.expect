@@ -1,0 +1,20 @@
+== Func Add ==
+Doc: AddInt doc
+
+func Add(a, b int) int
+== Func Add ==
+Doc: Add doc
+
+func Add(a, b float64) float64
+== Func Add ==
+Doc: AddString doc
+
+func Add(a, b string) string
+== Func AddInt ==
+Doc: AddInt doc
+
+func AddInt(a, b int) int
+== Func AddString ==
+Doc: AddString doc
+
+func AddString(a, b string) string
