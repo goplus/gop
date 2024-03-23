@@ -24,6 +24,8 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
+	"os"
+	"path"
 	"strings"
 	"testing"
 )
@@ -59,128 +61,6 @@ func TestDocRecv(t *testing.T) {
 	if _, ok := docRecv(&ast.Field{}); ok {
 		t.Fatal("docRecv: ok?")
 	}
-}
-
-func TestGopoMethod(t *testing.T) {
-	testPkg(t, `
-package foo
-
-const GopPackage = true
-
-const Gopo__T__Gop_Add = ".AddInt,AddString"
-
-type T int
-
-// AddInt doc
-func (p T) AddInt(b int) *T {}
-
-// AddString doc
-func AddString(this *T, b string) *T {}
-`, `== Type T ==
-- Func AddString -
-Doc: AddString doc
-
-func AddString(this *T, b string) *T
-- Method AddInt -
-Recv: T
-Doc: AddInt doc
-
-func (p T) AddInt(b int) *T
-- Method Gop_Add -
-Recv: T
-Doc: AddInt doc
-
-func (p T) Gop_Add(b int) *T
-- Method Gop_Add -
-Recv: *T
-Doc: AddString doc
-
-func (this *T) Gop_Add(b string) *T
-`)
-}
-
-func TestGopoFn(t *testing.T) {
-	testPkg(t, `
-package foo
-
-const GopPackage = true
-
-const Gopo_Add = "AddInt,,AddString"
-
-// Add doc
-func Add__1(a, b float64) float64 {}
-
-// AddInt doc
-func AddInt(a, b int) int {}
-
-// AddString doc
-func AddString(a, b string) string {}
-`, `== Func Add ==
-Doc: AddInt doc
-
-func Add(a, b int) int
-== Func Add ==
-Doc: Add doc
-
-func Add(a, b float64) float64
-== Func Add ==
-Doc: AddString doc
-
-func Add(a, b string) string
-== Func AddInt ==
-Doc: AddInt doc
-
-func AddInt(a, b int) int
-== Func AddString ==
-Doc: AddString doc
-
-func AddString(a, b string) string
-`)
-}
-
-func TestOverloadFn(t *testing.T) {
-	testPkg(t, `
-package foo
-
-const GopPackage = true
-
-// Bar doc
-func Bar__0() {
-}
-`, `== Func Bar ==
-Doc: Bar doc
-
-func Bar()
-`)
-}
-
-func TestOverloadMethod(t *testing.T) {
-	testPkg(t, `
-package foo
-
-const GopPackage = true
-
-type T int
-
-// Bar doc 1
-func (p *T) Bar__0() {
-}
-
-// Bar doc 2
-func (t T) Bar__1() {
-}
-`, `== Type T ==
-- Method Bar -
-Recv: *T
-Doc: Bar doc 1
-
-func (p *T) Bar()
-- Method Bar -
-Recv: T
-Doc: Bar doc 2
-
-func (t T) Bar()
-`)
 }
 
 func printVal(parts []string, format string, val any) []string {
@@ -237,10 +117,10 @@ func printPkg(fset *token.FileSet, in *doc.Package) string {
 	return strings.Join(append(parts, ""), "\n")
 }
 
-func testPkg(t *testing.T, in, expected string) {
+func testPkg(t *testing.T, filename string, src any, expected string) {
 	t.Helper()
 	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, "foo.go", in, parser.ParseComments)
+	f, err := parser.ParseFile(fset, filename, src, parser.ParseComments)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -252,4 +132,34 @@ func testPkg(t *testing.T, in, expected string) {
 	if ret := printPkg(fset, pkg); ret != expected {
 		t.Fatalf("got:\n%s\nexpected:\n%s\n", ret, expected)
 	}
+}
+
+func testFromDir(t *testing.T, sel, relDir string) {
+	dir, err := os.Getwd()
+	if err != nil {
+		t.Fatal("Getwd failed:", err)
+	}
+	dir = path.Join(dir, relDir)
+	fis, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatal("ReadDir failed:", err)
+	}
+	for _, fi := range fis {
+		name := fi.Name()
+		if strings.HasPrefix(name, "_") || !fi.IsDir() || (sel != "" && !strings.Contains(name, sel)) {
+			continue
+		}
+		t.Run(name, func(t *testing.T) {
+			testDir := dir + "/" + name
+			out, e := os.ReadFile(testDir + "/out.expect")
+			if e != nil {
+				t.Fatal(e)
+			}
+			testPkg(t, testDir+"/in.go", nil, string(out))
+		})
+	}
+}
+
+func TestFromTestdata(t *testing.T) {
+	testFromDir(t, "", "./_testdata")
 }
