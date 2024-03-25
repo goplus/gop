@@ -622,3 +622,74 @@ func main() {
 }
 `)
 }
+
+func TestInferFuncLambda(t *testing.T) {
+	gopMixedClTest(t, "main", `package main
+func ListMap[T any](ar []T, fn func(v T) T)[]T {
+	for i, v := range ar {
+		ar[i] = fn(v)
+	}
+	return ar
+}
+`, `
+println ListMap([1,2,3,4], x => x*x)
+ListMap [1,2,3,4], x => {
+	println x
+	return x
+}
+`, `package main
+
+import "fmt"
+
+func main() {
+	fmt.Println(ListMap([]int{1, 2, 3, 4}, func(x int) int {
+		return x * x
+	}))
+	ListMap([]int{1, 2, 3, 4}, func(x int) int {
+		fmt.Println(x)
+		return x
+	})
+}
+`)
+}
+
+func TestInferOverloadFuncLambda(t *testing.T) {
+	gopMixedClTest(t, "main", `package main
+func ListMap__0[T any](ar []T, fn func(v T) T)[]T {
+	for i, v := range ar {
+		ar[i] = fn(v)
+	}
+	return ar
+}
+func ListMap__1(a string, fn func(s string)) {
+	for _, c := range a {
+		fn(string(c))
+	}
+}
+`, `
+println ListMap([1,2,3,4], x => x*x)
+ListMap [1,2,3,4], x => {
+	println x
+	return x
+}
+ListMap "hello", x => {
+	println x
+}
+`, `package main
+
+import "fmt"
+
+func main() {
+	fmt.Println(ListMap__0([]int{1, 2, 3, 4}, func(x int) int {
+		return x * x
+	}))
+	ListMap__0([]int{1, 2, 3, 4}, func(x int) int {
+		fmt.Println(x)
+		return x
+	})
+	ListMap__1("hello", func(x string) {
+		fmt.Println(x)
+	})
+}
+`)
+}
