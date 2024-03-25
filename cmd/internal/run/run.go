@@ -80,10 +80,12 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 
 	noChdir := *flagNoChdir
-	conf, err := gop.NewDefaultConf(".", true)
+	conf, err := gop.NewDefaultConf(".", true, true)
 	if err != nil {
 		log.Panicln("gop.NewDefaultConf:", err)
 	}
+	defer conf.UpdateCache()
+
 	if !conf.Mod.HasModfile() { // if no go.mod, check GopDeps
 		conf.GopDeps = new(int)
 	}

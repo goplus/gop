@@ -69,10 +69,12 @@ func runCmd(cmd *base.Command, args []string) {
 		cl.SetDisableRecover(true)
 	}
 
-	conf, err := gop.NewDefaultConf(".", false)
+	conf, err := gop.NewDefaultConf(".", false, true)
 	if err != nil {
 		log.Panicln("gop.NewDefaultConf:", err)
 	}
+	defer conf.UpdateCache()
+
 	confCmd := &gocmd.Config{Gop: conf.Gop}
 	confCmd.Flags = pass.Args
 	for _, proj := range projs {

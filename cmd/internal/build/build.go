@@ -74,10 +74,12 @@ func runCmd(cmd *base.Command, args []string) {
 		log.Panicln("too many arguments:", args)
 	}
 
-	conf, err := gop.NewDefaultConf(".", true)
+	conf, err := gop.NewDefaultConf(".", true, true)
 	if err != nil {
 		log.Panicln("gop.NewDefaultConf:", err)
 	}
+	defer conf.UpdateCache()
+
 	confCmd := &gocmd.BuildConfig{Gop: conf.Gop}
 	if *flagOutput != "" {
 		output, err := filepath.Abs(*flagOutput)

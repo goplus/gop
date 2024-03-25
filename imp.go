@@ -17,21 +17,31 @@
 package gop
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
+	"fmt"
 	"go/token"
 	"go/types"
+	"io"
+	"log"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/goplus/gogen/packages"
+	"github.com/goplus/gogen/packages/cache"
 	"github.com/goplus/mod/env"
 	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modfetch"
+	"github.com/goplus/mod/modfile"
 )
 
 // -----------------------------------------------------------------------------
 
+// Importer represents a Go+ importer.
 type Importer struct {
 	impFrom *packages.Importer
 	mod     *gopmod.Module
@@ -41,19 +51,68 @@ type Importer struct {
 	Flags GenFlags // can change this for loading Go+ modules
 }
 
+// NewImporter creates a Go+ Importer.
 func NewImporter(mod *gopmod.Module, gop *env.Gop, fset *token.FileSet) *Importer {
 	const (
 		defaultFlags = GenFlagPrompt | GenFlagPrintError
 	)
-	if mod == nil {
-		mod = gopmod.Default
+	if mod == nil || !mod.HasModfile() {
+		if modGop, e := gopmod.LoadFrom(filepath.Join(gop.Root, "go.mod"), ""); e == nil {
+			modGop.ImportClasses()
+			mod = modGop
+		} else {
+			mod = gopmod.Default
+		}
 	}
-	dir := ""
-	if mod.HasModfile() {
-		dir = mod.Root()
-	}
+	dir := mod.Root()
 	impFrom := packages.NewImporter(fset, dir)
-	return &Importer{mod: mod, gop: gop, impFrom: impFrom, fset: fset, Flags: defaultFlags}
+	ret := &Importer{mod: mod, gop: gop, impFrom: impFrom, fset: fset, Flags: defaultFlags}
+	impFrom.SetCache(cache.New(ret.PkgHash))
+	return ret
+}
+
+// CacheFile returns file path of the cache.
+func (p *Importer) CacheFile() string {
+	cacheDir, _ := os.UserCacheDir()
+	cacheDir += "/gop/cache/"
+	os.MkdirAll(cacheDir, 0755)
+
+	fname := ""
+	h := sha256.New()
+	if root := p.mod.Root(); root != "" {
+		io.WriteString(h, root)
+		fname = filepath.Base(root)
+	}
+	hash := base64.RawURLEncoding.EncodeToString(h.Sum(nil))
+	return cacheDir + hash + fname
+}
+
+// Cache returns the cache object.
+func (p *Importer) Cache() *cache.Impl {
+	return p.impFrom.Cache().(*cache.Impl)
+}
+
+// PkgHash calculates hash value for a package.
+// It is required by cache.New func.
+func (p *Importer) PkgHash(pkgPath string, self bool) string {
+	if pkg, e := p.mod.Lookup(pkgPath); e == nil {
+		switch pkg.Type {
+		case gopmod.PkgtStandard:
+			return cache.HashSkip
+		case gopmod.PkgtExtern:
+			if pkg.Real.Version != "" {
+				return pkg.Real.String()
+			}
+			fallthrough
+		case gopmod.PkgtModule:
+			return dirHash(p.mod, p.gop, pkg.Dir, self)
+		}
+	}
+	if isPkgInMod(pkgPath, gopMod) {
+		return cache.HashSkip
+	}
+	log.Println("PkgHash: unexpected package -", pkgPath)
+	return cache.HashInvalid
 }
 
 const (
@@ -144,6 +203,39 @@ func defaultGoMod(modPath string) []byte {
 
 go 1.16
 `)
+}
+
+func dirHash(mod *gopmod.Module, gop *env.Gop, dir string, self bool) string {
+	h := sha256.New()
+	if self {
+		fmt.Fprintf(h, "go\t%s\n", runtime.Version())
+		fmt.Fprintf(h, "gop\t%s\n", gop.Version)
+	}
+	if fis, err := os.ReadDir(dir); err == nil {
+		for _, fi := range fis {
+			if !fi.IsDir() {
+				continue
+			}
+			fname := fi.Name()
+			if strings.HasPrefix(fname, "_") || !canCl(mod, fname) {
+				continue
+			}
+			if v, e := fi.Info(); e == nil {
+				fmt.Fprintf(h, "file\t%s\t%x\t%x\n", fname, v.Size(), v.ModTime().UnixNano())
+			}
+		}
+	}
+	return base64.RawStdEncoding.EncodeToString(h.Sum(nil))
+}
+
+func canCl(mod *gopmod.Module, fname string) bool {
+	switch path.Ext(fname) {
+	case ".go", ".gop", ".gox":
+		return true
+	default:
+		ext := modfile.ClassExt(fname)
+		return mod.IsClass(ext)
+	}
 }
 
 // -----------------------------------------------------------------------------

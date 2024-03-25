@@ -18,7 +18,6 @@ package gop
 
 import (
 	"fmt"
-	"go/types"
 	"io/fs"
 	"os"
 	"path"
@@ -119,7 +118,7 @@ type Config struct {
 	Gop      *env.Gop
 	Fset     *token.FileSet
 	Mod      *gopmod.Module
-	Importer types.Importer
+	Importer *Importer
 
 	Filter func(fs.FileInfo) bool
 
@@ -127,12 +126,15 @@ type Config struct {
 	// see https://pkg.go.dev/github.com/goplus/gogen#File.CheckGopDeps
 	GopDeps *int
 
+	// CacheFile specifies the file path of the cache.
+	CacheFile string
+
 	IgnoreNotatedError bool
 	DontUpdateGoMod    bool
 }
 
 // NewDefaultConf creates a dfault configuration for common cases.
-func NewDefaultConf(dir string, noTestFile bool) (conf *Config, err error) {
+func NewDefaultConf(dir string, noTestFile bool, useCacheFile bool) (conf *Config, err error) {
 	mod, err := LoadMod(dir)
 	if err != nil {
 		return
@@ -141,10 +143,21 @@ func NewDefaultConf(dir string, noTestFile bool) (conf *Config, err error) {
 	fset := token.NewFileSet()
 	imp := NewImporter(mod, gop, fset)
 	conf = &Config{Gop: gop, Fset: fset, Mod: mod, Importer: imp}
+	if useCacheFile {
+		conf.CacheFile = imp.CacheFile()
+		imp.Cache().Load(conf.CacheFile)
+	}
 	if noTestFile {
 		conf.Filter = FilterNoTestFiles
 	}
 	return
+}
+
+// UpdateCache updates the cache.
+func (p *Config) UpdateCache() {
+	if p.CacheFile != "" {
+		p.Importer.Cache().Save(p.CacheFile)
+	}
 }
 
 // LoadMod loads a Go+ module from a specified directory.
