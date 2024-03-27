@@ -101,6 +101,7 @@ func genDefenderExcludePSFile(excludeDirs []string) (string, error) {
 		log.Fatalln(err)
 		return "", err
 	}
+	defer f.Close()
 	for _, v := range excludeDirs {
 		writeExcludeDirToFile(f, v);
 	}
