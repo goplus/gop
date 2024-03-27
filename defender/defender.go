@@ -1,28 +1,31 @@
 package defender
 
 import (
+	"fmt"
 	"log"
 	"runtime"
 )
 
-func ExcludeWithDirs(excludeDirs []string) {
+func ExcludeWithDirs(excludeDirs []string) error {
 	if runtime.GOOS != "windows" {
-		return
+		return fmt.Errorf("not supported for %s", runtime.GOOS)
 	}
 	file, err := genDefenderExcludePSFile(excludeDirs)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	runDefenderExcludePSFile(file)
+	_, resultError := runDefenderExcludePSFile(file)
+	return resultError
 }
 
-func Exclude() {
+func Exclude() error {
 	if runtime.GOOS != "windows" {
-		return
+		return fmt.Errorf("not supported for %s", runtime.GOOS)
 	}
 	file, err := genGopDefenderExcludePSFile()
 	if err != nil {
 		log.Fatalln(err)
 	}
-	runDefenderExcludePSFile(file)
+	_, resultError := runDefenderExcludePSFile(file)
+	return resultError
 }

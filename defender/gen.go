@@ -72,13 +72,22 @@ func genGopDefenderExcludePSFile() (string, error) {
 		if k == "gop env GOCACHE" {
 			localDir := filepath.Dir(v)
 			goplsDir := filepath.Join(localDir, "/gopls")
-			f.WriteString(excludeCmdString(goplsDir))
-			f.WriteString("\r\n")
+			writeExcludeDirToFile(f, goplsDir)
 		}
-		f.WriteString(excludeCmdString(v))
-		f.WriteString("\r\n")
+		writeExcludeDirToFile(f, v)
 	}
 	return f.Name(), nil
+}
+
+func writeExcludeDirToFile(f *os.File, dir string) {
+	_, err := f.WriteString(excludeCmdString(dir))
+	if err != nil {
+		log.Println(err)
+	}
+	_, newLineError := f.WriteString("\r\n")
+	if newLineError != nil {
+		log.Println(newLineError)
+	}
 }
 
 func genDefenderExcludePSFile(excludeDirs []string) (string, error) {
@@ -93,8 +102,7 @@ func genDefenderExcludePSFile(excludeDirs []string) (string, error) {
 		return "", err
 	}
 	for _, v := range excludeDirs {
-		f.WriteString(excludeCmdString(v))
-		f.WriteString("\r\n")
+		writeExcludeDirToFile(f, v);
 	}
 	return f.Name(), nil
 }
