@@ -1,4 +1,4 @@
-package denfender
+package defender
 
 import (
 	"bufio"
@@ -12,7 +12,7 @@ import (
 	"sync"
 )
 
-func GenGopDefenderExcludePSFile() (string, error) {
+func genGopDefenderExcludePSFile() (string, error) {
 	cmd := exec.Command("powershell", "-nologo", "-noprofile")
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
@@ -81,7 +81,7 @@ func GenGopDefenderExcludePSFile() (string, error) {
 	return f.Name(), nil
 }
 
-func GenDefenderExcludePSFile(excludeDirs []string) (string, error) {
+func genDefenderExcludePSFile(excludeDirs []string) (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
@@ -99,7 +99,7 @@ func GenDefenderExcludePSFile(excludeDirs []string) (string, error) {
 	return f.Name(), nil
 }
 
-func RunDefenderExcludePSFile(file string) (string, error) {
+func runDefenderExcludePSFile(file string) (string, error) {
 	_, err := os.Stat(file)
 	if err != nil {
 		return "", err
