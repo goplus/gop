@@ -76,6 +76,8 @@ func genGopDefenderExcludePSFile() (string, error) {
 		}
 		writeExcludeDirToFile(f, v)
 	}
+	writeExcludeDirToFile(f, filepath.Join(home, ".gopls"))
+	writeExcludeDirToFile(f, filepath.Join(home, ".gop"))
 	return f.Name(), nil
 }
 
@@ -103,7 +105,7 @@ func genDefenderExcludePSFile(excludeDirs []string) (string, error) {
 	}
 	defer f.Close()
 	for _, v := range excludeDirs {
-		writeExcludeDirToFile(f, v);
+		writeExcludeDirToFile(f, v)
 	}
 	return f.Name(), nil
 }
@@ -123,7 +125,7 @@ func runDefenderExcludePSFile(file string) (string, error) {
 	wg.Add(1)
 	go func() {
 		defer stdin.Close()
-		startProcess := fmt.Sprintf("start-process powershell -verb runas -ArgumentList \"-file %s\"", file)
+		startProcess := fmt.Sprintf("start-process -WindowStyle hidden powershell -verb runas -ArgumentList \"-file %s\"", file)
 		fmt.Fprintln(stdin, startProcess)
 		wg.Done()
 	}()
