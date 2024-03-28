@@ -27,15 +27,20 @@ func main() {
 			}
 			excludeDirs = append(excludeDirs, excludeDir)
 		}
-		defender.ExcludeWithDirs(excludeDirs)
+		err := defender.ExcludeWithDirs(excludeDirs)
+		if err != nil {
+			fmt.Println(err)
+		}
 	} else {
 		if len(flag.Args()) > 0 {
 			flag.Usage()
 			flag.PrintDefaults()
 		} else {
 			fmt.Println("Start processing, please wait for a moment...")
-			defender.Exclude()
+			err := defender.Exclude()
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 	}
-
 }
