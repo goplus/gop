@@ -201,6 +201,8 @@ nfpms:
     bindir: /usr/lib/{{ .ProjectName }}
     contents:
       # source folder
+      - src: "CODE_OF_CONDUCT.md"
+        dst: "/usr/lib/{{ .ProjectName }}/CODE_OF_CONDUCT.md"
       - src: "Dockerfile"
         dst: "/usr/lib/{{ .ProjectName }}/Dockerfile"
       - src: "LICENSE"
@@ -292,6 +294,8 @@ snapcrafts:
       {{- if .Arm }}v{{ .Arm }}{{ end }}
     extra_files:
       # source folder
+      - source: "CODE_OF_CONDUCT.md"
+        destination: "CODE_OF_CONDUCT.md"
       - source: "Dockerfile"
         destination: "Dockerfile"
       - source: "LICENSE"
