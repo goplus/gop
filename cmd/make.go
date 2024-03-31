@@ -432,11 +432,10 @@ func clean() {
 	}
 
 	cleanGopRunCache()
-
-	defender.Remove()
 }
 
 func cleanGopRunCache() {
+	defender.Remove()
 	homeDir, _ := os.UserHomeDir()
 	runCacheDir := filepath.Join(homeDir, ".gop", "run")
 	files := []string{"go.mod", "go.sum"}
