@@ -2,7 +2,10 @@ package defender
 
 import "fmt"
 
-func excludeCmdString(excludeDir string) string {
-	//excludeCmd := fmt.Sprintf("Add-MpPreference -ExclusionPath '%s' -ControlledFolderAccessAllowedApplications '%s'", v, filepath.Join(goproot, "/bin/gop.exe"))
+func excludeDirString(excludeDir string) string {
 	return fmt.Sprintf("Add-MpPreference -ExclusionPath '%s'", excludeDir)
+}
+
+func excludeExtString(excludeExt string) string {
+	return fmt.Sprintf("Add-MpPreference -ExclusionExtension '%s'", excludeExt)
 }

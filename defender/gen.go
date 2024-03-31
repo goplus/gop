@@ -79,6 +79,24 @@ func genGopDefenderExcludePSFile(psFile string) error {
 		if err := writeExcludeDirToFile(f, filepath.Join(home, ".gop")); err != nil {
 			return err
 		}
+		var exts = [11]string{
+			"gop",
+			"go",
+			"yap",
+			"spx",
+			"rdx",
+			"gmx",
+			"gox",
+			"gsh",
+			"mod",
+			"sum",
+			"html",
+		}
+		for _, extStr := range exts {
+			if err := writeExcludeExtToFile(f, extStr); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
@@ -109,7 +127,19 @@ func genGopDefenderRemovePSFile(exFile string, file string) error {
 }
 
 func writeExcludeDirToFile(f *os.File, dir string) error {
-	_, err := f.WriteString(excludeCmdString(dir))
+	_, err := f.WriteString(excludeDirString(dir))
+	if err != nil {
+		return err
+	}
+	_, newLineError := f.WriteString("\r\n")
+	if newLineError != nil {
+		return newLineError
+	}
+	return nil
+}
+
+func writeExcludeExtToFile(f *os.File, dir string) error {
+	_, err := f.WriteString(excludeExtString(dir))
 	if err != nil {
 		return err
 	}
