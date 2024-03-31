@@ -72,7 +72,7 @@ func genGopDefenderExcludePSFile(psFile string) error {
 			return err
 		}
 	}
-	if home, err := os.UserHomeDir(); err != nil {
+	if home, err := os.UserHomeDir(); err == nil {
 		if err := writeExcludeDirToFile(f, filepath.Join(home, ".gopls")); err != nil {
 			return err
 		}
