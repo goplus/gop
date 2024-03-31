@@ -411,6 +411,9 @@ func runTestcases() {
 }
 
 func clean() {
+	
+	defender.Remove()
+
 	gopBinPath := detectGopBinPath()
 	goBinPath := detectGoBinPath()
 
@@ -435,7 +438,6 @@ func clean() {
 }
 
 func cleanGopRunCache() {
-	defender.Remove()
 	homeDir, _ := os.UserHomeDir()
 	runCacheDir := filepath.Join(homeDir, ".gop", "run")
 	files := []string{"go.mod", "go.sum"}
