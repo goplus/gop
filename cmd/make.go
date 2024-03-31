@@ -432,6 +432,8 @@ func clean() {
 	}
 
 	cleanGopRunCache()
+
+	defender.Remove()
 }
 
 func cleanGopRunCache() {

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -12,12 +11,11 @@ import (
 	"sync"
 )
 
-func genGopDefenderExcludePSFile() (string, error) {
+func genGopDefenderExcludePSFile(psFile string) error {
 	cmd := exec.Command("powershell", "-nologo", "-noprofile")
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
-		log.Fatal(err)
-		return "", err
+		return err
 	}
 	resultMap := map[string]string{
 		"gop env GOCACHE": "",
@@ -37,8 +35,7 @@ func genGopDefenderExcludePSFile() (string, error) {
 	wg.Wait()
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Fatal(err)
-		return "", err
+		return err
 	}
 	buf := bytes.NewBuffer(out)
 	scanner := bufio.NewScanner(buf)
@@ -55,14 +52,9 @@ func genGopDefenderExcludePSFile() (string, error) {
 			key = ""
 		}
 	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-	psFile := filepath.Join(home, "ex.ps1")
 	f, err := os.Create(psFile)
 	if err != nil {
-		return "", err
+		return err
 	}
 	defer f.Close()
 	for k, v := range resultMap {
@@ -72,54 +64,71 @@ func genGopDefenderExcludePSFile() (string, error) {
 		if k == "gop env GOCACHE" {
 			localDir := filepath.Dir(v)
 			goplsDir := filepath.Join(localDir, "/gopls")
-			writeExcludeDirToFile(f, goplsDir)
+			if err := writeExcludeDirToFile(f, goplsDir); err != nil {
+				return err
+			}
 		}
-		writeExcludeDirToFile(f, v)
+		if err := writeExcludeDirToFile(f, v); err != nil {
+			return err
+		}
 	}
-	writeExcludeDirToFile(f, filepath.Join(home, ".gopls"))
-	writeExcludeDirToFile(f, filepath.Join(home, ".gop"))
-	return f.Name(), nil
+	if home, err := os.UserHomeDir(); err != nil {
+		if err := writeExcludeDirToFile(f, filepath.Join(home, ".gopls")); err != nil {
+			return err
+		}
+		if err := writeExcludeDirToFile(f, filepath.Join(home, ".gop")); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-func writeExcludeDirToFile(f *os.File, dir string) {
-	_, err := f.WriteString(excludeCmdString(dir))
-	if err != nil {
-		log.Println(err)
-	}
-	_, newLineError := f.WriteString("\r\n")
-	if newLineError != nil {
-		log.Println(newLineError)
-	}
-}
-
-func genDefenderExcludePSFile(excludeDirs []string) (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-	psFile := filepath.Join(home, "ex.ps1")
-	f, err := os.Create(psFile)
-	if err != nil {
-		log.Fatalln(err)
-		return "", err
-	}
-	defer f.Close()
-	for _, v := range excludeDirs {
-		writeExcludeDirToFile(f, v)
-	}
-	return f.Name(), nil
-}
-
-func runDefenderExcludePSFile(file string) (string, error) {
-	_, err := os.Stat(file)
-	if err != nil {
-		return "", err
+func genGopDefenderRemovePSFile(exFile string, file string) error {
+	if _, err := os.Stat(exFile); err != nil {
+		return err
 	}
 	cmd := exec.Command("powershell", "-nologo", "-noprofile")
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
-		log.Fatal(err)
-		return "", err
+		return err
+	}
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		defer stdin.Close()
+		cmdStr := fmt.Sprintf("powershell -Command \"(gc %s) -replace 'Add-MpPreference', 'Remove-MpPreference' | Out-File -encoding ASCII %s\"", exFile, file)
+		fmt.Fprintln(stdin, cmdStr)
+		wg.Done()
+	}()
+	wg.Wait()
+	_, err = cmd.CombinedOutput()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func writeExcludeDirToFile(f *os.File, dir string) error {
+	_, err := f.WriteString(excludeCmdString(dir))
+	if err != nil {
+		return err
+	}
+	_, newLineError := f.WriteString("\r\n")
+	if newLineError != nil {
+		return newLineError
+	}
+	return nil
+}
+
+func runDefenderExcludePSFile(file string) error {
+	_, err := os.Stat(file)
+	if err != nil {
+		return err
+	}
+	cmd := exec.Command("powershell", "-nologo", "-noprofile")
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return err
 	}
 	wg := sync.WaitGroup{}
 	wg.Add(1)
@@ -130,10 +139,9 @@ func runDefenderExcludePSFile(file string) (string, error) {
 		wg.Done()
 	}()
 	wg.Wait()
-	out, err := cmd.CombinedOutput()
+	_, err = cmd.CombinedOutput()
 	if err != nil {
-		log.Fatal(err)
-		return "", err
+		return err
 	}
-	return string(out), nil
+	return nil
 }
