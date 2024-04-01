@@ -92,11 +92,14 @@ func TestCompileLambda2(t *testing.T) {
 
 func TestCompileExpr(t *testing.T) {
 	defer func() {
-		if e := recover(); e != "compileExpr failed: unknown - *ast.Ellipsis\n" {
-			t.Fatal("compileExpr:", e)
+		if e := recover(); e != nil {
+			if ce := e.(*gogen.CodeError); ce.Msg != "compileExpr failed: unknown - *ast.Ellipsis" {
+				t.Fatal("compileExpr:", ce.Msg)
+			}
 		}
 	}()
-	compileExpr(nil, &ast.Ellipsis{})
+	ctx := &blockCtx{pkgCtx: &pkgCtx{}}
+	compileExpr(ctx, &ast.Ellipsis{})
 }
 
 func TestCompileStmt(t *testing.T) {

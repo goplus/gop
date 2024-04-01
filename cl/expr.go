@@ -24,7 +24,6 @@ import (
 	"go/types"
 	"log"
 	"math/big"
-	"reflect"
 	"strconv"
 	"strings"
 	"syscall"
@@ -249,7 +248,7 @@ func compileExprLHS(ctx *blockCtx, expr ast.Expr) {
 	case *ast.StarExpr:
 		compileStarExprLHS(ctx, v)
 	default:
-		log.Panicln("compileExpr failed: unknown -", reflect.TypeOf(v))
+		panic(ctx.newCodeErrorf(v.Pos(), "compileExprLHS failed: unknown - %T", expr))
 	}
 	if rec := ctx.recorder(); rec != nil {
 		rec.recordExpr(ctx, expr, true)
@@ -365,7 +364,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 	case *ast.EnvExpr:
 		compileEnvExpr(ctx, v)
 	default:
-		log.Panicf("compileExpr failed: unknown - %T\n", v)
+		panic(ctx.newCodeErrorf(v.Pos(), "compileExpr failed: unknown - %T", v))
 	}
 	if rec := ctx.recorder(); rec != nil {
 		rec.recordExpr(ctx, expr, false)
