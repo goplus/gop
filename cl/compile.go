@@ -1088,6 +1088,7 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 				case *ast.FuncLit:
 					checkOverloadFunc(d)
 					name1 := overloadFuncName(name.Name, idx)
+					onames = append(onames, "") // const Gopo_xxx = "xxxInt,,xxxFloat"
 					ctx.lbinames = append(ctx.lbinames, name1)
 					preloadFuncDecl(&ast.FuncDecl{
 						Doc:  d.Doc,

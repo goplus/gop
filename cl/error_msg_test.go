@@ -1049,3 +1049,17 @@ type
 a := 1
 `)
 }
+
+func TestCompileExprError(t *testing.T) {
+	codeErrorTestAst(t, "main", "bar.go", `bar.go:5:1: compileExpr failed: unknown - *ast.BadExpr`, `
+func Foo(){}
+func _() {
+	Foo(
+}
+`)
+	codeErrorTestAst(t, "main", "bar.go", `bar.go:3:2: compileExprLHS failed: unknown - *ast.StructType`, `
+func _() {
+	struct() = nil
+}
+`)
+}

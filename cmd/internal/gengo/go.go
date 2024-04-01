@@ -71,7 +71,7 @@ func runCmd(cmd *base.Command, args []string) {
 		cl.SetDisableRecover(true)
 	}
 
-	conf, err := gop.NewDefaultConf(".", false, true)
+	conf, err := gop.NewDefaultConf(".", 0)
 	if err != nil {
 		log.Panicln("gop.NewDefaultConf:", err)
 	}

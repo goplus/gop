@@ -114,6 +114,7 @@ func isNotatedErr(err error, pkg *ast.Package, fset *token.FileSet) (notatedErr 
 
 // -----------------------------------------------------------------------------
 
+// Config represents a configuration for loading Go+ packages.
 type Config struct {
 	Gop      *env.Gop
 	Fset     *token.FileSet
@@ -133,8 +134,18 @@ type Config struct {
 	DontUpdateGoMod    bool
 }
 
+// ConfFlags represents configuration flags.
+type ConfFlags int
+
+const (
+	ConfFlagIgnoreNotatedError ConfFlags = 1 << iota
+	ConfFlagDontUpdateGoMod
+	ConfFlagNoTestFiles
+	ConfFlagNoCacheFile
+)
+
 // NewDefaultConf creates a dfault configuration for common cases.
-func NewDefaultConf(dir string, noTestFile bool, useCacheFile bool) (conf *Config, err error) {
+func NewDefaultConf(dir string, flags ConfFlags) (conf *Config, err error) {
 	mod, err := LoadMod(dir)
 	if err != nil {
 		return
@@ -142,21 +153,29 @@ func NewDefaultConf(dir string, noTestFile bool, useCacheFile bool) (conf *Confi
 	gop := gopenv.Get()
 	fset := token.NewFileSet()
 	imp := NewImporter(mod, gop, fset)
-	conf = &Config{Gop: gop, Fset: fset, Mod: mod, Importer: imp}
-	if useCacheFile {
+	conf = &Config{
+		Gop: gop, Fset: fset, Mod: mod, Importer: imp,
+		IgnoreNotatedError: flags&ConfFlagIgnoreNotatedError != 0,
+		DontUpdateGoMod:    flags&ConfFlagDontUpdateGoMod != 0,
+	}
+	if flags&ConfFlagNoCacheFile == 0 {
 		conf.CacheFile = imp.CacheFile()
 		imp.Cache().Load(conf.CacheFile)
 	}
-	if noTestFile {
+	if flags&ConfFlagNoTestFiles != 0 {
 		conf.Filter = FilterNoTestFiles
 	}
 	return
 }
 
 // UpdateCache updates the cache.
-func (p *Config) UpdateCache() {
-	if p.CacheFile != "" {
-		p.Importer.Cache().Save(p.CacheFile)
+func (conf *Config) UpdateCache(verbose ...bool) {
+	if conf.CacheFile != "" {
+		c := conf.Importer.Cache()
+		c.Save(conf.CacheFile)
+		if verbose != nil && verbose[0] {
+			fmt.Println("Times of calling go list:", c.ListTimes())
+		}
 	}
 }
 

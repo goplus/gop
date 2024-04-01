@@ -71,7 +71,7 @@ func runCmd(cmd *base.Command, args []string) {
 		cl.SetDisableRecover(true)
 	}
 
-	conf, err := gop.NewDefaultConf(".", true, true)
+	conf, err := gop.NewDefaultConf(".", gop.ConfFlagNoTestFiles)
 	if err != nil {
 		log.Panicln("gop.NewDefaultConf:", err)
 	}
@@ -85,15 +85,16 @@ func runCmd(cmd *base.Command, args []string) {
 }
 
 func install(proj gopprojs.Proj, conf *gop.Config, install *gocmd.InstallConfig) {
+	const flags = gop.GenFlagPrompt
 	var obj string
 	var err error
 	switch v := proj.(type) {
 	case *gopprojs.DirProj:
 		obj = v.Dir
-		err = gop.InstallDir(obj, conf, install)
+		err = gop.InstallDir(obj, conf, install, flags)
 	case *gopprojs.PkgPathProj:
 		obj = v.Path
-		err = gop.InstallPkgPath("", v.Path, conf, install)
+		err = gop.InstallPkgPath("", v.Path, conf, install, flags)
 	case *gopprojs.FilesProj:
 		err = gop.InstallFiles(v.Files, conf, install)
 	default:

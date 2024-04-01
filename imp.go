@@ -74,7 +74,7 @@ func NewImporter(mod *gopmod.Module, gop *env.Gop, fset *token.FileSet) *Importe
 // CacheFile returns file path of the cache.
 func (p *Importer) CacheFile() string {
 	cacheDir, _ := os.UserCacheDir()
-	cacheDir += "/gop/cache/"
+	cacheDir += "/gop-build/"
 	os.MkdirAll(cacheDir, 0755)
 
 	fname := ""
@@ -213,7 +213,7 @@ func dirHash(mod *gopmod.Module, gop *env.Gop, dir string, self bool) string {
 	}
 	if fis, err := os.ReadDir(dir); err == nil {
 		for _, fi := range fis {
-			if !fi.IsDir() {
+			if fi.IsDir() {
 				continue
 			}
 			fname := fi.Name()
