@@ -18,6 +18,7 @@ package cl
 
 import (
 	"bytes"
+	"errors"
 	goast "go/ast"
 	gotoken "go/token"
 	"go/types"
@@ -566,12 +567,14 @@ func identVal(ctx *blockCtx, x *ast.Ident, flags int, v types.Object, alias bool
 }
 
 type fnType struct {
-	next     *fnType
-	params   *types.Tuple
-	base     int
-	size     int
-	variadic bool
-	typetype bool
+	next      *fnType
+	params    *types.Tuple
+	sig       *types.Signature
+	base      int
+	size      int
+	variadic  bool
+	typetype  bool
+	typeparam bool
 }
 
 func (p *fnType) arg(i int, ellipsis bool) types.Type {
@@ -590,7 +593,8 @@ func (p *fnType) arg(i int, ellipsis bool) types.Type {
 
 func (p *fnType) init(base int, t *types.Signature) {
 	p.base = base
-	p.params, p.variadic = t.Params(), t.Variadic()
+	p.sig = t
+	p.params, p.variadic, p.typeparam = t.Params(), t.Variadic(), t.TypeParams() != nil
 	p.size = p.params.Len()
 	if p.variadic {
 		p.size--
@@ -669,7 +673,6 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 	var err error
 	var stk = ctx.cb.InternalStack()
 	var base = stk.Len()
-	var fnt = stk.Get(-1).Type
 	var flags gogen.InstrFlags
 	var ellipsis = v.Ellipsis != gotoken.NoPos
 	if ellipsis {
@@ -678,10 +681,12 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 	if (inFlags & clCallWithTwoValue) != 0 {
 		flags |= gogen.InstrFlagTwoValue
 	}
+	pfn := stk.Get(-1)
+	fnt := pfn.Type
 	fn := &fnType{}
 	fn.load(fnt)
 	for fn != nil {
-		if err = compileCallArgs(fn, ctx, v, ellipsis, flags); err == nil {
+		if err = compileCallArgs(ctx, pfn, fn, v, ellipsis, flags); err == nil {
 			if rec := ctx.recorder(); rec != nil {
 				rec.recordCallExpr(ctx, v, fnt)
 			}
@@ -736,10 +741,16 @@ func fnCall(ctx *blockCtx, v *ast.CallExpr, flags gogen.InstrFlags, extra int) e
 	return ctx.cb.CallWithEx(len(v.Args)+extra, flags, v)
 }
 
-func compileCallArgs(fn *fnType, ctx *blockCtx, v *ast.CallExpr, ellipsis bool, flags gogen.InstrFlags) (err error) {
+func compileCallArgs(ctx *blockCtx, pfn *gogen.Element, fn *fnType, v *ast.CallExpr, ellipsis bool, flags gogen.InstrFlags) (err error) {
+	var needInferFunc bool
 	for i, arg := range v.Args {
 		switch expr := arg.(type) {
 		case *ast.LambdaExpr:
+			if fn.typeparam {
+				needInferFunc = true
+				compileIdent(ctx, ast.NewIdent("nil"), 0)
+				continue
+			}
 			sig, e := checkLambdaFuncType(ctx, expr, fn.arg(i, ellipsis), clLambaArgument, v.Fun)
 			if e != nil {
 				return e
@@ -748,6 +759,11 @@ func compileCallArgs(fn *fnType, ctx *blockCtx, v *ast.CallExpr, ellipsis bool, 
 				return
 			}
 		case *ast.LambdaExpr2:
+			if fn.typeparam {
+				needInferFunc = true
+				compileIdent(ctx, ast.NewIdent("nil"), 0)
+				continue
+			}
 			sig, e := checkLambdaFuncType(ctx, expr, fn.arg(i, ellipsis), clLambaArgument, v.Fun)
 			if e != nil {
 				return e
@@ -784,8 +800,23 @@ func compileCallArgs(fn *fnType, ctx *blockCtx, v *ast.CallExpr, ellipsis bool, 
 			compileExpr(ctx, arg)
 		}
 	}
+	if needInferFunc {
+		typ, err := gogen.InferFunc(ctx.pkg, pfn, fn.sig, nil, ctx.cb.InternalStack().GetArgs(len(v.Args)), flags)
+		if err != nil {
+			return err
+		}
+		next := &fnType{}
+		next.init(fn.base, typ.(*types.Signature))
+		next.next = fn.next
+		fn.next = next
+		return errCallNext
+	}
 	return ctx.cb.CallWithEx(len(v.Args), flags, v)
 }
+
+var (
+	errCallNext = errors.New("call next")
+)
 
 type clLambaFlag string
 
