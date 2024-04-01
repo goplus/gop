@@ -80,10 +80,12 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 
 	noChdir := *flagNoChdir
-	conf, err := gop.NewDefaultConf(".", true)
+	conf, err := gop.NewDefaultConf(".", gop.ConfFlagNoTestFiles)
 	if err != nil {
 		log.Panicln("gop.NewDefaultConf:", err)
 	}
+	defer conf.UpdateCache()
+
 	if !conf.Mod.HasModfile() { // if no go.mod, check GopDeps
 		conf.GopDeps = new(int)
 	}
@@ -93,15 +95,16 @@ func runCmd(cmd *base.Command, args []string) {
 }
 
 func run(proj gopprojs.Proj, args []string, chDir bool, conf *gop.Config, run *gocmd.RunConfig) {
+	const flags = 0
 	var obj string
 	var err error
 	switch v := proj.(type) {
 	case *gopprojs.DirProj:
 		obj = v.Dir
-		err = gop.RunDir(obj, args, conf, run)
+		err = gop.RunDir(obj, args, conf, run, flags)
 	case *gopprojs.PkgPathProj:
 		obj = v.Path
-		err = gop.RunPkgPath(v.Path, args, chDir, conf, run)
+		err = gop.RunPkgPath(v.Path, args, chDir, conf, run, flags)
 	case *gopprojs.FilesProj:
 		err = gop.RunFiles("", v.Files, args, conf, run)
 	default:

@@ -69,10 +69,12 @@ func runCmd(cmd *base.Command, args []string) {
 		cl.SetDisableRecover(true)
 	}
 
-	conf, err := gop.NewDefaultConf(".", false)
+	conf, err := gop.NewDefaultConf(".", 0)
 	if err != nil {
 		log.Panicln("gop.NewDefaultConf:", err)
 	}
+	defer conf.UpdateCache()
+
 	confCmd := &gocmd.Config{Gop: conf.Gop}
 	confCmd.Flags = pass.Args
 	for _, proj := range projs {
@@ -81,15 +83,16 @@ func runCmd(cmd *base.Command, args []string) {
 }
 
 func test(proj gopprojs.Proj, conf *gop.Config, test *gocmd.TestConfig) {
+	const flags = gop.GenFlagPrompt
 	var obj string
 	var err error
 	switch v := proj.(type) {
 	case *gopprojs.DirProj:
 		obj = v.Dir
-		err = gop.TestDir(obj, conf, test)
+		err = gop.TestDir(obj, conf, test, flags)
 	case *gopprojs.PkgPathProj:
 		obj = v.Path
-		err = gop.TestPkgPath("", v.Path, conf, test)
+		err = gop.TestPkgPath("", v.Path, conf, test, flags)
 	case *gopprojs.FilesProj:
 		err = gop.TestFiles(v.Files, conf, test)
 	default:

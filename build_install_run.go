@@ -24,11 +24,18 @@ import (
 	"github.com/qiniu/x/errors"
 )
 
+func genFlags(flags []GenFlags) GenFlags {
+	if flags != nil {
+		return flags[0]
+	}
+	return 0
+}
+
 // -----------------------------------------------------------------------------
 
 // InstallDir installs a Go+ package directory.
-func InstallDir(dir string, conf *Config, install *gocmd.InstallConfig) (err error) {
-	_, _, err = GenGo(dir, conf, false)
+func InstallDir(dir string, conf *Config, install *gocmd.InstallConfig, flags ...GenFlags) (err error) {
+	_, _, err = GenGoEx(dir, conf, false, genFlags(flags))
 	if err != nil {
 		return errors.NewWith(err, `GenGo(dir, conf, false)`, -2, "gop.GenGo", dir, conf, false)
 	}
@@ -36,8 +43,8 @@ func InstallDir(dir string, conf *Config, install *gocmd.InstallConfig) (err err
 }
 
 // InstallPkgPath installs a Go+ package.
-func InstallPkgPath(workDir, pkgPath string, conf *Config, install *gocmd.InstallConfig) (err error) {
-	localDir, recursively, err := GenGoPkgPath(workDir, pkgPath, conf, true)
+func InstallPkgPath(workDir, pkgPath string, conf *Config, install *gocmd.InstallConfig, flags ...GenFlags) (err error) {
+	localDir, recursively, err := GenGoPkgPathEx(workDir, pkgPath, conf, true, genFlags(flags))
 	if err != nil {
 		return errors.NewWith(err, `GenGoPkgPath(workDir, pkgPath, conf, true)`, -2, "gop.GenGoPkgPath", workDir, pkgPath, conf, true)
 	}
@@ -77,8 +84,8 @@ func chdir(dir string) string {
 // -----------------------------------------------------------------------------
 
 // BuildDir builds a Go+ package directory.
-func BuildDir(dir string, conf *Config, build *gocmd.BuildConfig) (err error) {
-	_, _, err = GenGo(dir, conf, false)
+func BuildDir(dir string, conf *Config, build *gocmd.BuildConfig, flags ...GenFlags) (err error) {
+	_, _, err = GenGoEx(dir, conf, false, genFlags(flags))
 	if err != nil {
 		return errors.NewWith(err, `GenGo(dir, conf, false)`, -2, "gop.GenGo", dir, conf, false)
 	}
@@ -86,8 +93,8 @@ func BuildDir(dir string, conf *Config, build *gocmd.BuildConfig) (err error) {
 }
 
 // BuildPkgPath builds a Go+ package.
-func BuildPkgPath(workDir, pkgPath string, conf *Config, build *gocmd.BuildConfig) (err error) {
-	localDir, recursively, err := GenGoPkgPath(workDir, pkgPath, conf, false)
+func BuildPkgPath(workDir, pkgPath string, conf *Config, build *gocmd.BuildConfig, flags ...GenFlags) (err error) {
+	localDir, recursively, err := GenGoPkgPathEx(workDir, pkgPath, conf, false, genFlags(flags))
 	if err != nil {
 		return errors.NewWith(err, `GenGoPkgPath(workDir, pkgPath, conf, false)`, -2, "gop.GenGoPkgPath", workDir, pkgPath, conf, false)
 	}
@@ -131,8 +138,8 @@ func getBuildDir(conf *Config) string {
 }
 
 // RunDir runs an application from a Go+ package directory.
-func RunDir(dir string, args []string, conf *Config, run *gocmd.RunConfig) (err error) {
-	_, _, err = GenGo(dir, conf, false)
+func RunDir(dir string, args []string, conf *Config, run *gocmd.RunConfig, flags ...GenFlags) (err error) {
+	_, _, err = GenGoEx(dir, conf, false, genFlags(flags))
 	if err != nil {
 		return errors.NewWith(err, `GenGo(dir, conf, false)`, -2, "gop.GenGo", dir, conf, false)
 	}
@@ -140,8 +147,8 @@ func RunDir(dir string, args []string, conf *Config, run *gocmd.RunConfig) (err 
 }
 
 // RunPkgPath runs an application from a Go+ package.
-func RunPkgPath(pkgPath string, args []string, chDir bool, conf *Config, run *gocmd.RunConfig) (err error) {
-	localDir, recursively, err := GenGoPkgPath("", pkgPath, conf, true)
+func RunPkgPath(pkgPath string, args []string, chDir bool, conf *Config, run *gocmd.RunConfig, flags ...GenFlags) (err error) {
+	localDir, recursively, err := GenGoPkgPathEx("", pkgPath, conf, true, genFlags(flags))
 	if err != nil {
 		return errors.NewWith(err, `GenGoPkgPath("", pkgPath, conf, true)`, -2, "gop.GenGoPkgPath", "", pkgPath, conf, true)
 	}
@@ -168,8 +175,8 @@ func RunFiles(autogen string, files []string, args []string, conf *Config, run *
 // -----------------------------------------------------------------------------
 
 // TestDir tests a Go+ package directory.
-func TestDir(dir string, conf *Config, test *gocmd.TestConfig) (err error) {
-	_, _, err = GenGo(dir, conf, true)
+func TestDir(dir string, conf *Config, test *gocmd.TestConfig, flags ...GenFlags) (err error) {
+	_, _, err = GenGoEx(dir, conf, true, genFlags(flags))
 	if err != nil {
 		return errors.NewWith(err, `GenGo(dir, conf, true)`, -2, "gop.GenGo", dir, conf, true)
 	}
@@ -177,8 +184,8 @@ func TestDir(dir string, conf *Config, test *gocmd.TestConfig) (err error) {
 }
 
 // TestPkgPath tests a Go+ package.
-func TestPkgPath(workDir, pkgPath string, conf *Config, test *gocmd.TestConfig) (err error) {
-	localDir, recursively, err := GenGoPkgPath(workDir, pkgPath, conf, false)
+func TestPkgPath(workDir, pkgPath string, conf *Config, test *gocmd.TestConfig, flags ...GenFlags) (err error) {
+	localDir, recursively, err := GenGoPkgPathEx(workDir, pkgPath, conf, false, genFlags(flags))
 	if err != nil {
 		return errors.NewWith(err, `GenGoPkgPath(workDir, pkgPath, conf, false)`, -2, "gop.GenGoPkgPath", workDir, pkgPath, conf, false)
 	}
