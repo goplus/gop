@@ -1507,6 +1507,15 @@ func main() {
 `)
 }
 
+func _TestRangeExpr10(t *testing.T) {
+	gopClTest(t, `
+for :10 {
+	echo "Hi"
+}
+`, `
+`)
+}
+
 func Test_RangeExpressionIf_Issue1243(t *testing.T) {
 	gopClTest(t, `
 for i <- :10, i%3 == 0 {
