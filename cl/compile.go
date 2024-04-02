@@ -342,7 +342,9 @@ type pkgCtx struct {
 	fset     *token.FileSet
 	cpkgs    *cpackages.Importer
 	syms     map[string]loader
-	lbinames []any // names that should load before initGopPkg (can be string/func or *ast.Ident/type)
+	overfuns map[string][]*ast.Ident // map ast.OverloadFuncDecl funcs
+	overtyps map[string][]*ast.Ident // map ast.OverloadFuncDecl recv
+	lbinames []any                   // names that should load before initGopPkg (can be string/func or *ast.Ident/type)
 	inits    []func()
 	tylds    []*typeLoader
 	errs     errors.List
@@ -493,6 +495,8 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 		projs:      make(map[string]*gmxProject),
 		classes:    make(map[*ast.File]*gmxClass),
 		syms:       make(map[string]loader),
+		overfuns:   make(map[string][]*ast.Ident),
+		overtyps:   make(map[string][]*ast.Ident),
 		generics:   make(map[string]bool),
 	}
 	confGox := &gogen.Config{
@@ -1002,7 +1006,13 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 								}
 								decl.InitType(ctx.pkg, toType(ctx, t.Type))
 								if rec := ctx.recorder(); rec != nil {
-									rec.Def(tName, decl.Type().Obj())
+									obj := decl.Type().Obj()
+									rec.Def(tName, obj)
+									if ids, ok := ctx.overtyps[tName.Name]; ok {
+										for _, id := range ids {
+											ctx.rec.Use(id, obj)
+										}
+									}
 								}
 							}
 						}
@@ -1068,6 +1078,9 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 					log.Panicln("TODO - cl.preloadFile OverloadFuncDecl: invalid recv")
 				}
 				recv = otyp
+				if ctx.rec != nil {
+					ctx.overtyps[recv.Name] = append(ctx.overtyps[recv.Name], recv)
+				}
 			}
 			onames := make([]string, 0, 4)
 			exov := false
@@ -1078,12 +1091,20 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 					checkOverloadFunc(d)
 					onames = append(onames, expr.Name)
 					ctx.lbinames = append(ctx.lbinames, expr.Name)
+					if ctx.rec != nil {
+						ctx.overfuns[expr.Name] = append(ctx.overfuns[expr.Name], expr)
+					}
 					exov = true
 				case *ast.SelectorExpr:
 					checkOverloadMethod(d)
-					checkOverloadMethodRecvType(recv, expr.X)
+					xrecv := checkOverloadMethodRecvType(recv, expr.X)
 					onames = append(onames, "."+expr.Sel.Name)
 					ctx.lbinames = append(ctx.lbinames, recv)
+					if ctx.rec != nil {
+						id := recv.Name + "." + expr.Sel.Name
+						ctx.overfuns[id] = append(ctx.overfuns[id], expr.Sel)
+						ctx.overtyps[recv.Name] = append(ctx.overtyps[recv.Name], xrecv)
+					}
 					exov = true
 				case *ast.FuncLit:
 					checkOverloadFunc(d)
@@ -1134,12 +1155,13 @@ func checkOverloadMethod(d *ast.OverloadFuncDecl) {
 	}
 }
 
-func checkOverloadMethodRecvType(ot *ast.Ident, recv ast.Expr) {
+func checkOverloadMethodRecvType(ot *ast.Ident, recv ast.Expr) *ast.Ident {
 	rtyp, _ := getRecvType(recv)
 	rt, ok := rtyp.(*ast.Ident)
 	if !ok || ot.Name != rt.Name {
 		log.Panicln("TODO - checkOverloadMethodRecvType:", recv)
 	}
+	return rt
 }
 
 const (
@@ -1237,6 +1259,18 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) {
 		rec.Def(d.Name, fn.Func)
 		if recv == nil && d.Name.Name != "_" {
 			ctx.fileScope.Insert(fn.Func)
+		}
+		// check ast.OverloadFuncDecl funcs
+		id := d.Name.Name
+		if d.Recv != nil {
+			if name, ok := getRecvTypeName(ctx.pkgCtx, d.Recv, false); ok {
+				id = name + "." + id
+			}
+		}
+		if ids, ok := ctx.overfuns[id]; ok {
+			for _, id := range ids {
+				rec.Use(id, fn.Func)
+			}
 		}
 	}
 	if genBody {

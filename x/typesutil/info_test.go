@@ -1985,3 +1985,137 @@ func (p *N) Test__1(n int) {
 		t.Fatal("check TyOverloadMethod failed")
 	}
 }
+
+func TestGopOverloadUses(t *testing.T) {
+	testGopInfo(t, `
+func MulInt(a, b int) int {
+	return a * b
+}
+
+func MulFloat(a, b float64) float64 {
+	return a * b
+}
+
+func Mul = (
+	MulInt
+	MulFloat
+)
+
+Mul 100,200
+`, ``, `== types ==
+000:  0: 0 | "MulInt,MulFloat"   *ast.BasicLit                  | value   : untyped string = "MulInt,MulFloat" | constant
+001:  2:18 | int                 *ast.Ident                     | type    : int | type
+002:  2:23 | int                 *ast.Ident                     | type    : int | type
+003:  3: 9 | a                   *ast.Ident                     | var     : int | variable
+004:  3: 9 | a * b               *ast.BinaryExpr                | value   : int | value
+005:  3:13 | b                   *ast.Ident                     | var     : int | variable
+006:  6:20 | float64             *ast.Ident                     | type    : float64 | type
+007:  6:29 | float64             *ast.Ident                     | type    : float64 | type
+008:  7: 9 | a                   *ast.Ident                     | var     : float64 | variable
+009:  7: 9 | a * b               *ast.BinaryExpr                | value   : float64 | value
+010:  7:13 | b                   *ast.Ident                     | var     : float64 | variable
+011: 15: 1 | Mul                 *ast.Ident                     | value   : func(a int, b int) int | value
+012: 15: 1 | Mul 100, 200        *ast.CallExpr                  | value   : int | value
+013: 15: 5 | 100                 *ast.BasicLit                  | value   : untyped int = 100 | constant
+014: 15: 9 | 200                 *ast.BasicLit                  | value   : untyped int = 200 | constant
+== defs ==
+000:  0: 0 | Gopo_Mul            | const main.Gopo_Mul untyped string
+001:  2: 6 | MulInt              | func main.MulInt(a int, b int) int
+002:  2:13 | a                   | var a int
+003:  2:16 | b                   | var b int
+004:  6: 6 | MulFloat            | func main.MulFloat(a float64, b float64) float64
+005:  6:15 | a                   | var a float64
+006:  6:18 | b                   | var b float64
+007: 15: 1 | main                | func main.main()
+== uses ==
+000:  2:18 | int                 | type int
+001:  2:23 | int                 | type int
+002:  3: 9 | a                   | var a int
+003:  3:13 | b                   | var b int
+004:  6:20 | float64             | type float64
+005:  6:29 | float64             | type float64
+006:  7: 9 | a                   | var a float64
+007:  7:13 | b                   | var b float64
+008: 11: 2 | MulInt              | func main.MulInt(a int, b int) int
+009: 12: 2 | MulFloat            | func main.MulFloat(a float64, b float64) float64
+010: 15: 1 | Mul                 | func main.MulInt(a int, b int) int`)
+
+	testGopInfo(t, `
+type foo struct {
+}
+
+func (a *foo) mulInt(b int) *foo {
+	return a
+}
+
+func (a *foo) mulFoo(b *foo) *foo {
+	return a
+}
+
+func (foo).mul = (
+	(foo).mulInt
+	(foo).mulFoo
+)
+
+var a, b *foo
+var c = a.mul(100)
+var d = a.mul(c)
+`, ``, `== types ==
+000:  0: 0 | ".mulInt,.mulFoo"   *ast.BasicLit                  | value   : untyped string = ".mulInt,.mulFoo" | constant
+001:  2:10 | struct {
+}          *ast.StructType                | type    : struct{} | type
+002:  5:10 | foo                 *ast.Ident                     | type    : main.foo | type
+003:  5:24 | int                 *ast.Ident                     | type    : int | type
+004:  5:29 | *foo                *ast.StarExpr                  | type    : *main.foo | type
+005:  5:30 | foo                 *ast.Ident                     | type    : main.foo | type
+006:  6: 9 | a                   *ast.Ident                     | var     : *main.foo | variable
+007:  9:10 | foo                 *ast.Ident                     | type    : main.foo | type
+008:  9:24 | *foo                *ast.StarExpr                  | type    : *main.foo | type
+009:  9:25 | foo                 *ast.Ident                     | type    : main.foo | type
+010:  9:30 | *foo                *ast.StarExpr                  | type    : *main.foo | type
+011:  9:31 | foo                 *ast.Ident                     | type    : main.foo | type
+012: 10: 9 | a                   *ast.Ident                     | var     : *main.foo | variable
+013: 18:10 | *foo                *ast.StarExpr                  | type    : *main.foo | type
+014: 18:11 | foo                 *ast.Ident                     | type    : main.foo | type
+015: 19: 9 | a                   *ast.Ident                     | var     : *main.foo | variable
+016: 19: 9 | a.mul               *ast.SelectorExpr              | value   : func(b int) *main.foo | value
+017: 19: 9 | a.mul(100)          *ast.CallExpr                  | value   : *main.foo | value
+018: 19:15 | 100                 *ast.BasicLit                  | value   : untyped int = 100 | constant
+019: 20: 9 | a                   *ast.Ident                     | var     : *main.foo | variable
+020: 20: 9 | a.mul               *ast.SelectorExpr              | value   : func(b *main.foo) *main.foo | value
+021: 20: 9 | a.mul(c)            *ast.CallExpr                  | value   : *main.foo | value
+022: 20:15 | c                   *ast.Ident                     | var     : *main.foo | variable
+== defs ==
+000:  0: 0 | Gopo_foo_mul        | const main.Gopo_foo_mul untyped string
+001:  2: 6 | foo                 | type main.foo struct{}
+002:  5: 7 | a                   | var a *main.foo
+003:  5:15 | mulInt              | func (*main.foo).mulInt(b int) *main.foo
+004:  5:22 | b                   | var b int
+005:  9: 7 | a                   | var a *main.foo
+006:  9:15 | mulFoo              | func (*main.foo).mulFoo(b *main.foo) *main.foo
+007:  9:22 | b                   | var b *main.foo
+008: 18: 5 | a                   | var main.a *main.foo
+009: 18: 8 | b                   | var main.b *main.foo
+010: 19: 5 | c                   | var main.c *main.foo
+011: 20: 5 | d                   | var main.d *main.foo
+== uses ==
+000:  5:10 | foo                 | type main.foo struct{}
+001:  5:24 | int                 | type int
+002:  5:30 | foo                 | type main.foo struct{}
+003:  6: 9 | a                   | var a *main.foo
+004:  9:10 | foo                 | type main.foo struct{}
+005:  9:25 | foo                 | type main.foo struct{}
+006:  9:31 | foo                 | type main.foo struct{}
+007: 10: 9 | a                   | var a *main.foo
+008: 13: 7 | foo                 | type main.foo struct{}
+009: 14: 3 | foo                 | type main.foo struct{}
+010: 14: 8 | mulInt              | func (*main.foo).mulInt(b int) *main.foo
+011: 15: 3 | foo                 | type main.foo struct{}
+012: 15: 8 | mulFoo              | func (*main.foo).mulFoo(b *main.foo) *main.foo
+013: 18:11 | foo                 | type main.foo struct{}
+014: 19: 9 | a                   | var main.a *main.foo
+015: 19:11 | mul                 | func (*main.foo).mulInt(b int) *main.foo
+016: 20: 9 | a                   | var main.a *main.foo
+017: 20:11 | mul                 | func (*main.foo).mulFoo(b *main.foo) *main.foo
+018: 20:15 | c                   | var main.c *main.foo`)
+}
