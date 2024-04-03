@@ -90,7 +90,6 @@ func genGopDefenderExcludePSFile(psFile string) error {
 			"gsh",
 			"mod",
 			"sum",
-			"html",
 		}
 		for _, extStr := range exts {
 			if err := writeExcludeExtToFile(f, extStr); err != nil {
