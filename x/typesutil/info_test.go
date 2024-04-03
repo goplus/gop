@@ -1999,11 +1999,15 @@ func MulFloat(a, b float64) float64 {
 func Mul = (
 	MulInt
 	MulFloat
+	func(x, y, z int) int {
+		return x * y * z
+	}
 )
 
 Mul 100,200
+Mul 100,200,300
 `, ``, `== types ==
-000:  0: 0 | "MulInt,MulFloat"   *ast.BasicLit                  | value   : untyped string = "MulInt,MulFloat" | constant
+000:  0: 0 | "MulInt,MulFloat,"  *ast.BasicLit                  | value   : untyped string = "MulInt,MulFloat," | constant
 001:  2:18 | int                 *ast.Ident                     | type    : int | type
 002:  2:23 | int                 *ast.Ident                     | type    : int | type
 003:  3: 9 | a                   *ast.Ident                     | var     : int | variable
@@ -2014,10 +2018,22 @@ Mul 100,200
 008:  7: 9 | a                   *ast.Ident                     | var     : float64 | variable
 009:  7: 9 | a * b               *ast.BinaryExpr                | value   : float64 | value
 010:  7:13 | b                   *ast.Ident                     | var     : float64 | variable
-011: 15: 1 | Mul                 *ast.Ident                     | value   : func(a int, b int) int | value
-012: 15: 1 | Mul 100, 200        *ast.CallExpr                  | value   : int | value
-013: 15: 5 | 100                 *ast.BasicLit                  | value   : untyped int = 100 | constant
-014: 15: 9 | 200                 *ast.BasicLit                  | value   : untyped int = 200 | constant
+011: 13:15 | int                 *ast.Ident                     | type    : int | type
+012: 13:20 | int                 *ast.Ident                     | type    : int | type
+013: 14:10 | x                   *ast.Ident                     | var     : int | variable
+014: 14:10 | x * y               *ast.BinaryExpr                | value   : int | value
+015: 14:10 | x * y * z           *ast.BinaryExpr                | value   : int | value
+016: 14:14 | y                   *ast.Ident                     | var     : int | variable
+017: 14:18 | z                   *ast.Ident                     | var     : int | variable
+018: 18: 1 | Mul                 *ast.Ident                     | value   : func(a int, b int) int | value
+019: 18: 1 | Mul 100, 200        *ast.CallExpr                  | value   : int | value
+020: 18: 5 | 100                 *ast.BasicLit                  | value   : untyped int = 100 | constant
+021: 18: 9 | 200                 *ast.BasicLit                  | value   : untyped int = 200 | constant
+022: 19: 1 | Mul                 *ast.Ident                     | value   : func(x int, y int, z int) int | value
+023: 19: 1 | Mul 100, 200, 300   *ast.CallExpr                  | value   : int | value
+024: 19: 5 | 100                 *ast.BasicLit                  | value   : untyped int = 100 | constant
+025: 19: 9 | 200                 *ast.BasicLit                  | value   : untyped int = 200 | constant
+026: 19:13 | 300                 *ast.BasicLit                  | value   : untyped int = 300 | constant
 == defs ==
 000:  0: 0 | Gopo_Mul            | const main.Gopo_Mul untyped string
 001:  2: 6 | MulInt              | func main.MulInt(a int, b int) int
@@ -2026,7 +2042,11 @@ Mul 100,200
 004:  6: 6 | MulFloat            | func main.MulFloat(a float64, b float64) float64
 005:  6:15 | a                   | var a float64
 006:  6:18 | b                   | var b float64
-007: 15: 1 | main                | func main.main()
+007: 13: 2 | Mul__2              | func main.Mul__2(x int, y int, z int) int
+008: 13: 7 | x                   | var x int
+009: 13:10 | y                   | var y int
+010: 13:13 | z                   | var z int
+011: 18: 1 | main                | func main.main()
 == uses ==
 000:  2:18 | int                 | type int
 001:  2:23 | int                 | type int
@@ -2038,7 +2058,13 @@ Mul 100,200
 007:  7:13 | b                   | var b float64
 008: 11: 2 | MulInt              | func main.MulInt(a int, b int) int
 009: 12: 2 | MulFloat            | func main.MulFloat(a float64, b float64) float64
-010: 15: 1 | Mul                 | func main.MulInt(a int, b int) int`)
+010: 13:15 | int                 | type int
+011: 13:20 | int                 | type int
+012: 14:10 | x                   | var x int
+013: 14:14 | y                   | var y int
+014: 14:18 | z                   | var z int
+015: 18: 1 | Mul                 | func main.MulInt(a int, b int) int
+016: 19: 1 | Mul                 | func main.Mul__2(x int, y int, z int) int`)
 
 	testGopInfo(t, `
 type foo struct {

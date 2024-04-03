@@ -1113,7 +1113,7 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 					ctx.lbinames = append(ctx.lbinames, name1)
 					preloadFuncDecl(&ast.FuncDecl{
 						Doc:  d.Doc,
-						Name: &ast.Ident{NamePos: name.NamePos, Name: name1},
+						Name: &ast.Ident{NamePos: expr.Pos(), Name: name1},
 						Type: expr.Type,
 						Body: expr.Body,
 					})
