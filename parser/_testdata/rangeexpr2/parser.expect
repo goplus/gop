@@ -1,0 +1,24 @@
+package main
+
+file rangeexpr.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ForStmt:
+          Cond:
+            ast.RangeExpr:
+              Last:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 10
+          Body:
+            ast.BlockStmt:
