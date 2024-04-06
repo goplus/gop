@@ -2637,14 +2637,18 @@ const (
 // of a range clause (with mode == rangeOk). The returned statement is an
 // assignment with a right-hand side that is a single unary expression of
 // the form "range x". No guarantees are given for the left-hand side.
-func (p *parser) parseSimpleStmt(mode int, allowCmd, allowRangeExpr bool) (ast.Stmt, bool) {
+func (p *parser) parseSimpleStmt(mode int, allowCmd bool) (ast.Stmt, bool) {
+	return p.parseSimpleStmtEx(mode, allowCmd, false)
+}
+
+func (p *parser) parseSimpleStmtEx(mode int, allowCmd, allowRangeExpr bool) (ast.Stmt, bool) {
 	if p.trace {
 		defer un(trace(p, "SimpleStmt"))
 	}
 
 	if allowRangeExpr && p.tok == token.COLON { // rangeExpr
 		re, _ := p.parseRangeExpr(nil, false, false)
-		return &ast.ExprStmt{X: re}, false
+		return &ast.ExprStmt{X: re}, true
 	}
 	x := p.parseLHSList(allowCmd)
 
@@ -2687,7 +2691,7 @@ func (p *parser) parseSimpleStmt(mode int, allowCmd, allowRangeExpr bool) (ast.S
 	case token.COLON:
 		if allowRangeExpr {
 			re, _ := p.parseRangeExpr(x[0], false, false)
-			return &ast.ExprStmt{X: re}, false
+			return &ast.ExprStmt{X: re}, true
 		}
 		// labeled statement
 		colon := p.pos
@@ -2794,7 +2798,7 @@ func (p *parser) parseBranchStmt(tok token.Token) ast.Stmt {
 	pos := p.expect(tok)
 	if p.tok == token.LPAREN { // Go+: allow goto() as a function
 		p.unget(oldpos, token.IDENT, oldlit)
-		s, _ := p.parseSimpleStmt(basic, false, false)
+		s, _ := p.parseSimpleStmt(basic, false)
 		p.expectSemi()
 		return s
 	}
@@ -2846,7 +2850,7 @@ func (p *parser) parseIfHeader() (init ast.Stmt, cond ast.Expr) {
 			p.next()
 			p.error(p.pos, "var declaration not allowed in 'IF' initializer")
 		}
-		init, _ = p.parseSimpleStmt(basic, false, false)
+		init, _ = p.parseSimpleStmt(basic, false)
 	}
 
 	var condStmt ast.Stmt
@@ -2863,7 +2867,7 @@ func (p *parser) parseIfHeader() (init ast.Stmt, cond ast.Expr) {
 			p.expect(token.SEMICOLON)
 		}
 		if p.tok != token.LBRACE {
-			condStmt, _ = p.parseSimpleStmt(basic, false, false)
+			condStmt, _ = p.parseSimpleStmt(basic, false)
 		}
 	} else {
 		condStmt = init
@@ -2910,7 +2914,7 @@ func (p *parser) parseForPhraseCond() (init ast.Stmt, cond ast.Expr) {
 			p.next()
 			p.error(p.pos, "var declaration not allowed in 'IF' initializer")
 		}
-		init, _ = p.parseSimpleStmt(basic, false, false)
+		init, _ = p.parseSimpleStmt(basic, false)
 	}
 
 	var condStmt ast.Stmt
@@ -2927,7 +2931,7 @@ func (p *parser) parseForPhraseCond() (init ast.Stmt, cond ast.Expr) {
 			p.expect(token.SEMICOLON)
 		}
 		if !isForPhraseCondEnd(p.tok) {
-			condStmt, _ = p.parseSimpleStmt(basic, false, false)
+			condStmt, _ = p.parseSimpleStmt(basic, false)
 		}
 	} else {
 		condStmt = init
@@ -3061,7 +3065,7 @@ func (p *parser) parseSwitchStmt() ast.Stmt {
 		prevLev := p.exprLev
 		p.exprLev = -1
 		if p.tok != token.SEMICOLON {
-			s2, _ = p.parseSimpleStmt(basic, false, false)
+			s2, _ = p.parseSimpleStmt(basic, false)
 		}
 		if p.tok == token.SEMICOLON {
 			p.next()
@@ -3082,7 +3086,7 @@ func (p *parser) parseSwitchStmt() ast.Stmt {
 				// Having the extra nested but empty scope won't affect it.
 				p.openScope()
 				defer p.closeScope()
-				s2, _ = p.parseSimpleStmt(basic, false, false)
+				s2, _ = p.parseSimpleStmt(basic, false)
 			}
 		}
 		p.exprLev = prevLev
@@ -3266,10 +3270,10 @@ func (p *parser) parseForStmt() ast.Stmt {
 
 	var s1, s2, s3 ast.Stmt
 	var isRange bool
-	if p.tok != token.LBRACE { // {
+	if p.tok != token.LBRACE {
 		prevLev := p.exprLev
 		p.exprLev = -1
-		if p.tok != token.SEMICOLON { // ;
+		if p.tok != token.SEMICOLON {
 			if p.tok == token.RANGE {
 				// "for range x" (nil lhs in assignment)
 				pos := p.pos
@@ -3278,7 +3282,7 @@ func (p *parser) parseForStmt() ast.Stmt {
 				s2 = &ast.AssignStmt{Rhs: y}
 				isRange = true
 			} else {
-				s2, isRange = p.parseSimpleStmt(rangeOk, false, true)
+				s2, isRange = p.parseSimpleStmtEx(rangeOk, false, true)
 			}
 		}
 		if !isRange && p.tok == token.SEMICOLON {
@@ -3286,11 +3290,11 @@ func (p *parser) parseForStmt() ast.Stmt {
 			s1 = s2
 			s2 = nil
 			if p.tok != token.SEMICOLON {
-				s2, _ = p.parseSimpleStmt(basic, false, false)
+				s2, _ = p.parseSimpleStmt(basic, false)
 			}
 			p.expectSemi()
 			if p.tok != token.LBRACE {
-				s3, _ = p.parseSimpleStmt(basic, false, false)
+				s3, _ = p.parseSimpleStmt(basic, false)
 			}
 		}
 		p.exprLev = prevLev
@@ -3300,10 +3304,18 @@ func (p *parser) parseForStmt() ast.Stmt {
 	p.expectSemi()
 
 	if isRange {
-		if stmt, ok := s2.(*ast.ForPhraseStmt); ok {
+		switch stmt := s2.(type) {
+		case *ast.ForPhraseStmt:
 			stmt.For = pos
 			stmt.Body = body
 			return stmt
+		case *ast.ExprStmt:
+			return &ast.RangeStmt{
+				For:       pos,
+				X:         stmt.X,
+				Body:      body,
+				NoRangeOp: true,
+			}
 		}
 		as := s2.(*ast.AssignStmt)
 		// check lhs
@@ -3361,7 +3373,7 @@ func (p *parser) parseStmt(allowCmd bool) (s ast.Stmt) {
 		allowCmd = false
 		fallthrough
 	case token.IDENT, token.MAP: // operands
-		s, _ = p.parseSimpleStmt(labelOk, allowCmd, false)
+		s, _ = p.parseSimpleStmt(labelOk, allowCmd)
 		// because of the required look-ahead, labeled statements are
 		// parsed by parseSimpleStmt - don't expect a semicolon after
 		// them

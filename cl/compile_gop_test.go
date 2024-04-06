@@ -1507,12 +1507,20 @@ func main() {
 `)
 }
 
-func _TestRangeExpr10(t *testing.T) {
+func TestRangeExpr10(t *testing.T) {
 	gopClTest(t, `
 for :10 {
 	echo "Hi"
 }
-`, `
+`, `package main
+
+import "fmt"
+
+func main() {
+	for _gop_k := 0; _gop_k < 10; _gop_k += 1 {
+		fmt.Println("Hi")
+	}
+}
 `)
 }
 

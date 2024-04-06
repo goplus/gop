@@ -726,6 +726,7 @@ type (
 		Tok        token.Token // ILLEGAL if Key == nil, ASSIGN, DEFINE
 		X          Expr        // value to range over
 		Body       *BlockStmt
+		NoRangeOp  bool
 	}
 )
 

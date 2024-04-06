@@ -13,8 +13,9 @@ ast.FuncDecl:
   Body:
     ast.BlockStmt:
       List:
-        ast.ForStmt:
-          Cond:
+        ast.RangeStmt:
+          Tok: ILLEGAL
+          X:
             ast.RangeExpr:
               First:
                 ast.BasicLit:
