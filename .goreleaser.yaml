@@ -43,11 +43,7 @@ archives:
   - format: tar.gz
     # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
-      {{ .ProjectName }}_v{{.Version}}_
-      {{- title .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
-      {{- else }}{{ .Arch }}{{ end }}
+      {{ .ProjectName }}{{.Version}}.{{ .Os }}-{{ .Arch }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
     # use zip for windows archives
     format_overrides:
@@ -192,11 +188,7 @@ nfpms:
         dependencies:
           - "golang-bin >= 1.18.0"
     file_name_template: >-
-      {{ .ProjectName }}_v{{.Version}}_
-      {{- title .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
-      {{- else }}{{ .Arch }}{{ end }}
+      {{ .ProjectName }}{{.Version}}.{{ .Os }}-{{ .Arch }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
     bindir: /usr/lib/{{ .ProjectName }}
     contents:
@@ -286,11 +278,7 @@ snapcrafts:
     confinement: classic
     license: Apache-2.0
     name_template: >-
-      {{ .ProjectName }}_v{{.Version}}_
-      {{- title .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
-      {{- else }}{{ .Arch }}{{ end }}
+      {{ .ProjectName }}{{.Version}}.{{ .Os }}-{{ .Arch }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
     extra_files:
       # source folder
@@ -371,7 +359,7 @@ snapcrafts:
           GOPROOT: "$SNAP"
 
 checksum:
-  name_template: "{{ .ProjectName }}_v{{ .Version }}_checksums.txt"
+  name_template: "{{ .ProjectName }}{{ .Version }}.checksums.txt"
 
 release:
   prerelease: auto
