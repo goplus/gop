@@ -2461,7 +2461,7 @@ func (p *parser) parseBinaryExpr(lhs bool, prec1 int, allowTuple, allowCmd bool)
 	}
 }
 
-func (p *parser) parseRangeExpr(allowTuple, allowCmd bool) (x ast.Expr, isTuple bool) {
+func (p *parser) parseRangeExpr(first ast.Expr, allowTuple, allowCmd bool) (x ast.Expr, isTuple bool) {
 	if p.trace {
 		defer un(trace(p, "RangeExpr"))
 	}
@@ -2470,6 +2470,8 @@ func (p *parser) parseRangeExpr(allowTuple, allowCmd bool) (x ast.Expr, isTuple 
 		if isTuple || p.tok != token.COLON { // not RangeExpr
 			return
 		}
+	} else {
+		x = first
 	}
 	to := p.pos
 	p.next()
@@ -2499,7 +2501,7 @@ func (p *parser) parseLambdaExpr(allowTuple, allowCmd, allowRangeExpr bool) (x a
 	var first = p.pos
 	if p.tok != token.DRARROW {
 		if allowRangeExpr {
-			x, isTuple = p.parseRangeExpr(true, allowCmd)
+			x, isTuple = p.parseRangeExpr(nil, true, allowCmd)
 		} else {
 			x, isTuple = p.parseBinaryExpr(false, token.LowestPrec+1, true, allowCmd)
 		}
@@ -2641,8 +2643,8 @@ func (p *parser) parseSimpleStmt(mode int, allowCmd, allowRangeExpr bool) (ast.S
 	}
 
 	if allowRangeExpr && p.tok == token.COLON { // rangeExpr
-		x, _ := p.parseRangeExpr(false, false)
-		return &ast.ExprStmt{X: x}, false
+		re, _ := p.parseRangeExpr(nil, false, false)
+		return &ast.ExprStmt{X: re}, false
 	}
 	x := p.parseLHSList(allowCmd)
 
@@ -2683,6 +2685,10 @@ func (p *parser) parseSimpleStmt(mode int, allowCmd, allowRangeExpr bool) (ast.S
 
 	switch p.tok {
 	case token.COLON:
+		if allowRangeExpr {
+			re, _ := p.parseRangeExpr(x[0], false, false)
+			return &ast.ExprStmt{X: re}, false
+		}
 		// labeled statement
 		colon := p.pos
 		p.next()
