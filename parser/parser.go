@@ -2461,12 +2461,17 @@ func (p *parser) parseBinaryExpr(lhs bool, prec1 int, allowTuple, allowCmd bool)
 	}
 }
 
-func (p *parser) parseRangeExpr(allowTuple, allowCmd bool) (x ast.Expr, isTuple bool) {
+func (p *parser) parseRangeExpr(first ast.Expr, allowTuple, allowCmd bool) (x ast.Expr, isTuple bool) {
+	if p.trace {
+		defer un(trace(p, "RangeExpr"))
+	}
 	if p.tok != token.COLON {
 		x, isTuple = p.parseBinaryExpr(false, token.LowestPrec+1, allowTuple, allowCmd)
 		if isTuple || p.tok != token.COLON { // not RangeExpr
 			return
 		}
+	} else {
+		x = first
 	}
 	to := p.pos
 	p.next()
@@ -2496,7 +2501,7 @@ func (p *parser) parseLambdaExpr(allowTuple, allowCmd, allowRangeExpr bool) (x a
 	var first = p.pos
 	if p.tok != token.DRARROW {
 		if allowRangeExpr {
-			x, isTuple = p.parseRangeExpr(true, allowCmd)
+			x, isTuple = p.parseRangeExpr(nil, true, allowCmd)
 		} else {
 			x, isTuple = p.parseBinaryExpr(false, token.LowestPrec+1, true, allowCmd)
 		}
@@ -2633,10 +2638,18 @@ const (
 // assignment with a right-hand side that is a single unary expression of
 // the form "range x". No guarantees are given for the left-hand side.
 func (p *parser) parseSimpleStmt(mode int, allowCmd bool) (ast.Stmt, bool) {
+	return p.parseSimpleStmtEx(mode, allowCmd, false)
+}
+
+func (p *parser) parseSimpleStmtEx(mode int, allowCmd, allowRangeExpr bool) (ast.Stmt, bool) {
 	if p.trace {
 		defer un(trace(p, "SimpleStmt"))
 	}
 
+	if allowRangeExpr && p.tok == token.COLON { // rangeExpr
+		re, _ := p.parseRangeExpr(nil, false, false)
+		return &ast.ExprStmt{X: re}, true
+	}
 	x := p.parseLHSList(allowCmd)
 
 	switch p.tok {
@@ -2676,6 +2689,10 @@ func (p *parser) parseSimpleStmt(mode int, allowCmd bool) (ast.Stmt, bool) {
 
 	switch p.tok {
 	case token.COLON:
+		if allowRangeExpr {
+			re, _ := p.parseRangeExpr(x[0], false, false)
+			return &ast.ExprStmt{X: re}, true
+		}
 		// labeled statement
 		colon := p.pos
 		p.next()
@@ -3265,7 +3282,7 @@ func (p *parser) parseForStmt() ast.Stmt {
 				s2 = &ast.AssignStmt{Rhs: y}
 				isRange = true
 			} else {
-				s2, isRange = p.parseSimpleStmt(rangeOk, false)
+				s2, isRange = p.parseSimpleStmtEx(rangeOk, false, true)
 			}
 		}
 		if !isRange && p.tok == token.SEMICOLON {
@@ -3287,10 +3304,18 @@ func (p *parser) parseForStmt() ast.Stmt {
 	p.expectSemi()
 
 	if isRange {
-		if stmt, ok := s2.(*ast.ForPhraseStmt); ok {
+		switch stmt := s2.(type) {
+		case *ast.ForPhraseStmt:
 			stmt.For = pos
 			stmt.Body = body
 			return stmt
+		case *ast.ExprStmt:
+			return &ast.RangeStmt{
+				For:       pos,
+				X:         stmt.X,
+				Body:      body,
+				NoRangeOp: true,
+			}
 		}
 		as := s2.(*ast.AssignStmt)
 		// check lhs

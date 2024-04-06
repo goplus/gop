@@ -1516,7 +1516,9 @@ func (p *printer) stmt(stmt ast.Stmt, nextIsRBrace bool) {
 			}
 			p.print(blank, s.TokPos, s.Tok, blank)
 		}
-		p.print(token.RANGE, blank)
+		if !s.NoRangeOp {
+			p.print(token.RANGE, blank)
+		}
 		p.expr(stripParens(s.X))
 		p.print(blank)
 		p.block(s.Body, 1)
