@@ -21,7 +21,10 @@ jobs:
   Test:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-11]
+        os:
+        - ubuntu-latest
+        - windows-latest
+        - macos-latest
         go:
         - 1.18.x
         - 1.19.x
