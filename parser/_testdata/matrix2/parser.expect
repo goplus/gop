@@ -31,7 +31,7 @@ ast.FuncDecl:
                     ast.BasicLit:
                       Kind: INT
                       Value: 3
-                    ast.Ellipsis:
+                    ast.ElemEllipsis:
                       Elt:
                         ast.Ident:
                           Name: row

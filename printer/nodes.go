@@ -1127,6 +1127,10 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 			p.print(x.Name)
 		}
 
+	case *ast.ElemEllipsis:
+		p.expr(x.Elt)
+		p.print(token.ELLIPSIS)
+
 	default:
 		log.Fatalf("unreachable %T\n", x)
 	}
