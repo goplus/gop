@@ -12,7 +12,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    
+
     - name: Check goreleaser files
       run: |
         pip install --no-input pyyaml
@@ -28,7 +28,7 @@ jobs:
         echo Current tag: $tag_name
         git checkout $tag_name
         echo "TAG_NAME=${tag_name}" >> $GITHUB_ENV
-    
+
     - name: Check VERSION consistency
       run: |
         tag=$(git describe --tags --dirty)
@@ -44,7 +44,7 @@ jobs:
           echo "TAG: $tag"
           exit 1
         fi
-    
+
     - name: Check pre-release
       run: |
         version=$(cat VERSION)
@@ -57,7 +57,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: "1.21"
+        go-version: 1.21.x
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
@@ -77,8 +77,7 @@ jobs:
         version: latest
         args: release --clean -p 4
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+        GITHUB_TOKEN: ${{ github.token }}
         WINGET_PKGS_PRIVATE_KEY: ${{ secrets.WINGET_PKGS_PRIVATE_KEY }}
 
     - name: Upload deb/rpm to Fury.io
@@ -95,4 +94,3 @@ jobs:
         done
       env:
         FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
-        GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
