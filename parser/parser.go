@@ -899,6 +899,11 @@ func (p *parser) parseSliceOrMatrixLit(lbrack token.Pos, first ast.Expr) ast.Exp
 		case token.SEMICOLON:
 			mat = append(mat, elts)
 			elts = make([]ast.Expr, 0, len(elts))
+		case token.ELLIPSIS:
+			n := len(elts)
+			elts[n-1] = &ast.ElemEllipsis{Ellipsis: p.pos, Elt: elts[n-1]}
+			p.next()
+			continue
 		default:
 			goto done
 		}
@@ -2195,6 +2200,7 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 		p.error(v.opening, msgTupleNotSupported)
 		x = &ast.BadExpr{From: v.opening, To: v.closing}
 	case *ast.EnvExpr:
+	case *ast.ElemEllipsis:
 	default:
 		// all other nodes are not proper expressions
 		p.errorExpected(x.Pos(), "expression", 3)

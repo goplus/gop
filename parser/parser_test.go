@@ -20,6 +20,7 @@ import (
 	"io/fs"
 	"testing"
 
+	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
 	fsx "github.com/qiniu/x/http/fs"
 )
@@ -311,6 +312,17 @@ func TestParseFieldDecl(t *testing.T) {
 }
 `), 0)
 	p.parseFieldDecl(nil)
+}
+
+func TestCheckExpr(t *testing.T) {
+	var p parser
+	p.init(token.NewFileSet(), "/foo/bar.gop", []byte(``), 0)
+	p.checkExpr(&ast.Ellipsis{})
+	p.checkExpr(&ast.ElemEllipsis{})
+	p.checkExpr(&ast.StarExpr{})
+	p.checkExpr(&ast.IndexListExpr{})
+	p.checkExpr(&ast.FuncType{})
+	p.checkExpr(&ast.FuncLit{})
 }
 
 // -----------------------------------------------------------------------------

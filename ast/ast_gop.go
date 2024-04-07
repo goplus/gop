@@ -159,6 +159,26 @@ func (*MatrixLit) exprNode() {}
 
 // -----------------------------------------------------------------------------
 
+// A ElemEllipsis node represents a matrix row elements.
+type ElemEllipsis struct {
+	Elt      Expr      // ellipsis element
+	Ellipsis token.Pos // position of "..."
+}
+
+// Pos - position of first character belonging to the node.
+func (p *ElemEllipsis) Pos() token.Pos {
+	return p.Elt.Pos()
+}
+
+// End - position of first character immediately after the node.
+func (p *ElemEllipsis) End() token.Pos {
+	return p.Ellipsis + 3
+}
+
+func (*ElemEllipsis) exprNode() {}
+
+// -----------------------------------------------------------------------------
+
 // ErrWrapExpr represents `expr!`, `expr?` or `expr?: defaultValue`.
 type ErrWrapExpr struct {
 	X       Expr
