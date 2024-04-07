@@ -67,7 +67,7 @@ changelog:
 dockers:
   - goarch: "386"
     image_templates:
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-i386
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-386
     use: buildx
     build_flag_templates:
       - --platform=linux/386
@@ -76,7 +76,7 @@ dockers:
       - ./
   - goarch: amd64
     image_templates:
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-x86_64
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-amd64
     use: buildx
     build_flag_templates:
       - --platform=linux/amd64
@@ -85,7 +85,7 @@ dockers:
       - ./
   - goarch: arm64
     image_templates:
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-arm64
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-arm64
     use: buildx
     build_flag_templates:
       - --platform=linux/arm64
@@ -94,28 +94,28 @@ dockers:
       - ./
 
 docker_manifests:
-  - name_template: ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}
+  - name_template: ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}
     image_templates:
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-i386
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-x86_64
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-arm64
-  - name_template: ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Major }}.{{ .Minor }}
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-386
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-amd64
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-arm64
+  - name_template: ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Major }}.{{ .Minor }}
     image_templates:
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-i386
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-x86_64
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-arm64
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-386
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-amd64
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-arm64
     skip_push: auto
-  - name_template: ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Major }}
+  - name_template: ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Major }}
     image_templates:
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-i386
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-x86_64
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-arm64
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-386
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-amd64
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-arm64
     skip_push: auto
   - name_template: ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:latest
     image_templates:
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-i386
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-x86_64
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:v{{ .Version }}-arm64
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-386
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-amd64
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-arm64
     skip_push: auto
 
 winget:
