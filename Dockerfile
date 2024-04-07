@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=golang:1.22-bookworm
+ARG BASE_IMAGE=golang:1.21-bookworm
 
 FROM $BASE_IMAGE AS build
 ARG USE_GORELEASER_ARTIFACTS=0
