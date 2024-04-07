@@ -968,6 +968,24 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		p.print(indent, unindent, mode, x.Rbrace, token.RBRACE, mode)
 		p.level--
 
+	case *ast.MatrixLit:
+		p.level++
+		p.print(x.Lbrack, token.LBRACK, newline, indent)
+		var last = len(x.Elts) - 1
+		var incomplete bool
+		for i, elts := range x.Elts {
+			if i == last {
+				incomplete = x.Incomplete
+			}
+			p.exprList(elts[0].Pos(), elts, 1, 0, elts[len(elts)-1].End(), incomplete)
+			p.print(newline)
+		}
+		mode := noExtraLinebreak | noExtraBlank
+		// need the initial indent to print lone comments with
+		// the proper level of indentation
+		p.print(unindent, mode, x.Rbrack, token.RBRACK, mode)
+		p.level--
+
 	case *ast.Ellipsis:
 		p.print(token.ELLIPSIS)
 		if x.Elt != nil {
@@ -1034,7 +1052,7 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 			p.print(token.LBRACK)
 			p.expr0(x.Elt, depth+1)
 			p.print(blank)
-			p.listForPhrase(x.Lpos, x.Fors, depth, x.Rpos)
+			p.listForPhrase(x.Fors)
 			p.print(token.RBRACK)
 		default: // {...}
 			p.print(token.LBRACE)
@@ -1048,7 +1066,7 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 				}
 				p.print(blank)
 			}
-			p.listForPhrase(x.Lpos, x.Fors, depth, x.Rpos)
+			p.listForPhrase(x.Fors)
 			p.print(token.RBRACE)
 		}
 	case *ast.ErrWrapExpr:
@@ -1114,7 +1132,7 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 	}
 }
 
-func (p *printer) listForPhrase(prev0 token.Pos, list []*ast.ForPhrase, depth int, next0 token.Pos) {
+func (p *printer) listForPhrase(list []*ast.ForPhrase) {
 	for i, x := range list {
 		if i > 0 {
 			p.print(blank)
@@ -1906,6 +1924,7 @@ func (p *printer) funcBody(headerSize int, sep whiteSpace, b *ast.BlockStmt) {
 // by sep. Otherwise the block's opening "{" is printed on the current line, followed by
 // lines for the block's statements and its closing "}".
 func (p *printer) funcBodyUnnamed(headerSize int, sep whiteSpace, b *ast.BlockStmt) {
+	_, _ = headerSize, sep
 	if b == nil {
 		return
 	}

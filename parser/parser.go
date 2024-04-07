@@ -824,7 +824,7 @@ func (p *parser) parseArrayTypeOrSliceLit(state int, slice ast.Expr) (expr ast.E
 		case stateArrayTypeOrSliceLit:
 			switch p.tok {
 			case token.COMMA: // [a, b, c, d ...]
-				sliceLit := p.parseSliceLit(lbrack, len)
+				sliceLit := p.parseSliceOrMatrixLit(lbrack, len)
 				p.exprLev--
 				return sliceLit, resultSliceLit
 			case token.FOR: // [expr for k, v <- container if cond]
@@ -887,20 +887,35 @@ func (p *parser) parseArrayTypeOrSliceLit(state int, slice ast.Expr) (expr ast.E
 	return &ast.ArrayType{Lbrack: lbrack, Len: len, Elt: elt}, resultArrayType
 }
 
-func (p *parser) parseSliceLit(lbrack token.Pos, len ast.Expr) ast.Expr {
+// [first, ...]
+// [first, a2, a2, ...; b1, b2, b3, ...]
+func (p *parser) parseSliceOrMatrixLit(lbrack token.Pos, first ast.Expr) ast.Expr {
+	var mat [][]ast.Expr
 	elts := make([]ast.Expr, 1, 8)
-	elts[0] = len
-	for p.tok == token.COMMA {
+	elts[0] = first
+	for {
+		switch p.tok {
+		case token.COMMA:
+		case token.SEMICOLON:
+			mat = append(mat, elts)
+			elts = make([]ast.Expr, 0, len(elts))
+		default:
+			goto done
+		}
 		p.next()
 		if p.tok != token.RBRACK {
 			elt := p.parseRHS()
 			elts = append(elts, elt)
 		}
 	}
+done:
 	rbrack := p.expect(token.RBRACK)
 
-	if debugParseOutput {
-		log.Printf("ast.SliceLit{Elts: %v}\n", elts)
+	if mat != nil {
+		if len(elts) > 0 {
+			mat = append(mat, elts)
+		}
+		return &ast.MatrixLit{Lbrack: lbrack, Elts: mat, Rbrack: rbrack}
 	}
 	return &ast.SliceLit{Lbrack: lbrack, Elts: elts, Rbrack: rbrack}
 }
