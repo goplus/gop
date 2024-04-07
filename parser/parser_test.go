@@ -287,4 +287,30 @@ func TestErrStringLiteral(t *testing.T) {
 `, `/foo/bar.gop:1:5: string literal not terminated`, ``)
 }
 
+func TestErrFieldDecl(t *testing.T) {
+	testErrCode(t, `
+type T struct {
+	*(Foo)
+}
+`, `/foo/bar.gop:3:3: cannot parenthesize embedded type`, ``)
+	testErrCode(t, `
+type T struct {
+	(Foo)
+}
+`, `/foo/bar.gop:3:2: cannot parenthesize embedded type`, ``)
+	testErrCode(t, `
+type T struct {
+	(*Foo)
+}
+`, `/foo/bar.gop:3:2: cannot parenthesize embedded type`, ``)
+}
+
+func TestParseFieldDecl(t *testing.T) {
+	var p parser
+	p.init(token.NewFileSet(), "/foo/bar.gop", []byte(`type T struct {
+}
+`), 0)
+	p.parseFieldDecl(nil)
+}
+
 // -----------------------------------------------------------------------------
