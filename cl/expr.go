@@ -188,6 +188,34 @@ find:
 	return
 }
 
+/*
+func compileMatrixLit(ctx *blockCtx, v *ast.MatrixLit) {
+	cb := ctx.cb
+	ncol := -1
+	for _, elts := range v.Elts {
+		switch n := len(elts); n {
+		case 1:
+			elt := elts[0]
+			if e, ok := elt.(*ast.Ellipsis); ok {
+				compileExpr(ctx, e.Elt)
+				panic("TODO") // TODO(xsw): matrixLit with ellipsis
+			}
+			fallthrough
+		default:
+			if ncol < 0 {
+				ncol = n
+			} else if ncol != n {
+				ctx.handleErrorf(elts[0].Pos(), "inconsistent matrix column count: got %v, want %v", n, ncol)
+			}
+			for _, elt := range elts {
+				compileExpr(ctx, elt)
+			}
+			cb.SliceLitEx(...)
+		}
+	}
+}
+*/
+
 func compileEnvExpr(ctx *blockCtx, v *ast.EnvExpr) {
 	cb := ctx.cb
 	if ctx.isClass { // in a Go+ class file
@@ -363,6 +391,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 		ctx.cb.Typ(toFuncType(ctx, v, nil, nil), v)
 	case *ast.EnvExpr:
 		compileEnvExpr(ctx, v)
+	/* case *ast.MatrixLit:
+	compileMatrixLit(ctx, v) */
 	default:
 		panic(ctx.newCodeErrorf(v.Pos(), "compileExpr failed: unknown - %T", v))
 	}
