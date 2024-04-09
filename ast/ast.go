@@ -1055,6 +1055,7 @@ type (
 		Operator bool          // is operator or not
 		Shadow   bool          // is a shadow entry
 		IsClass  bool          // recv set by class
+		Static   bool          // recv is static (class method)
 	}
 )
 

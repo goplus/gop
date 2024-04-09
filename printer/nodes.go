@@ -2016,8 +2016,13 @@ func (p *printer) funcDecl(d *ast.FuncDecl) {
 	// FUNC is emitted).
 	startCol := p.out.Column - len("func ")
 	if d.Recv != nil && !d.IsClass {
-		p.parameters(d.Recv) // method: print receiver
-		p.print(blank)
+		if d.Static { // static method
+			p.expr(d.Recv.List[0].Type)
+			p.print(token.PERIOD)
+		} else {
+			p.parameters(d.Recv) // method: print receiver
+			p.print(blank)
+		}
 	}
 	p.expr(d.Name)
 	if d.Operator && d.Recv != nil {
