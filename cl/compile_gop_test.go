@@ -1541,3 +1541,27 @@ func main() {
 }
 `)
 }
+
+func TestStaticMethod(t *testing.T) {
+	gopClTest(t, `
+type foo int
+
+func foo.New(a int) *foo {
+	return new(foo)
+}
+
+func foo._add() *foo {
+	return new(foo)
+}
+`, `package main
+
+type foo int
+
+func Gops_foo_New(a int) *foo {
+	return new(foo)
+}
+func Gops__foo___add() *foo {
+	return new(foo)
+}
+`)
+}

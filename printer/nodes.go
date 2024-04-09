@@ -2015,13 +2015,15 @@ func (p *printer) funcDecl(d *ast.FuncDecl) {
 	// different line (all whitespace preceding the FUNC is emitted only when the
 	// FUNC is emitted).
 	startCol := p.out.Column - len("func ")
-	if d.Recv != nil && !d.IsClass {
+	if d.Recv != nil {
 		if d.Static { // static method
-			if list := d.Recv.List; len(list) > 0 {
-				p.expr(list[0].Type)
+			if !d.IsClass {
+				if list := d.Recv.List; len(list) > 0 {
+					p.expr(list[0].Type)
+				}
 			}
 			p.print(token.PERIOD)
-		} else {
+		} else if !d.IsClass {
 			p.parameters(d.Recv) // method: print receiver
 			p.print(blank)
 		}
