@@ -3495,6 +3495,10 @@ func (p *parser) parseImportSpec(doc *ast.CommentGroup, _ token.Token, _ int) as
 	return spec
 }
 
+func (p *parser) inClassFile() bool {
+	return p.mode&ParseGoPlusClass != 0
+}
+
 func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota int) ast.Spec {
 	if p.trace {
 		defer un(trace(p, keyword.String()+"Spec"))
@@ -3505,7 +3509,7 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 	var typ ast.Expr
 	var tag *ast.BasicLit
 	var values []ast.Expr
-	if p.mode&ParseGoPlusClass != 0 && p.topScope == p.pkgScope && keyword == token.VAR && p.varDeclCnt == 1 {
+	if p.inClassFile() && p.topScope == p.pkgScope && keyword == token.VAR && p.varDeclCnt == 1 {
 		var starPos token.Pos
 		if p.tok == token.MUL {
 			starPos = p.pos
@@ -3706,6 +3710,7 @@ func (p *parser) parseOverloadDecl(decl *ast.OverloadFuncDecl) *ast.OverloadFunc
 // `func identOrOp = (overloadFuncs)`
 //
 // `func T.ident(params) results { ... }`
+// `func .ident(params) results { ... }` (only in classfile)
 //
 // `func (recv) identOrOp(params) results { ... }`
 // `func (T).identOrOp = (overloadFuncs)`
@@ -3723,31 +3728,8 @@ func (p *parser) parseFuncDeclOrCall() (ast.Decl, *ast.CallExpr) {
 	var ident *ast.Ident
 	var isOp, isStatic, isFunLit, ok bool
 
-	if p.tok != token.LPAREN {
-		// func: `func identOrOp(...) results`
-		// overload: `func identOrOp = (overloadFuncs)`
-		// static method: `func T.ident(...) results`
-		ident, isOp = p.parseIdentOrOp()
-		switch p.tok {
-		case token.ASSIGN:
-			// func identOrOp = (overloadFuncs)
-			return p.parseOverloadDecl(&ast.OverloadFuncDecl{
-				Doc:      doc,
-				Func:     pos,
-				Name:     ident,
-				Operator: isOp,
-			}), nil
-		case token.PERIOD:
-			// func T.ident(...) results
-			if !isOp {
-				p.next()
-				recv = &ast.FieldList{List: []*ast.Field{{Type: ident}}}
-				ident = p.parseIdent()
-				isStatic = true
-			}
-		}
-		params, results = p.parseSignature(scope)
-	} else {
+	switch p.tok {
+	case token.LPAREN:
 		// method: `func (recv) identOrOp(params) results { ... }`
 		// overload: `func (T).identOrOp = (overloadFuncs)`
 		// funlit: `func (params) results { ... }()`
@@ -3809,6 +3791,39 @@ func (p *parser) parseFuncDeclOrCall() (ast.Decl, *ast.CallExpr) {
 			p.expectSemi()
 			return nil, call
 		}
+	case token.PERIOD:
+		// func .ident(...) results (only in classfile)
+		if p.inClassFile() {
+			p.next()
+			recv = &ast.FieldList{}
+			ident = p.parseIdent()
+			isStatic = true
+		}
+		params, results = p.parseSignature(scope)
+	default:
+		// func: `func identOrOp(...) results`
+		// overload: `func identOrOp = (overloadFuncs)`
+		// static method: `func T.ident(...) results`
+		ident, isOp = p.parseIdentOrOp()
+		switch p.tok {
+		case token.ASSIGN:
+			// func identOrOp = (overloadFuncs)
+			return p.parseOverloadDecl(&ast.OverloadFuncDecl{
+				Doc:      doc,
+				Func:     pos,
+				Name:     ident,
+				Operator: isOp,
+			}), nil
+		case token.PERIOD:
+			// func T.ident(...) results
+			if !isOp {
+				p.next()
+				recv = &ast.FieldList{List: []*ast.Field{{Type: ident}}}
+				ident = p.parseIdent()
+				isStatic = true
+			}
+		}
+		params, results = p.parseSignature(scope)
 	}
 
 	if isOp {
