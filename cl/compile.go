@@ -888,19 +888,19 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 
 	preloadFuncDecl := func(d *ast.FuncDecl) {
 		if ctx.classRecv != nil { // in class file (.spx/.gmx)
-			if d.Recv == nil {
+			if recv := d.Recv; recv == nil || len(recv.List) == 0 {
 				d.Recv = ctx.classRecv
 				d.IsClass = true
 			}
 		}
+		name := d.Name
+		fname := name.Name
 		if d.Recv == nil {
-			name := d.Name
 			fn := func() {
 				old, _ := p.SetCurFile(goFile, true)
 				defer p.RestoreCurFile(old)
-				loadFunc(ctx, nil, d, genFnBody)
+				loadFunc(ctx, nil, fname, d, genFnBody)
 			}
-			fname := name.Name
 			if fname == "init" {
 				if genFnBody {
 					if debugLoad {
@@ -918,18 +918,30 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 					}
 				}
 			}
-		} else {
-			if name, ok := getRecvTypeName(parent, d.Recv, true); ok {
+		} else if tname, ok := getRecvTypeName(parent, d.Recv, true); ok {
+			if d.Static {
 				if debugLoad {
-					log.Printf("==> Preload method %s.%s\n", name, d.Name.Name)
+					log.Printf("==> Preload static method %s.%s\n", tname, fname)
 				}
-				ld := getTypeLoader(parent, syms, token.NoPos, name)
+				fname = staticMethod(tname, fname)
+				fn := func() {
+					old, _ := p.SetCurFile(goFile, true)
+					defer p.RestoreCurFile(old)
+					loadFunc(ctx, nil, fname, d, genFnBody)
+				}
+				initLoader(parent, syms, name.Pos(), fname, fn, genFnBody)
+				ctx.lbinames = append(ctx.lbinames, fname)
+			} else {
+				if debugLoad {
+					log.Printf("==> Preload method %s.%s\n", tname, fname)
+				}
+				ld := getTypeLoader(parent, syms, token.NoPos, tname)
 				fn := func() {
 					old, _ := p.SetCurFile(goFile, true)
 					defer p.RestoreCurFile(old)
 					doInitType(ld)
 					recv := toRecv(ctx, d.Recv)
-					loadFunc(ctx, recv, d, genFnBody)
+					loadFunc(ctx, recv, fname, d, genFnBody)
 				}
 				ld.methods = append(ld.methods, fn)
 			}
@@ -1169,6 +1181,14 @@ func overloadName(recv *ast.Ident, name string, isOp bool) string {
 	return "Gopo" + sep + typ + name
 }
 
+func staticMethod(tname, name string) string {
+	sep := "_"
+	if strings.ContainsRune(name, '_') || strings.ContainsRune(tname, '_') {
+		sep = "__"
+	}
+	return "Gops" + sep + tname + sep + name
+}
+
 func stringLit(val string) *ast.BasicLit {
 	return &ast.BasicLit{Kind: token.STRING, Value: strconv.Quote(val)}
 }
@@ -1186,8 +1206,7 @@ func aliasType(pkg *types.Package, pos token.Pos, name string, typ types.Type) {
 	pkg.Scope().Insert(o)
 }
 
-func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) {
-	name := d.Name.Name
+func loadFunc(ctx *blockCtx, recv *types.Var, name string, d *ast.FuncDecl, genBody bool) {
 	if debugLoad {
 		if recv == nil {
 			log.Println("==> Load func", name)
@@ -1235,7 +1254,7 @@ func loadFunc(ctx *blockCtx, recv *types.Var, d *ast.FuncDecl, genBody bool) {
 	commentFunc(ctx, fn, d)
 	if rec := ctx.recorder(); rec != nil {
 		rec.Def(d.Name, fn.Func)
-		if recv == nil && d.Name.Name != "_" {
+		if recv == nil && name != "_" {
 			ctx.fileScope.Insert(fn.Func)
 		}
 	}
