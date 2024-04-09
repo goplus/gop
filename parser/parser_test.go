@@ -325,4 +325,18 @@ func TestCheckExpr(t *testing.T) {
 	p.checkExpr(&ast.FuncLit{})
 }
 
+func TestErrFuncDecl(t *testing.T) {
+	testErrCode(t, `func test()
+{
+}
+`, `/foo/bar.gop:2:1: unexpected semicolon or newline before {`, ``)
+	testErrCode(t, `func test() +1
+`, `/foo/bar.gop:1:13: expected ';', found '+'`, ``)
+	testErrCode(t, `
+func (a T) +{}
+`, `/foo/bar.gop:2:12: expected type, found '+'`, ``)
+	testErrCode(t, `func +(a T, b T) {}
+`, `/foo/bar.gop:1:6: overload operator can only have one parameter`, ``)
+}
+
 // -----------------------------------------------------------------------------

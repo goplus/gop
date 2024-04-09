@@ -3648,7 +3648,7 @@ func (p *parser) parseGenDecl(keyword token.Token, f parseSpecFunction) *ast.Gen
 	}
 }
 
-func isOverloadOps(tok token.Token) bool {
+func isOverloadOp(tok token.Token) bool {
 	return int(tok) < len(overloadOps) && overloadOps[tok] != 0
 }
 
@@ -3705,6 +3705,8 @@ func (p *parser) parseOverloadDecl(decl *ast.OverloadFuncDecl) *ast.OverloadFunc
 // `func identOrOp(params) results {...}`
 // `func identOrOp = (overloadFuncs)`
 //
+// `func T.ident(params) results { ... }`
+//
 // `func (recv) identOrOp(params) results { ... }`
 // `func (T).identOrOp = (overloadFuncs)`
 // `func (params) results { ... }()`
@@ -3719,13 +3721,15 @@ func (p *parser) parseFuncDeclOrCall() (ast.Decl, *ast.CallExpr) {
 
 	var recv, params, results *ast.FieldList
 	var ident *ast.Ident
-	var isOp, isFunLit, ok bool
+	var isOp, isStatic, isFunLit, ok bool
 
 	if p.tok != token.LPAREN {
 		// func: `func identOrOp(...) results`
 		// overload: `func identOrOp = (overloadFuncs)`
+		// static method: `func T.ident(...) results`
 		ident, isOp = p.parseIdentOrOp()
-		if p.tok == token.ASSIGN {
+		switch p.tok {
+		case token.ASSIGN:
 			// func identOrOp = (overloadFuncs)
 			return p.parseOverloadDecl(&ast.OverloadFuncDecl{
 				Doc:      doc,
@@ -3733,6 +3737,14 @@ func (p *parser) parseFuncDeclOrCall() (ast.Decl, *ast.CallExpr) {
 				Name:     ident,
 				Operator: isOp,
 			}), nil
+		case token.PERIOD:
+			// func T.ident(...) results
+			if !isOp {
+				p.next()
+				recv = &ast.FieldList{List: []*ast.Field{{Type: ident}}}
+				ident = p.parseIdent()
+				isStatic = true
+			}
 		}
 		params, results = p.parseSignature(scope)
 	} else {
@@ -3754,8 +3766,8 @@ func (p *parser) parseFuncDeclOrCall() (ast.Decl, *ast.CallExpr) {
 				Name:     ident,
 				Operator: isOp,
 			}), nil
-		} else if isOp = isOverloadOps(p.tok); isOp {
-			oldtok, oldpos := p.tok, p.pos
+		} else if isOp = isOverloadOp(p.tok); isOp {
+			oldtok, oldpos, oldlit := p.tok, p.pos, p.lit
 			p.next()
 			if p.tok == token.LPAREN {
 				// func (recv) op(params) results { ... }
@@ -3763,10 +3775,12 @@ func (p *parser) parseFuncDeclOrCall() (ast.Decl, *ast.CallExpr) {
 				params, results = p.parseSignature(scope)
 			} else {
 				// func (params) typ { ... }()
-				p.unget(oldpos, oldtok, "")
+				p.unget(oldpos, oldtok, oldlit)
 				typ := p.tryType()
 				if typ == nil {
-					panic("TODO: invalid result type")
+					p.errorExpected(oldpos, "type", 1)
+					p.next()
+					typ = &ast.BadExpr{From: oldpos, To: p.pos}
 				}
 				isFunLit, results = true, &ast.FieldList{List: []*ast.Field{{Type: typ}}}
 			}
@@ -3799,7 +3813,7 @@ func (p *parser) parseFuncDeclOrCall() (ast.Decl, *ast.CallExpr) {
 
 	if isOp {
 		if params == nil || len(params.List) != 1 {
-			log.Panicln("TODO: overload operator can only have one parameter")
+			p.error(ident.Pos(), "overload operator can only have one parameter")
 		}
 	}
 	var body *ast.BlockStmt
@@ -3829,6 +3843,7 @@ func (p *parser) parseFuncDeclOrCall() (ast.Decl, *ast.CallExpr) {
 		},
 		Body:     body,
 		Operator: isOp,
+		Static:   isStatic,
 	}
 	if recv == nil {
 		// Go spec: The scope of an identifier denoting a constant, type,

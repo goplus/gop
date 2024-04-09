@@ -1,0 +1,37 @@
+package main
+
+file static_method.gop
+ast.FuncDecl:
+  Recv:
+    ast.FieldList:
+      List:
+        ast.Field:
+          Type:
+            ast.Ident:
+              Name: T
+  Name:
+    ast.Ident:
+      Name: foo
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Names:
+                ast.Ident:
+                  Name: a
+                ast.Ident:
+                  Name: b
+              Type:
+                ast.Ident:
+                  Name: int
+      Results:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Type:
+                ast.Ident:
+                  Name: string
+  Body:
+    ast.BlockStmt:
