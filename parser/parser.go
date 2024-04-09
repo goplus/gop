@@ -3796,9 +3796,9 @@ func (p *parser) parseFuncDeclOrCall() (ast.Decl, *ast.CallExpr) {
 		if p.inClassFile() {
 			p.next()
 			recv = &ast.FieldList{}
-			ident = p.parseIdent()
 			isStatic = true
 		}
+		ident = p.parseIdent()
 		params, results = p.parseSignature(scope)
 	default:
 		// func: `func identOrOp(...) results`
