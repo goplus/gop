@@ -2017,7 +2017,9 @@ func (p *printer) funcDecl(d *ast.FuncDecl) {
 	startCol := p.out.Column - len("func ")
 	if d.Recv != nil && !d.IsClass {
 		if d.Static { // static method
-			p.expr(d.Recv.List[0].Type)
+			if list := d.Recv.List; len(list) > 0 {
+				p.expr(list[0].Type)
+			}
 			p.print(token.PERIOD)
 		} else {
 			p.parameters(d.Recv) // method: print receiver

@@ -1,0 +1,24 @@
+package main
+
+file a.gox
+ast.FuncDecl:
+  Recv:
+    ast.FieldList:
+  Name:
+    ast.Ident:
+      Name: New
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+      Results:
+        ast.FieldList:
+          List:
+            ast.Field:
+              Type:
+                ast.StarExpr:
+                  X:
+                    ast.Ident:
+                      Name: T
+  Body:
+    ast.BlockStmt:
