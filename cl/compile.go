@@ -512,6 +512,9 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 	if conf.Recorder != nil {
 		rec = newRecorder(conf.Recorder)
 		confGox.Recorder = rec
+		defer func() {
+			rec.Complete(p.Types.Scope())
+		}()
 	}
 	if enableRecover {
 		defer func() {
@@ -1080,6 +1083,9 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 					log.Panicln("TODO - cl.preloadFile OverloadFuncDecl: invalid recv")
 				}
 				recv = otyp
+				if ctx.rec != nil {
+					ctx.rec.Refer(recv, recv.Name)
+				}
 			}
 			onames := make([]string, 0, 4)
 			exov := false
@@ -1091,12 +1097,19 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 					onames = append(onames, expr.Name)
 					ctx.lbinames = append(ctx.lbinames, expr.Name)
 					exov = true
+					if ctx.rec != nil {
+						ctx.rec.Refer(expr, expr.Name)
+					}
 				case *ast.SelectorExpr:
 					checkOverloadMethod(d)
-					checkOverloadMethodRecvType(recv, expr.X)
+					rtyp := checkOverloadMethodRecvType(recv, expr.X)
 					onames = append(onames, "."+expr.Sel.Name)
 					ctx.lbinames = append(ctx.lbinames, recv)
 					exov = true
+					if ctx.rec != nil {
+						ctx.rec.Refer(rtyp, rtyp.Name)
+						ctx.rec.Refer(expr.Sel, rtyp.Name+"."+expr.Sel.Name)
+					}
 				case *ast.FuncLit:
 					checkOverloadFunc(d)
 					name1 := overloadFuncName(name.Name, idx)
@@ -1104,7 +1117,7 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 					ctx.lbinames = append(ctx.lbinames, name1)
 					preloadFuncDecl(&ast.FuncDecl{
 						Doc:  d.Doc,
-						Name: &ast.Ident{NamePos: name.NamePos, Name: name1},
+						Name: &ast.Ident{NamePos: expr.Pos(), Name: name1},
 						Type: expr.Type,
 						Body: expr.Body,
 					})
@@ -1146,12 +1159,13 @@ func checkOverloadMethod(d *ast.OverloadFuncDecl) {
 	}
 }
 
-func checkOverloadMethodRecvType(ot *ast.Ident, recv ast.Expr) {
+func checkOverloadMethodRecvType(ot *ast.Ident, recv ast.Expr) *ast.Ident {
 	rtyp, _ := getRecvType(recv)
 	rt, ok := rtyp.(*ast.Ident)
 	if !ok || ot.Name != rt.Name {
 		log.Panicln("TODO - checkOverloadMethodRecvType:", recv)
 	}
+	return rt
 }
 
 const (
