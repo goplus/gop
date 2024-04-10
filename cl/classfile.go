@@ -427,6 +427,7 @@ func astFnClassfname(c *gmxClass) *ast.FuncDecl {
 				},
 			},
 		},
+		Shadow: true,
 	}
 }
 
