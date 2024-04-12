@@ -2090,6 +2090,10 @@ func declToken(decl ast.Decl) (tok token.Token) {
 func (p *printer) declList(list []ast.Decl) {
 	tok := token.ILLEGAL
 	for _, d := range list {
+		// skip no entry shadow
+		if decl, ok := d.(*ast.FuncDecl); ok && decl.Shadow && decl != p.shadowEntry {
+			continue
+		}
 		prev := tok
 		tok = declToken(d)
 		// If the declaration token changed (e.g., from CONST to TYPE)

@@ -67,6 +67,12 @@ func TestFuncs(t *testing.T) {
 				Name: &ast.Ident{Name: "bar"},
 				Body: &ast.BlockStmt{},
 			},
+			&ast.FuncDecl{
+				Type:   &ast.FuncType{Params: &ast.FieldList{}},
+				Name:   &ast.Ident{Name: "Classname"},
+				Body:   &ast.BlockStmt{},
+				Shadow: true,
+			},
 		},
 		NoPkgDecl: true,
 	}); err != nil {
