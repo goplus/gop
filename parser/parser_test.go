@@ -20,7 +20,7 @@ import (
 	"io/fs"
 	"testing"
 
-	"github.com/goplus/gop/parser/parsertest"
+	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
 	fsx "github.com/qiniu/x/http/fs"
 )
@@ -121,6 +121,10 @@ func testClassErrCode(t *testing.T, code string, errExp, panicExp string) {
 	}
 }
 
+func TestErrLabel(t *testing.T) {
+	testErrCode(t, `a.x:`, `/foo/bar.gop:1:4: illegal label declaration`, ``)
+}
+
 func TestErrTuple(t *testing.T) {
 	testErrCode(t, `println (1,2)*2`, `/foo/bar.gop:1:9: tuple is not supported`, ``)
 	testErrCode(t, `println 2*(1,2)`, `/foo/bar.gop:1:13: expected ')', found ','`, ``)
@@ -213,272 +217,6 @@ func TestErrInFunc(t *testing.T) {
 
 // -----------------------------------------------------------------------------
 
-var testStdCode = `package bar; import "io"
-	// comment
-	x := 0
-	if t := false; t {
-		x = 3
-	} else {
-		x = 5
-	}
-	println("x:", x)
-
-	// comment 1
-	// comment 2
-	x = 0
-	switch s := "Hello"; s {
-	default:
-		x = 7
-	case "world", "hi":
-		x = 5
-	case "xsw":
-		x = 3
-	}
-	println("x:", x)
-
-	c := make(chan bool, 100)
-	select {
-	case c <- true:
-	case v := <-c:
-	default:
-		panic("error")
-	}
-`
-
-func TestStd(t *testing.T) {
-	fset := token.NewFileSet()
-	pkgs, err := Parse(fset, "/foo/bar.gop", testStdCode, ParseComments)
-	if err != nil || len(pkgs) != 1 {
-		t.Fatal("Parse failed:", err, len(pkgs))
-	}
-	bar := pkgs["bar"]
-	parsertest.Expect(t, bar, `package bar
-
-file bar.gop
-noEntrypoint
-ast.GenDecl:
-  Tok: import
-  Specs:
-    ast.ImportSpec:
-      Path:
-        ast.BasicLit:
-          Kind: STRING
-          Value: "io"
-ast.FuncDecl:
-  Doc:
-    ast.CommentGroup:
-      List:
-        ast.Comment:
-          Text: // comment
-  Name:
-    ast.Ident:
-      Name: main
-  Type:
-    ast.FuncType:
-      Params:
-        ast.FieldList:
-  Body:
-    ast.BlockStmt:
-      List:
-        ast.AssignStmt:
-          Lhs:
-            ast.Ident:
-              Name: x
-          Tok: :=
-          Rhs:
-            ast.BasicLit:
-              Kind: INT
-              Value: 0
-        ast.IfStmt:
-          Init:
-            ast.AssignStmt:
-              Lhs:
-                ast.Ident:
-                  Name: t
-              Tok: :=
-              Rhs:
-                ast.Ident:
-                  Name: false
-          Cond:
-            ast.Ident:
-              Name: t
-          Body:
-            ast.BlockStmt:
-              List:
-                ast.AssignStmt:
-                  Lhs:
-                    ast.Ident:
-                      Name: x
-                  Tok: =
-                  Rhs:
-                    ast.BasicLit:
-                      Kind: INT
-                      Value: 3
-          Else:
-            ast.BlockStmt:
-              List:
-                ast.AssignStmt:
-                  Lhs:
-                    ast.Ident:
-                      Name: x
-                  Tok: =
-                  Rhs:
-                    ast.BasicLit:
-                      Kind: INT
-                      Value: 5
-        ast.ExprStmt:
-          X:
-            ast.CallExpr:
-              Fun:
-                ast.Ident:
-                  Name: println
-              Args:
-                ast.BasicLit:
-                  Kind: STRING
-                  Value: "x:"
-                ast.Ident:
-                  Name: x
-        ast.AssignStmt:
-          Lhs:
-            ast.Ident:
-              Name: x
-          Tok: =
-          Rhs:
-            ast.BasicLit:
-              Kind: INT
-              Value: 0
-        ast.SwitchStmt:
-          Init:
-            ast.AssignStmt:
-              Lhs:
-                ast.Ident:
-                  Name: s
-              Tok: :=
-              Rhs:
-                ast.BasicLit:
-                  Kind: STRING
-                  Value: "Hello"
-          Tag:
-            ast.Ident:
-              Name: s
-          Body:
-            ast.BlockStmt:
-              List:
-                ast.CaseClause:
-                  Body:
-                    ast.AssignStmt:
-                      Lhs:
-                        ast.Ident:
-                          Name: x
-                      Tok: =
-                      Rhs:
-                        ast.BasicLit:
-                          Kind: INT
-                          Value: 7
-                ast.CaseClause:
-                  List:
-                    ast.BasicLit:
-                      Kind: STRING
-                      Value: "world"
-                    ast.BasicLit:
-                      Kind: STRING
-                      Value: "hi"
-                  Body:
-                    ast.AssignStmt:
-                      Lhs:
-                        ast.Ident:
-                          Name: x
-                      Tok: =
-                      Rhs:
-                        ast.BasicLit:
-                          Kind: INT
-                          Value: 5
-                ast.CaseClause:
-                  List:
-                    ast.BasicLit:
-                      Kind: STRING
-                      Value: "xsw"
-                  Body:
-                    ast.AssignStmt:
-                      Lhs:
-                        ast.Ident:
-                          Name: x
-                      Tok: =
-                      Rhs:
-                        ast.BasicLit:
-                          Kind: INT
-                          Value: 3
-        ast.ExprStmt:
-          X:
-            ast.CallExpr:
-              Fun:
-                ast.Ident:
-                  Name: println
-              Args:
-                ast.BasicLit:
-                  Kind: STRING
-                  Value: "x:"
-                ast.Ident:
-                  Name: x
-        ast.AssignStmt:
-          Lhs:
-            ast.Ident:
-              Name: c
-          Tok: :=
-          Rhs:
-            ast.CallExpr:
-              Fun:
-                ast.Ident:
-                  Name: make
-              Args:
-                ast.ChanType:
-                  Value:
-                    ast.Ident:
-                      Name: bool
-                ast.BasicLit:
-                  Kind: INT
-                  Value: 100
-        ast.SelectStmt:
-          Body:
-            ast.BlockStmt:
-              List:
-                ast.CommClause:
-                  Comm:
-                    ast.SendStmt:
-                      Chan:
-                        ast.Ident:
-                          Name: c
-                      Value:
-                        ast.Ident:
-                          Name: true
-                ast.CommClause:
-                  Comm:
-                    ast.AssignStmt:
-                      Lhs:
-                        ast.Ident:
-                          Name: v
-                      Tok: :=
-                      Rhs:
-                        ast.UnaryExpr:
-                          Op: <-
-                          X:
-                            ast.Ident:
-                              Name: c
-                ast.CommClause:
-                  Body:
-                    ast.ExprStmt:
-                      X:
-                        ast.CallExpr:
-                          Fun:
-                            ast.Ident:
-                              Name: panic
-                          Args:
-                            ast.BasicLit:
-                              Kind: STRING
-                              Value: "error"
-`)
-}
-
 func TestClassErrCode(t *testing.T) {
 	testClassErrCode(t, `var (
 	A,B
@@ -548,6 +286,57 @@ println "$a${b}"
 func TestErrStringLiteral(t *testing.T) {
 	testErrCode(t, `run "
 `, `/foo/bar.gop:1:5: string literal not terminated`, ``)
+}
+
+func TestErrFieldDecl(t *testing.T) {
+	testErrCode(t, `
+type T struct {
+	*(Foo)
+}
+`, `/foo/bar.gop:3:3: cannot parenthesize embedded type`, ``)
+	testErrCode(t, `
+type T struct {
+	(Foo)
+}
+`, `/foo/bar.gop:3:2: cannot parenthesize embedded type`, ``)
+	testErrCode(t, `
+type T struct {
+	(*Foo)
+}
+`, `/foo/bar.gop:3:2: cannot parenthesize embedded type`, ``)
+}
+
+func TestParseFieldDecl(t *testing.T) {
+	var p parser
+	p.init(token.NewFileSet(), "/foo/bar.gop", []byte(`type T struct {
+}
+`), 0)
+	p.parseFieldDecl(nil)
+}
+
+func TestCheckExpr(t *testing.T) {
+	var p parser
+	p.init(token.NewFileSet(), "/foo/bar.gop", []byte(``), 0)
+	p.checkExpr(&ast.Ellipsis{})
+	p.checkExpr(&ast.ElemEllipsis{})
+	p.checkExpr(&ast.StarExpr{})
+	p.checkExpr(&ast.IndexListExpr{})
+	p.checkExpr(&ast.FuncType{})
+	p.checkExpr(&ast.FuncLit{})
+}
+
+func TestErrFuncDecl(t *testing.T) {
+	testErrCode(t, `func test()
+{
+}
+`, `/foo/bar.gop:2:1: unexpected semicolon or newline before {`, ``)
+	testErrCode(t, `func test() +1
+`, `/foo/bar.gop:1:13: expected ';', found '+'`, ``)
+	testErrCode(t, `
+func (a T) +{}
+`, `/foo/bar.gop:2:12: expected type, found '+'`, ``)
+	testErrCode(t, `func +(a T, b T) {}
+`, `/foo/bar.gop:1:6: overload operator can only have one parameter`, ``)
 }
 
 // -----------------------------------------------------------------------------

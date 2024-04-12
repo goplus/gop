@@ -126,6 +126,8 @@ Here is my `Hello world` program:
 
 ## Hello World
 
+Different from the function call style of most languages, Go+ recommends command style code:
+
 ```go
 println "Hello world"
 ```
@@ -139,6 +141,12 @@ See `gop help` for all supported commands.
 
 [`println`](#println) is one of the few [built-in functions](#builtin-functions).
 It prints the value passed to it to standard output.
+
+To emphasize our preference for command style, we introduce `echo` as an alias for `println`:
+
+```coffee
+echo "Hello world"
+```
 
 See https://tutorial.goplus.org/hello-world for more details.
 

@@ -1,0 +1,20 @@
+== Type T ==
+- Func AddString -
+Doc: AddString doc
+
+func AddString(this *T, b string) *T
+- Method AddInt -
+Recv: T
+Doc: AddInt doc
+
+func (p T) AddInt(b int) *T
+- Method Gop_Add -
+Recv: T
+Doc: AddInt doc
+
+func (p T) Gop_Add(b int) *T
+- Method Gop_Add -
+Recv: *T
+Doc: AddString doc
+
+func (this *T) Gop_Add(b string) *T

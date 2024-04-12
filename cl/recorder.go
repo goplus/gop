@@ -18,6 +18,7 @@ package cl
 
 import (
 	"go/types"
+	"strings"
 
 	"github.com/goplus/gogen"
 	"github.com/goplus/gop/ast"
@@ -28,12 +29,49 @@ import (
 
 type goxRecorder struct {
 	Recorder
-	types map[ast.Expr]types.TypeAndValue
+	types  map[ast.Expr]types.TypeAndValue
+	refers map[string][]*ast.Ident
 }
 
 func newRecorder(rec Recorder) *goxRecorder {
 	types := make(map[ast.Expr]types.TypeAndValue)
-	return &goxRecorder{rec, types}
+	refers := make(map[string][]*ast.Ident)
+	return &goxRecorder{rec, types, refers}
+}
+
+// Refer maps identifiers to name for ast.OverloadFuncDecl.
+func (p *goxRecorder) Refer(ident *ast.Ident, name string) {
+	p.refers[name] = append(p.refers[name], ident)
+}
+
+// Complete computes the types record.
+func (p *goxRecorder) Complete(scope *types.Scope) {
+	for name, idents := range p.refers {
+		pos := strings.Index(name, ".")
+		if pos == -1 {
+			if obj := scope.Lookup(name); obj != nil {
+				for _, id := range idents {
+					p.Use(id, obj)
+				}
+			}
+			continue
+		}
+		if obj := scope.Lookup(name[:pos]); obj != nil {
+			if named, ok := obj.Type().(*types.Named); ok {
+				n := named.NumMethods()
+				for i := 0; i < n; i++ {
+					if m := named.Method(i); m.Name() == name[pos+1:] {
+						for _, id := range idents {
+							p.Use(id, m)
+						}
+						break
+					}
+				}
+			}
+		}
+	}
+	p.types = nil
+	p.refers = nil
 }
 
 // Member maps identifiers to the objects they denote.

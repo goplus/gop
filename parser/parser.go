@@ -824,7 +824,7 @@ func (p *parser) parseArrayTypeOrSliceLit(state int, slice ast.Expr) (expr ast.E
 		case stateArrayTypeOrSliceLit:
 			switch p.tok {
 			case token.COMMA: // [a, b, c, d ...]
-				sliceLit := p.parseSliceLit(lbrack, len)
+				sliceLit := p.parseSliceOrMatrixLit(lbrack, len)
 				p.exprLev--
 				return sliceLit, resultSliceLit
 			case token.FOR: // [expr for k, v <- container if cond]
@@ -887,20 +887,40 @@ func (p *parser) parseArrayTypeOrSliceLit(state int, slice ast.Expr) (expr ast.E
 	return &ast.ArrayType{Lbrack: lbrack, Len: len, Elt: elt}, resultArrayType
 }
 
-func (p *parser) parseSliceLit(lbrack token.Pos, len ast.Expr) ast.Expr {
+// [first, ...]
+// [first, a2, a2, ...; b1, b2, b3, ...]
+func (p *parser) parseSliceOrMatrixLit(lbrack token.Pos, first ast.Expr) ast.Expr {
+	var mat [][]ast.Expr
 	elts := make([]ast.Expr, 1, 8)
-	elts[0] = len
-	for p.tok == token.COMMA {
+	elts[0] = first
+	for {
+		switch p.tok {
+		case token.COMMA:
+		case token.SEMICOLON:
+			mat = append(mat, elts)
+			elts = make([]ast.Expr, 0, len(elts))
+		case token.ELLIPSIS:
+			n := len(elts)
+			elts[n-1] = &ast.ElemEllipsis{Ellipsis: p.pos, Elt: elts[n-1]}
+			p.next()
+			continue
+		default:
+			goto done
+		}
 		p.next()
 		if p.tok != token.RBRACK {
 			elt := p.parseRHS()
 			elts = append(elts, elt)
 		}
 	}
+done:
 	rbrack := p.expect(token.RBRACK)
 
-	if debugParseOutput {
-		log.Printf("ast.SliceLit{Elts: %v}\n", elts)
+	if mat != nil {
+		if len(elts) > 0 {
+			mat = append(mat, elts)
+		}
+		return &ast.MatrixLit{Lbrack: lbrack, Elts: mat, Rbrack: rbrack}
 	}
 	return &ast.SliceLit{Lbrack: lbrack, Elts: elts, Rbrack: rbrack}
 }
@@ -2180,6 +2200,7 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 		p.error(v.opening, msgTupleNotSupported)
 		x = &ast.BadExpr{From: v.opening, To: v.closing}
 	case *ast.EnvExpr:
+	case *ast.ElemEllipsis:
 	default:
 		// all other nodes are not proper expressions
 		p.errorExpected(x.Pos(), "expression", 3)
@@ -2461,12 +2482,17 @@ func (p *parser) parseBinaryExpr(lhs bool, prec1 int, allowTuple, allowCmd bool)
 	}
 }
 
-func (p *parser) parseRangeExpr(allowTuple, allowCmd bool) (x ast.Expr, isTuple bool) {
+func (p *parser) parseRangeExpr(first ast.Expr, allowTuple, allowCmd bool) (x ast.Expr, isTuple bool) {
+	if p.trace {
+		defer un(trace(p, "RangeExpr"))
+	}
 	if p.tok != token.COLON {
 		x, isTuple = p.parseBinaryExpr(false, token.LowestPrec+1, allowTuple, allowCmd)
 		if isTuple || p.tok != token.COLON { // not RangeExpr
 			return
 		}
+	} else {
+		x = first
 	}
 	to := p.pos
 	p.next()
@@ -2496,7 +2522,7 @@ func (p *parser) parseLambdaExpr(allowTuple, allowCmd, allowRangeExpr bool) (x a
 	var first = p.pos
 	if p.tok != token.DRARROW {
 		if allowRangeExpr {
-			x, isTuple = p.parseRangeExpr(true, allowCmd)
+			x, isTuple = p.parseRangeExpr(nil, true, allowCmd)
 		} else {
 			x, isTuple = p.parseBinaryExpr(false, token.LowestPrec+1, true, allowCmd)
 		}
@@ -2633,10 +2659,18 @@ const (
 // assignment with a right-hand side that is a single unary expression of
 // the form "range x". No guarantees are given for the left-hand side.
 func (p *parser) parseSimpleStmt(mode int, allowCmd bool) (ast.Stmt, bool) {
+	return p.parseSimpleStmtEx(mode, allowCmd, false)
+}
+
+func (p *parser) parseSimpleStmtEx(mode int, allowCmd, allowRangeExpr bool) (ast.Stmt, bool) {
 	if p.trace {
 		defer un(trace(p, "SimpleStmt"))
 	}
 
+	if allowRangeExpr && p.tok == token.COLON { // rangeExpr
+		re, _ := p.parseRangeExpr(nil, false, false)
+		return &ast.ExprStmt{X: re}, true
+	}
 	x := p.parseLHSList(allowCmd)
 
 	switch p.tok {
@@ -2676,6 +2710,10 @@ func (p *parser) parseSimpleStmt(mode int, allowCmd bool) (ast.Stmt, bool) {
 
 	switch p.tok {
 	case token.COLON:
+		if allowRangeExpr {
+			re, _ := p.parseRangeExpr(x[0], false, false)
+			return &ast.ExprStmt{X: re}, true
+		}
 		// labeled statement
 		colon := p.pos
 		p.next()
@@ -3265,7 +3303,7 @@ func (p *parser) parseForStmt() ast.Stmt {
 				s2 = &ast.AssignStmt{Rhs: y}
 				isRange = true
 			} else {
-				s2, isRange = p.parseSimpleStmt(rangeOk, false)
+				s2, isRange = p.parseSimpleStmtEx(rangeOk, false, true)
 			}
 		}
 		if !isRange && p.tok == token.SEMICOLON {
@@ -3287,10 +3325,18 @@ func (p *parser) parseForStmt() ast.Stmt {
 	p.expectSemi()
 
 	if isRange {
-		if stmt, ok := s2.(*ast.ForPhraseStmt); ok {
+		switch stmt := s2.(type) {
+		case *ast.ForPhraseStmt:
 			stmt.For = pos
 			stmt.Body = body
 			return stmt
+		case *ast.ExprStmt:
+			return &ast.RangeStmt{
+				For:       pos,
+				X:         stmt.X,
+				Body:      body,
+				NoRangeOp: true,
+			}
 		}
 		as := s2.(*ast.AssignStmt)
 		// check lhs
@@ -3449,6 +3495,10 @@ func (p *parser) parseImportSpec(doc *ast.CommentGroup, _ token.Token, _ int) as
 	return spec
 }
 
+func (p *parser) inClassFile() bool {
+	return p.mode&ParseGoPlusClass != 0
+}
+
 func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota int) ast.Spec {
 	if p.trace {
 		defer un(trace(p, keyword.String()+"Spec"))
@@ -3459,7 +3509,7 @@ func (p *parser) parseValueSpec(doc *ast.CommentGroup, keyword token.Token, iota
 	var typ ast.Expr
 	var tag *ast.BasicLit
 	var values []ast.Expr
-	if p.mode&ParseGoPlusClass != 0 && p.topScope == p.pkgScope && keyword == token.VAR && p.varDeclCnt == 1 {
+	if p.inClassFile() && p.topScope == p.pkgScope && keyword == token.VAR && p.varDeclCnt == 1 {
 		var starPos token.Pos
 		if p.tok == token.MUL {
 			starPos = p.pos
@@ -3602,7 +3652,7 @@ func (p *parser) parseGenDecl(keyword token.Token, f parseSpecFunction) *ast.Gen
 	}
 }
 
-func isOverloadOps(tok token.Token) bool {
+func isOverloadOp(tok token.Token) bool {
 	return int(tok) < len(overloadOps) && overloadOps[tok] != 0
 }
 
@@ -3659,6 +3709,9 @@ func (p *parser) parseOverloadDecl(decl *ast.OverloadFuncDecl) *ast.OverloadFunc
 // `func identOrOp(params) results {...}`
 // `func identOrOp = (overloadFuncs)`
 //
+// `func T.ident(params) results { ... }`
+// `func .ident(params) results { ... }` (only in classfile)
+//
 // `func (recv) identOrOp(params) results { ... }`
 // `func (T).identOrOp = (overloadFuncs)`
 // `func (params) results { ... }()`
@@ -3673,23 +3726,10 @@ func (p *parser) parseFuncDeclOrCall() (ast.Decl, *ast.CallExpr) {
 
 	var recv, params, results *ast.FieldList
 	var ident *ast.Ident
-	var isOp, isFunLit, ok bool
+	var isOp, isStatic, isFunLit, ok bool
 
-	if p.tok != token.LPAREN {
-		// func: `func identOrOp(...) results`
-		// overload: `func identOrOp = (overloadFuncs)`
-		ident, isOp = p.parseIdentOrOp()
-		if p.tok == token.ASSIGN {
-			// func identOrOp = (overloadFuncs)
-			return p.parseOverloadDecl(&ast.OverloadFuncDecl{
-				Doc:      doc,
-				Func:     pos,
-				Name:     ident,
-				Operator: isOp,
-			}), nil
-		}
-		params, results = p.parseSignature(scope)
-	} else {
+	switch p.tok {
+	case token.LPAREN:
 		// method: `func (recv) identOrOp(params) results { ... }`
 		// overload: `func (T).identOrOp = (overloadFuncs)`
 		// funlit: `func (params) results { ... }()`
@@ -3708,8 +3748,8 @@ func (p *parser) parseFuncDeclOrCall() (ast.Decl, *ast.CallExpr) {
 				Name:     ident,
 				Operator: isOp,
 			}), nil
-		} else if isOp = isOverloadOps(p.tok); isOp {
-			oldtok, oldpos := p.tok, p.pos
+		} else if isOp = isOverloadOp(p.tok); isOp {
+			oldtok, oldpos, oldlit := p.tok, p.pos, p.lit
 			p.next()
 			if p.tok == token.LPAREN {
 				// func (recv) op(params) results { ... }
@@ -3717,10 +3757,12 @@ func (p *parser) parseFuncDeclOrCall() (ast.Decl, *ast.CallExpr) {
 				params, results = p.parseSignature(scope)
 			} else {
 				// func (params) typ { ... }()
-				p.unget(oldpos, oldtok, "")
+				p.unget(oldpos, oldtok, oldlit)
 				typ := p.tryType()
 				if typ == nil {
-					panic("TODO: invalid result type")
+					p.errorExpected(oldpos, "type", 1)
+					p.next()
+					typ = &ast.BadExpr{From: oldpos, To: p.pos}
 				}
 				isFunLit, results = true, &ast.FieldList{List: []*ast.Field{{Type: typ}}}
 			}
@@ -3749,11 +3791,44 @@ func (p *parser) parseFuncDeclOrCall() (ast.Decl, *ast.CallExpr) {
 			p.expectSemi()
 			return nil, call
 		}
+	case token.PERIOD:
+		// func .ident(...) results (only in classfile)
+		if p.inClassFile() {
+			p.next()
+			recv = &ast.FieldList{}
+			isStatic = true
+		}
+		ident = p.parseIdent()
+		params, results = p.parseSignature(scope)
+	default:
+		// func: `func identOrOp(...) results`
+		// overload: `func identOrOp = (overloadFuncs)`
+		// static method: `func T.ident(...) results`
+		ident, isOp = p.parseIdentOrOp()
+		switch p.tok {
+		case token.ASSIGN:
+			// func identOrOp = (overloadFuncs)
+			return p.parseOverloadDecl(&ast.OverloadFuncDecl{
+				Doc:      doc,
+				Func:     pos,
+				Name:     ident,
+				Operator: isOp,
+			}), nil
+		case token.PERIOD:
+			// func T.ident(...) results
+			if !isOp {
+				p.next()
+				recv = &ast.FieldList{List: []*ast.Field{{Type: ident}}}
+				ident = p.parseIdent()
+				isStatic = true
+			}
+		}
+		params, results = p.parseSignature(scope)
 	}
 
 	if isOp {
 		if params == nil || len(params.List) != 1 {
-			log.Panicln("TODO: overload operator can only have one parameter")
+			p.error(ident.Pos(), "overload operator can only have one parameter")
 		}
 	}
 	var body *ast.BlockStmt
@@ -3783,6 +3858,7 @@ func (p *parser) parseFuncDeclOrCall() (ast.Decl, *ast.CallExpr) {
 		},
 		Body:     body,
 		Operator: isOp,
+		Static:   isStatic,
 	}
 	if recv == nil {
 		// Go spec: The scope of an identifier denoting a constant, type,

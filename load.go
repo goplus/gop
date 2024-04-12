@@ -18,7 +18,6 @@ package gop
 
 import (
 	"fmt"
-	"go/types"
 	"io/fs"
 	"os"
 	"path"
@@ -115,11 +114,12 @@ func isNotatedErr(err error, pkg *ast.Package, fset *token.FileSet) (notatedErr 
 
 // -----------------------------------------------------------------------------
 
+// Config represents a configuration for loading Go+ packages.
 type Config struct {
 	Gop      *env.Gop
 	Fset     *token.FileSet
 	Mod      *gopmod.Module
-	Importer types.Importer
+	Importer *Importer
 
 	Filter func(fs.FileInfo) bool
 
@@ -127,12 +127,25 @@ type Config struct {
 	// see https://pkg.go.dev/github.com/goplus/gogen#File.CheckGopDeps
 	GopDeps *int
 
+	// CacheFile specifies the file path of the cache.
+	CacheFile string
+
 	IgnoreNotatedError bool
 	DontUpdateGoMod    bool
 }
 
+// ConfFlags represents configuration flags.
+type ConfFlags int
+
+const (
+	ConfFlagIgnoreNotatedError ConfFlags = 1 << iota
+	ConfFlagDontUpdateGoMod
+	ConfFlagNoTestFiles
+	ConfFlagNoCacheFile
+)
+
 // NewDefaultConf creates a dfault configuration for common cases.
-func NewDefaultConf(dir string, noTestFile bool) (conf *Config, err error) {
+func NewDefaultConf(dir string, flags ConfFlags) (conf *Config, err error) {
 	mod, err := LoadMod(dir)
 	if err != nil {
 		return
@@ -140,11 +153,30 @@ func NewDefaultConf(dir string, noTestFile bool) (conf *Config, err error) {
 	gop := gopenv.Get()
 	fset := token.NewFileSet()
 	imp := NewImporter(mod, gop, fset)
-	conf = &Config{Gop: gop, Fset: fset, Mod: mod, Importer: imp}
-	if noTestFile {
+	conf = &Config{
+		Gop: gop, Fset: fset, Mod: mod, Importer: imp,
+		IgnoreNotatedError: flags&ConfFlagIgnoreNotatedError != 0,
+		DontUpdateGoMod:    flags&ConfFlagDontUpdateGoMod != 0,
+	}
+	if flags&ConfFlagNoCacheFile == 0 {
+		conf.CacheFile = imp.CacheFile()
+		imp.Cache().Load(conf.CacheFile)
+	}
+	if flags&ConfFlagNoTestFiles != 0 {
 		conf.Filter = FilterNoTestFiles
 	}
 	return
+}
+
+// UpdateCache updates the cache.
+func (conf *Config) UpdateCache(verbose ...bool) {
+	if conf.CacheFile != "" {
+		c := conf.Importer.Cache()
+		c.Save(conf.CacheFile)
+		if verbose != nil && verbose[0] {
+			fmt.Println("Times of calling go list:", c.ListTimes())
+		}
+	}
 }
 
 // LoadMod loads a Go+ module from a specified directory.
@@ -369,5 +401,12 @@ var (
 	ErrMultiPackges     = errors.New("multiple packages")
 	ErrMultiTestPackges = errors.New("multiple test packages")
 )
+
+// -----------------------------------------------------------------------------
+
+// GetFileClassType get gop module file classType.
+func GetFileClassType(mod *gopmod.Module, file *ast.File, filename string) (classType string, isTest bool, ok bool) {
+	return cl.GetFileClassType(file, filename, mod.LookupClass)
+}
 
 // -----------------------------------------------------------------------------

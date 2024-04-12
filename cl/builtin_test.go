@@ -92,11 +92,14 @@ func TestCompileLambda2(t *testing.T) {
 
 func TestCompileExpr(t *testing.T) {
 	defer func() {
-		if e := recover(); e != "compileExpr failed: unknown - *ast.Ellipsis\n" {
-			t.Fatal("compileExpr:", e)
+		if e := recover(); e != nil {
+			if ce := e.(*gogen.CodeError); ce.Msg != "compileExpr failed: unknown - *ast.Ellipsis" {
+				t.Fatal("compileExpr:", ce.Msg)
+			}
 		}
 	}()
-	compileExpr(nil, &ast.Ellipsis{})
+	ctx := &blockCtx{pkgCtx: &pkgCtx{}}
+	compileExpr(ctx, &ast.Ellipsis{})
 }
 
 func TestCompileStmt(t *testing.T) {
@@ -255,6 +258,17 @@ func TestErrParseTypeEmbedName(t *testing.T) {
 func TestGmxCheckProjs(t *testing.T) {
 	_, multi := gmxCheckProjs(nil, &pkgCtx{
 		projs: map[string]*gmxProject{
+			".a": {hasMain_: true}, ".b": {hasMain_: true},
+		},
+	})
+	if !multi {
+		t.Fatal("gmxCheckProjs: not multi?")
+	}
+}
+
+func TestGmxCheckProjs2(t *testing.T) {
+	_, multi := gmxCheckProjs(nil, &pkgCtx{
+		projs: map[string]*gmxProject{
 			".a": {}, ".b": {},
 		},
 	})
@@ -297,6 +311,80 @@ func TestClassNameAndExt(t *testing.T) {
 	name, clsfile, ext = ClassNameAndExt("/foo/get-bar_:id.yap")
 	if name != "get_bar_id" || clsfile != "get-bar_:id" || ext != ".yap" {
 		t.Fatal("classNameAndExt:", name, ext)
+	}
+}
+
+func TestFileClassType(t *testing.T) {
+	type testData struct {
+		isClass     bool
+		isNormalGox bool
+		isProj      bool
+		fileName    string
+		classType   string
+		isTest      bool
+		found       bool
+	}
+	tests := []*testData{
+		{false, false, false, "abc.gop", "", false, false},
+		{false, false, false, "abc_test.gop", "", true, false},
+
+		{true, true, false, "abc.gox", "abc", false, true},
+		{true, true, false, "Abc.gox", "Abc", false, true},
+		{true, true, false, "abc_demo.gox", "abc", false, true},
+		{true, true, false, "Abc_demo.gox", "Abc", false, true},
+
+		{true, true, false, "main.gox", "_main", false, true},
+		{true, true, false, "main_demo.gox", "_main", false, true},
+		{true, true, false, "abc_xtest.gox", "abc", false, true},
+		{true, true, false, "main_xtest.gox", "_main", false, true},
+
+		{true, true, false, "abc_test.gox", "case_abc", true, true},
+		{true, true, false, "Abc_test.gox", "caseAbc", true, true},
+		{true, true, false, "main_test.gox", "case_main", true, true},
+
+		{true, false, false, "get.yap", "get", false, true},
+		{true, false, false, "get_p_#id.yap", "get_p_id", false, true},
+		{true, false, true, "main.yap", "AppV2", false, true},
+
+		{true, false, false, "abc_yap.gox", "abc", false, true},
+		{true, false, false, "Abc_yap.gox", "Abc", false, true},
+		{true, false, true, "main_yap.gox", "App", false, true},
+
+		{true, false, false, "abc_ytest.gox", "case_abc", true, true},
+		{true, false, false, "Abc_ytest.gox", "caseAbc", true, true},
+		{true, false, true, "main_ytest.gox", "App", true, true},
+	}
+	lookupClass := func(ext string) (c *Project, ok bool) {
+		switch ext {
+		case ".yap":
+			return &modfile.Project{
+				Ext: ".yap", Class: "AppV2",
+				Works:    []*modfile.Class{{Ext: ".yap", Class: "Handler"}},
+				PkgPaths: []string{"github.com/goplus/yap"}}, true
+		case "_yap.gox":
+			return &modfile.Project{
+				Ext: "_yap.gox", Class: "App",
+				PkgPaths: []string{"github.com/goplus/yap"}}, true
+		case "_ytest.gox":
+			return &modfile.Project{
+				Ext: "_ytest.gox", Class: "App",
+				Works:    []*modfile.Class{{Ext: "_ytest.gox", Class: "Case"}},
+				PkgPaths: []string{"github.com/goplus/yap/ytest", "testing"}}, true
+		}
+		return
+	}
+	for _, test := range tests {
+		f := &ast.File{IsClass: test.isClass, IsNormalGox: test.isNormalGox, IsProj: test.isProj}
+		classType, isTest, found := GetFileClassType(f, test.fileName, lookupClass)
+		if found != test.found {
+			t.Fatalf("%v found classType want %v, got %v.", test.fileName, test.found, found)
+		}
+		if isTest != test.isTest {
+			t.Fatalf("%v check classType isTest want %v, got %v.", test.fileName, test.isTest, isTest)
+		}
+		if classType != test.classType {
+			t.Fatalf("%v getClassType want %v, got %v.", test.fileName, test.classType, classType)
+		}
 	}
 }
 

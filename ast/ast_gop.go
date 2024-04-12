@@ -118,7 +118,7 @@ func (*EnvExpr) exprNode() {}
 // A SliceLit node represents a slice literal.
 type SliceLit struct {
 	Lbrack     token.Pos // position of "["
-	Elts       []Expr    // list of composite elements; or nil
+	Elts       []Expr    // list of slice elements; or nil
 	Rbrack     token.Pos // position of "]"
 	Incomplete bool      // true if (source) expressions are missing in the Elts list
 }
@@ -134,6 +134,48 @@ func (p *SliceLit) End() token.Pos {
 }
 
 func (*SliceLit) exprNode() {}
+
+// -----------------------------------------------------------------------------
+
+// A MatrixLit node represents a matrix literal.
+type MatrixLit struct {
+	Lbrack     token.Pos // position of "["
+	Elts       [][]Expr  // list of matrix elements
+	Rbrack     token.Pos // position of "]"
+	Incomplete bool      // true if (source) expressions are missing in the Elts list
+}
+
+// Pos - position of first character belonging to the node.
+func (p *MatrixLit) Pos() token.Pos {
+	return p.Lbrack
+}
+
+// End - position of first character immediately after the node.
+func (p *MatrixLit) End() token.Pos {
+	return p.Rbrack + 1
+}
+
+func (*MatrixLit) exprNode() {}
+
+// -----------------------------------------------------------------------------
+
+// A ElemEllipsis node represents a matrix row elements.
+type ElemEllipsis struct {
+	Elt      Expr      // ellipsis element
+	Ellipsis token.Pos // position of "..."
+}
+
+// Pos - position of first character belonging to the node.
+func (p *ElemEllipsis) Pos() token.Pos {
+	return p.Elt.Pos()
+}
+
+// End - position of first character immediately after the node.
+func (p *ElemEllipsis) End() token.Pos {
+	return p.Ellipsis + 3
+}
+
+func (*ElemEllipsis) exprNode() {}
 
 // -----------------------------------------------------------------------------
 

@@ -1,0 +1,24 @@
+package main
+
+file embtype.gop
+ast.GenDecl:
+  Tok: type
+  Specs:
+    ast.TypeSpec:
+      Name:
+        ast.Ident:
+          Name: T
+      Type:
+        ast.StructType:
+          Fields:
+            ast.FieldList:
+              List:
+                ast.Field:
+                  Type:
+                    ast.SelectorExpr:
+                      X:
+                        ast.Ident:
+                          Name: abc
+                      Sel:
+                        ast.Ident:
+                          Name: E

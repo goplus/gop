@@ -1,0 +1,47 @@
+package main
+
+file matrix.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: echo
+              Args:
+                ast.MatrixLit:
+                  Elts:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 1
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 2
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 3
+                    ast.ElemEllipsis:
+                      Elt:
+                        ast.Ident:
+                          Name: row
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 7
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 8
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 9
+                  NElt: 3

@@ -968,6 +968,24 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		p.print(indent, unindent, mode, x.Rbrace, token.RBRACE, mode)
 		p.level--
 
+	case *ast.MatrixLit:
+		p.level++
+		p.print(x.Lbrack, token.LBRACK, newline, indent)
+		var last = len(x.Elts) - 1
+		var incomplete bool
+		for i, elts := range x.Elts {
+			if i == last {
+				incomplete = x.Incomplete
+			}
+			p.exprList(elts[0].Pos(), elts, 1, 0, elts[len(elts)-1].End(), incomplete)
+			p.print(newline)
+		}
+		mode := noExtraLinebreak | noExtraBlank
+		// need the initial indent to print lone comments with
+		// the proper level of indentation
+		p.print(unindent, mode, x.Rbrack, token.RBRACK, mode)
+		p.level--
+
 	case *ast.Ellipsis:
 		p.print(token.ELLIPSIS)
 		if x.Elt != nil {
@@ -1034,7 +1052,7 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 			p.print(token.LBRACK)
 			p.expr0(x.Elt, depth+1)
 			p.print(blank)
-			p.listForPhrase(x.Lpos, x.Fors, depth, x.Rpos)
+			p.listForPhrase(x.Fors)
 			p.print(token.RBRACK)
 		default: // {...}
 			p.print(token.LBRACE)
@@ -1048,7 +1066,7 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 				}
 				p.print(blank)
 			}
-			p.listForPhrase(x.Lpos, x.Fors, depth, x.Rpos)
+			p.listForPhrase(x.Fors)
 			p.print(token.RBRACE)
 		}
 	case *ast.ErrWrapExpr:
@@ -1109,12 +1127,16 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 			p.print(x.Name)
 		}
 
+	case *ast.ElemEllipsis:
+		p.expr(x.Elt)
+		p.print(token.ELLIPSIS)
+
 	default:
 		log.Fatalf("unreachable %T\n", x)
 	}
 }
 
-func (p *printer) listForPhrase(prev0 token.Pos, list []*ast.ForPhrase, depth int, next0 token.Pos) {
+func (p *printer) listForPhrase(list []*ast.ForPhrase) {
 	for i, x := range list {
 		if i > 0 {
 			p.print(blank)
@@ -1516,7 +1538,9 @@ func (p *printer) stmt(stmt ast.Stmt, nextIsRBrace bool) {
 			}
 			p.print(blank, s.TokPos, s.Tok, blank)
 		}
-		p.print(token.RANGE, blank)
+		if !s.NoRangeOp {
+			p.print(token.RANGE, blank)
+		}
 		p.expr(stripParens(s.X))
 		p.print(blank)
 		p.block(s.Body, 1)
@@ -1904,6 +1928,7 @@ func (p *printer) funcBody(headerSize int, sep whiteSpace, b *ast.BlockStmt) {
 // by sep. Otherwise the block's opening "{" is printed on the current line, followed by
 // lines for the block's statements and its closing "}".
 func (p *printer) funcBodyUnnamed(headerSize int, sep whiteSpace, b *ast.BlockStmt) {
+	_, _ = headerSize, sep
 	if b == nil {
 		return
 	}
@@ -1990,9 +2015,18 @@ func (p *printer) funcDecl(d *ast.FuncDecl) {
 	// different line (all whitespace preceding the FUNC is emitted only when the
 	// FUNC is emitted).
 	startCol := p.out.Column - len("func ")
-	if d.Recv != nil && !d.IsClass {
-		p.parameters(d.Recv) // method: print receiver
-		p.print(blank)
+	if d.Recv != nil {
+		if d.Static { // static method
+			if !d.IsClass {
+				if list := d.Recv.List; len(list) > 0 {
+					p.expr(list[0].Type)
+				}
+			}
+			p.print(token.PERIOD)
+		} else if !d.IsClass {
+			p.parameters(d.Recv) // method: print receiver
+			p.print(blank)
+		}
 	}
 	p.expr(d.Name)
 	if d.Operator && d.Recv != nil {
@@ -2056,6 +2090,10 @@ func declToken(decl ast.Decl) (tok token.Token) {
 func (p *printer) declList(list []ast.Decl) {
 	tok := token.ILLEGAL
 	for _, d := range list {
+		// skip no entry shadow
+		if decl, ok := d.(*ast.FuncDecl); ok && decl.Shadow && decl != p.shadowEntry {
+			continue
+		}
 		prev := tok
 		tok = declToken(d)
 		// If the declaration token changed (e.g., from CONST to TYPE)

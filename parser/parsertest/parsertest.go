@@ -84,6 +84,9 @@ func FprintNode(w io.Writer, lead string, v interface{}, prefix, indent string) 
 					FprintNode(w, fmt.Sprintf("%s%v:\n", prefix, sf.Name), sfv, prefix+indent, indent)
 				}
 			}
+			if m, ok := v.(*ast.MatrixLit); ok {
+				fmt.Fprintf(w, "%sNElt: %d\n", prefix, len(m.Elts))
+			}
 		} else if lit, ok := v.(*ast.StringLitEx); ok {
 			fmt.Fprintf(w, "%sExtra:\n", prefix)
 			prefix += indent

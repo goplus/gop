@@ -17,6 +17,7 @@
 package cl_test
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -372,6 +373,46 @@ func mulFloat(a float64, b float64) float64 {
 func main() {
 	fmt.Println(mulInt(100, 7))
 	fmt.Println(mulFloat(1.2, 3.14))
+}
+`)
+}
+
+func TestOverloadFunc3(t *testing.T) {
+	gopClTest(t, `
+func addInt(a, b int) int {
+	return a + b
+}
+
+func addFloat(a, b float64) float64 {
+	return a * b
+}
+
+func add = (
+	func (a,b string) string { return a + b }
+	addInt
+	addFloat
+)
+
+println add(100, 7)
+println add(1.2, 3.14)
+`, `package main
+
+import "fmt"
+
+const Gopo_add = ",addInt,addFloat"
+
+func add__0(a string, b string) string {
+	return a + b
+}
+func addInt(a int, b int) int {
+	return a + b
+}
+func addFloat(a float64, b float64) float64 {
+	return a * b
+}
+func main() {
+	fmt.Println(addInt(100, 7))
+	fmt.Println(addFloat(1.2, 3.14))
 }
 `)
 }
@@ -1225,6 +1266,264 @@ func main() {
 `)
 }
 
+func testRangeExpr(t *testing.T, codeTpl, expect string) {
+	for k, s := range []string{" <- ", " := range ", " = range "} {
+		if k == 2 {
+			codeTpl = "i:=0\n" + codeTpl
+			expect = strings.Replace(expect, "for i := ", "i := 0\n\tfor i = ", -1)
+		}
+		gopClTest(t, strings.Replace(codeTpl, "$", s, -1), expect)
+	}
+}
+
+func TestRangeExpr(t *testing.T) {
+	testRangeExpr(t, `
+for i $ :10 {
+	println(i)
+}`, `package main
+
+import "fmt"
+
+func main() {
+	for i := 0; i < 10; i += 1 {
+		fmt.Println(i)
+	}
+}
+`)
+	testRangeExpr(t, `
+for i $ 1:10:3 {
+	println(i)
+}`, `package main
+
+import "fmt"
+
+func main() {
+	for i := 1; i < 10; i += 3 {
+		fmt.Println(i)
+	}
+}
+`)
+}
+
+func TestRangeExpr2(t *testing.T) {
+	testRangeExpr(t, `
+for i $ 1:10:2 {
+	println(i)
+}`, `package main
+
+import "fmt"
+
+func main() {
+	for i := 1; i < 10; i += 2 {
+		fmt.Println(i)
+	}
+}
+`)
+}
+
+func TestRangeExpr3(t *testing.T) {
+	testRangeExpr(t, `
+for i $ 1:10 {
+	println(i)
+}`, `package main
+
+import "fmt"
+
+func main() {
+	for i := 1; i < 10; i += 1 {
+		fmt.Println(i)
+	}
+}
+`)
+}
+
+func TestRangeExpr4(t *testing.T) {
+	testRangeExpr(t, `
+for i $ :10:2 {
+	println(i)
+}`, `package main
+
+import "fmt"
+
+func main() {
+	for i := 0; i < 10; i += 2 {
+		fmt.Println(i)
+	}
+}
+`)
+}
+
+func TestRangeExpr5(t *testing.T) {
+	gopClTest(t, `
+for range :10 {
+	println("Hi")
+}`, `package main
+
+import "fmt"
+
+func main() {
+	for _gop_k := 0; _gop_k < 10; _gop_k += 1 {
+		fmt.Println("Hi")
+	}
+}
+`)
+}
+
+func TestRangeExpr6(t *testing.T) {
+	gopClTest(t, `
+for _ <- :10 {
+	println("Hi")
+}`, `package main
+
+import "fmt"
+
+func main() {
+	for _gop_k := 0; _gop_k < 10; _gop_k += 1 {
+		fmt.Println("Hi")
+	}
+}
+`)
+}
+
+func TestRangeExpr7(t *testing.T) {
+	gopClTest(t, `
+println [x for x <- 0:3:1]
+`, `package main
+
+import (
+	"fmt"
+	"github.com/goplus/gop/builtin"
+)
+
+func main() {
+	fmt.Println(func() (_gop_ret []int) {
+		for _gop_it := builtin.NewRange__0(0, 3, 1).Gop_Enum(); ; {
+			var _gop_ok bool
+			x, _gop_ok := _gop_it.Next()
+			if !_gop_ok {
+				break
+			}
+			_gop_ret = append(_gop_ret, x)
+		}
+		return
+	}())
+}
+`)
+}
+
+func testRangeExpr8(t *testing.T, codeTpl, expect string) {
+	for _, s := range []string{" <- ", " := range "} {
+		gopClTest(t, strings.Replace(codeTpl, "$", s, -1), expect)
+	}
+}
+
+func TestRangeExpr8(t *testing.T) {
+	testRangeExpr8(t, `
+type T struct{}
+
+func (t T) start() int {
+	return 0
+}
+func (t T) end() int{
+	return 3
+}
+func (t T) step() int{
+	return 1
+}
+
+t:=T{}
+
+for i <- t.start():t.end():t.step(){
+	println i
+}
+`, `package main
+
+import "fmt"
+
+type T struct {
+}
+
+func (t T) start() int {
+	return 0
+}
+func (t T) end() int {
+	return 3
+}
+func (t T) step() int {
+	return 1
+}
+func main() {
+	t := T{}
+	for i, _gop_end, _gop_step := t.start(), t.end(), t.step(); i < _gop_end; i += _gop_step {
+		fmt.Println(i)
+	}
+}
+`)
+}
+
+func TestRangeExpr9(t *testing.T) {
+	testRangeExpr8(t, `
+type T struct{}
+
+func (t T) start() int {
+	return 0
+}
+func (t T) end() int{
+	return 3
+}
+func (t T) step() int{
+	return 1
+}
+
+t:=T{}
+i:=0
+for i =range t.start():t.end():t.step(){
+	println i
+}
+`, `package main
+
+import "fmt"
+
+type T struct {
+}
+
+func (t T) start() int {
+	return 0
+}
+func (t T) end() int {
+	return 3
+}
+func (t T) step() int {
+	return 1
+}
+func main() {
+	t := T{}
+	i := 0
+	for _gop_k, _gop_end, _gop_step := t.start(), t.end(), t.step(); _gop_k < _gop_end; _gop_k += _gop_step {
+		i = _gop_k
+		fmt.Println(i)
+	}
+}
+`)
+}
+
+func TestRangeExpr10(t *testing.T) {
+	gopClTest(t, `
+for :10 {
+	echo "Hi"
+}
+`, `package main
+
+import "fmt"
+
+func main() {
+	for _gop_k := 0; _gop_k < 10; _gop_k += 1 {
+		fmt.Println("Hi")
+	}
+}
+`)
+}
+
 func Test_RangeExpressionIf_Issue1243(t *testing.T) {
 	gopClTest(t, `
 for i <- :10, i%3 == 0 {
@@ -1239,6 +1538,35 @@ func main() {
 			fmt.Println(i)
 		}
 	}
+}
+`)
+}
+
+func TestStaticMethod(t *testing.T) {
+	gopClTest(t, `
+type foo int
+
+func foo.New(a int) *foo {
+	return new(foo)
+}
+
+func foo._add() *foo {
+	return new(foo)
+}
+
+a := foo.new(100)
+`, `package main
+
+type foo int
+
+func Gops_foo_New(a int) *foo {
+	return new(foo)
+}
+func Gops__foo___add() *foo {
+	return new(foo)
+}
+func main() {
+	a := Gops_foo_New(100)
 }
 `)
 }
