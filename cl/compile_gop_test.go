@@ -1553,6 +1553,8 @@ func foo.New(a int) *foo {
 func foo._add() *foo {
 	return new(foo)
 }
+
+a := foo.new(100)
 `, `package main
 
 type foo int
@@ -1562,6 +1564,9 @@ func Gops_foo_New(a int) *foo {
 }
 func Gops__foo___add() *foo {
 	return new(foo)
+}
+func main() {
+	a := Gops_foo_New(100)
 }
 `)
 }
