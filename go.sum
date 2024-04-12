@@ -6,8 +6,8 @@ github.com/fsnotify/fsnotify v1.7.0/go.mod h1:40Bi/Hjc2AVfZrqy+aj+yEI+/bRxZnMJyT
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
 github.com/goplus/c2go v0.7.25 h1:QvQfOwGVGKFYOTLry8i4p9U55jnIOQWeLsnSyFg0hhc=
 github.com/goplus/c2go v0.7.25/go.mod h1:e9oe4jDVhGFMJLEGmPSrVkLuXbLZAEmAu0/uD6fSz5E=
-github.com/goplus/gogen v1.15.2-0.20240401172158-4586769ba6d4 h1:u4aI5iMvIEBHg3Ity6LtqM2JZeHecMtINqXyi563YHo=
-github.com/goplus/gogen v1.15.2-0.20240401172158-4586769ba6d4/go.mod h1:92qEzVgv7y8JEFICWG9GvYI5IzfEkxYdsA1DbmnTkqk=
+github.com/goplus/gogen v1.15.2 h1:Q6XaSx/Zi5tWnjfAziYsQI6Jv6MgODRpFtOYqNkiiqM=
+github.com/goplus/gogen v1.15.2/go.mod h1:92qEzVgv7y8JEFICWG9GvYI5IzfEkxYdsA1DbmnTkqk=
 github.com/goplus/mod v0.13.10 h1:5Om6KOvo31daN7N30kWU1vC5zhsJPM+uPbcEN/FnlzE=
 github.com/goplus/mod v0.13.10/go.mod h1:HDuPZgpWiaTp3PUolFgsiX+Q77cbUWB/mikVHfYND3c=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=
