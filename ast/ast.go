@@ -1156,8 +1156,12 @@ func (f *File) Pos() token.Pos {
 
 // End returns position of first character immediately after the node.
 func (f *File) End() token.Pos {
-	if n := len(f.Decls); n > 0 {
-		return f.Decls[n-1].End()
+	for n := len(f.Decls) - 1; n >= 0; n-- {
+		d := f.Decls[n]
+		if fn, ok := d.(*FuncDecl); ok && fn.Shadow && fn != f.ShadowEntry {
+			continue
+		}
+		return d.End()
 	}
 	return f.Name.End()
 }
