@@ -26,6 +26,7 @@ import (
 	"github.com/goplus/gogen/cpackages"
 	"github.com/goplus/gogen/packages"
 	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/mod/modfile"
 )
@@ -685,6 +686,18 @@ func testPanic(t *testing.T, panicMsg string, doPanic func()) {
 		}()
 		doPanic()
 	})
+}
+
+func TestClassFileEnd(t *testing.T) {
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "get.yap", `json {"id": ${id} }`, parser.ParseGoPlusClass)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.Decls = append(f.Decls, astFnClassfname(&gmxClass{clsfile: "get"}))
+	if f.End() != f.ShadowEntry.End() {
+		t.Fatal("class file end not shadow entry")
+	}
 }
 
 // -----------------------------------------------------------------------------
