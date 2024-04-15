@@ -138,15 +138,19 @@ func GenGo(pattern ...string) (err error) {
 	if err != nil {
 		return
 	}
+	conf, _ := gop.NewDefaultConf(".", 0)
+	if conf != nil {
+		defer conf.UpdateCache()
+	}
 	for _, proj := range projs {
 		switch v := proj.(type) {
 		case *gopprojs.DirProj:
-			gop.GenGoEx(v.Dir, nil, true, 0)
+			gop.GenGoEx(v.Dir, conf, true, 0)
 		case *gopprojs.PkgPathProj:
 			if v.Path == "builtin" {
 				continue
 			}
-			gop.GenGoPkgPathEx("", v.Path, nil, true, 0)
+			gop.GenGoPkgPathEx("", v.Path, conf, true, 0)
 		}
 	}
 	return
