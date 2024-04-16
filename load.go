@@ -405,7 +405,7 @@ var (
 // -----------------------------------------------------------------------------
 
 // GetFileClassType get gop module file classType.
-func GetFileClassType(mod *gopmod.Module, file *ast.File, filename string) (classType string, isTest bool, ok bool) {
+func GetFileClassType(mod *gopmod.Module, file *ast.File, filename string) (classType string, isTest bool) {
 	return cl.GetFileClassType(file, filename, mod.LookupClass)
 }
 
