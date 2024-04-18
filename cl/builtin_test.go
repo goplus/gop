@@ -351,6 +351,10 @@ func TestFileClassType(t *testing.T) {
 		{true, false, false, "Abc_yap.gox", "Abc", false, true},
 		{true, false, true, "main_yap.gox", "App", false, true},
 
+		{true, false, true, "abc_yap.gox", "abc", false, true},
+		{true, false, true, "Abc_yap.gox", "Abc", false, true},
+		{true, false, true, "main_yap.gox", "App", false, true},
+
 		{true, false, false, "abc_ytest.gox", "case_abc", true, true},
 		{true, false, false, "Abc_ytest.gox", "caseAbc", true, true},
 		{true, false, true, "main_ytest.gox", "App", true, true},
@@ -376,10 +380,7 @@ func TestFileClassType(t *testing.T) {
 	}
 	for _, test := range tests {
 		f := &ast.File{IsClass: test.isClass, IsNormalGox: test.isNormalGox, IsProj: test.isProj}
-		classType, isTest, found := GetFileClassType(f, test.fileName, lookupClass)
-		if found != test.found {
-			t.Fatalf("%v found classType want %v, got %v.", test.fileName, test.found, found)
-		}
+		classType, isTest := GetFileClassType(f, test.fileName, lookupClass)
 		if isTest != test.isTest {
 			t.Fatalf("%v check classType isTest want %v, got %v.", test.fileName, test.isTest, isTest)
 		}

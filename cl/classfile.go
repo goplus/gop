@@ -97,11 +97,10 @@ func ClassNameAndExt(file string) (name, clsfile, ext string) {
 }
 
 // GetFileClassType get ast.File classType
-func GetFileClassType(file *ast.File, filename string, lookupClass func(ext string) (c *Project, ok bool)) (classType string, isTest bool, ok bool) {
+func GetFileClassType(file *ast.File, filename string, lookupClass func(ext string) (c *Project, ok bool)) (classType string, isTest bool) {
 	if file.IsClass {
 		var ext string
 		classType, _, ext = ClassNameAndExt(filename)
-		ok = true
 		if file.IsNormalGox {
 			isTest = strings.HasSuffix(ext, "_test.gox")
 			if !isTest && classType == "main" {
@@ -110,7 +109,7 @@ func GetFileClassType(file *ast.File, filename string, lookupClass func(ext stri
 		} else {
 			isTest = strings.HasSuffix(ext, "test.gox")
 		}
-		if file.IsProj {
+		if file.IsProj && classType == "main" {
 			if gt, ok := lookupClass(ext); ok {
 				classType = gt.Class
 			}
