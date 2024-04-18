@@ -336,7 +336,7 @@ func relativeBaseOf(mod *gopmod.Module) string {
 
 // -----------------------------------------------------------------------------
 
-// LoadDir loads a Go+ package from specified files.
+// LoadFiles loads a Go+ package from specified files.
 func LoadFiles(dir string, files []string, conf *Config) (out *gogen.Package, err error) {
 	if conf == nil {
 		conf = new(Config)
