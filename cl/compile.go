@@ -1080,7 +1080,8 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 			if d.Recv != nil {
 				otyp, ok := d.Recv.List[0].Type.(*ast.Ident)
 				if !ok {
-					log.Panicln("TODO - cl.preloadFile OverloadFuncDecl: invalid recv")
+					ctx.handleErrorf(d.Recv.List[0].Type.Pos(), "invalid recv type %v", ctx.LoadExpr(d.Recv.List[0].Type))
+					break
 				}
 				recv = otyp
 				if ctx.rec != nil {
@@ -1090,10 +1091,14 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 			onames := make([]string, 0, 4)
 			exov := false
 			name := d.Name
+		LoopFunc:
 			for idx, fn := range d.Funcs {
 				switch expr := fn.(type) {
 				case *ast.Ident:
-					checkOverloadFunc(d)
+					if d.Recv != nil && !d.Operator {
+						ctx.handleErrorf(expr.Pos(), "invalid method %v", ctx.LoadExpr(expr))
+						break LoopFunc
+					}
 					onames = append(onames, expr.Name)
 					ctx.lbinames = append(ctx.lbinames, expr.Name)
 					exov = true
@@ -1101,8 +1106,16 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 						ctx.rec.Refer(expr, expr.Name)
 					}
 				case *ast.SelectorExpr:
-					checkOverloadMethod(d)
-					rtyp := checkOverloadMethodRecvType(recv, expr.X)
+					if d.Recv == nil {
+						ctx.handleErrorf(expr.Pos(), "invalid func %v", ctx.LoadExpr(expr))
+						break LoopFunc
+					}
+					rtyp, ok := checkOverloadMethodRecvType(recv, expr.X)
+					if !ok {
+						ctx.handleErrorf(expr.Pos(), "invalid recv type %v", ctx.LoadExpr(expr.X))
+						break LoopFunc
+					}
+
 					onames = append(onames, "."+expr.Sel.Name)
 					ctx.lbinames = append(ctx.lbinames, recv)
 					exov = true
@@ -1111,7 +1124,10 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 						ctx.rec.Refer(expr.Sel, rtyp.Name+"."+expr.Sel.Name)
 					}
 				case *ast.FuncLit:
-					checkOverloadFunc(d)
+					if d.Recv != nil && !d.Operator {
+						ctx.handleErrorf(expr.Pos(), "invalid method %v", ctx.LoadExpr(expr))
+						break LoopFunc
+					}
 					name1 := overloadFuncName(name.Name, idx)
 					onames = append(onames, "") // const Gopo_xxx = "xxxInt,,xxxFloat"
 					ctx.lbinames = append(ctx.lbinames, name1)
@@ -1122,11 +1138,16 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 						Body: expr.Body,
 					})
 				default:
-					log.Panicf("TODO - cl.preloadFile OverloadFuncDecl: unknown func - %T\n", expr)
+					ctx.handleErrorf(expr.Pos(), "unknown func %v", ctx.LoadExpr(expr))
+					break LoopFunc
 				}
 			}
 			if exov { // need Gopo_xxx
-				oname := overloadName(recv, name.Name, d.Operator)
+				oname, err := overloadName(recv, name.Name, d.Operator)
+				if err != nil {
+					ctx.handleErrorf(name.NamePos, "%v", err)
+					break
+				}
 				oval := strings.Join(onames, ",")
 				preloadConst(&ast.GenDecl{
 					Doc: d.Doc,
@@ -1147,25 +1168,16 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 	}
 }
 
-func checkOverloadFunc(d *ast.OverloadFuncDecl) {
-	if d.Recv != nil && !d.Operator {
-		log.Panicln("TODO - cl.preloadFile OverloadFuncDecl: checkOverloadFunc")
+func checkOverloadMethodRecvType(ot *ast.Ident, recv ast.Expr) (*ast.Ident, bool) {
+	rtyp, _, ok := getRecvType(recv)
+	if !ok {
+		return nil, false
 	}
-}
-
-func checkOverloadMethod(d *ast.OverloadFuncDecl) {
-	if d.Recv == nil {
-		log.Panicln("TODO - cl.preloadFile OverloadFuncDecl: checkOverloadMethod")
-	}
-}
-
-func checkOverloadMethodRecvType(ot *ast.Ident, recv ast.Expr) *ast.Ident {
-	rtyp, _ := getRecvType(recv)
 	rt, ok := rtyp.(*ast.Ident)
 	if !ok || ot.Name != rt.Name {
-		log.Panicln("TODO - checkOverloadMethodRecvType:", recv)
+		return nil, false
 	}
-	return rt
+	return rt, true
 }
 
 const (
@@ -1176,12 +1188,12 @@ func overloadFuncName(name string, idx int) string {
 	return name + "__" + indexTable[idx:idx+1]
 }
 
-func overloadName(recv *ast.Ident, name string, isOp bool) string {
+func overloadName(recv *ast.Ident, name string, isOp bool) (string, error) {
 	if isOp {
 		if oname, ok := binaryGopNames[name]; ok {
 			name = oname
 		} else {
-			log.Panicln("TODO - can't overload operator", name)
+			return "", fmt.Errorf("invalid overload operator %v", name)
 		}
 	}
 	sep := "_"
@@ -1192,7 +1204,7 @@ func overloadName(recv *ast.Ident, name string, isOp bool) string {
 	if recv != nil {
 		typ = recv.Name + sep
 	}
-	return "Gopo" + sep + typ + name
+	return "Gopo" + sep + typ + name, nil
 }
 
 func staticMethod(tname, name string) string {

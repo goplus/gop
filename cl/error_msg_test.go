@@ -1063,3 +1063,46 @@ func _() {
 }
 `)
 }
+
+func TestOverloadFuncDecl(t *testing.T) {
+	codeErrorTest(t, "bar.gop:3:2: invalid func (foo).mulInt", `
+func mul = (
+	(foo).mulInt
+)
+`)
+	codeErrorTest(t, "bar.gop:2:7: invalid recv type *foo", `
+func (*foo).mul = (
+	(foo).mulInt
+)
+`)
+	codeErrorTest(t, "bar.gop:3:2: invalid recv type (foo2)", `
+func (foo).mul = (
+	(foo2).mulInt
+)
+`)
+	codeErrorTest(t, "bar.gop:3:2: invalid method mulInt", `
+func (foo).mul = (
+	mulInt
+)
+`)
+	codeErrorTest(t, "bar.gop:3:2: invalid recv type (**foo)", `
+func (foo).mul = (
+	(**foo).mulInt
+)
+`)
+	codeErrorTest(t, `bar.gop:3:9: unknown func ("ok")`, `
+func mul = (
+	println("ok")
+)
+`)
+	codeErrorTest(t, "bar.gop:3:2: invalid method func(){}", `
+func (foo).mul = (
+	func(){}
+)
+`)
+	codeErrorTest(t, "bar.gop:2:12: invalid overload operator ++", `
+func (foo).++ = (
+	mulInt
+)
+`)
+}
