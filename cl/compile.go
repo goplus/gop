@@ -340,6 +340,7 @@ type pkgCtx struct {
 	*nodeInterp
 	projs    map[string]*gmxProject // .gmx => project
 	classes  map[*ast.File]*gmxClass
+	overpos  map[string]token.Pos // overload => pos
 	fset     *token.FileSet
 	cpkgs    *cpackages.Importer
 	syms     map[string]loader
@@ -493,6 +494,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 		nodeInterp: interp,
 		projs:      make(map[string]*gmxProject),
 		classes:    make(map[*ast.File]*gmxClass),
+		overpos:    make(map[string]token.Pos),
 		syms:       make(map[string]loader),
 		generics:   make(map[string]bool),
 	}
@@ -663,7 +665,7 @@ func initGopPkg(ctx *pkgCtx, pkg *gogen.Package, gopSyms map[string]bool) {
 			ctx.loadType(lbi.(*ast.Ident).Name)
 		}
 	}
-	gogen.InitThisGopPkg(pkg.Types)
+	gogen.InitThisGopPkgEx(pkg.Types, ctx.overpos)
 }
 
 func loadFile(ctx *pkgCtx, f *ast.File) {
@@ -1152,6 +1154,11 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 				if err != nil {
 					ctx.handleErrorf(name.NamePos, "%v", err)
 					break
+				}
+				if recv != nil {
+					ctx.overpos[recv.Name+"."+name.Name] = name.NamePos
+				} else {
+					ctx.overpos[name.Name] = name.NamePos
 				}
 				oval := strings.Join(onames, ",")
 				preloadConst(&ast.GenDecl{
