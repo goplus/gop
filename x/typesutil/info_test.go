@@ -2018,22 +2018,26 @@ Mul 100,200,300
 008:  7: 9 | a                   *ast.Ident                     | var     : float64 | variable
 009:  7: 9 | a * b               *ast.BinaryExpr                | value   : float64 | value
 010:  7:13 | b                   *ast.Ident                     | var     : float64 | variable
-011: 13:15 | int                 *ast.Ident                     | type    : int | type
-012: 13:20 | int                 *ast.Ident                     | type    : int | type
-013: 14:10 | x                   *ast.Ident                     | var     : int | variable
-014: 14:10 | x * y               *ast.BinaryExpr                | value   : int | value
-015: 14:10 | x * y * z           *ast.BinaryExpr                | value   : int | value
-016: 14:14 | y                   *ast.Ident                     | var     : int | variable
-017: 14:18 | z                   *ast.Ident                     | var     : int | variable
-018: 18: 1 | Mul                 *ast.Ident                     | value   : func(a int, b int) int | value
-019: 18: 1 | Mul 100, 200        *ast.CallExpr                  | value   : int | value
-020: 18: 5 | 100                 *ast.BasicLit                  | value   : untyped int = 100 | constant
-021: 18: 9 | 200                 *ast.BasicLit                  | value   : untyped int = 200 | constant
-022: 19: 1 | Mul                 *ast.Ident                     | value   : func(x int, y int, z int) int | value
-023: 19: 1 | Mul 100, 200, 300   *ast.CallExpr                  | value   : int | value
-024: 19: 5 | 100                 *ast.BasicLit                  | value   : untyped int = 100 | constant
-025: 19: 9 | 200                 *ast.BasicLit                  | value   : untyped int = 200 | constant
-026: 19:13 | 300                 *ast.BasicLit                  | value   : untyped int = 300 | constant
+011: 13: 2 | func(x, y, z int) int *ast.FuncType                  | type    : func(x int, y int, z int) int | type
+012: 13: 2 | func(x, y, z int) int {
+	return x * y * z
+} *ast.FuncLit                   | value   : func(x int, y int, z int) int | value
+013: 13:15 | int                 *ast.Ident                     | type    : int | type
+014: 13:20 | int                 *ast.Ident                     | type    : int | type
+015: 14:10 | x                   *ast.Ident                     | var     : int | variable
+016: 14:10 | x * y               *ast.BinaryExpr                | value   : int | value
+017: 14:10 | x * y * z           *ast.BinaryExpr                | value   : int | value
+018: 14:14 | y                   *ast.Ident                     | var     : int | variable
+019: 14:18 | z                   *ast.Ident                     | var     : int | variable
+020: 18: 1 | Mul                 *ast.Ident                     | value   : func(a int, b int) int | value
+021: 18: 1 | Mul 100, 200        *ast.CallExpr                  | value   : int | value
+022: 18: 5 | 100                 *ast.BasicLit                  | value   : untyped int = 100 | constant
+023: 18: 9 | 200                 *ast.BasicLit                  | value   : untyped int = 200 | constant
+024: 19: 1 | Mul                 *ast.Ident                     | value   : func(x int, y int, z int) int | value
+025: 19: 1 | Mul 100, 200, 300   *ast.CallExpr                  | value   : int | value
+026: 19: 5 | 100                 *ast.BasicLit                  | value   : untyped int = 100 | constant
+027: 19: 9 | 200                 *ast.BasicLit                  | value   : untyped int = 200 | constant
+028: 19:13 | 300                 *ast.BasicLit                  | value   : untyped int = 300 | constant
 == defs ==
 000:  0: 0 | Gopo_Mul            | const main.Gopo_Mul untyped string
 001:  2: 6 | MulInt              | func main.MulInt(a int, b int) int
@@ -2042,11 +2046,12 @@ Mul 100,200,300
 004:  6: 6 | MulFloat            | func main.MulFloat(a float64, b float64) float64
 005:  6:15 | a                   | var a float64
 006:  6:18 | b                   | var b float64
-007: 13: 2 | Mul__2              | func main.Mul__2(x int, y int, z int) int
-008: 13: 7 | x                   | var x int
-009: 13:10 | y                   | var y int
-010: 13:13 | z                   | var z int
-011: 18: 1 | main                | func main.main()
+007: 10: 6 | Mul                 | func main.Mul(__gop_overload_args__ interface{_()})
+008: 13: 2 | Mul__2              | func main.Mul__2(x int, y int, z int) int
+009: 13: 7 | x                   | var x int
+010: 13:10 | y                   | var y int
+011: 13:13 | z                   | var z int
+012: 18: 1 | main                | func main.main()
 == uses ==
 000:  2:18 | int                 | type int
 001:  2:23 | int                 | type int
@@ -2120,10 +2125,11 @@ var d = a.mul(c)
 005:  9: 7 | a                   | var a *main.foo
 006:  9:15 | mulFoo              | func (*main.foo).mulFoo(b *main.foo) *main.foo
 007:  9:22 | b                   | var b *main.foo
-008: 18: 5 | a                   | var main.a *main.foo
-009: 18: 8 | b                   | var main.b *main.foo
-010: 19: 5 | c                   | var main.c *main.foo
-011: 20: 5 | d                   | var main.d *main.foo
+008: 13:12 | mul                 | func (main.foo).mul(__gop_overload_args__ interface{_()})
+009: 18: 5 | a                   | var main.a *main.foo
+010: 18: 8 | b                   | var main.b *main.foo
+011: 19: 5 | c                   | var main.c *main.foo
+012: 20: 5 | d                   | var main.d *main.foo
 == uses ==
 000:  5:10 | foo                 | type main.foo struct{}
 001:  5:24 | int                 | type int
@@ -2144,4 +2150,97 @@ var d = a.mul(c)
 016: 20: 9 | a                   | var main.a *main.foo
 017: 20:11 | mul                 | func (*main.foo).mulFoo(b *main.foo) *main.foo
 018: 20:15 | c                   | var main.c *main.foo`)
+}
+
+func TestGopOverloadDecl(t *testing.T) {
+	testGopInfo(t, `
+func addInt0() {
+}
+
+func addInt1(i int) {
+}
+
+func addInt2(i, j int) {
+}
+
+var addInt3 = func(i, j, k int) {
+}
+
+func add = (
+	addInt0
+	addInt1
+	addInt2
+	addInt3
+	func(a, b string) string {
+		return a + b
+	}
+)
+
+func init() {
+	add 100, 200
+	add 100, 200, 300
+	add("hello", "world")
+}
+`, ``, `== types ==
+000:  0: 0 | "addInt0,addInt1,addInt2,addInt3," *ast.BasicLit                  | value   : untyped string = "addInt0,addInt1,addInt2,addInt3," | constant
+001:  5:16 | int                 *ast.Ident                     | type    : int | type
+002:  8:19 | int                 *ast.Ident                     | type    : int | type
+003: 11:15 | func(i, j, k int)   *ast.FuncType                  | type    : func(i int, j int, k int) | type
+004: 11:15 | func(i, j, k int) {
+} *ast.FuncLit                   | value   : func(i int, j int, k int) | value
+005: 11:28 | int                 *ast.Ident                     | type    : int | type
+006: 19: 2 | func(a, b string) string *ast.FuncType                  | type    : func(a string, b string) string | type
+007: 19: 2 | func(a, b string) string {
+	return a + b
+} *ast.FuncLit                   | value   : func(a string, b string) string | value
+008: 19:12 | string              *ast.Ident                     | type    : string | type
+009: 19:20 | string              *ast.Ident                     | type    : string | type
+010: 20:10 | a                   *ast.Ident                     | var     : string | variable
+011: 20:10 | a + b               *ast.BinaryExpr                | value   : string | value
+012: 20:14 | b                   *ast.Ident                     | var     : string | variable
+013: 25: 2 | add                 *ast.Ident                     | value   : func(i int, j int) | value
+014: 25: 2 | add 100, 200        *ast.CallExpr                  | void    : () | no value
+015: 25: 6 | 100                 *ast.BasicLit                  | value   : untyped int = 100 | constant
+016: 25:11 | 200                 *ast.BasicLit                  | value   : untyped int = 200 | constant
+017: 26: 2 | add                 *ast.Ident                     | var     : func(i int, j int, k int) | variable
+018: 26: 2 | add 100, 200, 300   *ast.CallExpr                  | void    : () | no value
+019: 26: 6 | 100                 *ast.BasicLit                  | value   : untyped int = 100 | constant
+020: 26:11 | 200                 *ast.BasicLit                  | value   : untyped int = 200 | constant
+021: 26:16 | 300                 *ast.BasicLit                  | value   : untyped int = 300 | constant
+022: 27: 2 | add                 *ast.Ident                     | value   : func(a string, b string) string | value
+023: 27: 2 | add("hello", "world") *ast.CallExpr                  | value   : string | value
+024: 27: 6 | "hello"             *ast.BasicLit                  | value   : untyped string = "hello" | constant
+025: 27:15 | "world"             *ast.BasicLit                  | value   : untyped string = "world" | constant
+== defs ==
+000:  0: 0 | Gopo_add            | const main.Gopo_add untyped string
+001:  2: 6 | addInt0             | func main.addInt0()
+002:  5: 6 | addInt1             | func main.addInt1(i int)
+003:  5:14 | i                   | var i int
+004:  8: 6 | addInt2             | func main.addInt2(i int, j int)
+005:  8:14 | i                   | var i int
+006:  8:17 | j                   | var j int
+007: 11: 5 | addInt3             | var main.addInt3 func(i int, j int, k int)
+008: 11:20 | i                   | var i int
+009: 11:23 | j                   | var j int
+010: 11:26 | k                   | var k int
+011: 14: 6 | add                 | func main.add(__gop_overload_args__ interface{_()})
+012: 19: 2 | add__4              | func main.add__4(a string, b string) string
+013: 19: 7 | a                   | var a string
+014: 19:10 | b                   | var b string
+015: 24: 6 | init                | func main.init()
+== uses ==
+000:  5:16 | int                 | type int
+001:  8:19 | int                 | type int
+002: 11:28 | int                 | type int
+003: 15: 2 | addInt0             | func main.addInt0()
+004: 16: 2 | addInt1             | func main.addInt1(i int)
+005: 17: 2 | addInt2             | func main.addInt2(i int, j int)
+006: 18: 2 | addInt3             | var main.addInt3 func(i int, j int, k int)
+007: 19:12 | string              | type string
+008: 19:20 | string              | type string
+009: 20:10 | a                   | var a string
+010: 20:14 | b                   | var b string
+011: 25: 2 | add                 | func main.addInt2(i int, j int)
+012: 26: 2 | add                 | var main.addInt3 func(i int, j int, k int)
+013: 27: 2 | add                 | func main.add__4(a string, b string) string`)
 }
