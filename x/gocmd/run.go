@@ -76,9 +76,10 @@ func RunFiles(buildDir string, files []string, args []string, conf *RunConfig) (
 		return
 	}
 	tempf := f.Name()
-	f.Close()
-	os.Remove(tempf)
-	defer os.Remove(tempf)
+	defer func() {
+		f.Close()
+		os.Remove(tempf)
+	}()
 
 	buildArgs := append([]string{"-o", tempf}, absFiles...)
 	if err = doWithArgs(buildDir, "build", conf, buildArgs...); err != nil {
