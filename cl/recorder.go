@@ -29,24 +29,58 @@ import (
 
 type goxRecorder struct {
 	Recorder
-	types  map[ast.Expr]types.TypeAndValue
-	refers map[string][]*ast.Ident
+	types     map[ast.Expr]types.TypeAndValue
+	referDefs map[*ast.Ident]ast.Node
+	referUses map[string][]*ast.Ident
 }
 
 func newRecorder(rec Recorder) *goxRecorder {
 	types := make(map[ast.Expr]types.TypeAndValue)
-	refers := make(map[string][]*ast.Ident)
-	return &goxRecorder{rec, types, refers}
+	referDefs := make(map[*ast.Ident]ast.Node)
+	referUses := make(map[string][]*ast.Ident)
+	return &goxRecorder{rec, types, referDefs, referUses}
 }
 
-// Refer maps identifiers to name for ast.OverloadFuncDecl.
-func (p *goxRecorder) Refer(ident *ast.Ident, name string) {
-	p.refers[name] = append(p.refers[name], ident)
+// Refer uses maps identifiers to name for ast.OverloadFuncDecl.
+func (p *goxRecorder) ReferUse(ident *ast.Ident, name string) {
+	p.referUses[name] = append(p.referUses[name], ident)
+}
+
+// Refer def maps for ast.FuncLit or ast.OverloadFuncDecl.
+func (p *goxRecorder) ReferDef(ident *ast.Ident, node ast.Node) {
+	p.referDefs[ident] = node
 }
 
 // Complete computes the types record.
 func (p *goxRecorder) Complete(scope *types.Scope) {
-	for name, idents := range p.refers {
+	for id, node := range p.referDefs {
+		switch fn := node.(type) {
+		case *ast.FuncLit:
+			if obj := scope.Lookup(id.Name); obj != nil {
+				p.recordFuncLit(fn, obj.Type())
+				p.Implicit(node, obj)
+			}
+		case *ast.OverloadFuncDecl:
+			if fn.Recv == nil {
+				if obj := scope.Lookup(id.Name); obj != nil {
+					p.Def(id, obj)
+				}
+			} else {
+				if obj := scope.Lookup(fn.Recv.List[0].Type.(*ast.Ident).Name); obj != nil {
+					if named, ok := obj.Type().(*types.Named); ok {
+						n := named.NumMethods()
+						for i := 0; i < n; i++ {
+							if m := named.Method(i); m.Name() == id.Name {
+								p.Def(id, m)
+								break
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	for name, idents := range p.referUses {
 		pos := strings.Index(name, ".")
 		if pos == -1 {
 			if obj := scope.Lookup(name); obj != nil {
@@ -71,7 +105,8 @@ func (p *goxRecorder) Complete(scope *types.Scope) {
 		}
 	}
 	p.types = nil
-	p.refers = nil
+	p.referDefs = nil
+	p.referUses = nil
 }
 
 // Member maps identifiers to the objects they denote.

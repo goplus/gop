@@ -127,6 +127,7 @@ type Recorder interface {
 	//     *ast.ImportSpec    *PkgName for imports without renames
 	//     *ast.CaseClause    type-specific *Var for each type switch case clause (incl. default)
 	//     *ast.Field         anonymous parameter *Var (incl. unnamed results)
+	//     *ast.FunLit        function literal in *ast.OverloadFuncDecl
 	//
 	Implicit(node ast.Node, obj types.Object)
 
@@ -1085,7 +1086,7 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 				}
 				recv = otyp
 				if ctx.rec != nil {
-					ctx.rec.Refer(recv, recv.Name)
+					ctx.rec.ReferUse(recv, recv.Name)
 				}
 			}
 			onames := make([]string, 0, 4)
@@ -1103,7 +1104,7 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 					ctx.lbinames = append(ctx.lbinames, expr.Name)
 					exov = true
 					if ctx.rec != nil {
-						ctx.rec.Refer(expr, expr.Name)
+						ctx.rec.ReferUse(expr, expr.Name)
 					}
 				case *ast.SelectorExpr:
 					if d.Recv == nil {
@@ -1120,8 +1121,8 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 					ctx.lbinames = append(ctx.lbinames, recv)
 					exov = true
 					if ctx.rec != nil {
-						ctx.rec.Refer(rtyp, rtyp.Name)
-						ctx.rec.Refer(expr.Sel, rtyp.Name+"."+expr.Sel.Name)
+						ctx.rec.ReferUse(rtyp, rtyp.Name)
+						ctx.rec.ReferUse(expr.Sel, rtyp.Name+"."+expr.Sel.Name)
 					}
 				case *ast.FuncLit:
 					if d.Recv != nil && !d.Operator {
@@ -1131,9 +1132,13 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 					name1 := overloadFuncName(name.Name, idx)
 					onames = append(onames, "") // const Gopo_xxx = "xxxInt,,xxxFloat"
 					ctx.lbinames = append(ctx.lbinames, name1)
+					id := &ast.Ident{NamePos: expr.Pos(), Name: name1}
+					if ctx.rec != nil {
+						ctx.rec.ReferDef(id, expr)
+					}
 					preloadFuncDecl(&ast.FuncDecl{
 						Doc:  d.Doc,
-						Name: &ast.Ident{NamePos: expr.Pos(), Name: name1},
+						Name: id,
 						Type: expr.Type,
 						Body: expr.Body,
 					})
@@ -1160,6 +1165,9 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 					},
 				})
 				ctx.lbinames = append(ctx.lbinames, oname)
+				if ctx.rec != nil {
+					ctx.rec.ReferDef(d.Name, d)
+				}
 			}
 
 		default:
