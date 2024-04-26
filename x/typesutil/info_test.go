@@ -2243,4 +2243,66 @@ func init() {
 011: 25: 2 | add                 | func main.addInt2(i int, j int)
 012: 26: 2 | add                 | var main.addInt3 func(i int, j int, k int)
 013: 27: 2 | add                 | func main.add__4(a string, b string) string`)
+
+	testGopInfo(t, `
+func add = (
+	func(a, b int) int {
+		return a + b
+	}
+	func(a, b string) string {
+		return a + b
+	}
+)
+
+func init() {
+	add 100, 200
+	add "hello", "world"
+}
+`, ``, `== types ==
+000:  3: 2 | func(a, b int) int  *ast.FuncType                  | type    : func(a int, b int) int | type
+001:  3: 2 | func(a, b int) int {
+	return a + b
+} *ast.FuncLit                   | value   : func(a int, b int) int | value
+002:  3:12 | int                 *ast.Ident                     | type    : int | type
+003:  3:17 | int                 *ast.Ident                     | type    : int | type
+004:  4:10 | a                   *ast.Ident                     | var     : int | variable
+005:  4:10 | a + b               *ast.BinaryExpr                | value   : int | value
+006:  4:14 | b                   *ast.Ident                     | var     : int | variable
+007:  6: 2 | func(a, b string) string *ast.FuncType                  | type    : func(a string, b string) string | type
+008:  6: 2 | func(a, b string) string {
+	return a + b
+} *ast.FuncLit                   | value   : func(a string, b string) string | value
+009:  6:12 | string              *ast.Ident                     | type    : string | type
+010:  6:20 | string              *ast.Ident                     | type    : string | type
+011:  7:10 | a                   *ast.Ident                     | var     : string | variable
+012:  7:10 | a + b               *ast.BinaryExpr                | value   : string | value
+013:  7:14 | b                   *ast.Ident                     | var     : string | variable
+014: 12: 2 | add                 *ast.Ident                     | value   : func(a int, b int) int | value
+015: 12: 2 | add 100, 200        *ast.CallExpr                  | value   : int | value
+016: 12: 6 | 100                 *ast.BasicLit                  | value   : untyped int = 100 | constant
+017: 12:11 | 200                 *ast.BasicLit                  | value   : untyped int = 200 | constant
+018: 13: 2 | add                 *ast.Ident                     | value   : func(a string, b string) string | value
+019: 13: 2 | add "hello", "world" *ast.CallExpr                  | value   : string | value
+020: 13: 6 | "hello"             *ast.BasicLit                  | value   : untyped string = "hello" | constant
+021: 13:15 | "world"             *ast.BasicLit                  | value   : untyped string = "world" | constant
+== defs ==
+000:  2: 6 | add                 | func main.add(__gop_overload_args__ interface{_()})
+001:  3: 2 | add__0              | func main.add__0(a int, b int) int
+002:  3: 7 | a                   | var a int
+003:  3:10 | b                   | var b int
+004:  6: 2 | add__1              | func main.add__1(a string, b string) string
+005:  6: 7 | a                   | var a string
+006:  6:10 | b                   | var b string
+007: 11: 6 | init                | func main.init()
+== uses ==
+000:  3:12 | int                 | type int
+001:  3:17 | int                 | type int
+002:  4:10 | a                   | var a int
+003:  4:14 | b                   | var b int
+004:  6:12 | string              | type string
+005:  6:20 | string              | type string
+006:  7:10 | a                   | var a string
+007:  7:14 | b                   | var b string
+008: 12: 2 | add                 | func main.add__0(a int, b int) int
+009: 13: 2 | add                 | func main.add__1(a string, b string) string`)
 }

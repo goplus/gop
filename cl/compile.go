@@ -1172,9 +1172,11 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 					},
 				})
 				ctx.lbinames = append(ctx.lbinames, oname)
-				if ctx.rec != nil {
-					ctx.rec.ReferDef(d.Name, d)
-				}
+			} else {
+				ctx.overpos[name.Name] = name.NamePos
+			}
+			if ctx.rec != nil {
+				ctx.rec.ReferDef(d.Name, d)
 			}
 
 		default:
