@@ -46,17 +46,16 @@ func relFile(dir string, absFile string) string {
 }
 
 func commentStmt(ctx *blockCtx, stmt ast.Stmt) {
-	if ctx.fileLine {
-		commentStmtEx(ctx.cb, ctx.pkgCtx, stmt)
-	}
-}
-
-func commentStmtEx(cb *gogen.CodeBuilder, ctx *pkgCtx, stmt ast.Stmt) {
-	start := stmt.Pos()
-	if start == token.NoPos {
-		cb.SetComments(nil, false)
+	if !ctx.fileLine {
 		return
 	}
+	var comments []*goast.Comment
+	start := stmt.Pos()
+	if start == token.NoPos {
+		ctx.cb.SetComments(nil, false)
+		return
+	}
+
 	if doc := checkStmtDoc(stmt); doc != nil {
 		start = doc.Pos()
 	}
@@ -65,10 +64,27 @@ func commentStmtEx(cb *gogen.CodeBuilder, ctx *pkgCtx, stmt ast.Stmt) {
 		pos.Filename = fileLineFile(ctx.relBaseDir, pos.Filename)
 	}
 	line := fmt.Sprintf("\n//line %s:%d:1", pos.Filename, pos.Line)
-	comments := &goast.CommentGroup{
-		List: []*goast.Comment{{Text: line}},
+	comments = append(comments, &goast.Comment{Text: line})
+
+	switch stmt.(type) {
+	case *ast.DeclStmt:
+		// The comments of DeclStmt are represented by its Doc property, so no need to add again.
+		// here just add the line comment.
+		ctx.cb.SetComments(&goast.CommentGroup{List: comments}, false)
+	default:
+		cmts, ok := ctx.cmap[stmt]
+		if !ok || len(cmts) == 0 {
+			ctx.cb.SetComments(&goast.CommentGroup{List: comments}, false)
+			return
+		}
+
+		for _, cmt := range cmts {
+			for _, c := range cmt.List {
+				comments = append(comments, &goast.Comment{Text: c.Text})
+			}
+		}
+		ctx.cb.SetComments(&goast.CommentGroup{List: comments}, false)
 	}
-	cb.SetComments(comments, false)
 }
 
 func checkStmtDoc(stmt ast.Stmt) *ast.CommentGroup {

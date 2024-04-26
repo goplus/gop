@@ -4078,6 +4078,44 @@ func demo() {
 `)
 }
 
+func TestCommentStmt(t *testing.T) {
+	gopClTestEx(t, gblConfLine, "main", `
+// doc func foo
+func foo(a int) {
+	// this is a comment one.1
+	// this is a comment one.2
+	println(a)
+	// this is a comment two.1
+	// this is a comment two.2
+	println(a+1)
+}
+
+// this is a comment three
+foo(2)
+`, `package main
+
+import "fmt"
+//line /foo/bar.gop:2:1
+// doc func foo
+func foo(a int) {
+//line /foo/bar.gop:6:1
+	// this is a comment one.1
+	// this is a comment one.2
+	fmt.Println(a)
+//line /foo/bar.gop:9:1
+	// this is a comment two.1
+	// this is a comment two.2
+	fmt.Println(a + 1)
+}
+//line /foo/bar.gop:12
+// this is a comment three
+func main() {
+//line /foo/bar.gop:13:1
+	foo(2)
+}
+`)
+}
+
 func TestForPhraseScope(t *testing.T) {
 	gopClTest(t, `sum := 0
 for x <- [1, 3, 5, 7, 11, 13, 17] {
