@@ -30,7 +30,6 @@ jobs:
         - 1.19.x
         - 1.20.x
         - 1.21.x
-        - 1.22.x
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -53,3 +52,4 @@ jobs:
       uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
+        slug: goplus/gop
