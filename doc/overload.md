@@ -1,4 +1,4 @@
-Overload Func/Method/Operator/Types in Go+
+Overload Func/Method/Operator/Types
 =====
 
 ### Overload Funcs
