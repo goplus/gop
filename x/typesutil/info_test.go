@@ -179,8 +179,10 @@ func testGopInfoEx(t *testing.T, mod *gopmod.Module, name string, src string, go
 	list = append(list, defsList(fset, info.Defs, true)...)
 	list = append(list, "== uses ==")
 	list = append(list, usesList(fset, info.Uses)...)
-	list = append(list, "== overloads ==")
-	list = append(list, overloadsList(fset, info.Overloads)...)
+	if len(info.Overloads) > 0 {
+		list = append(list, "== overloads ==")
+		list = append(list, overloadsList(fset, info.Overloads)...)
+	}
 	result := strings.Join(list, "\n")
 	t.Log(result)
 	if result != expect {
@@ -587,8 +589,7 @@ println a
 001:  2: 1 | main                | func main.main()
 == uses ==
 000:  3: 1 | println             | func fmt.Println(a ...any) (n int, err error)
-001:  3: 9 | a                   | var a []int
-== overloads ==`)
+001:  3: 9 | a                   | var a []int`)
 }
 
 func TestForPhrase1(t *testing.T) {
@@ -627,8 +628,7 @@ println sum
 002:  4: 8 | sum                 | var sum int
 003:  4:14 | x                   | var x int
 004:  6: 1 | println             | func fmt.Println(a ...any) (n int, err error)
-005:  6: 9 | sum                 | var sum int
-== overloads ==`)
+005:  6: 9 | sum                 | var sum int`)
 }
 
 func TestForPhrase2(t *testing.T) {
@@ -675,8 +675,7 @@ println sum
 003:  4: 8 | sum                 | var sum int
 004:  4:14 | x                   | var x int
 005:  6: 1 | println             | func fmt.Println(a ...any) (n int, err error)
-006:  6: 9 | sum                 | var sum int
-== overloads ==`)
+006:  6: 9 | sum                 | var sum int`)
 }
 
 func TestMapComprehension(t *testing.T) {
@@ -703,8 +702,7 @@ println y
 000:  2: 7 | x                   | var x string
 001:  2:10 | i                   | var i int
 002:  3: 1 | println             | func fmt.Println(a ...any) (n int, err error)
-003:  3: 9 | y                   | var y map[string]int
-== overloads ==`)
+003:  3: 9 | y                   | var y map[string]int`)
 }
 
 func TestListComprehension(t *testing.T) {
@@ -730,8 +728,7 @@ _ = b
 000:  3: 7 | x                   | var x float64
 001:  3: 9 | x                   | var x float64
 002:  3:20 | a                   | var a []float64
-003:  4: 5 | b                   | var b []float64
-== overloads ==`)
+003:  4: 5 | b                   | var b []float64`)
 }
 
 func TestListComprehensionMultiLevel(t *testing.T) {
@@ -775,8 +772,7 @@ println("x:", x)
 005:  3:43 | arr                 | var arr []float64
 006:  3:48 | b                   | var b float64
 007:  4: 1 | println             | func fmt.Println(a ...any) (n int, err error)
-008:  4:15 | x                   | var x [][]float64
-== overloads ==`)
+008:  4:15 | x                   | var x [][]float64`)
 }
 
 func TestFileEnumLines(t *testing.T) {
@@ -798,8 +794,7 @@ for line <- os.Stdin {
 000:  4:13 | os                  | package os
 001:  4:16 | Stdin               | var os.Stdin *os.File
 002:  5: 2 | println             | func fmt.Println(a ...any) (n int, err error)
-003:  5:10 | line                | var line string
-== overloads ==`)
+003:  5:10 | line                | var line string`)
 }
 
 func TestLambdaExpr(t *testing.T) {
@@ -870,8 +865,7 @@ Map2([1.2, 3.5, 6], x => (x * x, x + x))
 011: 11:27 | x                   | var x float64
 012: 11:31 | x                   | var x float64
 013: 11:34 | x                   | var x float64
-014: 11:38 | x                   | var x float64
-== overloads ==`)
+014: 11:38 | x                   | var x float64`)
 }
 
 func TestLambdaExpr2(t *testing.T) {
@@ -950,8 +944,7 @@ Map2([1.2, 3.5, 6], x => {
 011: 14: 9 | x                   | var x float64
 012: 14:13 | x                   | var x float64
 013: 14:16 | x                   | var x float64
-014: 14:20 | x                   | var x float64
-== overloads ==`)
+014: 14:20 | x                   | var x float64`)
 }
 
 func TestMixedOverload1(t *testing.T) {
@@ -1661,8 +1654,7 @@ func Gopx_Var_Cast__1[T map[string]any]() *Var__1[T] {
 004:  4: 6 | Gopx_Var_Cast__0    | func main.Gopx_Var_Cast__0[T main.basetype]() *main.Var__0[T]
 005:  4:23 | string              | type string
 006:  5: 6 | Gopx_Var_Cast__1    | func main.Gopx_Var_Cast__1[T map[string]any]() *main.Var__1[T]
-007:  5:23 | M                   | type main.M = map[string]any
-== overloads ==`)
+007:  5:23 | M                   | type main.M = map[string]any`)
 }
 
 func TestSpxInfo(t *testing.T) {

@@ -196,3 +196,83 @@ func TestBadFile(t *testing.T) {
 	_ = checker.Files([]*goast.File{{Name: goast.NewIdent("main")}},
 		[]*ast.File{{Name: ast.NewIdent("main")}})
 }
+
+func TestCheckOverload(t *testing.T) {
+	fset := token.NewFileSet()
+	info, ginfo, err := checkFiles(fset, "main.gop", `
+type foo struct {
+}
+
+func (a *foo) mulInt(b int) *foo {
+	return a
+}
+
+func (a *foo) mulFoo(b *foo) *foo {
+	return a
+}
+
+func (foo).mul = (
+	(foo).mulInt
+	(foo).mulFoo
+)
+func addInt0() {
+}
+
+func addInt1(i int) {
+}
+
+func addInt2(i, j int) {
+}
+
+var addInt3 = func(i, j, k int) {
+}
+
+func add = (
+	addInt0
+	addInt1
+	addInt2
+	addInt3
+	func(a, b string) string {
+		return a + b
+	}
+)
+
+var a, b *foo
+var c = a.mul(100)
+var d = a.mul(c)
+
+func init() {
+	add 100, 200
+	add 100, 200, 300
+	add("hello", "world")
+}
+`, "", "", "", "")
+	if err != nil || info == nil || ginfo == nil {
+		t.Fatalf("check failed: %v", err)
+	}
+	for use, ovDeclObj := range info.Overloads {
+		o := info.ObjectOf(use)
+		declObj, ovObjs := info.OverloadOf(use)
+		if ovDeclObj != declObj {
+			t.Fatal("bad overload", o)
+		}
+		found := false
+		for _, ovObj := range ovObjs {
+			if o == ovObj {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Fatal("bad overload", o)
+		}
+	}
+	for use, o := range info.Uses {
+		declObj, ovObjs := info.OverloadOf(use)
+		if declObj != nil && ovObjs != nil {
+			if info.Overloads[use] == nil {
+				t.Fatal("bad overload", o)
+			}
+		}
+	}
+}
