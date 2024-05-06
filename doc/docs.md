@@ -1111,6 +1111,8 @@ By default `gop watch` does not convert test files (normally ending with `_test.
 
 ## Calling C from Go+
 
+**NOTE: c2go is deprecated.** We are actively replacing it with **llgo (https://github.com/goplus/llgo)**.
+
 - The `gop c` command (equivalent to the stand-alone `c2go` command) can be used to convert a C project to a Go project.
 - `import "C"` and `import "C/xxx"` are used to import a C project converted by c2go. where `import "C"` is short for `import "C/github.com/goplus/libc"`.
 - The `C"xxx"` syntax represents C-style string constants.
