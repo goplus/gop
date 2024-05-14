@@ -234,7 +234,7 @@ $ brew install goplus
 
 ### from source code
 
-Note: Requires go1.18 or later
+Note: Requires go1.19 or later
 
 ```bash
 git clone https://github.com/goplus/gop.git
