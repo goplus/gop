@@ -2382,3 +2382,69 @@ func init() {
 000: 12: 2 | add                 | func main.add(__gop_overload_args__ interface{_()})
 001: 13: 2 | add                 | func main.add(__gop_overload_args__ interface{_()})`)
 }
+
+func TestGoxOverloadInfo(t *testing.T) {
+	testSpxInfo(t, "Rect.gox", `
+func addInt(a, b int) int {
+	return a + b
+}
+
+func addString(a, b string) string {
+	return a + b
+}
+
+func add = (
+	addInt
+	func(a, b float64) float64 {
+		return a + b
+	}
+	addString
+)
+`, `== types ==
+000:  0: 0 | ".addInt,,.addString" *ast.BasicLit                  | value   : untyped string = ".addInt,,.addString" | constant
+001:  0: 0 | Rect                *ast.Ident                     | type    : main.Rect | type
+002:  2:18 | int                 *ast.Ident                     | type    : int | type
+003:  2:23 | int                 *ast.Ident                     | type    : int | type
+004:  3: 9 | a                   *ast.Ident                     | var     : int | variable
+005:  3: 9 | a + b               *ast.BinaryExpr                | value   : int | value
+006:  3:13 | b                   *ast.Ident                     | var     : int | variable
+007:  6:21 | string              *ast.Ident                     | type    : string | type
+008:  6:29 | string              *ast.Ident                     | type    : string | type
+009:  7: 9 | a                   *ast.Ident                     | var     : string | variable
+010:  7: 9 | a + b               *ast.BinaryExpr                | value   : string | value
+011:  7:13 | b                   *ast.Ident                     | var     : string | variable
+012: 12:12 | float64             *ast.Ident                     | type    : float64 | type
+013: 12:21 | float64             *ast.Ident                     | type    : float64 | type
+014: 13:10 | a                   *ast.Ident                     | var     : float64 | variable
+015: 13:10 | a + b               *ast.BinaryExpr                | value   : float64 | value
+016: 13:14 | b                   *ast.Ident                     | var     : float64 | variable
+== defs ==
+000:  0: 0 | Gopo_Rect_add       | const main.Gopo_Rect_add untyped string
+001:  0: 0 | this                | var this *main.Rect
+002:  2: 6 | addInt              | func (*main.Rect).addInt(a int, b int) int
+003:  2:13 | a                   | var a int
+004:  2:16 | b                   | var b int
+005:  6: 6 | addString           | func (*main.Rect).addString(a string, b string) string
+006:  6:16 | a                   | var a string
+007:  6:19 | b                   | var b string
+008: 10: 6 | add                 | func (main.Rect).add(__gop_overload_args__ interface{_()})
+009: 12: 2 | add__1              | func (*main.Rect).add__1(a float64, b float64) float64
+010: 12: 7 | a                   | var a float64
+011: 12:10 | b                   | var b float64
+== uses ==
+000:  0: 0 | Rect                | type main.Rect struct{}
+001:  2:18 | int                 | type int
+002:  2:23 | int                 | type int
+003:  3: 9 | a                   | var a int
+004:  3:13 | b                   | var b int
+005:  6:21 | string              | type string
+006:  6:29 | string              | type string
+007:  7: 9 | a                   | var a string
+008:  7:13 | b                   | var b string
+009: 11: 2 | addInt              | func (*main.Rect).addInt(a int, b int) int
+010: 12:12 | float64             | type float64
+011: 12:21 | float64             | type float64
+012: 13:10 | a                   | var a float64
+013: 13:14 | b                   | var b float64
+014: 15: 2 | addString           | func (*main.Rect).addString(a string, b string) string`)
+}

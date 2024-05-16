@@ -1071,13 +1071,26 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 
 		case *ast.OverloadFuncDecl:
 			var recv *ast.Ident
+			if ctx.classRecv != nil { // in class file (.spx/.gmx)
+				if recv := d.Recv; recv == nil || len(recv.List) == 0 {
+					d.Recv = &ast.FieldList{
+						List: []*ast.Field{
+							{
+								Type: ctx.classRecv.List[0].Type.(*ast.StarExpr).X,
+							},
+						},
+					}
+					d.IsClass = true
+				}
+			}
 			if d.Recv != nil {
-				otyp, ok := d.Recv.List[0].Type.(*ast.Ident)
+				var ok bool
+				recv, ok = d.Recv.List[0].Type.(*ast.Ident)
 				if !ok {
 					ctx.handleErrorf(d.Recv.List[0].Type.Pos(), "invalid recv type %v", ctx.LoadExpr(d.Recv.List[0].Type))
 					break
 				}
-				recv = otyp
+				ctx.lbinames = append(ctx.lbinames, recv)
 				if ctx.rec != nil {
 					ctx.rec.ReferUse(recv, recv.Name)
 				}
@@ -1086,21 +1099,30 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 			exov := false
 			name := d.Name
 		LoopFunc:
+
 			for idx, fn := range d.Funcs {
 				switch expr := fn.(type) {
 				case *ast.Ident:
-					if d.Recv != nil && !d.Operator {
+					if d.Recv != nil && !d.Operator && !d.IsClass {
 						ctx.handleErrorf(expr.Pos(), "invalid method %v", ctx.LoadExpr(expr))
 						break LoopFunc
 					}
-					onames = append(onames, expr.Name)
-					ctx.lbinames = append(ctx.lbinames, expr.Name)
 					exov = true
+					if d.IsClass {
+						onames = append(onames, "."+expr.Name)
+					} else {
+						onames = append(onames, expr.Name)
+						ctx.lbinames = append(ctx.lbinames, expr.Name)
+					}
 					if ctx.rec != nil {
-						ctx.rec.ReferUse(expr, expr.Name)
+						if d.IsClass {
+							ctx.rec.ReferUse(expr, recv.Name+"."+expr.Name)
+						} else {
+							ctx.rec.ReferUse(expr, expr.Name)
+						}
 					}
 				case *ast.SelectorExpr:
-					if d.Recv == nil {
+					if d.Recv == nil || d.IsClass {
 						ctx.handleErrorf(expr.Pos(), "invalid func %v", ctx.LoadExpr(expr))
 						break LoopFunc
 					}
@@ -1111,14 +1133,13 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 					}
 
 					onames = append(onames, "."+expr.Sel.Name)
-					ctx.lbinames = append(ctx.lbinames, recv)
 					exov = true
 					if ctx.rec != nil {
 						ctx.rec.ReferUse(rtyp, rtyp.Name)
 						ctx.rec.ReferUse(expr.Sel, rtyp.Name+"."+expr.Sel.Name)
 					}
 				case *ast.FuncLit:
-					if d.Recv != nil && !d.Operator {
+					if d.Recv != nil && !d.Operator && !d.IsClass {
 						ctx.handleErrorf(expr.Pos(), "invalid method %v", ctx.LoadExpr(expr))
 						break LoopFunc
 					}
