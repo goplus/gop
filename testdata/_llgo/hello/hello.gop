@@ -1,3 +1,3 @@
-import "github.com/goplus/llgo/c"
+import "c"
 
-c.Printf c.Str("Hello world\n")
+c.Printf C"Hello world\n"
