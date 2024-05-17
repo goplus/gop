@@ -23,7 +23,8 @@ import (
 // -----------------------------------------------------------------------------
 
 const (
-	pathLibc = "github.com/goplus/llgo/c"
+	pathLibc  = "github.com/goplus/llgo/c"
+	pathLibpy = "github.com/goplus/llgo/py"
 )
 
 func simplifyGopPackage(pkgPath string) string {
@@ -37,7 +38,12 @@ func simplifyPkgPath(pkgPath string) string {
 	switch pkgPath {
 	case "c":
 		return pathLibc
+	case "py":
+		return pathLibpy
 	default:
+		if strings.HasPrefix(pkgPath, "py/") {
+			return pathLibpy + pkgPath[2:]
+		}
 		return simplifyGopPackage(pkgPath)
 	}
 }
