@@ -1,0 +1,18 @@
+import (
+	"c"
+	"py"
+	"py/numpy"
+)
+
+a := py.list(
+	py.list(1.0, 2.0, 3.0),
+	py.list(4.0, 5.0, 6.0),
+	py.list(7.0, 8.0, 9.0),
+)
+b := py.list(
+	py.list(9.0, 8.0, 7.0),
+	py.list(6.0, 5.0, 4.0),
+	py.list(3.0, 2.0, 1.0),
+)
+x := numpy.add(a, b)
+c.printf C"a+b = %s\n", x.str.cStr
