@@ -1,0 +1,9 @@
+import (
+	"c"
+	"py"
+	"py/statistics"
+)
+
+list := py.list(1.0, 2.0, 3.0, 4.0, 4.0)
+mean := statistics.mean(list)
+c.printf(C"mean(1, 2, 3, 4, 4) = %f\n", mean.float64)
