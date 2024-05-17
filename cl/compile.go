@@ -369,6 +369,7 @@ type blockCtx struct {
 	lookups    []gogen.PkgRef
 	clookups   []cpackages.PkgRef
 	tlookup    *typeParamLookup
+	cmap       ast.CommentMap
 	c2goBase   string // default is `github.com/goplus/`
 	relBaseDir string
 
@@ -567,6 +568,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 			pkg: p, pkgCtx: ctx, cb: p.CB(), relBaseDir: relBaseDir, fileScope: fileScope,
 			fileLine: fileLine, isClass: f.IsClass, rec: rec,
 			c2goBase: c2goBase(conf.C2goBase), imports: make(map[string]pkgImp), isGopFile: true,
+			cmap: ast.NewCommentMap(fset, f.File, f.Comments),
 		}
 		if rec := ctx.rec; rec != nil {
 			rec.Scope(f.File, fileScope)
@@ -588,6 +590,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 		ctx := &blockCtx{
 			pkg: p, pkgCtx: ctx, cb: p.CB(), relBaseDir: relBaseDir,
 			imports: make(map[string]pkgImp),
+			cmap:    ast.NewCommentMap(fset, f, f.Comments),
 		}
 		preloadFile(p, ctx, f, skippingGoFile, false)
 	}
