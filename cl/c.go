@@ -18,54 +18,24 @@ package cl
 
 import (
 	"strings"
-
-	"github.com/goplus/gogen"
-	"github.com/goplus/gop/ast"
 )
-
-const (
-	c2goInvalid = iota
-	c2goStandard
-	c2goUserDef
-)
-
-func checkC2go(pkgPath string) (realPkgPath string, kind int) {
-	if strings.HasPrefix(pkgPath, "C") {
-		if len(pkgPath) == 1 {
-			return "libc", c2goStandard
-		}
-		if pkgPath[1] == '/' {
-			realPkgPath = pkgPath[2:]
-			if strings.IndexByte(realPkgPath, '/') < 0 {
-				kind = c2goStandard
-			} else {
-				kind = c2goUserDef
-			}
-		}
-	}
-	return
-}
-
-func c2goBase(base string) string {
-	if base == "" {
-		base = "github.com/goplus/"
-	} else if !strings.HasSuffix(base, "/") {
-		base += "/"
-	}
-	return base
-}
 
 // -----------------------------------------------------------------------------
 
-func loadC2goPkg(ctx *blockCtx, realPath string, src *ast.BasicLit) (ret gogen.PkgRef) {
-	cpkg, err := ctx.cpkgs.Import(realPath)
-	if err != nil {
-		ctx.handleErrorf(src.Pos(),
-			"%v not found or not a valid C package (c2go.a.pub file not found).\n", realPath)
-		return
+func simplifyGopPackage(pkgPath string) string {
+	if strings.HasPrefix(pkgPath, "gop/") {
+		return "github.com/goplus/" + pkgPath
 	}
-	ctx.clookups = append(ctx.clookups, cpkg)
-	return cpkg.Pkg()
+	return pkgPath
+}
+
+func simplifyPkgPath(pkgPath string) string {
+	switch pkgPath {
+	case "c":
+		return "github.com/goplus/llgo/c"
+	default:
+		return simplifyGopPackage(pkgPath)
+	}
 }
 
 // -----------------------------------------------------------------------------

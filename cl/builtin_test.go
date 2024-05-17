@@ -17,13 +17,11 @@
 package cl
 
 import (
-	"errors"
 	"go/types"
 	"log"
 	"testing"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gogen/cpackages"
 	"github.com/goplus/gogen/packages"
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/parser"
@@ -300,6 +298,7 @@ func TestFileClassType(t *testing.T) {
 		return
 	}
 	for _, test := range tests {
+		_ = test.found
 		f := &ast.File{IsClass: test.isClass, IsNormalGox: test.isNormalGox, IsProj: test.isProj}
 		classType, isTest := GetFileClassType(f, test.fileName, lookupClass)
 		if isTest != test.isTest {
@@ -553,12 +552,6 @@ func TestGetGoFile(t *testing.T) {
 	}
 }
 
-func TestC2goBase(t *testing.T) {
-	if c2goBase("") != "github.com/goplus/" {
-		t.Fatal("c2goBase failed")
-	}
-}
-
 func TestErrNewType(t *testing.T) {
 	testPanic(t, `bar redeclared in this block
 	previous declaration at <TODO>
@@ -566,25 +559,6 @@ func TestErrNewType(t *testing.T) {
 		pkg := types.NewPackage("", "foo")
 		newType(pkg, token.NoPos, "bar")
 		newType(pkg, token.NoPos, "bar")
-	})
-}
-
-func TestErrLoadImport(t *testing.T) {
-	testPanic(t, "-: unknownpkg not found or not a valid C package (c2go.a.pub file not found).\n", func() {
-		pkg := &pkgCtx{
-			nodeInterp: &nodeInterp{
-				fset: token.NewFileSet(),
-			},
-			cpkgs: cpackages.NewImporter(
-				&cpackages.Config{LookupPub: func(pkgPath string) (pubfile string, err error) {
-					return "", errors.New("not found")
-				}})}
-		ctx := &blockCtx{pkgCtx: pkg}
-		spec := &ast.ImportSpec{
-			Path: &ast.BasicLit{Kind: token.STRING, Value: `"C/unknownpkg"`},
-		}
-		loadImport(ctx, spec)
-		panic(ctx.errs[0].Error())
 	})
 }
 

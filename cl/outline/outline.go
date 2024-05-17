@@ -37,13 +37,6 @@ type Config struct {
 	// If Fset is nil, Load will use a new fileset, but preserve Fset's value.
 	Fset *token.FileSet
 
-	// C2goBase specifies base of standard c2go packages.
-	// Default is github.com/goplus/.
-	C2goBase string
-
-	// LookupPub lookups the c2go package pubfile (named c2go.a.pub).
-	LookupPub func(pkgPath string) (pubfile string, err error)
-
 	// LookupClass lookups a class by specified file extension.
 	LookupClass func(ext string) (c *Project, ok bool)
 
@@ -60,8 +53,6 @@ type Package struct {
 func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (_ Package, err error) {
 	ret, err := cl.NewPackage(pkgPath, pkg, &cl.Config{
 		Fset:           conf.Fset,
-		C2goBase:       conf.C2goBase,
-		LookupPub:      conf.LookupPub,
 		LookupClass:    conf.LookupClass,
 		Importer:       conf.Importer,
 		NoFileLine:     true,

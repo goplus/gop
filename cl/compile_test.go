@@ -52,8 +52,6 @@ func init() {
 		Importer:      imp,
 		Recorder:      gopRecorder{},
 		LookupClass:   lookupClass,
-		LookupPub:     lookupPub,
-		C2goBase:      "github.com/goplus/gop/cl/internal",
 		NoFileLine:    true,
 		NoAutoGenMain: true,
 	}
@@ -62,8 +60,6 @@ func init() {
 		Importer:      imp,
 		Recorder:      gopRecorder{},
 		LookupClass:   lookupClass,
-		LookupPub:     lookupPub,
-		C2goBase:      "github.com/goplus/gop/cl/internal",
 		NoFileLine:    false,
 		NoAutoGenMain: true,
 	}

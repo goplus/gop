@@ -28,7 +28,6 @@ import (
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
-	"github.com/goplus/gop/x/c2go"
 	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/mod/env"
 	"github.com/goplus/mod/gopmod"
@@ -260,7 +259,6 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 		RelativeBase: relativeBaseOf(mod),
 		Importer:     imp,
 		LookupClass:  mod.LookupClass,
-		LookupPub:    c2go.LookupPub(mod),
 	}
 
 	for name, pkg := range pkgs {
@@ -381,7 +379,6 @@ func LoadFiles(dir string, files []string, conf *Config) (out *gogen.Package, er
 			RelativeBase: relativeBaseOf(mod),
 			Importer:     imp,
 			LookupClass:  mod.LookupClass,
-			LookupPub:    c2go.LookupPub(mod),
 		}
 		out, err = cl.NewPackage("", pkg, clConf)
 		if err != nil {

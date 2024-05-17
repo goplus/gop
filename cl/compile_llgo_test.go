@@ -17,21 +17,14 @@
 package cl_test
 
 import (
-	"path/filepath"
-	"strings"
 	"testing"
 )
 
-func lookupPub(pkgPath string) (pubfile string, err error) {
-	relPath := strings.TrimPrefix(pkgPath, "github.com/goplus/gop/")
-	return filepath.Join(gopRootDir, relPath, "c2go.a.pub"), nil
-}
-
-func TestHelloC2go(t *testing.T) {
+func TestHelloLLGo(t *testing.T) {
 	gopClTest(t, `
-import "C"
+import "c"
 
-C.printf C"Hello, world!\n"
+c.Printf C"Hello, world!\n"
 `, `package main
 
 import (
@@ -45,6 +38,7 @@ func main() {
 `)
 }
 
+/*
 func TestHelloC2go2(t *testing.T) {
 	gopClTest(t, `
 import "C/github.com/goplus/gop/cl/internal/libc"
@@ -91,3 +85,4 @@ import (
 C.printf C"Hello, world!\n"
 `)
 }
+*/
