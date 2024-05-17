@@ -27,7 +27,6 @@ import (
 	"strings"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gogen/cpackages"
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/fromgo"
 	"github.com/goplus/gop/token"
@@ -182,14 +181,6 @@ type Config struct {
 	// RelativeBase is the root directory of relative path.
 	RelativeBase string
 
-	// C2goBase specifies base of standard c2go packages (optional).
-	// Default is github.com/goplus/.
-	C2goBase string
-
-	// LookupPub lookups the c2go package pubfile named c2go.a.pub (required).
-	// See gop/x/c2go.LookupPub.
-	LookupPub func(pkgPath string) (pubfile string, err error)
-
 	// LookupClass lookups a class by specified file extension (required).
 	// See (*github.com/goplus/mod/gopmod.Module).LookupClass.
 	LookupClass func(ext string) (c *Project, ok bool)
@@ -342,7 +333,6 @@ type pkgCtx struct {
 	classes  map[*ast.File]*gmxClass
 	overpos  map[string]token.Pos // overload => pos
 	fset     *token.FileSet
-	cpkgs    *cpackages.Importer
 	syms     map[string]loader
 	lbinames []any // names that should load before initGopPkg (can be string/func or *ast.Ident/type)
 	inits    []func()
@@ -367,9 +357,8 @@ type blockCtx struct {
 	imports    map[string]pkgImp
 	autoimps   map[string]pkgImp
 	lookups    []gogen.PkgRef
-	clookups   []cpackages.PkgRef
 	tlookup    *typeParamLookup
-	c2goBase   string // default is `github.com/goplus/`
+	cstr_      gogen.Ref
 	relBaseDir string
 
 	classRecv *ast.FieldList // available when isClass
@@ -381,6 +370,13 @@ type blockCtx struct {
 	fileLine  bool
 	isClass   bool
 	isGopFile bool // is Go+ file or not
+}
+
+func (p *blockCtx) cstr() gogen.Ref {
+	if p.cstr_ == nil {
+		p.cstr_ = p.pkg.Import(pathLibc).Ref("Str")
+	}
+	return p.cstr_
 }
 
 func (p *blockCtx) recorder() *goxRecorder {
@@ -533,10 +529,6 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 		p.CB().NewConstStart(nil, "_").Val(true).EndInit(1)
 	}
 
-	ctx.cpkgs = cpackages.NewImporter(&cpackages.Config{
-		Pkg: p, LookupPub: conf.LookupPub,
-	})
-
 	// sort files
 	type File struct {
 		*ast.File
@@ -565,8 +557,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 		fileScope := types.NewScope(p.Types.Scope(), f.Pos(), f.End(), f.path)
 		ctx := &blockCtx{
 			pkg: p, pkgCtx: ctx, cb: p.CB(), relBaseDir: relBaseDir, fileScope: fileScope,
-			fileLine: fileLine, isClass: f.IsClass, rec: rec,
-			c2goBase: c2goBase(conf.C2goBase), imports: make(map[string]pkgImp), isGopFile: true,
+			fileLine: fileLine, isClass: f.IsClass, rec: rec, imports: make(map[string]pkgImp), isGopFile: true,
 		}
 		if rec := ctx.rec; rec != nil {
 			rec.Scope(f.File, fileScope)
@@ -1394,13 +1385,6 @@ func loadFuncBody(ctx *blockCtx, fn *gogen.Func, body *ast.BlockStmt, sigBase *t
 	cb.End(src)
 }
 
-func simplifyGopPackage(pkgPath string) string {
-	if strings.HasPrefix(pkgPath, "gop/") {
-		return "github.com/goplus/" + pkgPath
-	}
-	return pkgPath
-}
-
 func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 	if enableRecover {
 		defer func() {
@@ -1409,18 +1393,8 @@ func loadImport(ctx *blockCtx, spec *ast.ImportSpec) {
 			}
 		}()
 	}
-	var pkg gogen.PkgRef
-	var pkgPath = toString(spec.Path)
-	if realPath, kind := checkC2go(pkgPath); kind != c2goInvalid {
-		if kind == c2goStandard {
-			realPath = ctx.c2goBase + realPath
-		}
-		if pkg = loadC2goPkg(ctx, realPath, spec.Path); pkg.Types == nil {
-			return
-		}
-	} else {
-		pkg = ctx.pkg.Import(simplifyGopPackage(pkgPath), spec)
-	}
+	pkgPath := simplifyPkgPath(toString(spec.Path))
+	pkg := ctx.pkg.Import(pkgPath, spec)
 
 	var pos token.Pos
 	var name string

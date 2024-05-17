@@ -29,7 +29,6 @@ import (
 	"syscall"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gogen/cpackages"
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/printer"
 	"github.com/goplus/gop/token"
@@ -72,7 +71,6 @@ const (
 const (
 	objNormal = iota
 	objPkgRef
-	objCPkgRef
 	objGopExecOrEnv
 
 	objGopEnv  = objGopExecOrEnv
@@ -125,10 +123,6 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg gogen.PkgRef,
 
 	// pkgRef object
 	if (flags & clIdentSelectorExpr) != 0 {
-		if name == "C" && len(ctx.clookups) > 0 {
-			kind = objCPkgRef
-			return
-		}
 		if pi, ok := ctx.findImport(name); ok {
 			if rec := ctx.recorder(); rec != nil {
 				rec.Use(ident, pi.pkgName)
@@ -543,18 +537,6 @@ func lookupPkgRef(ctx *blockCtx, pkg gogen.PkgRef, x *ast.Ident, pkgKind int) (o
 						x.Name, at.Types.Path(), pkg.Types.Path()))
 				}
 				pkg, o, alias = at, o2, alias2
-			}
-		}
-	} else {
-		var cpkg cpackages.PkgRef
-		for _, at := range ctx.clookups {
-			if o2 := at.Lookup(x.Name); o2 != nil {
-				if o != nil {
-					panic(ctx.newCodeErrorf(
-						x.Pos(), "confliction: %s declared both in \"%s\" and \"%s\"",
-						x.Name, at.Pkg().Types.Path(), cpkg.Pkg().Types.Path()))
-				}
-				cpkg, o = at, o2
 			}
 		}
 	}
@@ -998,14 +980,7 @@ func compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {
 		if err != nil {
 			log.Panicln("compileBasicLit:", err)
 		}
-		n := len(s)
-		tyInt8 := types.Typ[types.Int8]
-		typ := types.NewArray(tyInt8, int64(n+1))
-		cb.Typ(types.NewPointer(tyInt8)).Typ(types.Typ[types.UnsafePointer])
-		for i := 0; i < n; i++ {
-			cb.Val(rune(s[i]))
-		}
-		cb.Val(rune(0)).ArrayLit(typ, n+1).UnaryOp(gotoken.AND).Call(1).Call(1)
+		cb.Val(ctx.cstr()).Val(s).Call(1)
 	default:
 		if v.Extra == nil {
 			basicLit(cb, v)

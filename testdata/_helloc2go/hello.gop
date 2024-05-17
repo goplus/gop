@@ -1,4 +1,0 @@
-import "C"
-
-C.printf C"Hello, c2go!\n"
-C.fprintf C.stderr, C"Hi, %7.1f\n", 3.14

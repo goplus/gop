@@ -4,7 +4,6 @@ go 1.18
 
 require (
 	github.com/fsnotify/fsnotify v1.7.0
-	github.com/goplus/c2go v0.7.26
 	github.com/goplus/gogen v1.15.3-0.20240424153048-0d40138c65a5
 	github.com/goplus/llgo v0.8.2
 	github.com/goplus/mod v0.13.10
@@ -13,9 +12,6 @@ require (
 )
 
 require (
-	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
-	github.com/modern-go/reflect2 v1.0.2 // indirect
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect
 )
