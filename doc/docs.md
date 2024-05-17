@@ -1111,32 +1111,29 @@ By default `gop watch` does not convert test files (normally ending with `_test.
 
 ## Calling C from Go+
 
-**NOTE: c2go is deprecated.** We are actively replacing it with **llgo (https://github.com/goplus/llgo)**.
-
-- `import "c"` is used to import libc.
-- The `C"xxx"` syntax represents C-style string constants.
-
-Here is [an example to show how Go+ interacts with C](https://github.com/goplus/gop/tree/v1.1/testdata/helloc2go).
+Here is [an example to show how Go+ interacts with C](https://github.com/goplus/gop/tree/main/testdata/_llgo/hellollgo).
 
 ```go
-import "C"
+import "c"
 
-C.printf C"Hello, c2go!\n"
-C.fprintf C.stderr, C"Hi, %7.1f\n", 3.14
+c.printf C"Hello, llgo!\n"
+c.fprintf c.Stderr, C"Hi, %6.1f\n", 3.14
 ```
 
-In this example we call two C standard functions `printf` and `fprintf`, passing a C variable `stderr` and two C strings in the form of `C"xxx"` (a Go+ syntax to represent C-style strings).
+Here `import "c"` is used to import libc. In this example we call two C standard functions `printf` and `fprintf`, passing a C variable `stderr` and two C strings in the form of `C"xxx"` (a Go+ syntax to represent C-style strings).
 
-Run `gop run .` to see the output of this example:
+To run this demo, you need to set the `GOP_GOCMD` environment variable first.
+
+```sh
+export GOP_GOCMD=llgo  # default is `go`
+```
+
+Then execute `gop run .` to see the output of this example:
 
 ```
-Hello, c2go!
-Hi,     3.1
+Hello, llgo!
+Hi,    3.1
 ```
-
-Of course, the current Go+ support for C is only a preview version, not to the extent that it is actually available in engineering. As far as libc is concerned, the current migration progress is only about 5%, and it is just the beginning.
-
-In the upcoming Go+ v1.2 version planning, complete support for C is listed as a top priority. Of course, support for cgo and Go templates is also under planning, which is a crucial capability enhancement for Go/Go+ hybrid projects.
 
 <h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
