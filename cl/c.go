@@ -22,6 +22,10 @@ import (
 
 // -----------------------------------------------------------------------------
 
+const (
+	pathLibc = "github.com/goplus/llgo/c"
+)
+
 func simplifyGopPackage(pkgPath string) string {
 	if strings.HasPrefix(pkgPath, "gop/") {
 		return "github.com/goplus/" + pkgPath
@@ -32,7 +36,7 @@ func simplifyGopPackage(pkgPath string) string {
 func simplifyPkgPath(pkgPath string) string {
 	switch pkgPath {
 	case "c":
-		return "github.com/goplus/llgo/c"
+		return pathLibc
 	default:
 		return simplifyGopPackage(pkgPath)
 	}

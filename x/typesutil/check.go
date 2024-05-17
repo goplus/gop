@@ -26,7 +26,6 @@ import (
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/token"
-	"github.com/goplus/gop/x/c2go"
 	"github.com/goplus/gop/x/typesutil/internal/typesutil"
 	"github.com/goplus/mod/gopmod"
 	"github.com/qiniu/x/errors"
@@ -72,10 +71,6 @@ type Config struct {
 	// WorkingDir is the directory in which to run gop compiler (optional).
 	// If WorkingDir is not set, os.Getwd() is used.
 	WorkingDir string
-
-	// C2goBase specifies base of standard c2go packages (optional).
-	// Default is github.com/goplus/.
-	C2goBase string
 
 	// Mod represents a Go+ module (optional).
 	Mod *gopmod.Module
@@ -150,8 +145,6 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 	_, err = cl.NewPackage(pkgTypes.Path(), pkg, &cl.Config{
 		Types:          pkgTypes,
 		Fset:           fset,
-		C2goBase:       opts.C2goBase,
-		LookupPub:      c2go.LookupPub(mod),
 		LookupClass:    mod.LookupClass,
 		Importer:       conf.Importer,
 		Recorder:       NewRecorder(p.gopInfo),

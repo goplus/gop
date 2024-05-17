@@ -358,6 +358,7 @@ type blockCtx struct {
 	autoimps   map[string]pkgImp
 	lookups    []gogen.PkgRef
 	tlookup    *typeParamLookup
+	cstr_      gogen.Ref
 	relBaseDir string
 
 	classRecv *ast.FieldList // available when isClass
@@ -369,6 +370,13 @@ type blockCtx struct {
 	fileLine  bool
 	isClass   bool
 	isGopFile bool // is Go+ file or not
+}
+
+func (p *blockCtx) cstr() gogen.Ref {
+	if p.cstr_ == nil {
+		p.cstr_ = p.pkg.Import(pathLibc).Ref("Str")
+	}
+	return p.cstr_
 }
 
 func (p *blockCtx) recorder() *goxRecorder {
