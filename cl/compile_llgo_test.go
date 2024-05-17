@@ -24,13 +24,38 @@ func TestHelloLLGo(t *testing.T) {
 	gopClTest(t, `
 import "c"
 
-c.Printf C"Hello, world!\n"
+c.printf C"Hello, world!\n"
 `, `package main
 
 import "github.com/goplus/llgo/c"
 
 func main() {
 	c.Printf(c.Str("Hello, world!\n"))
+}
+`)
+}
+
+func TestPyCall(t *testing.T) {
+	gopClTest(t, `
+import (
+	"c"
+	"py"
+	"py/math"
+)
+
+x := math.sqrt(py.float(2))
+c.printf C"sqrt(2) = %f\n", x.float64
+`, `package main
+
+import (
+	"github.com/goplus/llgo/c"
+	"github.com/goplus/llgo/py"
+	"github.com/goplus/llgo/py/math"
+)
+
+func main() {
+	x := math.Sqrt(py.Float(2))
+	c.Printf(c.Str("sqrt(2) = %f\n"), x.Float64())
 }
 `)
 }
