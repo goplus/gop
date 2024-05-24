@@ -203,6 +203,8 @@ See [gsh: Go+ DevOps Tools](https://github.com/qiniu/x/tree/main/gsh) for more d
 
 ## How to install
 
+Note: Requires go1.19 or later
+
 ### on Windows
 
 ```sh
@@ -233,8 +235,6 @@ $ brew install goplus
 ```
 
 ### from source code
-
-Note: Requires go1.19 or later
 
 ```bash
 git clone https://github.com/goplus/gop.git
