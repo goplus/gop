@@ -7,9 +7,10 @@
 .DS_Store
 go.json
 x.mod
-gop
-gopfmt
-goptestgo
+
+# gop
+# gopfmt
+# goptestgo
 
 # Folders
 _obj
