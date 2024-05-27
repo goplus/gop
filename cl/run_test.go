@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/goplus/gop/cl"
+	"github.com/goplus/gop/cl/cltest"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/parser/fsx/memfs"
 	"github.com/goplus/gop/scanner"
@@ -84,7 +85,7 @@ func genGo(t *testing.T, conf *cl.Config, gopcode string) []byte {
 	defer cl.SetDisableRecover(false)
 
 	fs := memfs.SingleFile("/foo", "bar.gop", gopcode)
-	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", parser.Config{Mode: parser.ParseComments})
+	pkgs, err := parser.ParseFSDir(cltest.Conf.Fset, fs, "/foo", parser.Config{Mode: parser.ParseComments})
 	if err != nil {
 		scanner.PrintError(os.Stderr, err)
 		t.Fatal("ParseFSDir:", err)
@@ -102,7 +103,7 @@ func genGo(t *testing.T, conf *cl.Config, gopcode string) []byte {
 }
 
 func testRun(t *testing.T, gopcode, expected string) {
-	code := genGo(t, gblConf, gopcode)
+	code := genGo(t, cltest.Conf, gopcode)
 	result := goRun(t, code)
 	if result != expected {
 		t.Fatalf("=> Result:\n%s\n=> Expected:\n%s\n", result, expected)
