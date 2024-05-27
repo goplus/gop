@@ -17,93 +17,30 @@
 package cl_test
 
 import (
-	"bytes"
-	"os"
 	"testing"
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cl/cltest"
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/parser/fsx/memfs"
-	"github.com/goplus/gop/scanner"
-	"github.com/goplus/mod/modfile"
 )
 
-func spxParserConf() parser.Config {
-	return parser.Config{
-		ClassKind: func(fname string) (isProj bool, ok bool) {
-			ext := modfile.ClassExt(fname)
-			c, ok := cltest.LookupClass(ext)
-			if ok {
-				isProj = c.IsProj(ext, fname)
-			}
-			return
-		},
-	}
-}
-
 func gopSpxTest(t *testing.T, gmx, spxcode, expected string) {
-	gopSpxTestEx(t, gmx, spxcode, expected, "index.tgmx", "bar.tspx")
+	cltest.SpxEx(t, gmx, spxcode, expected, "index.tgmx", "bar.tspx")
 }
 
 func gopSpxTestEx(t *testing.T, gmx, spxcode, expected, gmxfile, spxfile string) {
-	gopSpxTestExConf(t, "gopSpxTest", cltest.Conf, gmx, spxcode, expected, gmxfile, spxfile, "")
+	cltest.SpxWithConf(t, "gopSpxTest", cltest.Conf, gmx, spxcode, expected, gmxfile, spxfile, "")
 }
 
 func gopSpxTestEx2(t *testing.T, gmx, spxcode, expected, gmxfile, spxfile, resultFile string) {
-	gopSpxTestExConf(t, "gopSpxTest", cltest.Conf, gmx, spxcode, expected, gmxfile, spxfile, resultFile)
+	cltest.SpxWithConf(t, "gopSpxTest", cltest.Conf, gmx, spxcode, expected, gmxfile, spxfile, resultFile)
 }
 
 func gopSpxTestExConf(t *testing.T, name string, conf *cl.Config, gmx, spxcode, expected, gmxfile, spxfile, resultFile string) {
-	t.Run(name, func(t *testing.T) {
-		cl.SetDisableRecover(true)
-		defer cl.SetDisableRecover(false)
-
-		fs := memfs.TwoFiles("/foo", spxfile, spxcode, gmxfile, gmx)
-		if gmxfile == "" {
-			fs = memfs.SingleFile("/foo", spxfile, spxcode)
-		}
-		pkgs, err := parser.ParseFSDir(cltest.Conf.Fset, fs, "/foo", spxParserConf())
-		if err != nil {
-			scanner.PrintError(os.Stderr, err)
-			t.Fatal("ParseFSDir:", err)
-		}
-		bar := pkgs["main"]
-		pkg, err := cl.NewPackage("", bar, conf)
-		if err != nil {
-			t.Fatal("NewPackage:", err)
-		}
-		var b bytes.Buffer
-		err = pkg.WriteTo(&b, resultFile)
-		if err != nil {
-			t.Fatal("gogen.WriteTo failed:", err)
-		}
-		result := b.String()
-		if result != expected {
-			t.Fatalf("\nResult:\n%s\nExpected:\n%s\n", result, expected)
-		}
-	})
+	cltest.SpxWithConf(t, name, conf, gmx, spxcode, expected, gmxfile, spxfile, resultFile)
 }
 
 func gopSpxErrorTestEx(t *testing.T, msg, gmx, spxcode, gmxfile, spxfile string) {
-	fs := memfs.TwoFiles("/foo", spxfile, spxcode, gmxfile, gmx)
-	pkgs, err := parser.ParseFSDir(cltest.Conf.Fset, fs, "/foo", spxParserConf())
-	if err != nil {
-		scanner.PrintError(os.Stderr, err)
-		t.Fatal("ParseFSDir:", err)
-	}
-	conf := *cltest.Conf
-	conf.RelativeBase = "/foo"
-	conf.Recorder = nil
-	conf.NoFileLine = false
-	bar := pkgs["main"]
-	_, err = cl.NewPackage("", bar, &conf)
-	if err == nil {
-		t.Fatal("no error?")
-	}
-	if ret := err.Error(); ret != msg {
-		t.Fatalf("\nError: \"%s\"\nExpected: \"%s\"\n", ret, msg)
-	}
+	cltest.SpxErrorEx(t, msg, gmx, spxcode, gmxfile, spxfile)
 }
 
 func TestSpxNoGame(t *testing.T) {
