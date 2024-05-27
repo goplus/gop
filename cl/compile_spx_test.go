@@ -1397,6 +1397,42 @@ type foo struct {
 `, "foo.gox")
 }
 
+func TestGopxOverload(t *testing.T) {
+	gopClTestFile(t, `
+func addString(a, b string) string {
+	return a + b
+}
+
+func addInt(a, b int) int {
+	return a + b
+}
+
+func add = (
+	addInt
+	func(a, b float64) float64 {
+		return a + b
+	}
+	addString
+)
+`, `package main
+
+const Gopo_Rect_add = ".addInt,,.addString"
+
+type Rect struct {
+}
+
+func (this *Rect) addString(a string, b string) string {
+	return a + b
+}
+func (this *Rect) addInt(a int, b int) int {
+	return a + b
+}
+func (this *Rect) add__1(a float64, b float64) float64 {
+	return a + b
+}
+`, "Rect.gox")
+}
+
 func TestClassFileGopx(t *testing.T) {
 	gopClTestFile(t, `
 var (
