@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/goplus/gop/cl"
+	"github.com/goplus/gop/cl/cltest"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/parser/fsx/memfs"
 )
@@ -223,12 +224,12 @@ func mixedErrorTest(t *testing.T, msg, gocode, gopcode string) {
 
 func mixedErrorTestEx(t *testing.T, pkgname, msg, gocode, gopcode string) {
 	fs := memfs.TwoFiles("/foo", "a.go", gocode, "b.gop", gopcode)
-	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", parser.Config{})
+	pkgs, err := parser.ParseFSDir(cltest.Conf.Fset, fs, "/foo", parser.Config{})
 	if err != nil {
 		scanner.PrintError(os.Stderr, err)
 		t.Fatal("parser.ParseFSDir failed")
 	}
-	conf := *gblConf
+	conf := *cltest.Conf
 	conf.NoFileLine = false
 	conf.RelativeBase = "/foo"
 	bar := pkgs[pkgname]

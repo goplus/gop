@@ -22,50 +22,18 @@ import (
 	"testing"
 
 	"github.com/goplus/gop/cl"
+	"github.com/goplus/gop/cl/cltest"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/parser/fsx/memfs"
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/mod/modfile"
 )
 
-func lookupClass(ext string) (c *modfile.Project, ok bool) {
-	switch ext {
-	case ".tgmx", ".tspx":
-		return &modfile.Project{
-			Ext: ".tgmx", Class: "*MyGame",
-			Works:    []*modfile.Class{{Ext: ".tspx", Class: "Sprite"}},
-			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx", "math"}}, true
-	case ".t2gmx", ".t2spx", ".t2spx2":
-		return &modfile.Project{
-			Ext: ".t2gmx", Class: "Game",
-			Works: []*modfile.Class{{Ext: ".t2spx", Class: "Sprite"},
-				{Ext: ".t2spx2", Class: "Sprite2"}},
-			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
-	case "_t3spx.gox", ".t3spx2":
-		return &modfile.Project{
-			Works: []*modfile.Class{{Ext: "_t3spx.gox", Class: "Sprite"},
-				{Ext: ".t3spx2", Class: "Sprite2"}},
-			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
-	case "_spx.gox":
-		return &modfile.Project{
-			Ext: "_spx.gox", Class: "Game",
-			Works:    []*modfile.Class{{Ext: "_spx.gox", Class: "Sprite"}},
-			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx3", "math"},
-			Import:   []*modfile.Import{{Path: "github.com/goplus/gop/cl/internal/spx3/jwt"}}}, true
-	case "_xtest.gox":
-		return &modfile.Project{
-			Ext: "_xtest.gox", Class: "App",
-			Works:    []*modfile.Class{{Ext: "_xtest.gox", Class: "Case"}},
-			PkgPaths: []string{"github.com/goplus/gop/test", "testing"}}, true
-	}
-	return
-}
-
 func spxParserConf() parser.Config {
 	return parser.Config{
 		ClassKind: func(fname string) (isProj bool, ok bool) {
 			ext := modfile.ClassExt(fname)
-			c, ok := lookupClass(ext)
+			c, ok := cltest.LookupClass(ext)
 			if ok {
 				isProj = c.IsProj(ext, fname)
 			}
@@ -79,11 +47,11 @@ func gopSpxTest(t *testing.T, gmx, spxcode, expected string) {
 }
 
 func gopSpxTestEx(t *testing.T, gmx, spxcode, expected, gmxfile, spxfile string) {
-	gopSpxTestExConf(t, "gopSpxTest", gblConf, gmx, spxcode, expected, gmxfile, spxfile, "")
+	gopSpxTestExConf(t, "gopSpxTest", cltest.Conf, gmx, spxcode, expected, gmxfile, spxfile, "")
 }
 
 func gopSpxTestEx2(t *testing.T, gmx, spxcode, expected, gmxfile, spxfile, resultFile string) {
-	gopSpxTestExConf(t, "gopSpxTest", gblConf, gmx, spxcode, expected, gmxfile, spxfile, resultFile)
+	gopSpxTestExConf(t, "gopSpxTest", cltest.Conf, gmx, spxcode, expected, gmxfile, spxfile, resultFile)
 }
 
 func gopSpxTestExConf(t *testing.T, name string, conf *cl.Config, gmx, spxcode, expected, gmxfile, spxfile, resultFile string) {
@@ -95,7 +63,7 @@ func gopSpxTestExConf(t *testing.T, name string, conf *cl.Config, gmx, spxcode, 
 		if gmxfile == "" {
 			fs = memfs.SingleFile("/foo", spxfile, spxcode)
 		}
-		pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", spxParserConf())
+		pkgs, err := parser.ParseFSDir(cltest.Conf.Fset, fs, "/foo", spxParserConf())
 		if err != nil {
 			scanner.PrintError(os.Stderr, err)
 			t.Fatal("ParseFSDir:", err)
@@ -119,12 +87,12 @@ func gopSpxTestExConf(t *testing.T, name string, conf *cl.Config, gmx, spxcode, 
 
 func gopSpxErrorTestEx(t *testing.T, msg, gmx, spxcode, gmxfile, spxfile string) {
 	fs := memfs.TwoFiles("/foo", spxfile, spxcode, gmxfile, gmx)
-	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", spxParserConf())
+	pkgs, err := parser.ParseFSDir(cltest.Conf.Fset, fs, "/foo", spxParserConf())
 	if err != nil {
 		scanner.PrintError(os.Stderr, err)
 		t.Fatal("ParseFSDir:", err)
 	}
-	conf := *gblConf
+	conf := *cltest.Conf
 	conf.RelativeBase = "/foo"
 	conf.Recorder = nil
 	conf.NoFileLine = false
@@ -803,7 +771,7 @@ func (this *Kai) Main() {
 }
 
 func TestSpxMainEntry(t *testing.T) {
-	conf := *gblConf
+	conf := *cltest.Conf
 	conf.Importer = nil
 	conf.NoAutoGenMain = false
 
