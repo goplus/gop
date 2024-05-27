@@ -210,16 +210,6 @@ func main() {
 `)
 }
 
-func _TestMatrix1(t *testing.T) {
-	gopSpxTest(t, `
-echo [
-	1, 2, 3
-	4, 5, 6
-]
-`, ``, `
-`)
-}
-
 func TestEnvOp(t *testing.T) {
 	gopSpxTest(t, `
 echo ${PATH}, $id

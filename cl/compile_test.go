@@ -40,7 +40,7 @@ func init() {
 	gblConfLine = &cl.Config{
 		Fset:          conf.Fset,
 		Importer:      conf.Importer,
-		Recorder:      gopRecorder{},
+		Recorder:      cltest.Conf.Recorder,
 		LookupClass:   cltest.LookupClass,
 		NoFileLine:    false,
 		NoAutoGenMain: true,
