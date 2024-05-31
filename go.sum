@@ -2,8 +2,8 @@ github.com/fsnotify/fsnotify v1.7.0 h1:8JEhPFa5W2WU7YfeZzPNqzMP6Lwt7L2715Ggo0nos
 github.com/fsnotify/fsnotify v1.7.0/go.mod h1:40Bi/Hjc2AVfZrqy+aj+yEI+/bRxZnMJyTJwOpGvigM=
 github.com/goplus/gogen v1.16.0 h1:hAK2ZX8vCjH+Y2QoJl9viSZ8Gw9pzE0vCz5voYBYnv4=
 github.com/goplus/gogen v1.16.0/go.mod h1:92qEzVgv7y8JEFICWG9GvYI5IzfEkxYdsA1DbmnTkqk=
-github.com/goplus/llgo v0.8.3 h1:CKqQltgm7GWYQ2DiMbr0eQy0cs3tXFnRjbJISG/VJB8=
-github.com/goplus/llgo v0.8.3/go.mod h1:FZVAPoRTpAuQIizMP7wcZYcZ25Ft+GUX6WhD23GcFhc=
+github.com/goplus/llgo v0.8.5 h1:SwTJi6/2hCibM8VIGyF/hoqqcn5WwIvxVx3qISKuez4=
+github.com/goplus/llgo v0.8.5/go.mod h1:bdhfyMkmrsjXbdT8nV1WpCDJuq+fhdjBR/0kTK43bow=
 github.com/goplus/mod v0.13.10 h1:5Om6KOvo31daN7N30kWU1vC5zhsJPM+uPbcEN/FnlzE=
 github.com/goplus/mod v0.13.10/go.mod h1:HDuPZgpWiaTp3PUolFgsiX+Q77cbUWB/mikVHfYND3c=
 github.com/qiniu/x v1.13.10 h1:J4Z3XugYzAq85SlyAfqlKVrbf05glMbAOh+QncsDQpE=
