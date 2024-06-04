@@ -5,6 +5,7 @@
 *.txt
 *.cache
 .DS_Store
+test.db
 go.json
 x.mod
 
