@@ -41,6 +41,9 @@ func simplifyPkgPath(pkgPath string) string {
 	case "py":
 		return pathLibpy
 	default:
+		if strings.HasPrefix(pkgPath, "c/") {
+			return pathLibc + pkgPath[1:]
+		}
 		if strings.HasPrefix(pkgPath, "py/") {
 			return pathLibpy + pkgPath[2:]
 		}
