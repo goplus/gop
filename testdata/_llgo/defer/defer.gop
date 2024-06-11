@@ -1,0 +1,15 @@
+import "c"
+
+func f(s string) bool {
+	return len(s) > 2
+}
+
+defer func() {
+	c.printf C"hi\n"
+}()
+if s := "hello"; f(s) {
+	defer c.printf(C"%s\n", c.allocaCStr(s))
+} else {
+	defer c.printf(C"world\n")
+}
+defer c.printf(C"bye\n")
