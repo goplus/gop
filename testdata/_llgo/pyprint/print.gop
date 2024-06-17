@@ -1,0 +1,7 @@
+import (
+	"py"
+	"py/std"
+)
+
+x := py.float(3.14)
+std.print(x)

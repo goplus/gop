@@ -1,0 +1,12 @@
+import (
+	"py"
+	"py/std"
+	"py/torch"
+)
+
+data := py.list(
+	py.list(1.0, 2.0),
+	py.list(3.0, 4.0),
+)
+x := torch.tensor(data)
+std.print(x)
