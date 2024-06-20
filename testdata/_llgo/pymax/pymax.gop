@@ -1,0 +1,11 @@
+import (
+	"py"
+	"py/std"
+)
+
+x := std.max(py.float(3.0), py.float(9.0), py.float(23.0), py.float(100.0))
+std.print(x)
+
+list := py.list(3.0, 9.0, 23.0, 100.0)
+y := std.max(std.iter(list))
+std.print(y)
