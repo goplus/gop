@@ -145,7 +145,7 @@ const (
 
 	ENV = additional_end2 // ${name}
 
-	CSTRING  = literal_beg  // C"Hello"
+	CSTRING  = literal_beg  // c"Hello"
 	RAT      = literal_end  // 123.5r
 	DRARROW  = operator_beg // => (double right arrow)
 	QUESTION = operator_end // ?

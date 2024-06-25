@@ -5,11 +5,11 @@ func f(s string) bool {
 }
 
 defer func() {
-	c.printf C"hi\n"
+	c.printf c"hi\n"
 }()
 if s := "hello"; f(s) {
-	defer c.printf(C"%s\n", c.allocaCStr(s))
+	defer c.printf(c"%s\n", c.allocaCStr(s))
 } else {
-	defer c.printf(C"world\n")
+	defer c.printf(c"world\n")
 }
-defer c.printf(C"bye\n")
+defer c.printf(c"bye\n")

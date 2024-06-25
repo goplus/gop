@@ -838,7 +838,7 @@ scanAgain:
 			case token.IDENT, token.BREAK, token.CONTINUE, token.FALLTHROUGH, token.RETURN:
 				insertSemi = true
 			}
-		} else if lit == "C" && s.ch == '"' { // C"..."
+		} else if (lit == "C" || lit == "c") && s.ch == '"' { // C"..."
 			s.next()
 			insertSemi = true
 			tok = token.CSTRING
