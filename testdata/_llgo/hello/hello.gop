@@ -1,3 +1,3 @@
 import "c"
 
-c.printf C"Hello world\n"
+c.printf c"Hello world\n"

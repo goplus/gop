@@ -313,7 +313,7 @@ func (p *printer) writeString(pos token.Position, s string, isLit bool) {
 		// UTF-8 sequences.
 		p.output = append(p.output, tabwriter.Escape)
 		if p.lastTok == token.CSTRING {
-			p.output = append(p.output, 'C')
+			p.output = append(p.output, 'c')
 		}
 	}
 

@@ -15,4 +15,4 @@ b := py.list(
 	py.list(3.0, 2.0, 1.0),
 )
 x := numpy.add(a, b)
-c.printf C"a+b = %s\n", x.str.cStr
+c.printf c"a+b = %s\n", x.str.cStr

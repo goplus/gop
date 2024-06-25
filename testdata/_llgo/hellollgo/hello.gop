@@ -1,4 +1,4 @@
 import "c"
 
-c.printf C"Hello, llgo!\n"
-c.fprintf c.Stderr, C"Hi, %6.1f\n", 3.14
+c.printf c"Hello, llgo!\n"
+c.fprintf c.Stderr, c"Hi, %6.1f\n", 3.14
