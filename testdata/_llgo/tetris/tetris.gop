@@ -1,7 +1,6 @@
 import (
 	"c"
 	"c/raylib"
-	"unsafe"
 )
 
 const (
@@ -164,7 +163,6 @@ for !raylib.windowShouldClose && !gameOver {
 
 	c.sprintf scoreText, c"Score:%d", score
 	raylib.drawText scoreText, 10, 10, 20, raylib.BLACK
-
 	raylib.endDrawing
 }
 
