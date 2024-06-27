@@ -115,6 +115,7 @@ func keyPressed(key c.Int) bool {
 raylib.initWindow SCREENWIDTH, SCREENHEIGHT, c"tetris (powered by raylib and Go+)"
 raylib.setTargetFPS 60
 genShape
+
 for !raylib.windowShouldClose && !gameOver {
 	fallTime += raylib.getFrameTime
 	if fallTime >= fallSpeed {
@@ -161,10 +162,10 @@ for !raylib.windowShouldClose && !gameOver {
 			BLOCK_SIZE-1, BLOCK_SIZE-1, curShape.Color
 	}
 
-	c.Sprintf(scoreText, c"Score:%d", score)
-	raylib.DrawText(scoreText, 10, 10, 20, raylib.BLACK)
+	c.sprintf scoreText, c"Score:%d", score
+	raylib.drawText scoreText, 10, 10, 20, raylib.BLACK
 
-	raylib.EndDrawing()
+	raylib.endDrawing
 }
 
 for !raylib.windowShouldClose {
