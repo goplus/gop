@@ -1,0 +1,5 @@
+import (
+	"py/std"
+)
+
+std.print py"Hello, World!"
