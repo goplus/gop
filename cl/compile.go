@@ -359,6 +359,7 @@ type blockCtx struct {
 	lookups    []gogen.PkgRef
 	tlookup    *typeParamLookup
 	cstr_      gogen.Ref
+	pystr_     gogen.Ref
 	relBaseDir string
 
 	classRecv *ast.FieldList // available when isClass
@@ -377,6 +378,13 @@ func (p *blockCtx) cstr() gogen.Ref {
 		p.cstr_ = p.pkg.Import(pathLibc).Ref("Str")
 	}
 	return p.cstr_
+}
+
+func (p *blockCtx) pystr() gogen.Ref {
+	if p.pystr_ == nil {
+		p.pystr_ = p.pkg.Import(pathLibpy).Ref("Str")
+	}
+	return p.pystr_
 }
 
 func (p *blockCtx) recorder() *goxRecorder {

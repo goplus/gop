@@ -970,17 +970,24 @@ func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
 
 func compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {
 	cb := ctx.cb
-	switch v.Kind {
+	switch kind := v.Kind; kind {
 	case token.RAT:
 		val := v.Value
 		bi, _ := new(big.Int).SetString(val[:len(val)-1], 10) // remove r suffix
 		cb.UntypedBigInt(bi, v)
-	case token.CSTRING:
+	case token.CSTRING, token.PYSTRING:
 		s, err := strconv.Unquote(v.Value)
 		if err != nil {
 			log.Panicln("compileBasicLit:", err)
 		}
-		cb.Val(ctx.cstr()).Val(s).Call(1)
+		var xstr gogen.Ref
+		switch kind {
+		case token.CSTRING:
+			xstr = ctx.cstr()
+		default:
+			xstr = ctx.pystr()
+		}
+		cb.Val(xstr).Val(s).Call(1)
 	default:
 		if v.Extra == nil {
 			basicLit(cb, v)
