@@ -80,7 +80,7 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 	defer conf.UpdateCache()
 
-	confCmd := &gocmd.BuildConfig{Gop: conf.Gop}
+	confCmd := conf.NewGoCmdConf()
 	if *flagOutput != "" {
 		output, err := filepath.Abs(*flagOutput)
 		if err != nil {
