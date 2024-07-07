@@ -17,6 +17,7 @@
 package mod
 
 import (
+	"log"
 	"runtime"
 	"strings"
 
@@ -27,15 +28,26 @@ import (
 
 // gop mod init
 var cmdInit = &base.Command{
-	UsageLine: "gop mod init [module]",
+	UsageLine: "gop mod init [-llgo -tinygo] module-path",
 	Short:     "initialize new module in current directory",
 }
+
+var (
+	flagInit   = &cmdInit.Flag
+	flagLLGo   = flagInit.Bool("llgo", false, "use llgo as the compiler")
+	flagTinyGo = flagInit.Bool("tinygo", false, "use tinygo as the compiler")
+)
 
 func init() {
 	cmdInit.Run = runInit
 }
 
 func runInit(cmd *base.Command, args []string) {
+	err := flagInit.Parse(args)
+	if err != nil {
+		log.Fatalln("parse input arguments failed:", err)
+	}
+	args = flagInit.Args()
 	switch len(args) {
 	case 0:
 		fatal(`Example usage:
@@ -51,6 +63,12 @@ Run 'gop help mod init' for more information.`)
 	modPath := args[0]
 	mod, err := modload.Create(".", modPath, goMainVer(), env.MainVersion)
 	check(err)
+
+	if *flagLLGo {
+		mod.AddCompiler("llgo", "1.0")
+	} else if *flagTinyGo {
+		mod.AddCompiler("tinygo", "0.32")
+	}
 
 	err = mod.Save()
 	check(err)

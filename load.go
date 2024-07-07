@@ -28,6 +28,7 @@ import (
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
+	"github.com/goplus/gop/x/gocmd"
 	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/mod/env"
 	"github.com/goplus/mod/gopmod"
@@ -165,6 +166,17 @@ func NewDefaultConf(dir string, flags ConfFlags) (conf *Config, err error) {
 		conf.Filter = FilterNoTestFiles
 	}
 	return
+}
+
+func (conf *Config) NewGoCmdConf() *gocmd.Config {
+	if cl := conf.Mod.Opt.Compiler; cl != nil {
+		if os.Getenv("GOP_GOCMD") == "" {
+			os.Setenv("GOP_GOCMD", cl.Name)
+		}
+	}
+	return &gocmd.Config{
+		Gop: conf.Gop,
+	}
 }
 
 // UpdateCache updates the cache.
