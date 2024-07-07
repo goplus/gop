@@ -1,7 +1,5 @@
 import (
 	"c"
-
-	"github.com/goplus/llgo/c"
 )
 
 // New returns an error that formats as the given text.
