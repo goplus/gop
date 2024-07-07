@@ -1116,11 +1116,11 @@ Here is [an example to show how Go+ interacts with C](https://github.com/goplus/
 ```go
 import "c"
 
-c.printf C"Hello, llgo!\n"
-c.fprintf c.Stderr, C"Hi, %6.1f\n", 3.14
+c.printf c"Hello, llgo!\n"
+c.fprintf c.Stderr, c"Hi, %6.1f\n", 3.14
 ```
 
-Here `import "c"` is used to import libc. In this example we call two C standard functions `printf` and `fprintf`, passing a C variable `stderr` and two C strings in the form of `C"xxx"` (a Go+ syntax to represent C-style strings).
+Here `import "c"` is used to import libc. In this example we call two C standard functions `printf` and `fprintf`, passing a C variable `stderr` and two C strings in the form of `c"xxx"` (a Go+ syntax to represent C-style strings).
 
 To run this demo, you need to set the `GOP_GOCMD` environment variable first.
 
