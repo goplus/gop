@@ -3,8 +3,8 @@ This is an example to show how Go+ interacts with C.
 ```go
 import "c"
 
-c.printf C"Hello, llgo!\n"
-c.fprintf c.Stderr, C"Hi, %6.1f\n", 3.14
+c.printf c"Hello, llgo!\n"
+c.fprintf c.Stderr, c"Hi, %6.1f\n", 3.14
 ```
 
 Here we use `import "c"` to import libc. It's an abbreviation for `import "github.com/goplus/llgo/c"`. It is equivalent to the following code:
@@ -12,11 +12,11 @@ Here we use `import "c"` to import libc. It's an abbreviation for `import "githu
 ```go
 import "github.com/goplus/llgo/c"
 
-c.printf C"Hello, llgo!\n"
-c.fprintf c.Stderr, C"Hi, %7.1f\n", 3.14
+c.printf c"Hello, llgo!\n"
+c.fprintf c.Stderr, c"Hi, %7.1f\n", 3.14
 ```
 
-In this example we call two C standard functions `printf` and `fprintf`, pass a C variable `stderr` and two C strings in the form of `C"xxx"`.
+In this example we call two C standard functions `printf` and `fprintf`, pass a C variable `stderr` and two C strings in the form of `c"xxx"`.
 
 To run this demo, you need to set the `GOP_GOCMD` environment variable first.
 
