@@ -500,11 +500,11 @@ func TestError(t *testing.T) {
 	if err == nil {
 		t.Fatal("BuildFile: no error?")
 	}
-	_, err = ctx.BuildDir("./testdata/nofound")
+	_, err = ctx.BuildDir("./demo/nofound")
 	if err == nil {
 		t.Fatal("BuildDir: no error?")
 	}
-	_, err = ctx.BuildFSDir(fsx.Local, "./testdata/nofound")
+	_, err = ctx.BuildFSDir(fsx.Local, "./demo/nofound")
 	if err == nil {
 		t.Fatal("BuildDir: no error?")
 	}
@@ -516,7 +516,7 @@ func TestError(t *testing.T) {
 	if err == nil {
 		t.Fatal("ParseFile: no error?")
 	}
-	_, err = ctx.ParseFile("./testdata/nofound/main.gop", nil)
+	_, err = ctx.ParseFile("./demo/nofound/main.gop", nil)
 	if err == nil {
 		t.Fatal("ParseFile: no error?")
 	}

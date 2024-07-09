@@ -1111,7 +1111,7 @@ By default `gop watch` does not convert test files (normally ending with `_test.
 
 ## Calling C from Go+
 
-Here is [an example to show how Go+ interacts with C](https://github.com/goplus/gop/tree/main/testdata/_llgo/hellollgo).
+Here is [an example to show how Go+ interacts with C](https://github.com/goplus/gop/tree/main/demo/_llgo/hellollgo).
 
 ```go
 import "c"

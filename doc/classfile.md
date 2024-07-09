@@ -147,7 +147,7 @@ func foo(v int) int {
 }
 ```
 
-Then you can create a `foo_test.gox` file to test it (see [unit-test/foo_test.gox](../testdata/unit-test/foo_test.gox)):
+Then you can create a `foo_test.gox` file to test it (see [unit-test/foo_test.gox](../demo/unit-test/foo_test.gox)):
 
 ```go
 if v := foo(50); v != 100 {
