@@ -554,7 +554,7 @@ func runRegtests() {
 	cmd := exec.Command(filepath.Join(gopRoot, "bin/"+gopBinFiles[0]), "go", "./...")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.Dir = filepath.Join(gopRoot, "testdata")
+	cmd.Dir = filepath.Join(gopRoot, "demo")
 	err := cmd.Run()
 	if err != nil {
 		code := cmd.ProcessState.ExitCode()
