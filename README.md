@@ -44,6 +44,16 @@ The Go+ programming language is designed for engineering, STEM education, and da
 For more details, see [Quick Start](doc/docs.md).
 
 
+## Key Features of Go+
+
+* Approaching natural language expression and intuitive (see [Command Style Code](#command-style-code)).
+* Fully compatible with [Go](https://github.com/golang/go) and can mix Go/Go+ code in the same package (see [Go/Go+ Hybrid Programming](doc/docs.md#gogo-hybrid-programming)).
+* No DSL (Domain Specific Language) support, but SDF (Specific Domain Friendliness) (see [Go+ Classfiles](#go-classfiles)).
+* Support Go code generation (main backend) and [bytecode backend](https://github.com/goplus/igop) (REPL: see [iGo+](https://repl.goplus.org/)).
+* [Simplest way to interaction with C](doc/docs.md#calling-c-from-go) (cgo is supported but not recommended).
+* [Powerful built-in data processing capabilities](doc/docs.md#data-processing).
+
+
 ## Command Style Code
 
 Different from the function call style of most languages, Go+ recommends command style code:
@@ -187,18 +197,6 @@ mkdir "testgsh"
 Don't need a `go.mod` file, just enter `gop run ./example.gsh` directly to run.
 
 See [gsh: Go+ DevOps Tools](https://github.com/qiniu/x/tree/main/gsh) for more details.
-
-
-## Key Features of Go+
-
-* A static typed language.
-* The simplest engineering language that can be mastered by children (script-like style).
-* Performance: as fast as Go (Go+'s main backend compiles to human-readable Go).
-* Fully compatible with [Go](https://github.com/golang/go) and can mix Go/Go+ code in the same package (see [Go/Go+ hybrid programming](doc/docs.md#gogo-hybrid-programming)).
-* No DSL (Domain Specific Language) support, but SDF ([Specific Domain Friendliness](doc/classfile.md)).
-* Support Go code generation (main backend) and [bytecode backend](https://github.com/goplus/igop) (REPL: see [iGo+](https://repl.goplus.org/)).
-* [Simplest way to interaction with C](doc/docs.md#calling-c-from-go) (cgo is supported but not recommended).
-* [Powerful built-in data processing capabilities](doc/docs.md#data-processing).
 
 
 ## How to install
