@@ -39,6 +39,15 @@ func getGoxConf() *gogen.Config {
 	return &gogen.Config{Fset: fset, Importer: imp}
 }
 
+func TestSimplifyPkgPath(t *testing.T) {
+	if simplifyPkgPath("c/lua") != "github.com/goplus/llgo/c/lua" {
+		t.Fatal("simplifyPkgPath: c/lua")
+	}
+	if simplifyPkgPath("cpp/std") != "github.com/goplus/llgo/cpp/std" {
+		t.Fatal("simplifyPkgPath: cpp/std")
+	}
+}
+
 func TestCompileLambdaExpr(t *testing.T) {
 	ctx := &blockCtx{
 		pkgCtx: &pkgCtx{},
