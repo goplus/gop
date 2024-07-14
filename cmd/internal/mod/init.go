@@ -18,11 +18,13 @@ package mod
 
 import (
 	"log"
+	"path/filepath"
 	"runtime"
 	"strings"
 
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/env"
+	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modload"
 )
 
@@ -66,6 +68,7 @@ Run 'gop help mod init' for more information.`)
 
 	if *flagLLGo {
 		mod.AddCompiler("llgo", "1.0")
+		mod.AddRequire("github.com/goplus/llgo", llgoVer(), false)
 	} else if *flagTinyGo {
 		mod.AddCompiler("tinygo", "0.32")
 	}
@@ -83,4 +86,13 @@ func goMainVer() string {
 		}
 	}
 	return ver
+}
+
+func llgoVer() string {
+	if modGop, e1 := gopmod.LoadFrom(filepath.Join(env.GOPROOT(), "go.mod"), ""); e1 == nil {
+		if pkg, e2 := modGop.Lookup("github.com/goplus/llgo"); e2 == nil {
+			return pkg.Real.Version
+		}
+	}
+	return "v0.9.0"
 }
