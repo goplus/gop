@@ -26,18 +26,6 @@ builds:
     ldflags:
       - -X github.com/goplus/gop/env.buildVersion=v{{.Version}}
       - -X github.com/goplus/gop/env.buildDate={{.Date}}
-  - id: gopfmt
-    env:
-      - CGO_ENABLED=0
-    goos:
-      - linux
-      - windows
-      - darwin
-    main: ./cmd/gopfmt
-    binary: bin/gopfmt
-    ldflags:
-      - -X github.com/goplus/gop/env.buildVersion=v{{.Version}}
-      - -X github.com/goplus/gop/env.buildDate={{.Date}}
 
 archives:
   - format: tar.gz
@@ -261,9 +249,6 @@ nfpms:
       - src: "/usr/lib/{{ .ProjectName }}/bin/gop"
         dst: /usr/bin/gop
         type: symlink
-      - src: "/usr/lib/{{ .ProjectName }}/bin/gopfmt"
-        dst: /usr/bin/gopfmt
-        type: symlink
 
 snapcrafts:
   - id: gop
@@ -350,11 +335,6 @@ snapcrafts:
       gop:
         command: "gop"
         aliases: ["gop"]
-        environment:
-          GOPROOT: "$SNAP"
-      gopfmt:
-        command: "gopfmt"
-        aliases: ["gopfmt"]
         environment:
           GOPROOT: "$SNAP"
 
