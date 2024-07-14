@@ -48,10 +48,8 @@ For more details, see [Quick Start](doc/docs.md).
 
 * Approaching natural language expression and intuitive (see [Command Style Code](#command-style-code)).
 * Fully compatible with [Go](https://github.com/golang/go) and can mix Go/Go+ code in the same package (see [Go/Go+ Hybrid Programming](doc/docs.md#gogo-hybrid-programming)).
-* No DSL (Domain Specific Language) support, but SDF (Specific Domain Friendliness) (see [Go+ Classfiles](#go-classfiles)).
-* Support Go code generation (main backend) and [bytecode backend](https://github.com/goplus/igop) (REPL: see [iGo+](https://repl.goplus.org/)).
-* [Simplest way to interaction with C](doc/docs.md#calling-c-from-go) (cgo is supported but not recommended).
-* [Powerful built-in data processing capabilities](doc/docs.md#data-processing).
+* Integrating with the C ecosystem including Python and providing limitless possibilities (see [Support for C/C++ and Python](#support-for-cc-and-python)).
+* Does not support DSL (Domain-Specific Languages), but supports SDF (Specific Domain Friendliness) (see [Go+ Classfiles](#go-classfiles)).
 
 
 ## Command Style Code
@@ -69,6 +67,79 @@ echo "Hello world"
 ```
 
 For more discussion on coding style, see https://tutorial.goplus.org/hello-world.
+
+
+## Support for C/C++ and Python
+
+Go+ can choose different Go compilers as its underlying support. Currently known supported Go compilers include:
+
+* [go](https://go.dev/) (The official Go compiler supported by Google)
+* [llgo](https://github.com/goplus/llgo) (The Go compiler supported by the Go+ team)
+* [tinygo](https://tinygo.org/) (A Go compiler for small places)
+
+Currently, Go+ defaults to using [go](https://go.dev/) as its underlying support, but in the future, it will be [llgo](https://github.com/goplus/llgo).
+
+LLGo is a Go compiler based on [LLVM](https://llvm.org/) in order to better integrate Go with the C ecosystem including Python. It aims to expand the boundaries of Go/Go+, providing limitless possibilities such as:
+
+* Game development
+* AI and data science
+* WebAssembly
+* Embedded development
+* ...
+
+If you wish to use [llgo](https://github.com/goplus/llgo), specify the `-llgo` flag when initializing a Go+ module:
+
+```sh
+gop mod init -llgo YourModulePath
+```
+
+This will generate a `go.mod` file with the following contents (It may vary slightly depending on the versions of local Go+ and LLGo):
+
+```go
+module YourModulePath
+
+go 1.21 // llgo 1.0
+
+require github.com/goplus/llgo v0.9.1
+```
+
+Based on LLGo, Go+ can support importing libraries written in C/C++ and Python.
+
+Here is an example (see [chello](demo/_llgo/chello/hello.gop)) of printing `Hello world` using C's `printf`:
+
+```go
+import "c"
+
+c.printf c"Hello world\n"
+```
+
+Here, `c"Hello world\n"` is a syntax supported by Go+, representing a null-terminated C-style string.
+
+To run this example, you can:
+
+```sh
+cd YourModulePath  # set work directory to your module
+gop mod tidy       # for generating go.sum file
+gop run .
+```
+
+And here is an example (see [pyhello](demo/_llgo/pyhello/hello.gop)) of printing `Hello world` using Python's `print`:
+
+```go
+import "py/std"
+
+std.print py"Hello world"
+```
+
+Here, `py"Hello world"` is a syntax supported by Go+, representing a Python string.
+
+Here are more examples of Go+ calling C/C++ and Python libraries:
+
+* [pytensor](demo/_llgo/pytensor/tensor.gop): a simple demo using [py/torch](https://pkg.go.dev/github.com/goplus/llgo/py/torch)
+* [tetris](demo/_llgo/tetris/tetris.gop): a tetris game based on [c/raylib](https://pkg.go.dev/github.com/goplus/llgo/c/raylib)
+* [sqlitedemo](demo/_llgo/sqlitedemo/sqlitedemo.gop): a demo using [c/sqlite](https://pkg.go.dev/github.com/goplus/llgo/c/sqlite)
+
+To find out more about LLGo/Go+'s support for C/C++ and Python in detail, please refer to homepage of [llgo](https://github.com/goplus/llgo).
 
 
 ## Go+ Classfiles
