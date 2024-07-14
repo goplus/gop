@@ -161,8 +161,8 @@ func initType(ctx *blockCtx, named *types.Named, spec *ast.TypeSpec) {
 	named.SetUnderlying(typ)
 }
 
-func getRecvType(typ ast.Expr) (ast.Expr, bool) {
-	var ptr bool
+func getRecvType(expr ast.Expr) (typ ast.Expr, ptr bool, ok bool) {
+	typ = expr
 L:
 	for {
 		switch t := typ.(type) {
@@ -170,7 +170,8 @@ L:
 			typ = t.X
 		case *ast.StarExpr:
 			if ptr {
-				panic("TODO: getRecvType")
+				ok = false
+				return
 			}
 			ptr = true
 			typ = t.X
@@ -184,7 +185,8 @@ L:
 	case *ast.IndexListExpr:
 		typ = t.X
 	}
-	return typ, ptr
+	ok = true
+	return
 }
 
 func collectTypeParams(ctx *blockCtx, list *ast.FieldList) []*types.TypeParam {

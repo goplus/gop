@@ -91,6 +91,7 @@ type Info struct {
 	//     *ast.ImportSpec    *PkgName for imports without renames
 	//     *ast.CaseClause    type-specific *Var for each type switch case clause (incl. default)
 	//     *ast.Field         anonymous parameter *Var (incl. unnamed results)
+	//     *ast.FunLit        function literal in *ast.OverloadFuncDecl
 	//
 	Implicits map[ast.Node]types.Object
 
@@ -135,8 +136,8 @@ type Info struct {
 	// appear in this list.
 	// InitOrder []*Initializer
 
-	// Overloads maps identifiers to the overload objects.
-	Overloads map[*ast.Ident][]types.Object
+	// Overloads maps identifiers to the overload decl object.
+	Overloads map[*ast.Ident]types.Object
 }
 
 // ObjectOf returns the object denoted by the specified id,
@@ -165,6 +166,18 @@ func (info *Info) TypeOf(e ast.Expr) types.Type {
 		}
 	}
 	return nil
+}
+
+// Returns the overloaded function declaration corresponding to the ident and its overloaded function members
+func (info *Info) OverloadOf(id *ast.Ident) (types.Object, []types.Object) {
+	if obj := info.Overloads[id]; obj != nil {
+		if sig, ok := obj.Type().(*types.Signature); ok {
+			if _, objs := gogen.CheckSigFuncExObjects(sig); len(objs) > 1 {
+				return obj, objs
+			}
+		}
+	}
+	return nil, nil
 }
 
 // -----------------------------------------------------------------------------
@@ -254,11 +267,11 @@ func (info gopRecorder) Use(id *ast.Ident, obj types.Object) {
 	}
 	if info.Overloads != nil {
 		if sig, ok := obj.Type().(*types.Signature); ok {
-			if ext, objs := gogen.CheckSigFuncExObjects(sig); len(objs) > 1 {
+			if ext, ok := gogen.CheckSigFuncEx(sig); ok {
 				if debugVerbose {
 					log.Println("==> Overloads:", id, ext)
 				}
-				info.Overloads[id] = objs
+				info.Overloads[id] = obj
 			}
 		}
 	}

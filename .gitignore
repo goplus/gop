@@ -5,11 +5,13 @@
 *.txt
 *.cache
 .DS_Store
+test.db
 go.json
 x.mod
-gop
-gopfmt
-goptestgo
+
+# gop
+# gopfmt
+# goptestgo
 
 # Folders
 _obj

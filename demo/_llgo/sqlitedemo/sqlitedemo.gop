@@ -1,0 +1,58 @@
+import (
+	"c"
+	"c/sqlite"
+	"c/os"
+)
+
+func check(err sqlite.Errno, db *sqlite.Sqlite3, at string) {
+	if err != sqlite.OK {
+		c.printf c"==> %s Error: (%d) %s\n", c.allocaCStr(at), err, db.errmsg
+		c.exit 1
+	}
+}
+
+func checkDone(err sqlite.Errno, db *sqlite.Sqlite3, at string) {
+	if err != sqlite.Done {
+		check err, db, at
+	}
+}
+
+os.remove c"test.db"
+
+db, err := sqlite.open(c"test.db")
+check err, db, "sqlite: Open"
+
+err = db.exec(c"CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)", nil, nil, nil)
+check err, db, "sqlite: Exec CREATE TABLE"
+
+stmt, err := db.prepareV3("INSERT INTO users (id, name) VALUES (?, ?)", 0, nil)
+check err, db, "sqlite: PrepareV3 INSERT"
+
+stmt.bindInt 1, 100
+stmt.bindText 2, c"Hello World", -1, nil
+
+err = stmt.step
+checkDone err, db, "sqlite: Step INSERT 1"
+
+stmt.reset
+stmt.bindInt 1, 200
+stmt.bindText 2, c"This is llgo", -1, nil
+
+err = stmt.step
+checkDone err, db, "sqlite: Step INSERT 2"
+
+stmt.close
+
+stmt, err = db.prepareV3("SELECT * FROM users", 0, nil)
+check err, db, "sqlite: PrepareV3 SELECT"
+
+for {
+	if err = stmt.step; err != sqlite.HasRow {
+		break
+	}
+	c.printf c"==> id=%d, name=%s\n", stmt.columnInt(0), stmt.columnText(1)
+}
+checkDone err, db, "sqlite: Step done"
+
+stmt.close
+db.close

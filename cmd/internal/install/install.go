@@ -77,7 +77,7 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 	defer conf.UpdateCache()
 
-	confCmd := &gocmd.Config{Gop: conf.Gop}
+	confCmd := conf.NewGoCmdConf()
 	confCmd.Flags = pass.Args
 	for _, proj := range projs {
 		install(proj, conf, confCmd)

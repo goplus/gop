@@ -1,0 +1,4 @@
+import "c"
+
+c.printf c"Hello, llgo!\n"
+c.fprintf c.Stderr, c"Hi, %6.1f\n", 3.14

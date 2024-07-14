@@ -1,0 +1,3 @@
+import "c"
+
+c.Printf c"Hello, world!\n"

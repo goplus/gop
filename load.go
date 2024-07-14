@@ -28,7 +28,7 @@ import (
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
-	"github.com/goplus/gop/x/c2go"
+	"github.com/goplus/gop/x/gocmd"
 	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/mod/env"
 	"github.com/goplus/mod/gopmod"
@@ -168,6 +168,17 @@ func NewDefaultConf(dir string, flags ConfFlags) (conf *Config, err error) {
 	return
 }
 
+func (conf *Config) NewGoCmdConf() *gocmd.Config {
+	if cl := conf.Mod.Opt.Compiler; cl != nil {
+		if os.Getenv("GOP_GOCMD") == "" {
+			os.Setenv("GOP_GOCMD", cl.Name)
+		}
+	}
+	return &gocmd.Config{
+		Gop: conf.Gop,
+	}
+}
+
 // UpdateCache updates the cache.
 func (conf *Config) UpdateCache(verbose ...bool) {
 	if conf.CacheFile != "" {
@@ -260,7 +271,6 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 		RelativeBase: relativeBaseOf(mod),
 		Importer:     imp,
 		LookupClass:  mod.LookupClass,
-		LookupPub:    c2go.LookupPub(mod),
 	}
 
 	for name, pkg := range pkgs {
@@ -336,7 +346,7 @@ func relativeBaseOf(mod *gopmod.Module) string {
 
 // -----------------------------------------------------------------------------
 
-// LoadDir loads a Go+ package from specified files.
+// LoadFiles loads a Go+ package from specified files.
 func LoadFiles(dir string, files []string, conf *Config) (out *gogen.Package, err error) {
 	if conf == nil {
 		conf = new(Config)
@@ -381,7 +391,6 @@ func LoadFiles(dir string, files []string, conf *Config) (out *gogen.Package, er
 			RelativeBase: relativeBaseOf(mod),
 			Importer:     imp,
 			LookupClass:  mod.LookupClass,
-			LookupPub:    c2go.LookupPub(mod),
 		}
 		out, err = cl.NewPackage("", pkg, clConf)
 		if err != nil {
@@ -405,7 +414,7 @@ var (
 // -----------------------------------------------------------------------------
 
 // GetFileClassType get gop module file classType.
-func GetFileClassType(mod *gopmod.Module, file *ast.File, filename string) (classType string, isTest bool, ok bool) {
+func GetFileClassType(mod *gopmod.Module, file *ast.File, filename string) (classType string, isTest bool) {
 	return cl.GetFileClassType(file, filename, mod.LookupClass)
 }
 

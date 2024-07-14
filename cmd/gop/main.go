@@ -28,7 +28,6 @@ import (
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/cmd/internal/bug"
 	"github.com/goplus/gop/cmd/internal/build"
-	"github.com/goplus/gop/cmd/internal/c2go"
 	"github.com/goplus/gop/cmd/internal/clean"
 	"github.com/goplus/gop/cmd/internal/doc"
 	"github.com/goplus/gop/cmd/internal/env"
@@ -68,7 +67,6 @@ func init() {
 		serve.Cmd,
 		watch.Cmd,
 		env.Cmd,
-		c2go.Cmd,
 		bug.Cmd,
 		version.Cmd,
 	}

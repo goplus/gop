@@ -1,0 +1,10 @@
+import "c"
+
+done := false
+go func() {
+	c.printf c"Hello, goroutine\n"
+	done = true
+}()
+for !done {
+	c.printf c"."
+}

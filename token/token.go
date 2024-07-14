@@ -143,9 +143,14 @@ const (
 	additional_end
 	additional_end2
 
+	additional_literal_beg = 96
+	additional_literal_end = 97
+
 	ENV = additional_end2 // ${name}
 
-	CSTRING  = literal_beg  // C"Hello"
+	PYSTRING = additional_literal_beg // py"Hello"
+
+	CSTRING  = literal_beg  // c"Hello"
 	RAT      = literal_end  // 123.5r
 	DRARROW  = operator_beg // => (double right arrow)
 	QUESTION = operator_end // ?
@@ -163,14 +168,15 @@ var tokens = [...]string{
 	EOF:     "EOF",
 	COMMENT: "COMMENT",
 
-	IDENT:   "IDENT",
-	INT:     "INT",
-	FLOAT:   "FLOAT",
-	IMAG:    "IMAG",
-	CHAR:    "CHAR",
-	STRING:  "STRING",
-	CSTRING: "CSTRING",
-	RAT:     "RAT",
+	IDENT:    "IDENT",
+	INT:      "INT",
+	FLOAT:    "FLOAT",
+	IMAG:     "IMAG",
+	CHAR:     "CHAR",
+	STRING:   "STRING",
+	CSTRING:  "CSTRING",
+	PYSTRING: "PYSTRING",
+	RAT:      "RAT",
 
 	ADD: "+",
 	SUB: "-",
@@ -333,7 +339,7 @@ func Lookup(ident string) Token {
 // IsLiteral returns true for tokens corresponding to identifiers
 // and basic type literals; it returns false otherwise.
 func (tok Token) IsLiteral() bool {
-	return literal_beg <= tok && tok <= literal_end
+	return literal_beg <= tok && tok <= literal_end || tok == PYSTRING
 }
 
 // IsOperator returns true for tokens corresponding to operators and

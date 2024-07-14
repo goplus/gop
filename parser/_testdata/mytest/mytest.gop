@@ -1,4 +1,4 @@
-package testdata
+package demo
 
 import (
 	"go/token"

@@ -1,4 +1,4 @@
-package testdata
+package demo
 
 file mytest.gop
 ast.GenDecl:

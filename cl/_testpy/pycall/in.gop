@@ -1,0 +1,8 @@
+import (
+	"c"
+	"py"
+	"py/math"
+)
+
+x := math.sqrt(py.float(2))
+c.printf c"sqrt(2) = %f\n", x.float64

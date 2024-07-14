@@ -1,0 +1,36 @@
+This is an example to show how Go+ interacts with C.
+
+```go
+import "c"
+
+c.printf c"Hello, llgo!\n"
+c.fprintf c.Stderr, c"Hi, %6.1f\n", 3.14
+```
+
+Here we use `import "c"` to import libc. It's an abbreviation for `import "github.com/goplus/llgo/c"`. It is equivalent to the following code:
+
+```go
+import "github.com/goplus/llgo/c"
+
+c.printf c"Hello, llgo!\n"
+c.fprintf c.Stderr, c"Hi, %7.1f\n", 3.14
+```
+
+In this example we call two C standard functions `printf` and `fprintf`, pass a C variable `stderr` and two C strings in the form of `c"xxx"`.
+
+To run this demo, you need to set the `GOP_GOCMD` environment variable first.
+
+```sh
+export GOP_GOCMD=llgo  # default is `go`
+```
+
+Then execute `gop run .` to see the output of this example:
+
+```
+Hello, llgo!
+Hi,    3.1
+```
+
+### Give a Star! ⭐
+
+If you like or are using Go+ to learn or start your projects, please give it a star. Thanks!

@@ -1,0 +1,3 @@
+import "cpp/std"
+
+println std.str("Hello world").str

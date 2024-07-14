@@ -18,58 +18,23 @@ package cl_test
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/parser/fsx/memfs"
-	"github.com/goplus/gop/scanner"
+	"github.com/goplus/gop/cl/cltest"
 )
 
 func codeErrorTest(t *testing.T, msg, src string) {
-	codeErrorTestEx(t, "main", "bar.gop", msg, src)
+	cltest.ErrorEx(t, "main", "bar.gop", msg, src)
 }
 
 func codeErrorTestEx(t *testing.T, pkgname, filename, msg, src string) {
-	fs := memfs.SingleFile("/foo", filename, src)
-	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", parser.Config{})
-	if err != nil {
-		scanner.PrintError(os.Stderr, err)
-		t.Fatal("parser.ParseFSDir failed")
-	}
-	conf := *gblConf
-	conf.NoFileLine = false
-	conf.RelativeBase = "/foo"
-	bar := pkgs[pkgname]
-	_, err = cl.NewPackage("", bar, &conf)
-	if err == nil {
-		t.Fatal("no error?")
-	}
-	if ret := err.Error(); ret != msg {
-		t.Fatalf("\nError: \"%s\"\nExpected: \"%s\"\n", ret, msg)
-	}
+	cltest.ErrorEx(t, pkgname, filename, msg, src)
 }
 
 func codeErrorTestAst(t *testing.T, pkgname, filename, msg, src string) {
-	f, _ := parser.ParseFile(gblFset, filename, src, parser.AllErrors)
-	pkg := &ast.Package{
-		Name:  pkgname,
-		Files: map[string]*ast.File{filename: f},
-	}
-	conf := *gblConf
-	conf.NoFileLine = false
-	conf.RelativeBase = "/foo"
-	_, err := cl.NewPackage("", pkg, &conf)
-	if err == nil {
-		t.Fatal("no error?")
-	}
-	if ret := err.Error(); ret != msg {
-		t.Fatalf("\nError: \"%s\"\nExpected: \"%s\"\n", ret, msg)
-	}
+	cltest.ErrorAst(t, pkgname, filename, msg, src)
 }
 
 func TestErrVargCommand(t *testing.T) {
@@ -1061,5 +1026,48 @@ func _() {
 func _() {
 	struct() = nil
 }
+`)
+}
+
+func TestOverloadFuncDecl(t *testing.T) {
+	codeErrorTest(t, "bar.gop:3:2: invalid func (foo).mulInt", `
+func mul = (
+	(foo).mulInt
+)
+`)
+	codeErrorTest(t, "bar.gop:2:7: invalid recv type *foo", `
+func (*foo).mul = (
+	(foo).mulInt
+)
+`)
+	codeErrorTest(t, "bar.gop:3:2: invalid recv type (foo2)", `
+func (foo).mul = (
+	(foo2).mulInt
+)
+`)
+	codeErrorTest(t, "bar.gop:3:2: invalid method mulInt", `
+func (foo).mul = (
+	mulInt
+)
+`)
+	codeErrorTest(t, "bar.gop:3:2: invalid recv type (**foo)", `
+func (foo).mul = (
+	(**foo).mulInt
+)
+`)
+	codeErrorTest(t, `bar.gop:3:9: unknown func ("ok")`, `
+func mul = (
+	println("ok")
+)
+`)
+	codeErrorTest(t, "bar.gop:3:2: invalid method func(){}", `
+func (foo).mul = (
+	func(){}
+)
+`)
+	codeErrorTest(t, "bar.gop:2:12: invalid overload operator ++", `
+func (foo).++ = (
+	mulInt
+)
 `)
 }

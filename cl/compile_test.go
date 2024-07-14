@@ -17,19 +17,13 @@
 package cl_test
 
 import (
-	"bytes"
 	"os"
 	"sync"
 	"testing"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/parser/fsx/memfs"
-	"github.com/goplus/gop/scanner"
-	"github.com/goplus/gop/token"
-	"github.com/goplus/mod/env"
+	"github.com/goplus/gop/cl/cltest"
 )
 
 const (
@@ -37,88 +31,40 @@ const (
 )
 
 var (
-	gblFset     *token.FileSet
-	gblConf     *cl.Config
 	gblConfLine *cl.Config
 )
 
 func init() {
-	gogen.SetDebug(gogen.DbgFlagAll)
-	cl.SetDebug(cl.DbgFlagAll | cl.FlagNoMarkAutogen)
-	gblFset = token.NewFileSet()
-	imp := gop.NewImporter(nil, &env.Gop{Root: gopRootDir, Version: "1.0"}, gblFset)
-	gblConf = &cl.Config{
-		Fset:          gblFset,
-		Importer:      imp,
-		Recorder:      gopRecorder{},
-		LookupClass:   lookupClass,
-		LookupPub:     lookupPub,
-		C2goBase:      "github.com/goplus/gop/cl/internal",
-		NoFileLine:    true,
-		NoAutoGenMain: true,
-	}
+	cltest.Gop.Root = gopRootDir
+	conf := cltest.Conf
 	gblConfLine = &cl.Config{
-		Fset:          gblFset,
-		Importer:      imp,
-		Recorder:      gopRecorder{},
-		LookupClass:   lookupClass,
-		LookupPub:     lookupPub,
-		C2goBase:      "github.com/goplus/gop/cl/internal",
+		Fset:          conf.Fset,
+		Importer:      conf.Importer,
+		Recorder:      cltest.Conf.Recorder,
+		LookupClass:   cltest.LookupClass,
 		NoFileLine:    false,
 		NoAutoGenMain: true,
 	}
 }
 
 func gopClNamedTest(t *testing.T, name string, gopcode, expected string) {
-	t.Run(name, func(t *testing.T) {
-		gopClTest(t, gopcode, expected)
-	})
+	cltest.Named(t, name, gopcode, expected)
 }
 
 func gopClTest(t *testing.T, gopcode, expected string) {
-	gopClTestEx(t, gblConf, "main", gopcode, expected)
+	cltest.DoExt(t, cltest.Conf, "main", gopcode, expected)
 }
 
 func gopClTestFile(t *testing.T, gopcode, expected string, fname string) {
-	fs := memfs.SingleFile("/foo", fname, gopcode)
-	gopClTestFS(t, gblConf, fs, "main", expected)
+	cltest.DoWithFname(t, gopcode, expected, fname)
 }
 
 func gopClTestEx(t *testing.T, conf *cl.Config, pkgname, gopcode, expected string) {
-	fs := memfs.SingleFile("/foo", "bar.gop", gopcode)
-	gopClTestFS(t, conf, fs, pkgname, expected)
+	cltest.DoExt(t, conf, pkgname, gopcode, expected)
 }
 
 func gopMixedClTest(t *testing.T, pkgname, gocode, gopcode, expected string, outline ...bool) {
-	conf := *gblConf
-	conf.Outline = (outline != nil && outline[0])
-	fs := memfs.TwoFiles("/foo", "a.go", gocode, "b.gop", gopcode)
-	gopClTestFS(t, &conf, fs, pkgname, expected)
-}
-
-func gopClTestFS(t *testing.T, conf *cl.Config, fs parser.FileSystem, pkgname, expected string) {
-	cl.SetDisableRecover(true)
-	defer cl.SetDisableRecover(false)
-
-	pkgs, err := parser.ParseFSDir(gblFset, fs, "/foo", parser.Config{Mode: parser.ParseComments})
-	if err != nil {
-		scanner.PrintError(os.Stderr, err)
-		t.Fatal("ParseFSDir:", err)
-	}
-	bar := pkgs[pkgname]
-	pkg, err := cl.NewPackage("github.com/goplus/gop/cl", bar, conf)
-	if err != nil {
-		t.Fatal("NewPackage:", err)
-	}
-	var b bytes.Buffer
-	err = pkg.WriteTo(&b)
-	if err != nil {
-		t.Fatal("gogen.WriteTo failed:", err)
-	}
-	result := b.String()
-	if result != expected {
-		t.Fatalf("\nResult:\n%s\nExpected:\n%s\n", result, expected)
-	}
+	cltest.Mixed(t, pkgname, gocode, gopcode, expected, outline...)
 }
 
 func TestTypeDoc(t *testing.T) {
@@ -3670,7 +3616,7 @@ func main() {
 	fmt.Println("init")
 }
 `)
-	gopClTestEx(t, gblConf, "bar", `package bar
+	gopClTestEx(t, cltest.Conf, "bar", `package bar
 println("init")
 `, `package bar
 
@@ -3773,7 +3719,7 @@ func main() {
 }
 
 func TestMainEntry(t *testing.T) {
-	conf := *gblConf
+	conf := *cltest.Conf
 	conf.NoAutoGenMain = false
 
 	gopClTestEx(t, &conf, "main", `
@@ -3899,7 +3845,7 @@ func main() {
 }
 
 func TestCommentLineRoot(t *testing.T) {
-	conf := *gblConf
+	conf := *cltest.Conf
 	conf.NoFileLine = false
 	conf.RelativeBase = "/foo/root"
 	var src = `

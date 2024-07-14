@@ -1724,7 +1724,7 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) (x ast.Expr, isTup
 		}
 		return
 
-	case token.STRING, token.CSTRING, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT:
+	case token.STRING, token.CSTRING, token.PYSTRING, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT:
 		bl := &ast.BasicLit{ValuePos: p.pos, Kind: p.tok, Value: p.lit}
 		if p.tok == token.STRING && len(p.lit) > 1 {
 			bl.Extra = p.stringLit(p.pos, p.lit)
@@ -2353,7 +2353,8 @@ func (p *parser) isCmd(x ast.Expr) bool {
 func (p *parser) checkCmd() bool {
 	switch p.tok {
 	case token.IDENT, token.DRARROW,
-		token.STRING, token.CSTRING, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT,
+		token.STRING, token.CSTRING, token.PYSTRING,
+		token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT,
 		token.FUNC, token.GOTO, token.MAP, token.INTERFACE, token.CHAN, token.STRUCT, token.ENV:
 		return true
 	case token.SUB, token.AND, token.MUL, token.ARROW, token.XOR, token.ADD:
@@ -3388,7 +3389,7 @@ func (p *parser) parseStmt(allowCmd bool) (s ast.Stmt) {
 		s = &ast.DeclStmt{Decl: p.parseGenDecl(p.tok, p.parseValueSpec)}
 	case
 		// tokens that may start an expression
-		token.INT, token.FLOAT, token.IMAG, token.RAT, token.CHAR, token.STRING, token.CSTRING, token.FUNC, token.LPAREN, // operands
+		token.INT, token.FLOAT, token.IMAG, token.RAT, token.CHAR, token.STRING, token.CSTRING, token.PYSTRING, token.FUNC, token.LPAREN, // operands
 		token.ADD, token.SUB, token.MUL, token.AND, token.XOR, token.ARROW, token.NOT, token.ENV, // unary operators
 		token.LBRACK, token.STRUCT, token.CHAN, token.INTERFACE: // composite types
 		allowCmd = false

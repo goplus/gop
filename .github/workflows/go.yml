@@ -26,11 +26,9 @@ jobs:
         - windows-latest
         - macos-latest
         go:
-        - 1.18.x
         - 1.19.x
         - 1.20.x
         - 1.21.x
-        - 1.22.x
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -38,7 +36,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go: ${{ matrix.go }}
+        go-version: ${{ matrix.go }}
 
     - name: Test Go+ installer
       run: |
@@ -53,3 +51,4 @@ jobs:
       uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
+        slug: goplus/gop

@@ -835,10 +835,17 @@ scanAgain:
 			// keywords are longer than one letter - avoid lookup otherwise
 			tok = token.Lookup(lit)
 			switch tok {
-			case token.IDENT, token.BREAK, token.CONTINUE, token.FALLTHROUGH, token.RETURN:
+			case token.IDENT:
+				insertSemi = true
+				if lit == "py" && s.ch == '"' { // py"..."
+					s.next()
+					tok = token.PYSTRING
+					lit = s.scanString()
+				}
+			case token.BREAK, token.CONTINUE, token.FALLTHROUGH, token.RETURN:
 				insertSemi = true
 			}
-		} else if lit == "C" && s.ch == '"' { // C"..."
+		} else if (lit == "c" || lit == "C") && s.ch == '"' { // c"..."
 			s.next()
 			insertSemi = true
 			tok = token.CSTRING

@@ -91,7 +91,7 @@ func parseMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string,
 		Implicits:  make(map[ast.Node]types.Object),
 		Selections: make(map[*ast.SelectorExpr]*types.Selection),
 		Scopes:     make(map[ast.Node]*types.Scope),
-		Overloads:  make(map[*ast.Ident][]types.Object),
+		Overloads:  make(map[*ast.Ident]types.Object),
 	}
 	ginfo := &types.Info{
 		Types:      make(map[goast.Expr]types.TypeAndValue),
@@ -129,7 +129,7 @@ func parseSource(fset *token.FileSet, filename string, src interface{}, mode par
 		Implicits:  make(map[ast.Node]types.Object),
 		Selections: make(map[*ast.SelectorExpr]*types.Selection),
 		Scopes:     make(map[ast.Node]*types.Scope),
-		Overloads:  make(map[*ast.Ident][]types.Object),
+		Overloads:  make(map[*ast.Ident]types.Object),
 	}
 	check := typesutil.NewChecker(conf, chkOpts, nil, info)
 	err = check.Files(nil, []*ast.File{f})
@@ -179,6 +179,10 @@ func testGopInfoEx(t *testing.T, mod *gopmod.Module, name string, src string, go
 	list = append(list, defsList(fset, info.Defs, true)...)
 	list = append(list, "== uses ==")
 	list = append(list, usesList(fset, info.Uses)...)
+	if len(info.Overloads) > 0 {
+		list = append(list, "== overloads ==")
+		list = append(list, overloadsList(fset, info.Overloads)...)
+	}
 	result := strings.Join(list, "\n")
 	t.Log(result)
 	if result != expect {
@@ -330,6 +334,20 @@ func goUsesList(fset *token.FileSet, uses map[*goast.Ident]types.Object) []strin
 		if obj == nil {
 			continue // skip nil object
 		}
+		var buf strings.Builder
+		posn := fset.Position(expr.Pos())
+		// line:col | expr | mode : type = value
+		fmt.Fprintf(&buf, "%2d:%2d | %-19s | %s",
+			posn.Line, posn.Column, expr,
+			obj)
+		items = append(items, buf.String())
+	}
+	return sortItems(items)
+}
+
+func overloadsList(fset *token.FileSet, overloads map[*ast.Ident]types.Object) []string {
+	var items []string
+	for expr, obj := range overloads {
 		var buf strings.Builder
 		posn := fset.Position(expr.Pos())
 		// line:col | expr | mode : type = value
@@ -1163,7 +1181,21 @@ func OnKey__a(a, b string, v ...int) {
 023: 33:26 | x                   | var x int
 024: 34: 9 | x                   | var x int
 025: 36: 1 | OnKey               | func main.OnKey__a(a string, b string, v ...int)
-026: 37: 1 | OnKey               | func main.OnKey__a(a string, b string, v ...int)`)
+026: 37: 1 | OnKey               | func main.OnKey__a(a string, b string, v ...int)
+== overloads ==
+000: 14: 1 | OnKey               | func main.OnKey(__gop_overload_args__ interface{_()})
+001: 16: 1 | OnKey               | func main.OnKey(__gop_overload_args__ interface{_()})
+002: 18: 1 | OnKey               | func main.OnKey(__gop_overload_args__ interface{_()})
+003: 20: 1 | OnKey               | func main.OnKey(__gop_overload_args__ interface{_()})
+004: 22: 1 | OnKey               | func main.OnKey(__gop_overload_args__ interface{_()})
+005: 24: 1 | OnKey               | func main.OnKey(__gop_overload_args__ interface{_()})
+006: 26: 1 | OnKey               | func main.OnKey(__gop_overload_args__ interface{_()})
+007: 28: 1 | OnKey               | func main.OnKey(__gop_overload_args__ interface{_()})
+008: 30: 1 | OnKey               | func main.OnKey(__gop_overload_args__ interface{_()})
+009: 32: 1 | OnKey               | func main.OnKey(__gop_overload_args__ interface{_()})
+010: 33: 1 | OnKey               | func main.OnKey(__gop_overload_args__ interface{_()})
+011: 36: 1 | OnKey               | func main.OnKey(__gop_overload_args__ interface{_()})
+012: 37: 1 | OnKey               | func main.OnKey(__gop_overload_args__ interface{_()})`)
 }
 
 func TestMixedOverload2(t *testing.T) {
@@ -1387,7 +1419,18 @@ func OnKey__a(a, b string, v ...int) {
 028: 31: 3 | onKey               | func (*main.N).OnKey__6(a []string, b []string, fn func(key string))
 029: 31:16 | nil                 | nil
 030: 33: 1 | n                   | var n *main.N
-031: 33: 3 | onKey               | func (*main.N).OnKey__8(x int, y int)`)
+031: 33: 3 | onKey               | func (*main.N).OnKey__8(x int, y int)
+== overloads ==
+000: 15: 3 | onKey               | func (main.N).OnKey(__gop_overload_args__ interface{_()})
+001: 17: 3 | onKey               | func (main.N).OnKey(__gop_overload_args__ interface{_()})
+002: 19: 3 | onKey               | func (main.N).OnKey(__gop_overload_args__ interface{_()})
+003: 21: 3 | onKey               | func (main.N).OnKey(__gop_overload_args__ interface{_()})
+004: 23: 3 | onKey               | func (main.N).OnKey(__gop_overload_args__ interface{_()})
+005: 25: 3 | onKey               | func (main.N).OnKey(__gop_overload_args__ interface{_()})
+006: 27: 3 | onKey               | func (main.N).OnKey(__gop_overload_args__ interface{_()})
+007: 29: 3 | onKey               | func (main.N).OnKey(__gop_overload_args__ interface{_()})
+008: 31: 3 | onKey               | func (main.N).OnKey(__gop_overload_args__ interface{_()})
+009: 33: 3 | onKey               | func (main.N).OnKey(__gop_overload_args__ interface{_()})`)
 }
 
 func TestMixedOverload3(t *testing.T) {
@@ -1432,7 +1475,12 @@ func (p *N) Test__1(n int) {
 003:  5: 1 | n                   | var n main.N
 004:  5: 3 | test                | func (*main.N).Test__0()
 005:  6: 1 | n                   | var n main.N
-006:  6: 3 | test                | func (*main.N).Test__1(n int)`)
+006:  6: 3 | test                | func (*main.N).Test__1(n int)
+== overloads ==
+000:  2: 1 | Test                | func main.Test(__gop_overload_args__ interface{_()})
+001:  3: 1 | Test                | func main.Test(__gop_overload_args__ interface{_()})
+002:  5: 3 | test                | func (main.N).Test(__gop_overload_args__ interface{_()})
+003:  6: 3 | test                | func (main.N).Test(__gop_overload_args__ interface{_()})`)
 }
 
 func TestOverloadNamed(t *testing.T) {
@@ -1476,7 +1524,12 @@ d := bar.Var(bar.M)
 010:  7: 6 | bar                 | package bar ("github.com/goplus/gop/cl/internal/overload/bar")
 011:  7:10 | Var                 | func github.com/goplus/gop/cl/internal/overload/bar.Gopx_Var_Cast__1[T map[string]any]() *github.com/goplus/gop/cl/internal/overload/bar.Var__1[T]
 012:  7:14 | bar                 | package bar ("github.com/goplus/gop/cl/internal/overload/bar")
-013:  7:18 | M                   | type github.com/goplus/gop/cl/internal/overload/bar.M = map[string]any`)
+013:  7:18 | M                   | type github.com/goplus/gop/cl/internal/overload/bar.M = map[string]any
+== overloads ==
+000:  4:11 | Var                 | type github.com/goplus/gop/cl/internal/overload/bar.Var = func(__gop_overload_args__ interface{_()})
+001:  5:11 | Var                 | type github.com/goplus/gop/cl/internal/overload/bar.Var = func(__gop_overload_args__ interface{_()})
+002:  6:10 | Var                 | type github.com/goplus/gop/cl/internal/overload/bar.Var = func(__gop_overload_args__ interface{_()})
+003:  7:10 | Var                 | type github.com/goplus/gop/cl/internal/overload/bar.Var = func(__gop_overload_args__ interface{_()})`)
 }
 
 func TestMixedOverloadNamed(t *testing.T) {
@@ -1536,7 +1589,12 @@ func Gopx_Var_Cast__1[T map[string]any]() *Var__1[T] {
 004:  4: 6 | Var                 | func main.Gopx_Var_Cast__0[T main.basetype]() *main.Var__0[T]
 005:  4:10 | string              | type string
 006:  5: 6 | Var                 | func main.Gopx_Var_Cast__1[T map[string]any]() *main.Var__1[T]
-007:  5:10 | M                   | type main.M = map[string]any`)
+007:  5:10 | M                   | type main.M = map[string]any
+== overloads ==
+000:  2: 7 | Var                 | type main.Var = func(__gop_overload_args__ interface{_()})
+001:  3: 7 | Var                 | type main.Var = func(__gop_overload_args__ interface{_()})
+002:  4: 6 | Var                 | type main.Var = func(__gop_overload_args__ interface{_()})
+003:  5: 6 | Var                 | type main.Var = func(__gop_overload_args__ interface{_()})`)
 }
 
 func TestMixedRawNamed(t *testing.T) {
@@ -1675,7 +1733,11 @@ func onCloned() {
 009: 14: 8 | info                | type main.info struct{x int; y int}
 010: 15: 2 | clone               | func github.com/goplus/gop/cl/internal/spx.Gopt_Sprite_Clone__1(sprite interface{}, data interface{})
 011: 15: 9 | info                | type main.info struct{x int; y int}
-012: 19: 2 | say                 | func (*github.com/goplus/gop/cl/internal/spx.Sprite).Say(msg string, secs ...float64)`)
+012: 19: 2 | say                 | func (*github.com/goplus/gop/cl/internal/spx.Sprite).Say(msg string, secs ...float64)
+== overloads ==
+000: 13: 2 | clone               | func (github.com/goplus/gop/cl/internal/spx.Sprite).Clone(__gop_overload_args__ interface{_()})
+001: 14: 2 | clone               | func (github.com/goplus/gop/cl/internal/spx.Sprite).Clone(__gop_overload_args__ interface{_()})
+002: 15: 2 | clone               | func (github.com/goplus/gop/cl/internal/spx.Sprite).Clone(__gop_overload_args__ interface{_()})`)
 }
 
 func TestScopesInfo(t *testing.T) {
@@ -2018,22 +2080,26 @@ Mul 100,200,300
 008:  7: 9 | a                   *ast.Ident                     | var     : float64 | variable
 009:  7: 9 | a * b               *ast.BinaryExpr                | value   : float64 | value
 010:  7:13 | b                   *ast.Ident                     | var     : float64 | variable
-011: 13:15 | int                 *ast.Ident                     | type    : int | type
-012: 13:20 | int                 *ast.Ident                     | type    : int | type
-013: 14:10 | x                   *ast.Ident                     | var     : int | variable
-014: 14:10 | x * y               *ast.BinaryExpr                | value   : int | value
-015: 14:10 | x * y * z           *ast.BinaryExpr                | value   : int | value
-016: 14:14 | y                   *ast.Ident                     | var     : int | variable
-017: 14:18 | z                   *ast.Ident                     | var     : int | variable
-018: 18: 1 | Mul                 *ast.Ident                     | value   : func(a int, b int) int | value
-019: 18: 1 | Mul 100, 200        *ast.CallExpr                  | value   : int | value
-020: 18: 5 | 100                 *ast.BasicLit                  | value   : untyped int = 100 | constant
-021: 18: 9 | 200                 *ast.BasicLit                  | value   : untyped int = 200 | constant
-022: 19: 1 | Mul                 *ast.Ident                     | value   : func(x int, y int, z int) int | value
-023: 19: 1 | Mul 100, 200, 300   *ast.CallExpr                  | value   : int | value
-024: 19: 5 | 100                 *ast.BasicLit                  | value   : untyped int = 100 | constant
-025: 19: 9 | 200                 *ast.BasicLit                  | value   : untyped int = 200 | constant
-026: 19:13 | 300                 *ast.BasicLit                  | value   : untyped int = 300 | constant
+011: 13: 2 | func(x, y, z int) int *ast.FuncType                  | type    : func(x int, y int, z int) int | type
+012: 13: 2 | func(x, y, z int) int {
+	return x * y * z
+} *ast.FuncLit                   | value   : func(x int, y int, z int) int | value
+013: 13:15 | int                 *ast.Ident                     | type    : int | type
+014: 13:20 | int                 *ast.Ident                     | type    : int | type
+015: 14:10 | x                   *ast.Ident                     | var     : int | variable
+016: 14:10 | x * y               *ast.BinaryExpr                | value   : int | value
+017: 14:10 | x * y * z           *ast.BinaryExpr                | value   : int | value
+018: 14:14 | y                   *ast.Ident                     | var     : int | variable
+019: 14:18 | z                   *ast.Ident                     | var     : int | variable
+020: 18: 1 | Mul                 *ast.Ident                     | value   : func(a int, b int) int | value
+021: 18: 1 | Mul 100, 200        *ast.CallExpr                  | value   : int | value
+022: 18: 5 | 100                 *ast.BasicLit                  | value   : untyped int = 100 | constant
+023: 18: 9 | 200                 *ast.BasicLit                  | value   : untyped int = 200 | constant
+024: 19: 1 | Mul                 *ast.Ident                     | value   : func(x int, y int, z int) int | value
+025: 19: 1 | Mul 100, 200, 300   *ast.CallExpr                  | value   : int | value
+026: 19: 5 | 100                 *ast.BasicLit                  | value   : untyped int = 100 | constant
+027: 19: 9 | 200                 *ast.BasicLit                  | value   : untyped int = 200 | constant
+028: 19:13 | 300                 *ast.BasicLit                  | value   : untyped int = 300 | constant
 == defs ==
 000:  0: 0 | Gopo_Mul            | const main.Gopo_Mul untyped string
 001:  2: 6 | MulInt              | func main.MulInt(a int, b int) int
@@ -2042,11 +2108,12 @@ Mul 100,200,300
 004:  6: 6 | MulFloat            | func main.MulFloat(a float64, b float64) float64
 005:  6:15 | a                   | var a float64
 006:  6:18 | b                   | var b float64
-007: 13: 2 | Mul__2              | func main.Mul__2(x int, y int, z int) int
-008: 13: 7 | x                   | var x int
-009: 13:10 | y                   | var y int
-010: 13:13 | z                   | var z int
-011: 18: 1 | main                | func main.main()
+007: 10: 6 | Mul                 | func main.Mul(__gop_overload_args__ interface{_()})
+008: 13: 2 | Mul__2              | func main.Mul__2(x int, y int, z int) int
+009: 13: 7 | x                   | var x int
+010: 13:10 | y                   | var y int
+011: 13:13 | z                   | var z int
+012: 18: 1 | main                | func main.main()
 == uses ==
 000:  2:18 | int                 | type int
 001:  2:23 | int                 | type int
@@ -2064,7 +2131,10 @@ Mul 100,200,300
 013: 14:14 | y                   | var y int
 014: 14:18 | z                   | var z int
 015: 18: 1 | Mul                 | func main.MulInt(a int, b int) int
-016: 19: 1 | Mul                 | func main.Mul__2(x int, y int, z int) int`)
+016: 19: 1 | Mul                 | func main.Mul__2(x int, y int, z int) int
+== overloads ==
+000: 18: 1 | Mul                 | func main.Mul(__gop_overload_args__ interface{_()})
+001: 19: 1 | Mul                 | func main.Mul(__gop_overload_args__ interface{_()})`)
 
 	testGopInfo(t, `
 type foo struct {
@@ -2120,10 +2190,11 @@ var d = a.mul(c)
 005:  9: 7 | a                   | var a *main.foo
 006:  9:15 | mulFoo              | func (*main.foo).mulFoo(b *main.foo) *main.foo
 007:  9:22 | b                   | var b *main.foo
-008: 18: 5 | a                   | var main.a *main.foo
-009: 18: 8 | b                   | var main.b *main.foo
-010: 19: 5 | c                   | var main.c *main.foo
-011: 20: 5 | d                   | var main.d *main.foo
+008: 13:12 | mul                 | func (main.foo).mul(__gop_overload_args__ interface{_()})
+009: 18: 5 | a                   | var main.a *main.foo
+010: 18: 8 | b                   | var main.b *main.foo
+011: 19: 5 | c                   | var main.c *main.foo
+012: 20: 5 | d                   | var main.d *main.foo
 == uses ==
 000:  5:10 | foo                 | type main.foo struct{}
 001:  5:24 | int                 | type int
@@ -2143,5 +2214,237 @@ var d = a.mul(c)
 015: 19:11 | mul                 | func (*main.foo).mulInt(b int) *main.foo
 016: 20: 9 | a                   | var main.a *main.foo
 017: 20:11 | mul                 | func (*main.foo).mulFoo(b *main.foo) *main.foo
-018: 20:15 | c                   | var main.c *main.foo`)
+018: 20:15 | c                   | var main.c *main.foo
+== overloads ==
+000: 19:11 | mul                 | func (main.foo).mul(__gop_overload_args__ interface{_()})
+001: 20:11 | mul                 | func (main.foo).mul(__gop_overload_args__ interface{_()})`)
+
+}
+
+func TestGopOverloadDecl(t *testing.T) {
+	testGopInfo(t, `
+func addInt0() {
+}
+
+func addInt1(i int) {
+}
+
+func addInt2(i, j int) {
+}
+
+var addInt3 = func(i, j, k int) {
+}
+
+func add = (
+	addInt0
+	addInt1
+	addInt2
+	addInt3
+	func(a, b string) string {
+		return a + b
+	}
+)
+
+func init() {
+	add 100, 200
+	add 100, 200, 300
+	add("hello", "world")
+}
+`, ``, `== types ==
+000:  0: 0 | "addInt0,addInt1,addInt2,addInt3," *ast.BasicLit                  | value   : untyped string = "addInt0,addInt1,addInt2,addInt3," | constant
+001:  5:16 | int                 *ast.Ident                     | type    : int | type
+002:  8:19 | int                 *ast.Ident                     | type    : int | type
+003: 11:15 | func(i, j, k int)   *ast.FuncType                  | type    : func(i int, j int, k int) | type
+004: 11:15 | func(i, j, k int) {
+} *ast.FuncLit                   | value   : func(i int, j int, k int) | value
+005: 11:28 | int                 *ast.Ident                     | type    : int | type
+006: 19: 2 | func(a, b string) string *ast.FuncType                  | type    : func(a string, b string) string | type
+007: 19: 2 | func(a, b string) string {
+	return a + b
+} *ast.FuncLit                   | value   : func(a string, b string) string | value
+008: 19:12 | string              *ast.Ident                     | type    : string | type
+009: 19:20 | string              *ast.Ident                     | type    : string | type
+010: 20:10 | a                   *ast.Ident                     | var     : string | variable
+011: 20:10 | a + b               *ast.BinaryExpr                | value   : string | value
+012: 20:14 | b                   *ast.Ident                     | var     : string | variable
+013: 25: 2 | add                 *ast.Ident                     | value   : func(i int, j int) | value
+014: 25: 2 | add 100, 200        *ast.CallExpr                  | void    : () | no value
+015: 25: 6 | 100                 *ast.BasicLit                  | value   : untyped int = 100 | constant
+016: 25:11 | 200                 *ast.BasicLit                  | value   : untyped int = 200 | constant
+017: 26: 2 | add                 *ast.Ident                     | var     : func(i int, j int, k int) | variable
+018: 26: 2 | add 100, 200, 300   *ast.CallExpr                  | void    : () | no value
+019: 26: 6 | 100                 *ast.BasicLit                  | value   : untyped int = 100 | constant
+020: 26:11 | 200                 *ast.BasicLit                  | value   : untyped int = 200 | constant
+021: 26:16 | 300                 *ast.BasicLit                  | value   : untyped int = 300 | constant
+022: 27: 2 | add                 *ast.Ident                     | value   : func(a string, b string) string | value
+023: 27: 2 | add("hello", "world") *ast.CallExpr                  | value   : string | value
+024: 27: 6 | "hello"             *ast.BasicLit                  | value   : untyped string = "hello" | constant
+025: 27:15 | "world"             *ast.BasicLit                  | value   : untyped string = "world" | constant
+== defs ==
+000:  0: 0 | Gopo_add            | const main.Gopo_add untyped string
+001:  2: 6 | addInt0             | func main.addInt0()
+002:  5: 6 | addInt1             | func main.addInt1(i int)
+003:  5:14 | i                   | var i int
+004:  8: 6 | addInt2             | func main.addInt2(i int, j int)
+005:  8:14 | i                   | var i int
+006:  8:17 | j                   | var j int
+007: 11: 5 | addInt3             | var main.addInt3 func(i int, j int, k int)
+008: 11:20 | i                   | var i int
+009: 11:23 | j                   | var j int
+010: 11:26 | k                   | var k int
+011: 14: 6 | add                 | func main.add(__gop_overload_args__ interface{_()})
+012: 19: 2 | add__4              | func main.add__4(a string, b string) string
+013: 19: 7 | a                   | var a string
+014: 19:10 | b                   | var b string
+015: 24: 6 | init                | func main.init()
+== uses ==
+000:  5:16 | int                 | type int
+001:  8:19 | int                 | type int
+002: 11:28 | int                 | type int
+003: 15: 2 | addInt0             | func main.addInt0()
+004: 16: 2 | addInt1             | func main.addInt1(i int)
+005: 17: 2 | addInt2             | func main.addInt2(i int, j int)
+006: 18: 2 | addInt3             | var main.addInt3 func(i int, j int, k int)
+007: 19:12 | string              | type string
+008: 19:20 | string              | type string
+009: 20:10 | a                   | var a string
+010: 20:14 | b                   | var b string
+011: 25: 2 | add                 | func main.addInt2(i int, j int)
+012: 26: 2 | add                 | var main.addInt3 func(i int, j int, k int)
+013: 27: 2 | add                 | func main.add__4(a string, b string) string
+== overloads ==
+000: 25: 2 | add                 | func main.add(__gop_overload_args__ interface{_()})
+001: 26: 2 | add                 | func main.add(__gop_overload_args__ interface{_()})
+002: 27: 2 | add                 | func main.add(__gop_overload_args__ interface{_()})`)
+
+	testGopInfo(t, `
+func add = (
+	func(a, b int) int {
+		return a + b
+	}
+	func(a, b string) string {
+		return a + b
+	}
+)
+
+func init() {
+	add 100, 200
+	add "hello", "world"
+}
+`, ``, `== types ==
+000:  3: 2 | func(a, b int) int  *ast.FuncType                  | type    : func(a int, b int) int | type
+001:  3: 2 | func(a, b int) int {
+	return a + b
+} *ast.FuncLit                   | value   : func(a int, b int) int | value
+002:  3:12 | int                 *ast.Ident                     | type    : int | type
+003:  3:17 | int                 *ast.Ident                     | type    : int | type
+004:  4:10 | a                   *ast.Ident                     | var     : int | variable
+005:  4:10 | a + b               *ast.BinaryExpr                | value   : int | value
+006:  4:14 | b                   *ast.Ident                     | var     : int | variable
+007:  6: 2 | func(a, b string) string *ast.FuncType                  | type    : func(a string, b string) string | type
+008:  6: 2 | func(a, b string) string {
+	return a + b
+} *ast.FuncLit                   | value   : func(a string, b string) string | value
+009:  6:12 | string              *ast.Ident                     | type    : string | type
+010:  6:20 | string              *ast.Ident                     | type    : string | type
+011:  7:10 | a                   *ast.Ident                     | var     : string | variable
+012:  7:10 | a + b               *ast.BinaryExpr                | value   : string | value
+013:  7:14 | b                   *ast.Ident                     | var     : string | variable
+014: 12: 2 | add                 *ast.Ident                     | value   : func(a int, b int) int | value
+015: 12: 2 | add 100, 200        *ast.CallExpr                  | value   : int | value
+016: 12: 6 | 100                 *ast.BasicLit                  | value   : untyped int = 100 | constant
+017: 12:11 | 200                 *ast.BasicLit                  | value   : untyped int = 200 | constant
+018: 13: 2 | add                 *ast.Ident                     | value   : func(a string, b string) string | value
+019: 13: 2 | add "hello", "world" *ast.CallExpr                  | value   : string | value
+020: 13: 6 | "hello"             *ast.BasicLit                  | value   : untyped string = "hello" | constant
+021: 13:15 | "world"             *ast.BasicLit                  | value   : untyped string = "world" | constant
+== defs ==
+000:  2: 6 | add                 | func main.add(__gop_overload_args__ interface{_()})
+001:  3: 2 | add__0              | func main.add__0(a int, b int) int
+002:  3: 7 | a                   | var a int
+003:  3:10 | b                   | var b int
+004:  6: 2 | add__1              | func main.add__1(a string, b string) string
+005:  6: 7 | a                   | var a string
+006:  6:10 | b                   | var b string
+007: 11: 6 | init                | func main.init()
+== uses ==
+000:  3:12 | int                 | type int
+001:  3:17 | int                 | type int
+002:  4:10 | a                   | var a int
+003:  4:14 | b                   | var b int
+004:  6:12 | string              | type string
+005:  6:20 | string              | type string
+006:  7:10 | a                   | var a string
+007:  7:14 | b                   | var b string
+008: 12: 2 | add                 | func main.add__0(a int, b int) int
+009: 13: 2 | add                 | func main.add__1(a string, b string) string
+== overloads ==
+000: 12: 2 | add                 | func main.add(__gop_overload_args__ interface{_()})
+001: 13: 2 | add                 | func main.add(__gop_overload_args__ interface{_()})`)
+}
+
+func TestGoxOverloadInfo(t *testing.T) {
+	testSpxInfo(t, "Rect.gox", `
+func addInt(a, b int) int {
+	return a + b
+}
+
+func addString(a, b string) string {
+	return a + b
+}
+
+func add = (
+	addInt
+	func(a, b float64) float64 {
+		return a + b
+	}
+	addString
+)
+`, `== types ==
+000:  0: 0 | ".addInt,,.addString" *ast.BasicLit                  | value   : untyped string = ".addInt,,.addString" | constant
+001:  0: 0 | Rect                *ast.Ident                     | type    : main.Rect | type
+002:  2:18 | int                 *ast.Ident                     | type    : int | type
+003:  2:23 | int                 *ast.Ident                     | type    : int | type
+004:  3: 9 | a                   *ast.Ident                     | var     : int | variable
+005:  3: 9 | a + b               *ast.BinaryExpr                | value   : int | value
+006:  3:13 | b                   *ast.Ident                     | var     : int | variable
+007:  6:21 | string              *ast.Ident                     | type    : string | type
+008:  6:29 | string              *ast.Ident                     | type    : string | type
+009:  7: 9 | a                   *ast.Ident                     | var     : string | variable
+010:  7: 9 | a + b               *ast.BinaryExpr                | value   : string | value
+011:  7:13 | b                   *ast.Ident                     | var     : string | variable
+012: 12:12 | float64             *ast.Ident                     | type    : float64 | type
+013: 12:21 | float64             *ast.Ident                     | type    : float64 | type
+014: 13:10 | a                   *ast.Ident                     | var     : float64 | variable
+015: 13:10 | a + b               *ast.BinaryExpr                | value   : float64 | value
+016: 13:14 | b                   *ast.Ident                     | var     : float64 | variable
+== defs ==
+000:  0: 0 | Gopo_Rect_add       | const main.Gopo_Rect_add untyped string
+001:  0: 0 | this                | var this *main.Rect
+002:  2: 6 | addInt              | func (*main.Rect).addInt(a int, b int) int
+003:  2:13 | a                   | var a int
+004:  2:16 | b                   | var b int
+005:  6: 6 | addString           | func (*main.Rect).addString(a string, b string) string
+006:  6:16 | a                   | var a string
+007:  6:19 | b                   | var b string
+008: 10: 6 | add                 | func (main.Rect).add(__gop_overload_args__ interface{_()})
+009: 12: 2 | add__1              | func (*main.Rect).add__1(a float64, b float64) float64
+010: 12: 7 | a                   | var a float64
+011: 12:10 | b                   | var b float64
+== uses ==
+000:  0: 0 | Rect                | type main.Rect struct{}
+001:  2:18 | int                 | type int
+002:  2:23 | int                 | type int
+003:  3: 9 | a                   | var a int
+004:  3:13 | b                   | var b int
+005:  6:21 | string              | type string
+006:  6:29 | string              | type string
+007:  7: 9 | a                   | var a string
+008:  7:13 | b                   | var b string
+009: 11: 2 | addInt              | func (*main.Rect).addInt(a int, b int) int
+010: 12:12 | float64             | type float64
+011: 12:21 | float64             | type float64
+012: 13:10 | a                   | var a float64
+013: 13:14 | b                   | var b float64
+014: 15: 2 | addString           | func (*main.Rect).addString(a string, b string) string`)
 }

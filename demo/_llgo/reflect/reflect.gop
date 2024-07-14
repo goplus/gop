@@ -1,0 +1,12 @@
+import (
+	"c"
+	"reflect"
+)
+
+tyIntSlice := reflect.sliceOf(reflect.typeOf(0))
+v := reflect.zero(tyIntSlice)
+v = reflect.append(v, reflect.valueOf(1), reflect.valueOf(2), reflect.valueOf(3))
+for i, n := 0, v.len; i < n; i++ {
+	item := v.index(i)
+	c.Printf c"%d\n", item.int
+}

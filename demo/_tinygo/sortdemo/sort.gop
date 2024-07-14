@@ -1,0 +1,19 @@
+import "sort"
+
+vals := [32, 58, 25, 92, 45, 78]
+sort.ints vals
+for v <- vals {
+	println v
+}
+
+texts := ["apple", "banana", "cherry", "date", "elderberry", "fig"]
+sort.slice texts, (i, j) => {
+	leni, lenj := len(texts[i]), len(texts[j])
+	if leni != lenj {
+		return leni < lenj
+	}
+	return texts[i] < texts[j]
+}
+for v <- texts {
+	println v
+}

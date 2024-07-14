@@ -17,15 +17,14 @@
 package cl
 
 import (
-	"errors"
 	"go/types"
 	"log"
 	"testing"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gogen/cpackages"
 	"github.com/goplus/gogen/packages"
 	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/mod/modfile"
 )
@@ -38,6 +37,15 @@ func getGoxConf() *gogen.Config {
 	fset := token.NewFileSet()
 	imp := packages.NewImporter(fset)
 	return &gogen.Config{Fset: fset, Importer: imp}
+}
+
+func TestSimplifyPkgPath(t *testing.T) {
+	if simplifyPkgPath("c/lua") != "github.com/goplus/llgo/c/lua" {
+		t.Fatal("simplifyPkgPath: c/lua")
+	}
+	if simplifyPkgPath("cpp/std") != "github.com/goplus/llgo/cpp/std" {
+		t.Fatal("simplifyPkgPath: cpp/std")
+	}
 }
 
 func TestCompileLambdaExpr(t *testing.T) {
@@ -154,85 +162,6 @@ func TestErrStringLit(t *testing.T) {
 func TestErrPreloadFile(t *testing.T) {
 	pkg := gogen.NewPackage("", "foo", goxConf)
 	ctx := &blockCtx{pkgCtx: &pkgCtx{}}
-	t.Run("overloadName", func(t *testing.T) {
-		defer func() {
-			if e := recover(); e == nil || e != "TODO - can't overload operator ++\n" {
-				t.Fatal("TestErrPreloadFile:", e)
-			}
-		}()
-		overloadName(&ast.Ident{}, "++", true)
-	})
-	t.Run("checkOverloadFunc", func(t *testing.T) {
-		defer func() {
-			if e := recover(); e == nil || e != "TODO - cl.preloadFile OverloadFuncDecl: checkOverloadFunc\n" {
-				t.Fatal("TestErrPreloadFile:", e)
-			}
-		}()
-		checkOverloadFunc(&ast.OverloadFuncDecl{
-			Recv: &ast.FieldList{},
-		})
-	})
-	t.Run("checkOverloadMethod", func(t *testing.T) {
-		defer func() {
-			if e := recover(); e == nil || e != "TODO - cl.preloadFile OverloadFuncDecl: checkOverloadMethod\n" {
-				t.Fatal("TestErrPreloadFile:", e)
-			}
-		}()
-		checkOverloadMethod(&ast.OverloadFuncDecl{})
-	})
-	t.Run("checkOverloadMethodRecvType1", func(t *testing.T) {
-		defer func() {
-			if e := recover(); e == nil || e != "TODO - checkOverloadMethodRecvType: bar\n" {
-				t.Fatal("TestErrPreloadFile:", e)
-			}
-		}()
-		checkOverloadMethodRecvType(&ast.Ident{Name: "foo"}, &ast.Ident{Name: "bar"})
-	})
-	t.Run("checkOverloadMethodRecvType2", func(t *testing.T) {
-		defer func() {
-			if e := recover(); e == nil || e != "TODO - checkOverloadMethodRecvType: &{0 INT 123 <nil>}\n" {
-				t.Fatal("TestErrPreloadFile:", e)
-			}
-		}()
-		expr := &ast.BasicLit{Kind: token.INT, Value: "123"}
-		checkOverloadMethodRecvType(&ast.Ident{Name: "foo"}, expr)
-	})
-	t.Run("OverloadFuncDecl: invalid recv", func(t *testing.T) {
-		defer func() {
-			if e := recover(); e == nil || e != "TODO - cl.preloadFile OverloadFuncDecl: invalid recv\n" {
-				t.Fatal("TestErrPreloadFile:", e)
-			}
-		}()
-		decls := []ast.Decl{
-			&ast.OverloadFuncDecl{
-				Name: &ast.Ident{Name: "add"},
-				Funcs: []ast.Expr{
-					&ast.FuncLit{},
-				},
-				Recv: &ast.FieldList{List: []*ast.Field{
-					{Type: &ast.StarExpr{}},
-				}},
-			},
-		}
-		preloadFile(pkg, ctx, &ast.File{Decls: decls}, "", true)
-	})
-	t.Run("OverloadFuncDecl: unknown func", func(t *testing.T) {
-		defer func() {
-			if e := recover(); e == nil || e != "TODO - cl.preloadFile OverloadFuncDecl: unknown func - *ast.BasicLit\n" {
-				t.Fatal("TestErrPreloadFile:", e)
-			}
-		}()
-		decls := []ast.Decl{
-			&ast.OverloadFuncDecl{
-				Name: &ast.Ident{Name: "add"},
-				Funcs: []ast.Expr{
-					&ast.BasicLit{},
-				},
-				Operator: true,
-			},
-		}
-		preloadFile(pkg, ctx, &ast.File{Decls: decls}, "", true)
-	})
 	t.Run("unknown decl", func(t *testing.T) {
 		defer func() {
 			if e := recover(); e == nil || e != "TODO - cl.preloadFile: unknown decl - *ast.BadDecl\n" {
@@ -350,6 +279,10 @@ func TestFileClassType(t *testing.T) {
 		{true, false, false, "Abc_yap.gox", "Abc", false, true},
 		{true, false, true, "main_yap.gox", "App", false, true},
 
+		{true, false, true, "abc_yap.gox", "abc", false, true},
+		{true, false, true, "Abc_yap.gox", "Abc", false, true},
+		{true, false, true, "main_yap.gox", "App", false, true},
+
 		{true, false, false, "abc_ytest.gox", "case_abc", true, true},
 		{true, false, false, "Abc_ytest.gox", "caseAbc", true, true},
 		{true, false, true, "main_ytest.gox", "App", true, true},
@@ -374,11 +307,9 @@ func TestFileClassType(t *testing.T) {
 		return
 	}
 	for _, test := range tests {
+		_ = test.found
 		f := &ast.File{IsClass: test.isClass, IsNormalGox: test.isNormalGox, IsProj: test.isProj}
-		classType, isTest, found := GetFileClassType(f, test.fileName, lookupClass)
-		if found != test.found {
-			t.Fatalf("%v found classType want %v, got %v.", test.fileName, test.found, found)
-		}
+		classType, isTest := GetFileClassType(f, test.fileName, lookupClass)
 		if isTest != test.isTest {
 			t.Fatalf("%v check classType isTest want %v, got %v.", test.fileName, test.isTest, isTest)
 		}
@@ -389,14 +320,12 @@ func TestFileClassType(t *testing.T) {
 }
 
 func TestErrMultiStarRecv(t *testing.T) {
-	defer func() {
-		if e := recover(); e == nil {
-			t.Fatal("TestErrMultiStarRecv: no panic?")
-		}
-	}()
-	getRecvType(&ast.StarExpr{
+	_, _, ok := getRecvType(&ast.StarExpr{
 		X: &ast.StarExpr{},
 	})
+	if ok {
+		t.Fatal("TestErrMultiStarRecv: no error?")
+	}
 }
 
 func TestErrAssign(t *testing.T) {
@@ -632,12 +561,6 @@ func TestGetGoFile(t *testing.T) {
 	}
 }
 
-func TestC2goBase(t *testing.T) {
-	if c2goBase("") != "github.com/goplus/" {
-		t.Fatal("c2goBase failed")
-	}
-}
-
 func TestErrNewType(t *testing.T) {
 	testPanic(t, `bar redeclared in this block
 	previous declaration at <TODO>
@@ -645,25 +568,6 @@ func TestErrNewType(t *testing.T) {
 		pkg := types.NewPackage("", "foo")
 		newType(pkg, token.NoPos, "bar")
 		newType(pkg, token.NoPos, "bar")
-	})
-}
-
-func TestErrLoadImport(t *testing.T) {
-	testPanic(t, "-: unknownpkg not found or not a valid C package (c2go.a.pub file not found).\n", func() {
-		pkg := &pkgCtx{
-			nodeInterp: &nodeInterp{
-				fset: token.NewFileSet(),
-			},
-			cpkgs: cpackages.NewImporter(
-				&cpackages.Config{LookupPub: func(pkgPath string) (pubfile string, err error) {
-					return "", errors.New("not found")
-				}})}
-		ctx := &blockCtx{pkgCtx: pkg}
-		spec := &ast.ImportSpec{
-			Path: &ast.BasicLit{Kind: token.STRING, Value: `"C/unknownpkg"`},
-		}
-		loadImport(ctx, spec)
-		panic(ctx.errs[0].Error())
 	})
 }
 
@@ -685,6 +589,18 @@ func testPanic(t *testing.T, panicMsg string, doPanic func()) {
 		}()
 		doPanic()
 	})
+}
+
+func TestClassFileEnd(t *testing.T) {
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "get.yap", `json {"id": ${id} }`, parser.ParseGoPlusClass)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.Decls = append(f.Decls, astFnClassfname(&gmxClass{clsfile: "get"}))
+	if f.End() != f.ShadowEntry.End() {
+		t.Fatal("class file end not shadow entry")
+	}
 }
 
 // -----------------------------------------------------------------------------
