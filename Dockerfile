@@ -13,10 +13,10 @@ RUN set -eux; \
 		BIN_DIR_SUFFIX=linux_$GOARCH; \
 		[ $GOARCH = "amd64" ] && BIN_DIR_SUFFIX=${BIN_DIR_SUFFIX}_v1; \
 		[ $GOARCH = "arm" ] && BIN_DIR_SUFFIX=${BIN_DIR_SUFFIX}_$(go env GOARM | cut -d , -f 1); \
-		cp .dist/gop_$BIN_DIR_SUFFIX/bin/gop .dist/gopfmt_$BIN_DIR_SUFFIX/bin/gopfmt $GOPROOT/bin/; \
+		cp .dist/gop_$BIN_DIR_SUFFIX/bin/gop $GOPROOT/bin/; \
 	else \
 		./all.bash; \
-		cp bin/gop bin/gopfmt $GOPROOT/bin/; \
+		cp bin/gop $GOPROOT/bin/; \
 	fi
 
 FROM $BASE_IMAGE
