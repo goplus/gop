@@ -1,39 +1,30 @@
-# The lines below are called `modelines`. See `:help modeline`
-# Feel free to remove those if you don't want/need to use them.
-# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
-# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+version: 2
 
-version: 1
-dist: ".dist"
+dist: .dist
 
 before:
   hooks:
-    # You may remove this if you don't use go modules.
-    - go mod tidy
-    # you may remove this if you don't need go generate
-    # - go generate ./...
+    - go mod download
 
 builds:
   - id: gop
+    main: ./cmd/gop
+    binary: bin/gop
+    ldflags:
+      - -X github.com/goplus/gop/env.buildVersion=v{{.Version}}
+      - -X github.com/goplus/gop/env.buildDate={{.Date}}
     env:
       - CGO_ENABLED=0
     goos:
       - linux
       - windows
       - darwin
-    main: ./cmd/gop
-    binary: bin/gop
-    ldflags:
-      - -X github.com/goplus/gop/env.buildVersion=v{{.Version}}
-      - -X github.com/goplus/gop/env.buildDate={{.Date}}
 
 archives:
   - format: tar.gz
-    # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
-      {{ .ProjectName }}{{.Version}}.{{ .Os }}-{{ .Arch }}
-      {{- if .Arm }}v{{ .Arm }}{{ end }}
-    # use zip for windows archives
+      {{.ProjectName}}{{.Version}}.{{.Os}}-{{.Arch}}
+      {{- if .Arm}}v{{.Arm}}{{end}}
     format_overrides:
       - goos: windows
         format: zip
