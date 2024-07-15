@@ -48,7 +48,7 @@ For more details, see [Quick Start](doc/docs.md).
 
 * Approaching natural language expression and intuitive (see [Command Style Code](#command-style-code)).
 * Fully compatible with [Go](https://github.com/golang/go) and can mix Go/Go+ code in the same package (see [Go/Go+ Hybrid Programming](doc/docs.md#gogo-hybrid-programming)).
-* Integrating with the C ecosystem including Python and providing limitless possibilities (see [Support for C/C++ and Python](#support-for-cc-and-python)).
+* Integrating with the C ecosystem including Python and providing limitless possibilities based on [LLGo](https://github.com/goplus/llgo) (see [Support for C/C++ and Python](#support-for-cc-and-python)).
 * Does not support DSL (Domain-Specific Languages), but supports SDF (Specific Domain Friendliness) (see [Go+ Classfiles](#go-classfiles)).
 
 
