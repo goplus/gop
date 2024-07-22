@@ -46,13 +46,13 @@ For more details, see [Quick Start](doc/docs.md).
 
 ## Key Features of Go+
 
-* Approaching natural language expression and intuitive (see [Command Style Code](#command-style-code)).
+* Approaching natural language expression and intuitive (see [How Go+ simplifies Go's expressions](#how-go-simplifies-gos-expressions)).
 * Fully compatible with [Go](https://github.com/golang/go) and can mix Go/Go+ code in the same package (see [Go/Go+ Hybrid Programming](doc/docs.md#gogo-hybrid-programming)).
 * Integrating with the C ecosystem including Python and providing limitless possibilities based on [LLGo](https://github.com/goplus/llgo) (see [Support for C/C++ and Python](#support-for-cc-and-python)).
 * Does not support DSL (Domain-Specific Languages), but supports SDF (Specific Domain Friendliness) (see [Go+ Classfiles](#go-classfiles)).
 
 
-## Command Style Code
+## How Go+ simplifies Go's expressions
 
 Different from the function call style of most languages, Go+ recommends command style code:
 
@@ -67,6 +67,17 @@ echo "Hello world"
 ```
 
 For more discussion on coding style, see https://tutorial.goplus.org/hello-world.
+
+Code style is just the first step. We have made many efforts to make the code more intuitive and closer to natural language expression. These include:
+
+| Go code | Go+ code | Note |
+| ---- | ---- | ---- |
+| package main<br><br>import "fmt"<br><br>func main() {<br>&nbsp;&nbsp;&nbsp;&nbsp;fmt.Println("Hello world")<br>} | import "fmt"<br><br>fmt.Println("Hello world")<br> | Program Structure: Go+ allows omitting `package main` and `func main`. The contents of the main function can be written directly at the end of a Go+ file. |
+| fmt.Println("Hello world") | echo("Hello world") | Go+ provides more builtin functions to simplify the expression of the most common tasks. |
+| fmt.Println("Hello world") | echo "Hello world" | Go+ encourages writing code in a command-line style. It reduces the number of parentheses in the code as much as possible, making it closer to natural language. |
+| a := []int{1, 2, 3} | a := [1, 2, 3] | List literals |
+| a := map[string]int{<br>&nbsp;&nbsp;&nbsp;&nbsp;"Monday": 1,<br>&nbsp;&nbsp;&nbsp;&nbsp;"Tuesday": 2,<br>} | a := {<br>&nbsp;&nbsp;&nbsp;&nbsp;"Monday": 1,<br>&nbsp;&nbsp;&nbsp;&nbsp;"Tuesday": 2,<br>} | Mapping literals |
+| OnStart(func() {<br>&nbsp;&nbsp;&nbsp;&nbsp;...<br>}) | onStart => {<br>&nbsp;&nbsp;&nbsp;&nbsp;...<br>} | Lambda expressions |
 
 
 ## Support for C/C++ and Python
