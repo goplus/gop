@@ -72,9 +72,9 @@ Code style is just the first step. We have made many efforts to make the code mo
 
 | Go code | Go+ code | Note |
 | ---- | ---- | ---- |
-| package main<br><br>import "fmt"<br><br>func main() {<br>&nbsp;&nbsp;&nbsp;&nbsp;fmt.Println("Hello world")<br>} | import "fmt"<br><br>fmt.Println("Hello world")<br> | Program Structure: Go+ allows omitting `package main` and `func main`. The contents of the main function can be written directly at the end of a Go+ file. |
-| fmt.Println("Hello world") | echo("Hello world") | Go+ provides more builtin functions to simplify the expression of the most common tasks. |
-| fmt.Println("Hello world") | echo "Hello world" | Go+ encourages writing code in a command-line style. It reduces the number of parentheses in the code as much as possible, making it closer to natural language. |
+| package main<br><br>import "fmt"<br><br>func main() {<br>&nbsp;&nbsp;&nbsp;&nbsp;fmt.Println("Hi")<br>} | import "fmt"<br><br>fmt.Println("Hi")<br> | Program Structure: Go+ allows omitting `package main` and `func main` |
+| fmt.Println("Hi") | echo("Hi") | More builtin functions: It simplifies the expression of the most common tasks |
+| fmt.Println("Hi") | echo "Hi" | Command-line style code: It reduces the number of parentheses in the code as much as possible, making it closer to natural language |
 | a := []int{1, 2, 3} | a := [1, 2, 3] | List literals |
 | a := map[string]int{<br>&nbsp;&nbsp;&nbsp;&nbsp;"Monday": 1,<br>&nbsp;&nbsp;&nbsp;&nbsp;"Tuesday": 2,<br>} | a := {<br>&nbsp;&nbsp;&nbsp;&nbsp;"Monday": 1,<br>&nbsp;&nbsp;&nbsp;&nbsp;"Tuesday": 2,<br>} | Mapping literals |
 | OnStart(func() {<br>&nbsp;&nbsp;&nbsp;&nbsp;...<br>}) | onStart => {<br>&nbsp;&nbsp;&nbsp;&nbsp;...<br>} | Lambda expressions |
