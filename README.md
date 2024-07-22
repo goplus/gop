@@ -72,12 +72,13 @@ Code style is just the first step. We have made many efforts to make the code mo
 
 | Go code | Go+ code | Note |
 | ---- | ---- | ---- |
-| package main<br><br>import "fmt"<br><br>func main() {<br>&nbsp;&nbsp;&nbsp;&nbsp;fmt.Println("Hi")<br>} | import "fmt"<br><br>fmt.Println("Hi")<br> | Program Structure: Go+ allows omitting `package main` and `func main` |
+| package main<br><br>import "fmt"<br><br>func main() {<br>&nbsp;&nbsp;&nbsp;&nbsp;fmt.Println("Hi")<br>} | import "fmt"<br><br>fmt.Println("Hi")<br> | Program structure: Go+ allows omitting `package main` and `func main` |
 | fmt.Println("Hi") | echo("Hi") | More builtin functions: It simplifies the expression of the most common tasks |
 | fmt.Println("Hi") | echo "Hi" | Command-line style code: It reduces the number of parentheses in the code as much as possible, making it closer to natural language |
 | a := []int{1, 2, 3} | a := [1, 2, 3] | List literals |
 | a := map[string]int{<br>&nbsp;&nbsp;&nbsp;&nbsp;"Monday": 1,<br>&nbsp;&nbsp;&nbsp;&nbsp;"Tuesday": 2,<br>} | a := {<br>&nbsp;&nbsp;&nbsp;&nbsp;"Monday": 1,<br>&nbsp;&nbsp;&nbsp;&nbsp;"Tuesday": 2,<br>} | Mapping literals |
 | OnStart(func() {<br>&nbsp;&nbsp;&nbsp;&nbsp;...<br>}) | onStart => {<br>&nbsp;&nbsp;&nbsp;&nbsp;...<br>} | Lambda expressions |
+| type Rect struct {<br>&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp; float64<br>&nbsp;&nbsp;&nbsp;&nbsp;Height float64<br>}<br><br>func (this *Rect) Area() float64 { <br>&nbsp;&nbsp;&nbsp;&nbsp;return this.Width * this.Height<br>} | var (<br>&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp; float64<br>&nbsp;&nbsp;&nbsp;&nbsp;Height float64<br>)<br><br>func Area() float64 { <br>&nbsp;&nbsp;&nbsp;&nbsp;return Width * Height<br>} | [Go+ Classfile](doc/classfile.md): We can express OOP with global variables and functions. |
 
 
 ## Support for C/C++ and Python
