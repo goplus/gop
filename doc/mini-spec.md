@@ -5,16 +5,16 @@ Go+ STEM Education Minimum Specification
 
 Comments serve as program documentation. There are three forms:
 
-* __Line comments__ start with the character sequence `//` and stop at the end of the line.
-* __Line comments__ start with the character sequence `#` and stop at the end of the line.
-* __General comments__ start with the character sequence `/*` and stop with the first subsequent character sequence `*/`.
+* _Line comments_ start with the character sequence `//` and stop at the end of the line.
+* _Line comments_ start with the character sequence `#` and stop at the end of the line.
+* _General comments_ start with the character sequence `/*` and stop with the first subsequent character sequence `*/`.
 
-A __general comment__ containing no newlines acts like a space. Any other comment acts like a newline.
+A _general comment_ containing no newlines acts like a space. Any other comment acts like a newline.
 
 ```
 # this is a line comment
 // this is another line comment
-/* this is  a general comment */
+/* this is a general comment */
 ```
 
 ## Literals
@@ -87,7 +87,7 @@ For readability, an underscore character _ may appear after a base prefix or bet
 
 ### Imaginary literals
 
-An imaginary literal represents the imaginary part of a [complex constant](). It consists of an [integer](#integer-literals) or [floating-point](#floating-point-literals) literal followed by the lowercase letter __i__. The value of an imaginary literal is the value of the respective integer or floating-point literal multiplied by the imaginary unit __i__.
+An imaginary literal represents the imaginary part of a [complex constant](). It consists of an [integer](#integer-literals) or [floating-point](#floating-point-literals) literal followed by the lowercase letter _i_. The value of an imaginary literal is the value of the respective integer or floating-point literal multiplied by the imaginary unit _i_.
 
 For backward compatibility, an imaginary literal's integer part consisting entirely of decimal digits (and possibly underscores) is considered a decimal integer, even if it starts with a leading 0.
 
@@ -110,6 +110,19 @@ For backward compatibility, an imaginary literal's integer part consisting entir
 
 TODO
 
+```sh
+1r       # bigint 1
+2/3r     # bigrat 2/3
+```
+
+### Boolean literals
+
+TODO
+
+```go
+true
+false
+```
 
 ### Rune literals
 
@@ -194,18 +207,118 @@ These examples all represent the same string:
 
 If the source code represents a character as two code points, such as a combining form involving an accent and a letter, the result will be an error if placed in a rune literal (it is not a single code point), and will appear as two code points if placed in a string literal.
 
-#### C style string literals
 
-TODO
+## Types
 
-```go
-c"Hello, world!\n"
-```
+### Boolean types
 
-#### Python string literals
-
-TODO
+A _boolean type_ represents the set of Boolean truth values denoted by the predeclared constants true and false. The predeclared boolean type is `bool`; it is a defined type.
 
 ```go
-py"Hello, world!\n"
+bool
 ```
+
+### Numeric types
+
+An _integer_, _floating-point_, _complex_ or _rational_ type represents the set of integer, floating-point, or complex values, respectively. They are collectively called _numeric types_. The predeclared architecture-independent numeric types are:
+
+```go
+uint8       // the set of all unsigned  8-bit integers (0 to 255)
+uint16      // the set of all unsigned 16-bit integers (0 to 65535)
+uint32      // the set of all unsigned 32-bit integers (0 to 4294967295)
+uint64      // the set of all unsigned 64-bit integers (0 to 18446744073709551615)
+
+int8        // the set of all signed  8-bit integers (-128 to 127)
+int16       // the set of all signed 16-bit integers (-32768 to 32767)
+int32       // the set of all signed 32-bit integers (-2147483648 to 2147483647)
+int64       // the set of all signed 64-bit integers (-9223372036854775808 to 9223372036854775807)
+
+float32     // the set of all IEEE-754 32-bit floating-point numbers
+float64     // the set of all IEEE-754 64-bit floating-point numbers
+
+complex64   // the set of all complex numbers with float32 real and imaginary parts
+complex128  // the set of all complex numbers with float64 real and imaginary parts
+
+byte        // alias for uint8
+rune        // alias for int32
+```
+
+The value of an _n_-bit integer is n bits wide and represented using [two's complement arithmetic](https://en.wikipedia.org/wiki/Two's_complement).
+
+There is also a set of predeclared integer types with implementation-specific sizes:
+
+```go
+uint     // either 32 or 64 bits
+int      // same size as uint
+uintptr  // an unsigned integer large enough to store the uninterpreted bits of a pointer value
+```
+
+To avoid portability issues all numeric types are defined types and thus distinct except _byte_, which is an [alias]() for _uint8_, and _rune_, which is an alias for _int32_. Explicit conversions are required when different numeric types are mixed in an expression or assignment. For instance, _int32_ and _int_ are not the same type even though they may have the same size on a particular architecture.
+
+TODO:
+
+```go
+bigint  // TODO
+bigrat  // TODO
+```
+
+### String types
+
+A _string type_ represents the set of string values. A string value is a (possibly empty) sequence of bytes. The number of bytes is called the length of the string and is never negative. Strings are immutable: once created, it is impossible to change the contents of a string. The predeclared string type is `string`; it is a defined type.
+
+```go
+string
+```
+
+The length of a string `s` can be discovered using the built-in function [len](). The length is a compile-time constant if the string is a constant. A string's bytes can be accessed by integer [indices]() `0` through `len(s)-1`. It is illegal to take the address of such an element; if `s[i]` is the i'th byte of a string, `&s[i]` is invalid.
+
+
+### Array types
+
+An array is a numbered sequence of elements of a single type, called the element type. The number of elements is called the length of the array and is never negative.
+
+```go
+[N]T
+```
+
+The length is part of the array's type; it must evaluate to a non-negative [constant]() representable by a value of type int. The length of array `a` can be discovered using the built-in function [len](). The elements can be addressed by integer [indices]() `0` through `len(a)-1`. Array types are always one-dimensional but may be composed to form multi-dimensional types.
+
+```go
+[32]byte
+[1000]*float64
+[3][5]int
+[2][2][2]float64  // same as [2]([2]([2]float64))
+```
+
+### Slice types
+
+A _slice_ is a descriptor for a contiguous segment of an underlying array and provides access to a numbered sequence of elements from that array. A slice type denotes the set of all slices of arrays of its element type. The number of elements is called the length of the slice and is never negative. The value of an uninitialized slice is `nil`.
+
+```go
+[]T
+```
+
+The length of a slice `s` can be discovered by the built-in function [len](); unlike with arrays it may change during execution. The elements can be addressed by integer [indices]() `0` through `len(s)-1`. The slice index of a given element may be less than the index of the same element in the underlying array.
+
+A slice, once initialized, is always associated with an underlying array that holds its elements. A slice therefore shares storage with its array and with other slices of the same array; by contrast, distinct arrays always represent distinct storage.
+
+The array underlying `a` slice may extend past the end of the slice. The capacity is a measure of that extent: it is the sum of the length of the slice and the length of the array beyond the slice; a slice of length up to that capacity can be created by [slicing]() a new one from the original slice. The capacity of a slice a can be discovered using the built-in function `cap(a)`.
+
+A new, initialized slice value for a given element type `T` may be made using the built-in function [make](), which takes a slice type and parameters specifying the length and optionally the capacity. A slice created with make always allocates a new, hidden array to which the returned slice value refers. That is, executing
+
+```go
+make([]T, length, capacity)
+```
+
+produces the same slice as allocating an array and [slicing]() it, so these two expressions are equivalent:
+
+```
+make([]int, 50, 100)
+new([100]int)[0:50]
+```
+
+Like arrays, slices are always one-dimensional but may be composed to construct higher-dimensional objects. With arrays of arrays, the inner arrays are, by construction, always the same length; however with slices of slices (or arrays of slices), the inner lengths may vary dynamically. Moreover, the inner slices must be initialized individually.
+
+### Pointer types
+
+TODO
