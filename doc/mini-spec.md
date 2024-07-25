@@ -207,6 +207,15 @@ These examples all represent the same string:
 
 If the source code represents a character as two code points, such as a combining form involving an accent and a letter, the result will be an error if placed in a rune literal (it is not a single code point), and will appear as two code points if placed in a string literal.
 
+### Special literals
+
+TODO
+
+```go
+nil
+iota
+```
+
 
 ## Types
 
@@ -290,6 +299,21 @@ The length is part of the array's type; it must evaluate to a non-negative [cons
 [2][2][2]float64  // same as [2]([2]([2]float64))
 ```
 
+### Pointer types
+
+A _pointer_ type denotes the set of all pointers to [variables]() of a given type, called the base type of the pointer. The value of an uninitialized pointer is `nil`.
+
+```go
+*T
+```
+
+For example:
+
+```go
+*Point
+*[4]int
+```
+
 ### Slice types
 
 A _slice_ is a descriptor for a contiguous segment of an underlying array and provides access to a numbered sequence of elements from that array. A slice type denotes the set of all slices of arrays of its element type. The number of elements is called the length of the slice and is never negative. The value of an uninitialized slice is `nil`.
@@ -319,6 +343,64 @@ new([100]int)[0:50]
 
 Like arrays, slices are always one-dimensional but may be composed to construct higher-dimensional objects. With arrays of arrays, the inner arrays are, by construction, always the same length; however with slices of slices (or arrays of slices), the inner lengths may vary dynamically. Moreover, the inner slices must be initialized individually.
 
-### Pointer types
+### Map types
 
-TODO
+A _map_ is an unordered group of elements of one type, called the element type, indexed by a set of unique keys of another type, called the key type. The value of an uninitialized map is `nil`.
+
+```go
+map[KeyT]ElemT
+```
+
+The comparison operators `==` and `!=` must be fully defined for operands of the key type; thus the key type must not be a function, map, or slice. If the key type is an interface type, these comparison operators must be defined for the dynamic key values; failure will cause a run-time panic.
+
+```go
+map[string]int
+map[*T]string
+map[string]any
+```
+
+The number of map elements is called its length. For a map `m`, it can be discovered using the built-in function [len]() and may change during execution. Elements may be added during execution using [assignments]() and retrieved with [index expressions](); they may be removed with the [delete]() and [clear]() built-in function.
+
+A new, empty map value is made using the built-in function [make](), which takes the map type and an optional capacity hint as arguments:
+
+```go
+make(map[string]int)
+make(map[string]int, 100)
+```
+
+The initial capacity does not bound its size: maps grow to accommodate the number of items stored in them, with the exception of nil maps. A nil map is equivalent to an empty map except that no elements may be added.
+
+
+### Function types
+
+A _function_ type denotes the set of all functions with the same parameter and result types. The value of an uninitialized variable of function type is `nil`.
+
+```go
+func(parameters) results
+```
+
+Within a list of parameters or results, the names (IdentifierList) must either all be present or all be absent. If present, each name stands for one item (parameter or result) of the specified type and all non-[blank]() names in the signature must be [unique](). If absent, each type stands for one item of that type. Parameter and result lists are always parenthesized except that if there is exactly one unnamed result it may be written as an unparenthesized type.
+
+The final incoming parameter in a function signature may have a type prefixed with `...`. A function with such a parameter is called _variadic_ and may be invoked with zero or more arguments for that parameter.
+
+```go
+func()
+func(x int) int
+func(a, _ int, z float32) bool
+func(a, b int, z float32) (bool)
+func(prefix string, values ...int)
+func(a, b int, z float64, opt ...any) (success bool)
+func(int, int, float64) (float64, *[]int)
+func(n int) func(p *T)
+```
+
+### Interface types
+
+#### Builtin interfaces
+
+TODO:
+
+```go
+error
+any
+```

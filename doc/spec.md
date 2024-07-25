@@ -28,6 +28,7 @@ TODO
 py"Hello, world!\n"
 ```
 
+
 ## Types
 
 ### Boolean types
@@ -38,11 +39,11 @@ See [Boolean types](mini-spec.md#boolean-types).
 
 See [Numeric types](mini-spec.md#numeric-types).
 
-#### String types
+### String types
 
 See [String types](mini-spec.md#string-types).
 
-##### C style string types
+#### C style string types
 
 ```go
 import "c"
@@ -50,7 +51,7 @@ import "c"
 *c.Char  // alias for *int8
 ```
 
-##### Python string types
+#### Python string types
 
 ```go
 import "py"
@@ -81,9 +82,17 @@ type (
 )
 ```
 
+### Pointer types
+
+See [Pointer types](mini-spec.md#pointer-types).
+
 ### Slice types
 
 See [Slice types](mini-spec.md#slice-types).
+
+### Map types
+
+See [Map types](mini-spec.md#map-types).
 
 ### Struct types
 
@@ -172,6 +181,18 @@ type (
 )
 ```
 
-### Pointer types
+### Function types
 
-See [Pointer types](mini-spec.md#pointer-types).
+See [Function types](mini-spec.md#function-types).
+
+### Interface types
+
+TODO
+
+#### Builtin interfaces
+
+See [Builtin interfaces](mini-spec.md#builtin-interfaces).
+
+### Channel types
+
+TODO
