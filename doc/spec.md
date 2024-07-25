@@ -3,12 +3,12 @@ Go+ Specification
 
 ## Comments
 
-See [Comments](mini-spec.md#comments).
+See [Comments](spec-mini.md#comments).
 
 
 ## Literals
 
-See [Literals](mini-spec.md#literals).
+See [Literals](spec-mini.md#literals).
 
 ### String literals
 
@@ -33,15 +33,15 @@ py"Hello, world!\n"
 
 ### Boolean types
 
-See [Boolean types](mini-spec.md#boolean-types).
+See [Boolean types](spec-mini.md#boolean-types).
 
 ### Numeric types
 
-See [Numeric types](mini-spec.md#numeric-types).
+See [Numeric types](spec-mini.md#numeric-types).
 
 ### String types
 
-See [String types](mini-spec.md#string-types).
+See [String types](spec-mini.md#string-types).
 
 #### C style string types
 
@@ -61,7 +61,7 @@ import "py"
 
 ### Array types
 
-See [Array types](mini-spec.md#array-types).
+See [Array types](spec-mini.md#array-types).
 
 An array type T may not have an element of type T, or of a type containing T as a component, directly or indirectly, if those containing types are only array or struct types.
 
@@ -84,15 +84,15 @@ type (
 
 ### Pointer types
 
-See [Pointer types](mini-spec.md#pointer-types).
+See [Pointer types](spec-mini.md#pointer-types).
 
 ### Slice types
 
-See [Slice types](mini-spec.md#slice-types).
+See [Slice types](spec-mini.md#slice-types).
 
 ### Map types
 
-See [Map types](mini-spec.md#map-types).
+See [Map types](spec-mini.md#map-types).
 
 ### Struct types
 
@@ -183,7 +183,7 @@ type (
 
 ### Function types
 
-See [Function types](mini-spec.md#function-types).
+See [Function types](spec-mini.md#function-types).
 
 ### Interface types
 
@@ -191,7 +191,7 @@ TODO
 
 #### Builtin interfaces
 
-See [Builtin interfaces](mini-spec.md#builtin-interfaces).
+See [Builtin interfaces](spec-mini.md#builtin-interfaces).
 
 ### Channel types
 
@@ -202,23 +202,23 @@ TODO
 
 ### Commands and calls
 
-See [Commands and calls](mini-spec.md#commands-and-calls).
+See [Commands and calls](spec-mini.md#commands-and-calls).
 
 ### Operators
 
-See [Operators](mini-spec.md#operators).
+See [Operators](spec-mini.md#operators).
 
 #### Operator precedence
 
-See [Operator precedence](mini-spec.md#operator-precedence).
+See [Operator precedence](spec-mini.md#operator-precedence).
 
 #### Arithmetic operators
 
-See [Arithmetic operators](mini-spec.md#arithmetic-operators).
+See [Arithmetic operators](spec-mini.md#arithmetic-operators).
 
 #### Comparison operators
 
-See [Comparison operators](mini-spec.md#comparison-operators).
+See [Comparison operators](spec-mini.md#comparison-operators).
 
 The equality operators == and != apply to operands of comparable types. The ordering operators <, <=, >, and >= apply to operands of ordered types. These terms and the result of the comparisons are defined as follows:
 
@@ -249,11 +249,11 @@ A type is _strictly comparable_ if it is comparable and not an interface type no
 
 #### Logical operators
 
-See [Logical operators](mini-spec.md#logical-operators).
+See [Logical operators](spec-mini.md#logical-operators).
 
 ### Address operators
 
-See [Address operators](mini-spec.md#address-operators).
+See [Address operators](spec-mini.md#address-operators).
 
 ### Send/Receive operator
 
@@ -261,6 +261,6 @@ TODO
 
 ### Conversions
 
-See [Conversions](mini-spec.md#conversions).
+See [Conversions](spec-mini.md#conversions).
 
 TODO
