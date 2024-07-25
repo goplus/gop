@@ -1,4 +1,4 @@
-Go+ STEM Education Minimum Specification
+Go+ Specification for STEM Education
 =====
 
 ## Comments
