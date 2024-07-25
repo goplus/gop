@@ -196,3 +196,71 @@ See [Builtin interfaces](mini-spec.md#builtin-interfaces).
 ### Channel types
 
 TODO
+
+
+## Expressions
+
+### Commands and calls
+
+See [Commands and calls](mini-spec.md#commands-and-calls).
+
+### Operators
+
+See [Operators](mini-spec.md#operators).
+
+#### Operator precedence
+
+See [Operator precedence](mini-spec.md#operator-precedence).
+
+#### Arithmetic operators
+
+See [Arithmetic operators](mini-spec.md#arithmetic-operators).
+
+#### Comparison operators
+
+See [Comparison operators](mini-spec.md#comparison-operators).
+
+The equality operators == and != apply to operands of comparable types. The ordering operators <, <=, >, and >= apply to operands of ordered types. These terms and the result of the comparisons are defined as follows:
+
+* Channel types are comparable. Two channel values are equal if they were created by the same call to [make]() or if both have value `nil`.
+* Struct types are comparable if all their field types are comparable. Two struct values are equal if their corresponding non-[blank]() field values are equal. The fields are compared in source order, and comparison stops as soon as two field values differ (or all fields have been compared).
+* Type parameters are comparable if they are strictly comparable (see below).
+
+```go
+const c = 3 < 4            // c is the untyped boolean constant true
+
+type MyBool bool
+var x, y int
+var (
+	// The result of a comparison is an untyped boolean.
+	// The usual assignment rules apply.
+	b3        = x == y // b3 has type bool
+	b4 bool   = x == y // b4 has type bool
+	b5 MyBool = x == y // b5 has type MyBool
+)
+```
+
+A type is _strictly comparable_ if it is comparable and not an interface type nor composed of interface types. Specifically:
+
+* Boolean, numeric, string, pointer, and channel types are strictly comparable.
+* Struct types are strictly comparable if all their field types are strictly comparable.
+* Array types are strictly comparable if their array element types are strictly comparable.
+* Type parameters are strictly comparable if all types in their type set are strictly comparable.
+
+#### Logical operators
+
+See [Logical operators](mini-spec.md#logical-operators).
+
+### Address operators
+
+See [Address operators](mini-spec.md#address-operators).
+
+### Send/Receive operator
+
+TODO
+
+### Conversions
+
+See [Conversions](mini-spec.md#conversions).
+
+TODO

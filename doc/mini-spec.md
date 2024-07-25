@@ -85,6 +85,15 @@ For readability, an underscore character _ may appear after a base prefix or bet
 1.5e1_       // invalid: _ must separate successive digits
 ```
 
+### Rational literals
+
+TODO
+
+```sh
+1r       # bigint 1
+2/3r     # bigrat 2/3
+```
+
 ### Imaginary literals
 
 An imaginary literal represents the imaginary part of a [complex constant](). It consists of an [integer](#integer-literals) or [floating-point](#floating-point-literals) literal followed by the lowercase letter _i_. The value of an imaginary literal is the value of the respective integer or floating-point literal multiplied by the imaginary unit _i_.
@@ -104,15 +113,6 @@ For backward compatibility, an imaginary literal's integer part consisting entir
 .25i
 .12345E+5i
 0x1p-2i       // == 0x1p-2 * 1i == 0.25i
-```
-
-### Rational literals
-
-TODO
-
-```sh
-1r       # bigint 1
-2/3r     # bigrat 2/3
 ```
 
 ### Boolean literals
@@ -216,7 +216,6 @@ nil
 iota
 ```
 
-
 ## Types
 
 ### Boolean types
@@ -229,7 +228,7 @@ bool
 
 ### Numeric types
 
-An _integer_, _floating-point_, _complex_ or _rational_ type represents the set of integer, floating-point, or complex values, respectively. They are collectively called _numeric types_. The predeclared architecture-independent numeric types are:
+An _integer_, _floating-point_, _rational_ or _complex_ type represents the set of integer, floating-point, or complex values, respectively. They are collectively called _numeric types_. The predeclared architecture-independent numeric types are:
 
 ```go
 uint8       // the set of all unsigned  8-bit integers (0 to 255)
@@ -290,7 +289,7 @@ An array is a numbered sequence of elements of a single type, called the element
 [N]T
 ```
 
-The length is part of the array's type; it must evaluate to a non-negative [constant]() representable by a value of type int. The length of array `a` can be discovered using the built-in function [len](). The elements can be addressed by integer [indices]() `0` through `len(a)-1`. Array types are always one-dimensional but may be composed to form multi-dimensional types.
+The length is part of the array's type; it must evaluate to a non-negative [constant]() [representable]() by a value of type int. The length of array `a` can be discovered using the built-in function [len](). The elements can be addressed by integer [indices]() `0` through `len(a)-1`. Array types are always one-dimensional but may be composed to form multi-dimensional types.
 
 ```go
 [32]byte
@@ -404,3 +403,199 @@ TODO:
 error
 any
 ```
+
+
+## Expressions
+
+### Commands and calls
+
+TODO
+
+```go
+echo "Hello world"
+echo("Hello world")
+```
+
+### Operators
+
+Operators combine operands into expressions.
+
+Binary operators:
+
+```go
+|| && == != < <= > >=
++ - * / %
+| & ^ &^ << >>
+```
+
+Unary operators:
+
+```go
++ - ! ^ * &
+```
+
+#### Operator precedence
+
+_Unary operators_ have the highest precedence. As the ++ and -- operators form statements, not expressions, they fall outside the operator hierarchy. As a consequence, statement *p++ is the same as (*p)++.
+
+There are five precedence levels for _binary operators_. Multiplication operators bind strongest, followed by addition operators, comparison operators, && (logical AND), and finally || (logical OR):
+
+```
+Precedence    Operator
+    5             *  /  %  <<  >>  &  &^
+    4             +  -  |  ^
+    3             ==  !=  <  <=  >  >=
+    2             &&
+    1             ||
+```
+
+Binary operators of the same precedence associate from left to right. For instance, `x / y * z` is the same as `(x / y) * z`.
+
+```go
++x                         // x
+42 + a - b                 // (42 + a) - b
+23 + 3*x[i]                // 23 + (3 * x[i])
+x <= f()                   // x <= f()
+^a >> b                    // (^a) >> b
+f() || g()                 // f() || g()
+x == y+1 && <-chanInt > 0  // (x == (y+1)) && ((<-chanInt) > 0)
+```
+
+#### Arithmetic operators
+
+_Arithmetic operators_ apply to numeric values and yield a result of the same type as the first operand. The four standard arithmetic operators (+, -, *, /) apply to [integer](), [floating-point](), [rational]() and [complex]() types; + also applies to [strings](). The bitwise logical and shift operators apply to integers only.
+
+```
++    sum                    integers (including bigint), floats, bigrat, complex values, strings
+-    difference             integers (including bigint), floats, bigrat, complex values
+*    product                integers (including bigint), floats, bigrat, complex values
+/    quotient               integers (including bigint), floats, bigrat, complex values
+%    remainder              integers (including bigint)
+
+&    bitwise AND            integers (including bigint)
+|    bitwise OR             integers (including bigint)
+^    bitwise XOR            integers (including bigint)
+&^   bit clear (AND NOT)    integers (including bigint)
+
+<<   left shift             integer << integer >= 0
+>>   right shift            integer >> integer >= 0
+```
+
+TODO
+
+#### Comparison operators
+
+_Comparison operators_ compare two operands and yield an untyped boolean value.
+
+```go
+==    equal
+!=    not equal
+<     less
+<=    less or equal
+>     greater
+>=    greater or equal
+```
+
+In any comparison, the first operand must be [assignable]() to the type of the second operand, or vice versa.
+
+The equality operators == and != apply to operands of comparable types. The ordering operators <, <=, >, and >= apply to operands of ordered types. These terms and the result of the comparisons are defined as follows:
+
+* Boolean types are comparable. Two boolean values are equal if they are either both true or both false.
+* Integer types are comparable and ordered. Two integer values are compared in the usual way.
+* Floating-point types are comparable and ordered. Two floating-point values are compared as defined by the IEEE-754 standard.
+* Complex types are comparable. Two complex values u and v are equal if both real(u) == real(v) and imag(u) == imag(v).
+* String types are comparable and ordered. Two string values are compared lexically byte-wise.
+* Pointer types are comparable. Two pointer values are equal if they point to the same variable or if both have value `nil`. Pointers to distinct [zero-size]() variables may or may not be equal.
+* Interface types that are not type parameters are comparable. Two interface values are equal if they have [identical]() dynamic types and equal dynamic values or if both have value `nil`.
+* A value x of non-interface type X and a value t of interface type T can be compared if type X is comparable and X [implements]() T. They are equal if t's dynamic type is identical to X and t's dynamic value is equal to x.
+* Array types are comparable if their array element types are comparable. Two array values are equal if their corresponding element values are equal. The elements are compared in ascending index order, and comparison stops as soon as two element values differ (or all elements have been compared).
+
+A comparison of two interface values with identical dynamic types causes a [run-time panic]() if that type is not comparable. This behavior applies not only to direct interface value comparisons but also when comparing arrays of interface values or structs with interface-valued fields.
+
+Slice, map, and function types are not comparable. However, as a special case, a slice, map, or function value may be compared to the predeclared identifier `nil`. Comparison of pointer, channel, and interface values to `nil` is also allowed and follows from the general rules above.
+
+#### Logical operators
+
+Logical operators apply to [boolean]() values and yield a result of the same type as the operands. The left operand is evaluated, and then the right if the condition requires it.
+
+```
+&&    conditional AND    p && q  is  "if p then q else false"
+||    conditional OR     p || q  is  "if p then true else q"
+!     NOT                !p      is  "not p"
+```
+
+### Address operators
+
+For an operand x of type T, the address operation &x generates a pointer of type *T to x. The operand must be addressable, that is, either a variable, pointer indirection, or slice indexing operation; or a field selector of an addressable struct operand; or an array indexing operation of an addressable array. As an exception to the addressability requirement, x may also be a (possibly parenthesized) [composite literal](). If the evaluation of x would cause a [run-time panic](), then the evaluation of &x does too.
+
+For an operand x of pointer type *T, the pointer indirection *x denotes the [variable]() of type T pointed to by x. If x is nil, an attempt to evaluate *x will cause a [run-time panic]().
+
+```go
+&x
+&a[f(2)]
+&Point{2, 3}
+*p
+*pf(x)
+
+var x *int = nil
+*x   // causes a run-time panic
+&*x  // causes a run-time panic
+```
+
+### Conversions
+
+A _conversion_ changes the [type](#types) of an expression to the type specified by the conversion. A conversion may appear literally in the source, or it may be _implied_ by the context in which an expression appears.
+
+An _explicit conversion_ is an expression of the form `T(x)` where `T` is a type and `x` is an expression that can be converted to type `T`.
+
+```go
+T(x)
+```
+
+If the type starts with the operator * or <-, or if the type starts with the keyword func and has no result list, it must be parenthesized when necessary to avoid ambiguity:
+
+```go
+*Point(p)        // same as *(Point(p))
+(*Point)(p)      // p is converted to *Point
+func()(x)        // function signature func() x
+(func())(x)      // x is converted to func()
+(func() int)(x)  // x is converted to func() int
+func() int(x)    // x is converted to func() int (unambiguous)
+```
+
+A [constant]() value `x` can be converted to type `T` if `x` is [representable]() by a value of `T`. As a special case, an integer constant `x` can be explicitly converted to a [string type]() using the [same rule]() as for non-constant `x`.
+
+Converting a constant to a type that is not a type parameter yields a typed constant.
+
+```go
+uint(iota)               // iota value of type uint
+float32(2.718281828)     // 2.718281828 of type float32
+complex128(1)            // 1.0 + 0.0i of type complex128
+float32(0.49999999)      // 0.5 of type float32
+float64(-1e-1000)        // 0.0 of type float64
+string('x')              // "x" of type string
+string(0x266c)           // "♬" of type string
+myString("foo" + "bar")  // "foobar" of type myString
+string([]byte{'a'})      // not a constant: []byte{'a'} is not a constant
+(*int)(nil)              // not a constant: nil is not a constant, *int is not a boolean, numeric, or string type
+int(1.2)                 // illegal: 1.2 cannot be represented as an int
+string(65.0)             // illegal: 65.0 is not an integer constant
+```
+
+#### Conversions between numeric types
+
+For the conversion of non-constant numeric values, the following rules apply:
+
+* When converting between [integer types](#numeric-types), if the value is a signed integer, it is sign extended to implicit infinite precision; otherwise it is zero extended. It is then truncated to fit in the result type's size. For example, if v := uint16(0x10F0), then uint32(int8(v)) == 0xFFFFFFF0. The conversion always yields a valid value; there is no indication of overflow.
+* When converting a [floating-point number](#numeric-types) to an integer, the fraction is discarded (truncation towards zero).
+* When converting an integer or floating-point number to a floating-point type, or a [complex number](#numeric-types) to another complex type, the result value is rounded to the precision specified by the destination type. For instance, the value of a variable x of type float32 may be stored using additional precision beyond that of an IEEE-754 32-bit number, but float32(x) represents the result of rounding x's value to 32-bit precision. Similarly, x + 0.1 may use more than 32 bits of precision, but float32(x + 0.1) does not.
+
+In all non-constant conversions involving floating-point or complex values, if the result type cannot represent the value the conversion succeeds but the result value is implementation-dependent.
+
+#### Conversions to and from a string type
+
+TODO
+
+#### Conversions from slice to array or array pointer
+
+TODO
