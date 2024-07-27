@@ -117,7 +117,7 @@ For backward compatibility, an imaginary literal's integer part consisting entir
 
 ### Boolean literals
 
-TODO
+The boolean truth values are represented by the predeclared constants `true` and `false`.
 
 ```go
 true
@@ -215,6 +215,51 @@ TODO
 nil
 iota
 ```
+
+## Constants
+
+There are _boolean constants_, _rune constants_, _integer constants_, _floating-point constants_, _complex constants_, and _string constants_. Rune, integer, floating-point, and complex constants are collectively called _numeric constants_.
+
+A constant value is represented by a [rune](#rune-literals), [integer](#integer-literals), [floating-point](#floating-point-literals), [imaginary](#imaginary-literals), [boolean](#boolean-literals) or [string](#string-literals) literal, an identifier denoting a constant, a [constant expression](), a [conversion](#conversions) with a result that is a constant, or the result value of some built-in functions such as `min` or `max` applied to constant arguments, `unsafe.Sizeof` applied to [certain values](), `cap` or `len` applied to [some expressions](), `real` and `imag` applied to a complex constant and complex applied to numeric constants. The predeclared identifier `iota` denotes an integer constant.
+
+Not all literals are constants. For example:
+
+```sh
+nil
+1r
+2/3r
+```
+
+In general, complex constants are a form of [constant expression]() and are discussed in that section.
+
+Numeric constants represent exact values of arbitrary precision and do not overflow. Consequently, there are no constants denoting the IEEE-754 negative zero, infinity, and not-a-number values.
+
+Constants may be [typed](#types) or _untyped_. Literal constants (including `true`, `false`, `iota`), and certain [constant expressions]() containing only untyped constant operands are untyped.
+
+A constant may be given a type explicitly by a [constant declaration]() or [conversion](#conversions), or implicitly when used in a [variable declaration]() or an [assignment statement]() or as an operand in an [expression](#expressions). It is an error if the constant value cannot be [represented]() as a value of the respective type.
+
+An untyped constant has a _default type_ which is the type to which the constant is implicitly converted in contexts where a typed value is required, for instance, in a [short variable declaration]() such as `i := 0` where there is no explicit type. The default type of an untyped constant is `bool`, `rune`, `int`, `float64`, `complex128`, or `string` respectively, depending on whether it is a boolean, rune, integer, floating-point, complex, or string constant.
+
+
+## Variables
+
+A variable is a storage location for holding a value. The set of permissible values is determined by the variable's [type](#types).
+
+A [variable declaration]() or, for function parameters and results, the signature of a [function declaration]() or [function literal]() reserves storage for a named variable. Calling the built-in function [new]() or taking the address of a [composite literal]() allocates storage for a variable at run time. Such an anonymous variable is referred to via a (possibly implicit) [pointer indirection](#address-operators).
+
+_Structured_ variables of [array](#array-types), [slice](#slice-types), and [class](#classes) types have elements and fields that may be [addressed](#address-operators) individually. Each such element acts like a variable.
+
+The _static type_ (or just _type_) of a variable is the type given in its declaration, the type provided in the new call or composite literal, or the type of an element of a class variable. Variables of interface type also have a distinct _dynamic type_, which is the (non-interface) type of the value assigned to the variable at run time (unless the value is the predeclared identifier `nil`, which has no type). The dynamic type may vary during execution but values stored in interface variables are always [assignable]() to the static type of the variable.
+
+```go
+var x any  // x is nil and has static type any
+var v *T   // v has value nil, static type *T
+x = 42     // x has value 42 and dynamic type int
+x = v      // x has value (*T)(nil) and dynamic type *T
+```
+
+A variable's value is retrieved by referring to the variable in an [expression](#expressions); it is the most recent value [assigned]() to the variable. If a variable has not yet been assigned a value, its value is the [zero value]() for its type.
+
 
 ## Types
 
@@ -404,6 +449,10 @@ error
 any
 ```
 
+### Classes
+
+TODO (classfile)
+
 
 ## Expressions
 
@@ -415,6 +464,10 @@ TODO
 echo "Hello world"
 echo("Hello world")
 ```
+
+#### Builtin functions
+
+TODO
 
 ### Operators
 
@@ -506,7 +559,7 @@ The equality operators == and != apply to operands of comparable types. The orde
 * Complex types are comparable. Two complex values u and v are equal if both real(u) == real(v) and imag(u) == imag(v).
 * String types are comparable and ordered. Two string values are compared lexically byte-wise.
 * Pointer types are comparable. Two pointer values are equal if they point to the same variable or if both have value `nil`. Pointers to distinct [zero-size]() variables may or may not be equal.
-* Interface types that are not type parameters are comparable. Two interface values are equal if they have [identical]() dynamic types and equal dynamic values or if both have value `nil`.
+* Interface types are comparable. Two interface values are equal if they have [identical]() dynamic types and equal dynamic values or if both have value `nil`.
 * A value x of non-interface type X and a value t of interface type T can be compared if type X is comparable and X [implements]() T. They are equal if t's dynamic type is identical to X and t's dynamic value is equal to x.
 * Array types are comparable if their array element types are comparable. Two array values are equal if their corresponding element values are equal. The elements are compared in ascending index order, and comparison stops as soon as two element values differ (or all elements have been compared).
 
@@ -524,7 +577,7 @@ Logical operators apply to [boolean]() values and yield a result of the same typ
 !     NOT                !p      is  "not p"
 ```
 
-### Address operators
+#### Address operators
 
 For an operand x of type T, the address operation &x generates a pointer of type *T to x. The operand must be addressable, that is, either a variable, pointer indirection, or slice indexing operation; or a field selector of an addressable struct operand; or an array indexing operation of an addressable array. As an exception to the addressability requirement, x may also be a (possibly parenthesized) [composite literal](). If the evaluation of x would cause a [run-time panic](), then the evaluation of &x does too.
 
@@ -542,7 +595,7 @@ var x *int = nil
 &*x  // causes a run-time panic
 ```
 
-### Conversions
+#### Conversions
 
 A _conversion_ changes the [type](#types) of an expression to the type specified by the conversion. A conversion may appear literally in the source, or it may be _implied_ by the context in which an expression appears.
 
@@ -565,7 +618,7 @@ func() int(x)    // x is converted to func() int (unambiguous)
 
 A [constant]() value `x` can be converted to type `T` if `x` is [representable]() by a value of `T`. As a special case, an integer constant `x` can be explicitly converted to a [string type]() using the [same rule]() as for non-constant `x`.
 
-Converting a constant to a type that is not a type parameter yields a typed constant.
+Converting a constant to a type yields a typed constant.
 
 ```go
 uint(iota)               // iota value of type uint
@@ -582,7 +635,7 @@ int(1.2)                 // illegal: 1.2 cannot be represented as an int
 string(65.0)             // illegal: 65.0 is not an integer constant
 ```
 
-#### Conversions between numeric types
+##### Conversions between numeric types
 
 For the conversion of non-constant numeric values, the following rules apply:
 
@@ -592,10 +645,10 @@ For the conversion of non-constant numeric values, the following rules apply:
 
 In all non-constant conversions involving floating-point or complex values, if the result type cannot represent the value the conversion succeeds but the result value is implementation-dependent.
 
-#### Conversions to and from a string type
+##### Conversions to and from a string type
 
 TODO
 
-#### Conversions from slice to array or array pointer
+##### Conversions from slice to array or array pointer
 
 TODO
