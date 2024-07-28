@@ -47,6 +47,7 @@ For more details, see [Quick Start](doc/docs.md).
 ## Key Features of Go+
 
 * Approaching natural language expression and intuitive (see [How Go+ simplifies Go's expressions](#how-go-simplifies-gos-expressions)).
+* Smallest but Turing-complete syntax set in best practices (see [Go+ Specification for STEM Education](doc/spec-mini.md)).
 * Fully compatible with [Go](https://github.com/golang/go) and can mix Go/Go+ code in the same package (see [Go/Go+ Hybrid Programming](doc/docs.md#gogo-hybrid-programming)).
 * Integrating with the C ecosystem including Python and providing limitless possibilities based on [LLGo](https://github.com/goplus/llgo) (see [Support for C/C++ and Python](#support-for-cc-and-python)).
 * Does not support DSL (Domain-Specific Languages), but supports SDF (Specific Domain Friendliness) (see [Go+ Classfiles](#go-classfiles)).
@@ -78,7 +79,9 @@ Code style is just the first step. We have made many efforts to make the code mo
 | a := []int{1, 2, 3} | a := [1, 2, 3] | List literals |
 | a := map[string]int{<br>&nbsp;&nbsp;&nbsp;&nbsp;"Monday": 1,<br>&nbsp;&nbsp;&nbsp;&nbsp;"Tuesday": 2,<br>} | a := {<br>&nbsp;&nbsp;&nbsp;&nbsp;"Monday": 1,<br>&nbsp;&nbsp;&nbsp;&nbsp;"Tuesday": 2,<br>} | Mapping literals |
 | OnStart(func() {<br>&nbsp;&nbsp;&nbsp;&nbsp;...<br>}) | onStart => {<br>&nbsp;&nbsp;&nbsp;&nbsp;...<br>} | Lambda expressions |
-| type Rect struct {<br>&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp; float64<br>&nbsp;&nbsp;&nbsp;&nbsp;Height float64<br>}<br><br>func (this *Rect) Area() float64 { <br>&nbsp;&nbsp;&nbsp;&nbsp;return this.Width * this.Height<br>} | var (<br>&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp; float64<br>&nbsp;&nbsp;&nbsp;&nbsp;Height float64<br>)<br><br>func Area() float64 { <br>&nbsp;&nbsp;&nbsp;&nbsp;return Width * Height<br>} | [Go+ Classfile](doc/classfile.md): We can express OOP with global variables and functions. |
+| type Rect struct {<br>&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp; float64<br>&nbsp;&nbsp;&nbsp;&nbsp;Height float64<br>}<br><br>func (this *Rect) Area() float64 { <br>&nbsp;&nbsp;&nbsp;&nbsp;return this.Width * this.Height<br>} | var (<br>&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp; float64<br>&nbsp;&nbsp;&nbsp;&nbsp;Height float64<br>)<br><br>func Area() float64 { <br>&nbsp;&nbsp;&nbsp;&nbsp;return Width * Height<br>} | [Go+ Classfiles](doc/classfile.md): We can express OOP with global variables and functions. |
+
+For more details, see [Go+ Specification for STEM Education](doc/spec-mini.md).
 
 
 ## Support for C/C++ and Python
