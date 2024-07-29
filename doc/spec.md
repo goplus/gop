@@ -1,4 +1,4 @@
-Go+ Specification
+Go+ Full Specification
 =====
 
 ## Comments
