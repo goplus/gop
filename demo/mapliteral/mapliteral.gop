@@ -1,0 +1,9 @@
+func echoS2f32(vals map[string]float32) {
+	echo vals
+}
+
+echo {"Monday": 1, "Sunday": 7}
+echoS2f32 {"Monday": 1, "Sunday": 7}
+
+var a map[string]any = {"Monday": 1, "Sunday": 7}
+echo a
