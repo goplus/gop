@@ -791,3 +791,33 @@ echoF32s [10, 3.14, 200]       // []float32
 var a []any = [10, 3.14, 200]  // []any
 echo a
 ```
+
+#### Map literals
+
+TODO
+
+```go
+{key1: value1, ...}
+```
+
+For example:
+
+```go
+{}                           // map[string]any
+{"Monday": 1, "Sunday": 7}   // map[string]int
+{1: 100, 3: 3.14, 5: 10}     // map[int]float64
+```
+
+The type of map literals can be inferred from the context:
+
+```go
+func echoS2f32(vals map[string]float32) {
+	echo vals
+}
+
+echo {"Monday": 1, "Sunday": 7}
+echoS2f32 {"Monday": 1, "Sunday": 7}
+
+var a map[string]any = {"Monday": 1, "Sunday": 7}
+echo a
+```
