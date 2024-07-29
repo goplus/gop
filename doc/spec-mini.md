@@ -756,3 +756,38 @@ x, y, x := 1, 2, 3                        // illegal: x repeated on left side of
 ```
 
 Short variable declarations may appear only inside functions. In some contexts such as the initializers for "[if]()", "[for]()", or "[switch]()" statements, they can be used to declare local temporary variables.
+
+
+### Composite literals
+
+#### Slice literals
+
+TODO
+
+```go
+[expression1, ...]
+```
+
+For example:
+
+```go
+[]                   // []any
+[1, 2, 3]            // []int
+[10, 3.14, 200]      // []float64
+["Hello", "world"]   // []string
+["Hello", 100, true] // []any
+```
+
+The type of slice literals can be inferred from the context:
+
+```go
+func echoF32s(vals []float32) {
+	echo vals
+}
+
+echo [10, 3.14, 200]           // []float64
+echoF32s [10, 3.14, 200]       // []float32
+
+var a []any = [10, 3.14, 200]  // []any
+echo a
+```
