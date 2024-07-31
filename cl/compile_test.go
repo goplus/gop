@@ -4122,3 +4122,44 @@ func _() {
 }
 `)
 }
+
+func TestSliceLitAssign(t *testing.T) {
+	gopClTest(t, `
+var n = 1
+var a []any = [10, 3.14, 200]
+n, a = 100, [10, 3.14, 200]
+echo a, n
+`, `package main
+
+import "fmt"
+
+var n = 1
+var a []interface{} = []interface{}{10, 3.14, 200}
+
+func main() {
+	n, a = 100, []interface{}{10, 3.14, 200}
+	fmt.Println(a, n)
+}
+`)
+}
+
+func TestSliceLitReturn(t *testing.T) {
+	gopClTest(t, `
+func anyslice() (int, []any) {
+	return 100, [10, 3.14, 200]
+}
+n, a := anyslice()
+echo n, a
+`, `package main
+
+import "fmt"
+
+func anyslice() (int, []interface{}) {
+	return 100, []interface{}{10, 3.14, 200}
+}
+func main() {
+	n, a := anyslice()
+	fmt.Println(n, a)
+}
+`)
+}
