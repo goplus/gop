@@ -313,6 +313,12 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 				typ, _ = gogen.DerefType(ctx.cb.Get(-1 - i).Type)
 			}
 			compileSliceLit(ctx, e, typ)
+		case *ast.CompositeLit:
+			var typ types.Type
+			if len(expr.Lhs) == len(expr.Rhs) {
+				typ, _ = gogen.DerefType(ctx.cb.Get(-1 - i).Type)
+			}
+			compileCompositeLit(ctx, e, typ, false)
 		default:
 			compileExpr(ctx, rhs, inFlags)
 		}
