@@ -4163,3 +4163,33 @@ func main() {
 }
 `)
 }
+
+func TestCompositeLitAssign(t *testing.T) {
+	gopClTest(t, `
+var a map[any]any = {10: "A", 3.14: "B", 200: "C"}
+var b map[any]string = {10: "A", 3.14: "B", 200: "C"}
+echo a
+echo b
+var n int
+n, a = 1, {10: "A", 3.14: "B", 200: "C"}
+echo a, n
+n, b = 1, {10: "A", 3.14: "B", 200: "C"}
+echo b, n
+`, `package main
+
+import "fmt"
+
+var a map[interface{}]interface{} = map[interface{}]interface{}{10: "A", 3.14: "B", 200: "C"}
+var b map[interface{}]string = map[interface{}]string{10: "A", 3.14: "B", 200: "C"}
+
+func main() {
+	fmt.Println(a)
+	fmt.Println(b)
+	var n int
+	n, a = 1, map[interface{}]interface{}{10: "A", 3.14: "B", 200: "C"}
+	fmt.Println(a, n)
+	n, b = 1, map[interface{}]string{10: "A", 3.14: "B", 200: "C"}
+	fmt.Println(b, n)
+}
+`)
+}
