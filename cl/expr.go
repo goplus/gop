@@ -853,8 +853,11 @@ retry:
 		typ = t.Underlying()
 		goto retry
 	}
-	src := ctx.LoadExpr(toNode)
-	return nil, ctx.newCodeErrorf(lambda.Pos(), "cannot use lambda literal as type %v in %v to %v", ftyp, flag, src)
+	var to string
+	if toNode != nil {
+		to = " to " + ctx.LoadExpr(toNode)
+	}
+	return nil, ctx.newCodeErrorf(lambda.Pos(), "cannot use lambda literal as type %v in %v%v", ftyp, flag, to)
 }
 
 func compileLambda(ctx *blockCtx, lambda ast.Expr, sig *types.Signature) {
@@ -1065,7 +1068,7 @@ func checkCompositeLitElts(elts []ast.Expr) (kind int) {
 	return compositeLitVal
 }
 
-func compileCompositeLitElts(ctx *blockCtx, elts []ast.Expr, kind int, expected *kvType) {
+func compileCompositeLitElts(ctx *blockCtx, elts []ast.Expr, kind int, expected *kvType) error {
 	for _, elt := range elts {
 		if kv, ok := elt.(*ast.KeyValueExpr); ok {
 			if key, ok := kv.Key.(*ast.CompositeLit); ok && key.Type == nil {
@@ -1073,22 +1076,60 @@ func compileCompositeLitElts(ctx *blockCtx, elts []ast.Expr, kind int, expected 
 			} else {
 				compileExpr(ctx, kv.Key)
 			}
-			if val, ok := kv.Value.(*ast.CompositeLit); ok && val.Type == nil {
-				compileCompositeLit(ctx, val, expected.Elem(), false)
-			} else {
-				compileExpr(ctx, kv.Value)
+			err := compileCompositeLitElt(ctx, kv.Value, expected.Elem(), clLambaAssign, kv.Key)
+			if err != nil {
+				return err
 			}
 		} else {
 			if kind == compositeLitKeyVal {
 				ctx.cb.None()
 			}
-			if val, ok := elt.(*ast.CompositeLit); ok && val.Type == nil {
-				compileCompositeLit(ctx, val, expected.Elem(), false)
-			} else {
-				compileExpr(ctx, elt)
+			err := compileCompositeLitElt(ctx, elt, expected.Elem(), clLambaAssign, nil)
+			if err != nil {
+				return err
 			}
 		}
 	}
+	return nil
+}
+
+func compileCompositeLitElt(ctx *blockCtx, e ast.Expr, typ types.Type, flag clLambaFlag, toNode ast.Node) error {
+	switch v := unparen(e).(type) {
+	case *ast.LambdaExpr, *ast.LambdaExpr2:
+		sig, err := checkLambdaFuncType(ctx, v, typ, flag, toNode)
+		if err != nil {
+			return err
+		}
+		compileLambda(ctx, v, sig)
+	case *ast.SliceLit:
+		compileSliceLit(ctx, v, typ)
+	case *ast.CompositeLit:
+		compileCompositeLit(ctx, v, typ, false)
+	default:
+		compileExpr(ctx, v)
+	}
+	return nil
+}
+
+func unparen(x ast.Expr) ast.Expr {
+	if e, ok := x.(*ast.ParenExpr); ok {
+		return e.X
+	}
+	return x
+}
+
+func compileStructLit(ctx *blockCtx, elts []ast.Expr, t *types.Struct, typ types.Type, src *ast.CompositeLit) error {
+	for idx, elt := range elts {
+		if idx >= t.NumFields() {
+			return ctx.newCodeErrorf(elt.Pos(), "too many values in %v{...}", typ)
+		}
+		err := compileCompositeLitElt(ctx, elt, t.Field(idx).Type(), clLambaField, nil)
+		if err != nil {
+			return err
+		}
+	}
+	ctx.cb.StructLit(typ, len(elts), false, src)
+	return nil
 }
 
 func compileStructLitInKeyVal(ctx *blockCtx, elts []ast.Expr, t *types.Struct, typ types.Type, src *ast.CompositeLit) error {
@@ -1105,15 +1146,9 @@ func compileStructLitInKeyVal(ctx *blockCtx, elts []ast.Expr, t *types.Struct, t
 		if rec := ctx.recorder(); rec != nil {
 			rec.Use(name, t.Field(idx))
 		}
-		switch expr := kv.Value.(type) {
-		case *ast.LambdaExpr, *ast.LambdaExpr2:
-			sig, err := checkLambdaFuncType(ctx, expr, t.Field(idx).Type(), clLambaField, kv.Key)
-			if err != nil {
-				return err
-			}
-			compileLambda(ctx, expr, sig)
-		default:
-			compileExpr(ctx, kv.Value)
+		err := compileCompositeLitElt(ctx, kv.Value, t.Field(idx).Type(), clLambaField, kv.Key)
+		if err != nil {
+			return err
 		}
 	}
 	ctx.cb.StructLit(typ, len(elts)<<1, true, src)
@@ -1194,12 +1229,21 @@ func compileCompositeLitEx(ctx *blockCtx, v *ast.CompositeLit, expected types.Ty
 			typ, underlying = expected, tu
 		}
 	}
-	if t, ok := underlying.(*types.Struct); ok && kind == compositeLitKeyVal {
-		if err := compileStructLitInKeyVal(ctx, v.Elts, t, typ, v); err != nil {
+	if t, ok := underlying.(*types.Struct); ok {
+		var err error
+		if kind == compositeLitKeyVal {
+			err = compileStructLitInKeyVal(ctx, v.Elts, t, typ, v)
+		} else {
+			err = compileStructLit(ctx, v.Elts, t, typ, v)
+		}
+		if err != nil {
 			return err
 		}
 	} else {
-		compileCompositeLitElts(ctx, v.Elts, kind, &kvType{underlying: underlying})
+		err := compileCompositeLitElts(ctx, v.Elts, kind, &kvType{underlying: underlying})
+		if err != nil {
+			return err
+		}
 		n := len(v.Elts)
 		if isMap(underlying) {
 			if kind == compositeLitVal && n > 0 {
@@ -1214,8 +1258,6 @@ func compileCompositeLitEx(ctx *blockCtx, v *ast.CompositeLit, expected types.Ty
 				ctx.cb.SliceLitEx(typ, n<<kind, kind == compositeLitKeyVal, v)
 			case *types.Array:
 				ctx.cb.ArrayLitEx(typ, n<<kind, kind == compositeLitKeyVal, v)
-			case *types.Struct:
-				ctx.cb.StructLit(typ, n, false, v) // key-val mode handled by compileStructLitInKeyVal
 			default:
 				return ctx.newCodeErrorf(v.Pos(), "invalid composite literal type %v", typ)
 			}

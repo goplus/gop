@@ -1071,3 +1071,30 @@ func (foo).++ = (
 )
 `)
 }
+
+func TestCompositeLitError(t *testing.T) {
+	codeErrorTest(t, `bar.gop:2:22: cannot use 3.14 (type untyped float) as type int in slice literal`, `
+var a [][]int = {[10,3.14,200],[100,200]}
+echo a
+`)
+	codeErrorTest(t, `bar.gop:2:17: cannot use lambda literal as type int in assignment`, `
+var a []int = {(x => x)}
+echo a
+`)
+	codeErrorTest(t, `bar.gop:2:35: cannot use x (type int) as type string in return argument`, `
+var a []func(int) string = {(x => x)}
+echo a
+`)
+	codeErrorTest(t, `bar.gop:2:27: cannot use lambda literal as type int in assignment to "A"`, `
+var a map[any]int = {"A": x => x}
+`)
+	codeErrorTest(t, `bar.gop:2:45: cannot use x (type int) as type string in return argument`, `
+var a map[any]func(int) string = {"A": x => x}
+`)
+	codeErrorTest(t, `bar.gop:2:24: cannot use lambda literal as type int in field value`, `
+var a = struct{v int}{(x => x)}
+`)
+	codeErrorTest(t, `bar.gop:2:27: cannot use lambda literal as type int in field value to v`, `
+var a = struct{v int}{v: (x => x)}
+`)
+}

@@ -295,7 +295,7 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 		compileExprLHS(ctx, lhs)
 	}
 	for i, rhs := range expr.Rhs {
-		switch e := rhs.(type) {
+		switch e := unparen(rhs).(type) {
 		case *ast.LambdaExpr, *ast.LambdaExpr2:
 			if len(expr.Lhs) == 1 && len(expr.Rhs) == 1 {
 				typ := ctx.cb.Get(-1).Type.(interface{ Elem() types.Type }).Elem()
