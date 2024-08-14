@@ -758,9 +758,7 @@ x, y, x := 1, 2, 3                        // illegal: x repeated on left side of
 Short variable declarations may appear only inside functions. In some contexts such as the initializers for "[if]()", "[for]()", or "[switch]()" statements, they can be used to declare local temporary variables.
 
 
-### Composite literals
-
-#### Slice literals
+### Slice literals
 
 TODO
 
@@ -792,7 +790,7 @@ var a []any = [10, 3.14, 200]  // []any
 echo a
 ```
 
-#### Map literals
+### Map literals
 
 TODO
 
@@ -821,3 +819,7 @@ echoS2f32 {"Monday": 1, "Sunday": 7}
 var a map[string]any = {"Monday": 1, "Sunday": 7}
 echo a
 ```
+
+## Statements
+
+TODO
