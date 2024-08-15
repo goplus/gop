@@ -822,4 +822,43 @@ echo a
 
 ## Statements
 
+### Expression statements
+
+With the exception of specific built-in functions, function and method [calls](#commands-and-calls) and [receive operations]() can appear in statement context. Such statements may be parenthesized.
+
+The following built-in functions are not permitted in statement context:
+
+```go
+append cap complex imag len make new real
+unsafe.Add unsafe.Alignof unsafe.Offsetof unsafe.Sizeof unsafe.Slice unsafe.SliceData unsafe.String unsafe.StringData
+```
+
+For example:
+
+```go
+h(x+y)
+f.Close()
+<-ch
+(<-ch)
+len("foo")  // illegal if len is the built-in function
+```
+
+### IncDec statements
+
+The "++" and "--" statements increment or decrement their operands by the untyped constant 1. As with an assignment, the operand must be addressable or a map index expression.
+
+The following [assignment statements]() are semantically equivalent:
+
+```go
+IncDec statement    Assignment
+x++                 x += 1
+x--                 x -= 1
+```
+
+### Assignment statements
+
 TODO
+
+### Empty statements
+
+The empty statement does nothing.
