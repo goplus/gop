@@ -822,9 +822,32 @@ echo a
 
 ## Statements
 
+Statements control execution.
+
+```go
+Statement =
+	Declaration | SimpleStmt | IfStmt | ForStmt | SwitchStmt |
+    LabeledStmt | BreakStmt | ContinueStmt | FallthroughStmt | GotoStmt |
+	ReturnStmt | DeferStmt | Block .
+
+SimpleStmt = EmptyStmt | ExpressionStmt | IncDecStmt | Assignment | ShortVarDecl .
+```
+
+### Empty statements
+
+The empty statement does nothing.
+
+```go
+EmptyStmt = .
+```
+
 ### Expression statements
 
 With the exception of specific built-in functions, function and method [calls](#commands-and-calls) and [receive operations]() can appear in statement context. Such statements may be parenthesized.
+
+```go
+ExpressionStmt = Expression .
+```
 
 The following built-in functions are not permitted in statement context:
 
@@ -847,6 +870,10 @@ len("foo")  // illegal if len is the built-in function
 
 The "++" and "--" statements increment or decrement their operands by the untyped constant 1. As with an assignment, the operand must be addressable or a map index expression.
 
+```go
+IncDecStmt = Expression ( "++" | "--" ) .
+```
+
 The following [assignment statements]() are semantically equivalent:
 
 ```go
@@ -860,7 +887,8 @@ x--                 x -= 1
 An assignment replaces the current value stored in a [variable](#variables) with a new value specified by an [expression](#expressions). An assignment statement may assign a single value to a single variable, or multiple values to a matching number of variables.
 
 ```go
-LeftExpresion1[, ...] assign_op RightExpresion1[, ...]
+Assignment = ExpressionList assign_op ExpressionList .
+ExpressionList = Expression { "," Expression } .
 ```
 
 Here `assign_op` can be:
@@ -935,6 +963,30 @@ In assignments, each value must be [assignable]() to the type of the operand to 
 * If an untyped boolean value is assigned to a variable of interface type or the blank identifier, it is first implicitly converted to type bool.
 
 
-### Empty statements
+### If statements
 
-The empty statement does nothing.
+"If" statements specify the conditional execution of two branches according to the value of a boolean expression. If the expression evaluates to true, the "if" branch is executed, otherwise, if present, the "else" branch is executed.
+
+```go
+IfStmt = "if" [ SimpleStmt ";" ] Expression Block [ "else" ( IfStmt | Block ) ] .
+```
+
+For example:
+
+```go
+if x > 1 {
+	x = 1
+}
+```
+
+The expression may be preceded by a simple statement, which executes before the expression is evaluated.
+
+```go
+if x := f(); x < y {
+	return x
+} else if x > z {
+	return z
+} else {
+	return y
+}
+```
