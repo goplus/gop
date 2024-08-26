@@ -1067,3 +1067,252 @@ Prior to [Go 1.22], iterations share one set of variables instead of having thei
 #### For statements with range clause
 
 TODO
+
+### Switch statements
+
+"Switch" statements provide multi-way execution. An expression or type is compared to the "cases" inside the "switch" to determine which branch to execute.
+
+```go
+SwitchStmt = ExprSwitchStmt | TypeSwitchStmt .
+```
+
+There are two forms: expression switches and type switches. In an expression switch, the cases contain expressions that are compared against the value of the switch expression. In a type switch, the cases contain types that are compared against the type of a specially annotated switch expression. The switch expression is evaluated exactly once in a switch statement.
+
+#### Expression switches
+
+In an expression switch, the switch expression is evaluated and the case expressions, which need not be constants, are evaluated left-to-right and top-to-bottom; the first one that equals the switch expression triggers execution of the statements of the associated case; the other cases are skipped. If no case matches and there is a "default" case, its statements are executed. There can be at most one default case and it may appear anywhere in the "switch" statement. A missing switch expression is equivalent to the boolean value true.
+
+```go
+ExprSwitchStmt = "switch" [ SimpleStmt ";" ] [ Expression ] "{" { ExprCaseClause } "}" .
+ExprCaseClause = ExprSwitchCase ":" StatementList .
+ExprSwitchCase = "case" ExpressionList | "default" .
+```
+
+If the switch expression evaluates to an untyped constant, it is first implicitly [converted](#conversions) to its [default type](#constants). The predeclared untyped value nil cannot be used as a switch expression. The switch expression type must be [comparable](#comparison-operators).
+
+If a case expression is untyped, it is first implicitly [converted](#conversions) to the type of the switch expression. For each (possibly converted) case expression x and the value t of the switch expression, x == t must be a valid [comparison](#comparison-operators).
+
+In other words, the switch expression is treated as if it were used to declare and initialize a temporary variable t without explicit type; it is that value of t against which each case expression x is tested for equality.
+
+In a case or default clause, the last non-empty statement may be a (possibly [labeled](#labeled-statements)) ["fallthrough" statement]() to indicate that control should flow from the end of this clause to the first statement of the next clause. Otherwise control flows to the end of the "switch" statement. A "fallthrough" statement may appear as the last statement of all but the last clause of an expression switch.
+
+The switch expression may be preceded by a simple statement, which executes before the expression is evaluated.
+
+```go
+switch tag {
+default: s3()
+case 0, 1, 2, 3: s1()
+case 4, 5, 6, 7: s2()
+}
+
+switch x := f(); {  // missing switch expression means "true"
+case x < 0: return -x
+default: return x
+}
+
+switch {
+case x < y: f1()
+case x < z: f2()
+case x == 4: f3()
+}
+```
+
+Implementation restriction: A compiler may disallow multiple case expressions evaluating to the same constant. For instance, the current compilers disallow duplicate integer, floating point, or string constants in case expressions.
+
+#### Type switches
+
+A type switch compares types rather than values. It is otherwise similar to an expression switch. It is marked by a special switch expression that has the form of a [type assertion]() using the keyword type rather than an actual type:
+
+```go
+switch x.(type) {
+// cases
+}
+```
+
+Cases then match actual types T against the dynamic type of the expression x. As with type assertions, x must be of interface type, but not a type parameter, and each non-interface type T listed in a case must implement the type of x. The types listed in the cases of a type switch must all be different.
+
+```go
+TypeSwitchStmt  = "switch" [ SimpleStmt ";" ] TypeSwitchGuard "{" { TypeCaseClause } "}" .
+TypeSwitchGuard = [ identifier ":=" ] PrimaryExpr "." "(" "type" ")" .
+TypeCaseClause  = TypeSwitchCase ":" StatementList .
+TypeSwitchCase  = "case" TypeList | "default" .
+```
+
+The TypeSwitchGuard may include a [short variable declaration](#short-variable-declarations). When that form is used, the variable is declared at the end of the TypeSwitchCase in the [implicit block]() of each clause. In clauses with a case listing exactly one type, the variable has that type; otherwise, the variable has the type of the expression in the TypeSwitchGuard.
+
+Instead of a type, a case may use the predeclared identifier [nil](); that case is selected when the expression in the TypeSwitchGuard is a `nil` interface value. There may be at most one `nil` case.
+
+Given an expression x of type `any`, the following type switch:
+
+```
+switch i := x.(type) {
+case nil:
+	printString("x is nil")                // type of i is type of x (any)
+case int:
+	printInt(i)                            // type of i is int
+case float64:
+	printFloat64(i)                        // type of i is float64
+case func(int) float64:
+	printFunction(i)                       // type of i is func(int) float64
+case bool, string:
+	printString("type is bool or string")  // type of i is type of x (any)
+default:
+	printString("don't know the type")     // type of i is type of x (any)
+}
+```
+
+could be rewritten:
+
+```go
+v := x  // x is evaluated exactly once
+if v == nil {
+	i := v                                 // type of i is type of x (any)
+	printString("x is nil")
+} else if i, isInt := v.(int); isInt {
+	printInt(i)                            // type of i is int
+} else if i, isFloat64 := v.(float64); isFloat64 {
+	printFloat64(i)                        // type of i is float64
+} else if i, isFunc := v.(func(int) float64); isFunc {
+	printFunction(i)                       // type of i is func(int) float64
+} else {
+	_, isBool := v.(bool)
+	_, isString := v.(string)
+	if isBool || isString {
+		i := v                         // type of i is type of x (any)
+		printString("type is bool or string")
+	} else {
+		i := v                         // type of i is type of x (any)
+		printString("don't know the type")
+	}
+}
+```
+
+The type switch guard may be preceded by a simple statement, which executes before the guard is evaluated.
+
+The "fallthrough" statement is not permitted in a type switch.
+
+
+### Labeled statements
+
+A labeled statement may be the target of a goto, break or continue statement.
+
+```go
+LabeledStmt = Label ":" Statement .
+Label       = identifier .
+```
+
+For example:
+
+```go
+Error:
+	log.Panic("error encountered")
+```
+
+### Break statements
+
+A "break" statement terminates execution of the innermost "[for](#for-statements)" or "[switch](#switch-statements)" statement within the same function.
+
+```go
+BreakStmt = "break" [ Label ] .
+```
+
+If there is a label, it must be that of an enclosing "for" or "switch" statement, and that is the one whose execution terminates.
+
+```go
+OuterLoop:
+	for i = 0; i < n; i++ {
+		for j = 0; j < m; j++ {
+			switch a[i][j] {
+			case nil:
+				state = Error
+				break OuterLoop
+			case item:
+				state = Found
+				break OuterLoop
+			}
+		}
+	}
+```
+
+### Continue statements
+
+A "continue" statement begins the next iteration of the innermost enclosing "[for](#for-statements)" loop by advancing control to the end of the loop block. The "for" loop must be within the same function.
+
+```go
+ContinueStmt = "continue" [ Label ] .
+```
+
+If there is a label, it must be that of an enclosing "for" statement, and that is the one whose execution advances.
+
+```go
+RowLoop:
+	for y, row := range rows {
+		for x, data := range row {
+			if data == endOfRow {
+				continue RowLoop
+			}
+			row[x] = data + bias(x, y)
+		}
+	}
+```
+
+### Fallthrough statements
+
+A "fallthrough" statement transfers control to the first statement of the next case clause in an expression "[switch](#switch-statements)" statement. It may be used only as the final non-empty statement in such a clause.
+
+```go
+FallthroughStmt = "fallthrough" .
+```
+
+### Goto statements
+
+A "goto" statement transfers control to the statement with the corresponding label within the same function.
+
+```go
+GotoStmt = "goto" Label .
+```
+
+For example:
+
+```go
+goto Error
+```
+
+Executing the "goto" statement must not cause any variables to come into [scope]() that were not already in scope at the point of the goto. For instance, this example:
+
+```go
+	goto L  // BAD
+	v := 3
+L:
+```
+
+is erroneous because the jump to label L skips the creation of v.
+
+A "goto" statement outside a [block]() cannot jump to a label inside that block. For instance, this example:
+
+```go
+if n%2 == 1 {
+	goto L1  // BAD
+}
+for n > 0 {
+	f()
+	n--
+L1:
+	f()
+	n--
+}
+```
+
+is erroneous because the label L1 is inside the "for" statement's block but the goto is not.
+
+### Return statements
+
+TODO
+
+### Defer statements
+
+TODO
+
+### Terminating statements
+
+TODO
