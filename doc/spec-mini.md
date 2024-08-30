@@ -1307,11 +1307,97 @@ is erroneous because the label L1 is inside the "for" statement's block but the 
 
 ### Return statements
 
-TODO
+A "return" statement in a function F terminates the execution of F, and optionally provides one or more result values. Any functions [deferred](#defer-statements) by F are executed before F returns to its caller.
+
+```go
+ReturnStmt = "return" [ ExpressionList ] .
+```
+
+In a function without a result type, a "return" statement must not specify any result values.
+
+```go
+func noResult() {
+	return
+}
+```
+
+There are three ways to return values from a function with a result type:
+
+* The return value or values may be explicitly listed in the "return" statement. Each expression must be single-valued and [assignable]() to the corresponding element of the function's result type.
+
+```go
+func simpleF() int {
+	return 2
+}
+
+func complexF1() (re float64, im float64) {
+	return -7.0, -4.0
+}
+```
+
+* The expression list in the "return" statement may be a single call to a multi-valued function. The effect is as if each value returned from that function were assigned to a temporary variable with the type of the respective value, followed by a "return" statement listing these variables, at which point the rules of the previous case apply.
+
+```go
+func complexF2() (re float64, im float64) {
+	return complexF1()
+}
+```
+
+* The expression list may be empty if the function's result type specifies names for its [result parameters](). The result parameters act as ordinary local variables and the function may assign values to them as necessary. The "return" statement returns the values of these variables.
+
+```go
+func complexF3() (re float64, im float64) {
+	re = 7.0
+	im = 4.0
+	return
+}
+
+func (devnull) Write(p []byte) (n int, _ error) {
+	n = len(p)
+	return
+}
+```
+
+Regardless of how they are declared, all the result values are initialized to the [zero values]() for their type upon entry to the function. A "return" statement that specifies results sets the result parameters before any deferred functions are executed.
+
+Implementation restriction: A compiler may disallow an empty expression list in a "return" statement if a different entity (constant, type, or variable) with the same name as a result parameter is in [scope]() at the place of the return.
+
+```go
+func f(n int) (res int, err error) {
+	if _, err := f(n-1); err != nil {
+		return  // invalid return statement: err is shadowed
+	}
+	return
+}
+```
 
 ### Defer statements
 
-TODO
+A "defer" statement invokes a function whose execution is deferred to the moment the surrounding function returns, either because the surrounding function executed a [return statement](#return-statements), reached the end of its [function body](), or because the corresponding goroutine is [panicking]().
+
+```go
+DeferStmt = "defer" Expression .
+```
+
+The expression must be a function or method call; it cannot be parenthesized. Calls of built-in functions are restricted as for [expression statements](#expression-statements).
+
+Each time a "defer" statement executes, the function value and parameters to the call are [evaluated as usual]() and saved anew but the actual function is not invoked. Instead, deferred functions are invoked immediately before the surrounding function returns, in the reverse order they were deferred. That is, if the surrounding function returns through an explicit [return statement](#return-statements), deferred functions are executed after any result parameters are set by that return statement but before the function returns to its caller. If a deferred function value evaluates to nil, execution [panics]() when the function is invoked, not when the "defer" statement is executed.
+
+For instance, if the deferred function is a [function literal]() and the surrounding function has [named result parameters]() that are in scope within the literal, the deferred function may access and modify the result parameters before they are returned. If the deferred function has any return values, they are discarded when the function completes. (See also the section on [handling panics]().)
+
+```go
+lock(l)
+defer unlock(l)  // unlocking happens before surrounding function returns
+
+// f returns 42
+func f() (result int) {
+	defer func() {
+		// result is accessed after it was set to 6 by the return statement
+		result *= 7
+	}()
+	return 6
+}
+```
 
 ### Terminating statements
 
