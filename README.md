@@ -115,7 +115,7 @@ module YourModulePath
 
 go 1.21 // llgo 1.0
 
-require github.com/goplus/llgo v0.9.1
+require github.com/goplus/llgo v0.9.7
 ```
 
 Based on LLGo, Go+ can support importing libraries written in C/C++ and Python.
