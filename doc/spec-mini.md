@@ -440,7 +440,7 @@ func(n int) func(p *T)
 
 ### Interface types
 
-#### Builtin interfaces
+#### Built-in interfaces
 
 TODO:
 
@@ -1402,3 +1402,54 @@ func f() (result int) {
 ### Terminating statements
 
 TODO
+
+
+## Built-in functions
+
+Built-in functions are [predeclared](). They are called like any other function but some of them accept a type instead of an expression as the first argument.
+
+The built-in functions do not have standard Go types, so they can only appear in [call expressions](#commands-and-calls); they cannot be used as function values.
+
+### Appending to and copying slices
+
+The built-in functions `append` and `copy` assist in common slice operations. For both functions, the result is independent of whether the memory referenced by the arguments overlaps.
+
+The [variadic](#function-types) function append appends zero or more values x to a slice s and returns the resulting slice of the same type as s. The [core type]() of s must be a slice of type `[]E`. The values x are passed to a parameter of type `...E` and the respective [parameter passing rules]() apply. As a special case, if the core type of s is []byte, append also accepts a second argument with core type [bytestring]() followed by `...`. This form appends the bytes of the byte slice or string.
+
+```go
+append(s S, x ...E) S  // core type of S is []E
+```
+
+If the capacity of s is not large enough to fit the additional values, append [allocates]() a new, sufficiently large underlying array that fits both the existing slice elements and the additional values. Otherwise, append re-uses the underlying array.
+
+```go
+s0 := [0, 0]
+s1 := append(s0, 2)                // append a single element     s1 is [0, 0, 2]
+s2 := append(s1, 3, 5, 7)          // append multiple elements    s2 is [0, 0, 2, 3, 5, 7]
+s3 := append(s2, s0...)            // append a slice              s3 is [0, 0, 2, 3, 5, 7, 0, 0]
+s4 := append(s3[3:6], s3[2:]...)   // append overlapping slice    s4 is [3, 5, 7, 2, 3, 5, 7, 0, 0]
+
+var t []any
+t = append(t, 42, 3.1415, "foo")   //                             t is [42, 3.1415, "foo"]
+
+var b []byte
+b = append(b, "bar"...)            // append string contents      b is []byte("bar")
+```
+
+The function copy copies slice elements from a source src to a destination dst and returns the number of elements copied. The [core types]() of both arguments must be slices with [identical]() element type. The number of elements copied is the minimum of `len(src)` and `len(dst)`. As a special case, if the destination's core type is `[]byte`, copy also accepts a source argument with core type [bytestring](). This form copies the bytes from the byte slice or string into the byte slice.
+
+```go
+copy(dst, src []T) int
+copy(dst []byte, src string) int
+```
+
+Examples:
+
+```go
+a := [0, 1, 2, 3, 4, 5, 6, 7]
+s := make([]int, 6)
+b := make([]byte, 5)
+n1 := copy(s, a)                // n1 == 6, s is []int{0, 1, 2, 3, 4, 5}
+n2 := copy(s, s[2:])            // n2 == 4, s is []int{2, 3, 4, 5, 4, 5}
+n3 := copy(b, "Hello, World!")  // n3 == 5, b is []byte("Hello")
+```
