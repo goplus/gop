@@ -264,3 +264,24 @@ TODO
 See [Conversions](spec-mini.md#conversions).
 
 TODO
+
+
+## Statements
+
+TODO
+
+## Built-in functions
+
+### Appending to and copying slices
+
+See [Appending to and copying slices](spec-mini.md#appending-to-and-copying-slices).
+
+### Clear
+
+TODO
+
+### Close
+
+TODO
+
+### Manipulating complex numbers
