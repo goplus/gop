@@ -1453,3 +1453,23 @@ n1 := copy(s, a)                // n1 == 6, s is []int{0, 1, 2, 3, 4, 5}
 n2 := copy(s, s[2:])            // n2 == 4, s is []int{2, 3, 4, 5, 4, 5}
 n3 := copy(b, "Hello, World!")  // n3 == 5, b is []byte("Hello")
 ```
+
+### Clear
+
+The built-in function `clear` takes an argument of `map` or `slice` and deletes or zeroes out all elements.
+
+```
+Call        Argument type     Result
+
+clear(m)    map[K]T           deletes all entries, resulting in an
+                              empty map (len(m) == 0)
+
+clear(s)    []T               sets all elements up to the length of
+                              s to the zero value of T
+```
+
+If the map or slice is `nil`, `clear` is a no-op.
+
+### Manipulating complex numbers
+
+TODO
