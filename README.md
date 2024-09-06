@@ -24,7 +24,7 @@
 
 </div>
 
-Our vision is to **enable everyone to become a builder of the future**.
+Our vision is to **enable everyone to become a builder of the digital world**.
 
 #### Easy to learn
 
