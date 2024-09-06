@@ -24,7 +24,7 @@
 
 </div>
 
-Our vision is to **enable everyone to create production-level applications**.
+Our vision is to **enable everyone to become a builder of the digital world**.
 
 #### Easy to learn
 
@@ -46,13 +46,14 @@ For more details, see [Quick Start](doc/docs.md).
 
 ## Key Features of Go+
 
-* Approaching natural language expression and intuitive (see [Command Style Code](#command-style-code)).
-* Fully compatible with [Go](https://github.com/golang/go) and can mix Go/Go+ code in the same package (see [Go/Go+ Hybrid Programming](doc/docs.md#gogo-hybrid-programming)).
-* Integrating with the C ecosystem including Python and providing limitless possibilities (see [Support for C/C++ and Python](#support-for-cc-and-python)).
+* Approaching natural language expression and intuitive (see [How Go+ simplifies Go's expressions](#how-go-simplifies-gos-expressions)).
+* Smallest but Turing-complete syntax set in best practices (see [Go+ Specification for STEM Education](doc/spec-mini.md)).
+* Fully compatible with [Go](https://github.com/golang/go) and can mix Go/Go+ code in the same package (see [Go+ Full Specification](doc/spec.md) and [Go/Go+ Hybrid Programming](doc/docs.md#gogo-hybrid-programming)).
+* Integrating with the C ecosystem including Python and providing limitless possibilities based on [LLGo](https://github.com/goplus/llgo) (see [Support for C/C++ and Python](#support-for-cc-and-python)).
 * Does not support DSL (Domain-Specific Languages), but supports SDF (Specific Domain Friendliness) (see [Go+ Classfiles](#go-classfiles)).
 
 
-## Command Style Code
+## How Go+ simplifies Go's expressions
 
 Different from the function call style of most languages, Go+ recommends command style code:
 
@@ -67,6 +68,20 @@ echo "Hello world"
 ```
 
 For more discussion on coding style, see https://tutorial.goplus.org/hello-world.
+
+Code style is just the first step. We have made many efforts to make the code more intuitive and closer to natural language expression. These include:
+
+| Go code | Go+ code | Note |
+| ---- | ---- | ---- |
+| package main<br><br>import "fmt"<br><br>func main() {<br>&nbsp;&nbsp;&nbsp;&nbsp;fmt.Println("Hi")<br>} | import "fmt"<br><br>fmt.Println("Hi")<br> | Program structure: Go+ allows omitting `package main` and `func main` |
+| fmt.Println("Hi") | echo("Hi") | More builtin functions: It simplifies the expression of the most common tasks |
+| fmt.Println("Hi") | echo "Hi" | Command-line style code: It reduces the number of parentheses in the code as much as possible, making it closer to natural language |
+| a := []int{1, 2, 3} | a := [1, 2, 3] | List literals |
+| a := map[string]int{<br>&nbsp;&nbsp;&nbsp;&nbsp;"Monday": 1,<br>&nbsp;&nbsp;&nbsp;&nbsp;"Tuesday": 2,<br>} | a := {<br>&nbsp;&nbsp;&nbsp;&nbsp;"Monday": 1,<br>&nbsp;&nbsp;&nbsp;&nbsp;"Tuesday": 2,<br>} | Mapping literals |
+| OnStart(func() {<br>&nbsp;&nbsp;&nbsp;&nbsp;...<br>}) | onStart => {<br>&nbsp;&nbsp;&nbsp;&nbsp;...<br>} | Lambda expressions |
+| type Rect struct {<br>&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp; float64<br>&nbsp;&nbsp;&nbsp;&nbsp;Height float64<br>}<br><br>func (this *Rect) Area() float64 { <br>&nbsp;&nbsp;&nbsp;&nbsp;return this.Width * this.Height<br>} | var (<br>&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp; float64<br>&nbsp;&nbsp;&nbsp;&nbsp;Height float64<br>)<br><br>func Area() float64 { <br>&nbsp;&nbsp;&nbsp;&nbsp;return Width * Height<br>} | [Go+ Classfiles](doc/classfile.md): We can express OOP with global variables and functions. |
+
+For more details, see [Go+ Specification for STEM Education](doc/spec-mini.md).
 
 
 ## Support for C/C++ and Python
@@ -100,7 +115,7 @@ module YourModulePath
 
 go 1.21 // llgo 1.0
 
-require github.com/goplus/llgo v0.9.1
+require github.com/goplus/llgo v0.9.7
 ```
 
 Based on LLGo, Go+ can support importing libraries written in C/C++ and Python.

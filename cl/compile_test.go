@@ -4122,3 +4122,132 @@ func _() {
 }
 `)
 }
+
+func TestSliceLitAssign(t *testing.T) {
+	gopClTest(t, `
+var n = 1
+var a []any = [10, 3.14, 200]
+n, a = 100, [10, 3.14, 200]
+echo a, n
+`, `package main
+
+import "fmt"
+
+var n = 1
+var a []interface{} = []interface{}{10, 3.14, 200}
+
+func main() {
+	n, a = 100, []interface{}{10, 3.14, 200}
+	fmt.Println(a, n)
+}
+`)
+}
+
+func TestSliceLitReturn(t *testing.T) {
+	gopClTest(t, `
+func anyslice() (int, []any) {
+	return 100, [10, 3.14, 200]
+}
+n, a := anyslice()
+echo n, a
+`, `package main
+
+import "fmt"
+
+func anyslice() (int, []interface{}) {
+	return 100, []interface{}{10, 3.14, 200}
+}
+func main() {
+	n, a := anyslice()
+	fmt.Println(n, a)
+}
+`)
+}
+
+func TestCompositeLitAssign(t *testing.T) {
+	gopClTest(t, `
+var a map[any]any = {10: "A", 3.14: "B", 200: "C"}
+var b map[any]string = {10: "A", 3.14: "B", 200: "C"}
+echo a
+echo b
+var n int
+n, a = 1, {10: "A", 3.14: "B", 200: "C"}
+echo a, n
+n, b = 1, {10: "A", 3.14: "B", 200: "C"}
+echo b, n
+`, `package main
+
+import "fmt"
+
+var a map[interface{}]interface{} = map[interface{}]interface{}{10: "A", 3.14: "B", 200: "C"}
+var b map[interface{}]string = map[interface{}]string{10: "A", 3.14: "B", 200: "C"}
+
+func main() {
+	fmt.Println(a)
+	fmt.Println(b)
+	var n int
+	n, a = 1, map[interface{}]interface{}{10: "A", 3.14: "B", 200: "C"}
+	fmt.Println(a, n)
+	n, b = 1, map[interface{}]string{10: "A", 3.14: "B", 200: "C"}
+	fmt.Println(b, n)
+}
+`)
+}
+
+func TestCompositeLitStruct(t *testing.T) {
+	gopClTest(t, `
+type T struct {
+	s  []any
+	m  map[any]any
+	fn func(int) int
+}
+
+echo &T{[10, 3.14, 200], {10: "A", 3.14: "B", 200: "C"}, (x => x)}
+echo &T{s: [10, 3.14, 200], m: {10: "A", 3.14: "B", 200: "C"}, fn: (x => x)}
+`, `package main
+
+import "fmt"
+
+type T struct {
+	s  []interface{}
+	m  map[interface{}]interface{}
+	fn func(int) int
+}
+
+func main() {
+	fmt.Println(&T{[]interface{}{10, 3.14, 200}, map[interface{}]interface{}{10: "A", 3.14: "B", 200: "C"}, func(x int) int {
+		return x
+	}})
+	fmt.Println(&T{s: []interface{}{10, 3.14, 200}, m: map[interface{}]interface{}{10: "A", 3.14: "B", 200: "C"}, fn: func(x int) int {
+		return x
+	}})
+}
+`)
+}
+
+func TestCompositeLitEx(t *testing.T) {
+	gopClTest(t, `
+var a [][]any = {[10, 3.14, 200], [100, 200]}
+var m map[any][]any = {10: [10, 3.14, 200]}
+var f map[any]func(int) int = {10: x => x}
+
+echo a
+echo m
+echo f
+`, `package main
+
+import "fmt"
+
+var a [][]interface{} = [][]interface{}{[]interface{}{10, 3.14, 200}, []interface{}{100, 200}}
+var m map[interface{}][]interface{} = map[interface{}][]interface{}{10: []interface{}{10, 3.14, 200}}
+var f map[interface{}]func(int) int = map[interface{}]func(int) int{10: func(x int) int {
+	return x
+}}
+
+func main() {
+	fmt.Println(a)
+	fmt.Println(m)
+	fmt.Println(f)
+}
+`)
+}

@@ -227,6 +227,9 @@ func compileReturnStmt(ctx *blockCtx, expr *ast.ReturnStmt) {
 						ret.Pos(), "cannot use lambda expression as type %v in return statement", rtyp))
 				}
 				compileLambda(ctx, v, sig)
+			case *ast.SliceLit:
+				rtyp := ctx.cb.Func().Type().(*types.Signature).Results().At(i).Type()
+				compileSliceLit(ctx, v, rtyp)
 			default:
 				compileExpr(ctx, ret, inFlags)
 			}
@@ -291,8 +294,8 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 	for _, lhs := range expr.Lhs {
 		compileExprLHS(ctx, lhs)
 	}
-	for _, rhs := range expr.Rhs {
-		switch e := rhs.(type) {
+	for i, rhs := range expr.Rhs {
+		switch e := unparen(rhs).(type) {
 		case *ast.LambdaExpr, *ast.LambdaExpr2:
 			if len(expr.Lhs) == 1 && len(expr.Rhs) == 1 {
 				typ := ctx.cb.Get(-1).Type.(interface{ Elem() types.Type }).Elem()
@@ -304,6 +307,18 @@ func compileAssignStmt(ctx *blockCtx, expr *ast.AssignStmt) {
 			} else {
 				panic(ctx.newCodeErrorf(e.Pos(), "lambda unsupport multiple assignment"))
 			}
+		case *ast.SliceLit:
+			var typ types.Type
+			if len(expr.Lhs) == len(expr.Rhs) {
+				typ, _ = gogen.DerefType(ctx.cb.Get(-1 - i).Type)
+			}
+			compileSliceLit(ctx, e, typ)
+		case *ast.CompositeLit:
+			var typ types.Type
+			if len(expr.Lhs) == len(expr.Rhs) {
+				typ, _ = gogen.DerefType(ctx.cb.Get(-1 - i).Type)
+			}
+			compileCompositeLit(ctx, e, typ, false)
 		default:
 			compileExpr(ctx, rhs, inFlags)
 		}

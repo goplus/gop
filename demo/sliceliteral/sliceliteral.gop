@@ -1,0 +1,15 @@
+func echoF32s(vals []float32) {
+	echo vals
+}
+
+func anyslice() []any {
+	return [10, 3.14, 200]
+}
+
+echo [10, 3.14, 200]
+echoF32s [10, 3.14, 200]
+
+var a []any = [10, 3.14, 200]
+a = [10, 3.14, 200]
+echo a
+echo anyslice()
