@@ -1503,4 +1503,15 @@ _ = imag(3 << s)                   // illegal: 3 assumes complex type, cannot sh
 
 ### Deletion of map elements
 
+The built-in function `delete` removes the element with key `k` from a [map](#map-types) `m`. The value `k` must be [assignable]() to the key type of `m`.
+
+```go
+delete(m, k)  // remove element m[k] from map m
+```
+
+If the map m is nil or the element m[k] does not exist, delete is a no-op.
+
+### Length and capacity¶
+
 TODO
+
