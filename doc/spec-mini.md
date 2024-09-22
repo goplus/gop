@@ -1578,6 +1578,24 @@ m := make(map[string]int, 100)  // map with initial space for approximately 100 
 
 Calling make with a map type and size hint `n` will create a map with initial space to hold `n` map elements. The precise behavior is implementation-dependent.
 
+
+### Allocation
+
+The built-in function `new` takes a type `T`, allocates storage for a [variable](#variables) of that type at run time, and returns a value of type `*T` [pointing](#pointer-types) to it. The variable is initialized as described in the section on [initial values]().
+
+```go
+new(T)
+```
+
+For instance
+
+```go
+new(int)
+```
+
+allocates storage for a variable of type `int`, initializes it `0`, and returns a value of type `*int` containing the address of the location.
+
+
 ### Min and max
 
 The built-in functions `min` and `max` compute the smallest—or largest, respectively—value of a fixed number of arguments of [ordered types](). There must be at least one argument.
@@ -1621,6 +1639,6 @@ min(x, y)    == if x <= y then x else y
 min(x, y, z) == min(min(x, y), z)
 ```
 
-### Allocation
+### Handling panics
 
 TODO
