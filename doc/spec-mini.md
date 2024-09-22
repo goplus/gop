@@ -1641,4 +1641,53 @@ min(x, y, z) == min(min(x, y), z)
 
 ### Handling panics
 
+Two built-in functions, `panic` and `recover`, assist in reporting and handling [run-time panics]() and program-defined error conditions.
+
+```go
+func panic(any)
+func recover() any
+```
+
+While executing a function `F`, an explicit call to `panic` or a [run-time panic]() terminates the execution of `F`. Any functions [deferred]() by `F` are then executed as usual. Next, any deferred functions run by `F`'s caller are run, and so on up to any deferred by the top-level function in the executing goroutine. At that point, the program is terminated and the error condition is reported, including the value of the argument to panic. This termination sequence is called _panicking_.
+
+```go
+panic(42)
+panic("unreachable")
+panic(Error("cannot parse"))
+```
+
+The `recover` function allows a program to manage behavior of a panicking goroutine. Suppose a function `G` defers a function `D` that calls `recover` and a panic occurs in a function on the same goroutine in which `G` is executing. When the running of deferred functions reaches `D`, the return value of `D`'s call to recover will be the value passed to the call of panic. If `D` returns normally, without starting a new panic, the panicking sequence stops. In that case, the state of functions called between `G` and the call to panic is discarded, and normal execution resumes. Any functions deferred by `G` before `D` are then run and `G`'s execution terminates by returning to its caller.
+
+The return value of `recover` is `nil` when the goroutine is not panicking or `recover` was not called directly by a deferred function. Conversely, if a goroutine is panicking and recover was called directly by a deferred function, the return value of recover is guaranteed not to be `nil`. To ensure this, calling panic with a `nil` interface value (or an untyped nil) causes a [run-time panic]().
+
+The `protect` function in the example below invokes the function argument `g` and protects callers from run-time panics raised by `g`.
+
+```go
+func protect(g func()) {
+	defer func() {
+		log.Println("done")  // Println executes normally even if there is a panic
+		if x := recover(); x != nil {
+			log.Printf("run time panic: %v", x)
+		}
+	}()
+	log.Println("start")
+	g()
+}
+```
+
+### TODO
+
+```go
+print
+printf
+println
+...
+```
+
+## Functions
+
+TODO
+
+## Packages
+
 TODO
