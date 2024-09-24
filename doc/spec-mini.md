@@ -1686,7 +1686,26 @@ println
 
 ## Functions
 
-TODO
+A function declaration binds an identifier, the function name, to a function.
+
+```go
+FunctionDecl = "func" FunctionName Signature [ FunctionBody ] .
+FunctionName = identifier .
+FunctionBody = Block .
+```
+
+If the function's [signature](#function-types) declares result parameters, the function body's statement list must end in a [terminating statement](#terminating-statements).
+
+```go
+func IndexRune(s string, r rune) int {
+	for i, c := range s {
+		if c == r {
+			return i
+		}
+	}
+	// invalid: missing return statement
+}
+```
 
 ## Packages
 
