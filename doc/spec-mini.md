@@ -1709,4 +1709,31 @@ func IndexRune(s string, r rune) int {
 
 ## Packages
 
+Go+ programs are constructed by linking together packages. A package in turn is constructed from one or more source files that together declare constants, types, variables and functions belonging to the package and which are accessible in all files of the same package. Those elements may be [exported]() and used in another package.
+
+### Source file organization
+
+Each source file consists of a package clause defining the package to which it belongs, followed by a possibly empty set of import declarations that declare packages whose contents it wishes to use, followed by a possibly empty set of declarations of functions, types, variables, and constants.
+
+```go
+SourceFile       = [ PackageClause ";" ] { ImportDecl ";" } { TopLevelDecl ";" } .
+```
+
+### Package clause
+
+A package clause begins each source file and defines the package to which the file belongs.
+
+```go
+PackageClause  = "package" PackageName .
+PackageName    = identifier .
+```
+
+The PackageName must not be the [blank identifier]().
+
+```go
+package math
+```
+
+### Import declarations
+
 TODO
