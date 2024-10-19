@@ -1570,3 +1570,30 @@ func main() {
 }
 `)
 }
+
+func TestOverlodOptions(t *testing.T) {
+	gopMixedClTest(t, "main", `
+package main
+
+type PlayOptions struct {
+	Action int
+	Wait   bool
+	Loop   bool
+}
+type Game struct {
+}
+func (g *Game) Play__0(options *PlayOptions) {
+}
+func (g *Game) Play__1(name string, options *PlayOptions) {
+}
+`, `
+g := &Game{}
+g.play "work", { Action: 0, Loop: true }
+`, `package main
+
+func main() {
+	g := &Game{}
+	g.Play__1("work", &PlayOptions{Action: 0, Loop: true})
+}
+`)
+}
