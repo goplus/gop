@@ -1773,3 +1773,22 @@ Here is a complete Go+ package that implements XXX.
 ```go
 TODO
 ```
+
+## Program initialization and execution
+
+### The zero value
+
+When storage is allocated for a [variable](#variables), either through a declaration or a call of `new`, or when a new value is created, either through a composite literal or a call of `make`, and no explicit initialization is provided, the variable or value is given a default value. Each element of such a variable or value is set to the _zero_ value for its type: `false` for booleans, `0` for numeric types, `""` for strings, and `nil` for pointers, functions, interfaces, slices, and maps. This initialization is done recursively, so for instance each element of an array of structs will have its fields zeroed if no value is specified.
+
+These two simple declarations are equivalent:
+
+```go
+var i int
+var i int = 0
+```
+
+TODO
+
+### Package initialization
+
+TODO
