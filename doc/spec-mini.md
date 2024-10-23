@@ -1861,4 +1861,23 @@ The entire package is initialized by assigning initial values to all its package
 
 ### Program initialization
 
+The packages of a complete program are initialized stepwise, one package at a time. If a package has imports, the imported packages are initialized before initializing the package itself. If multiple packages import a package, the imported package will be initialized only once. The importing of packages, by construction, guarantees that there can be no cyclic initialization dependencies. More precisely:
+
+Given the list of all packages, sorted by import path, in each step the first uninitialized package in the list for which all imported packages (if any) are already initialized is [initialized](#package-initialization). This step is repeated until all packages are initialized.
+
+Package initialization—variable initialization and the invocation of `init` functions—happens in a single goroutine, sequentially, one package at a time. An `init` function may launch other goroutines, which can run concurrently with the initialization code. However, initialization always sequences the `init` functions: it will not invoke the next one until the previous one has returned.
+
+### Program execution
+
+A complete program is created by linking a single, unimported package called the main package with all the packages it imports, transitively. The main package must have package name main and declare a function main that takes no arguments and returns no value.
+
+```go
+func main() { … }
+```
+
+Program execution begins by [initializing the program](#program-initialization) and then invoking the function `main` in package `main`. When that function invocation returns, the program exits. It does not wait for other (non-main) goroutines to complete.
+
+
+## Errors
+
 TODO
