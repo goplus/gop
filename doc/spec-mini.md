@@ -449,6 +449,22 @@ error
 any
 ```
 
+#### Errors
+
+The predeclared type `error` is defined as
+
+```go
+type error interface {
+	Error() string
+}
+```
+
+It is the conventional interface for representing an `error` condition, with the nil value representing no error. For instance, a function to read data from a file might be defined:
+
+```go
+func Read(f *File, b []byte) (n int, err error)
+```
+
 ### Classes
 
 TODO (classfile)
@@ -1878,6 +1894,6 @@ func main() { … }
 Program execution begins by [initializing the program](#program-initialization) and then invoking the function `main` in package `main`. When that function invocation returns, the program exits. It does not wait for other (non-main) goroutines to complete.
 
 
-## Errors
+### Run-time panics¶
 
 TODO
