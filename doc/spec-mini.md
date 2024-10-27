@@ -1894,6 +1894,22 @@ func main() { … }
 Program execution begins by [initializing the program](#program-initialization) and then invoking the function `main` in package `main`. When that function invocation returns, the program exits. It does not wait for other (non-main) goroutines to complete.
 
 
-### Run-time panics¶
+### Run-time panics
+
+Execution errors such as attempting to index an array out of bounds trigger a _run-time panic_ equivalent to a call of the built-in function [panic]() with a value of the implementation-defined interface type `runtime.Error`. That type satisfies the predeclared interface type [error](#errors). The exact error values that represent distinct run-time error conditions are unspecified.
+
+```go
+package runtime
+
+type Error interface {
+	error
+	// and perhaps other methods
+}
+```
+
+
+## System considerations
+
+### Package unsafe
 
 TODO
