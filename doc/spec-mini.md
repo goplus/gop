@@ -1962,4 +1962,18 @@ Computer architectures may require memory addresses to be _aligned_; that is, fo
 uintptr(unsafe.Pointer(&x)) % unsafe.Alignof(x) == 0
 ```
 
+A (variable of) type T has _variable size_ if T is a [type parameter](), or if it is an array or struct type containing elements or fields of variable size. Otherwise the size is constant. Calls to `Alignof`, `Offsetof`, and `Sizeof` are compile-time [constant expressions](#constant-expressions) of type `uintptr` if their arguments (or the struct `s` in the selector expression `s.f` for `Offsetof`) are types of constant size.
+
+The function `Add` adds `len` to `ptr` and returns the updated pointer `unsafe.Pointer(uintptr(ptr) + uintptr(len))`. The `len` argument must be of [integer type](#numeric-types) or an untyped [constant](#constants). A constant `len` argument must be [representable]() by a value of type `int`; if it is an untyped constant it is given type `int`. The rules for [valid uses]() of Pointer still apply.
+
+The function `Slice` returns a slice whose underlying array starts at `ptr` and whose length and capacity are `len`. `Slice(ptr, len)` is equivalent to
+
+```go
+(*[len]ArbitraryType)(unsafe.Pointer(ptr))[:]
+```
+
+except that, as a special case, if `ptr` is `nil` and `len` is zero, `Slice` returns `nil`.
+
+The `len` argument must be of [integer type](#numeric-types) or an untyped [constant](#constants). A constant `len` argument must be non-negative and [representable]() by a value of type `int`; if it is an untyped constant it is given type `int`. At run time, if `len` is negative, or if `ptr` is nil and `len` is not zero, a [run-time panic](#run-time-panics) occurs.
+
 TODO
