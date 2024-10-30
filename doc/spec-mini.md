@@ -1912,4 +1912,54 @@ type Error interface {
 
 ### Package unsafe
 
+The built-in package `unsafe`, known to the compiler and accessible through the [import path]() `"unsafe"`, provides facilities for low-level programming including operations that violate the type system. A package using unsafe must be vetted manually for type safety and may not be portable. The package provides the following interface:
+
+```go
+package unsafe
+
+type ArbitraryType int  // shorthand for an arbitrary Go type; it is not a real type
+type Pointer *ArbitraryType
+
+func Alignof(variable ArbitraryType) uintptr
+func Offsetof(selector ArbitraryType) uintptr
+func Sizeof(variable ArbitraryType) uintptr
+
+type IntegerType int  // shorthand for an integer type; it is not a real type
+func Add(ptr Pointer, len IntegerType) Pointer
+func Slice(ptr *ArbitraryType, len IntegerType) []ArbitraryType
+func SliceData(slice []ArbitraryType) *ArbitraryType
+func String(ptr *byte, len IntegerType) string
+func StringData(str string) *byte
+```
+
+A Pointer is a [pointer type](#pointer-types) but a Pointer value may not be [dereferenced](#address-operators). Any pointer or value of [core type]() `uintptr` can be [converted](#conversions) to a type of core type Pointer and vice versa. The effect of converting between Pointer and `uintptr` is implementation-defined.
+
+```go
+var f float64
+bits = *(*uint64)(unsafe.Pointer(&f))
+
+type ptr unsafe.Pointer
+bits = *(*uint64)(ptr(&f))
+
+func f[P ~*B, B any](p P) uintptr {
+	return uintptr(unsafe.Pointer(p))
+}
+
+var p ptr = nil
+```
+
+The functions `Alignof` and `Sizeof` take an expression `x` of any type and return the alignment or size, respectively, of a hypothetical variable `v` as if `v` was declared via `var v = x`.
+
+The function `Offsetof` takes a (possibly parenthesized) [selector]() `s.f`, denoting a field `f` of the struct denoted by `s` or `*s`, and returns the field offset in bytes relative to the struct's address. If `f` is an [embedded field](), it must be reachable without pointer indirections through fields of the struct. For a struct `s` with field `f`:
+
+```go
+uintptr(unsafe.Pointer(&s)) + unsafe.Offsetof(s.f) == uintptr(unsafe.Pointer(&s.f))
+```
+
+Computer architectures may require memory addresses to be _aligned_; that is, for addresses of a variable to be a multiple of a factor, the variable's type's _alignment_. The function `Alignof` takes an expression denoting a variable of any type and returns the alignment of the (type of the) variable in bytes. For a variable `x`:
+
+```go
+uintptr(unsafe.Pointer(&x)) % unsafe.Alignof(x) == 0
+```
+
 TODO
