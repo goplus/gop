@@ -1,5 +1,5 @@
-github.com/fsnotify/fsnotify v1.7.0 h1:8JEhPFa5W2WU7YfeZzPNqzMP6Lwt7L2715Ggo0nosvA=
-github.com/fsnotify/fsnotify v1.7.0/go.mod h1:40Bi/Hjc2AVfZrqy+aj+yEI+/bRxZnMJyTJwOpGvigM=
+github.com/fsnotify/fsnotify v1.8.0 h1:dAwr6QBTBZIkG8roQaJjGof0pp0EeF+tNV7YBP3F/8M=
+github.com/fsnotify/fsnotify v1.8.0/go.mod h1:8jBTzvmWwFyi3Pb8djgCCO5IBqzKJ/Jwo8TRcHyHii0=
 github.com/goplus/gogen v1.16.1 h1:f55LIfyTO5GcXxCfwXKqLKiQV3AORvn9PSGCncWvB1A=
 github.com/goplus/gogen v1.16.1/go.mod h1:6TQYbabXDF9LCdDkOOzHmfg1R4ENfXQ3XpHa9RhTSD8=
 github.com/goplus/llgo v0.9.7 h1:LRF2Fq9ts4QrVxOPZufexalbIoJ1oiBERjCWQ45wxbg=
