@@ -1976,4 +1976,12 @@ except that, as a special case, if `ptr` is `nil` and `len` is zero, `Slice` ret
 
 The `len` argument must be of [integer type](#numeric-types) or an untyped [constant](#constants). A constant `len` argument must be non-negative and [representable]() by a value of type `int`; if it is an untyped constant it is given type `int`. At run time, if `len` is negative, or if `ptr` is nil and `len` is not zero, a [run-time panic](#run-time-panics) occurs.
 
+The function `SliceData` returns a pointer to the underlying array of the `slice` argument. If the slice's capacity `cap(slice)` is not zero, that pointer is `&slice[:1][0]`. If slice is `nil`, the result is `nil`. Otherwise it is a non-nil pointer to an unspecified memory address.
+
+The function `String` returns a `string` value whose underlying bytes start at `ptr` and whose length is `len`. The same requirements apply to the `ptr` and `len` argument as in the function `Slice`. If `len` is zero, the result is the empty string `""`. Since Go+ strings are immutable, the bytes passed to `String` must not be modified afterwards.
+
+The function `StringData` returns a pointer to the underlying bytes of the `str` argument. For an empty string the return value is unspecified, and may be `nil`. Since Go+ strings are immutable, the bytes returned by `StringData` must not be modified.
+
+### Size and alignment guarantees
+
 TODO
