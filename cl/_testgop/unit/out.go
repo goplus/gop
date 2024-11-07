@@ -5,5 +5,5 @@ import "time"
 func Wait(time.Duration) {
 }
 func main() {
-	Wait(1)
+	Wait(500)
 }

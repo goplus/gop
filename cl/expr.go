@@ -813,12 +813,15 @@ func compileCallArgs(ctx *blockCtx, pfn *gogen.Element, fn *fnType, v *ast.CallE
 			if typetype {
 				return
 			}
+		case *ast.NumberUnitLit:
+			compileNumberUnitLit(ctx, expr, fn.arg(i, ellipsis))
 		default:
 			compileExpr(ctx, arg)
 		}
 	}
 	if needInferFunc {
-		typ, err := gogen.InferFunc(ctx.pkg, pfn, fn.sig, nil, ctx.cb.InternalStack().GetArgs(len(v.Args)), flags)
+		args := ctx.cb.InternalStack().GetArgs(len(v.Args))
+		typ, err := gogen.InferFunc(ctx.pkg, pfn, fn.sig, nil, args, flags)
 		if err != nil {
 			return err
 		}
@@ -975,6 +978,12 @@ func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
 		loadFuncBody(ctx, fn, body, nil, v)
 		cb.SetComments(comments, once)
 	}
+}
+
+func compileNumberUnitLit(ctx *blockCtx, v *ast.NumberUnitLit, expected types.Type) {
+	ctx.cb.ValWithUnit(
+		&goast.BasicLit{ValuePos: v.ValuePos, Kind: gotoken.Token(v.Kind), Value: v.Value},
+		expected, v.Unit)
 }
 
 func compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {

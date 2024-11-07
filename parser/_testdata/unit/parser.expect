@@ -18,9 +18,9 @@ ast.FuncDecl:
             ast.CallExpr:
               Fun:
                 ast.Ident:
-                  Name: step
+                  Name: wait
               Args:
                 ast.NumberUnitLit:
                   Kind: INT
                   Value: 1
-                  Unit: cm
+                  Unit: µs
