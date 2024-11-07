@@ -339,4 +339,10 @@ func (a T) +{}
 `, `/foo/bar.gop:1:6: overload operator can only have one parameter`, ``)
 }
 
+func TestNumberUnitLit(t *testing.T) {
+	var p parser
+	p.checkExpr(&ast.NumberUnitLit{})
+	p.toIdent(&ast.NumberUnitLit{})
+}
+
 // -----------------------------------------------------------------------------

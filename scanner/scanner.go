@@ -55,6 +55,7 @@ type Scanner struct {
 	lineOffset int  // current line offset
 	nParen     int
 	insertSemi bool // insert a semicolon before next newline
+	needUnit   bool
 
 	// public state - ok to modify
 	ErrorCount int // number of errors encountered
@@ -509,6 +510,8 @@ func (s *Scanner) scanNumber() (token.Token, string) {
 	} else if s.ch == 'r' {
 		tok = token.RAT
 		s.next()
+	} else if s.ch >= 'a' && s.ch <= 'z' || s.ch >= 'A' && s.ch <= 'Z' {
+		s.needUnit = true
 	}
 
 	lit := string(s.src[offs:s.offset])
@@ -828,6 +831,12 @@ scanAgain:
 
 	// determine token value
 	insertSemi := false
+	if s.needUnit { // number with unit
+		insertSemi = true
+		tok, lit = token.UNIT, s.scanIdentifier()
+		s.needUnit = false
+		goto done
+	}
 	switch ch := s.ch; {
 	case isLetter(ch):
 		lit = s.scanIdentifier()
@@ -1021,9 +1030,10 @@ scanAgain:
 			lit = string(ch)
 		}
 	}
+
+done:
 	if s.mode&dontInsertSemis == 0 {
 		s.insertSemi = insertSemi
 	}
-
 	return
 }

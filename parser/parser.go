@@ -1729,11 +1729,25 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) (x ast.Expr, isTup
 		if p.tok == token.STRING && len(p.lit) > 1 {
 			bl.Extra = p.stringLit(p.pos, p.lit)
 		}
-		x = bl
-		if debugParseOutput {
-			log.Printf("ast.BasicLit{Kind: %v, Value: %v}\n", p.tok, p.lit)
-		}
 		p.next()
+		if p.tok == token.UNIT {
+			nu := &ast.NumberUnitLit{
+				ValuePos: bl.ValuePos,
+				Kind:     bl.Kind,
+				Value:    bl.Value,
+				Unit:     p.lit,
+			}
+			x = nu
+			if debugParseOutput {
+				log.Printf("ast.NumberUnitLit{Kind: %v, Value: %v, Unit: %v}\n", nu.Kind, nu.Value, nu.Unit)
+			}
+			p.next()
+		} else {
+			x = bl
+			if debugParseOutput {
+				log.Printf("ast.BasicLit{Kind: %v, Value: %v}\n", bl.Kind, bl.Value)
+			}
+		}
 		return
 
 	case token.LPAREN:
@@ -2168,6 +2182,7 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	case *ast.BadExpr:
 	case *ast.Ident:
 	case *ast.BasicLit:
+	case *ast.NumberUnitLit:
 	case *ast.FuncLit:
 	case *ast.CompositeLit:
 	case *ast.SliceLit:
@@ -2942,12 +2957,12 @@ func (p *parser) parseForPhraseCond() (init ast.Stmt, cond ast.Expr) {
 	var condStmt ast.Stmt
 	var semi struct {
 		pos token.Pos
-		lit string // ";" or "\n"; valid if pos.IsValid()
+		//lit string // ";" or "\n"; valid if pos.IsValid()
 	}
 	if !isForPhraseCondEnd(p.tok) {
 		if p.tok == token.SEMICOLON {
 			semi.pos = p.pos
-			semi.lit = p.lit
+			//semi.lit = p.lit
 			p.next()
 		} else {
 			p.expect(token.SEMICOLON)
@@ -3246,6 +3261,8 @@ func (p *parser) toIdent(e ast.Expr) *ast.Ident {
 		return v
 	case *ast.BasicLit:
 		p.errorExpected(e.Pos(), fmt.Sprintf("'IDENT', found %v", v.Value), 2)
+	case *ast.NumberUnitLit:
+		p.errorExpected(e.Pos(), fmt.Sprintf("'IDENT', found %v", v.Value+v.Unit), 2)
 	default:
 		p.errorExpected(e.Pos(), "'IDENT'", 2)
 	}

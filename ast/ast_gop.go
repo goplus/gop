@@ -85,6 +85,26 @@ func NextPartPos(pos token.Pos, part any) (nextPos token.Pos) {
 
 // -----------------------------------------------------------------------------
 
+// A NumberUnitLit node represents a number with unit.
+type NumberUnitLit struct {
+	ValuePos token.Pos   // literal position
+	Kind     token.Token // token.INT or token.FLOAT
+	Value    string      // literal string of the number; e.g. 42, 0x7f, 3.14, 1e-9
+	Unit     string      // unit string of the number; e.g. "px", "em", "rem"
+}
+
+func (*NumberUnitLit) exprNode() {}
+
+func (x *NumberUnitLit) Pos() token.Pos {
+	return x.ValuePos
+}
+
+func (x *NumberUnitLit) End() token.Pos {
+	return token.Pos(int(x.ValuePos) + len(x.Value) + len(x.Unit))
+}
+
+// -----------------------------------------------------------------------------
+
 // A EnvExpr node represents a ${name} expression.
 type EnvExpr struct {
 	TokPos token.Pos // position of "$"
