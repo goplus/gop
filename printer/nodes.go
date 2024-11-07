@@ -825,6 +825,10 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 	case *ast.BasicLit:
 		p.print(x)
 
+	case *ast.NumberUnitLit:
+		p.print(&ast.BasicLit{Kind: x.Kind, Value: x.Value})
+		p.print(&ast.Ident{Name: x.Unit})
+
 	case *ast.FuncLit:
 		p.print(x.Type.Pos(), token.FUNC)
 		// See the comment in funcDecl about how the header size is computed.
