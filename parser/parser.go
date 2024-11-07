@@ -1729,11 +1729,25 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) (x ast.Expr, isTup
 		if p.tok == token.STRING && len(p.lit) > 1 {
 			bl.Extra = p.stringLit(p.pos, p.lit)
 		}
-		x = bl
-		if debugParseOutput {
-			log.Printf("ast.BasicLit{Kind: %v, Value: %v}\n", p.tok, p.lit)
-		}
 		p.next()
+		if p.tok == token.UNIT {
+			nu := &ast.NumberUnitLit{
+				ValuePos: bl.ValuePos,
+				Kind:     bl.Kind,
+				Value:    bl.Value,
+				Unit:     p.lit,
+			}
+			x = nu
+			if debugParseOutput {
+				log.Printf("ast.NumberUnitLit{Kind: %v, Value: %v, Unit: %v}\n", nu.Kind, nu.Value, nu.Unit)
+			}
+			p.next()
+		} else {
+			x = bl
+			if debugParseOutput {
+				log.Printf("ast.BasicLit{Kind: %v, Value: %v}\n", bl.Kind, bl.Value)
+			}
+		}
 		return
 
 	case token.LPAREN:
