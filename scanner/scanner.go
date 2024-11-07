@@ -510,7 +510,7 @@ func (s *Scanner) scanNumber() (token.Token, string) {
 	} else if s.ch == 'r' {
 		tok = token.RAT
 		s.next()
-	} else if s.ch >= 'a' && s.ch <= 'z' || s.ch >= 'A' && s.ch <= 'Z' {
+	} else if isLetter(s.ch) {
 		s.needUnit = true
 	}
 

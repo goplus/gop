@@ -1,0 +1,5 @@
+import "time"
+
+func Wait(time.Duration) {}
+
+wait 0.5µs
