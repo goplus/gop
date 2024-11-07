@@ -60,6 +60,7 @@ type gmxProject struct {
 	gameIsPtr  bool
 	isTest     bool
 	hasMain_   bool
+	file       string
 }
 
 func (p *gmxProject) hasMain() bool {
@@ -324,14 +325,14 @@ func gmxProjMain(pkg *gogen.Package, parent *pkgCtx, proj *gmxProject) {
 		classType = base.Name()
 		proj.gameClass = classType
 	}
-
+	goFile := parent.genGoFile(proj.file, false)
 	ld := getTypeLoader(parent, parent.syms, token.NoPos, proj.gameClass)
 	if ld.typ == nil {
 		ld.typ = func() {
 			if debugLoad {
 				log.Println("==> Load > NewType", classType)
 			}
-			old, _ := pkg.SetCurFile(defaultGoFile, true)
+			old, _ := pkg.SetCurFile(goFile, true)
 			defer pkg.RestoreCurFile(old)
 
 			baseType := base.Type()
@@ -347,7 +348,7 @@ func gmxProjMain(pkg *gogen.Package, parent *pkgCtx, proj *gmxProject) {
 				if debugLoad {
 					log.Println("==> Load > InitType", classType)
 				}
-				old, _ := pkg.SetCurFile(defaultGoFile, true)
+				old, _ := pkg.SetCurFile(goFile, true)
 				defer pkg.RestoreCurFile(old)
 
 				decl.InitType(pkg, types.NewStruct(flds, nil))
@@ -356,7 +357,7 @@ func gmxProjMain(pkg *gogen.Package, parent *pkgCtx, proj *gmxProject) {
 		}
 	}
 	ld.methods = append(ld.methods, func() {
-		old, _ := pkg.SetCurFile(defaultGoFile, true)
+		old, _ := pkg.SetCurFile(goFile, true)
 		defer pkg.RestoreCurFile(old)
 		doInitType(ld)
 
@@ -365,7 +366,7 @@ func gmxProjMain(pkg *gogen.Package, parent *pkgCtx, proj *gmxProject) {
 		fn := pkg.NewFunc(recv, "Main", nil, nil, false)
 
 		parent.inits = append(parent.inits, func() {
-			old, _ := pkg.SetCurFile(defaultGoFile, true)
+			old, _ := pkg.SetCurFile(goFile, true)
 			defer pkg.RestoreCurFile(old)
 
 			cb := fn.BodyStart(pkg).Typ(base.Type()).MemberVal("Main")
@@ -394,9 +395,11 @@ func gmxProjMain(pkg *gogen.Package, parent *pkgCtx, proj *gmxProject) {
 	})
 }
 
-func gmxMainFunc(pkg *gogen.Package, proj *gmxProject) func() {
+func gmxMainFunc(pkg *gogen.Package, ctx *pkgCtx, proj *gmxProject) func() {
 	return func() {
 		if o := pkg.TryRef(proj.gameClass); o != nil {
+			old, _ := pkg.SetCurFile(ctx.genGoFile(proj.file, false), true)
+			defer pkg.RestoreCurFile(old)
 			// new(gameClass).Main()
 			new := pkg.Builtin().Ref("new")
 			pkg.NewFunc(nil, "main", nil, nil, false).
