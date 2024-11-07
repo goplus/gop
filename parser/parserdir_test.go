@@ -628,7 +628,7 @@ func testFromDir(t *testing.T, sel, relDir string) {
 }
 
 func TestFromTestdata(t *testing.T) {
-	testFromDir(t, "unit", "./_testdata")
+	testFromDir(t, "", "./_testdata")
 }
 
 func TestFromNofmt(t *testing.T) {

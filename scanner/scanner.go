@@ -831,7 +831,8 @@ scanAgain:
 
 	// determine token value
 	insertSemi := false
-	if s.needUnit {
+	if s.needUnit { // number with unit
+		insertSemi = true
 		tok, lit = token.UNIT, s.scanIdentifier()
 		s.needUnit = false
 		goto done

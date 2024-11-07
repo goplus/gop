@@ -2182,6 +2182,7 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	case *ast.BadExpr:
 	case *ast.Ident:
 	case *ast.BasicLit:
+	case *ast.NumberUnitLit:
 	case *ast.FuncLit:
 	case *ast.CompositeLit:
 	case *ast.SliceLit:
@@ -3260,6 +3261,8 @@ func (p *parser) toIdent(e ast.Expr) *ast.Ident {
 		return v
 	case *ast.BasicLit:
 		p.errorExpected(e.Pos(), fmt.Sprintf("'IDENT', found %v", v.Value), 2)
+	case *ast.NumberUnitLit:
+		p.errorExpected(e.Pos(), fmt.Sprintf("'IDENT', found %v", v.Value+v.Unit), 2)
 	default:
 		p.errorExpected(e.Pos(), "'IDENT'", 2)
 	}
