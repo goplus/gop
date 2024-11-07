@@ -2956,12 +2956,12 @@ func (p *parser) parseForPhraseCond() (init ast.Stmt, cond ast.Expr) {
 	var condStmt ast.Stmt
 	var semi struct {
 		pos token.Pos
-		lit string // ";" or "\n"; valid if pos.IsValid()
+		//lit string // ";" or "\n"; valid if pos.IsValid()
 	}
 	if !isForPhraseCondEnd(p.tok) {
 		if p.tok == token.SEMICOLON {
 			semi.pos = p.pos
-			semi.lit = p.lit
+			//semi.lit = p.lit
 			p.next()
 		} else {
 			p.expect(token.SEMICOLON)
