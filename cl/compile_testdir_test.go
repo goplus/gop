@@ -22,6 +22,10 @@ import (
 	"github.com/goplus/gop/cl/cltest"
 )
 
+func TestTestgop(t *testing.T) {
+	cltest.FromDir(t, "", "./_testgop")
+}
+
 func TestTestc(t *testing.T) {
 	cltest.FromDir(t, "", "./_testc")
 }
