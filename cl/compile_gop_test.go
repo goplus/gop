@@ -1597,3 +1597,36 @@ func main() {
 }
 `)
 }
+
+func TestEmbedField(t *testing.T) {
+	gopClTest(t, `package main
+
+type Info struct {
+	id int
+}
+type T struct {
+	Info
+	id string
+}
+func demo(t *T) {
+	t.id = "0"
+}
+func main() {
+}
+`, `package main
+
+type Info struct {
+	id int
+}
+type T struct {
+	Info
+	id string
+}
+
+func demo(t *T) {
+	t.id = "0"
+}
+func main() {
+}
+`)
+}
