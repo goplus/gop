@@ -48,7 +48,7 @@ jobs:
       run: go test -v -coverprofile="coverage.txt" -covermode=atomic ./...
 
     - name: Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         slug: goplus/gop
