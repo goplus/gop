@@ -19,7 +19,7 @@ jobs:
         python .github/workflows/check_goreleaser_config.py
 
     - name: Install Snapcraft
-      uses: samuelmeuli/action-snapcraft@v2
+      uses: samuelmeuli/action-snapcraft@v3
 
     - name: Checkout tag
       run: |
