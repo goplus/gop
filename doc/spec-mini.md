@@ -1764,6 +1764,15 @@ The [package clause]() is not a declaration; the package name does not appear in
 
 ### Label scopes
 
+Labels are declared by [labeled statements](#labeled-statements) and are used in the "[break](#break-statements)", "[continue](#continue-statements)", and "[goto](#goto-statements)" statements. It is illegal to define a label that is never used. In contrast to other identifiers, labels are not block scoped and do not conflict with identifiers that are not labels. The scope of a label is the body of the function in which it is declared and excludes the body of any nested function.
+
+
+### Blank identifier
+
+The _blank identifier_ is represented by the underscore character `_`. It serves as an anonymous placeholder instead of a regular (non-blank) identifier and has special meaning in [declarations](#declarations-and-scope), as an [operand](), and in [assignment statements](#assignment-statements).
+
+### Predeclared identifiers
+
 TODO
 
 
