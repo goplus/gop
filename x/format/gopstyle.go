@@ -69,6 +69,9 @@ func Gopstyle(file *ast.File) {
 	formatFile(file)
 }
 
+// GopClassSource format Go+ source to Go+ class source.
+// pkg set class project pkg path, emtpy if normal .gox class.
+// class set the class name. proj indication project or class.
 func GopClassSource(src []byte, pkg string, class string, proj bool, filename ...string) (ret []byte, err error) {
 	var fname string
 	if filename != nil {
@@ -285,7 +288,7 @@ func formatClass(file *ast.File, pkg string, class string, proj bool) {
 				if spec, ok := v.Specs[0].(*ast.TypeSpec); ok && spec.Name.Name == class {
 					if st, ok := spec.Type.(*ast.StructType); ok {
 						for _, fs := range st.Fields.List {
-							if len(fs.Names) == 0 {
+							if len(fs.Names) == 0 && pkg != "" {
 								continue
 							}
 							varSpecs = append(varSpecs, &ast.ValueSpec{Names: fs.Names, Type: fs.Type})
