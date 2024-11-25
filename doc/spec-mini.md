@@ -1795,11 +1795,16 @@ Functions:
 
 ### Exported identifiers
 
-TODO
+An identifier may be _exported_ to permit access to it from another package. An identifier is exported if both:
+
+* the first character of the identifier's name is a Unicode uppercase letter (Unicode character category Lu); and
+* the identifier is declared in the [package block]() or it is a [field name]() or [method name]().
+
+All other identifiers are not exported.
 
 ### Uniqueness of identifiers
 
-TODO
+Given a set of identifiers, an identifier is called _unique_ if it is _different_ from every other in the set. Two identifiers are different if they are spelled differently, or if they appear in different [packages](#packages) and are not [exported](#exported-identifiers). Otherwise, they are the same.
 
 ### Constant declarations
 
