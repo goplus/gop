@@ -203,6 +203,9 @@ type Config struct {
 
 	// Outline = true means to skip compiling function bodies.
 	Outline bool
+
+	// MultiFiles = true means generate multi files.
+	MultiFiles bool
 }
 
 type nodeInterp struct {
@@ -342,6 +345,8 @@ type pkgCtx struct {
 	generics map[string]bool // generic type record
 	idents   []*ast.Ident    // toType ident recored
 	inInst   int             // toType in generic instance
+
+	multiFiles bool // generate multi files
 }
 
 type pkgImp struct {
@@ -501,6 +506,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 		overpos:    make(map[string]token.Pos),
 		syms:       make(map[string]loader),
 		generics:   make(map[string]bool),
+		multiFiles: conf.MultiFiles,
 	}
 	confGox := &gogen.Config{
 		Types:           conf.Types,
@@ -609,7 +615,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 
 	if genMain { // make classfile main func if need
 		if proj != nil && !multi { // only one project file
-			gen = gmxMainFunc(p, proj)
+			gen = gmxMainFunc(p, ctx, proj)
 		}
 	}
 
@@ -634,7 +640,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 	if gen != nil { // generate classfile main func
 		gen()
 	} else if genMain && !conf.NoAutoGenMain { // generate empty main func
-		old, _ := p.SetCurFile(defaultGoFile, false)
+		old, _ := p.SetCurFile(ctx.genGoFile("", false), false)
 		p.NewFunc(nil, "main", nil, nil, false).BodyStart(p).End()
 		p.RestoreCurFile(old)
 	}
@@ -702,9 +708,12 @@ func loadFile(ctx *pkgCtx, f *ast.File) {
 //
 //	*_test.gop
 //	*test.gox
-func genGoFile(file string, goxTestFile bool) string {
+func (ctx *pkgCtx) genGoFile(file string, goxTestFile bool) string {
 	if goxTestFile || strings.HasSuffix(file, "_test.gop") {
 		return testingGoFile
+	}
+	if ctx.multiFiles {
+		return file
 	}
 	return defaultGoFile
 }
@@ -744,6 +753,7 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 				if proj.gameIsPtr {
 					baseType = types.NewPointer(baseType)
 				}
+				proj.file = file
 			} else {
 				o := proj.sprite[c.ext]
 				ctx.baseClass = o
@@ -751,7 +761,7 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 			}
 		}
 	}
-	goFile := genGoFile(file, goxTestFile)
+	goFile := ctx.genGoFile(file, goxTestFile)
 	if classType != "" {
 		if debugLoad {
 			log.Println("==> Preload type", classType)

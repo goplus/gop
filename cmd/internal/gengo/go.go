@@ -44,6 +44,7 @@ var (
 	flagSingleMode       = flag.Bool("s", false, "run in single file mode for package")
 	flagIgnoreNotatedErr = flag.Bool(
 		"ignore-notated-error", false, "ignore notated errors, only available together with -t (check mode)")
+	flagMultiFiles = flag.Bool("multi-files", false, "genarate multi files for package")
 )
 
 func init() {
@@ -86,6 +87,9 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 	if *flagSingleMode {
 		flags |= gop.GenFlagSingleFile
+	}
+	if *flagMultiFiles {
+		flags |= gop.GenFlagMultiFiles
 	}
 	for _, proj := range projs {
 		switch v := proj.(type) {
