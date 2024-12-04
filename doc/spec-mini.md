@@ -1889,11 +1889,29 @@ This last example exploits the [implicit repetition](#constant-declarations) of 
 
 ### Type declarations
 
-TODO
+A type declaration binds an identifier, the _type name_, to a [type](#types). Type declarations come in two forms: alias declarations and type definitions.
+
+```go
+TypeDecl = "type" ( TypeSpec | "(" { TypeSpec ";" } ")" ) .
+TypeSpec = AliasDecl | TypeDef .
+```
 
 #### Alias declarations
 
-TODO
+An alias declaration binds an identifier to the given type.
+
+```go
+AliasDecl = identifier "=" Type .
+```
+
+Within the [scope]() of the identifier, it serves as an alias for the type.
+
+```go
+type (
+	nodeList = []*Node  // nodeList and []*Node are identical types
+	Polar    = polar    // Polar and polar denote identical types
+)
+```
 
 #### Type definitions
 
