@@ -1915,7 +1915,44 @@ type (
 
 #### Type definitions
 
-TODO
+A type definition creates a new, distinct type with the same [underlying type]() and operations as the given type and binds an identifier, the _type name_, to it.
+
+```go
+TypeDef = identifier Type .
+```
+
+The new type is called a _defined type_. It is [different]() from any other type, including the type it is created from.
+
+```go
+type (
+	Point struct{ x, y float64 }  // Point and struct{ x, y float64 } are different types
+	polar Point                   // polar and Point denote different types
+)
+
+type TreeNode struct {
+	left, right *TreeNode
+	value any
+}
+
+type Block interface {
+	BlockSize() int
+	Encrypt(src, dst []byte)
+	Decrypt(src, dst []byte)
+}
+```
+
+Type definitions may be used to define different boolean, numeric, or string types:
+
+```go
+type TimeZone int
+
+const (
+	EST TimeZone = -(5 + iota)
+	CST
+	MST
+	PST
+)
+```
 
 ### Variable declarations
 
