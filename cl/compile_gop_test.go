@@ -1630,3 +1630,37 @@ func main() {
 }
 `)
 }
+
+func TestOverloadUntyped(t *testing.T) {
+	gopMixedClTest(t, "main", `
+package main
+
+type specialObj int
+type SpriteName string
+
+type SpriteImpl struct {
+}
+
+func (p *SpriteImpl) turn(v any) {
+}
+func (p *SpriteImpl) TurnTo__0(sprite *SpriteImpl) {
+}
+func (p *SpriteImpl) TurnTo__1(sprite SpriteName) {
+}
+func (p *SpriteImpl) TurnTo__2(obj specialObj) {
+}
+func (p *SpriteImpl) TurnTo__3(degree float64) {
+}
+`, `
+p := &SpriteImpl{}
+p.turnTo 180.0
+p.turnTo 180.1
+`, `package main
+
+func main() {
+	p := &SpriteImpl{}
+	p.TurnTo__2(180.0)
+	p.TurnTo__3(180.1)
+}
+`)
+}
