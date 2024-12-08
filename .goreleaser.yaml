@@ -51,6 +51,7 @@ dockers:
     build_flag_templates:
       - --platform=linux/386
       - --build-arg=USE_GORELEASER_ARTIFACTS=1
+      - --build-arg=GORELEASER_ARTIFACTS_TARBALL=./.dist/{{.ProjectName}}{{.Version}}.linux-386.tar.gz
     extra_files:
       - ./
   - goarch: amd64
@@ -60,6 +61,7 @@ dockers:
     build_flag_templates:
       - --platform=linux/amd64
       - --build-arg=USE_GORELEASER_ARTIFACTS=1
+      - --build-arg=GORELEASER_ARTIFACTS_TARBALL=./.dist/{{.ProjectName}}{{.Version}}.linux-amd64.tar.gz
     extra_files:
       - ./
   - goarch: arm64
@@ -69,6 +71,7 @@ dockers:
     build_flag_templates:
       - --platform=linux/arm64
       - --build-arg=USE_GORELEASER_ARTIFACTS=1
+      - --build-arg=GORELEASER_ARTIFACTS_TARBALL=./.dist/{{.ProjectName}}{{.Version}}.linux-arm64.tar.gz
     extra_files:
       - ./
 
