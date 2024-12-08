@@ -1991,9 +1991,15 @@ var n = nil            // illegal
 
 Implementation restriction: A compiler may make it illegal to declare a variable inside a [function body](#function-declarations) if the variable is never used.
 
-### Short variable declarations
+In a function body, variables do not need to be explicitly defined.
 
-TODO
+```go
+d := math.Sin(0.5)  // d is float64
+i := 42             // i is int
+t, ok := x.(T)      // t is T, ok is bool
+```
+
+See [short variable declarations](#short-variable-declarations).
 
 ### Function declarations
 
