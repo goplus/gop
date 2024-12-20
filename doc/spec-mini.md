@@ -1,5 +1,7 @@
-Go+ Specification for STEM Education
+The Go+ Mini Specification
 =====
+
+Go+ has a recommended best practice syntax set, which we call the Go+ Mini Specification.It is simple but Turing-complete and can elegantly implement any business requirements.
 
 ## Notation
 
@@ -100,6 +102,25 @@ The formal syntax uses semicolons ";" as terminators in a number of productions.
 To reflect idiomatic use, code examples in this document elide semicolons using these rules.
 
 ### Identifiers
+
+Identifiers name program entities such as variables and types. An identifier is a sequence of one or more letters and digits. The first character in an identifier must be a letter.
+
+```go
+identifier = letter { letter | unicode_digit } .
+```
+
+For example:
+
+```go
+a
+_x9
+ThisVariableIsExported
+αβ
+```
+
+Some identifiers are [predeclared](#predeclared-identifiers).
+
+### Keywords
 
 TODO
 
