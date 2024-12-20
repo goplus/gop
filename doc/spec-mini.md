@@ -86,8 +86,20 @@ A _general comment_ containing no newlines acts like a space. Any other comment 
 
 Tokens form the vocabulary of the Go+ language. There are four classes: _identifiers_, _keywords_, _operators_ and _punctuation_, and _literals_. White space, formed from spaces (U+0020), horizontal tabs (U+0009), carriage returns (U+000D), and newlines (U+000A), is ignored except as it separates tokens that would otherwise combine into a single token. Also, a newline or end of file may trigger the insertion of a [semicolon](). While breaking the input into tokens, the next token is the longest sequence of characters that form a valid token.
 
-
 ### Semicolons
+
+The formal syntax uses semicolons ";" as terminators in a number of productions. Go+ programs may omit most of these semicolons using the following two rules:
+
+* When the input is broken into tokens, a semicolon is automatically inserted into the token stream immediately after a line's final token if that token is
+  * an [identifier](#identifiers)
+  * an [integer](), [floating-point](), [imaginary](), [rune](), or [string]() literal
+  * one of the [keywords]() `break`, `continue`, `fallthrough`, or `return`
+  * one of the [operators and punctuation]() `++`, `--`, `)`, `]`, or `}`
+* To allow complex statements to occupy a single line, a semicolon may be omitted before a closing `")"` or `"}"`.
+
+To reflect idiomatic use, code examples in this document elide semicolons using these rules.
+
+### Identifiers
 
 TODO
 
