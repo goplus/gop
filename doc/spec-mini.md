@@ -122,6 +122,18 @@ Some identifiers are [predeclared](#predeclared-identifiers).
 
 ### Keywords
 
+The following keywords are reserved and may not be used as identifiers (TODO: some keywords are allowed as identifiers).
+
+```go
+break        default      func         interface    select
+case         defer        go           map          struct
+chan         else         goto         package      switch
+const        fallthrough  if           range        type
+continue     for          import       return       var
+```
+
+### Operators and punctuation
+
 TODO
 
 ### Integer literals
