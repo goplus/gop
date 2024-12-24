@@ -314,6 +314,20 @@ After a backslash, certain single-character escapes represent special values:
 An unrecognized character following a backslash in a rune literal is illegal.
 
 ```go
+rune_lit         = "'" ( unicode_value | byte_value ) "'" .
+unicode_value    = unicode_char | little_u_value | big_u_value | escaped_char .
+byte_value       = octal_byte_value | hex_byte_value .
+octal_byte_value = `\` octal_digit octal_digit octal_digit .
+hex_byte_value   = `\` "x" hex_digit hex_digit .
+little_u_value   = `\` "u" hex_digit hex_digit hex_digit hex_digit .
+big_u_value      = `\` "U" hex_digit hex_digit hex_digit hex_digit
+                           hex_digit hex_digit hex_digit hex_digit .
+escaped_char     = `\` ( "a" | "b" | "f" | "n" | "r" | "t" | "v" | `\` | "'" | `"` ) .
+```
+
+For example:
+
+```go
 'a'
 'ä'
 '本'
