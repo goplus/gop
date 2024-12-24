@@ -256,7 +256,11 @@ TODO
 
 An imaginary literal represents the imaginary part of a [complex constant](). It consists of an [integer](#integer-literals) or [floating-point](#floating-point-literals) literal followed by the lowercase letter _i_. The value of an imaginary literal is the value of the respective integer or floating-point literal multiplied by the imaginary unit _i_.
 
-For backward compatibility, an imaginary literal's integer part consisting entirely of decimal digits (and possibly underscores) is considered a decimal integer, even if it starts with a leading 0.
+```go
+imaginary_lit = (decimal_digits | int_lit | float_lit) "i" .
+```
+
+For backward compatibility, an imaginary literal's integer part consisting entirely of decimal digits (and possibly underscores) is considered a decimal integer, even if it starts with a leading `0`.
 
 ```go
 0i
@@ -275,7 +279,7 @@ For backward compatibility, an imaginary literal's integer part consisting entir
 
 ### Boolean literals
 
-The boolean truth values are represented by the predeclared constants `true` and `false`.
+The boolean truth values are represented by the [predeclared constants](#constants) `true` and `false`.
 
 ```go
 true
@@ -378,9 +382,9 @@ iota
 
 There are _boolean constants_, _rune constants_, _integer constants_, _floating-point constants_, _complex constants_, and _string constants_. Rune, integer, floating-point, and complex constants are collectively called _numeric constants_.
 
-A constant value is represented by a [rune](#rune-literals), [integer](#integer-literals), [floating-point](#floating-point-literals), [imaginary](#imaginary-literals), [boolean](#boolean-literals) or [string](#string-literals) literal, an identifier denoting a constant, a [constant expression](), a [conversion](#conversions) with a result that is a constant, or the result value of some built-in functions such as `min` or `max` applied to constant arguments, `unsafe.Sizeof` applied to [certain values](), `cap` or `len` applied to [some expressions](), `real` and `imag` applied to a complex constant and complex applied to numeric constants. The predeclared identifier `iota` denotes an integer constant.
+A constant value is represented by a [rune](#rune-literals), [integer](#integer-literals), [floating-point](#floating-point-literals), [imaginary](#imaginary-literals), [boolean](#boolean-literals) or [string](#string-literals) literal, an identifier denoting a constant, a [constant expression](), a [conversion](#conversions) with a result that is a constant, or the result value of some built-in functions such as `min` or `max` applied to constant arguments, `unsafe.Sizeof` applied to [certain values](), `cap` or `len` applied to [some expressions](), `real` and `imag` applied to a complex constant and complex applied to numeric constants. The boolean truth values are represented by the predeclared constants `true` and `false`. The predeclared identifier `iota` denotes an integer constant.
 
-Not all literals are constants. For example:
+Not all literals are constants. For example (TODO: check this):
 
 ```sh
 nil
