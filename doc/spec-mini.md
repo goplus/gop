@@ -109,8 +109,6 @@ Identifiers name program entities such as variables and types. An identifier is 
 identifier = letter { letter | unicode_digit } .
 ```
 
-For example:
-
 ```go
 a
 _x9
@@ -164,8 +162,6 @@ octal_digits   = octal_digit { [ "_" ] octal_digit } .
 hex_digits     = hex_digit { [ "_" ] hex_digit } .
 ```
 
-For example:
-
 ```go
 42
 4_2
@@ -210,8 +206,6 @@ hex_mantissa      = [ "_" ] hex_digits "." [ hex_digits ] |
 hex_exponent      = ( "p" | "P" ) [ "+" | "-" ] decimal_digits .
 ```
 
-For example:
-
 ```go
 0.
 72.40
@@ -254,7 +248,7 @@ TODO
 
 ### Imaginary literals
 
-An imaginary literal represents the imaginary part of a [complex constant](). It consists of an [integer](#integer-literals) or [floating-point](#floating-point-literals) literal followed by the lowercase letter _i_. The value of an imaginary literal is the value of the respective integer or floating-point literal multiplied by the imaginary unit _i_.
+An imaginary literal represents the imaginary part of a [complex constant](#constants). It consists of an [integer](#integer-literals) or [floating-point](#floating-point-literals) literal followed by the lowercase letter _i_. The value of an imaginary literal is the value of the respective integer or floating-point literal multiplied by the imaginary unit _i_.
 
 ```go
 imaginary_lit = (decimal_digits | int_lit | float_lit) "i" .
@@ -288,7 +282,7 @@ false
 
 ### Rune literals
 
-A rune literal represents a [rune constant](), an integer value identifying a Unicode code point. A rune literal is expressed as one or more characters enclosed in single quotes, as in `'x'` or `'\n'`. Within the quotes, any character may appear except newline and unescaped single quote. A single quoted character represents the Unicode value of the character itself, while multi-character sequences beginning with a backslash encode values in various formats.
+A rune literal represents a [rune constant](#constants), an integer value identifying a Unicode code point. A rune literal is expressed as one or more characters enclosed in single quotes, as in `'x'` or `'\n'`. Within the quotes, any character may appear except newline and unescaped single quote. A single quoted character represents the Unicode value of the character itself, while multi-character sequences beginning with a backslash encode values in various formats.
 
 The simplest form represents the single character within the quotes; since Go+ source text is Unicode characters encoded in UTF-8, multiple UTF-8-encoded bytes may represent a single integer value. For instance, the literal `'a'` holds a single byte representing a literal a, Unicode `U+0061`, value 0x61, while `'ä'` holds two bytes (0xc3 0xa4) representing a literal a-dieresis, `U+00E4`, value 0xe4.
 
@@ -325,8 +319,6 @@ big_u_value      = `\` "U" hex_digit hex_digit hex_digit hex_digit
 escaped_char     = `\` ( "a" | "b" | "f" | "n" | "r" | "t" | "v" | `\` | "'" | `"` ) .
 ```
 
-For example:
-
 ```go
 'a'
 'ä'
@@ -351,11 +343,17 @@ For example:
 
 ### String literals
 
-A string literal represents a [string constant]() obtained from concatenating a sequence of characters. There are two forms: raw string literals and interpreted string literals.
+A string literal represents a [string constant](#constants) obtained from concatenating a sequence of characters. There are two forms: raw string literals and interpreted string literals.
 
 Raw string literals are character sequences between back quotes, as in \`foo\`. Within the quotes, any character may appear except back quote. The value of a raw string literal is the string composed of the uninterpreted (implicitly UTF-8-encoded) characters between the quotes; in particular, backslashes have no special meaning and the string may contain newlines. Carriage return characters (`'\r'`) inside raw string literals are discarded from the raw string value.
 
 Interpreted string literals are character sequences between double quotes, as in `"bar"`. Within the quotes, any character may appear except newline and unescaped double quote. The text between the quotes forms the value of the literal, with backslash escapes interpreted as they are in [rune literals](#rune-literals) (except that `\'` is illegal and `\"` is legal), with the same restrictions. The three-digit octal (`\nnn`) and two-digit hexadecimal (`\xnn`) escapes represent individual bytes of the resulting string; all other escapes represent the (possibly multi-byte) UTF-8 encoding of individual characters. Thus inside a string literal `\377` and `\xFF` represent a single byte of value 0xFF=255, while `ÿ`, `\u00FF`, `\U000000FF` and `\xc3\xbf` represent the two bytes 0xc3 0xbf of the UTF-8 encoding of character `U+00FF`.
+
+```go
+string_lit             = raw_string_lit | interpreted_string_lit .
+raw_string_lit         = "`" { unicode_char | newline } "`" .
+interpreted_string_lit = `"` { unicode_value | byte_value } `"` .
+```
 
 ```go
 `abc`                // same as "abc"
@@ -929,8 +927,6 @@ It is shorthand for a regular [variable declaration](#variable-declarations) wit
 "var" IdentifierList "=" ExpressionList .
 ```
 
-For example:
-
 ```go
 i, j := 0, 10
 f := func() int { return 7 }
@@ -1085,8 +1081,6 @@ append cap complex imag len make new real
 unsafe.Add unsafe.Alignof unsafe.Offsetof unsafe.Sizeof unsafe.Slice unsafe.SliceData unsafe.String unsafe.StringData
 ```
 
-For example:
-
 ```go
 h(x+y)
 f.Close()
@@ -1200,8 +1194,6 @@ In assignments, each value must be [assignable]() to the type of the operand to 
 IfStmt = "if" [ SimpleStmt ";" ] Expression Block [ "else" ( IfStmt | Block ) ] .
 ```
 
-For example:
-
 ```go
 if x > 1 {
 	x = 1
@@ -1248,8 +1240,6 @@ ForClause = [ InitStmt ] ";" [ Condition ] ";" [ PostStmt ] .
 InitStmt = SimpleStmt .
 PostStmt = SimpleStmt .
 ```
-
-For example:
 
 ```go
 for i := 0; i < 10; i++ {
@@ -1430,8 +1420,6 @@ LabeledStmt = Label ":" Statement .
 Label       = identifier .
 ```
 
-For example:
-
 ```go
 Error:
 	log.Panic("error encountered")
@@ -1500,8 +1488,6 @@ A "goto" statement transfers control to the statement with the corresponding lab
 ```go
 GotoStmt = "goto" Label .
 ```
-
-For example:
 
 ```go
 goto Error
@@ -2138,8 +2124,6 @@ A variable declaration creates one or more [variables](#variables), binds corres
 VarDecl     = "var" ( VarSpec | "(" { VarSpec ";" } ")" ) .
 VarSpec     = IdentifierList ( Type [ "=" ExpressionList ] | "=" ExpressionList ) .
 ```
-
-For example:
 
 ```go
 var i int
