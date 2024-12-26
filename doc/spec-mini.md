@@ -437,6 +437,19 @@ A variable's value is retrieved by referring to the variable in an [expression](
 
 ## Types
 
+A type determines a set of values together with operations and methods specific to those values. A type may be denoted by a _type name_. A type may also be specified using a type literal, which composes a type from existing types.
+
+```go
+Type      = TypeName | TypeLit | "(" Type ")" .
+TypeName  = identifier | QualifiedIdent .
+TypeLit   = ArrayType | StructType | PointerType | FunctionType | InterfaceType |
+            SliceType | MapType . // TODO: check this
+```
+
+The language [predeclares]() certain type names. Others are introduced with [type declarations](#type-declarations). _Composite types_—array, struct, pointer, function, interface, slice, map—may be constructed using type literals.
+
+Predeclared types and defined types are called _named types_. An alias denotes a named type if the type given in the alias declaration is a named type.
+
 ### Boolean types
 
 A _boolean type_ represents the set of Boolean truth values denoted by the predeclared constants true and false. The predeclared boolean type is `bool`; it is a defined type.
@@ -755,7 +768,7 @@ The equality operators == and != apply to operands of comparable types. The orde
 
 A comparison of two interface values with identical dynamic types causes a [run-time panic]() if that type is not comparable. This behavior applies not only to direct interface value comparisons but also when comparing arrays of interface values or structs with interface-valued fields.
 
-Slice, map, and function types are not comparable. However, as a special case, a slice, map, or function value may be compared to the predeclared identifier `nil`. Comparison of pointer, channel, and interface values to `nil` is also allowed and follows from the general rules above.
+Slice, map, and function types are not comparable. However, as a special case, a slice, map, or function value may be compared to the predeclared identifier `nil`. Comparison of pointer, and interface values to `nil` is also allowed and follows from the general rules above.
 
 #### Logical operators
 
@@ -1136,7 +1149,7 @@ a[i] <<= 2
 i &^= 1<<n
 ```
 
-A tuple assignment assigns the individual elements of a multi-valued operation to a list of variables. There are two forms. In the first, the right hand operand is a single multi-valued expression such as a function call, a channel or [map](#map-types) operation, or a [type assertion](). The number of operands on the left hand side must match the number of values. For instance, if f is a function returning two values,
+A tuple assignment assigns the individual elements of a multi-valued operation to a list of variables. There are two forms. In the first, the right hand operand is a single multi-valued expression such as a function call or [map](#map-types) operation, or a [type assertion](). The number of operands on the left hand side must match the number of values. For instance, if f is a function returning two values,
 
 ```go
 x, y = f()
@@ -1737,12 +1750,10 @@ len(s)    string type      string length in bytes
           [n]T, *[n]T      array length (== n)
           []T              slice length
           map[K]T          map length (number of defined keys)
-          chan T           number of elements queued in channel buffer
           type parameter   see below
 
 cap(s)    [n]T, *[n]T      array length (== n)
           []T              slice capacity
-          chan T           channel buffer capacity
           type parameter   see below
 ```
 
@@ -1752,7 +1763,7 @@ The capacity of a slice is the number of elements for which there is space alloc
 0 <= len(s) <= cap(s)
 ```
 
-The length of a `nil` slice, map or channel is `0`. The capacity of a `nil` slice or channel is `0`.
+The length of a `nil` slice, map is `0`. The capacity of a `nil` slice is `0`.
 
 The expression `len(s)` is [constant](#constants) if s is a string constant. The expressions `len(s)` and `cap(s)` are constants if the type of `s` is an array or pointer to an array and the expression `s` does not contain (non-constant) [function calls](#commands-and-calls); in this case `s` is not evaluated. Otherwise, invocations of `len` and `cap` are not constant and `s` is evaluated.
 
