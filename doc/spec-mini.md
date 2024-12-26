@@ -518,27 +518,48 @@ The length of a string `s` can be discovered using the built-in function [len]()
 An array is a numbered sequence of elements of a single type, called the element type. The number of elements is called the length of the array and is never negative.
 
 ```go
-[N]T
+ArrayType   = "[" ArrayLength "]" ElementType .
+ArrayLength = Expression .
+ElementType = Type .
 ```
 
-The length is part of the array's type; it must evaluate to a non-negative [constant]() [representable]() by a value of type int. The length of array `a` can be discovered using the built-in function [len](). The elements can be addressed by integer [indices]() `0` through `len(a)-1`. Array types are always one-dimensional but may be composed to form multi-dimensional types.
+The length is part of the array's type; it must evaluate to a non-negative [constant](#constants) [representable]() by a value of type int. The length of array `a` can be discovered using the built-in function [len](). The elements can be addressed by integer [indices]() `0` through `len(a)-1`. Array types are always one-dimensional but may be composed to form multi-dimensional types.
 
 ```go
 [32]byte
+[2*N] struct { x, y int32 }
 [1000]*float64
 [3][5]int
 [2][2][2]float64  // same as [2]([2]([2]float64))
 ```
 
-### Pointer types
-
-A _pointer_ type denotes the set of all pointers to [variables]() of a given type, called the base type of the pointer. The value of an uninitialized pointer is `nil`.
+An array type T may not have an element of type T, or of a type containing T as a component, directly or indirectly, if those containing types are only array or struct types.
 
 ```go
-*T
+// invalid array types
+type (
+	T1 [10]T1                 // element type of T1 is T1
+	T2 [10]struct{ f T2 }     // T2 contains T2 as component of a struct
+	T3 [10]T4                 // T3 contains T3 as component of a struct in T4
+	T4 struct{ f T3 }         // T4 contains T4 as component of array T3 in a struct
+)
+
+// valid array types
+type (
+	T5 [10]*T5                // T5 contains T5 as component of a pointer
+	T6 [10]func() T6          // T6 contains T6 as component of a function type
+	T7 [10]struct{ f []T7 }   // T7 contains T7 as component of a slice in a struct
+)
 ```
 
-For example:
+### Pointer types
+
+A _pointer_ type denotes the set of all pointers to [variables](#variables) of a given type, called the base type of the pointer. The value of an uninitialized pointer is `nil`.
+
+```go
+PointerType = "*" BaseType .
+BaseType    = Type .
+```
 
 ```go
 *Point
@@ -547,10 +568,10 @@ For example:
 
 ### Slice types
 
-A _slice_ is a descriptor for a contiguous segment of an underlying array and provides access to a numbered sequence of elements from that array. A slice type denotes the set of all slices of arrays of its element type. The number of elements is called the length of the slice and is never negative. The value of an uninitialized slice is `nil`.
+A _slice_ is a descriptor for a contiguous segment of an _underlying array_ and provides access to a numbered sequence of elements from that array. A slice type denotes the set of all slices of arrays of its element type. The number of elements is called the length of the slice and is never negative. The value of an uninitialized slice is `nil`.
 
 ```go
-[]T
+SliceType = "[" "]" ElementType .
 ```
 
 The length of a slice `s` can be discovered by the built-in function [len](); unlike with arrays it may change during execution. The elements can be addressed by integer [indices]() `0` through `len(s)-1`. The slice index of a given element may be less than the index of the same element in the underlying array.
@@ -576,17 +597,18 @@ Like arrays, slices are always one-dimensional but may be composed to construct 
 
 ### Map types
 
-A _map_ is an unordered group of elements of one type, called the element type, indexed by a set of unique keys of another type, called the key type. The value of an uninitialized map is `nil`.
+A _map_ is an unordered group of elements of one type, called the element type, indexed by a set of unique _keys_ of another type, called the key type. The value of an uninitialized map is `nil`.
 
 ```go
-map[KeyT]ElemT
+MapType     = "map" "[" KeyType "]" ElementType .
+KeyType     = Type .
 ```
 
 The comparison operators `==` and `!=` must be fully defined for operands of the key type; thus the key type must not be a function, map, or slice. If the key type is an interface type, these comparison operators must be defined for the dynamic key values; failure will cause a run-time panic.
 
 ```go
 map[string]int
-map[*T]string
+map[*T]struct{ x, y float64 }
 map[string]any
 ```
 
