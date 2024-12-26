@@ -440,8 +440,10 @@ A variable's value is retrieved by referring to the variable in an [expression](
 A type determines a set of values together with operations and methods specific to those values. A type may be denoted by a _type name_. A type may also be specified using a type literal, which composes a type from existing types.
 
 ```go
-Type      = TypeName | TypeLit | "(" Type ")" .
+Type      = TypeName [ TypeArgs ] | TypeLit | "(" Type ")" .
 TypeName  = identifier | QualifiedIdent .
+TypeArgs  = "[" TypeList [ "," ] "]" .
+TypeList  = Type { "," Type } .
 TypeLit   = ArrayType | StructType | PointerType | FunctionType | InterfaceType |
             SliceType | MapType . // TODO: check this
 ```
@@ -594,6 +596,65 @@ new([100]int)[0:50]
 ```
 
 Like arrays, slices are always one-dimensional but may be composed to construct higher-dimensional objects. With arrays of arrays, the inner arrays are, by construction, always the same length; however with slices of slices (or arrays of slices), the inner lengths may vary dynamically. Moreover, the inner slices must be initialized individually.
+
+### Struct types
+
+A struct is a sequence of named elements, called fields, each of which has a name and a type. Field names may be specified explicitly (IdentifierList) or implicitly (EmbeddedField). Within a struct, non-[blank](#blank-identifier) field names must be [unique]().
+
+```go
+StructType    = "struct" "{" { FieldDecl ";" } "}" .
+FieldDecl     = (IdentifierList Type | EmbeddedField) [ Tag ] .
+EmbeddedField = [ "*" ] TypeName [ TypeArgs ] .
+Tag           = string_lit .
+```
+
+```go
+// An empty struct.
+struct {}
+
+// A struct with 6 fields.
+struct {
+	x, y int
+	u float32
+	_ float32  // padding
+	A *[]int
+	F func()
+}
+```
+
+A field declared with a type but no explicit field name is called an _embedded field_. An embedded field must be specified as a type name T or as a pointer to a non-interface type name *T, and T itself may not be a pointer type. The unqualified type name acts as the field name.
+
+```go
+// A struct with four embedded fields of types T1, *T2, P.T3 and *P.T4
+struct {
+	T1        // field name is T1
+	*T2       // field name is T2
+	P.T3      // field name is T3
+	*P.T4     // field name is T4
+	x, y int  // field names are x and y
+}
+```
+
+The following declaration is illegal because field names must be unique in a struct type:
+
+```go
+struct {
+	T     // conflicts with embedded field *T and *P.T
+	*T    // conflicts with embedded field T and *P.T
+	*P.T  // conflicts with embedded field T and *T
+}
+```
+
+A field `f` or [method]() of an embedded field in a struct `x` is called promoted if `x.f` is a legal [selector]() that denotes that field or method `f`.
+
+Promoted fields act like ordinary fields of a struct except that they cannot be used as field names in [composite literals]() of the struct.
+
+Given a struct type `S` and a [named type](#types) `T`, promoted methods are included in the method set of the struct as follows:
+
+* If `S` contains an embedded field `T`, the [method sets]() of `S` and `*S` both include promoted methods with receiver `T`. The method set of `*S` also includes promoted methods with receiver `*T`.
+* If `S` contains an embedded field `*T`, the method sets of `S` and `*S` both include promoted methods with receiver `T` or `*T`.
+
+TODO
 
 ### Map types
 
