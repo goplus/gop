@@ -749,7 +749,115 @@ func(n int) func(p *T)
 
 ### Interface types
 
-TODO
+An interface type specifies a [method set]() called its _interface_. A variable of interface type can store a value of any type with a method set that is any superset of the interface. Such a type is said to _implement the interface_. The value of an uninitialized variable of interface type is `nil`.
+
+```go
+InterfaceType      = "interface" "{" { ( MethodSpec | InterfaceTypeName ) ";" } "}" .
+MethodSpec         = MethodName Signature .
+MethodName         = identifier .
+InterfaceTypeName  = TypeName .
+```
+
+An interface type may specify methods _explicitly_ through method specifications, or it may _embed_ methods of other interfaces through interface type names.
+
+```go
+// A simple File interface.
+interface {
+	Read([]byte) (int, error)
+	Write([]byte) (int, error)
+	Close() error
+}
+```
+
+The name of each explicitly specified method must be [unique]() and not [blank]().
+
+```go
+interface {
+	String() string
+	String() string  // illegal: String not unique
+	_(x int)         // illegal: method must have non-blank name
+}
+```
+
+More than one type may implement an interface. For instance, if two types `S1` and `S2` have the method set
+
+```go
+func (p T) Read(p []byte) (n int, err error)
+func (p T) Write(p []byte) (n int, err error)
+func (p T) Close() error
+```
+
+(where `T` stands for either `S1` or `S2`) then the `File` interface is implemented by both `S1` and `S2`, regardless of what other methods `S1` and `S2` may have or share.
+
+A type implements any interface comprising any subset of its methods and may therefore implement several distinct interfaces. For instance, all types implement the _empty interface_:
+
+```go
+interface{}
+```
+
+Similarly, consider this interface specification, which appears within a [type declaration](#type-declarations) to define an interface called `Locker`:
+
+```go
+type Locker interface {
+	Lock()
+	Unlock()
+}
+```
+
+If `S1` and `S2` also implement
+
+```go
+func Lock() { … }
+func Unlock() { … }
+```
+
+they implement the `Locker` interface as well as the `File` interface.
+
+An interface `T` may use a (possibly qualified) interface type name `E` in place of a method specification. This is called _embedding_ interface `E` in `T`. The method set of `T` is the union of the method sets of T’s explicitly declared methods and of T’s embedded interfaces.
+
+```go
+type Reader interface {
+	Read(p []byte) (n int, err error)
+	Close() error
+}
+
+type Writer interface {
+	Write(p []byte) (n int, err error)
+	Close() error
+}
+
+// ReadWriter's methods are Read, Write, and Close.
+type ReadWriter interface {
+	Reader  // includes methods of Reader in ReadWriter's method set
+	Writer  // includes methods of Writer in ReadWriter's method set
+}
+```
+
+A union of method sets contains the (exported and non-exported) methods of each method set exactly once, and methods with the [same]() names must have [identical]() signatures.
+
+```go
+type ReadCloser interface {
+	Reader   // includes methods of Reader in ReadCloser's method set
+	Close()  // illegal: signatures of Reader.Close and Close are different
+}
+```
+
+An interface type `T` may not embed itself or any interface type that embeds `T`, recursively.
+
+```go
+// illegal: Bad cannot embed itself
+type Bad interface {
+	Bad
+}
+
+// illegal: Bad1 cannot embed itself using Bad2
+type Bad1 interface {
+	Bad2
+}
+type Bad2 interface {
+	Bad1
+}
+```
 
 #### Built-in interfaces
 
