@@ -782,9 +782,9 @@ interface {
 More than one type may implement an interface. For instance, if two types `S1` and `S2` have the method set
 
 ```go
-func (p T) Read(p []byte) (n int, err error)
-func (p T) Write(p []byte) (n int, err error)
-func (p T) Close() error
+func Read(p []byte) (n int, err error)
+func Write(p []byte) (n int, err error)
+func Close() error
 ```
 
 (where `T` stands for either `S1` or `S2`) then the `File` interface is implemented by both `S1` and `S2`, regardless of what other methods `S1` and `S2` may have or share.
@@ -1007,6 +1007,19 @@ x                   T           x is not representable by a value of T because
 42i                 float32     (0 + 42i) is not in the set of float32 values
 1e1000              float64     1e1000 overflows to IEEE +Inf after rounding
 ```
+
+### Method sets
+
+The _method set_ of a type determines the methods that can be [called](#commands-and-calls) on an [operand]() of that type. Every type has a (possibly empty) method set associated with it:
+
+* The method set of a [defined type](#type-definitions) T consists of all [methods]() declared with receiver type T.
+* The method set of a pointer to a defined type T (where T is neither a pointer nor an interface) is the set of all methods declared with receiver *T or T.
+* The method set of an [interface type](#interface-types) is the intersection of the method sets of each type in the interface's [type set](#interface-types) (the resulting method set is usually just the set of declared methods in the interface).
+
+Further rules apply to structs (and pointer to structs) containing embedded fields, as described in the section on [struct types](#struct-types). Any other type has an empty method set.
+
+In a method set, each method must have a [unique](#uniqueness-of-identifiers) non-[blank](#blank-identifier) [method name]().
+
 
 ## Expressions
 
@@ -1930,11 +1943,6 @@ func complexF3() (re float64, im float64) {
 	im = 4.0
 	return
 }
-
-func (devnull) Write(p []byte) (n int, _ error) {
-	n = len(p)
-	return
-}
 ```
 
 Regardless of how they are declared, all the result values are initialized to the [zero values]() for their type upon entry to the function. A "return" statement that specifies results sets the result parameters before any deferred functions are executed.
@@ -2674,7 +2682,7 @@ the initialization order is `d`, `b`, `c`, `a`. Note that the order of subexpres
 
 Dependency analysis is performed per package; only references referring to variables, functions, and (non-interface) methods declared in the current package are considered. If other, hidden, data dependencies exists between variables, the initialization order between those variables is unspecified.
 
-For instance, given the declarations
+For instance, given the declarations (TODO: use classfile instead of method)
 
 ```go
 var x = I(T{}).ab()   // x has an undetected, hidden dependency on a and b
