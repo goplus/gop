@@ -4,12 +4,12 @@ github.com/goplus/gogen v1.16.4-0.20241205134824-ac870e207d8f h1:+CwzStluc1MGjEQ
 github.com/goplus/gogen v1.16.4-0.20241205134824-ac870e207d8f/go.mod h1:6TQYbabXDF9LCdDkOOzHmfg1R4ENfXQ3XpHa9RhTSD8=
 github.com/goplus/llgo v0.9.8 h1:9qFO5sEYzTXYixNL9m9qDNfI2kjtnU3bPMf5hOwQlME=
 github.com/goplus/llgo v0.9.8/go.mod h1:1phqPJEgr/uw59PRz/NB7s54OoP+NGjC6pz0HovT5JY=
-github.com/goplus/mod v0.13.12 h1:Trwk6j3i9VvBuW6/9ZxmkoFlEL2v3HKQu0Na1c6DAdw=
-github.com/goplus/mod v0.13.12/go.mod h1:fyCcoiL02uUQK9CWxGK9pQzuJT+rZIvRKaaG+hSa2bk=
+github.com/goplus/mod v0.13.13 h1:rvwXCCQciTz4NjB3GLAZ2cskw035B64F7KzRAyMYUCw=
+github.com/goplus/mod v0.13.13/go.mod h1:invR72Rz2+qpOOsXqxz830MX8/aR2GDR2EAow/WgfHI=
 github.com/qiniu/x v1.13.10 h1:J4Z3XugYzAq85SlyAfqlKVrbf05glMbAOh+QncsDQpE=
 github.com/qiniu/x v1.13.10/go.mod h1:INZ2TSWSJVWO/RuELQROERcslBwVgFG7MkTfEdaQz9E=
-golang.org/x/mod v0.19.0 h1:fEdghXQSo20giMthA7cd28ZC+jts4amQ3YMXiP5oMQ8=
-golang.org/x/mod v0.19.0/go.mod h1:hTbmBsO62+eylJbnUtE2MGJUyE7QWk4xUqPFrRgJ+7c=
+golang.org/x/mod v0.20.0 h1:utOm6MM3R3dnawAiJgn0y+xvuYRsm1RKM/4giyfDgV0=
+golang.org/x/mod v0.20.0/go.mod h1:hTbmBsO62+eylJbnUtE2MGJUyE7QWk4xUqPFrRgJ+7c=
 golang.org/x/sync v0.7.0 h1:YsImfSBoP9QPYL0xyKJPq0gcaJdG3rInoqxTWbfQu9M=
 golang.org/x/sys v0.21.0 h1:rF+pYz3DAGSQAxAu1CbC7catZg4ebC4UIeIhKxBZvws=
 golang.org/x/sys v0.21.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
