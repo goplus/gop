@@ -965,8 +965,48 @@ func(x int, y float64) *[]string, func(int, float64) (result *[]string), and A5
 
 ### Assignability
 
-TODO
+A value x of type V is _assignable_ to a [variable](#variables) of type T ("x is assignable to T") if one of the following conditions applies:
 
+* V and T are identical.
+* V and T have identical [underlying types](#underlying-types) but are not type parameters and at least one of V or T is not a [named type](#types).
+* T is an interface type, and x [implements]() T.
+* x is the predeclared identifier nil and T is a pointer, function, slice, map, or interface type.
+* x is an untyped [constant](#constants) [representable](#representability) by a value of type T.
+
+### Representability
+
+A [constant](#constants) x is _representable_ by a value of type T if one of the following conditions applies:
+
+* x is in the set of values [determined](#types) by T.
+* T is a floating-point type and x can be rounded to T's precision without overflow. Rounding uses IEEE 754 round-to-even rules but with an IEEE negative zero further simplified to an unsigned zero. Note that constant values never result in an IEEE negative zero, NaN, or infinity.
+* T is a complex type, and x's [components](#manipulating-complex-numbers) `real(x)` and `imag(x)` are representable by values of T's component type (`float32` or `float64`).
+
+```go
+x                   T           x is representable by a value of T because
+
+'a'                 byte        97 is in the set of byte values
+97                  rune        rune is an alias for int32, and 97 is in the set of 32-bit integers
+"foo"               string      "foo" is in the set of string values
+1024                int16       1024 is in the set of 16-bit integers
+42.0                byte        42 is in the set of unsigned 8-bit integers
+1e10                uint64      10000000000 is in the set of unsigned 64-bit integers
+2.718281828459045   float32     2.718281828459045 rounds to 2.7182817 which is in the set of float32 values
+-1e-1000            float64     -1e-1000 rounds to IEEE -0.0 which is further simplified to 0.0
+0i                  int         0 is an integer value
+(42 + 0i)           float32     42.0 (with zero imaginary part) is in the set of float32 values
+```
+
+```go
+x                   T           x is not representable by a value of T because
+
+0                   bool        0 is not in the set of boolean values
+'a'                 string      'a' is a rune, it is not in the set of string values
+1024                byte        1024 is not in the set of unsigned 8-bit integers
+-1                  uint16      -1 is not in the set of unsigned 16-bit integers
+1.1                 int         1.1 is not an integer value
+42i                 float32     (0 + 42i) is not in the set of float32 values
+1e1000              float64     1e1000 overflows to IEEE +Inf after rounding
+```
 
 ## Expressions
 
