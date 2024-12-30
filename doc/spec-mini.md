@@ -911,7 +911,59 @@ type (
 
 The underlying type of `string`, `A1`, `A2`, `B1`, and `B2` is `string`. The underlying type of `[]B1`, `B3`, and `B4` is `[]B1`.
 
-### Core types
+### Type identity
+
+Two types are either _identical_ or _different_.
+
+A [named type](#types) is always different from any other type. Otherwise, two types are identical if their [underlying type](#underlying-types) literals are structurally equivalent; that is, they have the same literal structure and corresponding components have identical types. In detail:
+
+* Two array types are identical if they have identical element types and the same array length.
+* Two slice types are identical if they have identical element types.
+* Two struct types are identical if they have the same sequence of fields, and if corresponding fields have the same names, and identical types, and identical tags. [Non-exported](#exported-identifiers) field names from different packages are always different.
+* Two pointer types are identical if they have identical base types.
+* Two function types are identical if they have the same number of parameters and result values, corresponding parameter and result types are identical, and either both functions are variadic or neither is. Parameter and result names are not required to match.
+* Two interface types are identical if they define the same type set.
+* Two map types are identical if they have identical key and element types.
+
+Given the declarations
+
+```go
+type (
+	A0 = []string
+	A1 = A0
+	A2 = struct{ a, b int }
+	A3 = int
+	A4 = func(A3, float64) *A0
+	A5 = func(x int, _ float64) *[]string
+
+	B0 A0
+	B1 []string
+	B2 struct{ a, b int }
+	B3 struct{ a, c int }
+	B4 func(int, float64) *B0
+	B5 func(x int, y float64) *A1
+
+	C0 = B0
+)
+```
+
+these types are identical:
+
+```go
+A0, A1, and []string
+A2 and struct{ a, b int }
+A3 and int
+A4, func(int, float64) *[]string, and A5
+
+B0 and C0
+[]int and []int
+struct{ a, b *B5 } and struct{ a, b *B5 }
+func(x int, y float64) *[]string, func(int, float64) (result *[]string), and A5
+```
+
+`B0` and `B1` are different because they are new types created by distinct [type definitions](#type-definitions); `func(int, float64) *B0` and `func(x int, y float64) *[]string` are different because `B0` is different from `[]string`.
+
+### Assignability
 
 TODO
 
@@ -1901,10 +1953,10 @@ The built-in functions do not have standard Go types, so they can only appear in
 
 The built-in functions `append` and `copy` assist in common slice operations. For both functions, the result is independent of whether the memory referenced by the arguments overlaps.
 
-The [variadic](#function-types) function append appends zero or more values x to a slice s and returns the resulting slice of the same type as s. The [core type]() of s must be a slice of type `[]E`. The values x are passed to a parameter of type `...E` and the respective [parameter passing rules]() apply. As a special case, if the core type of s is []byte, append also accepts a second argument with core type [bytestring]() followed by `...`. This form appends the bytes of the byte slice or string.
+The [variadic](#function-types) function append appends zero or more values x to a slice s and returns the resulting slice of the same type as s. The [underlying type](#underlying-types) of s must be a slice of type `[]E`. The values x are passed to a parameter of type `...E` and the respective [parameter passing rules]() apply. As a special case, if the underlying type of s is []byte, append also accepts a second argument with underlying type [bytestring]() followed by `...`. This form appends the bytes of the byte slice or string.
 
 ```go
-append(s S, x ...E) S  // core type of S is []E
+append(s S, x ...E) S  // underlying type of S is []E
 ```
 
 If the capacity of s is not large enough to fit the additional values, append [allocates]() a new, sufficiently large underlying array that fits both the existing slice elements and the additional values. Otherwise, append re-uses the underlying array.
@@ -1923,7 +1975,7 @@ var b []byte
 b = append(b, "bar"...)            // append string contents      b is []byte("bar")
 ```
 
-The function copy copies slice elements from a source src to a destination dst and returns the number of elements copied. The [core types]() of both arguments must be slices with [identical]() element type. The number of elements copied is the minimum of `len(src)` and `len(dst)`. As a special case, if the destination's core type is `[]byte`, copy also accepts a source argument with core type [bytestring](). This form copies the bytes from the byte slice or string into the byte slice.
+The function copy copies slice elements from a source src to a destination dst and returns the number of elements copied. The [underlying types](#underlying-types) of both arguments must be slices with [identical]() element type. The number of elements copied is the minimum of `len(src)` and `len(dst)`. As a special case, if the destination's underlying type is `[]byte`, copy also accepts a source argument with underlying type [bytestring](). This form copies the bytes from the byte slice or string into the byte slice.
 
 ```go
 copy(dst, src []T) int
@@ -2039,10 +2091,10 @@ var z complex128
 
 Making slices and maps
 
-The built-in function `make` takes a type `T`, optionally followed by a type-specific list of expressions. The [core type]() of `T` must be a slice or map. It returns a value of type `T` (not `*T`). The memory is initialized as described in the section on [initial values]().
+The built-in function `make` takes a type `T`, optionally followed by a type-specific list of expressions. The [underlying type]() of `T` must be a slice or map. It returns a value of type `T` (not `*T`). The memory is initialized as described in the section on [initial values]().
 
 ```go
-Call             Core type    Result
+Call             Underlying type    Result
 
 make(T, n)       slice        slice of type T with length n and capacity n
 make(T, n, m)    slice        slice of type T with length n and capacity m
@@ -2347,7 +2399,7 @@ type (
 
 #### Type definitions
 
-A type definition creates a new, distinct type with the same [underlying type]() and operations as the given type and binds an identifier, the _type name_, to it.
+A type definition creates a new, distinct type with the same [underlying type](#underlying-types) and operations as the given type and binds an identifier, the _type name_, to it.
 
 ```go
 TypeDef = identifier Type .
@@ -2664,7 +2716,7 @@ func String(ptr *byte, len IntegerType) string
 func StringData(str string) *byte
 ```
 
-A Pointer is a [pointer type](#pointer-types) but a Pointer value may not be [dereferenced](#address-operators). Any pointer or value of [core type]() `uintptr` can be [converted](#conversions) to a type of core type Pointer and vice versa. The effect of converting between Pointer and `uintptr` is implementation-defined.
+A Pointer is a [pointer type](#pointer-types) but a Pointer value may not be [dereferenced](#address-operators). Any pointer or value of [underlying type](#underlying-types) `uintptr` can be [converted](#conversions) to a type of underlying type Pointer and vice versa. The effect of converting between Pointer and `uintptr` is implementation-defined.
 
 ```go
 var f float64
@@ -2752,7 +2804,7 @@ Two types that are not bound type parameters unify exactly if any of following c
 
 * Both types are [identical]().
 * Both types have identical structure and their element types unify exactly.
-* Exactly one type is an [unbound]() type parameter with a [core type](), and that core type unifies with the other type per the unification rules for ≡A (loose unification at the top level and exact unification for element types).
+* Exactly one type is an [unbound]() type parameter with a [underlying type](#underlying-types), and that underlying type unifies with the other type per the unification rules for ≡A (loose unification at the top level and exact unification for element types).
 
 If both types are bound type parameters, they unify per the given matching modes if:
 
