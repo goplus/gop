@@ -889,6 +889,33 @@ func Read(f *File, b []byte) (n int, err error)
 TODO (classfile)
 
 
+## Properties of types and values
+
+### Underlying types
+
+Each type T has an _underlying type_: If T is one of the predeclared boolean, numeric, or string types, or a type literal, the corresponding underlying type is T itself. Otherwise, T's underlying type is the underlying type of the type to which T refers in its declaration.
+
+```go
+type (
+	A1 = string
+	A2 = A1
+)
+
+type (
+	B1 string
+	B2 B1
+	B3 []B1
+	B4 B3
+)
+```
+
+The underlying type of `string`, `A1`, `A2`, `B1`, and `B2` is `string`. The underlying type of `[]B1`, `B3`, and `B4` is `[]B1`.
+
+### Core types
+
+TODO
+
+
 ## Expressions
 
 ### Commands and calls
