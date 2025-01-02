@@ -1021,26 +1021,6 @@ Further rules apply to structs (and pointer to structs) containing embedded fiel
 In a method set, each method must have a [unique](#uniqueness-of-identifiers) non-[blank](#blank-identifier) [method name]().
 
 
-## Blocks
-
-A _block_ is a possibly empty sequence of declarations and statements within matching brace brackets.
-
-```go
-Block = "{" StatementList "}" .
-StatementList = { Statement ";" } .
-```
-
-In addition to explicit blocks in the source code, there are implicit blocks:
-
-* The _universe block_ encompasses all Go+ source text.
-* Each [package](#packages) has a _package block_ containing all Go+ source text for that package.
-* Each file has a _file block_ containing all Go+ source text in that file.
-* Each "[if](#if-statements)", "[for](#for-statements)", and "[switch](#switch-statements)" statement is considered to be in its own implicit block.
-* Each clause in a "[switch](#switch-statements)" statement acts as an implicit block.
-
-Blocks nest and influence [scoping]().
-
-
 ## Expressions
 
 ### Commands and calls
@@ -2288,6 +2268,26 @@ printf
 println
 ...
 ```
+
+## Blocks
+
+A _block_ is a possibly empty sequence of declarations and statements within matching brace brackets.
+
+```go
+Block = "{" StatementList "}" .
+StatementList = { Statement ";" } .
+```
+
+In addition to explicit blocks in the source code, there are implicit blocks:
+
+* The _universe block_ encompasses all Go+ source text.
+* Each [package](#packages) has a _package block_ containing all Go+ source text for that package.
+* Each file has a _file block_ containing all Go+ source text in that file.
+* Each "[if](#if-statements)", "[for](#for-statements)", and "[switch](#switch-statements)" statement is considered to be in its own implicit block.
+* Each clause in a "[switch](#switch-statements)" statement acts as an implicit block.
+
+Blocks nest and influence [scoping]().
+
 
 ## Declarations and scope
 
