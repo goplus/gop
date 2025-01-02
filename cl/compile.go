@@ -716,6 +716,7 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 	var testType string
 	var baseTypeName string
 	var baseType types.Type
+	var spxProj string
 	var spxClass bool
 	var goxTestFile bool
 	var parent = ctx.pkgCtx
@@ -745,9 +746,10 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 					baseType = types.NewPointer(baseType)
 				}
 			} else {
-				o := proj.sprite[c.ext]
+				sp := proj.sprite[c.ext]
+				o := sp.obj
 				ctx.baseClass = o
-				baseTypeName, baseType, spxClass = o.Name(), o.Type(), true
+				baseTypeName, baseType, spxProj, spxClass = o.Name(), o.Type(), sp.proj, true
 			}
 		}
 	}
@@ -790,13 +792,18 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 					tags = append(tags, "")
 					chk.chkRedecl(ctx, baseTypeName, pos)
 				}
-				if spxClass && proj.gameClass != "" {
-					typ := toType(ctx, &ast.StarExpr{X: &ast.Ident{Name: proj.gameClass}})
-					name := getTypeName(typ)
-					if !chk.chkRedecl(ctx, name, pos) {
-						fld := types.NewField(pos, pkg, name, typ, true)
-						flds = append(flds, fld)
-						tags = append(tags, "")
+				if spxClass {
+					if gameClass := proj.gameClass; gameClass != "" {
+						if spxProj == "" { // if spxProj is empty, use gameClass
+							spxProj = gameClass
+						}
+						typ := toType(ctx, &ast.StarExpr{X: &ast.Ident{Name: spxProj}})
+						name := getTypeName(typ)
+						if !chk.chkRedecl(ctx, name, pos) {
+							fld := types.NewField(pos, pkg, name, typ, true)
+							flds = append(flds, fld)
+							tags = append(tags, "")
+						}
 					}
 				}
 				rec := ctx.recorder()
