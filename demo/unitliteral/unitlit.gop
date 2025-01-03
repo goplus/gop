@@ -1,0 +1,5 @@
+import "time"
+
+echo "Let's wait for a second"
+time.sleep 1s
+echo "Hello, world"
