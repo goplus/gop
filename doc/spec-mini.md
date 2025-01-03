@@ -1023,6 +1023,21 @@ In a method set, each method must have a [unique](#uniqueness-of-identifiers) no
 
 ## Expressions
 
+An expression specifies the computation of a value by applying operators and functions to operands.
+
+### Operands
+
+Operands denote the elementary values in an expression. An operand may be a literal, a (possibly [qualified]()) non-[blank](#blank-identifier) identifier denoting a [constant](#constant-declarations), [variable](#variable-declarations), or [function](#function-declarations), or a parenthesized expression.
+
+```go
+Operand     = Literal | OperandName [ TypeArgs ] | "(" Expression ")" .
+Literal     = BasicLit | CompositeLit | FunctionLit .
+BasicLit    = int_lit | float_lit | imaginary_lit | rune_lit | string_lit .
+OperandName = identifier | QualifiedIdent .
+```
+
+The [blank identifier](#blank-identifier) may appear as an operand only on the left-hand side of an [assignment statement](#assignment-statements).
+
 ### Commands and calls
 
 TODO
