@@ -1038,6 +1038,20 @@ OperandName = identifier | QualifiedIdent .
 
 The [blank identifier](#blank-identifier) may appear as an operand only on the left-hand side of an [assignment statement](#assignment-statements).
 
+### Qualified identifiers
+
+A _qualified identifier_ is an identifier qualified with a package name prefix. Both the package name and the identifier must not be [blank](#blank-identifier).
+
+```go
+QualifiedIdent = PackageName "." identifier .
+```
+
+A qualified identifier accesses an identifier in a different package, which must be [imported](#import-declarations). The identifier must be [exported](#exported-identifiers) and declared in the [package block](#blocks) of that package.
+
+```go
+math.Sin // denotes the Sin function in package math
+```
+
 ### Commands and calls
 
 TODO
