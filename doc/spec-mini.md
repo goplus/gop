@@ -1052,6 +1052,46 @@ A qualified identifier accesses an identifier in a different package, which must
 math.Sin // denotes the Sin function in package math
 ```
 
+### Composite literals
+
+Composite literals construct new composite values each time they are evaluated. They consist of the type of the literal followed by a brace-bound list of elements. Each element may optionally be preceded by a corresponding key.
+
+```go
+CompositeLit  = LiteralType LiteralValue .
+LiteralType   = TypeName [ TypeArgs ] .
+LiteralValue  = "{" [ ElementList [ "," ] ] "}" .
+ElementList   = KeyedElement { "," KeyedElement } .
+KeyedElement  = [ Key ":" ] Element .
+Key           = FieldName | Expression | LiteralValue .
+FieldName     = identifier .
+Element       = Expression | LiteralValue .
+```
+
+The LiteralType's [underlying type](#underlying-types) `T` must be a [struct](#struct-types) or a [classfile]() type. The types of the elements and keys must be [assignable](#assignability) to the respective field; there is no additional conversion. It is an error to specify multiple elements with the same field name.
+
+* A key must be a field name declared in the struct type.
+* An element list that does not contain any keys must list an element for each struct field in the order in which the fields are declared.
+* If any element has a key, every element must have a key.
+* An element list that contains keys does not need to have an element for each struct field. Omitted fields get the zero value for that field.
+* A literal may omit the element list; such a literal evaluates to the zero value for its type.
+* It is an error to specify an element for a non-exported field of a struct belonging to a different package.
+
+Given the declarations
+
+```go
+type Point3D struct { x, y, z float64 }
+type Line struct { p, q Point3D }
+```
+
+one may write
+
+```go
+origin := Point3D{}                            // zero value for Point3D
+line := Line{origin, Point3D{y: -4, z: 12.3}}  // zero value for line.q.x
+```
+
+TODO
+
 ### Commands and calls
 
 TODO
