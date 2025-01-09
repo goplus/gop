@@ -1664,3 +1664,28 @@ func main() {
 }
 `)
 }
+
+func TestOverloadUntyped2(t *testing.T) {
+	gopMixedClTest(t, "main", `
+package main
+
+type SpriteImpl struct {
+}
+
+func (p *SpriteImpl) Rand__0(from int, to int) {
+}
+func (p *SpriteImpl) Rand__1(from float64, to float64) {
+}
+`, `
+p := &SpriteImpl{}
+p.rand(1.0,2.0)
+p.rand(float64(1),float64(2))
+`, `package main
+
+func main() {
+	p := &SpriteImpl{}
+	p.Rand__0(1.0, 2.0)
+	p.Rand__1(float64(1), float64(2))
+}
+`)
+}
