@@ -2833,15 +2833,16 @@ func (p *parser) parseBranchStmt(tok token.Token) ast.Stmt {
 
 	oldpos, oldlit := p.pos, p.lit // Go+: save token to allow goto() as a function
 	pos := p.expect(tok)
-	if p.tok == token.LPAREN { // Go+: allow goto() as a function
+	next := p.tok
+	if next != token.IDENT && next != token.SEMICOLON { // Go+: allow goto() as a function
 		p.unget(oldpos, token.IDENT, oldlit)
-		s, _ := p.parseSimpleStmt(basic, false)
+		s, _ := p.parseSimpleStmt(basic, true)
 		p.expectSemi()
 		return s
 	}
 
 	var label *ast.Ident
-	if tok != token.FALLTHROUGH && p.tok == token.IDENT {
+	if tok != token.FALLTHROUGH && next == token.IDENT {
 		label = p.parseIdent()
 		// add to list of unresolved targets
 		n := len(p.targetStack) - 1
