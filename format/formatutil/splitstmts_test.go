@@ -44,9 +44,9 @@ func doSplitStmts(src []byte) (ret []string) {
 }
 
 func stmtKind(s aStmt) string {
-	tok, at := s.tok()
+	tok := s.tok
 	if tok == token.FUNC {
-		if isFuncDecl(s.words[at+1:]) {
+		if isFuncDecl(s.words[s.at+1:]) {
 			return "FUNC"
 		}
 		return "FNCALL"
@@ -96,5 +96,5 @@ func testFromDir(t *testing.T, sel, relDir string) {
 }
 
 func TestSplitStmts(t *testing.T) {
-	testFromDir(t, "", "./_testdata")
+	testFromDir(t, "", "./_testdata/splitstmts")
 }

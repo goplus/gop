@@ -41,25 +41,42 @@ func RearrangeFuncs(src []byte, filename ...string) ([]byte, error) {
 		return src, nil
 	}
 
-	return src, nil
-}
+	ret := make([]byte, 0, len(src))
+	off := int(stmts[first].words[0].pos) - base
+	ret = append(ret, src[:off]...)
 
-type aWord struct {
-	pos token.Pos
-	tok token.Token
-}
-
-type aStmt struct {
-	words []aWord
-}
-
-func (s aStmt) tok() (tok token.Token, at int) {
-	for i, w := range s.words {
-		if w.tok != token.COMMENT {
-			return w.tok, i
+	rest := stmts[first:]
+	for i, s := range rest {
+		if s.isFuncDecl() {
+			ret = append(ret, codeOf(src, base, i, rest)...)
 		}
 	}
-	return s.words[0].tok, 0
+	for i, s := range rest {
+		if !s.isFuncDecl() {
+			ret = append(ret, codeOf(src, base, i, rest)...)
+		}
+	}
+	return ret, nil
+}
+
+func codeOf(src []byte, base, i int, rest []aStmt) []byte {
+	from := int(rest[i].words[0].pos) - base
+	to := 0
+	if i == len(rest)-1 {
+		to = len(src)
+	} else {
+		to = int(rest[i+1].words[0].pos) - base
+	}
+	return src[from:to]
+}
+
+func firstNonDecl(stmts []aStmt) int {
+	for i, stmt := range stmts {
+		if !stmt.isDecl() {
+			return i
+		}
+	}
+	return -1
 }
 
 func splitStmts(s *scanner.Scanner) (stmts []aStmt) {
@@ -81,6 +98,7 @@ func splitStmts(s *scanner.Scanner) (stmts []aStmt) {
 			level--
 		}
 		if tok == token.SEMICOLON && level == 0 {
+			stmt.tok, stmt.at = tokOf(stmt.words)
 			stmts = append(stmts, stmt)
 			stmt = aStmt{}
 			continue
@@ -88,19 +106,38 @@ func splitStmts(s *scanner.Scanner) (stmts []aStmt) {
 	}
 }
 
-func firstNonDecl(stmts []aStmt) int {
-	for i, stmt := range stmts {
-		switch tok, at := stmt.tok(); tok {
-		case token.CONST, token.TYPE, token.VAR:
-			continue
-		case token.FUNC:
-			if isFuncDecl(stmt.words[at+1:]) {
-				continue
-			}
-		}
-		return i
+type aWord struct {
+	pos token.Pos
+	tok token.Token
+}
+
+type aStmt struct {
+	words []aWord
+	tok   token.Token
+	at    int
+}
+
+func (s aStmt) isFuncDecl() bool {
+	return s.tok == token.FUNC && isFuncDecl(s.words[s.at+1:])
+}
+
+func (s aStmt) isDecl() bool {
+	switch s.tok {
+	case token.CONST, token.TYPE, token.VAR:
+		return true
+	case token.FUNC:
+		return isFuncDecl(s.words[s.at+1:])
 	}
-	return -1
+	return false
+}
+
+func tokOf(words []aWord) (tok token.Token, at int) {
+	for i, w := range words {
+		if w.tok != token.COMMENT {
+			return w.tok, i
+		}
+	}
+	return words[0].tok, 0
 }
 
 func isFuncDecl(words []aWord) bool {
