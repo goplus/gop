@@ -9,5 +9,4 @@ func x() {
 /*
  y comment
 */
-func y() {
-}
+var y int

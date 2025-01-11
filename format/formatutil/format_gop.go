@@ -85,9 +85,6 @@ func splitStmts(s *scanner.Scanner) (stmts []aStmt) {
 	for {
 		pos, tok, _ := s.Scan()
 		if tok == token.EOF {
-			if len(stmt.words) > 0 {
-				stmts = append(stmts, stmt)
-			}
 			return
 		}
 		stmt.words = append(stmt.words, aWord{pos, tok})
