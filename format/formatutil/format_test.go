@@ -17,6 +17,7 @@
 package formatutil
 
 import (
+	"bytes"
 	"log"
 	"os"
 	"path"
@@ -54,7 +55,7 @@ func stmtKind(s aStmt) string {
 	return tok.String()
 }
 
-func testFrom(t *testing.T, pkgDir, sel string) {
+func testFrom(t *testing.T, pkgDir, sel string, doIt func(in []byte) ([]byte, error)) {
 	if sel != "" && !strings.Contains(pkgDir, sel) {
 		return
 	}
@@ -68,13 +69,16 @@ func testFrom(t *testing.T, pkgDir, sel string) {
 	if err != nil {
 		t.Fatal("Parsing", pkgDir, "-", err)
 	}
-	ret := strings.Join(doSplitStmts(in), "\n") + "\n"
-	if ret != string(out) {
-		t.Fatal("Parsing", pkgDir, "- failed:\n"+ret)
+	ret, err := doIt(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(ret, out) {
+		t.Fatal("Parsing", pkgDir, "- failed:\n"+string(ret))
 	}
 }
 
-func testFromDir(t *testing.T, sel, relDir string) {
+func testFromDir(t *testing.T, sel, relDir string, doIt func(in []byte) ([]byte, error)) {
 	dir, err := os.Getwd()
 	if err != nil {
 		t.Fatal("Getwd failed:", err)
@@ -90,11 +94,20 @@ func testFromDir(t *testing.T, sel, relDir string) {
 			continue
 		}
 		t.Run(name, func(t *testing.T) {
-			testFrom(t, dir+"/"+name, sel)
+			testFrom(t, dir+"/"+name, sel, doIt)
 		})
 	}
 }
 
 func TestSplitStmts(t *testing.T) {
-	testFromDir(t, "", "./_testdata/splitstmts")
+	testFromDir(t, "", "./_testdata/splitstmts", func(in []byte) ([]byte, error) {
+		ret := strings.Join(doSplitStmts(in), "\n") + "\n"
+		return []byte(ret), nil
+	})
+}
+
+func TestFormat(t *testing.T) {
+	testFromDir(t, "", "./_testdata/format", func(in []byte) ([]byte, error) {
+		return SourceEx(in, false)
+	})
 }
