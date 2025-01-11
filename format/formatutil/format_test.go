@@ -106,8 +106,14 @@ func TestSplitStmts(t *testing.T) {
 	})
 }
 
+func TestRearrangeFuncs(t *testing.T) {
+	testFromDir(t, "", "./_testdata/rearrange", func(in []byte) ([]byte, error) {
+		return RearrangeFuncs(in)
+	})
+}
+
 func TestFormat(t *testing.T) {
 	testFromDir(t, "", "./_testdata/format", func(in []byte) ([]byte, error) {
-		return SourceEx(in, false)
+		return SourceEx(in, false, "")
 	})
 }
